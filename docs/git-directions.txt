@@ -1,0 +1,18 @@
+This file has some directions that must be followed when using git in this project.
+
+
+Rebase vs. Merge
+================
+
+Please use "git rebase" instead of "git merge" when possible. To make it easier, do the following:
+
+	git config branch.autosetuprebase always
+
+
+
+List of good practices
+======================
+
+Keep .gitignore updated
+
+
