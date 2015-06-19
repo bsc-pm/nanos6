@@ -12,30 +12,30 @@
 //! \brief a class for generating the TAP testing protocol that the autotools recognizes
 class TestAnyProtocolProducer {
 private:
-	int m_testCount;
-	int m_currentTest;
-	bool m_hasFailed;
-	std::string m_component;
+	int _testCount;
+	int _currentTest;
+	bool _hasFailed;
+	std::string _component;
 	
 	void emitOutcome(std::string const &outcome, std::string const &detail, std::string const &special = "")
 	{
-		std::cout << outcome << " " << m_currentTest;
+		std::cout << outcome << " " << _currentTest;
 		if (special != "") {
 			std::cout << " # " << special;
 		}
-		if (m_component != "") {
-			std::cout << " " << m_component << ":";
+		if (_component != "") {
+			std::cout << " " << _component << ":";
 		}
 		if (detail != "") {
 			std::cout << " " << detail;
 		}
 		std::cout << std::endl;
-		m_currentTest++;
+		_currentTest++;
 	}
 	
 public:
 	TestAnyProtocolProducer()
-		: m_testCount(0), m_currentTest(0), m_hasFailed(false)
+		: _testCount(0), _currentTest(0), _hasFailed(false)
 	{
 	}
 	
@@ -45,7 +45,7 @@ public:
 	//! \param in count the number of new tests to register
 	void registerNewTests(int count=1)
 	{
-		m_testCount += count;
+		_testCount += count;
 	}
 	
 	//! \brief set up the name of the component that is being tested
@@ -57,10 +57,10 @@ public:
 		char *demangledComponent = abi::__cxa_demangle(component.c_str(), 0, 0, &status);
 		
 		if (status == 0) {
-			m_component = std::string(demangledComponent);
+			_component = std::string(demangledComponent);
 			free(demangledComponent);
 		} else {
-			m_component = component;
+			_component = component;
 		}
 	}
 	
@@ -68,10 +68,10 @@ public:
 	//! Each test is run one after the other and its result is indicated by just calling succecc, failure, todo, skip or evaluate
 	void begin()
 	{
-		if (m_testCount != 0) {
-			std::cout << "1.." << m_testCount << std::endl;
+		if (_testCount != 0) {
+			std::cout << "1.." << _testCount << std::endl;
 		}
-		m_currentTest = 1;
+		_currentTest = 1;
 	}
 	
 	//! \brief finish the set of tests (sequentially)
@@ -94,7 +94,7 @@ public:
 	void failure(std::string const &detail="")
 	{
 		emitOutcome("not ok", detail);
-		m_hasFailed = true;
+		_hasFailed = true;
 	}
 	
 	//! \brief indicate that the current test in sequential order is yet to be implemented
@@ -143,7 +143,7 @@ public:
 	//! Possibly because it can cause the program to fail, or the rest of the tests will fail
 	void bailOutAndExitIfAnyFailed()
 	{
-		if (m_hasFailed) {
+		if (_hasFailed) {
 			bailOut("to avoid further errors");
 			std::exit(1);
 		}
@@ -152,13 +152,13 @@ public:
 	//! \brief check if any of the previous tests has been reported as a failure
 	bool hasFailed() const
 	{
-		return m_hasFailed;
+		return _hasFailed;
 	}
 	
 	//! \brief ignore any previous failure, but still report them
 	void clearFailureMark()
 	{
-		m_hasFailed = false;
+		_hasFailed = false;
 	}
 	
 	//! \brief emit an additional comment in the output
