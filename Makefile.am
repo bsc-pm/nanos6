@@ -3,6 +3,7 @@ AM_CXXFLAGS = -I$(srcdir)/src
 
 
 lib_LTLIBRARIES = libsimpless.la libsimpless-debug.la
+noinst_LTLIBRARIES = libcheck-shutdown.la libcheck-shutdown-debug.la
 
 # See info page of libtool "Updating version info"
 lib_current = 0
@@ -64,13 +65,29 @@ enabled_tests = \
 disabled_tests =
 
 
+shutdown_common_sources = \
+	tests/infrastructure/ProgramLifecycle.cc
+
+libcheck_shutdown_la_CPPFLAGS = -DNDEBUG
+libcheck_shutdown_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libcheck_shutdown_la_SOURCES = $(shutdown_common_sources)
+libcheck_shutdown_la_LDFLAGS = -module -rpath /nowhere -ldl
+
+libcheck_shutdown_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+libcheck_shutdown_debug_la_SOURCES = $(shutdown_common_sources)
+libcheck_shutdown_debug_la_LDFLAGS = -module -rpath /nowhere -ldl
+
+
+test_common_debug_libs = libsimpless-debug.la libcheck-shutdown-debug.la
+test_common_libs = libsimpless.la libcheck-shutdown.la
+
 noop_debug_test_SOURCES = tests/apiless/noop/noop.cc
-noop_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS)
-noop_debug_test_LDADD = libsimpless-debug.la
+noop_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+noop_debug_test_LDADD = $(test_common_debug_libs)
 
 noop_test_SOURCES = tests/apiless/noop/noop.cc
-noop_test_CXXFLAGS = $(OPT_CXXFLAGS)
-noop_test_LDADD = libsimpless.la
+noop_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+noop_test_LDADD = $(test_common_libs)
 
 
 check_PROGRAMS = $(enabled_tests) $(disabled_tests)

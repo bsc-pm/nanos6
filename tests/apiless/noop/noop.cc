@@ -1,29 +1,22 @@
-#include <cstdlib>
-
 #include "tests/infrastructure/TestAnyProtocolProducer.hpp"
 
 
-TestAnyProtocolProducer tap;
+// This is shared with tests/infrastructure/ProgramLifecycle.cc
+extern TestAnyProtocolProducer tap;
 
 
-static void endOfTest()
+// This function is called after the runtime has shut down
+void shutdownTests()
 {
-	tap.success();
+	tap.success("Could exit the runtime");
 	tap.end();
 }
 
 
 int main(int argc, char **argv)
 {
-	tap.registerNewTests(2);
+	tap.registerNewTests(1); // Only the shutdown test
 	tap.begin();
-	
-	int rc = atexit(endOfTest);
-	if (rc == 0) {
-		tap.success();
-	} else {
-		tap.failure();
-	}
 	
 	return 0;
 }
