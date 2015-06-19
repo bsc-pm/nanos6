@@ -31,7 +31,7 @@ public:
 		: _thread(nullptr), _countdownToBeWokenUp(1), _parent(parent)
 	{
 		if (parent != nullptr) {
-			addChild(this);
+			parent->addChild(this);
 		}
 	}
 	
@@ -61,11 +61,6 @@ public:
 		return _thread;
 	}
 	
-	//! \brief clears the thread assigned to this task
-	inline void unsetThread()
-	{
-		_thread = nullptr;
-	}
 	
 	//! \brief Add a nested task
 	inline void addChild(__attribute__((unused)) Task *child)
@@ -79,6 +74,17 @@ public:
 	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
 	{
 		return ((--_countdownToBeWokenUp) == 0);
+	}
+	
+	//! \brief Set the parent
+	//! This should be used when the parent was not set during creation, and should have the parent in a state that allows
+	//! adding this task as a child.
+	//! \param parent inout the actual parent of the task
+	inline void setParent(Task *parent)
+	{
+		assert(parent != nullptr);
+		_parent = parent;
+		_parent->addChild(this);
 	}
 	
 	//! \brief Get the parent into which this task is nested
@@ -97,7 +103,7 @@ public:
 		if (_parent != nullptr) {
 			return _parent->removeChild(this);
 		} else {
-			return false;
+			return (_countdownToBeWokenUp == 0);
 		}
 	}
 	

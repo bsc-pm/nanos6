@@ -83,7 +83,7 @@ void ThreadManager::enableCPU(size_t systemCPUId)
 		cpu->_enabled = true;
 		
 		WorkerThread *thread = getNewOrIdleThread(cpu);
-		resumeThread(thread, cpu);
+		thread->resume();
 	}
 }
 

@@ -22,7 +22,9 @@ void *WorkerThread::body()
 {
 	_currentWorkerThread = this;
 	
-	ThreadManager::yieldIdler(this);
+	suspend();
+	
+	_cpu->_runningThread = this;
 	
 	while (!ThreadManager::mustExit(_cpu)) {
 		_task = Scheduler::schedule(_cpu);
@@ -46,7 +48,6 @@ void WorkerThread::handleTask()
 	// Run the task
 	_task->setThread(this);
 	_task->body();
-	_task->unsetThread();
 	
 	// TODO: Release successors
 	
