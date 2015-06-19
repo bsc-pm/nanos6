@@ -107,6 +107,7 @@ public:
 	//! \returns true if the change makes the task disposable
 	inline bool markAsFinished() __attribute__((warn_unused_result))
 	{
+		assert(_thread != nullptr);
 		_thread = nullptr;
 		return ((--_countdownToBeWokenUp) == 0);
 	}
@@ -116,6 +117,7 @@ public:
 	//! \returns true if the change makes the task become ready
 	inline bool markAsBlocked()
 	{
+		assert(_thread != nullptr);
 		return ((--_countdownToBeWokenUp) == 0);
 	}
 	
@@ -124,6 +126,7 @@ public:
 	//! \returns true if it does not have any children
 	inline bool markAsUnblocked()
 	{
+		assert(_thread != nullptr);
 		return ((++_countdownToBeWokenUp) == 1);
 	}
 	
@@ -137,6 +140,7 @@ public:
 	//! Note: The task must have been marked as blocked
 	inline bool canBeWokenUp()
 	{
+		assert(_thread != nullptr);
 		return (_countdownToBeWokenUp == 0);
 	}
 	

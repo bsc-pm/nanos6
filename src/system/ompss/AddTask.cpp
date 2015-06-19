@@ -15,6 +15,7 @@ void addTask(Task *task)
 	assert(currentWorkerThread != nullptr);
 	
 	HardwarePlace *hardwarePlace = currentWorkerThread->getHardwarePlace();
+	assert(currentWorkerThread->getTask() != nullptr);
 	Scheduler::addChildTask(task, hardwarePlace);
 	ThreadManager::resumeAnyIdle(hardwarePlace);
 }
