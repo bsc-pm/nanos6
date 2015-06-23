@@ -61,7 +61,8 @@ libsimpless_debug_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(li
 
 enabled_tests = \
 	noop.debug.test noop.test \
-	single-nest.debug.test single-nest.test
+	single-nest.debug.test single-nest.test \
+	fibonacci.debug.test fibonacci.test
 
 disabled_tests =
 
@@ -97,6 +98,14 @@ single_nest_debug_test_LDADD = $(test_common_debug_libs)
 single_nest_test_SOURCES = tests/apiless/single-nest/single-nest.cc
 single_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 single_nest_test_LDADD = $(test_common_libs)
+
+fibonacci_debug_test_SOURCES = tests/apiless/fibonacci/fibonacci.cc
+fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+fibonacci_debug_test_LDADD = $(test_common_debug_libs)
+
+fibonacci_test_SOURCES = tests/apiless/fibonacci/fibonacci.cc
+fibonacci_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+fibonacci_test_LDADD = $(test_common_libs)
 
 
 check_PROGRAMS = $(enabled_tests) $(disabled_tests)
