@@ -101,6 +101,9 @@ void ThreadManager::disableCPU(size_t systemCPUId)
 void ThreadManager::exitAndWakeUpNext (WorkerThread *currentThread)
 {
 	CPU *cpu = currentThread->_cpu;
+	assert(cpu != nullptr);
+	assert(cpu->_runningThread == currentThread);
+	assert(WorkerThread::getCurrentWorkerThread() == currentThread);
 	
 	// Find next to wake
 	WorkerThread *next = getIdleThread(cpu);

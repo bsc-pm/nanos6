@@ -53,26 +53,20 @@ void WorkerThread::handleTask()
 	
 	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
 	{
-		bool canDispose = _task->markAsFinished();
-		Task *potentiallyDisposableTask = _task;
+		bool readyOrDisposable = _task->markAsFinished();
+		Task *currentTask = _task;
 		
-		if (canDispose) {
-			while (potentiallyDisposableTask != nullptr) {
-				Task *parent = potentiallyDisposableTask->getParent();
-				
-				bool parentIsReadyOrDisposable = potentiallyDisposableTask->unlinkFromParent();
-				if (parentIsReadyOrDisposable) {
-					if (potentiallyDisposableTask->hasFinished()) {
-						delete potentiallyDisposableTask; // FIXME: Need a proper object recycling mechanism here
-						potentiallyDisposableTask = parent;
-					} else {
-						// An ancestor in a taskwait that finishes at this point
-						ThreadManager::threadBecomesReady(potentiallyDisposableTask->getThread());
-						potentiallyDisposableTask = nullptr;
-					}
-				} else {
-					potentiallyDisposableTask = nullptr;
-				}
+		while ((currentTask != nullptr) && readyOrDisposable) {
+			Task *parent = currentTask->getParent();
+			
+			if (currentTask->hasFinished()) {
+				readyOrDisposable = currentTask->unlinkFromParent();
+				delete currentTask; // FIXME: Need a proper object recycling mechanism here
+				currentTask = parent;
+			} else {
+				// An ancestor in a taskwait that finishes at this point
+				ThreadManager::threadBecomesReady(currentTask->getThread());
+				readyOrDisposable = false;
 			}
 		}
 	}

@@ -36,15 +36,21 @@ class ThreadManager {
 	
 	//! \brief retrieve an idle WorkerThread that is pinned to a given CPU
 	//!
+	//! \param inout cpu the CPU on which to get an idle thread
+	//!
 	//! \returns an idle WorkerThread pinned to the requested CPU or nullptr
 	static inline WorkerThread *getIdleThread(CPU *cpu);
 	
 	//! \brief create or recycle a WorkerThread that is pinned to a given CPU
 	//!
+	//! \param inout cpu the CPU on which to get a new or idle thread
+	//!
 	//! \returns a WorkerThread pinned to the requested CPU
 	static inline WorkerThread *getNewOrIdleThread(CPU *cpu);
 	
 	//! \brief get a ready WorkerThread that is pinned to a given CPU
+	//!
+	//! \param inout cpu the CPU on which to get a ready thread
 	//!
 	//! \returns a WorkerThread pinned to the requested CPU that is ready (previously blocked)
 	static inline WorkerThread *getReadyThread(CPU *cpu);
@@ -126,6 +132,8 @@ public:
 
 inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu)
 {
+	assert(cpu != nullptr);
+	
 	std::lock_guard<SpinLock> guard(cpu->_idleThreadsLock);
 	if (!cpu->_idleThreads.empty()) {
 		WorkerThread *idleThread = cpu->_idleThreads.front();
@@ -140,17 +148,21 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu)
 
 inline WorkerThread *ThreadManager::getNewOrIdleThread(CPU *cpu)
 {
-	WorkerThread *idleThread = getIdleThread(cpu);
+	assert(cpu != nullptr);
 	
-	if (idleThread == nullptr) {
-		idleThread = new WorkerThread(cpu);
+	WorkerThread *idleThread = getIdleThread(cpu);
+	if (idleThread != nullptr) {
+		return idleThread;
 	}
 	
-	return idleThread;
+	WorkerThread *newThread = new WorkerThread(cpu);
+	
+	return newThread;
 }
 
 inline WorkerThread *ThreadManager::getReadyThread(CPU *cpu)
 {
+	assert(cpu != nullptr);
 	WorkerThread *readyThread = nullptr;
 	
 	{
@@ -180,12 +192,16 @@ inline void ThreadManager::resumeThread(WorkerThread *thread, CPU *cpu)
 
 inline void ThreadManager::linkIdleCPU (CPU *cpu)
 {
+	assert(cpu != nullptr);
+	
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	_idleCPUs.push_back(cpu);
 }
 
 inline void ThreadManager::unlinkIdleCPU (ThreadManager::CPU *cpu)
 {
+	assert(cpu != nullptr);
+	
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	std::remove(_idleCPUs.begin(), _idleCPUs.end(), cpu);
 }
@@ -209,6 +225,10 @@ inline ThreadManager::CPU *ThreadManager::getIdleCPU()
 inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThread *replacementThread, CPU *cpu)
 {
 	assert(cpu != nullptr);
+	assert(currentThread != nullptr);
+	assert(currentThread->_cpu == cpu);
+	assert(currentThread == WorkerThread::getCurrentWorkerThread());
+	assert(cpu->_runningThread == currentThread);
 	
 	// Resume the replacement thread (if any)
 	{
@@ -251,6 +271,7 @@ inline void ThreadManager::yieldIdler(WorkerThread *currentThread)
 	assert(currentThread == WorkerThread::getCurrentWorkerThread());
 	
 	CPU *cpu = currentThread->_cpu;
+	
 	assert(cpu != nullptr);
 	assert(cpu->_runningThread == currentThread);
 	
