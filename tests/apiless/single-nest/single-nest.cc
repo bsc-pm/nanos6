@@ -28,7 +28,7 @@ public:
 	std::atomic<bool> _theTaskHasFinished;
 	
 	OuterExplicitTask():
-		Task(nullptr)
+		Task(nullptr), _mainHasFinished(false), _theTaskHasFinished(false)
 	{
 	}
 	
