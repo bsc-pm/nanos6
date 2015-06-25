@@ -10,6 +10,17 @@
 #endif
 
 
+#include <cassert>
+
+
+#ifndef NDEBUG
+class WorkerThread;
+namespace ompss_debug {
+	__attribute__((weak)) WorkerThread *getCurrentWorkerThread();
+}
+#endif
+
+
 class SpinLock {
 private:
 	SpinLock operator=(const SpinLock &) = delete;
@@ -17,14 +28,62 @@ private:
 	
 	SPINLOCK_INTERNAL_TYPE _lock;
 	
+#ifndef NDEBUG
+	WorkerThread *_owner;
+#endif
+	
+	inline void assertCurrentOwner();
+	inline void assertUnowned();
+	inline void setOwner();
+	inline void unsetOwner();
+	
 public:
 	inline SpinLock();
 	inline ~SpinLock();
 	inline void lock();
 	inline bool tryLock();
 	inline void unlock();
+	inline bool isLockedByThisThread();
 };
 
+
+#ifndef NDEBUG
+inline void SpinLock::assertCurrentOwner()
+{
+	assert(_owner == ompss_debug::getCurrentWorkerThread());
+}
+
+inline void SpinLock::assertUnowned()
+{
+	assert(_owner == nullptr);
+}
+
+inline void SpinLock::setOwner()
+{
+	_owner = ompss_debug::getCurrentWorkerThread();
+}
+
+inline void SpinLock::unsetOwner()
+{
+	_owner = nullptr;
+}
+#else
+inline void SpinLock::assertCurrentOwner()
+{
+}
+
+inline void SpinLock::assertUnowned()
+{
+}
+
+inline void SpinLock::setOwner()
+{
+}
+
+inline void SpinLock::unsetOwner()
+{
+}
+#endif
 
 #ifdef __APPLE__
 	#include "apple/SpinLockImplementation.hpp"

@@ -91,4 +91,20 @@ public:
 
 
 
+#ifndef NDEBUG
+namespace ompss_debug {
+	__attribute__((weak)) WorkerThread *getCurrentWorkerThread()
+	{
+		WorkerThread *current = WorkerThread::getCurrentWorkerThread();
+		
+		if (current == nullptr) {
+			return (WorkerThread *) ~0UL;
+		} else {
+			return current;
+		}
+	}
+}
+#endif
+
+
 #endif // WORKER_THREAD_HPP
