@@ -121,6 +121,11 @@ public:
 	//! \param in cpu the CPU that is running the current thread
 	static inline bool mustExit(CPU *cpu);
 	
+	//! \brief set up the information related to the currently running thread
+	//!
+	//! \param in currentThread a thread that is currently running and that has just begun its execution
+	static void threadStartup(WorkerThread *currentThread);
+	
 	//! \brief exit the currently running thread and wake up the next one assigned to the same CPU (so that it can do the same)
 	//!
 	//! \param in currentThread a thread that is currently running and that must exit

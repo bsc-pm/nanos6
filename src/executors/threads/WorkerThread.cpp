@@ -20,11 +20,7 @@ WorkerThread::WorkerThread(WorkerThread::CPU *cpu)
 
 void *WorkerThread::body()
 {
-	_currentWorkerThread = this;
-	
-	suspend();
-	
-	_cpu->_runningThread = this;
+	ThreadManager::threadStartup(this);
 	
 	while (!ThreadManager::mustExit(_cpu)) {
 		_task = Scheduler::schedule(_cpu);

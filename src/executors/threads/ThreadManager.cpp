@@ -39,7 +39,11 @@ void ThreadManager::shutdown()
 			if (cpu->_enabled) {
 				if (cpu->_runningThread == nullptr) {
 					WorkerThread *thread = getIdleThread(cpu);
-					resumeThread(thread, cpu);
+					
+					if (thread != nullptr) {
+						assert(thread->_cpu == cpu);
+						thread->resume();
+					}
 				} else {
 					// In principle there is a thread running that will either detect the shutdown signal or end up waking up another thread that will notice it
 				}
@@ -79,6 +83,7 @@ void ThreadManager::enableCPU(size_t systemCPUId)
 		cpu->_enabled = true;
 		
 		WorkerThread *thread = getNewOrIdleThread(cpu);
+		assert(thread->_cpu == cpu);
 		thread->resume();
 	}
 }
@@ -94,6 +99,21 @@ void ThreadManager::disableCPU(size_t systemCPUId)
 }
 
 
+void ThreadManager::threadStartup(WorkerThread *currentThread)
+{
+	assert(currentThread != nullptr);
+	
+	CPU *cpu = currentThread->_cpu;
+	
+	assert(cpu != nullptr);
+	currentThread->_currentWorkerThread = currentThread;
+	currentThread->suspend();
+	
+	std::lock_guard<SpinLock> guard(cpu->_statusLock);
+	cpu->_runningThread = currentThread;
+}
+
+
 void ThreadManager::exitAndWakeUpNext(WorkerThread *currentThread)
 {
 	CPU *cpu = currentThread->_cpu;
@@ -101,13 +121,16 @@ void ThreadManager::exitAndWakeUpNext(WorkerThread *currentThread)
 	assert(cpu->_runningThread == currentThread);
 	assert(WorkerThread::getCurrentWorkerThread() == currentThread);
 	
-	// Find next to wake
-	WorkerThread *next = getIdleThread(cpu);
-	
-	// Resume it, or set the CPU to idle
 	{
 		std::lock_guard<SpinLock> guard(cpu->_statusLock);
-		resumeThread(next, cpu);
+		
+		// Find next to wake
+		WorkerThread *next = getIdleThread(cpu);
+		
+		if (next != nullptr) {
+			assert(next->_cpu == cpu);
+			next->resume();
+		}
 	}
 	
 	// Exit the current thread
