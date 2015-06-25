@@ -17,7 +17,7 @@ class WorkerThread;
 namespace threaded_executor_internals {
 
 	struct CPU: public CPUPlace {
-		//! \brief this lock affects _enabled, _runningThread
+		//! \brief this lock affects _enabled, _runningThread, _idlePosition, _idleThreads and _readyThreads
 		SpinLock _statusLock;
 		
 		bool _enabled;
@@ -26,12 +26,8 @@ namespace threaded_executor_internals {
 		//! \brief the thread that is currently running in this CPU or nullptr
 		WorkerThread *_runningThread;
 		
-		SpinLock _idleThreadsLock;
-		
 		//! \brief threads currently assigned to this CPU that are currently suspended due to idleness
 		std::deque<WorkerThread *> _idleThreads;
-		
-		SpinLock _readyThreadsLock;
 		
 		//! \brief threads assigned to this CPU that have been blocked, but that are now ready to be resumed 
 		std::deque<WorkerThread *> _readyThreads;

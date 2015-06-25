@@ -35,6 +35,7 @@ class ThreadManager {
 	static std::deque<CPU *> _idleCPUs;
 	
 	//! \brief retrieve an idle WorkerThread that is pinned to a given CPU
+	//! NOTE: This method should be called with the CPU status lock held
 	//!
 	//! \param inout cpu the CPU on which to get an idle thread
 	//!
@@ -42,6 +43,7 @@ class ThreadManager {
 	static inline WorkerThread *getIdleThread(CPU *cpu);
 	
 	//! \brief create or recycle a WorkerThread that is pinned to a given CPU
+	//! NOTE: This method should be called with the CPU status lock held
 	//!
 	//! \param inout cpu the CPU on which to get a new or idle thread
 	//!
@@ -49,6 +51,7 @@ class ThreadManager {
 	static inline WorkerThread *getNewOrIdleThread(CPU *cpu);
 	
 	//! \brief get a ready WorkerThread that is pinned to a given CPU
+	//! NOTE: This method should be called with the CPU status lock held
 	//!
 	//! \param inout cpu the CPU on which to get a ready thread
 	//!
@@ -133,8 +136,8 @@ public:
 inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu)
 {
 	assert(cpu != nullptr);
+	assert(cpu->_statusLock.isLockedByThisThread());
 	
-	std::lock_guard<SpinLock> guard(cpu->_idleThreadsLock);
 	if (!cpu->_idleThreads.empty()) {
 		WorkerThread *idleThread = cpu->_idleThreads.front();
 		cpu->_idleThreads.pop_front();
@@ -149,6 +152,7 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu)
 inline WorkerThread *ThreadManager::getNewOrIdleThread(CPU *cpu)
 {
 	assert(cpu != nullptr);
+	assert(cpu->_statusLock.isLockedByThisThread());
 	
 	WorkerThread *idleThread = getIdleThread(cpu);
 	if (idleThread != nullptr) {
@@ -163,10 +167,10 @@ inline WorkerThread *ThreadManager::getNewOrIdleThread(CPU *cpu)
 inline WorkerThread *ThreadManager::getReadyThread(CPU *cpu)
 {
 	assert(cpu != nullptr);
+	assert(cpu->_statusLock.isLockedByThisThread());
 	WorkerThread *readyThread = nullptr;
 	
 	{
-		std::lock_guard<SpinLock> guard(cpu->_readyThreadsLock);
 		if (!cpu->_readyThreads.empty()) {
 			readyThread = cpu->_readyThreads.front();
 			cpu->_readyThreads.pop_front();
@@ -193,6 +197,7 @@ inline void ThreadManager::resumeThread(WorkerThread *thread, CPU *cpu)
 inline void ThreadManager::linkIdleCPU (CPU *cpu)
 {
 	assert(cpu != nullptr);
+	assert(cpu->_statusLock.isLockedByThisThread());
 	
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	_idleCPUs.push_back(cpu);
@@ -201,6 +206,7 @@ inline void ThreadManager::linkIdleCPU (CPU *cpu)
 inline void ThreadManager::unlinkIdleCPU (ThreadManager::CPU *cpu)
 {
 	assert(cpu != nullptr);
+	assert(cpu->_statusLock.isLockedByThisThread());
 	
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	std::remove(_idleCPUs.begin(), _idleCPUs.end(), cpu);
@@ -229,10 +235,10 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 	assert(currentThread->_cpu == cpu);
 	assert(currentThread == WorkerThread::getCurrentWorkerThread());
 	assert(cpu->_runningThread == currentThread);
+	assert(cpu->_statusLock.isLockedByThisThread());
 	
 	// Resume the replacement thread (if any)
 	{
-		std::lock_guard<SpinLock> guard(cpu->_statusLock);
 		resumeThread(replacementThread, cpu); // Also updates the status in case that replacementThread is nullptr
 	}
 	
@@ -271,21 +277,22 @@ inline void ThreadManager::yieldIdler(WorkerThread *currentThread)
 	assert(currentThread == WorkerThread::getCurrentWorkerThread());
 	
 	CPU *cpu = currentThread->_cpu;
-	
 	assert(cpu != nullptr);
+	
+	cpu->_statusLock.lock();
+	
 	assert(cpu->_runningThread == currentThread);
 	
 	// Look up a ready thread (previosly blocked)
 	WorkerThread *readyThread = getReadyThread(cpu);
 	
 	// Return the current thread to the idle list
-	{
-		std::lock_guard<SpinLock> guard(cpu->_idleThreadsLock);
-		cpu->_idleThreads.push_front(currentThread);
-	}
+	cpu->_idleThreads.push_front(currentThread);
 	
 	// Suspend it and replace it by the ready thread (if any)
 	switchThreads(currentThread, readyThread, cpu);
+	
+	cpu->_statusLock.unlock();
 }
 
 
@@ -296,6 +303,9 @@ inline void ThreadManager::suspendForBlocking(WorkerThread *currentThread)
 	
 	CPU *cpu = currentThread->_cpu;
 	assert(cpu != nullptr);
+	
+	cpu->_statusLock.lock();
+	
 	assert(cpu->_runningThread == currentThread);
 	
 	// FIXME: Handle !cpu->_enabled
@@ -312,6 +322,8 @@ inline void ThreadManager::suspendForBlocking(WorkerThread *currentThread)
 	
 	// Suspend the current thread and replace it by ready or idle thread
 	switchThreads(currentThread, replacementThread, cpu);
+	
+	cpu->_statusLock.unlock();
 }
 
 
@@ -325,31 +337,46 @@ inline void ThreadManager::resumeAnyIdle(__attribute__((unused)) HardwarePlace *
 		return;
 	}
 	
+	idleCPU->_statusLock.lock();
+	
+	assert(idleCPU->_runningThread == nullptr);
+	assert(WorkerThread::getCurrentWorkerThread() != nullptr);
+	assert(WorkerThread::getCurrentWorkerThread()->_cpu != nullptr);
+	assert(WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU);
+	
 	// Get an idle thread for the CPU
 	WorkerThread *idleThread = getNewOrIdleThread(idleCPU);
 	assert(idleThread != nullptr);
 	assert(idleThread->_cpu == idleCPU);
+	assert(idleThread != WorkerThread::getCurrentWorkerThread());
 	
 	// Resume it
-	std::lock_guard<SpinLock> guard(idleCPU->_statusLock);
 	resumeThread(idleThread, idleCPU);
+	
+	idleCPU->_statusLock.unlock();
 }
 
 
 inline void ThreadManager::threadBecomesReady(WorkerThread *readyThread)
 {
+	assert(readyThread != nullptr);
 	CPU *cpu = readyThread->_cpu;
 	assert(cpu != nullptr);
+	
+	// Assertions to avoid later resuming a thread in the current CPU (because the state was wrong)
+	assert(WorkerThread::getCurrentWorkerThread() != nullptr);
+	assert(WorkerThread::getCurrentWorkerThread()->_cpu != nullptr);
+	assert(WorkerThread::getCurrentWorkerThread()->_cpu->_runningThread != nullptr);
+	assert(WorkerThread::getCurrentWorkerThread()->_cpu->_runningThread == WorkerThread::getCurrentWorkerThread());
 	
 	cpu->_statusLock.lock();
 	if (cpu->_runningThread == nullptr) {
 		resumeThread(readyThread, cpu);
-		cpu->_statusLock.unlock();
 	} else {
-		cpu->_statusLock.unlock();
-		std::lock_guard<SpinLock> guard(cpu->_readyThreadsLock);
 		cpu->_readyThreads.push_back(readyThread);
 	}
+	
+	cpu->_statusLock.unlock();
 }
 
 

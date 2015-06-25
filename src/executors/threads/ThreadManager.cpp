@@ -30,12 +30,9 @@ void ThreadManager::shutdown()
 {
 	for (CPU *cpu: _cpus) {
 		if (cpu != nullptr) {
-			{
-				std::lock_guard<SpinLock> guard(cpu->_readyThreadsLock);
-				assert(cpu->_readyThreads.empty());
-			}
-			
 			std::lock_guard<SpinLock> guard(cpu->_statusLock);
+			
+			assert(cpu->_readyThreads.empty());
 			
 			cpu->_mustExit = true;
 			
@@ -48,7 +45,6 @@ void ThreadManager::shutdown()
 				}
 			} else {
 				// Disabled CPU
-				std::lock_guard<SpinLock> guard2(cpu->_idleThreadsLock);
 				for (auto idleThread: cpu->_idleThreads) {
 					int rc = pthread_cancel(idleThread->_pthread);
 					assert(rc == 0);
@@ -98,7 +94,7 @@ void ThreadManager::disableCPU(size_t systemCPUId)
 }
 
 
-void ThreadManager::exitAndWakeUpNext (WorkerThread *currentThread)
+void ThreadManager::exitAndWakeUpNext(WorkerThread *currentThread)
 {
 	CPU *cpu = currentThread->_cpu;
 	assert(cpu != nullptr);
