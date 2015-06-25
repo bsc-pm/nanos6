@@ -66,13 +66,6 @@ class ThreadManager {
 	//! \param inout cpu the CPU that is running the currentThread and that must run the replacementThread
 	static inline void switchThreads(WorkerThread *currentThread, WorkerThread *replacementThread, CPU *cpu);
 	
-	//! \brief resumes a thread on a CPU taking care of updating the CPU status or sets the CPU to idle (if a null thread)
-	//! NOTE: This method should be called with the CPU status lock held
-	//!
-	//! \param in thread the thread to be resumed or nullptr to leave the CPU idle
-	//! \param in cpu the affected CPU 
-	static inline void resumeThread(WorkerThread *thread, CPU *cpu);
-	
 	static inline void linkIdleCPU(CPU *cpu);
 	static inline void unlinkIdleCPU(CPU *cpu);
 	static inline CPU *getIdleCPU();
@@ -175,27 +168,13 @@ inline WorkerThread *ThreadManager::getReadyThread(CPU *cpu)
 	assert(cpu->_statusLock.isLockedByThisThread());
 	WorkerThread *readyThread = nullptr;
 	
-	{
-		if (!cpu->_readyThreads.empty()) {
-			readyThread = cpu->_readyThreads.front();
-			cpu->_readyThreads.pop_front();
-		}
+	if (!cpu->_readyThreads.empty()) {
+		readyThread = cpu->_readyThreads.front();
+		cpu->_readyThreads.pop_front();
+		assert(readyThread->_cpu == cpu);
 	}
 	
 	return readyThread;
-}
-
-
-inline void ThreadManager::resumeThread(WorkerThread *thread, CPU *cpu)
-{
-	assert(cpu != nullptr);
-	cpu->_runningThread = thread; // NOTE: this will set it to null if (thread == nullptr);
-	if (thread != nullptr) {
-		assert(thread->_cpu == cpu); // NOTE: until we start migrating threads
-		thread->resume();
-	} else {
-		linkIdleCPU(cpu);
-	}
 }
 
 
@@ -242,35 +221,42 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 	assert(cpu->_runningThread == currentThread);
 	assert(cpu->_statusLock.isLockedByThisThread());
 	
-	// Resume the replacement thread (if any)
-	{
-		resumeThread(replacementThread, cpu); // Also updates the status in case that replacementThread is nullptr
+	if (replacementThread != nullptr) {
+		if (currentThread->willResumeImmediately()) {
+			currentThread->abortResumption();
+			cpu->_readyThreads.push_back(currentThread);
+		}
+		
+		assert(replacementThread->_cpu == cpu);
+		replacementThread->resume();
+		
+		cpu->_statusLock.unlock();
+		// NOTE: cpu->_runningThread may be incorrect until the replacement thread has actually set if correctly, but it will not be nullptr during that period
+		
+	} else {
+		// No replacement thread
+		if (currentThread->willResumeImmediately()) {
+			currentThread->abortResumption();
+			cpu->_statusLock.unlock();
+			return;
+		} else {
+			cpu->_runningThread = nullptr;
+			linkIdleCPU(cpu);
+			
+			cpu->_statusLock.unlock();
+		}
 	}
 	
-	// Suspend the thread
-	bool presignaled = currentThread->suspend();
-	
+	currentThread->suspend();
 	// After resuming, the thread continues here
 	
-	// If it had been presignaled but we are waking up another, place it in the ready list and suspend it again
-	if (presignaled && (replacementThread != nullptr)) {
-		threadBecomesReady(currentThread);
-		currentThread->suspend();
-		// If presignaled a second time, either there is a bug, or
-		// the thread was woken up after adding it to the ready queue but before suspending it
-	}
+	cpu->_statusLock.lock();
 	
 	// Get the CPU again, since the thread may have migrated while blocked
 	CPU *cpuAfter = currentThread->_cpu;
 	assert(cpuAfter != nullptr);
 	
-	if (presignaled && (replacementThread == nullptr)) {
-		// Fix the cpu to thread assignment
-		cpuAfter->_runningThread = currentThread;
-	}
-	
-	// NOTE: Right before resuming a thread we always set it up as the thread running on the CPU
-	assert(cpuAfter->_runningThread == currentThread);
+	cpuAfter->_runningThread = currentThread;
 }
 
 
@@ -356,7 +342,7 @@ inline void ThreadManager::resumeAnyIdle(__attribute__((unused)) HardwarePlace *
 	assert(idleThread != WorkerThread::getCurrentWorkerThread());
 	
 	// Resume it
-	resumeThread(idleThread, idleCPU);
+	idleThread->resume();
 	
 	idleCPU->_statusLock.unlock();
 }
@@ -375,8 +361,21 @@ inline void ThreadManager::threadBecomesReady(WorkerThread *readyThread)
 	assert(WorkerThread::getCurrentWorkerThread()->_cpu->_runningThread == WorkerThread::getCurrentWorkerThread());
 	
 	cpu->_statusLock.lock();
+	
+	bool mustResume = false;
 	if (cpu->_runningThread == nullptr) {
-		resumeThread(readyThread, cpu);
+		std::lock_guard<SpinLock> guard(_idleCPUsLock);
+		std::deque<CPU *>::iterator position = std::find(_idleCPUs.begin(), _idleCPUs.end(), cpu);
+		if (position != _idleCPUs.end()) {
+			mustResume = true;
+			_idleCPUs.erase(position);
+		} else {
+			// A thread is being woken up
+		}
+	}
+	
+	if (mustResume) {
+		readyThread->resume();
 	} else {
 		cpu->_readyThreads.push_back(readyThread);
 	}

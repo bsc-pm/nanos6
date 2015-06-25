@@ -47,6 +47,18 @@ class WorkerThread {
 		_suspensionConditionVariable.signal();
 	}
 	
+	//! \brief check if the thread will resume immediately when calling to suspend
+	inline bool willResumeImmediately()
+	{
+		return _suspensionConditionVariable.isPresignaled();
+	}
+	
+	//! \brief clear the pending resumption mark
+	inline void abortResumption()
+	{
+		_suspensionConditionVariable.clearPresignal();
+	}
+	
 	inline void exit()
 	{
 		pthread_exit(nullptr);
