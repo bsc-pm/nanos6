@@ -60,6 +60,17 @@ public:
 		_condVar.notify_one();
 	}
 	
+	bool isPresignaled()
+	{
+		return _signaled;
+	}
+	
+	void clearPresignal()
+	{
+		assert(_signaled);
+		_signaled = false;
+	}
+	
 };
 
 
