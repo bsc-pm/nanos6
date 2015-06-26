@@ -17,7 +17,7 @@ class WorkerThread;
 namespace threaded_executor_internals {
 
 	struct CPU: public CPUPlace {
-		//! \brief this lock affects _enabled, _runningThread, _idlePosition, _idleThreads and _readyThreads
+		//! \brief this lock affects _enabled, _runningThread, _idleThreads and _readyThreads
 		SpinLock _statusLock;
 		
 		bool _enabled;

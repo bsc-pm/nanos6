@@ -51,7 +51,7 @@ AC_DEFUN([SSS_PREPARE_COMPILER_FLAGS],
 		
 		user_CXXFLAGS="${CXXFLAGS}"
 		# Do not let autoconf set up its own set of configure flags
-		${CXXFLAGS=""}
+		CXXFLAGS=" "
 	]
 )
 
