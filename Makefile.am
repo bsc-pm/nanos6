@@ -68,7 +68,7 @@ disabled_tests =
 
 
 shutdown_common_sources = \
-	tests/infrastructure/ProgramLifecycle.cc
+	tests/infrastructure/ProgramLifecycle.cpp
 
 libcheck_shutdown_la_CPPFLAGS = -DNDEBUG
 libcheck_shutdown_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
@@ -84,32 +84,32 @@ test_common_debug_libs = libsimpless-debug.la libcheck-shutdown-debug.la
 test_common_libs = libsimpless.la libcheck-shutdown.la
 test_common_ldflags = -no-install
 
-noop_debug_test_SOURCES = tests/apiless/noop/noop.cc
+noop_debug_test_SOURCES = tests/apiless/noop/noop.cpp
 noop_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 noop_debug_test_LDADD = $(test_common_debug_libs)
 noop_debug_test_LDFLAGS = $(test_common_ldflags)
 
-noop_test_SOURCES = tests/apiless/noop/noop.cc
+noop_test_SOURCES = tests/apiless/noop/noop.cpp
 noop_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 noop_test_LDADD = $(test_common_libs)
 noop_test_LDFLAGS = $(test_common_ldflags)
 
-single_nest_debug_test_SOURCES = tests/apiless/single-nest/single-nest.cc
+single_nest_debug_test_SOURCES = tests/apiless/single-nest/single-nest.cpp
 single_nest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 single_nest_debug_test_LDADD = $(test_common_debug_libs)
 single_nest_debug_test_LDFLAGS = $(test_common_ldflags)
 
-single_nest_test_SOURCES = tests/apiless/single-nest/single-nest.cc
+single_nest_test_SOURCES = tests/apiless/single-nest/single-nest.cpp
 single_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 single_nest_test_LDADD = $(test_common_libs)
 single_nest_test_LDFLAGS = $(test_common_ldflags)
 
-fibonacci_debug_test_SOURCES = tests/apiless/fibonacci/fibonacci.cc
+fibonacci_debug_test_SOURCES = tests/apiless/fibonacci/fibonacci.cpp
 fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_debug_test_LDADD = $(test_common_debug_libs)
 fibonacci_debug_test_LDFLAGS = $(test_common_ldflags)
 
-fibonacci_test_SOURCES = tests/apiless/fibonacci/fibonacci.cc
+fibonacci_test_SOURCES = tests/apiless/fibonacci/fibonacci.cpp
 fibonacci_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_test_LDADD = $(test_common_libs)
 fibonacci_test_LDFLAGS = $(test_common_ldflags)
