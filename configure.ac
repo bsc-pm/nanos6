@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([simpless], [1.0], [pm-tools-users@bsc.es])
+AC_INIT([nanos6], [1.0], [pm-tools-users@bsc.es])
 AC_CONFIG_SRCDIR([src/scheduling/Scheduler.hpp])
 AC_CONFIG_AUX_DIR([config-aux])
 AC_CONFIG_MACRO_DIR([m4])
