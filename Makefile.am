@@ -82,30 +82,37 @@ libcheck_shutdown_debug_la_LDFLAGS = -module -rpath /nowhere -ldl
 
 test_common_debug_libs = libsimpless-debug.la libcheck-shutdown-debug.la
 test_common_libs = libsimpless.la libcheck-shutdown.la
+test_common_ldflags = -no-install
 
 noop_debug_test_SOURCES = tests/apiless/noop/noop.cc
 noop_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 noop_debug_test_LDADD = $(test_common_debug_libs)
+noop_debug_test_LDFLAGS = $(test_common_ldflags)
 
 noop_test_SOURCES = tests/apiless/noop/noop.cc
 noop_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 noop_test_LDADD = $(test_common_libs)
+noop_test_LDFLAGS = $(test_common_ldflags)
 
 single_nest_debug_test_SOURCES = tests/apiless/single-nest/single-nest.cc
 single_nest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 single_nest_debug_test_LDADD = $(test_common_debug_libs)
+single_nest_debug_test_LDFLAGS = $(test_common_ldflags)
 
 single_nest_test_SOURCES = tests/apiless/single-nest/single-nest.cc
 single_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 single_nest_test_LDADD = $(test_common_libs)
+single_nest_test_LDFLAGS = $(test_common_ldflags)
 
 fibonacci_debug_test_SOURCES = tests/apiless/fibonacci/fibonacci.cc
 fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_debug_test_LDADD = $(test_common_debug_libs)
+fibonacci_debug_test_LDFLAGS = $(test_common_ldflags)
 
 fibonacci_test_SOURCES = tests/apiless/fibonacci/fibonacci.cc
 fibonacci_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_test_LDADD = $(test_common_libs)
+fibonacci_test_LDFLAGS = $(test_common_ldflags)
 
 
 check_PROGRAMS = $(enabled_tests) $(disabled_tests)
@@ -118,4 +125,5 @@ TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/tests/infrastru
 
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool
-                  
+
+

@@ -6,7 +6,13 @@ AC_INIT([simpless], [1.0], [pm-tools-users@bsc.es])
 AC_CONFIG_SRCDIR([src/scheduling/Scheduler.hpp])
 AC_CONFIG_AUX_DIR([config-aux])
 AC_CONFIG_MACRO_DIR([m4])
+
+AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
+
 AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall])
+
+AC_CHECK_SPECIAL_HOST_ARCH
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -47,3 +53,4 @@ SSS_FIXUP_COMPILER_FLAGS
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
+
