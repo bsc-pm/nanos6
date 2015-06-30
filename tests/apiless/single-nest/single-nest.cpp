@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <sstream>
 
+#include <string.h>
 #include <unistd.h>
 
 #include "system/ompss/AddTask.hpp"
@@ -47,7 +48,7 @@ public:
 			int rc = nanosleep(&ts, nullptr);
 			
 			if (rc != 0) {
-				/* Test1 */ tap.failure(std::string(sys_errlist[errno]));
+				/* Test1 */ tap.failure(std::string(strerror(errno)));
 				/* Test1 */ tap.bailOut();
 				return;
 			}
