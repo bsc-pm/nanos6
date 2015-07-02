@@ -71,10 +71,16 @@ int main(int argc, char **argv) {
 	
 	unsigned long result;
 	
+	Timer timer;
+	
 	FibonacciTask<unsigned long> *fib = new FibonacciTask<unsigned long>(N, result);
 	ompss::addTask(fib);
-	
 	ompss::taskWait();
+	
+	timer.stop();
+	
+	tap.emitDiagnostic("Elapsed time: ", (long int) timer, " us");
+	
 	tap.evaluate(result == TemplatedFibonacci<N>::_value, "Check if the result is correct");
 	
 	shutdownTimer.start();
