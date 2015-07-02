@@ -41,6 +41,8 @@ common_sources = \
 	src/tasks/Task.hpp
 
 
+noinst_HEADERS = \
+	tests/infrastructure/ProgramLifecycle.hpp \
 	tests/infrastructure/TestAnyProtocolProducer.hpp \
 	tests/infrastructure/Timer.hpp
 

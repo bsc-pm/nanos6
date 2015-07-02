@@ -2,7 +2,9 @@
 #include <cstdlib>
 #include <dlfcn.h>
 
+#include "ProgramLifecycle.hpp"
 #include "TestAnyProtocolProducer.hpp"
+#include "Timer.hpp"
 
 
 //! \brief Tests should define this function that will be called after the runtime has shut down
@@ -10,6 +12,8 @@ extern void shutdownTests();
 
 
 TestAnyProtocolProducer tap;
+Timer initializationTimer;
+Timer shutdownTimer;
 
 
 int (*next_main) (int, char **, char **);
@@ -17,7 +21,21 @@ int (*next_main) (int, char **, char **);
 
 int test_main(int argc, char **argv, char **envp)
 {
+	initializationTimer.start();
+	
 	int rc = next_main(argc, argv, envp);
+	
+	if (shutdownTimer.hasBeenStartedAtLeastOnce()) {
+		shutdownTimer.stop();
+	}
+	
+	if (initializationTimer.hasBeenStoppedAtLeastOnce()) {
+		tap.emitDiagnostic("Startup time: ", (long int) initializationTimer, " us");
+	}
+	if (shutdownTimer.hasBeenStoppedAtLeastOnce()) {
+		tap.emitDiagnostic("Shutdown time: ", (long int) shutdownTimer, " us");
+	}
+	
 	shutdownTests();
 	return rc;
 }
