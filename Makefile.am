@@ -41,8 +41,11 @@ common_sources = \
 	src/tasks/Task.hpp
 
 
-noinst_HEADERS = tests/infrastructure/TestAnyProtocolProducer.hpp
-EXTRA_DIST = tests/infrastructure/tap-driver.sh
+	tests/infrastructure/TestAnyProtocolProducer.hpp \
+	tests/infrastructure/Timer.hpp
+
+EXTRA_DIST = \
+	tests/infrastructure/tap-driver.sh
 
 
 libsimpless_la_CPPFLAGS = -DNDEBUG
