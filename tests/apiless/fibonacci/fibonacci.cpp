@@ -1,6 +1,8 @@
 #include "system/ompss/AddTask.hpp"
 #include "system/ompss/TaskWait.hpp"
+#include "tests/infrastructure/ProgramLifecycle.hpp"
 #include "tests/infrastructure/TestAnyProtocolProducer.hpp"
+#include "tests/infrastructure/Timer.hpp"
 
 
 #define N 5
@@ -62,6 +64,8 @@ public:
 
 
 int main(int argc, char **argv) {
+	initializationTimer.stop();
+	
 	tap.registerNewTests(1);
 	tap.begin();
 	
@@ -72,7 +76,8 @@ int main(int argc, char **argv) {
 	
 	ompss::taskWait();
 	tap.evaluate(result == TemplatedFibonacci<N>::_value, "Check if the result is correct");
-	tap.end();
+	
+	shutdownTimer.start();
 	
 	return 0;
 }

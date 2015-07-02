@@ -1,4 +1,6 @@
+#include "tests/infrastructure/ProgramLifecycle.hpp"
 #include "tests/infrastructure/TestAnyProtocolProducer.hpp"
+#include "tests/infrastructure/Timer.hpp"
 
 
 // This is shared with tests/infrastructure/ProgramLifecycle.cc
@@ -15,8 +17,12 @@ void shutdownTests()
 
 int main(int argc, char **argv)
 {
+	initializationTimer.stop();
+	
 	tap.registerNewTests(1); // Only the shutdown test
 	tap.begin();
+	
+	shutdownTimer.start();
 	
 	return 0;
 }

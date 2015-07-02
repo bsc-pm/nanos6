@@ -7,7 +7,9 @@
 #include <unistd.h>
 
 #include "system/ompss/AddTask.hpp"
+#include "tests/infrastructure/ProgramLifecycle.hpp"
 #include "tests/infrastructure/TestAnyProtocolProducer.hpp"
+#include "tests/infrastructure/Timer.hpp"
 
 
 extern TestAnyProtocolProducer tap;
@@ -63,6 +65,8 @@ public:
 
 int main(int argc, char **argv)
 {
+	initializationTimer.stop();
+	
 	tap.registerNewTests(2);
 	tap.begin();
 	
@@ -72,6 +76,8 @@ int main(int argc, char **argv)
 	ompss::addTask(theOuterTask);
 	
 	theOuterTask->_mainHasFinished = true; // Well, almost. It has continued after adding the task
+	
+	shutdownTimer.start();
 	
 	return 0;
 }
