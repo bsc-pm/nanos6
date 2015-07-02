@@ -35,6 +35,7 @@ common_sources = \
 	src/system/MainTask.cpp \
 	src/system/MainTask.hpp \
 	src/system/ompss/AddTask.cpp \
+	src/system/ompss/AddTask.hpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/TaskWait.hpp \
 	src/tasks/Task.hpp
