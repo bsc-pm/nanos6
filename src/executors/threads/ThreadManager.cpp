@@ -96,6 +96,8 @@ void ThreadManager::disableCPU(size_t systemCPUId)
 	std::lock_guard<SpinLock> guard(cpu->_statusLock);
 	assert(cpu->_enabled);
 	cpu->_enabled = false;
+	
+	unlinkIdleCPU(cpu);
 }
 
 

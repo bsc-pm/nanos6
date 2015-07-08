@@ -39,7 +39,7 @@ class ThreadManager {
 	//!
 	//! \param inout cpu the CPU on which to get an idle thread
 	//!
-	//! \returns an idle WorkerThread pinned to the requested CPU or nullptr
+	//! \returns an idle WorkerThread pinned to the requested CPU or nullptr (if none left, or the CPU is disabled)
 	static inline WorkerThread *getIdleThread(CPU *cpu);
 	
 	//! \brief create or recycle a WorkerThread that is pinned to a given CPU
@@ -47,7 +47,7 @@ class ThreadManager {
 	//!
 	//! \param inout cpu the CPU on which to get a new or idle thread
 	//!
-	//! \returns a WorkerThread pinned to the requested CPU
+	//! \returns a WorkerThread pinned to the requested CPU or nullptr if the CPU is disabled
 	static inline WorkerThread *getNewOrIdleThread(CPU *cpu);
 	
 	//! \brief get a ready WorkerThread that is pinned to a given CPU
@@ -136,7 +136,7 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu)
 	assert(cpu != nullptr);
 	assert(cpu->_statusLock.isLockedByThisThread());
 	
-	if (!cpu->_idleThreads.empty()) {
+	if (cpu->_enabled && !cpu->_idleThreads.empty()) {
 		WorkerThread *idleThread = cpu->_idleThreads.front();
 		cpu->_idleThreads.pop_front();
 		
@@ -152,14 +152,16 @@ inline WorkerThread *ThreadManager::getNewOrIdleThread(CPU *cpu)
 	assert(cpu != nullptr);
 	assert(cpu->_statusLock.isLockedByThisThread());
 	
+	if (!cpu->_enabled) {
+		return nullptr;
+	}
+	
 	WorkerThread *idleThread = getIdleThread(cpu);
 	if (idleThread != nullptr) {
 		return idleThread;
 	}
 	
-	WorkerThread *newThread = new WorkerThread(cpu);
-	
-	return newThread;
+	return new WorkerThread(cpu);
 }
 
 inline WorkerThread *ThreadManager::getReadyThread(CPU *cpu)
@@ -183,8 +185,12 @@ inline void ThreadManager::linkIdleCPU (CPU *cpu)
 	assert(cpu != nullptr);
 	assert(cpu->_statusLock.isLockedByThisThread());
 	
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	_idleCPUs.push_back(cpu);
+	if (cpu->_enabled) {
+		std::lock_guard<SpinLock> guard(_idleCPUsLock);
+		_idleCPUs.push_back(cpu);
+	} else {
+		// Not elligible to run anything
+	}
 }
 
 inline void ThreadManager::unlinkIdleCPU (ThreadManager::CPU *cpu)
@@ -322,29 +328,40 @@ inline void ThreadManager::resumeAnyIdle(__attribute__((unused)) HardwarePlace *
 {
 	// FIXME: for now we are ignoring the preferredHardwarePlace
 	
-	CPU *idleCPU = getIdleCPU();
-	if (idleCPU == nullptr) {
-		// No idle CPUs found
-		return;
+	bool finished = false;
+	
+	// This loop is necessary to remove disabled CPUs from the list of idle CPUs
+	while (!finished) {
+		CPU *idleCPU = getIdleCPU();
+		if (idleCPU == nullptr) {
+			// No idle CPUs found
+			return;
+		}
+		
+		idleCPU->_statusLock.lock();
+		
+		assert(idleCPU->_runningThread == nullptr);
+		assert(WorkerThread::getCurrentWorkerThread() != nullptr);
+		assert(WorkerThread::getCurrentWorkerThread()->_cpu != nullptr);
+		assert(WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU);
+		
+		if (idleCPU->_enabled) {
+			// Get an idle thread for the CPU
+			WorkerThread *idleThread = getNewOrIdleThread(idleCPU);
+			assert(idleThread != nullptr);
+			assert(idleThread->_cpu == idleCPU);
+			assert(idleThread != WorkerThread::getCurrentWorkerThread());
+			
+			// Resume it
+			idleThread->resume();
+			
+			finished = true;
+		} else {
+			// The CPU has been disabled, so we have removed it from the list of idle CPUs and we need to try with the next idle CPU
+		}
+		
+		idleCPU->_statusLock.unlock();
 	}
-	
-	idleCPU->_statusLock.lock();
-	
-	assert(idleCPU->_runningThread == nullptr);
-	assert(WorkerThread::getCurrentWorkerThread() != nullptr);
-	assert(WorkerThread::getCurrentWorkerThread()->_cpu != nullptr);
-	assert(WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU);
-	
-	// Get an idle thread for the CPU
-	WorkerThread *idleThread = getNewOrIdleThread(idleCPU);
-	assert(idleThread != nullptr);
-	assert(idleThread->_cpu == idleCPU);
-	assert(idleThread != WorkerThread::getCurrentWorkerThread());
-	
-	// Resume it
-	idleThread->resume();
-	
-	idleCPU->_statusLock.unlock();
 }
 
 
