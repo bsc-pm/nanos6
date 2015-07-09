@@ -1,3 +1,4 @@
+#include "CPUActivation.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -22,7 +23,9 @@ void *WorkerThread::body()
 {
 	ThreadManager::threadStartup(this);
 	
-	while (!ThreadManager::mustExit(_cpu)) {
+	while (!ThreadManager::mustExit()) {
+		CPUActivation::activationCheck(this);
+		
 		_task = Scheduler::schedule(_cpu);
 		
 		if (_task != nullptr) {

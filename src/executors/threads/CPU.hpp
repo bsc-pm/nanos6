@@ -17,11 +17,18 @@ class WorkerThread;
 namespace threaded_executor_internals {
 
 	struct CPU: public CPUPlace {
-		//! \brief this lock affects _enabled, _runningThread, _idleThreads and _readyThreads
+		typedef enum {
+			starting_status=0,
+			enabled_status,
+			enabling_status,
+			disabling_status,
+			disabled_status
+		} activation_status_t;
+		
+		//! \brief this lock affects _runningThread, _idleThreads and _readyThreads
 		SpinLock _statusLock;
 		
-		bool _enabled;
-		bool _mustExit;
+		std::atomic<activation_status_t> _activationStatus;
 		
 		//! \brief the thread that is currently running in this CPU or nullptr
 		WorkerThread *_runningThread;

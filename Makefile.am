@@ -13,6 +13,7 @@ lib_age = 0
 common_sources = \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
+	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/WorkerThread.cpp \

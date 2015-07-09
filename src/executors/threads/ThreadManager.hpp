@@ -23,6 +23,9 @@
 class ThreadManager {
 	typedef threaded_executor_internals::CPU CPU;
 	
+	//! \brief indicates if the runtime is shutting down
+	static std::atomic<bool> _mustExit;
+	
 	//! \brief CPU mask of the process
 	static cpu_set_t _processCPUMask;
 	
@@ -77,6 +80,9 @@ public:
 	static void shutdown();
 	
 	
+	//! \brief get or create the CPU object assigned to a given numerical system CPU identifier
+	static inline CPU *getCPU(size_t systemCPUId);
+	
 	//! \brief suspend the currently running thread due to idleness and potentially switch to another
 	//! Threads suspended with this call must only be woken up through a call to resumeAnyIdle
 	//!
@@ -91,6 +97,12 @@ public:
 	//! \param in currentThread a thread that is currently running and that must be stopped
 	static inline void suspendForBlocking(WorkerThread *currentThread);
 	
+	//! \brief resume an idle thread on a given CPU
+	//!
+	//! \param in idleCPU the CPU on which to resume an idle thread
+	//! \param in inInitialization true if it should not enforce assertions that are not valid during initialization
+	static inline void resumeIdle(CPU *idleCPU, bool inInitialization=false);
+	
 	//! \brief attempt to activate an idle CPU
 	//!
 	//! \param in preferredHardwarePlace a hint on a desirable area of the hardware
@@ -102,17 +114,8 @@ public:
 	static inline void threadBecomesReady(WorkerThread *readyThread);
 	
 	
-	//! \brief set a CPU online
-	static void enableCPU(size_t systemCPUId);
-	
-	//! \brief set a CPU offline
-	static void disableCPU(size_t systemCPUId);
-	
-	
 	//! \brief returns true if the thread must shut down
-	//!
-	//! \param in cpu the CPU that is running the current thread
-	static inline bool mustExit(CPU *cpu);
+	static inline bool mustExit();
 	
 	//! \brief set up the information related to the currently running thread
 	//!
@@ -126,6 +129,27 @@ public:
 };
 
 
+ThreadManager::CPU *ThreadManager::getCPU(size_t systemCPUId)
+{
+	assert(systemCPUId < _cpus.size());
+	
+	CPU *cpu = _cpus[systemCPUId];
+	if (cpu == nullptr) {
+		CPU *newCPU = new CPU(systemCPUId);
+		bool success = _cpus[systemCPUId].compare_exchange_strong(cpu, newCPU);
+		if (!success) {
+			// Another thread already did it
+			delete newCPU;
+			cpu = _cpus[systemCPUId];
+		} else {
+			cpu = newCPU;
+		}
+	}
+	
+	return cpu;
+}
+
+
 //
 // Getting / Returning worker threads
 //
@@ -136,7 +160,7 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu)
 	assert(cpu != nullptr);
 	assert(cpu->_statusLock.isLockedByThisThread());
 	
-	if (cpu->_enabled && !cpu->_idleThreads.empty()) {
+	if (!cpu->_idleThreads.empty()) {
 		WorkerThread *idleThread = cpu->_idleThreads.front();
 		cpu->_idleThreads.pop_front();
 		
@@ -151,10 +175,6 @@ inline WorkerThread *ThreadManager::getNewOrIdleThread(CPU *cpu)
 {
 	assert(cpu != nullptr);
 	assert(cpu->_statusLock.isLockedByThisThread());
-	
-	if (!cpu->_enabled) {
-		return nullptr;
-	}
 	
 	WorkerThread *idleThread = getIdleThread(cpu);
 	if (idleThread != nullptr) {
@@ -185,12 +205,9 @@ inline void ThreadManager::linkIdleCPU (CPU *cpu)
 	assert(cpu != nullptr);
 	assert(cpu->_statusLock.isLockedByThisThread());
 	
-	if (cpu->_enabled) {
-		std::lock_guard<SpinLock> guard(_idleCPUsLock);
-		_idleCPUs.push_back(cpu);
-	} else {
-		// Not elligible to run anything
-	}
+	assert(cpu->_activationStatus != CPU::disabled_status);
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	_idleCPUs.push_back(cpu);
 }
 
 inline void ThreadManager::unlinkIdleCPU (ThreadManager::CPU *cpu)
@@ -304,8 +321,6 @@ inline void ThreadManager::suspendForBlocking(WorkerThread *currentThread)
 	
 	assert(cpu->_runningThread == currentThread);
 	
-	// FIXME: Handle !cpu->_enabled
-	
 	// Look up a ready thread (previosly blocked)
 	WorkerThread *replacementThread = getReadyThread(cpu);
 	
@@ -323,6 +338,34 @@ inline void ThreadManager::suspendForBlocking(WorkerThread *currentThread)
 }
 
 
+inline void ThreadManager::resumeIdle(CPU *idleCPU, bool inInitialization)
+{
+	assert(idleCPU != nullptr);
+	
+	assert(idleCPU->_runningThread == nullptr);
+	
+	if (!inInitialization) {
+		assert(WorkerThread::getCurrentWorkerThread() != nullptr);
+		assert(WorkerThread::getCurrentWorkerThread()->_cpu != nullptr);
+		assert(WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU);
+	}
+	
+	// Get an idle thread for the CPU
+	idleCPU->_statusLock.lock();
+	WorkerThread *idleThread = getNewOrIdleThread(idleCPU);
+	idleCPU->_statusLock.unlock();
+	
+	assert(idleThread != nullptr);
+	assert(idleThread->_cpu == idleCPU);
+	if (!inInitialization) {
+		assert(idleThread != WorkerThread::getCurrentWorkerThread());
+	}
+	
+	// Resume it
+	idleThread->resume();
+}
+
+
 inline void ThreadManager::resumeAnyIdle(__attribute__((unused)) HardwarePlace *preferredHardwarePlace)
 {
 	// FIXME: for now we are ignoring the preferredHardwarePlace
@@ -337,29 +380,9 @@ inline void ThreadManager::resumeAnyIdle(__attribute__((unused)) HardwarePlace *
 			return;
 		}
 		
-		idleCPU->_statusLock.lock();
-		
-		assert(idleCPU->_runningThread == nullptr);
-		assert(WorkerThread::getCurrentWorkerThread() != nullptr);
-		assert(WorkerThread::getCurrentWorkerThread()->_cpu != nullptr);
-		assert(WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU);
-		
-		if (idleCPU->_enabled) {
-			// Get an idle thread for the CPU
-			WorkerThread *idleThread = getNewOrIdleThread(idleCPU);
-			assert(idleThread != nullptr);
-			assert(idleThread->_cpu == idleCPU);
-			assert(idleThread != WorkerThread::getCurrentWorkerThread());
-			
-			// Resume it
-			idleThread->resume();
-			
-			finished = true;
-		} else {
-			// The CPU has been disabled, so we have removed it from the list of idle CPUs and we need to try with the next idle CPU
-		}
-		
-		idleCPU->_statusLock.unlock();
+		assert(idleCPU->_activationStatus != CPU::disabled_status);
+		resumeIdle(idleCPU);
+		finished = true;
 	}
 }
 
@@ -400,12 +423,9 @@ inline void ThreadManager::threadBecomesReady(WorkerThread *readyThread)
 }
 
 
-inline bool ThreadManager::mustExit(CPU *currentCPU)
+inline bool ThreadManager::mustExit()
 {
-	assert(currentCPU != nullptr);
-	
-	std::lock_guard<SpinLock> guard(currentCPU->_statusLock); // This is necessary to avoid a race condition during shutdown. Since threads are pinned, the same exact CPU is always the one that accesses the given SpinLock
-	return currentCPU->_mustExit;
+	return _mustExit;
 }
 
 

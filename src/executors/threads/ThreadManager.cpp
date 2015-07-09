@@ -3,9 +3,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include "CPUActivation.hpp"
 #include "ThreadManager.hpp"
 
 
+std::atomic<bool> ThreadManager::_mustExit;
 cpu_set_t ThreadManager::_processCPUMask;
 std::vector<std::atomic<ThreadManager::CPU *>> ThreadManager::_cpus(CPU_SETSIZE);
 SpinLock ThreadManager::_idleCPUsLock;
@@ -14,13 +16,18 @@ std::deque<ThreadManager::CPU *> ThreadManager::_idleCPUs;
 
 void ThreadManager::initialize()
 {
+	_mustExit = false;
+	
 	int rc = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &_processCPUMask);
 	assert(rc == 0);
 	
 	// Set up the pthread attributes for the threads of each CPU
 	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
 		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
-			enableCPU(systemCPUId);
+			CPU *cpu = getCPU(systemCPUId);
+			
+			assert(cpu != nullptr);
+			resumeIdle(cpu, true);
 		}
 	}
 }
@@ -28,15 +35,19 @@ void ThreadManager::initialize()
 
 void ThreadManager::shutdown()
 {
+	_mustExit = true;
+	
 	for (CPU *cpu: _cpus) {
 		if (cpu != nullptr) {
 			std::lock_guard<SpinLock> guard(cpu->_statusLock);
 			
 			assert(cpu->_readyThreads.empty());
 			
-			cpu->_mustExit = true;
+			while ((cpu->_activationStatus != CPU::enabled_status) && (cpu->_activationStatus != CPU::disabled_status)) {
+				// Wait for the CPU status to make the transition
+			}
 			
-			if (cpu->_enabled) {
+			if (cpu->_activationStatus == CPU::enabled_status) {
 				if (cpu->_runningThread == nullptr) {
 					WorkerThread *thread = getIdleThread(cpu);
 					
@@ -47,57 +58,17 @@ void ThreadManager::shutdown()
 				} else {
 					// In principle there is a thread running that will either detect the shutdown signal or end up waking up another thread that will notice it
 				}
-			} else {
+			} else if (cpu->_activationStatus == CPU::disabled_status) {
 				// Disabled CPU
 				for (auto idleThread: cpu->_idleThreads) {
 					int rc = pthread_cancel(idleThread->_pthread);
 					assert(rc == 0);
 				}
+			} else {
+				assert("The CPU status was transitioning during shutdown" == nullptr);
 			}
 		}
 	}
-}
-
-
-//
-// Setting CPUs online / offline
-//
-
-void ThreadManager::enableCPU(size_t systemCPUId)
-{
-	if (_cpus[systemCPUId] == nullptr) {
-		CPU *currentCPUObject = nullptr;
-		
-		CPU *newCPU = new CPU(systemCPUId);
-		_cpus[systemCPUId].compare_exchange_strong(currentCPUObject, newCPU);
-		
-		assert(currentCPUObject == nullptr); // Another thread enabled the CPU !?!
-	} else {
-		assert(!((CPU *)_cpus[systemCPUId])->_enabled);
-	}
-	
-	CPU *cpu = _cpus[systemCPUId];
-	{
-		std::lock_guard<SpinLock> guard(cpu->_statusLock);
-		assert(!cpu->_enabled);
-		cpu->_enabled = true;
-		
-		WorkerThread *thread = getNewOrIdleThread(cpu);
-		assert(thread->_cpu == cpu);
-		thread->resume();
-	}
-}
-
-void ThreadManager::disableCPU(size_t systemCPUId)
-{
-	CPU *cpu = _cpus[systemCPUId];
-	assert(cpu != nullptr);
-	
-	std::lock_guard<SpinLock> guard(cpu->_statusLock);
-	assert(cpu->_enabled);
-	cpu->_enabled = false;
-	
-	unlinkIdleCPU(cpu);
 }
 
 
@@ -108,7 +79,13 @@ void ThreadManager::threadStartup(WorkerThread *currentThread)
 	CPU *cpu = currentThread->_cpu;
 	
 	assert(cpu != nullptr);
-	currentThread->_currentWorkerThread = currentThread;
+	
+	WorkerThread::_currentWorkerThread = currentThread;
+	
+	// Initialize the CPU status if necessary before the thread has a chance to check the shutdown signaled
+	CPUActivation::activationCheck(currentThread);
+	
+	// The thread suspends itself after initialization, since the "activator" is the one will unblock it when needed
 	currentThread->suspend();
 	
 	std::lock_guard<SpinLock> guard(cpu->_statusLock);

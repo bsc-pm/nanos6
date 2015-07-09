@@ -9,7 +9,7 @@
 namespace threaded_executor_internals {
 
 CPU::CPU(size_t systemCPUId)
-	: _enabled(false), _mustExit(false), _runningThread(nullptr), _systemCPUId(systemCPUId)
+	: _activationStatus(starting_status), _runningThread(nullptr), _systemCPUId(systemCPUId)
 {
 	CPU_ZERO_S(sizeof(cpu_set_t), &_cpuMask);
 	CPU_SET_S(systemCPUId, sizeof(cpu_set_t), &_cpuMask);
