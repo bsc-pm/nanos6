@@ -17,6 +17,13 @@ class WorkerThread;
 namespace threaded_executor_internals {
 
 	struct CPU: public CPUPlace {
+		
+#ifdef __KNC__
+		// For some reason ICPC from composer_xe_2015.2.164 with KNC is unable to handle the activation_status_t as is correctly
+		typedef unsigned int activation_status_t;
+	#define activation_status_t knc_workaround_activation_status_t
+#endif
+		
 		typedef enum {
 			starting_status=0,
 			enabled_status,
@@ -24,6 +31,10 @@ namespace threaded_executor_internals {
 			disabling_status,
 			disabled_status
 		} activation_status_t;
+		
+#ifdef __KNC__
+	#undef activation_status_t
+#endif
 		
 		//! \brief this lock affects _runningThread, _idleThreads and _readyThreads
 		SpinLock _statusLock;
