@@ -243,7 +243,6 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 		// No replacement thread
 		if (currentThread->willResumeImmediately()) {
 			currentThread->abortResumption();
-			cpu->_statusLock.unlock();
 			return;
 		} else {
 			cpu->_runningThread = nullptr;
