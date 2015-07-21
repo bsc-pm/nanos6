@@ -70,7 +70,8 @@ libsimpless_debug_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(li
 enabled_tests = \
 	noop.debug.test noop.test \
 	single-nest.debug.test single-nest.test \
-	fibonacci.debug.test fibonacci.test
+	fibonacci.debug.test fibonacci.test \
+	cpu-activation.debug.test cpu-activation.test
 
 disabled_tests =
 
@@ -124,6 +125,17 @@ fibonacci_test_CPPFLAGS = -DNDEBUG
 fibonacci_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_test_LDADD = $(test_common_libs)
 fibonacci_test_LDFLAGS = $(test_common_ldflags)
+
+cpu_activation_debug_test_SOURCES = tests/apiless/cpu-activation/cpu-activation.cpp
+cpu_activation_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+cpu_activation_debug_test_LDADD = $(test_common_debug_libs) -lpthread
+cpu_activation_debug_test_LDFLAGS = $(test_common_ldflags)
+
+cpu_activation_test_SOURCES = tests/apiless/cpu-activation/cpu-activation.cpp
+cpu_activation_test_CPPFLAGS = -DNDEBUG
+cpu_activation_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+cpu_activation_test_LDADD = $(test_common_libs) -lpthread
+cpu_activation_test_LDFLAGS = $(test_common_ldflags)
 
 
 check_PROGRAMS = $(enabled_tests) $(disabled_tests)
