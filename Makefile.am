@@ -97,6 +97,7 @@ noop_debug_test_LDADD = $(test_common_debug_libs)
 noop_debug_test_LDFLAGS = $(test_common_ldflags)
 
 noop_test_SOURCES = tests/apiless/noop/noop.cpp
+noop_test_CPPFLAGS = -DNDEBUG
 noop_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 noop_test_LDADD = $(test_common_libs)
 noop_test_LDFLAGS = $(test_common_ldflags)
@@ -107,6 +108,7 @@ single_nest_debug_test_LDADD = $(test_common_debug_libs)
 single_nest_debug_test_LDFLAGS = $(test_common_ldflags)
 
 single_nest_test_SOURCES = tests/apiless/single-nest/single-nest.cpp
+single_nest_test_CPPFLAGS = -DNDEBUG
 single_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 single_nest_test_LDADD = $(test_common_libs)
 single_nest_test_LDFLAGS = $(test_common_ldflags)
@@ -117,6 +119,7 @@ fibonacci_debug_test_LDADD = $(test_common_debug_libs)
 fibonacci_debug_test_LDFLAGS = $(test_common_ldflags)
 
 fibonacci_test_SOURCES = tests/apiless/fibonacci/fibonacci.cpp
+fibonacci_test_CPPFLAGS = -DNDEBUG
 fibonacci_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_test_LDADD = $(test_common_libs)
 fibonacci_test_LDFLAGS = $(test_common_ldflags)
