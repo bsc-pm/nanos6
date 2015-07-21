@@ -26,9 +26,12 @@ class Task {
 	//! Task to which this one is closely nested
 	Task *_parent;
 	
+	//! Opaque data that is scheduler-dependent
+	void *_schedulerInfo;
+	
 public:
 	Task(Task *parent)
-		: _thread(nullptr), _countdownToBeWokenUp(1), _parent(parent)
+		: _thread(nullptr), _countdownToBeWokenUp(1), _parent(parent), _schedulerInfo(nullptr)
 	{
 		if (parent != nullptr) {
 			parent->addChild(this);
@@ -155,6 +158,18 @@ public:
 	inline bool doesNotNeedToBlockForChildren()
 	{
 		return (_countdownToBeWokenUp == 1);
+	}
+	
+	//! \brief Retrieve scheduler-dependent data
+	inline void *getSchedulerInfo()
+	{
+		return _schedulerInfo;
+	}
+	
+	//! \brief Set scheduler-dependent data
+	inline void setSchedulerInfo(void *schedulerInfo)
+	{
+		_schedulerInfo = schedulerInfo;
 	}
 	
 };
