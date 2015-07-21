@@ -4,9 +4,11 @@
 #include <cxxabi.h>
 
 #include <cstdlib>
+#include <functional>
 #include <iostream>
 #include <string>
 
+#include <sys/time.h>
 
 
 //! \brief a class for generating the TAP testing protocol that the autotools recognizes
@@ -137,6 +139,47 @@ public:
 		} else {
 			failure(detail);
 		}
+	}
+	
+	//! \brief check that a condition is satisfied in a given amount of time
+	//!
+	//! \param condition in true if the test was successful, false otherwise
+	//! \param microseconds grace period to assert the condition
+	//! \param detail in optionally any additional information about the test
+	void timedEvaluate(std::function<bool ()> condition, long microseconds, std::string const &detail="")
+	{
+		struct timeval start, end, maximum;
+		
+		int rc = gettimeofday(&start, nullptr);
+		if (rc != 0) {
+			failure("Failed to get time for a timed check");
+			return;
+		}
+		
+		maximum.tv_sec = start.tv_sec;
+		maximum.tv_usec = start.tv_usec + microseconds;
+		if (maximum.tv_usec >= 1000000) {
+			maximum.tv_sec += 1;
+			maximum.tv_usec -= 1000000;
+		}
+		
+		while (!condition()) {
+			rc = gettimeofday(&end, nullptr);
+			bool timeout = (end.tv_sec > maximum.tv_sec);
+			timeout = timeout || ((end.tv_sec == maximum.tv_sec) && (end.tv_usec > maximum.tv_usec));
+			
+			if (timeout) {
+				if (condition()) {
+					success(detail);
+					return;
+				} else {
+					failure(detail);
+					return;
+				}
+			}
+		}
+		
+		success(detail);
 	}
 	
 	//! \brief exit abruptly if any of the tests up to that point has failed
