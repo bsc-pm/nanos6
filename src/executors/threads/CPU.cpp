@@ -27,7 +27,7 @@ CPU::CPU(size_t systemCPUId)
 
 void CPU::bindThread(pthread_t *internalPThread)
 {
-	int rc = pthread_setaffinity_np(*internalPThread, CPU_ALLOC_SIZE(_systemCPUId), &_cpuMask);
+	int rc = pthread_setaffinity_np(*internalPThread, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
 	assert(rc == 0);
 }
 
