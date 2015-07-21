@@ -16,6 +16,7 @@ common_sources = \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
+	src/executors/threads/ThreadManagerDebuggingInterface.hpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/hardware/places/CPUPlace.hpp \
