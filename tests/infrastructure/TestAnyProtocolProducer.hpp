@@ -8,6 +8,7 @@
 #include <iostream>
 #include <mutex>
 #include <string>
+#include <sstream>
 
 #include <sys/time.h>
 
@@ -114,6 +115,19 @@ public:
 		_hasFailed = true;
 	}
 	
+	//! \brief indicate that the current test in sequential order failed but that it was an expected failure
+	//!
+	//! \param[in] detail information about the outcome of the test
+	//! \param[in] weakDetail information about why the test is weak 
+	void weakFailure(std::string const &detail, std::string const &weakDetail)
+	{
+		std::ostringstream special;
+		
+		special << "TODO " << weakDetail;
+		
+		emitOutcome("not ok", detail, special.str());
+	}
+	
 	//! \brief indicate that the current test in sequential order is yet to be implemented
 	//!
 	//! \param detail in optionally any additional information about the outcome of the test
@@ -154,6 +168,20 @@ public:
 			success(detail);
 		} else {
 			failure(detail);
+		}
+	}
+	
+	//! \brief get the outcome of the current test through a condition
+	//!
+	//! \param[in] condition true if the test was successful, false otherwise
+	//! \param[in] detail additional information about the test
+	//! \param[in] weakDetail information about why the test is weak 
+	void evaluateWeak(bool condition, std::string const &detail, std::string const &weakDetail)
+	{
+		if (condition) {
+			success(detail);
+		} else {
+			weakFailure(detail, weakDetail);
 		}
 	}
 	
