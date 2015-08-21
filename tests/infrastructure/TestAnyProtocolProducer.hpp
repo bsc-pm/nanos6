@@ -22,14 +22,14 @@ private:
 	void emitOutcome(std::string const &outcome, std::string const &detail, std::string const &special = "")
 	{
 		std::cout << outcome << " " << _currentTest;
-		if (special != "") {
-			std::cout << " # " << special;
-		}
 		if (_component != "") {
 			std::cout << " " << _component << ":";
 		}
 		if (detail != "") {
 			std::cout << " " << detail;
+		}
+		if (special != "") {
+			std::cout << " # " << special;
 		}
 		std::cout << std::endl;
 		_currentTest++;
