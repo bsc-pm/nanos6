@@ -35,6 +35,17 @@ private:
 		_currentTest++;
 	}
 	
+	template<typename T, typename... TS>
+	void emitDiagnosticParts(T const &diagnostic, TS... diagnostics)
+	{
+		std::cout << diagnostic;
+		emitDiagnosticParts(diagnostics...);
+	}
+	
+	void emitDiagnosticParts()
+	{
+	}
+	
 public:
 	TestAnyProtocolProducer()
 		: _testCount(0), _currentTest(0), _hasFailed(false)
@@ -205,28 +216,12 @@ public:
 	}
 	
 	//! \brief emit an additional comment in the output
-	template <typename T1>
-	void emitDiagnostic(T1 const &diagnostic)
+	template<typename T, typename... TS>
+	void emitDiagnostic(T const &diagnostic, TS... diagnostics)
 	{
-		std::cout << "# " << diagnostic << std::endl;
-	}
-	
-	template <typename T1, typename T2>
-	void emitDiagnostic(T1 const &diagnostic1, T2 const &diagnostic2)
-	{
-		std::cout << "# " << diagnostic1 << diagnostic2 << std::endl;
-	}
-	
-	template <typename T1, typename T2, typename T3>
-	void emitDiagnostic(T1 const &diagnostic1, T2 const &diagnostic2, T3 const &diagnostic3)
-	{
-		std::cout << "# " << diagnostic1 << diagnostic2 << diagnostic3 << std::endl;
-	}
-	
-	template <typename T1, typename T2, typename T3, typename T4>
-	void emitDiagnostic(T1 const &diagnostic1, T2 const &diagnostic2, T3 const &diagnostic3, T4 const &diagnostic4)
-	{
-		std::cout << "# " << diagnostic1 << diagnostic2 << diagnostic3 << diagnostic4 << std::endl;
+		std::cout << "# " << diagnostic;
+		emitDiagnosticParts(diagnostics...);
+		std::cout << std::endl;
 	}
 	
 };
