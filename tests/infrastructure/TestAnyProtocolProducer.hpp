@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <mutex>
 #include <string>
 
 #include <sys/time.h>
@@ -18,9 +19,11 @@ private:
 	int _currentTest;
 	bool _hasFailed;
 	std::string _component;
+	std::mutex _outputAndCounterMutex;
 	
 	void emitOutcome(std::string const &outcome, std::string const &detail, std::string const &special = "")
 	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
 		std::cout << outcome << " " << _currentTest;
 		if (_component != "") {
 			std::cout << " " << _component << ":";
@@ -48,7 +51,7 @@ private:
 	
 public:
 	TestAnyProtocolProducer()
-		: _testCount(0), _currentTest(0), _hasFailed(false)
+		: _testCount(0), _currentTest(0), _hasFailed(false), _outputAndCounterMutex()
 	{
 	}
 	
@@ -84,6 +87,7 @@ public:
 		if (_testCount != 0) {
 			std::cout << "1.." << _testCount << std::endl;
 		}
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
 		_currentTest = 1;
 	}
 	
@@ -131,6 +135,7 @@ public:
 	//! \param detail in optionally any additional information about the reason
 	void bailOut(std::string const &detail="")
 	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
 		std::cout << "Bail out!";
 		if (detail != "") {
 			std::cout << " " << detail;
@@ -219,6 +224,7 @@ public:
 	template<typename T, typename... TS>
 	void emitDiagnostic(T const &diagnostic, TS... diagnostics)
 	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
 		std::cout << "# " << diagnostic;
 		emitDiagnosticParts(diagnostics...);
 		std::cout << std::endl;
