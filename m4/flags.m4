@@ -88,6 +88,7 @@ AC_DEFUN([SSS_FIXUP_COMPILER_FLAGS],
 		CXXFLAGS="${autoconf_calculated_cxxflags}"
 		
 		AC_SUBST(DEBUG_CXXFLAGS)
+		AC_SUBST(OPT_CXXFLAGS)
 		
 		AC_LANG_POP(C++)
 	]
