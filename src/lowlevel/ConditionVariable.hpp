@@ -2,12 +2,17 @@
 #define CONDITION_VARIABLE_HPP
 
 
+#include <atomic>
 #include <cassert>
 #include <condition_variable>
 #include <mutex>
 
 #ifndef NDEBUG
 #include <iostream>
+#endif
+
+#ifndef NDEBUG
+#include <pthread.h>
 #endif
 
 
@@ -17,6 +22,9 @@ class ConditionVariable {
 	std::mutex _mutex;
 	std::condition_variable _condVar;
 	
+	#ifndef NDEBUG
+		std::atomic<long> _owner;
+	#endif
 	
 public:
 	ConditionVariable(const ConditionVariable &) = delete;
@@ -24,6 +32,9 @@ public:
 	
 	ConditionVariable()
 		: _signaled(false)
+		#ifndef NDEBUG
+			, _owner(0)
+		#endif
 	{
 	}
 	
@@ -33,6 +44,19 @@ public:
 	//! \returns true if it had already been signaled
 	bool wait()
 	{
+		#ifndef NDEBUG
+			{
+				if (_owner == 0) {
+					long expected = 0;
+					long want = (long) pthread_self();
+					assert(_owner.compare_exchange_strong(expected, want));
+				} else {
+					long currentThread = (long) pthread_self();
+					assert(_owner == currentThread);
+				}
+			}
+		#endif
+		
 		std::unique_lock<std::mutex> lock(_mutex);
 		if (_signaled) {
 			_signaled = false;
@@ -51,6 +75,13 @@ public:
 	//! \brief Signal the condition variable to wake up a thread that is waiting or will wait on it
 	void signal()
 	{
+		#ifndef NDEBUG
+			{
+				long currentThread = (long) pthread_self();
+				assert(_owner != currentThread);
+			}
+		#endif
+		
 		std::unique_lock<std::mutex> lock(_mutex);
 		assert(_signaled == false);
 		_signaled = true;
