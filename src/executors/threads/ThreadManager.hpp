@@ -20,6 +20,9 @@
 #include "WorkerThread.hpp"
 
 
+class ThreadManagerDebuggingInterface;
+
+
 class ThreadManager {
 	typedef threaded_executor_internals::CPU CPU;
 	
@@ -126,6 +129,8 @@ public:
 	//!
 	//! \param in currentThread a thread that is currently running and that must exit
 	static void exitAndWakeUpNext(WorkerThread *currentThread);
+	
+	friend class ThreadManagerDebuggingInterface;
 };
 
 
