@@ -19,6 +19,11 @@ public:
 		return ThreadManager::_cpus;
 	}
 	
+	static cpu_set_t const &getProcessCPUMaskRef()
+	{
+		return ThreadManager::_processCPUMask;
+	}
+	
 };
 
 
