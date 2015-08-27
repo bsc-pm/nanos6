@@ -52,6 +52,7 @@ public:
 	//! \param in thread the thread that will run the task
 	inline void setThread(WorkerThread *thread)
 	{
+		assert(thread != nullptr);
 		assert(_thread == nullptr);
 		_thread = thread;
 	}
