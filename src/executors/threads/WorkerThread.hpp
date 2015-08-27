@@ -15,9 +15,6 @@ class SchedulingDecisionPlaceholder;
 
 
 class WorkerThread {
-	typedef threaded_executor_internals::CPU CPU;
-	
-	
 	//! This condition variable is used for suspending and resuming the thread
 	ConditionVariable _suspensionConditionVariable;
 	
@@ -70,7 +67,7 @@ class WorkerThread {
 	friend class ThreadManager;
 	
 public:
-	WorkerThread(WorkerThread::CPU * cpu);
+	WorkerThread(CPU * cpu);
 	
 	//! \brief code that the thread executes
 	void *body();

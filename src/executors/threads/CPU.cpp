@@ -6,8 +6,6 @@
 #include <unistd.h>
 
 
-namespace threaded_executor_internals {
-
 CPU::CPU(size_t systemCPUId)
 	: _activationStatus(starting_status), _runningThread(nullptr), _systemCPUId(systemCPUId)
 {
@@ -31,5 +29,3 @@ void CPU::bindThread(pthread_t *internalPThread)
 	assert(rc == 0);
 }
 
-
-} // namespace threaded_executor_internals

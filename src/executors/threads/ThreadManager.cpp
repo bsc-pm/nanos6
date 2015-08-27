@@ -9,9 +9,9 @@
 
 std::atomic<bool> ThreadManager::_mustExit;
 cpu_set_t ThreadManager::_processCPUMask;
-std::vector<std::atomic<ThreadManager::CPU *>> ThreadManager::_cpus(CPU_SETSIZE);
+std::vector<std::atomic<CPU *>> ThreadManager::_cpus(CPU_SETSIZE);
 SpinLock ThreadManager::_idleCPUsLock;
-std::deque<ThreadManager::CPU *> ThreadManager::_idleCPUs;
+std::deque<CPU *> ThreadManager::_idleCPUs;
 
 
 void ThreadManager::initialize()

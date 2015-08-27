@@ -24,8 +24,6 @@ class ThreadManagerDebuggingInterface;
 
 
 class ThreadManager {
-	typedef threaded_executor_internals::CPU CPU;
-	
 	//! \brief indicates if the runtime is shutting down
 	static std::atomic<bool> _mustExit;
 	
@@ -134,7 +132,7 @@ public:
 };
 
 
-ThreadManager::CPU *ThreadManager::getCPU(size_t systemCPUId)
+CPU *ThreadManager::getCPU(size_t systemCPUId)
 {
 	assert(systemCPUId < _cpus.size());
 	
@@ -215,7 +213,7 @@ inline void ThreadManager::linkIdleCPU (CPU *cpu)
 	_idleCPUs.push_back(cpu);
 }
 
-inline void ThreadManager::unlinkIdleCPU (ThreadManager::CPU *cpu)
+inline void ThreadManager::unlinkIdleCPU (CPU *cpu)
 {
 	assert(cpu != nullptr);
 	assert(cpu->_statusLock.isLockedByThisThread());
@@ -224,7 +222,7 @@ inline void ThreadManager::unlinkIdleCPU (ThreadManager::CPU *cpu)
 	std::remove(_idleCPUs.begin(), _idleCPUs.end(), cpu);
 }
 
-inline ThreadManager::CPU *ThreadManager::getIdleCPU()
+inline CPU *ThreadManager::getIdleCPU()
 {
 	CPU *idleCPU = nullptr;
 	

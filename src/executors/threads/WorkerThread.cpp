@@ -11,7 +11,7 @@
 __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
 
 
-WorkerThread::WorkerThread(WorkerThread::CPU *cpu)
+WorkerThread::WorkerThread(CPU *cpu)
 	: _suspensionConditionVariable(), _cpu(cpu), _task(nullptr)
 {
 	int rc = pthread_create(&_pthread, &_cpu->_pthreadAttr, (void* (*)(void*)) &WorkerThread::body, this);

@@ -8,9 +8,6 @@
 #include "ThreadManager.hpp"
 
 
-using namespace threaded_executor_internals;
-
-
 class CPUActivation {
 public:
 	//! \brief set a CPU online
