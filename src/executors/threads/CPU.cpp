@@ -7,7 +7,7 @@
 
 
 CPU::CPU(size_t systemCPUId, size_t virtualCPUId)
-	: _activationStatus(starting_status), _runningThread(nullptr), _systemCPUId(systemCPUId), _virtualCPUId(virtualCPUId)
+	: _activationStatus(starting_status), _systemCPUId(systemCPUId), _virtualCPUId(virtualCPUId), _shutdownControlerThread(nullptr)
 {
 	CPU_ZERO_S(sizeof(cpu_set_t), &_cpuMask);
 	CPU_SET_S(systemCPUId, sizeof(cpu_set_t), &_cpuMask);
@@ -16,16 +16,6 @@ CPU::CPU(size_t systemCPUId, size_t virtualCPUId)
 	assert(rc == 0);
 	
 	rc = pthread_attr_setaffinity_np(&_pthreadAttr, sizeof(cpu_set_t), &_cpuMask);
-	assert(rc == 0);
-	
-	rc = pthread_attr_setdetachstate(&_pthreadAttr, PTHREAD_CREATE_DETACHED);
-	assert(rc == 0);
-}
-
-
-void CPU::bindThread(pthread_t *internalPThread)
-{
-	int rc = pthread_setaffinity_np(*internalPThread, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
 	assert(rc == 0);
 }
 

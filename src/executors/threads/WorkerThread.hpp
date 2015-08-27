@@ -6,6 +6,9 @@
 
 #include "CPU.hpp"
 
+#include <atomic>
+#include <cassert>
+
 #include <pthread.h>
 
 
@@ -18,8 +21,14 @@ class WorkerThread {
 	//! This condition variable is used for suspending and resuming the thread
 	ConditionVariable _suspensionConditionVariable;
 	
-	//! The CPU assigned to this thread. Volatile, since the thread could migrate while blocked.
-	CPU * volatile _cpu;
+	//! The CPU on which this thread is running.
+	CPU *_cpu;
+	
+	//! The CPU to which the thread transitions the next time it resumes. Atomic since this is changed by other threads.
+	std::atomic<CPU *> _cpuToBeResumedOn;
+	
+	//! Indicates that it is time for this thread to participate in the shutdown process
+	std::atomic<bool> _mustShutDown;
 	
 	//! The underlying pthread
 	pthread_t _pthread;
@@ -35,6 +44,7 @@ class WorkerThread {
 	//! \returns true if it was pre-resumed
 	inline bool suspend()
 	{
+		assert(this == _currentWorkerThread);
 		return _suspensionConditionVariable.wait();
 	}
 	
@@ -69,6 +79,24 @@ class WorkerThread {
 public:
 	WorkerThread(CPU * cpu);
 	
+	//! \brief handle a task
+	//! This method is here to cover the case in which a task is run within the execution of another in the same thread
+	inline void handleTask(Task *task)
+	{
+		assert(task != nullptr);
+		
+		// Save current task
+		Task *oldTask = _task;
+		assert(task != oldTask);
+		
+		// Run the task
+		_task = task;
+		handleTask();
+		
+		// Restore the initial task
+		_task = oldTask;
+	}
+	
 	//! \brief code that the thread executes
 	void *body();
 	
@@ -83,12 +111,33 @@ public:
 		return _task;
 	}
 	
+	//! \brief set the task that this thread must run when it is resumed
+	//!
+	//! \param[in] task the task that the thread will run when it is resumed
+	inline void setTask(Task *task)
+	{
+		assert(_task == nullptr);
+		_task = task;
+	}
+	
 	//! \brief get the hardware place currently assigned
 	inline CPU *getHardwarePlace()
 	{
 		return _cpu;
 	}
 	
+	
+	//! \brief turn on the flag to start the shutdown process
+	inline void signalShutdown()
+	{
+		_mustShutDown = true;
+	}
+	
+	//! \brief get the thread shutdown flag
+	inline bool hasPendingShutdown()
+	{
+		return _mustShutDown;
+	}
 	
 	//! \brief returns the WorkerThread that runs the call
 	static inline WorkerThread *getCurrentWorkerThread()

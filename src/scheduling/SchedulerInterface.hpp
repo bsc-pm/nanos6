@@ -14,31 +14,43 @@ public:
 	}
 	
 	
-	//! \brief Add the main task
+	//! \brief Add a (ready) task that has been created or freed (but not unblocked)
 	//!
-	//! \param in mainTask the main task
-	virtual void addMainTask(Task *mainTask) = 0;
-	
-	//! \brief Add a (ready) task that has been freed by another task
+	//! \param[in] task the task to be added
+	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
 	//!
-	//! \param in newReadyTask the task to be added
-	//! \param in triggererTask the task that has been finished and thus has triggered the change of status of the new task to ready
-	//! \param in hardwarePlace the hardware place where the triggerer has run
-	virtual void addSiblingTask(Task *newReadyTask, Task *triggererTask, HardwarePlace const *hardwarePlace) = 0;
+	//! \returns an idle HardwarePlace that is to be resumed or nullptr
+	virtual HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace) = 0;
 	
-	//! \brief Add a child task that is ready
+	//! \brief Add back a task that was blocked but that is now unblocked
 	//!
-	//! \param in newReadyTask the task to be added
-	//! \param in hardwarePlace the hardware place where the parent task is running
-	virtual void addChildTask(Task *newReadyTask, HardwarePlace const *hardwarePlace) = 0;
+	//! \param[in] unblockedTask the task that has been unblocked
+	//! \param[in] hardwarePlace the hardware place of the unblocker
+	virtual void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace) = 0;
 	
+	//! \brief Check if a hardware place is idle and can be resumed
+	//! This call first checks if the hardware place is idle. If so, it marks it as not idle
+	//! and returns true. Otherwise it returns false.
+	//!
+	//! \param[in] hardwarePlace the hardware place to check
+	//!
+	//! \returns true if the hardware place must be resumed
+	virtual bool checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace) = 0;
 	
 	//! \brief Get a ready task for execution
 	//!
-	//! \param in hardwarePlace the hardware place asking for scheduling orders
+	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
+	//! \param[in] currentTask a task within whose context the resulting task will run
 	//!
 	//! \returns a ready task or nullptr
-	virtual Task *schedule(HardwarePlace const *hardwarePlace) = 0;
+	virtual Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr) = 0;
+	
+	//! \brief Get an idle hardware place
+	//!
+	//! \param[in] force idicates that an idle hardware place must be returned (if any) even if the scheduler does not have any pending work to be assigned
+	//!
+	//! \returns a hardware place that becomes non idle or nullptr
+	virtual HardwarePlace *getIdleHardwarePlace(bool force=false) = 0;
 	
 };
 

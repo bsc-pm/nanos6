@@ -6,6 +6,7 @@
 #include "lowlevel/SpinLock.hpp"
 
 #include <atomic>
+#include <cassert>
 #include <deque>
 
 #include <pthread.h>
@@ -34,19 +35,7 @@ struct CPU: public CPUPlace {
 #undef activation_status_t
 #endif
 	
-	//! \brief this lock affects _runningThread, _idleThreads and _readyThreads
-	SpinLock _statusLock;
-	
 	std::atomic<activation_status_t> _activationStatus;
-	
-	//! \brief the thread that is currently running in this CPU or nullptr
-	WorkerThread *_runningThread;
-	
-	//! \brief threads currently assigned to this CPU that are currently suspended due to idleness
-	std::deque<WorkerThread *> _idleThreads;
-	
-	//! \brief threads assigned to this CPU that have been blocked, but that are now ready to be resumed
-	std::deque<WorkerThread *> _readyThreads;
 	
 	size_t _systemCPUId;
 	size_t _virtualCPUId;
@@ -56,6 +45,9 @@ struct CPU: public CPUPlace {
 	
 	//! \brief the pthread attr that is used for all the threads of this CPU
 	pthread_attr_t _pthreadAttr;
+	
+	//! \brief a thread responsible for shutting down the rest of the threads and itself
+	std::atomic<WorkerThread *> _shutdownControlerThread;
 	
 	CPU(size_t systemCPUId, size_t virtualCPUId);
 	
@@ -67,7 +59,11 @@ struct CPU: public CPUPlace {
 	{
 	}
 	
-	void bindThread(pthread_t *internalPThread);
+	inline void bindThread(pthread_t internalPThread)
+	{
+		int rc = pthread_setaffinity_np(internalPThread, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
+		assert(rc == 0);
+	}
 	
 };
 

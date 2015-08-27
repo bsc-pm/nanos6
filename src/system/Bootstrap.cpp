@@ -7,6 +7,7 @@
 #include "MainTask.hpp"
 
 #include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/ThreadManagerPolicy.hpp"
 #include "scheduling/Scheduler.hpp"
 
 
@@ -50,9 +51,10 @@ namespace simpless {
 	//! \returns the return code of the "main" function
 	static int bootstrap(int argc, char **argv, char **envp) {
 		Scheduler::initialize();
+		ThreadManagerPolicy::initialize();
 		
 		Task *mainTask = new MainTask(appMain, argc, argv, envp);
-		Scheduler::addMainTask(mainTask);
+		Scheduler::addReadyTask(mainTask, nullptr);
 		
 		ThreadManager::initialize();
 		

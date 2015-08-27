@@ -12,9 +12,9 @@ __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
 
 
 WorkerThread::WorkerThread(CPU *cpu)
-	: _suspensionConditionVariable(), _cpu(cpu), _task(nullptr)
+	: _suspensionConditionVariable(), _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false), _task(nullptr)
 {
-	int rc = pthread_create(&_pthread, &_cpu->_pthreadAttr, (void* (*)(void*)) &WorkerThread::body, this);
+	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, (void* (*)(void*)) &WorkerThread::body, this);
 	assert(rc == 0);
 }
 
@@ -23,19 +23,41 @@ void *WorkerThread::body()
 {
 	ThreadManager::threadStartup(this);
 	
-	while (!ThreadManager::mustExit()) {
+	while (!_mustShutDown) {
 		CPUActivation::activationCheck(this);
 		
-		_task = Scheduler::schedule(_cpu);
+		if (_task == nullptr) {
+			_task = Scheduler::getReadyTask(_cpu);
+		} else {
+			// The thread has been preassigned a task before being resumed
+		}
 		
 		if (_task != nullptr) {
-			handleTask();
+			WorkerThread *assignedThread = _task->getThread();
+			
+			// A task already assigned to another thread
+			if (assignedThread != nullptr) {
+				_task = nullptr;
+				ThreadManager::addIdler(this);
+				ThreadManager::switchThreads(this, assignedThread);
+			} else {
+				handleTask();
+				_task = nullptr;
+			}
 		} else {
-			ThreadManager::yieldIdler(this);
+			// The code below is protected by a condition because under certain CPU activation/deactivation
+			// cases, the call to CPUActivation::activationCheck may have put the thread in the idle queue
+			// and the shutdown mechanism may have waken up the thread. In that case we do not want the
+			// thread to go back to the idle queue. The previous case does not need the condition because
+			// there is a task to be run and thus the program cannot be performing (a regular) shutdown.
+			if (!_mustShutDown) {
+				ThreadManager::addIdler(this);
+				ThreadManager::switchThreads(this, nullptr);
+			}
 		}
 	}
 	
-	ThreadManager::exitAndWakeUpNext(this);
+	ThreadManager::threadShutdownSequence(this);
 	
 	assert(false);
 	return nullptr;
@@ -64,7 +86,7 @@ void WorkerThread::handleTask()
 				currentTask = parent;
 			} else {
 				// An ancestor in a taskwait that finishes at this point
-				ThreadManager::threadBecomesReady(currentTask->getThread());
+				Scheduler::taskGetsUnblocked(currentTask, _cpu);
 				readyOrDisposable = false;
 			}
 		}

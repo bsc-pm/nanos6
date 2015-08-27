@@ -30,41 +30,57 @@ public:
 		return _scheduler;
 	}
 	
-	//! \brief Add the main task
+	//! \brief Add a (ready) task that has been created or freed (but not unblocked)
 	//!
-	//! \param in mainTask the main task
-	static inline void addMainTask(Task *mainTask)
+	//! \param[in] task the task to be added
+	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
+	//!
+	//! \returns an idle HardwarePlace that is to be resumed or nullptr
+	static inline HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace)
 	{
-		_scheduler->addMainTask(mainTask);
+		return _scheduler->addReadyTask(task, hardwarePlace);
 	}
 	
-	//! \brief Add a (ready) task that has been freed by another task
+	//! \brief Add back a task that was blocked but that is now unblocked
 	//!
-	//! \param in newReadyTask the task to be added
-	//! \param in triggererTask the task that has been finished and thus has triggered the change of status of the new task to ready
-	//! \param in hardwarePlace the hardware place where the triggerer has run
-	static inline void addSiblingTask(Task *newReadyTask, Task *triggererTask, HardwarePlace const *hardwarePlace)
+	//! \param[in] unblockedTask the task that has been unblocked
+	//! \param[in] hardwarePlace the hardware place of the unblocker
+	static inline void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace)
 	{
-		_scheduler->addSiblingTask(newReadyTask, triggererTask, hardwarePlace);
-	}
-	//! \brief Add a child task that is ready
-	//!
-	//! \param in newReadyTask the task to be added
-	//! \param in hardwarePlace the hardware place where the parent task is running
-	static inline void addChildTask(Task *newReadyTask, HardwarePlace const *hardwarePlace)
-	{
-		_scheduler->addChildTask(newReadyTask, hardwarePlace);
+		_scheduler->taskGetsUnblocked(unblockedTask, hardwarePlace);
 	}
 	
+	//! \brief Check if a hardware place is idle and can be resumed
+	//! This call first checks if the hardware place is idle. If so, it marks it as not idle
+	//! and returns true. Otherwise it returns false.
+	//!
+	//! \param[in] hardwarePlace the hardware place to check
+	//!
+	//! \returns true if the hardware place must be resumed
+	static inline bool checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace)
+	{
+		return _scheduler->checkIfIdleAndGrantReactivation(hardwarePlace);
+	}
 	
 	//! \brief Get a ready task for execution
 	//!
-	//! \param in hardwarePlace the hardware place asking for scheduling orders
+	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
+	//! \param[in] currentTask a task within whose context the resulting task will run
 	//!
 	//! \returns a ready task or nullptr
-	static Task *schedule(HardwarePlace const *hardwarePlace)
+	static inline Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr)
 	{
-		return _scheduler->schedule(hardwarePlace);
+		return _scheduler->getReadyTask(hardwarePlace, currentTask);
+	}
+	
+	//! \brief Get an idle hardware place
+	//!
+	//! \param[in] force idicates that an idle hardware place must be returned (if any) even if the scheduler does not have any pending work to be assigned
+	//!
+	//! \returns a hardware place that becomes non idle or nullptr
+	static inline HardwarePlace *getIdleHardwarePlace(bool force=false)
+	{
+		return _scheduler->getIdleHardwarePlace(force);
 	}
 	
 };

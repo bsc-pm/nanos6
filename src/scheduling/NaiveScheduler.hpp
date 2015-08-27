@@ -7,26 +7,37 @@
 
 #include "SchedulerInterface.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "executors/threads/CPU.hpp"
 
 
 class Task;
-class WorkerThread;
 
 
 class NaiveScheduler: public SchedulerInterface {
-	SpinLock _readyTasksLock;
-	std::deque<Task *> _readyTasks;
+	SpinLock _globalLock;
 	
+	std::deque<Task *> _readyTasks;
+	std::deque<Task *> _unblockedTasks;
+	
+	std::deque<CPU *> _idleCPUs;
+	
+	inline CPU *getIdleCPU();
+	inline Task *getReplacementTask(CPU *hardwarePlace);
+	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	NaiveScheduler();
 	~NaiveScheduler();
 	
-	void addMainTask(Task *mainTask);
-	void addSiblingTask(Task *newReadyTask, Task *triggererTask, HardwarePlace const *hardwarePlace);
-	void addChildTask(Task *newReadyTask, HardwarePlace const *hardwarePlace);
-	Task *schedule(const HardwarePlace *hardwarePlace);
+	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace);
 	
+	void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace);
+	
+	bool checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace);
+	
+	Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr);
+	
+	HardwarePlace *getIdleHardwarePlace(bool force=false);
 };
 
 
