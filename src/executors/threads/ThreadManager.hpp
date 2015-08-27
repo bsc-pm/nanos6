@@ -33,6 +33,9 @@ class ThreadManager {
 	//! \brief per-CPU data indexed by system CPU identifier
 	static std::vector<std::atomic<CPU *>> _cpus;
 	
+	//! \brief numer of initialized CPUs
+	static std::atomic<long> _totalCPUs;
+	
 	static SpinLock _idleCPUsLock;
 	
 	//! \brief CPUs that are currently idle
@@ -83,6 +86,9 @@ public:
 	
 	//! \brief get or create the CPU object assigned to a given numerical system CPU identifier
 	static inline CPU *getCPU(size_t systemCPUId);
+	
+	//! \brief get the maximum number of CPUs that will be used
+	static inline long getTotalCPUs();
 	
 	//! \brief suspend the currently running thread due to idleness and potentially switch to another
 	//! Threads suspended with this call must only be woken up through a call to resumeAnyIdle
@@ -138,18 +144,25 @@ CPU *ThreadManager::getCPU(size_t systemCPUId)
 	
 	CPU *cpu = _cpus[systemCPUId];
 	if (cpu == nullptr) {
-		CPU *newCPU = new CPU(systemCPUId);
+		CPU *newCPU = new CPU(systemCPUId, /* INVALID VALUE */ ~0UL);
 		bool success = _cpus[systemCPUId].compare_exchange_strong(cpu, newCPU);
 		if (!success) {
 			// Another thread already did it
 			delete newCPU;
 			cpu = _cpus[systemCPUId];
 		} else {
+			newCPU->_virtualCPUId = _totalCPUs++;
 			cpu = newCPU;
 		}
 	}
 	
 	return cpu;
+}
+
+
+inline long ThreadManager::getTotalCPUs()
+{
+	return _totalCPUs;
 }
 
 

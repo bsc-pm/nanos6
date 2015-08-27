@@ -49,6 +49,7 @@ struct CPU: public CPUPlace {
 	std::deque<WorkerThread *> _readyThreads;
 	
 	size_t _systemCPUId;
+	size_t _virtualCPUId;
 	
 	//! \brief the CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;
@@ -56,7 +57,7 @@ struct CPU: public CPUPlace {
 	//! \brief the pthread attr that is used for all the threads of this CPU
 	pthread_attr_t _pthreadAttr;
 	
-	CPU(size_t systemCPUId);
+	CPU(size_t systemCPUId, size_t virtualCPUId);
 	
 	// Not copyable
 	CPU(CPU const &) = delete;

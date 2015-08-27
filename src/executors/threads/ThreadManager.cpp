@@ -10,6 +10,7 @@
 std::atomic<bool> ThreadManager::_mustExit;
 cpu_set_t ThreadManager::_processCPUMask;
 std::vector<std::atomic<CPU *>> ThreadManager::_cpus(CPU_SETSIZE);
+std::atomic<long> ThreadManager::_totalCPUs;
 SpinLock ThreadManager::_idleCPUsLock;
 std::deque<CPU *> ThreadManager::_idleCPUs;
 
@@ -17,6 +18,7 @@ std::deque<CPU *> ThreadManager::_idleCPUs;
 void ThreadManager::initialize()
 {
 	_mustExit = false;
+	_totalCPUs = 0;
 	
 	int rc = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &_processCPUMask);
 	assert(rc == 0);

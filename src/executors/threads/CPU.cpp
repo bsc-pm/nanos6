@@ -6,8 +6,8 @@
 #include <unistd.h>
 
 
-CPU::CPU(size_t systemCPUId)
-	: _activationStatus(starting_status), _runningThread(nullptr), _systemCPUId(systemCPUId)
+CPU::CPU(size_t systemCPUId, size_t virtualCPUId)
+	: _activationStatus(starting_status), _runningThread(nullptr), _systemCPUId(systemCPUId), _virtualCPUId(virtualCPUId)
 {
 	CPU_ZERO_S(sizeof(cpu_set_t), &_cpuMask);
 	CPU_SET_S(systemCPUId, sizeof(cpu_set_t), &_cpuMask);
