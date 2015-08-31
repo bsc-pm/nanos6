@@ -1,5 +1,4 @@
 *.Plo
-*.in
 *.kdev4
 *.la
 *.lo
@@ -13,10 +12,12 @@
 .libs
 INSTALL
 Makefile
+Makefile.in
 aclocal.m4
 autom4te.cache
 config-aux
 config.h
+config.h.in
 config.status
 configure
 configure.scan
