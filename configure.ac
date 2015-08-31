@@ -32,6 +32,9 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
+DX_DOT_FEATURE(ON)
+DX_INIT_DOXYGEN([nanos6_rt], [docs/Doxyfile], [docs/doxygen])
+
 # Checks for libraries.
 
 # Checks for header files.
@@ -51,6 +54,6 @@ AC_LANG_POP(C++)
 
 SSS_FIXUP_COMPILER_FLAGS
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile docs/Doxyfile])
 AC_OUTPUT
 
