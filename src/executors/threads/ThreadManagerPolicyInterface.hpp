@@ -2,7 +2,7 @@
 #define THREAD_MANAGER_POLICY_INTERFACE_HPP
 
 
-class CPU;
+struct CPU;
 class Task;
 
 

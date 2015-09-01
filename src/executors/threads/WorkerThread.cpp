@@ -11,10 +11,18 @@
 __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
 
 
+static void *worker_thread_body_wrapper(void *parameter)
+{
+	WorkerThread *workerThread = (WorkerThread *) parameter;
+	assert(workerThread != nullptr);
+	return workerThread->body();
+}
+
+
 WorkerThread::WorkerThread(CPU *cpu)
 	: _suspensionConditionVariable(), _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false), _task(nullptr)
 {
-	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, (void* (*)(void*)) &WorkerThread::body, this);
+	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, &worker_thread_body_wrapper, this);
 	assert(rc == 0);
 }
 
