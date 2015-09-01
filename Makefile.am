@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CXXFLAGS = -I$(srcdir)/src
 
 
-lib_LTLIBRARIES = libsimpless.la libsimpless-debug.la
+lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la
 noinst_LTLIBRARIES = libcheck-shutdown.la libcheck-shutdown-debug.la
 
 # See info page of libtool "Updating version info"
@@ -60,14 +60,14 @@ EXTRA_DIST = \
 	tests/infrastructure/tap-driver.sh
 
 
-libsimpless_la_CPPFLAGS = -DNDEBUG
-libsimpless_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libsimpless_la_SOURCES = $(common_sources)
-libsimpless_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+libnanos6_la_CPPFLAGS = -DNDEBUG
+libnanos6_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_la_SOURCES = $(common_sources)
+libnanos6_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
-libsimpless_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-libsimpless_debug_la_SOURCES = $(common_sources)
-libsimpless_debug_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_debug_la_SOURCES = $(common_sources)
+libnanos6_debug_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
 
 
@@ -97,8 +97,8 @@ libcheck_shutdown_debug_la_SOURCES = $(shutdown_common_sources)
 libcheck_shutdown_debug_la_LDFLAGS = -module -rpath /nowhere -ldl
 
 
-test_common_debug_libs = libsimpless-debug.la libcheck-shutdown-debug.la
-test_common_libs = libsimpless.la libcheck-shutdown.la
+test_common_debug_libs = libnanos6-debug.la libcheck-shutdown-debug.la
+test_common_libs = libnanos6.la libcheck-shutdown.la
 test_common_ldflags = -no-install
 
 noop_debug_test_SOURCES = tests/direct_api/noop/noop.cpp
