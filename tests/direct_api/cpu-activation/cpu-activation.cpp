@@ -1,15 +1,16 @@
-#include "system/ompss/AddTask.hpp"
-#include "system/ompss/TaskWait.hpp"
+#include "api/nanos6_rt_interface.h"
 
 #include "tests/infrastructure/ProgramLifecycle.hpp"
 #include "tests/infrastructure/TestAnyProtocolProducer.hpp"
 #include "tests/infrastructure/Timer.hpp"
 
+#include "executors/threads/CPUActivation.hpp"
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/ThreadManagerDebuggingInterface.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "lowlevel/ConditionVariable.hpp"
-#include "executors/threads/CPUActivation.hpp"
+#include "tasks/TaskDebuggingInterface.hpp"
+#include "tasks/Task.hpp"
 
 #include <cassert>
 
@@ -25,33 +26,56 @@ void shutdownTests()
 }
 
 
-class Task1: public Task {
+class Blocker {
 public:
 	ConditionVariable _condVar;
 	
-	Task1():
-		Task(nullptr)
+	Blocker()
 	{
 	}
 	
-	virtual void body()
+	void body()
 	{
 		_condVar.wait();
 	}
 };
 
 
-class Task2: public Task {
+static void blocker_wrapper(void *argsBlock)
+{
+	Blocker **blocker = (Blocker **) argsBlock;
+	
+	(*blocker)->body();
+}
+
+static void blocker_register_depinfo(__attribute__((unused)) void *handler, __attribute__((unused)) void *argsBlock)
+{
+}
+
+static void blocker_register_copies(__attribute__((unused)) void *handler, __attribute__((unused)) void *argsBlock)
+{
+}
+
+static nanos_task_info blocker_info = {
+	blocker_wrapper,
+	blocker_register_depinfo,
+	blocker_register_copies,
+	"blocker",
+	"blocker_source_line"
+};
+
+
+class PlacementEvaluator {
 public:
 	CPU *_expectedCPU;
 	std::vector<std::atomic<int>> &_tasksPerCPU;
 	
-	Task2(CPU *expectedCPU, std::vector<std::atomic<int>> &tasksPerCPU)
-		: Task(nullptr), _expectedCPU(expectedCPU), _tasksPerCPU(tasksPerCPU)
+	PlacementEvaluator(CPU *expectedCPU, std::vector<std::atomic<int>> &tasksPerCPU)
+		: _expectedCPU(expectedCPU), _tasksPerCPU(tasksPerCPU)
 	{
 	}
 	
-	virtual void body()
+	void body()
 	{
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
@@ -74,6 +98,30 @@ public:
 		_tasksPerCPU[cpu->_systemCPUId]++;
 	}
 	
+};
+
+
+static void placement_evaluator_wrapper(void *argsBlock)
+{
+	PlacementEvaluator **placementEvaluator = (PlacementEvaluator **) argsBlock;
+	
+	(*placementEvaluator)->body();
+}
+
+static void placement_evaluator_register_depinfo(__attribute__((unused)) void *handler, __attribute__((unused)) void *argsBlock)
+{
+}
+
+static void placement_evaluator_register_copies(__attribute__((unused)) void *handler, __attribute__((unused)) void *argsBlock)
+{
+}
+
+static nanos_task_info placement_evaluator_info = {
+	placement_evaluator_wrapper,
+	placement_evaluator_register_depinfo,
+	placement_evaluator_register_copies,
+	"placement_evaluator",
+	"placement_evaluator_source_line"
 };
 
 
@@ -142,62 +190,68 @@ int main(int argc, char **argv) {
 	/* PHASE 1 */
 	/***********/
 	
-	Task1 *task1 = new Task1();
-	ompss::addTask(task1);
+	Blocker *blocker = new Blocker();
+	Blocker **blockerParam;
+	void *blockerTask = nullptr;
+	nanos_create_task(&blocker_info, sizeof(Blocker *), (void **) &blockerParam, &blockerTask);
+	*blockerParam = blocker;
+	nanos_submit_task(blockerTask);
 	
-	while (task1->getThread() == nullptr) {
+	Task *actualRuntimeTask = TaskDebuggingInterface::getRuntimeTask(blockerTask);
+	
+	while (actualRuntimeTask->getThread() == nullptr) {
 		// Wait
 	}
 	
-	CPU *task1CPU = task1->getThread()->getHardwarePlace();
-	assert(task1CPU != nullptr);
+	CPU *blockerCPU = actualRuntimeTask->getThread()->getHardwarePlace();
+	assert(blockerCPU != nullptr);
 	
 	tap.evaluate(
-		task1CPU->_activationStatus == CPU::enabled_status,
+		blockerCPU->_activationStatus == CPU::enabled_status,
 		"Check that the CPU that runs a task is enabled"
 	); // 2
 	
-	CPUActivation::disable(task1CPU->_systemCPUId);
+	CPUActivation::disable(blockerCPU->_systemCPUId);
 	tap.evaluate(
-		task1CPU->_activationStatus == CPU::disabling_status,
+		blockerCPU->_activationStatus == CPU::disabling_status,
 		"Check that attempting to disable a CPU will set it to disabling status"
 	); // 3
 	tap.bailOutAndExitIfAnyFailed();
 	
-	task1->_condVar.signal();
+	blocker->_condVar.signal();
 	tap.timedEvaluate(
 		[&]() {
-			return (task1CPU->_activationStatus == CPU::disabled_status);
+			return (blockerCPU->_activationStatus == CPU::disabled_status);
 		},
 		1000000, // 1 second
 		"Check that the CPU completes the deactivation in a reasonable amount of time"
 	); // 4
 	tap.bailOutAndExitIfAnyFailed();
 	
-	CPUActivation::disable(task1CPU->_systemCPUId);
+	CPUActivation::disable(blockerCPU->_systemCPUId);
 	tap.evaluate(
-		task1CPU->_activationStatus == CPU::disabled_status,
+		blockerCPU->_activationStatus == CPU::disabled_status,
 		"Check that attempting to disable an already disabled CPU keeps it untouched"
 	); // 5
 	
-	CPUActivation::enable(task1CPU->_systemCPUId);
+	CPUActivation::enable(blockerCPU->_systemCPUId);
 	tap.timedEvaluate(
 		[&]() {
-			return (task1CPU->_activationStatus == CPU::enabled_status);
+			return (blockerCPU->_activationStatus == CPU::enabled_status);
 		},
 		1000000, // 1 second
 		"Check that enabling a CPU will eventually set it to enabled"
 	); // 6
 	tap.bailOutAndExitIfAnyFailed();
 	
-	CPUActivation::enable(task1CPU->_systemCPUId);
+	CPUActivation::enable(blockerCPU->_systemCPUId);
 	tap.evaluate(
-		task1CPU->_activationStatus == CPU::enabled_status,
+		blockerCPU->_activationStatus == CPU::enabled_status,
 		"Check that reenabling a CPU does not change its status"
 	); // 7
 	tap.bailOutAndExitIfAnyFailed();
 	
-	ompss::taskWait();
+	nanos_taskwait();
 	
 	
 	/***********/
@@ -230,11 +284,15 @@ int main(int argc, char **argv) {
 	}
 	
 	for (int i=0; i < activeCPUs*VALIDATION_STEPS_PER_CPU; i++) {
-		Task2 *task2Instance = new Task2(thisCPU, tasksPerCPU);
-		ompss::addTask(task2Instance);
+		PlacementEvaluator *placementEvaluator = new PlacementEvaluator(thisCPU, tasksPerCPU);
+		PlacementEvaluator **placementEvaluatorParam = nullptr;
+		void *placementEvaluatorTask = nullptr;
+		nanos_create_task(&placement_evaluator_info, sizeof(PlacementEvaluator *), (void **) &placementEvaluatorParam, &placementEvaluatorTask);
+		*placementEvaluatorParam = placementEvaluator;
+		nanos_submit_task(placementEvaluatorTask);
 	}
 	
-	ompss::taskWait();
+	nanos_taskwait();
 	
 	
 	/***********/

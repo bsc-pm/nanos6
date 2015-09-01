@@ -10,6 +10,10 @@ lib_current = 0
 lib_revision = 0
 lib_age = 0
 
+pkginclude_HEADERS = \
+	src/api/nanos6_rt_interface.h
+
+
 common_sources = \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
@@ -42,10 +46,9 @@ common_sources = \
 	src/system/MainTask.cpp \
 	src/system/MainTask.hpp \
 	src/system/ompss/AddTask.cpp \
-	src/system/ompss/AddTask.hpp \
 	src/system/ompss/TaskWait.cpp \
-	src/system/ompss/TaskWait.hpp \
-	src/tasks/Task.hpp
+	src/tasks/Task.hpp \
+	src/tasks/TaskDebuggingInterface.hpp
 
 
 noinst_HEADERS = \
@@ -98,45 +101,45 @@ test_common_debug_libs = libsimpless-debug.la libcheck-shutdown-debug.la
 test_common_libs = libsimpless.la libcheck-shutdown.la
 test_common_ldflags = -no-install
 
-noop_debug_test_SOURCES = tests/apiless/noop/noop.cpp
+noop_debug_test_SOURCES = tests/direct_api/noop/noop.cpp
 noop_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 noop_debug_test_LDADD = $(test_common_debug_libs)
 noop_debug_test_LDFLAGS = $(test_common_ldflags)
 
-noop_test_SOURCES = tests/apiless/noop/noop.cpp
+noop_test_SOURCES = tests/direct_api/noop/noop.cpp
 noop_test_CPPFLAGS = -DNDEBUG
 noop_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 noop_test_LDADD = $(test_common_libs)
 noop_test_LDFLAGS = $(test_common_ldflags)
 
-single_nest_debug_test_SOURCES = tests/apiless/single-nest/single-nest.cpp
+single_nest_debug_test_SOURCES = tests/direct_api/single-nest/single-nest.cpp
 single_nest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 single_nest_debug_test_LDADD = $(test_common_debug_libs)
 single_nest_debug_test_LDFLAGS = $(test_common_ldflags)
 
-single_nest_test_SOURCES = tests/apiless/single-nest/single-nest.cpp
+single_nest_test_SOURCES = tests/direct_api/single-nest/single-nest.cpp
 single_nest_test_CPPFLAGS = -DNDEBUG
 single_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 single_nest_test_LDADD = $(test_common_libs)
 single_nest_test_LDFLAGS = $(test_common_ldflags)
 
-fibonacci_debug_test_SOURCES = tests/apiless/fibonacci/fibonacci.cpp
+fibonacci_debug_test_SOURCES = tests/direct_api/fibonacci/fibonacci.cpp
 fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_debug_test_LDADD = $(test_common_debug_libs)
 fibonacci_debug_test_LDFLAGS = $(test_common_ldflags)
 
-fibonacci_test_SOURCES = tests/apiless/fibonacci/fibonacci.cpp
+fibonacci_test_SOURCES = tests/direct_api/fibonacci/fibonacci.cpp
 fibonacci_test_CPPFLAGS = -DNDEBUG
 fibonacci_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_test_LDADD = $(test_common_libs)
 fibonacci_test_LDFLAGS = $(test_common_ldflags)
 
-cpu_activation_debug_test_SOURCES = tests/apiless/cpu-activation/cpu-activation.cpp
+cpu_activation_debug_test_SOURCES = tests/direct_api/cpu-activation/cpu-activation.cpp
 cpu_activation_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 cpu_activation_debug_test_LDADD = $(test_common_debug_libs) -lpthread
 cpu_activation_debug_test_LDFLAGS = $(test_common_ldflags)
 
-cpu_activation_test_SOURCES = tests/apiless/cpu-activation/cpu-activation.cpp
+cpu_activation_test_SOURCES = tests/direct_api/cpu-activation/cpu-activation.cpp
 cpu_activation_test_CPPFLAGS = -DNDEBUG
 cpu_activation_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 cpu_activation_test_LDADD = $(test_common_libs) -lpthread

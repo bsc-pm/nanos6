@@ -1,4 +1,4 @@
-#include "TaskWait.hpp"
+#include "api/nanos6_rt_interface.h"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -11,9 +11,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace ompss {
-
-void taskWait()
+void nanos_taskwait()
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
@@ -115,5 +113,3 @@ void taskWait()
 	currentTask->markAsUnblocked();
 }
 
-
-} // namespace ompss

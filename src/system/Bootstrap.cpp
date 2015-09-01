@@ -6,13 +6,10 @@
 #include "LeaderThread.hpp"
 #include "MainTask.hpp"
 
+#include "api/nanos6_rt_interface.h"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "scheduling/Scheduler.hpp"
-
-
-// The actual "main" function that the runtime will wrap as a task
-static MainTask::main_function_t *appMain;
 
 
 #if __powerpc__
@@ -45,7 +42,11 @@ extern "C" typedef int libc_start_main_function_t(
 #endif
 
 
-namespace simpless {
+namespace nanos6 {
+	// The actual "main" function that the runtime will wrap as a task
+	static main_function_t *appMain;
+	
+	
 	//! \brief This function creates the main task, submits it and keeps the initial thread doing maintainance duties
 	//!
 	//! \returns the return code of the "main" function
@@ -53,8 +54,23 @@ namespace simpless {
 		Scheduler::initialize();
 		ThreadManagerPolicy::initialize();
 		
-		Task *mainTask = new MainTask(appMain, argc, argv, envp);
-		Scheduler::addReadyTask(mainTask, nullptr);
+		// Create the task
+		main_task_args_block_t *argsBlock = nullptr;
+		void *mainTask = nullptr;
+		nanos_create_task(
+			&main_task_info,
+			sizeof(main_task_args_block_t),
+			/* OUT */ (void **) &argsBlock,
+			/* OUT */ &mainTask
+		);
+		assert(argsBlock != nullptr);
+		assert(mainTask != nullptr);
+		
+		// Fill in its parameters
+		new (argsBlock) main_task_args_block_t(appMain, argc, argv, envp);
+		
+		// Submit it
+		nanos_submit_task(mainTask);
 		
 		ThreadManager::initialize();
 		
@@ -67,7 +83,7 @@ namespace simpless {
 }
 
 
-//! \brief This function overrides the function of the same name and is in charge of handling the call to "main". In this case, it calls simpless::bootstrap instead.
+//! \brief This function overrides the function of the same name and is in charge of handling the call to "main". In this case, it calls nanos6::bootstrap instead.
 #if __powerpc__
 extern "C" int __libc_start_main(
 	int argc,
@@ -83,11 +99,11 @@ extern "C" int __libc_start_main(
 		(libc_start_main_function_t *) dlsym(RTLD_NEXT, "__libc_start_main");
 	assert(real_libc_start_main != nullptr);
 	
-	// Interpose simpless::bootstrap instead of main into the overrided function
+	// Interpose nanos6::bootstrap instead of main into the overrided function
 	assert(startupInfo != nullptr);
-	appMain = startupInfo->main;
+	nanos6::appMain = startupInfo->main;
 	
-	struct startup_info newStartupInfo = { startupInfo->sda_base, simpless::bootstrap, startupInfo->init, startupInfo->fini };
+	struct startup_info newStartupInfo = { startupInfo->sda_base, nanos6::bootstrap, startupInfo->init, startupInfo->fini };
 	
 	return real_libc_start_main(argc, argv, envp, auxvec, rtld_fini, &newStartupInfo, stackOnEntry);
 }
@@ -106,9 +122,9 @@ extern "C" int __libc_start_main(
 		(libc_start_main_function_t *) dlsym(RTLD_NEXT, "__libc_start_main");
 	assert(real_libc_start_main != nullptr);
 	
-	appMain = main;
+	nanos6::appMain = main;
 	
-	// Interpose simpless::bootstrap instead of main into the overrided function
-	return real_libc_start_main(simpless::bootstrap, argc, argv, init, fini, rtld_fini, stack_end);
+	// Interpose nanos6::bootstrap instead of main into the overrided function
+	return real_libc_start_main(nanos6::bootstrap, argc, argv, init, fini, rtld_fini, stack_end);
 }
 #endif

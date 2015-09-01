@@ -6,6 +6,7 @@
 #include <cassert>
 #include <set>
 
+#include "api/nanos6_rt_interface.h"
 #include "lowlevel/SpinLock.hpp"
 
 
@@ -17,6 +18,10 @@ class WorkerThread;
 
 
 class Task {
+	void *_argsBlock;
+	
+	nanos_task_info *_taskInfo;
+	
 	//! The thread assigned to this task, nullptr if the task has finished (but possibly waiting its children)
 	std::atomic<WorkerThread *> _thread;
 	
@@ -30,8 +35,8 @@ class Task {
 	void *_schedulerInfo;
 	
 public:
-	Task(Task *parent)
-		: _thread(nullptr), _countdownToBeWokenUp(1), _parent(parent), _schedulerInfo(nullptr)
+	Task(void *argsBlock, nanos_task_info *taskInfo, Task *parent)
+		: _argsBlock(argsBlock), _taskInfo(taskInfo), _thread(nullptr), _countdownToBeWokenUp(1), _parent(parent), _schedulerInfo(nullptr)
 	{
 		if (parent != nullptr) {
 			parent->addChild(this);
@@ -43,8 +48,17 @@ public:
 	}
 	
 	
+	inline nanos_task_info *getTaskInfo() const
+	{
+		return _taskInfo;
+	}
+	
 	//! Actual code of the task
-	virtual void body() = 0;
+	inline void body()
+	{
+		assert(_taskInfo != nullptr);
+		_taskInfo->run(_argsBlock);
+	}
 	
 	
 	//! \brief sets the thread assigned to tun the task
