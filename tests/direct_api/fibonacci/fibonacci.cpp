@@ -4,7 +4,7 @@
 #include "tests/infrastructure/Timer.hpp"
 
 
-#define N 5
+#define N 26
 #define INTEGER unsigned long
 
 
