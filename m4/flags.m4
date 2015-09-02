@@ -5,8 +5,8 @@ AC_DEFUN([AC_CHECK_COMPILER_FLAG],
 		ac_[]_AC_LANG_ABBREV[]_werror_flag=yes
 		
 		ac_save_[]_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS"
-		_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS $1"
 		AC_MSG_CHECKING([if $[]_AC_CC[] $[]_AC_LANG_PREFIX[]FLAGS supports the $1 flag])
+		_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS $1"
 		AC_LINK_IFELSE(
 			[AC_LANG_PROGRAM([[]], [[]])],
 			[
