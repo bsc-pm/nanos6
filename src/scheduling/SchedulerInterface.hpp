@@ -47,7 +47,7 @@ public:
 	
 	//! \brief Get an idle hardware place
 	//!
-	//! \param[in] force idicates that an idle hardware place must be returned (if any) even if the scheduler does not have any pending work to be assigned
+	//! \param[in] force indicates that an idle hardware place must be returned (if any) even if the scheduler does not have any pending work to be assigned
 	//!
 	//! \returns a hardware place that becomes non idle or nullptr
 	virtual HardwarePlace *getIdleHardwarePlace(bool force=false) = 0;
