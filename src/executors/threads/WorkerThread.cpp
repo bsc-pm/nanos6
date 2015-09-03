@@ -90,7 +90,9 @@ void WorkerThread::handleTask()
 			
 			if (currentTask->hasFinished()) {
 				readyOrDisposable = currentTask->unlinkFromParent();
-				delete currentTask; // FIXME: Need a proper object recycling mechanism here
+				// NOTE: The memory layout is defined in nanos_create_task
+				currentTask->~Task();
+				free(currentTask->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here
 				currentTask = parent;
 			} else {
 				// An ancestor in a taskwait that finishes at this point

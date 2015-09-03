@@ -47,6 +47,11 @@ public:
 	{
 	}
 	
+	//! Get the address of the arguments block
+	inline void *getArgsBlock() const
+	{
+		return _argsBlock;
+	}
 	
 	inline nanos_task_info *getTaskInfo() const
 	{
