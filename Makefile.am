@@ -32,6 +32,7 @@ common_sources = \
 	src/hardware/places/HardwarePlace.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/ConditionVariable.hpp \
+	src/lowlevel/FatalErrorHandler.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/scheduling/DefaultScheduler.hpp \

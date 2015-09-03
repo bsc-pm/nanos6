@@ -7,6 +7,7 @@
 #include "CPUActivation.hpp"
 #include "ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 
 std::atomic<bool> ThreadManager::_mustExit;
@@ -29,7 +30,7 @@ void ThreadManager::initialize()
 	_mainShutdownControllerThread = nullptr;
 	
 	int rc = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &_processCPUMask);
-	assert(rc == 0);
+	FatalErrorHandler::handle(rc, " when retrieving the affinity of the current pthread ", pthread_self());
 	
 	// Set up the pthread attributes for the threads of each CPU
 	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
@@ -148,7 +149,7 @@ void ThreadManager::shutdown()
 		assert(shutdownControllerThread != nullptr);
 		
 		int rc = pthread_join(shutdownControllerThread->_pthread, nullptr);
-		assert(rc == 0);
+		FatalErrorHandler::handle(rc, " during shutdown when joining pthread ", shutdownControllerThread->_pthread);
 	}
 	
 	// Sanity check
@@ -190,7 +191,7 @@ void ThreadManager::threadShutdownSequence(WorkerThread *currentThread)
 				next->resume();
 				
 				int rc = pthread_join(next->_pthread, nullptr);
-				assert(rc == 0);
+				FatalErrorHandler::handle(rc, " during shutdown when joining pthread ", next->_pthread, " from pthread ", currentThread->_pthread, " in CPU ", cpu->_systemCPUId);
 			} else {
 				// No more idle threads (for the moment)
 				if (!isMainController) {

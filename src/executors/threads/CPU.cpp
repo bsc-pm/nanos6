@@ -1,6 +1,5 @@
 #include "CPU.hpp"
-
-#include <cassert>
+#include "lowlevel/FatalErrorHandler.hpp"
 
 #include <pthread.h>
 #include <unistd.h>
@@ -13,9 +12,9 @@ CPU::CPU(size_t systemCPUId, size_t virtualCPUId)
 	CPU_SET_S(systemCPUId, sizeof(cpu_set_t), &_cpuMask);
 	
 	int rc = pthread_attr_init(&_pthreadAttr);
-	assert(rc == 0);
+	FatalErrorHandler::handle(rc, " in call to pthread_attr_init");
 	
 	rc = pthread_attr_setaffinity_np(&_pthreadAttr, sizeof(cpu_set_t), &_cpuMask);
-	assert(rc == 0);
+	FatalErrorHandler::handle(rc, " when setting the affinity of a pthread in pthread_attr to ", systemCPUId);
 }
 

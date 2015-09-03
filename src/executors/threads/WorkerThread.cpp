@@ -1,6 +1,7 @@
 #include "CPUActivation.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
@@ -23,7 +24,7 @@ WorkerThread::WorkerThread(CPU *cpu)
 	: _suspensionConditionVariable(), _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false), _task(nullptr)
 {
 	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, &worker_thread_body_wrapper, this);
-	assert(rc == 0);
+	FatalErrorHandler::handle(rc, " when creating a pthread in CPU ", cpu->_systemCPUId);
 }
 
 

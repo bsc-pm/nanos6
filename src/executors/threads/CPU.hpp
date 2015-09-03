@@ -3,6 +3,7 @@
 
 
 #include "hardware/places/CPUPlace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <atomic>
@@ -62,7 +63,7 @@ struct CPU: public CPUPlace {
 	inline void bindThread(pthread_t internalPThread)
 	{
 		int rc = pthread_setaffinity_np(internalPThread, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
-		assert(rc == 0);
+		FatalErrorHandler::handle(rc, " when changing affinity of pthread ", internalPThread, " to CPU ", _systemCPUId);
 	}
 	
 };

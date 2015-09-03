@@ -7,6 +7,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/HardwarePlace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include <tasks/Task.hpp>
 
@@ -32,20 +33,7 @@ void nanos_create_task(nanos_task_info *taskInfo, size_t args_block_size, void *
 	
 	// Allocation and layout
 	int rc = posix_memalign(args_block_pointer, TASK_ALIGNMENT, args_block_size + sizeof(Task));
-	if (__builtin_expect(rc != 0, 0)) {
-		if (rc == EINVAL) {
-			std::cerr << "Error: Invalid alignment when trying to allocate memory for a new task." << std::endl;
-		} else if (rc == ENOMEM) {
-			std::cerr << "Error: out of memory when trying to allocate memory for a new task." << std::endl;
-		} else {
-			std::cerr << "Unknown error when trying to allocate memory for a new task." << std::endl;
-		}
-#ifndef NDEBUG
-		abort();
-#else
-		exit(1);
-#endif
-	}
+	FatalErrorHandler::handle(rc, " when trying to allocate memory for a new task of type '", taskInfo->task_label, "' with args block of size ", args_block_size);
 	
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
