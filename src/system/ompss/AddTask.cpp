@@ -1,3 +1,8 @@
+// This is for posix_memalign
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE 600
+#endif
+
 #include "api/nanos6_rt_interface.h"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -7,7 +12,7 @@
 
 #include <cassert>
 #include <cstdlib>
-
+#include <iostream>
 
 #ifndef NDEBUG
 #include "system/MainTask.hpp"
@@ -15,7 +20,7 @@
 
 
 #define DATA_ALIGNMENT_SIZE sizeof(void *)
-#define TASK_ALIGNMENT_SIZE 128
+#define TASK_ALIGNMENT 128
 
 
 void nanos_create_task(nanos_task_info *taskInfo, size_t args_block_size, void **args_block_pointer, void **task_pointer)
@@ -25,12 +30,27 @@ void nanos_create_task(nanos_task_info *taskInfo, size_t args_block_size, void *
 	size_t correction = (DATA_ALIGNMENT_SIZE - missalignment) & (DATA_ALIGNMENT_SIZE - 1);
 	args_block_size += correction;
 	
+	// Allocation and layout
+	int rc = posix_memalign(args_block_pointer, TASK_ALIGNMENT, args_block_size + sizeof(Task));
+	if (__builtin_expect(rc != 0, 0)) {
+		if (rc == EINVAL) {
+			std::cerr << "Error: Invalid alignment when trying to allocate memory for a new task." << std::endl;
+		} else if (rc == ENOMEM) {
+			std::cerr << "Error: out of memory when trying to allocate memory for a new task." << std::endl;
+		} else {
+			std::cerr << "Unknown error when trying to allocate memory for a new task." << std::endl;
+		}
+#ifndef NDEBUG
+		abort();
+#else
+		exit(1);
+#endif
+	}
+	
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
 	void *&task = *task_pointer;
 	
-	// Allocation and layout
-	args_block = aligned_alloc(TASK_ALIGNMENT_SIZE, args_block_size + sizeof(Task));
 	task = (char *)args_block + args_block_size;
 	
 	// Construct the Task object
