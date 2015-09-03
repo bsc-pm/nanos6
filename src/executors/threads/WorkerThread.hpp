@@ -40,12 +40,10 @@ class WorkerThread {
 	static __thread WorkerThread *_currentWorkerThread;
 	
 	//! \brief Suspend the thread
-	//!
-	//! \returns true if it was pre-resumed
-	inline bool suspend()
+	inline void suspend()
 	{
 		assert(this == _currentWorkerThread);
-		return _suspensionConditionVariable.wait();
+		_suspensionConditionVariable.wait();
 	}
 	
 	//! \brief Resume the thread
