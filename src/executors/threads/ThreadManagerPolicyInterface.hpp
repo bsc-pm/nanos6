@@ -16,7 +16,7 @@ public:
 	//!
 	//! \param[in] replacementTask the task that is to be run
 	//! \param[in] currentTask the task that is blocked on the thread
-	//! \param[in] cpu the CPU where currentTask is runnun
+	//! \param[in] cpu the CPU where currentTask is running
 	//!
 	//! \returns true is replacementTask is to be run within the same thread as currentTask (which is blocked)
 	virtual bool checkIfMustRunInline(Task *replacementTask, Task *currentTask, CPU *cpu) = 0;

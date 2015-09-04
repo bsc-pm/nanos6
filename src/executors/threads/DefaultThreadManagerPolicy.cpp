@@ -6,7 +6,7 @@
 #include "tasks/Task.hpp"
 
 
-bool DefaultThreadManagerPolicy::checkIfMustRunInline (Task *replacementTask, Task *currentTask, CPU *cpu)
+bool DefaultThreadManagerPolicy::checkIfMustRunInline(Task *replacementTask, Task *currentTask, CPU *cpu)
 {
 	return CPUActivation::acceptsWork(cpu) && (replacementTask->getParent() == currentTask);
 }
