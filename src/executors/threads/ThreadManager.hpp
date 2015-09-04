@@ -102,6 +102,9 @@ public:
 	//! \returns the thread that has been resumed or nullptr
 	static inline WorkerThread *resumeIdle(CPU *idleCPU, bool inInitializationOrShutdown=false, bool doNotCreate=false);
 	
+	//! \brief migrate the currently running thread to a given CPU
+	static inline void migrateThread(WorkerThread *currentThread, CPU *cpu);
+	
 	//! \brief returns true if the thread must shut down
 	static inline bool mustExit();
 	
@@ -279,6 +282,22 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 	resumeThread(idleThread, idleCPU, inInitializationOrShutdown);
 	
 	return idleThread;
+}
+
+
+inline void ThreadManager::migrateThread(WorkerThread *currentThread, CPU *cpu)
+{
+	assert(currentThread != nullptr);
+	assert(cpu != nullptr);
+	
+	assert(WorkerThread::getCurrentWorkerThread() == currentThread);
+	assert(currentThread->_cpu != cpu);
+	
+	assert(currentThread->_cpuToBeResumedOn == nullptr);
+	
+	// Since it is the same thread the one that migrates itself, change the CPU directly
+	currentThread->_cpu = cpu;
+	cpu->bindThread(currentThread->_pthread);
 }
 
 
