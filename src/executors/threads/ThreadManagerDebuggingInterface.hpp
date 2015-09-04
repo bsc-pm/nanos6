@@ -24,6 +24,16 @@ public:
 		return ThreadManager::_processCPUMask;
 	}
 	
+	static bool hasFinishedCPUInitialization()
+	{
+		return ThreadManager::_finishedCPUInitialization;
+	}
+	
+	static long getTotalCPUs()
+	{
+		return ThreadManager::_totalCPUs;
+	}
+	
 };
 
 

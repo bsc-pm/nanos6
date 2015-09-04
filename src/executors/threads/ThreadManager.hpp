@@ -36,6 +36,9 @@ class ThreadManager {
 	//! \brief numer of initialized CPUs
 	static std::atomic<long> _totalCPUs;
 	
+	//! \brief indicates if the thread manager has finished initializing the CPUs
+	static std::atomic<bool> _finishedCPUInitialization;
+	
 	static SpinLock _idleThreadsLock;
 	
 	//! \brief threads blocked due to idleness
