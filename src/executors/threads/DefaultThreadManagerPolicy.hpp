@@ -17,6 +17,7 @@ public:
 	}
 	
 	bool checkIfMustRunInline(Task *replacementTask, Task *currentTask, CPU *cpu);
+	bool checkIfUnblockedMustPreemtUnblocker(Task *unblockerTask, Task *unblockedTask, CPU *cpu);
 };
 
 

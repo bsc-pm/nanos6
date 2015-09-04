@@ -94,6 +94,24 @@ void nanos_register_write_depinfo(void *handler, void *start, size_t length);
 void nanos_register_readwrite_depinfo(void *handler, void *start, size_t length);
 
 
+//! \brief User-side lock primitive with initialization on first call
+//!
+//! Performs an user-side lock over a mutex (of type void *) that must be initially
+//! initialized to nullptr. The first call to this function performs the actual
+//! mutex allocation and stores the handler in the address that is passed.
+//!
+//! \param[in,out] handlerPointer a pointer to the handler, which is of type void *, that represent the mutex
+void nanos_user_lock(void **handlerPointer);
+
+//! \brief User-side unlock primitive
+//!
+//! Performs an user-side unlock over a mutex (of type void *) initialized during
+//! the first call to nanos_user_lock.
+//!
+//! \param[in] handlerPointer a pointer to the handler, which is of type void *, that represent the mutex
+void nanos_user_unlock(void **handlerPointer);
+
+
 // TODO: nanos_register_input_copy, nanos_register_output_copy and nanos_register_inout_copy
 
 

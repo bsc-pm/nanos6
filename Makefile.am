@@ -50,6 +50,7 @@ common_sources = \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
+	src/system/ompss/UserMutex.cpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp
 
@@ -82,7 +83,8 @@ enabled_tests = \
 	noop.debug.test noop.test \
 	single-nest.debug.test single-nest.test \
 	fibonacci.debug.test fibonacci.test \
-	cpu-activation.debug.test cpu-activation.test
+	cpu-activation.debug.test cpu-activation.test \
+	critical.debug.test critical.test
 
 disabled_tests =
 
@@ -147,6 +149,17 @@ cpu_activation_test_CPPFLAGS = -DNDEBUG
 cpu_activation_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 cpu_activation_test_LDADD = $(test_common_libs) -lpthread
 cpu_activation_test_LDFLAGS = $(test_common_ldflags)
+
+critical_debug_test_SOURCES = tests/direct_api/critical/critical.cpp
+critical_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+critical_debug_test_LDADD = $(test_common_debug_libs)
+critical_debug_test_LDFLAGS = $(test_common_ldflags)
+
+critical_test_SOURCES = tests/direct_api/critical/critical.cpp
+critical_test_CPPFLAGS = -DNDEBUG
+critical_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+critical_test_LDADD = $(test_common_libs)
+critical_test_LDFLAGS = $(test_common_ldflags)
 
 
 check_PROGRAMS = $(enabled_tests) $(disabled_tests)

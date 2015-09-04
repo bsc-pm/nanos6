@@ -37,6 +37,24 @@ public:
 		
 		return _policy->checkIfMustRunInline(replacementTask, currentTask, cpu);
 	}
+	
+	
+	//! \brief check if a task that has just been unblocked must preempt its unblocker
+	//!
+	//! \param[in] unblockerTask the task that unblocks the other task (the triggerer)
+	//! \param[in] unblockedTask the task that is unblocked by the other task
+	//! \param[in] cpu the CPU where unblockerTask is running
+	//!
+	//! \returns true if unblockedTask must preempt unblockerTask
+	static bool checkIfUnblockedMustPreemtUnblocker(Task *unblockerTask, Task *unblockedTask, CPU *cpu)
+	{
+		assert(unblockerTask != nullptr);
+		assert(unblockedTask != nullptr);
+		assert(cpu != nullptr);
+		
+		return _policy->checkIfUnblockedMustPreemtUnblocker(unblockerTask, unblockedTask, cpu);
+	}
+	
 };
 
 

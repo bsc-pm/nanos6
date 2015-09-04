@@ -21,6 +21,14 @@ public:
 	//! \returns true is replacementTask is to be run within the same thread as currentTask (which is blocked)
 	virtual bool checkIfMustRunInline(Task *replacementTask, Task *currentTask, CPU *cpu) = 0;
 	
+	//! \brief check if a task that has just been unblocked must preempt its unblocker
+	//!
+	//! \param[in] unblockerTask the task that unblocks the other task (the triggerer)
+	//! \param[in] unblockedTask the task that is unblocked by the other task
+	//! \param[in] cpu the CPU where unblockerTask is running
+	//!
+	//! \returns true if unblockedTask must preempt unblockerTask
+	virtual bool checkIfUnblockedMustPreemtUnblocker(Task *unblockerTask, Task *unblockedTask, CPU *cpu) = 0;
 };
 
 

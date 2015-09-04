@@ -11,3 +11,11 @@ bool DefaultThreadManagerPolicy::checkIfMustRunInline(Task *replacementTask, Tas
 	return CPUActivation::acceptsWork(cpu) && (replacementTask->getParent() == currentTask);
 }
 
+bool DefaultThreadManagerPolicy::checkIfUnblockedMustPreemtUnblocker(
+	__attribute__((unused)) Task *unblockerTask,
+	__attribute__((unused)) Task *unblockedTask,
+	__attribute__((unused)) CPU *cpu
+) {
+	return true;
+}
+
