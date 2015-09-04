@@ -86,6 +86,13 @@ public:
 	//! \param[in] idleThread a thread that has become idle
 	static inline void addIdler(WorkerThread *idleThread);
 	
+	//! \brief resume a thread on a given CPU
+	//!
+	//! \param[in] suspendedThread the thread that will be resumed
+	//! \param[in] cpu the CPU on which to resume the thread
+	//! \param[in] inInitializationOrShutdown true if it should not enforce assertions that are not valid during initialization and shutdown
+	static inline void resumeThread(WorkerThread *suspendedThread, CPU *cpu, bool inInitializationOrShutdown=false);
+	
 	//! \brief resume an idle thread on a given CPU
 	//!
 	//! \param[in] idleCPU the CPU on which to resume an idle thread
@@ -228,6 +235,30 @@ inline void ThreadManager::addIdler(WorkerThread *idleThread)
 }
 
 
+inline void ThreadManager::resumeThread(WorkerThread *suspendedThread, CPU *cpu, bool inInitializationOrShutdown)
+{
+	assert(cpu != nullptr);
+	
+	if (!inInitializationOrShutdown) {
+		assert(WorkerThread::getCurrentWorkerThread() != nullptr);
+		assert(WorkerThread::getCurrentWorkerThread() != suspendedThread);
+	}
+	
+	assert(suspendedThread->_cpuToBeResumedOn == nullptr);
+	suspendedThread->_cpuToBeResumedOn = cpu;
+	if (suspendedThread->_cpu != cpu) {
+		cpu->bindThread(suspendedThread->_pthread);
+	}
+	
+	if (!inInitializationOrShutdown) {
+		assert(suspendedThread != WorkerThread::getCurrentWorkerThread());
+	}
+	
+	// Resume it
+	suspendedThread->resume();
+}
+
+
 inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializationOrShutdown, bool doNotCreate)
 {
 	assert(idleCPU != nullptr);
@@ -245,18 +276,7 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 		return nullptr;
 	}
 	
-	assert(idleThread->_cpuToBeResumedOn == nullptr);
-	idleThread->_cpuToBeResumedOn = idleCPU;
-	if (idleThread->_cpu != idleCPU) {
-		idleCPU->bindThread(idleThread->_pthread);
-	}
-	
-	if (!inInitializationOrShutdown) {
-		assert(idleThread != WorkerThread::getCurrentWorkerThread());
-	}
-	
-	// Resume it
-	idleThread->resume();
+	resumeThread(idleThread, idleCPU, inInitializationOrShutdown);
 	
 	return idleThread;
 }
