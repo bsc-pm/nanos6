@@ -52,10 +52,7 @@ void ThreadManager::initialize()
 void ThreadManager::threadStartup(WorkerThread *currentThread)
 {
 	assert(currentThread != nullptr);
-	
-	CPU *cpu = currentThread->_cpu;
-	
-	assert(cpu != nullptr);
+	assert(currentThread->_cpu != nullptr);
 	
 	WorkerThread::_currentWorkerThread = currentThread;
 	
