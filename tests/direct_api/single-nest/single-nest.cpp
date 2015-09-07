@@ -12,6 +12,11 @@
 #include "tests/infrastructure/Timer.hpp"
 
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define __FILE_LINE__ (__FILE__ ":" TOSTRING(__LINE__))
+
+
 extern TestAnyProtocolProducer tap;
 std::atomic<bool> theOuterTaskHasFinished;
 
@@ -101,7 +106,10 @@ int main(int argc, char **argv)
 	OuterExplicitTaskChecker *outer_explicit_task_checker = new OuterExplicitTaskChecker();
 	OuterExplicitTaskChecker **outer_explicit_task_checker_param;
 	void *outer_explicit_task_checker_task = nullptr;
-	nanos_create_task(&outer_explicit_task_checker_info, sizeof(OuterExplicitTaskChecker *), (void **) &outer_explicit_task_checker_param, &outer_explicit_task_checker_task);
+	static nanos_task_invocation_info outer_explicit_task_checker_invocation_info = {
+		__FILE_LINE__
+	};
+	nanos_create_task(&outer_explicit_task_checker_info, &outer_explicit_task_checker_invocation_info, sizeof(OuterExplicitTaskChecker *), (void **) &outer_explicit_task_checker_param, &outer_explicit_task_checker_task);
 	*outer_explicit_task_checker_param = outer_explicit_task_checker;
 	nanos_submit_task(outer_explicit_task_checker_task);
 	

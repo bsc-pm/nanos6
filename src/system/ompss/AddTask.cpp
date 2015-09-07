@@ -24,7 +24,7 @@
 #define TASK_ALIGNMENT 128
 
 
-void nanos_create_task(nanos_task_info *taskInfo, size_t args_block_size, void **args_block_pointer, void **task_pointer)
+void nanos_create_task(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo, size_t args_block_size, void **args_block_pointer, void **task_pointer)
 {
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
@@ -42,7 +42,7 @@ void nanos_create_task(nanos_task_info *taskInfo, size_t args_block_size, void *
 	task = (char *)args_block + args_block_size;
 	
 	// Construct the Task object
-	new (task) Task(args_block, taskInfo, /* Delayed to the submit call */ nullptr);
+	new (task) Task(args_block, taskInfo, taskInvokationInfo, /* Delayed to the submit call */ nullptr);
 }
 
 

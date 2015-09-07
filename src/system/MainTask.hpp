@@ -22,6 +22,7 @@ namespace nanos6 {
 	};
 	
 	extern nanos_task_info main_task_info;
+	extern nanos_task_invocation_info main_task_invocation_info;
 }
 
 

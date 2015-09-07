@@ -15,6 +15,11 @@
 #include <cassert>
 
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define __FILE_LINE__ (__FILE__ ":" TOSTRING(__LINE__))
+
+
 #define VALIDATION_STEPS_PER_CPU 16
 
 
@@ -193,7 +198,10 @@ int main(int argc, char **argv) {
 	Blocker *blocker = new Blocker();
 	Blocker **blockerParam;
 	void *blockerTask = nullptr;
-	nanos_create_task(&blocker_info, sizeof(Blocker *), (void **) &blockerParam, &blockerTask);
+	static nanos_task_invocation_info blocker_invocation_info = {
+		__FILE_LINE__
+	};
+	nanos_create_task(&blocker_info, &blocker_invocation_info, sizeof(Blocker *), (void **) &blockerParam, &blockerTask);
 	*blockerParam = blocker;
 	nanos_submit_task(blockerTask);
 	
@@ -251,7 +259,7 @@ int main(int argc, char **argv) {
 	); // 7
 	tap.bailOutAndExitIfAnyFailed();
 	
-	nanos_taskwait();
+	nanos_taskwait(__FILE_LINE__);
 	
 	
 	/***********/
@@ -287,12 +295,15 @@ int main(int argc, char **argv) {
 		PlacementEvaluator *placementEvaluator = new PlacementEvaluator(thisCPU, tasksPerCPU);
 		PlacementEvaluator **placementEvaluatorParam = nullptr;
 		void *placementEvaluatorTask = nullptr;
-		nanos_create_task(&placement_evaluator_info, sizeof(PlacementEvaluator *), (void **) &placementEvaluatorParam, &placementEvaluatorTask);
+		static nanos_task_invocation_info placement_evaluator_invocation_info = {
+			__FILE_LINE__
+		};
+		nanos_create_task(&placement_evaluator_info, &placement_evaluator_invocation_info, sizeof(PlacementEvaluator *), (void **) &placementEvaluatorParam, &placementEvaluatorTask);
 		*placementEvaluatorParam = placementEvaluator;
 		nanos_submit_task(placementEvaluatorTask);
 	}
 	
-	nanos_taskwait();
+	nanos_taskwait(__FILE_LINE__);
 	
 	
 	/***********/

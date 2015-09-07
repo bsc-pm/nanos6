@@ -59,6 +59,7 @@ namespace nanos6 {
 		void *mainTask = nullptr;
 		nanos_create_task(
 			&main_task_info,
+			&main_task_invocation_info,
 			sizeof(main_task_args_block_t),
 			/* OUT */ (void **) &argsBlock,
 			/* OUT */ &mainTask

@@ -21,6 +21,7 @@ class Task {
 	void *_argsBlock;
 	
 	nanos_task_info *_taskInfo;
+	nanos_task_invocation_info *_taskInvokationInfo;
 	
 	//! The thread assigned to this task, nullptr if the task has finished (but possibly waiting its children)
 	std::atomic<WorkerThread *> _thread;
@@ -35,8 +36,9 @@ class Task {
 	void *_schedulerInfo;
 	
 public:
-	Task(void *argsBlock, nanos_task_info *taskInfo, Task *parent)
-		: _argsBlock(argsBlock), _taskInfo(taskInfo), _thread(nullptr), _countdownToBeWokenUp(1), _parent(parent), _schedulerInfo(nullptr)
+	Task(void *argsBlock, nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo, Task *parent)
+		: _argsBlock(argsBlock), _taskInfo(taskInfo), _taskInvokationInfo(taskInvokationInfo),
+		_thread(nullptr), _countdownToBeWokenUp(1), _parent(parent), _schedulerInfo(nullptr)
 	{
 		if (parent != nullptr) {
 			parent->addChild(this);
@@ -56,6 +58,11 @@ public:
 	inline nanos_task_info *getTaskInfo() const
 	{
 		return _taskInfo;
+	}
+	
+	inline nanos_task_invocation_info *getTaskInvokationInfo() const
+	{
+		return _taskInvokationInfo;
 	}
 	
 	//! Actual code of the task

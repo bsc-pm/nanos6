@@ -85,7 +85,7 @@ namespace nanos6 {
 using namespace nanos6;
 
 
-void nanos_user_lock(void **handlerPointer)
+void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *invocationSource)
 {
 	assert(handlerPointer != nullptr);
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;

@@ -42,6 +42,14 @@ typedef struct
 } nanos_task_info __attribute__((aligned(64)));
 
 
+//! \brief Struct that contains data shared by all tasks invoked at fixed location in the source code
+typedef struct
+{
+	//! \brief A string that identifies the source code location of the task invocation
+	char const *invocation_source;
+} nanos_task_invocation_info __attribute__((aligned(64)));
+
+
 //! \brief Allocate space for a task and its parameters
 //! 
 //! This function creates a task and allocates space for its parameters.
@@ -49,11 +57,13 @@ typedef struct
 //! and call nanos_submit_task with the contents stored in task_pointer.
 //! 
 //! \param[in] task_info a pointer to the nanos_task_info structure
+//! \param[in] task_invocation_info a pointer to the nanos_task_invocation_info structure
 //! \param[in] args_block_size size needed to store the paramerters passed to the task call
 //! \param[out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call
 //! \param[out] task_pointer a pointer to a location to store the task handler
 void nanos_create_task(
 	nanos_task_info *task_info,
+	nanos_task_invocation_info *task_invocation_info,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
 	/* OUT */ void **task_pointer
@@ -69,7 +79,9 @@ void nanos_submit_task(void *task);
 
 
 //! \brief Block the control flow of the current task until all of its children have finished
-void nanos_taskwait(void);
+//!
+//! \param[in] invocation_source A string that identifies the source code location of the invokation
+void nanos_taskwait(char const *invocation_source);
 
 
 //! \brief Register a task read access on linear range of addresses
@@ -101,7 +113,8 @@ void nanos_register_readwrite_depinfo(void *handler, void *start, size_t length)
 //! mutex allocation and stores the handler in the address that is passed.
 //!
 //! \param[in,out] handlerPointer a pointer to the handler, which is of type void *, that represent the mutex
-void nanos_user_lock(void **handlerPointer);
+//! \param[in] invocation_source A string that identifies the location of the critical region in the source code
+void nanos_user_lock(void **handlerPointer, char const *invocation_source);
 
 //! \brief User-side unlock primitive
 //!

@@ -9,7 +9,7 @@
 
 
 
-void nanos_taskwait()
+void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);

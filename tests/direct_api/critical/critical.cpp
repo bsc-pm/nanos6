@@ -12,6 +12,11 @@
 #include <sched.h>
 
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define __FILE_LINE__ (__FILE__ ":" TOSTRING(__LINE__))
+
+
 extern TestAnyProtocolProducer tap;
 
 
@@ -77,7 +82,7 @@ static void sum(long participant)
 		end = ARRAY_SIZE;
 	}
 	
-	nanos_user_lock(&critical_handle);
+	nanos_user_lock(&critical_handle, __FILE_LINE__);
 	concurrent_tasks++;
 	tap.evaluate(concurrent_tasks == 1, "Check that only one task is in the critical region after entering it");
 	for (long i=start; i < end; i++) {
@@ -126,11 +131,14 @@ int main(int argc, char **argv) {
 	for (int i=0; i < numCPUs ; i++) {
 		long *initialize_args_block;
 		void *initialize_task = nullptr;
-		nanos_create_task(&initialize_info, sizeof(long), (void **) &initialize_args_block, &initialize_task);
+		static nanos_task_invocation_info initialize_invocation_info = {
+			__FILE_LINE__
+		};
+		nanos_create_task(&initialize_info, &initialize_invocation_info, sizeof(long), (void **) &initialize_args_block, &initialize_task);
 		*initialize_args_block = i;
 		nanos_submit_task(initialize_task);
 	}
-	nanos_taskwait();
+	nanos_taskwait(__FILE_LINE__);
 	
 	tap.begin();
 	
@@ -139,11 +147,14 @@ int main(int argc, char **argv) {
 	for (int i=0; i < numCPUs ; i++) {
 		long *sum_args_block;
 		void *sum_task = nullptr;
-		nanos_create_task(&sum_info, sizeof(long), (void **) &sum_args_block, &sum_task);
+		static nanos_task_invocation_info sum_invocation_info = {
+			__FILE_LINE__
+		};
+		nanos_create_task(&sum_info, &sum_invocation_info, sizeof(long), (void **) &sum_args_block, &sum_task);
 		*sum_args_block = i;
 		nanos_submit_task(sum_task);
 	}
-	nanos_taskwait();
+	nanos_taskwait(__FILE_LINE__);
 	
 	tap.evaluate(sum_result == ARRAY_SIZE, "Check that the result is correct");
 	tap.emitDiagnostic<>("Expected result: ", ARRAY_SIZE);

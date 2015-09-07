@@ -4,6 +4,11 @@
 #include "tests/infrastructure/Timer.hpp"
 
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define __FILE_LINE__ (__FILE__ ":" TOSTRING(__LINE__))
+
+
 #define N 26
 #define INTEGER unsigned long
 
@@ -74,7 +79,10 @@ void fibonacci(INTEGER index, INTEGER *resultPointer) {
 	INTEGER result1;
 	fibonacci_args_block_t *fibonacci_args_block1;
 	void *fibonacciTask1 = nullptr;
-	nanos_create_task(&fibonacci_info, sizeof(fibonacci_args_block_t), (void **) &fibonacci_args_block1, &fibonacciTask1);
+	static nanos_task_invocation_info fibonacci_invocation_info1 = {
+		__FILE_LINE__
+	};
+	nanos_create_task(&fibonacci_info, &fibonacci_invocation_info1, sizeof(fibonacci_args_block_t), (void **) &fibonacci_args_block1, &fibonacciTask1);
 	fibonacci_args_block1->_index = index-1;
 	fibonacci_args_block1->_resultPointer = &result1;
 	nanos_submit_task(fibonacciTask1);
@@ -82,12 +90,15 @@ void fibonacci(INTEGER index, INTEGER *resultPointer) {
 	INTEGER result2;
 	fibonacci_args_block_t *fibonacci_args_block2;
 	void *fibonacciTask2 = nullptr;
-	nanos_create_task(&fibonacci_info, sizeof(fibonacci_args_block_t), (void **) &fibonacci_args_block2, &fibonacciTask2);
+	static nanos_task_invocation_info fibonacci_invocation_info2 = {
+		__FILE_LINE__
+	};
+	nanos_create_task(&fibonacci_info, &fibonacci_invocation_info2, sizeof(fibonacci_args_block_t), (void **) &fibonacci_args_block2, &fibonacciTask2);
 	fibonacci_args_block2->_index = index-2;
 	fibonacci_args_block2->_resultPointer = &result2;
 	nanos_submit_task(fibonacciTask2);
 	
-	nanos_taskwait();
+	nanos_taskwait(__FILE_LINE__);
 	*resultPointer = result1 + result2;
 }
 
@@ -104,12 +115,15 @@ int main(int argc, char **argv) {
 	
 	fibonacci_args_block_t *fibonacci_args_block;
 	void *fibonacciTask = nullptr;
-	nanos_create_task(&fibonacci_info, sizeof(fibonacci_args_block_t), (void **) &fibonacci_args_block, &fibonacciTask);
+	static nanos_task_invocation_info fibonacci_invocation_info3 = {
+		__FILE_LINE__
+	};
+	nanos_create_task(&fibonacci_info, &fibonacci_invocation_info3, sizeof(fibonacci_args_block_t), (void **) &fibonacci_args_block, &fibonacciTask);
 	fibonacci_args_block->_index = N;
 	fibonacci_args_block->_resultPointer = &result;
 	nanos_submit_task(fibonacciTask);
 	
-	nanos_taskwait();
+	nanos_taskwait(__FILE_LINE__);
 	
 	timer.stop();
 	
