@@ -30,6 +30,12 @@ common_sources = \
 	src/executors/threads/WorkerThread.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/HardwarePlace.hpp \
+	src/instrument/InstrumentAddTask.hpp \
+	src/instrument/InstrumentInitAndShutdown.hpp \
+	src/instrument/InstrumentTaskExecution.hpp \
+	src/instrument/InstrumentTaskWait.hpp \
+	src/instrument/InstrumentThreadManagement.hpp \
+	src/instrument/InstrumentUserMutex.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
@@ -51,8 +57,18 @@ common_sources = \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
+	src/system/ompss/UserMutex.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp
+
+noinstrument_sources = \
+	src/instrument/null/InstrumentAddTask.hpp \
+	src/instrument/null/InstrumentInitAndShutdown.hpp \
+	src/instrument/null/InstrumentTaskExecution.hpp \
+	src/instrument/null/InstrumentTaskId.hpp \
+	src/instrument/null/InstrumentTaskWait.hpp \
+	src/instrument/null/InstrumentThreadManagement.hpp \
+	src/instrument/null/InstrumentUserMutex.hpp
 
 
 noinst_HEADERS = \
@@ -64,13 +80,14 @@ EXTRA_DIST = \
 	tests/infrastructure/tap-driver.sh
 
 
-libnanos6_la_CPPFLAGS = -DNDEBUG
+libnanos6_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/null
 libnanos6_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_la_SOURCES = $(common_sources)
+libnanos6_la_SOURCES = $(common_sources) $(noinstrument_sources)
 libnanos6_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
+libnanos6_debug_la_CPPFLAGS = -I$(srcdir)/src/instrument/null
 libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_debug_la_SOURCES = $(common_sources)
+libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources)
 libnanos6_debug_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
 

@@ -11,6 +11,8 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "scheduling/Scheduler.hpp"
 
+#include <InstrumentInitAndShutdown.hpp>
+
 
 #if __powerpc__
 struct startup_info {
@@ -67,6 +69,8 @@ namespace nanos6 {
 		assert(argsBlock != nullptr);
 		assert(mainTask != nullptr);
 		
+		Instrument::initialize();
+		
 		// Fill in its parameters
 		new (argsBlock) main_task_args_block_t(appMain, argc, argv, envp);
 		
@@ -76,6 +80,8 @@ namespace nanos6 {
 		ThreadManager::initialize();
 		
 		LeaderThread::maintenanceLoop();
+		
+		Instrument::shutdown();
 		
 		ThreadManager::shutdown();
 		

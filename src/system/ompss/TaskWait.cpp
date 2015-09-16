@@ -5,6 +5,8 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
+#include <InstrumentTaskWait.hpp>
+
 #include <cassert>
 
 
@@ -18,8 +20,11 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	assert(currentTask != nullptr);
 	assert(currentTask->getThread() == currentThread);
 	
+	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource);
+	
 	// Fast check
 	if (currentTask->doesNotNeedToBlockForChildren()) {
+		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		return;
 	}
 	
@@ -42,6 +47,8 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	if (!done) {
 		TaskBlocking::taskBlocks(currentThread, currentTask);
 	}
+	
+	Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 	
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();

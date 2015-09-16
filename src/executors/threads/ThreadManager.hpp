@@ -19,6 +19,8 @@
 // #include "CPUStatusListener.hpp"
 #include "WorkerThread.hpp"
 
+#include <InstrumentThreadManagement.hpp>
+
 
 class ThreadManagerDebuggingInterface;
 
@@ -134,6 +136,9 @@ inline CPU *ThreadManager::getCPU(size_t systemCPUId)
 			// Another thread already did it
 			delete newCPU;
 			cpu = _cpus[systemCPUId];
+			while (newCPU->_virtualCPUId == ~0UL) {
+				// Wait for the CPU to be fully be initialized
+			}
 		} else {
 			newCPU->_virtualCPUId = _totalCPUs++;
 			cpu = newCPU;
@@ -213,12 +218,16 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 		// NOTE: In this case the CPUActivation class can end up resuming a CPU before its running thread has had a chance to get blocked
 	}
 	
+	Instrument::threadWillSuspend(currentThread, cpu);
+	
 	currentThread->suspend();
 	// After resuming (if ever blocked), the thread continues here
 	
 	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
 	assert(currentThread->_cpuToBeResumedOn != nullptr);
 	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
+	
+	Instrument::threadHasResumed(currentThread, currentThread->_cpu);
 	
 #ifndef NDEBUG
 	currentThread->_cpuToBeResumedOn = nullptr;

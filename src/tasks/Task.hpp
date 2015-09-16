@@ -9,6 +9,8 @@
 #include "api/nanos6_rt_interface.h"
 #include "lowlevel/SpinLock.hpp"
 
+#include <InstrumentTaskId.hpp>
+
 
 class WorkerThread;
 
@@ -32,13 +34,25 @@ class Task {
 	//! Task to which this one is closely nested
 	Task *_parent;
 	
+	//! An identifier for the task for the instrumentation
+	Instrument::task_id_t _instrumentationTaskId;
+	
 	//! Opaque data that is scheduler-dependent
 	void *_schedulerInfo;
 	
 public:
-	Task(void *argsBlock, nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo, Task *parent)
-		: _argsBlock(argsBlock), _taskInfo(taskInfo), _taskInvokationInfo(taskInvokationInfo),
-		_thread(nullptr), _countdownToBeWokenUp(1), _parent(parent), _schedulerInfo(nullptr)
+	Task(
+		void *argsBlock,
+		nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo,
+		Task *parent,
+		Instrument::task_id_t instrumentationTaskId
+	)
+		: _argsBlock(argsBlock),
+		_taskInfo(taskInfo), _taskInvokationInfo(taskInvokationInfo),
+		_thread(nullptr), _countdownToBeWokenUp(1),
+		_parent(parent),
+		_instrumentationTaskId(instrumentationTaskId),
+		_schedulerInfo(nullptr)
 	{
 		if (parent != nullptr) {
 			parent->addChild(this);
@@ -185,6 +199,12 @@ public:
 	inline bool doesNotNeedToBlockForChildren()
 	{
 		return (_countdownToBeWokenUp == 1);
+	}
+	
+	//! \brief Retrieve the instrumentation-specific task identifier
+	inline Instrument::task_id_t getInstrumentationTaskId() const
+	{
+		return _instrumentationTaskId;
 	}
 	
 	//! \brief Retrieve scheduler-dependent data

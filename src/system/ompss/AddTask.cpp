@@ -9,7 +9,9 @@
 #include "hardware/places/HardwarePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
-#include <tasks/Task.hpp>
+#include "tasks/Task.hpp"
+
+#include <InstrumentAddTask.hpp>
 
 #include <cassert>
 #include <cstdlib>
@@ -26,6 +28,8 @@
 
 void nanos_create_task(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvocationInfo, size_t args_block_size, void **args_block_pointer, void **task_pointer)
 {
+	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo);
+	
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
 	size_t correction = (DATA_ALIGNMENT_SIZE - missalignment) & (DATA_ALIGNMENT_SIZE - 1);
@@ -42,7 +46,7 @@ void nanos_create_task(nanos_task_info *taskInfo, nanos_task_invocation_info *ta
 	task = (char *)args_block + args_block_size;
 	
 	// Construct the Task object
-	new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr);
+	new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId);
 }
 
 
@@ -65,11 +69,15 @@ void nanos_submit_task(void *taskHandle)
 		assert(task->getTaskInfo() == &nanos6::main_task_info);
 	}
 	
+	Instrument::createdTask(task, task->getInstrumentationTaskId());
+	
 	HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace);
 	assert((currentWorkerThread != nullptr) || (idleHardwarePlace == nullptr)); // The main task is added before the scheduler 
 	
 	if (idleHardwarePlace != nullptr) {
 		ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
 	}
+	
+	Instrument::exitAddTask(task->getInstrumentationTaskId());
 }
 

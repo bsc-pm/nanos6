@@ -9,6 +9,8 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include <InstrumentThreadManagement.hpp>
+
 
 std::atomic<bool> ThreadManager::_mustExit;
 cpu_set_t ThreadManager::_processCPUMask;
@@ -63,12 +65,16 @@ void ThreadManager::threadStartup(WorkerThread *currentThread)
 	// Initialize the CPU status if necessary before the thread has a chance to check the shutdown signal
 	CPUActivation::threadInitialization(currentThread);
 	
+	Instrument::createdThread(currentThread);
+	
 	// The thread suspends itself after initialization, since the "activator" is the one will unblock it when needed
 	currentThread->suspend();
 	
 	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
 	assert(currentThread->_cpuToBeResumedOn != nullptr);
 	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
+	
+	Instrument::threadHasResumed(currentThread, currentThread->_cpu);
 	
 #ifndef NDEBUG
 	currentThread->_cpuToBeResumedOn = nullptr;

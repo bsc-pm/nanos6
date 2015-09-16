@@ -17,7 +17,7 @@ namespace nanos6 {
 				realArgsBlock->_argv,
 				realArgsBlock->_envp
 			);
-			nanos_taskwait("Nanos6-Bootstrap-Code");
+			nanos_taskwait("Implicit");
 			
 			LeaderThread::notifyMainExit(returnCode);
 		}

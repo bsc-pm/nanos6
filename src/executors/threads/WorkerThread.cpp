@@ -5,6 +5,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
+#include <InstrumentTaskExecution.hpp>
 
 #include <pthread.h>
 
@@ -75,9 +76,14 @@ void *WorkerThread::body()
 
 void WorkerThread::handleTask()
 {
+	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
+	Instrument::startTask(taskId, _cpu, this);
+	
 	// Run the task
 	_task->setThread(this);
 	_task->body();
+	
+	Instrument::endTask(taskId, _cpu, this);
 	
 	// TODO: Release successors
 	

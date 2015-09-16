@@ -39,7 +39,7 @@ struct CPU: public CPUPlace {
 	std::atomic<activation_status_t> _activationStatus;
 	
 	size_t _systemCPUId;
-	size_t _virtualCPUId;
+	std::atomic<size_t> _virtualCPUId;
 	
 	//! \brief the CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;

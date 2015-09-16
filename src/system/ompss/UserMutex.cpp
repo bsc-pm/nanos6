@@ -1,6 +1,7 @@
 #include "api/nanos6_rt_interface.h"
 
 #include "TaskBlocking.hpp"
+#include "UserMutex.hpp"
 
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
@@ -9,80 +10,12 @@
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
-#include <atomic>
+#include <InstrumentUserMutex.hpp>
+
 #include <cassert>
-#include <deque>
 
 
-namespace nanos6 {
-	class UserMutex {
-		//! \brief The user mutex state
-		std::atomic<bool> _userMutex;
-		
-		//! \brief The spin lock that protects the queue of tasks blocked on this user-side mutex
-		SpinLock _blockedTasksLock;
-		
-		//! \brief The list of tasks blocked on this user-side mutex
-		std::deque<Task *> _blockedTasks;
-		
-	public:
-		//! \brief Initialize the mutex
-		//!
-		//! \param[in] initialState true if the mutex must be initialized in the locked state
-		inline UserMutex(bool initialState)
-			: _userMutex(initialState), _blockedTasksLock(), _blockedTasks()
-		{
-		}
-		
-		//! \brief Try to lock
-		//!
-		//! \returns true if the user-lock has been locked successfully, false otherwise
-		inline bool tryLock()
-		{
-			bool expected = false;
-			bool successful = _userMutex.compare_exchange_strong(expected, false);
-			assert(expected != successful);
-			return successful;
-		}
-		
-		//! \brief Try to lock of queue the task
-		//!
-		//! \param[in] task The task that will be queued if the lock cannot be acquired
-		//!
-		//! \returns true if the lock has been acquired, false if not and the task has been queued
-		inline bool lockOrQueue(Task *task)
-		{
-			std::lock_guard<SpinLock> guard(_blockedTasksLock);
-			if (tryLock()) {
-				return true;
-			} else {
-				_blockedTasks.push_back(task);
-				return false;
-			}
-		}
-		
-		inline Task *dequeueOrUnlock()
-		{
-			std::lock_guard<SpinLock> guard(_blockedTasksLock);
-			
-			if (_blockedTasks.empty()) {
-				_userMutex = false;
-				return nullptr;
-			}
-			
-			Task *releasedTask = _blockedTasks.front();
-			_blockedTasks.pop_front();
-			assert(releasedTask != nullptr);
-			
-			return releasedTask;
-		}
-	};
-	
-	typedef std::atomic<UserMutex *> mutex_t;
-}
-
-
-using namespace nanos6;
+typedef std::atomic<UserMutex *> mutex_t;
 
 
 void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *invocationSource)
@@ -98,6 +31,8 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 		if (userMutexReference.compare_exchange_strong(expected, newMutex)) {
 			// Successfully assigned new mutex
 			assert(userMutexReference == newMutex);
+			
+			Instrument::acquiredUserMutex(newMutex);
 			
 			// Since we allocate the mutex in the locked state, the thread already owns it and the work is done
 			return;
@@ -117,6 +52,7 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	
 	// Fast path
 	if (userMutex.tryLock()) {
+		Instrument::acquiredUserMutex(&userMutex);
 		return;
 	}
 	
@@ -129,10 +65,13 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	// Acquire the lock if possible. Otherwise queue the task.
 	if (userMutex.lockOrQueue(currentTask)) {
 		// Successful
+		Instrument::acquiredUserMutex(&userMutex);
 		return;
 	}
 	
+	Instrument::blockedOnUserMutex(&userMutex);
 	TaskBlocking::taskBlocks(currentThread, currentTask);
+	Instrument::acquiredUserMutex(&userMutex);
 }
 
 
@@ -143,6 +82,7 @@ void nanos_user_unlock(void **handlerPointer)
 	
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
 	UserMutex &userMutex = *(userMutexReference.load());
+	Instrument::releasedUserMutex(&userMutex);
 	
 	Task *releasedTask = userMutex.dequeueOrUnlock();
 	if (releasedTask != nullptr) {
