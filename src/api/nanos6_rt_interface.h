@@ -80,7 +80,7 @@ void nanos_submit_task(void *task);
 
 //! \brief Block the control flow of the current task until all of its children have finished
 //!
-//! \param[in] invocation_source A string that identifies the source code location of the invokation
+//! \param[in] invocation_source A string that identifies the source code location of the invocation
 void nanos_taskwait(char const *invocation_source);
 
 
