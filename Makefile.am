@@ -2,7 +2,8 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CXXFLAGS = -I$(srcdir)/src
 
 
-lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la
+
+lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la libnanos6-graph.la
 noinst_LTLIBRARIES = libcheck-shutdown.la libcheck-shutdown-debug.la
 
 # See info page of libtool "Updating version info"
@@ -70,6 +71,23 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentThreadManagement.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp
 
+instrument_graph_sources = \
+	src/instrument/graph/InstrumentAddTask.cpp \
+	src/instrument/graph/InstrumentAddTask.hpp \
+	src/instrument/graph/InstrumentGraph.cpp \
+	src/instrument/graph/InstrumentGraph.hpp \
+	src/instrument/graph/InstrumentInitAndShutdown.cpp \
+	src/instrument/graph/InstrumentInitAndShutdown.hpp \
+	src/instrument/graph/InstrumentTaskExecution.cpp \
+	src/instrument/graph/InstrumentTaskExecution.hpp \
+	src/instrument/graph/InstrumentTaskId.hpp \
+	src/instrument/graph/InstrumentTaskWait.cpp \
+	src/instrument/graph/InstrumentTaskWait.hpp \
+	src/instrument/graph/InstrumentThreadManagement.cpp \
+	src/instrument/graph/InstrumentThreadManagement.hpp \
+	src/instrument/graph/InstrumentUserMutex.cpp \
+	src/instrument/graph/InstrumentUserMutex.hpp
+
 
 noinst_HEADERS = \
 	tests/infrastructure/ProgramLifecycle.hpp \
@@ -89,6 +107,12 @@ libnanos6_debug_la_CPPFLAGS = -I$(srcdir)/src/instrument/null
 libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources)
 libnanos6_debug_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+
+libnanos6_graph_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/graph
+libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources)
+libnanos6_graph_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+
 
 
 
