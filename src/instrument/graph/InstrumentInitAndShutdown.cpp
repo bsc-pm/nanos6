@@ -230,7 +230,7 @@ namespace Instrument {
 					ofs << indentation << "style=\"invisible\";" << std::endl;
 					
 					size_t subtasks = taskGroup->_children.size();
-					for (long index=0; index < subtasks; index++) {
+					for (size_t index=0; index < subtasks; index++) {
 						task_id_t childId = taskGroup->_children[index];
 						emitTask(ofs, childId, currentPhaseLinks[index], currentPhaseSourceLinks[index], currentPhaseSinkLinks[index]);
 						
@@ -270,8 +270,8 @@ namespace Instrument {
 				if (!previousPhaseLinks.empty()) {
 					size_t previousPhaseElements = previousPhaseLinks.size();
 					
-					for (int previousIndex=0; previousIndex < previousPhaseElements; previousIndex++) {
-						for (int currentIndex=0; currentIndex < phaseElements; currentIndex++) {
+					for (size_t previousIndex=0; previousIndex < previousPhaseElements; previousIndex++) {
+						for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
 							
 							ofs
 								<< indentation << previousPhaseSinkLinks[previousIndex] << " -> " << currentPhaseSourceLinks[currentIndex]
