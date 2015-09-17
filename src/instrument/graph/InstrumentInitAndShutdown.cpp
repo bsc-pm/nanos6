@@ -177,6 +177,7 @@ namespace Instrument {
 			ofs
 				<< indentation << taskLink
 				<< " [ label=\"" << makeTaskLabel(taskId, taskInfo) << "\" "
+				<< " shape=\"box\" "
 				<< getTaskAttributes(taskInfo._status, taskInfo._lastCPU)
 				<< " ]" << std::endl;
 			
