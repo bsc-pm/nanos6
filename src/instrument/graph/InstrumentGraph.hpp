@@ -85,6 +85,9 @@ namespace Instrument {
 		//! \brief maps tasks to their information
 		typedef std::map<task_id_t, task_info_t> task_to_info_map_t;
 		
+		//! \brief maps task invocations to the text to use as label
+		typedef std::map<nanos_task_invocation_info *, std::string> task_invocation_info_label_map_t;
+		
 		
 		struct execution_step_t {
 			long _cpu;
@@ -192,6 +195,8 @@ namespace Instrument {
 		//! \brief maps task identifiers to their information
 		extern task_to_info_map_t _taskToInfoMap;
 		
+		//! \brief maps task invocation struct addresses to the text to use as task label
+		extern task_invocation_info_label_map_t _taskInvocationLabel;
 		
 		typedef std::map<UserMutex *, usermutex_id_t> usermutex_to_id_map_t;
 		

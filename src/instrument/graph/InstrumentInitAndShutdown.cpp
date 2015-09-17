@@ -4,6 +4,7 @@
 #include "Color.hpp"
 
 #include "executors/threads/ThreadManager.hpp"
+#include "lowlevel/EnvironmentVariable.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -27,23 +28,48 @@ namespace Instrument {
 	
 	static long _nextCluster = 1;
 	
+	static EnvironmentVariable<bool> _shortenFilenames("NANOS_GRAPH_SHORTEN_FILENAMES", false);
+	
+	
 	static inline bool isComposite(task_id_t taskId)
 	{
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
 		return (!taskInfo._phaseList.empty());
 	}
 	
-	static inline std::string getTaskName(task_info_t &taskInfo)
+	static inline void shortenString(std::string /* INOUT */ &s)
 	{
-		if (taskInfo._nanos_task_info->task_label != nullptr) {
-			return std::string(taskInfo._nanos_task_info->task_label);
-		} else if ((taskInfo._nanos_task_invocation_info != nullptr) && (taskInfo._nanos_task_invocation_info->invocation_source != nullptr)) {
-			return std::string(taskInfo._nanos_task_invocation_info->invocation_source);
-		} else if (taskInfo._nanos_task_info->declaration_source != nullptr) {
-			return std::string(taskInfo._nanos_task_info->declaration_source);
-		} else {
-			return std::string();
+		size_t lastSlash = s.rfind('/');
+		if (lastSlash != std::string::npos) {
+			s = s.substr(lastSlash+1);
 		}
+	}
+	
+	static inline std::string const &getTaskName(task_info_t &taskInfo)
+	{
+		assert(taskInfo._nanos_task_invocation_info != nullptr);
+		task_invocation_info_label_map_t::iterator it = _taskInvocationLabel.find(taskInfo._nanos_task_invocation_info);
+		if (it != _taskInvocationLabel.end()) {
+			return it->second;
+		}
+		
+		std::string label;
+		if (taskInfo._nanos_task_info->task_label != nullptr) {
+			label = taskInfo._nanos_task_info->task_label;
+		} else if ((taskInfo._nanos_task_invocation_info != nullptr) && (taskInfo._nanos_task_invocation_info->invocation_source != nullptr)) {
+			label = taskInfo._nanos_task_invocation_info->invocation_source;
+		} else if (taskInfo._nanos_task_info->declaration_source != nullptr) {
+			label = taskInfo._nanos_task_info->declaration_source;
+		} else {
+			label = std::string();
+		}
+		
+		if (_shortenFilenames) {
+			shortenString(label);
+		}
+		
+		_taskInvocationLabel[taskInfo._nanos_task_invocation_info] = std::move(label);
+		return _taskInvocationLabel[taskInfo._nanos_task_invocation_info];
 	}
 	
 	static std::string indentation;
@@ -69,7 +95,12 @@ namespace Instrument {
 		
 		oss << "TASKWAIT";
 		if ((sourceLocation != nullptr) && (std::string() != sourceLocation)) {
-			oss << "\\n" << sourceLocation;
+			std::string location(sourceLocation);
+			if (_shortenFilenames) {
+				shortenString(location);
+			}
+			
+			oss << "\\n" << location;
 		}
 		
 		return oss.str();

@@ -10,6 +10,7 @@ namespace Instrument {
 		
 		std::map<WorkerThread *, thread_id_t> _threadToId;
 		task_to_info_map_t _taskToInfoMap;
+		task_invocation_info_label_map_t _taskInvocationLabel;
 		usermutex_to_id_map_t _usermutexToId;
 		execution_sequence_t _executionSequence;
 		
