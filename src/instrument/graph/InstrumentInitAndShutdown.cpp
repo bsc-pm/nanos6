@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 
 namespace Instrument {
@@ -344,10 +345,16 @@ namespace Instrument {
 			filenameBase = oss.str();
 		}
 		
+		std::string dir = filenameBase + std::string("-components");
+		int rc = mkdir(dir.c_str(), 0755);
+		if (rc != 0) {
+			FatalErrorHandler::handle(errno, " trying to create directory '", dir, "'");
+		}
+		
 		int step=0;
 		{
 			std::ostringstream oss;
-			oss << filenameBase << "-step";
+			oss << dir << "/" << filenameBase << "-step";
 			oss.width(8); oss.fill('0'); oss << step;
 			oss.width(0); oss.fill(' '); oss << ".dot";
 			
@@ -443,7 +450,7 @@ namespace Instrument {
 			// Emit a graph frame
 			{
 				std::ostringstream oss;
-				oss << filenameBase << "-step";
+				oss << dir << "/" << filenameBase << "-step";
 				oss.width(8); oss.fill('0'); oss << step;
 				oss.width(0); oss.fill(' '); oss << ".dot";
 				
@@ -464,7 +471,7 @@ namespace Instrument {
 			std::string stepBase;
 			{
 				std::ostringstream oss;
-				oss << filenameBase << "-step";
+				oss << dir << "/" << filenameBase << "-step";
 				oss.width(8); oss.fill('0'); oss << i;
 				stepBase = oss.str();
 			}
@@ -483,7 +490,7 @@ namespace Instrument {
 			std::string stepBase;
 			{
 				std::ostringstream oss;
-				oss << filenameBase << "-step";
+				oss << dir << "/" << filenameBase << "-step";
 				oss.width(8); oss.fill('0'); oss << i;
 				stepBase = oss.str();
 			}
@@ -495,18 +502,12 @@ namespace Instrument {
 		scriptOS << std::endl;
 		
 		scriptOS << "echo" << std::endl;
-		scriptOS << "if [ x\"$1\" != x\"--preserve-intermediates\" ] ; then" << std::endl;
-		scriptOS << "	rm -f " << filenameBase << "-step*" << std::endl;
-		scriptOS << "	rm -f " << filenameBase << "-script.sh" << std::endl;
-		scriptOS << "else" << std::endl;
-		scriptOS << "	echo 'Intermediate files can be removed by running: rm -f " << filenameBase << "-step*'" << std::endl;
-		scriptOS << "fi" << std::endl;
+		scriptOS << "echo The contents of " << dir << " can now be safely removed " << std::endl;
 		scriptOS << std::endl;
 		scriptOS.close();
 		
 		chmod((filenameBase + "-script.sh").c_str(), S_IRUSR|S_IWUSR|S_IXUSR);
 		std::cerr << std::endl << "Generated graph script '" << filenameBase << "-script.sh" << "'" << std::endl;
-		std::cerr << "It accepts the --preserve-intermediates parameter to preserve intermediate files. Otherwise it will build the full PDF and remove any other graph source or PDF." << std::endl;
 	}
 	
 }
