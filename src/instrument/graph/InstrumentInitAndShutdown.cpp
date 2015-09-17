@@ -480,7 +480,7 @@ namespace Instrument {
 			scriptOS << "	echo Generating step " << i+1 << "/" << step << std::endl;
 			scriptOS << "	lasttime=${currenttime}" << std::endl;
 			scriptOS << "fi" << std::endl;
-			scriptOS << "dot -Gfontname=Helvetica -Nfontname=Helvetica -Efontname=Helvetica -Tpdf " << stepBase << ".dot -o " << stepBase << ".pdf" << std::endl;
+			scriptOS << "dot -Gfontname=Helvetica -Nfontname=Helvetica -Efontname=Helvetica \"$@\" -Tpdf " << stepBase << ".dot -o " << stepBase << ".pdf" << std::endl;
 		}
 		scriptOS << std::endl;
 		
