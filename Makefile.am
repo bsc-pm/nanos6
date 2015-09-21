@@ -182,24 +182,24 @@ fibonacci_test_LDADD = $(test_common_libs)
 fibonacci_test_LDFLAGS = $(test_common_ldflags)
 
 cpu_activation_debug_test_SOURCES = tests/direct_api/cpu-activation/cpu-activation.cpp
-cpu_activation_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+cpu_activation_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/src/instrument/null
 cpu_activation_debug_test_LDADD = $(test_common_debug_libs) -lpthread
 cpu_activation_debug_test_LDFLAGS = $(test_common_ldflags)
 
 cpu_activation_test_SOURCES = tests/direct_api/cpu-activation/cpu-activation.cpp
 cpu_activation_test_CPPFLAGS = -DNDEBUG
-cpu_activation_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+cpu_activation_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/src/instrument/null
 cpu_activation_test_LDADD = $(test_common_libs) -lpthread
 cpu_activation_test_LDFLAGS = $(test_common_ldflags)
 
 critical_debug_test_SOURCES = tests/direct_api/critical/critical.cpp
-critical_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+critical_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/src/instrument/null
 critical_debug_test_LDADD = $(test_common_debug_libs)
 critical_debug_test_LDFLAGS = $(test_common_ldflags)
 
 critical_test_SOURCES = tests/direct_api/critical/critical.cpp
 critical_test_CPPFLAGS = -DNDEBUG
-critical_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+critical_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/src/instrument/null
 critical_test_LDADD = $(test_common_libs)
 critical_test_LDFLAGS = $(test_common_ldflags)
 
