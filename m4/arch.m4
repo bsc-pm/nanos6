@@ -2,6 +2,7 @@ AC_DEFUN([AC_CHECK_SPECIAL_HOST_ARCH],
 	[
 		AC_REQUIRE([AC_CANONICAL_HOST])
 		
+		AC_BEFORE([$0], [AC_PROG_CPP])
 		AC_BEFORE([$0], [AC_PROG_CC])
 		AC_BEFORE([$0], [AC_PROG_CXX])
 		
@@ -41,6 +42,12 @@ AC_DEFUN([AC_CHECK_SPECIAL_HOST_ARCH],
 				if ! test -z "${TARGET_GCC}" ; then
 					TARGET_GCC=$(env PATH="${ac_cv_use_k1om_prefix}/bin:${PATH}" which "${TARGET_GCC}")
 					AC_CHECK_TOOL([CC], [icc -mmic -gcc-name=${TARGET_GCC}], [], [${ac_cv_use_k1om_prefix}/bin:${PATH}])
+				fi
+			fi
+			
+			if test -z "$CPP" ; then
+				if ! test -z "${TARGET_GCC}" ; then
+					AC_CHECK_TOOL([CPP], [icc -mmic -gcc-name=${TARGET_GCC} -E], [], [${ac_cv_use_k1om_prefix}/bin:${PATH}])
 				fi
 			fi
 			
