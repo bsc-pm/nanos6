@@ -4,7 +4,7 @@ AM_CXXFLAGS = -I$(srcdir)/src
 SUBDIRS = tests/directive_based
 
 
-lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la libnanos6-graph.la
+lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la libnanos6-graph.la libnanos6-null.la
 noinst_LTLIBRARIES = libcheck-shutdown.la libcheck-shutdown-debug.la
 
 # See info page of libtool "Updating version info"
@@ -91,6 +91,8 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentUserMutex.cpp \
 	src/instrument/graph/InstrumentUserMutex.hpp
 
+null_sources = \
+	src/null/NullAPI.cpp
 
 noinst_HEADERS = \
 	tests/infrastructure/ProgramLifecycle.hpp \
@@ -116,6 +118,9 @@ libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources)
 libnanos6_graph_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
+libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_null_la_SOURCES = $(null_sources)
+libnanos6_null_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
 
 
