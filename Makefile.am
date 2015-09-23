@@ -73,6 +73,7 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentUserMutex.hpp
 
 instrument_graph_sources = \
+	src/instrument/graph/Color.hpp \
 	src/instrument/graph/InstrumentAddTask.cpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
 	src/instrument/graph/InstrumentGraph.cpp \
