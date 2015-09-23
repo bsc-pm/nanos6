@@ -1,6 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 AM_CXXFLAGS = -I$(srcdir)/src
 
+SUBDIRS = tests/directive_based
 
 
 lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la libnanos6-graph.la
