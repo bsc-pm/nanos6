@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#define __NANOS6__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
