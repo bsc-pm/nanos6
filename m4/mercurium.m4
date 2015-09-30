@@ -25,8 +25,8 @@ AC_DEFUN([SSS_CHECK_MERCURIUM],
 				ac_use_mercurium_prefix=$(echo "${MCC}" | sed 's@/bin/mcc'\$'@@')
 			fi
 		elif test x"${ac_use_mercurium_prefix}" != x"no" ; then
-			AC_PATH_PROG(MCC, mcc, [], [${ac_use_mercurium_prefix}])
-			AC_PATH_PROG(MCXX, mcxx, [], [${ac_use_mercurium_prefix}])
+			AC_PATH_PROG(MCC, mcc, [], [${ac_use_mercurium_prefix}/bin])
+			AC_PATH_PROG(MCXX, mcxx, [], [${ac_use_mercurium_prefix}/bin])
 			if test x"${MCC}" = x"" || test x"${MCXX}" = x"" ; then
 				AC_MSG_ERROR([could not find Mercurium])
 			else
