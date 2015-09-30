@@ -20,10 +20,15 @@ AM_PROG_AR
 LT_INIT([shared disable-static pic-only])
 AC_SUBST([LIBTOOL_DEPS])
 
+SSS_CHECK_SOURCE_VERSION
+
 # Checks for programs.
 SSS_PREPARE_COMPILER_FLAGS
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11([], [mandatory])
+
+SSS_CHECK_CC_VERSION
+SSS_CHECK_CXX_VERSION
 
 AC_PROG_AWK
 #AC_PROG_CC
@@ -54,7 +59,7 @@ AC_LANG_POP(C++)
 
 SSS_FIXUP_COMPILER_FLAGS
 
-AC_CONFIG_FILES([Makefile docs/Doxyfile])
+AC_CONFIG_FILES([Makefile docs/Doxyfile src/version/VersionInfo.hpp])
 AC_CONFIG_SUBDIRS([tests/directive_based])
 AC_OUTPUT
 

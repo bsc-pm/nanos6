@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I m4
-AM_CXXFLAGS = -I$(srcdir)/src
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src
 
 SUBDIRS = tests/directive_based
 
@@ -13,7 +13,16 @@ lib_revision = 0
 lib_age = 0
 
 pkginclude_HEADERS = \
-	src/api/nanos6_rt_interface.h
+	src/api/nanos6_rt_interface.h \
+	src/api/nanos6_debug_interface.h
+
+nodist_noinst_HEADERS = \
+	src/version/VersionInfo.hpp
+
+
+# Sources for debugging both the regular and the null runtime
+universal_debug_sources = \
+	src/system/debug/DebugAPI.cpp
 
 
 common_sources = \
@@ -105,21 +114,21 @@ EXTRA_DIST = \
 
 libnanos6_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/null
 libnanos6_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_la_SOURCES = $(common_sources) $(noinstrument_sources)
+libnanos6_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
 libnanos6_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
 libnanos6_debug_la_CPPFLAGS = -I$(srcdir)/src/instrument/null
 libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources)
+libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
 libnanos6_debug_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
 libnanos6_graph_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/graph
 libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources)
+libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
 libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_null_la_SOURCES = $(null_sources)
+libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
 libnanos6_null_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
 
@@ -222,6 +231,9 @@ TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/tests/infrastru
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status libtool
 
+
+src/version/VersionInfo.hpp: $(srcdir)/src/version/VersionInfo.hpp.in
+	$(SHELL) ./config.status src/version/VersionInfo.hpp
 
 
 
