@@ -11,6 +11,8 @@ char const *nanos_get_runtime_branch();
 char const *nanos_get_runtime_compiler_version();
 char const *nanos_get_runtime_compiler_flags();
 
+long nanos_get_num_cpus();
+
 #ifdef __cplusplus
 }
 #endif

@@ -65,6 +65,7 @@ common_sources = \
 	src/system/MainTask.cpp \
 	src/system/MainTask.hpp \
 	src/system/ompss/AddTask.cpp \
+	src/system/ompss/Debug.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
@@ -101,6 +102,7 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentUserMutex.hpp
 
 null_sources = \
+	src/null/NullDebug.cpp \
 	src/null/NullAPI.cpp
 
 noinst_HEADERS = \
