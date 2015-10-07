@@ -4,7 +4,7 @@ AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src
 SUBDIRS = tests/directive_based
 
 
-lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la libnanos6-graph.la libnanos6-null.la
+lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la libnanos6-graph.la libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la 
 noinst_LTLIBRARIES = libcheck-shutdown.la libcheck-shutdown-debug.la
 
 # See info page of libtool "Updating version info"
@@ -101,9 +101,21 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentUserMutex.cpp \
 	src/instrument/graph/InstrumentUserMutex.hpp
 
-null_sources = \
+null_common_sources = \
 	src/null/NullDebug.cpp \
 	src/null/NullAPI.cpp
+
+null_sources = \
+	$(null_common_sources) \
+	src/null/NullDynamicBlock.cpp
+
+null_cb_sources = \
+	$(null_common_sources) \
+	src/null/NullConstantBlock.cpp
+
+null_sb_sources = \
+	$(null_common_sources) \
+	src/null/NullStaticBlock.cpp
 
 noinst_HEADERS = \
 	tests/infrastructure/ProgramLifecycle.hpp \
@@ -132,6 +144,14 @@ libnanos6_graph_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_
 libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
 libnanos6_null_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+
+libnanos6_null_cb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_null_cb_la_SOURCES = $(null_cb_sources) $(universal_debug_sources)
+libnanos6_null_cb_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+
+libnanos6_null_sb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
+libnanos6_null_sb_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
 
 
