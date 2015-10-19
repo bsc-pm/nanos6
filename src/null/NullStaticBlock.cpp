@@ -13,9 +13,10 @@
 
 #define DATA_ALIGNMENT_SIZE sizeof(void *)
 #define TASK_ALIGNMENT 128
+#define STATIC_BUFFER_MB 256UL
 
 
-static char __attribute__((aligned(TASK_ALIGNMENT))) _staticTaskMemory[8192UL * 1024UL];
+static char __attribute__((aligned(TASK_ALIGNMENT))) _staticTaskMemory[STATIC_BUFFER_MB * 1024UL * 1024UL];
 static char *_nextFreeTaskMemory = _staticTaskMemory;
 
 
