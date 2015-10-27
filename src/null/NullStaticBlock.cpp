@@ -13,11 +13,18 @@
 
 #define DATA_ALIGNMENT_SIZE sizeof(void *)
 #define TASK_ALIGNMENT 128
-#define STATIC_BUFFER_MB 256UL
+#define STATIC_BUFFER_MB (2048UL)
 
 
-static char __attribute__((aligned(TASK_ALIGNMENT))) _staticTaskMemory[STATIC_BUFFER_MB * 1024UL * 1024UL];
-static char *_nextFreeTaskMemory = _staticTaskMemory;
+static char __attribute__((aligned(TASK_ALIGNMENT))) *_staticTaskMemory = 0;
+static char *_nextFreeTaskMemory = 0;
+
+
+static void __attribute__((constructor)) nanos_null_init_static_buffer() {
+	int rc = posix_memalign((void **) &_staticTaskMemory, TASK_ALIGNMENT, STATIC_BUFFER_MB * 1024UL * 1024UL);
+	FatalErrorHandler::handle(rc, " when trying to allocate memory for tasks ", TASK_ALIGNMENT, STATIC_BUFFER_MB * 1024UL * 1024UL);
+	_nextFreeTaskMemory = _staticTaskMemory;
+}
 
 
 class NullTask {
