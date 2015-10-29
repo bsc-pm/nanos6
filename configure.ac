@@ -54,7 +54,8 @@ AC_C_RESTRICT
 AC_LANG_POP(C++)
 
 # Checks for library functions.
-
+AC_CHECK_BACKTRACE
+AC_CHECK_LIB([rt], [timer_create], [BACKTRACE_LIBS="${BACKTRACE_LIBS} -lrt"])
 
 
 SSS_FIXUP_COMPILER_FLAGS

@@ -4,7 +4,11 @@ AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src
 SUBDIRS = tests/directive_based
 
 
-lib_LTLIBRARIES = libnanos6.la libnanos6-debug.la libnanos6-graph.la libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la 
+lib_LTLIBRARIES = \
+	libnanos6.la libnanos6-debug.la \
+	libnanos6-graph.la \
+	libnanos6-profile.la \
+	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la 
 noinst_LTLIBRARIES = libcheck-shutdown.la libcheck-shutdown-debug.la
 
 # See info page of libtool "Updating version info"
@@ -101,6 +105,13 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentUserMutex.cpp \
 	src/instrument/graph/InstrumentUserMutex.hpp
 
+instrument_profile_sources = \
+	src/instrument/profile/InstrumentProfile.cpp \
+	src/instrument/profile/InstrumentProfile.hpp \
+	src/instrument/profile/InstrumentInitAndShutdown.cpp \
+	src/instrument/profile/InstrumentInitAndShutdown.hpp \
+	src/instrument/profile/InstrumentThreadManagement.hpp
+
 null_common_sources = \
 	src/null/NullDebug.cpp \
 	src/null/NullAPI.cpp
@@ -140,6 +151,11 @@ libnanos6_graph_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/graph
 libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+
+libnanos6_profile_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/profile -I$(srcdir)/src/instrument/null
+libnanos6_profile_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
+libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
+libnanos6_profile_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl $(BACKTRACE_LIBS)
 
 libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
