@@ -260,8 +260,19 @@ critical_test_LDADD = $(test_common_libs)
 critical_test_LDFLAGS = $(test_common_ldflags)
 
 
-check_PROGRAMS = $(enabled_tests) $(disabled_tests)
-TESTS = $(enabled_tests)
+unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test
+
+inline_double_linked_list_debug_test_SOURCES = tests/unit/support/TestInlineDoublyLinkedList.cpp
+inline_double_linked_list_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+
+inline_double_linked_list_test_SOURCES = tests/unit/support/TestInlineDoublyLinkedList.cpp
+inline_double_linked_list_test_CPPFLAGS = -DNDEBUG
+inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+
+
+
+check_PROGRAMS = $(unit_tests) $(enabled_tests) $(disabled_tests)
+TESTS = $(unit_tests) $(enabled_tests)
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/tests/infrastructure/tap-driver.sh
 
 
