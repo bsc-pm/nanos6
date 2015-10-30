@@ -64,6 +64,7 @@ common_sources = \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerInterface.hpp \
 	src/support/ConstPropagator.hpp \
+	src/support/InlineDoublyLinkedList.hpp \
 	src/system/Bootstrap.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
