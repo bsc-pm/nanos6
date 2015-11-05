@@ -49,7 +49,7 @@ static std::string contentsToString(list_t const &myList) {
 int main(__attribute__((unused)) int argc, __attribute__((unused)) char **argv) {
 	TestAnyProtocolProducer tap;
 	
-	tap.registerNewTests(34);
+	tap.registerNewTests(29);
 	tap.begin();
 	
 	list_t myList;
