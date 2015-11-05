@@ -26,7 +26,7 @@ nodist_noinst_HEADERS = \
 
 # Sources for debugging both the regular and the null runtime
 universal_debug_sources = \
-	src/system/debug/DebugAPI.cpp
+	src/system/debug/RuntimeVersionAPI.cpp
 
 
 common_sources = \
@@ -37,7 +37,6 @@ common_sources = \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
-	src/executors/threads/ThreadManagerDebuggingInterface.hpp \
 	src/executors/threads/ThreadManagerPolicy.cpp \
 	src/executors/threads/ThreadManagerPolicy.hpp \
 	src/executors/threads/ThreadManagerPolicyInterface.hpp \
@@ -70,8 +69,8 @@ common_sources = \
 	src/system/LeaderThread.hpp \
 	src/system/MainTask.cpp \
 	src/system/MainTask.hpp \
+	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
-	src/system/ompss/Debug.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \

@@ -26,6 +26,10 @@ class ThreadManagerDebuggingInterface;
 
 
 class ThreadManager {
+public:
+	typedef std::vector<std::atomic<CPU *>> cpu_list_t;
+	
+private:
 	//! \brief indicates if the runtime is shutting down
 	static std::atomic<bool> _mustExit;
 	
@@ -33,7 +37,7 @@ class ThreadManager {
 	static cpu_set_t _processCPUMask;
 	
 	//! \brief per-CPU data indexed by system CPU identifier
-	static std::vector<std::atomic<CPU *>> _cpus;
+	static cpu_list_t _cpus;
 	
 	//! \brief numer of initialized CPUs
 	static std::atomic<long> _totalCPUs;
@@ -67,6 +71,15 @@ public:
 	
 	//! \brief get the maximum number of CPUs that will be used
 	static inline long getTotalCPUs();
+	
+	//! \brief check if initialization has finished
+	static inline bool hasFinishedInitialization();
+	
+	//! \brief get a reference to the CPU mask of the process
+	static inline cpu_set_t const &getProcessCPUMaskReference();
+	
+	//! \brief get a reference to the list of CPUs
+	static inline cpu_list_t const &getCPUListReference();
 	
 	//! \brief create or recycle a WorkerThread
 	//! The thread is returned in a blocked (or about to block) status
@@ -141,6 +154,7 @@ inline CPU *ThreadManager::getCPU(size_t systemCPUId)
 			}
 		} else {
 			newCPU->_virtualCPUId = _totalCPUs++;
+// 			atomic_thread_fence(std::memory_order_seq_cst);
 			cpu = newCPU;
 		}
 	}
@@ -152,6 +166,22 @@ inline CPU *ThreadManager::getCPU(size_t systemCPUId)
 inline long ThreadManager::getTotalCPUs()
 {
 	return _totalCPUs;
+}
+
+inline bool ThreadManager::hasFinishedInitialization()
+{
+	return _finishedCPUInitialization;
+}
+
+
+inline cpu_set_t const &ThreadManager::getProcessCPUMaskReference()
+{
+	return _processCPUMask;
+}
+
+inline ThreadManager::cpu_list_t const &ThreadManager::getCPUListReference()
+{
+	return _cpus;
 }
 
 

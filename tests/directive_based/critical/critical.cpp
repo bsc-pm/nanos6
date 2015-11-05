@@ -1,13 +1,11 @@
+#include "api/nanos6_debug_interface.h"
+
 #include "infrastructure/ProgramLifecycle.hpp"
 #include "infrastructure/TestAnyProtocolProducer.hpp"
 #include "infrastructure/Timer.hpp"
 
-#include "executors/threads/ThreadManagerDebuggingInterface.hpp"
-
 #include <atomic>
 #include <cassert>
-
-#include <sched.h>
 
 
 extern TestAnyProtocolProducer tap;
@@ -69,11 +67,9 @@ static void sum(long participant)
 
 
 int main(int argc, char **argv) {
-	while (!ThreadManagerDebuggingInterface::hasFinishedCPUInitialization()) {
-		sched_yield();
-	}
+	nanos_wait_for_full_initialization();
 	
-	numCPUs = ThreadManager::getTotalCPUs();
+	numCPUs = nanos_get_num_cpus();
 	
 	tap.registerNewTests(numCPUs * 2L + 1);
 	

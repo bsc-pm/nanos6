@@ -1,15 +1,12 @@
 #include "api/nanos6_rt_interface.h"
+#include "api/nanos6_debug_interface.h"
 
 #include "tests/infrastructure/ProgramLifecycle.hpp"
 #include "tests/infrastructure/TestAnyProtocolProducer.hpp"
 #include "tests/infrastructure/Timer.hpp"
 
-#include "executors/threads/ThreadManagerDebuggingInterface.hpp"
-
 #include <atomic>
 #include <cassert>
-
-#include <sched.h>
 
 
 #define STRINGIFY(x) #x
@@ -118,11 +115,9 @@ static nanos_task_info sum_info = {
 
 
 int main(int argc, char **argv) {
-	while (!ThreadManagerDebuggingInterface::hasFinishedCPUInitialization()) {
-		sched_yield();
-	}
+	nanos_wait_for_full_initialization();
 	
-	numCPUs = ThreadManager::getTotalCPUs();
+	numCPUs = nanos_get_num_cpus();
 	
 	tap.registerNewTests(numCPUs * 2L + 1);
 	
