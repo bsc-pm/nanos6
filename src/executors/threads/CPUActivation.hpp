@@ -24,8 +24,12 @@ public:
 		
 		CPU::activation_status_t currentStatus = cpu->_activationStatus;
 		if (currentStatus == CPU::starting_status) {
-			bool successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
-			assert(successful); // There should be no other thread changing this
+			#if NDEBUG
+				cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
+			#else
+				bool successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
+				assert(successful); // There should be no other thread changing this
+			#endif
 		}
 	}
 	
