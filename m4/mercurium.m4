@@ -116,10 +116,11 @@ AC_DEFUN([SSS_ALTERNATIVE_MERCURIUM_CONFIGURATION],
 			AC_MSG_NOTICE([Creating local Mercurium configuration file ${config}])
 			# Replace the include directory and do not link automatically, since the runtime is compiled with libtool and has yet to be installed
 			cat "${MCC_CONFIG_DIR}"/${config} | sed \
-				's@{:true:} linker_options = -L.*@{:true:} linker_options = @;
-				s@{:true:,openmp}preprocessor_options = -I.*@{:true:,openmp}preprocessor_options = -I'$(readlink -f "${srcdir}/../../src/api")' -include nanos6_rt_interface.h@;
+				's@{!nanox} linker_options = -L.*@{!nanox} linker_options = @;
+				s@{!nanox,openmp}preprocessor_options = -I.*@{!nanox,openmp}preprocessor_options = -I'$(readlink -f "${srcdir}/../../src/api")' -include nanos6_rt_interface.h@;
 				s@-lnanos6[[^ ]]*@@g;
-				s@-Xlinker -rpath -Xlinker '"${MCC_PREFIX}/lib"'@@' \
+				s@-Xlinker -rpath -Xlinker '"${MCC_PREFIX}/lib"'@@;
+				s@-Xlinker -rpath -Xlinker '"${prefix}/lib"'@@' \
 			> mcc-config.d/${config}
 			LOCAL_MCC_CONFIG="${LOCAL_MCC_CONFIG} mcc-config.d/${config}"
 		done
