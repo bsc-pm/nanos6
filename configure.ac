@@ -40,6 +40,8 @@ AC_PROG_MAKE_SET
 
 DX_DOT_FEATURE(ON)
 DX_INIT_DOXYGEN([nanos6_rt], [docs/Doxyfile], [docs/doxygen])
+full_top_srcdir=$(readlink -f ${srcdir})
+AC_SUBST([full_top_srcdir])
 
 # Checks for libraries.
 
