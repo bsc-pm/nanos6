@@ -95,6 +95,11 @@ common_sources = \
 
 noinstrument_sources = \
 	src/instrument/null/InstrumentAddTask.hpp \
+	src/instrument/null/InstrumentDataAccessId.hpp \
+	src/instrument/null/InstrumentDataAccessSequenceId.hpp \
+	src/instrument/null/InstrumentDependenciesByAccess.hpp \
+	src/instrument/null/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/null/InstrumentDependenciesByGroup.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
@@ -107,14 +112,17 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentAddTask.cpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
-	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
 	src/instrument/graph/InstrumentDataAccessSequenceId.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.cpp \
-	src/instrument/graph/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccessSequences.cpp \
+	src/instrument/graph/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
 	src/instrument/graph/InstrumentGraph.cpp \
 	src/instrument/graph/InstrumentGraph.hpp \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
+	src/instrument/graph/InstrumentInitAndShutdown.cpp.was \
+	src/instrument/graph/InstrumentInitAndShutdown.cpp.was-002 \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentTaskExecution.cpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
@@ -128,10 +136,15 @@ instrument_graph_sources = \
 
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentAddTask.hpp \
-	src/instrument/profile/InstrumentProfile.cpp \
-	src/instrument/profile/InstrumentProfile.hpp \
+	src/instrument/profile/InstrumentDataAccessId.hpp \
+	src/instrument/profile/InstrumentDataAccessSequenceId.hpp \
+	src/instrument/profile/InstrumentDependenciesByAccess.hpp \
+	src/instrument/profile/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
+	src/instrument/profile/InstrumentProfile.cpp \
+	src/instrument/profile/InstrumentProfile.hpp \
 	src/instrument/profile/InstrumentTaskExecution.hpp \
 	src/instrument/profile/InstrumentTaskId.hpp \
 	src/instrument/profile/InstrumentTaskWait.hpp \
