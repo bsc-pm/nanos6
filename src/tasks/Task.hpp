@@ -5,13 +5,18 @@
 #include <atomic>
 #include <cassert>
 #include <set>
+#include <boost/intrusive/list.hpp>
 
 #include "api/nanos6_rt_interface.h"
+#include "dependencies/DataAccess.hpp"
+#include "dependencies/FixedAddressDataAccessMap.hpp"
+#include "dependencies/TaskDataAccessesLinkingArtifacts.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <InstrumentTaskId.hpp>
 
 
+class DataAccess;
 class WorkerThread;
 
 
@@ -20,6 +25,10 @@ class WorkerThread;
 
 
 class Task {
+public:
+	typedef FixedAddressDataAccessMap dependency_domain_t;
+	
+private:
 	void *_argsBlock;
 	
 	nanos_task_info *_taskInfo;
@@ -33,6 +42,15 @@ class Task {
 	
 	//! Task to which this one is closely nested
 	Task *_parent;
+	
+	//! Accesses that may determine dependencies
+	boost::intrusive::list<DataAccess, boost::intrusive::function_hook<TaskDataAccessesLinkingArtifacts>> _dataAccesses;
+	
+	//! Number of pending predecessors
+	std::atomic<int> _predecessorCount;
+	
+	//! Dependency domain of the tasks directly nested within the task
+	dependency_domain_t _innerDependencyDomain;
 	
 	//! An identifier for the task for the instrumentation
 	Instrument::task_id_t _instrumentationTaskId;
@@ -51,6 +69,9 @@ public:
 		_taskInfo(taskInfo), _taskInvokationInfo(taskInvokationInfo),
 		_thread(nullptr), _countdownToBeWokenUp(1),
 		_parent(parent),
+		_dataAccesses(),
+		_predecessorCount(0),
+		_innerDependencyDomain(),
 		_instrumentationTaskId(instrumentationTaskId),
 		_schedulerInfo(nullptr)
 	{
@@ -201,6 +222,49 @@ public:
 		return (_countdownToBeWokenUp == 1);
 	}
 	
+	//! \brief Add an element to the list of data accesses (that may generate dependencies)
+	void addDataAccess(DataAccess *dataAccess)
+	{
+		_dataAccesses.push_back(*dataAccess); // This operation actually does add the pointer
+	}
+	
+	//! \brief Remove an element of the data accesses list (if any) and return it (or null)
+	DataAccess *popDataAccess()
+	{
+		if (_dataAccesses.empty()) {
+			return 0;
+		} else {
+			DataAccess *dataAccess = &_dataAccesses.front();
+			_dataAccesses.pop_front();
+			return dataAccess;
+		}
+	}
+	
+	//! \brief Increase the number of predecessors
+	void increasePredecessors(int amount=1)
+	{
+		_predecessorCount += amount;
+	}
+	
+	//! \brief Decrease the number of predecessors
+	//! \returns true if the task becomes ready
+	bool decreasePredecessors(int amount=1)
+	{
+		return ((_predecessorCount -= amount) == 0);
+	}
+	
+	//! \brief Retrieves the inner dependency domain used to calculate the dependencies between the direct children
+	dependency_domain_t const &getInnerDependencyDomain() const
+	{
+		return _innerDependencyDomain;
+	}
+	
+	//! \brief Retrieves the inner dependency domain used to calculate the dependencies between the direct children
+	dependency_domain_t &getInnerDependencyDomain()
+	{
+		return _innerDependencyDomain;
+	}
+	
 	//! \brief Retrieve the instrumentation-specific task identifier
 	inline Instrument::task_id_t getInstrumentationTaskId() const
 	{
@@ -223,6 +287,10 @@ public:
 
 
 #pragma GCC diagnostic push
+
+
+#include "dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp"
+#include "dependencies/DataAccessSequenceImplementation.hpp"
 
 
 #endif // TASK_HPP

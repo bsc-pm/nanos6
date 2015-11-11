@@ -4,15 +4,21 @@
 
 #include "api/nanos6_rt_interface.h"
 
+#include "dependencies/DataAccess.hpp"
+#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "system/ompss/UserMutex.hpp"
 
+#include <InstrumentDataAccessId.hpp>
+#include <InstrumentDataAccessSequenceId.hpp>
 #include <InstrumentTaskId.hpp>
+#include <dependencies/DataAccess.hpp>
 
 #include <atomic>
+#include <deque>
 #include <list>
 #include <map>
-#include <deque>
+#include <set>
 
 
 class WorkerThread;
@@ -34,7 +40,60 @@ namespace Instrument {
 		};
 		
 		//! \brief this is the list of direct children between the previous (if any) and next (if any) taskwait
-		typedef std::deque<task_id_t> children_list_t;
+		typedef std::set<task_id_t> children_list_t;
+		
+		struct dependency_info_t {
+			std::set<task_id_t> _lastReaders;
+			task_id_t _lastWriter;
+			DataAccess::type_t _lastAccessType;
+			
+			dependency_info_t()
+				: _lastReaders(), _lastWriter(-1), _lastAccessType(DataAccess::READ)
+			{
+			}
+		};
+		
+		typedef std::map<void *, dependency_info_t> dependency_info_map_t;
+		
+		//! \brief a dependency edge between 2 tasks
+		struct edge_t {
+			task_id_t _source;
+			task_id_t _sink;
+			
+			edge_t(task_id_t source, task_id_t sink)
+				: _source(source), _sink(sink)
+			{
+			}
+		};
+		
+		//! \brief this is the list of dependency edges
+		typedef std::deque<edge_t> dependency_edge_list_t;
+		
+		typedef enum {
+			READ = DataAccess::READ,
+			WRITE = DataAccess::WRITE,
+			READWRITE = DataAccess::READWRITE,
+			NOT_CREATED
+		} access_type_t;
+		
+		struct access_t {
+			access_type_t _type;
+			bool _satisfied;
+			task_id_t _originator;
+			bool _deleted;
+			
+			access_t():
+				_type(NOT_CREATED), _satisfied(false), _originator(-1), _deleted(false)
+			{
+			}
+		};
+		
+		struct access_sequence_t {
+			std::map<data_access_id_t, access_t> _accesses;
+		};
+		
+		typedef std::map<data_access_sequence_id_t, access_sequence_t> domain_access_sequences_t;
+		
 		
 		struct phase_t {
 			virtual ~phase_t()
@@ -45,10 +104,16 @@ namespace Instrument {
 		
 		struct task_group_t : public phase_t {
 			children_list_t _children;
+			dependency_edge_list_t _dependencyEdges;
+			dependency_info_map_t _dependencyInfoMap;
+			domain_access_sequences_t _accessSequences;
 			taskwait_id_t _clusterId;
 			
 			task_group_t(taskwait_id_t id)
-				: phase_t(), _clusterId(id)
+				: phase_t(),
+				_children(), _dependencyEdges(),
+				_dependencyInfoMap(),
+				_clusterId(id)
 			{
 			}
 		};
@@ -69,14 +134,20 @@ namespace Instrument {
 			nanos_task_info *_nanos_task_info;
 			nanos_task_invocation_info *_nanos_task_invocation_info;
 			
+			task_id_t _parent;
+			
 			task_status_t _status;
 			long _lastCPU;
+			bool _hasPredecessors;
+			bool _hasSuccessors;
 			
 			phase_list_t _phaseList;
 			
 			task_info_t()
 				: _nanos_task_info(nullptr), _nanos_task_invocation_info(nullptr),
+				_parent(-1),
 				_status(not_created_status), _lastCPU(-1),
+				_hasPredecessors(false), _hasSuccessors(false),
 				_phaseList()
 			{
 			}
@@ -180,6 +251,80 @@ namespace Instrument {
 			}
 		};
 		
+		struct register_task_access_in_sequence_step_t : public execution_step_t {
+			data_access_sequence_id_t _sequenceId;
+			data_access_id_t _accessId;
+			DataAccess::type_t _accessType;
+			bool _satisfied;
+			task_id_t _originatorTaskId;
+			
+			register_task_access_in_sequence_step_t(
+				long cpu, thread_id_t threadId,
+				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
+				DataAccess::type_t accessType, bool satisfied, task_id_t originatorTaskId
+			)
+				: execution_step_t(cpu, threadId),
+				_sequenceId(sequenceId), _accessId(accessId),
+				_accessType(accessType), _satisfied(satisfied), _originatorTaskId(originatorTaskId)
+			{
+			}
+		};
+		
+		struct upgrade_task_access_in_sequence_step_t : public execution_step_t {
+			data_access_sequence_id_t _sequenceId;
+			data_access_id_t _accessId;
+			DataAccess::type_t _newAccessType;
+			bool _becomesUnsatisfied;
+			task_id_t _originatorTaskId;
+			
+			upgrade_task_access_in_sequence_step_t(
+				long cpu, thread_id_t threadId,
+				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
+				DataAccess::type_t newAccessType, bool becomesUnsatisfied,
+				task_id_t originatorTaskId
+			)
+				: execution_step_t(cpu, threadId),
+				_sequenceId(sequenceId), _accessId(accessId),
+				_newAccessType(newAccessType), _becomesUnsatisfied(becomesUnsatisfied), _originatorTaskId(originatorTaskId)
+			{
+			}
+		};
+		
+		struct task_access_in_sequence_becomes_satisfied_step_t : public execution_step_t {
+			data_access_sequence_id_t _sequenceId;
+			data_access_id_t _accessId;
+			task_id_t _triggererTaskId;
+			task_id_t _targetTaskId;
+			
+			task_access_in_sequence_becomes_satisfied_step_t(
+				long cpu, thread_id_t threadId,
+				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
+				task_id_t triggererTaskId, task_id_t targetTaskId
+			)
+				: execution_step_t(cpu, threadId),
+				_sequenceId(sequenceId), _accessId(accessId),
+				_triggererTaskId(triggererTaskId), _targetTaskId(targetTaskId)
+			{
+			}
+		};
+		
+		struct removed_task_access_from_sequence_step_t : public execution_step_t {
+			data_access_sequence_id_t _sequenceId;
+			data_access_id_t _accessId;
+			task_id_t _triggererTaskId;
+			
+			removed_task_access_from_sequence_step_t(
+				long cpu, thread_id_t threadId,
+				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
+				task_id_t triggererTaskId
+			)
+				: execution_step_t(cpu, threadId),
+				_sequenceId(sequenceId), _accessId(accessId),
+				_triggererTaskId(triggererTaskId)
+			{
+			}
+		};
+		
 		typedef std::list<execution_step_t *> execution_sequence_t;
 		
 		
@@ -187,6 +332,8 @@ namespace Instrument {
 		extern std::atomic<taskwait_id_t> _nextTaskwaitId;
 		extern std::atomic<task_id_t> _nextTaskId;
 		extern std::atomic<usermutex_id_t> _nextUsermutexId;
+		extern std::atomic<data_access_id_t> _nextDataAccessId;
+		extern std::atomic<data_access_sequence_id_t> _nextDataAccessSequenceId;
 		
 		
 		//! \brief maps thread pointers to thread identifiers
@@ -207,6 +354,13 @@ namespace Instrument {
 		extern execution_sequence_t _executionSequence;
 		
 		extern SpinLock _graphLock;
+		
+		extern EnvironmentVariable<bool> _showDependencyStructures;
+		
+		
+		// Helper functions
+		access_sequence_t &getAccessSequence(data_access_sequence_id_t dataAccessSequenceId, task_id_t originatorTaskId);
+		access_t &getAccess(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, task_id_t originatorTaskId);
 	};
 	
 }

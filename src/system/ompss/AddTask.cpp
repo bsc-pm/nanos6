@@ -4,6 +4,7 @@
 #endif
 
 #include "api/nanos6_rt_interface.h"
+#include "dependencies/DataAccessRegistration.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/HardwarePlace.hpp"
@@ -15,7 +16,6 @@
 
 #include <cassert>
 #include <cstdlib>
-#include <iostream>
 
 #ifndef NDEBUG
 #include "system/MainTask.hpp"
@@ -71,11 +71,20 @@ void nanos_submit_task(void *taskHandle)
 	
 	Instrument::createdTask(task, task->getInstrumentationTaskId());
 	
-	HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace);
-	assert((currentWorkerThread != nullptr) || (idleHardwarePlace == nullptr)); // The main task is added before the scheduler 
+	bool ready = true;
+	nanos_task_info *taskInfo = task->getTaskInfo();
+	assert(taskInfo != 0);
+	if (taskInfo->register_depinfo != 0) {
+		ready = DataAccessRegistration::registerTaskDataAccesses(task);
+	}
 	
-	if (idleHardwarePlace != nullptr) {
-		ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+	if (ready) {
+		HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace);
+		assert((currentWorkerThread != nullptr) || (idleHardwarePlace == nullptr)); // The main task is added before the scheduler
+		
+		if (idleHardwarePlace != nullptr) {
+			ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+		}
 	}
 	
 	Instrument::exitAddTask(task->getInstrumentationTaskId());

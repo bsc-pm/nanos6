@@ -1,6 +1,7 @@
 #include "CPUActivation.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
+#include <dependencies/DataAccessRegistration.hpp>
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
@@ -85,7 +86,8 @@ void WorkerThread::handleTask()
 	
 	Instrument::endTask(taskId, _cpu, this);
 	
-	// TODO: Release successors
+	// Release successors
+	DataAccessRegistration::unregisterTaskDataAccesses(_task);
 	
 	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
 	{

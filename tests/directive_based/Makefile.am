@@ -10,7 +10,8 @@ alltests = \
 	single-nest.debug.test single-nest.test \
 	fibonacci.debug.test fibonacci.test \
 	cpu-activation.debug.test cpu-activation.test \
-	critical.debug.test critical.test
+	critical.debug.test critical.test \
+	dependencies-nonest.debug.test dependencies-nonest.test
 
 check_PROGRAMS =
 TESTS =
@@ -81,6 +82,17 @@ critical_test_CPPFLAGS = -DNDEBUG
 critical_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/../../src/instrument/null
 critical_test_LDADD = $(test_common_libs) -lpthread
 critical_test_LDFLAGS = $(test_common_ldflags)
+
+dependencies_nonest_debug_test_SOURCES = dependencies-nonest/dependencies-nonest.cpp
+dependencies_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dependencies_nonest_debug_test_LDADD = $(test_common_debug_libs) -lpthread
+dependencies_nonest_debug_test_LDFLAGS = $(test_common_ldflags)
+
+dependencies_nonest_test_SOURCES = dependencies-nonest/dependencies-nonest.cpp
+dependencies_nonest_test_CPPFLAGS = -DNDEBUG
+dependencies_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dependencies_nonest_test_LDADD = $(test_common_libs) -lpthread
+dependencies_nonest_test_LDFLAGS = $(test_common_ldflags)
 
 
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/../../tests/infrastructure/tap-driver.sh

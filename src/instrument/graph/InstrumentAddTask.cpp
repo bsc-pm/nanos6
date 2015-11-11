@@ -74,6 +74,9 @@ namespace Instrument {
 		assert(taskInfo._phaseList.empty());
 		taskInfo._nanos_task_info = task->getTaskInfo();
 		taskInfo._nanos_task_invocation_info = task->getTaskInvokationInfo();
+		if (parentTask != 0) {
+			taskInfo._parent = parentTask->getInstrumentationTaskId();
+		}
 		taskInfo._status = not_created_status; // The simulation comes afterwards
 		
 		if (parentTask != nullptr) {
@@ -92,7 +95,7 @@ namespace Instrument {
 			}
 			assert(taskGroup != nullptr);
 			
-			taskGroup->_children.push_back(taskId);
+			taskGroup->_children.insert(taskId);
 		}
 	}
 	

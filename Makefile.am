@@ -30,6 +30,15 @@ universal_debug_sources = \
 
 
 common_sources = \
+	src/dependencies/DataAccess.hpp \
+	src/dependencies/DataAccessRegistration.hpp \
+	src/dependencies/DataAccessSequenceLinkingArtifactsImplementation.hpp \
+	src/dependencies/DataAccessSequence.hpp \
+	src/dependencies/DataAccessSequenceImplementation.hpp \
+	src/dependencies/DataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/FixedAddressDataAccessMap.hpp \
+	src/dependencies/TaskDataAccessesLinkingArtifacts.hpp \
+	src/dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
@@ -45,6 +54,9 @@ common_sources = \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/HardwarePlace.hpp \
 	src/instrument/InstrumentAddTask.hpp \
+	src/instrument/InstrumentDependenciesByAccess.hpp \
+	src/instrument/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/InstrumentDependenciesByGroup.hpp \
 	src/instrument/InstrumentInitAndShutdown.hpp \
 	src/instrument/InstrumentTaskExecution.hpp \
 	src/instrument/InstrumentTaskWait.hpp \
@@ -62,6 +74,7 @@ common_sources = \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerInterface.hpp \
+	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/support/ConstPropagator.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/system/Bootstrap.cpp \
@@ -71,6 +84,7 @@ common_sources = \
 	src/system/MainTask.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
+	src/system/ompss/RegisterDependencies.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
@@ -92,6 +106,12 @@ instrument_graph_sources = \
 	src/instrument/graph/Color.hpp \
 	src/instrument/graph/InstrumentAddTask.cpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
+	src/instrument/graph/InstrumentDataAccessId.hpp \
+	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
+	src/instrument/graph/InstrumentDataAccessSequenceId.hpp \
+	src/instrument/graph/InstrumentDependenciesByAccess.cpp \
+	src/instrument/graph/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/graph/InstrumentDependenciesByAccessSequences.cpp \
 	src/instrument/graph/InstrumentGraph.cpp \
 	src/instrument/graph/InstrumentGraph.hpp \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
@@ -143,37 +163,40 @@ EXTRA_DIST = \
 	tests/infrastructure/tap-driver.sh
 
 
-libnanos6_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/null
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER
+common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+
+libnanos6_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
-libnanos6_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+libnanos6_la_LDFLAGS = $(common_libnanos6_ldflags)
 
-libnanos6_debug_la_CPPFLAGS = -I$(srcdir)/src/instrument/null
+libnanos6_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
-libnanos6_debug_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+libnanos6_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 
-libnanos6_graph_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/graph
+libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph
 libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
-libnanos6_graph_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+libnanos6_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
 
-libnanos6_profile_la_CPPFLAGS = -DNDEBUG -I$(srcdir)/src/instrument/profile
+libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile
 libnanos6_profile_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
-libnanos6_profile_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl $(BACKTRACE_LIBS)
+libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS)
 
 libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
-libnanos6_null_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+libnanos6_null_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 libnanos6_null_cb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_cb_la_SOURCES = $(null_cb_sources) $(universal_debug_sources)
-libnanos6_null_cb_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+libnanos6_null_cb_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 libnanos6_null_sb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
-libnanos6_null_sb_la_LDFLAGS = -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
+libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 
 

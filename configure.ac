@@ -44,6 +44,7 @@ full_top_srcdir=$(readlink -f ${srcdir})
 AC_SUBST([full_top_srcdir])
 
 # Checks for libraries.
+AX_BOOST_BASE([1.59], [], [ AC_MSG_ERROR([Boost library not found])])
 
 # Checks for header files.
 AC_CHECK_HEADERS([unistd.h])
