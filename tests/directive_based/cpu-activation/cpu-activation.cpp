@@ -1,11 +1,10 @@
-#include "api/nanos6_rt_interface.h"
-#include "api/nanos6_debug_interface.h"
+#include <nanos6_debug_interface.h>
 
 #include "infrastructure/ProgramLifecycle.hpp"
 #include "infrastructure/TestAnyProtocolProducer.hpp"
 #include "infrastructure/Timer.hpp"
 
-#include "lowlevel/ConditionVariable.hpp"
+#include "ConditionVariable.hpp"
 
 #include <atomic>
 #include <cassert>

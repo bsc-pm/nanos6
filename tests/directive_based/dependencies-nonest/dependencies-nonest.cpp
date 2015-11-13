@@ -14,7 +14,7 @@
 #include "infrastructure/TestAnyProtocolProducer.hpp"
 #include "infrastructure/Timer.hpp"
 
-#include "api/nanos6_debug_interface.h"
+#include <nanos6_debug_interface.h>
 
 
 extern TestAnyProtocolProducer tap;

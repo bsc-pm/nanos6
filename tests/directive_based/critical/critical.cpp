@@ -1,4 +1,4 @@
-#include "api/nanos6_debug_interface.h"
+#include <nanos6_debug_interface.h>
 
 #include "infrastructure/ProgramLifecycle.hpp"
 #include "infrastructure/TestAnyProtocolProducer.hpp"
