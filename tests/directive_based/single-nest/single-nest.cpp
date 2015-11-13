@@ -18,8 +18,6 @@ std::atomic<bool> theOuterTaskHasFinished;
 void shutdownTests()
 {
 	/* Test2 */ tap.evaluate(theOuterTaskHasFinished, "Evaluating whether the runtime exits after the regular task");
-	
-	assert(theOuterTaskHasFinished);
 	tap.end();
 }
 
