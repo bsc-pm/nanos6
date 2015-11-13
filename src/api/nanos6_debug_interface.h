@@ -13,6 +13,8 @@ char const *nanos_get_runtime_compiler_flags(void);
 
 void nanos_wait_for_full_initialization(void);
 
+long nanos_supports_cpu_management(void);
+
 long nanos_get_num_cpus(void);
 
 long nanos_get_current_system_cpu();

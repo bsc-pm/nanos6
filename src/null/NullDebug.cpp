@@ -9,6 +9,11 @@ long nanos_get_num_cpus()
 	return 1;
 }
 
+long nanos_supports_cpu_management(void)
+{
+	return 0;
+}
+
 long nanos_get_current_system_cpu(void)
 {
 	return 0;

@@ -77,6 +77,14 @@ public:
 int main(int argc, char **argv) {
 	initializationTimer.stop();
 	
+	if (!nanos_supports_cpu_management()) {
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.skip("This test requires CPU management");
+		shutdownTimer.start();
+		return 0;
+	}
+	
 	nanos_wait_for_full_initialization();
 	
 	long activeCPUs = nanos_get_num_cpus();
