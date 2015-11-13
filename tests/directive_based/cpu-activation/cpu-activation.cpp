@@ -84,11 +84,7 @@ int main(int argc, char **argv) {
 		// This test only works correctly with more than 1 CPU
 		tap.registerNewTests(1);
 		tap.begin();
-		tap.evaluateWeak(
-			activeCPUs > 1,
-			"Check that the test is being executed with more than 1 CPU",
-			"This test does not work with just 1 CPU"
-		);
+		tap.skip("This test does not work with just 1 CPU");
 		shutdownTimer.start();
 		return 0;
 	}
