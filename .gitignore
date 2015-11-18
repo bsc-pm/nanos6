@@ -1,4 +1,5 @@
 *.Plo
+*.kate-swp
 *.kdev4
 *.la
 *.lo
@@ -6,6 +7,8 @@
 *.o
 *.test
 *.trs
+*.was
+*.was-*
 *~
 .deps
 .dirstamp
