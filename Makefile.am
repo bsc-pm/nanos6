@@ -215,16 +215,6 @@ libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
 # Tests
 #
 
-enabled_tests = \
-	noop.debug.test noop.test \
-	single-nest.debug.test single-nest.test \
-	fibonacci.debug.test fibonacci.test \
-	cpu-activation.debug.test cpu-activation.test \
-	critical.debug.test critical.test
-
-disabled_tests =
-
-
 shutdown_common_sources = \
 	tests/infrastructure/ProgramLifecycle.cpp
 
@@ -238,66 +228,6 @@ libcheck_shutdown_debug_la_SOURCES = $(shutdown_common_sources)
 libcheck_shutdown_debug_la_LDFLAGS = -module -rpath /nowhere -ldl
 
 
-test_common_debug_libs = libnanos6-debug.la libcheck-shutdown-debug.la
-test_common_libs = libnanos6.la libcheck-shutdown.la
-test_common_ldflags = -no-install
-
-noop_debug_test_SOURCES = tests/direct_api/noop/noop.cpp
-noop_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-noop_debug_test_LDADD = $(test_common_debug_libs)
-noop_debug_test_LDFLAGS = $(test_common_ldflags)
-
-noop_test_SOURCES = tests/direct_api/noop/noop.cpp
-noop_test_CPPFLAGS = -DNDEBUG
-noop_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-noop_test_LDADD = $(test_common_libs)
-noop_test_LDFLAGS = $(test_common_ldflags)
-
-single_nest_debug_test_SOURCES = tests/direct_api/single-nest/single-nest.cpp
-single_nest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-single_nest_debug_test_LDADD = $(test_common_debug_libs)
-single_nest_debug_test_LDFLAGS = $(test_common_ldflags)
-
-single_nest_test_SOURCES = tests/direct_api/single-nest/single-nest.cpp
-single_nest_test_CPPFLAGS = -DNDEBUG
-single_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-single_nest_test_LDADD = $(test_common_libs)
-single_nest_test_LDFLAGS = $(test_common_ldflags)
-
-fibonacci_debug_test_SOURCES = tests/direct_api/fibonacci/fibonacci.cpp
-fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-fibonacci_debug_test_LDADD = $(test_common_debug_libs)
-fibonacci_debug_test_LDFLAGS = $(test_common_ldflags)
-
-fibonacci_test_SOURCES = tests/direct_api/fibonacci/fibonacci.cpp
-fibonacci_test_CPPFLAGS = -DNDEBUG
-fibonacci_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-fibonacci_test_LDADD = $(test_common_libs)
-fibonacci_test_LDFLAGS = $(test_common_ldflags)
-
-cpu_activation_debug_test_SOURCES = tests/direct_api/cpu-activation/cpu-activation.cpp
-cpu_activation_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/src/instrument/null
-cpu_activation_debug_test_LDADD = $(test_common_debug_libs) -lpthread
-cpu_activation_debug_test_LDFLAGS = $(test_common_ldflags)
-
-cpu_activation_test_SOURCES = tests/direct_api/cpu-activation/cpu-activation.cpp
-cpu_activation_test_CPPFLAGS = -DNDEBUG
-cpu_activation_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/src/instrument/null
-cpu_activation_test_LDADD = $(test_common_libs) -lpthread
-cpu_activation_test_LDFLAGS = $(test_common_ldflags)
-
-critical_debug_test_SOURCES = tests/direct_api/critical/critical.cpp
-critical_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/src/instrument/null
-critical_debug_test_LDADD = $(test_common_debug_libs)
-critical_debug_test_LDFLAGS = $(test_common_ldflags)
-
-critical_test_SOURCES = tests/direct_api/critical/critical.cpp
-critical_test_CPPFLAGS = -DNDEBUG
-critical_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -I$(srcdir)/src/instrument/null
-critical_test_LDADD = $(test_common_libs)
-critical_test_LDFLAGS = $(test_common_ldflags)
-
-
 unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test
 
 inline_double_linked_list_debug_test_SOURCES = tests/unit/support/TestInlineDoublyLinkedList.cpp
@@ -309,8 +239,8 @@ inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 
 
 
-check_PROGRAMS = $(unit_tests) $(enabled_tests) $(disabled_tests)
-TESTS = $(unit_tests) $(enabled_tests)
+check_PROGRAMS = $(unit_tests)
+TESTS = $(unit_tests)
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/tests/infrastructure/tap-driver.sh
 
 
