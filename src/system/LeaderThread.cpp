@@ -6,7 +6,6 @@
 #include "LeaderThread.hpp"
 
 
-int LeaderThread::_returnCode;
 std::atomic<bool> LeaderThread::_mustExit(false);
 
 
@@ -25,15 +24,8 @@ void LeaderThread::maintenanceLoop()
 }
 
 
-void LeaderThread::notifyMainExit(int returnCode)
+void LeaderThread::notifyMainExit()
 {
-	_returnCode = returnCode;
 	std::atomic_store_explicit(&_mustExit, true, std::memory_order_release);
-}
-
-
-int LeaderThread::getMainReturnCode()
-{
-	return _returnCode;
 }
 

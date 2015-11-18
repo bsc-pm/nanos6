@@ -130,6 +130,19 @@ void nanos_user_unlock(void **handlerPointer);
 // TODO: nanos_register_input_copy, nanos_register_output_copy and nanos_register_inout_copy
 
 
+//! \brief Initialize the runtime at least to the point that it will accept tasks
+void nanos_preinit(void);
+
+//! \brief Continue with the rest of the runtime initialization
+void nanos_init(void);
+
+//! \brief Wait until the the runtime has shut down
+void nanos_wait_until_shutdown(void);
+
+//! \brief Notify the runtime that it can begin the shutdown process
+void nanos_notify_ready_for_shutdown(void);
+
+
 #ifdef __cplusplus
 }
 #endif

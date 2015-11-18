@@ -5,7 +5,7 @@ SUBDIRS = tests/directive_based
 
 
 lib_LTLIBRARIES = \
-	libnanos6.la libnanos6-debug.la \
+	libnanos6-optimized.la libnanos6-debug.la \
 	libnanos6-graph.la \
 	libnanos6-profile.la \
 	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la 
@@ -80,8 +80,6 @@ common_sources = \
 	src/system/Bootstrap.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
-	src/system/MainTask.cpp \
-	src/system/MainTask.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/RegisterDependencies.cpp \
@@ -179,10 +177,10 @@ EXTRA_DIST = \
 common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER
 common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl
 
-libnanos6_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
-libnanos6_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
-libnanos6_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
+libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_optimized_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
+libnanos6_optimized_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 libnanos6_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

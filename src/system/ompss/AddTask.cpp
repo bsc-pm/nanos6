@@ -17,10 +17,6 @@
 #include <cassert>
 #include <cstdlib>
 
-#ifndef NDEBUG
-#include "system/MainTask.hpp"
-#endif
-
 
 #define DATA_ALIGNMENT_SIZE sizeof(void *)
 #define TASK_ALIGNMENT 128
@@ -66,7 +62,12 @@ void nanos_submit_task(void *taskHandle)
 		assert(hardwarePlace != nullptr);
 	} else {
 		// Adding the main task from within the leader thread
-		assert(task->getTaskInfo() == &nanos6::main_task_info);
+		assert(task->getTaskInfo() != 0);
+		
+		// The following two assertions fail if the symbol of the nanos_task_info
+		// of "main" gets overwriten by that of another task
+		assert(task->getTaskInfo()->task_label != 0);
+		assert(std::string(task->getTaskInfo()->task_label) == std::string("main"));
 	}
 	
 	Instrument::createdTask(task, task->getInstrumentationTaskId());

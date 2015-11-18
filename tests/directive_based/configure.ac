@@ -28,7 +28,6 @@ AC_PROG_CXX
 SSS_CHECK_MERCURIUM
 if test x"${ac_use_mercurium_prefix}" != x"" ; then
 	SSS_REPLACE_WITH_MERCURIUM
-	SSS_ALTERNATIVE_MERCURIUM_CONFIGURATION
 fi
 AX_CXX_COMPILE_STDCXX_11([], [mandatory])
 
@@ -36,6 +35,16 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+
+AC_ARG_WITH(
+	[nanos6-libdir],
+	[AS_HELP_STRING([--with-nanos6-libdir=libdir], [the directory where the Nanos6 runtime library is installed @<:@default=none@:>@])],
+	[ac_use_nanos6_libdir="${withval}"],
+	[ac_use_nanos6_libdir=""]
+)
+AM_CONDITIONAL([HAVE_NANOS6_LIBRARY_PATH], [test x"$ac_use_nanos6_libdir" != x""])
+NANOS6_LIBRARY_PATH="$ac_use_nanos6_libdir"
+AC_SUBST([NANOS6_LIBRARY_PATH])
 
 # Checks for libraries.
 
