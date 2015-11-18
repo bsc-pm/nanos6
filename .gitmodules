@@ -1,0 +1,6 @@
+[submodule "common"]
+	path = common
+	url = https://pm.bsc.es/git-dev/nanos6-common.git
+[submodule "tests/directive_based"]
+	path = tests/directive_based
+	url = https://pm.bsc.es/git-dev/nanos6-tests.git

@@ -1,7 +1,7 @@
-ACLOCAL_AMFLAGS = -I m4
-AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src
+ACLOCAL_AMFLAGS = -I common/m4
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(top_srcdir)/common -I$(top_srcdir)/common/api
 
-SUBDIRS = tests/directive_based
+SUBDIRS = tests/directive_based/check-shutdown tests/directive_based/tests
 
 
 lib_LTLIBRARIES = \
@@ -165,12 +165,11 @@ null_sb_sources = \
 	src/null/NullStaticBlock.cpp
 
 noinst_HEADERS = \
-	tests/infrastructure/ProgramLifecycle.hpp \
-	tests/infrastructure/TestAnyProtocolProducer.hpp \
-	tests/infrastructure/Timer.hpp
+	common/tests/TestAnyProtocolProducer.hpp \
+	common/tests/Timer.hpp
 
 EXTRA_DIST = \
-	tests/infrastructure/tap-driver.sh
+	common/tests/tap-driver.sh
 
 
 common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER
@@ -216,18 +215,20 @@ libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test
 
+unit_test_common_cxxflags = -I$(top_srcdir)/common/tests
+
 inline_double_linked_list_debug_test_SOURCES = tests/unit/support/TestInlineDoublyLinkedList.cpp
-inline_double_linked_list_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+inline_double_linked_list_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
 
 inline_double_linked_list_test_SOURCES = tests/unit/support/TestInlineDoublyLinkedList.cpp
 inline_double_linked_list_test_CPPFLAGS = -DNDEBUG
-inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
 
 
 
 check_PROGRAMS = $(unit_tests)
 TESTS = $(unit_tests)
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/tests/infrastructure/tap-driver.sh
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/common/tests/tap-driver.sh
 
 
 

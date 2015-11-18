@@ -5,7 +5,7 @@ AC_PREREQ([2.69])
 AC_INIT([nanos6], [1.0], [pm-tools-users@bsc.es])
 AC_CONFIG_SRCDIR([src/scheduling/Scheduler.hpp])
 AC_CONFIG_AUX_DIR([config-aux])
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_MACRO_DIR([common/m4])
 
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -37,6 +37,7 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+SSS_CHECK_NANOS6_MERCURIUM
 
 DX_DOT_FEATURE(ON)
 DX_INIT_DOXYGEN([nanos6_rt], [docs/Doxyfile], [docs/doxygen])
@@ -64,7 +65,12 @@ AC_CHECK_LIB([rt], [timer_create], [BACKTRACE_LIBS="${BACKTRACE_LIBS} -lrt"])
 
 SSS_FIXUP_COMPILER_FLAGS
 
-AC_CONFIG_FILES([Makefile docs/Doxyfile src/version/VersionInfo.hpp])
-AC_CONFIG_SUBDIRS([tests/directive_based])
+AC_CONFIG_FILES([
+	Makefile
+	docs/Doxyfile
+	src/version/VersionInfo.hpp
+	tests/directive_based/check-shutdown/Makefile
+	tests/directive_based/tests/Makefile
+])
 AC_OUTPUT
 

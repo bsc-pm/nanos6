@@ -1,4 +1,4 @@
-#include "tests/infrastructure/TestAnyProtocolProducer.hpp"
+#include "TestAnyProtocolProducer.hpp"
 #include "support/InlineDoublyLinkedList.hpp"
 
 #include <algorithm>
