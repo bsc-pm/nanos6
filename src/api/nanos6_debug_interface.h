@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 
-//! \brief returns a string that describes the wesion of the runtime
+//! \brief returns a string that describes the version of the runtime
 //! For instance "2015-11-13 11:27:48 +0100 ff1221e"
 char const *nanos_get_runtime_version(void);
 
