@@ -1,6 +1,17 @@
 ACLOCAL_AMFLAGS = -I ../../m4
 AM_CXXFLAGS = -I$(srcdir)/..
 
+noinst_LTLIBRARIES = libcheck-shutdown.la libcheck-shutdown-debug.la
+
+noinst_HEADERS = \
+	common/ProgramLifecycle.hpp \
+	common/TestAnyProtocolProducer.hpp \
+	common/Timer.hpp
+
+EXTRA_DIST = \
+	common/tap-driver.sh
+
+
 #
 # Tests
 #
@@ -22,10 +33,22 @@ endif
 
 
 shutdown_common_sources = \
-	tests/infrastructure/ProgramLifecycle.cpp
+	common/ProgramLifecycle.cpp
 
-test_common_debug_ldflags = -no-install --WL,-Xlinker,-rpath,-Xlinker,$(abs_top_builddir)/../../.libs --WL,-L../../.libs,-lcheck-shutdown-debug
-test_common_ldflags = -no-install --WL,-Xlinker,-rpath,-Xlinker,$(abs_top_builddir)/../../.libs --WL,-L../../.libs,-lcheck-shutdown
+libcheck_shutdown_la_CPPFLAGS = -DNDEBUG
+libcheck_shutdown_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libcheck_shutdown_la_SOURCES = $(shutdown_common_sources)
+libcheck_shutdown_la_LDFLAGS = -module -rpath /nowhere -ldl -lpthread
+
+libcheck_shutdown_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+libcheck_shutdown_debug_la_SOURCES = $(shutdown_common_sources)
+libcheck_shutdown_debug_la_LDFLAGS = -module -rpath /nowhere -ldl -lpthread
+
+
+
+
+test_common_debug_ldflags = -no-install --WL,-Xlinker,-rpath,-Xlinker,$(abs_top_builddir)/.libs --WL,-L.libs,-lcheck-shutdown-debug
+test_common_ldflags = -no-install --WL,-Xlinker,-rpath,-Xlinker,$(abs_top_builddir)/.libs --WL,-L.libs,-lcheck-shutdown
 
 noop_debug_test_SOURCES = noop/noop.cpp
 noop_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -83,9 +106,9 @@ dependencies_nonest_test_LDFLAGS = $(test_common_ldflags)
 
 
 if HAVE_NANOS6_LIBRARY_PATH
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' NANOS6_LIBRARY_PATH='$(NANOS6_LIBRARY_PATH)' $(SHELL) $(top_srcdir)/../../tests/infrastructure/tap-driver.sh
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' NANOS6_LIBRARY_PATH='$(NANOS6_LIBRARY_PATH)' $(SHELL) $(srcdir)/common/tap-driver.sh
 else
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/../../tests/infrastructure/tap-driver.sh
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(srcdir)/common/tap-driver.sh
 endif
 
 

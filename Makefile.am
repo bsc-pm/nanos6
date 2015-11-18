@@ -9,7 +9,6 @@ lib_LTLIBRARIES = \
 	libnanos6-graph.la \
 	libnanos6-profile.la \
 	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la 
-noinst_LTLIBRARIES = libcheck-shutdown.la libcheck-shutdown-debug.la
 
 # See info page of libtool "Updating version info"
 lib_current = 0
@@ -214,19 +213,6 @@ libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
 #
 # Tests
 #
-
-shutdown_common_sources = \
-	tests/infrastructure/ProgramLifecycle.cpp
-
-libcheck_shutdown_la_CPPFLAGS = -DNDEBUG
-libcheck_shutdown_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libcheck_shutdown_la_SOURCES = $(shutdown_common_sources)
-libcheck_shutdown_la_LDFLAGS = -module -rpath /nowhere -ldl
-
-libcheck_shutdown_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-libcheck_shutdown_debug_la_SOURCES = $(shutdown_common_sources)
-libcheck_shutdown_debug_la_LDFLAGS = -module -rpath /nowhere -ldl
-
 
 unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test
 
