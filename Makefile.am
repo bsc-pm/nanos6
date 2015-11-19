@@ -16,8 +16,8 @@ lib_revision = 0
 lib_age = 0
 
 pkginclude_HEADERS = \
-	src/api/nanos6_rt_interface.h \
-	src/api/nanos6_debug_interface.h
+	common/api/nanos6_rt_interface.h \
+	common/api/nanos6_debug_interface.h
 
 nodist_noinst_HEADERS = \
 	src/version/VersionInfo.hpp
