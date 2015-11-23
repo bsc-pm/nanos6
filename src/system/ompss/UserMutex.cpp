@@ -69,9 +69,13 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 		return;
 	}
 	
+	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 	Instrument::blockedOnUserMutex(&userMutex);
+	
 	TaskBlocking::taskBlocks(currentThread, currentTask);
+	
 	Instrument::acquiredUserMutex(&userMutex);
+	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 }
 
 

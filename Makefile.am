@@ -58,6 +58,7 @@ common_sources = \
 	src/instrument/InstrumentDependenciesByGroup.hpp \
 	src/instrument/InstrumentInitAndShutdown.hpp \
 	src/instrument/InstrumentTaskExecution.hpp \
+	src/instrument/InstrumentTaskStatus.hpp \
 	src/instrument/InstrumentTaskWait.hpp \
 	src/instrument/InstrumentThreadManagement.hpp \
 	src/instrument/InstrumentUserMutex.hpp \
@@ -100,6 +101,7 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
+	src/instrument/null/InstrumentTaskStatus.hpp \
 	src/instrument/null/InstrumentTaskWait.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp
@@ -122,6 +124,7 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentTaskExecution.cpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
 	src/instrument/graph/InstrumentTaskId.hpp \
+	src/instrument/graph/InstrumentTaskStatus.hpp \
 	src/instrument/graph/InstrumentTaskWait.cpp \
 	src/instrument/graph/InstrumentTaskWait.hpp \
 	src/instrument/graph/InstrumentThreadManagement.cpp \
@@ -142,6 +145,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentProfile.hpp \
 	src/instrument/profile/InstrumentTaskExecution.hpp \
 	src/instrument/profile/InstrumentTaskId.hpp \
+	src/instrument/profile/InstrumentTaskStatus.hpp \
 	src/instrument/profile/InstrumentTaskWait.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp

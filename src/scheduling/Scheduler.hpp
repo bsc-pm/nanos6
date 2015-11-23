@@ -4,6 +4,9 @@
 
 #include "SchedulerInterface.hpp"
 
+#include <InstrumentTaskStatus.hpp>
+#include <tasks/Task.hpp>
+
 #include <cassert>
 
 
@@ -38,6 +41,8 @@ public:
 	//! \returns an idle HardwarePlace that is to be resumed or nullptr
 	static inline HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace)
 	{
+		assert(task != 0);
+		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		return _scheduler->addReadyTask(task, hardwarePlace);
 	}
 	
@@ -47,6 +52,8 @@ public:
 	//! \param[in] hardwarePlace the hardware place of the unblocker
 	static inline void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace)
 	{
+		assert(unblockedTask != 0);
+		Instrument::taskIsReady(unblockedTask->getInstrumentationTaskId());
 		_scheduler->taskGetsUnblocked(unblockedTask, hardwarePlace);
 	}
 	

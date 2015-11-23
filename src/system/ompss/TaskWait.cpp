@@ -6,6 +6,7 @@
 #include "tasks/Task.hpp"
 
 #include <InstrumentTaskWait.hpp>
+#include <InstrumentTaskStatus.hpp>
 
 #include <cassert>
 
@@ -45,6 +46,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	// 		on the "old" CPU)
 	
 	if (!done) {
+		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask);
 	}
 	
@@ -52,5 +54,10 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();
+	
+	if (!done) {
+		// The instrumentation was notified that the task had been blocked
+		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+	}
 }
 

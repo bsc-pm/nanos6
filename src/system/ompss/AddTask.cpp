@@ -13,6 +13,7 @@
 #include "tasks/Task.hpp"
 
 #include <InstrumentAddTask.hpp>
+#include <InstrumentTaskStatus.hpp>
 
 #include <cassert>
 #include <cstdlib>
@@ -86,6 +87,8 @@ void nanos_submit_task(void *taskHandle)
 		if (idleHardwarePlace != nullptr) {
 			ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
 		}
+	} else {
+		Instrument::taskIsPending(task->getInstrumentationTaskId());
 	}
 	
 	Instrument::exitAddTask(task->getInstrumentationTaskId());

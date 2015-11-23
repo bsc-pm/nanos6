@@ -7,6 +7,7 @@
 #include "tasks/Task.hpp"
 
 #include <InstrumentTaskExecution.hpp>
+#include <InstrumentTaskStatus.hpp>
 
 #include <pthread.h>
 
@@ -77,13 +78,16 @@ void *WorkerThread::body()
 
 void WorkerThread::handleTask()
 {
+	_task->setThread(this);
+	
 	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
 	Instrument::startTask(taskId, _cpu, this);
+	Instrument::taskIsExecuting(taskId);
 	
 	// Run the task
-	_task->setThread(this);
 	_task->body();
 	
+	Instrument::taskIsZombie(taskId);
 	Instrument::endTask(taskId, _cpu, this);
 	
 	// Release successors
