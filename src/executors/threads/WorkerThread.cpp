@@ -99,6 +99,7 @@ void WorkerThread::handleTask()
 			
 			if (currentTask->hasFinished()) {
 				readyOrDisposable = currentTask->unlinkFromParent();
+				Instrument::destroyTask(currentTask->getInstrumentationTaskId(), _cpu, this);
 				// NOTE: The memory layout is defined in nanos_create_task
 				currentTask->~Task();
 				free(currentTask->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here

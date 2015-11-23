@@ -19,6 +19,9 @@ namespace Instrument {
 	{
 	}
 	
+	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) CPU *cpu, __attribute__((unused)) WorkerThread *currentThread)
+	{
+	}
 }
 
 

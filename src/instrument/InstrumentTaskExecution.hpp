@@ -14,6 +14,7 @@ namespace Instrument {
 	void startTask(task_id_t taskId, CPU *cpu, WorkerThread *currentThread);
 	void returnToTask(task_id_t taskId, CPU *cpu, WorkerThread *currentThread);
 	void endTask(task_id_t taskId, CPU *cpu, WorkerThread *currentThread);
+	void destroyTask(task_id_t taskId, CPU *cpu, WorkerThread *currentThread);
 }
 
 
