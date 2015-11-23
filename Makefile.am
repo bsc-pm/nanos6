@@ -8,6 +8,7 @@ lib_LTLIBRARIES = \
 	libnanos6-optimized.la libnanos6-debug.la \
 	libnanos6-graph.la \
 	libnanos6-profile.la \
+	libnanos6-stats.la \
 	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la 
 
 # See info page of libtool "Updating version info"
@@ -150,6 +151,25 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp
 
+instrument_stats_sources = \
+	src/instrument/stats/InstrumentAddTask.hpp \
+	src/instrument/stats/InstrumentDataAccessId.hpp \
+	src/instrument/stats/InstrumentDataAccessSequenceId.hpp \
+	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
+	src/instrument/stats/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
+	src/instrument/stats/InstrumentInitAndShutdown.cpp \
+	src/instrument/stats/InstrumentInitAndShutdown.hpp \
+	src/instrument/stats/InstrumentStats.cpp \
+	src/instrument/stats/InstrumentStats.hpp \
+	src/instrument/stats/InstrumentTaskExecution.hpp \
+	src/instrument/stats/InstrumentTaskId.hpp \
+	src/instrument/stats/InstrumentTaskStatus.hpp \
+	src/instrument/stats/InstrumentTaskWait.hpp \
+	src/instrument/stats/InstrumentThreadManagement.hpp \
+	src/instrument/stats/InstrumentUserMutex.hpp \
+	src/instrument/stats/Timer.hpp
+
 null_common_sources = \
 	src/null/NullDebug.cpp \
 	src/null/NullAPI.cpp
@@ -196,6 +216,11 @@ libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir
 libnanos6_profile_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
 libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS)
+
+libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats
+libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
+libnanos6_stats_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(universal_debug_sources)
+libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
