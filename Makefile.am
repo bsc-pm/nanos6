@@ -118,8 +118,6 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentGraph.cpp \
 	src/instrument/graph/InstrumentGraph.hpp \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
-	src/instrument/graph/InstrumentInitAndShutdown.cpp.was \
-	src/instrument/graph/InstrumentInitAndShutdown.cpp.was-002 \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentTaskExecution.cpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
