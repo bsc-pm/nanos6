@@ -9,6 +9,8 @@
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
 
+#include <atomic>
+
 #include <pthread.h>
 
 
@@ -85,7 +87,9 @@ void WorkerThread::handleTask()
 	Instrument::taskIsExecuting(taskId);
 	
 	// Run the task
+	std::atomic_thread_fence(std::memory_order_acquire);
 	_task->body();
+	std::atomic_thread_fence(std::memory_order_release);
 	
 	Instrument::taskIsZombie(taskId);
 	Instrument::endTask(taskId, _cpu, this);
