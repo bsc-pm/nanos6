@@ -74,6 +74,9 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	
 	TaskBlocking::taskBlocks(currentThread, currentTask);
 	
+	// This in combination with a release from other threads makes their changes visible to this one
+	std::atomic_thread_fence(std::memory_order_acquire);
+	
 	Instrument::acquiredUserMutex(&userMutex);
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 }
@@ -83,6 +86,9 @@ void nanos_user_unlock(void **handlerPointer)
 {
 	assert(handlerPointer != nullptr);
 	assert(*handlerPointer != nullptr);
+	
+	// This in combination with an acquire from another thread makes the changes visible to that one
+	std::atomic_thread_fence(std::memory_order_release);
 	
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
 	UserMutex &userMutex = *(userMutexReference.load());
