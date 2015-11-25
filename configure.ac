@@ -65,6 +65,10 @@ AC_CHECK_LIB([rt], [timer_create], [BACKTRACE_LIBS="${BACKTRACE_LIBS} -lrt"])
 
 SSS_FIXUP_COMPILER_FLAGS
 
+
+CONFIGURE_NANOS6_FEATURES
+
+
 AC_CONFIG_FILES([
 	Makefile
 	docs/Doxyfile

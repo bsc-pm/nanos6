@@ -34,11 +34,6 @@ long nanos_get_num_cpus(void)
 	}
 }
 
-long nanos_supports_cpu_management(void)
-{
-	return 1;
-}
-
 long nanos_get_current_system_cpu()
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
