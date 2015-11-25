@@ -1,7 +1,3 @@
-#ifndef INSTRUMENT_GRAPH_DEPENDENCIES_BY_ACCESS_SEQUENCE_HPP
-#define INSTRUMENT_GRAPH_DEPENDENCIES_BY_ACCESS_SEQUENCE_HPP
-
-
 #include <algorithm>
 #include <cassert>
 
@@ -154,5 +150,3 @@ namespace Instrument {
 	}
 	
 }
-
-#endif // INSTRUMENT_GRAPH_DEPENDENCIES_BY_ACCESS_SEQUENCE_HPP
