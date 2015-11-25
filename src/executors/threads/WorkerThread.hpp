@@ -2,6 +2,7 @@
 #define WORKER_THREAD_HPP
 
 
+#include "dependencies/FixedAddressDataAccessMap.hpp"
 #include "lowlevel/ConditionVariable.hpp"
 
 #include "CPU.hpp"
@@ -18,6 +19,10 @@ class SchedulingDecisionPlaceholder;
 
 
 class WorkerThread {
+public:
+	typedef FixedAddressDataAccessMap dependency_domain_t;
+	
+private:
 	//! This condition variable is used for suspending and resuming the thread
 	ConditionVariable _suspensionConditionVariable;
 	
@@ -35,6 +40,9 @@ class WorkerThread {
 	
 	//! The Task currently assigned to this thread
 	Task *_task;
+	
+	//! Dependency domain of the tasks instantiated by this thread
+	dependency_domain_t _dependencyDomain;
 	
 	//! Thread Local Storage variable to point back to the WorkerThread that is running the code
 	static __thread WorkerThread *_currentWorkerThread;
@@ -137,6 +145,18 @@ public:
 		return _mustShutDown;
 	}
 	
+	//! \brief Retrieves the dependency domain used to calculate the dependencies of the tasks instantiated by this thread
+	dependency_domain_t const &getDependencyDomain() const
+	{
+		return _dependencyDomain;
+	}
+	
+	//! \brief Retrieves the dependency domain used to calculate the dependencies of the tasks instantiated by this thread
+	dependency_domain_t &getDependencyDomain()
+	{
+		return _dependencyDomain;
+	}
+	
 	//! \brief returns the WorkerThread that runs the call
 	static inline WorkerThread *getCurrentWorkerThread()
 	{
@@ -161,6 +181,9 @@ namespace ompss_debug {
 	}
 }
 #endif
+
+
+#include <dependencies/DataAccessSequenceImplementation.hpp>
 
 
 #endif // WORKER_THREAD_HPP

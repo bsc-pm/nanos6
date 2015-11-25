@@ -9,7 +9,6 @@
 
 #include "api/nanos6_rt_interface.h"
 #include "dependencies/DataAccess.hpp"
-#include "dependencies/FixedAddressDataAccessMap.hpp"
 #include "dependencies/TaskDataAccessesLinkingArtifacts.hpp"
 #include "lowlevel/SpinLock.hpp"
 
@@ -25,9 +24,6 @@ class WorkerThread;
 
 
 class Task {
-public:
-	typedef FixedAddressDataAccessMap dependency_domain_t;
-	
 private:
 	void *_argsBlock;
 	
@@ -49,9 +45,6 @@ private:
 	//! Number of pending predecessors
 	std::atomic<int> _predecessorCount;
 	
-	//! Dependency domain of the tasks directly nested within the task
-	dependency_domain_t _innerDependencyDomain;
-	
 	//! An identifier for the task for the instrumentation
 	Instrument::task_id_t _instrumentationTaskId;
 	
@@ -71,7 +64,6 @@ public:
 		_parent(parent),
 		_dataAccesses(),
 		_predecessorCount(0),
-		_innerDependencyDomain(),
 		_instrumentationTaskId(instrumentationTaskId),
 		_schedulerInfo(nullptr)
 	{
@@ -251,18 +243,6 @@ public:
 	bool decreasePredecessors(int amount=1)
 	{
 		return ((_predecessorCount -= amount) == 0);
-	}
-	
-	//! \brief Retrieves the inner dependency domain used to calculate the dependencies between the direct children
-	dependency_domain_t const &getInnerDependencyDomain() const
-	{
-		return _innerDependencyDomain;
-	}
-	
-	//! \brief Retrieves the inner dependency domain used to calculate the dependencies between the direct children
-	dependency_domain_t &getInnerDependencyDomain()
-	{
-		return _innerDependencyDomain;
 	}
 	
 	//! \brief Retrieve the instrumentation-specific task identifier

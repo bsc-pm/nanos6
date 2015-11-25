@@ -3,6 +3,7 @@
 #include <InstrumentDependenciesByAccess.hpp>
 
 #include "api/nanos6_rt_interface.h"
+#include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -10,15 +11,14 @@ template <DataAccess::type_t ACCESS_TYPE>
 void register_access(void *handler, void *start, size_t length)
 {
 	assert(handler != 0);
-	
 	Task *task = (Task *) handler;
-	Task *parent = task->getParent();
-	
-	assert(parent != 0);
 	
 	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, start, length);
 	
-	Task::dependency_domain_t &dependencyDomain = parent->getInnerDependencyDomain();
+	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentWorkerThread != 0); // NOTE: The "main" task is not created by a WorkerThread, but in any case it is not supposed to have dependencies
+	
+	WorkerThread::dependency_domain_t &dependencyDomain = currentWorkerThread->getDependencyDomain();
 	DataAccessSequence &accessSequence = dependencyDomain[start];
 	
 	DataAccess *dataAccess;
