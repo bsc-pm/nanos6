@@ -7,11 +7,11 @@
 
 
 #include "../InstrumentDependenciesByAccess.hpp"
-#include "dependencies/DataAccess.hpp"
+#include "dependencies/DataAccessType.hpp"
 
 
 namespace Instrument {
-	void registerTaskAccess(task_id_t taskId, DataAccess::type_t accessType, void *start, size_t length);
+	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, void *start, size_t length);
 }
 
 

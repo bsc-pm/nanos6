@@ -13,7 +13,7 @@ namespace Instrument {
 	
 	inline data_access_id_t addedDataAccessInSequence(
 		__attribute__((unused)) data_access_sequence_id_t dataAccessSequenceId,
-		__attribute__((unused)) DataAccess::type_t accessType,
+		__attribute__((unused)) DataAccessType accessType,
 		__attribute__((unused)) bool satisfied,
 		__attribute__((unused)) task_id_t originatorTaskId
 	) {
@@ -23,8 +23,8 @@ namespace Instrument {
 	inline void upgradedDataAccessInSequence(
 		__attribute__((unused)) data_access_sequence_id_t dataAccessSequenceId,
 		__attribute__((unused)) data_access_id_t dataAccessId,
-		__attribute__((unused)) DataAccess::type_t previousAccessType,
-		__attribute__((unused)) DataAccess::type_t newAccessType,
+		__attribute__((unused)) DataAccessType previousAccessType,
+		__attribute__((unused)) DataAccessType newAccessType,
 		__attribute__((unused)) bool becomesUnsatisfied,
 		__attribute__((unused)) task_id_t triggererTaskId
 	) {

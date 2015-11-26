@@ -36,6 +36,7 @@ common_sources = \
 	src/dependencies/DataAccessSequence.hpp \
 	src/dependencies/DataAccessSequenceImplementation.hpp \
 	src/dependencies/DataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/DataAccessType.hpp \
 	src/dependencies/FixedAddressDataAccessMap.hpp \
 	src/dependencies/TaskDataAccessesLinkingArtifacts.hpp \
 	src/dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp \

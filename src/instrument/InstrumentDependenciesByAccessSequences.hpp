@@ -6,7 +6,7 @@
 #include <InstrumentDataAccessSequenceId.hpp>
 #include <InstrumentTaskId.hpp>
 
-#include "dependencies/DataAccess.hpp"
+#include "dependencies/DataAccessType.hpp"
 
 
 namespace Instrument {
@@ -46,7 +46,7 @@ namespace Instrument {
 	//! \param originatorTaskId the identifier of the task that will perform the access as returned in the call to Instrument::enterAddTask
 	//! 
 	//! \returns an identifier for the new data access
-	data_access_id_t addedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, DataAccess::type_t accessType, bool satisfied, task_id_t originatorTaskId);
+	data_access_id_t addedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, DataAccessType accessType, bool satisfied, task_id_t originatorTaskId);
 	
 	//! \brief Called when a DataAccess has its type of access upgraded
 	//! 
@@ -59,7 +59,7 @@ namespace Instrument {
 	//! \param becomesUnsatisfied indicates if the DataAccess was satisfied and has become unsatisfied as a result of the upgrade
 	//! \param triggererTaskId the identifier of the task that trigers the change
 	//! 
-	void upgradedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, DataAccess::type_t previousAccessType, DataAccess::type_t newAccessType, bool becomesUnsatisfied, task_id_t triggererTaskId);
+	void upgradedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, DataAccessType previousAccessType, DataAccessType newAccessType, bool becomesUnsatisfied, task_id_t triggererTaskId);
 	
 	//! \brief Called when a DataAccess becomes satisfied
 	//! 

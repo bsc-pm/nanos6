@@ -4,7 +4,10 @@
 
 #include <InstrumentTaskId.hpp>
 
-#include "dependencies/DataAccess.hpp"
+#include "dependencies/DataAccessType.hpp"
+
+#include <cstddef>
+
 
 namespace Instrument {
 	//! \file
@@ -24,7 +27,7 @@ namespace Instrument {
 	//! \param[in] accessType the type of access
 	//! \param[in] start the starting address of the access
 	//! \param[in] length the length of the access is bytes
-	void registerTaskAccess(task_id_t taskId, DataAccess::type_t accessType, void *start, size_t length);
+	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, void *start, size_t length);
 	
 	//! @}
 }

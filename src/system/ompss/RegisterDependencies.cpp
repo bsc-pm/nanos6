@@ -3,11 +3,12 @@
 #include <InstrumentDependenciesByAccess.hpp>
 
 #include "api/nanos6_rt_interface.h"
+#include "dependencies/DataAccessType.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
 
-template <DataAccess::type_t ACCESS_TYPE>
+template <DataAccessType ACCESS_TYPE>
 void register_access(void *handler, void *start, size_t length)
 {
 	assert(handler != 0);
@@ -36,19 +37,19 @@ void register_access(void *handler, void *start, size_t length)
 
 void nanos_register_read_depinfo(void *handler, void *start, size_t length)
 {
-	register_access<DataAccess::READ>(handler, start, length);
+	register_access<READ_ACCESS_TYPE>(handler, start, length);
 }
 
 
 void nanos_register_write_depinfo(void *handler, void *start, size_t length)
 {
-	register_access<DataAccess::WRITE>(handler, start, length);
+	register_access<WRITE_ACCESS_TYPE>(handler, start, length);
 }
 
 
 void nanos_register_readwrite_depinfo(void *handler, void *start, size_t length)
 {
-	register_access<DataAccess::READWRITE>(handler, start, length);
+	register_access<READWRITE_ACCESS_TYPE>(handler, start, length);
 }
 
 

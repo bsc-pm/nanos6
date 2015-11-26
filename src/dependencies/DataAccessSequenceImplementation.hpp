@@ -32,7 +32,7 @@ bool DataAccessSequence::reevaluateSatisfactibility(DataAccessSequence::access_s
 		return true;
 	}
 	
-	if (dataAccess._type == DataAccess::WRITE) {
+	if (dataAccess._type == WRITE_ACCESS_TYPE) {
 		// A write access with accesses before it
 		return false;
 	}
@@ -44,21 +44,21 @@ bool DataAccessSequence::reevaluateSatisfactibility(DataAccessSequence::access_s
 		return false;
 	}
 	
-	assert(dataAccess._type == DataAccess::READ);
+	assert(dataAccess._type == READ_ACCESS_TYPE);
 	assert(previousAccess._satisfied);
-	if (previousAccess._type == DataAccess::READ) {
+	if (previousAccess._type == READ_ACCESS_TYPE) {
 		// Consecutive reads are satisfied together
 		dataAccess._satisfied = true;
 		return true;
 	} else {
-		assert(previousAccess._type == DataAccess::WRITE);
+		assert(previousAccess._type == WRITE_ACCESS_TYPE);
 		// Read after Write
 		return false;
 	}
 }
 
 
-bool DataAccessSequence::addTaskAccess(Task *task, DataAccess::type_t accessType, DataAccess *&dataAccess)
+bool DataAccessSequence::addTaskAccess(Task *task, DataAccessType accessType, DataAccess *&dataAccess)
 {
 	assert(task != 0);
 	std::lock_guard<SpinLock> guard(_lock);
@@ -79,17 +79,17 @@ bool DataAccessSequence::addTaskAccess(Task *task, DataAccess::type_t accessType
 			if (lastAccess._type == accessType) {
 				// An identical access
 				return true; // Do not count this one
-			} else if ((accessType == DataAccess::WRITE) && (lastAccess._type == DataAccess::READWRITE)) {
+			} else if ((accessType == WRITE_ACCESS_TYPE) && (lastAccess._type == READWRITE_ACCESS_TYPE)) {
 				return true; // The previous access subsumes this
-			} else if ((accessType == DataAccess::READWRITE) && (lastAccess._type == DataAccess::WRITE)) {
+			} else if ((accessType == READWRITE_ACCESS_TYPE) && (lastAccess._type == WRITE_ACCESS_TYPE)) {
 				// An almost identical access
 				Instrument::upgradedDataAccessInSequence(_instrumentationId, lastAccess._instrumentationId, lastAccess._type, accessType, false, task->getInstrumentationTaskId());
 				lastAccess._type = accessType;
 				
 				return true; // Do not count this one
-			} else if (lastAccess._type == DataAccess::READ) {
+			} else if (lastAccess._type == READ_ACCESS_TYPE) {
 				// Upgrade a read into a write or readwrite
-				assert((accessType == DataAccess::WRITE) || (accessType == DataAccess::READWRITE));
+				assert((accessType == WRITE_ACCESS_TYPE) || (accessType == READWRITE_ACCESS_TYPE));
 				
 				Instrument::removeTaskFromAccessGroup(this, task->getInstrumentationTaskId());
 				Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), this, false);
@@ -116,13 +116,13 @@ bool DataAccessSequence::addTaskAccess(Task *task, DataAccess::type_t accessType
 					return true; // The predecessor has already been counted
 				}
 			} else {
-				assert((lastAccess._type == DataAccess::WRITE) || (lastAccess._type == DataAccess::READWRITE));
+				assert((lastAccess._type == WRITE_ACCESS_TYPE) || (lastAccess._type == READWRITE_ACCESS_TYPE));
 				
 				// The previous access was as restrictive as possible
 				return true; // Satisfactibility has already been accounted for
 			}
 		} else {
-			if ((lastAccess._type == DataAccess::WRITE) || (lastAccess._type == DataAccess::READWRITE)) {
+			if ((lastAccess._type == WRITE_ACCESS_TYPE) || (lastAccess._type == READWRITE_ACCESS_TYPE)) {
 				satisfied = false;
 			} else {
 				satisfied = (lastAccess._type == accessType) && lastAccess._satisfied;

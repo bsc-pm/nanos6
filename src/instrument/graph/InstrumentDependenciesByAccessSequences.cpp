@@ -26,7 +26,7 @@ namespace Instrument {
 	
 	data_access_id_t addedDataAccessInSequence(
 		data_access_sequence_id_t dataAccessSequenceId,
-		DataAccess::type_t accessType,
+		DataAccessType accessType,
 		bool satisfied,
 		task_id_t originatorTaskId
 	) {
@@ -67,8 +67,8 @@ namespace Instrument {
 	void upgradedDataAccessInSequence(
 		data_access_sequence_id_t dataAccessSequenceId,
 		data_access_id_t dataAccessId,
-		__attribute__((unused)) DataAccess::type_t previousAccessType,
-		DataAccess::type_t newAccessType,
+		__attribute__((unused)) DataAccessType previousAccessType,
+		DataAccessType newAccessType,
 		bool becomesUnsatisfied,
 		task_id_t originatorTaskId
 	) {

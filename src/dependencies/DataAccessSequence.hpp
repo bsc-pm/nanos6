@@ -5,6 +5,7 @@
 
 #include "DataAccess.hpp"
 #include "DataAccessSequenceLinkingArtifacts.hpp"
+#include "DataAccessType.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <InstrumentDataAccessSequenceId.hpp>
@@ -50,7 +51,7 @@ struct DataAccessSequence {
 	//! 
 	//! If the task has already a previous access, it may be upgraded if necessary, and dataAccess is set to null. The return
 	//! value indicates if the new access produces an additional dependency (only possible if the previous one did not).
-	inline bool addTaskAccess(Task *task, DataAccess::type_t accessType, DataAccess *&dataAccess);
+	inline bool addTaskAccess(Task *task, DataAccessType accessType, DataAccess *&dataAccess);
 	
 };
 

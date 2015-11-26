@@ -14,6 +14,9 @@ struct DataAccessSequence;
 class Task;
 
 
+#include "DataAccessType.hpp"
+
+
 struct DataAccessAndParticipationPosition {
 	//! An access that a task performs that can produce dependencies
 	DataAccess *_dataAccess;
@@ -25,12 +28,6 @@ struct DataAccessAndParticipationPosition {
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
 struct DataAccess {
-	typedef enum {
-		READ,
-		WRITE,
-		READWRITE
-	} type_t;
-	
 	#if NDEBUG
 		typedef boost::intrusive::link_mode<boost::intrusive::normal_link> link_mode_t;
 	#else
@@ -51,7 +48,7 @@ struct DataAccess {
 	DataAccessSequence *_dataAccessSequence;
 	
 	//! Type of access: read, write, ...
-	type_t _type;
+	DataAccessType _type;
 	
 	//! If the data access can already be performed
 	bool _satisfied;
@@ -64,7 +61,7 @@ struct DataAccess {
 	
 	DataAccess(
 		DataAccessSequence *dataAccessSequence,
-		DataAccess::type_t type,
+		DataAccessType type,
 		bool satisfied,
 		Task *originator,
 		Instrument::data_access_id_t instrumentationId

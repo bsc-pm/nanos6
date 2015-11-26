@@ -2,7 +2,7 @@
 #include "InstrumentGraph.hpp"
 #include "InstrumentDependenciesByAccess.hpp"
 
-#include "dependencies/DataAccess.hpp"
+#include "dependencies/DataAccessType.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
@@ -14,7 +14,7 @@
 namespace Instrument {
 	using namespace Graph;
 	
-	void registerTaskAccess(task_id_t taskId, DataAccess::type_t accessType, void *start, __attribute__((unused)) size_t length)
+	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, void *start, __attribute__((unused)) size_t length)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
@@ -47,12 +47,12 @@ namespace Instrument {
 		}
 		assert(taskGroup != nullptr);
 		
-		if (accessType == DataAccess::READWRITE) {
-			accessType = DataAccess::WRITE;
+		if (accessType == READWRITE_ACCESS_TYPE) {
+			accessType = WRITE_ACCESS_TYPE;
 		}
 		
 		dependency_info_t &dependencyInfo = taskGroup->_dependencyInfoMap[start];
-		if (accessType == DataAccess::WRITE) {
+		if (accessType == WRITE_ACCESS_TYPE) {
 			// Handle repeated accesses
 			if (dependencyInfo._lastWriter == taskId) {
 				return;
@@ -61,14 +61,14 @@ namespace Instrument {
 			// Handle access upgrades
 			dependencyInfo._lastReaders.erase(taskId);
 			
-			if (dependencyInfo._lastAccessType == DataAccess::WRITE) {
+			if (dependencyInfo._lastAccessType == WRITE_ACCESS_TYPE) {
 				if (dependencyInfo._lastWriter != -1) {
 					_taskToInfoMap[dependencyInfo._lastWriter]._hasSuccessors = true;
 					_taskToInfoMap[taskId]._hasPredecessors = true;
 					taskGroup->_dependencyEdges.push_back(edge_t(dependencyInfo._lastWriter, taskId));
 				}
 			} else {
-				assert(dependencyInfo._lastAccessType == DataAccess::READ);
+				assert(dependencyInfo._lastAccessType == READ_ACCESS_TYPE);
 				for (auto predecessor : dependencyInfo._lastReaders) {
 					_taskToInfoMap[predecessor]._hasSuccessors = true;
 					_taskToInfoMap[taskId]._hasPredecessors = true;
@@ -77,10 +77,10 @@ namespace Instrument {
 			}
 			
 			dependencyInfo._lastWriter = taskId;
-			dependencyInfo._lastAccessType = DataAccess::WRITE;
+			dependencyInfo._lastAccessType = WRITE_ACCESS_TYPE;
 			dependencyInfo._lastReaders.clear();
 		} else {
-			assert(accessType == DataAccess::READ);
+			assert(accessType == READ_ACCESS_TYPE);
 			
 			// Handle access upgrades
 			if (dependencyInfo._lastWriter == taskId) {
@@ -98,8 +98,8 @@ namespace Instrument {
 				taskGroup->_dependencyEdges.push_back(edge_t(dependencyInfo._lastWriter, taskId));
 			}
 			
-			assert((dependencyInfo._lastAccessType == DataAccess::READ) || dependencyInfo._lastReaders.empty());
-			dependencyInfo._lastAccessType = DataAccess::READ;
+			assert((dependencyInfo._lastAccessType == READ_ACCESS_TYPE) || dependencyInfo._lastReaders.empty());
+			dependencyInfo._lastAccessType = READ_ACCESS_TYPE;
 			dependencyInfo._lastReaders.insert(taskId);
 		}
 	}

@@ -4,7 +4,7 @@
 
 #include "api/nanos6_rt_interface.h"
 
-#include "dependencies/DataAccess.hpp"
+#include "dependencies/DataAccessType.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "system/ompss/UserMutex.hpp"
@@ -45,10 +45,10 @@ namespace Instrument {
 		struct dependency_info_t {
 			std::set<task_id_t> _lastReaders;
 			task_id_t _lastWriter;
-			DataAccess::type_t _lastAccessType;
+			DataAccessType _lastAccessType;
 			
 			dependency_info_t()
-				: _lastReaders(), _lastWriter(-1), _lastAccessType(DataAccess::READ)
+				: _lastReaders(), _lastWriter(-1), _lastAccessType(READ_ACCESS_TYPE)
 			{
 			}
 		};
@@ -70,9 +70,9 @@ namespace Instrument {
 		typedef std::deque<edge_t> dependency_edge_list_t;
 		
 		typedef enum {
-			READ = DataAccess::READ,
-			WRITE = DataAccess::WRITE,
-			READWRITE = DataAccess::READWRITE,
+			READ = READ_ACCESS_TYPE,
+			WRITE = WRITE_ACCESS_TYPE,
+			READWRITE = READWRITE_ACCESS_TYPE,
 			NOT_CREATED
 		} access_type_t;
 		
@@ -254,14 +254,14 @@ namespace Instrument {
 		struct register_task_access_in_sequence_step_t : public execution_step_t {
 			data_access_sequence_id_t _sequenceId;
 			data_access_id_t _accessId;
-			DataAccess::type_t _accessType;
+			DataAccessType _accessType;
 			bool _satisfied;
 			task_id_t _originatorTaskId;
 			
 			register_task_access_in_sequence_step_t(
 				long cpu, thread_id_t threadId,
 				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
-				DataAccess::type_t accessType, bool satisfied, task_id_t originatorTaskId
+				DataAccessType accessType, bool satisfied, task_id_t originatorTaskId
 			)
 				: execution_step_t(cpu, threadId),
 				_sequenceId(sequenceId), _accessId(accessId),
@@ -273,14 +273,14 @@ namespace Instrument {
 		struct upgrade_task_access_in_sequence_step_t : public execution_step_t {
 			data_access_sequence_id_t _sequenceId;
 			data_access_id_t _accessId;
-			DataAccess::type_t _newAccessType;
+			DataAccessType _newAccessType;
 			bool _becomesUnsatisfied;
 			task_id_t _originatorTaskId;
 			
 			upgrade_task_access_in_sequence_step_t(
 				long cpu, thread_id_t threadId,
 				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
-				DataAccess::type_t newAccessType, bool becomesUnsatisfied,
+				DataAccessType newAccessType, bool becomesUnsatisfied,
 				task_id_t originatorTaskId
 			)
 				: execution_step_t(cpu, threadId),
