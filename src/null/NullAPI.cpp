@@ -20,3 +20,19 @@ void nanos_user_unlock(__attribute__((unused)) void **handlerPointer)
 {
 }
 
+
+void nanos_preinit(void)
+{
+}
+
+void nanos_init(void)
+{
+}
+
+void nanos_wait_until_shutdown(void)
+{
+}
+
+void nanos_notify_ready_for_shutdown(void)
+{
+}
