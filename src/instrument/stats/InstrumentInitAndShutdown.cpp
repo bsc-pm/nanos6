@@ -11,14 +11,31 @@ namespace Instrument {
 		static void emitTaskInfo(std::ofstream &output, std::string const &name, TaskInfo &taskInfo)
 		{
 			TaskTimes meanTimes = taskInfo._times / taskInfo._numInstances;
-			output << "STATS\t" << name << " instances\t" << taskInfo._numInstances << std::endl;
-			output << "STATS\t" << name << " mean instantiation time\t" << meanTimes._instantiationTime << "\t" << Timer::getUnits() << std::endl;
-			output << "STATS\t" << name << " mean pending time\t" << meanTimes._pendingTime << "\t" << Timer::getUnits() << std::endl;
-			output << "STATS\t" << name << " mean ready time\t" << meanTimes._readyTime << "\t" << Timer::getUnits() << std::endl;
-			output << "STATS\t" << name << " mean execution time\t" << meanTimes._executionTime << "\t" << Timer::getUnits() << std::endl;
-			output << "STATS\t" << name << " mean blocked time\t" << meanTimes._blockedTime << "\t" << Timer::getUnits() << std::endl;
-			output << "STATS\t" << name << " mean zombie time\t" << meanTimes._zombieTime << "\t" << Timer::getUnits() << std::endl;
-			output << "STATS\t" << name << " mean lifetime\t" << meanTimes.getTotal() << "\t" << Timer::getUnits() << std::endl;
+			
+			double meanLifetime = meanTimes.getTotal();
+			
+			output << "STATS\t" << name << " instances\t"
+				<< taskInfo._numInstances << std::endl;
+			output << "STATS\t" << name << " mean instantiation time\t"
+				<< meanTimes._instantiationTime << "\t" << Timer::getUnits()
+				<< "\t" << 100.0 * (double) meanTimes._instantiationTime / meanLifetime << "\t%" << std::endl;
+			output << "STATS\t" << name << " mean pending time\t"
+				<< meanTimes._pendingTime << "\t" << Timer::getUnits()
+				<< "\t" << 100.0 * (double) meanTimes._pendingTime / meanLifetime << "\t%" << std::endl;
+			output << "STATS\t" << name << " mean ready time\t"
+				<< meanTimes._readyTime << "\t" << Timer::getUnits()
+				<< "\t" << 100.0 * (double) meanTimes._readyTime / meanLifetime << "\t%" << std::endl;
+			output << "STATS\t" << name << " mean execution time\t"
+				<< meanTimes._executionTime << "\t" << Timer::getUnits()
+				<< "\t" << 100.0 * (double) meanTimes._executionTime / meanLifetime << "\t%" << std::endl;
+			output << "STATS\t" << name << " mean blocked time\t"
+				<< meanTimes._blockedTime << "\t" << Timer::getUnits()
+				<< "\t" << 100.0 * (double) meanTimes._blockedTime / meanLifetime << "\t%" << std::endl;
+			output << "STATS\t" << name << " mean zombie time\t"
+				<< meanTimes._zombieTime << "\t" << Timer::getUnits()
+				<< "\t" << 100.0 * (double) meanTimes._zombieTime / meanLifetime << "\t%" << std::endl;
+			output << "STATS\t" << name << " mean lifetime\t"
+				<< meanTimes.getTotal() << "\t" << Timer::getUnits() << std::endl;
 		}
 	}
 	
