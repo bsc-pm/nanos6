@@ -12,10 +12,20 @@
 
 
 DataAccessSequence::DataAccessSequence()
-	: _lock(), _accessSequence()
-	, _instrumentationId(Instrument::registerAccessSequence())
+	: _accessRange(),
+	_lock(), _accessSequence(), _superAccess(0),
+	_instrumentationId(Instrument::registerAccessSequence())
 {
 }
+
+
+DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess)
+	: _accessRange(accessRange),
+	_lock(), _accessSequence(), _superAccess(superAccess),
+	_instrumentationId(Instrument::registerAccessSequence())
+{
+}
+
 
 bool DataAccessSequence::reevaluateSatisfactibility(DataAccessSequence::access_sequence_t::iterator position)
 {
@@ -27,7 +37,7 @@ bool DataAccessSequence::reevaluateSatisfactibility(DataAccessSequence::access_s
 	}
 	
 	if (position == _accessSequence.begin()) {
-		// The first position is satisfied
+		// The first position is satisfied, otherwise the parent task code is incorrect
 		dataAccess._satisfied = true;
 		return true;
 	}
@@ -133,11 +143,24 @@ bool DataAccessSequence::addTaskAccess(Task *task, DataAccessType accessType, Da
 		Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), this, true);
 	}
 	
+	if (_accessSequence.empty()) {
+		_instrumentationId = Instrument::registerAccessSequence();
+		if (_superAccess != 0) {
+			// The access of the parent will start having subaccesses
+			
+			// 1. The parent is adding this task, so it cannot have finished (>=1)
+			// 2. The sequence is empty, so it has not been counted yet (<2)
+			assert(_superAccess->_completionCountdown.load() == 1);
+			
+			_superAccess->_completionCountdown++;
+		}
+	}
+	
 	Instrument::data_access_id_t dataAccessInstrumentationId =
 		Instrument::addedDataAccessInSequence(_instrumentationId, accessType, satisfied, task->getInstrumentationTaskId());
 	Instrument::addTaskToAccessGroup(this, task->getInstrumentationTaskId());
 	
-	dataAccess = new DataAccess(this, accessType, satisfied, task, dataAccessInstrumentationId);
+	dataAccess = new DataAccess(this, accessType, satisfied, task, _accessRange, dataAccessInstrumentationId);
 	_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer
 	
 	return satisfied;

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include <dependencies/DataAccess.hpp>
+#include <dependencies/DataAccessSequence.hpp>
 
 #include "InstrumentDependenciesByAccessSequences.hpp"
 

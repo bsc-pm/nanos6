@@ -6,7 +6,6 @@
 #include <deque>
 #include <mutex>
 
-#include "DataAccess.hpp"
 #include "DataAccessSequence.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -26,8 +25,11 @@ private:
 		DataAccessSequence *dataAccessSequence = dataAccess->_dataAccessSequence;
 		DataAccessSequence::access_sequence_t::iterator dataAccessPosition = dataAccessSequence->_accessSequence.iterator_to(*dataAccess);
 		
+		DataAccess *superAccess = 0;
+		bool superAccessCompleted = false;
+		
 		// Erase the DataAccess and reevaluate if the following ones in the sequence become satisfied
-		// NOTE: This is done with lock held
+		// NOTE: This is done with the lock held
 		{
 			std::lock_guard<SpinLock> guard(dataAccessSequence->_lock);
 			
@@ -55,6 +57,21 @@ private:
 					break;
 				}
 			}
+			
+			if (dataAccessSequence->_accessSequence.empty()) {
+				superAccess = dataAccessSequence->_superAccess;
+				if (superAccess != 0) {
+					superAccessCompleted = (--superAccess->_completionCountdown == 0);
+				}
+			}
+		}
+		
+		if (superAccessCompleted) {
+			assert(superAccess != 0);
+			Task *superOriginator = superAccess->_originator;
+			assert(superOriginator != 0);
+			
+			unregisterDataAccess(superOriginator->getInstrumentationTaskId(), superAccess, satisfiedOriginators);
 		}
 	}
 	
@@ -113,8 +130,12 @@ public:
 		// A temporary list of tasks to minimize the time spent with the mutex held.
 		satisfied_originator_list_t satisfiedOriginators; // NOTE: This could be moved as a member of the WorkerThread for efficiency.
 		while (dataAccess != 0) {
-			unregisterDataAccess(finishedTask->getInstrumentationTaskId(), dataAccess, /* OUT */ satisfiedOriginators);
-			processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
+			assert(dataAccess->_originator == finishedTask);
+			bool canRemoveAccess = (--dataAccess->_completionCountdown == 0);
+			if (canRemoveAccess) {
+				unregisterDataAccess(finishedTask->getInstrumentationTaskId(), dataAccess, /* OUT */ satisfiedOriginators);
+				processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
+			}
 			
 			dataAccess = finishedTask->popDataAccess();
 			satisfiedOriginators.clear();

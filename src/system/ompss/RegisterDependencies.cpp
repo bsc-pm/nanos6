@@ -19,11 +19,31 @@ void register_access(void *handler, void *start, size_t length)
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != 0); // NOTE: The "main" task is not created by a WorkerThread, but in any case it is not supposed to have dependencies
 	
-	WorkerThread::dependency_domain_t &dependencyDomain = currentWorkerThread->getDependencyDomain();
-	DataAccessSequence &accessSequence = dependencyDomain[start];
+	DataAccessRange accessRange(start, length);
+	
+	DataAccessSequence *accessSequence = 0;
+	Task *parent = task->getParent();
+	if (parent != 0) {
+		for (DataAccess &parentAccess : parent->getDataAccesses()) {
+			DataAccessSequence *parentSequence = parentAccess._dataAccessSequence;
+			assert(parentSequence != 0);
+			
+			if (parentSequence->_accessRange == accessRange) {
+				accessSequence = &parentAccess._subaccesses;
+				break;
+			}
+		}
+	}
+	
+	if (accessSequence == 0) {
+		// An access that is not a subset of the parent accesses, therefore
+		// (if the code is correct) it must be temporary data created by the parent
+		WorkerThread::dependency_domain_t &dependencyDomain = currentWorkerThread->getDependencyDomain();
+		accessSequence = &dependencyDomain[accessRange];
+	}
 	
 	DataAccess *dataAccess;
-	bool satisfied = accessSequence.addTaskAccess(task, ACCESS_TYPE, /* OUT */ dataAccess);
+	bool satisfied = accessSequence->addTaskAccess(task, ACCESS_TYPE, /* OUT */ dataAccess);
 	if (dataAccess != 0) {
 		// A new data access, as opposed to a repeated or upgraded one
 		task->addDataAccess(dataAccess);

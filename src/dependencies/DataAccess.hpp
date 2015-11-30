@@ -1,8 +1,14 @@
 #ifndef DATA_ACCESS_HPP
 #define DATA_ACCESS_HPP
 
+#ifndef DATA_ACCESS_SEQUENCE_HPP
+	#warning Please, include DataAccessSequence.hpp instead of DataAccess.hpp. Otherwise it may fail to compile.
+#endif // DATA_ACCESS_SEQUENCE_HPP
+
+
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/list_hook.hpp>
+#include <atomic>
 #include <cassert>
 #include <set>
 
@@ -15,15 +21,7 @@ class Task;
 
 
 #include "DataAccessType.hpp"
-
-
-struct DataAccessAndParticipationPosition {
-	//! An access that a task performs that can produce dependencies
-	DataAccess *_dataAccess;
-	
-	//! The position of the task in the list of participants of the access, to speed up removal.
-	std::set<Task *>::iterator _participationPosition;
-};
+#include "DataAccessRange.hpp"
 
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
@@ -53,8 +51,16 @@ struct DataAccess {
 	//! If the data access can already be performed
 	bool _satisfied;
 	
+	//! \brief Countdown until full completion of the access
+	//! +1 if the originator has not finished
+	//! +1 if _subaccesses is not empty
+	std::atomic<int> _completionCountdown;
+	
 	//! Tasks to which the access corresponds
 	Task *_originator;
+	
+	//! Accesses performed by the direct children of the _originator task
+	DataAccessSequence _subaccesses;
 	
 	//! An identifier for the instrumentation
 	Instrument::data_access_id_t _instrumentationId;
@@ -64,10 +70,12 @@ struct DataAccess {
 		DataAccessType type,
 		bool satisfied,
 		Task *originator,
+		DataAccessRange accessRange,
 		Instrument::data_access_id_t instrumentationId
 	)
 		: _taskAccessListLinks(), _accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
-		_type(type), _satisfied(satisfied), _originator(originator),
+		_type(type), _satisfied(satisfied), _completionCountdown(1 /* For the originator */), _originator(originator),
+		_subaccesses(accessRange, this),
 		_instrumentationId(instrumentationId)
 	{
 		assert(dataAccessSequence != 0);

@@ -4,6 +4,7 @@
 
 #include <boost/intrusive/avl_set.hpp>
 #include <boost/intrusive/options.hpp>
+#include "DataAccessRange.hpp"
 #include "DataAccessSequence.hpp"
 
 
@@ -21,17 +22,16 @@ private:
 		#endif
 		typedef boost::intrusive::avl_set_member_hook<link_mode_t> links_t;
 		
-		address_t _address;
 		links_t _mapLinks;
 		DataAccessSequence _accessSequence;
 		
 		Node()
-			: _address(0), _mapLinks(), _accessSequence()
+			: _mapLinks(), _accessSequence()
 		{
 		}
 		
-		Node(address_t address)
-			: _address(address), _mapLinks(), _accessSequence()
+		Node(DataAccessRange accessRange)
+			: _mapLinks(), _accessSequence(accessRange)
 		{
 		}
 	};
@@ -39,11 +39,11 @@ private:
 	
 	struct KeyOfNodeArtifact
 	{
-		typedef address_t type;
+		typedef DataAccessRange type;
 		
 		const type & operator()(Node const &node) const
 		{ 
-			return node._address;
+			return node._accessSequence._accessRange;
 		}
 	};
 	
@@ -60,13 +60,13 @@ public:
 	{
 	}
 	
-	DataAccessSequence &operator[](address_t address)
+	DataAccessSequence &operator[](DataAccessRange accessRange)
 	{
-		auto it = _map.find(address);
+		auto it = _map.find(accessRange);
 		if (it != _map.end()) {
 			return it->_accessSequence;
 		} else {
-			Node *newNode = new Node(address);
+			Node *newNode = new Node(accessRange);
 			_map.insert(*newNode); // This operation does actually take the pointer
 			return newNode->_accessSequence;
 		}

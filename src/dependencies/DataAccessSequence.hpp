@@ -3,7 +3,7 @@
 
 #include <boost/intrusive/list.hpp>
 
-#include "DataAccess.hpp"
+#include "DataAccessRange.hpp"
 #include "DataAccessSequenceLinkingArtifacts.hpp"
 #include "DataAccessType.hpp"
 #include "lowlevel/SpinLock.hpp"
@@ -12,9 +12,13 @@
 
 
 class Task;
+struct DataAccess;
 
 
 struct DataAccessSequence {
+	//! The range of data covered by the accesses of this sequence
+	DataAccessRange _accessRange;
+	
 	//! \brief SpinLock to protect the sequence
 	SpinLock _lock;
 	
@@ -23,11 +27,15 @@ struct DataAccessSequence {
 	//! \brief Ordered sequence of accesses to the same location
 	access_sequence_t _accessSequence;
 	
+	//! \brief Access originated by the direct parent to the tasks of this access sequence
+	DataAccess *_superAccess;
+	
 	//! An identifier for the instrumentation
 	Instrument::data_access_sequence_id_t _instrumentationId;
 	
 	
 	inline DataAccessSequence();
+	inline DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess = 0);
 	
 	
 	//! \brief Reevaluate the satisfactibility of a DataAccess according to the once immediately preceeding it (if any)
@@ -56,6 +64,7 @@ struct DataAccessSequence {
 };
 
 
+#include "DataAccess.hpp"
 #include "DataAccessSequenceLinkingArtifactsImplementation.hpp"
 
 

@@ -8,7 +8,7 @@
 #include <boost/intrusive/list.hpp>
 
 #include "api/nanos6_rt_interface.h"
-#include "dependencies/DataAccess.hpp"
+#include "dependencies/DataAccessSequence.hpp"
 #include "dependencies/TaskDataAccessesLinkingArtifacts.hpp"
 #include "lowlevel/SpinLock.hpp"
 
@@ -24,6 +24,10 @@ class WorkerThread;
 
 
 class Task {
+public:
+	//! The type of the list that contains the accesses that may determine dependencies
+	typedef boost::intrusive::list<DataAccess, boost::intrusive::function_hook<TaskDataAccessesLinkingArtifacts>> data_access_list_t;
+	
 private:
 	void *_argsBlock;
 	
@@ -40,7 +44,7 @@ private:
 	Task *_parent;
 	
 	//! Accesses that may determine dependencies
-	boost::intrusive::list<DataAccess, boost::intrusive::function_hook<TaskDataAccessesLinkingArtifacts>> _dataAccesses;
+	data_access_list_t _dataAccesses;
 	
 	//! Number of pending predecessors
 	std::atomic<int> _predecessorCount;
@@ -230,6 +234,18 @@ public:
 			_dataAccesses.pop_front();
 			return dataAccess;
 		}
+	}
+	
+	//! \brief Retrieve the list of data accesses
+	data_access_list_t const &getDataAccesses() const
+	{
+		return _dataAccesses;
+	}
+	
+	//! \brief Retrieve the list of data accesses
+	data_access_list_t &getDataAccesses()
+	{
+		return _dataAccesses;
 	}
 	
 	//! \brief Increase the number of predecessors

@@ -4,6 +4,8 @@
 
 #include "api/nanos6_rt_interface.h"
 
+#include "dependencies/DataAccessSequence.hpp"
+#include "dependencies/DataAccessSequenceImplementation.hpp"
 #include "dependencies/DataAccessType.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
@@ -12,7 +14,6 @@
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentDataAccessSequenceId.hpp>
 #include <InstrumentTaskId.hpp>
-#include <dependencies/DataAccess.hpp>
 
 #include <atomic>
 #include <deque>
