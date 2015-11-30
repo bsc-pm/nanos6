@@ -361,14 +361,20 @@ namespace Instrument {
 							ofs << " ]" << std::endl;
 							
 							assert(access._originator != -1);
-							ofs << indentation << "data_access_" << accessId << " -> " << makeTaskNodeName(access._originator);
-							if ((access._type == NOT_CREATED) || access._deleted) {
-								ofs << "[ style=\"invis\" ]" << std::endl;
-							} else if (access._satisfied) {
-								ofs << "[ style=dashed color=\"#888888\" fillcolor=\"#888888\" ]" << std::endl;
-							} else {
-								ofs << "[ style=dashed color=\"#000000\" fillcolor=\"#000000\" ]" << std::endl;
+							size_t originatorIndex = taskId2Index[access._originator];
+							ofs << indentation << "data_access_" << accessId << " -> " << currentPhaseSourceLinks[originatorIndex];
+							ofs << " [";
+							if (currentPhaseLinks[originatorIndex] != currentPhaseSourceLinks[originatorIndex]) {
+								ofs << " lhead=\"" << currentPhaseLinks[originatorIndex] << "\"";
 							}
+							if ((access._type == NOT_CREATED) || access._deleted) {
+								ofs << " style=\"invis\"";
+							} else if (access._satisfied) {
+								ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
+							} else {
+								ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
+							}
+							ofs << " ]" << std::endl;
 							
 							if (lastAccessId != -1) {
 								ofs << indentation << "data_access_" << lastAccessId << " -> data_access_" << accessId << " [ weight=8 ]" << std::endl;
