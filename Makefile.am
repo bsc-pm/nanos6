@@ -78,6 +78,8 @@ common_sources = \
 	src/scheduling/SchedulerInterface.hpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/support/ConstPropagator.hpp \
+	src/support/GlobalLock.cpp \
+	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/system/Bootstrap.cpp \
 	src/system/LeaderThread.cpp \
