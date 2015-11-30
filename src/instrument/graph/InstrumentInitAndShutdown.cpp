@@ -259,6 +259,7 @@ namespace Instrument {
 					ofs << indentation << "compound=true;" << std::endl;
 					ofs << indentation << "style=\"invisible\";" << std::endl;
 					
+					std::map<task_id_t, size_t> taskId2Index;
 					{
 						size_t index = 0;
 						for (task_id_t childId : taskGroup->_children) {
@@ -269,6 +270,7 @@ namespace Instrument {
 								currentPhaseElementsHavePredecessors[index], currentPhaseElementsHaveSuccessors[index]
 							);
 							
+							taskId2Index[childId] = index;
 							task_info_t const &childInfo = _taskToInfoMap[childId];
 							currentPhaseStatuses[index] = childInfo._status;
 							
@@ -277,17 +279,28 @@ namespace Instrument {
 					}
 					
 					for (edge_t edge : taskGroup->_dependencyEdges) {
-						ofs << indentation << makeTaskNodeName(edge._source) << " -> " << makeTaskNodeName(edge._sink);
+						size_t sourceIndex = taskId2Index[edge._source];
+						size_t sinkIndex = taskId2Index[edge._sink];
+						
+						ofs << indentation << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
+						ofs << " [";
+						if (currentPhaseSinkLinks[sourceIndex] != currentPhaseLinks[sourceIndex]) {
+							ofs << " ltail=\"" << currentPhaseLinks[sourceIndex] << "\"";
+						}
+						if (currentPhaseSourceLinks[sinkIndex] != currentPhaseLinks[sinkIndex]) {
+							ofs << " lhead=\"" << currentPhaseLinks[sinkIndex] << "\"";
+						}
+						
 						task_info_t const &sourceInfo = _taskToInfoMap[edge._source];
 						task_info_t const &sinkInfo = _taskToInfoMap[edge._sink];
 						
 						if ((sourceInfo._status == not_created_status) || (sourceInfo._status == finished_status)
 							|| (sinkInfo._status == not_created_status) || (sinkInfo._status == finished_status))
 						{
-							ofs << "[  color=\"#888888\" fillcolor=\"#888888\" ]" << std::endl;
-						} else {
-							ofs << std::endl;
+							ofs << " color=\"#888888\" fillcolor=\"#888888\"" << std::endl;
 						}
+						
+						ofs << " ]" << std::endl;
 					}
 					
 					for (auto element : taskGroup->_accessSequences) {
