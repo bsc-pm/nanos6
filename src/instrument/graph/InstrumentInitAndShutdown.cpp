@@ -349,9 +349,9 @@ namespace Instrument {
 								case READWRITE:
 									ofs << " label=\"RW\" style=\"filled,dashed\"";
 									if (access._deleted) {
-										ofs << " fillcolor=\"#EEEE66\"";
+										ofs << " fillcolor=\"#AAFFAA;0.5:#FFAAAA\"";
 									} else {
-										ofs << " fillcolor=\"#888800\"";
+										ofs << " fillcolor=\"#00FF00;0.5:#FF0000\"";
 									}
 									break;
 								case NOT_CREATED:
