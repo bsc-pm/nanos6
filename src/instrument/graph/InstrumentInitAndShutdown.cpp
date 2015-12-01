@@ -327,7 +327,7 @@ namespace Instrument {
 								continue;
 							}
 							
-							ofs << indentation << "data_access_" << accessId << "[ shape=ellipse";
+							ofs << indentation << "data_access_" << accessId << " [ shape=ellipse";
 							switch (access._type) {
 								case READ:
 									ofs << " label=\"R\" style=\"filled,dashed\"";
@@ -504,7 +504,7 @@ namespace Instrument {
 		
 		ofs << indentation << mainTaskSinkLink << " -> nanos_end";
 		if (mainTaskSinkLink != mainTaskLink) {
-			ofs << "[ ltail=\"" << mainTaskLink << "\" ]";
+			ofs << " [ ltail=\"" << mainTaskLink << "\" ]";
 		}
 		ofs << ";" << std::endl;
 		ofs << "}" << std::endl;
