@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I common/m4
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(top_srcdir)/common -I$(top_srcdir)/common/api
 
-SUBDIRS = tests/directive_based/check-shutdown tests/directive_based/tests
+SUBDIRS = . tests/directive_based/check-shutdown tests/directive_based/tests
 
 
 lib_LTLIBRARIES = \
