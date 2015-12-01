@@ -309,7 +309,7 @@ namespace Instrument {
 							ofs << " color=\"#888888\" fillcolor=\"#888888\"" << std::endl;
 						}
 						
-						ofs << " ]" << std::endl;
+						ofs << " weight=1 ]" << std::endl;
 					}
 					
 					for (auto element : taskGroup->_accessSequences) {
@@ -420,7 +420,7 @@ namespace Instrument {
 								ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
 								lastAccessStatus = pending;
 							}
-							ofs << " ]" << std::endl;
+							ofs << " weight=1 ]" << std::endl;
 							
 							lastAccessId = accessId;
 						}
@@ -501,7 +501,7 @@ namespace Instrument {
 								ofs << " lhead=\"" << currentPhaseLinks[currentIndex] << "\" ";
 							}
 							ofs
-								<< " ];" << std::endl;
+								<< " weight=1 ];" << std::endl;
 						}
 					}
 				}
