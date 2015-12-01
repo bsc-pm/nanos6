@@ -6,8 +6,10 @@
 
 
 namespace Instrument {
-	inline data_access_sequence_id_t registerAccessSequence()
-	{
+	inline data_access_sequence_id_t registerAccessSequence(
+		__attribute__((unused)) data_access_id_t parentDataAccessId,
+		__attribute__((unused)) task_id_t triggererTaskId
+	) {
 		return data_access_sequence_id_t();
 	}
 	

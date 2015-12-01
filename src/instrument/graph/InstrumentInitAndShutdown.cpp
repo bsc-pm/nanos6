@@ -382,6 +382,13 @@ namespace Instrument {
 								sourceLinkIsSet = true;
 							}
 							
+							{
+								auto dataAccessSubLink = _firstSubAccessByAccess.find(accessId);
+								if (dataAccessSubLink != _firstSubAccessByAccess.end()) {
+									ofs << indentation << "data_access_" << dataAccessSubLink->first << " -> " << "data_access_" << dataAccessSubLink->second << " [ style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=4 ]" << std::endl;
+								}
+							}
+							
 							if (lastAccessId != -1) {
 								ofs << indentation << "data_access_" << lastAccessId << " -> data_access_" << accessId << " [ weight=8";
 								switch (lastAccessStatus) {

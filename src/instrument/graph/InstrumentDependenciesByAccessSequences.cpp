@@ -15,13 +15,21 @@
 namespace Instrument {
 	using namespace Graph;
 	
-	data_access_sequence_id_t registerAccessSequence()
+	data_access_sequence_id_t registerAccessSequence(data_access_id_t parentDataAccessId, task_id_t triggererTaskId)
 	{
 		if (!Graph::_showDependencyStructures) {
 			return data_access_sequence_id_t(-1);
 		}
 		
-		return Graph::_nextDataAccessSequenceId++;
+		data_access_sequence_id_t dataAccessSequenceId = Graph::_nextDataAccessSequenceId++;
+		
+		if (parentDataAccessId != data_access_id_t()) {
+			// See comment above call to getAccessSequence in next function
+			access_sequence_t &accessSequence = getAccessSequence(dataAccessSequenceId, triggererTaskId);
+			accessSequence._superAccess = parentDataAccessId;
+		}
+		
+		return dataAccessSequenceId;
 	}
 	
 	data_access_id_t addedDataAccessInSequence(
@@ -57,6 +65,16 @@ namespace Instrument {
 		// and will be modified as we replay the steps recorder in the remaining functions of this
 		// instrumentation interface
 		access_sequence_t &accessSequence = getAccessSequence(dataAccessSequenceId, originatorTaskId);
+		
+		// If the first access of a sequence, then record which is the corresponding access of the parent
+		bool firstInSequence = accessSequence._accesses.empty();
+		if (firstInSequence) {
+			if (accessSequence._superAccess != data_access_id_t()) {
+				_superAccessByAccess[dataAccessId] = accessSequence._superAccess;
+				_firstSubAccessByAccess[accessSequence._superAccess] = dataAccessId;
+			}
+		}
+		
 		access_t &access = accessSequence._accesses[dataAccessId];
 		access._originator = originatorTaskId;
 		

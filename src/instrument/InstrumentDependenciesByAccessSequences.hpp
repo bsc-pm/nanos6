@@ -35,8 +35,11 @@ namespace Instrument {
 	
 	//! \brief Called when a new DataAccessSequence is created
 	//! 
+	//! \param parentDataAccessId the data access identifier that corresponds to the parent task, or data_access_id_t() if there is no matching parent access
+	//! \param triggererTaskId the identifier of the task that triggers the creation of the sequence if any, otherwise task_id_t()
+	//! 
 	//! \returns an identifier for the DataAccessSequence
-	data_access_sequence_id_t registerAccessSequence();
+	data_access_sequence_id_t registerAccessSequence(data_access_id_t parentDataAccessId, task_id_t triggererTaskId);
 	
 	//! \brief Called when a new DataAccess is added to a DataAccessSequence
 	//! 

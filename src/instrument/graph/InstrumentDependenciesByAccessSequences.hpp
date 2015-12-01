@@ -9,7 +9,7 @@
 
 
 namespace Instrument {
-	data_access_sequence_id_t registerAccessSequence();
+	data_access_sequence_id_t registerAccessSequence(data_access_id_t parentDataAccessId, task_id_t triggererTaskId);
 	
 	data_access_id_t addedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, DataAccessType accessType, bool satisfied, task_id_t originatorTaskId);
 	

@@ -91,6 +91,7 @@ namespace Instrument {
 		
 		struct access_sequence_t {
 			std::map<data_access_id_t, access_t> _accesses;
+			data_access_id_t _superAccess;
 		};
 		
 		typedef std::map<data_access_sequence_id_t, access_sequence_t> domain_access_sequences_t;
@@ -333,7 +334,7 @@ namespace Instrument {
 		extern std::atomic<taskwait_id_t> _nextTaskwaitId;
 		extern std::atomic<task_id_t> _nextTaskId;
 		extern std::atomic<usermutex_id_t> _nextUsermutexId;
-		extern std::atomic<data_access_id_t> _nextDataAccessId;
+		extern std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId;
 		extern std::atomic<data_access_sequence_id_t> _nextDataAccessSequenceId;
 		
 		
@@ -353,6 +354,12 @@ namespace Instrument {
 		
 		//! \brief sequence of task executions with their corresponding CPU
 		extern execution_sequence_t _executionSequence;
+		
+		//! \brief the parent access of the first access of a sequence
+		extern std::map<data_access_id_t, data_access_id_t> _superAccessByAccess;
+		
+		//! \brief the first subaccess of an access (the opposite of the previous one)
+		extern std::map<data_access_id_t, data_access_id_t> _firstSubAccessByAccess;
 		
 		extern SpinLock _graphLock;
 		

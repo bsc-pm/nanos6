@@ -7,7 +7,7 @@ namespace Instrument {
 		std::atomic<taskwait_id_t> _nextTaskwaitId(1);
 		std::atomic<task_id_t> _nextTaskId(0);
 		std::atomic<usermutex_id_t> _nextUsermutexId(0);
-		std::atomic<data_access_id_t> _nextDataAccessId(0);
+		std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId(0);
 		std::atomic<data_access_sequence_id_t> _nextDataAccessSequenceId(0);
 		
 		std::map<WorkerThread *, thread_id_t> _threadToId;
@@ -15,6 +15,8 @@ namespace Instrument {
 		task_invocation_info_label_map_t _taskInvocationLabel;
 		usermutex_to_id_map_t _usermutexToId;
 		execution_sequence_t _executionSequence;
+		std::map<data_access_id_t, data_access_id_t> _superAccessByAccess;
+		std::map<data_access_id_t, data_access_id_t> _firstSubAccessByAccess;
 		
 		SpinLock _graphLock;
 		

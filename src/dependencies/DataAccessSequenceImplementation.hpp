@@ -14,7 +14,7 @@
 DataAccessSequence::DataAccessSequence()
 	: _accessRange(),
 	_lock(), _accessSequence(), _superAccess(0),
-	_instrumentationId(Instrument::registerAccessSequence())
+	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
 {
 }
 
@@ -22,7 +22,7 @@ DataAccessSequence::DataAccessSequence()
 DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess)
 	: _accessRange(accessRange),
 	_lock(), _accessSequence(), _superAccess(superAccess),
-	_instrumentationId(Instrument::registerAccessSequence())
+	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
 {
 }
 
@@ -144,7 +144,7 @@ bool DataAccessSequence::addTaskAccess(Task *task, DataAccessType accessType, Da
 	}
 	
 	if (_accessSequence.empty()) {
-		_instrumentationId = Instrument::registerAccessSequence();
+		_instrumentationId = Instrument::registerAccessSequence((_superAccess != 0 ? _superAccess->_instrumentationId : Instrument::data_access_id_t()), task->getInstrumentationTaskId());
 		if (_superAccess != 0) {
 			// The access of the parent will start having subaccesses
 			
