@@ -217,6 +217,8 @@ namespace Instrument {
 			sourceLink = taskLink;
 			sinkLink = taskLink;
 		} else {
+			bool sourceLinkIsSet = false;
+			
 			std::ostringstream oss;
 			oss << "cluster_task" << taskId;
 			taskLink = oss.str();
@@ -373,6 +375,13 @@ namespace Instrument {
 							}
 							ofs << " ]" << std::endl;
 							
+							if (!sourceLinkIsSet) {
+								std::ostringstream oss;
+								oss << "data_access_" << accessId;
+								sourceLink = oss.str();
+								sourceLinkIsSet = true;
+							}
+							
 							if (lastAccessId != -1) {
 								ofs << indentation << "data_access_" << lastAccessId << " -> data_access_" << accessId << " [ weight=8";
 								switch (lastAccessStatus) {
@@ -435,7 +444,7 @@ namespace Instrument {
 					assert(false);
 				}
 				
-				if (phase == 0) {
+				if ((phase == 0) && !sourceLinkIsSet) {
 					std::vector<std::string> validSourceLinks;
 					for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
 						if (!currentPhaseElementsHavePredecessors[currentIndex]) {
@@ -444,6 +453,7 @@ namespace Instrument {
 					}
 					
 					sourceLink = validSourceLinks[validSourceLinks.size()/2];
+					sourceLinkIsSet = true;
 				}
 				
 				if (phase == taskInfo._phaseList.size()-1) {
