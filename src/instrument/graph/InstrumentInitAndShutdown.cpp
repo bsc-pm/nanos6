@@ -319,6 +319,12 @@ namespace Instrument {
 						}
 						
 						data_access_id_t lastAccessId = -1;
+						typedef enum {
+							not_created,
+							pending,
+							satisfied
+						} last_access_status_t;
+						last_access_status_t lastAccessStatus = not_created;
 						for (auto element2 : accessSequence._accesses) {
 							data_access_id_t accessId = element2.first;
 							access_t &access = element2.second;
@@ -367,6 +373,20 @@ namespace Instrument {
 							}
 							ofs << " ]" << std::endl;
 							
+							if (lastAccessId != -1) {
+								ofs << indentation << "data_access_" << lastAccessId << " -> data_access_" << accessId << " [ weight=8";
+								switch (lastAccessStatus) {
+									case not_created:
+									case satisfied:
+										ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
+										break;
+									case pending:
+										ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
+										break;
+								}
+								ofs << " ]" << std::endl;
+							}
+							
 							assert(access._originator != -1);
 							size_t originatorIndex = taskId2Index[access._originator];
 							ofs << indentation << "data_access_" << accessId << " -> " << currentPhaseSourceLinks[originatorIndex];
@@ -376,16 +396,16 @@ namespace Instrument {
 							}
 							if ((access._type == NOT_CREATED) || access._deleted) {
 								ofs << " style=\"invis\"";
+								lastAccessStatus = not_created;
 							} else if (access._satisfied) {
 								ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
+								lastAccessStatus = satisfied;
 							} else {
 								ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
+								lastAccessStatus = pending;
 							}
 							ofs << " ]" << std::endl;
 							
-							if (lastAccessId != -1) {
-								ofs << indentation << "data_access_" << lastAccessId << " -> data_access_" << accessId << " [ weight=8 ]" << std::endl;
-							}
 							lastAccessId = accessId;
 						}
 					}
