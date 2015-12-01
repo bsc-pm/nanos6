@@ -26,7 +26,7 @@ namespace Instrument {
 	//! interface, dependencies are determined at the time that they are satisfied.
 	//! 
 	//! Since this interface depends on the information that the runtime stores, it cannot detect reliably situations in
-	//! which there are not enought data accesses in a given sequence.
+	//! which there are not enough data accesses in a given sequence.
 	//! 
 	//! In addition the interface for instrumenting taskwaits can help to differentiate between cases in which a sequence
 	//! is depleted due to a taskwait from the cases in which they deplete due to the conditions of the execution
