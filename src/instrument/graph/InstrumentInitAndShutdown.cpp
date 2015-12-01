@@ -32,6 +32,7 @@ namespace Instrument {
 	static EnvironmentVariable<bool> _shortenFilenames("NANOS_GRAPH_SHORTEN_FILENAMES", false);
 	static EnvironmentVariable<bool> _showSpuriousDependencyStructures("NANOS_GRAPH_SHOW_SPURIOUS_DEPENDENCY_STRUCTURES", false);
 	static EnvironmentVariable<bool> _showDeadDependencyStructures("NANOS_GRAPH_SHOW_DEAD_DEPENDENCY_STRUCTURES", false);
+	static EnvironmentVariable<bool> _showAllSteps("NANOS_GRAPH_SHOW_ALL_STEPS", false);
 	
 	
 	static inline bool isComposite(task_id_t taskId)
@@ -552,6 +553,13 @@ namespace Instrument {
 		task_id_t accumulateStepsTriggeredByTask = -1;
 		for (execution_step_t *executionStep : _executionSequence) {
 			assert(executionStep != nullptr);
+			
+			if (_showAllSteps) {
+				if (accumulateStepsTriggeredByTask != -1) {
+					emitFrame(dir, filenameBase, frame);
+					accumulateStepsTriggeredByTask = -1;
+				}
+			}
 			
 			// Get the kind of step
 			create_task_step_t *createTask = dynamic_cast<create_task_step_t *> (executionStep);
