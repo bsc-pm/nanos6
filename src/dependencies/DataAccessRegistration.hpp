@@ -41,7 +41,7 @@ private:
 			auto nextPosition = dataAccessSequence->_accessSequence.erase(dataAccessPosition);
 			
 			while (nextPosition != dataAccessSequence->_accessSequence.end()) {
-				bool becomesSatisfied = dataAccessSequence->reevaluateSatisfactibility(nextPosition);
+				bool becomesSatisfied = dataAccessSequence->reevaluateSatisfiability(nextPosition);
 				if (becomesSatisfied) {
 					Instrument::dataAccessBecomesSatisfied(
 						dataAccessSequence->_instrumentationId,

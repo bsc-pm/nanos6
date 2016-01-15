@@ -27,7 +27,7 @@ DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *
 }
 
 
-bool DataAccessSequence::reevaluateSatisfactibility(DataAccessSequence::access_sequence_t::iterator position)
+bool DataAccessSequence::reevaluateSatisfiability(DataAccessSequence::access_sequence_t::iterator position)
 {
 	DataAccess &dataAccess = *position;
 	
@@ -118,7 +118,7 @@ bool DataAccessSequence::upgradeAccess(Task *task, access_sequence_t::reverse_it
 		assert((oldAccess._type == WRITE_ACCESS_TYPE) || (oldAccess._type == READWRITE_ACCESS_TYPE));
 		
 		// The old access was as restrictive as possible
-		return true; // Satisfactibility has already been accounted for
+		return true; // Satisfiability has already been accounted for
 	}
 }
 

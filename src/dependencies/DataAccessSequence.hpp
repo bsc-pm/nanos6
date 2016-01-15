@@ -38,12 +38,12 @@ struct DataAccessSequence {
 	inline DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess = 0);
 	
 	
-	//! \brief Reevaluate the satisfactibility of a DataAccess according to the once immediately preceeding it (if any)
+	//! \brief Reevaluate the satisfiability of a DataAccess according to the once immediately preceeding it (if any)
 	//! 
 	//! \param[in] position an iterator to the list position of the DataAccess to be reevaluated
 	//! 
 	//! \returns true if the DataAccess has become satisfied
-	inline bool reevaluateSatisfactibility(access_sequence_t::iterator position);
+	inline bool reevaluateSatisfiability(access_sequence_t::iterator position);
 	
 	
 	//! \brief Upgrade a DataAccess to a new access type
