@@ -73,51 +73,51 @@ bool DataAccessSequence::reevaluateSatisfactibility(DataAccessSequence::access_s
 }
 
 
-bool DataAccessSequence::upgradeAccess(Task *task, access_sequence_t::reverse_iterator &position, DataAccess &previousAccess, DataAccessType currentAccessType)
+bool DataAccessSequence::upgradeAccess(Task *task, access_sequence_t::reverse_iterator &position, DataAccess &oldAccess, DataAccessType newAccessType)
 {
-	if (previousAccess._type == currentAccessType) {
+	if (oldAccess._type == newAccessType) {
 		// An identical access
 		return true; // Do not count this one
-	} else if ((currentAccessType == WRITE_ACCESS_TYPE) && (previousAccess._type == READWRITE_ACCESS_TYPE)) {
-		return true; // The previous access subsumes this
-	} else if ((currentAccessType == READWRITE_ACCESS_TYPE) && (previousAccess._type == WRITE_ACCESS_TYPE)) {
+	} else if ((newAccessType == WRITE_ACCESS_TYPE) && (oldAccess._type == READWRITE_ACCESS_TYPE)) {
+		return true; // The old access subsumes this
+	} else if ((newAccessType == READWRITE_ACCESS_TYPE) && (oldAccess._type == WRITE_ACCESS_TYPE)) {
 		// An almost identical access
-		Instrument::upgradedDataAccessInSequence(_instrumentationId, previousAccess._instrumentationId, previousAccess._type, currentAccessType, false, task->getInstrumentationTaskId());
-		previousAccess._type = currentAccessType;
+		Instrument::upgradedDataAccessInSequence(_instrumentationId, oldAccess._instrumentationId, oldAccess._type, newAccessType, false, task->getInstrumentationTaskId());
+		oldAccess._type = newAccessType;
 		
 		return true; // Do not count this one
-	} else if (previousAccess._type == READ_ACCESS_TYPE) {
+	} else if (oldAccess._type == READ_ACCESS_TYPE) {
 		// Upgrade a read into a write or readwrite
-		assert((currentAccessType == WRITE_ACCESS_TYPE) || (currentAccessType == READWRITE_ACCESS_TYPE));
+		assert((newAccessType == WRITE_ACCESS_TYPE) || (newAccessType == READWRITE_ACCESS_TYPE));
 		
 		Instrument::removeTaskFromAccessGroup(this, task->getInstrumentationTaskId());
 		Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), this, false);
 		Instrument::addTaskToAccessGroup(this, task->getInstrumentationTaskId());
 		
-		if (previousAccess._satisfied) {
+		if (oldAccess._satisfied) {
 			// Calculate if the upgraded access is satisfied
 			--position;
 			bool satisfied = (position == _accessSequence.rend());
-			previousAccess._satisfied = satisfied;
+			oldAccess._satisfied = satisfied;
 			
-			Instrument::upgradedDataAccessInSequence(_instrumentationId, previousAccess._instrumentationId, previousAccess._type, currentAccessType, !satisfied, task->getInstrumentationTaskId());
+			Instrument::upgradedDataAccessInSequence(_instrumentationId, oldAccess._instrumentationId, oldAccess._type, newAccessType, !satisfied, task->getInstrumentationTaskId());
 			
 			// Upgrade the access type
-			previousAccess._type = currentAccessType;
+			oldAccess._type = newAccessType;
 			
 			return satisfied; // A new chance for the access to not be satisfied
 		} else {
-			Instrument::upgradedDataAccessInSequence(_instrumentationId, previousAccess._instrumentationId, previousAccess._type, currentAccessType, false, task->getInstrumentationTaskId());
+			Instrument::upgradedDataAccessInSequence(_instrumentationId, oldAccess._instrumentationId, oldAccess._type, newAccessType, false, task->getInstrumentationTaskId());
 			
 			// Upgrade the access type
-			previousAccess._type = currentAccessType;
+			oldAccess._type = newAccessType;
 			
 			return true; // The predecessor has already been counted
 		}
 	} else {
-		assert((previousAccess._type == WRITE_ACCESS_TYPE) || (previousAccess._type == READWRITE_ACCESS_TYPE));
+		assert((oldAccess._type == WRITE_ACCESS_TYPE) || (oldAccess._type == READWRITE_ACCESS_TYPE));
 		
-		// The previous access was as restrictive as possible
+		// The old access was as restrictive as possible
 		return true; // Satisfactibility has already been accounted for
 	}
 }

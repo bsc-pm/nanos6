@@ -50,11 +50,11 @@ struct DataAccessSequence {
 	//! 
 	//! \param[in] task the task that performs the access
 	//! \param[in] position the position of the DataAccess in the sequence
-	//! \param[inout] previousAccess the DataAccess to be upgraded
-	//! \param[in] currentAccessType the type of access that triggers the update
+	//! \param[inout] oldAccess the DataAccess to be upgraded
+	//! \param[in] newAccessType the type of access that triggers the update
 	//! 
 	//! \returns false if the DataAccess becomes unsatisfied
-	inline bool upgradeAccess(Task* task, access_sequence_t::reverse_iterator& position, DataAccess& previousAccess, DataAccessType currentAccessType);
+	inline bool upgradeAccess(Task* task, access_sequence_t::reverse_iterator& position, DataAccess& oldAccess, DataAccessType newAccessType);
 	
 	
 	//! \brief adds a task access to the sequence taking into account repeated accesses
