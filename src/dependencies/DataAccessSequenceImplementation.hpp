@@ -47,6 +47,11 @@ bool DataAccessSequence::reevaluateSatisfactibility(DataAccessSequence::access_s
 		return false;
 	}
 	
+	if (dataAccess._type == READWRITE_ACCESS_TYPE) {
+		// A readwrite access with accesses before it
+		return false;
+	}
+	
 	--position;
 	DataAccess const &previousAccess = *position;
 	if (!previousAccess._satisfied) {
@@ -61,7 +66,7 @@ bool DataAccessSequence::reevaluateSatisfactibility(DataAccessSequence::access_s
 		dataAccess._satisfied = true;
 		return true;
 	} else {
-		assert(previousAccess._type == WRITE_ACCESS_TYPE);
+		assert((previousAccess._type == WRITE_ACCESS_TYPE) || (previousAccess._type == READWRITE_ACCESS_TYPE));
 		// Read after Write
 		return false;
 	}
