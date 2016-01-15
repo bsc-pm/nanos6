@@ -103,14 +103,14 @@ bool DataAccessSequence::upgradeAccess(Task *task, access_sequence_t::reverse_it
 			Instrument::upgradedDataAccessInSequence(_instrumentationId, oldAccess._instrumentationId, oldAccess._type, newAccessType, !satisfied, task->getInstrumentationTaskId());
 			
 			// Upgrade the access type
-			oldAccess._type = newAccessType;
+			oldAccess._type = READWRITE_ACCESS_TYPE;
 			
 			return satisfied; // A new chance for the access to not be satisfied
 		} else {
 			Instrument::upgradedDataAccessInSequence(_instrumentationId, oldAccess._instrumentationId, oldAccess._type, newAccessType, false, task->getInstrumentationTaskId());
 			
 			// Upgrade the access type
-			oldAccess._type = newAccessType;
+			oldAccess._type = READWRITE_ACCESS_TYPE;
 			
 			return true; // The predecessor has already been counted
 		}
