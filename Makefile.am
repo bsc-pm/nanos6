@@ -69,6 +69,7 @@ common_sources = \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
+	src/lowlevel/TicketSpinLock.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
