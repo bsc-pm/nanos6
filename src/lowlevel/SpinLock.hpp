@@ -1,14 +1,18 @@
 #ifndef SPIN_LOCK_HPP
 #define SPIN_LOCK_HPP
 
-#ifdef __APPLE__
-	#include <libkern/OSAtomic.h>
-	#define SPINLOCK_INTERNAL_TYPE OSSpinLock
+#if USE_OLD_SPINLOCK_IMPLEMENTATION
+	#ifdef __APPLE__
+		#include <libkern/OSAtomic.h>
+		#define SPINLOCK_INTERNAL_TYPE OSSpinLock
+	#else
+		#include <pthread.h>
+		#define SPINLOCK_INTERNAL_TYPE pthread_spinlock_t
+	#endif
 #else
-	#include <pthread.h>
-	#define SPINLOCK_INTERNAL_TYPE pthread_spinlock_t
+	#include <atomic>
+	#define SPINLOCK_INTERNAL_TYPE std::atomic<bool>
 #endif
-
 
 #include <cassert>
 
@@ -85,10 +89,14 @@ inline void SpinLock::unsetOwner()
 }
 #endif
 
-#ifdef __APPLE__
-	#include "apple/SpinLockImplementation.hpp"
+#if USE_OLD_SPINLOCK_IMPLEMENTATION
+	#ifdef __APPLE__
+		#include "apple/SpinLockImplementation.hpp"
+	#else
+		#include "posix/SpinLockImplementation.hpp"
+	#endif
 #else
-	#include "posix/SpinLockImplementation.hpp"
+	#include "cxx/SpinLockImplementation.hpp"
 #endif
 
 #undef SPINLOCK_INTERNAL_TYPE

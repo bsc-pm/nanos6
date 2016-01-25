@@ -62,6 +62,7 @@ common_sources = \
 	src/instrument/InstrumentThreadManagement.hpp \
 	src/instrument/InstrumentUserMutex.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
+	src/lowlevel/cxx/SpinLockImplementation.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
