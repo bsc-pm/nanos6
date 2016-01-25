@@ -167,4 +167,14 @@ namespace Instrument {
 		_executionSequence.push_back(step);
 	}
 	
+	void replacedSequenceOfDataAccess(
+		data_access_sequence_id_t previousDataAccessSequenceId,
+		data_access_sequence_id_t newDataAccessSequenceId,
+		data_access_id_t dataAccessId,
+		data_access_id_t beforeDataAccessId,
+		task_id_t triggererTaskId
+	) {
+		// For now we will not represent the change
+	}
+	
 }

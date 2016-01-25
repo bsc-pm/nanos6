@@ -20,58 +20,100 @@ class DataAccessRegistration {
 private:
 	typedef std::deque<Task *> satisfied_originator_list_t;
 	
+	
+	static inline void reevaluateAndPropagateSatisfiability(Instrument::task_id_t instrumentationTaskId, DataAccess *previousDataAccess, DataAccess *targetDataAccess, satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
+	{
+		if (targetDataAccess == nullptr) {
+			return;
+		}
+		auto position = targetDataAccess->_dataAccessSequence->_accessSequence.iterator_to(*targetDataAccess);
+		
+		while (position != targetDataAccess->_dataAccessSequence->_accessSequence.end()) {
+			DataAccess *currentDataAccess = &(*position);
+			assert(currentDataAccess != nullptr);
+			
+			bool becomesSatisfied = DataAccessSequence::reevaluateSatisfiability(previousDataAccess, currentDataAccess);
+			if (becomesSatisfied) {
+				Instrument::dataAccessBecomesSatisfied(
+					currentDataAccess->_dataAccessSequence->_instrumentationId,
+					currentDataAccess->_instrumentationId,
+					instrumentationTaskId,
+					currentDataAccess->_originator->getInstrumentationTaskId()
+				);
+				satisfiedOriginators.push_back(currentDataAccess->_originator);
+			} else {
+				// Either it was already satisfied or it cannot become satisfied
+				break;
+			}
+			
+			previousDataAccess = currentDataAccess;
+			position++;
+		}
+	}
+	
+	
 	static inline void unregisterDataAccess(Instrument::task_id_t instrumentationTaskId, DataAccess *dataAccess, satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
 	{
+		assert(dataAccess != nullptr);
+		
+		DataAccessSequence &subaccesses = dataAccess->_subaccesses;
 		DataAccessSequence *dataAccessSequence = dataAccess->_dataAccessSequence;
-		DataAccessSequence::access_sequence_t::iterator dataAccessPosition = dataAccessSequence->_accessSequence.iterator_to(*dataAccess);
 		
-		DataAccess *superAccess = 0;
-		bool superAccessCompleted = false;
-		
-		// Erase the DataAccess and reevaluate if the following ones in the sequence become satisfied
-		// NOTE: This is done with the lock held
+		// Locking strategy:
+		// 	Every DataAccess that accesses the same data is protected by the same SpinLock that is located
+		// 	in the root DataAccessSequence of the data. Each DataAccessSequence, except the root one contains
+		// 	a pointer to the root one. However, since a DataAccess can be moved from one sequence to another
+		// 	we cannot rely on getting the root spinlock from the sequence of the DataAccess since the sequence
+		// 	may disappear while we attempt to grab the lock. Instead we get it from the subaccesses, which
+		// 	is actually an embedded DataAccessSequence and should have the correct pointer.
 		{
-			std::lock_guard<SpinLock> guard(dataAccessSequence->_lock);
+			std::unique_lock<SpinLock> guard(subaccesses.getLockGuard());
 			
+			DataAccessSequence::access_sequence_t::iterator dataAccessPosition = dataAccessSequence->_accessSequence.iterator_to(*dataAccess);
+			
+			auto nextPosition = dataAccessSequence->_accessSequence.erase(dataAccessPosition);
+			
+			// Move the subaccesses to the location where the DataAccess was
+			auto newPreviousPosition = dataAccessSequence->_accessSequence.end();
+			auto current = subaccesses._accessSequence.begin();
+			while (current != subaccesses._accessSequence.end()) {
+				DataAccess &subaccess = *current;
+				
+				Instrument::replacedSequenceOfDataAccess(
+					subaccesses._instrumentationId,
+					dataAccessSequence->_instrumentationId,
+					subaccess._instrumentationId,
+					dataAccess->_instrumentationId,
+					instrumentationTaskId
+				);
+				
+				subaccess._dataAccessSequence = dataAccessSequence;
+				current = subaccesses._accessSequence.erase(current);
+				newPreviousPosition = dataAccessSequence->_accessSequence.insert(nextPosition, subaccess);
+			}
+			
+			// Instrumenters first see the movement, then the deletion
 			Instrument::removedDataAccessFromSequence(
 				dataAccessSequence->_instrumentationId,
 				dataAccess->_instrumentationId,
 				instrumentationTaskId
 			);
-			auto nextPosition = dataAccessSequence->_accessSequence.erase(dataAccessPosition);
 			
-			while (nextPosition != dataAccessSequence->_accessSequence.end()) {
-				bool becomesSatisfied = dataAccessSequence->reevaluateSatisfiability(nextPosition);
-				if (becomesSatisfied) {
-					Instrument::dataAccessBecomesSatisfied(
-						dataAccessSequence->_instrumentationId,
-						nextPosition->_instrumentationId,
-						instrumentationTaskId,
-						nextPosition->_originator->getInstrumentationTaskId()
-					);
-					satisfiedOriginators.push_back(nextPosition->_originator);
-					
-					nextPosition++;
+			if ((nextPosition != dataAccessSequence->_accessSequence.end()) && !nextPosition->_satisfied) {
+				// There is a next element in the sequence that must be reevaluated
+				DataAccess *next = &(*nextPosition);
+				assert(next != nullptr);
+				
+				DataAccess *effectivePrevious = nullptr;
+				if (newPreviousPosition != dataAccessSequence->_accessSequence.end()) {
+					effectivePrevious = &(*newPreviousPosition);
+					assert(effectivePrevious != nullptr);
 				} else {
-					// Either it was already satisfied or it cannot become satisfied
-					break;
+					effectivePrevious = dataAccessSequence->getEffectivePrevious(next);
 				}
+				
+				reevaluateAndPropagateSatisfiability(instrumentationTaskId, effectivePrevious, next, satisfiedOriginators);
 			}
-			
-			if (dataAccessSequence->_accessSequence.empty()) {
-				superAccess = dataAccessSequence->_superAccess;
-				if (superAccess != 0) {
-					superAccessCompleted = (--superAccess->_completionCountdown == 0);
-				}
-			}
-		}
-		
-		if (superAccessCompleted) {
-			assert(superAccess != 0);
-			Task *superOriginator = superAccess->_originator;
-			assert(superOriginator != 0);
-			
-			unregisterDataAccess(superOriginator->getInstrumentationTaskId(), superAccess, satisfiedOriginators);
 		}
 	}
 	
@@ -115,49 +157,44 @@ public:
 	{
 		assert(task != 0);
 		assert(accessSequence != nullptr);
-		std::lock_guard<SpinLock> guard(accessSequence->_lock);
 		
-		auto position = accessSequence->_accessSequence.rbegin();
+		std::unique_lock<SpinLock> guard(accessSequence->getLockGuard());
 		
-		// If there are no previous accesses, then the new access can be satisfied
-		bool satisfied = (position == accessSequence->_accessSequence.rend());
-		
-		if (position != accessSequence->_accessSequence.rend()) {
-			// There is a "last" access
-			DataAccess &lastAccess = *position;
+		DataAccess *effectivePrevious;
+		if (!accessSequence->_accessSequence.empty()) {
+			auto lastPosition = accessSequence->_accessSequence.rbegin();
+			effectivePrevious = &(*lastPosition);
+			assert(effectivePrevious != nullptr);
 			
-			if (lastAccess._originator == task) {
+			if (effectivePrevious->_originator == task) {
 				// The task "accesses" twice to the same location
 				
 				dataAccess = 0;
-				return accessSequence->upgradeAccess(task, position, lastAccess, accessType);
-			} else {
-				if ((lastAccess._type == WRITE_ACCESS_TYPE) || (lastAccess._type == READWRITE_ACCESS_TYPE)) {
-					satisfied = false;
-				} else {
-					satisfied = (lastAccess._type == accessType) && lastAccess._satisfied;
-				}
+				return accessSequence->upgradeAccess(task, effectivePrevious, accessType);
 			}
 		} else {
+			// New access to an empty sequence
+			effectivePrevious = accessSequence->getEffectivePrevious(nullptr);
+		}
+		
+		bool satisfied;
+		if (effectivePrevious != nullptr) {
+			satisfied = DataAccessSequence::evaluateSatisfiability(effectivePrevious, accessType);
+		} else {
 			// We no longer have (or never had) information about any previous access to this storage
+			satisfied = true;
 			Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), accessSequence, true);
 		}
 		
 		if (accessSequence->_accessSequence.empty()) {
-			accessSequence->_instrumentationId = Instrument::registerAccessSequence((accessSequence->_superAccess != 0 ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()), task->getInstrumentationTaskId());
-			if (accessSequence->_superAccess != 0) {
-				// The access of the parent will start having subaccesses
-				
-				// 1. The parent is adding this task, so it cannot have finished (>=1)
-				// 2. The sequence is empty, so it has not been counted yet (<2)
-				assert(accessSequence->_superAccess->_completionCountdown.load() == 1);
-				
-				accessSequence->_superAccess->_completionCountdown++;
-			}
+			accessSequence->_instrumentationId = Instrument::registerAccessSequence(
+				(accessSequence->_superAccess != 0 ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
+				task->getInstrumentationTaskId()
+			);
 		}
 		
 		Instrument::data_access_id_t dataAccessInstrumentationId =
-		Instrument::addedDataAccessInSequence(accessSequence->_instrumentationId, accessType, satisfied, task->getInstrumentationTaskId());
+			Instrument::addedDataAccessInSequence(accessSequence->_instrumentationId, accessType, satisfied, task->getInstrumentationTaskId());
 		Instrument::addTaskToAccessGroup(accessSequence, task->getInstrumentationTaskId());
 		
 		dataAccess = new DataAccess(accessSequence, accessType, satisfied, task, accessSequence->_accessRange, dataAccessInstrumentationId);
@@ -202,11 +239,8 @@ public:
 		satisfied_originator_list_t satisfiedOriginators; // NOTE: This could be moved as a member of the WorkerThread for efficiency.
 		while (dataAccess != 0) {
 			assert(dataAccess->_originator == finishedTask);
-			bool canRemoveAccess = (--dataAccess->_completionCountdown == 0);
-			if (canRemoveAccess) {
-				unregisterDataAccess(finishedTask->getInstrumentationTaskId(), dataAccess, /* OUT */ satisfiedOriginators);
-				processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
-			}
+			unregisterDataAccess(finishedTask->getInstrumentationTaskId(), dataAccess, /* OUT */ satisfiedOriginators);
+			processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
 			
 			dataAccess = finishedTask->popDataAccess();
 			satisfiedOriginators.clear();

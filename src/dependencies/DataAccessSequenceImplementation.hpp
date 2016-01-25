@@ -11,82 +11,138 @@
 #include <InstrumentDependenciesByGroup.hpp>
 
 
-DataAccessSequence::DataAccessSequence()
+inline DataAccessSequence::DataAccessSequence()
 	: _accessRange(),
-	_lock(), _accessSequence(), _superAccess(0),
+	_superAccess(0), _rootLock(), _accessSequence(),
 	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
 {
 }
 
 
-DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess)
+inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange)
 	: _accessRange(accessRange),
-	_lock(), _accessSequence(), _superAccess(superAccess),
+	_superAccess(nullptr), _rootLock(), _accessSequence(),
 	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
 {
 }
 
 
-bool DataAccessSequence::reevaluateSatisfiability(DataAccessSequence::access_sequence_t::iterator position)
+inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess)
+	: _accessRange(accessRange),
+	_superAccess(superAccess), _rootSequence(superAccess->_dataAccessSequence->getRootSequence()), _accessSequence(),
+	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
 {
-	DataAccess &dataAccess = *position;
-	
-	if (dataAccess._satisfied) {
-		// Already satisfied
-		return false;
+}
+
+
+inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess, DataAccessSequence *rootSequence)
+	: _accessRange(accessRange),
+	_superAccess(superAccess), _rootSequence(rootSequence), _accessSequence(),
+	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
+{
+}
+
+
+inline DataAccessSequence::~DataAccessSequence()
+{
+	if (_superAccess == nullptr) {
+		_rootLock.~SpinLock();
 	}
-	
-	if (position == _accessSequence.begin()) {
-		// The first position is satisfied, otherwise the parent task code is incorrect
-		dataAccess._satisfied = true;
+	_accessSequence.~list_impl();
+}
+
+
+inline DataAccessSequence *DataAccessSequence::getRootSequence()
+{
+	if (_superAccess == nullptr) {
+		return this;
+	} else {
+		assert(_rootSequence != nullptr);
+		assert(_rootSequence->_superAccess == nullptr);
+		return _rootSequence;
+	}
+}
+
+
+inline void DataAccessSequence::lock()
+{
+	getRootSequence()->_rootLock.lock();
+}
+
+inline void DataAccessSequence::unlock()
+{
+	getRootSequence()->_rootLock.unlock();
+}
+
+
+inline std::unique_lock<SpinLock> DataAccessSequence::getLockGuard()
+{
+	return std::unique_lock<SpinLock>(getRootSequence()->_rootLock);
+}
+
+
+inline bool DataAccessSequence::evaluateSatisfiability(DataAccess *previousDataAccess, DataAccessType nextAccessType)
+{
+	if (previousDataAccess == nullptr) {
+		// The first position is satisfied
 		return true;
 	}
 	
-	if (dataAccess._type == WRITE_ACCESS_TYPE) {
-		// A write access with accesses before it
-		return false;
-	}
-	
-	if (dataAccess._type == READWRITE_ACCESS_TYPE) {
-		// A readwrite access with accesses before it
-		return false;
-	}
-	
-	--position;
-	DataAccess const &previousAccess = *position;
-	if (!previousAccess._satisfied) {
+	if (!previousDataAccess->_satisfied) {
 		// If the preceeding access is not satisfied, this cannot be either
 		return false;
 	}
 	
-	assert(dataAccess._type == READ_ACCESS_TYPE);
-	assert(previousAccess._satisfied);
-	if (previousAccess._type == READ_ACCESS_TYPE) {
+	if (nextAccessType == WRITE_ACCESS_TYPE) {
+		// A write access with accesses before it
+		return false;
+	}
+	
+	if (nextAccessType == READWRITE_ACCESS_TYPE) {
+		// A readwrite access with accesses before it
+		return false;
+	}
+	
+	assert(nextAccessType == READ_ACCESS_TYPE);
+	assert(previousDataAccess->_satisfied);
+	if (previousDataAccess->_type == READ_ACCESS_TYPE) {
 		// Consecutive reads are satisfied together
-		dataAccess._satisfied = true;
 		return true;
 	} else {
-		assert((previousAccess._type == WRITE_ACCESS_TYPE) || (previousAccess._type == READWRITE_ACCESS_TYPE));
+		assert((previousDataAccess->_type == WRITE_ACCESS_TYPE) || (previousDataAccess->_type == READWRITE_ACCESS_TYPE));
 		// Read after Write
 		return false;
 	}
 }
 
 
-bool DataAccessSequence::upgradeAccess(Task *task, access_sequence_t::reverse_iterator &position, DataAccess &oldAccess, DataAccessType newAccessType)
+inline bool DataAccessSequence::reevaluateSatisfiability(DataAccess *previousDataAccess, DataAccess *targetDataAccess)
 {
-	if (oldAccess._type == newAccessType) {
+	if (targetDataAccess->_satisfied) {
+		// Already satisfied
+		return false;
+	}
+	
+	return DataAccessSequence::evaluateSatisfiability(previousDataAccess, targetDataAccess->_type);
+}
+
+
+bool DataAccessSequence::upgradeAccess(Task *task, DataAccess *dataAccess, DataAccessType newAccessType)
+{
+	assert(dataAccess != nullptr);
+	
+	if (dataAccess->_type == newAccessType) {
 		// An identical access
 		return true; // Do not count this one
-	} else if ((newAccessType == WRITE_ACCESS_TYPE) && (oldAccess._type == READWRITE_ACCESS_TYPE)) {
+	} else if ((newAccessType == WRITE_ACCESS_TYPE) && (dataAccess->_type == READWRITE_ACCESS_TYPE)) {
 		return true; // The old access subsumes this
-	} else if ((newAccessType == READWRITE_ACCESS_TYPE) && (oldAccess._type == WRITE_ACCESS_TYPE)) {
+	} else if ((newAccessType == READWRITE_ACCESS_TYPE) && (dataAccess->_type == WRITE_ACCESS_TYPE)) {
 		// An almost identical access
-		Instrument::upgradedDataAccessInSequence(_instrumentationId, oldAccess._instrumentationId, oldAccess._type, newAccessType, false, task->getInstrumentationTaskId());
-		oldAccess._type = newAccessType;
+		Instrument::upgradedDataAccessInSequence(_instrumentationId, dataAccess->_instrumentationId, dataAccess->_type, newAccessType, false, task->getInstrumentationTaskId());
+		dataAccess->_type = newAccessType;
 		
 		return true; // Do not count this one
-	} else if (oldAccess._type == READ_ACCESS_TYPE) {
+	} else if (dataAccess->_type == READ_ACCESS_TYPE) {
 		// Upgrade a read into a write or readwrite
 		assert((newAccessType == WRITE_ACCESS_TYPE) || (newAccessType == READWRITE_ACCESS_TYPE));
 		
@@ -94,32 +150,66 @@ bool DataAccessSequence::upgradeAccess(Task *task, access_sequence_t::reverse_it
 		Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), this, false);
 		Instrument::addTaskToAccessGroup(this, task->getInstrumentationTaskId());
 		
-		if (oldAccess._satisfied) {
-			// Calculate if the upgraded access is satisfied
-			--position;
-			bool satisfied = (position == _accessSequence.rend());
-			oldAccess._satisfied = satisfied;
+		DataAccessType oldAccessType = dataAccess->_type;
+		
+		// Upgrade the access type
+		dataAccess->_type = READWRITE_ACCESS_TYPE;
+		
+		if (dataAccess->_satisfied) {
+			// Calculate if the satisfiability of the upgraded access
+			DataAccess *effectivePrevious = getEffectivePrevious(dataAccess);
+			bool satisfied = evaluateSatisfiability(effectivePrevious, dataAccess->_type);
+			dataAccess->_satisfied = satisfied;
 			
-			Instrument::upgradedDataAccessInSequence(_instrumentationId, oldAccess._instrumentationId, oldAccess._type, newAccessType, !satisfied, task->getInstrumentationTaskId());
-			
-			// Upgrade the access type
-			oldAccess._type = READWRITE_ACCESS_TYPE;
+			Instrument::upgradedDataAccessInSequence(_instrumentationId, dataAccess->_instrumentationId, oldAccessType, newAccessType, !satisfied, task->getInstrumentationTaskId());
 			
 			return satisfied; // A new chance for the access to not be satisfied
 		} else {
-			Instrument::upgradedDataAccessInSequence(_instrumentationId, oldAccess._instrumentationId, oldAccess._type, newAccessType, false, task->getInstrumentationTaskId());
-			
-			// Upgrade the access type
-			oldAccess._type = READWRITE_ACCESS_TYPE;
+			Instrument::upgradedDataAccessInSequence(_instrumentationId, dataAccess->_instrumentationId, dataAccess->_type, newAccessType, false, task->getInstrumentationTaskId());
 			
 			return true; // The predecessor has already been counted
 		}
 	} else {
-		assert((oldAccess._type == WRITE_ACCESS_TYPE) || (oldAccess._type == READWRITE_ACCESS_TYPE));
+		assert((dataAccess->_type == WRITE_ACCESS_TYPE) || (dataAccess->_type == READWRITE_ACCESS_TYPE));
 		
 		// The old access was as restrictive as possible
 		return true; // Satisfiability has already been accounted for
 	}
+}
+
+
+DataAccess *DataAccessSequence::getEffectivePrevious(DataAccess *dataAccess)
+{
+	DataAccessSequence *currentSequence = this;
+	DataAccessSequence::access_sequence_t::iterator next;
+	
+	if (dataAccess != nullptr) {
+		next = _accessSequence.iterator_to(*dataAccess);
+	} else {
+		// Looking for the effective previous to a new access that has yet to be added and assuming that the sequence is empty
+		assert(_accessSequence.empty());
+		next = _accessSequence.begin();
+	}
+	
+	// While we hit the top of a sequence, go to the previous of the parent
+	while (next == currentSequence->_accessSequence.begin()) {
+		DataAccess *superAccess = currentSequence->_superAccess;
+		
+		if (superAccess == nullptr) {
+			// We reached the beginning of the logical sequence or the top of the root sequence
+			return nullptr;
+		}
+		
+		currentSequence = superAccess->_dataAccessSequence;
+		next = currentSequence->_accessSequence.iterator_to(*superAccess);
+	}
+	
+	assert(next != currentSequence->_accessSequence.begin());
+	
+	next--;
+	DataAccess *effectivePrevious = &(*next);
+	
+	return effectivePrevious;
 }
 
 

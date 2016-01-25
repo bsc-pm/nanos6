@@ -47,6 +47,14 @@ namespace Instrument {
 	) {
 	}
 	
+	inline void replacedSequenceOfDataAccess(
+		__attribute__((unused)) data_access_sequence_id_t previousDataAccessSequenceId,
+		__attribute__((unused)) data_access_sequence_id_t newDataAccessSequenceId,
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) data_access_id_t beforeDataAccessId,
+		__attribute__((unused)) task_id_t triggererTaskId
+	) {
+	}
 }
 
 

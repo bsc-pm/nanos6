@@ -79,6 +79,16 @@ namespace Instrument {
 	//! \param triggererTaskId the identifier of the task that trigers the change
 	void removedDataAccessFromSequence(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, task_id_t triggererTaskId);
 	
+	//! \brief Called when a DataAccess has is moved from one DataAccessSequence to another
+	//! 
+	//! \param previousDataAccessSequenceId the identifier of the sequence from which the DataAccess is removed
+	//! \param newDataAccessSequenceId the identifier of the sequence to which the DataAccess is inserted
+	//! \param dataAccessId the identifier of the DataAccess that is moved
+	//! \param beforeDataAccessId the identifier of the DataAccess from the target DataAccessSequence on fron of which the access will be placed
+	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! 
+	void replacedSequenceOfDataAccess(data_access_sequence_id_t previousDataAccessSequenceId, data_access_sequence_id_t newDataAccessSequenceId, data_access_id_t dataAccessId, data_access_id_t beforeDataAccessId, task_id_t triggererTaskId);
+	
 	//! @}
 }
 

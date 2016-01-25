@@ -18,6 +18,8 @@ namespace Instrument {
 	void dataAccessBecomesSatisfied(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, task_id_t triggererTaskId, task_id_t targetTaskId);
 	
 	void removedDataAccessFromSequence(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, task_id_t triggererTaskId);
+	
+	void replacedSequenceOfDataAccess(data_access_sequence_id_t previousDataAccessSequenceId, data_access_sequence_id_t newDataAccessSequenceId, data_access_id_t dataAccessId, data_access_id_t beforeDataAccessId, task_id_t triggererTaskId);
 }
 
 

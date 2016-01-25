@@ -51,11 +51,6 @@ struct DataAccess {
 	//! If the data access can already be performed
 	bool _satisfied;
 	
-	//! \brief Countdown until full completion of the access
-	//! +1 if the originator has not finished
-	//! +1 if _subaccesses is not empty
-	std::atomic<int> _completionCountdown;
-	
 	//! Tasks to which the access corresponds
 	Task *_originator;
 	
@@ -74,7 +69,7 @@ struct DataAccess {
 		Instrument::data_access_id_t instrumentationId
 	)
 		: _taskAccessListLinks(), _accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
-		_type(type), _satisfied(satisfied), _completionCountdown(1 /* For the originator */), _originator(originator),
+		_type(type), _satisfied(satisfied), _originator(originator),
 		_subaccesses(accessRange, this),
 		_instrumentationId(instrumentationId)
 	{
