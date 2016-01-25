@@ -56,22 +56,6 @@ struct DataAccessSequence {
 	//! \returns false if the DataAccess becomes unsatisfied
 	inline bool upgradeAccess(Task* task, access_sequence_t::reverse_iterator& position, DataAccess& oldAccess, DataAccessType newAccessType);
 	
-	
-	//! \brief adds a task access to the sequence taking into account repeated accesses
-	//! 
-	//! \param[in] task the task that performs the access
-	//! \param[in] accessType the type of access
-	//! \param[out] dataAccess gets initialized with a pointer to the new DataAccess object or null if there was already a previous one for that task
-	//! 
-	//! \returns true is the access can be started
-	//!
-	//! The new DataAccess object has the task as its originator and is inserted in the DataAccessSequence.
-	//! However, it is not inserted in the list of accesses of the Task.
-	//! 
-	//! If the task has already a previous access, it may be upgraded if necessary, and dataAccess is set to null. The return
-	//! value indicates if the new access produces an additional dependency (only possible if the previous one did not).
-	inline bool addTaskAccess(Task *task, DataAccessType accessType, DataAccess *&dataAccess);
-	
 };
 
 

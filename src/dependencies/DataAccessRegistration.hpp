@@ -96,6 +96,77 @@ private:
 	
 	
 public:
+
+	//! \brief adds a task access to the end of a sequence taking into account repeated accesses
+	//! 
+	//! \param[in] task the task that performs the access
+	//! \param[in] accessType the type of access
+	//! \param[in] accessSequence the sequnece on which to add the new access
+	//! \param[out] dataAccess gets initialized with a pointer to the new DataAccess object or null if there was already a previous one for that task
+	//! 
+	//! \returns true is the access can be started
+	//!
+	//! The new DataAccess object has the task as its originator and is inserted in the DataAccessSequence.
+	//! However, it is not inserted in the list of accesses of the Task.
+	//! 
+	//! If the task has already a previous access, it may be upgraded if necessary, and dataAccess is set to null. The return
+	//! value indicates if the new access produces an additional dependency (only possible if the previous one did not).
+	static inline bool registerTaskDataAccess(Task *task, DataAccessType accessType, DataAccessSequence *accessSequence, DataAccess *&dataAccess)
+	{
+		assert(task != 0);
+		assert(accessSequence != nullptr);
+		std::lock_guard<SpinLock> guard(accessSequence->_lock);
+		
+		auto position = accessSequence->_accessSequence.rbegin();
+		
+		// If there are no previous accesses, then the new access can be satisfied
+		bool satisfied = (position == accessSequence->_accessSequence.rend());
+		
+		if (position != accessSequence->_accessSequence.rend()) {
+			// There is a "last" access
+			DataAccess &lastAccess = *position;
+			
+			if (lastAccess._originator == task) {
+				// The task "accesses" twice to the same location
+				
+				dataAccess = 0;
+				return accessSequence->upgradeAccess(task, position, lastAccess, accessType);
+			} else {
+				if ((lastAccess._type == WRITE_ACCESS_TYPE) || (lastAccess._type == READWRITE_ACCESS_TYPE)) {
+					satisfied = false;
+				} else {
+					satisfied = (lastAccess._type == accessType) && lastAccess._satisfied;
+				}
+			}
+		} else {
+			// We no longer have (or never had) information about any previous access to this storage
+			Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), accessSequence, true);
+		}
+		
+		if (accessSequence->_accessSequence.empty()) {
+			accessSequence->_instrumentationId = Instrument::registerAccessSequence((accessSequence->_superAccess != 0 ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()), task->getInstrumentationTaskId());
+			if (accessSequence->_superAccess != 0) {
+				// The access of the parent will start having subaccesses
+				
+				// 1. The parent is adding this task, so it cannot have finished (>=1)
+				// 2. The sequence is empty, so it has not been counted yet (<2)
+				assert(accessSequence->_superAccess->_completionCountdown.load() == 1);
+				
+				accessSequence->_superAccess->_completionCountdown++;
+			}
+		}
+		
+		Instrument::data_access_id_t dataAccessInstrumentationId =
+		Instrument::addedDataAccessInSequence(accessSequence->_instrumentationId, accessType, satisfied, task->getInstrumentationTaskId());
+		Instrument::addTaskToAccessGroup(accessSequence, task->getInstrumentationTaskId());
+		
+		dataAccess = new DataAccess(accessSequence, accessType, satisfied, task, accessSequence->_accessRange, dataAccessInstrumentationId);
+		accessSequence->_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer
+		
+		return satisfied;
+	}
+	
+	
 	//! \brief Performs the task dependency registration procedure
 	//! 
 	//! \param[in] task the Task whose dependencies need to be calculated

@@ -4,6 +4,7 @@
 
 #include "api/nanos6_rt_interface.h"
 #include "dependencies/DataAccessType.hpp"
+#include "dependencies/DataAccessRegistration.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
@@ -43,7 +44,7 @@ void register_access(void *handler, void *start, size_t length)
 	}
 	
 	DataAccess *dataAccess;
-	bool satisfied = accessSequence->addTaskAccess(task, ACCESS_TYPE, /* OUT */ dataAccess);
+	bool satisfied = DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, accessSequence, /* OUT */ dataAccess);
 	if (dataAccess != 0) {
 		// A new data access, as opposed to a repeated or upgraded one
 		task->addDataAccess(dataAccess);
