@@ -35,6 +35,7 @@ namespace Instrument {
 	data_access_id_t addedDataAccessInSequence(
 		data_access_sequence_id_t dataAccessSequenceId,
 		DataAccessType accessType,
+		__attribute__((unused)) bool weak,
 		bool satisfied,
 		task_id_t originatorTaskId
 	) {
@@ -86,7 +87,9 @@ namespace Instrument {
 		data_access_sequence_id_t dataAccessSequenceId,
 		data_access_id_t dataAccessId,
 		__attribute__((unused)) DataAccessType previousAccessType,
+		__attribute__((unused)) bool previousWeakness,
 		DataAccessType newAccessType,
+		__attribute__((unused)) bool newWeakness,
 		bool becomesUnsatisfied,
 		task_id_t originatorTaskId
 	) {
@@ -168,11 +171,11 @@ namespace Instrument {
 	}
 	
 	void replacedSequenceOfDataAccess(
-		data_access_sequence_id_t previousDataAccessSequenceId,
-		data_access_sequence_id_t newDataAccessSequenceId,
-		data_access_id_t dataAccessId,
-		data_access_id_t beforeDataAccessId,
-		task_id_t triggererTaskId
+		__attribute__((unused)) data_access_sequence_id_t previousDataAccessSequenceId,
+		__attribute__((unused)) data_access_sequence_id_t newDataAccessSequenceId,
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) data_access_id_t beforeDataAccessId,
+		__attribute__((unused)) task_id_t triggererTaskId
 	) {
 		// For now we will not represent the change
 	}

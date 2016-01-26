@@ -127,28 +127,51 @@ inline bool DataAccessSequence::reevaluateSatisfiability(DataAccess *previousDat
 }
 
 
-bool DataAccessSequence::upgradeAccess(Task *task, DataAccess *dataAccess, DataAccessType newAccessType)
+bool DataAccessSequence::upgradeSameTypeAccess(Task *task, DataAccess /* INOUT */ *dataAccess, bool newAccessWeakness)
 {
-	assert(dataAccess != nullptr);
+	if (dataAccess->_weak != newAccessWeakness) {
+		Instrument::upgradedDataAccessInSequence(
+			_instrumentationId, dataAccess->_instrumentationId,
+			dataAccess->_type, dataAccess->_weak,
+			dataAccess->_type, (dataAccess->_weak && newAccessWeakness),
+			false, task->getInstrumentationTaskId()
+		);
+		dataAccess->_weak &= newAccessWeakness; // In fact, just false
+	}
 	
-	if (dataAccess->_type == newAccessType) {
-		// An identical access
-		return true; // Do not count this one
-	} else if ((newAccessType == WRITE_ACCESS_TYPE) && (dataAccess->_type == READWRITE_ACCESS_TYPE)) {
-		return true; // The old access subsumes this
-	} else if ((newAccessType == READWRITE_ACCESS_TYPE) && (dataAccess->_type == WRITE_ACCESS_TYPE)) {
-		// An almost identical access
-		Instrument::upgradedDataAccessInSequence(_instrumentationId, dataAccess->_instrumentationId, dataAccess->_type, newAccessType, false, task->getInstrumentationTaskId());
+	// An identical access
+	return true; // Do not count this one
+}
+
+
+bool DataAccessSequence::upgradeSameStrengthAccess(Task *task, DataAccess /* INOUT */ *dataAccess, DataAccessType newAccessType)
+{
+	if (dataAccess->_type == READWRITE_ACCESS_TYPE) {
+		// The old access is as restrictive as possible
+		return true;
+	} else if (dataAccess->_type == WRITE_ACCESS_TYPE) {
+		// A write that becomes readwrite
+		assert((newAccessType == READWRITE_ACCESS_TYPE) || (newAccessType == READ_ACCESS_TYPE));
+		Instrument::upgradedDataAccessInSequence(
+			_instrumentationId, dataAccess->_instrumentationId,
+			dataAccess->_type, dataAccess->_weak,
+			READWRITE_ACCESS_TYPE, dataAccess->_weak,
+			false, task->getInstrumentationTaskId()
+		);
 		dataAccess->_type = newAccessType;
 		
+		// The essential type of access did not change, and thus neither did its satisfiability
 		return true; // Do not count this one
-	} else if (dataAccess->_type == READ_ACCESS_TYPE) {
-		// Upgrade a read into a write or readwrite
+	} else {
+		// Upgrade a read into a readwrite
+		assert(dataAccess->_type == READ_ACCESS_TYPE);
 		assert((newAccessType == WRITE_ACCESS_TYPE) || (newAccessType == READWRITE_ACCESS_TYPE));
 		
-		Instrument::removeTaskFromAccessGroup(this, task->getInstrumentationTaskId());
-		Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), this, false);
-		Instrument::addTaskToAccessGroup(this, task->getInstrumentationTaskId());
+		if (!dataAccess->_weak) {
+			Instrument::removeTaskFromAccessGroup(this, task->getInstrumentationTaskId());
+			Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), this, false);
+			Instrument::addTaskToAccessGroup(this, task->getInstrumentationTaskId());
+		}
 		
 		DataAccessType oldAccessType = dataAccess->_type;
 		
@@ -161,19 +184,184 @@ bool DataAccessSequence::upgradeAccess(Task *task, DataAccess *dataAccess, DataA
 			bool satisfied = evaluateSatisfiability(effectivePrevious, dataAccess->_type);
 			dataAccess->_satisfied = satisfied;
 			
-			Instrument::upgradedDataAccessInSequence(_instrumentationId, dataAccess->_instrumentationId, oldAccessType, newAccessType, !satisfied, task->getInstrumentationTaskId());
+			Instrument::upgradedDataAccessInSequence(
+				_instrumentationId, dataAccess->_instrumentationId,
+				oldAccessType, dataAccess->_weak,
+				newAccessType, dataAccess->_weak,
+				!satisfied, task->getInstrumentationTaskId()
+			);
 			
 			return satisfied; // A new chance for the access to not be satisfied
 		} else {
-			Instrument::upgradedDataAccessInSequence(_instrumentationId, dataAccess->_instrumentationId, dataAccess->_type, newAccessType, false, task->getInstrumentationTaskId());
+			Instrument::upgradedDataAccessInSequence(
+				_instrumentationId, dataAccess->_instrumentationId,
+				dataAccess->_type, dataAccess->_weak,
+				newAccessType, dataAccess->_weak,
+				false, task->getInstrumentationTaskId()
+			);
 			
-			return true; // The predecessor has already been counted
+			return true; // The old access has already been counted
+		}
+	}
+}
+
+
+bool DataAccessSequence::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType)
+{
+	if (dataAccess->_type == READWRITE_ACCESS_TYPE) {
+		// The old access is as restrictive as possible
+		return true;
+	} else if (dataAccess->_type == WRITE_ACCESS_TYPE) {
+		// A write that becomes readwrite
+		assert((newAccessType == READWRITE_ACCESS_TYPE) || (newAccessType == READ_ACCESS_TYPE));
+		Instrument::upgradedDataAccessInSequence(
+			_instrumentationId, dataAccess->_instrumentationId,
+			dataAccess->_type, false,
+			READWRITE_ACCESS_TYPE, false,
+			false, task->getInstrumentationTaskId()
+		);
+		dataAccess->_type = newAccessType;
+		
+		// The essential type of access did not change, and thus neither did its satisfiability
+		return true; // Do not count this one
+	} else {
+		assert(dataAccess->_type == READ_ACCESS_TYPE);
+		
+		if (newAccessType == READ_ACCESS_TYPE) {
+			return true;
+		} else {
+			bool satisfied = evaluateSatisfiability(dataAccess, newAccessType);
+			
+			DataAccessSequence *accessSequence = dataAccess->_dataAccessSequence;
+			assert(accessSequence != nullptr);
+			
+			Instrument::data_access_id_t newDataAccessInstrumentationId =
+			Instrument::addedDataAccessInSequence(accessSequence->_instrumentationId, newAccessType, true, satisfied, task->getInstrumentationTaskId());
+			
+			dataAccess = new DataAccess(accessSequence, newAccessType, true, satisfied, task, accessSequence->_accessRange, newDataAccessInstrumentationId);
+			accessSequence->_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer
+			
+			return satisfied;
+		}
+	}
+}
+
+
+bool DataAccessSequence::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType)
+{
+	if (newAccessType != READ_ACCESS_TYPE) {
+		// A new write or readwrite that subsumes a weak access
+		assert((dataAccess->_type != WRITE_ACCESS_TYPE) || (newAccessType != WRITE_ACCESS_TYPE)); // Handled elsewhere
+		
+		DataAccessType oldAccessType = dataAccess->_type;
+		
+		// Upgrade the access type
+		dataAccess->_type = READWRITE_ACCESS_TYPE;
+		dataAccess->_weak = false;
+		
+		if (dataAccess->_satisfied) {
+			// Calculate if the satisfiability of the upgraded access
+			DataAccess *effectivePrevious = getEffectivePrevious(dataAccess);
+			bool satisfied = evaluateSatisfiability(effectivePrevious, dataAccess->_type);
+			dataAccess->_satisfied = satisfied;
+			
+			Instrument::upgradedDataAccessInSequence(
+				_instrumentationId, dataAccess->_instrumentationId,
+				oldAccessType, true,
+				newAccessType, false,
+				!satisfied, task->getInstrumentationTaskId()
+			);
+			
+			return satisfied; // A new chance for the access to not be satisfied
+		} else {
+			Instrument::upgradedDataAccessInSequence(
+				_instrumentationId, dataAccess->_instrumentationId,
+				dataAccess->_type, true,
+				newAccessType, false,
+				false, task->getInstrumentationTaskId()
+			);
+			
+			return true;
 		}
 	} else {
-		assert((dataAccess->_type == WRITE_ACCESS_TYPE) || (dataAccess->_type == READWRITE_ACCESS_TYPE));
+		// A new "strong" read to be combined with an already existing weak access
+		assert(newAccessType == READ_ACCESS_TYPE);
 		
-		// The old access was as restrictive as possible
-		return true; // Satisfiability has already been accounted for
+		if (dataAccess->_type == READ_ACCESS_TYPE) {
+			dataAccess->_weak = false;
+			
+			Instrument::upgradedDataAccessInSequence(
+				_instrumentationId, dataAccess->_instrumentationId,
+				READ_ACCESS_TYPE, true,
+				READ_ACCESS_TYPE, false,
+				false, task->getInstrumentationTaskId()
+			);
+			
+			return dataAccess->_satisfied; // A new chance for the access to be accounted
+		} else {
+			// The new "strong" read must come before the old weak write or weak readwrite
+			
+			DataAccess *effectivePrevious = getEffectivePrevious(dataAccess);
+			bool satisfied = evaluateSatisfiability(effectivePrevious, newAccessType);
+			
+			DataAccessSequence *accessSequence = dataAccess->_dataAccessSequence;
+			assert(accessSequence != nullptr);
+			
+			// We overwrite the old DataAccess object with the "strong" read and create a new DataAccess after it with the old weak access information
+			// This simplifies insertion and the instrumentation
+			
+			// Instrumentation for the upgrade of the existing access to "strong" read
+			Instrument::upgradedDataAccessInSequence(
+				_instrumentationId, dataAccess->_instrumentationId,
+				dataAccess->_type, true,
+				READ_ACCESS_TYPE, false,
+				false, task->getInstrumentationTaskId()
+			);
+			if (dataAccess->_satisfied != satisfied) {
+				Instrument::dataAccessBecomesSatisfied(
+					accessSequence->_instrumentationId, dataAccess->_instrumentationId,
+					task->getInstrumentationTaskId(), task->getInstrumentationTaskId()
+				);
+			}
+			
+			// Update existing access to "strong" read
+			DataAccessType oldAccessType = dataAccess->_type;
+			dataAccess->_type = READ_ACCESS_TYPE;
+			dataAccess->_weak = false;
+			dataAccess->_satisfied = satisfied;
+			
+			// New object with the old information
+			Instrument::data_access_id_t newDataAccessInstrumentationId =
+			Instrument::addedDataAccessInSequence(accessSequence->_instrumentationId, oldAccessType, true, false, task->getInstrumentationTaskId());
+			
+			dataAccess = new DataAccess(accessSequence, oldAccessType, true, false, task, accessSequence->_accessRange, newDataAccessInstrumentationId);
+			accessSequence->_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer
+			
+			return satisfied;
+		}
+	}
+}
+
+
+bool DataAccessSequence::upgradeAccess(Task *task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType, bool newAccessWeakness)
+{
+	assert(dataAccess != nullptr);
+	
+	if (dataAccess->_type == newAccessType) {
+		return upgradeSameTypeAccess(task, dataAccess, newAccessWeakness);
+	} else if (dataAccess->_weak == newAccessWeakness) {
+		// Either both weak or both "strong"
+		return upgradeSameStrengthAccess(task, dataAccess, newAccessType);
+	} else if (!dataAccess->_weak) {
+		// Current is "strong", new is weak
+		assert(newAccessWeakness);
+		return upgradeStrongAccessWithWeak(task, dataAccess, newAccessType);
+	} else {
+		// Current is weak, new is "strong"
+		assert(dataAccess->_weak);
+		assert(!newAccessWeakness);
+		
+		return upgradeWeakAccessWithStrong(task, dataAccess, newAccessType);
 	}
 }
 

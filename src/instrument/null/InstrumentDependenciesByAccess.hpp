@@ -12,6 +12,7 @@ namespace Instrument {
 	inline void registerTaskAccess(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) DataAccessType accessType,
+		__attribute__((unused)) bool weak,
 		__attribute__((unused)) void *start,
 		__attribute__((unused)) size_t length)
 	{

@@ -45,11 +45,12 @@ namespace Instrument {
 	//! 
 	//! \param dataAccessSequenceId the identifier of the sequence returned by Instrument::newAccessSequence when it was created
 	//! \param accessType the type of access of the new DataAccess
+	//! \param weak true if the access is weak
 	//! \param satisfied whether the access does not preclude the task from running immediately
 	//! \param originatorTaskId the identifier of the task that will perform the access as returned in the call to Instrument::enterAddTask
 	//! 
 	//! \returns an identifier for the new data access
-	data_access_id_t addedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, DataAccessType accessType, bool satisfied, task_id_t originatorTaskId);
+	data_access_id_t addedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, DataAccessType accessType, bool weak, bool satisfied, task_id_t originatorTaskId);
 	
 	//! \brief Called when a DataAccess has its type of access upgraded
 	//! 
@@ -58,11 +59,13 @@ namespace Instrument {
 	//! \param dataAccessSequenceId the identifier of the sequence returned by Instrument::newAccessSequence when it was created
 	//! \param dataAccessId the identifier of the DataAccess returned in the previous call to Instrument::registerDataAccessInSequence
 	//! \param previousAccessType the type of access that will be upgraded
+	//! \param previousWeakness true if the access to be upgraded is weak
 	//! \param newAccessType the type of access to which it will be upgraded
+	//! \param newWeakness true if the resulting access is weak
 	//! \param becomesUnsatisfied indicates if the DataAccess was satisfied and has become unsatisfied as a result of the upgrade
 	//! \param triggererTaskId the identifier of the task that trigers the change
 	//! 
-	void upgradedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, DataAccessType previousAccessType, DataAccessType newAccessType, bool becomesUnsatisfied, task_id_t triggererTaskId);
+	void upgradedDataAccessInSequence(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, DataAccessType previousAccessType, bool previousWeakness, DataAccessType newAccessType, bool newWeakness, bool becomesUnsatisfied, task_id_t triggererTaskId);
 	
 	//! \brief Called when a DataAccess becomes satisfied
 	//! 

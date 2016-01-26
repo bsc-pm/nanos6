@@ -11,7 +11,7 @@
 
 
 namespace Instrument {
-	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, void *start, size_t length);
+	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, bool weak, void *start, size_t length);
 }
 
 

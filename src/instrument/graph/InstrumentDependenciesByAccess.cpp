@@ -14,7 +14,7 @@
 namespace Instrument {
 	using namespace Graph;
 	
-	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, void *start, __attribute__((unused)) size_t length)
+	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, __attribute__((unused)) bool weak, void *start, __attribute__((unused)) size_t length)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		

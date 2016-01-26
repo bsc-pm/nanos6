@@ -9,13 +9,13 @@
 #include "tasks/Task.hpp"
 
 
-template <DataAccessType ACCESS_TYPE>
+template <DataAccessType ACCESS_TYPE, bool WEAK>
 void register_access(void *handler, void *start, size_t length)
 {
 	assert(handler != 0);
 	Task *task = (Task *) handler;
 	
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, start, length);
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK, start, length);
 	
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != 0); // NOTE: The "main" task is not created by a WorkerThread, but in any case it is not supposed to have dependencies
@@ -44,13 +44,13 @@ void register_access(void *handler, void *start, size_t length)
 	}
 	
 	DataAccess *dataAccess;
-	bool satisfied = DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, accessSequence, /* OUT */ dataAccess);
+	bool canStart = DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK, accessSequence, /* OUT */ dataAccess);
 	if (dataAccess != 0) {
 		// A new data access, as opposed to a repeated or upgraded one
 		task->addDataAccess(dataAccess);
 	}
 	
-	if (!satisfied) {
+	if (!canStart) {
 		task->increasePredecessors();
 	}
 }
@@ -58,19 +58,37 @@ void register_access(void *handler, void *start, size_t length)
 
 void nanos_register_read_depinfo(void *handler, void *start, size_t length)
 {
-	register_access<READ_ACCESS_TYPE>(handler, start, length);
+	register_access<READ_ACCESS_TYPE, false>(handler, start, length);
 }
 
 
 void nanos_register_write_depinfo(void *handler, void *start, size_t length)
 {
-	register_access<WRITE_ACCESS_TYPE>(handler, start, length);
+	register_access<WRITE_ACCESS_TYPE, false>(handler, start, length);
 }
 
 
 void nanos_register_readwrite_depinfo(void *handler, void *start, size_t length)
 {
-	register_access<READWRITE_ACCESS_TYPE>(handler, start, length);
+	register_access<READWRITE_ACCESS_TYPE, false>(handler, start, length);
+}
+
+
+void nanos_register_weak_read_depinfo(void *handler, void *start, size_t length)
+{
+	register_access<READ_ACCESS_TYPE, true>(handler, start, length);
+}
+
+
+void nanos_register_weak_write_depinfo(void *handler, void *start, size_t length)
+{
+	register_access<WRITE_ACCESS_TYPE, true>(handler, start, length);
+}
+
+
+void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t length)
+{
+	register_access<READWRITE_ACCESS_TYPE, true>(handler, start, length);
 }
 
 

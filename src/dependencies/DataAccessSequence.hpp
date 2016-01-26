@@ -87,21 +87,30 @@ struct DataAccessSequence {
 	inline bool reevaluateSatisfiability(access_sequence_t::iterator position);
 	
 	
+	inline bool upgradeSameTypeAccess(Task *task, DataAccess /* INOUT */ *dataAccess, bool newAccessWeakness);
+	inline bool upgradeSameStrengthAccess(Task *task, DataAccess /* INOUT */ *dataAccess, DataAccessType newAccessType);
+	inline bool upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType);
+	inline bool upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType);
+	
+	
 	//! \brief Upgrade a DataAccess to a new access type
 	//! 
 	//! \param[in] task the task that performs the access
 	//! \param[inout] dataAccess the DataAccess to be upgraded
 	//! \param[in] newAccessType the type of access that triggers the update
+	//! \param[in] newAccessWeakness true iff the access that triggers the update is weak
 	//! 
 	//! \returns false if the DataAccess becomes unsatisfied
-	inline bool upgradeAccess(Task* task, DataAccess *dataAccess, DataAccessType newAccessType);
+	//! 
+	//! NOTE: In some cases, the upgrade can create an additional DataAccess. In that case, dataAccess is updated to point to the new object.
+	inline bool upgradeAccess(Task* task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType, bool newAccessWeakness);
 	
 	
 	//! \brief Get the Effective Previous access of another given one
 	//! 
 	//! \param[in] dataAccess the DataAccess that is effectively after the one to be returned or nullptr if the DataAccess is yet to be added and the sequence is empty
 	//! 
-	//! \returns the Effetiv Previous access to the one passed by parameter, or nullptr if there is none
+	//! \returns the Effective Previous access to the one passed by parameter, or nullptr if there is none
 	//! 
 	//! NOTE: This function assumes that the whole hierarchy has already been locked
 	inline DataAccess *getEffectivePrevious(DataAccess *dataAccess);

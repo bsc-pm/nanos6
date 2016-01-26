@@ -25,9 +25,10 @@ namespace Instrument {
 	//!
 	//! \param[in] taskId the task_id_t returned by a call to Instrument::enterAddTask
 	//! \param[in] accessType the type of access
+	//! \param[in] weak true if the access is weak
 	//! \param[in] start the starting address of the access
 	//! \param[in] length the length of the access is bytes
-	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, void *start, size_t length);
+	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, bool weak, void *start, size_t length);
 	
 	//! @}
 }

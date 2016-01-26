@@ -40,7 +40,16 @@ private:
 					instrumentationTaskId,
 					currentDataAccess->_originator->getInstrumentationTaskId()
 				);
-				satisfiedOriginators.push_back(currentDataAccess->_originator);
+				
+				if (currentDataAccess->_weak) {
+					DataAccessSequence &subaccesses = currentDataAccess->_subaccesses;
+					auto it = subaccesses._accessSequence.begin();
+					if (it != subaccesses._accessSequence.end()) {
+						reevaluateAndPropagateSatisfiability(instrumentationTaskId, previousDataAccess, &(*it), satisfiedOriginators);
+					}
+				} else {
+					satisfiedOriginators.push_back(currentDataAccess->_originator);
+				}
 			} else {
 				// Either it was already satisfied or it cannot become satisfied
 				break;
@@ -143,6 +152,7 @@ public:
 	//! 
 	//! \param[in] task the task that performs the access
 	//! \param[in] accessType the type of access
+	//! \param[in] weak true iff the access is weak
 	//! \param[in] accessSequence the sequnece on which to add the new access
 	//! \param[out] dataAccess gets initialized with a pointer to the new DataAccess object or null if there was already a previous one for that task
 	//! 
@@ -153,7 +163,7 @@ public:
 	//! 
 	//! If the task has already a previous access, it may be upgraded if necessary, and dataAccess is set to null. The return
 	//! value indicates if the new access produces an additional dependency (only possible if the previous one did not).
-	static inline bool registerTaskDataAccess(Task *task, DataAccessType accessType, DataAccessSequence *accessSequence, DataAccess *&dataAccess)
+	static inline bool registerTaskDataAccess(Task *task, DataAccessType accessType, bool weak, DataAccessSequence *accessSequence, DataAccess *&dataAccess)
 	{
 		assert(task != 0);
 		assert(accessSequence != nullptr);
@@ -170,7 +180,7 @@ public:
 				// The task "accesses" twice to the same location
 				
 				dataAccess = 0;
-				return accessSequence->upgradeAccess(task, effectivePrevious, accessType);
+				return accessSequence->upgradeAccess(task, effectivePrevious, accessType, weak);
 			}
 		} else {
 			// New access to an empty sequence
@@ -194,13 +204,13 @@ public:
 		}
 		
 		Instrument::data_access_id_t dataAccessInstrumentationId =
-			Instrument::addedDataAccessInSequence(accessSequence->_instrumentationId, accessType, satisfied, task->getInstrumentationTaskId());
+			Instrument::addedDataAccessInSequence(accessSequence->_instrumentationId, accessType, weak, satisfied, task->getInstrumentationTaskId());
 		Instrument::addTaskToAccessGroup(accessSequence, task->getInstrumentationTaskId());
 		
-		dataAccess = new DataAccess(accessSequence, accessType, satisfied, task, accessSequence->_accessRange, dataAccessInstrumentationId);
+		dataAccess = new DataAccess(accessSequence, accessType, weak, satisfied, task, accessSequence->_accessRange, dataAccessInstrumentationId);
 		accessSequence->_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer
 		
-		return satisfied;
+		return satisfied || weak;
 	}
 	
 	

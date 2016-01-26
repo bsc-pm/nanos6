@@ -48,6 +48,9 @@ struct DataAccess {
 	//! Type of access: read, write, ...
 	DataAccessType _type;
 	
+	//! True iff the access is weak
+	bool _weak;
+	
 	//! If the data access can already be performed
 	bool _satisfied;
 	
@@ -63,13 +66,14 @@ struct DataAccess {
 	DataAccess(
 		DataAccessSequence *dataAccessSequence,
 		DataAccessType type,
+		bool weak,
 		bool satisfied,
 		Task *originator,
 		DataAccessRange accessRange,
 		Instrument::data_access_id_t instrumentationId
 	)
 		: _taskAccessListLinks(), _accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
-		_type(type), _satisfied(satisfied), _originator(originator),
+		_type(type), _weak(weak), _satisfied(satisfied), _originator(originator),
 		_subaccesses(accessRange, this),
 		_instrumentationId(instrumentationId)
 	{

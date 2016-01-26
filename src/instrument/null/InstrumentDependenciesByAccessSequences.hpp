@@ -16,6 +16,7 @@ namespace Instrument {
 	inline data_access_id_t addedDataAccessInSequence(
 		__attribute__((unused)) data_access_sequence_id_t dataAccessSequenceId,
 		__attribute__((unused)) DataAccessType accessType,
+		__attribute__((unused)) bool weak,
 		__attribute__((unused)) bool satisfied,
 		__attribute__((unused)) task_id_t originatorTaskId
 	) {
@@ -26,7 +27,9 @@ namespace Instrument {
 		__attribute__((unused)) data_access_sequence_id_t dataAccessSequenceId,
 		__attribute__((unused)) data_access_id_t dataAccessId,
 		__attribute__((unused)) DataAccessType previousAccessType,
+		__attribute__((unused)) bool previousWeakness,
 		__attribute__((unused)) DataAccessType newAccessType,
+		__attribute__((unused)) bool newWeakness,
 		__attribute__((unused)) bool becomesUnsatisfied,
 		__attribute__((unused)) task_id_t triggererTaskId
 	) {
