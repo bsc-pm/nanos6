@@ -60,6 +60,7 @@ common_sources = \
 	src/instrument/InstrumentDependenciesByAccessSequences.hpp \
 	src/instrument/InstrumentDependenciesByGroup.hpp \
 	src/instrument/InstrumentInitAndShutdown.hpp \
+	src/instrument/InstrumentLeaderThread.hpp \
 	src/instrument/InstrumentTaskExecution.hpp \
 	src/instrument/InstrumentTaskStatus.hpp \
 	src/instrument/InstrumentTaskWait.hpp \
@@ -105,6 +106,7 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentDependenciesByAccessSequences.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
+	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
 	src/instrument/null/InstrumentTaskStatus.hpp \
@@ -127,6 +129,7 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentGraph.hpp \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
+	src/instrument/graph/InstrumentLeaderThread.hpp \
 	src/instrument/graph/InstrumentTaskExecution.cpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
 	src/instrument/graph/InstrumentTaskId.hpp \
@@ -147,6 +150,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
+	src/instrument/profile/InstrumentLeaderThread.hpp \
 	src/instrument/profile/InstrumentProfile.cpp \
 	src/instrument/profile/InstrumentProfile.hpp \
 	src/instrument/profile/InstrumentTaskExecution.hpp \
@@ -165,6 +169,7 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
+	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentStats.cpp \
 	src/instrument/stats/InstrumentStats.hpp \
 	src/instrument/stats/InstrumentTaskExecution.hpp \

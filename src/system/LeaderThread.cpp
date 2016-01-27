@@ -5,6 +5,8 @@
 
 #include "LeaderThread.hpp"
 
+#include <InstrumentLeaderThread.hpp>
+
 
 std::atomic<bool> LeaderThread::_mustExit(false);
 
@@ -20,6 +22,7 @@ void LeaderThread::maintenanceLoop()
 		
 		// check somenting, like changes on the process_mask, or if there is any
 		// pending work
+		Instrument::leaderThreadSpin();
 	}
 }
 
