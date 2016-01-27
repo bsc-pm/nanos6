@@ -9,7 +9,8 @@ lib_LTLIBRARIES = \
 	libnanos6-graph.la \
 	libnanos6-profile.la \
 	libnanos6-stats.la \
-	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la 
+	libnanos6-verbose.la libnanos6-verbose-debug.la \
+	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la
 
 # See info page of libtool "Updating version info"
 lib_current = 0
@@ -180,6 +181,35 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp
 
+instrument_verbose_sources = \
+	src/instrument/verbose/InstrumentAddTask.cpp \
+	src/instrument/verbose/InstrumentAddTask.hpp \
+	src/instrument/verbose/InstrumentDataAccessId.hpp \
+	src/instrument/verbose/InstrumentDataAccessSequenceId.hpp \
+	src/instrument/verbose/InstrumentDependenciesByAccess.cpp \
+	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
+	src/instrument/verbose/InstrumentDependenciesByAccessSequences.cpp \
+	src/instrument/verbose/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
+	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
+	src/instrument/verbose/InstrumentInitAndShutdown.cpp \
+	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
+	src/instrument/verbose/InstrumentLeaderThread.cpp \
+	src/instrument/verbose/InstrumentLeaderThread.hpp \
+	src/instrument/verbose/InstrumentTaskExecution.cpp \
+	src/instrument/verbose/InstrumentTaskExecution.hpp \
+	src/instrument/verbose/InstrumentTaskId.hpp \
+	src/instrument/verbose/InstrumentTaskStatus.cpp \
+	src/instrument/verbose/InstrumentTaskStatus.hpp \
+	src/instrument/verbose/InstrumentTaskWait.cpp \
+	src/instrument/verbose/InstrumentTaskWait.hpp \
+	src/instrument/verbose/InstrumentThreadManagement.cpp \
+	src/instrument/verbose/InstrumentThreadManagement.hpp \
+	src/instrument/verbose/InstrumentUserMutex.cpp \
+	src/instrument/verbose/InstrumentUserMutex.hpp \
+	src/instrument/verbose/InstrumentVerbose.cpp \
+	src/instrument/verbose/InstrumentVerbose.hpp
+
 null_common_sources = \
 	src/null/NullDebug.cpp \
 	src/null/NullAPI.cpp
@@ -231,6 +261,16 @@ libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_stats_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(universal_debug_sources)
 libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags)
+
+libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
+libnanos6_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_verbose_la_SOURCES = $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
+libnanos6_verbose_la_LDFLAGS = $(common_libnanos6_ldflags)
+
+libnanos6_verbose_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
+libnanos6_verbose_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_verbose_debug_la_SOURCES = $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
+libnanos6_verbose_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)

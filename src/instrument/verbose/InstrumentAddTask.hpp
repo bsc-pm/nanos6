@@ -1,0 +1,8 @@
+#ifndef INSTRUMENT_VERBOSE_ADD_TASK_HPP
+#define INSTRUMENT_VERBOSE_ADD_TASK_HPP
+
+
+#include "../InstrumentAddTask.hpp"
+
+
+#endif // INSTRUMENT_VERBOSE_ADD_TASK_HPP

@@ -1,0 +1,8 @@
+#ifndef INSTRUMENT_VERBOSE_USER_MUTEX_HPP
+#define INSTRUMENT_VERBOSE_USER_MUTEX_HPP
+
+
+#include "../InstrumentUserMutex.hpp"
+
+
+#endif // INSTRUMENT_VERBOSE_USER_MUTEX_HPP
