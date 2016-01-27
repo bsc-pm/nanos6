@@ -66,8 +66,6 @@ private:
 		assert(dataAccess != nullptr);
 		
 		DataAccessSequence &subaccesses = dataAccess->_subaccesses;
-		DataAccessSequence *dataAccessSequence = dataAccess->_dataAccessSequence;
-		
 		// Locking strategy:
 		// 	Every DataAccess that accesses the same data is protected by the same SpinLock that is located
 		// 	in the root DataAccessSequence of the data. Each DataAccessSequence, except the root one contains
@@ -77,6 +75,8 @@ private:
 		// 	is actually an embedded DataAccessSequence and should have the correct pointer.
 		{
 			std::unique_lock<SpinLock> guard(subaccesses.getLockGuard());
+			
+			DataAccessSequence *dataAccessSequence = dataAccess->_dataAccessSequence;
 			
 			DataAccessSequence::access_sequence_t::iterator dataAccessPosition = dataAccessSequence->_accessSequence.iterator_to(*dataAccess);
 			
