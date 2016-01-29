@@ -18,10 +18,7 @@
 
 class DataAccessRegistration {
 private:
-	typedef std::deque<Task *> satisfied_originator_list_t;
-	
-	
-	static inline void reevaluateAndPropagateSatisfiability(Instrument::task_id_t instrumentationTaskId, DataAccess *previousDataAccess, DataAccess *targetDataAccess, satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
+	static inline void reevaluateAndPropagateSatisfiability(Instrument::task_id_t instrumentationTaskId, DataAccess *previousDataAccess, DataAccess *targetDataAccess, WorkerThread::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
 	{
 		if (targetDataAccess == nullptr) {
 			return;
@@ -61,7 +58,7 @@ private:
 	}
 	
 	
-	static inline void unregisterDataAccess(Instrument::task_id_t instrumentationTaskId, DataAccess *dataAccess, satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
+	static inline void unregisterDataAccess(Instrument::task_id_t instrumentationTaskId, DataAccess *dataAccess, WorkerThread::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
 	{
 		assert(dataAccess != nullptr);
 		
@@ -128,7 +125,7 @@ private:
 	
 	
 	//! Process all the originators for whose a DataAccess has become satisfied
-	static inline void processSatisfiedOriginators(satisfied_originator_list_t &satisfiedOriginators, HardwarePlace *hardwarePlace)
+	static inline void processSatisfiedOriginators(WorkerThread::satisfied_originator_list_t &satisfiedOriginators, HardwarePlace *hardwarePlace)
 	{
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : satisfiedOriginators) {
@@ -239,14 +236,15 @@ public:
 	{
 		assert(finishedTask != 0);
 		
-		assert(WorkerThread::getCurrentWorkerThread() != 0);
-		HardwarePlace *hardwarePlace = WorkerThread::getCurrentWorkerThread()->getHardwarePlace();
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != 0);
+		HardwarePlace *hardwarePlace = currentThread->getHardwarePlace();
 		assert(hardwarePlace != 0);
 		
 		DataAccess *dataAccess = finishedTask->popDataAccess();
 		
 		// A temporary list of tasks to minimize the time spent with the mutex held.
-		satisfied_originator_list_t satisfiedOriginators; // NOTE: This could be moved as a member of the WorkerThread for efficiency.
+		WorkerThread::satisfied_originator_list_t &satisfiedOriginators = currentThread->getSatisfiedOriginatorsReference();
 		while (dataAccess != 0) {
 			assert(dataAccess->_originator == finishedTask);
 			unregisterDataAccess(finishedTask->getInstrumentationTaskId(), dataAccess, /* OUT */ satisfiedOriginators);
