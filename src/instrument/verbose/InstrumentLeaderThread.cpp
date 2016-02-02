@@ -81,14 +81,14 @@ namespace Instrument {
 				
 				(*_output) << logEntry->_timestamp.tv_sec << "." << std::setw(9) << std::setfill('0') << logEntry->_timestamp.tv_nsec << std::setw(0) << std::setfill(' ');
 				(*_output) << " " << logEntry->_contents.str() << std::endl;
-				logEntry->_contents.clear();
+				logEntry->_contents.str("");
 			}
 		} else {
 			// Dump the (unsorted) vector in reverse order, which is the actual order of the log creation
 			for (auto it = entries.rbegin(); it != entries.rend(); it++) {
 				LogEntry *logEntry = *it;
 				(*_output) << logEntry->_contents.str() << std::endl;
-				logEntry->_contents.clear();
+				logEntry->_contents.str("");
 			}
 		}
 		
