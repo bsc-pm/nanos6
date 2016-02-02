@@ -58,9 +58,11 @@ AC_LANG_PUSH(C++)
 AC_C_RESTRICT
 AC_LANG_POP(C++)
 
-SSS_PUSH_NANOS6_MERCURIUM
-SSS_CHECK_SANE_CHRONO
-SSS_POP_NANOS6_MERCURIUM
+if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
+	SSS_PUSH_NANOS6_MERCURIUM
+	SSS_CHECK_SANE_CHRONO
+	SSS_POP_NANOS6_MERCURIUM
+fi
 
 # Checks for library functions.
 AC_CHECK_BACKTRACE
@@ -81,4 +83,10 @@ AC_CONFIG_FILES([
 	tests/directive_based/tests/Makefile
 ])
 AC_OUTPUT
+
+
+if test x"${ac_have_nanos6_mercurium}" = x"no" ; then
+	AC_MSG_WARN([the directive based tests will not be checked since there is no Mercurium compiler available])
+fi
+
 
