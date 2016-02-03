@@ -66,7 +66,8 @@ fi
 
 # Checks for library functions.
 AC_CHECK_BACKTRACE
-AC_CHECK_LIB([rt], [timer_create], [BACKTRACE_LIBS="${BACKTRACE_LIBS} -lrt"])
+AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
+AC_SUBST(CLOCK_LIBS)
 
 CHECK_UNDEFINED_SYMBOL_VERIFICATION_FLAGS
 
