@@ -74,7 +74,7 @@ struct DataAccess {
 	)
 		: _taskAccessListLinks(), _accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
 		_type(type), _weak(weak), _satisfied(satisfied), _originator(originator),
-		_subaccesses(accessRange, this),
+		_subaccesses(accessRange, this, dataAccessSequence->_lock),
 		_instrumentationId(instrumentationId)
 	{
 		assert(dataAccessSequence != 0);

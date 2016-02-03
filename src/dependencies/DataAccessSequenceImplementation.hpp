@@ -11,73 +11,34 @@
 #include <InstrumentDependenciesByGroup.hpp>
 
 
-inline DataAccessSequence::DataAccessSequence()
+inline DataAccessSequence::DataAccessSequence(SpinLock *lock)
 	: _accessRange(),
-	_superAccess(0), _rootLock(), _accessSequence(),
+	_superAccess(0), _lock(lock), _accessSequence(),
 	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
 {
 }
 
 
-inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange)
+inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, SpinLock *lock)
 	: _accessRange(accessRange),
-	_superAccess(nullptr), _rootLock(), _accessSequence(),
+	_superAccess(nullptr), _lock(lock), _accessSequence(),
 	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
 {
 }
 
 
-inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess)
+inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess, SpinLock *lock)
 	: _accessRange(accessRange),
-	_superAccess(superAccess), _rootSequence(superAccess->_dataAccessSequence->getRootSequence()), _accessSequence(),
+	_superAccess(superAccess), _lock(lock), _accessSequence(),
 	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
 {
-}
-
-
-inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess, DataAccessSequence *rootSequence)
-	: _accessRange(accessRange),
-	_superAccess(superAccess), _rootSequence(rootSequence), _accessSequence(),
-	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
-{
-}
-
-
-inline DataAccessSequence::~DataAccessSequence()
-{
-	if (_superAccess == nullptr) {
-		_rootLock.~SpinLock();
-	}
-	_accessSequence.~list_impl();
-}
-
-
-inline DataAccessSequence *DataAccessSequence::getRootSequence()
-{
-	if (_superAccess == nullptr) {
-		return this;
-	} else {
-		assert(_rootSequence != nullptr);
-		assert(_rootSequence->_superAccess == nullptr);
-		return _rootSequence;
-	}
-}
-
-
-inline void DataAccessSequence::lock()
-{
-	getRootSequence()->_rootLock.lock();
-}
-
-inline void DataAccessSequence::unlock()
-{
-	getRootSequence()->_rootLock.unlock();
 }
 
 
 inline std::unique_lock<SpinLock> DataAccessSequence::getLockGuard()
 {
-	return std::unique_lock<SpinLock>(getRootSequence()->_rootLock);
+	assert(_lock != nullptr);
+	return std::unique_lock<SpinLock>(*_lock);
 }
 
 

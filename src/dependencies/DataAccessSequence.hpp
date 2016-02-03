@@ -23,13 +23,8 @@ struct DataAccessSequence {
 	//! \brief Access originated by the direct parent to the tasks of this access sequence
 	DataAccess *_superAccess;
 	
-	union {
-		//! \brief SpinLock to protect the sequence and all its subaccesses. Only valid when _superAccess == nullptr
-		SpinLock _rootLock;
-		
-		//! \brief Pointer to the root DataAccessSequence that does contain the lock that protects all of its hierarchy. Only valid when _superAccess != nullptr
-		DataAccessSequence *_rootSequence;
-	};
+	//! \brief SpinLock to protect the sequence and all its subaccesses.
+	SpinLock *_lock;
 	
 	typedef boost::intrusive::list<DataAccess, boost::intrusive::function_hook<DataAccessSequenceLinkingArtifacts>> access_sequence_t;
 	
@@ -40,23 +35,11 @@ struct DataAccessSequence {
 	Instrument::data_access_sequence_id_t _instrumentationId;
 	
 	
-	inline DataAccessSequence();
-	inline DataAccessSequence(DataAccessRange accessRange);
-	inline DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess);
-	inline DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess, DataAccessSequence *rootSequence);
-	inline ~DataAccessSequence();
+	DataAccessSequence() = delete;
+	inline DataAccessSequence(SpinLock *lock);
+	inline DataAccessSequence(DataAccessRange accessRange, SpinLock *lock);
+	inline DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess, SpinLock *lock);
 	
-	
-	//! \brief Get the Root DataAccessSequence that leads to this one
-	inline DataAccessSequence *getRootSequence();
-	
-	//! \brief Lock the sequence.
-	//! 
-	//! NOTE: The current implementation uses a single non-recursive lock for all the hierarchy of accesses to the same data
-	inline void lock();
-	
-	//! \brief Unlok the sequence
-	inline void unlock();
 	
 	//! \brief Get a locking guard
 	inline std::unique_lock<SpinLock> getLockGuard();

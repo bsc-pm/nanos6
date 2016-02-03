@@ -65,8 +65,8 @@ private:
 		DataAccessSequence &subaccesses = dataAccess->_subaccesses;
 		// Locking strategy:
 		// 	Every DataAccess that accesses the same data is protected by the same SpinLock that is located
-		// 	in the root DataAccessSequence of the data. Each DataAccessSequence, except the root one contains
-		// 	a pointer to the root one. However, since a DataAccess can be moved from one sequence to another
+		// 	in the DataAccess map together with the root DataAccessSequence of the data. Each DataAccessSequence,
+		// 	a pointer to the SpinLock. However, since a DataAccess can be moved from one sequence to another
 		// 	we cannot rely on getting the root spinlock from the sequence of the DataAccess since the sequence
 		// 	may disappear while we attempt to grab the lock. Instead we get it from the subaccesses, which
 		// 	is actually an embedded DataAccessSequence and should have the correct pointer.

@@ -6,6 +6,7 @@
 #include <boost/intrusive/options.hpp>
 #include "DataAccessRange.hpp"
 #include "DataAccessSequence.hpp"
+#include "lowlevel/SpinLock.hpp"
 
 
 class FixedAddressDataAccessMap {
@@ -23,15 +24,16 @@ private:
 		typedef boost::intrusive::avl_set_member_hook<link_mode_t> links_t;
 		
 		links_t _mapLinks;
+		SpinLock _lock;
 		DataAccessSequence _accessSequence;
 		
 		Node()
-			: _mapLinks(), _accessSequence()
+			: _mapLinks(), _lock(), _accessSequence(&_lock)
 		{
 		}
 		
 		Node(DataAccessRange accessRange)
-			: _mapLinks(), _accessSequence(accessRange)
+		: _mapLinks(), _lock(), _accessSequence(accessRange, &_lock)
 		{
 		}
 	};
