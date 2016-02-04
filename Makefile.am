@@ -32,6 +32,7 @@ universal_debug_sources = \
 
 common_sources = \
 	src/dependencies/DataAccess.hpp \
+	src/dependencies/DataAccessImplementation.hpp \
 	src/dependencies/DataAccessRange.hpp \
 	src/dependencies/DataAccessRegistration.hpp \
 	src/dependencies/DataAccessSequenceLinkingArtifactsImplementation.hpp \

@@ -45,50 +45,6 @@ struct DataAccessSequence {
 	inline std::unique_lock<SpinLock> getLockGuard();
 	
 	
-	//! \brief Evaluate the satisfiability of a DataAccessType according to its effective previous (if any)
-	//! 
-	//! \param[in] previousDataAccess the effective previous access or nullptr if there is none
-	//! \param[in] nextAccessType the type of access that will follow and whose satisfiability is to be evaluated
-	//! 
-	//! \returns true if the nextAccessType is satisfied
-	static inline bool evaluateSatisfiability(DataAccess *previousDataAccess, DataAccessType nextAccessType);
-	
-	//! \brief Reevaluate the satisfiability of a DataAccess according to its effective previous (if any)
-	//! 
-	//! \param[in] previousDataAccess the effective previous access or nullptr if there is none
-	//! \param[in] targetDataAccess the DataAccess whose satisfiability it to be reevaluated
-	//! 
-	//! \returns true if the DataAccess has become satisfied
-	static inline bool reevaluateSatisfiability(DataAccess *previousDataAccess, DataAccess *targetDataAccess);
-	
-	
-	//! \brief Reevaluate the satisfiability of a DataAccess according to the one immediately preceeding it (if any)
-	//! 
-	//! \param[in] position an iterator to the list position of the DataAccess to be reevaluated
-	//! 
-	//! \returns true if the DataAccess has become satisfied
-	inline bool reevaluateSatisfiability(access_sequence_t::iterator position);
-	
-	
-	inline bool upgradeSameTypeAccess(Task *task, DataAccess /* INOUT */ *dataAccess, bool newAccessWeakness);
-	inline bool upgradeSameStrengthAccess(Task *task, DataAccess /* INOUT */ *dataAccess, DataAccessType newAccessType);
-	inline bool upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType);
-	inline bool upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType);
-	
-	
-	//! \brief Upgrade a DataAccess to a new access type
-	//! 
-	//! \param[in] task the task that performs the access
-	//! \param[inout] dataAccess the DataAccess to be upgraded
-	//! \param[in] newAccessType the type of access that triggers the update
-	//! \param[in] newAccessWeakness true iff the access that triggers the update is weak
-	//! 
-	//! \returns false if the DataAccess becomes unsatisfied
-	//! 
-	//! NOTE: In some cases, the upgrade can create an additional DataAccess. In that case, dataAccess is updated to point to the new object.
-	inline bool upgradeAccess(Task* task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType, bool newAccessWeakness);
-	
-	
 	//! \brief Get the Effective Previous access of another given one
 	//! 
 	//! \param[in] dataAccess the DataAccess that is effectively after the one to be returned or nullptr if the DataAccess is yet to be added and the sequence is empty

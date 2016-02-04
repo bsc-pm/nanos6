@@ -29,7 +29,7 @@ private:
 			DataAccess *currentDataAccess = &(*position);
 			assert(currentDataAccess != nullptr);
 			
-			bool becomesSatisfied = DataAccessSequence::reevaluateSatisfiability(previousDataAccess, currentDataAccess);
+			bool becomesSatisfied = currentDataAccess->reevaluateSatisfiability(previousDataAccess);
 			if (becomesSatisfied) {
 				Instrument::dataAccessBecomesSatisfied(
 					currentDataAccess->_dataAccessSequence->_instrumentationId,
@@ -177,7 +177,7 @@ public:
 				// The task "accesses" twice to the same location
 				
 				dataAccess = 0;
-				return accessSequence->upgradeAccess(task, effectivePrevious, accessType, weak);
+				return DataAccess::upgradeAccess(task, effectivePrevious, accessType, weak);
 			}
 		} else {
 			// New access to an empty sequence
@@ -186,7 +186,7 @@ public:
 		
 		bool satisfied;
 		if (effectivePrevious != nullptr) {
-			satisfied = DataAccessSequence::evaluateSatisfiability(effectivePrevious, accessType);
+			satisfied = DataAccess::evaluateSatisfiability(effectivePrevious, accessType);
 		} else {
 			// We no longer have (or never had) information about any previous access to this storage
 			satisfied = true;
