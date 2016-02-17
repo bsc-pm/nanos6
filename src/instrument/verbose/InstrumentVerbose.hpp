@@ -48,9 +48,10 @@ namespace Instrument {
 			std::ostringstream _contents;
 			LogEntry *_next;
 			
-			LogEntry(timestamp_t timestamp, std::ostringstream &&contents)
-				: _timestamp(timestamp), _contents(std::move(contents)), _next(nullptr)
+			LogEntry(timestamp_t timestamp, std::ostringstream const &contents)
+				: _timestamp(timestamp), _contents(), _next(nullptr)
 			{
+				_contents << contents.str();
 			}
 			
 			LogEntry()
