@@ -35,13 +35,13 @@ namespace Instrument {
 	//! being depleted.
 	//! 
 	//! \param[in] parentTaskId the identifier of the parent task, that is the one that determines the domain of dependencies
-	//! \param[in] handler an identifier for the group of task accesses
+	//! \param[in] handler an identifier for the sequence of groups of task accesses
 	//! \param[in] sequenceIsEmpty true if the sequence of accesses is empty and that has caused a new group (which may be artificial)
 	void beginAccessGroup(task_id_t parentTaskId, void *handler, bool sequenceIsEmpty);
 	
 	//! \brief Register a task in the current group of tasks associated with the given handler
 	//! 
-	//! \param[in] handler the identifier for the group of task accesses
+	//! \param[in] handler the identifier for the sequence of groups of task accesses
 	//! \param[in] taskId the identifier of a task (returned by the call to Instrument::enterAddTask) that participates in the current group of accesses associated with the handler
 	void addTaskToAccessGroup(void *handler, task_id_t taskId);
 	
@@ -49,7 +49,7 @@ namespace Instrument {
 	//! 
 	//! The task to be removed is the last one. The reason is that its access belongs to the next group that is about to be created.
 	//! 
-	//! \param[in] handler the identifier for the group of task accesses
+	//! \param[in] handler the identifier for the sequence of groups of task accesses
 	//! \param[in] taskId the identifier of a task (returned by the call to Instrument::enterAddTask) that no longer participates in the current group of accesses associated with the handler
 	void removeTaskFromAccessGroup(void *handler, task_id_t taskId);
 	
