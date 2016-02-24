@@ -361,10 +361,14 @@ namespace Instrument {
 						ofs << " ]" << std::endl;
 						
 						if (!sourceLinkIsSet && sourceAccess._previousLinks.empty()) {
-							std::ostringstream oss;
-							oss << "data_access_" << sourceAccessId;
-							sourceLink = oss.str();
-							sourceLinkIsSet = true;
+							task_info_t const &originator = _taskToInfoMap[sourceAccess._originator];
+							
+							if (!originator._hasPredecessors) {
+								std::ostringstream oss;
+								oss << "data_access_" << sourceAccessId;
+								sourceLink = oss.str();
+								sourceLinkIsSet = true;
+							}
 						}
 						
 						{
