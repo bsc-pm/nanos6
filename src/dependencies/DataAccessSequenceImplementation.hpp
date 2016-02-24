@@ -7,29 +7,26 @@
 #include "DataAccessSequence.hpp"
 #include "tasks/Task.hpp"
 
-#include <InstrumentDependenciesByAccessSequences.hpp>
+#include <InstrumentDependenciesByAccessLinks.hpp>
 
 
 inline DataAccessSequence::DataAccessSequence(SpinLock *lock)
 	: _accessRange(),
-	_superAccess(0), _lock(lock), _accessSequence(),
-	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
+	_superAccess(0), _lock(lock), _accessSequence()
 {
 }
 
 
 inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, SpinLock *lock)
 	: _accessRange(accessRange),
-	_superAccess(nullptr), _lock(lock), _accessSequence(),
-	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
+	_superAccess(nullptr), _lock(lock), _accessSequence()
 {
 }
 
 
 inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess, SpinLock *lock)
 	: _accessRange(accessRange),
-	_superAccess(superAccess), _lock(lock), _accessSequence(),
-	_instrumentationId(Instrument::registerAccessSequence(Instrument::data_access_id_t(), Instrument::task_id_t()))
+	_superAccess(superAccess), _lock(lock), _accessSequence()
 {
 }
 

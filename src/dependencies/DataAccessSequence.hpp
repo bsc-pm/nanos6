@@ -9,8 +9,6 @@
 #include "DataAccessType.hpp"
 #include "lowlevel/SpinLock.hpp"
 
-#include <InstrumentDataAccessSequenceId.hpp>
-
 
 class Task;
 struct DataAccess;
@@ -30,9 +28,6 @@ struct DataAccessSequence {
 	
 	//! \brief Ordered sequence of accesses to the same location
 	access_sequence_t _accessSequence;
-	
-	//! An identifier for the instrumentation
-	Instrument::data_access_sequence_id_t _instrumentationId;
 	
 	
 	DataAccessSequence() = delete;

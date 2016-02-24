@@ -37,7 +37,7 @@ namespace Instrument {
 			if (area == "all") {
 				_verboseAddTask = true;
 				_verboseDependenciesByAccess = true;
-				_verboseDependenciesByAccessSequence = true;
+				_verboseDependenciesByAccessLinks = true;
 				_verboseDependenciesByGroup = true;
 				_verboseLeaderThread = true;
 				_verboseTaskExecution = true;
@@ -49,8 +49,8 @@ namespace Instrument {
 				_verboseAddTask = true;
 			} else if (area == "dependenciesbyaccess") {
 				_verboseDependenciesByAccess = true;
-			} else if (area == "dependenciesbyaccesssequence") {
-				_verboseDependenciesByAccessSequence = true;
+			} else if (area == "dependenciesbyaccesslinks") {
+				_verboseDependenciesByAccessLinks = true;
 			} else if (area == "dependenciesbygroup") {
 				_verboseDependenciesByGroup = true;
 			} else if (area == "leaderthread") {
@@ -70,8 +70,8 @@ namespace Instrument {
 				_verboseAddTask = false;
 			} else if (area == "!dependenciesbyaccess") {
 				_verboseDependenciesByAccess = false;
-			} else if (area == "!dependenciesbyaccesssequence") {
-				_verboseDependenciesByAccessSequence = false;
+			} else if (area == "!dependenciesbyaccesslinks") {
+				_verboseDependenciesByAccessLinks = false;
 			} else if (area == "!dependenciesbygroup") {
 				_verboseDependenciesByGroup = false;
 			} else if (area == "!leaderthread") {

@@ -4,15 +4,12 @@
 
 #include "api/nanos6_rt_interface.h"
 
-#include "dependencies/DataAccessSequence.hpp"
-#include "dependencies/DataAccessSequenceImplementation.hpp"
 #include "dependencies/DataAccessType.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "system/ompss/UserMutex.hpp"
 
 #include <InstrumentDataAccessId.hpp>
-#include <InstrumentDataAccessSequenceId.hpp>
 #include <InstrumentTaskId.hpp>
 
 #include <atomic>
@@ -77,24 +74,44 @@ namespace Instrument {
 			NOT_CREATED
 		} access_type_t;
 		
+		struct link_to_next_t {
+			bool _direct;
+			enum {
+				not_created_link_status,
+				created_link_status,
+				dead_link_status
+			} _status;
+			
+			link_to_next_t()
+			{
+				assert("Instrument::Graph did not find a link between two data accesses" == 0);
+			}
+			
+			link_to_next_t(bool direct)
+				: _direct(direct), _status(not_created_link_status)
+			{
+			}
+		};
+		
+		typedef std::set<data_access_id_t> data_access_previous_links_t;
+		typedef std::map<data_access_id_t, link_to_next_t> data_access_next_links_t;
+		
 		struct access_t {
 			access_type_t _type;
 			bool _satisfied;
 			task_id_t _originator;
 			bool _deleted;
+			data_access_previous_links_t _previousLinks;
+			data_access_next_links_t _nextLinks;
 			
 			access_t():
-				_type(NOT_CREATED), _satisfied(false), _originator(-1), _deleted(false)
+				_type(NOT_CREATED), _satisfied(false), _originator(-1), _deleted(false),
+				_previousLinks(), _nextLinks()
 			{
 			}
 		};
 		
-		struct access_sequence_t {
-			std::map<data_access_id_t, access_t> _accesses;
-			data_access_id_t _superAccess;
-		};
-		
-		typedef std::map<data_access_sequence_id_t, access_sequence_t> domain_access_sequences_t;
+		typedef std::map<data_access_id_t, access_t> data_access_map_t;
 		
 		
 		struct phase_t {
@@ -108,13 +125,14 @@ namespace Instrument {
 			children_list_t _children;
 			dependency_edge_list_t _dependencyEdges;
 			dependency_info_map_t _dependencyInfoMap;
-			domain_access_sequences_t _accessSequences;
+			data_access_map_t _dataAccessMap;
 			taskwait_id_t _clusterId;
 			
 			task_group_t(taskwait_id_t id)
 				: phase_t(),
 				_children(), _dependencyEdges(),
 				_dependencyInfoMap(),
+				_dataAccessMap(),
 				_clusterId(id)
 			{
 			}
@@ -253,81 +271,143 @@ namespace Instrument {
 			}
 		};
 		
-		struct register_task_access_in_sequence_step_t : public execution_step_t {
-			data_access_sequence_id_t _sequenceId;
+		
+		struct create_data_access_step_t : public execution_step_t {
+			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
 			DataAccessType _accessType;
 			bool _satisfied;
 			task_id_t _originatorTaskId;
 			
-			register_task_access_in_sequence_step_t(
+			create_data_access_step_t(
 				long cpu, thread_id_t threadId,
-				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
+				data_access_id_t superAccessId, data_access_id_t accessId,
 				DataAccessType accessType, bool satisfied, task_id_t originatorTaskId
 			)
-				: execution_step_t(cpu, threadId),
-				_sequenceId(sequenceId), _accessId(accessId),
-				_accessType(accessType), _satisfied(satisfied), _originatorTaskId(originatorTaskId)
+			: execution_step_t(cpu, threadId),
+			_superAccessId(superAccessId), _accessId(accessId),
+			_accessType(accessType), _satisfied(satisfied), _originatorTaskId(originatorTaskId)
 			{
 			}
 		};
 		
-		struct upgrade_task_access_in_sequence_step_t : public execution_step_t {
-			data_access_sequence_id_t _sequenceId;
+		struct upgrade_data_access_step_t : public execution_step_t {
+			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
 			DataAccessType _newAccessType;
+			bool _newWeakness;
 			bool _becomesUnsatisfied;
 			task_id_t _originatorTaskId;
 			
-			upgrade_task_access_in_sequence_step_t(
+			upgrade_data_access_step_t(
 				long cpu, thread_id_t threadId,
-				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
-				DataAccessType newAccessType, bool becomesUnsatisfied,
-				task_id_t originatorTaskId
+				data_access_id_t superAccessId, data_access_id_t accessId,
+				DataAccessType newAccessType, bool newWeakness,
+				bool becomesUnsatisfied, task_id_t originatorTaskId
 			)
 				: execution_step_t(cpu, threadId),
-				_sequenceId(sequenceId), _accessId(accessId),
-				_newAccessType(newAccessType), _becomesUnsatisfied(becomesUnsatisfied), _originatorTaskId(originatorTaskId)
+				_superAccessId(superAccessId), _accessId(accessId),
+				_newAccessType(newAccessType), _newWeakness(newWeakness),
+				_becomesUnsatisfied(becomesUnsatisfied), _originatorTaskId(originatorTaskId)
 			{
 			}
 		};
 		
-		struct task_access_in_sequence_becomes_satisfied_step_t : public execution_step_t {
-			data_access_sequence_id_t _sequenceId;
+		struct data_access_becomes_satisfied_step_t : public execution_step_t {
+			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
 			task_id_t _triggererTaskId;
 			task_id_t _targetTaskId;
 			
-			task_access_in_sequence_becomes_satisfied_step_t(
+			data_access_becomes_satisfied_step_t(
 				long cpu, thread_id_t threadId,
-				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
+				data_access_id_t superAccessId, data_access_id_t accessId,
 				task_id_t triggererTaskId, task_id_t targetTaskId
 			)
 				: execution_step_t(cpu, threadId),
-				_sequenceId(sequenceId), _accessId(accessId),
+				_superAccessId(superAccessId), _accessId(accessId),
 				_triggererTaskId(triggererTaskId), _targetTaskId(targetTaskId)
 			{
 			}
 		};
 		
-		struct removed_task_access_from_sequence_step_t : public execution_step_t {
-			data_access_sequence_id_t _sequenceId;
+		struct removed_data_access_step_t : public execution_step_t {
+			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
 			task_id_t _triggererTaskId;
 			
-			removed_task_access_from_sequence_step_t(
+			removed_data_access_step_t(
 				long cpu, thread_id_t threadId,
-				data_access_sequence_id_t sequenceId, data_access_id_t accessId,
+				data_access_id_t superAccessId, data_access_id_t accessId,
 				task_id_t triggererTaskId
 			)
 				: execution_step_t(cpu, threadId),
-				_sequenceId(sequenceId), _accessId(accessId),
+				_superAccessId(superAccessId), _accessId(accessId),
 				_triggererTaskId(triggererTaskId)
 			{
 			}
 		};
 		
+		struct linked_data_accesses_step_t : public execution_step_t {
+			data_access_id_t _sourceAccessId;
+			data_access_id_t _sinkAccessId;
+			bool _direct;
+			task_id_t _triggererTaskId;
+			
+			linked_data_accesses_step_t(
+				long cpu, thread_id_t threadId,
+				data_access_id_t sourceAccessId, data_access_id_t sinkAccessId, bool direct,
+				task_id_t triggererTaskId
+			)
+				: execution_step_t(cpu, threadId),
+				_sourceAccessId(sourceAccessId), _sinkAccessId(sinkAccessId), _direct(direct),
+				_triggererTaskId(triggererTaskId)
+			{
+			}
+		};
+		
+		struct unlinked_data_accesses_step_t : public execution_step_t {
+			data_access_id_t _sourceAccessId;
+			data_access_id_t _sinkAccessId;
+			bool _direct;
+			task_id_t _triggererTaskId;
+			
+			unlinked_data_accesses_step_t(
+				long cpu, thread_id_t threadId,
+				data_access_id_t sourceAccessId, data_access_id_t sinkAccessId, bool direct,
+				task_id_t triggererTaskId
+			)
+				: execution_step_t(cpu, threadId),
+				_sourceAccessId(sourceAccessId), _sinkAccessId(sinkAccessId), _direct(direct),
+				_triggererTaskId(triggererTaskId)
+			{
+			}
+		};
+		
+		struct reparented_data_access_step_t : public execution_step_t {
+			data_access_id_t _oldSuperAccessId;
+			data_access_id_t _newSuperAccessId;
+			data_access_id_t _accessId;
+			task_id_t _triggererTaskId;
+			
+			reparented_data_access_step_t(
+				long cpu, thread_id_t threadId,
+				data_access_id_t oldSuperAccessId, data_access_id_t newSuperAccessId,
+				data_access_id_t accessId, task_id_t triggererTaskId
+			)
+				: execution_step_t(cpu, threadId),
+				_oldSuperAccessId(oldSuperAccessId), _newSuperAccessId(newSuperAccessId),
+				_accessId(accessId), _triggererTaskId(triggererTaskId)
+			{
+			}
+		};
+		
+		
+		
+		
 		typedef std::list<execution_step_t *> execution_sequence_t;
+		
+		typedef std::map<data_access_id_t, task_id_t> data_access_originator_map_t;
 		
 		
 		extern std::atomic<thread_id_t> _nextThreadId;
@@ -335,7 +415,6 @@ namespace Instrument {
 		extern std::atomic<task_id_t> _nextTaskId;
 		extern std::atomic<usermutex_id_t> _nextUsermutexId;
 		extern std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId;
-		extern std::atomic<data_access_sequence_id_t> _nextDataAccessSequenceId;
 		
 		
 		//! \brief maps thread pointers to thread identifiers
@@ -343,6 +422,9 @@ namespace Instrument {
 		
 		//! \brief maps task identifiers to their information
 		extern task_to_info_map_t _taskToInfoMap;
+		
+		//! \brief maps data access identifiers to their originator task
+		extern data_access_originator_map_t _accessToOriginatorMap;
 		
 		//! \brief maps task invocation struct addresses to the text to use as task label
 		extern task_invocation_info_label_map_t _taskInvocationLabel;
@@ -367,8 +449,8 @@ namespace Instrument {
 		
 		
 		// Helper functions
-		access_sequence_t &getAccessSequence(data_access_sequence_id_t dataAccessSequenceId, task_id_t originatorTaskId);
-		access_t &getAccess(data_access_sequence_id_t dataAccessSequenceId, data_access_id_t dataAccessId, task_id_t originatorTaskId);
+		access_t &getAccess(data_access_id_t dataAccessId, task_id_t originatorTaskId);
+		access_t &getAccess(data_access_id_t dataAccessId);
 	};
 	
 }

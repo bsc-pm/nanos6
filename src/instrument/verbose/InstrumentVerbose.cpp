@@ -5,7 +5,7 @@ namespace Instrument {
 	namespace Verbose {
 		bool _verboseAddTask = false;
 		bool _verboseDependenciesByAccess = false;
-		bool _verboseDependenciesByAccessSequence = false;
+		bool _verboseDependenciesByAccessLinks = false;
 		bool _verboseDependenciesByGroup = false;
 		bool _verboseLeaderThread = true;
 		bool _verboseTaskExecution = false;

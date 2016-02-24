@@ -12,7 +12,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
-#include <InstrumentDependenciesByAccessSequences.hpp>
+#include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentTaskId.hpp>
 
 
@@ -32,7 +32,7 @@ private:
 			bool becomesSatisfied = currentDataAccess->reevaluateSatisfiability(previousDataAccess);
 			if (becomesSatisfied) {
 				Instrument::dataAccessBecomesSatisfied(
-					currentDataAccess->_dataAccessSequence->_instrumentationId,
+					(currentDataAccess->_dataAccessSequence->_superAccess != nullptr ? currentDataAccess->_dataAccessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 					currentDataAccess->_instrumentationId,
 					instrumentationTaskId,
 					currentDataAccess->_originator->getInstrumentationTaskId()
@@ -85,22 +85,54 @@ private:
 			while (current != subaccesses._accessSequence.end()) {
 				DataAccess &subaccess = *current;
 				
-				Instrument::replacedSequenceOfDataAccess(
-					subaccesses._instrumentationId,
-					dataAccessSequence->_instrumentationId,
-					subaccess._instrumentationId,
+				Instrument::reparentedDataAccess(
 					dataAccess->_instrumentationId,
+					(dataAccessSequence->_superAccess != nullptr ? dataAccessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
+					subaccess._instrumentationId,
 					instrumentationTaskId
 				);
 				
 				subaccess._dataAccessSequence = dataAccessSequence;
+				
+				if ((current == subaccesses._accessSequence.begin()) && (nextPosition != dataAccessSequence->_accessSequence.begin())) {
+					auto previousOfFirstPosition = nextPosition;
+					previousOfFirstPosition--;
+					
+					DataAccess *previousOfFirst = &(*previousOfFirstPosition);
+					assert(previousOfFirst != nullptr);
+					Instrument::linkedDataAccesses(
+						previousOfFirst->_instrumentationId,
+						subaccess._instrumentationId,
+						true,
+						instrumentationTaskId
+					);
+				}
+				
 				current = subaccesses._accessSequence.erase(current);
 				newPreviousPosition = dataAccessSequence->_accessSequence.insert(nextPosition, subaccess);
+				
+				if (nextPosition != dataAccessSequence->_accessSequence.end()) {
+					auto positionOfNextToCurrent = current;
+					positionOfNextToCurrent++;
+					
+					DataAccess *next = &(*nextPosition);
+					assert(next != nullptr);
+					
+					if (positionOfNextToCurrent == subaccesses._accessSequence.end()) {
+						// The current subaccess is the last one
+						Instrument::linkedDataAccesses(
+							subaccess._instrumentationId,
+							next->_instrumentationId,
+							true,
+							instrumentationTaskId
+						);
+					}
+				}
 			}
 			
 			// Instrumenters first see the movement, then the deletion
-			Instrument::removedDataAccessFromSequence(
-				dataAccessSequence->_instrumentationId,
+			Instrument::removedDataAccess(
+				(dataAccessSequence->_superAccess != nullptr ? dataAccessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 				dataAccess->_instrumentationId,
 				instrumentationTaskId
 			);
@@ -116,6 +148,14 @@ private:
 					assert(effectivePrevious != nullptr);
 				} else {
 					effectivePrevious = dataAccessSequence->getEffectivePrevious(next);
+					if (effectivePrevious != nullptr) {
+						Instrument::linkedDataAccesses(
+							effectivePrevious->_instrumentationId,
+							next->_instrumentationId,
+							false /* not direct */,
+							instrumentationTaskId
+						);
+					}
 				}
 				
 				reevaluateAndPropagateSatisfiability(instrumentationTaskId, effectivePrevious, next, satisfiedOriginators);
@@ -193,15 +233,20 @@ public:
 			Instrument::beginAccessGroup(task->getParent()->getInstrumentationTaskId(), accessSequence, true);
 		}
 		
-		if (accessSequence->_accessSequence.empty()) {
-			accessSequence->_instrumentationId = Instrument::registerAccessSequence(
-				(accessSequence->_superAccess != 0 ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
+		Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
+			(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
+			accessType, weak,
+			satisfied,
+			task->getInstrumentationTaskId()
+		);
+		if (effectivePrevious != nullptr) {
+			Instrument::linkedDataAccesses(
+				effectivePrevious->_instrumentationId,
+				dataAccessInstrumentationId,
+				!accessSequence->_accessSequence.empty() /* Direct? */,
 				task->getInstrumentationTaskId()
 			);
 		}
-		
-		Instrument::data_access_id_t dataAccessInstrumentationId =
-			Instrument::addedDataAccessInSequence(accessSequence->_instrumentationId, accessType, weak, satisfied, task->getInstrumentationTaskId());
 		Instrument::addTaskToAccessGroup(accessSequence, task->getInstrumentationTaskId());
 		
 		dataAccess = new DataAccess(accessSequence, accessType, weak, satisfied, task, accessSequence->_accessRange, dataAccessInstrumentationId);

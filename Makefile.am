@@ -59,7 +59,7 @@ common_sources = \
 	src/hardware/places/HardwarePlace.hpp \
 	src/instrument/InstrumentAddTask.hpp \
 	src/instrument/InstrumentDependenciesByAccess.hpp \
-	src/instrument/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/InstrumentDependenciesByGroup.hpp \
 	src/instrument/InstrumentInitAndShutdown.hpp \
 	src/instrument/InstrumentLeaderThread.hpp \
@@ -103,9 +103,8 @@ common_sources = \
 noinstrument_sources = \
 	src/instrument/null/InstrumentAddTask.hpp \
 	src/instrument/null/InstrumentDataAccessId.hpp \
-	src/instrument/null/InstrumentDataAccessSequenceId.hpp \
 	src/instrument/null/InstrumentDependenciesByAccess.hpp \
-	src/instrument/null/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
@@ -121,11 +120,10 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentAddTask.cpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
-	src/instrument/graph/InstrumentDataAccessSequenceId.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.cpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
-	src/instrument/graph/InstrumentDependenciesByAccessSequences.cpp \
-	src/instrument/graph/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/graph/InstrumentDependenciesByAccessLinks.cpp \
+	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
 	src/instrument/graph/InstrumentGraph.cpp \
 	src/instrument/graph/InstrumentGraph.hpp \
@@ -146,9 +144,8 @@ instrument_graph_sources = \
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentAddTask.hpp \
 	src/instrument/profile/InstrumentDataAccessId.hpp \
-	src/instrument/profile/InstrumentDataAccessSequenceId.hpp \
 	src/instrument/profile/InstrumentDependenciesByAccess.hpp \
-	src/instrument/profile/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/profile/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
@@ -165,9 +162,8 @@ instrument_profile_sources = \
 instrument_stats_sources = \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentDataAccessId.hpp \
-	src/instrument/stats/InstrumentDataAccessSequenceId.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
-	src/instrument/stats/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/stats/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
@@ -186,11 +182,10 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentAddTask.cpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
-	src/instrument/verbose/InstrumentDataAccessSequenceId.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.cpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
-	src/instrument/verbose/InstrumentDependenciesByAccessSequences.cpp \
-	src/instrument/verbose/InstrumentDependenciesByAccessSequences.hpp \
+	src/instrument/verbose/InstrumentDependenciesByAccessLinks.cpp \
+	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.cpp \

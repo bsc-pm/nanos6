@@ -29,7 +29,7 @@ namespace Instrument {
 		
 		extern bool _verboseAddTask;
 		extern bool _verboseDependenciesByAccess;
-		extern bool _verboseDependenciesByAccessSequence;
+		extern bool _verboseDependenciesByAccessLinks;
 		extern bool _verboseDependenciesByGroup;
 		extern bool _verboseLeaderThread;
 		extern bool _verboseTaskExecution;
