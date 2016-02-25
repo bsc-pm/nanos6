@@ -279,7 +279,7 @@ namespace Instrument {
 						ofs << indentation << "data_access_" << sourceAccessId << " [ shape=ellipse";
 						switch (sourceAccess._type) {
 							case READ:
-								ofs << " label=\"R\" style=\"filled,dashed\"";
+								ofs << " label=\"" << sourceAccessId << ": R\" style=\"filled,dashed\"";
 								if (sourceAccess._deleted) {
 									ofs << " fillcolor=\"#AAFFAA\"";
 								} else {
@@ -287,7 +287,7 @@ namespace Instrument {
 								}
 								break;
 							case WRITE:
-								ofs << " label=\"W\" style=\"filled,dashed\"";
+								ofs << " label=\"" << sourceAccessId << ": W\" style=\"filled,dashed\"";
 								if (sourceAccess._deleted) {
 									ofs << " fillcolor=\"#FFAAAA\"";
 								} else {
@@ -295,7 +295,7 @@ namespace Instrument {
 								}
 								break;
 							case READWRITE:
-								ofs << " label=\"RW\" style=\"filled,dashed\"";
+								ofs << " label=\"" << sourceAccessId << ": RW\" style=\"filled,dashed\"";
 								if (sourceAccess._deleted) {
 									ofs << " fillcolor=\"#AAFFAA;0.5:#FFAAAA\"";
 								} else {
@@ -303,7 +303,7 @@ namespace Instrument {
 								}
 								break;
 							case NOT_CREATED:
-								ofs << " label=\"--\" style=\"filled,dashed\" fillcolor=\"#AAAAAA\"";
+								ofs << " label=\"" << sourceAccessId << "\" style=\"filled,dashed\" fillcolor=\"#AAAAAA\"";
 								assert(!sourceAccess._deleted);
 								break;
 						}
