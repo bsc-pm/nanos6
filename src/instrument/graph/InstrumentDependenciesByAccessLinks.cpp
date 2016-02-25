@@ -36,7 +36,6 @@ namespace Instrument {
 		assert(cpu != nullptr);
 		
 		data_access_id_t dataAccessId = Graph::_nextDataAccessId++;
-		_accessToOriginatorMap[dataAccessId] = originatorTaskId;
 		
 		create_data_access_step_t *step = new create_data_access_step_t(
 			cpu->_virtualCPUId, threadId,
@@ -47,8 +46,32 @@ namespace Instrument {
 		// Create the access but in an almost uninitialized state. It will be initialized when we
 		// replay the create_data_access_step_t created above and will be modified as we replay the
 		// steps recorded in the remaining functions of this instrumentation interface
-		access_t &access = getAccess(dataAccessId, originatorTaskId);
+		access_t &access = getAccess(dataAccessId);
 		access._originator = originatorTaskId;
+		
+		if (superAccessId != data_access_id_t()) {
+			access_t const &superAccess = getAccess(superAccessId);
+			access._taskNestingLevel = superAccess._taskNestingLevel + 1;
+		} else {
+			access._taskNestingLevel = 1;
+		}
+		
+		task_info_t &taskInfo = _taskToInfoMap[originatorTaskId];
+		
+		// The "main" function is not supposed to have dependencies
+		assert(taskInfo._parent != -1);
+		
+		task_info_t &parentInfo = _taskToInfoMap[taskInfo._parent];
+		
+		assert(!parentInfo._phaseList.empty());
+		auto it = parentInfo._phaseList.end();
+		it--;
+		
+		phase_t *lastPhase = *it;
+		task_group_t *lastTaskGroup = dynamic_cast<task_group_t *> (lastPhase);
+		
+		assert(lastTaskGroup != nullptr);
+		lastTaskGroup->_dataAccesses.insert(dataAccessId);
 		
 		return dataAccessId;
 	}

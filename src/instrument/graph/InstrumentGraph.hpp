@@ -97,6 +97,7 @@ namespace Instrument {
 		typedef std::map<data_access_id_t, link_to_next_t> data_access_next_links_t;
 		
 		struct access_t {
+			int _taskNestingLevel;
 			access_type_t _type;
 			bool _satisfied;
 			task_id_t _originator;
@@ -105,13 +106,14 @@ namespace Instrument {
 			data_access_next_links_t _nextLinks;
 			
 			access_t():
+				_taskNestingLevel(0),
 				_type(NOT_CREATED), _satisfied(false), _originator(-1), _deleted(false),
 				_previousLinks(), _nextLinks()
 			{
 			}
 		};
 		
-		typedef std::map<data_access_id_t, access_t> data_access_map_t;
+		typedef std::set<data_access_id_t> data_accesses_t;
 		
 		
 		struct phase_t {
@@ -125,14 +127,14 @@ namespace Instrument {
 			children_list_t _children;
 			dependency_edge_list_t _dependencyEdges;
 			dependency_info_map_t _dependencyInfoMap;
-			data_access_map_t _dataAccessMap;
+			data_accesses_t _dataAccesses;
 			taskwait_id_t _clusterId;
 			
 			task_group_t(taskwait_id_t id)
 				: phase_t(),
 				_children(), _dependencyEdges(),
 				_dependencyInfoMap(),
-				_dataAccessMap(),
+				_dataAccesses(),
 				_clusterId(id)
 			{
 			}
@@ -407,7 +409,7 @@ namespace Instrument {
 		
 		typedef std::list<execution_step_t *> execution_sequence_t;
 		
-		typedef std::map<data_access_id_t, task_id_t> data_access_originator_map_t;
+		typedef std::map<data_access_id_t, access_t> data_access_map_t;
 		
 		
 		extern std::atomic<thread_id_t> _nextThreadId;
@@ -423,8 +425,8 @@ namespace Instrument {
 		//! \brief maps task identifiers to their information
 		extern task_to_info_map_t _taskToInfoMap;
 		
-		//! \brief maps data access identifiers to their originator task
-		extern data_access_originator_map_t _accessToOriginatorMap;
+		//! \brief maps data access identifiers to their associated access
+		extern data_access_map_t _accessIdToAccessMap;
 		
 		//! \brief maps task invocation struct addresses to the text to use as task label
 		extern task_invocation_info_label_map_t _taskInvocationLabel;
@@ -449,7 +451,6 @@ namespace Instrument {
 		
 		
 		// Helper functions
-		access_t &getAccess(data_access_id_t dataAccessId, task_id_t originatorTaskId);
 		access_t &getAccess(data_access_id_t dataAccessId);
 	};
 	

@@ -268,53 +268,8 @@ namespace Instrument {
 					ofs << indentation << "compound=true;" << std::endl;
 					ofs << indentation << "style=\"invisible\";" << std::endl;
 					
-					std::map<task_id_t, size_t> taskId2Index;
-					{
-						size_t index = 0;
-						for (task_id_t childId : taskGroup->_children) {
-							emitTask(
-								ofs, childId,
-								currentPhaseLinks[index],
-								currentPhaseSourceLinks[index], currentPhaseSinkLinks[index],
-								currentPhaseElementsHavePredecessors[index], currentPhaseElementsHaveSuccessors[index]
-							);
-							
-							taskId2Index[childId] = index;
-							task_info_t const &childInfo = _taskToInfoMap[childId];
-							currentPhaseStatuses[index] = childInfo._status;
-							
-							index++;
-						}
-					}
-					
-					for (edge_t edge : taskGroup->_dependencyEdges) {
-						size_t sourceIndex = taskId2Index[edge._source];
-						size_t sinkIndex = taskId2Index[edge._sink];
-						
-						ofs << indentation << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
-						ofs << " [";
-						if (currentPhaseSinkLinks[sourceIndex] != currentPhaseLinks[sourceIndex]) {
-							ofs << " ltail=\"" << currentPhaseLinks[sourceIndex] << "\"";
-						}
-						if (currentPhaseSourceLinks[sinkIndex] != currentPhaseLinks[sinkIndex]) {
-							ofs << " lhead=\"" << currentPhaseLinks[sinkIndex] << "\"";
-						}
-						
-						task_info_t const &sourceInfo = _taskToInfoMap[edge._source];
-						task_info_t const &sinkInfo = _taskToInfoMap[edge._sink];
-						
-						if ((sourceInfo._status == not_created_status) || (sourceInfo._status == finished_status)
-							|| (sinkInfo._status == not_created_status) || (sinkInfo._status == finished_status))
-						{
-							ofs << " color=\"#888888\" fillcolor=\"#888888\"" << std::endl;
-						}
-						
-						ofs << " weight=1 ]" << std::endl;
-					}
-					
-					for (auto element : taskGroup->_dataAccessMap) {
-						data_access_id_t sourceAccessId = element.first;
-						access_t &sourceAccess = element.second;
+					for (data_access_id_t sourceAccessId : taskGroup->_dataAccesses) {
+						access_t &sourceAccess = _accessIdToAccessMap[sourceAccessId];
 						
 						if (!_showDeadDependencyStructures && (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED))) {
 							// Skip dead accesses
@@ -359,6 +314,59 @@ namespace Instrument {
 							ofs << " penwidth=1";
 						}
 						ofs << " ]" << std::endl;
+					}
+					
+					std::map<task_id_t, size_t> taskId2Index;
+					{
+						size_t index = 0;
+						for (task_id_t childId : taskGroup->_children) {
+							emitTask(
+								ofs, childId,
+								currentPhaseLinks[index],
+								currentPhaseSourceLinks[index], currentPhaseSinkLinks[index],
+								currentPhaseElementsHavePredecessors[index], currentPhaseElementsHaveSuccessors[index]
+							);
+							
+							taskId2Index[childId] = index;
+							task_info_t const &childInfo = _taskToInfoMap[childId];
+							currentPhaseStatuses[index] = childInfo._status;
+							
+							index++;
+						}
+					}
+					
+					for (edge_t edge : taskGroup->_dependencyEdges) {
+						size_t sourceIndex = taskId2Index[edge._source];
+						size_t sinkIndex = taskId2Index[edge._sink];
+						
+						ofs << indentation << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
+						ofs << " [";
+						if (currentPhaseSinkLinks[sourceIndex] != currentPhaseLinks[sourceIndex]) {
+							ofs << " ltail=\"" << currentPhaseLinks[sourceIndex] << "\"";
+						}
+						if (currentPhaseSourceLinks[sinkIndex] != currentPhaseLinks[sinkIndex]) {
+							ofs << " lhead=\"" << currentPhaseLinks[sinkIndex] << "\"";
+						}
+						
+						task_info_t const &sourceInfo = _taskToInfoMap[edge._source];
+						task_info_t const &sinkInfo = _taskToInfoMap[edge._sink];
+						
+						if ((sourceInfo._status == not_created_status) || (sourceInfo._status == finished_status)
+							|| (sinkInfo._status == not_created_status) || (sinkInfo._status == finished_status))
+						{
+							ofs << " color=\"#888888\" fillcolor=\"#888888\"" << std::endl;
+						}
+						
+						ofs << " weight=1 ]" << std::endl;
+					}
+					
+					for (data_access_id_t sourceAccessId : taskGroup->_dataAccesses) {
+						access_t &sourceAccess = _accessIdToAccessMap[sourceAccessId];
+						
+						if (!_showDeadDependencyStructures && (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED))) {
+							// Skip dead accesses
+							continue;
+						}
 						
 						if (!sourceLinkIsSet && sourceAccess._previousLinks.empty()) {
 							task_info_t const &originator = _taskToInfoMap[sourceAccess._originator];
@@ -393,17 +401,8 @@ namespace Instrument {
 							ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
 						}
 						ofs << " weight=1 ]" << std::endl;
-					}
-					
-					for (auto element : taskGroup->_dataAccessMap) {
-						data_access_id_t sourceAccessId = element.first;
-						access_t &sourceAccess = element.second;
 						
-						if (!_showDeadDependencyStructures && (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED))) {
-							// Skip dead accesses
-							continue;
-						}
-						
+						// Links from this access
 						for (auto nextLink : sourceAccess._nextLinks) {
 							data_access_id_t sinkAccessId = nextLink.first;
 							bool direct = nextLink.second._direct;
@@ -414,7 +413,39 @@ namespace Instrument {
 								continue;
 							}
 							
+							if (sinkAccess._taskNestingLevel < sourceAccess._taskNestingLevel) {
+								continue;
+							}
+							
 							ofs << indentation << "data_access_" << sourceAccessId << " -> data_access_" << sinkAccessId << " [ weight=8";
+							if ((nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
+								ofs << " style=\"invis\"";
+							} else if (!direct) {
+								ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
+							} else {
+								ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
+							}
+							ofs << " ]" << std::endl;
+						}
+						
+						// Links to this access
+						for (data_access_id_t previousAccessId: sourceAccess._previousLinks) {
+							access_t &previousAccess = getAccess(previousAccessId);
+							
+							if (!_showDeadDependencyStructures && (previousAccess._deleted || (previousAccess._type == NOT_CREATED))) {
+								continue;
+							}
+							
+							if (sourceAccess._taskNestingLevel <= previousAccess._taskNestingLevel) {
+								continue;
+							}
+							
+							auto nextLinkPosition = previousAccess._nextLinks.find(sourceAccessId);
+							assert(nextLinkPosition != previousAccess._nextLinks.end());
+							auto nextLink = *nextLinkPosition;
+							bool direct = nextLink.second._direct;
+							
+							ofs << indentation << "data_access_" << previousAccessId << " -> data_access_" << sourceAccessId << " [ weight=8";
 							if ((nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
 								ofs << " style=\"invis\"";
 							} else if (!direct) {
@@ -730,7 +761,7 @@ namespace Instrument {
 					emitFrame(dir, filenameBase, frame);
 				}
 				
-				access_t &access = getAccess(createDataAccess->_accessId, createDataAccess->_originatorTaskId);
+				access_t &access = getAccess(createDataAccess->_accessId);
 				
 				access._originator = createDataAccess->_originatorTaskId;
 				access._type = (access_type_t) createDataAccess->_accessType;
@@ -742,7 +773,7 @@ namespace Instrument {
 					emitFrame(dir, filenameBase, frame);
 				}
 				
-				access_t &access = getAccess(upgradeDataAccess->_accessId, upgradeDataAccess->_originatorTaskId);
+				access_t &access = getAccess(upgradeDataAccess->_accessId);
 				
 				access._type = (access_type_t) upgradeDataAccess->_newAccessType;
 				if (upgradeDataAccess->_becomesUnsatisfied) {
@@ -755,7 +786,7 @@ namespace Instrument {
 					emitFrame(dir, filenameBase, frame);
 				}
 				
-				access_t &access = getAccess(dataAccessBecomesSatisfied->_accessId, dataAccessBecomesSatisfied->_triggererTaskId);
+				access_t &access = getAccess(dataAccessBecomesSatisfied->_accessId);
 				
 				access._satisfied = true;
 				
@@ -765,7 +796,7 @@ namespace Instrument {
 					emitFrame(dir, filenameBase, frame);
 				}
 				
-				access_t &access = getAccess(removedDataAccess->_accessId, removedDataAccess->_triggererTaskId);
+				access_t &access = getAccess(removedDataAccess->_accessId);
 				
 				access._deleted = true;
 				
