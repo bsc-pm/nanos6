@@ -97,6 +97,7 @@ namespace Instrument {
 		typedef std::map<data_access_id_t, link_to_next_t> data_access_next_links_t;
 		
 		struct access_t {
+			data_access_id_t _superAccess;
 			access_type_t _type;
 			bool _satisfied;
 			task_id_t _originator;
@@ -105,6 +106,7 @@ namespace Instrument {
 			data_access_next_links_t _nextLinks;
 			
 			access_t():
+				_superAccess(),
 				_type(NOT_CREATED), _satisfied(false), _originator(-1), _deleted(false),
 				_previousLinks(), _nextLinks()
 			{
@@ -436,12 +438,6 @@ namespace Instrument {
 		
 		//! \brief sequence of task executions with their corresponding CPU
 		extern execution_sequence_t _executionSequence;
-		
-		//! \brief the parent access of the first access of a sequence
-		extern std::map<data_access_id_t, data_access_id_t> _superAccessByAccess;
-		
-		//! \brief the first subaccess of an access (the opposite of the previous one)
-		extern std::map<data_access_id_t, data_access_id_t> _firstSubAccessByAccess;
 		
 		extern SpinLock _graphLock;
 		

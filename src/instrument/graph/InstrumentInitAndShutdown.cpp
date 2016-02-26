@@ -454,10 +454,37 @@ namespace Instrument {
 							sourceLinkIsSet = true;
 						}
 						
-						{
-							auto dataAccessSubLink = _firstSubAccessByAccess.find(sourceAccessId);
-							if (dataAccessSubLink != _firstSubAccessByAccess.end()) {
-								linksStream << "\t" << "data_access_" << dataAccessSubLink->first << " -> " << "data_access_" << dataAccessSubLink->second << " [ style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=4 ]" << std::endl;
+						if ((sourceAccess._superAccess != data_access_id_t()) && (sourceAccess._type != NOT_CREATED)) {
+							bool isFirst = true;
+							for (auto previousId : sourceAccess._previousLinks) {
+								access_t &previous = getAccess(previousId);
+								auto positionOflinkToCurrent = previous._nextLinks.find(sourceAccessId);
+								assert(positionOflinkToCurrent != previous._nextLinks.end());
+								
+								if (positionOflinkToCurrent->second._direct && (positionOflinkToCurrent->second._status == link_to_next_t::created_link_status)) {
+									isFirst = false;
+									break;
+								}
+							}
+							
+							bool isLast = true;
+							for (auto nextLink : sourceAccess._nextLinks) {
+								if (nextLink.second._direct && (nextLink.second._status == link_to_next_t::created_link_status)) {
+									isLast = false;
+									break;
+								}
+							}
+							
+							if (isFirst && !isLast) {
+								linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"diamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
+							}
+							
+							if (isLast && !isFirst) {
+								linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"odiamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
+							}
+							
+							if (isFirst && isLast) {
+								linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"diamondodiamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
 							}
 						}
 						
@@ -491,7 +518,7 @@ namespace Instrument {
 							if (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED) || sinkAccess._deleted || (sinkAccess._type == NOT_CREATED) || (nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
 								linksStream << " style=\"invis\"";
 							} else if (!direct) {
-								linksStream << " style=dotted color=\"#000000\" fillcolor=\"#000000\"";
+								linksStream << " arrowhead=\"vee\" style=dotted color=\"#000000\" fillcolor=\"#000000\"";
 							} else {
 								linksStream << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
 							}
@@ -574,7 +601,7 @@ namespace Instrument {
 								linksStream << " lhead=\"" << currentPhaseLinks[currentIndex] << "\" ";
 							}
 							linksStream
-								<< " weight=1 ];" << std::endl;
+								<< " weight=4 ];" << std::endl;
 						}
 					}
 				}
@@ -692,6 +719,7 @@ namespace Instrument {
 			removed_data_access_step_t *removedDataAccess = dynamic_cast<removed_data_access_step_t *> (executionStep);
 			linked_data_accesses_step_t *linkedDataAccess = dynamic_cast<linked_data_accesses_step_t *> (executionStep);
 			unlinked_data_accesses_step_t *unlinkedDataAccess = dynamic_cast<unlinked_data_accesses_step_t *> (executionStep);
+			reparented_data_access_step_t *reparentedDataAccess = dynamic_cast<reparented_data_access_step_t *> (executionStep);
 			
 			// Update the status
 			if (createTask != nullptr) {
@@ -807,7 +835,7 @@ namespace Instrument {
 				}
 				
 				access_t &access = getAccess(createDataAccess->_accessId);
-				
+				access._superAccess = createDataAccess->_superAccessId;
 				access._originator = createDataAccess->_originatorTaskId;
 				access._type = (access_type_t) createDataAccess->_accessType;
 				access._satisfied = createDataAccess->_satisfied;
@@ -881,6 +909,16 @@ namespace Instrument {
 				// sinkAccess._previousLinks.erase(unlinkedDataAccess->_sourceAccessId);
 				
 				accumulateStepsTriggeredByTask = unlinkedDataAccess->_triggererTaskId;
+			} else if (reparentedDataAccess != nullptr) {
+				if ((accumulateStepsTriggeredByTask != -1) && (accumulateStepsTriggeredByTask != reparentedDataAccess->_triggererTaskId)) {
+					emitFrame(dir, filenameBase, frame);
+				}
+				
+				access_t &access = getAccess(reparentedDataAccess->_accessId);
+				assert(access._superAccess == reparentedDataAccess->_oldSuperAccessId);
+				access._superAccess = reparentedDataAccess->_newSuperAccessId;
+				
+				accumulateStepsTriggeredByTask = reparentedDataAccess->_triggererTaskId;
 			} else {
 				assert(false);
 			}

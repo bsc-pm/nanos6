@@ -47,6 +47,7 @@ namespace Instrument {
 		// replay the create_data_access_step_t created above and will be modified as we replay the
 		// steps recorded in the remaining functions of this instrumentation interface
 		access_t &access = getAccess(dataAccessId);
+		access._superAccess = superAccessId;
 		access._originator = originatorTaskId;
 		
 		task_info_t &taskInfo = _taskToInfoMap[originatorTaskId];
@@ -226,12 +227,31 @@ namespace Instrument {
 	
 	
 	void reparentedDataAccess(
-		__attribute__((unused)) data_access_id_t oldSuperAccessId,
-		__attribute__((unused)) data_access_id_t newSuperAccessId,
-		__attribute__((unused)) data_access_id_t dataAccessId,
-		__attribute__((unused)) task_id_t triggererTaskId
+		data_access_id_t oldSuperAccessId,
+		data_access_id_t newSuperAccessId,
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
 	) {
-		// For now we will not represent the change
+		if (!Graph::_showDependencyStructures) {
+			return;
+		}
+		
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		std::lock_guard<SpinLock> guard(_graphLock);
+		assert(_threadToId.find(currentThread) != _threadToId.end());
+		thread_id_t threadId = _threadToId[currentThread];
+		
+		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		assert(cpu != nullptr);
+		
+		reparented_data_access_step_t *step = new reparented_data_access_step_t(
+			cpu->_virtualCPUId, threadId,
+			oldSuperAccessId, newSuperAccessId, dataAccessId,
+			triggererTaskId
+		);
+		_executionSequence.push_back(step);
 	}
 	
 }

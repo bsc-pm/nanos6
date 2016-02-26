@@ -15,8 +15,6 @@ namespace Instrument {
 		task_invocation_info_label_map_t _taskInvocationLabel;
 		usermutex_to_id_map_t _usermutexToId;
 		execution_sequence_t _executionSequence;
-		std::map<data_access_id_t, data_access_id_t> _superAccessByAccess;
-		std::map<data_access_id_t, data_access_id_t> _firstSubAccessByAccess;
 		
 		SpinLock _graphLock;
 		
