@@ -49,13 +49,6 @@ namespace Instrument {
 		access_t &access = getAccess(dataAccessId);
 		access._originator = originatorTaskId;
 		
-		if (superAccessId != data_access_id_t()) {
-			access_t const &superAccess = getAccess(superAccessId);
-			access._taskNestingLevel = superAccess._taskNestingLevel + 1;
-		} else {
-			access._taskNestingLevel = 1;
-		}
-		
 		task_info_t &taskInfo = _taskToInfoMap[originatorTaskId];
 		
 		// The "main" function is not supposed to have dependencies

@@ -97,7 +97,6 @@ namespace Instrument {
 		typedef std::map<data_access_id_t, link_to_next_t> data_access_next_links_t;
 		
 		struct access_t {
-			int _taskNestingLevel;
 			access_type_t _type;
 			bool _satisfied;
 			task_id_t _originator;
@@ -106,7 +105,6 @@ namespace Instrument {
 			data_access_next_links_t _nextLinks;
 			
 			access_t():
-				_taskNestingLevel(0),
 				_type(NOT_CREATED), _satisfied(false), _originator(-1), _deleted(false),
 				_previousLinks(), _nextLinks()
 			{
