@@ -33,6 +33,8 @@ namespace Instrument {
 	static EnvironmentVariable<bool> _showSpuriousDependencyStructures("NANOS_GRAPH_SHOW_SPURIOUS_DEPENDENCY_STRUCTURES", false);
 	static EnvironmentVariable<bool> _showDeadDependencyStructures("NANOS_GRAPH_SHOW_DEAD_DEPENDENCY_STRUCTURES", false);
 	static EnvironmentVariable<bool> _showAllSteps("NANOS_GRAPH_SHOW_ALL_STEPS", false);
+	static EnvironmentVariable<bool> _autoDisplay("NANOS_GRAPH_DISPLAY", false);
+	static EnvironmentVariable<std::string> _displayCommand("NANOS_GRAPH_DISPLAY_COMMAND", "xdg-open");
 	
 	
 	static inline bool isComposite(task_id_t taskId)
@@ -927,7 +929,9 @@ namespace Instrument {
 			emitFrame(dir, filenameBase, frame);
 		}
 		
-		std::ofstream scriptOS(filenameBase + "-script.sh");
+		std::string scriptName = filenameBase + "-script.sh";
+		
+		std::ofstream scriptOS(scriptName);
 		scriptOS << "#!/bin/sh" << std::endl;
 		scriptOS << "set -e" << std::endl;
 		scriptOS << std::endl;
@@ -972,8 +976,35 @@ namespace Instrument {
 		scriptOS << std::endl;
 		scriptOS.close();
 		
-		chmod((filenameBase + "-script.sh").c_str(), S_IRUSR|S_IWUSR|S_IXUSR);
-		std::cerr << std::endl << "Generated graph script '" << filenameBase << "-script.sh" << "'" << std::endl;
+		chmod(scriptName.c_str(), S_IRUSR|S_IWUSR|S_IXUSR);
+		
+		if (!_autoDisplay) {
+			std::cerr << std::endl << "Generated graph script '" << scriptName << "'" << std::endl;
+			return;
+		}
+		
+		{
+			std::ostringstream oss;
+			oss << "./" << scriptName;
+			rc = system(oss.str().c_str());
+			if (rc != 0) {
+				std::cerr << "Error: Execution of '" << scriptName << "' returned code " << rc << std::endl;
+				return;
+			}
+		}
+		
+		std::string pdfName = filenameBase + ".pdf";
+		std::ostringstream displayCommandLine;
+		if (_displayCommand.isPresent()) {
+			displayCommandLine << ((std::string) _displayCommand) << " " << pdfName;
+		} else {
+			displayCommandLine << "xdg-open " << pdfName << " || evince " << pdfName << " || okular " << pdfName << " || acroread " << pdfName;
+		}
+		rc = system(displayCommandLine.str().c_str());
+		if (rc != 0) {
+			std::cerr << "Error: Execution of '" << displayCommandLine.str() << "' returned code " << rc << std::endl;
+			return;
+		}
 	}
 	
 }
