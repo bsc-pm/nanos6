@@ -126,6 +126,8 @@ namespace Instrument {
 		struct task_group_t : public phase_t {
 			children_list_t _children;
 			dependency_edge_list_t _dependencyEdges;
+			task_id_t _longestPathFirstTaskId;
+			task_id_t _longestPathLastTaskId;
 			dependency_info_map_t _dependencyInfoMap;
 			data_accesses_t _dataAccesses;
 			taskwait_id_t _clusterId;
@@ -133,6 +135,7 @@ namespace Instrument {
 			task_group_t(taskwait_id_t id)
 				: phase_t(),
 				_children(), _dependencyEdges(),
+				_longestPathFirstTaskId(), _longestPathLastTaskId(),
 				_dependencyInfoMap(),
 				_dataAccesses(),
 				_clusterId(id)
@@ -160,8 +163,6 @@ namespace Instrument {
 			
 			task_status_t _status;
 			long _lastCPU;
-			bool _hasPredecessors;
-			bool _hasSuccessors;
 			
 			phase_list_t _phaseList;
 			
@@ -169,7 +170,6 @@ namespace Instrument {
 				: _nanos_task_info(nullptr), _nanos_task_invocation_info(nullptr),
 				_parent(-1),
 				_status(not_created_status), _lastCPU(-1),
-				_hasPredecessors(false), _hasSuccessors(false),
 				_phaseList()
 			{
 			}
@@ -414,7 +414,7 @@ namespace Instrument {
 		
 		extern std::atomic<thread_id_t> _nextThreadId;
 		extern std::atomic<taskwait_id_t> _nextTaskwaitId;
-		extern std::atomic<task_id_t> _nextTaskId;
+		extern std::atomic<task_id_t::inner_type_t> _nextTaskId;
 		extern std::atomic<usermutex_id_t> _nextUsermutexId;
 		extern std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId;
 		

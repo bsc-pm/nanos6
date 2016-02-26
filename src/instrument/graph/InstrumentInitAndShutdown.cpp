@@ -191,15 +191,100 @@ namespace Instrument {
 	typedef char Bool;
 	
 	
+	struct graph_node_info_t {
+		int _maximumDepth;
+		bool _visited;
+		task_id_t _lastInLongestPath;
+		std::vector<task_id_t> _successors;
+		
+		graph_node_info_t()
+		: _maximumDepth(1), _visited(false), _lastInLongestPath(), _successors()
+		{
+		}
+	};
+	
+	
+	typedef std::map<task_id_t, graph_node_info_t> task_node_info_map_t;
+	
+	
+	static void findDepth(task_id_t currentId, graph_node_info_t &current, task_node_info_map_t &taskNodeInfoMap)
+	{
+		if (current._visited) {
+			return;
+		}
+		
+		current._maximumDepth = 1;
+		current._lastInLongestPath = currentId;
+		for (task_id_t successorId : current._successors) {
+			graph_node_info_t &successor = taskNodeInfoMap[successorId];
+			findDepth(successorId, successor, taskNodeInfoMap);
+			
+			if (successor._maximumDepth + 1 > current._maximumDepth) {
+				current._maximumDepth = successor._maximumDepth + 1;
+				current._lastInLongestPath = successor._lastInLongestPath;
+			}
+		}
+	}
+	
+	
+	static void findTopmostTasksAndPathLengths(task_id_t startingTaskId = 0)
+	{
+		task_info_t &startingTaskInfo = _taskToInfoMap[startingTaskId];
+		
+		if (!isComposite(startingTaskId)) {
+			return;
+		}
+		
+		for (unsigned int phase = 0; phase < startingTaskInfo._phaseList.size(); phase++) {
+			phase_t *currentPhase = startingTaskInfo._phaseList[phase];
+			
+			task_group_t *taskGroup = dynamic_cast<task_group_t *>(currentPhase);
+			if (taskGroup == nullptr) {
+				continue;
+			}
+			
+			task_node_info_map_t taskNodeInfoMap;
+			
+			// Create one node per task
+			for (auto childId : taskGroup->_children) {
+				taskNodeInfoMap[childId];
+			}
+			
+			// Fill out the successor lists
+			for (edge_t edge : taskGroup->_dependencyEdges) {
+				taskNodeInfoMap[edge._source]._successors.push_back(edge._sink);
+			}
+			
+			task_id_t longestPathStart;
+			task_id_t longestPathEnd;
+			int longestPathLength = 0;
+			for (auto &idAndNode : taskNodeInfoMap) {
+				task_id_t nodeId = idAndNode.first;
+				graph_node_info_t &node = idAndNode.second;
+				
+				findDepth(nodeId, node, taskNodeInfoMap);
+				if (node._maximumDepth > longestPathLength) {
+					longestPathLength = node._maximumDepth;
+					longestPathStart = nodeId;
+					longestPathEnd = node._lastInLongestPath;
+				}
+				
+				findTopmostTasksAndPathLengths(nodeId);
+			}
+			
+			taskGroup->_longestPathFirstTaskId = longestPathStart;
+			taskGroup->_longestPathLastTaskId = longestPathEnd;
+		}
+	}
+	
+	
 	static void emitTask(
 		std::ofstream &ofs, task_id_t taskId,
 		std::string /* OUT */ &taskLink,
 		std::string /* OUT */ &sourceLink, std::string /* OUT */ &sinkLink,
-		Bool /* OUT */ &hasPredecessors, Bool /* OUT */ &hasSuccessors)
-	{
+		std::ostringstream &linksStream
+	) {
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
-		hasPredecessors = taskInfo._hasPredecessors;
-		hasSuccessors = taskInfo._hasSuccessors;
 		
 		if (!isComposite(taskId)) {
 			// A leaf task
@@ -235,7 +320,7 @@ namespace Instrument {
 			
 			std::vector<std::string> previousPhaseLinks;
 			std::vector<std::string> previousPhaseSinkLinks;
-			std::vector<Bool> previousPhaseElementsHaveSuccessors;
+			std::vector<Bool> previousPhaseGoodBottomLinks;
 			std::vector<task_status_t> previousPhaseStatuses;
 			for (unsigned int phase = 0; phase < taskInfo._phaseList.size(); phase++) {
 				phase_t *currentPhase = taskInfo._phaseList[phase];
@@ -251,8 +336,8 @@ namespace Instrument {
 				std::vector<std::string> currentPhaseLinks(phaseElements);
 				std::vector<std::string> currentPhaseSourceLinks(phaseElements);
 				std::vector<std::string> currentPhaseSinkLinks(phaseElements);
-				std::vector<Bool> currentPhaseElementsHavePredecessors(phaseElements);
-				std::vector<Bool> currentPhaseElementsHaveSuccessors(phaseElements);
+				std::vector<Bool> goodTopLink(phaseElements);
+				std::vector<Bool> goodBottomLink(phaseElements);
 				std::vector<task_status_t> currentPhaseStatuses(phaseElements);
 				if (taskGroup != nullptr) {
 					long currentCluster = _nextCluster++;
@@ -267,6 +352,53 @@ namespace Instrument {
 					ofs << indentation << "rank=same;" << std::endl;
 					ofs << indentation << "compound=true;" << std::endl;
 					ofs << indentation << "style=\"invisible\";" << std::endl;
+					
+					std::map<task_id_t, size_t> taskId2Index;
+					{
+						size_t index = 0;
+						for (task_id_t childId : taskGroup->_children) {
+							emitTask(
+								ofs, childId,
+								currentPhaseLinks[index],
+								currentPhaseSourceLinks[index], currentPhaseSinkLinks[index],
+								linksStream
+							);
+							
+							goodTopLink[index] = (taskGroup->_longestPathFirstTaskId == childId);
+							goodBottomLink[index] = (taskGroup->_longestPathLastTaskId == childId);
+							
+							taskId2Index[childId] = index;
+							task_info_t const &childInfo = _taskToInfoMap[childId];
+							currentPhaseStatuses[index] = childInfo._status;
+							
+							index++;
+						}
+					}
+					
+					for (edge_t edge : taskGroup->_dependencyEdges) {
+						size_t sourceIndex = taskId2Index[edge._source];
+						size_t sinkIndex = taskId2Index[edge._sink];
+						
+						linksStream << "\t" << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
+						linksStream << " [";
+						if (currentPhaseSinkLinks[sourceIndex] != currentPhaseLinks[sourceIndex]) {
+							linksStream << " ltail=\"" << currentPhaseLinks[sourceIndex] << "\"";
+						}
+						if (currentPhaseSourceLinks[sinkIndex] != currentPhaseLinks[sinkIndex]) {
+							linksStream << " lhead=\"" << currentPhaseLinks[sinkIndex] << "\"";
+						}
+						
+						task_info_t const &sourceInfo = _taskToInfoMap[edge._source];
+						task_info_t const &sinkInfo = _taskToInfoMap[edge._sink];
+						
+						if ((sourceInfo._status == not_created_status) || (sourceInfo._status == finished_status)
+							|| (sinkInfo._status == not_created_status) || (sinkInfo._status == finished_status))
+						{
+							linksStream << " color=\"#888888\" fillcolor=\"#888888\"";
+						}
+						
+						linksStream << " weight=16 ]" << std::endl;
+					}
 					
 					for (data_access_id_t sourceAccessId : taskGroup->_dataAccesses) {
 						access_t &sourceAccess = _accessIdToAccessMap[sourceAccessId];
@@ -314,146 +446,56 @@ namespace Instrument {
 							ofs << " penwidth=1";
 						}
 						ofs << " ]" << std::endl;
-					}
-					
-					std::map<task_id_t, size_t> taskId2Index;
-					{
-						size_t index = 0;
-						for (task_id_t childId : taskGroup->_children) {
-							emitTask(
-								ofs, childId,
-								currentPhaseLinks[index],
-								currentPhaseSourceLinks[index], currentPhaseSinkLinks[index],
-								currentPhaseElementsHavePredecessors[index], currentPhaseElementsHaveSuccessors[index]
-							);
-							
-							taskId2Index[childId] = index;
-							task_info_t const &childInfo = _taskToInfoMap[childId];
-							currentPhaseStatuses[index] = childInfo._status;
-							
-							index++;
-						}
-					}
-					
-					for (edge_t edge : taskGroup->_dependencyEdges) {
-						size_t sourceIndex = taskId2Index[edge._source];
-						size_t sinkIndex = taskId2Index[edge._sink];
 						
-						ofs << indentation << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
-						ofs << " [";
-						if (currentPhaseSinkLinks[sourceIndex] != currentPhaseLinks[sourceIndex]) {
-							ofs << " ltail=\"" << currentPhaseLinks[sourceIndex] << "\"";
-						}
-						if (currentPhaseSourceLinks[sinkIndex] != currentPhaseLinks[sinkIndex]) {
-							ofs << " lhead=\"" << currentPhaseLinks[sinkIndex] << "\"";
-						}
-						
-						task_info_t const &sourceInfo = _taskToInfoMap[edge._source];
-						task_info_t const &sinkInfo = _taskToInfoMap[edge._sink];
-						
-						if ((sourceInfo._status == not_created_status) || (sourceInfo._status == finished_status)
-							|| (sinkInfo._status == not_created_status) || (sinkInfo._status == finished_status))
-						{
-							ofs << " color=\"#888888\" fillcolor=\"#888888\"" << std::endl;
-						}
-						
-						ofs << " weight=1 ]" << std::endl;
-					}
-					
-					for (data_access_id_t sourceAccessId : taskGroup->_dataAccesses) {
-						access_t &sourceAccess = _accessIdToAccessMap[sourceAccessId];
-						
-						if (!_showDeadDependencyStructures && (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED))) {
-							// Skip dead accesses
-							continue;
-						}
-						
-						if (!sourceLinkIsSet && sourceAccess._previousLinks.empty()) {
-							task_info_t const &originator = _taskToInfoMap[sourceAccess._originator];
-							
-							if (!originator._hasPredecessors) {
-								std::ostringstream oss;
-								oss << "data_access_" << sourceAccessId;
-								sourceLink = oss.str();
-								sourceLinkIsSet = true;
-							}
+						if (!sourceLinkIsSet && (taskGroup->_longestPathFirstTaskId == sourceAccess._originator)) {
+							std::ostringstream oss;
+							oss << "data_access_" << sourceAccessId;
+							sourceLink = oss.str();
+							sourceLinkIsSet = true;
 						}
 						
 						{
 							auto dataAccessSubLink = _firstSubAccessByAccess.find(sourceAccessId);
 							if (dataAccessSubLink != _firstSubAccessByAccess.end()) {
-								ofs << indentation << "data_access_" << dataAccessSubLink->first << " -> " << "data_access_" << dataAccessSubLink->second << " [ style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=4 ]" << std::endl;
+								linksStream << "\t" << "data_access_" << dataAccessSubLink->first << " -> " << "data_access_" << dataAccessSubLink->second << " [ style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=4 ]" << std::endl;
 							}
 						}
 						
 						assert(sourceAccess._originator != -1);
 						size_t originatorIndex = taskId2Index[sourceAccess._originator];
-						ofs << indentation << "data_access_" << sourceAccessId << " -> " << currentPhaseSourceLinks[originatorIndex];
-						ofs << " [";
+						linksStream << "\t" << "data_access_" << sourceAccessId << " -> " << currentPhaseSourceLinks[originatorIndex];
+						linksStream << " [";
 						if (currentPhaseLinks[originatorIndex] != currentPhaseSourceLinks[originatorIndex]) {
-							ofs << " lhead=\"" << currentPhaseLinks[originatorIndex] << "\"";
+							linksStream << " lhead=\"" << currentPhaseLinks[originatorIndex] << "\"";
 						}
 						if ((sourceAccess._type == NOT_CREATED) || sourceAccess._deleted) {
-							ofs << " style=\"invis\"";
+							linksStream << " style=\"invis\"";
 						} else if (sourceAccess._satisfied) {
-							ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
+							linksStream << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
 						} else {
-							ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
+							linksStream << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
 						}
-						ofs << " weight=1 ]" << std::endl;
+						linksStream << " weight=1 ]" << std::endl;
 						
-						// Links from this access
 						for (auto nextLink : sourceAccess._nextLinks) {
 							data_access_id_t sinkAccessId = nextLink.first;
 							bool direct = nextLink.second._direct;
 							
 							access_t const &sinkAccess = getAccess(sinkAccessId);
 							
-							if (!_showDeadDependencyStructures && (sinkAccess._deleted || (sinkAccess._type == NOT_CREATED))) {
+							if (!_showDeadDependencyStructures && (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED) || sinkAccess._deleted || (sinkAccess._type == NOT_CREATED))) {
 								continue;
 							}
 							
-							if (sinkAccess._taskNestingLevel < sourceAccess._taskNestingLevel) {
-								continue;
-							}
-							
-							ofs << indentation << "data_access_" << sourceAccessId << " -> data_access_" << sinkAccessId << " [ weight=8";
-							if ((nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
-								ofs << " style=\"invis\"";
+							linksStream << "\t" << "data_access_" << sourceAccessId << " -> data_access_" << sinkAccessId << " [ weight=8";
+							if (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED) || sinkAccess._deleted || (sinkAccess._type == NOT_CREATED) || (nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
+								linksStream << " style=\"invis\"";
 							} else if (!direct) {
-								ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
+								linksStream << " style=dotted color=\"#000000\" fillcolor=\"#000000\"";
 							} else {
-								ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
+								linksStream << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
 							}
-							ofs << " ]" << std::endl;
-						}
-						
-						// Links to this access
-						for (data_access_id_t previousAccessId: sourceAccess._previousLinks) {
-							access_t &previousAccess = getAccess(previousAccessId);
-							
-							if (!_showDeadDependencyStructures && (previousAccess._deleted || (previousAccess._type == NOT_CREATED))) {
-								continue;
-							}
-							
-							if (sourceAccess._taskNestingLevel <= previousAccess._taskNestingLevel) {
-								continue;
-							}
-							
-							auto nextLinkPosition = previousAccess._nextLinks.find(sourceAccessId);
-							assert(nextLinkPosition != previousAccess._nextLinks.end());
-							auto nextLink = *nextLinkPosition;
-							bool direct = nextLink.second._direct;
-							
-							ofs << indentation << "data_access_" << previousAccessId << " -> data_access_" << sourceAccessId << " [ weight=8";
-							if ((nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
-								ofs << " style=\"invis\"";
-							} else if (!direct) {
-								ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
-							} else {
-								ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
-							}
-							ofs << " ]" << std::endl;
+							linksStream << " ]" << std::endl;
 						}
 					}
 					
@@ -476,8 +518,8 @@ namespace Instrument {
 					currentPhaseSourceLinks[0] = currentPhaseLink;
 					currentPhaseSinkLinks[0] = currentPhaseLink;
 					currentPhaseStatuses[0] = taskwaitStatus._status;
-					currentPhaseElementsHavePredecessors[0] = false;
-					currentPhaseElementsHaveSuccessors[0] = false;
+					goodTopLink[0] = true;
+					goodBottomLink[0] = true;
 				} else {
 					assert(false);
 				}
@@ -485,7 +527,7 @@ namespace Instrument {
 				if ((phase == 0) && !sourceLinkIsSet) {
 					std::vector<std::string> validSourceLinks;
 					for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
-						if (!currentPhaseElementsHavePredecessors[currentIndex]) {
+						if (goodTopLink[currentIndex]) {
 							validSourceLinks.push_back(currentPhaseSourceLinks[currentIndex]);
 						}
 					}
@@ -497,7 +539,7 @@ namespace Instrument {
 				if (phase == taskInfo._phaseList.size()-1) {
 					std::vector<std::string> validSinkLinks;
 					for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
-						if (!currentPhaseElementsHavePredecessors[currentIndex]) {
+						if (goodBottomLink[currentIndex]) {
 							validSinkLinks.push_back(currentPhaseSinkLinks[currentIndex]);
 						}
 					}
@@ -509,29 +551,29 @@ namespace Instrument {
 					size_t previousPhaseElements = previousPhaseLinks.size();
 					
 					for (size_t previousIndex=0; previousIndex < previousPhaseElements; previousIndex++) {
-						if (previousPhaseElementsHaveSuccessors[previousIndex]) {
+						if (!previousPhaseGoodBottomLinks[previousIndex]) {
 							// Link only leaf nodes of the previous phase
 							continue;
 						}
 						
 						for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
-							if (currentPhaseElementsHavePredecessors[currentIndex]) {
+							if (!goodTopLink[currentIndex]) {
 								// Link only top nodes of the current phase
 								continue;
 							}
 							
-							ofs
-								<< indentation << previousPhaseSinkLinks[previousIndex] << " -> " << currentPhaseSourceLinks[currentIndex]
+							linksStream
+								<< "\t" << previousPhaseSinkLinks[previousIndex] << " -> " << currentPhaseSourceLinks[currentIndex]
 								<< " [ "
 								<< getEdgeAttributes(previousPhaseStatuses[previousIndex], currentPhaseStatuses[currentIndex]);
 							
 							if (previousPhaseLinks[previousIndex] != previousPhaseSinkLinks[previousIndex]) {
-								ofs << " ltail=\"" << previousPhaseLinks[previousIndex] << "\" ";
+								linksStream << " ltail=\"" << previousPhaseLinks[previousIndex] << "\" ";
 							}
 							if (currentPhaseLinks[currentIndex] != currentPhaseSourceLinks[currentIndex]) {
-								ofs << " lhead=\"" << currentPhaseLinks[currentIndex] << "\" ";
+								linksStream << " lhead=\"" << currentPhaseLinks[currentIndex] << "\" ";
 							}
-							ofs
+							linksStream
 								<< " weight=1 ];" << std::endl;
 						}
 					}
@@ -539,7 +581,7 @@ namespace Instrument {
 				
 				previousPhaseLinks = std::move(currentPhaseLinks);
 				previousPhaseSinkLinks = std::move(currentPhaseSinkLinks);
-				previousPhaseElementsHaveSuccessors = std::move(currentPhaseElementsHaveSuccessors);
+				previousPhaseGoodBottomLinks = std::move(goodBottomLink);
 				previousPhaseStatuses = std::move(currentPhaseStatuses);
 			}
 			
@@ -561,9 +603,8 @@ namespace Instrument {
 		std::string mainTaskSourceLink;
 		std::string mainTaskSinkLink;
 		std::string mainTaskLink;
-		Bool mainTaskHasPredecessors;
-		Bool mainTaskHasSuccessors;
-		emitTask(ofs, 0, mainTaskLink, mainTaskSourceLink, mainTaskSinkLink, mainTaskHasPredecessors, mainTaskHasSuccessors);
+		std::ostringstream linksStream;
+		emitTask(ofs, 0, mainTaskLink, mainTaskSourceLink, mainTaskSinkLink, linksStream);
 		
 		ofs << indentation << "nanos_start -> " << mainTaskSourceLink;
 		if (mainTaskSourceLink != mainTaskLink) {
@@ -576,6 +617,7 @@ namespace Instrument {
 			ofs << " [ ltail=\"" << mainTaskLink << "\" ]";
 		}
 		ofs << ";" << std::endl;
+		ofs << linksStream.str();
 		ofs << "}" << std::endl;
 		indentation = "";
 	}
@@ -614,6 +656,9 @@ namespace Instrument {
 		if (rc != 0) {
 			FatalErrorHandler::handle(errno, " trying to create directory '", dir, "'");
 		}
+		
+		// Find the longest dependency paths for layout reasons
+		findTopmostTasksAndPathLengths(0);
 		
 		int frame=0;
 		emitFrame(dir, filenameBase, frame);

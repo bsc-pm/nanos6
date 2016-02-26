@@ -63,15 +63,11 @@ namespace Instrument {
 			
 			if (dependencyInfo._lastAccessType == WRITE_ACCESS_TYPE) {
 				if (dependencyInfo._lastWriter != -1) {
-					_taskToInfoMap[dependencyInfo._lastWriter]._hasSuccessors = true;
-					_taskToInfoMap[taskId]._hasPredecessors = true;
 					taskGroup->_dependencyEdges.push_back(edge_t(dependencyInfo._lastWriter, taskId));
 				}
 			} else {
 				assert(dependencyInfo._lastAccessType == READ_ACCESS_TYPE);
 				for (auto predecessor : dependencyInfo._lastReaders) {
-					_taskToInfoMap[predecessor]._hasSuccessors = true;
-					_taskToInfoMap[taskId]._hasPredecessors = true;
 					taskGroup->_dependencyEdges.push_back(edge_t(predecessor, taskId));
 				}
 			}
@@ -93,8 +89,6 @@ namespace Instrument {
 			}
 			
 			if (dependencyInfo._lastWriter != -1) {
-				_taskToInfoMap[dependencyInfo._lastWriter]._hasSuccessors = true;
-				_taskToInfoMap[taskId]._hasPredecessors = true;
 				taskGroup->_dependencyEdges.push_back(edge_t(dependencyInfo._lastWriter, taskId));
 			}
 			
