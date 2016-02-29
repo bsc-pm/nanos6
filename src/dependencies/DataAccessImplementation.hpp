@@ -191,6 +191,13 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 				task->getInstrumentationTaskId()
 			);
 			
+			Instrument::linkedDataAccesses(
+				dataAccess->_instrumentationId,
+				newDataAccessInstrumentationId,
+				true /* Direct? */,
+				task->getInstrumentationTaskId()
+			);
+			
 			dataAccess = new DataAccess(
 				accessSequence,
 				newAccessType, true,
@@ -302,6 +309,13 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 				oldAccessType, true,
 				false,
+				task->getInstrumentationTaskId()
+			);
+			
+			Instrument::linkedDataAccesses(
+				effectivePrevious->_instrumentationId,
+				newDataAccessInstrumentationId,
+				!accessSequence->_accessSequence.empty() /* Direct? */,
 				task->getInstrumentationTaskId()
 			);
 			
