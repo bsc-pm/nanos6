@@ -14,7 +14,7 @@ public:
 	//! The loop ends after notifyMainExit is called
 	static void maintenanceLoop();
 	
-	//! \brief Signal the leather thread that the "main" function has finished and thus that the execution must end
+	//! \brief Signal the leader thread that the "main" function has finished and thus that the execution must end
 	static void notifyMainExit();
 	
 };
