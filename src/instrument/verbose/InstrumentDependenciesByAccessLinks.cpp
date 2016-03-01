@@ -35,7 +35,7 @@ namespace Instrument {
 		} else {
 			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
 		}
-		logEntry->_contents << " <-> AddDataAccess superaccess:" << superAccessId << " ";
+		logEntry->_contents << " <-> CreateDataAccess " << id << " superaccess:" << superAccessId << " ";
 		
 		if (weak) {
 			logEntry->_contents << "weak";
