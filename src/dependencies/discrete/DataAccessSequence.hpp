@@ -6,7 +6,7 @@
 
 #include "DataAccessRange.hpp"
 #include "DataAccessSequenceLinkingArtifacts.hpp"
-#include "DataAccessType.hpp"
+#include "../DataAccessType.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 
@@ -48,12 +48,11 @@ struct DataAccessSequence {
 	//! 
 	//! NOTE: This function assumes that the whole hierarchy has already been locked
 	inline DataAccess *getEffectivePrevious(DataAccess *dataAccess);
-	
-	
 };
 
 
 #include "DataAccess.hpp"
+#include "DataAccessSequenceImplementation.hpp"
 #include "DataAccessSequenceLinkingArtifactsImplementation.hpp"
 
 

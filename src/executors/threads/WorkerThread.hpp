@@ -2,7 +2,7 @@
 #define WORKER_THREAD_HPP
 
 
-#include "dependencies/FixedAddressDataAccessMap.hpp"
+#include "DependencyDomain.hpp"
 #include "lowlevel/ConditionVariable.hpp"
 
 #include "CPU.hpp"
@@ -21,7 +21,6 @@ class SchedulingDecisionPlaceholder;
 
 class WorkerThread {
 public:
-	typedef FixedAddressDataAccessMap dependency_domain_t;
 	typedef std::deque<Task *> satisfied_originator_list_t;
 	
 private:
@@ -44,7 +43,7 @@ private:
 	Task *_task;
 	
 	//! Dependency domain of the tasks instantiated by this thread
-	dependency_domain_t _dependencyDomain;
+	DependencyDomain _dependencyDomain;
 	
 	//! Tasks whose accesses have been satified after ending a task
 	satisfied_originator_list_t _satisfiedAccessOriginators;
@@ -151,15 +150,15 @@ public:
 	}
 	
 	//! \brief Retrieves the dependency domain used to calculate the dependencies of the tasks instantiated by this thread
-	dependency_domain_t const &getDependencyDomain() const
+	DependencyDomain const *getDependencyDomain() const
 	{
-		return _dependencyDomain;
+		return &_dependencyDomain;
 	}
 	
 	//! \brief Retrieves the dependency domain used to calculate the dependencies of the tasks instantiated by this thread
-	dependency_domain_t &getDependencyDomain()
+	DependencyDomain *getDependencyDomain()
 	{
-		return _dependencyDomain;
+		return &_dependencyDomain;
 	}
 	
 	//! \brief Retrieves a reference to the thread-local list of tasks that have had one of their accesses satisfied when removing a task
@@ -192,9 +191,6 @@ namespace ompss_debug {
 	}
 }
 #endif
-
-
-#include <dependencies/DataAccessSequenceImplementation.hpp>
 
 
 #endif // WORKER_THREAD_HPP

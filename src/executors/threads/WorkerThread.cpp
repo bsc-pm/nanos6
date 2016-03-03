@@ -1,10 +1,11 @@
 #include "CPUActivation.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
-#include <dependencies/DataAccessRegistration.hpp>
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+
+#include <DataAccessRegistration.hpp>
 
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -26,7 +27,8 @@ static void *worker_thread_body_wrapper(void *parameter)
 
 
 WorkerThread::WorkerThread(CPU *cpu)
-	: _suspensionConditionVariable(), _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false), _task(nullptr), _dependencyDomain()
+	: _suspensionConditionVariable(), _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false), _task(nullptr),
+	_dependencyDomain()
 {
 	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, &worker_thread_body_wrapper, this);
 	FatalErrorHandler::handle(rc, " when creating a pthread in CPU ", cpu->_systemCPUId);

@@ -3,7 +3,7 @@
 
 #include <boost/intrusive/parent_from_member.hpp>
 
-#include "DataAccess.hpp"
+#include "DataAccessBase.hpp"
 #include "TaskDataAccessesLinkingArtifacts.hpp"
 
 
@@ -19,12 +19,12 @@ inline constexpr TaskDataAccessesLinkingArtifacts::const_hook_ptr TaskDataAccess
 
 inline TaskDataAccessesLinkingArtifacts::pointer TaskDataAccessesLinkingArtifacts::to_value_ptr(TaskDataAccessesLinkingArtifacts::hook_ptr n)
 {
-	return boost::intrusive::get_parent_from_member<DataAccess>(n, &DataAccess::_taskAccessListLinks);
+	return boost::intrusive::get_parent_from_member<DataAccessBase>(n, &DataAccessBase::_taskAccessListLinks);
 }
 
 inline TaskDataAccessesLinkingArtifacts::const_pointer TaskDataAccessesLinkingArtifacts::to_value_ptr(TaskDataAccessesLinkingArtifacts::const_hook_ptr n)
 {
-	return boost::intrusive::get_parent_from_member<DataAccess>(n, &DataAccess::_taskAccessListLinks);
+	return boost::intrusive::get_parent_from_member<DataAccessBase>(n, &DataAccessBase::_taskAccessListLinks);
 }
 
 

@@ -3,6 +3,11 @@
 
 
 #include <cstddef>
+#include <ostream>
+
+
+class DataAccessRange;
+inline std::ostream & operator<<(std::ostream &o, DataAccessRange const &range);
 
 
 class DataAccessRange {
@@ -38,7 +43,16 @@ public:
 		return _startAddress != other._startAddress;
 	}
 	
+	friend std::ostream & ::operator<<(std::ostream &o, DataAccessRange const &range);
 };
+
+
+inline std::ostream & operator<<(std::ostream &o, const DataAccessRange& range)
+{
+	return o << range._startAddress;
+}
+
+
 
 
 #endif // DATA_ACCESS_RANGE_HPP

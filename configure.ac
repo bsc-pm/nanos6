@@ -77,6 +77,24 @@ SSS_FIXUP_COMPILER_FLAGS
 
 CONFIGURE_NANOS6_FEATURES
 
+# Dependency engine to use
+AC_ARG_WITH(
+	[dependencies],
+	[AS_HELP_STRING([--with-dependencies=type], [specify the type of dependencies to handle @<:@default=discrete@:>@])],
+	[ac_with_dependencies="${withval}"],
+	[ac_with_dependencies="discrete"]
+)
+AC_MSG_CHECKING([the type of dependencies to handle])
+case x"${ac_with_dependencies}" in
+	x"discrete")
+		AC_MSG_RESULT([${ac_with_dependencies}])
+		;;
+	*)
+		AC_MSG_ERROR([unknown dependency type ${ac_with_dependencies}])
+		;;
+esac
+AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdiscrete"])
+
 
 AC_CONFIG_FILES([
 	Makefile

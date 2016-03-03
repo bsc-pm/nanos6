@@ -5,6 +5,8 @@
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentTaskId.hpp>
 
+#include <DataAccessRange.hpp>
+
 #include "dependencies/DataAccessType.hpp"
 
 
@@ -39,13 +41,14 @@ namespace Instrument {
 	//! \param superAccessId the identifier of the superaccess that contains the new DataAccess as returned by Instrument::createdDataAccess or data_access_id_t() if there is no superaccess
 	//! \param accessType the type of access of the new DataAccess
 	//! \param weak true if the access is weak
+	//! \param range the range of data that the new access covers
 	//! \param satisfied whether the access does not preclude the task from running immediately
 	//! \param originatorTaskId the identifier of the task that will perform the access as returned in the call to Instrument::enterAddTask
 	//! 
 	//! \returns an identifier for the new data access
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType, bool weak,
+		DataAccessType accessType, bool weak, DataAccessRange range,
 		bool satisfied,
 		task_id_t originatorTaskId
 	);

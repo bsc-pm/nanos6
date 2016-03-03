@@ -31,16 +31,8 @@ universal_debug_sources = \
 
 
 common_sources = \
-	src/dependencies/DataAccess.hpp \
-	src/dependencies/DataAccessImplementation.hpp \
-	src/dependencies/DataAccessRange.hpp \
-	src/dependencies/DataAccessRegistration.hpp \
-	src/dependencies/DataAccessSequenceLinkingArtifactsImplementation.hpp \
-	src/dependencies/DataAccessSequence.hpp \
-	src/dependencies/DataAccessSequenceImplementation.hpp \
-	src/dependencies/DataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
-	src/dependencies/FixedAddressDataAccessMap.hpp \
 	src/dependencies/TaskDataAccessesLinkingArtifacts.hpp \
 	src/dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp \
 	src/executors/threads/CPU.cpp \
@@ -91,7 +83,6 @@ common_sources = \
 	src/system/LeaderThread.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
-	src/system/ompss/RegisterDependencies.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
@@ -99,6 +90,31 @@ common_sources = \
 	src/system/ompss/UserMutex.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp
+
+common_dependency_sources = \
+	src/dependencies/DataAccessType.hpp \
+	src/dependencies/TaskDataAccessesLinkingArtifacts.hpp \
+	src/dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp
+
+discrete_dependency_sources = $(common_dependency_sources) \
+	src/dependencies/discrete/DataAccess.hpp \
+	src/dependencies/discrete/DataAccessImplementation.hpp \
+	src/dependencies/discrete/DataAccessRange.hpp \
+	src/dependencies/discrete/DataAccessRegistration.hpp \
+	src/dependencies/discrete/DataAccessSequence.hpp \
+	src/dependencies/discrete/DataAccessSequenceImplementation.hpp \
+	src/dependencies/discrete/DataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/discrete/DataAccessSequenceLinkingArtifactsImplementation.hpp \
+	src/dependencies/discrete/DependencyDomain.hpp \
+	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
+	src/dependencies/discrete/RegisterDependencies.cpp
+
+
+if DISCRETE_DEPENDENCIES
+AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
+common_sources += $(discrete_dependency_sources)
+endif
+
 
 noinstrument_sources = \
 	src/instrument/null/InstrumentAddTask.hpp \

@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <cassert>
 
-#include <dependencies/DataAccessSequence.hpp>
-
 #include "InstrumentDependenciesByAccessLinks.hpp"
 
 #include "InstrumentDataAccessId.hpp"
@@ -18,6 +16,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType,
 		__attribute__((unused)) bool weak,
+		__attribute__((unused)) DataAccessRange range,
 		bool satisfied,
 		task_id_t originatorTaskId
 	) {

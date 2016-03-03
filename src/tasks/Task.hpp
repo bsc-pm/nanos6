@@ -8,7 +8,6 @@
 #include <boost/intrusive/list.hpp>
 
 #include "api/nanos6_rt_interface.h"
-#include "dependencies/DataAccessSequence.hpp"
 #include "dependencies/TaskDataAccessesLinkingArtifacts.hpp"
 #include "lowlevel/SpinLock.hpp"
 
@@ -16,6 +15,7 @@
 
 
 struct DataAccess;
+struct DataAccessBase;
 class WorkerThread;
 
 
@@ -26,7 +26,7 @@ class WorkerThread;
 class Task {
 public:
 	//! The type of the list that contains the accesses that may determine dependencies
-	typedef boost::intrusive::list<DataAccess, boost::intrusive::function_hook<TaskDataAccessesLinkingArtifacts>> data_access_list_t;
+	typedef boost::intrusive::list<DataAccessBase, boost::intrusive::function_hook<TaskDataAccessesLinkingArtifacts>> data_access_list_t;
 	
 private:
 	void *_argsBlock;
@@ -221,7 +221,7 @@ public:
 	//! \brief Add an element to the list of data accesses (that may generate dependencies)
 	void addDataAccess(DataAccess *dataAccess)
 	{
-		_dataAccesses.push_back(*dataAccess); // This operation actually does add the pointer
+		_dataAccesses.push_back((DataAccessBase &) *dataAccess); // This operation actually does add the pointer
 	}
 	
 	//! \brief Remove an element of the data accesses list (if any) and return it (or null)
@@ -230,7 +230,7 @@ public:
 		if (_dataAccesses.empty()) {
 			return 0;
 		} else {
-			DataAccess *dataAccess = &_dataAccesses.front();
+			DataAccess *dataAccess = (DataAccess *) &_dataAccesses.front();
 			_dataAccesses.pop_front();
 			return dataAccess;
 		}
@@ -286,7 +286,6 @@ public:
 
 
 #include "dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp"
-#include "dependencies/DataAccessSequenceImplementation.hpp"
 
 
 #endif // TASK_HPP

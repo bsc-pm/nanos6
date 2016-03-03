@@ -14,6 +14,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType,
 		bool weak,
+		DataAccessRange range,
 		bool satisfied,
 		task_id_t originatorTaskId
 	) {
@@ -54,6 +55,8 @@ namespace Instrument {
 				logEntry->_contents << " unknown_access_type";
 				break;
 		}
+		
+		logEntry->_contents << " " << range;
 		
 		if (satisfied) {
 			logEntry->_contents << " safistied";

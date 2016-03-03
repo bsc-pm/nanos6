@@ -10,6 +10,7 @@ namespace Instrument {
 		__attribute__((unused)) data_access_id_t superAccessId,
 		__attribute__((unused)) DataAccessType accessType,
 		__attribute__((unused)) bool weak,
+		__attribute__((unused)) DataAccessRange range,
 		__attribute__((unused)) bool satisfied,
 		__attribute__((unused)) task_id_t originatorTaskId
 	) {

@@ -236,6 +236,7 @@ public:
 		Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
 			(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			accessType, weak,
+			accessSequence->_accessRange,
 			satisfied,
 			task->getInstrumentationTaskId()
 		);

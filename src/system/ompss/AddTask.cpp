@@ -4,13 +4,14 @@
 #endif
 
 #include "api/nanos6_rt_interface.h"
-#include "dependencies/DataAccessRegistration.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/HardwarePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+
+#include <DataAccessRegistration.hpp>
 
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskStatus.hpp>

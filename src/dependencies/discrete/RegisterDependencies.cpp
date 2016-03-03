@@ -3,10 +3,11 @@
 #include <InstrumentDependenciesByAccess.hpp>
 
 #include "api/nanos6_rt_interface.h"
-#include "dependencies/DataAccessType.hpp"
-#include "dependencies/DataAccessRegistration.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
+
+#include "../DataAccessType.hpp"
+#include "DataAccessRegistration.hpp"
 
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
@@ -25,7 +26,8 @@ void register_access(void *handler, void *start, size_t length)
 	DataAccessSequence *accessSequence = 0;
 	Task *parent = task->getParent();
 	if (parent != 0) {
-		for (DataAccess &parentAccess : parent->getDataAccesses()) {
+		for (DataAccessBase &parentAccessBase : parent->getDataAccesses()) {
+			DataAccess &parentAccess = (DataAccess &) parentAccessBase;
 			DataAccessSequence *parentSequence = parentAccess._dataAccessSequence;
 			assert(parentSequence != 0);
 			
@@ -39,8 +41,8 @@ void register_access(void *handler, void *start, size_t length)
 	if (accessSequence == 0) {
 		// An access that is not a subset of the parent accesses, therefore
 		// (if the code is correct) it must be temporary data created by the parent
-		WorkerThread::dependency_domain_t &dependencyDomain = currentWorkerThread->getDependencyDomain();
-		accessSequence = &dependencyDomain[accessRange];
+		DependencyDomain *dependencyDomain = currentWorkerThread->getDependencyDomain();
+		accessSequence = &(*dependencyDomain)[accessRange];
 	}
 	
 	DataAccess *dataAccess;
