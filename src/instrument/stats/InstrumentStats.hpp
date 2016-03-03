@@ -106,11 +106,11 @@ namespace Instrument {
 		
 		struct TaskTypeAndTimes {
 			nanos_task_info const *_type;
-			Timer *_currentTimer;
 			TaskTimes _times;
+			Timer *_currentTimer;
 			
 			TaskTypeAndTimes(nanos_task_info const *type)
-				: _type(type), _currentTimer(&_times._instantiationTime), _times(false)
+			: _type(type), _times(false), _currentTimer(&_times._instantiationTime)
 			{
 			}
 		};

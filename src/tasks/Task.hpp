@@ -15,7 +15,7 @@
 #include <InstrumentTaskId.hpp>
 
 
-class DataAccess;
+struct DataAccess;
 class WorkerThread;
 
 

@@ -3,7 +3,7 @@
 
 
 class WorkerThread;
-class CPU;
+struct CPU;
 
 
 namespace Instrument {

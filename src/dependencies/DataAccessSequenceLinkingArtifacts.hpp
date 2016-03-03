@@ -5,7 +5,7 @@
 #include <boost/intrusive/list_hook.hpp>
 
 
-class DataAccess;
+struct DataAccess;
 
 
 struct DataAccessSequenceLinkingArtifacts {

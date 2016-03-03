@@ -6,7 +6,7 @@
 
 
 class Task;
-class CPU;
+struct CPU;
 class WorkerThread;
 
 

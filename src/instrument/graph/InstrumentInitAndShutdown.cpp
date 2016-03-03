@@ -95,22 +95,6 @@ namespace Instrument {
 	}
 	
 	
-	static inline std::string makeTaskNodeName(task_id_t taskId)
-	{
-		task_info_t &taskInfo = _taskToInfoMap[taskId];
-		std::ostringstream oss;
-		
-		if (taskInfo._phaseList.empty()) {
-			oss << "task";
-		} else {
-			oss << "cluster_task";
-		}
-		oss << taskId;
-		
-		return oss.str();
-	}
-	
-	
 	static std::string makeTaskwaitLabel(char const *sourceLocation)
 	{
 		std::ostringstream oss;

@@ -4,7 +4,7 @@
 
 namespace Instrument {
 	namespace Stats {
-		class TaskTypeAndTimes;
+		struct TaskTypeAndTimes;
 	}
 	//! This is the default task identifier for the instrumentation.
 	typedef Stats::TaskTypeAndTimes *task_id_t;

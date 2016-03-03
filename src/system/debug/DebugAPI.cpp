@@ -61,7 +61,7 @@ nanos_cpu_status_t nanos_get_cpu_status(long systemCPUId)
 	CPU *cpu = ThreadManager::getCPU(systemCPUId);
 	
 	assert(cpu != 0);
-	switch (cpu->_activationStatus) {
+	switch (cpu->_activationStatus.load()) {
 		case CPU::starting_status:
 			return nanos_starting_cpu;
 		case CPU::enabling_status:
