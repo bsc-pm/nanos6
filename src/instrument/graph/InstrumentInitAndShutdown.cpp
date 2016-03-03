@@ -517,8 +517,11 @@ namespace Instrument {
 							}
 							
 							linksStream << "\t" << "data_access_" << sourceAccessId << " -> data_access_" << sinkAccessId << " [ weight=8";
-							if (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED) || sinkAccess._deleted || (sinkAccess._type == NOT_CREATED) || (nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
+							if ((nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
 								linksStream << " style=\"invis\"";
+							} else if (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED) || sinkAccess._deleted || (sinkAccess._type == NOT_CREATED)) {
+								// This is an error!
+								linksStream << " penwidth=4 arrowsize=2 color=\"#BB0000\" label=\"DANGLING\\nLINK\" fontsize=30 fontcolor=\"#BB0000\" fontname=\"Helvetica-Bold\"";
 							} else if (!direct) {
 								linksStream << " arrowhead=\"vee\" style=dotted color=\"#000000\" fillcolor=\"#000000\"";
 							} else {
