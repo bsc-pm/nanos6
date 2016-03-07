@@ -949,7 +949,8 @@ namespace Instrument {
 		scriptOS << std::endl;
 		
 		scriptOS << "echo Joining into a single file" << std::endl;
-		scriptOS << "pdfjoin -q --preamble '\\usepackage{hyperref} \\hypersetup{pdfpagelayout=SinglePage}' --rotateoversize false --outfile " << filenameBase << ".pdf";
+		scriptOS << "pdfunite " << filenameBase << "-components/*.pdf " << filenameBase << ".pdf"
+			<< " || pdfjoin -q --preamble '\\usepackage{hyperref} \\hypersetup{pdfpagelayout=SinglePage}' --rotateoversize false --outfile " << filenameBase << ".pdf";
 		for (int i=0; i < frame; i++) {
 			std::string stepBase;
 			{
