@@ -42,7 +42,7 @@ void register_access(void *handler, void *start, size_t length)
 		// An access that is not a subset of the parent accesses, therefore
 		// (if the code is correct) it must be temporary data created by the parent
 		DependencyDomain *dependencyDomain = currentWorkerThread->getDependencyDomain();
-		accessSequence = &(*dependencyDomain)[accessRange];
+		accessSequence = & (*dependencyDomain)[accessRange]._accessSequence;
 	}
 	
 	DataAccess *dataAccess;

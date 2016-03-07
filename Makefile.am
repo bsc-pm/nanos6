@@ -100,12 +100,14 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DataAccess.hpp \
 	src/dependencies/discrete/DataAccessImplementation.hpp \
 	src/dependencies/discrete/DataAccessRange.hpp \
+	src/dependencies/discrete/DataAccessRangeIndexer.hpp \
 	src/dependencies/discrete/DataAccessRegistration.hpp \
 	src/dependencies/discrete/DataAccessSequence.hpp \
 	src/dependencies/discrete/DataAccessSequenceImplementation.hpp \
 	src/dependencies/discrete/DataAccessSequenceLinkingArtifacts.hpp \
 	src/dependencies/discrete/DataAccessSequenceLinkingArtifactsImplementation.hpp \
 	src/dependencies/discrete/DependencyDomain.hpp \
+	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
 	src/dependencies/discrete/RegisterDependencies.cpp
 

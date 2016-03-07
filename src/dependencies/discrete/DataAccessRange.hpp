@@ -43,6 +43,21 @@ public:
 		return _startAddress != other._startAddress;
 	}
 	
+	bool empty() const
+	{
+		return (_startAddress == nullptr);
+	}
+	
+	void *getStartAddress() const
+	{
+		return _startAddress;
+	}
+	
+	void * const &getStartAddressConstRef() const
+	{
+		return _startAddress;
+	}
+	
 	friend std::ostream & ::operator<<(std::ostream &o, DataAccessRange const &range);
 };
 
