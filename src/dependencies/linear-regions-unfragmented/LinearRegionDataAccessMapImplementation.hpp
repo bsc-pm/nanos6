@@ -1,0 +1,9 @@
+#ifndef LINEAR_REGION_DATA_ACCESS_MAP_IMPLEMENTATION_HPP
+#define LINEAR_REGION_DATA_ACCESS_MAP_IMPLEMENTATION_HPP
+
+
+#include "LinearRegionDataAccessMap.hpp"
+#include "LinearRegionMapImplementation.hpp"
+
+
+#endif // LINEAR_REGION_DATA_ACCESS_MAP_IMPLEMENTATION_HPP

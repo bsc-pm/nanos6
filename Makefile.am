@@ -115,10 +115,27 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/TaskDataAccessesLinkingArtifacts.hpp \
 	src/dependencies/discrete/TaskDataAccessesLinkingArtifactsImplementation.hpp
 
+linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) \
+	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
+	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
+	src/dependencies/linear-regions-unfragmented/DataAccessRange.hpp \
+	src/dependencies/linear-regions-unfragmented/DataAccessRangeIndexer.hpp \
+	src/dependencies/linear-regions-unfragmented/DataAccessRegistration.hpp \
+	src/dependencies/linear-regions-unfragmented/DependencyDomain.hpp \
+	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMap.hpp \
+	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
+	src/dependencies/linear-regions-unfragmented/LinearRegionMap.hpp \
+	src/dependencies/linear-regions-unfragmented/LinearRegionMapImplementation.hpp \
+	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp
+
 
 if DISCRETE_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
 common_sources += $(discrete_dependency_sources)
+endif
+if LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES
+AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions-unfragmented
+common_sources += $(linear_regions_unfragmented_dependency_sources)
 endif
 
 

@@ -89,11 +89,15 @@ case x"${ac_with_dependencies}" in
 	x"discrete")
 		AC_MSG_RESULT([${ac_with_dependencies}])
 		;;
+	x"linear-regions-unfragmented")
+		AC_MSG_RESULT([${ac_with_dependencies}])
+		;;
 	*)
 		AC_MSG_ERROR([unknown dependency type ${ac_with_dependencies}])
 		;;
 esac
 AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdiscrete"])
+AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-unfragmented"])
 
 AX_CHECK_EXTRAE
 
