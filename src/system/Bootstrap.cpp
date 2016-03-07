@@ -20,9 +20,16 @@ static std::atomic<int> shutdownDueToSignalNumber(0);
 
 static void signalHandler(int signum)
 {
-	// By default set up the termination flag
+	// SIGABRT needs special handling
+	if (signum == SIGABRT) {
+		Instrument::shutdown();
+		return;
+	}
+	
+	// For the rest, just set up the termination flag
 	shutdownDueToSignalNumber.store(signum);
 	nanos_notify_ready_for_shutdown();
+	
 }
 
 
@@ -58,6 +65,10 @@ void nanos_init(void) {
 	if (handleSigQuit) {
 		programSignal(SIGQUIT);
 	}
+	
+	#ifndef NDEBUG
+		programSignal(SIGABRT);
+	#endif
 }
 
 void nanos_wait_until_shutdown(void) {
