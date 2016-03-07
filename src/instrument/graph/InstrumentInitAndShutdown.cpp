@@ -877,7 +877,7 @@ namespace Instrument {
 				}
 				access._previousLinks.clear();
 				
-				for (auto nextAccessLink : access._nextLinks) {
+				for (auto &nextAccessLink : access._nextLinks) {
 					// access_t &nextAccess = getAccess(nextAccessLink.first);
 					// nextAccess._previousLinks.erase(removedDataAccess->_accessId);
 					nextAccessLink.second._status = link_to_next_t::dead_link_status;
