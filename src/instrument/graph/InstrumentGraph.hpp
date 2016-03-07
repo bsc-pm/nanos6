@@ -12,6 +12,8 @@
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentTaskId.hpp>
 
+#include <DataAccessRangeIndexer.hpp>
+
 #include <atomic>
 #include <deque>
 #include <list>
@@ -41,31 +43,31 @@ namespace Instrument {
 		typedef std::set<task_id_t> children_list_t;
 		
 		struct dependency_info_t {
+			DataAccessRange _accessRange;
 			std::set<task_id_t> _lastReaders;
 			task_id_t _lastWriter;
 			DataAccessType _lastAccessType;
 			
-			dependency_info_t()
-				: _lastReaders(), _lastWriter(-1), _lastAccessType(READ_ACCESS_TYPE)
+			dependency_info_t(DataAccessRange accessRange = DataAccessRange())
+				: _accessRange(accessRange), _lastReaders(), _lastWriter(-1), _lastAccessType(READ_ACCESS_TYPE)
 			{
 			}
-		};
-		
-		typedef std::map<void *, dependency_info_t> dependency_info_map_t;
-		
-		//! \brief a dependency edge between 2 tasks
-		struct edge_t {
-			task_id_t _source;
-			task_id_t _sink;
 			
-			edge_t(task_id_t source, task_id_t sink)
-				: _source(source), _sink(sink)
+			DataAccessRange const &getAccessRange() const
 			{
+				return _accessRange;
+			}
+			
+			DataAccessRange &getAccessRange()
+			{
+				return _accessRange;
 			}
 		};
 		
-		//! \brief this is the list of dependency edges
-		typedef std::deque<edge_t> dependency_edge_list_t;
+		typedef DataAccessRangeIndexer<dependency_info_t> dependency_info_map_t;
+		
+		//! \brief this is the list of dependency edges grouped by source
+		typedef std::map<task_id_t, std::set<task_id_t>> dependency_edge_sinks_by_source_t;
 		
 		typedef enum {
 			READ = READ_ACCESS_TYPE,
@@ -125,7 +127,7 @@ namespace Instrument {
 		
 		struct task_group_t : public phase_t {
 			children_list_t _children;
-			dependency_edge_list_t _dependencyEdges;
+			dependency_edge_sinks_by_source_t _dependenciesGroupedBySource;
 			task_id_t _longestPathFirstTaskId;
 			task_id_t _longestPathLastTaskId;
 			dependency_info_map_t _dependencyInfoMap;
@@ -134,7 +136,7 @@ namespace Instrument {
 			
 			task_group_t(taskwait_id_t id)
 				: phase_t(),
-				_children(), _dependencyEdges(),
+				_children(), _dependenciesGroupedBySource(),
 				_longestPathFirstTaskId(), _longestPathLastTaskId(),
 				_dependencyInfoMap(),
 				_dataAccesses(),

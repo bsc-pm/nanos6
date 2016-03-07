@@ -237,8 +237,11 @@ namespace Instrument {
 			}
 			
 			// Fill out the successor lists
-			for (edge_t edge : taskGroup->_dependencyEdges) {
-				taskNodeInfoMap[edge._source]._successors.push_back(edge._sink);
+			for (auto const &sourceAndSinks : taskGroup->_dependenciesGroupedBySource) {
+				task_id_t const &source = sourceAndSinks.first;
+				for (task_id_t const &sink : sourceAndSinks.second) {
+					taskNodeInfoMap[source]._successors.push_back(sink);
+				}
 			}
 			
 			task_id_t longestPathStart;
@@ -361,29 +364,33 @@ namespace Instrument {
 						}
 					}
 					
-					for (edge_t edge : taskGroup->_dependencyEdges) {
-						size_t sourceIndex = taskId2Index[edge._source];
-						size_t sinkIndex = taskId2Index[edge._sink];
-						
-						linksStream << "\t" << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
-						linksStream << " [";
-						if (currentPhaseSinkLinks[sourceIndex] != currentPhaseLinks[sourceIndex]) {
-							linksStream << " ltail=\"" << currentPhaseLinks[sourceIndex] << "\"";
+					
+					for (auto const &sourceAndSinks : taskGroup->_dependenciesGroupedBySource) {
+						task_id_t const &source = sourceAndSinks.first;
+						for (task_id_t const &sink : sourceAndSinks.second) {
+							size_t sourceIndex = taskId2Index[source];
+							size_t sinkIndex = taskId2Index[sink];
+							
+							linksStream << "\t" << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
+							linksStream << " [";
+							if (currentPhaseSinkLinks[sourceIndex] != currentPhaseLinks[sourceIndex]) {
+								linksStream << " ltail=\"" << currentPhaseLinks[sourceIndex] << "\"";
+							}
+							if (currentPhaseSourceLinks[sinkIndex] != currentPhaseLinks[sinkIndex]) {
+								linksStream << " lhead=\"" << currentPhaseLinks[sinkIndex] << "\"";
+							}
+							
+							task_info_t const &sourceInfo = _taskToInfoMap[source];
+							task_info_t const &sinkInfo = _taskToInfoMap[sink];
+							
+							if ((sourceInfo._status == not_created_status) || (sourceInfo._status == finished_status)
+								|| (sinkInfo._status == not_created_status) || (sinkInfo._status == finished_status))
+							{
+								linksStream << " color=\"#888888\" fillcolor=\"#888888\"";
+							}
+							
+							linksStream << " weight=16 ]" << std::endl;
 						}
-						if (currentPhaseSourceLinks[sinkIndex] != currentPhaseLinks[sinkIndex]) {
-							linksStream << " lhead=\"" << currentPhaseLinks[sinkIndex] << "\"";
-						}
-						
-						task_info_t const &sourceInfo = _taskToInfoMap[edge._source];
-						task_info_t const &sinkInfo = _taskToInfoMap[edge._sink];
-						
-						if ((sourceInfo._status == not_created_status) || (sourceInfo._status == finished_status)
-							|| (sinkInfo._status == not_created_status) || (sinkInfo._status == finished_status))
-						{
-							linksStream << " color=\"#888888\" fillcolor=\"#888888\"";
-						}
-						
-						linksStream << " weight=16 ]" << std::endl;
 					}
 					
 					for (data_access_id_t sourceAccessId : taskGroup->_dataAccesses) {

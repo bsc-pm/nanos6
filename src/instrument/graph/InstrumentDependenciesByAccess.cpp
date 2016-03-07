@@ -14,7 +14,57 @@
 namespace Instrument {
 	using namespace Graph;
 	
-	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, __attribute__((unused)) bool weak, void *start, __attribute__((unused)) size_t length)
+	
+	void registerTaskAccessInDependencyInfo(dependency_info_t &dependencyInfo, task_group_t *taskGroup, task_id_t taskId, DataAccessType accessType)
+	{
+		if (accessType == WRITE_ACCESS_TYPE) {
+			// Handle repeated accesses
+			if (dependencyInfo._lastWriter == taskId) {
+				return;
+			}
+			
+			// Handle access upgrades
+			dependencyInfo._lastReaders.erase(taskId);
+			
+			if (dependencyInfo._lastAccessType == WRITE_ACCESS_TYPE) {
+				if (dependencyInfo._lastWriter != -1) {
+					taskGroup->_dependenciesGroupedBySource[dependencyInfo._lastWriter].insert(taskId);
+				}
+			} else {
+				assert(dependencyInfo._lastAccessType == READ_ACCESS_TYPE);
+				for (auto predecessor : dependencyInfo._lastReaders) {
+					taskGroup->_dependenciesGroupedBySource[predecessor].insert(taskId);
+				}
+			}
+			
+			dependencyInfo._lastWriter = taskId;
+			dependencyInfo._lastAccessType = WRITE_ACCESS_TYPE;
+			dependencyInfo._lastReaders.clear();
+		} else {
+			assert(accessType == READ_ACCESS_TYPE);
+			
+			// Handle access upgrades
+			if (dependencyInfo._lastWriter == taskId) {
+				return;
+			}
+			
+			// Handle repeated accesses
+			if (dependencyInfo._lastReaders.find(taskId) != dependencyInfo._lastReaders.end()) {
+				return;
+			}
+			
+			if (dependencyInfo._lastWriter != -1) {
+				taskGroup->_dependenciesGroupedBySource[dependencyInfo._lastWriter].insert(taskId);
+			}
+			
+			assert((dependencyInfo._lastAccessType == READ_ACCESS_TYPE) || dependencyInfo._lastReaders.empty());
+			dependencyInfo._lastAccessType = READ_ACCESS_TYPE;
+			dependencyInfo._lastReaders.insert(taskId);
+		}
+	}
+	
+	
+	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, __attribute__((unused)) bool weak, void *start, size_t length)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
@@ -51,51 +101,40 @@ namespace Instrument {
 			accessType = WRITE_ACCESS_TYPE;
 		}
 		
-		dependency_info_t &dependencyInfo = taskGroup->_dependencyInfoMap[start];
-		if (accessType == WRITE_ACCESS_TYPE) {
-			// Handle repeated accesses
-			if (dependencyInfo._lastWriter == taskId) {
-				return;
+		DataAccessRange accessRange(start, length);
+		taskGroup->_dependencyInfoMap.processIntersectingAndMissing(
+			accessRange,
+			// Information that overlaps in the current map
+			[&](dependency_info_map_t::iterator position) -> bool {
+				// Fragment the node as needed
+				dependency_info_map_t::iterator interestingFragmentPosition
+					= taskGroup->_dependencyInfoMap.fragmentByIntersection(position, accessRange, false);
+					assert(interestingFragmentPosition != taskGroup->_dependencyInfoMap.end());
+				
+				dependency_info_t &dependencyInfo = *interestingFragmentPosition;
+				registerTaskAccessInDependencyInfo(
+					dependencyInfo, taskGroup,
+					taskId, accessType
+				);
+				
+				return true;
+			},
+			// Range not currently in the map
+			[&](DataAccessRange missingRange) -> bool {
+				// Add the range to the map
+				dependency_info_map_t::iterator newDependencyInfoPosition
+					= taskGroup->_dependencyInfoMap.insert( dependency_info_t(missingRange) );
+				assert(newDependencyInfoPosition != taskGroup->_dependencyInfoMap.end());
+				
+				dependency_info_t &dependencyInfo = *newDependencyInfoPosition;
+				registerTaskAccessInDependencyInfo(
+					dependencyInfo, taskGroup,
+					taskId, accessType
+				);
+				
+				return true;
 			}
-			
-			// Handle access upgrades
-			dependencyInfo._lastReaders.erase(taskId);
-			
-			if (dependencyInfo._lastAccessType == WRITE_ACCESS_TYPE) {
-				if (dependencyInfo._lastWriter != -1) {
-					taskGroup->_dependencyEdges.push_back(edge_t(dependencyInfo._lastWriter, taskId));
-				}
-			} else {
-				assert(dependencyInfo._lastAccessType == READ_ACCESS_TYPE);
-				for (auto predecessor : dependencyInfo._lastReaders) {
-					taskGroup->_dependencyEdges.push_back(edge_t(predecessor, taskId));
-				}
-			}
-			
-			dependencyInfo._lastWriter = taskId;
-			dependencyInfo._lastAccessType = WRITE_ACCESS_TYPE;
-			dependencyInfo._lastReaders.clear();
-		} else {
-			assert(accessType == READ_ACCESS_TYPE);
-			
-			// Handle access upgrades
-			if (dependencyInfo._lastWriter == taskId) {
-				return;
-			}
-			
-			// Handle repeated accesses
-			if (dependencyInfo._lastReaders.find(taskId) != dependencyInfo._lastReaders.end()) {
-				return;
-			}
-			
-			if (dependencyInfo._lastWriter != -1) {
-				taskGroup->_dependencyEdges.push_back(edge_t(dependencyInfo._lastWriter, taskId));
-			}
-			
-			assert((dependencyInfo._lastAccessType == READ_ACCESS_TYPE) || dependencyInfo._lastReaders.empty());
-			dependencyInfo._lastAccessType = READ_ACCESS_TYPE;
-			dependencyInfo._lastReaders.insert(taskId);
-		}
+		);
 	}
 }
 
