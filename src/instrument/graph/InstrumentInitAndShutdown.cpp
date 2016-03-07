@@ -309,7 +309,8 @@ namespace Instrument {
 			
 			std::vector<std::string> previousPhaseLinks;
 			std::vector<std::string> previousPhaseSinkLinks;
-			std::vector<Bool> previousPhaseGoodBottomLinks;
+			std::vector<Bool> previousPhaseBestBottomLinks;
+			std::vector<Bool> previousPhaseElementWithoutSuccessors;
 			std::vector<task_status_t> previousPhaseStatuses;
 			for (unsigned int phase = 0; phase < taskInfo._phaseList.size(); phase++) {
 				phase_t *currentPhase = taskInfo._phaseList[phase];
@@ -325,8 +326,10 @@ namespace Instrument {
 				std::vector<std::string> currentPhaseLinks(phaseElements);
 				std::vector<std::string> currentPhaseSourceLinks(phaseElements);
 				std::vector<std::string> currentPhaseSinkLinks(phaseElements);
-				std::vector<Bool> goodTopLink(phaseElements);
-				std::vector<Bool> goodBottomLink(phaseElements);
+				std::vector<Bool> bestTopLink(phaseElements);
+				std::vector<Bool> bestBottomLink(phaseElements);
+				std::vector<Bool> currentPhaseElementWithoutPredecessors(phaseElements, true);
+				std::vector<Bool> currentPhaseElementWithoutSuccessors(phaseElements, true);
 				std::vector<task_status_t> currentPhaseStatuses(phaseElements);
 				if (taskGroup != nullptr) {
 					long currentCluster = _nextCluster++;
@@ -353,8 +356,8 @@ namespace Instrument {
 								linksStream
 							);
 							
-							goodTopLink[index] = (taskGroup->_longestPathFirstTaskId == childId);
-							goodBottomLink[index] = (taskGroup->_longestPathLastTaskId == childId);
+							bestTopLink[index] = (taskGroup->_longestPathFirstTaskId == childId);
+							bestBottomLink[index] = (taskGroup->_longestPathLastTaskId == childId);
 							
 							taskId2Index[childId] = index;
 							task_info_t const &childInfo = _taskToInfoMap[childId];
@@ -370,6 +373,9 @@ namespace Instrument {
 						for (task_id_t const &sink : sourceAndSinks.second) {
 							size_t sourceIndex = taskId2Index[source];
 							size_t sinkIndex = taskId2Index[sink];
+							
+							currentPhaseElementWithoutPredecessors[sinkIndex] = false;
+							currentPhaseElementWithoutSuccessors[sourceIndex] = false;
 							
 							linksStream << "\t" << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
 							linksStream << " [";
@@ -541,8 +547,8 @@ namespace Instrument {
 					currentPhaseSourceLinks[0] = currentPhaseLink;
 					currentPhaseSinkLinks[0] = currentPhaseLink;
 					currentPhaseStatuses[0] = taskwaitStatus._status;
-					goodTopLink[0] = true;
-					goodBottomLink[0] = true;
+					bestTopLink[0] = true;
+					bestBottomLink[0] = true;
 				} else {
 					assert(false);
 				}
@@ -550,7 +556,7 @@ namespace Instrument {
 				if ((phase == 0) && !sourceLinkIsSet) {
 					std::vector<std::string> validSourceLinks;
 					for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
-						if (goodTopLink[currentIndex]) {
+						if (bestTopLink[currentIndex]) {
 							validSourceLinks.push_back(currentPhaseSourceLinks[currentIndex]);
 						}
 					}
@@ -562,7 +568,7 @@ namespace Instrument {
 				if (phase == taskInfo._phaseList.size()-1) {
 					std::vector<std::string> validSinkLinks;
 					for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
-						if (goodBottomLink[currentIndex]) {
+						if (bestBottomLink[currentIndex]) {
 							validSinkLinks.push_back(currentPhaseSinkLinks[currentIndex]);
 						}
 					}
@@ -574,13 +580,13 @@ namespace Instrument {
 					size_t previousPhaseElements = previousPhaseLinks.size();
 					
 					for (size_t previousIndex=0; previousIndex < previousPhaseElements; previousIndex++) {
-						if (!previousPhaseGoodBottomLinks[previousIndex]) {
+						if (!previousPhaseElementWithoutSuccessors[previousIndex]) {
 							// Link only leaf nodes of the previous phase
 							continue;
 						}
 						
 						for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
-							if (!goodTopLink[currentIndex]) {
+							if (!currentPhaseElementWithoutPredecessors[currentIndex]) {
 								// Link only top nodes of the current phase
 								continue;
 							}
@@ -604,7 +610,8 @@ namespace Instrument {
 				
 				previousPhaseLinks = std::move(currentPhaseLinks);
 				previousPhaseSinkLinks = std::move(currentPhaseSinkLinks);
-				previousPhaseGoodBottomLinks = std::move(goodBottomLink);
+				previousPhaseBestBottomLinks = std::move(bestBottomLink);
+				previousPhaseElementWithoutSuccessors = std::move(currentPhaseElementWithoutSuccessors);
 				previousPhaseStatuses = std::move(currentPhaseStatuses);
 			}
 			
