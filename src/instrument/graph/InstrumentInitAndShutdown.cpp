@@ -454,36 +454,40 @@ namespace Instrument {
 						}
 						
 						if ((sourceAccess._superAccess != data_access_id_t()) && (sourceAccess._type != NOT_CREATED)) {
-							bool isFirst = true;
-							for (auto previousId : sourceAccess._previousLinks) {
-								access_t &previous = getAccess(previousId);
-								auto positionOflinkToCurrent = previous._nextLinks.find(sourceAccessId);
-								assert(positionOflinkToCurrent != previous._nextLinks.end());
+							access_t &superAccess = _accessIdToAccessMap[sourceAccess._superAccess];
+							
+							if (!superAccess._deleted) {
+								bool isFirst = true;
+								for (auto previousId : sourceAccess._previousLinks) {
+									access_t &previous = getAccess(previousId);
+									auto positionOflinkToCurrent = previous._nextLinks.find(sourceAccessId);
+									assert(positionOflinkToCurrent != previous._nextLinks.end());
+									
+									if (positionOflinkToCurrent->second._direct && (positionOflinkToCurrent->second._status == link_to_next_t::created_link_status)) {
+										isFirst = false;
+										break;
+									}
+								}
 								
-								if (positionOflinkToCurrent->second._direct && (positionOflinkToCurrent->second._status == link_to_next_t::created_link_status)) {
-									isFirst = false;
-									break;
+								bool isLast = true;
+								for (auto nextLink : sourceAccess._nextLinks) {
+									if (nextLink.second._direct && (nextLink.second._status == link_to_next_t::created_link_status)) {
+										isLast = false;
+										break;
+									}
 								}
-							}
-							
-							bool isLast = true;
-							for (auto nextLink : sourceAccess._nextLinks) {
-								if (nextLink.second._direct && (nextLink.second._status == link_to_next_t::created_link_status)) {
-									isLast = false;
-									break;
+								
+								if (isFirst && !isLast) {
+									linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"diamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
 								}
-							}
-							
-							if (isFirst && !isLast) {
-								linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"diamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
-							}
-							
-							if (isLast && !isFirst) {
-								linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"odiamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
-							}
-							
-							if (isFirst && isLast) {
-								linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"diamondodiamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
+								
+								if (isLast && !isFirst) {
+									linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"odiamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
+								}
+								
+								if (isFirst && isLast) {
+									linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"diamondodiamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
+								}
 							}
 						}
 						
