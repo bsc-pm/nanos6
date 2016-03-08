@@ -753,6 +753,8 @@ namespace Instrument {
 				assert((taskInfo._status == not_started_status) || (taskInfo._status == blocked_status));
 				taskInfo._status = started_status;
 				taskInfo._lastCPU = enterTask->_cpu;
+				
+				accumulateStepsTriggeredByTask = -2; // Force the emission of a frame
 			} else if (exitTask != nullptr) {
 				if (accumulateStepsTriggeredByTask != -1) {
 					emitFrame(dir, filenameBase, frame);
@@ -782,6 +784,8 @@ namespace Instrument {
 				assert(taskInfo._status == started_status);
 				taskInfo._status = blocked_status;
 				taskInfo._lastCPU = enterTaskwait->_cpu;
+				
+				accumulateStepsTriggeredByTask = -2; // Force the emission of a frame
 			} else if (exitTaskwait != nullptr) {
 				if (accumulateStepsTriggeredByTask != -1) {
 					emitFrame(dir, filenameBase, frame);
