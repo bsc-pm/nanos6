@@ -410,7 +410,11 @@ namespace Instrument {
 						ofs << indentation << "data_access_" << sourceAccessId << " [ shape=ellipse";
 						switch (sourceAccess._type) {
 							case READ:
-								ofs << " label=\"" << sourceAccessId << ": R\" style=\"filled,dashed\"";
+								if (sourceAccess._weak) {
+									ofs << " label=\"" << sourceAccessId << ": r\" style=\"filled,dashed\"";
+								} else {
+									ofs << " label=\"" << sourceAccessId << ": R\" style=\"filled,dashed\"";
+								}
 								if (sourceAccess._deleted) {
 									ofs << " fillcolor=\"#AAFFAA\"";
 								} else {
@@ -418,7 +422,11 @@ namespace Instrument {
 								}
 								break;
 							case WRITE:
-								ofs << " label=\"" << sourceAccessId << ": W\" style=\"filled,dashed\"";
+								if (sourceAccess._weak) {
+									ofs << " label=\"" << sourceAccessId << ": w\" style=\"filled,dashed\"";
+								} else {
+									ofs << " label=\"" << sourceAccessId << ": W\" style=\"filled,dashed\"";
+								}
 								if (sourceAccess._deleted) {
 									ofs << " fillcolor=\"#FFAAAA\"";
 								} else {
@@ -426,7 +434,11 @@ namespace Instrument {
 								}
 								break;
 							case READWRITE:
-								ofs << " label=\"" << sourceAccessId << ": RW\" style=\"filled,dashed\"";
+								if (sourceAccess._weak) {
+									ofs << " label=\"" << sourceAccessId << ": rw\" style=\"filled,dashed\"";
+								} else {
+									ofs << " label=\"" << sourceAccessId << ": RW\" style=\"filled,dashed\"";
+								}
 								if (sourceAccess._deleted) {
 									ofs << " fillcolor=\"#AAFFAA;0.5:#FFAAAA\"";
 								} else {
@@ -849,6 +861,7 @@ namespace Instrument {
 				access._superAccess = createDataAccess->_superAccessId;
 				access._originator = createDataAccess->_originatorTaskId;
 				access._type = (access_type_t) createDataAccess->_accessType;
+				access._weak = createDataAccess->_weak;
 				access._satisfied = createDataAccess->_satisfied;
 				
 				accumulateStepsTriggeredByTask = createDataAccess->_originatorTaskId;

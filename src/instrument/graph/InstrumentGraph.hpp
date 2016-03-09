@@ -101,6 +101,7 @@ namespace Instrument {
 		struct access_t {
 			data_access_id_t _superAccess;
 			access_type_t _type;
+			bool _weak;
 			bool _satisfied;
 			task_id_t _originator;
 			bool _deleted;
@@ -109,7 +110,7 @@ namespace Instrument {
 			
 			access_t():
 				_superAccess(),
-				_type(NOT_CREATED), _satisfied(false), _originator(-1), _deleted(false),
+				_type(NOT_CREATED), _weak(false), _satisfied(false), _originator(-1), _deleted(false),
 				_previousLinks(), _nextLinks()
 			{
 			}
@@ -280,17 +281,18 @@ namespace Instrument {
 			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
 			DataAccessType _accessType;
+			bool _weak;
 			bool _satisfied;
 			task_id_t _originatorTaskId;
 			
 			create_data_access_step_t(
 				long cpu, thread_id_t threadId,
 				data_access_id_t superAccessId, data_access_id_t accessId,
-				DataAccessType accessType, bool satisfied, task_id_t originatorTaskId
+				DataAccessType accessType, bool weak, bool satisfied, task_id_t originatorTaskId
 			)
 			: execution_step_t(cpu, threadId),
 			_superAccessId(superAccessId), _accessId(accessId),
-			_accessType(accessType), _satisfied(satisfied), _originatorTaskId(originatorTaskId)
+			_accessType(accessType), _weak(weak), _satisfied(satisfied), _originatorTaskId(originatorTaskId)
 			{
 			}
 		};
