@@ -98,6 +98,7 @@ case x"${ac_with_dependencies}" in
 esac
 AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdiscrete"])
 AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-unfragmented"])
+AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
 
 AX_CHECK_EXTRAE
 
