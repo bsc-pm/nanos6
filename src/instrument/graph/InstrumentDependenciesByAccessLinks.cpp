@@ -16,7 +16,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType,
 		bool weak,
-		__attribute__((unused)) DataAccessRange range,
+		DataAccessRange range,
 		bool satisfied,
 		task_id_t originatorTaskId
 	) {
@@ -38,7 +38,7 @@ namespace Instrument {
 		
 		create_data_access_step_t *step = new create_data_access_step_t(
 			cpu->_virtualCPUId, threadId,
-			superAccessId, dataAccessId, accessType, weak, satisfied, originatorTaskId
+			superAccessId, dataAccessId, accessType, range, weak, satisfied, originatorTaskId
 		);
 		_executionSequence.push_back(step);
 		

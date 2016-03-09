@@ -33,6 +33,7 @@ namespace Instrument {
 	static EnvironmentVariable<bool> _showSpuriousDependencyStructures("NANOS_GRAPH_SHOW_SPURIOUS_DEPENDENCY_STRUCTURES", false);
 	static EnvironmentVariable<bool> _showDeadDependencyStructures("NANOS_GRAPH_SHOW_DEAD_DEPENDENCY_STRUCTURES", false);
 	static EnvironmentVariable<bool> _showAllSteps("NANOS_GRAPH_SHOW_ALL_STEPS", false);
+	static EnvironmentVariable<bool> _showRanges("NANOS_GRAPH_SHOW_RANGES", false);
 	static EnvironmentVariable<bool> _autoDisplay("NANOS_GRAPH_DISPLAY", false);
 	static EnvironmentVariable<std::string> _displayCommand("NANOS_GRAPH_DISPLAY_COMMAND", "xdg-open");
 	
@@ -407,46 +408,58 @@ namespace Instrument {
 							continue;
 						}
 						
-						ofs << indentation << "data_access_" << sourceAccessId << " [ shape=ellipse";
+						ofs << indentation
+							<< "data_access_" << sourceAccessId
+							<< " [ shape=ellipse style=\"filled,dashed\""
+							<<   " label=\"" << sourceAccessId;
 						switch (sourceAccess._type) {
 							case READ:
 								if (sourceAccess._weak) {
-									ofs << " label=\"" << sourceAccessId << ": r\" style=\"filled,dashed\"";
+									ofs << ": r";
 								} else {
-									ofs << " label=\"" << sourceAccessId << ": R\" style=\"filled,dashed\"";
+									ofs << ": R";
+								}
+								if (_showRanges) {
+									ofs << "\\n" << sourceAccess._range;
 								}
 								if (sourceAccess._deleted) {
-									ofs << " fillcolor=\"#AAFFAA\"";
+									ofs << "\" fillcolor=\"#AAFFAA\"";
 								} else {
-									ofs << " fillcolor=\"#00FF00\"";
+									ofs << "\" fillcolor=\"#00FF00\"";
 								}
 								break;
 							case WRITE:
 								if (sourceAccess._weak) {
-									ofs << " label=\"" << sourceAccessId << ": w\" style=\"filled,dashed\"";
+									ofs << ": w";
 								} else {
-									ofs << " label=\"" << sourceAccessId << ": W\" style=\"filled,dashed\"";
+									ofs << ": W";
+								}
+								if (_showRanges) {
+									ofs << "\\n" << sourceAccess._range;
 								}
 								if (sourceAccess._deleted) {
-									ofs << " fillcolor=\"#FFAAAA\"";
+									ofs << "\" fillcolor=\"#FFAAAA\"";
 								} else {
-									ofs << " fillcolor=\"#FF0000\"";
+									ofs << "\" fillcolor=\"#FF0000\"";
 								}
 								break;
 							case READWRITE:
 								if (sourceAccess._weak) {
-									ofs << " label=\"" << sourceAccessId << ": rw\" style=\"filled,dashed\"";
+									ofs << ": rw";
 								} else {
-									ofs << " label=\"" << sourceAccessId << ": RW\" style=\"filled,dashed\"";
+									ofs << ": RW";
+								}
+								if (_showRanges) {
+									ofs << "\\n" << sourceAccess._range;
 								}
 								if (sourceAccess._deleted) {
-									ofs << " fillcolor=\"#AAFFAA;0.5:#FFAAAA\"";
+									ofs << "\" fillcolor=\"#AAFFAA;0.5:#FFAAAA\"";
 								} else {
-									ofs << " fillcolor=\"#00FF00;0.5:#FF0000\"";
+									ofs << "\" fillcolor=\"#00FF00;0.5:#FF0000\"";
 								}
 								break;
 							case NOT_CREATED:
-								ofs << " label=\"" << sourceAccessId << "\" style=\"filled,dashed\" fillcolor=\"#AAAAAA\"";
+								ofs << "\" fillcolor=\"#AAAAAA\"";
 								assert(!sourceAccess._deleted);
 								break;
 						}
@@ -861,6 +874,7 @@ namespace Instrument {
 				access._superAccess = createDataAccess->_superAccessId;
 				access._originator = createDataAccess->_originatorTaskId;
 				access._type = (access_type_t) createDataAccess->_accessType;
+				access._range = createDataAccess->_range;
 				access._weak = createDataAccess->_weak;
 				access._satisfied = createDataAccess->_satisfied;
 				
