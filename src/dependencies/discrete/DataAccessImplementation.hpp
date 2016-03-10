@@ -12,6 +12,26 @@
 #include <InstrumentDependenciesByGroup.hpp>
 
 
+inline DataAccess::DataAccess(
+	DataAccessSequence *dataAccessSequence,
+	DataAccessType type,
+	bool weak,
+	bool satisfied,
+	Task *originator,
+	DataAccessRange accessRange,
+	Instrument::data_access_id_t instrumentationId
+)
+	: DataAccessBase(type, weak, originator, instrumentationId),
+	_satisfied(satisfied),
+	_accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
+	_subaccesses(accessRange, this, dataAccessSequence->_lock)
+{
+	assert(dataAccessSequence != 0);
+}
+
+
+
+
 inline bool DataAccess::evaluateSatisfiability(DataAccess *effectivePrevious, DataAccessType nextAccessType)
 {
 	if (effectivePrevious == nullptr) {
@@ -358,6 +378,8 @@ bool DataAccess::upgradeAccess(Task *task, DataAccess /* INOUT */ * /* INOUT */ 
 	}
 }
 
+
+#include "DataAccessSequenceImplementation.hpp"
 
 
 #endif // DATA_ACCESS_IMPLEMENTATION_HPP

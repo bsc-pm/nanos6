@@ -33,8 +33,6 @@ universal_debug_sources = \
 common_sources = \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
-	src/dependencies/TaskDataAccessesLinkingArtifacts.hpp \
-	src/dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
@@ -109,7 +107,10 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DependencyDomain.hpp \
 	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
-	src/dependencies/discrete/RegisterDependencies.cpp
+	src/dependencies/discrete/RegisterDependencies.cpp \
+	src/dependencies/discrete/TaskDataAccesses.hpp \
+	src/dependencies/discrete/TaskDataAccessesLinkingArtifacts.hpp \
+	src/dependencies/discrete/TaskDataAccessesLinkingArtifactsImplementation.hpp
 
 
 if DISCRETE_DEPENDENCIES

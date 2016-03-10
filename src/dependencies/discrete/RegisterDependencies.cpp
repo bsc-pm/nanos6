@@ -49,7 +49,7 @@ void register_access(void *handler, void *start, size_t length)
 	bool canStart = DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK, accessSequence, /* OUT */ dataAccess);
 	if (dataAccess != 0) {
 		// A new data access, as opposed to a repeated or upgraded one
-		task->addDataAccess(dataAccess);
+		task->getDataAccesses().push_back(*dataAccess);
 	}
 	
 	if (!canStart) {

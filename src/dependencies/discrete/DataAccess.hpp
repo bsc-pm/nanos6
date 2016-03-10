@@ -21,6 +21,9 @@ class Task;
 struct DataAccess : public DataAccessBase {
 	typedef boost::intrusive::list_member_hook<link_mode_t> access_sequence_links_t;
 	
+	//! True if the data access can already be performed
+	bool _satisfied;
+	
 	//! Links used by the list within DataAccessSequence
 	access_sequence_links_t _accessSequenceLinks;
 	
@@ -38,13 +41,7 @@ struct DataAccess : public DataAccessBase {
 		Task *originator,
 		DataAccessRange accessRange,
 		Instrument::data_access_id_t instrumentationId
-	)
-		: DataAccessBase(type, weak, satisfied, originator, instrumentationId),
-		_accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
-		_subaccesses(accessRange, this, dataAccessSequence->_lock)
-	{
-		assert(dataAccessSequence != 0);
-	}
+	);
 	
 	
 	//! \brief Evaluate the satisfiability of a DataAccessType according to its effective previous (if any)
@@ -82,6 +79,9 @@ struct DataAccess : public DataAccessBase {
 	static inline bool upgradeAccess(Task* task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType, bool newAccessWeakness);
 	
 };
+
+
+#include "DataAccessSequence.hpp"
 
 
 #endif // DATA_ACCESS_HPP

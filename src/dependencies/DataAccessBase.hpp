@@ -7,6 +7,8 @@
 #include <boost/intrusive/list_hook.hpp>
 
 #include <InstrumentDataAccessId.hpp>
+#include <TaskDataAccesses.hpp>
+#include <TaskDataAccessesLinkingArtifacts.hpp>
 
 
 class Task;
@@ -22,20 +24,14 @@ struct DataAccessBase {
 		typedef boost::intrusive::link_mode<boost::intrusive::safe_link> link_mode_t;
 	#endif
 	
-	typedef boost::intrusive::list_member_hook<link_mode_t> task_access_list_links_t;
-	
-	
 	//! Links used by the list of accesses of a Task
-	task_access_list_links_t _taskAccessListLinks;
+	TaskDataAccessesHook _taskDataAccessesLinks;
 	
 	//! Type of access: read, write, ...
 	DataAccessType _type;
 	
 	//! True iff the access is weak
 	bool _weak;
-	
-	//! If the data access can already be performed
-	bool _satisfied;
 	
 	//! Tasks to which the access corresponds
 	Task *_originator;
@@ -46,12 +42,11 @@ struct DataAccessBase {
 	DataAccessBase(
 		DataAccessType type,
 		bool weak,
-		bool satisfied,
 		Task *originator,
 		Instrument::data_access_id_t instrumentationId
 	)
-		: _taskAccessListLinks(), 
-		_type(type), _weak(weak), _satisfied(satisfied), _originator(originator),
+		: _taskDataAccessesLinks(), 
+		_type(type), _weak(weak), _originator(originator),
 		_instrumentationId(instrumentationId)
 	{
 		assert(originator != 0);

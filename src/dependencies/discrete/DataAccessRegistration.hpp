@@ -287,17 +287,20 @@ public:
 		HardwarePlace *hardwarePlace = currentThread->getHardwarePlace();
 		assert(hardwarePlace != 0);
 		
-		DataAccess *dataAccess = finishedTask->popDataAccess();
+		TaskDataAccesses &taskDataAccesses = finishedTask->getDataAccesses();
 		
 		// A temporary list of tasks to minimize the time spent with the mutex held.
 		WorkerThread::satisfied_originator_list_t &satisfiedOriginators = currentThread->getSatisfiedOriginatorsReference();
-		while (dataAccess != 0) {
+		for (auto it = taskDataAccesses.begin(); it != taskDataAccesses.end(); it = taskDataAccesses.erase(it)) {
+			DataAccess *dataAccess = &(*it);
+			
 			assert(dataAccess->_originator == finishedTask);
 			unregisterDataAccess(finishedTask->getInstrumentationTaskId(), dataAccess, /* OUT */ satisfiedOriginators);
-			processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
 			
-			dataAccess = finishedTask->popDataAccess();
+			processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
 			satisfiedOriginators.clear();
+			
+			// FIXME: delete the access
 		}
 	}
 };
