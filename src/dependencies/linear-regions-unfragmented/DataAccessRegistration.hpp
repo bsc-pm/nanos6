@@ -531,7 +531,7 @@ private:
 		);
 		
 		previousAccess->fullLinkTo(intersectingFragment, dataAccess, !satisfied, task->getInstrumentationTaskId());
-		task->addDataAccess(dataAccess);
+		task->getDataAccesses().push_back(*dataAccess);
 		if (!satisfied && ! weak) {
 			task->increasePredecessors();
 		}
@@ -597,8 +597,8 @@ private:
 		
 		// Remove the old access from the task itself
 		{
-			Task::data_access_list_t &taskAccesses = task->getDataAccesses();
-			auto oldAccessInTaskPosition = taskAccesses.iterator_to(*(DataAccessBase *) oldDataAccess);
+			TaskDataAccesses &taskAccesses = task->getDataAccesses();
+			auto oldAccessInTaskPosition = taskAccesses.iterator_to(*oldDataAccess);
 			assert(oldAccessInTaskPosition != taskAccesses.end());
 			taskAccesses.erase(oldAccessInTaskPosition);
 		}
@@ -752,7 +752,7 @@ private:
 		
 		// Insert the new DataAccess
 		bottomMap->insert(LinearRegionDataAccessMapNode(accessRange, dataAccess));
-		task->addDataAccess(dataAccess);
+		task->getDataAccesses().push_back(*dataAccess);
 		
 		if (dataAccess->_blockerCount == 0) {
 			Instrument::dataAccessBecomesSatisfied(
@@ -824,11 +824,13 @@ public:
 		HardwarePlace *hardwarePlace = currentThread->getHardwarePlace();
 		assert(hardwarePlace != 0);
 		
-		DataAccess *dataAccess = finishedTask->popDataAccess();
-		
 		// A temporary list of tasks to minimize the time spent with the mutex held.
 		WorkerThread::satisfied_originator_list_t &satisfiedOriginators = currentThread->getSatisfiedOriginatorsReference();
-		while (dataAccess != 0) {
+		
+		TaskDataAccesses &taskDataAccesses = finishedTask->getDataAccesses();
+		for (auto it = taskDataAccesses.begin(); it != taskDataAccesses.end(); it = taskDataAccesses.erase(it)) {
+			DataAccess *dataAccess = &(*it);
+			
 			assert(dataAccess->_originator == finishedTask);
 			{
 				// Locking strategy:
@@ -851,12 +853,10 @@ public:
 				);
 			}
 			processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
-			
-			dataAccess = finishedTask->popDataAccess();
 			satisfiedOriginators.clear();
+			
+			// FIXME: delete the accesses
 		}
-		
-		// FIXME: delete the accesses
 	}
 };
 
