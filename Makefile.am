@@ -31,8 +31,6 @@ universal_debug_sources = \
 
 
 common_sources = \
-	src/dependencies/DataAccessBase.hpp \
-	src/dependencies/DataAccessType.hpp \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
@@ -91,8 +89,7 @@ common_sources = \
 
 common_dependency_sources = \
 	src/dependencies/DataAccessType.hpp \
-	src/dependencies/TaskDataAccessesLinkingArtifacts.hpp \
-	src/dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp
+	src/dependencies/DataAccessBase.hpp
 
 discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DataAccess.hpp \
