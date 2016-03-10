@@ -5,13 +5,13 @@
 #include <atomic>
 #include <cassert>
 #include <set>
-#include <boost/intrusive/list.hpp>
 
 #include "api/nanos6_rt_interface.h"
-#include "dependencies/TaskDataAccessesLinkingArtifacts.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <InstrumentTaskId.hpp>
+#include <TaskDataAccesses.hpp>
+#include <TaskDataAccessesLinkingArtifacts.hpp>
 
 
 struct DataAccess;
@@ -24,10 +24,6 @@ class WorkerThread;
 
 
 class Task {
-public:
-	//! The type of the list that contains the accesses that may determine dependencies
-	typedef boost::intrusive::list<DataAccessBase, boost::intrusive::function_hook<TaskDataAccessesLinkingArtifacts>> data_access_list_t;
-	
 private:
 	void *_argsBlock;
 	
@@ -44,7 +40,7 @@ private:
 	Task *_parent;
 	
 	//! Accesses that may determine dependencies
-	data_access_list_t _dataAccesses;
+	TaskDataAccesses _dataAccesses;
 	
 	//! Number of pending predecessors
 	std::atomic<int> _predecessorCount;
@@ -218,32 +214,14 @@ public:
 		return (_countdownToBeWokenUp == 1);
 	}
 	
-	//! \brief Add an element to the list of data accesses (that may generate dependencies)
-	void addDataAccess(DataAccess *dataAccess)
-	{
-		_dataAccesses.push_back((DataAccessBase &) *dataAccess); // This operation actually does add the pointer
-	}
-	
-	//! \brief Remove an element of the data accesses list (if any) and return it (or null)
-	DataAccess *popDataAccess()
-	{
-		if (_dataAccesses.empty()) {
-			return 0;
-		} else {
-			DataAccess *dataAccess = (DataAccess *) &_dataAccesses.front();
-			_dataAccesses.pop_front();
-			return dataAccess;
-		}
-	}
-	
 	//! \brief Retrieve the list of data accesses
-	data_access_list_t const &getDataAccesses() const
+	TaskDataAccesses const &getDataAccesses() const
 	{
 		return _dataAccesses;
 	}
 	
 	//! \brief Retrieve the list of data accesses
-	data_access_list_t &getDataAccesses()
+	TaskDataAccesses &getDataAccesses()
 	{
 		return _dataAccesses;
 	}
@@ -285,7 +263,7 @@ public:
 #pragma GCC diagnostic push
 
 
-#include "dependencies/TaskDataAccessesLinkingArtifactsImplementation.hpp"
+#include <TaskDataAccessesLinkingArtifactsImplementation.hpp>
 
 
 #endif // TASK_HPP

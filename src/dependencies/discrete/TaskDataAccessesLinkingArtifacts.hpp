@@ -5,7 +5,7 @@
 #include <boost/intrusive/list_hook.hpp>
 
 
-struct DataAccessBase;
+struct DataAccess;
 
 
 struct TaskDataAccessesLinkingArtifacts {
@@ -18,7 +18,7 @@ struct TaskDataAccessesLinkingArtifacts {
 	typedef boost::intrusive::list_member_hook<link_mode_t> hook_type;
 	typedef hook_type* hook_ptr;
 	typedef const hook_type* const_hook_ptr;
-	typedef DataAccessBase value_type;
+	typedef DataAccess value_type;
 	typedef value_type* pointer;
 	typedef const value_type* const_pointer;
 	
