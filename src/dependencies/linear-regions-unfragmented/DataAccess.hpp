@@ -2,8 +2,8 @@
 #define DATA_ACCESS_HPP
 
 
-#include <boost/intrusive/list.hpp>
-#include <boost/intrusive/list_hook.hpp>
+#include <boost/intrusive/avl_set.hpp>
+#include <boost/intrusive/avl_set_hook.hpp>
 #include <atomic>
 #include <cassert>
 #include <set>
@@ -17,25 +17,13 @@ class Task;
 class SpinLock;
 
 
-#include "../DataAccessType.hpp"
+#include "../DataAccessBase.hpp"
 #include "DataAccessRange.hpp"
 #include "LinearRegionDataAccessMap.hpp"
 
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
-struct DataAccess {
-	#if NDEBUG
-		typedef boost::intrusive::link_mode<boost::intrusive::normal_link> link_mode_t;
-	#else
-		typedef boost::intrusive::link_mode<boost::intrusive::safe_link> link_mode_t;
-	#endif
-	
-	typedef boost::intrusive::list_member_hook<link_mode_t> task_access_list_links_t;
-	
-	
-	//! Links used by the list of accesses of a Task
-	task_access_list_links_t _taskAccessListLinks;
-	
+struct DataAccess : public DataAccessBase {
 	//! Links equivalent to the ones within a DataAccessSequence
 	DataAccessPreviousLinks _previous;
 	DataAccessNextLinks _next;
@@ -52,26 +40,14 @@ struct DataAccess {
 	//! The range of data covered by the access
 	DataAccessRange _range;
 	
-	//! Type of access: read, write, ...
-	DataAccessType _type;
-	
-	//! True iff the access is weak
-	bool _weak;
-	
 	//! Equal to 0 when the data access can be performed
 	int _blockerCount;
-	
-	//! Tasks to which the access corresponds
-	Task *_originator;
 	
 	//! Top map of accesses performed by the direct children of the _originator task
 	LinearRegionDataAccessMap _topSubaccesses;
 	
 	//! Bottom map of accesses performed by the direct children of the _originator task
 	LinearRegionDataAccessMap _bottomSubaccesses;
-	
-	//! An identifier for the instrumentation
-	Instrument::data_access_id_t _instrumentationId;
 	
 	DataAccess(
 		DataAccess *superAccess, SpinLock *lock, LinearRegionDataAccessMap *bottomMap,
@@ -81,14 +57,25 @@ struct DataAccess {
 		DataAccessRange accessRange,
 		Instrument::data_access_id_t instrumentationId
 	)
-		: _taskAccessListLinks(), _previous(), _next(),
+		: DataAccessBase(type, weak, originator, instrumentationId),
+		_previous(), _next(),
 		_superAccess(superAccess), _lock(lock), _bottomMap(bottomMap),
-		_range(accessRange), _type(type), _weak(weak), _blockerCount(blockerCount), _originator(originator),
-		_topSubaccesses(this), _bottomSubaccesses(this),
-		_instrumentationId(instrumentationId)
+		_range(accessRange), _blockerCount(blockerCount),
+		_topSubaccesses(this), _bottomSubaccesses(this)
 	{
 		assert(bottomMap != 0);
 		assert(originator != 0);
+	}
+	
+	
+	DataAccessRange const &getAccessRange() const
+	{
+		return _range;
+	}
+	
+	DataAccessRange &getAccessRange()
+	{
+		return _range;
 	}
 	
 	

@@ -126,7 +126,10 @@ linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionMap.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionMapImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp
+	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp \
+	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions-unfragmented/TaskDataAccessesLinkingArtifacts.hpp \
+	src/dependencies/linear-regions-unfragmented/TaskDataAccessesLinkingArtifactsImplementation.hpp
 
 
 if DISCRETE_DEPENDENCIES
