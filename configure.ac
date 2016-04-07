@@ -95,6 +95,7 @@ case x"${ac_with_dependencies}" in
 esac
 AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdiscrete"])
 
+AX_CHECK_EXTRAE
 
 AC_CONFIG_FILES([
 	Makefile
