@@ -61,6 +61,8 @@ private:
 	
 	
 public:
+	static void preinitialize();
+	
 	static void initialize();
 	
 	static void shutdown();
