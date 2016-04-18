@@ -4,7 +4,7 @@
 
 #include <boost/intrusive/list.hpp>
 
-#include "TaskDataAccessesLinkingArtifacts.hpp"
+#include "TaskDataAccessLinkingArtifacts.hpp"
 
 
 struct DataAccess;
@@ -12,10 +12,10 @@ struct DataAccess;
 
 typedef boost::intrusive::list<
 	DataAccess,
-	boost::intrusive::function_hook<TaskDataAccessesLinkingArtifacts>
+	boost::intrusive::function_hook<TaskDataAccessLinkingArtifacts>
 > TaskDataAccesses;
 
-typedef typename TaskDataAccessesLinkingArtifacts::hook_type TaskDataAccessesHook;
+typedef typename TaskDataAccessLinkingArtifacts::hook_type TaskDataAccessHooks;
 
 
 #endif // TASK_DATA_ACCESSES_HPP

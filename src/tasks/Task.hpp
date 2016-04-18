@@ -11,7 +11,7 @@
 
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
-#include <TaskDataAccessesLinkingArtifacts.hpp>
+#include <TaskDataAccessLinkingArtifacts.hpp>
 
 
 struct DataAccess;
@@ -279,7 +279,7 @@ public:
 #pragma GCC diagnostic push
 
 
-#include <TaskDataAccessesLinkingArtifactsImplementation.hpp>
+#include <TaskDataAccessLinkingArtifactsImplementation.hpp>
 
 
 #endif // TASK_HPP
