@@ -110,8 +110,8 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
 	src/dependencies/discrete/TaskDataAccesses.hpp \
-	src/dependencies/discrete/TaskDataAccessesLinkingArtifacts.hpp \
-	src/dependencies/discrete/TaskDataAccessesLinkingArtifactsImplementation.hpp
+	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
+	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
@@ -126,8 +126,8 @@ linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/linear-regions-unfragmented/LinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccessesLinkingArtifacts.hpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccessesLinkingArtifactsImplementation.hpp
+	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifacts.hpp \
+	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 
 if DISCRETE_DEPENDENCIES

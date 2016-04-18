@@ -8,7 +8,7 @@
 
 #include <InstrumentDataAccessId.hpp>
 #include <TaskDataAccesses.hpp>
-#include <TaskDataAccessesLinkingArtifacts.hpp>
+#include <TaskDataAccessLinkingArtifacts.hpp>
 
 
 class Task;
@@ -25,7 +25,7 @@ struct DataAccessBase {
 	#endif
 	
 	//! Links used by the list of accesses of a Task
-	TaskDataAccessesHook _taskDataAccessesLinks;
+	TaskDataAccessHooks _taskDataAccessLinks;
 	
 	//! Type of access: read, write, ...
 	DataAccessType _type;
@@ -45,7 +45,7 @@ struct DataAccessBase {
 		Task *originator,
 		Instrument::data_access_id_t instrumentationId
 	)
-		: _taskDataAccessesLinks(), 
+		: _taskDataAccessLinks(), 
 		_type(type), _weak(weak), _originator(originator),
 		_instrumentationId(instrumentationId)
 	{

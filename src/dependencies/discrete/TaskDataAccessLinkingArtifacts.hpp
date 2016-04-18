@@ -1,5 +1,5 @@
-#ifndef TASK_DATA_ACCESSES_LINKING_ARTIFACTS_HPP
-#define TASK_DATA_ACCESSES_LINKING_ARTIFACTS_HPP
+#ifndef TASK_DATA_ACCESS_LINKING_ARTIFACTS_HPP
+#define TASK_DATA_ACCESS_LINKING_ARTIFACTS_HPP
 
 
 #include <boost/intrusive/list_hook.hpp>
@@ -8,7 +8,7 @@
 struct DataAccess;
 
 
-struct TaskDataAccessesLinkingArtifacts {
+struct TaskDataAccessLinkingArtifacts {
 	#if NDEBUG
 		typedef boost::intrusive::link_mode<boost::intrusive::normal_link> link_mode_t;
 	#else
@@ -29,4 +29,4 @@ struct TaskDataAccessesLinkingArtifacts {
 };
 
 
-#endif // TASK_DATA_ACCESSES_LINKING_ARTIFACTS_HPP
+#endif // TASK_DATA_ACCESS_LINKING_ARTIFACTS_HPP
