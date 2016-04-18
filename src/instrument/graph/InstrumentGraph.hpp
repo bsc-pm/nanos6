@@ -78,6 +78,7 @@ namespace Instrument {
 		
 		struct link_to_next_t {
 			bool _direct;
+			bool _bidirectional;
 			enum {
 				not_created_link_status,
 				created_link_status,
@@ -89,8 +90,8 @@ namespace Instrument {
 				assert("Instrument::Graph did not find a link between two data accesses" == 0);
 			}
 			
-			link_to_next_t(bool direct)
-				: _direct(direct), _status(not_created_link_status)
+			link_to_next_t(bool direct, bool bidirectional)
+				: _direct(direct), _bidirectional(bidirectional), _status(not_created_link_status)
 			{
 			}
 		};
@@ -285,6 +286,7 @@ namespace Instrument {
 			DataAccessType _accessType;
 			DataAccessRange _range;
 			bool _weak;
+			bool _readSatisfied, _writeSatisfied, _globallySatisfied;
 			bool _satisfied;
 			task_id_t _originatorTaskId;
 			
@@ -292,18 +294,19 @@ namespace Instrument {
 				long cpu, thread_id_t threadId,
 				data_access_id_t superAccessId, data_access_id_t accessId,
 				DataAccessType accessType, DataAccessRange const &range, bool weak,
-				bool satisfied, task_id_t originatorTaskId
+				bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+				task_id_t originatorTaskId
 			)
 				: execution_step_t(cpu, threadId),
 				_superAccessId(superAccessId), _accessId(accessId),
 				_accessType(accessType), _range(range), _weak(weak),
-				_satisfied(satisfied), _originatorTaskId(originatorTaskId)
+				_readSatisfied(readSatisfied), _writeSatisfied(writeSatisfied), _globallySatisfied(globallySatisfied),
+				_originatorTaskId(originatorTaskId)
 			{
 			}
 		};
 		
 		struct upgrade_data_access_step_t : public execution_step_t {
-			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
 			DataAccessType _newAccessType;
 			bool _newWeakness;
@@ -312,12 +315,12 @@ namespace Instrument {
 			
 			upgrade_data_access_step_t(
 				long cpu, thread_id_t threadId,
-				data_access_id_t superAccessId, data_access_id_t accessId,
+				data_access_id_t accessId,
 				DataAccessType newAccessType, bool newWeakness,
 				bool becomesUnsatisfied, task_id_t originatorTaskId
 			)
 				: execution_step_t(cpu, threadId),
-				_superAccessId(superAccessId), _accessId(accessId),
+				_accessId(accessId),
 				_newAccessType(newAccessType), _newWeakness(newWeakness),
 				_becomesUnsatisfied(becomesUnsatisfied), _originatorTaskId(originatorTaskId)
 			{
@@ -325,35 +328,36 @@ namespace Instrument {
 		};
 		
 		struct data_access_becomes_satisfied_step_t : public execution_step_t {
-			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
+			bool _readSatisfied, _writeSatisfied, _globallySatisfied;
 			task_id_t _triggererTaskId;
 			task_id_t _targetTaskId;
 			
 			data_access_becomes_satisfied_step_t(
 				long cpu, thread_id_t threadId,
-				data_access_id_t superAccessId, data_access_id_t accessId,
+				data_access_id_t accessId,
+				bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 				task_id_t triggererTaskId, task_id_t targetTaskId
 			)
 				: execution_step_t(cpu, threadId),
-				_superAccessId(superAccessId), _accessId(accessId),
+				_accessId(accessId),
+				_readSatisfied(readSatisfied), _writeSatisfied(writeSatisfied), _globallySatisfied(globallySatisfied),
 				_triggererTaskId(triggererTaskId), _targetTaskId(targetTaskId)
 			{
 			}
 		};
 		
 		struct removed_data_access_step_t : public execution_step_t {
-			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
 			task_id_t _triggererTaskId;
 			
 			removed_data_access_step_t(
 				long cpu, thread_id_t threadId,
-				data_access_id_t superAccessId, data_access_id_t accessId,
+				data_access_id_t accessId,
 				task_id_t triggererTaskId
 			)
 				: execution_step_t(cpu, threadId),
-				_superAccessId(superAccessId), _accessId(accessId),
+				_accessId(accessId),
 				_triggererTaskId(triggererTaskId)
 			{
 			}
@@ -362,16 +366,21 @@ namespace Instrument {
 		struct linked_data_accesses_step_t : public execution_step_t {
 			data_access_id_t _sourceAccessId;
 			data_access_id_t _sinkAccessId;
-			bool _direct;
+			DataAccessRange _range;
+			bool _direct, _bidirectional;
 			task_id_t _triggererTaskId;
 			
 			linked_data_accesses_step_t(
 				long cpu, thread_id_t threadId,
-				data_access_id_t sourceAccessId, data_access_id_t sinkAccessId, bool direct,
+				data_access_id_t sourceAccessId, data_access_id_t sinkAccessId,
+				DataAccessRange range,
+				bool direct, bool bidirectional,
 				task_id_t triggererTaskId
 			)
 				: execution_step_t(cpu, threadId),
-				_sourceAccessId(sourceAccessId), _sinkAccessId(sinkAccessId), _direct(direct),
+				_sourceAccessId(sourceAccessId), _sinkAccessId(sinkAccessId),
+				_range(range),
+				_direct(direct), _bidirectional(bidirectional),
 				_triggererTaskId(triggererTaskId)
 			{
 			}

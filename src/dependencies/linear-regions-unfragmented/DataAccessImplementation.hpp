@@ -49,7 +49,10 @@ inline void DataAccess::fullLinkTo(DataAccessRange const &range, DataAccess *tar
 	assert(target != nullptr);
 	
 	Instrument::linkedDataAccesses(
-		_instrumentationId, target->_instrumentationId, /* direct */ true,
+		_instrumentationId, target->_instrumentationId,
+		range,
+		/* direct */ true,
+		/* bidirectional */ true,
 		triggererTaskInstrumentationId
 	);
 	
@@ -105,7 +108,6 @@ bool DataAccess::upgradeSameTypeAccess(Task *task, DataAccess /* INOUT */ *dataA
 	
 	if (dataAccess->_weak != newAccessWeakness) {
 		Instrument::upgradedDataAccess(
-			(dataAccess->_superAccess != nullptr ? dataAccess->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			dataAccess->_instrumentationId,
 			dataAccess->_type, dataAccess->_weak,
 			dataAccess->_type, (dataAccess->_weak && newAccessWeakness),
@@ -219,7 +221,6 @@ bool DataAccess::upgradeSameStrengthAccess(Task *task, DataAccess /* INOUT */ *d
 		// A write that becomes readwrite
 		assert((newAccessType == READWRITE_ACCESS_TYPE) || (newAccessType == READ_ACCESS_TYPE));
 		Instrument::upgradedDataAccess(
-			superAccessId,
 			dataAccess->_instrumentationId,
 			dataAccess->_type, dataAccess->_weak,
 			READWRITE_ACCESS_TYPE, dataAccess->_weak,
@@ -242,7 +243,6 @@ bool DataAccess::upgradeSameStrengthAccess(Task *task, DataAccess /* INOUT */ *d
 		bool becomesUnsatisfied = dataAccess->updateBlockerCountAndLinkSatisfiability();
 		
 		Instrument::upgradedDataAccess(
-			superAccessId,
 			dataAccess->_instrumentationId,
 			oldAccessType, dataAccess->_weak,
 			newAccessType, dataAccess->_weak,
@@ -269,7 +269,6 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 		// A write that becomes readwrite
 		assert((newAccessType == READWRITE_ACCESS_TYPE) || (newAccessType == READ_ACCESS_TYPE));
 		Instrument::upgradedDataAccess(
-			superAccessId,
 			dataAccess->_instrumentationId,
 			dataAccess->_type, false,
 			READWRITE_ACCESS_TYPE, false,
@@ -291,7 +290,7 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 				superAccessId,
 				newAccessType, true,
 				dataAccess->_range,
-				false, // Not satisfied
+				false, false, false, // Not satisfied
 				taskInstrumentationId
 			);
 			
@@ -331,7 +330,6 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 		dataAccess->_weak = false;
 		
 		Instrument::upgradedDataAccess(
-			superAccessId,
 			dataAccess->_instrumentationId,
 			oldAccessType, true,
 			newAccessType, false,
@@ -347,7 +345,6 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 			dataAccess->_weak = false;
 			
 			Instrument::upgradedDataAccess(
-				superAccessId,
 				dataAccess->_instrumentationId,
 				READ_ACCESS_TYPE, true,
 				READ_ACCESS_TYPE, false,
@@ -372,7 +369,6 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 			
 			// Instrumentation for the upgrade of the existing access to "strong" read
 			Instrument::upgradedDataAccess(
-				superAccessId,
 				dataAccess->_instrumentationId,
 				oldAccessType, true,
 				READ_ACCESS_TYPE, false,
@@ -385,7 +381,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				superAccessId,
 				oldAccessType, true,
 				dataAccess->_range,
-				false /* Not satisfied */,
+				false, false, false /* Not satisfied */,
 				taskInstrumentationId
 			);
 			

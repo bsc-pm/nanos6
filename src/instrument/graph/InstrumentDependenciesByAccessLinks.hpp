@@ -10,14 +10,12 @@
 namespace Instrument {
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType,
-		bool weak,
-		bool satisfied,
+		DataAccessType accessType, bool weak, DataAccessRange range,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId
 	);
 	
 	void upgradedDataAccess(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
 		DataAccessType previousAccessType,
 		bool previousWeakness,
@@ -28,22 +26,21 @@ namespace Instrument {
 	);
 	
 	void dataAccessBecomesSatisfied(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t triggererTaskId,
 		task_id_t targetTaskId
 	);
 	
 	void removedDataAccess(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	);
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId,
-		data_access_id_t sinkAccessId,
-		bool direct,
+		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId,
+		DataAccessRange range,
+		bool direct, bool bidirectional,
 		task_id_t triggererTaskId
 	);
 	

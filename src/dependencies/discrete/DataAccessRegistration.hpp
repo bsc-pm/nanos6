@@ -33,8 +33,8 @@ private:
 			bool becomesSatisfied = currentDataAccess->reevaluateSatisfiability(previousDataAccess);
 			if (becomesSatisfied) {
 				Instrument::dataAccessBecomesSatisfied(
-					(currentDataAccess->_dataAccessSequence->_superAccess != nullptr ? currentDataAccess->_dataAccessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 					currentDataAccess->_instrumentationId,
+					false, false, true,
 					instrumentationTaskId,
 					currentDataAccess->_originator->getInstrumentationTaskId()
 				);
@@ -104,7 +104,8 @@ private:
 					Instrument::linkedDataAccesses(
 						previousOfFirst->_instrumentationId,
 						subaccess._instrumentationId,
-						true,
+						dataAccessSequence->_accessRange,
+						true, true,
 						instrumentationTaskId
 					);
 				}
@@ -124,7 +125,8 @@ private:
 						Instrument::linkedDataAccesses(
 							subaccess._instrumentationId,
 							next->_instrumentationId,
-							true,
+							dataAccessSequence->_accessRange,
+							true, true,
 							instrumentationTaskId
 						);
 					}
@@ -133,7 +135,6 @@ private:
 			
 			// Instrumenters first see the movement, then the deletion
 			Instrument::removedDataAccess(
-				(dataAccessSequence->_superAccess != nullptr ? dataAccessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 				dataAccess->_instrumentationId,
 				instrumentationTaskId
 			);
@@ -153,7 +154,9 @@ private:
 						Instrument::linkedDataAccesses(
 							effectivePrevious->_instrumentationId,
 							next->_instrumentationId,
+							dataAccessSequence->_accessRange,
 							false /* not direct */,
+							false /* unidirectional */,
 							instrumentationTaskId
 						);
 					}
@@ -238,14 +241,16 @@ public:
 			(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			accessType, weak,
 			accessSequence->_accessRange,
-			satisfied,
+			false, false, satisfied,
 			task->getInstrumentationTaskId()
 		);
 		if (effectivePrevious != nullptr) {
 			Instrument::linkedDataAccesses(
 				effectivePrevious->_instrumentationId,
 				dataAccessInstrumentationId,
+				accessSequence->_accessRange,
 				!accessSequence->_accessSequence.empty() /* Direct? */,
+				!accessSequence->_accessSequence.empty() /* Bidirectional? */,
 				task->getInstrumentationTaskId()
 			);
 		}
