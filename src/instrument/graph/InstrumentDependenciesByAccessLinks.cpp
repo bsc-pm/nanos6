@@ -14,10 +14,8 @@ namespace Instrument {
 	
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType,
-		bool weak,
-		DataAccessRange range,
-		bool satisfied,
+		DataAccessType accessType, bool weak, DataAccessRange range,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId
 	) {
 		if (!Graph::_showDependencyStructures) {
@@ -38,7 +36,9 @@ namespace Instrument {
 		
 		create_data_access_step_t *step = new create_data_access_step_t(
 			cpu->_virtualCPUId, threadId,
-			superAccessId, dataAccessId, accessType, range, weak, satisfied, originatorTaskId
+			superAccessId, dataAccessId, accessType, range, weak,
+			readSatisfied, writeSatisfied, globallySatisfied,
+			originatorTaskId
 		);
 		_executionSequence.push_back(step);
 		
@@ -71,7 +71,6 @@ namespace Instrument {
 	
 	
 	void upgradedDataAccess(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
 		__attribute__((unused)) DataAccessType previousAccessType,
 		__attribute__((unused)) bool previousWeakness,
@@ -96,7 +95,7 @@ namespace Instrument {
 		
 		upgrade_data_access_step_t *step = new upgrade_data_access_step_t(
 			cpu->_virtualCPUId, threadId,
-			superAccessId, dataAccessId,
+			dataAccessId,
 			newAccessType, newWeakness,
 			becomesUnsatisfied,
 			originatorTaskId
@@ -106,8 +105,8 @@ namespace Instrument {
 	
 	
 	void dataAccessBecomesSatisfied(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t triggererTaskId,
 		task_id_t targetTaskId
 	) {
@@ -127,14 +126,15 @@ namespace Instrument {
 		
 		data_access_becomes_satisfied_step_t *step = new data_access_becomes_satisfied_step_t(
 			cpu->_virtualCPUId, threadId,
-			superAccessId, dataAccessId, triggererTaskId, targetTaskId
+			dataAccessId,
+			readSatisfied, writeSatisfied, globallySatisfied,
+			triggererTaskId, targetTaskId
 		);
 		_executionSequence.push_back(step);
 	}
 	
 	
 	void removedDataAccess(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
@@ -154,16 +154,16 @@ namespace Instrument {
 		
 		removed_data_access_step_t *step = new removed_data_access_step_t(
 			cpu->_virtualCPUId, threadId,
-			superAccessId, dataAccessId, triggererTaskId
+			dataAccessId, triggererTaskId
 		);
 		_executionSequence.push_back(step);
 	}
 	
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId,
-		data_access_id_t sinkAccessId,
-		bool direct,
+		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId,
+		DataAccessRange range,
+		bool direct, bool bidirectional,
 		task_id_t triggererTaskId
 	) {
 		if (!Graph::_showDependencyStructures) {
@@ -183,13 +183,15 @@ namespace Instrument {
 		access_t &sourceAccess = getAccess(sourceAccessId);
 		access_t &sinkAccess = getAccess(sinkAccessId);
 		sourceAccess._nextLinks.emplace(
-			std::pair<data_access_id_t, link_to_next_t> (sinkAccessId, link_to_next_t(direct))
+			std::pair<data_access_id_t, link_to_next_t> (sinkAccessId, link_to_next_t(direct, bidirectional))
 		); // A "not created" link
 		sinkAccess._previousLinks.insert(sourceAccessId);
 		
 		linked_data_accesses_step_t *step = new linked_data_accesses_step_t(
 			cpu->_virtualCPUId, threadId,
-			sourceAccessId, sinkAccessId, direct,
+			sourceAccessId, sinkAccessId,
+			range,
+			direct, bidirectional,
 			triggererTaskId
 		);
 		_executionSequence.push_back(step);

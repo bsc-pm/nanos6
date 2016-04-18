@@ -12,10 +12,8 @@ using namespace Instrument::Verbose;
 namespace Instrument {
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType,
-		bool weak,
-		DataAccessRange range,
-		bool satisfied,
+		DataAccessType accessType, bool weak, DataAccessRange range,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId
 	) {
 		static std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId(1);
@@ -58,9 +56,16 @@ namespace Instrument {
 		
 		logEntry->_contents << " " << range;
 		
-		if (satisfied) {
+		if (readSatisfied) {
+			logEntry->_contents << " read_safistied";
+		}
+		if (writeSatisfied) {
+			logEntry->_contents << " write_safistied";
+		}
+		if (globallySatisfied) {
 			logEntry->_contents << " safistied";
-		} else {
+		}
+		if (!readSatisfied && !writeSatisfied && !globallySatisfied) {
 			logEntry->_contents << " unsatisfied";
 		}
 		
@@ -73,7 +78,6 @@ namespace Instrument {
 	
 	
 	void upgradedDataAccess(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
 		DataAccessType previousAccessType,
 		bool previousWeakness,
@@ -96,7 +100,7 @@ namespace Instrument {
 		} else {
 			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
 		}
-		logEntry->_contents << " <-> UpgradeDataAccess " << dataAccessId << " superaccess:" << superAccessId;
+		logEntry->_contents << " <-> UpgradeDataAccess " << dataAccessId;
 		
 		logEntry->_contents << " ";
 		if (previousWeakness) {
@@ -153,8 +157,8 @@ namespace Instrument {
 	
 	
 	void dataAccessBecomesSatisfied(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t triggererTaskId,
 		task_id_t targetTaskId
 	) {
@@ -172,14 +176,26 @@ namespace Instrument {
 		} else {
 			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
 		}
-		logEntry->_contents << " <-> DataAccessBecomesSatisfied " << dataAccessId << " superaccess:" << superAccessId << " triggererTask:" << triggererTaskId << " targetTask:" << targetTaskId;
+		logEntry->_contents << " <-> DataAccessBecomesSatisfied " << dataAccessId << " triggererTask:" << triggererTaskId << " targetTask:" << targetTaskId;
+		
+		if (readSatisfied) {
+			logEntry->_contents << " +read_safistied";
+		}
+		if (writeSatisfied) {
+			logEntry->_contents << " +write_safistied";
+		}
+		if (globallySatisfied) {
+			logEntry->_contents << " +safistied";
+		}
+		if (!readSatisfied && !writeSatisfied && !globallySatisfied) {
+			logEntry->_contents << " remains_unsatisfied";
+		}
 		
 		addLogEntry(logEntry);
 	}
 	
 	
 	void removedDataAccess(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
@@ -197,7 +213,7 @@ namespace Instrument {
 		} else {
 			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
 		}
-		logEntry->_contents << " <-> RemoveDataAccessFromSequence " << dataAccessId << " superaccess:" << superAccessId << " triggererTask:" << triggererTaskId;
+		logEntry->_contents << " <-> RemoveDataAccessFromSequence " << dataAccessId << " triggererTask:" << triggererTaskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -206,7 +222,9 @@ namespace Instrument {
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId,
 		data_access_id_t sinkAccessId,
+		DataAccessRange range,
 		bool direct,
+		__attribute__((unused)) bool bidirectional,
 		task_id_t triggererTaskId
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
@@ -223,7 +241,7 @@ namespace Instrument {
 		} else {
 			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
 		}
-		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> " << sinkAccessId << (direct ? " direct" : "indirect") << " triggererTask:" << triggererTaskId;
+		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> " << sinkAccessId << " [" << range << "]" << (direct ? " direct" : "indirect") << " triggererTask:" << triggererTaskId;
 		
 		addLogEntry(logEntry);
 	}

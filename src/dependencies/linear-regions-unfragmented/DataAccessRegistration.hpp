@@ -253,8 +253,8 @@ private:
 			
 			if (nextAccess->_blockerCount == 0) {
 				Instrument::dataAccessBecomesSatisfied(
-					(nextAccess->_superAccess != nullptr ? nextAccess->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 					nextAccess->_instrumentationId,
+					false, false, true,
 					triggererTaskInstrumentationId,
 					nextAccess->_originator->getInstrumentationTaskId()
 				);
@@ -291,8 +291,8 @@ private:
 			
 			if (subaccess->_blockerCount == 0) {
 				Instrument::dataAccessBecomesSatisfied(
-					(subaccess->_superAccess != nullptr ? subaccess->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 					subaccess->_instrumentationId,
+					false, false, true,
 					triggererTaskInstrumentationId,
 					subaccess->_originator->getInstrumentationTaskId()
 				);
@@ -436,8 +436,8 @@ private:
 				assert(nextOriginator != nullptr);
 				
 				Instrument::dataAccessBecomesSatisfied(
-					(next->_superAccess != nullptr ? next->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 					next->_instrumentationId,
+					false, false, true,
 					instrumentationTaskId,
 					next->_originator->getInstrumentationTaskId()
 				);
@@ -470,7 +470,6 @@ private:
 		removeMapProjection(bottomMap, dataAccess);
 		
 		Instrument::removedDataAccess(
-			(dataAccess->_superAccess != nullptr ? dataAccess->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			dataAccess->_instrumentationId,
 			instrumentationTaskId
 		);
@@ -520,7 +519,7 @@ private:
 		Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
 			(superAccess != nullptr ? superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			accessType, weak, intersectingFragment,
-			(satisfied ? 0 : 1),
+			false, false, (satisfied ? 0 : 1),
 			task->getInstrumentationTaskId()
 		);
 		DataAccess *dataAccess = new DataAccess(
@@ -683,7 +682,7 @@ private:
 			(superAccess != nullptr ? superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			accessType, weak,
 			accessRange,
-			false, // Not satisfied
+			false, false, false, // Not satisfied
 			task->getInstrumentationTaskId()
 		);
 		
@@ -756,8 +755,8 @@ private:
 		
 		if (dataAccess->_blockerCount == 0) {
 			Instrument::dataAccessBecomesSatisfied(
-				(dataAccess->_superAccess != nullptr ? dataAccess->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 				dataAccess->_instrumentationId,
+				false, false, true,
 				task->getInstrumentationTaskId(),
 				task->getInstrumentationTaskId()
 			);

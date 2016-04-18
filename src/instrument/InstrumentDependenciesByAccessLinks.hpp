@@ -42,14 +42,16 @@ namespace Instrument {
 	//! \param accessType the type of access of the new DataAccess
 	//! \param weak true if the access is weak
 	//! \param range the range of data that the new access covers
-	//! \param satisfied whether the access does not preclude the task from running immediately
+	//! \param readSatisfied whether the access is ready to perform a potential read operation
+	//! \param writeSatisfied whether the access is ready to perform a potential write operation
+	//! \param globallySatisfied whether the access does not preclude the task from running immediately
 	//! \param originatorTaskId the identifier of the task that will perform the access as returned in the call to Instrument::enterAddTask
 	//! 
 	//! \returns an identifier for the new data access
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRange range,
-		bool satisfied,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId
 	);
 	
@@ -57,7 +59,6 @@ namespace Instrument {
 	//! 
 	//! Note that this function may be called with previousAccessType == newAccessType in case of a repeated access
 	//! 
-	//! \param superAccessId the identifier of the superaccess as returned by Instrument::createdDataAccess or data_access_id_t() if there is no superaccess
 	//! \param dataAccessId the identifier of the DataAccess returned in the previous call to Instrument::createdDataAccess
 	//! \param previousAccessType the type of access that will be upgraded
 	//! \param previousWeakness true if the access to be upgraded is weak
@@ -67,7 +68,7 @@ namespace Instrument {
 	//! \param triggererTaskId the identifier of the task that trigers the change
 	//! 
 	void upgradedDataAccess(
-		data_access_id_t superAccessId, data_access_id_t dataAccessId,
+		data_access_id_t dataAccessId,
 		DataAccessType previousAccessType, bool previousWeakness,
 		DataAccessType newAccessType, bool newWeakness,
 		bool becomesUnsatisfied,
@@ -76,23 +77,25 @@ namespace Instrument {
 	
 	//! \brief Called when a DataAccess becomes satisfied
 	//! 
-	//! \param superAccessId the identifier of the superaccess as returned by Instrument::createdDataAccess or data_access_id_t() if there is no superaccess
 	//! \param dataAccessId the identifier of the DataAccess that becomes satisfied as returned in the previous call to Instrument::createdDataAccess
+	//! \param readSatisfied whether the access becomes read satisfied
+	//! \param writeSatisfied whether the access begomes write satisfied
+	//! \param globallySatisfied whether the access becomes globally satisfied
 	//! \param triggererTaskId the identifier of the task that trigers the change
 	//! \param targetTaskId the identifier of the task that will perform the now satisfied DataAccess
 	void dataAccessBecomesSatisfied(
-		data_access_id_t superAccessId, data_access_id_t dataAccessId,
+		data_access_id_t dataAccessId,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t triggererTaskId,
 		task_id_t targetTaskId
 	);
 	
 	//! \brief Called when a DataAccess has been removed
 	//! 
-	//! \param superAccessId the identifier of the superaccess as returned by Instrument::createdDataAccess or data_access_id_t() if there is no superaccess
 	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
 	//! \param triggererTaskId the identifier of the task that trigers the change
 	void removedDataAccess(
-		data_access_id_t superAccessId, data_access_id_t dataAccessId,
+		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	);
 	
@@ -100,10 +103,14 @@ namespace Instrument {
 	//! 
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkAccessId the identifier of the sink DataAccess
+	//! \param range the range of data covered by the link
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
+	//! \param bidirectional tru if the link is bidirectional
 	//! \param triggererTaskId the identifier of the task that trigers the change
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId, bool direct,
+		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId,
+		DataAccessRange range,
+		bool direct, bool bidirectional,
 		task_id_t triggererTaskId
 	);
 	
