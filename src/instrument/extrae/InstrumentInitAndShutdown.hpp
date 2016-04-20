@@ -17,7 +17,7 @@ extern "C" {
 			cpuId = cpu->_virtualCPUId;
       }
 	
-fprintf(stderr,"XTERUEL: thred num = %d\n",cpuId); //FIXME
+//fprintf(stderr,"XTERUEL: thred num = %d\n",cpuId); //FIXME:debug
 		return (unsigned int) cpuId;
    }
 
@@ -31,10 +31,10 @@ fprintf(stderr,"XTERUEL: thred num = %d\n",cpuId); //FIXME
    {
       unsigned int retval = 0; 
       if (ThreadManager::hasFinishedInitialization()) {
-fprintf(stderr,"XTERUEL: has finished init\n"); //FIXME
+//fprintf(stderr,"XTERUEL: has finished init\n"); //FIXME:debug
          retval = ThreadManager::getTotalCPUs();
       } else {
-fprintf(stderr,"XTERUEL: using cpumask\n"); //FIXME
+//fprintf(stderr,"XTERUEL: using cpumask\n"); //FIXME:debug
          cpu_set_t const &cpuMask = ThreadManager::getProcessCPUMaskReference();
          for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
             if (CPU_ISSET(systemCPUId, &cpuMask)) {
@@ -43,7 +43,7 @@ fprintf(stderr,"XTERUEL: using cpumask\n"); //FIXME
          }
 
       }
-fprintf(stderr,"XTERUEL: number of cpus = %d \n", retval); //FIXME
+//fprintf(stderr,"XTERUEL: number of cpus = %d \n", retval); //FIXME:debug
       return retval;
    }
 };
@@ -59,7 +59,7 @@ namespace Instrument {
       Extrae_set_numthreads_function ( nanos_get_max_threads );
 
       // Initialize extrae library
-fprintf(stderr,"XTERUEL: initializing instrumentation\n"); //FIXME
+//fprintf(stderr,"XTERUEL: initializing instrumentation\n"); //FIXME:debug
       Extrae_init();
 
       Extrae_register_codelocation_type( _functionName, _codeLocation, "User Function Name", "User Function Location" );
@@ -79,25 +79,18 @@ fprintf(stderr,"XTERUEL: initializing instrumentation\n"); //FIXME
       for ( i = 0; i < nval; i++ ) values[i] = i;
 
       Extrae_define_event_type( (extrae_type_t *) &_runtimeState, (char *) "Runtime state", &nval, values, _eventStateValueStr );
-#if 0
-      Extrae_define_event_type( (extrae_type_t *) &_functionName, (char *) "Function name", &nzero, 0, 0 );
-      Extrae_define_event_type( (extrae_type_t *) &_codeLocation, (char *) "Code location", &nzero, 0, 0 );
-#endif
 
-      // Finalize extrae library
-fprintf(stderr,"XTERUEL: finalizing instrumentation\n"); //FIXME
-
+//fprintf(stderr,"XTERUEL: finalizing instrumentation\n"); //FIXME:debug
       user_fct_map_t::iterator it;
 
 //      extrae_value_t functions[_userFunctionMap.size()];
 
       for ( it = _userFunctionMap.begin(); it!=_userFunctionMap.end(); it++ ) {
-fprintf(stderr,"XTERUEL: address = %p, fct=%s, loc=%s, line=%d\n",it->first, it->second, it->second, 13); //FIXME
-
-
-         Extrae_register_function_address ( (void *) (it->first), (char *) (it->second), (char *) (it->second), (unsigned) 13); //FIXME:XXX
+//fprintf(stderr,"XTERUEL: address = %p, fct=%s, loc=%s, line=%d\n",it->first, it->second, it->second, 13); //FIXME:debug
+         Extrae_register_function_address ( (void *) (it->first), (char *) (it->second), (char *) (it->second), (unsigned) 13); //FIXME:XXX substitute address
       }
 
+      // Finalize extrae library
       Extrae_fini();
    }
 }

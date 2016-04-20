@@ -26,13 +26,12 @@ namespace Instrument {
       ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 
       nanos_task_info* TaskInfo =  currentThread->getTask()->getTaskInfo();
-fprintf(stderr,"XTERUEL: executeTask: %s\n",_userFunctionMap[(void *) TaskInfo->run]);
+//fprintf(stderr,"XTERUEL: executeTask: %s\n",_userFunctionMap[(void *) TaskInfo->run]); //FIXME:debug
 
       ce.Types[1] = _codeLocation;
       ce.Values[1] = (extrae_value_t) TaskInfo->run;
 
-
-fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","start task",_runtimeState, NANOS_RUNNING); //FIXME
+//fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","start task",_runtimeState, NANOS_RUNNING); //FIXME:debug
       Extrae_emit_CombinedEvents ( &ce );
 
 	}
@@ -53,7 +52,7 @@ fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","start task",_runtimeStat
       ce.Types[0] = _runtimeState;
       ce.Values[0] = (extrae_value_t) NANOS_NO_STATE;
 
-fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","return task",_runtimeState, NANOS_NO_STATE); //FIXME
+//fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","return task",_runtimeState, NANOS_NO_STATE); //FIXME:debug
       Extrae_emit_CombinedEvents ( &ce );
 
 	}
@@ -74,7 +73,7 @@ fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","return task",_runtimeSta
       ce.Types[0] = _runtimeState;
       ce.Values[0] = (extrae_value_t) NANOS_NO_STATE;
 
-fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","End task",_runtimeState, NANOS_NO_STATE); //FIXME
+//fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","End task",_runtimeState, NANOS_NO_STATE); //FIXME:debug
 
       ce.Types[1] = _codeLocation;
       ce.Values[1] = (extrae_value_t) nullptr;

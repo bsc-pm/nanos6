@@ -28,15 +28,15 @@ namespace Instrument {
       ce.Types[0] = _runtimeState;
       ce.Values[0] = (extrae_value_t) NANOS_CREATION;
 
-fprintf(stderr,"XTERUEL: Extrae_emit_CombinedEvents %s:%d:%d\n","enterAddTask", _runtimeState, NANOS_CREATION ); //FIXME
+//fprintf(stderr,"XTERUEL: Extrae_emit_CombinedEvents %s:%d:%d\n","enterAddTask", _runtimeState, NANOS_CREATION ); //FIXME:debug
       Extrae_emit_CombinedEvents ( &ce );
 
 		if (taskInfo) {
          const char * label = taskInfo->task_label? taskInfo->task_label: taskInvokationInfo->invocation_source;
          _userFunctionMap[(void *)taskInfo->run] = label;
 
-//fprintf(stderr,"XTERUEL: addr =%p, declaration= %s, label=%s, invocation = %s\n", taskInfo->run, taskInfo->declaration_source, taskInfo->task_label, taskInvokationInfo->invocation_source);
-fprintf(stderr,"XTERUEL: addr =%p, label=%s\n", taskInfo->run, label);
+//fprintf(stderr,"XTERUEL: addr =%p, declaration= %s, label=%s, invocation = %s\n", taskInfo->run, taskInfo->declaration_source, taskInfo->task_label, taskInvokationInfo->invocation_source); // FIXME:debug
+//fprintf(stderr,"XTERUEL: addr =%p, label=%s\n", taskInfo->run, label); // FIXME:debug
          
 		}
 
@@ -63,7 +63,7 @@ fprintf(stderr,"XTERUEL: addr =%p, label=%s\n", taskInfo->run, label);
       ce.Types[0] = _runtimeState;
       ce.Values[0] = (extrae_value_t) NANOS_NO_STATE;
 
-fprintf(stderr,"XTERUEL: Extrae_emit_CombinedEvents %s:%d:%d\n","exitAddTask",_runtimeState, NANOS_NO_STATE); //FIXME
+//fprintf(stderr,"XTERUEL: Extrae_emit_CombinedEvents %s:%d:%d\n","exitAddTask",_runtimeState, NANOS_NO_STATE); //FIXME:debug
       Extrae_emit_CombinedEvents ( &ce );
 	}
 }

@@ -31,7 +31,7 @@ namespace Instrument {
       ce.Types[0] = _runtimeState;
       ce.Values[0] = (extrae_value_t) NANOS_SYNCHRONIZATION;
 
-fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","enter task wait",_runtimeState, NANOS_SYNCHRONIZATION); //FIXME
+//fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","enter task wait",_runtimeState, NANOS_SYNCHRONIZATION); //FIXME:debug
       Extrae_emit_CombinedEvents ( &ce );
 	}
 	
@@ -51,8 +51,10 @@ fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","enter task wait",_runtim
       ce.Types[0] = _runtimeState;
       ce.Values[0] = (extrae_value_t) NANOS_NO_STATE;
 
-fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","exit task wait",_runtimeState, NANOS_NO_STATE); //FIXME
+//fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","exit task wait",_runtimeState, NANOS_NO_STATE); //FIXME:debug
       Extrae_emit_CombinedEvents ( &ce );
+
+//TODO: Emit returnToTask at this point
 #if 0
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
@@ -65,6 +67,5 @@ fprintf(stderr,"Extrae_emit_CombinedEvents %s:%d:%d\n","exit task wait",_runtime
 	}
 	
 }
-
 
 #endif // INSTRUMENT_EXTRAE_TASK_WAIT_HPP
