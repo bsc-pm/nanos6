@@ -6,6 +6,7 @@
 #include <deque>
 #include <mutex>
 
+#include "CPUDependencyData.hpp"
 #include "DataAccess.hpp"
 #include "DataAccessImplementation.hpp"
 
@@ -233,7 +234,7 @@ private:
 	static void propagateSatisfiabilityChangeToNext(
 		DataAccessRange const &range, DataAccess *fromDataAccess,
 		DataAccessNextLinks::iterator &nextLink,
-		WorkerThread::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
+		CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
 		assert(fromDataAccess != nullptr);
@@ -273,7 +274,7 @@ private:
 	static void propagateSatisfiabilityChangeToSubaccess(
 		DataAccessRange const &range, DataAccess *fromDataAccess,
 		LinearRegionDataAccessMap::iterator &subaccessPosition,
-		WorkerThread::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
+		CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
 		assert(fromDataAccess != nullptr);
@@ -308,7 +309,7 @@ private:
 	
 	static void propagateSatisfiabilityChange(
 		DataAccessRange const &range, DataAccess *fromDataAccess,
-		WorkerThread::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
+		CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
 		assert(fromDataAccess != nullptr);
@@ -340,7 +341,7 @@ private:
 		Instrument::task_id_t instrumentationTaskId,
 		DataAccess *dataAccess,
 		LinearRegionDataAccessMap *topMap, LinearRegionDataAccessMap *bottomMap,
-		WorkerThread::satisfied_originator_list_t /* OUT */ &satisfiedOriginators
+		CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators
 	) {
 		assert(dataAccess != nullptr);
 		assert((dataAccess->_blockerCount == 0) || dataAccess->_weak);
@@ -481,7 +482,7 @@ private:
 	
 	
 	//! Process all the originators for whose a DataAccess has become satisfied
-	static inline void processSatisfiedOriginators(WorkerThread::satisfied_originator_list_t &satisfiedOriginators, HardwarePlace *hardwarePlace)
+	static inline void processSatisfiedOriginators(CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators, HardwarePlace *hardwarePlace)
 	{
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : satisfiedOriginators) {
@@ -604,7 +605,7 @@ private:
 		
 		// Unlink the old access, remove it from the map and delete it
 		{
-			WorkerThread::satisfied_originator_list_t dummyList;
+			CPUDependencyData::satisfied_originator_list_t dummyList;
 			unregisterDataAccess(
 				task->getInstrumentationTaskId(),
 				oldDataAccess, topMap, bottomMap,
@@ -820,11 +821,11 @@ public:
 		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != 0);
-		HardwarePlace *hardwarePlace = currentThread->getHardwarePlace();
-		assert(hardwarePlace != 0);
+		CPU *cpu = currentThread->getHardwarePlace();
+		assert(cpu != 0);
 		
 		// A temporary list of tasks to minimize the time spent with the mutex held.
-		WorkerThread::satisfied_originator_list_t &satisfiedOriginators = currentThread->getSatisfiedOriginatorsReference();
+		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators = cpu->_dependencyData._satisfiedAccessOriginators;
 		
 		TaskDataAccesses &taskDataAccesses = finishedTask->getDataAccesses();
 		for (auto it = taskDataAccesses.begin(); it != taskDataAccesses.end(); it = taskDataAccesses.erase(it)) {
@@ -851,7 +852,7 @@ public:
 					/* OUT */ satisfiedOriginators
 				);
 			}
-			processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
+			processSatisfiedOriginators(satisfiedOriginators, cpu);
 			satisfiedOriginators.clear();
 			
 			// FIXME: delete the accesses

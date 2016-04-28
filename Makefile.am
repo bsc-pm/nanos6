@@ -116,6 +116,7 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) \
+	src/dependencies/linear-regions-unfragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccessRange.hpp \
