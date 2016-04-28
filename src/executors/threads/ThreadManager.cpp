@@ -24,7 +24,7 @@ std::atomic<long> ThreadManager::_shutdownThreads;
 std::atomic<WorkerThread *> ThreadManager::_mainShutdownControllerThread;
 
 
-void ThreadManager::initialize()
+void ThreadManager::preinitialize()
 {
 	_mustExit = false;
 	_totalCPUs = 0;
@@ -40,11 +40,25 @@ void ThreadManager::initialize()
 	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
 		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
 			CPU *cpu = getCPU(systemCPUId);
-			
 			assert(cpu != nullptr);
+			cpu;
 			
 			assert(_shutdownThreads == 0);
 			_totalThreads++;
+		}
+	}
+}
+
+
+void ThreadManager::initialize()
+{
+	// Start a thread in each CPU
+	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
+		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
+			CPU *cpu = getCPU(systemCPUId);
+			assert(cpu != nullptr);
+			
+			assert(_shutdownThreads == 0);
 			WorkerThread *thread = new WorkerThread(cpu);
 			thread->_cpuToBeResumedOn = cpu;
 			thread->resume();

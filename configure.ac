@@ -10,7 +10,7 @@ AC_CONFIG_MACRO_DIR([common/m4])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
-AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall tar-pax])
 AM_SILENT_RULES([yes])
 
 AC_CHECK_SPECIAL_HOST_ARCH
@@ -100,6 +100,7 @@ AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdis
 AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-unfragmented"])
 AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
 
+AX_CHECK_EXTRAE
 
 AC_CONFIG_FILES([
 	Makefile

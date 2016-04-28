@@ -12,6 +12,10 @@ lib_LTLIBRARIES = \
 	libnanos6-verbose.la libnanos6-verbose-debug.la \
 	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la
 
+if HAVE_EXTRAE
+   lib_LTLIBRARIES += libnanos6-extrae.la
+endif
+
 # See info page of libtool "Updating version info"
 lib_current = 0
 lib_revision = 0
@@ -242,6 +246,23 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentVerbose.cpp \
 	src/instrument/verbose/InstrumentVerbose.hpp
 
+instrument_extrae_sources = \
+	src/instrument/extrae/InstrumentExtrae.hpp \
+	src/instrument/extrae/InstrumentExtrae.cpp \
+	src/instrument/extrae/InstrumentAddTask.hpp \
+	src/instrument/extrae/InstrumentDataAccessId.hpp \
+	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
+	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
+	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
+	src/instrument/extrae/InstrumentLeaderThread.hpp \
+	src/instrument/extrae/InstrumentTaskExecution.hpp \
+	src/instrument/extrae/InstrumentTaskId.hpp \
+	src/instrument/extrae/InstrumentTaskStatus.hpp \
+	src/instrument/extrae/InstrumentTaskWait.hpp \
+	src/instrument/extrae/InstrumentThreadManagement.hpp \
+	src/instrument/extrae/InstrumentUserMutex.hpp
+
 null_common_sources = \
 	src/null/NullDebug.cpp \
 	src/null/NullAPI.cpp
@@ -315,6 +336,13 @@ libnanos6_null_cb_la_LDFLAGS = $(common_libnanos6_ldflags)
 libnanos6_null_sb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
 libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
+
+if HAVE_EXTRAE
+libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae @extrae_CPPFLAGS@
+libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
+libnanos6_extrae_la_LDFLAGS = @extrae_LDFLAGS@ @extrae_LIBS@ $(common_libnanos6_ldflags)
+endif
 
 
 
