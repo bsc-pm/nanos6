@@ -4,3 +4,4 @@
 [submodule "tests/directive_based"]
 	path = tests/directive_based
 	url = https://pm.bsc.es/gitlab/nanos6/nanos6-tests.git
+	branch = linear-regions
