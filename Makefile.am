@@ -96,6 +96,7 @@ common_dependency_sources = \
 	src/dependencies/DataAccessBase.hpp
 
 discrete_dependency_sources = $(common_dependency_sources) \
+	src/dependencies/discrete/CPUDependencyData.hpp \
 	src/dependencies/discrete/DataAccess.hpp \
 	src/dependencies/discrete/DataAccessImplementation.hpp \
 	src/dependencies/discrete/DataAccessRange.hpp \
