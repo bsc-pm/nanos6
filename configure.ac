@@ -10,7 +10,7 @@ AC_CONFIG_MACRO_DIR([common/m4])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
-AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall])
+AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall tar-pax])
 AM_SILENT_RULES([yes])
 
 AC_CHECK_SPECIAL_HOST_ARCH
