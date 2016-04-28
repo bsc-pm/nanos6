@@ -21,7 +21,6 @@ class SchedulingDecisionPlaceholder;
 
 class WorkerThread {
 public:
-	typedef std::deque<Task *> satisfied_originator_list_t;
 	
 private:
 	//! This condition variable is used for suspending and resuming the thread
@@ -44,9 +43,6 @@ private:
 	
 	//! Dependency domain of the tasks instantiated by this thread
 	DependencyDomain _dependencyDomain;
-	
-	//! Tasks whose accesses have been satified after ending a task
-	satisfied_originator_list_t _satisfiedAccessOriginators;
 	
 	//! Thread Local Storage variable to point back to the WorkerThread that is running the code
 	static __thread WorkerThread *_currentWorkerThread;
@@ -159,12 +155,6 @@ public:
 	DependencyDomain *getDependencyDomain()
 	{
 		return &_dependencyDomain;
-	}
-	
-	//! \brief Retrieves a reference to the thread-local list of tasks that have had one of their accesses satisfied when removing a task
-	satisfied_originator_list_t &getSatisfiedOriginatorsReference()
-	{
-		return _satisfiedAccessOriginators;
 	}
 	
 	//! \brief returns the WorkerThread that runs the call

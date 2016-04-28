@@ -6,6 +6,7 @@
 #include <deque>
 #include <mutex>
 
+#include "CPUDependencyData.hpp"
 #include "DataAccessSequence.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -18,7 +19,7 @@
 
 class DataAccessRegistration {
 private:
-	static inline void reevaluateAndPropagateSatisfiability(Instrument::task_id_t instrumentationTaskId, DataAccess *previousDataAccess, DataAccess *targetDataAccess, WorkerThread::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
+	static inline void reevaluateAndPropagateSatisfiability(Instrument::task_id_t instrumentationTaskId, DataAccess *previousDataAccess, DataAccess *targetDataAccess, CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
 	{
 		if (targetDataAccess == nullptr) {
 			return;
@@ -58,7 +59,7 @@ private:
 	}
 	
 	
-	static inline void unregisterDataAccess(Instrument::task_id_t instrumentationTaskId, DataAccess *dataAccess, WorkerThread::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
+	static inline void unregisterDataAccess(Instrument::task_id_t instrumentationTaskId, DataAccess *dataAccess, CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
 	{
 		assert(dataAccess != nullptr);
 		
@@ -168,7 +169,7 @@ private:
 	
 	
 	//! Process all the originators for whose a DataAccess has become satisfied
-	static inline void processSatisfiedOriginators(WorkerThread::satisfied_originator_list_t &satisfiedOriginators, HardwarePlace *hardwarePlace)
+	static inline void processSatisfiedOriginators(CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators, HardwarePlace *hardwarePlace)
 	{
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : satisfiedOriginators) {
@@ -289,20 +290,20 @@ public:
 		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != 0);
-		HardwarePlace *hardwarePlace = currentThread->getHardwarePlace();
-		assert(hardwarePlace != 0);
+		CPU *cpu = currentThread->getHardwarePlace();
+		assert(cpu != 0);
 		
 		TaskDataAccesses &taskDataAccesses = finishedTask->getDataAccesses();
 		
 		// A temporary list of tasks to minimize the time spent with the mutex held.
-		WorkerThread::satisfied_originator_list_t &satisfiedOriginators = currentThread->getSatisfiedOriginatorsReference();
+		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators = cpu->_dependencyData._satisfiedAccessOriginators;
 		for (auto it = taskDataAccesses.begin(); it != taskDataAccesses.end(); it = taskDataAccesses.erase(it)) {
 			DataAccess *dataAccess = &(*it);
 			
 			assert(dataAccess->_originator == finishedTask);
 			unregisterDataAccess(finishedTask->getInstrumentationTaskId(), dataAccess, /* OUT */ satisfiedOriginators);
 			
-			processSatisfiedOriginators(satisfiedOriginators, hardwarePlace);
+			processSatisfiedOriginators(satisfiedOriginators, cpu);
 			satisfiedOriginators.clear();
 			
 			// FIXME: delete the access
