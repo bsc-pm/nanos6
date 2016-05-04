@@ -64,7 +64,7 @@ namespace Instrument {
 	//! \param newAccessType the type of access to which it will be upgraded
 	//! \param newWeakness true if the resulting access is weak
 	//! \param becomesUnsatisfied indicates if the DataAccess was satisfied and has become unsatisfied as a result of the upgrade
-	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! 
 	void upgradedDataAccess(
 		data_access_id_t superAccessId, data_access_id_t dataAccessId,
@@ -78,7 +78,7 @@ namespace Instrument {
 	//! 
 	//! \param superAccessId the identifier of the superaccess as returned by Instrument::createdDataAccess or data_access_id_t() if there is no superaccess
 	//! \param dataAccessId the identifier of the DataAccess that becomes satisfied as returned in the previous call to Instrument::createdDataAccess
-	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! \param targetTaskId the identifier of the task that will perform the now satisfied DataAccess
 	void dataAccessBecomesSatisfied(
 		data_access_id_t superAccessId, data_access_id_t dataAccessId,
@@ -90,7 +90,7 @@ namespace Instrument {
 	//! 
 	//! \param superAccessId the identifier of the superaccess as returned by Instrument::createdDataAccess or data_access_id_t() if there is no superaccess
 	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
-	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! \param triggererTaskId the identifier of the task that triggers the change
 	void removedDataAccess(
 		data_access_id_t superAccessId, data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
@@ -101,7 +101,7 @@ namespace Instrument {
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkAccessId the identifier of the sink DataAccess
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
-	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! \param triggererTaskId the identifier of the task that triggers the change
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId, bool direct,
 		task_id_t triggererTaskId
@@ -112,7 +112,7 @@ namespace Instrument {
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkAccessId the identifier of the sink DataAccess
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
-	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! \param triggererTaskId the identifier of the task that triggers the change
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId, bool direct,
 		task_id_t triggererTaskId
@@ -123,7 +123,7 @@ namespace Instrument {
 	//! \param oldSuperAccessId the identifier of the superaccess from which the DataAccess is removed
 	//! \param newSuperAccessId the identifier of the superaccess to which the DataAccess is inserted
 	//! \param dataAccessId the identifier of the DataAccess that is moved
-	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! 
 	void reparentedDataAccess(
 		data_access_id_t oldSuperAccessId, data_access_id_t newSuperAccessId,
