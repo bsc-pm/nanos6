@@ -1,4 +1,5 @@
 #include "CPUActivation.hpp"
+#include "TaskFinalization.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -99,29 +100,11 @@ void WorkerThread::handleTask()
 	// Release successors
 	DataAccessRegistration::unregisterTaskDataAccesses(_task);
 	
-	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
-	{
-		bool readyOrDisposable = _task->markAsFinished();
-		Task *currentTask = _task;
-		
-		while ((currentTask != nullptr) && readyOrDisposable) {
-			Task *parent = currentTask->getParent();
-			
-			if (currentTask->hasFinished()) {
-				readyOrDisposable = currentTask->unlinkFromParent();
-				Instrument::destroyTask(currentTask->getInstrumentationTaskId(), _cpu, this);
-				// NOTE: The memory layout is defined in nanos_create_task
-				currentTask->~Task();
-				free(currentTask->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here
-				currentTask = parent;
-			} else {
-				// An ancestor in a taskwait that finishes at this point
-				Scheduler::taskGetsUnblocked(currentTask, _cpu);
-				readyOrDisposable = false;
-			}
-		}
+	if (_task->markAsFinished()) {
+		TaskFinalization::disposeOrUnblockTask(_task, _cpu, this);
 	}
 	
 	_task = nullptr;
 }
+
 
