@@ -133,6 +133,22 @@ public:
 		return ((--_countdownToBeWokenUp) == 0);
 	}
 	
+	
+	//! \brief Increase an internal counter to prevent the removal of the task
+	inline void increaseRemovalBlockingCount()
+	{
+		++_countdownToBeWokenUp;
+	}
+	
+	//! \brief Decrease an internal counter that prevents the removal of the task
+	//!
+	//! \returns true iff the change makes this task become ready or disposable
+	inline bool decreaseRemovalBlockingCount()
+	{
+		return ((--_countdownToBeWokenUp) == 0);
+	}
+	
+	
 	//! \brief Set the parent
 	//! This should be used when the parent was not set during creation, and should have the parent in a state that allows
 	//! adding this task as a child.
