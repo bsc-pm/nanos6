@@ -879,7 +879,7 @@ public:
 		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators = cpu->_dependencyData._satisfiedAccessOriginators;
 		
 		TaskDataAccesses &taskDataAccesses = finishedTask->getDataAccesses();
-		for (auto it = taskDataAccesses.begin(); it != taskDataAccesses.end(); it = taskDataAccesses.erase(it)) {
+		for (auto it = taskDataAccesses.begin(); it != taskDataAccesses.end(); ) {
 			DataAccess *dataAccess = &(*it);
 			
 			assert(dataAccess->_originator == finishedTask);
@@ -906,7 +906,8 @@ public:
 			processSatisfiedOriginators(satisfiedOriginators, cpu);
 			satisfiedOriginators.clear();
 			
-			// FIXME: delete the accesses
+			it = taskDataAccesses.erase(it);
+			delete dataAccess;
 		}
 	}
 	
