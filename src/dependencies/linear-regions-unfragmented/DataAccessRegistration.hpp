@@ -25,6 +25,10 @@ private:
 		LinearRegionDataAccessMap *map, DataAccessRange const &range,
 		DataAccess *outdatedContent, DataAccess *replacement
 	) {
+		assert(outdatedContent != nullptr);
+		assert(outdatedContent->_lock != nullptr);
+		assert(outdatedContent->_lock->isLockedByThisThread());
+		
 		map->processIntersecting(
 			range,
 			[&](LinearRegionDataAccessMap::iterator position) -> bool {
@@ -45,6 +49,10 @@ private:
 		LinearRegionDataAccessMap *map, DataAccess *outdatedContent,
 		LinearRegionDataAccessMap &replacement
 	) {
+		assert(outdatedContent != nullptr);
+		assert(outdatedContent->_lock != nullptr);
+		assert(outdatedContent->_lock->isLockedByThisThread());
+		
 		// NOTE: This could be implemented as a "merge"-like operation
 		for (auto replacementPosition = replacement.begin(); replacementPosition != replacement.end(); replacementPosition++) {
 			replaceOutdatedMapProjection(
@@ -58,6 +66,8 @@ private:
 	static void propagateSuperAccessAndBottomMap(DataAccess *dataAccess, Instrument::task_id_t triggererTaskInstrumentationId)
 	{
 		assert(dataAccess != nullptr);
+		assert(dataAccess->_lock != nullptr);
+		assert(dataAccess->_lock->isLockedByThisThread());
 		
 		DataAccess *superAccess = dataAccess->_superAccess;
 		LinearRegionDataAccessMap *bottomMap = dataAccess->_bottomMap;
@@ -91,6 +101,8 @@ private:
 	static inline void replaceSuperAccessAndBottomMapOfSubaccesses(DataAccess *dataAccess, LinearRegionDataAccessMap *newBottomMap, Instrument::task_id_t triggererTaskInstrumentationId)
 	{
 		assert(dataAccess != nullptr);
+		assert(dataAccess->_lock != nullptr);
+		assert(dataAccess->_lock->isLockedByThisThread());
 		
 		DataAccess *newSuperAccess = dataAccess->_superAccess;
 		for (auto const &subaccessNode : dataAccess->_topSubaccesses) {
@@ -125,6 +137,8 @@ private:
 	static inline void removeMapProjection(LinearRegionDataAccessMap *map, DataAccess *dataAccess)
 	{
 		assert(dataAccess != nullptr);
+		assert(dataAccess->_lock != nullptr);
+		assert(dataAccess->_lock->isLockedByThisThread());
 		
 		map->processIntersecting(
 			dataAccess->_range,
@@ -149,6 +163,9 @@ private:
 		assert(target != nullptr);
 		assert(!sourceRange.empty());
 		assert(!targetRange.empty());
+		assert(source->_lock != nullptr);
+		assert(source->_lock->isLockedByThisThread());
+		assert(source->_lock == target->_lock);
 		
 		DataAccessRange intersection = targetRange.intersect(sourceRange);
 		assert(!intersection.empty());
@@ -167,6 +184,12 @@ private:
 		DataAccessRange const &nextRange,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
+		assert(dataAccess != nullptr);
+		assert(dataAccess->_lock != nullptr);
+		assert(dataAccess->_lock->isLockedByThisThread());
+		assert(next != nullptr);
+		assert(dataAccess->_lock == next->_lock);
+		
 		dataAccess->_bottomSubaccesses.processIntersectingAndMissing(
 			nextRange,
 			// Bottom subaccesses that have an intersection with "next"
@@ -214,6 +237,12 @@ private:
 		DataAccessRange const &previousRange,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
+		assert(dataAccess != nullptr);
+		assert(dataAccess->_lock != nullptr);
+		assert(dataAccess->_lock->isLockedByThisThread());
+		assert(previous != nullptr);
+		assert(dataAccess->_lock == previous->_lock);
+		
 		dataAccess->_topSubaccesses.processIntersecting(
 			previousRange,
 			// Top subaccesses that have an intersection with "previous"
@@ -239,11 +268,14 @@ private:
 	) {
 		assert(fromDataAccess != nullptr);
 		assert(fromDataAccess->_blockerCount == 0);
+		assert(fromDataAccess->_lock != nullptr);
+		assert(fromDataAccess->_lock->isLockedByThisThread());
 		
 		DataAccess *nextAccess = nextLink->_access;
 		assert(nextAccess != nullptr);
 		assert(!nextLink->_satisfied);
 		assert(nextAccess->_blockerCount != 0);
+		assert(fromDataAccess->_lock == nextAccess->_lock);
 		
 		bool linkBecomesSatisfied = DataAccess::evaluateSatisfiability(fromDataAccess, nextAccess->_type);
 		if (linkBecomesSatisfied) {
@@ -279,9 +311,12 @@ private:
 	) {
 		assert(fromDataAccess != nullptr);
 		assert(fromDataAccess->_blockerCount == 0);
+		assert(fromDataAccess->_lock != nullptr);
+		assert(fromDataAccess->_lock->isLockedByThisThread());
 		
 		DataAccess *subaccess = subaccessPosition->_access;
 		assert(subaccess != nullptr);
+		assert(fromDataAccess->_lock == subaccess->_lock);
 		
 		bool linkBecomesSatisfied = fromDataAccess->propagatesSatisfiability(subaccess->_type);
 		if (linkBecomesSatisfied) {
@@ -314,6 +349,8 @@ private:
 	) {
 		assert(fromDataAccess != nullptr);
 		assert(fromDataAccess->_blockerCount == 0);
+		assert(fromDataAccess->_lock != nullptr);
+		assert(fromDataAccess->_lock->isLockedByThisThread());
 		
 		fromDataAccess->_next.processIntersecting(
 			range,
@@ -345,6 +382,8 @@ private:
 	) {
 		assert(dataAccess != nullptr);
 		assert((dataAccess->_blockerCount == 0) || dataAccess->_weak);
+		assert(dataAccess->_lock != nullptr);
+		assert(dataAccess->_lock->isLockedByThisThread());
 		
 		// Update the top map with any projection of the top subaccesses that will become unobstructed
 		if (topMap != nullptr) {
@@ -364,6 +403,7 @@ private:
 			
 			// Check that there is a correct reverse link
 			assert(previous != nullptr);
+			assert(dataAccess->_lock == previous->_lock);
 			assert(previous->_next.find(previousRange) != previous->_next.end());
 			assert(previous->_next.find(previousRange)->_access == dataAccess);
 			
@@ -393,6 +433,7 @@ private:
 			
 			// Check that there is a correct reverse link
 			assert(next != nullptr);
+			assert(dataAccess->_lock == next->_lock);
 			assert(next->_previous.find(nextRange) != next->_previous.end());
 			assert(!next->_previous.find(nextRange)->getAccessRange().intersect(nextRange).empty());
 			assert(next->_previous.find(nextRange)->_access == dataAccess);
@@ -454,6 +495,7 @@ private:
 		for (auto previousLinkPosition = dataAccess->_previous.begin(); previousLinkPosition != dataAccess->_previous.end(); previousLinkPosition++) {
 			DataAccessRange const &previousRange = previousLinkPosition->_accessRange;
 			DataAccess *previous = previousLinkPosition->_access;
+			assert(dataAccess->_lock == previous->_lock);
 			
 			// Update the bottom map with any projection of "previous" that becomes unobstructed
 			replaceOutdatedMapProjection(bottomMap, previousRange, dataAccess, previous);
@@ -509,6 +551,10 @@ private:
 		
 		DataAccessRange intersectingFragment = positionOfPreviousAccess->_accessRange;
 		DataAccess *previousAccess = positionOfPreviousAccess->_access;
+		assert(previousAccess != nullptr);
+		assert(previousAccess->_lock != nullptr);
+		assert(previousAccess->_lock == lock);
+		assert(previousAccess->_lock->isLockedByThisThread());
 		
 		// A new data access, as opposed to a repeated or upgraded one
 		assert(previousAccess->_originator != task);
@@ -550,6 +596,8 @@ private:
 		DataAccess *dataAccess = accessPosition->_access;
 		assert(dataAccess != nullptr);
 		assert(dataAccess->_originator == task);
+		assert(dataAccess->_lock != nullptr);
+		assert(dataAccess->_lock->isLockedByThisThread());
 		
 		bool doesNotBecomeUnsatisfied = DataAccess::upgradeAccess(task, dataAccess, accessType, weak);
 		
@@ -588,6 +636,7 @@ private:
 		assert(oldDataAccess->_lock == lock);
 		assert(oldDataAccess->_superAccess == superAccess);
 		assert(oldDataAccess->_bottomMap == bottomMap);
+		assert(lock->isLockedByThisThread());
 		
 		// Simple case: perfectly matching upgrade
 		if (oldAccessRange == accessRange) {
@@ -644,6 +693,8 @@ private:
 		assert(task != nullptr);
 		assert(lock != nullptr);
 		assert(bottomMap != nullptr);
+		assert(lock->isLockedByThisThread());
+		assert((bottomMap->_superAccess == nullptr) || (bottomMap->_superAccess->_lock == lock));
 		
 		//
 		// Handling of access upgrades
