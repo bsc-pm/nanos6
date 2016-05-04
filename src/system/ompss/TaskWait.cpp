@@ -1,5 +1,6 @@
 #include "api/nanos6_rt_interface.h"
 
+#include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 
 #include "executors/threads/WorkerThread.hpp"
@@ -32,6 +33,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 		return;
 	}
 	
+	DataAccessRegistration::handleEnterTaskwait(currentTask);
 	bool done = currentTask->markAsBlocked();
 	
 	// done == true:
@@ -60,6 +62,8 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();
+	
+	DataAccessRegistration::handleExitTaskwait(currentTask);
 	
 	if (!done) {
 		// The instrumentation was notified that the task had been blocked

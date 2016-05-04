@@ -3,6 +3,7 @@
 #include "InstrumentLeaderThread.hpp"
 #include "InstrumentVerbose.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "system/LeaderThread.hpp"
 
 #include <algorithm>
 #include <iomanip>
@@ -29,6 +30,10 @@ namespace Instrument {
 			logEntry->_contents << " --- LeaderThreadSpin";
 			
 			addLogEntry(logEntry);
+		}
+		
+		if (_dumpOnlyOnExit && !LeaderThread::isExiting()) {
+			return;
 		}
 		
 		// After this we flush the current log

@@ -17,6 +17,10 @@ public:
 	//! \brief Signal the leader thread that the "main" function has finished and thus that the execution must end
 	static void notifyMainExit();
 	
+	static bool isExiting()
+	{
+		return _mustExit.load();
+	}
 };
 
 

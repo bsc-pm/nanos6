@@ -1,5 +1,6 @@
 #include "api/nanos6_rt_interface.h"
 
+#include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 #include "UserMutex.hpp"
 
@@ -72,7 +73,9 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 	Instrument::blockedOnUserMutex(&userMutex);
 	
+	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask);
+	DataAccessRegistration::handleExitBlocking(currentTask);
 	
 	// This in combination with a release from other threads makes their changes visible to this one
 	std::atomic_thread_fence(std::memory_order_acquire);

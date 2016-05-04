@@ -40,6 +40,7 @@ common_sources = \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.cpp \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
+	./src/executors/threads/TaskFinalization.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/ThreadManagerPolicy.cpp \
