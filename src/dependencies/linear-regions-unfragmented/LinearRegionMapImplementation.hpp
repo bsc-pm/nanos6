@@ -138,7 +138,7 @@ typename LinearRegionMap<ContentType>::iterator LinearRegionMap<ContentType>::fr
 	iterator intersectionPosition = end();
 	DataAccessRange originalRange = position->_accessRange;
 	bool alreadyShrinked = false;
-	ContentType &contents = *position;
+	ContentType contentsCopy(*position);
 	
 	originalRange.processIntersectingFragments(
 		fragmenterRange,
@@ -148,9 +148,8 @@ typename LinearRegionMap<ContentType>::iterator LinearRegionMap<ContentType>::fr
 				position->_accessRange = range;
 				alreadyShrinked = true;
 			} else {
-				ContentType newContents(contents);
-				newContents.getAccessRange() = range;
-				insert(newContents);
+				contentsCopy.getAccessRange() = range;
+				insert(contentsCopy);
 			}
 		},
 		/* intersection */
@@ -161,9 +160,8 @@ typename LinearRegionMap<ContentType>::iterator LinearRegionMap<ContentType>::fr
 					alreadyShrinked = true;
 					intersectionPosition = position;
 				} else {
-					ContentType newContents(contents);
-					newContents.getAccessRange() = range;
-					intersectionPosition = insert(newContents);
+					contentsCopy.getAccessRange() = range;
+					intersectionPosition = insert(contentsCopy);
 				}
 			} else {
 				if (!alreadyShrinked) {
