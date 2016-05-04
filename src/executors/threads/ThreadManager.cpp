@@ -41,7 +41,6 @@ void ThreadManager::preinitialize()
 		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
 			CPU *cpu = getCPU(systemCPUId);
 			assert(cpu != nullptr);
-			cpu;
 			
 			assert(_shutdownThreads == 0);
 			_totalThreads++;
