@@ -39,6 +39,7 @@ namespace Instrument {
 		extern bool _verboseUserMutex;
 		
 		extern EnvironmentVariable<bool> _useTimestamps;
+		extern EnvironmentVariable<bool> _dumpOnlyOnExit;
 		
 		extern std::ofstream *_output;
 		
