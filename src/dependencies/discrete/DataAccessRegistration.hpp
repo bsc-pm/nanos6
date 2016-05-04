@@ -304,6 +304,22 @@ public:
 			// FIXME: delete the access
 		}
 	}
+	
+	
+	static inline void handleEnterBlocking(__attribute__((unused)) Task *task)
+	{
+	}
+	static inline void handleExitBlocking(__attribute__((unused)) Task *task)
+	{
+	}
+	
+	static inline void handleEnterTaskwait(__attribute__((unused)) Task *task)
+	{
+	}
+	static inline void handleExitTaskwait(__attribute__((unused)) Task *task)
+	{
+	}
+	
 };
 
 
