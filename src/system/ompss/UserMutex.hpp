@@ -38,7 +38,7 @@ public:
 	inline bool tryLock()
 	{
 		bool expected = false;
-		bool successful = _userMutex.compare_exchange_strong(expected, false);
+		bool successful = _userMutex.compare_exchange_strong(expected, true);
 		assert(expected != successful);
 		return successful;
 	}
