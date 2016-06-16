@@ -115,18 +115,20 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
 
-linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) \
+common_linear_regions_dependency_sources = \
+	src/dependencies/linear-regions/DataAccessRange.hpp \
+	src/dependencies/linear-regions/DataAccessRangeIndexer.hpp \
+	src/dependencies/linear-regions/LinearRegionMap.hpp \
+	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp
+	
+linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
 	src/dependencies/linear-regions-unfragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccessRange.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccessRangeIndexer.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-unfragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMap.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/LinearRegionMap.hpp \
-	src/dependencies/linear-regions-unfragmented/LinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifacts.hpp \
@@ -138,7 +140,7 @@ AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
 common_sources += $(discrete_dependency_sources)
 endif
 if LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES
-AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions-unfragmented
+AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-unfragmented
 common_sources += $(linear_regions_unfragmented_dependency_sources)
 endif
 
