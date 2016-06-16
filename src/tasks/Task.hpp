@@ -130,7 +130,9 @@ public:
 	//! \returns true iff the change makes this task become ready or disposable
 	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
 	{
-		return ((--_countdownToBeWokenUp) == 0);
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
 	}
 	
 	
@@ -145,7 +147,9 @@ public:
 	//! \returns true iff the change makes this task become ready or disposable
 	inline bool decreaseRemovalBlockingCount()
 	{
-		return ((--_countdownToBeWokenUp) == 0);
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
 	}
 	
 	
@@ -188,7 +192,10 @@ public:
 	{
 		assert(_thread != nullptr);
 		_thread = nullptr;
-		return ((--_countdownToBeWokenUp) == 0);
+		
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
 	}
 	
 	//! \brief Mark it as blocked
@@ -197,7 +204,10 @@ public:
 	inline bool markAsBlocked()
 	{
 		assert(_thread != nullptr);
-		return ((--_countdownToBeWokenUp) == 0);
+		
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
 	}
 	
 	//! \brief Mark it as unblocked
