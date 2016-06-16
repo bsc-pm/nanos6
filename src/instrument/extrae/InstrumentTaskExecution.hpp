@@ -6,6 +6,8 @@
 #include "InstrumentExtrae.hpp"
 #include <InstrumentTaskId.hpp>
 
+#include <executors/threads/WorkerThread.hpp>
+#include <tasks/Task.hpp>
 
 
 namespace Instrument {
