@@ -39,9 +39,14 @@ private:
 	//! Task to which this one is closely nested
 	Task *_parent;
 	
+protected:
 	//! Accesses that may determine dependencies
 	TaskDataAccesses _dataAccesses;
 	
+	// Need to get back to the task from TaskDataAccesses for instrumentation purposes
+	friend struct TaskDataAccesses;
+	
+private:
 	//! Number of pending predecessors
 	std::atomic<int> _predecessorCount;
 	
@@ -70,10 +75,6 @@ public:
 		if (parent != nullptr) {
 			parent->addChild(this);
 		}
-	}
-	
-	virtual ~Task()
-	{
 	}
 	
 	//! Get the address of the arguments block
