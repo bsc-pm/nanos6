@@ -6,7 +6,7 @@ SUBDIRS = . tests/directive_based/check-shutdown tests/directive_based/tests
 
 lib_LTLIBRARIES = \
 	libnanos6-optimized.la libnanos6-debug.la \
-	libnanos6-graph.la \
+	libnanos6-graph.la libnanos6-graph-debug.la \
 	libnanos6-profile.la \
 	libnanos6-stats.la \
 	libnanos6-verbose.la libnanos6-verbose-debug.la \
@@ -307,6 +307,11 @@ libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/
 libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
+
+libnanos6_graph_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph
+libnanos6_graph_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_graph_debug_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
+libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile
 libnanos6_profile_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
