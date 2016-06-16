@@ -5,6 +5,7 @@
 
 #include <boost/intrusive/avl_set.hpp>
 #include <boost/intrusive/options.hpp>
+#include <boost/intrusive/parent_from_member.hpp>
 #include "DataAccessRange.hpp"
 
 
@@ -42,6 +43,11 @@ namespace LinearRegionMapInternals {
 		}
 		
 		DataAccessRange const &getAccessRange() const
+		{
+			return _contents.getAccessRange();
+		}
+		
+		DataAccessRange &getAccessRange()
 		{
 			return _contents.getAccessRange();
 		}
@@ -199,6 +205,17 @@ public:
 		return result;
 	}
 	
+	void moved(ContentType *content)
+	{
+		typedef LinearRegionMapInternals::Node<ContentType> node_t;
+		
+		node_t *node = boost::intrusive::get_parent_from_member<node_t>(content, &node_t::_contents);
+		typename map_t::iterator it = _map.iterator_to(*node);
+		
+		_map.erase(it);
+		_map.insert(*node);
+	}
+	
 	void clear()
 	{
 		for (auto it = begin(); it != end(); ) {
@@ -206,6 +223,14 @@ public:
 		}
 	}
 	
+	
+	//! \brief Pass all elements through a lambda
+	//! 
+	//! \param[in] processor a lambda that receives an iterator to each element and that returns a boolean, that is false to stop the traversal
+	//! 
+	//! \returns false if the traversal was stopped before finishing
+	template <typename ProcessorType>
+	bool processAll(ProcessorType processor);
 	
 	//! \brief Pass all elements that intersect a given range through a lambda
 	//! 
@@ -234,6 +259,14 @@ public:
 	//! \returns true if the condition evaluated to true for any element
 	template <typename PredicateType>
 	bool exists(DataAccessRange const &range, PredicateType condition);
+	
+	
+	//! \brief Check if there is any element in a given range
+	//! 
+	//! \param[in] range the range to explore
+	//! 
+	//! \returns true if there was at least one element at least partially in the range
+	bool contains(DataAccessRange const &range);
 	
 	
 	iterator fragmentByIntersection(iterator position, DataAccessRange const &range, bool removeIntersection);

@@ -90,6 +90,11 @@ public:
 		return end;
 	}
 	
+	size_t getSize() const
+	{
+		return _length;
+	}
+	
 	
 	std::pair<void *, void *> getBounds() const
 	{
@@ -137,6 +142,10 @@ public:
 		// There must be an intersection
 		assert(intersectionStart < intersectionEnd);
 		
+		// Intersection
+		DataAccessRange intersection(intersectionStart, intersectionEnd);
+		intersectingProcessor(intersection);
+		
 		// Left of intersection
 		if (boundaries._firstStart < intersectionStart) {
 			DataAccessRange leftOfIntersection(boundaries._firstStart, intersectionStart);
@@ -145,10 +154,6 @@ public:
 			DataAccessRange leftOfIntersection(boundaries._secondStart, intersectionStart);
 			otherOnlyProcessor(leftOfIntersection);
 		}
-		
-		// Intersection
-		DataAccessRange intersection(intersectionStart, intersectionEnd);
-		intersectingProcessor(intersection);
 		
 		// Right of intersection
 		if (intersectionEnd < boundaries._firstEnd) {

@@ -9,6 +9,23 @@
 
 
 template <typename ContentType> template <typename ProcessorType>
+bool LinearRegionMap<ContentType>::processAll(ProcessorType processor)
+{
+	for (iterator it = _map.begin(); it != _map.end(); ) {
+		iterator position = it;
+		it++; // Advance before processing to allow the processor to fragment the node without passing a second time over some new fragments
+		
+		bool cont = processor(position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+		if (!cont) {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+
+template <typename ContentType> template <typename ProcessorType>
 bool LinearRegionMap<ContentType>::processIntersecting(
 	DataAccessRange const &range,
 	ProcessorType processor
@@ -16,17 +33,17 @@ bool LinearRegionMap<ContentType>::processIntersecting(
 	iterator it = _map.lower_bound(range.getStartAddress());
 	
 	if (it != _map.begin()) {
-		if ((it == _map.end()) || (it->_accessRange.getStartAddress() > range.getStartAddress())) {
+		if ((it == _map.end()) || (it->getAccessRange().getStartAddress() > range.getStartAddress())) {
 			it--;
 		}
 	}
 	
-	while ((it != _map.end()) && (it->_accessRange.getStartAddress() < range.getEndAddress())) {
+	while ((it != _map.end()) && (it->getAccessRange().getStartAddress() < range.getEndAddress())) {
 		// The "processor" may replace the node by something else, so advance before that happens
 		iterator position = it;
 		it++;
 		
-		if (!range.intersect(position->_accessRange).empty()) {
+		if (!range.intersect(position->getAccessRange()).empty()) {
 			bool cont = processor(position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
 			if (!cont) {
 				return false;
@@ -52,38 +69,38 @@ bool LinearRegionMap<ContentType>::processIntersectingAndMissing(
 	iterator initial = it;
 	
 	if (it != _map.begin()) {
-		if ((it == _map.end()) || (it->_accessRange.getStartAddress() > range.getStartAddress())) {
+		if ((it == _map.end()) || (it->getAccessRange().getStartAddress() > range.getStartAddress())) {
 			it--;
 		}
 	}
 	
 	void *lastEnd = range.getStartAddress();
 	assert(!_map.empty());
-	if (it->_accessRange.getEndAddress() <= range.getStartAddress()) {
+	if (it->getAccessRange().getEndAddress() <= range.getStartAddress()) {
 		it = initial;
 	}
 	
-	while ((it != _map.end()) && (it->_accessRange.getStartAddress() < range.getEndAddress())) {
+	while ((it != _map.end()) && (it->getAccessRange().getStartAddress() < range.getEndAddress())) {
 		bool cont = true;
 		
 		// The "processor" may replace the node by something else, so advance before that happens
 		iterator position = it;
 		it++;
 		
-		if (lastEnd < position->_accessRange.getStartAddress()) {
-			DataAccessRange missingRange(lastEnd, position->_accessRange.getStartAddress());
+		if (lastEnd < position->getAccessRange().getStartAddress()) {
+			DataAccessRange missingRange(lastEnd, position->getAccessRange().getStartAddress());
 			cont = missingProcessor(missingRange); // NOTE: an error here indicates that the lambda is missing the "bool" return type
 			if (!cont) {
 				return false;
 			}
 		}
 		
-		if (position->_accessRange.getEndAddress() <= range.getEndAddress()) {
-			lastEnd = position->_accessRange.getEndAddress();
+		if (position->getAccessRange().getEndAddress() <= range.getEndAddress()) {
+			lastEnd = position->getAccessRange().getEndAddress();
 			cont = intersectingProcessor(position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
 		} else {
-			assert(position->_accessRange.getEndAddress() > range.getEndAddress());
-			assert((position->_accessRange.getStartAddress() >= lastEnd) || (position->_accessRange.getStartAddress() < range.getStartAddress()));
+			assert(position->getAccessRange().getEndAddress() > range.getEndAddress());
+			assert((position->getAccessRange().getStartAddress() >= lastEnd) || (position->getAccessRange().getStartAddress() < range.getStartAddress()));
 			
 			cont = intersectingProcessor(position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
 			lastEnd = range.getEndAddress();
@@ -109,18 +126,40 @@ bool LinearRegionMap<ContentType>::exists(DataAccessRange const &range, Predicat
 	iterator it = _map.lower_bound(range.getStartAddress());
 	
 	if (it != _map.begin()) {
-		if ((it == _map.end()) || (it->_accessRange.getStartAddress() > range.getStartAddress())) {
+		if ((it == _map.end()) || (it->getAccessRange().getStartAddress() > range.getStartAddress())) {
 			it--;
 		}
 	}
 	
 	
-	while ((it != _map.end()) && (it->_accessRange.getStartAddress() < range.getEndAddress())) {
-		if (!range.intersect(it->_accessRange).empty()) {
+	while ((it != _map.end()) && (it->getAccessRange().getStartAddress() < range.getEndAddress())) {
+		if (!range.intersect(it->getAccessRange()).empty()) {
 			bool found = condition(it); // NOTE: an error here indicates that the lambda is missing the "bool" return type
 			if (found) {
 				return true;
 			}
+		}
+		it++;
+	}
+	
+	return false;
+}
+
+
+template <typename ContentType>
+bool LinearRegionMap<ContentType>::contains(DataAccessRange const &range)
+{
+	iterator it = _map.lower_bound(range.getStartAddress());
+	
+	if (it != _map.begin()) {
+		if ((it == _map.end()) || (it->getAccessRange().getStartAddress() > range.getStartAddress())) {
+			it--;
+		}
+	}
+	
+	while ((it != _map.end()) && (it->getAccessRange().getStartAddress() < range.getEndAddress())) {
+		if (!range.intersect(it->getAccessRange()).empty()) {
+			return true;
 		}
 		it++;
 	}
@@ -136,32 +175,34 @@ typename LinearRegionMap<ContentType>::iterator LinearRegionMap<ContentType>::fr
 	bool removeIntersection
 ) {
 	iterator intersectionPosition = end();
-	DataAccessRange originalRange = position->_accessRange;
+	DataAccessRange originalRange = position->getAccessRange();
 	bool alreadyShrinked = false;
-	ContentType contentsCopy(*position);
+	ContentType &contents = *position;
 	
 	originalRange.processIntersectingFragments(
 		fragmenterRange,
 		/* originalRange only */
 		[&](DataAccessRange const &range) {
 			if (!alreadyShrinked) {
-				position->_accessRange = range;
+				position->getAccessRange() = range;
 				alreadyShrinked = true;
 			} else {
-				contentsCopy.getAccessRange() = range;
-				insert(contentsCopy);
+				ContentType newContents(contents);
+				newContents.getAccessRange() = range;
+				insert(newContents);
 			}
 		},
 		/* intersection */
 		[&](DataAccessRange const &range) {
 			if (!removeIntersection) {
 				if (!alreadyShrinked) {
-					position->_accessRange = range;
+					position->getAccessRange() = range;
 					alreadyShrinked = true;
 					intersectionPosition = position;
 				} else {
-					contentsCopy.getAccessRange() = range;
-					intersectionPosition = insert(contentsCopy);
+					ContentType newContents(contents);
+					newContents.getAccessRange() = range;
+					intersectionPosition = insert(newContents);
 				}
 			} else {
 				if (!alreadyShrinked) {

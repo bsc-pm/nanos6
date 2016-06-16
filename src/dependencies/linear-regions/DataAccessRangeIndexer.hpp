@@ -3,6 +3,7 @@
 
 
 #include "LinearRegionMap.hpp"
+#include "LinearRegionMapImplementation.hpp"
 
 
 template <typename ContentType>
