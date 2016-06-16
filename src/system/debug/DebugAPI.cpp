@@ -14,7 +14,7 @@ void nanos_wait_for_full_initialization(void)
 	}
 }
 
-long nanos_get_num_cpus(void)
+unsigned int nanos_get_num_cpus(void)
 {
 	if (ThreadManager::hasFinishedInitialization()) {
 		return ThreadManager::getTotalCPUs();
@@ -43,6 +43,20 @@ long nanos_get_current_system_cpu()
 	
 	assert(currentCPU != 0);
 	return currentCPU->_systemCPUId;
+}
+
+unsigned int nanos_get_current_virtual_cpu()
+{
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	
+	if (currentThread == nullptr) {
+		return 0;
+	}
+	
+	CPU *currentCPU = currentThread->getHardwarePlace();
+	assert(currentCPU != 0);
+	
+	return currentCPU->_virtualCPUId;
 }
 
 void nanos_enable_cpu(long systemCPUId)

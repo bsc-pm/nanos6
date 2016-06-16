@@ -3,43 +3,10 @@
 
 #include <cassert>
 
+#include "api/nanos6_debug_interface.h"
 #include "executors/threads/ThreadManager.hpp"
 #include "../InstrumentInitAndShutdown.hpp"
 #include "InstrumentExtrae.hpp"
-
-
-extern "C" {
-	unsigned int nanos_get_thread_num ( void ) 
-	{
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		
-		unsigned int cpuId = 0;
-		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->getHardwarePlace();
-			cpuId = cpu->_virtualCPUId;
-		}
-		
-		return (unsigned int) cpuId;
-	}
-	
-	
-	unsigned int nanos_get_max_threads ( void )
-	{
-		unsigned int retval = 0; 
-		if (ThreadManager::hasFinishedInitialization()) {
-			retval = ThreadManager::getTotalCPUs();
-		} else {
-			cpu_set_t const &cpuMask = ThreadManager::getProcessCPUMaskReference();
-			for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
-				if (CPU_ISSET(systemCPUId, &cpuMask)) {
-					retval++;
-				}
-			}
-		}
-		
-		return retval;
-	}
-};
 
 
 namespace Instrument {
@@ -49,8 +16,8 @@ namespace Instrument {
 		_threadToId[0] = 0;
 		
 		// Common thread information callbacks
-		Extrae_set_threadid_function ( nanos_get_thread_num );
-		Extrae_set_numthreads_function ( nanos_get_max_threads );
+		Extrae_set_threadid_function ( nanos_get_current_virtual_cpu );
+		Extrae_set_numthreads_function ( nanos_get_num_cpus );
 		
 		// Initialize extrae library
 		Extrae_init();
