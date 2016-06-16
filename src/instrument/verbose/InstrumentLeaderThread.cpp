@@ -47,7 +47,7 @@ namespace Instrument {
 		
 		// Swap the current log
 		LogEntry *currentEntry = _lastEntry.load();
-		while (!_lastEntry.compare_exchange_weak(currentEntry, nullptr)) {
+		while (!_lastEntry.compare_exchange_strong(currentEntry, nullptr)) {
 		}
 		
 		// Move the log to a vector
@@ -108,7 +108,7 @@ namespace Instrument {
 		LogEntry *firstFreeEntry = _freeEntries;
 		do {
 			lastEntry->_next = firstFreeEntry;
-		} while (!_freeEntries.compare_exchange_weak(firstFreeEntry, firstEntry));
+		} while (!_freeEntries.compare_exchange_strong(firstFreeEntry, firstEntry));
 		
 		// Clean the vector, which is reused
 		entries.clear();
