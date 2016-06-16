@@ -2,7 +2,7 @@
 #define INSTRUMENT_EXTRAE_ADD_TASK_HPP
 
 
-//#include "../InstrumentAddTask.hpp"
+#include "../InstrumentAddTask.hpp"
 #include <InstrumentTaskId.hpp>
 #include "InstrumentExtrae.hpp"
 
@@ -33,11 +33,9 @@ namespace Instrument {
 		Extrae_emit_CombinedEvents ( &ce );
 		
 		assert(taskInfo != nullptr);
-		assert(taskInvokationInfo != nullptr);
-		const char * label = taskInfo->task_label? taskInfo->task_label: taskInvokationInfo->invocation_source;
 		{
 			std::lock_guard<SpinLock> guard(_userFunctionMapLock);
-			_userFunctionMap[(void *) taskInfo->run] = label;
+			_userFunctionMap.insert(taskInfo);
 		}
 		
 		return task_id_t((void *) taskInfo->run);

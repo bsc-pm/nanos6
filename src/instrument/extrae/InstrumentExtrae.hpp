@@ -4,8 +4,10 @@
 #include "extrae_user_events.h"
 #include "extrae_types.h"
 
+#include "api/nanos6_rt_interface.h"
 #include "lowlevel/SpinLock.hpp"
 
+#include <set>
 #include <map>
 
 class WorkerThread;
@@ -14,7 +16,7 @@ namespace Instrument {
 
 typedef long                                     thread_id_t;
 typedef std::map<WorkerThread *, thread_id_t>    thread_map_t;
-typedef std::map<void *, const char *>           user_fct_map_t;
+typedef std::set<nanos_task_info *>              user_fct_map_t;
 
 extern const extrae_type_t                       _runtimeState;      //!< Runtime state (extrae event type)
 extern const extrae_type_t                       _functionName;      //!< Task function name

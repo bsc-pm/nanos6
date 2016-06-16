@@ -1,6 +1,7 @@
 #ifndef INSTRUMENT_EXTRAE_INIT_AND_SHUTDOWN_HPP
 #define INSTRUMENT_EXTRAE_INIT_AND_SHUTDOWN_HPP
 
+#include <cassert>
 
 #include "executors/threads/ThreadManager.hpp"
 #include "../InstrumentInitAndShutdown.hpp"
@@ -72,11 +73,14 @@ namespace Instrument {
 		
 		Extrae_define_event_type( (extrae_type_t *) &_runtimeState, (char *) "Runtime state", &nval, values, _eventStateValueStr );
 		
-		user_fct_map_t::iterator it;
-		
-		for ( it = _userFunctionMap.begin(); it != _userFunctionMap.end(); it++ ) {
-			//FIXME:XXX substitute address
-			Extrae_register_function_address ( (void *) (it->first), (char *) (it->second), (char *) (it->second), (unsigned) 13); 
+		for (nanos_task_info *taskInfo : _userFunctionMap) {
+			assert(taskInfo != nullptr);
+			
+			Extrae_register_function_address (
+				(void *) (taskInfo->run),
+				(taskInfo->task_label != nullptr ? taskInfo->task_label : taskInfo->declaration_source),
+				taskInfo->declaration_source, 0
+			);
 		}
 		
 		// Finalize extrae library
