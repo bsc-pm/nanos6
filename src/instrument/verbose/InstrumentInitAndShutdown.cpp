@@ -45,6 +45,7 @@ namespace Instrument {
 				_verboseTaskWait = true;
 				_verboseThreadManagement = true;
 				_verboseUserMutex = true;
+				_verboseLoggingMessages = true;
 			} else if (area == "addtask") {
 				_verboseAddTask = true;
 			} else if (area == "dependenciesbyaccess") {
@@ -65,6 +66,8 @@ namespace Instrument {
 				_verboseThreadManagement = true;
 			} else if (area == "usermutex") {
 				_verboseUserMutex = true;
+			} else if (area == "logmessages") {
+				_verboseLoggingMessages = true;
 			
 			} else if (area == "!addtask") {
 				_verboseAddTask = false;
@@ -86,7 +89,9 @@ namespace Instrument {
 				_verboseThreadManagement = false;
 			} else if (area == "!usermutex") {
 				_verboseUserMutex = false;
-				
+			} else if (area == "!logmessages") {
+				_verboseLoggingMessages = false;
+			
 			} else {
 				std::cerr << "Warning: ignoring unknown '" << area << "' verbose instrumentation" << std::endl;
 			}

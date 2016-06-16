@@ -32,13 +32,39 @@ namespace Instrument {
 		task_id_t targetTaskId
 	);
 	
+	void modifiedDataAccessRange(
+		data_access_id_t dataAccessId,
+		DataAccessRange newRange,
+		task_id_t triggererTaskId
+	);
+	
+	data_access_id_t fragmentedDataAccess(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
+	data_access_id_t createdDataSubaccessFragment(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
+	void completedDataAccess(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
+	void dataAccessBecomesRemovable(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
 	void removedDataAccess(
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	);
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId,
+		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
 		DataAccessRange range,
 		bool direct, bool bidirectional,
 		task_id_t triggererTaskId
@@ -46,7 +72,7 @@ namespace Instrument {
 	
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		data_access_id_t sinkAccessId,
+		task_id_t sinkTaskId,
 		bool direct,
 		task_id_t triggererTaskId
 	);

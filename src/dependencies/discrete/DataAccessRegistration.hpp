@@ -101,9 +101,10 @@ private:
 					
 					DataAccess *previousOfFirst = &(*previousOfFirstPosition);
 					assert(previousOfFirst != nullptr);
+					assert(subaccess._originator != nullptr);
 					Instrument::linkedDataAccesses(
 						previousOfFirst->_instrumentationId,
-						subaccess._instrumentationId,
+						subaccess._originator->getInstrumentationTaskId(),
 						dataAccessSequence->_accessRange,
 						true, true,
 						instrumentationTaskId
@@ -121,10 +122,12 @@ private:
 					assert(next != nullptr);
 					
 					if (positionOfNextToCurrent == subaccesses._accessSequence.end()) {
+						assert(next->_originator != nullptr);
+						
 						// The current subaccess is the last one
 						Instrument::linkedDataAccesses(
 							subaccess._instrumentationId,
-							next->_instrumentationId,
+							next->_originator->getInstrumentationTaskId(),
 							dataAccessSequence->_accessRange,
 							true, true,
 							instrumentationTaskId
@@ -151,9 +154,11 @@ private:
 				} else {
 					effectivePrevious = dataAccessSequence->getEffectivePrevious(next);
 					if (effectivePrevious != nullptr) {
+						assert(next->_originator != nullptr);
+						
 						Instrument::linkedDataAccesses(
 							effectivePrevious->_instrumentationId,
-							next->_instrumentationId,
+							next->_originator->getInstrumentationTaskId(),
 							dataAccessSequence->_accessRange,
 							false /* not direct */,
 							false /* unidirectional */,
@@ -247,7 +252,7 @@ public:
 		if (effectivePrevious != nullptr) {
 			Instrument::linkedDataAccesses(
 				effectivePrevious->_instrumentationId,
-				dataAccessInstrumentationId,
+				task->getInstrumentationTaskId(),
 				accessSequence->_accessRange,
 				!accessSequence->_accessSequence.empty() /* Direct? */,
 				!accessSequence->_accessSequence.empty() /* Bidirectional? */,

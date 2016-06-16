@@ -37,6 +37,7 @@ namespace Instrument {
 		extern bool _verboseTaskWait;
 		extern bool _verboseThreadManagement;
 		extern bool _verboseUserMutex;
+		extern bool _verboseLoggingMessages;
 		
 		extern EnvironmentVariable<bool> _useTimestamps;
 		extern EnvironmentVariable<bool> _dumpOnlyOnExit;

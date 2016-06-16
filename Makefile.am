@@ -162,10 +162,13 @@ noinstrument_sources = \
 
 instrument_graph_sources = \
 	src/instrument/graph/Color.hpp \
+	src/instrument/graph/ExecutionSteps.cpp \
+	src/instrument/graph/ExecutionSteps.hpp \
+	src/instrument/graph/GenerateEdges.cpp \
+	src/instrument/graph/GenerateEdges.hpp \
 	src/instrument/graph/InstrumentAddTask.cpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
-	src/instrument/graph/InstrumentDependenciesByAccess.cpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.cpp \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
@@ -184,7 +187,11 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentThreadManagement.cpp \
 	src/instrument/graph/InstrumentThreadManagement.hpp \
 	src/instrument/graph/InstrumentUserMutex.cpp \
-	src/instrument/graph/InstrumentUserMutex.hpp
+	src/instrument/graph/InstrumentUserMutex.hpp \
+	src/instrument/graph/PathLength.cpp \
+	src/instrument/graph/PathLength.hpp \
+	src/instrument/graph/SortAccessGroups.cpp \
+	src/instrument/graph/SortAccessGroups.hpp
 
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentAddTask.hpp \

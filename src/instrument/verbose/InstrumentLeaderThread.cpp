@@ -3,10 +3,12 @@
 #include "InstrumentLeaderThread.hpp"
 #include "InstrumentVerbose.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "lowlevel/SpinLock.hpp"
 #include "system/LeaderThread.hpp"
 
 #include <algorithm>
 #include <iomanip>
+#include <mutex>
 #include <vector>
 
 
@@ -15,6 +17,11 @@ using namespace Instrument::Verbose;
 
 namespace Instrument {
 	void leaderThreadSpin() {
+		static SpinLock lock;
+		
+		// This is needed since this method can be called by a regular thread on abort
+		std::lock_guard<SpinLock> guard(lock);
+		
 		// Logging part
 		if (_verboseLeaderThread) {
 			LogEntry *logEntry = getLogEntry();

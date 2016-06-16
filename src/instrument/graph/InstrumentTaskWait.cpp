@@ -1,3 +1,4 @@
+#include "ExecutionSteps.hpp"
 #include "InstrumentTaskWait.hpp"
 #include "InstrumentGraph.hpp"
 
@@ -31,15 +32,6 @@ namespace Instrument {
 		enter_taskwait_step_t *enterTaskwaitStep = new enter_taskwait_step_t(cpu->_virtualCPUId, threadId, taskwaitId, taskId);
 		
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
-		
-		// Attempt to recover some memory
-		if (!taskInfo._phaseList.empty()) {
-			phase_t *lastPhase = taskInfo._phaseList.back();
-			task_group_t *taskGroup = dynamic_cast<task_group_t *>(lastPhase);
-			if (taskGroup != 0) {
-				taskGroup->_dependencyInfoMap.clear();
-			}
-		}
 		
 		taskInfo._phaseList.push_back(taskwait);
 		

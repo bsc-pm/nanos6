@@ -90,6 +90,61 @@ namespace Instrument {
 		task_id_t targetTaskId
 	);
 	
+	//! \brief Called when a DataAccess has its range modified
+	//! 
+	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
+	//! \param newRange the range of data that the access covers now
+	//! \param triggererTaskId the identifier of the task that triggers the change
+	void modifiedDataAccessRange(
+		data_access_id_t dataAccessId,
+		DataAccessRange newRange,
+		task_id_t triggererTaskId
+	);
+	
+	//! \brief Called when a DataAccess gets fragmented
+	//! 
+	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
+	//! \param newRange the range of data of the new fragment
+	//! \param triggererTaskId the identifier of the task that triggers the change
+	//! 
+	//! The original data access and any newly created fragments will have the modifiedDataAccessRange method called
+	//! 
+	//! \returns an identifier for the new data access
+	data_access_id_t fragmentedDataAccess(
+		data_access_id_t dataAccessId,
+		DataAccessRange newRange,
+		task_id_t triggererTaskId
+	);
+	
+	//! \brief Called when a DataAccess has its subaccess fragment created
+	//! 
+	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
+	//! \param triggererTaskId the identifier of the task that triggers the change
+	//! 
+	//! \returns an identifier for the subaccess fragment
+	data_access_id_t createdDataSubaccessFragment(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
+	//! \brief Called when a DataAccess has has been completed
+	//! 
+	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
+	//! \param triggererTaskId the identifier of the task that triggers the change
+	void completedDataAccess(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
+	//! \brief Called when a DataAccess becomes removable
+	//! 
+	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
+	//! \param triggererTaskId the identifier of the task that triggers the change
+	void dataAccessBecomesRemovable(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
 	//! \brief Called when a DataAccess has been removed
 	//! 
 	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
@@ -102,13 +157,13 @@ namespace Instrument {
 	//! \brief Called when two DataAccess objects are linked
 	//! 
 	//! \param sourceAccessId the identifier of the source DataAccess
-	//! \param sinkAccessId the identifier of the sink DataAccess
+	//! \param sinkTaskId the identifier of the sink Task
 	//! \param range the range of data covered by the link
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	//! \param bidirectional tru if the link is bidirectional
 	//! \param triggererTaskId the identifier of the task that triggers the change
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId,
+		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
 		DataAccessRange range,
 		bool direct, bool bidirectional,
 		task_id_t triggererTaskId
@@ -117,11 +172,11 @@ namespace Instrument {
 	//! \brief Called when two DataAccess objects are unlinked
 	//! 
 	//! \param sourceAccessId the identifier of the source DataAccess
-	//! \param sinkAccessId the identifier of the sink DataAccess
+	//! \param sinkTaskId the identifier of the sink Task
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	//! \param triggererTaskId the identifier of the task that triggers the change
 	void unlinkedDataAccesses(
-		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId, bool direct,
+		data_access_id_t sourceAccessId, task_id_t sinkTaskId, bool direct,
 		task_id_t triggererTaskId
 	);
 	

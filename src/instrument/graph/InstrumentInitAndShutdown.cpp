@@ -2,6 +2,10 @@
 
 #include "InstrumentGraph.hpp"
 #include "Color.hpp"
+#include "ExecutionSteps.hpp"
+#include "GenerateEdges.hpp"
+#include "PathLength.hpp"
+#include "SortAccessGroups.hpp"
 
 #include "executors/threads/ThreadManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
@@ -33,8 +37,9 @@ namespace Instrument {
 	static EnvironmentVariable<bool> _showSpuriousDependencyStructures("NANOS_GRAPH_SHOW_SPURIOUS_DEPENDENCY_STRUCTURES", false);
 	static EnvironmentVariable<bool> _showDeadDependencyStructures("NANOS_GRAPH_SHOW_DEAD_DEPENDENCY_STRUCTURES", false);
 	static EnvironmentVariable<bool> _showAllSteps("NANOS_GRAPH_SHOW_ALL_STEPS", false);
-	static EnvironmentVariable<bool> _showRanges("NANOS_GRAPH_SHOW_RANGES", false);
+	static EnvironmentVariable<bool> _showSuperAccessLinks("NANOS_GRAPH_SHOW_SUPERACCESS_LINKS", true);
 	static EnvironmentVariable<bool> _autoDisplay("NANOS_GRAPH_DISPLAY", false);
+	
 	static EnvironmentVariable<std::string> _displayCommand("NANOS_GRAPH_DISPLAY_COMMAND", "xdg-open");
 	
 	
@@ -89,7 +94,12 @@ namespace Instrument {
 		oss << id;
 		std::string taskName = getTaskName(taskInfo);
 		if (!taskName.empty()) {
-			oss << "\\n" << taskName;
+			if (taskInfo._phaseList.empty()) {
+				oss << "\\n";
+			} else {
+				oss << ": ";
+			}
+			oss << taskName;
 		}
 		
 		return oss.str();
@@ -112,19 +122,6 @@ namespace Instrument {
 		
 		return oss.str();
 	}
-	
-	
-	struct taskwait_status_t {
-		task_status_t _status;
-		long _lastCPU;
-		
-		taskwait_status_t()
-			: _status(not_created_status), _lastCPU(-1)
-		{
-		}
-	};
-	
-	static std::map<taskwait_id_t, taskwait_status_t> _taskwaitStatus;
 	
 	
 	static std::string getTaskAttributes(task_status_t status, long cpu)
@@ -178,129 +175,249 @@ namespace Instrument {
 	typedef char Bool;
 	
 	
-	struct graph_node_info_t {
-		int _maximumDepth;
-		bool _visited;
-		task_id_t _lastInLongestPath;
-		std::vector<task_id_t> _successors;
-		
-		graph_node_info_t()
-		: _maximumDepth(1), _visited(false), _lastInLongestPath(), _successors()
-		{
-		}
+	
+	
+	struct dot_linking_labels {
+		std::string _nodeLabel;
+		std::string _outLabel;
+		std::string _inLabel;
 	};
+	typedef std::map<task_id_t, dot_linking_labels> task_to_dot_linking_labels_t;
 	
 	
-	typedef std::map<task_id_t, graph_node_info_t> task_node_info_map_t;
+	static task_to_dot_linking_labels_t _taskToDotLinkingLabels;
 	
 	
-	static void findDepth(task_id_t currentId, graph_node_info_t &current, task_node_info_map_t &taskNodeInfoMap)
-	{
-		if (current._visited) {
-			return;
-		}
+	static void emitAccess(
+		std::ofstream &ofs, access_t &access
+	) {
+		bool bicolor = false;
+		std::string color1, color2;
+		std::ostringstream text;
 		
-		current._maximumDepth = 1;
-		current._lastInLongestPath = currentId;
-		for (task_id_t successorId : current._successors) {
-			graph_node_info_t &successor = taskNodeInfoMap[successorId];
-			findDepth(successorId, successor, taskNodeInfoMap);
+		text << access._id;
+		
+		if (access._status != Graph::not_created_access_status) {
+			text << ": ";
 			
-			if (successor._maximumDepth + 1 > current._maximumDepth) {
-				current._maximumDepth = successor._maximumDepth + 1;
-				current._lastInLongestPath = successor._lastInLongestPath;
+			switch (access._type) {
+				case READ:
+					text << (access.weak() ? "r" : "R");
+					color1 = "#00FF00";
+					break;
+				case WRITE:
+					text << (access.weak() ? "w" : "W");
+					color1 = "#FF0000";
+					break;
+				case READWRITE:
+					text << (access.weak() ? "rw" : "RW");
+					bicolor = true;
+					color1 = "#00FF00";
+					color2 = "#FF0000";
+					break;
 			}
 		}
+		
+		std::string style;
+		std::ostringstream colorList;
+		switch (access._status) {
+			case not_created_access_status:
+				bicolor = false;
+				color1 = "#AAAAAA";
+				style = "filled";
+				colorList << color1;
+				break;
+			case created_access_status:
+				if (bicolor) {
+					colorList << color1 << ";0.5:" << color2 << ";0.5";
+					style = "dashed,wedged";
+				} else {
+					colorList << color1;
+				}
+				style = "filled";
+				break;
+			case removable_access_status:
+				if (bicolor) {
+					colorList
+						<< color1 << ";0.10:" << color2 << ";0.10:" << "white;0.05"
+						<< ":" << color1 << ";0.10:" << color2 << ";0.10:" << "white;0.05"
+						<< ":" << color1 << ";0.10:" << color2 << ";0.10:" << "white;0.05"
+						<< ":" << color1 << ";0.10:" << color2 << ";0.10:" << "white;0.05";
+				} else {
+					colorList
+						<< color1 << ";0.20:" << "white;0.05"
+						<< ":" << color1 << ";0.20:" << "white;0.05"
+						<< ":" << color1 << ";0.20:" << "white;0.05"
+						<< ":" << color1 << ";0.20:" << "white;0.05";
+				}
+				style = "wedged";
+				break;
+			case removed_access_status:
+				if (bicolor) {
+					colorList
+						<< color1 << ";0.05:" << color2 << ";0.05:" << "white;0.15"
+						<< ":" << color1 << ";0.05:" << color2 << ";0.05:" << "white;0.15"
+						<< ":" << color1 << ";0.05:" << color2 << ";0.05:" << "white;0.15"
+						<< ":" << color1 << ";0.05:" << color2 << ";0.05:" << "white;0.15";
+				} else {
+					colorList
+						<< color1 << ";0.10:" << "white;0.15"
+						<< ":" << color1 << ";0.10:" << "white;0.15"
+						<< ":" << color1 << ";0.10:" << "white;0.15"
+						<< ":" << color1 << ";0.10:" << "white;0.15";
+				}
+				style = "wedged";
+				break;
+		}
+		
+		if (_showRanges && (access._status != not_created_access_status)) {
+			text << "\\n" << access._accessRange;
+		}
+		
+		bool haveStatusText = false;
+		std::ostringstream statusText;
+		
+		if (access.satisfied()) {
+			haveStatusText = true;
+			statusText << "Sat";
+		}
+		if (access.readSatisfied()) {
+			haveStatusText = true;
+			statusText << "R";
+		}
+		if (access.writeSatisfied()) {
+			haveStatusText = true;
+			statusText << "W";
+		}
+		if (access.complete()) {
+			haveStatusText = true;
+			statusText << "C";
+		}
+		
+		if (haveStatusText) {
+			text << "\\n" << statusText.str() << "+";
+		}
+		
+		bool blocker = true;
+		if (access.satisfied()) {
+			blocker = false;
+		} else if ((access._type == READ_ACCESS_TYPE) && access.readSatisfied()) {
+			blocker = false;
+		} else if (access.readSatisfied() && access.writeSatisfied()) {
+			blocker = false;
+		}
+		
+		ofs << indentation
+			<< "data_access_" << access._id
+			<< "["
+				<< " shape=ellipse"
+				<< " style=\"" << style << "\""
+				<< " label=\"" << text.str() << "\""
+				<< " fillcolor=\"" << colorList.str() << "\"";
+		if (blocker) {
+			ofs
+				<< " penwidth=2 ";
+		} else {
+			ofs
+				<< " color=\"invis\" ";
+		}
+		ofs
+			<< "]"
+#ifndef NDEBUG
+			<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+			<< std::endl;
 	}
 	
 	
-	static void findTopmostTasksAndPathLengths(task_id_t startingTaskId = 0)
-	{
-		task_info_t &startingTaskInfo = _taskToInfoMap[startingTaskId];
+	// Returns the id of an emited access in the group
+	static data_access_id_t emitAccessGroup(
+		std::ofstream &ofs, access_t &firstAccess
+	) {
+		std::string initialIndentation = indentation;
+		ofs << indentation << "{"
+		#ifndef NDEBUG
+			<< "\t// " << __FILE__ << ":" << __LINE__
+		#endif
+			<< std::endl;
+		indentation = initialIndentation + "\t";
+		ofs << indentation << "rank=same;" << std::endl;
 		
-		if (!isComposite(startingTaskId)) {
-			return;
-		}
-		
-		for (unsigned int phase = 0; phase < startingTaskInfo._phaseList.size(); phase++) {
-			phase_t *currentPhase = startingTaskInfo._phaseList[phase];
+		data_access_id_t lastId;
+		data_access_id_t firstEmittedId;
+		data_access_id_t currentId = firstAccess._id;
+		while (currentId != data_access_id_t()) {
+			access_t *access = _accessIdToAccessMap[currentId];
+			assert(access != nullptr);
 			
-			task_group_t *taskGroup = dynamic_cast<task_group_t *>(currentPhase);
-			if (taskGroup == nullptr) {
+			// Skip irrelevant accesses if not explicitly requested
+			if (!_showDeadDependencyStructures && (access->_status != created_access_status)) {
 				continue;
 			}
 			
-			task_node_info_map_t taskNodeInfoMap;
-			
-			// Create one node per task
-			for (auto childId : taskGroup->_children) {
-				taskNodeInfoMap[childId];
+			emitAccess(ofs, *access);
+			if (lastId != data_access_id_t()) {
+				ofs << indentation
+				<< "data_access_" << lastId
+				<< " -> "
+				<< "data_access_" << access->_id
+				<< " [style=invis]"
+#ifndef NDEBUG
+				<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+				<< std::endl;
+			}
+			if (firstEmittedId == data_access_id_t()) {
+				firstEmittedId = access->_id;
 			}
 			
-			// Fill out the successor lists
-			for (auto const &sourceAndSinks : taskGroup->_dependenciesGroupedBySource) {
-				task_id_t const &source = sourceAndSinks.first;
-				for (task_id_t const &sink : sourceAndSinks.second) {
-					taskNodeInfoMap[source]._successors.push_back(sink);
-				}
-			}
-			
-			task_id_t longestPathStart;
-			task_id_t longestPathEnd;
-			int longestPathLength = 0;
-			for (auto &idAndNode : taskNodeInfoMap) {
-				task_id_t nodeId = idAndNode.first;
-				graph_node_info_t &node = idAndNode.second;
-				
-				findDepth(nodeId, node, taskNodeInfoMap);
-				if (node._maximumDepth > longestPathLength) {
-					longestPathLength = node._maximumDepth;
-					longestPathStart = nodeId;
-					longestPathEnd = node._lastInLongestPath;
-				}
-				
-				findTopmostTasksAndPathLengths(nodeId);
-			}
-			
-			taskGroup->_longestPathFirstTaskId = longestPathStart;
-			taskGroup->_longestPathLastTaskId = longestPathEnd;
+			lastId = access->_id;
+			currentId = access->_nextGroupAccess;
 		}
+		
+		indentation = initialIndentation;
+		ofs << indentation << "}" << std::endl;
+		
+		return firstEmittedId;
 	}
 	
 	
 	static void emitTask(
 		std::ofstream &ofs, task_id_t taskId,
-		std::string /* OUT */ &taskLink,
-		std::string /* OUT */ &sourceLink, std::string /* OUT */ &sinkLink,
 		std::ostringstream &linksStream
 	) {
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
+		dot_linking_labels &taskLinkingLabels = _taskToDotLinkingLabels[taskId];
 		
 		if (!isComposite(taskId)) {
 			// A leaf task
 			std::ostringstream oss;
 			oss << "task" << taskId;
-			taskLink = oss.str();
+			taskLinkingLabels._nodeLabel = oss.str();
 			
 			ofs
-				<< indentation << taskLink
+				<< indentation << taskLinkingLabels._nodeLabel
 				<< " [ label=\"" << makeTaskLabel(taskId, taskInfo) << "\" "
 				<< " shape=\"box\" "
 				<< getTaskAttributes(taskInfo._status, taskInfo._lastCPU)
 				<< " ]" << std::endl;
 			
-			sourceLink = taskLink;
-			sinkLink = taskLink;
+			taskLinkingLabels._inLabel = taskLinkingLabels._nodeLabel;
+			taskLinkingLabels._outLabel = taskLinkingLabels._nodeLabel;
 		} else {
 			bool sourceLinkIsSet = false;
 			
 			std::ostringstream oss;
 			oss << "cluster_task" << taskId;
-			taskLink = oss.str();
+			taskLinkingLabels._nodeLabel = oss.str();
 			
 			std::string initialIndentation = indentation;
 			
-			ofs << indentation << "subgraph " << taskLink << " {" << std::endl;
+			ofs << indentation << "subgraph " << taskLinkingLabels._nodeLabel << " {"
+#ifndef NDEBUG
+				<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+				<< std::endl;
 			indentation = initialIndentation + "\t";
 			ofs << indentation << "label=\"" << makeTaskLabel(taskId, taskInfo) << "\";" << std::endl;
 			ofs << indentation << "compound=true;" << std::endl;
@@ -326,6 +443,7 @@ namespace Instrument {
 				
 				std::vector<std::string> currentPhaseLinks(phaseElements);
 				std::vector<std::string> currentPhaseSourceLinks(phaseElements);
+				std::vector<data_access_id_t> currentPhaseTopAccesses;
 				std::vector<std::string> currentPhaseSinkLinks(phaseElements);
 				std::vector<Bool> bestTopLink(phaseElements);
 				std::vector<Bool> bestBottomLink(phaseElements);
@@ -339,12 +457,83 @@ namespace Instrument {
 					oss << "cluster_phase" << currentCluster;
 					std::string currentPhaseLink = oss.str();
 					
-					ofs << indentation << "subgraph " << currentPhaseLink << " {" << std::endl;
+					ofs << indentation << "subgraph " << currentPhaseLink << " {"
+#ifndef NDEBUG
+						<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+						<< std::endl;
 					indentation = initialIndentation + "\t\t";
 					ofs << indentation << "label=\"\";" << std::endl;
 					ofs << indentation << "rank=same;" << std::endl;
 					ofs << indentation << "compound=true;" << std::endl;
 					ofs << indentation << "style=\"invisible\";" << std::endl;
+					
+					
+					// Emit the fragments
+					if (_showDependencyStructures) {
+						for (access_fragment_t *fragment : taskGroup->_allFragments) {
+							assert(fragment != nullptr);
+							
+							// Work at the access group level
+							if (fragment->_firstGroupAccess != fragment->_id) {
+								continue;
+							}
+							
+							data_access_id_t representativeFragmentId = emitAccessGroup(ofs, *fragment);
+							
+							data_access_id_t currentFragmentId = representativeFragmentId;
+							while (currentFragmentId != data_access_id_t()) {
+								access_fragment_t *fragment = (access_fragment_t *) _accessIdToAccessMap[currentFragmentId];
+								
+								if (_showDeadDependencyStructures || (fragment->_status == created_access_status)) {
+									currentPhaseTopAccesses.push_back(currentFragmentId);
+									
+									if (!sourceLinkIsSet) {
+										for (auto &nextIdAndLink : fragment->_nextLinks) {
+											link_to_next_t &link = nextIdAndLink.second;
+											
+											if (taskGroup->_longestPathFirstTaskId == nextIdAndLink.first) {
+												task_info_t &nextTaskInfo = _taskToInfoMap[nextIdAndLink.first];
+												
+												if (_showDeadDependencyStructures) {
+													std::ostringstream oss;
+													oss << "data_access_" << fragment->_id;
+													taskLinkingLabels._inLabel = oss.str();
+													sourceLinkIsSet = true;
+												} else if (link._status == created_link_status) {
+													nextTaskInfo._liveAccesses.processIntersecting(
+														fragment->_accessRange,
+														[&](task_live_accesses_t::iterator nextAccessPosition) -> bool {
+															access_t *nextAccess = nextAccessPosition->_access;
+															assert(nextAccess != nullptr);
+															
+															if (_showDeadDependencyStructures || (nextAccess->_status == created_access_status)) {
+																std::ostringstream oss;
+																oss << "data_access_" << fragment->_id;
+																taskLinkingLabels._inLabel = oss.str();
+																sourceLinkIsSet = true;
+																
+																return false;
+															}
+															
+															return true;
+														}
+													);
+												}
+											}
+											
+											if (sourceLinkIsSet) {
+												break;
+											}
+										}
+									}
+								}
+								
+								currentFragmentId = fragment->_nextGroupAccess;
+							}
+						} // For each fragment
+					} // If must show dependency structures
+					
 					
 					std::map<task_id_t, size_t> taskId2Index;
 					{
@@ -352,208 +541,58 @@ namespace Instrument {
 						for (task_id_t childId : taskGroup->_children) {
 							emitTask(
 								ofs, childId,
-								currentPhaseLinks[index],
-								currentPhaseSourceLinks[index], currentPhaseSinkLinks[index],
 								linksStream
 							);
+							
+							dot_linking_labels &childLinkingLabels = _taskToDotLinkingLabels[childId];
+							currentPhaseLinks[index] = childLinkingLabels._nodeLabel;
+							currentPhaseSourceLinks[index] = childLinkingLabels._inLabel;
+							currentPhaseSinkLinks[index] = childLinkingLabels._outLabel;
 							
 							bestTopLink[index] = (taskGroup->_longestPathFirstTaskId == childId);
 							bestBottomLink[index] = (taskGroup->_longestPathLastTaskId == childId);
 							
 							taskId2Index[childId] = index;
-							task_info_t const &childInfo = _taskToInfoMap[childId];
+							
+							task_info_t &childInfo = _taskToInfoMap[childId];
 							currentPhaseStatuses[index] = childInfo._status;
 							
-							index++;
-						}
-					}
-					
-					
-					for (auto const &sourceAndSinks : taskGroup->_dependenciesGroupedBySource) {
-						task_id_t const &source = sourceAndSinks.first;
-						for (task_id_t const &sink : sourceAndSinks.second) {
-							size_t sourceIndex = taskId2Index[source];
-							size_t sinkIndex = taskId2Index[sink];
+							currentPhaseElementWithoutPredecessors[index] = !childInfo._hasPredecessorsInSameLevel;
+							currentPhaseElementWithoutSuccessors[index] = !childInfo._hasSuccessorsInSameLevel;
 							
-							currentPhaseElementWithoutPredecessors[sinkIndex] = false;
-							currentPhaseElementWithoutSuccessors[sourceIndex] = false;
-							
-							linksStream << "\t" << currentPhaseSinkLinks[sourceIndex] << " -> " << currentPhaseSourceLinks[sinkIndex];
-							linksStream << " [";
-							if (currentPhaseSinkLinks[sourceIndex] != currentPhaseLinks[sourceIndex]) {
-								linksStream << " ltail=\"" << currentPhaseLinks[sourceIndex] << "\"";
-							}
-							if (currentPhaseSourceLinks[sinkIndex] != currentPhaseLinks[sinkIndex]) {
-								linksStream << " lhead=\"" << currentPhaseLinks[sinkIndex] << "\"";
-							}
-							
-							task_info_t const &sourceInfo = _taskToInfoMap[source];
-							task_info_t const &sinkInfo = _taskToInfoMap[sink];
-							
-							if ((sourceInfo._status == not_created_status) || (sourceInfo._status == finished_status)
-								|| (sinkInfo._status == not_created_status) || (sinkInfo._status == finished_status))
-							{
-								linksStream << " color=\"#888888\" fillcolor=\"#888888\"";
-							}
-							
-							linksStream << " weight=16 ]" << std::endl;
-						}
-					}
-					
-					for (data_access_id_t sourceAccessId : taskGroup->_dataAccesses) {
-						access_t &sourceAccess = _accessIdToAccessMap[sourceAccessId];
-						
-						if (!_showDeadDependencyStructures && (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED))) {
-							// Skip dead accesses
-							continue;
-						}
-						
-						ofs << indentation
-							<< "data_access_" << sourceAccessId
-							<< " [ shape=ellipse style=\"filled,dashed\""
-							<<   " label=\"" << sourceAccessId;
-						switch (sourceAccess._type) {
-							case READ:
-								if (sourceAccess._weak) {
-									ofs << ": r";
-								} else {
-									ofs << ": R";
-								}
-								if (_showRanges) {
-									ofs << "\\n" << sourceAccess._range;
-								}
-								if (sourceAccess._deleted) {
-									ofs << "\" fillcolor=\"#AAFFAA\"";
-								} else {
-									ofs << "\" fillcolor=\"#00FF00\"";
-								}
-								break;
-							case WRITE:
-								if (sourceAccess._weak) {
-									ofs << ": w";
-								} else {
-									ofs << ": W";
-								}
-								if (_showRanges) {
-									ofs << "\\n" << sourceAccess._range;
-								}
-								if (sourceAccess._deleted) {
-									ofs << "\" fillcolor=\"#FFAAAA\"";
-								} else {
-									ofs << "\" fillcolor=\"#FF0000\"";
-								}
-								break;
-							case READWRITE:
-								if (sourceAccess._weak) {
-									ofs << ": rw";
-								} else {
-									ofs << ": RW";
-								}
-								if (_showRanges) {
-									ofs << "\\n" << sourceAccess._range;
-								}
-								if (sourceAccess._deleted) {
-									ofs << "\" fillcolor=\"#AAFFAA;0.5:#FFAAAA\"";
-								} else {
-									ofs << "\" fillcolor=\"#00FF00;0.5:#FF0000\"";
-								}
-								break;
-							case NOT_CREATED:
-								ofs << "\" fillcolor=\"#AAAAAA\"";
-								assert(!sourceAccess._deleted);
-								break;
-						}
-						
-						if (sourceAccess._satisfied) {
-							ofs << " penwidth=2";
-						} else {
-							ofs << " penwidth=1";
-						}
-						ofs << " ]" << std::endl;
-						
-						if (!sourceLinkIsSet && (taskGroup->_longestPathFirstTaskId == sourceAccess._originator)) {
-							std::ostringstream oss;
-							oss << "data_access_" << sourceAccessId;
-							sourceLink = oss.str();
-							sourceLinkIsSet = true;
-						}
-						
-						if ((sourceAccess._superAccess != data_access_id_t()) && (sourceAccess._type != NOT_CREATED)) {
-							access_t &superAccess = _accessIdToAccessMap[sourceAccess._superAccess];
-							
-							if (!superAccess._deleted) {
-								bool isFirst = true;
-								for (auto previousId : sourceAccess._previousLinks) {
-									access_t &previous = getAccess(previousId);
-									auto positionOflinkToCurrent = previous._nextLinks.find(sourceAccessId);
-									assert(positionOflinkToCurrent != previous._nextLinks.end());
+							// Emit nodes for the accesses
+							if (_showDependencyStructures) {
+								for (access_t *access : childInfo._allAccesses) {
+									assert(access != nullptr);
+									assert(!access->fragment());
 									
-									if (positionOflinkToCurrent->second._direct && (positionOflinkToCurrent->second._status == link_to_next_t::created_link_status)) {
-										isFirst = false;
-										break;
+									if (_showDeadDependencyStructures || (access->_status == created_access_status)) {
+										if (!access->hasPrevious()) {
+											currentPhaseTopAccesses.push_back(access->_id);
+										}
 									}
-								}
-								
-								bool isLast = true;
-								for (auto nextLink : sourceAccess._nextLinks) {
-									if (nextLink.second._direct && (nextLink.second._status == link_to_next_t::created_link_status)) {
-										isLast = false;
-										break;
+									
+									// Work at the access group level
+									if (access->_firstGroupAccess != access->_id) {
+										continue;
 									}
-								}
-								
-								if (isFirst && !isLast) {
-									linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"diamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
-								}
-								
-								if (isLast && !isFirst) {
-									linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"odiamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
-								}
-								
-								if (isFirst && isLast) {
-									linksStream << "\t" << "data_access_" << sourceAccess._superAccess << " -> " << "data_access_" << sourceAccessId << " [ dir=\"both\" arrowhead=\"empty\" arrowtail=\"diamondodiamond\" style=dotted color=\"#888888\" fillcolor=\"#888888\" weight=0.1 ]" << std::endl;
-								}
-							}
-						}
-						
-						assert(sourceAccess._originator != -1);
-						size_t originatorIndex = taskId2Index[sourceAccess._originator];
-						linksStream << "\t" << "data_access_" << sourceAccessId << " -> " << currentPhaseSourceLinks[originatorIndex];
-						linksStream << " [";
-						if (currentPhaseLinks[originatorIndex] != currentPhaseSourceLinks[originatorIndex]) {
-							linksStream << " lhead=\"" << currentPhaseLinks[originatorIndex] << "\"";
-						}
-						if ((sourceAccess._type == NOT_CREATED) || sourceAccess._deleted) {
-							linksStream << " style=\"invis\"";
-						} else if (sourceAccess._satisfied) {
-							linksStream << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
-						} else {
-							linksStream << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
-						}
-						linksStream << " weight=1 ]" << std::endl;
-						
-						for (auto nextLink : sourceAccess._nextLinks) {
-							data_access_id_t sinkAccessId = nextLink.first;
-							bool direct = nextLink.second._direct;
+									
+									data_access_id_t representativeAccessId = emitAccessGroup(ofs, *access);
+									if (representativeAccessId == data_access_id_t()) {
+										// Did not actually emit anything
+										continue;
+									}
+									
+									if (!sourceLinkIsSet && (taskGroup->_longestPathFirstTaskId == childId)) {
+										std::ostringstream oss;
+										oss << "data_access_" << representativeAccessId;
+										taskLinkingLabels._inLabel = oss.str();
+										sourceLinkIsSet = true;
+									}
+								} // For each access of the child
+							} // If must show dependency structures
 							
-							access_t const &sinkAccess = getAccess(sinkAccessId);
-							
-							if (!_showDeadDependencyStructures && (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED) || sinkAccess._deleted || (sinkAccess._type == NOT_CREATED))) {
-								continue;
-							}
-							
-							linksStream << "\t" << "data_access_" << sourceAccessId << " -> data_access_" << sinkAccessId << " [ weight=8";
-							if ((nextLink.second._status == link_to_next_t::not_created_link_status) || (nextLink.second._status == link_to_next_t::dead_link_status)) {
-								linksStream << " style=\"invis\"";
-							} else if (sourceAccess._deleted || (sourceAccess._type == NOT_CREATED) || sinkAccess._deleted || (sinkAccess._type == NOT_CREATED)) {
-								// This is an error!
-								linksStream << " penwidth=4 arrowsize=2 color=\"#BB0000\" label=\"DANGLING\\nLINK\" fontsize=30 fontcolor=\"#BB0000\" fontname=\"Helvetica-Bold\"";
-							} else if (!direct) {
-								linksStream << " arrowhead=\"vee\" style=dotted color=\"#000000\" fillcolor=\"#000000\"";
-							} else {
-								linksStream << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
-							}
-							linksStream << " ]" << std::endl;
+							index++;
 						}
 					}
 					
@@ -570,7 +609,11 @@ namespace Instrument {
 						<< " [ label=\"" << makeTaskwaitLabel(taskWait->_taskwaitSource) << "\" "
 						<< getTaskAttributes(taskwaitStatus._status, taskwaitStatus._lastCPU)
 						<< " shape=\"doubleoctagon\" "
-						<< " ]" << std::endl;
+						<< " ]"
+#ifndef NDEBUG
+						<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+						<< std::endl;
 					
 					currentPhaseLinks[0] = currentPhaseLink;
 					currentPhaseSourceLinks[0] = currentPhaseLink;
@@ -590,7 +633,7 @@ namespace Instrument {
 						}
 					}
 					
-					sourceLink = validSourceLinks[validSourceLinks.size()/2];
+					taskLinkingLabels._inLabel = validSourceLinks[validSourceLinks.size()/2];
 					sourceLinkIsSet = true;
 				}
 				
@@ -602,7 +645,7 @@ namespace Instrument {
 						}
 					}
 					
-					sinkLink = validSinkLinks[validSinkLinks.size()/2];
+					taskLinkingLabels._outLabel = validSinkLinks[validSinkLinks.size()/2];
 				}
 				
 				if (!previousPhaseLinks.empty()) {
@@ -612,6 +655,24 @@ namespace Instrument {
 						if (!previousPhaseElementWithoutSuccessors[previousIndex]) {
 							// Link only leaf nodes of the previous phase
 							continue;
+						}
+						
+						if (!currentPhaseTopAccesses.empty()) {
+							for (data_access_id_t accessId : currentPhaseTopAccesses) {
+								linksStream
+									<< "\t" << previousPhaseSinkLinks[previousIndex] << " -> data_access_" << accessId << " [ style=\"invis\" ";
+								
+								if (previousPhaseLinks[previousIndex] != previousPhaseSinkLinks[previousIndex]) {
+									linksStream << " ltail=\"" << previousPhaseLinks[previousIndex] << "\" ";
+								}
+								
+								linksStream << " ];"
+#ifndef NDEBUG
+									<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+									<< std::endl; 
+							}
+							currentPhaseTopAccesses.clear();
 						}
 						
 						for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
@@ -632,7 +693,11 @@ namespace Instrument {
 								linksStream << " lhead=\"" << currentPhaseLinks[currentIndex] << "\" ";
 							}
 							linksStream
-								<< " weight=4 ];" << std::endl;
+								<< " ];"
+#ifndef NDEBUG
+								<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+								<< std::endl;
 						}
 					}
 				}
@@ -650,7 +715,354 @@ namespace Instrument {
 	}
 	
 	
-	static void dumpGraph(std::ofstream &ofs)
+	static void emitAccessLinksToNext(access_t &access, std::ofstream &ofs)
+	{
+		dot_linking_labels const &sourceLinkingLabels = _taskToDotLinkingLabels[access._originator];
+		
+		foreachItersectingNextOfAccess(
+			&access,
+			[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool
+			{
+				if (!_showDeadDependencyStructures && (nextAccess._status != created_access_status)) {
+					return true;
+				}
+				
+				ofs << "\t"
+					<< "data_access_" << access._id
+					<< " -> "
+					<< "data_access_" << nextAccess._id
+					<< " [";
+				if ((linkToNext._status == not_created_link_status) || (linkToNext._status == dead_link_status)) {
+					ofs << " style=dotted"
+					<< " color=\"#AAAAAA\""
+					<< " fillcolor=\"#AAAAAA\"";
+				} else if (
+					(access._status == not_created_access_status)
+					|| (access._status == removed_access_status)
+					|| (nextAccess._status == not_created_access_status)
+					|| (nextAccess._status == removed_access_status)
+				) {
+					ofs << " style=dotted"
+					<< " color=\"#AAAAAA\""
+					<< " fillcolor=\"#AAAAAA\"";
+				} else if (!linkToNext._direct) {
+					ofs << " arrowhead=\"vee\""
+					<< " style=dotted"
+					<< " color=\"#000000\""
+					<< " fillcolor=\"#000000\"";
+				} else {
+					ofs << " style=dashed"
+					<< " color=\"#000000\""
+					<< " fillcolor=\"#000000\"";
+				}
+				ofs << " ]"
+#ifndef NDEBUG
+					<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+					<< std::endl;
+				
+				if (!access.fragment()) {
+					ofs << "\t" << sourceLinkingLabels._outLabel << " -> " << "data_access_" << nextAccess._id;
+					ofs << " [";
+					if (sourceLinkingLabels._outLabel != sourceLinkingLabels._nodeLabel) {
+						ofs << " ltail=\"" << sourceLinkingLabels._nodeLabel << "\"";
+					}
+					ofs << " style=\"invis\"";
+					ofs << " ]"
+#ifndef NDEBUG
+						<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+						<< std::endl;
+				}
+				
+				return true;
+			}
+		);
+		
+		
+	}
+	
+	
+	static void emitEdges(std::ofstream &ofs)
+	{
+		for (auto &taskIdAndInfo : _taskToInfoMap) {
+			task_id_t taskId = taskIdAndInfo.first;
+			task_info_t &taskInfo = taskIdAndInfo.second;
+			dot_linking_labels const &sourceLinkingLabels = _taskToDotLinkingLabels[taskId];
+			
+			// Task dependencies
+			for (auto &successorAndDependencyEdge : taskInfo._outputEdges) {
+				task_id_t successorId = successorAndDependencyEdge.first;
+				dependency_edge_t &dependencyEdge = successorAndDependencyEdge.second;
+				
+				dot_linking_labels const &sinkLinkingLabels = _taskToDotLinkingLabels[successorId];
+				
+				ofs << "\t" << sourceLinkingLabels._outLabel << " -> " << sinkLinkingLabels._inLabel;
+				
+				ofs << " [";
+				
+				if (sourceLinkingLabels._outLabel != sourceLinkingLabels._nodeLabel) {
+					ofs << " ltail=\"" << sourceLinkingLabels._nodeLabel << "\"";
+				}
+				if (sinkLinkingLabels._inLabel != sinkLinkingLabels._nodeLabel) {
+					ofs << " lhead=\"" << sinkLinkingLabels._nodeLabel << "\"";
+				}
+				
+				task_info_t &successorInfo = _taskToInfoMap[successorId];
+				if (
+					!dependencyEdge._hasBeenMaterialized
+					|| ((dependencyEdge._activeStrongContributorLinks == 0) && (dependencyEdge._activeWeakContributorLinks == 0))
+					|| (taskInfo._status == not_created_status)
+					|| (taskInfo._status == finished_status)
+					|| (taskInfo._status == deleted_status)
+					|| (successorInfo._status == not_created_status)
+					|| (successorInfo._status == finished_status)
+					|| (successorInfo._status == deleted_status)
+				) {
+					ofs << " style=\"invis\"";
+				} else if (dependencyEdge._activeStrongContributorLinks == 0) {
+					assert(dependencyEdge._activeWeakContributorLinks != 0);
+					ofs << " style=\"dashed\"";
+				}
+				
+				ofs << " ]"
+#ifndef NDEBUG
+					<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+					<< std::endl;
+				
+				if (_showDependencyStructures) {
+					if (_showDeadDependencyStructures) {
+						for (access_t *nextAccess : successorInfo._allAccesses) {
+							assert(nextAccess != nullptr);
+							
+							ofs << "\t" << sourceLinkingLabels._outLabel << " -> data_access_" << nextAccess->_id << " [ style=\"invis\" ";
+							if (sourceLinkingLabels._outLabel != sourceLinkingLabels._nodeLabel) {
+								ofs << " ltail=\"" << sourceLinkingLabels._nodeLabel << "\"";
+							}
+							ofs << " ]"
+#ifndef NDEBUG
+								<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+								<< std::endl;
+						}
+					} else {
+						successorInfo._liveAccesses.processAll(
+							[&](task_live_accesses_t::iterator position) -> bool {
+								access_t *nextAccess = position->_access;
+								assert(nextAccess != nullptr);
+								
+								if (nextAccess->_status != created_access_status) {
+									return true;
+								}
+								
+								ofs << "\t" << sourceLinkingLabels._outLabel << " -> data_access_" << nextAccess->_id << " [ style=\"invis\" ";
+								if (sourceLinkingLabels._outLabel != sourceLinkingLabels._nodeLabel) {
+									ofs << " ltail=\"" << sourceLinkingLabels._nodeLabel << "\"";
+								}
+								ofs << " ]"
+#ifndef NDEBUG
+									<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+									<< std::endl;
+								
+								return true;
+							}
+						);
+					}
+				}
+			}
+			
+			if (!_showDependencyStructures) {
+				continue;
+			}
+			
+			// Access links
+			for (access_t *access : taskInfo._allAccesses) {
+				assert(access != nullptr);
+				
+				// Skip irrelevant accesses if not explicitly requested
+				if (!_showDeadDependencyStructures && (access->_status != created_access_status)) {
+					continue;
+				}
+				
+				// Link to superaccess
+				if (_showSuperAccessLinks) {
+					if ((access->_superAccess != data_access_id_t()) && (access->_status != not_created_access_status)) {
+						access_t *superAccess = _accessIdToAccessMap[access->_superAccess];
+						assert(superAccess != nullptr);
+						
+						bool isFirst = !access->hasPrevious();
+						bool isLast = access->_nextLinks.empty();
+						if (isFirst || isLast) {
+							if (_showDeadDependencyStructures || (superAccess->_status != removed_access_status)) {
+								std::ostringstream arrowType;
+								
+								if (isFirst) {
+									arrowType << "diamond";
+								}
+								if (isLast) {
+									arrowType << "odiamond";
+								}
+								
+								ofs << "\t" 
+									<< "data_access_" << access->_superAccess
+									<< " -> "
+									<< "data_access_" << access->_id
+									<< " ["
+										<< " dir=\"both\""
+										<< " arrowhead=\"empty\""
+										<< " arrowtail=\"" << arrowType.str() << "\""
+										<< " style=dotted"
+										<< " color=\"#888888\""
+										<< " fillcolor=\"#888888\""
+									<< "]"
+#ifndef NDEBUG
+									<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+									<< std::endl;
+							}
+						}
+					}
+				}
+				
+				// Link accesses to their originator
+				assert(access->_originator != task_id_t());
+				dot_linking_labels &taskLinkingLabels = _taskToDotLinkingLabels[access->_originator];
+				ofs << "\t"
+					<< "data_access_" << access->_id
+					<< " -> "
+					<< taskLinkingLabels._inLabel
+					<< " [";
+				if (taskLinkingLabels._nodeLabel != taskLinkingLabels._inLabel) {
+					ofs << " lhead=\"" << taskLinkingLabels._nodeLabel << "\"";
+				}
+				if ((access->_status == not_created_access_status) || (access->_status == removed_access_status)) {
+					ofs << " style=dotted color=\"#AAAAAA\" fillcolor=\"#AAAAAA\"";
+				} else if (access->weak() || access->satisfied() || (access->readSatisfied() && access->writeSatisfied())) {
+					ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
+				} else if (access->readSatisfied() && (access->_type == READ_ACCESS_TYPE)) {
+					ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
+				} else {
+					ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";
+				}
+				ofs << " ]"
+#ifndef NDEBUG
+					<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+					<< std::endl;
+				
+				// Links to next
+				emitAccessLinksToNext(*access, ofs);
+			} // For each access
+			
+			// Emit links from accesses to fragments and from fragments to subaccesses
+			for (phase_t *phase : taskInfo._phaseList) {
+				assert(phase != nullptr);
+				
+				task_group_t *taskGroup = dynamic_cast<task_group_t *>(phase);
+				if (taskGroup == nullptr) {
+					continue;
+				}
+				assert(taskGroup != nullptr);
+				
+				for (access_fragment_t *fragment : taskGroup->_allFragments) {
+					assert(fragment != nullptr);
+					
+					// Skip irrelevant fragments if not explicitly requested
+					if (!_showDeadDependencyStructures && (fragment->_status != created_access_status)) {
+						continue;
+					}
+					
+					// From superaccess to fragment
+					if (_showSuperAccessLinks) {
+						for (access_t *superAccess : taskInfo._allAccesses) {
+							assert(superAccess != nullptr);
+							
+							if (superAccess->_accessRange.intersect(fragment->_accessRange).empty()) {
+								continue;
+							}
+							
+							// Skip irrelevant superaccesses if not explicitly requested
+							if (!_showDeadDependencyStructures && (superAccess->_status != created_access_status)) {
+								continue;
+							}
+							
+							bool isLast = fragment->_nextLinks.empty();
+							std::string arrowType;
+							
+							if (!isLast) {
+								arrowType = "diamond";
+							} else {
+								arrowType = "diamondodiamond";
+							}
+							
+							ofs << "\t" 
+								<< "data_access_" << superAccess->_id
+								<< " -> "
+								<< "data_access_" << fragment->_id
+								<< " ["
+								<< " dir=\"both\""
+								<< " arrowhead=\"empty\""
+								<< " arrowtail=\"" << arrowType << "\"";
+							if ((superAccess->_status != created_access_status) || (fragment->_status != created_access_status)) {
+								ofs
+									<< " style=dotted"
+									<< " color=\"#AAAAAA\""
+									<< " fillcolor=\"#AAAAAA\"";
+							} else {
+								ofs
+									<< " style=dotted"
+									<< " color=\"#888888\""
+									<< " fillcolor=\"#888888\"";
+							}
+							ofs
+								<< "]"
+	#ifndef NDEBUG
+								<< "\t// " << __FILE__ << ":" << __LINE__
+	#endif
+								<< std::endl;
+						}
+					}
+					
+					// From fragment to next
+					emitAccessLinksToNext(*fragment, ofs);
+				}
+				
+			} // For each task group
+			
+		} // For each task
+	}
+	
+	
+	typedef std::list<std::string> log_t;
+	static log_t currentLog;
+	
+	
+	static void emitLog(std::ofstream &ofs, std::ofstream *logFile)
+	{
+		static int step = 1;
+		
+		if (!currentLog.empty()) {
+			ofs << indentation << "{ rank=max;" << std::endl;
+			ofs << indentation << "\tlogbox [ shape=plaintext label=<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\" cellpadding=\"4\">" << std::endl;
+			
+			for (std::string &currentEntry : currentLog) {
+				ofs << indentation << "\t\t<tr><td align=\"right\">" << step << "</td><td align=\"left\">" << currentEntry << "</td></tr>" << std::endl;
+				if (logFile != nullptr) {
+					(*logFile) << "\t" << step << "\t" << currentEntry << std::endl;
+				}
+				step++;
+			}
+			
+			ofs << indentation << "\t\t</table>" << std::endl;
+			ofs << indentation << "\t> ]" << std::endl;
+			ofs << indentation << "}" << std::endl;
+		}
+	}
+	
+	
+	static void dumpGraph(std::ofstream &ofs, std::ofstream *logFile)
 	{
 		indentation = "";
 		ofs << "digraph {" << std::endl;
@@ -659,48 +1071,67 @@ namespace Instrument {
 		ofs << indentation << "nanos_start [shape=Mdiamond];" << std::endl;
 		ofs << indentation << "nanos_end [shape=Msquare];" << std::endl;
 		
-		std::string mainTaskSourceLink;
-		std::string mainTaskSinkLink;
-		std::string mainTaskLink;
 		std::ostringstream linksStream;
-		emitTask(ofs, 0, mainTaskLink, mainTaskSourceLink, mainTaskSinkLink, linksStream);
+		emitTask(ofs, 0, linksStream);
+		dot_linking_labels &mainTaskLinkingLabels = _taskToDotLinkingLabels[0];
 		
-		ofs << indentation << "nanos_start -> " << mainTaskSourceLink;
-		if (mainTaskSourceLink != mainTaskLink) {
-			ofs << "[ lhead=\"" << mainTaskLink << "\" ]";
+		ofs << indentation << "nanos_start -> " << mainTaskLinkingLabels._inLabel;
+		if (mainTaskLinkingLabels._inLabel != mainTaskLinkingLabels._nodeLabel) {
+			ofs << "[ lhead=\"" << mainTaskLinkingLabels._nodeLabel << "\" ]";
 		}
 		ofs << ";" << std::endl;
 		
-		ofs << indentation << mainTaskSinkLink << " -> nanos_end";
-		if (mainTaskSinkLink != mainTaskLink) {
-			ofs << " [ ltail=\"" << mainTaskLink << "\" ]";
+		ofs << indentation << mainTaskLinkingLabels._outLabel << " -> nanos_end";
+		if (mainTaskLinkingLabels._outLabel != mainTaskLinkingLabels._nodeLabel) {
+			ofs << " [ ltail=\"" << mainTaskLinkingLabels._nodeLabel << "\" ]";
 		}
 		ofs << ";" << std::endl;
+		
 		ofs << linksStream.str();
+		
+		emitEdges(ofs);
+		
+		if (_showLog) {
+			emitLog(ofs, logFile);
+		}
+		
 		ofs << "}" << std::endl;
 		indentation = "";
 	}
 	
 	
-	static void emitFrame(std::string const &dir, std::string const &filenameBase, int &frame)
+	static void emitFrame(std::string const &dir, std::string const &filenameBase, int &frame, std::ofstream *logFile)
 	{
+		// To avoid spurious differences between frames
+		_nextCluster = 1;
+		
 		// Emit a graph frame
 		std::ostringstream oss;
 		oss << dir << "/" << filenameBase << "-step";
 		oss.width(8); oss.fill('0'); oss << frame;
 		oss.width(0); oss.fill(' '); oss << ".dot";
 		
+		if (logFile != nullptr) {
+			(*logFile) << "Page " << frame+1 << ": [" << oss.str() << "]" << std::endl;
+		}
+		
 		std::ofstream ofs(oss.str());
-		dumpGraph(ofs);
+		dumpGraph(ofs, logFile);
 		ofs.close();
 		
+		if (logFile != nullptr) {
+			(*logFile) << std::endl;
+		}
+		
 		frame++;
+		currentLog.clear();
 	}
 	
 	
 	void shutdown()
 	{
 		std::string filenameBase;
+		std::string logName;
 		{
 			struct timeval tv;
 			gettimeofday(&tv, nullptr);
@@ -708,6 +1139,10 @@ namespace Instrument {
 			std::ostringstream oss;
 			oss << "graph-" << gethostid() << "-" << getpid() << "-" << tv.tv_sec;
 			filenameBase = oss.str();
+			
+			std::ostringstream oss2;
+			oss2 << "log-" << gethostid() << "-" << getpid() << "-" << tv.tv_sec << ".txt";
+			logName = oss2.str();
 		}
 		
 		std::string dir = filenameBase + std::string("-components");
@@ -716,253 +1151,52 @@ namespace Instrument {
 			FatalErrorHandler::handle(errno, " trying to create directory '", dir, "'");
 		}
 		
+		// Derive the actual edges from the access links
+		generateEdges();
+		
 		// Find the longest dependency paths for layout reasons
 		findTopmostTasksAndPathLengths(0);
 		
-		int frame=0;
-		emitFrame(dir, filenameBase, frame);
+		// Find a fixed order for the accesses and fragments of the same group
+		if (_showDependencyStructures) {
+			sortAccessGroups();
+		} else {
+			clearLiveAccessesAndGroups();
+		}
 		
-		task_id_t accumulateStepsTriggeredByTask = -1;
+		std::ofstream *logStream = nullptr;
+		if (_showLog) {
+			logStream = new std::ofstream(logName);
+		}
+		
+		// Simultation loop
+		int frame=0;
+		execution_step_flush_state_t flushState;
 		for (execution_step_t *executionStep : _executionSequence) {
 			assert(executionStep != nullptr);
 			
-			if (_showAllSteps) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
+			if (_showAllSteps || executionStep->needsFlushBefore(flushState)) {
+				emitFrame(dir, filenameBase, frame, logStream);
 			}
 			
-			// Get the kind of step
-			create_task_step_t *createTask = dynamic_cast<create_task_step_t *> (executionStep);
-			enter_task_step_t *enterTask = dynamic_cast<enter_task_step_t *> (executionStep);
-			exit_task_step_t *exitTask = dynamic_cast<exit_task_step_t *> (executionStep);
+			executionStep->execute();
+			if (_showLog) {
+				currentLog.push_back(executionStep->describe());
+			}
 			
-			enter_taskwait_step_t *enterTaskwait = dynamic_cast<enter_taskwait_step_t *> (executionStep);
-			exit_taskwait_step_t *exitTaskwait = dynamic_cast<exit_taskwait_step_t *> (executionStep);
-			
-			enter_usermutex_step_t *enterUsermutex = dynamic_cast<enter_usermutex_step_t *> (executionStep);
-			block_on_usermutex_step_t *blockedOnUsermutex = dynamic_cast<block_on_usermutex_step_t *> (executionStep);
-			exit_usermutex_step_t *exitUsermutex = dynamic_cast<exit_usermutex_step_t *> (executionStep);
-			
-			create_data_access_step_t *createDataAccess = dynamic_cast<create_data_access_step_t *> (executionStep);
-			upgrade_data_access_step_t *upgradeDataAccess = dynamic_cast<upgrade_data_access_step_t *> (executionStep);
-			data_access_becomes_satisfied_step_t *dataAccessBecomesSatisfied = dynamic_cast<data_access_becomes_satisfied_step_t *> (executionStep);
-			removed_data_access_step_t *removedDataAccess = dynamic_cast<removed_data_access_step_t *> (executionStep);
-			linked_data_accesses_step_t *linkedDataAccess = dynamic_cast<linked_data_accesses_step_t *> (executionStep);
-			unlinked_data_accesses_step_t *unlinkedDataAccess = dynamic_cast<unlinked_data_accesses_step_t *> (executionStep);
-			reparented_data_access_step_t *reparentedDataAccess = dynamic_cast<reparented_data_access_step_t *> (executionStep);
-			
-			// Update the status
-			if (createTask != nullptr) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
-				
-				task_id_t taskId = createTask->_taskId;
-				task_info_t &taskInfo = _taskToInfoMap[taskId];
-				assert(taskInfo._status == not_created_status);
-				taskInfo._status = not_started_status;
-				taskInfo._lastCPU = createTask->_cpu;
-				
-				accumulateStepsTriggeredByTask = taskId;
-			} else if (enterTask != nullptr) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
-				
-				task_id_t taskId = enterTask->_taskId;
-				task_info_t &taskInfo = _taskToInfoMap[taskId];
-				assert((taskInfo._status == not_started_status) || (taskInfo._status == blocked_status));
-				taskInfo._status = started_status;
-				taskInfo._lastCPU = enterTask->_cpu;
-				
-				accumulateStepsTriggeredByTask = -2; // Force the emission of a frame
-			} else if (exitTask != nullptr) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
-				
-				task_id_t taskId = exitTask->_taskId;
-				task_info_t &taskInfo = _taskToInfoMap[taskId];
-				assert(taskInfo._status == started_status);
-				taskInfo._status = finished_status;
-				taskInfo._lastCPU = exitTask->_cpu;
-				
-				accumulateStepsTriggeredByTask = taskId;
-			} else if (enterTaskwait != nullptr) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
-				
-				taskwait_id_t taskwaitId = enterTaskwait->_taskwaitId;
-				taskwait_status_t &taskwaitStatus = _taskwaitStatus[taskwaitId];
-				taskwaitStatus._status = started_status;
-				taskwaitStatus._lastCPU = enterTaskwait->_cpu;
-				
-				task_id_t taskId = enterTaskwait->_taskId;
-				task_info_t &taskInfo = _taskToInfoMap[taskId];
-				assert(taskInfo._status == started_status);
-				taskInfo._status = blocked_status;
-				taskInfo._lastCPU = enterTaskwait->_cpu;
-				
-				accumulateStepsTriggeredByTask = -2; // Force the emission of a frame
-			} else if (exitTaskwait != nullptr) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
-				
-				taskwait_id_t taskwaitId = exitTaskwait->_taskwaitId;
-				taskwait_status_t &taskwaitStatus = _taskwaitStatus[taskwaitId];
-				taskwaitStatus._status = finished_status;
-				taskwaitStatus._lastCPU = exitTaskwait->_cpu;
-				
-				task_id_t taskId = exitTaskwait->_taskId;
-				task_info_t &taskInfo = _taskToInfoMap[taskId];
-				assert(taskInfo._status == blocked_status);
-				taskInfo._status = started_status;
-				taskInfo._lastCPU = exitTaskwait->_cpu;
-			} else if (enterUsermutex != nullptr) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
-				
-				task_id_t taskId = enterUsermutex->_taskId;
-				task_info_t &taskInfo = _taskToInfoMap[taskId];
-				assert((taskInfo._status == started_status) || (taskInfo._status == blocked_status));
-				taskInfo._status = started_status;
-				taskInfo._lastCPU = enterUsermutex->_cpu;
-			} else if (blockedOnUsermutex != nullptr) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
-				
-				task_id_t taskId = blockedOnUsermutex->_taskId;
-				task_info_t &taskInfo = _taskToInfoMap[taskId];
-				assert(taskInfo._status == started_status);
-				taskInfo._status = started_status;
-				taskInfo._lastCPU = blockedOnUsermutex->_cpu;
-			} else if (exitUsermutex != nullptr) {
-				if (accumulateStepsTriggeredByTask != -1) {
-					emitFrame(dir, filenameBase, frame);
-					accumulateStepsTriggeredByTask = -1;
-				}
-				
-				task_id_t taskId = exitUsermutex->_taskId;
-				task_info_t &taskInfo = _taskToInfoMap[taskId];
-				assert(taskInfo._status == started_status);
-				if (taskInfo._lastCPU == exitUsermutex->_cpu) {
-					// Not doing anything for now
-					// Perhaps will represent the state of the mutex, its allocation slots,
-					// and links from those to task-internal critical nodes
-					continue;
-				}
-				taskInfo._lastCPU = exitUsermutex->_cpu;
-			} else if (createDataAccess != nullptr) {
-				if ((accumulateStepsTriggeredByTask != -1) && (accumulateStepsTriggeredByTask != createDataAccess->_originatorTaskId)) {
-					emitFrame(dir, filenameBase, frame);
-				}
-				
-				access_t &access = getAccess(createDataAccess->_accessId);
-				access._superAccess = createDataAccess->_superAccessId;
-				access._originator = createDataAccess->_originatorTaskId;
-				access._type = (access_type_t) createDataAccess->_accessType;
-				access._range = createDataAccess->_range;
-				access._weak = createDataAccess->_weak;
-				access._satisfied = createDataAccess->_satisfied;
-				
-				accumulateStepsTriggeredByTask = createDataAccess->_originatorTaskId;
-			} else if (upgradeDataAccess != nullptr) {
-				if ((accumulateStepsTriggeredByTask != -1) && (accumulateStepsTriggeredByTask != upgradeDataAccess->_originatorTaskId)) {
-					emitFrame(dir, filenameBase, frame);
-				}
-				
-				access_t &access = getAccess(upgradeDataAccess->_accessId);
-				
-				access._type = (access_type_t) upgradeDataAccess->_newAccessType;
-				if (upgradeDataAccess->_becomesUnsatisfied) {
-					access._satisfied = false;
-				}
-				
-				accumulateStepsTriggeredByTask = upgradeDataAccess->_originatorTaskId;
-			} else if (dataAccessBecomesSatisfied != nullptr) {
-				if ((accumulateStepsTriggeredByTask != -1) && (accumulateStepsTriggeredByTask != dataAccessBecomesSatisfied->_triggererTaskId)) {
-					emitFrame(dir, filenameBase, frame);
-				}
-				
-				access_t &access = getAccess(dataAccessBecomesSatisfied->_accessId);
-				
-				access._satisfied = true;
-				
-				accumulateStepsTriggeredByTask = dataAccessBecomesSatisfied->_triggererTaskId;
-			} else if (removedDataAccess != nullptr) {
-				if ((accumulateStepsTriggeredByTask != -1) && (accumulateStepsTriggeredByTask != removedDataAccess->_triggererTaskId)) {
-					emitFrame(dir, filenameBase, frame);
-				}
-				
-				access_t &access = getAccess(removedDataAccess->_accessId);
-				
-				access._deleted = true;
-				
-				for (auto previousAccessId : access._previousLinks) {
-					access_t &previousAccess = getAccess(previousAccessId);
-					auto it = previousAccess._nextLinks.find(removedDataAccess->_accessId);
-					assert(it != previousAccess._nextLinks.end());
-					it->second._status = link_to_next_t::dead_link_status;
-				}
-				access._previousLinks.clear();
-				
-				for (auto &nextAccessLink : access._nextLinks) {
-					// access_t &nextAccess = getAccess(nextAccessLink.first);
-					// nextAccess._previousLinks.erase(removedDataAccess->_accessId);
-					nextAccessLink.second._status = link_to_next_t::dead_link_status;
-				}
-				// access._nextLinks.clear();
-				
-				accumulateStepsTriggeredByTask = removedDataAccess->_triggererTaskId;
-			} else if (linkedDataAccess != nullptr) {
-				if ((accumulateStepsTriggeredByTask != -1) && (accumulateStepsTriggeredByTask != linkedDataAccess->_triggererTaskId)) {
-					emitFrame(dir, filenameBase, frame);
-				}
-				
-				access_t &sourceAccess = getAccess(linkedDataAccess->_sourceAccessId);
-				sourceAccess._nextLinks[linkedDataAccess->_sinkAccessId]._status = link_to_next_t::created_link_status;
-				
-				accumulateStepsTriggeredByTask = linkedDataAccess->_triggererTaskId;
-			} else if (unlinkedDataAccess != nullptr) {
-				if ((accumulateStepsTriggeredByTask != -1) && (accumulateStepsTriggeredByTask != unlinkedDataAccess->_triggererTaskId)) {
-					emitFrame(dir, filenameBase, frame);
-				}
-				
-				access_t &sourceAccess = getAccess(unlinkedDataAccess->_sourceAccessId);
-				sourceAccess._nextLinks[unlinkedDataAccess->_sinkAccessId]._status = link_to_next_t::dead_link_status;
-				// access_t &sinkAccess = getAccess(unlinkedDataAccess->_sinkAccessId);
-				// sinkAccess._previousLinks.erase(unlinkedDataAccess->_sourceAccessId);
-				
-				accumulateStepsTriggeredByTask = unlinkedDataAccess->_triggererTaskId;
-			} else if (reparentedDataAccess != nullptr) {
-				if ((accumulateStepsTriggeredByTask != -1) && (accumulateStepsTriggeredByTask != reparentedDataAccess->_triggererTaskId)) {
-					emitFrame(dir, filenameBase, frame);
-				}
-				
-				access_t &access = getAccess(reparentedDataAccess->_accessId);
-				assert(access._superAccess == reparentedDataAccess->_oldSuperAccessId);
-				access._superAccess = reparentedDataAccess->_newSuperAccessId;
-				
-				accumulateStepsTriggeredByTask = reparentedDataAccess->_triggererTaskId;
-			} else {
-				assert(false);
+			if (!_showAllSteps && executionStep->needsFlushAfter(flushState)) {
+				emitFrame(dir, filenameBase, frame, logStream);
 			}
 		}
-		if (accumulateStepsTriggeredByTask != -1) {
-			emitFrame(dir, filenameBase, frame);
+		
+		// Flush last frame if necessary
+		if (_showAllSteps || !flushState._hasAlreadyFlushed) {
+			emitFrame(dir, filenameBase, frame, logStream);
+		}
+		
+		if (_showLog) {
+			logStream->close();
+			delete logStream;
 		}
 		
 		std::string scriptName = filenameBase + "-script.sh";
@@ -971,6 +1205,12 @@ namespace Instrument {
 		scriptOS << "#!/bin/sh" << std::endl;
 		scriptOS << "set -e" << std::endl;
 		scriptOS << std::endl;
+		
+		scriptOS << "if which parallel >&/dev/null ; then" << std::endl;
+		scriptOS << "\tls " << dir << "/" << filenameBase << "-step" << "*.dot"
+			<< " | parallel --progress --eta dot -Gfontname=Helvetica -Nfontname=Helvetica -Efontname=Helvetica \"$@\" -Tpdf " << "'{}'" << " -o " << "'{.}.pdf'" << std::endl;
+		scriptOS << "else" << std::endl;
+		
 		
 		scriptOS << "lasttime=0" << std::endl;
 		for (int i=0; i < frame; i++) {
@@ -981,29 +1221,79 @@ namespace Instrument {
 				oss.width(8); oss.fill('0'); oss << i;
 				stepBase = oss.str();
 			}
-			scriptOS << "currenttime=$(date +%s)" << std::endl;
-			scriptOS << "if [ ${currenttime} -gt ${lasttime} ] ; then" << std::endl;
-			scriptOS << "	echo Generating step " << i+1 << "/" << frame << std::endl;
-			scriptOS << "	lasttime=${currenttime}" << std::endl;
-			scriptOS << "fi" << std::endl;
-			scriptOS << "dot -Gfontname=Helvetica -Nfontname=Helvetica -Efontname=Helvetica \"$@\" -Tpdf " << stepBase << ".dot -o " << stepBase << ".pdf" << std::endl;
+			scriptOS << "\tcurrenttime=$(date +%s)" << std::endl;
+			scriptOS << "\tif [ ${currenttime} -gt ${lasttime} ] ; then" << std::endl;
+			scriptOS << "\t	echo Generating step " << i+1 << "/" << frame << std::endl;
+			scriptOS << "\t	lasttime=${currenttime}" << std::endl;
+			scriptOS << "\tfi" << std::endl;
+			scriptOS << "\tdot -Gfontname=Helvetica -Nfontname=Helvetica -Efontname=Helvetica \"$@\" -Tpdf " << stepBase << ".dot -o " << stepBase << ".pdf" << std::endl;
 		}
+		scriptOS << "fi" << std::endl;
+		
 		scriptOS << std::endl;
 		
 		scriptOS << "echo Joining into a single file" << std::endl;
-		scriptOS << "pdfunite " << filenameBase << "-components/*.pdf " << filenameBase << ".pdf"
-			<< " || pdfjoin -q --preamble '\\usepackage{hyperref} \\hypersetup{pdfpagelayout=SinglePage}' --rotateoversize false --outfile " << filenameBase << ".pdf";
-		for (int i=0; i < frame; i++) {
+		
+		// pdfunite
+		scriptOS << "if which pdfunite >&/dev/null ; then" << std::endl;
+		for (int i=0; i < frame; i+=100) {
 			std::string stepBase;
 			{
 				std::ostringstream oss;
 				oss << dir << "/" << filenameBase << "-step";
-				oss.width(8); oss.fill('0'); oss << i;
+				oss.width(6); oss.fill('0'); oss << i/100;
+				oss << "*.pdf";
 				stepBase = oss.str();
 			}
-			scriptOS << " " << stepBase << ".pdf";
+			std::string intermediate;
+			{
+				std::ostringstream oss;
+				oss << dir << "/" << filenameBase << "-100steps-";
+				oss.width(6); oss.fill('0'); oss << i/100;
+				oss << ".pdf";
+				intermediate = oss.str();
+			}
+			
+			scriptOS << "\tpdfunite " << stepBase << " " << intermediate << std::endl;  
 		}
-		scriptOS << std::endl;
+		scriptOS << "\tpdfunite " << dir << "/" << filenameBase << "-100steps-*.pdf " << filenameBase << ".pdf"
+			<< " && rm -f " << dir << "/" << filenameBase << "-100steps-*.pdf" << std::endl;
+		
+		
+		// pdfjoin
+		scriptOS << "elif which pdfjoin >&/dev/null ; then" << std::endl;
+		
+		for (int i=0; i < frame; i+=100) {
+			std::string stepBase;
+			{
+				std::ostringstream oss;
+				oss << dir << "/" << filenameBase << "-step";
+				oss.width(6); oss.fill('0'); oss << i/100;
+				oss << "*.pdf";
+				stepBase = oss.str();
+			}
+			std::string intermediate;
+			{
+				std::ostringstream oss;
+				oss << dir << "/" << filenameBase << "-100steps-";
+				oss.width(6); oss.fill('0'); oss << i/100;
+				oss << ".pdf";
+				intermediate = oss.str();
+			}
+			
+			scriptOS << "\tpdfjoin -q --preamble '\\usepackage{hyperref} \\hypersetup{pdfpagelayout=SinglePage}' --rotateoversize false --outfile " << intermediate << " " << stepBase << std::endl;  
+		}
+		scriptOS << "\tpdfjoin -q --preamble '\\usepackage{hyperref} \\hypersetup{pdfpagelayout=SinglePage}' --rotateoversize false --outfile " << filenameBase << ".pdf " << dir << "/" << filenameBase << "-100steps-*.pdf"
+		<< " && rm -f " << dir << "/" << filenameBase << "-100steps-*.pdf" << std::endl;
+		
+		// Without pdfunite nor pdfjoin
+		scriptOS << "else" << std::endl;
+		
+		scriptOS << "\techo 'Warning: did not find neither pdfunite (from poppler) nor pdfjoin (from latex) to collect the individual steps into a single PDF.'" << std::endl;
+		scriptOS << "\techo 'Individual PDF files for each step have been left inside the \"" << dir << "\" directory.'" << std::endl;
+		scriptOS << "\texit" << std::endl;
+		
+		scriptOS << "fi" << std::endl;
 		
 		scriptOS << "echo Generated " << filenameBase << ".pdf" << std::endl;
 		scriptOS << std::endl;

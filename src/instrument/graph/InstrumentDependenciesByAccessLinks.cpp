@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cassert>
 
+#include "ExecutionSteps.hpp"
 #include "InstrumentDependenciesByAccessLinks.hpp"
 
 #include "InstrumentDataAccessId.hpp"
@@ -18,10 +19,6 @@ namespace Instrument {
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId
 	) {
-		if (!Graph::_showDependencyStructures) {
-			return data_access_id_t(-1);
-		}
-		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
@@ -42,29 +39,22 @@ namespace Instrument {
 		);
 		_executionSequence.push_back(step);
 		
-		// Create the access but in an almost uninitialized state. It will be initialized when we
-		// replay the create_data_access_step_t created above and will be modified as we replay the
-		// steps recorded in the remaining functions of this instrumentation interface
-		access_t &access = getAccess(dataAccessId);
-		access._superAccess = superAccessId;
-		access._originator = originatorTaskId;
-		
 		task_info_t &taskInfo = _taskToInfoMap[originatorTaskId];
 		
-		// The "main" function is not supposed to have dependencies
-		assert(taskInfo._parent != -1);
+		access_t *access = new access_t();
+		access->_id = dataAccessId;
+		access->_superAccess = superAccessId;
+		access->_originator = originatorTaskId;
+		access->_firstGroupAccess = dataAccessId;
 		
-		task_info_t &parentInfo = _taskToInfoMap[taskInfo._parent];
+		// We need the final range and type of each access to calculate the full graph
+		access->_type = accessType;
+		access->_accessRange = range;
 		
-		assert(!parentInfo._phaseList.empty());
-		auto it = parentInfo._phaseList.end();
-		it--;
+		_accessIdToAccessMap[dataAccessId] = access;
 		
-		phase_t *lastPhase = *it;
-		task_group_t *lastTaskGroup = dynamic_cast<task_group_t *> (lastPhase);
-		
-		assert(lastTaskGroup != nullptr);
-		lastTaskGroup->_dataAccesses.insert(dataAccessId);
+		taskInfo._allAccesses.insert(access);
+		taskInfo._liveAccesses.insert(AccessWrapper(access));
 		
 		return dataAccessId;
 	}
@@ -79,7 +69,8 @@ namespace Instrument {
 		bool becomesUnsatisfied,
 		task_id_t originatorTaskId
 	) {
-		if (!Graph::_showDependencyStructures) {
+		if (dataAccessId == data_access_id_t()) {
+			// A data access that has not been fully created yet
 			return;
 		}
 		
@@ -101,6 +92,11 @@ namespace Instrument {
 			originatorTaskId
 		);
 		_executionSequence.push_back(step);
+		
+		// We need the final type of each access to calculate the full graph
+		access_t *access = _accessIdToAccessMap[dataAccessId];
+		assert(access != nullptr);
+		access->_type = newAccessType;
 	}
 	
 	
@@ -110,10 +106,6 @@ namespace Instrument {
 		task_id_t triggererTaskId,
 		task_id_t targetTaskId
 	) {
-		if (!Graph::_showDependencyStructures) {
-			return;
-		}
-		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
@@ -134,14 +126,210 @@ namespace Instrument {
 	}
 	
 	
+	void modifiedDataAccessRange(
+		data_access_id_t dataAccessId,
+		DataAccessRange newRange,
+		task_id_t triggererTaskId
+	) {
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		std::lock_guard<SpinLock> guard(_graphLock);
+		assert(_threadToId.find(currentThread) != _threadToId.end());
+		thread_id_t threadId = _threadToId[currentThread];
+		
+		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		assert(cpu != nullptr);
+		
+		modified_data_access_range_step_t *step = new modified_data_access_range_step_t(
+			cpu->_virtualCPUId, threadId,
+			dataAccessId,
+			newRange,
+			triggererTaskId
+		);
+		_executionSequence.push_back(step);
+		
+		// We need the final range of each access to calculate the full graph
+		access_t *access = _accessIdToAccessMap[dataAccessId];
+		assert(access != nullptr);
+		access->_accessRange = newRange;
+		
+	}
+	
+	
+	data_access_id_t fragmentedDataAccess(
+		data_access_id_t dataAccessId,
+		DataAccessRange newRange,
+		task_id_t triggererTaskId
+	) {
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		std::lock_guard<SpinLock> guard(_graphLock);
+		assert(_threadToId.find(currentThread) != _threadToId.end());
+		thread_id_t threadId = _threadToId[currentThread];
+		
+		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		assert(cpu != nullptr);
+		
+		access_t *originalAccess = _accessIdToAccessMap[dataAccessId];
+		assert(originalAccess != nullptr);
+		
+		data_access_id_t newDataAccessId = Graph::_nextDataAccessId++;
+		
+		fragment_data_access_step_t *step = new fragment_data_access_step_t(
+			cpu->_virtualCPUId, threadId,
+			dataAccessId, newDataAccessId, newRange,
+			triggererTaskId
+		);
+		_executionSequence.push_back(step);
+		
+		if (!originalAccess->fragment()) {
+			task_info_t &taskInfo = _taskToInfoMap[originalAccess->_originator];
+			
+			// Copy all the contents so that we also get any already existing link
+			access_t *newAccess = new access_t();
+			*newAccess = *originalAccess;
+			newAccess->_accessRange = newRange;
+			
+			newAccess->_id = newDataAccessId;
+			
+			taskInfo._allAccesses.insert(newAccess);
+			taskInfo._liveAccesses.insert(AccessWrapper(newAccess));
+			
+			_accessIdToAccessMap[newDataAccessId] = newAccess;
+		} else {
+			access_fragment_t *originalFragment = (access_fragment_t *) originalAccess;
+			
+			task_group_t *taskGroup = originalFragment->_taskGroup;
+			assert(taskGroup != nullptr);
+			
+			// Copy all the contents so that we also get any already existing link
+			access_fragment_t *newFragment = new access_fragment_t();
+			*newFragment = *originalFragment;
+			newFragment->_accessRange = newRange;
+			
+			newFragment->_id = newDataAccessId;
+			
+			// Fragments are inserted in the task group that corresponds to the phase in which they are created
+			taskGroup->_allFragments.insert(newFragment);
+			taskGroup->_liveFragments.insert(AccessFragmentWrapper(newFragment));
+			
+			_accessIdToAccessMap[newDataAccessId] = newFragment;
+		}
+		
+		// Link the new access/fragment into the access group
+		originalAccess->_nextGroupAccess = newDataAccessId;
+		
+		return newDataAccessId;
+	}
+	
+	
+	data_access_id_t createdDataSubaccessFragment(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	) {
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		std::lock_guard<SpinLock> guard(_graphLock);
+		assert(_threadToId.find(currentThread) != _threadToId.end());
+		thread_id_t threadId = _threadToId[currentThread];
+		
+		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		assert(cpu != nullptr);
+		
+		access_t *originalAccess = _accessIdToAccessMap[dataAccessId];
+		assert(originalAccess != nullptr);
+		
+		data_access_id_t newDataAccessId = Graph::_nextDataAccessId++;
+		
+		create_subaccess_fragment_step_t *step = new create_subaccess_fragment_step_t(
+			cpu->_virtualCPUId, threadId,
+			dataAccessId, newDataAccessId,
+			triggererTaskId
+		);
+		_executionSequence.push_back(step);
+		
+		task_info_t &taskInfo = _taskToInfoMap[originalAccess->_originator];
+		
+		// The last phase of the creator task should be a taskgroup that includes the new task that
+		// triggers the creation of the subaccess fragment
+		task_group_t *taskGroup = nullptr;
+		if (!taskInfo._phaseList.empty()) {
+			phase_t *lastPhase = taskInfo._phaseList.back();
+			taskGroup = dynamic_cast<task_group_t *>(lastPhase);
+		}
+		assert(taskGroup != nullptr);
+		
+		// Create the fragment
+		access_fragment_t *fragment = new access_fragment_t();
+		fragment->_id = newDataAccessId;
+		fragment->_superAccess = originalAccess->_superAccess;
+		fragment->_originator = originalAccess->_originator;
+		fragment->fragment() = true;
+		fragment->_firstGroupAccess = newDataAccessId;
+		fragment->_nextGroupAccess = data_access_id_t();
+		fragment->_taskGroup = taskGroup;
+		
+		taskGroup->_allFragments.insert(fragment);
+		taskGroup->_liveFragments.insert(AccessFragmentWrapper(fragment));
+		
+		_accessIdToAccessMap[newDataAccessId] = fragment;
+		
+		return newDataAccessId;
+	}
+	
+	
+	void completedDataAccess(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	) {
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		std::lock_guard<SpinLock> guard(_graphLock);
+		assert(_threadToId.find(currentThread) != _threadToId.end());
+		thread_id_t threadId = _threadToId[currentThread];
+		
+		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		assert(cpu != nullptr);
+		
+		completed_data_access_step_t *step = new completed_data_access_step_t(
+			cpu->_virtualCPUId, threadId,
+			dataAccessId,
+			triggererTaskId
+		);
+		_executionSequence.push_back(step);
+	}
+	
+	
+	void dataAccessBecomesRemovable(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	) {
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		std::lock_guard<SpinLock> guard(_graphLock);
+		assert(_threadToId.find(currentThread) != _threadToId.end());
+		thread_id_t threadId = _threadToId[currentThread];
+		
+		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		assert(cpu != nullptr);
+		
+		data_access_becomes_removable_step_t *step = new data_access_becomes_removable_step_t(
+			cpu->_virtualCPUId, threadId,
+			dataAccessId, triggererTaskId
+		);
+		_executionSequence.push_back(step);
+	}
+	
+	
 	void removedDataAccess(
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
-		if (!Graph::_showDependencyStructures) {
-			return;
-		}
-		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
@@ -161,15 +349,11 @@ namespace Instrument {
 	
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId,
+		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
 		DataAccessRange range,
 		bool direct, bool bidirectional,
 		task_id_t triggererTaskId
 	) {
-		if (!Graph::_showDependencyStructures) {
-			return;
-		}
-		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
@@ -180,16 +364,15 @@ namespace Instrument {
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
 		
-		access_t &sourceAccess = getAccess(sourceAccessId);
-		access_t &sinkAccess = getAccess(sinkAccessId);
-		sourceAccess._nextLinks.emplace(
-			std::pair<data_access_id_t, link_to_next_t> (sinkAccessId, link_to_next_t(direct, bidirectional))
+		access_t *sourceAccess = _accessIdToAccessMap[sourceAccessId];
+		assert(sourceAccess != nullptr);
+		sourceAccess->_nextLinks.emplace(
+			std::pair<task_id_t, link_to_next_t> (sinkTaskId, link_to_next_t(direct, bidirectional))
 		); // A "not created" link
-		sinkAccess._previousLinks.insert(sourceAccessId);
 		
 		linked_data_accesses_step_t *step = new linked_data_accesses_step_t(
 			cpu->_virtualCPUId, threadId,
-			sourceAccessId, sinkAccessId,
+			sourceAccessId, sinkTaskId,
 			range,
 			direct, bidirectional,
 			triggererTaskId
@@ -200,14 +383,10 @@ namespace Instrument {
 	
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		data_access_id_t sinkAccessId,
+		task_id_t sinkTaskId,
 		bool direct,
 		task_id_t triggererTaskId
 	) {
-		if (!Graph::_showDependencyStructures) {
-			return;
-		}
-		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
@@ -220,7 +399,7 @@ namespace Instrument {
 		
 		unlinked_data_accesses_step_t *step = new unlinked_data_accesses_step_t(
 			cpu->_virtualCPUId, threadId,
-			sourceAccessId, sinkAccessId, direct,
+			sourceAccessId, sinkTaskId, direct,
 			triggererTaskId
 		);
 		_executionSequence.push_back(step);
@@ -233,10 +412,6 @@ namespace Instrument {
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
-		if (!Graph::_showDependencyStructures) {
-			return;
-		}
-		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		

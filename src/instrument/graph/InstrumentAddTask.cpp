@@ -1,4 +1,6 @@
 #include "InstrumentAddTask.hpp"
+
+#include "ExecutionSteps.hpp"
 #include "InstrumentGraph.hpp"
 
 #include "executors/threads/WorkerThread.hpp"
@@ -82,6 +84,8 @@ namespace Instrument {
 		if (parentTask != nullptr) {
 			task_id_t parentTaskId = parentTask->getInstrumentationTaskId();
 			task_info_t &parentInfo = _taskToInfoMap[parentTaskId];
+			
+			parentInfo._hasChildren = true;
 			
 			task_group_t *taskGroup = nullptr;
 			if (!parentInfo._phaseList.empty()) {

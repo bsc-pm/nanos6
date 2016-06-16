@@ -3,6 +3,8 @@
 
 namespace Instrument {
 	namespace Graph {
+		std::map<taskwait_id_t, taskwait_status_t> _taskwaitStatus;
+		
 		std::atomic<thread_id_t> _nextThreadId(1);
 		std::atomic<taskwait_id_t> _nextTaskwaitId(1);
 		std::atomic<task_id_t::inner_type_t> _nextTaskId(0);
@@ -19,12 +21,7 @@ namespace Instrument {
 		SpinLock _graphLock;
 		
 		EnvironmentVariable<bool> _showDependencyStructures("NANOS_GRAPH_SHOW_DEPENDENCY_STRUCTURES", false);
-		
-		
-		access_t &getAccess(data_access_id_t dataAccessId)
-		{
-			return _accessIdToAccessMap[dataAccessId];
-		}
-		
+		EnvironmentVariable<bool> _showRanges("NANOS_GRAPH_SHOW_RANGES", false);
+		EnvironmentVariable<bool> _showLog("NANOS_GRAPH_SHOW_LOG", false);
 	}
 }

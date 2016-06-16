@@ -47,9 +47,10 @@ bool DataAccess::processEffectivePrevious(
 inline void DataAccess::fullLinkTo(DataAccessRange const &range, DataAccess *target, bool blocker, Instrument::task_id_t triggererTaskInstrumentationId)
 {
 	assert(target != nullptr);
+	assert(target->_originator != nullptr);
 	
 	Instrument::linkedDataAccesses(
-		_instrumentationId, target->_instrumentationId,
+		_instrumentationId, target->_originator->getInstrumentationTaskId(),
 		range,
 		/* direct */ true,
 		/* bidirectional */ true,
