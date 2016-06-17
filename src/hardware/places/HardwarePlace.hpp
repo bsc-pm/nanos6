@@ -6,17 +6,17 @@
 class HardwarePlace {
 protected:
 	HardwarePlace *_parent;
-	
+        int _index;	
 public:
-	HardwarePlace(HardwarePlace *parent = nullptr)
-		: _parent(parent)
+	HardwarePlace(int index, HardwarePlace *parent = nullptr)
+		: _parent(parent),
+		_index(index)
 	{
 	}
 	
 	virtual ~HardwarePlace()
 	{
 	}
-	
 	
 };
 
