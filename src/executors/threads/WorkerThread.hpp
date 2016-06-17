@@ -2,6 +2,8 @@
 #define WORKER_THREAD_HPP
 
 
+#include <InstrumentThreadId.hpp>
+
 #include "DependencyDomain.hpp"
 #include "lowlevel/ConditionVariable.hpp"
 
@@ -43,6 +45,8 @@ private:
 	
 	//! Dependency domain of the tasks instantiated by this thread
 	DependencyDomain _dependencyDomain;
+	
+	Instrument::thread_id_t _instrumentationId;
 	
 	//! Thread Local Storage variable to point back to the WorkerThread that is running the code
 	static __thread WorkerThread *_currentWorkerThread;
@@ -155,6 +159,11 @@ public:
 	DependencyDomain *getDependencyDomain()
 	{
 		return &_dependencyDomain;
+	}
+	
+	Instrument::thread_id_t getInstrumentationId() const
+	{
+		return _instrumentationId;
 	}
 	
 	//! \brief returns the WorkerThread that runs the call

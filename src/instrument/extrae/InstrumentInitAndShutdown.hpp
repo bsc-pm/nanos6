@@ -10,14 +10,17 @@
 
 
 namespace Instrument {
+	static unsigned int extrae_nanos_get_num_cpus()
+	{
+		// CPU "0" is for the leader thread
+		return nanos_get_num_cpus() + 1;
+	}
+	
 	void initialize()
 	{
-		// Assign thread identifier 0 to the leader thread
-		_threadToId[0] = 0;
-		
 		// Common thread information callbacks
 		Extrae_set_threadid_function ( nanos_get_current_virtual_cpu );
-		Extrae_set_numthreads_function ( nanos_get_num_cpus );
+		Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus );
 		
 		// Initialize extrae library
 		Extrae_init();
@@ -32,7 +35,6 @@ namespace Instrument {
 	void shutdown()
 	{
 		unsigned int nval = NANOS_EVENT_STATE_TYPES;
-		unsigned int nzero = 0;
 		extrae_value_t values[nval];
 		unsigned int i;
 		

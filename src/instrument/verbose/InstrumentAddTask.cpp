@@ -42,10 +42,12 @@ namespace Instrument {
 	}
 	
 	
-	void createdTask(Task *task, task_id_t taskId) {
+	void createdTask(void *taskObject, task_id_t taskId) {
 		if (!_verboseAddTask) {
 			return;
 		}
+		
+		Task *task = (Task *) taskObject;
 		
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);

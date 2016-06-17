@@ -38,11 +38,11 @@ namespace Instrument {
 			_userFunctionMap.insert(taskInfo);
 		}
 		
-		return task_id_t((void *) taskInfo->run);
+		return taskInfo;
 	}
 	
 	
-	inline void createdTask(__attribute__((unused)) Task *task, __attribute__((unused)) task_id_t taskId)
+	inline void createdTask(__attribute__((unused)) void *task, __attribute__((unused)) task_id_t taskId)
 	{
 	}
 	

@@ -26,8 +26,6 @@ namespace Instrument {
 	
 	void initialize()
 	{
-		// Assign thread identifier 0 to the leader thread
-		_threadToId[0] = 0;
 	}
 	
 	

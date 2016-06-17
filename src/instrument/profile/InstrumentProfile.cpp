@@ -51,6 +51,9 @@
 #define LOWEST_VALID_ADDRESS 1024UL
 
 
+using namespace Instrument;
+
+
 Instrument::Profile Instrument::Profile::_singleton;
 __thread Instrument::Profile::PerThread Instrument::Profile::_perThread;
 bool Instrument::Profile::_enabled;
@@ -131,7 +134,7 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 }
 
 
-void Instrument::Profile::doCreatedThread(__attribute__((unused)) WorkerThread *thread)
+thread_id_t Instrument::Profile::doCreatedThread()
 {
 	#if !defined(HAVE_BACKTRACE) && !defined(HAVE_LIBUNWIND)
 		std::cerr << "Warning: profiling currently not supported in this platform." << std::endl;
@@ -178,6 +181,8 @@ void Instrument::Profile::doCreatedThread(__attribute__((unused)) WorkerThread *
 	
 	rc = timer_settime(_perThread._profilingTimer, 0, &it, 0);
 	FatalErrorHandler::handle(rc, " arming the timer for profiling");
+	
+	return thread_id_t();
 }
 
 

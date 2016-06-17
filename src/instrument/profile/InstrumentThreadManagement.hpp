@@ -7,16 +7,16 @@
 
 
 namespace Instrument {
-	inline void createdThread(WorkerThread *thread)
+	inline thread_id_t createdThread()
 	{
-		Profile::createdThread(thread);
+		return Profile::createdThread();
 	}
 	
-	inline void threadWillSuspend(__attribute__((unused)) WorkerThread *thread, __attribute__((unused)) CPU *cpu)
+	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) cpu_id_t cpu)
 	{
 	}
 	
-	inline void threadHasResumed(__attribute__((unused)) WorkerThread *thread, __attribute__((unused)) CPU *cpu)
+	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) cpu_id_t cpu)
 	{
 	}
 	

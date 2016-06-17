@@ -16,13 +16,12 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
 
+#include "InstrumentThreadId.hpp"
+
 #include <list>
 #include <map>
 #include <string>
 #include <vector>
-
-
-class WorkerThread;
 
 
 namespace Instrument {
@@ -156,7 +155,7 @@ namespace Instrument {
 		
 		void doInit();
 		void doShutdown();
-		void doCreatedThread(WorkerThread *workerThread);
+		thread_id_t doCreatedThread();
 		
 	public:
 		Profile()
@@ -176,9 +175,9 @@ namespace Instrument {
 			_singleton.doShutdown();
 		}
 		
-		static inline void createdThread(WorkerThread *workerThread)
+		static inline thread_id_t createdThread()
 		{
-			_singleton.doCreatedThread(workerThread);
+			return _singleton.doCreatedThread();
 		}
 	};
 }

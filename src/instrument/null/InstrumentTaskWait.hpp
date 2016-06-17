@@ -26,7 +26,7 @@ namespace Instrument {
 		CPU *cpu = (CPU *) thread->getHardwarePlace();
 		assert(cpu != nullptr);
 		
-		Instrument::returnToTask(taskId, cpu, thread);
+		Instrument::returnToTask(taskId, cpu->_virtualCPUId.load(), thread->getInstrumentationId());
 	}
 	
 }

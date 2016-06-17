@@ -19,7 +19,7 @@ namespace Instrument {
 	//! task can be executed.
 	//! \param[in] task the Task object
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	void createdTask(Task *task, task_id_t taskId);
+	void createdTask(void *task, task_id_t taskId);
 	
 	//! This function is called right before returning to the user code. The task
 	//! identifier is necessary because the actual task may have already been

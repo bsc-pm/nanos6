@@ -23,8 +23,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -78,8 +77,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -110,8 +108,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -135,8 +132,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -166,8 +162,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -233,8 +228,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -289,8 +283,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -312,8 +305,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -334,8 +326,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -358,8 +349,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -391,8 +381,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -416,8 +405,7 @@ namespace Instrument {
 		assert(currentThread != nullptr);
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);

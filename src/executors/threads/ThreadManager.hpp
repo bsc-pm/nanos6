@@ -250,7 +250,7 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 		// NOTE: In this case the CPUActivation class can end up resuming a CPU before its running thread has had a chance to get blocked
 	}
 	
-	Instrument::threadWillSuspend(currentThread, cpu);
+	Instrument::threadWillSuspend(currentThread->_instrumentationId, cpu->_virtualCPUId.load());
 	
 	currentThread->suspend();
 	// After resuming (if ever blocked), the thread continues here
@@ -259,7 +259,7 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 	assert(currentThread->_cpuToBeResumedOn != nullptr);
 	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
 	
-	Instrument::threadHasResumed(currentThread, currentThread->_cpu);
+	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->_virtualCPUId.load());
 	
 #ifndef NDEBUG
 	currentThread->_cpuToBeResumedOn = nullptr;

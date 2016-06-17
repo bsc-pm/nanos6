@@ -5,8 +5,6 @@ namespace Instrument {
 	const extrae_type_t       _functionName = 9200011;     //!< Task function name
 	const extrae_type_t       _codeLocation = 9200021;     //!< Task code location
 	
-	thread_map_t              _threadToId;
-	
 	SpinLock                  _extraeLock;
 	
 	char                     *_eventStateValueStr[NANOS_EVENT_STATE_TYPES] = {

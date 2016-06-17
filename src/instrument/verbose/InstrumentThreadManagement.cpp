@@ -5,14 +5,18 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
+#include "../generic_ids/GenericIds.hpp"
+
 
 using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void createdThread(WorkerThread *thread) {
+	thread_id_t createdThread() {
+		thread_id_t::inner_type_t threadId = GenericIds::getNewThreadId();
+		
 		if (!_verboseThreadManagement) {
-			return;
+			return thread_id_t(threadId);
 		}
 		
 		LogEntry *logEntry = getLogEntry();
@@ -26,13 +30,15 @@ namespace Instrument {
 			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
 		}
 		
-		logEntry->_contents << " <-> CreateThread " << thread;
+		logEntry->_contents << " <-> CreateThread " << threadId;
 		
 		addLogEntry(logEntry);
+		
+		return thread_id_t(threadId);
 	}
 	
 	
-	void threadWillSuspend(WorkerThread *thread, CPU *cpu) {
+	void threadWillSuspend(thread_id_t threadId, cpu_id_t cpuId) {
 		if (!_verboseThreadManagement) {
 			return;
 		}
@@ -40,13 +46,13 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		logEntry->_contents << "Thread:" << thread << " CPU:" << cpu->_virtualCPUId << " --> SuspendThread ";
+		logEntry->_contents << "Thread:" << (thread_id_t::inner_type_t) threadId << " CPU:" << (cpu_id_t::inner_type_t) cpuId << " --> SuspendThread ";
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void threadHasResumed(WorkerThread *thread, CPU *cpu) {
+	void threadHasResumed(thread_id_t threadId, cpu_id_t cpuId) {
 		if (!_verboseThreadManagement) {
 			return;
 		}
@@ -54,7 +60,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		logEntry->_contents << "Thread:" << thread << " CPU:" << cpu->_virtualCPUId << " <-- SuspendThread ";
+		logEntry->_contents << "Thread:" << (thread_id_t::inner_type_t) threadId << " CPU:" << (cpu_id_t::inner_type_t) cpuId << " <-- SuspendThread ";
 		
 		addLogEntry(logEntry);
 	}

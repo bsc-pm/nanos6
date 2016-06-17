@@ -2,14 +2,19 @@
 #define INSTRUMENT_THREAD_MANAGEMENT_HPP
 
 
-class WorkerThread;
-struct CPU;
+#include <InstrumentThreadId.hpp>
+
+#include "InstrumentCPUId.hpp"
 
 
 namespace Instrument {
-	void createdThread(WorkerThread *thread);
-	void threadWillSuspend(WorkerThread *thread, CPU *cpu);
-	void threadHasResumed(WorkerThread *thread, CPU *cpu);
+	//! This function is called when the runtime creates a new thread and
+	//! must return an instrumentation-specific thread identifier that will
+	//! be used to identify it throughout the rest of the instrumentation API.
+	thread_id_t createdThread();
+	
+	void threadWillSuspend(thread_id_t threadId, cpu_id_t cpu);
+	void threadHasResumed(thread_id_t threadId, cpu_id_t cpu);
 }
 
 

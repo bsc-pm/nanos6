@@ -35,8 +35,10 @@ namespace Instrument {
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -58,8 +60,10 @@ namespace Instrument {
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);
@@ -81,7 +85,10 @@ namespace Instrument {
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
 		
 		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
 		assert(cpu != nullptr);

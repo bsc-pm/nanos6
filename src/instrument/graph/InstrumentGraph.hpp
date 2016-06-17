@@ -31,7 +31,6 @@ namespace Instrument {
 	namespace Graph {
 		typedef long taskwait_id_t;
 		typedef long usermutex_id_t;
-		typedef long thread_id_t;
 		
 		enum task_status_t {
 			not_created_status,
@@ -382,15 +381,11 @@ namespace Instrument {
 		
 		extern std::map<taskwait_id_t, taskwait_status_t> _taskwaitStatus;
 		
-		extern std::atomic<thread_id_t> _nextThreadId;
 		extern std::atomic<taskwait_id_t> _nextTaskwaitId;
 		extern std::atomic<task_id_t::inner_type_t> _nextTaskId;
 		extern std::atomic<usermutex_id_t> _nextUsermutexId;
 		extern std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId;
 		
-		
-		//! \brief maps thread pointers to thread identifiers
-		extern std::map<WorkerThread *, thread_id_t> _threadToId;
 		
 		//! \brief maps task identifiers to their information
 		extern task_to_info_map_t _taskToInfoMap;

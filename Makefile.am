@@ -51,6 +51,7 @@ common_sources = \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/HardwarePlace.hpp \
 	src/instrument/InstrumentAddTask.hpp \
+	src/instrument/InstrumentCPUId.hpp \
 	src/instrument/InstrumentDependenciesByAccess.hpp \
 	src/instrument/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/InstrumentDependenciesByGroup.hpp \
@@ -176,10 +177,17 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentTaskId.hpp \
 	src/instrument/null/InstrumentTaskStatus.hpp \
 	src/instrument/null/InstrumentTaskWait.hpp \
+	src/instrument/null/InstrumentThreadId.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp
 
+instrument_generic_ids_sources = \
+	src/instrument/generic_ids/GenericIds.cpp \
+	src/instrument/generic_ids/GenericIds.hpp \
+	src/instrument/generic_ids/InstrumentThreadId.hpp
+
 instrument_graph_sources = \
+	$(instrument_generic_ids_sources) \
 	src/instrument/graph/Color.hpp \
 	src/instrument/graph/ExecutionSteps.cpp \
 	src/instrument/graph/ExecutionSteps.hpp \
@@ -204,7 +212,7 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentTaskStatus.hpp \
 	src/instrument/graph/InstrumentTaskWait.cpp \
 	src/instrument/graph/InstrumentTaskWait.hpp \
-	src/instrument/graph/InstrumentThreadManagement.cpp \
+	src/instrument/graph/InstrumentThreadId.hpp \
 	src/instrument/graph/InstrumentThreadManagement.hpp \
 	src/instrument/graph/InstrumentUserMutex.cpp \
 	src/instrument/graph/InstrumentUserMutex.hpp \
@@ -229,6 +237,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentTaskId.hpp \
 	src/instrument/profile/InstrumentTaskStatus.hpp \
 	src/instrument/profile/InstrumentTaskWait.hpp \
+	src/instrument/profile/InstrumentThreadId.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp
 
@@ -248,11 +257,13 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentTaskId.hpp \
 	src/instrument/stats/InstrumentTaskStatus.hpp \
 	src/instrument/stats/InstrumentTaskWait.hpp \
+	src/instrument/stats/InstrumentThreadId.hpp \
 	src/instrument/stats/InstrumentThreadManagement.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp
 
 instrument_verbose_sources = \
+	$(instrument_generic_ids_sources) \
 	src/instrument/verbose/InstrumentAddTask.cpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
@@ -274,6 +285,7 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \
 	src/instrument/verbose/InstrumentTaskWait.cpp \
 	src/instrument/verbose/InstrumentTaskWait.hpp \
+	src/instrument/verbose/InstrumentThreadId.hpp \
 	src/instrument/verbose/InstrumentThreadManagement.cpp \
 	src/instrument/verbose/InstrumentThreadManagement.hpp \
 	src/instrument/verbose/InstrumentUserMutex.cpp \
@@ -282,6 +294,7 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentVerbose.hpp
 
 instrument_extrae_sources = \
+	$(instrument_generic_ids_sources) \
 	src/instrument/extrae/InstrumentExtrae.hpp \
 	src/instrument/extrae/InstrumentExtrae.cpp \
 	src/instrument/extrae/InstrumentAddTask.hpp \
@@ -296,6 +309,7 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
 	src/instrument/extrae/InstrumentTaskWait.hpp \
+	src/instrument/extrae/InstrumentThreadId.hpp \
 	src/instrument/extrae/InstrumentThreadManagement.hpp \
 	src/instrument/extrae/InstrumentUserMutex.hpp
 

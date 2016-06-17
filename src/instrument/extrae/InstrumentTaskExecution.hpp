@@ -11,7 +11,7 @@
 
 
 namespace Instrument {
-	inline void startTask(task_id_t taskId, __attribute__((unused)) CPU *cpu, __attribute__((unused)) WorkerThread *currentThread)
+	inline void startTask(task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
 	{
 		extrae_combined_events_t ce;
 
@@ -27,16 +27,14 @@ namespace Instrument {
 		ce.Types[0] = _runtimeState;
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
-		nanos_task_info* TaskInfo =  currentThread->getTask()->getTaskInfo();
-		
 		ce.Types[1] = _codeLocation;
-		ce.Values[1] = (extrae_value_t) taskId._userCode;
+		ce.Values[1] = (extrae_value_t) taskId->run;
 		
 		Extrae_emit_CombinedEvents ( &ce );
 	}
 	
 	
-	inline void returnToTask(__attribute__((unused)) task_id_t taskIdk, __attribute__((unused)) CPU *cpu, __attribute__((unused)) WorkerThread *currentThread)
+	inline void returnToTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
 	{
 		extrae_combined_events_t ce;
 		
@@ -56,7 +54,7 @@ namespace Instrument {
 	}
 	
 	
-	inline void endTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) CPU *cpu, __attribute__((unused)) WorkerThread *currentThread)
+	inline void endTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
 	{
 		extrae_combined_events_t ce;
 		
@@ -78,7 +76,8 @@ namespace Instrument {
 		Extrae_emit_CombinedEvents ( &ce );
 	}
 	
-	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) CPU *cpu, __attribute__((unused)) WorkerThread *currentThread)
+	
+	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
 	{
 	}
 }

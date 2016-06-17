@@ -43,8 +43,7 @@ namespace Instrument {
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
+		thread_id_t threadId = currentThread->getInstrumentationId();
 		
 		size_t cpuId = 0;
 		if (currentThread != nullptr) {

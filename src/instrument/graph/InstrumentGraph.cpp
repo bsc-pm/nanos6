@@ -1,4 +1,5 @@
 #include "InstrumentGraph.hpp"
+#include "../generic_ids/InstrumentThreadId.hpp"
 
 
 namespace Instrument {
@@ -11,7 +12,6 @@ namespace Instrument {
 		std::atomic<usermutex_id_t> _nextUsermutexId(0);
 		std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId(1);
 		
-		std::map<WorkerThread *, thread_id_t> _threadToId;
 		task_to_info_map_t _taskToInfoMap;
 		data_access_map_t _accessIdToAccessMap;
 		task_invocation_info_label_map_t _taskInvocationLabel;

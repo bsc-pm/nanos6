@@ -26,10 +26,9 @@ namespace Instrument {
 			assert(_nextTaskId == 0);
 		}
 		
-		thread_id_t threadId;
-		{
-			assert((currentThread == nullptr) || (_threadToId.find(currentThread) != _threadToId.end()));
-			threadId = _threadToId[currentThread];
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
 		}
 		
 		// Get an ID for the task
@@ -58,7 +57,7 @@ namespace Instrument {
 	}
 	
 	
-	void createdTask(Task *task, task_id_t taskId)
+	void createdTask(void *taskObject, task_id_t taskId)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		Task *parentTask = nullptr;
@@ -74,6 +73,8 @@ namespace Instrument {
 		// Create the task information
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
 		assert(taskInfo._phaseList.empty());
+		
+		Task *task = (Task *) taskObject;
 		taskInfo._nanos_task_info = task->getTaskInfo();
 		taskInfo._nanos_task_invocation_info = task->getTaskInvokationInfo();
 		if (parentTask != 0) {

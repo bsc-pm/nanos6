@@ -2,22 +2,23 @@
 #define INSTRUMENT_NULL_THREAD_MANAGEMENT_HPP
 
 
+#include "InstrumentThreadId.hpp"
 #include "../InstrumentThreadManagement.hpp"
 
 
 namespace Instrument {
-	inline void createdThread(__attribute__((unused)) WorkerThread *thread)
+	inline thread_id_t createdThread()
+	{
+		return thread_id_t();
+	}
+	
+	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) cpu_id_t cpu)
 	{
 	}
 	
-	inline void threadWillSuspend(__attribute__((unused)) WorkerThread *thread, __attribute__((unused)) CPU *cpu)
+	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) cpu_id_t cpu)
 	{
 	}
-	
-	inline void threadHasResumed(__attribute__((unused)) WorkerThread *thread, __attribute__((unused)) CPU *cpu)
-	{
-	}
-	
 }
 
 

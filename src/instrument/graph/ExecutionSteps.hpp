@@ -3,6 +3,7 @@
 
 
 #include "InstrumentGraph.hpp"
+#include "../generic_ids/InstrumentThreadId.hpp"
 
 #include <string>
 

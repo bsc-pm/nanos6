@@ -2,14 +2,25 @@
 #define INSTRUMENT_GRAPH_THREAD_MANAGEMENT_HPP
 
 
+#include "InstrumentThreadId.hpp"
+
 #include "../InstrumentThreadManagement.hpp"
+#include "../generic_ids/GenericIds.hpp"
 
 
 namespace Instrument {
-	void createdThread(WorkerThread *thread);
-	void threadWillSuspend(WorkerThread *thread, CPU *cpu);
-	void threadHasResumed(WorkerThread *thread, CPU *cpu);
+	inline thread_id_t createdThread()
+	{
+		return GenericIds::getNewThreadId();
+	}
 	
+	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) cpu_id_t cpu)
+	{
+	}
+	
+	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) cpu_id_t cpu)
+	{
+	}
 }
 
 

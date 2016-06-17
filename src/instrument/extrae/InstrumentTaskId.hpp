@@ -2,19 +2,11 @@
 #define INSTRUMENT_TASK_ID_HPP
 
 
+#include "api/nanos6_rt_interface.h"
+
+
 namespace Instrument {
-	namespace Extrae {
-		struct TaskInfo {
-			void *_userCode;
-			
-			TaskInfo(void *userCode)
-				: _userCode(userCode)
-			{
-			}
-		};
-	}
-	
-	typedef Extrae::TaskInfo task_id_t;
+	typedef nanos_task_info *task_id_t;
 }
 
 #endif // INSTRUMENT_TASK_ID_HPP
