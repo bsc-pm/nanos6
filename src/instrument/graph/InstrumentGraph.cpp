@@ -1,12 +1,10 @@
 #include "InstrumentGraph.hpp"
-#include "../public/generic_ids/InstrumentThreadId.hpp"
 
 
 namespace Instrument {
 	namespace Graph {
 		std::map<taskwait_id_t, taskwait_status_t> _taskwaitStatus;
 		
-		std::atomic<thread_id_t> _nextThreadId(1);
 		std::atomic<taskwait_id_t> _nextTaskwaitId(1);
 		std::atomic<task_id_t::inner_type_t> _nextTaskId(0);
 		std::atomic<usermutex_id_t> _nextUsermutexId(0);
