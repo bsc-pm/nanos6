@@ -2,11 +2,11 @@
 #define INSTRUMENT_GRAPH_TASK_EXECUTION_HPP
 
 
-#include <../InstrumentCPUId.hpp>
+#include <../api/InstrumentCPUId.hpp>
 #include <InstrumentTaskId.hpp>
 #include <InstrumentThreadId.hpp>
 
-#include "../InstrumentTaskExecution.hpp"
+#include "../api/InstrumentTaskExecution.hpp"
 
 
 namespace Instrument {

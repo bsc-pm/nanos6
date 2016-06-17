@@ -4,7 +4,7 @@
 
 #include <cassert>
 
-#include "../InstrumentLogMessage.hpp"
+#include "../api/InstrumentLogMessage.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
 #include "InstrumentVerbose.hpp"

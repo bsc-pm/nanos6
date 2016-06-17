@@ -2,7 +2,7 @@
 #define INSTRUMENT_NULL_TASK_WAIT_HPP
 
 
-#include "../InstrumentTaskWait.hpp"
+#include "../api/InstrumentTaskWait.hpp"
 #include <InstrumentTaskExecution.hpp>
 
 #include "executors/threads/CPU.hpp"

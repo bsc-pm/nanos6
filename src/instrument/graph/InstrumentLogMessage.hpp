@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#include "../InstrumentLogMessage.hpp"
+#include "../api/InstrumentLogMessage.hpp"
 #include "InstrumentGraph.hpp"
 #include "InstrumentTaskId.hpp"
 #include "executors/threads/WorkerThread.hpp"

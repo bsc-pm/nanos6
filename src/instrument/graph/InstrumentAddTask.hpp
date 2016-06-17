@@ -2,7 +2,7 @@
 #define INSTRUMENT_GRAPH_ADD_TASK_HPP
 
 
-#include "../InstrumentAddTask.hpp"
+#include "../api/InstrumentAddTask.hpp"
 
 #include <InstrumentTaskId.hpp>
 

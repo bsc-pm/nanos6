@@ -2,7 +2,7 @@
 #define INSTRUMENT_STATS_INIT_AND_SHUTDOWN_HPP
 
 
-#include "../InstrumentInitAndShutdown.hpp"
+#include "../api/InstrumentInitAndShutdown.hpp"
 
 
 namespace Instrument {

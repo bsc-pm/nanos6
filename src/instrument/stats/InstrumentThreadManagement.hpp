@@ -2,7 +2,7 @@
 #define INSTRUMENT_STATS_THREAD_MANAGEMENT_HPP
 
 
-#include "../InstrumentThreadManagement.hpp"
+#include "../api/InstrumentThreadManagement.hpp"
 
 #include "InstrumentStats.hpp"
 #include "InstrumentThreadId.hpp"

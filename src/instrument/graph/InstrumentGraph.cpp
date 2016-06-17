@@ -1,5 +1,5 @@
 #include "InstrumentGraph.hpp"
-#include "../generic_ids/InstrumentThreadId.hpp"
+#include "../public/generic_ids/InstrumentThreadId.hpp"
 
 
 namespace Instrument {

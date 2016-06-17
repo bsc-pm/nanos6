@@ -2,7 +2,7 @@
 #define INSTRUMENT_PROFILE_THREAD_MANAGEMENT_HPP
 
 
-#include "../InstrumentThreadManagement.hpp"
+#include "../api/InstrumentThreadManagement.hpp"
 #include "InstrumentProfile.hpp"
 
 

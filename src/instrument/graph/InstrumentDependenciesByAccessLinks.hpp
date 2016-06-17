@@ -4,7 +4,7 @@
 
 #include "InstrumentDataAccessId.hpp"
 
-#include "../InstrumentDependenciesByAccessLinks.hpp"
+#include "../api/InstrumentDependenciesByAccessLinks.hpp"
 
 
 namespace Instrument {

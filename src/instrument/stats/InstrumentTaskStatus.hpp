@@ -2,7 +2,7 @@
 #define INSTRUMENT_STATS_TASK_STATUS_HPP
 
 
-#include "../InstrumentTaskStatus.hpp"
+#include "../api/InstrumentTaskStatus.hpp"
 #include <InstrumentTaskId.hpp>
 
 #include "InstrumentStats.hpp"
