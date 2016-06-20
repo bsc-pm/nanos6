@@ -5,3 +5,7 @@
 	path = tests/directive_based
 	url = https://pm.bsc.es/gitlab/nanos6/nanos6-tests.git
 	branch = linear-regions
+[submodule "src/instrument/public"]
+	path = src/instrument/public
+	url = https://pm.bsc.es/gitlab/nanos6/public-instrumentation.git
+	branch = master
