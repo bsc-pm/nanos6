@@ -3,6 +3,7 @@
 
 
 #include <atomic>
+#include <bitset>
 #include <cassert>
 #include <set>
 
@@ -25,6 +26,12 @@ class WorkerThread;
 
 class Task {
 private:
+	enum {
+		final_flag=0,
+		total_flags
+	};
+	typedef std::bitset<total_flags> flags_t;
+	
 	void *_argsBlock;
 	
 	nanos_task_info *_taskInfo;
@@ -50,6 +57,8 @@ private:
 	//! Number of pending predecessors
 	std::atomic<int> _predecessorCount;
 	
+	flags_t _flags;
+	
 	//! An identifier for the task for the instrumentation
 	Instrument::task_id_t _instrumentationTaskId;
 	
@@ -61,7 +70,8 @@ public:
 		void *argsBlock,
 		nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo,
 		Task *parent,
-		Instrument::task_id_t instrumentationTaskId
+		Instrument::task_id_t instrumentationTaskId,
+		size_t flags
 	)
 		: _argsBlock(argsBlock),
 		_taskInfo(taskInfo), _taskInvokationInfo(taskInvokationInfo),
@@ -69,6 +79,7 @@ public:
 		_parent(parent),
 		_dataAccesses(),
 		_predecessorCount(0),
+		_flags(flags),
 		_instrumentationTaskId(instrumentationTaskId),
 		_schedulerInfo(nullptr)
 	{
@@ -97,7 +108,11 @@ public:
 	inline void body()
 	{
 		assert(_taskInfo != nullptr);
-		_taskInfo->run(_argsBlock);
+		if (isFinal()) {
+			_taskInfo->run_final(_argsBlock);
+		} else {
+			_taskInfo->run(_argsBlock);
+		}
 	}
 	
 	
@@ -264,6 +279,17 @@ public:
 	bool decreasePredecessors(int amount=1)
 	{
 		return ((_predecessorCount -= amount) == 0);
+	}
+	
+	//! \brief Set or unset the final flag
+	void setFinal(bool finalValue)
+	{
+		_flags[final_flag] = finalValue;
+	}
+	//! \brief Check if tha task is final
+	bool isFinal() const
+	{
+		return _flags[final_flag];
 	}
 	
 	//! \brief Retrieve the instrumentation-specific task identifier
