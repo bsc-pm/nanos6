@@ -45,9 +45,9 @@ static void programSignal(int signum) {
 
 
 void nanos_preinit(void) {
-	Scheduler::initialize();
 	ThreadManagerPolicy::initialize();
 	ThreadManager::preinitialize();
+	Scheduler::initialize();
 	Instrument::initialize();
 }
 
