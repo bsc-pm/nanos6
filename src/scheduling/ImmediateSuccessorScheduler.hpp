@@ -3,7 +3,6 @@
 
 
 #include <deque>
-#include <map>
 #include <vector>
 
 #include "SchedulerInterface.hpp"
@@ -21,8 +20,6 @@ class ImmediateSuccessorScheduler: public SchedulerInterface {
 	std::deque<Task *> _unblockedTasks;
 	
 	std::deque<CPU *> _idleCPUs;
-	
-	std::map<CPU *, Task *> _immediateSuccessors;
 	
 	inline CPU *getIdleCPU();
 	inline Task *getReplacementTask(CPU *hardwarePlace);

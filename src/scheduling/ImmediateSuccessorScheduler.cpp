@@ -11,11 +11,6 @@
 
 ImmediateSuccessorScheduler::ImmediateSuccessorScheduler()
 {
-	ThreadManager::cpu_list_t const &cpuList = ThreadManager::getCPUListReference();
-	for (auto it = cpuList.begin(); it != cpuList.end(); it++) {
-		CPU *cpu = (*it).load();
-		_immediateSuccessors[cpu] = nullptr;
-	}
 }
 
 ImmediateSuccessorScheduler::~ImmediateSuccessorScheduler()
@@ -59,13 +54,12 @@ CPU *ImmediateSuccessorScheduler::getIdleCPU()
 
 HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
 {
-	CPU *cpu = (CPU *) hardwarePlace;
-	auto position = _immediateSuccessors.find(cpu);
-	assert(position != _immediateSuccessors.end());
-	
-	if (position->second == nullptr) {
-		position->second = task;
-		return nullptr;
+	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
+	if (hardwarePlace != nullptr) {
+		if (hardwarePlace->_schedulerData == nullptr) {
+			hardwarePlace->_schedulerData = task;
+			return nullptr;
+		}
 	}
 	
 	std::lock_guard<SpinLock> guard(_globalLock);
@@ -110,16 +104,10 @@ Task *ImmediateSuccessorScheduler::getReadyTask(__attribute__((unused)) Hardware
 	}
 	
 	// 2. Get the immediate successor
-	{
-		CPU *cpu = (CPU *) hardwarePlace;
-		auto position = _immediateSuccessors.find(cpu);
-		assert(position != _immediateSuccessors.end());
-		
-		if (position->second != nullptr) {
-			task = position->second;
-			position->second = nullptr;
-			return task;
-		}
+	if (hardwarePlace->_schedulerData != nullptr) {
+		task = (Task *) hardwarePlace->_schedulerData;
+		hardwarePlace->_schedulerData = nullptr;
+		return task;
 	}
 	
 	// 3. Or get a ready task
