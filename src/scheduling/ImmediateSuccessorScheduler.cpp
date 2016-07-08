@@ -52,7 +52,7 @@ CPU *ImmediateSuccessorScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (hardwarePlace != nullptr) {
@@ -69,8 +69,14 @@ HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, __attribut
 }
 
 
-void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) HardwarePlace *hardwarePlace)
+void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace)
 {
+	assert(hardwarePlace != nullptr);
+	if (hardwarePlace->_schedulerData == nullptr) {
+		hardwarePlace->_schedulerData = unblockedTask;
+		return;
+	}
+	
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_front(unblockedTask);
 }
@@ -91,22 +97,22 @@ bool ImmediateSuccessorScheduler::checkIfIdleAndGrantReactivation(HardwarePlace 
 }
 
 
-Task *ImmediateSuccessorScheduler::getReadyTask(__attribute__((unused)) HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *ImmediateSuccessorScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
-	std::lock_guard<SpinLock> guard(_globalLock);
-	
-	// 1. Get an unblocked task
-	task = getReplacementTask((CPU *) hardwarePlace);
-	if (task != nullptr) {
-		return task;
-	}
-	
-	// 2. Get the immediate successor
+	// 1. Get the immediate successor
 	if (hardwarePlace->_schedulerData != nullptr) {
 		task = (Task *) hardwarePlace->_schedulerData;
 		hardwarePlace->_schedulerData = nullptr;
+		return task;
+	}
+	
+	std::lock_guard<SpinLock> guard(_globalLock);
+	
+	// 2. Get an unblocked task
+	task = getReplacementTask((CPU *) hardwarePlace);
+	if (task != nullptr) {
 		return task;
 	}
 	
