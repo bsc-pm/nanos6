@@ -79,6 +79,10 @@ common_sources = \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/scheduling/DefaultScheduler.hpp \
+	src/scheduling/FIFOScheduler.cpp \
+	src/scheduling/FIFOScheduler.hpp \
+	src/scheduling/ImmediateSuccessorScheduler.cpp \
+	src/scheduling/ImmediateSuccessorScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
 	src/scheduling/Scheduler.cpp \

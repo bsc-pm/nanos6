@@ -8,8 +8,10 @@ protected:
 	HardwarePlace *_parent;
 	
 public:
+	void *_schedulerData;
+	
 	HardwarePlace(HardwarePlace *parent = nullptr)
-		: _parent(parent)
+		: _parent(parent), _schedulerData(nullptr)
 	{
 	}
 	
