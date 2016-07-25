@@ -18,6 +18,13 @@ void register_access(void *handler, void *start, size_t length)
 	
 	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK, start, length);
 	
+	if (start == nullptr) {
+		return;
+	}
+	if (length == 0) {
+		return;
+	}
+	
 	DataAccessRange accessRange(start, length);
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK, accessRange);
 }
