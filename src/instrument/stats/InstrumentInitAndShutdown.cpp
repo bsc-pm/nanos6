@@ -82,6 +82,7 @@ namespace Instrument {
 			emitTaskInfo(output, "All Tasks", accumulatedTaskInfo);
 		}
 		
+		std::map<std::string, TaskInfo> perLabel;
 		for (auto &taskInfoEntry : accumulatedThreadInfo._perTask) {
 			nanos_task_info const *userSideTaskInfo = taskInfoEntry.first;
 			
@@ -95,8 +96,13 @@ namespace Instrument {
 				name = "Unknown task";
 			}
 			
+			TaskInfo &taskInfo = perLabel[name];
+			taskInfo += taskInfoEntry.second;
+		}
+		
+		for (auto &taskInfoEntry : perLabel) {
 			output << std::endl;
-			emitTaskInfo(output, name, taskInfoEntry.second);
+			emitTaskInfo(output, taskInfoEntry.first, taskInfoEntry.second);
 		}
 		
 		output.close();
