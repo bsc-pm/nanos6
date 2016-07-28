@@ -48,7 +48,31 @@ void *WorkerThread::body()
 		}
 		
 		if (_task == nullptr) {
-			_task = Scheduler::getReadyTask(_cpu);
+			std::atomic<Task *> pollingSlot(nullptr);
+			
+			if (Scheduler::requestPolling(_cpu, &pollingSlot)) {
+				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(_cpu)) {
+					// Keep trying
+					pollingSlot.compare_exchange_strong(_task, nullptr);
+				}
+				
+				if (ThreadManager::mustExit()) {
+					bool worked = Scheduler::releasePolling(_cpu, &pollingSlot);
+					assert(worked && "A failure to release the scheduler polling slot means that the thread has got a task assigned, however the runtime is shutting down");
+				}
+				
+				if (!CPUActivation::acceptsWork(_cpu)) {
+					// The CPU is about to be disabled
+					
+					// Release the polling slot
+					Scheduler::releasePolling(_cpu, &pollingSlot);
+					
+					// We may already have a task assigned through
+					pollingSlot.compare_exchange_strong(_task, nullptr);
+				}
+			} else {
+				// Did not receive neither the polling slot nor a task
+			}
 		} else {
 			// The thread has been preassigned a task before being resumed
 		}
