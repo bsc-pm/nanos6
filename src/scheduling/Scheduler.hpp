@@ -7,6 +7,7 @@
 #include <InstrumentTaskStatus.hpp>
 #include <tasks/Task.hpp>
 
+#include <atomic>
 #include <cassert>
 
 
@@ -105,6 +106,28 @@ public:
 	static void enableHardwarePlace(HardwarePlace *hardwarePlace)
 	{
 		_scheduler->enableHardwarePlace(hardwarePlace);
+	}
+	
+	//! \brief Attempt to get a one task polling slot
+	//! 
+	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
+	//! \param[out] pollingSlot a pointer to a location that the caller will poll for ready tasks
+	//! 
+	//! \returns true if the caller is allowed to poll that memory position for a single ready task or if it actually got a task, otherwise false and the hardware place is assumed to become idle
+	static inline bool requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+	{
+		return _scheduler->requestPolling(hardwarePlace, pollingSlot);
+	}
+	
+	//! \brief Attempt to release the polling slot
+	//! 
+	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
+	//! \param[out] pollingSlot a pointer to a location that the caller is polling for ready tasks
+	//! 
+	//! \returns true if the caller has successfully released the polling slot otherwise false indicating that there already is a taskl assigned or it is on the way
+	static bool releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+	{
+		return _scheduler->releasePolling(hardwarePlace, pollingSlot);
 	}
 	
 };
