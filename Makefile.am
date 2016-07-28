@@ -83,6 +83,8 @@ common_sources = \
 	src/scheduling/FIFOScheduler.hpp \
 	src/scheduling/ImmediateSuccessorScheduler.cpp \
 	src/scheduling/ImmediateSuccessorScheduler.hpp \
+	src/scheduling/ImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/ImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
 	src/scheduling/Scheduler.cpp \
