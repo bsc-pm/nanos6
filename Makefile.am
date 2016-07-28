@@ -87,6 +87,7 @@ common_sources = \
 	src/scheduling/NaiveScheduler.hpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/Scheduler.hpp \
+	src/scheduling/SchedulerInterface.cpp \
 	src/scheduling/SchedulerInterface.hpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/support/ConstPropagator.hpp \

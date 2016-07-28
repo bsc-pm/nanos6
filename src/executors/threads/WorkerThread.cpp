@@ -41,7 +41,11 @@ void *WorkerThread::body()
 	ThreadManager::threadStartup(this);
 	
 	while (!_mustShutDown) {
-		CPUActivation::activationCheck(this);
+		if (!CPUActivation::acceptsWork(_cpu)) {
+			Scheduler::disableHardwarePlace(_cpu);
+			CPUActivation::activationCheck(this);
+			Scheduler::enableHardwarePlace(_cpu);
+		}
 		
 		if (_task == nullptr) {
 			_task = Scheduler::getReadyTask(_cpu);

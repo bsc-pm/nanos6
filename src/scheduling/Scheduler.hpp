@@ -91,6 +91,22 @@ public:
 		return _scheduler->getIdleHardwarePlace(force);
 	}
 	
+	//! \brief Notify the scheduler that a hardware place is being disabled so that it has a chance to migrate any preassigned tasks
+	//! 
+	//! \param[in] hardwarePlace the hardware place that is about to be disabled
+	static void disableHardwarePlace(HardwarePlace *hardwarePlace)
+	{
+		_scheduler->disableHardwarePlace(hardwarePlace);
+	}
+	
+	//! \brief Notify the scheduler that a hardware place is back online so that it preassign tasks to it
+	//! 
+	//! \param[in] hardwarePlace the hardware place that is about to be enabled
+	static void enableHardwarePlace(HardwarePlace *hardwarePlace)
+	{
+		_scheduler->enableHardwarePlace(hardwarePlace);
+	}
+	
 };
 
 
