@@ -16,7 +16,7 @@ std::atomic<bool> ThreadManager::_mustExit;
 cpu_set_t ThreadManager::_processCPUMask;
 std::vector<std::atomic<CPU *>> ThreadManager::_cpus(CPU_SETSIZE);
 std::atomic<long> ThreadManager::_totalCPUs;
-std::atomic<bool> ThreadManager::_finishedCPUInitialization;
+std::atomic<bool> ThreadManager::_finishedCPUInitialization(false);
 SpinLock ThreadManager::_idleThreadsLock;
 std::deque<WorkerThread *> ThreadManager::_idleThreads;
 std::atomic<long> ThreadManager::_totalThreads;
