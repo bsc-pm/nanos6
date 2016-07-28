@@ -38,6 +38,8 @@ public:
 	Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	HardwarePlace *getIdleHardwarePlace(bool force=false);
+	
+	void disableHardwarePlace(HardwarePlace *hardwarePlace);
 };
 
 
