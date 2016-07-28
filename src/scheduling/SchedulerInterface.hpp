@@ -9,6 +9,13 @@ class Task;
 //! \brief Interface that schedulers must implement
 class SchedulerInterface {
 public:
+	enum ReadyTaskHint {
+		NO_HINT,
+		CHILD_TASK_HINT,
+		SIBLING_TASK_HINT
+	};
+	
+	
 	virtual ~SchedulerInterface()
 	{
 	}
@@ -18,9 +25,10 @@ public:
 	//!
 	//! \param[in] task the task to be added
 	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
+	//! \param[in] hint a hint about the relation of the task to the current task
 	//!
 	//! \returns an idle HardwarePlace that is to be resumed or nullptr
-	virtual HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace) = 0;
+	virtual HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint) = 0;
 	
 	//! \brief Add back a task that was blocked but that is now unblocked
 	//!

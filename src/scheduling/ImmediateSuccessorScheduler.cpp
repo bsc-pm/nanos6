@@ -52,11 +52,11 @@ CPU *ImmediateSuccessorScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace)
+HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (hardwarePlace != nullptr) {
-		if (hardwarePlace->_schedulerData == nullptr) {
+		if ((hint != CHILD_TASK_HINT) && (hardwarePlace->_schedulerData == nullptr)) {
 			hardwarePlace->_schedulerData = task;
 			return nullptr;
 		}

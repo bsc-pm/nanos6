@@ -37,13 +37,14 @@ public:
 	//!
 	//! \param[in] task the task to be added
 	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
+	//! \param[in] hint a hint about the relation of the task to the current task
 	//!
 	//! \returns an idle HardwarePlace that is to be resumed or nullptr
-	static inline HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace)
+	static inline HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, SchedulerInterface::ReadyTaskHint hint = SchedulerInterface::NO_HINT)
 	{
 		assert(task != 0);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
-		return _scheduler->addReadyTask(task, hardwarePlace);
+		return _scheduler->addReadyTask(task, hardwarePlace, hint);
 	}
 	
 	//! \brief Add back a task that was blocked but that is now unblocked

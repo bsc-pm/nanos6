@@ -29,7 +29,7 @@ public:
 	FIFOScheduler();
 	~FIFOScheduler();
 	
-	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace);
+	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint);
 	
 	void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace);
 	

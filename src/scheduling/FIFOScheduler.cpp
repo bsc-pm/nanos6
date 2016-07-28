@@ -52,7 +52,7 @@ CPU *FIFOScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+HardwarePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_back(task);

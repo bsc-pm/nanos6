@@ -182,7 +182,7 @@ private:
 			
 			bool becomesReady = satisfiedOriginator->decreasePredecessors();
 			if (becomesReady) {
-				HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace);
+				HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 				
 				if (idleHardwarePlace != nullptr) {
 					ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
