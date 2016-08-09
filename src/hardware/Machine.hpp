@@ -8,9 +8,10 @@ class Machine {
 
 friend class Loader; // only the loader should modify the machine at startup
 
+typedef float** distances_t;	
+typedef std::map<int, MemoryPlace*> nodes_t;
+
 private:
-	typedef std::map<int, MemoryPlace*> nodes_t;
-	typedef float** distances_t;	
 
 	size_t _nNodes;
 	nodes_t _nodes;
@@ -30,39 +31,59 @@ private:
 		_nNodes++;
 	}
 public:
+
 	//TODO Need to define how data is accesses by the scheduler, etc. to make functions
 	static Machine *create(){
 		_instance = new Machine();
 			
-		//Call loader	
+		HWLOCLoader loader = new HWLOCLoader();
+		loader.load();	
 
 		_pagesize = getpagesize();
+	}
+	
+	static const size_t getNodeCount(void){
+		return _nodes.size();
 	}
 
 	static const MemoryPlace* getNode(int os_index){
 		return _nodes[os_index];
 	}
 
-	static const ComputePlace** getCpusByNode(int os_index){
-		return _nodes[os_index]->_cpus;
-	}
-
-	static const long getpagesize(void){
-		return _pagesize;
-	}
-
-        // return a vector with the os_index of the nodes
+	// TODO reconsider preloading vector if there are no modification needs
         static const vector<int>* getNodeIndexes(){
 
-                std::vector<int> indexes = new std::vector<int>();
+                std::vector<int>* indexes = new std::vector<int>();
 
                 for(nodes_t::iterator it = _nodes.begin(); it != _nodes.end(); ++it){
-                        v.push_back(it->first);
+                        indexes.push_back(it->first);
                 }
 
                 return indexes;
         }
 
+	static const vector<MemoryPlace*>* getNodes(){
+		
+		std::vector<int>* nodes = new std::vector<int>();
+		
+		for(nodes_t::iterator it = _nodes.begin(); it != _nodes.end(); ++it){
+			nodes.push_back(it->first);
+		}
+
+		return nodes;
+	}
+
+	static nodes_t::iterator nodesBegin(void){
+		return _nodes.begin();
+	}
+
+	static nodes_t::iterator nodesEnd(void){
+		return _nodes.end();
+	}
+
+	static const long getpagesize(void){
+		return _pagesize;
+	}
 };
 
 #endif //MACHINE_HPP

@@ -17,6 +17,10 @@ public:
 	virtual ~HardwarePlace()
 	{
 	}
+
+	int getIndex(void){
+		return index;
+	} 
 	
 };
 
