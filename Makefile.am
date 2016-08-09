@@ -49,7 +49,11 @@ common_sources = \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/hardware/places/CPUPlace.hpp \
+	src/hardware/places/MemoryPlace.hpp \
+	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/HardwarePlace.hpp \
+	src/hardware/loaders/HWLOCLoader.cpp \
+	src/hardware/Machine.hpp \
 	src/instrument/InstrumentAddTask.hpp \
 	src/instrument/InstrumentDependenciesByAccess.hpp \
 	src/instrument/InstrumentDependenciesByAccessLinks.hpp \
@@ -68,6 +72,10 @@ common_sources = \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
+	src/memory/Directory.cpp \
+	src/memory/Directory.hpp \
+	src/memory/MemoryRegion.cpp \
+	src/memory/MemoryRegion.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
@@ -83,7 +91,9 @@ common_sources = \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
 	src/system/debug/DebugAPI.cpp \
+	src/system/debug/HardwareAPI.cpp \
 	src/system/ompss/AddTask.cpp \
+	src/system/ompss/RegisterMemory.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
