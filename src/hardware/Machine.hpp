@@ -16,6 +16,8 @@ private:
 	nodes_t _nodes;
 	distances_t _distances;
 
+	long _pagesize; //< pre loaded page size to avoid redundant system calls
+
 	static Machine *_instance;
 
 	Machine()
@@ -33,7 +35,34 @@ public:
 		_instance = new Machine();
 			
 		//Call loader	
+
+		_pagesize = getpagesize();
 	}
+
+	static const MemoryPlace* getNode(int os_index){
+		return _nodes[os_index];
+	}
+
+	static const ComputePlace** getCpusByNode(int os_index){
+		return _nodes[os_index]->_cpus;
+	}
+
+	static const long getpagesize(void){
+		return _pagesize;
+	}
+
+        // return a vector with the os_index of the nodes
+        static const vector<int>* getNodeIndexes(){
+
+                std::vector<int> indexes = new std::vector<int>();
+
+                for(nodes_t::iterator it = _nodes.begin(); it != _nodes.end(); ++it){
+                        v.push_back(it->first);
+                }
+
+                return indexes;
+        }
+
 };
 
 #endif //MACHINE_HPP
