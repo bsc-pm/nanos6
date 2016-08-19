@@ -162,7 +162,12 @@ namespace Instrument {
 			: _profilingNSResolution("NANOS_PROFILE_NS_RESOLUTION", 1000),
 			_profilingBacktraceDepth("NANOS_PROFILE_BACKTRACE_DEPTH", 4),
 			_profilingBufferSize("NANOS_PROFILE_BUFFER_SIZE", /* 1 second */ 1000000000UL / _profilingNSResolution),
-			_bufferListSpinLock(), _bufferList()
+			_bufferListSpinLock(), _bufferList(),
+			_executableMemoryMap(),
+			_unknownAddrInfo(),
+			_addr2Cache(),
+			_nextSourceFunctionId(1), _id2sourceFunction(), _sourceFunction2id(),
+			_nextSourceLineId(1), _id2sourceLine(), _sourceLine2id()
 		{
 		}
 		
