@@ -392,7 +392,10 @@ void Instrument::Profile::doShutdown()
 	// Build frequency tables and resolve address information
 	std::map<address_t, freq_t> address2Frequency;
 	std::map<Backtrace, freq_t> backtrace2Frequency;
+	std::map<SymbolicBacktrace, freq_t> symbolicBacktrace2Frequency;
+	
 	Backtrace backtrace(_profilingBacktraceDepth);
+	SymbolicBacktrace symbolicBacktrace(_profilingBacktraceDepth);
 	int frame = 0;
 	
 	_bufferListSpinLock.lock();
@@ -412,14 +415,25 @@ void Instrument::Profile::doShutdown()
 					assert(frame <= _profilingBacktraceDepth);
 					for (; frame < _profilingBacktraceDepth; frame++) {
 						backtrace[frame] = 0;
+						symbolicBacktrace[frame].clear();
 					}
 					
 					// Increment the frequency of the backtrace
-					auto it = backtrace2Frequency.find(backtrace);
-					if (it == backtrace2Frequency.end()) {
-						backtrace2Frequency[backtrace] = 1;
-					} else {
-						it->second++;
+					{
+						auto it = backtrace2Frequency.find(backtrace);
+						if (it == backtrace2Frequency.end()) {
+							backtrace2Frequency[backtrace] = 1;
+						} else {
+							it->second++;
+						}
+					}
+					{
+						auto it = symbolicBacktrace2Frequency.find(symbolicBacktrace);
+						if (it == symbolicBacktrace2Frequency.end()) {
+							symbolicBacktrace2Frequency[symbolicBacktrace] = 1;
+						} else {
+							it->second++;
+						}
 					}
 					
 					frame = 0;
@@ -428,7 +442,14 @@ void Instrument::Profile::doShutdown()
 				}
 			}
 			
+			AddrInfo const &addrInfo = resolveAddress(address);
+			for (auto addrInfoStep : addrInfo) {
+				_id2sourceFunction[addrInfoStep._functionId]._frequency++;
+				_id2sourceLine[addrInfoStep._sourceLineId]._frequency++;
+			}
+			
 			backtrace[frame] = address;
+			symbolicBacktrace[frame] = addrInfo;
 			frame++;
 			
 			{
@@ -438,12 +459,6 @@ void Instrument::Profile::doShutdown()
 				} else {
 					address2Frequency[address] = 1;
 				}
-			}
-			
-			AddrInfo const &addrInfo = resolveAddress(address);
-			for (auto addrInfoStep : addrInfo) {
-				_id2sourceFunction[addrInfoStep._functionId]._frequency++;
-				_id2sourceLine[addrInfoStep._sourceLineId]._frequency++;
 			}
 			
 			position++;
@@ -460,9 +475,16 @@ void Instrument::Profile::doShutdown()
 	}
 	backtrace2Frequency.clear();
 	
+	std::map<freq_t, std::list<SymbolicBacktrace>, std::greater<freq_t>> symbolicBacktracesByFrequency;
+	for (auto it : symbolicBacktrace2Frequency) {
+		symbolicBacktracesByFrequency[it.second].push_back(it.first);
+	}
+	symbolicBacktrace2Frequency.clear();
+	
+	
 	{
 		std::ostringstream oss;
-		oss << "backtrace-profile-" << getpid() << ".txt";
+		oss << "backtrace-profile-by-address-" << getpid() << ".txt";
 		
 		std::ofstream backtraceProfile(oss.str().c_str());
 		for (auto it : backtracesByFrequency) {
@@ -496,6 +518,39 @@ void Instrument::Profile::doShutdown()
 		backtraceProfile.close();
 	}
 	backtracesByFrequency.clear();
+	
+	
+	{
+		std::ostringstream oss;
+		oss << "backtrace-profile-by-line-" << getpid() << ".txt";
+		
+		std::ofstream symbolicBacktraceProfile(oss.str().c_str());
+		for (auto it : symbolicBacktracesByFrequency) {
+			std::list<SymbolicBacktrace> const &symbolicBacktraces = it.second;
+			for (SymbolicBacktrace const &symbolicBacktrace : symbolicBacktraces) {
+				bool first = true;
+				for (AddrInfo const &addrInfo : symbolicBacktrace) {
+					for (auto addrInfoStep : addrInfo) {
+						if (first) {
+							// Frequency on the innermost function
+							symbolicBacktraceProfile << it.first;
+							first = false;
+						}
+						
+						symbolicBacktraceProfile << "\t" << _id2sourceFunction[addrInfoStep._functionId]._name;
+						symbolicBacktraceProfile << "\t" << _id2sourceLine[addrInfoStep._sourceLineId]._name;
+						symbolicBacktraceProfile << std::endl;
+					}
+				}
+				
+				if (!first) {
+					symbolicBacktraceProfile << std::endl;
+				}
+			}
+		}
+		symbolicBacktraceProfile.close();
+	}
+	symbolicBacktracesByFrequency.clear();
 	
 	
 	std::map<freq_t, std::list<address_t>, std::greater<freq_t>> addressesByFrequency;

@@ -71,10 +71,129 @@ namespace Instrument {
 				: _functionId(0), _sourceLineId(0)
 			{
 			}
+			
+			bool operator==(AddrInfoStep const &other) const
+			{
+				return (_functionId == other._functionId) && (_sourceLineId == other._sourceLineId);
+			}
+			
+			bool operator!=(AddrInfoStep const &other) const
+			{
+				return (_functionId != other._functionId) || (_sourceLineId != other._sourceLineId);
+			}
+			
+			bool operator<(AddrInfoStep const &other) const
+			{
+				if (_functionId < other._functionId) {
+					return true;
+				} else if (_functionId == other._functionId) {
+					return (_sourceLineId < other._sourceLineId);
+				} else {
+					return false;
+				}
+			}
 		};
 		
+		
 		// Backtrace of a single address (may contain inlined nested calls, hence the list)
-		typedef std::list<AddrInfoStep> AddrInfo;
+		class AddrInfo : public std::list<AddrInfoStep> {
+		public:
+			bool operator==(AddrInfo const &other) const
+			{
+				if (size() != other.size()) {
+					return false;
+				}
+				
+				auto it1 = begin();
+				auto it2 = other.begin();
+				while (it1 != end()) {
+					if (*it1 != *it2) {
+						return false;
+					}
+					
+					it1++;
+					it2++;
+				}
+				
+				return true;
+			}
+			
+			bool operator!=(AddrInfo const &other) const
+			{
+				return !((*this) == other);
+			}
+			
+			bool operator<(AddrInfo const &other) const
+			{
+				auto it1 = begin();
+				auto it2 = other.begin();
+				while ((it1 != end()) && (it2 != other.end())) {
+					if (*it1 < *it2) {
+						return true;
+					} else if (*it2 < *it1) {
+						return false;
+					}
+					
+					it1++;
+					it2++;
+				}
+				
+				return ((it1 == end()) && (it2 != other.end()));
+			}
+		};
+		
+		
+		class SymbolicBacktrace : public std::vector<AddrInfo> {
+		public:
+			SymbolicBacktrace(size_t frames)
+			: std::vector<AddrInfo>(frames, AddrInfo())
+			{
+			}
+			
+			bool operator==(SymbolicBacktrace const &other) const
+			{
+				if (size() != other.size()) {
+					return false;
+				}
+				
+				for (size_t position = 0; position < size(); position++) {
+					if ((*this)[position] != other[position]) {
+						return false;
+					}
+				}
+				
+				return true;
+			}
+			
+			bool operator!=(SymbolicBacktrace const &other) const
+			{
+				return !((*this) == other);
+			}
+			
+			bool operator<(SymbolicBacktrace const &other) const
+			{
+				size_t position = 0;
+				while (true) {
+					if (size() == position) {
+						if (other.size() == position) {
+							// Equal
+							return false;
+						} else {
+							// this < other
+							return true;
+						}
+					}
+					if ((*this)[position] < other[position]) {
+						return true;
+					} else if ((*this)[position] > other[position]) {
+						return false;
+					} else {
+						position++;
+					}
+				}
+			}
+		};
+		
 		
 		AddrInfo _unknownAddrInfo;
 		
@@ -98,6 +217,7 @@ namespace Instrument {
 			{
 			}
 		};
+		
 		
 		// Map of addresses to their information
 		std::map<void *, AddrInfo> _addr2Cache;
