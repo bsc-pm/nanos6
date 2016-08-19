@@ -22,7 +22,7 @@ public:
 			
 			if (task->hasFinished()) {
 				readyOrDisposable = task->unlinkFromParent();
-				Instrument::destroyTask(task->getInstrumentationTaskId(), cpu->_virtualCPUId.load(), thread->getInstrumentationId());
+				Instrument::destroyTask(task->getInstrumentationTaskId(), cpu->_virtualCPUId, thread->getInstrumentationId());
 				// NOTE: The memory layout is defined in nanos_create_task
 				task->~Task();
 				free(task->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here

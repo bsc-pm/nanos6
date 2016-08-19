@@ -87,7 +87,7 @@ void ThreadManager::threadStartup(WorkerThread *currentThread)
 	assert(currentThread->_cpuToBeResumedOn != nullptr);
 	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
 	
-	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->_virtualCPUId.load());
+	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->_virtualCPUId);
 	
 #ifndef NDEBUG
 	currentThread->_cpuToBeResumedOn = nullptr;
