@@ -288,10 +288,11 @@ bool ImmediateSuccessorWithPollingScheduler::requestPolling(HardwarePlace *hardw
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::releasePolling(__attribute__((unused)) HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool ImmediateSuccessorWithPollingScheduler::releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
 {
 	std::atomic<Task *> *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
+		cpuBecomesIdle((CPU *) hardwarePlace);
 		return true;
 	} else {
 		return false;
