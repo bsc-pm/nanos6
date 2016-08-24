@@ -1,6 +1,10 @@
 #ifndef INSTRUMENT_PROFILE_HPP
 #define INSTRUMENT_PROFILE_HPP
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -23,6 +27,10 @@
 #include <string>
 #include <vector>
 
+#if HAVE_LIBDW
+#include <elfutils/libdwfl.h>
+#endif
+
 
 namespace Instrument {
 	class Profile {
@@ -31,10 +39,58 @@ namespace Instrument {
 		EnvironmentVariable<long> _profilingBacktraceDepth;
 		EnvironmentVariable<long> _profilingBufferSize;
 		
+		
 		// Basic types
 		typedef void *address_t;
-		typedef uint32_t id_t;
+		
+		class id_t {
+			uint32_t _value;
+			
+		public:
+			id_t()
+				: _value(~0U)
+			{
+			}
+			
+			id_t(uint32_t value)
+			: _value(value)
+			{
+			}
+			
+			operator uint32_t() const
+			{
+				return _value;
+			}
+			
+			id_t &operator++()
+			{
+				++_value;
+				return *this;
+			}
+			
+			id_t operator++(int)
+			{
+				uint32_t result = _value;
+				_value++;
+				return id_t(result);
+			}
+			
+			id_t &operator--()
+			{
+				--_value;
+				return *this;
+			}
+			
+			id_t operator--(int)
+			{
+				uint32_t result = _value;
+				_value--;
+				return id_t(result);
+			}
+		};
+		
 		typedef uint32_t freq_t;
+		
 		
 		// All the buffers with the collected samples
 		SpinLock _bufferListSpinLock;
@@ -49,6 +105,9 @@ namespace Instrument {
 		static __thread PerThread _perThread;
 		static bool _enabled;
 		
+#if HAVE_LIBDW
+		Dwfl *_dwfl;
+#else
 		// Map between the address space and the executable objects
 		struct MemoryMapSegment {
 			std::string _filename;
@@ -61,6 +120,7 @@ namespace Instrument {
 			}
 		};
 		std::map<address_t, MemoryMapSegment> _executableMemoryMap;
+#endif
 		
 		// Backtrace (possibly inline) step information
 		struct AddrInfoStep {
@@ -182,6 +242,9 @@ namespace Instrument {
 							// this < other
 							return true;
 						}
+					} else if (other.size() == position) {
+						// this > other
+						return false;
 					}
 					if ((*this)[position] < other[position]) {
 						return true;
@@ -252,6 +315,9 @@ namespace Instrument {
 							// this < other
 							return true;
 						}
+					} else if (other.size() == position) {
+						// this > other
+						return false;
 					}
 					if ((*this)[position] < other[position]) {
 						return true;
@@ -277,13 +343,24 @@ namespace Instrument {
 		void doShutdown();
 		thread_id_t doCreatedThread();
 		
+		static inline std::string demangleSymbol(std::string const &symbol);
+#if HAVE_LIBDW
+		static inline std::string getDebugInformationEntryName(Dwarf_Die *debugInformationEntry);
+		static inline std::string sourceToString(char const *source, int line, int column);
+		inline void addInfoStep(AddrInfo &addrInfo, std::string function, std::string sourceLine);
+#endif
+		
 	public:
 		Profile()
 			: _profilingNSResolution("NANOS_PROFILE_NS_RESOLUTION", 1000),
 			_profilingBacktraceDepth("NANOS_PROFILE_BACKTRACE_DEPTH", 4),
 			_profilingBufferSize("NANOS_PROFILE_BUFFER_SIZE", /* 1 second */ 1000000000UL / _profilingNSResolution),
 			_bufferListSpinLock(), _bufferList(),
+#if HAVE_LIBDW
+			_dwfl(nullptr),
+#else
 			_executableMemoryMap(),
+#endif
 			_unknownAddrInfo(),
 			_addr2Cache(),
 			_nextSourceFunctionId(1), _id2sourceFunction(), _sourceFunction2id(),
