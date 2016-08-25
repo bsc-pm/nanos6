@@ -25,8 +25,7 @@ void MemoryRegion::merge(MemoryRegion *other){
 		_size += other_end - my_end;   
 	} else { 						// intersection (  [)   ]  []=this  ()=other
 		_address = other->_address;
-		_size = my_end - other_end;
-	}
+	}	
 }
 
 int MemoryRegion::locate(void){

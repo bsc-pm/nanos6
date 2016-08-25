@@ -7,6 +7,7 @@ bool nanos_register_region(void *address, unsigned long size, int mode, nodemask
 	/*
 	bitmask bm = numa_allocate_nodemask(); 
 	copy_nodemask_to_bitmask(&nodemask, &bm);
+	
 	int nNodes = numa_bitmask_weight(bm);
 	vector<int> indexes = Machine.getNodeIndexes();
 	MemoryLocation** locations = new MemoryLocation*[nNodes];
@@ -42,13 +43,6 @@ bool nanos_register_region(void *address, unsigned long size, int mode, nodemask
 		// insert with no data (all default)
 		Directory.insert(address, size);
 	}
-	*/ // 
-
-
- 
-	//		TRY TO USE HWLOC
-
-
 	
 	return true;		
 }

@@ -74,6 +74,7 @@ common_sources = \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
+	src/memory/Directory.cpp \
 	src/memory/Directory.hpp \
 	src/memory/MemoryRegion.cpp \
 	src/memory/MemoryRegion.hpp \
@@ -92,6 +93,7 @@ common_sources = \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
 	src/system/debug/DebugAPI.cpp \
+	src/system/debug/HardwareAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/RegisterMemory.cpp \
 	src/system/ompss/TaskBlocking.cpp \

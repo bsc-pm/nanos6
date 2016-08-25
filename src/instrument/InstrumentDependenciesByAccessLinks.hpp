@@ -81,7 +81,7 @@ namespace Instrument {
 	//! \param readSatisfied whether the access becomes read satisfied
 	//! \param writeSatisfied whether the access begomes write satisfied
 	//! \param globallySatisfied whether the access becomes globally satisfied
-	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! \param targetTaskId the identifier of the task that will perform the now satisfied DataAccess
 	void dataAccessBecomesSatisfied(
 		data_access_id_t dataAccessId,
@@ -106,7 +106,7 @@ namespace Instrument {
 	//! \param range the range of data covered by the link
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	//! \param bidirectional tru if the link is bidirectional
-	//! \param triggererTaskId the identifier of the task that trigers the change
+	//! \param triggererTaskId the identifier of the task that triggers the change
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId, data_access_id_t sinkAccessId,
 		DataAccessRange range,

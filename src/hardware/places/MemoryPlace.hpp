@@ -20,6 +20,7 @@ private:
 	void _addPU(ComputePlace* pu){
 		_processors[pu->_index] = pu;
 		_ncpus++;
+	
 	}
 
 	
