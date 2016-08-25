@@ -2,31 +2,39 @@
 #define MEMORY_REGION_CPP
 
 #include <numa.h>
+#include <numaif.h>
+
 #include "MemoryRegion.hpp"
-#include "../hardware/Machine.hpp"
+#include "hardware/Machine.hpp"
 
 void MemoryRegion::merge(MemoryRegion *other){
-	// TODO assert intersection	
-
+	
 	char *my_start = (char *) _address;	
 	char *other_start = (char *) other->_address;
-	char *my_end = _address + _size;
-	char *other_end = other->_address + other->_size;
+	char *my_end = my_start + _size;
+	char *other_end = other_start + other->_size;
 
-	if(my_start < other_start){
+	// check if there is an intersection
+	if(( my_start > other_start && my_end < other_end ) ||
+	   ( my_start < other_start && my_end > other_end ) ||
+	   ( my_end < other_start) || (other_end < my_start) ){
+		return; // improve this
+	}
+	
+	if(my_start < other_start && my_end < other_end){ 	// intersection [ (] ) []=this ()=other
 		_size += other_end - my_end;   
-	} else {
-		_address = other->address;
+	} else { 						// intersection (  [)   ]  []=this  ()=other
+		_address = other->_address;
 		_size = my_end - other_end;
 	}
 }
 
-int locate(void){
+int MemoryRegion::locate(void){
 	if(_present) return 0; // already located	
 	
-	void *ptr = (void*)( ( long )_address & ~(PAGE_SIZE-1) );
-	long pagesize = Machine.getpagesize();
-	int npages = (( (long)_address - (long)ptr ) + size) / pagesize;
+	long pagesize = Machine::instance()->getPageSize();
+	void *ptr = (void*)( ( long )_address & ~(pagesize-1) );
+	int npages = (( (long)_address - (long)ptr ) + _size) / pagesize;
 
 	// allocate support structures for move_pages
 	void **pages = new void*[npages];
@@ -37,10 +45,10 @@ int locate(void){
 		pages[i] = ptr + i*pagesize;
 	}
 
-	move_pages(0, npages, pages, NULL, status, int flags);
+	move_pages(0, npages, pages, NULL, status, 0);
 	
 	// check status
-	std::vector<int> nodes();
+	std::vector<int> nodes;
 	bool interleaved = true;
 
 	/*
@@ -57,7 +65,7 @@ int locate(void){
 		if(node = ENOENT){
 			return ENOENT; // error, pages not present in memory (may be untouched)
 		}
-		if( !nodes.contains( node ) ){ 
+		if(std::find(nodes.begin(), nodes.end(), node) != nodes.end()) {
 			nodes.push_back( node );
 		} else {
 			if( nodes.size() <= 1 || node != nodes[i % nodes.size()] ){
@@ -70,7 +78,7 @@ int locate(void){
 	_interleaved = interleaved;
 	_nLocations = nodes.size();
 	for(int i = 0; i < _nLocations; i++){
-		_location[i] = Machine.getNode(nodes[i]);
+		_location[i] = Machine::instance()->getNode(nodes[i]);
 	}
 	
 	_present = true;

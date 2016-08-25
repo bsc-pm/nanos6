@@ -15,14 +15,14 @@ private:
 	size_t _nLocations; //< number of nodes in which it is interleaved
 	bool _present; //< true if data is already located	
 
-	DataAccessRange _range; //TODO repeated data, need _address / _size?
-	
+	DataAccessRange _range;
+
 	MemoryPlace **_location; //< memory nodes of the region
 public:
 
-	Region( void *address, size_t size, bool interleaved = false, size_t nLocations = 1, bool _present = false, MemoryPlace **location = nullptr )
+	MemoryRegion( void *address, size_t size, bool interleaved = false, size_t nLocations = 1, bool present = false, MemoryPlace **location = nullptr )
 		: _address( address ),
-		_size( size )
+		_size( size ),
 		_range( address, size ),
 		_interleaved( interleaved ),
 		_nLocations( nLocations ),
@@ -32,13 +32,18 @@ public:
 		// Consider changing the address to the page start address
 	}
 
-	DataAccessRange const &getAccessRange() const // required by the linear region map
-	{
-		return _range;
-	}
-
 	void merge( MemoryRegion *other ); // merge two regions into this
 	int locate( void ); // find the pages of this memory region
-}
+	
+	DataAccessRange const &getAccessRange() const
+        {
+                return _range;
+        }
 
+        DataAccessRange &getAccessRange()
+        {
+                return _range;
+        }
+
+};
 #endif //REGION_HPP

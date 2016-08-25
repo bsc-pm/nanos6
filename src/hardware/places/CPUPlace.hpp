@@ -5,7 +5,7 @@
 
 class CPUPlace: public HardwarePlace {
 public:
-	CPUPlace (int index, HardwarePlace *parent = nullptr)
+	CPUPlace (int index = 0, HardwarePlace *parent = nullptr)
 		: HardwarePlace(index, parent)
 	{
 	}

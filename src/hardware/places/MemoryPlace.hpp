@@ -1,6 +1,12 @@
 #ifndef MEMORY_PLACE_HPP
 #define MEMORY_PLACE_HPP
 
+#include <vector>
+#include <map>
+
+#include "HardwarePlace.hpp"
+#include "ComputePlace.hpp"
+
 class MemoryPlace : public HardwarePlace{
 private:
 	typedef std::map<int, ComputePlace*> processors_t; // no guarantee that cpus are in order in a node, map for easy access
@@ -8,10 +14,12 @@ private:
 	size_t _ncpus;
 	processors_t _processors;
 
+	friend class Machine;
+	friend class Loader;
 	
 	void _addPU(ComputePlace* pu){
-		processors[pu->os_index] = pu;
-		ncpus++;
+		_processors[pu->_index] = pu;
+		_ncpus++;
 	}
 
 	
@@ -28,25 +36,25 @@ public:
 	}
 
 	const ComputePlace* getCPU(int os_index){
-		return _processorsi[os_index];
+		return _processors[os_index];
 	}
 
-	const vector<int>* getCPUIndexes(){
+	const std::vector<int>* getCPUIndexes(){
 	
 		std::vector<int>* indexes = new std::vector<int>();
 	
 		for(processors_t::iterator it = _processors.begin(); it != _processors.end(); ++it){
-			indexes.push_back(it->first);
+			indexes->push_back(it->first);
 		}
 	
 		return indexes;
 	}
 
-	const vector<ComputePlace*>* getCPUs(){
-		std::vector<ComputePlace*>* cpus = new std::vector<int>();
+	const std::vector<ComputePlace*>* getCPUs(){
+		std::vector<ComputePlace*>* cpus = new std::vector<ComputePlace*>();
 		
 		for(processors_t::iterator it = _processors.begin(); it != _processors.end(); ++it){
-			cpus.push_back(it->second);
+			cpus->push_back(it->second);
 		}
 		
 		return cpus;

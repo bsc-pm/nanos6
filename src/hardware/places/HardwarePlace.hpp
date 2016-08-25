@@ -19,7 +19,7 @@ public:
 	}
 
 	int getIndex(void){
-		return index;
+		return _index;
 	} 
 	
 };

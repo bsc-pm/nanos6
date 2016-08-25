@@ -101,6 +101,7 @@ AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_depe
 AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
 
 AX_CHECK_EXTRAE
+PKG_CHECK_MODULES([hwloc], [hwloc])
 
 AC_CONFIG_FILES([
 	Makefile
@@ -115,5 +116,4 @@ AC_OUTPUT
 if test x"${ac_have_nanos6_mercurium}" = x"no" ; then
 	AC_MSG_WARN([the directive based tests will not be checked since there is no Mercurium compiler available])
 fi
-
 

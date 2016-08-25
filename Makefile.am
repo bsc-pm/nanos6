@@ -52,7 +52,9 @@ common_sources = \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/HardwarePlace.hpp \
-	src/hardware/loaders/HWLOCLoader.cpp \
+	src/hardware/Loader.cpp \
+	src/hardware/Loader.hpp \
+	src/hardware/Machine.cpp \
 	src/hardware/Machine.hpp \
 	src/instrument/InstrumentAddTask.hpp \
 	src/instrument/InstrumentDependenciesByAccess.hpp \
@@ -72,7 +74,6 @@ common_sources = \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
-	src/memory/Directory.cpp \
 	src/memory/Directory.hpp \
 	src/memory/MemoryRegion.cpp \
 	src/memory/MemoryRegion.hpp \
@@ -91,7 +92,6 @@ common_sources = \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
 	src/system/debug/DebugAPI.cpp \
-	src/system/debug/HardwareAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/RegisterMemory.cpp \
 	src/system/ompss/TaskBlocking.cpp \
@@ -300,8 +300,8 @@ EXTRA_DIST = \
 	common/tests/tap-driver.sh
 
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER
-common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl $(LDFLAGS_NOUNDEFINED)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(hwloc_CFLAGS) -lnuma
+common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) -lnuma
 
 libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)

@@ -5,6 +5,10 @@
 
 class ComputePlace : public HardwarePlace {
 private:
+	friend class MemoryPlace;
+	friend class Loader;
+	friend class Machine;	
+
 	ComputePlace(int index, HardwarePlace *parent = nullptr)
 		: HardwarePlace(index, parent) 
 	{
