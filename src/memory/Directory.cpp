@@ -23,10 +23,10 @@ typename Directory::iterator Directory::find(void *address){
 	return _set.find(address);
 }
 
-void Directory::insert(void *baseAddress){
+void Directory::insert(void *baseAddress, int dimensions, int *dimSizes){
 	// TODO check if contains other objects. (engulf them in the _homes set)
 	// TODO check if contained by other. (send to _homes of the object)
-	MemoryObject *obj = new MemoryObject(baseAddress);
+	MemoryObject *obj = new MemoryObject(baseAddress, dimensions, dimSizes);
 	_set.insert( *obj );
 }
 

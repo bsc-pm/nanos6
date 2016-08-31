@@ -30,7 +30,16 @@ public:
 	/* Debugging / Testing */
 	friend std::ostream& operator<<(std::ostream &os, const MemoryRegion &obj){
         void *end = static_cast<char*>(obj._baseAddress) + obj._size;
-        os << "(MemoryRegion: Region [" << obj._baseAddress << "-" << end <<"] | Location: " << 0 << ")";
+        os << "{ MemoryRegion: ";
+		
+		os << "region [" << obj._baseAddress << "-" << end <<")";
+
+		os << " | ";
+		
+		os << "location: " << 0;
+		
+		os << " }";
+
         return os;
     }
 

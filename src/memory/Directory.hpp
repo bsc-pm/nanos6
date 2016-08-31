@@ -26,7 +26,7 @@ public:
 	iterator begin();
 	iterator end();
 	iterator find(void *address);
-	void insert(void* baseAddress/* NEED PARAMS */);
+	void insert(void* baseAddress, int dimensions, int *dimSizes);
 	iterator erase(iterator position);	
 };
 

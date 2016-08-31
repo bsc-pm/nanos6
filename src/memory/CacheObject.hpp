@@ -27,7 +27,15 @@ public:
 	/* Debugging / Testing */
     friend std::ostream& operator<<(std::ostream &os, const CacheObject &obj){
         void *end = static_cast<char*>(obj._baseAddress) + obj._size;
-		os << "(CacheObject: Region [" << obj._baseAddress << "-" << end <<"] | Version: " << obj._version << ")";
+		os << "{ CacheObject: ";
+		
+		os << "region [" << obj._baseAddress << "-" << end <<")";
+		
+		os <<" | ";
+
+		os << "version: " << obj._version;
+
+		os << " }";
         return os;
     }
 

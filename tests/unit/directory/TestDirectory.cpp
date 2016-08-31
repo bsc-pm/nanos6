@@ -9,9 +9,9 @@
 static std::string contentsToString(Directory &dir){
 	std::ostringstream oss;
 	
-	oss << "Contents:";
+	oss << "Contents:" << std::endl;
 	for(Directory::iterator it = dir.begin(); it != dir.end(); ++it){
-		oss << *it;
+		oss << *it << std::endl;
 	}
 
 	return oss.str();
@@ -28,21 +28,35 @@ int main(__attribute__((unused)) int argc, __attribute__((unused)) char **argv){
 	void *ptr1;
 	void *ptr2;
 		
+	ptr1 = (void *) new int;
+
+	ptr2 = (void *) new float[5][20];
+	
+	int *dim1 = new int[1];
+	dim1[0] = sizeof(int);
+
+	int *dim2 = new int[2];
+ 	dim2[0] = 5;
+	dim2[1] = 20 * sizeof(float);
+	
+	if(ptr1 > ptr2){
+		void *tmp = ptr1;
+		int *tmpdim = dim1;
+		
+		ptr2 = ptr1;
+		dim2 = dim1;
+
+		ptr1 = tmp;
+		dim1 = tmpdim;
+	}
+		
+	
+	dir.insert(ptr1, 1, dim1);
+	dir.insert(ptr2, 2, dim2);
+	
 	//1
 	tap.evaluate(dir.empty(), "The directory is initially empty");
 	tap.emitDiagnostic(contentsToString(dir));
-
-	ptr1 = malloc(20);
-	ptr2 = malloc(20);
-	if(ptr1 > ptr2){
-		void *tmp = ptr1;
-		ptr2 = ptr1;
-		ptr1 = tmp;
-	}
-		
-	dir.insert(ptr1);
-	dir.insert(ptr2);
-	
 	
 	//2 
 	tap.evaluate( (dir.size() == 2 ), "There are two elements in the directory" );
