@@ -1,50 +1,51 @@
 #ifndef REGION_HPP
 #define REGION_HPP
 
-#include "../dependencies/linear-regions-unfragmented/DataAccessRange.hpp"
-#include "../hardware/places/MemoryPlace.hpp"
+#include <boost/intrusive/avl_set.hpp>
+#include "hardware/places/MemoryPlace.hpp"
 
-class MemoryRegion {
+class MemoryRegion : public boost::intrusive::avl_set_base_hook<> {
 	
-friend class Directory;
-
 private:
-	void *_address; //< start address of the region
-	size_t _size; //< length of the region
-	bool _interleaved; //< true if data interleaved between nodes
-	size_t _nLocations; //< number of nodes in which it is interleaved
-	bool _present; //< true if data is already located	
+	void *_baseAddress; //< start address of the region
+	int _size; //< length of the region
+	MemoryPlace *_location; //< memory nodes of the region
 
-	DataAccessRange _range;
-
-	MemoryPlace **_location; //< memory nodes of the region
 public:
 
-	MemoryRegion( void *address, size_t size, bool interleaved = false, size_t nLocations = 1, bool present = false, MemoryPlace **location = nullptr )
-		: _address( address ),
+	MemoryRegion( void *baseAddress, size_t size, MemoryPlace *location = nullptr )
+		: _baseAddress( baseAddress ),
 		_size( size ),
-		_range( address, size ),
-		_interleaved( interleaved ),
-		_nLocations( nLocations ),
-		_present( present ),
 		_location( location )
 	{
-		// Consider changing the address to the page start address
+	
 	}
 
-	void merge( MemoryRegion *other ); // merge two regions into this
-	int locate( void ); // find the pages of this memory region
 	
-	DataAccessRange const &getAccessRange() const
-        {
-                return _range;
-        }
+	/* Comparison operators for Boost Intrusive AVL Set (OLD) */ 
+	friend bool operator <(const MemoryRegion &a, const MemoryRegion &b) { return a._baseAddress < b._baseAddress; }
+	friend bool operator >(const MemoryRegion &a, const MemoryRegion &b) { return a._baseAddress > b._baseAddress; }
+	friend bool operator ==(const MemoryRegion &a, const MemoryRegion &b) { return a._baseAddress == b._baseAddress; } 
 
-        DataAccessRange &getAccessRange()
-        {
-                return _range;
-        }
+	/* Debugging / Testing */
+	friend std::ostream& operator<<(std::ostream &os, const MemoryRegion &obj){
+        void *end = static_cast<char*>(obj._baseAddress) + obj._size;
+        os << "(MemoryRegion: Region [" << obj._baseAddress << "-" << end <<"] | Location: " << 0 << ")";
+        return os;
+    }
 
+
+	/* Key structure for Boost Intrusive AVL Set */
+	struct key_value
+	{
+		typedef void *type;
+		
+		const type &operator()(const MemoryRegion &m){
+			return m._baseAddress;
+		}
+	};
+	
+	friend key_value;
 };
 
 #endif //REGION_HPP

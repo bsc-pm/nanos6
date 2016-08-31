@@ -1,89 +1,33 @@
 #ifndef DIRECTORY_HPP
 #define DIRECTORY_HPP
 
-#include "MemoryRegion.hpp"
-#include "dependencies/linear-regions-unfragmented/LinearRegionMap.hpp" 
-#include "dependencies/linear-regions-unfragmented/LinearRegionMapImplementation.hpp"
+#include <boost/intrusive/avl_set.hpp> //boost::intrusive
+#include <functional> // std::less
 
-class DirectoryNode {
-	
-friend class LinearRegionMap<DirectoryNode>;
+#include "MemoryObject.hpp"
+
+class Directory {
+
+typedef boost::intrusive::avl_set< MemoryObject, boost::intrusive::key_of_value< MemoryObject::key_value > > ObjectSet;
 
 private:
-	MemoryRegion* _region;
-	DataAccessRange _accessRange;
-public:
+	ObjectSet _set;
 
-	DirectoryNode(MemoryRegion* region)
-	: _region( region ),
-	  _accessRange( region->getAccessRange() )
-	{
-
-	}
-
-	~DirectoryNode(){
-		delete _region;
-	}
-
-	MemoryRegion* getRegion(){
-		return _region;
-	}
-
-	DataAccessRange const &getAccessRange() const
-        {
-                return _accessRange;
-        }
-
-        DataAccessRange &getAccessRange()
-        {
-                return _accessRange;
-        }
-
-};
-
-class Directory : LinearRegionMap<DirectoryNode> {
-private:
+public:	
+	typedef ObjectSet::iterator iterator;
 	
-	static Directory *_instance;
-	
-	Directory(){
+	Directory()
+	: _set(){
 		
 	}
 
-public:		
-	
-	// singleton methods
-	static void init(){
-		_instance = new Directory();
-	}
-
-	static void destroy(){
-		delete _instance;
-	}
-
-	static bool addRegion(void *addr, size_t size, bool interleaved = false, int nLocations = 0, bool present = false, MemoryPlace **locations = nullptr){
-        // create region object
-        	MemoryRegion *region = new MemoryRegion(addr, size, interleaved, nLocations, present, locations);
-
-        	// merge with intersecting regions when not interleaved and present
-        	if(!interleaved && present){
-
-                	_instance->processIntersecting(
-                        	region->_range,
-                        	[&](Directory::iterator position) -> bool {
-                                	region->merge(position->getRegion());
-                                	_instance->erase(position);
-                                	return true;
-                        	}
-                	);
-        	}
-	
-        	// insert to directory
-        	_instance->insert(DirectoryNode(region));
-        	return true;
-	}
-	
+	bool empty();
+	int size();
+	iterator begin();
+	iterator end();
+	iterator find(void *address);
+	void insert(void* baseAddress/* NEED PARAMS */);
+	iterator erase(iterator position);	
 };
-
 
 #endif //DIRECTORY_HPP

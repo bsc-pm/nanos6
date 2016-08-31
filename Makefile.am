@@ -74,10 +74,11 @@ common_sources = \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
+	src/memory/CacheObject.hpp \
 	src/memory/Directory.cpp \
 	src/memory/Directory.hpp \
-	src/memory/MemoryRegion.cpp \
 	src/memory/MemoryRegion.hpp \
+	src/memory/MemoryObject.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
@@ -93,7 +94,6 @@ common_sources = \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
 	src/system/debug/DebugAPI.cpp \
-	src/system/debug/HardwareAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/RegisterMemory.cpp \
 	src/system/ompss/TaskBlocking.cpp \
@@ -365,7 +365,7 @@ endif
 # Tests
 #
 
-unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test
+unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test directory.debug.test directory.test
 
 unit_test_common_cxxflags = -I$(top_srcdir)/common/tests
 
@@ -376,7 +376,12 @@ inline_double_linked_list_test_SOURCES = tests/unit/support/TestInlineDoublyLink
 inline_double_linked_list_test_CPPFLAGS = -DNDEBUG
 inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
 
+directory_debug_test_SOURCES = tests/unit/directory/TestDirectory.cpp
+directory_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
 
+directory_test_SOURCES = tests/unit/directory/TestDirectory.cpp
+directory_test_CPPFLAGS = -DNDEBUG
+directory_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
 
 check_PROGRAMS = $(unit_tests)
 TESTS = $(unit_tests)

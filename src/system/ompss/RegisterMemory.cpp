@@ -44,5 +44,6 @@ bool nanos_register_region(void *address, unsigned long size, int mode, nodemask
 		Directory.insert(address, size);
 	}
 	
-	return true;		
+	return true;
+	*/		
 }
