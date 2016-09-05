@@ -11,6 +11,7 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "hardware/Machine.hpp"
 
 #include <InstrumentInitAndShutdown.hpp>
 
@@ -49,6 +50,7 @@ void nanos_preinit(void) {
 	ThreadManagerPolicy::initialize();
 	ThreadManager::preinitialize();
 	Instrument::initialize();
+    Machine::initialize();
 }
 
 void nanos_init(void) {

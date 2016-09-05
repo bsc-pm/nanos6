@@ -29,7 +29,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		data_access_id_t dataAccessId = Graph::_nextDataAccessId++;
@@ -90,7 +90,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		upgrade_data_access_step_t *step = new upgrade_data_access_step_t(
@@ -121,7 +121,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		data_access_becomes_satisfied_step_t *step = new data_access_becomes_satisfied_step_t(
@@ -149,7 +149,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		removed_data_access_step_t *step = new removed_data_access_step_t(
@@ -177,7 +177,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		access_t &sourceAccess = getAccess(sourceAccessId);
@@ -215,7 +215,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		unlinked_data_accesses_step_t *step = new unlinked_data_accesses_step_t(
@@ -244,7 +244,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		reparented_data_access_step_t *step = new reparented_data_access_step_t(

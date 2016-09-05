@@ -52,7 +52,7 @@ CPU *NaiveScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_front(task);
@@ -61,14 +61,14 @@ HardwarePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused))
 }
 
 
-void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) HardwarePlace *hardwarePlace)
+void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_front(unblockedTask);
 }
 
 
-bool NaiveScheduler::checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace)
+bool NaiveScheduler::checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	
@@ -83,7 +83,7 @@ bool NaiveScheduler::checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlac
 }
 
 
-Task *NaiveScheduler::getReadyTask(__attribute__((unused)) HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
@@ -112,7 +112,7 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) HardwarePlace *hardwa
 }
 
 
-HardwarePlace *NaiveScheduler::getIdleHardwarePlace(bool force)
+ComputePlace *NaiveScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {

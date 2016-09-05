@@ -17,7 +17,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask)
 	assert(WorkerThread::getCurrentWorkerThread() == currentThread);
 	assert(currentThread->getTask() == currentTask);
 	
-	CPU *cpu = currentThread->getHardwarePlace();
+	CPU *cpu = currentThread->getComputePlace();
 	assert(cpu != nullptr);
 	
 	bool done = false;
@@ -64,7 +64,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask)
 			currentThread->handleTask(replacementTask);
 			
 			// The thread can have migrated while running the replacement task
-			cpu = currentThread->getHardwarePlace();
+			cpu = currentThread->getComputePlace();
 			
 			// The following code can only be executed while in a taskwait
 			if (currentTask->canBeWokenUp()) {

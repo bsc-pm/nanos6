@@ -39,7 +39,7 @@ long nanos_get_current_system_cpu()
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	
 	assert(currentThread != 0);
-	CPU *currentCPU = currentThread->getHardwarePlace();
+	CPU *currentCPU = currentThread->getComputePlace();
 	
 	assert(currentCPU != 0);
 	return currentCPU->_systemCPUId;
@@ -99,7 +99,7 @@ long nanos_get_system_cpu_of_task(void *taskHandle)
 	WorkerThread *thread = task->getThread();
 	
 	assert(thread != 0);
-	CPU *cpu = thread->getHardwarePlace();
+	CPU *cpu = thread->getComputePlace();
 	
 	assert(cpu != 0);
 	return cpu->_systemCPUId;

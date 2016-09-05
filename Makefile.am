@@ -50,8 +50,9 @@ common_sources = \
 	src/executors/threads/WorkerThread.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
+	src/hardware/places/MemoryPlace.cpp \
 	src/hardware/places/ComputePlace.hpp \
-	src/hardware/places/HardwarePlace.hpp \
+	src/hardware/places/ComputePlace.cpp \
 	src/hardware/Loader.cpp \
 	src/hardware/Loader.hpp \
 	src/hardware/Machine.cpp \
