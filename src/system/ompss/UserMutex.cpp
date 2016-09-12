@@ -102,7 +102,7 @@ void nanos_user_unlock(void **handlerPointer)
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		
-		CPU *cpu = currentThread->getHardwarePlace();
+		CPU *cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		Task *currentTask = currentThread->getTask();
@@ -112,7 +112,7 @@ void nanos_user_unlock(void **handlerPointer)
 			WorkerThread *releasedThread = releasedTask->getThread();
 			assert(releasedThread != nullptr);
 			
-			CPU *idleCPU = (CPU *) Scheduler::getIdleHardwarePlace();
+			CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
 			if (idleCPU != nullptr) {
 				// Wake up the unblocked task and migrate to an idle CPU
 				ThreadManager::resumeThread(releasedThread, cpu);
@@ -125,7 +125,7 @@ void nanos_user_unlock(void **handlerPointer)
 		} else {
 			Scheduler::taskGetsUnblocked(releasedTask, cpu);
 			
-			CPU *idleCPU = (CPU *) Scheduler::getIdleHardwarePlace();
+			CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
 			if (idleCPU != nullptr) {
 				ThreadManager::resumeIdle(idleCPU);
 			}

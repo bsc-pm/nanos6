@@ -524,7 +524,7 @@ private:
 	
 	
 	//! Process all the originators for whose a DataAccess has become satisfied
-	static inline void processSatisfiedOriginators(CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators, HardwarePlace *hardwarePlace)
+	static inline void processSatisfiedOriginators(CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators, ComputePlace *hardwarePlace)
 	{
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : satisfiedOriginators) {
@@ -532,10 +532,10 @@ private:
 			
 			bool becomesReady = satisfiedOriginator->decreasePredecessors();
 			if (becomesReady) {
-				HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace);
+				ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace);
 				
-				if (idleHardwarePlace != nullptr) {
-					ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+				if (idleComputePlace != nullptr) {
+					ThreadManager::resumeIdle((CPU *) idleComputePlace);
 				}
 			}
 		}
@@ -872,7 +872,7 @@ public:
 		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != 0);
-		CPU *cpu = currentThread->getHardwarePlace();
+		CPU *cpu = currentThread->getComputePlace();
 		assert(cpu != 0);
 		
 		// A temporary list of tasks to minimize the time spent with the mutex held.

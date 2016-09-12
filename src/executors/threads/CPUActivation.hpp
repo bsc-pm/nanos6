@@ -19,7 +19,7 @@ public:
 	{
 		assert(currentThread != nullptr);
 		
-		CPU *cpu = currentThread->getHardwarePlace();
+		CPU *cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		CPU::activation_status_t currentStatus = cpu->_activationStatus;
@@ -119,7 +119,7 @@ public:
 		
 		bool successful = false;
 		while (!successful) {
-			CPU *cpu = currentThread->getHardwarePlace();
+			CPU *cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
 			
 			CPU::activation_status_t currentStatus = cpu->_activationStatus;
@@ -137,11 +137,11 @@ public:
 				case CPU::disabling_status:
 					successful = cpu->_activationStatus.compare_exchange_weak(currentStatus, CPU::disabled_status);
 					if (successful) {
-						HardwarePlace *idleHardwarePlace = Scheduler::getIdleHardwarePlace();
-						assert(idleHardwarePlace != cpu);
+						ComputePlace *idleComputePlace = Scheduler::getIdleComputePlace();
+						assert(idleComputePlace != cpu);
 						
-						if (idleHardwarePlace != nullptr) {
-							ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+						if (idleComputePlace != nullptr) {
+							ThreadManager::resumeIdle((CPU *) idleComputePlace);
 						}
 						
 						ThreadManager::addIdler(currentThread);

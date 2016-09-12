@@ -13,7 +13,7 @@ extern "C" {
 
 		unsigned int cpuId = 0;
 		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->getHardwarePlace();
+			CPU *cpu = currentThread->getComputePlace();
 			cpuId = cpu->_virtualCPUId;
       }
 	

@@ -11,7 +11,7 @@
 
 
 class HardwareDescription;
-class HardwarePlace;
+class ComputePlace;
 
 class Task;
 
@@ -38,8 +38,8 @@ public:
 	//! \param[in] task the task to be added
 	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
 	//!
-	//! \returns an idle HardwarePlace that is to be resumed or nullptr
-	static inline HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace)
+	//! \returns an idle ComputePlace that is to be resumed or nullptr
+	static inline ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace)
 	{
 		assert(task != 0);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
@@ -50,7 +50,7 @@ public:
 	//!
 	//! \param[in] unblockedTask the task that has been unblocked
 	//! \param[in] hardwarePlace the hardware place of the unblocker
-	static inline void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace)
+	static inline void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace)
 	{
 		assert(unblockedTask != 0);
 		Instrument::taskIsReady(unblockedTask->getInstrumentationTaskId());
@@ -64,7 +64,7 @@ public:
 	//! \param[in] hardwarePlace the hardware place to check
 	//!
 	//! \returns true if the hardware place must be resumed
-	static inline bool checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace)
+	static inline bool checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace)
 	{
 		return _scheduler->checkIfIdleAndGrantReactivation(hardwarePlace);
 	}
@@ -75,7 +75,7 @@ public:
 	//! \param[in] currentTask a task within whose context the resulting task will run
 	//!
 	//! \returns a ready task or nullptr
-	static inline Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr)
+	static inline Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr)
 	{
 		return _scheduler->getReadyTask(hardwarePlace, currentTask);
 	}
@@ -85,9 +85,9 @@ public:
 	//! \param[in] force idicates that an idle hardware place must be returned (if any) even if the scheduler does not have any pending work to be assigned
 	//!
 	//! \returns a hardware place that becomes non idle or nullptr
-	static inline HardwarePlace *getIdleHardwarePlace(bool force=false)
+	static inline ComputePlace *getIdleComputePlace(bool force=false)
 	{
-		return _scheduler->getIdleHardwarePlace(force);
+		return _scheduler->getIdleComputePlace(force);
 	}
 	
 };

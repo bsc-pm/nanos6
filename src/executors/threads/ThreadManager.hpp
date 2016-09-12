@@ -12,7 +12,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "hardware/places/HardwarePlace.hpp"
+#include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include "CPU.hpp"

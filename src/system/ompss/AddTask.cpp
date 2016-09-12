@@ -6,7 +6,7 @@
 #include "api/nanos6_rt_interface.h"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware/places/HardwarePlace.hpp"
+#include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
@@ -55,12 +55,12 @@ void nanos_submit_task(void *taskHandle)
 	
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	
-	HardwarePlace *hardwarePlace = nullptr;
+	ComputePlace *hardwarePlace = nullptr;
 	if (__builtin_expect((currentWorkerThread != nullptr), 1)) {
 		assert(currentWorkerThread->getTask() != nullptr);
 		task->setParent(currentWorkerThread->getTask());
 		
-		hardwarePlace = currentWorkerThread->getHardwarePlace();
+		hardwarePlace = currentWorkerThread->getComputePlace();
 		assert(hardwarePlace != nullptr);
 	} else {
 		// Adding the main task from within the leader thread
@@ -82,11 +82,11 @@ void nanos_submit_task(void *taskHandle)
 	}
 	
 	if (ready) {
-		HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace);
-		assert((currentWorkerThread != nullptr) || (idleHardwarePlace == nullptr)); // The main task is added before the scheduler
+		ComputePlace *idleComputePlace = Scheduler::addReadyTask(task, hardwarePlace);
+		assert((currentWorkerThread != nullptr) || (idleComputePlace == nullptr)); // The main task is added before the scheduler
 		
-		if (idleHardwarePlace != nullptr) {
-			ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+		if (idleComputePlace != nullptr) {
+			ThreadManager::resumeIdle((CPU *) idleComputePlace);
 		}
 	} else {
 		Instrument::taskIsPending(task->getInstrumentationTaskId());

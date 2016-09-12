@@ -23,7 +23,7 @@ namespace Instrument {
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
 		
-		CPU *cpu = (CPU *) thread->getHardwarePlace();
+		CPU *cpu = (CPU *) thread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		Instrument::returnToTask(taskId, cpu, thread);

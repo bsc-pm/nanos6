@@ -37,7 +37,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		Task *task = currentThread->getTask();
@@ -60,7 +60,7 @@ namespace Instrument {
 		assert(_threadToId.find(currentThread) != _threadToId.end());
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		Task *task = currentThread->getTask();
@@ -82,7 +82,7 @@ namespace Instrument {
 		
 		thread_id_t threadId = _threadToId[currentThread];
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+		CPU *cpu = (CPU *) currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		Task *task = currentThread->getTask();

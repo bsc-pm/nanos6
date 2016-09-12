@@ -3,47 +3,61 @@
 
 #include <vector>
 #include <map>
+#include <atomic>
 
-#include "Loader.hpp"
 #include "places/MemoryPlace.hpp"
 #include "places/ComputePlace.hpp"
 
 class Machine {
-
-friend class Loader; // only the loader should modify the machine at startup
-
-
+public: 
+	typedef std::map<int, MemoryPlace*> MemoryNodes_t;
+	typedef std::map<int, ComputePlace*> ComputeNodes_t;
 private:
-
-	typedef float** distances_t;	
-	typedef std::map<int, MemoryPlace*> nodes_t;
+	//typedef std::map<int, MemoryPlace*> MemoryNodes_t;
+	//typedef std::map<int, ComputePlace*> ComputeNodes_t;
+    // pair.first -> ComputePlace || pair.second -> MemoryPlace
+    typedef std::map<std::pair<int, int>, float> Distances_t;
 	
-	size_t _nNodes;
-	nodes_t _nodes;
-	distances_t _distances;
+    MemoryNodes_t _memoryNodes;
+    ComputeNodes_t _computeNodes;
+    Distances_t _distances;
 
-	long _pagesize; //< pre loaded page size to avoid redundant system calls
+	long _pageSize; //< pre loaded page size to avoid redundant system calls
 
-	static Machine *_instance;
+    // First unused adressSpace identifier
+    unsigned int _addressSpacesCount;
+
+	static Machine *_machine;
 
 	Machine()
-		:_nNodes(0)
+        : _addressSpacesCount(0)
 	{
 	}
 
-	void _addNode(MemoryPlace *node){
-		_nodes[node->_index] = node;
-		_nNodes++;
-	}
 public:
-	static Machine *__attribute__ ((noinline)) instance();
-	size_t getNodeCount(void);
-	MemoryPlace* getNode(int os_index);
-        std::vector<int>* getNodeIndexes();
-	std::vector<MemoryPlace*>* getNodes();
-	nodes_t::iterator nodesBegin(void);
-	nodes_t::iterator nodesEnd(void);
-	const long getPageSize(void);
+    // Generic methods
+    static void initialize();
+	static inline Machine * getMachine() { return _machine; }
+	inline const long getPageSize(void) { return _pageSize; }
+    inline unsigned int getNewAddressSpaceId() { return _addressSpacesCount++; }
+
+    // ComputeNodes related methods
+	inline size_t getComputeNodeCount(void) { return _computeNodes.size(); }
+	void addComputeNode(ComputePlace *node);
+	inline ComputePlace* getComputeNode(int index) { return _computeNodes[index]; }
+    std::vector<int>* getComputeNodeIndexes();
+	std::vector<ComputePlace*>* getComputeNodes();
+	inline ComputeNodes_t::iterator computeNodesBegin(void) { return _computeNodes.begin(); }
+	inline ComputeNodes_t::iterator computeNodesEnd(void) { return _computeNodes.end(); }
+
+    // MemoryNodes related methods
+	inline size_t getMemoryNodeCount(void) { return _memoryNodes.size(); }
+	void addMemoryNode(MemoryPlace *node);
+	inline MemoryPlace* getMemoryNode(int index) { return _memoryNodes[index]; }
+    std::vector<int>* getMemoryNodeIndexes();
+	std::vector<MemoryPlace*>* getMemoryNodes();
+	inline MemoryNodes_t::iterator memoryNodesBegin(void) { return _memoryNodes.begin(); }
+	inline MemoryNodes_t::iterator memoryNodesEnd(void) { return _memoryNodes.end(); }
 };
 
 #endif //MACHINE_HPP

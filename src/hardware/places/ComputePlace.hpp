@@ -1,20 +1,34 @@
 #ifndef COMPUTE_PLACE_HPP
 #define COMPUTE_PLACE_HPP
 
-#include "HardwarePlace.hpp"
+#include <map>
+#include <vector>
 
-class ComputePlace : public HardwarePlace {
+class MemoryPlace;
+
+//! \brief A class that represents a place where code can be executed either directly, or in a sub-place within
+class ComputePlace {
 private:
-	friend class MemoryPlace;
-	friend class Loader;
-	friend class Machine;	
+	typedef std::map<int, MemoryPlace*> memoryPlaces_t;
+    memoryPlaces_t _memoryPlaces; // Accessible MemoryPlaces from this ComputePlace 
 
-	ComputePlace(int index, HardwarePlace *parent = nullptr)
-		: HardwarePlace(index, parent) 
-	{
-	}		
+protected:
+    //ComputePlace * _parent;
+    int _index;	
+
 public:
-
+	ComputePlace(int index/*, ComputePlace *parent = nullptr*/)
+		: _index(index)/*, _parent(parent)*/
+	{}
+	
+	virtual ~ComputePlace() {}
+	const size_t getMemoryPlacesCount(void){ return _memoryPlaces.size(); }
+	const MemoryPlace* getMemoryPlace(int index){ return _memoryPlaces[index]; }
+	inline int getIndex(void){ return _index; } 
+	void addMemoryPlace(MemoryPlace* mem);
+	const std::vector<int>* getMemoryPlacesIndexes();
+	const std::vector<MemoryPlace*>* getMemoryPlaces();
+	
 };
 
 #endif //COMPUTE_PLACE_HPP
