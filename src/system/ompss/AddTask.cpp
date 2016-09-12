@@ -4,6 +4,7 @@
 #endif
 
 #include "api/nanos6_rt_interface.h"
+#include "executors/threads/ExternalThreadEnvironment.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/HardwarePlace.hpp"
@@ -53,24 +54,25 @@ void nanos_submit_task(void *taskHandle)
 	Task *task = (Task *) taskHandle;
 	assert(task != nullptr);
 	
+	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	
 	HardwarePlace *hardwarePlace = nullptr;
-	if (__builtin_expect((currentWorkerThread != nullptr), 1)) {
+	
+	if (currentWorkerThread != nullptr) {
 		assert(currentWorkerThread->getTask() != nullptr);
-		task->setParent(currentWorkerThread->getTask());
+		parent = currentWorkerThread->getTask();
 		
 		hardwarePlace = currentWorkerThread->getHardwarePlace();
 		assert(hardwarePlace != nullptr);
 	} else {
-		// Adding the main task from within the leader thread
-		assert(task->getTaskInfo() != 0);
+		ExternalThreadEnvironment *taskWrapper = ExternalThreadEnvironment::getTaskWrapperEnvironment();
+		assert(taskWrapper != nullptr);
 		
-		// The following two assertions fail if the symbol of the nanos_task_info
-		// of "main" gets overwriten by that of another task
-		assert(task->getTaskInfo()->task_label != 0);
-		assert(std::string(task->getTaskInfo()->task_label) == std::string("main"));
+		parent = taskWrapper->getTask();
 	}
+	assert(parent != nullptr);
+	
+	task->setParent(parent);
 	
 	Instrument::createdTask(task, task->getInstrumentationTaskId());
 	

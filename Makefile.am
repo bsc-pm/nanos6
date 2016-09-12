@@ -48,6 +48,9 @@ common_sources = \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.cpp \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
+	src/executors/threads/EssentialThreadEnvironment.hpp \
+	src/executors/threads/ExternalThreadEnvironment.cpp \
+	src/executors/threads/ExternalThreadEnvironment.hpp \
 	src/executors/threads/TaskFinalization.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
@@ -107,7 +110,9 @@ common_sources = \
 	src/system/ompss/UserMutex.cpp \
 	src/system/ompss/UserMutex.hpp \
 	src/tasks/Task.hpp \
-	src/tasks/TaskDebuggingInterface.hpp
+	src/tasks/TaskDebuggingInterface.hpp \
+	src/tasks/TaskWrapper.cpp \
+	src/tasks/TaskWrapper.hpp
 
 common_dependency_sources = \
 	src/dependencies/DataAccessType.hpp \

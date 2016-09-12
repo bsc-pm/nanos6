@@ -16,7 +16,7 @@
 
 struct DataAccess;
 struct DataAccessBase;
-class WorkerThread;
+class EssentialThreadEnvironment;
 
 
 #pragma GCC diagnostic push
@@ -31,7 +31,7 @@ private:
 	nanos_task_invocation_info *_taskInvokationInfo;
 	
 	//! The thread assigned to this task, nullptr if the task has finished (but possibly waiting its children)
-	std::atomic<WorkerThread *> _thread;
+	std::atomic<EssentialThreadEnvironment *> _thread;
 	
 	//! Number of children that are still alive (may have live references to data from this task), +1 if not blocked
 	std::atomic<int> _countdownToBeWokenUp;
@@ -104,7 +104,7 @@ public:
 	//! \brief sets the thread assigned to tun the task
 	//!
 	//! \param in thread the thread that will run the task
-	inline void setThread(WorkerThread *thread)
+	inline void setThread(EssentialThreadEnvironment *thread)
 	{
 		assert(thread != nullptr);
 		assert(_thread == nullptr);
@@ -114,7 +114,7 @@ public:
 	//! \brief get the thread that runs or will run the task
 	//!
 	//! \returns the thread that runs or will run the task
-	inline WorkerThread *getThread() const
+	inline EssentialThreadEnvironment *getThread() const
 	{
 		return _thread;
 	}

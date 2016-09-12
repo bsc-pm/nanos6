@@ -9,6 +9,7 @@
 #include "CPUDependencyData.hpp"
 #include "DataAccess.hpp"
 
+#include "executors/threads/ExternalThreadEnvironment.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -302,7 +303,7 @@ private:
 			}
 		}
 		
-		assert(!targetAccess->hasForcedRemoval() || !targetAccess->isInBottomMap());
+		assert(targetAccess->hasForcedRemoval() || !targetAccess->isInBottomMap());
 	}
 	
 	
@@ -1375,9 +1376,6 @@ private:
 		CPU *cpu,
 		WorkerThread *thread
 	) {
-		assert(cpu != nullptr);
-		assert(thread != nullptr);
-		
 		for (Task *removableTask : removableTasks) {
 			TaskFinalization::disposeOrUnblockTask(removableTask, cpu, thread);
 		}
@@ -1387,12 +1385,18 @@ private:
 	static inline CPUDependencyData &getCPUDependencyDataCPUAndThread(/* out */ CPU * &cpu, /* out */ WorkerThread * &thread)
 	{
 		thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
-		
-		cpu = thread->getHardwarePlace();
-		assert(cpu != nullptr);
-		
-		return cpu->_dependencyData;
+		if (thread != nullptr) {
+			cpu = thread->getHardwarePlace();
+			assert(cpu != nullptr);
+			
+			return cpu->_dependencyData;
+		} else {
+			ExternalThreadEnvironment *_taskWrapper = ExternalThreadEnvironment::getTaskWrapperEnvironment();
+			assert(_taskWrapper != nullptr);
+			
+			cpu = nullptr;
+			return _taskWrapper->getDependencyData();
+		}
 	}
 	
 	
@@ -1463,13 +1467,20 @@ public:
 			
 			task->increasePredecessors(2);
 			
-			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-			assert(currentThread != 0);
+			WorkerThread *currentThread = nullptr;
+			ExternalThreadEnvironment *externalThreadEnvironment = nullptr;
+			CPU *cpu = nullptr;
 			
-			CPU *cpu = currentThread->getHardwarePlace();
-			assert(cpu != 0);
+			currentThread = WorkerThread::getCurrentWorkerThread();
+			if (currentThread != nullptr) {
+				cpu = currentThread->getHardwarePlace();
+				assert(cpu != 0);
+			} else {
+				externalThreadEnvironment = ExternalThreadEnvironment::getTaskWrapperEnvironment();
+				assert(externalThreadEnvironment != nullptr);
+			}
 			
-			CPUDependencyData &cpuDependencyData = cpu->_dependencyData;
+			CPUDependencyData &cpuDependencyData = (currentThread != nullptr ? cpu->_dependencyData : externalThreadEnvironment->getDependencyData());
 			
 #ifndef NDEBUG
 			{
@@ -1603,8 +1614,6 @@ public:
 		CPU *cpu = nullptr;
 		WorkerThread *currentThread = nullptr;
 		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
-		assert(cpu != nullptr);
-		assert(currentThread != nullptr);
 		
 #ifndef NDEBUG
 		{

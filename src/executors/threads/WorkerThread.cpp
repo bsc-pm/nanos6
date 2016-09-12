@@ -1,4 +1,5 @@
 #include "CPUActivation.hpp"
+#include "ExternalThreadEnvironment.hpp"
 #include "TaskFinalization.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
@@ -28,8 +29,7 @@ static void *worker_thread_body_wrapper(void *parameter)
 
 
 WorkerThread::WorkerThread(CPU *cpu)
-	: _suspensionConditionVariable(), _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false), _task(nullptr),
-	_dependencyDomain()
+	: _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false)
 {
 	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, &worker_thread_body_wrapper, this);
 	FatalErrorHandler::handle(rc, " when creating a pthread in CPU ", cpu->_systemCPUId);
@@ -78,13 +78,27 @@ void *WorkerThread::body()
 		}
 		
 		if (_task != nullptr) {
-			WorkerThread *assignedThread = _task->getThread();
+			EssentialThreadEnvironment *assignedThreadEnvironment = _task->getThread();
 			
 			// A task already assigned to another thread
-			if (assignedThread != nullptr) {
+			if (assignedThreadEnvironment != nullptr) {
 				_task = nullptr;
-				ThreadManager::addIdler(this);
-				ThreadManager::switchThreads(this, assignedThread);
+				
+				WorkerThread *assignedWorkerThread = dynamic_cast<WorkerThread *>(assignedThreadEnvironment);
+				if (assignedWorkerThread != nullptr) {
+					ThreadManager::addIdler(this);
+					ThreadManager::switchThreads(this, assignedWorkerThread);
+				} else {
+					// The scheduler actually returned a task wrapping environment attached to an external
+					// thread that was probably blocked on a taskwait
+					#ifndef NDEBUG
+						ExternalThreadEnvironment *externalThread = dynamic_cast<ExternalThreadEnvironment *>(assignedThreadEnvironment);
+						assert(externalThread != nullptr);
+					#endif
+					
+					// Wake it up and continue
+					assignedThreadEnvironment->resume();
+				}
 			} else {
 				handleTask();
 				_task = nullptr;

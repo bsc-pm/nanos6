@@ -3,6 +3,7 @@
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 
+#include "executors/threads/ExternalThreadEnvironment.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
@@ -15,12 +16,21 @@
 
 void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 {
+	Task *currentTask = nullptr;
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentThread != nullptr);
+	EssentialThreadEnvironment *wrapperEnvironment = nullptr;
 	
-	Task *currentTask = currentThread->getTask();
-	assert(currentTask != nullptr);
-	assert(currentTask->getThread() == currentThread);
+	if (currentThread != nullptr) {
+		currentTask = currentThread->getTask();
+		assert(currentTask != nullptr);
+		assert(currentTask->getThread() == currentThread);
+	} else {
+		wrapperEnvironment = ExternalThreadEnvironment::getTaskWrapperEnvironment();
+		assert(wrapperEnvironment != nullptr);
+		
+		currentTask = wrapperEnvironment->getTask();
+		assert(currentTask != nullptr);
+	}
 	
 	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource);
 	
@@ -30,6 +40,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 		std::atomic_thread_fence(std::memory_order_acquire);
 		
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
+		
 		return;
 	}
 	
@@ -51,8 +62,13 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	// 		on the "old" CPU)
 	
 	if (!done) {
-		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
-		TaskBlocking::taskBlocks(currentThread, currentTask);
+		if (currentThread != nullptr) {
+			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
+			TaskBlocking::taskBlocks(currentThread, currentTask);
+		} else {
+			// External threads get blocked in taskwaits until they can continue
+			wrapperEnvironment->suspend();
+		}
 	}
 	
 	// This in combination with a release from the children makes their changes visible to this thread
@@ -65,7 +81,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	
 	DataAccessRegistration::handleExitTaskwait(currentTask);
 	
-	if (!done) {
+	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 	}

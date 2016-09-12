@@ -28,7 +28,7 @@ static void signalHandler(int signum)
 	
 	// For the rest, just set up the termination flag
 	shutdownDueToSignalNumber.store(signum);
-	nanos_notify_ready_for_shutdown();
+	nanos_shutdown();
 	
 }
 
@@ -51,6 +51,7 @@ void nanos_preinit(void) {
 	Instrument::initialize();
 }
 
+
 void nanos_init(void) {
 	ThreadManager::initialize();
 	
@@ -72,8 +73,8 @@ void nanos_init(void) {
 	#endif
 }
 
-void nanos_wait_until_shutdown(void) {
-	LeaderThread::maintenanceLoop();
+
+void nanos_shutdown(void) {
 	Instrument::shutdown();
 	
 	if (shutdownDueToSignalNumber.load() != 0) {
@@ -81,9 +82,5 @@ void nanos_wait_until_shutdown(void) {
 	}
 	
 	ThreadManager::shutdown();
-}
-
-void nanos_notify_ready_for_shutdown(void) {
-	LeaderThread::notifyMainExit();
 }
 

@@ -87,6 +87,10 @@ namespace Instrument {
 		
 		void enter_taskwait_step_t::execute()
 		{
+			if (_triggererTaskId == task_id_t()) {
+				return;
+			}
+			
 			taskwait_status_t &taskwaitStatus = _taskwaitStatus[_taskwaitId];
 			taskwaitStatus._status = started_status;
 			taskwaitStatus._lastCPU = _cpu;
@@ -101,6 +105,10 @@ namespace Instrument {
 		
 		std::string enter_taskwait_step_t::describe()
 		{
+			if (_triggererTaskId == task_id_t()) {
+				return "An external thread enters a taskwait";
+			}
+			
 			std::ostringstream oss;
 			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": enter taskwait " << _taskwaitId;
 			return oss.str();
@@ -109,13 +117,17 @@ namespace Instrument {
 		
 		bool enter_taskwait_step_t::visible()
 		{
-			return true;
+			return (_triggererTaskId != task_id_t());
 		}
 		
 		
 		
 		void exit_taskwait_step_t::execute()
 		{
+			if (_triggererTaskId == task_id_t()) {
+				return;
+			}
+			
 			taskwait_status_t &taskwaitStatus = _taskwaitStatus[_taskwaitId];
 			taskwaitStatus._status = finished_status;
 			taskwaitStatus._lastCPU =_cpu;
@@ -129,6 +141,10 @@ namespace Instrument {
 		
 		std::string exit_taskwait_step_t::describe()
 		{
+			if (_triggererTaskId == task_id_t()) {
+				return "An external thread exits a taskwait";
+			}
+			
 			std::ostringstream oss;
 			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": exit taskwait " << _taskwaitId;
 			return oss.str();
@@ -137,7 +153,7 @@ namespace Instrument {
 		
 		bool exit_taskwait_step_t::visible()
 		{
-			return true;
+			return (_triggererTaskId != task_id_t());
 		}
 		
 		

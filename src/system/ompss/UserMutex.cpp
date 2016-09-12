@@ -109,7 +109,7 @@ void nanos_user_unlock(void **handlerPointer)
 		assert(currentTask != nullptr);
 		
 		if (ThreadManagerPolicy::checkIfUnblockedMustPreemtUnblocker(currentTask, releasedTask, cpu)) {
-			WorkerThread *releasedThread = releasedTask->getThread();
+			WorkerThread *releasedThread = static_cast<WorkerThread *>(releasedTask->getThread());
 			assert(releasedThread != nullptr);
 			
 			CPU *idleCPU = (CPU *) Scheduler::getIdleHardwarePlace();
