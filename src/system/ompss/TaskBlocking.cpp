@@ -46,7 +46,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask)
 		bool runReplacementInline = false;
 		if (replacementTask != nullptr) {
 			// Attempt to set up case (1)
-			replacementThread = static_cast<WorkerThread *>(replacementTask->getThread());
+			replacementThread = replacementTask->getThread();
 			
 			if (replacementThread == nullptr) {
 				runReplacementInline = ThreadManagerPolicy::checkIfMustRunInline(replacementTask, currentTask, cpu);

@@ -1,5 +1,4 @@
 #include "CPUActivation.hpp"
-#include "ExternalThreadEnvironment.hpp"
 #include "TaskFinalization.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
@@ -78,27 +77,14 @@ void *WorkerThread::body()
 		}
 		
 		if (_task != nullptr) {
-			EssentialThreadEnvironment *assignedThreadEnvironment = _task->getThread();
+			WorkerThread *assignedThread = _task->getThread();
 			
 			// A task already assigned to another thread
-			if (assignedThreadEnvironment != nullptr) {
+			if (assignedThread != nullptr) {
 				_task = nullptr;
 				
-				WorkerThread *assignedWorkerThread = dynamic_cast<WorkerThread *>(assignedThreadEnvironment);
-				if (assignedWorkerThread != nullptr) {
-					ThreadManager::addIdler(this);
-					ThreadManager::switchThreads(this, assignedWorkerThread);
-				} else {
-					// The scheduler actually returned a task wrapping environment attached to an external
-					// thread that was probably blocked on a taskwait
-					#ifndef NDEBUG
-						ExternalThreadEnvironment *externalThread = dynamic_cast<ExternalThreadEnvironment *>(assignedThreadEnvironment);
-						assert(externalThread != nullptr);
-					#endif
-					
-					// Wake it up and continue
-					assignedThreadEnvironment->resume();
-				}
+				ThreadManager::addIdler(this);
+				ThreadManager::switchThreads(this, assignedThread);
 			} else {
 				handleTask();
 				_task = nullptr;

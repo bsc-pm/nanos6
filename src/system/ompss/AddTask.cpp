@@ -4,7 +4,6 @@
 #endif
 
 #include "api/nanos6_rt_interface.h"
-#include "executors/threads/ExternalThreadEnvironment.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/HardwarePlace.hpp"
@@ -61,18 +60,13 @@ void nanos_submit_task(void *taskHandle)
 	if (currentWorkerThread != nullptr) {
 		assert(currentWorkerThread->getTask() != nullptr);
 		parent = currentWorkerThread->getTask();
+		assert(parent != nullptr);
 		
 		hardwarePlace = currentWorkerThread->getHardwarePlace();
 		assert(hardwarePlace != nullptr);
-	} else {
-		ExternalThreadEnvironment *taskWrapper = ExternalThreadEnvironment::getTaskWrapperEnvironment();
-		assert(taskWrapper != nullptr);
 		
-		parent = taskWrapper->getTask();
+		task->setParent(parent);
 	}
-	assert(parent != nullptr);
-	
-	task->setParent(parent);
 	
 	Instrument::createdTask(task, task->getInstrumentationTaskId());
 	

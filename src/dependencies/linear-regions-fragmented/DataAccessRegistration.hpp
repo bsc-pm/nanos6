@@ -9,7 +9,6 @@
 #include "CPUDependencyData.hpp"
 #include "DataAccess.hpp"
 
-#include "executors/threads/ExternalThreadEnvironment.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -1385,18 +1384,11 @@ private:
 	static inline CPUDependencyData &getCPUDependencyDataCPUAndThread(/* out */ CPU * &cpu, /* out */ WorkerThread * &thread)
 	{
 		thread = WorkerThread::getCurrentWorkerThread();
-		if (thread != nullptr) {
-			cpu = thread->getHardwarePlace();
-			assert(cpu != nullptr);
-			
-			return cpu->_dependencyData;
-		} else {
-			ExternalThreadEnvironment *_taskWrapper = ExternalThreadEnvironment::getTaskWrapperEnvironment();
-			assert(_taskWrapper != nullptr);
-			
-			cpu = nullptr;
-			return _taskWrapper->getDependencyData();
-		}
+		assert(thread != nullptr);
+		cpu = thread->getHardwarePlace();
+		assert(cpu != nullptr);
+		
+		return cpu->_dependencyData;
 	}
 	
 	
@@ -1468,19 +1460,14 @@ public:
 			task->increasePredecessors(2);
 			
 			WorkerThread *currentThread = nullptr;
-			ExternalThreadEnvironment *externalThreadEnvironment = nullptr;
 			CPU *cpu = nullptr;
 			
 			currentThread = WorkerThread::getCurrentWorkerThread();
-			if (currentThread != nullptr) {
-				cpu = currentThread->getHardwarePlace();
-				assert(cpu != 0);
-			} else {
-				externalThreadEnvironment = ExternalThreadEnvironment::getTaskWrapperEnvironment();
-				assert(externalThreadEnvironment != nullptr);
-			}
+			assert(currentThread != nullptr);
+			cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
 			
-			CPUDependencyData &cpuDependencyData = (currentThread != nullptr ? cpu->_dependencyData : externalThreadEnvironment->getDependencyData());
+			CPUDependencyData &cpuDependencyData = cpu->_dependencyData;
 			
 #ifndef NDEBUG
 			{

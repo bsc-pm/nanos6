@@ -3,7 +3,6 @@
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 
-#include "executors/threads/ExternalThreadEnvironment.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
@@ -18,19 +17,12 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 {
 	Task *currentTask = nullptr;
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	EssentialThreadEnvironment *wrapperEnvironment = nullptr;
 	
-	if (currentThread != nullptr) {
-		currentTask = currentThread->getTask();
-		assert(currentTask != nullptr);
-		assert(currentTask->getThread() == currentThread);
-	} else {
-		wrapperEnvironment = ExternalThreadEnvironment::getTaskWrapperEnvironment();
-		assert(wrapperEnvironment != nullptr);
-		
-		currentTask = wrapperEnvironment->getTask();
-		assert(currentTask != nullptr);
-	}
+	assert(currentThread != nullptr);
+	
+	currentTask = currentThread->getTask();
+	assert(currentTask != nullptr);
+	assert(currentTask->getThread() == currentThread);
 	
 	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource);
 	
@@ -62,13 +54,8 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	// 		on the "old" CPU)
 	
 	if (!done) {
-		if (currentThread != nullptr) {
-			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
-			TaskBlocking::taskBlocks(currentThread, currentTask);
-		} else {
-			// External threads get blocked in taskwaits until they can continue
-			wrapperEnvironment->suspend();
-		}
+		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
+		TaskBlocking::taskBlocks(currentThread, currentTask);
 	}
 	
 	// This in combination with a release from the children makes their changes visible to this thread
