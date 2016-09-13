@@ -7,6 +7,7 @@
 #include "DataAccess.hpp"
 #include "DataAccessSequence.hpp"
 #include "tasks/Task.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentDependenciesByGroup.hpp>
@@ -54,14 +55,27 @@ inline bool DataAccess::evaluateSatisfiability(DataAccess *effectivePrevious, Da
 		return false;
 	}
 	
-	assert(nextAccessType == READ_ACCESS_TYPE);
 	assert(effectivePrevious->_satisfied);
-	if (effectivePrevious->_type == READ_ACCESS_TYPE) {
-		// Consecutive reads are satisfied together
+	
+	if (nextAccessType == READ_ACCESS_TYPE) {
+		if (effectivePrevious->_type == READ_ACCESS_TYPE) {
+			// Consecutive reads are satisfied together
+			return true;
+		} else {
+			assert((effectivePrevious->_type == WRITE_ACCESS_TYPE) || (effectivePrevious->_type == READWRITE_ACCESS_TYPE) || (effectivePrevious->_type == CONCURRENT_ACCESS_TYPE));
+			// Read after Write
+			return false;
+		}
+	}
+	
+	assert(nextAccessType == CONCURRENT_ACCESS_TYPE);
+	
+	if (effectivePrevious->_type == CONCURRENT_ACCESS_TYPE) {
+		// Concurrent accesses are satisfied together
 		return true;
 	} else {
-		assert((effectivePrevious->_type == WRITE_ACCESS_TYPE) || (effectivePrevious->_type == READWRITE_ACCESS_TYPE));
-		// Read after Write
+		assert((effectivePrevious->_type == WRITE_ACCESS_TYPE) || (effectivePrevious->_type == READWRITE_ACCESS_TYPE) || (effectivePrevious->_type == READ_ACCESS_TYPE));
+		// First concurrent access with accesses before it
 		return false;
 	}
 }
@@ -355,6 +369,12 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 bool DataAccess::upgradeAccess(Task *task, DataAccess /* INOUT */ * /* INOUT */ &dataAccess, DataAccessType newAccessType, bool newAccessWeakness)
 {
 	assert(dataAccess != nullptr);
+	
+	FatalErrorHandler::failIf((dataAccess->_type == CONCURRENT_ACCESS_TYPE) ||
+		(newAccessType == CONCURRENT_ACCESS_TYPE),
+		"when registering accesses for task ",
+		(task->getTaskInfo()->task_label != nullptr ? task->getTaskInfo()->task_label : task->getTaskInfo()->declaration_source),
+		": Combining accesses of type concurrent with other accesses over the same data is not permitted");
 	
 	if (dataAccess->_type == newAccessType) {
 		return upgradeSameTypeAccess(task, dataAccess, newAccessWeakness);

@@ -94,3 +94,7 @@ void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t le
 }
 
 
+void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length)
+{
+	register_access<CONCURRENT_ACCESS_TYPE, false>(handler, start, length);
+}
