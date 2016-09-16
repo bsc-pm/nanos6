@@ -74,7 +74,8 @@ inline bool DataAccess::reevaluateSatisfiability(DataAccess *effectivePrevious)
 		return false;
 	}
 	
-	return DataAccess::evaluateSatisfiability(effectivePrevious, _type);
+	_satisfied = DataAccess::evaluateSatisfiability(effectivePrevious, _type);
+	return _satisfied;
 }
 
 
