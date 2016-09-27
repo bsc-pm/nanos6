@@ -23,7 +23,7 @@ namespace Instrument {
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		if (currentThread == nullptr) {
 			// The main task gets added by a non-worker thread
-			assert(_nextTaskId == 0);
+			// And other tasks can also be added by external threads in library mode
 		}
 		
 		thread_id_t threadId = 0;
@@ -68,6 +68,7 @@ namespace Instrument {
 			assert(parentTask != nullptr);
 		} else {
 			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
 		}
 		
 		// Create the task information

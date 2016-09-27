@@ -28,8 +28,7 @@ static void *worker_thread_body_wrapper(void *parameter)
 
 
 WorkerThread::WorkerThread(CPU *cpu)
-	: _suspensionConditionVariable(), _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false), _task(nullptr),
-	_dependencyDomain()
+	: _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false)
 {
 	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, &worker_thread_body_wrapper, this);
 	FatalErrorHandler::handle(rc, " when creating a pthread in CPU ", cpu->_systemCPUId);
@@ -83,6 +82,7 @@ void *WorkerThread::body()
 			// A task already assigned to another thread
 			if (assignedThread != nullptr) {
 				_task = nullptr;
+				
 				ThreadManager::addIdler(this);
 				ThreadManager::switchThreads(this, assignedThread);
 			} else {

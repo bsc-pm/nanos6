@@ -15,10 +15,12 @@
 
 void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 {
+	Task *currentTask = nullptr;
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	
 	assert(currentThread != nullptr);
 	
-	Task *currentTask = currentThread->getTask();
+	currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 	assert(currentTask->getThread() == currentThread);
 	
@@ -30,6 +32,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 		std::atomic_thread_fence(std::memory_order_acquire);
 		
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
+		
 		return;
 	}
 	
@@ -65,7 +68,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	
 	DataAccessRegistration::handleExitTaskwait(currentTask);
 	
-	if (!done) {
+	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 	}

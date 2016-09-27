@@ -22,7 +22,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:pending";
 		
@@ -43,7 +43,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:ready";
 		
@@ -64,7 +64,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:executing";
 		
@@ -85,7 +85,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:blocked";
 		logEntry->_contents << " reason:";
@@ -118,7 +118,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:zombie";
 		

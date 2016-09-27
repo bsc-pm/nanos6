@@ -302,7 +302,7 @@ private:
 			}
 		}
 		
-		assert(!targetAccess->hasForcedRemoval() || !targetAccess->isInBottomMap());
+		assert(targetAccess->hasForcedRemoval() || !targetAccess->isInBottomMap());
 	}
 	
 	
@@ -1375,9 +1375,6 @@ private:
 		CPU *cpu,
 		WorkerThread *thread
 	) {
-		assert(cpu != nullptr);
-		assert(thread != nullptr);
-		
 		for (Task *removableTask : removableTasks) {
 			TaskFinalization::disposeOrUnblockTask(removableTask, cpu, thread);
 		}
@@ -1388,7 +1385,6 @@ private:
 	{
 		thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
-		
 		cpu = thread->getHardwarePlace();
 		assert(cpu != nullptr);
 		
@@ -1463,11 +1459,13 @@ public:
 			
 			task->increasePredecessors(2);
 			
-			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-			assert(currentThread != 0);
+			WorkerThread *currentThread = nullptr;
+			CPU *cpu = nullptr;
 			
-			CPU *cpu = currentThread->getHardwarePlace();
-			assert(cpu != 0);
+			currentThread = WorkerThread::getCurrentWorkerThread();
+			assert(currentThread != nullptr);
+			cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
 			
 			CPUDependencyData &cpuDependencyData = cpu->_dependencyData;
 			
@@ -1603,8 +1601,6 @@ public:
 		CPU *cpu = nullptr;
 		WorkerThread *currentThread = nullptr;
 		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
-		assert(cpu != nullptr);
-		assert(currentThread != nullptr);
 		
 #ifndef NDEBUG
 		{

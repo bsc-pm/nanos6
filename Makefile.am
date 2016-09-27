@@ -22,6 +22,7 @@ lib_revision = 0
 lib_age = 0
 
 pkginclude_HEADERS = \
+	common/api/nanos6_library_interface.h \
 	common/api/nanos6_rt_interface.h \
 	common/api/nanos6_debug_interface.h
 
@@ -48,6 +49,7 @@ common_sources = \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.cpp \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
+	src/executors/threads/EssentialThreadEnvironment.hpp \
 	src/executors/threads/TaskFinalization.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
@@ -101,6 +103,7 @@ common_sources = \
 	src/system/LeaderThread.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
+	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
