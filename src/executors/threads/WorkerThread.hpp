@@ -6,11 +6,10 @@
 
 #include "CPU.hpp"
 #include "EssentialThreadEnvironment.hpp"
+#include "Thread.hpp"
 
 #include <atomic>
 #include <cassert>
-
-#include <pthread.h>
 
 
 class Task;
@@ -18,7 +17,7 @@ class ThreadManager;
 class SchedulingDecisionPlaceholder;
 
 
-class WorkerThread : public EssentialThreadEnvironment {
+class WorkerThread : public Thread, public EssentialThreadEnvironment {
 private:
 	//! The CPU on which this thread is running.
 	CPU *_cpu;
@@ -33,11 +32,6 @@ private:
 	
 	//! Thread Local Storage variable to point back to the WorkerThread that is running the code
 	static __thread WorkerThread *_currentWorkerThread;
-	
-	inline void exit()
-	{
-		pthread_exit(nullptr);
-	}
 	
 	void handleTask();
 	

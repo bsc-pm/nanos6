@@ -1,17 +1,48 @@
+#include <cassert>
 #include <ctime>
 #include <iostream>
 
 #include <time.h>
 
 #include "LeaderThread.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 #include <InstrumentLeaderThread.hpp>
 
 
-std::atomic<bool> LeaderThread::_mustExit(false);
+LeaderThread *LeaderThread::_singleton;
 
 
-void LeaderThread::maintenanceLoop()
+void LeaderThread::initialize()
+{
+	_singleton = new LeaderThread();
+}
+
+
+void LeaderThread::shutdown()
+{
+	assert(_singleton != nullptr);
+	bool expected = false;
+	_singleton->_mustExit.compare_exchange_strong(expected, true);
+	assert(!expected);
+	
+	void *dummy;
+	int rc = pthread_join(_singleton->_pthread, &dummy);
+	FatalErrorHandler::handle(rc, "Error joining leader thread");
+	
+	delete _singleton;
+	_singleton = nullptr;
+}
+
+
+LeaderThread::LeaderThread()
+	: _mustExit(false)
+{
+	start(nullptr);
+}
+
+
+void *LeaderThread::body()
 {
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {
 		struct timespec delay = { 0, 1000000}; // 1000 Hz
@@ -20,15 +51,10 @@ void LeaderThread::maintenanceLoop()
 		while (nanosleep(&delay, &delay)) {
 		}
 		
-		// check somenting, like changes on the process_mask, or if there is any
+		// check something, like changes on the process_mask, or if there is any
 		// pending work
 		Instrument::leaderThreadSpin();
 	}
 }
 
-
-void LeaderThread::notifyMainExit()
-{
-	std::atomic_store_explicit(&_mustExit, true, std::memory_order_release);
-}
 

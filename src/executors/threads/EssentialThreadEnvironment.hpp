@@ -5,8 +5,6 @@
 #include "DependencyDomain.hpp"
 #include "lowlevel/ConditionVariable.hpp"
 
-#include <pthread.h>
-
 
 class Task;
 
@@ -21,9 +19,6 @@ protected:
 	
 	//! Dependency domain of the tasks instantiated by this thread
 	DependencyDomain _dependencyDomain;
-	
-	//! The underlying pthread
-	pthread_t _pthread;
 	
 	
 public:

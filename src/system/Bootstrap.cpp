@@ -49,6 +49,7 @@ void nanos_preinit(void) {
 	ThreadManager::preinitialize();
 	Scheduler::initialize();
 	Instrument::initialize();
+	LeaderThread::initialize();
 }
 
 
@@ -75,6 +76,7 @@ void nanos_init(void) {
 
 
 void nanos_shutdown(void) {
+	LeaderThread::shutdown();
 	Instrument::shutdown();
 	
 	if (shutdownDueToSignalNumber.load() != 0) {

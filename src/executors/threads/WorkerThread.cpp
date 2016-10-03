@@ -2,7 +2,6 @@
 #include "TaskFinalization.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
@@ -19,19 +18,10 @@
 __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
 
 
-static void *worker_thread_body_wrapper(void *parameter)
-{
-	WorkerThread *workerThread = (WorkerThread *) parameter;
-	assert(workerThread != nullptr);
-	return workerThread->body();
-}
-
-
 WorkerThread::WorkerThread(CPU *cpu)
 	: _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false)
 {
-	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, &worker_thread_body_wrapper, this);
-	FatalErrorHandler::handle(rc, " when creating a pthread in CPU ", cpu->_systemCPUId);
+	start(&cpu->_pthreadAttr);
 }
 
 

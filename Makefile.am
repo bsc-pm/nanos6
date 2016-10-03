@@ -51,6 +51,8 @@ common_sources = \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
 	src/executors/threads/EssentialThreadEnvironment.hpp \
 	src/executors/threads/TaskFinalization.hpp \
+	src/executors/threads/Thread.cpp \
+	src/executors/threads/Thread.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/ThreadManagerPolicy.cpp \
