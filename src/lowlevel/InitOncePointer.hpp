@@ -22,11 +22,16 @@ public:
 	template <typename... ConstructorArgTypes>
 	static inline bool init(void * &pointer, ConstructorArgTypes... constructorArgs)
 	{
-		std::atomic<void *> &ref = (std::atomic<void *> &) (pointer);
-		
 		// Constants that we use to identify the initialization stages
 		void * const uninitializedValue = nullptr;
 		void * const initializingValue = (void *) ~0UL;
+		
+		// Fast check
+		if (__builtin_expect( (pointer != uninitializedValue) && (pointer != initializingValue), 1 )) {
+			return false;
+		}
+		
+		std::atomic<void *> &ref = (std::atomic<void *> &) (pointer);
 		
 		// Not initialized yet
 		if (__builtin_expect(ref.load() == nullptr, 0)) {
