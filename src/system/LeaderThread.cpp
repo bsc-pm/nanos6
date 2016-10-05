@@ -55,6 +55,8 @@ void *LeaderThread::body()
 		// pending work
 		Instrument::leaderThreadSpin();
 	}
+	
+	return nullptr;
 }
 
 
