@@ -55,7 +55,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	
 	if (!done) {
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
-		TaskBlocking::taskBlocks(currentThread, currentTask);
+		TaskBlocking::taskBlocks(currentThread, currentTask, true);
 	}
 	
 	// This in combination with a release from the children makes their changes visible to this thread

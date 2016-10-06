@@ -74,7 +74,7 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	Instrument::blockedOnUserMutex(&userMutex);
 	
 	DataAccessRegistration::handleEnterBlocking(currentTask);
-	TaskBlocking::taskBlocks(currentThread, currentTask);
+	TaskBlocking::taskBlocks(currentThread, currentTask, false);
 	DataAccessRegistration::handleExitBlocking(currentTask);
 	
 	// This in combination with a release from other threads makes their changes visible to this one
