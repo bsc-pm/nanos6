@@ -3,6 +3,8 @@
 
 #include <hwloc.h>
 #include "Machine.hpp"
+#include "places/CPUPlace.hpp"
+#include "places/NUMAPlace.hpp"
 
 class Machine;
 
@@ -11,11 +13,11 @@ class Loader{
 private:
 	hwloc_topology_t _topology;
 	
-	MemoryPlace* createMemoryFromObj(hwloc_obj_t node_obj, AddressSpace * space);
-	MemoryPlace* createMemoryFromMachine(AddressSpace * space);
+	NUMAPlace* createMemoryFromObj(hwloc_obj_t node_obj, AddressSpace * space);
+	NUMAPlace* createMemoryFromMachine(AddressSpace * space);
 
-	inline ComputePlace* createPUFromObj(hwloc_obj_t pu_obj) {
-        	return new ComputePlace( pu_obj->logical_index );
+	inline CPUPlace* createCPUFromObj(hwloc_obj_t cpu_obj) {
+        	return new CPUPlace( cpu_obj->logical_index );
 	}
 	
 public:

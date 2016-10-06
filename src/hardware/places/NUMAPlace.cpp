@@ -1,14 +1,14 @@
-#ifndef MEMORY_PLACE_CPP
-#define MEMORY_PLACE_CPP
+#ifndef NUMA_PLACE_CPP
+#define NUMA_PLACE_CPP
 
-#include "MemoryPlace.hpp"
+#include "NUMAPlace.hpp"
 #include "ComputePlace.hpp"
 
-void MemoryPlace::addPU(ComputePlace * pu) {
+void NUMAPlace::addPU(ComputePlace * pu) {
     _processingUnits[pu->getIndex()] = pu;
 }
 
-const std::vector<int>* MemoryPlace::getPUIndexes(){
+const std::vector<int>* NUMAPlace::getPUIndexes(){
     std::vector<int>* indexes = new std::vector<int>();
 
     for(processingUnits_t::iterator it = _processingUnits.begin(); it != _processingUnits.end(); ++it){
@@ -18,7 +18,7 @@ const std::vector<int>* MemoryPlace::getPUIndexes(){
     return indexes;
 }
 
-const std::vector<ComputePlace*>* MemoryPlace::getPUs(){
+const std::vector<ComputePlace*>* NUMAPlace::getPUs(){
     std::vector<ComputePlace*>* PUs = new std::vector<ComputePlace*>();
 
     for(processingUnits_t::iterator it = _processingUnits.begin(); it != _processingUnits.end(); ++it){
@@ -28,4 +28,4 @@ const std::vector<ComputePlace*>* MemoryPlace::getPUs(){
     return PUs;
 }
 
-#endif //MEMORY_PLACE_CPP
+#endif //NUMA_PLACE_CPP

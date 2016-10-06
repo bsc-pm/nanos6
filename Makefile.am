@@ -48,11 +48,14 @@ common_sources = \
 	src/executors/threads/ThreadManagerPolicyInterface.hpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
-	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
-	src/hardware/places/MemoryPlace.cpp \
+    src/hardware/places/AIOPlace.hpp \
+    src/hardware/places/NUMAPlace.hpp \
+    src/hardware/places/NUMAPlace.cpp \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/ComputePlace.cpp \
+	src/hardware/places/CPUPlace.hpp \
+	src/hardware/places/CPUPlace.cpp \
 	src/hardware/Loader.cpp \
 	src/hardware/Loader.hpp \
 	src/hardware/Machine.cpp \
@@ -80,6 +83,11 @@ common_sources = \
 	src/memory/Directory.hpp \
 	src/memory/MemoryRegion.hpp \
 	src/memory/MemoryObject.hpp \
+	src/memory/GenericCache.hpp \
+	src/memory/AIOCache.hpp \
+	src/memory/AIOCache.cpp \
+	src/memory/NUMACache.hpp \
+	src/memory/NUMACache.cpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
