@@ -46,6 +46,7 @@ AC_SUBST([full_top_srcdir])
 
 # Checks for libraries.
 AX_BOOST_BASE([1.59], [], [ AC_MSG_ERROR([Boost library not found])])
+AX_PTHREAD
 
 # Checks for header files.
 AC_CHECK_HEADERS([unistd.h])
