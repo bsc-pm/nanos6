@@ -2,6 +2,8 @@
 #define LOADER_CPP
 
 #include "Loader.hpp"
+#include "places/AIOPlace.hpp"
+#include "../memory/AIOCache.hpp"
 #if HWLOC_API_VERSION < 0x00010b00 
     #define HWLOC_NUMA_ALIAS HWLOC_OBJ_NODE 
 #else
@@ -18,8 +20,9 @@ Loader::~Loader(){
 }
 
 void Loader::load(Machine *machine){
+    // Load SMP device
     // Create NUMA addressSpace
-    AddressSpace * numaAddressSpace = new AddressSpace(machine->getNewAddressSpaceId());
+    AddressSpace * NUMAAddressSpace = new AddressSpace();
 
     // Get NUMA nodes of the machine
     //int n_nodes = hwloc_get_nbobjs_by_type( _topology, HWLOC_OBJ_NUMANODE );
@@ -27,12 +30,11 @@ void Loader::load(Machine *machine){
 
     if(n_nodes != 0){ // NUMA node info is available
         for(int i = 0; i < n_nodes; i++){ //Load nodes
-            //MemoryPlace *node = createMemoryFromObj(hwloc_get_obj_by_type( _topology, HWLOC_OBJ_NUMANODE, i ), numaAddressSpace);
-            MemoryPlace *node = createMemoryFromObj(hwloc_get_obj_by_type( _topology, HWLOC_NUMA_ALIAS, i ), numaAddressSpace);
+            NUMAPlace *node = createMemoryFromObj(hwloc_get_obj_by_type( _topology, HWLOC_NUMA_ALIAS, i ), NUMAAddressSpace);
             machine->addMemoryNode(node);
         }
     } else { // No NUMA info, fallback on single node
-        MemoryPlace *node = createMemoryFromMachine(numaAddressSpace); 
+        NUMAPlace *node = createMemoryFromMachine(NUMAAddressSpace); 
         machine->addMemoryNode(node);
     }
 
@@ -41,24 +43,34 @@ void Loader::load(Machine *machine){
 
     if(n_cores != 0){ // core info is available
         for(int i = 0; i < n_cores; i++){ //Load nodes
-            ComputePlace *node = createPUFromObj( hwloc_get_obj_by_type( _topology, HWLOC_OBJ_CORE, i ) );
+            CPUPlace *node = createCPUFromObj( hwloc_get_obj_by_type( _topology, HWLOC_OBJ_CORE, i ) );
             machine->addComputeNode(node);
         }
     } else { // No core info, fallback detecting processing units
         int n_PUs = hwloc_get_nbobjs_by_type( _topology, HWLOC_OBJ_PU );
-        for(int i = 0; i < n_cores; i++){ //Load nodes
-            ComputePlace *node = createPUFromObj( hwloc_get_obj_by_type( _topology, HWLOC_OBJ_PU, i ) );
+        for(int i = 0; i < n_PUs; i++){ //Load nodes
+            CPUPlace *node = createCPUFromObj( hwloc_get_obj_by_type( _topology, HWLOC_OBJ_PU, i ) );
             machine->addComputeNode(node);
         }
     }
 
-    // Associate ComputePlaces with MemoryPlaces
+    // Associate CPUPlaces with NUMAPlaces
     for(Machine::MemoryNodes_t::iterator mem = machine->memoryNodesBegin(); mem != machine->memoryNodesEnd(); ++mem) {
         for(Machine::ComputeNodes_t::iterator pu = machine->computeNodesBegin(); pu != machine->computeNodesEnd(); ++pu) {
-            mem->second->addPU(pu->second);
+            NUMAPlace * numa = (NUMAPlace *) mem->second;
+            numa->addPU(pu->second);
             pu->second->addMemoryPlace(mem->second);
         }
     }
+
+    // Load AIO device
+    // Create AIO addressSpace
+    AddressSpace * AIOAddressSpace = new AddressSpace();
+    // Create AIOCache
+    AIOCache * AIOcache = new AIOCache();
+    // Create AIO Memory Place
+    AIOPlace * AIOMemoryPlace = new AIOPlace(/*index*/ -1, AIOcache, AIOAddressSpace);
+    machine->addMemoryNode(AIOMemoryPlace);
 
     // load accelerators
     // load distances
@@ -66,14 +78,16 @@ void Loader::load(Machine *machine){
     //other work				
 }
 
-MemoryPlace* Loader::createMemoryFromObj(hwloc_obj_t node_obj, AddressSpace * space){
+NUMAPlace* Loader::createMemoryFromObj(hwloc_obj_t node_obj, AddressSpace * space){
     // Create MemoryPlace representing the NUMA node
-    MemoryPlace* node = new MemoryPlace(node_obj->logical_index, space);
+    NUMACache * cache = new NUMACache();
+    NUMAPlace* node = new NUMAPlace(node_obj->logical_index, cache, space);
     return node;
 }
 
-MemoryPlace* Loader::createMemoryFromMachine( AddressSpace * space){
-    MemoryPlace* node = new MemoryPlace(0, space); // arbitrary os index // TODO: special index? Negative index?
+NUMAPlace* Loader::createMemoryFromMachine( AddressSpace * space){
+    NUMACache * cache = new NUMACache();
+    NUMAPlace* node = new NUMAPlace(0, cache, space); // arbitrary os index // TODO: special index? Negative index?
     return node;
 }
 

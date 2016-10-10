@@ -13,24 +13,22 @@ public:
 	typedef std::map<int, MemoryPlace*> MemoryNodes_t;
 	typedef std::map<int, ComputePlace*> ComputeNodes_t;
 private:
-	//typedef std::map<int, MemoryPlace*> MemoryNodes_t;
-	//typedef std::map<int, ComputePlace*> ComputeNodes_t;
     // pair.first -> ComputePlace || pair.second -> MemoryPlace
     typedef std::map<std::pair<int, int>, float> Distances_t;
 	
+    // Physical memory places. For instance, 2 NUMA nodes are 2 different memory places.
     MemoryNodes_t _memoryNodes;
+    // Physical compute places.
     ComputeNodes_t _computeNodes;
+    // Cost of accessing from a ComputePlace to a MemoryPlace.
     Distances_t _distances;
 
 	long _pageSize; //< pre loaded page size to avoid redundant system calls
 
-    // First unused adressSpace identifier
-    unsigned int _addressSpacesCount;
-
+    // The actual instance of this class.
 	static Machine *_machine;
 
 	Machine()
-        : _addressSpacesCount(0)
 	{
 	}
 
@@ -39,7 +37,6 @@ public:
     static void initialize();
 	static inline Machine * getMachine() { return _machine; }
 	inline const long getPageSize(void) { return _pageSize; }
-    inline unsigned int getNewAddressSpaceId() { return _addressSpacesCount++; }
 
     // ComputeNodes related methods
 	inline size_t getComputeNodeCount(void) { return _computeNodes.size(); }

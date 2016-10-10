@@ -10,14 +10,9 @@ class AddressSpace {
 private:
 	typedef std::map<int, MemoryPlace*> memoryPlaces_t;
 	memoryPlaces_t _memoryPlaces; // MemoryPlaces within this AddressSpace 
-
-protected:
-    unsigned int _index;	
 	
 public:
-	AddressSpace(unsigned int index)
-        : _index(index)
-	{}
+	AddressSpace() {}
     
     virtual ~AddressSpace() {}
 	const size_t getMemoryPlacesCount(void){ return _memoryPlaces.size(); }
