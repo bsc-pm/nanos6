@@ -49,10 +49,10 @@ common_sources = \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/hardware/places/CPUPlace.hpp \
-	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/MemoryPlace.cpp \
-	src/hardware/places/ComputePlace.hpp \
+	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/ComputePlace.cpp \
+	src/hardware/places/ComputePlace.hpp \
 	src/hardware/Loader.cpp \
 	src/hardware/Loader.hpp \
 	src/hardware/Machine.cpp \
@@ -75,14 +75,16 @@ common_sources = \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
-	src/memory/CopyObject.hpp \
-	src/memory/Directory.cpp \
-	src/memory/Directory.hpp \
-	src/memory/MemoryRegion.hpp \
-	src/memory/MemoryObject.hpp \
-	src/memory/Shape.hpp \
-	src/memory/Shape.cpp \
-	src/memory/MemoryOperations.hpp \
+	src/memory/AddressSpace.hpp \
+	src/memory/directory/Directory.hpp \
+	src/memory/directory/CopySet.hpp \
+	src/memory/directory/CopySet.cpp \
+	src/memory/directory/CopyObject.hpp \
+	src/memory/directory/MemoryRegion.hpp \
+	src/memory/directory/RegionSet.hpp \
+	src/memory/directory/RegionSet.cpp \
+	src/memory/Region.hpp \
+	src/memory/Region.cpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
@@ -380,9 +382,11 @@ inline_double_linked_list_test_SOURCES = tests/unit/support/TestInlineDoublyLink
 inline_double_linked_list_test_CPPFLAGS = -DNDEBUG
 inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
 
-directory_test_SOURCES = tests/unit/directory/TestDirectory.cpp
-directory_test_CPPFLAGS = -DNDEBUG
+directory_test_SOURCES = tests/unit/directory/TestDirectory.cpp $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
+directory_test_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 directory_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
+directory_test_LDFLAGS = $(common_libnanos6_ldflags)
+
 
 check_PROGRAMS = $(unit_tests)
 TESTS = $(unit_tests)
