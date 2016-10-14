@@ -16,6 +16,30 @@ public:
 	: _region(baseAddress, size),
 	_version(0){
 	
+	}
+
+	void *getBaseAddress(){
+		return _region._baseAddress;
+	}
+
+	void *getEndAddress(){
+		return _region._endAddress;
+	}
+
+	size_t getSize(){
+		return _region._size;
+	}
+
+	int getVersion(){
+		return _version;
+	}
+
+	void setVersion(int version){
+		_version = version;
+	}
+
+	void incrementVersion(){
+		_version++;
 	} 
 	
 	/* Key for Boost Intrusive AVL Set */

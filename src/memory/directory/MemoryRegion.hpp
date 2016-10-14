@@ -20,6 +20,21 @@ public:
 	
 	}
 
+	void *getBaseAddress(){
+		return _region._baseAddress;
+	}
+
+	void *getEndAddress(){
+		return _region._endAddress;
+	}
+
+	size_t getSize(){
+		return _region._size;
+	}
+
+	MemoryPlace *getLocation(){
+		return location;
+	}
 	
 	/* Key structure for Boost Intrusive AVL Set */
 	struct key_value
