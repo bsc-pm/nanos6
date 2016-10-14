@@ -23,6 +23,18 @@ Region::Region(void *baseAddress, size_t size)
 		
 }
 
+bool Region::intersects(Region &other){
+	return std::max(_baseAddress, other._baseAddress) < std::min(_endAddress, other._endAddress);
+}
+
+bool Region::contains(Region &other){
+	return _baseAddress <= other._baseAddress && _endAddress >= other._endAddress;
+}
+
+bool Region::containedIn(Region &other){
+	return _baseAddress >= other._baseAddress && _endAddress <= other._endAddress;
+}
+
 void *Region::add(void *ptr, size_t bytes){
 	return static_cast<void *>( static_cast<char *>( ptr ) + bytes );
 }
