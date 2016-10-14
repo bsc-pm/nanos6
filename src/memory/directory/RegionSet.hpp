@@ -5,6 +5,7 @@
 #include <functional> // std::less
 
 #include "MemoryRegion.hpp"
+#include "memory/TaskMemoryData.hpp"
 
 class RegionSet{
 
@@ -26,6 +27,8 @@ public:
 	iterator begin();
 	iterator end();
 	iterator find(void *address);
+	void insert(TaskMemoryData data);
+
 };
 
 #endif //REGION_SET_HPP

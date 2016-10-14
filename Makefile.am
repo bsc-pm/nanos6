@@ -80,6 +80,7 @@ common_sources = \
 	src/lowlevel/SpinLock.hpp \
 	src/memory/AddressSpace.hpp \
 	src/memory/directory/Directory.hpp \
+	src/memory/directory/Directory.cpp \
 	src/memory/directory/CopySet.hpp \
 	src/memory/directory/CopySet.cpp \
 	src/memory/directory/CopyObject.hpp \

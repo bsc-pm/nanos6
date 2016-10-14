@@ -7,6 +7,8 @@
 #include "CopySet.hpp"
 #include "RegionSet.hpp"
 
+#include "memory/TaskMemoryData.hpp"
+
 class Directory {
 
 
@@ -24,7 +26,7 @@ public:
 
 	/* At least base address and shape needed */	
 
-	void /* std::pair<iterator, iterator>? */ insert(/* Define */);
+	void insert(TaskMemoryData data);
 	
 	void /* std::pair<iterator, iterator>? */ erase(/* Define */);
 };
