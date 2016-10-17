@@ -2,7 +2,7 @@
 #define INSTRUMENT_GRAPH_TASK_WAIT_HPP
 
 
-#include "../InstrumentTaskWait.hpp"
+#include "../api/InstrumentTaskWait.hpp"
 
 #include <InstrumentTaskId.hpp>
 

@@ -7,6 +7,7 @@
 #include <InstrumentTaskStatus.hpp>
 #include <tasks/Task.hpp>
 
+#include <atomic>
 #include <cassert>
 
 
@@ -37,13 +38,14 @@ public:
 	//!
 	//! \param[in] task the task to be added
 	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
+	//! \param[in] hint a hint about the relation of the task to the current task
 	//!
-	//! \returns an idle ComputePlace that is to be resumed or nullptr
-	static inline ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace)
+	//! \returns an idle HardwarePlace that is to be resumed or nullptr
+	static inline ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, SchedulerInterface::ReadyTaskHint hint = SchedulerInterface::NO_HINT)
 	{
 		assert(task != 0);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
-		return _scheduler->addReadyTask(task, hardwarePlace);
+		return _scheduler->addReadyTask(task, hardwarePlace, hint);
 	}
 	
 	//! \brief Add back a task that was blocked but that is now unblocked
@@ -88,6 +90,44 @@ public:
 	static inline ComputePlace *getIdleComputePlace(bool force=false)
 	{
 		return _scheduler->getIdleComputePlace(force);
+	}
+	
+	//! \brief Notify the scheduler that a hardware place is being disabled so that it has a chance to migrate any preassigned tasks
+	//! 
+	//! \param[in] hardwarePlace the hardware place that is about to be disabled
+	static void disableHardwarePlace(HardwarePlace *hardwarePlace)
+	{
+		_scheduler->disableHardwarePlace(hardwarePlace);
+	}
+	
+	//! \brief Notify the scheduler that a hardware place is back online so that it preassign tasks to it
+	//! 
+	//! \param[in] hardwarePlace the hardware place that is about to be enabled
+	static void enableHardwarePlace(HardwarePlace *hardwarePlace)
+	{
+		_scheduler->enableHardwarePlace(hardwarePlace);
+	}
+	
+	//! \brief Attempt to get a one task polling slot
+	//! 
+	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
+	//! \param[out] pollingSlot a pointer to a location that the caller will poll for ready tasks
+	//! 
+	//! \returns true if the caller is allowed to poll that memory position for a single ready task or if it actually got a task, otherwise false and the hardware place is assumed to become idle
+	static inline bool requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+	{
+		return _scheduler->requestPolling(hardwarePlace, pollingSlot);
+	}
+	
+	//! \brief Attempt to release the polling slot
+	//! 
+	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
+	//! \param[out] pollingSlot a pointer to a location that the caller is polling for ready tasks
+	//! 
+	//! \returns true if the caller has successfully released the polling slot otherwise false indicating that there already is a taskl assigned or it is on the way
+	static bool releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+	{
+		return _scheduler->releasePolling(hardwarePlace, pollingSlot);
 	}
 	
 };

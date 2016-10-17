@@ -58,6 +58,39 @@ public:
 		return _startAddress;
 	}
 	
+	//! \brief Returns the intersection or an empty DataAccessRange if there is none
+	DataAccessRange intersect(DataAccessRange const &other) const
+	{
+		if (other == *this) {
+			return other;
+		} else {
+			return DataAccessRange();
+		}
+	}
+	
+	
+	bool fullyContainedIn(DataAccessRange const &other) const
+	{
+		return other == *this;
+	}
+	
+	
+	template <typename ThisOnlyProcessorType, typename IntersectingProcessorType, typename OtherOnlyProcessorType>
+	void processIntersectingFragments(
+		DataAccessRange const &fragmeterRange,
+		ThisOnlyProcessorType thisOnlyProcessor,
+		IntersectingProcessorType intersectingProcessor,
+		OtherOnlyProcessorType otherOnlyProcessor
+	) {
+		if (fragmeterRange == *this) {
+			intersectingProcessor(fragmeterRange);
+		} else {
+			thisOnlyProcessor(*this);
+			otherOnlyProcessor(fragmeterRange);
+		}
+	}
+	
+	
 	friend std::ostream & ::operator<<(std::ostream &o, DataAccessRange const &range);
 };
 

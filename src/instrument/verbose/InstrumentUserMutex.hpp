@@ -2,7 +2,7 @@
 #define INSTRUMENT_VERBOSE_USER_MUTEX_HPP
 
 
-#include "../InstrumentUserMutex.hpp"
+#include "../api/InstrumentUserMutex.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_USER_MUTEX_HPP

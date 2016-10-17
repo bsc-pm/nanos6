@@ -53,23 +53,19 @@ void nanos_submit_task(void *taskHandle)
 	Task *task = (Task *) taskHandle;
 	assert(task != nullptr);
 	
+	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	
 	ComputePlace *hardwarePlace = nullptr;
-	if (__builtin_expect((currentWorkerThread != nullptr), 1)) {
+	
+	if (currentWorkerThread != nullptr) {
 		assert(currentWorkerThread->getTask() != nullptr);
-		task->setParent(currentWorkerThread->getTask());
+		parent = currentWorkerThread->getTask();
+		assert(parent != nullptr);
 		
 		hardwarePlace = currentWorkerThread->getComputePlace();
 		assert(hardwarePlace != nullptr);
-	} else {
-		// Adding the main task from within the leader thread
-		assert(task->getTaskInfo() != 0);
 		
-		// The following two assertions fail if the symbol of the nanos_task_info
-		// of "main" gets overwriten by that of another task
-		assert(task->getTaskInfo()->task_label != 0);
-		assert(std::string(task->getTaskInfo()->task_label) == std::string("main"));
+		task->setParent(parent);
 	}
 	
 	Instrument::createdTask(task, task->getInstrumentationTaskId());
@@ -82,8 +78,8 @@ void nanos_submit_task(void *taskHandle)
 	}
 	
 	if (ready) {
-		ComputePlace *idleComputePlace = Scheduler::addReadyTask(task, hardwarePlace);
-		assert((currentWorkerThread != nullptr) || (idleComputePlace == nullptr)); // The main task is added before the scheduler
+		ComputePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace, SchedulerInterface::SchedulerInterface::CHILD_TASK_HINT);
+		assert((currentWorkerThread != nullptr) || (idleHardwarePlace == nullptr)); // The main task is added before the scheduler
 		
 		if (idleComputePlace != nullptr) {
 			ThreadManager::resumeIdle((CPU *) idleComputePlace);

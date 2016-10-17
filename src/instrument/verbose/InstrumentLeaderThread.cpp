@@ -3,10 +3,12 @@
 #include "InstrumentLeaderThread.hpp"
 #include "InstrumentVerbose.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "lowlevel/SpinLock.hpp"
 #include "system/LeaderThread.hpp"
 
 #include <algorithm>
 #include <iomanip>
+#include <mutex>
 #include <vector>
 
 
@@ -15,6 +17,11 @@ using namespace Instrument::Verbose;
 
 namespace Instrument {
 	void leaderThreadSpin() {
+		static SpinLock lock;
+		
+		// This is needed since this method can be called by a regular thread on abort
+		std::lock_guard<SpinLock> guard(lock);
+		
 		// Logging part
 		if (_verboseLeaderThread) {
 			LogEntry *logEntry = getLogEntry();
@@ -25,7 +32,7 @@ namespace Instrument {
 			if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 			} else {
-				logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+				logEntry->_contents << "Thread:external CPU:ANY";
 			}
 			logEntry->_contents << " --- LeaderThreadSpin";
 			
@@ -40,7 +47,7 @@ namespace Instrument {
 		
 		// Swap the current log
 		LogEntry *currentEntry = _lastEntry.load();
-		while (!_lastEntry.compare_exchange_weak(currentEntry, nullptr)) {
+		while (!_lastEntry.compare_exchange_strong(currentEntry, nullptr)) {
 		}
 		
 		// Move the log to a vector
@@ -101,7 +108,7 @@ namespace Instrument {
 		LogEntry *firstFreeEntry = _freeEntries;
 		do {
 			lastEntry->_next = firstFreeEntry;
-		} while (!_freeEntries.compare_exchange_weak(firstFreeEntry, firstEntry));
+		} while (!_freeEntries.compare_exchange_strong(firstFreeEntry, firstEntry));
 		
 		// Clean the vector, which is reused
 		entries.clear();

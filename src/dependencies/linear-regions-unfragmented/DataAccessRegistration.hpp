@@ -414,10 +414,11 @@ private:
 				assert(reverseLinkPosition->_accessRange == previousRange);
 				assert(reverseLinkPosition->_access == dataAccess);
 				assert(reverseLinkPosition->_satisfied || dataAccess->_weak);
+				assert(dataAccess->_originator != nullptr);
 				
 				Instrument::unlinkedDataAccesses(
 					previous->_instrumentationId,
-					dataAccess->_instrumentationId,
+					dataAccess->_originator->getInstrumentationTaskId(),
 					true /* direct link */,
 					instrumentationTaskId
 				);
@@ -446,10 +447,11 @@ private:
 				assert(reverseLinkPosition != next->_previous.end());
 				assert(reverseLinkPosition->_accessRange == nextRange);
 				assert(reverseLinkPosition->_access == dataAccess);
+				assert(next->_originator != nullptr);
 				
 				Instrument::unlinkedDataAccesses(
 					dataAccess->_instrumentationId,
-					next->_instrumentationId,
+					next->_originator->getInstrumentationTaskId(),
 					true /* direct link */,
 					instrumentationTaskId
 				);
@@ -532,7 +534,7 @@ private:
 			
 			bool becomesReady = satisfiedOriginator->decreasePredecessors();
 			if (becomesReady) {
-				ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace);
+				ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 				
 				if (idleComputePlace != nullptr) {
 					ThreadManager::resumeIdle((CPU *) idleComputePlace);

@@ -17,8 +17,10 @@ protected:
     int _index;	
 
 public:
+    void *_schedulerData;
+    
 	ComputePlace(int index/*, ComputePlace *parent = nullptr*/)
-		: _index(index)/*, _parent(parent)*/
+		: _index(index)/*, _parent(parent)*/, _schedulerData(nullptr)
 	{}
 	
 	virtual ~ComputePlace() {}

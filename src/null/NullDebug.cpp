@@ -4,12 +4,17 @@ void nanos_wait_for_full_initialization(void)
 {
 }
 
-long nanos_get_num_cpus()
+unsigned int nanos_get_num_cpus()
 {
 	return 1;
 }
 
 long nanos_get_current_system_cpu(void)
+{
+	return 0;
+}
+
+unsigned int nanos_get_current_virtual_cpu(void)
 {
 	return 0;
 }

@@ -10,10 +10,14 @@
 struct DataAccess;
 
 
-typedef boost::intrusive::list<
-	DataAccess,
-	boost::intrusive::function_hook<TaskDataAccessLinkingArtifacts>
-> TaskDataAccesses;
+struct TaskDataAccesses
+	: public boost::intrusive::list<
+		DataAccess,
+		boost::intrusive::function_hook<TaskDataAccessLinkingArtifacts>
+	>
+{
+};
+
 
 typedef typename TaskDataAccessLinkingArtifacts::hook_type TaskDataAccessHooks;
 

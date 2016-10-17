@@ -6,7 +6,7 @@ SUBDIRS = . tests/directive_based/check-shutdown tests/directive_based/tests
 
 lib_LTLIBRARIES = \
 	libnanos6-optimized.la libnanos6-debug.la \
-	libnanos6-graph.la \
+	libnanos6-graph.la libnanos6-graph-debug.la \
 	libnanos6-profile.la \
 	libnanos6-stats.la \
 	libnanos6-verbose.la libnanos6-verbose-debug.la \
@@ -22,6 +22,7 @@ lib_revision = 0
 lib_age = 0
 
 pkginclude_HEADERS = \
+	common/api/nanos6_library_interface.h \
 	common/api/nanos6_rt_interface.h \
 	common/api/nanos6_debug_interface.h
 
@@ -33,14 +34,25 @@ nodist_noinst_HEADERS = \
 universal_debug_sources = \
 	src/system/debug/RuntimeVersionAPI.cpp
 
+public_instrumentation_api = \
+	src/instrument/public/api/InstrumentAddTask.hpp \
+	src/instrument/public/api/InstrumentCPUId.hpp \
+	src/instrument/public/api/InstrumentInitAndShutdown.hpp \
+	src/instrument/public/api/InstrumentTaskExecution.hpp \
+	src/instrument/public/api/InstrumentTaskWait.hpp \
+	src/instrument/public/api/InstrumentThreadManagement.hpp
 
 common_sources = \
+	$(public_instrumentation_api) \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.cpp \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
-	./src/executors/threads/TaskFinalization.hpp \
+	src/executors/threads/EssentialThreadEnvironment.hpp \
+	src/executors/threads/TaskFinalization.hpp \
+	src/executors/threads/Thread.cpp \
+	src/executors/threads/Thread.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/ThreadManagerPolicy.cpp \
@@ -49,28 +61,26 @@ common_sources = \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/hardware/places/MemoryPlace.hpp \
-    src/hardware/places/AIOPlace.hpp \
-    src/hardware/places/NUMAPlace.hpp \
-    src/hardware/places/NUMAPlace.cpp \
+	src/hardware/places/AIOPlace.hpp \
+	src/hardware/places/NUMAPlace.hpp \
+	src/hardware/places/NUMAPlace.cpp \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/ComputePlace.cpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/CPUPlace.cpp \
-	src/hardware/Loader.cpp \
-	src/hardware/Loader.hpp \
-	src/hardware/Machine.cpp \
-	src/hardware/Machine.hpp \
-	src/instrument/InstrumentAddTask.hpp \
-	src/instrument/InstrumentDependenciesByAccess.hpp \
-	src/instrument/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/InstrumentDependenciesByGroup.hpp \
-	src/instrument/InstrumentInitAndShutdown.hpp \
-	src/instrument/InstrumentLeaderThread.hpp \
-	src/instrument/InstrumentTaskExecution.hpp \
-	src/instrument/InstrumentTaskStatus.hpp \
-	src/instrument/InstrumentTaskWait.hpp \
-	src/instrument/InstrumentThreadManagement.hpp \
-	src/instrument/InstrumentUserMutex.hpp \
+	src/instrument/api/InstrumentAddTask.hpp \
+	src/instrument/api/InstrumentCPUId.hpp \
+	src/instrument/api/InstrumentDependenciesByAccess.hpp \
+	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/api/InstrumentDependenciesByGroup.hpp \
+	src/instrument/api/InstrumentInitAndShutdown.hpp \
+	src/instrument/api/InstrumentLeaderThread.hpp \
+	src/instrument/api/InstrumentLogMessage.hpp \
+	src/instrument/api/InstrumentTaskExecution.hpp \
+	src/instrument/api/InstrumentTaskStatus.hpp \
+	src/instrument/api/InstrumentTaskWait.hpp \
+	src/instrument/api/InstrumentThreadManagement.hpp \
+	src/instrument/api/InstrumentUserMutex.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
@@ -95,10 +105,17 @@ common_sources = \
 	src/memory/NUMACache.hpp \
 	src/memory/NUMACache.cpp \
 	src/scheduling/DefaultScheduler.hpp \
+	src/scheduling/FIFOScheduler.cpp \
+	src/scheduling/FIFOScheduler.hpp \
+	src/scheduling/ImmediateSuccessorScheduler.cpp \
+	src/scheduling/ImmediateSuccessorScheduler.hpp \
+	src/scheduling/ImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/ImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/Scheduler.hpp \
+	src/scheduling/SchedulerInterface.cpp \
 	src/scheduling/SchedulerInterface.hpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/support/ConstPropagator.hpp \
@@ -111,6 +128,7 @@ common_sources = \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/RegisterMemory.cpp \
+	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
@@ -142,22 +160,37 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
 
-linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) \
+common_linear_regions_dependency_sources = \
+	src/dependencies/linear-regions/DataAccessRange.hpp \
+	src/dependencies/linear-regions/DataAccessRangeIndexer.hpp \
+	src/dependencies/linear-regions/LinearRegionMap.hpp \
+	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp
+	
+linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
 	src/dependencies/linear-regions-unfragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccessRange.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccessRangeIndexer.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-unfragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMap.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/LinearRegionMap.hpp \
-	src/dependencies/linear-regions-unfragmented/LinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
+
+linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
+	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
+	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
+	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
+	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
+	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMap.hpp \
+	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMapImplementation.hpp \
+	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 
 if DISCRETE_DEPENDENCIES
@@ -165,8 +198,12 @@ AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
 common_sources += $(discrete_dependency_sources)
 endif
 if LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES
-AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions-unfragmented
+AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-unfragmented
 common_sources += $(linear_regions_unfragmented_dependency_sources)
+endif
+if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
+AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
+common_sources += $(linear_regions_fragmented_dependency_sources)
 endif
 
 
@@ -178,19 +215,39 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
+	src/instrument/null/InstrumentLogMessage.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
 	src/instrument/null/InstrumentTaskStatus.hpp \
 	src/instrument/null/InstrumentTaskWait.hpp \
+	src/instrument/null/InstrumentThreadId.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
-	src/instrument/null/InstrumentUserMutex.hpp
+	src/instrument/null/InstrumentUserMutex.hpp \
+	src/instrument/public/null/InstrumentAddTask.hpp \
+	src/instrument/public/null/InstrumentInitAndShutdown.hpp \
+	src/instrument/public/null/InstrumentTaskExecution.hpp \
+	src/instrument/public/null/InstrumentTaskId.hpp \
+	src/instrument/public/null/InstrumentTaskWait.hpp \
+	src/instrument/public/null/InstrumentThreadId.hpp \
+	src/instrument/public/null/InstrumentThreadManagement.hpp
+
+instrument_generic_ids_sources = \
+	src/instrument/public/generic_ids/GenericIds.cpp \
+	src/instrument/public/generic_ids/GenericIds.hpp \
+	src/instrument/public/generic_ids/InstrumentThreadId.hpp \
+	src/instrument/generic_ids/GenericIds.hpp \
+	src/instrument/generic_ids/InstrumentThreadId.hpp
 
 instrument_graph_sources = \
+	$(instrument_generic_ids_sources) \
 	src/instrument/graph/Color.hpp \
+	src/instrument/graph/ExecutionSteps.cpp \
+	src/instrument/graph/ExecutionSteps.hpp \
+	src/instrument/graph/GenerateEdges.cpp \
+	src/instrument/graph/GenerateEdges.hpp \
 	src/instrument/graph/InstrumentAddTask.cpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
-	src/instrument/graph/InstrumentDependenciesByAccess.cpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.cpp \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
@@ -200,16 +257,21 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
+	src/instrument/graph/InstrumentLogMessage.hpp \
 	src/instrument/graph/InstrumentTaskExecution.cpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
 	src/instrument/graph/InstrumentTaskId.hpp \
 	src/instrument/graph/InstrumentTaskStatus.hpp \
 	src/instrument/graph/InstrumentTaskWait.cpp \
 	src/instrument/graph/InstrumentTaskWait.hpp \
-	src/instrument/graph/InstrumentThreadManagement.cpp \
+	src/instrument/graph/InstrumentThreadId.hpp \
 	src/instrument/graph/InstrumentThreadManagement.hpp \
 	src/instrument/graph/InstrumentUserMutex.cpp \
-	src/instrument/graph/InstrumentUserMutex.hpp
+	src/instrument/graph/InstrumentUserMutex.hpp \
+	src/instrument/graph/PathLength.cpp \
+	src/instrument/graph/PathLength.hpp \
+	src/instrument/graph/SortAccessGroups.cpp \
+	src/instrument/graph/SortAccessGroups.hpp
 
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentAddTask.hpp \
@@ -220,12 +282,14 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
 	src/instrument/profile/InstrumentLeaderThread.hpp \
+	src/instrument/profile/InstrumentLogMessage.hpp \
 	src/instrument/profile/InstrumentProfile.cpp \
 	src/instrument/profile/InstrumentProfile.hpp \
 	src/instrument/profile/InstrumentTaskExecution.hpp \
 	src/instrument/profile/InstrumentTaskId.hpp \
 	src/instrument/profile/InstrumentTaskStatus.hpp \
 	src/instrument/profile/InstrumentTaskWait.hpp \
+	src/instrument/profile/InstrumentThreadId.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp
 
@@ -238,17 +302,20 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
+	src/instrument/stats/InstrumentLogMessage.hpp \
 	src/instrument/stats/InstrumentStats.cpp \
 	src/instrument/stats/InstrumentStats.hpp \
 	src/instrument/stats/InstrumentTaskExecution.hpp \
 	src/instrument/stats/InstrumentTaskId.hpp \
 	src/instrument/stats/InstrumentTaskStatus.hpp \
 	src/instrument/stats/InstrumentTaskWait.hpp \
+	src/instrument/stats/InstrumentThreadId.hpp \
 	src/instrument/stats/InstrumentThreadManagement.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp
 
 instrument_verbose_sources = \
+	$(instrument_generic_ids_sources) \
 	src/instrument/verbose/InstrumentAddTask.cpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
@@ -262,6 +329,7 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
 	src/instrument/verbose/InstrumentLeaderThread.cpp \
 	src/instrument/verbose/InstrumentLeaderThread.hpp \
+	src/instrument/verbose/InstrumentLogMessage.hpp \
 	src/instrument/verbose/InstrumentTaskExecution.cpp \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \
 	src/instrument/verbose/InstrumentTaskId.hpp \
@@ -269,6 +337,7 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \
 	src/instrument/verbose/InstrumentTaskWait.cpp \
 	src/instrument/verbose/InstrumentTaskWait.hpp \
+	src/instrument/verbose/InstrumentThreadId.hpp \
 	src/instrument/verbose/InstrumentThreadManagement.cpp \
 	src/instrument/verbose/InstrumentThreadManagement.hpp \
 	src/instrument/verbose/InstrumentUserMutex.cpp \
@@ -277,21 +346,24 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentVerbose.hpp
 
 instrument_extrae_sources = \
-	src/instrument/extrae/InstrumentExtrae.hpp \
-	src/instrument/extrae/InstrumentExtrae.cpp \
-	src/instrument/extrae/InstrumentAddTask.hpp \
+	$(instrument_generic_ids_sources) \
 	src/instrument/extrae/InstrumentDataAccessId.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
-	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
-	src/instrument/extrae/InstrumentTaskExecution.hpp \
-	src/instrument/extrae/InstrumentTaskId.hpp \
+	src/instrument/extrae/InstrumentLogMessage.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
-	src/instrument/extrae/InstrumentTaskWait.hpp \
-	src/instrument/extrae/InstrumentThreadManagement.hpp \
-	src/instrument/extrae/InstrumentUserMutex.hpp
+	src/instrument/extrae/InstrumentUserMutex.hpp \
+	src/instrument/public/extrae/InstrumentAddTask.hpp \
+	src/instrument/public/extrae/InstrumentExtrae.cpp \
+	src/instrument/public/extrae/InstrumentExtrae.hpp \
+	src/instrument/public/extrae/InstrumentInitAndShutdown.hpp \
+	src/instrument/public/extrae/InstrumentTaskExecution.hpp \
+	src/instrument/public/extrae/InstrumentTaskId.hpp \
+	src/instrument/public/extrae/InstrumentTaskWait.hpp \
+	src/instrument/public/extrae/InstrumentThreadId.hpp \
+	src/instrument/public/extrae/InstrumentThreadManagement.hpp
 
 null_common_sources = \
 	src/null/NullDebug.cpp \
@@ -314,11 +386,12 @@ noinst_HEADERS = \
 	common/tests/Timer.hpp
 
 EXTRA_DIST = \
+	common/tests/tap-driver.pl \
 	common/tests/tap-driver.sh
 
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(hwloc_CFLAGS) -lnuma
-common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) -lnuma
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS)
+common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) -ldl $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) -lnuma
 
 libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
@@ -335,10 +408,15 @@ libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
 
-libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile
+libnanos6_graph_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph
+libnanos6_graph_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_graph_debug_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
+libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
+
+libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS)
 libnanos6_profile_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
-libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS)
+libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
 
 libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
@@ -368,7 +446,7 @@ libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
 libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 if HAVE_EXTRAE
-libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae @extrae_CPPFLAGS@
+libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/public/extrae @extrae_CPPFLAGS@
 libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
 libnanos6_extrae_la_LDFLAGS = @extrae_LDFLAGS@ @extrae_LIBS@ $(common_libnanos6_ldflags)

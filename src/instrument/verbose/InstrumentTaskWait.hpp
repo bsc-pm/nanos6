@@ -2,7 +2,7 @@
 #define INSTRUMENT_VERBOSE_TASK_WAIT_HPP
 
 
-#include "../InstrumentTaskWait.hpp"
+#include "../api/InstrumentTaskWait.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_TASK_WAIT_HPP
