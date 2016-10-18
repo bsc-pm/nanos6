@@ -28,7 +28,7 @@ public:
 	inline void lock()
 	{
 		TICKET_T ticket = _nextFreeTicket++;
-		while (_currentTicket.load(std::memory_order_acquire)) {
+		while (_currentTicket.load(std::memory_order_acquire) != ticket) {
 			// NOTE: there could be here some architecture-specific code to slow down the thread
 		}
 	}
