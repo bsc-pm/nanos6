@@ -4,7 +4,7 @@
 
 #include <InstrumentTaskId.hpp>
 
-#include "../InstrumentDependenciesByAccess.hpp"
+#include "../api/InstrumentDependenciesByAccess.hpp"
 #include "dependencies/DataAccessType.hpp"
 
 

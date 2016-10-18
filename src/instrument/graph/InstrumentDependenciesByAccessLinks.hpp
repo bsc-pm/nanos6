@@ -4,20 +4,18 @@
 
 #include "InstrumentDataAccessId.hpp"
 
-#include "../InstrumentDependenciesByAccessLinks.hpp"
+#include "../api/InstrumentDependenciesByAccessLinks.hpp"
 
 
 namespace Instrument {
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType,
-		bool weak,
-		bool satisfied,
+		DataAccessType accessType, bool weak, DataAccessRange range,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId
 	);
 	
 	void upgradedDataAccess(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
 		DataAccessType previousAccessType,
 		bool previousWeakness,
@@ -28,28 +26,53 @@ namespace Instrument {
 	);
 	
 	void dataAccessBecomesSatisfied(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
+		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t triggererTaskId,
 		task_id_t targetTaskId
 	);
 	
+	void modifiedDataAccessRange(
+		data_access_id_t dataAccessId,
+		DataAccessRange newRange,
+		task_id_t triggererTaskId
+	);
+	
+	data_access_id_t fragmentedDataAccess(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
+	data_access_id_t createdDataSubaccessFragment(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
+	void completedDataAccess(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
+	void dataAccessBecomesRemovable(
+		data_access_id_t dataAccessId,
+		task_id_t triggererTaskId
+	);
+	
 	void removedDataAccess(
-		data_access_id_t superAccessId,
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	);
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId,
-		data_access_id_t sinkAccessId,
-		bool direct,
+		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
+		DataAccessRange range,
+		bool direct, bool bidirectional,
 		task_id_t triggererTaskId
 	);
 	
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		data_access_id_t sinkAccessId,
+		task_id_t sinkTaskId,
 		bool direct,
 		task_id_t triggererTaskId
 	);

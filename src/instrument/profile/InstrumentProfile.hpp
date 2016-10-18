@@ -1,6 +1,10 @@
 #ifndef INSTRUMENT_PROFILE_HPP
 #define INSTRUMENT_PROFILE_HPP
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -16,13 +20,16 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
 
+#include "InstrumentThreadId.hpp"
+
 #include <list>
 #include <map>
 #include <string>
 #include <vector>
 
-
-class WorkerThread;
+#if HAVE_LIBDW
+#include <elfutils/libdwfl.h>
+#endif
 
 
 namespace Instrument {
@@ -32,10 +39,58 @@ namespace Instrument {
 		EnvironmentVariable<long> _profilingBacktraceDepth;
 		EnvironmentVariable<long> _profilingBufferSize;
 		
+		
 		// Basic types
 		typedef void *address_t;
-		typedef uint32_t id_t;
+		
+		class id_t {
+			uint32_t _value;
+			
+		public:
+			id_t()
+				: _value(~0U)
+			{
+			}
+			
+			id_t(uint32_t value)
+			: _value(value)
+			{
+			}
+			
+			operator uint32_t() const
+			{
+				return _value;
+			}
+			
+			id_t &operator++()
+			{
+				++_value;
+				return *this;
+			}
+			
+			id_t operator++(int)
+			{
+				uint32_t result = _value;
+				_value++;
+				return id_t(result);
+			}
+			
+			id_t &operator--()
+			{
+				--_value;
+				return *this;
+			}
+			
+			id_t operator--(int)
+			{
+				uint32_t result = _value;
+				_value--;
+				return id_t(result);
+			}
+		};
+		
 		typedef uint32_t freq_t;
+		
 		
 		// All the buffers with the collected samples
 		SpinLock _bufferListSpinLock;
@@ -50,6 +105,9 @@ namespace Instrument {
 		static __thread PerThread _perThread;
 		static bool _enabled;
 		
+#if HAVE_LIBDW
+		Dwfl *_dwfl;
+#else
 		// Map between the address space and the executable objects
 		struct MemoryMapSegment {
 			std::string _filename;
@@ -62,6 +120,7 @@ namespace Instrument {
 			}
 		};
 		std::map<address_t, MemoryMapSegment> _executableMemoryMap;
+#endif
 		
 		// Backtrace (possibly inline) step information
 		struct AddrInfoStep {
@@ -72,10 +131,132 @@ namespace Instrument {
 				: _functionId(0), _sourceLineId(0)
 			{
 			}
+			
+			bool operator==(AddrInfoStep const &other) const
+			{
+				return (_functionId == other._functionId) && (_sourceLineId == other._sourceLineId);
+			}
+			
+			bool operator!=(AddrInfoStep const &other) const
+			{
+				return (_functionId != other._functionId) || (_sourceLineId != other._sourceLineId);
+			}
+			
+			bool operator<(AddrInfoStep const &other) const
+			{
+				if (_functionId < other._functionId) {
+					return true;
+				} else if (_functionId == other._functionId) {
+					return (_sourceLineId < other._sourceLineId);
+				} else {
+					return false;
+				}
+			}
 		};
 		
+		
 		// Backtrace of a single address (may contain inlined nested calls, hence the list)
-		typedef std::list<AddrInfoStep> AddrInfo;
+		class AddrInfo : public std::list<AddrInfoStep> {
+		public:
+			bool operator==(AddrInfo const &other) const
+			{
+				if (size() != other.size()) {
+					return false;
+				}
+				
+				auto it1 = begin();
+				auto it2 = other.begin();
+				while (it1 != end()) {
+					if (*it1 != *it2) {
+						return false;
+					}
+					
+					it1++;
+					it2++;
+				}
+				
+				return true;
+			}
+			
+			bool operator!=(AddrInfo const &other) const
+			{
+				return !((*this) == other);
+			}
+			
+			bool operator<(AddrInfo const &other) const
+			{
+				auto it1 = begin();
+				auto it2 = other.begin();
+				while ((it1 != end()) && (it2 != other.end())) {
+					if (*it1 < *it2) {
+						return true;
+					} else if (*it2 < *it1) {
+						return false;
+					}
+					
+					it1++;
+					it2++;
+				}
+				
+				return ((it1 == end()) && (it2 != other.end()));
+			}
+		};
+		
+		
+		class SymbolicBacktrace : public std::vector<AddrInfo> {
+		public:
+			SymbolicBacktrace(size_t frames)
+			: std::vector<AddrInfo>(frames, AddrInfo())
+			{
+			}
+			
+			bool operator==(SymbolicBacktrace const &other) const
+			{
+				if (size() != other.size()) {
+					return false;
+				}
+				
+				for (size_t position = 0; position < size(); position++) {
+					if ((*this)[position] != other[position]) {
+						return false;
+					}
+				}
+				
+				return true;
+			}
+			
+			bool operator!=(SymbolicBacktrace const &other) const
+			{
+				return !((*this) == other);
+			}
+			
+			bool operator<(SymbolicBacktrace const &other) const
+			{
+				size_t position = 0;
+				while (true) {
+					if (size() == position) {
+						if (other.size() == position) {
+							// Equal
+							return false;
+						} else {
+							// this < other
+							return true;
+						}
+					} else if (other.size() == position) {
+						// this > other
+						return false;
+					}
+					if ((*this)[position] < other[position]) {
+						return true;
+					} else if ((*this)[position] > other[position]) {
+						return false;
+					} else {
+						position++;
+					}
+				}
+			}
+		};
+		
 		
 		AddrInfo _unknownAddrInfo;
 		
@@ -99,6 +280,7 @@ namespace Instrument {
 			{
 			}
 		};
+		
 		
 		// Map of addresses to their information
 		std::map<void *, AddrInfo> _addr2Cache;
@@ -133,6 +315,9 @@ namespace Instrument {
 							// this < other
 							return true;
 						}
+					} else if (other.size() == position) {
+						// this > other
+						return false;
 					}
 					if ((*this)[position] < other[position]) {
 						return true;
@@ -156,14 +341,30 @@ namespace Instrument {
 		
 		void doInit();
 		void doShutdown();
-		void doCreatedThread(WorkerThread *workerThread);
+		thread_id_t doCreatedThread();
+		
+		static inline std::string demangleSymbol(std::string const &symbol);
+#if HAVE_LIBDW
+		static inline std::string getDebugInformationEntryName(Dwarf_Die *debugInformationEntry);
+		static inline std::string sourceToString(char const *source, int line, int column);
+		inline void addInfoStep(AddrInfo &addrInfo, std::string function, std::string sourceLine);
+#endif
 		
 	public:
 		Profile()
 			: _profilingNSResolution("NANOS_PROFILE_NS_RESOLUTION", 1000),
 			_profilingBacktraceDepth("NANOS_PROFILE_BACKTRACE_DEPTH", 4),
 			_profilingBufferSize("NANOS_PROFILE_BUFFER_SIZE", /* 1 second */ 1000000000UL / _profilingNSResolution),
-			_bufferListSpinLock(), _bufferList()
+			_bufferListSpinLock(), _bufferList(),
+#if HAVE_LIBDW
+			_dwfl(nullptr),
+#else
+			_executableMemoryMap(),
+#endif
+			_unknownAddrInfo(),
+			_addr2Cache(),
+			_nextSourceFunctionId(1), _id2sourceFunction(), _sourceFunction2id(),
+			_nextSourceLineId(1), _id2sourceLine(), _sourceLine2id()
 		{
 		}
 		
@@ -176,9 +377,9 @@ namespace Instrument {
 			_singleton.doShutdown();
 		}
 		
-		static inline void createdThread(WorkerThread *workerThread)
+		static inline thread_id_t createdThread()
 		{
-			_singleton.doCreatedThread(workerThread);
+			return _singleton.doCreatedThread();
 		}
 	};
 }

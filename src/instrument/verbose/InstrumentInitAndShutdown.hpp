@@ -2,7 +2,7 @@
 #define INSTRUMENT_VERBOSE_INIT_AND_SHUTDOWN_HPP
 
 
-#include "../InstrumentInitAndShutdown.hpp"
+#include "../api/InstrumentInitAndShutdown.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_INIT_AND_SHUTDOWN_HPP

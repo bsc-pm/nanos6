@@ -2,7 +2,7 @@
 #define INSTRUMENT_STATS_TASK_STATUS_HPP
 
 
-#include "../InstrumentTaskStatus.hpp"
+#include "../api/InstrumentTaskStatus.hpp"
 #include <InstrumentTaskId.hpp>
 
 #include "InstrumentStats.hpp"
@@ -13,6 +13,11 @@
 namespace Instrument {
 	inline void taskIsPending(task_id_t taskId)
 	{
+		if (taskId == task_id_t()) {
+			// A task environment wrapper
+			return;
+		}
+		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._pendingTime);
 		taskId->_currentTimer = &taskId->_times._pendingTime;
@@ -20,6 +25,11 @@ namespace Instrument {
 	
 	inline void taskIsReady(task_id_t taskId)
 	{
+		if (taskId == task_id_t()) {
+			// A task environment wrapper
+			return;
+		}
+		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._readyTime);
 		taskId->_currentTimer = &taskId->_times._readyTime;
@@ -27,6 +37,11 @@ namespace Instrument {
 	
 	inline void taskIsExecuting(task_id_t taskId)
 	{
+		if (taskId == task_id_t()) {
+			// A task environment wrapper
+			return;
+		}
+		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._executionTime);
 		taskId->_currentTimer = &taskId->_times._executionTime;
@@ -34,6 +49,11 @@ namespace Instrument {
 	
 	inline void taskIsBlocked(task_id_t taskId, __attribute__((unused)) task_blocking_reason_t reason)
 	{
+		if (taskId == task_id_t()) {
+			// A task environment wrapper
+			return;
+		}
+		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._blockedTime);
 		taskId->_currentTimer = &taskId->_times._blockedTime;
@@ -41,6 +61,11 @@ namespace Instrument {
 	
 	inline void taskIsZombie(task_id_t taskId)
 	{
+		if (taskId == task_id_t()) {
+			// A task environment wrapper
+			return;
+		}
+		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._zombieTime);
 		taskId->_currentTimer = &taskId->_times._zombieTime;

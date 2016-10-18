@@ -37,6 +37,8 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+CHECK_SANE_AWK
+AC_PATH_PROG([PERL],[perl])
 SSS_CHECK_NANOS6_MERCURIUM
 
 DX_DOT_FEATURE(ON)
@@ -46,6 +48,7 @@ AC_SUBST([full_top_srcdir])
 
 # Checks for libraries.
 AX_BOOST_BASE([1.59], [], [ AC_MSG_ERROR([Boost library not found])])
+CHECK_PTHREAD
 
 # Checks for header files.
 AC_CHECK_HEADERS([unistd.h])
@@ -69,6 +72,10 @@ AC_CHECK_BACKTRACE
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
 AC_SUBST(CLOCK_LIBS)
 
+PKG_CHECK_MODULES([elfutils], [libdw >= 0.164],
+   [AC_DEFINE([HAVE_LIBDW], [1], [Use elfutils libdw])], [AC_MSG_WARN([The profiling instrumenter is more accurate when the headers and libraries of elfutils are available.])]
+)
+
 CHECK_UNDEFINED_SYMBOL_VERIFICATION_FLAGS
 
 
@@ -89,11 +96,20 @@ case x"${ac_with_dependencies}" in
 	x"discrete")
 		AC_MSG_RESULT([${ac_with_dependencies}])
 		;;
+	x"linear-regions-unfragmented")
+		AC_MSG_RESULT([${ac_with_dependencies}])
+		;;
+	x"linear-regions-fragmented")
+		AC_MSG_RESULT([${ac_with_dependencies}])
+		;;
 	*)
 		AC_MSG_ERROR([unknown dependency type ${ac_with_dependencies}])
 		;;
 esac
 AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdiscrete"])
+AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-unfragmented"])
+AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-fragmented"])
+AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
 
 AX_CHECK_EXTRAE
 

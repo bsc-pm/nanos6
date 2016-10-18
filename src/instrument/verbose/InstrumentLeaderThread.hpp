@@ -2,7 +2,7 @@
 #define INSTRUMENT_VERBOSE_LEADER_THREAD_HPP
 
 
-#include "../InstrumentLeaderThread.hpp"
+#include "../api/InstrumentLeaderThread.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_LEADER_THREAD_HPP

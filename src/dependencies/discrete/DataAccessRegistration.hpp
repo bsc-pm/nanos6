@@ -33,8 +33,8 @@ private:
 			bool becomesSatisfied = currentDataAccess->reevaluateSatisfiability(previousDataAccess);
 			if (becomesSatisfied) {
 				Instrument::dataAccessBecomesSatisfied(
-					(currentDataAccess->_dataAccessSequence->_superAccess != nullptr ? currentDataAccess->_dataAccessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 					currentDataAccess->_instrumentationId,
+					false, false, true,
 					instrumentationTaskId,
 					currentDataAccess->_originator->getInstrumentationTaskId()
 				);
@@ -101,10 +101,12 @@ private:
 					
 					DataAccess *previousOfFirst = &(*previousOfFirstPosition);
 					assert(previousOfFirst != nullptr);
+					assert(subaccess._originator != nullptr);
 					Instrument::linkedDataAccesses(
 						previousOfFirst->_instrumentationId,
-						subaccess._instrumentationId,
-						true,
+						subaccess._originator->getInstrumentationTaskId(),
+						dataAccessSequence->_accessRange,
+						true, true,
 						instrumentationTaskId
 					);
 				}
@@ -120,11 +122,14 @@ private:
 					assert(next != nullptr);
 					
 					if (positionOfNextToCurrent == subaccesses._accessSequence.end()) {
+						assert(next->_originator != nullptr);
+						
 						// The current subaccess is the last one
 						Instrument::linkedDataAccesses(
 							subaccess._instrumentationId,
-							next->_instrumentationId,
-							true,
+							next->_originator->getInstrumentationTaskId(),
+							dataAccessSequence->_accessRange,
+							true, true,
 							instrumentationTaskId
 						);
 					}
@@ -133,7 +138,6 @@ private:
 			
 			// Instrumenters first see the movement, then the deletion
 			Instrument::removedDataAccess(
-				(dataAccessSequence->_superAccess != nullptr ? dataAccessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 				dataAccess->_instrumentationId,
 				instrumentationTaskId
 			);
@@ -150,10 +154,14 @@ private:
 				} else {
 					effectivePrevious = dataAccessSequence->getEffectivePrevious(next);
 					if (effectivePrevious != nullptr) {
+						assert(next->_originator != nullptr);
+						
 						Instrument::linkedDataAccesses(
 							effectivePrevious->_instrumentationId,
-							next->_instrumentationId,
+							next->_originator->getInstrumentationTaskId(),
+							dataAccessSequence->_accessRange,
 							false /* not direct */,
+							false /* unidirectional */,
 							instrumentationTaskId
 						);
 					}
@@ -174,7 +182,7 @@ private:
 			
 			bool becomesReady = satisfiedOriginator->decreasePredecessors();
 			if (becomesReady) {
-				HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace);
+				HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 				
 				if (idleHardwarePlace != nullptr) {
 					ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
@@ -238,14 +246,16 @@ public:
 			(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			accessType, weak,
 			accessSequence->_accessRange,
-			satisfied,
+			false, false, satisfied,
 			task->getInstrumentationTaskId()
 		);
 		if (effectivePrevious != nullptr) {
 			Instrument::linkedDataAccesses(
 				effectivePrevious->_instrumentationId,
-				dataAccessInstrumentationId,
+				task->getInstrumentationTaskId(),
+				accessSequence->_accessRange,
 				!accessSequence->_accessSequence.empty() /* Direct? */,
+				!accessSequence->_accessSequence.empty() /* Bidirectional? */,
 				task->getInstrumentationTaskId()
 			);
 		}

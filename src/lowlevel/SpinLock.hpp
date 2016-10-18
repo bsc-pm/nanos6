@@ -38,6 +38,7 @@ private:
 	
 	inline void assertCurrentOwner();
 	inline void assertUnowned();
+	inline void assertUnownedOrCurrentOwner();
 	inline void setOwner();
 	inline void unsetOwner();
 	
@@ -62,6 +63,11 @@ inline void SpinLock::assertUnowned()
 	assert(_owner == nullptr);
 }
 
+inline void SpinLock::assertUnownedOrCurrentOwner()
+{
+	assert( (_owner == nullptr) || (_owner == ompss_debug::getCurrentWorkerThread()) ) ;
+}
+
 inline void SpinLock::setOwner()
 {
 	_owner = ompss_debug::getCurrentWorkerThread();
@@ -77,6 +83,10 @@ inline void SpinLock::assertCurrentOwner()
 }
 
 inline void SpinLock::assertUnowned()
+{
+}
+
+inline void SpinLock::assertUnownedOrCurrentOwner()
 {
 }
 

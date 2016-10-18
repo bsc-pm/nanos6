@@ -2,7 +2,7 @@
 #define INSTRUMENT_NULL_DEPENDENCIES_BY_ACCESS_LINK_HPP
 
 
-#include "../InstrumentDependenciesByAccessLinks.hpp"
+#include "../api/InstrumentDependenciesByAccessLinks.hpp"
 
 
 namespace Instrument {
@@ -11,14 +11,15 @@ namespace Instrument {
 		__attribute__((unused)) DataAccessType accessType,
 		__attribute__((unused)) bool weak,
 		__attribute__((unused)) DataAccessRange range,
-		__attribute__((unused)) bool satisfied,
+		__attribute__((unused)) bool readSatisfied,
+		__attribute__((unused)) bool writeSatisfied,
+		__attribute__((unused)) bool globallySatisfied,
 		__attribute__((unused)) task_id_t originatorTaskId
 	) {
 		return data_access_id_t();
 	}
 	
 	inline void upgradedDataAccess(
-		__attribute__((unused)) data_access_id_t superAccessId,
 		__attribute__((unused)) data_access_id_t dataAccessId,
 		__attribute__((unused)) DataAccessType previousAccessType,
 		__attribute__((unused)) bool previousWeakness,
@@ -30,15 +31,50 @@ namespace Instrument {
 	}
 	
 	inline void dataAccessBecomesSatisfied(
-		__attribute__((unused)) data_access_id_t superAccessId,
 		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) bool readSatisfied,
+		__attribute__((unused)) bool writeSatisfied,
+		__attribute__((unused)) bool globallySatisfied,
 		__attribute__((unused)) task_id_t triggererTaskId,
 		__attribute__((unused)) task_id_t targetTaskId
 	) {
 	}
 	
+	inline void modifiedDataAccessRange(
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) DataAccessRange newRange,
+		__attribute__((unused)) task_id_t triggererTaskId
+	) {
+	}
+	
+	inline data_access_id_t fragmentedDataAccess(
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) DataAccessRange newRange,
+		__attribute__((unused)) task_id_t triggererTaskId
+	) {
+		return data_access_id_t();
+	}
+	
+	inline data_access_id_t createdDataSubaccessFragment(
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) task_id_t triggererTaskId
+	) {
+		return data_access_id_t();
+	}
+	
+	inline void completedDataAccess(
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) task_id_t triggererTaskId
+	) {
+	}
+	
+	inline void dataAccessBecomesRemovable(
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) task_id_t triggererTaskId
+	) {
+	}
+	
 	inline void removedDataAccess(
-		__attribute__((unused)) data_access_id_t superAccessId,
 		__attribute__((unused)) data_access_id_t dataAccessId,
 		__attribute__((unused)) task_id_t triggererTaskId
 	) {
@@ -46,15 +82,17 @@ namespace Instrument {
 	
 	inline void linkedDataAccesses(
 		__attribute__((unused)) data_access_id_t sourceAccessId,
-		__attribute__((unused)) data_access_id_t sinkAccessId,
+		__attribute__((unused)) task_id_t sinkTaskId,
+		__attribute__((unused)) DataAccessRange range,
 		__attribute__((unused)) bool direct,
+		__attribute__((unused)) bool bidirectional,
 		__attribute__((unused)) task_id_t triggererTaskId
 	) {
 	}
 	
 	inline void unlinkedDataAccesses(
 		__attribute__((unused)) data_access_id_t sourceAccessId,
-		__attribute__((unused)) data_access_id_t sinkAccessId,
+		__attribute__((unused)) task_id_t sinkTaskId,
 		__attribute__((unused)) bool direct,
 		__attribute__((unused)) task_id_t triggererTaskId
 	) {

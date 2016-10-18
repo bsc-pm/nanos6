@@ -2,7 +2,7 @@
 #define INSTRUMENT_VERBOSE_THREAD_MANAGEMENT_HPP
 
 
-#include "../InstrumentThreadManagement.hpp"
+#include "../api/InstrumentThreadManagement.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_THREAD_MANAGEMENT_HPP

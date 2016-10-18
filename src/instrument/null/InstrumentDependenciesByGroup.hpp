@@ -4,7 +4,7 @@
 
 #include <InstrumentTaskId.hpp>
 
-#include "../InstrumentDependenciesByGroup.hpp"
+#include "../api/InstrumentDependenciesByGroup.hpp"
 
 
 namespace Instrument {

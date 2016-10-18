@@ -1,3 +1,4 @@
+#include "ExecutionSteps.hpp"
 #include "InstrumentTaskExecution.hpp"
 #include "InstrumentGraph.hpp"
 
@@ -12,34 +13,17 @@ namespace Instrument {
 	using namespace Graph;
 	
 	
-	void startTask(task_id_t taskId, CPU *cpu, WorkerThread *currentThread)
+	void startTask(task_id_t taskId, cpu_id_t cpuId, thread_id_t currentThreadId)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(cpu != nullptr);
-		
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
-		
-		enter_task_step_t *enterTaskStep = new enter_task_step_t(cpu->_virtualCPUId, threadId, taskId);
+		enter_task_step_t *enterTaskStep = new enter_task_step_t(cpuId, currentThreadId, taskId);
 		_executionSequence.push_back(enterTaskStep);
 	}
 	
-	void returnToTask(
-		__attribute__((unused)) task_id_t taskId,
-		__attribute__((unused)) CPU *cpu,
-		__attribute__((unused)) WorkerThread *currentThread)
-	{
-	}
-	
-	void endTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) CPU *cpu, WorkerThread *currentThread)
+	void endTask(__attribute__((unused)) task_id_t taskId, cpu_id_t cpuId, thread_id_t currentThreadId)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
-		assert(cpu != nullptr);
-		
-		assert(_threadToId.find(currentThread) != _threadToId.end());
-		thread_id_t threadId = _threadToId[currentThread];
-		
-		exit_task_step_t *exitTaskStep = new exit_task_step_t(cpu->_virtualCPUId, threadId, taskId);
+		exit_task_step_t *exitTaskStep = new exit_task_step_t(cpuId, currentThreadId, taskId);
 		_executionSequence.push_back(exitTaskStep);
 	}
 	

@@ -23,6 +23,7 @@ inline SpinLock::~SpinLock()
 
 inline void SpinLock::lock()
 {
+	assert(!isLockedByThisThread());
 	pthread_spin_lock(&_lock);
 	assertUnowned();
 	setOwner();
@@ -30,6 +31,8 @@ inline void SpinLock::lock()
 
 inline bool SpinLock::tryLock()
 {
+	assert(!isLockedByThisThread());
+	
 	bool success = (pthread_spin_trylock(&_lock) == 0);
 	
 	if (success) {

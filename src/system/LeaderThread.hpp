@@ -4,22 +4,35 @@
 
 #include <atomic>
 
+#include "executors/threads/Thread.hpp"
+
 
 //! \brief This class contains the code of the leader thread that consists in performing maintenance duties
-class LeaderThread {
-	static std::atomic<bool> _mustExit;
+class LeaderThread : public Thread {
+	static LeaderThread *_singleton;
+	
+	std::atomic<bool> _mustExit;
 	
 public:
+	static void initialize();
+	static void shutdown();
+	
+	LeaderThread();
+	virtual ~LeaderThread()
+	{
+	}
+	
 	//! \brief A loop that takes care of maintenance duties
 	//! The loop ends after notifyMainExit is called
-	static void maintenanceLoop();
-	
-	//! \brief Signal the leader thread that the "main" function has finished and thus that the execution must end
-	static void notifyMainExit();
+	void *body();
 	
 	static bool isExiting()
 	{
-		return _mustExit.load();
+		if (_singleton == nullptr) {
+			return false;
+		}
+		
+		return _singleton->_mustExit.load();
 	}
 };
 
