@@ -82,7 +82,7 @@ HardwarePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task,
 		}
 	}
 	
-	std::lock_guard<SpinLock> guard(_globalLock);
+	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	// 3. Attempt to send the task to polling thread with locking, since the polling slot
 	// can only be set when locked (but unset at any time).
@@ -130,7 +130,7 @@ void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTa
 		}
 	}
 	
-	std::lock_guard<SpinLock> guard(_globalLock);
+	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	// 2. Attempt to send the task to polling thread with locking, since the polling slot
 	// can only be set when locked (but unset at any time).
@@ -158,7 +158,7 @@ void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTa
 
 bool ImmediateSuccessorWithPollingScheduler::checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace)
 {
-	std::lock_guard<SpinLock> guard(_globalLock);
+	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	auto it = std::find(_idleCPUs.begin(), _idleCPUs.end(), (CPU *) hardwarePlace);
 	
@@ -183,7 +183,7 @@ Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(HardwarePlace *hardwa
 		return task;
 	}
 	
-	std::lock_guard<SpinLock> guard(_globalLock);
+	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	// 2. Get an unblocked task
 	task = getReplacementTask((CPU *) hardwarePlace);
@@ -210,7 +210,7 @@ Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(HardwarePlace *hardwa
 
 HardwarePlace *ImmediateSuccessorWithPollingScheduler::getIdleHardwarePlace(bool force)
 {
-	std::lock_guard<SpinLock> guard(_globalLock);
+	std::lock_guard<spinlock_t> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
 		return getIdleCPU();
 	} else {
@@ -225,7 +225,7 @@ void ImmediateSuccessorWithPollingScheduler::disableHardwarePlace(HardwarePlace 
 		Task *task = (Task *) hardwarePlace->_schedulerData;
 		hardwarePlace->_schedulerData = nullptr;
 		
-		std::lock_guard<SpinLock> guard(_globalLock);
+		std::lock_guard<spinlock_t> guard(_globalLock);
 		_readyTasks.push_front(task);
 	}
 }
@@ -247,7 +247,7 @@ bool ImmediateSuccessorWithPollingScheduler::requestPolling(HardwarePlace *hardw
 		return true;
 	}
 	
-	std::lock_guard<SpinLock> guard(_globalLock);
+	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	// 2. Get an unblocked task
 	task = getReplacementTask((CPU *) hardwarePlace);
