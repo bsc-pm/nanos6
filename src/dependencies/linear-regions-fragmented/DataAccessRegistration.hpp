@@ -1093,7 +1093,7 @@ private:
 				assert(!parentAccessStructures._accesses.contains(missingRange));
 				
 				// Holes in the parent bottom map that are not in the parent accesses become fully satisfied
-				std::lock_guard<SpinLock> guard(accessStructures._lock); // Need the lock since an access of data allocated in the parent may partially overlap a previous one
+				std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock); // Need the lock since an access of data allocated in the parent may partially overlap a previous one
 				accessStructures._accesses.processIntersecting(
 					missingRange,
 					[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
@@ -1174,8 +1174,8 @@ private:
 		}
 		
 		{
-			std::lock_guard<SpinLock> parentGuard(parentAccessStructures._lock);
-			std::lock_guard<SpinLock> guard(accessStructures._lock);
+			std::lock_guard<TaskDataAccesses::spinlock_t> parentGuard(parentAccessStructures._lock);
+			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 			
 			// Create any initial missing fragments in the parent, link the previous accesses
 			// and possibly some parent fragments to the new task, and create propagation
@@ -1530,7 +1530,7 @@ public:
 		
 		{
 			bool parentIsLocked = false;
-			std::lock_guard<SpinLock> guard(accessStructures._lock);
+			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 			
 			accesses.processAllWithRestart(
 				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
@@ -1574,7 +1574,7 @@ public:
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
-		std::lock_guard<SpinLock> guard(accessStructures._lock);
+		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 		if (!accessStructures._accesses.empty()) {
 			task->decreaseRemovalBlockingCount();
 		}
@@ -1587,7 +1587,7 @@ public:
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
-		std::lock_guard<SpinLock> guard(accessStructures._lock);
+		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 		if (!accessStructures._accesses.empty()) {
 			task->increaseRemovalBlockingCount();
 		}
@@ -1612,7 +1612,7 @@ public:
 		{
 			TaskDataAccesses &accessStructures = task->getDataAccesses();
 			assert(!accessStructures.hasBeenDeleted());
-			std::lock_guard<SpinLock> guard(accessStructures._lock);
+			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 			if (!accessStructures._accesses.empty()) {
 				assert(accessStructures._removalBlockers > 0);
 				task->decreaseRemovalBlockingCount();
@@ -1640,7 +1640,7 @@ public:
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
-		std::lock_guard<SpinLock> guard(accessStructures._lock);
+		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 		
 		// In principle, all inner tasks must have ended
 		

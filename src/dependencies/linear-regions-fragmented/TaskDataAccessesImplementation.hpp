@@ -19,7 +19,7 @@ inline TaskDataAccesses::~TaskDataAccesses()
 	assert(&task->getDataAccesses() == this);
 	
 	// We take the lock since the task may be marked for deletion while the lock is held
-	std::lock_guard<SpinLock> guard(_lock);
+	std::lock_guard<spinlock_t> guard(_lock);
 	_accesses.processAll(
 		[&](accesses_t::iterator position) -> bool {
 			DataAccess *access = &(*position);
