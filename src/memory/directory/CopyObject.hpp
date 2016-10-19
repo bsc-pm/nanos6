@@ -3,17 +3,19 @@
 
 #include <boost/intrusive/avl_set.hpp>
 #include "memory/Region.hpp"
+#include "memory/cache/GenericCache.hpp"
 
 class CopyObject: public boost::intrusive::avl_set_base_hook<> {
 private: 
 	Region _region;
 
 	unsigned int _version;
-	// Cache of the latest version	
+	std::set<GenericCache *> _caches;
 
 public:
 	CopyObject(void *baseAddress, size_t size)
 	: _region(baseAddress, size),
+	_caches(),
 	_version(0){
 	
 	}
@@ -40,7 +42,19 @@ public:
 
 	void incrementVersion(){
 		_version++;
-	} 
+	}
+
+	void addCache(GenericCache *cache){
+		_caches.add(cache);
+	}
+
+	void removeCache(GenericCache *cache){
+		_caches.erase(_caches.find(cache));
+	}	
+ 
+	bool isInCache(GenericCache *cache){
+		return _caches.count(cache) != 0;	
+	}
 	
 	/* Key for Boost Intrusive AVL Set */
     struct key_value

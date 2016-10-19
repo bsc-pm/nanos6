@@ -5,17 +5,16 @@
 #include <cstddef>
 
 struct TaskMemoryData{
+	enum class State {READY, COPY_READY, COPYING, COPIED} //Need to define states
+
+	State state;
 	std::vector<void *> bases;
 	std::vector<size_t> sizes;
 	std::vector<int> ids;
 	int regions;	
+	
 
-
-	TaskMemoryData()
-	: bases(),
-	sizes(),
-	ids(),
-	regions(0){
+	TaskMemoryData() : bases(), sizes(), ids(), regions(0){
 			
 	}
 

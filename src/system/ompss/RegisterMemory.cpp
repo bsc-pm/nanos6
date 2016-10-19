@@ -1,10 +1,11 @@
 #include "api/nanos6_rt_interface.h"
 #include "memory/directory/Directory.hpp"
 
+
 #include <numa.h>
 
 bool nanos_register_region(void *address, unsigned long size, int mode, nodemask_t nodemask){
-	/*
+
 	bitmask bm = numa_allocate_nodemask(); 
 	copy_nodemask_to_bitmask(&nodemask, &bm);
 	
@@ -45,5 +46,6 @@ bool nanos_register_region(void *address, unsigned long size, int mode, nodemask
 	}
 	
 	return true;
-	*/		
+			
 }
+*/

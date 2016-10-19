@@ -26,6 +26,8 @@ public:
 	iterator end();
 	iterator find(void *address);
 
+	iterator insert(void *baseAddress, size_t size, GenericCache *cache, bool increment);
+	iterator erase(void *baseAddress, size_t size, GenericCache *cache);
 };
 
 #endif //COPY_SET_HPP

@@ -27,7 +27,7 @@ public:
 	iterator begin();
 	iterator end();
 	iterator find(void *address);
-	void insert(TaskMemoryData data);
+	vector<MemoryRegion> insert(TaskMemoryData data);
 
 };
 
