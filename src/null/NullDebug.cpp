@@ -4,7 +4,7 @@ void nanos_wait_for_full_initialization(void)
 {
 }
 
-unsigned int nanos_get_num_cpus()
+long int nanos_get_num_cpus()
 {
 	return 1;
 }

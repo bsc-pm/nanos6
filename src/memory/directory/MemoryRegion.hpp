@@ -33,7 +33,7 @@ public:
 	}
 
 	MemoryPlace *getLocation(){
-		return location;
+		return _location;
 	}
 	
 	/* Key structure for Boost Intrusive AVL Set */

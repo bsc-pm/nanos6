@@ -1,12 +1,13 @@
 #include "Region.hpp"
+#include "../hardware/Machine.hpp"
 
-unsigned int Region::pageCount(){
+unsigned long Region::pageCount(){
 	return _size / Machine::getMachine()->getPageSize();
 }
 
-void Region::pages(void **pages){
+void **Region::pages(void **pages){
 	long pagesize = Machine::getMachine()->getPageSize();
-	count = pageCount();	
+	unsigned long count = pageCount();	
 
 	pages[0] = (void *)( (long) _baseAddress & ~(pagesize-1) );
 	for(int i = 0; i < count; i++){
@@ -31,6 +32,6 @@ void *Region::sub(void *ptr, size_t bytes){
 	return static_cast<void *>( static_cast<char *>( ptr ) - bytes );
 }
 
-size_t *Region::distance(void *ptr1, void *ptr2){
+size_t Region::distance(void *ptr1, void *ptr2){
 	return static_cast<char *>(ptr1) - static_cast<char *>(ptr2);
 }

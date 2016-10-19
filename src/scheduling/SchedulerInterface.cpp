@@ -3,17 +3,17 @@
 #include <cassert>
 
 
-void SchedulerInterface::disableHardwarePlace(__attribute__((unused)) HardwarePlace *hardwarePlace)
+void SchedulerInterface::disableComputePlace(__attribute__((unused)) ComputePlace *hardwarePlace)
 {
 }
 
 
-void SchedulerInterface::enableHardwarePlace(__attribute__((unused)) HardwarePlace *hardwarePlace)
+void SchedulerInterface::enableComputePlace(__attribute__((unused)) ComputePlace *hardwarePlace)
 {
 }
 
 
-bool SchedulerInterface::requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool SchedulerInterface::requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
 {
 	assert(pollingSlot != nullptr);
 	assert(*pollingSlot == nullptr);
@@ -34,7 +34,7 @@ bool SchedulerInterface::requestPolling(HardwarePlace *hardwarePlace, std::atomi
 }
 
 
-bool SchedulerInterface::releasePolling(__attribute__((unused)) HardwarePlace *hardwarePlace, __attribute__((unused)) std::atomic<Task *> *pollingSlot)
+bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) std::atomic<Task *> *pollingSlot)
 {
 	// The default implementation should never be called if there is a default implementation of requestPolling
 	// otherwise there should be an implementation of this method that matches requestPolling

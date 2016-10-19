@@ -52,7 +52,7 @@ CPU *FIFOScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
+ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_back(task);
@@ -61,14 +61,14 @@ HardwarePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) 
 }
 
 
-void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) HardwarePlace *hardwarePlace)
+void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_back(unblockedTask);
 }
 
 
-bool FIFOScheduler::checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace)
+bool FIFOScheduler::checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	
@@ -83,7 +83,7 @@ bool FIFOScheduler::checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace
 }
 
 
-Task *FIFOScheduler::getReadyTask(__attribute__((unused)) HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
@@ -112,7 +112,7 @@ Task *FIFOScheduler::getReadyTask(__attribute__((unused)) HardwarePlace *hardwar
 }
 
 
-HardwarePlace *FIFOScheduler::getIdleHardwarePlace(bool force)
+ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {

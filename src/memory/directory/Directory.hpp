@@ -17,7 +17,7 @@ private:
 	RegionSet _regions;	
 
 public:	
-	typedef ObjectSet::iterator iterator;
+	//typedef ObjectSet::iterator iterator;
 	
 	Directory()
 	: _copies(),

@@ -3,7 +3,6 @@
 
 #include "Loader.hpp"
 #include "places/AIOPlace.hpp"
-#include "../memory/AIOCache.hpp"
 #if HWLOC_API_VERSION < 0x00010b00 
     #define HWLOC_NUMA_ALIAS HWLOC_OBJ_NODE 
 #else

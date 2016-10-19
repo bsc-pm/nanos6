@@ -30,7 +30,7 @@ public:
 	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
 	//! \param[in] hint a hint about the relation of the task to the current task
 	//!
-	//! \returns an idle HardwarePlace that is to be resumed or nullptr
+	//! \returns an idle ComputePlace that is to be resumed or nullptr
 	virtual ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint) = 0;
 	
 	//! \brief Add back a task that was blocked but that is now unblocked
@@ -68,14 +68,14 @@ public:
 	//! \param[in] hardwarePlace the hardware place that is about to be disabled
 	//! 
 	//! This method has a default implementation that does nothing
-	virtual void disableHardwarePlace(HardwarePlace *hardwarePlace);
+	virtual void disableComputePlace(ComputePlace *hardwarePlace);
 	
 	//! \brief Notify the scheduler that a hardware place is back online so that it preassign tasks to it
 	//! 
 	//! \param[in] hardwarePlace the hardware place that is about to be enabled
 	//! 
 	//! This method has a default implementation that does nothing
-	virtual void enableHardwarePlace(HardwarePlace *hardwarePlace);
+	virtual void enableComputePlace(ComputePlace *hardwarePlace);
 	
 	//! \brief Attempt to get a one task polling slot
 	//! 
@@ -85,7 +85,7 @@ public:
 	//! \returns true if the caller is allowed to poll that memory position for a single ready task or if it actually got a task, otherwise false and the hardware place is assumed to become idle
 	//! 
 	//! This method has a default implementation that just falls back to getReadyTask.
-	virtual bool requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	virtual bool requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 	
 	//! \brief Attempt to release the polling slot
 	//! 
@@ -95,7 +95,7 @@ public:
 	//! \returns true if the caller has successfully released the polling slot otherwise false indicating that there already is a taskl assigned or it is on the way
 	//! 
 	//! This method has a default implementation that matches the default implementation of requestPolling.
-	virtual bool releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	virtual bool releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 	
 };
 

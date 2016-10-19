@@ -33,20 +33,20 @@ public:
 	ImmediateSuccessorWithPollingScheduler();
 	~ImmediateSuccessorWithPollingScheduler();
 	
-	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
 	
-	void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace);
+	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);
 	
-	bool checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace);
+	bool checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace);
 	
-	Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr);
+	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	
-	HardwarePlace *getIdleHardwarePlace(bool force=false);
+	ComputePlace *getIdleComputePlace(bool force=false);
 	
-	void disableHardwarePlace(HardwarePlace *hardwarePlace);
+	void disableComputePlace(ComputePlace *hardwarePlace);
 	
-	bool requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
-	bool releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	bool requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	bool releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 };
 
 

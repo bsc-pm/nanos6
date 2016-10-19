@@ -9,7 +9,7 @@ struct Region {
 	size_t _size;
 
  	Region(void *baseAddress, size_t size);	
-	void **pages();
+	void **pages(void **pages);
 	unsigned long pageCount();
 
 	static inline void *add(void *address, size_t size);

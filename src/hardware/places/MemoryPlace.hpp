@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 #include "../../memory/AddressSpace.hpp"
-#include "../../memory/GenericCache.hpp"
+#include "../../memory/cache/GenericCache.hpp"
 
 class ComputePlace;
 

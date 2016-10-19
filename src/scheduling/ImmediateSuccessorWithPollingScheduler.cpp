@@ -53,7 +53,7 @@ CPU *ImmediateSuccessorWithPollingScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint)
+ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (hardwarePlace != nullptr) {
@@ -111,7 +111,7 @@ HardwarePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task,
 }
 
 
-void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) HardwarePlace *hardwarePlace)
+void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *hardwarePlace)
 {
 	// 1. Attempt to send the task to a polling thread without locking
 	{
@@ -156,7 +156,7 @@ void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTa
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace)
+bool ImmediateSuccessorWithPollingScheduler::checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	
@@ -171,7 +171,7 @@ bool ImmediateSuccessorWithPollingScheduler::checkIfIdleAndGrantReactivation(Har
 }
 
 
-Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
@@ -208,7 +208,7 @@ Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(HardwarePlace *hardwa
 }
 
 
-HardwarePlace *ImmediateSuccessorWithPollingScheduler::getIdleHardwarePlace(bool force)
+ComputePlace *ImmediateSuccessorWithPollingScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
@@ -219,7 +219,7 @@ HardwarePlace *ImmediateSuccessorWithPollingScheduler::getIdleHardwarePlace(bool
 }
 
 
-void ImmediateSuccessorWithPollingScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
+void ImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlace *hardwarePlace)
 {
 	if (hardwarePlace->_schedulerData != nullptr) {
 		Task *task = (Task *) hardwarePlace->_schedulerData;
@@ -231,7 +231,7 @@ void ImmediateSuccessorWithPollingScheduler::disableHardwarePlace(HardwarePlace 
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool ImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
 {
 	Task *task = nullptr;
 	
@@ -288,7 +288,7 @@ bool ImmediateSuccessorWithPollingScheduler::requestPolling(HardwarePlace *hardw
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool ImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
 {
 	std::atomic<Task *> *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {

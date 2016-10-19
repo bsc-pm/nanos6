@@ -52,7 +52,7 @@ CPU *ImmediateSuccessorScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint)
+ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (hardwarePlace != nullptr) {
@@ -69,14 +69,14 @@ HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePl
 }
 
 
-void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace)
+void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_front(unblockedTask);
 }
 
 
-bool ImmediateSuccessorScheduler::checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace)
+bool ImmediateSuccessorScheduler::checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	
@@ -91,7 +91,7 @@ bool ImmediateSuccessorScheduler::checkIfIdleAndGrantReactivation(HardwarePlace 
 }
 
 
-Task *ImmediateSuccessorScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
@@ -127,7 +127,7 @@ Task *ImmediateSuccessorScheduler::getReadyTask(HardwarePlace *hardwarePlace, __
 }
 
 
-HardwarePlace *ImmediateSuccessorScheduler::getIdleHardwarePlace(bool force)
+ComputePlace *ImmediateSuccessorScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
@@ -138,7 +138,7 @@ HardwarePlace *ImmediateSuccessorScheduler::getIdleHardwarePlace(bool force)
 }
 
 
-void ImmediateSuccessorScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
+void ImmediateSuccessorScheduler::disableComputePlace(ComputePlace *hardwarePlace)
 {
 	if (hardwarePlace->_schedulerData != nullptr) {
 		Task *task = (Task *) hardwarePlace->_schedulerData;

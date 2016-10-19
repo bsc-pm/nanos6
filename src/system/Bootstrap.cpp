@@ -18,6 +18,8 @@
 
 static std::atomic<int> shutdownDueToSignalNumber(0);
 
+void nanos_shutdown(void);
+
 
 static void signalHandler(int signum)
 {

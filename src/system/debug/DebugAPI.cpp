@@ -14,7 +14,7 @@ void nanos_wait_for_full_initialization(void)
 	}
 }
 
-unsigned int nanos_get_num_cpus(void)
+long nanos_get_num_cpus(void)
 {
 	if (ThreadManager::hasFinishedInitialization()) {
 		return ThreadManager::getTotalCPUs();
@@ -53,7 +53,7 @@ unsigned int nanos_get_current_virtual_cpu()
 		return 0;
 	}
 	
-	CPU *currentCPU = currentThread->getHardwarePlace();
+	CPU *currentCPU = currentThread->getComputePlace();
 	assert(currentCPU != 0);
 	
 	return currentCPU->_virtualCPUId;

@@ -31,9 +31,9 @@ void *WorkerThread::body()
 	
 	while (!_mustShutDown) {
 		if (!CPUActivation::acceptsWork(_cpu)) {
-			Scheduler::disableHardwarePlace(_cpu);
+			Scheduler::disableComputePlace(_cpu);
 			CPUActivation::activationCheck(this);
-			Scheduler::enableHardwarePlace(_cpu);
+			Scheduler::enableComputePlace(_cpu);
 		}
 		
 		if (_task == nullptr) {

@@ -33,7 +33,7 @@ namespace Instrument {
 		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->ComputePlace();
+			CPU *cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
 			cpuId = cpu->_virtualCPUId;
 		}

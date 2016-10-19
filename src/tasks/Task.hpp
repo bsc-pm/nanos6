@@ -55,6 +55,10 @@ private:
 	
 	//! Opaque data that is scheduler-dependent
 	void *_schedulerInfo;
+    
+    //! Cache info
+    std::size_t _taskDataSize;
+    std::size_t _cachedBytes;
 	
 public:
 	Task(
@@ -284,6 +288,19 @@ public:
 		_schedulerInfo = schedulerInfo;
 	}
 	
+
+    //! \brief Update _cachedBytes with the amount specified and return the new value
+    inline unsigned int addCachedBytes(std::size_t cachedBytes) {
+        _cachedBytes += cachedBytes;
+        return _cachedBytes;
+    }
+
+    //! \brief Return the total number of bytes required by a task to be executed
+    inline unsigned int getTaskDataSize() const
+    {
+        return _taskDataSize;
+    }
+
 };
 
 

@@ -244,16 +244,16 @@ private:
 	//! Process all the originators that have become ready
 	static inline void processSatisfiedOriginators(
 		/* INOUT */ CPUDependencyData &cpuDependencyData,
-		HardwarePlace *hardwarePlace
+		ComputePlace *hardwarePlace
 	) {
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : cpuDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 			
-			HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
+			ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 			
-			if (idleHardwarePlace != nullptr) {
-				ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+			if (idleComputePlace != nullptr) {
+				ThreadManager::resumeIdle((CPU *) idleComputePlace);
 			}
 		}
 		
@@ -1385,7 +1385,7 @@ private:
 	{
 		thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
-		cpu = thread->getHardwarePlace();
+		cpu = thread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		return cpu->_dependencyData;
@@ -1464,7 +1464,7 @@ public:
 			
 			currentThread = WorkerThread::getCurrentWorkerThread();
 			assert(currentThread != nullptr);
-			cpu = currentThread->getHardwarePlace();
+			cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
 			
 			CPUDependencyData &cpuDependencyData = cpu->_dependencyData;

@@ -17,32 +17,10 @@ RegionSet::iterator RegionSet::find(void *address){
     return _set.find(address);
 }
 
-RegionSet::insert(TaskMemoryData data){
-	std::vector<void *> p();
-	std::vector<int> s();
-	long pagesize = Machine::getMachine()->getPageSize();
-
-	for(int i = 0; i < data.regions; i++){
-		insertRegionPages(data.bases[i], data.sizes[i], pagesize, p);
-	}
-
-	void **pages = &p[0];
-	int *status = &s[0];
-	int npages = p.size();
-
-	move_pages(0, npages, pages, NULL, status, 0); //Find the location of pages
-
-	page = p[0];
-	pst = s[0];
-	for(int i = 1; i < npages, i++){
-		if(p[i] ==  
-	}
-}   
-
 /* Insert the pages that the region touches if they are not already present */
 static void insertRegionPages(void *baseAddress, int size, long pagesize, std::vector<void *> p, std::vector<int> s){
-	void *page = (void *)( (long) _baseAddress & ~(pagesize-1) );
-	size += Region::distance(baseAddress, page);
+	void *page = (void *)( (long) baseAddress & ~(pagesize-1) );
+	//size += Region::distance(baseAddress, page);
 	
 	int npages = size / pagesize;
 
@@ -62,3 +40,26 @@ static void insertRegionPages(void *baseAddress, int size, long pagesize, std::v
 
 	std::sort(p.begin(), p.end());
 }
+
+void RegionSet::insert(TaskMemoryData data){
+	//std::vector<void *> p();
+	//std::vector<int> s();
+	//long pagesize = Machine::getMachine()->getPageSize();
+
+	//for(int i = 0; i < data.regions; i++){
+	//	//insertRegionPages(data.bases[i], data.sizes[i], pagesize, p, s);
+	//}
+
+	//void **pages = (void **) &p[0];
+	//int *status = (int *) &s[0];
+	//int npages = p.size();
+
+	//move_pages(0, npages, pages, NULL, status, 0); //Find the location of pages
+
+	//page = p[0];
+	//pst = s[0];
+	//for(int i = 1; i < npages, i++){
+	//	if(p[i] ==  
+	//}
+}   
+

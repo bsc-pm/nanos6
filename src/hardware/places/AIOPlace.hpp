@@ -2,7 +2,7 @@
 #define AIO_PLACE_HPP
 
 #include "MemoryPlace.hpp"
-#include "../../memory/AIOCache.hpp"
+#include "../../memory/cache/AIOCache.hpp"
 
 class AIOPlace: public MemoryPlace {
 public:

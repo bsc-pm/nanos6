@@ -50,7 +50,7 @@ namespace Instrument {
 		
 		size_t cpuId = 0;
 		if (currentThread != nullptr) {
-			CPU *cpu = (CPU *) currentThread->getHardwarePlace();
+			CPU *cpu = (CPU *) currentThread->getComputePlace();
 			assert(cpu != nullptr);
 			cpuId = cpu->_virtualCPUId;
 		}
