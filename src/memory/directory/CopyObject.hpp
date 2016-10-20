@@ -1,68 +1,46 @@
 #ifndef CACHE_OBJECT_HPP
 #define CACHE_OBJECT_HPP
 
+#include <DataAccessRange.h>
+
 #include <boost/intrusive/avl_set.hpp>
-#include "memory/Region.hpp"
 #include "memory/cache/GenericCache.hpp"
 
-class CopyObject: public boost::intrusive::avl_set_base_hook<> {
-private: 
-	Region _region;
 
+class CopyObject {
+private: 
+	DataAccessRange _range;
 	unsigned int _version;
 	std::set<GenericCache *> _caches;
 
 public:
-	CopyObject(void *baseAddress, size_t size)
-	: _region(baseAddress, size),
-	_caches(),
-	_version(0){
 	
-	}
+	#if NDEBUG
+		typedef boost::intrusive::avl_set_member_hook<boost::intrusive::link_mode<boost::intrusive::normal_link>> member_hook_t;
+	#else
+		typedef boost::intrusive::avl_set_member_hook<boost::intrusive::link_mode<boost::intrusive::safe_link>> member_hook_t;
+	#endif	
 
-	void *getBaseAddress(){
-		return _region._baseAddress;
-	}
+	member_hook_t _hook;
 
-	void *getEndAddress(){
-		return _region._endAddress;
-	}
+	CopyObject(void *startAddress, size_t size);
+	void *getStartAddress();
+	size_t getSize();
+	int getVersion();
+	void setVerstion(int version);
+	void incrementVersion();
+	void addCache(GenericCache *cache);
+	void removeCache(GenericCache *cache);
+	void isInCache(GenericCache *cache);
+	int countCaches();
 
-	size_t getSize(){
-		return _region._size;
-	}
-
-	int getVersion(){
-		return _version;
-	}
-
-	void setVersion(int version){
-		_version = version;
-	}
-
-	void incrementVersion(){
-		_version++;
-	}
-
-	void addCache(GenericCache *cache){
-		_caches.add(cache);
-	}
-
-	void removeCache(GenericCache *cache){
-		_caches.erase(_caches.find(cache));
-	}	
- 
-	bool isInCache(GenericCache *cache){
-		return _caches.count(cache) != 0;	
-	}
-	
 	/* Key for Boost Intrusive AVL Set */
     struct key_value
     {
         typedef void *type;
 
         const type &operator()(const CopyObject &obj){
-            return obj._region._baseAddress;
+            return obj._range.getStartAddress();
         }
     };
 

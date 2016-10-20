@@ -1,4 +1,4 @@
-#include "RegionSet.hpp"
+#include "MemoryPageSet.hpp"
 
 #include <vector>
 #include <set>
@@ -7,18 +7,21 @@
 #include "hardware/Machine.hpp"
 #include "memory/Region.hpp"
 
+MemoryPageSet::MemoryPageSet(): _set(){}
 
-RegionSet::iterator RegionSet::begin(){
+MemoryPageSet::iterator RegionSet::begin(){
     return _set.begin();
 }
 
-RegionSet::iterator RegionSet::end(){
+MemoryPageSet::iterator RegionSet::end(){
     return _set.end();
 }
 
-RegionSet::iterator RegionSet::find(void *address){
+MemoryPageSet::iterator RegionSet::find(void *address){
     return _set.find(address);
 }
+/* Provisionally on hold
+
 
 vector<MemoryRegion> RegionSet::insert(TaskMemoryData data){
 	std::vector<RegionSet::iterator> regions;	
@@ -43,12 +46,8 @@ vector<MemoryRegion> RegionSet::insert(TaskMemoryData data){
 	psize = pagesize;
 	node = s[0];
 
-	/*
-		Insert located pages to the set
-		Pages are sorted and same size, so we can find which are adjacent and merge
-	*/
 	for(int i = 1; i < npages, i++){
-		if(p[i] != Region::add(initial, psize) /* Pages are not touching */ || s[i] != node /* Different node */){
+		if(p[i] != Region::add(initial, psize) || s[i] != node){
 	
 			std::pair<RegionSet::iterator, bool> response =  _set.insert(MemoryRegion(initial, psize, Machine::getMachine()->getMemoryNode(node)));
 			responses.push_back(response->first*);
@@ -70,7 +69,7 @@ vector<MemoryRegion> RegionSet::insert(TaskMemoryData data){
 	return response;
 }   
 
-/* Insert the pages that the region touches if they are not already present */
+// Insert the pages that the region touches if they are not already present 
 static void insertRegionPages(void *baseAddress, int size, long pagesize, std::vector<void *> p, std::vector<int> s){
 	void *page = (void *)( (long) _baseAddress & ~(pagesize-1) );
 	size += Region::distance(baseAddress, page);
@@ -93,3 +92,4 @@ static void insertRegionPages(void *baseAddress, int size, long pagesize, std::v
 
 	std::sort(p.begin(), p.end());
 }
+*/

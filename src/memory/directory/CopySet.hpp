@@ -8,26 +8,59 @@
 
 class CopySet {
 
-typedef boost::intrusive::avl_multiset< CopyObject, boost::intrusive::key_of_value< CopyObject::key_value > > Set;
-
+typedef member_hook< CopyObject, CopyObject::member_hook_t, &CopyObject::_hook > MemberOption;
+typedef boost::intrusive::avl_multiset< CopyObject, MemberOption, boost::intrusive::key_of_value< CopyObject::key_value > > CopyObjectSet;
 
 private:
-	Set _set;
+	CopyObjectSet _set;
 
 public:
-	typedef Set::iterator iterator;
-	typedef Set::const_iterator const_iterator;	
+	typedef CopyObjectSet::iterator iterator;
+	typedef CopyObjectSet::const_iterator const_iterator;	
 
-	CopySet(): _set(){
-
-	}
+	CopySet();
 	
+	/*! \brief Proxy call for the boost intrusive avl_set begin method*/
 	iterator begin();
+	
+	/*! \brief Proxy call for the boost intrusive avl_set end method*/
 	iterator end();
+	
+	/*! \brief Proxy call for the boost intrusive avl_set find method*/
 	iterator find(void *address);
 
-	iterator insert(void *baseAddress, size_t size, GenericCache *cache, bool increment);
-	iterator erase(void *baseAddress, size_t size, GenericCache *cache);
+	/*!	\brief Find the CopyObject with the specified address and size
+	 *	
+	 *	\param address Starting address of the copy region
+	 *	\param size Size of the copy region
+	 */	
+	iterator find(void *address, size_t size);
+
+	/*! \brief Inserts a copy in a cache to the list 
+	 *
+	 * 	Registers that a region has been copied in a cache.
+	 * 	If the region is already present in the list it adds a new one (if not already present) to the list of copies of the region.
+	 * 	If the region was not on the list it creates a new CopyObject and adds the cache to its list.
+	 * 	Optionally increments the version of the copy.
+	 *
+	 *	\param address Starting address of the copy region
+	 *	\param size Size of the copy region
+	 *	\param cache Cache object where the copy is stored
+	 *	\param increment True if the version must be incremented
+	 */
+	iterator insert(void *address, size_t size, GenericCache *cache, bool increment);
+	
+	/*!	\brief Removes a copy on a cache from the list
+	 *
+	 *	Registers that a region has been evicted from a cache.
+	 * 	If the CopyObject had more up-to-date copies, it will remove the cache from the list.
+	 *	If the CopyObject only had this copy it will remove the object from the directory. 
+	 *
+	 *	\param address Starting address of the copy region
+	 *	\param size Size of the copy region
+	 *	\param cache Cache from which the copy was evicted
+	 */
+	iterator erase(void *address, size_t size, GenericCache *cache);
 };
 
 #endif //COPY_SET_HPP
