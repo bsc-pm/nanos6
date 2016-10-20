@@ -2,13 +2,10 @@
 #define INSTRUMENT_STATS_ADD_TASK_HPP
 
 
-#include "../InstrumentAddTask.hpp"
+#include "../api/InstrumentAddTask.hpp"
 #include <InstrumentTaskId.hpp>
 
 #include "InstrumentStats.hpp"
-
-
-class Task;
 
 
 namespace Instrument {
@@ -19,7 +16,7 @@ namespace Instrument {
 		return taskTypeAndTimes;
 	}
 	
-	inline void createdTask(__attribute__((unused)) Task *task, __attribute__((unused)) task_id_t taskId)
+	inline void createdTask(__attribute__((unused)) void *task, __attribute__((unused)) task_id_t taskId)
 	{
 	}
 	

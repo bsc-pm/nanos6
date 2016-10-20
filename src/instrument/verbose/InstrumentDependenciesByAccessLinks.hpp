@@ -2,7 +2,7 @@
 #define INSTRUMENT_VERBOSE_DEPENDENCIES_BY_ACCESS_LINK_HPP
 
 
-#include "../InstrumentDependenciesByAccessLinks.hpp"
+#include "../api/InstrumentDependenciesByAccessLinks.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_DEPENDENCIES_BY_ACCESS_LINK_HPP

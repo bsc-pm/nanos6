@@ -1,5 +1,6 @@
-/*#include "api/nanos6_rt_interface.h"
-#include "memory/Directory.hpp"
+#include "api/nanos6_rt_interface.h"
+#include "memory/directory/Directory.hpp"
+
 
 #include <numa.h>
 

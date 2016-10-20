@@ -39,9 +39,14 @@ private:
 	//! Task to which this one is closely nested
 	Task *_parent;
 	
+protected:
 	//! Accesses that may determine dependencies
 	TaskDataAccesses _dataAccesses;
 	
+	// Need to get back to the task from TaskDataAccesses for instrumentation purposes
+	friend struct TaskDataAccesses;
+	
+private:
 	//! Number of pending predecessors
 	std::atomic<int> _predecessorCount;
 	
@@ -50,6 +55,10 @@ private:
 	
 	//! Opaque data that is scheduler-dependent
 	void *_schedulerInfo;
+    
+    //! Cache info
+    std::size_t _taskDataSize;
+    std::size_t _cachedBytes;
 	
 public:
 	Task(
@@ -70,10 +79,6 @@ public:
 		if (parent != nullptr) {
 			parent->addChild(this);
 		}
-	}
-	
-	virtual ~Task()
-	{
 	}
 	
 	//! Get the address of the arguments block
@@ -130,7 +135,9 @@ public:
 	//! \returns true iff the change makes this task become ready or disposable
 	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
 	{
-		return ((--_countdownToBeWokenUp) == 0);
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
 	}
 	
 	
@@ -145,7 +152,9 @@ public:
 	//! \returns true iff the change makes this task become ready or disposable
 	inline bool decreaseRemovalBlockingCount()
 	{
-		return ((--_countdownToBeWokenUp) == 0);
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
 	}
 	
 	
@@ -188,7 +197,10 @@ public:
 	{
 		assert(_thread != nullptr);
 		_thread = nullptr;
-		return ((--_countdownToBeWokenUp) == 0);
+		
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
 	}
 	
 	//! \brief Mark it as blocked
@@ -197,7 +209,10 @@ public:
 	inline bool markAsBlocked()
 	{
 		assert(_thread != nullptr);
-		return ((--_countdownToBeWokenUp) == 0);
+		
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
 	}
 	
 	//! \brief Mark it as unblocked
@@ -273,6 +288,19 @@ public:
 		_schedulerInfo = schedulerInfo;
 	}
 	
+
+    //! \brief Update _cachedBytes with the amount specified and return the new value
+    inline unsigned int addCachedBytes(std::size_t cachedBytes) {
+        _cachedBytes += cachedBytes;
+        return _cachedBytes;
+    }
+
+    //! \brief Return the total number of bytes required by a task to be executed
+    inline unsigned int getTaskDataSize() const
+    {
+        return _taskDataSize;
+    }
+
 };
 
 

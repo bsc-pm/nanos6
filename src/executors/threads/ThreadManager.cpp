@@ -16,7 +16,7 @@ std::atomic<bool> ThreadManager::_mustExit;
 cpu_set_t ThreadManager::_processCPUMask;
 std::vector<std::atomic<CPU *>> ThreadManager::_cpus(CPU_SETSIZE);
 std::atomic<long> ThreadManager::_totalCPUs;
-std::atomic<bool> ThreadManager::_finishedCPUInitialization;
+std::atomic<bool> ThreadManager::_finishedCPUInitialization(false);
 SpinLock ThreadManager::_idleThreadsLock;
 std::deque<WorkerThread *> ThreadManager::_idleThreads;
 std::atomic<long> ThreadManager::_totalThreads;
@@ -78,7 +78,7 @@ void ThreadManager::threadStartup(WorkerThread *currentThread)
 	// Initialize the CPU status if necessary before the thread has a chance to check the shutdown signal
 	CPUActivation::threadInitialization(currentThread);
 	
-	Instrument::createdThread(currentThread);
+	currentThread->_instrumentationId = Instrument::createdThread();
 	
 	// The thread suspends itself after initialization, since the "activator" is the one will unblock it when needed
 	currentThread->suspend();
@@ -87,7 +87,7 @@ void ThreadManager::threadStartup(WorkerThread *currentThread)
 	assert(currentThread->_cpuToBeResumedOn != nullptr);
 	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
 	
-	Instrument::threadHasResumed(currentThread, currentThread->_cpu);
+	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->_virtualCPUId);
 	
 #ifndef NDEBUG
 	currentThread->_cpuToBeResumedOn = nullptr;

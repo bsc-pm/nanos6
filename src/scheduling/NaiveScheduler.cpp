@@ -52,7 +52,7 @@ CPU *NaiveScheduler::getIdleCPU()
 }
 
 
-ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace)
+ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_front(task);

@@ -4,11 +4,10 @@
 #include "InstrumentTaskExecution.hpp"
 
 #include "CPU.hpp"
+#include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
-
-class WorkerThread;
 
 
 class TaskFinalization {
@@ -23,7 +22,11 @@ public:
 			
 			if (task->hasFinished()) {
 				readyOrDisposable = task->unlinkFromParent();
-				Instrument::destroyTask(task->getInstrumentationTaskId(), cpu, thread);
+				Instrument::destroyTask(
+					task->getInstrumentationTaskId(),
+					(cpu != nullptr ? cpu->_virtualCPUId : ~0UL),
+					(thread != nullptr ? thread->getInstrumentationId() : Instrument::thread_id_t())
+				);
 				// NOTE: The memory layout is defined in nanos_create_task
 				task->~Task();
 				free(task->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here

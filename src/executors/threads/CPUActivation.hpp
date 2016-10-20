@@ -61,10 +61,10 @@ public:
 					successful = true;
 					break;
 				case CPU::disabling_status:
-					successful = cpu->_activationStatus.compare_exchange_weak(currentStatus, CPU::enabled_status);
+					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
 					break;
 				case CPU::disabled_status:
-					successful = cpu->_activationStatus.compare_exchange_weak(currentStatus, CPU::enabling_status);
+					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabling_status);
 					// Wake up a thread to allow the state change to progress
 					if (successful) {
 						ThreadManager::resumeIdle(cpu);
@@ -93,10 +93,10 @@ public:
 					// Keep iterating until the CPU has actually been initialized
 					break;
 				case CPU::enabled_status:
-					successful = cpu->_activationStatus.compare_exchange_weak(currentStatus, CPU::disabling_status);
+					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::disabling_status);
 					break;
 				case CPU::enabling_status:
-					successful = cpu->_activationStatus.compare_exchange_weak(currentStatus, CPU::disabled_status);
+					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::disabled_status);
 					break;
 				case CPU::disabling_status:
 					// No change
@@ -132,10 +132,10 @@ public:
 					successful = true;
 					break;
 				case CPU::enabling_status:
-					successful = cpu->_activationStatus.compare_exchange_weak(currentStatus, CPU::enabled_status);
+					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
 					break;
 				case CPU::disabling_status:
-					successful = cpu->_activationStatus.compare_exchange_weak(currentStatus, CPU::disabled_status);
+					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::disabled_status);
 					if (successful) {
 						ComputePlace *idleComputePlace = Scheduler::getIdleComputePlace();
 						assert(idleComputePlace != cpu);

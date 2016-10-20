@@ -8,7 +8,7 @@ class Task;
 
 class TaskBlocking {
 public:
-	static void taskBlocks(WorkerThread *currentThread, Task *currentTask);
+	static void taskBlocks(WorkerThread *currentThread, Task *currentTask, bool allowRunningInline);
 };
 
 

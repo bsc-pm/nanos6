@@ -2,7 +2,7 @@
 #define INSTRUMENT_VERBOSE_DEPENDENCIES_BY_GROUP_HPP
 
 
-#include "../InstrumentDependenciesByGroup.hpp"
+#include "../api/InstrumentDependenciesByGroup.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_DEPENDENCIES_BY_GROUP_HPP

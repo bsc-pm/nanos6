@@ -9,7 +9,7 @@
 #include <cassert>
 
 
-void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask)
+void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, bool allowRunningInline)
 {
 	assert(currentThread != nullptr);
 	assert(currentTask != nullptr);
@@ -49,7 +49,9 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask)
 			replacementThread = replacementTask->getThread();
 			
 			if (replacementThread == nullptr) {
-				runReplacementInline = ThreadManagerPolicy::checkIfMustRunInline(replacementTask, currentTask, cpu);
+				if (allowRunningInline) {
+					runReplacementInline = ThreadManagerPolicy::checkIfMustRunInline(replacementTask, currentTask, cpu);
+				}
 				if (!runReplacementInline) {
 					// Set up case (2)
 					replacementThread = ThreadManager::getIdleThread(cpu);

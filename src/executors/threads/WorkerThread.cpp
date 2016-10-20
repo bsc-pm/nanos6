@@ -2,7 +2,6 @@
 #include "TaskFinalization.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
@@ -19,20 +18,10 @@
 __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
 
 
-static void *worker_thread_body_wrapper(void *parameter)
-{
-	WorkerThread *workerThread = (WorkerThread *) parameter;
-	assert(workerThread != nullptr);
-	return workerThread->body();
-}
-
-
 WorkerThread::WorkerThread(CPU *cpu)
-	: _suspensionConditionVariable(), _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false), _task(nullptr),
-	_dependencyDomain()
+	: _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false)
 {
-	int rc = pthread_create(&_pthread, &cpu->_pthreadAttr, &worker_thread_body_wrapper, this);
-	FatalErrorHandler::handle(rc, " when creating a pthread in CPU ", cpu->_systemCPUId);
+	start(&cpu->_pthreadAttr);
 }
 
 
@@ -41,10 +30,38 @@ void *WorkerThread::body()
 	ThreadManager::threadStartup(this);
 	
 	while (!_mustShutDown) {
-		CPUActivation::activationCheck(this);
+		if (!CPUActivation::acceptsWork(_cpu)) {
+			Scheduler::disableComputePlace(_cpu);
+			CPUActivation::activationCheck(this);
+			Scheduler::enableComputePlace(_cpu);
+		}
 		
 		if (_task == nullptr) {
-			_task = Scheduler::getReadyTask(_cpu);
+			std::atomic<Task *> pollingSlot(nullptr);
+			
+			if (Scheduler::requestPolling(_cpu, &pollingSlot)) {
+				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(_cpu)) {
+					// Keep trying
+					pollingSlot.compare_exchange_strong(_task, nullptr);
+				}
+				
+				if (ThreadManager::mustExit()) {
+					bool worked = Scheduler::releasePolling(_cpu, &pollingSlot);
+					assert(worked && "A failure to release the scheduler polling slot means that the thread has got a task assigned, however the runtime is shutting down");
+				}
+				
+				if (!CPUActivation::acceptsWork(_cpu)) {
+					// The CPU is about to be disabled
+					
+					// Release the polling slot
+					Scheduler::releasePolling(_cpu, &pollingSlot);
+					
+					// We may already have a task assigned through
+					pollingSlot.compare_exchange_strong(_task, nullptr);
+				}
+			} else {
+				// Did not receive neither the polling slot nor a task
+			}
 		} else {
 			// The thread has been preassigned a task before being resumed
 		}
@@ -55,6 +72,7 @@ void *WorkerThread::body()
 			// A task already assigned to another thread
 			if (assignedThread != nullptr) {
 				_task = nullptr;
+				
 				ThreadManager::addIdler(this);
 				ThreadManager::switchThreads(this, assignedThread);
 			} else {
@@ -86,7 +104,7 @@ void WorkerThread::handleTask()
 	_task->setThread(this);
 	
 	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
-	Instrument::startTask(taskId, _cpu, this);
+	Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
 	Instrument::taskIsExecuting(taskId);
 	
 	// Run the task
@@ -95,7 +113,7 @@ void WorkerThread::handleTask()
 	std::atomic_thread_fence(std::memory_order_release);
 	
 	Instrument::taskIsZombie(taskId);
-	Instrument::endTask(taskId, _cpu, this);
+	Instrument::endTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
 	
 	// Release successors
 	DataAccessRegistration::unregisterTaskDataAccesses(_task);

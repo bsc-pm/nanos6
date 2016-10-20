@@ -2,7 +2,7 @@
 #define INSTRUMENT_VERBOSE_ADD_TASK_HPP
 
 
-#include "../InstrumentAddTask.hpp"
+#include "../api/InstrumentAddTask.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_ADD_TASK_HPP

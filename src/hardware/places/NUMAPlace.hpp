@@ -2,7 +2,7 @@
 #define NUMA_PLACE_HPP
 
 #include "MemoryPlace.hpp"
-#include "../../memory/NUMACache.hpp"
+#include "../../memory/cache/NUMACache.hpp"
 
 class NUMAPlace: public MemoryPlace {
 private:

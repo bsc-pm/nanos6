@@ -2,7 +2,7 @@
 #define INSTRUMENT_NULL_LEADER_THREAD_HPP
 
 
-#include "../InstrumentUserMutex.hpp"
+#include "../api/InstrumentLeaderThread.hpp"
 
 
 namespace Instrument {

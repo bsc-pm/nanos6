@@ -24,9 +24,7 @@ struct TaskMemoryData{
 		ids.push_back(id);
 		regions++;
 	}
-
-	
-}
+};
 
 typedef struct TaskMemoryData TaskMemoryData;
 

@@ -1,4 +1,6 @@
 #include "InstrumentAddTask.hpp"
+
+#include "ExecutionSteps.hpp"
 #include "InstrumentGraph.hpp"
 
 #include "executors/threads/WorkerThread.hpp"
@@ -21,13 +23,12 @@ namespace Instrument {
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		if (currentThread == nullptr) {
 			// The main task gets added by a non-worker thread
-			assert(_nextTaskId == 0);
+			// And other tasks can also be added by external threads in library mode
 		}
 		
-		thread_id_t threadId;
-		{
-			assert((currentThread == nullptr) || (_threadToId.find(currentThread) != _threadToId.end()));
-			threadId = _threadToId[currentThread];
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
 		}
 		
 		// Get an ID for the task
@@ -56,7 +57,7 @@ namespace Instrument {
 	}
 	
 	
-	void createdTask(Task *task, task_id_t taskId)
+	void createdTask(void *taskObject, task_id_t taskId)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		Task *parentTask = nullptr;
@@ -67,11 +68,14 @@ namespace Instrument {
 			assert(parentTask != nullptr);
 		} else {
 			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
 		}
 		
 		// Create the task information
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
 		assert(taskInfo._phaseList.empty());
+		
+		Task *task = (Task *) taskObject;
 		taskInfo._nanos_task_info = task->getTaskInfo();
 		taskInfo._nanos_task_invocation_info = task->getTaskInvokationInfo();
 		if (parentTask != 0) {
@@ -82,6 +86,8 @@ namespace Instrument {
 		if (parentTask != nullptr) {
 			task_id_t parentTaskId = parentTask->getInstrumentationTaskId();
 			task_info_t &parentInfo = _taskToInfoMap[parentTaskId];
+			
+			parentInfo._hasChildren = true;
 			
 			task_group_t *taskGroup = nullptr;
 			if (!parentInfo._phaseList.empty()) {

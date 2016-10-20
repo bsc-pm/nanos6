@@ -217,6 +217,28 @@ public:
 	}
 	
 	
+	//! \brief Pass all elements through a lambda
+	//! 
+	//! \param[in] processor a lambda that receives an iterator to each element and that returns a boolean, that is false to stop the traversal
+	//! 
+	//! \returns false if the traversal was stopped before finishing
+	template <typename ProcessorType>
+	bool processAll(ProcessorType processor)
+	{
+		for (iterator it = _map.begin(); it != _map.end(); ) {
+			iterator position = it;
+			it++; // Advance before processing to allow the processor to fragment the node without passing a second time over some new fragments
+			
+			bool cont = processor(position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+			if (!cont) {
+				return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	
 	//! \brief Pass all elements that intersect a given range through a lambda
 	//! 
 	//! \param[in] range the range to explore
@@ -268,6 +290,17 @@ public:
 		}
 		
 		return false;
+	}
+	
+	
+	//! \brief Check if there is any element in a given range
+	//! 
+	//! \param[in] range the range to explore
+	//! 
+	//! \returns true if there was at least one element at least partially in the range
+	bool contains(DataAccessRange const &range)
+	{
+		return (_map.find(range) != _map.end());
 	}
 	
 	

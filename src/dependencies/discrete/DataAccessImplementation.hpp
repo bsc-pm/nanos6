@@ -74,7 +74,8 @@ inline bool DataAccess::reevaluateSatisfiability(DataAccess *effectivePrevious)
 		return false;
 	}
 	
-	return DataAccess::evaluateSatisfiability(effectivePrevious, _type);
+	_satisfied = DataAccess::evaluateSatisfiability(effectivePrevious, _type);
+	return _satisfied;
 }
 
 
@@ -199,17 +200,17 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 			bool satisfied = evaluateSatisfiability(dataAccess, newAccessType);
 			
 			Instrument::data_access_id_t newDataAccessInstrumentationId =
-			Instrument::createdDataAccess(
-				(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
-				newAccessType, true,
-				accessSequence->_accessRange,
-				false, false, satisfied,
-				task->getInstrumentationTaskId()
-			);
+				Instrument::createdDataAccess(
+					(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
+					newAccessType, true,
+					accessSequence->_accessRange,
+					false, false, satisfied,
+					task->getInstrumentationTaskId()
+				);
 			
 			Instrument::linkedDataAccesses(
 				dataAccess->_instrumentationId,
-				newDataAccessInstrumentationId,
+				task->getInstrumentationTaskId(),
 				accessSequence->_accessRange,
 				true /* Direct? */,
 				true /* Bidirectional? */,
@@ -319,17 +320,17 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 			
 			// New object with the old information
 			Instrument::data_access_id_t newDataAccessInstrumentationId =
-			Instrument::createdDataAccess(
-				(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
-				oldAccessType, true,
-				accessSequence->_accessRange,
-				false, false, false,
-				task->getInstrumentationTaskId()
-			);
+				Instrument::createdDataAccess(
+					(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
+					oldAccessType, true,
+					accessSequence->_accessRange,
+					false, false, false,
+					task->getInstrumentationTaskId()
+				);
 			
 			Instrument::linkedDataAccesses(
 				effectivePrevious->_instrumentationId,
-				newDataAccessInstrumentationId,
+				task->getInstrumentationTaskId(),
 				accessSequence->_accessRange,
 				!accessSequence->_accessSequence.empty() /* Direct? */,
 				!accessSequence->_accessSequence.empty() /* Bidirectional? */,

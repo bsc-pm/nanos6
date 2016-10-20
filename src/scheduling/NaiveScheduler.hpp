@@ -29,7 +29,7 @@ public:
 	NaiveScheduler();
 	~NaiveScheduler();
 	
-	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);
 	

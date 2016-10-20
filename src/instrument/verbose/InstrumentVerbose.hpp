@@ -37,6 +37,7 @@ namespace Instrument {
 		extern bool _verboseTaskWait;
 		extern bool _verboseThreadManagement;
 		extern bool _verboseUserMutex;
+		extern bool _verboseLoggingMessages;
 		
 		extern EnvironmentVariable<bool> _useTimestamps;
 		extern EnvironmentVariable<bool> _dumpOnlyOnExit;
@@ -80,7 +81,7 @@ namespace Instrument {
 			LogEntry *currentEntry = _freeEntries;
 			while (currentEntry != nullptr) {
 				LogEntry *nextEntry = currentEntry->_next;
-				if (_freeEntries.compare_exchange_weak(currentEntry, nextEntry)) {
+				if (_freeEntries.compare_exchange_strong(currentEntry, nextEntry)) {
 					assert(currentEntry != nullptr);
 					currentEntry->_contents.clear();
 					stampTime(currentEntry);
@@ -101,7 +102,7 @@ namespace Instrument {
 			LogEntry *lastEntry = _lastEntry;
 			do {
 				logEntry->_next = lastEntry;
-			} while (!_lastEntry.compare_exchange_weak(lastEntry, logEntry, std::memory_order_release));
+			} while (!_lastEntry.compare_exchange_strong(lastEntry, logEntry));
 		}
 		
 	}

@@ -45,6 +45,20 @@ long nanos_get_current_system_cpu()
 	return currentCPU->_systemCPUId;
 }
 
+unsigned int nanos_get_current_virtual_cpu()
+{
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	
+	if (currentThread == nullptr) {
+		return 0;
+	}
+	
+	CPU *currentCPU = currentThread->getComputePlace();
+	assert(currentCPU != 0);
+	
+	return currentCPU->_virtualCPUId;
+}
+
 void nanos_enable_cpu(long systemCPUId)
 {
 	CPUActivation::enable(systemCPUId);

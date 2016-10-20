@@ -2,7 +2,7 @@
 #define INSTRUMENT_GRAPH_USER_MUTEX_HPP
 
 
-#include "../InstrumentUserMutex.hpp"
+#include "../api/InstrumentUserMutex.hpp"
 
 
 namespace Instrument {
