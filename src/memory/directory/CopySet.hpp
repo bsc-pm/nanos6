@@ -8,7 +8,7 @@
 
 class CopySet {
 
-typedef member_hook< CopyObject, CopyObject::member_hook_t, &CopyObject::_hook > MemberOption;
+typedef boost::intrusive::member_hook< CopyObject, CopyObject::member_hook_t, &CopyObject::_hook > MemberOption;
 typedef boost::intrusive::avl_multiset< CopyObject, MemberOption, boost::intrusive::key_of_value< CopyObject::key_value > > CopyObjectSet;
 
 private:

@@ -98,11 +98,11 @@ common_sources = \
 	src/memory/directory/CopySet.hpp \
 	src/memory/directory/CopySet.cpp \
 	src/memory/directory/CopyObject.hpp \
-	src/memory/directory/MemoryRegion.hpp \
-	src/memory/directory/RegionSet.hpp \
-	src/memory/directory/RegionSet.cpp \
-	src/memory/Region.hpp \
-	src/memory/Region.cpp \
+	src/memory/directory/CopyObject.cpp \
+	src/memory/directory/MemoryPageObject.hpp \
+	src/memory/directory/MemoryPageObject.cpp \
+	src/memory/directory/MemoryPageSet.hpp \
+	src/memory/directory/MemoryPageSet.cpp \
 	src/memory/cache/GenericCache.hpp \
 	src/memory/cache/AIOCache.hpp \
 	src/memory/cache/AIOCache.cpp \

@@ -14,7 +14,7 @@ private:
 	CopySet _copies;
 	MemoryPageSet _pages;	
 
-	static Directory _instance;
+	static Directory *_instance;
 
 	Directory();
 public:	
@@ -48,9 +48,10 @@ public:
 	/*! Registers a region that has been removed from a cache
 	 *  
 	 *  \param address The base address of the evicted region
+	 *	\param size Size of the evicted region
 	 *	\param cache The cache from which the region is evicted
 	 */
-	static void erase_copy(void *address, GenericCache *cache);	
+	static void erase_copy(void *address, size_t size, GenericCache *cache);	
 };
 
 #endif //DIRECTORY_HPP

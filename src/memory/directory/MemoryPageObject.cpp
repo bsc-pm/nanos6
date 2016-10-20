@@ -1,9 +1,9 @@
 #include "MemoryPageObject.hpp"
 
-MemoryPageObject::MemoryPageObject( void *baseAddress, size_t size, MemoryPlace *location = nullptr ): _range(startAddress, size), _location( location ){}
+MemoryPageObject::MemoryPageObject( void *startAddress, size_t size, MemoryPlace *location ): _range(startAddress, size), _location( location ){}
 
-void *MemoryPageObject::getBaseAddress(){
-	return _region.getStartAddress();
+void *MemoryPageObject::getStartAddress(){
+	return _range.getStartAddress();
 }
 
 size_t MemoryPageObject::getSize(){
@@ -11,6 +11,6 @@ size_t MemoryPageObject::getSize(){
 }
 
 MemoryPlace *MemoryPageObject::getLocation(){
-	return location;
+	return _location;
 }
 

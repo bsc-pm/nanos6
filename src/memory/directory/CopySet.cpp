@@ -15,7 +15,7 @@ CopySet::iterator CopySet::find(void *address){
 }
 
 CopySet::iterator CopySet::find(void *address, size_t size){
-	CopySet::iterator it = _set.find(baseAddress);
+	CopySet::iterator it = _set.find(address);
 	while(it != _set.end() && it->getStartAddress() == address){
 		if(it->getSize() == size){
 			return it;
@@ -25,21 +25,22 @@ CopySet::iterator CopySet::find(void *address, size_t size){
 	return _set.end();	
 }
 
-CopySet::iterator insert(void *baseAddress, size_t size, GenericCache *cache, bool increment){
-	CopySet::iterator it = find(baseAddress, size);
+CopySet::iterator CopySet::insert(void *address, size_t size, GenericCache *cache, bool increment){
+	CopySet::iterator it = find(address, size);
 	if(it != _set.end()){
 		if(!it->isInCache(cache)) it->addCache(cache);
 		if(increment) it->incrementVersion();
 		return it;
 	}	
-	
-	std::pair<CopySet::iterator, bool> result = _set.insert(CopyObject(baseAddress, size));
-	_set.addCache(cache);
-	return result->first;
+
+	CopyObject *cpy = new CopyObject(address, size);
+	cpy->addCache(cache);	
+	it = _set.insert(*cpy);
+	return it;
 }
 
-CopySet::iterator erase(void *baseAddress, size_t size, GenericCache *cache){
-	CopySet::iterator it = _set.find(baseAddress);
+CopySet::iterator CopySet::erase(void *address, size_t size, GenericCache *cache){
+	CopySet::iterator it = _set.find(address);
 	if(it != _set.end()){
 		it->removeCache(cache);
 		if(it->countCaches() == 0) _set.erase(it);

@@ -1,7 +1,7 @@
 #ifndef REGION_HPP
 #define REGION_HPP
 
-#include <DataAccessRange.h>
+#include "dependencies/linear-regions/DataAccessRange.hpp"
 
 #include <boost/intrusive/avl_set.hpp>
 #include "hardware/places/MemoryPlace.hpp"
@@ -22,7 +22,7 @@ public:
 	member_hook_t _hook;
 
 
-	MemoryRegion( void *baseAddress, size_t size, MemoryPlace *location = nullptr );
+	MemoryPageObject( void *baseAddress, size_t size, MemoryPlace *location = nullptr );
 	void *getStartAddress();
 	size_t getSize();
 	MemoryPlace *getLocation();
@@ -33,8 +33,8 @@ public:
 	{
 		typedef void *type;
 		
-		const type &operator()(const MemoryRegion &m){
-			return m._region._baseAddress;
+		const type &operator()(const MemoryPageObject &m){
+			return m._range.getStartAddress();
 		}
 	};
 	

@@ -4,15 +4,15 @@
 
 MemoryPageSet::MemoryPageSet(): _set(){}
 
-RegionSet::iterator MemoryPageSet::begin(){
+MemoryPageSet::iterator MemoryPageSet::begin(){
     return _set.begin();
 }
 
-RegionSet::iterator MemoryPageSet::end(){
+MemoryPageSet::iterator MemoryPageSet::end(){
     return _set.end();
 }
 
-RegionSet::iterator MemoryPageSet::find(void *address){
+MemoryPageSet::iterator MemoryPageSet::find(void *address){
     return _set.find(address);
 }
 
@@ -111,3 +111,4 @@ void RegionSet::insert(TaskMemoryData data){
 	//	if(p[i] ==  
 	//}
 }  
+*/

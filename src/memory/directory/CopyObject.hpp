@@ -1,7 +1,7 @@
 #ifndef CACHE_OBJECT_HPP
 #define CACHE_OBJECT_HPP
 
-#include <DataAccessRange.h>
+#include "dependencies/linear-regions/DataAccessRange.hpp"
 
 #include <boost/intrusive/avl_set.hpp>
 #include "memory/cache/GenericCache.hpp"
@@ -31,7 +31,7 @@ public:
 	void incrementVersion();
 	void addCache(GenericCache *cache);
 	void removeCache(GenericCache *cache);
-	void isInCache(GenericCache *cache);
+	bool isInCache(GenericCache *cache);
 	int countCaches();
 
 	/* Key for Boost Intrusive AVL Set */
