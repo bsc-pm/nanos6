@@ -18,16 +18,20 @@ void CopyObject::incrementVersion(){
 	_version++;
 }
 
-void CopyObject::addCache(GenericCache *cache){
-	_caches.insert(cache);
+void CopyObject::addCache(int id){
+	_caches.set(id);
 }
 
-void CopyObject::removeCache(GenericCache *cache){
-	_caches.erase(_caches.find(cache));
+void CopyObject::removeCache(int id){
+	_caches.reset(id);
 }	
  
-bool CopyObject::isInCache(GenericCache *cache){
-	return _caches.count(cache) != 0;	
+bool CopyObject::testCache(int id){
+	return _caches.test(id);	
+}
+
+bool CopyObject::anyCache(){
+	return _caches.any();
 }
 
 int CopyObject::countCaches(){

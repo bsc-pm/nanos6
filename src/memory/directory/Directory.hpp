@@ -43,7 +43,7 @@ public:
 	 *  \param cache The cache to which the region is copied
 	 *  \param increment True if the version needs to be incremented
 	 */
-	static int insert_copy(void *address, size_t size, GenericCache *cache, bool increment);
+	static int insert_copy(void *address, size_t size, int cache, bool increment);
 
 	/*! Registers a region that has been removed from a cache
 	 *  
@@ -51,7 +51,7 @@ public:
 	 *	\param size Size of the evicted region
 	 *	\param cache The cache from which the region is evicted
 	 */
-	static void erase_copy(void *address, size_t size, GenericCache *cache);	
+	static void erase_copy(void *address, size_t size, int cache);	
 };
 
 #endif //DIRECTORY_HPP

@@ -21,11 +21,11 @@ int Directory::copy_version(void *address, size_t size){
 	}
 }
 
-int Directory::insert_copy(void *address, size_t size, GenericCache *cache, bool increment){
+int Directory::insert_copy(void *address, size_t size, int cache, bool increment){
 	CopySet::iterator it = Directory::_instance->_copies.insert(address, size, cache, increment);
 	return it->getVersion();
 }
 
-void Directory::erase_copy(void *address, size_t size, GenericCache *cache){
+void Directory::erase_copy(void *address, size_t size, int cache){
 	Directory::_instance->_copies.erase(address, size, cache);
 }

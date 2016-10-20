@@ -25,10 +25,10 @@ CopySet::iterator CopySet::find(void *address, size_t size){
 	return _set.end();	
 }
 
-CopySet::iterator CopySet::insert(void *address, size_t size, GenericCache *cache, bool increment){
+CopySet::iterator CopySet::insert(void *address, size_t size, int cache, bool increment){
 	CopySet::iterator it = find(address, size);
 	if(it != _set.end()){
-		if(!it->isInCache(cache)) it->addCache(cache);
+		if(!it->testCache(cache)) it->addCache(cache);
 		if(increment) it->incrementVersion();
 		return it;
 	}	
@@ -39,11 +39,11 @@ CopySet::iterator CopySet::insert(void *address, size_t size, GenericCache *cach
 	return it;
 }
 
-CopySet::iterator CopySet::erase(void *address, size_t size, GenericCache *cache){
+CopySet::iterator CopySet::erase(void *address, size_t size, int cache){
 	CopySet::iterator it = _set.find(address);
 	if(it != _set.end()){
 		it->removeCache(cache);
-		if(it->countCaches() == 0) _set.erase(it);
+		if(!it->anyCache()) _set.erase(it);
 	}
 	return it;	
 }
