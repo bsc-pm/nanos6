@@ -1675,6 +1675,7 @@ public:
 					assert(accessStructures._removalBlockers >= 0);
 					
 					Instrument::removedDataAccess(dataAccess->_instrumentationId, task->getInstrumentationTaskId());
+					accessStructures._accessFragments.erase(dataAccess);
 					delete dataAccess;
 					
 					return true;
