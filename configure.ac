@@ -117,7 +117,6 @@ AC_CONFIG_FILES([
 	Makefile
 	docs/Doxyfile
 	src/version/VersionInfo.hpp
-	tests/directive_based/check-shutdown/Makefile
 	tests/directive_based/tests/Makefile
 ])
 AC_OUTPUT
