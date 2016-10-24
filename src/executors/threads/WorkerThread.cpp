@@ -29,6 +29,8 @@ void *WorkerThread::body()
 {
 	ThreadManager::threadStartup(this);
 	
+	_cpu->bindThread(pthread_self());
+	
 	while (!_mustShutDown) {
 		if (!CPUActivation::acceptsWork(_cpu)) {
 			Scheduler::disableHardwarePlace(_cpu);

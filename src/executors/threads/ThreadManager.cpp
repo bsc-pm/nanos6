@@ -1,8 +1,14 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <cassert>
 #include <list>
 
 #include <pthread.h>
 #include <unistd.h>
+
+#include <sys/syscall.h>
 
 #include "CPUActivation.hpp"
 #include "ThreadManager.hpp"
@@ -33,7 +39,7 @@ void ThreadManager::preinitialize()
 	_shutdownThreads = 0;
 	_mainShutdownControllerThread = nullptr;
 	
-	int rc = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &_processCPUMask);
+	int rc = sched_getaffinity(syscall(SYS_gettid), sizeof(cpu_set_t), &_processCPUMask);
 	FatalErrorHandler::handle(rc, " when retrieving the affinity of the current pthread ", pthread_self());
 	
 	// Set up the pthread attributes for the threads of each CPU
