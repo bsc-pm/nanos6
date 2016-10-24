@@ -84,6 +84,9 @@ SSS_FIXUP_COMPILER_FLAGS
 
 CONFIGURE_NANOS6_FEATURES
 
+# Check for gethostid
+AC_CHECK_FUNCS([gethostid])
+
 # Dependency engine to use
 AC_ARG_WITH(
 	[dependencies],
