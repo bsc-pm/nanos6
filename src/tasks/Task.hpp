@@ -295,6 +295,10 @@ public:
         return _cachedBytes;
     }
 
+    inline unsigned int getCachedBytes() {
+        return _cachedBytes;
+    }
+
     //! \brief Return the total number of bytes required by a task to be executed
     inline unsigned int getTaskDataSize() const
     {

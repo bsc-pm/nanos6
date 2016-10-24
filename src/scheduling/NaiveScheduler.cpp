@@ -51,6 +51,13 @@ CPU *NaiveScheduler::getIdleCPU()
 	return nullptr;
 }
 
+ComputePlace * NaiveScheduler::addPreReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
+{
+	std::lock_guard<SpinLock> guard(_globalLock);
+	_preReadyTasks.push_front(task);
+	
+	return getIdleCPU();
+}
 
 ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
@@ -82,6 +89,27 @@ bool NaiveScheduler::checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace
 	return false;
 }
 
+Task *NaiveScheduler::getPreReadyTask(__attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+{
+	Task *task = nullptr;
+	
+	std::lock_guard<SpinLock> guard(_globalLock);
+	
+	// 1. Get a preready task
+	if (!_preReadyTasks.empty()) {
+		task = _preReadyTasks.front();
+		_preReadyTasks.pop_front();
+		
+		assert(task != nullptr);
+		
+		return task;
+	}
+	
+	// 3. Or mark the CPU as idle
+	cpuBecomesIdle((CPU *) hardwarePlace);
+	
+	return nullptr;
+}
 
 Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
