@@ -1537,7 +1537,7 @@ public:
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					
-					// Returns false if the lock has been droped to also lock the parent.
+					// Returns false if the lock has been dropped to also lock the parent.
 					// This allows the traversal to restart from the equivalent point, since the contents of
 					// accesses may have changed during the relocking operation (due to fragmentation).
 					return finalizeAccess(
