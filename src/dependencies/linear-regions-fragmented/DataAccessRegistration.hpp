@@ -470,9 +470,17 @@ private:
 							
 							if (!parentAccessStructuresIfLocked->_lock.tryLock()) {
 								// Relock and restart
+								
+								// Do not allow the task to disappear!
+								targetTaskAccessStructures._removalBlockers++;
+								
+								// Relock
 								targetTaskAccessStructures._lock.unlock();
 								parentAccessStructuresIfLocked->_lock.lock();
 								targetTaskAccessStructures._lock.lock();
+								
+								// Allow again the task to disappear (after processing it)
+								targetTaskAccessStructures._removalBlockers--;
 								
 								return false;
 							}
