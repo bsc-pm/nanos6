@@ -32,7 +32,6 @@ public:
 	/*!	\brief Find the CopyObject with the specified address and size
 	 *	
 	 *	\param address Starting address of the copy region
-	 *	\param size Size of the copy region
 	 */	
 	iterator find(void *address, size_t size);
 
@@ -57,10 +56,9 @@ public:
 	 *	If the CopyObject only had this copy it will remove the object from the directory. 
 	 *
 	 *	\param address Starting address of the copy region
-	 *	\param size Size of the copy region
 	 *	\param cache Cache from which the copy was evicted
 	 */
-	iterator erase(void *address, size_t size, int cache);
+	iterator erase(void *address, int cache);
 };
 
 #endif //COPY_SET_HPP
