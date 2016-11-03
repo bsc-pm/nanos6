@@ -140,6 +140,8 @@ discrete_dependency_sources = $(common_dependency_sources) \
 common_linear_regions_dependency_sources = \
 	src/dependencies/linear-regions/DataAccessRange.hpp \
 	src/dependencies/linear-regions/DataAccessRangeIndexer.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp
 	
@@ -161,8 +163,6 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
-	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMap.hpp \
-	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
