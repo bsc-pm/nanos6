@@ -66,7 +66,7 @@ void Loader::load(Machine *machine){
     // Create AIO addressSpace
     AddressSpace * AIOAddressSpace = new AddressSpace();
     // Create AIOCache
-    AIOCache * AIOcache = new AIOCache();
+    AIOCache * AIOcache = new AIOCache(/*index*/-1);
     // Create AIO Memory Place
     AIOPlace * AIOMemoryPlace = new AIOPlace(/*index*/ -1, AIOcache, AIOAddressSpace);
     machine->addMemoryNode(AIOMemoryPlace);
@@ -79,14 +79,14 @@ void Loader::load(Machine *machine){
 
 NUMAPlace* Loader::createMemoryFromObj(hwloc_obj_t node_obj, AddressSpace * space){
     // Create MemoryPlace representing the NUMA node
-    NUMACache * cache = new NUMACache();
+    NUMACache * cache = new NUMACache(node_obj->logical_index);
     NUMAPlace* node = new NUMAPlace(node_obj->logical_index, cache, space);
     return node;
 }
 
 NUMAPlace* Loader::createMemoryFromMachine( AddressSpace * space){
-    NUMACache * cache = new NUMACache();
-    NUMAPlace* node = new NUMAPlace(0, cache, space); // arbitrary os index // TODO: special index? Negative index?
+    NUMACache * cache = new NUMACache(/*index*/0);
+    NUMAPlace* node = new NUMAPlace(/*index*/0, cache, space); // arbitrary os index // TODO: special index? Negative index?
     return node;
 }
 

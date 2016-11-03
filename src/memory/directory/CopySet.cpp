@@ -14,8 +14,8 @@ void CopySet::processMissing(void *startAddress, void *endAddress, int cache, bo
 
 void CopySet::processIntersecting(CopyObject &cpy, void *startAddress, void *endAddress, int cache, bool increment){
 	if(cpy.getStartAddress() < startAddress){
-		CopyObject cpy = new CopyObject(cpy->getStartAddress(), startAddress);
-		cpy.addCache(cache);
+		CopyObject * cpy = new CopyObject(cpy->getStartAddress(), startAddress);
+		cpy->addCache(cache);
 		_set.insert(*cpy);
 
 		cpy->setStartAddress(startAddress); 
@@ -58,13 +58,13 @@ CopySet::iterator CopySet::find(void *address, size_t size){
 }
 
 CopySet::iterator CopySet::insert(void *startAddress, size_t size, int cache, bool increment){
-	void *endAddress = static_cast<void *>( static_cast<char *>(startAddress) + size )
+	void *endAddress = static_cast<void *>( static_cast<char *>(startAddress) + size );
 	CopySet::iterator it = _set.lower_bound(startAddress);
     CopySet::iterator initial = it;
 
 	if(it != set.end()){
 		//Adjust lower bound
-		if ((it != _set.begin()) && (it->getStartAddress() > address)) {
+		if ((it != _set.begin()) && (it->getStartAddress() > startAddress)) {
             it--;
         }
 		

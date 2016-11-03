@@ -33,7 +33,7 @@ void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task *
         auto it2 = _replicas.find((*it).getAccessRange().getStartAddress());
         if(it2 != _replicas.end()) {
             //! The data is already in the cache. Check with the directory whether it is correct or outdated. 
-            if(it2->second._version == Directory::copy_version(it2->first, it2->second._size)) {
+            if(it2->second._version == Directory::copy_version(it2->first)) {
                 //! The data in the cache is correct.
                 //! Increment the _refCount to avoid evictions.
                 it2->second._refCount++;
@@ -109,7 +109,7 @@ void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task *
 
             //! Notify insert to directory
             //! Directory returns version. Check wether it is okay with ours.
-            int dirVersion = Directory::insert_copy((*it).getAccessRange().getStartAddress(), replicaSize, this, newReplica._dirty);
+            int dirVersion = Directory::insert_copy((*it).getAccessRange().getStartAddress(), replicaSize, _index, newReplica._dirty);
             if(dirVersion != newReplica._version) { 
                 std::cerr << "VERSIONS DOES NOT MATCH!!" << std::endl;
                 //! Use the version given by the directory.
@@ -137,12 +137,12 @@ void NUMACache::flush() {
     //! a flush.
     for(auto& replica : _replicas) {
         //! The replica is dirty and it is the last version, copy back.
-        if(replica.second._dirty && replica.second._version == Directory::copy_version(replica.first, replica.second._size)) {
+        if(replica.second._dirty && replica.second._version == Directory::copy_version(replica.first)) {
             //! TODO: Copy back to homeNode (The homeNode can be found in the TaskDataAccesses) 
             //! First, copy back to user address space.
             memcpy(replica.first, replica.second._physicalAddress, replica.second._size); 
             //! Inform directory the data is not in the cache anymore.
-            Directory::erase_copy(replica.first, replica.second._size, this);
+            Directory::erase_copy(replica.first, _index);
         }
         //! Remove replica from _replicas
         _replicas.erase(replica.first);
@@ -171,12 +171,12 @@ bool NUMACache::evict() {
         replicaInfo_t * replica = &_replicas[candidate->second];
         //! The replica is dirty and it is the last version.
         //! TODO: For performance, it could be also checked if the data is anywhere else. If it is, avoid copy back.
-        if(replica->_dirty && replica->_version == Directory::copy_version(candidate->second, replica->_size)) {
+        if(replica->_dirty && replica->_version == Directory::copy_version(candidate->second)) {
             //! TODO: Copy back to homeNode (The homeNode can be found in the TaskDataAccesses) 
             //! First, copy back to user address space.
             memcpy(candidate->second, replica->_physicalAddress, replica->_size); 
             //! Inform directory the data is not in the cache anymore.
-            Directory::erase_copy(candidate->second, replica->_size, this);
+            Directory::erase_copy(candidate->second, _index);
         }
         //! Remove replica from _replicas
         _replicas.erase(candidate->second);

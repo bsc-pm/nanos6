@@ -5,7 +5,9 @@
 
 class NUMACache: public GenericCache {
 public:
-    NUMACache() {}
+    NUMACache(int index)
+        : GenericCache(index) 
+    {}
     virtual ~NUMACache() {
         //Iterate over _replicas and free all the replicas.
         for(const auto& replica : _replicas ) {

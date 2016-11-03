@@ -5,7 +5,9 @@
 
 class AIOCache: public GenericCache {
 public:
-    AIOCache() {}
+    AIOCache(int index)
+        : GenericCache(index) 
+    {}
     virtual ~AIOCache() {}
     virtual void * allocate(std::size_t size);
     virtual void deallocate(void * ptr);

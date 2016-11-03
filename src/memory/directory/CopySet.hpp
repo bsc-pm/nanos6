@@ -15,8 +15,8 @@ private:
 	CopyObjectSet _set;
 
 	//Convenience functions
-	void processMissing();
-	void processIntersecting();
+    void processMissing(void *startAddress, void *endAddress, int cache, bool increment);
+    void processIntersecting(CopyObject &cpy, void *startAddress, void *endAddress, int cache, bool increment);
 public:
 	typedef CopyObjectSet::iterator iterator;
 	typedef CopyObjectSet::const_iterator const_iterator;	

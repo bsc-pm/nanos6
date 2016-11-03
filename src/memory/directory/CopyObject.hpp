@@ -27,9 +27,9 @@ public:
 	CopyObject(void *startAddress, void *endAddress);
 	CopyObject(void *startAddress, size_t size);
 	void *getStartAddress();
-	void setStartAddress();
+	void setStartAddress(void * startAddress);
 	void *getEndAddress();
-	void getEndAddress();
+    void setEndAddress(void *endAddress);
 	size_t getSize();
 	int getVersion();
 	void setVerstion(int version);

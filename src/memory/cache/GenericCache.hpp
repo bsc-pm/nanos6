@@ -45,6 +45,7 @@ protected:
     //boost::pool_allocator<char> _pool;
     //! Counter to determine the last use of the replicas. Not thread-protected because it is not critical to have two replicas with the same lastUse.
     long unsigned int _count; 
+    int _index;
     void addReadyTask(Task *task) {
         WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
         ComputePlace *hardwarePlace = currentThread->getComputePlace();
@@ -56,7 +57,7 @@ protected:
         }
     }
 public:
-    GenericCache() : _count(0) {}
+    GenericCache(int index) : _count(0), _index(index) {}
     virtual ~GenericCache() {}
     virtual void * allocate(std::size_t size) = 0;
     virtual void deallocate(void * ptr) = 0;
