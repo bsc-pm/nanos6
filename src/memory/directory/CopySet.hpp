@@ -14,6 +14,9 @@ typedef boost::intrusive::avl_multiset< CopyObject, MemberOption, boost::intrusi
 private:
 	CopyObjectSet _set;
 
+	//Convenience functions
+	void processMissing();
+	void processIntersecting();
 public:
 	typedef CopyObjectSet::iterator iterator;
 	typedef CopyObjectSet::const_iterator const_iterator;	

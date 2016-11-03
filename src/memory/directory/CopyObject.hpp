@@ -24,8 +24,12 @@ public:
 
 	member_hook_t _hook;
 
+	CopyObject(void *startAddress, void *endAddress);
 	CopyObject(void *startAddress, size_t size);
 	void *getStartAddress();
+	void setStartAddress();
+	void *getEndAddress();
+	void getEndAddress();
 	size_t getSize();
 	int getVersion();
 	void setVerstion(int version);
