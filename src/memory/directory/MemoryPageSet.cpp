@@ -16,99 +16,29 @@ MemoryPageSet::iterator MemoryPageSet::find(void *address){
     return _set.find(address);
 }
 
-/*
-vector<MemoryRegion> RegionSet::insert(TaskMemoryData data){
-	std::vector<RegionSet::iterator> regions;	
-
-	//Structures to extract the pages of the task data
-	std::vector<void *> p();
-	std::vector<int> s();
-	
+MemoryPageSet::iterator MemoryPageSet::insert(DataAccessRange range){
 	long pagesize = Machine::getMachine()->getPageSize();
-
-	for(int i = 0; i < data.regions; i++){
-		insertRegionPages(data.bases[i], data.sizes[i], pagesize, p);
-	}
-
-	void **pages = &p[0];
-	int *status = &s[0];
-	int npages = p.size();
-
-	move_pages(0, npages, pages, NULL, status, 0); //Find the location of pages
-
-	initial = p[0];
-	psize = pagesize;
-	node = s[0];
-
-
-		Insert located pages to the set
-		Pages are sorted and same size, so we can find which are adjacent and merge
-
-	for(int i = 1; i < npages, i++){
-		if(p[i] != Region::add(initial, psize)  || s[i] != node){
-	
-			std::pair<RegionSet::iterator, bool> response =  _set.insert(MemoryRegion(initial, psize, Machine::getMachine()->getMemoryNode(node)));
-			responses.push_back(response->first*);
-
-			//update next region values
-			initial = p[i];
-			psize = pagesize;
-			node = s[i];
-	
-		} else { // Pages are touching and in the same node
-			psize += pagesize;
-		}
-
-	}
-
-	std::pair<RegionSet::iterator, bool> response = _set.insert(MemoryRegion(initial, psize, Machine::getMachine()->getMemoryNode(node)));
-	responses.push_back(response->first*);
-	
-	return response;
-}   
-
-static void insertRegionPages(void *baseAddress, int size, long pagesize, std::vector<void *> p, std::vector<int> s){
-	void *page = (void *)( (long) baseAddress & ~(pagesize-1) );
-	size += Region::distance(baseAddress, page);
+	void *page = (void *)( (long) range.getStartAddress() & ~(pagesize-1) );
+	size_t size = static_cast<char *>( range.getEndAddress() ) - static_cast<char *>(page);
 	
 	int npages = size / pagesize;
 
-	//Check if element is already in queue before pushing
-	if(std::find(p.begin(), p.end(), page) == p.end()) {
-		p.push_back(page);
-		s.push_back(0);		
+	void * pages[npages];
+	int status[npages]; 
+
+	pages[0] = page;
+	for(int i = 1; i < npages; i++){
+		page += pagesize;
+		pages[i] = page;
 	}
 
-	for( int i = 1; i < npages; i++){
-		page += pagesize;
-		if(std::find(p.begin(), p.end(), page) == p.end()){
-			p.push_back(page);
-			s.push_back(0);
+	//move_pages(0, npages, pages, NULL, status, 0);
+	
+	for(int i = 0; i < npages; i++){
+		if(_set.find(pages[i]) != _set.end()){
+		//	MemoryPageObject *obj = new MemoryPageObject(pages[i], pagesize, status[i]);
+		//	_set.insert(*obj);
 		}
 	}
-
-	std::sort(p.begin(), p.end());
+	
 }
-
-void RegionSet::insert(TaskMemoryData data){
-	//std::vector<void *> p();
-	//std::vector<int> s();
-	//long pagesize = Machine::getMachine()->getPageSize();
-
-	//for(int i = 0; i < data.regions; i++){
-	//	//insertRegionPages(data.bases[i], data.sizes[i], pagesize, p, s);
-	//}
-
-	//void **pages = (void **) &p[0];
-	//int *status = (int *) &s[0];
-	//int npages = p.size();
-
-	//move_pages(0, npages, pages, NULL, status, 0); //Find the location of pages
-
-	//page = p[0];
-	//pst = s[0];
-	//for(int i = 1; i < npages, i++){
-	//	if(p[i] ==  
-	//}
-}  
-*/

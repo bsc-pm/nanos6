@@ -4,6 +4,7 @@
 #include <boost/intrusive/avl_set.hpp> //boost::intrusive
 
 #include "MemoryPageObject.hpp"
+#include "dependencies/linear-regions/DataAccessRange.hpp"
 
 class MemoryPageSet{
 
@@ -23,7 +24,7 @@ public:
 	iterator begin();
 	iterator end();
 	iterator find(void *address);
-
+	iterator insert(DataAccessRange range);	
 	
 };
 

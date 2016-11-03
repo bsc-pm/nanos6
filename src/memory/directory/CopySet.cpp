@@ -14,23 +14,23 @@ void CopySet::processMissing(void *startAddress, void *endAddress, int cache, bo
 
 void CopySet::processIntersecting(CopyObject &cpy, void *startAddress, void *endAddress, int cache, bool increment){
 	if(cpy.getStartAddress() < startAddress){
-		CopyObject * cpy = new CopyObject(cpy->getStartAddress(), startAddress);
-		cpy->addCache(cache);
-		_set.insert(*cpy);
+		CopyObject * newCopy = new CopyObject(cpy.getStartAddress(), startAddress);
+		newCopy->addCache(cache);
+		_set.insert(*newCopy);
 
-		cpy->setStartAddress(startAddress); 
+		cpy.setStartAddress(startAddress); 
 	}
 
-	if(cpy->getEndAddress() > endAddress){
-		CopyObject *cpy = new CopyObject(cpy->getEndAddress(), endAddress);
-		cpy.addCache(cache);
-		_set.insert(*cpy);
+	if(cpy.getEndAddress() > endAddress){
+		CopyObject *newCopy = new CopyObject(cpy.getEndAddress(), endAddress);
+		newCopy->addCache(cache);
+		_set.insert(*newCopy);
 
-		cpy->setEndAddress(endAddress);
+		cpy.setEndAddress(endAddress);
 	}
 
-	if(increment) cpy->incrementVersion();
-	cpy->addCache(cache);
+	if(increment) cpy.incrementVersion();
+	cpy.addCache(cache);
 
 }
 
@@ -62,7 +62,7 @@ CopySet::iterator CopySet::insert(void *startAddress, size_t size, int cache, bo
 	CopySet::iterator it = _set.lower_bound(startAddress);
     CopySet::iterator initial = it;
 
-	if(it != set.end()){
+	if(it != _set.end()){
 		//Adjust lower bound
 		if ((it != _set.begin()) && (it->getStartAddress() > startAddress)) {
             it--;
@@ -80,7 +80,7 @@ CopySet::iterator CopySet::insert(void *startAddress, size_t size, int cache, bo
 			
 			if(lastEnd < position->getStartAddress()){
 				//Misssing region before a position
-				processMissing(lastEnd, position->getStartAddress);				
+				processMissing(lastEnd, position->getStartAddress(), cache, increment);				
 			}
 			
 			if(position->getEndAddress() <= endAddress){
@@ -98,11 +98,11 @@ CopySet::iterator CopySet::insert(void *startAddress, size_t size, int cache, bo
 		if(lastEnd < endAddress){
 			//Missing region at the end
 			//If not intersecting this is the whole region
-			processMissing(lastEnd, endAddress);
+			processMissing(lastEnd, endAddress, cache, increment);
 		}
 
     } else {
-		processMissing(startAddress, endAddress);
+		processMissing(startAddress, endAddress, cache, increment);
 	}
 }
 
