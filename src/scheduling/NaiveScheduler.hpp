@@ -16,6 +16,9 @@ class Task;
 class NaiveScheduler: public SchedulerInterface {
 	SpinLock _globalLock;
 	
+    //! Tasks with logical dependences satisfied but data is not in the remote host.
+	std::deque<Task *> _preReadyTasks;
+    //! Tasks ready to be executed.
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
@@ -29,12 +32,14 @@ public:
 	NaiveScheduler();
 	~NaiveScheduler();
 	
+	ComputePlace *addPreReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
 	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);
 	
 	bool checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace);
 	
+	Task *getPreReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
