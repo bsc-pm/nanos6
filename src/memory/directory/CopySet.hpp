@@ -14,6 +14,9 @@ typedef boost::intrusive::avl_multiset< CopyObject, MemberOption, boost::intrusi
 private:
 	CopyObjectSet _set;
 
+	//Convenience functions
+	void processMissing();
+	void processIntersecting();
 public:
 	typedef CopyObjectSet::iterator iterator;
 	typedef CopyObjectSet::const_iterator const_iterator;	
@@ -32,7 +35,6 @@ public:
 	/*!	\brief Find the CopyObject with the specified address and size
 	 *	
 	 *	\param address Starting address of the copy region
-	 *	\param size Size of the copy region
 	 */	
 	iterator find(void *address, size_t size);
 
@@ -48,7 +50,7 @@ public:
 	 *	\param cache Cache object where the copy is stored
 	 *	\param increment True if the version must be incremented
 	 */
-	iterator insert(void *address, size_t size, GenericCache *cache, bool increment);
+	iterator insert(void *address, size_t size, int cache, bool increment);
 	
 	/*!	\brief Removes a copy on a cache from the list
 	 *
@@ -57,10 +59,9 @@ public:
 	 *	If the CopyObject only had this copy it will remove the object from the directory. 
 	 *
 	 *	\param address Starting address of the copy region
-	 *	\param size Size of the copy region
 	 *	\param cache Cache from which the copy was evicted
 	 */
-	iterator erase(void *address, size_t size, GenericCache *cache);
+	iterator erase(void *address, int cache);
 };
 
 #endif //COPY_SET_HPP

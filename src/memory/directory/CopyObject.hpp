@@ -3,6 +3,7 @@
 
 #include "dependencies/linear-regions/DataAccessRange.hpp"
 
+#include "memory/Globals.hpp"
 #include <boost/intrusive/avl_set.hpp>
 #include "memory/cache/GenericCache.hpp"
 
@@ -11,7 +12,7 @@ class CopyObject {
 private: 
 	DataAccessRange _range;
 	unsigned int _version;
-	std::set<GenericCache *> _caches;
+	cache_mask _caches;
 
 public:
 	
@@ -23,15 +24,20 @@ public:
 
 	member_hook_t _hook;
 
+	CopyObject(void *startAddress, void *endAddress);
 	CopyObject(void *startAddress, size_t size);
 	void *getStartAddress();
+	void setStartAddress();
+	void *getEndAddress();
+	void getEndAddress();
 	size_t getSize();
 	int getVersion();
 	void setVerstion(int version);
 	void incrementVersion();
-	void addCache(GenericCache *cache);
-	void removeCache(GenericCache *cache);
-	bool isInCache(GenericCache *cache);
+	void addCache(int id);
+	void removeCache(int id);
+	bool testCache(int id);
+	bool anyCache();
 	int countCaches();
 
 	/* Key for Boost Intrusive AVL Set */

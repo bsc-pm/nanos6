@@ -93,6 +93,7 @@ common_sources = \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/memory/AddressSpace.hpp \
+	src/memory/Globals.hpp \
 	src/memory/directory/Directory.hpp \
 	src/memory/directory/Directory.cpp \
 	src/memory/directory/CopySet.hpp \
