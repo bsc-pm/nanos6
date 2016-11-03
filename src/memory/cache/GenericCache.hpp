@@ -5,6 +5,9 @@
 #include <string.h>
 #include <atomic>
 #include "../../tasks/Task.hpp"
+#include "scheduling/Scheduler.hpp"
+#include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/CPU.hpp"
 //#include <boost/pool/pool_alloc.hpp>
 //#include "CacheObject.hpp"
 
@@ -42,12 +45,22 @@ protected:
     //boost::pool_allocator<char> _pool;
     //! Counter to determine the last use of the replicas. Not thread-protected because it is not critical to have two replicas with the same lastUse.
     long unsigned int _count; 
+    void addReadyTask(Task *task) {
+        WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+        ComputePlace *hardwarePlace = currentThread->getComputePlace();
+        ComputePlace *idleComputePlace = Scheduler::addReadyTask(task, hardwarePlace, SchedulerInterface::SchedulerInterface::NO_HINT);
+        assert((currentThread != nullptr) || (idleComputePlace == nullptr)); // The main task is added before the scheduler
+
+        if (idleComputePlace != nullptr) {
+            ThreadManager::resumeIdle((CPU *) idleComputePlace);
+        }
+    }
 public:
     GenericCache() : _count(0) {}
     virtual ~GenericCache() {}
     virtual void * allocate(std::size_t size) = 0;
     virtual void deallocate(void * ptr) = 0;
-    virtual void copyData(unsigned int sourceCache, unsigned int homeNode, Task task) = 0;
+    virtual void copyData(unsigned int sourceCache, unsigned int homeNode, Task * task) = 0;
     virtual void flush() = 0;
     virtual bool evict() = 0;
     virtual replicaInfo_t * getReplicaInfo(void * key) {

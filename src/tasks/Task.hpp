@@ -74,7 +74,9 @@ public:
 		_dataAccesses(),
 		_predecessorCount(0),
 		_instrumentationTaskId(instrumentationTaskId),
-		_schedulerInfo(nullptr)
+		_schedulerInfo(nullptr),
+        _taskDataSize(0),
+        _cachedBytes(0)
 	{
 		if (parent != nullptr) {
 			parent->addChild(this);
@@ -299,10 +301,19 @@ public:
         return _cachedBytes;
     }
 
+    inline void addDataSize(std::size_t size) {
+        _taskDataSize += size;
+    }
+
     //! \brief Return the total number of bytes required by a task to be executed
-    inline unsigned int getTaskDataSize() const
+    inline unsigned int getDataSize() const
     {
         return _taskDataSize;
+    }
+
+    inline bool hasPendingCopies() const 
+    {
+        return _cachedBytes < _taskDataSize;
     }
 
 };

@@ -33,20 +33,6 @@ public:
 		assert(_scheduler != nullptr);
 		return _scheduler;
 	}
-
-	//! \brief Add a (preready) task that has been created or freed (but not unblocked)
-	//!
-	//! \param[in] task the task to be added
-	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
-	//! \param[in] hint a hint about the relation of the task to the current task
-	//!
-	//! \returns an idle ComputePlace that is to be resumed or nullptr
-	static inline ComputePlace *addPreReadyTask(Task *task, ComputePlace *hardwarePlace, SchedulerInterface::ReadyTaskHint hint = SchedulerInterface::NO_HINT)
-	{
-		assert(task != 0);
-		//Instrument::taskIsPreReady(task->getInstrumentationTaskId());
-		return _scheduler->addPreReadyTask(task, hardwarePlace, hint);
-	}
 	
 	//! \brief Add a (ready) task that has been created or freed (but not unblocked)
 	//!
@@ -83,17 +69,6 @@ public:
 	static inline bool checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace)
 	{
 		return _scheduler->checkIfIdleAndGrantReactivation(hardwarePlace);
-	}
-	
-	//! \brief Get a preready task for execution
-	//!
-	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
-	//! \param[in] currentTask a task within whose context the resulting task will run
-	//!
-	//! \returns a preready task or nullptr
-	static inline Task *getPreReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr)
-	{
-		return _scheduler->getPreReadyTask(hardwarePlace, currentTask);
 	}
 
 	//! \brief Get a ready task for execution

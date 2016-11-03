@@ -4,6 +4,7 @@
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+#include "hardware/Machine.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -101,27 +102,41 @@ void *WorkerThread::body()
 
 void WorkerThread::handleTask()
 {
-	_task->setThread(this);
-	
-	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
-	Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
-	Instrument::taskIsExecuting(taskId);
-	
-	// Run the task
-	std::atomic_thread_fence(std::memory_order_acquire);
-	_task->body();
-	std::atomic_thread_fence(std::memory_order_release);
-	
-	Instrument::taskIsZombie(taskId);
-	Instrument::endTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
-	
-	// Release successors
-	DataAccessRegistration::unregisterTaskDataAccesses(_task);
-	
-	if (_task->markAsFinished()) {
-		TaskFinalization::disposeOrUnblockTask(_task, _cpu, this);
-	}
-	
+    if(_task->hasPendingCopies()) {
+        // task is preReady
+        //! Do some data transferences if any
+        //! How do I know which is the destCache? 
+        GenericCache * destCache = Machine::getMachine()->getMemoryNode(0)->getCache();;
+        //! How do I know which is the sourceCache? 
+        unsigned int sourceCache = 0;
+        //! homeNode is specified in the dataAccess
+        unsigned int homeNode = 0;
+        destCache->copyData(sourceCache, homeNode, _task);
+    }
+    else {
+        // task is ready
+        _task->setThread(this);
+
+        Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
+        Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
+        Instrument::taskIsExecuting(taskId);
+
+        // Run the task
+        std::atomic_thread_fence(std::memory_order_acquire);
+        _task->body();
+        std::atomic_thread_fence(std::memory_order_release);
+
+        Instrument::taskIsZombie(taskId);
+        Instrument::endTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
+
+        // Release successors
+        DataAccessRegistration::unregisterTaskDataAccesses(_task);
+
+        if (_task->markAsFinished()) {
+            TaskFinalization::disposeOrUnblockTask(_task, _cpu, this);
+        }
+    }
+
 	_task = nullptr;
 }
 

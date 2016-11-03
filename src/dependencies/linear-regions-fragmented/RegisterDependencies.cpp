@@ -27,6 +27,7 @@ void register_access(void *handler, void *start, size_t length)
 	
 	DataAccessRange accessRange(start, length);
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK, accessRange);
+    task->addDataSize(length);
 }
 
 

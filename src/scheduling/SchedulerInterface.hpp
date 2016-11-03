@@ -23,7 +23,7 @@ public:
 	{
 	}
 	
-	
+
 	//! \brief Add a (ready) task that has been created or freed (but not unblocked)
 	//!
 	//! \param[in] task the task to be added
@@ -47,7 +47,7 @@ public:
 	//!
 	//! \returns true if the hardware place must be resumed
 	virtual bool checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace) = 0;
-	
+
 	//! \brief Get a ready task for execution
 	//!
 	//! \param[in] hardwarePlace the hardware place asking for scheduling orders

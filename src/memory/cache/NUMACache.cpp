@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <set>
+#include <cassert>
 #include "NUMACache.hpp" 
 #include "../../hardware/Machine.hpp" 
 #include "../directory/Directory.hpp"
@@ -15,38 +16,51 @@ void NUMACache::deallocate(void * ptr) {
     free(ptr);
 }
 
-void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task task /*, unsigned int copiesToDo */) {
+void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task *task /*, unsigned int copiesToDo */) {
     //! TODO: Think about concurrency...
     unsigned int copiesDone = 0;
 
-    if(task.getCachedBytes() == task.getDataSize()) return;
+    //! Disabled for testing purposes
+    //assert(Machine::getMachine()->getMemoryNode(sourceCache)->getCache()!=this);
 
-    //! Iterate over the task data accesses to check if they are already in the cache
-    for(auto it = task.getDataAccesses()._accesses.begin(); it != task.getDataAccesses()._accesses.end(); it++ ) {
-        //! TODO: Do a first round to block the data that is already in the cache to avoid evictions of that data.
+    //! Check whether there is any data access.
+    if(task->getDataSize() == 0) {
+        addReadyTask(task);
+    }
+    
+    //! Do a first round to block the data that is already in the cache to avoid evictions of that data.
+    for(auto it = task->getDataAccesses()._accesses.begin(); it != task->getDataAccesses()._accesses.end(); it++ ) {
         auto it2 = _replicas.find((*it).getAccessRange().getStartAddress());
-        bool bringData = false;
         if(it2 != _replicas.end()) {
             //! The data is already in the cache. Check with the directory whether it is correct or outdated. 
-            if(it2->second._version != Directory::copy_version(it2->first, it2->second._size)) {
-                //! The data in the cache is outdated.
-                bringData = true;
-            }
-            else {
+            if(it2->second._version == Directory::copy_version(it2->first, it2->second._size)) {
                 //! The data in the cache is correct.
                 //! Increment the _refCount to avoid evictions.
                 it2->second._refCount++;
                 //! Update _lastUse.
                 it2->second._lastUse = ++_count;
                 //! Update _cachedBytes but it must be done only once.
+                task->addCachedBytes(it2->second._size);
+                //! Mark data access as cached
+                (*it).setCached();
             }
         }
-        else {
-            //! The data is not in the cache yet. Bring it.
-            bringData = true;
+    }
+
+    //! Iterate over the task data accesses to check if they are already in the cache
+    for(auto it = task->getDataAccesses()._accesses.begin(); it != task->getDataAccesses()._accesses.end(); it++ ) {
+
+        //! Check whether all the copies are cached. If so, add the task to the ready queue.
+        if(task->getCachedBytes() == task->getDataSize()) {
+            addReadyTask(task);
         }
 
-        if(bringData) {
+        //! Check whether this thread has already done all the desired copies.
+        if(copiesDone /* >= copiesToDo */ ) 
+            return;
+
+        //! The data is not in the cache yet. Bring it.
+        if(!(*it).isCached()) {
             //! Allocate
             std::size_t replicaSize = (*it).getAccessRange().getSize();
             void * replicaAddress = allocate(replicaSize);
@@ -71,11 +85,14 @@ void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task t
             if(sourceReplica->_physicalAddress == NULL) {
                 //! sourceCache failed, do it from homeNode
                 //! TODO: this address is the same than (*it).getAccessRange().getStartAddress()? The homeNode is equivalent to the user address space?
-                sourceReplica = Machine::getMachine()->getMemoryNode(homeNode)->getCache()->getReplicaInfo((*it).getAccessRange().getStartAddress());
-                if(sourceReplica->_physicalAddress == NULL)
-                    //! homeNode also failed, nothing to do. 
-                    //! TODO: homeNode should always have the data, so maybe this is a fatal error
-                    return;
+                //sourceReplica = Machine::getMachine()->getMemoryNode(homeNode)->getCache()->getReplicaInfo((*it).getAccessRange().getStartAddress());
+                //if(sourceReplica->_physicalAddress == NULL)
+                //    //! homeNode also failed, nothing to do. 
+                //    //! TODO: homeNode should always have the data, so maybe this is a fatal error
+                //    return;
+                //! TEMPORARY!!! Copy from user address space.
+                sourceReplica->_physicalAddress = (*it).getAccessRange().getStartAddress();
+                sourceReplica->_version = 0;
             }
 
             //! Actually perform the copy
@@ -91,19 +108,23 @@ void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task t
             _replicas[(*it).getAccessRange().getStartAddress()] = newReplica;
 
             //! Notify insert to directory
-            //! TODO: directory returns version. Check wether it is okay with ours.
+            //! Directory returns version. Check wether it is okay with ours.
             int dirVersion = Directory::insert_copy((*it).getAccessRange().getStartAddress(), replicaSize, this, newReplica._dirty);
-            if(dirVersion != newReplica._version) 
+            if(dirVersion != newReplica._version) { 
                 std::cerr << "VERSIONS DOES NOT MATCH!!" << std::endl;
+                //! Use the version given by the directory.
+                newReplica._version = dirVersion;
+            }
 
-            //! Update the number of cachedBytes in the task.
-            unsigned int cachedBytes = task.addCachedBytes(replicaSize);
+            //! Update the number of cachedBytes in the task->
+            task->addCachedBytes(replicaSize);
+            
+            //! Mark data access as cached
+            (*it).setCached();
 
             ++copiesDone;
         }
 
-        if(copiesDone /* >= copiesToDo */ ) 
-            return;
     }
 }
 
@@ -151,7 +172,7 @@ bool NUMACache::evict() {
         //! The replica is dirty and it is the last version.
         //! TODO: For performance, it could be also checked if the data is anywhere else. If it is, avoid copy back.
         if(replica->_dirty && replica->_version == Directory::copy_version(candidate->second, replica->_size)) {
-            //! TODO: Copy back to homeNode or to user address space??
+            //! TODO: Copy back to homeNode (The homeNode can be found in the TaskDataAccesses) 
             //! First, copy back to user address space.
             memcpy(candidate->second, replica->_physicalAddress, replica->_size); 
             //! Inform directory the data is not in the cache anymore.

@@ -250,8 +250,7 @@ private:
 		for (Task *satisfiedOriginator : cpuDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 			
-			//ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
-			ComputePlace *idleComputePlace = Scheduler::addPreReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
+			ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 			
 			if (idleComputePlace != nullptr) {
 				ThreadManager::resumeIdle((CPU *) idleComputePlace);
