@@ -97,8 +97,10 @@ namespace Instrument {
 			}
 		}
 		
+#ifndef __ANDROID__
 		EnvironmentVariable<std::string> outputFilename("NANOS_VERBOSE_FILE", "/dev/stderr");
 		_output = new std::ofstream(outputFilename.getValue().c_str());
+#endif
 		
 		// Prepopulate the list of free log entries
 		LogEntry *lastEntry = new LogEntry();
@@ -117,7 +119,9 @@ namespace Instrument {
 		// Flush out any pending log entries
 		Instrument::leaderThreadSpin();
 		
+#ifndef __ANDROID__
 		_output->close();
+#endif
 		
 		// TODO: Free up all the memory
 	}

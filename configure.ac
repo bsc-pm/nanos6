@@ -72,6 +72,9 @@ AC_CHECK_BACKTRACE
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
 AC_SUBST(CLOCK_LIBS)
 
+AC_CHECK_LIB([log], [__android_log_print], [ANDROID_LOG_LIBS="${ANDROID_LOG_LIBS} -llog"])
+AC_SUBST(ANDROID_LOG_LIBS)
+
 PKG_CHECK_MODULES([elfutils], [libdw >= 0.164],
    [AC_DEFINE([HAVE_LIBDW], [1], [Use elfutils libdw])], [AC_MSG_WARN([The profiling instrumenter is more accurate when the headers and libraries of elfutils are available.])]
 )
