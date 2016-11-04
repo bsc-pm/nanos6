@@ -35,6 +35,7 @@
 #endif
 
 #include <atomic>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -45,6 +46,14 @@
 // Workaround for missing definition
 #ifndef sigev_notify_thread_id
 #define sigev_notify_thread_id _sigev_un._tid
+#endif
+
+
+#include <cxxabi.h>
+#if HAVE_LIBDW
+#include <dwarf.h>
+#include <elfutils/libdw.h>
+#include <elfutils/libdwfl.h>
 #endif
 
 
@@ -207,6 +216,116 @@ void Instrument::Profile::doInit()
 }
 
 
+inline std::string Instrument::Profile::demangleSymbol(std::string const &symbol)
+{
+	std::string result;
+	
+	int demangleStatus = 0;
+	char *demangledName = abi::__cxa_demangle(symbol.c_str(), nullptr, 0, &demangleStatus);
+	
+	if ((demangledName != nullptr) && (demangleStatus == 0)) {
+		result = demangledName;
+	} else {
+		result = symbol;
+	}
+	
+	if (demangledName != nullptr) {
+		free(demangledName);
+	}
+	
+	return result;
+}
+
+
+#if HAVE_LIBDW
+inline std::string Instrument::Profile::getDebugInformationEntryName(Dwarf_Die *debugInformationEntry)
+{
+	assert(debugInformationEntry != nullptr);
+	
+	Dwarf_Attribute linkageNameAttribute;
+	
+	// For some reason MIPS names have their own attribute type
+	Dwarf_Attribute *attr = dwarf_attr_integrate(debugInformationEntry, DW_AT_MIPS_linkage_name, &linkageNameAttribute);
+	
+	if (attr == nullptr) {
+		attr = dwarf_attr_integrate(debugInformationEntry, DW_AT_linkage_name, &linkageNameAttribute);
+	}
+	
+	// This is useful for lambdas. In that case we get "operator()"
+	if (attr == nullptr) {
+		attr = dwarf_attr_integrate(debugInformationEntry, DW_AT_name, &linkageNameAttribute);
+	}
+	
+	assert(attr == &linkageNameAttribute);
+	
+	char const *linkageName = dwarf_formstring(&linkageNameAttribute);
+	
+	if (linkageName == nullptr) {
+		linkageName = dwarf_diename(debugInformationEntry);
+	}
+	
+	if (linkageName == nullptr) {
+		linkageName = "";
+	}
+	
+	return demangleSymbol(linkageName);
+}
+
+
+inline std::string Instrument::Profile::sourceToString(char const *source, int line, int column)
+{
+	std::ostringstream oss;
+	if (source != nullptr) {
+		oss << source;
+		if (line > 0) {
+			oss << ":" << line;
+			if (column > 0) {
+				oss << ":" << column;
+			}
+		}
+		
+		return oss.str();
+	}
+	
+	return std::string();
+}
+
+
+inline void Instrument::Profile::addInfoStep(AddrInfo &addrInfo, std::string function, std::string sourceLine)
+{
+	if (!function.empty() || !sourceLine.empty()) {
+		AddrInfoStep addrInfoStep;
+		
+		if (!function.empty()) {
+			auto functionIt = _sourceFunction2id.find(function);
+			if (functionIt != _sourceFunction2id.end()) {
+				addrInfoStep._functionId = functionIt->second;
+			} else {
+				addrInfoStep._functionId = _nextSourceFunctionId;
+				_sourceFunction2id[function] = _nextSourceFunctionId;
+				_id2sourceFunction[_nextSourceFunctionId] = function;
+				_nextSourceFunctionId++;
+			}
+		}
+		
+		if (!sourceLine.empty()) {
+			auto sourceLineIt = _sourceLine2id.find(sourceLine);
+			if (sourceLineIt != _sourceLine2id.end()) {
+				addrInfoStep._sourceLineId = sourceLineIt->second;
+			} else {
+				addrInfoStep._sourceLineId = _nextSourceLineId;
+				_sourceLine2id[sourceLine] = _nextSourceLineId;
+				_id2sourceLine[_nextSourceLineId] = sourceLine;
+				_nextSourceLineId++;
+			}
+		}
+		
+		addrInfo.push_back(addrInfoStep);
+	}
+}
+#endif
+
+
 inline Instrument::Profile::AddrInfo const &Instrument::Profile::resolveAddress(Instrument::Profile::address_t address)
 {
 	{
@@ -216,6 +335,169 @@ inline Instrument::Profile::AddrInfo const &Instrument::Profile::resolveAddress(
 		}
 	}
 	
+#if HAVE_LIBDW
+	if (_dwfl == nullptr) {
+		return _unknownAddrInfo;
+	}
+	
+	Dwarf_Addr dwflAddress = (Dwarf_Addr) address;
+	
+	Dwfl_Module *module = dwfl_addrmodule(_dwfl, dwflAddress);
+	if (module == nullptr) {
+		return _unknownAddrInfo;
+	}
+	
+	Dwarf_Addr addressBias = 0;
+	Dwarf_Die *compilationUnitDebugInformationEntry = dwfl_module_addrdie(module, dwflAddress, &addressBias);
+	
+	assert(compilationUnitDebugInformationEntry != nullptr);
+	Dwarf_Die *scopeDebugInformationEntries = nullptr;
+	int scopeEntryCount = dwarf_getscopes(compilationUnitDebugInformationEntry, dwflAddress - addressBias, &scopeDebugInformationEntries);
+	if (scopeEntryCount <= 0) {
+		return _unknownAddrInfo;
+	}
+	
+	// Get the name of the function
+	std::string function;
+	for (int scopeEntryIndex = 0; scopeEntryIndex < scopeEntryCount; scopeEntryIndex++) {
+		Dwarf_Die *scopeEntry = &scopeDebugInformationEntries[scopeEntryIndex];
+		int dwarfTag = dwarf_tag(scopeEntry);
+		
+		if (
+			(dwarfTag == DW_TAG_subprogram)
+			|| (dwarfTag == DW_TAG_inlined_subroutine)
+			|| (dwarfTag == DW_TAG_entry_point)
+		) {
+			function = getDebugInformationEntryName(scopeEntry);
+			break;
+		}
+	}
+	
+	// Get the source code location
+	std::string sourceLine;
+	{
+		Dwfl_Line *dwarfLine = dwfl_module_getsrc (module, dwflAddress);
+		
+		Dwarf_Addr dwarfAddress = dwflAddress;
+		int line = 0;
+		int column = 0;
+		const char *source = dwfl_lineinfo(dwarfLine, &dwarfAddress, &line, &column, nullptr, nullptr);
+		
+		sourceLine = sourceToString(source, line, column);
+	}
+	
+	// Create and add the AddrInfoStep of the function
+	AddrInfo addrInfo;
+	addInfoStep(addrInfo, function, sourceLine);
+	
+	Dwarf_Off scopeOffset = dwarf_dieoffset(&scopeDebugInformationEntries[0]);
+	Dwarf_Addr moduleBias = 0;
+	Dwarf *moduleDwarf = dwfl_module_getdwarf(module, &moduleBias);
+	Dwarf_Die addressDebugInformationEntry;
+	dwarf_offdie(moduleDwarf, scopeOffset, &addressDebugInformationEntry);
+	free(scopeDebugInformationEntries);
+	
+	scopeDebugInformationEntries = nullptr;
+	scopeEntryCount = dwarf_getscopes_die(&addressDebugInformationEntry, &scopeDebugInformationEntries);
+	
+	if (scopeEntryCount > 1) {
+		Dwarf_Die compilationUnit;
+		Dwarf_Die *cu = dwarf_diecu(&scopeDebugInformationEntries[0], &compilationUnit, nullptr, nullptr);
+		
+		Dwarf_Files *sourceFiles = nullptr;
+		
+		int rc = -1;
+		if (cu != nullptr) {
+			assert(cu == &compilationUnit);
+			
+			// Load the source file information of the compilation unit if not already loaded
+			rc = dwarf_getsrcfiles(&compilationUnit, &sourceFiles, nullptr);
+		}
+		
+		if (rc == 0) {
+			for (int scopeEntryIndex = 0; scopeEntryIndex < scopeEntryCount-1; scopeEntryIndex++) {
+				Dwarf_Die *scopeEntry = &scopeDebugInformationEntries[scopeEntryIndex];
+				int dwarfTag = dwarf_tag(scopeEntry);
+				
+				if (dwarfTag != DW_TAG_inlined_subroutine) {
+					continue;
+				}
+				
+				function.clear();
+				sourceLine.clear();
+				
+				// Look up the function name
+				for (int parentEntryIndex = scopeEntryIndex + 1; parentEntryIndex < scopeEntryCount; parentEntryIndex++) {
+					Dwarf_Die *parentEntry = &scopeDebugInformationEntries[parentEntryIndex];
+					int dwarfTag = dwarf_tag(parentEntry);
+					
+					if (
+						(dwarfTag == DW_TAG_subprogram)
+						|| (dwarfTag == DW_TAG_inlined_subroutine)
+						|| (dwarfTag == DW_TAG_entry_point)
+					) {
+						function = getDebugInformationEntryName(parentEntry);
+						break;
+					}
+				}
+				
+				// Get the source code location
+				{
+					int line = 0;
+					int column = 0;
+					const char *source = nullptr;
+					
+					Dwarf_Word attributeValue;
+					Dwarf_Attribute attribute;
+					
+					// Get source file
+					Dwarf_Attribute *filledAttribute = dwarf_attr(scopeEntry, DW_AT_call_file, &attribute);
+					if (filledAttribute != nullptr) {
+						assert(filledAttribute == &attribute);
+						rc = dwarf_formudata(&attribute, &attributeValue);
+						if (rc == 0) {
+							source = dwarf_filesrc(sourceFiles, attributeValue, nullptr, nullptr);
+						}
+					}
+					
+					// Get line number
+					filledAttribute = dwarf_attr(scopeEntry, DW_AT_call_line, &attribute);
+					if (filledAttribute != nullptr) {
+						assert(filledAttribute == &attribute);
+						rc = dwarf_formudata(&attribute, &attributeValue);
+						if (rc == 0) {
+							line = attributeValue;
+						}
+					}
+					
+					// Get column number
+					filledAttribute = dwarf_attr(scopeEntry, DW_AT_call_column, &attribute);
+					if (filledAttribute != nullptr) {
+						assert(filledAttribute == &attribute);
+						rc = dwarf_formudata(&attribute, &attributeValue);
+						if (rc == 0) {
+							column = attributeValue;
+						}
+					}
+					
+					sourceLine = sourceToString(source, line, column);
+				}
+				
+				addInfoStep(addrInfo, function, sourceLine);
+			}
+		}
+		
+		free(scopeDebugInformationEntries);
+	}
+	
+	if (addrInfo.empty()) {
+		return _unknownAddrInfo;
+	} else {
+		_addr2Cache[address] = std::move(addrInfo);
+		return _addr2Cache[address];
+	}
+	
+#else
 	auto it = _executableMemoryMap.upper_bound(address);
 	if (it == _executableMemoryMap.begin()) {
 		// The address cannot be resolved
@@ -289,11 +571,35 @@ inline Instrument::Profile::AddrInfo const &Instrument::Profile::resolveAddress(
 	_addr2Cache[address] = std::move(addrInfo);
 	
 	return _addr2Cache[address];
+#endif
 }
 
 
 void Instrument::Profile::buildExecutableMemoryMap(pid_t pid)
 {
+#if HAVE_LIBDW
+	static char *debugInfoPath = nullptr;
+	
+	static Dwfl_Callbacks dwflCallbacks = {
+		dwfl_linux_proc_find_elf,
+		dwfl_standard_find_debuginfo,
+		nullptr,
+		&debugInfoPath,
+	};
+	
+	_dwfl = dwfl_begin(&dwflCallbacks);
+	if (_dwfl == nullptr) {
+		int error = dwfl_errno();
+		std::cerr << "Warning: cannot get the memory map of the process: " << dwfl_errmsg(error) << std::endl;
+		return;
+	}
+	
+	int rc = dwfl_linux_proc_report(_dwfl, pid);
+	if (rc != 0) {
+		std::cerr << "Warning: cannot get the memory map of the process." << std::endl;
+		return;
+	}
+#else
 	std::string mapsFilename;
 	{
 		std::ostringstream oss;
@@ -372,6 +678,7 @@ void Instrument::Profile::buildExecutableMemoryMap(pid_t pid)
 	}
 	
 	mapsFile.close();
+#endif
 }
 
 
@@ -392,7 +699,12 @@ void Instrument::Profile::doShutdown()
 	// Build frequency tables and resolve address information
 	std::map<address_t, freq_t> address2Frequency;
 	std::map<Backtrace, freq_t> backtrace2Frequency;
+	std::map<SymbolicBacktrace, freq_t> symbolicBacktrace2Frequency;
+	
 	Backtrace backtrace(_profilingBacktraceDepth);
+	SymbolicBacktrace symbolicBacktrace(_profilingBacktraceDepth);
+	backtrace.clear();
+	symbolicBacktrace.clear();
 	int frame = 0;
 	
 	_bufferListSpinLock.lock();
@@ -408,27 +720,51 @@ void Instrument::Profile::doShutdown()
 					// End of buffer
 					break;
 				} else {
-					// End of backtrace
-					assert(frame <= _profilingBacktraceDepth);
-					for (; frame < _profilingBacktraceDepth; frame++) {
-						backtrace[frame] = 0;
-					}
+// 					// End of backtrace
+// 					assert(frame <= _profilingBacktraceDepth);
+// 					for (; frame < _profilingBacktraceDepth; frame++) {
+// 						backtrace[frame] = 0;
+// 						symbolicBacktrace[frame].clear();
+// 					}
 					
 					// Increment the frequency of the backtrace
-					auto it = backtrace2Frequency.find(backtrace);
-					if (it == backtrace2Frequency.end()) {
-						backtrace2Frequency[backtrace] = 1;
-					} else {
-						it->second++;
+					{
+						auto it = backtrace2Frequency.find(backtrace);
+						if (it == backtrace2Frequency.end()) {
+							backtrace2Frequency[backtrace] = 1;
+						} else {
+							it->second++;
+						}
+					}
+					{
+						auto it = symbolicBacktrace2Frequency.find(symbolicBacktrace);
+						if (it == symbolicBacktrace2Frequency.end()) {
+							symbolicBacktrace2Frequency[symbolicBacktrace] = 1;
+						} else {
+							it->second++;
+						}
 					}
 					
 					frame = 0;
 					position++;
+					backtrace.clear();
+					symbolicBacktrace.clear();
 					continue;
 				}
 			}
 			
-			backtrace[frame] = address;
+			AddrInfo const &addrInfo = resolveAddress(address);
+			for (auto addrInfoStep : addrInfo) {
+				if (addrInfoStep._functionId != id_t()) {
+					_id2sourceFunction[addrInfoStep._functionId]._frequency++;
+				}
+				if (addrInfoStep._sourceLineId != id_t()) {
+					_id2sourceLine[addrInfoStep._sourceLineId]._frequency++;
+				}
+			}
+			
+			backtrace.push_back(address);
+			symbolicBacktrace.push_back(addrInfo);
 			frame++;
 			
 			{
@@ -438,12 +774,6 @@ void Instrument::Profile::doShutdown()
 				} else {
 					address2Frequency[address] = 1;
 				}
-			}
-			
-			AddrInfo const &addrInfo = resolveAddress(address);
-			for (auto addrInfoStep : addrInfo) {
-				_id2sourceFunction[addrInfoStep._functionId]._frequency++;
-				_id2sourceLine[addrInfoStep._sourceLineId]._frequency++;
 			}
 			
 			position++;
@@ -460,9 +790,16 @@ void Instrument::Profile::doShutdown()
 	}
 	backtrace2Frequency.clear();
 	
+	std::map<freq_t, std::list<SymbolicBacktrace>, std::greater<freq_t>> symbolicBacktracesByFrequency;
+	for (auto it : symbolicBacktrace2Frequency) {
+		symbolicBacktracesByFrequency[it.second].push_back(it.first);
+	}
+	symbolicBacktrace2Frequency.clear();
+	
+	
 	{
 		std::ostringstream oss;
-		oss << "backtrace-profile-" << getpid() << ".txt";
+		oss << "backtrace-profile-by-address-" << getpid() << ".txt";
 		
 		std::ofstream backtraceProfile(oss.str().c_str());
 		for (auto it : backtracesByFrequency) {
@@ -482,8 +819,18 @@ void Instrument::Profile::doShutdown()
 							first = false;
 						}
 						
-						backtraceProfile << "\t" << _id2sourceFunction[addrInfoStep._functionId]._name;
-						backtraceProfile << "\t" << _id2sourceLine[addrInfoStep._sourceLineId]._name;
+						if (addrInfoStep._functionId != id_t()) {
+							backtraceProfile << "\t" << _id2sourceFunction[addrInfoStep._functionId]._name;
+						} else {
+							backtraceProfile << "\t??";
+						}
+						
+						if (addrInfoStep._sourceLineId != id_t()) {
+							backtraceProfile << "\t" << _id2sourceLine[addrInfoStep._sourceLineId]._name;
+						} else {
+							backtraceProfile << "\t??:??";
+						}
+						
 						backtraceProfile << std::endl;
 					}
 				}
@@ -496,6 +843,49 @@ void Instrument::Profile::doShutdown()
 		backtraceProfile.close();
 	}
 	backtracesByFrequency.clear();
+	
+	
+	{
+		std::ostringstream oss;
+		oss << "backtrace-profile-by-line-" << getpid() << ".txt";
+		
+		std::ofstream symbolicBacktraceProfile(oss.str().c_str());
+		for (auto it : symbolicBacktracesByFrequency) {
+			std::list<SymbolicBacktrace> const &symbolicBacktraces = it.second;
+			for (SymbolicBacktrace const &symbolicBacktrace : symbolicBacktraces) {
+				bool first = true;
+				for (AddrInfo const &addrInfo : symbolicBacktrace) {
+					for (auto addrInfoStep : addrInfo) {
+						if (first) {
+							// Frequency on the innermost function
+							symbolicBacktraceProfile << it.first;
+							first = false;
+						}
+						
+						if (addrInfoStep._functionId != id_t()) {
+							symbolicBacktraceProfile << "\t" << _id2sourceFunction[addrInfoStep._functionId]._name;
+						} else {
+							symbolicBacktraceProfile << "\t??";
+						}
+						
+						if (addrInfoStep._sourceLineId != id_t()) {
+							symbolicBacktraceProfile << "\t" << _id2sourceLine[addrInfoStep._sourceLineId]._name;
+						} else {
+							symbolicBacktraceProfile << "\t??:??";
+						}
+						
+						symbolicBacktraceProfile << std::endl;
+					}
+				}
+				
+				if (!first) {
+					symbolicBacktraceProfile << std::endl;
+				}
+			}
+		}
+		symbolicBacktraceProfile.close();
+	}
+	symbolicBacktracesByFrequency.clear();
 	
 	
 	std::map<freq_t, std::list<address_t>, std::greater<freq_t>> addressesByFrequency;
@@ -518,8 +908,18 @@ void Instrument::Profile::doShutdown()
 					inlineProfile << it.first;
 				}
 				for (auto addrInfoStep : addrInfo) {
-					inlineProfile << "\t" << _id2sourceFunction[addrInfoStep._functionId]._name;
-					inlineProfile << "\t" << _id2sourceLine[addrInfoStep._sourceLineId]._name;
+					if (addrInfoStep._functionId != id_t()) {
+						inlineProfile << "\t" << _id2sourceFunction[addrInfoStep._functionId]._name;
+					} else {
+						inlineProfile << "\t??";
+					}
+					
+					if (addrInfoStep._sourceLineId != id_t()) {
+						inlineProfile << "\t" << _id2sourceLine[addrInfoStep._sourceLineId]._name;
+					} else {
+						inlineProfile << "\t??:??";
+					}
+					
 					inlineProfile << std::endl;
 				}
 			}
@@ -569,5 +969,10 @@ void Instrument::Profile::doShutdown()
 		lineProfile.close();
 	}
 	
+#if HAVE_LIBDW
+	if (_dwfl != nullptr) {
+		dwfl_end(_dwfl);
+	}
+#endif
 }
 

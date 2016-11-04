@@ -1,7 +1,8 @@
-#ifndef FIFO_SCHEDULER_HPP
-#define FIFO_SCHEDULER_HPP
+#ifndef IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
+#define IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
 
 
+#include <atomic>
 #include <deque>
 #include <vector>
 
@@ -13,7 +14,7 @@
 class Task;
 
 
-class FIFOScheduler: public SchedulerInterface {
+class ImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
 	SpinLock _globalLock;
 	
 	std::deque<Task *> _readyTasks;
@@ -21,13 +22,16 @@ class FIFOScheduler: public SchedulerInterface {
 	
 	std::deque<CPU *> _idleCPUs;
 	
+	std::atomic<std::atomic<Task *> *> _pollingSlot;
+	
+	
 	inline CPU *getIdleCPU();
 	inline Task *getReplacementTask(CPU *hardwarePlace);
 	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
-	FIFOScheduler();
-	~FIFOScheduler();
+	ImmediateSuccessorWithPollingScheduler();
+	~ImmediateSuccessorWithPollingScheduler();
 	
 	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint);
 	
@@ -38,8 +42,13 @@ public:
 	Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	HardwarePlace *getIdleHardwarePlace(bool force=false);
+	
+	void disableHardwarePlace(HardwarePlace *hardwarePlace);
+	
+	bool requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	bool releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 };
 
 
-#endif // FIFO_SCHEDULER_HPP
+#endif // IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
 

@@ -32,7 +32,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> CreateDataAccess " << id << " superaccess:" << superAccessId << " ";
 		
@@ -98,7 +98,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> UpgradeDataAccess " << dataAccessId;
 		
@@ -174,7 +174,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> DataAccessBecomesSatisfied " << dataAccessId << " triggererTask:" << triggererTaskId << " targetTask:" << targetTaskId;
 		
@@ -212,7 +212,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> ModifiedDataAccessRange " << dataAccessId << " newRange:" << newRange << " triggererTask:" << triggererTaskId;
 		
@@ -239,7 +239,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> FragmentedDataAccess " << dataAccessId << " newFragment:" << id << " newRange:" << newRange << " triggererTask:" << triggererTaskId;
 		
@@ -267,7 +267,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> CreatedDataSubaccessFragment " << dataAccessId << " newSubaccessFragment:" << id << " triggererTask:" << triggererTaskId;
 		
@@ -293,7 +293,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> CompletedDataAccess " << dataAccessId << " triggererTask:" << triggererTaskId;
 		
@@ -317,7 +317,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> DataAccessBecomesRemovable " << dataAccessId << " triggererTask:" << triggererTaskId;
 		
@@ -341,7 +341,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> RemoveDataAccess " << dataAccessId << " triggererTask:" << triggererTaskId;
 		
@@ -369,7 +369,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << " [" << range << "]" << (direct ? " direct" : "indirect") << " triggererTask:" << triggererTaskId;
 		
@@ -395,7 +395,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> UnlinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << (direct ? " direct" : "indirect") << " triggererTask:" << triggererTaskId;
 		
@@ -421,7 +421,7 @@ namespace Instrument {
 		if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 		} else {
-			logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+			logEntry->_contents << "Thread:external CPU:ANY";
 		}
 		logEntry->_contents << " <-> ReplaceSuperAccess " << dataAccessId << " " << oldSuperAccessId << "->" << newSuperAccessId << " triggererTask:" << triggererTaskId;
 		

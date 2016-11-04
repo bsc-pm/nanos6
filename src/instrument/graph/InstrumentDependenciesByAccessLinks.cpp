@@ -19,19 +19,33 @@ namespace Instrument {
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		data_access_id_t dataAccessId = Graph::_nextDataAccessId++;
 		
 		create_data_access_step_t *step = new create_data_access_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			superAccessId, dataAccessId, accessType, range, weak,
 			readSatisfied, writeSatisfied, globallySatisfied,
 			originatorTaskId
@@ -73,17 +87,31 @@ namespace Instrument {
 			return;
 		}
 		
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		upgrade_data_access_step_t *step = new upgrade_data_access_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			dataAccessId,
 			newAccessType, newWeakness,
 			becomesUnsatisfied,
@@ -104,17 +132,31 @@ namespace Instrument {
 		task_id_t triggererTaskId,
 		task_id_t targetTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		data_access_becomes_satisfied_step_t *step = new data_access_becomes_satisfied_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			dataAccessId,
 			readSatisfied, writeSatisfied, globallySatisfied,
 			triggererTaskId, targetTaskId
@@ -128,17 +170,31 @@ namespace Instrument {
 		DataAccessRange newRange,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		modified_data_access_range_step_t *step = new modified_data_access_range_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			dataAccessId,
 			newRange,
 			triggererTaskId
@@ -149,7 +205,6 @@ namespace Instrument {
 		access_t *access = _accessIdToAccessMap[dataAccessId];
 		assert(access != nullptr);
 		access->_accessRange = newRange;
-		
 	}
 	
 	
@@ -158,14 +213,28 @@ namespace Instrument {
 		DataAccessRange newRange,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		access_t *originalAccess = _accessIdToAccessMap[dataAccessId];
 		assert(originalAccess != nullptr);
@@ -173,7 +242,7 @@ namespace Instrument {
 		data_access_id_t newDataAccessId = Graph::_nextDataAccessId++;
 		
 		fragment_data_access_step_t *step = new fragment_data_access_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			dataAccessId, newDataAccessId, newRange,
 			triggererTaskId
 		);
@@ -224,14 +293,28 @@ namespace Instrument {
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		access_t *originalAccess = _accessIdToAccessMap[dataAccessId];
 		assert(originalAccess != nullptr);
@@ -239,7 +322,7 @@ namespace Instrument {
 		data_access_id_t newDataAccessId = Graph::_nextDataAccessId++;
 		
 		create_subaccess_fragment_step_t *step = new create_subaccess_fragment_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			dataAccessId, newDataAccessId,
 			triggererTaskId
 		);
@@ -279,17 +362,31 @@ namespace Instrument {
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		completed_data_access_step_t *step = new completed_data_access_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			dataAccessId,
 			triggererTaskId
 		);
@@ -301,17 +398,31 @@ namespace Instrument {
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		data_access_becomes_removable_step_t *step = new data_access_becomes_removable_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			dataAccessId, triggererTaskId
 		);
 		_executionSequence.push_back(step);
@@ -322,17 +433,31 @@ namespace Instrument {
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		removed_data_access_step_t *step = new removed_data_access_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			dataAccessId, triggererTaskId
 		);
 		_executionSequence.push_back(step);
@@ -345,14 +470,28 @@ namespace Instrument {
 		bool direct, bool bidirectional,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		access_t *sourceAccess = _accessIdToAccessMap[sourceAccessId];
 		assert(sourceAccess != nullptr);
@@ -361,7 +500,7 @@ namespace Instrument {
 		); // A "not created" link
 		
 		linked_data_accesses_step_t *step = new linked_data_accesses_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			sourceAccessId, sinkTaskId,
 			range,
 			direct, bidirectional,
@@ -377,17 +516,31 @@ namespace Instrument {
 		bool direct,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		unlinked_data_accesses_step_t *step = new unlinked_data_accesses_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			sourceAccessId, sinkTaskId, direct,
 			triggererTaskId
 		);
@@ -401,17 +554,31 @@ namespace Instrument {
 		data_access_id_t dataAccessId,
 		task_id_t triggererTaskId
 	) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = currentThread->getInstrumentationId();
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
+		
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		// Get an ID for the task
+		task_id_t taskId = _nextTaskId++;
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		reparented_data_access_step_t *step = new reparented_data_access_step_t(
-			cpu->_virtualCPUId, threadId,
+			cpuId, threadId,
 			oldSuperAccessId, newSuperAccessId, dataAccessId,
 			triggererTaskId
 		);

@@ -32,7 +32,7 @@ namespace Instrument {
 			if (currentWorker != nullptr) {
 			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
 			} else {
-				logEntry->_contents << "Thread:LeaderThread CPU:ANY";
+				logEntry->_contents << "Thread:external CPU:ANY";
 			}
 			logEntry->_contents << " --- LeaderThreadSpin";
 			

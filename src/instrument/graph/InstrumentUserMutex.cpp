@@ -32,16 +32,24 @@ namespace Instrument {
 	void acquiredUserMutex(UserMutex *userMutex)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
+		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
 		
 		thread_id_t threadId = 0;
 		if (currentThread != nullptr) {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		Task *task = currentThread->getTask();
 		assert(task != nullptr);
@@ -50,23 +58,31 @@ namespace Instrument {
 		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		enter_usermutex_step_t *enterUsermutexStep = new enter_usermutex_step_t(cpu->_virtualCPUId, threadId, usermutexId, taskId);
+		enter_usermutex_step_t *enterUsermutexStep = new enter_usermutex_step_t(cpuId, threadId, usermutexId, taskId);
 		_executionSequence.push_back(enterUsermutexStep);
 	}
 	
 	void blockedOnUserMutex(UserMutex *userMutex)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
+		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
 		
 		thread_id_t threadId = 0;
 		if (currentThread != nullptr) {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		Task *task = currentThread->getTask();
 		assert(task != nullptr);
@@ -75,23 +91,31 @@ namespace Instrument {
 		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		block_on_usermutex_step_t *blockOnUsermutexStep = new block_on_usermutex_step_t(cpu->_virtualCPUId, threadId, usermutexId, taskId);
+		block_on_usermutex_step_t *blockOnUsermutexStep = new block_on_usermutex_step_t(cpuId, threadId, usermutexId, taskId);
 		_executionSequence.push_back(blockOnUsermutexStep);
 	}
 	
 	void releasedUserMutex(UserMutex *userMutex)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
+		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
 		
 		thread_id_t threadId = 0;
 		if (currentThread != nullptr) {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-		assert(cpu != nullptr);
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
 		
 		Task *task = currentThread->getTask();
 		assert(task != nullptr);
@@ -100,7 +124,7 @@ namespace Instrument {
 		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		exit_usermutex_step_t *exitUsermutexStep = new exit_usermutex_step_t(cpu->_virtualCPUId, threadId, usermutexId, taskId);
+		exit_usermutex_step_t *exitUsermutexStep = new exit_usermutex_step_t(cpuId, threadId, usermutexId, taskId);
 		_executionSequence.push_back(exitUsermutexStep);
 	}
 	

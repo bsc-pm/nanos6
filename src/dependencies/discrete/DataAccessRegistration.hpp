@@ -115,13 +115,10 @@ private:
 				newPreviousPosition = dataAccessSequence->_accessSequence.insert(nextPosition, subaccess);
 				
 				if (nextPosition != dataAccessSequence->_accessSequence.end()) {
-					auto positionOfNextToCurrent = current;
-					positionOfNextToCurrent++;
-					
 					DataAccess *next = &(*nextPosition);
 					assert(next != nullptr);
 					
-					if (positionOfNextToCurrent == subaccesses._accessSequence.end()) {
+					if (current == subaccesses._accessSequence.end()) {
 						assert(next->_originator != nullptr);
 						
 						// The current subaccess is the last one
@@ -182,7 +179,7 @@ private:
 			
 			bool becomesReady = satisfiedOriginator->decreasePredecessors();
 			if (becomesReady) {
-				HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace);
+				HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 				
 				if (idleHardwarePlace != nullptr) {
 					ThreadManager::resumeIdle((CPU *) idleHardwarePlace);

@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I common/m4
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(top_srcdir)/common -I$(top_srcdir)/common/api
 
-SUBDIRS = . tests/directive_based/check-shutdown tests/directive_based/tests
+SUBDIRS = . tests/directive_based/tests
 
 
 lib_LTLIBRARIES = \
@@ -22,6 +22,7 @@ lib_revision = 0
 lib_age = 0
 
 pkginclude_HEADERS = \
+	common/api/nanos6_library_interface.h \
 	common/api/nanos6_rt_interface.h \
 	common/api/nanos6_debug_interface.h
 
@@ -48,7 +49,10 @@ common_sources = \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.cpp \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
+	src/executors/threads/EssentialThreadEnvironment.hpp \
 	src/executors/threads/TaskFinalization.hpp \
+	src/executors/threads/Thread.cpp \
+	src/executors/threads/Thread.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/ThreadManagerPolicy.cpp \
@@ -83,10 +87,13 @@ common_sources = \
 	src/scheduling/FIFOScheduler.hpp \
 	src/scheduling/ImmediateSuccessorScheduler.cpp \
 	src/scheduling/ImmediateSuccessorScheduler.hpp \
+	src/scheduling/ImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/ImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/Scheduler.hpp \
+	src/scheduling/SchedulerInterface.cpp \
 	src/scheduling/SchedulerInterface.hpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/support/ConstPropagator.hpp \
@@ -99,6 +106,7 @@ common_sources = \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
+	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
@@ -133,6 +141,8 @@ discrete_dependency_sources = $(common_dependency_sources) \
 common_linear_regions_dependency_sources = \
 	src/dependencies/linear-regions/DataAccessRange.hpp \
 	src/dependencies/linear-regions/DataAccessRangeIndexer.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp
 	
@@ -154,8 +164,6 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
-	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMap.hpp \
-	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
@@ -356,11 +364,12 @@ noinst_HEADERS = \
 	common/tests/Timer.hpp
 
 EXTRA_DIST = \
+	common/tests/tap-driver.pl \
 	common/tests/tap-driver.sh
 
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER
-common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) -lpthread -ldl $(LDFLAGS_NOUNDEFINED)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS)
+common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) -ldl $(LDFLAGS_NOUNDEFINED)
 
 libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
@@ -382,10 +391,10 @@ libnanos6_graph_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_debug_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 
-libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile
+libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS)
 libnanos6_profile_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
-libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS)
+libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
 
 libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2

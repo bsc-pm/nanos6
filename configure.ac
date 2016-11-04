@@ -37,6 +37,8 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+CHECK_SANE_AWK
+AC_PATH_PROG([PERL],[perl])
 SSS_CHECK_NANOS6_MERCURIUM
 
 DX_DOT_FEATURE(ON)
@@ -46,6 +48,7 @@ AC_SUBST([full_top_srcdir])
 
 # Checks for libraries.
 AX_BOOST_BASE([1.59], [], [ AC_MSG_ERROR([Boost library not found])])
+CHECK_PTHREAD
 
 # Checks for header files.
 AC_CHECK_HEADERS([unistd.h])
@@ -69,6 +72,10 @@ AC_CHECK_BACKTRACE
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
 AC_SUBST(CLOCK_LIBS)
 
+PKG_CHECK_MODULES([elfutils], [libdw >= 0.164],
+   [AC_DEFINE([HAVE_LIBDW], [1], [Use elfutils libdw])], [AC_MSG_WARN([The profiling instrumenter is more accurate when the headers and libraries of elfutils are available.])]
+)
+
 CHECK_UNDEFINED_SYMBOL_VERIFICATION_FLAGS
 
 
@@ -80,9 +87,9 @@ CONFIGURE_NANOS6_FEATURES
 # Dependency engine to use
 AC_ARG_WITH(
 	[dependencies],
-	[AS_HELP_STRING([--with-dependencies=type], [specify the type of dependencies to handle @<:@default=discrete@:>@])],
+	[AS_HELP_STRING([--with-dependencies=type], [specify the type of dependencies to handle @<:@default=linear-regions-fragmented@:>@])],
 	[ac_with_dependencies="${withval}"],
-	[ac_with_dependencies="discrete"]
+	[ac_with_dependencies="linear-regions-fragmented"]
 )
 AC_MSG_CHECKING([the type of dependencies to handle])
 case x"${ac_with_dependencies}" in
@@ -110,7 +117,6 @@ AC_CONFIG_FILES([
 	Makefile
 	docs/Doxyfile
 	src/version/VersionInfo.hpp
-	tests/directive_based/check-shutdown/Makefile
 	tests/directive_based/tests/Makefile
 ])
 AC_OUTPUT

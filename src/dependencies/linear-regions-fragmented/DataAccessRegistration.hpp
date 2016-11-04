@@ -250,7 +250,7 @@ private:
 		for (Task *satisfiedOriginator : cpuDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 			
-			HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace);
+			HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 			
 			if (idleHardwarePlace != nullptr) {
 				ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
@@ -265,6 +265,44 @@ private:
 	{
 		cpuDependencyData._delayedOperations.emplace_back();
 		return cpuDependencyData._delayedOperations.back();
+	}
+	
+	
+	static inline void handleAccessRemoval(
+		DataAccess *targetAccess, TaskDataAccesses &targetTaskAccessStructures, Task *targetTask,
+		TaskDataAccesses *parentAccessStructures,
+		Instrument::task_id_t triggererInstrumentationTaskId,
+		bool allowRemovalFromBottomMap,
+		/* OUT */ CPUDependencyData &cpuDependencyData
+	) {
+		assert(targetTaskAccessStructures._removalBlockers > 0);
+		targetTaskAccessStructures._removalBlockers--;
+		targetAccess->markAsDiscounted();
+		Instrument::dataAccessBecomesRemovable(targetAccess->_instrumentationId, triggererInstrumentationTaskId);
+		
+		if (targetAccess->_next != nullptr) {
+			Instrument::unlinkedDataAccesses(
+				targetAccess->_instrumentationId,
+				targetAccess->_next->getInstrumentationTaskId(),
+				/* direct */ true,
+				triggererInstrumentationTaskId
+			);
+		} else {
+			assert(targetAccess->isInBottomMap());
+			if (allowRemovalFromBottomMap) {
+				assert(parentAccessStructures != nullptr);
+				targetAccess->isInBottomMap() = false;
+				parentAccessStructures->_subaccessBottomMap.erase(targetAccess);
+			}
+		}
+		
+		if (targetTaskAccessStructures._removalBlockers == 0) {
+			if (targetTask->decreaseRemovalBlockingCount()) {
+				cpuDependencyData._removableTasks.push_back(targetTask);
+			}
+		}
+		
+		assert(targetAccess->hasForcedRemoval() || !targetAccess->isInBottomMap());
 	}
 	
 	
@@ -340,26 +378,10 @@ private:
 				
 				// Update the number of non removable accesses of the task
 				if (!wasRemovable && targetAccess->isRemovable(targetAccess->hasForcedRemoval())) {
-					assert(targetTaskAccessStructures._removalBlockers > 0);
-					targetTaskAccessStructures._removalBlockers--;
-					targetAccess->markAsDiscounted();
-					Instrument::dataAccessBecomesRemovable(targetAccess->_instrumentationId, triggererInstrumentationTaskId);
-					
-					if (targetAccess->_next != nullptr) {
-						assert(!targetAccess->hasForcedRemoval());
-						Instrument::unlinkedDataAccesses(
-							targetAccess->_instrumentationId,
-							targetAccess->_next->getInstrumentationTaskId(),
-							/* direct */ true,
-							triggererInstrumentationTaskId
-						);
-					};
-					
-					if (targetTaskAccessStructures._removalBlockers == 0) {
-						if (targetTask->decreaseRemovalBlockingCount()) {
-							cpuDependencyData._removableTasks.push_back(targetTask);
-						}
-					}
+					handleAccessRemoval(
+						targetAccess, targetTaskAccessStructures, targetTask,
+						nullptr, triggererInstrumentationTaskId, /* Do not remove from bottom map */ false, cpuDependencyData
+					);
 				}
 				
 				assert((targetAccess->_next != nullptr) || targetAccess->isInBottomMap());
@@ -448,9 +470,17 @@ private:
 							
 							if (!parentAccessStructuresIfLocked->_lock.tryLock()) {
 								// Relock and restart
+								
+								// Do not allow the task to disappear!
+								targetTaskAccessStructures._removalBlockers++;
+								
+								// Relock
 								targetTaskAccessStructures._lock.unlock();
 								parentAccessStructuresIfLocked->_lock.lock();
 								targetTaskAccessStructures._lock.lock();
+								
+								// Allow again the task to disappear (after processing it)
+								targetTaskAccessStructures._removalBlockers--;
 								
 								return false;
 							}
@@ -482,36 +512,10 @@ private:
 				
 				// Update the number of non removable accesses of the task
 				if (!wasRemovable && targetAccess->isRemovable(targetAccess->hasForcedRemoval())) {
-					assert(targetTaskAccessStructures._removalBlockers > 0);
-					targetTaskAccessStructures._removalBlockers--;
-					targetAccess->markAsDiscounted();
-					Instrument::dataAccessBecomesRemovable(targetAccess->_instrumentationId, triggererInstrumentationTaskId);
-					
-					if (targetAccess->_next != nullptr) {
-						Instrument::unlinkedDataAccesses(
-							targetAccess->_instrumentationId,
-							targetAccess->_next->getInstrumentationTaskId(),
-							/* direct */ true,
-							triggererInstrumentationTaskId
-						);
-					} else {
-						assert(targetAccess->isInBottomMap());
-						assert(parentAccessStructuresIfLocked != nullptr);
-						targetAccess->isInBottomMap() = false;
-						parentAccessStructuresIfLocked->_subaccessBottomMap.erase(targetAccess);
-					}
-					
-					if (targetTaskAccessStructures._removalBlockers == 0) {
-						if (targetTask->decreaseRemovalBlockingCount()) {
-							cpuDependencyData._removableTasks.push_back(targetTask);
-						}
-					}
-					
-					if (targetAccess->hasForcedRemoval() && targetAccess->isInBottomMap()) {
-						assert(parentAccessStructuresIfLocked != nullptr);
-						parentAccessStructuresIfLocked->_subaccessBottomMap.erase(targetAccess);
-						targetAccess->isInBottomMap() = false;
-					}
+					handleAccessRemoval(
+						targetAccess, targetTaskAccessStructures, targetTask,
+						parentAccessStructuresIfLocked, triggererInstrumentationTaskId, true, cpuDependencyData
+					);
 				}
 				
 				Instrument::dataAccessBecomesSatisfied(
@@ -625,19 +629,10 @@ private:
 				
 				if (!dataAccess->isRemovable(false) && dataAccess->isRemovable(true)) {
 					// The access has become removable
-					assert(subtaskAccessStructures._removalBlockers > 0);
-					subtaskAccessStructures._removalBlockers--;
-					dataAccess->markAsDiscounted();
-					Instrument::dataAccessBecomesRemovable(dataAccess->_instrumentationId, task->getInstrumentationTaskId());
-					
-					dataAccess->isInBottomMap() = false;
-					accessStructures._subaccessBottomMap.erase(dataAccess);
-					
-					if (subtaskAccessStructures._removalBlockers == 0) {
-						if (subtask->decreaseRemovalBlockingCount()) {
-							cpuDependencyData._removableTasks.push_back(subtask);
-						}
-					}
+					handleAccessRemoval(
+						dataAccess, subtaskAccessStructures, subtask,
+						&accessStructures, triggererInstrumentationTaskId, true, cpuDependencyData
+					);
 				}
 				
 				if (subtask != task) {
@@ -684,19 +679,10 @@ private:
 				
 				if (!dataAccess->isRemovable(false) && dataAccess->isRemovable(true)) {
 					// The access has become removable
-					assert(subtaskAccessStructures._removalBlockers > 0);
-					subtaskAccessStructures._removalBlockers--;
-					dataAccess->markAsDiscounted();
-					Instrument::dataAccessBecomesRemovable(dataAccess->_instrumentationId, task->getInstrumentationTaskId());
-					
-					dataAccess->isInBottomMap() = false;
-					accessStructures._subaccessBottomMap.erase(dataAccess);
-					
-					if (subtaskAccessStructures._removalBlockers == 0) {
-						if (subtask->decreaseRemovalBlockingCount()) {
-							cpuDependencyData._removableTasks.push_back(subtask);
-						}
-					}
+					handleAccessRemoval(
+						dataAccess, subtaskAccessStructures, subtask,
+						&accessStructures, triggererInstrumentationTaskId, true, cpuDependencyData
+					);
 				}
 				
 				if (subtask != task) {
@@ -974,23 +960,10 @@ private:
 		// Update the number of non-removable accesses of the dataAccess task
 		if (!wasRemovable && dataAccess->isRemovable(dataAccess->hasForcedRemoval())) {
 			assert(dataAccess->_next != nullptr);
-			Instrument::unlinkedDataAccesses(
-				dataAccess->_instrumentationId,
-				dataAccess->_next->getInstrumentationTaskId(),
-				/* direct */ true,
-				task->getInstrumentationTaskId()
+			handleAccessRemoval(
+				dataAccess, accessStructures, task,
+				nullptr, triggererInstrumentationTaskId, /* Do not remove from bottom map */ false, cpuDependencyData
 			);
-			
-			assert(accessStructures._removalBlockers > 0);
-			accessStructures._removalBlockers--;
-			dataAccess->markAsDiscounted();
-			Instrument::dataAccessBecomesRemovable(dataAccess->_instrumentationId, triggererInstrumentationTaskId);
-			
-			if (accessStructures._removalBlockers == 0) {
-				if (task->decreaseRemovalBlockingCount()) {
-					cpuDependencyData._removableTasks.push_back(task);
-				}
-			}
 		}
 		
 		// Return the data access since it may have been fragmented
@@ -1351,40 +1324,13 @@ private:
 					assert(!fragment->complete());
 					fragment->complete() = true;
 					
-					// Update the number of non removable accesses if the fragment has next and has become removable
-					if (fragment->_next != nullptr) {
-						assert(!fragment->isInBottomMap());
-						
-						// NOTE: Propagation to the first subaccess (skipping the fragment) is always performed, so there
-						// is no need to repreat it here.
-						
-						if (fragment->isRemovable(false)) {
-							assert(accessStructures._removalBlockers > 0);
-							accessStructures._removalBlockers--;
-							assert(accessStructures._removalBlockers > 0);
-							fragment->markAsDiscounted();
-							Instrument::dataAccessBecomesRemovable(fragment->_instrumentationId, finishedTask->getInstrumentationTaskId());
-							
-							Instrument::unlinkedDataAccesses(
-								fragment->_instrumentationId,
-								fragment->_next->getInstrumentationTaskId(),
-								/* direct */ true,
-								finishedTask->getInstrumentationTaskId()
-							);
-						}
-					} else if (fragment->hasForcedRemoval() && fragment->isRemovable(true)) {
-						// The fragment has no next but is removable due to forced removal
-						assert(fragment->_next == nullptr);
-						assert(fragment->isInBottomMap());
-						
-						fragment->isInBottomMap() = false;
-						accessStructures._subaccessBottomMap.erase(fragment);
-						
+					// Update the number of non removable accesses if the fragment has become removable
+					if (fragment->isRemovable(fragment->hasForcedRemoval())) {
+						handleAccessRemoval(
+							fragment, accessStructures, finishedTask,
+							&accessStructures, finishedTask->getInstrumentationTaskId(), true, cpuDependencyData
+						);
 						assert(accessStructures._removalBlockers > 0);
-						accessStructures._removalBlockers--;
-						assert(accessStructures._removalBlockers > 0);
-						fragment->markAsDiscounted();
-						Instrument::dataAccessBecomesRemovable(fragment->_instrumentationId, finishedTask->getInstrumentationTaskId());
 					}
 					
 					return true;
@@ -1421,29 +1367,10 @@ private:
 			
 		// Update the number of non removable accesses of the task
 		if (dataAccess->isRemovable(dataAccess->hasForcedRemoval())) {
-			assert(accessStructures._removalBlockers > 0);
-			accessStructures._removalBlockers--;
-			dataAccess->markAsDiscounted();
-			Instrument::dataAccessBecomesRemovable(dataAccess->_instrumentationId, finishedTask->getInstrumentationTaskId());
-			
-			if (dataAccess->_next != nullptr) {
-				Instrument::unlinkedDataAccesses(
-					dataAccess->_instrumentationId,
-					dataAccess->_next->getInstrumentationTaskId(),
-					/* direct */ true,
-					finishedTask->getInstrumentationTaskId()
-				);
-			} else {
-				assert(dataAccess->isInBottomMap());
-				assert(parentIsLocked);
-				parentAccessStructures._subaccessBottomMap.erase(dataAccess);
-			};
-			
-			if (accessStructures._removalBlockers == 0) {
-				if (finishedTask->decreaseRemovalBlockingCount()) {
-					cpuDependencyData._removableTasks.push_back(finishedTask);
-				}
-			}
+			handleAccessRemoval(
+				dataAccess, accessStructures, finishedTask,
+				&parentAccessStructures, finishedTask->getInstrumentationTaskId(), true, cpuDependencyData
+			);
 		}
 		
 		// No need to reflow due to relock
@@ -1456,9 +1383,6 @@ private:
 		CPU *cpu,
 		WorkerThread *thread
 	) {
-		assert(cpu != nullptr);
-		assert(thread != nullptr);
-		
 		for (Task *removableTask : removableTasks) {
 			TaskFinalization::disposeOrUnblockTask(removableTask, cpu, thread);
 		}
@@ -1469,7 +1393,6 @@ private:
 	{
 		thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
-		
 		cpu = thread->getHardwarePlace();
 		assert(cpu != nullptr);
 		
@@ -1544,11 +1467,13 @@ public:
 			
 			task->increasePredecessors(2);
 			
-			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-			assert(currentThread != 0);
+			WorkerThread *currentThread = nullptr;
+			CPU *cpu = nullptr;
 			
-			CPU *cpu = currentThread->getHardwarePlace();
-			assert(cpu != 0);
+			currentThread = WorkerThread::getCurrentWorkerThread();
+			assert(currentThread != nullptr);
+			cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
 			
 			CPUDependencyData &cpuDependencyData = cpu->_dependencyData;
 			
@@ -1620,7 +1545,7 @@ public:
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					
-					// Returns false if the lock has been droped to also lock the parent.
+					// Returns false if the lock has been dropped to also lock the parent.
 					// This allows the traversal to restart from the equivalent point, since the contents of
 					// accesses may have changed during the relocking operation (due to fragmentation).
 					return finalizeAccess(
@@ -1684,8 +1609,6 @@ public:
 		CPU *cpu = nullptr;
 		WorkerThread *currentThread = nullptr;
 		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
-		assert(cpu != nullptr);
-		assert(currentThread != nullptr);
 		
 #ifndef NDEBUG
 		{
@@ -1760,6 +1683,7 @@ public:
 					assert(accessStructures._removalBlockers >= 0);
 					
 					Instrument::removedDataAccess(dataAccess->_instrumentationId, task->getInstrumentationTaskId());
+					accessStructures._accessFragments.erase(dataAccess);
 					delete dataAccess;
 					
 					return true;

@@ -2,6 +2,9 @@
 #define SCHEDULER_INTERFACE_HPP
 
 
+#include <atomic>
+
+
 class HardwarePlace;
 class Task;
 
@@ -9,6 +12,13 @@ class Task;
 //! \brief Interface that schedulers must implement
 class SchedulerInterface {
 public:
+	enum ReadyTaskHint {
+		NO_HINT,
+		CHILD_TASK_HINT,
+		SIBLING_TASK_HINT
+	};
+	
+	
 	virtual ~SchedulerInterface()
 	{
 	}
@@ -18,9 +28,10 @@ public:
 	//!
 	//! \param[in] task the task to be added
 	//! \param[in] hardwarePlace the hardware place of the creator or the liberator
+	//! \param[in] hint a hint about the relation of the task to the current task
 	//!
 	//! \returns an idle HardwarePlace that is to be resumed or nullptr
-	virtual HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace) = 0;
+	virtual HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint) = 0;
 	
 	//! \brief Add back a task that was blocked but that is now unblocked
 	//!
@@ -51,6 +62,40 @@ public:
 	//!
 	//! \returns a hardware place that becomes non idle or nullptr
 	virtual HardwarePlace *getIdleHardwarePlace(bool force=false) = 0;
+	
+	//! \brief Notify the scheduler that a hardware place is being disabled so that it has a chance to migrate any preassigned tasks
+	//! 
+	//! \param[in] hardwarePlace the hardware place that is about to be disabled
+	//! 
+	//! This method has a default implementation that does nothing
+	virtual void disableHardwarePlace(HardwarePlace *hardwarePlace);
+	
+	//! \brief Notify the scheduler that a hardware place is back online so that it preassign tasks to it
+	//! 
+	//! \param[in] hardwarePlace the hardware place that is about to be enabled
+	//! 
+	//! This method has a default implementation that does nothing
+	virtual void enableHardwarePlace(HardwarePlace *hardwarePlace);
+	
+	//! \brief Attempt to get a one task polling slot
+	//! 
+	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
+	//! \param[out] pollingSlot a pointer to a location that the caller will poll for ready tasks
+	//! 
+	//! \returns true if the caller is allowed to poll that memory position for a single ready task or if it actually got a task, otherwise false and the hardware place is assumed to become idle
+	//! 
+	//! This method has a default implementation that just falls back to getReadyTask.
+	virtual bool requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	
+	//! \brief Attempt to release the polling slot
+	//! 
+	//! \param[in] hardwarePlace the hardware place asking for scheduling orders
+	//! \param[out] pollingSlot a pointer to a location that the caller is polling for ready tasks
+	//! 
+	//! \returns true if the caller has successfully released the polling slot otherwise false indicating that there already is a taskl assigned or it is on the way
+	//! 
+	//! This method has a default implementation that matches the default implementation of requestPolling.
+	virtual bool releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 	
 };
 

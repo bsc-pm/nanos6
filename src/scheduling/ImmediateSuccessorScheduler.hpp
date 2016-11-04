@@ -29,7 +29,7 @@ public:
 	ImmediateSuccessorScheduler();
 	~ImmediateSuccessorScheduler();
 	
-	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace);
+	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint);
 	
 	void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace);
 	
@@ -38,6 +38,8 @@ public:
 	Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	HardwarePlace *getIdleHardwarePlace(bool force=false);
+	
+	void disableHardwarePlace(HardwarePlace *hardwarePlace);
 };
 
 

@@ -151,7 +151,9 @@ inline CPU *ThreadManager::getCPU(size_t systemCPUId)
 			// Another thread already did it
 			delete newCPU;
 			cpu = _cpus[systemCPUId];
-			while (newCPU->_virtualCPUId == ~0UL) {
+			size_t volatile * virtualCPUId = (&newCPU->_virtualCPUId);
+			
+			while (*virtualCPUId == ~0UL) {
 				// Wait for the CPU to be fully be initialized
 			}
 		} else {
@@ -250,7 +252,7 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 		// NOTE: In this case the CPUActivation class can end up resuming a CPU before its running thread has had a chance to get blocked
 	}
 	
-	Instrument::threadWillSuspend(currentThread->_instrumentationId, cpu->_virtualCPUId.load());
+	Instrument::threadWillSuspend(currentThread->_instrumentationId, cpu->_virtualCPUId);
 	
 	currentThread->suspend();
 	// After resuming (if ever blocked), the thread continues here
@@ -259,7 +261,7 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 	assert(currentThread->_cpuToBeResumedOn != nullptr);
 	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
 	
-	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->_virtualCPUId.load());
+	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->_virtualCPUId);
 	
 #ifndef NDEBUG
 	currentThread->_cpuToBeResumedOn = nullptr;

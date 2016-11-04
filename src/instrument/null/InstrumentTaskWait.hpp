@@ -20,13 +20,25 @@ namespace Instrument {
 	
 	void exitTaskWait(task_id_t taskId)
 	{
-		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread == nullptr) {
+			// The main task gets added by a non-worker thread
+			// And other tasks can also be added by external threads in library mode
+		}
 		
-		CPU *cpu = (CPU *) thread->getHardwarePlace();
-		assert(cpu != nullptr);
+		thread_id_t threadId;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
 		
-		Instrument::returnToTask(taskId, cpu->_virtualCPUId.load(), thread->getInstrumentationId());
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
+		
+		Instrument::returnToTask(taskId, cpuId, threadId);
 	}
 	
 }

@@ -52,11 +52,11 @@ CPU *ImmediateSuccessorScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace)
+HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (hardwarePlace != nullptr) {
-		if (hardwarePlace->_schedulerData == nullptr) {
+		if ((hint != CHILD_TASK_HINT) && (hardwarePlace->_schedulerData == nullptr)) {
 			hardwarePlace->_schedulerData = task;
 			return nullptr;
 		}
@@ -71,12 +71,6 @@ HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePl
 
 void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace)
 {
-	assert(hardwarePlace != nullptr);
-	if (hardwarePlace->_schedulerData == nullptr) {
-		hardwarePlace->_schedulerData = unblockedTask;
-		return;
-	}
-	
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_front(unblockedTask);
 }
@@ -140,6 +134,18 @@ HardwarePlace *ImmediateSuccessorScheduler::getIdleHardwarePlace(bool force)
 		return getIdleCPU();
 	} else {
 		return nullptr;
+	}
+}
+
+
+void ImmediateSuccessorScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
+{
+	if (hardwarePlace->_schedulerData != nullptr) {
+		Task *task = (Task *) hardwarePlace->_schedulerData;
+		hardwarePlace->_schedulerData = nullptr;
+		
+		std::lock_guard<SpinLock> guard(_globalLock);
+		_readyTasks.push_front(task);
 	}
 }
 
