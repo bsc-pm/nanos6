@@ -108,11 +108,7 @@ public:
 	inline void body()
 	{
 		assert(_taskInfo != nullptr);
-		if (isFinal()) {
-			_taskInfo->run_final(_argsBlock);
-		} else {
-			_taskInfo->run(_argsBlock);
-		}
+		_taskInfo->run(_argsBlock);
 	}
 	
 	

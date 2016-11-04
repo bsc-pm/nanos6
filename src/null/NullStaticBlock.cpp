@@ -92,13 +92,8 @@ void nanos_submit_task(void *taskHandle)
 	
 	bool wasInFinal = _inFinal;
 	assert(task->_taskInfo != nullptr);
-	if ((task->_flags & nanos_final_task)) {
-		_inFinal = true;
-		task->_taskInfo->run_final(task->_argsBlock);
-	} else {
-		_inFinal = false;
-		task->_taskInfo->run(task->_argsBlock);
-	}
+	_inFinal = (task->_flags & nanos_final_task);
+	task->_taskInfo->run(task->_argsBlock);
 	_inFinal = wasInFinal;
 	
 	task->~NullTask();
