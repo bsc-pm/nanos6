@@ -78,8 +78,13 @@ void nanos_submit_task(void *taskHandle)
 	}
 	
 	if (ready) {
-		HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace, SchedulerInterface::SchedulerInterface::CHILD_TASK_HINT);
-		assert((currentWorkerThread != nullptr) || (idleHardwarePlace == nullptr)); // The main task is added before the scheduler
+		SchedulerInterface::ReadyTaskHint schedulingHint = SchedulerInterface::NO_HINT;
+		
+		if (currentWorkerThread != nullptr) {
+			schedulingHint = SchedulerInterface::CHILD_TASK_HINT;
+		}
+		
+		HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace, schedulingHint);
 		
 		if (idleHardwarePlace != nullptr) {
 			ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
