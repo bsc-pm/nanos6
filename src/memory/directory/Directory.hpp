@@ -6,8 +6,8 @@
 
 #include <TaskDataAccesses.hpp>
 
-#include "CopySet.hpp"
-#include "MemoryPageSet.hpp"
+#include "copies/CopySet.hpp"
+#include "pages/MemoryPageSet.hpp"
 
 class Directory {
 

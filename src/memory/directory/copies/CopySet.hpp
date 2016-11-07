@@ -4,12 +4,13 @@
 #include <boost/intrusive/avl_set.hpp> //boost::intrusive
 #include <functional> // std::less
 
+#include <IntrusiveLinearRegionMap.hpp>
+
 #include "CopyObject.hpp"
 
 class CopySet {
 
-typedef boost::intrusive::member_hook< CopyObject, CopyObject::member_hook_t, &CopyObject::_hook > MemberOption;
-typedef boost::intrusive::avl_multiset< CopyObject, MemberOption, boost::intrusive::key_of_value< CopyObject::key_value > > CopyObjectSet;
+	typedef IntrusiveLinearRegionMap<CopyObject, boost::intrusive::function_hook< CopyObjectLinkingArtifacts > > CopyObjectSet; 
 
 private:
 	CopyObjectSet _set;
@@ -29,15 +30,6 @@ public:
 	/*! \brief Proxy call for the boost intrusive avl_set end method*/
 	iterator end();
 	
-	/*! \brief Proxy call for the boost intrusive avl_set find method*/
-	iterator find(void *address);
-
-	/*!	\brief Find the CopyObject with the specified address and size
-	 *	
-	 *	\param address Starting address of the copy region
-	 */	
-	iterator find(void *address, size_t size);
-
 	/*! \brief Inserts a copy in a cache to the list 
 	 *
 	 * 	Registers that a region has been copied in a cache.

@@ -2,6 +2,8 @@
 
 #include "hardware/Machine.hpp"
 
+#include <numaif.h>
+
 MemoryPageSet::MemoryPageSet(): _set(){}
 
 MemoryPageSet::iterator MemoryPageSet::begin(){
@@ -32,12 +34,12 @@ MemoryPageSet::iterator MemoryPageSet::insert(DataAccessRange range){
 		pages[i] = page;
 	}
 
-	//move_pages(0, npages, pages, NULL, status, 0);
+	move_pages(0, npages, pages, NULL, status, 0);
 	
 	for(int i = 0; i < npages; i++){
 		if(_set.find(pages[i]) != _set.end()){
-		//	MemoryPageObject *obj = new MemoryPageObject(pages[i], pagesize, status[i]);
-		//	_set.insert(*obj);
+			MemoryPageObject *obj = new MemoryPageObject(pages[i], pagesize, status[i]);
+			_set.insert(*obj);
 		}
 	}
 	

@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I common/m4
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(top_srcdir)/common -I$(top_srcdir)/common/api
 
-SUBDIRS = . tests/directive_based/check-shutdown tests/directive_based/tests
+SUBDIRS = . tests/directive_based/tests
 
 
 lib_LTLIBRARIES = \
@@ -96,14 +96,16 @@ common_sources = \
 	src/memory/Globals.hpp \
 	src/memory/directory/Directory.hpp \
 	src/memory/directory/Directory.cpp \
-	src/memory/directory/CopySet.hpp \
-	src/memory/directory/CopySet.cpp \
-	src/memory/directory/CopyObject.hpp \
-	src/memory/directory/CopyObject.cpp \
-	src/memory/directory/MemoryPageObject.hpp \
-	src/memory/directory/MemoryPageObject.cpp \
-	src/memory/directory/MemoryPageSet.hpp \
-	src/memory/directory/MemoryPageSet.cpp \
+	src/memory/directory/copies/CopySet.hpp \
+	src/memory/directory/copies/CopySet.cpp \
+	src/memory/directory/copies/CopyObject.hpp \
+	src/memory/directory/copies/CopyObject.cpp \
+	src/memory/directory/copies/CopyObjectLinkingArtifacts.hpp \
+	src/memory/directory/copies/CopyObjectLinkingArtifacts.cpp \
+	src/memory/directory/pages/MemoryPageObject.hpp \
+	src/memory/directory/pages/MemoryPageObject.cpp \
+	src/memory/directory/pages/MemoryPageSet.hpp \
+	src/memory/directory/pages/MemoryPageSet.cpp \
 	src/memory/cache/GenericCache.hpp \
 	src/memory/cache/AIOCache.hpp \
 	src/memory/cache/AIOCache.cpp \
@@ -168,6 +170,8 @@ discrete_dependency_sources = $(common_dependency_sources) \
 common_linear_regions_dependency_sources = \
 	src/dependencies/linear-regions/DataAccessRange.hpp \
 	src/dependencies/linear-regions/DataAccessRangeIndexer.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp
 	
@@ -189,8 +193,6 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
-	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMap.hpp \
-	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \

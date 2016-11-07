@@ -4,6 +4,14 @@ CopyObject::CopyObject(void *startAddress, size_t length): _range(startAddress, 
 
 CopyObject::CopyObject(void *startAddress, void *endAddress): _range(startAddress, endAddress), _version(0), _caches(){}
 
+DataAccessRange &CopyObject::getAccessRange(){
+	return _range;
+}
+
+DataAccessRange const &CopyObject::getAccessRange() const{
+	return _range;
+}
+
 void *CopyObject::getStartAddress(){
 	return _range.getStartAddress();
 }

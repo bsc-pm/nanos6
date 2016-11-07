@@ -42,23 +42,8 @@ CopySet::iterator CopySet::end(){
 	return _set.end();
 }
 
-CopySet::iterator CopySet::find(void *address){
-	return _set.find(address);
-}
-
-CopySet::iterator CopySet::find(void *address, size_t size){
-	CopySet::iterator it = _set.find(address);
-	while(it != _set.end() && it->getStartAddress() > address){
-		if(it->getSize() == size){
-			return it;
-		}
-		it++;
-	}
-	return _set.end();	
-}
-
 CopySet::iterator CopySet::insert(void *startAddress, size_t size, int cache, bool increment){
-	void *endAddress = static_cast<void *>( static_cast<char *>(startAddress) + size );
+	/*void *endAddress = static_cast<void *>( static_cast<char *>(startAddress) + size );
 	CopySet::iterator it = _set.lower_bound(startAddress);
     CopySet::iterator initial = it;
 
@@ -104,14 +89,17 @@ CopySet::iterator CopySet::insert(void *startAddress, size_t size, int cache, bo
     } else {
 		processMissing(startAddress, endAddress, cache, increment);
 	}
+	*/
 }
 
 
 CopySet::iterator CopySet::erase(void *address, int cache){
+	/*
 	CopySet::iterator it = _set.find(address);
 	if(it != _set.end()){
 		it->removeCache(cache);
 		if(!it->anyCache()) _set.erase(it);
 	}
 	return it;	
+	*/
 }

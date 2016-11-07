@@ -715,14 +715,23 @@ namespace Instrument {
 		{
 			access_t *original = _accessIdToAccessMap[_accessId];
 			access_t *oldSuperAccess = _accessIdToAccessMap[_oldSuperAccessId];
-			access_t *newSuperAccess = _accessIdToAccessMap[_newSuperAccessId];
 			assert(original != nullptr);
 			assert(oldSuperAccess != nullptr);
-			assert(newSuperAccess != nullptr);
+			
+			access_t *newSuperAccess = nullptr;
+			if (_newSuperAccessId != data_access_id_t()) {
+				newSuperAccess = _accessIdToAccessMap[_newSuperAccessId];
+				assert(newSuperAccess != nullptr);
+			}
 			
 			std::ostringstream oss;
 			
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": moves access " << _accessId << " of task " << original->_originator << " from son of task " << oldSuperAccess->_originator << " to " << newSuperAccess->_originator;
+			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": moves access " << _accessId << " of task " << original->_originator << " from son of task " << oldSuperAccess->_originator << " to ";
+			if (newSuperAccess != nullptr) {
+				oss << newSuperAccess->_originator;
+			} else {
+				oss << "top level";
+			}
 			
 			return oss.str();
 		}

@@ -1,7 +1,7 @@
 #ifndef REGION_HPP
 #define REGION_HPP
 
-#include "dependencies/linear-regions/DataAccessRange.hpp"
+#include <DataAccessRange.hpp>
 
 #include <boost/intrusive/avl_set.hpp>
 #include "hardware/places/MemoryPlace.hpp"
@@ -10,7 +10,7 @@ class MemoryPageObject{
 	
 private:
 	DataAccessRange _range; //< Range of the page
-	MemoryPlace *_location; //< memory node where the page resides
+	int _location; //< memory node where the page resides
 
 public:
  	#if NDEBUG
@@ -22,10 +22,10 @@ public:
 	member_hook_t _hook;
 
 
-	MemoryPageObject( void *baseAddress, size_t size, MemoryPlace *location = nullptr );
+	MemoryPageObject( void *baseAddress, size_t size, int location );
 	void *getStartAddress();
 	size_t getSize();
-	MemoryPlace *getLocation();
+	int getLocation();
 
 	
 	/* Key structure for Boost Intrusive AVL Set */

@@ -470,9 +470,17 @@ private:
 							
 							if (!parentAccessStructuresIfLocked->_lock.tryLock()) {
 								// Relock and restart
+								
+								// Do not allow the task to disappear!
+								targetTaskAccessStructures._removalBlockers++;
+								
+								// Relock
 								targetTaskAccessStructures._lock.unlock();
 								parentAccessStructuresIfLocked->_lock.lock();
 								targetTaskAccessStructures._lock.lock();
+								
+								// Allow again the task to disappear (after processing it)
+								targetTaskAccessStructures._removalBlockers--;
 								
 								return false;
 							}
@@ -1537,7 +1545,7 @@ public:
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					
-					// Returns false if the lock has been droped to also lock the parent.
+					// Returns false if the lock has been dropped to also lock the parent.
 					// This allows the traversal to restart from the equivalent point, since the contents of
 					// accesses may have changed during the relocking operation (due to fragmentation).
 					return finalizeAccess(
@@ -1675,6 +1683,7 @@ public:
 					assert(accessStructures._removalBlockers >= 0);
 					
 					Instrument::removedDataAccess(dataAccess->_instrumentationId, task->getInstrumentationTaskId());
+					accessStructures._accessFragments.erase(dataAccess);
 					delete dataAccess;
 					
 					return true;
