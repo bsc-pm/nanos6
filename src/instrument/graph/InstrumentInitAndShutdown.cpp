@@ -350,6 +350,7 @@ namespace Instrument {
 			
 			// Skip irrelevant accesses if not explicitly requested
 			if (!_showDeadDependencyStructures && (access->_status != created_access_status)) {
+				currentId = access->_nextGroupAccess;
 				continue;
 			}
 			
