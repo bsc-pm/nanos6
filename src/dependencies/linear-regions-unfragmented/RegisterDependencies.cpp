@@ -17,7 +17,7 @@ void register_access(void *handler, void *start, size_t length)
 	assert(handler != 0);
 	Task *task = (Task *) handler;
 	
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK, start, length);
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal(), start, length);
 	
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != 0); // NOTE: The "main" task is not created by a WorkerThread, but in any case it is not supposed to have dependencies
@@ -61,7 +61,7 @@ void register_access(void *handler, void *start, size_t length)
 		lock = &domain->_lock;
 	}
 	
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK, accessRange, superAccess, lock, topMap, bottomMap);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal(), accessRange, superAccess, lock, topMap, bottomMap);
 }
 
 
