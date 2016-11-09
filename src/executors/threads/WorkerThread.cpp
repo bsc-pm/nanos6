@@ -31,11 +31,7 @@ void *WorkerThread::body()
 	ThreadManager::threadStartup(this);
 	
 	while (!_mustShutDown) {
-		if (!CPUActivation::acceptsWork(_cpu)) {
-			Scheduler::disableComputePlace(_cpu);
-			CPUActivation::activationCheck(this);
-			Scheduler::enableComputePlace(_cpu);
-		}
+		CPUActivation::activationCheck(this);
 		
 		if (_task == nullptr) {
 			std::atomic<Task *> pollingSlot(nullptr);

@@ -5,19 +5,45 @@
 
 #include <boost/intrusive/avl_set.hpp>
 #include <boost/intrusive/options.hpp>
+#include <boost/version.hpp>
 #include "DataAccessRange.hpp"
 
 
 namespace IntrusiveLinearRegionMapInternals {
+	struct address_t
+	{
+		void *_address;
+		
+		inline address_t(void *address)
+			: _address(address)
+		{
+		}
+		
+		inline bool operator<(address_t const &other) const
+		{
+			return _address < other._address;
+		}
+	};
+	
+	
 	template <typename ContentType>
 	struct KeyOfNodeArtifact
 	{
+#if BOOST_VERSION >= 106200
+		typedef address_t type;
+		
+		type operator()(ContentType const &node)
+		{ 
+			return node.getAccessRange().getStartAddressConstRef();
+		}
+#else
 		typedef void *type;
 		
 		type const &operator()(ContentType const &node)
 		{ 
 			return node.getAccessRange().getStartAddressConstRef();
 		}
+#endif
 	};
 }
 
