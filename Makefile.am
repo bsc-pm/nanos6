@@ -462,7 +462,7 @@ endif
 # Tests
 #
 
-unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test #directory.test
+unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test directory.test
 
 unit_test_common_cxxflags = -I$(top_srcdir)/common/tests
 
@@ -473,10 +473,10 @@ inline_double_linked_list_test_SOURCES = tests/unit/support/TestInlineDoublyLink
 inline_double_linked_list_test_CPPFLAGS = -DNDEBUG
 inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
 
-#directory_test_SOURCES = tests/unit/directory/TestDirectory.cpp $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
-#directory_test_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
-#directory_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
-#directory_test_LDFLAGS = $(common_libnanos6_ldflags)
+directory_test_SOURCES = tests/unit/directory/TestDirectory.cpp $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
+directory_test_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
+directory_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
+directory_test_LDFLAGS = $(common_libnanos6_ldflags)
 
 
 check_PROGRAMS = $(unit_tests)

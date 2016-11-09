@@ -9,7 +9,6 @@
 
 class CopyObject {
 private: 
-	DataAccessRange _range;
 	unsigned int _version;
 	cache_mask _caches;
 
@@ -20,14 +19,14 @@ private:
 	#endif
 
 public:
-	
+	DataAccessRange _range;
 
 	typedef boost::intrusive::avl_set_member_hook<link_mode_t> hook_type;
 	
 	hook_type _hook;
 
-	CopyObject(void *startAddress, void *endAddress);
-	CopyObject(void *startAddress, size_t size);
+	CopyObject(DataAccessRange range, int version = 0);
+	CopyObject(const CopyObject &ob);
 
 	DataAccessRange &getAccessRange();
 	DataAccessRange const &getAccessRange() const;
@@ -48,6 +47,7 @@ public:
 	void removeCache(int id);
 	bool testCache(int id);
 	bool anyCache();
+	bool isOnlyCache(int id);
 	int countCaches();
 };
 

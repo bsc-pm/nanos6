@@ -1,38 +1,10 @@
 #include "CopySet.hpp"
+#include <DataAccessRange.hpp>
+#include <iostream>
 
 CopySet::CopySet(): _set(){}
 
 /* Private methods */
-
-void CopySet::processMissing(void *startAddress, void *endAddress, int cache, bool increment){
-	size_t size = static_cast<char *>(endAddress) - static_cast<char *>(startAddress);
-	CopyObject *cpy = new CopyObject(startAddress, size);
-	cpy->addCache(cache);
-	if(increment) cpy->incrementVersion();
-	_set.insert(*cpy);
-}
-
-void CopySet::processIntersecting(CopyObject &cpy, void *startAddress, void *endAddress, int cache, bool increment){
-	if(cpy.getStartAddress() < startAddress){
-		CopyObject * newCopy = new CopyObject(cpy.getStartAddress(), startAddress);
-		newCopy->addCache(cache);
-		_set.insert(*newCopy);
-
-		cpy.setStartAddress(startAddress); 
-	}
-
-	if(cpy.getEndAddress() > endAddress){
-		CopyObject *newCopy = new CopyObject(cpy.getEndAddress(), endAddress);
-		newCopy->addCache(cache);
-		_set.insert(*newCopy);
-
-		cpy.setEndAddress(endAddress);
-	}
-
-	if(increment) cpy.incrementVersion();
-	cpy.addCache(cache);
-
-}
 
 CopySet::iterator CopySet::begin(){
 	return _set.begin();
@@ -42,64 +14,107 @@ CopySet::iterator CopySet::end(){
 	return _set.end();
 }
 
-CopySet::iterator CopySet::insert(void *startAddress, size_t size, int cache, bool increment){
-	/*void *endAddress = static_cast<void *>( static_cast<char *>(startAddress) + size );
-	CopySet::iterator it = _set.lower_bound(startAddress);
-    CopySet::iterator initial = it;
+bool CopySet::empty(){
+	return _set.empty();
+}
 
-	if(it != _set.end()){
-		//Adjust lower bound
-		if ((it != _set.begin()) && (it->getStartAddress() > startAddress)) {
-            it--;
-        }
+void CopySet::insert(void *startAddress, size_t size, int cache, bool increment){
+	
+	DataAccessRange range(startAddress, size);
+
+
+	//First version of insert with defrag. 
+	if(!increment){	
+		// When CopyIn:
+		// Every region intersecting is added the cache.
+		// Every missing region is created and added the cache.
+		// Regions on the edges are shrunk and the cache is added to them.
 		
-		//If previous element is not intersecting, readjust
-		if( it->getEndAddress() <= startAddress ){
-			it = initial;
-		}
-		
-		void *lastEnd = startAddress;
-		while( it != _set.end() && endAddress > it->getStartAddress()){
-			CopySet::iterator position = it;
-			it++;
-			
-			if(lastEnd < position->getStartAddress()){
-				//Misssing region before a position
-				processMissing(lastEnd, position->getStartAddress(), cache, increment);				
+
+		// Process Interesection section, shrinking edges and adding a new cache to each old region.
+		_set.processIntersecting(
+			range,
+			[&] (CopySet::iterator position) -> bool {	
+				if(position->getStartAddress() < range.getStartAddress()){
+					if(position->getEndAddress() > range.getEndAddress()){
+						CopyObject *cpy = new CopyObject( *position );
+						cpy->setStartAddress(range.getEndAddress() );
+						_set.insert(*cpy);
+					}
+					position->setEndAddress(range.getStartAddress()); 
+				}
+				if(position->getEndAddress() > range.getEndAddress()){
+					position->setStartAddress(range.getEndAddress());
+				}	
+				if(position->getEndAddress() <= range.getEndAddress() && position->getStartAddress() >= range.getStartAddress()){
+					position->addCache(cache);
+				}
+				return true;
 			}
-			
-			if(position->getEndAddress() <= endAddress){
-				//Intersecting region
-				lastEnd = position->getEndAddress();			
-				processIntersecting(*position, startAddress, endAddress, cache, increment);
-			} else {
-				//Intersecting region
-				lastEnd = endAddress;
-				processIntersecting(*position, startAddress, endAddress, cache, increment);
+		);
+		
+		// Process Missing sections, creating a copyObject with the added cache for each.
+		_set.processMissing(
+			range,
+			[&] (DataAccessRange missingRange) -> bool {
+				CopyObject *cpy = new CopyObject(missingRange, 0);
+				cpy->addCache(cache);
+				_set.insert(*cpy);
+				return true;
 			} 
+		);
+	} else {
+		// When CopyOut (incrementing version):
+		// All regions are absorbed into the new one. 
+		// Regions on the edges are shrunk (if needed).
+		int version = 0;
+
+		// Process all intersecting sections, resizing the edges as needed.
+		_set.processIntersecting(
+			range,
+			[&] (CopySet::iterator position) -> bool {
+				if(position->getVersion() > version){
+					version > position->getVersion();
+				}
+				 	
+				bool edge = false;	
+				if(position->getStartAddress() < range.getStartAddress()){
+					if(position->getEndAddress() > range.getEndAddress()){
+						CopyObject *cpy = new CopyObject( *position );
+						cpy->setStartAddress(range.getEndAddress() );
+						_set.insert(*cpy);
+					}
+					position->setEndAddress(range.getStartAddress());
+					edge = true; 
+				}
+				if(position->getEndAddress() > range.getEndAddress()){
+					position->setStartAddress(range.getEndAddress());
+					edge = true;
+				}
+				if(!edge){
+					_set.erase(*position);
+					delete &(*position);
+				}
+
+				return true;
+			}
+		);
 			
-		}
-
-		if(lastEnd < endAddress){
-			//Missing region at the end
-			//If not intersecting this is the whole region
-			processMissing(lastEnd, endAddress, cache, increment);
-		}
-
-    } else {
-		processMissing(startAddress, endAddress, cache, increment);
+		CopyObject *cpy = new CopyObject( range, version + 1 );
+		cpy->addCache(cache);
+		_set.insert(*cpy);
 	}
-	*/
 }
 
 
 CopySet::iterator CopySet::erase(void *address, int cache){
-	/*
-	CopySet::iterator it = _set.find(address);
-	if(it != _set.end()){
-		it->removeCache(cache);
-		if(!it->anyCache()) _set.erase(it);
+
+ 	DataAccessRange eraseRange(address, address);	
+	CopySet::iterator it = _set.find(eraseRange);
+	it->removeCache(cache);
+	if(!it->anyCache()){
+		_set.erase(*it);
 	}
+	
 	return it;	
-	*/
 }

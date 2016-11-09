@@ -1,8 +1,18 @@
 #include "CopyObject.hpp"
 
-CopyObject::CopyObject(void *startAddress, size_t length): _range(startAddress, length), _version(0), _caches(){}
+CopyObject::CopyObject(DataAccessRange range, int version)
+	: _range(range), 
+	_version(version), 
+	_caches()
+{
 
-CopyObject::CopyObject(void *startAddress, void *endAddress): _range(startAddress, endAddress), _version(0), _caches(){}
+}
+
+CopyObject::CopyObject(const CopyObject &obj){
+	_range = DataAccessRange( obj._range.getStartAddress(), obj._range.getEndAddress() );
+	_version = obj._version;
+	_caches = obj._caches;
+}
 
 DataAccessRange &CopyObject::getAccessRange(){
 	return _range;
@@ -51,6 +61,18 @@ void CopyObject::removeCache(int id){
  
 bool CopyObject::testCache(int id){
 	return _caches.test(id);	
+}
+
+bool CopyObject::isOnlyCache(int id){
+	if(!_caches.test(id)) return false;
+
+	for(int i = 0; i < _caches.size(); i++){
+		if(i != id && _caches.test(id)){
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool CopyObject::anyCache(){

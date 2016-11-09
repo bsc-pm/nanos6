@@ -5,6 +5,7 @@
 #include <functional> // std::less
 
 #include <IntrusiveLinearRegionMap.hpp>
+#include <IntrusiveLinearRegionMapImplementation.hpp>
 
 #include "CopyObject.hpp"
 
@@ -15,9 +16,6 @@ class CopySet {
 private:
 	CopyObjectSet _set;
 
-	//Convenience functions
-    void processMissing(void *startAddress, void *endAddress, int cache, bool increment);
-    void processIntersecting(CopyObject &cpy, void *startAddress, void *endAddress, int cache, bool increment);
 public:
 	typedef CopyObjectSet::iterator iterator;
 	typedef CopyObjectSet::const_iterator const_iterator;	
@@ -29,6 +27,9 @@ public:
 	
 	/*! \brief Proxy call for the boost intrusive avl_set end method*/
 	iterator end();
+	
+	/*! \brief Proxy call for the boost intrusive avl_set empty method */
+	bool empty();
 	
 	/*! \brief Inserts a copy in a cache to the list 
 	 *
@@ -42,7 +43,7 @@ public:
 	 *	\param cache Cache object where the copy is stored
 	 *	\param increment True if the version must be incremented
 	 */
-	iterator insert(void *address, size_t size, int cache, bool increment);
+	void insert(void *address, size_t size, int cache, bool increment);
 	
 	/*!	\brief Removes a copy on a cache from the list
 	 *
@@ -54,6 +55,7 @@ public:
 	 *	\param cache Cache from which the copy was evicted
 	 */
 	iterator erase(void *address, int cache);
+
 };
 
 #endif //COPY_SET_HPP
