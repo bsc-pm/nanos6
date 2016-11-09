@@ -133,20 +133,27 @@ public:
 					break;
 				case CPU::enabling_status:
 					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
+					if (successful) {
+						Scheduler::enableHardwarePlace(cpu);
+					}
 					break;
 				case CPU::disabling_status:
 					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::disabled_status);
 					if (successful) {
+						// Mark the Hardware Place as disabled
+						Scheduler::disableHardwarePlace(cpu);
+						
+						successful = false; // Loop again, since things may have changed
+						
 						HardwarePlace *idleHardwarePlace = Scheduler::getIdleHardwarePlace();
-						assert(idleHardwarePlace != cpu);
-						
 						if (idleHardwarePlace != nullptr) {
-							ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+							// Migrate the thread to the idle hardware place
+							ThreadManager::migrateThread(currentThread, (CPU *) idleHardwarePlace);
+						} else {
+							// There is no available hardware place, so this thread becomes idle
+							ThreadManager::addIdler(currentThread);
+							ThreadManager::switchThreads(currentThread, nullptr);
 						}
-						
-						ThreadManager::addIdler(currentThread);
-						ThreadManager::switchThreads(currentThread, nullptr);
-						successful = false; // Loop again, since the CPU has been or is being re-enabled
 					}
 					break;
 				case CPU::disabled_status:
