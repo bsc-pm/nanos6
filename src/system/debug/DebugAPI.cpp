@@ -14,7 +14,7 @@ void nanos_wait_for_full_initialization(void)
 	}
 }
 
-long nanos_get_num_cpus(void)
+unsigned int nanos_get_num_cpus(void)
 {
 	if (ThreadManager::hasFinishedInitialization()) {
 		return ThreadManager::getTotalCPUs();

@@ -40,7 +40,7 @@ public_instrumentation_api = \
 	src/instrument/public/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/public/api/InstrumentTaskExecution.hpp \
 	src/instrument/public/api/InstrumentTaskWait.hpp \
-	src/instrument/public/api/InstrumentThreadManagement.hpp
+	th mastersrc/instrument/public/api/InstrumentThreadManagement.hpp
 
 common_sources = \
 	$(public_instrumentation_api) \
@@ -100,8 +100,6 @@ common_sources = \
 	src/memory/directory/copies/CopySet.cpp \
 	src/memory/directory/copies/CopyObject.hpp \
 	src/memory/directory/copies/CopyObject.cpp \
-	src/memory/directory/copies/CopyObjectLinkingArtifacts.hpp \
-	src/memory/directory/copies/CopyObjectLinkingArtifacts.cpp \
 	src/memory/directory/pages/MemoryPageObject.hpp \
 	src/memory/directory/pages/MemoryPageObject.cpp \
 	src/memory/directory/pages/MemoryPageSet.hpp \
