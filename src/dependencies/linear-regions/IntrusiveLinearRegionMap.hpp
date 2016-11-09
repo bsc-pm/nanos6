@@ -75,13 +75,13 @@ public:
 	const_iterator find(DataAccessRange const &range) const
 	{
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
-		return find(range.getStartAddress());
+		return BaseType::find(range.getStartAddress());
 	}
 	
 	iterator find(DataAccessRange const &range)
 	{
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
-		return find(range.getStartAddress());
+		return BaseType::find(range.getStartAddress());
 	}
 	
 	void clear()
