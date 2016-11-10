@@ -2,26 +2,16 @@
 #include <DataAccessRange.hpp>
 #include <iostream>
 
-CopySet::CopySet(): _set(){}
+CopySet::CopySet(): BaseType(){}
 
-/* Private methods */
-
-CopySet::iterator CopySet::begin(){
-	return _set.begin();
+CopySet::iterator CopySet::find(void *address){
+	return BaseType::find( DataAccessRange(address, address) );
 }
 
-CopySet::iterator CopySet::end(){
-	return _set.end();
-}
-
-bool CopySet::empty(){
-	return _set.empty();
-}
-
-void CopySet::insert(void *startAddress, size_t size, int cache, bool increment){
+int CopySet::insert(void *startAddress, size_t size, int cache, bool increment){
 	
 	DataAccessRange range(startAddress, size);
-
+	int result = 0;
 
 	//First version of insert with defrag. 
 	if(!increment){	
@@ -32,14 +22,14 @@ void CopySet::insert(void *startAddress, size_t size, int cache, bool increment)
 		
 
 		// Process Interesection section, shrinking edges and adding a new cache to each old region.
-		_set.processIntersecting(
+		BaseType::processIntersecting(
 			range,
 			[&] (CopySet::iterator position) -> bool {	
 				if(position->getStartAddress() < range.getStartAddress()){
 					if(position->getEndAddress() > range.getEndAddress()){
 						CopyObject *cpy = new CopyObject( *position );
 						cpy->setStartAddress(range.getEndAddress() );
-						_set.insert(*cpy);
+						BaseType::insert(*cpy);
 					}
 					position->setEndAddress(range.getStartAddress()); 
 				}
@@ -48,18 +38,24 @@ void CopySet::insert(void *startAddress, size_t size, int cache, bool increment)
 				}	
 				if(position->getEndAddress() <= range.getEndAddress() && position->getStartAddress() >= range.getStartAddress()){
 					position->addCache(cache);
+
+					//Store the highest versioning copyObject
+					if(result < position->getVersion()){
+						result = position->getVersion();
+					}
 				}
 				return true;
 			}
 		);
 		
 		// Process Missing sections, creating a copyObject with the added cache for each.
-		_set.processMissing(
+		BaseType::processMissing(
 			range,
 			[&] (DataAccessRange missingRange) -> bool {
+				
 				CopyObject *cpy = new CopyObject(missingRange, 0);
 				cpy->addCache(cache);
-				_set.insert(*cpy);
+				BaseType::insert(*cpy);
 				return true;
 			} 
 		);
@@ -70,7 +66,7 @@ void CopySet::insert(void *startAddress, size_t size, int cache, bool increment)
 		int version = 0;
 
 		// Process all intersecting sections, resizing the edges as needed.
-		_set.processIntersecting(
+		BaseType::processIntersecting(
 			range,
 			[&] (CopySet::iterator position) -> bool {
 				if(position->getVersion() > version){
@@ -82,7 +78,7 @@ void CopySet::insert(void *startAddress, size_t size, int cache, bool increment)
 					if(position->getEndAddress() > range.getEndAddress()){
 						CopyObject *cpy = new CopyObject( *position );
 						cpy->setStartAddress(range.getEndAddress() );
-						_set.insert(*cpy);
+						BaseType::insert(*cpy);
 					}
 					position->setEndAddress(range.getStartAddress());
 					edge = true; 
@@ -92,7 +88,7 @@ void CopySet::insert(void *startAddress, size_t size, int cache, bool increment)
 					edge = true;
 				}
 				if(!edge){
-					_set.erase(*position);
+					BaseType::erase(*position);
 					delete &(*position);
 				}
 
@@ -102,18 +98,22 @@ void CopySet::insert(void *startAddress, size_t size, int cache, bool increment)
 			
 		CopyObject *cpy = new CopyObject( range, version + 1 );
 		cpy->addCache(cache);
-		_set.insert(*cpy);
+		BaseType::insert(*cpy);
+		
+		result = version + 1;
 	}
+
+	return result;
 }
 
 
 CopySet::iterator CopySet::erase(void *address, int cache){
 
  	DataAccessRange eraseRange(address, address);	
-	CopySet::iterator it = _set.find(eraseRange);
+	CopySet::iterator it = BaseType::find(eraseRange);
 	it->removeCache(cache);
 	if(!it->anyCache()){
-		_set.erase(*it);
+		BaseType::erase(*it);
 	}
 	
 	return it;	

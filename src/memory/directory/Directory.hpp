@@ -1,11 +1,9 @@
 #ifndef DIRECTORY_HPP
 #define DIRECTORY_HPP
 
-#include <boost/intrusive/avl_set.hpp> //boost::intrusive
-#include <functional> // std::less
-
 #include <TaskDataAccesses.hpp>
 
+#include "lowlevel/SpinLock.hpp"
 #include "copies/CopySet.hpp"
 #include "pages/MemoryPageSet.hpp"
 
@@ -13,6 +11,8 @@ class Directory {
 
 
 private:
+	SpinLock _lock;
+
 	CopySet _copies;
 	MemoryPageSet _pages;	
 
@@ -66,7 +66,7 @@ public:
 	 *	\param accesses Data accesses of a Task
 	 *
 	 */
-	static void /*provisional name*/analyze(TaskDataAccesses &accesses /* Policy here? */);	
+	static void /*provisional name*/analyze(TaskDataAccesses &accesses, size_t *vector /* Needs name */);	
 };
 
 #endif //DIRECTORY_HPP

@@ -9,27 +9,18 @@
 
 #include "CopyObject.hpp"
 
-class CopySet {
+class CopySet: public IntrusiveLinearRegionMap<CopyObject, boost::intrusive::function_hook< CopyObjectLinkingArtifacts > >{
 
-	typedef IntrusiveLinearRegionMap<CopyObject, boost::intrusive::function_hook< CopyObjectLinkingArtifacts > > CopyObjectSet; 
+	 
 
 private:
-	CopyObjectSet _set;
+	typedef IntrusiveLinearRegionMap<CopyObject, boost::intrusive::function_hook< CopyObjectLinkingArtifacts > > BaseType;
 
 public:
-	typedef CopyObjectSet::iterator iterator;
-	typedef CopyObjectSet::const_iterator const_iterator;	
 
 	CopySet();
-	
-	/*! \brief Proxy call for the boost intrusive avl_set begin method*/
-	iterator begin();
-	
-	/*! \brief Proxy call for the boost intrusive avl_set end method*/
-	iterator end();
-	
-	/*! \brief Proxy call for the boost intrusive avl_set empty method */
-	bool empty();
+
+	iterator find(void *address);
 	
 	/*! \brief Inserts a copy in a cache to the list 
 	 *
@@ -38,12 +29,14 @@ public:
 	 * 	If the region was not on the list it creates a new CopyObject and adds the cache to its list.
 	 * 	Optionally increments the version of the copy.
 	 *
+	 *  Returns the highest version.  
+     *
 	 *	\param address Starting address of the copy region
 	 *	\param size Size of the copy region
 	 *	\param cache Cache object where the copy is stored
 	 *	\param increment True if the version must be incremented
 	 */
-	void insert(void *address, size_t size, int cache, bool increment);
+	int insert(void *address, size_t size, int cache, bool increment);
 	
 	/*!	\brief Removes a copy on a cache from the list
 	 *
@@ -55,7 +48,6 @@ public:
 	 *	\param cache Cache from which the copy was evicted
 	 */
 	iterator erase(void *address, int cache);
-
 };
 
 #endif //COPY_SET_HPP

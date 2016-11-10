@@ -4,18 +4,11 @@
 
 #include <numaif.h>
 
-MemoryPageSet::MemoryPageSet(): _set(){}
+MemoryPageSet::MemoryPageSet(): BaseType(){}
 
-MemoryPageSet::iterator MemoryPageSet::begin(){
-    return _set.begin();
-}
-
-MemoryPageSet::iterator MemoryPageSet::end(){
-    return _set.end();
-}
 
 MemoryPageSet::iterator MemoryPageSet::find(void *address){
-    return _set.find(address);
+    return BaseType::find( DataAccessRange( address, address ) );
 }
 
 MemoryPageSet::iterator MemoryPageSet::insert(DataAccessRange range){
@@ -37,9 +30,9 @@ MemoryPageSet::iterator MemoryPageSet::insert(DataAccessRange range){
 	move_pages(0, npages, pages, NULL, status, 0);
 	
 	for(int i = 0; i < npages; i++){
-		if(_set.find(pages[i]) != _set.end()){
+		if(BaseType::find(DataAccessRange( pages[i], pages[i] )) != BaseType::end()){
 			MemoryPageObject *obj = new MemoryPageObject(pages[i], pagesize, status[i]);
-			_set.insert(*obj);
+			BaseType::insert(*obj);
 		}
 	}
 	

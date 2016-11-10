@@ -462,7 +462,7 @@ endif
 # Tests
 #
 
-unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test directory.test
+unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test #directory.test
 
 unit_test_common_cxxflags = -I$(top_srcdir)/common/tests
 
