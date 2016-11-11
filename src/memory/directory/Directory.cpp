@@ -41,8 +41,27 @@ void Directory::analyze(TaskDataAccesses &accesses, size_t *vector){
 	// Process all Data accesses
 	accesses._accesses.processAll(
 		[&] ( TaskDataAccesses::accesses_t::iterator it ) -> bool {
-			// Process the intersecting copies (and spaces in between) for each access
-			Directory::_instance->_copies.processIntersectingAndMissing(
+
+			// Process all possible gaps in the pages directory and insert them in the pages list
+			Directory::_instance->_pages.processMissing(
+				it->getAccessRange(),
+				[&] (DataAccessRange missingRange) -> bool {
+					Directory::_instance->_pages.insert(missingRange);
+					return true;
+				}
+			);	
+
+			// Search for all pages in the pages list
+			Directory::_instance->_pages.processIntersecting(
+				it->getAccessRange(),
+				[&] (MemoryPageSet::iterator position) -> bool {
+					it->_homeNode = position->getLocation();
+					return true; 
+				}
+			);
+		
+			// Process the intersecting copies for each access
+			Directory::_instance->_copies.processIntersecting(
 				it->getAccessRange(),
 				
 				// Process regions which are present in the directory
@@ -67,17 +86,9 @@ void Directory::analyze(TaskDataAccesses &accesses, size_t *vector){
 					} 
 					
 					return true;	
-				},
-
-				// Process regions which are missing from the directory
-				
-				[&] (DataAccessRange missingRange) -> bool {
-					// Do nothing for now, potentially use the homes information
-					return true;
 				}
 			);				
 			return true;
 		} 
 	);	
-	// 
 }

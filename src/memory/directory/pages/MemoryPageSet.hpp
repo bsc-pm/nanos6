@@ -17,7 +17,7 @@ public:
 	
 	MemoryPageSet();
 	iterator find(void *address);
-	iterator insert(DataAccessRange range);	
+	void insert(DataAccessRange range);	
 	
 };
 

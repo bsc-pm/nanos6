@@ -24,6 +24,9 @@ struct DataAccessBase {
 		typedef boost::intrusive::link_mode<boost::intrusive::safe_link> link_mode_t;
 	#endif
 	
+	//! Home node of the accessed data, to be filled by the directory
+	int _homeNode;
+	
 	//! Links used by the list of accesses of a Task
 	TaskDataAccessHooks _taskDataAccessLinks;
 	

@@ -29,6 +29,9 @@ public:
 	DataAccessRange const &getAccessRange() const;
 
 	void *getStartAddress();
+	void setStartAddress(void *address);
+	void *getEndAddress();
+	void setEndAddress(void *address);
 	size_t getSize();
 	int getLocation();
 

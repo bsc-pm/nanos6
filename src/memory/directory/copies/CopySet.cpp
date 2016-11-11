@@ -13,6 +13,8 @@ int CopySet::insert(void *startAddress, size_t size, int cache, bool increment){
 	DataAccessRange range(startAddress, size);
 	int result = 0;
 
+	// TODO check de-fragmentation cases
+
 	//First version of insert with defrag. 
 	if(!increment){	
 		// When CopyIn:
@@ -25,8 +27,11 @@ int CopySet::insert(void *startAddress, size_t size, int cache, bool increment){
 		BaseType::processIntersecting(
 			range,
 			[&] (CopySet::iterator position) -> bool {	
+				// Check if the current position is a edge. If so shrink. 
 				if(position->getStartAddress() < range.getStartAddress()){
+					// If the leftmost edge is the same as the rightmost (
 					if(position->getEndAddress() > range.getEndAddress()){
+						// TODO merge if already has cache
 						CopyObject *cpy = new CopyObject( *position );
 						cpy->setStartAddress(range.getEndAddress() );
 						BaseType::insert(*cpy);
