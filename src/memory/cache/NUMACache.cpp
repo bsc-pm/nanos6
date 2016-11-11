@@ -26,6 +26,7 @@ void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task *
     //! Check whether there is any data access.
     if(task->getDataSize() == 0) {
         addReadyTask(task);
+        return;
     }
     
     //! Do a first round to block the data that is already in the cache to avoid evictions of that data.
@@ -33,6 +34,7 @@ void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task *
         auto it2 = _replicas.find((*it).getAccessRange().getStartAddress());
         if(it2 != _replicas.end()) {
             //! The data is already in the cache. Check with the directory whether it is correct or outdated. 
+            //! TODO: TEMPORARY DISABLE IF
             if(it2->second._version == Directory::copy_version(it2->first)) {
                 //! The data in the cache is correct.
                 //! Increment the _refCount to avoid evictions.
@@ -49,15 +51,13 @@ void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task *
 
     //! Iterate over the task data accesses to check if they are already in the cache
     for(auto it = task->getDataAccesses()._accesses.begin(); it != task->getDataAccesses()._accesses.end(); it++ ) {
-
         //! Check whether all the copies are cached. If so, add the task to the ready queue.
-        if(task->getCachedBytes() == task->getDataSize()) {
-            addReadyTask(task);
-        }
+        if(!task->hasPendingCopies())
+            break;
 
         //! Check whether this thread has already done all the desired copies.
         if(copiesDone /* >= copiesToDo */ ) 
-            return;
+            break;
 
         //! The data is not in the cache yet. Bring it.
         if(!(*it).isCached()) {
@@ -126,6 +126,12 @@ void NUMACache::copyData(unsigned int sourceCache, unsigned int homeNode, Task *
         }
 
     }
+
+    //! Check whether all the copies are cached. If so, add the task to the ready queue.
+    //if(!task->hasPendingCopies()) {
+    //! As of now, there is no preready and ready differentiation in the queue, so add it always.
+        addReadyTask(task);
+    //}
 }
 
 void NUMACache::flush() {

@@ -27,3 +27,4 @@ configure.scan
 libtool
 simpless-*.*
 stamp-h1
+*.swp

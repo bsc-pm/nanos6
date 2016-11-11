@@ -12,6 +12,7 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "hardware/Machine.hpp"
+#include "memory/directory/Directory.hpp"
 
 #include <InstrumentInitAndShutdown.hpp>
 
@@ -54,6 +55,7 @@ void nanos_preinit(void) {
 	Instrument::initialize();
 	Machine::initialize();
 	LeaderThread::initialize();
+    Directory::initialize();
 }
 
 
