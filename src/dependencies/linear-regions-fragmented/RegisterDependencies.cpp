@@ -16,7 +16,7 @@ void register_access(void *handler, void *start, size_t length)
 	assert(handler != 0);
 	Task *task = (Task *) handler;
 	
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK, start, length);
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal(), start, length);
 	
 	if (start == nullptr) {
 		return;
@@ -26,7 +26,7 @@ void register_access(void *handler, void *start, size_t length)
 	}
 	
 	DataAccessRange accessRange(start, length);
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK, accessRange);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal(), accessRange);
     task->addDataSize(length);
 }
 
