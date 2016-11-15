@@ -134,6 +134,9 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
+	src/dependencies/discrete/RootDataAccessSequence.hpp \
+	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifactsImplementation.hpp \
 	src/dependencies/discrete/TaskDataAccesses.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
