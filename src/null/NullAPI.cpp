@@ -3,7 +3,7 @@
 #define _XOPEN_SOURCE 600
 #endif
 
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 
 
 void nanos_taskwait(__attribute__((unused)) char const *invocationSource)

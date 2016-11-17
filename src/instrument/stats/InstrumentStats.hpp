@@ -4,7 +4,7 @@
 #include <list>
 #include <map>
 
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 #include "lowlevel/SpinLock.hpp"
 #include "Timer.hpp"
 

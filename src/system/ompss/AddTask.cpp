@@ -3,7 +3,7 @@
 #define _XOPEN_SOURCE 600
 #endif
 
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/HardwarePlace.hpp"

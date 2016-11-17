@@ -7,7 +7,7 @@
 #include <cassert>
 #include <set>
 
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 #include "lowlevel/SpinLock.hpp"
 
 #include <InstrumentTaskId.hpp>

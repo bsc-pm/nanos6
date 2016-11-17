@@ -1,4 +1,4 @@
-#include "api/nanos6_debug_interface.h"
+#include <nanos6/debug.h>
 #include "version/VersionInfo.hpp"
 
 

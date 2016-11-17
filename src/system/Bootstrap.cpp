@@ -6,7 +6,7 @@
 
 #include "LeaderThread.hpp"
 
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"

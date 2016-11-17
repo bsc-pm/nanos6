@@ -119,6 +119,15 @@ AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_depe
 AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-fragmented"])
 AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
 
+AC_ARG_WITH(
+	[installed-loader],
+	[AS_HELP_STRING([--with-installed-loader=prefix], [specify the prefix of the Nanos6 loader installation @<:@default=same as prefix@:>@])],
+	[ac_loader_dir="${withval}"],
+	[ac_loader_dir='$(prefix)']
+)
+HEADER_DIR="${ac_loader_dir}/include"
+AC_SUBST([HEADER_DIR])
+
 AX_CHECK_EXTRAE
 
 AC_CONFIG_FILES([

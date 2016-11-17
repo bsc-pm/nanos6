@@ -2,7 +2,7 @@
 #define INSTRUMENT_GRAPH_GRAPH_HPP
 
 
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 
 #include "dependencies/DataAccessType.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"

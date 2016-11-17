@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I common/m4
-AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(top_srcdir)/common -I$(top_srcdir)/common/api
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I@HEADER_DIR@
 
 SUBDIRS = . tests/directive_based/tests
 
@@ -21,10 +21,6 @@ lib_current = 0
 lib_revision = 0
 lib_age = 0
 
-pkginclude_HEADERS = \
-	common/api/nanos6_library_interface.h \
-	common/api/nanos6_rt_interface.h \
-	common/api/nanos6_debug_interface.h
 
 nodist_noinst_HEADERS = \
 	src/version/VersionInfo.hpp

@@ -1,5 +1,6 @@
-#include "api/nanos6_library_interface.h"
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
+#include <nanos6/library-mode.h>
+
 #include "lowlevel/SpinLock.hpp"
 
 #include <cassert>

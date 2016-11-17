@@ -1,4 +1,4 @@
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
