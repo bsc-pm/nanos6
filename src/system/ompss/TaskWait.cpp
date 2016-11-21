@@ -6,6 +6,8 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
+#include "hardware/Machine.hpp"
+
 #include <InstrumentTaskWait.hpp>
 #include <InstrumentTaskStatus.hpp>
 
@@ -67,6 +69,9 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	currentTask->markAsUnblocked();
 	
 	DataAccessRegistration::handleExitTaskwait(currentTask);
+    GenericCache * destCache = currentTask->getCache();
+    destCache->flush();
+
 	
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked

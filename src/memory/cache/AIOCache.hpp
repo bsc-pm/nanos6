@@ -11,7 +11,7 @@ public:
     virtual ~AIOCache() {}
     virtual void * allocate(std::size_t size);
     virtual void deallocate(void * ptr);
-    virtual void copyData(unsigned int sourceCache, unsigned int homeNode, Task * task);
+    virtual void copyData(int sourceCache, Task * task, unsigned int copiesToDo);
     virtual void flush(); 
     virtual bool evict();
 };
