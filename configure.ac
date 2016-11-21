@@ -62,6 +62,8 @@ AC_C_RESTRICT
 AC_LANG_POP(C++)
 
 if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
+	NANOS6_MCXX="${NANOS6_MCXX} -std=c++11"
+	
 	SSS_PUSH_NANOS6_MERCURIUM([-I${full_top_srcdir}/common/api])
 	SSS_CHECK_SANE_CHRONO
 	SSS_POP_NANOS6_MERCURIUM
