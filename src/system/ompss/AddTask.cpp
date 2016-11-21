@@ -24,8 +24,14 @@
 #define TASK_ALIGNMENT 128
 
 
-void nanos_create_task(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvocationInfo, size_t args_block_size, void **args_block_pointer, void **task_pointer)
-{
+void nanos_create_task(
+	nanos_task_info *taskInfo,
+	nanos_task_invocation_info *taskInvocationInfo,
+	size_t args_block_size,
+	void **args_block_pointer,
+	void **task_pointer,
+	size_t flags
+) {
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo);
 	
 	// Alignment fixup
@@ -44,7 +50,7 @@ void nanos_create_task(nanos_task_info *taskInfo, nanos_task_invocation_info *ta
 	task = (char *)args_block + args_block_size;
 	
 	// Construct the Task object
-	new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId);
+	new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
 }
 
 
@@ -78,8 +84,13 @@ void nanos_submit_task(void *taskHandle)
 	}
 	
 	if (ready) {
-		HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace, SchedulerInterface::SchedulerInterface::CHILD_TASK_HINT);
-		assert((currentWorkerThread != nullptr) || (idleHardwarePlace == nullptr)); // The main task is added before the scheduler
+		SchedulerInterface::ReadyTaskHint schedulingHint = SchedulerInterface::NO_HINT;
+		
+		if (currentWorkerThread != nullptr) {
+			schedulingHint = SchedulerInterface::CHILD_TASK_HINT;
+		}
+		
+		HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(task, hardwarePlace, schedulingHint);
 		
 		if (idleHardwarePlace != nullptr) {
 			ThreadManager::resumeIdle((CPU *) idleHardwarePlace);

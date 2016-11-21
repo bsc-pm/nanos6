@@ -93,9 +93,9 @@ AC_CHECK_FUNCS([gethostid])
 # Dependency engine to use
 AC_ARG_WITH(
 	[dependencies],
-	[AS_HELP_STRING([--with-dependencies=type], [specify the type of dependencies to handle @<:@default=discrete@:>@])],
+	[AS_HELP_STRING([--with-dependencies=type], [specify the type of dependencies to handle @<:@default=linear-regions-fragmented@:>@])],
 	[ac_with_dependencies="${withval}"],
-	[ac_with_dependencies="discrete"]
+	[ac_with_dependencies="linear-regions-fragmented"]
 )
 AC_MSG_CHECKING([the type of dependencies to handle])
 case x"${ac_with_dependencies}" in
@@ -123,7 +123,6 @@ AC_CONFIG_FILES([
 	Makefile
 	docs/Doxyfile
 	src/version/VersionInfo.hpp
-	tests/directive_based/check-shutdown/Makefile
 	tests/directive_based/tests/Makefile
 ])
 AC_OUTPUT

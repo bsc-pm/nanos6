@@ -1,7 +1,7 @@
 ACLOCAL_AMFLAGS = -I common/m4
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(top_srcdir)/common -I$(top_srcdir)/common/api
 
-SUBDIRS = . tests/directive_based/check-shutdown tests/directive_based/tests
+SUBDIRS = . tests/directive_based/tests
 
 
 lib_LTLIBRARIES = \
@@ -109,6 +109,7 @@ common_sources = \
 	src/system/LeaderThread.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
+	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
@@ -137,6 +138,9 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
+	src/dependencies/discrete/RootDataAccessSequence.hpp \
+	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifactsImplementation.hpp \
 	src/dependencies/discrete/TaskDataAccesses.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
@@ -144,6 +148,8 @@ discrete_dependency_sources = $(common_dependency_sources) \
 common_linear_regions_dependency_sources = \
 	src/dependencies/linear-regions/DataAccessRange.hpp \
 	src/dependencies/linear-regions/DataAccessRangeIndexer.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp
 	
@@ -165,8 +171,6 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
-	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMap.hpp \
-	src/dependencies/linear-regions-fragmented/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
