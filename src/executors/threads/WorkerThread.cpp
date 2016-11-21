@@ -110,7 +110,7 @@ void WorkerThread::handleTask()
             size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
             memset(cachesData, 0, MAX_CACHES*sizeof(size_t));
             Directory::analyze(_task->getDataAccesses(), cachesData);
-            int bestCache = -1;
+            int bestCache = 0;
             size_t max = cachesData[0];
             for(int i=0; i<MAX_CACHES; i++) {
                 if(cachesData[i] > max) {
