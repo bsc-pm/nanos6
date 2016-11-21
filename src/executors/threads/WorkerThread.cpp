@@ -108,14 +108,15 @@ void WorkerThread::handleTask()
         if(destCache == nullptr) {
             size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
             Directory::analyze(_task->getDataAccesses(), cachesData);
-            int bestCache = 0;
-            size_t max = 0;
+            int bestCache = -1;
+            size_t max = -1;
             for(int i=0; i<MAX_CACHES; i++) {
-                if(cachesData[i] >= max) {
+                if(cachesData[i] > max) {
                     max = cachesData[i];
                     bestCache = i;
                 }
             }
+            assert(bestCache != -1 && "No caches available");
             destCache = Machine::getMachine()->getMemoryNode(bestCache)->getCache();
             _task->setCache(destCache);
         }
