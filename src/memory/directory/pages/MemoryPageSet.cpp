@@ -31,7 +31,7 @@ void MemoryPageSet::insert(DataAccessRange range){
 	}
 
 
-	move_pages(0, npages, pages, NULL, status, 0);
+	move_pages(0, npages, pages, nullptr, status, 0);
 
 	// Find the previous page if it is registered
 	MemoryPageSet::iterator edge = lower_bound(static_cast<void *>( pages[0] ) - pagesize);

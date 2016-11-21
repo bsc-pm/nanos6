@@ -18,6 +18,7 @@
 struct DataAccess;
 struct DataAccessBase;
 class WorkerThread;
+class GenericCache;
 
 
 #pragma GCC diagnostic push
@@ -68,6 +69,7 @@ private:
     //! Cache info
     std::size_t _taskDataSize;
     std::size_t _cachedBytes;
+    GenericCache * _cache;
 	
 public:
 	Task(
@@ -87,7 +89,8 @@ public:
 		_instrumentationTaskId(instrumentationTaskId),
 		_schedulerInfo(nullptr),
         _taskDataSize(0),
-        _cachedBytes(0)
+        _cachedBytes(0),
+        _cache(nullptr)
 	{
 		if (parent != nullptr) {
 			parent->addChild(this);
@@ -314,15 +317,22 @@ public:
 	
 
     //! \brief Update _cachedBytes with the amount specified and return the new value
-    inline unsigned int addCachedBytes(std::size_t cachedBytes) {
+    inline std::size_t addCachedBytes(std::size_t cachedBytes) {
         _cachedBytes += cachedBytes;
         return _cachedBytes;
     }
 
+    //! \brief Set _cachedBytes to the amount specified
+    inline void setCachedBytes(std::size_t cachedBytes) {
+        _cachedBytes = cachedBytes;
+    }
+
+    //! \brief Return the current number of bytes that a task has in the cache where it is going to be executed.
     inline unsigned int getCachedBytes() {
         return _cachedBytes;
     }
 
+    //! \brief Update _taskDataSize with the amount specified
     inline void addDataSize(std::size_t size) {
         _taskDataSize += size;
     }
@@ -336,6 +346,14 @@ public:
     inline bool hasPendingCopies() const 
     {
         return _cachedBytes < _taskDataSize;
+    }
+
+    inline void setCache(GenericCache * cache) {
+        _cache = cache;
+    }
+
+    inline GenericCache * getCache() const {
+        return _cache;
     }
 
 };

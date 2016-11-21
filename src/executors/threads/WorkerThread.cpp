@@ -5,6 +5,8 @@
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 #include "hardware/Machine.hpp"
+#include "memory/directory/Directory.hpp"
+#include "memory/Globals.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -102,12 +104,24 @@ void WorkerThread::handleTask()
         // task is preReady
         //! Do some data transferences if any
         //! How do I know which is the destCache? 
-        GenericCache * destCache = Machine::getMachine()->getMemoryNode(0)->getCache();;
+        GenericCache * destCache = _task->getCache();
+        if(destCache == nullptr) {
+            size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
+            Directory::analyze(_task->getDataAccesses(), cachesData);
+            int bestCache = 0;
+            size_t max = 0;
+            for(int i=0; i<MAX_CACHES; i++) {
+                if(cachesData[i] >= max) {
+                    max = cachesData[i];
+                    bestCache = i;
+                }
+            }
+            destCache = Machine::getMachine()->getMemoryNode(bestCache)->getCache();
+            _task->setCache(destCache);
+        }
         //! How do I know which is the sourceCache? 
-        unsigned int sourceCache = 0;
-        //! homeNode is specified in the dataAccess
-        unsigned int homeNode = 0;
-        destCache->copyData(sourceCache, homeNode, _task);
+        int sourceCache = -1;
+        destCache->copyData(sourceCache, _task);
     }
     else {
         // task is ready
@@ -127,6 +141,9 @@ void WorkerThread::handleTask()
 
         // Release successors
         DataAccessRegistration::unregisterTaskDataAccesses(_task);
+        // Release copies
+        GenericCache * destCache = _task->getCache();
+        destCache->releaseCopies(_task);
 
         if (_task->markAsFinished()) {
             TaskFinalization::disposeOrUnblockTask(_task, _cpu, this);

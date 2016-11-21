@@ -192,9 +192,9 @@ struct DataAccess : public DataAccessBase {
         return _cached;
     }
 
-    void setCached()
+    void setCached(bool b)
     {
-        _cached = true;
+        _cached = b;
     }
 	
 };

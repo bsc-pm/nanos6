@@ -9,7 +9,7 @@ void * AIOCache::allocate(std::size_t size) {
 void AIOCache::deallocate(void * ptr) {
 }
 
-void AIOCache::copyData(unsigned int sourceCache, unsigned int homeNode, Task * task) {
+void AIOCache::copyData(int sourceCache, Task * task, unsigned int copiesToDo) {
 }
 
 void AIOCache::flush() {
