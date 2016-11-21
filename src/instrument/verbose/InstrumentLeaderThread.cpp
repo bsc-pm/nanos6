@@ -97,12 +97,16 @@ namespace Instrument {
 				assert(logEntry != nullptr);
 				
 #ifdef __ANDROID__
-				__android_log_print(ANDROID_LOG_DEBUG, "Nanos6", "%lu.%09lu %s\n",
-				                    logEntry->_timestamp.tv_sec, logEntry->_timestamp.tv_nsec,
-				                    logEntry->_contents.str().c_str());
-#else
+				if (_output == nullptr) {
+					__android_log_print(ANDROID_LOG_DEBUG, "Nanos6", "%lu.%09lu %s\n",
+										logEntry->_timestamp.tv_sec, logEntry->_timestamp.tv_nsec,
+										logEntry->_contents.str().c_str());
+				} else {
+#endif
 				(*_output) << logEntry->_timestamp.tv_sec << "." << std::setw(9) << std::setfill('0') << logEntry->_timestamp.tv_nsec << std::setw(0) << std::setfill(' ');
 				(*_output) << " " << logEntry->_contents.str() << std::endl;
+#ifdef __ANDROID__
+				}
 #endif
 				logEntry->_contents.str("");
 			}
@@ -111,9 +115,13 @@ namespace Instrument {
 			for (auto it = entries.rbegin(); it != entries.rend(); it++) {
 				LogEntry *logEntry = *it;
 #ifdef __ANDROID__
-				__android_log_print(ANDROID_LOG_DEBUG, "Nanos6", "%s\n", logEntry->_contents.str().c_str());
-#else
+				if (_output == nullptr) {
+					__android_log_print(ANDROID_LOG_DEBUG, "Nanos6", "%s\n", logEntry->_contents.str().c_str());
+				} else {
+#endif
 				(*_output) << logEntry->_contents.str() << std::endl;
+#ifdef __ANDROID__
+				}
 #endif
 				logEntry->_contents.str("");
 			}
