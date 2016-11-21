@@ -70,7 +70,8 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	
 	DataAccessRegistration::handleExitTaskwait(currentTask);
     GenericCache * destCache = currentTask->getCache();
-    destCache->flush();
+    if(destCache != nullptr)
+        destCache->flush();
 
 	
 	if (!done && (currentThread != nullptr)) {
