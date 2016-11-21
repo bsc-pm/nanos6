@@ -16,6 +16,7 @@
 #include <atomic>
 
 #include <pthread.h>
+#include <cstring>
 
 
 __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
@@ -107,6 +108,7 @@ void WorkerThread::handleTask()
         GenericCache * destCache = _task->getCache();
         if(destCache == nullptr) {
             size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
+            memset(cachesData, 0, MAX_CACHES*sizeof(size_t));
             Directory::analyze(_task->getDataAccesses(), cachesData);
             int bestCache = -1;
             size_t max = -1;
