@@ -156,21 +156,6 @@ void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTa
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::checkIfIdleAndGrantReactivation(HardwarePlace *hardwarePlace)
-{
-	std::lock_guard<spinlock_t> guard(_globalLock);
-	
-	auto it = std::find(_idleCPUs.begin(), _idleCPUs.end(), (CPU *) hardwarePlace);
-	
-	if (it != _idleCPUs.end()) {
-		_idleCPUs.erase(it);
-		return true;
-	}
-	
-	return false;
-}
-
-
 Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
