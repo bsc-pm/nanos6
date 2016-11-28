@@ -2,7 +2,7 @@
 #define NUMA_PLACE_HPP
 
 #include "MemoryPlace.hpp"
-#include "../../memory/cache/NUMACache.hpp"
+#include "memory/cache/NUMACache.hpp"
 
 class NUMAPlace: public MemoryPlace {
 private:
@@ -15,11 +15,11 @@ public:
     
     virtual ~NUMAPlace() {}
     virtual inline NUMACache * getCache() { return (NUMACache *) _cache; }
-	const size_t getPUCount(void){ return _processingUnits.size(); }
-	const ComputePlace* getPU(int index){ return _processingUnits[index]; }
+	size_t getPUCount(void) const { return _processingUnits.size(); }
+	ComputePlace* getPU(int index){ return _processingUnits[index]; }
 	void addPU(ComputePlace* pu);
-	const std::vector<int>* getPUIndexes();
-	const std::vector<ComputePlace*>* getPUs();
+	std::vector<int> getPUIndexes();
+	std::vector<ComputePlace*> getPUs();
 };
 
 #endif //NUMA_PLACE_HPP

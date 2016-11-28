@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <string.h>
 #include <atomic>
-#include "../../tasks/Task.hpp"
+#include "tasks/Task.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/CPU.hpp"
@@ -28,6 +28,9 @@ public:
         std::atomic_uint _refCount;
         //! Last use to determine evictions
         long unsigned int _lastUse;
+        //! Is it evictable? (Data in the homeNode but not actually in the cache)
+        //! Probably not used now.
+        //bool _evictable;
 
         replicaInfo_t& operator=(replicaInfo_t& other) {
             this->_physicalAddress = other._physicalAddress;
@@ -36,6 +39,7 @@ public:
             this->_dirty = other._dirty;
             this->_refCount.store(other._refCount);
             this->_lastUse = other._lastUse;
+            //this->_evictable = other._evictable;
         }
     };
 protected:
@@ -72,6 +76,7 @@ public:
     virtual void copyData(int sourceCache, Task * task, unsigned int copiesToDo = 1) = 0;
     virtual void flush() = 0;
     virtual bool evict() = 0;
+    virtual void writeBack(void *address) = 0;
     virtual void releaseCopies(Task * task) {
         for(auto it = task->getDataAccesses()._accesses.begin(); it != task->getDataAccesses()._accesses.end(); it++ ) {
             //! Mark the dataAccess as not cached
@@ -94,7 +99,9 @@ public:
             res->_physicalAddress = nullptr;
             res->_version = -1;
             res->_dirty = false;
-            res->_refCount = 0;
+            res->_refCount = -1;
+            res->_lastUse = -1;
+            //res->_evictable = true;
         }
         else
             *res = (_replicas.find(key))->second;

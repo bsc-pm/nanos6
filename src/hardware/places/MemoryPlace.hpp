@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <map>
-#include "../../memory/AddressSpace.hpp"
-#include "../../memory/cache/GenericCache.hpp"
+#include "memory/AddressSpace.hpp"
+#include "memory/cache/GenericCache.hpp"
 
 class ComputePlace;
 
@@ -16,7 +16,7 @@ protected:
 	
 public:
 	MemoryPlace(int index, GenericCache * cache, AddressSpace * addressSpace = nullptr)
-        : _index(index), _addressSpace(addressSpace), _cache(cache)
+        : _addressSpace(addressSpace), _index(index), _cache(cache)
 	{}
     
     virtual ~MemoryPlace() {}

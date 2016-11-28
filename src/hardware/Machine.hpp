@@ -36,25 +36,25 @@ public:
     // Generic methods
     static void initialize();
 	static inline Machine * getMachine() { return _machine; }
-	inline const long getPageSize(void) { return _pageSize; }
+	static inline long getPageSize(void) { return _machine->_pageSize; }
 
     // ComputeNodes related methods
-	inline size_t getComputeNodeCount(void) { return _computeNodes.size(); }
-	void addComputeNode(ComputePlace *node);
-	inline ComputePlace* getComputeNode(int index) { return _computeNodes[index]; }
-    std::vector<int>* getComputeNodeIndexes();
-	std::vector<ComputePlace*>* getComputeNodes();
-	inline ComputeNodes_t::iterator computeNodesBegin(void) { return _computeNodes.begin(); }
-	inline ComputeNodes_t::iterator computeNodesEnd(void) { return _computeNodes.end(); }
+	static inline size_t getComputeNodeCount(void) { return _machine->_computeNodes.size(); }
+	static void addComputeNode(ComputePlace *node);
+	static inline ComputePlace* getComputeNode(int index) { return _machine->_computeNodes[index]; }
+    static std::vector<int> getComputeNodeIndexes();
+	static std::vector<ComputePlace*> getComputeNodes();
+	static inline ComputeNodes_t::iterator computeNodesBegin(void) { return _machine->_computeNodes.begin(); }
+	static inline ComputeNodes_t::iterator computeNodesEnd(void) { return _machine->_computeNodes.end(); }
 
     // MemoryNodes related methods
-	inline size_t getMemoryNodeCount(void) { return _memoryNodes.size(); }
-	void addMemoryNode(MemoryPlace *node);
-	inline MemoryPlace* getMemoryNode(int index) { return _memoryNodes[index]; }
-    std::vector<int>* getMemoryNodeIndexes();
-	std::vector<MemoryPlace*>* getMemoryNodes();
-	inline MemoryNodes_t::iterator memoryNodesBegin(void) { return _memoryNodes.begin(); }
-	inline MemoryNodes_t::iterator memoryNodesEnd(void) { return _memoryNodes.end(); }
+	static inline size_t getMemoryNodeCount(void) { return _machine->_memoryNodes.size(); }
+	static void addMemoryNode(MemoryPlace *node);
+	static inline MemoryPlace* getMemoryNode(int index) { return _machine->_memoryNodes[index]; }
+    static std::vector<int> getMemoryNodeIndexes();
+	static std::vector<MemoryPlace*> getMemoryNodes();
+	static inline MemoryNodes_t::iterator memoryNodesBegin(void) { return _machine->_memoryNodes.begin(); }
+	static inline MemoryNodes_t::iterator memoryNodesEnd(void) { return _machine->_memoryNodes.end(); }
 };
 
 #endif //MACHINE_HPP

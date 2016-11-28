@@ -15,22 +15,21 @@ void Directory::dispose(){
 	delete Directory::_instance;
 }
 
-int Directory::copy_version(void *address){
+int Directory::getVersion(void *address){
 	CopySet::iterator it = Directory::_instance->_copies.find(address);
 	if(it != Directory::_instance->_copies.end()){
 		return it->getVersion();
 	} else {
 		return -1;
 	}
-
 }
 
-int Directory::insert_copy(void *address, size_t size, int cache, bool increment){
+int Directory::insertCopy(void *address, size_t size, int homeNode, int cache, bool increment){
 	std::lock_guard<SpinLock> guard(Directory::_instance->_lock);
-	return Directory::_instance->_copies.insert(address, size, cache, increment);
+	return Directory::_instance->_copies.insert(address, size, homeNode, cache, increment);
 }
 
-void Directory::erase_copy(void *address, int cache){
+void Directory::eraseCopy(void *address, int cache){
 	std::lock_guard<SpinLock> guard(Directory::_instance->_lock);
 	Directory::_instance->_copies.erase(address, cache);
 }
@@ -80,7 +79,7 @@ void Directory::analyze(TaskDataAccesses &accesses, size_t *vector){
 					
 					// Add the size to the corresponding position in the vector.
 					for(int i = 0; i < position->countCaches(); i++){							
-						if( position->testCache(i) ){
+						if( position->testCache(i) || ((position->getHomeNode() == i) && (position->isHomeNodeUpToDate()))){
 							vector[i] += size;
 						}
 					} 
@@ -91,4 +90,39 @@ void Directory::analyze(TaskDataAccesses &accesses, size_t *vector){
 			return true;
 		} 
 	);	
+}
+
+cache_mask Directory::getCaches(void *address) {
+	CopySet::iterator it = Directory::_instance->_copies.find(address);
+    assert(it != _instance->_copies.end() && "The copy must be in the directory");
+    return it->getCaches();
+}
+
+int Directory::getHomeNode(void *address) {
+    CopySet::iterator it = _instance->_copies.find(address);
+    if(it != _instance->_copies.end()) {
+        return it->getHomeNode();
+    }
+    else {
+        return -1;
+    }
+}
+
+bool Directory::isHomeNodeUpToDate(void *address) {
+    CopySet::iterator it = _instance->_copies.find(address);
+    //assert(it != _instance->_copies.end() && "The copy must be in the directory");
+    if(it != _instance->_copies.end()) {
+        return it->isHomeNodeUpToDate();
+    }
+    else {
+        return false;
+    }
+}
+
+void Directory::setHomeNodeUpToDate(void *address, bool b) {
+    CopySet::iterator it = _instance->_copies.find(address);
+    //assert(it != _instance->_copies.end() && "The copy must be in the directory");
+    if(it != _instance->_copies.end()) {
+        it->setHomeNodeUpToDate(b);
+    }
 }

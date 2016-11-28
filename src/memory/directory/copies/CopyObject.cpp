@@ -1,9 +1,11 @@
 #include "CopyObject.hpp"
 
-CopyObject::CopyObject(DataAccessRange range, int version)
+CopyObject::CopyObject(DataAccessRange range, int homeNode, int version)
 	: _range(range), 
 	_version(version), 
-	_caches()
+	_caches(),
+    _homeNode(homeNode),
+    _homeNodeUpToDate(false)
 {
 
 }
@@ -12,6 +14,9 @@ CopyObject::CopyObject(const CopyObject &obj){
 	_range = DataAccessRange( obj._range.getStartAddress(), obj._range.getEndAddress() );
 	_version = obj._version;
 	_caches = obj._caches;
+    _homeNode = obj._homeNode;
+    _homeNodeUpToDate = obj._homeNodeUpToDate;
+    assert(!_caches.test(_homeNode) && "homeNode cache cannot be true");
 }
 
 DataAccessRange &CopyObject::getAccessRange(){
@@ -48,15 +53,18 @@ int CopyObject::getVersion(){
 
 void CopyObject::incrementVersion(){
 	_caches.reset();
+    _homeNodeUpToDate = false;
 	_version++;
 }
 
 void CopyObject::addCache(int id){
+    assert(id != _homeNode && "bit concerning homeNode cache cannot be 1");
 	_caches.set(id);
 }
 
 void CopyObject::removeCache(int id){
 	_caches.reset(id);
+    assert(anyCache() || _homeNodeUpToDate && "Data must be at least in one cache or in the homeNode");
 }	
  
 bool CopyObject::testCache(int id){
@@ -64,15 +72,16 @@ bool CopyObject::testCache(int id){
 }
 
 bool CopyObject::isOnlyCache(int id){
-	if(!_caches.test(id)) return false;
+    return _caches.to_ulong() == (unsigned long) (1<<id);
+	//if(!_caches.test(id)) return false;
 
-	for(int i = 0; i < _caches.size(); i++){
-		if(i != id && _caches.test(id)){
-			return false;
-		}
-	}
+	//for(int i = 0; i < _caches.size(); i++){
+	//	if(i != id && _caches.test(id)){
+	//		return false;
+	//	}
+	//}
 
-	return true;
+	//return true;
 }
 
 bool CopyObject::anyCache(){
@@ -82,3 +91,19 @@ bool CopyObject::anyCache(){
 int CopyObject::countCaches(){
 	return _caches.size();
 }	
+
+cache_mask CopyObject::getCaches() {
+    return _caches;
+}
+
+int CopyObject::getHomeNode() {
+    return _homeNode;
+}
+
+void CopyObject::setHomeNodeUpToDate(bool b) {
+    _homeNodeUpToDate = b;
+}
+
+bool CopyObject::isHomeNodeUpToDate() {
+    return _homeNodeUpToDate;
+}

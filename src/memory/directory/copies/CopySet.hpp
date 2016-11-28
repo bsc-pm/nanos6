@@ -33,10 +33,11 @@ public:
      *
 	 *	\param address Starting address of the copy region
 	 *	\param size Size of the copy region
+     *  \param homeNode the homeNode of the copy region 
 	 *	\param cache Cache object where the copy is stored
 	 *	\param increment True if the version must be incremented
 	 */
-	int insert(void *address, size_t size, int cache, bool increment);
+	int insert(void *address, size_t size, int homeNode, int cache, bool increment);
 	
 	/*!	\brief Removes a copy on a cache from the list
 	 *

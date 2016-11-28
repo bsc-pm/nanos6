@@ -24,12 +24,12 @@ public:
 	{}
 	
 	virtual ~ComputePlace() {}
-	const size_t getMemoryPlacesCount(void){ return _memoryPlaces.size(); }
-	const MemoryPlace* getMemoryPlace(int index){ return _memoryPlaces[index]; }
-	inline int getIndex(void){ return _index; } 
+	size_t getMemoryPlacesCount(void) const { return _memoryPlaces.size(); }
+	MemoryPlace* getMemoryPlace(int index) { return _memoryPlaces[index]; }
+	inline int getIndex(void) const{ return _index; } 
 	void addMemoryPlace(MemoryPlace* mem);
-	const std::vector<int>* getMemoryPlacesIndexes();
-	const std::vector<MemoryPlace*>* getMemoryPlaces();
+	std::vector<int> getMemoryPlacesIndexes();
+	std::vector<MemoryPlace*> getMemoryPlaces();
 	
 };
 

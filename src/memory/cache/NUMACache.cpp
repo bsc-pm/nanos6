@@ -5,8 +5,8 @@
 #include <set>
 #include <cassert>
 #include "NUMACache.hpp" 
-#include "../../hardware/Machine.hpp" 
-#include "../directory/Directory.hpp"
+#include "hardware/Machine.hpp" 
+#include "memory/directory/Directory.hpp"
 
 void * NUMACache::allocate(std::size_t size) {
     return malloc(size);
@@ -16,222 +16,213 @@ void NUMACache::deallocate(void * ptr) {
     free(ptr);
 }
 
-void NUMACache::copyData(int sourceCache, Task *task , unsigned int copiesToDo = 1) {
-	std::lock_guard<SpinLock> guard(_lock);
-    unsigned int copiesDone = 0;
-
-    //! Disabled for testing purposes
-    //assert(Machine::getMachine()->getMemoryNode(sourceCache)->getCache()!=this);
-
-    //! Check whether there is any data access.
-    if(task->getDataSize() == 0) {
+void NUMACache::copyData(int sourceCache, Task *task, unsigned int copiesToDo = 1) {
+    assert(task->hasPendingCopies() && "task without pending copies requesting copyData");
+    if(task->getDataSize() == 0 || copiesToDo == 0) {
         addReadyTask(task);
         if(_verbose) {
-            std::cout << "[CACHE " << _index << "]: Task " << task << " is ready to be executed because it has no data to be copied." << std::endl;
+            std::stringstream ss;
+            ss << "Task " << task << " cannot perform any copy"; 
+            verboseMsg(ss.str()); 
         }
         return;
     }
-    
+
     //! Do a first round to block the data that is already in the cache to avoid evictions of that data.
-    for(auto it = task->getDataAccesses()._accesses.begin(); it != task->getDataAccesses()._accesses.end(); it++ ) {
-        if(!(*it).isCached()) {
-            auto it2 = _replicas.find((*it).getAccessRange().getStartAddress());
-            if(it2 != _replicas.end()) {
-                //! The data is already in the cache. Check with the directory whether it is correct or outdated. 
-                if(it2->second._version == Directory::copy_version(it2->first)) {
-                    //! The data in the cache is correct.
-                    //! Increment the _refCount to avoid evictions.
-                    it2->second._refCount++;
-                    //! Update _lastUse.
-                    it2->second._lastUse = ++_count;
-                    //! Update _cachedBytes but it must be done only once.
-                    task->addCachedBytes(it2->second._size);
-                    ////! Mark data access as cached
-                    (*it).setCached(true);
-                    if(_verbose) {
-                        std::cout << "[CACHE " << _index << "]: DataAccess with address " << it2->first << " and size " << (*it).getAccessRange().getSize() 
-                            << " required by task " << task << " is already in the cache and has been blocked." << std::endl;
+    //! No actual copies are done in this loop.
+    for(DataAccess& dataAccess : task->getDataAccesses()._accesses) {
+        //! If access already marked as cached, ignore it. Just process those not cached yet.
+        if(!dataAccess.isCached()) {
+            replicas_t::iterator replica = _replicas.find(dataAccess.getAccessRange().getStartAddress()); 
+            //! Check if data is already in the cache.
+            if(replica != _replicas.end()) {
+                //! Data is already in the cache.
+                //! All cases needs to lock data, do it.
+                replica->second._refCount++;
+                //! out access type -> does not need up to date version -> Update replicaInfo+directory and lock data (already done).
+                //! in/inout access type -> needs last version 
+                //!     *if data is up to date -> Update replicaInfo+directory and lock data (already done).
+                //!     *if data is outdated -> Just lock data (already done), the copy will be performed in the main loop.
+                if(dataAccess._type == WRITE_ACCESS_TYPE || 
+                   (Directory::getVersion(dataAccess.getAccessRange().getStartAddress()) == replica->second._version)) {
+                    //! (out access) or (in/inout access and up to date).
+                    //! Update replicaInfo+directory and lock data (already done). 
+                    replica->second._dirty = (dataAccess._type != READ_ACCESS_TYPE);
+                    replica->second._version += replica->second._dirty;
+                    replica->second._lastUse = ++_count;
+                    int dirVersion = Directory::insertCopy(/*address*/ dataAccess.getAccessRange().getStartAddress(), 
+                                                           /*size*/ dataAccess.getAccessRange().getSize(),
+                                                           /*homeNode*/ dataAccess._homeNode,
+                                                           /*cache index*/ _index, 
+                                                           /*increment*/ dataAccess._type != READ_ACCESS_TYPE);
+                    assert(dirVersion==replica->second._version && "Versions must match");
+                    //! Update task cachedBytes.
+                    task->addCachedBytes(dataAccess.getAccessRange().getSize());
+                    //! Mark dataAccess as cached.
+                    dataAccess.setCached(true);
+                }
+            }
+        }
+    }
+
+    unsigned int copiesDone = 0;
+
+    //! Main loop. Copies are performed here. 
+    for(DataAccess& dataAccess : task->getDataAccesses()._accesses) {
+        if(!task->hasPendingCopies() || copiesDone >= copiesToDo)
+            break;
+        //! If access already marked as cached, ignore it. Just process those not cached yet.
+        if(!dataAccess.isCached()) {
+            replicas_t::iterator replica = _replicas.find(dataAccess.getAccessRange().getStartAddress()); 
+            //! Check if data is already in the cache.
+            if(replica != _replicas.end()) {
+                //! Data is already in the cache. However, if we have arrived here with data marked as not cached, it means that 
+                //! data is outdated, otherwise first round would have mark it as cached. Therefore, bring last version of data.
+                //! Moreover, only in/inout accesses can reach this point of the code so this check is not needed. This is because 
+                //! if it is an out access, in case of being in the cache, first round has already marked it as cached, in case of 
+                //! not being present in the cache, it goes to the else branch.
+                //! Assertions just for debug.
+                //assert(replica->second._version == Directory::getVersion(dataAccess.getAccessRange().getStartAddress()) && "Versions must match");
+                //assert(dataAccess._type != WRITE_ACCESS_TYPE && "out copies cannot reach this point");
+                //! Bring data and update replicaInfo+directory.
+                //! Data can be found either in sourceCache provided by the scheduler or in the homeNode.
+                assert(_index != sourceCache && "When sourceCache and cache are the same, copy is not required");
+                assert(_index != dataAccess._homeNode && "When data's homenode and cache are the same, copy is not required");
+                replicaInfo_t * sourceReplica = nullptr;
+                if(sourceCache != -1)
+                    sourceReplica = Machine::getMemoryNode(sourceCache)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
+                if(sourceReplica->_physicalAddress == nullptr) {
+                    //! sourceCache failed, do it from homeNode
+                    sourceReplica = Machine::getMemoryNode(dataAccess._homeNode)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
+                    //! homeNode also failed, nothing to do. 
+                    assert(sourceReplica->_physicalAddress != nullptr && "Cannot copy data from homeNode");
+                }
+                //! TODO: memcpy should be wrapped!!
+                memcpy(replica->second._physicalAddress, sourceReplica->_physicalAddress, dataAccess.getAccessRange().getSize());
+                replica->second._dirty = sourceReplica->_dirty || (dataAccess._type != READ_ACCESS_TYPE);
+                replica->second._version = sourceReplica->_version + replica->second._dirty;
+                replica->second._lastUse = ++_count;
+                int dirVersion = Directory::insertCopy(/*address*/ dataAccess.getAccessRange().getStartAddress(), 
+                        /*size*/ dataAccess.getAccessRange().getSize(),
+                        /*homeNode*/ dataAccess._homeNode,
+                        /*cache index*/ _index, 
+                        /*increment*/ replica->second._dirty);
+                assert(dirVersion==replica->second._version && "Versions must match");
+            }
+            else{
+                //! Data is not in the cache.
+                replicaInfo_t newReplica;
+                newReplica._physicalAddress = nullptr;
+                if(dataAccess._homeNode != _index) {
+                    //! If data's homeNode is not this cache, allocate space in the cache and physicalAddress is this allocated space.
+                    //! In this case, it is evictable.
+                    //! Create new replicaInfo and fill it.
+                    newReplica._size = dataAccess.getAccessRange().getSize();
+                    newReplica._version = 0;
+                    newReplica._dirty = (dataAccess._type != READ_ACCESS_TYPE);
+                    newReplica._refCount = 1;
+                    newReplica._lastUse = ++_count;
+                    //newReplica._evictable = true;
+                    //allocate
+                    void * replicaAddress = allocate(dataAccess.getAccessRange().getSize());
+                    newReplica._physicalAddress =  replicaAddress; 
+                    bool allocated = (replicaAddress == nullptr) /*debug purposes*/ || (_replicas.size() >= 5);
+                    if(!allocated) {
+                        while(!allocated) {
+                            bool canEvict = evict();
+                            if(!canEvict) {
+                                releaseCopies(task);
+                                addReadyTask(task);
+                                return;
+                            }
+                            replicaAddress = allocate(dataAccess.getAccessRange().getSize());
+                            allocated = (replicaAddress == nullptr) /*debug purposes*/ || (_replicas.size() >= 5);
+                        }
                     }
+                    if(dataAccess._type != WRITE_ACCESS_TYPE) {
+                        //! Moreover, if access is in/inout, we need the data up to date. Bring it.
+                        //! Data can be found either in sourceCache provided by the scheduler or in the homeNode.
+                        assert(_index != sourceCache && "When sourceCache and cache are the same, copy is not required");
+                        assert(_index != dataAccess._homeNode && "When data's homenode and cache are the same, copy is not required");
+                        replicaInfo_t * sourceReplica = nullptr;
+                        if(sourceCache != -1)
+                            sourceReplica = Machine::getMemoryNode(sourceCache)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
+                        if(sourceReplica->_physicalAddress == nullptr) {
+                            //! sourceCache failed, do it from homeNode
+                            sourceReplica = Machine::getMemoryNode(dataAccess._homeNode)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
+                            //! homeNode also failed, nothing to do. 
+                            assert(sourceReplica->_physicalAddress != nullptr && "Cannot copy data from homeNode");
+                        }
+                        //! TODO: memcpy should be wrapped!!
+                        memcpy(replicaAddress, sourceReplica->_physicalAddress, dataAccess.getAccessRange().getSize());
+                        newReplica._dirty = newReplica._dirty || sourceReplica->_dirty;
+                        newReplica._version = sourceReplica->_version + newReplica._dirty;
+                    }
+                    //! Insert replica into _replicas.
+                    _replicas[dataAccess.getAccessRange().getStartAddress()] = newReplica;
                 }
                 else {
-                    if(_verbose) {
-                        std::cout << "[CACHE " << _index << "]: DataAccess with address " << it2->first << " and size " << (*it).getAccessRange().getSize() 
-                            << " required by task " << task << " is already in the cache but current version does not match directory version." << std::endl;
+                    //! If this cache is the homeNode, we must check if homeNode's data is up to date.
+                    //! If so, there is no problem. Otherwise, we must check the access type. If the 
+                    //! access type is only write, even with outdated data there is no problem because 
+                    //! it is going to be overwritten. However, if access includes read, we must bring 
+                    //! data.
+                    if(!Directory::isHomeNodeUpToDate(dataAccess.getAccessRange().getStartAddress()) && 
+                        (dataAccess._type != WRITE_ACCESS_TYPE)) {
+                        //! Bring data. It implies asking directory where is it and requesting that cache 
+                        //! a writeBack.
+                        cache_mask caches = Directory::getCaches(dataAccess.getAccessRange().getStartAddress());
+                        int cacheIndex = -1;
+                        for(int i=0; i<caches.size(); ++i) {
+                            if(caches.test(i)) {
+                                cacheIndex = i;
+                                break;
+                            }
+                        }
+                        Machine::getMemoryNode(cacheIndex)->getCache()->writeBack(dataAccess.getAccessRange().getStartAddress());
+                        assert(Directory::isHomeNodeUpToDate(dataAccess.getAccessRange().getStartAddress()));
                     }
                 }
+                //! All cases needs insert into directory, do it.
+                int dirVersion = Directory::insertCopy(/*address*/ dataAccess.getAccessRange().getStartAddress(), 
+                                                       /*size*/ dataAccess.getAccessRange().getSize(),
+                                                       /*homeNode*/ dataAccess._homeNode,
+                                                       /*cache index*/ _index, 
+                                                       /*increment*/ (dataAccess._type != READ_ACCESS_TYPE));
+                if(newReplica._physicalAddress != nullptr)
+                    assert(dirVersion==newReplica._version && "Versions must match");
             }
-        }
-    }
-
-    //! Iterate over the task data accesses to check if they are already in the cache
-    for(auto it = task->getDataAccesses()._accesses.begin(); it != task->getDataAccesses()._accesses.end(); it++ ) {
-        //! Check whether all the copies are cached. If so, add the task to the ready queue.
-        if(!task->hasPendingCopies()) {
-            if(_verbose) {
-                std::cout << "[CACHE " << _index << "]: Task " << task << " is ready to be executed because it does not have pending copies." << std::endl;
-            }
-            break;
-        }
-
-        //! Check whether this thread has already done all the desired copies.
-        if(copiesDone >= copiesToDo) { 
-            if(_verbose) {
-                std::cout << "[CACHE " << _index << "]: Task " << task << " is going back to ready queue because it has performed all the desired copies." << std::endl;
-            }
-            break;
-        }
-
-        //! The data is not in the cache yet. Bring it.
-        if(!(*it).isCached()) {
-            if(_verbose) {
-                std::cout << "[CACHE " << _index << "]: Data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                    << (*it).getAccessRange().getSize() << " required by task " << task
-                    << " is not in the cache yet so we should bring it. First, try to allocate data in the cache." << std::endl;
-            }
-            //! Allocate
-            std::size_t replicaSize = (*it).getAccessRange().getSize();
-            void * replicaAddress = allocate(replicaSize);
-            if(replicaAddress == nullptr || _replicas.size() >= 5) { 
-                if(_verbose) {
-                    std::cout << "[CACHE " << _index << "]: Data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                        << (*it).getAccessRange().getSize() << " required by task " << task << " has failed allocation. Try to perform evictions." << std::endl;
-                }
-                //! If allocate fails it means that there is no space left in the cache. Perform evictions.
-                //! TODO: The extra restriction of only 6 replicas is just for debug purposes!!
-                while(replicaAddress == nullptr || _replicas.size() >= 5) {
-                    bool canEvict = evict();
-                    replicaAddress = allocate(replicaSize);
-                    if(!canEvict) { 
-                        if(_verbose)
-                            std::cout << "[CACHE " << _index << "]: Data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                                << (*it).getAccessRange().getSize() << " required by task " << task 
-                                << " has failed allocation and cannot perform more evictions. Try releasing its own copies." << std::endl;
-                        releaseCopies(task);
-                        addReadyTask(task);
-                        return;
-                    }
-                }
-                if(_verbose) {
-                    std::cout << "[CACHE " << _index << "]: Data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                        << (*it).getAccessRange().getSize() << " required by task " << task << " had successful allocation." << std::endl;
-                }
-            }
-
-            //! Copy data
-            replicaInfo_t newReplica;
-            //! Try to do it from the sourceCache provided by the directory/scheduler.
-            //! Ask the sourceCache for the data
-            if(_verbose) {
-                std::cout << "[CACHE " << _index << "]: Try to bring data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                    << (*it).getAccessRange().getSize() << " required by task " << task << " from sourceCache provided by the Scheduler." << std::endl;
-            }
-            replicaInfo_t * sourceReplica;
-            if(sourceCache != 0) 
-                sourceReplica = Machine::getMachine()->getMemoryNode(sourceCache)->getCache()->getReplicaInfo((*it).getAccessRange().getStartAddress());
-            else
-                sourceReplica->_physicalAddress = nullptr;
-            if(sourceReplica->_physicalAddress == nullptr) {
-                if(_verbose) {
-                    std::cout << "[CACHE " << _index << "]: Try to bring data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                        << (*it).getAccessRange().getSize() << " required by task " << task 
-                        << " from sourceCache provided by the Scheduler has failed. Try from homeNode." << std::endl;
-                }
-                //! sourceCache failed, do it from homeNode
-                //! TODO: this address is the same than (*it).getAccessRange().getStartAddress()? The homeNode is equivalent to the user address space?
-                int homeNode = (*it)._homeNode; 
-                //sourceReplica = Machine::getMachine()->getMemoryNode(homeNode)->getCache()->getReplicaInfo((*it).getAccessRange().getStartAddress());
-                //if(sourceReplica->_physicalAddress == nullptr)
-                //    //! homeNode also failed, nothing to do. 
-                //    //! TODO: homeNode should always have the data, so maybe this is a fatal error
-                //    return;
-                //! TEMPORARY!!! Copy from user address space.
-                sourceReplica->_physicalAddress = (*it).getAccessRange().getStartAddress();
-                sourceReplica->_version = 0;
-            }
-
-            if(_verbose) {
-                std::cout << "[CACHE " << _index << "]: Actually bring data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                    << (*it).getAccessRange().getSize() << " required by task " << task << "." << std::endl;
-            }
-            //! Actually perform the copy
-            memcpy(replicaAddress, sourceReplica->_physicalAddress, replicaSize);
-            //! Update replicaInfo
-            newReplica._physicalAddress = replicaAddress;
-            newReplica._size = replicaSize;
-            newReplica._dirty = (*it)._type == READ_ACCESS_TYPE ? false : true ;
-            newReplica._version = sourceReplica->_version + newReplica._dirty;
-            newReplica._refCount = 1;
-            newReplica._lastUse = ++_count;
-            //! Insert into _replicas
-            _replicas[(*it).getAccessRange().getStartAddress()] = newReplica;
-
-            //! Notify insert to directory
-            //! Directory returns version. Check wether it is okay with ours.
-            if(_verbose) {
-                std::cout << "[CACHE " << _index << "]: Notify directory data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                    << (*it).getAccessRange().getSize() << " required by task " << task << " has been inserted." << std::endl;
-            }
-            int dirVersion = Directory::insert_copy((*it).getAccessRange().getStartAddress(), replicaSize, _index, newReplica._dirty);
-            if(dirVersion != newReplica._version) { 
-                if(_verbose) {
-                    std::cout << "[CACHE " << _index << "]: Data with startAddress " << (*it).getAccessRange().getStartAddress() << " and size " 
-                        << (*it).getAccessRange().getSize() << " required by task " << task 
-                        << " copied from sourceCache/homeNode does not match directory version." << std::endl;
-                }
-                //! If versions does not match, the data copied is probably outdated. FatalError?
-                //! Use the version given by the directory.
-                newReplica._version = dirVersion;
-            }
-
-            //! Update the number of cachedBytes in the task->
-            task->addCachedBytes(replicaSize);
-
-            ////! Mark data access as cached
-            (*it).setCached(true);
-
             ++copiesDone;
+            //! Update task cachedBytes.
+            task->addCachedBytes(dataAccess.getAccessRange().getSize());
+            //! Mark dataAccess as cached.
+            dataAccess.setCached(true);
         }
     }
 
-    //! Check whether all the copies are cached. If so, add the task to the ready queue.
-    //if(!task->hasPendingCopies()) {
-    //! As of now, there is no preready and ready differentiation in the queue, so add it always.
-        addReadyTask(task);
-    //}
+    //! Reenqueue task either to make the remaining copies or to be executed.
+    addReadyTask(task);
 }
 
 void NUMACache::flush() {
-    //! Iterate over all the replicas and copy them back to the user address space if dirty. Then, clear the cache. 
-    //! Clearing the cache is needed because a flush is performed in a taskwait. At this moment, the user recovers 
-    //! the control of the data and the runtime knows nothing about it. If after a taskwait, the user issues a task 
-    //! with some previously cached data, this data could be changed between the taskwait and the new task, so we 
-    //! must copy it again from the user address space. Hence, it is useless to maintain the data in the cache after 
-    //! a flush.
+    //! Iterate over all the replicas and copy them back to the homeNode if the replica is dirty and it is the last version and 
+    //! nobody else has the data. Write back implies notify directory the removal of this cache and the update in the homeNode.
+    //! For all replicas: invalidate (version=-1), set refCount to 0, set dirty to false, set lastUse to 0.
+    //! There is no need to actually clear the cache because if after a flush comes again the same dataAccess, at least we don't need 
+    //! to reallocate the space even though we do need to copy the data again.
 	std::lock_guard<SpinLock> guard(_lock);
     for(auto& replica : _replicas) {
-        if(_verbose) {
-            std::cout << "[CACHE " << _index << "]: Data with address " << replica.first << " is going to be flushed." << std::endl;
+        //! The replica is dirty and it is the last version, and nobody else has the data: copy back to homeNode, notifiy removal 
+        //! to directory and notify update in the homeNode to directory.
+        if(replica.second._dirty && replica.second._version == Directory::getVersion(replica.first) && 
+           ((Directory::getCaches(replica.first).to_ulong() == (unsigned long)(1<<_index)) && !Directory::isHomeNodeUpToDate(replica.first))) {
+            writeBack(replica.first);
         }
-        //! The replica is dirty and it is the last version, copy back.
-        if(replica.second._dirty && replica.second._version == Directory::copy_version(replica.first)) {
-            if(_verbose) {
-                std::cout << "[CACHE " << _index << "]: Data with address " << replica.first 
-                    << " is dirty and matches last version of the directory, so it has to be copied back to homeNode and notify directory before flushing." << std::endl;
-            }
-            //! TODO: Copy back to homeNode (The homeNode can be found in the TaskDataAccesses) 
-            //! First, copy back to user address space.
-            memcpy(replica.first, replica.second._physicalAddress, replica.second._size); 
-            //! Inform directory the data is not in the cache anymore.
-            Directory::erase_copy(replica.first, _index);
-        }
-        //! Free space of the replica
-        deallocate(replica.second._physicalAddress);
-        if(_verbose) {
-            std::cout << "[CACHE " << _index << "]: Data with address " << replica.first << " has been flushed." << std::endl;
-        }
+        replica.second._version = -1;
+        replica.second._dirty = false;
+        replica.second._refCount.store(0);
+        replica.second._lastUse = 0;
     }
-    //! Clear _replicas
-    _replicas.clear();
 }
 
 bool NUMACache::evict() {
@@ -239,7 +230,7 @@ bool NUMACache::evict() {
     //! Look for candidates to be evicted.
     for(auto& replica : _replicas) {
         //! Iterate through all the replicas to look for those that are not being used now.
-        if(replica.second._refCount == 0) {
+        if(replica.second._refCount.load() == 0) {
             //! If they are not in use, store them in a set that orders by the lastUse.
             //! This way, the first elements of the set are those least recently used.
             candidates.insert(std::make_pair(replica.second._lastUse, replica.first));
@@ -251,34 +242,33 @@ bool NUMACache::evict() {
     else {
         //! Evict the least recently used candidate.
         auto candidate = candidates.begin();
-        if(_verbose) {
-            std::cout << "[CACHE " << _index << "]: Data with address " << candidate->second << " is going to be evicted." << std::endl; 
-        }
         replicaInfo_t * replica = &_replicas[candidate->second];
         //! The replica is dirty and it is the last version.
-        //! TODO: For performance, it could be also checked if the data is anywhere else. If it is, avoid copy back.
-        if(replica->_dirty && replica->_version == Directory::copy_version(candidate->second)) {
-            if(_verbose) {
-                std::cout << "[CACHE " << _index << "]: Data with address " << candidate->second 
-                    << " is dirty and matches last version of the directory, so it has to be copied back to homeNode and notify directory before evicting." << std::endl;
-            }
-            //! TODO: Copy back to homeNode (The homeNode can be found in the TaskDataAccesses) 
-            //! First, copy back to user address space.
-            memcpy(candidate->second, replica->_physicalAddress, replica->_size); 
-            //! Inform directory the data is not in the cache anymore.
-            Directory::erase_copy(candidate->second, _index);
+        //! The replica is dirty and it is the last version, and nobody else has the data: copy back to homeNode, notifiy removal 
+        //! to directory and notify update in the homeNode to directory.
+        if(replica->_dirty && replica->_version == Directory::getVersion(candidate->second) && 
+           ((Directory::getCaches(candidate->second).to_ulong() == (unsigned long)(1<<_index)) && !Directory::isHomeNodeUpToDate(candidate->second))) {
+            writeBack(candidate->second);
         }
-        //! Remove replica from _replicas
-        _replicas.erase(candidate->second);
         //! Free space of the replica
         deallocate(replica->_physicalAddress);
-
-        if(_verbose) {
-            std::cout << "[CACHE " << _index << "]: Data with address " << candidate->second << " has been evicted." << std::endl;
-        }
+        //! Remove replica from _replicas
+        _replicas.erase(candidate->second);
 
         return true;
     }
+}
+
+void NUMACache::writeBack(void* address) {
+    replicaInfo_t * replica = &_replicas[address];
+    assert(replica != nullptr && "Replica must be present");
+    assert(replica->_version == Directory::getVersion(address) && "Replica must be updated");
+    //! First, copy back to homeNode.
+    memcpy(address, replica->_physicalAddress, replica->_size); 
+    //! Notify directory the data is not in the cache anymore.
+    Directory::eraseCopy(address, _index);
+    //! Notify directory the data is now up to date in the homeNode.
+    Directory::setHomeNodeUpToDate(address, true);
 }
 
 #endif //NUMA_CACHE_CPP

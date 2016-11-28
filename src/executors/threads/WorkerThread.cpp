@@ -118,8 +118,7 @@ void WorkerThread::handleTask()
                     bestCache = i;
                 }
             }
-            assert(bestCache != -1 && "No caches available");
-            destCache = Machine::getMachine()->getMemoryNode(bestCache)->getCache();
+            destCache = Machine::getMemoryNode(bestCache)->getCache();
             _task->setCache(destCache);
         }
         //! How do I know which is the sourceCache? 
@@ -146,7 +145,8 @@ void WorkerThread::handleTask()
         DataAccessRegistration::unregisterTaskDataAccesses(_task);
         // Release copies
         GenericCache * destCache = _task->getCache();
-        destCache->releaseCopies(_task);
+        if(destCache != nullptr)
+            destCache->releaseCopies(_task);
 
         if (_task->markAsFinished()) {
             TaskFinalization::disposeOrUnblockTask(_task, _cpu, this);

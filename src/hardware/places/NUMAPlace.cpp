@@ -8,21 +8,31 @@ void NUMAPlace::addPU(ComputePlace * pu) {
     _processingUnits[pu->getIndex()] = pu;
 }
 
-const std::vector<int>* NUMAPlace::getPUIndexes(){
-    std::vector<int>* indexes = new std::vector<int>();
+std::vector<int> NUMAPlace::getPUIndexes(){
+    std::vector<int> indexes(_processingUnits.size());
 
-    for(processingUnits_t::iterator it = _processingUnits.begin(); it != _processingUnits.end(); ++it){
-        indexes->push_back(it->first);
+    int i = 0;
+    for(processingUnits_t::iterator it = _processingUnits.begin(); 
+        it != _processingUnits.end(); 
+        ++it, ++i)
+    {
+        indexes[i] = it->first;
+        //indexes.push_back(it->first);
     }
 
     return indexes;
 }
 
-const std::vector<ComputePlace*>* NUMAPlace::getPUs(){
-    std::vector<ComputePlace*>* PUs = new std::vector<ComputePlace*>();
+std::vector<ComputePlace*> NUMAPlace::getPUs(){
+    std::vector<ComputePlace*> PUs(_processingUnits.size());
 
-    for(processingUnits_t::iterator it = _processingUnits.begin(); it != _processingUnits.end(); ++it){
-        PUs->push_back(it->second);
+    int i = 0;
+    for(processingUnits_t::iterator it = _processingUnits.begin(); 
+        it != _processingUnits.end(); 
+        ++it, ++i)
+    {
+        PUs[i] = it->second;
+        //PUs.push_back(it->second);
     }
 
     return PUs;

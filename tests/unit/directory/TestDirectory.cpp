@@ -28,7 +28,7 @@ int main(__attribute__((unused)) int argc, __attribute__((unused)) char **argv) 
 		
 	/*    BEGIN PAGES TESTS     */
 
-	long pagesize = Machine::getMachine()->getPageSize();
+	long pagesize = Machine::getPageSize();
 	// Using 3 pages for test (for now)
 	char *pagesTestData = (char *) malloc(sizeof(char) * pagesize * 3);
     

@@ -18,4 +18,7 @@ void AIOCache::flush() {
 bool AIOCache::evict() {
 }
 
+void AIOCache::writeBack(void * address) {
+}
+
 #endif //AIO_CACHE_CPP

@@ -15,7 +15,7 @@ MemoryPageSet::iterator MemoryPageSet::find(void *address){
 void MemoryPageSet::insert(DataAccessRange range){
 	// Guarantee that the range is not on the AVL already
 
-	long pagesize = Machine::getMachine()->getPageSize();
+	long pagesize = Machine::getPageSize();
 	void *page = (void *)( (long) range.getStartAddress() & ~(pagesize-1) );
 	size_t size = static_cast<char *>( range.getEndAddress() ) - static_cast<char *>(page);
 	
@@ -31,7 +31,11 @@ void MemoryPageSet::insert(DataAccessRange range){
 	}
 
 
-	move_pages(0, npages, pages, nullptr, status, 0);
+	int err = move_pages(0, npages, pages, nullptr, status, 0);
+    if(err != 0) {
+        std::perror("move_pages failed");
+        assert(err==0);
+    }
 
 	// Find the previous page if it is registered
 	MemoryPageSet::iterator edge = lower_bound(static_cast<void *>( pages[0] ) - pagesize);

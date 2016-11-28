@@ -9,10 +9,10 @@ public:
         : GenericCache(index) 
     {
     }
-    virtual ~NUMACache() {
+    ~NUMACache(){
         //Iterate over _replicas and free all the replicas.
         for(const auto& replica : _replicas ) {
-            free(replica.second._physicalAddress);
+            deallocate(replica.second._physicalAddress);
         }
     }
     virtual void * allocate(std::size_t size);
@@ -20,6 +20,10 @@ public:
     virtual void copyData(int sourceCache, Task * task, unsigned int copiesToDo);
     virtual void flush(); 
     virtual bool evict();
+    virtual void verboseMsg(std::string msg) {
+        std::cout << "##### [CACHE " << _index << "]: " << msg << " . #####" << std::endl;
+    }
+    virtual void writeBack(void*);
 };
 
 #endif //NUMA_CACHE_HPP

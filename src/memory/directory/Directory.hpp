@@ -35,16 +35,17 @@ public:
 	 *	\param address The starting address of the copy
 	 *	\param size The size of the copy
 	 */
-	static int copy_version(void *address);
+	static int getVersion(void *address);
 
 	/*! \brief Registers a region that has been copied at a certain cache 
 	 * 
 	 *  \param address The base address of the copied region
 	 *  \param size The size of the copied region
+     *  \param homeNode The homeNode of the copied region
 	 *  \param cache The cache to which the region is copied
 	 *  \param increment True if the version needs to be incremented
 	 */
-	static int insert_copy(void *address, size_t size, int cache, bool increment);
+	static int insertCopy(void *address, size_t size, int homeNode, int cache, bool increment);
 
 	/*! \brief Registers a region that has been removed from a cache
 	 *  
@@ -52,7 +53,7 @@ public:
 	 *	\param size Size of the evicted region
 	 *	\param cache The cache from which the region is evicted
 	 */
-	static void erase_copy(void *address, int cache);
+	static void eraseCopy(void *address, int cache);
 
 	/*! \brief Retrieves location data of the data accesses of a task in order to determine execution place.
 	 *	
@@ -67,6 +68,27 @@ public:
 	 *
 	 */
 	static void /*provisional name*/analyze(TaskDataAccesses &accesses, size_t *vector /* Needs name */);	
+
+    /*! \brief Returns a bitset indicating which caches have the dataAccess in its last version
+     *  \param (in) address The startAddress of the dataAccess
+     */
+    static cache_mask getCaches(void *address);
+
+    /*! \brief Returns the homeNode of a region
+     *  \param (in) address The startAddress of the region.
+     */
+    static int getHomeNode(void *address);
+
+    /*! \brief Returns a boolean indicating whether the homeNode is up to date.
+      * \param (in) address The startAddress of the region.
+      */
+    static bool isHomeNodeUpToDate(void *address); 
+    
+    /*! \brief Set a boolean indicating whether the homeNode is up to date.
+      * \param (in) address The start address of the region.
+      * \param (in) b The boolean to set.
+      */
+    static void setHomeNodeUpToDate(void *address, bool b);
 };
 
 #endif //DIRECTORY_HPP

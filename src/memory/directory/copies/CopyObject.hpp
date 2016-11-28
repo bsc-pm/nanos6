@@ -11,6 +11,8 @@ class CopyObject {
 private: 
 	unsigned int _version;
 	cache_mask _caches;
+    int _homeNode;
+    bool _homeNodeUpToDate;
 
 	#if NDEBUG
 		typedef boost::intrusive::link_mode<boost::intrusive::normal_link> link_mode_t;
@@ -25,7 +27,7 @@ public:
 	
 	hook_type _hook;
 
-	CopyObject(DataAccessRange range, int version = 0);
+	CopyObject(DataAccessRange range, int homeNode, int version = 0);
 	CopyObject(const CopyObject &ob);
 
 	DataAccessRange &getAccessRange();
@@ -49,6 +51,10 @@ public:
 	bool anyCache();
 	bool isOnlyCache(int id);
 	int countCaches();
+    cache_mask getCaches();
+    int getHomeNode();
+    void setHomeNodeUpToDate(bool b);
+    bool isHomeNodeUpToDate();
 };
 
 struct CopyObjectLinkingArtifacts {

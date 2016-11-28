@@ -8,21 +8,31 @@ void ComputePlace::addMemoryPlace(MemoryPlace * mem) {
     _memoryPlaces[mem->getIndex()] = mem;
 }
 
-const std::vector<int>* ComputePlace::getMemoryPlacesIndexes(){
-    std::vector<int>* indexes = new std::vector<int>();
+std::vector<int> ComputePlace::getMemoryPlacesIndexes() {
+    std::vector<int> indexes(_memoryPlaces.size());
 
-    for(memoryPlaces_t::iterator it = _memoryPlaces.begin(); it != _memoryPlaces.end(); ++it){
-        indexes->push_back(it->first);
+    int i = 0;
+    for(memoryPlaces_t::iterator it = _memoryPlaces.begin(); 
+        it != _memoryPlaces.end(); 
+        ++it, ++i)
+    {
+        //indexes.push_back(it->first);
+        indexes[i] = it->first;
     }
 
     return indexes;
 }
 
-const std::vector<MemoryPlace*>* ComputePlace::getMemoryPlaces(){
-    std::vector<MemoryPlace*>* mems = new std::vector<MemoryPlace*>();
+std::vector<MemoryPlace*> ComputePlace::getMemoryPlaces() {
+    std::vector<MemoryPlace*> mems(_memoryPlaces.size());
 
-    for(memoryPlaces_t::iterator it = _memoryPlaces.begin(); it != _memoryPlaces.end(); ++it){
-        mems->push_back(it->second);
+    int i = 0;
+    for(memoryPlaces_t::iterator it = _memoryPlaces.begin(); 
+        it != _memoryPlaces.end(); 
+        ++it, ++i)
+    {
+        //mems.push_back(it->second);
+        mems[i] = it->second;
     }
 
     return mems;

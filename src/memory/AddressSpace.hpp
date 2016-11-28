@@ -15,11 +15,11 @@ public:
 	AddressSpace() {}
     
     virtual ~AddressSpace() {}
-	const size_t getMemoryPlacesCount(void){ return _memoryPlaces.size(); }
-	const MemoryPlace* getMemoryPlace(unsigned int index){ return _memoryPlaces[index]; }
+	size_t getMemoryPlacesCount(void) const { return _memoryPlaces.size(); }
+	MemoryPlace* getMemoryPlace(unsigned int index){ return _memoryPlaces[index]; }
 	void addMemoryPlace(MemoryPlace* memoryPlace);
-	const std::vector<unsigned int>* getMemoryPlacesIndexes();
-	const std::vector<MemoryPlace*>* getMemoryPlaces();
+	std::vector<unsigned int> getMemoryPlacesIndexes() const;
+	std::vector<MemoryPlace*> getMemoryPlaces() const;
 };
 
 #endif //ADDRESS_SPACE_HPP

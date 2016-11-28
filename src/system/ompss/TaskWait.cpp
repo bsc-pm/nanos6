@@ -69,10 +69,10 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	currentTask->markAsUnblocked();
 	
 	DataAccessRegistration::handleExitTaskwait(currentTask);
-    GenericCache * destCache = currentTask->getCache();
-    if(destCache != nullptr)
-        destCache->flush();
-
+    std::vector<MemoryPlace*> memoryNodes = Machine::getMemoryNodes();
+    for(int i=0; i<memoryNodes.size(); i++) {
+        memoryNodes[i]->getCache()->flush();
+    }
 	
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked

@@ -8,7 +8,8 @@
 class MemoryPageObject{
 	
 private:
-	int _location; //< memory node where the page resides
+    int _location; //< memory node where the page resides, -1 means memory node where the task is going to be executed.
+
 
 	#if NDEBUG
 		typedef boost::intrusive::link_mode<boost::intrusive::normal_link> link_mode_t;

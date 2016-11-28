@@ -14,6 +14,7 @@ public:
     virtual void copyData(int sourceCache, Task * task, unsigned int copiesToDo);
     virtual void flush(); 
     virtual bool evict();
+    virtual void writeBack(void * address);
 };
 
 #endif //AIO_CACHE_HPP
