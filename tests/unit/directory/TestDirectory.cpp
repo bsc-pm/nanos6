@@ -1,7 +1,7 @@
 #include "TestAnyProtocolProducer.hpp"
 #include "memory/directory/pages/MemoryPageSet.hpp"
 #include "memory/directory/copies/CopySet.hpp"
-#include "hardware/Machine.hpp"
+#include "hardware/HardwareInfo.hpp"
 #include "memory/directory/Directory.hpp"
 
 static std::string pagesToString(MemoryPageSet &mySet) {
@@ -23,12 +23,12 @@ int main(__attribute__((unused)) int argc, __attribute__((unused)) char **argv) 
 	
 	CopySet copies;
 	MemoryPageSet pages;
-	Machine::initialize();
+	HardwareInfo::initialize();
 	Directory::initialize();
 		
 	/*    BEGIN PAGES TESTS     */
 
-	long pagesize = Machine::getPageSize();
+	long pagesize = HardwareInfo::getPageSize();
 	// Using 3 pages for test (for now)
 	char *pagesTestData = (char *) malloc(sizeof(char) * pagesize * 3);
     

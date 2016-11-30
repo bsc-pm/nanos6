@@ -25,7 +25,13 @@ public:
 	
 	virtual ~ComputePlace() {}
 	size_t getMemoryPlacesCount(void) const { return _memoryPlaces.size(); }
-	MemoryPlace* getMemoryPlace(int index) { return _memoryPlaces[index]; }
+	MemoryPlace* getMemoryPlace(int index) { 
+        memoryPlaces_t::iterator it = _memoryPlaces.find(index);
+        if(it != _memoryPlaces.end()) {
+            return it->second;
+        }
+        return nullptr;
+    }
 	inline int getIndex(void) const{ return _index; } 
 	void addMemoryPlace(MemoryPlace* mem);
 	std::vector<int> getMemoryPlacesIndexes();

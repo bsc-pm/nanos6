@@ -17,7 +17,7 @@ public:
     }
     virtual void * allocate(std::size_t size);
     virtual void deallocate(void * ptr);
-    virtual void copyData(int sourceCache, Task * task, unsigned int copiesToDo);
+    virtual void copyData(float * cachesLoad, Task * task, unsigned int copiesToDo);
     virtual void flush(); 
     virtual bool evict();
     virtual void verboseMsg(std::string msg) {

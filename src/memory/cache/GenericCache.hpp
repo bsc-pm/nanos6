@@ -40,6 +40,7 @@ public:
             this->_refCount.store(other._refCount);
             this->_lastUse = other._lastUse;
             //this->_evictable = other._evictable;
+            return *this;
         }
     };
 protected:
@@ -73,10 +74,11 @@ public:
     virtual ~GenericCache() {}
     virtual void * allocate(std::size_t size) = 0;
     virtual void deallocate(void * ptr) = 0;
-    virtual void copyData(int sourceCache, Task * task, unsigned int copiesToDo = 1) = 0;
+    virtual void copyData(float * cachesLoad, Task * task, unsigned int copiesToDo = 1) = 0;
     virtual void flush() = 0;
     virtual bool evict() = 0;
     virtual void writeBack(void *address) = 0;
+    virtual int getIndex() { return _index; }
     virtual void releaseCopies(Task * task) {
         for(auto it = task->getDataAccesses()._accesses.begin(); it != task->getDataAccesses()._accesses.end(); it++ ) {
             //! Mark the dataAccess as not cached

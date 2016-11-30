@@ -5,7 +5,7 @@
 #include <set>
 #include <cassert>
 #include "NUMACache.hpp" 
-#include "hardware/Machine.hpp" 
+#include "hardware/HardwareInfo.hpp"
 #include "memory/directory/Directory.hpp"
 
 void * NUMACache::allocate(std::size_t size) {
@@ -16,7 +16,7 @@ void NUMACache::deallocate(void * ptr) {
     free(ptr);
 }
 
-void NUMACache::copyData(int sourceCache, Task *task, unsigned int copiesToDo = 1) {
+void NUMACache::copyData(float * cachesLoad, Task *task, unsigned int copiesToDo = 1) {
     assert(task->hasPendingCopies() && "task without pending copies requesting copyData");
     if(task->getDataSize() == 0 || copiesToDo == 0) {
         addReadyTask(task);
@@ -82,31 +82,55 @@ void NUMACache::copyData(int sourceCache, Task *task, unsigned int copiesToDo = 
                 //! if it is an out access, in case of being in the cache, first round has already marked it as cached, in case of 
                 //! not being present in the cache, it goes to the else branch.
                 //! Assertions just for debug.
-                //assert(replica->second._version == Directory::getVersion(dataAccess.getAccessRange().getStartAddress()) && "Versions must match");
-                //assert(dataAccess._type != WRITE_ACCESS_TYPE && "out copies cannot reach this point");
+                assert(replica->second._version != Directory::getVersion(dataAccess.getAccessRange().getStartAddress()) && "Versions must not match");
+                assert(dataAccess._type != WRITE_ACCESS_TYPE && "out copies cannot reach this point");
                 //! Bring data and update replicaInfo+directory.
-                //! Data can be found either in sourceCache provided by the scheduler or in the homeNode.
-                assert(_index != sourceCache && "When sourceCache and cache are the same, copy is not required");
                 assert(_index != dataAccess._homeNode && "When data's homenode and cache are the same, copy is not required");
                 replicaInfo_t * sourceReplica = nullptr;
-                if(sourceCache != -1)
-                    sourceReplica = Machine::getMemoryNode(sourceCache)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
-                if(sourceReplica->_physicalAddress == nullptr) {
-                    //! sourceCache failed, do it from homeNode
-                    sourceReplica = Machine::getMemoryNode(dataAccess._homeNode)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
-                    //! homeNode also failed, nothing to do. 
-                    assert(sourceReplica->_physicalAddress != nullptr && "Cannot copy data from homeNode");
+                //! Ask directory where is the last version of the data.
+                cache_mask caches = Directory::getCaches(dataAccess.getAccessRange().getStartAddress());
+                assert((caches.to_ulong() != (unsigned long)(1<<_index)) && "The copy is being done because the data is outdated, it cannot be in cache_mask.");
+                if(caches.any()) {
+                    //! At least one cache different than this has the data.
+                    //! If cachesLoad is not nullptr, here it is possible to look at it to do some load balancing.
+                    //! By now, the first cache with data available is the chosen one.
+                    int sourceCache = -1;
+                    for(unsigned int i=0; i<caches.size(); i++) {
+                        if(caches.test(i)) {
+                            sourceCache = i;
+                            break;
+                        }
+                    }
+                    //! Get the replica from the sourceCache.
+                    sourceReplica = HardwareInfo::getMemoryNode(sourceCache)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
+                    assert(sourceReplica->_version == Directory::getVersion(dataAccess.getAccessRange().getStartAddress()) && "Versions must match");
+                    //! Actually copy data.
+                    //! TODO: memcpy should be wrapped!!
+                    memcpy(replica->second._physicalAddress, sourceReplica->_physicalAddress, dataAccess.getAccessRange().getSize());
+                    //! Merge dirty bits.
+                    replica->second._dirty = sourceReplica->_dirty || (dataAccess._type != READ_ACCESS_TYPE);
+                    //replica->second._version = sourceReplica->_version + replica->second._dirty;
                 }
-                //! TODO: memcpy should be wrapped!!
-                memcpy(replica->second._physicalAddress, sourceReplica->_physicalAddress, dataAccess.getAccessRange().getSize());
-                replica->second._dirty = sourceReplica->_dirty || (dataAccess._type != READ_ACCESS_TYPE);
-                replica->second._version = sourceReplica->_version + replica->second._dirty;
+                else {
+                    //! Data is not in any cache, it must be in the homeNode.
+                    assert(Directory::isHomeNodeUpToDate(dataAccess.getAccessRange().getStartAddress()) && "Data is not in any cache neither in the homeNode");
+                    //! Actually copy data.
+                    //! TODO: memcpy should be wrapped!!
+                    memcpy(replica->second._physicalAddress, dataAccess.getAccessRange().getStartAddress(), dataAccess.getAccessRange().getSize());
+                    //! Dirty is just determined by this current access, data in homeNode is never dirty.
+                    replica->second._dirty = (dataAccess._type != READ_ACCESS_TYPE);
+                    //replica->second._version = Directory::getVersion(dataAccess.getAccessRange().getStartAddress()) + replica->second._dirty; 
+                }
+                //! Update last use.
                 replica->second._lastUse = ++_count;
+                //! Insert into directory.
                 int dirVersion = Directory::insertCopy(/*address*/ dataAccess.getAccessRange().getStartAddress(), 
                         /*size*/ dataAccess.getAccessRange().getSize(),
                         /*homeNode*/ dataAccess._homeNode,
                         /*cache index*/ _index, 
                         /*increment*/ replica->second._dirty);
+                //! Update version.
+                replica->second._version = dirVersion;
                 assert(dirVersion==replica->second._version && "Versions must match");
             }
             else{
@@ -141,22 +165,44 @@ void NUMACache::copyData(int sourceCache, Task *task, unsigned int copiesToDo = 
                     }
                     if(dataAccess._type != WRITE_ACCESS_TYPE) {
                         //! Moreover, if access is in/inout, we need the data up to date. Bring it.
-                        //! Data can be found either in sourceCache provided by the scheduler or in the homeNode.
-                        assert(_index != sourceCache && "When sourceCache and cache are the same, copy is not required");
                         assert(_index != dataAccess._homeNode && "When data's homenode and cache are the same, copy is not required");
                         replicaInfo_t * sourceReplica = nullptr;
-                        if(sourceCache != -1)
-                            sourceReplica = Machine::getMemoryNode(sourceCache)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
-                        if(sourceReplica->_physicalAddress == nullptr) {
-                            //! sourceCache failed, do it from homeNode
-                            sourceReplica = Machine::getMemoryNode(dataAccess._homeNode)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
-                            //! homeNode also failed, nothing to do. 
-                            assert(sourceReplica->_physicalAddress != nullptr && "Cannot copy data from homeNode");
+                        //! Ask directory where is the last version of the data.
+                        cache_mask caches = Directory::getCaches(dataAccess.getAccessRange().getStartAddress());
+                        assert((caches.to_ulong() != (unsigned long)(1<<_index)) && "The copy is being done because the data is outdated, it cannot be in cache_mask.");
+                        if(caches.any()) {
+                            //! At least one cache different than this has the data.
+                            //! If cachesLoad is not nullptr, here it is possible to look at it to do some load balancing.
+                            //! By now, the first cache with data available is the chosen one.
+                            int sourceCache = -1;
+                            for(unsigned int i=0; i<caches.size(); i++) {
+                                if(caches.test(i)) {
+                                    sourceCache = i;
+                                    break;
+                                }
+                            }
+                            //! Get the replica from the sourceCache.
+                            sourceReplica = HardwareInfo::getMemoryNode(sourceCache)->getCache()->getReplicaInfo(dataAccess.getAccessRange().getStartAddress());
+                            assert(sourceReplica->_version == Directory::getVersion(dataAccess.getAccessRange().getStartAddress()) && "Versions must match");
+                            //! Actually copy data.
+                            //! TODO: memcpy should be wrapped!!
+                            memcpy(replica->second._physicalAddress, sourceReplica->_physicalAddress, dataAccess.getAccessRange().getSize());
+                            //! Merge dirty bits.
+                            replica->second._dirty = sourceReplica->_dirty || (dataAccess._type != READ_ACCESS_TYPE);
+                            //replica->second._version = sourceReplica->_version + replica->second._dirty;
                         }
-                        //! TODO: memcpy should be wrapped!!
-                        memcpy(replicaAddress, sourceReplica->_physicalAddress, dataAccess.getAccessRange().getSize());
-                        newReplica._dirty = newReplica._dirty || sourceReplica->_dirty;
-                        newReplica._version = sourceReplica->_version + newReplica._dirty;
+                        else {
+                            //! Data is not in any cache, it must be in the homeNode.
+                            assert(Directory::isHomeNodeUpToDate(dataAccess.getAccessRange().getStartAddress()) && "Data is not in any cache neither in the homeNode");
+                            //! Actually copy data.
+                            //! TODO: memcpy should be wrapped!!
+                            memcpy(replica->second._physicalAddress, dataAccess.getAccessRange().getStartAddress(), dataAccess.getAccessRange().getSize());
+                            //! Dirty is just determined by this current access, data in homeNode is never dirty.
+                            replica->second._dirty = (dataAccess._type != READ_ACCESS_TYPE);
+                            //replica->second._version = Directory::getVersion(dataAccess.getAccessRange().getStartAddress()) + replica->second._dirty; 
+                        }
+                        //! Update last use.
+                        replica->second._lastUse = ++_count;
                     }
                     //! Insert replica into _replicas.
                     _replicas[dataAccess.getAccessRange().getStartAddress()] = newReplica;
@@ -173,13 +219,13 @@ void NUMACache::copyData(int sourceCache, Task *task, unsigned int copiesToDo = 
                         //! a writeBack.
                         cache_mask caches = Directory::getCaches(dataAccess.getAccessRange().getStartAddress());
                         int cacheIndex = -1;
-                        for(int i=0; i<caches.size(); ++i) {
+                        for(unsigned int i=0; i<caches.size(); ++i) {
                             if(caches.test(i)) {
                                 cacheIndex = i;
                                 break;
                             }
                         }
-                        Machine::getMemoryNode(cacheIndex)->getCache()->writeBack(dataAccess.getAccessRange().getStartAddress());
+                        HardwareInfo::getMemoryNode(cacheIndex)->getCache()->writeBack(dataAccess.getAccessRange().getStartAddress());
                         assert(Directory::isHomeNodeUpToDate(dataAccess.getAccessRange().getStartAddress()));
                     }
                 }
@@ -189,8 +235,10 @@ void NUMACache::copyData(int sourceCache, Task *task, unsigned int copiesToDo = 
                                                        /*homeNode*/ dataAccess._homeNode,
                                                        /*cache index*/ _index, 
                                                        /*increment*/ (dataAccess._type != READ_ACCESS_TYPE));
-                if(newReplica._physicalAddress != nullptr)
+                if(newReplica._physicalAddress != nullptr) {
+                    newReplica._version = dirVersion;
                     assert(dirVersion==newReplica._version && "Versions must match");
+                }
             }
             ++copiesDone;
             //! Update task cachedBytes.

@@ -1,6 +1,6 @@
 #include "MemoryPageSet.hpp"
 
-#include "hardware/Machine.hpp"
+#include "hardware/HardwareInfo.hpp"
 
 #include <numaif.h>
 #include <iostream>
@@ -15,7 +15,7 @@ MemoryPageSet::iterator MemoryPageSet::find(void *address){
 void MemoryPageSet::insert(DataAccessRange range){
 	// Guarantee that the range is not on the AVL already
 
-	long pagesize = Machine::getPageSize();
+	long pagesize = HardwareInfo::getPageSize();
 	void *page = (void *)( (long) range.getStartAddress() & ~(pagesize-1) );
 	size_t size = static_cast<char *>( range.getEndAddress() ) - static_cast<char *>(page);
 	

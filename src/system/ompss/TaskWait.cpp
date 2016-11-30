@@ -6,7 +6,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
-#include "hardware/Machine.hpp"
+#include "hardware/HardwareInfo.hpp"
 
 #include <InstrumentTaskWait.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -69,8 +69,8 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	currentTask->markAsUnblocked();
 	
 	DataAccessRegistration::handleExitTaskwait(currentTask);
-    std::vector<MemoryPlace*> memoryNodes = Machine::getMemoryNodes();
-    for(int i=0; i<memoryNodes.size(); i++) {
+    std::vector<MemoryPlace*> memoryNodes = HardwareInfo::getMemoryNodes();
+    for(unsigned int i=0; i<memoryNodes.size(); i++) {
         memoryNodes[i]->getCache()->flush();
     }
 	

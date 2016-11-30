@@ -11,7 +11,7 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "hardware/Machine.hpp"
+#include "hardware/HardwareInfo.hpp"
 #include "memory/directory/Directory.hpp"
 
 #include <InstrumentInitAndShutdown.hpp>
@@ -49,11 +49,11 @@ static void programSignal(int signum) {
 
 
 void nanos_preinit(void) {
+	HardwareInfo::initialize();
 	ThreadManagerPolicy::initialize();
 	ThreadManager::preinitialize();
 	Scheduler::initialize();
 	Instrument::initialize();
-	Machine::initialize();
 	LeaderThread::initialize();
     Directory::initialize();
 }

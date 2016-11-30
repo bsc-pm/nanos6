@@ -1,8 +1,11 @@
 #include "NaiveScheduler.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "hardware/HardwareInfo.hpp"
 #include "hardware/places/CPUPlace.hpp"
 #include "tasks/Task.hpp"
+#include "memory/directory/Directory.hpp"
+#include "memory/Globals.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -51,12 +54,79 @@ CPU *NaiveScheduler::getIdleCPU()
 	return nullptr;
 }
 
+CPU *NaiveScheduler::getLocalityCPU(Task * task)
+{
+    //! Check if task has already a cache assigned.
+    GenericCache * destCache = task->getCache();
+        CPU *idleCPU = nullptr;
+    if(destCache == nullptr) {
+        //! If no cache assigned, ask directory information about locality in each cache.
+        size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
+        memset(cachesData, 0, MAX_CACHES*sizeof(size_t));
+        Directory::analyze(task->getDataAccesses(), cachesData);
+        int bestCache = 0;
+        int oldBestCache = -1;
+        size_t max = cachesData[0];
+        //! Get the index of the cache with best locality.
+        for(int i=0; i<MAX_CACHES; i++) {
+            if(cachesData[i] > max) {
+                max = cachesData[i];
+                bestCache = i;
+            }
+        }
+        //! Try to get a CPU which can access to the best cache.
+        while(idleCPU == nullptr) {
+            //! Iterate over all the idleCPUs until finding one associated with the best cache.
+            for(unsigned int i = 0; i < _idleCPUs.size(); i++) {
+                idleCPU = _idleCPUs[i];
+                if(idleCPU->getMemoryPlace(bestCache) != nullptr) {
+                    //! idleCPU with access to the best cache found. Erase the CPU from idleCPUs and assign the cache to the task.
+                    _idleCPUs.erase(_idleCPUs.begin()+i);
+                    destCache = HardwareInfo::getMemoryNode(bestCache)->getCache();
+                    task->setCache(destCache);
+                    return idleCPU;
+                }
+                idleCPU = nullptr;
+            }
+            //! If no CPU has been found with access to the best cache, try to find the next best cache until finding a idleCPU 
+            //! that can access the chosen cache.
+            cachesData[bestCache] = 0;
+            max = cachesData[0];
+            oldBestCache = bestCache;
+            bestCache = 0;
+            for(int i=0; i<MAX_CACHES; i++) {
+                if(cachesData[i] > max) {
+                    max = cachesData[i];
+                    bestCache = i;
+                }
+            }
+            if(bestCache == oldBestCache)
+                return nullptr;
+        }
+    }
+    else{
+        int bestCache = task->getCache()->getIndex();
+        for(unsigned int i = 0; i < _idleCPUs.size(); i++) {
+            idleCPU = _idleCPUs[i];
+            if(idleCPU->getMemoryPlace(bestCache) != nullptr) {
+                //! idleCPU with access to the best cache found. Erase the CPU from idleCPUs and assign the cache to the task.
+                _idleCPUs.erase(_idleCPUs.begin()+i);
+                return idleCPU;
+            }
+            idleCPU = nullptr;
+        }
+    }
+
+    return nullptr;
+}
+
 ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_front(task);
 	
-	return getIdleCPU();
+    return getLocalityCPU(task);
+	//return getIdleCPU();
 }
 
 

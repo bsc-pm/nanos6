@@ -6,8 +6,8 @@
 
 class NUMAPlace: public MemoryPlace {
 private:
-	typedef std::map<int, ComputePlace*> processingUnits_t;
-	processingUnits_t _processingUnits; //ProcessingUnits able to interact with this MemoryPlace
+	typedef std::map<int, ComputePlace*> computePlaces_t;
+	computePlaces_t _computePlaces; //ComputePlaces able to interact with this MemoryPlace
 public:
 	NUMAPlace(int index, NUMACache * cache, AddressSpace * addressSpace = nullptr)
         : MemoryPlace(index, cache, addressSpace)
@@ -15,11 +15,11 @@ public:
     
     virtual ~NUMAPlace() {}
     virtual inline NUMACache * getCache() { return (NUMACache *) _cache; }
-	size_t getPUCount(void) const { return _processingUnits.size(); }
-	ComputePlace* getPU(int index){ return _processingUnits[index]; }
-	void addPU(ComputePlace* pu);
-	std::vector<int> getPUIndexes();
-	std::vector<ComputePlace*> getPUs();
+	size_t getComputePlaceCount(void) const { return _computePlaces.size(); }
+	ComputePlace* getComputePlace(int index){ return _computePlaces[index]; }
+	void addComputePlace(ComputePlace* computePlace);
+	std::vector<int> getComputePlaceIndexes();
+	std::vector<ComputePlace*> getComputePlaces();
 };
 
 #endif //NUMA_PLACE_HPP

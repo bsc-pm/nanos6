@@ -60,10 +60,8 @@ common_sources = \
 	src/executors/threads/ThreadManagerPolicyInterface.hpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
-	src/hardware/Loader.hpp \
-	src/hardware/Loader.cpp \
-	src/hardware/Machine.hpp \
-	src/hardware/Machine.cpp \
+	src/hardware/HardwareInfo.hpp \
+	src/hardware/HardwareInfo.cpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/AIOPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \

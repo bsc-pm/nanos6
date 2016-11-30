@@ -4,9 +4,6 @@
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
-#include "hardware/Machine.hpp"
-#include "memory/directory/Directory.hpp"
-#include "memory/Globals.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -104,26 +101,9 @@ void WorkerThread::handleTask()
     if(_task->hasPendingCopies()) {
         // task is preReady
         //! Do some data transferences if any
-        //! How do I know which is the destCache? 
+        float * cachesLoad = nullptr;
         GenericCache * destCache = _task->getCache();
-        if(destCache == nullptr) {
-            size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
-            memset(cachesData, 0, MAX_CACHES*sizeof(size_t));
-            Directory::analyze(_task->getDataAccesses(), cachesData);
-            int bestCache = 0;
-            size_t max = cachesData[0];
-            for(int i=0; i<MAX_CACHES; i++) {
-                if(cachesData[i] > max) {
-                    max = cachesData[i];
-                    bestCache = i;
-                }
-            }
-            destCache = Machine::getMemoryNode(bestCache)->getCache();
-            _task->setCache(destCache);
-        }
-        //! How do I know which is the sourceCache? 
-        int sourceCache = -1;
-        destCache->copyData(sourceCache, _task);
+        destCache->copyData(cachesLoad, _task);
     }
     else {
         // task is ready
