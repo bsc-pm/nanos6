@@ -4,6 +4,8 @@
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+#include "memory/cache/GenericCache.hpp"
+#include "hardware/places/MemoryPlace.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -103,6 +105,10 @@ void WorkerThread::handleTask()
         //! Do some data transferences if any
         float * cachesLoad = nullptr;
         GenericCache * destCache = _task->getCache();
+        if(destCache == nullptr) {
+            destCache = _cpu->getMemoryPlaces()[0]->getCache();
+        }
+        assert(destCache != nullptr);
         destCache->copyData(cachesLoad, _task);
     }
     else {

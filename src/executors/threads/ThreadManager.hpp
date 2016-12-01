@@ -144,6 +144,7 @@ inline CPU *ThreadManager::getCPU(size_t systemCPUId)
 	assert(systemCPUId < _cpus.size());
 	
 	CPU *cpu = _cpus[systemCPUId];
+    assert(cpu != nullptr);
 	if (cpu == nullptr) {
 		CPU *newCPU = new CPU(systemCPUId, /* INVALID VALUE */ ~0UL);
 		bool success = _cpus[systemCPUId].compare_exchange_strong(cpu, newCPU);

@@ -8,6 +8,7 @@
 #include "ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "hardware/HardwareInfo.hpp"
 
 #include <InstrumentThreadManagement.hpp>
 
@@ -36,16 +37,28 @@ void ThreadManager::preinitialize()
 	int rc = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &_processCPUMask);
 	FatalErrorHandler::handle(rc, " when retrieving the affinity of the current pthread ", pthread_self());
 	
-	// Set up the pthread attributes for the threads of each CPU
-	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
-		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
-			CPU *cpu = getCPU(systemCPUId);
-			assert(cpu != nullptr);
-			
+    std::vector<ComputePlace *> cpus = HardwareInfo::getComputeNodes();
+    for (size_t i = 0; i < cpus.size(); i++) {
+        //! Atomic is not needed because this is sequential code.
+        _cpus[i] = (CPU*) cpus[i];
+        _totalCPUs++;
+		if (CPU_ISSET(i, &_processCPUMask)) {
+			assert(_cpus[i] != nullptr);
 			assert(_shutdownThreads == 0);
-			_totalThreads++;
-		}
-	}
+            _totalThreads++;
+        }
+    }
+
+	// Set up the pthread attributes for the threads of each CPU
+	//for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
+	//	if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
+	//		CPU *cpu = getCPU(systemCPUId);
+	//		assert(cpu != nullptr);
+	//		
+	//		assert(_shutdownThreads == 0);
+	//		_totalThreads++;
+	//	}
+	//}
 }
 
 
