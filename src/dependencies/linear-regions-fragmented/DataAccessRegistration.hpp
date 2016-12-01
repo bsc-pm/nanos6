@@ -1690,6 +1690,64 @@ public:
 	
 	
 	
+	static inline void releaseAccessRange(Task *task, DataAccessRange range, __attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak)
+	{
+		assert(task != 0);
+		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		assert(!accessStructures.hasBeenDeleted());
+		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
+		
+		CPU *cpu = nullptr;
+		WorkerThread *currentThread = nullptr;
+		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
+		assert(cpu != nullptr);
+		assert(currentThread != nullptr);
+		
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = false;
+			assert(cpuDependencyData._inUse.compare_exchange_strong(alreadyTaken, true));
+		}
+#endif
+		
+		assert(cpuDependencyData._delayedOperations.empty());
+		
+		{
+			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+			
+			accesses.processIntersecting(
+				range,
+				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+					DataAccess *dataAccess = &(*position);
+					assert(dataAccess != nullptr);
+					assert(dataAccess->_type == accessType);
+					assert(dataAccess->_weak == weak);
+					
+					finalizeAccess(
+						task, dataAccess, range,
+						/* OUT */ cpuDependencyData
+					);
+					
+					return true;
+				}
+			);
+		}
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
+			task->getInstrumentationTaskId(),
+			cpuDependencyData, cpu, currentThread
+		);
+		
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = true;
+			assert(cpuDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
+		}
+#endif
+	}
+	
+	
+	
 	static inline void unregisterTaskDataAccesses(Task *task)
 	{
 		assert(task != 0);
