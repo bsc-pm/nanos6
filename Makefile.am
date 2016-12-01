@@ -87,6 +87,8 @@ common_sources = \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/scheduling/DefaultScheduler.hpp \
+	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/FIFOScheduler.cpp \
 	src/scheduling/FIFOScheduler.hpp \
 	src/scheduling/ImmediateSuccessorScheduler.cpp \
