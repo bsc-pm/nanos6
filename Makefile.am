@@ -81,6 +81,8 @@ common_sources = \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
+	src/lowlevel/PaddedSpinLock.hpp \
+	src/lowlevel/PaddedTicketSpinLock.hpp \
 	src/lowlevel/RWSpinLock.hpp \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
