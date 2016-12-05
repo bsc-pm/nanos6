@@ -244,6 +244,15 @@ public:
 // 		BaseType::node_algorithms::init(BaseType::value_traits::to_node_ptr(*toBeReplaced));
 	}
 	
+	//! \brief Delete all the elements
+	//! 
+	//! \param[in] processor a lambda that receives a pointer to each element to dispose it
+	template <typename ProcessorType>
+	void deleteAll(ProcessorType processor)
+	{
+		BaseType::clear_and_dispose(processor);
+	}
+	
 };
 
 
