@@ -69,6 +69,7 @@ void NUMACache::copyData(float * cachesLoad, Task *task, unsigned int copiesToDo
 
     //! Main loop. Copies are performed here. 
     for(DataAccess& dataAccess : task->getDataAccesses()._accesses) {
+        assert(dataAccess._homeNode != -1 && "This homeNode has not been set");
         if(!task->hasPendingCopies() || copiesDone >= copiesToDo)
             break;
         //! If access already marked as cached, ignore it. Just process those not cached yet.

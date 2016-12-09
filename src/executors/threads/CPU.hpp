@@ -27,7 +27,8 @@ struct CPU: public CPUPlace {
 #endif
 	
 	typedef enum {
-		starting_status=0,
+        uninitialized_status=0,
+		starting_status,
 		enabled_status,
 		enabling_status,
 		disabling_status,
@@ -69,6 +70,12 @@ struct CPU: public CPUPlace {
 		int rc = pthread_setaffinity_np(internalPThread, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
 		FatalErrorHandler::handle(rc, " when changing affinity of pthread ", internalPThread, " to CPU ", _systemCPUId);
 	}
+
+    inline void initializeIfNeeded() 
+    {
+        activation_status_t expectedStatus = uninitialized_status;
+        _activationStatus.compare_exchange_strong(expectedStatus, starting_status);
+    }
 	
 };
 

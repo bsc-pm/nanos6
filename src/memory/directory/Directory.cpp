@@ -2,6 +2,7 @@
 
 #include "Directory.hpp"
 #include <TaskDataAccessesImplementation.hpp>
+#include <iostream>
 
 Directory *Directory::_instance = nullptr;
 
@@ -36,12 +37,13 @@ void Directory::eraseCopy(void *address, int cache){
 
 void Directory::analyze(TaskDataAccesses &accesses, size_t *vector){
 	std::lock_guard<SpinLock> guard(accesses._lock);
+    size_t accessesCount = accesses._accesses.size();
 	
-	// Process all Data accesses
+	//! Process all Data accesses
 	accesses._accesses.processAll(
 		[&] ( TaskDataAccesses::accesses_t::iterator it ) -> bool {
 
-			// Process all possible gaps in the pages directory and insert them in the pages list
+			//! Process all possible gaps in the pages directory and insert them in the pages list
 			Directory::_instance->_pages.processMissing(
 				it->getAccessRange(),
 				[&] (DataAccessRange missingRange) -> bool {
@@ -50,21 +52,23 @@ void Directory::analyze(TaskDataAccesses &accesses, size_t *vector){
 				}
 			);	
 
-			// Search for all pages in the pages list
+			//! Search for all pages in the pages list
 			Directory::_instance->_pages.processIntersecting(
 				it->getAccessRange(),
 				[&] (MemoryPageSet::iterator position) -> bool {
+                    accessesCount--;
+                    assert(position->getLocation() >= 0 && "Wrong location");
 					it->_homeNode = position->getLocation();
 					return true; 
 				}
 			);
-		
-			// Process the intersecting copies for each access
+
+			//! Process the intersecting copies for each access
 			Directory::_instance->_copies.processIntersecting(
 				it->getAccessRange(),
 				
-				// Process regions which are present in the directory
-				// The size of the copyObjects is added to the positions corresponding to the caches in which they are
+				//! Process regions which are present in the directory
+				//! The size of the copyObjects is added to the positions corresponding to the caches in which they are
 				[&] (CopySet::iterator position ) -> bool {
 					
 					size_t size = position->getSize();
@@ -90,6 +94,7 @@ void Directory::analyze(TaskDataAccesses &accesses, size_t *vector){
 			return true;
 		} 
 	);	
+    assert(accessesCount == 0 && "Some homeNodes have not been set");
 }
 
 cache_mask Directory::getCaches(void *address) {
@@ -110,12 +115,12 @@ int Directory::getHomeNode(void *address) {
 
 bool Directory::isHomeNodeUpToDate(void *address) {
     CopySet::iterator it = _instance->_copies.find(address);
-    //assert(it != _instance->_copies.end() && "The copy must be in the directory");
     if(it != _instance->_copies.end()) {
         return it->isHomeNodeUpToDate();
     }
     else {
-        return false;
+        //! If the copy is not in the directory yet, it is up to date in the Directory.
+        return true;
     }
 }
 

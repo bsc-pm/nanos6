@@ -44,11 +44,15 @@ public:
 		CPU *cpu = ThreadManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
 		
+        cpu->initializeIfNeeded();
 		bool successful = false;
 		
 		while (!successful) {
 			CPU::activation_status_t currentStatus = cpu->_activationStatus;
 			switch (currentStatus) {
+                case CPU::uninitialized_status:
+                    assert(false);
+                    break;
 				case CPU::starting_status:
 					// Keep iterating until the CPU has actually been initialized
 					break;
@@ -89,6 +93,9 @@ public:
 		while (!successful) {
 			CPU::activation_status_t currentStatus = cpu->_activationStatus;
 			switch (currentStatus) {
+                case CPU::uninitialized_status:
+                    assert(false);
+                    break;
 				case CPU::starting_status:
 					// Keep iterating until the CPU has actually been initialized
 					break;
@@ -124,6 +131,9 @@ public:
 			
 			CPU::activation_status_t currentStatus = cpu->_activationStatus;
 			switch (currentStatus) {
+                case CPU::uninitialized_status:
+                    assert(false);
+                    break;
 				case CPU::starting_status:
 					assert(false && "Invalid CPU activation status");
 					break;
@@ -180,6 +190,7 @@ public:
 			case CPU::enabling_status:
 				return true;
 				break;
+            case CPU::uninitialized_status:
 			case CPU::disabling_status:
 			case CPU::disabled_status:
 				return false;
@@ -197,6 +208,14 @@ public:
 		
 		return (cpu->_activationStatus != CPU::starting_status);
 	}
+
+	//! \brief check if the CPU is being initialized 
+    static inline bool isBeingInitialized(CPU *cpu) 
+    {
+		assert(cpu != nullptr);
+		
+		return (cpu->_activationStatus == CPU::starting_status);
+    }
 	
 };
 

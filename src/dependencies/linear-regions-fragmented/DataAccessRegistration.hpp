@@ -31,7 +31,7 @@ private:
 	typedef CPUDependencyData::DelayedOperation DelayedOperation;
 	
 	
-	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRange range, bool fragment)
+	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRange range, bool fragment, int homeNode)
 	{
 		Instrument::data_access_id_t newDataAccessInstrumentationId;
 		
@@ -39,7 +39,8 @@ private:
 		DataAccess *dataAccess = new DataAccess(
 			accessType, weak, originator, range,
 			fragment,
-			newDataAccessInstrumentationId
+			newDataAccessInstrumentationId,
+            homeNode
 		);
 		
 		return dataAccess;
@@ -87,7 +88,8 @@ private:
 		DataAccess *newFragment = createAccess(
 			toBeDuplicated._originator,
 			toBeDuplicated._type, toBeDuplicated._weak, toBeDuplicated._range,
-			toBeDuplicated.isFragment()
+			toBeDuplicated.isFragment(),
+            toBeDuplicated._homeNode
 		);
 		
 		newFragment->_status = toBeDuplicated._status;
@@ -1430,12 +1432,17 @@ public:
 				DataAccess *oldAccess = &(*position);
 				assert(oldAccess != nullptr);
 				
+                //std::cerr << "Task (" << task << ") upgrading current access with size " << oldAccess->getAccessRange().getSize() << "." << std::endl;
 				upgradeAccess(oldAccess, accessType, weak);
 				
 				return true;
 			},
 			[&](DataAccessRange missingRange) -> bool {
-				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange, false);
+                //std::cerr << "Task (" << task << ") upgrading current access with size " << missingRange.getSize() << "." << std::endl;
+				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange, false, -1);
+                //! Just increment taskDataSize if it is a newAccess.
+                //std::cerr << "Task (" << task << ") incrementing dataSize with size " << missingRange.getSize() << "." << std::endl;
+                task->addDataSize(missingRange.getSize());
 				
 				accessStructures._removalBlockers++;
 				accessStructures._accesses.insert(*newAccess);

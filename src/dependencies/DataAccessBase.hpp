@@ -24,9 +24,6 @@ struct DataAccessBase {
 		typedef boost::intrusive::link_mode<boost::intrusive::safe_link> link_mode_t;
 	#endif
 	
-	//! Home node of the accessed data, to be filled by the directory
-	int _homeNode;
-	
 	//! Links used by the list of accesses of a Task
 	TaskDataAccessHooks _taskDataAccessLinks;
 	
@@ -42,15 +39,20 @@ struct DataAccessBase {
 	//! An identifier for the instrumentation
 	Instrument::data_access_id_t _instrumentationId;
 	
+	//! Home node of the accessed data, to be filled by the directory
+	int _homeNode;
+	
 	DataAccessBase(
 		DataAccessType type,
 		bool weak,
 		Task *originator,
-		Instrument::data_access_id_t instrumentationId
+		Instrument::data_access_id_t instrumentationId,
+        int homeNode
 	)
 		: _taskDataAccessLinks(), 
 		_type(type), _weak(weak), _originator(originator),
-		_instrumentationId(instrumentationId)
+		_instrumentationId(instrumentationId),
+        _homeNode(homeNode)
 	{
 		assert(originator != 0);
 	}

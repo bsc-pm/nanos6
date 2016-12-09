@@ -57,9 +57,10 @@ struct DataAccess : public DataAccessBase {
 		Task *originator,
 		DataAccessRange accessRange,
 		bool fragment,
-		Instrument::data_access_id_t instrumentationId
+		Instrument::data_access_id_t instrumentationId,
+        int homeNode = -1
 	)
-		: DataAccessBase(type, weak, originator, instrumentationId),
+		: DataAccessBase(type, weak, originator, instrumentationId, homeNode),
 		_range(accessRange),
 		_status(0),
 		_next(nullptr),

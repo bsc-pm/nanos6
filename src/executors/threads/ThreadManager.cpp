@@ -41,10 +41,10 @@ void ThreadManager::preinitialize()
     for (size_t i = 0; i < cpus.size(); i++) {
         //! Atomic is not needed because this is sequential code.
         _cpus[i] = (CPU*) cpus[i];
-        _totalCPUs++;
 		if (CPU_ISSET(i, &_processCPUMask)) {
 			assert(_cpus[i] != nullptr);
 			assert(_shutdownThreads == 0);
+            _totalCPUs++;
             _totalThreads++;
         }
     }
@@ -71,6 +71,7 @@ void ThreadManager::initialize()
 			assert(cpu != nullptr);
 			
 			assert(_shutdownThreads == 0);
+            cpu->initializeIfNeeded();
 			WorkerThread *thread = new WorkerThread(cpu);
 			thread->_cpuToBeResumedOn = cpu;
 			thread->resume();
@@ -123,7 +124,7 @@ void ThreadManager::shutdown()
 		
 		if ((cpu != nullptr) && CPUActivation::acceptsWork(cpu)) {
 			// Wait for the CPU to be started
-			while (!CPUActivation::hasStarted(cpu)) {
+			while (CPUActivation::isBeingInitialized(cpu)) {
 				sched_yield();
 			}
 			

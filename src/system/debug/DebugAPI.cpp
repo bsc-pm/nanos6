@@ -124,7 +124,7 @@ long nanos_get_system_cpu_of_task(void *taskHandle)
 typedef ThreadManager::cpu_list_t::const_iterator cpu_iterator_t;
 
 
-static void *nanos_cpus_skip_nulls(void *cpuIterator) {
+static void *nanos_cpus_skip_uninitialized(void *cpuIterator) {
 	ThreadManager::cpu_list_t const &cpuList = ThreadManager::getCPUListReference();
 	
 	cpu_iterator_t *itp = (cpu_iterator_t *) cpuIterator;
@@ -140,7 +140,7 @@ static void *nanos_cpus_skip_nulls(void *cpuIterator) {
 		
 		CPU *cpu = *(*itp);
 		
-		if (cpu != 0) {
+		if ((cpu != 0) && (cpu->_activationStatus != CPU::uninitialized_status)) {
 			return itp;
 		}
 		
@@ -158,7 +158,7 @@ void *nanos_cpus_begin(void)
 		return 0;
 	} else {
 		void *result = new cpu_iterator_t(it);
-		return nanos_cpus_skip_nulls(result);
+		return nanos_cpus_skip_uninitialized(result);
 	}
 }
 
@@ -175,7 +175,7 @@ void *nanos_cpus_advance(void *cpuIterator)
 	}
 	
 	(*itp)++;
-	return nanos_cpus_skip_nulls(itp);
+	return nanos_cpus_skip_uninitialized(itp);
 }
 
 long nanos_cpus_get(void *cpuIterator)

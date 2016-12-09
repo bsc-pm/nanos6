@@ -4,6 +4,7 @@
 
 #include <numaif.h>
 #include <iostream>
+#include <cerrno>
 
 MemoryPageSet::MemoryPageSet(): BaseType(){}
 
@@ -35,6 +36,11 @@ void MemoryPageSet::insert(DataAccessRange range){
     if(err != 0) {
         std::perror("move_pages failed");
         assert(err==0);
+    }
+    if(status[0] < 0) {
+        errno = status[0];
+        std::perror("move_pages failed");
+        assert(status[0] >= 0);
     }
 
 	// Find the previous page if it is registered
