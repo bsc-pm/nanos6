@@ -17,8 +17,8 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/types.h>
 
-#include <sys/syscall.h>
 
 class WorkerThread;
 
@@ -69,10 +69,10 @@ struct CPU: public CPUPlace {
 	{
 	}
 	
-	inline void bindThread(pthread_t internalPThread)
+	inline void bindThread(pid_t tid)
 	{
-		int rc = sched_setaffinity(syscall(SYS_gettid), CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
-		FatalErrorHandler::handle(rc, " when changing affinity of pthread ", internalPThread, " to CPU ", _systemCPUId);
+		int rc = sched_setaffinity(tid, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
+		FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", tid, " to CPU ", _systemCPUId);
 	}
 	
 };

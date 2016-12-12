@@ -3,12 +3,15 @@
 
 
 #include <pthread.h>
+#include <sys/types.h>
 
 
 class Thread {
 protected:
 	//! The underlying pthread
 	pthread_t _pthread;
+	pid_t _tid;
+	
 	
 	inline void exit()
 	{
@@ -22,6 +25,12 @@ public:
 	
 	virtual ~Thread()
 	{
+	}
+	
+	// WARNING: This should be only called by the thread initialization code
+	inline void setTid(pid_t tid)
+	{
+		_tid = tid;
 	}
 	
 	void start(pthread_attr_t const *pthreadAttr);

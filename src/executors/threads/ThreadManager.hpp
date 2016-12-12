@@ -242,7 +242,7 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 		assert(replacementThread->_cpuToBeResumedOn == nullptr);
 		replacementThread->_cpuToBeResumedOn = cpu;
 		if (replacementThread->_cpu != cpu) {
-			cpu->bindThread(replacementThread->_pthread);
+			cpu->bindThread(replacementThread->_tid);
 		}
 		
 		replacementThread->resume();
@@ -293,7 +293,7 @@ inline void ThreadManager::resumeThread(WorkerThread *suspendedThread, CPU *cpu,
 	assert(suspendedThread->_cpuToBeResumedOn == nullptr);
 	suspendedThread->_cpuToBeResumedOn = cpu;
 	if (suspendedThread->_cpu != cpu) {
-		cpu->bindThread(suspendedThread->_pthread);
+		cpu->bindThread(suspendedThread->_tid);
 	}
 	
 	if (!inInitializationOrShutdown) {
@@ -340,7 +340,7 @@ inline void ThreadManager::migrateThread(WorkerThread *currentThread, CPU *cpu)
 	
 	// Since it is the same thread the one that migrates itself, change the CPU directly
 	currentThread->_cpu = cpu;
-	cpu->bindThread(currentThread->_pthread);
+	cpu->bindThread(currentThread->_tid);
 }
 
 
