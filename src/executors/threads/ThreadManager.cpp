@@ -142,7 +142,7 @@ void ThreadManager::shutdown()
 				// Migrate the thread if necessary
 				idleThread->_cpuToBeResumedOn = cpu;
 				if (idleThread->_cpu != cpu) {
-					cpu->bindThread(idleThread->_pthread);
+					cpu->bindThread(idleThread->_tid);
 				}
 				
 				idleThread->signalShutdown();
@@ -210,7 +210,7 @@ void ThreadManager::threadShutdownSequence(WorkerThread *currentThread)
 				assert(next->_cpuToBeResumedOn == nullptr);
 				next->_cpuToBeResumedOn = cpu;
 				if (next->_cpu != cpu) {
-					cpu->bindThread(next->_pthread);
+					cpu->bindThread(next->_tid);
 				}
 				
 				// Resume the thread
