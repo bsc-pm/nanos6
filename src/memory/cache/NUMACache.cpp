@@ -17,6 +17,8 @@ void NUMACache::deallocate(void * ptr) {
 }
 
 void NUMACache::copyData(float * cachesLoad, Task *task, unsigned int copiesToDo = 1) {
+	std::lock_guard<SpinLock> task_guard(task->getDataAccesses()._lock);
+	std::lock_guard<SpinLock> guard(_lock);
     assert(task->hasPendingCopies() && "task without pending copies requesting copyData");
     if(task->getDataSize() == 0 || copiesToDo == 0) {
         addReadyTask(task);

@@ -107,6 +107,7 @@ void WorkerThread::handleTask()
         GenericCache * destCache = _task->getCache();
         if(destCache == nullptr) {
             destCache = _cpu->getMemoryPlaces()[0]->getCache();
+            _task->setCache(destCache);
         }
         assert(destCache != nullptr);
         destCache->copyData(cachesLoad, _task);

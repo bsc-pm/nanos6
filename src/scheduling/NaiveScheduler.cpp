@@ -58,7 +58,7 @@ CPU *NaiveScheduler::getLocalityCPU(Task * task)
 {
     //! Check if task has already a cache assigned.
     GenericCache * destCache = task->getCache();
-        CPU *idleCPU = nullptr;
+    CPU *idleCPU = nullptr;
     if(destCache == nullptr) {
         //! If no cache assigned, ask directory information about locality in each cache.
         size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
