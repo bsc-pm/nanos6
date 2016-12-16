@@ -7,7 +7,7 @@
 #include "LeaderThread.hpp"
 
 #include "api/nanos6_rt_interface.h"
-#include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -51,7 +51,7 @@ static void programSignal(int signum) {
 void nanos_preinit(void) {
 	HardwareInfo::initialize();
 	ThreadManagerPolicy::initialize();
-	ThreadManager::preinitialize();
+	CPUManager::preinitialize();
 	Scheduler::initialize();
 	Instrument::initialize();
 	LeaderThread::initialize();
@@ -60,7 +60,7 @@ void nanos_preinit(void) {
 
 
 void nanos_init(void) {
-	ThreadManager::initialize();
+	CPUManager::initialize();
 	
 	EnvironmentVariable<bool> handleSigInt("NANOS_HANDLE_SIGINT", 0);
 	if (handleSigInt) {

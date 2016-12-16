@@ -1,7 +1,7 @@
 #include "InstrumentInitAndShutdown.hpp"
 #include "InstrumentStats.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
-#include <executors/threads/ThreadManager.hpp>
+#include <executors/threads/CPUManager.hpp>
 
 #include <fstream>
 
@@ -69,9 +69,9 @@ namespace Instrument {
 		EnvironmentVariable<std::string> _outputFilename("NANOS6_STATS_FILE", "/dev/stderr");
 		std::ofstream output(_outputFilename);
 		
-		output << "STATS\t" << "Total CPUs\t" << ThreadManager::getTotalCPUs() << std::endl;
+		output << "STATS\t" << "Total CPUs\t" << CPUManager::getTotalCPUs() << std::endl;
 		output << "STATS\t" << "Total threads\t" << numThreads << std::endl;
-		output << "STATS\t" << "Mean threads per CPU\t" << ((double) numThreads) / (double) ThreadManager::getTotalCPUs() << std::endl;
+		output << "STATS\t" << "Mean threads per CPU\t" << ((double) numThreads) / (double) CPUManager::getTotalCPUs() << std::endl;
 		output << "STATS\t" << "Mean tasks per thread\t" << ((double) accumulatedTaskInfo._numInstances) / (double) numThreads << std::endl;
 		output << std::endl;
 		output << "STATS\t" << "Mean thread lifetime\t" << 100.0 * averageThreadTime / totalTime << "\t%" << std::endl;

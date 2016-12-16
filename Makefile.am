@@ -47,6 +47,8 @@ common_sources = \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
+	src/executors/threads/CPUManager.cpp \
+	src/executors/threads/CPUManager.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.cpp \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
 	src/executors/threads/EssentialThreadEnvironment.hpp \

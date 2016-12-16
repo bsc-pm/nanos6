@@ -7,6 +7,7 @@
 #include "CPU.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "ThreadManager.hpp"
+#include "CPUManager.hpp"
 
 
 class CPUActivation {
@@ -41,7 +42,7 @@ public:
 			return;
 		}
 		
-		CPU *cpu = ThreadManager::getCPU(systemCPUId);
+		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
 		
         cpu->initializeIfNeeded();
@@ -85,7 +86,7 @@ public:
 			return;
 		}
 		
-		CPU *cpu = ThreadManager::getCPU(systemCPUId);
+		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
 		
 		bool successful = false;

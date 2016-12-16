@@ -9,20 +9,20 @@
 
 void nanos_wait_for_full_initialization(void)
 {
-	while (!ThreadManager::hasFinishedInitialization()) {
+	while (!CPUManager::hasFinishedInitialization()) {
 		// Wait
 	}
 }
 
 unsigned int nanos_get_num_cpus(void)
 {
-	if (ThreadManager::hasFinishedInitialization()) {
-		return ThreadManager::getTotalCPUs();
+	if (CPUManager::hasFinishedInitialization()) {
+		return CPUManager::getTotalCPUs();
 	} else {
 		static long activeCPUs = 0;
 		
 		if (activeCPUs == 0) {
-			cpu_set_t const &cpuMask = ThreadManager::getProcessCPUMaskReference();
+			cpu_set_t const &cpuMask = CPUManager::getProcessCPUMaskReference();
 			for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
 				if (CPU_ISSET(systemCPUId, &cpuMask)) {
 					activeCPUs++;
@@ -72,7 +72,7 @@ void nanos_disable_cpu(long systemCPUId)
 
 nanos_cpu_status_t nanos_get_cpu_status(long systemCPUId)
 {
-	CPU *cpu = ThreadManager::getCPU(systemCPUId);
+	CPU *cpu = CPUManager::getCPU(systemCPUId);
 	
 	assert(cpu != 0);
 	switch (cpu->_activationStatus.load()) {
@@ -121,11 +121,11 @@ long nanos_get_system_cpu_of_task(void *taskHandle)
 #endif
 
 
-typedef ThreadManager::cpu_list_t::const_iterator cpu_iterator_t;
+typedef std::vector<CPU *>::const_iterator cpu_iterator_t;
 
 
 static void *nanos_cpus_skip_uninitialized(void *cpuIterator) {
-	ThreadManager::cpu_list_t const &cpuList = ThreadManager::getCPUListReference();
+	std::vector<CPU *> const &cpuList = CPUManager::getCPUListReference();
 	
 	cpu_iterator_t *itp = (cpu_iterator_t *) cpuIterator;
 	if (itp == 0) {
@@ -151,7 +151,7 @@ static void *nanos_cpus_skip_uninitialized(void *cpuIterator) {
 
 void *nanos_cpus_begin(void)
 {
-	ThreadManager::cpu_list_t const &cpuList = ThreadManager::getCPUListReference();
+	std::vector<CPU *> const &cpuList = CPUManager::getCPUListReference();
 	cpu_iterator_t it = cpuList.begin();
 	
 	if (it == cpuList.end()) {
