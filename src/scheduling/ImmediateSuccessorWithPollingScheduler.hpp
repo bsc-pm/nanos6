@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "SchedulerInterface.hpp"
-#include "lowlevel/SpinLock.hpp"
+#include "lowlevel/TicketSpinLock.hpp"
 #include "executors/threads/CPU.hpp"
 
 
@@ -15,7 +15,9 @@ class Task;
 
 
 class ImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
-	SpinLock _globalLock;
+	typedef TicketSpinLock<> spinlock_t;
+	
+	spinlock_t _globalLock;
 	
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
@@ -36,8 +38,6 @@ public:
 	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);
-	
-	bool checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace);
 	
 	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	

@@ -19,30 +19,20 @@ inline TaskDataAccesses::~TaskDataAccesses()
 	assert(&task->getDataAccesses() == this);
 	
 	// We take the lock since the task may be marked for deletion while the lock is held
-	std::lock_guard<SpinLock> guard(_lock);
-	_accesses.processAll(
-		[&](accesses_t::iterator position) -> bool {
-			DataAccess *access = &(*position);
-			
+	std::lock_guard<spinlock_t> guard(_lock);
+	_accesses.deleteAll(
+		[&](DataAccess *access) {
 			Instrument::removedDataAccess(access->_instrumentationId, task->getInstrumentationTaskId());
-			_accesses.erase(access);
 			delete access;
-			
-			return true;
 		}
 	);
 	
 	_subaccessBottomMap.clear();
 	
-	_accessFragments.processAll(
-		[&](access_fragments_t::iterator position) -> bool {
-			DataAccess *fragment = &(*position);
-			
+	_accessFragments.deleteAll(
+		[&](DataAccess *fragment) {
 			Instrument::removedDataAccess(fragment->_instrumentationId, task->getInstrumentationTaskId());
-			_accessFragments.erase(fragment);
 			delete fragment;
-			
-			return true;
 		}
 	);
 	

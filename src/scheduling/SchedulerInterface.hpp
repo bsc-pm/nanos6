@@ -39,15 +39,6 @@ public:
 	//! \param[in] hardwarePlace the hardware place of the unblocker
 	virtual void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace) = 0;
 	
-	//! \brief Check if a hardware place is idle and can be resumed
-	//! This call first checks if the hardware place is idle. If so, it marks it as not idle
-	//! and returns true. Otherwise it returns false.
-	//!
-	//! \param[in] hardwarePlace the hardware place to check
-	//!
-	//! \returns true if the hardware place must be resumed
-	virtual bool checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace) = 0;
-
 	//! \brief Get a ready task for execution
 	//!
 	//! \param[in] hardwarePlace the hardware place asking for scheduling orders

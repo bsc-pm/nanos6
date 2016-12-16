@@ -62,6 +62,8 @@ AC_C_RESTRICT
 AC_LANG_POP(C++)
 
 if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
+	NANOS6_MCXX="${NANOS6_MCXX} -std=c++11"
+	
 	SSS_PUSH_NANOS6_MERCURIUM([-I${full_top_srcdir}/common/api])
 	SSS_CHECK_SANE_CHRONO
 	SSS_POP_NANOS6_MERCURIUM
@@ -71,6 +73,9 @@ fi
 AC_CHECK_BACKTRACE
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
 AC_SUBST(CLOCK_LIBS)
+
+AC_CHECK_LIB([log], [__android_log_print], [ANDROID_LOG_LIBS="${ANDROID_LOG_LIBS} -llog"])
+AC_SUBST(ANDROID_LOG_LIBS)
 
 PKG_CHECK_MODULES([elfutils], [libdw >= 0.164],
    [AC_DEFINE([HAVE_LIBDW], [1], [Use elfutils libdw])], [AC_MSG_WARN([The profiling instrumenter is more accurate when the headers and libraries of elfutils are available.])]
@@ -83,6 +88,9 @@ SSS_FIXUP_COMPILER_FLAGS
 
 
 CONFIGURE_NANOS6_FEATURES
+
+# Check for gethostid
+AC_CHECK_FUNCS([gethostid])
 
 # Dependency engine to use
 AC_ARG_WITH(

@@ -137,20 +137,6 @@ void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unuse
 }
 
 
-bool NaiveScheduler::checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace)
-{
-	std::lock_guard<SpinLock> guard(_globalLock);
-	
-	auto it = std::find(_idleCPUs.begin(), _idleCPUs.end(), (CPU *) hardwarePlace);
-	
-	if (it != _idleCPUs.end()) {
-		_idleCPUs.erase(it);
-		return true;
-	}
-	
-	return false;
-}
-
 Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;

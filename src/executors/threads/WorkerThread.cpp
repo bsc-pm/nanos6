@@ -32,6 +32,8 @@ void *WorkerThread::body()
 {
 	ThreadManager::threadStartup(this);
 	
+	_cpu->bindThread(_tid);
+	
 	while (!_mustShutDown) {
 		CPUActivation::activationCheck(this);
 		

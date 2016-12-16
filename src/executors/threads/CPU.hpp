@@ -1,6 +1,9 @@
 #ifndef EXECUTORS_THREADS_CPU_HPP
 #define EXECUTORS_THREADS_CPU_HPP
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 
 #include "CPUDependencyData.hpp"
 
@@ -12,7 +15,9 @@
 #include <cassert>
 #include <deque>
 
+#include <unistd.h>
 #include <pthread.h>
+#include <sys/types.h>
 
 
 class WorkerThread;
@@ -65,10 +70,10 @@ struct CPU: public CPUPlace {
 	{
 	}
 	
-	inline void bindThread(pthread_t internalPThread)
+	inline void bindThread(pid_t tid)
 	{
-		int rc = pthread_setaffinity_np(internalPThread, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
-		FatalErrorHandler::handle(rc, " when changing affinity of pthread ", internalPThread, " to CPU ", _systemCPUId);
+		int rc = sched_setaffinity(tid, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
+		FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", tid, " to CPU ", _systemCPUId);
 	}
 
     inline void initializeIfNeeded() 

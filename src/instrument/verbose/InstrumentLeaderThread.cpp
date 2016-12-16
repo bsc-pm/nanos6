@@ -11,6 +11,9 @@
 #include <mutex>
 #include <vector>
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
 
 using namespace Instrument::Verbose;
 
@@ -85,21 +88,41 @@ namespace Instrument {
 		}
 		
 		// Dump the log and leave the entries ready to be reused
+#ifndef __ANDROID__
 		assert(_output != nullptr);
+#endif
 		if (_useTimestamps) {
 			// Dump the log from the vector, which is already sorted by timestamp
 			for (LogEntry *logEntry : entries) {
 				assert(logEntry != nullptr);
 				
+#ifdef __ANDROID__
+				if (_output == nullptr) {
+					__android_log_print(ANDROID_LOG_DEBUG, "Nanos6", "%lu.%09lu %s\n",
+										logEntry->_timestamp.tv_sec, logEntry->_timestamp.tv_nsec,
+										logEntry->_contents.str().c_str());
+				} else {
+#endif
 				(*_output) << logEntry->_timestamp.tv_sec << "." << std::setw(9) << std::setfill('0') << logEntry->_timestamp.tv_nsec << std::setw(0) << std::setfill(' ');
 				(*_output) << " " << logEntry->_contents.str() << std::endl;
+#ifdef __ANDROID__
+				}
+#endif
 				logEntry->_contents.str("");
 			}
 		} else {
 			// Dump the (unsorted) vector in reverse order, which is the actual order of the log creation
 			for (auto it = entries.rbegin(); it != entries.rend(); it++) {
 				LogEntry *logEntry = *it;
+#ifdef __ANDROID__
+				if (_output == nullptr) {
+					__android_log_print(ANDROID_LOG_DEBUG, "Nanos6", "%s\n", logEntry->_contents.str().c_str());
+				} else {
+#endif
 				(*_output) << logEntry->_contents.str() << std::endl;
+#ifdef __ANDROID__
+				}
+#endif
 				logEntry->_contents.str("");
 			}
 		}

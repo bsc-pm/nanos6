@@ -19,6 +19,8 @@ class Task;
 
 
 struct TaskDataAccesses {
+	typedef SpinLock spinlock_t;
+	
 	typedef IntrusiveLinearRegionMap<
 		DataAccess,
 		boost::intrusive::function_hook< TaskDataAccessLinkingArtifacts >
@@ -40,7 +42,7 @@ struct TaskDataAccesses {
 	typedef std::bitset<TOTAL_FLAG_BITS> flags_t;
 #endif
 	
-	SpinLock _lock;
+	spinlock_t _lock;
 	accesses_t _accesses;
 	access_fragments_t _accessFragments;
 	subaccess_bottom_map_t _subaccessBottomMap;

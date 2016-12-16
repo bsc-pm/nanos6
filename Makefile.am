@@ -84,12 +84,16 @@ common_sources = \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
+	src/lowlevel/cxx/SpinLockImplementation.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/lowlevel/RWSpinLock.hpp \
+	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
+	src/lowlevel/TicketSpinLock.hpp \
 	src/memory/AddressSpace.hpp \
 	src/memory/Globals.hpp \
 	src/memory/directory/Directory.hpp \
@@ -108,6 +112,8 @@ common_sources = \
 	src/memory/cache/NUMACache.hpp \
 	src/memory/cache/NUMACache.cpp \
 	src/scheduling/DefaultScheduler.hpp \
+	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/FIFOScheduler.cpp \
 	src/scheduling/FIFOScheduler.hpp \
 	src/scheduling/ImmediateSuccessorScheduler.cpp \
@@ -160,6 +166,9 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
+	src/dependencies/discrete/RootDataAccessSequence.hpp \
+	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifactsImplementation.hpp \
 	src/dependencies/discrete/TaskDataAccesses.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
@@ -417,7 +426,7 @@ libnanos6_graph_debug_la_SOURCES = $(common_sources) $(instrument_graph_sources)
 libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS)
-libnanos6_profile_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
+libnanos6_profile_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
 libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
 
@@ -429,12 +438,12 @@ libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
 libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
 libnanos6_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_verbose_la_SOURCES = $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
-libnanos6_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+libnanos6_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 
 libnanos6_verbose_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
 libnanos6_verbose_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_verbose_debug_la_SOURCES = $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
-libnanos6_verbose_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+libnanos6_verbose_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 
 libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)

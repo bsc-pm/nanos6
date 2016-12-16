@@ -1,8 +1,14 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <cassert>
 #include <list>
 
 #include <pthread.h>
 #include <unistd.h>
+
+#include <sys/syscall.h>
 
 #include "CPUActivation.hpp"
 #include "ThreadManager.hpp"
@@ -34,7 +40,7 @@ void ThreadManager::preinitialize()
 	_shutdownThreads = 0;
 	_mainShutdownControllerThread = nullptr;
 	
-	int rc = pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &_processCPUMask);
+	int rc = sched_getaffinity(syscall(SYS_gettid), sizeof(cpu_set_t), &_processCPUMask);
 	FatalErrorHandler::handle(rc, " when retrieving the affinity of the current pthread ", pthread_self());
 	
     std::vector<ComputePlace *> cpus = HardwareInfo::getComputeNodes();
@@ -150,7 +156,7 @@ void ThreadManager::shutdown()
 				// Migrate the thread if necessary
 				idleThread->_cpuToBeResumedOn = cpu;
 				if (idleThread->_cpu != cpu) {
-					cpu->bindThread(idleThread->_pthread);
+					cpu->bindThread(idleThread->_tid);
 				}
 				
 				idleThread->signalShutdown();
@@ -218,7 +224,7 @@ void ThreadManager::threadShutdownSequence(WorkerThread *currentThread)
 				assert(next->_cpuToBeResumedOn == nullptr);
 				next->_cpuToBeResumedOn = cpu;
 				if (next->_cpu != cpu) {
-					cpu->bindThread(next->_pthread);
+					cpu->bindThread(next->_tid);
 				}
 				
 				// Resume the thread

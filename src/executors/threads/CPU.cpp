@@ -14,8 +14,5 @@ CPU::CPU(size_t systemCPUId, size_t virtualCPUId)
 	
 	int rc = pthread_attr_init(&_pthreadAttr);
 	FatalErrorHandler::handle(rc, " in call to pthread_attr_init");
-	
-	rc = pthread_attr_setaffinity_np(&_pthreadAttr, sizeof(cpu_set_t), &_cpuMask);
-	FatalErrorHandler::handle(rc, " when setting the affinity of a pthread in pthread_attr to ", systemCPUId);
 }
 

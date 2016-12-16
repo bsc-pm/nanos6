@@ -1,4 +1,5 @@
 #include "DefaultScheduler.hpp"
+#include "FIFOImmediateSuccessorWithPollingScheduler.hpp"
 #include "FIFOScheduler.hpp"
 #include "ImmediateSuccessorScheduler.hpp"
 #include "ImmediateSuccessorWithPollingScheduler.hpp"
@@ -26,6 +27,8 @@ void Scheduler::initialize()
 		_scheduler = new ImmediateSuccessorScheduler();
 	} else if (schedulerName.getValue() == "iswp") {
 		_scheduler = new ImmediateSuccessorWithPollingScheduler();
+	} else if (schedulerName.getValue() == "fifoiswp") {
+		_scheduler = new FIFOImmediateSuccessorWithPollingScheduler();
 	} else {
 		std::cerr << "Warning: invalid scheduler name '" << schedulerName.getValue() << "', using default instead." << std::endl;
 		_scheduler = new DefaultScheduler();

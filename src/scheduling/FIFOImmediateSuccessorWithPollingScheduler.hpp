@@ -1,33 +1,39 @@
-#ifndef IMMEDIATE_SUCCESSOR_SCHEDULER_HPP
-#define IMMEDIATE_SUCCESSOR_SCHEDULER_HPP
+#ifndef FIFO_IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
+#define FIFO_IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
 
 
+#include <atomic>
 #include <deque>
 #include <vector>
 
 #include "SchedulerInterface.hpp"
-#include "lowlevel/SpinLock.hpp"
+#include "lowlevel/TicketSpinLock.hpp"
 #include "executors/threads/CPU.hpp"
 
 
 class Task;
 
 
-class ImmediateSuccessorScheduler: public SchedulerInterface {
-	SpinLock _globalLock;
+class FIFOImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
+	typedef TicketSpinLock<> spinlock_t;
+	
+	spinlock_t _globalLock;
 	
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
 	std::deque<CPU *> _idleCPUs;
 	
+	std::atomic<std::atomic<Task *> *> _pollingSlot;
+	
+	
 	inline CPU *getIdleCPU();
 	inline Task *getReplacementTask(CPU *hardwarePlace);
 	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
-	ImmediateSuccessorScheduler();
-	~ImmediateSuccessorScheduler();
+	FIFOImmediateSuccessorWithPollingScheduler();
+	~FIFOImmediateSuccessorWithPollingScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
 	
@@ -38,8 +44,11 @@ public:
 	ComputePlace *getIdleComputePlace(bool force=false);
 	
 	void disableComputePlace(ComputePlace *hardwarePlace);
+	
+	bool requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	bool releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 };
 
 
-#endif // IMMEDIATE_SUCCESSOR_SCHEDULER_HPP
+#endif // FIFO_IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
 

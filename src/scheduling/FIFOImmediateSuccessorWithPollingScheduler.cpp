@@ -1,4 +1,4 @@
-#include "ImmediateSuccessorWithPollingScheduler.hpp"
+#include "FIFOImmediateSuccessorWithPollingScheduler.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
@@ -9,17 +9,17 @@
 #include <mutex>
 
 
-ImmediateSuccessorWithPollingScheduler::ImmediateSuccessorWithPollingScheduler()
+FIFOImmediateSuccessorWithPollingScheduler::FIFOImmediateSuccessorWithPollingScheduler()
 	: _pollingSlot(nullptr)
 {
 }
 
-ImmediateSuccessorWithPollingScheduler::~ImmediateSuccessorWithPollingScheduler()
+FIFOImmediateSuccessorWithPollingScheduler::~FIFOImmediateSuccessorWithPollingScheduler()
 {
 }
 
 
-Task *ImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute__((unused)) CPU *hardwarePlace)
+Task *FIFOImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute__((unused)) CPU *hardwarePlace)
 {
 	if (!_unblockedTasks.empty()) {
 		Task *replacementTask = _unblockedTasks.front();
@@ -34,13 +34,13 @@ Task *ImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute__((
 }
 
 
-void ImmediateSuccessorWithPollingScheduler::cpuBecomesIdle(CPU *cpu)
+void FIFOImmediateSuccessorWithPollingScheduler::cpuBecomesIdle(CPU *cpu)
 {
 	_idleCPUs.push_front(cpu);
 }
 
 
-CPU *ImmediateSuccessorWithPollingScheduler::getIdleCPU()
+CPU *FIFOImmediateSuccessorWithPollingScheduler::getIdleCPU()
 {
 	if (!_idleCPUs.empty()) {
 		CPU *idleCPU = _idleCPUs.front();
@@ -53,7 +53,7 @@ CPU *ImmediateSuccessorWithPollingScheduler::getIdleCPU()
 }
 
 
-ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
+ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (hardwarePlace != nullptr) {
@@ -104,14 +104,14 @@ ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, 
 	
 	// 4. At this point the polling slot is empty, so send the task to the queue
 	assert(_pollingSlot.load() == nullptr);
-	_readyTasks.push_front(task);
+	_readyTasks.push_back(task);
 	
 	// Attempt to get a CPU to resume the task
 	return getIdleCPU();
 }
 
 
-void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *hardwarePlace)
+void FIFOImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *hardwarePlace)
 {
 	// 1. Attempt to send the task to a polling thread without locking
 	{
@@ -152,11 +152,11 @@ void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTa
 	
 	// 3. At this point the polling slot is empty, so send the task to the queue
 	assert(_pollingSlot.load() == nullptr);
-	_unblockedTasks.push_front(unblockedTask);
+	_unblockedTasks.push_back(unblockedTask);
 }
 
 
-Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *FIFOImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
@@ -193,7 +193,7 @@ Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *hardwar
 }
 
 
-ComputePlace *ImmediateSuccessorWithPollingScheduler::getIdleComputePlace(bool force)
+ComputePlace *FIFOImmediateSuccessorWithPollingScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
@@ -204,7 +204,7 @@ ComputePlace *ImmediateSuccessorWithPollingScheduler::getIdleComputePlace(bool f
 }
 
 
-void ImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlace *hardwarePlace)
+void FIFOImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlace *hardwarePlace)
 {
 	if (hardwarePlace->_schedulerData != nullptr) {
 		Task *task = (Task *) hardwarePlace->_schedulerData;
@@ -216,7 +216,7 @@ void ImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlace *h
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
 {
 	Task *task = nullptr;
 	
@@ -273,7 +273,7 @@ bool ImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *hardwa
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
 {
 	std::atomic<Task *> *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {

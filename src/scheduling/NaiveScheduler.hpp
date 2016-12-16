@@ -37,8 +37,6 @@ public:
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);
 	
-	bool checkIfIdleAndGrantReactivation(ComputePlace *hardwarePlace);
-	
 	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);

@@ -1136,11 +1136,19 @@ namespace Instrument {
 			gettimeofday(&tv, nullptr);
 			
 			std::ostringstream oss;
-			oss << "graph-" << gethostid() << "-" << getpid() << "-" << tv.tv_sec;
+			oss << "graph-"
+#if HAVE_GETHOSTID
+				<< gethostid() << "-"
+#endif
+				<< getpid() << "-" << tv.tv_sec;
 			filenameBase = oss.str();
 			
 			std::ostringstream oss2;
-			oss2 << "log-" << gethostid() << "-" << getpid() << "-" << tv.tv_sec << ".txt";
+			oss2 << "log-"
+#if HAVE_GETHOSTID
+				<< gethostid() << "-"
+#endif
+				<< getpid() << "-" << tv.tv_sec << ".txt";
 			logName = oss2.str();
 		}
 		
