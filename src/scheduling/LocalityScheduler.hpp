@@ -1,5 +1,5 @@
-#ifndef NAIVE_SCHEDULER_HPP
-#define NAIVE_SCHEDULER_HPP
+#ifndef LOCALITY_SCHEDULER_HPP
+#define LOCALITY_SCHEDULER_HPP
 
 
 #include <deque>
@@ -13,17 +13,21 @@
 class Task;
 
 
-class NaiveScheduler: public SchedulerInterface {
+class LocalityScheduler: public SchedulerInterface {
 	SpinLock _globalLock;
 	
+    //! Tasks with logical dependences satisfied but data is not in the remote host.
+	//std::deque<Task *> _preReadyTasks;
+    //! Tasks ready to be executed.
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
+    inline CPU *getLocalityCPU(Task * task);
 	inline Task *getReplacementTask(CPU *hardwarePlace);
 	
 public:
-	NaiveScheduler();
-	~NaiveScheduler();
+	LocalityScheduler();
+	~LocalityScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
 	
@@ -35,5 +39,5 @@ public:
 };
 
 
-#endif // NAIVE_SCHEDULER_HPP
+#endif // LOCALITY_SCHEDULER_HPP
 

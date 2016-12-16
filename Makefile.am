@@ -122,6 +122,8 @@ common_sources = \
 	src/scheduling/ImmediateSuccessorScheduler.hpp \
 	src/scheduling/ImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/ImmediateSuccessorWithPollingScheduler.hpp \
+	src/scheduling/LocalityScheduler.cpp \
+	src/scheduling/LocalityScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
 	src/scheduling/Scheduler.cpp \
