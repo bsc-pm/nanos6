@@ -22,12 +22,8 @@ class NaiveScheduler: public SchedulerInterface {
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
-	std::deque<CPU *> _idleCPUs;
-	
-	inline CPU *getIdleCPU();
     inline CPU *getLocalityCPU(Task * task);
 	inline Task *getReplacementTask(CPU *hardwarePlace);
-	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	NaiveScheduler();

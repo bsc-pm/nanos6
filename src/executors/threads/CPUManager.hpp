@@ -54,6 +54,15 @@ public:
 	
 	//! \brief get a reference to the list of CPUs
 	static inline std::vector<CPU *> const &getCPUListReference();
+
+	//! \brief mark a CPU as idle
+	static inline void cpuBecomesIdle(CPU *cpu);
+
+	//! \brief get an idle CPU
+	static inline CPU *getIdleCPU();
+
+	//! \brief get an idle CPU given an ideal cache
+	static inline CPU *getLocalityIdleCPU(int cache);
 };
 
 
@@ -82,6 +91,49 @@ inline cpu_set_t const &CPUManager::getProcessCPUMaskReference()
 inline std::vector<CPU *> const &CPUManager::getCPUListReference()
 {
 	return _cpus;
+}
+
+
+inline void CPUManager::cpuBecomesIdle(CPU *cpu)
+{
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+#ifndef NDEBUG
+	assert(_idleCPUs[cpu->_systemCPUId] == false);
+#endif
+	_idleCPUs[cpu->_systemCPUId] = true;
+}
+
+
+inline CPU *CPUManager::getIdleCPU()
+{
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	if (idleCPU != boost::dynamic_bitset<>::npos) {
+		_idleCPUs[idleCPU] = false;
+		return _cpus[idleCPU];
+	} else {
+		return nullptr;
+	}
+}
+
+
+inline CPU *CPUManager::getLocalityIdleCPU(int cache)
+{
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	
+	//! Iterate over all the idle CPUs until finding one associated with the given cache.
+	while (idleCPU != boost::dynamic_bitset<>::npos) {
+		if(_cpus[idleCPU]->getMemoryPlace(cache) != nullptr) {
+			//! Idle CPU with access to the best cache found
+			_idleCPUs[idleCPU] = false;
+			return _cpus[idleCPU];
+		}
+		
+		idleCPU = _idleCPUs.find_next(idleCPU);
+	}
+	
+	return nullptr;
 }
 
 #endif // THREAD_MANAGER_HPP
