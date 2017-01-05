@@ -9,7 +9,7 @@
 #include <mutex>
 
 
-FIFOScheduler::FIFOScheduler()
+FIFOScheduler::FIFOScheduler() : SchedulerInterface()
 {
 }
 

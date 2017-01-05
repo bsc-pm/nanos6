@@ -11,6 +11,13 @@ class Task;
 
 //! \brief Interface that schedulers must implement
 class SchedulerInterface {
+protected:
+	bool _enabledCopies;
+	
+	SchedulerInterface(bool enabledCopies = false) : _enabledCopies(enabledCopies)
+	{
+	}
+	
 public:
 	enum ReadyTaskHint {
 		NO_HINT,
@@ -88,6 +95,11 @@ public:
 	//! This method has a default implementation that matches the default implementation of requestPolling.
 	virtual bool releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 	
+	//! \brief Check if this scheduler has copies enabled or not
+	inline bool hasEnabledCopies()
+	{
+		return _enabledCopies;
+	}
 };
 
 

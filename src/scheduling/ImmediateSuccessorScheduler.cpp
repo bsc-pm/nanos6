@@ -9,7 +9,7 @@
 #include <mutex>
 
 
-ImmediateSuccessorScheduler::ImmediateSuccessorScheduler()
+ImmediateSuccessorScheduler::ImmediateSuccessorScheduler() : SchedulerInterface()
 {
 }
 

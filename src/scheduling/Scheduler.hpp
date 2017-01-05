@@ -118,6 +118,11 @@ public:
 		return _scheduler->releasePolling(hardwarePlace, pollingSlot);
 	}
 	
+	//! \brief Check if this scheduler has copies enabled or not
+	static inline bool hasEnabledCopies()
+	{
+		return _scheduler->hasEnabledCopies();
+	}
 };
 
 

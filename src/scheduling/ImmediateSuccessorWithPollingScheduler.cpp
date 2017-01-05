@@ -10,7 +10,7 @@
 
 
 ImmediateSuccessorWithPollingScheduler::ImmediateSuccessorWithPollingScheduler()
-	: _pollingSlot(nullptr)
+	: SchedulerInterface(), _pollingSlot(nullptr)
 {
 }
 

@@ -75,6 +75,8 @@ void nanos_submit_task(void *taskHandle)
 	}
 	
 	Instrument::createdTask(task, task->getInstrumentationTaskId());
+
+	task->setEnabledCopies(Scheduler::hasEnabledCopies());
 	
 	bool ready = true;
 	nanos_task_info *taskInfo = task->getTaskInfo();

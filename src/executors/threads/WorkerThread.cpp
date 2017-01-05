@@ -102,7 +102,7 @@ void *WorkerThread::body()
 
 void WorkerThread::handleTask()
 {
-    if(_task->hasPendingCopies()) {
+    if(_task->hasEnabledCopies() && _task->hasPendingCopies()) {
         // task is preReady
         //! Do some data transferences if any
         float * cachesLoad = nullptr;

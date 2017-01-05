@@ -13,7 +13,7 @@
 #include <mutex>
 
 
-LocalityScheduler::LocalityScheduler()
+LocalityScheduler::LocalityScheduler() : SchedulerInterface(true)
 {
 }
 

@@ -67,6 +67,7 @@ private:
 	void *_schedulerInfo;
     
     //! Cache info
+	bool _enabledCopies;
     std::size_t _taskDataSize;
     std::size_t _cachedBytes;
     GenericCache * _cache;
@@ -88,6 +89,7 @@ public:
 		_flags(flags),
 		_instrumentationTaskId(instrumentationTaskId),
 		_schedulerInfo(nullptr),
+		_enabledCopies(false),
         _taskDataSize(0),
         _cachedBytes(0),
         _cache(nullptr)
@@ -355,7 +357,16 @@ public:
     inline GenericCache * getCache() const {
         return _cache;
     }
+	
+	inline bool hasEnabledCopies()
+	{
+		return _enabledCopies;
+	}
 
+	inline void setEnabledCopies(bool enabled)
+	{
+		_enabledCopies = enabled;
+	}
 };
 
 

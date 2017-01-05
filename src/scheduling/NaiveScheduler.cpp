@@ -10,7 +10,7 @@
 #include <mutex>
 
 
-NaiveScheduler::NaiveScheduler()
+NaiveScheduler::NaiveScheduler() : SchedulerInterface()
 {
 }
 

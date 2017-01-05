@@ -10,7 +10,7 @@
 
 
 FIFOImmediateSuccessorWithPollingScheduler::FIFOImmediateSuccessorWithPollingScheduler()
-	: _pollingSlot(nullptr)
+	: SchedulerInterface(), _pollingSlot(nullptr)
 {
 }
 
