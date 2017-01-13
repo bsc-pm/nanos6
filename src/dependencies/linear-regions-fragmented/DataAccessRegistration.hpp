@@ -1252,9 +1252,13 @@ private:
 		assert(dataAccess != nullptr);
 		
 		assert(dataAccess->_originator == finishedTask);
-		assert(!dataAccess->complete());
-		assert(!dataAccess->hasBeenDiscounted());
 		assert(!range.empty());
+		
+		// The access may already have been released through the "release" directive
+		if (dataAccess->complete()) {
+			return true;
+		}
+		assert(!dataAccess->hasBeenDiscounted());
 		
 		TaskDataAccesses &accessStructures = finishedTask->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
@@ -1288,8 +1292,8 @@ private:
 		}
 		
 		// Fragment if necessary
-		if (dataAccess->_range != range) {
-			assert(parentIsLocked);
+		if (!dataAccess->_range.fullyContainedIn(range)) {
+			assert(!dataAccess->isInBottomMap() || parentIsLocked);
 			dataAccess = fragmentAccess(
 				finishedTask->getInstrumentationTaskId(),
 				dataAccess, range,
@@ -1298,7 +1302,7 @@ private:
 			);
 			assert(dataAccess != nullptr);
 		}
-		assert(dataAccess->_range == range);
+		range = dataAccess->_range;
 		
 		assert(!dataAccess->hasForcedRemoval() || (dataAccess->_next == nullptr));
 		
