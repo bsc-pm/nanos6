@@ -46,43 +46,4 @@ TaskDataAccessLinkingArtifacts::to_value_ptr(TaskDataAccessLinkingArtifacts::con
 }
 
 
-inline constexpr TaskDataSubaccessBottomMapLinkingArtifacts::hook_ptr
-TaskDataSubaccessBottomMapLinkingArtifacts::to_hook_ptr (TaskDataSubaccessBottomMapLinkingArtifacts::value_type &value)
-{
-	return &value._taskDataAccessLinks._subaccessBottomMapHook;
-}
-
-inline constexpr TaskDataSubaccessBottomMapLinkingArtifacts::const_hook_ptr
-TaskDataSubaccessBottomMapLinkingArtifacts::to_hook_ptr(const TaskDataSubaccessBottomMapLinkingArtifacts::value_type &value)
-{
-	return &value._taskDataAccessLinks._subaccessBottomMapHook;
-}
-
-inline TaskDataSubaccessBottomMapLinkingArtifacts::pointer
-TaskDataSubaccessBottomMapLinkingArtifacts::to_value_ptr(TaskDataSubaccessBottomMapLinkingArtifacts::hook_ptr n)
-{
-	return (TaskDataSubaccessBottomMapLinkingArtifacts::pointer)
-		boost::intrusive::get_parent_from_member<DataAccessBase>(
-			boost::intrusive::get_parent_from_member<TaskDataAccessHooks>(
-				n,
-				&TaskDataAccessHooks::_subaccessBottomMapHook
-			),
-			&DataAccessBase::_taskDataAccessLinks
-		);
-}
-
-inline TaskDataSubaccessBottomMapLinkingArtifacts::const_pointer
-TaskDataSubaccessBottomMapLinkingArtifacts::to_value_ptr(TaskDataSubaccessBottomMapLinkingArtifacts::const_hook_ptr n)
-{
-	return (TaskDataSubaccessBottomMapLinkingArtifacts::const_pointer)
-		boost::intrusive::get_parent_from_member<DataAccessBase>(
-			boost::intrusive::get_parent_from_member<TaskDataAccessHooks>(
-				n,
-				&TaskDataAccessHooks::_subaccessBottomMapHook
-			),
-			&DataAccessBase::_taskDataAccessLinks
-		);
-}
-
-
 #endif // TASK_DATA_ACCESS_LINKING_ARTIFACTS_IMPLEMENTATION_HPP

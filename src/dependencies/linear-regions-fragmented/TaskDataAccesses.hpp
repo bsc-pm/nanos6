@@ -8,6 +8,7 @@
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 
+#include "BottomMapEntry.hpp"
 #include "IntrusiveLinearRegionMap.hpp"
 #include "IntrusiveLinearRegionMapImplementation.hpp"
 #include "TaskDataAccessLinkingArtifacts.hpp"
@@ -30,8 +31,8 @@ struct TaskDataAccesses {
 		boost::intrusive::function_hook< TaskDataAccessLinkingArtifacts >
 	> access_fragments_t;
 	typedef IntrusiveLinearRegionMap<
-		DataAccess,
-		boost::intrusive::function_hook< TaskDataSubaccessBottomMapLinkingArtifacts >
+		BottomMapEntry,
+		boost::intrusive::function_hook< BottomMapEntryLinkingArtifacts >
 	> subaccess_bottom_map_t;
 	
 #ifndef NDEBUG
@@ -82,12 +83,10 @@ struct TaskDataAccesses {
 
 
 typedef typename TaskDataAccessLinkingArtifacts::hook_type TaskDataAccessesHook;
-typedef typename TaskDataSubaccessBottomMapLinkingArtifacts::hook_type TaskDataSubaccessBottomMapHook;
 
 
 struct TaskDataAccessHooks {
 	TaskDataAccessesHook _accessesHook;
-	TaskDataSubaccessBottomMapHook _subaccessBottomMapHook;
 };
 
 
