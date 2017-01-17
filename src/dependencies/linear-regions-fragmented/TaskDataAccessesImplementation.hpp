@@ -5,6 +5,7 @@
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 
+#include "BottomMapEntry.hpp"
 #include "DataAccess.hpp"
 #include "TaskDataAccesses.hpp"
 #include "tasks/Task.hpp"
@@ -27,7 +28,11 @@ inline TaskDataAccesses::~TaskDataAccesses()
 		}
 	);
 	
-	_subaccessBottomMap.clear();
+	_subaccessBottomMap.deleteAll(
+		[&](BottomMapEntry *bottomMapEntry) {
+			delete bottomMapEntry;
+		}
+	);
 	
 	_accessFragments.deleteAll(
 		[&](DataAccess *fragment) {

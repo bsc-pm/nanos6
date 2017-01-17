@@ -169,6 +169,7 @@ linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) $(
 	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
+	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
