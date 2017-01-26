@@ -32,9 +32,6 @@ namespace Instrument {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
-		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
 			CPU *cpu = currentThread->getHardwarePlace();
@@ -100,9 +97,6 @@ namespace Instrument {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
-		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
 			CPU *cpu = currentThread->getHardwarePlace();
@@ -145,9 +139,6 @@ namespace Instrument {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
-		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
 			CPU *cpu = currentThread->getHardwarePlace();
@@ -182,9 +173,6 @@ namespace Instrument {
 		if (currentThread != nullptr) {
 			threadId = currentThread->getInstrumentationId();
 		}
-		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
 		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
@@ -225,9 +213,6 @@ namespace Instrument {
 		if (currentThread != nullptr) {
 			threadId = currentThread->getInstrumentationId();
 		}
-		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
 		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
@@ -306,9 +291,6 @@ namespace Instrument {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
-		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
 			CPU *cpu = currentThread->getHardwarePlace();
@@ -375,9 +357,6 @@ namespace Instrument {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
-		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
 			CPU *cpu = currentThread->getHardwarePlace();
@@ -411,9 +390,6 @@ namespace Instrument {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
-		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
 			CPU *cpu = currentThread->getHardwarePlace();
@@ -445,9 +421,6 @@ namespace Instrument {
 		if (currentThread != nullptr) {
 			threadId = currentThread->getInstrumentationId();
 		}
-		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
 		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
@@ -482,9 +455,6 @@ namespace Instrument {
 		if (currentThread != nullptr) {
 			threadId = currentThread->getInstrumentationId();
 		}
-		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
 		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
@@ -529,9 +499,6 @@ namespace Instrument {
 			threadId = currentThread->getInstrumentationId();
 		}
 		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
-		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
 			CPU *cpu = currentThread->getHardwarePlace();
@@ -566,9 +533,6 @@ namespace Instrument {
 		if (currentThread != nullptr) {
 			threadId = currentThread->getInstrumentationId();
 		}
-		
-		// Get an ID for the task
-		task_id_t taskId = _nextTaskId++;
 		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
