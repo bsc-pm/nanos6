@@ -7,6 +7,11 @@
 #include <cstddef>
 
 
+#ifndef SPIN_LOCK_READS_BETWEEN_CMPXCHG
+#define SPIN_LOCK_READS_BETWEEN_CMPXCHG 1000
+#endif
+
+
 #ifndef NDEBUG
 class WorkerThread;
 namespace ompss_debug {
@@ -49,8 +54,14 @@ public:
 	inline void lock()
 	{
 		TICKET_T ticket = _nextFreeTicket++;
+		
 		while (_currentTicket.load(std::memory_order_acquire) != ticket) {
-			// NOTE: there could be here some architecture-specific code to slow down the thread
+			int spinsLeft = SPIN_LOCK_READS_BETWEEN_CMPXCHG;
+			TICKET_T current;
+			do {
+				current = _currentTicket.load(std::memory_order_relaxed);
+				spinsLeft--;
+			} while ((current != ticket) && (spinsLeft > 0));
 		}
 		
 		assertUnowned();

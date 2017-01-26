@@ -77,15 +77,17 @@ common_sources = \
 	src/instrument/api/InstrumentUserMutex.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
-	src/lowlevel/TokenizedEnvironmentVariable.hpp \
-	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/lowlevel/PaddedSpinLock.hpp \
+	src/lowlevel/PaddedTicketSpinLock.hpp \
 	src/lowlevel/RWSpinLock.hpp \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
+	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
