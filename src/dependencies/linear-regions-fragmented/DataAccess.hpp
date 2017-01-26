@@ -64,7 +64,7 @@ struct DataAccess : public DataAccessBase {
 		assert(originator != 0);
 		
 		if (fragment) {
-			_status[3] = true;
+			_status[FRAGMENT_BIT] = true;
 		}
 	}
 	
