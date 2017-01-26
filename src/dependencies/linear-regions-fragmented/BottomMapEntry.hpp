@@ -38,9 +38,10 @@ struct BottomMapEntry {
 	
 	DataAccessRange _range;
 	Task *_task;
+	bool _local;
 	
-	BottomMapEntry(DataAccessRange range, Task *task)
-		: _links(), _range(range), _task(task)
+	BottomMapEntry(DataAccessRange range, Task *task, bool local)
+		: _links(), _range(range), _task(task), _local(local)
 	{
 	}
 	

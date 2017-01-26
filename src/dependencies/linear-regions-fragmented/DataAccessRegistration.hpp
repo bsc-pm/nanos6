@@ -138,7 +138,7 @@ private:
 			position, range,
 			false,
 			[&](BottomMapEntry const &toBeDuplicated) -> BottomMapEntry * {
-				return new BottomMapEntry(DataAccessRange(), toBeDuplicated._task);
+				return new BottomMapEntry(DataAccessRange(), toBeDuplicated._task, toBeDuplicated._local);
 			},
 			[&](__attribute__((unused)) BottomMapEntry *fragment, __attribute__((unused)) BottomMapEntry *originalBottomMapEntry) {
 			}
@@ -691,6 +691,8 @@ private:
 							assert(fragment->isInBottomMap());
 							assert(!fragment->hasBeenDiscounted());
 							
+							assert(!fragment->hasForcedRemoval());
+							
 							fragment = fragmentAccess(
 								triggererInstrumentationTaskId,
 								fragment, bottomMapEntry->_range, accessStructures,
@@ -801,11 +803,13 @@ private:
 		Instrument::task_id_t triggererInstrumentationTaskId,
 		TaskDataAccesses::accesses_t::iterator accessPosition,
 		TaskDataAccesses &accessStructures,
-		DataAccessRange subrange, bool createSubrangeBottomMapEntry
+		DataAccessRange subrange,
+		bool createSubrangeBottomMapEntry, /* Out */ BottomMapEntry *&bottomMapEntry
 	) {
 		DataAccess *dataAccess = &(*accessPosition);
 		assert(dataAccess != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
+		assert(bottomMapEntry == nullptr);
 		
 		assert(!accessStructures._accessFragments.contains(dataAccess->_range));
 		
@@ -834,13 +838,13 @@ private:
 		dataAccess->hasSubaccesses() = true;
 		
 		if (createSubrangeBottomMapEntry) {
-			BottomMapEntry *bottomMapEntry = new BottomMapEntry(dataAccess->_range, dataAccess->_originator);
+			bottomMapEntry = new BottomMapEntry(dataAccess->_range, dataAccess->_originator, /* Not local */ false);
 			accessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 		} else if (subrange != dataAccess->_range) {
 			dataAccess->_range.processIntersectingFragments(
 				subrange,
 				[&](DataAccessRange excludedSubrange) {
-					BottomMapEntry *bottomMapEntry = new BottomMapEntry(excludedSubrange, dataAccess->_originator);
+					bottomMapEntry = new BottomMapEntry(excludedSubrange, dataAccess->_originator, /* Not local */ false);
 					accessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 				},
 				[&](__attribute__((unused)) DataAccessRange intersection) {
@@ -898,7 +902,7 @@ private:
 							assert(previous->isInBottomMap());
 							assert(!previous->hasBeenDiscounted());
 							
-							return matchingProcessor(previous);
+							return matchingProcessor(previous, bottomMapEntry);
 						}
 					);
 					
@@ -916,7 +920,7 @@ private:
 							assert(previous->isInBottomMap());
 							assert(!previous->hasBeenDiscounted());
 							
-							return matchingProcessor(previous);
+							return matchingProcessor(previous, bottomMapEntry);
 						}
 					);
 				}
@@ -933,14 +937,16 @@ private:
 				parentAccessStructures._accesses.processIntersectingAndMissing(
 					missingRange,
 					[&](TaskDataAccesses::accesses_t::iterator superaccessPosition) -> bool {
+						BottomMapEntry *bottomMapEntry = nullptr;
+						
 						DataAccess *previous = createInitialFragment(
 							task->getInstrumentationTaskId(),
 							superaccessPosition, parentAccessStructures,
-							missingRange, !removeBottomMapEntry
+							missingRange, !removeBottomMapEntry, /* Out */ bottomMapEntry
 						);
 						assert(previous != nullptr);
 						
-						return matchingProcessor(previous);
+						return matchingProcessor(previous, bottomMapEntry);
 					},
 					[&](DataAccessRange rangeUncoveredByParent) -> bool {
 						return missingProcessor(rangeUncoveredByParent);
@@ -1199,17 +1205,26 @@ private:
 			task->increasePredecessors();
 		}
 		
+		bool local = false;
+		
 		// Link accesses to their corresponding predecessor
 		foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRange(
 			parent, parentAccessStructures,
 			range, task,
-			[&](DataAccess *previous) -> bool {
+			[&](DataAccess *previous, BottomMapEntry *bottomMapEntry) -> bool {
 				assert(previous != nullptr);
 				assert(previous->isReachable());
 				assert(!previous->hasBeenDiscounted());
 				
 				Task *previousTask = previous->_originator;
 				assert(previousTask != nullptr);
+				
+				if (bottomMapEntry != nullptr) {
+					local = bottomMapEntry->_local;
+				} else {
+					// The first subaccess of a parent access
+					local = false;
+				}
 				
 				TaskDataAccesses &previousAccessStructures = previousTask->getDataAccesses();
 				assert(!previousAccessStructures.hasBeenDeleted());
@@ -1225,6 +1240,9 @@ private:
 			},
 			[&](DataAccessRange missingRange) -> bool {
 				assert(!parentAccessStructures._accesses.contains(missingRange));
+				
+				// Not part of the parent
+				local = true;
 				
 				// Holes in the parent bottom map that are not in the parent accesses become fully satisfied
 				std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock); // Need the lock since an access of data allocated in the parent may partially overlap a previous one
@@ -1263,7 +1281,7 @@ private:
 		);
 		
 		// Add the entry to the bottom map
-		BottomMapEntry *bottomMapEntry = new BottomMapEntry(range, task);
+		BottomMapEntry *bottomMapEntry = new BottomMapEntry(range, task, local);
 		parentAccessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 	}
 	
@@ -1429,7 +1447,8 @@ private:
 				linkBottomMapAccessesToNext(
 					finishedTask->getInstrumentationTaskId(),
 					dataAccess->_originator, accessStructures, dataAccess->_range,
-					dataAccess->_next, /* OUT */ cpuDependencyData
+					dataAccess->_next,
+					/* OUT */ cpuDependencyData
 				);
 			}
 		}
@@ -1440,7 +1459,11 @@ private:
 		dataAccess->complete() = true;
 		
 		if (!dataAccess->hasSubaccesses() && (dataAccess->_next != nullptr) && dataAccess->writeSatisfied()) {
-			createPropagationOperation(dataAccess, dataAccess->_next, /* OUT */ cpuDependencyData);
+			createPropagationOperation(
+				dataAccess,
+				dataAccess->_next,
+				/* OUT */ cpuDependencyData
+			);
 		}
 		
 		// Handle propagation of forced removal of accesses
@@ -1451,7 +1474,7 @@ private:
 				cpuDependencyData, finishedTask->getInstrumentationTaskId()
 			);
 		}
-			
+		
 		// Update the number of non removable accesses of the task
 		if (dataAccess->isRemovable(dataAccess->hasForcedRemoval())) {
 			handleAccessRemoval(
@@ -1590,6 +1613,83 @@ public:
 	}
 	
 	
+	static inline void makeLocalAccessesRemovable(
+		Task *task, TaskDataAccesses &accessStructures,
+		CPUDependencyData &cpuDependencyData
+	) {
+		assert(task != 0);
+		assert(&accessStructures == &task->getDataAccesses());
+		assert(!accessStructures.hasBeenDeleted());
+		assert(accessStructures._lock.isLockedByThisThread());
+		
+		TaskDataAccesses::subaccess_bottom_map_t &bottomMap = accessStructures._subaccessBottomMap;
+		bottomMap.processAll(
+			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator position) -> bool {
+				BottomMapEntry *bottomMapEntry = &(*position);
+				assert(bottomMapEntry != nullptr);
+				
+				if (!bottomMapEntry->_local) {
+					return true;
+				}
+				
+				Task *subtask = bottomMapEntry->_task;
+				assert(subtask != task);
+				
+				TaskDataAccesses &subtaskAccessStructures = subtask->getDataAccesses();
+				assert(!subtaskAccessStructures.hasBeenDeleted());
+				
+				TaskDataAccesses::accesses_t &subaccesses = subtaskAccessStructures._accesses;
+				std::lock_guard<TaskDataAccesses::spinlock_t> subTaskGuard(subtaskAccessStructures._lock);
+				
+				subaccesses.processIntersecting(
+					bottomMapEntry->_range,
+					[&](TaskDataAccesses::accesses_t::iterator position2) -> bool {
+						DataAccess *dataAccess = &(*position2);
+						assert(dataAccess != nullptr);
+						
+						dataAccess = fragmentAccess(
+							task->getInstrumentationTaskId(),
+							dataAccess, bottomMapEntry->_range,
+							subtaskAccessStructures,
+							/* Consider blocking */ true
+						);
+						
+						if (dataAccess->hasForcedRemoval()) {
+							return true;
+						}
+						
+						dataAccess->hasForcedRemoval() = true;
+						
+						// Handle propagation of forced removal of accesses
+						if (dataAccess->hasSubaccesses()) {
+							activateForcedRemovalOfBottomMapAccesses(
+								subtask, subtaskAccessStructures,
+								dataAccess->_range,
+								cpuDependencyData, task->getInstrumentationTaskId()
+							);
+						}
+						
+						// Update the number of non removable accesses of the task
+						if (dataAccess->isRemovable(true)) {
+							assert(!dataAccess->isRemovable(false));
+							
+							handleAccessRemoval(
+								dataAccess, subtaskAccessStructures, subtask,
+								task->getInstrumentationTaskId(), cpuDependencyData
+							);
+						}
+						
+						return true;
+					}
+				);
+				
+				return true;
+			}
+		);
+	}
+	
+	
+	
 	static inline void unregisterTaskDataAccesses(Task *task)
 	{
 		assert(task != 0);
@@ -1633,6 +1733,9 @@ public:
 					return true;
 				}
 			);
+			
+			// Mark local accesses in the bottom map as removable
+			makeLocalAccessesRemovable(task, accessStructures, cpuDependencyData);
 		}
 		
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
