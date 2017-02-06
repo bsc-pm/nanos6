@@ -89,3 +89,6 @@ ComputePlace *NaiveScheduler::getIdleComputePlace(bool force)
 	}
 }
 
+void NaiveScheduler::addReadyQueue(std::size_t node_id) 
+{
+}

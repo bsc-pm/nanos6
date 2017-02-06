@@ -36,6 +36,8 @@ public:
 	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
+
+    void addReadyQueue(std::size_t node_id);
 };
 
 

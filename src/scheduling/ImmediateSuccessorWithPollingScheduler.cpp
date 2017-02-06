@@ -284,3 +284,6 @@ bool ImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *hardwa
 	}
 }
 
+void ImmediateSuccessorWithPollingScheduler::addReadyQueue(std::size_t node_id)
+{
+}

@@ -13,7 +13,9 @@
 #include <mutex>
 
 
-LocalityScheduler::LocalityScheduler() : SchedulerInterface(true)
+//! Disabling copies for a while
+//LocalityScheduler::LocalityScheduler() : SchedulerInterface(true)
+LocalityScheduler::LocalityScheduler() : SchedulerInterface(false)
 {
 }
 
@@ -40,63 +42,88 @@ Task *LocalityScheduler::getReplacementTask(__attribute__((unused)) CPU *hardwar
 CPU *LocalityScheduler::getLocalityCPU(Task * task)
 {
     //! Check if task has already a cache assigned.
-    GenericCache * destCache = task->getCache();
-    CPU *idleCPU = nullptr;
-    if(destCache == nullptr) {
-        //! If no cache assigned, ask directory information about locality in each cache.
-        size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
-        memset(cachesData, 0, MAX_CACHES*sizeof(size_t));
-        Directory::analyze(task->getDataAccesses(), cachesData);
-        int bestCache = 0;
-        int oldBestCache = -1;
-        size_t max = cachesData[0];
-        //! Get the index of the cache with best locality.
-        for(int i=0; i<MAX_CACHES; i++) {
-            if(cachesData[i] > max) {
-                max = cachesData[i];
-                bestCache = i;
-            }
-        }
+    //GenericCache * destCache = task->getCache();
+    //CPU *idleCPU = nullptr;
+    //if(destCache == nullptr) {
+    //    //! If no cache assigned, ask directory information about locality in each cache.
+    //    size_t * cachesData = (size_t *) malloc(MAX_CACHES * sizeof(size_t));
+    //    memset(cachesData, 0, MAX_CACHES*sizeof(size_t));
+    //    Directory::analyze(task->getDataAccesses(), cachesData);
+    //    int bestCache = 0;
+    //    int oldBestCache = -1;
+    //    size_t max = cachesData[0];
+    //    //! Get the index of the cache with best locality.
+    //    for(int i=0; i<MAX_CACHES; i++) {
+    //        if(cachesData[i] > max) {
+    //            max = cachesData[i];
+    //            bestCache = i;
+    //        }
+    //    }
 
-        //! Try to get a CPU which can access to the best cache.
-        while(idleCPU == nullptr) {
-            idleCPU = CPUManager::getLocalityIdleCPU(bestCache);
-            if (idleCPU != nullptr) {
-                destCache = HardwareInfo::getMemoryNode(bestCache)->getCache();
-                task->setCache(destCache);
-                return idleCPU;
-            }
+    //    //! Try to get a CPU which can access to the best cache.
+    //    while(idleCPU == nullptr) {
+    //        idleCPU = CPUManager::getLocalityIdleCPU(bestCache);
+    //        if (idleCPU != nullptr) {
+    //            destCache = HardwareInfo::getMemoryNode(bestCache)->getCache();
+    //            task->setCache(destCache);
+    //            return idleCPU;
+    //        }
 
-            //! If no CPU has been found with access to the best cache, try to find the next best cache until finding a idleCPU 
-            //! that can access the chosen cache.
-            cachesData[bestCache] = 0;
-            max = cachesData[0];
-            oldBestCache = bestCache;
-            bestCache = 0;
-            for(int i=0; i<MAX_CACHES; i++) {
-                if(cachesData[i] > max) {
-                    max = cachesData[i];
-                    bestCache = i;
-                }
-            }
-            if(bestCache == oldBestCache)
-                return nullptr;
-        }
-    }
-    else{
-        int bestCache = task->getCache()->getIndex();
-        return CPUManager::getLocalityIdleCPU(bestCache);
-    }
+    //        //! If no CPU has been found with access to the best cache, try to find the next best cache until finding a idleCPU 
+    //        //! that can access the chosen cache.
+    //        cachesData[bestCache] = 0;
+    //        max = cachesData[0];
+    //        oldBestCache = bestCache;
+    //        bestCache = 0;
+    //        /* The loop can start at 1 because the 0 is done in the "initialization" */
+    //        for(int i=1; i<MAX_CACHES; i++) {
+    //            if(cachesData[i] > max) {
+    //                max = cachesData[i];
+    //                bestCache = i;
+    //            }
+    //        }
+    //        if(bestCache == oldBestCache)
+    //            return nullptr;
+    //    }
+    //}
+    //else{
+    //    int bestCache = task->getCache()->getIndex();
+    //    return CPUManager::getLocalityIdleCPU(bestCache);
+    //}
 
     return nullptr;
 }
 
 ComputePlace * LocalityScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
+    /** ALL THIS WORK CAN BE DONE WITHOUT THE LOCK **/
+
+    /* Given that there must be a ready queue per NUMA node, some 
+       homeNode analysis must be done to know where to enqueue 
+       the task. Directory provides a method for that purpose.
+     */
+    std::vector<double> scores = Directory::computeNUMANodeAffinity(task->getDataAccesses());
+    /* Iterate over the vector (as the vector size shouldn't be so big, iterating over the vector 
+       shouldn't be costly) to choose the biggest score.
+     */
+    double max_score = scores[0];
+    unsigned int best_node = 0;
+    /* The loop can start at 1 because the 0 is done in the "initialization" */
+    for(unsigned int i=1; i<scores.size(); i++) {
+        if(scores[i] > max_score) {
+            best_node = i;
+            max_score = scores[i];
+        }
+    }
+
+    /** LOCK NEEDED **/
 	std::lock_guard<SpinLock> guard(_globalLock);
-	_readyTasks.push_front(task);
+    /* Enqueue in the readyQueue corresponding to best_node.
+     */
+    _readyQueues[best_node].push_front(task);
 	
-    return getLocalityCPU(task);
+    return CPUManager::getNUMALocalityIdleCPU(best_node);
+    //return getLocalityCPU(task);
 	//return CPUManager::getIdleCPU();
 }
 
@@ -121,9 +148,13 @@ Task *LocalityScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hard
 	}
 	
 	// 2. Or get a ready task
-	if (!_readyTasks.empty()) {
-		task = _readyTasks.front();
-		_readyTasks.pop_front();
+	//if (!_readyTasks.empty()) {
+	//	task = _readyTasks.front();
+	//	_readyTasks.pop_front();
+    size_t NUMANodeId = ((CPU *) hardwarePlace)->_NUMANodeId;
+    if (!_readyQueues[NUMANodeId].empty()) {
+        task = _readyQueues[NUMANodeId].front();
+        _readyQueues[NUMANodeId].pop_front();
 		
 		assert(task != nullptr);
 		
@@ -140,10 +171,23 @@ Task *LocalityScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hard
 ComputePlace *LocalityScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
-	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
+	//if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
+    bool remainingTasks = false;
+    for(auto&& readyQueue : _readyQueues) {
+        if(!readyQueue.second.empty()) {
+            remainingTasks = true;
+            break;
+        }
+    }
+	if (force || remainingTasks || !_unblockedTasks.empty()) {
 		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}
 }
 
+
+void LocalityScheduler::addReadyQueue(std::size_t node_id) {
+    std::deque<Task *> readyQueue;
+    _readyQueues[node_id] = readyQueue;
+}

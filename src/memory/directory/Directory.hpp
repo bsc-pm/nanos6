@@ -6,6 +6,7 @@
 #include "lowlevel/SpinLock.hpp"
 #include "copies/CopySet.hpp"
 #include "pages/MemoryPageSet.hpp"
+#include "affinity/AffinitySet.hpp"
 
 class Directory {
 
@@ -13,8 +14,19 @@ class Directory {
 private:
 	SpinLock _lock;
 
+    /* Tracks copies of software managed caches of the different devices 
+       It is only required when using software managed caches.
+     */
 	CopySet _copies;
+
+    /* Tracks the homeNode of each access. 
+     */
 	MemoryPageSet _pages;	
+
+    /* Tracks in which HW caches are the accesses. 
+       This is an approximation.
+     */
+    AffinitySet _affinitySet;
 
 	static Directory *_instance;
 
@@ -57,17 +69,16 @@ public:
 
 	/*! \brief Retrieves location data of the data accesses of a task in order to determine execution place.
 	 *	
-	 *  Accesses the information in the directory in order to determine in which processors / node will a task be executed.
+	 *  Accesses the information in the directory in order to determine in which NUMA node will a task be executed.
 	 *	First it accesses the home node information of each access and registers it inside the access. 
 	 *	If the region is not registered move_pages will be called to retrieve the information.
-	 *	Second it checks if any of the regions has a copy present in any cache and copies the information to the access.	
+     *  It returns a vector (for the time being, a vector is enough, especially taking into account that the size 
+     *  of this vector is the number of NUMA nodes which usually is not a very big number) with a score for each NUMA node.
 	 *	
-	 *	How the policy is involved in this process is still to be discussed
-	 *
 	 *	\param accesses Data accesses of a Task
 	 *
 	 */
-	static void /*provisional name*/analyze(TaskDataAccesses &accesses, size_t *vector /* Needs name */);	
+	static std::vector<double> computeNUMANodeAffinity(TaskDataAccesses &accesses);	
 
     /*! \brief Returns a bitset indicating which caches have the dataAccess in its last version
      *  \param (in) address The startAddress of the dataAccess

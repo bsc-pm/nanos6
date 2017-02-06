@@ -48,6 +48,7 @@ struct CPU: public CPUPlace {
 	
 	size_t _systemCPUId;
 	size_t _virtualCPUId;
+    size_t _NUMANodeId;
 	
 	//! \brief the CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;
@@ -60,7 +61,7 @@ struct CPU: public CPUPlace {
 	
 	CPUDependencyData _dependencyData;
 	
-	CPU(size_t systemCPUId, size_t virtualCPUId);
+	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
 	
 	// Not copyable
 	CPU(CPU const &) = delete;

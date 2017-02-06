@@ -42,3 +42,6 @@ bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *ha
 	return true;
 }
 
+void SchedulerInterface::addReadyQueue(std::size_t node_id)
+{
+}

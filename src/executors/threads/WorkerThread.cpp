@@ -117,6 +117,10 @@ void WorkerThread::handleTask()
     else {
         // task is ready
         _task->setThread(this);
+        
+        //! Temporal print to check that each task is executing where it should according to its data affinity.
+        std::cerr << "Task with label " << _task->getTaskInfo()->task_label << " is executed on NUMA node " 
+            << _cpu->_NUMANodeId << "." << std::endl;
 
         Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
         Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);

@@ -107,3 +107,6 @@ ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
 	}
 }
 
+void FIFOScheduler::addReadyQueue(std::size_t node_id)
+{
+}

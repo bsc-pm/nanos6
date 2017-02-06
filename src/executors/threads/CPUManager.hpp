@@ -62,7 +62,10 @@ public:
 	static inline CPU *getIdleCPU();
 
 	//! \brief get an idle CPU given an ideal cache
-	static inline CPU *getLocalityIdleCPU(int cache);
+	static inline CPU *getCacheLocalityIdleCPU(int cache);
+
+	//! \brief get an idle CPU given a NUMA node
+	static inline CPU *getNUMALocalityIdleCPU(size_t NUMANodeId);
 };
 
 
@@ -117,7 +120,7 @@ inline CPU *CPUManager::getIdleCPU()
 }
 
 
-inline CPU *CPUManager::getLocalityIdleCPU(int cache)
+inline CPU *CPUManager::getCacheLocalityIdleCPU(int cache)
 {
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
@@ -126,6 +129,25 @@ inline CPU *CPUManager::getLocalityIdleCPU(int cache)
 	while (idleCPU != boost::dynamic_bitset<>::npos) {
 		if(_cpus[idleCPU]->getMemoryPlace(cache) != nullptr) {
 			//! Idle CPU with access to the best cache found
+			_idleCPUs[idleCPU] = false;
+			return _cpus[idleCPU];
+		}
+		
+		idleCPU = _idleCPUs.find_next(idleCPU);
+	}
+	
+	return nullptr;
+}
+
+inline CPU *CPUManager::getNUMALocalityIdleCPU(size_t NUMANodeId)
+{
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	
+	//! Iterate over all the idle CPUs until finding one from the given NUMA node.
+	while (idleCPU != boost::dynamic_bitset<>::npos) {
+		if(_cpus[idleCPU]->_NUMANodeId == NUMANodeId) {
+			//! Idle CPU from the required NUMA node  found
 			_idleCPUs[idleCPU] = false;
 			return _cpus[idleCPU];
 		}

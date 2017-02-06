@@ -123,6 +123,11 @@ public:
 	{
 		return _scheduler->hasEnabledCopies();
 	}
+
+    static inline void addReadyQueue(std::size_t node_id)
+    {
+        _scheduler->addReadyQueue(node_id);
+    }
 };
 
 
