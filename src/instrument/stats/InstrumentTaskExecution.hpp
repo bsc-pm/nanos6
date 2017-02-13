@@ -27,8 +27,11 @@ namespace Instrument {
 		taskId->_currentTimer->stop();
 		taskId->_currentTimer = 0;
 		
-		Stats::_threadStats->_perTask[taskId->_type] += taskId->_times;
-		Stats::_threadStats->_perTask[taskId->_type] += taskId->_hardwareCounters;
+		Instrument::Stats::PhaseInfo &phaseInfo = Stats::_threadStats->getCurrentPhaseRef();
+		Instrument::Stats::TaskInfo &taskInfo = phaseInfo._perTask[taskId->_type];
+		taskInfo += taskId->_times;
+		taskInfo += taskId->_hardwareCounters;
+		
 		delete taskId;
 	}
 }

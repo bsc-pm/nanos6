@@ -26,12 +26,14 @@ namespace Instrument {
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) cpu_id_t cpuId)
 	{
-		Stats::_threadStats->_runningTime.continueAt(Stats::_threadStats->_blockedTime);
+		Instrument::Stats::PhaseInfo &currentPhase = Stats::_threadStats->getCurrentPhaseRef();
+		currentPhase._runningTime.continueAt(currentPhase._blockedTime);
 	}
 	
 	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) cpu_id_t cpuId)
 	{
-		Stats::_threadStats->_blockedTime.continueAt(Stats::_threadStats->_runningTime);
+		Instrument::Stats::PhaseInfo &currentPhase = Stats::_threadStats->getCurrentPhaseRef();
+		currentPhase._blockedTime.continueAt(currentPhase._runningTime);
 	}
 	
 }

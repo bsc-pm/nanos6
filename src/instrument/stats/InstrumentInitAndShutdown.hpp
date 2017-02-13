@@ -8,11 +8,7 @@
 
 
 namespace Instrument {
-	inline void initialize()
-	{
-		HardwareCounters::initialize();
-	}
-	
+	void initialize();
 	void shutdown();
 	
 }
