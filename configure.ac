@@ -71,6 +71,7 @@ fi
 
 # Checks for library functions.
 AC_CHECK_BACKTRACE
+AC_CHECK_PAPI
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
 AC_SUBST(CLOCK_LIBS)
 

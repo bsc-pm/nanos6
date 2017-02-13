@@ -194,6 +194,18 @@ common_sources += $(linear_regions_fragmented_dependency_sources)
 endif
 
 
+hardware_counters_sources = \
+	src/performance/HardwareCounters.hpp \
+	src/performance/HardwareCounters.cpp
+
+papi_hardware_counters_sources = \
+	src/performance/PAPI/PAPIHardwareCounters.hpp \
+	src/performance/PAPI/PAPIHardwareCounters.cpp
+
+no_hardware_counters_sources = \
+	src/performance/no-HC/NoHardwareCounters.hpp
+
+
 noinstrument_sources = \
 	src/instrument/null/InstrumentAddTask.hpp \
 	src/instrument/null/InstrumentDataAccessId.hpp \
@@ -351,6 +363,7 @@ instrument_extrae_sources = \
 	src/instrument/public/extrae/InstrumentTaskWait.hpp \
 	src/instrument/public/extrae/InstrumentThreadId.hpp \
 	src/instrument/public/extrae/InstrumentThreadManagement.hpp
+
 
 null_common_sources = \
 	src/null/NullDebug.cpp \
