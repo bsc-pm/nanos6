@@ -111,6 +111,7 @@ common_sources = \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
+	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \

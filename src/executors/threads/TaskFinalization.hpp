@@ -6,6 +6,7 @@
 #include "CPU.hpp"
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/ompss/SpawnFunction.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -31,6 +32,11 @@ public:
 				task->~Task();
 				free(task->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here
 				task = parent;
+				
+				// A task without parent must be a spawned function
+				if (parent == nullptr) {
+					SpawnedFunctions::_pendingSpawnedFuncions--;
+				}
 			} else {
 				// An ancestor in a taskwait that finishes at this point
 				Scheduler::taskGetsUnblocked(task, cpu);

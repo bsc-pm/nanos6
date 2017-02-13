@@ -11,6 +11,7 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/ompss/SpawnFunction.hpp"
 
 #include <InstrumentInitAndShutdown.hpp>
 
@@ -76,6 +77,10 @@ void nanos_init(void) {
 
 
 void nanos_shutdown(void) {
+	while (SpawnedFunctions::_pendingSpawnedFuncions > 0) {
+		// Wait for spawned functions to fully end
+	}
+	
 	LeaderThread::shutdown();
 	Instrument::shutdown();
 	
