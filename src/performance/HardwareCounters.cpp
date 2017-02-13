@@ -10,8 +10,8 @@ namespace HardwareCounters {
 		"L2 data cache miss ratio",
 		"L3 data cache miss ratio",
 		"GFLOP/s",
-		"Real usecs",
-		"Virtual usecs",
+		"Real nsecs",
+		"Virtual nsecs",
 		"Instructions"
 	};
 	

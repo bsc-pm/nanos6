@@ -21,8 +21,8 @@ namespace HardwareCounters {
 		l2_miss_ratio_counter,
 		l3_miss_ratio_count,
 		fpc_counter,
-		real_usecs_counter,
-		virtual_usecs_counter,
+		real_nsecs_counter,
+		virtual_nsecs_counter,
 		total_instructions,
 		total_preset_counter
 	};

@@ -145,8 +145,8 @@ namespace HardwareCounters {
 					case fpc_counter:
 						return (PAPI::_FPInstructionsEventIndex != -1);
 						break;
-					case real_usecs_counter:
-					case virtual_usecs_counter:
+					case real_nsecs_counter:
+					case virtual_nsecs_counter:
 					case total_instructions:
 						return true;
 						break;
@@ -265,18 +265,18 @@ namespace HardwareCounters {
 							_counterSetReference._counterSet[PAPI::_FPInstructionsEventIndex] / (double) _counterSetReference._realNsecs
 						);
 						break;
-					case real_usecs_counter:
+					case real_nsecs_counter:
 						return counter_value_t(
 							_presetCounterNames[_index],
 							(long) _counterSetReference._realNsecs,
-							"usecs"
+							"nsecs"
 						);
 						break;
-					case virtual_usecs_counter:
+					case virtual_nsecs_counter:
 						return counter_value_t(
 							_presetCounterNames[_index],
 							(long) _counterSetReference._virtualNsecs,
-							"usecs"
+							"nsecs"
 						);
 						break;
 					case total_instructions:
