@@ -129,7 +129,7 @@ namespace Instrument {
 			
 			ThreadInfo &operator+=(ThreadInfo const &other)
 			{
-				for (auto perTaskEntry : other._perTask) {
+				for (auto &perTaskEntry : other._perTask) {
 					_perTask[perTaskEntry.first] += perTaskEntry.second;
 				}
 				

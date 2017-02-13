@@ -50,7 +50,7 @@ namespace Instrument {
 		
 		ThreadInfo accumulatedThreadInfo(false);
 		int numThreads = 0;
-		for (auto threadInfo : _threadInfoList) {
+		for (auto &threadInfo : _threadInfoList) {
 			threadInfo->stoppedAt(_totalTime);
 			
 			accumulatedThreadInfo += *threadInfo;
