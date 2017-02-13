@@ -7,10 +7,14 @@
 #include "InstrumentStats.hpp"
 #include "InstrumentThreadId.hpp"
 
+#include "performance/HardwareCounters.hpp"
+
 
 namespace Instrument {
 	inline thread_id_t createdThread()
 	{
+		HardwareCounters::initializeThread();
+		
 		Stats::_threadStats = new Stats::ThreadInfo(true);
 		
 		Stats::_threadInfoListSpinLock.lock();

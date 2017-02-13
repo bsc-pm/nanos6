@@ -12,9 +12,15 @@ lib_LTLIBRARIES = \
 	libnanos6-verbose.la libnanos6-verbose-debug.la \
 	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la
 
+
 if HAVE_EXTRAE
    lib_LTLIBRARIES += libnanos6-extrae.la
 endif
+
+if HAVE_PAPI
+   lib_LTLIBRARIES += libnanos6-stats-papi.la
+endif
+
 
 # See info page of libtool "Updating version info"
 lib_current = 0
@@ -293,6 +299,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentUserMutex.hpp
 
 instrument_stats_sources = \
+	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentDataAccessId.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
@@ -420,8 +427,15 @@ libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(C
 
 libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
-libnanos6_stats_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(universal_debug_sources)
+libnanos6_stats_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources)
 libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+
+if HAVE_PAPI
+libnanos6_stats_papi_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats $(papi_CPPFLAGS) -DHAVE_PAPI
+libnanos6_stats_papi_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
+libnanos6_stats_papi_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources)
+libnanos6_stats_papi_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
+endif
 
 libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
 libnanos6_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)

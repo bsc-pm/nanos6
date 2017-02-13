@@ -2,6 +2,7 @@
 #include "InstrumentStats.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include <executors/threads/ThreadManager.hpp>
+#include "performance/HardwareCounters.hpp"
 
 #include <fstream>
 
@@ -36,6 +37,23 @@ namespace Instrument {
 				<< "\t" << 100.0 * (double) meanTimes._zombieTime / meanLifetime << "\t%" << std::endl;
 			output << "STATS\t" << name << " mean lifetime\t"
 				<< meanTimes.getTotal() << "\t" << Timer::getUnits() << std::endl;
+			
+			for (HardwareCounters::counter_value_t const &counterValue : taskInfo._hardwareCounters[0]) {
+				output << "STATS\t" << name << " " << counterValue._name << "\t";
+				
+				if (counterValue._isInteger) {
+					output << counterValue._integerValue;
+				} else {
+					output << counterValue._floatValue;
+				}
+				
+				if (!counterValue._units.empty()) {
+					output << "\t" << counterValue._units;
+				}
+				
+				output << std::endl;
+			}
+			
 		}
 	}
 	
@@ -47,6 +65,8 @@ namespace Instrument {
 	{
 		_totalTime.stop();
 		double totalTime = _totalTime;
+		
+		HardwareCounters::shutdown();
 		
 		ThreadInfo accumulatedThreadInfo(false);
 		int numThreads = 0;

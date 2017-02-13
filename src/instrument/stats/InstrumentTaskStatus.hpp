@@ -33,10 +33,13 @@ namespace Instrument {
 		
 		taskId->_currentTimer->continueAt(taskId->_times._executionTime);
 		taskId->_currentTimer = &taskId->_times._executionTime;
+		
+		taskId->_hardwareCounters.start();
 	}
 	
 	inline void taskIsBlocked(task_id_t taskId, __attribute__((unused)) task_blocking_reason_t reason)
 	{
+		taskId->_hardwareCounters.accumulateAndStop();
 		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._blockedTime);
@@ -45,6 +48,7 @@ namespace Instrument {
 	
 	inline void taskIsZombie(task_id_t taskId)
 	{
+		taskId->_hardwareCounters.accumulateAndStop();
 		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._zombieTime);

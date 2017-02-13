@@ -28,6 +28,7 @@ namespace Instrument {
 		taskId->_currentTimer = 0;
 		
 		Stats::_threadStats->_perTask[taskId->_type] += taskId->_times;
+		Stats::_threadStats->_perTask[taskId->_type] += taskId->_hardwareCounters;
 		delete taskId;
 	}
 }
