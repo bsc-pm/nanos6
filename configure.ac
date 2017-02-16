@@ -136,6 +136,9 @@ case x"${ac_with_dependencies}" in
 	x"linear-regions-fragmented")
 		AC_MSG_RESULT([${ac_with_dependencies}])
 		;;
+	x"linear-regions-alternative")
+		AC_MSG_RESULT([${ac_with_dependencies}])
+		;;
 	*)
 		AC_MSG_ERROR([unknown dependency type ${ac_with_dependencies}])
 		;;
@@ -143,6 +146,7 @@ esac
 AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdiscrete"])
 AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-unfragmented"])
 AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-fragmented"])
+AM_CONDITIONAL([LINEAR_REGION_ALTERNATIVE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-alternative"])
 AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
 
 AC_ARG_ENABLE(

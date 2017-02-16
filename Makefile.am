@@ -192,6 +192,17 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
 
+linear_regions_alternative_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
+	src/dependencies/linear-regions-alternative/BottomMapEntry.hpp \
+	src/dependencies/linear-regions-alternative/CPUDependencyData.hpp \
+	src/dependencies/linear-regions-alternative/DataAccess.hpp \
+	src/dependencies/linear-regions-alternative/DataAccessRegistration.hpp \
+	src/dependencies/linear-regions-alternative/DependencyDomain.hpp \
+	src/dependencies/linear-regions-alternative/RegisterDependencies.cpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifacts.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 if DISCRETE_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
@@ -204,6 +215,10 @@ endif
 if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
 common_sources += $(linear_regions_fragmented_dependency_sources)
+endif
+if LINEAR_REGION_ALTERNATIVE_DEPENDENCIES
+AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-alternative
+common_sources += $(linear_regions_alternative_dependency_sources)
 endif
 
 
