@@ -4,6 +4,7 @@
 
 #include <deque>
 #include <vector>
+#include <unordered_map>
 
 #include "SchedulerInterface.hpp"
 #include "lowlevel/SpinLock.hpp"
@@ -19,7 +20,9 @@ class LocalityScheduler: public SchedulerInterface {
     //! Tasks with logical dependences satisfied but data is not in the remote host.
 	//std::deque<Task *> _preReadyTasks;
     //! Tasks ready to be executed.
-	std::deque<Task *> _readyTasks;
+    //! There must be a queue for each NUMA node. Also, there must be a lock for queue.
+    std::unordered_map<unsigned int, std::deque<Task *> > _readyQueues;
+	//!std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
     inline CPU *getLocalityCPU(Task * task);
@@ -36,6 +39,8 @@ public:
 	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
+
+    void addReadyQueue(std::size_t node_id);
 };
 
 

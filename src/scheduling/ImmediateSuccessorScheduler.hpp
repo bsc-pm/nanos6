@@ -38,6 +38,8 @@ public:
 	ComputePlace *getIdleComputePlace(bool force=false);
 	
 	void disableComputePlace(ComputePlace *hardwarePlace);
+
+    void addReadyQueue(std::size_t node_id);
 };
 
 

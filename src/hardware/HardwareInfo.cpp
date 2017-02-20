@@ -49,6 +49,13 @@ void HardwareInfo::initialize()
             hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_NUMA_ALIAS, i);
             //! Create a Cache for the MemoryPlace. Assign the same index than the MemoryPlace.
             cache = new NUMACache(obj->logical_index);
+            //! Create a ReadyQueue in the scheduler for each NUMA node.
+            Scheduler::addReadyQueue(obj->logical_index);
+            assert(cache != nullptr && "No cache has been created");
+            //! Create the MemoryPlace representing the NUMA node with its index, cache and AddressSpace. 
+            node = new NUMAPlace(cache->getIndex(), cache, NUMAAddressSpace);
+            //! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
+            _memoryNodes[node->getIndex()] = node;
         }
     } 
     else { 
@@ -56,20 +63,23 @@ void HardwareInfo::initialize()
         //! Create a Cache for the MemoryPlace. Assign the same index than the MemoryPlace.
         //! TODO: Index is 0 arbitrarily. Maybe a special index should be set.
         cache = new NUMACache(/*index*/0);
+        Scheduler::addReadyQueue(/*index*/0);
+        assert(cache != nullptr && "No cache has been created");
+        //! Create the MemoryPlace representing the NUMA node with its index, cache and AddressSpace. 
+        node = new NUMAPlace(cache->getIndex(), cache, NUMAAddressSpace);
+        //! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
+        _memoryNodes[node->getIndex()] = node;
     }
 
-    assert(cache != nullptr && "No cache has been created");
-    //! Create the MemoryPlace representing the NUMA node with its index, cache and AddressSpace. 
-    node = new NUMAPlace(cache->getIndex(), cache, NUMAAddressSpace);
-    //! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
-    _memoryNodes[node->getIndex()] = node;
 
     //! Get (logical) cores of the machine
-    int coresCount = hwloc_get_nbobjs_by_type( topology, HWLOC_OBJ_PU );
+    int coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU );
     for(int i=0; i<coresCount; i++) {
         hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+        hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
+        size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
         //! TODO: Create an atomic global counter to assign CPUs
-        CPU * cpu = new CPU( /*systemCPUID*/ obj->logical_index, /*virtualCPUID*/ _totalCPUs++);
+        CPU * cpu = new CPU( /*systemCPUID*/ obj->logical_index, /*virtualCPUID*/ _totalCPUs++, NUMANodeId);
         _computeNodes[obj->logical_index] = cpu;
     }
 
