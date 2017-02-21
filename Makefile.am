@@ -22,6 +22,7 @@ nanos6include_HEADERS = \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/polling.h \
+	api/nanos6/reductions.h \
 	api/nanos6/task-info-registration.h \
 	api/nanos6/task-instantiation.h \
 	api/nanos6/taskwait.h \
@@ -86,6 +87,7 @@ symbol_resolution += \
 	loader/symbol-resolver/dependencies.c \
 	loader/symbol-resolver/final.c \
 	loader/symbol-resolver/polling.c \
+	loader/symbol-resolver/reductions.c \
 	loader/symbol-resolver/task-info-registration.c \
 	loader/symbol-resolver/task-instantiation.c \
 	loader/symbol-resolver/taskwait.c \
@@ -107,6 +109,7 @@ symbol_resolution += \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/final.c \
 	loader/indirect-symbols/polling.c \
+	loader/indirect-symbols/reductions.c \
 	loader/indirect-symbols/task-info-registration.c \
 	loader/indirect-symbols/task-instantiation.c \
 	loader/indirect-symbols/taskwait.c \

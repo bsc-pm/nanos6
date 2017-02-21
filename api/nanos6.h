@@ -15,6 +15,7 @@
 #include "nanos6/task-instantiation.h"
 #include "nanos6/taskwait.h"
 #include "nanos6/user-mutex.h"
+#include "nanos6/reductions.h"
 
 
 #endif /* NANOS6_H */
