@@ -315,6 +315,10 @@ common_sources = \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/FIFOScheduler.cpp \
 	src/scheduling/FIFOScheduler.hpp \
+	src/scheduling/hierarchy/HostHierarchicalScheduler.cpp \
+	src/scheduling/hierarchy/HostHierarchicalScheduler.hpp \
+	src/scheduling/hierarchy/NUMAHierarchicalScheduler.cpp \
+	src/scheduling/hierarchy/NUMAHierarchicalScheduler.hpp \
 	src/scheduling/ImmediateSuccessorScheduler.cpp \
 	src/scheduling/ImmediateSuccessorScheduler.hpp \
 	src/scheduling/ImmediateSuccessorWithPollingScheduler.cpp \

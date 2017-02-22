@@ -1,9 +1,4 @@
-#include "DefaultScheduler.hpp"
-#include "FIFOImmediateSuccessorWithPollingScheduler.hpp"
-#include "FIFOScheduler.hpp"
-#include "ImmediateSuccessorScheduler.hpp"
-#include "ImmediateSuccessorWithPollingScheduler.hpp"
-#include "PriorityScheduler.hpp"
+#include "hierarchy/HostHierarchicalScheduler.hpp"
 #include "Scheduler.hpp"
 #include "SchedulerInterface.hpp"
 
@@ -18,24 +13,7 @@ SchedulerInterface *Scheduler::_scheduler;
 
 void Scheduler::initialize()
 {
-	EnvironmentVariable<std::string> schedulerName("NANOS6_SCHEDULER", "default");
-	
-	if (schedulerName.getValue() == "default") {
-		_scheduler = new DefaultScheduler();
-	} else if (schedulerName.getValue() == "fifo") {
-		_scheduler = new FIFOScheduler();
-	} else if (schedulerName.getValue() == "immediatesuccessor") {
-		_scheduler = new ImmediateSuccessorScheduler();
-	} else if (schedulerName.getValue() == "iswp") {
-		_scheduler = new ImmediateSuccessorWithPollingScheduler();
-	} else if (schedulerName.getValue() == "fifoiswp") {
-		_scheduler = new FIFOImmediateSuccessorWithPollingScheduler();
-	} else if (schedulerName.getValue() == "priority") {
-		_scheduler = new PriorityScheduler();
-	} else {
-		std::cerr << "Warning: invalid scheduler name '" << schedulerName.getValue() << "', using default instead." << std::endl;
-		_scheduler = new DefaultScheduler();
-	}
+	_scheduler = new HostHierarchicalScheduler();
 }
 
 void Scheduler::shutdown() 

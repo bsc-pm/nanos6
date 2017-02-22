@@ -37,6 +37,7 @@ public:
 	{
 	}
 	
+	virtual SchedulerInterface *getInstance();
 
 	//! \brief Add a (ready) task that has been created or freed (but not unblocked)
 	//!
