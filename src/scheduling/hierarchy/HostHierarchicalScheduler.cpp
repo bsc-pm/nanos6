@@ -15,12 +15,6 @@ HostHierarchicalScheduler::~HostHierarchicalScheduler()
 }
 
 
-SchedulerInterface *HostHierarchicalScheduler::getInstance()
-{
-	return _NUMAScheduler->getInstance();
-}
-
-
 ComputePlace * HostHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
 {
 	return _NUMAScheduler->addReadyTask(task, hardwarePlace, hint);

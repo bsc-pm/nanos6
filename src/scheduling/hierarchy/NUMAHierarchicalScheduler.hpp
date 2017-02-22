@@ -19,8 +19,6 @@ public:
 	NUMAHierarchicalScheduler();
 	~NUMAHierarchicalScheduler();
 
-    SchedulerInterface *getInstance();
-	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);

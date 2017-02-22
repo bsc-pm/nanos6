@@ -64,12 +64,6 @@ NUMAHierarchicalScheduler::~NUMAHierarchicalScheduler()
 }
 
 
-SchedulerInterface *NUMAHierarchicalScheduler::getInstance()
-{
-	return _NUMANodeScheduler[0];
-}
-
-
 ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
 {
 	return _NUMANodeScheduler[0]->addReadyTask(task, hardwarePlace, hint);

@@ -34,12 +34,6 @@ public:
 
 	static void shutdown();
 	
-	//! \brief This is needed to make the scheduler aware of the CPUs that are online
-	static inline SchedulerInterface *getInstance()
-	{
-		return _scheduler->getInstance();
-	}
-	
 	//! \brief Add a (ready) task that has been created or freed (but not unblocked)
 	//!
 	//! \param[in] task the task to be added
