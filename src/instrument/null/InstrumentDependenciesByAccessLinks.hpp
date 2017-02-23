@@ -105,6 +105,15 @@ namespace Instrument {
 		__attribute__((unused)) task_id_t triggererTaskId
 	) {
 	}
+	
+	inline void newDataAccessProperty(
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) char const *shortPropertyName,
+		__attribute__((unused)) char const *longPropertyName,
+		__attribute__((unused)) task_id_t triggererTaskId
+	) {
+	}
+	
 }
 
 

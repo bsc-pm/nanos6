@@ -292,6 +292,11 @@ namespace Instrument {
 			statusText << "C";
 		}
 		
+		for (std::string const &property : access._otherProperties) {
+			haveStatusText = true;
+			statusText << property;
+		}
+		
 		if (haveStatusText) {
 			text << "\\n" << statusText.str() << "+";
 		}

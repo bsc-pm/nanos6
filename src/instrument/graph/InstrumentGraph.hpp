@@ -21,6 +21,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <string>
 
 
 class WorkerThread;
@@ -106,6 +107,7 @@ namespace Instrument {
 			task_id_t _originator;
 			
 			bitset_t _bitset;
+			std::set<std::string> _otherProperties;
 			
 			data_access_next_links_t _nextLinks;
 			access_status_t _status;

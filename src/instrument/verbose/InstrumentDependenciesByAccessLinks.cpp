@@ -429,4 +429,29 @@ namespace Instrument {
 	}
 	
 	
+	void newDataAccessProperty(
+		data_access_id_t dataAccessId,
+		char const *shortPropertyName,
+		char const *longPropertyName,
+		task_id_t triggererTaskId
+	) {
+		if (!_verboseDependenciesByAccessLinks) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry();
+		assert(logEntry != nullptr);
+		
+		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
+		
+		if (currentWorker != nullptr) {
+			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
+		} else {
+			logEntry->_contents << "Thread:external CPU:ANY";
+		}
+		logEntry->_contents << " <-> DataAccessNewProperty " << dataAccessId << " " << longPropertyName << " (" << shortPropertyName << ") triggererTask:" << triggererTaskId;
+		
+		addLogEntry(logEntry);
+	}
+	
 }

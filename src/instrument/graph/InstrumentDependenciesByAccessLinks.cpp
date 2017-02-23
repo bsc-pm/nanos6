@@ -549,4 +549,35 @@ namespace Instrument {
 		_executionSequence.push_back(step);
 	}
 	
+	
+	void newDataAccessProperty(
+		data_access_id_t dataAccessId,
+		char const *shortPropertyName,
+		char const *longPropertyName,
+		task_id_t triggererTaskId
+	) {
+		std::lock_guard<SpinLock> guard(_graphLock);
+		
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		thread_id_t threadId = 0;
+		if (currentThread != nullptr) {
+			threadId = currentThread->getInstrumentationId();
+		}
+		
+		long cpuId = -2;
+		if (currentThread != nullptr) {
+			CPU *cpu = currentThread->getHardwarePlace();
+			assert(cpu != nullptr);
+			cpuId = cpu->_virtualCPUId;
+		}
+		
+		new_data_access_property_step_t *step = new new_data_access_property_step_t(
+			cpuId, threadId,
+			dataAccessId,
+			shortPropertyName, longPropertyName,
+			triggererTaskId
+		);
+		_executionSequence.push_back(step);
+	}
+
 }
