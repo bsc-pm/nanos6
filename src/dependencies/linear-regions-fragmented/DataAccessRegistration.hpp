@@ -187,6 +187,9 @@ private:
 					if (fragment != originalDataAccess) {
 						fragment->_instrumentationId =
 							Instrument::fragmentedDataAccess(originalDataAccess->_instrumentationId, fragment->_range, triggererInstrumentationTaskId);
+						if (fragment->isTopmost()) {
+							Instrument::newDataAccessProperty(fragment->_instrumentationId, "T", "Topmost", triggererInstrumentationTaskId);
+						}
 					} else {
 						Instrument::modifiedDataAccessRange(fragment->_instrumentationId, fragment->_range, triggererInstrumentationTaskId);
 					}
@@ -209,6 +212,9 @@ private:
 					if (fragment != originalDataAccess) {
 						fragment->_instrumentationId =
 							Instrument::fragmentedDataAccess(originalDataAccess->_instrumentationId, fragment->_range, triggererInstrumentationTaskId);
+						if (fragment->isTopmost()) {
+							Instrument::newDataAccessProperty(fragment->_instrumentationId, "T", "Topmost", triggererInstrumentationTaskId);
+						}
 					} else {
 						Instrument::modifiedDataAccessRange(fragment->_instrumentationId, fragment->_range, triggererInstrumentationTaskId);
 					}
@@ -485,6 +491,7 @@ private:
 				}
 				if (makeTopmost) {
 					targetAccess->isTopmost() = true;
+					Instrument::newDataAccessProperty(targetAccess->_instrumentationId, "T", "Topmost", triggererInstrumentationTaskId);
 				}
 				
 				assert(targetAccess->readSatisfied() || !targetAccess->writeSatisfied());
@@ -642,6 +649,7 @@ private:
 							
 							assert(dataAccess->_next == nullptr);
 							dataAccess->hasForcedRemoval() = true;
+							Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "F", "Forced Removal", triggererInstrumentationTaskId);
 							
 							if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
 								activateForcedRemovalOfBottomMapAccesses(subtask, subtaskAccessStructures, dataAccess->_range, cpuDependencyData, triggererInstrumentationTaskId);
@@ -680,6 +688,7 @@ private:
 							
 							assert(fragment->_next == nullptr);
 							fragment->hasForcedRemoval() = true;
+							Instrument::newDataAccessProperty(fragment->_instrumentationId, "F", "Forced Removal", triggererInstrumentationTaskId);
 							
 							if (!fragment->isRemovable(false) && fragment->isRemovable(true)) {
 								// The access has become removable
@@ -742,6 +751,7 @@ private:
 							
 							assert(dataAccess->_next == nullptr);
 							dataAccess->hasForcedRemoval() = true;
+							Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "F", "Forced Removal", triggererInstrumentationTaskId);
 							
 							if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
 								activateForcedRemovalOfBottomMapAccesses(subtask, subtaskAccessStructures, dataAccess->_range, cpuDependencyData, triggererInstrumentationTaskId);
@@ -782,6 +792,7 @@ private:
 							
 							assert(fragment->_next == nullptr);
 							fragment->hasForcedRemoval() = true;
+							Instrument::newDataAccessProperty(fragment->_instrumentationId, "F", "Forced Removal", triggererInstrumentationTaskId);
 							
 							if (!fragment->isRemovable(false) && fragment->isRemovable(true)) {
 								// The access has become removable
@@ -1050,6 +1061,7 @@ private:
 						assert(previous != nullptr);
 						
 						previous->isTopmost() = true;
+						Instrument::newDataAccessProperty(previous->_instrumentationId, "T", "Topmost", task->getInstrumentationTaskId());
 						
 						assert(previous->isFragment());
 						previous = fragmentAccess(
@@ -1441,6 +1453,8 @@ private:
 						targetAccess->readSatisfied() = true;
 						targetAccess->writeSatisfied() = true;
 						targetAccess->isTopmost() = true;
+						Instrument::newDataAccessProperty(targetAccess->_instrumentationId, "T", "Topmost", task->getInstrumentationTaskId());
+						
 						if (!targetAccess->_weak) {
 							task->decreasePredecessors();
 						}
@@ -1927,6 +1941,8 @@ public:
 						
 						assert(dataAccess->_next == nullptr);
 						dataAccess->hasForcedRemoval() = true;
+						
+						Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "F", "Forced Removal", task->getInstrumentationTaskId());
 						
 						// Handle propagation of forced removal of accesses
 						if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
