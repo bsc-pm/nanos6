@@ -32,6 +32,7 @@ struct DataAccess : public DataAccessBase {
 		FRAGMENT_BIT,
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP,
+		TOPMOST_BIT,
 		FORCE_REMOVAL_BIT,
 #ifndef NDEBUG
 		IS_REACHABLE_BIT,
@@ -119,6 +120,16 @@ struct DataAccess : public DataAccessBase {
 		return _status[IN_BOTTOM_MAP];
 	}
 	
+	
+	typename status_t::reference isTopmost()
+	{
+		return _status[TOPMOST_BIT];
+	}
+	bool isTopmost() const
+	{
+		return _status[TOPMOST_BIT];
+	}
+	
 	typename status_t::reference hasForcedRemoval()
 	{
 		return _status[FORCE_REMOVAL_BIT];
@@ -177,7 +188,8 @@ struct DataAccess : public DataAccessBase {
 	
 	bool isRemovable(bool hasForcedRemoval) const
 	{
-		return readSatisfied()
+		return isTopmost() 
+			&& readSatisfied()
 			&& writeSatisfied()
 			&& complete()
 			&& ( !isInBottomMap() || hasForcedRemoval || (_next != nullptr) );

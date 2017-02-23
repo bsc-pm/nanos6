@@ -14,21 +14,25 @@ class Task;
 
 struct CPUDependencyData {
 	struct DelayedOperation {
-		enum operation_bit_number_t {
-			PROPAGATE_READ = 0,
-			PROPAGATE_WRITE,
-			PROPAGATE_TO_FRAGMENTS,
-			LINK_BOTTOM_ACCESSES_TO_NEXT,
-			OPERATION_BIT_COUNT
+		enum operation_type_t {
+			link_bottom_map_accesses_operation,
+			propagate_satisfiability_plain_operation,
+			propagate_satisfiability_to_fragments_operation
 		};
 		
-		std::bitset<OPERATION_BIT_COUNT> _operation;
+		operation_type_t _operationType;
+		bool _propagateRead;
+		bool _propagateWrite;
+		bool _makeTopmost;
+		Task *_next; // This is only for link_bottom_map_accesses_operation
+		
 		DataAccessRange _range;
 		Task *_target;
-		Task *_next;
 		
 		DelayedOperation()
-			: _operation(), _range(), _target(nullptr), _next(nullptr)
+			: _propagateRead(false), _propagateWrite(false), _makeTopmost(false),
+			_next(nullptr),
+			_range(), _target(nullptr)
 		{
 		}
 	};

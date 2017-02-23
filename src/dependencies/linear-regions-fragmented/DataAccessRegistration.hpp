@@ -1,6 +1,10 @@
 #ifndef DATA_ACCESS_REGISTRATION_HPP
 #define DATA_ACCESS_REGISTRATION_HPP
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cassert>
 #include <deque>
 #include <mutex>
@@ -281,10 +285,13 @@ private:
 		DelayedOperation const &delayedOperation,
 		/* OUT */ CPUDependencyData &cpuDependencyData
 	) {
-		assert(delayedOperation._target != nullptr);
-		assert(delayedOperation._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS]);
-		
+		bool propagateReadSatisfiability = delayedOperation._propagateRead;
+		bool propagateWriteSatisfiability = delayedOperation._propagateWrite;
 		Task *targetTask = delayedOperation._target;
+		DataAccessRange range = delayedOperation._range;
+		
+		assert(targetTask != nullptr);
+		
 		TaskDataAccesses &targetTaskAccessStructures = targetTask->getDataAccesses();
 		assert(!targetTaskAccessStructures.hasBeenDeleted());
 		assert(targetTaskAccessStructures._lock.isLockedByThisThread());
@@ -292,7 +299,7 @@ private:
 		// NOTE: An access is discounted before traversing the fragments, so by the time we reach this point, the counter could be 0
 		
 		targetTaskAccessStructures._accessFragments.processIntersecting(
-			delayedOperation._range,
+			range,
 			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 				DataAccess *targetAccess = &(*position);
 				assert(targetAccess != nullptr);
@@ -301,52 +308,53 @@ private:
 				assert(targetAccess->_originator == targetTask);
 				assert(!targetAccess->hasBeenDiscounted());
 				
-				bool acceptsReadSatisfiability = !targetAccess->readSatisfied();
-				bool acceptsWriteSatisfiability = !targetAccess->writeSatisfied();
+				__attribute__((unused)) bool acceptsReadSatisfiability = !targetAccess->readSatisfied();
+				__attribute__((unused)) bool acceptsWriteSatisfiability = !targetAccess->writeSatisfied();
 				
-				// Skip accesses whose state does not change
-				if (
-					(!delayedOperation._operation[DelayedOperation::PROPAGATE_READ] || !acceptsReadSatisfiability)
-					&& (!delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE] || !acceptsWriteSatisfiability)
-				) {
-					return true;
-				}
+				// Fragments always get the same satisfiability changes as their corresponding accesses
+				assert(!propagateReadSatisfiability || acceptsReadSatisfiability);
+				assert(!propagateWriteSatisfiability || acceptsWriteSatisfiability);
 				
 				// Fragment if necessary
-				if (!targetAccess->_range.fullyContainedIn(delayedOperation._range)) {
+				if (!targetAccess->_range.fullyContainedIn(range)) {
 					targetAccess = fragmentAccess(
 						triggererInstrumentationTaskId,
-						targetAccess, delayedOperation._range,
+						targetAccess, range,
 						targetTaskAccessStructures,
 						/* Do not affect originator blocking counter */ false
 					);
 					assert(targetAccess != nullptr);
-					assert(targetAccess->_range.fullyContainedIn(delayedOperation._range));
+					assert(targetAccess->_range.fullyContainedIn(range));
 				}
 				
 				bool wasRemovable = targetAccess->isRemovable(targetAccess->hasForcedRemoval());
 				
+				assert(targetAccess->readSatisfied() || !targetAccess->writeSatisfied());
+				
 				// Update the satisfiability
-				if (delayedOperation._operation[DelayedOperation::PROPAGATE_READ] && acceptsReadSatisfiability) {
+				if (propagateReadSatisfiability) {
 					assert(!targetAccess->readSatisfied());
 					targetAccess->readSatisfied() = true;
 				}
-				if (delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE] && acceptsWriteSatisfiability) {
+				if (propagateWriteSatisfiability) {
 					assert(!targetAccess->writeSatisfied());
 					targetAccess->writeSatisfied() = true;
 				}
 				
+				assert(targetAccess->readSatisfied() || !targetAccess->writeSatisfied());
+				
 				Instrument::dataAccessBecomesSatisfied(
 					targetAccess->_instrumentationId,
-					delayedOperation._operation[DelayedOperation::PROPAGATE_READ] && acceptsReadSatisfiability,
-					delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE] && acceptsWriteSatisfiability,
+					propagateReadSatisfiability,
+					propagateWriteSatisfiability,
 					false,
 					triggererInstrumentationTaskId,
 					targetTask->getInstrumentationTaskId()
 				);
 				
 				// Update the number of non removable accesses of the task
-				if (!wasRemovable && targetAccess->isRemovable(targetAccess->hasForcedRemoval())) {
+				bool becomesRemovable = !wasRemovable && targetAccess->isRemovable(targetAccess->hasForcedRemoval());
+				if (becomesRemovable) {
 					handleAccessRemoval(
 						targetAccess, targetTaskAccessStructures, targetTask,
 						triggererInstrumentationTaskId, cpuDependencyData
@@ -356,32 +364,41 @@ private:
 				assert((targetAccess->_next != nullptr) || targetAccess->isInBottomMap());
 				
 				// Propagates as is to subaccesses, and as a regular access to outer accesses
-				bool propagationToSubaccess =
+				bool propagationToSubtask =
 					(targetAccess->_next != nullptr) && (targetAccess->_next->getParent() == targetTask);
 				
-				bool canPropagateReadSatisfiability =
-					targetAccess->readSatisfied()
-					&& (targetAccess->complete() || (targetAccess->_type == READ_ACCESS_TYPE) || propagationToSubaccess);
-				bool canPropagateWriteSatisfiability =
-					targetAccess->writeSatisfied()
-					&& (targetAccess->complete() || propagationToSubaccess);
+				bool canPropagateReadSatisfiability = propagateReadSatisfiability;
+				bool canPropagateWriteSatisfiability = propagateWriteSatisfiability;
+				
+				if (propagationToSubtask) {
+					// The next of a fragment (of a direct subtask) inherits the same satisfiability as the fragments
+				} else {
+					canPropagateReadSatisfiability &= targetAccess->readSatisfied()
+						&& (targetAccess->complete() || (targetAccess->_type == READ_ACCESS_TYPE));
+					canPropagateWriteSatisfiability &= targetAccess->writeSatisfied()
+						&& targetAccess->complete();
+				}
+				
+				Task *nextTask = targetAccess->_next;
+				
+				// The next can only become topmost if it belongs to the same dependency domain
+				bool makesNextTopmost = becomesRemovable && (nextTask != nullptr) && (nextTask->getParent() == targetTask);
 				
 				// Continue to next iteration if there is nothing to propagate
 				if (
-					(!canPropagateReadSatisfiability || !delayedOperation._operation[DelayedOperation::PROPAGATE_READ])
-					&& (!canPropagateWriteSatisfiability || !delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE])
+					!canPropagateReadSatisfiability
+					&& !canPropagateWriteSatisfiability
+					&& !makesNextTopmost
 				) {
 					return true;
 				}
 				
-				if (targetAccess->_next != nullptr) {
+				if (nextTask != nullptr) {
 					DelayedOperation &nextOperation = getNewDelayedOperation(cpuDependencyData);
-					nextOperation._operation = delayedOperation._operation;
-					nextOperation._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS] = false;
-					nextOperation._operation[DelayedOperation::PROPAGATE_READ] =
-						nextOperation._operation[DelayedOperation::PROPAGATE_READ] & canPropagateReadSatisfiability;
-					nextOperation._operation[DelayedOperation::PROPAGATE_WRITE] =
-						nextOperation._operation[DelayedOperation::PROPAGATE_WRITE] & canPropagateWriteSatisfiability;
+					nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
+					nextOperation._propagateRead = canPropagateReadSatisfiability;
+					nextOperation._propagateWrite = canPropagateWriteSatisfiability;
+					nextOperation._makeTopmost = makesNextTopmost;
 					nextOperation._range = targetAccess->_range;
 					nextOperation._target = targetAccess->_next;
 				}
@@ -397,39 +414,45 @@ private:
 		DelayedOperation const &delayedOperation,
 		/* OUT */ CPUDependencyData &cpuDependencyData
 	) {
-		assert(delayedOperation._target != nullptr);
-		assert(!delayedOperation._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS]);
-		
+		bool propagateReadSatisfiability = delayedOperation._propagateRead;
+		bool propagateWriteSatisfiability = delayedOperation._propagateWrite;
+		bool makeTopmost = delayedOperation._makeTopmost;
 		Task *targetTask = delayedOperation._target;
+		DataAccessRange range = delayedOperation._range;
+		
+		assert(targetTask != nullptr);
+		
 		TaskDataAccesses &targetTaskAccessStructures = targetTask->getDataAccesses();
 		assert(!targetTaskAccessStructures.hasBeenDeleted());
 		assert(targetTaskAccessStructures._lock.isLockedByThisThread());
 		
 		targetTaskAccessStructures._accesses.processIntersecting(
-			delayedOperation._range,
+			range,
 			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 				DataAccess *targetAccess = &(*position);
 				assert(targetAccess != nullptr);
 				assert(targetAccess->isReachable());
 				assert(targetAccess->_originator == targetTask);
 				assert(!targetAccess->hasBeenDiscounted());
+				assert(!targetAccess->isTopmost() || !makeTopmost);
 				
 				bool acceptsReadSatisfiability = !targetAccess->readSatisfied();
 				bool acceptsWriteSatisfiability = !targetAccess->writeSatisfied();
 				
 				// Skip accesses whose state does not change
 				if (
-					(!delayedOperation._operation[DelayedOperation::PROPAGATE_READ] || !acceptsReadSatisfiability)
-					&& (!delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE] || !acceptsWriteSatisfiability)
+					(!propagateReadSatisfiability || !acceptsReadSatisfiability)
+					&& (!propagateWriteSatisfiability || !acceptsWriteSatisfiability)
+					&& !makeTopmost
 				) {
 					return true;
 				}
 				
 				// Fragment if necessary
-				if (!targetAccess->_range.fullyContainedIn(delayedOperation._range) || targetAccess->hasForcedRemoval()) {
+				if (!targetAccess->_range.fullyContainedIn(range) || targetAccess->hasForcedRemoval()) {
 					targetAccess = fragmentAccess(
 						triggererInstrumentationTaskId,
-						targetAccess, delayedOperation._range, targetTaskAccessStructures,
+						targetAccess, range, targetTaskAccessStructures,
 						/* Affect originator blocking counter */ true
 					);
 					assert(targetAccess != nullptr);
@@ -438,18 +461,26 @@ private:
 				bool wasSatisfied = targetAccess->satisfied();
 				bool wasRemovable = targetAccess->isRemovable(targetAccess->hasForcedRemoval());
 				
+				assert(targetAccess->readSatisfied() || !targetAccess->writeSatisfied());
+				
 				// Update the satisfiability
-				if (delayedOperation._operation[DelayedOperation::PROPAGATE_READ] && acceptsReadSatisfiability) {
+				if (propagateReadSatisfiability && acceptsReadSatisfiability) {
 					assert(!targetAccess->readSatisfied());
 					targetAccess->readSatisfied() = true;
 				}
-				if (delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE] && acceptsWriteSatisfiability) {
+				if (propagateWriteSatisfiability && acceptsWriteSatisfiability) {
 					assert(!targetAccess->writeSatisfied());
 					targetAccess->writeSatisfied() = true;
 				}
+				if (makeTopmost) {
+					targetAccess->isTopmost() = true;
+				}
+				
+				assert(targetAccess->readSatisfied() || !targetAccess->writeSatisfied());
 				
 				// Update the number of non removable accesses of the task
-				if (!wasRemovable && targetAccess->isRemovable(targetAccess->hasForcedRemoval())) {
+				bool becomesRemovable = !wasRemovable && targetAccess->isRemovable(targetAccess->hasForcedRemoval());
+				if (becomesRemovable) {
 					handleAccessRemoval(
 						targetAccess, targetTaskAccessStructures, targetTask,
 						triggererInstrumentationTaskId, cpuDependencyData
@@ -458,15 +489,15 @@ private:
 				
 				Instrument::dataAccessBecomesSatisfied(
 					targetAccess->_instrumentationId,
-					delayedOperation._operation[DelayedOperation::PROPAGATE_READ] && acceptsReadSatisfiability,
-					delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE] && acceptsWriteSatisfiability,
+					propagateReadSatisfiability && acceptsReadSatisfiability,
+					propagateWriteSatisfiability && acceptsWriteSatisfiability,
 					false,
 					triggererInstrumentationTaskId,
 					targetTask->getInstrumentationTaskId()
 				);
 				
 				
-				// If the target access becomes satisfied decrement the predecessor count of the task
+				// If the target access becomes satisfied decrease the predecessor count of the task
 				// If it becomes 0 then add it to the list of satisfied originators
 				if (!targetAccess->_weak && !wasSatisfied && targetAccess->satisfied()) {
 					if (targetTask->decreasePredecessors()) {
@@ -474,42 +505,60 @@ private:
 					}
 				}
 				
-				bool canPropagateReadSatisfiability =
-					targetAccess->readSatisfied()
-					&& (targetAccess->complete() || (targetAccess->_type == READ_ACCESS_TYPE));
-				bool canPropagateWriteSatisfiability = targetAccess->writeSatisfied() && (targetAccess->complete());
+				Task *nextTask = targetAccess->_next;
 				
-				// Continue to next iteration if there is nothing to propagate
-				if (
-					(!canPropagateReadSatisfiability || !delayedOperation._operation[DelayedOperation::PROPAGATE_READ])
-					&& (!canPropagateWriteSatisfiability || !delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE])
-					&& !targetAccess->hasSubaccesses()
-				) {
-					return true;
-				}
+				// The next can only become topmost if it belongs to the same dependency domain
+				bool makesNextTopmost = becomesRemovable && (nextTask != nullptr) && (nextTask->getParent() == targetTask->getParent());
 				
-				// Propagate to fragments
 				if (targetAccess->hasSubaccesses()) {
-					DelayedOperation &operationForFragments = getNewDelayedOperation(cpuDependencyData);
-					operationForFragments = delayedOperation;
-					assert(targetAccess->_range.fullyContainedIn(delayedOperation._range));
-					operationForFragments._range = targetAccess->_range;
-					operationForFragments._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS] = true;
-				} else if (targetAccess->_next != nullptr) {
+					// Propagate to fragments
+					assert(targetAccess->_range.fullyContainedIn(range));
+					
+					// Only propagate to fragments if there is satisfiability to propagate.
+					// The topmost property is internal to the inner dependency domain.
+					// Otherwise we may end up accessing a fragment that has already been
+					// discounted.
+					if (
+						(propagateReadSatisfiability && acceptsReadSatisfiability)
+						|| (propagateWriteSatisfiability && acceptsWriteSatisfiability)
+					) {
+						DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
+						delayedOperation._operationType = DelayedOperation::propagate_satisfiability_to_fragments_operation;
+						delayedOperation._propagateRead = propagateReadSatisfiability && acceptsReadSatisfiability;
+						delayedOperation._propagateWrite = propagateWriteSatisfiability && acceptsWriteSatisfiability;
+						delayedOperation._range = targetAccess->_range;
+						delayedOperation._target = targetTask;
+					}
+					
+					// Propagate topmost property to next
+					if (makesNextTopmost) {
+						makeRangeTopmost(
+							triggererInstrumentationTaskId,
+							targetAccess->_range, nextTask,
+							cpuDependencyData
+						);
+					}
+				} else if (nextTask != nullptr) {
+					assert(!targetAccess->hasSubaccesses());
+					
 					// Propagate to next
-					DelayedOperation &operationForNext = getNewDelayedOperation(cpuDependencyData);
-					operationForNext._operation = delayedOperation._operation;
-					operationForNext._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS] = false;
-					operationForNext._operation[DelayedOperation::PROPAGATE_READ] =
-						operationForNext._operation[DelayedOperation::PROPAGATE_READ] & canPropagateReadSatisfiability;
-					operationForNext._operation[DelayedOperation::PROPAGATE_WRITE] =
-						operationForNext._operation[DelayedOperation::PROPAGATE_WRITE] & canPropagateWriteSatisfiability;
-					operationForNext._range = targetAccess->_range;
-					operationForNext._target = targetAccess->_next;
-				} else {
-					// For now let's handle deep propagation by deep linking on creation
-					assert(targetAccess->_next == nullptr);
-					// We cannot assert(targetAccess->isInBottomMap()), since during addition the new task is unlocked before adding its accesses to the bottom map
+					bool canPropagateReadSatisfiability =
+						propagateReadSatisfiability
+						&& targetAccess->readSatisfied()
+						&& (targetAccess->complete() || (targetAccess->_type == READ_ACCESS_TYPE));
+					bool canPropagateWriteSatisfiability =
+						propagateWriteSatisfiability
+						&& targetAccess->writeSatisfied() && (targetAccess->complete());
+					
+					if (canPropagateReadSatisfiability || canPropagateWriteSatisfiability || makesNextTopmost) {
+						DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
+						delayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
+						delayedOperation._propagateRead = canPropagateReadSatisfiability;
+						delayedOperation._propagateWrite = canPropagateWriteSatisfiability;
+						delayedOperation._makeTopmost = makesNextTopmost;
+						delayedOperation._range = targetAccess->_range;
+						delayedOperation._target = nextTask;
+					}
 				}
 				
 				return true;
@@ -562,6 +611,7 @@ private:
 								/* Affect originator blocking counter */ true
 							);
 							
+							assert(dataAccess->_next == nullptr);
 							dataAccess->hasForcedRemoval() = true;
 							
 							if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
@@ -599,6 +649,7 @@ private:
 								/* Affect originator blocking counter */ true
 							);
 							
+							assert(fragment->_next == nullptr);
 							fragment->hasForcedRemoval() = true;
 							
 							if (!fragment->isRemovable(false) && fragment->isRemovable(true)) {
@@ -660,6 +711,7 @@ private:
 								/* Affect originator blocking counter */ true
 							);
 							
+							assert(dataAccess->_next == nullptr);
 							dataAccess->hasForcedRemoval() = true;
 							
 							if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
@@ -699,6 +751,7 @@ private:
 								/* Affect originator blocking counter */ true
 							);
 							
+							assert(fragment->_next == nullptr);
 							fragment->hasForcedRemoval() = true;
 							
 							if (!fragment->isRemovable(false) && fragment->isRemovable(true)) {
@@ -729,34 +782,35 @@ private:
 		DelayedOperation const &delayedOperation,
 		/* OUT */ CPUDependencyData &cpuDependencyData
 	) {
-		if (delayedOperation._operation[DelayedOperation::LINK_BOTTOM_ACCESSES_TO_NEXT]) {
-			assert(!delayedOperation._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS]);
-			
-			processLinkingBottomMapAccessesToNextOperation(
-				triggererInstrumentationTaskId,
-				delayedOperation,
-				cpuDependencyData
-			);
-		} else if (delayedOperation._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS]) {
-			propagateSatisfiabilityToFragments(
-				triggererInstrumentationTaskId,
-				delayedOperation,
-				cpuDependencyData
-			);
-		} else {
-			assert(!delayedOperation._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS]);
-			propagateSatisfiabilityPlain(
-				triggererInstrumentationTaskId,
-				delayedOperation,
-				cpuDependencyData
-			);
+		switch (delayedOperation._operationType) {
+			case DelayedOperation::link_bottom_map_accesses_operation:
+				linkBottomMapAccessesToNext(
+					triggererInstrumentationTaskId,
+					delayedOperation,
+					cpuDependencyData
+				);
+				break;
+			case DelayedOperation::propagate_satisfiability_to_fragments_operation:
+				propagateSatisfiabilityToFragments(
+					triggererInstrumentationTaskId,
+					delayedOperation,
+					cpuDependencyData
+				);
+				break;
+			case DelayedOperation::propagate_satisfiability_plain_operation:
+				propagateSatisfiabilityPlain(
+					triggererInstrumentationTaskId,
+					delayedOperation,
+					cpuDependencyData
+				);
+				break;
 		}
 	}
 	
 	
 	static inline void processDelayedOperations(
-		Instrument::task_id_t triggererInstrumentationTaskId,
-		/* INOUT */ CPUDependencyData &cpuDependencyData
+	Instrument::task_id_t triggererInstrumentationTaskId,
+	/* INOUT */ CPUDependencyData &cpuDependencyData
 	) {
 		Task *lastLocked = nullptr;
 		
@@ -790,9 +844,8 @@ private:
 		WorkerThread *currentThread
 	) {
 		processDelayedOperations(triggererInstrumentationTaskId, cpuDependencyData);
-		processSatisfiedOriginators(cpuDependencyData, cpu);
 		
-		assert(cpuDependencyData._delayedOperations.empty());
+		processSatisfiedOriginators(cpuDependencyData, cpu);
 		assert(cpuDependencyData._satisfiedOriginators.empty());
 		
 		handleRemovableTasks(cpuDependencyData._removableTasks, cpu, currentThread);
@@ -826,12 +879,18 @@ private:
 			/* A fragment */ true,
 			instrumentationId
 		);
+		
+		assert(dataAccess->readSatisfied() || !dataAccess->writeSatisfied());
+		assert(fragment->readSatisfied() || !fragment->writeSatisfied());
+			
 		fragment->readSatisfied() = dataAccess->readSatisfied();
 		fragment->writeSatisfied() = dataAccess->writeSatisfied();
 		fragment->complete() = dataAccess->complete();
 #ifndef NDEBUG
 		fragment->isReachable() = true;
 #endif
+		
+		assert(fragment->readSatisfied() || !fragment->writeSatisfied());
 		
 		accessStructures._accessFragments.insert(*fragment);
 		fragment->isInBottomMap() = true;
@@ -902,6 +961,12 @@ private:
 							assert(previous->isInBottomMap());
 							assert(!previous->hasBeenDiscounted());
 							
+							previous = fragmentAccess(
+								task->getInstrumentationTaskId(),
+								previous, subrange, subtaskAccessStructures,
+								/* Affect originator blocking counter */ true
+							);
+							
 							return matchingProcessor(previous, bottomMapEntry);
 						}
 					);
@@ -920,13 +985,19 @@ private:
 							assert(previous->isInBottomMap());
 							assert(!previous->hasBeenDiscounted());
 							
+							previous = fragmentAccess(
+								task->getInstrumentationTaskId(),
+								previous, subrange, parentAccessStructures,
+								/* Affect originator blocking counter */ true
+							);
+							
 							return matchingProcessor(previous, bottomMapEntry);
 						}
 					);
 				}
 				
 				if (removeBottomMapEntry) {
-					bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, range, parentAccessStructures);
+					bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, subrange, parentAccessStructures);
 					parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
 					delete bottomMapEntry;
 				}
@@ -946,6 +1017,15 @@ private:
 						);
 						assert(previous != nullptr);
 						
+						previous->isTopmost() = true;
+						
+						assert(previous->isFragment());
+						previous = fragmentAccess(
+							task->getInstrumentationTaskId(),
+							previous, missingRange, parentAccessStructures,
+							/* Affect originator blocking counter */ true
+						);
+						
 						return matchingProcessor(previous, bottomMapEntry);
 					},
 					[&](DataAccessRange rangeUncoveredByParent) -> bool {
@@ -959,9 +1039,10 @@ private:
 	}
 	
 	
-	static inline void createPropagationOperation(
-		DataAccess *dataAccess,
-		Task *targetTask,
+	static inline void propagateSatisfiability(
+		Instrument::task_id_t triggererInstrumentationTaskId,
+		DataAccess *dataAccess, Task *targetTask,
+		bool makeTopmost,
 		/* inout */ CPUDependencyData &cpuDependencyData
 	) {
 		assert(dataAccess != nullptr);
@@ -977,38 +1058,40 @@ private:
 			dataAccess->writeSatisfied()
 			&& (dataAccess->complete() || dataAccess->isFragment());
 		
-		// Create propagation operation (if there is anything to propagate)
-		if (canPropagateReadSatisfiability || canPropagateWriteSatisfiability) {
+		if (canPropagateReadSatisfiability || canPropagateWriteSatisfiability || makeTopmost) {
 			DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
-			delayedOperation._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS] = false;
-			delayedOperation._operation[DelayedOperation::PROPAGATE_READ] = canPropagateReadSatisfiability;
-			delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE] = canPropagateWriteSatisfiability;
+			delayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
+			
+			delayedOperation._propagateRead = canPropagateReadSatisfiability;
+			delayedOperation._propagateWrite = canPropagateWriteSatisfiability;
+			delayedOperation._makeTopmost = makeTopmost;
 			delayedOperation._range = dataAccess->_range;
 			delayedOperation._target = targetTask;
 		}
 	}
 	
 	
-	static inline void createLinkBottomMapAccessesToNextOperation(
-		Task *task, DataAccessRange range, Task *next,
+	static inline void makeRangeTopmost(
+		Instrument::task_id_t triggererInstrumentationTaskId,
+		DataAccessRange range, Task *task,
 		/* inout */ CPUDependencyData &cpuDependencyData
 	) {
-		assert(task != nullptr);
-		assert(!range.empty());
-		assert(next != nullptr);
+		DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
+		delayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
 		
-		DelayedOperation &operation = getNewDelayedOperation(cpuDependencyData);
-		operation._operation[DelayedOperation::LINK_BOTTOM_ACCESSES_TO_NEXT] = true;
-		operation._target = task;
-		operation._range = range;
-		operation._next = next;
+		delayedOperation._propagateRead = false;
+		delayedOperation._propagateWrite = false;
+		delayedOperation._makeTopmost = true;
+		delayedOperation._range = range;
+		delayedOperation._target = task;
 	}
 	
 	
-	static inline DataAccess *linkAndCreatePropagationOperation(
+	static inline DataAccess *linkAndPropagate(
 		Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccess *dataAccess, Task *task, TaskDataAccesses &accessStructures,
 		DataAccessRange range, Task *next,
+		bool propagateTopmost,
 		/* inout */ CPUDependencyData &cpuDependencyData
 	) {
 		assert(dataAccess != nullptr);
@@ -1029,12 +1112,31 @@ private:
 		assert(dataAccess != nullptr);
 		assert(dataAccess->_next == nullptr);
 		
-		bool wasRemovable = dataAccess->isRemovable(dataAccess->hasForcedRemoval());
+		assert(!dataAccess->hasForcedRemoval());
+		assert(!dataAccess->isRemovable(false));
 		
 		// Link the dataAccess access to the new task
 		dataAccess->_next = next;
-		
 		dataAccess->isInBottomMap() = false;
+		
+		bool becomesRemovable = dataAccess->isRemovable(false);
+		
+		bool makesNextTopmost = propagateTopmost && becomesRemovable;
+		if (makesNextTopmost) {
+			if (dataAccess->isFragment()) {
+				// Child after fragment
+				makesNextTopmost = (next->getParent() == dataAccess->_originator);
+			} else {
+				// Potentially sibling tasks
+				makesNextTopmost = (next->getParent() == task->getParent());
+			}
+		}
+		
+		Instrument::linkedDataAccesses(
+			dataAccess->_instrumentationId, next->getInstrumentationTaskId(),
+			dataAccess->_range,
+			true, false, triggererInstrumentationTaskId
+		);
 		
 		if (
 			!dataAccess->complete()
@@ -1042,23 +1144,35 @@ private:
 			|| (dataAccess->complete() && !dataAccess->hasSubaccesses())
 		) {
 			
-			Instrument::linkedDataAccesses(
-				dataAccess->_instrumentationId, next->getInstrumentationTaskId(),
-				dataAccess->_range,
-				true, false, triggererInstrumentationTaskId
+			propagateSatisfiability(
+				triggererInstrumentationTaskId,
+				dataAccess, next,
+				makesNextTopmost,
+				cpuDependencyData
 			);
-			
-			createPropagationOperation(dataAccess, next, cpuDependencyData);
 		} else {
 			assert(dataAccess->complete());
 			assert(!dataAccess->isFragment());
 			assert(dataAccess->hasSubaccesses());
 			
-			createLinkBottomMapAccessesToNextOperation(task, dataAccess->_range.intersect(range), next, cpuDependencyData);
+			if (makesNextTopmost) {
+				makeRangeTopmost(
+					triggererInstrumentationTaskId,
+					dataAccess->_range.intersect(range), next,
+					cpuDependencyData
+				);
+			}
+			
+			DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
+			delayedOperation._operationType = DelayedOperation::link_bottom_map_accesses_operation;
+			
+			delayedOperation._next = next;
+			delayedOperation._range = dataAccess->_range.intersect(range);
+			delayedOperation._target = task;
 		}
 		
 		// Update the number of non-removable accesses of the dataAccess task
-		if (!wasRemovable && dataAccess->isRemovable(dataAccess->hasForcedRemoval())) {
+		if (becomesRemovable) {
 			assert(dataAccess->_next != nullptr);
 			handleAccessRemoval(
 				dataAccess, accessStructures, task,
@@ -1073,15 +1187,21 @@ private:
 	
 	static inline void linkBottomMapAccessesToNext(
 		Instrument::task_id_t triggererInstrumentationTaskId,
-		Task *task, TaskDataAccesses &accessStructures,
-		DataAccessRange range, Task *next,
+		DelayedOperation const &delayedOperation,
 		/* OUT */ CPUDependencyData &cpuDependencyData
 	) {
+		DataAccessRange range = delayedOperation._range;
+		Task *task = delayedOperation._target;
+		Task *next = delayedOperation._next;
+		
 		assert(task != nullptr);
-		assert(!accessStructures.hasBeenDeleted());
-		assert(accessStructures._lock.isLockedByThisThread());
 		assert(!range.empty());
 		assert(next != nullptr);
+		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		
+		assert(!accessStructures.hasBeenDeleted());
+		assert(accessStructures._lock.isLockedByThisThread());
 		
 		accessStructures._subaccessBottomMap.processIntersecting(
 			range,
@@ -1115,10 +1235,11 @@ private:
 								/* Affect originator blocking counter */ true
 							);
 							
-							linkAndCreatePropagationOperation(
+							linkAndPropagate(
 								triggererInstrumentationTaskId,
 								subaccess, subtask, subtaskAccessStructures,
 								subrange.intersect(subaccess->_range), next,
+								/* Propagate topmost property */ true,
 								cpuDependencyData
 							);
 							
@@ -1145,10 +1266,11 @@ private:
 								/* Affect originator blocking counter */ true
 							);
 							
-							linkAndCreatePropagationOperation(
+							linkAndPropagate(
 								triggererInstrumentationTaskId,
 								fragment, task, accessStructures,
 								subrange.intersect(fragment->_range), next,
+								/* Do not propagate topmost property */ false,
 								cpuDependencyData
 							);
 							
@@ -1163,33 +1285,7 @@ private:
 	}
 	
 	
-	static inline void processLinkingBottomMapAccessesToNextOperation(
-		Instrument::task_id_t triggererInstrumentationTaskId,
-		DelayedOperation const &delayedOperation,
-		/* OUT */ CPUDependencyData &cpuDependencyData
-	) {
-		assert(delayedOperation._target != nullptr);
-		assert(!delayedOperation._operation[DelayedOperation::PROPAGATE_READ]);
-		assert(!delayedOperation._operation[DelayedOperation::PROPAGATE_WRITE]);
-		assert(!delayedOperation._operation[DelayedOperation::PROPAGATE_TO_FRAGMENTS]);
-		assert(delayedOperation._operation[DelayedOperation::LINK_BOTTOM_ACCESSES_TO_NEXT]);
-		
-		Task *task = delayedOperation._target;
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		
-		assert(accessStructures._lock.isLockedByThisThread());
-		linkBottomMapAccessesToNext(
-			triggererInstrumentationTaskId,
-			task, accessStructures,
-			delayedOperation._range, delayedOperation._next,
-			cpuDependencyData
-		);
-	}
-	
-	
-	
-	static inline void replaceAndLinkMatchingInBottomMapAndCreateDelayedOperations(
+	static inline void replaceMatchingInBottomMapLinkAndPropagate(
 		Task *task,  TaskDataAccesses &accessStructures,
 		DataAccessRange range, bool weak,
 		Task *parent, TaskDataAccesses &parentAccessStructures,
@@ -1206,6 +1302,10 @@ private:
 		}
 		
 		bool local = false;
+		#ifndef NDEBUG
+			bool lastWasLocal = false;
+			bool first = true;
+		#endif
 		
 		// Link accesses to their corresponding predecessor
 		foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRange(
@@ -1226,13 +1326,23 @@ private:
 					local = false;
 				}
 				
+				#ifndef NDEBUG
+					if (!first) {
+						assert((local == lastWasLocal) && "This fails with wrongly nested regions");
+					}
+					first = false;
+					lastWasLocal = local;
+				#endif
+				
 				TaskDataAccesses &previousAccessStructures = previousTask->getDataAccesses();
 				assert(!previousAccessStructures.hasBeenDeleted());
+				assert(previous->_range.fullyContainedIn(range));
 				
-				previous = linkAndCreatePropagationOperation(
+				previous = linkAndPropagate(
 					task->getInstrumentationTaskId(),
 					previous, previousTask, previousAccessStructures,
-					range.intersect(previous->_range), task,
+					previous->_range, task,
+					/* Propagate topmost property */ true,
 					cpuDependencyData
 				);
 				
@@ -1243,6 +1353,14 @@ private:
 				
 				// Not part of the parent
 				local = true;
+				
+				#ifndef NDEBUG
+					if (!first) {
+						assert((local == lastWasLocal) && "This fails with wrongly nested regions");
+					}
+					first = false;
+					lastWasLocal = local;
+				#endif
 				
 				// Holes in the parent bottom map that are not in the parent accesses become fully satisfied
 				std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock); // Need the lock since an access of data allocated in the parent may partially overlap a previous one
@@ -1261,6 +1379,7 @@ private:
 						
 						targetAccess->readSatisfied() = true;
 						targetAccess->writeSatisfied() = true;
+						targetAccess->isTopmost() = true;
 						if (!targetAccess->_weak) {
 							task->decreasePredecessors();
 						}
@@ -1290,7 +1409,6 @@ private:
 		/* OUT */ CPUDependencyData &cpuDependencyData,
 		Task *task
 	) {
-		assert(cpuDependencyData._delayedOperations.empty());
 		assert(task != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
@@ -1357,7 +1475,7 @@ private:
 					dataAccess->isReachable() = true;
 #endif
 					
-					replaceAndLinkMatchingInBottomMapAndCreateDelayedOperations(
+					replaceMatchingInBottomMapLinkAndPropagate(
 						task, accessStructures,
 						dataAccess->_range, dataAccess->_weak,
 						parent, parentAccessStructures,
@@ -1371,6 +1489,57 @@ private:
 				}
 			);
 		}
+	}
+	
+	
+	static inline void finalizeFragments(
+		Task *task, TaskDataAccesses &accessStructures,
+		/* OUT */ CPUDependencyData &cpuDependencyData
+	) {
+		assert(task != nullptr);
+		assert(!accessStructures.hasBeenDeleted());
+		
+		// Mark the fragments as completed and propagate topmost property
+		accessStructures._accessFragments.processAll(
+			[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
+				DataAccess *fragment = &(*position);
+				assert(fragment != nullptr);
+				assert(fragment->isFragment());
+				assert(!fragment->hasBeenDiscounted());
+				
+				if (fragment->complete()) {
+					return true;
+				}
+				
+				Instrument::completedDataAccess(fragment->_instrumentationId, task->getInstrumentationTaskId());
+				assert(!fragment->complete());
+				fragment->complete() = true;
+				
+				bool becomesRemovable = fragment->isRemovable(fragment->hasForcedRemoval());
+				
+				// The next can only become topmost if it belongs to the inner dependency domain
+				bool makesNextTopmost = becomesRemovable && (fragment->_next != nullptr) && (fragment->_next->getParent() == task);
+				
+				if (makesNextTopmost) {
+					makeRangeTopmost(
+						task->getInstrumentationTaskId(),
+						fragment->_range, fragment->_next,
+						cpuDependencyData
+					);
+				}
+				
+				// Update the number of non removable accesses if the fragment has become removable
+				if (becomesRemovable) {
+					handleAccessRemoval(
+						fragment, accessStructures, task,
+						task->getInstrumentationTaskId(), cpuDependencyData
+					);
+					assert(accessStructures._removalBlockers >= 0);
+				}
+				
+				return true;
+			}
+		);
 	}
 	
 	
@@ -1408,7 +1577,7 @@ private:
 		assert(!dataAccess->hasForcedRemoval() || (dataAccess->_next == nullptr));
 		
 		if (dataAccess->hasSubaccesses()) {
-			// Mark the fragments as completed
+			// Mark the fragments as completed and propagate topmost property
 			accessStructures._accessFragments.processIntersecting(
 				range,
 				[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
@@ -1429,8 +1598,21 @@ private:
 					assert(!fragment->complete());
 					fragment->complete() = true;
 					
+					bool becomesRemovable = fragment->isRemovable(fragment->hasForcedRemoval());
+					
+					// The next can only become topmost if it belongs to the inner dependency domain
+					bool makesNextTopmost = becomesRemovable && (fragment->_next->getParent() == finishedTask);
+					
+					if ((fragment->_next != nullptr) && makesNextTopmost) {
+						makeRangeTopmost(
+							finishedTask->getInstrumentationTaskId(),
+							fragment->_range, fragment->_next,
+							cpuDependencyData
+						);
+					}
+					
 					// Update the number of non removable accesses if the fragment has become removable
-					if (fragment->isRemovable(fragment->hasForcedRemoval())) {
+					if (becomesRemovable) {
 						handleAccessRemoval(
 							fragment, accessStructures, finishedTask,
 							finishedTask->getInstrumentationTaskId(), cpuDependencyData
@@ -1442,14 +1624,16 @@ private:
 				}
 			);
 			
+			// Link bottom map subaccesses to the next of the current access and remove them from the bottom map
 			if (dataAccess->_next != nullptr) {
-				// Link bottom map subaccesses to the next of the current access and remove them from the bottom map
-				linkBottomMapAccessesToNext(
-					finishedTask->getInstrumentationTaskId(),
-					dataAccess->_originator, accessStructures, dataAccess->_range,
-					dataAccess->_next,
-					/* OUT */ cpuDependencyData
-				);
+				// This also propagates
+				
+				DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
+				delayedOperation._operationType = DelayedOperation::link_bottom_map_accesses_operation;
+				
+				delayedOperation._next = dataAccess->_next;
+				delayedOperation._range = dataAccess->_range;
+				delayedOperation._target = dataAccess->_originator;
 			}
 		}
 		
@@ -1458,13 +1642,27 @@ private:
 		assert(!dataAccess->complete());
 		dataAccess->complete() = true;
 		
-		if (!dataAccess->hasSubaccesses() && (dataAccess->_next != nullptr) && dataAccess->writeSatisfied()) {
-			createPropagationOperation(
-				dataAccess,
-				dataAccess->_next,
+		bool becomesRemovable = dataAccess->isRemovable(dataAccess->hasForcedRemoval());
+		Task *next = dataAccess->_next;
+		
+		// The next can only become topmost if it belongs to the same dependency domain
+		bool makesNextTopmost = becomesRemovable && (next != nullptr) && (next->getParent() == finishedTask->getParent());
+		
+		if (!dataAccess->hasSubaccesses() && (next != nullptr)) {
+			// This call will actually decide whether there is anything to propagate
+			propagateSatisfiability(
+				finishedTask->getInstrumentationTaskId(),
+				dataAccess, next,
+				makesNextTopmost,
 				/* OUT */ cpuDependencyData
 			);
 		}
+		
+		// Propagate topmost property to next even if there are subaccesses
+		if (dataAccess->hasSubaccesses() && makesNextTopmost) {
+			makeRangeTopmost(finishedTask->getInstrumentationTaskId(), dataAccess->_range, next, cpuDependencyData);
+		}
+		
 		
 		// Handle propagation of forced removal of accesses
 		if (dataAccess->hasForcedRemoval() && dataAccess->hasSubaccesses()) {
@@ -1476,7 +1674,7 @@ private:
 		}
 		
 		// Update the number of non removable accesses of the task
-		if (dataAccess->isRemovable(dataAccess->hasForcedRemoval())) {
+		if (becomesRemovable) {
 			handleAccessRemoval(
 				dataAccess, accessStructures, finishedTask,
 				finishedTask->getInstrumentationTaskId(), cpuDependencyData
@@ -1495,6 +1693,7 @@ private:
 		}
 		removableTasks.clear();
 	}
+	
 	
 	static inline CPUDependencyData &getCPUDependencyDataCPUAndThread(/* out */ CPU * &cpu, /* out */ WorkerThread * &thread)
 	{
@@ -1595,8 +1794,7 @@ public:
 			linkTaskAccesses(cpuDependencyData, task);
 			
 			processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
-				task->getInstrumentationTaskId(),
-				cpuDependencyData, cpu, currentThread
+				task->getInstrumentationTaskId(), cpuDependencyData, cpu, currentThread
 			);
 			
 #ifndef NDEBUG
@@ -1658,10 +1856,11 @@ public:
 							return true;
 						}
 						
+						assert(dataAccess->_next == nullptr);
 						dataAccess->hasForcedRemoval() = true;
 						
 						// Handle propagation of forced removal of accesses
-						if (dataAccess->hasSubaccesses()) {
+						if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
 							activateForcedRemovalOfBottomMapAccesses(
 								subtask, subtaskAccessStructures,
 								dataAccess->_range,
@@ -1711,8 +1910,6 @@ public:
 		}
 #endif
 		
-		assert(cpuDependencyData._delayedOperations.empty());
-		
 		{
 			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 			
@@ -1734,8 +1931,7 @@ public:
 			);
 		}
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
-			task->getInstrumentationTaskId(),
-			cpuDependencyData, cpu, currentThread
+			task->getInstrumentationTaskId(), cpuDependencyData, cpu, currentThread
 		);
 		
 #ifndef NDEBUG
@@ -1773,8 +1969,6 @@ public:
 		}
 #endif
 		
-		assert(cpuDependencyData._delayedOperations.empty());
-		
 		{
 			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 			
@@ -1797,8 +1991,7 @@ public:
 		}
 		
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
-			task->getInstrumentationTaskId(),
-			cpuDependencyData, cpu, currentThread
+			task->getInstrumentationTaskId(), cpuDependencyData, cpu, currentThread
 		);
 		
 #ifndef NDEBUG
@@ -1861,10 +2054,11 @@ public:
 			}
 			
 			activateForcedRemovalOfBottomMapAccesses(task, accessStructures, cpuDependencyData, task->getInstrumentationTaskId());
+			
+			finalizeFragments(task, accessStructures, cpuDependencyData);
 		}
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
-			task->getInstrumentationTaskId(),
-			cpuDependencyData, cpu, currentThread
+			task->getInstrumentationTaskId(), cpuDependencyData, cpu, currentThread
 		);
 		
 #ifndef NDEBUG
@@ -1911,10 +2105,14 @@ public:
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					assert(dataAccess->isFragment());
-					assert(accessStructures._removalBlockers > 0);
 					
-					accessStructures._removalBlockers--;
-					assert(accessStructures._removalBlockers >= 0);
+					if (dataAccess->isRemovable(dataAccess->hasForcedRemoval())) {
+						// Already discounted
+					} else {
+						assert(accessStructures._removalBlockers > 0);
+						accessStructures._removalBlockers--;
+						assert(accessStructures._removalBlockers >= 0);
+					}
 					
 					Instrument::removedDataAccess(dataAccess->_instrumentationId, task->getInstrumentationTaskId());
 					accessStructures._accessFragments.erase(dataAccess);
