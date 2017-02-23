@@ -144,9 +144,6 @@ else
 	AC_DEFINE([NO_DEPENDENCY_DELAYED_OPERATIONS], 0, [do not delay dependency updates])
 fi
 
-NO_DEPENDENCY_DELAYED_OPERATIONS
-
-
 
 AC_ARG_WITH(
 	[installed-loader],
