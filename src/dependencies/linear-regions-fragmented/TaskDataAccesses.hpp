@@ -12,7 +12,7 @@
 #include "IntrusiveLinearRegionMap.hpp"
 #include "IntrusiveLinearRegionMapImplementation.hpp"
 #include "TaskDataAccessLinkingArtifacts.hpp"
-#include "lowlevel/SpinLock.hpp"
+#include "lowlevel/PaddedTicketSpinLock.hpp"
 
 
 struct DataAccess;
@@ -20,7 +20,7 @@ class Task;
 
 
 struct TaskDataAccesses {
-	typedef SpinLock spinlock_t;
+	typedef PaddedTicketSpinLock<int, 128> spinlock_t;
 	
 	typedef IntrusiveLinearRegionMap<
 		DataAccess,
