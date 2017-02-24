@@ -1084,7 +1084,7 @@ private:
 	
 	
 	static inline void propagateSatisfiability(
-		Instrument::task_id_t triggererInstrumentationTaskId,
+		__attribute__((unused)) Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccess *dataAccess, Task *targetTask,
 		bool makeTopmost,
 		/* inout */ CPUDependencyData &cpuDependencyData
@@ -1127,7 +1127,7 @@ private:
 	
 	
 	static inline void makeRangeTopmost(
-		Instrument::task_id_t triggererInstrumentationTaskId,
+		__attribute__((unused)) Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccessRange range, Task *task,
 		/* inout */ CPUDependencyData &cpuDependencyData
 	) {
