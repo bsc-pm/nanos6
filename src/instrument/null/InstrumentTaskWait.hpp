@@ -18,7 +18,7 @@ namespace Instrument {
 	{
 	}
 	
-	void exitTaskWait(task_id_t taskId)
+	inline void exitTaskWait(task_id_t taskId)
 	{
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		if (currentThread == nullptr) {
