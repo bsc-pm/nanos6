@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "LeaderThread.hpp"
+#include "PollingAPI.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include <InstrumentLeaderThread.hpp>
@@ -49,6 +50,7 @@ void *LeaderThread::body()
 		
 		// The loop repeats the call with the remaining time in the event that the thread received a signal with a handler that has SA_RESTART set
 		while (nanosleep(&delay, &delay)) {
+			PollingAPI::handleServices();
 		}
 		
 		// check something, like changes on the process_mask, or if there is any

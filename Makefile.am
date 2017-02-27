@@ -110,9 +110,12 @@ common_sources = \
 	src/support/GlobalLock.cpp \
 	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
+	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
+	src/system/PollingAPI.cpp \
+	src/system/PollingAPI.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
