@@ -476,6 +476,29 @@ namespace Instrument {
 		};
 		
 		
+		struct new_data_access_property_step_t : public execution_step_t {
+			data_access_id_t _accessId;
+			std::string _shortName;
+			std::string _longName;
+			
+			new_data_access_property_step_t(
+				long cpu, thread_id_t threadId,
+				data_access_id_t accessId,
+				std::string shortName, std::string longName,
+				task_id_t triggererTaskId
+			)
+				: execution_step_t(cpu, threadId, triggererTaskId),
+				_accessId(accessId),
+				_shortName(shortName), _longName(longName)
+			{
+			}
+			
+			virtual void execute();
+			virtual std::string describe();
+			virtual bool visible();
+		};
+		
+		
 		struct log_message_step_t : public execution_step_t {
 			std::string _message;
 			

@@ -4,12 +4,11 @@
 
 #include "../api/InstrumentInitAndShutdown.hpp"
 
+#include "performance/HardwareCounters.hpp"
+
 
 namespace Instrument {
-	inline void initialize()
-	{
-	}
-	
+	void initialize();
 	void shutdown();
 	
 }

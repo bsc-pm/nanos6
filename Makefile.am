@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I common/m4
-AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(top_srcdir)/common -I$(top_srcdir)/common/api
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I@HEADER_DIR@
 
 SUBDIRS = . tests/directive_based/tests
 
@@ -12,19 +12,21 @@ lib_LTLIBRARIES = \
 	libnanos6-verbose.la libnanos6-verbose-debug.la \
 	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la
 
+
 if HAVE_EXTRAE
    lib_LTLIBRARIES += libnanos6-extrae.la
 endif
+
+if HAVE_PAPI
+   lib_LTLIBRARIES += libnanos6-stats-papi.la
+endif
+
 
 # See info page of libtool "Updating version info"
 lib_current = 0
 lib_revision = 0
 lib_age = 0
 
-pkginclude_HEADERS = \
-	common/api/nanos6_library_interface.h \
-	common/api/nanos6_rt_interface.h \
-	common/api/nanos6_debug_interface.h
 
 nodist_noinst_HEADERS = \
 	src/version/VersionInfo.hpp
@@ -87,15 +89,17 @@ common_sources = \
 	src/instrument/api/InstrumentUserMutex.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
-	src/lowlevel/TokenizedEnvironmentVariable.hpp \
-	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/lowlevel/PaddedSpinLock.hpp \
+	src/lowlevel/PaddedTicketSpinLock.hpp \
 	src/lowlevel/RWSpinLock.hpp \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
+<<<<<<< HEAD
 	src/memory/AddressSpace.hpp \
 	src/memory/Globals.hpp \
 	src/memory/directory/Directory.hpp \
@@ -121,6 +125,7 @@ common_sources = \
 	src/memory/cache/AIOCache.cpp \
 	src/memory/cache/NUMACache.hpp \
 	src/memory/cache/NUMACache.cpp \
+	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
@@ -143,14 +148,18 @@ common_sources = \
 	src/support/GlobalLock.cpp \
 	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
+	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
+	src/system/PollingAPI.cpp \
+	src/system/PollingAPI.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/RegisterMemory.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
+	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
@@ -207,11 +216,13 @@ linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) $(
 	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
+	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
+	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
@@ -230,6 +241,18 @@ if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
 common_sources += $(linear_regions_fragmented_dependency_sources)
 endif
+
+
+hardware_counters_sources = \
+	src/performance/HardwareCounters.hpp \
+	src/performance/HardwareCounters.cpp
+
+papi_hardware_counters_sources = \
+	src/performance/PAPI/PAPIHardwareCounters.hpp \
+	src/performance/PAPI/PAPIHardwareCounters.cpp
+
+no_hardware_counters_sources = \
+	src/performance/no-HC/NoHardwareCounters.hpp
 
 
 noinstrument_sources = \
@@ -319,6 +342,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentUserMutex.hpp
 
 instrument_stats_sources = \
+	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentDataAccessId.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
@@ -390,6 +414,7 @@ instrument_extrae_sources = \
 	src/instrument/public/extrae/InstrumentThreadId.hpp \
 	src/instrument/public/extrae/InstrumentThreadManagement.hpp
 
+
 null_common_sources = \
 	src/null/NullDebug.cpp \
 	src/null/NullAPI.cpp
@@ -444,8 +469,15 @@ libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(C
 
 libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
-libnanos6_stats_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(universal_debug_sources)
+libnanos6_stats_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources)
 libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+
+if HAVE_PAPI
+libnanos6_stats_papi_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats $(papi_CPPFLAGS) -DHAVE_PAPI
+libnanos6_stats_papi_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
+libnanos6_stats_papi_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources)
+libnanos6_stats_papi_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
+endif
 
 libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
 libnanos6_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)

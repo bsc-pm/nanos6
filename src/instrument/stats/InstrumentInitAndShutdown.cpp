@@ -1,7 +1,8 @@
 #include "InstrumentInitAndShutdown.hpp"
 #include "InstrumentStats.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
-#include <executors/threads/CPUManager.hpp>
+#include <executors/threads/ThreadManager.hpp>
+#include "performance/HardwareCounters.hpp"
 
 #include <fstream>
 
@@ -36,6 +37,23 @@ namespace Instrument {
 				<< "\t" << 100.0 * (double) meanTimes._zombieTime / meanLifetime << "\t%" << std::endl;
 			output << "STATS\t" << name << " mean lifetime\t"
 				<< meanTimes.getTotal() << "\t" << Timer::getUnits() << std::endl;
+			
+			for (HardwareCounters::counter_value_t const &counterValue : taskInfo._hardwareCounters[0]) {
+				output << "STATS\t" << name << " " << counterValue._name << "\t";
+				
+				if (counterValue._isInteger) {
+					output << counterValue._integerValue;
+				} else {
+					output << counterValue._floatValue;
+				}
+				
+				if (!counterValue._units.empty()) {
+					output << "\t" << counterValue._units;
+				}
+				
+				output << std::endl;
+			}
+			
 		}
 	}
 	
@@ -43,51 +61,73 @@ namespace Instrument {
 	using namespace Stats;
 	
 	
+	void initialize()
+	{
+		HardwareCounters::initialize();
+		_phaseTimes.emplace_back(true);
+	}
+	
+	
 	void shutdown()
 	{
 		_totalTime.stop();
 		double totalTime = _totalTime;
 		
+		HardwareCounters::shutdown();
+		
 		ThreadInfo accumulatedThreadInfo(false);
 		int numThreads = 0;
-		for (auto threadInfo : _threadInfoList) {
-			threadInfo->stoppedAt(_totalTime);
+		for (auto &threadInfo : _threadInfoList) {
+			threadInfo->getCurrentPhaseRef().stoppedAt(_totalTime);
 			
 			accumulatedThreadInfo += *threadInfo;
 			numThreads++;
 		}
 		
-		double totalThreadTime = accumulatedThreadInfo._blockedTime;
-		totalThreadTime += (double) accumulatedThreadInfo._runningTime;
+		PhaseInfo accumulatedPhaseInfo(false);
+		for (auto &phaseInfo : accumulatedThreadInfo._phaseInfo) {
+			accumulatedPhaseInfo += phaseInfo;
+		}
+		
+		double totalThreadTime = (double) accumulatedPhaseInfo._blockedTime + (double) accumulatedPhaseInfo._runningTime;
+		double totalRunningTime = accumulatedPhaseInfo._runningTime;
+		
 		double averageThreadTime = totalThreadTime / (double) numThreads;
 		
 		TaskInfo accumulatedTaskInfo;
-		for (auto &taskInfoEntry : accumulatedThreadInfo._perTask) {
+		for (auto &taskInfoEntry : accumulatedPhaseInfo._perTask) {
 			accumulatedTaskInfo += taskInfoEntry.second;
 		}
 		
 		EnvironmentVariable<std::string> _outputFilename("NANOS6_STATS_FILE", "/dev/stderr");
 		std::ofstream output(_outputFilename);
 		
+<<<<<<< HEAD
 		output << "STATS\t" << "Total CPUs\t" << CPUManager::getTotalCPUs() << std::endl;
+=======
+		output << "STATS\t" << "Total CPUs\t" << ThreadManager::getTotalCPUs() << std::endl;
+		output << "STATS\t" << "Total time\t" << totalTime << "\tns" << std::endl;
+>>>>>>> origin/master
 		output << "STATS\t" << "Total threads\t" << numThreads << std::endl;
 		output << "STATS\t" << "Mean threads per CPU\t" << ((double) numThreads) / (double) CPUManager::getTotalCPUs() << std::endl;
 		output << "STATS\t" << "Mean tasks per thread\t" << ((double) accumulatedTaskInfo._numInstances) / (double) numThreads << std::endl;
 		output << std::endl;
 		output << "STATS\t" << "Mean thread lifetime\t" << 100.0 * averageThreadTime / totalTime << "\t%" << std::endl;
-		output << "STATS\t" << "Mean thread running time\t" << 100.0 * ((double) accumulatedThreadInfo._runningTime) / totalThreadTime << "\t%" << std::endl;
+		output << "STATS\t" << "Mean thread running time\t" << 100.0 * totalRunningTime / totalThreadTime << "\t%" << std::endl;
+		output << "STATS\t" << "Mean effective parallelism\t" << (double) accumulatedTaskInfo._times._executionTime / (double) totalTime << std::endl;
 		
 		if (accumulatedTaskInfo._numInstances > 0) {
 			output << std::endl;
 			emitTaskInfo(output, "All Tasks", accumulatedTaskInfo);
 		}
 		
-		for (auto &taskInfoEntry : accumulatedThreadInfo._perTask) {
+		
+		for (auto &taskInfoEntry : accumulatedPhaseInfo._perTask) {
 			nanos_task_info const *userSideTaskInfo = taskInfoEntry.first;
 			
 			assert(userSideTaskInfo != 0);
 			std::string name;
-			if (userSideTaskInfo->task_label != 0) {
+			if ((userSideTaskInfo->task_label != nullptr) && (userSideTaskInfo->task_label[0] != '\0')) {
 				name = userSideTaskInfo->task_label;
 			} else if (userSideTaskInfo->declaration_source != 0) {
 				name = userSideTaskInfo->declaration_source;
@@ -97,6 +137,52 @@ namespace Instrument {
 			
 			output << std::endl;
 			emitTaskInfo(output, name, taskInfoEntry.second);
+		}
+		
+		{
+			int phase = 0;
+			for (auto &phaseInfo : accumulatedThreadInfo._phaseInfo) {
+				TaskInfo currentPhaseAccumulatedTaskInfo;
+				
+				for (auto &taskInfoEntry : phaseInfo._perTask) {
+					nanos_task_info const *userSideTaskInfo = taskInfoEntry.first;
+					
+					assert(userSideTaskInfo != 0);
+					std::string name;
+					if ((userSideTaskInfo->task_label != nullptr) && (userSideTaskInfo->task_label[0] != '\0')) {
+						name = userSideTaskInfo->task_label;
+					} else if (userSideTaskInfo->declaration_source != 0) {
+						name = userSideTaskInfo->declaration_source;
+					} else {
+						name = "Unknown task";
+					}
+					
+					if (name == "main") {
+						// Main ends up in the last phase despite the fact that it contributes to all of them
+						continue;
+					}
+					
+					std::ostringstream oss;
+					oss << "Phase " << (phase+1) << " " << name;
+					
+					output << std::endl;
+					emitTaskInfo(output, oss.str(), taskInfoEntry.second);
+					
+					currentPhaseAccumulatedTaskInfo += taskInfoEntry.second;
+				}
+				
+				if (currentPhaseAccumulatedTaskInfo._numInstances > 0) {
+					std::ostringstream oss;
+					oss << "Phase " << (phase+1);
+					
+					output << std::endl;
+					emitTaskInfo(output, oss.str(), currentPhaseAccumulatedTaskInfo);
+					output << "STATS\t" << "Phase " << (phase+1) << " effective parallelism\t"
+						<< (double) currentPhaseAccumulatedTaskInfo._times._executionTime / (double) _phaseTimes[phase] << std::endl;
+				}
+				
+				phase++;
+			}
 		}
 		
 		output.close();

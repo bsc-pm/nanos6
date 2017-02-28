@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "SchedulerInterface.hpp"
+#include "lowlevel/PaddedTicketSpinLock.hpp"
 #include "lowlevel/TicketSpinLock.hpp"
 #include "executors/threads/CPU.hpp"
 
@@ -15,7 +16,7 @@ class Task;
 
 
 class FIFOImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
-	typedef TicketSpinLock<> spinlock_t;
+	typedef PaddedTicketSpinLock<> spinlock_t;
 	
 	spinlock_t _globalLock;
 	

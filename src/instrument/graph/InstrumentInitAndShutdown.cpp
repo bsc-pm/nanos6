@@ -292,6 +292,11 @@ namespace Instrument {
 			statusText << "C";
 		}
 		
+		for (std::string const &property : access._otherProperties) {
+			haveStatusText = true;
+			statusText << property;
+		}
+		
 		if (haveStatusText) {
 			text << "\\n" << statusText.str() << "+";
 		}
@@ -333,17 +338,13 @@ namespace Instrument {
 		std::ofstream &ofs, access_t &firstAccess
 	) {
 		std::string initialIndentation = indentation;
-		ofs << indentation << "{"
-		#ifndef NDEBUG
-			<< "\t// " << __FILE__ << ":" << __LINE__
-		#endif
-			<< std::endl;
 		indentation = initialIndentation + "\t";
-		ofs << indentation << "rank=same;" << std::endl;
 		
 		data_access_id_t lastId;
 		data_access_id_t firstEmittedId;
 		data_access_id_t currentId = firstAccess._id;
+		
+		bool started = false;
 		while (currentId != data_access_id_t()) {
 			access_t *access = _accessIdToAccessMap[currentId];
 			assert(access != nullptr);
@@ -352,6 +353,16 @@ namespace Instrument {
 			if (!_showDeadDependencyStructures && (access->_status != created_access_status)) {
 				currentId = access->_nextGroupAccess;
 				continue;
+			}
+			
+			if (!started) {
+				started = true;
+				ofs << initialIndentation << "{"
+				#ifndef NDEBUG
+					<< "\t// " << __FILE__ << ":" << __LINE__
+				#endif
+					<< std::endl;
+				ofs << indentation << "rank=same;" << std::endl;
 			}
 			
 			emitAccess(ofs, *access);
@@ -375,7 +386,10 @@ namespace Instrument {
 		}
 		
 		indentation = initialIndentation;
-		ofs << indentation << "}" << std::endl;
+		
+		if (started) {
+			ofs << indentation << "}" << std::endl;
+		}
 		
 		return firstEmittedId;
 	}

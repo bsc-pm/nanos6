@@ -1,6 +1,6 @@
 #include <cassert>
 
-#include "api/nanos6_debug_interface.h"
+#include <nanos6/debug.h>
 #include "executors/threads/CPUActivation.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"

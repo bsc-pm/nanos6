@@ -6,13 +6,12 @@
 
 #include "LeaderThread.hpp"
 
-#include "api/nanos6_rt_interface.h"
-#include "executors/threads/CPUManager.hpp"
+#include <nanos6.h>
+#include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "hardware/HardwareInfo.hpp"
-#include "memory/directory/Directory.hpp"
+#include "system/ompss/SpawnFunction.hpp"
 
 #include <InstrumentInitAndShutdown.hpp>
 
@@ -82,6 +81,10 @@ void nanos_init(void) {
 
 
 void nanos_shutdown(void) {
+	while (SpawnedFunctions::_pendingSpawnedFuncions > 0) {
+		// Wait for spawned functions to fully end
+	}
+	
 	LeaderThread::shutdown();
 	Instrument::shutdown();
 	

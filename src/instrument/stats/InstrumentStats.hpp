@@ -1,17 +1,23 @@
 #ifndef INSTRUMENT_STATS_HPP
 #define INSTRUMENT_STATS_HPP
 
+#include <atomic>
 #include <list>
 #include <map>
+#include <vector>
 
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 #include "lowlevel/SpinLock.hpp"
 #include "Timer.hpp"
 
+#include "performance/HardwareCounters.hpp"
 
 
 namespace Instrument {
 	namespace Stats {
+		extern std::atomic<int> _currentPhase;
+		extern std::vector<Timer> _phaseTimes;
+		
 		struct TaskTimes {
 			Timer _instantiationTime;
 			Timer _pendingTime;
@@ -76,9 +82,10 @@ namespace Instrument {
 		struct TaskInfo {
 			long _numInstances;
 			TaskTimes _times;
+			HardwareCounters::Counters<> _hardwareCounters;
 			
 			TaskInfo()
-				: _numInstances(0), _times(true)
+				: _numInstances(0), _times(true), _hardwareCounters()
 			{
 			}
 			
@@ -90,10 +97,18 @@ namespace Instrument {
 				return *this;
 			}
 			
+			TaskInfo &operator+=(HardwareCounters::Counters<> const &instanceHardwareCounters)
+			{
+				_hardwareCounters += instanceHardwareCounters;
+				
+				return *this;
+			}
+			
 			TaskInfo &operator+=(TaskInfo const &other)
 			{
 				_numInstances += other._numInstances;
 				_times += other._times;
+				_hardwareCounters += other._hardwareCounters;
 				
 				return *this;
 			}
@@ -108,33 +123,38 @@ namespace Instrument {
 			nanos_task_info const *_type;
 			TaskTimes _times;
 			Timer *_currentTimer;
+			HardwareCounters::ThreadCounters<> _hardwareCounters;
 			
 			TaskTypeAndTimes(nanos_task_info const *type)
-			: _type(type), _times(false), _currentTimer(&_times._instantiationTime)
+				: _type(type), _times(false), _currentTimer(&_times._instantiationTime), _hardwareCounters()
 			{
 			}
 		};
 		
-		struct ThreadInfo {
+		
+		struct PhaseInfo {
 			std::map<nanos_task_info const *, TaskInfo> _perTask;
 			Timer _runningTime;
 			Timer _blockedTime;
+			HardwareCounters::Counters<> _hardwareCounters;
 			
-			ThreadInfo(bool active=true)
+			PhaseInfo(bool active=true)
 				: _perTask(),
 				_runningTime(false),
-				_blockedTime(active)
+				_blockedTime(active),
+				_hardwareCounters()
 			{
 			}
 			
-			ThreadInfo &operator+=(ThreadInfo const &other)
+			PhaseInfo &operator+=(PhaseInfo const &other)
 			{
-				for (auto perTaskEntry : other._perTask) {
+				for (auto &perTaskEntry : other._perTask) {
 					_perTask[perTaskEntry.first] += perTaskEntry.second;
 				}
 				
 				_runningTime += other._runningTime;
 				_blockedTime += other._blockedTime;
+				_hardwareCounters += other._hardwareCounters;
 				
 				return *this;
 			}
@@ -152,10 +172,83 @@ namespace Instrument {
 			
 			void stoppedAt(Timer const &reference)
 			{
-				_runningTime.fixStopTimeFrom(reference);
-				_blockedTime.fixStopTimeFrom(reference);
+				if (!_runningTime.empty()) {
+					_runningTime.fixStopTimeFrom(reference);
+				}
+				if (!_blockedTime.empty()) {
+					_blockedTime.fixStopTimeFrom(reference);
+				}
 			}
 			
+			bool isRunning() const
+			{
+				return _runningTime.isRunning();
+			}
+		};
+		
+		
+		struct ThreadInfo {
+			std::list<PhaseInfo> _phaseInfo;
+			
+			ThreadInfo(bool active=true)
+				: _phaseInfo()
+			{
+				_phaseInfo.emplace_back(active);
+			}
+			
+			ThreadInfo &operator+=(ThreadInfo const &other)
+			{
+				unsigned int phases = other._phaseInfo.size();
+				
+				while (_phaseInfo.size() < phases) {
+					_phaseInfo.emplace_back(false);
+				}
+				
+				auto it = _phaseInfo.begin();
+				auto otherIt = other._phaseInfo.begin();
+				while (otherIt != other._phaseInfo.end()) {
+					(*it) += (*otherIt);
+					
+					it++;
+					otherIt++;
+				}
+				
+				return *this;
+			}
+			
+			PhaseInfo &getCurrentPhaseRef()
+			{
+				int currentPhase = _currentPhase.load();
+				assert(_currentPhase.load() == (_phaseTimes.size() - 1));
+				
+				int lastStartedPhase = _phaseInfo.size() - 1;
+				
+				if (lastStartedPhase == -1) {
+					// Add the previous phases as empty
+					for (int phase = 0; phase < currentPhase-1; phase++) {
+						_phaseInfo.emplace_back(false);
+					}
+					// Start the new phase
+					_phaseInfo.emplace_back(true);
+				} else if (lastStartedPhase < currentPhase) {
+					// Fix the stopping time of the last phase
+					bool isRunning = _phaseInfo.back().isRunning();
+					_phaseInfo.back().stoppedAt(_phaseTimes[lastStartedPhase]);
+					
+					// Mark any already finished phase that is missing and the current phase as blocked
+					for (int phase = lastStartedPhase+1; phase <= currentPhase; phase++) {
+						_phaseInfo.emplace_back(false);
+						
+						if (isRunning) {
+							_phaseInfo.back()._runningTime = _phaseTimes[phase];
+						} else {
+							_phaseInfo.back()._blockedTime = _phaseTimes[phase];
+						}
+					}
+				}
+				
+				return _phaseInfo.back();
+			}
 		};
 		
 		

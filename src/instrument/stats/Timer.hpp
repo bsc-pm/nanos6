@@ -267,7 +267,7 @@ public:
 				// Discount the fraction outside the reference end time
 				_accumulated -= _endTime - reference._endTime;
 			} else {
-				// Nothig to fix
+				// Nothing to fix
 			}
 		}
 	}
@@ -283,6 +283,14 @@ public:
 		_startTime = InternalRepresentation();
 		_endTime = InternalRepresentation();
 		_accumulated = InternalRepresentation();
+	}
+	
+	inline bool empty() const
+	{
+		return
+			(_startTime == InternalRepresentation())
+			&& (_endTime == InternalRepresentation())
+			&& (_accumulated == InternalRepresentation());
 	}
 	
 	bool isRunning() const

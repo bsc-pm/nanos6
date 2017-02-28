@@ -84,6 +84,13 @@ namespace Instrument {
 		task_id_t triggererTaskId
 	);
 	
+	void newDataAccessProperty(
+		data_access_id_t dataAccessId,
+		char const *shortPropertyName,
+		char const *longPropertyName,
+		task_id_t triggererTaskId
+	);
+
 }
 
 

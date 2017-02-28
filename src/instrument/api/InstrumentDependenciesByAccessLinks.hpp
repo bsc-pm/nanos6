@@ -193,6 +193,18 @@ namespace Instrument {
 		task_id_t triggererTaskId
 	);
 	
+	//! \brief Called when a DataAccess has a new property
+	//! 
+	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
+	//! \param shortPropertyName a short name to give to the property (1 to 3 characters)
+	//! \param longPropertyName a name for the property with unconstrained length
+	//! \param triggererTaskId the identifier of the task that triggers the change
+	void newDataAccessProperty(
+		data_access_id_t dataAccessId,
+		char const *shortPropertyName,
+		char const *longPropertyName,
+		task_id_t triggererTaskId
+	);
 	//! @}
 }
 

@@ -1,5 +1,7 @@
-#include "api/nanos6_library_interface.h"
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
+#include <nanos6/library-mode.h>
+
+#include "SpawnFunction.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <cassert>
@@ -18,6 +20,11 @@ static SpinLock _spawnedFunctionInfosLock;
 static std::map<task_info_key_t, nanos_task_info> _spawnedFunctionInfos;
 
 static nanos_task_invocation_info _spawnedFunctionInvocationInfo = { "Spawned from external code" };
+
+
+namespace SpawnedFunctions {
+	std::atomic<unsigned int> _pendingSpawnedFuncions(0);
+}
 
 
 struct SpawnedFunctionArgsBlock {
@@ -48,6 +55,8 @@ static void nanos_spawned_function_wrapper(void *args)
 
 void nanos_spawn_function(void (*function)(void *), void *args, void (*completion_callback)(void *), void *completion_args, char const *label)
 {
+	SpawnedFunctions::_pendingSpawnedFuncions++;
+	
 	nanos_task_info *taskInfo = nullptr;
 	{
 		task_info_key_t taskInfoKey(function, (label != nullptr ? label : ""));

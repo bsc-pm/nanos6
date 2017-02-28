@@ -744,6 +744,33 @@ namespace Instrument {
 		
 		
 		
+		void new_data_access_property_step_t::execute()
+		{
+			access_t *access = _accessIdToAccessMap[_accessId];
+			assert(access != nullptr);
+			
+			access->_otherProperties.insert(_shortName);
+		}
+		
+		
+		std::string new_data_access_property_step_t::describe()
+		{
+			access_t *access = _accessIdToAccessMap[_accessId];
+			assert(access != nullptr);
+			
+			std::ostringstream oss;
+			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator << " has new property [" << _longName << " (" << _shortName <<") ]";
+			return oss.str();
+		}
+		
+		
+		bool new_data_access_property_step_t::visible()
+		{
+			return _showDependencyStructures;
+		}
+		
+		
+		
 		void log_message_step_t::execute()
 		{
 		}

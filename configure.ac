@@ -71,6 +71,7 @@ fi
 
 # Checks for library functions.
 AC_CHECK_BACKTRACE
+AC_CHECK_PAPI
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
 AC_SUBST(CLOCK_LIBS)
 
@@ -118,6 +119,40 @@ AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdis
 AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-unfragmented"])
 AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-fragmented"])
 AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
+
+AC_ARG_ENABLE(
+	[dependency-delayed-operations],
+	[AS_HELP_STRING([--disable-dependency-delayed-operations], [do not delay dependency update operations])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_dep_delayed_ops=yes
+			;;
+		no)
+			ac_dep_delayed_ops=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --disable-dependency-delayed-operations])
+			;;
+		esac
+	],
+	[ac_dep_delayed_ops=yes]
+)
+if test x"${ac_dep_delayed_ops}" = x"no" ; then
+	AC_DEFINE([NO_DEPENDENCY_DELAYED_OPERATIONS], 1, [do not delay dependency updates])
+else
+	AC_DEFINE([NO_DEPENDENCY_DELAYED_OPERATIONS], 0, [do not delay dependency updates])
+fi
+
+
+AC_ARG_WITH(
+	[installed-loader],
+	[AS_HELP_STRING([--with-installed-loader=prefix], [specify the prefix of the Nanos6 loader installation @<:@default=same as prefix@:>@])],
+	[ac_loader_dir="${withval}"],
+	[ac_loader_dir='$(prefix)']
+)
+HEADER_DIR="${ac_loader_dir}/include"
+AC_SUBST([HEADER_DIR])
 
 AX_CHECK_EXTRAE
 PKG_CHECK_MODULES([hwloc], [hwloc])

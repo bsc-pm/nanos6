@@ -49,7 +49,7 @@ void *WorkerThread::body()
 				}
 				
 				if (ThreadManager::mustExit()) {
-					bool worked = Scheduler::releasePolling(_cpu, &pollingSlot);
+					__attribute__((unused)) bool worked = Scheduler::releasePolling(_cpu, &pollingSlot);
 					assert(worked && "A failure to release the scheduler polling slot means that the thread has got a task assigned, however the runtime is shutting down");
                     _unused(worked);
 				}

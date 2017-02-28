@@ -13,46 +13,33 @@
 namespace Instrument {
 	inline void taskIsPending(task_id_t taskId)
 	{
-		if (taskId == task_id_t()) {
-			// A task environment wrapper
-			return;
-		}
-		
 		assert(taskId->_currentTimer != 0);
+		
 		taskId->_currentTimer->continueAt(taskId->_times._pendingTime);
 		taskId->_currentTimer = &taskId->_times._pendingTime;
 	}
 	
 	inline void taskIsReady(task_id_t taskId)
 	{
-		if (taskId == task_id_t()) {
-			// A task environment wrapper
-			return;
-		}
-		
 		assert(taskId->_currentTimer != 0);
+		
 		taskId->_currentTimer->continueAt(taskId->_times._readyTime);
 		taskId->_currentTimer = &taskId->_times._readyTime;
 	}
 	
 	inline void taskIsExecuting(task_id_t taskId)
 	{
-		if (taskId == task_id_t()) {
-			// A task environment wrapper
-			return;
-		}
-		
 		assert(taskId->_currentTimer != 0);
+		
 		taskId->_currentTimer->continueAt(taskId->_times._executionTime);
 		taskId->_currentTimer = &taskId->_times._executionTime;
+		
+		taskId->_hardwareCounters.start();
 	}
 	
 	inline void taskIsBlocked(task_id_t taskId, __attribute__((unused)) task_blocking_reason_t reason)
 	{
-		if (taskId == task_id_t()) {
-			// A task environment wrapper
-			return;
-		}
+		taskId->_hardwareCounters.accumulateAndStop();
 		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._blockedTime);
@@ -61,10 +48,7 @@ namespace Instrument {
 	
 	inline void taskIsZombie(task_id_t taskId)
 	{
-		if (taskId == task_id_t()) {
-			// A task environment wrapper
-			return;
-		}
+		taskId->_hardwareCounters.accumulateAndStop();
 		
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->continueAt(taskId->_times._zombieTime);

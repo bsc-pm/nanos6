@@ -39,6 +39,43 @@ public:
 #endif
 	}
 	
+	
+	template<typename... TS>
+	static inline void check(bool success, TS... reasonParts)
+	{
+		if (__builtin_expect(success, 1)) {
+			return;
+		}
+		
+		std::cerr << "Error: ";
+		emitReasonParts(reasonParts...);
+		std::cerr << std::endl;
+		
+#ifndef NDEBUG
+		abort();
+#else
+		exit(1);
+#endif
+	}
+	
+	template<typename... TS>
+	static inline void failIf(bool failure, TS... reasonParts)
+	{
+		if (__builtin_expect(!failure, 1)) {
+			return;
+		}
+		
+		std::cerr << "Error: ";
+		emitReasonParts(reasonParts...);
+		std::cerr << std::endl;
+		
+#ifndef NDEBUG
+		abort();
+#else
+		exit(1);
+#endif
+	}
+	
 };
 
 

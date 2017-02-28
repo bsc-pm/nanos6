@@ -2,6 +2,11 @@
 #define CXX_SPIN_LOCK_IMPLEMENTATION_HPP
 
 
+#ifndef SPIN_LOCK_READS_BETWEEN_CMPXCHG
+#define SPIN_LOCK_READS_BETWEEN_CMPXCHG 1000
+#endif
+
+
 #ifndef SPIN_LOCK_HPP
 	#error Include SpinLock.hpp instead
 #include "../SpinLock.hpp"
@@ -23,10 +28,16 @@ inline SpinLock::~SpinLock()
 
 inline void SpinLock::lock()
 {
-	bool expected;
-	do {
+	bool expected = false;
+	while (!_lock.compare_exchange_weak(expected, true, std::memory_order_acquire)) {
+		int spinsLeft = SPIN_LOCK_READS_BETWEEN_CMPXCHG;
+		do {
+			expected = _lock.load(std::memory_order_relaxed);
+			spinsLeft--;
+		} while (expected && (spinsLeft > 0));
+
 		expected = false;
-	} while (!_lock.compare_exchange_weak(expected, true, std::memory_order_acquire));
+	}
 	
 	assertUnowned();
 	setOwner();
