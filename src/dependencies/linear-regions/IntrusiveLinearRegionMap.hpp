@@ -139,6 +139,15 @@ public:
 	template <typename ProcessorType>
 	bool processIntersecting(DataAccessRange const &range, ProcessorType processor);
 	
+	//! \brief Pass all elements that intersect a given range through a lambda
+	//! 
+	//! \param[in] range the range to explore
+	//! \param[in] processor a lambda that receives an iterator to each element intersecting the range and that returns a boolean, that is false to stop the traversal. Unless the processor returns false, it should not invalidate the iterator passed as a parameter
+	//! 
+	//! \returns false if the traversal was stopped before finishing
+	template <typename ProcessorType>
+	bool processIntersectingWithRecentAdditions(DataAccessRange const &range, ProcessorType processor);
+	
 	//! \brief Pass all elements that intersect a given range through a lambda and any missing subranges through another lambda
 	//! 
 	//! \param[in] range the range to explore
@@ -148,6 +157,16 @@ public:
 	//! \returns false if the traversal was stopped before finishing
 	template <typename IntersectionProcessorType, typename MissingProcessorType>
 	bool processIntersectingAndMissing(DataAccessRange const &range, IntersectionProcessorType intersectingProcessor, MissingProcessorType missingProcessor);
+	
+	//! \brief Pass all elements that intersect a given range through a lambda and any missing subranges through another lambda
+	//! 
+	//! \param[in] range the range to explore
+	//! \param[in] intersectingProcessor a lambda that receives an iterator to each element intersecting the range and that returns a boolean equal to false to stop the traversal. Unless the processor returns false, it should not invalidate the iterator passed as a parameter
+	//! \param[in] missingProcessor a lambda that receives each missing subrange as a DataAccessRange and that returns a boolean equal to false to stop the traversal
+	//! 
+	//! \returns false if the traversal was stopped before finishing
+	template <typename IntersectionProcessorType, typename MissingProcessorType>
+	bool processIntersectingAndMissingWithRecentAdditions(DataAccessRange const &range, IntersectionProcessorType intersectingProcessor, MissingProcessorType missingProcessor);
 	
 	//! \brief Pass all elements that intersect a given range through a lambda with the posibility of restarting
 	//! the traversal from the last location if instructed

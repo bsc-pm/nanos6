@@ -28,7 +28,6 @@ bool IntrusiveLinearRegionMap<ContentType, Hook>::processAll(ProcessorType proce
 	return true;
 }
 
-
 template <typename ContentType, class Hook> template <typename ProcessorType>
 void IntrusiveLinearRegionMap<ContentType, Hook>::processAllWithRestart(ProcessorType processor)
 {
@@ -112,6 +111,43 @@ bool IntrusiveLinearRegionMap<ContentType, Hook>::processIntersecting(
 				return false;
 			}
 		}
+		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+	}
+	
+	return true;
+}
+
+template <typename ContentType, class Hook> template <typename ProcessorType>
+bool IntrusiveLinearRegionMap<ContentType, Hook>::processIntersectingWithRecentAdditions(
+	DataAccessRange const &range,
+	ProcessorType processor
+) {
+	assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+	iterator it = BaseType::lower_bound(range.getStartAddress());
+	
+	if (it != BaseType::begin()) {
+		if ((it == BaseType::end()) || (it->_range.getStartAddress() > range.getStartAddress())) {
+			it--;
+		}
+	}
+	
+	assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+	while ((it != BaseType::end()) && (it->_range.getStartAddress() < range.getEndAddress())) {
+		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+		iterator position = it;
+		
+		if (!range.intersect(position->_range).empty()) {
+			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+			bool cont = processor(position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+			if (!cont) {
+				return false;
+			}
+		}
+		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+		
+		++it;
+		
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
 	}
 	
@@ -220,6 +256,89 @@ bool IntrusiveLinearRegionMap<ContentType, Hook>::processIntersectingAndMissing(
 			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
 			lastEnd = range.getEndAddress();
 		}
+		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+		
+		if (!cont) {
+			return false;
+		}
+	}
+	
+	if (lastEnd < range.getEndAddress()) {
+		DataAccessRange missingRange(lastEnd, range.getEndAddress());
+		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+		bool result = missingProcessor(missingRange); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+		return result;
+	}
+	
+	return true;
+}
+
+
+template <typename ContentType, class Hook> template <typename IntersectingProcessorType, typename MissingProcessorType>
+bool IntrusiveLinearRegionMap<ContentType, Hook>::processIntersectingAndMissingWithRecentAdditions(
+	DataAccessRange const &range,
+	IntersectingProcessorType intersectingProcessor,
+	MissingProcessorType missingProcessor
+) {
+	assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+	if (BaseType::empty()) {
+		return missingProcessor(range); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+	}
+	
+	assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+	iterator it = BaseType::lower_bound(range.getStartAddress());
+	iterator initial = it;
+	
+	assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+	if (it != BaseType::begin()) {
+		if ((it == BaseType::end()) || (it->_range.getStartAddress() > range.getStartAddress())) {
+			it--;
+		}
+	}
+	
+	void *lastEnd = range.getStartAddress();
+	assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+	assert(!BaseType::empty());
+	if (it->_range.getEndAddress() <= range.getStartAddress()) {
+		it = initial;
+	}
+	
+	assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+	while ((it != BaseType::end()) && (it->_range.getStartAddress() < range.getEndAddress())) {
+		bool cont = true;
+		
+		iterator position = it;
+		
+		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+		if (lastEnd < position->_range.getStartAddress()) {
+			DataAccessRange missingRange(lastEnd, position->_range.getStartAddress());
+			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+			cont = missingProcessor(missingRange); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+			if (!cont) {
+				return false;
+			}
+		}
+		
+		if (position->_range.getEndAddress() <= range.getEndAddress()) {
+			lastEnd = position->_range.getEndAddress();
+			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+			cont = intersectingProcessor(position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+		} else {
+			assert(position->_range.getEndAddress() > range.getEndAddress());
+			assert((position->_range.getStartAddress() >= lastEnd) || (position->_range.getStartAddress() < range.getStartAddress()));
+			
+			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+			cont = intersectingProcessor(position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+			assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+			lastEnd = range.getEndAddress();
+		}
+		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
+		
+		++it;
+		
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
 		
 		if (!cont) {
