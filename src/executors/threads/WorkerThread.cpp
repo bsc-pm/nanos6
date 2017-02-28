@@ -1,5 +1,6 @@
 #include "CPUActivation.hpp"
 #include "TaskFinalization.hpp"
+#include "TaskFinalizationImplementation.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"

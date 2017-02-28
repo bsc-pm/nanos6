@@ -2241,6 +2241,11 @@ public:
 		}
 	}
 	
+	
+	static void handleTaskRemoval(__attribute__((unused)) Task *task)
+	{
+	}
+	
 };
 
 
