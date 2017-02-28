@@ -2,7 +2,7 @@
 
 #include <InstrumentDependenciesByAccess.hpp>
 
-#include "api/nanos6_rt_interface.h"
+#include <nanos6.h>
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 

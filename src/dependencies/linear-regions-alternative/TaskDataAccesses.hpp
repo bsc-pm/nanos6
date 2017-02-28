@@ -27,10 +27,6 @@ struct TaskDataAccesses {
 		boost::intrusive::function_hook< TaskDataAccessLinkingArtifacts >
 	> accesses_t;
 	typedef IntrusiveLinearRegionMap<
-		DataAccess,
-		boost::intrusive::function_hook< TaskDataAccessLinkingArtifacts >
-	> access_fragments_t;
-	typedef IntrusiveLinearRegionMap<
 		BottomMapEntry,
 		boost::intrusive::function_hook< BottomMapEntryLinkingArtifacts >
 	> subaccess_bottom_map_t;
@@ -45,19 +41,18 @@ struct TaskDataAccesses {
 	
 	spinlock_t _lock;
 	accesses_t _accesses;
-	access_fragments_t _accessFragments;
 	subaccess_bottom_map_t _subaccessBottomMap;
 	
-	int _removalBlockers;
+	int _removalCountdown;
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
 	
 	TaskDataAccesses()
 		: _lock(),
-		_accesses(), _accessFragments(),
+		_accesses(),
 		_subaccessBottomMap(),
-		_removalBlockers(0)
+		_removalCountdown(0)
 #ifndef NDEBUG
 		,_flags()
 #endif
@@ -79,6 +74,23 @@ struct TaskDataAccesses {
 	}
 #endif
 	
+	bool isRemovable()
+	{
+		return (_removalCountdown == 0);
+	}
+	
+	void increaseRemovalCount(int amount = 1)
+	{
+		_removalCountdown += amount;
+	}
+	
+	bool decreaseRemovalCount(int amount = 1)
+	{
+		int countdown = (_removalCountdown -= amount);
+		assert(countdown >= 0);
+		
+		return (countdown == 0);
+	}
 };
 
 

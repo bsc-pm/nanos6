@@ -29,10 +29,8 @@ struct DataAccess : public DataAccessBase {
 		COMPLETE_BIT = 0,
 		READ_SATISFIED_BIT,
 		WRITE_SATISFIED_BIT,
-		FRAGMENT_BIT,
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP,
-		FORCE_REMOVAL_BIT,
 #ifndef NDEBUG
 		IS_REACHABLE_BIT,
 		HAS_BEEN_DISCOUNTED_BIT,
@@ -49,23 +47,22 @@ struct DataAccess : public DataAccessBase {
 	//! Direct next access
 	Task *_next;
 	
+	//! First child with accesses within this range
+	Task *_child;
+	
 	DataAccess(
 		DataAccessType type, bool weak,
 		Task *originator,
 		DataAccessRange accessRange,
-		bool fragment,
 		Instrument::data_access_id_t instrumentationId
 	)
 		: DataAccessBase(type, weak, originator, instrumentationId),
 		_range(accessRange),
 		_status(0),
-		_next(nullptr)
+		_next(nullptr),
+		_child(nullptr)
 	{
 		assert(originator != 0);
-		
-		if (fragment) {
-			_status[FRAGMENT_BIT] = true;
-		}
 	}
 	
 	
@@ -96,11 +93,6 @@ struct DataAccess : public DataAccessBase {
 		return _status[WRITE_SATISFIED_BIT];
 	}
 	
-	bool isFragment() const
-	{
-		return _status[FRAGMENT_BIT];
-	}
-	
 	typename status_t::reference hasSubaccesses()
 	{
 		return _status[HAS_SUBACCESSES_BIT];
@@ -117,15 +109,6 @@ struct DataAccess : public DataAccessBase {
 	bool isInBottomMap() const
 	{
 		return _status[IN_BOTTOM_MAP];
-	}
-	
-	typename status_t::reference hasForcedRemoval()
-	{
-		return _status[FORCE_REMOVAL_BIT];
-	}
-	bool hasForcedRemoval() const
-	{
-		return _status[FORCE_REMOVAL_BIT];
 	}
 	
 #ifndef NDEBUG
@@ -175,12 +158,12 @@ struct DataAccess : public DataAccessBase {
 	}
 	
 	
-	bool isRemovable(bool hasForcedRemoval) const
+	bool isRemovable() const
 	{
 		return readSatisfied()
 			&& writeSatisfied()
 			&& complete()
-			&& ( !isInBottomMap() || hasForcedRemoval || (_next != nullptr) );
+			&& !hasSubaccesses();
 	}
 	
 };
