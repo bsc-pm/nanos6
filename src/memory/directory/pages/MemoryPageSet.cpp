@@ -17,18 +17,19 @@ void MemoryPageSet::insert(DataAccessRange range){
 	// Guarantee that the range is not on the AVL already
 
 	long pagesize = HardwareInfo::getPageSize();
-	void *page = (void *)( (long) range.getStartAddress() & ~(pagesize-1) );
-	size_t size = static_cast<char *>( range.getEndAddress() ) - static_cast<char *>(page);
+	//void *page = (void *)( (long) range.getStartAddress() & ~(pagesize-1) );
+	char *page = (char *)((long) range.getStartAddress() & ~(pagesize-1));
+	size_t size = static_cast<char *>(range.getEndAddress()) - static_cast<char *>(page);
 	
 	int npages = 1 + ((size-1) / pagesize); // Ceil the division
 
 	void * pages[npages];
 	int status[npages]; 
 	
-	pages[0] = page;
+	pages[0] = (void *)page;
 	for(int i = 1; i < npages; i++){
 		page += pagesize;
-		pages[i] = page;
+		pages[i] = (void *)page;
 	}
 
 
@@ -38,13 +39,14 @@ void MemoryPageSet::insert(DataAccessRange range){
         assert(err==0);
     }
     if(status[0] < 0) {
-        errno = status[0];
-        std::perror("move_pages failed");
-        assert(status[0] >= 0);
+        return;
+        //errno = status[0];
+        //std::perror("move_pages failed");
+        //assert(status[0] >= 0);
     }
 
 	// Find the previous page if it is registered
-	MemoryPageSet::iterator edge = lower_bound(static_cast<void *>( pages[0] ) - pagesize);
+	MemoryPageSet::iterator edge = lower_bound(static_cast<char *>( pages[0] ) - pagesize);
 	MemoryPageObject *obj = nullptr;
 
 	
@@ -52,7 +54,7 @@ void MemoryPageSet::insert(DataAccessRange range){
 		edge--;
 	} 
 	
-	// Check if the new pages are adjacent to the previos ones and they share the same status for a merge
+	// Check if the new pages are adjacent to the previous ones and they share the same status for a merge
 	if(edge != BaseType::end()){
 		if(edge->getEndAddress() == pages[0] && edge->getLocation() == status[0]){
 			obj = &(*edge);
@@ -69,7 +71,7 @@ void MemoryPageSet::insert(DataAccessRange range){
 
 	for(int i = 1; i < npages; i++){
 		// If the next page is on a different node, insert object and create a new one for the node
-		if(obj->getLocation() != status[i]){
+		if((obj->getLocation() != status[i]) && (obj->getLocation() >= 0)){
 			BaseType::insert(*obj); // No need to delete if repeated, since it can only be an object retrieved from the dictionary
 			
 			obj = new MemoryPageObject(pages[i], pagesize, status[i]);
@@ -87,7 +89,8 @@ void MemoryPageSet::insert(DataAccessRange range){
 			delete obj;
 		}
 	} else {
-		BaseType::insert(*obj);
+        if(obj->getLocation() >= 0)
+            BaseType::insert(*obj);
 	}
 	
 }

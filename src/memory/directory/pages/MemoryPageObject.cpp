@@ -1,6 +1,6 @@
 #include "MemoryPageObject.hpp"
 
-MemoryPageObject::MemoryPageObject( void *startAddress, size_t size, int location ): _range(startAddress, size), _location( location ){}
+MemoryPageObject::MemoryPageObject( void *startAddress, size_t size, int location ): _location(location), _range(startAddress, size){}
 
 DataAccessRange &MemoryPageObject::getAccessRange(){
 	return _range;

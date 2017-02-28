@@ -4,7 +4,13 @@
 
 #include <numa.h>
 
+#define _unused(x) ((void)(x))
+
 bool nanos_register_region(void *address, unsigned long size, int mode, nodemask_t nodemask){
+    _unused(address);
+    _unused(size);
+    _unused(mode);
+    _unused(nodemask);
 //
 //	bitmask bm = numa_allocate_nodemask(); 
 //	copy_nodemask_to_bitmask(&nodemask, &bm);
@@ -47,4 +53,5 @@ bool nanos_register_region(void *address, unsigned long size, int mode, nodemask
 //	
 //	return true;
 //			
+    return false;
 }

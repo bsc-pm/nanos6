@@ -5,6 +5,7 @@
 #include "hardware/places/NUMAPlace.hpp"
 #include "memory/cache/NUMACache.hpp"
 #include "executors/threads/CPU.hpp"
+#include "memory/directory/Directory.hpp"
 
 //! Workaround to deal with changes in different HWLOC versions.
 #if HWLOC_API_VERSION < 0x00010b00 
@@ -18,11 +19,15 @@ std::map<int, ComputePlace*> HardwareInfo::_computeNodes;
 /*std::atomic<long>*/ long HardwareInfo::_totalCPUs;
 //Distances_t _distances;
 long HardwareInfo::_pageSize;
+long HardwareInfo::_lastLevelCacheSize;
+long HardwareInfo::_lastLevelCacheLineSize;
 
 void HardwareInfo::initialize()
 {
     _totalCPUs = 0;
     _pageSize = getpagesize();
+    _lastLevelCacheSize = 0;
+    _lastLevelCacheLineSize = 0;
     //! Hardware discovery
 	hwloc_topology_t topology;
     hwloc_topology_init(&topology);  // initialization
@@ -51,6 +56,8 @@ void HardwareInfo::initialize()
             cache = new NUMACache(obj->logical_index);
             //! Create a ReadyQueue in the scheduler for each NUMA node.
             Scheduler::addReadyQueue(obj->logical_index);
+            //! Create lastLevelCacheTracking for each NUMA node.
+            Directory::addLastLevelCacheTrackingNode(obj->logical_index);
             assert(cache != nullptr && "No cache has been created");
             //! Create the MemoryPlace representing the NUMA node with its index, cache and AddressSpace. 
             node = new NUMAPlace(cache->getIndex(), cache, NUMAAddressSpace);
@@ -63,13 +70,32 @@ void HardwareInfo::initialize()
         //! Create a Cache for the MemoryPlace. Assign the same index than the MemoryPlace.
         //! TODO: Index is 0 arbitrarily. Maybe a special index should be set.
         cache = new NUMACache(/*index*/0);
+        //! Create a ReadyQueue in the scheduler for each NUMA node.
         Scheduler::addReadyQueue(/*index*/0);
+        //! Create lastLevelCacheTracking for each NUMA node.
+        Directory::addLastLevelCacheTrackingNode(/*index*/0);
         assert(cache != nullptr && "No cache has been created");
         //! Create the MemoryPlace representing the NUMA node with its index, cache and AddressSpace. 
         node = new NUMAPlace(cache->getIndex(), cache, NUMAAddressSpace);
         //! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
         _memoryNodes[node->getIndex()] = node;
     }
+
+    //! Get last level cache size of the machine and its line size.
+    hwloc_obj_t root = hwloc_get_root_obj(topology);
+    hwloc_obj_t obj = root->children[0];
+    //while(true) {
+    //    if(obj->type == HWLOC_OBJ_CACHE) {
+    //        if(obj->attr->type = HWLOC_OBJ_CACHE_UNIFIED && obj->attr->depth == 3) 
+    //            break;
+    //    }
+    //    obj = obj->children[0];
+    //}
+    while(!(obj->type == HWLOC_OBJ_CACHE && obj->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED/* && obj->attr->cache.depth == 3*/)) {
+        obj = obj->children[0];
+    }
+    _lastLevelCacheSize = obj->attr->cache.size;
+    _lastLevelCacheLineSize = obj->attr->cache.linesize;
 
 
     //! Get (logical) cores of the machine

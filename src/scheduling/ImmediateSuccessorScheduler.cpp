@@ -8,6 +8,7 @@
 #include <cassert>
 #include <mutex>
 
+#define _unused(x) ((void)(x))
 
 ImmediateSuccessorScheduler::ImmediateSuccessorScheduler() : SchedulerInterface()
 {
@@ -71,6 +72,7 @@ ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlac
 
 void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace)
 {
+    _unused(hardwarePlace);
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_front(unblockedTask);
 }
@@ -136,4 +138,5 @@ void ImmediateSuccessorScheduler::disableComputePlace(ComputePlace *hardwarePlac
 
 void ImmediateSuccessorScheduler::addReadyQueue(std::size_t node_id)
 {
+    _unused(node_id);
 }

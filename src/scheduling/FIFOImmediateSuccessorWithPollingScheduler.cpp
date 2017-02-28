@@ -8,6 +8,7 @@
 #include <cassert>
 #include <mutex>
 
+#define _unused(x) ((void)(x))
 
 FIFOImmediateSuccessorWithPollingScheduler::FIFOImmediateSuccessorWithPollingScheduler()
 	: SchedulerInterface(), _pollingSlot(nullptr)
@@ -287,4 +288,5 @@ bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *ha
 
 void FIFOImmediateSuccessorWithPollingScheduler::addReadyQueue(std::size_t node_id)
 {
+    _unused(node_id);
 }

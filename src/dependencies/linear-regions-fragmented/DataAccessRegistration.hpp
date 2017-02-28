@@ -1415,6 +1415,8 @@ public:
 		Task *task, DataAccessType accessType, bool weak, DataAccessRange range
 	) {
 		assert(task != nullptr);
+        //std::cerr << "range [" << range.getStartAddress() << ", " << range.getEndAddress() << "] is being registered in task (" << task->getTaskInfo()->task_label 
+        //    << "." << std::endl;
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
@@ -1438,10 +1440,9 @@ public:
 				return true;
 			},
 			[&](DataAccessRange missingRange) -> bool {
-                //std::cerr << "Task (" << task << ") upgrading current access with size " << missingRange.getSize() << "." << std::endl;
 				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange, false, -1);
                 //! Just increment taskDataSize if it is a newAccess.
-                //std::cerr << "Task (" << task << ") incrementing dataSize with size " << missingRange.getSize() << "." << std::endl;
+                //std::cerr << "Task (" << task->getTaskInfo()->task_label << ") incrementing dataSize with size " << missingRange.getSize() << "." << std::endl;
                 task->addDataSize(missingRange.getSize());
 				
 				accessStructures._removalBlockers++;

@@ -76,6 +76,9 @@ nanos_cpu_status_t nanos_get_cpu_status(long systemCPUId)
 	
 	assert(cpu != 0);
 	switch (cpu->_activationStatus.load()) {
+        //TODO: FIXME: IS THIS CORRECT? Just introduced to fix a compilation warning.
+        case CPU::uninitialized_status:
+            return nanos_disabled_cpu; 
 		case CPU::starting_status:
 			return nanos_starting_cpu;
 		case CPU::enabling_status:

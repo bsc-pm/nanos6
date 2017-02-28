@@ -1,11 +1,11 @@
 #include "CopyObject.hpp"
 
 CopyObject::CopyObject(DataAccessRange range, int homeNode, int version)
-	: _range(range), 
-	_version(version), 
+	: _version(version), 
 	_caches(),
     _homeNode(homeNode),
-    _homeNodeUpToDate(false)
+    _homeNodeUpToDate(false),
+    _range(range)
 {
 
 }
@@ -64,7 +64,7 @@ void CopyObject::addCache(int id){
 
 void CopyObject::removeCache(int id){
 	_caches.reset(id);
-    assert(anyCache() || _homeNodeUpToDate && "Data must be at least in one cache or in the homeNode");
+    assert((anyCache() || _homeNodeUpToDate) && "Data must be at least in one cache or in the homeNode");
 }	
  
 bool CopyObject::testCache(int id){

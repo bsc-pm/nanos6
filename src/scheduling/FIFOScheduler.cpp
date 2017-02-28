@@ -8,6 +8,7 @@
 #include <cassert>
 #include <mutex>
 
+#define _unused(x) ((void)(x))
 
 FIFOScheduler::FIFOScheduler() : SchedulerInterface()
 {
@@ -109,4 +110,5 @@ ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
 
 void FIFOScheduler::addReadyQueue(std::size_t node_id)
 {
+    _unused(node_id);
 }

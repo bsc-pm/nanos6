@@ -8,6 +8,8 @@
 #include "hardware/HardwareInfo.hpp"
 #include "memory/directory/Directory.hpp"
 
+#define _unused(x) ((void)(x))
+
 void * NUMACache::allocate(std::size_t size) {
     return malloc(size);
 }
@@ -17,6 +19,7 @@ void NUMACache::deallocate(void * ptr) {
 }
 
 void NUMACache::copyData(float * cachesLoad, Task *task, unsigned int copiesToDo = 1) {
+    _unused(cachesLoad);
 	std::lock_guard<SpinLock> task_guard(task->getDataAccesses()._lock);
 	std::lock_guard<SpinLock> guard(_lock);
     assert(task->hasPendingCopies() && "task without pending copies requesting copyData");
@@ -58,6 +61,7 @@ void NUMACache::copyData(float * cachesLoad, Task *task, unsigned int copiesToDo
                                                            /*cache index*/ _index, 
                                                            /*increment*/ dataAccess._type != READ_ACCESS_TYPE);
                     assert(dirVersion==replica->second._version && "Versions must match");
+                    _unused(dirVersion);
                     //! Update task cachedBytes.
                     task->addCachedBytes(dataAccess.getAccessRange().getSize());
                     //! Mark dataAccess as cached.

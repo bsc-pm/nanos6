@@ -22,7 +22,7 @@ public:
     virtual ~MemoryPlace() {}
 	inline int getIndex(void){ return _index; } 
     inline AddressSpace * getAddressSpace(){ return _addressSpace; } 
-    virtual inline GenericCache * getCache() = 0;
+    virtual GenericCache * getCache() = 0;
 };
 
 #endif //MEMORY_PLACE_HPP

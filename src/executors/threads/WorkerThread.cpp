@@ -6,6 +6,7 @@
 #include "tasks/Task.hpp"
 #include "memory/cache/GenericCache.hpp"
 #include "hardware/places/MemoryPlace.hpp"
+#include "memory/directory/Directory.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -17,6 +18,7 @@
 #include <pthread.h>
 #include <cstring>
 
+#define _unused(x) ((void)(x))
 
 __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
 
@@ -49,6 +51,7 @@ void *WorkerThread::body()
 				if (ThreadManager::mustExit()) {
 					bool worked = Scheduler::releasePolling(_cpu, &pollingSlot);
 					assert(worked && "A failure to release the scheduler polling slot means that the thread has got a task assigned, however the runtime is shutting down");
+                    _unused(worked);
 				}
 				
 				if (!CPUActivation::acceptsWork(_cpu)) {
@@ -119,8 +122,11 @@ void WorkerThread::handleTask()
         _task->setThread(this);
         
         //! Temporal print to check that each task is executing where it should according to its data affinity.
-        std::cerr << "Task with label " << _task->getTaskInfo()->task_label << " is executed on NUMA node " 
-            << _cpu->_NUMANodeId << "." << std::endl;
+        //std::cerr << "Task with label " << _task->getTaskInfo()->task_label << " is executed on NUMA node " 
+        //    << _cpu->_NUMANodeId << ". It's data size is:" << _task->getDataSize() << "." << std::endl;
+
+        //! Notify CacheTrackingSet the task data.
+        Directory::registerLastLevelCacheData(_task->getDataAccesses(), _cpu->_NUMANodeId, _task);
 
         Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
         Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);

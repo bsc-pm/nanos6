@@ -8,6 +8,7 @@
 #include <cassert>
 #include <mutex>
 
+#define _unused(x) ((void)(x))
 
 ImmediateSuccessorWithPollingScheduler::ImmediateSuccessorWithPollingScheduler()
 	: SchedulerInterface(), _pollingSlot(nullptr)
@@ -286,4 +287,5 @@ bool ImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *hardwa
 
 void ImmediateSuccessorWithPollingScheduler::addReadyQueue(std::size_t node_id)
 {
+    _unused(node_id);
 }

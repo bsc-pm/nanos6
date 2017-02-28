@@ -12,6 +12,7 @@
 #include <cassert>
 #include <mutex>
 
+#define _unused(x) ((void)(x))
 
 //! Disabling copies for a while
 //LocalityScheduler::LocalityScheduler() : SchedulerInterface(true)
@@ -41,6 +42,7 @@ Task *LocalityScheduler::getReplacementTask(__attribute__((unused)) CPU *hardwar
 
 CPU *LocalityScheduler::getLocalityCPU(Task * task)
 {
+    _unused(task);
     //! Check if task has already a cache assigned.
     //GenericCache * destCache = task->getCache();
     //CPU *idleCPU = nullptr;
@@ -152,10 +154,29 @@ Task *LocalityScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hard
 	//	task = _readyTasks.front();
 	//	_readyTasks.pop_front();
     size_t NUMANodeId = ((CPU *) hardwarePlace)->_NUMANodeId;
-    if (!_readyQueues[NUMANodeId].empty()) {
-        task = _readyQueues[NUMANodeId].front();
-        _readyQueues[NUMANodeId].pop_front();
-		
+    std::deque<Task *> &readyQueue = _readyQueues[NUMANodeId];
+    if (!readyQueue.empty()) {
+        //task = readyQueue.front();
+        //readyQueues.pop_front();
+        double max_score = 0.0;
+        std::deque<Task*>::iterator toErase = readyQueue.end();
+		for(std::deque<Task*>::iterator it = readyQueue.begin(); it != readyQueue.end(); it++) {
+            double score = Directory::computeTaskAffinity(*it, NUMANodeId);
+            if(score >= max_score) {
+                max_score = score;
+                toErase = it;
+                task = *it;
+            }
+        }
+        readyQueue.erase(toErase);
+        //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
+        //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
+        //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
+        std::cerr << "Going to execute task " << task->getTaskInfo()->task_label << " with score " << max_score << "." << std::endl;
+        //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
+        //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
+        //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
+
 		assert(task != nullptr);
 		
 		return task;

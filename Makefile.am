@@ -108,6 +108,14 @@ common_sources = \
 	src/memory/directory/pages/MemoryPageObject.cpp \
 	src/memory/directory/pages/MemoryPageSet.hpp \
 	src/memory/directory/pages/MemoryPageSet.cpp \
+	src/memory/directory/last-level-cache-tracking/IntrusiveLinearRegionTreap.hpp \
+	src/memory/directory/last-level-cache-tracking/IntrusiveLinearRegionTreapImplementation.hpp \
+    src/memory/directory/last-level-cache-tracking/CacheTrackingObjectLinkingArtifacts.hpp \
+    src/memory/directory/last-level-cache-tracking/CacheTrackingObjectLinkingArtifactsImplementation.hpp \
+	src/memory/directory/last-level-cache-tracking/CacheTrackingObject.hpp \
+	src/memory/directory/last-level-cache-tracking/CacheTrackingObject.cpp \
+	src/memory/directory/last-level-cache-tracking/CacheTrackingSet.hpp \
+	src/memory/directory/last-level-cache-tracking/CacheTrackingSet.cpp \
 	src/memory/cache/GenericCache.hpp \
 	src/memory/cache/AIOCache.hpp \
 	src/memory/cache/AIOCache.cpp \
@@ -487,7 +495,7 @@ inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_
 
 directory_test_SOURCES = tests/unit/directory/TestDirectory.cpp $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
 directory_test_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
-directory_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
+directory_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags) $(DEBUG_CXXFLAGS)
 directory_test_LDFLAGS = $(common_libnanos6_ldflags)
 
 

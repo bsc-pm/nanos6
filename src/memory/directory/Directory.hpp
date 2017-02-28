@@ -6,9 +6,9 @@
 #include "lowlevel/SpinLock.hpp"
 #include "copies/CopySet.hpp"
 #include "pages/MemoryPageSet.hpp"
-//#include "last-level-cache-tracking/CacheTrackingSet.hpp"
+#include "last-level-cache-tracking/CacheTrackingSet.hpp"
 
-//#include <unordered_map>
+#include <unordered_map>
 
 class Directory {
 
@@ -28,7 +28,7 @@ private:
     /* Tracks, for each NUMA node, the current working set of the last 
        level cache.
      */
-    //std::unordered_map<unsigned int, CacheTrackingSet *> _lastLevelCacheTracking;
+    std::unordered_map<unsigned int, CacheTrackingSet *> _lastLevelCacheTracking;
 
 	static Directory *_instance;
 
@@ -103,8 +103,9 @@ public:
       */
     static void setHomeNodeUpToDate(void *address, bool b);
 
-    //static void addLastLevelCacheTrackingNode(unsigned int NUMANodeId);
-    //static void registerLastLevelCacheData(TaskDataAccesses &accesses, unsigned int NUMANodeId); 
+    static void addLastLevelCacheTrackingNode(unsigned int NUMANodeId);
+    static void registerLastLevelCacheData(TaskDataAccesses &accesses, unsigned int NUMANodeId, Task * task); 
+    static double computeTaskAffinity(Task * task, unsigned int NUMANodeId);
 };
 
 #endif //DIRECTORY_HPP

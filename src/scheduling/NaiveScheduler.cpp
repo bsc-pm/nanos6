@@ -9,6 +9,7 @@
 #include <cassert>
 #include <mutex>
 
+#define _unused(x) ((void)(x))
 
 NaiveScheduler::NaiveScheduler() : SchedulerInterface()
 {
@@ -91,4 +92,5 @@ ComputePlace *NaiveScheduler::getIdleComputePlace(bool force)
 
 void NaiveScheduler::addReadyQueue(std::size_t node_id) 
 {
+    _unused(node_id);
 }

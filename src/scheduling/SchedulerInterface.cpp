@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#define _unused(x) ((void)(x))
 
 void SchedulerInterface::disableComputePlace(__attribute__((unused)) ComputePlace *hardwarePlace)
 {
@@ -44,4 +45,5 @@ bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *ha
 
 void SchedulerInterface::addReadyQueue(std::size_t node_id)
 {
+    _unused(node_id);
 }

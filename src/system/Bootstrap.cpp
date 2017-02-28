@@ -50,12 +50,12 @@ static void programSignal(int signum) {
 
 void nanos_preinit(void) {
 	Scheduler::initialize();
+    Directory::initialize();
 	HardwareInfo::initialize();
 	ThreadManagerPolicy::initialize();
 	CPUManager::preinitialize();
 	Instrument::initialize();
 	LeaderThread::initialize();
-    Directory::initialize();
 }
 
 
