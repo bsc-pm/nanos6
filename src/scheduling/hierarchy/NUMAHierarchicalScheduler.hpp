@@ -6,7 +6,6 @@
 
 #include "../SchedulerInterface.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "executors/threads/CPU.hpp"
 
 
 class Task;
@@ -14,6 +13,11 @@ class Task;
 
 class NUMAHierarchicalScheduler: public SchedulerInterface {
 	std::vector<SchedulerInterface *> _NUMANodeScheduler;
+	
+	// Use atomics to avoid using a lock
+	// Be careful, as std::atomic does not have a copy operation, many vector
+	// operations are not usable
+	std::vector<std::atomic<int>> _readyTasks;
 
 public:
 	NUMAHierarchicalScheduler();

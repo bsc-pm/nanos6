@@ -10,16 +10,23 @@
 #include "../Scheduler.hpp"
 #include "../SchedulerInterface.hpp"
 
+#include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "executors/threads/WorkerThread.hpp"
 
 #include <cassert>
 
 
 NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
-	: _NUMANodeScheduler(HardwareInfo::getMemoryNodeCount())
+	: _NUMANodeScheduler(HardwareInfo::getMemoryNodeCount()),
+	_readyTasks(HardwareInfo::getMemoryNodeCount())
 {
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+
+	for (size_t i = 0; i < NUMANodeCount; ++i) {
+		_readyTasks[i] = 0;
+	}
 
 	EnvironmentVariable<std::string> schedulerName("NANOS6_SCHEDULER", "default");
 
@@ -66,35 +73,82 @@ NUMAHierarchicalScheduler::~NUMAHierarchicalScheduler()
 
 ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
 {
-	return _NUMANodeScheduler[0]->addReadyTask(task, hardwarePlace, hint);
+	/* Get the least loaded NUMA node */
+	int min_load = _readyTasks[0];
+	int min_idx = 0;
+
+	for (size_t i = 1; i < _readyTasks.size(); ++i) {
+		if (_readyTasks[i] < min_load) {
+			min_load = _readyTasks[i];
+			min_idx = i;
+		}
+	}
+
+	_readyTasks[min_idx] += 1;
+	return _NUMANodeScheduler[min_idx]->addReadyTask(task, hardwarePlace, hint);
 }
 
 
 void NUMAHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace)
 {
-	_NUMANodeScheduler[0]->taskGetsUnblocked(unblockedTask, hardwarePlace);
+	/* This is not pretty. But this function is seldom called */
+	size_t numa_node = unblockedTask->getThread()->getComputePlace()->_NUMANodeId;
+
+	_readyTasks[numa_node] += 1;
+	_NUMANodeScheduler[numa_node]->taskGetsUnblocked(unblockedTask, hardwarePlace);
 }
 
 
 Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask)
 {
-	/* TODO: be a bit more clever */
-	return _NUMANodeScheduler[((CPU *)hardwarePlace)->_NUMANodeId]->getReadyTask(hardwarePlace, currentTask);
+	size_t numa_node = ((CPU *)hardwarePlace)->_NUMANodeId;
+	Task *task = nullptr;
+	
+	if (_readyTasks[numa_node] > 0) {
+		task = _NUMANodeScheduler[numa_node]->getReadyTask(hardwarePlace, currentTask);
+
+		if (task != nullptr) {
+			_readyTasks[numa_node] -= 1;
+		}
+	} else {
+		/* Get the most loaded NUMA node */
+		int max_load = _readyTasks[numa_node];
+		int max_idx = numa_node;
+
+		for (size_t i = 0; i < _readyTasks.size(); ++i) {
+			if (_readyTasks[i] > max_load) {
+				max_load = _readyTasks[i];
+				max_idx = i;
+			}
+		}
+		
+		task = _NUMANodeScheduler[max_idx]->getReadyTask(hardwarePlace, currentTask);
+		if (task != nullptr) {
+			_readyTasks[max_idx] -= 1;
+		}
+	}
+
+	return task;
 }
 
 
 ComputePlace *NUMAHierarchicalScheduler::getIdleComputePlace(bool force)
 {
-	/* TODO: be a bit more clever */
-	ComputePlace *computePlace = nullptr;
+	if (force) {
+		return CPUManager::getIdleCPU();
+	} else {
+		ComputePlace *computePlace = nullptr;
 
-	for (SchedulerInterface *sched : _NUMANodeScheduler) {
-		computePlace = sched->getIdleComputePlace(force);
-		if (computePlace != nullptr) {
-			break;
+		for (size_t i = 0; i < _readyTasks.size(); ++i) {
+			if (_readyTasks[i] != 0) {
+				computePlace = _NUMANodeScheduler[i]->getIdleComputePlace(false);
+				if (computePlace != nullptr) {
+					break;
+				}
+			}
 		}
-	}
 
-	return computePlace;
+		return computePlace;
+	}
 }
 
