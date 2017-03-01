@@ -64,7 +64,30 @@ AC_LANG_POP(C++)
 if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
 	NANOS6_MCXX="${NANOS6_MCXX} -std=c++11"
 	
-	SSS_PUSH_NANOS6_MERCURIUM([-I${full_top_srcdir}/common/api])
+	SSS_PUSH_NANOS6_MERCURIUM
+	
+	AC_CHECK_HEADER([nanos6.h], [], [AC_MSG_ERROR([Mercurium cannot find nanos6.h])])
+	
+	AC_MSG_CHECKING([if Mercurium can compile and link simple codes])
+	AC_LANG_PUSH(C++)
+	AC_TRY_COMPILE(
+		[],
+		[
+			int a = 0;
+			
+			#pragma oss task
+			a++;
+			
+			#pragma oss taskwait
+		],
+		[ AC_MSG_RESULT([yes]) ],
+		[
+			AC_MSG_RESULT([no])
+			AC_MSG_ERROR([Mercurium cannot compile and link simple codes])
+		]
+	)
+	AC_LANG_POP(C++)
+	
 	SSS_CHECK_SANE_CHRONO
 	SSS_POP_NANOS6_MERCURIUM
 fi
