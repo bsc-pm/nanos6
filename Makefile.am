@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I common/m4
-AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I@HEADER_DIR@
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I@NANOS6_HEADER_DIR@
 
 SUBDIRS = . tests/directive_based/tests
 

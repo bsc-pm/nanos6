@@ -61,29 +61,31 @@ AC_LANG_PUSH(C++)
 AC_C_RESTRICT
 AC_LANG_POP(C++)
 
+
+SSS_CHECK_LOADER
+
 if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
+	CHECK_MERCURIUM_INSTALLATION_MSG="Please check that it has been configured with at least the --with-nanos6=${ac_loader_dir} --enable-tl-ompss-nanos6 --enable-ompss parameters."
 	NANOS6_MCXX="${NANOS6_MCXX} -std=c++11"
 	
 	SSS_PUSH_NANOS6_MERCURIUM
 	
-	AC_CHECK_HEADER([nanos6.h], [], [AC_MSG_ERROR([Mercurium cannot find nanos6.h])])
+	AC_CHECK_HEADER(
+		[nanos6.h],
+		[],
+		[AC_MSG_ERROR([Mercurium cannot find the nanos6.h header. ${CHECK_MERCURIUM_INSTALLATION_MSG}])]
+	)
+	unset ac_cv_header_nanos6_h
 	
-	AC_MSG_CHECKING([if Mercurium can compile and link simple codes])
+	AC_MSG_CHECKING([if Mercurium can compile and link an empty code])
 	AC_LANG_PUSH(C++)
 	AC_TRY_COMPILE(
 		[],
-		[
-			int a = 0;
-			
-			#pragma oss task
-			a++;
-			
-			#pragma oss taskwait
-		],
+		[ return 0; ],
 		[ AC_MSG_RESULT([yes]) ],
 		[
 			AC_MSG_RESULT([no])
-			AC_MSG_ERROR([Mercurium cannot compile and link simple codes])
+			AC_MSG_ERROR([Mercurium cannot compile and link an empty code. ${CHECK_MERCURIUM_INSTALLATION_MSG}])
 		]
 	)
 	AC_LANG_POP(C++)
@@ -167,15 +169,6 @@ else
 	AC_DEFINE([NO_DEPENDENCY_DELAYED_OPERATIONS], 0, [do not delay dependency updates])
 fi
 
-
-AC_ARG_WITH(
-	[installed-loader],
-	[AS_HELP_STRING([--with-installed-loader=prefix], [specify the prefix of the Nanos6 loader installation @<:@default=same as prefix@:>@])],
-	[ac_loader_dir="${withval}"],
-	[ac_loader_dir='$(prefix)']
-)
-HEADER_DIR="${ac_loader_dir}/include"
-AC_SUBST([HEADER_DIR])
 
 AX_CHECK_EXTRAE
 
