@@ -9,6 +9,7 @@
 #include "hardware/places/HardwarePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/If0Task.hpp"
 #include "tasks/Task.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -83,7 +84,10 @@ void nanos_submit_task(void *taskHandle)
 		ready = DataAccessRegistration::registerTaskDataAccesses(task);
 	}
 	
-	if (ready) {
+	bool isIf0 = task->isIf0();
+	
+	if (ready && !isIf0) {
+		// Queue the task if ready but not if0
 		SchedulerInterface::ReadyTaskHint schedulingHint = SchedulerInterface::NO_HINT;
 		
 		if (currentWorkerThread != nullptr) {
@@ -95,10 +99,23 @@ void nanos_submit_task(void *taskHandle)
 		if (idleHardwarePlace != nullptr) {
 			ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
 		}
-	} else {
+	} else if (!ready) {
 		Instrument::taskIsPending(task->getInstrumentationTaskId());
 	}
 	
 	Instrument::exitAddTask(task->getInstrumentationTaskId());
+	
+	// Special handling for if0 tasks
+	if (isIf0) {
+		if (ready) {
+			// Ready if0 tasks are executed inline
+			If0Task::executeInline(currentWorkerThread, parent, task);
+		} else {
+			// Non-ready if0 tasks cause this thread to get blocked
+			If0Task::waitForIf0Task(currentWorkerThread, parent, task, hardwarePlace);
+		}
+	}
+	
+	
 }
 

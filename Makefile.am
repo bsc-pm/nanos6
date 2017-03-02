@@ -112,6 +112,7 @@ common_sources = \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
+	src/system/If0Task.hpp \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
 	src/system/PollingAPI.cpp \

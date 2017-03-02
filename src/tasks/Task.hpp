@@ -28,6 +28,7 @@ class Task {
 private:
 	enum {
 		final_flag=0,
+		if0_flag,
 		total_flags
 	};
 	typedef std::bitset<total_flags> flags_t;
@@ -286,6 +287,17 @@ public:
 	bool isFinal() const
 	{
 		return _flags[final_flag];
+	}
+	
+	//! \brief Set or unset the if0 flag
+	void setIf0(bool if0Value)
+	{
+		_flags[if0_flag] = if0Value;
+	}
+	//! \brief Check if the task is in if0 mode
+	bool isIf0() const
+	{
+		return _flags[if0_flag];
 	}
 	
 	//! \brief Retrieve the instrumentation-specific task identifier

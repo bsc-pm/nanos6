@@ -3,6 +3,7 @@
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/If0Task.hpp"
 #include "tasks/Task.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -74,7 +75,13 @@ void *WorkerThread::body()
 				ThreadManager::addIdler(this);
 				ThreadManager::switchThreads(this, assignedThread);
 			} else {
-				handleTask();
+				if (_task->isIf0()) {
+					// An if0 task executed outside of the implicit taskwait of its parent (i.e. not inline)
+					If0Task::executeNonInline(this, _task, _cpu);
+				} else {
+					handleTask();
+				}
+				
 				_task = nullptr;
 			}
 		} else {
