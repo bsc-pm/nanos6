@@ -283,7 +283,7 @@ public:
 	{
 		_flags[final_flag] = finalValue;
 	}
-	//! \brief Check if tha task is final
+	//! \brief Check if the task is final
 	bool isFinal() const
 	{
 		return _flags[final_flag];
