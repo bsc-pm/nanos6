@@ -100,15 +100,10 @@ private:
 	
 	static inline void removeDataAccess(
 		Task *task, DataAccess *dataAccess,
-		TaskDataAccesses &accessStructures,
-		Task *parent,
-		TaskDataAccesses &parentAccessStructures
+		CPUDependencyData &cpuDependencyData
 	) {
 		assert(task != nullptr);
 		assert(dataAccess != nullptr);
-		assert(!accessStructures.hasBeenDeleted());
-		assert(parent != nullptr);
-		assert(!parentAccessStructures.hasBeenDeleted());
 		
 		assert(dataAccess->complete());
 		assert(dataAccess->readSatisfied());
@@ -117,56 +112,30 @@ private:
 		DataAccessRange range = dataAccess->_range;
 		assert(!range.empty());
 		
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		
 		if (dataAccess->isInBottomMap()) {
-			parentAccessStructures._accesses.processIntersecting(
-				range,
-				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
-					DataAccess *parentAccess = &(*position);
-					assert(parentAccess != nullptr);
-					assert(parentAccess->_child != nullptr);
-					assert(parentAccess->hasSubaccesses());
-					
-					if (!parentAccess->_range.fullyContainedIn(range)) {
-						parentAccess = fragmentAccess(
-							taskId,
-							parentAccess, range,
-							parentAccessStructures,
-							/* Consider blocking */ true
-						);
-					}
-					
-					parentAccess->_child = nullptr;
-					parentAccess->hasSubaccesses() = false;
-					
-					return true;
-				}
-			);
+			CPUDependencyData::data_access_range_list_t &removedRangeList =
+				cpuDependencyData._removedRangesFromBottomMap;
 			
-			parentAccessStructures._subaccessBottomMap.processIntersecting(
-				range,
-				[&](TaskDataAccesses::subaccess_bottom_map_t::iterator position) -> bool {
-					BottomMapEntry *bottomMapEntry = &(*position);
-					assert(bottomMapEntry != nullptr);
-					assert(bottomMapEntry->_task == task);
-					
-					// NOTE: This method could be improved without having to fragment
-					if (!bottomMapEntry->_range.fullyContainedIn(range)) {
-						bottomMapEntry = fragmentBottomMapEntry(
-							bottomMapEntry, range,
-							parentAccessStructures
-						);
-					}
-					
-					parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
-					
-					return true;
+			if (removedRangeList.empty()) {
+				removedRangeList.push_back(range);
+			} else {
+				DataAccessRange lastRange(removedRangeList.back());
+				assert(range.intersect(lastRange).empty());
+				
+				if (lastRange.contiguous(range)) {
+					removedRangeList.pop_back();
+					removedRangeList.push_back(lastRange.contiguousUnion(range));
+				} else {
+					removedRangeList.push_back(range);
 				}
-			);
+			}
 		}
 		
-		Instrument::removedDataAccess(dataAccess->_instrumentationId, taskId);
+		Instrument::removedDataAccess(
+			dataAccess->_instrumentationId,
+			task->getInstrumentationTaskId()
+		);
+		
 		delete dataAccess;
 	}
 	
@@ -280,6 +249,84 @@ private:
 	}
 	
 	
+	static void processRemovableTasks(
+		/* inout */ CPUDependencyData &cpuDependencyData,
+		CPU *cpu, WorkerThread *thread
+	) {
+		for (Task *removableTask : cpuDependencyData._removableTasks) {
+			assert(removableTask != nullptr);
+			
+			TaskFinalization::disposeOrUnblockTask(removableTask, cpu, thread);
+		}
+		cpuDependencyData._removableTasks.clear();
+	}
+	
+	
+	static inline void processRemovedRangesFromBottomMap(
+		Task *task, Task *parent,
+		TaskDataAccesses &parentAccessStructures,
+		CPUDependencyData &cpuDependencyData
+	) {
+		assert(task != nullptr);
+		assert(parent != nullptr);
+		assert(!parentAccessStructures.hasBeenDeleted());
+		
+		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
+		
+		for (DataAccessRange range : cpuDependencyData._removedRangesFromBottomMap) {
+			assert(!range.empty());
+			
+			parentAccessStructures._accesses.processIntersecting(
+				range,
+				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+					DataAccess *parentAccess = &(*position);
+					assert(parentAccess != nullptr);
+					assert(parentAccess->_child != nullptr);
+					assert(parentAccess->hasSubaccesses());
+					
+					if (!parentAccess->_range.fullyContainedIn(range)) {
+						parentAccess = fragmentAccess(
+							taskId,
+							parentAccess, range,
+							parentAccessStructures,
+							/* Consider blocking */ true
+						);
+						assert(parentAccess != nullptr);
+					}
+					
+					parentAccess->_child = nullptr;
+					parentAccess->hasSubaccesses() = false;
+					
+					return true;
+				}
+			);
+			
+			parentAccessStructures._subaccessBottomMap.processIntersecting(
+				range,
+				[&](TaskDataAccesses::subaccess_bottom_map_t::iterator position) -> bool {
+					BottomMapEntry *bottomMapEntry = &(*position);
+					assert(bottomMapEntry != nullptr);
+					assert(bottomMapEntry->_task == task);
+					
+					if (!bottomMapEntry->_range.fullyContainedIn(range)) {
+						bottomMapEntry = fragmentBottomMapEntry(
+							bottomMapEntry, range,
+							parentAccessStructures
+						);
+						assert(bottomMapEntry != nullptr);
+					}
+					
+					parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
+					
+					return true;
+				}
+			);
+		}
+		
+		cpuDependencyData._removedRangesFromBottomMap.clear();
+	}
+	
+	
 	template <typename MatchingProcessorType, typename MissingProcessorType>
 	static inline bool foreachBottomMapMatchingAndMissingRange(
 		Task *parent, TaskDataAccesses &parentAccessStructures,
@@ -308,23 +355,8 @@ private:
 				TaskDataAccesses &subtaskAccessStructures = subtask->getDataAccesses();
 				assert(!subtaskAccessStructures.hasBeenDeleted());
 				
-				
-			//	if (taskIsSonOfParent) {
-			//		// Parent's mutex has been already acquired
-			//		if (subtask != parent) {
-			//			// Take care of the possible deadlock when acquiring a sibling mutex
-			//			if (!subtaskAccessStructures._lock.tryLock()) {
-			//				accessStructures._lock.unlock();
-			//				subtaskAccessStructures._lock.lock();
-			//				accessStructures._lock.lock();
-			//			}
-			//		}
-			//	} else {
-			//		// Acquire the mutex without the worry of deadlocks
-			//		subtaskAccessStructures._lock.lock();
-			//	}
 				if (subtask != parent) {
-					// Take care of the possible deadlock when acquiring a sibling mutex
+					// Take care of the possible deadlock
 					if (!subtaskAccessStructures._lock.tryLock()) {
 						accessStructures._lock.unlock();
 						subtaskAccessStructures._lock.lock();
@@ -1035,17 +1067,6 @@ private:
 	}
 	
 	
-	static void processRemovableTasks(
-		/* inout */ CPUDependencyData &cpuDependencyData,
-		CPU *cpu, WorkerThread *thread
-	) {
-		for (Task *removableTask : cpuDependencyData._removableTasks) {
-			TaskFinalization::disposeOrUnblockTask(removableTask, cpu, thread);
-		}
-		cpuDependencyData._removableTasks.clear();
-	}
-	
-	
 	static inline CPUDependencyData &getCPUDependencyDataCPUAndThread(/* out */ CPU * &cpu, /* out */ WorkerThread * &thread)
 	{
 		thread = WorkerThread::getCurrentWorkerThread();
@@ -1137,7 +1158,7 @@ public:
 	static inline void unregisterTaskDataAccesses(Task *task)
 	{
 		assert(task != 0);
-
+		
 		CPU *cpu = nullptr;
 		WorkerThread *currentThread = nullptr;
 		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
@@ -1263,9 +1284,9 @@ public:
 		assert(accessStructures.isRemovable());
 		
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
-		TaskDataAccesses::subaccess_bottom_map_t &bottomMap = accessStructures._subaccessBottomMap;
+		assert(accessStructures._subaccessBottomMap.empty());
 		
-		if (accesses.empty() && bottomMap.empty()) {
+		if (accesses.empty()) {
 			return;
 		}
 		
@@ -1275,34 +1296,47 @@ public:
 		TaskDataAccesses &parentAccessStructures = parent->getDataAccesses();
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
-		std::lock_guard<TaskDataAccesses::spinlock_t> parentGuard(parentAccessStructures._lock);
-		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+		CPU *cpu = nullptr;
+		WorkerThread *currentThread = nullptr;
+		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
 		
-		accesses.deleteAll(
-			[&](DataAccess *access) {
-				assert(access != nullptr);
-				
-				removeDataAccess(
-					task, access,
-					accessStructures,
-					parent,
-					parentAccessStructures
-				);
-			}
-		);
+#ifndef NDEBUG
+		bool alreadyTaken = false;
+		cpuDependencyData._inUse.compare_exchange_strong(alreadyTaken, true);
+#endif
 		
-		bottomMap.deleteAll(
-			[&](BottomMapEntry *bottomMapEntry) {
-				assert(bottomMapEntry != nullptr);
-				
-				delete bottomMapEntry;
-			}
-		);
+		{
+			std::lock_guard<TaskDataAccesses::spinlock_t> parentGuard(parentAccessStructures._lock);
+			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+			
+			accesses.deleteAll(
+				[&](DataAccess *access) {
+					assert(access != nullptr);
+					
+					removeDataAccess(
+						task, access,
+						cpuDependencyData
+					);
+				}
+			);
+			assert(accesses.empty());
+			
+			// NOTE: mutexes must be held
+			processRemovedRangesFromBottomMap(
+				task, parent,
+				parentAccessStructures,
+				cpuDependencyData
+			);
+		}
 		
-		assert(accesses.empty());
-		assert(bottomMap.empty());
+#ifndef NDEBUG
+		if (!alreadyTaken) {
+			bool alreadyTaken = true;
+			assert(cpuDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
+		}
+#endif
+
 	}
-	
 };
 
 

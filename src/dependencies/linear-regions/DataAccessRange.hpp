@@ -121,6 +121,29 @@ public:
 	}
 	
 	
+	bool contiguous(DataAccessRange const &other) const
+	{
+		FragmentBoundaries boundaries(*this, other);
+		
+		return (boundaries._firstStart == boundaries._secondEnd
+			|| boundaries._firstEnd == boundaries._secondStart);
+	}
+	
+	
+	DataAccessRange contiguousUnion(DataAccessRange const &other) const
+	{
+		assert(contiguous(other));
+		assert(intersect(other).empty());
+		
+		FragmentBoundaries boundaries(*this, other);
+		
+		char *start = std::min(boundaries._firstStart, boundaries._secondStart);
+		char *end = std::max(boundaries._firstEnd, boundaries._secondEnd);
+		
+		return DataAccessRange(start, end);
+	}
+	
+	
 	bool fullyContainedIn(DataAccessRange const &other) const
 	{
 		return intersect(other) == *this;
