@@ -46,12 +46,15 @@ namespace If0Task {
 		assert(if0Task->getParent() == currentTask);
 		
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source);
-		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
-		
-		currentThread->handleTask(if0Task);
-		
+		if (if0Task->hasCode()) {
+			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
+			currentThread->handleTask(if0Task);
+		}
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
-		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+		
+		if (if0Task->hasCode()) {
+			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+		}
 	}
 	
 	
@@ -66,7 +69,9 @@ namespace If0Task {
 		Task *parent = if0Task->getParent();
 		assert(parent != nullptr);
 		
-		currentThread->handleTask(if0Task);
+		if (if0Task->hasCode()) {
+			currentThread->handleTask(if0Task);
+		}
 		
 		Scheduler::taskGetsUnblocked(parent, hardwarePlace);
 	}

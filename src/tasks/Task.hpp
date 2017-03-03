@@ -108,10 +108,18 @@ public:
 	//! Actual code of the task
 	inline void body()
 	{
+		assert(hasCode());
 		assert(_taskInfo != nullptr);
+		
 		_taskInfo->run(_argsBlock);
 	}
 	
+	//! Check if the task has an actual body
+	inline bool hasCode()
+	{
+		assert(_taskInfo != nullptr);
+		return (_taskInfo->run != nullptr);
+	}
 	
 	//! \brief sets the thread assigned to tun the task
 	//!
