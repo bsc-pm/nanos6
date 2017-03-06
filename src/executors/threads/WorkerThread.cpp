@@ -108,17 +108,19 @@ void WorkerThread::handleTask()
 {
 	_task->setThread(this);
 	
-	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
-	Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
-	Instrument::taskIsExecuting(taskId);
-	
-	// Run the task
-	std::atomic_thread_fence(std::memory_order_acquire);
-	_task->body();
-	std::atomic_thread_fence(std::memory_order_release);
-	
-	Instrument::taskIsZombie(taskId);
-	Instrument::endTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
+	if (_task->hasCode()) {
+		Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
+		Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
+		Instrument::taskIsExecuting(taskId);
+		
+		// Run the task
+		std::atomic_thread_fence(std::memory_order_acquire);
+		_task->body();
+		std::atomic_thread_fence(std::memory_order_release);
+		
+		Instrument::taskIsZombie(taskId);
+		Instrument::endTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
+	}
 	
 	// Release successors
 	DataAccessRegistration::unregisterTaskDataAccesses(_task);
