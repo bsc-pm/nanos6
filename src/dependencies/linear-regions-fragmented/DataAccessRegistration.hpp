@@ -1087,7 +1087,8 @@ private:
 		__attribute__((unused)) Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccess *dataAccess, Task *targetTask,
 		bool makeTopmost,
-		/* inout */ CPUDependencyData &cpuDependencyData
+		/* inout */ CPUDependencyData &cpuDependencyData,
+		bool delayable = true
 	) {
 		assert(dataAccess != nullptr);
 		assert(targetTask != nullptr);
@@ -1105,22 +1106,39 @@ private:
 		if (canPropagateReadSatisfiability || canPropagateWriteSatisfiability || makeTopmost) {
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
 			DelayedOperation delayedOperation;
-#else
-			DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
-			delayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
-#endif
-			
 			delayedOperation._propagateRead = canPropagateReadSatisfiability;
 			delayedOperation._propagateWrite = canPropagateWriteSatisfiability;
 			delayedOperation._makeTopmost = makeTopmost;
 			delayedOperation._range = dataAccess->_range;
 			delayedOperation._target = targetTask;
 			
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
 			TaskDataAccesses &targetAccessStructures = targetTask->getDataAccesses();
 			std::lock_guard<TaskDataAccesses::spinlock_t> guard(targetAccessStructures._lock);
 			
 			propagateSatisfiabilityPlain(triggererInstrumentationTaskId, delayedOperation, cpuDependencyData);
+#else
+			if (delayable) {
+				DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
+				
+				delayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
+				delayedOperation._propagateRead = canPropagateReadSatisfiability;
+				delayedOperation._propagateWrite = canPropagateWriteSatisfiability;
+				delayedOperation._makeTopmost = makeTopmost;
+				delayedOperation._range = dataAccess->_range;
+				delayedOperation._target = targetTask;
+			} else {
+				DelayedOperation delayedOperation;
+				delayedOperation._propagateRead = canPropagateReadSatisfiability;
+				delayedOperation._propagateWrite = canPropagateWriteSatisfiability;
+				delayedOperation._makeTopmost = makeTopmost;
+				delayedOperation._range = dataAccess->_range;
+				delayedOperation._target = targetTask;
+				
+				TaskDataAccesses &targetAccessStructures = targetTask->getDataAccesses();
+				std::lock_guard<TaskDataAccesses::spinlock_t> guard(targetAccessStructures._lock);
+				
+				propagateSatisfiabilityPlain(triggererInstrumentationTaskId, delayedOperation, cpuDependencyData);
+			}
 #endif
 		}
 	}
@@ -1129,14 +1147,11 @@ private:
 	static inline void makeRangeTopmost(
 		__attribute__((unused)) Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccessRange range, Task *task,
-		/* inout */ CPUDependencyData &cpuDependencyData
+		/* inout */ CPUDependencyData &cpuDependencyData,
+		bool delayable = true
 	) {
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
 		DelayedOperation delayedOperation;
-#else
-		DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
-		delayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
-#endif
 		
 		delayedOperation._propagateRead = false;
 		delayedOperation._propagateWrite = false;
@@ -1144,10 +1159,32 @@ private:
 		delayedOperation._range = range;
 		delayedOperation._target = task;
 		
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-		TaskDataAccesses &targetAccessStructures = targetTask->getDataAccesses();
+		TaskDataAccesses &targetAccessStructures = task->getDataAccesses();
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(targetAccessStructures._lock);
 		propagateSatisfiabilityPlain(triggererInstrumentationTaskId, delayedOperation, cpuDependencyData);
+#else
+		if (delayable) {
+			DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
+			delayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
+			
+			delayedOperation._propagateRead = false;
+			delayedOperation._propagateWrite = false;
+			delayedOperation._makeTopmost = true;
+			delayedOperation._range = range;
+			delayedOperation._target = task;
+		} else {
+			DelayedOperation delayedOperation;
+			
+			delayedOperation._propagateRead = false;
+			delayedOperation._propagateWrite = false;
+			delayedOperation._makeTopmost = true;
+			delayedOperation._range = range;
+			delayedOperation._target = task;
+			
+			TaskDataAccesses &targetAccessStructures = task->getDataAccesses();
+			std::lock_guard<TaskDataAccesses::spinlock_t> guard(targetAccessStructures._lock);
+			propagateSatisfiabilityPlain(triggererInstrumentationTaskId, delayedOperation, cpuDependencyData);
+		}
 #endif
 	}
 	
@@ -1213,7 +1250,8 @@ private:
 				triggererInstrumentationTaskId,
 				dataAccess, next,
 				makesNextTopmost,
-				cpuDependencyData
+				cpuDependencyData,
+				false /* Cannot be delayed */
 			);
 		} else {
 			assert(dataAccess->complete());
@@ -1224,24 +1262,17 @@ private:
 				makeRangeTopmost(
 					triggererInstrumentationTaskId,
 					dataAccess->_range.intersect(range), next,
-					cpuDependencyData
+					cpuDependencyData,
+					false /* Cannot be delayed */
 				);
 			}
 			
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
+			// This operation cannot be delayed since otherwise there could be update races
 			DelayedOperation delayedOperation;
-#else
-			DelayedOperation &delayedOperation = getNewDelayedOperation(cpuDependencyData);
-			delayedOperation._operationType = DelayedOperation::link_bottom_map_accesses_operation;
-#endif
-			
 			delayedOperation._next = next;
 			delayedOperation._range = dataAccess->_range.intersect(range);
 			delayedOperation._target = task;
-			
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
 			linkBottomMapAccessesToNext(triggererInstrumentationTaskId, delayedOperation, cpuDependencyData);
-#endif
 		}
 		
 		// Update the number of non-removable accesses of the dataAccess task
