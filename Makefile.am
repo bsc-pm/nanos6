@@ -398,6 +398,7 @@ noinst_HEADERS = \
 	common/tests/Timer.hpp
 
 EXTRA_DIST = \
+	common/tests/select-version.sh \
 	common/tests/tap-driver.pl \
 	common/tests/tap-driver.sh
 
