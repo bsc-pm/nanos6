@@ -77,7 +77,12 @@ void *WorkerThread::body()
 			} else {
 				if (_task->isIf0()) {
 					// An if0 task executed outside of the implicit taskwait of its parent (i.e. not inline)
-					If0Task::executeNonInline(this, _task, _cpu);
+					Task *if0Task = _task;
+					
+					// This is needed, since otherwise the semantics would be that the if0Task task is being launched from within its own execution
+					_task = nullptr;
+					
+					If0Task::executeNonInline(this, if0Task, _cpu);
 				} else {
 					handleTask();
 				}
