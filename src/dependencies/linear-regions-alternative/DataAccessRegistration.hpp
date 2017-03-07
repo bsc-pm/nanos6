@@ -332,7 +332,7 @@ private:
 		Task *parent, TaskDataAccesses &parentAccessStructures,
 		DataAccessRange range, __attribute__((unused)) Task *task, TaskDataAccesses &accessStructures,
 		MatchingProcessorType matchingProcessor, MissingProcessorType missingProcessor,
-		bool taskIsSonOfParent
+		bool removeBottomMapEntry
 	) {
 		assert(parent != nullptr);
 		assert(task != nullptr);
@@ -383,7 +383,7 @@ private:
 				}
 				
 				// Remove bottom map entries indexed in the actual parent
-				if (taskIsSonOfParent) {
+				if (removeBottomMapEntry) {
 					bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, range, parentAccessStructures);
 					parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
 					delete bottomMapEntry;
@@ -606,7 +606,7 @@ private:
 		Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccess *dataAccess, Task *task, TaskDataAccesses &accessStructures,
 		DataAccessRange range, DataAccess *nextDataAccess, Task *next,
-		TaskDataAccesses &nextAccessStructures, bool taskIsSiblingOfNext
+		TaskDataAccesses &nextAccessStructures
 	) {
 		assert(dataAccess != nullptr);
 		assert(dataAccess->isReachable());
@@ -619,8 +619,15 @@ private:
 		assert(!accessStructures.hasBeenDeleted());
 		assert(accessStructures._lock.isLockedByThisThread());
 		
-		bool parentalRelation = (task == next->getParent());
+		Task *taskParent = task->getParent();
+		Task *nextParent = next->getParent();
+		assert(taskParent != nullptr);
+		assert(nextParent != nullptr);
+		
+		bool parentalRelation = (task == nextParent);
+		bool siblingRelation = (taskParent == nextParent);
 		assert(dataAccess->isInBottomMap() || parentalRelation);
+		assert(dataAccess->_next == nullptr || parentalRelation);
 		
 		dataAccess = fragmentAccess(
 			triggererInstrumentationTaskId,
@@ -629,6 +636,7 @@ private:
 			/* Consider blocking */ true
 		);
 		assert(dataAccess != nullptr);
+		assert(dataAccess->isInBottomMap() || parentalRelation);
 		assert(dataAccess->_next == nullptr || parentalRelation);
 		
 		nextDataAccess = fragmentAccess(
@@ -641,13 +649,14 @@ private:
 		assert(nextDataAccess->_next == nullptr);
 		
 		// Link the dataAccess access to the new task
-		if (task != next->getParent()) {
-			if (taskIsSiblingOfNext) {
+		if (parentalRelation) {
+			dataAccess->_child = next;
+			dataAccess->hasSubaccesses() = true;
+		} else {
+			dataAccess->_next = next;
+			if (siblingRelation) {
 				dataAccess->isInBottomMap() = false;
 			}
-			dataAccess->_next = next;
-		} else {
-			dataAccess->_child = next;
 		}
 		
 		Instrument::linkedDataAccesses(
@@ -772,7 +781,6 @@ private:
 			task, accessStructures,
 			dataAccess, range,
 			parent, parentAccessStructures,
-			/* They are father and son */ true,
 			local
 		);
 		
@@ -786,7 +794,7 @@ private:
 		Task *task, TaskDataAccesses &accessStructures,
 		DataAccess *dataAccess, DataAccessRange range,
 		Task *parent, TaskDataAccesses &parentAccessStructures,
-		bool taskIsSonOfParent, bool &local
+		bool &local
 	) {
 		assert(parent != nullptr);
 		assert(task != nullptr);
@@ -798,6 +806,9 @@ private:
 		// Get the iterator to the linking data access
 		TaskDataAccesses::accesses_t::iterator partialDataAccessPosition = accessStructures._accesses.iterator_to(*dataAccess);
 		assert(partialDataAccessPosition != accessStructures._accesses.end());
+		
+		// Determine if they are actually parent and son
+		bool parentalRelation = (task->getParent() == parent);
 		
 		// Link accesses to their corresponding predecessor
 		foreachBottomMapMatchingAndMissingRange(
@@ -824,27 +835,8 @@ private:
 				TaskDataAccesses &previousAccessStructures = previousTask->getDataAccesses();
 				assert(!previousAccessStructures.hasBeenDeleted());
 				
-				// In case the previous access is from the parent,
-				// we have to mark that it has subaccesses
-				if (previousTask == task->getParent()) {
-					previous = fragmentAccess(
-						task->getInstrumentationTaskId(),
-						previous, rangeToBeProcessed,
-						previousAccessStructures,
-						/* Consider blocking */ true
-					);
-					
-					previous->hasSubaccesses() = true;
-				}
-				
-				// Link to previous access if it is uncompleted or has no subaccesses
-				bool linkToThisPreviousAccess =
-					previousTask == task->getParent()
-					|| !previous->hasSubaccesses()
-					|| !previous->complete();
-				
 				// Can be modified only from the same domain
-				if (taskIsSonOfParent) {
+				if (parentalRelation) {
 					if (bottomMapEntry != nullptr) {
 						local = bottomMapEntry->_local;
 					} else {
@@ -853,7 +845,9 @@ private:
 					}
 				}
 				
-				if (!linkToThisPreviousAccess) {
+				// In case previous task is not the parent, continue recursively
+				// if previous is completed and has subaccesses
+				if (previousTask != task->getParent() && previous->hasSubaccesses() && previous->complete()) {
 					// Avoid reprocessing some new additions
 					++partialDataAccessPosition;
 					
@@ -862,11 +856,19 @@ private:
         				task, accessStructures,
         				partialDataAccess, rangeToBeProcessed,
         				previousTask, previousAccessStructures,
-						/* Not the same domain */ false, local
+						local
 					);
 					
-					if (taskIsSonOfParent) {
+					if (parentalRelation) {
+						previous = fragmentAccess(
+							task->getInstrumentationTaskId(),
+							previous, rangeToBeProcessed,
+							previousAccessStructures,
+							/* Consider blocking */ true
+						);
+						assert(previous != nullptr);
 						assert(previous->_range.fullyContainedIn(range));
+						
 						previous->isInBottomMap() = false;
 					}
 					
@@ -878,7 +880,7 @@ private:
 						task->getInstrumentationTaskId(),
 						previous, previousTask, previousAccessStructures,
 						rangeToBeProcessed, partialDataAccess,
-						task, accessStructures, taskIsSonOfParent
+						task, accessStructures
 					);
 					
 					// Advance to the next partial access
@@ -888,7 +890,7 @@ private:
 				return true;
 			},
 			[&](DataAccessRange missingRange) -> bool {
-				assert(taskIsSonOfParent);
+				assert(parentalRelation);
 				assert(!parentAccessStructures._accesses.contains(missingRange));
 				assert(partialDataAccessPosition != accessStructures._accesses.end());
 				
@@ -928,7 +930,7 @@ private:
 				
 				return true;
 			},
-			taskIsSonOfParent
+			parentalRelation
 		);
 	}
 	
