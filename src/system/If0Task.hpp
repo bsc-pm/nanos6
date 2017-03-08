@@ -45,8 +45,10 @@ namespace If0Task {
 		assert(if0Task != nullptr);
 		assert(if0Task->getParent() == currentTask);
 		
+		bool hasCode = if0Task->hasCode();
+		
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source);
-		if (if0Task->hasCode()) {
+		if (hasCode) {
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}
 		
@@ -54,7 +56,7 @@ namespace If0Task {
 		
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		
-		if (if0Task->hasCode()) {
+		if (hasCode) {
 			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 		}
 	}
