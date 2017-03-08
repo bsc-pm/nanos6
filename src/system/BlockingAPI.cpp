@@ -8,7 +8,7 @@
 #include "scheduling/Scheduler.hpp"
 
 
-extern "C" void *nanos_get_current_task()
+extern "C" void *nanos_get_current_blocking_context()
 {
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != nullptr);
@@ -20,7 +20,7 @@ extern "C" void *nanos_get_current_task()
 }
 
 
-extern "C" void nanos_block_current_task()
+extern "C" void nanos_block_current_task(__attribute__((unused)) void *blocking_context)
 {
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != nullptr);
@@ -35,9 +35,9 @@ extern "C" void nanos_block_current_task()
 }
 
 
-extern "C" void nanos_unblock_task(void *blocked_task_handler)
+extern "C" void nanos_unblock_task(void *blocking_context)
 {
-	Task *task = static_cast<Task *>(blocked_task_handler);
+	Task *task = static_cast<Task *>(blocking_context);
 	
 	Scheduler::taskGetsUnblocked(task, nullptr);
 }
