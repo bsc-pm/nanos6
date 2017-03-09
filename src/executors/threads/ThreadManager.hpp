@@ -286,7 +286,6 @@ inline void ThreadManager::resumeThread(WorkerThread *suspendedThread, CPU *cpu,
 	assert(cpu != nullptr);
 	
 	if (!inInitializationOrShutdown) {
-		assert(WorkerThread::getCurrentWorkerThread() != nullptr);
 		assert(WorkerThread::getCurrentWorkerThread() != suspendedThread);
 	}
 	
@@ -310,9 +309,8 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 	assert(idleCPU != nullptr);
 	
 	if (!inInitializationOrShutdown) {
-		assert(WorkerThread::getCurrentWorkerThread() != nullptr);
-		assert(WorkerThread::getCurrentWorkerThread()->_cpu != nullptr);
-		assert(WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU);
+		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->_cpu != nullptr));
+		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU));
 	}
 	
 	// Get an idle thread for the CPU
