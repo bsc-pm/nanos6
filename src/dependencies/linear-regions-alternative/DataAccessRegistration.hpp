@@ -530,6 +530,7 @@ private:
 				assert(!(myPropagateReadSatisfiability && wasReadSatisfied) || allowReadResatisfiability);
 				assert(!(myPropagateReadSatisfiability && wasWriteSatisfied));
 				assert(!(myPropagateWriteSatisfiability && wasWriteSatisfied));
+				assert(!(myPropagateWriteSatisfiability && !(myPropagateReadSatisfiability || wasReadSatisfied)));
 				
 				if (myPropagateReadSatisfiability && wasReadSatisfied) {
 					myPropagateReadSatisfiability = false;
@@ -573,12 +574,21 @@ private:
 					}
 				}
 				
+				bool myAllowReadResatisfiability = false;
+				
 				// Decide the propagation for the next
 				if (!nextAccess->complete()) {
 					if (myPropagateReadSatisfiability && nextAccess->_type == READ_ACCESS_TYPE) {
 						myPropagateWriteSatisfiability = false;
 					} else {
 						return true;
+					}
+				}
+				else {
+					// Propagate the read satisfiability to next
+					if (nextAccess->readSatisfied() && nextAccess->_type != READ_ACCESS_TYPE) {
+						myPropagateReadSatisfiability = true;
+						myAllowReadResatisfiability = true;
 					}
 				}
 				
@@ -590,7 +600,8 @@ private:
 						nextAccess->_next,
 						myPropagateReadSatisfiability,
 						myPropagateWriteSatisfiability,
-						cpuDependencyData
+						cpuDependencyData,
+						myAllowReadResatisfiability
 					);
 				}
 				
