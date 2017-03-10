@@ -90,6 +90,8 @@ common_sources = \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
+	src/scheduling/CostAsPriorityScheduler.cpp \
+	src/scheduling/CostAsPriorityScheduler.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \

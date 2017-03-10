@@ -4,6 +4,7 @@
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
+#include "system/PollingAPI.hpp"
 #include "tasks/Task.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -42,6 +43,9 @@ void *WorkerThread::body()
 				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(_cpu)) {
 					// Keep trying
 					pollingSlot.compare_exchange_strong(_task, nullptr);
+					if (_task == nullptr) {
+						PollingAPI::handleServices();
+					}
 				}
 				
 				if (ThreadManager::mustExit()) {
@@ -90,6 +94,9 @@ void *WorkerThread::body()
 				_task = nullptr;
 			}
 		} else {
+			// Try to advance work before going to sleep
+			PollingAPI::handleServices();
+			
 			// The code below is protected by a condition because under certain CPU activation/deactivation
 			// cases, the call to CPUActivation::activationCheck may have put the thread in the idle queue
 			// and the shutdown mechanism may have waken up the thread. In that case we do not want the
