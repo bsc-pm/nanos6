@@ -32,6 +32,7 @@ namespace Instrument {
 	typedef enum {
 		in_taskwait_blocking_reason,
 		in_mutex_blocking_reason,
+		user_requested_blocking_reason
 	} task_blocking_reason_t;
 	
 	//! NOTE: Instrument::createdTask gets called before any of the following functions and before calculating the dependencies

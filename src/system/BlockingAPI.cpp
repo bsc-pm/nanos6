@@ -37,9 +37,13 @@ extern "C" void nanos_block_current_task(void *blocking_context)
 	
 	assert(blocking_context == currentTask);
 	
+	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
+	
 	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask, false);
 	DataAccessRegistration::handleExitBlocking(currentTask);
+	
+	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 }
 
 
