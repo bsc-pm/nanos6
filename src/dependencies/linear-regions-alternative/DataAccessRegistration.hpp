@@ -1054,17 +1054,22 @@ private:
 		
 		assert(!dataAccess->hasSubaccesses() || dataAccess->_next == nullptr);
 		
-		// Propagate only when the access is write satisfied
-		if (dataAccess->_next != nullptr && dataAccess->writeSatisfied()) {
+		if (dataAccess->_next != nullptr) {
 			bool isReadAccess = (dataAccess->_type == READ_ACCESS_TYPE);
 			
-			propagateSatisfiability(
-				finishedTask->getInstrumentationTaskId(),
-				finishedTask, range,
-				dataAccess->_next,
-				!isReadAccess, true,
-				cpuDependencyData
-			);
+			bool propagateReadSatisfiability = dataAccess->readSatisfied() && !isReadAccess;
+			bool propagateWriteSatisfiability = dataAccess->writeSatisfied();
+			
+			if (propagateReadSatisfiability || propagateWriteSatisfiability) {
+				propagateSatisfiability(
+					finishedTask->getInstrumentationTaskId(),
+					finishedTask, range,
+					dataAccess->_next,
+					propagateReadSatisfiability,
+					propagateWriteSatisfiability,
+					cpuDependencyData
+				);
+			}
 		}
 	}
 	
