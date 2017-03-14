@@ -60,6 +60,8 @@ void nanos_submit_task(void *taskHandle)
 	Task *task = (Task *) taskHandle;
 	assert(task != nullptr);
 	
+	Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
+	
 	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	HardwarePlace *hardwarePlace = nullptr;
@@ -75,7 +77,7 @@ void nanos_submit_task(void *taskHandle)
 		task->setParent(parent);
 	}
 	
-	Instrument::createdTask(task, task->getInstrumentationTaskId());
+	Instrument::createdTask(task, taskInstrumentationId);
 	
 	bool ready = true;
 	nanos_task_info *taskInfo = task->getTaskInfo();
@@ -100,10 +102,10 @@ void nanos_submit_task(void *taskHandle)
 			ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
 		}
 	} else if (!ready) {
-		Instrument::taskIsPending(task->getInstrumentationTaskId());
+		Instrument::taskIsPending(taskInstrumentationId);
 	}
 	
-	Instrument::exitAddTask(task->getInstrumentationTaskId());
+	Instrument::exitAddTask(taskInstrumentationId);
 	
 	// Special handling for if0 tasks
 	if (isIf0) {
