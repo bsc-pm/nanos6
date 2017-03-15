@@ -412,30 +412,33 @@ private:
 	
 	
 	static inline void propagateSatisfiabilityAfterFirstLinking(
-		DataAccess *dataAccess, Task *task,
-		DataAccess *nextAccess, Task *next
+		Task *previous, DataAccess *previousAccess,
+		Task *next, DataAccess *nextAccess,
+		bool parentalRelation = false
 	) {
-		assert(dataAccess != nullptr);
-		assert(task != nullptr);
-		assert(nextAccess != nullptr);
+		assert(previous != nullptr);
+		assert(previousAccess != nullptr);
 		assert(next != nullptr);
+		assert(nextAccess != nullptr);
 		
-		bool paternalRelation = (task == next->getParent());
+		bool readSatisfiability = false;
+		bool writeSatisfiability = false;
 		
-		bool canPropagateReadSatisfiability =
-			dataAccess->readSatisfied()
-			&& (dataAccess->complete() || dataAccess->_type == READ_ACCESS_TYPE || paternalRelation);
-		bool canPropagateWriteSatisfiability =
-			dataAccess->writeSatisfied()
-			&& (dataAccess->complete() || paternalRelation);
+		evaluateSatisfiability(
+			previous, previousAccess,
+			next, nextAccess,
+			readSatisfiability,
+			writeSatisfiability,
+			parentalRelation
+		);
 		
-		nextAccess->readSatisfied() = canPropagateReadSatisfiability;
-		nextAccess->writeSatisfied() = canPropagateWriteSatisfiability;
+		nextAccess->readSatisfied() = readSatisfiability;
+		nextAccess->writeSatisfied() = writeSatisfiability;
 		if (nextAccess->satisfied() && !nextAccess->_weak) {
 			next->decreasePredecessors();
 		}
 		
-		if (canPropagateWriteSatisfiability) {
+		if (writeSatisfiability) {
 			TaskDataAccesses &nextAccessStructures = next->getDataAccesses();
 			nextAccessStructures.decreaseRemovalCount(
 				nextAccess->_range.getSize()
@@ -444,7 +447,7 @@ private:
 		
 		Instrument::dataAccessBecomesSatisfied(
 			nextAccess->_instrumentationId,
-			canPropagateReadSatisfiability, canPropagateWriteSatisfiability, false,
+			readSatisfiability, writeSatisfiability, false,
 			next->getInstrumentationTaskId(), next->getInstrumentationTaskId()
 		);
 	}
@@ -459,39 +462,44 @@ private:
 		assert(task != nullptr);
 		assert(next != nullptr);
 		
-		bool canPropagateReadSatisfiability =
-			dataAccess->readSatisfied()
-			&& (dataAccess->complete() || dataAccess->_type == READ_ACCESS_TYPE);
-		bool canPropagateWriteSatisfiability =
-			dataAccess->writeSatisfied() && dataAccess->complete();
-		
 		propagateSatisfiability(
 			triggererInstrumentationTaskId,
-			task, dataAccess->_range,
-			next,
-			canPropagateReadSatisfiability,
-			canPropagateWriteSatisfiability,
-			cpuDependencyData,
-			/* Possible read resatisfiability */ true
+			task, dataAccess, 
+			dataAccess->_range, next,
+			cpuDependencyData
 		);
+	}
+	
+	static inline void evaluateSatisfiability(
+		Task *previous, DataAccess *previousAccess,
+		Task *next, DataAccess *nextAccess,
+		bool &readSatisfiability, bool &writeSatisfiability,
+		bool parentalRelation = false
+	) {
+		assert(previous != nullptr);
+		assert(previousAccess != nullptr);
+		assert(next != nullptr);
+		assert(nextAccess != nullptr);
+		
+		readSatisfiability =
+			previousAccess->readSatisfied()
+			&& (previousAccess->complete() || previousAccess->_type == READ_ACCESS_TYPE || parentalRelation);
+		
+		writeSatisfiability =
+			previousAccess->writeSatisfied()
+			&& (previousAccess->complete() || parentalRelation);
 	}
 	
 	static inline void propagateSatisfiability(
 		Instrument::task_id_t triggererInstrumentationTaskId,
-		Task *task, DataAccessRange range,
-		Task *nextTask,
-		bool propagateReadSatisfiability,
-		bool propagateWriteSatisfiability,
+		Task *task, DataAccess *dataAccess,
+		DataAccessRange range, Task *nextTask,
 		CPUDependencyData &cpuDependencyData,
-		bool allowReadResatisfiability = false
+		bool parentalRelation = false
 	) {
 		assert(task != nullptr);
 		assert(nextTask != nullptr);
 		assert(!range.empty());
-		
-		if (!propagateReadSatisfiability && !propagateWriteSatisfiability) {
-			return;
-		}
 		
 		TaskDataAccesses &nextAccessStructures = nextTask->getDataAccesses();
 		assert(!nextAccessStructures.hasBeenDeleted());
@@ -503,9 +511,35 @@ private:
 				DataAccess *nextAccess = &(*position);
 				assert(nextAccess != nullptr);
 				
-				// Function parameters should not be modified
-				bool myPropagateReadSatisfiability = propagateReadSatisfiability;
-				bool myPropagateWriteSatisfiability = propagateWriteSatisfiability;
+				bool wasSatisfied = nextAccess->satisfied();
+				bool wasReadSatisfied = nextAccess->readSatisfied();
+				bool wasWriteSatisfied = nextAccess->writeSatisfied();
+				bool readSatisfiability = false;
+				bool writeSatisfiability = false;
+				
+				evaluateSatisfiability(
+					task, dataAccess,
+					nextTask, nextAccess,
+					readSatisfiability,
+					writeSatisfiability,
+					parentalRelation
+				);
+				
+				if (wasReadSatisfied && readSatisfiability) {
+					readSatisfiability = false;
+				}
+				if (wasWriteSatisfied && writeSatisfiability) {
+					writeSatisfiability = false;
+				}
+				
+				if (!readSatisfiability && !writeSatisfiability) {
+					return true;
+				}
+				
+				assert(readSatisfiability || writeSatisfiability);
+				assert(!(readSatisfiability && wasReadSatisfied));
+				assert(!(readSatisfiability && wasWriteSatisfied));
+				assert(!(writeSatisfiability && wasWriteSatisfied));
 				
 				// Fragment next access if needed
 				if (!nextAccess->_range.fullyContainedIn(range)) {
@@ -524,34 +558,23 @@ private:
 					&& nextAccess->_next != nullptr)
 				);
 				
-				bool wasSatisfied = nextAccess->satisfied();
-				bool wasReadSatisfied = nextAccess->readSatisfied();
-				bool wasWriteSatisfied = nextAccess->writeSatisfied();
-				assert(!(myPropagateReadSatisfiability && wasReadSatisfied) || allowReadResatisfiability);
-				assert(!(myPropagateReadSatisfiability && wasWriteSatisfied));
-				assert(!(myPropagateWriteSatisfiability && wasWriteSatisfied));
-				
-				if (myPropagateReadSatisfiability && wasReadSatisfied) {
-					myPropagateReadSatisfiability = false;
-				}
+				// Modify the satisfiability of the access
+				nextAccess->readSatisfied() = (readSatisfiability) ? true : wasReadSatisfied;
+				nextAccess->writeSatisfied() = (writeSatisfiability) ? true : wasWriteSatisfied;
 				
 				// Propagate to subaccesses
 				if (nextAccess->hasSubaccesses()) {
 					propagateSatisfiability(
 						triggererInstrumentationTaskId,
-						nextTask, nextAccess->_range,
+						nextTask, nextAccess,
+						nextAccess->_range,
 						nextAccess->_child,
-						myPropagateReadSatisfiability,
-						myPropagateWriteSatisfiability,
-						cpuDependencyData
+						cpuDependencyData,
+						true
 					);
 				}
 				
-				// Modify the satisfiability of the access
-				nextAccess->readSatisfied() = (myPropagateReadSatisfiability) ? true : wasReadSatisfied;
-				nextAccess->writeSatisfied() = (myPropagateWriteSatisfiability) ? true : wasWriteSatisfied;
-				
-				if (myPropagateWriteSatisfiability) {
+				if (writeSatisfiability) {
 					size_t bytes = nextAccess->_range.getSize();
 					if (nextAccessStructures.decreaseRemovalCount(bytes)) {
 						if (nextTask->decreaseRemovalBlockingCount()) {
@@ -562,7 +585,7 @@ private:
 				
 				Instrument::dataAccessBecomesSatisfied(
 					nextAccess->_instrumentationId,
-					myPropagateReadSatisfiability, myPropagateWriteSatisfiability, false,
+					readSatisfiability, writeSatisfiability, false,
 					triggererInstrumentationTaskId, nextTask->getInstrumentationTaskId()
 				);
 				
@@ -573,23 +596,13 @@ private:
 					}
 				}
 				
-				// Decide the propagation for the next
-				if (!nextAccess->complete()) {
-					if (myPropagateReadSatisfiability && nextAccess->_type == READ_ACCESS_TYPE) {
-						myPropagateWriteSatisfiability = false;
-					} else {
-						return true;
-					}
-				}
-				
 				// Propagate to next task
 				if (nextAccess->_next != nullptr) {
 					propagateSatisfiability(
 						triggererInstrumentationTaskId,
-						nextTask, nextAccess->_range,
+						nextTask, nextAccess,
+						nextAccess->_range,
 						nextAccess->_next,
-						myPropagateReadSatisfiability,
-						myPropagateWriteSatisfiability,
 						cpuDependencyData
 					);
 				}
@@ -666,8 +679,9 @@ private:
 		);
 		
 		propagateSatisfiabilityAfterFirstLinking(
-			dataAccess, task,
-			nextDataAccess, next
+			task, dataAccess,
+			next, nextDataAccess,
+			parentalRelation
 		);
 		
 		// Return the data access since it may have been fragmented
@@ -1048,25 +1062,21 @@ private:
 				dataAccess->_next,
 				cpuDependencyData
 			);
-
+			
 			dataAccess->_next = nullptr;
 		}
 		
 		assert(!dataAccess->hasSubaccesses() || dataAccess->_next == nullptr);
 		
 		if (dataAccess->_next != nullptr) {
-			bool isReadAccess = (dataAccess->_type == READ_ACCESS_TYPE);
+			bool readSatisfied = dataAccess->readSatisfied();
+			bool writeSatisfied = dataAccess->writeSatisfied();
 			
-			bool propagateReadSatisfiability = dataAccess->readSatisfied() && !isReadAccess;
-			bool propagateWriteSatisfiability = dataAccess->writeSatisfied();
-			
-			if (propagateReadSatisfiability || propagateWriteSatisfiability) {
+			if (readSatisfied || writeSatisfied) {
 				propagateSatisfiability(
 					finishedTask->getInstrumentationTaskId(),
-					finishedTask, range,
-					dataAccess->_next,
-					propagateReadSatisfiability,
-					propagateWriteSatisfiability,
+					finishedTask, dataAccess,
+					range, dataAccess->_next,
 					cpuDependencyData
 				);
 			}
