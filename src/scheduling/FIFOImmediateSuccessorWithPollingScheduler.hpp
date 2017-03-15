@@ -25,7 +25,7 @@ class FIFOImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
 	
 	std::deque<CPU *> _idleCPUs;
 	
-	std::atomic<std::atomic<Task *> *> _pollingSlot;
+	std::atomic<polling_slot_t *> _pollingSlot;
 	
 	
 	inline CPU *getIdleCPU();
@@ -46,8 +46,8 @@ public:
 	
 	void disableHardwarePlace(HardwarePlace *hardwarePlace);
 	
-	bool requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
-	bool releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	bool requestPolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot);
+	bool releasePolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot);
 };
 
 

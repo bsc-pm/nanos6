@@ -12,6 +12,17 @@ class Task;
 //! \brief Interface that schedulers must implement
 class SchedulerInterface {
 public:
+	//! \brief An object to allow the scheduler to push tasks directly to a thread
+	struct polling_slot_t {
+		std::atomic<Task *> _task;
+		
+		polling_slot_t()
+			: _task(nullptr)
+		{
+		}
+	};
+	
+	
 	enum ReadyTaskHint {
 		NO_HINT,
 		CHILD_TASK_HINT,
@@ -76,7 +87,7 @@ public:
 	//! \returns true if the caller is allowed to poll that memory position for a single ready task or if it actually got a task, otherwise false and the hardware place is assumed to become idle
 	//! 
 	//! This method has a default implementation that just falls back to getReadyTask.
-	virtual bool requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	virtual bool requestPolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot);
 	
 	//! \brief Attempt to release the polling slot
 	//! 
@@ -86,7 +97,7 @@ public:
 	//! \returns true if the caller has successfully released the polling slot otherwise false indicating that there already is a taskl assigned or it is on the way
 	//! 
 	//! This method has a default implementation that matches the default implementation of requestPolling.
-	virtual bool releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	virtual bool releasePolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot);
 	
 };
 

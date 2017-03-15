@@ -37,12 +37,12 @@ void *WorkerThread::body()
 		CPUActivation::activationCheck(this);
 		
 		if (_task == nullptr) {
-			std::atomic<Task *> pollingSlot(nullptr);
+			Scheduler::polling_slot_t pollingSlot;
 			
 			if (Scheduler::requestPolling(_cpu, &pollingSlot)) {
 				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(_cpu)) {
 					// Keep trying
-					pollingSlot.compare_exchange_strong(_task, nullptr);
+					pollingSlot._task.compare_exchange_strong(_task, nullptr);
 					if (_task == nullptr) {
 						PollingAPI::handleServices();
 					}
@@ -60,7 +60,7 @@ void *WorkerThread::body()
 					Scheduler::releasePolling(_cpu, &pollingSlot);
 					
 					// We may already have a task assigned through
-					pollingSlot.compare_exchange_strong(_task, nullptr);
+					pollingSlot._task.compare_exchange_strong(_task, nullptr);
 				}
 			} else {
 				// Did not receive neither the polling slot nor a task

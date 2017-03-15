@@ -72,7 +72,7 @@ HardwarePlace * CostAsPriorityScheduler::addReadyTask(Task *task, HardwarePlace 
 	
 	// 2. Attempt to send the task to a polling thread without locking
 	{
-		std::atomic<Task *> *pollingSlot = _pollingSlot.load();
+		polling_slot_t *pollingSlot = _pollingSlot.load();
 		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
 			// Keep trying
 		}
@@ -80,7 +80,7 @@ HardwarePlace * CostAsPriorityScheduler::addReadyTask(Task *task, HardwarePlace 
 			// Obtained the polling slot
 			Task *expect = nullptr;
 			
-			pollingSlot->compare_exchange_strong(expect, task);
+			pollingSlot->_task.compare_exchange_strong(expect, task);
 			assert(expect == nullptr);
 			
 			return nullptr;
@@ -92,7 +92,7 @@ HardwarePlace * CostAsPriorityScheduler::addReadyTask(Task *task, HardwarePlace 
 	// 3. Attempt to send the task to polling thread with locking, since the polling slot
 	// can only be set when locked (but unset at any time).
 	{
-		std::atomic<Task *> *pollingSlot = _pollingSlot.load();
+		polling_slot_t *pollingSlot = _pollingSlot.load();
 		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
 			// Keep trying
 		}
@@ -100,7 +100,7 @@ HardwarePlace * CostAsPriorityScheduler::addReadyTask(Task *task, HardwarePlace 
 			// Obtained the polling slot
 			Task *expect = nullptr;
 			
-			pollingSlot->compare_exchange_strong(expect, task);
+			pollingSlot->_task.compare_exchange_strong(expect, task);
 			assert(expect == nullptr);
 			
 			return nullptr;
@@ -120,7 +120,7 @@ void CostAsPriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute
 {
 	// 1. Attempt to send the task to a polling thread without locking
 	{
-		std::atomic<Task *> *pollingSlot = _pollingSlot.load();
+		polling_slot_t *pollingSlot = _pollingSlot.load();
 		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
 			// Keep trying
 		}
@@ -128,7 +128,7 @@ void CostAsPriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute
 			// Obtained the polling slot
 			Task *expect = nullptr;
 			
-			pollingSlot->compare_exchange_strong(expect, unblockedTask);
+			pollingSlot->_task.compare_exchange_strong(expect, unblockedTask);
 			assert(expect == nullptr);
 			
 			return;
@@ -140,7 +140,7 @@ void CostAsPriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute
 	// 2. Attempt to send the task to polling thread with locking, since the polling slot
 	// can only be set when locked (but unset at any time).
 	{
-		std::atomic<Task *> *pollingSlot = _pollingSlot.load();
+		polling_slot_t *pollingSlot = _pollingSlot.load();
 		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
 			// Keep trying
 		}
@@ -148,7 +148,7 @@ void CostAsPriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute
 			// Obtained the polling slot
 			Task *expect = nullptr;
 			
-			pollingSlot->compare_exchange_strong(expect, unblockedTask);
+			pollingSlot->_task.compare_exchange_strong(expect, unblockedTask);
 			assert(expect == nullptr);
 			
 			return;
@@ -283,7 +283,7 @@ void CostAsPriorityScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
 }
 
 
-bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot)
 {
 	Task *task = nullptr;
 	
@@ -340,8 +340,8 @@ bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, std::
 			hardwarePlace->_schedulerData = nullptr;
 			
 			// Same thread, so there is no need to operate atomically
-			assert(pollingSlot->load() == nullptr);
-			pollingSlot->store(task);
+			assert(pollingSlot->_task.load() == nullptr);
+			pollingSlot->_task.store(task);
 			
 			return true;
 		}
@@ -364,8 +364,8 @@ bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, std::
 			assert(task != nullptr);
 			
 			// Same thread, so there is no need to operate atomically
-			assert(pollingSlot->load() == nullptr);
-			pollingSlot->store(task);
+			assert(pollingSlot->_task.load() == nullptr);
+			pollingSlot->_task.store(task);
 			
 			return true;
 		}
@@ -376,8 +376,8 @@ bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, std::
 			assert(task != nullptr);
 			
 			// Same thread, so there is no need to operate atomically
-			assert(pollingSlot->load() == nullptr);
-			pollingSlot->store(task);
+			assert(pollingSlot->_task.load() == nullptr);
+			pollingSlot->_task.store(task);
 			
 			return true;
 		}
@@ -388,7 +388,7 @@ bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, std::
 	assert(bestIs == non_existant);
 	
 	// 4. Or attempt to get the polling slot
-	std::atomic<Task *> *expect = nullptr;
+	polling_slot_t *expect = nullptr;
 	if (_pollingSlot.compare_exchange_strong(expect, pollingSlot)) {
 		
 		// 4.a. Successful
@@ -402,9 +402,9 @@ bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, std::
 }
 
 
-bool CostAsPriorityScheduler::releasePolling(HardwarePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool CostAsPriorityScheduler::releasePolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot)
 {
-	std::atomic<Task *> *expect = pollingSlot;
+	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
 		cpuBecomesIdle((CPU *) hardwarePlace);
 		return true;
