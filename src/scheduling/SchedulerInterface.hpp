@@ -16,8 +16,11 @@ public:
 	struct polling_slot_t {
 		std::atomic<Task *> _task;
 		
+		//! \brief scheduler-dependent information
+		void *_schedulerInfo;
+		
 		polling_slot_t()
-			: _task(nullptr)
+			: _task(nullptr), _schedulerInfo(nullptr)
 		{
 		}
 	};
