@@ -9,7 +9,7 @@
 #include <mutex>
 
 
-inline bool CostAsPriorityScheduler::PriorityCompare::operator()(Task *a, Task *b)
+inline bool CostAsPriorityScheduler::TaskPriorityCompare::operator()(Task *a, Task *b)
 {
 	assert(a != nullptr);
 	assert(b != nullptr);

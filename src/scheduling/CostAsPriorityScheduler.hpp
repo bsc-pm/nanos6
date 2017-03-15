@@ -19,14 +19,20 @@ class Task;
 class CostAsPriorityScheduler: public SchedulerInterface {
 	typedef PaddedTicketSpinLock<> spinlock_t;
 	
-	struct PriorityCompare {
+	
+	
+	
+	struct TaskPriorityCompare {
 		inline bool operator()(Task *a, Task *b);
 	};
 	
+	typedef std::priority_queue<Task *, std::vector<Task *>, TaskPriorityCompare> task_queue_t;
+	
+	
 	spinlock_t _globalLock;
 	
-	std::priority_queue<Task *, std::vector<Task *>, PriorityCompare> _readyTasks;
-	std::priority_queue<Task *, std::vector<Task *>, PriorityCompare> _unblockedTasks;
+	task_queue_t _readyTasks;
+	task_queue_t _unblockedTasks;
 	
 	std::deque<CPU *> _idleCPUs;
 	
