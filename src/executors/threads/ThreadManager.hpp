@@ -1,7 +1,6 @@
 #ifndef THREAD_MANAGER_HPP
 #define THREAD_MANAGER_HPP
 
-
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -310,7 +309,6 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 	
 	if (!inInitializationOrShutdown) {
 		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->_cpu != nullptr));
-		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU));
 	}
 	
 	// Get an idle thread for the CPU
