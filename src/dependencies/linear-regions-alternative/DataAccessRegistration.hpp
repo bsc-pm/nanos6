@@ -423,22 +423,25 @@ private:
 		
 		bool readSatisfiability = false;
 		bool writeSatisfiability = false;
+		bool topmostSatisfiability = false;
 		
 		evaluateSatisfiability(
 			previous, previousAccess,
 			next, nextAccess,
 			readSatisfiability,
 			writeSatisfiability,
+			topmostSatisfiability,
 			parentalRelation
 		);
 		
 		nextAccess->readSatisfied() = readSatisfiability;
 		nextAccess->writeSatisfied() = writeSatisfiability;
+		nextAccess->topmostSatisfied() = topmostSatisfiability;
 		if (nextAccess->satisfied() && !nextAccess->_weak) {
 			next->decreasePredecessors();
 		}
 		
-		if (writeSatisfiability) {
+		if (topmostSatisfiability) {
 			TaskDataAccesses &nextAccessStructures = next->getDataAccesses();
 			nextAccessStructures.decreaseRemovalCount(
 				nextAccess->_range.getSize()
@@ -474,6 +477,7 @@ private:
 		Task *previous, DataAccess *previousAccess,
 		Task *next, DataAccess *nextAccess,
 		bool &readSatisfiability, bool &writeSatisfiability,
+		bool &topmostSatisfiability,
 		bool parentalRelation = false
 	) {
 		assert(previous != nullptr);
@@ -487,6 +491,10 @@ private:
 		
 		writeSatisfiability =
 			previousAccess->writeSatisfied()
+			&& (previousAccess->complete() || parentalRelation);
+		
+		topmostSatisfiability =
+			previousAccess->topmostSatisfied()
 			&& (previousAccess->complete() || parentalRelation);
 	}
 	
@@ -514,14 +522,17 @@ private:
 				bool wasSatisfied = nextAccess->satisfied();
 				bool wasReadSatisfied = nextAccess->readSatisfied();
 				bool wasWriteSatisfied = nextAccess->writeSatisfied();
+				bool wasTopmostSatisfied = nextAccess->topmostSatisfied();
 				bool readSatisfiability = false;
 				bool writeSatisfiability = false;
+				bool topmostSatisfiability = false;
 				
 				evaluateSatisfiability(
 					task, dataAccess,
 					nextTask, nextAccess,
 					readSatisfiability,
 					writeSatisfiability,
+					topmostSatisfiability,
 					parentalRelation
 				);
 				
@@ -531,15 +542,17 @@ private:
 				if (wasWriteSatisfied && writeSatisfiability) {
 					writeSatisfiability = false;
 				}
+				assert(!(topmostSatisfiability && wasTopmostSatisfied));
 				
-				if (!readSatisfiability && !writeSatisfiability) {
+				if (!readSatisfiability && !writeSatisfiability && !topmostSatisfiability) {
 					return true;
 				}
 				
-				assert(readSatisfiability || writeSatisfiability);
+				assert(readSatisfiability || writeSatisfiability || topmostSatisfiability);
 				assert(!(readSatisfiability && wasReadSatisfied));
 				assert(!(readSatisfiability && wasWriteSatisfied));
 				assert(!(writeSatisfiability && wasWriteSatisfied));
+				assert(!(topmostSatisfiability && wasTopmostSatisfied));
 				
 				// Fragment next access if needed
 				if (!nextAccess->_range.fullyContainedIn(range)) {
@@ -561,6 +574,10 @@ private:
 				// Modify the satisfiability of the access
 				nextAccess->readSatisfied() = (readSatisfiability) ? true : wasReadSatisfied;
 				nextAccess->writeSatisfied() = (writeSatisfiability) ? true : wasWriteSatisfied;
+				nextAccess->topmostSatisfied() = topmostSatisfiability;
+				
+				assert(!(nextAccess->topmostSatisfied() && !nextAccess->readSatisfied()));
+				assert(!(nextAccess->topmostSatisfied() && !nextAccess->writeSatisfied()));
 				
 				// Propagate to subaccesses
 				if (nextAccess->hasSubaccesses()) {
@@ -574,7 +591,7 @@ private:
 					);
 				}
 				
-				if (writeSatisfiability) {
+				if (topmostSatisfiability) {
 					size_t bytes = nextAccess->_range.getSize();
 					if (nextAccessStructures.decreaseRemovalCount(bytes)) {
 						if (nextTask->decreaseRemovalBlockingCount()) {
@@ -924,6 +941,7 @@ private:
 				
 				partialDataAccess->readSatisfied() = true;
 				partialDataAccess->writeSatisfied() = true;
+				partialDataAccess->topmostSatisfied() = true;
 				if (!partialDataAccess->_weak) {
 					task->decreasePredecessors();
 				}

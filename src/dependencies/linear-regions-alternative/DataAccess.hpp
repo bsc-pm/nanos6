@@ -29,6 +29,7 @@ struct DataAccess : public DataAccessBase {
 		COMPLETE_BIT = 0,
 		READ_SATISFIED_BIT,
 		WRITE_SATISFIED_BIT,
+		TOPMOST_SATISFIED_BIT,
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP,
 #ifndef NDEBUG
@@ -91,6 +92,15 @@ struct DataAccess : public DataAccessBase {
 	bool writeSatisfied() const
 	{
 		return _status[WRITE_SATISFIED_BIT];
+	}
+	
+	typename status_t::reference topmostSatisfied()
+	{
+		return _status[TOPMOST_SATISFIED_BIT];
+	}
+	bool topmostSatisfied() const
+	{
+		return _status[TOPMOST_SATISFIED_BIT];
 	}
 	
 	typename status_t::reference hasSubaccesses()
@@ -162,6 +172,7 @@ struct DataAccess : public DataAccessBase {
 	{
 		return readSatisfied()
 			&& writeSatisfied()
+			&& topmostSatisfied()
 			&& complete()
 			&& !hasSubaccesses();
 	}
