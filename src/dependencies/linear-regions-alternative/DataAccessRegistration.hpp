@@ -1176,6 +1176,14 @@ public:
 	{
 		assert(task != 0);
 		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		assert(!accessStructures.hasBeenDeleted());
+		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
+		
+		if (accesses.empty()) {
+			return;
+		}
+		
 		CPU *cpu = nullptr;
 		WorkerThread *currentThread = nullptr;
 		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
@@ -1186,14 +1194,6 @@ public:
 			assert(cpuDependencyData._inUse.compare_exchange_strong(alreadyTaken, true));
 		}
 #endif
-		
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
-		
-		if (accesses.empty()) {
-			return;
-		}
 		
 		Task *parent = task->getParent();
 		assert(parent != nullptr);
