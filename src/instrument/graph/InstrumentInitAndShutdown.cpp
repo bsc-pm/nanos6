@@ -34,6 +34,7 @@ namespace Instrument {
 	static EnvironmentVariable<bool> _shortenFilenames("NANOS_GRAPH_SHORTEN_FILENAMES", false);
 	static EnvironmentVariable<bool> _showSpuriousDependencyStructures("NANOS_GRAPH_SHOW_SPURIOUS_DEPENDENCY_STRUCTURES", false);
 	static EnvironmentVariable<bool> _showDeadDependencyStructures("NANOS_GRAPH_SHOW_DEAD_DEPENDENCY_STRUCTURES", false);
+	static EnvironmentVariable<bool> _showDeadDependencies("NANOS_GRAPH_SHOW_DEAD_DEPENDENCIES", false);
 	static EnvironmentVariable<bool> _showAllSteps("NANOS_GRAPH_SHOW_ALL_STEPS", false);
 	static EnvironmentVariable<bool> _showSuperAccessLinks("NANOS_GRAPH_SHOW_SUPERACCESS_LINKS", true);
 	static EnvironmentVariable<bool> _autoDisplay("NANOS_GRAPH_DISPLAY", false);
@@ -822,15 +823,15 @@ namespace Instrument {
 				}
 				
 				task_info_t &successorInfo = _taskToInfoMap[successorId];
-				if (
-					!dependencyEdge._hasBeenMaterialized
+				if (!_showDeadDependencies &&
+					(!dependencyEdge._hasBeenMaterialized
 					|| ((dependencyEdge._activeStrongContributorLinks == 0) && (dependencyEdge._activeWeakContributorLinks == 0))
 					|| (taskInfo._status == not_created_status)
 					|| (taskInfo._status == finished_status)
 					|| (taskInfo._status == deleted_status)
 					|| (successorInfo._status == not_created_status)
 					|| (successorInfo._status == finished_status)
-					|| (successorInfo._status == deleted_status)
+					|| (successorInfo._status == deleted_status))
 				) {
 					ofs << " style=\"invis\"";
 				} else if (dependencyEdge._activeStrongContributorLinks == 0) {
