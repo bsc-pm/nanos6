@@ -2,7 +2,9 @@
 #define NUMA_HIERARCHICAL_SCHEDULER_HPP
 
 
-#include <vector>
+#include <map>
+
+#include <boost/dynamic_bitset.hpp>
 
 #include "../SchedulerInterface.hpp"
 #include "lowlevel/SpinLock.hpp"
@@ -19,6 +21,8 @@ class NUMAHierarchicalScheduler: public SchedulerInterface {
 	// operations are not usable
 	std::vector<std::atomic<int>> _readyTasks;
 
+	std::map<int, boost::dynamic_bitset<>> _cpuMask;
+
 public:
 	NUMAHierarchicalScheduler();
 	~NUMAHierarchicalScheduler();
@@ -30,6 +34,10 @@ public:
 	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
+	
+	void disableComputePlace(ComputePlace *hardwarePlace);
+	
+	void enableComputePlace(ComputePlace *hardwarePlace);
 };
 
 

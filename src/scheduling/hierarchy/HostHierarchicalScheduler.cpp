@@ -38,3 +38,12 @@ ComputePlace *HostHierarchicalScheduler::getIdleComputePlace(bool force)
 	return _NUMAScheduler->getIdleComputePlace(force);
 }
 
+void HostHierarchicalScheduler::disableComputePlace(ComputePlace *hardwarePlace)
+{
+	_NUMAScheduler->disableComputePlace(hardwarePlace);
+}
+
+void HostHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
+{
+	_NUMAScheduler->enableComputePlace(hardwarePlace);
+}

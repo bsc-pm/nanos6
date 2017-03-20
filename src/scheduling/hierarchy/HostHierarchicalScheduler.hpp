@@ -21,6 +21,10 @@ public:
 	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
+	
+	void disableComputePlace(ComputePlace *hardwarePlace);
+	
+	void enableComputePlace(ComputePlace *hardwarePlace);
 };
 
 
