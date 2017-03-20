@@ -45,6 +45,14 @@ private:
 		assert(dataAccess != nullptr);
 		assert(!dataAccess->hasBeenDiscounted());
 		
+		FatalErrorHandler::failIf(
+				(dataAccess->_type == CONCURRENT_ACCESS_TYPE) || (accessType == CONCURRENT_ACCESS_TYPE),
+				"when registering accesses for task ",
+				(dataAccess->_originator->getTaskInfo()->task_label != nullptr ?
+					dataAccess->_originator->getTaskInfo()->task_label :
+					dataAccess->_originator->getTaskInfo()->declaration_source),
+				": Combining accesses of type concurrent with other accesses over the same data is not permitted");
+		
 		bool newWeak = dataAccess->_weak && weak;
 		
 		DataAccessType newDataAccessType = accessType;
@@ -480,12 +488,28 @@ private:
 		assert(nextAccess != nullptr);
 		
 		readSatisfiability =
-			previousAccess->readSatisfied()
-			&& (previousAccess->complete() || previousAccess->_type == READ_ACCESS_TYPE || parentalRelation);
+			previousAccess->readSatisfied() && (
+					// Previous is a complete, non-concurrent access or concurrent topmost access
+					(previousAccess->complete() &&
+						(previousAccess->_type != CONCURRENT_ACCESS_TYPE || previousAccess->topmostSatisfied())) ||
+					// There is a paternal relation between accesses
+					parentalRelation ||
+					// Previous is a read access
+					previousAccess->_type == READ_ACCESS_TYPE ||
+					// Both are concurrent accesses
+					(previousAccess->_type == CONCURRENT_ACCESS_TYPE &&
+						nextAccess->_type == CONCURRENT_ACCESS_TYPE));
 		
 		writeSatisfiability =
-			previousAccess->writeSatisfied()
-			&& (previousAccess->complete() || parentalRelation);
+			previousAccess->writeSatisfied() && (
+					// Previous is a complete, non-concurrent access or concurrent topmost access
+					(previousAccess->complete() &&
+						(previousAccess->_type != CONCURRENT_ACCESS_TYPE || previousAccess->topmostSatisfied())) ||
+					// There is a paternal relation between accesses
+					parentalRelation ||
+					// Both are concurrent accesses
+					(previousAccess->_type == CONCURRENT_ACCESS_TYPE &&
+						nextAccess->_type == CONCURRENT_ACCESS_TYPE));
 		
 		topmostSatisfiability =
 			previousAccess->topmostSatisfied()
