@@ -51,6 +51,9 @@ struct DataAccess : public DataAccessBase {
 	//! First child with accesses within this range
 	Task *_child;
 	
+	//! Reduction type and operator
+	int _reductionInfo;
+	
 	DataAccess(
 		DataAccessType type, bool weak,
 		Task *originator,
@@ -61,7 +64,8 @@ struct DataAccess : public DataAccessBase {
 		_range(accessRange),
 		_status(0),
 		_next(nullptr),
-		_child(nullptr)
+		_child(nullptr),
+		_reductionInfo(0)
 	{
 		assert(originator != 0);
 	}

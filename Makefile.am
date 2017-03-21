@@ -324,6 +324,7 @@ common_sources = \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
+	src/system/ompss/Reductions.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.cpp \
