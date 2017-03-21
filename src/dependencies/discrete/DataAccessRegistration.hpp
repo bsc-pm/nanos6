@@ -312,6 +312,9 @@ public:
 		}
 	}
 	
+	static void handleTaskRemoval(Task *task)
+	{
+	}
 	
 	static inline void handleEnterBlocking(__attribute__((unused)) Task *task)
 	{
