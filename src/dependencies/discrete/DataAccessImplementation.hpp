@@ -25,9 +25,31 @@ inline DataAccess::DataAccess(
 	: DataAccessBase(type, weak, originator, instrumentationId),
 	_satisfied(satisfied),
 	_accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
-	_subaccesses(accessRange, this, dataAccessSequence->_lock)
+	_subaccesses(accessRange, this, dataAccessSequence->_lock),
+	_reductionInfo(0)
 {
 	assert(dataAccessSequence != 0);
+	assert(_type != REDUCTION_ACCESS_TYPE);
+}
+
+inline DataAccess::DataAccess(
+	DataAccessSequence *dataAccessSequence,
+	DataAccessType type,
+	bool weak,
+	bool satisfied,
+	Task *originator,
+	DataAccessRange accessRange,
+	Instrument::data_access_id_t instrumentationId,
+	int reductionInfo
+)
+	: DataAccessBase(type, weak, originator, instrumentationId),
+	_satisfied(satisfied),
+	_accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
+	_subaccesses(accessRange, this, dataAccessSequence->_lock),
+	_reductionInfo(reductionInfo)
+{
+	assert(dataAccessSequence != 0);
+	assert(_type == REDUCTION_ACCESS_TYPE);
 }
 
 
@@ -62,7 +84,10 @@ inline bool DataAccess::evaluateSatisfiability(DataAccess *effectivePrevious, Da
 			// Consecutive reads are satisfied together
 			return true;
 		} else {
-			assert((effectivePrevious->_type == WRITE_ACCESS_TYPE) || (effectivePrevious->_type == READWRITE_ACCESS_TYPE) || (effectivePrevious->_type == CONCURRENT_ACCESS_TYPE));
+			assert((effectivePrevious->_type == WRITE_ACCESS_TYPE) ||
+					(effectivePrevious->_type == READWRITE_ACCESS_TYPE) ||
+					(effectivePrevious->_type == CONCURRENT_ACCESS_TYPE) ||
+					(effectivePrevious->_type == REDUCTION_ACCESS_TYPE));
 			// Read after Write
 			return false;
 		}
@@ -74,8 +99,43 @@ inline bool DataAccess::evaluateSatisfiability(DataAccess *effectivePrevious, Da
 		// Concurrent accesses are satisfied together
 		return true;
 	} else {
-		assert((effectivePrevious->_type == WRITE_ACCESS_TYPE) || (effectivePrevious->_type == READWRITE_ACCESS_TYPE) || (effectivePrevious->_type == READ_ACCESS_TYPE));
+		assert((effectivePrevious->_type == READ_ACCESS_TYPE) ||
+				(effectivePrevious->_type == WRITE_ACCESS_TYPE) ||
+				(effectivePrevious->_type == READWRITE_ACCESS_TYPE) ||
+				(effectivePrevious->_type == REDUCTION_ACCESS_TYPE));
 		// First concurrent access with accesses before it
+		return false;
+	}
+}
+
+
+inline bool DataAccess::evaluateSatisfiability(DataAccess *effectivePrevious, DataAccessType nextAccessType, int reductionOperation)
+{
+	assert(nextAccessType == REDUCTION_ACCESS_TYPE);
+
+	if (effectivePrevious == nullptr) {
+		// The first position is satisfied
+		return true;
+	}
+
+	if (!effectivePrevious->_satisfied) {
+		// If the preceeding access is not satisfied, this cannot be either
+		return false;
+	}
+
+	if (effectivePrevious->_type == REDUCTION_ACCESS_TYPE &&
+			effectivePrevious->_reductionInfo == reductionOperation) {
+		// Reduction accesses of same kind (type & operator) are satisfied together
+		return true;
+	} else if (effectivePrevious->_type == REDUCTION_ACCESS_TYPE) {
+		// Reduction access with reduction access of different kind before it
+		return false;
+	} else {
+		assert((effectivePrevious->_type == WRITE_ACCESS_TYPE) ||
+				(effectivePrevious->_type == READWRITE_ACCESS_TYPE) ||
+				(effectivePrevious->_type == READ_ACCESS_TYPE) ||
+				(effectivePrevious->_type == CONCURRENT_ACCESS_TYPE));
+		// First reduction access with accesses before it
 		return false;
 	}
 }
@@ -88,7 +148,13 @@ inline bool DataAccess::reevaluateSatisfiability(DataAccess *effectivePrevious)
 		return false;
 	}
 	
-	_satisfied = DataAccess::evaluateSatisfiability(effectivePrevious, _type);
+	if (_type == REDUCTION_ACCESS_TYPE) {
+		assert(_reductionInfo != 0);
+		_satisfied = DataAccess::evaluateSatisfiability(effectivePrevious, _type, _reductionInfo);
+	}
+	else
+		_satisfied = DataAccess::evaluateSatisfiability(effectivePrevious, _type);
+	
 	return _satisfied;
 }
 

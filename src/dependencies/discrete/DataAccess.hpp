@@ -33,6 +33,9 @@ struct DataAccess : public DataAccessBase {
 	//! Accesses performed by the direct children of the _originator task
 	DataAccessSequence _subaccesses;
 	
+	//! Reduction type and operator
+	int _reductionInfo;
+	
 	inline DataAccess(
 		DataAccessSequence *dataAccessSequence,
 		DataAccessType type,
@@ -43,6 +46,16 @@ struct DataAccess : public DataAccessBase {
 		Instrument::data_access_id_t instrumentationId
 	);
 	
+	inline DataAccess(
+		DataAccessSequence *dataAccessSequence,
+		DataAccessType type,
+		bool weak,
+		bool satisfied,
+		Task *originator,
+		DataAccessRange accessRange,
+		Instrument::data_access_id_t instrumentationId,
+		int reductionInfo
+	);
 	
 	//! \brief Evaluate the satisfiability of a DataAccessType according to its effective previous (if any)
 	//! 
@@ -51,6 +64,15 @@ struct DataAccess : public DataAccessBase {
 	//! 
 	//! \returns true if the nextAccessType is satisfied
 	static inline bool evaluateSatisfiability(DataAccess *effectivePrevious, DataAccessType nextAccessType);
+	
+	//! \brief Evaluate the satisfiability of a reduction DataAccess according to its effective previous (if any)
+	//! 
+	//! \param[in] previousDataAccess the effective previous access or nullptr if there is none
+	//! \param[in] nextAccessType REDUCTION_ACCESS_TYPE
+	//! \param[in] reductionOperation reduction information about reduction data type and operator
+	//! 
+	//! \returns true if the nextAccessType is satisfied
+	static inline bool evaluateSatisfiability(DataAccess *effectivePrevious, DataAccessType nextAccessType, int reductionOperation);
 	
 	//! \brief Reevaluate the satisfiability of a DataAccess according to its effective previous (if any)
 	//! 
