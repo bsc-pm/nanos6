@@ -8,27 +8,49 @@
 #include "pages/MemoryPageSet.hpp"
 #include "last-level-cache-tracking/CacheTrackingSet.hpp"
 
-#include <unordered_map>
+//#include <vector>
+//#include <unordered_map>
 
 class Directory {
 
 
 private:
+    //! Members for debug purposes
+    Instrument::Timer _timer;
+    Instrument::Timer _timerCacheTrackingSetLock;
+    Instrument::Timer _timerTaskDataAccessesLock;
+    Instrument::Timer _timerProcess;
+    Instrument::Timer _timerFragment;
+    Instrument::Timer _timerIntersectingAndMissing;
+    Instrument::Timer _timerIntersecting;
+    Instrument::Timer _timerMissing;
+    Instrument::Timer _timerEvict;
+    Instrument::Timer _timerUpdate;
+    Instrument::Timer _timerErase;
+    Instrument::Timer _timerComputeScore;
+    long unsigned int _tasksRegistered;
+    long unsigned int _tasksComputed;
+
 	SpinLock _lock;
 
     /* Tracks copies of software managed caches of the different devices 
        It is only required when using software managed caches.
      */
+    bool _enableCopies;
 	CopySet _copies;
 
     /* Tracks the homeNode of each access. 
      */
+    bool _enableHomeNodeTracking;
 	MemoryPageSet _pages;	
 
     /* Tracks, for each NUMA node, the current working set of the last 
        level cache.
      */
-    std::unordered_map<unsigned int, CacheTrackingSet *> _lastLevelCacheTracking;
+    //std::unordered_map<unsigned int, CacheTrackingSet *> _lastLevelCacheTracking;
+    //std::vector<CacheTrackingSet *> _lastLevelCacheTracking;
+    bool _enableLastLevelCacheTracking;
+    CacheTrackingSet ** _lastLevelCacheTracking;
 
 	static Directory *_instance;
 
@@ -103,7 +125,7 @@ public:
       */
     static void setHomeNodeUpToDate(void *address, bool b);
 
-    static void addLastLevelCacheTrackingNode(unsigned int NUMANodeId);
+    static void createLastLevelCacheTracking(unsigned int nodes);
     static void registerLastLevelCacheData(TaskDataAccesses &accesses, unsigned int NUMANodeId, Task * task); 
     static double computeTaskAffinity(Task * task, unsigned int NUMANodeId);
 };

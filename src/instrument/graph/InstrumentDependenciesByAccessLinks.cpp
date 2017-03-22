@@ -566,7 +566,7 @@ namespace Instrument {
 		
 		long cpuId = -2;
 		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->getHardwarePlace();
+			CPU *cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
 			cpuId = cpu->_virtualCPUId;
 		}

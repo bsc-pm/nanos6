@@ -2,6 +2,7 @@
 #include "InstrumentStats.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include <executors/threads/ThreadManager.hpp>
+#include <executors/threads/CPUManager.hpp>
 #include "performance/HardwareCounters.hpp"
 
 #include <fstream>
@@ -102,12 +103,8 @@ namespace Instrument {
 		EnvironmentVariable<std::string> _outputFilename("NANOS6_STATS_FILE", "/dev/stderr");
 		std::ofstream output(_outputFilename);
 		
-<<<<<<< HEAD
 		output << "STATS\t" << "Total CPUs\t" << CPUManager::getTotalCPUs() << std::endl;
-=======
-		output << "STATS\t" << "Total CPUs\t" << ThreadManager::getTotalCPUs() << std::endl;
 		output << "STATS\t" << "Total time\t" << totalTime << "\tns" << std::endl;
->>>>>>> origin/master
 		output << "STATS\t" << "Total threads\t" << numThreads << std::endl;
 		output << "STATS\t" << "Mean threads per CPU\t" << ((double) numThreads) / (double) CPUManager::getTotalCPUs() << std::endl;
 		output << "STATS\t" << "Mean tasks per thread\t" << ((double) accumulatedTaskInfo._numInstances) / (double) numThreads << std::endl;

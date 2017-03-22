@@ -11,9 +11,9 @@ CacheTrackingObject::CacheTrackingObject(CacheTrackingObjectKey key)
 {
 }
 
-CacheTrackingObject::CacheTrackingObject(const CacheTrackingObject &obj){
-	_key._range = DataAccessRange( obj._key._range.getStartAddress(), obj._key._range.getEndAddress() );
-    _key._lastUse = obj._key._lastUse;
+CacheTrackingObject::CacheTrackingObject(const CacheTrackingObject &obj) 
+: _key(obj._key)
+{
 }
 
 DataAccessRange &CacheTrackingObject::getAccessRange(){

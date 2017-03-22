@@ -286,7 +286,7 @@ bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *ha
 }
 
 
-void FIFOImmediateSuccessorWithPollingScheduler::addReadyQueue(std::size_t node_id)
+void FIFOImmediateSuccessorWithPollingScheduler::createReadyQueues(std::size_t nodes)
 {
-    _unused(node_id);
+    _unused(nodes);
 }

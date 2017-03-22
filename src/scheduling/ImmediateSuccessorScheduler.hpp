@@ -39,7 +39,7 @@ public:
 	
 	void disableComputePlace(ComputePlace *hardwarePlace);
 
-    void addReadyQueue(std::size_t node_id);
+    void createReadyQueues(std::size_t nodes);
 };
 
 

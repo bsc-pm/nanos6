@@ -25,12 +25,13 @@ private:
 	static /*std::atomic<long>*/ long _totalCPUs;
     //! \brief Preloaded pagesize to avoid system calls.
 	static long _pageSize;
-    static long _lastLevelCacheSize;
-    static long _lastLevelCacheLineSize;
+    static std::size_t _lastLevelCacheSize;
+    static std::size_t _lastLevelCacheLineSize;
 
 public:
     // Generic methods
     static void initialize();
+    static void shutdown();
 	static inline long getPageSize(void) { return _pageSize; }
 
     // ComputeNodes related methods
@@ -46,8 +47,8 @@ public:
 	static std::vector<MemoryPlace*> getMemoryNodes();
 
     // Last level cache related methods
-    static inline long getLastLevelCacheSize() { return _lastLevelCacheSize; }
-    static inline long getLastLevelCacheLineSize() { return _lastLevelCacheLineSize; }
+    static inline std::size_t getLastLevelCacheSize() { return _lastLevelCacheSize; }
+    static inline std::size_t getLastLevelCacheLineSize() { return _lastLevelCacheLineSize; }
 };
 
 #endif // HARDWARE_INFO_HPP

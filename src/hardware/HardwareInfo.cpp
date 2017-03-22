@@ -19,8 +19,8 @@ std::map<int, ComputePlace*> HardwareInfo::_computeNodes;
 /*std::atomic<long>*/ long HardwareInfo::_totalCPUs;
 //Distances_t _distances;
 long HardwareInfo::_pageSize;
-long HardwareInfo::_lastLevelCacheSize;
-long HardwareInfo::_lastLevelCacheLineSize;
+std::size_t HardwareInfo::_lastLevelCacheSize;
+std::size_t HardwareInfo::_lastLevelCacheLineSize;
 
 void HardwareInfo::initialize()
 {
@@ -48,16 +48,16 @@ void HardwareInfo::initialize()
     NUMAPlace * node = nullptr;
     if(memNodesCount != 0){ 
         //! NUMA node info is available
+        //! Create a ReadyQueue in the scheduler for each NUMA node.
+        Scheduler::createReadyQueues(memNodesCount);
+        //! Create lastLevelCacheTracking for each NUMA node.
+        Directory::createLastLevelCacheTracking(memNodesCount);
         for(int i = 0; i < memNodesCount; i++){ 
             //! Create a MemoryPlace for each NUMA node.
             //! Get the hwloc obj representing the NUMA node. 
             hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_NUMA_ALIAS, i);
             //! Create a Cache for the MemoryPlace. Assign the same index than the MemoryPlace.
             cache = new NUMACache(obj->logical_index);
-            //! Create a ReadyQueue in the scheduler for each NUMA node.
-            Scheduler::addReadyQueue(obj->logical_index);
-            //! Create lastLevelCacheTracking for each NUMA node.
-            Directory::addLastLevelCacheTrackingNode(obj->logical_index);
             assert(cache != nullptr && "No cache has been created");
             //! Create the MemoryPlace representing the NUMA node with its index, cache and AddressSpace. 
             node = new NUMAPlace(cache->getIndex(), cache, NUMAAddressSpace);
@@ -71,9 +71,9 @@ void HardwareInfo::initialize()
         //! TODO: Index is 0 arbitrarily. Maybe a special index should be set.
         cache = new NUMACache(/*index*/0);
         //! Create a ReadyQueue in the scheduler for each NUMA node.
-        Scheduler::addReadyQueue(/*index*/0);
+        Scheduler::createReadyQueues(1);
         //! Create lastLevelCacheTracking for each NUMA node.
-        Directory::addLastLevelCacheTrackingNode(/*index*/0);
+        Directory::createLastLevelCacheTracking(1);
         assert(cache != nullptr && "No cache has been created");
         //! Create the MemoryPlace representing the NUMA node with its index, cache and AddressSpace. 
         node = new NUMAPlace(cache->getIndex(), cache, NUMAAddressSpace);

@@ -136,7 +136,7 @@ void ImmediateSuccessorScheduler::disableComputePlace(ComputePlace *hardwarePlac
 	}
 }
 
-void ImmediateSuccessorScheduler::addReadyQueue(std::size_t node_id)
+void ImmediateSuccessorScheduler::createReadyQueues(std::size_t nodes)
 {
-    _unused(node_id);
+    _unused(nodes);
 }

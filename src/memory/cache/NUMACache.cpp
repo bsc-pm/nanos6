@@ -20,7 +20,7 @@ void NUMACache::deallocate(void * ptr) {
 
 void NUMACache::copyData(float * cachesLoad, Task *task, unsigned int copiesToDo = 1) {
     _unused(cachesLoad);
-	std::lock_guard<SpinLock> task_guard(task->getDataAccesses()._lock);
+	std::lock_guard<TaskDataAccesses::spinlock_t> task_guard(task->getDataAccesses()._lock);
 	std::lock_guard<SpinLock> guard(_lock);
     assert(task->hasPendingCopies() && "task without pending copies requesting copyData");
     if(task->getDataSize() == 0 || copiesToDo == 0) {
@@ -203,6 +203,7 @@ void NUMACache::copyData(float * cachesLoad, Task *task, unsigned int copiesToDo
                             assert(Directory::isHomeNodeUpToDate(dataAccess.getAccessRange().getStartAddress()) && "Data is not in any cache neither in the homeNode");
                             //! Actually copy data.
                             //! TODO: memcpy should be wrapped!!
+                            //! FIXME: Check if replica is okay.
                             memcpy(replica->second._physicalAddress, dataAccess.getAccessRange().getStartAddress(), dataAccess.getAccessRange().getSize());
                             //! Dirty is just determined by this current access, data in homeNode is never dirty.
                             replica->second._dirty = (dataAccess._type != READ_ACCESS_TYPE);

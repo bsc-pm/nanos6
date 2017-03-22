@@ -8,10 +8,13 @@
 
 #include <nanos6.h>
 #include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/SpawnFunction.hpp"
+#include "memory/directory/Directory.hpp"
+#include "hardware/HardwareInfo.hpp"
 
 #include <InstrumentInitAndShutdown.hpp>
 
@@ -87,11 +90,13 @@ void nanos_shutdown(void) {
 	
 	LeaderThread::shutdown();
 	Instrument::shutdown();
+    Directory::dispose();
 	
 	if (shutdownDueToSignalNumber.load() != 0) {
 		raise(shutdownDueToSignalNumber.load());
 	}
 	
 	ThreadManager::shutdown();
+    Scheduler::shutdown();
 }
 

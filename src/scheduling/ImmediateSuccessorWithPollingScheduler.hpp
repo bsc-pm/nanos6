@@ -48,7 +48,7 @@ public:
 	bool requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 	bool releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
 
-    void addReadyQueue(std::size_t node_id);
+    void createReadyQueues(std::size_t nodes);
 };
 
 

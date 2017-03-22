@@ -33,7 +33,7 @@ public:
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
 
-    void addReadyQueue(std::size_t node_id);
+    void createReadyQueues(std::size_t nodes);
 };
 
 

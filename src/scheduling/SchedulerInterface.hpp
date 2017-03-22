@@ -101,7 +101,7 @@ public:
 		return _enabledCopies;
 	}
 
-    virtual void addReadyQueue(std::size_t node_id);
+    virtual void createReadyQueues(std::size_t nodes);
 };
 
 

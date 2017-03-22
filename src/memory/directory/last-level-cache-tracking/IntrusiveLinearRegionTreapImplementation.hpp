@@ -141,7 +141,7 @@ bool IntrusiveLinearRegionTreap<ContentType, Hook, Compare, Priority>::processIn
 	MissingProcessorType missingProcessor
 ) {
 	if (BaseType::empty()) {
-		return missingProcessor(range); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+		return missingProcessor(range, BaseType::end()); // NOTE: an error here indicates that the lambda is missing the "bool" return type
 	}
 
 	iterator it = BaseType::lower_bound(IntrusiveLinearRegionTreapInternals::KeyOfNodeArtifact<ContentType>()(range));
@@ -168,7 +168,9 @@ bool IntrusiveLinearRegionTreap<ContentType, Hook, Compare, Priority>::processIn
 
 		if (lastEnd < position->getStartAddress()) {
 			DataAccessRange missingRange(lastEnd, position->getStartAddress());
-			cont = missingProcessor(missingRange); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+			cont = missingProcessor(missingRange, position); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+			//cont = missingProcessor(missingRange, it); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+			//cont = missingProcessor(missingRange); // NOTE: an error here indicates that the lambda is missing the "bool" return type
 			if (!cont) {
 				return false;
 			}
@@ -192,7 +194,7 @@ bool IntrusiveLinearRegionTreap<ContentType, Hook, Compare, Priority>::processIn
 	
 	if (lastEnd < range.getEndAddress()) {
 		DataAccessRange missingRange(lastEnd, range.getEndAddress());
-		bool result = missingProcessor(missingRange); // NOTE: an error here indicates that the lambda is missing the "bool" return type
+		bool result = missingProcessor(missingRange, it); // NOTE: an error here indicates that the lambda is missing the "bool" return type
 		return result;
 	}
 	

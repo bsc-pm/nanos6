@@ -285,7 +285,7 @@ bool ImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *hardwa
 	}
 }
 
-void ImmediateSuccessorWithPollingScheduler::addReadyQueue(std::size_t node_id)
+void ImmediateSuccessorWithPollingScheduler::createReadyQueues(std::size_t nodes)
 {
-    _unused(node_id);
+    _unused(nodes);
 }

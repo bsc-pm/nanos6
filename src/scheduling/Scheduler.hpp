@@ -26,6 +26,8 @@ class Scheduler {
 public:
 	//! \brief Initializes the _scheduler member and in turn calls its initialization method
 	static void initialize();
+
+    static void shutdown();
 	
 	//! \brief This is needed to make the scheduler aware of the CPUs that are online
 	static inline SchedulerInterface *getInstance()
@@ -124,9 +126,9 @@ public:
 		return _scheduler->hasEnabledCopies();
 	}
 
-    static inline void addReadyQueue(std::size_t node_id)
+    static inline void createReadyQueues(std::size_t nodes)
     {
-        _scheduler->addReadyQueue(node_id);
+        _scheduler->createReadyQueues(nodes);
     }
 };
 

@@ -26,7 +26,7 @@ extern "C" void nanos_block_current_task()
 	assert(currentWorkerThread != nullptr);
 	
 	CPU *cpu = nullptr;
-	cpu = currentWorkerThread->getHardwarePlace();
+	cpu = currentWorkerThread->getComputePlace();
 	assert(cpu != nullptr);
 	
 	WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);

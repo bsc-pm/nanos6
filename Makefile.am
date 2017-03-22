@@ -42,7 +42,7 @@ public_instrumentation_api = \
 	src/instrument/public/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/public/api/InstrumentTaskExecution.hpp \
 	src/instrument/public/api/InstrumentTaskWait.hpp \
-	th mastersrc/instrument/public/api/InstrumentThreadManagement.hpp
+	src/instrument/public/api/InstrumentThreadManagement.hpp
 
 common_sources = \
 	$(public_instrumentation_api) \
@@ -99,7 +99,6 @@ common_sources = \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
-<<<<<<< HEAD
 	src/memory/AddressSpace.hpp \
 	src/memory/Globals.hpp \
 	src/memory/directory/Directory.hpp \
@@ -156,7 +155,6 @@ common_sources = \
 	src/system/PollingAPI.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
-	src/system/ompss/RegisterMemory.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/SpawnFunction.hpp \

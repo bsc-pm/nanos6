@@ -2,124 +2,126 @@
 #include <DataAccessRange.hpp>
 #include <iostream>
 #include <cstring>
-#include <list>
 
 #define _unused(x) ((void)(x))
 
-void checkRange(DataAccessRange range);
-
 CacheTrackingSet::CacheTrackingSet(): BaseType(), _count(0), _lock() {
     _currentWorkingSetSize = 0;
+    _insertions = 0;
+    _insertionsHint = 0;
+    _pushBacks = 0;
+    _perfectHints = 0;
 }
 
-void CacheTrackingSet::insert(DataAccessRange range, long unsigned int insertion_id){
-    //! Calculate actual range considering that HW caches works at line granularity.
+CacheTrackingSet::iterator CacheTrackingSet::insert(DataAccessRange range, long unsigned int insertion_id, bool present, CacheTrackingSet::iterator &hint){
+    Instrument::Timer aux;
+    aux.start();
+#ifndef NDEBUG
+    checkRange(range);
+#endif
     std::size_t cacheLineSize = HardwareInfo::getLastLevelCacheLineSize();
-    char * auxStart = (char *)range.getStartAddress();
-    char * auxEnd = (char *)range.getEndAddress();
-    char * actualStartAddress = (char*) (((std::size_t)auxStart/cacheLineSize)*cacheLineSize); 
-    char * actualEndAddress = (char *) ((((std::size_t)auxEnd/cacheLineSize)+1)*cacheLineSize); 
-    std::size_t actualRangeSize = actualEndAddress - actualStartAddress;
-    DataAccessRange tmp = DataAccessRange(actualStartAddress, actualRangeSize);
+    _unused(cacheLineSize);
+    uintptr_t start = (uintptr_t)range.getStartAddress();
+    uintptr_t end = (uintptr_t)range.getEndAddress();
+    std::size_t rangeSize = end - start;
+    DataAccessRange tmp = DataAccessRange((void *)start, rangeSize);
     CacheTrackingObjectKey keyToInsert = CacheTrackingObjectKey(tmp, insertion_id);
-    CacheTrackingObject * objectToInsert = new CacheTrackingObject(keyToInsert);
+    // TODO: Pool_alloc
+    CacheTrackingObject * objectToInsert; // = new CacheTrackingObject(keyToInsert);
+    CacheTrackingSet::iterator result = BaseType::end();
 
-    //! Check overlappings. Possible scenarios:
-    //!     1. No overlapping.
-    //!     2. Small new access contained in a big access already present in the set.
-    //!         Split the big access.
-    //!     3. Big new access which contains a small access already present in the set.
-    //!         The new access is merged with the old one.
-    //!     4. Partial overlapping between the new access and one already present in the set.
-    //!         Split the old access and merge the overlapped part with the new one.
-    //!     5. Identical access than one already present in the set.
-
-
-    //bool overlapping = false;
-    BaseType::iterator it = BaseType::find(keyToInsert);
-    if(it != BaseType::end()) {
-        //! Scenario 5.
-        //! Access is already in the set. Just update its last use.
-        it->updateLastUse(insertion_id);
-        //overlapping = true;
+    if(present) {
+        assert(hint==BaseType::find(keyToInsert));
+        //! The hint passed is the iterator of the element we want.
+        hint->updateLastUse(insertion_id);
+        result = hint;
+        //Instrument::Timer timerFind;
+        //timerFind.start();
+        //BaseType::iterator it = BaseType::find(keyToInsert);
+        //timerFind.stop();
+        //_timerFind+=timerFind;
+        //if(it != BaseType::end()) {
+        //    it->updateLastUse(insertion_id);
+        //}
     }
     else {
-        if(!BaseType::contains(tmp)) {
-            //std::cerr << "Inserting new range [" << (void *)actualStartAddress << ", " << (void *)actualEndAddress << "] WITHOUT overlappings." << std::endl;
-            //! Scenario 1. There is no overlapping.
-            //BaseType::insert(keyToInsert);
-            checkRange(objectToInsert->getAccessRange());
-            BaseType::insert(*objectToInsert);
-            //std::cerr << "Increment: " << actualRangeSize << std::endl;
-            //std::cerr << "Free space: " << getCurrentFreeSpace() << std::endl;
-            //std::cerr << "_currentWorkingSetSize: " << _currentWorkingSetSize << std::endl;
-            while(actualRangeSize > getCurrentFreeSpace()) {
-                //std::cerr << "Evicting because " << actualRangeSize << " bytes are needed and only " << getCurrentFreeSpace() 
-                //    << " remains free in the cache" << std::endl;
-                //! Evict until all the data of the task fits into the cache. 
-                evict();
-            }
-            //! Increment the current working set size.
-            _currentWorkingSetSize += actualRangeSize;
-            return;   
-        }
-        //std::cerr << "Inserting new range [" << (void *)actualStartAddress << ", " << (void *)actualEndAddress << "] WITH overlappings." << std::endl;
-        std::size_t increment = actualRangeSize;
-        BaseType::processIntersecting(
-            tmp,
-            [&] (CacheTrackingSet::iterator &intersectingAccess) -> bool {
-                if(tmp.fullyContainedIn(intersectingAccess->getAccessRange())) {
-                    //! Scenario 2. Split the big access. The new access is updated to 
-                    //! have the lastUse corresponding to the insertion time, while the 
-                    //! the rest of the big access keeps the same lastUse.
-                    if(tmp.getStartAddress() > intersectingAccess->getStartAddress()) {
-                        intersectingAccess->setEndAddress(tmp.getStartAddress());
-                    }
-                    else {
-                        intersectingAccess->setStartAddress(tmp.getEndAddress());
-                    }
-                    //! Incrementing the current working set size is not needed because 
-                    //! the new access is contained in a previous one.
-                    increment = 0;
-                }
-                else {
-                    if(intersectingAccess->getAccessRange().fullyContainedIn(tmp)) {
-                        //! Scenario 3. Erase the small access because the new one contains it.
-                        increment -= intersectingAccess->getSize();
-                        BaseType::erase(*intersectingAccess);
-                    }
-                    else {
-                        //! Scenario 4. Split the old access to be only the non-overlapping part.
-                        if(tmp.getStartAddress() < intersectingAccess->getStartAddress()) {
-                            increment -= ((char *)tmp.getEndAddress() - (char *)intersectingAccess->getStartAddress());
-                            intersectingAccess->setStartAddress(tmp.getEndAddress());
-                        }
-                        else {
-                            increment -= ((char *)intersectingAccess->getEndAddress() - (char *)tmp.getStartAddress());
-                            intersectingAccess->setEndAddress(tmp.getStartAddress());
-                        }
-                    }
-                }
-                return true;
-            }
-        );	
-        checkRange(objectToInsert->getAccessRange());
-        BaseType::insert(*objectToInsert);
-        //! Evict if needed. Evictions can be done after insertions because we are actually doing only a track of the information that would be there.
-        //! It should be enough to check if the size of the new inserted data (increment) is lower or equal to the free space.
-        //while(_currentWorkingSetSize >= HardwareInfo::getLastLevelCacheSize()) {
-        //std::cerr << "Increment: " << increment << std::endl;
-        //std::cerr << "Free space: " << getCurrentFreeSpace() << std::endl;
+        assert(!BaseType::contains(tmp));
+        //std::cerr << "Inserting new range [" << (void *)start << ", " << (void *)end << "] WITHOUT overlappings." << std::endl;
+        //! There is no overlapping.
         //std::cerr << "_currentWorkingSetSize: " << _currentWorkingSetSize << std::endl;
-        while(increment > getCurrentFreeSpace()) {
-            //std::cerr << "Evicting because " << increment << " bytes are needed and only " << getCurrentFreeSpace() 
-            //          << " remains free in the cache" << std::endl;
-            //! Evict until all the data of the task fits into the cache. 
-            evict();
+
+        //! Check if the access exceeds the total cache size
+        if(rangeSize > getAvailableLastLevelCacheSize()) {
+            //! The access does not fit into the cache even if it is empty. 
+            //! Let's split the access to insert, at least, the part of the access that fits into the cache.
+
+            //! Calculate the part that exceeds the cache size.
+            std::size_t excess = rangeSize - getAvailableLastLevelCacheSize();
+            assert(excess % cacheLineSize == 0);
+            //! Advance the start in the excess so the access can fit in the cache.
+            start += excess;
+            //! Substract the excess from the access size.
+            rangeSize -= excess;
+            assert(rangeSize == (end-start));
+            //! Update the access to be inserted discarding the excess.
+            tmp = DataAccessRange((void *)start, rangeSize);
         }
+        //! Check if the range fits into the cache.
+        assert(rangeSize <= getAvailableLastLevelCacheSize());
+
+        //! Construct the object to insert into the treap.
+        keyToInsert = CacheTrackingObjectKey(tmp, insertion_id);
+        objectToInsert = new CacheTrackingObject(keyToInsert);
+
+        //! Check that the range is aligned to cache line.
+#ifndef NDEBUG
+        checkRange(objectToInsert->getAccessRange());
+#endif
+
+        //! Actually insert the object.
+        Instrument::Timer timerActualInsert;
+        timerActualInsert.start();
+        if(hint != BaseType::end()) {
+            //std::cerr << "Using hint (" << hint->getStartAddress() << ") for inserting: " << tmp.getStartAddress() << std::endl;
+            //if(hint == BaseType::upper_bound(keyToInsert))
+            //    _perfectHints++;
+            //result = BaseType::insert(hint, *objectToInsert);
+#ifndef NDEBUG
+            //! Check that hint is actually the succesor of keyToInsert.
+            assert(upper_bound(keyToInsert) == hint);
+#endif
+            Instrument::Timer timerInsertHint;
+            timerInsertHint.start();
+            result = BaseType::insert_before(hint, *objectToInsert);
+            timerInsertHint.stop();
+            _timerInsertsHint+=timerInsertHint;
+            _insertionsHint++;
+        }
+        else {
+            //! If hint is BaseType::end() it means either the treap is empty or the access goes to the end. Both cases allow a push_back.
+            //result = BaseType::insert(*objectToInsert).first;
+#ifndef NDEBUG
+            //! Check that this is actually the greatest key.
+            assert(upper_bound(keyToInsert) == BaseType::end());
+#endif
+            Instrument::Timer timerPushBack;
+            timerPushBack.start();
+            BaseType::push_back(*objectToInsert);
+            timerPushBack.stop();
+            _timerPushBacks+=timerPushBack;
+            //! (BaseType::end()--) is the just pushed_back element.
+            result--;
+            _pushBacks++;
+        }
+        timerActualInsert.stop();
+        _timerActualInsert+=timerActualInsert;
+
         //! Increment the current working set size.
-        _currentWorkingSetSize += increment;
+        //std::cerr << "Incrementing _currentWorkingSetSize from " << _currentWorkingSetSize << " to " << _currentWorkingSetSize + rangeSize << std::endl;
+        _currentWorkingSetSize += rangeSize;
     }
+    _insertions++;
+    //std::cerr << "Range [" << tmp.getStartAddress() << ", " << tmp.getEndAddress() << "] with lastUse " << insertion_id << " has been inserted." << std::endl;
 
     //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
     //std::cerr << "Listing last level cache tracking set." << std::endl;
@@ -133,33 +135,78 @@ void CacheTrackingSet::insert(DataAccessRange range, long unsigned int insertion
     //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
     //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
     //std::cerr << "----------------------------------------------------------------------------------------------------" << std::endl;
-    assert(_currentWorkingSetSize <= (std::size_t) HardwareInfo::getLastLevelCacheSize() && "Current working set size must not be greater than cache size.");
-    // FIXME: TEMPORAL WORKAROUND
-    //assert((_currentWorkingSetSize-cacheLineSize) <= (std::size_t) HardwareInfo::getLastLevelCacheSize() && "Current working set size must not be greater than cache size.");
+    //! Check that there is some access in the treap as we have already inserted one.
+    assert(BaseType::size() >= 1);
+    aux.stop();
+    _timer+=aux;
+#ifndef NDEBUG
+    //std::cerr << "CHECKING TREAP SIZE." << std::endl;
+    std::size_t treapSize = 0;
+    BaseType::processAll(
+        [&] (BaseType::iterator it) -> bool {
+            treapSize += it->getSize();
+            checkRange(it->getAccessRange());
+            return true;
+        }
+    );
+    //std::cerr << "TREAP SIZE: " << treapSize << std::endl;
+    //std::cerr << "CURRENT WORKING SET SIZE: " << _currentWorkingSetSize << std::endl;
+    assert(treapSize == _currentWorkingSetSize);
+#endif
+    return result;
 }
 
-void CacheTrackingSet::evict(){
-    // TODO: Think about a mechanism to prevent evicting data that may be in use right now. 
-    // Maybe, set a threshold (e.g. 10) to prevent evicting data that its lastUse difference 
-    // with _count is lower than the threshold.
-    //! Get LRU access.
-    BaseType::iterator erase = BaseType::top();
-    CacheTrackingObject &aux = *erase;
-    ////! Decrement current working set size.
-    _currentWorkingSetSize -= erase->_key._range.getSize(); 
-    ////! Remove the access from the set.
-    BaseType::erase(aux);
+void CacheTrackingSet::evict() {
+    if(_currentWorkingSetSize <= getAvailableLastLevelCacheSize())
+        return;
+    std::size_t size = _currentWorkingSetSize - getAvailableLastLevelCacheSize();
+    std::size_t evictedSize = 0;
+    while(size > 0) {
+        //! Get LRU access.
+        BaseType::iterator it = BaseType::top();
+        assert(it != BaseType::end());
+        if(it->getSize() > size) {
+            uintptr_t newStartAddress = (uintptr_t) (it->getStartAddress())+size;
+            it->setStartAddress((void *)newStartAddress);
+            assert(it->getStartAddress() < it->getEndAddress() && "StartAddress cannot be greater than EndAddress");
+            //std::cerr << "1.Decrementing _currentWorkingSetSize from " << _currentWorkingSetSize << " to " << _currentWorkingSetSize - size << std::endl;
+            _currentWorkingSetSize -= size;
+            evictedSize += size;
+        }
+        else {
+            //std::cerr << "2.Decrementing _currentWorkingSetSize from " << _currentWorkingSetSize << " to " << _currentWorkingSetSize - it->getSize() << std::endl;
+            _currentWorkingSetSize -= it->getSize();
+            BaseType::erase(*it);
+            evictedSize += it->getSize();
+        }
+        size = _currentWorkingSetSize - getAvailableLastLevelCacheSize();
+    }
+    //std::cerr << "EVICTED " << evictedSize << " BYTES." << std::endl;
+    //std::cerr << "CURRENT WORKING SET SIZE: " << _currentWorkingSetSize << std::endl;
+    assert(_currentWorkingSetSize <= getAvailableLastLevelCacheSize());
+#ifndef NDEBUG
+    //std::cerr << "CHECKING TREAP SIZE." << std::endl;
+    std::size_t treapSize = 0;
+    BaseType::processAll(
+        [&] (BaseType::iterator it) -> bool {
+            treapSize += it->getSize();
+            checkRange(it->getAccessRange());
+            return true;
+        }
+    );
+    assert(treapSize == _currentWorkingSetSize);
+#endif
 }
 
-void checkRange(DataAccessRange range) {
+void CacheTrackingSet::checkRange(DataAccessRange range) {
     std::size_t cacheLineSize = HardwareInfo::getLastLevelCacheLineSize();
-    char * auxStart = (char *)range.getStartAddress();
-    char * auxEnd = (char *)range.getEndAddress();
+    uintptr_t auxStart= (uintptr_t)range.getStartAddress();
+    uintptr_t auxEnd = (uintptr_t)range.getEndAddress();
     std::size_t actualRangeSize = auxEnd - auxStart;
     _unused(cacheLineSize);
     _unused(actualRangeSize);
-    assert((((std::size_t)auxStart % cacheLineSize == 0) && 
-            ((std::size_t)auxEnd % cacheLineSize == 0) && 
+    assert(((auxStart % cacheLineSize == 0) && 
+            (auxEnd % cacheLineSize == 0) && 
             (actualRangeSize % cacheLineSize == 0)) 
             && "Not fitting in cache line");
 }
