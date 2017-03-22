@@ -191,6 +191,69 @@ namespace Instrument {
 				// Remove self as writer to return
 				newWriters.erase(positionAndConfirmation.first);
 				
+			} else if (access->_type == REDUCTION_ACCESS_TYPE) {
+				// Either there are previous readers or writers, but not both
+				assert((lastReaders.empty() != lastWriters.empty()) || !newWriters.empty());
+				
+				// Add previous readers as predecessors
+				for (task_id_t reader : lastReaders) {
+					link._predecessors.insert(reader);
+					
+					task_info_t &readerTaskInfo = _taskToInfoMap[reader];
+					if ((readerTaskInfo._parent == parentId) && (readerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
+						taskInfo._hasPredecessorsInSameLevel = true;
+						readerTaskInfo._hasSuccessorsInSameLevel = true;
+					}
+				}
+				
+				// Add previous writers as predecessors
+				for (task_id_t writer : lastWriters) {
+					link._predecessors.insert(writer);
+				
+					task_info_t &writerTaskInfo = _taskToInfoMap[writer];
+					if ((writerTaskInfo._parent == parentId) && (writerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
+						taskInfo._hasPredecessorsInSameLevel = true;
+						writerTaskInfo._hasSuccessorsInSameLevel = true;
+					}
+				}
+				
+				// Insert self as writer
+				auto positionAndConfirmation = newWriters.insert(access->_originator);
+				assert(positionAndConfirmation.second);
+				
+				// Advance to the next access
+				foreachLiveNextOfAccess(access,
+					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+						DataAccessRange nextRange = range.intersect(nextAccess._accessRange);
+						
+						if (!nextRange.empty()) {
+							// Next access hasn't type reduction so we flush readers and writers
+							if (nextAccess._type != REDUCTION_ACCESS_TYPE) {
+								predecessors_t nextLastReaders;
+								predecessors_t nextNewWriters;
+								predecessors_t& nextLastWriters = newWriters;
+								
+								buildPredecessorList(
+									nextRange,
+									nextLastReaders, nextLastWriters, nextNewWriters,
+									linkToNext, &nextAccess, nextTaskInfo
+								);
+							} else {
+								buildPredecessorList(
+									nextRange,
+									lastReaders, lastWriters, newWriters,
+									linkToNext, &nextAccess, nextTaskInfo
+								);
+							}
+						}
+						
+						return true;
+					}
+				);
+				
+				// Remove self as writer to return
+				newWriters.erase(positionAndConfirmation.first);
+				
 			} else {
 				assert((access->_type == WRITE_ACCESS_TYPE) || (access->_type == READWRITE_ACCESS_TYPE));
 				
@@ -278,6 +341,12 @@ namespace Instrument {
 								break;
 							case CONCURRENT_ACCESS_TYPE:
 								if (nextAccess._type == CONCURRENT_ACCESS_TYPE)
+									newWriters.insert(access->_originator);
+								else
+									lastWriters.insert(access->_originator);
+								break;
+							case REDUCTION_ACCESS_TYPE:
+								if (nextAccess._type == REDUCTION_ACCESS_TYPE)
 									newWriters.insert(access->_originator);
 								else
 									lastWriters.insert(access->_originator);

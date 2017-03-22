@@ -233,6 +233,10 @@ namespace Instrument {
 					text << "C";
 					color1 = "#FFFF00";
 					break;
+				case REDUCTION:
+					text << "RED";
+					color1 = "#00AFFF";
+					break;
 			}
 		}
 		
