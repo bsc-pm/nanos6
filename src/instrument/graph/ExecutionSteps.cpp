@@ -288,6 +288,9 @@ namespace Instrument {
 				case READWRITE_ACCESS_TYPE:
 					oss << " RW";
 					break;
+				case CONCURRENT_ACCESS_TYPE:
+					oss << " C";
+					break;
 			}
 			oss << " access " << _accessId;
 			oss << " [" << _range << "]";
@@ -335,6 +338,9 @@ namespace Instrument {
 					break;
 				case READWRITE_ACCESS_TYPE:
 					oss << " RW";
+					break;
+				case CONCURRENT_ACCESS_TYPE:
+					oss << " C";
 					break;
 			}
 			return oss.str();

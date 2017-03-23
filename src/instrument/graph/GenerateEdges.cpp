@@ -30,7 +30,7 @@ namespace Instrument {
 		
 		static void buildPredecessorList(
 			DataAccessRange range,
-			task_id_t const &lastWriter, predecessors_t &lastReaders,
+			predecessors_t &lastReaders, predecessors_t &lastWriters, predecessors_t &newWriters,
 			link_to_next_t &link, access_t *access, task_info_t &taskInfo
 		) {
 			assert(access != nullptr);
@@ -62,7 +62,7 @@ namespace Instrument {
 								if (!nextRange.empty()) {
 									buildPredecessorList(
 										nextRange,
-										lastWriter, lastReaders,
+										lastReaders, lastWriters, newWriters,
 										linkToNext, &nextAccess, nextTaskInfo
 									);
 								}
@@ -79,16 +79,20 @@ namespace Instrument {
 			task_id_t parentId = taskInfo._parent;
 			
 			if (access->_type == READ_ACCESS_TYPE) {
-				if (lastWriter != task_id_t()) {
-					link._predecessors.insert(lastWriter);
+				assert((!lastReaders.empty() || !lastWriters.empty()) && newWriters.empty());
+				
+				// Add previous writers as predecessors
+				for (task_id_t writer : lastWriters) {
+					link._predecessors.insert(writer);
 					
-					task_info_t &lastWriterTaskInfo = _taskToInfoMap[lastWriter];
-					if ((lastWriterTaskInfo._parent == parentId) && (lastWriterTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
+					task_info_t &writerTaskInfo = _taskToInfoMap[writer];
+					if ((writerTaskInfo._parent == parentId) && (writerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
 						taskInfo._hasPredecessorsInSameLevel = true;
-						lastWriterTaskInfo._hasSuccessorsInSameLevel = true;
+						writerTaskInfo._hasSuccessorsInSameLevel = true;
 					}
 				}
 				
+				// Insert self as reader
 				auto positionAndConfirmation = lastReaders.insert(access->_originator);
 				assert(positionAndConfirmation.second);
 				
@@ -98,50 +102,141 @@ namespace Instrument {
 						DataAccessRange nextRange = range.intersect(nextAccess._accessRange);
 						
 						if (!nextRange.empty()) {
-							buildPredecessorList(
-								nextRange,
-								lastWriter, lastReaders,
-								linkToNext, &nextAccess, nextTaskInfo
-							);
+							predecessors_t nextNewWriters;
+							// Next access hasn't type read so we flush writers
+							if (nextAccess._type != READ_ACCESS_TYPE) {
+								predecessors_t nextLastWriters;
+								
+								buildPredecessorList(
+									nextRange,
+									lastReaders, nextLastWriters, nextNewWriters,
+									linkToNext, &nextAccess, nextTaskInfo
+								);
+							} else {
+								buildPredecessorList(
+									nextRange,
+									lastReaders, lastWriters, nextNewWriters,
+									linkToNext, &nextAccess, nextTaskInfo
+								);
+							}
 						}
 						
 						return true;
 					}
 				);
 				
+				// Remove self as reader to return
 				lastReaders.erase(positionAndConfirmation.first);
-			} else {
-				if (lastReaders.empty()) {
-					assert(lastWriter != task_id_t());
-					link._predecessors.insert(lastWriter);
+				
+			} else if (access->_type == CONCURRENT_ACCESS_TYPE) {
+				// Either there are previous readers or writers, but not both
+				assert((lastReaders.empty() != lastWriters.empty()) || !newWriters.empty());
+				
+				// Add previous readers as predecessors
+				for (task_id_t reader : lastReaders) {
+					link._predecessors.insert(reader);
 					
-					task_info_t &lastWriterTaskInfo = _taskToInfoMap[lastWriter];
-					if ((lastWriterTaskInfo._parent == parentId) && (lastWriterTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
+					task_info_t &readerTaskInfo = _taskToInfoMap[reader];
+					if ((readerTaskInfo._parent == parentId) && (readerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
 						taskInfo._hasPredecessorsInSameLevel = true;
-						lastWriterTaskInfo._hasSuccessorsInSameLevel = true;
-					}
-				} else {
-					for (task_id_t reader : lastReaders) {
-						link._predecessors.insert(reader);
-						
-						task_info_t &readerTaskInfo = _taskToInfoMap[reader];
-						if ((readerTaskInfo._parent == parentId) && (readerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
-							taskInfo._hasPredecessorsInSameLevel = true;
-							readerTaskInfo._hasSuccessorsInSameLevel = true;
-						}
+						readerTaskInfo._hasSuccessorsInSameLevel = true;
 					}
 				}
 				
+				// Add previous writers as predecessors
+				for (task_id_t writer : lastWriters) {
+					link._predecessors.insert(writer);
+				
+					task_info_t &writerTaskInfo = _taskToInfoMap[writer];
+					if ((writerTaskInfo._parent == parentId) && (writerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
+						taskInfo._hasPredecessorsInSameLevel = true;
+						writerTaskInfo._hasSuccessorsInSameLevel = true;
+					}
+				}
+				
+				// Insert self as writer
+				auto positionAndConfirmation = newWriters.insert(access->_originator);
+				assert(positionAndConfirmation.second);
+				
 				// Advance to the next access
-				predecessors_t nextReaders;
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
 						DataAccessRange nextRange = range.intersect(nextAccess._accessRange);
 						
 						if (!nextRange.empty()) {
+							// Next access hasn't type concurrent so we flush readers and writers
+							if (nextAccess._type != CONCURRENT_ACCESS_TYPE) {
+								predecessors_t nextLastReaders;
+								predecessors_t nextNewWriters;
+								predecessors_t& nextLastWriters = newWriters;
+								
+								buildPredecessorList(
+									nextRange,
+									nextLastReaders, nextLastWriters, nextNewWriters,
+									linkToNext, &nextAccess, nextTaskInfo
+								);
+							} else {
+								buildPredecessorList(
+									nextRange,
+									lastReaders, lastWriters, newWriters,
+									linkToNext, &nextAccess, nextTaskInfo
+								);
+							}
+						}
+						
+						return true;
+					}
+				);
+				
+				// Remove self as writer to return
+				newWriters.erase(positionAndConfirmation.first);
+				
+			} else {
+				assert((access->_type == WRITE_ACCESS_TYPE) || (access->_type == READWRITE_ACCESS_TYPE));
+				
+				// Either there are previous readers or writers, but not both
+				assert((lastReaders.empty() != lastWriters.empty()) && newWriters.empty());
+				
+				// Add previous readers as predecessors
+				for (task_id_t reader : lastReaders) {
+					link._predecessors.insert(reader);
+					
+					task_info_t &readerTaskInfo = _taskToInfoMap[reader];
+					if ((readerTaskInfo._parent == parentId) && (readerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
+						taskInfo._hasPredecessorsInSameLevel = true;
+						readerTaskInfo._hasSuccessorsInSameLevel = true;
+					}
+				}
+				
+				// Add previous writers as predecessors
+				// Either we have previous readers or writers, but not both
+				for (task_id_t writer : lastWriters) {
+					link._predecessors.insert(writer);
+				
+					task_info_t &writerTaskInfo = _taskToInfoMap[writer];
+					if ((writerTaskInfo._parent == parentId) && (writerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
+						taskInfo._hasPredecessorsInSameLevel = true;
+						writerTaskInfo._hasSuccessorsInSameLevel = true;
+					}
+				}
+				
+				// Current access has type writer so we flush previous writers and insert self as one
+				auto positionAndConfirmation = newWriters.insert(access->_originator);
+				assert(positionAndConfirmation.second);
+				
+				// Advance to the next access
+				foreachLiveNextOfAccess(access,
+					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+						DataAccessRange nextRange = range.intersect(nextAccess._accessRange);
+						
+						if (!nextRange.empty()) {
+							predecessors_t nextLastReaders;
+							predecessors_t nextNewWriters;
+							predecessors_t& nextLastWriters = newWriters;
+							
 							buildPredecessorList(
 								nextRange,
-								access->_originator, nextReaders,
+								nextLastReaders, nextLastWriters, nextNewWriters,
 								linkToNext, &nextAccess, nextTaskInfo
 							);
 						}
@@ -149,6 +244,9 @@ namespace Instrument {
 						return true;
 					}
 				);
+				
+				// Remove self as writer to return
+				newWriters.erase(positionAndConfirmation.first);
 			}
 		}
 		
@@ -164,24 +262,31 @@ namespace Instrument {
 					DataAccessRange range = access->_accessRange.intersect(nextAccess._accessRange);
 					
 					if (!range.empty()) {
-						task_id_t lastWriter;
 						predecessors_t lastReaders;
+						predecessors_t lastWriters;
+						predecessors_t newWriters;
 						
 						switch(access->_type) {
 							case READ_ACCESS_TYPE:
 								lastReaders.insert(access->_originator);
 								break;
 							case WRITE_ACCESS_TYPE:
-								lastWriter = access->_originator;
+								lastWriters.insert(access->_originator);
 								break;
 							case READWRITE_ACCESS_TYPE:
-								lastWriter = access->_originator;
+								lastWriters.insert(access->_originator);
+								break;
+							case CONCURRENT_ACCESS_TYPE:
+								if (nextAccess._type == CONCURRENT_ACCESS_TYPE)
+									newWriters.insert(access->_originator);
+								else
+									lastWriters.insert(access->_originator);
 								break;
 						}
 						
 						buildPredecessorList(
 							range,
-							lastWriter, lastReaders,
+							lastReaders, lastWriters, newWriters,
 							linkToNext, &nextAccess, nextTaskInfo
 						);
 						
