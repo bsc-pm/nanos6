@@ -5,7 +5,7 @@
 #include "InstrumentThreadId.hpp"
 
 #include "../api/InstrumentThreadManagement.hpp"
-#include "../public/generic_ids/GenericIds.hpp"
+#include "../generic_ids/GenericIds.hpp"
 
 
 namespace Instrument {

@@ -36,16 +36,7 @@ nodist_noinst_HEADERS = \
 universal_debug_sources = \
 	src/system/debug/RuntimeVersionAPI.cpp
 
-public_instrumentation_api = \
-	src/instrument/public/api/InstrumentAddTask.hpp \
-	src/instrument/public/api/InstrumentCPUId.hpp \
-	src/instrument/public/api/InstrumentInitAndShutdown.hpp \
-	src/instrument/public/api/InstrumentTaskExecution.hpp \
-	src/instrument/public/api/InstrumentTaskWait.hpp \
-	src/instrument/public/api/InstrumentThreadManagement.hpp
-
 common_sources = \
-	$(public_instrumentation_api) \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
@@ -65,21 +56,25 @@ common_sources = \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/HardwarePlace.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
+	src/instrument/api/InstrumentAddTask.hpp \
+	src/instrument/api/InstrumentCPUId.hpp \
 	src/instrument/api/InstrumentCPUId.hpp \
 	src/instrument/api/InstrumentDependenciesByAccess.hpp \
 	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/api/InstrumentDependenciesByGroup.hpp \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
+	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
 	src/instrument/api/InstrumentTaskExecution.hpp \
+	src/instrument/api/InstrumentTaskExecution.hpp \
 	src/instrument/api/InstrumentTaskStatus.hpp \
 	src/instrument/api/InstrumentTaskWait.hpp \
+	src/instrument/api/InstrumentTaskWait.hpp \
+	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
-	src/lowlevel/apple/SpinLockImplementation.hpp \
-	src/lowlevel/cxx/SpinLockImplementation.hpp \
-	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
@@ -90,6 +85,9 @@ common_sources = \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
+	src/lowlevel/apple/SpinLockImplementation.hpp \
+	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/scheduling/CostAsPriorityScheduler.cpp \
 	src/scheduling/CostAsPriorityScheduler.hpp \
 	src/scheduling/DefaultScheduler.hpp \
@@ -107,7 +105,6 @@ common_sources = \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerInterface.cpp \
 	src/scheduling/SchedulerInterface.hpp \
-	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.cpp \
 	src/support/GlobalLock.hpp \
@@ -234,19 +231,10 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentTaskWait.hpp \
 	src/instrument/null/InstrumentThreadId.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
-	src/instrument/null/InstrumentUserMutex.hpp \
-	src/instrument/public/null/InstrumentAddTask.hpp \
-	src/instrument/public/null/InstrumentInitAndShutdown.hpp \
-	src/instrument/public/null/InstrumentTaskExecution.hpp \
-	src/instrument/public/null/InstrumentTaskId.hpp \
-	src/instrument/public/null/InstrumentTaskWait.hpp \
-	src/instrument/public/null/InstrumentThreadId.hpp \
-	src/instrument/public/null/InstrumentThreadManagement.hpp
+	src/instrument/null/InstrumentUserMutex.hpp
 
 instrument_generic_ids_sources = \
-	src/instrument/public/generic_ids/GenericIds.cpp \
-	src/instrument/public/generic_ids/GenericIds.hpp \
-	src/instrument/public/generic_ids/InstrumentThreadId.hpp \
+	src/instrument/generic_ids/GenericIds.cpp \
 	src/instrument/generic_ids/GenericIds.hpp \
 	src/instrument/generic_ids/InstrumentThreadId.hpp
 
@@ -360,24 +348,23 @@ instrument_verbose_sources = \
 
 instrument_extrae_sources = \
 	$(instrument_generic_ids_sources) \
+	src/instrument/extrae/InstrumentAddTask.hpp \
 	src/instrument/extrae/InstrumentDataAccessId.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
+	src/instrument/extrae/InstrumentExtrae.cpp \
+	src/instrument/extrae/InstrumentExtrae.hpp \
+	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
+	src/instrument/extrae/InstrumentTaskExecution.hpp \
+	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
-	src/instrument/extrae/InstrumentUserMutex.hpp \
-	src/instrument/public/extrae/InstrumentAddTask.hpp \
-	src/instrument/public/extrae/InstrumentExtrae.cpp \
-	src/instrument/public/extrae/InstrumentExtrae.hpp \
-	src/instrument/public/extrae/InstrumentInitAndShutdown.hpp \
-	src/instrument/public/extrae/InstrumentTaskExecution.hpp \
-	src/instrument/public/extrae/InstrumentTaskId.hpp \
-	src/instrument/public/extrae/InstrumentTaskWait.hpp \
-	src/instrument/public/extrae/InstrumentThreadId.hpp \
-	src/instrument/public/extrae/InstrumentThreadManagement.hpp
-
+	src/instrument/extrae/InstrumentTaskWait.hpp \
+	src/instrument/extrae/InstrumentThreadId.hpp \
+	src/instrument/extrae/InstrumentThreadManagement.hpp \
+	src/instrument/extrae/InstrumentUserMutex.hpp
 
 null_common_sources = \
 	src/null/NullDebug.cpp \
@@ -468,7 +455,7 @@ libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
 libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 if HAVE_EXTRAE
-libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/public/extrae @extrae_CPPFLAGS@
+libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae @extrae_CPPFLAGS@
 libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
 libnanos6_extrae_la_LDFLAGS = @extrae_LDFLAGS@ @extrae_LIBS@ $(common_libnanos6_ldflags)

@@ -5,7 +5,7 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
-#include "../public/generic_ids/GenericIds.hpp"
+#include "../generic_ids/GenericIds.hpp"
 
 
 using namespace Instrument::Verbose;
