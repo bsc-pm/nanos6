@@ -5,6 +5,8 @@
 *.lo
 *.log
 *.o
+*.orig
+*.rej
 *.test
 *.trs
 *.was
