@@ -448,12 +448,17 @@ namespace Instrument {
 			
 			std::string initialIndentation = indentation;
 			
+			// This external and invisible cluster is here just to correct the vertical spacing
+			ofs << indentation << "subgraph " << taskLinkingLabels._nodeLabel << "_wrapper {" << std::endl;
+			indentation = initialIndentation + "\t";
+			ofs << indentation << "style=invis;" << std::endl;
+			
 			ofs << indentation << "subgraph " << taskLinkingLabels._nodeLabel << " {"
 #ifndef NDEBUG
 				<< "\t// " << __FILE__ << ":" << __LINE__
 #endif
 				<< std::endl;
-			indentation = initialIndentation + "\t";
+			indentation = initialIndentation + "\t\t";
 			ofs << indentation << "label=\"" << makeTaskLabel(taskId, taskInfo) << "\";" << std::endl;
 			ofs << indentation << "compound=true;" << std::endl;
 			ofs << indentation << "color=\"black\";" << std::endl;
@@ -745,6 +750,11 @@ namespace Instrument {
 				previousPhaseStatuses = std::move(currentPhaseStatuses);
 			}
 			
+			// End of cluster
+			indentation = initialIndentation + "\t";
+			ofs << indentation << "}" << std::endl;
+			
+			// End of invisible cluster
 			indentation = initialIndentation;
 			ofs << indentation << "}" << std::endl;
 		}
