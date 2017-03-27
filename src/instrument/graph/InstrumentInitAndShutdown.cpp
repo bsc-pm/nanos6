@@ -101,6 +101,21 @@ namespace Instrument {
 			oss << taskName;
 		}
 		
+		bool openedSquareBrackets = false;
+		if (taskInfo._isIf0) {
+			if (!openedSquareBrackets) {
+				oss << " [";
+				openedSquareBrackets = true;
+			} else {
+				oss << ", ";
+			}
+			oss << "if(0)";
+		}
+		
+		if (openedSquareBrackets) {
+			oss << "]";
+		}
+		
 		return oss.str();
 	}
 	
@@ -412,9 +427,15 @@ namespace Instrument {
 			ofs
 				<< indentation << taskLinkingLabels._nodeLabel
 				<< " [ label=\"" << makeTaskLabel(taskId, taskInfo) << "\" "
-				<< " shape=\"box\" "
-				<< getTaskAttributes(taskInfo._status, taskInfo._lastCPU)
-				<< " ]" << std::endl;
+				<< getTaskAttributes(taskInfo._status, taskInfo._lastCPU);
+			
+			if (taskInfo._isIf0) {
+				ofs << " shape=\"doubleoctagon\" ";
+			} else {
+				ofs << " shape=\"box\" ";
+			}
+			
+			ofs << " ]" << std::endl;
 			
 			taskLinkingLabels._inLabel = taskLinkingLabels._nodeLabel;
 			taskLinkingLabels._outLabel = taskLinkingLabels._nodeLabel;
@@ -450,17 +471,25 @@ namespace Instrument {
 				task_group_t *taskGroup = dynamic_cast<task_group_t *>(currentPhase);
 				taskwait_t *taskWait = dynamic_cast<taskwait_t *>(currentPhase);
 				
-				size_t phaseElements = 1;
+				size_t phaseElements = 0;
 				if (taskGroup != nullptr) {
-					phaseElements = taskGroup->_children.size();
+					for (task_id_t childId : taskGroup->_children) {
+						task_info_t &childInfo = _taskToInfoMap[childId];
+						
+						if (!childInfo._isIf0) {
+							phaseElements++;
+						}
+					}
+				} else {
+					phaseElements = 1;
 				}
 				
 				std::vector<std::string> currentPhaseLinks(phaseElements);
 				std::vector<std::string> currentPhaseSourceLinks(phaseElements);
 				std::vector<data_access_id_t> currentPhaseTopAccesses;
 				std::vector<std::string> currentPhaseSinkLinks(phaseElements);
-				std::vector<Bool> bestTopLink(phaseElements);
-				std::vector<Bool> bestBottomLink(phaseElements);
+				std::vector<Bool> bestTopLink(phaseElements, true);
+				std::vector<Bool> bestBottomLink(phaseElements, true);
 				std::vector<Bool> currentPhaseElementWithoutPredecessors(phaseElements, true);
 				std::vector<Bool> currentPhaseElementWithoutSuccessors(phaseElements, true);
 				std::vector<task_status_t> currentPhaseStatuses(phaseElements);
@@ -559,20 +588,23 @@ namespace Instrument {
 							);
 							
 							dot_linking_labels &childLinkingLabels = _taskToDotLinkingLabels[childId];
-							currentPhaseLinks[index] = childLinkingLabels._nodeLabel;
-							currentPhaseSourceLinks[index] = childLinkingLabels._inLabel;
-							currentPhaseSinkLinks[index] = childLinkingLabels._outLabel;
-							
-							bestTopLink[index] = (taskGroup->_longestPathFirstTaskId == childId);
-							bestBottomLink[index] = (taskGroup->_longestPathLastTaskId == childId);
-							
-							taskId2Index[childId] = index;
-							
 							task_info_t &childInfo = _taskToInfoMap[childId];
-							currentPhaseStatuses[index] = childInfo._status;
 							
-							currentPhaseElementWithoutPredecessors[index] = !childInfo._hasPredecessorsInSameLevel;
-							currentPhaseElementWithoutSuccessors[index] = !childInfo._hasSuccessorsInSameLevel;
+							if (!childInfo._isIf0) {
+								currentPhaseLinks[index] = childLinkingLabels._nodeLabel;
+								currentPhaseSourceLinks[index] = childLinkingLabels._inLabel;
+								currentPhaseSinkLinks[index] = childLinkingLabels._outLabel;
+								
+								bestTopLink[index] = (taskGroup->_longestPathFirstTaskId == childId);
+								bestBottomLink[index] = (taskGroup->_longestPathLastTaskId == childId);
+								
+								taskId2Index[childId] = index;
+								
+								currentPhaseStatuses[index] = childInfo._status;
+								
+								currentPhaseElementWithoutPredecessors[index] = !childInfo._hasPredecessorsInSameLevel;
+								currentPhaseElementWithoutSuccessors[index] = !childInfo._hasSuccessorsInSameLevel;
+							}
 							
 							// Emit nodes for the accesses
 							if (_showDependencyStructures) {
@@ -606,35 +638,50 @@ namespace Instrument {
 								} // For each access of the child
 							} // If must show dependency structures
 							
-							index++;
+							if (!childInfo._isIf0) {
+								index++;
+							}
 						}
 					}
 					
 					indentation = initialIndentation + "\t";
 					ofs << indentation << "}" << std::endl;
 				} else if (taskWait != nullptr) {
-					std::ostringstream oss;
-					oss << "taskwait" << taskWait->_taskwaitId;
-					std::string currentPhaseLink = oss.str();
-					
-					taskwait_status_t const &taskwaitStatus = _taskwaitStatus[taskWait->_taskwaitId];
-					ofs
-						<< indentation << currentPhaseLink
-						<< " [ label=\"" << makeTaskwaitLabel(taskWait->_taskwaitSource) << "\" "
-						<< getTaskAttributes(taskwaitStatus._status, taskwaitStatus._lastCPU)
-						<< " shape=\"doubleoctagon\" "
-						<< " ]"
+					if (taskWait->_if0Task == task_id_t()) {
+						std::ostringstream oss;
+						oss << "taskwait" << taskWait->_taskwaitId;
+						std::string currentPhaseLink = oss.str();
+						
+						ofs
+							<< indentation << currentPhaseLink
+							<< " [ label=\"" << makeTaskwaitLabel(taskWait->_taskwaitSource) << "\" "
+							<< getTaskAttributes(taskWait->_status, taskWait->_lastCPU)
+							<< " shape=\"doubleoctagon\" "
+							<< " ]"
 #ifndef NDEBUG
-						<< "\t// " << __FILE__ << ":" << __LINE__
+							<< "\t// " << __FILE__ << ":" << __LINE__
 #endif
-						<< std::endl;
-					
-					currentPhaseLinks[0] = currentPhaseLink;
-					currentPhaseSourceLinks[0] = currentPhaseLink;
-					currentPhaseSinkLinks[0] = currentPhaseLink;
-					currentPhaseStatuses[0] = taskwaitStatus._status;
-					bestTopLink[0] = true;
-					bestBottomLink[0] = true;
+							<< std::endl;
+						
+						currentPhaseLinks[0] = currentPhaseLink;
+						currentPhaseSourceLinks[0] = currentPhaseLink;
+						currentPhaseSinkLinks[0] = currentPhaseLink;
+						currentPhaseStatuses[0] = taskWait->_status;
+						bestTopLink[0] = true;
+						bestBottomLink[0] = true;
+					} else {
+						// An if(0)'ed task
+						dot_linking_labels &if0TaskLinkingLabels = _taskToDotLinkingLabels[taskWait->_if0Task];
+						task_info_t const &if0Task = _taskToInfoMap[taskWait->_if0Task];
+						
+						currentPhaseLinks[0] = if0TaskLinkingLabels._nodeLabel;
+						currentPhaseSourceLinks[0] = if0TaskLinkingLabels._outLabel;
+						currentPhaseSinkLinks[0] = if0TaskLinkingLabels._inLabel;
+						currentPhaseStatuses[0] = if0Task._status;
+						
+						bestTopLink[0] = true;
+						bestBottomLink[0] = true;
+					}
 				} else {
 					assert(false);
 				}
@@ -687,31 +734,6 @@ namespace Instrument {
 									<< std::endl; 
 							}
 							currentPhaseTopAccesses.clear();
-						}
-						
-						for (size_t currentIndex=0; currentIndex < phaseElements; currentIndex++) {
-							if (!currentPhaseElementWithoutPredecessors[currentIndex]) {
-								// Link only top nodes of the current phase
-								continue;
-							}
-							
-							linksStream
-								<< "\t" << previousPhaseSinkLinks[previousIndex] << " -> " << currentPhaseSourceLinks[currentIndex]
-								<< " [ "
-								<< getEdgeAttributes(previousPhaseStatuses[previousIndex], currentPhaseStatuses[currentIndex]);
-							
-							if (previousPhaseLinks[previousIndex] != previousPhaseSinkLinks[previousIndex]) {
-								linksStream << " ltail=\"" << previousPhaseLinks[previousIndex] << "\" ";
-							}
-							if (currentPhaseLinks[currentIndex] != currentPhaseSourceLinks[currentIndex]) {
-								linksStream << " lhead=\"" << currentPhaseLinks[currentIndex] << "\" ";
-							}
-							linksStream
-								<< " ];"
-#ifndef NDEBUG
-								<< "\t// " << __FILE__ << ":" << __LINE__
-#endif
-								<< std::endl;
 						}
 					}
 				}
@@ -835,7 +857,6 @@ namespace Instrument {
 				) {
 					ofs << " style=\"invis\"";
 				} else if (dependencyEdge._activeStrongContributorLinks == 0) {
-					assert(dependencyEdge._activeWeakContributorLinks != 0);
 					ofs << " style=\"dashed\"";
 				}
 				
@@ -885,6 +906,101 @@ namespace Instrument {
 						);
 					}
 				}
+			}
+			
+			if (taskInfo._precedingTaskwait != taskwait_id_t()) {
+				taskwait_t *taskwait = _taskwaitToInfoMap[taskInfo._precedingTaskwait];
+				assert(taskwait != nullptr);
+				
+				ofs << "\t";
+				if (taskwait->_if0Task != task_id_t()) {
+					dot_linking_labels const &if0TaskLinkingLabels = _taskToDotLinkingLabels[taskwait->_if0Task];
+					ofs << if0TaskLinkingLabels._outLabel;
+				} else {
+					ofs << "taskwait" << taskInfo._precedingTaskwait;
+				}
+				
+				ofs << " -> " << sourceLinkingLabels._inLabel;
+				ofs << " [";
+			
+				if (taskwait->_if0Task != task_id_t()) {
+					dot_linking_labels const &if0TaskLinkingLabels = _taskToDotLinkingLabels[taskwait->_if0Task];
+					if (if0TaskLinkingLabels._nodeLabel != if0TaskLinkingLabels._outLabel) {
+						ofs << " ltail=\"" << if0TaskLinkingLabels._nodeLabel << "\"";
+					}
+				}
+				
+				if (sourceLinkingLabels._inLabel != sourceLinkingLabels._nodeLabel) {
+					ofs << " lhead=\"" << sourceLinkingLabels._nodeLabel << "\"";
+				}
+				
+				if (
+					(taskInfo._status == not_created_status)
+					|| (taskInfo._status == finished_status)
+					|| (taskInfo._status == deleted_status)
+					|| (taskwait->_status == not_created_status)
+					|| (taskwait->_status == finished_status)
+					|| (taskwait->_status == deleted_status)
+				) {
+					if (_showDeadDependencies) {
+						ofs << " style=\"dashed\"";
+					} else {
+						ofs << " style=\"invis\"";
+					}
+				}
+				
+				ofs << " ]"
+#ifndef NDEBUG
+					<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+					<< std::endl;
+			}
+			
+			if (taskInfo._succedingTaskwait != taskwait_id_t()) {
+				taskwait_t *taskwait = _taskwaitToInfoMap[taskInfo._succedingTaskwait];
+				assert(taskwait != nullptr);
+				
+				ofs << "\t" << sourceLinkingLabels._outLabel << " -> ";
+				if (taskwait->_if0Task != task_id_t()) {
+					dot_linking_labels const &if0TaskLinkingLabels = _taskToDotLinkingLabels[taskwait->_if0Task];
+					ofs << if0TaskLinkingLabels._inLabel;
+				} else {
+					ofs << "taskwait" << taskInfo._succedingTaskwait;
+				}
+				
+				ofs << " [";
+				
+				if (sourceLinkingLabels._outLabel != sourceLinkingLabels._nodeLabel) {
+					ofs << " ltail=\"" << sourceLinkingLabels._nodeLabel << "\"";
+				}
+				
+				if (taskwait->_if0Task != task_id_t()) {
+					dot_linking_labels const &if0TaskLinkingLabels = _taskToDotLinkingLabels[taskwait->_if0Task];
+					if (if0TaskLinkingLabels._nodeLabel != if0TaskLinkingLabels._inLabel) {
+						ofs << " lhead=\"" << if0TaskLinkingLabels._nodeLabel << "\"";
+					}
+				}
+				
+				if (
+					(taskInfo._status == not_created_status)
+					|| (taskInfo._status == finished_status)
+					|| (taskInfo._status == deleted_status)
+					|| (taskwait->_status == not_created_status)
+					|| (taskwait->_status == finished_status)
+					|| (taskwait->_status == deleted_status)
+				) {
+					if (_showDeadDependencies) {
+						ofs << " style=\"dashed\"";
+					} else {
+						ofs << " style=\"invis\"";
+					}
+				}
+				
+				ofs << " ]"
+#ifndef NDEBUG
+					<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+					<< std::endl;
 			}
 			
 			if (!_showDependencyStructures) {
@@ -1046,6 +1162,71 @@ namespace Instrument {
 			} // For each task group
 			
 		} // For each task
+		
+		for (auto &taskwaitIdAndTaskwait : _taskwaitToInfoMap) {
+			taskwait_t *taskwait = taskwaitIdAndTaskwait.second;
+			assert(taskwait != nullptr);
+			
+			if (taskwait->_immediateNextTaskwait == taskwait_id_t()) {
+				continue;
+			}
+			taskwait_t *immediateNextTaskwait = _taskwaitToInfoMap[taskwait->_immediateNextTaskwait];
+			assert(immediateNextTaskwait != nullptr);
+			
+			ofs << "\t";
+			if (taskwait->_if0Task != task_id_t()) {
+				dot_linking_labels const &if0TaskLinkingLabels = _taskToDotLinkingLabels[taskwait->_if0Task];
+				ofs << if0TaskLinkingLabels._inLabel;
+			} else {
+				ofs << "taskwait" << taskwait->_taskwaitId;
+			}
+			
+			ofs << " -> ";
+			
+			if (immediateNextTaskwait->_if0Task != task_id_t()) {
+				dot_linking_labels const &if0TaskLinkingLabels = _taskToDotLinkingLabels[immediateNextTaskwait->_if0Task];
+				ofs << if0TaskLinkingLabels._inLabel;
+			} else {
+				ofs << "taskwait" << immediateNextTaskwait->_taskwaitId;
+			}
+			
+			ofs << " [";
+			
+			if (taskwait->_if0Task != task_id_t()) {
+				dot_linking_labels const &if0TaskLinkingLabels = _taskToDotLinkingLabels[taskwait->_if0Task];
+				if (if0TaskLinkingLabels._nodeLabel != if0TaskLinkingLabels._inLabel) {
+					ofs << " ltail=\"" << if0TaskLinkingLabels._nodeLabel << "\"";
+				}
+			}
+			
+			if (immediateNextTaskwait->_if0Task != task_id_t()) {
+				dot_linking_labels const &if0TaskLinkingLabels = _taskToDotLinkingLabels[immediateNextTaskwait->_if0Task];
+				if (if0TaskLinkingLabels._nodeLabel != if0TaskLinkingLabels._inLabel) {
+					ofs << " lhead=\"" << if0TaskLinkingLabels._nodeLabel << "\"";
+				}
+			}
+			
+			if (
+				(immediateNextTaskwait->_status == not_created_status)
+				|| (immediateNextTaskwait->_status == finished_status)
+				|| (immediateNextTaskwait->_status == deleted_status)
+				|| (taskwait->_status == not_created_status)
+				|| (taskwait->_status == finished_status)
+				|| (taskwait->_status == deleted_status)
+			) {
+				if (_showDeadDependencies) {
+					ofs << " style=\"dashed\"";
+				} else {
+					ofs << " style=\"invis\"";
+				}
+			}
+			
+			ofs << " ]"
+#ifndef NDEBUG
+				<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+				<< std::endl;
+		}
 	}
 	
 	
@@ -1175,6 +1356,9 @@ namespace Instrument {
 		
 		// Derive the actual edges from the access links
 		generateEdges();
+		
+		// Find out the fencing relations between tasks and taskwaits
+		generateTaskwaitRelations();
 		
 		// Find the longest dependency paths for layout reasons
 		findTopmostTasksAndPathLengths(0);

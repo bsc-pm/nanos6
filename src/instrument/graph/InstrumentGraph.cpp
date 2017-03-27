@@ -3,9 +3,9 @@
 
 namespace Instrument {
 	namespace Graph {
-		std::map<taskwait_id_t, taskwait_status_t> _taskwaitStatus;
+		std::map<taskwait_id_t, taskwait_t *> _taskwaitToInfoMap;
 		
-		std::atomic<taskwait_id_t> _nextTaskwaitId(1);
+		std::atomic<taskwait_id_t::inner_type_t> _nextTaskwaitId(1);
 		std::atomic<task_id_t::inner_type_t> _nextTaskId(0);
 		std::atomic<usermutex_id_t> _nextUsermutexId(0);
 		std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId(1);

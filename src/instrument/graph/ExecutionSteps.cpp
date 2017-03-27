@@ -91,9 +91,11 @@ namespace Instrument {
 				return;
 			}
 			
-			taskwait_status_t &taskwaitStatus = _taskwaitStatus[_taskwaitId];
-			taskwaitStatus._status = started_status;
-			taskwaitStatus._lastCPU = _cpu;
+			taskwait_t *taskwait = _taskwaitToInfoMap[_taskwaitId];
+			assert(taskwait != nullptr);
+			
+			taskwait->_status = started_status;
+			taskwait->_lastCPU = _cpu;
 			
 			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
 			assert(taskInfo._status == started_status);
@@ -128,9 +130,11 @@ namespace Instrument {
 				return;
 			}
 			
-			taskwait_status_t &taskwaitStatus = _taskwaitStatus[_taskwaitId];
-			taskwaitStatus._status = finished_status;
-			taskwaitStatus._lastCPU =_cpu;
+			taskwait_t *taskwait = _taskwaitToInfoMap[_taskwaitId];
+			assert(taskwait != nullptr);
+			
+			taskwait->_status = finished_status;
+			taskwait->_lastCPU =_cpu;
 			
 			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
 			assert(taskInfo._status == blocked_status);

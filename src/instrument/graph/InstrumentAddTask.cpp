@@ -84,6 +84,8 @@ namespace Instrument {
 		}
 		taskInfo._status = not_created_status; // The simulation comes afterwards
 		
+		taskInfo._isIf0 = task->isIf0();
+		
 		if (parentTask != nullptr) {
 			task_id_t parentTaskId = parentTask->getInstrumentationTaskId();
 			task_info_t &parentInfo = _taskToInfoMap[parentTaskId];
@@ -91,16 +93,22 @@ namespace Instrument {
 			parentInfo._hasChildren = true;
 			
 			task_group_t *taskGroup = nullptr;
-			if (!parentInfo._phaseList.empty()) {
-				phase_t *lastPhase = parentInfo._phaseList.back();
-				taskGroup = dynamic_cast<task_group_t *>(lastPhase);
-			}
-			
-			if (taskGroup == nullptr) {
+			if (parentInfo._phaseList.empty()) {
 				taskGroup = new task_group_t(_nextTaskwaitId++);
 				parentInfo._phaseList.push_back(taskGroup);
+			} else {
+				phase_t *currentPhase = parentInfo._phaseList.back();
+				
+				taskGroup = dynamic_cast<task_group_t *> (currentPhase);
+				if (taskGroup == nullptr) {
+					// First task after a taskwait
+					taskGroup = new task_group_t(_nextTaskwaitId++);
+					parentInfo._phaseList.push_back(taskGroup);
+				}
 			}
-			assert(taskGroup != nullptr);
+			
+			size_t taskGroupPhaseIndex = parentInfo._phaseList.size() - 1;
+			taskInfo._taskGroupPhaseIndex = taskGroupPhaseIndex;
 			
 			taskGroup->_children.insert(taskId);
 		}

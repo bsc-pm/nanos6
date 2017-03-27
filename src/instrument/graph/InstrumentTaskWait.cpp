@@ -31,15 +31,16 @@ namespace Instrument {
 			cpuId = cpu->_virtualCPUId;
 		}
 		
-		taskwait_id_t taskwaitId = _nextTaskwaitId++;
-		
-		taskwait_t *taskwait = new taskwait_t(taskwaitId, invocationSource);
-		enter_taskwait_step_t *enterTaskwaitStep = new enter_taskwait_step_t(cpuId, threadId, taskwaitId, taskId);
-		
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
 		
-		taskInfo._phaseList.push_back(taskwait);
+		taskwait_id_t taskwaitId = _nextTaskwaitId++;
+		taskwait_t *taskwait = new taskwait_t(taskwaitId, invocationSource, if0TaskId);
+		taskwait->_task = taskId;
+		taskwait->_taskPhaseIndex = taskInfo._phaseList.size();
+		_taskwaitToInfoMap[taskwaitId] = taskwait;
 		
+		enter_taskwait_step_t *enterTaskwaitStep = new enter_taskwait_step_t(cpuId, threadId, taskwaitId, taskId);
+		taskInfo._phaseList.push_back(taskwait);
 		_executionSequence.push_back(enterTaskwaitStep);
 	}
 	
