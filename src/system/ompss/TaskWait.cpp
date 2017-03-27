@@ -24,7 +24,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	assert(currentTask != nullptr);
 	assert(currentTask->getThread() == currentThread);
 	
-	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource);
+	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource, Instrument::task_id_t());
 	
 	// Fast check
 	if (currentTask->doesNotNeedToBlockForChildren()) {

@@ -26,7 +26,7 @@ namespace If0Task {
 		
 		CPU *cpu = static_cast<CPU *>(hardwarePlace);
 		
-		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source);
+		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		
@@ -47,7 +47,7 @@ namespace If0Task {
 		
 		bool hasCode = if0Task->hasCode();
 		
-		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source);
+		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		if (hasCode) {
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}

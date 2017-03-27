@@ -12,7 +12,8 @@
 namespace Instrument {
 	inline void enterTaskWait(
 		__attribute__((unused)) task_id_t taskId,
-		__attribute__((unused)) char const *invocationSource)
+		__attribute__((unused)) char const *invocationSource,
+		__attribute__((unused)) task_id_t if0TaskId)
 	{
 		extrae_combined_events_t ce;
 		

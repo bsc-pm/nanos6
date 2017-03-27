@@ -9,7 +9,7 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void enterTaskWait(task_id_t taskId, char const *invocationSource) {
+	void enterTaskWait(task_id_t taskId, char const *invocationSource, __attribute__((unused)) task_id_t if0TaskId) {
 		if (!_verboseTaskWait) {
 			return;
 		}

@@ -14,7 +14,7 @@ namespace Instrument {
 	using namespace Graph;
 	
 	
-	void enterTaskWait(task_id_t taskId, char const *invocationSource)
+	void enterTaskWait(task_id_t taskId, char const *invocationSource, task_id_t if0TaskId)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
