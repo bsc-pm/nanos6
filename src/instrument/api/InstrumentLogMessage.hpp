@@ -7,7 +7,7 @@
 
 namespace Instrument {
 	template<typename... TS>
-	void logMessage(InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent(), TS... components);
+	void logMessage(InstrumentationContext const &context /* = ThreadInstrumentationContext::getCurrent() */, TS... components);
 }
 
 
