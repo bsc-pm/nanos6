@@ -1,9 +1,9 @@
-#ifndef INSTRUMENT_CPU_ID_HPP
-#define INSTRUMENT_CPU_ID_HPP
+#ifndef INSTRUMENT_HARDWARE_PLACE_ID_HPP
+#define INSTRUMENT_HARDWARE_PLACE_ID_HPP
 
 
 namespace Instrument {
-	class cpu_id_t {
+	class hardware_place_id_t {
 	public:
 		typedef unsigned int inner_type_t;
 		
@@ -11,12 +11,12 @@ namespace Instrument {
 		inner_type_t _id;
 		
 	public:
-		cpu_id_t()
+		hardware_place_id_t()
 			: _id(~0)
 		{
 		}
 		
-		cpu_id_t(inner_type_t id)
+		hardware_place_id_t(inner_type_t id)
 			: _id(id)
 		{
 		}
@@ -36,7 +36,7 @@ namespace Instrument {
 			return (_id != other);
 		}
 		
-		bool operator<(cpu_id_t other)
+		bool operator<(hardware_place_id_t other)
 		{
 			return (_id < other._id);
 		}
@@ -45,4 +45,4 @@ namespace Instrument {
 }
 
 
-#endif // INSTRUMENT_CPU_ID_HPP
+#endif // INSTRUMENT_HARDWARE_PLACE_ID_HPP

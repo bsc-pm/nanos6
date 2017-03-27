@@ -1,5 +1,7 @@
 #include "InstrumentGraph.hpp"
 
+#include <InstrumentTaskId.hpp>
+
 
 namespace Instrument {
 	namespace Graph {

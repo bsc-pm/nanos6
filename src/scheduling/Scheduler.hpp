@@ -4,6 +4,8 @@
 
 #include "SchedulerInterface.hpp"
 
+#include "hardware/places/HardwarePlace.hpp"
+
 #include <InstrumentTaskStatus.hpp>
 #include <tasks/Task.hpp>
 

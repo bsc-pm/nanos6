@@ -3,28 +3,38 @@
 
 
 #include "../api/InstrumentTaskStatus.hpp"
-#include <InstrumentTaskId.hpp>
 
 
 namespace Instrument {
-	inline void taskIsPending(__attribute__((unused)) task_id_t taskId)
-	{
+	inline void taskIsPending(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
-	inline void taskIsReady(__attribute__((unused)) task_id_t taskId)
-	{
+	inline void taskIsReady(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
-	inline void taskIsExecuting(__attribute__((unused)) task_id_t taskId)
-	{
+	inline void taskIsExecuting(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
-	inline void taskIsBlocked(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) task_blocking_reason_t reason)
-	{
+	inline void taskIsBlocked(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) task_blocking_reason_t reason,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
-	inline void taskIsZombie(__attribute__((unused)) task_id_t taskId)
-	{
+	inline void taskIsZombie(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
 }

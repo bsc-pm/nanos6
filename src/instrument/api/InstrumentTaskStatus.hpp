@@ -2,7 +2,7 @@
 #define INSTRUMENT_TASK_STATUS_HPP
 
 
-#include <InstrumentTaskId.hpp>
+#include <InstrumentInstrumentationContext.hpp>
 
 
 namespace Instrument {
@@ -39,15 +39,15 @@ namespace Instrument {
 	
 	//! \brief Indicates that the task is currently pending, i.e. it has predecessors
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	void taskIsPending(task_id_t taskId);
+	void taskIsPending(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! \brief Indicates that the task is currently ready to be executed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	void taskIsReady(task_id_t taskId);
+	void taskIsReady(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! \brief Indicates that the task is currently being executed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	void taskIsExecuting(task_id_t taskId);
+	void taskIsExecuting(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! \brief Indicates that the task is currently blocked
 	//! 
@@ -55,11 +55,11 @@ namespace Instrument {
 	//! 
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	//! \param[in] reason the reason why the task gets blocked
-	void taskIsBlocked(task_id_t taskId, task_blocking_reason_t reason);
+	void taskIsBlocked(task_id_t taskId, task_blocking_reason_t reason, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! \brief Indicates that the task has finished and at some point will be destroyed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	void taskIsZombie(task_id_t taskId);
+	void taskIsZombie(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! NOTE: The next step would be a call to Instrument::destroyTask
 }

@@ -9,7 +9,6 @@
 #include "../api/InstrumentLogMessage.hpp"
 #include "InstrumentGraph.hpp"
 #include "InstrumentTaskId.hpp"
-#include "executors/threads/WorkerThread.hpp"
 
 #include "ExecutionSteps.hpp"
 
@@ -35,28 +34,14 @@ namespace Instrument {
 	
 	
 	template<typename... TS>
-	inline void logMessage(task_id_t triggererTaskId, TS... contents)
+	inline void logMessage(InstrumentationContext const &context, TS... contents)
 	{
 		std::ostringstream stream;
 		fillStream(stream, contents...);
 		
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		
 		std::lock_guard<SpinLock> guard(_graphLock);
-		thread_id_t threadId = 0;
-		if (currentThread != nullptr) {
-			threadId = currentThread->getInstrumentationId();
-		}
-		
-		size_t cpuId = 0;
-		if (currentThread != nullptr) {
-			CPU *cpu = (CPU *) currentThread->getHardwarePlace();
-			assert(cpu != nullptr);
-			cpuId = cpu->_virtualCPUId;
-		}
-		
 		log_message_step_t *step = new log_message_step_t(
-			cpuId, threadId, triggererTaskId,
+			context._hardwarePlaceId, context._threadId, context._taskId,
 			stream.str()
 		);
 		_executionSequence.push_back(step);

@@ -2,8 +2,6 @@
 #define WORKER_THREAD_HPP
 
 
-#include <InstrumentThreadId.hpp>
-
 #include "CPU.hpp"
 #include "EssentialThreadEnvironment.hpp"
 #include "Thread.hpp"
@@ -27,8 +25,6 @@ private:
 	
 	//! Indicates that it is time for this thread to participate in the shutdown process
 	std::atomic<bool> _mustShutDown;
-	
-	Instrument::thread_id_t _instrumentationId;
 	
 	//! Thread Local Storage variable to point back to the WorkerThread that is running the code
 	static __thread WorkerThread *_currentWorkerThread;
@@ -87,11 +83,6 @@ public:
 	inline bool hasPendingShutdown()
 	{
 		return _mustShutDown;
-	}
-	
-	Instrument::thread_id_t getInstrumentationId() const
-	{
-		return _instrumentationId;
 	}
 	
 	//! \brief returns the WorkerThread that runs the call

@@ -4,19 +4,20 @@
 
 #include "../api/InstrumentTaskWait.hpp"
 
-#include <InstrumentTaskId.hpp>
 
 
 namespace Instrument {
 	inline void enterTaskWait(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) char const *invocationSource,
-		__attribute__((unused)) task_id_t if0TaskId)
-	{
+		__attribute__((unused)) task_id_t if0TaskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
-	inline void exitTaskWait(__attribute__((unused)) task_id_t taskId)
-	{
+	inline void exitTaskWait(__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
 }

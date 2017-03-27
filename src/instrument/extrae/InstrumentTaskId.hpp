@@ -23,6 +23,13 @@ namespace Instrument {
 		{
 			_taskId = _nextTaskId++;
 		}
+		
+		
+		bool operator==(task_id_t const &other) const
+		{
+			return (_taskInfo == other._taskInfo);
+		}
+		
 	};
 }
 

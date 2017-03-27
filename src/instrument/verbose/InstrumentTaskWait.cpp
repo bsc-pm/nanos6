@@ -2,14 +2,13 @@
 
 #include "InstrumentTaskWait.hpp"
 #include "InstrumentVerbose.hpp"
-#include "executors/threads/WorkerThread.hpp"
 
 
 using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void enterTaskWait(task_id_t taskId, char const *invocationSource, __attribute__((unused)) task_id_t if0TaskId) {
+	void enterTaskWait(task_id_t taskId, char const *invocationSource, __attribute__((unused)) task_id_t if0TaskId, InstrumentationContext const &context) {
 		if (!_verboseTaskWait) {
 			return;
 		}
@@ -17,20 +16,14 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " --> TaskWait " << (invocationSource ? invocationSource : "") << " task:" << taskId;
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void exitTaskWait(task_id_t taskId) {
+	void exitTaskWait(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskWait) {
 			return;
 		}
@@ -38,13 +31,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-- TaskWait task:" << taskId;
 		
 		addLogEntry(logEntry);

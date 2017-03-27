@@ -6,14 +6,14 @@
 #include <InstrumentTaskExecution.hpp>
 
 #include "InstrumentExtrae.hpp"
-#include <InstrumentTaskId.hpp>
 
 
 namespace Instrument {
 	inline void enterTaskWait(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) char const *invocationSource,
-		__attribute__((unused)) task_id_t if0TaskId)
+		__attribute__((unused)) task_id_t if0TaskId,
+		__attribute__((unused)) InstrumentationContext const &context)
 	{
 		extrae_combined_events_t ce;
 		
@@ -39,9 +39,11 @@ namespace Instrument {
 	}
 	
 	
-	inline void exitTaskWait(__attribute__((unused)) task_id_t taskId)
+	inline void exitTaskWait(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context)
 	{
-		returnToTask(taskId, /* UNUSED */ cpu_id_t(), /* UNUSED */ thread_id_t());
+		returnToTask(taskId, context);
 	}
 	
 }

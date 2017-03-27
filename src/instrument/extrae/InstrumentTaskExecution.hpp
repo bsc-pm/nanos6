@@ -4,14 +4,15 @@
 
 #include "../api/InstrumentTaskExecution.hpp"
 #include "InstrumentExtrae.hpp"
-#include <InstrumentTaskId.hpp>
 
 #include <cassert>
 
 
 namespace Instrument {
-	inline void startTask(task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
-	{
+	inline void startTask(
+		task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 		extrae_combined_events_t ce;
 
 		ce.HardwareCounters = 1;
@@ -47,8 +48,10 @@ namespace Instrument {
 	}
 	
 	
-	inline void returnToTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
-	{
+	inline void returnToTask(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -73,8 +76,10 @@ namespace Instrument {
 	}
 	
 	
-	inline void endTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
-	{
+	inline void endTask(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -111,8 +116,10 @@ namespace Instrument {
 	}
 	
 	
-	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
-	{
+	inline void destroyTask(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 }
 

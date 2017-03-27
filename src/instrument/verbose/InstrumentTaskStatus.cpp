@@ -1,15 +1,16 @@
 #include <cassert>
 
+#include <InstrumentInstrumentationContext.hpp>
+
 #include "InstrumentTaskStatus.hpp"
 #include "InstrumentVerbose.hpp"
-#include "executors/threads/WorkerThread.hpp"
 
 
 using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void taskIsPending(task_id_t taskId) {
+	void taskIsPending(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskStatus) {
 			return;
 		}
@@ -17,20 +18,14 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:pending";
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void taskIsReady(task_id_t taskId) {
+	void taskIsReady(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskStatus) {
 			return;
 		}
@@ -38,20 +33,14 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:ready";
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void taskIsExecuting(task_id_t taskId) {
+	void taskIsExecuting(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskStatus) {
 			return;
 		}
@@ -59,20 +48,14 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:executing";
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void taskIsBlocked(task_id_t taskId, task_blocking_reason_t reason) {
+	void taskIsBlocked(task_id_t taskId, task_blocking_reason_t reason, InstrumentationContext const &context) {
 		if (!_verboseTaskStatus) {
 			return;
 		}
@@ -80,13 +63,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:blocked";
 		logEntry->_contents << " reason:";
 		switch (reason) {
@@ -105,7 +82,7 @@ namespace Instrument {
 	}
 	
 	
-	void taskIsZombie(task_id_t taskId) {
+	void taskIsZombie(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskStatus) {
 			return;
 		}
@@ -113,13 +90,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:zombie";
 		
 		addLogEntry(logEntry);

@@ -3,7 +3,6 @@
 
 #include "InstrumentAddTask.hpp"
 #include "InstrumentVerbose.hpp"
-#include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -11,7 +10,10 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	task_id_t enterAddTask(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo, __attribute__((unused)) size_t flags) {
+	task_id_t enterAddTask(
+		nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo, __attribute__((unused)) size_t flags,
+		InstrumentationContext const &context
+	) {
 		static std::atomic<task_id_t::inner_type_t> _nextTaskId(0);
 		
 		if (!_verboseAddTask) {
@@ -22,12 +24,8 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		task_id_t taskId = _nextTaskId++;
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
+		
 		logEntry->_contents << " --> AddTask " << taskId;
 		if (taskInfo && taskInfo->task_label) {
 			logEntry->_contents << " " << taskInfo->task_label;
@@ -42,7 +40,11 @@ namespace Instrument {
 	}
 	
 	
-	void createdTask(void *taskObject, task_id_t taskId) {
+	void createdTask(
+		void *taskObject,
+		task_id_t taskId,
+		InstrumentationContext const &context
+	) {
 		if (!_verboseAddTask) {
 			return;
 		}
@@ -52,13 +54,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " --- AddTask: created " << taskId << " object:" << task;
 		if (task->getParent() != nullptr) {
 			logEntry->_contents << " parent:" << task->getParent()->getInstrumentationTaskId();
@@ -68,7 +64,10 @@ namespace Instrument {
 	}
 	
 	
-	void exitAddTask(task_id_t taskId) {
+	void exitAddTask(
+		task_id_t taskId,
+		InstrumentationContext const &context
+	) {
 		if (!_verboseAddTask) {
 			return;
 		}
@@ -76,13 +75,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-- AddTask " << taskId;
 		
 		addLogEntry(logEntry);

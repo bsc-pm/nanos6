@@ -2,9 +2,7 @@
 #define INSTRUMENT_THREAD_MANAGEMENT_HPP
 
 
-#include <InstrumentThreadId.hpp>
-
-#include "InstrumentCPUId.hpp"
+#include <InstrumentInstrumentationContext.hpp>
 
 
 namespace Instrument {
@@ -13,8 +11,8 @@ namespace Instrument {
 	//! be used to identify it throughout the rest of the instrumentation API.
 	thread_id_t createdThread();
 	
-	void threadWillSuspend(thread_id_t threadId, cpu_id_t cpu);
-	void threadHasResumed(thread_id_t threadId, cpu_id_t cpu);
+	void threadWillSuspend(thread_id_t threadId, hardware_place_id_t cpu);
+	void threadHasResumed(thread_id_t threadId, hardware_place_id_t cpu);
 }
 
 

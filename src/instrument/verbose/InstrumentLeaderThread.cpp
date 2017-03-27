@@ -1,8 +1,10 @@
 #include <cassert>
 
+#include <InstrumentInstrumentationContext.hpp>
+
 #include "InstrumentLeaderThread.hpp"
 #include "InstrumentVerbose.hpp"
-#include "executors/threads/WorkerThread.hpp"
+
 #include "lowlevel/SpinLock.hpp"
 #include "system/LeaderThread.hpp"
 
@@ -19,7 +21,7 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void leaderThreadSpin() {
+	void leaderThreadSpin(InstrumentationContext const &context) {
 		static SpinLock lock;
 		
 		// This is needed since this method can be called by a regular thread on abort
@@ -30,13 +32,7 @@ namespace Instrument {
 			LogEntry *logEntry = getLogEntry();
 			assert(logEntry != nullptr);
 			
-			WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-			
-			if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-			} else {
-				logEntry->_contents << "Thread:external CPU:ANY";
-			}
+			logEntry->appendLocation(context);
 			logEntry->_contents << " --- LeaderThreadSpin";
 			
 			addLogEntry(logEntry);

@@ -3,7 +3,6 @@
 
 
 #include "../api/InstrumentAddTask.hpp"
-#include <InstrumentTaskId.hpp>
 #include "InstrumentExtrae.hpp"
 
 #include <cassert>
@@ -17,7 +16,8 @@ namespace Instrument {
 	inline task_id_t enterAddTask(
 		nanos_task_info *taskInfo,
 		__attribute__((unused)) nanos_task_invocation_info *taskInvokationInfo,
-		__attribute__((unused)) size_t flags
+		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		extrae_combined_events_t ce;
 		
@@ -56,12 +56,12 @@ namespace Instrument {
 	}
 	
 	
-	inline void createdTask(__attribute__((unused)) void *task, __attribute__((unused)) task_id_t taskId)
+	inline void createdTask(__attribute__((unused)) void *task, __attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
 	
 	
-	inline void exitAddTask(__attribute__((unused)) task_id_t taskId)
+	inline void exitAddTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 		extrae_combined_events_t ce;
 		

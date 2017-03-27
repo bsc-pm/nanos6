@@ -1,15 +1,19 @@
 #include <cassert>
 
+#include <InstrumentInstrumentationContext.hpp>
+
 #include "InstrumentDependenciesByAccess.hpp"
 #include "InstrumentVerbose.hpp"
-#include "executors/threads/WorkerThread.hpp"
 
 
 using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void registerTaskAccess(task_id_t taskId, DataAccessType accessType, bool weak, void *start, size_t length) {
+	void registerTaskAccess(
+		task_id_t taskId, DataAccessType accessType, bool weak, void *start, size_t length,
+		InstrumentationContext const &context
+	) {
 		if (!_verboseDependenciesByAccess) {
 			return;
 		}
@@ -17,13 +21,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> RegisterTaskAccess Task:" << taskId << " ";
 		
 		if (weak) {

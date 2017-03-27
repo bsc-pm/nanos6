@@ -3,7 +3,6 @@
 
 #include "InstrumentDependenciesByAccessLinks.hpp"
 #include "InstrumentVerbose.hpp"
-#include "executors/threads/WorkerThread.hpp"
 
 
 using namespace Instrument::Verbose;
@@ -16,7 +15,8 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRange range,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
-		task_id_t originatorTaskId
+		task_id_t originatorTaskId,
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return data_access_id_t();
@@ -27,13 +27,7 @@ namespace Instrument {
 		
 		data_access_id_t id = _nextDataAccessId++;
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> CreateDataAccess " << id << " superaccess:" << superAccessId << " ";
 		
 		if (weak) {
@@ -84,7 +78,7 @@ namespace Instrument {
 		DataAccessType newAccessType,
 		bool newWeakness,
 		bool becomesUnsatisfied,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -93,13 +87,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> UpgradeDataAccess " << dataAccessId;
 		
 		logEntry->_contents << " ";
@@ -150,7 +138,7 @@ namespace Instrument {
 			logEntry->_contents << " satisfied->unsatisfied";
 		}
 		
-		logEntry->_contents << " triggererTask:" << triggererTaskId;
+		logEntry->_contents << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -159,8 +147,8 @@ namespace Instrument {
 	void dataAccessBecomesSatisfied(
 		data_access_id_t dataAccessId,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
-		task_id_t triggererTaskId,
-		task_id_t targetTaskId
+		task_id_t targetTaskId,
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -169,14 +157,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> DataAccessBecomesSatisfied " << dataAccessId << " triggererTask:" << triggererTaskId << " targetTask:" << targetTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> DataAccessBecomesSatisfied " << dataAccessId << " triggererTask:" << context._taskId << " targetTask:" << targetTaskId;
 		
 		if (readSatisfied) {
 			logEntry->_contents << " +read_safistied";
@@ -198,7 +180,7 @@ namespace Instrument {
 	void modifiedDataAccessRange(
 		data_access_id_t dataAccessId,
 		DataAccessRange newRange,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -207,14 +189,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> ModifiedDataAccessRange " << dataAccessId << " newRange:" << newRange << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> ModifiedDataAccessRange " << dataAccessId << " newRange:" << newRange << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -223,7 +199,7 @@ namespace Instrument {
 	data_access_id_t fragmentedDataAccess(
 		data_access_id_t dataAccessId,
 		DataAccessRange newRange,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return data_access_id_t();
@@ -234,14 +210,8 @@ namespace Instrument {
 		
 		data_access_id_t id = _nextDataAccessId++;
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> FragmentedDataAccess " << dataAccessId << " newFragment:" << id << " newRange:" << newRange << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> FragmentedDataAccess " << dataAccessId << " newFragment:" << id << " newRange:" << newRange << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 		
@@ -251,7 +221,7 @@ namespace Instrument {
 	
 	data_access_id_t createdDataSubaccessFragment(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return data_access_id_t();
@@ -262,14 +232,8 @@ namespace Instrument {
 		
 		data_access_id_t id = _nextDataAccessId++;
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> CreatedDataSubaccessFragment " << dataAccessId << " newSubaccessFragment:" << id << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> CreatedDataSubaccessFragment " << dataAccessId << " newSubaccessFragment:" << id << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 		
@@ -279,7 +243,7 @@ namespace Instrument {
 	
 	void completedDataAccess(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -288,14 +252,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> CompletedDataAccess " << dataAccessId << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> CompletedDataAccess " << dataAccessId << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -303,7 +261,7 @@ namespace Instrument {
 	
 	void dataAccessBecomesRemovable(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -312,14 +270,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> DataAccessBecomesRemovable " << dataAccessId << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> DataAccessBecomesRemovable " << dataAccessId << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -327,7 +279,7 @@ namespace Instrument {
 	
 	void removedDataAccess(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -336,14 +288,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> RemoveDataAccess " << dataAccessId << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> RemoveDataAccess " << dataAccessId << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -355,7 +301,7 @@ namespace Instrument {
 		DataAccessRange range,
 		bool direct,
 		__attribute__((unused)) bool bidirectional,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -364,14 +310,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << " [" << range << "]" << (direct ? " direct" : "indirect") << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << " [" << range << "]" << (direct ? " direct" : "indirect") << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -381,7 +321,7 @@ namespace Instrument {
 		data_access_id_t sourceAccessId,
 		task_id_t sinkTaskId,
 		bool direct,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -390,14 +330,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> UnlinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << (direct ? " direct" : "indirect") << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> UnlinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << (direct ? " direct" : "indirect") << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -407,7 +341,7 @@ namespace Instrument {
 		data_access_id_t oldSuperAccessId,
 		data_access_id_t newSuperAccessId,
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -416,14 +350,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> ReplaceSuperAccess " << dataAccessId << " " << oldSuperAccessId << "->" << newSuperAccessId << " triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> ReplaceSuperAccess " << dataAccessId << " " << oldSuperAccessId << "->" << newSuperAccessId << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -433,7 +361,7 @@ namespace Instrument {
 		data_access_id_t dataAccessId,
 		char const *shortPropertyName,
 		char const *longPropertyName,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
 			return;
@@ -442,14 +370,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		logEntry->_contents << " <-> DataAccessNewProperty " << dataAccessId << " " << longPropertyName << " (" << shortPropertyName << ") triggererTask:" << triggererTaskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> DataAccessNewProperty " << dataAccessId << " " << longPropertyName << " (" << shortPropertyName << ") triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}

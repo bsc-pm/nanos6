@@ -38,12 +38,15 @@ namespace If0Task {
 	}
 	
 	
-	inline void executeInline(WorkerThread *currentThread, Task *currentTask, Task *if0Task)
-	{
+	inline void executeInline(
+		WorkerThread *currentThread, Task *currentTask, Task *if0Task,
+		__attribute__((unused)) HardwarePlace *hardwarePlace
+	) {
 		assert(currentThread != nullptr);
 		assert(currentTask != nullptr);
 		assert(if0Task != nullptr);
 		assert(if0Task->getParent() == currentTask);
+		assert(hardwarePlace != nullptr);
 		
 		bool hasCode = if0Task->hasCode();
 		
@@ -62,8 +65,10 @@ namespace If0Task {
 	}
 	
 	
-	inline void executeNonInline(WorkerThread *currentThread, Task *if0Task, HardwarePlace *hardwarePlace)
-	{
+	inline void executeNonInline(
+		WorkerThread *currentThread, Task *if0Task,
+		__attribute__((unused)) HardwarePlace *hardwarePlace
+	) {
 		assert(currentThread != nullptr);
 		assert(if0Task != nullptr);
 		assert(hardwarePlace != nullptr);

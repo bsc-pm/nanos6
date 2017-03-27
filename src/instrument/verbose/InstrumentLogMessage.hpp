@@ -5,7 +5,6 @@
 #include <cassert>
 
 #include "../api/InstrumentLogMessage.hpp"
-#include "executors/threads/WorkerThread.hpp"
 
 #include "InstrumentVerbose.hpp"
 
@@ -31,21 +30,15 @@ namespace Instrument {
 	
 	
 	template<typename... TS>
-	inline void logMessage(task_id_t triggererTaskId, TS... contents)
+	void logMessage(InstrumentationContext const &context, TS... contents)
 	{
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
+		logEntry->appendLocation(context);
 		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:leader/unknown";
-		}
-		
-		if (triggererTaskId != task_id_t()) {
-			logEntry->_contents << " Task:" << triggererTaskId;
+		if (context._taskId != task_id_t()) {
+			logEntry->_contents << " Task:" << context._taskId;
 		}
 		
 		logEntry->_contents << " ";

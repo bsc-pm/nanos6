@@ -2,12 +2,12 @@
 #define INSTRUMENT_LOG_MESSAGE_HPP
 
 
-#include <InstrumentTaskId.hpp>
+#include <InstrumentInstrumentationContext.hpp>
 
 
 namespace Instrument {
 	template<typename... TS>
-	void logMessage(task_id_t triggererTaskId, TS... components);
+	void logMessage(InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent(), TS... components);
 }
 
 
