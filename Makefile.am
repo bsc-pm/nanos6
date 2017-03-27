@@ -56,21 +56,16 @@ common_sources = \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/HardwarePlace.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
-	src/instrument/api/InstrumentAddTask.hpp \
 	src/instrument/api/InstrumentDependenciesByAccess.hpp \
 	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/api/InstrumentDependenciesByGroup.hpp \
 	src/instrument/api/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
-	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
 	src/instrument/api/InstrumentTaskExecution.hpp \
-	src/instrument/api/InstrumentTaskExecution.hpp \
 	src/instrument/api/InstrumentTaskStatus.hpp \
 	src/instrument/api/InstrumentTaskWait.hpp \
-	src/instrument/api/InstrumentTaskWait.hpp \
-	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.cpp \
