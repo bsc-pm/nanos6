@@ -42,7 +42,7 @@ struct CPUDependencyData {
 	typedef std::deque<Task *> satisfied_originator_list_t;
 	typedef std::deque<Task *> removable_task_list_t;
 	
-	//! Tasks whose accesses have been satified after ending a task
+	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators;
 	delayed_operations_t _delayedOperations;
 	removable_task_list_t _removableTasks;
