@@ -50,6 +50,14 @@ struct CPUDependencyData {
 #ifndef NDEBUG
 	std::atomic<bool> _inUse;
 #endif
+	
+	CPUDependencyData()
+		: _satisfiedOriginators(), _delayedOperations(), _removableTasks()
+#ifndef NDEBUG
+		, _inUse(false)
+#endif
+	{
+	}
 };
 
 
