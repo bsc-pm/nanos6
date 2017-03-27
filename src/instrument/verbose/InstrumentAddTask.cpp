@@ -11,7 +11,7 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	task_id_t enterAddTask(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo) {
+	task_id_t enterAddTask(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo, __attribute__((unused)) size_t flags) {
 		static std::atomic<task_id_t::inner_type_t> _nextTaskId(0);
 		
 		if (!_verboseAddTask) {

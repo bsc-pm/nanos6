@@ -13,7 +13,7 @@ namespace Instrument {
 	//! This function is called right after entering the runtime and must
 	//! return an instrumentation-specific task identifier.
 	//! The other 2 functions will also be called by the same thread sequentially.
-	task_id_t enterAddTask(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo);
+	task_id_t enterAddTask(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo, size_t flags);
 	
 	//! This function is called after having created the Task object and before the
 	//! task can be executed.

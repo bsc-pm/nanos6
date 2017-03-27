@@ -33,7 +33,7 @@ void nanos_create_task(
 	void **task_pointer,
 	size_t flags
 ) {
-	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo);
+	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);

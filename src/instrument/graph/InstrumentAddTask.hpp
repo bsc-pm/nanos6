@@ -8,7 +8,7 @@
 
 
 namespace Instrument {
-	task_id_t enterAddTask(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo);
+	task_id_t enterAddTask(nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo, size_t flags);
 	void createdTask(void *task, task_id_t taskId);
 	void exitAddTask(task_id_t taskId);
 }
