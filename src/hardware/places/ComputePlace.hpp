@@ -1,6 +1,9 @@
 #ifndef COMPUTE_PLACE_HPP
 #define COMPUTE_PLACE_HPP
 
+#include <InstrumentHardwarePlaceId.hpp>
+#include "CPUDependencyData.hpp"
+
 #include <map>
 #include <vector>
 
@@ -15,6 +18,10 @@ private:
 protected:
     //ComputePlace * _parent;
     int _index;	
+
+    Instrument::hardware_place_id_t _instrumentationId;
+
+    CPUDependencyData _dependencyData;
 
 public:
     void *_schedulerData;
@@ -36,6 +43,21 @@ public:
 	void addMemoryPlace(MemoryPlace* mem);
 	std::vector<int> getMemoryPlacesIndexes();
 	std::vector<MemoryPlace*> getMemoryPlaces();
+
+	void setInstrumentationId(Instrument::hardware_place_id_t const &instrumentationId)
+	{
+		_instrumentationId = instrumentationId;
+	}
+	
+	Instrument::hardware_place_id_t const &getInstrumentationId() const
+	{
+		return _instrumentationId;
+	}
+	
+	CPUDependencyData &getDependencyData()
+	{
+		return _dependencyData;
+	}
 	
 };
 

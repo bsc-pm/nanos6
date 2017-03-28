@@ -4,9 +4,6 @@
 
 #include <InstrumentTaskExecution.hpp>
 
-#include "executors/threads/CPU.hpp"
-#include "executors/threads/WorkerThread.hpp"
-
 #include <cassert>
 
 
@@ -14,53 +11,26 @@ namespace Instrument {
 	using namespace Graph;
 	
 	
-	void enterTaskWait(task_id_t taskId, char const *invocationSource)
+	void enterTaskWait(task_id_t taskId, char const *invocationSource, task_id_t if0TaskId, InstrumentationContext const &context)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		
-		thread_id_t threadId = 0;
-		if (currentThread != nullptr) {
-			threadId = currentThread->getInstrumentationId();
-		}
-		
-		long cpuId = -2;
-		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->getComputePlace();
-			assert(cpu != nullptr);
-			cpuId = cpu->_virtualCPUId;
-		}
-		
-		taskwait_id_t taskwaitId = _nextTaskwaitId++;
-		
-		taskwait_t *taskwait = new taskwait_t(taskwaitId, invocationSource);
-		enter_taskwait_step_t *enterTaskwaitStep = new enter_taskwait_step_t(cpuId, threadId, taskwaitId, taskId);
-		
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
 		
-		taskInfo._phaseList.push_back(taskwait);
+		taskwait_id_t taskwaitId = _nextTaskwaitId++;
+		taskwait_t *taskwait = new taskwait_t(taskwaitId, invocationSource, if0TaskId);
+		taskwait->_task = taskId;
+		taskwait->_taskPhaseIndex = taskInfo._phaseList.size();
+		_taskwaitToInfoMap[taskwaitId] = taskwait;
 		
+		enter_taskwait_step_t *enterTaskwaitStep = new enter_taskwait_step_t(context._hardwarePlaceId, context._threadId, taskwaitId, taskId);
+		taskInfo._phaseList.push_back(taskwait);
 		_executionSequence.push_back(enterTaskwaitStep);
 	}
 	
 	
-	void exitTaskWait(task_id_t taskId)
+	void exitTaskWait(task_id_t taskId, InstrumentationContext const &context)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		
-		thread_id_t threadId = 0;
-		if (currentThread != nullptr) {
-			threadId = currentThread->getInstrumentationId();
-		}
-		
-		long cpuId = -2;
-		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->getComputePlace();
-			assert(cpu != nullptr);
-			cpuId = cpu->_virtualCPUId;
-		}
-		
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
 		
 		assert(!taskInfo._phaseList.empty());
@@ -69,7 +39,7 @@ namespace Instrument {
 		assert(taskwait != nullptr);
 		taskwait_id_t taskwaitId = taskwait->_taskwaitId;
 		
-		exit_taskwait_step_t *exitTaskwaitStep = new exit_taskwait_step_t(cpuId, threadId, taskwaitId, taskId);
+		exit_taskwait_step_t *exitTaskwaitStep = new exit_taskwait_step_t(context._hardwarePlaceId, context._threadId, taskwaitId, taskId);
 		_executionSequence.push_back(exitTaskwaitStep);
 		
 		// Instead of calling to Instrument::returnToTask we later on reuse the exitTaskwaitStep to also reactivate the task

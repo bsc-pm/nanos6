@@ -29,6 +29,7 @@ class Task {
 private:
 	enum {
 		final_flag=0,
+		if0_flag,
 		total_flags
 	};
 	typedef std::bitset<total_flags> flags_t;
@@ -118,10 +119,18 @@ public:
 	//! Actual code of the task
 	inline void body()
 	{
+		assert(hasCode());
 		assert(_taskInfo != nullptr);
+		
 		_taskInfo->run(_argsBlock);
 	}
 	
+	//! Check if the task has an actual body
+	inline bool hasCode()
+	{
+		assert(_taskInfo != nullptr);
+		return (_taskInfo->run != nullptr);
+	}
 	
 	//! \brief sets the thread assigned to tun the task
 	//!
@@ -293,10 +302,21 @@ public:
 	{
 		_flags[final_flag] = finalValue;
 	}
-	//! \brief Check if tha task is final
+	//! \brief Check if the task is final
 	bool isFinal() const
 	{
 		return _flags[final_flag];
+	}
+	
+	//! \brief Set or unset the if0 flag
+	void setIf0(bool if0Value)
+	{
+		_flags[if0_flag] = if0Value;
+	}
+	//! \brief Check if the task is in if0 mode
+	bool isIf0() const
+	{
+		return _flags[if0_flag];
 	}
 	
 	//! \brief Retrieve the instrumentation-specific task identifier

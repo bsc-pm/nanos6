@@ -1,9 +1,11 @@
 #ifndef TASK_FINALIZATION_HPP
 #define TASK_FINALIZATION_HPP
 
-#include "InstrumentTaskExecution.hpp"
+#include <InstrumentHardwarePlaceId.hpp>
+#include <InstrumentTaskExecution.hpp>
+#include <InstrumentThreadId.hpp>
 
-#include "CPU.hpp"
+#include "hardware/places/ComputePlace.hpp"
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/SpawnFunction.hpp"
@@ -13,7 +15,7 @@
 
 class TaskFinalization {
 public:
-	static void disposeOrUnblockTask(Task *task, CPU *cpu, WorkerThread *thread)
+	static void disposeOrUnblockTask(Task *task, ComputePlace *hardwarePlace)
 	{
 		bool readyOrDisposable = true;
 		
@@ -23,11 +25,7 @@ public:
 			
 			if (task->hasFinished()) {
 				readyOrDisposable = task->unlinkFromParent();
-				Instrument::destroyTask(
-					task->getInstrumentationTaskId(),
-					(cpu != nullptr ? cpu->_virtualCPUId : ~0UL),
-					(thread != nullptr ? thread->getInstrumentationId() : Instrument::thread_id_t())
-				);
+				Instrument::destroyTask(task->getInstrumentationTaskId());
 				// NOTE: The memory layout is defined in nanos_create_task
 				task->~Task();
 				free(task->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here
@@ -39,7 +37,7 @@ public:
 				}
 			} else {
 				// An ancestor in a taskwait that finishes at this point
-				Scheduler::taskGetsUnblocked(task, cpu);
+				Scheduler::taskGetsUnblocked(task, hardwarePlace);
 				readyOrDisposable = false;
 			}
 		}

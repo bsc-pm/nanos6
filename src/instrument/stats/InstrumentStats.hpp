@@ -122,11 +122,12 @@ namespace Instrument {
 		struct TaskTypeAndTimes {
 			nanos_task_info const *_type;
 			TaskTimes _times;
+			bool _hasParent;
 			Timer *_currentTimer;
 			HardwareCounters::ThreadCounters<> _hardwareCounters;
 			
-			TaskTypeAndTimes(nanos_task_info const *type)
-				: _type(type), _times(false), _currentTimer(&_times._instantiationTime), _hardwareCounters()
+			TaskTypeAndTimes(nanos_task_info const *type, bool hasParent)
+				: _type(type), _times(false), _hasParent(hasParent), _currentTimer(&_times._instantiationTime), _hardwareCounters()
 			{
 			}
 		};

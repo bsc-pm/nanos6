@@ -2,7 +2,6 @@
 #define INSTRUMENT_NULL_DEPENDENCIES_BY_ACCESS_HPP
 
 
-#include <InstrumentTaskId.hpp>
 
 #include "../api/InstrumentDependenciesByAccess.hpp"
 #include "dependencies/DataAccessType.hpp"
@@ -14,8 +13,9 @@ namespace Instrument {
 		__attribute__((unused)) DataAccessType accessType,
 		__attribute__((unused)) bool weak,
 		__attribute__((unused)) void *start,
-		__attribute__((unused)) size_t length)
-	{
+		__attribute__((unused)) size_t length,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 }
 

@@ -68,7 +68,7 @@ ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *ta
 	
 	// 2. Attempt to send the task to a polling thread without locking
 	{
-		std::atomic<Task *> *pollingSlot = _pollingSlot.load();
+		polling_slot_t *pollingSlot = _pollingSlot.load();
 		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
 			// Keep trying
 		}
@@ -76,7 +76,7 @@ ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *ta
 			// Obtained the polling slot
 			Task *expect = nullptr;
 			
-			pollingSlot->compare_exchange_strong(expect, task);
+			pollingSlot->_task.compare_exchange_strong(expect, task);
 			assert(expect == nullptr);
 			
 			return nullptr;
@@ -88,7 +88,7 @@ ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *ta
 	// 3. Attempt to send the task to polling thread with locking, since the polling slot
 	// can only be set when locked (but unset at any time).
 	{
-		std::atomic<Task *> *pollingSlot = _pollingSlot.load();
+		polling_slot_t *pollingSlot = _pollingSlot.load();
 		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
 			// Keep trying
 		}
@@ -96,7 +96,7 @@ ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *ta
 			// Obtained the polling slot
 			Task *expect = nullptr;
 			
-			pollingSlot->compare_exchange_strong(expect, task);
+			pollingSlot->_task.compare_exchange_strong(expect, task);
 			assert(expect == nullptr);
 			
 			return nullptr;
@@ -116,7 +116,7 @@ void FIFOImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblock
 {
 	// 1. Attempt to send the task to a polling thread without locking
 	{
-		std::atomic<Task *> *pollingSlot = _pollingSlot.load();
+		polling_slot_t *pollingSlot = _pollingSlot.load();
 		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
 			// Keep trying
 		}
@@ -124,7 +124,7 @@ void FIFOImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblock
 			// Obtained the polling slot
 			Task *expect = nullptr;
 			
-			pollingSlot->compare_exchange_strong(expect, unblockedTask);
+			pollingSlot->_task.compare_exchange_strong(expect, unblockedTask);
 			assert(expect == nullptr);
 			
 			return;
@@ -136,7 +136,7 @@ void FIFOImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblock
 	// 2. Attempt to send the task to polling thread with locking, since the polling slot
 	// can only be set when locked (but unset at any time).
 	{
-		std::atomic<Task *> *pollingSlot = _pollingSlot.load();
+		polling_slot_t *pollingSlot = _pollingSlot.load();
 		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
 			// Keep trying
 		}
@@ -144,7 +144,7 @@ void FIFOImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblock
 			// Obtained the polling slot
 			Task *expect = nullptr;
 			
-			pollingSlot->compare_exchange_strong(expect, unblockedTask);
+			pollingSlot->_task.compare_exchange_strong(expect, unblockedTask);
 			assert(expect == nullptr);
 			
 			return;
@@ -217,7 +217,7 @@ void FIFOImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlac
 }
 
 
-bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *hardwarePlace, polling_slot_t *pollingSlot)
 {
 	Task *task = nullptr;
 	
@@ -227,8 +227,8 @@ bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *ha
 		hardwarePlace->_schedulerData = nullptr;
 		
 		// Same thread, so there is no need to operate atomically
-		assert(pollingSlot->load() == nullptr);
-		pollingSlot->store(task);
+		assert(pollingSlot->_task.load() == nullptr);
+		pollingSlot->_task.store(task);
 		
 		return true;
 	}
@@ -239,8 +239,8 @@ bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *ha
 	task = getReplacementTask((CPU *) hardwarePlace);
 	if (task != nullptr) {
 		// Same thread, so there is no need to operate atomically
-		assert(pollingSlot->load() == nullptr);
-		pollingSlot->store(task);
+		assert(pollingSlot->_task.load() == nullptr);
+		pollingSlot->_task.store(task);
 		
 		return true;
 	}
@@ -253,14 +253,14 @@ bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *ha
 		assert(task != nullptr);
 		
 		// Same thread, so there is no need to operate atomically
-		assert(pollingSlot->load() == nullptr);
-		pollingSlot->store(task);
+		assert(pollingSlot->_task.load() == nullptr);
+		pollingSlot->_task.store(task);
 		
 		return true;
 	}
 	
 	// 4. Or attempt to get the polling slot
-	std::atomic<Task *> *expect = nullptr;
+	polling_slot_t *expect = nullptr;
 	if (_pollingSlot.compare_exchange_strong(expect, pollingSlot)) {
 		
 		// 4.a. Successful
@@ -274,9 +274,9 @@ bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *ha
 }
 
 
-bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *hardwarePlace, polling_slot_t *pollingSlot)
 {
-	std::atomic<Task *> *expect = pollingSlot;
+	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
 		cpuBecomesIdle((CPU *) hardwarePlace);
 		return true;

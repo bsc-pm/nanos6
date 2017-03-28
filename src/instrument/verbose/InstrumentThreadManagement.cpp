@@ -5,7 +5,7 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
-#include "../public/generic_ids/GenericIds.hpp"
+#include "../generic_ids/GenericIds.hpp"
 
 
 using namespace Instrument::Verbose;
@@ -22,14 +22,7 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		WorkerThread *currentWorker = WorkerThread::getCurrentWorkerThread();
-		
-		if (currentWorker != nullptr) {
-			logEntry->_contents << "Thread:" << currentWorker << " CPU:" << currentWorker->getCpuId();
-		} else {
-			logEntry->_contents << "Thread:external CPU:ANY";
-		}
-		
+		logEntry->appendLocation();
 		logEntry->_contents << " <-> CreateThread " << threadId;
 		
 		addLogEntry(logEntry);
@@ -38,7 +31,7 @@ namespace Instrument {
 	}
 	
 	
-	void threadWillSuspend(thread_id_t threadId, cpu_id_t cpuId) {
+	void threadWillSuspend(thread_id_t threadId, hardware_place_id_t hardwarePlaceID) {
 		if (!_verboseThreadManagement) {
 			return;
 		}
@@ -46,13 +39,14 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		logEntry->_contents << "Thread:" << (thread_id_t::inner_type_t) threadId << " CPU:" << (cpu_id_t::inner_type_t) cpuId << " --> SuspendThread ";
+		logEntry->appendLocation();
+		logEntry->_contents << " --> SuspendThread ";
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void threadHasResumed(thread_id_t threadId, cpu_id_t cpuId) {
+	void threadHasResumed(thread_id_t threadId, hardware_place_id_t hardwarePlaceID) {
 		if (!_verboseThreadManagement) {
 			return;
 		}
@@ -60,7 +54,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		logEntry->_contents << "Thread:" << (thread_id_t::inner_type_t) threadId << " CPU:" << (cpu_id_t::inner_type_t) cpuId << " <-- SuspendThread ";
+		logEntry->appendLocation();
+		logEntry->_contents << " <-- SuspendThread ";
 		
 		addLogEntry(logEntry);
 	}

@@ -2,23 +2,19 @@
 #define INSTRUMENT_GRAPH_TASK_EXECUTION_HPP
 
 
-#include <../api/InstrumentCPUId.hpp>
-#include <InstrumentTaskId.hpp>
-#include <InstrumentThreadId.hpp>
-
 #include "../api/InstrumentTaskExecution.hpp"
 
 
 namespace Instrument {
-	void startTask(task_id_t taskId, cpu_id_t cpuId, thread_id_t currentThreadId);
+	void startTask(task_id_t taskId, InstrumentationContext const &context);
 	
-	inline void returnToTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
+	inline void returnToTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
 	
-	void endTask(task_id_t taskId, cpu_id_t cpuId, thread_id_t currentThreadId);
+	void endTask(task_id_t taskId, InstrumentationContext const &context);
 	
-	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
+	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
 }

@@ -1,3 +1,4 @@
+#include "CostAsPriorityScheduler.hpp"
 #include "DefaultScheduler.hpp"
 #include "FIFOImmediateSuccessorWithPollingScheduler.hpp"
 #include "FIFOScheduler.hpp"
@@ -32,6 +33,8 @@ void Scheduler::initialize()
 		_scheduler = new FIFOImmediateSuccessorWithPollingScheduler();
 	} else if (schedulerName.getValue() == "locality") {
 		_scheduler = new LocalityScheduler();
+	} else if (schedulerName.getValue() == "costaspriority") {
+		_scheduler = new CostAsPriorityScheduler();
 	} else {
 		std::cerr << "Warning: invalid scheduler name '" << schedulerName.getValue() << "', using default instead." << std::endl;
 		_scheduler = new DefaultScheduler();

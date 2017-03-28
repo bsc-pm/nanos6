@@ -5,8 +5,6 @@
 #define _GNU_SOURCE
 #endif
 
-#include "CPUDependencyData.hpp"
-
 #include "hardware/places/CPUPlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/SpinLock.hpp"
@@ -58,8 +56,6 @@ struct CPU: public CPUPlace {
 	
 	//! \brief a thread responsible for shutting down the rest of the threads and itself
 	std::atomic<WorkerThread *> _shutdownControlerThread;
-	
-	CPUDependencyData _dependencyData;
 	
 	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
 	

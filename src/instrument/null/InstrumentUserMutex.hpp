@@ -6,16 +6,22 @@
 
 
 namespace Instrument {
-	inline void acquiredUserMutex(__attribute__((unused)) UserMutex *userMutex)
-	{
+	inline void acquiredUserMutex(
+		__attribute__((unused)) UserMutex *userMutex,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
-	inline void blockedOnUserMutex(__attribute__((unused)) UserMutex *userMutex)
-	{
+	inline void blockedOnUserMutex(
+		__attribute__((unused)) UserMutex *userMutex,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
-	inline void releasedUserMutex(__attribute__((unused)) UserMutex *userMutex)
-	{
+	inline void releasedUserMutex(
+		__attribute__((unused)) UserMutex *userMutex,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
 }

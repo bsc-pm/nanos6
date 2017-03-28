@@ -7,8 +7,10 @@
 
 namespace Instrument {
 	template<typename... TS>
-	inline void logMessage(__attribute__((unused)) task_id_t triggererTaskId, __attribute__((unused)) TS... components)
-	{
+	inline void logMessage(
+		__attribute__((unused)) InstrumentationContext const &context,
+		__attribute__((unused)) TS... components
+	) {
 	}
 }
 

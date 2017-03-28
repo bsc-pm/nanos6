@@ -48,7 +48,7 @@ void ThreadManager::threadStartup(WorkerThread *currentThread)
 	// Initialize the CPU status if necessary before the thread has a chance to check the shutdown signal
 	CPUActivation::threadInitialization(currentThread);
 	
-	currentThread->_instrumentationId = Instrument::createdThread();
+	currentThread->setInstrumentationId(Instrument::createdThread());
 	
 	// The thread suspends itself after initialization, since the "activator" is the one will unblock it when needed
 	currentThread->suspend();
@@ -57,7 +57,7 @@ void ThreadManager::threadStartup(WorkerThread *currentThread)
 	assert(currentThread->_cpuToBeResumedOn != nullptr);
 	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
 	
-	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->_virtualCPUId);
+	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->getInstrumentationId());
 	
 #ifndef NDEBUG
 	currentThread->_cpuToBeResumedOn = nullptr;

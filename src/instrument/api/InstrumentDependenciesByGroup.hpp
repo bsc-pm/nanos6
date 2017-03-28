@@ -2,7 +2,7 @@
 #define INSTRUMENT_DEPENDENCIES_BY_GROUP_HPP
 
 
-#include <InstrumentTaskId.hpp>
+#include <InstrumentInstrumentationContext.hpp>
 
 
 namespace Instrument {
@@ -37,13 +37,13 @@ namespace Instrument {
 	//! \param[in] parentTaskId the identifier of the parent task, that is the one that determines the domain of dependencies
 	//! \param[in] handler an identifier for the sequence of groups of task accesses
 	//! \param[in] sequenceIsEmpty true if the sequence of accesses is empty and that has caused a new group (which may be artificial)
-	void beginAccessGroup(task_id_t parentTaskId, void *handler, bool sequenceIsEmpty);
+	void beginAccessGroup(task_id_t parentTaskId, void *handler, bool sequenceIsEmpty, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! \brief Register a task in the current group of tasks associated with the given handler
 	//! 
 	//! \param[in] handler the identifier for the sequence of groups of task accesses
 	//! \param[in] taskId the identifier of a task (returned by the call to Instrument::enterAddTask) that participates in the current group of accesses associated with the handler
-	void addTaskToAccessGroup(void *handler, task_id_t taskId);
+	void addTaskToAccessGroup(void *handler, task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! \brief Unregister a task in the current group of tasks associated with the given handler
 	//! 
@@ -51,7 +51,7 @@ namespace Instrument {
 	//! 
 	//! \param[in] handler the identifier for the sequence of groups of task accesses
 	//! \param[in] taskId the identifier of a task (returned by the call to Instrument::enterAddTask) that no longer participates in the current group of accesses associated with the handler
-	void removeTaskFromAccessGroup(void *handler, task_id_t taskId);
+	void removeTaskFromAccessGroup(void *handler, task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! @}
 }
