@@ -21,7 +21,7 @@ protected:
 public:
 	//! \brief An object to allow the scheduler to push tasks directly to a thread
 	struct polling_slot_t {
-		std::atomic<Task *> _task;
+		polling_slot_t _task;
 		
 		//! \brief scheduler-dependent information
 		void *_schedulerInfo;

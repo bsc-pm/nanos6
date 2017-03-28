@@ -142,7 +142,6 @@ public:
 	friend class ThreadManagerDebuggingInterface;
 };
 
-
 inline CPU *ThreadManager::getCPU(size_t systemCPUId)
 {
 	assert(systemCPUId < _cpus.size());
@@ -196,7 +195,6 @@ inline ThreadManager::cpu_list_t const &ThreadManager::getCPUListReference()
 {
 	return _cpus;
 }
-
 
 inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 {
