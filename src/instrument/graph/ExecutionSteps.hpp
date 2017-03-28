@@ -3,7 +3,7 @@
 
 
 #include "InstrumentGraph.hpp"
-#include "../public/generic_ids/InstrumentThreadId.hpp"
+#include "../generic_ids/InstrumentThreadId.hpp"
 
 #include <string>
 
@@ -242,9 +242,9 @@ namespace Instrument {
 				long cpu, thread_id_t threadId,
 				data_access_id_t accessId,
 				DataAccessType newAccessType, bool newWeakness,
-				bool becomesUnsatisfied, task_id_t originatorTaskId
+				bool becomesUnsatisfied, task_id_t triggererTaskId
 			)
-				: execution_step_t(cpu, threadId, originatorTaskId),
+				: execution_step_t(cpu, threadId, triggererTaskId),
 				_accessId(accessId),
 				_newAccessType(newAccessType), _newWeakness(newWeakness),
 				_becomesUnsatisfied(becomesUnsatisfied)

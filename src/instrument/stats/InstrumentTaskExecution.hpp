@@ -3,25 +3,24 @@
 
 
 #include "../api/InstrumentTaskExecution.hpp"
-#include <InstrumentTaskId.hpp>
 
 #include "InstrumentStats.hpp"
 
 
 namespace Instrument {
-	inline void startTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
+	inline void startTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
 	
-	inline void returnToTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
+	inline void returnToTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
 	
-	inline void endTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
+	inline void endTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
 	
-	inline void destroyTask(task_id_t taskId, __attribute__((unused)) cpu_id_t cpuId, __attribute__((unused)) thread_id_t currentThreadId)
+	inline void destroyTask(task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 		assert(taskId->_currentTimer != 0);
 		taskId->_currentTimer->stop();

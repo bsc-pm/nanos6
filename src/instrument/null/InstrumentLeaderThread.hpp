@@ -6,8 +6,9 @@
 
 
 namespace Instrument {
-	inline void leaderThreadSpin()
-	{
+	inline void leaderThreadSpin(
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 	
 }

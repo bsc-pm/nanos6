@@ -24,6 +24,15 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	assert(handlerPointer != nullptr);
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
 	
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentThread != nullptr);
+	
+	Task *currentTask = currentThread->getTask();
+	assert(currentTask != nullptr);
+	
+	HardwarePlace *hardwarePlace = currentThread->getHardwarePlace();
+	assert(hardwarePlace != nullptr);
+	
 	// Allocation
 	if (__builtin_expect(userMutexReference == nullptr, 0)) {
 		UserMutex *newMutex = new UserMutex(true);
@@ -57,12 +66,6 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 		return;
 	}
 	
-	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentThread != nullptr);
-	
-	Task *currentTask = currentThread->getTask();
-	assert(currentTask != nullptr);
-	
 	// Acquire the lock if possible. Otherwise queue the task.
 	if (userMutex.lockOrQueue(currentTask)) {
 		// Successful
@@ -75,6 +78,10 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	
 	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask, false);
+	
+	hardwarePlace = currentThread->getHardwarePlace();
+	Instrument::ThreadInstrumentationContext::updateHardwarePlace(hardwarePlace->getInstrumentationId());
+	
 	DataAccessRegistration::handleExitBlocking(currentTask);
 	
 	// This in combination with a release from other threads makes their changes visible to this one
@@ -93,18 +100,21 @@ void nanos_user_unlock(void **handlerPointer)
 	// This in combination with an acquire from another thread makes the changes visible to that one
 	std::atomic_thread_fence(std::memory_order_release);
 	
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentThread != nullptr);
+	
+	Task *currentTask = currentThread->getTask();
+	assert(currentTask != nullptr);
+	
+	CPU *cpu = currentThread->getHardwarePlace();
+	assert(cpu != nullptr);
+	
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
 	UserMutex &userMutex = *(userMutexReference.load());
 	Instrument::releasedUserMutex(&userMutex);
 	
 	Task *releasedTask = userMutex.dequeueOrUnlock();
 	if (releasedTask != nullptr) {
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
-		CPU *cpu = currentThread->getComputePlace();
-		assert(cpu != nullptr);
-		
 		Task *currentTask = currentThread->getTask();
 		assert(currentTask != nullptr);
 		
@@ -121,6 +131,7 @@ void nanos_user_unlock(void **handlerPointer)
 				Scheduler::taskGetsUnblocked(currentTask, cpu);
 				
 				ThreadManager::switchThreads(currentThread, releasedThread);
+				Instrument::ThreadInstrumentationContext::updateHardwarePlace(currentThread->getHardwarePlace()->getInstrumentationId());
 			}
 		} else {
 			Scheduler::taskGetsUnblocked(releasedTask, cpu);

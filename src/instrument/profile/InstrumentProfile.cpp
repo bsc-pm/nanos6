@@ -147,7 +147,7 @@ thread_id_t Instrument::Profile::doCreatedThread()
 {
 	#if !defined(HAVE_BACKTRACE) && !defined(HAVE_LIBUNWIND)
 		std::cerr << "Warning: profiling currently not supported in this platform." << std::endl;
-		return;
+		return thread_id_t();
 	#endif
 	
 	struct sigevent se;

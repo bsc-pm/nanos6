@@ -6,9 +6,9 @@
 
 
 namespace Instrument {
-	void acquiredUserMutex(UserMutex *userMutex);
-	void blockedOnUserMutex(UserMutex *userMutex);
-	void releasedUserMutex(UserMutex *userMutex);
+	void acquiredUserMutex(UserMutex *userMutex, InstrumentationContext const &context);
+	void blockedOnUserMutex(UserMutex *userMutex, InstrumentationContext const &context);
+	void releasedUserMutex(UserMutex *userMutex, InstrumentationContext const &context);
 }
 
 

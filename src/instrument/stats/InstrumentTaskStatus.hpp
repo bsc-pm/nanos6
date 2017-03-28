@@ -3,7 +3,6 @@
 
 
 #include "../api/InstrumentTaskStatus.hpp"
-#include <InstrumentTaskId.hpp>
 
 #include "InstrumentStats.hpp"
 
@@ -11,7 +10,9 @@
 
 
 namespace Instrument {
-	inline void taskIsPending(task_id_t taskId)
+	inline void taskIsPending(
+		task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context)
 	{
 		assert(taskId->_currentTimer != 0);
 		
@@ -19,7 +20,9 @@ namespace Instrument {
 		taskId->_currentTimer = &taskId->_times._pendingTime;
 	}
 	
-	inline void taskIsReady(task_id_t taskId)
+	inline void taskIsReady(
+		task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context)
 	{
 		assert(taskId->_currentTimer != 0);
 		
@@ -27,7 +30,9 @@ namespace Instrument {
 		taskId->_currentTimer = &taskId->_times._readyTime;
 	}
 	
-	inline void taskIsExecuting(task_id_t taskId)
+	inline void taskIsExecuting(
+		task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context)
 	{
 		assert(taskId->_currentTimer != 0);
 		
@@ -37,7 +42,9 @@ namespace Instrument {
 		taskId->_hardwareCounters.start();
 	}
 	
-	inline void taskIsBlocked(task_id_t taskId, __attribute__((unused)) task_blocking_reason_t reason)
+	inline void taskIsBlocked(
+		task_id_t taskId, __attribute__((unused)) task_blocking_reason_t reason,
+		__attribute__((unused)) InstrumentationContext const &context)
 	{
 		taskId->_hardwareCounters.accumulateAndStop();
 		
@@ -46,7 +53,9 @@ namespace Instrument {
 		taskId->_currentTimer = &taskId->_times._blockedTime;
 	}
 	
-	inline void taskIsZombie(task_id_t taskId)
+	inline void taskIsZombie(
+		task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context)
 	{
 		taskId->_hardwareCounters.accumulateAndStop();
 		

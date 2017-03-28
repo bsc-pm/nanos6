@@ -9,6 +9,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/If0Task.hpp"
 #include "tasks/Task.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -32,7 +33,7 @@ void nanos_create_task(
 	void **task_pointer,
 	size_t flags
 ) {
-	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo);
+	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
@@ -59,6 +60,8 @@ void nanos_submit_task(void *taskHandle)
 	Task *task = (Task *) taskHandle;
 	assert(task != nullptr);
 	
+	Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
+	
 	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	ComputePlace *hardwarePlace = nullptr;
@@ -74,7 +77,7 @@ void nanos_submit_task(void *taskHandle)
 		task->setParent(parent);
 	}
 	
-	Instrument::createdTask(task, task->getInstrumentationTaskId());
+	Instrument::createdTask(task, taskInstrumentationId);
 
 	task->setEnabledCopies(Scheduler::hasEnabledCopies());
 	
@@ -82,20 +85,41 @@ void nanos_submit_task(void *taskHandle)
 	nanos_task_info *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);
 	if (taskInfo->register_depinfo != 0) {
-		ready = DataAccessRegistration::registerTaskDataAccesses(task);
+		ready = DataAccessRegistration::registerTaskDataAccesses(task, hardwarePlace);
 	}
 	
-	if (ready) {
-		ComputePlace *idleComputePlace = Scheduler::addReadyTask(task, hardwarePlace, SchedulerInterface::SchedulerInterface::CHILD_TASK_HINT);
-		assert((currentWorkerThread != nullptr) || (idleComputePlace == nullptr)); // The main task is added before the scheduler
+	bool isIf0 = task->isIf0();
+	
+	if (ready && !isIf0) {
+		// Queue the task if ready but not if0
+		SchedulerInterface::ReadyTaskHint schedulingHint = SchedulerInterface::NO_HINT;
+		
+		if (currentWorkerThread != nullptr) {
+			schedulingHint = SchedulerInterface::CHILD_TASK_HINT;
+		}
+		
+		ComputePlace *idleComputePlace = Scheduler::addReadyTask(task, hardwarePlace, schedulingHint);
 		
 		if (idleComputePlace != nullptr) {
 			ThreadManager::resumeIdle((CPU *) idleComputePlace);
 		}
-	} else {
-		Instrument::taskIsPending(task->getInstrumentationTaskId());
+	} else if (!ready) {
+		Instrument::taskIsPending(taskInstrumentationId);
 	}
 	
-	Instrument::exitAddTask(task->getInstrumentationTaskId());
+	Instrument::exitAddTask(taskInstrumentationId);
+	
+	// Special handling for if0 tasks
+	if (isIf0) {
+		if (ready) {
+			// Ready if0 tasks are executed inline
+			If0Task::executeInline(currentWorkerThread, parent, task, hardwarePlace);
+		} else {
+			// Non-ready if0 tasks cause this thread to get blocked
+			If0Task::waitForIf0Task(currentWorkerThread, parent, task, hardwarePlace);
+		}
+	}
+	
+	
 }
 

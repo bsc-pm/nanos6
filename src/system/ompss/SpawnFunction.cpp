@@ -70,7 +70,6 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 			// New task info
 			taskInfo->run = nanos_spawned_function_wrapper;
 			taskInfo->register_depinfo = nullptr;
-			taskInfo->register_copies = nullptr;
 			
 			// We use the stored copy since we do not know the actual lifetime of "label"
 			taskInfo->task_label = it->first.second.c_str();

@@ -83,7 +83,7 @@ namespace Instrument {
 					link._predecessors.insert(lastWriter);
 					
 					task_info_t &lastWriterTaskInfo = _taskToInfoMap[lastWriter];
-					if (lastWriterTaskInfo._parent == parentId) {
+					if ((lastWriterTaskInfo._parent == parentId) && (lastWriterTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
 						taskInfo._hasPredecessorsInSameLevel = true;
 						lastWriterTaskInfo._hasSuccessorsInSameLevel = true;
 					}
@@ -116,7 +116,7 @@ namespace Instrument {
 					link._predecessors.insert(lastWriter);
 					
 					task_info_t &lastWriterTaskInfo = _taskToInfoMap[lastWriter];
-					if (lastWriterTaskInfo._parent == parentId) {
+					if ((lastWriterTaskInfo._parent == parentId) && (lastWriterTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
 						taskInfo._hasPredecessorsInSameLevel = true;
 						lastWriterTaskInfo._hasSuccessorsInSameLevel = true;
 					}
@@ -125,7 +125,7 @@ namespace Instrument {
 						link._predecessors.insert(reader);
 						
 						task_info_t &readerTaskInfo = _taskToInfoMap[reader];
-						if (readerTaskInfo._parent == parentId) {
+						if ((readerTaskInfo._parent == parentId) && (readerTaskInfo._taskGroupPhaseIndex == taskInfo._taskGroupPhaseIndex)) {
 							taskInfo._hasPredecessorsInSameLevel = true;
 							readerTaskInfo._hasSuccessorsInSameLevel = true;
 						}
@@ -215,6 +215,86 @@ namespace Instrument {
 					return true;
 				}
 			);
+		}
+		
+		
+		static taskwait_id_t findPrecedingTaskwait(task_info_t const &taskInfo)
+		{
+			if (taskInfo._parent == task_id_t()) {
+				return taskwait_id_t();
+			}
+			
+			if (taskInfo._hasPredecessorsInSameLevel) {
+				return taskwait_id_t();
+			}
+			
+			task_info_t const &parent = _taskToInfoMap[taskInfo._parent];
+			if (taskInfo._taskGroupPhaseIndex > 0) {
+				phase_t *previousPhase = parent._phaseList[taskInfo._taskGroupPhaseIndex - 1];
+				assert(previousPhase != nullptr);
+				
+				taskwait_t *previousTaskwait = dynamic_cast<taskwait_t *> (previousPhase);
+				assert(previousTaskwait != nullptr);
+				
+				return previousTaskwait->_taskwaitId;
+			} else {
+				return findPrecedingTaskwait(parent);
+			}
+		}
+		
+		static taskwait_id_t findSuccedingTaskwait(task_info_t const &taskInfo)
+		{
+			if (taskInfo._parent == task_id_t()) {
+				return taskwait_id_t();
+			}
+			
+			if (taskInfo._hasSuccessorsInSameLevel) {
+				return taskwait_id_t();
+			}
+			
+			if (taskInfo._isIf0) {
+				return taskwait_id_t();
+			}
+			
+			task_info_t const &parent = _taskToInfoMap[taskInfo._parent];
+			size_t nextTaskGroupPhaseIndex = taskInfo._taskGroupPhaseIndex + 1;
+			if (nextTaskGroupPhaseIndex < parent._phaseList.size()) {
+				phase_t *nextPhase = parent._phaseList[nextTaskGroupPhaseIndex];
+				assert(nextPhase != nullptr);
+				
+				taskwait_t *nextTaskwait = dynamic_cast<taskwait_t *> (nextPhase);
+				assert(nextTaskwait != nullptr);
+				
+				return nextTaskwait->_taskwaitId;
+			} else {
+				return findSuccedingTaskwait(parent);
+			}
+		}
+		
+		
+		void generateTaskwaitRelations()
+		{
+			for (auto &taskIdAndTask : _taskToInfoMap) {
+				task_info_t &taskInfo = taskIdAndTask.second;
+				
+				taskInfo._precedingTaskwait = findPrecedingTaskwait(taskInfo);
+				taskInfo._succedingTaskwait = findSuccedingTaskwait(taskInfo);
+			}
+			
+			for (auto &taskwaitIdAndTaskwait : _taskwaitToInfoMap) {
+				taskwait_t *taskwait = taskwaitIdAndTaskwait.second;
+				assert(taskwait != nullptr);
+				
+				size_t phaseIndex = taskwait->_taskPhaseIndex;
+				task_info_t const &task = _taskToInfoMap[taskwait->_task];
+				
+				if (task._phaseList.size() > (phaseIndex + 1)) {
+					taskwait_t *nextTaskwait = dynamic_cast<taskwait_t *> (task._phaseList[phaseIndex + 1]);
+					if (nextTaskwait != nullptr) {
+						taskwait->_immediateNextTaskwait = nextTaskwait->_taskwaitId;
+					}
+				}
+			}
 		}
 		
 		

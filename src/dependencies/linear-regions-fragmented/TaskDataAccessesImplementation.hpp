@@ -15,15 +15,17 @@ inline TaskDataAccesses::~TaskDataAccesses()
 {
 	assert(!hasBeenDeleted());
 	
+#ifndef NDEBUG
 	Task *task = boost::intrusive::get_parent_from_member<Task>(this, &Task::_dataAccesses);
 	assert(task != nullptr);
 	assert(&task->getDataAccesses() == this);
+#endif
 	
 	// We take the lock since the task may be marked for deletion while the lock is held
 	std::lock_guard<spinlock_t> guard(_lock);
 	_accesses.deleteAll(
 		[&](DataAccess *access) {
-			Instrument::removedDataAccess(access->_instrumentationId, task->getInstrumentationTaskId());
+			Instrument::removedDataAccess(access->_instrumentationId);
 			delete access;
 		}
 	);
@@ -36,14 +38,14 @@ inline TaskDataAccesses::~TaskDataAccesses()
 	
 	_accessFragments.deleteAll(
 		[&](DataAccess *fragment) {
-			Instrument::removedDataAccess(fragment->_instrumentationId, task->getInstrumentationTaskId());
+			Instrument::removedDataAccess(fragment->_instrumentationId);
 			delete fragment;
 		}
 	);
 	
-	#ifndef NDEBUG
+#ifndef NDEBUG
 	hasBeenDeleted() = true;
-	#endif
+#endif
 	
 }
 

@@ -1,12 +1,11 @@
 #ifndef INSTRUMENT_LEADER_THREAD_HPP
 #define INSTRUMENT_LEADER_THREAD_HPP
 
-
-class UserMutex;
+#include <InstrumentInstrumentationContext.hpp>
 
 
 namespace Instrument {
-	void leaderThreadSpin();
+	void leaderThreadSpin(InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 }
 
 

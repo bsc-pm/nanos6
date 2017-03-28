@@ -1,5 +1,5 @@
 ACLOCAL_AMFLAGS = -I common/m4
-AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I@HEADER_DIR@
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/src/instrument/support -I@NANOS6_HEADER_DIR@
 
 SUBDIRS = . tests/directive_based/tests
 
@@ -36,16 +36,7 @@ nodist_noinst_HEADERS = \
 universal_debug_sources = \
 	src/system/debug/RuntimeVersionAPI.cpp
 
-public_instrumentation_api = \
-	src/instrument/public/api/InstrumentAddTask.hpp \
-	src/instrument/public/api/InstrumentCPUId.hpp \
-	src/instrument/public/api/InstrumentInitAndShutdown.hpp \
-	src/instrument/public/api/InstrumentTaskExecution.hpp \
-	src/instrument/public/api/InstrumentTaskWait.hpp \
-	src/instrument/public/api/InstrumentThreadManagement.hpp
-
 common_sources = \
-	$(public_instrumentation_api) \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
@@ -75,10 +66,10 @@ common_sources = \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/CPUPlace.cpp \
 	src/instrument/api/InstrumentAddTask.hpp \
-	src/instrument/api/InstrumentCPUId.hpp \
 	src/instrument/api/InstrumentDependenciesByAccess.hpp \
 	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/api/InstrumentDependenciesByGroup.hpp \
+	src/instrument/api/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
@@ -87,9 +78,9 @@ common_sources = \
 	src/instrument/api/InstrumentTaskWait.hpp \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
-	src/lowlevel/apple/SpinLockImplementation.hpp \
-	src/lowlevel/cxx/SpinLockImplementation.hpp \
-	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/instrument/support/InstrumentInstrumentationContext.cpp \
+	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
@@ -125,6 +116,11 @@ common_sources = \
 	src/memory/cache/NUMACache.hpp \
 	src/memory/cache/NUMACache.cpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
+	src/lowlevel/apple/SpinLockImplementation.hpp \
+	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/scheduling/CostAsPriorityScheduler.cpp \
+	src/scheduling/CostAsPriorityScheduler.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
@@ -142,13 +138,13 @@ common_sources = \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerInterface.cpp \
 	src/scheduling/SchedulerInterface.hpp \
-	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.cpp \
 	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
+	src/system/If0Task.hpp \
 	src/system/LeaderThread.cpp \
 	src/system/LeaderThread.hpp \
 	src/system/PollingAPI.cpp \
@@ -259,6 +255,8 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentDependenciesByAccess.hpp \
 	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
+	src/instrument/null/InstrumentHardwarePlaceId.hpp \
+	src/instrument/null/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
@@ -268,19 +266,10 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentTaskWait.hpp \
 	src/instrument/null/InstrumentThreadId.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
-	src/instrument/null/InstrumentUserMutex.hpp \
-	src/instrument/public/null/InstrumentAddTask.hpp \
-	src/instrument/public/null/InstrumentInitAndShutdown.hpp \
-	src/instrument/public/null/InstrumentTaskExecution.hpp \
-	src/instrument/public/null/InstrumentTaskId.hpp \
-	src/instrument/public/null/InstrumentTaskWait.hpp \
-	src/instrument/public/null/InstrumentThreadId.hpp \
-	src/instrument/public/null/InstrumentThreadManagement.hpp
+	src/instrument/null/InstrumentUserMutex.hpp
 
 instrument_generic_ids_sources = \
-	src/instrument/public/generic_ids/GenericIds.cpp \
-	src/instrument/public/generic_ids/GenericIds.hpp \
-	src/instrument/public/generic_ids/InstrumentThreadId.hpp \
+	src/instrument/generic_ids/GenericIds.cpp \
 	src/instrument/generic_ids/GenericIds.hpp \
 	src/instrument/generic_ids/InstrumentThreadId.hpp
 
@@ -300,6 +289,8 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
 	src/instrument/graph/InstrumentGraph.cpp \
 	src/instrument/graph/InstrumentGraph.hpp \
+	src/instrument/graph/InstrumentHardwarePlaceId.hpp \
+	src/instrument/graph/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
@@ -325,6 +316,8 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentDependenciesByAccess.hpp \
 	src/instrument/profile/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
+	src/instrument/profile/InstrumentHardwarePlaceId.hpp \
+	src/instrument/profile/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
 	src/instrument/profile/InstrumentLeaderThread.hpp \
@@ -346,6 +339,8 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
+	src/instrument/stats/InstrumentHardwarePlaceId.hpp \
+	src/instrument/stats/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
@@ -372,6 +367,8 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
+	src/instrument/verbose/InstrumentHardwarePlaceId.hpp \
+	src/instrument/verbose/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.cpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
 	src/instrument/verbose/InstrumentLeaderThread.cpp \
@@ -394,23 +391,25 @@ instrument_verbose_sources = \
 
 instrument_extrae_sources = \
 	$(instrument_generic_ids_sources) \
+	src/instrument/extrae/InstrumentAddTask.hpp \
 	src/instrument/extrae/InstrumentDataAccessId.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
+	src/instrument/extrae/InstrumentExtrae.cpp \
+	src/instrument/extrae/InstrumentExtrae.hpp \
+	src/instrument/extrae/InstrumentHardwarePlaceId.hpp \
+	src/instrument/extrae/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
+	src/instrument/extrae/InstrumentTaskExecution.hpp \
+	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
-	src/instrument/extrae/InstrumentUserMutex.hpp \
-	src/instrument/public/extrae/InstrumentAddTask.hpp \
-	src/instrument/public/extrae/InstrumentExtrae.cpp \
-	src/instrument/public/extrae/InstrumentExtrae.hpp \
-	src/instrument/public/extrae/InstrumentInitAndShutdown.hpp \
-	src/instrument/public/extrae/InstrumentTaskExecution.hpp \
-	src/instrument/public/extrae/InstrumentTaskId.hpp \
-	src/instrument/public/extrae/InstrumentTaskWait.hpp \
-	src/instrument/public/extrae/InstrumentThreadId.hpp \
-	src/instrument/public/extrae/InstrumentThreadManagement.hpp
+	src/instrument/extrae/InstrumentTaskWait.hpp \
+	src/instrument/extrae/InstrumentThreadId.hpp \
+	src/instrument/extrae/InstrumentThreadManagement.hpp \
+	src/instrument/extrae/InstrumentUserMutex.hpp
 
 
 null_common_sources = \
@@ -434,6 +433,7 @@ noinst_HEADERS = \
 	common/tests/Timer.hpp
 
 EXTRA_DIST = \
+	common/tests/select-version.sh \
 	common/tests/tap-driver.pl \
 	common/tests/tap-driver.sh
 
@@ -500,7 +500,7 @@ libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
 libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 if HAVE_EXTRAE
-libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/public/extrae @extrae_CPPFLAGS@
+libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae @extrae_CPPFLAGS@
 libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
 libnanos6_extrae_la_LDFLAGS = @extrae_LDFLAGS@ @extrae_LIBS@ $(common_libnanos6_ldflags)

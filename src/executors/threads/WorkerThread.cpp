@@ -3,6 +3,8 @@
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/If0Task.hpp"
+#include "system/PollingAPI.hpp"
 #include "tasks/Task.hpp"
 #include "memory/cache/GenericCache.hpp"
 #include "hardware/places/MemoryPlace.hpp"
@@ -12,6 +14,7 @@
 
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
+#include <InstrumentInstrumentationContext.hpp>
 
 #include <atomic>
 
@@ -40,12 +43,15 @@ void *WorkerThread::body()
 		CPUActivation::activationCheck(this);
 		
 		if (_task == nullptr) {
-			std::atomic<Task *> pollingSlot(nullptr);
+			Scheduler::polling_slot_t pollingSlot;
 			
 			if (Scheduler::requestPolling(_cpu, &pollingSlot)) {
 				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(_cpu)) {
 					// Keep trying
-					pollingSlot.compare_exchange_strong(_task, nullptr);
+					pollingSlot._task.compare_exchange_strong(_task, nullptr);
+					if (_task == nullptr) {
+						PollingAPI::handleServices();
+					}
 				}
 				
 				if (ThreadManager::mustExit()) {
@@ -61,7 +67,7 @@ void *WorkerThread::body()
 					Scheduler::releasePolling(_cpu, &pollingSlot);
 					
 					// We may already have a task assigned through
-					pollingSlot.compare_exchange_strong(_task, nullptr);
+					pollingSlot._task.compare_exchange_strong(_task, nullptr);
 				}
 			} else {
 				// Did not receive neither the polling slot nor a task
@@ -80,10 +86,24 @@ void *WorkerThread::body()
 				ThreadManager::addIdler(this);
 				ThreadManager::switchThreads(this, assignedThread);
 			} else {
-				handleTask();
+				if (_task->isIf0()) {
+					// An if0 task executed outside of the implicit taskwait of its parent (i.e. not inline)
+					Task *if0Task = _task;
+					
+					// This is needed, since otherwise the semantics would be that the if0Task task is being launched from within its own execution
+					_task = nullptr;
+					
+					If0Task::executeNonInline(this, if0Task, _cpu);
+				} else {
+					handleTask();
+				}
+				
 				_task = nullptr;
 			}
 		} else {
+			// Try to advance work before going to sleep
+			PollingAPI::handleServices();
+			
 			// The code below is protected by a condition because under certain CPU activation/deactivation
 			// cases, the call to CPUActivation::activationCheck may have put the thread in the idle queue
 			// and the shutdown mechanism may have waken up the thread. In that case we do not want the
@@ -118,9 +138,8 @@ void WorkerThread::handleTask()
         destCache->copyData(cachesLoad, _task);
     }
     else {
-        // task is ready
         _task->setThread(this);
-        
+
         //! Temporal print to check that each task is executing where it should according to its data affinity.
         //std::cerr << "Task with label " << _task->getTaskInfo()->task_label << " is executed on NUMA node " 
         //    << _cpu->_NUMANodeId << ". It's data size is:" << _task->getDataSize() << "." << std::endl;
@@ -129,26 +148,31 @@ void WorkerThread::handleTask()
         Directory::registerLastLevelCacheData(_task->getDataAccesses(), _cpu->_NUMANodeId, _task);
 
         Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
-        Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
-        Instrument::taskIsExecuting(taskId);
 
-        // Run the task
-        std::atomic_thread_fence(std::memory_order_acquire);
-        _task->body();
-        std::atomic_thread_fence(std::memory_order_release);
+        Instrument::ThreadInstrumentationContext instrumentationContext(taskId, _cpu->getInstrumentationId(), _instrumentationId);
 
-        Instrument::taskIsZombie(taskId);
-        Instrument::endTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
+        if (_task->hasCode()) {
+            Instrument::startTask(taskId);
+            Instrument::taskIsExecuting(taskId);
+
+            // Run the task
+            std::atomic_thread_fence(std::memory_order_acquire);
+            _task->body();
+            std::atomic_thread_fence(std::memory_order_release);
+
+            Instrument::taskIsZombie(taskId);
+            Instrument::endTask(taskId);
+        }
 
         // Release successors
-        DataAccessRegistration::unregisterTaskDataAccesses(_task);
+        DataAccessRegistration::unregisterTaskDataAccesses(_task, _cpu);
         // Release copies
         GenericCache * destCache = _task->getCache();
         if(destCache != nullptr)
             destCache->releaseCopies(_task);
 
         if (_task->markAsFinished()) {
-            TaskFinalization::disposeOrUnblockTask(_task, _cpu, this);
+            TaskFinalization::disposeOrUnblockTask(_task, _cpu);
         }
     }
 

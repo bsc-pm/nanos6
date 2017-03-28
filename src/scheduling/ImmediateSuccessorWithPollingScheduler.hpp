@@ -24,7 +24,7 @@ class ImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
 	
 	std::deque<CPU *> _idleCPUs;
 	
-	std::atomic<std::atomic<Task *> *> _pollingSlot;
+	std::atomic<polling_slot_t *> _pollingSlot;
 	
 	
 	inline CPU *getIdleCPU();
@@ -45,8 +45,8 @@ public:
 	
 	void disableComputePlace(ComputePlace *hardwarePlace);
 	
-	bool requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
-	bool releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	bool requestPolling(ComputePlace *hardwarePlace, polling_slot_t *pollingSlot);
+	bool releasePolling(ComputePlace *hardwarePlace, polling_slot_t *pollingSlot);
 
     void createReadyQueues(std::size_t nodes);
 };

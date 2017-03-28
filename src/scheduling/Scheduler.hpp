@@ -4,6 +4,8 @@
 
 #include "SchedulerInterface.hpp"
 
+#include "hardware/places/HardwarePlace.hpp"
+
 #include <InstrumentTaskStatus.hpp>
 #include <tasks/Task.hpp>
 
@@ -24,6 +26,9 @@ class Scheduler {
 	static SchedulerInterface *_scheduler;
 	
 public:
+	//! \brief An object to allow the scheduler to push tasks directly to a thread
+	typedef SchedulerInterface::polling_slot_t polling_slot_t;
+	
 	//! \brief Initializes the _scheduler member and in turn calls its initialization method
 	static void initialize();
 
@@ -104,7 +109,7 @@ public:
 	//! \param[out] pollingSlot a pointer to a location that the caller will poll for ready tasks
 	//! 
 	//! \returns true if the caller is allowed to poll that memory position for a single ready task or if it actually got a task, otherwise false and the hardware place is assumed to become idle
-	static inline bool requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+	static inline bool requestPolling(ComputePlace *hardwarePlace, polling_slot_t *pollingSlot)
 	{
 		return _scheduler->requestPolling(hardwarePlace, pollingSlot);
 	}
@@ -115,7 +120,7 @@ public:
 	//! \param[out] pollingSlot a pointer to a location that the caller is polling for ready tasks
 	//! 
 	//! \returns true if the caller has successfully released the polling slot otherwise false indicating that there already is a taskl assigned or it is on the way
-	static bool releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot)
+	static bool releasePolling(ComputePlace *hardwarePlace, polling_slot_t *pollingSlot)
 	{
 		return _scheduler->releasePolling(hardwarePlace, pollingSlot);
 	}

@@ -19,6 +19,20 @@ protected:
 	}
 	
 public:
+	//! \brief An object to allow the scheduler to push tasks directly to a thread
+	struct polling_slot_t {
+		polling_slot_t _task;
+		
+		//! \brief scheduler-dependent information
+		void *_schedulerInfo;
+		
+		polling_slot_t()
+			: _task(nullptr), _schedulerInfo(nullptr)
+		{
+		}
+	};
+	
+	
 	enum ReadyTaskHint {
 		NO_HINT,
 		CHILD_TASK_HINT,
@@ -83,7 +97,7 @@ public:
 	//! \returns true if the caller is allowed to poll that memory position for a single ready task or if it actually got a task, otherwise false and the hardware place is assumed to become idle
 	//! 
 	//! This method has a default implementation that just falls back to getReadyTask.
-	virtual bool requestPolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	virtual bool requestPolling(ComputePlace *hardwarePlace, polling_slot_t *pollingSlot);
 	
 	//! \brief Attempt to release the polling slot
 	//! 
@@ -93,7 +107,7 @@ public:
 	//! \returns true if the caller has successfully released the polling slot otherwise false indicating that there already is a taskl assigned or it is on the way
 	//! 
 	//! This method has a default implementation that matches the default implementation of requestPolling.
-	virtual bool releasePolling(ComputePlace *hardwarePlace, std::atomic<Task *> *pollingSlot);
+	virtual bool releasePolling(ComputePlace *hardwarePlace, polling_slot_t *pollingSlot);
 	
 	//! \brief Check if this scheduler has copies enabled or not
 	inline bool hasEnabledCopies()
