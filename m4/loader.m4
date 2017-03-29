@@ -1,44 +1,80 @@
-AC_DEFUN([SSS_CHECK_LOADER],
+AC_DEFUN([AC_CHECK_MAIN_WRAPPER_TYPE],
 	[
-		AC_ARG_WITH(
-			[installed-loader],
-			[AS_HELP_STRING([--with-installed-loader=prefix], [specify the prefix of the Nanos6 loader installation @<:@default=same as prefix@:>@])],
-			[ac_loader_dir="${withval}"],
-			[ac_loader_dir="${prefix}"]
-		)
-		NANOS6_HEADER_DIR="${ac_loader_dir}/include"
-		AC_SUBST([NANOS6_HEADER_DIR])
-		
-		ac_save_cppflags="${CPPFLAGS}"
-		ac_save_libs="${LIBS}"
-		CPPFLAGS="${CPPFLAGS} -I${NANOS6_HEADER_DIR}"
-		LIBS="${LIBS} -L${ac_loader_dir}/lib -L${ac_loader_dir}/lib64 -L${ac_loader_dir}/lib32"
-		
-		CHECK_LOADER_INSTALLATION_MSG="Please check that the nanos6 loader is installed either at the same prefix or use the --with-installed-loader parameter to specify an alternative path."
-		
 		AC_LANG_PUSH(C)
-		AC_CHECK_HEADER(nanos6.h, [], [AC_MSG_ERROR([Cannot find the nanos6.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		unset ac_cv_header_nanos6_h
 		
-		AC_CHECK_HEADER(nanos6/blocking.h, [], [AC_MSG_ERROR([Cannot find the nanos6/blocking.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/bootstrap.h, [], [AC_MSG_ERROR([Cannot find the nanos6/bootstrap.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/constants.h, [], [AC_MSG_ERROR([Cannot find the nanos6/constants.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/debug.h, [], [AC_MSG_ERROR([Cannot find the nanos6/debug.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/dependencies.h, [], [AC_MSG_ERROR([Cannot find the nanos6/dependencies.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/final.h, [], [AC_MSG_ERROR([Cannot find the nanos6/final.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/library-mode.h, [], [AC_MSG_ERROR([Cannot find the nanos6/library-mode.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/multidimensional-dependencies.h, [], [AC_MSG_ERROR([Cannot find the nanos6/multidimensional-dependencies.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/multidimensional-release.h, [], [AC_MSG_ERROR([Cannot find the nanos6/multidimensional-release.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/polling.h, [], [AC_MSG_ERROR([Cannot find the nanos6/polling.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/task-instantiation.h, [], [AC_MSG_ERROR([Cannot find the nanos6/task-instantiation.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/taskwait.h, [], [AC_MSG_ERROR([Cannot find the nanos6/taskwait.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
-		AC_CHECK_HEADER(nanos6/user-mutex.h, [], [AC_MSG_ERROR([Cannot find the nanos6/user-mutex.h header file. ${CHECK_LOADER_INSTALLATION_MSG}])])
+		AC_MSG_CHECKING([if target is PowerPC])
+		AC_COMPILE_IFELSE(
+			[ AC_LANG_SOURCE( [[
+#ifndef __powerpc__
+# error not power
+#endif
+]]
+				) ],
+			[ ac_target_is_powerpc=yes ],
+			[ ac_target_is_powerpc=no ]
+		)
+		AC_MSG_RESULT([${ac_target_is_powerpc}])
 		
-		AC_CHECK_LIB(nanos6, nanos_submit_task, [], [AC_MSG_ERROR([Cannot find the nanos6 loader library. ${CHECK_LOADER_INSTALLATION_MSG}])])
+		AC_MSG_CHECKING([if target is Linux])
+		AC_COMPILE_IFELSE(
+			[ AC_LANG_SOURCE( [[
+#ifndef __linux__
+# error not linux
+#endif
+]]
+				) ],
+			[ ac_target_is_linux=yes ],
+			[ ac_target_is_linux=no ]
+		)
+		AC_MSG_RESULT([${ac_target_is_linux}])
+		
+		AC_MSG_CHECKING([if target is Android])
+		AC_COMPILE_IFELSE(
+			[ AC_LANG_SOURCE( [[
+#ifndef __ANDROID__
+# error not android
+#endif
+]]
+				) ],
+			[ ac_target_is_android=yes ],
+			[ ac_target_is_android=no ]
+		)
+		AC_MSG_RESULT([${ac_target_is_android}])
+		
 		AC_LANG_POP(C)
 		
-		CPPFLAGS="${ac_save_cppflags}"
-		LIBS="${ac_save_libs}"
+		AM_CONDITIONAL([LINUX_POWERPC_GLIBC], [test "x${ac_target_is_linux}" = "xyes" && test "x${ac_target_is_powerpc}" = "xyes" && test "x${ac_target_is_android}" = "xno"])
+		AM_CONDITIONAL([LINUX_GLIBC], [test "x${ac_target_is_linux}" = "xyes" && test "x${ac_target_is_powerpc}" = "xno" && test "x${ac_target_is_android}" = "xno"])
+		AM_CONDITIONAL([ANDROID], [test "x${ac_target_is_android}" = "xyes"])
+	]
+)
+
+
+AC_DEFUN([AC_CHECK_SYMBOL_RESOLUTION_STRATEGY],
+	[
+		AC_MSG_CHECKING([which symbol resolution strategy to use])
+		AC_ARG_WITH(
+			[symbol-resolution],
+			[AS_HELP_STRING([--with-symbol-resolution=ifunc|indirect], [specify the strategy to resolve the runtime symbols @<:@default=ifunc@:>@])],
+			[ac_cv_use_symbol_resolution="${withval}"],
+			[ac_cv_use_symbol_resolution="ifunc"]
+		)
+		
+		case "x${ac_cv_use_symbol_resolution}" in
+			"xifunc")
+				AC_MSG_RESULT([${ac_cv_use_symbol_resolution}])
+				;;
+			"xindirect")
+				AC_MSG_RESULT([${ac_cv_use_symbol_resolution}])
+				;;
+			*)
+				AC_MSG_ERROR([Unknown loading strategy ${ac_cv_use_symbol_resolution}])
+				;;
+		esac
+		
+		AM_CONDITIONAL([RESOLVE_SYMBOLS_USING_IFUNC], [test "x${ac_cv_use_symbol_resolution}" = "xifunc"])
+		AM_CONDITIONAL([RESOLVE_SYMBOLS_USING_INDIRECTION], [test "x${ac_cv_use_symbol_resolution}" = "xindirect"])
+		
 	]
 )
 

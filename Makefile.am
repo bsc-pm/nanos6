@@ -1,16 +1,214 @@
 ACLOCAL_AMFLAGS = -I m4
-AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/src/instrument/support -I@NANOS6_HEADER_DIR@
+AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/src/instrument/support -I$(srcdir)/api -I.
 
 SUBDIRS = . tests/directive_based
 
 
+MAX_REGION_DIMENSIONS = 8
+MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative
+
+
+nanos6includedir = $(includedir)/nanos6
+
+nanos6include_HEADERS = \
+	api/nanos6/nanos6_rt_interface.h \
+	api/nanos6/nanos6_debug_interface.h \
+	api/nanos6/blocking.h \
+	api/nanos6/bootstrap.h \
+	api/nanos6/constants.h \
+	api/nanos6/debug.h \
+	api/nanos6/dependencies.h \
+	api/nanos6/final.h \
+	api/nanos6/library-mode.h \
+	api/nanos6/polling.h \
+	api/nanos6/task-info-registration.h \
+	api/nanos6/task-instantiation.h \
+	api/nanos6/taskwait.h \
+	api/nanos6/user-mutex.h
+
+nodist_nanos6include_HEADERS = \
+	nanos6/multidimensional-dependencies.h \
+	nanos6/multidimensional-release.h 
+
+include_HEADERS = \
+	api/nanos6.h
+
+
 lib_LTLIBRARIES = \
+	libnanos6.la \
 	libnanos6-optimized.la libnanos6-debug.la \
 	libnanos6-graph.la libnanos6-graph-debug.la \
 	libnanos6-profile.la \
 	libnanos6-stats.la \
 	libnanos6-verbose.la libnanos6-verbose-debug.la \
 	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la
+
+lib_LIBRARIES = libnanos6-main-wrapper.a
+
+
+#
+# Taskification of the "main" function
+#
+main_interception =
+if LINUX_POWERPC_GLIBC
+main_interception += loader/intercept-main-glibc-powerpc.c
+endif
+if LINUX_GLIBC
+main_interception += loader/intercept-main-glibc.c
+endif
+if ANDROID
+main_interception += loader/intercept-main-android.c
+endif
+
+libnanos6_main_wrapper_a_SOURCES = \
+	$(main_interception) \
+	loader/intercept-main-common.c \
+	loader/intercept-main-common.h \
+	loader/main-wrapper.c \
+	loader/main-wrapper.h
+
+
+#
+# Loader and symbol resolution
+#
+symbol_resolution =
+symbol_resolution_header =
+multidimensional_regions = 
+
+if RESOLVE_SYMBOLS_USING_IFUNC
+symbol_resolution_header += loader/symbol-resolver/resolve.h
+symbol_resolution += \
+	loader/symbol-resolver/blocking.c \
+	loader/symbol-resolver/bootstrap.c \
+	loader/symbol-resolver/cpu-control.c \
+	loader/symbol-resolver/debugging.c \
+	loader/symbol-resolver/dependencies.c \
+	loader/symbol-resolver/final.c \
+	loader/symbol-resolver/polling.c \
+	loader/symbol-resolver/task-info-registration.c \
+	loader/symbol-resolver/task-instantiation.c \
+	loader/symbol-resolver/taskwait.c \
+	loader/symbol-resolver/user-mutex.c \
+	loader/symbol-resolver/weak-dependencies.c
+multidimensional_regions += \
+	multidim-region-dependency-resolvers.c \
+	multidim-release-resolvers.c
+endif
+
+
+if RESOLVE_SYMBOLS_USING_INDIRECTION
+symbol_resolution_header += loader/indirect-symbols/resolve.h
+symbol_resolution += \
+	loader/indirect-symbols/blocking.c \
+	loader/indirect-symbols/bootstrap.c \
+	loader/indirect-symbols/cpu-control.c \
+	loader/indirect-symbols/debugging.c \
+	loader/indirect-symbols/dependencies.c \
+	loader/indirect-symbols/final.c \
+	loader/indirect-symbols/polling.c \
+	loader/indirect-symbols/task-info-registration.c \
+	loader/indirect-symbols/task-instantiation.c \
+	loader/indirect-symbols/taskwait.c \
+	loader/indirect-symbols/user-mutex.c \
+	loader/indirect-symbols/weak-dependencies.c
+
+multidimensional_regions += \
+	multidim-region-dependency-indirect-resolvers.c \
+	multidim-release-indirect-resolvers.c
+
+dependent_objects = $(symbol_resolution:.c=.lo) $(multidimensional_regions:.c=.lo)
+$(dependent_objects): nanos6/multidimensional-dependencies.h
+endif
+
+libnanos6_la_SOURCES = \
+	$(symbol_resolution_header) \
+	$(symbol_resolution) \
+	loader/loader.c \
+	loader/loader.h
+
+nanos6_generated_headers = \
+	nanos6/multidimensional-dependencies.h \
+	nanos6/multidimensional-release.h
+	
+nodist_libnanos6_la_SOURCES = \
+	$(nanos6_generated_headers) \
+	multidim-region-dependency-fallbacks.h \
+	multidim-region-dependency-fallbacks.c \
+	multidim-release-fallbacks.h \
+	multidim-release-fallbacks.c \
+	$(multidimensional_regions)
+CLEANFILES = $(nodist_libnanos6_la_SOURCES)
+
+BUILT_SOURCES = \
+	$(nanos6_generated_headers)
+
+
+#
+# Automatically generated API headers
+#
+EXTRA_DIST = \
+	loader/scripts/common.sh \
+	loader/scripts/generate_regions_fallback_functions.sh \
+	loader/scripts/generate_regions_fallback_prototypes.sh \
+	loader/scripts/generate_regions_indirect_symbol_resolvers.sh \
+	loader/scripts/generate_regions_prototypes.sh \
+	loader/scripts/generate_regions_symbol_resolvers.sh \
+	loader/scripts/generate_release_fallback_functions.sh \
+	loader/scripts/generate_release_fallback_prototypes.sh \
+	loader/scripts/generate_release_indirect_symbol_resolvers.sh \
+	loader/scripts/generate_release_prototypes.sh \
+	loader/scripts/generate_release_symbol_resolvers.sh
+
+
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 =
+
+nanos6/multidimensional-dependencies.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_prototypes.sh Makefile
+	$(AM_V_GEN)
+	@mkdir -p nanos6
+	@$(top_srcdir)/loader/scripts/generate_regions_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+multidim-region-dependency-fallbacks.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_fallback_prototypes.sh Makefile
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_regions_fallback_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+multidim-region-dependency-fallbacks.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_fallback_functions.sh Makefile multidim-region-dependency-fallbacks.h nanos6/multidimensional-dependencies.h
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_regions_fallback_functions.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+multidim-region-dependency-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_symbol_resolvers.sh Makefile multidim-region-dependency-fallbacks.h
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_regions_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+multidim-region-dependency-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_indirect_symbol_resolvers.sh Makefile multidim-region-dependency-fallbacks.h nanos6/multidimensional-dependencies.h
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_regions_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+nanos6/multidimensional-release.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_prototypes.sh Makefile
+	$(AM_V_GEN)
+	@mkdir -p nanos6
+	@$(top_srcdir)/loader/scripts/generate_release_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+multidim-release-fallbacks.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_fallback_prototypes.sh Makefile
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_release_fallback_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+multidim-release-fallbacks.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_fallback_functions.sh Makefile multidim-release-fallbacks.h nanos6/multidimensional-release.h
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_release_fallback_functions.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+multidim-release-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_symbol_resolvers.sh Makefile multidim-release-fallbacks.h
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_release_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+multidim-release-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh Makefile multidim-release-fallbacks.h nanos6/multidimensional-release.h
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+
 
 
 if HAVE_EXTRAE
@@ -35,6 +233,9 @@ nodist_noinst_HEADERS = \
 # Sources for debugging both the regular and the null runtime
 universal_debug_sources = \
 	src/system/debug/RuntimeVersionAPI.cpp
+
+nodist_common_sources = \
+	$(nanos6_generated_headers)
 
 common_sources = \
 	src/executors/threads/CPU.cpp \
@@ -395,7 +596,7 @@ noinst_HEADERS = \
 	tests/TestAnyProtocolProducer.hpp \
 	tests/Timer.hpp
 
-EXTRA_DIST = \
+EXTRA_DIST += \
 	tests/select-version.sh \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
@@ -408,48 +609,57 @@ libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcd
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_optimized_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
 libnanos6_optimized_la_LDFLAGS = $(common_libnanos6_ldflags)
+nodist_libnanos6_optimized_la_SOURCES = $(nodist_common_sources)
 
 libnanos6_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
 libnanos6_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
+nodist_libnanos6_debug_la_SOURCES = $(nodist_common_sources)
 
 libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph
 libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
+nodist_libnanos6_graph_la_SOURCES = $(nodist_common_sources)
 
 libnanos6_graph_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph
 libnanos6_graph_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_debug_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
+nodist_libnanos6_graph_debug_la_SOURCES = $(nodist_common_sources)
 
 libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS)
 libnanos6_profile_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
 libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
+nodist_libnanos6_profile_la_SOURCES = $(nodist_common_sources)
 
 libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_stats_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources)
 libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+nodist_libnanos6_stats_la_SOURCES = $(nodist_common_sources)
 
 if HAVE_PAPI
 libnanos6_stats_papi_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats $(papi_CPPFLAGS) -DHAVE_PAPI
 libnanos6_stats_papi_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_stats_papi_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources)
 libnanos6_stats_papi_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
+nodist_libnanos6_stats_papi_la_SOURCES = $(nodist_common_sources)
 endif
 
 libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
 libnanos6_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_verbose_la_SOURCES = $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
 libnanos6_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+nodist_libnanos6_verbose_la_SOURCES = $(nodist_common_sources)
 
 libnanos6_verbose_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
 libnanos6_verbose_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_verbose_debug_la_SOURCES = $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
 libnanos6_verbose_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+nodist_libnanos6_verbose_debug_la_SOURCES = $(nodist_common_sources)
 
 libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
@@ -468,6 +678,7 @@ libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)
 libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
 libnanos6_extrae_la_LDFLAGS = @extrae_LDFLAGS@ @extrae_LIBS@ $(common_libnanos6_ldflags)
+nodist_libnanos6_extrae_la_SOURCES = $(nodist_common_sources)
 endif
 
 

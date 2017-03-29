@@ -32,8 +32,8 @@ SSS_CHECK_CC_VERSION
 SSS_CHECK_CXX_VERSION
 
 AC_PROG_AWK
-#AC_PROG_CC
-#AC_PROG_CPP
+AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
@@ -51,7 +51,7 @@ AX_BOOST_BASE([1.59], [], [ AC_MSG_ERROR([Boost library not found])])
 CHECK_PTHREAD
 
 # Checks for header files.
-AC_CHECK_HEADERS([unistd.h])
+AC_CHECK_HEADERS([stdlib.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_CHECK_HEADER_STDBOOL
@@ -62,39 +62,12 @@ AC_C_RESTRICT
 AC_LANG_POP(C++)
 
 
-SSS_CHECK_LOADER
-
 if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
-	CHECK_MERCURIUM_INSTALLATION_MSG="Please check that it has been configured with at least the --with-nanos6=${ac_loader_dir} --enable-tl-ompss-nanos6 --enable-ompss parameters."
 	NANOS6_MCXX="${NANOS6_MCXX} -std=c++11"
-	
-	SSS_PUSH_NANOS6_MERCURIUM
-	
-	AC_CHECK_HEADER(
-		[nanos6.h],
-		[],
-		[AC_MSG_ERROR([Mercurium cannot find the nanos6.h header. ${CHECK_MERCURIUM_INSTALLATION_MSG}])]
-	)
-	unset ac_cv_header_nanos6_h
-	
-	AC_MSG_CHECKING([if Mercurium can compile and link an empty code])
-	AC_LANG_PUSH(C++)
-	AC_TRY_COMPILE(
-		[],
-		[ return 0; ],
-		[ AC_MSG_RESULT([yes]) ],
-		[
-			AC_MSG_RESULT([no])
-			AC_MSG_ERROR([Mercurium cannot compile and link an empty code. ${CHECK_MERCURIUM_INSTALLATION_MSG}])
-		]
-	)
-	AC_LANG_POP(C++)
-	
-	SSS_CHECK_SANE_CHRONO
-	SSS_POP_NANOS6_MERCURIUM
 fi
 
 # Checks for library functions.
+AC_CHECK_LIB([dl], [dlopen])
 AC_CHECK_BACKTRACE
 AC_CHECK_PAPI
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
@@ -169,6 +142,8 @@ else
 	AC_DEFINE([NO_DEPENDENCY_DELAYED_OPERATIONS], 0, [do not delay dependency updates])
 fi
 
+AC_CHECK_MAIN_WRAPPER_TYPE
+AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
 AX_CHECK_EXTRAE
 

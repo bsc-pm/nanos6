@@ -1,4 +1,5 @@
-AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
+AM_CXXFLAGS = -I$(top_srcdir)/api -I$(top_builddir) -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
+AM_LDFLAGS = -L$(top_builddir)/.libs -rpath $(abs_top_builddir)/.libs
 CXX = $(NANOS6_MCXX) --parallel
 
 
@@ -53,8 +54,8 @@ check_PROGRAMS += $(linear_region_tests)
 TESTS += $(linear_region_tests)
 endif
 
-test_common_debug_ldflags = -no-install $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
-test_common_ldflags = -no-install $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+test_common_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 
 fibonacci_debug_test_SOURCES = fibonacci/fibonacci.cpp
 fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
