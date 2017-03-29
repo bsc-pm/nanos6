@@ -100,9 +100,6 @@ inline std::vector<CPU *> const &CPUManager::getCPUListReference()
 inline void CPUManager::cpuBecomesIdle(CPU *cpu)
 {
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-#ifndef NDEBUG
-	assert(_idleCPUs[cpu->_systemCPUId] == false);
-#endif
 	_idleCPUs[cpu->_systemCPUId] = true;
 }
 
