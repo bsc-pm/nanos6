@@ -1,19 +1,12 @@
-#include "HostHierarchicalScheduler.hpp"
 #include "NUMAHierarchicalScheduler.hpp"
+#include "DeviceHierarchicalScheduler.hpp"
 
-#include "../DefaultScheduler.hpp"
-#include "../FIFOImmediateSuccessorWithPollingScheduler.hpp"
-#include "../FIFOScheduler.hpp"
-#include "../ImmediateSuccessorScheduler.hpp"
-#include "../ImmediateSuccessorWithPollingScheduler.hpp"
-#include "../PriorityScheduler.hpp"
-#include "../Scheduler.hpp"
 #include "../SchedulerInterface.hpp"
 
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "tasks/Task.hpp"
 
 #include <cassert>
 
@@ -36,39 +29,9 @@ NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 		}
 	}
 
-	EnvironmentVariable<std::string> schedulerName("NANOS6_SCHEDULER", "default");
-
-	if (schedulerName.getValue() == "default") {
-		for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-			_NUMANodeScheduler[idx] = new DefaultScheduler();
-		}
-	} else if (schedulerName.getValue() == "fifo") {
-		for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-			_NUMANodeScheduler[idx] = new FIFOScheduler();
-		}
-	} else if (schedulerName.getValue() == "immediatesuccessor") {
-		for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-			_NUMANodeScheduler[idx] = new ImmediateSuccessorScheduler();
-		}
-	} else if (schedulerName.getValue() == "iswp") {
-		for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-			_NUMANodeScheduler[idx] = new ImmediateSuccessorWithPollingScheduler();
-		}
-	} else if (schedulerName.getValue() == "fifoiswp") {
-		for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-			_NUMANodeScheduler[idx] = new FIFOImmediateSuccessorWithPollingScheduler();
-		}
-	} else if (schedulerName.getValue() == "priority") {
-		for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-			_NUMANodeScheduler[idx] = new PriorityScheduler();
-		}
-	} else {
-		std::cerr << "Warning: invalid scheduler name '" << schedulerName.getValue() << "', using default instead." << std::endl;
-		for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-			_NUMANodeScheduler[idx] = new DefaultScheduler();
-		}
+	for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
+		_NUMANodeScheduler[idx] = new DeviceHierarchicalScheduler();
 	}
-	
 }
 
 NUMAHierarchicalScheduler::~NUMAHierarchicalScheduler()

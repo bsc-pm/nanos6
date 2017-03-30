@@ -319,6 +319,8 @@ common_sources = \
 	src/scheduling/hierarchy/HostHierarchicalScheduler.hpp \
 	src/scheduling/hierarchy/NUMAHierarchicalScheduler.cpp \
 	src/scheduling/hierarchy/NUMAHierarchicalScheduler.hpp \
+	src/scheduling/hierarchy/DeviceHierarchicalScheduler.cpp \
+	src/scheduling/hierarchy/DeviceHierarchicalScheduler.hpp \
 	src/scheduling/ImmediateSuccessorScheduler.cpp \
 	src/scheduling/ImmediateSuccessorScheduler.hpp \
 	src/scheduling/ImmediateSuccessorWithPollingScheduler.cpp \
