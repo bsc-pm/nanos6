@@ -1,5 +1,5 @@
 #include "resolve.h"
-#include "common/api/nanos6/debug.h"
+#include "api/nanos6/debug.h"
 
 
 long nanos_get_current_system_cpu()
