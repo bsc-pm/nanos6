@@ -1,6 +1,8 @@
 #ifndef NANOS6_TASKWAIT_H
 #define NANOS6_TASKWAIT_H
 
+enum nanos6_taskwait_api_t { nanos6_taskwait_api = 1 };
+
 
 #ifdef __cplusplus
 extern "C" {

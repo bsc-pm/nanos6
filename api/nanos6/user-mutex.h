@@ -1,6 +1,8 @@
 #ifndef NANOS6_USER_MUTEX_H
 #define NANOS6_USER_MUTEX_H
 
+enum nanos6_locking_api_t { nanos6_locking_api = 1 };
+
 
 #ifdef __cplusplus
 extern "C" {

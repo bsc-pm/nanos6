@@ -1,6 +1,8 @@
 #ifndef NANOS6_TASK_INFO_REGISTRATION_H
 #define NANOS6_TASK_INFO_REGISTRATION_H
 
+enum nanos6_task_info_registration_api_t { nanos6_task_info_registration_api = 1 };
+
 
 #include "task-instantiation.h"
 

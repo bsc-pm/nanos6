@@ -1,6 +1,7 @@
 #ifndef NANOS6_BLOCKING_H
 #define NANOS6_BLOCKING_H
 
+enum nanos6_blocking_api_t { nanos6_blocking_api = 1 };
 
 #ifdef __cplusplus
 extern "C" {

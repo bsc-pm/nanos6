@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+enum nanos6_unidimensional_dependencies_api_t { nanos6_unidimensional_dependencies_api = 1 };
+
 
 #ifdef __cplusplus
 extern "C" {
