@@ -89,27 +89,13 @@ template <DataAccessType ACCESS_TYPE, bool WEAK, typename... TS>
 static _AI_ void register_data_access(
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
 	TS... dimensions
-);
-
-template <DataAccessType ACCESS_TYPE, bool WEAK, typename... TS>
-static _AI_ void register_data_access(
-	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
-	long currentDimSize, long currentDimStart, long currentDimEnd
 ) {
-	register_data_access_base<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, baseAddress, currentDimSize, currentDimStart, currentDimEnd);
-}
-
-template <DataAccessType ACCESS_TYPE, bool WEAK, typename... TS>
-static _AI_ void register_data_access(
-	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
-	long currentDimSize, long currentDimStart, long currentDimEnd,
-	TS... otherDimensions
-) {
-	size_t startOffset = getStartOffset<>(currentDimSize, currentDimStart, currentDimEnd, otherDimensions...);
+	size_t startOffset = getStartOffset<>(dimensions...);
 	char *currentBaseAddress = (char *) baseAddress;
 	currentBaseAddress += startOffset;
 	
-	register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, currentBaseAddress, otherDimensions...);
+	size_t size = getDiscreteSize(dimensions...);
+	register_data_access_base<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, currentBaseAddress, size, 0, size);
 }
 
 
