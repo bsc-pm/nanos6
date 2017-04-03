@@ -214,6 +214,10 @@ MultidimensionalAPIToLinear.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_sr
 	$(AM_V_GEN)
 	@$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
+MultidimensionalAPIToDiscrete.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh Makefile
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
 
 if HAVE_EXTRAE
    lib_LTLIBRARIES += libnanos6-extrae.la
@@ -349,6 +353,7 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DependencyDomain.hpp \
 	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
+	src/dependencies/discrete/MultidimensionalAPI.hpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
 	src/dependencies/discrete/RootDataAccessSequence.hpp \
 	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
@@ -398,6 +403,7 @@ multidimensional_adaptor_sources =
 if DISCRETE_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
 common_sources += $(discrete_dependency_sources)
+multidimensional_adaptor_sources += MultidimensionalAPIToDiscrete.cpp
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite
 endif
 
