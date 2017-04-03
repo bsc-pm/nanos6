@@ -73,7 +73,7 @@ static _AI_ size_t getDiscreteSize()
 }
 
 template <typename... TS>
-static _AI_ size_t getDiscreteSize(long currentDimSize, _UU_ long currentDimStart, _UU_ long currentDimEnd, TS... otherDimensions)
+static _AI_ size_t getDiscreteSize(_UU_ long currentDimSize, long currentDimStart, long currentDimEnd, TS... otherDimensions)
 {
 	return (currentDimEnd - currentDimStart) * getDiscreteSize<>(otherDimensions...);
 }
