@@ -103,9 +103,6 @@ void nanos_user_unlock(void **handlerPointer)
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
 	
-	Task *currentTask = currentThread->getTask();
-	assert(currentTask != nullptr);
-	
 	CPU *cpu = currentThread->getHardwarePlace();
 	assert(cpu != nullptr);
 	

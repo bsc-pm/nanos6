@@ -767,7 +767,7 @@ namespace Instrument {
 		
 		foreachItersectingNextOfAccess(
 			&access,
-			[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool
+			[&](access_t &nextAccess, link_to_next_t &linkToNext, __attribute__((unused)) task_info_t &nextTaskInfo) -> bool
 			{
 				if (!_showDeadDependencyStructures && (nextAccess._status != created_access_status)) {
 					return true;

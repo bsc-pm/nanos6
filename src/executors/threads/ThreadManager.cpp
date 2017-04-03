@@ -45,7 +45,7 @@ void ThreadManager::preinitialize()
 	// Set up the pthread attributes for the threads of each CPU
 	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
 		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
-			CPU *cpu = getCPU(systemCPUId);
+			__attribute__((unused)) CPU *cpu = getCPU(systemCPUId);
 			assert(cpu != nullptr);
 			
 			assert(_shutdownThreads == 0);

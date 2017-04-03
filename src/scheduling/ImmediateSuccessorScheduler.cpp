@@ -69,7 +69,7 @@ HardwarePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, HardwarePl
 }
 
 
-void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace)
+void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) HardwarePlace *hardwarePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_front(unblockedTask);
