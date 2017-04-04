@@ -4,6 +4,25 @@
 
 CopySet::CopySet(): BaseType(){}
 
+
+/* finds a CopyObject that includes the range [start,end)
+ * and returns an iterator to it
+ **/
+CopySet::iterator CopySet::find(void *start, void *end){
+  CopySet::iterator result = BaseType::end();
+  DataAccessRange range(start, end);
+  BaseType::processIntersecting(range,
+      [&] (CopySet::iterator position) -> bool {
+            result = position;
+            return false;
+           });
+  return result;
+}
+
+
+/* finds a CopyObject with startAddress == address if any
+ * and returns an iterator to it
+ **/
 CopySet::iterator CopySet::find(void *address){
 	return BaseType::find( DataAccessRange(address, address) );
 }

@@ -20,6 +20,7 @@ public:
 
 	CopySet();
 
+	iterator find(void *start, void *end);
 	iterator find(void *address);
 	
 	/*! \brief Inserts a copy in a cache to the list 
