@@ -31,7 +31,7 @@ namespace Instrument {
 	}
 	
 	
-	void threadWillSuspend(thread_id_t threadId, compute_place_id_t computePlaceID) {
+	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceID) {
 		if (!_verboseThreadManagement) {
 			return;
 		}
@@ -46,7 +46,7 @@ namespace Instrument {
 	}
 	
 	
-	void threadHasResumed(thread_id_t threadId, compute_place_id_t computePlaceID) {
+	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceID) {
 		if (!_verboseThreadManagement) {
 			return;
 		}

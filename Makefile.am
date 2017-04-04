@@ -7,7 +7,7 @@ SUBDIRS = . tests/directive_based
 
 MAX_REGION_DIMENSIONS = 8
 MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative
-
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES = 
 
 nanos6includedir = $(includedir)/nanos6
 
@@ -149,6 +149,7 @@ BUILT_SOURCES = \
 #
 EXTRA_DIST = \
 	loader/scripts/common.sh \
+	loader/scripts/generate_multidim_functions_for_linear_regions.sh \
 	loader/scripts/generate_regions_fallback_functions.sh \
 	loader/scripts/generate_regions_fallback_prototypes.sh \
 	loader/scripts/generate_regions_indirect_symbol_resolvers.sh \
@@ -209,6 +210,13 @@ multidim-release-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(
 	@$(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 
+MultidimensionalAPIToLinear.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh Makefile
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+MultidimensionalAPIToDiscrete.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh Makefile
+	$(AM_V_GEN)
+	@$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 
 if HAVE_EXTRAE
@@ -338,7 +346,8 @@ common_sources = \
 
 common_dependency_sources = \
 	src/dependencies/DataAccessType.hpp \
-	src/dependencies/DataAccessBase.hpp
+	src/dependencies/DataAccessBase.hpp \
+	src/dependencies/MultidimensionalAPITraversal.hpp
 
 discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/CPUDependencyData.hpp \
@@ -354,6 +363,7 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DependencyDomain.hpp \
 	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
+	src/dependencies/discrete/MultidimensionalAPI.hpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
 	src/dependencies/discrete/RootDataAccessSequence.hpp \
 	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
@@ -368,8 +378,9 @@ common_linear_regions_dependency_sources = \
 	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
 	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
-	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp
-	
+	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
+	src/dependencies/linear-regions/MultidimensionalAPI.hpp
+
 linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
 	src/dependencies/linear-regions-unfragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
@@ -397,18 +408,35 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 
+multidimensional_adaptor_sources =
+
 if DISCRETE_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
 common_sources += $(discrete_dependency_sources)
+multidimensional_adaptor_sources += MultidimensionalAPIToDiscrete.cpp
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite
 endif
+
 if LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-unfragmented
 common_sources += $(linear_regions_unfragmented_dependency_sources)
+multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite
 endif
+
 if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
 common_sources += $(linear_regions_fragmented_dependency_sources)
+multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite
 endif
+
+nodist_common_sources += \
+	$(multidimensional_adaptor_sources)
+BUILT_SOURCES += \
+	$(multidimensional_adaptor_sources)
+CLEANFILES += \
+	$(multidimensional_adaptor_sources)
 
 
 hardware_counters_sources = \

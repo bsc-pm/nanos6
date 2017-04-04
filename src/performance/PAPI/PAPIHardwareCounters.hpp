@@ -5,7 +5,10 @@
 #include <cstddef>
 #include <vector>
 
+// Work around bug in PAPI header
+#define ffsll papi_ffsll
 #include <papi.h>
+#undef ffsll
 
 #include "../HardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"

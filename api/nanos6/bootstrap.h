@@ -1,6 +1,8 @@
 #ifndef NANOS6_BOOTSTRAP_H
 #define NANOS6_BOOTSTRAP_H
 
+enum nanos6_bootstrap_api_t { nanos6_bootstrap_api = 1 };
+
 
 #ifdef __cplusplus
 extern "C" {

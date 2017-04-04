@@ -1,6 +1,8 @@
 #ifndef NANOS6_LIBRARY_MODE_H
 #define NANOS6_LIBRARY_MODE_H
 
+enum nanos6_library_mode_api_t { nanos6_library_mode_api = 1 };
+
 
 #ifdef __cplusplus
 extern "C" {

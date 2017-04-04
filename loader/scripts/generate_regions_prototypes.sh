@@ -16,6 +16,8 @@ shift
 echo '#ifndef NANOS6_MULTIDIMENSIONAL_DEPENDENCIES_H'
 echo '#define NANOS6_MULTIDIMENSIONAL_DEPENDENCIES_H'
 echo
+echo 'enum nanos6_multidimensional_dependencies_api_t { nanos6_multidimensional_dependencies_api = 1 };'
+echo
 echo
 echo "#ifndef NANOS6_MAX_DEPENDENCY_DIMENSIONS"
 echo "#define NANOS6_MAX_DEPENDENCY_DIMENSIONS ${maxdimensions}"

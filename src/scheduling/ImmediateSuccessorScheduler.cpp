@@ -68,7 +68,7 @@ ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlac
 }
 
 
-void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace)
+void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_front(unblockedTask);

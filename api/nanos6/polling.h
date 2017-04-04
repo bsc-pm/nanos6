@@ -1,6 +1,8 @@
 #ifndef NANOS6_POLLING_H
 #define NANOS6_POLLING_H
 
+enum nanos6_polling_api_t { nanos6_polling_api = 1 };
+
 
 #ifdef __cplusplus
 extern "C" {

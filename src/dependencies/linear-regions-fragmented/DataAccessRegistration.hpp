@@ -25,7 +25,6 @@
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentComputePlaceId.hpp>
-#include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentLogMessage.hpp>
 #include <InstrumentTaskId.hpp>
 
@@ -68,8 +67,6 @@ private:
 		}
 		
 		if ((newWeak != dataAccess->_weak) || (newDataAccessType != dataAccess->_type)) {
-			Instrument::ThreadInstrumentationContext instrumentationContext(dataAccess->_originator->getInstrumentationTaskId());
-			
 			Instrument::upgradedDataAccess(
 				dataAccess->_instrumentationId,
 				dataAccess->_type, dataAccess->_weak,
@@ -918,16 +915,13 @@ private:
 	template <typename MatchingProcessorType, typename MissingProcessorType>
 	static inline bool foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRange(
 		Task *parent, TaskDataAccesses &parentAccessStructures,
-		DataAccessRange range, Task *task,
+		DataAccessRange range,
 		MatchingProcessorType matchingProcessor, MissingProcessorType missingProcessor,
 		bool removeBottomMapEntry
 	) {
 		assert(parent != nullptr);
-		assert(task != nullptr);
 		assert((&parentAccessStructures) == (&parent->getDataAccesses()));
 		assert(!parentAccessStructures.hasBeenDeleted());
-		
-		Instrument::ThreadInstrumentationContext instrumentationContext(task->getInstrumentationTaskId());
 		
 		return parentAccessStructures._subaccessBottomMap.processIntersectingAndMissing(
 			range,
@@ -1335,7 +1329,7 @@ private:
 		// Link accesses to their corresponding predecessor
 		foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRange(
 			parent, parentAccessStructures,
-			range, task,
+			range,
 			[&](DataAccess *previous, BottomMapEntry *bottomMapEntry) -> bool {
 				assert(previous != nullptr);
 				assert(previous->isReachable());

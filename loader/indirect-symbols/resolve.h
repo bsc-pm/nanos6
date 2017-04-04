@@ -4,7 +4,7 @@
 
 #include "loader.h"
 
-#include "common/api/nanos6.h"
+#include "api/nanos6.h"
 
 #include <assert.h>
 #include <dlfcn.h>

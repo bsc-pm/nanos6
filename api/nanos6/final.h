@@ -1,6 +1,8 @@
 #ifndef NANOS6_FINAL_H
 #define NANOS6_FINAL_H
 
+enum nanos6_final_api_t { nanos6_final_api = 1 };
+
 
 #ifdef __cplusplus
 extern "C" {

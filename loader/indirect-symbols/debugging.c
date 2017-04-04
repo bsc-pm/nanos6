@@ -1,5 +1,5 @@
 #include "resolve.h"
-#include "common/api/nanos6/debug.h"
+#include "api/nanos6/debug.h"
 
 
 char const *nanos_get_runtime_version(void)
