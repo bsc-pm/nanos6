@@ -9,9 +9,7 @@
 #include <cassert>
 #include <mutex>
 
-#define _unused(x) ((void)(x))
-
-NaiveScheduler::NaiveScheduler() : SchedulerInterface()
+NaiveScheduler::NaiveScheduler()
 {
 }
 
@@ -20,7 +18,7 @@ NaiveScheduler::~NaiveScheduler()
 }
 
 
-Task *NaiveScheduler::getReplacementTask(__attribute__((unused)) CPU *hardwarePlace)
+Task *NaiveScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlace)
 {
 	if (!_unblockedTasks.empty()) {
 		Task *replacementTask = _unblockedTasks.front();
@@ -35,7 +33,7 @@ Task *NaiveScheduler::getReplacementTask(__attribute__((unused)) CPU *hardwarePl
 }
 
 
-ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
+ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_front(task);
@@ -44,21 +42,21 @@ ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) 
 }
 
 
-void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *hardwarePlace)
+void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_front(unblockedTask);
 }
 
 
-Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
 	std::lock_guard<SpinLock> guard(_globalLock);
 	
 	// 1. Get an unblocked task
-	task = getReplacementTask((CPU *) hardwarePlace);
+	task = getReplacementTask((CPU *) computePlace);
 	if (task != nullptr) {
 		return task;
 	}
@@ -74,7 +72,7 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hardwar
 	}
 	
 	// 3. Or mark the CPU as idle
-	CPUManager::cpuBecomesIdle((CPU *) hardwarePlace);
+	CPUManager::cpuBecomesIdle((CPU *) computePlace);
 	
 	return nullptr;
 }
@@ -88,9 +86,4 @@ ComputePlace *NaiveScheduler::getIdleComputePlace(bool force)
 	} else {
 		return nullptr;
 	}
-}
-
-void NaiveScheduler::createReadyQueues(std::size_t nodes) 
-{
-    _unused(nodes);
 }

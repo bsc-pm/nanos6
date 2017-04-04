@@ -259,7 +259,6 @@ common_sources = \
 	src/hardware/HardwareInfo.hpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/places/MemoryPlace.hpp \
-	src/hardware/places/AIOPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/hardware/places/ComputePlace.hpp \
@@ -270,7 +269,7 @@ common_sources = \
 	src/instrument/api/InstrumentDependenciesByAccess.hpp \
 	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/api/InstrumentDependenciesByGroup.hpp \
-	src/instrument/api/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/api/InstrumentComputePlaceManagement.hpp \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
@@ -292,30 +291,6 @@ common_sources = \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/memory/AddressSpace.hpp \
-	src/memory/Globals.hpp \
-	src/memory/directory/Directory.hpp \
-	src/memory/directory/Directory.cpp \
-	src/memory/directory/copies/CopySet.hpp \
-	src/memory/directory/copies/CopySet.cpp \
-	src/memory/directory/copies/CopyObject.hpp \
-	src/memory/directory/copies/CopyObject.cpp \
-	src/memory/directory/pages/MemoryPageObject.hpp \
-	src/memory/directory/pages/MemoryPageObject.cpp \
-	src/memory/directory/pages/MemoryPageSet.hpp \
-	src/memory/directory/pages/MemoryPageSet.cpp \
-	src/memory/directory/last-level-cache-tracking/IntrusiveLinearRegionTreap.hpp \
-	src/memory/directory/last-level-cache-tracking/IntrusiveLinearRegionTreapImplementation.hpp \
-    src/memory/directory/last-level-cache-tracking/CacheTrackingObjectLinkingArtifacts.hpp \
-    src/memory/directory/last-level-cache-tracking/CacheTrackingObjectLinkingArtifactsImplementation.hpp \
-	src/memory/directory/last-level-cache-tracking/CacheTrackingObject.hpp \
-	src/memory/directory/last-level-cache-tracking/CacheTrackingObject.cpp \
-	src/memory/directory/last-level-cache-tracking/CacheTrackingSet.hpp \
-	src/memory/directory/last-level-cache-tracking/CacheTrackingSet.cpp \
-	src/memory/cache/GenericCache.hpp \
-	src/memory/cache/AIOCache.hpp \
-	src/memory/cache/AIOCache.cpp \
-	src/memory/cache/NUMACache.hpp \
-	src/memory/cache/NUMACache.cpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
@@ -331,8 +306,6 @@ common_sources = \
 	src/scheduling/ImmediateSuccessorScheduler.hpp \
 	src/scheduling/ImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/ImmediateSuccessorWithPollingScheduler.hpp \
-	src/scheduling/LocalityScheduler.cpp \
-	src/scheduling/LocalityScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
 	src/scheduling/Scheduler.cpp \
@@ -456,8 +429,8 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentDependenciesByAccess.hpp \
 	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
-	src/instrument/null/InstrumentHardwarePlaceId.hpp \
-	src/instrument/null/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/null/InstrumentComputePlaceId.hpp \
+	src/instrument/null/InstrumentComputePlaceManagement.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
@@ -490,8 +463,8 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
 	src/instrument/graph/InstrumentGraph.cpp \
 	src/instrument/graph/InstrumentGraph.hpp \
-	src/instrument/graph/InstrumentHardwarePlaceId.hpp \
-	src/instrument/graph/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/graph/InstrumentComputePlaceId.hpp \
+	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
@@ -517,8 +490,8 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentDependenciesByAccess.hpp \
 	src/instrument/profile/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
-	src/instrument/profile/InstrumentHardwarePlaceId.hpp \
-	src/instrument/profile/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/profile/InstrumentComputePlaceId.hpp \
+	src/instrument/profile/InstrumentComputePlaceManagement.hpp \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
 	src/instrument/profile/InstrumentLeaderThread.hpp \
@@ -540,8 +513,8 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
-	src/instrument/stats/InstrumentHardwarePlaceId.hpp \
-	src/instrument/stats/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/stats/InstrumentComputePlaceId.hpp \
+	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
@@ -568,8 +541,8 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
-	src/instrument/verbose/InstrumentHardwarePlaceId.hpp \
-	src/instrument/verbose/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/verbose/InstrumentComputePlaceId.hpp \
+	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.cpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
 	src/instrument/verbose/InstrumentLeaderThread.cpp \
@@ -599,8 +572,8 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
 	src/instrument/extrae/InstrumentExtrae.cpp \
 	src/instrument/extrae/InstrumentExtrae.hpp \
-	src/instrument/extrae/InstrumentHardwarePlaceId.hpp \
-	src/instrument/extrae/InstrumentHardwarePlaceManagement.hpp \
+	src/instrument/extrae/InstrumentComputePlaceId.hpp \
+	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
 	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
@@ -723,7 +696,7 @@ endif
 # Tests
 #
 
-unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test #directory.test
+unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test
 
 unit_test_common_cxxflags = -I$(top_srcdir)/tests
 
@@ -733,12 +706,6 @@ inline_double_linked_list_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 inline_double_linked_list_test_SOURCES = tests/unit/support/TestInlineDoublyLinkedList.cpp
 inline_double_linked_list_test_CPPFLAGS = -DNDEBUG
 inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
-
-#directory_test_SOURCES = tests/unit/directory/TestDirectory.cpp $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
-#directory_test_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
-#directory_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags) $(DEBUG_CXXFLAGS)
-#directory_test_LDFLAGS = $(common_libnanos6_ldflags)
-
 
 check_PROGRAMS = $(unit_tests)
 TESTS = $(unit_tests)

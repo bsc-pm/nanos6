@@ -39,20 +39,15 @@ struct DataAccessBase {
 	//! An identifier for the instrumentation
 	Instrument::data_access_id_t _instrumentationId;
 	
-	//! Home node of the accessed data, to be filled by the directory
-	int _homeNode;
-	
 	DataAccessBase(
 		DataAccessType type,
 		bool weak,
 		Task *originator,
-		Instrument::data_access_id_t instrumentationId,
-        int homeNode
+		Instrument::data_access_id_t instrumentationId
 	)
 		: _taskDataAccessLinks(), 
 		_type(type), _weak(weak), _originator(originator),
-		_instrumentationId(instrumentationId),
-        _homeNode(homeNode)
+		_instrumentationId(instrumentationId)
 	{
 		assert(originator != 0);
 	}

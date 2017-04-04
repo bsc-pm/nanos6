@@ -8,9 +8,7 @@
 #include <cassert>
 #include <mutex>
 
-#define _unused(x) ((void)(x))
-
-FIFOScheduler::FIFOScheduler() : SchedulerInterface()
+FIFOScheduler::FIFOScheduler()
 {
 }
 
@@ -19,7 +17,7 @@ FIFOScheduler::~FIFOScheduler()
 }
 
 
-Task *FIFOScheduler::getReplacementTask(__attribute__((unused)) CPU *hardwarePlace)
+Task *FIFOScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlace)
 {
 	if (!_unblockedTasks.empty()) {
 		Task *replacementTask = _unblockedTasks.front();
@@ -53,7 +51,7 @@ CPU *FIFOScheduler::getIdleCPU()
 }
 
 
-ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) ReadyTaskHint hint)
+ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_back(task);
@@ -62,21 +60,21 @@ ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) C
 }
 
 
-void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *hardwarePlace)
+void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_unblockedTasks.push_back(unblockedTask);
 }
 
 
-Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
 	std::lock_guard<SpinLock> guard(_globalLock);
 	
 	// 1. Get an unblocked task
-	task = getReplacementTask((CPU *) hardwarePlace);
+	task = getReplacementTask((CPU *) computePlace);
 	if (task != nullptr) {
 		return task;
 	}
@@ -92,7 +90,7 @@ Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *hardware
 	}
 	
 	// 3. Or mark the CPU as idle
-	cpuBecomesIdle((CPU *) hardwarePlace);
+	cpuBecomesIdle((CPU *) computePlace);
 	
 	return nullptr;
 }
@@ -106,9 +104,4 @@ ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
 	} else {
 		return nullptr;
 	}
-}
-
-void FIFOScheduler::createReadyQueues(std::size_t nodes)
-{
-    _unused(nodes);
 }

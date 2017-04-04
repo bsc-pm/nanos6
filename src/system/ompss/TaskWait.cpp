@@ -58,7 +58,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	if (!done) {
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask, true);
-		Instrument::ThreadInstrumentationContext::updateHardwarePlace(currentThread->getComputePlace()->getInstrumentationId());
+		Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
 	}
 	
 	// This in combination with a release from the children makes their changes visible to this thread
@@ -70,10 +70,6 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	currentTask->markAsUnblocked();
 	
 	DataAccessRegistration::handleExitTaskwait(currentTask, currentThread->getComputePlace());
-    std::vector<MemoryPlace*> memoryNodes = HardwareInfo::getMemoryNodes();
-    for(unsigned int i=0; i<memoryNodes.size(); i++) {
-        memoryNodes[i]->getCache()->flush();
-    }
 	
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked

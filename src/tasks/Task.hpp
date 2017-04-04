@@ -18,7 +18,6 @@
 struct DataAccess;
 struct DataAccessBase;
 class WorkerThread;
-class GenericCache;
 
 
 #pragma GCC diagnostic push
@@ -66,12 +65,6 @@ private:
 	
 	//! Opaque data that is scheduler-dependent
 	void *_schedulerInfo;
-    
-    //! Cache info
-	bool _enabledCopies;
-    std::size_t _taskDataSize;
-    std::size_t _cachedBytes;
-    GenericCache * _cache;
 	
 public:
 	Task(
@@ -89,11 +82,7 @@ public:
 		_predecessorCount(0),
 		_flags(flags),
 		_instrumentationTaskId(instrumentationTaskId),
-		_schedulerInfo(nullptr),
-		_enabledCopies(false),
-        _taskDataSize(0),
-        _cachedBytes(0),
-        _cache(nullptr)
+		_schedulerInfo(nullptr)
 	{
 		if (parent != nullptr) {
 			parent->addChild(this);
@@ -335,57 +324,6 @@ public:
 	inline void setSchedulerInfo(void *schedulerInfo)
 	{
 		_schedulerInfo = schedulerInfo;
-	}
-	
-
-    //! \brief Update _cachedBytes with the amount specified and return the new value
-    inline std::size_t addCachedBytes(std::size_t cachedBytes) {
-        _cachedBytes += cachedBytes;
-        return _cachedBytes;
-    }
-
-    //! \brief Set _cachedBytes to the amount specified
-    inline void setCachedBytes(std::size_t cachedBytes) {
-        _cachedBytes = cachedBytes;
-    }
-
-    //! \brief Return the current number of bytes that a task has in the cache where it is going to be executed.
-    inline unsigned int getCachedBytes() {
-        return _cachedBytes;
-    }
-
-    //! \brief Update _taskDataSize with the amount specified
-    inline void addDataSize(std::size_t size) {
-        _taskDataSize += size;
-    }
-
-    //! \brief Return the total number of bytes required by a task to be executed
-    inline unsigned int getDataSize() const
-    {
-        return _taskDataSize;
-    }
-
-    inline bool hasPendingCopies() const 
-    {
-        return _cachedBytes < _taskDataSize;
-    }
-
-    inline void setCache(GenericCache * cache) {
-        _cache = cache;
-    }
-
-    inline GenericCache * getCache() const {
-        return _cache;
-    }
-	
-	inline bool hasEnabledCopies()
-	{
-		return _enabledCopies;
-	}
-
-	inline void setEnabledCopies(bool enabled)
-	{
-		_enabledCopies = enabled;
 	}
 };
 

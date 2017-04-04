@@ -4,25 +4,22 @@
 #include <vector>
 #include <map>
 #include "memory/AddressSpace.hpp"
-#include "memory/cache/GenericCache.hpp"
 
 class ComputePlace;
 
 class MemoryPlace {
 protected:
-    AddressSpace * _addressSpace;
-    int _index;	
-    GenericCache * _cache;
+	AddressSpace * _addressSpace;
+	int _index;	
 	
 public:
-	MemoryPlace(int index, GenericCache * cache, AddressSpace * addressSpace = nullptr)
-        : _addressSpace(addressSpace), _index(index), _cache(cache)
+	MemoryPlace(int index, AddressSpace * addressSpace = nullptr)
+		: _addressSpace(addressSpace), _index(index)
 	{}
-    
-    virtual ~MemoryPlace() {}
+	
+	virtual ~MemoryPlace() {}
 	inline int getIndex(void){ return _index; } 
-    inline AddressSpace * getAddressSpace(){ return _addressSpace; } 
-    virtual GenericCache * getCache() = 0;
+	inline AddressSpace * getAddressSpace(){ return _addressSpace; } 
 };
 
 #endif //MEMORY_PLACE_HPP

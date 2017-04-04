@@ -13,7 +13,6 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/SpawnFunction.hpp"
-#include "memory/directory/Directory.hpp"
 #include "hardware/HardwareInfo.hpp"
 
 #include <InstrumentInitAndShutdown.hpp>
@@ -52,7 +51,6 @@ static void programSignal(int signum) {
 
 void nanos_preinit(void) {
 	Scheduler::initialize();
-    Directory::initialize();
 	HardwareInfo::initialize();
 	ThreadManagerPolicy::initialize();
 	CPUManager::preinitialize();
@@ -90,13 +88,12 @@ void nanos_shutdown(void) {
 	
 	LeaderThread::shutdown();
 	Instrument::shutdown();
-    Directory::dispose();
 	
 	if (shutdownDueToSignalNumber.load() != 0) {
 		raise(shutdownDueToSignalNumber.load());
 	}
 	
 	ThreadManager::shutdown();
-    Scheduler::shutdown();
+	Scheduler::shutdown();
 }
 

@@ -37,9 +37,9 @@ void CPUManager::initialize()
 		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
 			assert(_cpus[systemCPUId] != nullptr);
 			
-            _cpus[systemCPUId]->initializeIfNeeded();
-            ThreadManager::initializeThread(_cpus[systemCPUId]);
-            _totalCPUs++;
+			_cpus[systemCPUId]->initializeIfNeeded();
+			ThreadManager::initializeThread(_cpus[systemCPUId]);
+			_totalCPUs++;
 		}
 	}
 	

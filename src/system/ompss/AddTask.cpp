@@ -64,28 +64,26 @@ void nanos_submit_task(void *taskHandle)
 	
 	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	ComputePlace *hardwarePlace = nullptr;
+	ComputePlace *computePlace = nullptr;
 	
 	if (currentWorkerThread != nullptr) {
 		assert(currentWorkerThread->getTask() != nullptr);
 		parent = currentWorkerThread->getTask();
 		assert(parent != nullptr);
 		
-		hardwarePlace = currentWorkerThread->getComputePlace();
-		assert(hardwarePlace != nullptr);
+		computePlace = currentWorkerThread->getComputePlace();
+		assert(computePlace != nullptr);
 		
 		task->setParent(parent);
 	}
 	
 	Instrument::createdTask(task, taskInstrumentationId);
-
-	task->setEnabledCopies(Scheduler::hasEnabledCopies());
 	
 	bool ready = true;
 	nanos_task_info *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);
 	if (taskInfo->register_depinfo != 0) {
-		ready = DataAccessRegistration::registerTaskDataAccesses(task, hardwarePlace);
+		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace);
 	}
 	
 	bool isIf0 = task->isIf0();
@@ -98,7 +96,7 @@ void nanos_submit_task(void *taskHandle)
 			schedulingHint = SchedulerInterface::CHILD_TASK_HINT;
 		}
 		
-		ComputePlace *idleComputePlace = Scheduler::addReadyTask(task, hardwarePlace, schedulingHint);
+		ComputePlace *idleComputePlace = Scheduler::addReadyTask(task, computePlace, schedulingHint);
 		
 		if (idleComputePlace != nullptr) {
 			ThreadManager::resumeIdle((CPU *) idleComputePlace);
@@ -113,10 +111,10 @@ void nanos_submit_task(void *taskHandle)
 	if (isIf0) {
 		if (ready) {
 			// Ready if0 tasks are executed inline
-			If0Task::executeInline(currentWorkerThread, parent, task, hardwarePlace);
+			If0Task::executeInline(currentWorkerThread, parent, task, computePlace);
 		} else {
 			// Non-ready if0 tasks cause this thread to get blocked
-			If0Task::waitForIf0Task(currentWorkerThread, parent, task, hardwarePlace);
+			If0Task::waitForIf0Task(currentWorkerThread, parent, task, computePlace);
 		}
 	}
 	

@@ -6,9 +6,6 @@
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
 #include "tasks/Task.hpp"
-#include "memory/cache/GenericCache.hpp"
-#include "hardware/places/MemoryPlace.hpp"
-#include "memory/directory/Directory.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -20,8 +17,6 @@
 
 #include <pthread.h>
 #include <cstring>
-
-#define _unused(x) ((void)(x))
 
 __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
 
@@ -57,7 +52,6 @@ void *WorkerThread::body()
 				if (ThreadManager::mustExit()) {
 					__attribute__((unused)) bool worked = Scheduler::releasePolling(_cpu, &pollingSlot);
 					assert(worked && "A failure to release the scheduler polling slot means that the thread has got a task assigned, however the runtime is shutting down");
-                    _unused(worked);
 				}
 				
 				if (!CPUActivation::acceptsWork(_cpu)) {
@@ -125,56 +119,31 @@ void *WorkerThread::body()
 
 void WorkerThread::handleTask()
 {
-    if(_task->hasEnabledCopies() && _task->hasPendingCopies()) {
-        // task is preReady
-        //! Do some data transferences if any
-        float * cachesLoad = nullptr;
-        GenericCache * destCache = _task->getCache();
-        if(destCache == nullptr) {
-            destCache = _cpu->getMemoryPlaces()[0]->getCache();
-            _task->setCache(destCache);
-        }
-        assert(destCache != nullptr);
-        destCache->copyData(cachesLoad, _task);
-    }
-    else {
-        _task->setThread(this);
+	_task->setThread(this);
 
-        //! Temporal print to check that each task is executing where it should according to its data affinity.
-        //std::cerr << "Task with label " << _task->getTaskInfo()->task_label << " is executed on NUMA node " 
-        //    << _cpu->_NUMANodeId << ". It's data size is:" << _task->getDataSize() << "." << std::endl;
+	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
 
-        //! Notify CacheTrackingSet the task data.
-        Directory::registerLastLevelCacheData(_task->getDataAccesses(), _cpu->_NUMANodeId, _task);
+	Instrument::ThreadInstrumentationContext instrumentationContext(taskId, _cpu->getInstrumentationId(), _instrumentationId);
 
-        Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
+	if (_task->hasCode()) {
+		Instrument::startTask(taskId);
+		Instrument::taskIsExecuting(taskId);
 
-        Instrument::ThreadInstrumentationContext instrumentationContext(taskId, _cpu->getInstrumentationId(), _instrumentationId);
+		// Run the task
+		std::atomic_thread_fence(std::memory_order_acquire);
+		_task->body();
+		std::atomic_thread_fence(std::memory_order_release);
 
-        if (_task->hasCode()) {
-            Instrument::startTask(taskId);
-            Instrument::taskIsExecuting(taskId);
+		Instrument::taskIsZombie(taskId);
+		Instrument::endTask(taskId);
+	}
 
-            // Run the task
-            std::atomic_thread_fence(std::memory_order_acquire);
-            _task->body();
-            std::atomic_thread_fence(std::memory_order_release);
+	// Release successors
+	DataAccessRegistration::unregisterTaskDataAccesses(_task, _cpu);
 
-            Instrument::taskIsZombie(taskId);
-            Instrument::endTask(taskId);
-        }
-
-        // Release successors
-        DataAccessRegistration::unregisterTaskDataAccesses(_task, _cpu);
-        // Release copies
-        GenericCache * destCache = _task->getCache();
-        if(destCache != nullptr)
-            destCache->releaseCopies(_task);
-
-        if (_task->markAsFinished()) {
-            TaskFinalization::disposeOrUnblockTask(_task, _cpu);
-        }
-    }
+	if (_task->markAsFinished()) {
+		TaskFinalization::disposeOrUnblockTask(_task, _cpu);
+	}
 
 	_task = nullptr;
 }

@@ -30,7 +30,7 @@ struct CPU: public CPUPlace {
 #endif
 	
 	typedef enum {
-        uninitialized_status=0,
+		uninitialized_status=0,
 		starting_status,
 		enabled_status,
 		enabling_status,
@@ -46,7 +46,7 @@ struct CPU: public CPUPlace {
 	
 	size_t _systemCPUId;
 	size_t _virtualCPUId;
-    size_t _NUMANodeId;
+	size_t _NUMANodeId;
 	
 	//! \brief the CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;
@@ -73,11 +73,11 @@ struct CPU: public CPUPlace {
 		FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", tid, " to CPU ", _systemCPUId);
 	}
 
-    inline void initializeIfNeeded() 
-    {
-        activation_status_t expectedStatus = uninitialized_status;
-        _activationStatus.compare_exchange_strong(expectedStatus, starting_status);
-    }
+	inline void initializeIfNeeded() 
+	{
+		activation_status_t expectedStatus = uninitialized_status;
+		_activationStatus.compare_exchange_strong(expectedStatus, starting_status);
+	}
 	
 };
 

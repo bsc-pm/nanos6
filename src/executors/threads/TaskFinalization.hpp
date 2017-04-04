@@ -1,7 +1,7 @@
 #ifndef TASK_FINALIZATION_HPP
 #define TASK_FINALIZATION_HPP
 
-#include <InstrumentHardwarePlaceId.hpp>
+#include <InstrumentComputePlaceId.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentThreadId.hpp>
 
@@ -15,7 +15,7 @@
 
 class TaskFinalization {
 public:
-	static void disposeOrUnblockTask(Task *task, ComputePlace *hardwarePlace)
+	static void disposeOrUnblockTask(Task *task, ComputePlace *computePlace)
 	{
 		bool readyOrDisposable = true;
 		
@@ -37,7 +37,7 @@ public:
 				}
 			} else {
 				// An ancestor in a taskwait that finishes at this point
-				Scheduler::taskGetsUnblocked(task, hardwarePlace);
+				Scheduler::taskGetsUnblocked(task, computePlace);
 				readyOrDisposable = false;
 			}
 		}

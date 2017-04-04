@@ -5,39 +5,39 @@
 #include "ComputePlace.hpp"
 
 void NUMAPlace::addComputePlace(ComputePlace * computePlace) {
-    _computePlaces[computePlace->getIndex()] = computePlace;
+	_computePlaces[computePlace->getIndex()] = computePlace;
 }
 
 std::vector<int> NUMAPlace::getComputePlaceIndexes(){
-    //! Create a new vector with the correct size. This automatically initialize all the positions to a value.
-    std::vector<int> indexes(_computePlaces.size());
+	//! Create a new vector with the correct size. This automatically initialize all the positions to a value.
+	std::vector<int> indexes(_computePlaces.size());
 
-    //! Double iterator needed to overwrite the already initialized positions of the vector.
-    int i = 0;
-    for(computePlaces_t::iterator it = _computePlaces.begin(); 
-        it != _computePlaces.end(); 
-        ++it, ++i)
-    {
-        indexes[i] = it->first;
-    }
+	//! Double iterator needed to overwrite the already initialized positions of the vector.
+	int i = 0;
+	for(computePlaces_t::iterator it = _computePlaces.begin(); 
+		it != _computePlaces.end(); 
+		++it, ++i)
+	{
+		indexes[i] = it->first;
+	}
 
-    return indexes;
+	return indexes;
 }
 
 std::vector<ComputePlace*> NUMAPlace::getComputePlaces(){
-    //! Create a new vector with the correct size. This automatically initialize all the positions to a value.
-    std::vector<ComputePlace*> computePlaces(_computePlaces.size());
+	//! Create a new vector with the correct size. This automatically initialize all the positions to a value.
+	std::vector<ComputePlace*> computePlaces(_computePlaces.size());
 
-    //! Double iterator needed to overwrite the already initialized positions of the vector.
-    int i = 0;
-    for(computePlaces_t::iterator it = _computePlaces.begin(); 
-        it != _computePlaces.end(); 
-        ++it, ++i)
-    {
-        computePlaces[i] = it->second;
-    }
+	//! Double iterator needed to overwrite the already initialized positions of the vector.
+	int i = 0;
+	for(computePlaces_t::iterator it = _computePlaces.begin(); 
+		it != _computePlaces.end(); 
+		++it, ++i)
+	{
+		computePlaces[i] = it->second;
+	}
 
-    return computePlaces;
+	return computePlaces;
 }
 
 #endif //NUMA_PLACE_CPP

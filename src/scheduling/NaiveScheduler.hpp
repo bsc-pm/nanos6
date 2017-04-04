@@ -19,21 +19,19 @@ class NaiveScheduler: public SchedulerInterface {
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
-	inline Task *getReplacementTask(CPU *hardwarePlace);
+	inline Task *getReplacementTask(CPU *computePlace);
 	
 public:
 	NaiveScheduler();
 	~NaiveScheduler();
 	
-	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint);
 	
-	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);
+	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace);
 	
-	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
+	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
-
-    void createReadyQueues(std::size_t nodes);
 };
 
 

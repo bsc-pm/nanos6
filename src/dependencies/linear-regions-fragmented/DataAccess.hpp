@@ -50,22 +50,17 @@ struct DataAccess : public DataAccessBase {
 	//! Direct next access
 	Task *_next;
 
-    //! Is it cached?
-    bool _cached;
-	
 	DataAccess(
 		DataAccessType type, bool weak,
 		Task *originator,
 		DataAccessRange accessRange,
 		bool fragment,
-		Instrument::data_access_id_t instrumentationId,
-        int homeNode = -1
+		Instrument::data_access_id_t instrumentationId
 	)
-		: DataAccessBase(type, weak, originator, instrumentationId, homeNode),
+		: DataAccessBase(type, weak, originator, instrumentationId),
 		_range(accessRange),
 		_status(0),
-		_next(nullptr),
-        _cached(false)
+		_next(nullptr)
 	{
 		assert(originator != 0);
 		
@@ -200,16 +195,6 @@ struct DataAccess : public DataAccessBase {
 			&& ( !isInBottomMap() || hasForcedRemoval || (_next != nullptr) );
 	}
 
-    bool isCached() const
-    {
-        return _cached;
-    }
-
-    void setCached(bool b)
-    {
-        _cached = b;
-    }
-	
 };
 
 

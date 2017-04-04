@@ -13,8 +13,8 @@ private:
 	
 public:
 	AddressSpace() {}
-    
-    virtual ~AddressSpace() {}
+	
+	virtual ~AddressSpace() {}
 	size_t getMemoryPlacesCount(void) const { return _memoryPlaces.size(); }
 	MemoryPlace* getMemoryPlace(unsigned int index){ return _memoryPlaces[index]; }
 	void addMemoryPlace(MemoryPlace* memoryPlace);

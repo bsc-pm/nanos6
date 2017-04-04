@@ -18,7 +18,7 @@
 // #include "CPUStatusListener.hpp"
 #include "WorkerThread.hpp"
 
-#include <InstrumentHardwarePlaceManagement.hpp>
+#include <InstrumentComputePlaceManagement.hpp>
 #include <InstrumentThreadManagement.hpp>
 
 
@@ -126,8 +126,8 @@ public:
 	//! \brief returns true if the thread must shut down
 	static inline bool mustExit();
 
-    //! \brief initialize a thread to run on the given CPU
-    static void initializeThread(CPU *cpu);
+	//! \brief initialize a thread to run on the given CPU
+	static void initializeThread(CPU *cpu);
 	
 	//! \brief set up the information related to the currently running thread
 	//!
@@ -147,29 +147,7 @@ inline CPU *ThreadManager::getCPU(size_t systemCPUId)
 	assert(systemCPUId < _cpus.size());
 	
 	CPU *cpu = _cpus[systemCPUId];
-    assert(cpu != nullptr);
-	//if (cpu == nullptr) {
-	//	CPU *newCPU = new CPU(systemCPUId, /* INVALID VALUE */ ~0UL);
-	//	bool success = _cpus[systemCPUId].compare_exchange_strong(cpu, newCPU);
-	//	if (!success) {
-	//		// Another thread already did it
-	//		delete newCPU;
-	//		cpu = _cpus[systemCPUId];
-	//		size_t volatile * virtualCPUId = (&newCPU->_virtualCPUId);
-	//		
-	//		while (*virtualCPUId == ~0UL) {
-	//			// Wait for the CPU to be fully be initialized
-	//		}
-	//	} else {
-	//		newCPU->_virtualCPUId = _totalCPUs++;
-// 	//		atomic_thread_fence(std::memory_order_seq_cst);
-	//		
-	//		Instrument::hardware_place_id_t cpuInstrumentationId = Instrument::createdCPU(newCPU->_virtualCPUId);
-	//		newCPU->setInstrumentationId(cpuInstrumentationId);
-	//		
-	//		cpu = newCPU;
-	//	}
-	//}
+	assert(cpu != nullptr);
 	
 	return cpu;
 }

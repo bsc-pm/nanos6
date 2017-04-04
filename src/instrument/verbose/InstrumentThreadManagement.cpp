@@ -31,7 +31,7 @@ namespace Instrument {
 	}
 	
 	
-	void threadWillSuspend(thread_id_t threadId, hardware_place_id_t hardwarePlaceID) {
+	void threadWillSuspend(thread_id_t threadId, compute_place_id_t computePlaceID) {
 		if (!_verboseThreadManagement) {
 			return;
 		}
@@ -46,7 +46,7 @@ namespace Instrument {
 	}
 	
 	
-	void threadHasResumed(thread_id_t threadId, hardware_place_id_t hardwarePlaceID) {
+	void threadHasResumed(thread_id_t threadId, compute_place_id_t computePlaceID) {
 		if (!_verboseThreadManagement) {
 			return;
 		}

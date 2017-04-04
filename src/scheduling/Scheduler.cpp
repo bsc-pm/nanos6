@@ -4,7 +4,6 @@
 #include "FIFOScheduler.hpp"
 #include "ImmediateSuccessorScheduler.hpp"
 #include "ImmediateSuccessorWithPollingScheduler.hpp"
-#include "LocalityScheduler.hpp"
 #include "Scheduler.hpp"
 #include "SchedulerInterface.hpp"
 
@@ -31,8 +30,6 @@ void Scheduler::initialize()
 		_scheduler = new ImmediateSuccessorWithPollingScheduler();
 	} else if (schedulerName.getValue() == "fifoiswp") {
 		_scheduler = new FIFOImmediateSuccessorWithPollingScheduler();
-	} else if (schedulerName.getValue() == "locality") {
-		_scheduler = new LocalityScheduler();
 	} else if (schedulerName.getValue() == "costaspriority") {
 		_scheduler = new CostAsPriorityScheduler();
 	} else {
@@ -43,5 +40,5 @@ void Scheduler::initialize()
 
 void Scheduler::shutdown() 
 {
-    delete _scheduler;
+	delete _scheduler;
 }

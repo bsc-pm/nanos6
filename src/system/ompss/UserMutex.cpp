@@ -30,8 +30,8 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 	
-	ComputePlace *hardwarePlace = currentThread->getComputePlace();
-	assert(hardwarePlace != nullptr);
+	ComputePlace *computePlace = currentThread->getComputePlace();
+	assert(computePlace != nullptr);
 	
 	// Allocation
 	if (__builtin_expect(userMutexReference == nullptr, 0)) {
@@ -79,8 +79,8 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask, false);
 	
-	hardwarePlace = currentThread->getComputePlace();
-	Instrument::ThreadInstrumentationContext::updateHardwarePlace(hardwarePlace->getInstrumentationId());
+	computePlace = currentThread->getComputePlace();
+	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 	
 	DataAccessRegistration::handleExitBlocking(currentTask);
 	
@@ -131,7 +131,7 @@ void nanos_user_unlock(void **handlerPointer)
 				Scheduler::taskGetsUnblocked(currentTask, cpu);
 				
 				ThreadManager::switchThreads(currentThread, releasedThread);
-				Instrument::ThreadInstrumentationContext::updateHardwarePlace(currentThread->getComputePlace()->getInstrumentationId());
+				Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
 			}
 		} else {
 			Scheduler::taskGetsUnblocked(releasedTask, cpu);

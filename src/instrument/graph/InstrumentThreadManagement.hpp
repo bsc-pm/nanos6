@@ -2,7 +2,7 @@
 #define INSTRUMENT_GRAPH_THREAD_MANAGEMENT_HPP
 
 
-#include <InstrumentHardwarePlaceId.hpp>
+#include <InstrumentComputePlaceId.hpp>
 #include <InstrumentThreadId.hpp>
 
 #include "../api/InstrumentThreadManagement.hpp"
@@ -15,11 +15,11 @@ namespace Instrument {
 		return GenericIds::getNewThreadId();
 	}
 	
-	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) hardware_place_id_t cpu)
+	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{
 	}
 	
-	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) hardware_place_id_t cpu)
+	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{
 	}
 }
