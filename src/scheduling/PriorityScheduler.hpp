@@ -1,5 +1,5 @@
-#ifndef COST_AS_PRIORITY_SCHEDULER_HPP
-#define COST_AS_PRIORITY_SCHEDULER_HPP
+#ifndef PRIORITY_SCHEDULER_HPP
+#define PRIORITY_SCHEDULER_HPP
 
 
 #include <atomic>
@@ -16,7 +16,7 @@
 class Task;
 
 
-class CostAsPriorityScheduler: public SchedulerInterface {
+class PriorityScheduler: public SchedulerInterface {
 	typedef PaddedTicketSpinLock<> spinlock_t;
 	
 	
@@ -43,8 +43,8 @@ class CostAsPriorityScheduler: public SchedulerInterface {
 	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
-	CostAsPriorityScheduler();
-	~CostAsPriorityScheduler();
+	PriorityScheduler();
+	~PriorityScheduler();
 	
 	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint);
 	
@@ -61,5 +61,5 @@ public:
 };
 
 
-#endif // COST_AS_PRIORITY_SCHEDULER_HPP
+#endif // PRIORITY_SCHEDULER_HPP
 

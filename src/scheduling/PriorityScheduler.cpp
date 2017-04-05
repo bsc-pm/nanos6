@@ -1,4 +1,4 @@
-#include "CostAsPriorityScheduler.hpp"
+#include "PriorityScheduler.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
@@ -9,35 +9,35 @@
 #include <mutex>
 
 
-inline bool CostAsPriorityScheduler::TaskPriorityCompare::operator()(Task *a, Task *b)
+inline bool PriorityScheduler::TaskPriorityCompare::operator()(Task *a, Task *b)
 {
 	assert(a != nullptr);
 	assert(b != nullptr);
 	
-	size_t priorityA = (size_t) a->getSchedulerInfo();	
+	size_t priorityA = (size_t) a->getSchedulerInfo();
 	size_t priorityB = (size_t) b->getSchedulerInfo();
 	
 	return (priorityA < priorityB);
 }
 
 
-CostAsPriorityScheduler::CostAsPriorityScheduler()
+PriorityScheduler::PriorityScheduler()
 	: _pollingSlot(nullptr)
 {
 }
 
-CostAsPriorityScheduler::~CostAsPriorityScheduler()
+PriorityScheduler::~PriorityScheduler()
 {
 }
 
 
-void CostAsPriorityScheduler::cpuBecomesIdle(CPU *cpu)
+void PriorityScheduler::cpuBecomesIdle(CPU *cpu)
 {
 	_idleCPUs.push_front(cpu);
 }
 
 
-CPU *CostAsPriorityScheduler::getIdleCPU()
+CPU *PriorityScheduler::getIdleCPU()
 {
 	if (!_idleCPUs.empty()) {
 		CPU *idleCPU = _idleCPUs.front();
@@ -50,13 +50,13 @@ CPU *CostAsPriorityScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * CostAsPriorityScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint)
+HardwarePlace * PriorityScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint)
 {
 	assert(task != nullptr);
 	
 	size_t priority = 0;
-	if ((task->getTaskInfo() != nullptr) && (task->getTaskInfo()->get_cost != nullptr)) {
-		priority = task->getTaskInfo()->get_cost(task->getArgsBlock());
+	if ((task->getTaskInfo() != nullptr) && (task->getTaskInfo()->get_priority != nullptr)) {
+		priority = task->getTaskInfo()->get_priority(task->getArgsBlock());
 	}
 	task->setSchedulerInfo((void *) priority);
 	
@@ -116,7 +116,7 @@ HardwarePlace * CostAsPriorityScheduler::addReadyTask(Task *task, HardwarePlace 
 }
 
 
-void CostAsPriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) HardwarePlace *hardwarePlace)
+void PriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) HardwarePlace *hardwarePlace)
 {
 	// 1. Attempt to send the task to a polling thread without locking
 	{
@@ -161,7 +161,7 @@ void CostAsPriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute
 }
 
 
-Task *CostAsPriorityScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *PriorityScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
@@ -260,7 +260,7 @@ Task *CostAsPriorityScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attr
 }
 
 
-HardwarePlace *CostAsPriorityScheduler::getIdleHardwarePlace(bool force)
+HardwarePlace *PriorityScheduler::getIdleHardwarePlace(bool force)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
@@ -271,7 +271,7 @@ HardwarePlace *CostAsPriorityScheduler::getIdleHardwarePlace(bool force)
 }
 
 
-void CostAsPriorityScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
+void PriorityScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
 {
 	if (hardwarePlace->_schedulerData != nullptr) {
 		Task *task = (Task *) hardwarePlace->_schedulerData;
@@ -283,7 +283,7 @@ void CostAsPriorityScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
 }
 
 
-bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot)
+bool PriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot)
 {
 	Task *task = nullptr;
 	
@@ -402,7 +402,7 @@ bool CostAsPriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polli
 }
 
 
-bool CostAsPriorityScheduler::releasePolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot)
+bool PriorityScheduler::releasePolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot)
 {
 	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {

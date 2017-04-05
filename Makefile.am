@@ -293,8 +293,6 @@ common_sources = \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
-	src/scheduling/CostAsPriorityScheduler.cpp \
-	src/scheduling/CostAsPriorityScheduler.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
@@ -306,6 +304,8 @@ common_sources = \
 	src/scheduling/ImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/NaiveScheduler.cpp \
 	src/scheduling/NaiveScheduler.hpp \
+	src/scheduling/PriorityScheduler.cpp \
+	src/scheduling/PriorityScheduler.hpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerInterface.cpp \
