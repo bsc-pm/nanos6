@@ -57,8 +57,7 @@ private:
 				dataAccess->_instrumentationId,
 				dataAccess->_type, dataAccess->_weak,
 				newDataAccessType, newWeak,
-				false,
-				dataAccess->_originator->getInstrumentationTaskId()
+				false
 			);
 			
 			dataAccess->_type = newDataAccessType;
@@ -132,8 +131,7 @@ private:
 		}
 		
 		Instrument::removedDataAccess(
-			dataAccess->_instrumentationId,
-			task->getInstrumentationTaskId()
+			dataAccess->_instrumentationId
 		);
 		
 		delete dataAccess;
@@ -186,7 +184,6 @@ private:
 	
 	
 	static inline DataAccess *fragmentAccess(
-		Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccess *dataAccess, DataAccessRange range,
 		TaskDataAccesses &accessStructures,
 		bool considerTaskBlocking
@@ -214,9 +211,9 @@ private:
 			[&](DataAccess *fragment, DataAccess *originalDataAccess) {
 				if (fragment != originalDataAccess) {
 					fragment->_instrumentationId =
-						Instrument::fragmentedDataAccess(originalDataAccess->_instrumentationId, fragment->_range, triggererInstrumentationTaskId);
+						Instrument::fragmentedDataAccess(originalDataAccess->_instrumentationId, fragment->_range);
 				} else {
-					Instrument::modifiedDataAccessRange(fragment->_instrumentationId, fragment->_range, triggererInstrumentationTaskId);
+					Instrument::modifiedDataAccessRange(fragment->_instrumentationId, fragment->_range);
 				}
 			}
 		);
@@ -251,12 +248,14 @@ private:
 	
 	static void processRemovableTasks(
 		/* inout */ CPUDependencyData &cpuDependencyData,
-		CPU *cpu, WorkerThread *thread
+		HardwarePlace *hardwarePlace
 	) {
+		assert(hardwarePlace != nullptr);
+		
 		for (Task *removableTask : cpuDependencyData._removableTasks) {
 			assert(removableTask != nullptr);
 			
-			TaskFinalization::disposeOrUnblockTask(removableTask, cpu, thread);
+			TaskFinalization::disposeOrUnblockTask(removableTask, hardwarePlace);
 		}
 		cpuDependencyData._removableTasks.clear();
 	}
@@ -271,8 +270,6 @@ private:
 		assert(parent != nullptr);
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		
 		for (DataAccessRange range : cpuDependencyData._removedRangesFromBottomMap) {
 			assert(!range.empty());
 			
@@ -286,7 +283,6 @@ private:
 					
 					if (!parentAccess->_range.fullyContainedIn(range)) {
 						parentAccess = fragmentAccess(
-							taskId,
 							parentAccess, range,
 							parentAccessStructures,
 							/* Consider blocking */ true
@@ -451,12 +447,11 @@ private:
 		Instrument::dataAccessBecomesSatisfied(
 			nextAccess->_instrumentationId,
 			readSatisfiability, writeSatisfiability, false,
-			next->getInstrumentationTaskId(), next->getInstrumentationTaskId()
+			next->getInstrumentationTaskId()
 		);
 	}
 	
 	static inline void propagateSatisfiabilityAfterLinkingBottomMapAccessesToNext(
-		Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccess *dataAccess, Task *task,
 		Task *next,
 		CPUDependencyData &cpuDependencyData
@@ -466,7 +461,6 @@ private:
 		assert(next != nullptr);
 		
 		propagateSatisfiability(
-			triggererInstrumentationTaskId,
 			task, dataAccess, 
 			dataAccess->_range, next,
 			cpuDependencyData
@@ -499,7 +493,6 @@ private:
 	}
 	
 	static inline void propagateSatisfiability(
-		Instrument::task_id_t triggererInstrumentationTaskId,
 		Task *task, DataAccess *dataAccess,
 		DataAccessRange range, Task *nextTask,
 		CPUDependencyData &cpuDependencyData,
@@ -557,7 +550,6 @@ private:
 				// Fragment next access if needed
 				if (!nextAccess->_range.fullyContainedIn(range)) {
 					nextAccess = fragmentAccess(
-						triggererInstrumentationTaskId,
 						nextAccess, range.intersect(nextAccess->_range),
 						nextAccessStructures,
 						/* Consider blocking */ true
@@ -579,10 +571,15 @@ private:
 				assert(!(nextAccess->topmostSatisfied() && !nextAccess->readSatisfied()));
 				assert(!(nextAccess->topmostSatisfied() && !nextAccess->writeSatisfied()));
 				
+				Instrument::dataAccessBecomesSatisfied(
+					nextAccess->_instrumentationId,
+					readSatisfiability, writeSatisfiability, false,
+					nextTask->getInstrumentationTaskId()
+				);
+				
 				// Propagate to subaccesses
 				if (nextAccess->hasSubaccesses()) {
 					propagateSatisfiability(
-						triggererInstrumentationTaskId,
 						nextTask, nextAccess,
 						nextAccess->_range,
 						nextAccess->_child,
@@ -600,12 +597,6 @@ private:
 					}
 				}
 				
-				Instrument::dataAccessBecomesSatisfied(
-					nextAccess->_instrumentationId,
-					readSatisfiability, writeSatisfiability, false,
-					triggererInstrumentationTaskId, nextTask->getInstrumentationTaskId()
-				);
-				
 				// Add the task to the satisfied originators if it is ready
 				if (!wasSatisfied && nextAccess->satisfied() && !nextAccess->_weak) {
 					if (nextTask->decreasePredecessors()) {
@@ -616,7 +607,6 @@ private:
 				// Propagate to next task
 				if (nextAccess->_next != nullptr) {
 					propagateSatisfiability(
-						triggererInstrumentationTaskId,
 						nextTask, nextAccess,
 						nextAccess->_range,
 						nextAccess->_next,
@@ -633,7 +623,6 @@ private:
 	
 	
 	static inline DataAccess *linkAndPropagateAfterFirstLinking(
-		Instrument::task_id_t triggererInstrumentationTaskId,
 		DataAccess *dataAccess, Task *task, TaskDataAccesses &accessStructures,
 		DataAccessRange range, DataAccess *nextDataAccess, Task *next,
 		TaskDataAccesses &nextAccessStructures
@@ -660,7 +649,6 @@ private:
 		assert(dataAccess->_next == nullptr || parentalRelation);
 		
 		dataAccess = fragmentAccess(
-			triggererInstrumentationTaskId,
 			dataAccess, range,
 			accessStructures,
 			/* Consider blocking */ true
@@ -670,7 +658,6 @@ private:
 		assert(dataAccess->_next == nullptr || parentalRelation);
 		
 		nextDataAccess = fragmentAccess(
-			triggererInstrumentationTaskId,
 			nextDataAccess, range,
 			nextAccessStructures,
 			/* Consider blocking */ true
@@ -692,7 +679,7 @@ private:
 		Instrument::linkedDataAccesses(
 			dataAccess->_instrumentationId, next->getInstrumentationTaskId(),
 			dataAccess->_range,
-			true, false, triggererInstrumentationTaskId
+			true, false
 		);
 		
 		propagateSatisfiabilityAfterFirstLinking(
@@ -707,7 +694,6 @@ private:
 	
 	
 	static inline void linkBottomMapAccessesToNext(
-		Instrument::task_id_t triggererInstrumentationTaskId,
 		Task *task, TaskDataAccesses &accessStructures,
 		DataAccessRange range, Task *next,
 		CPUDependencyData &cpuDependencyData
@@ -751,8 +737,8 @@ private:
 						if (!subaccess->hasSubaccesses() || !subaccess->complete()) {
 							// Fragment the subaccess if needed
 							subaccess = fragmentAccess(
-								triggererInstrumentationTaskId,
-								subaccess, rangeToBeProcessed, subtaskAccessStructures,
+								subaccess, rangeToBeProcessed,
+								subtaskAccessStructures,
 								/* Affect originator blocking counter */ true
 							);
 							assert(subaccess != nullptr);
@@ -762,14 +748,12 @@ private:
 							
 							// Propagate the satisfiability to the recently linked access
 							propagateSatisfiabilityAfterLinkingBottomMapAccessesToNext(
-								triggererInstrumentationTaskId,
 								subaccess, subtask,
 								next,
 								cpuDependencyData
 							);
 						} else {
 							linkBottomMapAccessesToNext(
-								triggererInstrumentationTaskId,
 								subtask, subtaskAccessStructures,
 								rangeToBeProcessed, next,
 								cpuDependencyData
@@ -892,7 +876,6 @@ private:
 					
 					if (parentalRelation) {
 						previous = fragmentAccess(
-							task->getInstrumentationTaskId(),
 							previous, rangeToBeProcessed,
 							previousAccessStructures,
 							/* Consider blocking */ true
@@ -908,7 +891,6 @@ private:
 				}
 				else {
 					previous = linkAndPropagateAfterFirstLinking(
-						task->getInstrumentationTaskId(),
 						previous, previousTask, previousAccessStructures,
 						rangeToBeProcessed, partialDataAccess,
 						task, accessStructures
@@ -934,8 +916,8 @@ private:
 				assert(!partialDataAccess->hasBeenDiscounted());
 				
 				partialDataAccess = fragmentAccess(
-					task->getInstrumentationTaskId(),
-					partialDataAccess, missingRange, accessStructures,
+					partialDataAccess, missingRange,
+					accessStructures,
 					/* Consider blocking */ true
 				);
 				
@@ -953,7 +935,6 @@ private:
 				Instrument::dataAccessBecomesSatisfied(
 					partialDataAccess->_instrumentationId,
 					true, true, false,
-					task->getInstrumentationTaskId(),
 					task->getInstrumentationTaskId()
 				);
 
@@ -1068,14 +1049,13 @@ private:
 		assert(!range.empty());
 		
 		// Mark it as complete
-		Instrument::completedDataAccess(dataAccess->_instrumentationId, finishedTask->getInstrumentationTaskId());
+		Instrument::completedDataAccess(dataAccess->_instrumentationId);
 		assert(!dataAccess->complete());
 		dataAccess->complete() = true;
 		
 		if (dataAccess->hasSubaccesses() && dataAccess->_next != nullptr) {
 			// Link bottom map subaccesses to the next
 			linkBottomMapAccessesToNext(
-				finishedTask->getInstrumentationTaskId(),
 				dataAccess->_originator, accessStructures, range,
 				dataAccess->_next,
 				cpuDependencyData
@@ -1092,7 +1072,6 @@ private:
 			
 			if (readSatisfied || writeSatisfied) {
 				propagateSatisfiability(
-					finishedTask->getInstrumentationTaskId(),
 					finishedTask, dataAccess,
 					range, dataAccess->_next,
 					cpuDependencyData
@@ -1100,18 +1079,6 @@ private:
 			}
 		}
 	}
-	
-	
-	static inline CPUDependencyData &getCPUDependencyDataCPUAndThread(/* out */ CPU * &cpu, /* out */ WorkerThread * &thread)
-	{
-		thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
-		cpu = thread->getHardwarePlace();
-		assert(cpu != nullptr);
-		
-		return cpu->_dependencyData;
-	}
-	
 	
 	
 public:
@@ -1164,9 +1131,11 @@ public:
 	//! \param[in] task the Task whose dependencies need to be calculated
 	//! 
 	//! \returns true if the task is already ready
-	static inline bool registerTaskDataAccesses(Task *task)
+	static inline bool registerTaskDataAccesses(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
 	{
 		assert(task != 0);
+		assert(task != nullptr);
+		assert(hardwarePlace != nullptr);
 		
 		nanos_task_info *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
@@ -1190,7 +1159,7 @@ public:
 	}
 	
 	
-	static inline void unregisterTaskDataAccesses(Task *task)
+	static inline void unregisterTaskDataAccesses(Task *task, HardwarePlace *hardwarePlace)
 	{
 		assert(task != 0);
 		
@@ -1202,9 +1171,7 @@ public:
 			return;
 		}
 		
-		CPU *cpu = nullptr;
-		WorkerThread *currentThread = nullptr;
-		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
+		CPUDependencyData &cpuDependencyData = hardwarePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		{
@@ -1240,10 +1207,10 @@ public:
 		}
 		
 		// Schedule satisfied tasks
-		processSatisfiedOriginators(cpuDependencyData, cpu);
+		processSatisfiedOriginators(cpuDependencyData, hardwarePlace);
 		
 		// Recycle removable tasks
-		processRemovableTasks(cpuDependencyData, cpu, currentThread);
+		processRemovableTasks(cpuDependencyData, hardwarePlace);
 		
 #ifndef NDEBUG
 		{
@@ -1280,7 +1247,7 @@ public:
 	}
 	
 	
-	static void handleEnterTaskwait(Task *task)
+	static void handleEnterTaskwait(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
 	{
 		assert(task != nullptr);
 		
@@ -1293,7 +1260,7 @@ public:
 	}
 	
 	
-	static void handleExitTaskwait(Task *task)
+	static void handleExitTaskwait(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
 	{
 		assert(task != nullptr);
 		
@@ -1310,9 +1277,11 @@ public:
 	}
 	
 	
-	static void handleTaskRemoval(Task *task)
+	static void handleTaskRemoval(Task *task, HardwarePlace *hardwarePlace)
 	{
+		assert(task != 0);
 		assert(task != nullptr);
+		assert(hardwarePlace != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
@@ -1331,9 +1300,7 @@ public:
 		TaskDataAccesses &parentAccessStructures = parent->getDataAccesses();
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
-		CPU *cpu = nullptr;
-		WorkerThread *currentThread = nullptr;
-		CPUDependencyData &cpuDependencyData = getCPUDependencyDataCPUAndThread(/* out */ cpu, /* out */ currentThread);
+		CPUDependencyData &cpuDependencyData = hardwarePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		bool alreadyTaken = false;

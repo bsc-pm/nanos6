@@ -5,12 +5,8 @@
 #include "TaskFinalization.hpp"
 
 
-void TaskFinalization::disposeOrUnblockTask(Task *task, CPU *cpu, WorkerThread *thread)
+void TaskFinalization::disposeOrUnblockTask(Task *task, HardwarePlace *hardwarePlace)
 {
-	assert(task != nullptr);
-	assert(cpu != nullptr);
-	assert(thread != nullptr);
-	
 	bool readyOrDisposable = true;
 	
 	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
@@ -19,15 +15,10 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, CPU *cpu, WorkerThread *
 		
 		if (task->hasFinished()) {
 			// NOTE: Handle task removal before unlinking from parent
-			DataAccessRegistration::handleTaskRemoval(task);
+			DataAccessRegistration::handleTaskRemoval(task, hardwarePlace);
 			
 			readyOrDisposable = task->unlinkFromParent();
-			
-			Instrument::destroyTask(
-				task->getInstrumentationTaskId(),
-				(cpu != nullptr ? cpu->_virtualCPUId : ~0UL),
-				(thread != nullptr ? thread->getInstrumentationId() : Instrument::thread_id_t())
-			);
+			Instrument::destroyTask(task->getInstrumentationTaskId());
 			// NOTE: The memory layout is defined in nanos_create_task
 			task->~Task();
 			free(task->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here
@@ -39,7 +30,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, CPU *cpu, WorkerThread *
 			}
 		} else {
 			// An ancestor in a taskwait that finishes at this point
-			Scheduler::taskGetsUnblocked(task, cpu);
+			Scheduler::taskGetsUnblocked(task, hardwarePlace);
 			readyOrDisposable = false;
 		}
 	}

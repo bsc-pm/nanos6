@@ -312,8 +312,10 @@ public:
 		}
 	}
 	
-	static void handleTaskRemoval(Task *task)
-	{
+	static void handleTaskRemoval(
+		__attribute__((unused)) Task *task,
+		__attribute__((unused)) HardwarePlace *hardwarePlace
+	) {
 	}
 	
 	static inline void handleEnterBlocking(__attribute__((unused)) Task *task)
