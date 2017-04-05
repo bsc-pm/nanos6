@@ -50,7 +50,7 @@ CPU *PriorityScheduler::getIdleCPU()
 }
 
 
-HardwarePlace * PriorityScheduler::addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint)
+ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
 {
 	assert(task != nullptr);
 	
@@ -61,10 +61,10 @@ HardwarePlace * PriorityScheduler::addReadyTask(Task *task, HardwarePlace *hardw
 	task->setSchedulerInfo((void *) priority);
 	
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
-	if (hardwarePlace != nullptr) {
+	if (computePlace != nullptr) {
 		// 1. Send the task to the immediate successor slot
-		if ((hint != CHILD_TASK_HINT) && (hardwarePlace->_schedulerData == nullptr)) {
-			hardwarePlace->_schedulerData = task;
+		if ((hint != CHILD_TASK_HINT) && (computePlace->_schedulerData == nullptr)) {
+			computePlace->_schedulerData = task;
 			
 			return nullptr;
 		}
@@ -116,7 +116,7 @@ HardwarePlace * PriorityScheduler::addReadyTask(Task *task, HardwarePlace *hardw
 }
 
 
-void PriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) HardwarePlace *hardwarePlace)
+void PriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
 {
 	// 1. Attempt to send the task to a polling thread without locking
 	{
@@ -161,7 +161,7 @@ void PriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((un
 }
 
 
-Task *PriorityScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute__((unused)) Task *currentTask)
+Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
 {
 	Task *task = nullptr;
 	
@@ -176,9 +176,9 @@ Task *PriorityScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute_
 	} bestIs = non_existant;
 	
 	// 1. Check the immediate successor
-	bool haveImmediateSuccessor = (hardwarePlace->_schedulerData != nullptr);
+	bool haveImmediateSuccessor = (computePlace->_schedulerData != nullptr);
 	if (haveImmediateSuccessor) {
-		task = (Task *) hardwarePlace->_schedulerData;
+		task = (Task *) computePlace->_schedulerData;
 		bestPriority = (size_t) task->getSchedulerInfo();
 		bestIs = from_immediate_successor_slot;
 	}
@@ -214,8 +214,8 @@ Task *PriorityScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute_
 	if (bestIs != non_existant) {
 		// The immediate successor was choosen
 		if (bestIs == from_immediate_successor_slot) {
-			task = (Task *) hardwarePlace->_schedulerData;
-			hardwarePlace->_schedulerData = nullptr;
+			task = (Task *) computePlace->_schedulerData;
+			computePlace->_schedulerData = nullptr;
 			
 			return task;
 		}
@@ -226,8 +226,8 @@ Task *PriorityScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute_
 		if (haveImmediateSuccessor) {
 			assert(bestIs != from_immediate_successor_slot);
 			
-			task = (Task *) hardwarePlace->_schedulerData;
-			hardwarePlace->_schedulerData = nullptr;
+			task = (Task *) computePlace->_schedulerData;
+			computePlace->_schedulerData = nullptr;
 			
 			_readyTasks.push(task);
 		}
@@ -254,13 +254,13 @@ Task *PriorityScheduler::getReadyTask(HardwarePlace *hardwarePlace, __attribute_
 	assert(bestIs == non_existant);
 	
 	// 4. Or mark the CPU as idle
-	cpuBecomesIdle((CPU *) hardwarePlace);
+	cpuBecomesIdle((CPU *) computePlace);
 	
 	return nullptr;
 }
 
 
-HardwarePlace *PriorityScheduler::getIdleHardwarePlace(bool force)
+ComputePlace *PriorityScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
@@ -271,11 +271,11 @@ HardwarePlace *PriorityScheduler::getIdleHardwarePlace(bool force)
 }
 
 
-void PriorityScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
+void PriorityScheduler::disableComputePlace(ComputePlace *computePlace)
 {
-	if (hardwarePlace->_schedulerData != nullptr) {
-		Task *task = (Task *) hardwarePlace->_schedulerData;
-		hardwarePlace->_schedulerData = nullptr;
+	if (computePlace->_schedulerData != nullptr) {
+		Task *task = (Task *) computePlace->_schedulerData;
+		computePlace->_schedulerData = nullptr;
 		
 		std::lock_guard<spinlock_t> guard(_globalLock);
 		_readyTasks.push(task);
@@ -283,7 +283,7 @@ void PriorityScheduler::disableHardwarePlace(HardwarePlace *hardwarePlace)
 }
 
 
-bool PriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot)
+bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
 {
 	Task *task = nullptr;
 	
@@ -298,9 +298,9 @@ bool PriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polling_slo
 	} bestIs = non_existant;
 	
 	// 1. Check the immediate successor
-	bool haveImmediateSuccessor = (hardwarePlace->_schedulerData != nullptr);
+	bool haveImmediateSuccessor = (computePlace->_schedulerData != nullptr);
 	if (haveImmediateSuccessor) {
-		task = (Task *) hardwarePlace->_schedulerData;
+		task = (Task *) computePlace->_schedulerData;
 		bestPriority = (size_t) task->getSchedulerInfo();
 		bestIs = from_immediate_successor_slot;
 	}
@@ -336,8 +336,8 @@ bool PriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polling_slo
 	if (bestIs != non_existant) {
 		// The immediate successor was choosen
 		if (bestIs == from_immediate_successor_slot) {
-			task = (Task *) hardwarePlace->_schedulerData;
-			hardwarePlace->_schedulerData = nullptr;
+			task = (Task *) computePlace->_schedulerData;
+			computePlace->_schedulerData = nullptr;
 			
 			// Same thread, so there is no need to operate atomically
 			assert(pollingSlot->_task.load() == nullptr);
@@ -352,8 +352,8 @@ bool PriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polling_slo
 		if (haveImmediateSuccessor) {
 			assert(bestIs != from_immediate_successor_slot);
 			
-			task = (Task *) hardwarePlace->_schedulerData;
-			hardwarePlace->_schedulerData = nullptr;
+			task = (Task *) computePlace->_schedulerData;
+			computePlace->_schedulerData = nullptr;
 			
 			_readyTasks.push(task);
 		}
@@ -395,18 +395,18 @@ bool PriorityScheduler::requestPolling(HardwarePlace *hardwarePlace, polling_slo
 		return true;
 	} else {
 		// 5.b. There is already another thread polling. Therefore, mark the CPU as idle
-		cpuBecomesIdle((CPU *) hardwarePlace);
+		cpuBecomesIdle((CPU *) computePlace);
 		
 		return false;
 	}
 }
 
 
-bool PriorityScheduler::releasePolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot)
+bool PriorityScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
 {
 	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
-		cpuBecomesIdle((CPU *) hardwarePlace);
+		cpuBecomesIdle((CPU *) computePlace);
 		return true;
 	} else {
 		return false;

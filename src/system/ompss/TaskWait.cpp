@@ -6,6 +6,8 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 
+#include "hardware/HardwareInfo.hpp"
+
 #include <InstrumentTaskWait.hpp>
 #include <InstrumentTaskStatus.hpp>
 
@@ -36,7 +38,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 		return;
 	}
 	
-	DataAccessRegistration::handleEnterTaskwait(currentTask, currentThread->getHardwarePlace());
+	DataAccessRegistration::handleEnterTaskwait(currentTask, currentThread->getComputePlace());
 	bool done = currentTask->markAsBlocked();
 	
 	// done == true:
@@ -56,7 +58,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	if (!done) {
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask, true);
-		Instrument::ThreadInstrumentationContext::updateHardwarePlace(currentThread->getHardwarePlace()->getInstrumentationId());
+		Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
 	}
 	
 	// This in combination with a release from the children makes their changes visible to this thread
@@ -67,7 +69,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();
 	
-	DataAccessRegistration::handleExitTaskwait(currentTask, currentThread->getHardwarePlace());
+	DataAccessRegistration::handleExitTaskwait(currentTask, currentThread->getComputePlace());
 	
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked

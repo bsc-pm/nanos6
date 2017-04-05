@@ -1,27 +1,27 @@
-#ifndef INSTRUMENT_SUPPORT_HARDWARE_PLACE_MANAGEMENT_HPP
-#define INSTRUMENT_SUPPORT_HARDWARE_PLACE_MANAGEMENT_HPP
+#ifndef INSTRUMENT_SUPPORT_COMPUTE_PLACE_MANAGEMENT_HPP
+#define INSTRUMENT_SUPPORT_COMPUTE_PLACE_MANAGEMENT_HPP
 
 
-#include <InstrumentHardwarePlaceId.hpp>
+#include <InstrumentComputePlaceId.hpp>
 
 
 namespace Instrument {
 	//! This function is called when the runtime creates a new CPU and
-	//! must return an instrumentation-specific hardwarePlace identifier that will
+	//! must return an instrumentation-specific computePlace identifier that will
 	//! be used to identify it throughout the rest of the instrumentation API.
-	inline hardware_place_id_t createdCPU(unsigned int virtualCPUId)
+	inline compute_place_id_t createdCPU(unsigned int virtualCPUId)
 	{
-		return hardware_place_id_t(virtualCPUId);
+		return compute_place_id_t(virtualCPUId);
 	}
 	
 	//! This function is called when the runtime creates a new CUDA GPU and
-	//! must return an instrumentation-specific hardwarePlace identifier that will
+	//! must return an instrumentation-specific computePlace identifier that will
 	//! be used to identify it throughout the rest of the instrumentation API.
-	inline hardware_place_id_t createdCUDAGPU()
+	inline compute_place_id_t createdCUDAGPU()
 	{
-		return hardware_place_id_t(-2);
+		return compute_place_id_t(-2);
 	}
 }
 
 
-#endif // INSTRUMENT_SUPPORT_HARDWARE_PLACE_MANAGEMENT_HPP
+#endif // INSTRUMENT_SUPPORT_COMPUTE_PLACE_MANAGEMENT_HPP

@@ -146,6 +146,7 @@ AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
 AX_CHECK_EXTRAE
+PKG_CHECK_MODULES([hwloc], [hwloc])
 
 AC_CONFIG_FILES([
 	Makefile
@@ -159,5 +160,4 @@ AC_OUTPUT
 if test x"${ac_have_nanos6_mercurium}" = x"no" ; then
 	AC_MSG_WARN([the directive based tests will not be checked since there is no Mercurium compiler available])
 fi
-
 

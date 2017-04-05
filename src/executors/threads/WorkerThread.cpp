@@ -16,7 +16,7 @@
 #include <atomic>
 
 #include <pthread.h>
-
+#include <cstring>
 
 __thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
 
@@ -120,31 +120,31 @@ void *WorkerThread::body()
 void WorkerThread::handleTask()
 {
 	_task->setThread(this);
-	
+
 	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
-	
+
 	Instrument::ThreadInstrumentationContext instrumentationContext(taskId, _cpu->getInstrumentationId(), _instrumentationId);
-	
+
 	if (_task->hasCode()) {
 		Instrument::startTask(taskId);
 		Instrument::taskIsExecuting(taskId);
-		
+
 		// Run the task
 		std::atomic_thread_fence(std::memory_order_acquire);
 		_task->body();
 		std::atomic_thread_fence(std::memory_order_release);
-		
+
 		Instrument::taskIsZombie(taskId);
 		Instrument::endTask(taskId);
 	}
-	
+
 	// Release successors
 	DataAccessRegistration::unregisterTaskDataAccesses(_task, _cpu);
-	
+
 	if (_task->markAsFinished()) {
 		TaskFinalization::disposeOrUnblockTask(_task, _cpu);
 	}
-	
+
 	_task = nullptr;
 }
 

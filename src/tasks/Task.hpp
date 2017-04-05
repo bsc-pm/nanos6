@@ -325,7 +325,6 @@ public:
 	{
 		_schedulerInfo = schedulerInfo;
 	}
-	
 };
 
 

@@ -13,18 +13,18 @@
 #include "tasks/Task.hpp"
 
 
-class HardwarePlace;
+class ComputePlace;
 
 
 namespace If0Task {
-	inline void waitForIf0Task(WorkerThread *currentThread, Task *currentTask, Task *if0Task, HardwarePlace *hardwarePlace)
+	inline void waitForIf0Task(WorkerThread *currentThread, Task *currentTask, Task *if0Task, ComputePlace *computePlace)
 	{
 		assert(currentThread != nullptr);
 		assert(currentTask != nullptr);
 		assert(if0Task != nullptr);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
-		CPU *cpu = static_cast<CPU *>(hardwarePlace);
+		CPU *cpu = static_cast<CPU *>(computePlace);
 		
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		
@@ -40,13 +40,13 @@ namespace If0Task {
 	
 	inline void executeInline(
 		WorkerThread *currentThread, Task *currentTask, Task *if0Task,
-		__attribute__((unused)) HardwarePlace *hardwarePlace
+		__attribute__((unused)) ComputePlace *computePlace
 	) {
 		assert(currentThread != nullptr);
 		assert(currentTask != nullptr);
 		assert(if0Task != nullptr);
 		assert(if0Task->getParent() == currentTask);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		bool hasCode = if0Task->hasCode();
 		
@@ -67,11 +67,11 @@ namespace If0Task {
 	
 	inline void executeNonInline(
 		WorkerThread *currentThread, Task *if0Task,
-		__attribute__((unused)) HardwarePlace *hardwarePlace
+		__attribute__((unused)) ComputePlace *computePlace
 	) {
 		assert(currentThread != nullptr);
 		assert(if0Task != nullptr);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		assert(if0Task->isIf0());
 		
@@ -80,7 +80,7 @@ namespace If0Task {
 		
 		currentThread->handleTask(if0Task);
 		
-		Scheduler::taskGetsUnblocked(parent, hardwarePlace);
+		Scheduler::taskGetsUnblocked(parent, computePlace);
 	}
 	
 }

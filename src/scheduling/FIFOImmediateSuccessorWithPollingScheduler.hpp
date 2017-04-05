@@ -29,25 +29,25 @@ class FIFOImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
 	
 	
 	inline CPU *getIdleCPU();
-	inline Task *getReplacementTask(CPU *hardwarePlace);
+	inline Task *getReplacementTask(CPU *computePlace);
 	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	FIFOImmediateSuccessorWithPollingScheduler();
 	~FIFOImmediateSuccessorWithPollingScheduler();
 	
-	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint);
 	
-	void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace);
+	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace);
 	
-	Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr);
+	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr);
 	
-	HardwarePlace *getIdleHardwarePlace(bool force=false);
+	ComputePlace *getIdleComputePlace(bool force=false);
 	
-	void disableHardwarePlace(HardwarePlace *hardwarePlace);
+	void disableComputePlace(ComputePlace *computePlace);
 	
-	bool requestPolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot);
-	bool releasePolling(HardwarePlace *hardwarePlace, polling_slot_t *pollingSlot);
+	bool requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
+	bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
 };
 
 

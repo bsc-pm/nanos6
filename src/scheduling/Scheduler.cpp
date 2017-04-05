@@ -38,3 +38,7 @@ void Scheduler::initialize()
 	}
 }
 
+void Scheduler::shutdown() 
+{
+	delete _scheduler;
+}

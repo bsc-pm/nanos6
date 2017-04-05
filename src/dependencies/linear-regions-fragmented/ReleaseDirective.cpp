@@ -4,7 +4,7 @@
 
 #include <nanos6/multidimensional-release.h>
 
-#include "hardware/places/HardwarePlace.hpp"
+#include "hardware/places/ComputePlace.hpp"
 #include "tasks/Task.hpp"
 #include "DataAccessRegistration.hpp"
 
@@ -18,7 +18,7 @@ void release_access(void *base_address, __attribute__((unused)) long dim1size, l
 	Task *task = currentWorkerThread->getTask();
 	assert(task != nullptr);
 	
-	HardwarePlace *hardwarePlace = currentWorkerThread->getHardwarePlace();
+	ComputePlace *computePlace = currentWorkerThread->getComputePlace();
 	
 	union {
 		void *_asVoidPointer;
@@ -28,7 +28,7 @@ void release_access(void *base_address, __attribute__((unused)) long dim1size, l
 	address._asCharPointer += dim1start;
 	
 	DataAccessRange accessRange(address._asVoidPointer, dim1end - dim1start);
-	DataAccessRegistration::releaseAccessRange(task, accessRange, ACCESS_TYPE, WEAK, hardwarePlace);
+	DataAccessRegistration::releaseAccessRange(task, accessRange, ACCESS_TYPE, WEAK, computePlace);
 }
 
 

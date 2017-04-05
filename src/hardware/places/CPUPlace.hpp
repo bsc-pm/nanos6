@@ -1,18 +1,15 @@
 #ifndef CPU_PLACE_HPP
 #define CPU_PLACE_HPP
 
+#include "ComputePlace.hpp"
 
-#include "HardwarePlace.hpp"
-
-
-class CPUPlace: public HardwarePlace {
+class CPUPlace: public ComputePlace {
 public:
-	CPUPlace (HardwarePlace *parent = nullptr)
-		: HardwarePlace(parent)
+	CPUPlace (int index = 0/*, ComputePlace *parent = nullptr*/)
+		: ComputePlace(index/*, parent*/)
 	{
 	}
 	
 };
-
 
 #endif // CPU_PLACE_HPP

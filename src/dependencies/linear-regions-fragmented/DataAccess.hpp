@@ -49,7 +49,7 @@ struct DataAccess : public DataAccessBase {
 	
 	//! Direct next access
 	Task *_next;
-	
+
 	DataAccess(
 		DataAccessType type, bool weak,
 		Task *originator,
@@ -194,7 +194,7 @@ struct DataAccess : public DataAccessBase {
 			&& complete()
 			&& ( !isInBottomMap() || hasForcedRemoval || (_next != nullptr) );
 	}
-	
+
 };
 
 

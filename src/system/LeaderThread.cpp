@@ -46,7 +46,7 @@ LeaderThread::LeaderThread()
 
 void *LeaderThread::body()
 {
-	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), Instrument::hardware_place_id_t(), getInstrumentationId());
+	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), Instrument::compute_place_id_t(), getInstrumentationId());
 	
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {
 		struct timespec delay = { 0, 1000000}; // 1000 Hz

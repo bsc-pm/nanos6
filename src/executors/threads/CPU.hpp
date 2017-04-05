@@ -30,7 +30,8 @@ struct CPU: public CPUPlace {
 #endif
 	
 	typedef enum {
-		starting_status=0,
+		uninitialized_status=0,
+		starting_status,
 		enabled_status,
 		enabling_status,
 		disabling_status,
@@ -45,6 +46,7 @@ struct CPU: public CPUPlace {
 	
 	size_t _systemCPUId;
 	size_t _virtualCPUId;
+	size_t _NUMANodeId;
 	
 	//! \brief the CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;
@@ -55,7 +57,7 @@ struct CPU: public CPUPlace {
 	//! \brief a thread responsible for shutting down the rest of the threads and itself
 	std::atomic<WorkerThread *> _shutdownControlerThread;
 	
-	CPU(size_t systemCPUId, size_t virtualCPUId);
+	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
 	
 	// Not copyable
 	CPU(CPU const &) = delete;
@@ -69,6 +71,12 @@ struct CPU: public CPUPlace {
 	{
 		int rc = sched_setaffinity(tid, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
 		FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", tid, " to CPU ", _systemCPUId);
+	}
+
+	inline void initializeIfNeeded() 
+	{
+		activation_status_t expectedStatus = uninitialized_status;
+		_activationStatus.compare_exchange_strong(expectedStatus, starting_status);
 	}
 	
 };

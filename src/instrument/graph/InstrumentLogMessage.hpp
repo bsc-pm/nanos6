@@ -41,7 +41,7 @@ namespace Instrument {
 		
 		std::lock_guard<SpinLock> guard(_graphLock);
 		log_message_step_t *step = new log_message_step_t(
-			context._hardwarePlaceId, context._threadId, context._taskId,
+			context._computePlaceId, context._threadId, context._taskId,
 			stream.str()
 		);
 		_executionSequence.push_back(step);

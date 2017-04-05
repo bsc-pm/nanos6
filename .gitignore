@@ -28,4 +28,4 @@ configure
 configure.scan
 libtool
 stamp-h1
-
+*.swp

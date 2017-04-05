@@ -67,7 +67,7 @@ public:
 	}
 	
 	//! \brief get the hardware place currently assigned
-	inline CPU *getHardwarePlace()
+	inline CPU *getComputePlace()
 	{
 		return _cpu;
 	}

@@ -4,7 +4,7 @@
 
 #include <InstrumentInstrumentationContext.hpp>
 
-#include "InstrumentHardwarePlaceId.hpp"
+#include "InstrumentComputePlaceId.hpp"
 
 
 namespace Instrument {

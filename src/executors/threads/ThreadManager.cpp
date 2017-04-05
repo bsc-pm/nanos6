@@ -11,66 +11,30 @@
 #include <sys/syscall.h>
 
 #include "CPUActivation.hpp"
+#include "CPUManager.hpp"
 #include "ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 
 #include <InstrumentThreadManagement.hpp>
 
 
-std::atomic<bool> ThreadManager::_mustExit;
-cpu_set_t ThreadManager::_processCPUMask;
-std::vector<std::atomic<CPU *>> ThreadManager::_cpus(CPU_SETSIZE);
-std::atomic<long> ThreadManager::_totalCPUs;
-std::atomic<bool> ThreadManager::_finishedCPUInitialization(false);
+std::atomic<bool> ThreadManager::_mustExit(false);
 SpinLock ThreadManager::_idleThreadsLock;
 std::deque<WorkerThread *> ThreadManager::_idleThreads;
-std::atomic<long> ThreadManager::_totalThreads;
-std::atomic<long> ThreadManager::_shutdownThreads;
-std::atomic<WorkerThread *> ThreadManager::_mainShutdownControllerThread;
+std::atomic<long> ThreadManager::_totalThreads(0);
+std::atomic<long> ThreadManager::_shutdownThreads(0);
+std::atomic<WorkerThread *> ThreadManager::_mainShutdownControllerThread(nullptr);
 
 
-void ThreadManager::preinitialize()
+void ThreadManager::initializeThread(CPU *cpu)
 {
-	_mustExit = false;
-	_totalCPUs = 0;
-	_finishedCPUInitialization = 0;
-	_totalThreads = 0;
-	_shutdownThreads = 0;
-	_mainShutdownControllerThread = nullptr;
+	assert(cpu != nullptr);
+	assert(_shutdownThreads == 0);
 	
-	int rc = sched_getaffinity(syscall(SYS_gettid), sizeof(cpu_set_t), &_processCPUMask);
-	FatalErrorHandler::handle(rc, " when retrieving the affinity of the current pthread ", pthread_self());
-	
-	// Set up the pthread attributes for the threads of each CPU
-	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
-		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
-			__attribute__((unused)) CPU *cpu = getCPU(systemCPUId);
-			assert(cpu != nullptr);
-			
-			assert(_shutdownThreads == 0);
-			_totalThreads++;
-		}
-	}
-}
-
-
-void ThreadManager::initialize()
-{
-	// Start a thread in each CPU
-	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
-		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
-			CPU *cpu = getCPU(systemCPUId);
-			assert(cpu != nullptr);
-			
-			assert(_shutdownThreads == 0);
-			WorkerThread *thread = new WorkerThread(cpu);
-			thread->_cpuToBeResumedOn = cpu;
-			thread->resume();
-		}
-	}
-	
-	_finishedCPUInitialization = true;
+	WorkerThread *thread = new WorkerThread(cpu);
+	thread->_cpuToBeResumedOn = cpu;
+	thread->resume();
+	_totalThreads++;
 }
 
 
@@ -108,15 +72,16 @@ void ThreadManager::shutdown()
 	_shutdownThreads = shutdownThreads;
 	
 	// Attempt to wake up all (enabled) CPUs so that they start shutting down the threads
+	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
 	std::deque<CPU *> participatingCPUs;
-	for (CPU *cpu : _cpus) {
+	for (CPU *cpu : cpus) {
 		// Sanity check
 		assert(_totalThreads == shutdownThreads);
 		assert(_shutdownThreads <= shutdownThreads);
 		
 		if ((cpu != nullptr) && CPUActivation::acceptsWork(cpu)) {
 			// Wait for the CPU to be started
-			while (!CPUActivation::hasStarted(cpu)) {
+			while (CPUActivation::isBeingInitialized(cpu)) {
 				sched_yield();
 			}
 			

@@ -17,14 +17,14 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware/places/HardwarePlace.hpp"
+#include "hardware/places/ComputePlace.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
 #include "TaskDataAccessesImplementation.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
-#include <InstrumentHardwarePlaceId.hpp>
+#include <InstrumentComputePlaceId.hpp>
 #include <InstrumentLogMessage.hpp>
 #include <InstrumentTaskId.hpp>
 
@@ -234,16 +234,16 @@ private:
 	//! Process all the originators that have become ready
 	static inline void processSatisfiedOriginators(
 		/* INOUT */ CPUDependencyData &hpDependencyData,
-		HardwarePlace *hardwarePlace
+		ComputePlace *computePlace
 	) {
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 			
-			HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
+			ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, computePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 			
-			if (idleHardwarePlace != nullptr) {
-				ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+			if (idleComputePlace != nullptr) {
+				ThreadManager::resumeIdle((CPU *) idleComputePlace);
 			}
 		}
 		
@@ -830,19 +830,19 @@ private:
 	
 	static void processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
 		CPUDependencyData &hpDependencyData,
-		HardwarePlace *hardwarePlace
+		ComputePlace *computePlace
 	) {
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
 #else
 		processDelayedOperations(hpDependencyData);
 #endif
 		
-		processSatisfiedOriginators(hpDependencyData, hardwarePlace);
+		processSatisfiedOriginators(hpDependencyData, computePlace);
 		assert(hpDependencyData._satisfiedOriginators.empty());
 		
-		handleRemovableTasks(hpDependencyData._removableTasks, hardwarePlace);
+		handleRemovableTasks(hpDependencyData._removableTasks, computePlace);
 	}
 	
 	
@@ -1688,14 +1688,13 @@ private:
 	
 	static void handleRemovableTasks(
 		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks,
-		HardwarePlace *hardwarePlace
+		ComputePlace *computePlace
 	) {
 		for (Task *removableTask : removableTasks) {
-			TaskFinalization::disposeOrUnblockTask(removableTask, hardwarePlace);
+			TaskFinalization::disposeOrUnblockTask(removableTask, computePlace);
 		}
 		removableTasks.clear();
 	}
-	
 	
 	
 public:
@@ -1750,10 +1749,10 @@ public:
 	//! \returns true if the task is already ready
 	static inline bool registerTaskDataAccesses(
 		Task *task,
-		HardwarePlace *hardwarePlace
+		ComputePlace *computePlace
 	) {
 		assert(task != 0);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		nanos_task_info *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
@@ -1767,8 +1766,7 @@ public:
 			
 			task->increasePredecessors(2);
 			
-			CPUDependencyData &hpDependencyData = hardwarePlace->getDependencyData();
-			
+			CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
 #ifndef NDEBUG
 			{
 				bool alreadyTaken = false;
@@ -1779,7 +1777,7 @@ public:
 			// This part actually inserts the accesses into the dependency system
 			linkTaskAccesses(hpDependencyData, task);
 			
-			processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, hardwarePlace);
+			processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace);
 			
 #ifndef NDEBUG
 			{
@@ -1874,16 +1872,16 @@ public:
 	static inline void releaseAccessRange(
 		Task *task, DataAccessRange range,
 		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
-		HardwarePlace *hardwarePlace
+		ComputePlace *computePlace
 	) {
 		assert(task != nullptr);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
-		CPUDependencyData &hpDependencyData = hardwarePlace->getDependencyData();
+		CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		{
@@ -1909,7 +1907,7 @@ public:
 				}
 			);
 		}
-		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, hardwarePlace);
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace);
 		
 #ifndef NDEBUG
 		{
@@ -1921,10 +1919,10 @@ public:
 	
 	
 	
-	static inline void unregisterTaskDataAccesses(Task *task, HardwarePlace *hardwarePlace)
+	static inline void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
@@ -1934,7 +1932,7 @@ public:
 			return;
 		}
 		
-		CPUDependencyData &hpDependencyData = hardwarePlace->getDependencyData();
+		CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		{
@@ -1961,7 +1959,7 @@ public:
 			makeLocalAccessesRemovable(task, accessStructures, hpDependencyData);
 		}
 		
-		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, hardwarePlace);
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace);
 		
 #ifndef NDEBUG
 		{
@@ -1998,12 +1996,12 @@ public:
 	}
 	
 	
-	static void handleEnterTaskwait(Task *task, HardwarePlace *hardwarePlace)
+	static void handleEnterTaskwait(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
-		CPUDependencyData &hpDependencyData = hardwarePlace->getDependencyData();
+		CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		{
@@ -2025,7 +2023,7 @@ public:
 			
 			finalizeFragments(task, accessStructures, hpDependencyData);
 		}
-		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, hardwarePlace);
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace);
 		
 #ifndef NDEBUG
 		{
@@ -2036,7 +2034,7 @@ public:
 	}
 	
 	
-	static void handleExitTaskwait(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+	static void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
 		
