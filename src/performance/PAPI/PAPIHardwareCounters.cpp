@@ -2,7 +2,10 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+// Work around bug in PAPI header
+#define ffsll papi_ffsll
 #include <papi.h>
+#undef ffsll
 
 #include <algorithm>
 #include <cassert>

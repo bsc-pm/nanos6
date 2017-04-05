@@ -12,7 +12,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRange range,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
-		task_id_t originatorTaskId
+		task_id_t originatorTaskId, InstrumentationContext const &context
 	);
 	
 	void upgradedDataAccess(
@@ -22,73 +22,72 @@ namespace Instrument {
 		DataAccessType newAccessType,
 		bool newWeakness,
 		bool becomesUnsatisfied,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	void dataAccessBecomesSatisfied(
 		data_access_id_t dataAccessId,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
-		task_id_t triggererTaskId,
-		task_id_t targetTaskId
+		task_id_t targetTaskId, InstrumentationContext const &context
 	);
 	
 	void modifiedDataAccessRange(
 		data_access_id_t dataAccessId,
 		DataAccessRange newRange,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	data_access_id_t fragmentedDataAccess(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	data_access_id_t createdDataSubaccessFragment(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	void completedDataAccess(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	void dataAccessBecomesRemovable(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	void removedDataAccess(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
 		DataAccessRange range,
 		bool direct, bool bidirectional,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
 		task_id_t sinkTaskId,
 		bool direct,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	void reparentedDataAccess(
 		data_access_id_t oldSuperAccessId,
 		data_access_id_t newSuperAccessId,
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 	
 	void newDataAccessProperty(
 		data_access_id_t dataAccessId,
 		char const *shortPropertyName,
 		char const *longPropertyName,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context
 	);
 
 }

@@ -24,7 +24,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	assert(currentTask != nullptr);
 	assert(currentTask->getThread() == currentThread);
 	
-	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource);
+	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource, Instrument::task_id_t());
 	
 	// Fast check
 	if (currentTask->doesNotNeedToBlockForChildren()) {
@@ -36,7 +36,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 		return;
 	}
 	
-	DataAccessRegistration::handleEnterTaskwait(currentTask);
+	DataAccessRegistration::handleEnterTaskwait(currentTask, currentThread->getHardwarePlace());
 	bool done = currentTask->markAsBlocked();
 	
 	// done == true:
@@ -56,6 +56,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	if (!done) {
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask, true);
+		Instrument::ThreadInstrumentationContext::updateHardwarePlace(currentThread->getHardwarePlace()->getInstrumentationId());
 	}
 	
 	// This in combination with a release from the children makes their changes visible to this thread
@@ -66,7 +67,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();
 	
-	DataAccessRegistration::handleExitTaskwait(currentTask);
+	DataAccessRegistration::handleExitTaskwait(currentTask, currentThread->getHardwarePlace());
 	
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked

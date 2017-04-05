@@ -1,0 +1,20 @@
+#include "resolve.h"
+
+
+static void nanos_register_task_info_unused(__attribute__((unused)) nanos_task_info *task_info)
+{
+}
+
+
+void nanos_register_task_info(nanos_task_info *task_info)
+{
+	typedef void nanos_register_task_info_t(nanos_task_info *task_info);
+	
+	static nanos_register_task_info_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos_register_task_info_t *) _nanos6_resolve_symbol_with_local_fallback("nanos_register_task_info", "essential", nanos_register_task_info_unused, "skipping");
+	}
+	
+	(*symbol)(task_info);
+}
+

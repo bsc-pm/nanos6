@@ -22,6 +22,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 
 class WorkerThread;
@@ -30,7 +31,30 @@ class WorkerThread;
 namespace Instrument {
 	
 	namespace Graph {
-		typedef long taskwait_id_t;
+		class taskwait_id_t {
+		public:
+			typedef long int inner_type_t;
+			
+		private:
+			inner_type_t _id;
+			
+		public:
+			taskwait_id_t(inner_type_t id)
+			: _id(id)
+			{
+			}
+			
+			taskwait_id_t()
+			: _id(-1)
+			{
+			}
+			
+			operator inner_type_t() const
+			{
+				return _id;
+			}
+		};
+		
 		typedef long usermutex_id_t;
 		
 		enum task_status_t {
@@ -279,8 +303,22 @@ namespace Instrument {
 			taskwait_id_t _taskwaitId;
 			char const *_taskwaitSource;
 			
-			taskwait_t(taskwait_id_t taskwaitId, char const *taskwaitSource)
-				: _taskwaitId(taskwaitId), _taskwaitSource(taskwaitSource)
+			task_id_t _task;
+			size_t _taskPhaseIndex;
+			
+			task_status_t _status;
+			long _lastCPU;
+			
+			taskwait_id_t _immediateNextTaskwait;
+			
+			task_id_t _if0Task;
+			
+			taskwait_t(taskwait_id_t taskwaitId, char const *taskwaitSource, task_id_t if0Task)
+				: _taskwaitId(taskwaitId), _taskwaitSource(taskwaitSource),
+				_task(), _taskPhaseIndex(~0UL),
+				_status(not_created_status), _lastCPU(-1),
+				_immediateNextTaskwait(),
+				_if0Task(if0Task)
 			{
 			}
 		};
@@ -306,7 +344,7 @@ namespace Instrument {
 		};
 		
 		
-		typedef std::deque<phase_t *> phase_list_t;
+		typedef std::vector<phase_t *> phase_list_t;
 		
 		typedef DataAccessRangeIndexer<AccessWrapper> task_live_accesses_t;
 		typedef std::set<access_t *> task_all_accesses_t;
@@ -328,6 +366,7 @@ namespace Instrument {
 			nanos_task_invocation_info *_nanos_task_invocation_info;
 			
 			task_id_t _parent;
+			size_t _taskGroupPhaseIndex;
 			
 			task_status_t _status;
 			long _lastCPU;
@@ -344,15 +383,22 @@ namespace Instrument {
 			bool _hasPredecessorsInSameLevel;
 			bool _hasSuccessorsInSameLevel;
 			
+			bool _isIf0;
+			
+			taskwait_id_t _precedingTaskwait;
+			taskwait_id_t _succedingTaskwait;
+			
 			task_info_t()
 				: _nanos_task_info(nullptr), _nanos_task_invocation_info(nullptr),
-				_parent(-1),
+				_parent(-1), _taskGroupPhaseIndex(0),
 				_status(not_created_status), _lastCPU(-1),
 				_phaseList(),
 				_liveAccesses(), _allAccesses(),
 				_outputEdges(),
 				_hasChildren(false),
-				_hasPredecessorsInSameLevel(false), _hasSuccessorsInSameLevel(false)
+				_hasPredecessorsInSameLevel(false), _hasSuccessorsInSameLevel(false),
+				_isIf0(false),
+				_precedingTaskwait(), _succedingTaskwait()
 			{
 			}
 		};
@@ -381,9 +427,9 @@ namespace Instrument {
 			}
 		};
 		
-		extern std::map<taskwait_id_t, taskwait_status_t> _taskwaitStatus;
+		extern std::map<taskwait_id_t, taskwait_t *> _taskwaitToInfoMap;
 		
-		extern std::atomic<taskwait_id_t> _nextTaskwaitId;
+		extern std::atomic<taskwait_id_t::inner_type_t> _nextTaskwaitId;
 		extern std::atomic<task_id_t::inner_type_t> _nextTaskId;
 		extern std::atomic<usermutex_id_t> _nextUsermutexId;
 		extern std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId;

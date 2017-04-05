@@ -12,6 +12,7 @@
 
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
+#include <InstrumentInstrumentationContext.hpp>
 
 #include <atomic>
 
@@ -121,9 +122,12 @@ void WorkerThread::handleTask()
 {
 	_task->setThread(this);
 	
+	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
+	
+	Instrument::ThreadInstrumentationContext instrumentationContext(taskId, _cpu->getInstrumentationId(), _instrumentationId);
+	
 	if (_task->hasCode()) {
-		Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
-		Instrument::startTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
+		Instrument::startTask(taskId);
 		Instrument::taskIsExecuting(taskId);
 		
 		// Run the task
@@ -132,14 +136,14 @@ void WorkerThread::handleTask()
 		std::atomic_thread_fence(std::memory_order_release);
 		
 		Instrument::taskIsZombie(taskId);
-		Instrument::endTask(taskId, _cpu->_virtualCPUId, _instrumentationId);
+		Instrument::endTask(taskId);
 	}
 	
 	// Release successors
-	DataAccessRegistration::unregisterTaskDataAccesses(_task);
+	DataAccessRegistration::unregisterTaskDataAccesses(_task, _cpu);
 	
 	if (_task->markAsFinished()) {
-		TaskFinalization::disposeOrUnblockTask(_task, _cpu, this);
+		TaskFinalization::disposeOrUnblockTask(_task, _cpu);
 	}
 	
 	_task = nullptr;

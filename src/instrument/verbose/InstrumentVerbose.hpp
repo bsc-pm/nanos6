@@ -19,6 +19,8 @@
 #include <string>
 #include <utility>
 
+#include <InstrumentInstrumentationContext.hpp>
+
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
@@ -60,6 +62,24 @@ namespace Instrument {
 				: _next(nullptr)
 			{
 			}
+			
+			void appendLocation(InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent())
+			{
+				_contents << "Thread:";
+				if (context._threadId != thread_id_t()) {
+					_contents << context._threadId;
+				} else {
+					_contents << "external";
+				}
+				
+				_contents << " HardwarePlace:";
+				if (context._hardwarePlaceId != hardware_place_id_t()) {
+					_contents << context._hardwarePlaceId;
+				} else {
+					_contents << "unknown";
+				}
+			}
+			
 		};
 		
 		extern std::atomic<LogEntry *> _lastEntry;

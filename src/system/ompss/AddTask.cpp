@@ -33,7 +33,7 @@ void nanos_create_task(
 	void **task_pointer,
 	size_t flags
 ) {
-	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo);
+	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
@@ -83,7 +83,7 @@ void nanos_submit_task(void *taskHandle)
 	nanos_task_info *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);
 	if (taskInfo->register_depinfo != 0) {
-		ready = DataAccessRegistration::registerTaskDataAccesses(task);
+		ready = DataAccessRegistration::registerTaskDataAccesses(task, hardwarePlace);
 	}
 	
 	bool isIf0 = task->isIf0();
@@ -111,7 +111,7 @@ void nanos_submit_task(void *taskHandle)
 	if (isIf0) {
 		if (ready) {
 			// Ready if0 tasks are executed inline
-			If0Task::executeInline(currentWorkerThread, parent, task);
+			If0Task::executeInline(currentWorkerThread, parent, task, hardwarePlace);
 		} else {
 			// Non-ready if0 tasks cause this thread to get blocked
 			If0Task::waitForIf0Task(currentWorkerThread, parent, task, hardwarePlace);

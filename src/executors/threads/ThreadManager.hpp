@@ -1,7 +1,6 @@
 #ifndef THREAD_MANAGER_HPP
 #define THREAD_MANAGER_HPP
 
-
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -19,7 +18,9 @@
 // #include "CPUStatusListener.hpp"
 #include "WorkerThread.hpp"
 
+#include <InstrumentHardwarePlaceManagement.hpp>
 #include <InstrumentThreadManagement.hpp>
+
 
 
 class ThreadManagerDebuggingInterface;
@@ -159,6 +160,10 @@ inline CPU *ThreadManager::getCPU(size_t systemCPUId)
 		} else {
 			newCPU->_virtualCPUId = _totalCPUs++;
 // 			atomic_thread_fence(std::memory_order_seq_cst);
+			
+			Instrument::hardware_place_id_t cpuInstrumentationId = Instrument::createdCPU(newCPU->_virtualCPUId);
+			newCPU->setInstrumentationId(cpuInstrumentationId);
+			
 			cpu = newCPU;
 		}
 	}
@@ -252,7 +257,7 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 		// NOTE: In this case the CPUActivation class can end up resuming a CPU before its running thread has had a chance to get blocked
 	}
 	
-	Instrument::threadWillSuspend(currentThread->_instrumentationId, cpu->_virtualCPUId);
+	Instrument::threadWillSuspend(currentThread->_instrumentationId, cpu->getInstrumentationId());
 	
 	currentThread->suspend();
 	// After resuming (if ever blocked), the thread continues here
@@ -261,7 +266,7 @@ inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThre
 	assert(currentThread->_cpuToBeResumedOn != nullptr);
 	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
 	
-	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->_virtualCPUId);
+	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->getInstrumentationId());
 	
 #ifndef NDEBUG
 	currentThread->_cpuToBeResumedOn = nullptr;
@@ -310,7 +315,6 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 	
 	if (!inInitializationOrShutdown) {
 		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->_cpu != nullptr));
-		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->_cpu != idleCPU));
 	}
 	
 	// Get an idle thread for the CPU

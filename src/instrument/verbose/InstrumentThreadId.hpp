@@ -1,1 +1,1 @@
-../public/generic_ids/InstrumentThreadId.hpp
+../generic_ids/InstrumentThreadId.hpp

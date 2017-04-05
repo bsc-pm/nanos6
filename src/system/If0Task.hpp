@@ -26,7 +26,7 @@ namespace If0Task {
 		
 		CPU *cpu = static_cast<CPU *>(hardwarePlace);
 		
-		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source);
+		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		
@@ -38,16 +38,19 @@ namespace If0Task {
 	}
 	
 	
-	inline void executeInline(WorkerThread *currentThread, Task *currentTask, Task *if0Task)
-	{
+	inline void executeInline(
+		WorkerThread *currentThread, Task *currentTask, Task *if0Task,
+		__attribute__((unused)) HardwarePlace *hardwarePlace
+	) {
 		assert(currentThread != nullptr);
 		assert(currentTask != nullptr);
 		assert(if0Task != nullptr);
 		assert(if0Task->getParent() == currentTask);
+		assert(hardwarePlace != nullptr);
 		
 		bool hasCode = if0Task->hasCode();
 		
-		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source);
+		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		if (hasCode) {
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}
@@ -62,8 +65,10 @@ namespace If0Task {
 	}
 	
 	
-	inline void executeNonInline(WorkerThread *currentThread, Task *if0Task, HardwarePlace *hardwarePlace)
-	{
+	inline void executeNonInline(
+		WorkerThread *currentThread, Task *if0Task,
+		__attribute__((unused)) HardwarePlace *hardwarePlace
+	) {
 		assert(currentThread != nullptr);
 		assert(if0Task != nullptr);
 		assert(hardwarePlace != nullptr);

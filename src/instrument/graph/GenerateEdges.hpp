@@ -6,6 +6,7 @@ namespace Instrument {
 	
 	namespace Graph {
 		void generateEdges();
+		void generateTaskwaitRelations();
 	}
 }
 

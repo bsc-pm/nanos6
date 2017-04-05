@@ -5,6 +5,8 @@
 *.lo
 *.log
 *.o
+*.orig
+*.rej
 *.test
 *.trs
 *.was
@@ -25,5 +27,5 @@ config.status
 configure
 configure.scan
 libtool
-simpless-*.*
 stamp-h1
+

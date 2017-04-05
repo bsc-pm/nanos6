@@ -1,12 +1,13 @@
 #include "system/ompss/UserMutex.hpp"
 
 #include "ExecutionSteps.hpp"
+#include "InstrumentTaskId.hpp"
 #include "InstrumentUserMutex.hpp"
+
 #include "InstrumentGraph.hpp"
 
-#include "executors/threads/CPU.hpp"
-#include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
+
 
 #include <cassert>
 
@@ -29,102 +30,33 @@ namespace Instrument {
 		return usermutexId;
 	}
 	
-	void acquiredUserMutex(UserMutex *userMutex)
+	void acquiredUserMutex(UserMutex *userMutex, InstrumentationContext const &context)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		if (currentThread == nullptr) {
-			// The main task gets added by a non-worker thread
-			// And other tasks can also be added by external threads in library mode
-		}
-		
-		thread_id_t threadId = 0;
-		if (currentThread != nullptr) {
-			threadId = currentThread->getInstrumentationId();
-		}
-		
-		long cpuId = -2;
-		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->getHardwarePlace();
-			assert(cpu != nullptr);
-			cpuId = cpu->_virtualCPUId;
-		}
-		
-		Task *task = currentThread->getTask();
-		assert(task != nullptr);
-		
-		task_id_t taskId = task->getInstrumentationTaskId();
-		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		enter_usermutex_step_t *enterUsermutexStep = new enter_usermutex_step_t(cpuId, threadId, usermutexId, taskId);
+		enter_usermutex_step_t *enterUsermutexStep = new enter_usermutex_step_t(context._hardwarePlaceId, context._threadId, usermutexId, context._taskId);
 		_executionSequence.push_back(enterUsermutexStep);
 	}
 	
-	void blockedOnUserMutex(UserMutex *userMutex)
+	void blockedOnUserMutex(UserMutex *userMutex, InstrumentationContext const &context)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		if (currentThread == nullptr) {
-			// The main task gets added by a non-worker thread
-			// And other tasks can also be added by external threads in library mode
-		}
-		
-		thread_id_t threadId = 0;
-		if (currentThread != nullptr) {
-			threadId = currentThread->getInstrumentationId();
-		}
-		
-		long cpuId = -2;
-		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->getHardwarePlace();
-			assert(cpu != nullptr);
-			cpuId = cpu->_virtualCPUId;
-		}
-		
-		Task *task = currentThread->getTask();
-		assert(task != nullptr);
-		
-		task_id_t taskId = task->getInstrumentationTaskId();
-		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		block_on_usermutex_step_t *blockOnUsermutexStep = new block_on_usermutex_step_t(cpuId, threadId, usermutexId, taskId);
+		block_on_usermutex_step_t *blockOnUsermutexStep = new block_on_usermutex_step_t(context._hardwarePlaceId, context._threadId, usermutexId, context._taskId);
 		_executionSequence.push_back(blockOnUsermutexStep);
 	}
 	
-	void releasedUserMutex(UserMutex *userMutex)
+	void releasedUserMutex(UserMutex *userMutex, InstrumentationContext const &context)
 	{
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		if (currentThread == nullptr) {
-			// The main task gets added by a non-worker thread
-			// And other tasks can also be added by external threads in library mode
-		}
-		
-		thread_id_t threadId = 0;
-		if (currentThread != nullptr) {
-			threadId = currentThread->getInstrumentationId();
-		}
-		
-		long cpuId = -2;
-		if (currentThread != nullptr) {
-			CPU *cpu = currentThread->getHardwarePlace();
-			assert(cpu != nullptr);
-			cpuId = cpu->_virtualCPUId;
-		}
-		
-		Task *task = currentThread->getTask();
-		assert(task != nullptr);
-		
-		task_id_t taskId = task->getInstrumentationTaskId();
-		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		exit_usermutex_step_t *exitUsermutexStep = new exit_usermutex_step_t(cpuId, threadId, usermutexId, taskId);
+		exit_usermutex_step_t *exitUsermutexStep = new exit_usermutex_step_t(context._hardwarePlaceId, context._threadId, usermutexId, context._taskId);
 		_executionSequence.push_back(exitUsermutexStep);
 	}
 	

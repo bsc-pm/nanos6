@@ -3,7 +3,7 @@
 
 
 #include <InstrumentDataAccessId.hpp>
-#include <InstrumentTaskId.hpp>
+#include <InstrumentInstrumentationContext.hpp>
 
 #include <DataAccessRange.hpp>
 
@@ -52,7 +52,8 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRange range,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
-		task_id_t originatorTaskId
+		task_id_t originatorTaskId,
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess has its type of access upgraded
@@ -65,14 +66,13 @@ namespace Instrument {
 	//! \param newAccessType the type of access to which it will be upgraded
 	//! \param newWeakness true if the resulting access is weak
 	//! \param becomesUnsatisfied indicates if the DataAccess was satisfied and has become unsatisfied as a result of the upgrade
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! 
 	void upgradedDataAccess(
 		data_access_id_t dataAccessId,
 		DataAccessType previousAccessType, bool previousWeakness,
 		DataAccessType newAccessType, bool newWeakness,
 		bool becomesUnsatisfied,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess becomes satisfied
@@ -81,31 +81,28 @@ namespace Instrument {
 	//! \param readSatisfied whether the access becomes read satisfied
 	//! \param writeSatisfied whether the access begomes write satisfied
 	//! \param globallySatisfied whether the access becomes globally satisfied
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! \param targetTaskId the identifier of the task that will perform the now satisfied DataAccess
 	void dataAccessBecomesSatisfied(
 		data_access_id_t dataAccessId,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
-		task_id_t triggererTaskId,
-		task_id_t targetTaskId
+		task_id_t targetTaskId,
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess has its range modified
 	//! 
 	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
 	//! \param newRange the range of data that the access covers now
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	void modifiedDataAccessRange(
 		data_access_id_t dataAccessId,
 		DataAccessRange newRange,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess gets fragmented
 	//! 
 	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
 	//! \param newRange the range of data of the new fragment
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! 
 	//! The original data access and any newly created fragments will have the modifiedDataAccessRange method called
 	//! 
@@ -113,45 +110,41 @@ namespace Instrument {
 	data_access_id_t fragmentedDataAccess(
 		data_access_id_t dataAccessId,
 		DataAccessRange newRange,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess has its subaccess fragment created
 	//! 
 	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! 
 	//! \returns an identifier for the subaccess fragment
 	data_access_id_t createdDataSubaccessFragment(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess has has been completed
 	//! 
 	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	void completedDataAccess(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess becomes removable
 	//! 
 	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	void dataAccessBecomesRemovable(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess has been removed
 	//! 
 	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	void removedDataAccess(
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when two DataAccess objects are linked
@@ -161,12 +154,11 @@ namespace Instrument {
 	//! \param range the range of data covered by the link
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	//! \param bidirectional tru if the link is bidirectional
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
 		DataAccessRange range,
 		bool direct, bool bidirectional,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when two DataAccess objects are unlinked
@@ -174,10 +166,9 @@ namespace Instrument {
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkTaskId the identifier of the sink Task
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId, task_id_t sinkTaskId, bool direct,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess has is moved from one superaccess to another
@@ -185,12 +176,11 @@ namespace Instrument {
 	//! \param oldSuperAccessId the identifier of the superaccess from which the DataAccess is removed
 	//! \param newSuperAccessId the identifier of the superaccess to which the DataAccess is inserted
 	//! \param dataAccessId the identifier of the DataAccess that is moved
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	//! 
 	void reparentedDataAccess(
 		data_access_id_t oldSuperAccessId, data_access_id_t newSuperAccessId,
 		data_access_id_t dataAccessId,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess has a new property
@@ -198,12 +188,11 @@ namespace Instrument {
 	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
 	//! \param shortPropertyName a short name to give to the property (1 to 3 characters)
 	//! \param longPropertyName a name for the property with unconstrained length
-	//! \param triggererTaskId the identifier of the task that triggers the change
 	void newDataAccessProperty(
 		data_access_id_t dataAccessId,
 		char const *shortPropertyName,
 		char const *longPropertyName,
-		task_id_t triggererTaskId
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	//! @}
 }

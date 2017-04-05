@@ -9,7 +9,7 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void startTask(task_id_t taskId, cpu_id_t cpuId, thread_id_t currentThreadId) {
+	void startTask(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskExecution) {
 			return;
 		}
@@ -17,13 +17,14 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		logEntry->_contents << "Thread:" << currentThreadId << " CPU:" << cpuId << " --> Task " << taskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " --> Task " << taskId;
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void returnToTask(task_id_t taskId, cpu_id_t cpuId, thread_id_t currentThreadId) {
+	void returnToTask(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskExecution) {
 			return;
 		}
@@ -31,13 +32,14 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		logEntry->_contents << "Thread:" << currentThreadId << " CPU:" << cpuId << " ->> Task " << taskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " ->> Task " << taskId;
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void endTask(task_id_t taskId, cpu_id_t cpuId, thread_id_t currentThreadId) {
+	void endTask(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskExecution) {
 			return;
 		}
@@ -45,13 +47,14 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		logEntry->_contents << "Thread:" << currentThreadId << " CPU:" << cpuId << " <-- Task " << taskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-- Task " << taskId;
 		
 		addLogEntry(logEntry);
 	}
 	
 	
-	void destroyTask(task_id_t taskId, cpu_id_t cpuId, thread_id_t currentThreadId) {
+	void destroyTask(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskExecution) {
 			return;
 		}
@@ -59,7 +62,8 @@ namespace Instrument {
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
-		logEntry->_contents << "Thread:" << currentThreadId << " CPU:" << cpuId << " <-> DestroyTask " << taskId;
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> DestroyTask " << taskId;
 		
 		addLogEntry(logEntry);
 	}
