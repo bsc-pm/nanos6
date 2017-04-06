@@ -21,7 +21,13 @@ echo
 echo
 for type in $* ; do
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
-		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_register_region_${type}_depinfo${dimensions}, \"multidimensional dependency\", nanos_register_region_${type}_depinfo${dimensions}_fallback);"
+		if [ "${type}" = "reduction" ] ; then
+			fallback_name=nanos_register_region_readwrite_depinfo${dimensions}_fallback
+		else
+			fallback_name=nanos_register_region_${type}_depinfo${dimensions}_fallback
+		fi
+		
+		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_register_region_${type}_depinfo${dimensions}, \"multidimensional dependency\", ${fallback_name});"
 	done
 	echo
 done

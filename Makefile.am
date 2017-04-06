@@ -6,7 +6,7 @@ SUBDIRS = . tests/directive_based
 
 
 MAX_REGION_DIMENSIONS = 8
-MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative
+MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative reduction
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES = 
 
 nanos6includedir = $(includedir)/nanos6

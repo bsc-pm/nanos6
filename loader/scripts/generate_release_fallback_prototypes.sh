@@ -15,6 +15,10 @@ shift
 
 
 for type in $* ; do
+	if [ "${type}" = "reduction" ] ; then
+		continue
+	fi
+	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		generate_release_named_prototype ${dimensions} "nanos_release_${type}_${dimensions}_fallback"
 		echo ";"

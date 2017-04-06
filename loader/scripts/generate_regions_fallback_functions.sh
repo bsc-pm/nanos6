@@ -20,6 +20,10 @@ echo
 echo
 
 for type in $* ; do
+	if [ "${type}" = "reduction" ] ; then
+		continue
+	fi
+	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		generate_regions_named_prototype ${dimensions} "nanos_register_region_${type}_depinfo${dimensions}_fallback"
 		echo " {"

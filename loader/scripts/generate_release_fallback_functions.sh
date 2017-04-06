@@ -19,6 +19,10 @@ echo
 echo
 
 for type in $* ; do
+	if [ "${type}" = "reduction" ] ; then
+		continue
+	fi
+	
 	generate_release_named_prototype 1 "nanos_release_${type}_1_fallback"
 	echo " {"
 	echo "}"
