@@ -25,6 +25,8 @@ public:
 	void disableComputePlace(ComputePlace *hardwarePlace);
 	
 	void enableComputePlace(ComputePlace *hardwarePlace);
+
+    bool canBeRemoved();
 };
 
 

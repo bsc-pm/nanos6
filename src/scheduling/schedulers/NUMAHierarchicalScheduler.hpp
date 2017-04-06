@@ -1,13 +1,11 @@
 #ifndef NUMA_HIERARCHICAL_SCHEDULER_HPP
 #define NUMA_HIERARCHICAL_SCHEDULER_HPP
 
-
 #include <map>
 
 #include <boost/dynamic_bitset.hpp>
 
 #include "../SchedulerInterface.hpp"
-#include "lowlevel/SpinLock.hpp"
 
 
 class Task;
@@ -38,6 +36,8 @@ public:
 	void disableComputePlace(ComputePlace *hardwarePlace);
 	
 	void enableComputePlace(ComputePlace *hardwarePlace);
+
+    bool canBeRemoved();
 };
 
 

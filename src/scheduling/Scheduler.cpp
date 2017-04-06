@@ -1,11 +1,6 @@
-#include "hierarchy/HostHierarchicalScheduler.hpp"
+#include "SchedulerGenerator.hpp"
 #include "Scheduler.hpp"
 #include "SchedulerInterface.hpp"
-
-#include "lowlevel/EnvironmentVariable.hpp"
-
-#include <iostream>
-#include <string>
 
 
 SchedulerInterface *Scheduler::_scheduler;
@@ -13,7 +8,7 @@ SchedulerInterface *Scheduler::_scheduler;
 
 void Scheduler::initialize()
 {
-	_scheduler = new HostHierarchicalScheduler();
+	_scheduler = SchedulerGenerator::createHostScheduler();
 }
 
 void Scheduler::shutdown() 

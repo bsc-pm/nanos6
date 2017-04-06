@@ -1,7 +1,7 @@
 #include "NUMAHierarchicalScheduler.hpp"
-#include "DeviceHierarchicalScheduler.hpp"
 
 #include "../SchedulerInterface.hpp"
+#include "../SchedulerGenerator.hpp"
 
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
@@ -30,7 +30,7 @@ NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 	}
 
 	for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-		_NUMANodeScheduler[idx] = new DeviceHierarchicalScheduler();
+		_NUMANodeScheduler[idx] = SchedulerGenerator::createNUMANodeScheduler();
 	}
 }
 
@@ -151,4 +151,9 @@ void NUMAHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 
 	_cpuMask[numa_node][((CPU *)hardwarePlace)->_systemCPUId] = true;
 	_NUMANodeScheduler[numa_node]->enableComputePlace(hardwarePlace);
+}
+
+bool NUMAHierarchicalScheduler::canBeRemoved()
+{
+	return (HardwareInfo::getMemoryNodeCount() == 1);
 }

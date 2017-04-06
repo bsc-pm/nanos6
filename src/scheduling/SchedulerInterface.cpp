@@ -39,3 +39,8 @@ bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *co
 	// otherwise there should be an implementation of this method that matches requestPolling
 	return (pollingSlot->_task.load(std::memory_order_seq_cst) == nullptr);
 }
+
+bool SchedulerInterface::canBeRemoved()
+{
+	return false;
+}

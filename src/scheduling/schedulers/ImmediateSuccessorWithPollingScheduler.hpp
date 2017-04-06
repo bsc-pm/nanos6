@@ -1,13 +1,12 @@
-#ifndef FIFO_IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
-#define FIFO_IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
+#ifndef IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
+#define IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
 
 
 #include <atomic>
 #include <deque>
 #include <vector>
 
-#include "SchedulerInterface.hpp"
-#include "lowlevel/PaddedTicketSpinLock.hpp"
+#include "../SchedulerInterface.hpp"
 #include "lowlevel/TicketSpinLock.hpp"
 #include "executors/threads/CPU.hpp"
 
@@ -15,8 +14,8 @@
 class Task;
 
 
-class FIFOImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
-	typedef PaddedTicketSpinLock<> spinlock_t;
+class ImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
+	typedef TicketSpinLock<> spinlock_t;
 	
 	spinlock_t _globalLock;
 	
@@ -33,8 +32,8 @@ class FIFOImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
 	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
-	FIFOImmediateSuccessorWithPollingScheduler();
-	~FIFOImmediateSuccessorWithPollingScheduler();
+	ImmediateSuccessorWithPollingScheduler();
+	~ImmediateSuccessorWithPollingScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint);
 	
@@ -51,5 +50,5 @@ public:
 };
 
 
-#endif // FIFO_IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
+#endif // IMMEDIATE_SUCCESSOR_WITH_POLLING_SCHEDULER_HPP
 

@@ -1,11 +1,11 @@
-#ifndef IMMEDIATE_SUCCESSOR_SCHEDULER_HPP
-#define IMMEDIATE_SUCCESSOR_SCHEDULER_HPP
+#ifndef FIFO_SCHEDULER_HPP
+#define FIFO_SCHEDULER_HPP
 
 
 #include <deque>
 #include <vector>
 
-#include "SchedulerInterface.hpp"
+#include "../SchedulerInterface.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "executors/threads/CPU.hpp"
 
@@ -13,7 +13,7 @@
 class Task;
 
 
-class ImmediateSuccessorScheduler: public SchedulerInterface {
+class FIFOScheduler: public SchedulerInterface {
 	SpinLock _globalLock;
 	
 	std::deque<Task *> _readyTasks;
@@ -26,8 +26,8 @@ class ImmediateSuccessorScheduler: public SchedulerInterface {
 	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
-	ImmediateSuccessorScheduler();
-	~ImmediateSuccessorScheduler();
+	FIFOScheduler();
+	~FIFOScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint);
 	
@@ -36,10 +36,8 @@ public:
 	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
-	
-	void disableComputePlace(ComputePlace *computePlace);
 };
 
 
-#endif // IMMEDIATE_SUCCESSOR_SCHEDULER_HPP
+#endif // FIFO_SCHEDULER_HPP
 

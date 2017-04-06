@@ -7,7 +7,7 @@
 #include <queue>
 #include <vector>
 
-#include "SchedulerInterface.hpp"
+#include "../SchedulerInterface.hpp"
 #include "lowlevel/PaddedTicketSpinLock.hpp"
 #include "lowlevel/TicketSpinLock.hpp"
 #include "executors/threads/CPU.hpp"

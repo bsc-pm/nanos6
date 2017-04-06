@@ -310,29 +310,31 @@ common_sources = \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
 	src/lowlevel/posix/KernelLevelThread.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
-	src/scheduling/DefaultScheduler.hpp \
-	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
-	src/scheduling/FIFOScheduler.cpp \
-	src/scheduling/FIFOScheduler.hpp \
-	src/scheduling/hierarchy/HostHierarchicalScheduler.cpp \
-	src/scheduling/hierarchy/HostHierarchicalScheduler.hpp \
-	src/scheduling/hierarchy/NUMAHierarchicalScheduler.cpp \
-	src/scheduling/hierarchy/NUMAHierarchicalScheduler.hpp \
-	src/scheduling/hierarchy/DeviceHierarchicalScheduler.cpp \
-	src/scheduling/hierarchy/DeviceHierarchicalScheduler.hpp \
-	src/scheduling/ImmediateSuccessorScheduler.cpp \
-	src/scheduling/ImmediateSuccessorScheduler.hpp \
-	src/scheduling/ImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/ImmediateSuccessorWithPollingScheduler.hpp \
-	src/scheduling/NaiveScheduler.cpp \
-	src/scheduling/NaiveScheduler.hpp \
-	src/scheduling/PriorityScheduler.cpp \
-	src/scheduling/PriorityScheduler.hpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/Scheduler.hpp \
+	src/scheduling/SchedulerGenerator.cpp \
+	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.cpp \
 	src/scheduling/SchedulerInterface.hpp \
+	src/scheduling/schedulers/DefaultScheduler.hpp \
+	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
+	src/scheduling/schedulers/FIFOScheduler.cpp \
+	src/scheduling/schedulers/FIFOScheduler.hpp \
+	src/scheduling/schedulers/HostHierarchicalScheduler.cpp \
+	src/scheduling/schedulers/HostHierarchicalScheduler.hpp \
+	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
+	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
+	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
+	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
+	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
+	src/scheduling/schedulers/ImmediateSuccessorScheduler.hpp \
+	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
+	src/scheduling/schedulers/NaiveScheduler.cpp \
+	src/scheduling/schedulers/NaiveScheduler.hpp \
+	src/scheduling/schedulers/PriorityScheduler.cpp \
+	src/scheduling/schedulers/PriorityScheduler.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.cpp \
 	src/support/GlobalLock.hpp \

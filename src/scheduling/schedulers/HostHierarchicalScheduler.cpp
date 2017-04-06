@@ -1,12 +1,13 @@
 #include "HostHierarchicalScheduler.hpp"
-#include "NUMAHierarchicalScheduler.hpp"
+
+#include "../SchedulerGenerator.hpp"
 
 #include <cassert>
 
 
 HostHierarchicalScheduler::HostHierarchicalScheduler()
 {
-	_NUMAScheduler = new NUMAHierarchicalScheduler();
+	_NUMAScheduler = SchedulerGenerator::createNUMAScheduler();
 }
 
 HostHierarchicalScheduler::~HostHierarchicalScheduler()
@@ -46,4 +47,9 @@ void HostHierarchicalScheduler::disableComputePlace(ComputePlace *hardwarePlace)
 void HostHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 {
 	_NUMAScheduler->enableComputePlace(hardwarePlace);
+}
+
+bool HostHierarchicalScheduler::canBeRemoved()
+{
+    return true;
 }

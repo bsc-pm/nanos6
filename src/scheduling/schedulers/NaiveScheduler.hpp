@@ -5,7 +5,7 @@
 #include <deque>
 #include <vector>
 
-#include "SchedulerInterface.hpp"
+#include "../SchedulerInterface.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "executors/threads/CPU.hpp"
 
