@@ -327,6 +327,7 @@ common_sources = \
 	src/support/GlobalLock.cpp \
 	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
+	src/support/InstrumentedThread.hpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
 	src/system/If0Task.hpp \
