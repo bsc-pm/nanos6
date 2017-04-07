@@ -31,7 +31,7 @@ namespace If0Task {
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
-		ThreadManager::switchThreads(currentThread, replacementThread);
+		currentThread->switchTo(replacementThread);
 		
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());

@@ -159,18 +159,18 @@ public:
 						ComputePlace *idleComputePlace = Scheduler::getIdleComputePlace();
 						if (idleComputePlace != nullptr) {
 							// Migrate the thread to the idle hardware place
-							ThreadManager::migrateThread(currentThread, (CPU *) idleComputePlace);
+							currentThread->migrate((CPU *) idleComputePlace);
 						} else {
 							// There is no available hardware place, so this thread becomes idle
 							ThreadManager::addIdler(currentThread);
-							ThreadManager::switchThreads(currentThread, nullptr);
+							currentThread->switchTo(nullptr);
 						}
 					}
 					break;
 				case CPU::disabled_status:
 					if (!currentThread->hasPendingShutdown()) {
 						ThreadManager::addIdler(currentThread);
-						ThreadManager::switchThreads(currentThread, nullptr);
+						currentThread->switchTo(nullptr);
 					} else {
 						successful = true;
 					}

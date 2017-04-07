@@ -3,8 +3,8 @@
 
 
 #include "CPU.hpp"
-#include "EssentialThreadEnvironment.hpp"
-#include "Thread.hpp"
+#include "DependencyDomain.hpp"
+#include "WorkerThreadBase.hpp"
 
 #include <atomic>
 #include <cassert>
@@ -15,31 +15,64 @@ class ThreadManager;
 class SchedulingDecisionPlaceholder;
 
 
-class WorkerThread : public Thread, public EssentialThreadEnvironment {
+class WorkerThread : public WorkerThreadBase {
 private:
-	//! The CPU on which this thread is running.
-	CPU *_cpu;
-	
-	//! The CPU to which the thread transitions the next time it resumes. Atomic since this is changed by other threads.
-	std::atomic<CPU *> _cpuToBeResumedOn;
-	
 	//! Indicates that it is time for this thread to participate in the shutdown process
 	std::atomic<bool> _mustShutDown;
 	
-	//! Thread Local Storage variable to point back to the WorkerThread that is running the code
-	static __thread WorkerThread *_currentWorkerThread;
+	//! The Task currently assigned to this thread
+	Task *_task;
 	
+	//! Dependency domain of the tasks instantiated by this thread
+	DependencyDomain _dependencyDomain;
+	
+	void initialize();
 	void handleTask();
 	
-	//! Only the thread manager is suposed to call the suspend and resume methods. Any other use must go through it.
+	//! Only the thread manager is supposed to call the suspend and resume methods. Any other use must go through it.
 	friend class ThreadManager;
 	
+	
 public:
-	WorkerThread(CPU * cpu);
+	WorkerThread() = delete;
+	
+	inline WorkerThread(CPU * cpu)
+		: WorkerThreadBase(cpu), _mustShutDown(false), _task(nullptr), _dependencyDomain()
+	{
+		start();
+	}
+	
 	virtual ~WorkerThread()
 	{
 	}
-	 
+	
+	//! \brief get the currently assigned task to this thread
+	inline Task *getTask()
+	{
+		return _task;
+	}
+	
+	//! \brief set the task that this thread must run when it is resumed
+	//!
+	//! \param[in] task the task that the thread will run when it is resumed
+	inline void setTask(Task *task)
+	{
+		assert(_task == nullptr);
+		_task = task;
+	}
+	
+	//! \brief Retrieves the dependency domain used to calculate the dependencies of the tasks instantiated by this thread
+	DependencyDomain const *getDependencyDomain() const
+	{
+		return &_dependencyDomain;
+	}
+	
+	//! \brief Retrieves the dependency domain used to calculate the dependencies of the tasks instantiated by this thread
+	DependencyDomain *getDependencyDomain()
+	{
+		return &_dependencyDomain;
+	}
+	
 	//! \brief handle a task
 	//! This method is here to cover the case in which a task is run within the execution of another in the same thread
 	inline void handleTask(Task *task)
@@ -59,18 +92,7 @@ public:
 	}
 	
 	//! \brief code that the thread executes
-	void *body();
-	
-	inline int getCpuId()
-	{
-		return _cpu->_systemCPUId;
-	}
-	
-	//! \brief get the hardware place currently assigned
-	inline CPU *getComputePlace()
-	{
-		return _cpu;
-	}
+	virtual void *body();
 	
 	
 	//! \brief turn on the flag to start the shutdown process
@@ -88,7 +110,7 @@ public:
 	//! \brief returns the WorkerThread that runs the call
 	static inline WorkerThread *getCurrentWorkerThread()
 	{
-		return _currentWorkerThread;
+		return static_cast<WorkerThread *> (WorkerThreadBase::getCurrentWorkerThread());
 	}
 	
 };

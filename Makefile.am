@@ -5,6 +5,9 @@ AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/src/instrument/suppo
 SUBDIRS = . tests/directive_based
 
 
+AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
+
+
 MAX_REGION_DIMENSIONS = 8
 MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES = 
@@ -253,10 +256,7 @@ common_sources = \
 	src/executors/threads/CPUManager.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.cpp \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
-	src/executors/threads/EssentialThreadEnvironment.hpp \
 	src/executors/threads/TaskFinalization.hpp \
-	src/executors/threads/Thread.cpp \
-	src/executors/threads/Thread.hpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/ThreadManagerPolicy.cpp \
@@ -264,6 +264,7 @@ common_sources = \
 	src/executors/threads/ThreadManagerPolicyInterface.hpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
+	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/hardware/HardwareInfo.hpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/places/MemoryPlace.hpp \

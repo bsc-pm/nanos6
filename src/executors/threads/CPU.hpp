@@ -6,7 +6,6 @@
 #endif
 
 #include "hardware/places/CPUPlace.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <atomic>
@@ -67,12 +66,6 @@ struct CPU: public CPUPlace {
 	{
 	}
 	
-	inline void bindThread(pid_t tid)
-	{
-		int rc = sched_setaffinity(tid, CPU_ALLOC_SIZE(_systemCPUId+1), &_cpuMask);
-		FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", tid, " to CPU ", _systemCPUId);
-	}
-
 	inline void initializeIfNeeded() 
 	{
 		activation_status_t expectedStatus = uninitialized_status;

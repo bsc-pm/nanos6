@@ -32,36 +32,8 @@ void ThreadManager::initializeThread(CPU *cpu)
 	assert(_shutdownThreads == 0);
 	
 	WorkerThread *thread = new WorkerThread(cpu);
-	thread->_cpuToBeResumedOn = cpu;
-	thread->resume();
+	thread->resume(cpu, true);
 	_totalThreads++;
-}
-
-
-void ThreadManager::threadStartup(WorkerThread *currentThread)
-{
-	assert(currentThread != nullptr);
-	assert(currentThread->_cpu != nullptr);
-	
-	WorkerThread::_currentWorkerThread = currentThread;
-	
-	// Initialize the CPU status if necessary before the thread has a chance to check the shutdown signal
-	CPUActivation::threadInitialization(currentThread);
-	
-	currentThread->setInstrumentationId(Instrument::createdThread());
-	
-	// The thread suspends itself after initialization, since the "activator" is the one will unblock it when needed
-	currentThread->suspend();
-	
-	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
-	assert(currentThread->_cpuToBeResumedOn != nullptr);
-	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
-	
-	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->getInstrumentationId());
-	
-#ifndef NDEBUG
-	currentThread->_cpuToBeResumedOn = nullptr;
-#endif
 }
 
 
@@ -104,16 +76,10 @@ void ThreadManager::shutdown()
 					_mainShutdownControllerThread = idleThread;
 				}
 				
-				// Migrate the thread if necessary
-				idleThread->_cpuToBeResumedOn = cpu;
-				if (idleThread->_cpu != cpu) {
-					cpu->bindThread(idleThread->_tid);
-				}
-				
 				idleThread->signalShutdown();
 				
 				// Resume the thread
-				idleThread->resume();
+				idleThread->resume(cpu, true);
 				
 				// Place them in reverse order so the last one we get afterwards is the main shutdown controller
 				participatingCPUs.push_front(cpu);
@@ -138,9 +104,7 @@ void ThreadManager::shutdown()
 		
 		WorkerThread *shutdownControllerThread = cpu->_shutdownControlerThread;
 		assert(shutdownControllerThread != nullptr);
-		
-		int rc = pthread_join(shutdownControllerThread->_pthread, nullptr);
-		FatalErrorHandler::handle(rc, " during shutdown when joining pthread ", shutdownControllerThread->_pthread);
+		shutdownControllerThread->join();
 	}
 	
 	// Sanity check
@@ -171,18 +135,9 @@ void ThreadManager::threadShutdownSequence(WorkerThread *currentThread)
 				
 				next->signalShutdown();
 				
-				// Migrate the thread if necessary
-				assert(next->_cpuToBeResumedOn == nullptr);
-				next->_cpuToBeResumedOn = cpu;
-				if (next->_cpu != cpu) {
-					cpu->bindThread(next->_tid);
-				}
-				
 				// Resume the thread
-				next->resume();
-				
-				int rc = pthread_join(next->_pthread, nullptr);
-				FatalErrorHandler::handle(rc, " during shutdown when joining pthread ", next->_pthread, " from pthread ", currentThread->_pthread, " in CPU ", cpu->_systemCPUId);
+				next->resume(cpu, true);
+				next->join();
 			} else {
 				// No more idle threads (for the moment)
 				if (!isMainController) {

@@ -18,21 +18,37 @@
 #include <pthread.h>
 #include <cstring>
 
-__thread WorkerThread *WorkerThread::_currentWorkerThread = nullptr;
-
-
-WorkerThread::WorkerThread(CPU *cpu)
-	: _cpu(cpu), _cpuToBeResumedOn(nullptr), _mustShutDown(false)
+void WorkerThread::initialize()
 {
-	start(&cpu->_pthreadAttr);
+	assert(_cpu != nullptr);
+	
+	markAsCurrentWorkerThread();
+	
+	// Initialize the CPU status if necessary before the thread has a chance to check the shutdown signal
+	CPUActivation::threadInitialization(this);
+	
+	setInstrumentationId(Instrument::createdThread());
+	
+	// The thread suspends itself after initialization, since the "activator" is the one will unblock it when needed
+	suspend();
+	
+	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
+	assert(_cpuToBeResumedOn != nullptr);
+	_cpu = _cpuToBeResumedOn;
+	
+	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
+	
+#ifndef NDEBUG
+	_cpuToBeResumedOn = nullptr;
+#endif
+	
+	bind(_cpu);
 }
 
 
 void *WorkerThread::body()
 {
-	ThreadManager::threadStartup(this);
-	
-	_cpu->bindThread(_tid);
+	initialize();
 	
 	while (!_mustShutDown) {
 		CPUActivation::activationCheck(this);
@@ -78,7 +94,7 @@ void *WorkerThread::body()
 				_task = nullptr;
 				
 				ThreadManager::addIdler(this);
-				ThreadManager::switchThreads(this, assignedThread);
+				switchTo(assignedThread);
 			} else {
 				if (_task->isIf0()) {
 					// An if0 task executed outside of the implicit taskwait of its parent (i.e. not inline)
@@ -105,7 +121,7 @@ void *WorkerThread::body()
 			// there is a task to be run and thus the program cannot be performing (a regular) shutdown.
 			if (!_mustShutDown) {
 				ThreadManager::addIdler(this);
-				ThreadManager::switchThreads(this, nullptr);
+				switchTo(nullptr);
 			}
 		}
 	}

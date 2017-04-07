@@ -122,12 +122,12 @@ void nanos_user_unlock(void **handlerPointer)
 			CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
 			if (idleCPU != nullptr) {
 				// Wake up the unblocked task and migrate to an idle CPU
-				ThreadManager::resumeThread(releasedThread, cpu);
-				ThreadManager::migrateThread(currentThread, idleCPU);
+				releasedThread->resume(cpu, false);
+				currentThread->migrate(idleCPU);
 			} else {
 				Scheduler::taskGetsUnblocked(currentTask, cpu);
 				
-				ThreadManager::switchThreads(currentThread, releasedThread);
+				currentThread->switchTo(releasedThread);
 				Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
 			}
 		} else {

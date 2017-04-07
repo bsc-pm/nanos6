@@ -78,14 +78,14 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, bo
 				// guarantee of how long it is going to take to have the task in the queue,
 				// and the thread (pre-)signaled.
 				replacementThread = ThreadManager::getIdleThread(cpu);
-				ThreadManager::switchThreads(currentThread, replacementThread);
+				currentThread->switchTo(replacementThread);
 				
 				// At this point the condition of the taskwait has been fulfilled
 				done = true;
 			}
 		} else {
 			// Either switch to the replacement thread, or just get blocked
-			ThreadManager::switchThreads(currentThread, replacementThread);
+			currentThread->switchTo(replacementThread);
 			
 			// At this point the condition of the taskwait has been fulfilled
 			done = true;
