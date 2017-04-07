@@ -292,6 +292,8 @@ common_sources = \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
+	src/lowlevel/KernelLevelThread.cpp \
+	src/lowlevel/KernelLevelThread.hpp \
 	src/lowlevel/PaddedSpinLock.hpp \
 	src/lowlevel/PaddedTicketSpinLock.hpp \
 	src/lowlevel/RWSpinLock.hpp \
@@ -302,6 +304,7 @@ common_sources = \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/posix/KernelLevelThread.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
