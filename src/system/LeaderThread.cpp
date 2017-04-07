@@ -41,7 +41,6 @@ void LeaderThread::shutdown()
 LeaderThread::LeaderThread()
 	: _mustExit(false)
 {
-	start(nullptr);
 }
 
 
