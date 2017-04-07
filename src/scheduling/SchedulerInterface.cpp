@@ -37,6 +37,5 @@ bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *co
 {
 	// The default implementation should never be called if there is a default implementation of requestPolling
 	// otherwise there should be an implementation of this method that matches requestPolling
-	assert(false);
-	return true;
+	return (pollingSlot->_task.load(std::memory_order_seq_cst) == nullptr);
 }
