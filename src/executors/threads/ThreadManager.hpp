@@ -113,7 +113,10 @@ public:
 	static void initializeThread(CPU *cpu);
 	
 	//! \brief exit the currently running thread and wake up the next one assigned to the same CPU (so that it can do the same)
-	//!
+	//! 
+	//! NOTE: This method does not actually cause the thread to exit. Instead the caller is supposed to return from the body of
+	//! the thread.
+	//! 
 	//! \param[in] currentThread a thread that is currently running and that must exit
 	static void threadShutdownSequence(WorkerThread *currentThread);
 	

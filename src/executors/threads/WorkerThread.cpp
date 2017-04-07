@@ -128,7 +128,6 @@ void *WorkerThread::body()
 	
 	ThreadManager::threadShutdownSequence(this);
 	
-	assert(false);
 	return nullptr;
 }
 

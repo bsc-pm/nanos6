@@ -152,8 +152,7 @@ void ThreadManager::threadShutdownSequence(WorkerThread *currentThread)
 		}
 	}
 	
-	// Exit the current thread
+	// The current thread must exit after this call
 	_shutdownThreads--;
-	currentThread->exit();
 }
 
