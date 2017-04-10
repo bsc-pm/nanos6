@@ -11,6 +11,7 @@ base_tests =
 cpu_management_tests =
 user_mutex_tests =
 linear_region_tests =
+reductions_tests =
 
 
 if HAVE_NANOS6_MERCURIUM
@@ -32,6 +33,17 @@ linear_region_tests += \
 	lr-nonest-upgrades.debug.test lr-nonest-upgrades.test \
 	lr-early-release.debug.test lr-early-release.test  \
 	lr-er-and-weak.debug.test lr-er-and-weak.test
+
+reductions_tests += \
+	red-nonest.debug.test red-nonest.test \
+	red-nest.debug.test red-nest.test \
+	red-nest-taskwait.debug.test red-nest-taskwait.test \
+	red-combine-finish-access.debug.test red-combine-finish-access.test \
+	red-combine-new-access.debug.test red-combine-new-access.test \
+	red-combine-taskwait.debug.test red-combine-taskwait.test \
+	red-combine-taskwait-mark.debug.test red-combine-taskwait-mark.test \
+	red-nqueens.debug.test red-nqueens.test \
+	red-stress.debug.test red-stress.test
 endif
 
 
@@ -52,6 +64,11 @@ endif
 if HAVE_LINEAR_REGION_SUPPORT
 check_PROGRAMS += $(linear_region_tests)
 TESTS += $(linear_region_tests)
+endif
+
+if HAVE_REDUCTIONS_SUPPORT
+check_PROGRAMS += $(reductions_tests)
+TESTS += $(reductions_tests)
 endif
 
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
@@ -155,6 +172,87 @@ lr_er_and_weak_test_SOURCES = linear-regions/lr-er-and-weak.cpp
 lr_er_and_weak_test_CPPFLAGS = -DNDEBUG
 lr_er_and_weak_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 lr_er_and_weak_test_LDFLAGS = $(test_common_ldflags)
+
+red_nonest_debug_test_SOURCES = reductions/red-nonest.cpp
+red_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_nonest_test_SOURCES = reductions/red-nonest.cpp
+red_nonest_test_CPPFLAGS = -DNDEBUG
+red_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_nonest_test_LDFLAGS = $(test_common_ldflags)
+
+red_nest_debug_test_SOURCES = reductions/red-nest.cpp
+red_nest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_nest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_nest_test_SOURCES = reductions/red-nest.cpp
+red_nest_test_CPPFLAGS = -DNDEBUG
+red_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_nest_test_LDFLAGS = $(test_common_ldflags)
+
+red_nest_taskwait_debug_test_SOURCES = reductions/red-nest-taskwait.cpp
+red_nest_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_nest_taskwait_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_nest_taskwait_test_SOURCES = reductions/red-nest-taskwait.cpp
+red_nest_taskwait_test_CPPFLAGS = -DNDEBUG
+red_nest_taskwait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_nest_taskwait_test_LDFLAGS = $(test_common_ldflags)
+
+red_combine_finish_access_debug_test_SOURCES = reductions/red-combine-finish-access.cpp
+red_combine_finish_access_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_combine_finish_access_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_combine_finish_access_test_SOURCES = reductions/red-combine-finish-access.cpp
+red_combine_finish_access_test_CPPFLAGS = -DNDEBUG
+red_combine_finish_access_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_combine_finish_access_test_LDFLAGS = $(test_common_ldflags)
+
+red_combine_new_access_debug_test_SOURCES = reductions/red-combine-new-access.cpp
+red_combine_new_access_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_combine_new_access_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_combine_new_access_test_SOURCES = reductions/red-combine-new-access.cpp
+red_combine_new_access_test_CPPFLAGS = -DNDEBUG
+red_combine_new_access_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_combine_new_access_test_LDFLAGS = $(test_common_ldflags)
+
+red_combine_taskwait_debug_test_SOURCES = reductions/red-combine-taskwait.cpp
+red_combine_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_combine_taskwait_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_combine_taskwait_test_SOURCES = reductions/red-combine-taskwait.cpp
+red_combine_taskwait_test_CPPFLAGS = -DNDEBUG
+red_combine_taskwait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_combine_taskwait_test_LDFLAGS = $(test_common_ldflags)
+
+red_combine_taskwait_mark_debug_test_SOURCES = reductions/red-combine-taskwait-mark.cpp
+red_combine_taskwait_mark_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_combine_taskwait_mark_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_combine_taskwait_mark_test_SOURCES = reductions/red-combine-taskwait-mark.cpp
+red_combine_taskwait_mark_test_CPPFLAGS = -DNDEBUG
+red_combine_taskwait_mark_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_combine_taskwait_mark_test_LDFLAGS = $(test_common_ldflags)
+
+red_nqueens_debug_test_SOURCES = reductions/red-nqueens.cpp
+red_nqueens_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_nqueens_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_nqueens_test_SOURCES = reductions/red-nqueens.cpp
+red_nqueens_test_CPPFLAGS = -DNDEBUG
+red_nqueens_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_nqueens_test_LDFLAGS = $(test_common_ldflags)
+
+red_stress_debug_test_SOURCES = reductions/red-stress.cpp
+red_stress_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_stress_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_stress_test_SOURCES = reductions/red-stress.cpp
+red_stress_test_CPPFLAGS = -DNDEBUG
+red_stress_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_stress_test_LDFLAGS = $(test_common_ldflags)
 
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' NANOS6_LIBRARY_PATH='$(top_builddir)/.libs' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
