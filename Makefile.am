@@ -433,6 +433,8 @@ endif
 if LINEAR_REGION_ALTERNATIVE_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-alternative
 common_sources += $(linear_regions_alternative_dependency_sources)
+multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent reduction
 endif
 
 nodist_common_sources += \
