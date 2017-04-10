@@ -6,7 +6,7 @@ SUBDIRS = . tests/directive_based
 
 
 MAX_REGION_DIMENSIONS = 8
-MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative
+MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative reduction
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES = 
 
 nanos6includedir = $(includedir)/nanos6
@@ -22,6 +22,7 @@ nanos6include_HEADERS = \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/polling.h \
+	api/nanos6/reductions.h \
 	api/nanos6/task-info-registration.h \
 	api/nanos6/task-instantiation.h \
 	api/nanos6/taskwait.h \
@@ -86,6 +87,7 @@ symbol_resolution += \
 	loader/symbol-resolver/dependencies.c \
 	loader/symbol-resolver/final.c \
 	loader/symbol-resolver/polling.c \
+	loader/symbol-resolver/reductions.c \
 	loader/symbol-resolver/task-info-registration.c \
 	loader/symbol-resolver/task-instantiation.c \
 	loader/symbol-resolver/taskwait.c \
@@ -107,6 +109,7 @@ symbol_resolution += \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/final.c \
 	loader/indirect-symbols/polling.c \
+	loader/indirect-symbols/reductions.c \
 	loader/indirect-symbols/task-info-registration.c \
 	loader/indirect-symbols/task-instantiation.c \
 	loader/indirect-symbols/taskwait.c \
@@ -321,6 +324,7 @@ common_sources = \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
+	src/system/ompss/Reductions.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.cpp \
@@ -429,6 +433,8 @@ endif
 if LINEAR_REGION_ALTERNATIVE_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-alternative
 common_sources += $(linear_regions_alternative_dependency_sources)
+multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent reduction
 endif
 
 nodist_common_sources += \

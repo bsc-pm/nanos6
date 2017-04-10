@@ -40,10 +40,35 @@ private:
 	}
 	
 	
+	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRange range, int reductionOperation)
+	{
+		DataAccess *dataAccess = createAccess(originator, accessType, weak, range);
+		dataAccess->_reductionInfo = reductionOperation;
+		
+		return dataAccess;
+	}
+	
+	
 	static inline void upgradeAccess(DataAccess *dataAccess, DataAccessType accessType, bool weak)
 	{
 		assert(dataAccess != nullptr);
 		assert(!dataAccess->hasBeenDiscounted());
+		
+		FatalErrorHandler::failIf(
+				(dataAccess->_type == CONCURRENT_ACCESS_TYPE) || (accessType == CONCURRENT_ACCESS_TYPE),
+				"when registering accesses for task ",
+				(dataAccess->_originator->getTaskInfo()->task_label != nullptr ?
+					dataAccess->_originator->getTaskInfo()->task_label :
+					dataAccess->_originator->getTaskInfo()->declaration_source),
+				": Combining accesses of type concurrent with other accesses over the same data is not permitted");
+		
+		FatalErrorHandler::failIf(
+				(dataAccess->_type == REDUCTION_ACCESS_TYPE) || (accessType == REDUCTION_ACCESS_TYPE),
+				"when registering accesses for task ",
+				(dataAccess->_originator->getTaskInfo()->task_label != nullptr ?
+					dataAccess->_originator->getTaskInfo()->task_label :
+					dataAccess->_originator->getTaskInfo()->declaration_source),
+				": Combining reduction accesses with other accesses over the same data is not permitted");
 		
 		bool newWeak = dataAccess->_weak && weak;
 		
@@ -81,7 +106,8 @@ private:
 			toBeDuplicated._originator,
 			toBeDuplicated._type,
 			toBeDuplicated._weak,
-			toBeDuplicated._range
+			toBeDuplicated._range,
+			toBeDuplicated._reductionInfo
 		);
 		
 		newFragment->_status = toBeDuplicated._status;
@@ -480,12 +506,40 @@ private:
 		assert(nextAccess != nullptr);
 		
 		readSatisfiability =
-			previousAccess->readSatisfied()
-			&& (previousAccess->complete() || previousAccess->_type == READ_ACCESS_TYPE || parentalRelation);
+			previousAccess->readSatisfied() && (
+					// Previous is a complete, non-(concurrent/reduction) access or concurrent topmost access
+					(previousAccess->complete() &&
+						((previousAccess->_type != CONCURRENT_ACCESS_TYPE &&
+							previousAccess->_type != REDUCTION_ACCESS_TYPE) ||
+						previousAccess->topmostSatisfied())) ||
+					// There is a paternal relation between accesses
+					parentalRelation ||
+					// Previous is a read access
+					previousAccess->_type == READ_ACCESS_TYPE ||
+					// Both are concurrent accesses
+					(previousAccess->_type == CONCURRENT_ACCESS_TYPE &&
+						nextAccess->_type == CONCURRENT_ACCESS_TYPE) ||
+					// Both are same-type reduction accesses
+					(previousAccess->_type == REDUCTION_ACCESS_TYPE &&
+						nextAccess->_type == REDUCTION_ACCESS_TYPE &&
+						previousAccess->_reductionInfo == nextAccess->_reductionInfo));
 		
 		writeSatisfiability =
-			previousAccess->writeSatisfied()
-			&& (previousAccess->complete() || parentalRelation);
+			previousAccess->writeSatisfied() && (
+					// Previous is a complete, non-(concurrent/reduction) access or concurrent topmost access
+					(previousAccess->complete() &&
+						((previousAccess->_type != CONCURRENT_ACCESS_TYPE &&
+							previousAccess->_type != REDUCTION_ACCESS_TYPE) ||
+						previousAccess->topmostSatisfied())) ||
+					// There is a paternal relation between accesses
+					parentalRelation ||
+					// Both are concurrent accesses
+					(previousAccess->_type == CONCURRENT_ACCESS_TYPE &&
+						nextAccess->_type == CONCURRENT_ACCESS_TYPE) ||
+					// Both are same-type reduction accesses
+					(previousAccess->_type == REDUCTION_ACCESS_TYPE &&
+						nextAccess->_type == REDUCTION_ACCESS_TYPE &&
+						previousAccess->_reductionInfo == nextAccess->_reductionInfo));
 		
 		topmostSatisfiability =
 			previousAccess->topmostSatisfied()
@@ -1089,8 +1143,9 @@ public:
 	//! \param[in] accessType the type of access
 	//! \param[in] weak true iff the access is weak
 	//! \param[in] range the range of data covered by the access
+	template<typename... ReductionInfo>
 	static inline void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRange range
+		Task *task, DataAccessType accessType, bool weak, DataAccessRange range, ReductionInfo... reductionInfo
 	) {
 		assert(task != nullptr);
 		
@@ -1115,7 +1170,7 @@ public:
 				return true;
 			},
 			[&](DataAccessRange missingRange) -> bool {
-				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange);
+				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange, reductionInfo...);
 				
 				accessStructures.increaseRemovalCount(missingRange.getSize());
 				accessStructures._accesses.insert(*newAccess);

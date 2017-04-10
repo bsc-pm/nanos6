@@ -206,7 +206,8 @@ public:
 	//! 
 	//! If the task has already a previous access, it may be upgraded if necessary, and dataAccess is set to null. The return
 	//! value indicates if the new access produces an additional dependency (only possible if the previous one did not).
-	static inline bool registerTaskDataAccess(Task *task, DataAccessType accessType, bool weak, DataAccessSequence *accessSequence, DataAccess *&dataAccess)
+	template <typename... ReductionInfo>
+	static inline bool registerTaskDataAccess(Task *task, DataAccessType accessType, bool weak, DataAccessSequence *accessSequence, DataAccess *&dataAccess, ReductionInfo... reductionInfo)
 	{
 		assert(task != 0);
 		assert(accessSequence != nullptr);
@@ -232,7 +233,7 @@ public:
 		
 		bool satisfied;
 		if (effectivePrevious != nullptr) {
-			satisfied = DataAccess::evaluateSatisfiability(effectivePrevious, accessType);
+			satisfied = DataAccess::evaluateSatisfiability(effectivePrevious, accessType, reductionInfo...);
 		} else {
 			// We no longer have (or never had) information about any previous access to this storage
 			satisfied = true;
@@ -258,7 +259,7 @@ public:
 		}
 		Instrument::addTaskToAccessGroup(accessSequence, task->getInstrumentationTaskId());
 		
-		dataAccess = new DataAccess(accessSequence, accessType, weak, satisfied, task, accessSequence->_accessRange, dataAccessInstrumentationId);
+		dataAccess = new DataAccess(accessSequence, accessType, weak, satisfied, task, accessSequence->_accessRange, dataAccessInstrumentationId, reductionInfo...);
 		accessSequence->_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer
 		
 		return satisfied || weak;

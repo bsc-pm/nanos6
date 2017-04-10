@@ -20,6 +20,10 @@ echo '#include "api/nanos6.h"'
 echo
 echo
 for type in $* ; do
+	if [ "${type}" = "reduction" ] ; then
+		continue
+	fi
+	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		name=nanos_release_${type}_${dimensions}
 		

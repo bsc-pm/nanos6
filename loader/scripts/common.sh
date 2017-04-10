@@ -6,6 +6,11 @@ generate_regions_full_prototype() {
 	
 	/bin/echo '/** \brief Register a task '${type}' access on a '${dimensions}'-dimensional range of addresses */'
 	/bin/echo 'void nanos_register_region_'${type}'_depinfo'${dimensions}'('
+	
+	if [ "${type}" = "reduction" ] ; then
+		/bin/echo "${indentation}	int reduction_operation, int reduction_index,"
+	fi
+	
 	/bin/echo '	void *handler /** Task handler */,'
 	/bin/echo '	int symbol_index /** Argument identifier */,'
 	/bin/echo '	char const *region_text /** Stringified contents of the dependency clause */,'
@@ -36,6 +41,11 @@ generate_regions_named_prototype() {
 	fi
 	
 	/bin/echo "void ${name}("
+	
+	if [ ${name/reduction/} != ${name} ] ; then
+		/bin/echo "${indentation}	int reduction_operation, int reduction_index,"
+	fi
+	
 	/bin/echo "${indentation}	void *handler /** Task handler */,"
 	/bin/echo "${indentation}	int symbol_index /** Argument identifier */,"
 	/bin/echo "${indentation}	char const *region_text /** Stringified contents of the dependency clause */,"

@@ -229,6 +229,14 @@ namespace Instrument {
 					color1 = "#00FF00";
 					color2 = "#FF0000";
 					break;
+				case CONCURRENT:
+					text << "C";
+					color1 = "#FFFF00";
+					break;
+				case REDUCTION:
+					text << "RED";
+					color1 = "#00AFFF";
+					break;
 			}
 		}
 		

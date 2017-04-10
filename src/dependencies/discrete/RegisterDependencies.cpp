@@ -10,8 +10,8 @@
 #include "DataAccessRegistration.hpp"
 
 
-template <DataAccessType ACCESS_TYPE, bool WEAK>
-void register_access(void *handler, void *start, size_t length)
+template <DataAccessType ACCESS_TYPE, bool WEAK, typename... ReductionInfo>
+void register_access(void *handler, void *start, size_t length, ReductionInfo... reductionInfo)
 {
 	assert(handler != 0);
 	Task *task = (Task *) handler;
@@ -46,7 +46,7 @@ void register_access(void *handler, void *start, size_t length)
 	}
 	
 	DataAccess *dataAccess;
-	bool canStart = DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal(), accessSequence, /* OUT */ dataAccess);
+	bool canStart = DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal(), accessSequence, /* OUT */ dataAccess, reductionInfo...);
 	if (dataAccess != 0) {
 		// A new data access, as opposed to a repeated or upgraded one
 		task->getDataAccesses().push_back(*dataAccess);
@@ -94,3 +94,20 @@ void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t le
 }
 
 
+void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length)
+{
+	register_access<CONCURRENT_ACCESS_TYPE, false>(handler, start, length);
+}
+
+void nanos_register_region_reduction1(
+		int type_op, int id,
+		void *handler,
+		int symbol_index,
+		char const *region_text,
+		void *base_address,
+		long dim1size, long dim1start, long dim1end)
+{
+	FatalErrorHandler::failIf(dim1size > sizeof(long long), "Array reductions not supported");
+
+	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, reduction_operation);
+}

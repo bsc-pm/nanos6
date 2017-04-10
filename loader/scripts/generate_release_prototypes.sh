@@ -31,6 +31,10 @@ echo
 echo
 
 for type in $* ; do
+	if [ "${type}" = "reduction" ] ; then
+		continue
+	fi
+	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		generate_release_full_prototype ${dimensions} ${type}
 		echo ";"

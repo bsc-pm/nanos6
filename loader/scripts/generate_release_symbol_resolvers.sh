@@ -20,6 +20,10 @@ echo '#include "multidim-release-fallbacks.h"'
 echo
 echo
 for type in $* ; do
+	if [ "${type}" = "reduction" ] ; then
+		continue
+	fi
+	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_release_${type}_${dimensions}, \"multidimensional release\", nanos_release_${type}_${dimensions}_fallback);"
 	done
