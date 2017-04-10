@@ -67,7 +67,7 @@ if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
 fi
 
 # Checks for library functions.
-AC_CHECK_LIB([dl], [dlopen])
+AC_CHECK_DLOPEN
 AC_CHECK_BACKTRACE
 AC_CHECK_PAPI
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])

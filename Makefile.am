@@ -130,7 +130,7 @@ libnanos6_la_SOURCES = \
 	loader/loader.c \
 	loader/loader.h
 
-libnanos6_la_LDFLAGS = $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED)
+libnanos6_la_LDFLAGS = $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
 nanos6_generated_headers = \
@@ -648,7 +648,7 @@ EXTRA_DIST += \
 	tests/tap-driver.sh
 
 common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS)
-common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) -ldl $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) -lnuma
+common_libnanos6_ldflags = $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) -lnuma
 
 libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
