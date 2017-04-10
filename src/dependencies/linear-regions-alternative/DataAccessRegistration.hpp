@@ -156,6 +156,14 @@ private:
 			}
 		}
 		
+		if (dataAccess->_next != nullptr) {
+			Instrument::unlinkedDataAccesses(
+				dataAccess->_instrumentationId,
+				dataAccess->_next->getInstrumentationTaskId(),
+				/* direct */ true
+			);
+		}
+		
 		Instrument::removedDataAccess(
 			dataAccess->_instrumentationId
 		);
@@ -464,6 +472,8 @@ private:
 		}
 		
 		if (topmostSatisfiability) {
+			Instrument::dataAccessBecomesRemovable(nextAccess->_instrumentationId);
+			
 			TaskDataAccesses &nextAccessStructures = next->getDataAccesses();
 			nextAccessStructures.decreaseRemovalCount(
 				nextAccess->_range.getSize()
@@ -643,6 +653,8 @@ private:
 				}
 				
 				if (topmostSatisfiability) {
+					Instrument::dataAccessBecomesRemovable(nextAccess->_instrumentationId);
+					
 					size_t bytes = nextAccess->_range.getSize();
 					if (nextAccessStructures.decreaseRemovalCount(bytes)) {
 						if (nextTask->decreaseRemovalBlockingCount()) {
@@ -799,6 +811,12 @@ private:
 							
 							// Assign the next task
 							subaccess->_next = next;
+							
+							Instrument::linkedDataAccesses(
+								subaccess->_instrumentationId,
+								next->getInstrumentationTaskId(),
+								rangeToBeProcessed, true, false
+							);
 							
 							// Propagate the satisfiability to the recently linked access
 							propagateSatisfiabilityAfterLinkingBottomMapAccessesToNext(
@@ -982,6 +1000,10 @@ private:
 					task->decreasePredecessors();
 				}
 				
+				Instrument::dataAccessBecomesRemovable(
+					partialDataAccess->_instrumentationId
+				);
+				
 				accessStructures.decreaseRemovalCount(
 					partialDataAccess->_range.getSize()
 				);
@@ -1113,6 +1135,12 @@ private:
 				dataAccess->_originator, accessStructures, range,
 				dataAccess->_next,
 				cpuDependencyData
+			);
+			
+			Instrument::unlinkedDataAccesses(
+				dataAccess->_instrumentationId,
+				dataAccess->_next->getInstrumentationTaskId(),
+				/* direct */ true
 			);
 			
 			dataAccess->_next = nullptr;
