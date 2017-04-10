@@ -130,6 +130,9 @@ libnanos6_la_SOURCES = \
 	loader/loader.c \
 	loader/loader.h
 
+libnanos6_la_LDFLAGS = $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED)
+
+
 nanos6_generated_headers = \
 	nanos6/multidimensional-dependencies.h \
 	nanos6/multidimensional-release.h
