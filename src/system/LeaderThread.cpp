@@ -30,7 +30,6 @@ void LeaderThread::shutdown()
 	_singleton->_mustExit.compare_exchange_strong(expected, true);
 	assert(!expected);
 	
-	void *dummy;
 	_singleton->join();
 	
 	delete _singleton;
