@@ -26,25 +26,10 @@ class ThreadManagerDebuggingInterface;
 
 
 class ThreadManager {
-public:
-	typedef std::vector<std::atomic<CPU *>> cpu_list_t;
-	
 private:
 	//! \brief indicates if the runtime is shutting down
 	static std::atomic<bool> _mustExit;
 	
-	//! \brief CPU mask of the process
-	static cpu_set_t _processCPUMask;
-	
-	//! \brief per-CPU data indexed by system CPU identifier
-	static cpu_list_t _cpus;
-	
-	//! \brief numer of initialized CPUs
-	static std::atomic<long> _totalCPUs;
-	
-	//! \brief indicates if the thread manager has finished initializing the CPUs
-	static std::atomic<bool> _finishedCPUInitialization;
-
 	static SpinLock _idleThreadsLock;
 	
 	//! \brief threads blocked due to idleness
@@ -61,27 +46,8 @@ private:
 	
 	
 public:
-	static void preinitialize();
-	
-	static void initialize();
-	
 	static void shutdown();
 	
-	
-	//! \brief get or create the CPU object assigned to a given numerical system CPU identifier
-	static inline CPU *getCPU(size_t systemCPUId);
-	
-	//! \brief get the maximum number of CPUs that will be used
-	static inline long getTotalCPUs();
-	
-	//! \brief check if initialization has finished
-	static inline bool hasFinishedInitialization();
-	
-	//! \brief get a reference to the CPU mask of the process
-	static inline cpu_set_t const &getProcessCPUMaskReference();
-	
-	//! \brief get a reference to the list of CPUs
-	static inline cpu_list_t const &getCPUListReference();
 	
 	//! \brief create or recycle a WorkerThread
 	//! The thread is returned in a blocked (or about to block) status
@@ -122,38 +88,6 @@ public:
 	
 	friend class ThreadManagerDebuggingInterface;
 };
-
-inline CPU *ThreadManager::getCPU(size_t systemCPUId)
-{
-	assert(systemCPUId < _cpus.size());
-	
-	CPU *cpu = _cpus[systemCPUId];
-	assert(cpu != nullptr);
-	
-	return cpu;
-}
-
-
-inline long ThreadManager::getTotalCPUs()
-{
-	return _totalCPUs;
-}
-
-inline bool ThreadManager::hasFinishedInitialization()
-{
-	return _finishedCPUInitialization;
-}
-
-
-inline cpu_set_t const &ThreadManager::getProcessCPUMaskReference()
-{
-	return _processCPUMask;
-}
-
-inline ThreadManager::cpu_list_t const &ThreadManager::getCPUListReference()
-{
-	return _cpus;
-}
 
 inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 {
