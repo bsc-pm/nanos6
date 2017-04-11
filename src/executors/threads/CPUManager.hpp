@@ -16,13 +16,10 @@
 
 class CPUManager {
 private:
-	//! \brief CPU mask of the process
-	static cpu_set_t _processCPUMask;
-	
 	//! \brief per-CPU data indexed by system CPU identifier
 	static std::vector<CPU *> _cpus;
-	
-	//! \brief numer of initialized CPUs
+
+	//! \brief number of available CPUs
 	static size_t _totalCPUs;
 	
 	//! \brief indicates if the thread manager has finished initializing the CPUs
@@ -30,9 +27,8 @@ private:
 	
 	//! \brief threads blocked due to idleness
 	static boost::dynamic_bitset<> _idleCPUs;
-	
+
 	static SpinLock _idleCPUsLock;
-	
 	
 public:
 	static void preinitialize();
@@ -48,9 +44,6 @@ public:
 	//! \brief check if initialization has finished
 	static inline bool hasFinishedInitialization();
 	
-	//! \brief get a reference to the CPU mask of the process
-	static inline cpu_set_t const &getProcessCPUMaskReference();
-	
 	//! \brief get a reference to the list of CPUs
 	static inline std::vector<CPU *> const &getCPUListReference();
 
@@ -64,9 +57,9 @@ public:
 
 inline CPU *CPUManager::getCPU(size_t systemCPUId)
 {
-	// TODO: make it simpler
+	// _cpus is sorted by virtual ID. This search should be changed in the future
 	for (size_t i = 0; i < _cpus.size(); ++i) {
-		if (_cpus[i]->_systemCPUId == systemCPUId) {
+		if (_cpus[i] != nullptr && _cpus[i]->_systemCPUId == systemCPUId) {
 			return _cpus[i];
 		}
 	}
@@ -85,11 +78,6 @@ inline bool CPUManager::hasFinishedInitialization()
 	return _finishedCPUInitialization;
 }
 
-
-inline cpu_set_t const &CPUManager::getProcessCPUMaskReference()
-{
-	return _processCPUMask;
-}
 
 inline std::vector<CPU *> const &CPUManager::getCPUListReference()
 {
