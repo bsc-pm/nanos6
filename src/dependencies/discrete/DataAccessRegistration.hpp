@@ -261,10 +261,10 @@ public:
 	//! \param[in] task the Task whose dependencies need to be calculated
 	//! 
 	//! \returns true if the task is already ready
-	static inline bool registerTaskDataAccesses(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+	static inline bool registerTaskDataAccesses(Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 		assert(task != 0);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		// We increase the number of predecessors to avoid having the task become ready while we are adding its dependencies.
 		// We do it by 2 because we add the data access and unlock access to it before increasing the number of predecessors.
@@ -278,7 +278,7 @@ public:
 	}
 	
 	
-	static inline void unregisterTaskDataAccesses(Task *task, HardwarePlace *hardwarePlace)
+	static inline void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != 0);
 		
@@ -290,7 +290,7 @@ public:
 		TaskDataAccesses &taskDataAccesses = task->getDataAccesses();
 		
 		// A temporary list of tasks to minimize the time spent with the mutex held.
-		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators = hardwarePlace->getDependencyData()._satisfiedAccessOriginators;
+		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators = computePlace->getDependencyData()._satisfiedAccessOriginators;
 		for (auto it = taskDataAccesses.begin(); it != taskDataAccesses.end(); it = taskDataAccesses.erase(it)) {
 			DataAccess *dataAccess = &(*it);
 			
@@ -312,10 +312,10 @@ public:
 	{
 	}
 	
-	static inline void handleEnterTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+	static inline void handleEnterTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 	}
-	static inline void handleExitTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+	static inline void handleExitTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 	}
 	
