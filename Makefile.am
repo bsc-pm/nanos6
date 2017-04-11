@@ -438,7 +438,7 @@ if DISCRETE_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
 common_sources += $(discrete_dependency_sources)
 multidimensional_adaptor_sources += MultidimensionalAPIToDiscrete.cpp
-SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent
 endif
 
 if LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES
