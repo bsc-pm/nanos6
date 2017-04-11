@@ -109,6 +109,26 @@ static _AI_ void register_data_access(
 }
 
 
+// The following is only for reductions
+
+template <typename... TS>
+static _AI_ void register_reduction_access(
+	int reduction_operation, int reduction_index,
+	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
+	TS... dimensions
+) {
+	size_t startOffset = getStartOffset<>(dimensions...);
+	char *currentBaseAddress = (char *) baseAddress;
+	currentBaseAddress += startOffset;
+	
+	size_t size = getDiscreteSize(dimensions...);
+	nanos_register_region_reduction_depinfo1(
+		reduction_operation, reduction_index,
+		handler, symbolIndex, regionText, currentBaseAddress,
+		size, 0, size
+	);
+}
+
 #undef _AI_
 #undef _UU_
 

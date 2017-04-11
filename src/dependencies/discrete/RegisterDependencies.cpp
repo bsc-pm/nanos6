@@ -99,8 +99,8 @@ void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length
 	register_access<CONCURRENT_ACCESS_TYPE, false>(handler, start, length);
 }
 
-void nanos_register_region_reduction1(
-		int type_op, int id,
+void nanos_register_region_reduction_depinfo1(
+		int reduction_operation, int reduction_index,
 		void *handler,
 		int symbol_index,
 		char const *region_text,
