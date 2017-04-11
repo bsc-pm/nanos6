@@ -5,7 +5,7 @@
 #include "TaskFinalization.hpp"
 
 
-void TaskFinalization::disposeOrUnblockTask(Task *task, HardwarePlace *hardwarePlace)
+void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace)
 {
 	bool readyOrDisposable = true;
 	
@@ -15,7 +15,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, HardwarePlace *hardwareP
 		
 		if (task->hasFinished()) {
 			// NOTE: Handle task removal before unlinking from parent
-			DataAccessRegistration::handleTaskRemoval(task, hardwarePlace);
+			DataAccessRegistration::handleTaskRemoval(task, computePlace);
 			
 			readyOrDisposable = task->unlinkFromParent();
 			Instrument::destroyTask(task->getInstrumentationTaskId());
@@ -30,7 +30,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, HardwarePlace *hardwareP
 			}
 		} else {
 			// An ancestor in a taskwait that finishes at this point
-			Scheduler::taskGetsUnblocked(task, hardwarePlace);
+			Scheduler::taskGetsUnblocked(task, computePlace);
 			readyOrDisposable = false;
 		}
 	}

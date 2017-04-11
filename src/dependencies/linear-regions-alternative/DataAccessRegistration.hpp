@@ -263,16 +263,16 @@ private:
 	//! Process all the originators that have become ready
 	static inline void processSatisfiedOriginators(
 		/* INOUT */ CPUDependencyData &cpuDependencyData,
-		HardwarePlace *hardwarePlace
+		ComputePlace *computePlace
 	) {
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : cpuDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 			
-			HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
+			ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, computePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 			
-			if (idleHardwarePlace != nullptr) {
-				ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+			if (idleComputePlace != nullptr) {
+				ThreadManager::resumeIdle((CPU *) idleComputePlace);
 			}
 		}
 		
@@ -282,14 +282,14 @@ private:
 	
 	static void processRemovableTasks(
 		/* inout */ CPUDependencyData &cpuDependencyData,
-		HardwarePlace *hardwarePlace
+		ComputePlace *computePlace
 	) {
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		for (Task *removableTask : cpuDependencyData._removableTasks) {
 			assert(removableTask != nullptr);
 			
-			TaskFinalization::disposeOrUnblockTask(removableTask, hardwarePlace);
+			TaskFinalization::disposeOrUnblockTask(removableTask, computePlace);
 		}
 		cpuDependencyData._removableTasks.clear();
 	}
@@ -1214,11 +1214,11 @@ public:
 	//! \param[in] task the Task whose dependencies need to be calculated
 	//! 
 	//! \returns true if the task is already ready
-	static inline bool registerTaskDataAccesses(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+	static inline bool registerTaskDataAccesses(Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 		assert(task != 0);
 		assert(task != nullptr);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		nanos_task_info *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
@@ -1242,7 +1242,7 @@ public:
 	}
 	
 	
-	static inline void unregisterTaskDataAccesses(Task *task, HardwarePlace *hardwarePlace)
+	static inline void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != 0);
 		
@@ -1254,7 +1254,7 @@ public:
 			return;
 		}
 		
-		CPUDependencyData &cpuDependencyData = hardwarePlace->getDependencyData();
+		CPUDependencyData &cpuDependencyData = computePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		{
@@ -1290,10 +1290,10 @@ public:
 		}
 		
 		// Schedule satisfied tasks
-		processSatisfiedOriginators(cpuDependencyData, hardwarePlace);
+		processSatisfiedOriginators(cpuDependencyData, computePlace);
 		
 		// Recycle removable tasks
-		processRemovableTasks(cpuDependencyData, hardwarePlace);
+		processRemovableTasks(cpuDependencyData, computePlace);
 		
 #ifndef NDEBUG
 		{
@@ -1330,7 +1330,7 @@ public:
 	}
 	
 	
-	static void handleEnterTaskwait(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+	static void handleEnterTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
 		
@@ -1343,7 +1343,7 @@ public:
 	}
 	
 	
-	static void handleExitTaskwait(Task *task, __attribute__((unused)) HardwarePlace *hardwarePlace)
+	static void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
 		
@@ -1360,11 +1360,11 @@ public:
 	}
 	
 	
-	static void handleTaskRemoval(Task *task, HardwarePlace *hardwarePlace)
+	static void handleTaskRemoval(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != 0);
 		assert(task != nullptr);
-		assert(hardwarePlace != nullptr);
+		assert(computePlace != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
@@ -1383,7 +1383,7 @@ public:
 		TaskDataAccesses &parentAccessStructures = parent->getDataAccesses();
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
-		CPUDependencyData &cpuDependencyData = hardwarePlace->getDependencyData();
+		CPUDependencyData &cpuDependencyData = computePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		bool alreadyTaken = false;

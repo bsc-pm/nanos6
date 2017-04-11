@@ -2092,7 +2092,7 @@ public:
 	
 	static void handleTaskRemoval(
 		__attribute__((unused)) Task *task,
-		__attribute__((unused)) HardwarePlace *hardwarePlace
+		__attribute__((unused)) ComputePlace *computePlace
 	) {
 	}
 	
