@@ -10,7 +10,6 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "hardware/HardwareInfo.hpp"
 
 #include "CPU.hpp"
 
@@ -65,8 +64,15 @@ public:
 
 inline CPU *CPUManager::getCPU(size_t systemCPUId)
 {
-	assert(systemCPUId < _cpus.size());
-	return _cpus[systemCPUId];
+	// TODO: make it simpler
+	for (size_t i = 0; i < _cpus.size(); ++i) {
+		if (_cpus[i]->_systemCPUId == systemCPUId) {
+			return _cpus[i];
+		}
+	}
+
+	assert(false);
+	return nullptr;
 }
 
 inline long CPUManager::getTotalCPUs()
@@ -94,7 +100,7 @@ inline std::vector<CPU *> const &CPUManager::getCPUListReference()
 inline void CPUManager::cpuBecomesIdle(CPU *cpu)
 {
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	_idleCPUs[cpu->_systemCPUId] = true;
+	_idleCPUs[cpu->_virtualCPUId] = true;
 }
 
 

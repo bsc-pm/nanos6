@@ -1,5 +1,7 @@
 #include <boost/dynamic_bitset.hpp>
 
+#include "hardware/HardwareInfo.hpp"
+
 #include "CPU.hpp"
 #include "CPUManager.hpp"
 #include "ThreadManager.hpp"
@@ -32,13 +34,12 @@ void CPUManager::preinitialize()
 
 void CPUManager::initialize()
 {
-	// Start a thread in each CPU enabled
-	for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
-		if (CPU_ISSET(systemCPUId, &_processCPUMask)) {
-			assert(_cpus[systemCPUId] != nullptr);
-			
-			_cpus[systemCPUId]->initializeIfNeeded();
-			ThreadManager::initializeThread(_cpus[systemCPUId]);
+	assert(CPU_COUNT(&_processCPUMask) <= (int)_cpus.size());
+
+	for (size_t i = 0; i < _cpus.size(); ++i) {
+		if (CPU_ISSET(_cpus[i]->_systemCPUId, &_processCPUMask)) {
+			_cpus[i]->initializeIfNeeded();
+			ThreadManager::initializeThread(_cpus[i]);
 			_totalCPUs++;
 		}
 	}
