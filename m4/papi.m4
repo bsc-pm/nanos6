@@ -1,7 +1,8 @@
 AC_DEFUN([AC_CHECK_PAPI],
 	[
-		AC_ARG_WITH([papi],
-			[  --with-papi=[prefix]   set the PAPI installation to be used],
+		AC_ARG_WITH(
+			[papi],
+			[AS_HELP_STRING([--with-papi=prefix], [specify the installation prefix of PAPI])],
 			[ ac_cv_use_papi_prefix=$withval ],
 			[ ac_cv_use_papi_prefix="" ]
 		)
@@ -11,6 +12,7 @@ AC_DEFUN([AC_CHECK_PAPI],
 			AC_MSG_RESULT([${ac_cv_use_papi_prefix}])
 			papi_LIBS="-L${ac_cv_use_papi_prefix}/lib"
 			papi_CPPFLAGS="-I$ac_cv_use_papi_prefix/include"
+			ac_use_papi=yes
 		else
 			PKG_CHECK_MODULES(
 				[papi],
@@ -50,6 +52,9 @@ AC_DEFUN([AC_CHECK_PAPI],
 					ac_use_papi=no
 				]
 			)
+			
+			CPPFLAGS="${ac_save_CPPFLAGS}"
+			LIBS="${ac_save_LIBS}"
 		fi
 		
 		AM_CONDITIONAL(HAVE_PAPI, test x"${ac_use_papi}" = x"yes")

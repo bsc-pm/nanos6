@@ -7,6 +7,7 @@
 #include "CPU.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "ThreadManager.hpp"
+#include "CPUManager.hpp"
 
 
 class CPUActivation {
@@ -19,7 +20,7 @@ public:
 	{
 		assert(currentThread != nullptr);
 		
-		CPU *cpu = currentThread->getHardwarePlace();
+		CPU *cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		
 		CPU::activation_status_t currentStatus = cpu->_activationStatus;
@@ -41,14 +42,18 @@ public:
 			return;
 		}
 		
-		CPU *cpu = ThreadManager::getCPU(systemCPUId);
+		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
 		
+		cpu->initializeIfNeeded();
 		bool successful = false;
 		
 		while (!successful) {
 			CPU::activation_status_t currentStatus = cpu->_activationStatus;
 			switch (currentStatus) {
+				case CPU::uninitialized_status:
+					assert(false);
+					break;
 				case CPU::starting_status:
 					// Keep iterating until the CPU has actually been initialized
 					break;
@@ -81,7 +86,7 @@ public:
 			return;
 		}
 		
-		CPU *cpu = ThreadManager::getCPU(systemCPUId);
+		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
 		
 		bool successful = false;
@@ -89,6 +94,9 @@ public:
 		while (!successful) {
 			CPU::activation_status_t currentStatus = cpu->_activationStatus;
 			switch (currentStatus) {
+				case CPU::uninitialized_status:
+					assert(false);
+					break;
 				case CPU::starting_status:
 					// Keep iterating until the CPU has actually been initialized
 					break;
@@ -119,11 +127,14 @@ public:
 		
 		bool successful = false;
 		while (!successful) {
-			CPU *cpu = currentThread->getHardwarePlace();
+			CPU *cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
 			
 			CPU::activation_status_t currentStatus = cpu->_activationStatus;
 			switch (currentStatus) {
+				case CPU::uninitialized_status:
+					assert(false);
+					break;
 				case CPU::starting_status:
 					assert(false && "Invalid CPU activation status");
 					break;
@@ -134,32 +145,32 @@ public:
 				case CPU::enabling_status:
 					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
 					if (successful) {
-						Scheduler::enableHardwarePlace(cpu);
+						Scheduler::enableComputePlace(cpu);
 					}
 					break;
 				case CPU::disabling_status:
 					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::disabled_status);
 					if (successful) {
 						// Mark the Hardware Place as disabled
-						Scheduler::disableHardwarePlace(cpu);
+						Scheduler::disableComputePlace(cpu);
 						
 						successful = false; // Loop again, since things may have changed
 						
-						HardwarePlace *idleHardwarePlace = Scheduler::getIdleHardwarePlace();
-						if (idleHardwarePlace != nullptr) {
+						ComputePlace *idleComputePlace = Scheduler::getIdleComputePlace();
+						if (idleComputePlace != nullptr) {
 							// Migrate the thread to the idle hardware place
-							ThreadManager::migrateThread(currentThread, (CPU *) idleHardwarePlace);
+							currentThread->migrate((CPU *) idleComputePlace);
 						} else {
 							// There is no available hardware place, so this thread becomes idle
 							ThreadManager::addIdler(currentThread);
-							ThreadManager::switchThreads(currentThread, nullptr);
+							currentThread->switchTo(nullptr);
 						}
 					}
 					break;
 				case CPU::disabled_status:
 					if (!currentThread->hasPendingShutdown()) {
 						ThreadManager::addIdler(currentThread);
-						ThreadManager::switchThreads(currentThread, nullptr);
+						currentThread->switchTo(nullptr);
 					} else {
 						successful = true;
 					}
@@ -180,6 +191,7 @@ public:
 			case CPU::enabling_status:
 				return true;
 				break;
+			case CPU::uninitialized_status:
 			case CPU::disabling_status:
 			case CPU::disabled_status:
 				return false;
@@ -196,6 +208,14 @@ public:
 		assert(cpu != nullptr);
 		
 		return (cpu->_activationStatus != CPU::starting_status);
+	}
+
+	//! \brief check if the CPU is being initialized 
+	static inline bool isBeingInitialized(CPU *cpu) 
+	{
+		assert(cpu != nullptr);
+		
+		return (cpu->_activationStatus == CPU::starting_status);
 	}
 	
 };

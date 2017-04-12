@@ -46,11 +46,36 @@ static _AI_ size_t getStride()
 	return 1;
 }
 
-
 template <typename... TS>
 static _AI_ size_t getStride(long currentDimSize, _UU_ long currentDimStart, _UU_ long currentDimEnd, TS... otherDimensions)
 {
 	return currentDimSize * getStride<>(otherDimensions...);
+}
+
+
+template <typename... TS>
+static _AI_ size_t getStartOffset()
+{
+	return 0;
+}
+
+template <typename... TS>
+static _AI_ size_t getStartOffset(_UU_ long currentDimSize, long currentDimStart, _UU_ long currentDimEnd, TS... otherDimensions)
+{
+	return currentDimStart * getStride<>(otherDimensions...) + getStartOffset<>(otherDimensions...);
+}
+
+
+template <typename... TS>
+static _AI_ size_t getDiscreteSize()
+{
+	return 1;
+}
+
+template <typename... TS>
+static _AI_ size_t getDiscreteSize(_UU_ long currentDimSize, long currentDimStart, long currentDimEnd, TS... otherDimensions)
+{
+	return (currentDimEnd - currentDimStart) * getDiscreteSize<>(otherDimensions...);
 }
 
 

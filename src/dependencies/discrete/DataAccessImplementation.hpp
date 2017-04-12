@@ -159,11 +159,11 @@ inline bool DataAccess::reevaluateSatisfiability(DataAccess *effectivePrevious)
 }
 
 
-bool DataAccess::upgradeSameTypeAccess(Task *task, DataAccess /* INOUT */ *dataAccess, bool newAccessWeakness)
+bool DataAccess::upgradeSameTypeAccess(__attribute__((unused)) Task *task, DataAccess /* INOUT */ *dataAccess, bool newAccessWeakness)
 {
 	assert(dataAccess != nullptr);
 	
-	DataAccessSequence *accessSequence = dataAccess->_dataAccessSequence;
+	__attribute__((unused)) DataAccessSequence *accessSequence = dataAccess->_dataAccessSequence;
 	assert(accessSequence != nullptr);
 	
 	if (dataAccess->_weak != newAccessWeakness) {
@@ -171,7 +171,7 @@ bool DataAccess::upgradeSameTypeAccess(Task *task, DataAccess /* INOUT */ *dataA
 			dataAccess->_instrumentationId,
 			dataAccess->_type, dataAccess->_weak,
 			dataAccess->_type, (dataAccess->_weak && newAccessWeakness),
-			false, task->getInstrumentationTaskId()
+			false
 		);
 		dataAccess->_weak &= newAccessWeakness; // In fact, just false
 	}
@@ -198,7 +198,7 @@ bool DataAccess::upgradeSameStrengthAccess(Task *task, DataAccess /* INOUT */ *d
 			dataAccess->_instrumentationId,
 			dataAccess->_type, dataAccess->_weak,
 			READWRITE_ACCESS_TYPE, dataAccess->_weak,
-			false, task->getInstrumentationTaskId()
+			false
 		);
 		dataAccess->_type = newAccessType;
 		
@@ -230,7 +230,7 @@ bool DataAccess::upgradeSameStrengthAccess(Task *task, DataAccess /* INOUT */ *d
 				dataAccess->_instrumentationId,
 				oldAccessType, dataAccess->_weak,
 				newAccessType, dataAccess->_weak,
-				!satisfied, task->getInstrumentationTaskId()
+				!satisfied
 			);
 			
 			return satisfied; // A new chance for the access to not be satisfied
@@ -239,7 +239,7 @@ bool DataAccess::upgradeSameStrengthAccess(Task *task, DataAccess /* INOUT */ *d
 				dataAccess->_instrumentationId,
 				dataAccess->_type, dataAccess->_weak,
 				newAccessType, dataAccess->_weak,
-				false, task->getInstrumentationTaskId()
+				false
 			);
 			
 			return true; // The old access has already been counted
@@ -265,7 +265,7 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 			dataAccess->_instrumentationId,
 			dataAccess->_type, false,
 			READWRITE_ACCESS_TYPE, false,
-			false, task->getInstrumentationTaskId()
+			false
 		);
 		dataAccess->_type = newAccessType;
 		
@@ -293,8 +293,7 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 				task->getInstrumentationTaskId(),
 				accessSequence->_accessRange,
 				true /* Direct? */,
-				true /* Bidirectional? */,
-				task->getInstrumentationTaskId()
+				true /* Bidirectional? */
 			);
 			
 			dataAccess = new DataAccess(
@@ -339,7 +338,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				dataAccess->_instrumentationId,
 				oldAccessType, true,
 				newAccessType, false,
-				!satisfied, task->getInstrumentationTaskId()
+				!satisfied
 			);
 			
 			return satisfied; // A new chance for the access to not be satisfied
@@ -348,7 +347,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				dataAccess->_instrumentationId,
 				dataAccess->_type, true,
 				newAccessType, false,
-				false, task->getInstrumentationTaskId()
+				false
 			);
 			
 			return true;
@@ -364,7 +363,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				dataAccess->_instrumentationId,
 				READ_ACCESS_TYPE, true,
 				READ_ACCESS_TYPE, false,
-				false, task->getInstrumentationTaskId()
+				false
 			);
 			
 			return dataAccess->_satisfied; // A new chance for the access to be accounted
@@ -382,13 +381,13 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				dataAccess->_instrumentationId,
 				dataAccess->_type, true,
 				READ_ACCESS_TYPE, false,
-				false, task->getInstrumentationTaskId()
+				false
 			);
 			if (dataAccess->_satisfied != satisfied) {
 				Instrument::dataAccessBecomesSatisfied(
 					dataAccess->_instrumentationId,
 					false, false, true,
-					task->getInstrumentationTaskId(), task->getInstrumentationTaskId()
+					task->getInstrumentationTaskId()
 				);
 			}
 			
@@ -413,8 +412,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				task->getInstrumentationTaskId(),
 				accessSequence->_accessRange,
 				!accessSequence->_accessSequence.empty() /* Direct? */,
-				!accessSequence->_accessSequence.empty() /* Bidirectional? */,
-				task->getInstrumentationTaskId()
+				!accessSequence->_accessSequence.empty() /* Bidirectional? */
 			);
 			
 			dataAccess = new DataAccess(

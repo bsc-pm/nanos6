@@ -19,7 +19,7 @@
 
 class DataAccessRegistration {
 private:
-	static inline void reevaluateAndPropagateSatisfiability(Instrument::task_id_t instrumentationTaskId, DataAccess *previousDataAccess, DataAccess *targetDataAccess, CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
+	static inline void reevaluateAndPropagateSatisfiability(DataAccess *previousDataAccess, DataAccess *targetDataAccess, CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
 	{
 		if (targetDataAccess == nullptr) {
 			return;
@@ -35,7 +35,6 @@ private:
 				Instrument::dataAccessBecomesSatisfied(
 					currentDataAccess->_instrumentationId,
 					false, false, true,
-					instrumentationTaskId,
 					currentDataAccess->_originator->getInstrumentationTaskId()
 				);
 				
@@ -43,7 +42,7 @@ private:
 					DataAccessSequence &subaccesses = currentDataAccess->_subaccesses;
 					auto it = subaccesses._accessSequence.begin();
 					if (it != subaccesses._accessSequence.end()) {
-						reevaluateAndPropagateSatisfiability(instrumentationTaskId, previousDataAccess, &(*it), satisfiedOriginators);
+						reevaluateAndPropagateSatisfiability(previousDataAccess, &(*it), satisfiedOriginators);
 					}
 				} else {
 					satisfiedOriginators.push_back(currentDataAccess->_originator);
@@ -59,7 +58,7 @@ private:
 	}
 	
 	
-	static inline void unregisterDataAccess(Instrument::task_id_t instrumentationTaskId, DataAccess *dataAccess, CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
+	static inline void unregisterDataAccess(DataAccess *dataAccess, CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators)
 	{
 		assert(dataAccess != nullptr);
 		
@@ -89,8 +88,7 @@ private:
 				Instrument::reparentedDataAccess(
 					dataAccess->_instrumentationId,
 					(dataAccessSequence->_superAccess != nullptr ? dataAccessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
-					subaccess._instrumentationId,
-					instrumentationTaskId
+					subaccess._instrumentationId
 				);
 				
 				subaccess._dataAccessSequence = dataAccessSequence;
@@ -106,8 +104,7 @@ private:
 						previousOfFirst->_instrumentationId,
 						subaccess._originator->getInstrumentationTaskId(),
 						dataAccessSequence->_accessRange,
-						true, true,
-						instrumentationTaskId
+						true, true
 					);
 				}
 				
@@ -126,18 +123,14 @@ private:
 							subaccess._instrumentationId,
 							next->_originator->getInstrumentationTaskId(),
 							dataAccessSequence->_accessRange,
-							true, true,
-							instrumentationTaskId
+							true, true
 						);
 					}
 				}
 			}
 			
 			// Instrumenters first see the movement, then the deletion
-			Instrument::removedDataAccess(
-				dataAccess->_instrumentationId,
-				instrumentationTaskId
-			);
+			Instrument::removedDataAccess(dataAccess->_instrumentationId);
 			
 			if ((nextPosition != dataAccessSequence->_accessSequence.end()) && !nextPosition->_satisfied) {
 				// There is a next element in the sequence that must be reevaluated
@@ -158,20 +151,19 @@ private:
 							next->_originator->getInstrumentationTaskId(),
 							dataAccessSequence->_accessRange,
 							false /* not direct */,
-							false /* unidirectional */,
-							instrumentationTaskId
+							false /* unidirectional */
 						);
 					}
 				}
 				
-				reevaluateAndPropagateSatisfiability(instrumentationTaskId, effectivePrevious, next, satisfiedOriginators);
+				reevaluateAndPropagateSatisfiability(effectivePrevious, next, satisfiedOriginators);
 			}
 		}
 	}
 	
 	
 	//! Process all the originators for whose a DataAccess has become satisfied
-	static inline void processSatisfiedOriginators(CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators, HardwarePlace *hardwarePlace)
+	static inline void processSatisfiedOriginators(CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators, ComputePlace *computePlace)
 	{
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : satisfiedOriginators) {
@@ -179,10 +171,10 @@ private:
 			
 			bool becomesReady = satisfiedOriginator->decreasePredecessors();
 			if (becomesReady) {
-				HardwarePlace *idleHardwarePlace = Scheduler::addReadyTask(satisfiedOriginator, hardwarePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
+				ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, computePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
 				
-				if (idleHardwarePlace != nullptr) {
-					ThreadManager::resumeIdle((CPU *) idleHardwarePlace);
+				if (idleComputePlace != nullptr) {
+					ThreadManager::resumeIdle((CPU *) idleComputePlace);
 				}
 			}
 		}
@@ -253,8 +245,7 @@ public:
 				task->getInstrumentationTaskId(),
 				accessSequence->_accessRange,
 				!accessSequence->_accessSequence.empty() /* Direct? */,
-				!accessSequence->_accessSequence.empty() /* Bidirectional? */,
-				task->getInstrumentationTaskId()
+				!accessSequence->_accessSequence.empty() /* Bidirectional? */
 			);
 		}
 		Instrument::addTaskToAccessGroup(accessSequence, task->getInstrumentationTaskId());
@@ -271,9 +262,10 @@ public:
 	//! \param[in] task the Task whose dependencies need to be calculated
 	//! 
 	//! \returns true if the task is already ready
-	static inline bool registerTaskDataAccesses(Task *task)
+	static inline bool registerTaskDataAccesses(Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 		assert(task != 0);
+		assert(computePlace != nullptr);
 		
 		// We increase the number of predecessors to avoid having the task become ready while we are adding its dependencies.
 		// We do it by 2 because we add the data access and unlock access to it before increasing the number of predecessors.
@@ -287,24 +279,24 @@ public:
 	}
 	
 	
-	static inline void unregisterTaskDataAccesses(Task *finishedTask)
+	static inline void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace)
 	{
-		assert(finishedTask != 0);
+		assert(task != 0);
 		
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != 0);
-		CPU *cpu = currentThread->getHardwarePlace();
+		CPU *cpu = currentThread->getComputePlace();
 		assert(cpu != 0);
 		
-		TaskDataAccesses &taskDataAccesses = finishedTask->getDataAccesses();
+		TaskDataAccesses &taskDataAccesses = task->getDataAccesses();
 		
 		// A temporary list of tasks to minimize the time spent with the mutex held.
-		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators = cpu->_dependencyData._satisfiedAccessOriginators;
+		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators = computePlace->getDependencyData()._satisfiedAccessOriginators;
 		for (auto it = taskDataAccesses.begin(); it != taskDataAccesses.end(); it = taskDataAccesses.erase(it)) {
 			DataAccess *dataAccess = &(*it);
 			
-			assert(dataAccess->_originator == finishedTask);
-			unregisterDataAccess(finishedTask->getInstrumentationTaskId(), dataAccess, /* OUT */ satisfiedOriginators);
+			assert(dataAccess->_originator == task);
+			unregisterDataAccess(dataAccess, /* OUT */ satisfiedOriginators);
 			
 			processSatisfiedOriginators(satisfiedOriginators, cpu);
 			satisfiedOriginators.clear();
@@ -326,10 +318,10 @@ public:
 	{
 	}
 	
-	static inline void handleEnterTaskwait(__attribute__((unused)) Task *task)
+	static inline void handleEnterTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 	}
-	static inline void handleExitTaskwait(__attribute__((unused)) Task *task)
+	static inline void handleExitTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 	}
 	

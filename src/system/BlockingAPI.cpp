@@ -23,13 +23,13 @@ extern "C" void *nanos_get_current_blocking_context()
 }
 
 
-extern "C" void nanos_block_current_task(void *blocking_context)
+extern "C" void nanos_block_current_task(__attribute__((unused)) void *blocking_context)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
 	
-	CPU *cpu = nullptr;
-	cpu = currentThread->getHardwarePlace();
+	__attribute__((unused)) CPU *cpu = nullptr;
+	cpu = currentThread->getComputePlace();
 	assert(cpu != nullptr);
 	
 	Task *currentTask = currentThread->getTask();
@@ -53,7 +53,7 @@ extern "C" void nanos_unblock_task(void *blocking_context)
 	
 	Scheduler::taskGetsUnblocked(task, nullptr);
 	
-	CPU *idleCPU = (CPU *) Scheduler::getIdleHardwarePlace();
+	CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
 	if (idleCPU != nullptr) {
 		ThreadManager::resumeIdle(idleCPU);
 	}

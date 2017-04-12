@@ -10,6 +10,7 @@
 
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentLeaderThread.hpp>
+#include <InstrumentThreadManagement.hpp>
 
 
 LeaderThread *LeaderThread::_singleton;
@@ -18,6 +19,7 @@ LeaderThread *LeaderThread::_singleton;
 void LeaderThread::initialize()
 {
 	_singleton = new LeaderThread();
+	_singleton->start(nullptr);
 }
 
 
@@ -28,9 +30,7 @@ void LeaderThread::shutdown()
 	_singleton->_mustExit.compare_exchange_strong(expected, true);
 	assert(!expected);
 	
-	void *dummy;
-	int rc = pthread_join(_singleton->_pthread, &dummy);
-	FatalErrorHandler::handle(rc, "Error joining leader thread");
+	_singleton->join();
 	
 	delete _singleton;
 	_singleton = nullptr;
@@ -40,13 +40,18 @@ void LeaderThread::shutdown()
 LeaderThread::LeaderThread()
 	: _mustExit(false)
 {
-	start(nullptr);
 }
 
 
 void *LeaderThread::body()
 {
-	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), Instrument::hardware_place_id_t(), getInstrumentationId());
+	Instrument::task_id_t instrumentationTaskId;
+	Instrument::compute_place_id_t instrumentationComputePlaceId;
+	Instrument::thread_id_t instrumentationThreadId;
+	
+	Instrument::ThreadInstrumentationContext instrumentationContext(
+		instrumentationTaskId, instrumentationComputePlaceId, instrumentationThreadId
+	);
 	
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {
 		struct timespec delay = { 0, 1000000}; // 1000 Hz

@@ -11,14 +11,13 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "hardware/places/HardwarePlace.hpp"
+#include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include "CPU.hpp"
-// #include "CPUStatusListener.hpp"
 #include "WorkerThread.hpp"
 
-#include <InstrumentHardwarePlaceManagement.hpp>
+#include <InstrumentComputePlaceManagement.hpp>
 #include <InstrumentThreadManagement.hpp>
 
 
@@ -27,24 +26,9 @@ class ThreadManagerDebuggingInterface;
 
 
 class ThreadManager {
-public:
-	typedef std::vector<std::atomic<CPU *>> cpu_list_t;
-	
 private:
 	//! \brief indicates if the runtime is shutting down
 	static std::atomic<bool> _mustExit;
-	
-	//! \brief CPU mask of the process
-	static cpu_set_t _processCPUMask;
-	
-	//! \brief per-CPU data indexed by system CPU identifier
-	static cpu_list_t _cpus;
-	
-	//! \brief numer of initialized CPUs
-	static std::atomic<long> _totalCPUs;
-	
-	//! \brief indicates if the thread manager has finished initializing the CPUs
-	static std::atomic<bool> _finishedCPUInitialization;
 	
 	static SpinLock _idleThreadsLock;
 	
@@ -62,27 +46,8 @@ private:
 	
 	
 public:
-	static void preinitialize();
-	
-	static void initialize();
-	
 	static void shutdown();
 	
-	
-	//! \brief get or create the CPU object assigned to a given numerical system CPU identifier
-	static inline CPU *getCPU(size_t systemCPUId);
-	
-	//! \brief get the maximum number of CPUs that will be used
-	static inline long getTotalCPUs();
-	
-	//! \brief check if initialization has finished
-	static inline bool hasFinishedInitialization();
-	
-	//! \brief get a reference to the CPU mask of the process
-	static inline cpu_set_t const &getProcessCPUMaskReference();
-	
-	//! \brief get a reference to the list of CPUs
-	static inline cpu_list_t const &getCPUListReference();
 	
 	//! \brief create or recycle a WorkerThread
 	//! The thread is returned in a blocked (or about to block) status
@@ -93,23 +58,10 @@ public:
 	//! \returns a WorkerThread or nullptr
 	static inline WorkerThread *getIdleThread(CPU *cpu, bool doNotCreate=false);
 	
-	//! \brief suspend the currently running thread and replace it by another (if given)
-	//!
-	//! \param[in] currentThread a thread that is currently running and that must be stopped
-	//! \param[in] replacementThread a thread that is currently suspended and that must take the place of the currentThread or nullptr
-	static inline void switchThreads(WorkerThread *currentThread, WorkerThread *replacementThread);
-	
 	//! \brief add a thread to the list of idle threads
 	//!
 	//! \param[in] idleThread a thread that has become idle
 	static inline void addIdler(WorkerThread *idleThread);
-	
-	//! \brief resume a thread on a given CPU
-	//!
-	//! \param[in] suspendedThread the thread that will be resumed
-	//! \param[in] cpu the CPU on which to resume the thread
-	//! \param[in] inInitializationOrShutdown true if it should not enforce assertions that are not valid during initialization and shutdown
-	static inline void resumeThread(WorkerThread *suspendedThread, CPU *cpu, bool inInitializationOrShutdown=false);
 	
 	//! \brief resume an idle thread on a given CPU
 	//!
@@ -120,79 +72,22 @@ public:
 	//! \returns the thread that has been resumed or nullptr
 	static inline WorkerThread *resumeIdle(CPU *idleCPU, bool inInitializationOrShutdown=false, bool doNotCreate=false);
 	
-	//! \brief migrate the currently running thread to a given CPU
-	static inline void migrateThread(WorkerThread *currentThread, CPU *cpu);
-	
 	//! \brief returns true if the thread must shut down
 	static inline bool mustExit();
-	
-	//! \brief set up the information related to the currently running thread
-	//!
-	//! \param[in] currentThread a thread that is currently running and that has just begun its execution
-	static void threadStartup(WorkerThread *currentThread);
+
+	//! \brief initialize a thread to run on the given CPU
+	static void initializeThread(CPU *cpu);
 	
 	//! \brief exit the currently running thread and wake up the next one assigned to the same CPU (so that it can do the same)
-	//!
+	//! 
+	//! NOTE: This method does not actually cause the thread to exit. Instead the caller is supposed to return from the body of
+	//! the thread.
+	//! 
 	//! \param[in] currentThread a thread that is currently running and that must exit
 	static void threadShutdownSequence(WorkerThread *currentThread);
 	
 	friend class ThreadManagerDebuggingInterface;
 };
-
-
-inline CPU *ThreadManager::getCPU(size_t systemCPUId)
-{
-	assert(systemCPUId < _cpus.size());
-	
-	CPU *cpu = _cpus[systemCPUId];
-	if (cpu == nullptr) {
-		CPU *newCPU = new CPU(systemCPUId, /* INVALID VALUE */ ~0UL);
-		bool success = _cpus[systemCPUId].compare_exchange_strong(cpu, newCPU);
-		if (!success) {
-			// Another thread already did it
-			delete newCPU;
-			cpu = _cpus[systemCPUId];
-			size_t volatile * virtualCPUId = (&newCPU->_virtualCPUId);
-			
-			while (*virtualCPUId == ~0UL) {
-				// Wait for the CPU to be fully be initialized
-			}
-		} else {
-			newCPU->_virtualCPUId = _totalCPUs++;
-// 			atomic_thread_fence(std::memory_order_seq_cst);
-			
-			Instrument::hardware_place_id_t cpuInstrumentationId = Instrument::createdCPU(newCPU->_virtualCPUId);
-			newCPU->setInstrumentationId(cpuInstrumentationId);
-			
-			cpu = newCPU;
-		}
-	}
-	
-	return cpu;
-}
-
-
-inline long ThreadManager::getTotalCPUs()
-{
-	return _totalCPUs;
-}
-
-inline bool ThreadManager::hasFinishedInitialization()
-{
-	return _finishedCPUInitialization;
-}
-
-
-inline cpu_set_t const &ThreadManager::getProcessCPUMaskReference()
-{
-	return _processCPUMask;
-}
-
-inline ThreadManager::cpu_list_t const &ThreadManager::getCPUListReference()
-{
-	return _cpus;
-}
-
 
 inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 {
@@ -231,49 +126,6 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 }
 
 
-inline void ThreadManager::switchThreads(WorkerThread *currentThread, WorkerThread *replacementThread)
-{
-	assert(currentThread != nullptr);
-	assert(currentThread == WorkerThread::getCurrentWorkerThread());
-	assert(currentThread != replacementThread);
-	
-	CPU *cpu = currentThread->_cpu;
-	assert(cpu != nullptr);
-	
-	if (replacementThread != nullptr) {
-		// Replace a thread by another
-		
-		// Check if the replacement comes from another CPU
-		assert(replacementThread->_cpuToBeResumedOn == nullptr);
-		replacementThread->_cpuToBeResumedOn = cpu;
-		if (replacementThread->_cpu != cpu) {
-			cpu->bindThread(replacementThread->_tid);
-		}
-		
-		replacementThread->resume();
-	} else {
-		// No replacement thread
-		
-		// NOTE: In this case the CPUActivation class can end up resuming a CPU before its running thread has had a chance to get blocked
-	}
-	
-	Instrument::threadWillSuspend(currentThread->_instrumentationId, cpu->getInstrumentationId());
-	
-	currentThread->suspend();
-	// After resuming (if ever blocked), the thread continues here
-	
-	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
-	assert(currentThread->_cpuToBeResumedOn != nullptr);
-	currentThread->_cpu = currentThread->_cpuToBeResumedOn;
-	
-	Instrument::threadHasResumed(currentThread->_instrumentationId, currentThread->_cpu->getInstrumentationId());
-	
-#ifndef NDEBUG
-	currentThread->_cpuToBeResumedOn = nullptr;
-#endif
-}
-
-
 inline void ThreadManager::addIdler(WorkerThread *idleThread)
 {
 	assert(idleThread != nullptr);
@@ -283,29 +135,6 @@ inline void ThreadManager::addIdler(WorkerThread *idleThread)
 		std::lock_guard<SpinLock> guard(_idleThreadsLock);
 		_idleThreads.push_front(idleThread);
 	}
-}
-
-
-inline void ThreadManager::resumeThread(WorkerThread *suspendedThread, CPU *cpu, bool inInitializationOrShutdown)
-{
-	assert(cpu != nullptr);
-	
-	if (!inInitializationOrShutdown) {
-		assert(WorkerThread::getCurrentWorkerThread() != suspendedThread);
-	}
-	
-	assert(suspendedThread->_cpuToBeResumedOn == nullptr);
-	suspendedThread->_cpuToBeResumedOn = cpu;
-	if (suspendedThread->_cpu != cpu) {
-		cpu->bindThread(suspendedThread->_tid);
-	}
-	
-	if (!inInitializationOrShutdown) {
-		assert(suspendedThread != WorkerThread::getCurrentWorkerThread());
-	}
-	
-	// Resume it
-	suspendedThread->resume();
 }
 
 
@@ -324,25 +153,9 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 		return nullptr;
 	}
 	
-	resumeThread(idleThread, idleCPU, inInitializationOrShutdown);
+	idleThread->resume(idleCPU, inInitializationOrShutdown);
 	
 	return idleThread;
-}
-
-
-inline void ThreadManager::migrateThread(WorkerThread *currentThread, CPU *cpu)
-{
-	assert(currentThread != nullptr);
-	assert(cpu != nullptr);
-	
-	assert(WorkerThread::getCurrentWorkerThread() == currentThread);
-	assert(currentThread->_cpu != cpu);
-	
-	assert(currentThread->_cpuToBeResumedOn == nullptr);
-	
-	// Since it is the same thread the one that migrates itself, change the CPU directly
-	currentThread->_cpu = cpu;
-	cpu->bindThread(currentThread->_tid);
 }
 
 

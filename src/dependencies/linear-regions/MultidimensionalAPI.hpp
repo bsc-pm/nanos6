@@ -19,9 +19,6 @@
 
 
 template <DataAccessType ACCESS_TYPE, bool WEAK, typename... TS>
-_AI_ void register_data_access(void *handler, int symbolIndex, char const *regionText, void *baseAddress, TS... dimensions);
-
-template <DataAccessType ACCESS_TYPE, bool WEAK, typename... TS>
 _AI_ void register_data_access_base(
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
 	long currentDimSize, long currentDimStart, long currentDimEnd

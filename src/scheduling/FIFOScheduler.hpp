@@ -22,20 +22,20 @@ class FIFOScheduler: public SchedulerInterface {
 	std::deque<CPU *> _idleCPUs;
 	
 	inline CPU *getIdleCPU();
-	inline Task *getReplacementTask(CPU *hardwarePlace);
+	inline Task *getReplacementTask(CPU *computePlace);
 	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	FIFOScheduler();
 	~FIFOScheduler();
 	
-	HardwarePlace *addReadyTask(Task *task, HardwarePlace *hardwarePlace, ReadyTaskHint hint);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint);
 	
-	void taskGetsUnblocked(Task *unblockedTask, HardwarePlace *hardwarePlace);
+	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace);
 	
-	Task *getReadyTask(HardwarePlace *hardwarePlace, Task *currentTask = nullptr);
+	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr);
 	
-	HardwarePlace *getIdleHardwarePlace(bool force=false);
+	ComputePlace *getIdleComputePlace(bool force=false);
 };
 
 

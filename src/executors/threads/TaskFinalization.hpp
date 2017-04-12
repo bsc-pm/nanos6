@@ -1,11 +1,11 @@
 #ifndef TASK_FINALIZATION_HPP
 #define TASK_FINALIZATION_HPP
 
-#include <InstrumentHardwarePlaceId.hpp>
+#include <InstrumentComputePlaceId.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentThreadId.hpp>
 
-#include "hardware/places/HardwarePlace.hpp"
+#include "hardware/places/ComputePlace.hpp"
 #include "WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/SpawnFunction.hpp"
@@ -15,7 +15,7 @@
 
 class TaskFinalization {
 public:
-	static void disposeOrUnblockTask(Task *task, HardwarePlace *hardwarePlace);
+	static void disposeOrUnblockTask(Task *task, ComputePlace *computePlace);
 	
 };
 

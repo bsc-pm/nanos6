@@ -18,7 +18,7 @@ namespace Instrument {
 				}
 				
 				foreachLiveNextOfAccess(access,
-					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+					[&](access_t &nextAccess, __attribute__((unused)) link_to_next_t &linkToNext, __attribute__((unused)) task_info_t &nextTaskInfo) -> bool {
 						nextAccess.hasPrevious() = true;
 						return true;
 					}
@@ -375,11 +375,8 @@ namespace Instrument {
 			assert(fragment != nullptr);
 			assert(fragment->fragment());
 			
-			task_info_t &originatorTaskInfo = _taskToInfoMap[fragment->_originator];
-			task_id_t parentId = originatorTaskInfo._parent;
-			
 			foreachLiveNextOfAccess(fragment,
-				[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+				[&](access_t &nextAccess, __attribute__((unused)) link_to_next_t &linkToNext, __attribute__((unused)) task_info_t &nextTaskInfo) -> bool {
 					DataAccessRange range = fragment->_accessRange.intersect(nextAccess._accessRange);
 					
 					if (!range.empty()) {

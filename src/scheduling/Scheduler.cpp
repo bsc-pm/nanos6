@@ -1,9 +1,9 @@
-#include "CostAsPriorityScheduler.hpp"
 #include "DefaultScheduler.hpp"
 #include "FIFOImmediateSuccessorWithPollingScheduler.hpp"
 #include "FIFOScheduler.hpp"
 #include "ImmediateSuccessorScheduler.hpp"
 #include "ImmediateSuccessorWithPollingScheduler.hpp"
+#include "PriorityScheduler.hpp"
 #include "Scheduler.hpp"
 #include "SchedulerInterface.hpp"
 
@@ -30,11 +30,15 @@ void Scheduler::initialize()
 		_scheduler = new ImmediateSuccessorWithPollingScheduler();
 	} else if (schedulerName.getValue() == "fifoiswp") {
 		_scheduler = new FIFOImmediateSuccessorWithPollingScheduler();
-	} else if (schedulerName.getValue() == "costaspriority") {
-		_scheduler = new CostAsPriorityScheduler();
+	} else if (schedulerName.getValue() == "priority") {
+		_scheduler = new PriorityScheduler();
 	} else {
 		std::cerr << "Warning: invalid scheduler name '" << schedulerName.getValue() << "', using default instead." << std::endl;
 		_scheduler = new DefaultScheduler();
 	}
 }
 
+void Scheduler::shutdown() 
+{
+	delete _scheduler;
+}

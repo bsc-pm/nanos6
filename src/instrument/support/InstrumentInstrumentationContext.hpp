@@ -2,7 +2,7 @@
 #define INSTRUMENT_SUPPORT_INSTRUMENTATION_CONTEXT_HPP
 
 
-#include <InstrumentHardwarePlaceId.hpp>
+#include <InstrumentComputePlaceId.hpp>
 #include <InstrumentTaskId.hpp>
 #include <InstrumentThreadId.hpp>
 
@@ -13,26 +13,26 @@ namespace Instrument {
 	//! \brief Data needed by the instrumentation API
 	struct InstrumentationContext {
 		task_id_t _taskId;
-		hardware_place_id_t _hardwarePlaceId;
+		compute_place_id_t _computePlaceId;
 		thread_id_t _threadId;
 		
 		InstrumentationContext()
 		{
 		}
 		
-		InstrumentationContext(task_id_t const &taskId, hardware_place_id_t const &hardwarePlaceId, thread_id_t const &threadId)
-			: _taskId(taskId), _hardwarePlaceId(hardwarePlaceId), _threadId(threadId)
+		InstrumentationContext(task_id_t const &taskId, compute_place_id_t const &computePlaceId, thread_id_t const &threadId)
+			: _taskId(taskId), _computePlaceId(computePlaceId), _threadId(threadId)
 		{
 		}
 		
 		InstrumentationContext(InstrumentationContext const &other)
-			: _taskId(other._taskId), _hardwarePlaceId(other._hardwarePlaceId), _threadId(other._threadId)
+			: _taskId(other._taskId), _computePlaceId(other._computePlaceId), _threadId(other._threadId)
 		{
 		}
 		
 		bool empty() const
 		{
-			return (_taskId == task_id_t()) && (_hardwarePlaceId == hardware_place_id_t()) && (_threadId == thread_id_t());
+			return (_taskId == task_id_t()) && (_computePlaceId == compute_place_id_t()) && (_threadId == thread_id_t());
 		}
 	};
 	
@@ -49,28 +49,28 @@ namespace Instrument {
 		InstrumentationContext _oldContext;
 		
 	public:
-		ThreadInstrumentationContext(task_id_t const &taskId, hardware_place_id_t const &hardwarePlaceId, thread_id_t const &threadId)
+		ThreadInstrumentationContext(task_id_t const &taskId, compute_place_id_t const &computePlaceId, thread_id_t const &threadId)
 		{
 			_oldContext = _context;
-			_context = InstrumentationContext(taskId, hardwarePlaceId, threadId);
+			_context = InstrumentationContext(taskId, computePlaceId, threadId);
 		}
 		
 		ThreadInstrumentationContext(task_id_t const &taskId)
 		{
 			_oldContext = _context;
-			_context = InstrumentationContext(taskId, _oldContext._hardwarePlaceId, _oldContext._threadId);
+			_context = InstrumentationContext(taskId, _oldContext._computePlaceId, _oldContext._threadId);
 		}
 		
-		ThreadInstrumentationContext(hardware_place_id_t const &hardwarePlaceId)
+		ThreadInstrumentationContext(compute_place_id_t const &computePlaceId)
 		{
 			_oldContext = _context;
-			_context = InstrumentationContext(_oldContext._taskId, hardwarePlaceId, _oldContext._threadId);
+			_context = InstrumentationContext(_oldContext._taskId, computePlaceId, _oldContext._threadId);
 		}
 		
 		ThreadInstrumentationContext(thread_id_t const &threadId)
 		{
 			_oldContext = _context;
-			_context = InstrumentationContext(_oldContext._taskId, _oldContext._hardwarePlaceId, threadId);
+			_context = InstrumentationContext(_oldContext._taskId, _oldContext._computePlaceId, threadId);
 		}
 		
 		~ThreadInstrumentationContext()
@@ -88,9 +88,9 @@ namespace Instrument {
 			return _context;
 		}
 		
-		static void updateHardwarePlace(hardware_place_id_t const &hardwarePlaceId)
+		static void updateComputePlace(compute_place_id_t const &computePlaceId)
 		{
-			_context._hardwarePlaceId = hardwarePlaceId;
+			_context._computePlaceId = computePlaceId;
 		}
 	};
 	

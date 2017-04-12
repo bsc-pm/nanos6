@@ -24,13 +24,13 @@ namespace Instrument {
 		return thread_id_t();
 	}
 	
-	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) hardware_place_id_t hardwarePlaceId)
+	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceId)
 	{
 		Instrument::Stats::PhaseInfo &currentPhase = Stats::_threadStats->getCurrentPhaseRef();
 		currentPhase._runningTime.continueAt(currentPhase._blockedTime);
 	}
 	
-	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) hardware_place_id_t hardwarePlaceId)
+	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceId)
 	{
 		Instrument::Stats::PhaseInfo &currentPhase = Stats::_threadStats->getCurrentPhaseRef();
 		currentPhase._blockedTime.continueAt(currentPhase._runningTime);

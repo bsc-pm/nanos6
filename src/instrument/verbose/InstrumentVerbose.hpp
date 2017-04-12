@@ -72,9 +72,9 @@ namespace Instrument {
 					_contents << "external";
 				}
 				
-				_contents << " HardwarePlace:";
-				if (context._hardwarePlaceId != hardware_place_id_t()) {
-					_contents << context._hardwarePlaceId;
+				_contents << " ComputePlace:";
+				if (context._computePlaceId != compute_place_id_t()) {
+					_contents << context._computePlaceId;
 				} else {
 					_contents << "unknown";
 				}

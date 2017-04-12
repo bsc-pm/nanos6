@@ -8,15 +8,19 @@
 
 #include <nanos6.h>
 #include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/SpawnFunction.hpp"
+#include "hardware/HardwareInfo.hpp"
 
 #include <InstrumentInitAndShutdown.hpp>
 
 
 static std::atomic<int> shutdownDueToSignalNumber(0);
+
+void nanos_shutdown(void);
 
 
 static void signalHandler(int signum)
@@ -46,16 +50,17 @@ static void programSignal(int signum) {
 
 
 void nanos_preinit(void) {
-	ThreadManagerPolicy::initialize();
-	ThreadManager::preinitialize();
 	Scheduler::initialize();
+	HardwareInfo::initialize();
+	ThreadManagerPolicy::initialize();
+	CPUManager::preinitialize();
 	Instrument::initialize();
 	LeaderThread::initialize();
 }
 
 
 void nanos_init(void) {
-	ThreadManager::initialize();
+	CPUManager::initialize();
 	
 	EnvironmentVariable<bool> handleSigInt("NANOS_HANDLE_SIGINT", 0);
 	if (handleSigInt) {
@@ -89,5 +94,6 @@ void nanos_shutdown(void) {
 	}
 	
 	ThreadManager::shutdown();
+	Scheduler::shutdown();
 }
 

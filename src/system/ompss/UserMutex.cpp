@@ -30,8 +30,8 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 	
-	HardwarePlace *hardwarePlace = currentThread->getHardwarePlace();
-	assert(hardwarePlace != nullptr);
+	ComputePlace *computePlace = currentThread->getComputePlace();
+	assert(computePlace != nullptr);
 	
 	// Allocation
 	if (__builtin_expect(userMutexReference == nullptr, 0)) {
@@ -79,8 +79,8 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask, false);
 	
-	hardwarePlace = currentThread->getHardwarePlace();
-	Instrument::ThreadInstrumentationContext::updateHardwarePlace(hardwarePlace->getInstrumentationId());
+	computePlace = currentThread->getComputePlace();
+	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 	
 	DataAccessRegistration::handleExitBlocking(currentTask);
 	
@@ -103,10 +103,7 @@ void nanos_user_unlock(void **handlerPointer)
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
 	
-	Task *currentTask = currentThread->getTask();
-	assert(currentTask != nullptr);
-	
-	CPU *cpu = currentThread->getHardwarePlace();
+	CPU *cpu = currentThread->getComputePlace();
 	assert(cpu != nullptr);
 	
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
@@ -122,21 +119,21 @@ void nanos_user_unlock(void **handlerPointer)
 			WorkerThread *releasedThread = releasedTask->getThread();
 			assert(releasedThread != nullptr);
 			
-			CPU *idleCPU = (CPU *) Scheduler::getIdleHardwarePlace();
+			CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
 			if (idleCPU != nullptr) {
 				// Wake up the unblocked task and migrate to an idle CPU
-				ThreadManager::resumeThread(releasedThread, cpu);
-				ThreadManager::migrateThread(currentThread, idleCPU);
+				releasedThread->resume(cpu, false);
+				currentThread->migrate(idleCPU);
 			} else {
 				Scheduler::taskGetsUnblocked(currentTask, cpu);
 				
-				ThreadManager::switchThreads(currentThread, releasedThread);
-				Instrument::ThreadInstrumentationContext::updateHardwarePlace(currentThread->getHardwarePlace()->getInstrumentationId());
+				currentThread->switchTo(releasedThread);
+				Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
 			}
 		} else {
 			Scheduler::taskGetsUnblocked(releasedTask, cpu);
 			
-			CPU *idleCPU = (CPU *) Scheduler::getIdleHardwarePlace();
+			CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
 			if (idleCPU != nullptr) {
 				ThreadManager::resumeIdle(idleCPU);
 			}
