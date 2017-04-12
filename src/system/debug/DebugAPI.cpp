@@ -16,22 +16,7 @@ void nanos_wait_for_full_initialization(void)
 
 unsigned int nanos_get_num_cpus(void)
 {
-	if (CPUManager::hasFinishedInitialization()) {
-		return CPUManager::getTotalCPUs();
-	} else {
-		static long activeCPUs = 0;
-		
-		if (activeCPUs == 0) {
-			cpu_set_t const &cpuMask = CPUManager::getProcessCPUMaskReference();
-			for (size_t systemCPUId = 0; systemCPUId < CPU_SETSIZE; systemCPUId++) {
-				if (CPU_ISSET(systemCPUId, &cpuMask)) {
-					activeCPUs++;
-				}
-			}
-		}
-		
-		return activeCPUs;
-	}
+	return CPUManager::getTotalCPUs();
 }
 
 long nanos_get_current_system_cpu()

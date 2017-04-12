@@ -10,20 +10,16 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "hardware/HardwareInfo.hpp"
 
 #include "CPU.hpp"
 
 
 class CPUManager {
 private:
-	//! \brief CPU mask of the process
-	static cpu_set_t _processCPUMask;
-	
 	//! \brief per-CPU data indexed by system CPU identifier
 	static std::vector<CPU *> _cpus;
-	
-	//! \brief numer of initialized CPUs
+
+	//! \brief number of available CPUs
 	static size_t _totalCPUs;
 	
 	//! \brief indicates if the thread manager has finished initializing the CPUs
@@ -31,9 +27,8 @@ private:
 	
 	//! \brief threads blocked due to idleness
 	static boost::dynamic_bitset<> _idleCPUs;
-	
+
 	static SpinLock _idleCPUsLock;
-	
 	
 public:
 	static void preinitialize();
@@ -49,9 +44,6 @@ public:
 	//! \brief check if initialization has finished
 	static inline bool hasFinishedInitialization();
 	
-	//! \brief get a reference to the CPU mask of the process
-	static inline cpu_set_t const &getProcessCPUMaskReference();
-	
 	//! \brief get a reference to the list of CPUs
 	static inline std::vector<CPU *> const &getCPUListReference();
 
@@ -65,8 +57,15 @@ public:
 
 inline CPU *CPUManager::getCPU(size_t systemCPUId)
 {
-	assert(systemCPUId < _cpus.size());
-	return _cpus[systemCPUId];
+	// _cpus is sorted by virtual ID. This search should be changed in the future
+	for (size_t i = 0; i < _cpus.size(); ++i) {
+		if (_cpus[i] != nullptr && _cpus[i]->_systemCPUId == systemCPUId) {
+			return _cpus[i];
+		}
+	}
+
+	assert(false);
+	return nullptr;
 }
 
 inline long CPUManager::getTotalCPUs()
@@ -80,11 +79,6 @@ inline bool CPUManager::hasFinishedInitialization()
 }
 
 
-inline cpu_set_t const &CPUManager::getProcessCPUMaskReference()
-{
-	return _processCPUMask;
-}
-
 inline std::vector<CPU *> const &CPUManager::getCPUListReference()
 {
 	return _cpus;
@@ -94,7 +88,7 @@ inline std::vector<CPU *> const &CPUManager::getCPUListReference()
 inline void CPUManager::cpuBecomesIdle(CPU *cpu)
 {
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	_idleCPUs[cpu->_systemCPUId] = true;
+	_idleCPUs[cpu->_virtualCPUId] = true;
 }
 
 

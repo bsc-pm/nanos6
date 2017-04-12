@@ -12,13 +12,11 @@
 	#define HWLOC_NUMA_ALIAS HWLOC_OBJ_NUMANODE
 #endif
 
-std::map<int, MemoryPlace*> HardwareInfo::_memoryNodes;
-std::map<int, ComputePlace*> HardwareInfo::_computeNodes;
-long HardwareInfo::_totalCPUs;
+std::vector<MemoryPlace*> HardwareInfo::_memoryNodes;
+std::vector<ComputePlace*> HardwareInfo::_computeNodes;
 
 void HardwareInfo::initialize()
 {
-	_totalCPUs = 0;
 	//! Hardware discovery
 	hwloc_topology_t topology;
 	hwloc_topology_init(&topology);  // initialization
@@ -34,6 +32,7 @@ void HardwareInfo::initialize()
 	//! Check if HWLOC has found any NUMA node.
 	NUMAPlace * node = nullptr;
 	if(memNodesCount != 0){ 
+		_memoryNodes.resize(memNodesCount);
 		//! NUMA node info is available
 		for(int i = 0; i < memNodesCount; i++){ 
 			//! Create a MemoryPlace for each NUMA node.
@@ -45,7 +44,8 @@ void HardwareInfo::initialize()
 			_memoryNodes[node->getIndex()] = node;
 		}
 	} 
-	else { 
+	else {
+		_memoryNodes.resize(1);
 		//! There is no NUMA info. We assume we have a single MemoryPlace.
 		//! Create a MemoryPlace.
 		//! TODO: Index is 0 arbitrarily. Maybe a special index should be set.
@@ -56,20 +56,21 @@ void HardwareInfo::initialize()
 	}
 
 	//! Get (logical) cores of the machine
-	int coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU );
-	for(int i=0; i<coresCount; i++) {
+	int coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+	_computeNodes.resize(coresCount);
+	for(int i = 0; i < coresCount; i++) {
 		hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
 		hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
 		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
-		CPU * cpu = new CPU( /*systemCPUID*/ obj->logical_index, /*virtualCPUID*/ _totalCPUs++, NUMANodeId);
+		CPU * cpu = new CPU( /*systemCPUID*/ obj->os_index, /*virtualCPUID*/ obj->logical_index, NUMANodeId);
 		_computeNodes[obj->logical_index] = cpu;
 	}
 
 	//! Associate CPUs with NUMA nodes
-	for(MemoryNodes_t::iterator numaNode = _memoryNodes.begin(); numaNode != _memoryNodes.end(); ++numaNode) {
-		for(ComputeNodes_t::iterator cpu = _computeNodes.begin(); cpu != _computeNodes.end(); ++cpu) {
-			((NUMAPlace*) (numaNode->second))->addComputePlace(cpu->second);
-			cpu->second->addMemoryPlace(numaNode->second);
+	for(memory_nodes_t::iterator numaNode = _memoryNodes.begin(); numaNode != _memoryNodes.end(); ++numaNode) {
+		for(compute_nodes_t::iterator cpu = _computeNodes.begin(); cpu != _computeNodes.end(); ++cpu) {
+			((NUMAPlace*)*numaNode)->addComputePlace(*cpu);
+			(*cpu)->addMemoryPlace(*numaNode);
 		}
 	}
 
@@ -77,66 +78,16 @@ void HardwareInfo::initialize()
 	hwloc_topology_destroy(topology); // release resources
 }
 
-std::vector<int> HardwareInfo::getComputeNodeIndexes(){
-	//! Create a new vector with the correct size. This automatically initialize all the positions to a value.
-	std::vector<int> indexes(_computeNodes.size());
-
-	//! Double iterator needed to overwrite the already initialized positions of the vector.
-	int i = 0;
-	for(ComputeNodes_t::iterator it = _computeNodes.begin(); 
-		it != _computeNodes.end(); 
-		++it, ++i)
-	{
-		indexes[i] = it->first;
-	}
-
-	return indexes;
-}
-
-std::vector<int> HardwareInfo::getMemoryNodeIndexes(){
-	//! Create a new vector with the correct size. This automatically initialize all the positions to a value.
-	std::vector<int> indexes(_memoryNodes.size());
-
-	//! Double iterator needed to overwrite the already initialized positions of the vector.
-	int i = 0;
-	for(MemoryNodes_t::iterator it = _memoryNodes.begin(); 
-		it != _memoryNodes.end(); 
-		++it, ++i)
-	{
-		indexes[i] = it->first;
-	}
-
-	return indexes;
-}
-
 std::vector<ComputePlace*> HardwareInfo::getComputeNodes(){
 	//! Create a new vector with the correct size. This automatically initialize all the positions to a value.
-	std::vector<ComputePlace*> nodes(_computeNodes.size());
-
-	//! Double iterator needed to overwrite the already initialized positions of the vector.
-	int i = 0;
-	for(ComputeNodes_t::iterator it = _computeNodes.begin(); 
-		it != _computeNodes.end(); 
-		++it, ++i)
-	{
-		nodes[i] = it->second;
-	}
+	std::vector<ComputePlace*> nodes = _computeNodes;
 
 	return nodes;
 }
 
 std::vector<MemoryPlace*> HardwareInfo::getMemoryNodes(){
 	//! Create a new vector with the correct size. This automatically initialize all the positions to a value.
-	std::vector<MemoryPlace*> nodes(_memoryNodes.size());
-
-	//! Double iterator needed to overwrite the already initialized positions of the vector.
-	int i = 0;
-	for(MemoryNodes_t::iterator it = _memoryNodes.begin(); 
-		it != _memoryNodes.end(); 
-		++it, ++i)
-	{
-		nodes[i] = it->second;
-	}
+	std::vector<MemoryPlace*> nodes = _memoryNodes;
 
 	return nodes;
 }
