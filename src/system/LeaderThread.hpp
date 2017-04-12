@@ -23,8 +23,7 @@ public:
 	}
 	
 	//! \brief A loop that takes care of maintenance duties
-	//! The loop ends after notifyMainExit is called
-	void *body();
+	void body();
 	
 	static bool isExiting()
 	{

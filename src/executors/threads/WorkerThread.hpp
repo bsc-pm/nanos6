@@ -92,7 +92,7 @@ public:
 	}
 	
 	//! \brief code that the thread executes
-	virtual void *body();
+	virtual void body();
 	
 	
 	//! \brief turn on the flag to start the shutdown process

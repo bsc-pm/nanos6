@@ -85,7 +85,7 @@ public:
 	}
 	
 	//! \brief code that the thread executes
-	virtual void *body() = 0;
+	virtual void body() = 0;
 	
 	static inline KernelLevelThread *getCurrentKernelLevelThread()
 	{
@@ -104,7 +104,9 @@ void *kernel_level_thread_body_wrapper(void *parameter)
 	
 	KernelLevelThread::_currentKernelLevelThread = thread;
 	
-	return thread->body();
+	thread->body();
+	
+	return nullptr;
 }
 
 

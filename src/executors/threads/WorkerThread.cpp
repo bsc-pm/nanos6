@@ -46,7 +46,7 @@ void WorkerThread::initialize()
 }
 
 
-void *WorkerThread::body()
+void WorkerThread::body()
 {
 	initialize();
 	
@@ -127,8 +127,6 @@ void *WorkerThread::body()
 	}
 	
 	ThreadManager::threadShutdownSequence(this);
-	
-	return nullptr;
 }
 
 

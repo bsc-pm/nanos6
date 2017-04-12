@@ -43,7 +43,7 @@ LeaderThread::LeaderThread()
 }
 
 
-void *LeaderThread::body()
+void LeaderThread::body()
 {
 	Instrument::task_id_t instrumentationTaskId;
 	Instrument::compute_place_id_t instrumentationComputePlaceId;
@@ -65,7 +65,7 @@ void *LeaderThread::body()
 		Instrument::leaderThreadSpin(instrumentationContext.get());
 	}
 	
-	return nullptr;
+	return;
 }
 
 
