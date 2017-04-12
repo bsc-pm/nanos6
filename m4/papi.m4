@@ -52,6 +52,9 @@ AC_DEFUN([AC_CHECK_PAPI],
 					ac_use_papi=no
 				]
 			)
+			
+			CPPFLAGS="${ac_save_CPPFLAGS}"
+			LIBS="${ac_save_LIBS}"
 		fi
 		
 		AM_CONDITIONAL(HAVE_PAPI, test x"${ac_use_papi}" = x"yes")
