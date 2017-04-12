@@ -1,0 +1,10 @@
+#ifndef CPU_THREADING_MODEL_DATA_HPP
+#define CPU_THREADING_MODEL_DATA_HPP
+
+
+struct CPUThreadingModelData
+{
+};
+
+
+#endif // CPU_THREADING_MODEL_DATA_HPP

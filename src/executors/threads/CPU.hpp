@@ -5,6 +5,7 @@
 #define _GNU_SOURCE
 #endif
 
+#include "CPUThreadingModelData.hpp"
 #include "hardware/places/CPUPlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 
@@ -56,6 +57,9 @@ struct CPU: public CPUPlace {
 	//! \brief a thread responsible for shutting down the rest of the threads and itself
 	std::atomic<WorkerThread *> _shutdownControlerThread;
 	
+	//! \brief Per-CPU data that is specific to the threading model
+	CPUThreadingModelData _threadingModelData;
+	
 	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
 	
 	// Not copyable
@@ -70,6 +74,16 @@ struct CPU: public CPUPlace {
 	{
 		activation_status_t expectedStatus = uninitialized_status;
 		_activationStatus.compare_exchange_strong(expectedStatus, starting_status);
+	}
+	
+	CPUThreadingModelData const &getThreadingModelData() const
+	{
+		return _threadingModelData;
+	}
+	
+	CPUThreadingModelData &getThreadingModelData()
+	{
+		return _threadingModelData;
 	}
 	
 };

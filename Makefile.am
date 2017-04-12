@@ -267,6 +267,7 @@ common_sources = \
 	src/executors/threads/ThreadManagerPolicyInterface.hpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
+	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/hardware/HardwareInfo.hpp \
 	src/hardware/HardwareInfo.cpp \
