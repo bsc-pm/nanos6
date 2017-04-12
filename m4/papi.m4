@@ -1,7 +1,8 @@
 AC_DEFUN([AC_CHECK_PAPI],
 	[
-		AC_ARG_WITH([papi],
-			[  --with-papi=[prefix]   set the PAPI installation to be used],
+		AC_ARG_WITH(
+			[papi],
+			[AS_HELP_STRING([--with-papi=prefix], [specify the installation prefix of PAPI])],
 			[ ac_cv_use_papi_prefix=$withval ],
 			[ ac_cv_use_papi_prefix="" ]
 		)

@@ -26,12 +26,7 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 	[
 		AC_ARG_WITH(
 			[git],
-			[
-				AS_HELP_STRING(
-					[--with-git=prefix],
-					[specify the installation prefix of the git content tracker]
-				)
-			],
+			[AS_HELP_STRING([--with-git=prefix], [specify the installation prefix of the git content tracker])],
 			[ac_use_git_prefix="${withval}"],
 			[ac_use_git_prefix=""]
 		)
