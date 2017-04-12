@@ -12,6 +12,7 @@ AC_DEFUN([AC_CHECK_PAPI],
 			AC_MSG_RESULT([${ac_cv_use_papi_prefix}])
 			papi_LIBS="-L${ac_cv_use_papi_prefix}/lib"
 			papi_CPPFLAGS="-I$ac_cv_use_papi_prefix/include"
+			ac_use_papi=yes
 		else
 			PKG_CHECK_MODULES(
 				[papi],
