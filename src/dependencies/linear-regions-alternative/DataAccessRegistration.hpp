@@ -94,7 +94,7 @@ private:
 	// NOTE: locking should be handled from the outside
 	static inline DataAccess *duplicateDataAccess(
 		DataAccess const &toBeDuplicated,
-		TaskDataAccesses &accessStructures,
+		__attribute__((unused)) TaskDataAccesses &accessStructures,
 		bool updateTaskBlockingCount
 	) {
 		assert(toBeDuplicated._originator != nullptr);
@@ -124,7 +124,8 @@ private:
 	}
 	
 	static inline void removeDataAccess(
-		Task *task, DataAccess *dataAccess,
+		__attribute__((unused)) Task *task,
+		DataAccess *dataAccess,
 		CPUDependencyData &cpuDependencyData
 	) {
 		assert(task != nullptr);
@@ -296,7 +297,8 @@ private:
 	
 	
 	static inline void processRemovedRangesFromBottomMap(
-		Task *task, Task *parent,
+		__attribute__((unused)) Task *task,
+		__attribute__((unused)) Task *parent,
 		TaskDataAccesses &parentAccessStructures,
 		CPUDependencyData &cpuDependencyData
 	) {
@@ -504,8 +506,8 @@ private:
 	}
 	
 	static inline void evaluateSatisfiability(
-		Task *previous, DataAccess *previousAccess,
-		Task *next, DataAccess *nextAccess,
+		__attribute__((unused)) Task *previous, DataAccess *previousAccess,
+		__attribute__((unused)) Task *next, DataAccess *nextAccess,
 		bool &readSatisfiability, bool &writeSatisfiability,
 		bool &topmostSatisfiability,
 		bool parentalRelation = false
@@ -576,10 +578,12 @@ private:
 				DataAccess *nextAccess = &(*position);
 				assert(nextAccess != nullptr);
 				
+#ifndef NDEBUG
+				bool wasTopmostSatisfied = nextAccess->topmostSatisfied();
+#endif
 				bool wasSatisfied = nextAccess->satisfied();
 				bool wasReadSatisfied = nextAccess->readSatisfied();
 				bool wasWriteSatisfied = nextAccess->writeSatisfied();
-				bool wasTopmostSatisfied = nextAccess->topmostSatisfied();
 				bool readSatisfiability = false;
 				bool writeSatisfiability = false;
 				bool topmostSatisfiability = false;
@@ -760,7 +764,8 @@ private:
 	
 	
 	static inline void linkBottomMapAccessesToNext(
-		Task *task, TaskDataAccesses &accessStructures,
+		__attribute__((unused)) Task *task,
+		TaskDataAccesses &accessStructures,
 		DataAccessRange range, Task *next,
 		CPUDependencyData &cpuDependencyData
 	) {

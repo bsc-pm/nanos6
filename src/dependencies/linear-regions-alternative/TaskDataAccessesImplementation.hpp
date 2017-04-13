@@ -15,17 +15,19 @@ inline TaskDataAccesses::~TaskDataAccesses()
 {
 	assert(!hasBeenDeleted());
 	
+#ifndef NDEBUG
 	Task *task = boost::intrusive::get_parent_from_member<Task>(this, &Task::_dataAccesses);
 	assert(task != nullptr);
 	assert(&task->getDataAccesses() == this);
+#endif
 	
 	assert(_removalCountdown == 0);
 	assert(_accesses.empty());
 	assert(_subaccessBottomMap.empty());
 	
-	#ifndef NDEBUG
+#ifndef NDEBUG
 	hasBeenDeleted() = true;
-	#endif
+#endif
 }
 
 

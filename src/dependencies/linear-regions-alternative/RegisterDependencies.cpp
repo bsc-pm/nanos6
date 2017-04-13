@@ -72,14 +72,17 @@ void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length
 }
 
 void nanos_register_region_reduction_depinfo1(
-		int reduction_operation, int reduction_index,
+		int reduction_operation,
+		__attribute__((unused)) int reduction_index,
 		void *handler,
-		int symbol_index,
-		char const *region_text,
+		__attribute__((unused)) int symbol_index,
+		__attribute__((unused)) char const *region_text,
 		void *base_address,
-		long dim1size, long dim1start, long dim1end)
-{
-	FatalErrorHandler::failIf(dim1size > sizeof(long long), "Array reductions not supported");
+		long dim1size,
+		__attribute__((unused)) long dim1start,
+		__attribute__((unused)) long dim1end
+) {
+	FatalErrorHandler::failIf((size_t) dim1size > sizeof(long long), "Array reductions not supported");
 
 	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, reduction_operation);
 }
