@@ -24,14 +24,36 @@ public:
 
 	// ComputeNodes related methods
 	// When new compute places are added, a new parameter type could be added
-	static inline size_t getComputeNodeCount(void) { return _computeNodes.size(); }
-	static inline ComputePlace* getComputeNode(int index) { return _computeNodes[index]; }
-	static std::vector<ComputePlace*> getComputeNodes();
+	static inline size_t getComputeNodeCount(void)
+	{
+		return _computeNodes.size();
+	}
+
+	static inline ComputePlace* getComputeNode(int index)
+	{
+		return _computeNodes[index];
+	}
+
+	static inline std::vector<ComputePlace*> const &getComputeNodes()
+	{
+		return _computeNodes;
+	}
 
 	// MemoryNodes related methods
-	static inline size_t getMemoryNodeCount(void) { return _memoryNodes.size(); }
-	static inline MemoryPlace* getMemoryNode(int index) { return _memoryNodes[index]; }
-	static std::vector<MemoryPlace*> getMemoryNodes();
+	static inline size_t getMemoryNodeCount(void)
+	{
+		return _memoryNodes.size();
+	}
+
+	static inline MemoryPlace* getMemoryNode(int index)
+	{
+		return _memoryNodes[index];
+	}
+
+	static inline std::vector<MemoryPlace*> const &getMemoryNodes()
+	{
+		return _memoryNodes;
+	}
 };
 
 #endif // HARDWARE_INFO_HPP

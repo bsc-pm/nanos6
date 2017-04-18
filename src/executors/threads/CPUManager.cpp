@@ -22,7 +22,7 @@ void CPUManager::preinitialize()
 	FatalErrorHandler::handle(rc, " when retrieving the affinity of the process");
 
 	// Get CPU objects that can run a thread
-	std::vector<ComputePlace *> cpus = HardwareInfo::getComputeNodes();
+	std::vector<ComputePlace *> const &cpus = HardwareInfo::getComputeNodes();
 	_cpus.resize(cpus.size());
 	for (size_t i = 0; i < cpus.size(); ++i) {
 		if (CPU_ISSET(((CPU *)cpus[i])->_systemCPUId, &processCPUMask)) {

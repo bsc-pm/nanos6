@@ -77,17 +77,3 @@ void HardwareInfo::initialize()
 	//other work				
 	hwloc_topology_destroy(topology); // release resources
 }
-
-std::vector<ComputePlace*> HardwareInfo::getComputeNodes(){
-	//! Create a new vector with the correct size. This automatically initialize all the positions to a value.
-	std::vector<ComputePlace*> nodes = _computeNodes;
-
-	return nodes;
-}
-
-std::vector<MemoryPlace*> HardwareInfo::getMemoryNodes(){
-	//! Create a new vector with the correct size. This automatically initialize all the positions to a value.
-	std::vector<MemoryPlace*> nodes = _memoryNodes;
-
-	return nodes;
-}
