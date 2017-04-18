@@ -21,7 +21,7 @@ private:
 	static bool _collapsable;
 
 	// Get the CPU scheduler
-	static inline SchedulerInterface *createCPUScheduler(std::string schedulerName)
+	static inline SchedulerInterface *createCPUScheduler(std::string const &schedulerName)
 	{
 		if (schedulerName == "default") {
 			return new DefaultScheduler();
