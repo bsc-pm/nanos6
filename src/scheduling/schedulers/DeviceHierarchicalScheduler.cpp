@@ -49,8 +49,3 @@ void DeviceHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace
 {
 	_CPUScheduler->enableComputePlace(hardwarePlace);
 }
-
-bool DeviceHierarchicalScheduler::canBeRemoved()
-{
-    return true;
-}

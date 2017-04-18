@@ -13,12 +13,13 @@ SchedulerInterface *SchedulerGenerator::createHostScheduler()
 	} else if (schedulerName.getValue() == "collapsable") {
 		_collapsable = true;
 		
-		SchedulerInterface *scheduler = new HostHierarchicalScheduler();
+		SchedulerInterface *scheduler = nullptr;
 		
 		// Check if this scheduler level can be collapsed
-		if (scheduler->canBeRemoved()) {
-			delete scheduler;
+		if (HostHierarchicalScheduler::canBeCollapsed()) {
 			scheduler = createNUMAScheduler();
+		} else {
+			scheduler = new HostHierarchicalScheduler();
 		}
 
 		return scheduler;

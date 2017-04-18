@@ -48,8 +48,3 @@ void HostHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 {
 	_NUMAScheduler->enableComputePlace(hardwarePlace);
 }
-
-bool HostHierarchicalScheduler::canBeRemoved()
-{
-    return true;
-}

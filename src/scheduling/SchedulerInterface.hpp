@@ -101,11 +101,6 @@ public:
 	//! 
 	//! This method has a default implementation that matches the default implementation of requestPolling.
 	virtual bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
-
-	//! \brief Check if this scheduler is not doing anything useful
-	//! 
-	//! This may happen, for example if this scheduler is part of a hierarchy, but it only has one child.
-	virtual bool canBeRemoved();
 };
 
 

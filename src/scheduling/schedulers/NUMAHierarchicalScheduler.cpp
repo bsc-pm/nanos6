@@ -152,8 +152,3 @@ void NUMAHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 	_cpuMask[numa_node][((CPU *)hardwarePlace)->_systemCPUId] = true;
 	_NUMANodeScheduler[numa_node]->enableComputePlace(hardwarePlace);
 }
-
-bool NUMAHierarchicalScheduler::canBeRemoved()
-{
-	return (HardwareInfo::getMemoryNodeCount() == 1);
-}

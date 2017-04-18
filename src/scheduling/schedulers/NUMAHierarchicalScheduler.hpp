@@ -5,6 +5,8 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include "hardware/HardwareInfo.hpp"
+
 #include "../SchedulerInterface.hpp"
 
 
@@ -37,7 +39,10 @@ public:
 	
 	void enableComputePlace(ComputePlace *hardwarePlace);
 
-    bool canBeRemoved();
+	static inline bool canBeCollapsed()
+	{
+		return (HardwareInfo::getMemoryNodeCount() == 1);
+	}
 };
 
 

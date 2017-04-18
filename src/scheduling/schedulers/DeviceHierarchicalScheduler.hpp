@@ -26,7 +26,10 @@ public:
 	
 	void enableComputePlace(ComputePlace *hardwarePlace);
 
-    bool canBeRemoved();
+	static inline bool canBeCollapsed()
+	{
+		return true;
+	}
 };
 
 

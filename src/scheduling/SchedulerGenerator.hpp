@@ -49,12 +49,13 @@ public:
 	// Get the scheduler for the NUMA nodes
 	static inline SchedulerInterface *createNUMAScheduler()
 	{
-		SchedulerInterface *scheduler = new NUMAHierarchicalScheduler();
+		SchedulerInterface *scheduler = nullptr;
 		
 		// Check if this scheduler level can be collapsed
-		if (_collapsable && scheduler->canBeRemoved()) {
-			delete scheduler;
+		if (_collapsable && NUMAHierarchicalScheduler::canBeCollapsed()) {
 			scheduler = createNUMANodeScheduler();
+		} else {
+			scheduler = new NUMAHierarchicalScheduler();
 		}
 
 		return scheduler;
@@ -62,12 +63,13 @@ public:
 	
 	static inline SchedulerInterface *createNUMANodeScheduler()
 	{
-		SchedulerInterface *scheduler = new DeviceHierarchicalScheduler();
+		SchedulerInterface *scheduler = nullptr;
 		
 		// Check if this scheduler level can be collapsed
-		if (_collapsable && scheduler->canBeRemoved()) {
-			delete scheduler;
+		if (_collapsable && DeviceHierarchicalScheduler::canBeCollapsed()) {
 			scheduler = createDeviceScheduler();
+		} else {
+			scheduler = new DeviceHierarchicalScheduler();
 		}
 
 		return scheduler;
