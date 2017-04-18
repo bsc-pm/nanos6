@@ -16,15 +16,15 @@ NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 	_readyTasks(HardwareInfo::getMemoryNodeCount())
 {
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
-	std::vector<ComputePlace *> computeNodes = HardwareInfo::getComputeNodes();
+	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
 
 	for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
 		_readyTasks[numa] = 0;
-		_cpuMask[numa].resize(computeNodes.size());
+		_cpuMask[numa].resize(cpus.size());
 
-		for (ComputePlace *place : computeNodes) {
-			if (((CPU *)place)->_NUMANodeId == numa) {
-				_cpuMask[numa][((CPU *)place)->_systemCPUId] = true;
+		for (CPU *cpu : cpus) {
+			if (cpu != nullptr && cpu->_NUMANodeId == numa) {
+				_cpuMask[numa][cpu->_systemCPUId] = true;
 			}
 		}
 	}
