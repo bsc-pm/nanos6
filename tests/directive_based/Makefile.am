@@ -102,11 +102,17 @@ critical_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 critical_test_LDFLAGS = $(test_common_ldflags)
 
 dep_nonest_debug_test_SOURCES = dependencies/dep-nonest.cpp
+if HAVE_CONCURRENT_SUPPORT
+dep_nonest_debug_test_CPPFLAGS = -DHAVE_CONCURRENT_SUPPORT
+endif
 dep_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dep_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 dep_nonest_test_SOURCES = dependencies/dep-nonest.cpp
 dep_nonest_test_CPPFLAGS = -DNDEBUG
+if HAVE_CONCURRENT_SUPPORT
+dep_nonest_test_CPPFLAGS += -DHAVE_CONCURRENT_SUPPORT
+endif
 dep_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 dep_nonest_test_LDFLAGS = $(test_common_ldflags)
 

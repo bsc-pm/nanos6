@@ -104,6 +104,7 @@ AC_MSG_CHECKING([the type of dependencies to handle])
 case x"${ac_with_dependencies}" in
 	x"discrete")
 		AC_MSG_RESULT([${ac_with_dependencies}])
+		ac_supports_concurrent=yes
 		ac_supports_reductions=yes
 		;;
 	x"linear-regions-unfragmented")
@@ -114,6 +115,7 @@ case x"${ac_with_dependencies}" in
 		;;
 	x"linear-regions-alternative")
 		AC_MSG_RESULT([${ac_with_dependencies}])
+		ac_supports_concurrent=yes
 		ac_supports_reductions=yes
 		;;
 	*)
@@ -125,6 +127,7 @@ AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_depe
 AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-fragmented"])
 AM_CONDITIONAL([LINEAR_REGION_ALTERNATIVE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-alternative"])
 AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
+AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [test x"${ac_supports_concurrent}" = x"yes"])
 AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [test x"${ac_supports_reductions}" = x"yes"])
 
 

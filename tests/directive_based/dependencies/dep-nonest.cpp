@@ -543,6 +543,7 @@ int main(int argc, char **argv)
 	// Upgraded access form 3
 	TaskVerifier upgradedForm3(TaskVerifier::UPGRADE3, &var1); verifiers.push_back(&upgradedForm3); _constraintCalculator.handleWriter(&upgradedForm3);
 	
+#ifdef HAVE_CONCURRENT_SUPPORT
 	// NCPUS concurrent
 	std::atomic_int numConcurrents1(0);
 	for (long i=0; i < ncpus; i++) {
@@ -596,6 +597,7 @@ int main(int argc, char **argv)
 	
 	// 1 writer
 	TaskVerifier fifthWriter(TaskVerifier::WRITE, &var1); verifiers.push_back(&fifthWriter); _constraintCalculator.handleWriter(&fifthWriter);
+#endif
 	
 	// Forced flush
 	_constraintCalculator.flush();
