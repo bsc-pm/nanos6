@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
-AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/src/instrument/support -I$(srcdir)/api -I.
+AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 
 SUBDIRS = . tests/directive_based
 
@@ -291,7 +291,6 @@ common_sources = \
 	src/instrument/api/InstrumentTaskWait.hpp \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.cpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/ConditionVariable.hpp \
@@ -519,7 +518,8 @@ instrument_graph_sources = \
 	src/instrument/graph/PathLength.cpp \
 	src/instrument/graph/PathLength.hpp \
 	src/instrument/graph/SortAccessGroups.cpp \
-	src/instrument/graph/SortAccessGroups.hpp
+	src/instrument/graph/SortAccessGroups.hpp \
+	src/instrument/support/InstrumentInstrumentationContext.cpp
 
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentAddTask.hpp \
@@ -531,6 +531,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentComputePlaceManagement.hpp \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
+	src/instrument/profile/InstrumentInstrumentationContext.hpp \
 	src/instrument/profile/InstrumentLeaderThread.hpp \
 	src/instrument/profile/InstrumentLogMessage.hpp \
 	src/instrument/profile/InstrumentProfile.cpp \
@@ -542,7 +543,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentThreadId.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp
-
+	
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentAddTask.hpp \
@@ -565,7 +566,8 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentThreadId.hpp \
 	src/instrument/stats/InstrumentThreadManagement.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
-	src/instrument/stats/Timer.hpp
+	src/instrument/stats/Timer.hpp \
+	src/instrument/support/InstrumentInstrumentationContext.cpp
 
 instrument_verbose_sources = \
 	$(instrument_generic_ids_sources) \
@@ -598,7 +600,8 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentUserMutex.cpp \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
 	src/instrument/verbose/InstrumentVerbose.cpp \
-	src/instrument/verbose/InstrumentVerbose.hpp
+	src/instrument/verbose/InstrumentVerbose.hpp \
+	src/instrument/support/InstrumentInstrumentationContext.cpp
 
 instrument_extrae_sources = \
 	$(instrument_generic_ids_sources) \
@@ -620,7 +623,8 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentTaskWait.hpp \
 	src/instrument/extrae/InstrumentThreadId.hpp \
 	src/instrument/extrae/InstrumentThreadManagement.hpp \
-	src/instrument/extrae/InstrumentUserMutex.hpp
+	src/instrument/extrae/InstrumentUserMutex.hpp \
+	src/instrument/support/InstrumentInstrumentationContext.cpp
 
 
 null_common_sources = \
@@ -663,13 +667,13 @@ libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources) $(univers
 libnanos6_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 nodist_libnanos6_debug_la_SOURCES = $(nodist_common_sources)
 
-libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph
+libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
 libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
 nodist_libnanos6_graph_la_SOURCES = $(nodist_common_sources)
 
-libnanos6_graph_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph
+libnanos6_graph_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
 libnanos6_graph_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_debug_la_SOURCES = $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
@@ -681,27 +685,27 @@ libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $
 libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
 nodist_libnanos6_profile_la_SOURCES = $(nodist_common_sources)
 
-libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats
+libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_stats_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources)
 libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
 nodist_libnanos6_stats_la_SOURCES = $(nodist_common_sources)
 
 if HAVE_PAPI
-libnanos6_stats_papi_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats $(papi_CPPFLAGS) -DHAVE_PAPI
+libnanos6_stats_papi_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support $(papi_CPPFLAGS) -DHAVE_PAPI
 libnanos6_stats_papi_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_stats_papi_la_SOURCES = $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources)
 libnanos6_stats_papi_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
 nodist_libnanos6_stats_papi_la_SOURCES = $(nodist_common_sources)
 endif
 
-libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
+libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_verbose_la_SOURCES = $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
 libnanos6_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 nodist_libnanos6_verbose_la_SOURCES = $(nodist_common_sources)
 
-libnanos6_verbose_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose
+libnanos6_verbose_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_verbose_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_verbose_debug_la_SOURCES = $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
 libnanos6_verbose_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
@@ -720,7 +724,7 @@ libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
 libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
 
 if HAVE_EXTRAE
-libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae @extrae_CPPFLAGS@
+libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
 libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
 libnanos6_extrae_la_LDFLAGS = @extrae_LDFLAGS@ @extrae_LIBS@ $(common_libnanos6_ldflags)
