@@ -39,7 +39,7 @@ public:
 	}
 	
 	
-	//! \brief Wait on the contition variable until signaled
+	//! \brief Wait on the condition variable until signaled
 	void wait()
 	{
 		#ifndef NDEBUG
