@@ -33,7 +33,7 @@ Task *ImmediateSuccessorScheduler::getReplacementTask(__attribute__((unused)) CP
 }
 
 
-ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
+ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
@@ -46,7 +46,11 @@ ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlac
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_front(task);
 	
-	return CPUManager::getIdleCPU();
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
+	} else {
+		return nullptr;
+	}
 }
 
 

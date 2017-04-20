@@ -32,7 +32,7 @@ public:
 	FIFOImmediateSuccessorWithPollingScheduler();
 	~FIFOImmediateSuccessorWithPollingScheduler();
 	
-	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace);
 	

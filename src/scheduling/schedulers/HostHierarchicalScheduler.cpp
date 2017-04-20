@@ -16,9 +16,9 @@ HostHierarchicalScheduler::~HostHierarchicalScheduler()
 }
 
 
-ComputePlace * HostHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
+ComputePlace * HostHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint, bool doGetIdle)
 {
-	return _NUMAScheduler->addReadyTask(task, hardwarePlace, hint);
+	return _NUMAScheduler->addReadyTask(task, hardwarePlace, hint, doGetIdle);
 }
 
 

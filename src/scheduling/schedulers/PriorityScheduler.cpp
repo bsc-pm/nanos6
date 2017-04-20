@@ -32,7 +32,7 @@ PriorityScheduler::~PriorityScheduler()
 }
 
 
-ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
+ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	assert(task != nullptr);
 	
@@ -94,7 +94,11 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 	_readyTasks.push(task);
 	
 	// Attempt to get a CPU to resume the task
-	return CPUManager::getIdleCPU();
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
+	} else {
+		return nullptr;
+	}
 }
 
 

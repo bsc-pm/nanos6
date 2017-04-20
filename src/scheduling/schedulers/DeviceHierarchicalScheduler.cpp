@@ -17,9 +17,9 @@ DeviceHierarchicalScheduler::~DeviceHierarchicalScheduler()
 }
 
 
-ComputePlace * DeviceHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
+ComputePlace * DeviceHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint, bool doGetIdle)
 {
-	return _CPUScheduler->addReadyTask(task, hardwarePlace, hint);
+	return _CPUScheduler->addReadyTask(task, hardwarePlace, hint, doGetIdle);
 }
 
 

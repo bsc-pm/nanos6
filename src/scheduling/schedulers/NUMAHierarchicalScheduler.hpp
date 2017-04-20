@@ -27,7 +27,7 @@ public:
 	NUMAHierarchicalScheduler();
 	~NUMAHierarchicalScheduler();
 
-	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint, bool doGetIdle = true);
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);
 	

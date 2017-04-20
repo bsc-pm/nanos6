@@ -34,7 +34,7 @@ Task *FIFOImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute
 }
 
 
-ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
+ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
@@ -88,7 +88,11 @@ ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *ta
 	_readyTasks.push_back(task);
 	
 	// Attempt to get a CPU to resume the task
-	return CPUManager::getIdleCPU();
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
+	} else {
+		return nullptr;
+	}
 }
 
 

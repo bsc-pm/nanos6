@@ -45,7 +45,7 @@ public:
 	//! \param[in] hint a hint about the relation of the task to the current task
 	//!
 	//! \returns an idle ComputePlace that is to be resumed or nullptr
-	virtual ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint) = 0;
+	virtual ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true) = 0;
 	
 	//! \brief Add back a task that was blocked but that is now unblocked
 	//!

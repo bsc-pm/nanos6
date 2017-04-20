@@ -42,7 +42,7 @@ NUMAHierarchicalScheduler::~NUMAHierarchicalScheduler()
 }
 
 
-ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint)
+ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
 	
@@ -59,9 +59,12 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 		}
 	}
 
-	if (min_idx != -1) {
-		_readyTasks[min_idx] += 1;
-		return _NUMANodeScheduler[min_idx]->addReadyTask(task, hardwarePlace, hint);
+	assert(min_idx != -1);
+
+	_readyTasks[min_idx] += 1;
+	_NUMANodeScheduler[min_idx]->addReadyTask(task, hardwarePlace, hint, false);
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}

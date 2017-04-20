@@ -33,12 +33,16 @@ Task *FIFOScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlac
 }
 
 
-ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint)
+ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint, bool doGetIdle)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_back(task);
 	
-	return CPUManager::getIdleCPU();
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
+	} else {
+		return nullptr;
+	}
 }
 
 

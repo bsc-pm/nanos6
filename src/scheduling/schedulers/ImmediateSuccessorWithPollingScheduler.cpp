@@ -34,7 +34,7 @@ Task *ImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute__((
 }
 
 
-ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
+ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
@@ -88,7 +88,11 @@ ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, 
 	_readyTasks.push_front(task);
 	
 	// Attempt to get a CPU to resume the task
-	return CPUManager::getIdleCPU();
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
+	} else {
+		return nullptr;
+	}
 }
 
 
