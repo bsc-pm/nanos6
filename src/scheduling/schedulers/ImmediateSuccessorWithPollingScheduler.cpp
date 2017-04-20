@@ -1,4 +1,5 @@
 #include "ImmediateSuccessorWithPollingScheduler.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
@@ -30,25 +31,6 @@ Task *ImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute__((
 	} else {
 		return nullptr;
 	}
-}
-
-
-void ImmediateSuccessorWithPollingScheduler::cpuBecomesIdle(CPU *cpu)
-{
-	_idleCPUs.push_front(cpu);
-}
-
-
-CPU *ImmediateSuccessorWithPollingScheduler::getIdleCPU()
-{
-	if (!_idleCPUs.empty()) {
-		CPU *idleCPU = _idleCPUs.front();
-		_idleCPUs.pop_front();
-		
-		return idleCPU;
-	}
-	
-	return nullptr;
 }
 
 
@@ -106,7 +88,7 @@ ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, 
 	_readyTasks.push_front(task);
 	
 	// Attempt to get a CPU to resume the task
-	return getIdleCPU();
+	return CPUManager::getIdleCPU();
 }
 
 
@@ -186,7 +168,7 @@ Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *compute
 	}
 	
 	// 4. Or mark the CPU as idle
-	cpuBecomesIdle((CPU *) computePlace);
+	CPUManager::cpuBecomesIdle((CPU *) computePlace);
 	
 	return nullptr;
 }
@@ -196,7 +178,7 @@ ComputePlace *ImmediateSuccessorWithPollingScheduler::getIdleComputePlace(bool f
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
-		return getIdleCPU();
+		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}
@@ -265,7 +247,7 @@ bool ImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *comput
 		return true;
 	} else {
 		// 5.b. There is already another thread polling. Therefore, mark the CPU as idle
-		cpuBecomesIdle((CPU *) computePlace);
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
 		
 		return false;
 	}
@@ -276,7 +258,7 @@ bool ImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *comput
 {
 	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
-		cpuBecomesIdle((CPU *) computePlace);
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
 		return true;
 	} else {
 		return false;

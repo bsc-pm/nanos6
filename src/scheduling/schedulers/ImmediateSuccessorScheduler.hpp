@@ -19,11 +19,7 @@ class ImmediateSuccessorScheduler: public SchedulerInterface {
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
-	std::deque<CPU *> _idleCPUs;
-	
-	inline CPU *getIdleCPU();
 	inline Task *getReplacementTask(CPU *computePlace);
-	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	ImmediateSuccessorScheduler();

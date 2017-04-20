@@ -22,14 +22,10 @@ class ImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
-	std::deque<CPU *> _idleCPUs;
-	
 	std::atomic<polling_slot_t *> _pollingSlot;
 	
 	
-	inline CPU *getIdleCPU();
 	inline Task *getReplacementTask(CPU *computePlace);
-	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	ImmediateSuccessorWithPollingScheduler();

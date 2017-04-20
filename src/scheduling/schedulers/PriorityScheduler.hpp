@@ -34,13 +34,8 @@ class PriorityScheduler: public SchedulerInterface {
 	task_queue_t _readyTasks;
 	task_queue_t _unblockedTasks;
 	
-	std::deque<CPU *> _idleCPUs;
-	
 	std::atomic<polling_slot_t *> _pollingSlot;
 	
-	
-	inline CPU *getIdleCPU();
-	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	PriorityScheduler();

@@ -1,4 +1,5 @@
 #include "FIFOScheduler.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
@@ -32,31 +33,12 @@ Task *FIFOScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlac
 }
 
 
-void FIFOScheduler::cpuBecomesIdle(CPU *cpu)
-{
-	_idleCPUs.push_front(cpu);
-}
-
-
-CPU *FIFOScheduler::getIdleCPU()
-{
-	if (!_idleCPUs.empty()) {
-		CPU *idleCPU = _idleCPUs.front();
-		_idleCPUs.pop_front();
-		
-		return idleCPU;
-	}
-	
-	return nullptr;
-}
-
-
 ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_back(task);
 	
-	return getIdleCPU();
+	return CPUManager::getIdleCPU();
 }
 
 
@@ -90,7 +72,7 @@ Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computeP
 	}
 	
 	// 3. Or mark the CPU as idle
-	cpuBecomesIdle((CPU *) computePlace);
+	CPUManager::cpuBecomesIdle((CPU *) computePlace);
 	
 	return nullptr;
 }
@@ -100,7 +82,7 @@ ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
-		return getIdleCPU();
+		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}

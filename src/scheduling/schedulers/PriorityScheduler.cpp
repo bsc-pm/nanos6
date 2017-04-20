@@ -1,4 +1,5 @@
 #include "PriorityScheduler.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
@@ -28,25 +29,6 @@ PriorityScheduler::PriorityScheduler()
 
 PriorityScheduler::~PriorityScheduler()
 {
-}
-
-
-void PriorityScheduler::cpuBecomesIdle(CPU *cpu)
-{
-	_idleCPUs.push_front(cpu);
-}
-
-
-CPU *PriorityScheduler::getIdleCPU()
-{
-	if (!_idleCPUs.empty()) {
-		CPU *idleCPU = _idleCPUs.front();
-		_idleCPUs.pop_front();
-		
-		return idleCPU;
-	}
-	
-	return nullptr;
 }
 
 
@@ -112,7 +94,7 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 	_readyTasks.push(task);
 	
 	// Attempt to get a CPU to resume the task
-	return getIdleCPU();
+	return CPUManager::getIdleCPU();
 }
 
 
@@ -252,7 +234,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 	assert(bestIs == non_existant);
 	
 	// 4. Or mark the CPU as idle
-	cpuBecomesIdle((CPU *) computePlace);
+	CPUManager::cpuBecomesIdle((CPU *) computePlace);
 	
 	return nullptr;
 }
@@ -262,7 +244,7 @@ ComputePlace *PriorityScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
-		return getIdleCPU();
+		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}
@@ -391,7 +373,7 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 		return true;
 	} else {
 		// 5.b. There is already another thread polling. Therefore, mark the CPU as idle
-		cpuBecomesIdle((CPU *) computePlace);
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
 		
 		return false;
 	}
@@ -402,7 +384,7 @@ bool PriorityScheduler::releasePolling(ComputePlace *computePlace, polling_slot_
 {
 	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
-		cpuBecomesIdle((CPU *) computePlace);
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
 		return true;
 	} else {
 		return false;
