@@ -29,9 +29,9 @@ void DeviceHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, Compute
 }
 
 
-Task *DeviceHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask)
+Task *DeviceHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask, bool canMarkAsIdle)
 {
-	return _CPUScheduler->getReadyTask(hardwarePlace, currentTask);
+	return _CPUScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle);
 }
 
 

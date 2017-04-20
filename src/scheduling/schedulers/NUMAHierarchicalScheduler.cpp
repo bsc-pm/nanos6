@@ -81,15 +81,15 @@ void NUMAHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePl
 }
 
 
-Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask)
+Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, bool canMarkAsIdle)
 {
-	size_t numa_node = ((CPU *)hardwarePlace)->_NUMANodeId;
+	size_t numa_node = ((CPU *)computePlace)->_NUMANodeId;
 	Task *task = nullptr;
 
-	assert(_cpuMask[numa_node][((CPU *)hardwarePlace)->_systemCPUId]);
+	assert(_cpuMask[numa_node][((CPU *)computePlace)->_systemCPUId]);
 	
 	if (_readyTasks[numa_node] > 0) {
-		task = _NUMANodeScheduler[numa_node]->getReadyTask(hardwarePlace, currentTask);
+		task = _NUMANodeScheduler[numa_node]->getReadyTask(computePlace, currentTask, false);
 
 		if (task != nullptr) {
 			_readyTasks[numa_node] -= 1;
@@ -106,12 +106,16 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task 
 			}
 		}
 		
-		task = _NUMANodeScheduler[max_idx]->getReadyTask(hardwarePlace, currentTask);
+		task = _NUMANodeScheduler[max_idx]->getReadyTask(computePlace, currentTask, false);
 		if (task != nullptr) {
 			_readyTasks[max_idx] -= 1;
 		}
 	}
 
+	if (canMarkAsIdle && task == nullptr) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
+	
 	return task;
 }
 

@@ -57,7 +57,7 @@ void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, __attri
 }
 
 
-Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
+Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	
@@ -87,7 +87,9 @@ Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *computePlace, __at
 	}
 	
 	// 4. Or mark the CPU as idle
-	CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	if (canMarkAsIdle) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
 	
 	return nullptr;
 }

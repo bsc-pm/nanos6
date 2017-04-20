@@ -49,7 +49,7 @@ void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused
 }
 
 
-Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
+Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	
@@ -72,7 +72,9 @@ Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computeP
 	}
 	
 	// 3. Or mark the CPU as idle
-	CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	if (canMarkAsIdle) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
 	
 	return nullptr;
 }

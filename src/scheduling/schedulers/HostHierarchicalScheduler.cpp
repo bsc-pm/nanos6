@@ -28,9 +28,9 @@ void HostHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePl
 }
 
 
-Task *HostHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask)
+Task *HostHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask, bool canMarkAsIdle)
 {
-	return _NUMAScheduler->getReadyTask(hardwarePlace, currentTask);
+	return _NUMAScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle);
 }
 
 

@@ -57,9 +57,10 @@ public:
 	//!
 	//! \param[in] computePlace the hardware place asking for scheduling orders
 	//! \param[in] currentTask a task within whose context the resulting task will run
+	//! \param[in] canMarkAsIdle true if the scheduler should mark the computePlace as idle if there are no pending tasks
 	//!
 	//! \returns a ready task or nullptr
-	virtual Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr) = 0;
+	virtual Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true) = 0;
 	
 	//! \brief Get an idle hardware place
 	//!

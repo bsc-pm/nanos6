@@ -49,7 +49,7 @@ void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unuse
 }
 
 
-Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
+Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	
@@ -72,7 +72,9 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 	}
 	
 	// 3. Or mark the CPU as idle
-	CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	if (canMarkAsIdle) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
 	
 	return nullptr;
 }

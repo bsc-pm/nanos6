@@ -143,7 +143,7 @@ void PriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((un
 }
 
 
-Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
+Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
@@ -234,7 +234,9 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 	assert(bestIs == non_existant);
 	
 	// 4. Or mark the CPU as idle
-	CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	if (canMarkAsIdle) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
 	
 	return nullptr;
 }

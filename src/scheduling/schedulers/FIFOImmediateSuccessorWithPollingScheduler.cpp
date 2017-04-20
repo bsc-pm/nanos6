@@ -137,7 +137,7 @@ void FIFOImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblock
 }
 
 
-Task *FIFOImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
+Task *FIFOImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	
@@ -168,7 +168,9 @@ Task *FIFOImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *com
 	}
 	
 	// 4. Or mark the CPU as idle
-	CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	if (canMarkAsIdle) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
 	
 	return nullptr;
 }

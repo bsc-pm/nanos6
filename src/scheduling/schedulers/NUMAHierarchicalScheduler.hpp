@@ -31,7 +31,7 @@ public:
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace);
 	
-	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr);
+	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
 	
