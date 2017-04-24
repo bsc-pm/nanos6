@@ -64,7 +64,7 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 	_readyTasks[min_idx] += 1;
 	_NUMANodeScheduler[min_idx]->addReadyTask(task, hardwarePlace, hint, false);
 	if (doGetIdle) {
-		return CPUManager::getIdleCPU();
+		return CPUManager::getIdleNUMANodeCPU(min_idx);
 	} else {
 		return nullptr;
 	}
@@ -133,7 +133,7 @@ ComputePlace *NUMAHierarchicalScheduler::getIdleComputePlace(bool force)
 
 		for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
 			if (_cpuMask[numa].any() && _readyTasks[numa] != 0) {
-				computePlace = _NUMANodeScheduler[numa]->getIdleComputePlace(false);
+				computePlace = CPUManager::getIdleNUMANodeCPU(numa);
 				if (computePlace != nullptr) {
 					break;
 				}
