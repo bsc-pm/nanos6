@@ -75,7 +75,7 @@ namespace Instrument {
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
 		ce.Types[0] = _runtimeState;
-		ce.Values[0] = (extrae_value_t) NANOS_NO_STATE;
+		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
