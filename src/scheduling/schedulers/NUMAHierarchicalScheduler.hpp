@@ -1,8 +1,6 @@
 #ifndef NUMA_HIERARCHICAL_SCHEDULER_HPP
 #define NUMA_HIERARCHICAL_SCHEDULER_HPP
 
-#include <map>
-
 #include <boost/dynamic_bitset.hpp>
 
 #include "hardware/HardwareInfo.hpp"
@@ -21,7 +19,7 @@ class NUMAHierarchicalScheduler: public SchedulerInterface {
 	// operations are not usable
 	std::vector<std::atomic<int>> _readyTasks;
 
-	std::map<int, boost::dynamic_bitset<>> _cpuMask;
+	std::vector<std::atomic<int>> _enabledCPUs;
 
 public:
 	NUMAHierarchicalScheduler();

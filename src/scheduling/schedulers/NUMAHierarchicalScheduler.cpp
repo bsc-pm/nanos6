@@ -10,23 +10,16 @@
 
 #include <cassert>
 
-
 NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 	: _NUMANodeScheduler(HardwareInfo::getMemoryNodeCount()),
-	_readyTasks(HardwareInfo::getMemoryNodeCount())
+	_readyTasks(HardwareInfo::getMemoryNodeCount()),
+	_enabledCPUs(HardwareInfo::getMemoryNodeCount())
 {
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
 	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
 
-	for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
-		_readyTasks[numa] = 0;
-		_cpuMask[numa].resize(cpus.size());
-
-		for (CPU *cpu : cpus) {
-			if (cpu != nullptr && cpu->_NUMANodeId == numa) {
-				_cpuMask[numa][cpu->_systemCPUId] = true;
-			}
-		}
+	for (CPU *cpu : cpus) {
+		_enabledCPUs[cpu->_NUMANodeId] += 1;
 	}
 
 	for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
@@ -51,7 +44,7 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 	int min_idx = -1;
 
 	for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
-		if (_cpuMask[numa].any()) {
+		if (_enabledCPUs[numa] > 0) {
 			if (min_load == -1 || _readyTasks[numa] < min_load) {
 				min_load = _readyTasks[numa];
 				min_idx = numa;
@@ -77,8 +70,6 @@ void NUMAHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePl
 	CPU *cpu = unblockedTask->getThread()->getComputePlace();
 	size_t numa_node = cpu->_NUMANodeId;
 
-	assert(_cpuMask[numa_node][cpu->_systemCPUId]);
-
 	_readyTasks[numa_node] += 1;
 	_NUMANodeScheduler[numa_node]->taskGetsUnblocked(unblockedTask, hardwarePlace);
 }
@@ -89,8 +80,6 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 	size_t numa_node = ((CPU *)computePlace)->_NUMANodeId;
 	Task *task = nullptr;
 
-	assert(_cpuMask[numa_node][((CPU *)computePlace)->_systemCPUId]);
-	
 	if (_readyTasks[numa_node] > 0) {
 		task = _NUMANodeScheduler[numa_node]->getReadyTask(computePlace, currentTask, false);
 
@@ -132,7 +121,7 @@ ComputePlace *NUMAHierarchicalScheduler::getIdleComputePlace(bool force)
 		ComputePlace *computePlace = nullptr;
 
 		for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
-			if (_cpuMask[numa].any() && _readyTasks[numa] != 0) {
+			if (_enabledCPUs[numa] > 0 && _readyTasks[numa] > 0) {
 				computePlace = CPUManager::getIdleNUMANodeCPU(numa);
 				if (computePlace != nullptr) {
 					break;
@@ -146,16 +135,22 @@ ComputePlace *NUMAHierarchicalScheduler::getIdleComputePlace(bool force)
 
 void NUMAHierarchicalScheduler::disableComputePlace(ComputePlace *hardwarePlace)
 {
-	size_t numa_node = ((CPU *)hardwarePlace)->_NUMANodeId;
+	size_t NUMANode = ((CPU *)hardwarePlace)->_NUMANodeId;
 
-	_cpuMask[numa_node][((CPU *)hardwarePlace)->_systemCPUId] = false;
-	_NUMANodeScheduler[numa_node]->disableComputePlace(hardwarePlace);
+	assert(_enabledCPUs[NUMANode] > 0);
+	
+	// TODO: do something if a NUMA node has pending tasks but is disabled.
+	// This is not an issue now because of task stealing
+	
+	_enabledCPUs[NUMANode] -= 1;
+
+	_NUMANodeScheduler[NUMANode]->disableComputePlace(hardwarePlace);
 }
 
 void NUMAHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 {
-	size_t numa_node = ((CPU *)hardwarePlace)->_NUMANodeId;
+	size_t NUMANode = ((CPU *)hardwarePlace)->_NUMANodeId;
 
-	_cpuMask[numa_node][((CPU *)hardwarePlace)->_systemCPUId] = true;
-	_NUMANodeScheduler[numa_node]->enableComputePlace(hardwarePlace);
+	_enabledCPUs[NUMANode] += 1;
+	_NUMANodeScheduler[NUMANode]->enableComputePlace(hardwarePlace);
 }
