@@ -1,12 +1,13 @@
 #ifndef INSTRUMENT_STATS_HPP
 #define INSTRUMENT_STATS_HPP
 
-#include <atomic>
 #include <list>
 #include <map>
 #include <vector>
 
 #include <nanos6.h>
+
+#include "lowlevel/RWTicketSpinLock.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "Timer.hpp"
 
@@ -15,7 +16,8 @@
 
 namespace Instrument {
 	namespace Stats {
-		extern std::atomic<int> _currentPhase;
+		extern RWTicketSpinLock _phasesSpinLock;
+		extern int _currentPhase;
 		extern std::vector<Timer> _phaseTimes;
 		
 		struct TaskTimes {
@@ -219,25 +221,25 @@ namespace Instrument {
 			
 			PhaseInfo &getCurrentPhaseRef()
 			{
-				int currentPhase = _currentPhase.load();
-				assert(_currentPhase.load() == (_phaseTimes.size() - 1));
+				Instrument::Stats::_phasesSpinLock.readLock();
 				
+				assert(_currentPhase == (_phaseTimes.size() - 1));
 				int lastStartedPhase = _phaseInfo.size() - 1;
 				
 				if (lastStartedPhase == -1) {
 					// Add the previous phases as empty
-					for (int phase = 0; phase < currentPhase-1; phase++) {
+					for (int phase = 0; phase < _currentPhase-1; phase++) {
 						_phaseInfo.emplace_back(false);
 					}
 					// Start the new phase
 					_phaseInfo.emplace_back(true);
-				} else if (lastStartedPhase < currentPhase) {
+				} else if (lastStartedPhase < _currentPhase) {
 					// Fix the stopping time of the last phase
 					bool isRunning = _phaseInfo.back().isRunning();
 					_phaseInfo.back().stoppedAt(_phaseTimes[lastStartedPhase]);
 					
 					// Mark any already finished phase that is missing and the current phase as blocked
-					for (int phase = lastStartedPhase+1; phase <= currentPhase; phase++) {
+					for (int phase = lastStartedPhase+1; phase <= _currentPhase; phase++) {
 						_phaseInfo.emplace_back(false);
 						
 						if (isRunning) {
@@ -247,6 +249,8 @@ namespace Instrument {
 						}
 					}
 				}
+				
+				Instrument::Stats::_phasesSpinLock.readUnlock();
 				
 				return _phaseInfo.back();
 			}
