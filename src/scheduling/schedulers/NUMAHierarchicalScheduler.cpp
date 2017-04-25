@@ -19,7 +19,9 @@ NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
 
 	for (CPU *cpu : cpus) {
-		_enabledCPUs[cpu->_NUMANodeId] += 1;
+		if (cpu != nullptr) {
+			_enabledCPUs[cpu->_NUMANodeId] += 1;
+		}
 	}
 
 	for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
@@ -35,7 +37,7 @@ NUMAHierarchicalScheduler::~NUMAHierarchicalScheduler()
 }
 
 
-ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint, bool doGetIdle)
+ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
 	
@@ -55,9 +57,16 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 	assert(min_idx != -1);
 
 	_readyTasks[min_idx] += 1;
-	_NUMANodeScheduler[min_idx]->addReadyTask(task, hardwarePlace, hint, false);
+	_NUMANodeScheduler[min_idx]->addReadyTask(task, computePlace, hint, false);
 	if (doGetIdle) {
-		return CPUManager::getIdleNUMANodeCPU(min_idx);
+		ComputePlace *cp;
+		cp = CPUManager::getIdleNUMANodeCPU(min_idx);
+		if (cp == nullptr) {
+			// If this NUMA node does not have any idle CPUs, get any other idle CPU
+			cp = CPUManager::getIdleCPU();
+		}
+
+		return cp;
 	} else {
 		return nullptr;
 	}
@@ -86,7 +95,9 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 		if (task != nullptr) {
 			_readyTasks[numa_node] -= 1;
 		}
-	} else {
+	}
+
+	if (task == nullptr) {
 		/* Get the most loaded NUMA node */
 		int max_load = _readyTasks[numa_node];
 		int max_idx = numa_node;
