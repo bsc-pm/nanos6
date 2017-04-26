@@ -2,8 +2,6 @@
 
 #include "../SchedulerGenerator.hpp"
 
-#include <cassert>
-
 
 HostHierarchicalScheduler::HostHierarchicalScheduler()
 {
@@ -47,4 +45,14 @@ void HostHierarchicalScheduler::disableComputePlace(ComputePlace *hardwarePlace)
 void HostHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 {
 	_NUMAScheduler->enableComputePlace(hardwarePlace);
+}
+
+bool HostHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+{
+	return _NUMAScheduler->requestPolling(computePlace, pollingSlot);
+}
+
+bool HostHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+{
+	return _NUMAScheduler->releasePolling(computePlace, pollingSlot);
 }

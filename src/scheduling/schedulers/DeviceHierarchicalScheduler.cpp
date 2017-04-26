@@ -1,9 +1,6 @@
 #include "DeviceHierarchicalScheduler.hpp"
 
-#include "../SchedulerInterface.hpp"
 #include "../SchedulerGenerator.hpp"
-
-#include <cassert>
 
 
 DeviceHierarchicalScheduler::DeviceHierarchicalScheduler()
@@ -48,4 +45,14 @@ void DeviceHierarchicalScheduler::disableComputePlace(ComputePlace *hardwarePlac
 void DeviceHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 {
 	_CPUScheduler->enableComputePlace(hardwarePlace);
+}
+
+bool DeviceHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+{
+	return _CPUScheduler->requestPolling(computePlace, pollingSlot);
+}
+
+bool DeviceHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+{
+	return _CPUScheduler->releasePolling(computePlace, pollingSlot);
 }

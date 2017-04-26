@@ -1,5 +1,7 @@
 #include "SchedulerInterface.hpp"
 
+#include "Scheduler.hpp"
+
 #include <cassert>
 
 void SchedulerInterface::disableComputePlace(__attribute__((unused)) ComputePlace *computePlace)
@@ -18,7 +20,7 @@ bool SchedulerInterface::requestPolling(ComputePlace *computePlace, polling_slot
 	assert(pollingSlot->_task == nullptr);
 	
 	// Default implementation: attempt to get a ready task and fail if not possible
-	Task *task = getReadyTask(computePlace);
+	Task *task = Scheduler::getReadyTask(computePlace);
 	
 	if (task != nullptr) {
 		Task *expected = nullptr;

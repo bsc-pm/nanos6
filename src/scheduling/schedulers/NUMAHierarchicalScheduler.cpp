@@ -165,3 +165,15 @@ void NUMAHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 	_enabledCPUs[NUMANode] += 1;
 	_NUMANodeScheduler[NUMANode]->enableComputePlace(hardwarePlace);
 }
+
+bool NUMAHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+{
+	size_t NUMANode = ((CPU *)computePlace)->_NUMANodeId;
+	return _NUMANodeScheduler[NUMANode]->requestPolling(computePlace, pollingSlot);
+}
+
+bool NUMAHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+{
+	size_t NUMANode = ((CPU *)computePlace)->_NUMANodeId;
+	return _NUMANodeScheduler[NUMANode]->releasePolling(computePlace, pollingSlot);
+}
