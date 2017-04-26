@@ -28,7 +28,6 @@ protected:
 	//! The CPU to which the thread transitions the next time it resumes. Atomic since this is changed by other threads.
 	std::atomic<CPU *> _cpuToBeResumedOn;
 	
-	inline void bind(CPU *cpu);
 	
 	inline void markAsCurrentWorkerThread()
 	{
@@ -101,13 +100,6 @@ public:
 WorkerThreadBase::WorkerThreadBase(CPU* cpu)
 	: _cpu(cpu), _cpuToBeResumedOn(nullptr)
 {
-}
-
-
-void WorkerThreadBase::bind(CPU *cpu)
-{
-	int rc = sched_setaffinity(_tid, CPU_ALLOC_SIZE(cpu->_systemCPUId+1), &cpu->_cpuMask);
-	FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", _tid, " to CPU ", cpu->_systemCPUId);
 }
 
 
