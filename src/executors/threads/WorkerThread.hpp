@@ -2,7 +2,6 @@
 #define WORKER_THREAD_HPP
 
 
-#include "CPU.hpp"
 #include "DependencyDomain.hpp"
 #include "WorkerThreadBase.hpp"
 #include "performance/HardwareCountersThreadLocalData.hpp"
@@ -11,8 +10,10 @@
 #include <atomic>
 
 
+struct CPU;
 class Task;
 class ThreadManager;
+class WorkerThreadRunner;
 
 
 class WorkerThread : public WorkerThreadBase {
@@ -31,10 +32,10 @@ private:
 	Instrument::ThreadLocalData _instrumentationData;
 	
 	void initialize();
-	void handleTask();
+	void handleTask(CPU *cpu);
 	
-	//! Only the thread manager is supposed to call the suspend and resume methods. Any other use must go through it.
 	friend class ThreadManager;
+	friend class WorkerThreadRunner;
 	
 	
 public:
@@ -64,7 +65,7 @@ public:
 	
 	//! \brief handle a task
 	//! This method is here to cover the case in which a task is run within the execution of another in the same thread
-	inline void handleTask(Task *task);
+	inline void handleTask(CPU *cpu, Task *task);
 	
 	//! \brief code that the thread executes
 	virtual void body();

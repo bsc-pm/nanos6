@@ -268,7 +268,9 @@ common_sources = \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/executors/threads/WorkerThreadImplementation.hpp \
+	src/executors/threads/kernel-level/CPUThreadingModelData.cpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
+	src/executors/threads/kernel-level/WorkerThreadBase.cpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/hardware/HardwareInfo.hpp \
 	src/hardware/HardwareInfo.cpp \

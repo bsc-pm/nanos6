@@ -40,7 +40,7 @@ namespace If0Task {
 	
 	inline void executeInline(
 		WorkerThread *currentThread, Task *currentTask, Task *if0Task,
-		__attribute__((unused)) ComputePlace *computePlace
+		ComputePlace *computePlace
 	) {
 		assert(currentThread != nullptr);
 		assert(currentTask != nullptr);
@@ -55,7 +55,7 @@ namespace If0Task {
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}
 		
-		currentThread->handleTask(if0Task);
+		currentThread->handleTask((CPU *) computePlace, if0Task);
 		
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		
@@ -67,7 +67,7 @@ namespace If0Task {
 	
 	inline void executeNonInline(
 		WorkerThread *currentThread, Task *if0Task,
-		__attribute__((unused)) ComputePlace *computePlace
+		ComputePlace *computePlace
 	) {
 		assert(currentThread != nullptr);
 		assert(if0Task != nullptr);
@@ -78,7 +78,10 @@ namespace If0Task {
 		Task *parent = if0Task->getParent();
 		assert(parent != nullptr);
 		
-		currentThread->handleTask(if0Task);
+		currentThread->handleTask((CPU *) computePlace, if0Task);
+		
+		// The thread can migrate during the execution of the task
+		computePlace = currentThread->getComputePlace();
 		
 		Scheduler::taskGetsUnblocked(parent, computePlace);
 	}

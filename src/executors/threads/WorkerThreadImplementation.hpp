@@ -15,7 +15,7 @@ inline WorkerThread::WorkerThread(CPU * cpu)
 	: WorkerThreadBase(cpu), _mustShutDown(false), _task(nullptr), _dependencyDomain(),
 	_hardwareCounters(), _instrumentationData()
 {
-	start();
+	WorkerThreadBase::start();
 }
 
 
@@ -59,7 +59,7 @@ inline Instrument::ThreadLocalData &WorkerThread::getInstrumentationData()
 }
 
 
-inline void WorkerThread::handleTask(Task *task)
+inline void WorkerThread::handleTask(CPU *cpu, Task *task)
 {
 	assert(task != nullptr);
 	
@@ -69,7 +69,7 @@ inline void WorkerThread::handleTask(Task *task)
 	
 	// Run the task
 	_task = task;
-	handleTask();
+	handleTask(cpu);
 	
 	// Restore the initial task
 	_task = oldTask;

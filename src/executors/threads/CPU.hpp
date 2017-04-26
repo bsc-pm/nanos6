@@ -54,9 +54,6 @@ struct CPU: public CPUPlace {
 	//! \brief the pthread attr that is used for all the threads of this CPU
 	pthread_attr_t _pthreadAttr;
 	
-	//! \brief a thread responsible for shutting down the rest of the threads and itself
-	std::atomic<WorkerThread *> _shutdownControlerThread;
-	
 	//! \brief Per-CPU data that is specific to the threading model
 	CPUThreadingModelData _threadingModelData;
 	
@@ -70,10 +67,18 @@ struct CPU: public CPUPlace {
 	{
 	}
 	
-	inline void initializeIfNeeded() 
+	inline bool initializeIfNeeded() 
 	{
 		activation_status_t expectedStatus = uninitialized_status;
-		_activationStatus.compare_exchange_strong(expectedStatus, starting_status);
+		bool worked = _activationStatus.compare_exchange_strong(expectedStatus, starting_status);
+		
+		if (worked) {
+			_threadingModelData.initialize(this);
+		} else {
+			assert(_activationStatus != starting_status);
+		}
+		
+		return worked;
 	}
 	
 	CPUThreadingModelData const &getThreadingModelData() const
