@@ -1,3 +1,6 @@
+#include <performance/HardwareCountersThreadLocalData.hpp>
+#include <performance/HardwareCountersThreadLocalDataImplementation.hpp>
+
 #include "InstrumentStats.hpp"
 
 

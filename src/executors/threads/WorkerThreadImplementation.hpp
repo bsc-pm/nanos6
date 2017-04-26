@@ -6,13 +6,14 @@
 #include "DependencyDomain.hpp"
 #include "WorkerThread.hpp"
 #include "WorkerThreadBase.hpp"
+#include "performance/HardwareCountersThreadLocalData.hpp"
 
 #include <cassert>
 
 
 inline WorkerThread::WorkerThread(CPU * cpu)
 	: WorkerThreadBase(cpu), _mustShutDown(false), _task(nullptr), _dependencyDomain(),
-	_instrumentationData()
+	_hardwareCounters(), _instrumentationData()
 {
 	start();
 }
@@ -46,6 +47,11 @@ inline DependencyDomain *WorkerThread::getDependencyDomain()
 	return &_dependencyDomain;
 }
 
+
+inline HardwareCountersThreadLocalData &WorkerThread::getHardwareCounters()
+{
+	return _hardwareCounters;
+}
 
 inline Instrument::ThreadLocalData &WorkerThread::getInstrumentationData()
 {
@@ -101,6 +107,9 @@ namespace ompss_debug {
 	}
 }
 #endif
+
+
+#include "performance/HardwareCountersThreadLocalDataImplementation.hpp"
 
 
 #endif // WORKER_THREAD_IMPLEMENTATION_HPP

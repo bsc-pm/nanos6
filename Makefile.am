@@ -450,15 +450,21 @@ CLEANFILES += \
 
 
 hardware_counters_sources = \
+	src/performance/HardwareCounters.cpp \
 	src/performance/HardwareCounters.hpp \
-	src/performance/HardwareCounters.cpp
+	src/performance/HardwareCountersThreadLocalData.hpp \
+	src/performance/HardwareCountersThreadLocalDataImplementation.hpp
 
 papi_hardware_counters_sources = \
+	src/performance/PAPI/PAPIHardwareCounters.cpp \
 	src/performance/PAPI/PAPIHardwareCounters.hpp \
-	src/performance/PAPI/PAPIHardwareCounters.cpp
+	src/performance/PAPI/PAPIHardwareCountersThreadLocalData.hpp \
+	src/performance/PAPI/PAPIHardwareCountersThreadLocalDataImplementation.hpp
 
 no_hardware_counters_sources = \
-	src/performance/no-HC/NoHardwareCounters.hpp
+	src/performance/no-HC/NoHardwareCounters.hpp \
+	src/performance/no-HC/NoHardwareCountersThreadLocalData.hpp \
+	src/performance/no-HC/NoHardwareCountersThreadLocalDataImplementation.hpp
 
 
 noinstrument_sources = \
