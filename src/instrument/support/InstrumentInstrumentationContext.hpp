@@ -39,61 +39,6 @@ namespace Instrument {
 	
 	//! \brief A non-thread-local instrumentation 
 	typedef InstrumentationContext LocalInstrumentationContext;
-	
-	
-	//! \brief Creates a thread-local instrumentation context with the scope of the lifetime of the object itself
-	class ThreadInstrumentationContext {
-	private:
-		static thread_local InstrumentationContext _context;
-		
-		InstrumentationContext _oldContext;
-		
-	public:
-		ThreadInstrumentationContext(task_id_t const &taskId, compute_place_id_t const &computePlaceId, thread_id_t const &threadId)
-		{
-			_oldContext = _context;
-			_context = InstrumentationContext(taskId, computePlaceId, threadId);
-		}
-		
-		ThreadInstrumentationContext(task_id_t const &taskId)
-		{
-			_oldContext = _context;
-			_context = InstrumentationContext(taskId, _oldContext._computePlaceId, _oldContext._threadId);
-		}
-		
-		ThreadInstrumentationContext(compute_place_id_t const &computePlaceId)
-		{
-			_oldContext = _context;
-			_context = InstrumentationContext(_oldContext._taskId, computePlaceId, _oldContext._threadId);
-		}
-		
-		ThreadInstrumentationContext(thread_id_t const &threadId)
-		{
-			_oldContext = _context;
-			_context = InstrumentationContext(_oldContext._taskId, _oldContext._computePlaceId, threadId);
-		}
-		
-		~ThreadInstrumentationContext()
-		{
-			_context = _oldContext;
-		}
-		
-		InstrumentationContext const &get() const
-		{
-			return _context;
-		}
-		
-		static InstrumentationContext const &getCurrent()
-		{
-			return _context;
-		}
-		
-		static void updateComputePlace(compute_place_id_t const &computePlaceId)
-		{
-			_context._computePlaceId = computePlaceId;
-		}
-	};
-	
 }
 
 

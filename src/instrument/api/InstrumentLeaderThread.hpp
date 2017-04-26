@@ -2,6 +2,7 @@
 #define INSTRUMENT_LEADER_THREAD_HPP
 
 #include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
 
 
 namespace Instrument {

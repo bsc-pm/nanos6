@@ -3,6 +3,7 @@
 
 
 #include "../api/InstrumentTaskExecution.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 #include "InstrumentExtrae.hpp"
 
 #include <cassert>
@@ -14,7 +15,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		extrae_combined_events_t ce;
-
+		
 		ce.HardwareCounters = 1;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
@@ -36,7 +37,8 @@ namespace Instrument {
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) taskId._taskId;
 		
-		_nestingLevels.push_back(taskId._nestingLevel);
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		threadLocal._nestingLevels.push_back(taskId._nestingLevel);
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
@@ -120,8 +122,9 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 		
-		assert(!_nestingLevels.empty());
-		_nestingLevels.pop_back();
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		assert(!threadLocal._nestingLevels.empty());
+		threadLocal._nestingLevels.pop_back();
 	}
 	
 	

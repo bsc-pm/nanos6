@@ -2,6 +2,7 @@
 #define INSTRUMENT_EXTRAE_INIT_AND_SHUTDOWN_HPP
 
 #include <cassert>
+#include <cstdlib>
 
 #include <nanos6/debug.h>
 
@@ -18,8 +19,9 @@ namespace Instrument {
 	
 	static unsigned int extrae_nanos_get_thread_id()
 	{
-		if (_currentThreadId != nullptr) {
-			return *_currentThreadId;
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		if (threadLocal._currentThreadId != nullptr) {
+			return *threadLocal._currentThreadId;
 		} else {
 			return 0;
 		}
@@ -27,6 +29,11 @@ namespace Instrument {
 	
 	void initialize()
 	{
+		// This is a workaround to avoid an extrae segfault
+		if ((getenv("EXTRAE_ON") == nullptr) && (getenv("EXTRAE_CONFIG_FILE") == nullptr)) {
+			setenv("EXTRAE_ON", "1", 0);
+		}
+		
 		// Common thread information callbacks
 		if (_traceAsThreads) {
 			Extrae_set_threadid_function ( extrae_nanos_get_thread_id );

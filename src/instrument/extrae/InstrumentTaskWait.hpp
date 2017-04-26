@@ -3,6 +3,7 @@
 
 
 #include "../api/InstrumentTaskWait.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 #include <InstrumentTaskExecution.hpp>
 
 #include "InstrumentExtrae.hpp"

@@ -42,3 +42,7 @@ void Scheduler::shutdown()
 {
 	delete _scheduler;
 }
+
+
+#include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
+#include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"

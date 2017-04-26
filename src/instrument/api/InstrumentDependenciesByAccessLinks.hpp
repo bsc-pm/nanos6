@@ -4,6 +4,7 @@
 
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
 
 #include <DataAccessRange.hpp>
 

@@ -9,6 +9,10 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 #include <InstrumentLeaderThread.hpp>
 #include <InstrumentThreadManagement.hpp>
 

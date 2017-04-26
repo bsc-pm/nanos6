@@ -267,6 +267,7 @@ common_sources = \
 	src/executors/threads/ThreadManagerPolicyInterface.hpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
+	src/executors/threads/WorkerThreadImplementation.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/hardware/HardwareInfo.hpp \
@@ -291,7 +292,8 @@ common_sources = \
 	src/instrument/api/InstrumentTaskWait.hpp \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
+	src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
@@ -468,6 +470,7 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentComputePlaceId.hpp \
 	src/instrument/null/InstrumentComputePlaceManagement.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
+	src/instrument/null/InstrumentInstrumentationContext.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
@@ -475,6 +478,9 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentTaskStatus.hpp \
 	src/instrument/null/InstrumentTaskWait.hpp \
 	src/instrument/null/InstrumentThreadId.hpp \
+	src/instrument/null/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/null/InstrumentThreadInstrumentationContextImplementation.hpp \
+	src/instrument/null/InstrumentThreadLocalData.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp
 
@@ -512,6 +518,7 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentTaskWait.cpp \
 	src/instrument/graph/InstrumentTaskWait.hpp \
 	src/instrument/graph/InstrumentThreadId.hpp \
+	src/instrument/graph/InstrumentThreadLocalData.hpp \
 	src/instrument/graph/InstrumentThreadManagement.hpp \
 	src/instrument/graph/InstrumentUserMutex.cpp \
 	src/instrument/graph/InstrumentUserMutex.hpp \
@@ -519,7 +526,9 @@ instrument_graph_sources = \
 	src/instrument/graph/PathLength.hpp \
 	src/instrument/graph/SortAccessGroups.cpp \
 	src/instrument/graph/SortAccessGroups.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.cpp
+	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
 
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentAddTask.hpp \
@@ -541,6 +550,9 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentTaskStatus.hpp \
 	src/instrument/profile/InstrumentTaskWait.hpp \
 	src/instrument/profile/InstrumentThreadId.hpp \
+	src/instrument/profile/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/profile/InstrumentThreadInstrumentationContextImplementation.hpp \
+	src/instrument/profile/InstrumentThreadLocalData.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp
 	
@@ -564,10 +576,13 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentTaskStatus.hpp \
 	src/instrument/stats/InstrumentTaskWait.hpp \
 	src/instrument/stats/InstrumentThreadId.hpp \
+	src/instrument/stats/InstrumentThreadLocalData.hpp \
 	src/instrument/stats/InstrumentThreadManagement.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.cpp
+	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
 
 instrument_verbose_sources = \
 	$(instrument_generic_ids_sources) \
@@ -595,13 +610,16 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentTaskWait.cpp \
 	src/instrument/verbose/InstrumentTaskWait.hpp \
 	src/instrument/verbose/InstrumentThreadId.hpp \
+	src/instrument/verbose/InstrumentThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentThreadManagement.cpp \
 	src/instrument/verbose/InstrumentThreadManagement.hpp \
 	src/instrument/verbose/InstrumentUserMutex.cpp \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
 	src/instrument/verbose/InstrumentVerbose.cpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.cpp
+	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
 
 instrument_extrae_sources = \
 	$(instrument_generic_ids_sources) \
@@ -622,9 +640,12 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
 	src/instrument/extrae/InstrumentTaskWait.hpp \
 	src/instrument/extrae/InstrumentThreadId.hpp \
+	src/instrument/extrae/InstrumentThreadLocalData.hpp \
 	src/instrument/extrae/InstrumentThreadManagement.hpp \
 	src/instrument/extrae/InstrumentUserMutex.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.cpp
+	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
 
 
 null_common_sources = \

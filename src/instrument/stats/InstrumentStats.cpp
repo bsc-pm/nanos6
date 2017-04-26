@@ -3,8 +3,6 @@
 
 namespace Instrument {
 	namespace Stats {
-		thread_local ThreadInfo *_threadStats;
-		
 		RWTicketSpinLock _phasesSpinLock;
 		int _currentPhase(0);
 		std::vector<Timer> _phaseTimes;

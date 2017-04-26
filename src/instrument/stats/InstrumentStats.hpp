@@ -257,8 +257,6 @@ namespace Instrument {
 		};
 		
 		
-		extern thread_local ThreadInfo *_threadStats;
-		
 		extern SpinLock _threadInfoListSpinLock;
 		extern std::list<ThreadInfo *> _threadInfoList;
 		extern Timer _totalTime;
