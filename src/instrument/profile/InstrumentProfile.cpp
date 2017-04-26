@@ -417,10 +417,12 @@ inline Instrument::Profile::AddrInfo const &Instrument::Profile::resolveAddress(
 		if (rc == 0) {
 			for (int scopeEntryIndex = 0; scopeEntryIndex < scopeEntryCount-1; scopeEntryIndex++) {
 				Dwarf_Die *scopeEntry = &scopeDebugInformationEntries[scopeEntryIndex];
-				int dwarfTag = dwarf_tag(scopeEntry);
-				
-				if (dwarfTag != DW_TAG_inlined_subroutine) {
-					continue;
+				{
+					int dwarfTag = dwarf_tag(scopeEntry);
+					
+					if (dwarfTag != DW_TAG_inlined_subroutine) {
+						continue;
+					}
 				}
 				
 				function.clear();
@@ -701,87 +703,89 @@ void Instrument::Profile::doShutdown()
 	std::map<Backtrace, freq_t> backtrace2Frequency;
 	std::map<SymbolicBacktrace, freq_t> symbolicBacktrace2Frequency;
 	
-	Backtrace backtrace(_profilingBacktraceDepth);
-	SymbolicBacktrace symbolicBacktrace(_profilingBacktraceDepth);
-	backtrace.clear();
-	symbolicBacktrace.clear();
-	int frame = 0;
-	
-	_bufferListSpinLock.lock();
-	for (address_t *buffer : _bufferList) {
-		long position = 0;
-		frame = 0;
+	{
+		Backtrace backtrace(_profilingBacktraceDepth);
+		SymbolicBacktrace symbolicBacktrace(_profilingBacktraceDepth);
+		backtrace.clear();
+		symbolicBacktrace.clear();
+		int frame = 0;
 		
-		while (position < _profilingBufferSize) {
-			address_t address = buffer[position];
+		_bufferListSpinLock.lock();
+		for (address_t *buffer : _bufferList) {
+			long position = 0;
+			frame = 0;
 			
-			if (address == 0) {
-				if (frame == 0) {
-					// End of buffer
-					break;
-				} else {
-// 					// End of backtrace
-// 					assert(frame <= _profilingBacktraceDepth);
-// 					for (; frame < _profilingBacktraceDepth; frame++) {
-// 						backtrace[frame] = 0;
-// 						symbolicBacktrace[frame].clear();
-// 					}
-					
-					// Increment the frequency of the backtrace
-					{
-						auto it = backtrace2Frequency.find(backtrace);
-						if (it == backtrace2Frequency.end()) {
-							backtrace2Frequency[backtrace] = 1;
-						} else {
-							it->second++;
+			while (position < _profilingBufferSize) {
+				address_t address = buffer[position];
+				
+				if (address == 0) {
+					if (frame == 0) {
+						// End of buffer
+						break;
+					} else {
+	// 					// End of backtrace
+	// 					assert(frame <= _profilingBacktraceDepth);
+	// 					for (; frame < _profilingBacktraceDepth; frame++) {
+	// 						backtrace[frame] = 0;
+	// 						symbolicBacktrace[frame].clear();
+	// 					}
+						
+						// Increment the frequency of the backtrace
+						{
+							auto it = backtrace2Frequency.find(backtrace);
+							if (it == backtrace2Frequency.end()) {
+								backtrace2Frequency[backtrace] = 1;
+							} else {
+								it->second++;
+							}
 						}
-					}
-					{
-						auto it = symbolicBacktrace2Frequency.find(symbolicBacktrace);
-						if (it == symbolicBacktrace2Frequency.end()) {
-							symbolicBacktrace2Frequency[symbolicBacktrace] = 1;
-						} else {
-							it->second++;
+						{
+							auto it = symbolicBacktrace2Frequency.find(symbolicBacktrace);
+							if (it == symbolicBacktrace2Frequency.end()) {
+								symbolicBacktrace2Frequency[symbolicBacktrace] = 1;
+							} else {
+								it->second++;
+							}
 						}
+						
+						frame = 0;
+						position++;
+						backtrace.clear();
+						symbolicBacktrace.clear();
+						continue;
 					}
-					
-					frame = 0;
-					position++;
-					backtrace.clear();
-					symbolicBacktrace.clear();
-					continue;
 				}
+				
+				AddrInfo const &addrInfo = resolveAddress(address);
+				for (auto addrInfoStep : addrInfo) {
+					if (addrInfoStep._functionId != id_t()) {
+						_id2sourceFunction[addrInfoStep._functionId]._frequency++;
+					}
+					if (addrInfoStep._sourceLineId != id_t()) {
+						_id2sourceLine[addrInfoStep._sourceLineId]._frequency++;
+					}
+				}
+				
+				backtrace.push_back(address);
+				symbolicBacktrace.push_back(addrInfo);
+				frame++;
+				
+				{
+					auto it = address2Frequency.find(address);
+					if (it != address2Frequency.end()) {
+						it->second++;
+					} else {
+						address2Frequency[address] = 1;
+					}
+				}
+				
+				position++;
 			}
-			
-			AddrInfo const &addrInfo = resolveAddress(address);
-			for (auto addrInfoStep : addrInfo) {
-				if (addrInfoStep._functionId != id_t()) {
-					_id2sourceFunction[addrInfoStep._functionId]._frequency++;
-				}
-				if (addrInfoStep._sourceLineId != id_t()) {
-					_id2sourceLine[addrInfoStep._sourceLineId]._frequency++;
-				}
-			}
-			
-			backtrace.push_back(address);
-			symbolicBacktrace.push_back(addrInfo);
-			frame++;
-			
-			{
-				auto it = address2Frequency.find(address);
-				if (it != address2Frequency.end()) {
-					it->second++;
-				} else {
-					address2Frequency[address] = 1;
-				}
-			}
-			
-			position++;
+			free(buffer);
 		}
-		free(buffer);
+		_bufferList.clear();
+		_bufferListSpinLock.unlock();
 	}
-	_bufferList.clear();
-	_bufferListSpinLock.unlock();
 	
 	
 	std::map<freq_t, std::list<Backtrace>, std::greater<freq_t>> backtracesByFrequency;
