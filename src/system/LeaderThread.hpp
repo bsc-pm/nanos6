@@ -4,7 +4,7 @@
 
 #include <atomic>
 
-#include "lowlevel/KernelLevelThread.hpp"
+#include "lowlevel/threads/KernelLevelThread.hpp"
 
 
 //! \brief This class contains the code of the leader thread that consists in performing maintenance duties

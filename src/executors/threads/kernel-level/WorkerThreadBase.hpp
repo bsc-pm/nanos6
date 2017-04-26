@@ -12,7 +12,7 @@
 
 #include "executors/threads/CPU.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "lowlevel/KernelLevelThread.hpp"
+#include "lowlevel/threads/KernelLevelThread.hpp"
 #include "support/InstrumentedThread.hpp"
 
 #include <InstrumentThreadManagement.hpp>

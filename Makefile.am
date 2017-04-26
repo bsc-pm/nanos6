@@ -5,9 +5,6 @@ AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 SUBDIRS = . tests/directive_based
 
 
-AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
-
-
 MAX_REGION_DIMENSIONS = 8
 MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES = 
@@ -268,10 +265,6 @@ common_sources = \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/executors/threads/WorkerThreadImplementation.hpp \
-	src/executors/threads/kernel-level/CPUThreadingModelData.cpp \
-	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
-	src/executors/threads/kernel-level/WorkerThreadBase.cpp \
-	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/hardware/HardwareInfo.hpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/places/MemoryPlace.hpp \
@@ -300,20 +293,20 @@ common_sources = \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
-	src/lowlevel/KernelLevelThread.cpp \
-	src/lowlevel/KernelLevelThread.hpp \
 	src/lowlevel/PaddedSpinLock.hpp \
 	src/lowlevel/PaddedTicketSpinLock.hpp \
 	src/lowlevel/RWSpinLock.hpp \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
-	src/memory/AddressSpace.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
-	src/lowlevel/posix/KernelLevelThread.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/lowlevel/threads/KernelLevelThread.cpp \
+	src/lowlevel/threads/KernelLevelThread.hpp \
+	src/lowlevel/threads/posix/KernelLevelThread.hpp \
+	src/memory/AddressSpace.hpp \
 	src/scheduling/DefaultScheduler.hpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/FIFOImmediateSuccessorWithPollingScheduler.hpp \
@@ -442,6 +435,15 @@ common_sources += $(linear_regions_fragmented_dependency_sources)
 multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite
 endif
+
+
+AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
+common_sources += \
+	src/executors/threads/kernel-level/CPUThreadingModelData.cpp \
+	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
+	src/executors/threads/kernel-level/WorkerThreadBase.cpp \
+	src/executors/threads/kernel-level/WorkerThreadBase.hpp
+
 
 nodist_common_sources += \
 	$(multidimensional_adaptor_sources)
