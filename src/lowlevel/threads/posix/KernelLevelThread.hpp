@@ -1,6 +1,10 @@
 #ifndef POSIX_KERNEL_LEVEL_THREAD_HPP
 #define POSIX_KERNEL_LEVEL_THREAD_HPP
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <cassert>
 
 #include <pthread.h>
@@ -8,6 +12,7 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+#include "executors/threads/CPU.hpp"
 #include "lowlevel/ConditionVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
@@ -26,6 +31,7 @@ protected:
 	
 	//! Thread Local Storage variable to point back to the KernelLevelThread that is running the code
 	static __thread KernelLevelThread *_currentKernelLevelThread;
+	
 	
 	inline void exit()
 	{
@@ -57,6 +63,8 @@ public:
 	
 	inline void start(pthread_attr_t const *pthreadAttr);
 	
+	inline void bind(CPU const *cpu);
+	
 	//! \brief Suspend the thread
 	inline void suspend()
 	{
@@ -85,7 +93,7 @@ public:
 	}
 	
 	//! \brief code that the thread executes
-	virtual void *body() = 0;
+	virtual void body() = 0;
 	
 	static inline KernelLevelThread *getCurrentKernelLevelThread()
 	{
@@ -104,7 +112,9 @@ void *kernel_level_thread_body_wrapper(void *parameter)
 	
 	KernelLevelThread::_currentKernelLevelThread = thread;
 	
-	return thread->body();
+	thread->body();
+	
+	return nullptr;
 }
 
 
@@ -112,6 +122,14 @@ void KernelLevelThread::start(pthread_attr_t const *pthreadAttr)
 {
 	int rc = pthread_create(&_pthread, pthreadAttr, &kernel_level_thread_body_wrapper, this);
 	FatalErrorHandler::handle(rc, " when creating a pthread");
+}
+
+
+void KernelLevelThread::bind(CPU const *cpu)
+{
+	assert(cpu != nullptr);
+	int rc = sched_setaffinity(_tid, CPU_ALLOC_SIZE(cpu->_systemCPUId+1), &cpu->_cpuMask);
+	FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", _tid, " to CPU ", cpu->_systemCPUId);
 }
 
 

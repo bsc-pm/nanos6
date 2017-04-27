@@ -5,7 +5,7 @@
 
 
 namespace SpawnedFunctions {
-	extern std::atomic<unsigned int> _pendingSpawnedFuncions;
+	extern std::atomic<unsigned int> _pendingSpawnedFunctions;
 }
 
 

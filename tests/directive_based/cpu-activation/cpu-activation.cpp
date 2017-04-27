@@ -72,6 +72,8 @@ int main(int argc, char **argv) {
 	nanos_wait_for_full_initialization();
 	
 	long activeCPUs = nanos_get_num_cpus();
+	tap.emitDiagnostic("Detected ", activeCPUs, " CPUs");
+	
 	if (activeCPUs == 1) {
 		// This test only works correctly with more than 1 CPU
 		tap.registerNewTests(1);
@@ -95,6 +97,12 @@ int main(int argc, char **argv) {
 	/***********/
 	/* PHASE 1 */
 	/***********/
+	
+	tap.emitDiagnostic("*****************");
+	tap.emitDiagnostic("***  PHASE 1  ***");
+	tap.emitDiagnostic("***           ***");
+	tap.emitDiagnostic("***  6 tests  ***");
+	tap.emitDiagnostic("*****************");
 	
 	_blockerCPU = -1;
 	Blocker *blocker = new Blocker();
@@ -161,6 +169,12 @@ int main(int argc, char **argv) {
 	/* PHASE 2 */
 	/***********/
 	
+	tap.emitDiagnostic("*****************");
+	tap.emitDiagnostic("***  PHASE 2  ***");
+	tap.emitDiagnostic("***           ***");
+	tap.emitDiagnostic("***  ", activeCPUs*VALIDATION_STEPS_PER_CPU, " tests ***");
+	tap.emitDiagnostic("*****************");
+	
 	long thisCPU = nanos_get_current_system_cpu();
 	
 	tap.emitDiagnostic("Will be using CPU ", thisCPU);
@@ -194,6 +208,12 @@ int main(int argc, char **argv) {
 	/***********/
 	/* PHASE 3 */
 	/***********/
+	
+	tap.emitDiagnostic("*****************");
+	tap.emitDiagnostic("***  PHASE 3  ***");
+	tap.emitDiagnostic("***           ***");
+	tap.emitDiagnostic("*** ", activeCPUs-1, " tests  ***");
+	tap.emitDiagnostic("*****************");
 	
 	for (void *cpuIterator = nanos_cpus_begin(); cpuIterator != nanos_cpus_end(); cpuIterator = nanos_cpus_advance(cpuIterator)) {
 		long cpu = nanos_cpus_get(cpuIterator);

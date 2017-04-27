@@ -17,10 +17,6 @@
 #include "CPU.hpp"
 #include "WorkerThread.hpp"
 
-#include <InstrumentComputePlaceManagement.hpp>
-#include <InstrumentThreadManagement.hpp>
-
-
 
 class ThreadManagerDebuggingInterface;
 
@@ -37,12 +33,6 @@ private:
 	
 	//! \brief number of threads in the system
 	static std::atomic<long> _totalThreads;
-	
-	//! \brief number of threads that must be shut down
-	static std::atomic<long> _shutdownThreads;
-	
-	//! \brief number of threads in the system that are coordinating the shutdown process
-	static std::atomic<WorkerThread *> _mainShutdownControllerThread;
 	
 	
 public:
@@ -74,19 +64,9 @@ public:
 	
 	//! \brief returns true if the thread must shut down
 	static inline bool mustExit();
-
-	//! \brief initialize a thread to run on the given CPU
-	static void initializeThread(CPU *cpu);
-	
-	//! \brief exit the currently running thread and wake up the next one assigned to the same CPU (so that it can do the same)
-	//! 
-	//! NOTE: This method does not actually cause the thread to exit. Instead the caller is supposed to return from the body of
-	//! the thread.
-	//! 
-	//! \param[in] currentThread a thread that is currently running and that must exit
-	static void threadShutdownSequence(WorkerThread *currentThread);
 	
 	friend class ThreadManagerDebuggingInterface;
+	friend struct CPUThreadingModelData;
 };
 
 inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
@@ -113,14 +93,12 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 	
 	// The shutdown code is not ready to have _totalThreads changing
 	assert(!_mustExit);
-	assert(_shutdownThreads == 0);
 	
 	// Otherwise create a new one
 	_totalThreads++;
 	
 	// The shutdown code is not ready to have _totalThreads changing
 	assert(!_mustExit);
-	assert(_shutdownThreads == 0);
 	
 	return new WorkerThread(cpu);
 }
@@ -133,6 +111,8 @@ inline void ThreadManager::addIdler(WorkerThread *idleThread)
 	// Return the current thread to the idle list
 	{
 		std::lock_guard<SpinLock> guard(_idleThreadsLock);
+		
+		assert(std::find(_idleThreads.begin(), _idleThreads.end(), idleThread) == _idleThreads.end());
 		_idleThreads.push_front(idleThread);
 	}
 }
@@ -143,7 +123,7 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 	assert(idleCPU != nullptr);
 	
 	if (!inInitializationOrShutdown) {
-		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->_cpu != nullptr));
+		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->getComputePlace() != nullptr));
 	}
 	
 	// Get an idle thread for the CPU

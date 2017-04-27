@@ -163,8 +163,6 @@ void PriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((un
 
 Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
 {
-	Task *task = nullptr;
-	
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	size_t bestPriority = 0;
@@ -178,7 +176,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 	// 1. Check the immediate successor
 	bool haveImmediateSuccessor = (computePlace->_schedulerData != nullptr);
 	if (haveImmediateSuccessor) {
-		task = (Task *) computePlace->_schedulerData;
+		Task *task = (Task *) computePlace->_schedulerData;
 		bestPriority = (size_t) task->getSchedulerInfo();
 		bestIs = from_immediate_successor_slot;
 	}
@@ -214,7 +212,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 	if (bestIs != non_existant) {
 		// The immediate successor was choosen
 		if (bestIs == from_immediate_successor_slot) {
-			task = (Task *) computePlace->_schedulerData;
+			Task *task = (Task *) computePlace->_schedulerData;
 			computePlace->_schedulerData = nullptr;
 			
 			return task;
@@ -226,14 +224,14 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 		if (haveImmediateSuccessor) {
 			assert(bestIs != from_immediate_successor_slot);
 			
-			task = (Task *) computePlace->_schedulerData;
+			Task *task = (Task *) computePlace->_schedulerData;
 			computePlace->_schedulerData = nullptr;
 			
 			_readyTasks.push(task);
 		}
 		
 		if (bestIs == from_ready_task_queue) {
-			task = _readyTasks.top();
+			Task *task = _readyTasks.top();
 			_readyTasks.pop();
 			assert(task != nullptr);
 			
@@ -241,7 +239,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 		}
 		
 		if (bestIs == from_unblocked_task_queue) {
-			task = _unblockedTasks.top();
+			Task *task = _unblockedTasks.top();
 			_unblockedTasks.pop();
 			assert(task != nullptr);
 			
@@ -285,8 +283,6 @@ void PriorityScheduler::disableComputePlace(ComputePlace *computePlace)
 
 bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
 {
-	Task *task = nullptr;
-	
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	size_t bestPriority = 0;
@@ -300,7 +296,7 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 	// 1. Check the immediate successor
 	bool haveImmediateSuccessor = (computePlace->_schedulerData != nullptr);
 	if (haveImmediateSuccessor) {
-		task = (Task *) computePlace->_schedulerData;
+		Task *task = (Task *) computePlace->_schedulerData;
 		bestPriority = (size_t) task->getSchedulerInfo();
 		bestIs = from_immediate_successor_slot;
 	}
@@ -336,7 +332,7 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 	if (bestIs != non_existant) {
 		// The immediate successor was choosen
 		if (bestIs == from_immediate_successor_slot) {
-			task = (Task *) computePlace->_schedulerData;
+			Task *task = (Task *) computePlace->_schedulerData;
 			computePlace->_schedulerData = nullptr;
 			
 			// Same thread, so there is no need to operate atomically
@@ -352,14 +348,14 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 		if (haveImmediateSuccessor) {
 			assert(bestIs != from_immediate_successor_slot);
 			
-			task = (Task *) computePlace->_schedulerData;
+			Task *task = (Task *) computePlace->_schedulerData;
 			computePlace->_schedulerData = nullptr;
 			
 			_readyTasks.push(task);
 		}
 		
 		if (bestIs == from_ready_task_queue) {
-			task = _readyTasks.top();
+			Task *task = _readyTasks.top();
 			_readyTasks.pop();
 			assert(task != nullptr);
 			
@@ -371,7 +367,7 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 		}
 		
 		if (bestIs == from_unblocked_task_queue) {
-			task = _unblockedTasks.top();
+			Task *task = _unblockedTasks.top();
 			_unblockedTasks.pop();
 			assert(task != nullptr);
 			

@@ -12,6 +12,8 @@
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 
 #include <atomic>
 
@@ -20,44 +22,33 @@
 
 void WorkerThread::initialize()
 {
-	assert(_cpu != nullptr);
+	setInstrumentationId(Instrument::createdThread());
+	
+	assert(getComputePlace() != nullptr);
 	
 	markAsCurrentWorkerThread();
 	
-	// Initialize the CPU status if necessary before the thread has a chance to check the shutdown signal
-	CPUActivation::threadInitialization(this);
+	// This is needed for kernel-level threads to stop them after initialization 
+	synchronizeInitialization();
 	
-	setInstrumentationId(Instrument::createdThread());
-	
-	// The thread suspends itself after initialization, since the "activator" is the one will unblock it when needed
-	suspend();
-	
-	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
-	assert(_cpuToBeResumedOn != nullptr);
-	_cpu = _cpuToBeResumedOn;
-	
-	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
-	
-#ifndef NDEBUG
-	_cpuToBeResumedOn = nullptr;
-#endif
-	
-	bind(_cpu);
+	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
 }
 
 
-void *WorkerThread::body()
+void WorkerThread::body()
 {
 	initialize();
 	
 	while (!_mustShutDown) {
 		CPUActivation::activationCheck(this);
 		
+		CPU *cpu = getComputePlace();
+		
 		if (_task == nullptr) {
 			Scheduler::polling_slot_t pollingSlot;
 			
-			if (Scheduler::requestPolling(_cpu, &pollingSlot)) {
-				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(_cpu)) {
+			if (Scheduler::requestPolling(cpu, &pollingSlot)) {
+				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(cpu)) {
 					// Keep trying
 					pollingSlot._task.compare_exchange_strong(_task, nullptr);
 					if (_task == nullptr) {
@@ -66,15 +57,15 @@ void *WorkerThread::body()
 				}
 				
 				if (ThreadManager::mustExit()) {
-					__attribute__((unused)) bool worked = Scheduler::releasePolling(_cpu, &pollingSlot);
+					__attribute__((unused)) bool worked = Scheduler::releasePolling(cpu, &pollingSlot);
 					assert(worked && "A failure to release the scheduler polling slot means that the thread has got a task assigned, however the runtime is shutting down");
 				}
 				
-				if (!CPUActivation::acceptsWork(_cpu)) {
+				if (!CPUActivation::acceptsWork(cpu)) {
 					// The CPU is about to be disabled
 					
 					// Release the polling slot
-					Scheduler::releasePolling(_cpu, &pollingSlot);
+					Scheduler::releasePolling(cpu, &pollingSlot);
 					
 					// We may already have a task assigned through
 					pollingSlot._task.compare_exchange_strong(_task, nullptr);
@@ -103,9 +94,9 @@ void *WorkerThread::body()
 					// This is needed, since otherwise the semantics would be that the if0Task task is being launched from within its own execution
 					_task = nullptr;
 					
-					If0Task::executeNonInline(this, if0Task, _cpu);
+					If0Task::executeNonInline(this, if0Task, cpu);
 				} else {
-					handleTask();
+					handleTask(cpu);
 				}
 				
 				_task = nullptr;
@@ -126,40 +117,41 @@ void *WorkerThread::body()
 		}
 	}
 	
-	ThreadManager::threadShutdownSequence(this);
-	
-	return nullptr;
+	shutdownSequence();
 }
 
 
-void WorkerThread::handleTask()
+void WorkerThread::handleTask(CPU *cpu)
 {
 	_task->setThread(this);
-
+	
 	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
-
-	Instrument::ThreadInstrumentationContext instrumentationContext(taskId, _cpu->getInstrumentationId(), _instrumentationId);
-
+	
+	Instrument::ThreadInstrumentationContext instrumentationContext(taskId, cpu->getInstrumentationId(), _instrumentationId);
+	
 	if (_task->hasCode()) {
 		Instrument::startTask(taskId);
 		Instrument::taskIsExecuting(taskId);
-
+		
 		// Run the task
 		std::atomic_thread_fence(std::memory_order_acquire);
 		_task->body();
 		std::atomic_thread_fence(std::memory_order_release);
-
+		
 		Instrument::taskIsZombie(taskId);
 		Instrument::endTask(taskId);
 	}
-
+	
+	// Update the CPU since the thread may have migrated
+	cpu = getComputePlace();
+	
 	// Release successors
-	DataAccessRegistration::unregisterTaskDataAccesses(_task, _cpu);
-
+	DataAccessRegistration::unregisterTaskDataAccesses(_task, cpu);
+	
 	if (_task->markAsFinished()) {
-		TaskFinalization::disposeOrUnblockTask(_task, _cpu);
+		TaskFinalization::disposeOrUnblockTask(_task, cpu);
 	}
-
+	
 	_task = nullptr;
 }
 

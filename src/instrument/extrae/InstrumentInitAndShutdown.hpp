@@ -2,6 +2,7 @@
 #define INSTRUMENT_EXTRAE_INIT_AND_SHUTDOWN_HPP
 
 #include <cassert>
+#include <cstdlib>
 
 #include <nanos6/debug.h>
 
@@ -18,8 +19,9 @@ namespace Instrument {
 	
 	static unsigned int extrae_nanos_get_thread_id()
 	{
-		if (_currentThreadId != nullptr) {
-			return *_currentThreadId;
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		if (threadLocal._currentThreadId != nullptr) {
+			return *threadLocal._currentThreadId;
 		} else {
 			return 0;
 		}
@@ -27,6 +29,11 @@ namespace Instrument {
 	
 	void initialize()
 	{
+		// This is a workaround to avoid an extrae segfault
+		if ((getenv("EXTRAE_ON") == nullptr) && (getenv("EXTRAE_CONFIG_FILE") == nullptr)) {
+			setenv("EXTRAE_ON", "1", 0);
+		}
+		
 		// Common thread information callbacks
 		if (_traceAsThreads) {
 			Extrae_set_threadid_function ( extrae_nanos_get_thread_id );
@@ -44,12 +51,6 @@ namespace Instrument {
 		Extrae_register_codelocation_type( _functionName, _codeLocation, "User Function Name", "User Function Location" );
 		Extrae_define_event_type((extrae_type_t *) &_taskInstanceId, "Task instance", &zero, nullptr, nullptr);
 		Extrae_define_event_type((extrae_type_t *) &_nestingLevel, "Task nesting level", &zero, nullptr, nullptr);
-		
-		Extrae_register_stacked_type( (extrae_type_t) _runtimeState );
-		Extrae_register_stacked_type( (extrae_type_t) _functionName );
-		Extrae_register_stacked_type( (extrae_type_t) _codeLocation );
-		Extrae_register_stacked_type( (extrae_type_t) _taskInstanceId );
-		Extrae_register_stacked_type( (extrae_type_t) _nestingLevel );
 	}
 	
 	
@@ -59,9 +60,13 @@ namespace Instrument {
 		extrae_value_t values[nval];
 		unsigned int i;
 		
-		for ( i = 0; i < nval; i++ ) values[i] = i;
-		
-		Extrae_define_event_type( (extrae_type_t *) &_runtimeState, (char *) "Runtime state", &nval, values, _eventStateValueStr );
+		for (i = 0; i < nval; i++) {
+			values[i] = i;
+		}
+		Extrae_define_event_type(
+			(extrae_type_t *) &_runtimeState, (char *) "Runtime state",
+			&nval, values, _eventStateValueStr
+		);
 		
 		std::set<nanos_task_info *, ExtraeTaskInfoCompare> orderedTaskInfoMap(_userFunctionMap.begin(), _userFunctionMap.end());
 		for (nanos_task_info *taskInfo : orderedTaskInfoMap) {

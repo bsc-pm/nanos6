@@ -33,7 +33,7 @@ public:
 				
 				// A task without parent must be a spawned function
 				if (parent == nullptr) {
-					SpawnedFunctions::_pendingSpawnedFuncions--;
+					SpawnedFunctions::_pendingSpawnedFunctions--;
 				}
 			} else {
 				// An ancestor in a taskwait that finishes at this point

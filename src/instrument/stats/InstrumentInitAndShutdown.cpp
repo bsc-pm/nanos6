@@ -65,7 +65,10 @@ namespace Instrument {
 	void initialize()
 	{
 		HardwareCounters::initialize();
+		
+		_phasesSpinLock.writeLock();
 		_phaseTimes.emplace_back(true);
+		_phasesSpinLock.writeUnlock();
 	}
 	
 	

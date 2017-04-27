@@ -528,18 +528,18 @@ private:
 						|| (propagateWriteSatisfiability && acceptsWriteSatisfiability)
 					) {
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
-						DelayedOperation delayedOperation;
+						DelayedOperation nextDelayedOperation;
 #else
-						DelayedOperation &delayedOperation = getNewDelayedOperation(hpDependencyData);
-						delayedOperation._operationType = DelayedOperation::propagate_satisfiability_to_fragments_operation;
+						DelayedOperation &nextDelayedOperation = getNewDelayedOperation(hpDependencyData);
+						nextDelayedOperation._operationType = DelayedOperation::propagate_satisfiability_to_fragments_operation;
 #endif
-						delayedOperation._propagateRead = propagateReadSatisfiability && acceptsReadSatisfiability;
-						delayedOperation._propagateWrite = propagateWriteSatisfiability && acceptsWriteSatisfiability;
-						delayedOperation._range = targetAccess->_range;
-						delayedOperation._target = targetTask;
+						nextDelayedOperation._propagateRead = propagateReadSatisfiability && acceptsReadSatisfiability;
+						nextDelayedOperation._propagateWrite = propagateWriteSatisfiability && acceptsWriteSatisfiability;
+						nextDelayedOperation._range = targetAccess->_range;
+						nextDelayedOperation._target = targetTask;
 						
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
-						propagateSatisfiabilityToFragments(delayedOperation, hpDependencyData);
+						propagateSatisfiabilityToFragments(nextDelayedOperation, hpDependencyData);
 #endif
 					}
 					
@@ -561,21 +561,21 @@ private:
 					
 					if (canPropagateReadSatisfiability || canPropagateWriteSatisfiability || makesNextTopmost) {
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
-						DelayedOperation delayedOperation;
+						DelayedOperation nextDelayedOperation;
 #else
-						DelayedOperation &delayedOperation = getNewDelayedOperation(hpDependencyData);
-						delayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
+						DelayedOperation &nextDelayedOperation = getNewDelayedOperation(hpDependencyData);
+						nextDelayedOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
 #endif
-						delayedOperation._propagateRead = canPropagateReadSatisfiability;
-						delayedOperation._propagateWrite = canPropagateWriteSatisfiability;
-						delayedOperation._makeTopmost = makesNextTopmost;
-						delayedOperation._range = targetAccess->_range;
-						delayedOperation._target = nextTask;
+						nextDelayedOperation._propagateRead = canPropagateReadSatisfiability;
+						nextDelayedOperation._propagateWrite = canPropagateWriteSatisfiability;
+						nextDelayedOperation._makeTopmost = makesNextTopmost;
+						nextDelayedOperation._range = targetAccess->_range;
+						nextDelayedOperation._target = nextTask;
 						
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
 						TaskDataAccesses &nextTaskAccessStructures = nextTask->getDataAccesses();
 						std::lock_guard<TaskDataAccesses::spinlock_t> guard(nextTaskAccessStructures._lock);
-						propagateSatisfiabilityPlain(delayedOperation, hpDependencyData);
+						propagateSatisfiabilityPlain(nextDelayedOperation, hpDependencyData);
 #endif
 					}
 				}

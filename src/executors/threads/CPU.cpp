@@ -6,7 +6,7 @@
 
 
 CPU::CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId)
-	: _activationStatus(starting_status), _systemCPUId(systemCPUId), _virtualCPUId(virtualCPUId), _NUMANodeId(NUMANodeId), _shutdownControlerThread(nullptr)
+	: _activationStatus(uninitialized_status), _systemCPUId(systemCPUId), _virtualCPUId(virtualCPUId), _NUMANodeId(NUMANodeId)
 {
 	CPU_ZERO_S(sizeof(cpu_set_t), &_cpuMask);
 	CPU_SET_S(systemCPUId, sizeof(cpu_set_t), &_cpuMask);

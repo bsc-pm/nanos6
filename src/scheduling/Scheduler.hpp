@@ -6,6 +6,9 @@
 
 #include "hardware/places/ComputePlace.hpp"
 
+#include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <tasks/Task.hpp>
 

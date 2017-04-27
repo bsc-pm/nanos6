@@ -12,7 +12,7 @@
 
 #include "executors/threads/CPU.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "lowlevel/KernelLevelThread.hpp"
+#include "lowlevel/threads/KernelLevelThread.hpp"
 #include "support/InstrumentedThread.hpp"
 
 #include <InstrumentThreadManagement.hpp>
@@ -20,17 +20,38 @@
 
 class WorkerThreadBase : protected KernelLevelThread, public InstrumentedThread {
 protected:
+	friend struct CPUThreadingModelData;
+	
 	//! The CPU on which this thread is running.
 	CPU *_cpu;
 	
 	//! The CPU to which the thread transitions the next time it resumes. Atomic since this is changed by other threads.
 	std::atomic<CPU *> _cpuToBeResumedOn;
 	
-	inline void bind(CPU *cpu);
 	
 	inline void markAsCurrentWorkerThread()
 	{
 		KernelLevelThread::setCurrentKernelLevelThread();
+	}
+	
+	inline void synchronizeInitialization()
+	{
+		assert(_cpu != nullptr);
+		bind(_cpu);
+		
+		// The thread suspends itself after initialization, since the "activator" is the one that will unblock it when needed
+		suspend();
+	}
+	
+	//! \brief exit the currently running thread and wake up the next one assigned to the same CPU (so that it can do the same)
+	//! 
+	//! NOTE: This method does not actually cause the thread to exit. Instead the caller is supposed to return from the body of
+	//! the thread.
+	void shutdownSequence();
+	
+	inline void start()
+	{
+		KernelLevelThread::start(&_cpu->_pthreadAttr);
 	}
 	
 	
@@ -39,8 +60,6 @@ public:
 	virtual ~WorkerThreadBase()
 	{
 	}
-	
-	inline void start();
 	
 	inline void suspend();
 	
@@ -87,22 +106,20 @@ WorkerThreadBase::WorkerThreadBase(CPU* cpu)
 }
 
 
-void WorkerThreadBase::start()
-{
-	KernelLevelThread::start(&_cpu->_pthreadAttr);
-}
-
-
-void WorkerThreadBase::bind(CPU *cpu)
-{
-	int rc = sched_setaffinity(_tid, CPU_ALLOC_SIZE(cpu->_systemCPUId+1), &cpu->_cpuMask);
-	FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", _tid, " to CPU ", cpu->_systemCPUId);
-}
-
-
 void WorkerThreadBase::suspend()
 {
+	Instrument::threadWillSuspend(_instrumentationId, _cpu->getInstrumentationId());
 	KernelLevelThread::suspend();
+	
+	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
+	assert(_cpuToBeResumedOn != nullptr);
+	_cpu = _cpuToBeResumedOn;
+	
+#ifndef NDEBUG
+	_cpuToBeResumedOn = nullptr;
+#endif
+	
+	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
 }
 
 
@@ -115,7 +132,7 @@ void WorkerThreadBase::resume(CPU *cpu, bool inInitializationOrShutdown)
 	}
 	
 	assert(_cpuToBeResumedOn == nullptr);
-	_cpuToBeResumedOn = cpu;
+	_cpuToBeResumedOn.store(cpu, std::memory_order_release);
 	if (_cpu != cpu) {
 		bind(cpu);
 	}
@@ -161,20 +178,8 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 		// NOTE: In this case the CPUActivation class can end up resuming a CPU before its running thread has had a chance to get blocked
 	}
 	
-	Instrument::threadWillSuspend(_instrumentationId, cpu->getInstrumentationId());
-	
 	suspend();
 	// After resuming (if ever blocked), the thread continues here
-	
-	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
-	assert(_cpuToBeResumedOn != nullptr);
-	_cpu = _cpuToBeResumedOn;
-	
-	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
-	
-#ifndef NDEBUG
-	_cpuToBeResumedOn = nullptr;
-#endif
 }
 
 

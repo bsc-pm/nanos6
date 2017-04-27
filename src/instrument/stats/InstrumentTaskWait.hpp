@@ -28,11 +28,15 @@ namespace Instrument {
 	{
 		// If a spawned function, count the taskwait as a frontier between phases
 		if (!taskId->_hasParent) {
+			Instrument::Stats::_phasesSpinLock.writeLock();
+			
 			assert(Instrument::Stats::_currentPhase == (Instrument::Stats::_phaseTimes.size() - 1));
 			Instrument::Stats::_phaseTimes.back().stop();
 			Instrument::Stats::_phaseTimes.emplace_back(true);
 			
 			Instrument::Stats::_currentPhase++;
+			
+			Instrument::Stats::_phasesSpinLock.writeUnlock();
 		}
 		
 		Instrument::returnToTask(taskId, context);

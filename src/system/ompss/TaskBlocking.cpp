@@ -26,7 +26,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, bo
 		
 		// The task needs to block. However during the following code, it can reach an unblocking condition.
 		// This can cause another thread to migrate it to another CPU and to presignal it, which will cause
-		// it to not block in the call to switchThreads.
+		// it to not block in the call to switchTo.
 		
 		replacementTask = Scheduler::getReadyTask(cpu, currentTask);
 		
@@ -63,7 +63,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, bo
 		if (runReplacementInline) {
 			assert(replacementThread == nullptr);
 			
-			currentThread->handleTask(replacementTask);
+			currentThread->handleTask(cpu, replacementTask);
 			
 			// The thread can have migrated while running the replacement task
 			cpu = currentThread->getComputePlace();

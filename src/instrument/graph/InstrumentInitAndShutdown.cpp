@@ -442,9 +442,11 @@ namespace Instrument {
 		} else {
 			bool sourceLinkIsSet = false;
 			
-			std::ostringstream oss;
-			oss << "cluster_task" << taskId;
-			taskLinkingLabels._nodeLabel = oss.str();
+			{
+				std::ostringstream oss;
+				oss << "cluster_task" << taskId;
+				taskLinkingLabels._nodeLabel = oss.str();
+			}
 			
 			std::string initialIndentation = indentation;
 			
@@ -501,15 +503,17 @@ namespace Instrument {
 				if (taskGroup != nullptr) {
 					long currentCluster = _nextCluster++;
 					
-					std::ostringstream oss;
-					oss << "cluster_phase" << currentCluster;
-					std::string currentPhaseLink = oss.str();
-					
-					ofs << indentation << "subgraph " << currentPhaseLink << " {"
+					{
+						std::ostringstream oss;
+						oss << "cluster_phase" << currentCluster;
+						std::string currentPhaseLink = oss.str();
+						
+						ofs << indentation << "subgraph " << currentPhaseLink << " {"
 #ifndef NDEBUG
-						<< "\t// " << __FILE__ << ":" << __LINE__
+							<< "\t// " << __FILE__ << ":" << __LINE__
 #endif
-						<< std::endl;
+							<< std::endl;
+					}
 					indentation = initialIndentation + "\t\t";
 					ofs << indentation << "label=\"\";" << std::endl;
 					ofs << indentation << "rank=same;" << std::endl;
@@ -531,13 +535,13 @@ namespace Instrument {
 							
 							data_access_id_t currentFragmentId = representativeFragmentId;
 							while (currentFragmentId != data_access_id_t()) {
-								access_fragment_t *fragment = (access_fragment_t *) _accessIdToAccessMap[currentFragmentId];
+								access_fragment_t *accessGroupFragment = (access_fragment_t *) _accessIdToAccessMap[currentFragmentId];
 								
-								if (_showDeadDependencyStructures || (fragment->_status == created_access_status)) {
+								if (_showDeadDependencyStructures || (accessGroupFragment->_status == created_access_status)) {
 									currentPhaseTopAccesses.push_back(currentFragmentId);
 									
 									if (!sourceLinkIsSet) {
-										for (auto &nextIdAndLink : fragment->_nextLinks) {
+										for (auto &nextIdAndLink : accessGroupFragment->_nextLinks) {
 											link_to_next_t &link = nextIdAndLink.second;
 											
 											if (taskGroup->_longestPathFirstTaskId == nextIdAndLink.first) {
@@ -545,19 +549,19 @@ namespace Instrument {
 												
 												if (_showDeadDependencyStructures) {
 													std::ostringstream oss;
-													oss << "data_access_" << fragment->_id;
+													oss << "data_access_" << accessGroupFragment->_id;
 													taskLinkingLabels._inLabel = oss.str();
 													sourceLinkIsSet = true;
 												} else if (link._status == created_link_status) {
 													nextTaskInfo._liveAccesses.processIntersecting(
-														fragment->_accessRange,
+														accessGroupFragment->_accessRange,
 														[&](task_live_accesses_t::iterator nextAccessPosition) -> bool {
 															access_t *nextAccess = nextAccessPosition->_access;
 															assert(nextAccess != nullptr);
 															
 															if (_showDeadDependencyStructures || (nextAccess->_status == created_access_status)) {
 																std::ostringstream oss;
-																oss << "data_access_" << fragment->_id;
+																oss << "data_access_" << accessGroupFragment->_id;
 																taskLinkingLabels._inLabel = oss.str();
 																sourceLinkIsSet = true;
 																

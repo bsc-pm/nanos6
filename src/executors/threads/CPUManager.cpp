@@ -1,5 +1,6 @@
 #include <boost/dynamic_bitset.hpp>
 
+#include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 
 #include "CPU.hpp"
@@ -11,6 +12,7 @@ size_t CPUManager::_totalCPUs;
 std::atomic<bool> CPUManager::_finishedCPUInitialization;
 SpinLock CPUManager::_idleCPUsLock;
 boost::dynamic_bitset<> CPUManager::_idleCPUs;
+
 
 void CPUManager::preinitialize()
 {
@@ -36,11 +38,21 @@ void CPUManager::preinitialize()
 	_idleCPUs.reset();
 }
 
+
 void CPUManager::initialize()
 {
-	for (size_t i = 0; i < _cpus.size(); ++i) {
-		if (_cpus[i] != nullptr) {
-			ThreadManager::initializeThread(_cpus[i]);
+	for (size_t systemCPUId = 0; systemCPUId < _cpus.size(); ++systemCPUId) {
+		if (_cpus[systemCPUId] != nullptr) {
+			CPU *cpu = _cpus[systemCPUId];
+			assert(cpu != nullptr);
+			
+			bool worked = cpu->initializeIfNeeded();
+			if (worked) {
+				WorkerThread *initialThread = ThreadManager::getIdleThread(cpu, false);
+				initialThread->resume(cpu, true);
+			} else {
+				// Already initialized?
+			}
 		}
 	}
 

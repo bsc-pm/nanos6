@@ -24,8 +24,6 @@ namespace Instrument {
 	user_fct_map_t            _userFunctionMap;
 	
 	std::atomic<size_t> _nextTaskId(1);
-	thread_local thread_id_t *_currentThreadId = nullptr;
-	thread_local std::vector<int> _nestingLevels; 
 	
 	RWSpinLock _extraeThreadCountLock;
 	

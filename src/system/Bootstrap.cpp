@@ -82,7 +82,7 @@ void nanos_init(void) {
 
 
 void nanos_shutdown(void) {
-	while (SpawnedFunctions::_pendingSpawnedFuncions > 0) {
+	while (SpawnedFunctions::_pendingSpawnedFunctions > 0) {
 		// Wait for spawned functions to fully end
 	}
 	

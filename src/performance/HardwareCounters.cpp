@@ -17,3 +17,6 @@ namespace HardwareCounters {
 	
 };
 
+
+#include "performance/HardwareCountersThreadLocalData.hpp"
+#include "performance/HardwareCountersThreadLocalDataImplementation.hpp"

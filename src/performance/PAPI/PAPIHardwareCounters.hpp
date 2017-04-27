@@ -11,6 +11,7 @@
 #undef ffsll
 
 #include "../HardwareCounters.hpp"
+#include "PAPIHardwareCountersThreadLocalData.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
@@ -40,8 +41,6 @@ namespace HardwareCounters {
 			}
 		};
 		
-		extern thread_local ThreadLocal _threadLocal;
-		
 		typedef signed char event_index_t;
 		typedef unsigned long long event_value_t;
 		
@@ -66,21 +65,23 @@ namespace HardwareCounters {
 	inline void initializeThread()
 	{
 		assert(PAPI::_initializationCount > 0);
-		assert(PAPI::_threadLocal._initializationCount >= 0);
+		PAPI::ThreadLocal &threadLocal = PAPI::getCurrentThreadHardwareCounters();
 		
-		PAPI::_threadLocal._initializationCount++;
+		assert(threadLocal._initializationCount >= 0);
 		
-		if (PAPI::_threadLocal._initializationCount > 1) {
+		threadLocal._initializationCount++;
+		
+		if (threadLocal._initializationCount > 1) {
 			return;
 		}
 		
-		assert(PAPI::_threadLocal._eventSet == PAPI_NULL);
+		assert(threadLocal._eventSet == PAPI_NULL);
 		
-		int rc = PAPI_create_eventset(&PAPI::_threadLocal._eventSet);
+		int rc = PAPI_create_eventset(&threadLocal._eventSet);
 		FatalErrorHandler::failIf(rc == PAPI_ENOMEM, "Not enough memory creating PAPI event set");
 		FatalErrorHandler::failIf(rc == PAPI_EINVAL, "Invalid parameter creating PAPI event set");
 		
-		rc = PAPI_add_events(PAPI::_threadLocal._eventSet, PAPI::_papiEventCodes.data(), PAPI::_papiEventCodes.size());
+		rc = PAPI_add_events(threadLocal._eventSet, PAPI::_papiEventCodes.data(), PAPI::_papiEventCodes.size());
 		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to events to an event set");
 	}
 	
@@ -440,7 +441,9 @@ namespace HardwareCounters {
 		//! \brief Start the hardware counters
 		inline bool start()
 		{
-			int rc = PAPI_start(PAPI::_threadLocal._eventSet);
+			PAPI::ThreadLocal &threadLocal = PAPI::getCurrentThreadHardwareCounters();
+			
+			int rc = PAPI_start(threadLocal._eventSet);
 			_valid = (rc == PAPI_OK);
 			
 			_realStart = PAPI_get_real_nsec();
@@ -453,7 +456,9 @@ namespace HardwareCounters {
 		inline bool accumulateAndRestart(int set = 0)
 		{
 			if (_valid) {
-				int rc = PAPI_accum(PAPI::_threadLocal._eventSet, (long long *) Counters<NUM_SETS>::_counterSets[set]);
+				PAPI::ThreadLocal &threadLocal = PAPI::getCurrentThreadHardwareCounters();
+				
+				int rc = PAPI_accum(threadLocal._eventSet, (long long *) Counters<NUM_SETS>::_counterSets[set]);
 				
 				PAPI::event_value_t _realStop = PAPI_get_real_nsec();
 				PAPI::event_value_t _virtualStop = PAPI_get_virt_nsec();
@@ -480,7 +485,9 @@ namespace HardwareCounters {
 		inline bool accumulateAndStop(int set = 0)
 		{
 			if (_valid) {
-				int rc = PAPI_stop(PAPI::_threadLocal._eventSet, (long long *) Counters<NUM_SETS>::_counterSets[set]);
+				PAPI::ThreadLocal &threadLocal = PAPI::getCurrentThreadHardwareCounters();
+				
+				int rc = PAPI_stop(threadLocal._eventSet, (long long *) Counters<NUM_SETS>::_counterSets[set]);
 				
 				PAPI::event_value_t _realStop = PAPI_get_real_nsec();
 				PAPI::event_value_t _virtualStop = PAPI_get_virt_nsec();
@@ -504,7 +511,9 @@ namespace HardwareCounters {
 		inline void stop(int set = 0)
 		{
 			if (_valid) {
-				PAPI_stop(PAPI::_threadLocal._eventSet, nullptr);
+				PAPI::ThreadLocal &threadLocal = PAPI::getCurrentThreadHardwareCounters();
+				
+				PAPI_stop(threadLocal._eventSet, nullptr);
 			}
 		}
 		
