@@ -36,6 +36,9 @@ protected:
 	
 	inline void synchronizeInitialization()
 	{
+		assert(_cpu != nullptr);
+		bind(_cpu);
+		
 		// The thread suspends itself after initialization, since the "activator" is the one that will unblock it when needed
 		suspend();
 	}
@@ -115,8 +118,6 @@ void WorkerThreadBase::suspend()
 #ifndef NDEBUG
 	_cpuToBeResumedOn = nullptr;
 #endif
-	
-	bind(_cpu);
 	
 	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
 }
