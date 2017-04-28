@@ -27,6 +27,7 @@ namespace Instrument {
 			if (current._visited) {
 				return;
 			}
+			current._visited = true;
 			
 			current._maximumDepth = 1;
 			current._lastInLongestPath = currentId;
