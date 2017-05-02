@@ -28,6 +28,9 @@ private:
 	//! \brief threads blocked due to idleness
 	static boost::dynamic_bitset<> _idleCPUs;
 
+	//! \brief NUMA node CPU mask
+	static std::vector<boost::dynamic_bitset<>> _NUMANodeMask;
+
 	static SpinLock _idleCPUsLock;
 	
 public:
@@ -52,6 +55,9 @@ public:
 
 	//! \brief get an idle CPU
 	static inline CPU *getIdleCPU();
+
+	//! \brief get an idle CPU from a specific NUMA node
+	static inline CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
 };
 
 
@@ -104,4 +110,17 @@ inline CPU *CPUManager::getIdleCPU()
 	}
 }
 
-#endif // THREAD_MANAGER_HPP
+inline CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
+{
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<> tmpIdleCPUs = _idleCPUs & _NUMANodeMask[NUMANodeId];
+	boost::dynamic_bitset<>::size_type idleCPU = tmpIdleCPUs.find_first();
+	if (idleCPU != boost::dynamic_bitset<>::npos) {
+		_idleCPUs[idleCPU] = false;
+		return _cpus[idleCPU];
+	} else {
+		return nullptr;
+	}
+}
+
+#endif // CPU_MANAGER_HPP

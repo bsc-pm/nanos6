@@ -5,6 +5,7 @@
 #include <nanos6.h>
 
 #include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
 
 
 class Task;

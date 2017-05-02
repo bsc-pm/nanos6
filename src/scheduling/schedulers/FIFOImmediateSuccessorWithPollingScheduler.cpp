@@ -1,4 +1,5 @@
-#include "ImmediateSuccessorWithPollingScheduler.hpp"
+#include "FIFOImmediateSuccessorWithPollingScheduler.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
@@ -8,17 +9,17 @@
 #include <cassert>
 #include <mutex>
 
-ImmediateSuccessorWithPollingScheduler::ImmediateSuccessorWithPollingScheduler()
+FIFOImmediateSuccessorWithPollingScheduler::FIFOImmediateSuccessorWithPollingScheduler()
 	: _pollingSlot(nullptr)
 {
 }
 
-ImmediateSuccessorWithPollingScheduler::~ImmediateSuccessorWithPollingScheduler()
+FIFOImmediateSuccessorWithPollingScheduler::~FIFOImmediateSuccessorWithPollingScheduler()
 {
 }
 
 
-Task *ImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlace)
+Task *FIFOImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlace)
 {
 	if (!_unblockedTasks.empty()) {
 		Task *replacementTask = _unblockedTasks.front();
@@ -33,26 +34,7 @@ Task *ImmediateSuccessorWithPollingScheduler::getReplacementTask(__attribute__((
 }
 
 
-void ImmediateSuccessorWithPollingScheduler::cpuBecomesIdle(CPU *cpu)
-{
-	_idleCPUs.push_front(cpu);
-}
-
-
-CPU *ImmediateSuccessorWithPollingScheduler::getIdleCPU()
-{
-	if (!_idleCPUs.empty()) {
-		CPU *idleCPU = _idleCPUs.front();
-		_idleCPUs.pop_front();
-		
-		return idleCPU;
-	}
-	
-	return nullptr;
-}
-
-
-ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
+ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
@@ -103,14 +85,18 @@ ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, 
 	
 	// 4. At this point the polling slot is empty, so send the task to the queue
 	assert(_pollingSlot.load() == nullptr);
-	_readyTasks.push_front(task);
+	_readyTasks.push_back(task);
 	
 	// Attempt to get a CPU to resume the task
-	return getIdleCPU();
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
+	} else {
+		return nullptr;
+	}
 }
 
 
-void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
+void FIFOImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
 {
 	// 1. Attempt to send the task to a polling thread without locking
 	{
@@ -151,11 +137,11 @@ void ImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblockedTa
 	
 	// 3. At this point the polling slot is empty, so send the task to the queue
 	assert(_pollingSlot.load() == nullptr);
-	_unblockedTasks.push_front(unblockedTask);
+	_unblockedTasks.push_back(unblockedTask);
 }
 
 
-Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
+Task *FIFOImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	
@@ -186,24 +172,26 @@ Task *ImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *compute
 	}
 	
 	// 4. Or mark the CPU as idle
-	cpuBecomesIdle((CPU *) computePlace);
+	if (canMarkAsIdle) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
 	
 	return nullptr;
 }
 
 
-ComputePlace *ImmediateSuccessorWithPollingScheduler::getIdleComputePlace(bool force)
+ComputePlace *FIFOImmediateSuccessorWithPollingScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
-		return getIdleCPU();
+		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}
 }
 
 
-void ImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlace *computePlace)
+void FIFOImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlace *computePlace)
 {
 	if (computePlace->_schedulerData != nullptr) {
 		Task *task = (Task *) computePlace->_schedulerData;
@@ -215,7 +203,7 @@ void ImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlace *c
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
 {
 	Task *task = nullptr;
 	
@@ -265,18 +253,18 @@ bool ImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *comput
 		return true;
 	} else {
 		// 5.b. There is already another thread polling. Therefore, mark the CPU as idle
-		cpuBecomesIdle((CPU *) computePlace);
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
 		
 		return false;
 	}
 }
 
 
-bool ImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
 {
 	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
-		cpuBecomesIdle((CPU *) computePlace);
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
 		return true;
 	} else {
 		return false;

@@ -7,7 +7,7 @@
 #include <queue>
 #include <vector>
 
-#include "SchedulerInterface.hpp"
+#include "../SchedulerInterface.hpp"
 #include "lowlevel/PaddedTicketSpinLock.hpp"
 #include "lowlevel/TicketSpinLock.hpp"
 #include "executors/threads/CPU.hpp"
@@ -34,23 +34,18 @@ class PriorityScheduler: public SchedulerInterface {
 	task_queue_t _readyTasks;
 	task_queue_t _unblockedTasks;
 	
-	std::deque<CPU *> _idleCPUs;
-	
 	std::atomic<polling_slot_t *> _pollingSlot;
 	
-	
-	inline CPU *getIdleCPU();
-	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	PriorityScheduler();
 	~PriorityScheduler();
 	
-	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace);
 	
-	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr);
+	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
 	

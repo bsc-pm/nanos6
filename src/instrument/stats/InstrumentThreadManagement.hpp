@@ -3,6 +3,7 @@
 
 
 #include "../api/InstrumentThreadManagement.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include "InstrumentStats.hpp"
 #include "InstrumentThreadId.hpp"
@@ -15,10 +16,10 @@ namespace Instrument {
 	{
 		HardwareCounters::initializeThread();
 		
-		Stats::_threadStats = new Stats::ThreadInfo(true);
+		ThreadLocalData &threadLocal = getThreadLocalData();
 		
 		Stats::_threadInfoListSpinLock.lock();
-		Stats::_threadInfoList.push_back(Stats::_threadStats);
+		Stats::_threadInfoList.push_back(&threadLocal._threadInfo);
 		Stats::_threadInfoListSpinLock.unlock();
 		
 		return thread_id_t();
@@ -26,13 +27,17 @@ namespace Instrument {
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceId)
 	{
-		Instrument::Stats::PhaseInfo &currentPhase = Stats::_threadStats->getCurrentPhaseRef();
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		
+		Instrument::Stats::PhaseInfo &currentPhase = threadLocal._threadInfo.getCurrentPhaseRef();
 		currentPhase._runningTime.continueAt(currentPhase._blockedTime);
 	}
 	
 	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceId)
 	{
-		Instrument::Stats::PhaseInfo &currentPhase = Stats::_threadStats->getCurrentPhaseRef();
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		
+		Instrument::Stats::PhaseInfo &currentPhase = threadLocal._threadInfo.getCurrentPhaseRef();
 		currentPhase._blockedTime.continueAt(currentPhase._runningTime);
 	}
 	

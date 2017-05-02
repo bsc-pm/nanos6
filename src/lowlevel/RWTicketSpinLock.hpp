@@ -8,9 +8,9 @@
 
 class RWTicketSpinLock {
 private:
-	TicketSpinLock _readersSpinLock;
+	TicketSpinLock<> _readersSpinLock;
 	long _readers;
-	TicketSpinLock _writerSpinLock;
+	TicketSpinLock<> _writerSpinLock;
 	
 public:
 	RWTicketSpinLock()

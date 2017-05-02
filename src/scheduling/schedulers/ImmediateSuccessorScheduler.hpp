@@ -5,7 +5,7 @@
 #include <deque>
 #include <vector>
 
-#include "SchedulerInterface.hpp"
+#include "../SchedulerInterface.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "executors/threads/CPU.hpp"
 
@@ -19,21 +19,17 @@ class ImmediateSuccessorScheduler: public SchedulerInterface {
 	std::deque<Task *> _readyTasks;
 	std::deque<Task *> _unblockedTasks;
 	
-	std::deque<CPU *> _idleCPUs;
-	
-	inline CPU *getIdleCPU();
 	inline Task *getReplacementTask(CPU *computePlace);
-	inline void cpuBecomesIdle(CPU *cpu);
 	
 public:
 	ImmediateSuccessorScheduler();
 	~ImmediateSuccessorScheduler();
 	
-	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint);
+	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);
 	
 	void taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace);
 	
-	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr);
+	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
 	

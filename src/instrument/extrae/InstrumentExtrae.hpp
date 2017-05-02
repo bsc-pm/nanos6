@@ -5,6 +5,7 @@
 #include "extrae_types.h"
 
 #include <nanos6.h>
+
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/RWSpinLock.hpp"
 #include "lowlevel/SpinLock.hpp"
@@ -44,8 +45,6 @@ namespace Instrument {
 	extern user_fct_map_t                            _userFunctionMap;
 	
 	extern std::atomic<size_t> _nextTaskId;
-	extern thread_local thread_id_t *_currentThreadId; 
-	extern thread_local std::vector<int> _nestingLevels; 
 	
 	extern RWSpinLock _extraeThreadCountLock;
 	

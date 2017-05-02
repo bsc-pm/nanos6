@@ -4,7 +4,7 @@
 
 #include <atomic>
 
-#include "lowlevel/KernelLevelThread.hpp"
+#include "lowlevel/threads/KernelLevelThread.hpp"
 
 
 //! \brief This class contains the code of the leader thread that consists in performing maintenance duties
@@ -23,8 +23,7 @@ public:
 	}
 	
 	//! \brief A loop that takes care of maintenance duties
-	//! The loop ends after notifyMainExit is called
-	void *body();
+	void body();
 	
 	static bool isExiting()
 	{

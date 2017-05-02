@@ -3,6 +3,7 @@
 
 
 #include "../api/InstrumentTaskExecution.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include "InstrumentStats.hpp"
 
@@ -26,7 +27,8 @@ namespace Instrument {
 		taskId->_currentTimer->stop();
 		taskId->_currentTimer = 0;
 		
-		Instrument::Stats::PhaseInfo &phaseInfo = Stats::_threadStats->getCurrentPhaseRef();
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		Instrument::Stats::PhaseInfo &phaseInfo = threadLocal._threadInfo.getCurrentPhaseRef();
 		Instrument::Stats::TaskInfo &taskInfo = phaseInfo._perTask[taskId->_type];
 		taskInfo += taskId->_times;
 		taskInfo += taskId->_hardwareCounters;

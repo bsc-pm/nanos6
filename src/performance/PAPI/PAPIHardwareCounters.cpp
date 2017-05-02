@@ -17,8 +17,6 @@ namespace HardwareCounters {
 		
 		std::vector<int> _papiEventCodes;
 		
-		thread_local ThreadLocal _threadLocal;
-		
 		event_index_t _totalEvents = 0;
 		event_index_t _l1CacheEventIndex = -1;
 		event_index_t _l2CacheEventIndex = -1;
@@ -266,21 +264,23 @@ namespace HardwareCounters {
 	
 	void shutdownThread()
 	{
-		assert(PAPI::_threadLocal._eventSet != PAPI_NULL);
+		PAPI::ThreadLocal &threadLocal = PAPI::getCurrentThreadHardwareCounters();
 		
-		assert(PAPI::_threadLocal._initializationCount > 0);
-		PAPI::_threadLocal._initializationCount--;
+		assert(threadLocal._eventSet != PAPI_NULL);
 		
-		if (PAPI::_threadLocal._initializationCount > 0) {
+		assert(threadLocal._initializationCount > 0);
+		threadLocal._initializationCount--;
+		
+		if (threadLocal._initializationCount > 0) {
 			return;
 		}
 		
-		PAPI_stop(PAPI::_threadLocal._eventSet, nullptr);
+		PAPI_stop(threadLocal._eventSet, nullptr);
 		
-		int rc = PAPI_cleanup_eventset(PAPI::_threadLocal._eventSet);
+		int rc = PAPI_cleanup_eventset(threadLocal._eventSet);
 		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to clean up an event set");
 		
-		rc = PAPI_destroy_eventset(&PAPI::_threadLocal._eventSet);
+		rc = PAPI_destroy_eventset(&threadLocal._eventSet);
 		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to destroy an event set");
 	}
 	

@@ -23,7 +23,7 @@ static nanos_task_invocation_info _spawnedFunctionInvocationInfo = { "Spawned fr
 
 
 namespace SpawnedFunctions {
-	std::atomic<unsigned int> _pendingSpawnedFuncions(0);
+	std::atomic<unsigned int> _pendingSpawnedFunctions(0);
 }
 
 
@@ -55,7 +55,7 @@ static void nanos_spawned_function_wrapper(void *args)
 
 void nanos_spawn_function(void (*function)(void *), void *args, void (*completion_callback)(void *), void *completion_args, char const *label)
 {
-	SpawnedFunctions::_pendingSpawnedFuncions++;
+	SpawnedFunctions::_pendingSpawnedFunctions++;
 	
 	nanos_task_info *taskInfo = nullptr;
 	{

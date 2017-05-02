@@ -261,8 +261,8 @@ red_stress_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_stress_test_LDFLAGS = $(test_common_ldflags)
 
 if AWK_IS_SANE
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' NANOS6_LIBRARY_PATH='$(top_builddir)/.libs' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
 else
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' NANOS6_LIBRARY_PATH='$(top_builddir)/.libs' $(SHELL) $(top_srcdir)/tests/select-version.sh $(PERL) $(top_srcdir)/tests/tap-driver.pl 
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(PERL) $(top_srcdir)/tests/tap-driver.pl 
 endif
 

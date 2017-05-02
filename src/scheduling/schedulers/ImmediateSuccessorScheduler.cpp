@@ -1,4 +1,5 @@
 #include "ImmediateSuccessorScheduler.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
@@ -32,26 +33,7 @@ Task *ImmediateSuccessorScheduler::getReplacementTask(__attribute__((unused)) CP
 }
 
 
-void ImmediateSuccessorScheduler::cpuBecomesIdle(CPU *cpu)
-{
-	_idleCPUs.push_front(cpu);
-}
-
-
-CPU *ImmediateSuccessorScheduler::getIdleCPU()
-{
-	if (!_idleCPUs.empty()) {
-		CPU *idleCPU = _idleCPUs.front();
-		_idleCPUs.pop_front();
-		
-		return idleCPU;
-	}
-	
-	return nullptr;
-}
-
-
-ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
+ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
@@ -64,7 +46,11 @@ ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlac
 	std::lock_guard<SpinLock> guard(_globalLock);
 	_readyTasks.push_front(task);
 	
-	return getIdleCPU();
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
+	} else {
+		return nullptr;
+	}
 }
 
 
@@ -75,7 +61,7 @@ void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, __attri
 }
 
 
-Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
+Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	
@@ -105,7 +91,9 @@ Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *computePlace, __at
 	}
 	
 	// 4. Or mark the CPU as idle
-	cpuBecomesIdle((CPU *) computePlace);
+	if (canMarkAsIdle) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
 	
 	return nullptr;
 }
@@ -115,7 +103,7 @@ ComputePlace *ImmediateSuccessorScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
-		return getIdleCPU();
+		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}

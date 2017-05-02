@@ -13,28 +13,6 @@
 class CPUActivation {
 public:
 	
-	//! \brief check and handle CPU activation initialization
-	//!
-	//! This code must be run from within a worker thread within its initialization
-	static inline void threadInitialization(WorkerThread *currentThread)
-	{
-		assert(currentThread != nullptr);
-		
-		CPU *cpu = currentThread->getComputePlace();
-		assert(cpu != nullptr);
-		
-		CPU::activation_status_t currentStatus = cpu->_activationStatus;
-		if (currentStatus == CPU::starting_status) {
-			#if NDEBUG
-				cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
-			#else
-				bool successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
-				assert(successful); // There should be no other thread changing this
-			#endif
-		}
-	}
-	
-	
 	//! \brief set a CPU online
 	static inline void enable(size_t systemCPUId)
 	{
@@ -136,7 +114,10 @@ public:
 					assert(false);
 					break;
 				case CPU::starting_status:
-					assert(false && "Invalid CPU activation status");
+					{
+						__attribute__((unused)) bool enabled = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
+						assert(enabled); // There should be no other thread changing this
+					}
 					break;
 				case CPU::enabled_status:
 					// No change

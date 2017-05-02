@@ -9,6 +9,10 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 #include <InstrumentLeaderThread.hpp>
 #include <InstrumentThreadManagement.hpp>
 
@@ -43,13 +47,13 @@ LeaderThread::LeaderThread()
 }
 
 
-void *LeaderThread::body()
+void LeaderThread::body()
 {
 	Instrument::task_id_t instrumentationTaskId;
 	Instrument::compute_place_id_t instrumentationComputePlaceId;
 	Instrument::thread_id_t instrumentationThreadId;
 	
-	Instrument::ThreadInstrumentationContext instrumentationContext(
+	Instrument::InstrumentationContext instrumentationContext(
 		instrumentationTaskId, instrumentationComputePlaceId, instrumentationThreadId
 	);
 	
@@ -62,10 +66,10 @@ void *LeaderThread::body()
 		
 		PollingAPI::handleServices();
 		
-		Instrument::leaderThreadSpin(instrumentationContext.get());
+		Instrument::leaderThreadSpin(instrumentationContext);
 	}
 	
-	return nullptr;
+	return;
 }
 
 

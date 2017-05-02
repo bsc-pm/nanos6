@@ -3,6 +3,7 @@
 
 
 #include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
 
 
 namespace Instrument {

@@ -31,13 +31,13 @@ public:
 		CHILD_TASK_HINT,
 		SIBLING_TASK_HINT
 	};
+
 	
 	
 	virtual ~SchedulerInterface()
 	{
 	}
 	
-
 	//! \brief Add a (ready) task that has been created or freed (but not unblocked)
 	//!
 	//! \param[in] task the task to be added
@@ -45,7 +45,7 @@ public:
 	//! \param[in] hint a hint about the relation of the task to the current task
 	//!
 	//! \returns an idle ComputePlace that is to be resumed or nullptr
-	virtual ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint) = 0;
+	virtual ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true) = 0;
 	
 	//! \brief Add back a task that was blocked but that is now unblocked
 	//!
@@ -57,9 +57,10 @@ public:
 	//!
 	//! \param[in] computePlace the hardware place asking for scheduling orders
 	//! \param[in] currentTask a task within whose context the resulting task will run
+	//! \param[in] canMarkAsIdle true if the scheduler should mark the computePlace as idle if there are no pending tasks
 	//!
 	//! \returns a ready task or nullptr
-	virtual Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr) = 0;
+	virtual Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true) = 0;
 	
 	//! \brief Get an idle hardware place
 	//!

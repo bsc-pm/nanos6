@@ -2,8 +2,6 @@
 #define INSTRUMENT_THREAD_MANAGEMENT_HPP
 
 
-#include <InstrumentInstrumentationContext.hpp>
-
 
 namespace Instrument {
 	//! This function is called when the runtime creates a new thread and

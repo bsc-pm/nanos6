@@ -1,7 +1,7 @@
-#include "NaiveScheduler.hpp"
+#include "FIFOScheduler.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
-#include "executors/threads/CPUManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
 #include "tasks/Task.hpp"
 
@@ -9,16 +9,16 @@
 #include <cassert>
 #include <mutex>
 
-NaiveScheduler::NaiveScheduler()
+FIFOScheduler::FIFOScheduler()
 {
 }
 
-NaiveScheduler::~NaiveScheduler()
+FIFOScheduler::~FIFOScheduler()
 {
 }
 
 
-Task *NaiveScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlace)
+Task *FIFOScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlace)
 {
 	if (!_unblockedTasks.empty()) {
 		Task *replacementTask = _unblockedTasks.front();
@@ -33,23 +33,27 @@ Task *NaiveScheduler::getReplacementTask(__attribute__((unused)) CPU *computePla
 }
 
 
-ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint)
+ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint, bool doGetIdle)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
-	_readyTasks.push_front(task);
+	_readyTasks.push_back(task);
 	
-	return CPUManager::getIdleCPU();
+	if (doGetIdle) {
+		return CPUManager::getIdleCPU();
+	} else {
+		return nullptr;
+	}
 }
 
 
-void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
+void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
-	_unblockedTasks.push_front(unblockedTask);
+	_unblockedTasks.push_back(unblockedTask);
 }
 
 
-Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask)
+Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	
@@ -72,13 +76,15 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 	}
 	
 	// 3. Or mark the CPU as idle
-	CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	if (canMarkAsIdle) {
+		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+	}
 	
 	return nullptr;
 }
 
 
-ComputePlace *NaiveScheduler::getIdleComputePlace(bool force)
+ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {

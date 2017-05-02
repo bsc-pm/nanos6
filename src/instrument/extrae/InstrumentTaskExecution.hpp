@@ -3,6 +3,7 @@
 
 
 #include "../api/InstrumentTaskExecution.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 #include "InstrumentExtrae.hpp"
 
 #include <cassert>
@@ -14,7 +15,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		extrae_combined_events_t ce;
-
+		
 		ce.HardwareCounters = 1;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
@@ -36,7 +37,8 @@ namespace Instrument {
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) taskId._taskId;
 		
-		_nestingLevels.push_back(taskId._nestingLevel);
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		threadLocal._nestingLevels.push_back(taskId._nestingLevel);
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
@@ -57,14 +59,23 @@ namespace Instrument {
 		ce.HardwareCounters = 1;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 1;
+		ce.nEvents = 4;
 		ce.nCommunications = 0;
 		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
 		ce.Types[0] = _runtimeState;
-		ce.Values[0] = (extrae_value_t) NANOS_NO_STATE;
+		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
+		
+		ce.Types[1] = _codeLocation;
+		ce.Values[1] = (extrae_value_t) taskId._taskInfo->run;
+		
+		ce.Types[2] = _nestingLevel;
+		ce.Values[2] = (extrae_value_t) taskId._nestingLevel;
+		
+		ce.Types[3] = _taskInstanceId;
+		ce.Values[3] = (extrae_value_t) taskId._taskId;
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
@@ -92,7 +103,7 @@ namespace Instrument {
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
 		ce.Types[0] = _runtimeState;
-		ce.Values[0] = (extrae_value_t) NANOS_NO_STATE;
+		ce.Values[0] = (extrae_value_t) NANOS_IDLE;
 		
 		ce.Types[1] = _codeLocation;
 		ce.Values[1] = (extrae_value_t) nullptr;
@@ -111,8 +122,9 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 		
-		assert(!_nestingLevels.empty());
-		_nestingLevels.pop_back();
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		assert(!threadLocal._nestingLevels.empty());
+		threadLocal._nestingLevels.pop_back();
 	}
 	
 	
