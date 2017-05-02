@@ -41,3 +41,7 @@ bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *co
 	// otherwise there should be an implementation of this method that matches requestPolling
 	return (pollingSlot->_task.load(std::memory_order_seq_cst) == nullptr);
 }
+
+
+#include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
+#include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
