@@ -53,7 +53,7 @@ void LeaderThread::body()
 	Instrument::compute_place_id_t instrumentationComputePlaceId;
 	Instrument::thread_id_t instrumentationThreadId;
 	
-	Instrument::ThreadInstrumentationContext instrumentationContext(
+	Instrument::InstrumentationContext instrumentationContext(
 		instrumentationTaskId, instrumentationComputePlaceId, instrumentationThreadId
 	);
 	
@@ -66,7 +66,7 @@ void LeaderThread::body()
 		
 		PollingAPI::handleServices();
 		
-		Instrument::leaderThreadSpin(instrumentationContext.get());
+		Instrument::leaderThreadSpin(instrumentationContext);
 	}
 	
 	return;
