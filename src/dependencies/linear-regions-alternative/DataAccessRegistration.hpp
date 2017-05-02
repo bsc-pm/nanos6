@@ -1421,7 +1421,7 @@ public:
 		
 #ifndef NDEBUG
 		if (!alreadyTaken) {
-			bool alreadyTaken = true;
+			alreadyTaken = true;
 			assert(cpuDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
 		}
 #endif
