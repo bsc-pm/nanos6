@@ -48,9 +48,9 @@ namespace Instrument {
 		
 		unsigned int zero = 0;
 		
-		Extrae_register_codelocation_type( _functionName, _codeLocation, "User Function Name", "User Function Location" );
-		Extrae_define_event_type((extrae_type_t *) &_taskInstanceId, "Task instance", &zero, nullptr, nullptr);
-		Extrae_define_event_type((extrae_type_t *) &_nestingLevel, "Task nesting level", &zero, nullptr, nullptr);
+		Extrae_register_codelocation_type( _functionName, _codeLocation, (char *) "User Function Name", (char *) "User Function Location" );
+		Extrae_define_event_type((extrae_type_t *) &_taskInstanceId, (char *) "Task instance", &zero, nullptr, nullptr);
+		Extrae_define_event_type((extrae_type_t *) &_nestingLevel, (char *) "Task nesting level", &zero, nullptr, nullptr);
 	}
 	
 	
@@ -65,7 +65,7 @@ namespace Instrument {
 		}
 		Extrae_define_event_type(
 			(extrae_type_t *) &_runtimeState, (char *) "Runtime state",
-			&nval, values, _eventStateValueStr
+			&nval, values, (char **) _eventStateValueStr
 		);
 		
 		std::set<nanos_task_info *, ExtraeTaskInfoCompare> orderedTaskInfoMap(_userFunctionMap.begin(), _userFunctionMap.end());

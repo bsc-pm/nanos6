@@ -39,7 +39,7 @@ namespace Instrument {
 						NANOS_EVENT_STATE_TYPES
 	} nanos_event_state_t;
 	
-	extern char                                     *_eventStateValueStr[];
+	extern char const                               *_eventStateValueStr[];
 	
 	extern SpinLock _userFunctionMapLock;
 	extern user_fct_map_t                            _userFunctionMap;

@@ -16,7 +16,7 @@ namespace Instrument {
 	
 	SpinLock                  _extraeLock;
 	
-	char                     *_eventStateValueStr[NANOS_EVENT_STATE_TYPES] = {
+	char const               *_eventStateValueStr[NANOS_EVENT_STATE_TYPES] = {
 		"NOT CREATED", "NOT RUNNING", "STARTUP", "SHUTDOWN", "ERROR", "IDLE",
 		"RUNTIME", "RUNNING", "SYNCHRONIZATION", "SCHEDULING", "CREATION" };
 	
