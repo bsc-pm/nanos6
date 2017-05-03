@@ -169,23 +169,6 @@ namespace Instrument {
 	}
 	
 	
-	static std::string getEdgeAttributes(task_status_t sourceStatus, task_status_t sinkStatus)
-	{
-		bool grayout = false;
-		
-		grayout |= (sourceStatus == not_created_status);
-		grayout |= (sinkStatus == not_created_status);
-		grayout |= (sourceStatus == finished_status);
-		grayout |= (sinkStatus == finished_status);
-		
-		if (grayout) {
-			return " color=\"#888888\" fillcolor=\"#888888\" ";
-		} else {
-			return "";
-		}
-	}
-	
-	
 	typedef char Bool;
 	
 	
