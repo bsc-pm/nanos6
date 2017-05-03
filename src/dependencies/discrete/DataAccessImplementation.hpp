@@ -460,6 +460,6 @@ bool DataAccess::upgradeAccess(Task *task, DataAccess /* INOUT */ * /* INOUT */ 
 
 
 #include "DataAccessSequenceImplementation.hpp"
-
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 
 #endif // DATA_ACCESS_IMPLEMENTATION_HPP

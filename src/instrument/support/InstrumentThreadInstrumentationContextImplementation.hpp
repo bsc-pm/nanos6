@@ -3,7 +3,7 @@
 
 
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadLocalDataSupport.hpp>
+#include "InstrumentThreadLocalDataSupport.hpp"
 
 
 inline Instrument::ThreadInstrumentationContext::ThreadInstrumentationContext(task_id_t const &taskId, compute_place_id_t const &computePlaceId, thread_id_t const &threadId)
