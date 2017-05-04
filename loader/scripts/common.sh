@@ -42,7 +42,7 @@ generate_regions_named_prototype() {
 	
 	/bin/echo "void ${name}("
 	
-	if [ ${name/reduction/} != ${name} ] ; then
+	if [ $(echo ${name} | sed 's/reduction//g') != ${name} ] ; then
 		/bin/echo "${indentation}	int reduction_operation, int reduction_index,"
 	fi
 	
