@@ -43,9 +43,9 @@ inline bool SpinLock::tryLock()
 	return success;
 }
 
-inline void SpinLock::unlock()
+inline void SpinLock::unlock(bool ignoreOwner)
 {
-	assertCurrentOwner();
+	assertCurrentOwner(ignoreOwner);
 	unsetOwner();
 	pthread_spin_unlock(&_lock);
 }

@@ -36,9 +36,9 @@ private:
 	WorkerThread *_owner;
 #endif
 	
-	inline void assertCurrentOwner();
+	inline void assertCurrentOwner(__attribute__((unused)) bool ignoreOwner);
 	inline void assertUnowned();
-	inline void assertUnownedOrCurrentOwner();
+	inline void assertUnownedOrCurrentOwner(__attribute__((unused)) bool ignoreOwner);
 	inline void setOwner();
 	inline void unsetOwner();
 	
@@ -47,15 +47,15 @@ public:
 	inline ~SpinLock();
 	inline void lock();
 	inline bool tryLock();
-	inline void unlock();
+	inline void unlock(bool ignoreOwner = false);
 	inline bool isLockedByThisThread();
 };
 
 
 #ifndef NDEBUG
-inline void SpinLock::assertCurrentOwner()
+inline void SpinLock::assertCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 {
-	assert(_owner == ompss_debug::getCurrentWorkerThread());
+	assert(ignoreOwner || (_owner == ompss_debug::getCurrentWorkerThread()));
 }
 
 inline void SpinLock::assertUnowned()
@@ -63,9 +63,9 @@ inline void SpinLock::assertUnowned()
 	assert(_owner == nullptr);
 }
 
-inline void SpinLock::assertUnownedOrCurrentOwner()
+inline void SpinLock::assertUnownedOrCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 {
-	assert( (_owner == nullptr) || (_owner == ompss_debug::getCurrentWorkerThread()) ) ;
+	assert( ignoreOwner || (_owner == nullptr) || (_owner == ompss_debug::getCurrentWorkerThread()) ) ;
 }
 
 inline void SpinLock::setOwner()
@@ -78,7 +78,7 @@ inline void SpinLock::unsetOwner()
 	_owner = nullptr;
 }
 #else
-inline void SpinLock::assertCurrentOwner()
+inline void SpinLock::assertCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 {
 }
 
@@ -86,7 +86,7 @@ inline void SpinLock::assertUnowned()
 {
 }
 
-inline void SpinLock::assertUnownedOrCurrentOwner()
+inline void SpinLock::assertUnownedOrCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 {
 }
 
