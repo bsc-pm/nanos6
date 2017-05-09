@@ -3,11 +3,15 @@
 #include "../SchedulerInterface.hpp"
 #include "../SchedulerGenerator.hpp"
 
-#include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "system/RuntimeInfo.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskloopInfo.hpp"
+#include "tasks/TaskloopManagerImplementation.hpp"
+
+#include <InstrumentAddTask.hpp>
 
 #include <cassert>
 #include <sstream>
@@ -47,36 +51,41 @@ NUMAHierarchicalScheduler::~NUMAHierarchicalScheduler()
 
 ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
-	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+	if (task->isTaskloop()) {
+		distributeTaskloopAmongNUMANodes((Taskloop *)task, computePlace, hint);
+		return nullptr;
+	} else {
+		size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+		
+		/* Get the least loaded NUMA node */
+		int min_load = -1;
+		int min_idx = -1;
 	
-	/* Get the least loaded NUMA node */
-	int min_load = -1;
-	int min_idx = -1;
-
-	for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
-		if (_enabledCPUs[numa] > 0) {
-			if (min_load == -1 || _readyTasks[numa] < min_load) {
-				min_load = _readyTasks[numa];
-				min_idx = numa;
+		for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
+			if (_enabledCPUs[numa] > 0) {
+				if (min_load == -1 || _readyTasks[numa] < min_load) {
+					min_load = _readyTasks[numa];
+					min_idx = numa;
+				}
 			}
 		}
-	}
-
-	assert(min_idx != -1);
-
-	_readyTasks[min_idx] += 1;
-	_NUMANodeScheduler[min_idx]->addReadyTask(task, computePlace, hint, false);
-	if (doGetIdle) {
-		ComputePlace *cp;
-		cp = CPUManager::getIdleNUMANodeCPU(min_idx);
-		if (cp == nullptr) {
-			// If this NUMA node does not have any idle CPUs, get any other idle CPU
-			cp = CPUManager::getIdleCPU();
+	
+		assert(min_idx != -1);
+	
+		_readyTasks[min_idx] += 1;
+		_NUMANodeScheduler[min_idx]->addReadyTask(task, computePlace, hint, false);
+		if (doGetIdle) {
+			ComputePlace *cp;
+			cp = CPUManager::getIdleNUMANodeCPU(min_idx);
+			if (cp == nullptr) {
+				// If this NUMA node does not have any idle CPUs, get any other idle CPU
+				cp = CPUManager::getIdleCPU();
+			}
+	
+			return cp;
+		} else {
+			return nullptr;
 		}
-
-		return cp;
-	} else {
-		return nullptr;
 	}
 }
 
@@ -96,7 +105,20 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 {
 	size_t numa_node = ((CPU *)computePlace)->_NUMANodeId;
 	Task *task = nullptr;
-
+	
+	task = _NUMANodeScheduler[numa_node]->getReadyTask(computePlace, currentTask, false);
+	
+	if (task == nullptr) {
+		for (size_t i = 0; i < _readyTasks.size(); ++i) {
+			task = _NUMANodeScheduler[i]->getReadyTask(computePlace, currentTask, false);
+			if (task != nullptr) {
+				break;
+			}
+		}
+	}
+	
+// FIXME
+#if 0
 	if (_readyTasks[numa_node] > 0) {
 		task = _NUMANodeScheduler[numa_node]->getReadyTask(computePlace, currentTask, false);
 
@@ -122,6 +144,7 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 			_readyTasks[max_idx] -= 1;
 		}
 	}
+#endif
 
 	if (canMarkAsIdle && task == nullptr) {
 		CPUManager::cpuBecomesIdle((CPU *) computePlace);
@@ -186,8 +209,87 @@ bool NUMAHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polli
 	return _NUMANodeScheduler[NUMANode]->releasePolling(computePlace, pollingSlot);
 }
 
-
 std::string NUMAHierarchicalScheduler::getName() const
 {
 	return "numa-hierarchical";
+}
+
+size_t NUMAHierarchicalScheduler::getAvailableNUMANodeCount()
+{
+	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+	size_t availableNUMANodeCount = 0;
+	
+	for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
+		if (_enabledCPUs[numa] > 0) {
+			++availableNUMANodeCount;
+		}
+	}
+	
+	return availableNUMANodeCount;
+}
+
+void NUMAHierarchicalScheduler::distributeTaskloopAmongNUMANodes(Taskloop *taskloop, ComputePlace *computePlace, ReadyTaskHint hint)
+{
+	assert(taskloop != nullptr);
+	assert(computePlace != nullptr);
+	
+	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+	size_t availableNUMANodeCount = getAvailableNUMANodeCount();
+	assert(NUMANodeCount > 0);
+	assert(availableNUMANodeCount > 0);
+	assert(availableNUMANodeCount <= NUMANodeCount);
+	
+	// Get the information of the complete taskloop bounds
+	const TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
+	nanos_taskloop_bounds *taskloopBounds = taskloopInfo._bounds;
+	assert(taskloopBounds != nullptr);
+	
+	size_t originalLowerBound = taskloopBounds->lower_bound;
+	size_t originalUpperBound = taskloopBounds->upper_bound;
+	size_t gridSize = taskloopBounds->grid_size;
+	size_t step = taskloopBounds->step;
+	
+	nanos_taskloop_bounds partialBounds;
+	partialBounds.grid_size = gridSize;
+	partialBounds.step = step;
+	
+	// Compute the actual number of iterations
+	size_t totalIts = TaskloopBounds::getIterationCount(taskloopBounds);
+	size_t itsPerPartition = totalIts / availableNUMANodeCount;
+	size_t missalignment = itsPerPartition % gridSize;
+	size_t extraItsPerPartition = (missalignment) ? gridSize - missalignment : 0;
+	itsPerPartition += extraItsPerPartition;
+	
+	// Start the partition from the original lower bound
+	size_t lowerBound = originalLowerBound;
+	
+	size_t numa = 0, partition = 0;
+	while (partition < NUMANodeCount && numa < NUMANodeCount) {
+		if (_enabledCPUs[numa] > 0) {
+			// Compute the upper bound for this partition
+			size_t upperBound = (partition < availableNUMANodeCount - 1) ?
+				lowerBound + itsPerPartition * step : originalUpperBound;
+			
+			// Set taskloop bounds
+			partialBounds.lower_bound = lowerBound;
+			partialBounds.upper_bound = upperBound;
+			
+			// Create a partition taskloop for this NUMA node
+			Taskloop *partitionTaskloop = TaskloopManager::createPartitionTaskloop(taskloop, partialBounds);
+			assert(partitionTaskloop != nullptr);
+			
+			// Update the lower bound for the next partition
+			lowerBound = upperBound;
+			
+			// Send the work to the NUMA Node
+			_NUMANodeScheduler[numa]->addReadyTask(partitionTaskloop, computePlace, hint);
+			++partition;
+		}
+		
+		++numa;
+	}
+	
+	if (taskloop->markAsFinished()) {
+		TaskFinalization::disposeOrUnblockTask(taskloop, computePlace);
+	}
 }

@@ -16,13 +16,22 @@ extern "C" {
 typedef signed long nanos_priority_t;
 
 
+typedef struct {
+    size_t lower_bound; // Inclusive
+    size_t upper_bound; // Exclusive
+    size_t step;
+    size_t grid_size;
+} nanos_taskloop_bounds;
+
+
 //! \brief Struct that contains the common parts that all tasks of the same type share
 typedef struct
 {
 	//! \brief Wrapper around the actual task implementation
 	//! 
 	//! \param[in,out] args_block A pointer to a block of data for the parameters
-	void (*run)(void *args_block);
+	//! \param[in] taskloop_bounds bounds of the taskloop if it is the case
+	void (*run)(void *args_block, nanos_taskloop_bounds *taskloop_bounds);
 	
 	//! \brief Function that the runtime calls to retrieve the information needed to calculate the dependencies
 	//! 
@@ -71,6 +80,8 @@ typedef enum {
 	nanos_final_task = (1 << 0),
 	//! Specifies that the task is in "if(0)" mode
 	nanos_if_0_task = (1 << 1),
+	//! Specifies that the task is really a taskloop
+	nanos_taskloop_task = (1 << 2),
 	//! Specifies that the task has the "wait" clause
 	nanos_waiting_task = (1 << 3)
 } nanos_task_flag;
@@ -92,6 +103,7 @@ void nanos_create_task(
 	nanos_task_invocation_info *task_invocation_info,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
+	/* OUT */ void **taskloop_bounds_pointer,
 	/* OUT */ void **task_pointer,
 	size_t flags
 );

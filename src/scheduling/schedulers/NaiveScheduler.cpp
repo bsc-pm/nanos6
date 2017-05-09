@@ -1,9 +1,11 @@
 #include "NaiveScheduler.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskloopManagerImplementation.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -56,28 +58,68 @@ void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unuse
 Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
+	bool workAssigned = false;
+	nanos_taskloop_bounds obtainedBounds;
+	std::vector<Taskloop *> completeTaskloops;
 	
-	std::lock_guard<SpinLock> guard(_globalLock);
-	
-	// 1. Get an unblocked task
-	task = getReplacementTask((CPU *) computePlace);
-	if (task != nullptr) {
-		return task;
+	{
+		std::lock_guard<SpinLock> guard(_globalLock);
+		
+		// Try to get an unblocked task
+		task = getReplacementTask((CPU *) computePlace);
+		if (task != nullptr) {
+			return task;
+		}
+		
+		while (!_readyTasks.empty() && !workAssigned) {
+			// Get the first ready task
+			task = _readyTasks.front();
+			assert(task != nullptr);
+			
+			if (!task->isTaskloop()) {
+				_readyTasks.pop_front();
+				workAssigned = true;
+				break;
+			}
+			
+			Taskloop *taskloop = (Taskloop *)task;
+			assert(taskloop != nullptr);
+			
+			bool complete = true;
+			workAssigned = taskloop->getIterations(0, &obtainedBounds, &complete);
+			if (complete) {
+				_readyTasks.pop_front();
+				completeTaskloops.push_back(taskloop);
+			}
+		}
 	}
 	
-	// 2. Or get a ready task
-	if (!_readyTasks.empty()) {
-		task = _readyTasks.front();
-		_readyTasks.pop_front();
-		
+	bool shouldRecheckUnblockedTasks = false;
+	for (Taskloop *completeTaskloop : completeTaskloops) {
+		// Check if the taskloop can disposed
+		bool disposable = completeTaskloop->markAsFinished();
+		if (disposable) {
+			TaskFinalization::disposeOrUnblockTask(completeTaskloop, computePlace);
+			shouldRecheckUnblockedTasks = true;
+		}
+	}
+	
+	if (workAssigned) {
 		assert(task != nullptr);
 		
+		if (task->isTaskloop()) {
+			return TaskloopManager::createRunnableTaskloop((Taskloop *)task, obtainedBounds);
+		}
+		
 		return task;
 	}
 	
-	// 3. Or mark the CPU as idle
+	if (shouldRecheckUnblockedTasks) {
+		return Scheduler::getReadyTask(computePlace, currentTask);
+	}
+	
 	if (canMarkAsIdle) {
-		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		CPUManager::cpuBecomesIdle((CPU *)computePlace);
 	}
 	
 	return nullptr;

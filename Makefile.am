@@ -386,7 +386,11 @@ common_sources = \
 	src/system/ompss/UserMutex.cpp \
 	src/system/ompss/UserMutex.hpp \
 	src/tasks/Task.hpp \
-	src/tasks/TaskDebuggingInterface.hpp
+	src/tasks/TaskDebuggingInterface.hpp \
+	src/tasks/TaskloopInfo.hpp \
+	src/tasks/TaskloopManager.cpp \
+	src/tasks/TaskloopManager.hpp \
+	src/tasks/TaskloopManagerImplementation.hpp
 
 common_dependency_sources = \
 	src/dependencies/DataAccessType.hpp \

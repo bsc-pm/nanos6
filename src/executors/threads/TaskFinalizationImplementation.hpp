@@ -19,9 +19,23 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			
 			readyOrDisposable = task->unlinkFromParent();
 			Instrument::destroyTask(task->getInstrumentationTaskId());
+			
 			// NOTE: The memory layout is defined in nanos_create_task
+			void *disposableBlock = nullptr;
+			if (task->isArgsBlockOwner()) {
+				disposableBlock = task->getArgsBlock();
+			} else {
+				assert(task->isTaskloop());
+				Taskloop *taskloop = (Taskloop *)task;
+				assert(taskloop != nullptr);
+				
+				TaskloopInfo &info = taskloop->getTaskloopInfo();
+				disposableBlock = (void *)info._bounds;
+			}
+			assert(disposableBlock != nullptr);
+			
 			task->~Task();
-			free(task->getArgsBlock()); // FIXME: Need a proper object recycling mechanism here
+			free(disposableBlock); // FIXME: Need a proper object recycling mechanism here
 			task = parent;
 			
 			// A task without parent must be a spawned function
