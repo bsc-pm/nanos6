@@ -9,6 +9,8 @@
 #include "hardware/places/CPUPlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 
+#include "instrument/support/InstrumentHardwarePlaceManagement.hpp"
+
 #include <atomic>
 #include <cassert>
 #include <deque>
@@ -74,6 +76,7 @@ struct CPU: public CPUPlace {
 		
 		if (worked) {
 			_threadingModelData.initialize(this);
+			_instrumentationId = Instrument::createdCPU(_virtualCPUId);
 		} else {
 			assert(_activationStatus != starting_status);
 		}
