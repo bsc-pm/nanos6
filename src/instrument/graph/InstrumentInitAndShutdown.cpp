@@ -572,7 +572,7 @@ namespace Instrument {
 									}
 								}
 								
-								currentFragmentId = fragment->_nextGroupAccess;
+								currentFragmentId = accessGroupFragment->_nextGroupAccess;
 							}
 						} // For each fragment
 					} // If must show dependency structures
