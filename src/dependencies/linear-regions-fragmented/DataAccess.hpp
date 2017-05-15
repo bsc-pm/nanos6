@@ -34,7 +34,10 @@ struct DataAccess : public DataAccessBase {
 		IN_BOTTOM_MAP,
 		TOPMOST_BIT,
 		FORCE_REMOVAL_BIT,
+		HAS_PROPAGATED_READ_SATISFIABILITY_BIT,
+		HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT,
 #ifndef NDEBUG
+		HAS_PROPAGATED_TOPMOST_PROPERTY_BIT,
 		IS_REACHABLE_BIT,
 		HAS_BEEN_DISCOUNTED_BIT,
 #endif
@@ -139,7 +142,35 @@ struct DataAccess : public DataAccessBase {
 		return _status[FORCE_REMOVAL_BIT];
 	}
 	
+	typename status_t::reference hasPropagatedReadSatisfiability()
+	{
+		return _status[HAS_PROPAGATED_READ_SATISFIABILITY_BIT];
+	}
+	bool hasPropagatedReadSatisfiability() const
+	{
+		return _status[HAS_PROPAGATED_READ_SATISFIABILITY_BIT];
+	}
+	
+	typename status_t::reference hasPropagatedWriteSatisfiability()
+	{
+		return _status[HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT];
+	}
+	bool hasPropagatedWriteSatisfiability() const
+	{
+		return _status[HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT];
+	}
+	
+	
 #ifndef NDEBUG
+	typename status_t::reference hasPropagatedTopmostProperty()
+	{
+		return _status[HAS_PROPAGATED_TOPMOST_PROPERTY_BIT];
+	}
+	bool hasPropagatedTopmostProperty() const
+	{
+		return _status[HAS_PROPAGATED_TOPMOST_PROPERTY_BIT];
+	}
+	
 	typename status_t::reference isReachable()
 	{
 		return _status[IS_REACHABLE_BIT];
@@ -186,15 +217,38 @@ struct DataAccess : public DataAccessBase {
 	}
 	
 	
-	bool isRemovable(bool hasForcedRemoval) const
-	{
-		return isTopmost() 
-			&& readSatisfied()
-			&& writeSatisfied()
-			&& complete()
-			&& ( !isInBottomMap() || hasForcedRemoval || (_next != nullptr) );
+	bool hasAlreadyPropagated(
+		bool assumeHasPropagatedReadSatisfiability = false,
+		bool assumeHasPropagatedWriteSatisfiability = false
+	) const {
+		return
+			(assumeHasPropagatedReadSatisfiability || hasPropagatedReadSatisfiability())
+			&& (assumeHasPropagatedWriteSatisfiability || hasPropagatedWriteSatisfiability());
 	}
-
+	
+	
+	bool hasNext() const
+	{
+		return (_next != nullptr);
+	}
+	
+	
+	bool isRemovable(
+		bool hasForcedRemoval,
+		bool assumeHasPropagatedReadSatisfiability = false,
+		bool assumeHasPropagatedWriteSatisfiability = false
+	) const {
+		return isTopmost() 
+			&& readSatisfied() && writeSatisfied()
+			&& complete()
+			&& (
+					hasForcedRemoval
+					||
+					( (!isInBottomMap() || hasNext()) && hasAlreadyPropagated(assumeHasPropagatedReadSatisfiability, assumeHasPropagatedWriteSatisfiability))
+				)
+		;
+	}
+	
 };
 
 

@@ -13,6 +13,29 @@ class Task;
 
 
 struct CPUDependencyData {
+	struct PropagationBits {
+		bool _read;
+		bool _write;
+		bool _becomesRemovable;
+		bool _makesNextTopmost;
+		
+		PropagationBits()
+			: _read(false), _write(false), _becomesRemovable(false), _makesNextTopmost(false)
+		{
+		}
+		
+		inline bool propagates() const
+		{
+			return (_read || _write || _makesNextTopmost);
+		}
+		
+		inline bool propagatesSatisfiability() const
+		{
+			return (_read || _write);
+		}
+	};
+	
+	
 	struct DelayedOperation {
 		enum operation_type_t {
 			link_bottom_map_accesses_operation,
@@ -21,16 +44,15 @@ struct CPUDependencyData {
 		};
 		
 		operation_type_t _operationType;
-		bool _propagateRead;
-		bool _propagateWrite;
-		bool _makeTopmost;
+		PropagationBits _propagationBits;
+		
 		Task *_next; // This is only for link_bottom_map_accesses_operation
 		
 		DataAccessRange _range;
 		Task *_target;
 		
 		DelayedOperation()
-			: _propagateRead(false), _propagateWrite(false), _makeTopmost(false),
+			: _propagationBits(),
 			_next(nullptr),
 			_range(), _target(nullptr)
 		{
