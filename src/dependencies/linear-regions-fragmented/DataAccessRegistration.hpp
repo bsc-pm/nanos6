@@ -1087,49 +1087,35 @@ private:
 	static inline void propagate(
 		PropagationBits const &propagationBits,
 		DataAccessRange range, Task *next,
-		/* inout */ CPUDependencyData &hpDependencyData,
-		bool delayed = true
+		/* inout */ CPUDependencyData &hpDependencyData
 	) {
 		assert(propagationBits.propagates());
 		assert(!range.empty());
 		assert(next != nullptr);
 		
-		if (!delayed) {
-			DelayedOperation nextOperation;
-			nextOperation._propagationBits = propagationBits;
-			nextOperation._range = range;
-			nextOperation._target = next;
-				
-			TaskDataAccesses &nextTaskAccessStructures = next->getDataAccesses();
-			std::lock_guard<TaskDataAccesses::spinlock_t> guard(nextTaskAccessStructures._lock);
-				
-			propagateSatisfiabilityPlain(nextOperation, hpDependencyData);
-		} else {
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
-			DelayedOperation nextOperation;
+		DelayedOperation nextOperation;
 #else
-			DelayedOperation &nextOperation = getNewDelayedOperation(hpDependencyData);
-			nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
+		DelayedOperation &nextOperation = getNewDelayedOperation(hpDependencyData);
+		nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
 #endif
-			nextOperation._propagationBits = propagationBits;
-			nextOperation._range = range;
-			nextOperation._target = next;
-				
+		nextOperation._propagationBits = propagationBits;
+		nextOperation._range = range;
+		nextOperation._target = next;
+		
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
-			TaskDataAccesses &nextTaskAccessStructures = next->getDataAccesses();
-			std::lock_guard<TaskDataAccesses::spinlock_t> guard(nextTaskAccessStructures._lock);
-				
-			propagateSatisfiabilityPlain(nextOperation, hpDependencyData);
+		TaskDataAccesses &nextTaskAccessStructures = next->getDataAccesses();
+		std::lock_guard<TaskDataAccesses::spinlock_t> guard(nextTaskAccessStructures._lock);
+		
+		propagateSatisfiabilityPlain(nextOperation, hpDependencyData);
 #endif
-		}
 	}
 	
 	
 	static inline DataAccess *linkAndPropagate(
 		DataAccess *dataAccess, Task *task, TaskDataAccesses &accessStructures,
 		DataAccessRange range, Task *next,
-		/* inout */ CPUDependencyData &hpDependencyData,
-		bool delayed = true
+		/* inout */ CPUDependencyData &hpDependencyData
 	) {
 		assert(dataAccess != nullptr);
 		assert(dataAccess->isReachable());
@@ -1180,13 +1166,13 @@ private:
 			if (propagationBits._makesNextTopmost) {
 				PropagationBits makeNextTopmostBits;
 				makeNextTopmostBits._makesNextTopmost = true;
-				propagate(makeNextTopmostBits, dataAccess->_range, next, hpDependencyData, delayed);
+				propagate(makeNextTopmostBits, dataAccess->_range, next, hpDependencyData);
 			}
 		} else if (propagationBits.propagates()) {
 			// Regular propagation
 			
 			assert(!dataAccess->complete() || !dataAccess->hasSubaccesses());
-			propagate(propagationBits, dataAccess->_range, next, hpDependencyData, delayed);
+			propagate(propagationBits, dataAccess->_range, next, hpDependencyData);
 		}
 		
 		// Update the number of non removable accesses of the task
@@ -1263,8 +1249,7 @@ private:
 							linkAndPropagate(
 								subaccess, subtask, subtaskAccessStructures,
 								subrange.intersect(subaccess->_range), next,
-								hpDependencyData,
-								/* Not delayed */ false
+								hpDependencyData
 							);
 							
 							return true;
@@ -1304,8 +1289,7 @@ private:
 							linkAndPropagate(
 								fragment, task, accessStructures,
 								subrange.intersect(fragment->_range), next,
-								hpDependencyData,
-								/* Not delayed */ false
+								hpDependencyData
 							);
 							
 							return true;
@@ -1375,8 +1359,7 @@ private:
 				previous = linkAndPropagate(
 					previous, previousTask, previousAccessStructures,
 					previous->_range, task,
-					hpDependencyData,
-					/* Not delayed */ false
+					hpDependencyData
 				);
 				
 				return true;
