@@ -931,9 +931,6 @@ private:
 			instrumentationId
 		);
 		
-		assert(dataAccess->readSatisfied() || !dataAccess->writeSatisfied());
-		assert(fragment->readSatisfied() || !fragment->writeSatisfied());
-			
 		fragment->readSatisfied() = dataAccess->readSatisfied();
 		fragment->writeSatisfied() = dataAccess->writeSatisfied();
 		fragment->complete() = dataAccess->complete();
