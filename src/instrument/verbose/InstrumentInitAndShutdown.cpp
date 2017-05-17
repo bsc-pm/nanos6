@@ -37,7 +37,7 @@ using namespace Instrument::Verbose;
 namespace Instrument {
 	void initialize()
 	{
-		TokenizedEnvironmentVariable<std::string> verboseAreas("NANOS_VERBOSE", ',', "all");
+		TokenizedEnvironmentVariable<std::string> verboseAreas("NANOS_VERBOSE", ',', "all,!LeaderThread");
 		for (auto area : verboseAreas) {
 			std::transform(area.begin(), area.end(), area.begin(), ::tolower);
 			if (area == "all") {
