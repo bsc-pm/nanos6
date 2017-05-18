@@ -3,7 +3,7 @@
 
 void *nanos_get_original_reduction_address(const void *private_address)
 {
-	typedef void *nanos_get_original_reduction_address(const void *private_address);
+	typedef void *nanos_get_original_reduction_address_t(const void *private_address);
 	
 	static nanos_get_original_reduction_address_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
