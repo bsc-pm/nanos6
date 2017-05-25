@@ -9,6 +9,7 @@
 #include "performance/HardwareCountersThreadLocalData.hpp"
 
 #include <cassert>
+#include <typeinfo>
 
 
 inline WorkerThread::WorkerThread(CPU * cpu)
@@ -88,7 +89,15 @@ inline bool WorkerThread::hasPendingShutdown()
 
 inline WorkerThread *WorkerThread::getCurrentWorkerThread()
 {
-	return static_cast<WorkerThread *> (WorkerThreadBase::getCurrentWorkerThread());
+	WorkerThreadBase *thread = WorkerThreadBase::getCurrentWorkerThread();
+	
+	if (thread == nullptr) {
+		return nullptr;
+	} else if (typeid(*thread) == typeid(WorkerThread)) {
+		return static_cast<WorkerThread *> (thread);
+	} else {
+		return nullptr;
+	}
 }
 
 
