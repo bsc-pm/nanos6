@@ -19,7 +19,6 @@ public:
 		void *argsBlock, size_t argsBlockSize,
 		nanos_task_info *taskInfo,
 		nanos_task_invocation_info *taskInvokationInfo,
-		nanos_taskloop_bounds *taskloopBounds,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
@@ -27,7 +26,7 @@ public:
 	)
 		: Task(argsBlock, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags),
 		_argsBlockSize(argsBlockSize),
-		_taskloopInfo(taskloopBounds)
+		_taskloopInfo()
 	{
 		setRunnable(runnable);
 		setArgsBlockOwner(true);
@@ -93,45 +92,37 @@ public:
 		return !_flags[Task::non_owner_args_flag];
 	}
 	
-	inline bool getIterations(size_t completedIterations, nanos_taskloop_bounds *partialBounds, bool *complete = nullptr)
+	inline bool getIterations(bool newExecutor, nanos_taskloop_bounds &partialBounds, bool *complete = nullptr)
 	{
-		assert(partialBounds != nullptr);
 		assert(!isRunnable());
 		
-		nanos_taskloop_bounds *bounds = _taskloopInfo._bounds;
-		assert(bounds != nullptr);
+		nanos_taskloop_bounds &bounds = _taskloopInfo._bounds;
+		const size_t originalLowerBound = bounds.lower_bound;
+		const size_t originalUpperBound = bounds.upper_bound;
+		const size_t grainSize = bounds.grain_size;
+		const size_t step = bounds.step;
 		
-		const size_t originalLowerBound = bounds->lower_bound;
-		const size_t originalUpperBound = bounds->upper_bound;
-		const size_t gridSize = bounds->grid_size;
-		const size_t step = bounds->step;
+		const size_t chunkSize = grainSize * step;
+		const size_t lowerBound = std::atomic_fetch_add(&_taskloopInfo._nextLowerBound, chunkSize);
 		
-		const size_t remainingIterations = (_taskloopInfo._remainingIterations -= completedIterations);
-		
-		if (remainingIterations != 0) {
-			size_t chunkSize = gridSize * step;
-			size_t lowerBound = std::atomic_fetch_add(&_taskloopInfo._nextLowerBound, chunkSize);
+		if (lowerBound < originalUpperBound) {
+			const size_t upperBound = std::min(lowerBound + chunkSize, originalUpperBound);
 			
-			if (lowerBound < originalUpperBound) {
-				size_t upperBound = std::min(lowerBound + chunkSize, originalUpperBound);
-				
-				partialBounds->lower_bound = lowerBound;
-				partialBounds->upper_bound = upperBound;
-				partialBounds->grid_size = gridSize;
-				partialBounds->step = step;
-				
-				if (complete != nullptr) {
-					*complete = (upperBound == originalUpperBound);
-				}
+			partialBounds.lower_bound = lowerBound;
+			partialBounds.upper_bound = upperBound;
+			partialBounds.grain_size = grainSize;
+			partialBounds.step = step;
 			
-				// The first to get a chunk
-				if (lowerBound == originalLowerBound) {
-					increaseRemovalBlockingCount();
-				}
-				
-				return true;
+			if (newExecutor) {
+				increaseRemovalBlockingCount();
 			}
-		} else if (completedIterations > 0) {
+			
+			if (complete != nullptr) {
+				*complete = (upperBound == originalUpperBound);
+			}
+			
+			return true;
+		} else if (!newExecutor) {
 			decreaseRemovalBlockingCount();
 		}
 		

@@ -38,12 +38,7 @@ void nanos_create_task(
 	
 	bool isTaskloop = flags & nanos_task_flag::nanos_taskloop_task;
 	size_t originalArgsBlockSize = args_block_size;
-	size_t taskSize = sizeof(Task);
-	
-	if (isTaskloop) {
-		args_block_size += sizeof(nanos_taskloop_bounds);
-		taskSize = sizeof(Taskloop);
-	}
+	size_t taskSize = (isTaskloop) ? sizeof(Taskloop) : sizeof(Task);
 	
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
@@ -56,18 +51,19 @@ void nanos_create_task(
 	
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
-	void *&bounds = *taskloop_bounds_pointer;
 	void *&task = *task_pointer;
 	
 	task = (char *)args_block + args_block_size;
 	
 	if (isTaskloop) {
-		bounds = (char *)args_block + originalArgsBlockSize;
+		void *&bounds = *taskloop_bounds_pointer;
 		
-		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, (nanos_taskloop_bounds *)bounds, nullptr, taskId, flags);
+		Taskloop *taskloop = new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+		assert(taskloop != nullptr);
+		
+		TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
+		bounds = &taskloopInfo._bounds;
 	} else {
-		bounds = nullptr;
-		
 		// Construct the Task object
 		new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
 	}

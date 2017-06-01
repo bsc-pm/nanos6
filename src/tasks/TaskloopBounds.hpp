@@ -5,18 +5,14 @@
 
 class TaskloopBounds {
 public:
-	static inline size_t getIterationCount(nanos_taskloop_bounds *bounds)
+	static inline size_t getIterationCount(const nanos_taskloop_bounds &bounds)
 	{
-		assert(bounds != nullptr);
-		
-		return 1 + ((getRawSize(bounds) - 1) / bounds->step);
+		return 1 + ((getRawSize(bounds) - 1) / bounds.step);
 	}
 	
-	static inline size_t getRawSize(nanos_taskloop_bounds *bounds)
+	static inline size_t getRawSize(const nanos_taskloop_bounds &bounds)
 	{
-		assert(bounds != nullptr);
-		
-		return bounds->upper_bound - bounds->lower_bound;
+		return bounds.upper_bound - bounds.lower_bound;
 	}
 };
 

@@ -86,7 +86,7 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 			assert(taskloop != nullptr);
 			
 			bool complete = true;
-			workAssigned = taskloop->getIterations(0, &obtainedBounds, &complete);
+			workAssigned = taskloop->getIterations(true, obtainedBounds, &complete);
 			if (complete) {
 				_readyTasks.pop_front();
 				completeTaskloops.push_back(taskloop);

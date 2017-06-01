@@ -26,11 +26,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				disposableBlock = task->getArgsBlock();
 			} else {
 				assert(task->isTaskloop());
-				Taskloop *taskloop = (Taskloop *)task;
-				assert(taskloop != nullptr);
-				
-				TaskloopInfo &info = taskloop->getTaskloopInfo();
-				disposableBlock = (void *)info._bounds;
+				disposableBlock = (void *)task;
 			}
 			assert(disposableBlock != nullptr);
 			

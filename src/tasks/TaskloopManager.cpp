@@ -12,18 +12,15 @@ void TaskloopManager::handleTaskloop(Taskloop *runnableTaskloop, Taskloop *sourc
 	assert(sourceTaskloop != nullptr);
 	
 	TaskloopInfo &taskloopInfo = runnableTaskloop->getTaskloopInfo();
-	nanos_taskloop_bounds *bounds = taskloopInfo._bounds;
+	nanos_taskloop_bounds &bounds = taskloopInfo._bounds;
 	nanos_task_info *taskInfo = runnableTaskloop->getTaskInfo();
 	void *argsBlock = runnableTaskloop->getArgsBlock();
 	
 	bool assignedWork;
 	do {
-		taskInfo->run(argsBlock, bounds);
+		taskInfo->run(argsBlock, &bounds);
 		
-		size_t completedIterations = TaskloopBounds::getIterationCount(bounds);
-		assert(completedIterations > 0);
-		
-		assignedWork = sourceTaskloop->getIterations(completedIterations, bounds);
+		assignedWork = sourceTaskloop->getIterations(false, bounds);
 	} while (assignedWork);
 }
 

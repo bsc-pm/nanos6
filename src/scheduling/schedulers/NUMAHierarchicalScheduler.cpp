@@ -241,23 +241,22 @@ void NUMAHierarchicalScheduler::distributeTaskloopAmongNUMANodes(Taskloop *taskl
 	
 	// Get the information of the complete taskloop bounds
 	const TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
-	nanos_taskloop_bounds *taskloopBounds = taskloopInfo._bounds;
-	assert(taskloopBounds != nullptr);
+	const nanos_taskloop_bounds &taskloopBounds = taskloopInfo._bounds;
 	
-	size_t originalLowerBound = taskloopBounds->lower_bound;
-	size_t originalUpperBound = taskloopBounds->upper_bound;
-	size_t gridSize = taskloopBounds->grid_size;
-	size_t step = taskloopBounds->step;
+	size_t originalLowerBound = taskloopBounds.lower_bound;
+	size_t originalUpperBound = taskloopBounds.upper_bound;
+	size_t grainSize = taskloopBounds.grain_size;
+	size_t step = taskloopBounds.step;
 	
 	nanos_taskloop_bounds partialBounds;
-	partialBounds.grid_size = gridSize;
+	partialBounds.grain_size = grainSize;
 	partialBounds.step = step;
 	
 	// Compute the actual number of iterations
 	size_t totalIts = TaskloopBounds::getIterationCount(taskloopBounds);
 	size_t itsPerPartition = totalIts / availableNUMANodeCount;
-	size_t missalignment = itsPerPartition % gridSize;
-	size_t extraItsPerPartition = (missalignment) ? gridSize - missalignment : 0;
+	size_t missalignment = itsPerPartition % grainSize;
+	size_t extraItsPerPartition = (missalignment) ? grainSize - missalignment : 0;
 	itsPerPartition += extraItsPerPartition;
 	
 	// Start the partition from the original lower bound

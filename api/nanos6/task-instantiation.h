@@ -20,7 +20,7 @@ typedef struct {
     size_t lower_bound; // Inclusive
     size_t upper_bound; // Exclusive
     size_t step;
-    size_t grid_size;
+    size_t grain_size;
 } nanos_taskloop_bounds;
 
 
