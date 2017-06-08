@@ -1,12 +1,14 @@
 #include <cassert>
 #include <map>
 #include <mutex>
+#include <sstream>
 #include <string>
 
 #include <nanos6/polling.h>
 
 #include "PollingAPI.hpp"
 #include "lowlevel/PaddedSpinLock.hpp"
+#include "system/RuntimeInfo.hpp"
 
 
 namespace PollingAPI {
@@ -90,6 +92,9 @@ using namespace PollingAPI;
 extern "C" void nanos_register_polling_service(char const *service_name, nanos_polling_service_t service_function, void *service_data)
 {
 	std::lock_guard<PollingAPI::lock_t> guard(PollingAPI::_lock);
+	
+	static std::map<nanos_polling_service_t, std::string> uniqueRegisteredServices;
+	
 	auto result = PollingAPI::_services.emplace(
 		ServiceKey(service_name, service_function, service_data),
 		ServiceData()
@@ -104,6 +109,16 @@ extern "C" void nanos_register_polling_service(char const *service_name, nanos_p
 		
 		// Remove the mark
 		serviceData._discard = false;
+	} else {
+		auto it = uniqueRegisteredServices.find(service_function);
+		if (it == uniqueRegisteredServices.end()) {
+			uniqueRegisteredServices[service_function] = service_name;
+			std::ostringstream oss, oss2;
+			oss << "registered_service_" << uniqueRegisteredServices.size();
+			oss2 << "Registered Service " << uniqueRegisteredServices.size();
+			
+			RuntimeInfo::addEntry(oss.str(), oss2.str(), service_name);
+		}
 	}
 }
 
