@@ -297,6 +297,7 @@ common_sources = \
 	src/instrument/api/InstrumentTaskWait.hpp \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
+	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
