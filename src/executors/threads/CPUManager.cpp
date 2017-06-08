@@ -2,10 +2,16 @@
 
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "system/RuntimeInfo.hpp"
 
 #include "CPU.hpp"
 #include "CPUManager.hpp"
 #include "ThreadManager.hpp"
+
+#include <cassert>
+#include <map>
+#include <sstream>
+
 
 std::vector<CPU *> CPUManager::_cpus;
 size_t CPUManager::_totalCPUs;
@@ -13,6 +19,100 @@ std::atomic<bool> CPUManager::_finishedCPUInitialization;
 SpinLock CPUManager::_idleCPUsLock;
 boost::dynamic_bitset<> CPUManager::_idleCPUs;
 std::vector<boost::dynamic_bitset<>> CPUManager::_NUMANodeMask;
+
+
+namespace cpumanager_internals {
+	static inline std::string maskToRangeList(boost::dynamic_bitset<> const &mask, std::map<size_t, size_t> const &systemToVirtualCPUId)
+	{
+		std::ostringstream oss;
+		
+		int start = 0;
+		int end = -1;
+		bool first = true;
+		for (size_t systemCPUId = 0; systemCPUId < mask.size()+1; systemCPUId++) {
+			size_t virtualCPUId;
+			
+			if (systemCPUId < mask.size()) {
+				auto position = systemToVirtualCPUId.find(systemCPUId);
+				assert(position != systemToVirtualCPUId.end());
+				virtualCPUId = position->second;
+			} else {
+				virtualCPUId = mask.size();
+			}
+			
+			if ((virtualCPUId < mask.size()) && mask[virtualCPUId]) {
+				if (end >= start) {
+					// Valid range: extend
+					end = systemCPUId;
+				} else {
+					// Invalid range: start
+					start = systemCPUId;
+					end = systemCPUId;
+				}
+			} else {
+				if (end >= start) {
+					// Valid range: emit and invalidate
+					if (first) {
+						first = false;
+					} else {
+						oss << ",";
+					}
+					if (end == start) {
+						oss << start;
+					} else {
+						oss << start << "-" << end;
+					}
+					end = -1;
+				} else {
+					// Invalid range: do nothing
+				}
+			}
+		}
+		
+		return oss.str();
+	}
+	
+	
+	static inline std::string maskToRangeList(cpu_set_t const &mask, size_t size)
+	{
+		std::ostringstream oss;
+		
+		int start = 0;
+		int end = -1;
+		bool first = true;
+		for (size_t i = 0; i < size+1; i++) {
+			if ((i < size) && CPU_ISSET(i, &mask)) {
+				if (end >= start) {
+					// Valid range: extend
+					end = i;
+				} else {
+					// Invalid range: start
+					start = i;
+					end = i;
+				}
+			} else {
+				if (end >= start) {
+					// Valid range: emit and invalidate
+					if (first) {
+						first = false;
+					} else {
+						oss << ",";
+					}
+					if (end == start) {
+						oss << start;
+					} else {
+						oss << start << "-" << end;
+					}
+					end = -1;
+				} else {
+					// Invalid range: do nothing
+				}
+			}
+		}
+		
+		return oss.str();
+	}
+}
 
 
 void CPUManager::preinitialize()
@@ -35,14 +135,28 @@ void CPUManager::preinitialize()
 		_NUMANodeMask[i].resize(cpus.size());
 	}
 	
+	std::map<size_t, size_t> systemToVirtualCPUId;
+	
 	for (size_t i = 0; i < cpus.size(); ++i) {
+		systemToVirtualCPUId[ ((CPU *) cpus[i])->_systemCPUId ] = ((CPU *) cpus[i])->_virtualCPUId;
 		if (CPU_ISSET(((CPU *)cpus[i])->_systemCPUId, &processCPUMask)) {
 			_cpus[i] = (CPU *)cpus[i];
 			++_totalCPUs;
 			_NUMANodeMask[_cpus[i]->_NUMANodeId][i] = true;
 		}
 	}
-
+	
+	RuntimeInfo::addEntry("initial_cpu_list", "Initial CPU List", cpumanager_internals::maskToRangeList(processCPUMask, cpus.size()));
+	for (size_t i = 0; i < _NUMANodeMask.size(); ++i) {
+		std::ostringstream oss, oss2;
+		
+		oss << "numa_node_" << i << "_cpu_list";
+		oss2 << "NUMA Node " << i << " CPU List";
+		std::string cpuRangeList = cpumanager_internals::maskToRangeList(_NUMANodeMask[i], systemToVirtualCPUId);
+		
+		RuntimeInfo::addEntry(oss.str(), oss2.str(), cpuRangeList);
+	}
+	
 	// Set all CPUs as not idle
 	_idleCPUs.resize(_cpus.size());
 	_idleCPUs.reset();
