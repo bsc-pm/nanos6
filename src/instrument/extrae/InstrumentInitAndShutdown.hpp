@@ -37,13 +37,19 @@ namespace Instrument {
 		
 		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "extrae");
 		
+		if (getenv("EXTRAE_CONFIG_FILE") != nullptr) {
+			RuntimeInfo::addEntry("extrae_config_file", "Extrae Configuration File", getenv("EXTRAE_CONFIG_FILE"));
+		}
+		
 		// Common thread information callbacks
 		if (_traceAsThreads) {
 			Extrae_set_threadid_function ( extrae_nanos_get_thread_id );
 			Extrae_set_numthreads_function ( extrae_nanos_get_num_threads );
+			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "thread");
 		} else {
 			Extrae_set_threadid_function ( nanos_get_current_virtual_cpu );
 			Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus );
+			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "cpu");
 		}
 		
 		// Initialize extrae library
@@ -54,6 +60,13 @@ namespace Instrument {
 		Extrae_register_codelocation_type( _functionName, _codeLocation, (char *) "User Function Name", (char *) "User Function Location" );
 		Extrae_define_event_type((extrae_type_t *) &_taskInstanceId, (char *) "Task instance", &zero, nullptr, nullptr);
 		Extrae_define_event_type((extrae_type_t *) &_nestingLevel, (char *) "Task nesting level", &zero, nullptr, nullptr);
+		
+		std::stringstream oss;
+		unsigned extraeMajor, extraeMinor, extraeRevision;
+		
+		Extrae_get_version(&extraeMajor, &extraeMinor, &extraeRevision);
+		oss << extraeMajor << "." << extraeMinor << "." << extraeRevision;
+		RuntimeInfo::addEntry("extrae_version", "Extrae Version", oss.str());
 	}
 	
 	
