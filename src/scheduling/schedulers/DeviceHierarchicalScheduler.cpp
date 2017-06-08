@@ -1,3 +1,5 @@
+#include "system/RuntimeInfo.hpp"
+
 #include "DeviceHierarchicalScheduler.hpp"
 
 #include "../SchedulerGenerator.hpp"
@@ -6,6 +8,7 @@
 DeviceHierarchicalScheduler::DeviceHierarchicalScheduler()
 {
 	_CPUScheduler = SchedulerGenerator::createDeviceScheduler();
+	RuntimeInfo::addEntry("cpu-scheduler", "CPU Scheduler", _CPUScheduler->getName());
 }
 
 DeviceHierarchicalScheduler::~DeviceHierarchicalScheduler()
@@ -55,4 +58,10 @@ bool DeviceHierarchicalScheduler::requestPolling(ComputePlace *computePlace, pol
 bool DeviceHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
 {
 	return _CPUScheduler->releasePolling(computePlace, pollingSlot);
+}
+
+
+std::string DeviceHierarchicalScheduler::getName() const
+{
+	return "device-hierachical";
 }

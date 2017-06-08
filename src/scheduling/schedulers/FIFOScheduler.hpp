@@ -32,6 +32,8 @@ public:
 	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true);
 	
 	ComputePlace *getIdleComputePlace(bool force=false);
+	
+	std::string getName() const;
 };
 
 

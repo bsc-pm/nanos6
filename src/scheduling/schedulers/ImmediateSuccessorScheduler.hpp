@@ -34,6 +34,8 @@ public:
 	ComputePlace *getIdleComputePlace(bool force=false);
 	
 	void disableComputePlace(ComputePlace *computePlace);
+	
+	std::string getName() const;
 };
 
 

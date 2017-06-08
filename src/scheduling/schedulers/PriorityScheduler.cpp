@@ -397,3 +397,9 @@ bool PriorityScheduler::releasePolling(ComputePlace *computePlace, polling_slot_
 	}
 }
 
+
+std::string PriorityScheduler::getName() const
+{
+	return "priority";
+}
+

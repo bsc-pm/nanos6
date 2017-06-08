@@ -93,3 +93,9 @@ ComputePlace *NaiveScheduler::getIdleComputePlace(bool force)
 		return nullptr;
 	}
 }
+
+
+std::string NaiveScheduler::getName() const
+{
+	return "naive";
+}

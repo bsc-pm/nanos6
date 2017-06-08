@@ -3,6 +3,7 @@
 
 
 #include <atomic>
+#include <string>
 
 
 class ComputePlace;
@@ -102,6 +103,8 @@ public:
 	//! 
 	//! This method has a default implementation that matches the default implementation of requestPolling.
 	virtual bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
+	
+	virtual std::string getName() const = 0;
 };
 
 

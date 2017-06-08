@@ -45,6 +45,8 @@ public:
 	{
 		return (HardwareInfo::getMemoryNodeCount() == 1);
 	}
+	
+	std::string getName() const;
 };
 
 

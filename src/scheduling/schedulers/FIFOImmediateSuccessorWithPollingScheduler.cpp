@@ -270,3 +270,9 @@ bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *co
 		return false;
 	}
 }
+
+
+std::string FIFOImmediateSuccessorWithPollingScheduler::getName() const
+{
+	return "fifo-immediate-successor-with-polling";
+}

@@ -270,3 +270,9 @@ bool ImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *comput
 		return false;
 	}
 }
+
+
+std::string ImmediateSuccessorWithPollingScheduler::getName() const
+{
+	return "immediate-successor-with-polling";
+}

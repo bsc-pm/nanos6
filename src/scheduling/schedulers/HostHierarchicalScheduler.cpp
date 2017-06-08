@@ -1,3 +1,5 @@
+#include "system/RuntimeInfo.hpp"
+
 #include "HostHierarchicalScheduler.hpp"
 
 #include "../SchedulerGenerator.hpp"
@@ -6,6 +8,7 @@
 HostHierarchicalScheduler::HostHierarchicalScheduler()
 {
 	_NUMAScheduler = SchedulerGenerator::createNUMAScheduler();
+	RuntimeInfo::addEntry("numa-scheduler", "NUMA Scheduler", _NUMAScheduler->getName());
 }
 
 HostHierarchicalScheduler::~HostHierarchicalScheduler()
@@ -55,4 +58,10 @@ bool HostHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polli
 bool HostHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
 {
 	return _NUMAScheduler->releasePolling(computePlace, pollingSlot);
+}
+
+
+std::string HostHierarchicalScheduler::getName() const
+{
+	return "host-hierarchical";
 }

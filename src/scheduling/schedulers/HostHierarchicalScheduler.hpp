@@ -29,7 +29,9 @@ public:
 	bool requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
 	
 	bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
-
+	
+	std::string getName() const;
+	
 	static inline bool canBeCollapsed()
 	{
 		return true;

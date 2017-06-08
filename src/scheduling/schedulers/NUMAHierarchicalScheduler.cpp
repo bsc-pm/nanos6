@@ -6,9 +6,12 @@
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "system/RuntimeInfo.hpp"
 #include "tasks/Task.hpp"
 
 #include <cassert>
+#include <sstream>
+
 
 NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 	: _NUMANodeScheduler(HardwareInfo::getMemoryNodeCount()),
@@ -26,6 +29,11 @@ NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 
 	for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
 		_NUMANodeScheduler[idx] = SchedulerGenerator::createNUMANodeScheduler();
+		
+		std::ostringstream oss, oss2;
+		oss << "numa-node-" << idx << "-scheduler";
+		oss2 << "NUMA Node " << idx << " Scheduler";
+		RuntimeInfo::addEntry(oss.str(), oss2.str(), _NUMANodeScheduler[idx]->getName());
 	}
 }
 
@@ -176,4 +184,10 @@ bool NUMAHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polli
 {
 	size_t NUMANode = ((CPU *)computePlace)->_NUMANodeId;
 	return _NUMANodeScheduler[NUMANode]->releasePolling(computePlace, pollingSlot);
+}
+
+
+std::string NUMAHierarchicalScheduler::getName() const
+{
+	return "numa-hierarchical";
 }

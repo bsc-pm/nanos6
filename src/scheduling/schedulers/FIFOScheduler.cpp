@@ -93,3 +93,9 @@ ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
 		return nullptr;
 	}
 }
+
+
+std::string FIFOScheduler::getName() const
+{
+	return "fifo";
+}

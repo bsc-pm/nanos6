@@ -120,3 +120,9 @@ void ImmediateSuccessorScheduler::disableComputePlace(ComputePlace *computePlace
 		_readyTasks.push_front(task);
 	}
 }
+
+
+std::string ImmediateSuccessorScheduler::getName() const
+{
+	return "immediate-successor";
+}
