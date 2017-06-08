@@ -12,6 +12,7 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/RuntimeInfoEssentials.hpp"
 #include "system/ompss/SpawnFunction.hpp"
 #include "hardware/HardwareInfo.hpp"
 
@@ -50,6 +51,7 @@ static void programSignal(int signum) {
 
 
 void nanos_preinit(void) {
+	RuntimeInfoEssentials::initialize();
 	HardwareInfo::initialize();
 	CPUManager::preinitialize();
 	Scheduler::initialize();
@@ -95,5 +97,6 @@ void nanos_shutdown(void) {
 	
 	ThreadManager::shutdown();
 	Scheduler::shutdown();
+	RuntimeInfoEssentials::shutdown();
 }
 

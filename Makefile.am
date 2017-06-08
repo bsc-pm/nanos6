@@ -355,6 +355,8 @@ common_sources = \
 	src/system/LeaderThread.hpp \
 	src/system/PollingAPI.cpp \
 	src/system/PollingAPI.hpp \
+	src/system/RuntimeInfoEssentials.cpp \
+	src/system/RuntimeInfoEssentials.hpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
