@@ -1,10 +1,13 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "main-wrapper.h"
 #include "api/nanos6/bootstrap.h"
 #include "api/nanos6/library-mode.h"
+#include "api/nanos6/runtime-info.h"
 #include "api/nanos6/taskwait.h"
 
 
@@ -40,6 +43,46 @@ static void main_task_wrapper(void *argsBlock)
 	);
 	
 	nanos_taskwait("NanosLoader Bootstrap code");
+	
+	char *reportPrefix = getenv("NANOS6_REPORT_PREFIX");
+	if (reportPrefix != NULL) {
+		for (void *it = nanos6_runtime_info_begin(); it != nanos6_runtime_info_end(); it = nanos6_runtime_info_advance(it)) {
+			if (reportPrefix[0] != '\0') {
+				printf("%s\t", reportPrefix);
+			}
+			
+			nanos6_runtime_info_entry_t entry;
+			nanos6_runtime_info_get(it, &entry);
+			
+			switch (entry.type) {
+				case nanos6_integer_runtime_info_entry:
+					printf("long\t");
+					break;
+				case nanos6_real_runtime_info_entry:
+					printf("double\t");
+					break;
+				case nanos6_text_runtime_info_entry:
+					printf("string\t");
+					break;
+			}
+			
+			printf("%s\t", entry.name);
+			
+			switch (entry.type) {
+				case nanos6_integer_runtime_info_entry:
+					printf("%li\t", entry.integer);
+					break;
+				case nanos6_real_runtime_info_entry:
+					printf("%f\t", entry.real);
+					break;
+				case nanos6_text_runtime_info_entry:
+					printf("%s\t", entry.text);
+					break;
+			}
+			
+			printf("%s\t%s\n", entry.units, entry.description);
+		}
+	}
 }
 
 
