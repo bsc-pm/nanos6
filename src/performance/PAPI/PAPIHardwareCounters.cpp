@@ -1,6 +1,7 @@
 #include "PAPIHardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "system/RuntimeInfo.hpp"
 
 // Work around bug in PAPI header
 #define ffsll papi_ffsll
@@ -9,6 +10,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <sstream>
 
 
 namespace HardwareCounters {
@@ -251,7 +253,43 @@ namespace HardwareCounters {
 		rc = PAPI_thread_init((unsigned long (*)()) WorkerThread::getCurrentWorkerThread());
 		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed during threading initialization");
 		
+		{
+			std::ostringstream oss;
+			
+			int papiVersion = PAPI_get_opt(PAPI_LIB_VERSION, nullptr);
+			oss << PAPI_VERSION_MAJOR(papiVersion) << "." << PAPI_VERSION_MINOR(papiVersion) << "." << PAPI_VERSION_REVISION(papiVersion);
+			
+			RuntimeInfo::addEntry("papi_version", "PAPI Version", oss.str());
+		}
+		
 		PAPI::choosePAPIEventCodes();
+		
+		{
+			std::ostringstream oss;
+			
+			bool worked = true;
+			for (size_t i = 0; i < PAPI::_papiEventCodes.size(); i++)
+			{
+				char eventName[PAPI_MAX_STR_LEN];
+				rc = PAPI_event_code_to_name(PAPI::_papiEventCodes[i], eventName);
+				
+				if (rc == PAPI_OK) {
+					if (i > 0) {
+						oss << ",";
+					}
+					oss << eventName;
+				} else {
+					worked = false;
+					break;
+				}
+			}
+			
+			if (worked) {
+				RuntimeInfo::addEntry("papi_events", "PAPI Event Names", oss.str());
+			} else {
+				RuntimeInfo::addEntry("papi_events", "PAPI Event Names", "error");
+			}
+		}
 	}
 	
 	
