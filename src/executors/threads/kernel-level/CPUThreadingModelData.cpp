@@ -2,6 +2,7 @@
 #include "executors/threads/CPUActivation.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "system/RuntimeInfo.hpp"
 
 #include <cassert>
 
@@ -12,6 +13,12 @@ std::atomic<WorkerThread *> CPUThreadingModelData::_mainShutdownControllerThread
 
 void CPUThreadingModelData::initialize(__attribute__((unused)) CPU *cpu)
 {
+	static std::atomic<bool> firstTime(true);
+	bool expect = true;
+	bool worked = firstTime.compare_exchange_strong(expect, false);
+	if (worked) {
+		RuntimeInfo::addEntry("threading_model", "Threading Model", "pthreads");
+	}
 }
 
 
