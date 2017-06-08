@@ -19,14 +19,14 @@ void CPUManager::preinitialize()
 {
 	_finishedCPUInitialization = false;
 	_totalCPUs = 0;
-
+	
 	cpu_set_t processCPUMask;
 	int rc = sched_getaffinity(0, sizeof(cpu_set_t), &processCPUMask);
 	FatalErrorHandler::handle(rc, " when retrieving the affinity of the process");
-
+	
 	// Get NUMA nodes
 	_NUMANodeMask.resize(HardwareInfo::getMemoryNodeCount());
-
+	
 	// Get CPU objects that can run a thread
 	std::vector<ComputePlace *> const &cpus = HardwareInfo::getComputeNodes();
 	_cpus.resize(cpus.size());
