@@ -8,6 +8,7 @@
 
 #include "../api/InstrumentInitAndShutdown.hpp"
 #include "../generic_ids/GenericIds.hpp"
+#include "system/RuntimeInfo.hpp"
 #include "InstrumentExtrae.hpp"
 
 
@@ -33,6 +34,8 @@ namespace Instrument {
 		if ((getenv("EXTRAE_ON") == nullptr) && (getenv("EXTRAE_CONFIG_FILE") == nullptr)) {
 			setenv("EXTRAE_ON", "1", 0);
 		}
+		
+		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "extrae");
 		
 		// Common thread information callbacks
 		if (_traceAsThreads) {

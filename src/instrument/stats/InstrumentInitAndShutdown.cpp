@@ -4,6 +4,7 @@
 #include <executors/threads/ThreadManager.hpp>
 #include <executors/threads/CPUManager.hpp>
 #include "performance/HardwareCounters.hpp"
+#include "system/RuntimeInfo.hpp"
 
 #include <fstream>
 
@@ -64,6 +65,7 @@ namespace Instrument {
 	
 	void initialize()
 	{
+		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "stats");
 		HardwareCounters::initialize();
 		
 		_phasesSpinLock.writeLock();

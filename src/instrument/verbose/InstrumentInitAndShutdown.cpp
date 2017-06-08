@@ -26,6 +26,7 @@
 #include "InstrumentVerbose.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/TokenizedEnvironmentVariable.hpp"
+#include "system/RuntimeInfo.hpp"
 
 
 #define VERBOSE_INITIAL_LOG_ENTRIES 5000
@@ -37,6 +38,8 @@ using namespace Instrument::Verbose;
 namespace Instrument {
 	void initialize()
 	{
+		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "verbose");
+		
 		TokenizedEnvironmentVariable<std::string> verboseAreas("NANOS_VERBOSE", ',', "all,!LeaderThread");
 		for (auto area : verboseAreas) {
 			std::transform(area.begin(), area.end(), area.begin(), ::tolower);

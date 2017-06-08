@@ -9,6 +9,7 @@
 
 #include "executors/threads/ThreadManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "system/RuntimeInfo.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -26,6 +27,7 @@ namespace Instrument {
 	
 	void initialize()
 	{
+		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "graph");
 	}
 	
 	
