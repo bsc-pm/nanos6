@@ -16,6 +16,7 @@
 #include "system/ompss/SpawnFunction.hpp"
 #include "hardware/HardwareInfo.hpp"
 
+#include <DependencySystem.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 
 
@@ -57,6 +58,7 @@ void nanos_preinit(void) {
 	Scheduler::initialize();
 	ThreadManagerPolicy::initialize();
 	Instrument::initialize();
+	DependencySystem::initialize();
 	LeaderThread::initialize();
 }
 

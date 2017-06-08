@@ -388,6 +388,7 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DataAccessSequenceLinkingArtifacts.hpp \
 	src/dependencies/discrete/DataAccessSequenceLinkingArtifactsImplementation.hpp \
 	src/dependencies/discrete/DependencyDomain.hpp \
+	src/dependencies/discrete/DependencySystem.hpp \
 	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
 	src/dependencies/discrete/MultidimensionalAPI.hpp \
@@ -414,6 +415,7 @@ linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) $(
 	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-unfragmented/DependencyDomain.hpp \
+	src/dependencies/linear-regions-unfragmented/DependencySystem.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMap.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
 	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp \
@@ -427,6 +429,7 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
+	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
@@ -440,6 +443,7 @@ linear_regions_alternative_dependency_sources = $(common_dependency_sources) $(c
 	src/dependencies/linear-regions-alternative/DataAccess.hpp \
 	src/dependencies/linear-regions-alternative/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-alternative/DependencyDomain.hpp \
+	src/dependencies/linear-regions-alternative/DependencySystem.hpp \
 	src/dependencies/linear-regions-alternative/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \
