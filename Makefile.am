@@ -27,7 +27,8 @@ nanos6include_HEADERS = \
 	api/nanos6/task-info-registration.h \
 	api/nanos6/task-instantiation.h \
 	api/nanos6/taskwait.h \
-	api/nanos6/user-mutex.h
+	api/nanos6/user-mutex.h \
+	api/nanos6/utils.h
 
 nodist_nanos6include_HEADERS = \
 	nanos6/multidimensional-dependencies.h \
@@ -94,6 +95,7 @@ symbol_resolution += \
 	loader/symbol-resolver/task-instantiation.c \
 	loader/symbol-resolver/taskwait.c \
 	loader/symbol-resolver/user-mutex.c \
+	loader/symbol-resolver/utils.c \
 	loader/symbol-resolver/weak-dependencies.c
 multidimensional_regions += \
 	multidim-region-dependency-resolvers.c \
@@ -117,6 +119,7 @@ symbol_resolution += \
 	loader/indirect-symbols/task-instantiation.c \
 	loader/indirect-symbols/taskwait.c \
 	loader/indirect-symbols/user-mutex.c \
+	loader/indirect-symbols/utils.c \
 	loader/indirect-symbols/weak-dependencies.c
 
 multidimensional_regions += \
@@ -357,6 +360,7 @@ common_sources = \
 	src/system/PollingAPI.hpp \
 	src/system/RuntimeInfoEssentials.cpp \
 	src/system/RuntimeInfoEssentials.hpp \
+	src/system/UtilsAPI.cpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
