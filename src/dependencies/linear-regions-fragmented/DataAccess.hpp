@@ -29,6 +29,7 @@ struct DataAccess : public DataAccessBase {
 		COMPLETE_BIT = 0,
 		READ_SATISFIED_BIT,
 		WRITE_SATISFIED_BIT,
+		CONCURRENT_SATISFIED_BIT,
 		FRAGMENT_BIT,
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP,
@@ -36,6 +37,7 @@ struct DataAccess : public DataAccessBase {
 		FORCE_REMOVAL_BIT,
 		HAS_PROPAGATED_READ_SATISFIABILITY_BIT,
 		HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT,
+		HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT,
 #ifndef NDEBUG
 		HAS_PROPAGATED_TOPMOST_PROPERTY_BIT,
 		IS_REACHABLE_BIT,
@@ -100,6 +102,15 @@ struct DataAccess : public DataAccessBase {
 		return _status[WRITE_SATISFIED_BIT];
 	}
 	
+	typename status_t::reference concurrentSatisfied()
+	{
+		return _status[CONCURRENT_SATISFIED_BIT];
+	}
+	bool concurrentSatisfied() const
+	{
+		return _status[CONCURRENT_SATISFIED_BIT];
+	}
+	
 	bool isFragment() const
 	{
 		return _status[FRAGMENT_BIT];
@@ -160,6 +171,15 @@ struct DataAccess : public DataAccessBase {
 		return _status[HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT];
 	}
 	
+	typename status_t::reference hasPropagatedConcurrentSatisfiability()
+	{
+		return _status[HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT];
+	}
+	bool hasPropagatedConcurrentSatisfiability() const
+	{
+		return _status[HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT];
+	}
+	
 	
 #ifndef NDEBUG
 	typename status_t::reference hasPropagatedTopmostProperty()
@@ -211,6 +231,8 @@ struct DataAccess : public DataAccessBase {
 	{
 		if (_type == READ_ACCESS_TYPE) {
 			return readSatisfied();
+		} else if (_type == CONCURRENT_ACCESS_TYPE) {
+			return concurrentSatisfied();
 		} else {
 			return readSatisfied() && writeSatisfied();
 		}

@@ -319,6 +319,9 @@ private:
 				dataAccess->writeSatisfied()
 				&& !dataAccess->hasPropagatedWriteSatisfiability()
 				&& (dataAccess->complete() || dataAccess->isFragment());
+			result._concurrent =
+				!dataAccess->hasPropagatedConcurrentSatisfiability()
+				&& ( result._write  ||  (dataAccess->concurrentSatisfied() && (dataAccess->_type == CONCURRENT_ACCESS_TYPE)) );
 		}
 		
 		result._becomesRemovable =
@@ -366,6 +369,12 @@ private:
 			Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropW", "Propagated Write Satisfiability");
 		}
 		
+		if (propagationBits._concurrent) {
+			assert(!dataAccess->hasPropagatedConcurrentSatisfiability());
+			dataAccess->hasPropagatedConcurrentSatisfiability() = true;
+			Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
+		}
+		
 #ifndef NDEBUG
 		if (propagationBits._makesNextTopmost) {
 			assert(!dataAccess->hasPropagatedTopmostProperty());
@@ -394,6 +403,7 @@ private:
 		PropagationBits result;
 		result._read = dataAccess->hasPropagatedReadSatisfiability();
 		result._write = dataAccess->hasPropagatedWriteSatisfiability();
+		result._concurrent = dataAccess->hasPropagatedConcurrentSatisfiability();
 		return result;
 	}
 	
@@ -416,6 +426,10 @@ private:
 		if (propagationBits._write) {
 			assert(!dataAccess->writeSatisfied());
 			dataAccess->writeSatisfied() = true;
+		}
+		if (propagationBits._concurrent) {
+			assert(!dataAccess->concurrentSatisfied());
+			dataAccess->concurrentSatisfied() = true;
 		}
 		
 		if (propagationBits._makesNextTopmost) {
@@ -472,7 +486,7 @@ private:
 				
 				Instrument::dataAccessBecomesSatisfied(
 					targetFragment->_instrumentationId,
-					propagationBits._read, propagationBits._write, false,
+					propagationBits._read, propagationBits._write, /* propagationBits._concurrent, */ false,
 					targetTask->getInstrumentationTaskId()
 				);
 				
@@ -557,7 +571,7 @@ private:
 				
 				Instrument::dataAccessBecomesSatisfied(
 					targetAccess->_instrumentationId,
-					propagationBits._read, propagationBits._write, false,
+					propagationBits._read, propagationBits._write, /* propagationBits._concurrent, */ false,
 					targetTask->getInstrumentationTaskId()
 				);
 				
@@ -933,6 +947,7 @@ private:
 		
 		fragment->readSatisfied() = dataAccess->readSatisfied();
 		fragment->writeSatisfied() = dataAccess->writeSatisfied();
+		fragment->concurrentSatisfied() = dataAccess->concurrentSatisfied();
 		fragment->complete() = dataAccess->complete();
 #ifndef NDEBUG
 		fragment->isReachable() = true;
@@ -1245,6 +1260,11 @@ private:
 								subaccess->hasPropagatedWriteSatisfiability() = true;
 								Instrument::newDataAccessProperty(subaccess->_instrumentationId, "PropW", "Propagated Write Satisfiability");
 							}
+							if (propagationMask._concurrent) {
+								assert(!subaccess->hasPropagatedConcurrentSatisfiability());
+								subaccess->hasPropagatedConcurrentSatisfiability() = true;
+								Instrument::newDataAccessProperty(subaccess->_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
+							}
 							
 							linkAndPropagate(
 								subaccess, subtask, subtaskAccessStructures,
@@ -1284,6 +1304,11 @@ private:
 								assert(!fragment->hasPropagatedWriteSatisfiability());
 								fragment->hasPropagatedWriteSatisfiability() = true;
 								Instrument::newDataAccessProperty(fragment->_instrumentationId, "PropW", "Propagated Write Satisfiability");
+							}
+							if (propagationMask._concurrent) {
+								assert(!fragment->hasPropagatedConcurrentSatisfiability());
+								fragment->hasPropagatedConcurrentSatisfiability() = true;
+								Instrument::newDataAccessProperty(fragment->_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
 							}
 							
 							linkAndPropagate(
@@ -1394,6 +1419,7 @@ private:
 						
 						targetAccess->readSatisfied() = true;
 						targetAccess->writeSatisfied() = true;
+						targetAccess->concurrentSatisfied() = true;
 						targetAccess->isTopmost() = true;
 						Instrument::newDataAccessProperty(targetAccess->_instrumentationId, "T", "Topmost");
 						
@@ -1403,7 +1429,7 @@ private:
 						
 						Instrument::dataAccessBecomesSatisfied(
 							targetAccess->_instrumentationId,
-							true, true, false,
+							true, true, /* true, */ false,
 							task->getInstrumentationTaskId()
 						);
 						
@@ -1454,7 +1480,7 @@ private:
 						Instrument::data_access_id_t(),
 						dataAccess->_type, dataAccess->_weak,
 						dataAccess->_range,
-						false, false, false,
+						false, false, /* false, */ false,
 						task->getInstrumentationTaskId()
 					);
 					
@@ -1631,6 +1657,11 @@ private:
 					// The actual propagation will occur through the bottom map accesses
 					dataAccess->hasPropagatedWriteSatisfiability() = true;
 					Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropW", "Propagated Write Satisfiability");
+				}
+				if (dataAccess->concurrentSatisfied() && !dataAccess->hasPropagatedConcurrentSatisfiability()) {
+					// The actual propagation will occur through the bottom map accesses
+					dataAccess->hasPropagatedConcurrentSatisfiability() = true;
+					Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
 				}
 				
 				// Must be done synchronously

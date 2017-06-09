@@ -112,6 +112,7 @@ case x"${ac_with_dependencies}" in
 		;;
 	x"linear-regions-fragmented")
 		AC_MSG_RESULT([${ac_with_dependencies}])
+		ac_supports_concurrent=yes
 		;;
 	x"linear-regions-alternative")
 		AC_MSG_RESULT([${ac_with_dependencies}])

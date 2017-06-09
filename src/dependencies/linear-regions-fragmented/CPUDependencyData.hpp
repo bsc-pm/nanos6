@@ -16,22 +16,23 @@ struct CPUDependencyData {
 	struct PropagationBits {
 		bool _read;
 		bool _write;
+		bool _concurrent;
 		bool _becomesRemovable;
 		bool _makesNextTopmost;
 		
 		PropagationBits()
-			: _read(false), _write(false), _becomesRemovable(false), _makesNextTopmost(false)
+			: _read(false), _write(false), _concurrent(false), _becomesRemovable(false), _makesNextTopmost(false)
 		{
 		}
 		
 		inline bool propagates() const
 		{
-			return (_read || _write || _makesNextTopmost);
+			return (_read || _write || _concurrent || _makesNextTopmost);
 		}
 		
 		inline bool propagatesSatisfiability() const
 		{
-			return (_read || _write);
+			return (_read || _write || _concurrent);
 		}
 	};
 	
