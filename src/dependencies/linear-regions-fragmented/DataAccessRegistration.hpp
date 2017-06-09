@@ -39,7 +39,7 @@ private:
 	typedef CPUDependencyData::PropagationBits PropagationBits;
 	
 	
-	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRange range, bool fragment)
+	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRange range, bool fragment, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex)
 	{
 		Instrument::data_access_id_t newDataAccessInstrumentationId;
 		
@@ -47,6 +47,7 @@ private:
 		DataAccess *dataAccess = new DataAccess(
 			accessType, weak, originator, range,
 			fragment,
+			reductionTypeAndOperatorIndex,
 			newDataAccessInstrumentationId
 		);
 		
@@ -54,8 +55,10 @@ private:
 	}
 	
 	
+	
+	
 	static inline void upgradeAccess(
-		DataAccess *dataAccess, DataAccessType accessType, bool weak
+		DataAccess *dataAccess, DataAccessType accessType, bool weak, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
 	) {
 		assert(dataAccess != nullptr);
 		assert(!dataAccess->hasBeenDiscounted());
@@ -64,7 +67,27 @@ private:
 		
 		DataAccessType newDataAccessType = accessType;
 		if (accessType != dataAccess->_type) {
+			FatalErrorHandler::failIf(
+				(accessType == REDUCTION_ACCESS_TYPE) || (dataAccess->_type == REDUCTION_ACCESS_TYPE),
+				"Task ",
+				(dataAccess->_originator->getTaskInfo()->task_label != nullptr ?
+					dataAccess->_originator->getTaskInfo()->task_label :
+					dataAccess->_originator->getTaskInfo()->declaration_source
+				),
+				" has non-reduction accesses that overlap a reduction"
+			);
 			newDataAccessType = READWRITE_ACCESS_TYPE;
+		} else {
+			FatalErrorHandler::failIf(
+				(accessType == REDUCTION_ACCESS_TYPE)
+					&& (dataAccess->_reductionTypeAndOperatorIndex != reductionTypeAndOperatorIndex),
+				"Task ",
+				(dataAccess->_originator->getTaskInfo()->task_label != nullptr ?
+					dataAccess->_originator->getTaskInfo()->task_label :
+					dataAccess->_originator->getTaskInfo()->declaration_source
+				),
+				" has two overlapping reductions over different types or with different operators"
+			);
 		}
 		
 		if ((newWeak != dataAccess->_weak) || (newDataAccessType != dataAccess->_type)) {
@@ -95,7 +118,8 @@ private:
 		DataAccess *newFragment = createAccess(
 			toBeDuplicated._originator,
 			toBeDuplicated._type, toBeDuplicated._weak, toBeDuplicated._range,
-			toBeDuplicated.isFragment()
+			toBeDuplicated.isFragment(),
+			toBeDuplicated._reductionTypeAndOperatorIndex
 		);
 		
 		newFragment->_status = toBeDuplicated._status;
@@ -322,6 +346,22 @@ private:
 			result._concurrent =
 				!dataAccess->hasPropagatedConcurrentSatisfiability()
 				&& ( result._write  ||  (dataAccess->concurrentSatisfied() && (dataAccess->_type == CONCURRENT_ACCESS_TYPE)) );
+			
+			if (
+				!dataAccess->hasPropagatedAnyReductionSatisfiability()
+				&& dataAccess->writeSatisfied()
+				&& (dataAccess->complete() || dataAccess->isFragment())
+			) {
+				result._reductionTypeAndOperatorIndex = any_reduction_type_and_operator;
+			} else if (
+				!dataAccess->hasPropagatedMatchingReductionSatisfiability()
+				&& (dataAccess->matchingReductionSatisfied() || dataAccess->anyReductionSatisfied())
+				&& (dataAccess->_type == REDUCTION_ACCESS_TYPE)
+			) {
+				result._reductionTypeAndOperatorIndex = dataAccess->_reductionTypeAndOperatorIndex;
+			} else {
+				result._reductionTypeAndOperatorIndex = no_reduction_type_and_operator;
+			}
 		}
 		
 		result._becomesRemovable =
@@ -375,6 +415,25 @@ private:
 			Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
 		}
 		
+		if (propagationBits._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
+			assert(!dataAccess->hasPropagatedAnyReductionSatisfiability());
+			dataAccess->hasPropagatedAnyReductionSatisfiability() = true;
+			Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropAR", "Propagated Any Reduction Satisfiability");
+			
+			if ((dataAccess->_type == REDUCTION_ACCESS_TYPE) && !dataAccess->hasPropagatedMatchingReductionSatisfiability()) {
+				dataAccess->hasPropagatedMatchingReductionSatisfiability() = true;
+				Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropMR", "Propagated Matching Reduction Satisfiability");
+			}
+		} else if (propagationBits._reductionTypeAndOperatorIndex == no_reduction_type_and_operator) {
+			// Nothing to do
+		} else if (propagationBits._reductionTypeAndOperatorIndex == dataAccess->_reductionTypeAndOperatorIndex) {
+			assert(!dataAccess->hasPropagatedMatchingReductionSatisfiability());
+			dataAccess->hasPropagatedMatchingReductionSatisfiability() = true;
+			Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropMR", "Propagated Matching Reduction Satisfiability");
+		} else {
+			assert("Propagating a mismatched reduction type or operator" == nullptr);
+		}
+		
 #ifndef NDEBUG
 		if (propagationBits._makesNextTopmost) {
 			assert(!dataAccess->hasPropagatedTopmostProperty());
@@ -404,6 +463,15 @@ private:
 		result._read = dataAccess->hasPropagatedReadSatisfiability();
 		result._write = dataAccess->hasPropagatedWriteSatisfiability();
 		result._concurrent = dataAccess->hasPropagatedConcurrentSatisfiability();
+		
+		if (dataAccess->hasPropagatedAnyReductionSatisfiability()) {
+			result._reductionTypeAndOperatorIndex = any_reduction_type_and_operator;
+		} else if (dataAccess->hasPropagatedMatchingReductionSatisfiability()) {
+			result._reductionTypeAndOperatorIndex = dataAccess->_reductionTypeAndOperatorIndex;
+		} else {
+			result._reductionTypeAndOperatorIndex = no_reduction_type_and_operator;
+		}
+		
 		return result;
 	}
 	
@@ -430,6 +498,17 @@ private:
 		if (propagationBits._concurrent) {
 			assert(!dataAccess->concurrentSatisfied());
 			dataAccess->concurrentSatisfied() = true;
+		}
+		
+		if (propagationBits._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
+			assert(!dataAccess->anyReductionSatisfied());
+			dataAccess->anyReductionSatisfied() = true;
+		} else if (
+			(propagationBits._reductionTypeAndOperatorIndex != no_reduction_type_and_operator)
+			&& (propagationBits._reductionTypeAndOperatorIndex == dataAccess->_reductionTypeAndOperatorIndex)
+		) {
+			assert(!dataAccess->matchingReductionSatisfied());
+			dataAccess->matchingReductionSatisfied() = true;
 		}
 		
 		if (propagationBits._makesNextTopmost) {
@@ -942,12 +1021,15 @@ private:
 			dataAccess->_originator,
 			dataAccess->_range,
 			/* A fragment */ true,
+			dataAccess->_reductionTypeAndOperatorIndex,
 			instrumentationId
 		);
 		
 		fragment->readSatisfied() = dataAccess->readSatisfied();
 		fragment->writeSatisfied() = dataAccess->writeSatisfied();
 		fragment->concurrentSatisfied() = dataAccess->concurrentSatisfied();
+		fragment->anyReductionSatisfied() = dataAccess->anyReductionSatisfied();
+		fragment->matchingReductionSatisfied() = dataAccess->matchingReductionSatisfied();
 		fragment->complete() = dataAccess->complete();
 #ifndef NDEBUG
 		fragment->isReachable() = true;
@@ -1265,6 +1347,16 @@ private:
 								subaccess->hasPropagatedConcurrentSatisfiability() = true;
 								Instrument::newDataAccessProperty(subaccess->_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
 							}
+							if (propagationMask._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
+								assert(!subaccess->hasPropagatedAnyReductionSatisfiability());
+								subaccess->hasPropagatedAnyReductionSatisfiability() = true;
+								Instrument::newDataAccessProperty(subaccess->_instrumentationId, "PropAR", "Propagated Any Reduction Satisfiability");
+							} else if (propagationMask._reductionTypeAndOperatorIndex != no_reduction_type_and_operator) {
+								assert(propagationMask._reductionTypeAndOperatorIndex == subaccess->_reductionTypeAndOperatorIndex);
+								assert(!subaccess->hasPropagatedMatchingReductionSatisfiability());
+								subaccess->hasPropagatedMatchingReductionSatisfiability() = true;
+								Instrument::newDataAccessProperty(subaccess->_instrumentationId, "PropMR", "Propagated Matching Reduction Satisfiability");
+							}
 							
 							linkAndPropagate(
 								subaccess, subtask, subtaskAccessStructures,
@@ -1309,6 +1401,17 @@ private:
 								assert(!fragment->hasPropagatedConcurrentSatisfiability());
 								fragment->hasPropagatedConcurrentSatisfiability() = true;
 								Instrument::newDataAccessProperty(fragment->_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
+							}
+							
+							if (propagationMask._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
+								assert(!fragment->hasPropagatedAnyReductionSatisfiability());
+								fragment->hasPropagatedAnyReductionSatisfiability() = true;
+								Instrument::newDataAccessProperty(fragment->_instrumentationId, "PropAR", "Propagated Any Reduction Satisfiability");
+							} else if (propagationMask._reductionTypeAndOperatorIndex != no_reduction_type_and_operator) {
+								assert(propagationMask._reductionTypeAndOperatorIndex == fragment->_reductionTypeAndOperatorIndex);
+								assert(!fragment->hasPropagatedMatchingReductionSatisfiability());
+								fragment->hasPropagatedMatchingReductionSatisfiability() = true;
+								Instrument::newDataAccessProperty(fragment->_instrumentationId, "PropMR", "Propagated Matching Reduction Satisfiability");
 							}
 							
 							linkAndPropagate(
@@ -1420,6 +1523,8 @@ private:
 						targetAccess->readSatisfied() = true;
 						targetAccess->writeSatisfied() = true;
 						targetAccess->concurrentSatisfied() = true;
+						targetAccess->anyReductionSatisfied() = true;
+						targetAccess->matchingReductionSatisfied() = true;
 						targetAccess->isTopmost() = true;
 						Instrument::newDataAccessProperty(targetAccess->_instrumentationId, "T", "Topmost");
 						
@@ -1663,6 +1768,16 @@ private:
 					dataAccess->hasPropagatedConcurrentSatisfiability() = true;
 					Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
 				}
+				if (dataAccess->anyReductionSatisfied() && ! dataAccess->hasPropagatedAnyReductionSatisfiability()) {
+					// The actual propagation will occur through the bottom map accesses
+					dataAccess->hasPropagatedAnyReductionSatisfiability() = true;
+					Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropAR", "Propagated Any Reduction Satisfiability");
+				}
+				if (dataAccess->matchingReductionSatisfied() && ! dataAccess->hasPropagatedMatchingReductionSatisfiability()) {
+					// The actual propagation will occur through the bottom map accesses
+					dataAccess->hasPropagatedMatchingReductionSatisfiability() = true;
+					Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropAR", "Propagated Matching Reduction Satisfiability");
+				}
 				
 				// Must be done synchronously
 				linkBottomMapAccessesToNext(delayedOperation, hpDependencyData);
@@ -1720,8 +1835,9 @@ public:
 	//! \param[in] accessType the type of access
 	//! \param[in] weak true iff the access is weak
 	//! \param[in] range the range of data covered by the access
+	//! \param[in] reductionTypeAndOperatorIndex an index that identifies the type and the operation of the reduction
 	static inline void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRange range
+		Task *task, DataAccessType accessType, bool weak, DataAccessRange range, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
 	) {
 		assert(task != nullptr);
 		
@@ -1741,12 +1857,12 @@ public:
 				DataAccess *oldAccess = &(*position);
 				assert(oldAccess != nullptr);
 				
-				upgradeAccess(oldAccess, accessType, weak);
+				upgradeAccess(oldAccess, accessType, weak, reductionTypeAndOperatorIndex);
 				
 				return true;
 			},
 			[&](DataAccessRange missingRange) -> bool {
-				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange, false);
+				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange, false, reductionTypeAndOperatorIndex);
 				
 				accessStructures._removalBlockers++;
 				accessStructures._accesses.insert(*newAccess);

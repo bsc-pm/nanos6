@@ -6,7 +6,10 @@
 #include <bitset>
 #include <deque>
 
+#include <limits.h>
+
 #include "DataAccessRange.hpp"
+#include "ReductionSpecific.hpp"
 
 
 class Task;
@@ -17,22 +20,24 @@ struct CPUDependencyData {
 		bool _read;
 		bool _write;
 		bool _concurrent;
+		reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
 		bool _becomesRemovable;
 		bool _makesNextTopmost;
 		
 		PropagationBits()
-			: _read(false), _write(false), _concurrent(false), _becomesRemovable(false), _makesNextTopmost(false)
+			: _read(false), _write(false), _concurrent(false), _reductionTypeAndOperatorIndex(no_reduction_type_and_operator),
+			_becomesRemovable(false), _makesNextTopmost(false)
 		{
 		}
 		
 		inline bool propagates() const
 		{
-			return (_read || _write || _concurrent || _makesNextTopmost);
+			return (_read || _write || _concurrent || (_reductionTypeAndOperatorIndex != no_reduction_type_and_operator) || _makesNextTopmost);
 		}
 		
 		inline bool propagatesSatisfiability() const
 		{
-			return (_read || _write || _concurrent);
+			return (_read || _write || _concurrent || (_reductionTypeAndOperatorIndex != no_reduction_type_and_operator));
 		}
 	};
 	

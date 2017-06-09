@@ -21,6 +21,7 @@ class Task;
 
 #include "../DataAccessBase.hpp"
 #include "DataAccessRange.hpp"
+#include "ReductionSpecific.hpp"
 
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
@@ -30,6 +31,8 @@ struct DataAccess : public DataAccessBase {
 		READ_SATISFIED_BIT,
 		WRITE_SATISFIED_BIT,
 		CONCURRENT_SATISFIED_BIT,
+		ANY_REDUCTION_SATISFIED_BIT,
+		MATCHING_REDUCTION_SATISFIED_BIT,
 		FRAGMENT_BIT,
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP,
@@ -38,6 +41,8 @@ struct DataAccess : public DataAccessBase {
 		HAS_PROPAGATED_READ_SATISFIABILITY_BIT,
 		HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT,
 		HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT,
+		HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT,
+		HAS_PROPAGATED_MATCHING_REDUCTION_SATISFIABILITY_BIT,
 #ifndef NDEBUG
 		HAS_PROPAGATED_TOPMOST_PROPERTY_BIT,
 		IS_REACHABLE_BIT,
@@ -54,18 +59,23 @@ struct DataAccess : public DataAccessBase {
 	
 	//! Direct next access
 	Task *_next;
-
+	
+	//! An index that determines the data type and the operation of the reduction (if applicable)
+	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
+	
 	DataAccess(
 		DataAccessType type, bool weak,
 		Task *originator,
 		DataAccessRange accessRange,
 		bool fragment,
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
 		Instrument::data_access_id_t instrumentationId
 	)
 		: DataAccessBase(type, weak, originator, instrumentationId),
 		_range(accessRange),
 		_status(0),
-		_next(nullptr)
+		_next(nullptr),
+		_reductionTypeAndOperatorIndex(reductionTypeAndOperatorIndex)
 	{
 		assert(originator != 0);
 		
@@ -109,6 +119,24 @@ struct DataAccess : public DataAccessBase {
 	bool concurrentSatisfied() const
 	{
 		return _status[CONCURRENT_SATISFIED_BIT];
+	}
+	
+	typename status_t::reference anyReductionSatisfied()
+	{
+		return _status[ANY_REDUCTION_SATISFIED_BIT];
+	}
+	bool anyReductionSatisfied() const
+	{
+		return _status[ANY_REDUCTION_SATISFIED_BIT];
+	}
+	
+	typename status_t::reference matchingReductionSatisfied()
+	{
+		return _status[MATCHING_REDUCTION_SATISFIED_BIT];
+	}
+	bool matchingReductionSatisfied() const
+	{
+		return _status[MATCHING_REDUCTION_SATISFIED_BIT];
 	}
 	
 	bool isFragment() const
@@ -180,6 +208,24 @@ struct DataAccess : public DataAccessBase {
 		return _status[HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT];
 	}
 	
+	typename status_t::reference hasPropagatedAnyReductionSatisfiability()
+	{
+		return _status[HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT];
+	}
+	bool hasPropagatedAnyReductionSatisfiability() const
+	{
+		return _status[HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT];
+	}
+	
+	typename status_t::reference hasPropagatedMatchingReductionSatisfiability()
+	{
+		return _status[HAS_PROPAGATED_MATCHING_REDUCTION_SATISFIABILITY_BIT];
+	}
+	bool hasPropagatedMatchingReductionSatisfiability() const
+	{
+		return _status[HAS_PROPAGATED_MATCHING_REDUCTION_SATISFIABILITY_BIT];
+	}
+	
 	
 #ifndef NDEBUG
 	typename status_t::reference hasPropagatedTopmostProperty()
@@ -233,6 +279,8 @@ struct DataAccess : public DataAccessBase {
 			return readSatisfied();
 		} else if (_type == CONCURRENT_ACCESS_TYPE) {
 			return concurrentSatisfied();
+		} else if (_type == REDUCTION_ACCESS_TYPE) {
+			return (anyReductionSatisfied() || matchingReductionSatisfied());
 		} else {
 			return readSatisfied() && writeSatisfied();
 		}
