@@ -4,11 +4,21 @@
 
 #include "../SchedulerGenerator.hpp"
 
+#include <sstream>
 
-DeviceHierarchicalScheduler::DeviceHierarchicalScheduler()
+
+DeviceHierarchicalScheduler::DeviceHierarchicalScheduler(int nodeIndex)
 {
-	_CPUScheduler = SchedulerGenerator::createDeviceScheduler();
-	RuntimeInfo::addEntry("cpu-scheduler", "CPU Scheduler", _CPUScheduler->getName());
+	_CPUScheduler = SchedulerGenerator::createDeviceScheduler(nodeIndex);
+	
+	std::ostringstream oss, oss2;
+	if (nodeIndex != -1) {
+		oss << "numa-node-" << nodeIndex + 1 << "-";
+		oss2 << "NUMA Node " << nodeIndex + 1 << " ";
+	}
+	oss << "cpu-scheduler";
+	oss2 << "CPU Scheduler";
+	RuntimeInfo::addEntry(oss.str(), oss2.str(), _CPUScheduler->getName());
 }
 
 DeviceHierarchicalScheduler::~DeviceHierarchicalScheduler()

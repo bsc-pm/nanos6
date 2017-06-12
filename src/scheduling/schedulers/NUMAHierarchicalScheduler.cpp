@@ -28,7 +28,7 @@ NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 	}
 
 	for (size_t idx = 0; idx < NUMANodeCount; ++idx) {
-		_NUMANodeScheduler[idx] = SchedulerGenerator::createNUMANodeScheduler();
+		_NUMANodeScheduler[idx] = SchedulerGenerator::createNUMANodeScheduler(idx);
 		
 		std::ostringstream oss, oss2;
 		oss << "numa-node-" << idx << "-scheduler";

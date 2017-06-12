@@ -53,7 +53,7 @@ public:
 		
 		// Check if this scheduler level can be collapsed
 		if (_collapsable && NUMAHierarchicalScheduler::canBeCollapsed()) {
-			scheduler = createNUMANodeScheduler();
+			scheduler = createNUMANodeScheduler(-1);
 		} else {
 			scheduler = new NUMAHierarchicalScheduler();
 		}
@@ -61,21 +61,21 @@ public:
 		return scheduler;
 	}
 	
-	static inline SchedulerInterface *createNUMANodeScheduler()
+	static inline SchedulerInterface *createNUMANodeScheduler(int nodeIndex)
 	{
 		SchedulerInterface *scheduler = nullptr;
 		
 		// Check if this scheduler level can be collapsed
 		if (_collapsable && DeviceHierarchicalScheduler::canBeCollapsed()) {
-			scheduler = createDeviceScheduler();
+			scheduler = createDeviceScheduler(nodeIndex);
 		} else {
-			scheduler = new DeviceHierarchicalScheduler();
+			scheduler = new DeviceHierarchicalScheduler(nodeIndex);
 		}
 
 		return scheduler;
 	}
 	
-	static inline SchedulerInterface *createDeviceScheduler()
+	static inline SchedulerInterface *createDeviceScheduler(__attribute__((unused)) int nodeIndex)
 	{
 		// TODO: when other devices are introduced, add "type" parameter
 		EnvironmentVariable<std::string> schedulerName("NANOS6_CPU_SCHEDULER", "default");
