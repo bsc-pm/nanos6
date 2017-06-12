@@ -241,14 +241,14 @@ void NUMAHierarchicalScheduler::distributeTaskloopAmongNUMANodes(Taskloop *taskl
 	
 	// Get the information of the complete taskloop bounds
 	const TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
-	const nanos_taskloop_bounds &taskloopBounds = taskloopInfo._bounds;
+	const nanos6_taskloop_bounds_t &taskloopBounds = taskloopInfo._bounds;
 	
 	size_t originalLowerBound = taskloopBounds.lower_bound;
 	size_t originalUpperBound = taskloopBounds.upper_bound;
 	size_t grainSize = taskloopBounds.grain_size;
 	size_t step = taskloopBounds.step;
 	
-	nanos_taskloop_bounds partialBounds;
+	nanos6_taskloop_bounds_t partialBounds;
 	partialBounds.grain_size = grainSize;
 	partialBounds.step = step;
 	

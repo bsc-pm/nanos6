@@ -40,7 +40,7 @@ struct SpawnedFunctionArgsBlock {
 };
 
 
-static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) nanos_taskloop_bounds *taskloop_bounds)
+static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) nanos6_taskloop_bounds_t *taskloop_bounds)
 {
 	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
 	assert(argsBlock != nullptr);

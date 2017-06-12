@@ -59,7 +59,7 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 {
 	Task *task = nullptr;
 	bool workAssigned = false;
-	nanos_taskloop_bounds obtainedBounds;
+	nanos6_taskloop_bounds_t obtainedBounds;
 	std::vector<Taskloop *> completeTaskloops;
 	
 	{

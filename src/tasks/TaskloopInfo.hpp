@@ -12,7 +12,7 @@
 struct TaskloopInfo {
 	std::atomic<size_t> _nextLowerBound __attribute__ ((aligned (CACHE_LINE_SIZE)));
 	
-	nanos_taskloop_bounds _bounds __attribute__ ((aligned (CACHE_LINE_SIZE)));
+	nanos6_taskloop_bounds_t _bounds __attribute__ ((aligned (CACHE_LINE_SIZE)));
 	
 	inline TaskloopInfo()
 		: _nextLowerBound(0),
@@ -35,7 +35,7 @@ struct TaskloopInfo {
 		initialize();
 	}
 	
-	inline void setBounds(const nanos_taskloop_bounds &newBounds)
+	inline void setBounds(const nanos6_taskloop_bounds_t &newBounds)
 	{
 		setBounds(
 			newBounds.lower_bound,

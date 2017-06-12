@@ -12,7 +12,7 @@ void TaskloopManager::handleTaskloop(Taskloop *runnableTaskloop, Taskloop *sourc
 	assert(sourceTaskloop != nullptr);
 	
 	TaskloopInfo &taskloopInfo = runnableTaskloop->getTaskloopInfo();
-	nanos_taskloop_bounds &bounds = taskloopInfo._bounds;
+	nanos6_taskloop_bounds_t &bounds = taskloopInfo._bounds;
 	nanos_task_info *taskInfo = runnableTaskloop->getTaskInfo();
 	void *argsBlock = runnableTaskloop->getArgsBlock();
 	

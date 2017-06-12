@@ -92,11 +92,11 @@ public:
 		return !_flags[Task::non_owner_args_flag];
 	}
 	
-	inline bool getIterations(bool newExecutor, nanos_taskloop_bounds &partialBounds, bool *complete = nullptr)
+	inline bool getIterations(bool newExecutor, nanos6_taskloop_bounds_t &partialBounds, bool *complete = nullptr)
 	{
 		assert(!isRunnable());
 		
-		nanos_taskloop_bounds &bounds = _taskloopInfo._bounds;
+		nanos6_taskloop_bounds_t &bounds = _taskloopInfo._bounds;
 		const size_t originalLowerBound = bounds.lower_bound;
 		const size_t originalUpperBound = bounds.upper_bound;
 		const size_t grainSize = bounds.grain_size;

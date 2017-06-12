@@ -1,8 +1,6 @@
 #ifndef NANOS6_TASK_INSTANTIATION_H
 #define NANOS6_TASK_INSTANTIATION_H
 
-enum nanos6_task_info_contents_t { nanos6_task_info_contents = 1 };
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 1 };
 
 
 #include <stddef.h>
@@ -16,13 +14,20 @@ extern "C" {
 typedef signed long nanos_priority_t;
 
 
+//! \brief This needs to be incremented every time there is an update to the nanos_task_info::run
+enum nanos6_task_execution_api_t { nanos6_task_execution_api = 1 };
+
+
 typedef struct {
     size_t lower_bound; // Inclusive
     size_t upper_bound; // Exclusive
     size_t step;
     size_t grain_size;
-} nanos_taskloop_bounds;
+} nanos6_taskloop_bounds_t;
 
+
+//! \brief This needs to be incremented every time that there is a change in nanos_task_info
+enum nanos6_task_info_contents_t { nanos6_task_info_contents = 2 };
 
 //! \brief Struct that contains the common parts that all tasks of the same type share
 typedef struct
@@ -31,7 +36,7 @@ typedef struct
 	//! 
 	//! \param[in,out] args_block A pointer to a block of data for the parameters
 	//! \param[in] taskloop_bounds bounds of the taskloop if it is the case
-	void (*run)(void *args_block, nanos_taskloop_bounds *taskloop_bounds);
+	void (*run)(void *args_block, nanos6_taskloop_bounds_t *taskloop_bounds);
 	
 	//! \brief Function that the runtime calls to retrieve the information needed to calculate the dependencies
 	//! 
@@ -74,6 +79,9 @@ typedef struct
 	char const *invocation_source;
 } nanos_task_invocation_info __attribute__((aligned(64)));
 
+
+//! \brief This needs to be incremented on every change to the instantiation API
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 2 };
 
 typedef enum {
 	//! Specifies that the task will be a final task

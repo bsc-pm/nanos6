@@ -13,7 +13,7 @@
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 
 
-inline Taskloop* TaskloopManager::createRunnableTaskloop(Taskloop *parent, const nanos_taskloop_bounds &assignedBounds)
+inline Taskloop* TaskloopManager::createRunnableTaskloop(Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds)
 {
 	assert(parent != nullptr);
 	
@@ -46,13 +46,13 @@ inline Taskloop* TaskloopManager::createRunnableTaskloop(Taskloop *parent, const
 	return taskloop;
 }
 
-inline Taskloop* TaskloopManager::createPartitionTaskloop(Taskloop *parent, const nanos_taskloop_bounds &assignedBounds)
+inline Taskloop* TaskloopManager::createPartitionTaskloop(Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds)
 {
 	assert(parent != nullptr);
 	
 	void *argsBlock = nullptr;
 	Taskloop *taskloop = nullptr;
-	nanos_taskloop_bounds *taskloopBounds = nullptr;
+	nanos6_taskloop_bounds_t *taskloopBounds = nullptr;
 	
 	// Get the infomation of the complete taskloop
 	nanos_task_info *taskInfo = parent->getTaskInfo();
@@ -81,7 +81,7 @@ inline Taskloop* TaskloopManager::createPartitionTaskloop(Taskloop *parent, cons
 	return taskloop;
 }
 
-void TaskloopManager::completeTaskloopCreation(Taskloop *taskloop, Taskloop *parent, const nanos_taskloop_bounds &assignedBounds)
+void TaskloopManager::completeTaskloopCreation(Taskloop *taskloop, Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds)
 {
 	assert(taskloop != nullptr);
 	assert(parent != nullptr);
