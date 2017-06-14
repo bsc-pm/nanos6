@@ -328,6 +328,8 @@ common_sources = \
 	src/scheduling/SchedulerInterface.cpp \
 	src/scheduling/SchedulerInterface.hpp \
 	src/scheduling/schedulers/DefaultScheduler.hpp \
+	src/scheduling/schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.cpp \
+	src/scheduling/schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.hpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/schedulers/FIFOScheduler.cpp \
@@ -340,6 +342,8 @@ common_sources = \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
 	src/scheduling/schedulers/ImmediateSuccessorScheduler.hpp \
+	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.cpp \
+	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/schedulers/NaiveScheduler.cpp \

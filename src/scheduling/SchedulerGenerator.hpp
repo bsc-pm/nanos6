@@ -3,10 +3,12 @@
 
 #include "schedulers/DefaultScheduler.hpp"
 #include "schedulers/DeviceHierarchicalScheduler.hpp"
+#include "schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.hpp"
 #include "schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp"
 #include "schedulers/FIFOScheduler.hpp"
 #include "schedulers/HostHierarchicalScheduler.hpp"
 #include "schedulers/ImmediateSuccessorScheduler.hpp"
+#include "schedulers/ImmediateSuccessorWithMultiPollingScheduler.hpp"
 #include "schedulers/ImmediateSuccessorWithPollingScheduler.hpp"
 #include "schedulers/NUMAHierarchicalScheduler.hpp"
 #include "schedulers/PriorityScheduler.hpp"
@@ -33,6 +35,10 @@ private:
 			return new ImmediateSuccessorWithPollingScheduler();
 		} else if (schedulerName == "fifoiswp") {
 			return new FIFOImmediateSuccessorWithPollingScheduler();
+		} else if (schedulerName == "iswmp") {
+			return new ImmediateSuccessorWithMultiPollingScheduler();
+		} else if (schedulerName == "fifoiswmp") {
+			return new FIFOImmediateSuccessorWithMultiPollingScheduler();
 		} else if (schedulerName == "priority") {
 			return new PriorityScheduler();
 		} else {
