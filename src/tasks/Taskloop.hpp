@@ -97,20 +97,19 @@ public:
 		assert(!isRunnable());
 		
 		nanos6_taskloop_bounds_t &bounds = _taskloopInfo._bounds;
-		const size_t originalLowerBound = bounds.lower_bound;
 		const size_t originalUpperBound = bounds.upper_bound;
-		const size_t grainSize = bounds.grain_size;
+		const size_t originalChunksize = bounds.chunksize;
 		const size_t step = bounds.step;
 		
-		const size_t chunkSize = grainSize * step;
-		const size_t lowerBound = std::atomic_fetch_add(&_taskloopInfo._nextLowerBound, chunkSize);
+		const size_t chunksize = originalChunksize * step;
+		const size_t lowerBound = std::atomic_fetch_add(&_taskloopInfo._nextLowerBound, chunksize);
 		
 		if (lowerBound < originalUpperBound) {
-			const size_t upperBound = std::min(lowerBound + chunkSize, originalUpperBound);
+			const size_t upperBound = std::min(lowerBound + chunksize, originalUpperBound);
 			
 			partialBounds.lower_bound = lowerBound;
 			partialBounds.upper_bound = upperBound;
-			partialBounds.grain_size = grainSize;
+			partialBounds.chunksize = originalChunksize;
 			partialBounds.step = step;
 			
 			if (newExecutor) {

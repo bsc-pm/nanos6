@@ -25,11 +25,11 @@ struct TaskloopInfo {
 		_nextLowerBound = _bounds.lower_bound;
 	}
 	
-	inline void setBounds(size_t lowerBound, size_t upperBound, size_t grainSize, size_t step)
+	inline void setBounds(size_t lowerBound, size_t upperBound, size_t chunksize, size_t step)
 	{
 		_bounds.lower_bound = lowerBound;
 		_bounds.upper_bound = upperBound;
-		_bounds.grain_size = grainSize;
+		_bounds.chunksize = chunksize;
 		_bounds.step = step;
 		
 		initialize();
@@ -40,7 +40,7 @@ struct TaskloopInfo {
 		setBounds(
 			newBounds.lower_bound,
 			newBounds.upper_bound,
-			newBounds.grain_size,
+			newBounds.chunksize,
 			newBounds.step
 		);
 	}
