@@ -23,27 +23,27 @@ private:
 	static bool _collapsable;
 
 	// Get the CPU scheduler
-	static inline SchedulerInterface *createCPUScheduler(std::string const &schedulerName)
+	static inline SchedulerInterface *createCPUScheduler(std::string const &schedulerName, int nodeIndex)
 	{
 		if (schedulerName == "default") {
-			return new DefaultScheduler();
+			return new DefaultScheduler(nodeIndex);
 		} else if (schedulerName == "fifo") {
-			return new FIFOScheduler();
+			return new FIFOScheduler(nodeIndex);
 		} else if (schedulerName == "immediatesuccessor") {
-			return new ImmediateSuccessorScheduler();
+			return new ImmediateSuccessorScheduler(nodeIndex);
 		} else if (schedulerName == "iswp") {
-			return new ImmediateSuccessorWithPollingScheduler();
+			return new ImmediateSuccessorWithPollingScheduler(nodeIndex);
 		} else if (schedulerName == "fifoiswp") {
-			return new FIFOImmediateSuccessorWithPollingScheduler();
+			return new FIFOImmediateSuccessorWithPollingScheduler(nodeIndex);
 		} else if (schedulerName == "iswmp") {
-			return new ImmediateSuccessorWithMultiPollingScheduler();
+			return new ImmediateSuccessorWithMultiPollingScheduler(nodeIndex);
 		} else if (schedulerName == "fifoiswmp") {
-			return new FIFOImmediateSuccessorWithMultiPollingScheduler();
+			return new FIFOImmediateSuccessorWithMultiPollingScheduler(nodeIndex);
 		} else if (schedulerName == "priority") {
-			return new PriorityScheduler();
+			return new PriorityScheduler(nodeIndex);
 		} else {
 			std::cerr << "Warning: invalid scheduler name '" << schedulerName << "', using default instead." << std::endl;
-			return new DefaultScheduler();
+			return new DefaultScheduler(nodeIndex);
 		}
 	}
 
@@ -81,12 +81,12 @@ public:
 		return scheduler;
 	}
 	
-	static inline SchedulerInterface *createDeviceScheduler(__attribute__((unused)) int nodeIndex)
+	static inline SchedulerInterface *createDeviceScheduler(int nodeIndex)
 	{
 		// TODO: when other devices are introduced, add "type" parameter
 		EnvironmentVariable<std::string> schedulerName("NANOS6_CPU_SCHEDULER", "default");
 	
-		return SchedulerGenerator::createCPUScheduler(schedulerName.getValue());
+		return SchedulerGenerator::createCPUScheduler(schedulerName.getValue(), nodeIndex);
 	}
 };
 

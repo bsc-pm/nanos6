@@ -11,7 +11,7 @@ class DeviceHierarchicalScheduler: public SchedulerInterface {
 	SchedulerInterface *_CPUScheduler;
 
 public:
-	DeviceHierarchicalScheduler(int nodeIndex);
+	DeviceHierarchicalScheduler(int numaNodeIndex);
 	~DeviceHierarchicalScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint, bool doGetIdle = true);

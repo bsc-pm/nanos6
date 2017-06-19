@@ -38,7 +38,7 @@ class PriorityScheduler: public SchedulerInterface {
 	
 	
 public:
-	PriorityScheduler();
+	PriorityScheduler(int numaNodeIndex);
 	~PriorityScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);

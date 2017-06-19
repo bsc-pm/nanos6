@@ -7,14 +7,14 @@
 #include <sstream>
 
 
-DeviceHierarchicalScheduler::DeviceHierarchicalScheduler(int nodeIndex)
+DeviceHierarchicalScheduler::DeviceHierarchicalScheduler(int numaNodeIndex)
 {
-	_CPUScheduler = SchedulerGenerator::createDeviceScheduler(nodeIndex);
+	_CPUScheduler = SchedulerGenerator::createDeviceScheduler(numaNodeIndex);
 	
 	std::ostringstream oss, oss2;
-	if (nodeIndex != -1) {
-		oss << "numa-node-" << nodeIndex + 1 << "-";
-		oss2 << "NUMA Node " << nodeIndex + 1 << " ";
+	if (numaNodeIndex != -1) {
+		oss << "numa-node-" << numaNodeIndex + 1 << "-";
+		oss2 << "NUMA Node " << numaNodeIndex + 1 << " ";
 	}
 	oss << "cpu-scheduler";
 	oss2 << "CPU Scheduler";

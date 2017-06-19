@@ -28,7 +28,7 @@ class ImmediateSuccessorWithPollingScheduler: public SchedulerInterface {
 	inline Task *getReplacementTask(CPU *computePlace);
 	
 public:
-	ImmediateSuccessorWithPollingScheduler();
+	ImmediateSuccessorWithPollingScheduler(int numaNodeIndex);
 	~ImmediateSuccessorWithPollingScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);

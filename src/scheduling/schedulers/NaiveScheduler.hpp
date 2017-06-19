@@ -22,7 +22,7 @@ class NaiveScheduler: public SchedulerInterface {
 	inline Task *getReplacementTask(CPU *computePlace);
 	
 public:
-	NaiveScheduler();
+	NaiveScheduler(int numaNodeIndex);
 	~NaiveScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);

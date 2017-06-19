@@ -28,7 +28,7 @@ class FIFOImmediateSuccessorWithMultiPollingScheduler: public SchedulerInterface
 	inline Task *getReplacementTask(CPU *computePlace);
 	
 public:
-	FIFOImmediateSuccessorWithMultiPollingScheduler();
+	FIFOImmediateSuccessorWithMultiPollingScheduler(int numaNodeIndex);
 	~FIFOImmediateSuccessorWithMultiPollingScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);

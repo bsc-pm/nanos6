@@ -9,7 +9,7 @@
 #include <cassert>
 #include <mutex>
 
-ImmediateSuccessorScheduler::ImmediateSuccessorScheduler()
+ImmediateSuccessorScheduler::ImmediateSuccessorScheduler(__attribute__((unused)) int numaNodeIndex)
 {
 }
 

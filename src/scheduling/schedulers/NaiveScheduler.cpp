@@ -9,7 +9,7 @@
 #include <cassert>
 #include <mutex>
 
-NaiveScheduler::NaiveScheduler()
+NaiveScheduler::NaiveScheduler(__attribute__((unused)) int numaNodeIndex)
 {
 }
 

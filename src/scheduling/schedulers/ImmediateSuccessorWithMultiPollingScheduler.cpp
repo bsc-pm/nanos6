@@ -9,7 +9,7 @@
 #include <cassert>
 #include <mutex>
 
-ImmediateSuccessorWithMultiPollingScheduler::ImmediateSuccessorWithMultiPollingScheduler()
+ImmediateSuccessorWithMultiPollingScheduler::ImmediateSuccessorWithMultiPollingScheduler(__attribute__((unused)) int numaNodeIndex)
 	: _pollingSlot(nullptr)
 {
 }

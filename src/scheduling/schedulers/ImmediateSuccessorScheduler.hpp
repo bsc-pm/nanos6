@@ -22,7 +22,7 @@ class ImmediateSuccessorScheduler: public SchedulerInterface {
 	inline Task *getReplacementTask(CPU *computePlace);
 	
 public:
-	ImmediateSuccessorScheduler();
+	ImmediateSuccessorScheduler(int numaNodeIndex);
 	~ImmediateSuccessorScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);

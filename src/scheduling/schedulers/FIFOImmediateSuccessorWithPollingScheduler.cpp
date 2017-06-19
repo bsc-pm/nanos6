@@ -9,7 +9,7 @@
 #include <cassert>
 #include <mutex>
 
-FIFOImmediateSuccessorWithPollingScheduler::FIFOImmediateSuccessorWithPollingScheduler()
+FIFOImmediateSuccessorWithPollingScheduler::FIFOImmediateSuccessorWithPollingScheduler(__attribute__((unused)) int numaNodeIndex)
 	: _pollingSlot(nullptr)
 {
 }

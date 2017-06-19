@@ -22,7 +22,7 @@ inline bool PriorityScheduler::TaskPriorityCompare::operator()(Task *a, Task *b)
 }
 
 
-PriorityScheduler::PriorityScheduler()
+PriorityScheduler::PriorityScheduler(__attribute__((unused)) int numaNodeIndex)
 	: _pollingSlot(nullptr)
 {
 }

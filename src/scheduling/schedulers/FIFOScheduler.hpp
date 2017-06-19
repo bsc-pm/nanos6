@@ -22,7 +22,7 @@ class FIFOScheduler: public SchedulerInterface {
 	inline Task *getReplacementTask(CPU *computePlace);
 	
 public:
-	FIFOScheduler();
+	FIFOScheduler(int numaNodeIndex);
 	~FIFOScheduler();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);

@@ -24,6 +24,6 @@ SchedulerInterface *SchedulerGenerator::createHostScheduler()
 
 		return scheduler;
 	} else {
-		return createCPUScheduler(schedulerName.getValue());
+		return createCPUScheduler(schedulerName.getValue(), -1);
 	}
 }

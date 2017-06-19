@@ -9,7 +9,7 @@
 #include <cassert>
 #include <mutex>
 
-FIFOScheduler::FIFOScheduler()
+FIFOScheduler::FIFOScheduler(__attribute__((unused)) int numaNodeIndex)
 {
 }
 
