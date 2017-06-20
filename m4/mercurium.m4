@@ -325,3 +325,22 @@ AC_DEFUN([SSS_ALTERNATIVE_MERCURIUM_CONFIGURATION],
 	]
 )
 
+
+AC_DEFUN([SSS_CHECK_MERCURIUM_ACCEPTS_EXTERNAL_INSTALLATION],
+	[
+		AC_MSG_CHECKING([if Mercurium allows using an external runtime])
+		AC_LANG_PUSH([C])
+		ac_save_[]_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS"
+		_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS --nanos6 --no-default-nanos6-inc"
+		AC_LINK_IFELSE(
+			[AC_LANG_PROGRAM([[]], [[]])],
+			[ac_mercurium_supports_external_installation=no],
+			[ac_mercurium_supports_external_installation=yes]
+		)
+		AC_LANG_POP([C])
+		_AC_LANG_PREFIX[]FLAGS="$ac_save_[]_AC_LANG_PREFIX[]FLAGS"
+		AC_MSG_RESULT([$ac_mercurium_supports_external_installation])
+		AM_CONDITIONAL([MCC_SUPORTS_EXTERNAL_INSTALL], [test x"${ac_mercurium_supports_external_installation}" = x"yes"])
+	]
+)
+
