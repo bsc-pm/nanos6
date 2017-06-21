@@ -66,12 +66,45 @@ public:
 	
 	inline bool markAsFinished() __attribute__((warn_unused_result))
 	{
-		if (isRunnable()) {
+		bool runnable = isRunnable();
+		if (runnable) {
 			assert(_thread != nullptr);
 			_thread = nullptr;
 		}
 		
-		return decreaseRemovalBlockingCount();
+		int countdown = decreaseAndGetRemovalBlockingCount();
+		assert(countdown >= 0);
+		
+		if (!runnable) {
+			TaskDataAccesses &accessStructures = getDataAccesses();
+			assert(!accessStructures.hasBeenDeleted());
+			
+			if (!accessStructures._accesses.empty() && countdown == 1) {
+				TaskloopManager::unregisterTaskloopDataAccesses(this);
+			}
+		}
+		
+		return (countdown == 0);
+	}
+	
+	//! \brief Remove a nested task (because it has finished)
+	//!
+	//! \returns true iff the change makes this task become ready or disposable
+	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
+	{
+		int countdown = decreaseAndGetRemovalBlockingCount();
+		assert(countdown >= 0);
+		
+		if (!isRunnable()) {
+			TaskDataAccesses &accessStructures = getDataAccesses();
+			assert(!accessStructures.hasBeenDeleted());
+			
+			if (!accessStructures._accesses.empty() && countdown == 1) {
+				TaskloopManager::unregisterTaskloopDataAccesses(this);
+			}
+		}
+		
+		return (countdown == 0);
 	}
 	
 	inline void setRunnable(bool runnableValue)

@@ -164,7 +164,7 @@ public:
 	//! \brief Remove a nested task (because it has finished)
 	//!
 	//! \returns true iff the change makes this task become ready or disposable
-	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
+	virtual inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
 	{
 		int countdown = (--_countdownToBeWokenUp);
 		assert(countdown >= 0);
@@ -187,6 +187,15 @@ public:
 		return (countdown == 0);
 	}
 	
+	//! \brief Decrease an internal counter that prevents the removal of the task
+	//!
+	//! \returns the counter's value after decreasing it
+	inline int decreaseAndGetRemovalBlockingCount()
+	{
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return countdown;
+	}
 	
 	//! \brief Set the parent
 	//! This should be used when the parent was not set during creation, and should have the parent in a state that allows
