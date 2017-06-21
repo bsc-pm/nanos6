@@ -64,10 +64,9 @@ inline Taskloop* TaskloopManager::createPartitionTaskloop(Taskloop *parent, cons
 	size_t originalArgsBlockSize = parent->getArgsBlockSize();
 	
 	// Create the taskloop for this partition
-	nanos_create_task(taskInfo, taskInvocationInfo, 0, (void **) argsBlock, (void **) &taskloopBounds, (void **) &taskloop, flags);
+	nanos_create_task(taskInfo, taskInvocationInfo, 0, (void **) &argsBlock, (void **) &taskloopBounds, (void **) &taskloop, flags);
 	assert(argsBlock != nullptr);
 	assert(taskloopBounds != nullptr);
-	assert(argsBlock == taskloopBounds);
 	assert(taskloop != nullptr);
 	
 	// The args block point to the args block of the original taskloop
