@@ -4,10 +4,6 @@
 #include "TaskloopInfo.hpp"
 #include "TaskloopManager.hpp"
 #include "TaskloopManagerImplementation.hpp"
-#include "executors/threads/WorkerThread.hpp"
-#include "hardware/places/ComputePlace.hpp"
-
-#include <DataAccessRegistration.hpp>
 
 void TaskloopManager::handleTaskloop(Taskloop *runnableTaskloop, Taskloop *sourceTaskloop)
 {
@@ -25,16 +21,5 @@ void TaskloopManager::handleTaskloop(Taskloop *runnableTaskloop, Taskloop *sourc
 		
 		assignedWork = sourceTaskloop->getIterations(false, bounds);
 	} while (assignedWork);
-}
-
-void TaskloopManager::unregisterTaskloopDataAccesses(Taskloop *taskloop)
-{
-	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentWorkerThread != nullptr);
-	
-	ComputePlace *computePlace = currentWorkerThread->getComputePlace();
-	assert(computePlace != nullptr);
-	
-	DataAccessRegistration::unregisterTaskDataAccesses(taskloop, computePlace);
 }
 

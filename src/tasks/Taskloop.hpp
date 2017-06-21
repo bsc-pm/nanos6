@@ -80,7 +80,7 @@ public:
 			assert(!accessStructures.hasBeenDeleted());
 			
 			if (!accessStructures._accesses.empty() && countdown == 1) {
-				TaskloopManager::unregisterTaskloopDataAccesses(this);
+				unregisterDataAccesses();
 			}
 		}
 		
@@ -100,12 +100,14 @@ public:
 			assert(!accessStructures.hasBeenDeleted());
 			
 			if (!accessStructures._accesses.empty() && countdown == 1) {
-				TaskloopManager::unregisterTaskloopDataAccesses(this);
+				unregisterDataAccesses();
 			}
 		}
 		
 		return (countdown == 0);
 	}
+	
+	void unregisterDataAccesses();
 	
 	inline void setRunnable(bool runnableValue)
 	{
