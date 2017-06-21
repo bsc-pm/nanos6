@@ -69,9 +69,8 @@ int main() {
 	recursion(x, 0);
 	
 	#pragma omp taskwait
-	
 	std::ostringstream oss;
-	oss << "Expected reduction computation when all " << totalTasks << " tasks are executed, taks nesting depth = " << finalDepth;
+	oss << "After a taskwait, the reduction variable contains the effect of " << x << " out of " << totalTasks << " tasks with nesting depth " << finalDepth;
 	tap.evaluate(x == totalTasks, oss.str());
 	
 	tap.end();
