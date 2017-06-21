@@ -200,6 +200,9 @@ private:
 			return dataAccess;
 		}
 		
+		// Partial overlapping of reductions is not supported at this time
+		assert(dataAccess->_type != REDUCTION_ACCESS_TYPE);
+		
 		if (dataAccess->isFragment()) {
 			TaskDataAccesses::access_fragments_t::iterator position =
 				accessStructures._accessFragments.iterator_to(*dataAccess);
@@ -498,17 +501,20 @@ private:
 		if (propagationBits._concurrent) {
 			assert(!dataAccess->concurrentSatisfied());
 			dataAccess->concurrentSatisfied() = true;
+			Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "ConSat", "Concurrent Satisfied");
 		}
 		
 		if (propagationBits._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
 			assert(!dataAccess->anyReductionSatisfied());
 			dataAccess->anyReductionSatisfied() = true;
+			Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "ARSat", "Any Reduction Satisfied");
 		} else if (
 			(propagationBits._reductionTypeAndOperatorIndex != no_reduction_type_and_operator)
 			&& (propagationBits._reductionTypeAndOperatorIndex == dataAccess->_reductionTypeAndOperatorIndex)
 		) {
 			assert(!dataAccess->matchingReductionSatisfied());
 			dataAccess->matchingReductionSatisfied() = true;
+			Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "MRSat", "Matching Reduction Satisfied");
 		}
 		
 		if (propagationBits._makesNextTopmost) {
@@ -1526,6 +1532,9 @@ private:
 						targetAccess->anyReductionSatisfied() = true;
 						targetAccess->matchingReductionSatisfied() = true;
 						targetAccess->isTopmost() = true;
+						Instrument::newDataAccessProperty(targetAccess->_instrumentationId, "ConSat", "Concurrent Satisfied");
+						Instrument::newDataAccessProperty(targetAccess->_instrumentationId, "ARSat", "Any Reduction Satisfied");
+						Instrument::newDataAccessProperty(targetAccess->_instrumentationId, "MRSat", "Matching Reduction Satisfied");
 						Instrument::newDataAccessProperty(targetAccess->_instrumentationId, "T", "Topmost");
 						
 						if (!targetAccess->_weak) {
@@ -1776,7 +1785,7 @@ private:
 				if (dataAccess->matchingReductionSatisfied() && ! dataAccess->hasPropagatedMatchingReductionSatisfiability()) {
 					// The actual propagation will occur through the bottom map accesses
 					dataAccess->hasPropagatedMatchingReductionSatisfiability() = true;
-					Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropAR", "Propagated Matching Reduction Satisfiability");
+					Instrument::newDataAccessProperty(dataAccess->_instrumentationId, "PropMR", "Propagated Matching Reduction Satisfiability");
 				}
 				
 				// Must be done synchronously
