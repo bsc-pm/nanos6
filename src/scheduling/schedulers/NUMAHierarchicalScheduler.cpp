@@ -253,7 +253,7 @@ void NUMAHierarchicalScheduler::distributeTaskloopAmongNUMANodes(Taskloop *taskl
 	partialBounds.step = step;
 	
 	// Compute the actual number of iterations
-	size_t totalIts = TaskloopBounds::getIterationCount(taskloopBounds);
+	size_t totalIts = TaskloopManager::getIterationCount(taskloopBounds);
 	size_t itsPerPartition = totalIts / availableNUMANodeCount;
 	size_t missalignment = itsPerPartition % chunksize;
 	size_t extraItsPerPartition = (missalignment) ? chunksize - missalignment : 0;

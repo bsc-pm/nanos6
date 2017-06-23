@@ -10,9 +10,23 @@ class Taskloop;
 class TaskloopManager {
 public:
 	static void handleTaskloop(Taskloop *runnableTaskloop, Taskloop *sourceTaskloop);
+	
 	static inline Taskloop* createRunnableTaskloop(Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds);
+	
 	static inline Taskloop* createPartitionTaskloop(Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds);
+	
 	static inline void completeTaskloopCreation(Taskloop *taskloop, Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds);
+	
+	static inline size_t getIterationCount(const nanos6_taskloop_bounds_t &bounds)
+	{
+		return 1 + ((getRawSize(bounds) - 1) / bounds.step);
+	}
+	
+private:
+	static inline size_t getRawSize(const nanos6_taskloop_bounds_t &bounds)
+	{
+		return bounds.upper_bound - bounds.lower_bound;
+	}
 };
 
 #endif // TASKLOOP_MANAGER_HPP

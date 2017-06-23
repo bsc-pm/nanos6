@@ -4,7 +4,6 @@
 #include <atomic>
 
 #include <nanos6.h>
-#include "tasks/TaskloopBounds.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #define CACHE_LINE_SIZE 128

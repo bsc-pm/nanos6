@@ -389,7 +389,6 @@ common_sources = \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/Taskloop.cpp \
 	src/tasks/Taskloop.hpp \
-	src/tasks/TaskloopBounds.hpp \
 	src/tasks/TaskloopInfo.hpp \
 	src/tasks/TaskloopManager.cpp \
 	src/tasks/TaskloopManager.hpp \

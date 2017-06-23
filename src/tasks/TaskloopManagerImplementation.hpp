@@ -12,7 +12,6 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 
-
 inline Taskloop* TaskloopManager::createRunnableTaskloop(Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds)
 {
 	assert(parent != nullptr);

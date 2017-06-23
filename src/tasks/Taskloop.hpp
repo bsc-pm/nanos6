@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "tasks/Task.hpp"
-#include "tasks/TaskloopBounds.hpp"
 #include "tasks/TaskloopInfo.hpp"
 #include "tasks/TaskloopManager.hpp"
 
