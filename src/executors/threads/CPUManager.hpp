@@ -58,6 +58,9 @@ public:
 
 	//! \brief get an idle CPU from a specific NUMA node
 	static inline CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
+	
+	//! \brief mark a CPU as not being idle (if possible)
+	static inline bool unidleCPU(CPU *cpu);
 };
 
 
@@ -110,6 +113,7 @@ inline CPU *CPUManager::getIdleCPU()
 	}
 }
 
+
 inline CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
 {
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
@@ -120,6 +124,20 @@ inline CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
 		return _cpus[idleCPU];
 	} else {
 		return nullptr;
+	}
+}
+
+
+inline bool CPUManager::unidleCPU(CPU *cpu)
+{
+	assert(cpu != nullptr);
+	
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	if (_idleCPUs[cpu->_virtualCPUId]) {
+		_idleCPUs[cpu->_virtualCPUId] = false;
+		return true;
+	} else {
+		return false;
 	}
 }
 
