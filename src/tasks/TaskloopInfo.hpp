@@ -2,46 +2,110 @@
 #define TASKLOOP_INFO_HPP
 
 #include <atomic>
+#include <cstdlib>
 
 #include <nanos6.h>
+#include "TaskloopManager.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #define CACHE_LINE_SIZE 128
+#define CPUS_PER_PARTITION 4
+
+#ifndef ALIGNED
+#define ALIGNED __attribute__ ((aligned (CACHE_LINE_SIZE)))
+#endif
+
+struct alignas(CACHE_LINE_SIZE) TaskloopPartition {
+	size_t upperBound;
+	std::atomic<size_t> nextLowerBound;
+	
+	TaskloopPartition()
+		: upperBound(0),
+		nextLowerBound(0)
+	{
+	}
+};
 
 struct TaskloopInfo {
-	std::atomic<size_t> _nextLowerBound __attribute__ ((aligned (CACHE_LINE_SIZE)));
+private:
+	typedef nanos6_taskloop_bounds_t bounds_t;
 	
-	nanos6_taskloop_bounds_t _bounds __attribute__ ((aligned (CACHE_LINE_SIZE)));
+	friend class Taskloop;
 	
+protected:
+	bounds_t _bounds;
+	
+	std::atomic<size_t> _remainingPartitions;
+	
+	TaskloopPartition *_partitions;
+	
+public:
 	inline TaskloopInfo()
-		: _nextLowerBound(0),
-		_bounds()
+		: _bounds(),
+		_remainingPartitions(0),
+		_partitions(nullptr)
 	{
+	}
+	
+	inline ~TaskloopInfo()
+	{
+		if (_partitions != nullptr) {
+			free(_partitions);
+		}
 	}
 	
 	inline void initialize()
 	{
-		_nextLowerBound = _bounds.lower_bound;
+		assert(_partitions == nullptr);
+		
+		size_t partitionCount = getPartitionCount();
+		assert(partitionCount > 0);
+		
+		// Allocate memory for the partitions
+		posix_memalign((void **)&_partitions, CACHE_LINE_SIZE, sizeof(TaskloopPartition) * partitionCount);
+		assert(_partitions != nullptr);
+		
+		// Get the partitions
+		std::vector<bounds_t> partialBounds;
+		TaskloopManager::splitTaskloopIterations(partitionCount, _bounds, partialBounds);
+		assert(partialBounds.size() == partitionCount);
+		
+		// Set the partitions
+		for (size_t i = 0; i < partitionCount; ++i) {
+			_partitions[i].upperBound = partialBounds[i].upper_bound;
+			_partitions[i].nextLowerBound = partialBounds[i].lower_bound;
+		}
+		
+		// Initialize the number of remaining partitions
+		_remainingPartitions = partitionCount;
 	}
 	
-	inline void setBounds(size_t lowerBound, size_t upperBound, size_t chunksize, size_t step)
+	inline void initialize(const bounds_t &newBounds)
 	{
-		_bounds.lower_bound = lowerBound;
-		_bounds.upper_bound = upperBound;
-		_bounds.chunksize = chunksize;
-		_bounds.step = step;
+		// Set the bounds
+		_bounds.lower_bound = newBounds.lower_bound;
+		_bounds.upper_bound = newBounds.upper_bound;
+		_bounds.chunksize = newBounds.chunksize;
+		_bounds.step = newBounds.step;
 		
 		initialize();
 	}
 	
-	inline void setBounds(const nanos6_taskloop_bounds_t &newBounds)
+	inline bounds_t &getBounds()
 	{
-		setBounds(
-			newBounds.lower_bound,
-			newBounds.upper_bound,
-			newBounds.chunksize,
-			newBounds.step
-		);
+		return _bounds;
+	}
+	
+	inline bounds_t const &getBounds() const
+	{
+		return _bounds;
+	}
+	
+	inline size_t getPartitionCount()
+	{
+		static size_t partitionCount = 1 + ((CPUManager::getTotalCPUs() - 1) / CPUS_PER_PARTITION);
+		return partitionCount;
 	}
 };
 

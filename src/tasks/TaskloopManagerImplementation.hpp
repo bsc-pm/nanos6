@@ -12,7 +12,7 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 
-inline Taskloop* TaskloopManager::createRunnableTaskloop(Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds)
+inline Taskloop* TaskloopManager::createRunnableTaskloop(Taskloop *parent)
 {
 	assert(parent != nullptr);
 	
@@ -40,18 +40,18 @@ inline Taskloop* TaskloopManager::createRunnableTaskloop(Taskloop *parent, const
 	taskloop->setRunnable(true);
 	
 	// Complete the taskloop creation
-	completeTaskloopCreation(taskloop, parent, assignedBounds);
+	completeTaskloopCreation(taskloop, parent);
 	
 	return taskloop;
 }
 
-inline Taskloop* TaskloopManager::createPartitionTaskloop(Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds)
+inline Taskloop* TaskloopManager::createPartitionTaskloop(Taskloop *parent, const bounds_t &assignedBounds)
 {
 	assert(parent != nullptr);
 	
 	void *argsBlock = nullptr;
 	Taskloop *taskloop = nullptr;
-	nanos6_taskloop_bounds_t *taskloopBounds = nullptr;
+	bounds_t *taskloopBounds = nullptr;
 	
 	// Get the infomation of the complete taskloop
 	nanos_task_info *taskInfo = parent->getTaskInfo();
@@ -73,20 +73,20 @@ inline Taskloop* TaskloopManager::createPartitionTaskloop(Taskloop *parent, cons
 	taskloop->setArgsBlockSize(originalArgsBlockSize);
 	taskloop->setArgsBlockOwner(false);
 	
+	// Assign the corresponding iterations
+	TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
+	taskloopInfo.initialize(assignedBounds);
+	
 	// Complete the taskloop creation
-	completeTaskloopCreation(taskloop, parent, assignedBounds);
+	completeTaskloopCreation(taskloop, parent);
 	
 	return taskloop;
 }
 
-void TaskloopManager::completeTaskloopCreation(Taskloop *taskloop, Taskloop *parent, const nanos6_taskloop_bounds_t &assignedBounds)
+void TaskloopManager::completeTaskloopCreation(Taskloop *taskloop, Taskloop *parent)
 {
 	assert(taskloop != nullptr);
 	assert(parent != nullptr);
-	
-	// Assign the corresponding iterations
-	TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
-	taskloopInfo.setBounds(assignedBounds);
 	
 	// Set the parent
 	taskloop->setParent(parent);

@@ -59,7 +59,6 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 {
 	Task *task = nullptr;
 	bool workAssigned = false;
-	nanos6_taskloop_bounds_t obtainedBounds;
 	std::vector<Taskloop *> completeTaskloops;
 	
 	{
@@ -83,11 +82,8 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 			}
 			
 			Taskloop *taskloop = (Taskloop *)task;
-			assert(taskloop != nullptr);
-			
-			bool complete = true;
-			workAssigned = taskloop->getIterations(true, obtainedBounds, &complete);
-			if (complete) {
+			workAssigned = taskloop->needMoreExecutors();
+			if (!workAssigned) {
 				_readyTasks.pop_front();
 				completeTaskloops.push_back(taskloop);
 			}
@@ -108,7 +104,7 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 		assert(task != nullptr);
 		
 		if (task->isTaskloop()) {
-			return TaskloopManager::createRunnableTaskloop((Taskloop *)task, obtainedBounds);
+			return TaskloopManager::createRunnableTaskloop((Taskloop *)task);
 		}
 		
 		return task;

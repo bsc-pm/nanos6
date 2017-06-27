@@ -14,7 +14,9 @@ private:
 	TaskloopInfo _taskloopInfo;
 	
 public:
-	Taskloop(
+	typedef nanos6_taskloop_bounds_t bounds_t;
+	
+	inline Taskloop(
 		void *argsBlock, size_t argsBlockSize,
 		nanos_task_info *taskInfo,
 		nanos_task_invocation_info *taskInvokationInfo,
@@ -112,6 +114,7 @@ public:
 	{
 		_flags[Task::non_runnable_flag] = !runnableValue;
 	}
+	
 	inline bool isRunnable() const
 	{
 		return !_flags[Task::non_runnable_flag];
@@ -121,46 +124,70 @@ public:
 	{
 		_flags[Task::non_owner_args_flag] = !argsBlockOwnerValue;
 	}
+	
 	bool isArgsBlockOwner() const
 	{
 		return !_flags[Task::non_owner_args_flag];
 	}
 	
-	inline bool getIterations(bool newExecutor, nanos6_taskloop_bounds_t &partialBounds, bool *complete = nullptr)
+	inline bool needMoreExecutors()
 	{
 		assert(!isRunnable());
 		
-		nanos6_taskloop_bounds_t &bounds = _taskloopInfo._bounds;
-		const size_t originalUpperBound = bounds.upper_bound;
-		const size_t originalChunksize = bounds.chunksize;
-		const size_t step = bounds.step;
+		if (_taskloopInfo._remainingPartitions.load() > 0) {
+			increaseRemovalBlockingCount();
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	inline bool hasPendingIterations()
+	{
+		return (_taskloopInfo._remainingPartitions.load() > 0);
+	}
+	
+	inline void notifyNoPendingIterations()
+	{
+		assert(!isRunnable());
 		
-		const size_t chunksize = originalChunksize * step;
-		const size_t lowerBound = std::atomic_fetch_add(&_taskloopInfo._nextLowerBound, chunksize);
+		decreaseRemovalBlockingCount();
+	}
+	
+	inline size_t getPartitionCount()
+	{
+		return _taskloopInfo.getPartitionCount();
+	}
+	
+	inline bool getPendingIterationsFromPartition(int partitionId, bounds_t &obtainedBounds)
+	{
+		assert(!isRunnable());
+		assert(partitionId >= 0);
+		assert(partitionId < CPUS_PER_PARTITION);
+		
+		bounds_t &bounds = _taskloopInfo._bounds;
+		const size_t step = bounds.step;
+		const size_t chunksize = bounds.chunksize;
+		const size_t steppedChunksize = step * chunksize;
+		
+		TaskloopPartition &partition = _taskloopInfo._partitions[partitionId];
+		const size_t originalUpperBound = partition.upperBound;
+		
+		const size_t lowerBound = std::atomic_fetch_add(&(partition.nextLowerBound), steppedChunksize);
 		
 		if (lowerBound < originalUpperBound) {
-			const size_t upperBound = std::min(lowerBound + chunksize, originalUpperBound);
+			const size_t upperBound = std::min(lowerBound + steppedChunksize, originalUpperBound);
 			
-			partialBounds.lower_bound = lowerBound;
-			partialBounds.upper_bound = upperBound;
-			partialBounds.chunksize = originalChunksize;
-			partialBounds.step = step;
+			obtainedBounds.lower_bound = lowerBound;
+			obtainedBounds.upper_bound = upperBound;
+			obtainedBounds.chunksize = chunksize;
+			obtainedBounds.step = step;
 			
-			if (newExecutor) {
-				increaseRemovalBlockingCount();
-			}
-			
-			if (complete != nullptr) {
-				*complete = (upperBound == originalUpperBound);
+			if (upperBound >= originalUpperBound) {
+				--_taskloopInfo._remainingPartitions;
 			}
 			
 			return true;
-		} else if (!newExecutor) {
-			decreaseRemovalBlockingCount();
-		}
-		
-		if (complete != nullptr) {
-			*complete = true;
 		}
 		
 		return false;

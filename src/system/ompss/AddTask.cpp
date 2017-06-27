@@ -11,6 +11,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskloopInfo.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -62,7 +63,7 @@ void nanos_create_task(
 		assert(taskloop != nullptr);
 		
 		TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
-		bounds = &taskloopInfo._bounds;
+		bounds = &(taskloopInfo.getBounds());
 	} else {
 		// Construct the Task object
 		new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);

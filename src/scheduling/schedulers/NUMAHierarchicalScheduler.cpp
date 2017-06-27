@@ -15,6 +15,7 @@
 
 #include <cassert>
 #include <sstream>
+#include <vector>
 
 
 NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
@@ -233,59 +234,40 @@ void NUMAHierarchicalScheduler::distributeTaskloopAmongNUMANodes(Taskloop *taskl
 	assert(taskloop != nullptr);
 	assert(computePlace != nullptr);
 	
-	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
-	size_t availableNUMANodeCount = getAvailableNUMANodeCount();
-	assert(NUMANodeCount > 0);
-	assert(availableNUMANodeCount > 0);
-	assert(availableNUMANodeCount <= NUMANodeCount);
+	size_t totalNodes = HardwareInfo::getMemoryNodeCount();
+	size_t availableNodes = getAvailableNUMANodeCount();
+	assert(totalNodes > 0);
+	assert(availableNodes > 0);
+	assert(availableNodes <= totalNodes);
 	
 	// Get the information of the complete taskloop bounds
 	const TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
-	const nanos6_taskloop_bounds_t &taskloopBounds = taskloopInfo._bounds;
+	const Taskloop::bounds_t &originalBounds = taskloopInfo.getBounds();
 	
-	size_t originalLowerBound = taskloopBounds.lower_bound;
-	size_t originalUpperBound = taskloopBounds.upper_bound;
-	size_t chunksize = taskloopBounds.chunksize;
-	size_t step = taskloopBounds.step;
+	Taskloop::bounds_t auxBounds;
+	auxBounds.chunksize = originalBounds.chunksize;
+	auxBounds.step = originalBounds.step;
 	
-	nanos6_taskloop_bounds_t partialBounds;
-	partialBounds.chunksize = chunksize;
-	partialBounds.step = step;
-	
-	// Compute the actual number of iterations
-	size_t totalIts = TaskloopManager::getIterationCount(taskloopBounds);
-	size_t itsPerPartition = totalIts / availableNUMANodeCount;
-	size_t missalignment = itsPerPartition % chunksize;
-	size_t extraItsPerPartition = (missalignment) ? chunksize - missalignment : 0;
-	itsPerPartition += extraItsPerPartition;
-	
-	// Start the partition from the original lower bound
-	size_t lowerBound = originalLowerBound;
+	std::vector<Taskloop::bounds_t> partitionBounds;
+	TaskloopManager::splitTaskloopIterations(availableNodes, originalBounds, partitionBounds);
 	
 	size_t numa = 0, partition = 0;
-	while (partition < NUMANodeCount && numa < NUMANodeCount) {
+	while (partition < availableNodes) {
 		if (_enabledCPUs[numa] > 0) {
-			// Compute the upper bound for this partition
-			size_t upperBound = (partition < availableNUMANodeCount - 1) ?
-				lowerBound + itsPerPartition * step : originalUpperBound;
-			
 			// Set taskloop bounds
-			partialBounds.lower_bound = lowerBound;
-			partialBounds.upper_bound = upperBound;
+			auxBounds.lower_bound = partitionBounds[partition].lower_bound;
+			auxBounds.upper_bound = partitionBounds[partition].upper_bound;
 			
 			// Create a partition taskloop for this NUMA node
-			Taskloop *partitionTaskloop = TaskloopManager::createPartitionTaskloop(taskloop, partialBounds);
+			Taskloop *partitionTaskloop = TaskloopManager::createPartitionTaskloop(taskloop, auxBounds);
 			assert(partitionTaskloop != nullptr);
-			
-			// Update the lower bound for the next partition
-			lowerBound = upperBound;
 			
 			// Send the work to the NUMA Node
 			_NUMANodeScheduler[numa]->addReadyTask(partitionTaskloop, computePlace, hint);
 			++partition;
 		}
 		
-		++numa;
+		numa = (numa + 1) % totalNodes;
 	}
 	
 	if (taskloop->markAsFinished()) {
