@@ -46,6 +46,13 @@ public:
 		_writerSpinLock.unlock();
 	}
 	
+#ifndef NDEBUG
+	inline bool isWriteLockedByThisThread()
+	{
+		return _writerSpinLock.isLockedByThisThread();
+	}
+#endif
+	
 };
 
 
