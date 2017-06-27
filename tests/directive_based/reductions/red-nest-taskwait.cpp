@@ -40,8 +40,10 @@ void recursion(int& x, int depth) {
 			
 			#pragma omp taskwait
 			
+			int expected = 1;
+			for (int i = finalDepth - depth; i > 1; i--) expected *= BRANCHING_FACTOR;
 			tap.emitDiagnostic("Task ", id, "/", totalTasks,
-				" (REDUCTION) is executed");
+				" local x=", x, " expected=", expected, " good=", (x == expected));
 		}
 	}
 }
