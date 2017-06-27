@@ -122,6 +122,11 @@ generate_regions_api_type() {
 	local name=$2
 	
 	/bin/echo -n "void ${name}("
+	
+	if [ $(echo ${name} | sed 's/reduction//g') != ${name} ] ; then
+		/bin/echo "${indentation}	int, int,"
+	fi
+	
 	/bin/echo -n "void *, int, char const*, void *"
 	for currentdimension in $(seq 1 ${dimensions}) ; do
 		/bin/echo -n ", long, long, long"
@@ -144,6 +149,11 @@ generate_release_api_type() {
 
 generate_regions_parameter_list() {
 	local dimensions=$1
+	local name=$2
+	
+	if [ $(echo ${name} | sed 's/reduction//g') != ${name} ] ; then
+		/bin/echo "${indentation}	reduction_operation, reduction_index,"
+	fi
 	
 	/bin/echo -n 'handler, symbol_index, region_text, base_address'
 	for currentdimension in $(seq 1 ${dimensions}) ; do

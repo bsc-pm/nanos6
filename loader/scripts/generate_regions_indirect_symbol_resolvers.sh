@@ -46,7 +46,7 @@ for type in $* ; do
 		echo "	"
 		
 		echo -n "	(*symbol)("
-		generate_regions_parameter_list ${dimensions}
+		generate_regions_parameter_list ${dimensions} ${type}
 		echo ");"
 		
 		echo "}"
