@@ -8,8 +8,9 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "system/RuntimeInfo.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskloopGenerator.hpp"
 #include "tasks/TaskloopInfo.hpp"
-#include "tasks/TaskloopManagerImplementation.hpp"
+#include "tasks/TaskloopLogic.hpp"
 
 #include <InstrumentAddTask.hpp>
 
@@ -240,16 +241,15 @@ void NUMAHierarchicalScheduler::distributeTaskloopAmongNUMANodes(Taskloop *taskl
 	assert(availableNodes > 0);
 	assert(availableNodes <= totalNodes);
 	
-	// Get the information of the complete taskloop bounds
-	const TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
-	const Taskloop::bounds_t &originalBounds = taskloopInfo.getBounds();
+	// Get the original taskloop bounds
+	const Taskloop::bounds_t originalBounds = taskloop->getTaskloopInfo().getBounds();
 	
 	Taskloop::bounds_t auxBounds;
 	auxBounds.chunksize = originalBounds.chunksize;
 	auxBounds.step = originalBounds.step;
 	
 	std::vector<Taskloop::bounds_t> partitionBounds;
-	TaskloopManager::splitTaskloopIterations(availableNodes, originalBounds, partitionBounds);
+	TaskloopLogic::splitIterations(availableNodes, originalBounds, partitionBounds);
 	
 	size_t numa = 0, partition = 0;
 	while (partition < availableNodes) {
@@ -259,7 +259,7 @@ void NUMAHierarchicalScheduler::distributeTaskloopAmongNUMANodes(Taskloop *taskl
 			auxBounds.upper_bound = partitionBounds[partition].upper_bound;
 			
 			// Create a partition taskloop for this NUMA node
-			Taskloop *partitionTaskloop = TaskloopManager::createPartitionTaskloop(taskloop, auxBounds);
+			Taskloop *partitionTaskloop = TaskloopGenerator::createPartition(taskloop, auxBounds);
 			assert(partitionTaskloop != nullptr);
 			
 			// Send the work to the NUMA Node

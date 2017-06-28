@@ -5,7 +5,8 @@
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/TaskloopManagerImplementation.hpp"
+#include "tasks/Taskloop.hpp"
+#include "tasks/TaskloopGenerator.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -82,11 +83,14 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 			}
 			
 			Taskloop *taskloop = (Taskloop *)task;
-			workAssigned = taskloop->needMoreExecutors();
-			if (!workAssigned) {
-				_readyTasks.pop_front();
-				completeTaskloops.push_back(taskloop);
+			workAssigned = taskloop->hasPendingIterations();
+			if (workAssigned) {
+				taskloop->notifyCollaboratorHasStarted();
+				break;
 			}
+			
+			_readyTasks.pop_front();
+			completeTaskloops.push_back(taskloop);
 		}
 	}
 	
@@ -104,7 +108,7 @@ Task *NaiveScheduler::getReadyTask(__attribute__((unused)) ComputePlace *compute
 		assert(task != nullptr);
 		
 		if (task->isTaskloop()) {
-			return TaskloopManager::createRunnableTaskloop((Taskloop *)task);
+			return TaskloopGenerator::createCollaborator((Taskloop *)task);
 		}
 		
 		return task;

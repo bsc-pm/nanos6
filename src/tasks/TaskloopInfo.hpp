@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 #include <nanos6.h>
-#include "TaskloopManager.hpp"
+#include "TaskloopLogic.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "lowlevel/SpinLock.hpp"
 
@@ -68,7 +68,7 @@ public:
 		
 		// Get the partitions
 		std::vector<bounds_t> partialBounds;
-		TaskloopManager::splitTaskloopIterations(partitionCount, _bounds, partialBounds);
+		TaskloopLogic::splitIterations(partitionCount, _bounds, partialBounds);
 		assert(partialBounds.size() == partitionCount);
 		
 		// Set the partitions

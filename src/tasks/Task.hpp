@@ -8,8 +8,6 @@
 #include <set>
 
 #include <nanos6.h>
-#include "TaskloopInfo.hpp"
-#include "TaskloopManager.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <InstrumentTaskId.hpp>

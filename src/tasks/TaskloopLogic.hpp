@@ -1,20 +1,16 @@
-#ifndef TASKLOOP_MANAGER_HPP
-#define TASKLOOP_MANAGER_HPP
-
-#include <vector>
+#ifndef TASKLOOP_LOGIC_HPP
+#define TASKLOOP_LOGIC_HPP
 
 #include <nanos6.h>
 
-// Forward declaration
-class Task;
-class Taskloop;
+#include <vector>
 
-class TaskloopManager {
+class TaskloopLogic {
 private:
 	typedef nanos6_taskloop_bounds_t bounds_t;
 	
 public:
-	static inline void splitTaskloopIterations(int numPartitions, const bounds_t &bounds, std::vector<bounds_t> &partitions)
+	static inline void splitIterations(int numPartitions, const bounds_t &bounds, std::vector<bounds_t> &partitions)
 	{
 		assert(numPartitions > 0);
 		
@@ -53,29 +49,10 @@ public:
 		}
 	}
 	
-	static void handleTaskloop(Taskloop *runnableTaskloop, Taskloop *sourceTaskloop);
-	
-	static inline Taskloop* createRunnableTaskloop(Taskloop *parent);
-	
-	static inline Taskloop* createPartitionTaskloop(Taskloop *parent, const bounds_t &assignedBounds);
-	
-	static inline void completeTaskloopCreation(Taskloop *taskloop, Taskloop *parent);
-	
 	static inline size_t getIterationCount(const bounds_t &bounds)
 	{
-		return getIterationCount(bounds.upper_bound, bounds.lower_bound, bounds.step);
-	}
-	
-	static inline size_t getIterationCount(size_t upperBound, size_t lowerBound, size_t step)
-	{
-		return 1 + ((getRawSize(upperBound, lowerBound) - 1) / step);
-	}
-	
-private:
-	static inline size_t getRawSize(size_t upperBound, size_t lowerBound)
-	{
-		return upperBound - lowerBound;
+		return 1 + (((bounds.upper_bound - bounds.lower_bound) - 1) / bounds.step);
 	}
 };
 
-#endif // TASKLOOP_MANAGER_HPP
+#endif

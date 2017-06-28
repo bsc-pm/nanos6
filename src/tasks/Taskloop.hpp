@@ -5,7 +5,6 @@
 
 #include "tasks/Task.hpp"
 #include "tasks/TaskloopInfo.hpp"
-#include "tasks/TaskloopManager.hpp"
 
 class Taskloop : public Task {
 private:
@@ -57,12 +56,13 @@ public:
 	{
 		assert(hasCode());
 		assert(isRunnable());
+		assert(_thread != nullptr);
 		
 		Task *parent = getParent();
 		assert(parent != nullptr);
 		assert(parent->isTaskloop());
 		
-		TaskloopManager::handleTaskloop(this, (Taskloop *)parent);
+		run(*((Taskloop *)parent));
 	}
 	
 	inline bool markAsFinished() __attribute__((warn_unused_result))
@@ -108,8 +108,6 @@ public:
 		return (countdown == 0);
 	}
 	
-	void unregisterDataAccesses();
-	
 	inline void setRunnable(bool runnableValue)
 	{
 		_flags[Task::non_runnable_flag] = !runnableValue;
@@ -130,24 +128,21 @@ public:
 		return !_flags[Task::non_owner_args_flag];
 	}
 	
-	inline bool needMoreExecutors()
+	inline bool hasPendingIterations()
 	{
 		assert(!isRunnable());
 		
-		if (_taskloopInfo._remainingPartitions.load() > 0) {
-			increaseRemovalBlockingCount();
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	inline bool hasPendingIterations()
-	{
 		return (_taskloopInfo._remainingPartitions.load() > 0);
 	}
 	
-	inline void notifyNoPendingIterations()
+	inline void notifyCollaboratorHasStarted()
+	{
+		assert(!isRunnable());
+		
+		increaseRemovalBlockingCount();
+	}
+	
+	inline void notifyCollaboratorHasFinished()
 	{
 		assert(!isRunnable());
 		
@@ -192,6 +187,12 @@ public:
 		
 		return false;
 	}
+	
+private:
+	void run(Taskloop &source);
+	
+	void unregisterDataAccesses();
+	
 };
 
 #endif // TASKLOOP_HPP
