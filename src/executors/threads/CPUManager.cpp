@@ -9,7 +9,6 @@
 #include "ThreadManager.hpp"
 
 #include <cassert>
-#include <map>
 #include <sstream>
 
 
@@ -19,10 +18,11 @@ std::atomic<bool> CPUManager::_finishedCPUInitialization;
 SpinLock CPUManager::_idleCPUsLock;
 boost::dynamic_bitset<> CPUManager::_idleCPUs;
 std::vector<boost::dynamic_bitset<>> CPUManager::_NUMANodeMask;
+std::vector<size_t> CPUManager::_systemToVirtualCPUId;
 
 
 namespace cpumanager_internals {
-	static inline std::string maskToRangeList(boost::dynamic_bitset<> const &mask, std::map<size_t, size_t> const &systemToVirtualCPUId)
+	static inline std::string maskToRangeList(boost::dynamic_bitset<> const &mask, std::vector<size_t> const &systemToVirtualCPUId)
 	{
 		std::ostringstream oss;
 		
@@ -33,9 +33,8 @@ namespace cpumanager_internals {
 			size_t virtualCPUId;
 			
 			if (systemCPUId < mask.size()) {
-				auto position = systemToVirtualCPUId.find(systemCPUId);
-				assert(position != systemToVirtualCPUId.end());
-				virtualCPUId = position->second;
+				assert(systemToVirtualCPUId.size() > systemCPUId);
+				virtualCPUId = systemToVirtualCPUId[systemCPUId];
 			} else {
 				virtualCPUId = mask.size();
 			}
@@ -130,17 +129,18 @@ void CPUManager::preinitialize()
 	// Get CPU objects that can run a thread
 	std::vector<ComputePlace *> const &cpus = HardwareInfo::getComputeNodes();
 	_cpus.resize(cpus.size());
+	_systemToVirtualCPUId.resize(cpus.size());
 	
 	for (size_t i = 0; i < _NUMANodeMask.size(); ++i) {
 		_NUMANodeMask[i].resize(cpus.size());
 	}
 	
-	std::map<size_t, size_t> systemToVirtualCPUId;
-	
 	for (size_t i = 0; i < cpus.size(); ++i) {
-		systemToVirtualCPUId[ ((CPU *) cpus[i])->_systemCPUId ] = ((CPU *) cpus[i])->_virtualCPUId;
-		if (CPU_ISSET(((CPU *)cpus[i])->_systemCPUId, &processCPUMask)) {
-			_cpus[i] = (CPU *)cpus[i];
+		CPU *cpu = (CPU *)cpus[i];
+		
+		_systemToVirtualCPUId[cpu->_systemCPUId] = cpu->_virtualCPUId;
+		if (CPU_ISSET(cpu->_systemCPUId, &processCPUMask)) {
+			_cpus[i] = cpu;
 			++_totalCPUs;
 			_NUMANodeMask[_cpus[i]->_NUMANodeId][i] = true;
 		}
@@ -152,7 +152,7 @@ void CPUManager::preinitialize()
 		
 		oss << "numa_node_" << i << "_cpu_list";
 		oss2 << "NUMA Node " << i << " CPU List";
-		std::string cpuRangeList = cpumanager_internals::maskToRangeList(_NUMANodeMask[i], systemToVirtualCPUId);
+		std::string cpuRangeList = cpumanager_internals::maskToRangeList(_NUMANodeMask[i], _systemToVirtualCPUId);
 		
 		RuntimeInfo::addEntry(oss.str(), oss2.str(), cpuRangeList);
 	}

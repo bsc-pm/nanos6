@@ -31,6 +31,9 @@ private:
 	//! \brief NUMA node CPU mask
 	static std::vector<boost::dynamic_bitset<>> _NUMANodeMask;
 
+	//! \brief Map from system to virtual CPU id
+	static std::vector<size_t> _systemToVirtualCPUId;
+
 	static SpinLock _idleCPUsLock;
 	
 public:
@@ -66,15 +69,11 @@ public:
 
 inline CPU *CPUManager::getCPU(size_t systemCPUId)
 {
-	// _cpus is sorted by virtual ID. This search should be changed in the future
-	for (size_t i = 0; i < _cpus.size(); ++i) {
-		if (_cpus[i] != nullptr && _cpus[i]->_systemCPUId == systemCPUId) {
-			return _cpus[i];
-		}
-	}
-
-	assert(false);
-	return nullptr;
+	// _cpus is sorted by virtual ID
+	assert(_systemToVirtualCPUId.size() > systemCPUId);
+	size_t virtualCPUId = _systemToVirtualCPUId[systemCPUId];
+	
+	return _cpus[virtualCPUId];
 }
 
 inline long CPUManager::getTotalCPUs()
