@@ -252,6 +252,8 @@ nodist_noinst_HEADERS = \
 
 # Sources for debugging both the regular and the null runtime
 universal_debug_sources = \
+	src/lowlevel/FatalErrorHandler.cpp \
+	src/lowlevel/FatalErrorHandler.hpp \
 	src/system/RuntimeInfo.cpp \
 	src/system/RuntimeInfo.hpp \
 	src/system/RuntimeInfoAPI.cpp \
@@ -306,7 +308,6 @@ common_sources = \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
-	src/lowlevel/FatalErrorHandler.hpp \
 	src/lowlevel/PaddedSpinLock.hpp \
 	src/lowlevel/PaddedTicketSpinLock.hpp \
 	src/lowlevel/RWSpinLock.hpp \

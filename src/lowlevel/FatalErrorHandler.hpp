@@ -5,10 +5,15 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <mutex>
+
+#include "lowlevel/SpinLock.hpp"
 
 
 class FatalErrorHandler {
 private:
+	static SpinLock _lock;
+	
 	template<typename T, typename... TS>
 	static inline void emitReasonParts(T const &firstReasonPart, TS... reasonParts)
 	{
@@ -27,6 +32,8 @@ public:
 		if (__builtin_expect(rc == 0, 1)) {
 			return;
 		}
+		
+		std::lock_guard<SpinLock> guard(_lock);
 		
 		std::cerr << "Error: " << strerror(rc);
 		emitReasonParts(reasonParts...);
@@ -47,6 +54,8 @@ public:
 			return;
 		}
 		
+		std::lock_guard<SpinLock> guard(_lock);
+		
 		std::cerr << "Error: ";
 		emitReasonParts(reasonParts...);
 		std::cerr << std::endl;
@@ -64,6 +73,8 @@ public:
 		if (__builtin_expect(!failure, 1)) {
 			return;
 		}
+		
+		std::lock_guard<SpinLock> guard(_lock);
 		
 		std::cerr << "Error: ";
 		emitReasonParts(reasonParts...);
