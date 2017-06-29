@@ -140,7 +140,10 @@ extern "C" void nanos_unregister_polling_service(char const *service_name, nanos
 
 void PollingAPI::handleServices()
 {
-	PollingAPI::_lock.lock();
+	bool locked = PollingAPI::_lock.tryLock();
+	if (!locked) {
+		return;
+	}
 	
 	auto it = _services.begin();
 	while (it != _services.end()) {
