@@ -6,9 +6,9 @@
 
 void RuntimeInfoEssentials::initialize()
 {
-	RuntimeInfo::addEntry("version", "Runtime Version", NANOS_VERSION);
-	RuntimeInfo::addEntry("branch", "Runtime Branch", NANOS_BRANCH);
-	RuntimeInfo::addEntry("compiler_version", "Runtime Compiler Version", CXX_VERSION);
-	RuntimeInfo::addEntry("compiler_flags", "Runtime Compiler Flags", CXXFLAGS);
+	RuntimeInfo::addEntry("version", "Runtime Version", nanos6_version);
+	RuntimeInfo::addEntry("branch", "Runtime Branch", nanos6_branch);
+	RuntimeInfo::addEntry("compiler_version", "Runtime Compiler Version", nanos6_compiler_version);
+	RuntimeInfo::addEntry("compiler_flags", "Runtime Compiler Flags", nanos6_compiler_flags);
 }
 

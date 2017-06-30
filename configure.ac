@@ -170,7 +170,6 @@ PKG_CHECK_MODULES([hwloc], [hwloc])
 AC_CONFIG_FILES([
 	Makefile
 	docs/Doxyfile
-	src/version/VersionInfo.hpp
 	tests/directive_based/Makefile
 ])
 AC_OUTPUT

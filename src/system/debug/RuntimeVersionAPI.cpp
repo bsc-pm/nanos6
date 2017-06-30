@@ -4,22 +4,22 @@
 
 char const *nanos_get_runtime_version(void)
 {
-	return NANOS_VERSION;
+	return nanos6_version;
 }
 
 char const *nanos_get_runtime_branch(void)
 {
-	return NANOS_BRANCH;
+	return nanos6_branch;
 }
 
 char const *nanos_get_runtime_compiler_version(void)
 {
-	return CXX_VERSION;
+	return nanos6_compiler_version;
 }
 
 char const *nanos_get_runtime_compiler_flags(void)
 {
-	return CXXFLAGS;
+	return nanos6_compiler_flags;
 }
 
 

@@ -43,6 +43,7 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 			fi
 			SOURCE_VERSION=$($GIT --git-dir="${srcdir}/$3/.git" show --pretty=format:'%ci %h' -s HEAD)
 			SOURCE_BRANCH=$($GIT --git-dir="${srcdir}/$3/.git" symbolic-ref HEAD | sed 's@refs/heads/@@')
+			ac_source_in_git=true
 		else
 			if test x"$1" = x""; then
 				SOURCE_VERSION=unknown
@@ -51,9 +52,12 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 				SOURCE_VERSION="$1"
 				SOURCE_BRANCH="$2"
 			fi
+			ac_source_in_git=false
 		fi
 		AC_MSG_RESULT([$SOURCE_BRANCH $SOURCE_VERSION])
 		AC_SUBST([SOURCE_VERSION])
 		AC_SUBST([SOURCE_BRANCH])
+		
+		AM_CONDITIONAL([FROM_GIT_REPOSITORY], [test x"${ac_source_in_git}" = x"true"])
 	]
 )
