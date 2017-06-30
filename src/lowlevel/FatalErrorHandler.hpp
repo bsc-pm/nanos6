@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <mutex>
+#include <sstream>
 
 #include "lowlevel/SpinLock.hpp"
 
@@ -15,13 +16,13 @@ private:
 	static SpinLock _lock;
 	
 	template<typename T, typename... TS>
-	static inline void emitReasonParts(T const &firstReasonPart, TS... reasonParts)
+	static inline void emitReasonParts(std::ostringstream &oss, T const &firstReasonPart, TS... reasonParts)
 	{
-		std::cout << firstReasonPart;
-		emitReasonParts(reasonParts...);
+		oss << firstReasonPart;
+		emitReasonParts(oss, reasonParts...);
 	}
 	
-	static inline void emitReasonParts()
+	static inline void emitReasonParts(__attribute__((unused)) std::ostringstream &oss)
 	{
 	}
 	
@@ -33,11 +34,15 @@ public:
 			return;
 		}
 		
-		std::lock_guard<SpinLock> guard(_lock);
+		std::ostringstream oss;
+		oss << "Error: " << strerror(rc);
+		emitReasonParts(oss, reasonParts...);
+		oss << std::endl;
 		
-		std::cerr << "Error: " << strerror(rc);
-		emitReasonParts(reasonParts...);
-		std::cerr << std::endl;
+		{
+			std::lock_guard<SpinLock> guard(_lock);
+			std::cerr << oss.str();
+		}
 		
 #ifndef NDEBUG
 		abort();
@@ -54,11 +59,15 @@ public:
 			return;
 		}
 		
-		std::lock_guard<SpinLock> guard(_lock);
+		std::ostringstream oss;
+		oss << "Error: ";
+		emitReasonParts(oss, reasonParts...);
+		oss << std::endl;
 		
-		std::cerr << "Error: ";
-		emitReasonParts(reasonParts...);
-		std::cerr << std::endl;
+		{
+			std::lock_guard<SpinLock> guard(_lock);
+			std::cerr << oss.str();
+		}
 		
 #ifndef NDEBUG
 		abort();
@@ -74,11 +83,15 @@ public:
 			return;
 		}
 		
-		std::lock_guard<SpinLock> guard(_lock);
+		std::ostringstream oss;
+		oss << "Error: ";
+		emitReasonParts(oss, reasonParts...);
+		oss << std::endl;
 		
-		std::cerr << "Error: ";
-		emitReasonParts(reasonParts...);
-		std::cerr << std::endl;
+		{
+			std::lock_guard<SpinLock> guard(_lock);
+			std::cerr << oss.str();
+		}
 		
 #ifndef NDEBUG
 		abort();
