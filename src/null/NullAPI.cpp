@@ -29,10 +29,6 @@ void nanos_init(void)
 {
 }
 
-void nanos_wait_until_shutdown(void)
-{
-}
-
-void nanos_notify_ready_for_shutdown(void)
+void nanos_shutdown(void)
 {
 }

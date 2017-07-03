@@ -721,7 +721,8 @@ instrument_extrae_sources = \
 
 null_common_sources = \
 	src/null/NullDebug.cpp \
-	src/null/NullAPI.cpp
+	src/null/NullAPI.cpp \
+	src/null/NullSpawn.cpp
 
 null_sources = \
 	$(null_common_sources) \
