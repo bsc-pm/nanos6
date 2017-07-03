@@ -7,7 +7,7 @@
 #include <nanos6.h>
 #include "TaskloopLogic.hpp"
 #include "executors/threads/CPUManager.hpp"
-#include "lowlevel/SpinLock.hpp"
+#include "lowlevel/EnvironmentVariable.hpp"
 
 #define CACHE_LINE_SIZE 128
 #define CPUS_PER_PARTITION 4
@@ -104,8 +104,15 @@ public:
 	
 	inline size_t getPartitionCount()
 	{
-		static size_t partitionCount = 1 + ((CPUManager::getTotalCPUs() - 1) / CPUS_PER_PARTITION);
+		static size_t partitionCount = 1 + ((CPUManager::getTotalCPUs() - 1) / getCPUsPerPartition());
 		return partitionCount;
+	}
+	
+	static inline size_t getCPUsPerPartition()
+	{
+		EnvironmentVariable<size_t> cpusPerPartition("NANOS6_CPUS_PER_TASKLOOP_PARTITION", CPUS_PER_PARTITION);
+		
+		return cpusPerPartition.getValue();
 	}
 };
 
