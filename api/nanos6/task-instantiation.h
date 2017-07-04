@@ -2,7 +2,7 @@
 #define NANOS6_TASK_INSTANTIATION_H
 
 enum nanos6_task_info_contents_t { nanos6_task_info_contents = 1 };
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 1 };
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 2 };
 
 
 #include <stddef.h>
@@ -70,7 +70,9 @@ typedef enum {
 	//! Specifies that the task will be a final task
 	nanos_final_task = (1 << 0),
 	//! Specifies that the task is in "if(0)" mode
-	nanos_if_0_task = (1 << 1)
+	nanos_if_0_task = (1 << 1),
+	//! Specifies that the task has the "wait" clause
+	nanos_waiting_task = (1 << 2)
 } nanos_task_flag;
 
 
