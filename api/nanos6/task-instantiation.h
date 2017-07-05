@@ -2,7 +2,7 @@
 #define NANOS6_TASK_INSTANTIATION_H
 
 enum nanos6_task_info_contents_t { nanos6_task_info_contents = 1 };
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 2 };
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 1 };
 
 
 #include <stddef.h>
