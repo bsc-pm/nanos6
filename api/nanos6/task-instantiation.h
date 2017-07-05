@@ -72,7 +72,7 @@ typedef enum {
 	//! Specifies that the task is in "if(0)" mode
 	nanos_if_0_task = (1 << 1),
 	//! Specifies that the task has the "wait" clause
-	nanos_waiting_task = (1 << 2)
+	nanos_waiting_task = (1 << 3)
 } nanos_task_flag;
 
 
