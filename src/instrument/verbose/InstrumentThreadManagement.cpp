@@ -64,5 +64,18 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
+	void threadWillShutdown() {
+		if (!_verboseThreadManagement) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry();
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation();
+		logEntry->_contents << " <-> ShutdownThread ";
+		
+		addLogEntry(logEntry);
+	}
 	
 }

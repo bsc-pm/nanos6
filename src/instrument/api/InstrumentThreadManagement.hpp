@@ -11,6 +11,7 @@ namespace Instrument {
 	
 	void threadWillSuspend(thread_id_t threadId, compute_place_id_t cpu);
 	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu);
+	void threadWillShutdown();
 }
 
 

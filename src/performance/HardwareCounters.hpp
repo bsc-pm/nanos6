@@ -63,7 +63,7 @@ namespace HardwareCounters {
 	void shutdown();
 	
 	inline void initializeThread();
-	void shutdownThread();
+	inline void shutdownThread();
 	
 }
 

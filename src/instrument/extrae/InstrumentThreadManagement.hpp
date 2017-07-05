@@ -62,6 +62,10 @@ namespace Instrument {
 	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{
 	}
+	
+	inline void threadWillShutdown()
+	{
+	}
 }
 
 

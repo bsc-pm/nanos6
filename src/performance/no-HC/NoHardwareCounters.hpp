@@ -24,6 +24,10 @@ namespace HardwareCounters {
 	{
 	}
 	
+	inline void shutdownThread()
+	{
+	}
+	
 	
 	class CounterSetReference {
 	public:

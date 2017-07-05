@@ -82,7 +82,29 @@ namespace HardwareCounters {
 		FatalErrorHandler::failIf(rc == PAPI_EINVAL, "Invalid parameter creating PAPI event set");
 		
 		rc = PAPI_add_events(threadLocal._eventSet, PAPI::_papiEventCodes.data(), PAPI::_papiEventCodes.size());
-		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to events to an event set");
+		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to add events to an event set");
+	}
+	
+	inline void shutdownThread()
+	{
+		PAPI::ThreadLocal &threadLocal = PAPI::getCurrentThreadHardwareCounters();
+		
+		assert(threadLocal._eventSet != PAPI_NULL);
+		
+		assert(threadLocal._initializationCount > 0);
+		threadLocal._initializationCount--;
+		
+		if (threadLocal._initializationCount > 0) {
+			return;
+		}
+		
+		PAPI_stop(threadLocal._eventSet, nullptr);
+		
+		int rc = PAPI_cleanup_eventset(threadLocal._eventSet);
+		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to clean up an event set");
+		
+		rc = PAPI_destroy_eventset(&threadLocal._eventSet);
+		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to destroy an event set");
 	}
 	
 	

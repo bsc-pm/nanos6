@@ -41,6 +41,12 @@ namespace Instrument {
 		currentPhase._blockedTime.continueAt(currentPhase._runningTime);
 	}
 	
+	inline void threadWillShutdown()
+	{
+		// Clean PAPI events for the current thread
+		HardwareCounters::shutdownThread();
+	}
+	
 }
 
 

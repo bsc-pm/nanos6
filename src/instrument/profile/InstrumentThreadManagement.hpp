@@ -20,6 +20,10 @@ namespace Instrument {
 	{
 	}
 	
+	inline void threadWillShutdown()
+	{
+	}
+	
 }
 
 

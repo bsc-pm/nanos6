@@ -118,6 +118,8 @@ void WorkerThread::body()
 		}
 	}
 	
+	Instrument::threadWillShutdown();
+	
 	shutdownSequence();
 }
 
