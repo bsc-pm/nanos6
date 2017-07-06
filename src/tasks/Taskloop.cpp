@@ -2,8 +2,38 @@
 #include "TaskloopInfo.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "lowlevel/EnvironmentVariable.hpp"
 
 #include <DataAccessRegistration.hpp>
+
+template <class T = int>
+static inline T modulus(T a, T b)
+{
+	return (a < 0) ? (((a % b) + b) % b) : (a % b);
+}
+
+void Taskloop::getPartitionPath(int CPUId, std::vector<int> &partitionPath)
+{
+	static bool useDistributionFunction = isDistributionFunctionEnabled();
+	
+	int partitionCount = getPartitionCount();
+	int partition = CPUId % partitionCount;
+	
+	if (useDistributionFunction) {
+		int sign = 1;
+		for (int i = 0; i < partitionCount; ++i) {
+			partition = modulus(partition + sign * i, partitionCount);
+			partitionPath.push_back(partition);
+			sign *= -1;
+		}
+	} else {
+		for (int i = 0; i < partitionCount; ++i) {
+			partitionPath.push_back(partition);
+			partition = (partition + 1) % partitionCount;
+		}
+	}
+	assert((int) partitionPath.size() == partitionCount);
+}
 
 void Taskloop::run(Taskloop &source)
 {
@@ -19,8 +49,13 @@ void Taskloop::run(Taskloop &source)
     CPU *currentCPU = getThread()->getComputePlace();
 	assert(currentCPU != nullptr);
 	
-	// Compute the inital partition
-	int partitionId = currentCPU->_virtualCPUId % partitionCount;
+	// Get the path of partitions to vist
+	std::vector<int> partitionPath;
+	getPartitionPath(currentCPU->_virtualCPUId, partitionPath);
+	
+	// Get the initial partition identifier
+	int partitionId = partitionPath[0];
+	int visitedPartitions = 0;
 	
 	while (true) {
 		// Try to get a chunk of iterations
@@ -28,14 +63,17 @@ void Taskloop::run(Taskloop &source)
 		if (work) {
 			taskInfo.run(argsBlock, &bounds);
 		} else {
+			++visitedPartitions;
+			
 			// Finalize the execution in case there are no iterations
-			if (!source.hasPendingIterations()) {
+			if (!source.hasPendingIterations() || visitedPartitions == partitionCount) {
 				source.notifyCollaboratorHasFinished();
 				return;
 			}
+			assert(visitedPartitions < partitionCount);
 			
-			// Reconsider the partition
-			partitionId = (partitionId + 1) % partitionCount;
+			// Move to the next partition
+			partitionId = partitionPath[visitedPartitions];
 		}
 	}
 }

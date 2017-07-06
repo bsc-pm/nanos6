@@ -6,6 +6,8 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskloopInfo.hpp"
 
+#define MOD(a, b)  ((a) < 0 ? ((((a) % (b)) + (b)) % (b)) : ((a) % (b)))
+
 class Taskloop : public Task {
 private:
 	size_t _argsBlockSize;
@@ -148,17 +150,27 @@ public:
 		
 		decreaseRemovalBlockingCount();
 	}
-	
-	inline size_t getPartitionCount()
+
+private:
+	inline int getPartitionCount()
 	{
 		return _taskloopInfo.getPartitionCount();
+	}
+	
+	inline bool isDistributionFunctionEnabled()
+	{
+		EnvironmentVariable<int> distributionFunction("NANOS6_TASKLOOP_DISTRIBUTION_FUNCTION", 0);
+		int value = distributionFunction.getValue();
+		assert(value >= 0);
+		
+		return (value > 0);
 	}
 	
 	inline bool getPendingIterationsFromPartition(int partitionId, bounds_t &obtainedBounds)
 	{
 		assert(!isRunnable());
 		assert(partitionId >= 0);
-		assert(partitionId < CPUS_PER_PARTITION);
+		assert(partitionId < getPartitionCount());
 		
 		bounds_t &bounds = _taskloopInfo._bounds;
 		const size_t step = bounds.step;
@@ -188,11 +200,11 @@ public:
 		return false;
 	}
 	
-private:
+	void getPartitionPath(int CPUId, std::vector<int> &partitionPath);
+	
 	void run(Taskloop &source);
 	
 	void unregisterDataAccesses();
-	
 };
 
 #endif // TASKLOOP_HPP

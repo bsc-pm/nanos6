@@ -10,7 +10,7 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 
 #define CACHE_LINE_SIZE 128
-#define CPUS_PER_PARTITION 4
+#define DEFAULT_CPUS_PER_PARTITION 1
 
 #ifndef ALIGNED
 #define ALIGNED __attribute__ ((aligned (CACHE_LINE_SIZE)))
@@ -59,7 +59,7 @@ public:
 	{
 		assert(_partitions == nullptr);
 		
-		size_t partitionCount = getPartitionCount();
+		int partitionCount = getPartitionCount();
 		assert(partitionCount > 0);
 		
 		// Allocate memory for the partitions
@@ -69,10 +69,10 @@ public:
 		// Get the partitions
 		std::vector<bounds_t> partialBounds;
 		TaskloopLogic::splitIterations(partitionCount, _bounds, partialBounds);
-		assert(partialBounds.size() == partitionCount);
+		assert((int) partialBounds.size() == partitionCount);
 		
 		// Set the partitions
-		for (size_t i = 0; i < partitionCount; ++i) {
+		for (int i = 0; i < partitionCount; ++i) {
 			_partitions[i].upperBound = partialBounds[i].upper_bound;
 			_partitions[i].nextLowerBound = partialBounds[i].lower_bound;
 		}
@@ -102,17 +102,19 @@ public:
 		return _bounds;
 	}
 	
-	inline size_t getPartitionCount()
+	inline int getPartitionCount()
 	{
-		static size_t partitionCount = 1 + ((CPUManager::getTotalCPUs() - 1) / getCPUsPerPartition());
+		static int partitionCount = 1 + ((CPUManager::getTotalCPUs() - 1) / getCPUsPerPartition());
 		return partitionCount;
 	}
 	
-	static inline size_t getCPUsPerPartition()
+	static inline int getCPUsPerPartition()
 	{
-		EnvironmentVariable<size_t> cpusPerPartition("NANOS6_CPUS_PER_TASKLOOP_PARTITION", CPUS_PER_PARTITION);
+		EnvironmentVariable<int> cpusPerPartition("NANOS6_CPUS_PER_TASKLOOP_PARTITION", DEFAULT_CPUS_PER_PARTITION);
+		int value = cpusPerPartition.getValue();
+		assert(value > 0);
 		
-		return cpusPerPartition.getValue();
+		return value;
 	}
 };
 
