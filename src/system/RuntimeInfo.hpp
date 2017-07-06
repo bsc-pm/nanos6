@@ -2,6 +2,7 @@
 #define RUNTIME_INFO_HPP
 
 
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -43,8 +44,8 @@ private:
 		}
 	};
 	
-	template <typename T, bool INT_CONVERTIBLE, bool STRING_CONVERTIBLE, bool INTEGER, bool DOUBLE>
-	struct EntryValueSetter<T, INT_CONVERTIBLE, true, STRING_CONVERTIBLE, INTEGER, DOUBLE, false> {
+	template <typename T, bool INT_CONVERTIBLE, bool STRING_CONVERTIBLE, bool DOUBLE>
+	struct EntryValueSetter<T, INT_CONVERTIBLE, true, STRING_CONVERTIBLE, false, DOUBLE, false> {
 		static void setEntryValue(nanos6_runtime_info_entry_t &entry, T const &value)
 		{
 			entry.type = nanos6_real_runtime_info_entry;
@@ -61,8 +62,8 @@ private:
 		}
 	};
 	
-	template <typename T, bool DOUBLE_CONVERTIBLE, bool STRING_CONVERTIBLE, bool INTEGER, bool DOUBLE>
-	struct EntryValueSetter<T, true, DOUBLE_CONVERTIBLE, STRING_CONVERTIBLE, INTEGER, DOUBLE, false> {
+	template <typename T, bool STRING_CONVERTIBLE, bool INTEGER, bool DOUBLE>
+	struct EntryValueSetter<T, true, false, STRING_CONVERTIBLE, INTEGER, DOUBLE, false> {
 		static void setEntryValue(nanos6_runtime_info_entry_t &entry, T const &value)
 		{
 			entry.type = nanos6_integer_runtime_info_entry;
@@ -108,6 +109,24 @@ public:
 		}
 		
 		_lock.unlock();
+	}
+	
+	
+	template <typename ITERATOR_T>
+	static void addListEntry(std::string const &name, std::string const &description, ITERATOR_T begin, ITERATOR_T end, std::string const &units = "")
+	{
+		std::ostringstream oss;
+		
+		oss << "{";
+		for (auto it = begin; it != end; it++) {
+			if (it != begin) {
+				oss << ", ";
+			}
+			oss << *it;
+		}
+		oss << "}";
+		
+		addEntry(name, description, oss.str(), units);
 	}
 	
 	
