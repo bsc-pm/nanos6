@@ -74,10 +74,10 @@ Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computeP
 		while (!_readyTasks.empty() && !workAssigned) {
 			// Get the first ready task
 			task = _readyTasks.front();
+			_readyTasks.pop_front();
 			assert(task != nullptr);
 			
 			if (!task->isTaskloop()) {
-				_readyTasks.pop_front();
 				workAssigned = true;
 				break;
 			}
@@ -85,11 +85,11 @@ Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computeP
 			Taskloop *taskloop = (Taskloop *)task;
 			workAssigned = taskloop->hasPendingIterations();
 			if (workAssigned) {
+				_readyTasks.push_back(taskloop);
 				taskloop->notifyCollaboratorHasStarted();
 				break;
 			}
 			
-			_readyTasks.pop_front();
 			completeTaskloops.push_back(taskloop);
 		}
 	}
