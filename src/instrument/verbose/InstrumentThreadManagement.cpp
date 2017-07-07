@@ -78,4 +78,38 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
+	void threadEnterBusyWait(busy_wait_reason_t reason)
+	{
+		if (!_verboseThreadManagement) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry();
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation();
+		logEntry->_contents << " --> BusyWait ";
+		switch (reason) {
+			case scheduling_polling_slot_busy_wait_reason:
+				logEntry->_contents << "(scheduler polling) ";
+				break;
+		}
+		
+		addLogEntry(logEntry);
+	}
+	
+	void threadExitBusyWait()
+	{
+		if (!_verboseThreadManagement) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry();
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation();
+		logEntry->_contents << " <-- BusyWait ";
+		
+		addLogEntry(logEntry);
+	}
 }

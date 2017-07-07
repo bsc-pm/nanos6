@@ -26,6 +26,14 @@ namespace Instrument {
 	inline void threadWillShutdown()
 	{
 	}
+	
+	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)
+	{
+	}
+	
+	inline void threadExitBusyWait()
+	{
+	}
 }
 
 

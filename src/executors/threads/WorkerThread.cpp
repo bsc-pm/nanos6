@@ -15,6 +15,7 @@
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <InstrumentThreadManagement.hpp>
 
 #include <atomic>
 
@@ -49,6 +50,7 @@ void WorkerThread::body()
 			Scheduler::polling_slot_t pollingSlot;
 			
 			if (Scheduler::requestPolling(cpu, &pollingSlot)) {
+				Instrument::threadEnterBusyWait(Instrument::scheduling_polling_slot_busy_wait_reason);
 				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(cpu)) {
 					// Keep trying
 					pollingSlot._task.compare_exchange_strong(_task, nullptr);
@@ -61,6 +63,7 @@ void WorkerThread::body()
 					__attribute__((unused)) bool worked = Scheduler::releasePolling(cpu, &pollingSlot);
 					assert(worked && "A failure to release the scheduler polling slot means that the thread has got a task assigned, however the runtime is shutting down");
 				}
+				Instrument::threadExitBusyWait();
 				
 				if (!CPUActivation::acceptsWork(cpu)) {
 					// The CPU is about to be disabled

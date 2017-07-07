@@ -14,6 +14,9 @@
 
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
+
 #include <dlfcn.h>
 #include <signal.h>
 #include <stdio.h>
@@ -78,6 +81,12 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 		// Disarm the timer
 		timer_settime(_perThread._profilingTimer, 0, &it, 0);
 		
+		return;
+	}
+	
+	ThreadLocalData &threadLocal = getThreadLocalData();
+	if (!threadLocal._enabled) {
+		// Temporarily disabled
 		return;
 	}
 	

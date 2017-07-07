@@ -3,7 +3,10 @@
 
 
 #include "../api/InstrumentThreadManagement.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
+
 #include "InstrumentProfile.hpp"
+
 
 
 namespace Instrument {
@@ -22,6 +25,18 @@ namespace Instrument {
 	
 	inline void threadWillShutdown()
 	{
+	}
+	
+	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)
+	{
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		threadLocal._enabled = false;
+	}
+	
+	inline void threadExitBusyWait()
+	{
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		threadLocal._enabled = true;
 	}
 	
 }
