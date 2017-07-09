@@ -53,41 +53,40 @@ NUMAHierarchicalScheduler::~NUMAHierarchicalScheduler()
 
 ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
-	if (task->isTaskloop()) {
-		distributeTaskloopAmongNUMANodes((Taskloop *)task, computePlace, hint);
-		return nullptr;
+	assert(task != nullptr);
+	
+	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
+	
+	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+	
+	/* Get the least loaded NUMA node */
+	int min_load = -1;
+	int min_idx = -1;
+	
+	for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
+		if (_enabledCPUs[numa] > 0) {
+			if (min_load == -1 || _readyTasks[numa] < min_load) {
+				min_load = _readyTasks[numa];
+				min_idx = numa;
+			}
+		}
+	}
+	
+	assert(min_idx != -1);
+	
+	_readyTasks[min_idx] += 1;
+	_NUMANodeScheduler[min_idx]->addReadyTask(task, computePlace, hint, false);
+	if (doGetIdle) {
+		ComputePlace *cp;
+		cp = CPUManager::getIdleNUMANodeCPU(min_idx);
+		if (cp == nullptr) {
+			// If this NUMA node does not have any idle CPUs, get any other idle CPU
+			cp = CPUManager::getIdleCPU();
+		}
+	
+		return cp;
 	} else {
-		size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
-		
-		/* Get the least loaded NUMA node */
-		int min_load = -1;
-		int min_idx = -1;
-	
-		for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
-			if (_enabledCPUs[numa] > 0) {
-				if (min_load == -1 || _readyTasks[numa] < min_load) {
-					min_load = _readyTasks[numa];
-					min_idx = numa;
-				}
-			}
-		}
-	
-		assert(min_idx != -1);
-	
-		_readyTasks[min_idx] += 1;
-		_NUMANodeScheduler[min_idx]->addReadyTask(task, computePlace, hint, false);
-		if (doGetIdle) {
-			ComputePlace *cp;
-			cp = CPUManager::getIdleNUMANodeCPU(min_idx);
-			if (cp == nullptr) {
-				// If this NUMA node does not have any idle CPUs, get any other idle CPU
-				cp = CPUManager::getIdleCPU();
-			}
-	
-			return cp;
-		} else {
-			return nullptr;
-		}
+		return nullptr;
 	}
 }
 
@@ -108,19 +107,6 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 	size_t numa_node = ((CPU *)computePlace)->_NUMANodeId;
 	Task *task = nullptr;
 	
-	task = _NUMANodeScheduler[numa_node]->getReadyTask(computePlace, currentTask, false);
-	
-	if (task == nullptr) {
-		for (size_t i = 0; i < _readyTasks.size(); ++i) {
-			task = _NUMANodeScheduler[i]->getReadyTask(computePlace, currentTask, false);
-			if (task != nullptr) {
-				break;
-			}
-		}
-	}
-	
-// FIXME
-#if 0
 	if (_readyTasks[numa_node] > 0) {
 		task = _NUMANodeScheduler[numa_node]->getReadyTask(computePlace, currentTask, false);
 
@@ -146,8 +132,7 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 			_readyTasks[max_idx] -= 1;
 		}
 	}
-#endif
-
+	
 	if (canMarkAsIdle && task == nullptr) {
 		CPUManager::cpuBecomesIdle((CPU *) computePlace);
 	}
