@@ -62,6 +62,12 @@ public:
 		int partitionCount = getPartitionCount();
 		assert(partitionCount > 0);
 		
+		// Set a implementation defined chunksize if needed
+		if (_bounds.chunksize == 0) {
+			size_t totalIterations = TaskloopLogic::getIterationCount(_bounds);
+			_bounds.chunksize = std::max(totalIterations / (2 * partitionCount), (size_t) 1);
+		}
+		
 		// Allocate memory for the partitions
 		posix_memalign((void **)&_partitions, CACHE_LINE_SIZE, sizeof(TaskloopPartition) * partitionCount);
 		assert(_partitions != nullptr);
