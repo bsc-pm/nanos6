@@ -81,7 +81,7 @@ typedef struct
 
 
 //! \brief This needs to be incremented on every change to the instantiation API
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 2 };
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 3 };
 
 typedef enum {
 	//! Specifies that the task will be a final task
