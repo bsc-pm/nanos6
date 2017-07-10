@@ -6,7 +6,7 @@
 
 
 namespace Instrument {
-	const EnvironmentVariable<bool> _traceAsThreads("NANOS_EXTRAE_AS_THREADS", 0);
+	const EnvironmentVariable<bool> _traceAsThreads("NANOS6_EXTRAE_AS_THREADS", 0);
 	
 	const extrae_type_t       _taskInstanceId = 9200002;
 	const extrae_type_t       _runtimeState = 9000000;     //!< Runtime state (extrae event type)

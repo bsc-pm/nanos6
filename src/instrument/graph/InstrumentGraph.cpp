@@ -20,8 +20,8 @@ namespace Instrument {
 		
 		SpinLock _graphLock;
 		
-		EnvironmentVariable<bool> _showDependencyStructures("NANOS_GRAPH_SHOW_DEPENDENCY_STRUCTURES", false);
-		EnvironmentVariable<bool> _showRanges("NANOS_GRAPH_SHOW_RANGES", false);
-		EnvironmentVariable<bool> _showLog("NANOS_GRAPH_SHOW_LOG", false);
+		EnvironmentVariable<bool> _showDependencyStructures("NANOS6_GRAPH_SHOW_DEPENDENCY_STRUCTURES", false);
+		EnvironmentVariable<bool> _showRanges("NANOS6_GRAPH_SHOW_RANGES", false);
+		EnvironmentVariable<bool> _showLog("NANOS6_GRAPH_SHOW_LOG", false);
 	}
 }

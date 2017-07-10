@@ -21,8 +21,8 @@ namespace Instrument {
 		bool _verboseUserMutex = false;
 		bool _verboseLoggingMessages = false;
 		
-		EnvironmentVariable<bool> _useTimestamps("NANOS_VERBOSE_TIMESTAMPS", true);
-		EnvironmentVariable<bool> _dumpOnlyOnExit("NANOS_VERBOSE_DUMP_ONLY_ON_EXIT", false);
+		EnvironmentVariable<bool> _useTimestamps("NANOS6_VERBOSE_TIMESTAMPS", true);
+		EnvironmentVariable<bool> _dumpOnlyOnExit("NANOS6_VERBOSE_DUMP_ONLY_ON_EXIT", false);
 		
 		std::ofstream *_output = nullptr;
 		

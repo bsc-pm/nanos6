@@ -33,15 +33,15 @@ namespace Instrument {
 	
 	static long _nextCluster = 1;
 	
-	static EnvironmentVariable<bool> _shortenFilenames("NANOS_GRAPH_SHORTEN_FILENAMES", false);
-	static EnvironmentVariable<bool> _showSpuriousDependencyStructures("NANOS_GRAPH_SHOW_SPURIOUS_DEPENDENCY_STRUCTURES", false);
-	static EnvironmentVariable<bool> _showDeadDependencyStructures("NANOS_GRAPH_SHOW_DEAD_DEPENDENCY_STRUCTURES", false);
-	static EnvironmentVariable<bool> _showDeadDependencies("NANOS_GRAPH_SHOW_DEAD_DEPENDENCIES", false);
-	static EnvironmentVariable<bool> _showAllSteps("NANOS_GRAPH_SHOW_ALL_STEPS", false);
-	static EnvironmentVariable<bool> _showSuperAccessLinks("NANOS_GRAPH_SHOW_SUPERACCESS_LINKS", true);
-	static EnvironmentVariable<bool> _autoDisplay("NANOS_GRAPH_DISPLAY", false);
+	static EnvironmentVariable<bool> _shortenFilenames("NANOS6_GRAPH_SHORTEN_FILENAMES", false);
+	static EnvironmentVariable<bool> _showSpuriousDependencyStructures("NANOS6_GRAPH_SHOW_SPURIOUS_DEPENDENCY_STRUCTURES", false);
+	static EnvironmentVariable<bool> _showDeadDependencyStructures("NANOS6_GRAPH_SHOW_DEAD_DEPENDENCY_STRUCTURES", false);
+	static EnvironmentVariable<bool> _showDeadDependencies("NANOS6_GRAPH_SHOW_DEAD_DEPENDENCIES", false);
+	static EnvironmentVariable<bool> _showAllSteps("NANOS6_GRAPH_SHOW_ALL_STEPS", false);
+	static EnvironmentVariable<bool> _showSuperAccessLinks("NANOS6_GRAPH_SHOW_SUPERACCESS_LINKS", true);
+	static EnvironmentVariable<bool> _autoDisplay("NANOS6_GRAPH_DISPLAY", false);
 	
-	static EnvironmentVariable<std::string> _displayCommand("NANOS_GRAPH_DISPLAY_COMMAND", "xdg-open");
+	static EnvironmentVariable<std::string> _displayCommand("NANOS6_GRAPH_DISPLAY_COMMAND", "xdg-open");
 	
 	
 	static inline bool isComposite(task_id_t taskId)

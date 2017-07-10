@@ -40,7 +40,7 @@ namespace Instrument {
 	{
 		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "verbose");
 		
-		TokenizedEnvironmentVariable<std::string> verboseAreas("NANOS_VERBOSE", ',', "all,!LeaderThread");
+		TokenizedEnvironmentVariable<std::string> verboseAreas("NANOS6_VERBOSE", ',', "all,!LeaderThread");
 		for (auto area : verboseAreas) {
 			std::transform(area.begin(), area.end(), area.begin(), ::tolower);
 			if (area == "all") {
@@ -106,7 +106,7 @@ namespace Instrument {
 			}
 		}
 		
-		EnvironmentVariable<std::string> outputFilename("NANOS_VERBOSE_FILE", "/dev/stderr");
+		EnvironmentVariable<std::string> outputFilename("NANOS6_VERBOSE_FILE", "/dev/stderr");
 #ifdef __ANDROID__
 		if (!outputFilename.isPresent()) {
 			_output = nullptr;

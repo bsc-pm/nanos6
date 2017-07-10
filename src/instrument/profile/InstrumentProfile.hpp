@@ -352,9 +352,9 @@ namespace Instrument {
 		
 	public:
 		Profile()
-			: _profilingNSResolution("NANOS_PROFILE_NS_RESOLUTION", 1000),
-			_profilingBacktraceDepth("NANOS_PROFILE_BACKTRACE_DEPTH", 4),
-			_profilingBufferSize("NANOS_PROFILE_BUFFER_SIZE", /* 1 second */ 1000000000UL / _profilingNSResolution),
+			: _profilingNSResolution("NANOS6_PROFILE_NS_RESOLUTION", 1000),
+			_profilingBacktraceDepth("NANOS6_PROFILE_BACKTRACE_DEPTH", 4),
+			_profilingBufferSize("NANOS6_PROFILE_BUFFER_SIZE", /* 1 second */ 1000000000UL / _profilingNSResolution),
 			_bufferListSpinLock(), _bufferList(),
 #if HAVE_LIBDW
 			_dwfl(nullptr),

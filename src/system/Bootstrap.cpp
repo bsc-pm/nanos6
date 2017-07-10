@@ -66,15 +66,15 @@ void nanos_preinit(void) {
 void nanos_init(void) {
 	CPUManager::initialize();
 	
-	EnvironmentVariable<bool> handleSigInt("NANOS_HANDLE_SIGINT", 0);
+	EnvironmentVariable<bool> handleSigInt("NANOS6_HANDLE_SIGINT", 0);
 	if (handleSigInt) {
 		programSignal(SIGINT);
 	}
-	EnvironmentVariable<bool> handleSigTerm("NANOS_HANDLE_SIGTERM", 0);
+	EnvironmentVariable<bool> handleSigTerm("NANOS6_HANDLE_SIGTERM", 0);
 	if (handleSigTerm) {
 		programSignal(SIGTERM);
 	}
-	EnvironmentVariable<bool> handleSigQuit("NANOS_HANDLE_SIGQUIT", 0);
+	EnvironmentVariable<bool> handleSigQuit("NANOS6_HANDLE_SIGQUIT", 0);
 	if (handleSigQuit) {
 		programSignal(SIGQUIT);
 	}
