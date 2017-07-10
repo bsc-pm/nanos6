@@ -55,10 +55,35 @@ AC_DEFUN([AC_CHECK_SYMBOL_RESOLUTION_STRATEGY],
 		AC_MSG_CHECKING([which symbol resolution strategy to use])
 		AC_ARG_WITH(
 			[symbol-resolution],
-			[AS_HELP_STRING([--with-symbol-resolution=ifunc|indirect], [specify the strategy to resolve the runtime symbols @<:@default=ifunc@:>@])],
+			[AS_HELP_STRING([--with-symbol-resolution=ifunc|indirect], [specify the strategy to resolve the runtime symbols @<:@default=check@:>@])],
 			[ac_cv_use_symbol_resolution="${withval}"],
-			[ac_cv_use_symbol_resolution="ifunc"]
+			[ac_cv_use_symbol_resolution="check"]
 		)
+		
+		if test "x${ac_cv_use_symbol_resolution}" = "xcheck" ; then
+			AC_LANG_PUSH(C)
+			AC_RUN_IFELSE(
+				[AC_LANG_PROGRAM(
+[[
+#include <stdlib.h>
+
+void (*_indirect_exit_resolver(void)) (int) {
+	return exit;
+}
+
+void indirect_exit(int) __attribute__ (( ifunc("_indirect_exit_resolver") ));
+]], [[
+	indirect_exit(0);
+	
+	return 1;
+]]
+				)],
+				[ac_cv_use_symbol_resolution=ifunc],
+				[ac_cv_use_symbol_resolution=indirect],
+				[AC_MSG_ERROR([cross-compilation detected. Please specify a symbol resolution method with --with-symbol-resolution=ifunc|indirect])]
+			)
+			AC_LANG_POP(C)
+		fi
 		
 		case "x${ac_cv_use_symbol_resolution}" in
 			"xifunc")
