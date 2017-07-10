@@ -10,6 +10,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <list>
+#include <string>
 #include <sstream>
 
 
@@ -290,30 +292,21 @@ namespace HardwareCounters {
 		);
 		
 		{
-			std::ostringstream oss;
+			std::vector<std::string> stringifiedCounterCodes;
+			stringifiedCounterCodes.reserve(PAPI::_papiEventCodes.size());
 			
-			bool worked = true;
-			for (size_t i = 0; i < PAPI::_papiEventCodes.size(); i++)
-			{
-				char eventName[PAPI_MAX_STR_LEN];
-				rc = PAPI_event_code_to_name(PAPI::_papiEventCodes[i], eventName);
-				
-				if (rc == PAPI_OK) {
-					if (i > 0) {
-						oss << ",";
-					}
-					oss << eventName;
+			for (auto event : PAPI::_papiEventCodes) {
+				char counterName[PAPI_MAX_STR_LEN];
+				if (PAPI_event_code_to_name(event, counterName ) == PAPI_OK) {
+					stringifiedCounterCodes.emplace_back(counterName);
 				} else {
-					worked = false;
-					break;
+					std::ostringstream oss;
+					oss << event;
+					stringifiedCounterCodes.emplace_back(oss.str());
 				}
 			}
 			
-			if (worked) {
-				RuntimeInfo::addEntry("papi_events", "PAPI Event Names", oss.str());
-			} else {
-				RuntimeInfo::addEntry("papi_events", "PAPI Event Names", "error");
-			}
+			RuntimeInfo::addListEntry("papi_events", "PAPI Event Names", stringifiedCounterCodes.begin(), stringifiedCounterCodes.end());
 		}
 	}
 	
