@@ -14,20 +14,19 @@ public:
 	{
 		assert(numPartitions > 0);
 		
+		// The loop must be normalized
+		assert(bounds.step == 1);
 		const size_t originalLowerBound = bounds.lower_bound;
 		const size_t originalUpperBound = bounds.upper_bound;
 		const size_t chunksize = bounds.chunksize;
-		const size_t step = bounds.step;
 		
-		// Compute the actual number of iterations
-		const size_t totalIts = getIterationCount(bounds);
-		size_t itsPerPartition = totalIts / numPartitions;
-		const size_t missalignment = itsPerPartition % chunksize;
-		const size_t extraItsPerPartition = (missalignment) ? chunksize - missalignment : 0;
-		itsPerPartition += extraItsPerPartition;
+		// Compute the number of chunks per partition
+		const size_t totalIterations = getIterationCount(bounds);
+		const size_t totalChunks = (totalIterations / chunksize) + (totalIterations % chunksize > 0);
+		const size_t chunksPerPartition = (totalChunks / numPartitions);
 		
 		bounds_t partialBounds;
-		partialBounds.step = step;
+		partialBounds.step = 1;
 		partialBounds.chunksize = chunksize;
 		
 		// Start the partition from the original lower bound
@@ -35,8 +34,9 @@ public:
 		
 		for (int partition = 0; partition < numPartitions; ++partition) {
 			// Compute the upper bound for this partition
-			size_t upperBound = (partition < numPartitions - 1) ?
-				lowerBound + itsPerPartition * step : originalUpperBound;
+			const size_t extraChunk = (totalChunks % numPartitions >= (size_t) numPartitions - partition);
+			const size_t myIterations = (chunksPerPartition + extraChunk) * chunksize;
+			const size_t upperBound = std::min(lowerBound + myIterations, originalUpperBound);
 			
 			partialBounds.lower_bound = lowerBound;
 			partialBounds.upper_bound = upperBound;
@@ -51,7 +51,7 @@ public:
 	
 	static inline size_t getIterationCount(const bounds_t &bounds)
 	{
-		return 1 + (((bounds.upper_bound - bounds.lower_bound) - 1) / bounds.step);
+		return (bounds.upper_bound - bounds.lower_bound);
 	}
 };
 

@@ -71,14 +71,21 @@ public:
 		TaskloopLogic::splitIterations(partitionCount, _bounds, partialBounds);
 		assert((int) partialBounds.size() == partitionCount);
 		
+		// Count the number of non-empty partitions
+		int nonEmptyPartitions = 0;
+		
 		// Set the partitions
 		for (int i = 0; i < partitionCount; ++i) {
 			_partitions[i].upperBound = partialBounds[i].upper_bound;
 			_partitions[i].nextLowerBound = partialBounds[i].lower_bound;
+			
+			if (TaskloopLogic::getIterationCount(partialBounds[i]) > 0) {
+				++nonEmptyPartitions;
+			}
 		}
 		
 		// Initialize the number of remaining partitions
-		_remainingPartitions = partitionCount;
+		_remainingPartitions = nonEmptyPartitions;
 	}
 	
 	inline void initialize(const bounds_t &newBounds)
