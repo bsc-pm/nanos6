@@ -253,6 +253,7 @@ namespace HardwareCounters {
 		rc = PAPI_thread_init((unsigned long (*)()) WorkerThread::getCurrentWorkerThread());
 		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed during threading initialization");
 		
+		RuntimeInfo::addEntry("hardware_counters", "Hardware Counters", "PAPI");
 		{
 			std::ostringstream oss;
 			

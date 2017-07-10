@@ -2,6 +2,8 @@
 #define NO_HARDWARE_COUNTERS_HPP
 
 
+#include "system/RuntimeInfo.hpp"
+
 #include <cassert>
 #include <cstddef>
 
@@ -14,6 +16,7 @@ namespace HardwareCounters {
 	
 	inline void initialize()
 	{
+		RuntimeInfo::addEntry("hardware_counters", "Hardware Counters", "disabled");
 	}
 	
 	inline void shutdown()
