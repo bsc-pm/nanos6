@@ -17,6 +17,17 @@ namespace HardwareCounters {
 	namespace PAPI {
 		int _initializationCount = 0;
 		
+		char const *cache_counting_strategy_descriptions[cache_counting_strategy_entries] =
+		{
+			"unavailable",
+			"data hits and misses",
+			"data accesses and hits",
+			"data accesses and misses",
+			"total hits and misses",
+			"total accesses and hits",
+			"total accesses and misses"
+		};
+		
 		std::vector<int> _papiEventCodes;
 		
 		event_index_t _totalEvents = 0;
@@ -264,6 +275,19 @@ namespace HardwareCounters {
 		}
 		
 		PAPI::choosePAPIEventCodes();
+		
+		RuntimeInfo::addEntry(
+			"l2_cache_hc_set", "L2 Cache Hardware Counter Set",
+			PAPI::cache_counting_strategy_descriptions[PAPI::_l2CacheStrategy]
+		);
+		RuntimeInfo::addEntry(
+			"l3_cache_hc_set", "L3 Cache Hardware Counter Set",
+			PAPI::cache_counting_strategy_descriptions[PAPI::_l3CacheStrategy]
+		);
+		RuntimeInfo::addEntry(
+			"l1_cache_hc_set", "L1 Cache Hardware Counter Set",
+			PAPI::cache_counting_strategy_descriptions[PAPI::_l1CacheStrategy]
+		);
 		
 		{
 			std::ostringstream oss;

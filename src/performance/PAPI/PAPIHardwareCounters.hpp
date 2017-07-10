@@ -26,8 +26,11 @@ namespace HardwareCounters {
 			accesses_and_misses_cache_counting_strategy,
 			total_hits_and_misses_cache_counting_strategy,
 			total_accesses_and_hits_cache_counting_strategy,
-			total_accesses_and_misses_cache_counting_strategy
+			total_accesses_and_misses_cache_counting_strategy,
+			cache_counting_strategy_entries
 		};
+		
+		extern char const *cache_counting_strategy_descriptions[cache_counting_strategy_entries];
 		
 		extern std::vector<int> _papiEventCodes;
 		
@@ -231,6 +234,9 @@ namespace HardwareCounters {
 							/ _counterSetReference._counterSet[eventIndex];
 						break;
 					case PAPI::no_cache_counting_strategy:
+						break;
+					case PAPI::cache_counting_strategy_entries:
+						assert("PAPI cache counting strategy = cache_counting_strategy_entries" == nullptr);
 						break;
 				}
 				
