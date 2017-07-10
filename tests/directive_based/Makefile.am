@@ -17,6 +17,7 @@ cpu_management_tests =
 user_mutex_tests =
 linear_region_tests =
 reductions_tests =
+runtime_handled_reductions_tests =
 
 
 if HAVE_NANOS6_MERCURIUM
@@ -42,13 +43,19 @@ linear_region_tests += \
 reductions_tests += \
 	red-nonest.debug.test red-nonest.test \
 	red-nest.debug.test red-nest.test \
+	red-nqueens.debug.test red-nqueens.test \
+	red-stress.debug.test red-stress.test
+
+# The following tests are designed for testing reductions implementations where
+# the combination is handled by the runtime. They are not enabled at the
+# moment, as the current implementation is based on task privatization and the
+# combination is handled at compile time.
+runtime_handled_reductions_tests += \
 	red-nest-taskwait.debug.test red-nest-taskwait.test \
 	red-combine-finish-access.debug.test red-combine-finish-access.test \
 	red-combine-new-access.debug.test red-combine-new-access.test \
 	red-combine-taskwait.debug.test red-combine-taskwait.test \
-	red-combine-taskwait-mark.debug.test red-combine-taskwait-mark.test \
-	red-nqueens.debug.test red-nqueens.test \
-	red-stress.debug.test red-stress.test
+	red-combine-taskwait-mark.debug.test red-combine-taskwait-mark.test
 endif
 
 
