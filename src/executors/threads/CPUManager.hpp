@@ -58,7 +58,10 @@ public:
 
 	//! \brief get an idle CPU
 	static inline CPU *getIdleCPU();
-
+	
+	//! \brief get all idle CPUs
+	static inline void getIdleCPUs(std::vector<CPU *> &idleCPUs);
+	
 	//! \brief get an idle CPU from a specific NUMA node
 	static inline CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
 	
@@ -112,6 +115,18 @@ inline CPU *CPUManager::getIdleCPU()
 	}
 }
 
+inline void CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs)
+{
+	assert(idleCPUs.empty());
+	
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	while (idleCPU != boost::dynamic_bitset<>::npos) {
+		_idleCPUs[idleCPU] = false;
+		idleCPUs.push_back(_cpus[idleCPU]);
+		idleCPU = _idleCPUs.find_next(idleCPU);
+	}
+}
 
 inline CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
 {

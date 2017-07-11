@@ -20,7 +20,7 @@ struct SpawnedFunctionArgsBlock {
 };
 
 
-static void nanos_spawned_function_wrapper(void *args)
+static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) nanos6_taskloop_bounds_t *bounds)
 {
 	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
 	assert(argsBlock != nullptr);
@@ -43,8 +43,9 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 	taskInfo.get_cost = nullptr;
 	
 	SpawnedFunctionArgsBlock *argsBlock = nullptr;
+	nanos6_taskloop_bounds_t *bounds = nullptr;
 	Task *task = nullptr;
-	nanos_create_task(&taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, 0);
+	nanos_create_task(&taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &bounds, (void **) &task, 0);
 	
 	assert(argsBlock != nullptr);
 	assert(task != nullptr);

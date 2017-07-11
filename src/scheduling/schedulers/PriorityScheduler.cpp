@@ -3,6 +3,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/Task.hpp"
 
 #include <algorithm>
@@ -35,6 +36,8 @@ PriorityScheduler::~PriorityScheduler()
 ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	assert(task != nullptr);
+	
+	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
 	
 	size_t priority = 0;
 	if ((task->getTaskInfo() != nullptr) && (task->getTaskInfo()->get_priority != nullptr)) {

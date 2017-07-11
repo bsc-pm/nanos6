@@ -10,7 +10,9 @@
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentTaskStatus.hpp>
-#include <tasks/Task.hpp>
+#include "executors/threads/CPUManager.hpp"
+#include "executors/threads/ThreadManager.hpp"
+#include "tasks/Task.hpp"
 
 #include <atomic>
 #include <cassert>
@@ -48,7 +50,20 @@ public:
 	{
 		assert(task != 0);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
-		return _scheduler->addReadyTask(task, computePlace, hint);
+		
+		if (task->isTaskloop()) {
+			_scheduler->addReadyTask(task, computePlace, hint, false);
+			
+			std::vector<CPU *> idleCPUs;
+			CPUManager::getIdleCPUs(idleCPUs);
+			if (!idleCPUs.empty()) {
+				ThreadManager::resumeIdle(idleCPUs);
+			}
+			
+			return nullptr;
+		} else {
+			return _scheduler->addReadyTask(task, computePlace, hint);
+		}
 	}
 	
 	//! \brief Add back a task that was blocked but that is now unblocked

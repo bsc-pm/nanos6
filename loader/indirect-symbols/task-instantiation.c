@@ -6,6 +6,7 @@ void nanos_create_task(
 	nanos_task_invocation_info *task_invocation_info,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
+	/* OUT */ void **taskloop_bounds_pointer,
 	/* OUT */ void **task_pointer,
 	size_t flags
 ) {
@@ -14,6 +15,7 @@ void nanos_create_task(
 		nanos_task_invocation_info *task_invocation_info,
 		size_t args_block_size,
 		/* OUT */ void **args_block_pointer,
+		/* OUT */ void **taskloop_bounds_pointer,
 		/* OUT */ void **task_pointer,
 		size_t flags
 	);
@@ -23,7 +25,7 @@ void nanos_create_task(
 		symbol = (nanos_create_task_t *) _nanos6_resolve_symbol("nanos_create_task", "essential", NULL);
 	}
 	
-	(*symbol)(task_info, task_invocation_info, args_block_size, args_block_pointer, task_pointer, flags);
+	(*symbol)(task_info, task_invocation_info, args_block_size, args_block_pointer, taskloop_bounds_pointer, task_pointer, flags);
 }
 
 

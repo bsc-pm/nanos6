@@ -1,9 +1,12 @@
 #include "FIFOScheduler.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/Taskloop.hpp"
+#include "tasks/TaskloopGenerator.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -56,28 +59,67 @@ void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused
 Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
+	bool workAssigned = false;
+	std::vector<Taskloop *> completeTaskloops;
 	
-	std::lock_guard<SpinLock> guard(_globalLock);
-	
-	// 1. Get an unblocked task
-	task = getReplacementTask((CPU *) computePlace);
-	if (task != nullptr) {
-		return task;
+	{
+		std::lock_guard<SpinLock> guard(_globalLock);
+		
+		// Try to get an unblocked task
+		task = getReplacementTask((CPU *) computePlace);
+		if (task != nullptr) {
+			return task;
+		}
+		
+		while (!_readyTasks.empty() && !workAssigned) {
+			// Get the first ready task
+			task = _readyTasks.front();
+			_readyTasks.pop_front();
+			assert(task != nullptr);
+			
+			if (!task->isTaskloop()) {
+				workAssigned = true;
+				break;
+			}
+			
+			Taskloop *taskloop = (Taskloop *)task;
+			workAssigned = taskloop->hasPendingIterations();
+			if (workAssigned) {
+				_readyTasks.push_back(taskloop);
+				taskloop->notifyCollaboratorHasStarted();
+				break;
+			}
+			
+			completeTaskloops.push_back(taskloop);
+		}
 	}
 	
-	// 2. Or get a ready task
-	if (!_readyTasks.empty()) {
-		task = _readyTasks.front();
-		_readyTasks.pop_front();
-		
+	bool shouldRecheckUnblockedTasks = false;
+	for (Taskloop *completeTaskloop : completeTaskloops) {
+		// Check if the taskloop can disposed
+		bool disposable = completeTaskloop->markAsFinished();
+		if (disposable) {
+			TaskFinalization::disposeOrUnblockTask(completeTaskloop, computePlace);
+			shouldRecheckUnblockedTasks = true;
+		}
+	}
+	
+	if (workAssigned) {
 		assert(task != nullptr);
 		
+		if (task->isTaskloop()) {
+			return TaskloopGenerator::createCollaborator((Taskloop *)task);
+		}
+		
 		return task;
 	}
 	
-	// 3. Or mark the CPU as idle
+	if (shouldRecheckUnblockedTasks) {
+		return Scheduler::getReadyTask(computePlace, currentTask);
+	}
+	
 	if (canMarkAsIdle) {
-		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		CPUManager::cpuBecomesIdle((CPU *)computePlace);
 	}
 	
 	return nullptr;

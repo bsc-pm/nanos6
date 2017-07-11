@@ -25,21 +25,23 @@ class WorkerThread;
 
 
 class Task {
-private:
+public:
 	enum {
 		final_flag=0,
 		if0_flag,
+		taskloop_flag,
+		non_runnable_flag, // NOTE: Must be the last flag
+		non_owner_args_flag, // NOTE: Must be the last flag
 		total_flags
 	};
+	
+private:
 	typedef std::bitset<total_flags> flags_t;
 	
 	void *_argsBlock;
 	
 	nanos_task_info *_taskInfo;
 	nanos_task_invocation_info *_taskInvokationInfo;
-	
-	//! The thread assigned to this task, nullptr if the task has finished (but possibly waiting its children)
-	std::atomic<WorkerThread *> _thread;
 	
 	//! Number of children that are still alive (may have live references to data from this task), +1 if not blocked
 	std::atomic<int> _countdownToBeWokenUp;
@@ -48,17 +50,20 @@ private:
 	Task *_parent;
 	
 protected:
+	//! The thread assigned to this task, nullptr if the task has finished (but possibly waiting its children)
+	std::atomic<WorkerThread *> _thread;
+	
 	//! Accesses that may determine dependencies
 	TaskDataAccesses _dataAccesses;
 	
 	// Need to get back to the task from TaskDataAccesses for instrumentation purposes
 	friend struct TaskDataAccesses;
 	
+	flags_t _flags;
+	
 private:
 	//! Number of pending predecessors
 	std::atomic<int> _predecessorCount;
-	
-	flags_t _flags;
 	
 	//! An identifier for the task for the instrumentation
 	Instrument::task_id_t _instrumentationTaskId;
@@ -69,18 +74,21 @@ private:
 public:
 	Task(
 		void *argsBlock,
-		nanos_task_info *taskInfo, nanos_task_invocation_info *taskInvokationInfo,
+		nanos_task_info *taskInfo,
+		nanos_task_invocation_info *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags
 	)
 		: _argsBlock(argsBlock),
-		_taskInfo(taskInfo), _taskInvokationInfo(taskInvokationInfo),
-		_thread(nullptr), _countdownToBeWokenUp(1),
+		_taskInfo(taskInfo),
+		_taskInvokationInfo(taskInvokationInfo),
+		_countdownToBeWokenUp(1),
 		_parent(parent),
+		_thread(nullptr),
 		_dataAccesses(),
-		_predecessorCount(0),
 		_flags(flags),
+		_predecessorCount(0),
 		_instrumentationTaskId(instrumentationTaskId),
 		_schedulerInfo(nullptr)
 	{
@@ -89,6 +97,11 @@ public:
 		}
 	}
 	
+	//! Set the address of the arguments block
+	inline void setArgsBlock(void *argsBlock)
+	{
+		_argsBlock = argsBlock;
+	}
 	//! Get the address of the arguments block
 	inline void *getArgsBlock() const
 	{
@@ -106,12 +119,12 @@ public:
 	}
 	
 	//! Actual code of the task
-	inline void body()
+	virtual inline void body()
 	{
 		assert(hasCode());
 		assert(_taskInfo != nullptr);
 		
-		_taskInfo->run(_argsBlock);
+		_taskInfo->run(_argsBlock, nullptr);
 	}
 	
 	//! Check if the task has an actual body
@@ -149,13 +162,12 @@ public:
 	//! \brief Remove a nested task (because it has finished)
 	//!
 	//! \returns true iff the change makes this task become ready or disposable
-	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
+	virtual inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
 	{
 		int countdown = (--_countdownToBeWokenUp);
 		assert(countdown >= 0);
 		return (countdown == 0);
 	}
-	
 	
 	//! \brief Increase an internal counter to prevent the removal of the task
 	inline void increaseRemovalBlockingCount()
@@ -173,6 +185,15 @@ public:
 		return (countdown == 0);
 	}
 	
+	//! \brief Decrease an internal counter that prevents the removal of the task
+	//!
+	//! \returns the counter's value after decreasing it
+	inline int decreaseAndGetRemovalBlockingCount()
+	{
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return countdown;
+	}
 	
 	//! \brief Set the parent
 	//! This should be used when the parent was not set during creation, and should have the parent in a state that allows
@@ -209,7 +230,7 @@ public:
 	//! \brief Mark it as finished
 	//!
 	//! \returns true if the change makes the task disposable
-	inline bool markAsFinished() __attribute__((warn_unused_result))
+	virtual inline bool markAsFinished() __attribute__((warn_unused_result))
 	{
 		assert(_thread != nullptr);
 		_thread = nullptr;
@@ -306,6 +327,27 @@ public:
 	bool isIf0() const
 	{
 		return _flags[if0_flag];
+	}
+	
+	//! \brief Set or unset the taskloop flag
+	void setTaskloop(bool taskloopValue)
+	{
+		_flags[taskloop_flag] = taskloopValue;
+	}
+	//! \brief Check if the task is a taskloop
+	bool isTaskloop() const
+	{
+		return _flags[taskloop_flag];
+	}
+	
+	virtual bool isArgsBlockOwner() const
+	{
+		return true;
+	}
+	
+	inline size_t getFlags() const
+	{
+		return _flags.to_ulong();
 	}
 	
 	//! \brief Retrieve the instrumentation-specific task identifier

@@ -54,6 +54,7 @@ void nanos_create_task(
 	__attribute__((unused)) nanos_task_invocation_info *taskInvocationInfo,
 	size_t args_block_size,
 	void **args_block_pointer,
+	void **taskloop_bounds_pointer,
 	void **task_pointer,
 	size_t flags
 ) {
@@ -78,7 +79,7 @@ void nanos_create_task(
 	void *&task = *task_pointer;
 	
 	task = (char *)args_block + args_block_size;
-	
+	*taskloop_bounds_pointer = nullptr;
 	
 	// Construct the Task object
 	new (task) NullTask(args_block, taskInfo, flags);
@@ -93,7 +94,7 @@ void nanos_submit_task(void *taskHandle)
 	bool wasInFinal = _inFinal;
 	assert(task->_taskInfo != nullptr);
 	_inFinal = (task->_flags & nanos_final_task);
-	task->_taskInfo->run(task->_argsBlock);
+	task->_taskInfo->run(task->_argsBlock, nullptr);
 	_inFinal = wasInFinal;
 	
 	task->~NullTask();

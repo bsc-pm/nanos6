@@ -1,8 +1,6 @@
 #ifndef NANOS6_TASK_INSTANTIATION_H
 #define NANOS6_TASK_INSTANTIATION_H
 
-enum nanos6_task_info_contents_t { nanos6_task_info_contents = 1 };
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 1 };
 
 
 #include <stddef.h>
@@ -16,13 +14,29 @@ extern "C" {
 typedef signed long nanos_priority_t;
 
 
+//! \brief This needs to be incremented every time there is an update to the nanos_task_info::run
+enum nanos6_task_execution_api_t { nanos6_task_execution_api = 1 };
+
+
+typedef struct {
+    size_t lower_bound; // Inclusive
+    size_t upper_bound; // Exclusive
+    size_t step;
+    size_t chunksize;
+} nanos6_taskloop_bounds_t;
+
+
+//! \brief This needs to be incremented every time that there is a change in nanos_task_info
+enum nanos6_task_info_contents_t { nanos6_task_info_contents = 2 };
+
 //! \brief Struct that contains the common parts that all tasks of the same type share
 typedef struct
 {
 	//! \brief Wrapper around the actual task implementation
 	//! 
 	//! \param[in,out] args_block A pointer to a block of data for the parameters
-	void (*run)(void *args_block);
+	//! \param[in] taskloop_bounds bounds of the taskloop if it is the case
+	void (*run)(void *args_block, nanos6_taskloop_bounds_t *taskloop_bounds);
 	
 	//! \brief Function that the runtime calls to retrieve the information needed to calculate the dependencies
 	//! 
@@ -66,11 +80,16 @@ typedef struct
 } nanos_task_invocation_info __attribute__((aligned(64)));
 
 
+//! \brief This needs to be incremented on every change to the instantiation API
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 3 };
+
 typedef enum {
 	//! Specifies that the task will be a final task
 	nanos_final_task = (1 << 0),
 	//! Specifies that the task is in "if(0)" mode
 	nanos_if_0_task = (1 << 1),
+	//! Specifies that the task is really a taskloop
+	nanos_taskloop_task = (1 << 2),
 	//! Specifies that the task has the "wait" clause
 	nanos_waiting_task = (1 << 3)
 } nanos_task_flag;
@@ -92,6 +111,7 @@ void nanos_create_task(
 	nanos_task_invocation_info *task_invocation_info,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
+	/* OUT */ void **taskloop_bounds_pointer,
 	/* OUT */ void **task_pointer,
 	size_t flags
 );

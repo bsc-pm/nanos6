@@ -3,6 +3,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/Task.hpp"
 
 #include <algorithm>
@@ -36,6 +37,10 @@ Task *FIFOImmediateSuccessorWithMultiPollingScheduler::getReplacementTask(__attr
 
 ComputePlace * FIFOImmediateSuccessorWithMultiPollingScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
+	assert(task != nullptr);
+	
+	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
+	
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
 		// 1. Send the task to the immediate successor slot
