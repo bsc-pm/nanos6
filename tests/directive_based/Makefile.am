@@ -50,12 +50,12 @@ reductions_tests += \
 # the combination is handled by the runtime. They are not enabled at the
 # moment, as the current implementation is based on task privatization and the
 # combination is handled at compile time.
-runtime_handled_reductions_tests += \
-	red-nest-taskwait.debug.test red-nest-taskwait.test \
-	red-combine-finish-access.debug.test red-combine-finish-access.test \
-	red-combine-new-access.debug.test red-combine-new-access.test \
-	red-combine-taskwait.debug.test red-combine-taskwait.test \
-	red-combine-taskwait-mark.debug.test red-combine-taskwait-mark.test
+#runtime_handled_reductions_tests += \
+#	red-nest-taskwait.debug.test red-nest-taskwait.test \
+#	red-combine-finish-access.debug.test red-combine-finish-access.test \
+#	red-combine-new-access.debug.test red-combine-new-access.test \
+#	red-combine-taskwait.debug.test red-combine-taskwait.test \
+#	red-combine-taskwait-mark.debug.test red-combine-taskwait-mark.test
 endif
 
 
@@ -209,50 +209,50 @@ red_nest_test_CPPFLAGS = -DNDEBUG
 red_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_nest_test_LDFLAGS = $(test_common_ldflags)
 
-red_nest_taskwait_debug_test_SOURCES = reductions/red-nest-taskwait.cpp
-red_nest_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-red_nest_taskwait_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+#red_nest_taskwait_debug_test_SOURCES = reductions/red-nest-taskwait.cpp
+#red_nest_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+#red_nest_taskwait_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-red_nest_taskwait_test_SOURCES = reductions/red-nest-taskwait.cpp
-red_nest_taskwait_test_CPPFLAGS = -DNDEBUG
-red_nest_taskwait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-red_nest_taskwait_test_LDFLAGS = $(test_common_ldflags)
+#red_nest_taskwait_test_SOURCES = reductions/red-nest-taskwait.cpp
+#red_nest_taskwait_test_CPPFLAGS = -DNDEBUG
+#red_nest_taskwait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+#red_nest_taskwait_test_LDFLAGS = $(test_common_ldflags)
 
-red_combine_finish_access_debug_test_SOURCES = reductions/red-combine-finish-access.cpp
-red_combine_finish_access_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-red_combine_finish_access_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+#red_combine_finish_access_debug_test_SOURCES = reductions/red-combine-finish-access.cpp
+#red_combine_finish_access_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+#red_combine_finish_access_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-red_combine_finish_access_test_SOURCES = reductions/red-combine-finish-access.cpp
-red_combine_finish_access_test_CPPFLAGS = -DNDEBUG
-red_combine_finish_access_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-red_combine_finish_access_test_LDFLAGS = $(test_common_ldflags)
+#red_combine_finish_access_test_SOURCES = reductions/red-combine-finish-access.cpp
+#red_combine_finish_access_test_CPPFLAGS = -DNDEBUG
+#red_combine_finish_access_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+#red_combine_finish_access_test_LDFLAGS = $(test_common_ldflags)
 
-red_combine_new_access_debug_test_SOURCES = reductions/red-combine-new-access.cpp
-red_combine_new_access_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-red_combine_new_access_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+#red_combine_new_access_debug_test_SOURCES = reductions/red-combine-new-access.cpp
+#red_combine_new_access_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+#red_combine_new_access_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-red_combine_new_access_test_SOURCES = reductions/red-combine-new-access.cpp
-red_combine_new_access_test_CPPFLAGS = -DNDEBUG
-red_combine_new_access_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-red_combine_new_access_test_LDFLAGS = $(test_common_ldflags)
+#red_combine_new_access_test_SOURCES = reductions/red-combine-new-access.cpp
+#red_combine_new_access_test_CPPFLAGS = -DNDEBUG
+#red_combine_new_access_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+#red_combine_new_access_test_LDFLAGS = $(test_common_ldflags)
 
-red_combine_taskwait_debug_test_SOURCES = reductions/red-combine-taskwait.cpp
-red_combine_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-red_combine_taskwait_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+#red_combine_taskwait_debug_test_SOURCES = reductions/red-combine-taskwait.cpp
+#red_combine_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+#red_combine_taskwait_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-red_combine_taskwait_test_SOURCES = reductions/red-combine-taskwait.cpp
-red_combine_taskwait_test_CPPFLAGS = -DNDEBUG
-red_combine_taskwait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-red_combine_taskwait_test_LDFLAGS = $(test_common_ldflags)
+#red_combine_taskwait_test_SOURCES = reductions/red-combine-taskwait.cpp
+#red_combine_taskwait_test_CPPFLAGS = -DNDEBUG
+#red_combine_taskwait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+#red_combine_taskwait_test_LDFLAGS = $(test_common_ldflags)
 
-red_combine_taskwait_mark_debug_test_SOURCES = reductions/red-combine-taskwait-mark.cpp
-red_combine_taskwait_mark_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-red_combine_taskwait_mark_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+#red_combine_taskwait_mark_debug_test_SOURCES = reductions/red-combine-taskwait-mark.cpp
+#red_combine_taskwait_mark_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+#red_combine_taskwait_mark_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-red_combine_taskwait_mark_test_SOURCES = reductions/red-combine-taskwait-mark.cpp
-red_combine_taskwait_mark_test_CPPFLAGS = -DNDEBUG
-red_combine_taskwait_mark_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-red_combine_taskwait_mark_test_LDFLAGS = $(test_common_ldflags)
+#red_combine_taskwait_mark_test_SOURCES = reductions/red-combine-taskwait-mark.cpp
+#red_combine_taskwait_mark_test_CPPFLAGS = -DNDEBUG
+#red_combine_taskwait_mark_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+#red_combine_taskwait_mark_test_LDFLAGS = $(test_common_ldflags)
 
 red_nqueens_debug_test_SOURCES = reductions/red-nqueens.cpp
 red_nqueens_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
