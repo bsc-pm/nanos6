@@ -8,6 +8,7 @@
 #include "TaskloopLogic.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 #define CACHE_LINE_SIZE 128
 #define DEFAULT_CPUS_PER_PARTITION 1
@@ -69,7 +70,8 @@ public:
 		}
 		
 		// Allocate memory for the partitions
-		posix_memalign((void **)&_partitions, CACHE_LINE_SIZE, sizeof(TaskloopPartition) * partitionCount);
+		int rc = posix_memalign((void **)&_partitions, CACHE_LINE_SIZE, sizeof(TaskloopPartition) * partitionCount);
+		FatalErrorHandler::handle(rc, " when trying to allocate memory for the new taskloop's partitions");
 		assert(_partitions != nullptr);
 		
 		// Get the partitions
