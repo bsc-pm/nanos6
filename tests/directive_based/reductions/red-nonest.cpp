@@ -99,19 +99,6 @@ struct TaskVerifier {
 			}
 		}
 		
-		struct timespec delay = { 0, 1000000};
-		nanosleep(&delay, &delay);
-		
-		for (int successor : _runsBefore) {
-			TaskVerifier *successorTask = verifiers[successor];
-			assert(successorTask != 0);
-			{
-				std::ostringstream oss;
-				oss << "Task " << _id << " must run before task " << successorTask->_id;
-				tap.evaluate(successorTask->_status == NOT_STARTED, oss.str());
-			}
-		}
-		
 		if (!_runsConcurrentlyWith.empty()) {
 			// FIXME can be extended to a full wait when taskyield is implemented
 			int nwait = (ncpus < _runsConcurrentlyWith.size() + 1) ? ncpus : _runsConcurrentlyWith.size() + 1;
@@ -130,6 +117,19 @@ struct TaskVerifier {
 				SUSTAIN_MICROSECONDS * delayMultiplier,
 				oss.str()
 			);
+		}
+		
+		struct timespec delay = { 0, 1000000};
+		nanosleep(&delay, &delay);
+		
+		for (int successor : _runsBefore) {
+			TaskVerifier *successorTask = verifiers[successor];
+			assert(successorTask != 0);
+			{
+				std::ostringstream oss;
+				oss << "Task " << _id << " must run before task " << successorTask->_id;
+				tap.evaluate(successorTask->_status == NOT_STARTED, oss.str());
+			}
 		}
 		
 		_status = FINISHED;
