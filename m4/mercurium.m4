@@ -105,8 +105,8 @@ AC_DEFUN([SSS_CHECK_NANOS6_MERCURIUM],
 		AC_MSG_CHECKING([the Nanos6 Mercurium installation prefix])
 		if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
 			AC_MSG_RESULT([${ac_use_nanos6_mercurium_prefix}])
-			NANOS6_MCC="${NANOS6_MCC} --nanos6"
-			NANOS6_MCXX="${NANOS6_MCXX} --nanos6"
+			NANOS6_MCC="${NANOS6_MCC} --ompss-v2"
+			NANOS6_MCXX="${NANOS6_MCXX} --ompss-v2"
 		else
 			AC_MSG_RESULT([not found])
 		fi
@@ -331,7 +331,7 @@ AC_DEFUN([SSS_CHECK_MERCURIUM_ACCEPTS_EXTERNAL_INSTALLATION],
 		AC_MSG_CHECKING([if Mercurium allows using an external runtime])
 		AC_LANG_PUSH([C])
 		ac_save_[]_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS"
-		_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS --nanos6 --no-default-nanos6-inc"
+		_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS --ompss-v2 --no-default-nanos6-inc"
 		AC_LINK_IFELSE(
 			[AC_LANG_PROGRAM([[]], [[]])],
 			[ac_mercurium_supports_external_installation=no],
