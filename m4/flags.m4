@@ -112,7 +112,7 @@ AC_DEFUN([SSS_FIXUP_COMPILER_FLAGS],
 			#AC_CHECK_FIRST_COMPILER_FLAG([-Og -O0])
 			AC_CHECK_COMPILER_FLAG([-O0])
 			AC_CHECK_FIRST_COMPILER_FLAG([-g3 -g2 -g])
-			AC_CHECK_COMPILER_FLAG([-fstack-protector-all])
+			AC_CHECK_FIRST_COMPILER_FLAG([-fstack-security-check -fstack-protector-all])
 			DEBUG_CXXFLAGS="${CXXFLAGS}"
 		fi
 		
