@@ -10,7 +10,7 @@
 #include <nanos6/debug.h>
 
 
-#define SUSTAIN_MICROSECONDS 100000L
+#define SUSTAIN_MICROSECONDS 200000L
 
 
 TestAnyProtocolProducer tap;
