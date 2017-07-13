@@ -2068,10 +2068,6 @@ public:
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
-		if (accesses.empty()) {
-			return;
-		}
-		
 		CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
 		
 #ifndef NDEBUG
