@@ -38,7 +38,7 @@ int main()
 	tap.begin();
 	
 	for (int i = 0; i < activeCPUs*4; ++i) {
-		#pragma omp task reduction(+: x) in(sync)
+		#pragma oss task reduction(+: x) in(sync)
 		{
 			int id = ++numTasks;
 			tap.emitDiagnostic("Task ", id, "/", activeCPUs*4,
@@ -66,7 +66,7 @@ int main()
 	ready = true;
 	
 	// Taskwait combines the reduction
-	#pragma omp taskwait
+	#pragma oss taskwait
 	
 	std::ostringstream oss;
 	oss << "Expected reduction computation when taskwait is reached";

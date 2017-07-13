@@ -38,7 +38,7 @@ int main()
 	tap.begin();
 	
 	for (int i = 0; i < activeCPUs*4; ++i) {
-		#pragma omp task reduction(+: x)
+		#pragma oss task reduction(+: x)
 		{
 			x++;
 			
@@ -60,7 +60,7 @@ int main()
 		}
 	}
 	
-	#pragma omp task in(x)
+	#pragma oss task in(x)
 	{
 		std::ostringstream oss;
 		oss << "Expected reduction computation when task " << activeCPUs*4 + 1 <<
@@ -72,7 +72,7 @@ int main()
 	tap.emitDiagnostic("All tasks submitted, unblocking held tasks");
 	ready = true;
 	
-	#pragma omp taskwait
+	#pragma oss taskwait
 	
 	tap.end();
 }

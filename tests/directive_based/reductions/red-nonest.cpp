@@ -138,7 +138,7 @@ struct TaskVerifier {
 };
 
 
-#pragma omp task in(*variable) label(R)
+#pragma oss task in(*variable) label(R)
 void verifyRead(int *variable, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -146,7 +146,7 @@ void verifyRead(int *variable, TaskVerifier *verifier)
 }
 
 
-#pragma omp task out(*variable) label(W)
+#pragma oss task out(*variable) label(W)
 void verifyWrite(int *variable, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -154,7 +154,7 @@ void verifyWrite(int *variable, TaskVerifier *verifier)
 }
 
 
-#pragma omp task concurrent(*variable1) label(C)
+#pragma oss task concurrent(*variable1) label(C)
 void verifyConcurrent(int *variable1, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -183,13 +183,13 @@ void TaskVerifier::submit()
 			break;
 		case REDUCTION: {
 			int& red_variable = *_variable;
-			#pragma omp task reduction(+: red_variable) label(RED)
+			#pragma oss task reduction(+: red_variable) label(RED)
 			verifyReduction(_variable, this);
 			break;
 		}
 		case REDUCTION_OTHER: {
 			int& red_variable = *_variable;
-			#pragma omp task reduction(*: red_variable) label(RED_OTHER)
+			#pragma oss task reduction(*: red_variable) label(RED_OTHER)
 			verifyReduction(_variable, this);
 			break;
 		}
@@ -531,7 +531,7 @@ int main(int argc, char **argv)
 		verifier->submit();
 	}
 	
-	#pragma omp taskwait
+	#pragma oss taskwait
 	
 	tap.end();
 	

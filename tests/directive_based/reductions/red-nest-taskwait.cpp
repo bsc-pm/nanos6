@@ -29,7 +29,7 @@ static double delayMultiplier = 1.0;
 
 void recursion(int& x, int depth) {
 	if (depth < finalDepth) {
-		#pragma omp task reduction(+: x)
+		#pragma oss task reduction(+: x)
 		{
 			int id = ++numTasks; // Id from next reduction task
 			x++;
@@ -38,7 +38,7 @@ void recursion(int& x, int depth) {
 				recursion(x, depth + 1);
 			}
 			
-			#pragma omp taskwait
+			#pragma oss taskwait
 			
 			int expected = 1;
 			for (int i = finalDepth - depth; i > 1; i--) expected *= BRANCHING_FACTOR;
@@ -70,7 +70,7 @@ int main() {
 	
 	recursion(x, 0);
 	
-	#pragma omp taskwait
+	#pragma oss taskwait
 	std::ostringstream oss;
 	oss << "After a taskwait, the reduction variable contains the effect of " << x << " out of " << totalTasks << " tasks with nesting depth " << finalDepth;
 	tap.evaluate(x == totalTasks, oss.str());

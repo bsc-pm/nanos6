@@ -40,7 +40,7 @@ void recursion(int& x, int depth, std::atomic_bool& parentReady) {
 		
 		nextReady = false;
 		
-		#pragma omp task reduction(+: x) shared(parentReady, nextReady)
+		#pragma oss task reduction(+: x) shared(parentReady, nextReady)
 		{
 			x++;
 			
@@ -93,7 +93,7 @@ int main() {
 	
 	recursion(x, 0, initReady);
 	
-	#pragma omp taskwait
+	#pragma oss taskwait
 	
 	std::ostringstream oss;
 	oss << "Expected reduction computation when all " << numTasks << "/" << totalTasks << " tasks are executed, task nesting depth = " << finalDepth;

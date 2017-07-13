@@ -69,7 +69,7 @@ void solve(int n, const int col, sol_node_t& sol, int& result)
 				new_sol.prev = &sol;
 				new_sol.row = row;
 				
-				#pragma omp task final(final_depth <= col) reduction(+: result) label(rec_solve)
+				#pragma oss task final(final_depth <= col) reduction(+: result) label(rec_solve)
 				{
 					solve(n, col + 1, new_sol, result);
 				}
@@ -94,12 +94,12 @@ int main()
 	struct timeval start;
 	
 	gettimeofday(&start, NULL);
-	#pragma omp task reduction(+:count_main) label(solve)
+	#pragma oss task reduction(+:count_main) label(solve)
 	{
 		solve(n, 0, initial_node, count_main);
 	}
 	
-	#pragma omp task in(count_main) label(print)
+	#pragma oss task in(count_main) label(print)
 	{
 		struct timeval stop;
 		gettimeofday(&stop, NULL);
@@ -114,7 +114,7 @@ int main()
 		tap.evaluate(count_main == EXPECTED_RESULT, oss.str());
 	}
 	
-	#pragma omp taskwait
+	#pragma oss taskwait
 	
 	tap.end();
 	

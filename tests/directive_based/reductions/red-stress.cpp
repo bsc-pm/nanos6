@@ -31,7 +31,7 @@ int main() {
 		
 		int& element = array[i];
 		for (unsigned int task = 0; task < TASKS_PER_REDUCTION; ++task) {
-			#pragma omp task reduction(+: element)
+			#pragma oss task reduction(+: element)
 			{
 				element++;
 			}
@@ -42,7 +42,7 @@ int main() {
 				" submitted");
 	}
 
-	#pragma omp taskwait
+	#pragma oss taskwait
 	
 	bool correct = true;
 	for (size_t i = 0; i < N_REDUCTIONS; ++i) {
