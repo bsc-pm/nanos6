@@ -74,9 +74,29 @@ AC_DEFUN([SSS_CHECK_NANOS6_MERCURIUM],
 			[ac_use_nanos6_mercurium_prefix="auto"]
 		)
 		
+		AC_LANG_PUSH([C])
+		AX_COMPILER_VENDOR
+		AC_LANG_POP([C])
+		
+		AC_LANG_PUSH([C++])
+		AX_COMPILER_VENDOR
+		AC_LANG_POP([C++])
+		
+		if test "$ax_cv_c_compiler_vendor" = "intel" ; then
+			mcc_vendor_prefix=i
+		elif test "$ax_cv_c_compiler_vendor" = "ibm" ; then
+			mcc_vendor_prefix=xl
+		fi
+		
+		if test "$ax_cv_cxx_compiler_vendor" = "intel" ; then
+			mcxx_vendor_prefix=i
+		elif test "$ax_cv_cxx_compiler_vendor" = "ibm" ; then
+			mcxx_vendor_prefix=xl
+		fi
+		
 		if test x"${ac_use_nanos6_mercurium_prefix}" = x"auto" || test x"${ac_use_nanos6_mercurium_prefix}" = x"yes" ; then
-			AC_PATH_PROGS(NANOS6_MCC, [mcc.nanos6 mcc], [])
-			AC_PATH_PROGS(NANOS6_MCXX, [mcxx.nanos6 mcxx], [])
+			AC_PATH_PROGS(NANOS6_MCC, [${mcc_vendor_prefix}mcc.nanos6 ${mcc_vendor_prefix}mcc], [])
+			AC_PATH_PROGS(NANOS6_MCXX, [${mcxx_vendor_prefix}mcxx.nanos6 ${mcc_vendor_prefix}mcxx], [])
 			if test x"${NANOS6_MCC}" = x"" || test x"${NANOS6_MCXX}" = x"" ; then
 				if test x"${ac_use_nanos6_mercurium_prefix}" = x"yes"; then
 					AC_MSG_ERROR([could not find Nanos6 Mercurium])
@@ -85,16 +105,16 @@ AC_DEFUN([SSS_CHECK_NANOS6_MERCURIUM],
 					ac_have_nanos6_mercurium=no
 				fi
 			else
-				ac_use_nanos6_mercurium_prefix=$(echo "${NANOS6_MCC}" | sed 's@/bin/mcc.nanos6'\$'@@;s@/bin/mcc'\$'@@')
+				ac_use_nanos6_mercurium_prefix=$(echo "${NANOS6_MCC}" | sed 's@/bin/'${mcc_vendor_prefix}'mcc.nanos6'\$'@@;s@/bin/'${mcc_vendor_prefix}'mcc'\$'@@')
 				ac_have_nanos6_mercurium=yes
 			fi
 		elif test x"${ac_use_nanos6_mercurium_prefix}" != x"no" ; then
-			AC_PATH_PROGS(NANOS6_MCC, [mcc.nanos6 mcc], [], [${ac_use_nanos6_mercurium_prefix}/bin])
-			AC_PATH_PROGS(NANOS6_MCXX, [mcxx.nanos6 mcxx], [], [${ac_use_nanos6_mercurium_prefix}/bin])
+			AC_PATH_PROGS(NANOS6_MCC, [${mcc_vendor_prefix}mcc.nanos6 ${mcc_vendor_prefix}mcc], [], [${ac_use_nanos6_mercurium_prefix}/bin])
+			AC_PATH_PROGS(NANOS6_MCXX, [${mcxx_vendor_prefix}mcxx.nanos6 ${mcc_vendor_prefix}mcxx], [], [${ac_use_nanos6_mercurium_prefix}/bin])
 			if test x"${NANOS6_MCC}" = x"" || test x"${NANOS6_MCXX}" = x"" ; then
 				AC_MSG_ERROR([could not find Nanos6 Mercurium])
 			else
-				ac_use_nanos6_mercurium_prefix=$(echo "${NANOS6_MCC}" | sed 's@/bin/mcc.nanos6'\$'@@;s@/bin/mcc'\$'@@')
+				ac_use_nanos6_mercurium_prefix=$(echo "${NANOS6_MCC}" | sed 's@/bin/'${mcc_vendor_prefix}'mcc.nanos6'\$'@@;s@/bin/'${mcc_vendor_prefix}'mcc'\$'@@')
 				ac_have_nanos6_mercurium=yes
 			fi
 		else
