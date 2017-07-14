@@ -13,6 +13,18 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 	while ((task != nullptr) && readyOrDisposable) {
 		Task *parent = task->getParent();
 		
+		if (task->hasDelayedDataAccessRelease()) {
+			DataAccessRegistration::handleExitTaskwait(task, computePlace);
+			
+			// Unregister data accesses preventing the removal of the task
+			task->increaseRemovalBlockingCount();
+			DataAccessRegistration::unregisterTaskDataAccesses(task, computePlace);
+			if (!task->markAsFinishedAfterDataAccessRelease()) {
+				break;
+			}
+		}
+		assert(!task->hasDelayedDataAccessRelease());
+		
 		if (task->hasFinished()) {
 			// NOTE: Handle task removal before unlinking from parent
 			DataAccessRegistration::handleTaskRemoval(task, computePlace);
@@ -39,6 +51,8 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				SpawnedFunctions::_pendingSpawnedFunctions--;
 			}
 		} else {
+			assert(!task->hasFinished());
+			
 			// An ancestor in a taskwait that finishes at this point
 			Scheduler::taskGetsUnblocked(task, computePlace);
 			readyOrDisposable = false;

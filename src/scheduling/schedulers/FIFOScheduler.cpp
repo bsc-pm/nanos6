@@ -8,6 +8,8 @@
 #include "tasks/Taskloop.hpp"
 #include "tasks/TaskloopGenerator.hpp"
 
+#include <DataAccessRegistration.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <mutex>
@@ -56,7 +58,7 @@ void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused
 }
 
 
-Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
+Task *FIFOScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	bool workAssigned = false;
@@ -95,11 +97,17 @@ Task *FIFOScheduler::getReadyTask(__attribute__((unused)) ComputePlace *computeP
 	}
 	
 	bool shouldRecheckUnblockedTasks = false;
-	for (Taskloop *completeTaskloop : completeTaskloops) {
-		// Check if the taskloop can disposed
-		bool disposable = completeTaskloop->markAsFinished();
-		if (disposable) {
-			TaskFinalization::disposeOrUnblockTask(completeTaskloop, computePlace);
+	for (Taskloop *taskloop : completeTaskloops) {
+		taskloop->setDelayedDataAccessRelease(true);
+		DataAccessRegistration::handleEnterTaskwait(taskloop, computePlace);
+		if (taskloop->markAsFinished()) {
+			DataAccessRegistration::handleExitTaskwait(taskloop, computePlace);
+			taskloop->increaseRemovalBlockingCount();
+			DataAccessRegistration::unregisterTaskDataAccesses(taskloop, computePlace);
+			
+			if (taskloop->markAsFinishedAfterDataAccessRelease()) {
+				TaskFinalization::disposeOrUnblockTask(taskloop, computePlace);
+			}
 			shouldRecheckUnblockedTasks = true;
 		}
 	}

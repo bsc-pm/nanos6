@@ -69,43 +69,13 @@ public:
 	
 	inline bool markAsFinished() __attribute__((warn_unused_result))
 	{
-		bool runnable = isRunnable();
-		if (runnable) {
+		if (isRunnable()) {
 			assert(_thread != nullptr);
 			_thread = nullptr;
 		}
 		
 		int countdown = decreaseAndGetRemovalBlockingCount();
 		assert(countdown >= 0);
-		
-		if (!runnable) {
-			TaskDataAccesses &accessStructures = getDataAccesses();
-			assert(!accessStructures.hasBeenDeleted());
-			
-			if (!accessStructures._accesses.empty() && countdown == 1) {
-				unregisterDataAccesses();
-			}
-		}
-		
-		return (countdown == 0);
-	}
-	
-	//! \brief Remove a nested task (because it has finished)
-	//!
-	//! \returns true iff the change makes this task become ready or disposable
-	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
-	{
-		int countdown = decreaseAndGetRemovalBlockingCount();
-		assert(countdown >= 0);
-		
-		if (!isRunnable()) {
-			TaskDataAccesses &accessStructures = getDataAccesses();
-			assert(!accessStructures.hasBeenDeleted());
-			
-			if (!accessStructures._accesses.empty() && countdown == 1) {
-				unregisterDataAccesses();
-			}
-		}
 		
 		return (countdown == 0);
 	}
@@ -203,8 +173,6 @@ private:
 	void getPartitionPath(int CPUId, std::vector<int> &partitionPath);
 	
 	void run(Taskloop &source);
-	
-	void unregisterDataAccesses();
 };
 
 #endif // TASKLOOP_HPP

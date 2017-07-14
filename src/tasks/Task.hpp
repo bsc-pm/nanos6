@@ -30,8 +30,10 @@ public:
 		final_flag=0,
 		if0_flag,
 		taskloop_flag,
-		non_runnable_flag, // NOTE: Must be the last flag
-		non_owner_args_flag, // NOTE: Must be the last flag
+		wait_flag,
+		non_runnable_flag, // NOTE: Must be at the end
+		non_owner_args_flag, // NOTE: Must be at the end
+		delayed_release_flag, // NOTE: Must be at the end
 		total_flags
 	};
 	
@@ -162,7 +164,7 @@ public:
 	//! \brief Remove a nested task (because it has finished)
 	//!
 	//! \returns true iff the change makes this task become ready or disposable
-	virtual inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
+	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
 	{
 		int countdown = (--_countdownToBeWokenUp);
 		assert(countdown >= 0);
@@ -234,6 +236,24 @@ public:
 	{
 		assert(_thread != nullptr);
 		_thread = nullptr;
+		
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
+	}
+	
+	//! \brief Mark it as finished after the data access release
+	//!
+	//! \returns true if the change makes the task disposable
+	inline bool markAsFinishedAfterDataAccessRelease() __attribute__((warn_unused_result))
+	{
+		if (hasDelayedDataAccessRelease()) {
+			assert(_thread == nullptr);
+			setDelayedDataAccessRelease(false);
+		} else {
+			assert(_thread != nullptr);
+			_thread = nullptr;
+		}
 		
 		int countdown = (--_countdownToBeWokenUp);
 		assert(countdown >= 0);
@@ -338,6 +358,29 @@ public:
 	bool isTaskloop() const
 	{
 		return _flags[taskloop_flag];
+	}
+	
+	//! \brief Set or unset the wait flag
+	void setDelayDataAccessRelease(bool delayValue)
+	{
+		_flags[wait_flag] = delayValue;
+	}
+	//! \brief Check if the task has the wait clause
+	bool mustDelayDataAccessRelease() const
+	{
+		return _flags[wait_flag];
+	}
+	
+	//! \brief Set or unset the delayed release flag
+	void setDelayedDataAccessRelease(bool delayedValue)
+	{
+		_flags[delayed_release_flag] = delayedValue;
+	}
+	
+	//! \brief Check if the task has delayed the data access release
+	bool hasDelayedDataAccessRelease() const
+	{
+		return _flags[delayed_release_flag];
 	}
 	
 	virtual bool isArgsBlockOwner() const

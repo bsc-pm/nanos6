@@ -78,14 +78,3 @@ void Taskloop::run(Taskloop &source)
 	}
 }
 
-void Taskloop::unregisterDataAccesses()
-{
-	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentWorkerThread != nullptr);
-	
-	ComputePlace *computePlace = currentWorkerThread->getComputePlace();
-	assert(computePlace != nullptr);
-	
-	DataAccessRegistration::unregisterTaskDataAccesses(this, computePlace);
-}
-

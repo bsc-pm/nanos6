@@ -151,10 +151,24 @@ void WorkerThread::handleTask(CPU *cpu)
 	// Update the CPU since the thread may have migrated
 	cpu = getComputePlace();
 	
-	// Release successors
+	// The release must be delayed until all children has finished
+	if (_task->mustDelayDataAccessRelease()) {
+		_task->setDelayedDataAccessRelease(true);
+		DataAccessRegistration::handleEnterTaskwait(_task, cpu);
+		if (!_task->markAsFinished()) {
+			_task = nullptr;
+			return;
+		}
+		
+		DataAccessRegistration::handleExitTaskwait(_task, cpu);
+		_task->increaseRemovalBlockingCount();
+	}
+	
+	// Release the accesses
 	DataAccessRegistration::unregisterTaskDataAccesses(_task, cpu);
 	
-	if (_task->markAsFinished()) {
+	// Try to dispose the task
+	if (_task->markAsFinishedAfterDataAccessRelease()) {
 		TaskFinalization::disposeOrUnblockTask(_task, cpu);
 	}
 	
