@@ -131,7 +131,7 @@ static _AI_ void register_data_access(
 		currentBaseAddress += currentDimStart * stride;
 		
 		for (long index = currentDimStart; index < currentDimEnd; index++) {
-			register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, baseAddress, otherDimensions...);
+			register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, currentBaseAddress, otherDimensions...);
 			currentBaseAddress += stride;
 		}
 	}
