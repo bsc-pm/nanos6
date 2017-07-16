@@ -27,6 +27,7 @@ base_tests += \
 	dep-early-release.debug.test dep-early-release.test \
 	dep-er-and-weak.debug.test dep-er-and-weak.test \
 	if0.debug.test if0.test \
+	dep-wait.debug.test dep-wait.test \
 	taskloop-multiaxpy.debug.test taskloop-multiaxpy.test \
 	taskloop-dep-multiaxpy.debug.test taskloop-dep-multiaxpy.test
 
@@ -156,6 +157,15 @@ if0_test_SOURCES = dependencies/if0.cpp
 if0_test_CPPFLAGS = -DNDEBUG
 if0_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 if0_test_LDFLAGS = $(test_common_ldflags)
+
+dep_wait_debug_test_SOURCES = dependencies/dep-wait.cpp
+dep_wait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dep_wait_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dep_wait_test_SOURCES = dependencies/dep-wait.cpp
+dep_wait_test_CPPFLAGS = -DNDEBUG
+dep_wait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dep_wait_test_LDFLAGS = $(test_common_ldflags)
 
 taskloop_multiaxpy_debug_test_SOURCES = taskloop/taskloop-multiaxpy.cpp
 taskloop_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
