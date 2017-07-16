@@ -26,7 +26,9 @@ base_tests += \
 	dep-nonest.debug.test dep-nonest.test \
 	dep-early-release.debug.test dep-early-release.test \
 	dep-er-and-weak.debug.test dep-er-and-weak.test \
-	if0.debug.test if0.test
+	if0.debug.test if0.test \
+	taskloop-multiaxpy.debug.test taskloop-multiaxpy.test \
+	taskloop-dep-multiaxpy.debug.test taskloop-dep-multiaxpy.test
 
 cpu_management_tests += \
 	cpu-activation.debug.test cpu-activation.test
@@ -154,6 +156,24 @@ if0_test_SOURCES = dependencies/if0.cpp
 if0_test_CPPFLAGS = -DNDEBUG
 if0_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 if0_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_multiaxpy_debug_test_SOURCES = taskloop/taskloop-multiaxpy.cpp
+taskloop_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_multiaxpy_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_multiaxpy_test_SOURCES = taskloop/taskloop-multiaxpy.cpp
+taskloop_multiaxpy_test_CPPFLAGS = -DNDEBUG
+taskloop_multiaxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_multiaxpy_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_dep_multiaxpy_debug_test_SOURCES = taskloop/taskloop-dep-multiaxpy.cpp
+taskloop_dep_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_dep_multiaxpy_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_dep_multiaxpy_test_SOURCES = taskloop/taskloop-dep-multiaxpy.cpp
+taskloop_dep_multiaxpy_test_CPPFLAGS = -DNDEBUG
+taskloop_dep_multiaxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_dep_multiaxpy_test_LDFLAGS = $(test_common_ldflags)
 
 lr_nonest_debug_test_SOURCES = linear-regions/lr-nonest.cpp
 lr_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
