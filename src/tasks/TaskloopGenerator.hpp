@@ -38,8 +38,9 @@ public:
 		// Copy the args block
 		memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
 		
-		// Since a taskloop is non-runnable by default, set it as runnable
+		// Set the flags
 		taskloop->setRunnable(true);
+		taskloop->setDelayedDataAccessRelease(false);
 		
 		// Complete the taskloop creation
 		completeCreation(taskloop, parent);
