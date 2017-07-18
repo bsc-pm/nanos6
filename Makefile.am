@@ -1018,3 +1018,5 @@ endif DX_COND_doc
 
 MOSTLYCLEANFILES = $(DX_CLEANFILES)
 
+
+build-tests-local: all $(check_PROGRAMS)
