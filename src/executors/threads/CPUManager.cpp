@@ -22,21 +22,23 @@ std::vector<size_t> CPUManager::_systemToVirtualCPUId;
 
 
 namespace cpumanager_internals {
-	static inline std::string maskToRangeList(boost::dynamic_bitset<> const &mask, std::vector<size_t> const &systemToVirtualCPUId)
+	static inline std::string maskToRangeList(boost::dynamic_bitset<> const &mask, std::vector<CPU *> const &cpus)
 	{
 		std::ostringstream oss;
 		
 		int start = 0;
 		int end = -1;
 		bool first = true;
-		for (size_t systemCPUId = 0; systemCPUId < mask.size()+1; systemCPUId++) {
-			size_t virtualCPUId;
+		for (size_t virtualCPUId = 0; virtualCPUId < mask.size()+1; virtualCPUId++) {
+			size_t systemCPUId = ~0UL;
 			
-			if (systemCPUId < mask.size()) {
-				assert(systemToVirtualCPUId.size() > systemCPUId);
-				virtualCPUId = systemToVirtualCPUId[systemCPUId];
-			} else {
-				virtualCPUId = mask.size();
+			CPU *cpu = nullptr;
+			if (virtualCPUId < mask.size()) {
+				cpu = cpus[virtualCPUId];
+			}
+			
+			if (cpu != nullptr) {
+				systemCPUId = cpu->_systemCPUId;
 			}
 			
 			if ((virtualCPUId < mask.size()) && mask[virtualCPUId]) {
@@ -138,12 +140,18 @@ void CPUManager::preinitialize()
 	for (size_t i = 0; i < cpus.size(); ++i) {
 		CPU *cpu = (CPU *)cpus[i];
 		
-		_systemToVirtualCPUId[cpu->_systemCPUId] = cpu->_virtualCPUId;
+		size_t virtualCPUId;
 		if (CPU_ISSET(cpu->_systemCPUId, &processCPUMask)) {
-			_cpus[i] = cpu;
+			virtualCPUId = _totalCPUs;
+			cpu->_virtualCPUId = virtualCPUId;
+			_cpus[virtualCPUId] = cpu;
 			++_totalCPUs;
-			_NUMANodeMask[_cpus[i]->_NUMANodeId][i] = true;
+			_NUMANodeMask[cpu->_NUMANodeId][virtualCPUId] = true;
+		} else {
+			virtualCPUId = (size_t) ~0UL;
+			cpu->_virtualCPUId = virtualCPUId;
 		}
+		_systemToVirtualCPUId[cpu->_systemCPUId] = cpu->_virtualCPUId;
 	}
 	
 	RuntimeInfo::addEntry("initial_cpu_list", "Initial CPU List", cpumanager_internals::maskToRangeList(processCPUMask, cpus.size()));
@@ -152,7 +160,7 @@ void CPUManager::preinitialize()
 		
 		oss << "numa_node_" << i << "_cpu_list";
 		oss2 << "NUMA Node " << i << " CPU List";
-		std::string cpuRangeList = cpumanager_internals::maskToRangeList(_NUMANodeMask[i], _systemToVirtualCPUId);
+		std::string cpuRangeList = cpumanager_internals::maskToRangeList(_NUMANodeMask[i], _cpus);
 		
 		RuntimeInfo::addEntry(oss.str(), oss2.str(), cpuRangeList);
 	}
