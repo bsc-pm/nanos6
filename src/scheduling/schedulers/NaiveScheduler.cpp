@@ -4,6 +4,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
+#include "scheduling/TaskloopSchedulingPolicy.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/Taskloop.hpp"
 #include "tasks/TaskloopGenerator.hpp"
@@ -76,22 +77,27 @@ Task *NaiveScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((un
 		while (!_readyTasks.empty() && !workAssigned) {
 			// Get the first ready task
 			task = _readyTasks.front();
-			_readyTasks.pop_front();
 			assert(task != nullptr);
 			
 			if (!task->isTaskloop()) {
+				_readyTasks.pop_front();
 				workAssigned = true;
 				break;
 			}
 			
 			Taskloop *taskloop = (Taskloop *)task;
 			workAssigned = taskloop->hasPendingIterations();
+			
 			if (workAssigned) {
-				_readyTasks.push_back(taskloop);
+				if (TaskloopSchedulingPolicy::isRequeueEnabled()) {
+					_readyTasks.pop_front();
+					_readyTasks.push_back(taskloop);
+				}
 				taskloop->notifyCollaboratorHasStarted();
 				break;
 			}
 			
+			_readyTasks.pop_front();
 			completeTaskloops.push_back(taskloop);
 		}
 	}
