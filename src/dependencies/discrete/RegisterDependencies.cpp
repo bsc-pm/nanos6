@@ -16,7 +16,11 @@ void register_access(void *handler, void *start, size_t length, ReductionInfo...
 	assert(handler != 0);
 	Task *task = (Task *) handler;
 	
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal(), start, length);
+	if (WEAK && task->isTaskloop()) {
+		std::cerr << "Warning: task loop cannot have weak dependencies. Changing them to strong dependencies." << std::endl;
+	}
+	
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), start, length);
 	
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != 0); // NOTE: The "main" task is not created by a WorkerThread, but in any case it is not supposed to have dependencies
@@ -46,7 +50,9 @@ void register_access(void *handler, void *start, size_t length, ReductionInfo...
 	}
 	
 	DataAccess *dataAccess;
-	bool canStart = DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal(), accessSequence, /* OUT */ dataAccess, reductionInfo...);
+	bool canStart = DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(),
+			accessSequence, /* OUT */ dataAccess, reductionInfo...);
+	
 	if (dataAccess != 0) {
 		// A new data access, as opposed to a repeated or upgraded one
 		task->getDataAccesses().push_back(*dataAccess);
