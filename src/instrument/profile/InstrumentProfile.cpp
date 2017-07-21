@@ -11,6 +11,7 @@
 #endif
 
 #include "InstrumentProfile.hpp"
+#include "InstrumentThreadLocalData.hpp"
 
 #include "lowlevel/FatalErrorHandler.hpp"
 
@@ -67,25 +68,25 @@ using namespace Instrument;
 
 
 Instrument::Profile Instrument::Profile::_singleton;
-__thread Instrument::Profile::PerThread Instrument::Profile::_perThread;
 bool Instrument::Profile::_enabled;
 
 
 void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __attribute__((unused)) siginfo_t *sigInfo, __attribute__((unused))  void *signalContext)
 {
+	ThreadLocalData &threadLocal = getThreadLocalData();
+	
 	if (__builtin_expect(!_enabled, 0)) {
 		struct itimerspec it;
 		it.it_interval = {0, 0};
 		it.it_value = {0, 0};
 		
 		// Disarm the timer
-		timer_settime(_perThread._profilingTimer, 0, &it, 0);
+		timer_settime(threadLocal._profilingTimer, 0, &it, 0);
 		
 		return;
 	}
 	
-	ThreadLocalData &threadLocal = getThreadLocalData();
-	if (!threadLocal._enabled) {
+	if (threadLocal._disableCount > 0) {
 		// Temporarily disabled
 		return;
 	}
@@ -93,14 +94,14 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 	long depth = _singleton._profilingBacktraceDepth;
 	long bufferSize = _singleton._profilingBufferSize;
 	
-	if (_perThread._nextBufferPosition + depth > (bufferSize + 2)) {
-		int rc = posix_memalign((void **) &_perThread._currentBuffer, 128, sizeof(address_t) * bufferSize);
+	if (threadLocal._nextBufferPosition + depth > (bufferSize + 2)) {
+		int rc = posix_memalign((void **) &threadLocal._currentBuffer, 128, sizeof(address_t) * bufferSize);
 		FatalErrorHandler::handle(rc, " allocating a buffer of ", sizeof(address_t) * bufferSize, " bytes for profiling");
 		
-		_perThread._nextBufferPosition = 0;
+		threadLocal._nextBufferPosition = 0;
 		
 		_singleton._bufferListSpinLock.lock();
-		_singleton._bufferList.push_back(_perThread._currentBuffer);
+		_singleton._bufferList.push_back(threadLocal._currentBuffer);
 		_singleton._bufferListSpinLock.unlock();
 	}
 	
@@ -116,9 +117,9 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 	haveAFrame = (unw_step(&cursor) > 0); // Skip the signal frame
 	
 	while (haveAFrame && (currentFrame < depth)) {
-		if (unw_get_reg(&cursor, UNW_REG_IP, (unw_word_t *) &_perThread._currentBuffer[_perThread._nextBufferPosition]) == 0) {
-			if (_perThread._currentBuffer[_perThread._nextBufferPosition] >= (address_t) LOWEST_VALID_ADDRESS) {
-				_perThread._nextBufferPosition++;
+		if (unw_get_reg(&cursor, UNW_REG_IP, (unw_word_t *) &threadLocal._currentBuffer[threadLocal._nextBufferPosition]) == 0) {
+			if (threadLocal._currentBuffer[threadLocal._nextBufferPosition] >= (address_t) LOWEST_VALID_ADDRESS) {
+				threadLocal._nextBufferPosition++;
 				currentFrame++;
 			}
 			haveAFrame = (unw_step(&cursor) > 0);
@@ -129,13 +130,13 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 #elif defined(HAVE_EXECINFO_H) && defined(HAVE_BACKTRACE)
 	// Get the number of backtrace addresses + one for this function + one for the signal frame
 	address_t addresses[depth+2];
-	int frames = backtrace((void **) &_perThread._currentBuffer[_perThread._nextBufferPosition], depth+2);
+	int frames = backtrace((void **) &threadLocal._currentBuffer[threadLocal._nextBufferPosition], depth+2);
 	
 	// Skip this function and the signal frame
 	for (int frame=2; frame < frames; frame++) {
 		if (addresses[frame]  >= (address_t) LOWEST_VALID_ADDRESS) {
-			_perThread._currentBuffer[_perThread._nextBufferPosition] = addresses[frame];
-			_perThread._nextBufferPosition++;
+			threadLocal._currentBuffer[threadLocal._nextBufferPosition] = addresses[frame];
+			threadLocal._nextBufferPosition++;
 		}
 	}
 #else
@@ -143,12 +144,52 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 #endif
 	
 	// End of backtrace mark
-	_perThread._currentBuffer[_perThread._nextBufferPosition] = 0;
-	_perThread._nextBufferPosition++;
+	threadLocal._currentBuffer[threadLocal._nextBufferPosition] = 0;
+	threadLocal._nextBufferPosition++;
 	
 	// We keep always an end mark in the buffer and add it to the list of buffers.
 	// This way we do not need to perform any kind of cleanup for the threads
-	_perThread._currentBuffer[_perThread._nextBufferPosition] = 0; // The end mark
+	threadLocal._currentBuffer[threadLocal._nextBufferPosition] = 0; // The end mark
+}
+
+
+void Instrument::Profile::threadEnable()
+{
+	ThreadLocalData &threadLocal = getThreadLocalData();
+	assert(threadLocal._disableCount > 0);
+	
+	threadLocal._disableCount--;
+	if (threadLocal._disableCount > 0) {
+		return;
+	}
+	
+	struct itimerspec it = {
+		.it_interval = { .tv_sec = 0, .tv_nsec = _profilingNSResolution },
+		.it_value = { .tv_sec = 0, .tv_nsec = _profilingNSResolution }
+	};
+	
+	int rc = timer_settime(threadLocal._profilingTimer, 0, &it, 0);
+	FatalErrorHandler::handle(rc, " arming the timer for profiling");
+}
+
+
+void Instrument::Profile::threadDisable()
+{
+	ThreadLocalData &threadLocal = getThreadLocalData();
+	assert(threadLocal._disableCount >= 0);
+	
+	threadLocal._disableCount++;
+	if (threadLocal._disableCount > 1) {
+		return;
+	}
+	
+	struct itimerspec it = {
+		.it_interval = { .tv_sec = 0, .tv_nsec = 0 },
+		.it_value = { .tv_sec = 0, .tv_nsec = 0 }
+	};
+	
+	int rc = timer_settime(threadLocal._profilingTimer, 0, &it, 0);
+	FatalErrorHandler::handle(rc, " disarming the timer for profiling");
 }
 
 
@@ -159,25 +200,27 @@ thread_id_t Instrument::Profile::doCreatedThread()
 		return thread_id_t();
 	#endif
 	
+	ThreadLocalData &threadLocal = getThreadLocalData();
+	
 	struct sigevent se;
 	se.sigev_notify = SIGEV_THREAD_ID;
 	se.sigev_signo = SIGPROF;
 	se.sigev_value.sival_int = 1;
 	se.sigev_notify_thread_id = syscall(SYS_gettid);
 	
-	int rc = posix_memalign((void **) &_perThread._currentBuffer, 128, sizeof(address_t) * _profilingBufferSize);
+	int rc = posix_memalign((void **) &threadLocal._currentBuffer, 128, sizeof(address_t) * _profilingBufferSize);
 	FatalErrorHandler::handle(rc, " allocating a buffer of ", sizeof(address_t) * _profilingBufferSize, " bytes for profiling");
 	
-	_perThread._nextBufferPosition = 0;
+	threadLocal._nextBufferPosition = 0;
 	
 	// We keep always an end mark in the buffer and add it to the list of buffers.
 	// This way we do not need to perform any kind of cleanup for the threads
 	
-	_perThread._currentBuffer[_perThread._nextBufferPosition] = 0; // End of backtrace
-	_perThread._currentBuffer[_perThread._nextBufferPosition+1] = 0; // End of buffer
+	threadLocal._currentBuffer[threadLocal._nextBufferPosition] = 0; // End of backtrace
+	threadLocal._currentBuffer[threadLocal._nextBufferPosition+1] = 0; // End of buffer
 	
 	_bufferListSpinLock.lock();
-	_bufferList.push_back(_perThread._currentBuffer);
+	_bufferList.push_back(threadLocal._currentBuffer);
 	_bufferListSpinLock.unlock();
 	
 	// We call the signal handler once since the first call to backtrace allocates memory.
@@ -185,20 +228,15 @@ thread_id_t Instrument::Profile::doCreatedThread()
 	sigprofHandler(0, 0, 0);
 	
 	// Remove the sample
-	_perThread._nextBufferPosition = 0;
-	_perThread._currentBuffer[0] = 0; // End of backtrace
-	_perThread._currentBuffer[1] = 0; // End of buffer
+	threadLocal._nextBufferPosition = 0;
+	threadLocal._currentBuffer[0] = 0; // End of backtrace
+	threadLocal._currentBuffer[1] = 0; // End of buffer
 	
 	// Profiling actually starts after the follwoing lines
-	rc = timer_create(CLOCK_THREAD_CPUTIME_ID, &se, &_perThread._profilingTimer);
+	rc = timer_create(CLOCK_THREAD_CPUTIME_ID, &se, &threadLocal._profilingTimer);
 	FatalErrorHandler::handle(rc, " creating a timer for profiling");
-	struct itimerspec it = {
-		.it_interval = { .tv_sec = 0, .tv_nsec = _profilingNSResolution },
-		.it_value = { .tv_sec = 0, .tv_nsec = _profilingNSResolution }
-	};
 	
-	rc = timer_settime(_perThread._profilingTimer, 0, &it, 0);
-	FatalErrorHandler::handle(rc, " arming the timer for profiling");
+	threadEnable();
 	
 	return thread_id_t();
 }

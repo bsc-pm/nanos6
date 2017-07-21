@@ -3,7 +3,6 @@
 
 
 #include "../api/InstrumentThreadManagement.hpp"
-#include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include "InstrumentProfile.hpp"
 
@@ -17,26 +16,27 @@ namespace Instrument {
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{
+		Profile::disableForCurrentThread();
 	}
 	
 	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{
+		Profile::enableForCurrentThread();
 	}
 	
 	inline void threadWillShutdown()
 	{
+		Profile::disableForCurrentThread();
 	}
 	
 	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)
 	{
-		ThreadLocalData &threadLocal = getThreadLocalData();
-		threadLocal._enabled = false;
+		Profile::disableForCurrentThread();
 	}
 	
 	inline void threadExitBusyWait()
 	{
-		ThreadLocalData &threadLocal = getThreadLocalData();
-		threadLocal._enabled = true;
+		Profile::enableForCurrentThread();
 	}
 	
 }

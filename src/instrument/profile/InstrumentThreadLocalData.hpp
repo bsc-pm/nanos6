@@ -1,16 +1,23 @@
 #ifndef INSTRUMENT_PROFILE_THREAD_LOCAL_DATA_HPP
 #define INSTRUMENT_PROFILE_THREAD_LOCAL_DATA_HPP
 
+#include <time.h>
 
 #include <InstrumentInstrumentationContext.hpp>
+
+#include "InstrumentProfile.hpp"
 
 
 namespace Instrument {
 	struct ThreadLocalData {
-		bool _enabled;
+		int _disableCount;
+		timer_t _profilingTimer;
+		Profile::address_t *_currentBuffer;
+		long _nextBufferPosition;
 		
 		ThreadLocalData()
-			: _enabled(true)
+			: _disableCount(1),
+			_currentBuffer(nullptr), _nextBufferPosition(0)
 		{
 		}
 	};

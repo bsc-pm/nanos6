@@ -34,14 +34,16 @@
 
 namespace Instrument {
 	class Profile {
+	public:
+		// Basic types
+		typedef void *address_t;
+		
+	private:
 		// Environment variables
 		EnvironmentVariable<long> _profilingNSResolution;
 		EnvironmentVariable<long> _profilingBacktraceDepth;
 		EnvironmentVariable<long> _profilingBufferSize;
 		
-		
-		// Basic types
-		typedef void *address_t;
 		
 		class id_t {
 			uint32_t _value;
@@ -96,13 +98,6 @@ namespace Instrument {
 		SpinLock _bufferListSpinLock;
 		std::list<address_t *> _bufferList;
 		
-		// Thread-local information
-		struct PerThread {
-			timer_t _profilingTimer;
-			address_t *_currentBuffer;
-			long _nextBufferPosition;
-		};
-		static __thread PerThread _perThread;
 		static bool _enabled;
 		
 #if HAVE_LIBDW
@@ -342,6 +337,9 @@ namespace Instrument {
 		void doInit();
 		void doShutdown();
 		thread_id_t doCreatedThread();
+		void threadEnable();
+		void threadDisable();
+		
 		
 		static inline std::string demangleSymbol(std::string const &symbol);
 #if HAVE_LIBDW
@@ -380,6 +378,15 @@ namespace Instrument {
 		static inline thread_id_t createdThread()
 		{
 			return _singleton.doCreatedThread();
+		}
+		
+		static inline void enableForCurrentThread()
+		{
+			_singleton.threadEnable();
+		}
+		static inline void disableForCurrentThread()
+		{
+			_singleton.threadDisable();
 		}
 	};
 }
