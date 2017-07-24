@@ -69,7 +69,8 @@ libnanos6_main_wrapper_a_SOURCES = \
 	loader/intercept-main-common.c \
 	loader/intercept-main-common.h \
 	loader/main-wrapper.c \
-	loader/main-wrapper.h
+	loader/main-wrapper.h \
+	loader/malloc.h
 
 
 #
@@ -82,6 +83,7 @@ multidimensional_regions =
 if RESOLVE_SYMBOLS_USING_IFUNC
 symbol_resolution_header += loader/symbol-resolver/resolve.h
 symbol_resolution += \
+	loader/indirect-symbols/malloc.c \
 	loader/symbol-resolver/blocking.c \
 	loader/symbol-resolver/bootstrap.c \
 	loader/symbol-resolver/cpu-control.c \
@@ -112,6 +114,7 @@ symbol_resolution += \
 	loader/indirect-symbols/debugging.c \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/final.c \
+	loader/indirect-symbols/malloc.c \
 	loader/indirect-symbols/polling.c \
 	loader/indirect-symbols/reductions.c \
 	loader/indirect-symbols/runtime-info.c \
