@@ -624,6 +624,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentInstrumentationContext.hpp \
 	src/instrument/profile/InstrumentLeaderThread.hpp \
 	src/instrument/profile/InstrumentLogMessage.hpp \
+	src/instrument/profile/InstrumentMalloc.cpp \
 	src/instrument/profile/InstrumentProfile.cpp \
 	src/instrument/profile/InstrumentProfile.hpp \
 	src/instrument/profile/InstrumentTaskExecution.hpp \
@@ -785,7 +786,7 @@ nodist_libnanos6_graph_debug_la_SOURCES = $(nodist_common_sources) $(nodist_univ
 libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS)
 libnanos6_profile_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
-libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
+libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS) $(DLOPEN_LIBS)
 nodist_libnanos6_profile_la_SOURCES = $(nodist_common_sources) $(nodist_universal_debug_sources)
 
 libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
