@@ -321,6 +321,7 @@ common_sources = \
 	src/lowlevel/RWSpinLock.hpp \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
+	src/lowlevel/SymbolResolver.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
