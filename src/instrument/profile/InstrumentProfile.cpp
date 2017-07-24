@@ -86,7 +86,7 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 		return;
 	}
 	
-	if (threadLocal._disableCount > 0) {
+	if ((threadLocal._disableCount > 0) || (threadLocal._lightweightDisableCount > 0)) {
 		// Temporarily disabled
 		return;
 	}
@@ -190,6 +190,24 @@ void Instrument::Profile::threadDisable()
 	
 	int rc = timer_settime(threadLocal._profilingTimer, 0, &it, 0);
 	FatalErrorHandler::handle(rc, " disarming the timer for profiling");
+}
+
+
+void Instrument::Profile::lightweightThreadEnable()
+{
+	ThreadLocalData &threadLocal = getThreadLocalData();
+	assert(threadLocal._lightweightDisableCount > 0);
+	
+	threadLocal._lightweightDisableCount--;
+}
+
+
+void Instrument::Profile::lightweightThreadDisable()
+{
+	ThreadLocalData &threadLocal = getThreadLocalData();
+	assert(threadLocal._lightweightDisableCount >= 0);
+	
+	threadLocal._lightweightDisableCount++;
 }
 
 

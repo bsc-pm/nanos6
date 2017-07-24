@@ -339,6 +339,8 @@ namespace Instrument {
 		thread_id_t doCreatedThread();
 		void threadEnable();
 		void threadDisable();
+		void lightweightThreadEnable();
+		void lightweightThreadDisable();
 		
 		
 		static inline std::string demangleSymbol(std::string const &symbol);
@@ -387,6 +389,15 @@ namespace Instrument {
 		static inline void disableForCurrentThread()
 		{
 			_singleton.threadDisable();
+		}
+		
+		static inline void lightweightEnableForCurrentThread()
+		{
+			_singleton.lightweightThreadEnable();
+		}
+		static inline void lightweightDisableForCurrentThread()
+		{
+			_singleton.lightweightThreadDisable();
 		}
 	};
 }
