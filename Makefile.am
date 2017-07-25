@@ -66,6 +66,7 @@ endif
 
 libnanos6_main_wrapper_a_SOURCES = \
 	$(main_interception) \
+	loader/function-interception.h \
 	loader/intercept-main-common.c \
 	loader/intercept-main-common.h \
 	loader/main-wrapper.c \

@@ -102,8 +102,11 @@ static void *_nanos6_resolve_intercepted_symbol_with_global_fallback(char const 
 #define DECLARE_LIBC_FALLBACK(prefix, fname, rtype, ...) \
 extern rtype prefix##fname (__VA_ARGS__)
 
-#define DECLARE_INTERCEPTED_FUNCTION_POINTER(sname, fname, rtype, ...) \
+#define DECLARE_INTERCEPTED_FUNCTION_POINTER_AND_INIT_AS_NULL(sname, fname, rtype, ...) \
 	rtype (*sname)(__VA_ARGS__) = (rtype (*)(__VA_ARGS__)) NULL;
+
+#define DECLARE_INTERCEPTED_FUNCTION_POINTER(sname, fname, rtype, ...) \
+	rtype (*sname)(__VA_ARGS__)
 
 #define RESOLVE_INTERCEPTED_FUNCTION_WITH_LIBC_FALLBACK(prefix, sname, fname, rtype, ...) \
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
@@ -123,6 +126,15 @@ extern rtype prefix##fname (__VA_ARGS__)
 		} \
 		\
 		sname = nanos6_symbol; \
+	} \
+	1
+
+
+#define REDIRECT_INTERCEPTED_FUNCTION(sname, fname, rtype, ...) \
+	rtype (*fname##_nanos6_symbol)(__VA_ARGS__) = (rtype (*)(__VA_ARGS__)) dlsym(_nanos6_lib_handle, "nanos6_intercepted_" #fname); \
+	dlerror(); \
+	if (fname##_nanos6_symbol != NULL) { \
+		sname = fname##_nanos6_symbol; \
 	} \
 	1
 

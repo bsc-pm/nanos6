@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "function-interception.h"
 #include "main-wrapper.h"
 #include "api/nanos6/bootstrap.h"
 #include "api/nanos6/library-mode.h"
@@ -102,6 +103,8 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 	// First half of the initialization
 	nanos_preinit();
 	
+	nanos_start_function_interception();
+	
 	condition_variable_t condVar = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0};
 	
 	// Spawn the main task
@@ -117,6 +120,8 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 		pthread_cond_wait(&condVar._cond, &condVar._mutex);
 	}
 	pthread_mutex_unlock(&condVar._mutex);
+	
+	nanos_stop_function_interception();
 	
 	// Terminate
 	nanos_shutdown();
