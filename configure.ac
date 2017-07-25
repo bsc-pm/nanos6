@@ -205,6 +205,7 @@ AM_EXTRA_RECURSIVE_TARGETS([build-tests])
 AC_CONFIG_FILES([
 	Makefile
 	docs/Doxyfile
+	commands/Makefile
 	tests/directive_based/Makefile
 ])
 AC_OUTPUT

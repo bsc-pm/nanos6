@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 
-SUBDIRS = . tests/directive_based
+SUBDIRS = . commands tests/directive_based
 
 
 MAX_REGION_DIMENSIONS = 8

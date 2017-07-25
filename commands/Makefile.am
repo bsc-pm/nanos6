@@ -1,0 +1,14 @@
+AM_CXXFLAGS = $(PTHREAD_CFLAGS)
+AM_LDFLAGS = 
+CXX = $(NANOS6_MCXX)
+
+bin_PROGRAMS =
+
+if HAVE_NANOS6_MERCURIUM
+bin_PROGRAMS += nanos6-info
+endif
+
+
+nanos6_info_SOURCES = nanos6-info.cpp
+nanos6_info_CPPFLAGS = -DNDEBUG
+nanos6_info_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
