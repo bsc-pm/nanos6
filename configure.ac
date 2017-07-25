@@ -186,7 +186,7 @@ AC_ARG_ENABLE(
 )
 AC_MSG_RESULT([$ac_embed_code_changes])
 if test x"${ac_embed_code_changes}" = x"yes"; then
-	if test x"${ac_source_in_git}" != x"yes" ; then
+	if test x"${ac_source_in_git}" != x"true" ; then
 		AC_MSG_WARN([cannot embed code changes if source is not in a git repository])
 		ac_embed_code_changes=no
 	fi
