@@ -130,8 +130,18 @@ void CPUManager::preinitialize()
 	
 	// Get CPU objects that can run a thread
 	std::vector<ComputePlace *> const &cpus = HardwareInfo::getComputeNodes();
+	
+	size_t maxSystemCPUId = 0;
+	for (auto const *computePlace : cpus) {
+		CPU const *cpu = (CPU const *) computePlace;
+		
+		if (cpu->_systemCPUId > maxSystemCPUId) {
+			maxSystemCPUId = cpu->_systemCPUId;
+		}
+	}
+	
 	_cpus.resize(cpus.size());
-	_systemToVirtualCPUId.resize(cpus.size());
+	_systemToVirtualCPUId.resize(maxSystemCPUId+1);
 	
 	for (size_t i = 0; i < _NUMANodeMask.size(); ++i) {
 		_NUMANodeMask[i].resize(cpus.size());
