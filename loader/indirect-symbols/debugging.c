@@ -28,6 +28,19 @@ char const *nanos_get_runtime_branch(void)
 }
 
 
+char const *nanos_get_runtime_patches(void)
+{
+	typedef char const *nanos_get_runtime_patches_t();
+	
+	static nanos_get_runtime_patches_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos_get_runtime_patches_t *) _nanos6_resolve_symbol("nanos_get_runtime_patches", "debugging", NULL);
+	}
+	
+	return (*symbol)();
+}
+
+
 char const *nanos_get_runtime_compiler_version(void)
 {
 	typedef char const *nanos_get_runtime_compiler_version_t();

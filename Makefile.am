@@ -883,6 +883,9 @@ src/version/CodeVersionInfo.cpp: $(srcdir)/.git
 	branch=`$(GIT) --git-dir="$(srcdir)/.git" symbolic-ref HEAD | sed 's@refs/heads/@@'` ; echo -n $$branch >> src/version/CodeVersionInfo.cpp
 	echo '";' >> src/version/CodeVersionInfo.cpp
 	
+	echo >> src/version/CodeVersionInfo.cpp
+endif
+if EMBED_CODE_CHANGES
 	echo -n 'char const * nanos6_patches = "' >> src/version/CodeVersionInfo.cpp
 	( \
 		cd $(srcdir) ; \
@@ -892,9 +895,11 @@ src/version/CodeVersionInfo.cpp: $(srcdir)/.git
 		done \
 	) | sed 's@\\@\\\\@g;s@"@\\"@g' | awk 'BEGIN {ORS="\\n";} {print $$0;}' >> src/version/CodeVersionInfo.cpp
 	echo '";' >> src/version/CodeVersionInfo.cpp
+else
+	echo -n 'char const * nanos6_patches = nullptr;' >> src/version/CodeVersionInfo.cpp
+endif
 	
 	echo >> src/version/CodeVersionInfo.cpp
-endif
 
 
 src/version/CompilerVersionInfo.cpp: Makefile

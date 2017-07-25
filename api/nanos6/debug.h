@@ -15,6 +15,9 @@ char const *nanos_get_runtime_version(void);
 //! For instance "master"
 char const *nanos_get_runtime_branch(void);
 
+//! \brief returns a string containing code patches relative to the runtime version
+char const *nanos_get_runtime_patches(void);
+
 //! \brief returns a string describing the version of the compiler used in the runtime
 //! For instance "g++ (Debian 5.2.1-23) 5.2.1 20151028"
 char const *nanos_get_runtime_compiler_version(void);

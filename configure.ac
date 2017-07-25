@@ -164,6 +164,36 @@ else
 	AC_DEFINE([NO_DEPENDENCY_DELAYED_OPERATIONS], 0, [do not delay dependency updates])
 fi
 
+
+AC_MSG_CHECKING([if the runtime must embed any code changes])
+AC_ARG_ENABLE(
+	[embed-code-changes],
+	[AS_HELP_STRING([--enable-embed-code-changes], [embed into the runtime any code changes present in the source])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_embed_code_changes=yes
+			;;
+		no)
+			ac_embed_code_changes=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-embed-code-changes])
+			;;
+		esac
+	],
+	[ac_embed_code_changes=no]
+)
+AC_MSG_RESULT([$ac_embed_code_changes])
+if test x"${ac_embed_code_changes}" = x"yes"; then
+	if test x"${ac_source_in_git}" != x"yes" ; then
+		AC_MSG_WARN([cannot embed code changes if source is not in a git repository])
+		ac_embed_code_changes=no
+	fi
+fi
+AM_CONDITIONAL([EMBED_CODE_CHANGES], [test x"${ac_embed_code_changes}" = x"yes"])
+
+
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
