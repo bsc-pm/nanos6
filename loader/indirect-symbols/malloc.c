@@ -27,10 +27,7 @@ static DECLARE_INTERCEPTED_FUNCTION_POINTER(memalign_symbol, memalign, void *, s
 static DECLARE_INTERCEPTED_FUNCTION_POINTER(pvalloc_symbol, pvalloc, void *, size_t) = __libc_pvalloc;
 
 static DECLARE_INTERCEPTED_FUNCTION_POINTER(posix_memalign_symbol, posix_memalign, int, void **, size_t, size_t) = NULL;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(aligned_alloc_symbol, aligned_alloc, void *, size_t, size_t) = NULL;
-
 static DECLARE_INTERCEPTED_FUNCTION_POINTER(posix_memalign_libc_symbol, posix_memalign, int, void **, size_t, size_t) = NULL;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(aligned_alloc_libc_symbol, aligned_alloc, void *, size_t, size_t) = NULL;
 
 void *malloc(size_t size)
 { return (*malloc_symbol)(size); }
@@ -73,6 +70,10 @@ int posix_memalign(void **memptr, size_t alignment, size_t size)
 }
 
 
+#if HAVE_ALIGNED_ALLOC
+static DECLARE_INTERCEPTED_FUNCTION_POINTER(aligned_alloc_symbol, aligned_alloc, void *, size_t, size_t) = NULL;
+static DECLARE_INTERCEPTED_FUNCTION_POINTER(aligned_alloc_libc_symbol, aligned_alloc, void *, size_t, size_t) = NULL;
+
 void *aligned_alloc(size_t alignment, size_t size)
 {
 	typedef void *(*aligned_alloc_t)(size_t, size_t);
@@ -90,6 +91,7 @@ void *aligned_alloc(size_t alignment, size_t size)
 	
 	return (aligned_alloc_symbol)(alignment, size);
 }
+#endif
 
 
 #if HAVE_REALLOCARRAY
@@ -129,6 +131,7 @@ void nanos_start_function_interception()
 		posix_memalign_symbol = posix_memalign_libc_symbol;
 	}
 	
+#if HAVE_ALIGNED_ALLOC
 	typedef void *(*aligned_alloc_t)(size_t, size_t);
 	if (aligned_alloc_symbol == NULL) {
 		aligned_alloc_libc_symbol = (aligned_alloc_t) dlsym(RTLD_NEXT, "aligned_alloc");
@@ -139,6 +142,7 @@ void nanos_start_function_interception()
 		
 		aligned_alloc_symbol = aligned_alloc_libc_symbol;
 	}
+#endif
 	
 #if HAVE_REALLOCARRAY
 	typedef void *(*reallocarray_t)(void *, size_t, size_t);
@@ -151,11 +155,17 @@ void nanos_start_function_interception()
 		
 		reallocarray_symbol = reallocarray_libc_symbol;
 	}
+#endif
+
+#if HAVE_ALIGNED_ALLOC
+	REDIRECT_INTERCEPTED_FUNCTION(aligned_alloc_symbol, aligned_alloc, void *, size_t, size_t);
+#endif
+	
+#if HAVE_REALLOCARRAY
 	REDIRECT_INTERCEPTED_FUNCTION(reallocarray_symbol, reallocarray, void *, void *, size_t, size_t);
 #endif
 	
 	REDIRECT_INTERCEPTED_FUNCTION(posix_memalign_symbol, posix_memalign, int, void **, size_t, size_t);
-	REDIRECT_INTERCEPTED_FUNCTION(aligned_alloc_symbol, aligned_alloc, void *, size_t, size_t);
 	
 	REDIRECT_INTERCEPTED_FUNCTION(malloc_symbol, malloc, void *, size_t);
 	REDIRECT_INTERCEPTED_FUNCTION(free_symbol, free, void, void *);
@@ -179,11 +189,13 @@ void nanos_stop_function_interception()
 	pvalloc_symbol = __libc_pvalloc;
 	
 	posix_memalign_symbol = posix_memalign_libc_symbol;
+	
+#if HAVE_ALIGNED_ALLOC
 	aligned_alloc_symbol = aligned_alloc_libc_symbol;
+#endif
 	
 #if HAVE_REALLOCARRAY
 	reallocarray_symbol = reallocarray_libc_symbol;
 #endif
 }
-
 
