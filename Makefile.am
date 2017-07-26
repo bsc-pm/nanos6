@@ -1,3 +1,7 @@
+#	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+#	
+#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
@@ -920,6 +924,9 @@ src/version/CompilerVersionInfo.cpp: Makefile
 	echo '#endif' >> src/version/CompilerVersionInfo.cpp
 	echo >> src/version/CompilerVersionInfo.cpp
 
+
+EXTRA_DIST += \
+	COPYING
 
 
 ## --------------------------------- ##

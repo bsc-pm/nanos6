@@ -1,3 +1,7 @@
+#	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+#	
+#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
 AC_DEFUN([CHECK_UNDEFINED_SYMBOL_VERIFICATION_FLAGS],
 	[
 		AC_MSG_CHECKING([if the linker accepts flags to fail on undefined symbols])

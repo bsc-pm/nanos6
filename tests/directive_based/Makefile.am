@@ -1,3 +1,8 @@
+#	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+#	
+#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
+
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
 AM_LDFLAGS = 
 CXX = $(NANOS6_MCXX) --parallel
