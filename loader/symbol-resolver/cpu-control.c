@@ -15,3 +15,5 @@ RESOLVE_API_FUNCTION(nanos_cpus_begin, "cpu control", NULL);
 RESOLVE_API_FUNCTION(nanos_cpus_end, "cpu control", NULL);
 RESOLVE_API_FUNCTION(nanos_cpus_advance, "cpu control", NULL);
 RESOLVE_API_FUNCTION(nanos_cpus_get, "cpu control", NULL);
+RESOLVE_API_FUNCTION(nanos_cpus_get_virtual, "cpu control", NULL);
+

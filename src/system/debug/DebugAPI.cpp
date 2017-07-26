@@ -183,5 +183,16 @@ long nanos_cpus_get(void *cpuIterator)
 	return cpu->_systemCPUId;
 }
 
+long nanos_cpus_get_virtual(void *cpuIterator)
+{
+	cpu_iterator_t *it = (cpu_iterator_t *) cpuIterator;
+	assert (it != 0);
+	
+	CPU *cpu = *(*it);
+	assert(cpu != 0);
+	
+	return cpu->_virtualCPUId;
+}
+
 
 

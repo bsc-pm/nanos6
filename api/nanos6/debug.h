@@ -76,6 +76,9 @@ void *nanos_cpus_advance(void *cpuIterator);
 //! \brief retrieve the operating system assigned identifier to the CPU pointed to by the iterator
 long nanos_cpus_get(void *cpuIterator);
 
+//! \brief retrieve the runtime-assigned identifier to the CPU pointed to by the iterator
+long nanos_cpus_get_virtual(void *cpuIterator);
+
 
 #ifdef __cplusplus
 }

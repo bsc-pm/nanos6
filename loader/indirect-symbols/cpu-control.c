@@ -124,3 +124,16 @@ long nanos_cpus_get(void *cpuIterator)
 	return (*symbol)(cpuIterator);
 }
 
+
+long nanos_cpus_get_virtual(void *cpuIterator)
+{
+	typedef long nanos_cpus_get_virtual_t(void *cpuIterator);
+	
+	static nanos_cpus_get_virtual_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos_cpus_get_virtual_t *) _nanos6_resolve_symbol("nanos_cpus_get_virtual", "cpu control", NULL);
+	}
+	
+	return (*symbol)(cpuIterator);
+}
+
