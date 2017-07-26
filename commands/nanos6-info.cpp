@@ -105,6 +105,8 @@ static char const *dumpPatches()
 	} else {
 		std::cout << "This runtime does not contain any changes over the reported version." << std::endl;
 	}
+	
+	return "";
 }
 
 
@@ -138,6 +140,8 @@ static char const *dumpRuntimeDetailedInfo()
 	if ((patches != nullptr) && (std::string() != patches)) {
 		std::cout << "This runtime contains patches" << std::endl;
 	}
+	
+	return "";
 }
 
 
