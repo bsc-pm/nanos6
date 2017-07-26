@@ -383,7 +383,6 @@ common_sources = \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
-	src/system/ompss/Reductions.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.cpp \
@@ -420,6 +419,7 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/DiscreteAddressMap.hpp \
 	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
 	src/dependencies/discrete/MultidimensionalAPI.hpp \
+	src/dependencies/discrete/Reductions.cpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
 	src/dependencies/discrete/RootDataAccessSequence.hpp \
 	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
@@ -459,6 +459,7 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionSpecific.hpp \
+	src/dependencies/linear-regions-fragmented/Reductions.cpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
@@ -473,6 +474,7 @@ linear_regions_alternative_dependency_sources = $(common_dependency_sources) $(c
 	src/dependencies/linear-regions-alternative/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-alternative/DependencyDomain.hpp \
 	src/dependencies/linear-regions-alternative/DependencySystem.hpp \
+	src/dependencies/linear-regions-alternative/Reductions.cpp \
 	src/dependencies/linear-regions-alternative/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \

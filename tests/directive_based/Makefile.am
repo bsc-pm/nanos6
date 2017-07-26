@@ -45,6 +45,7 @@ linear_region_tests += \
 	lr-er-and-weak.debug.test lr-er-and-weak.test
 
 reductions_tests += \
+	red-firstprivate.debug.test red-firstprivate.test \
 	red-nonest.debug.test red-nonest.test \
 	red-nest.debug.test red-nest.test \
 	red-nqueens.debug.test red-nqueens.test \
@@ -230,6 +231,15 @@ lr_er_and_weak_test_SOURCES = linear-regions/lr-er-and-weak.cpp
 lr_er_and_weak_test_CPPFLAGS = -DNDEBUG
 lr_er_and_weak_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 lr_er_and_weak_test_LDFLAGS = $(test_common_ldflags)
+
+red_firstprivate_debug_test_SOURCES = reductions/red-firstprivate.cpp
+red_firstprivate_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_firstprivate_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_firstprivate_test_SOURCES = reductions/red-firstprivate.cpp
+red_firstprivate_test_CPPFLAGS = -DNDEBUG
+red_firstprivate_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_firstprivate_test_LDFLAGS = $(test_common_ldflags)
 
 red_nonest_debug_test_SOURCES = reductions/red-nonest.cpp
 red_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
