@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
 	tap.emitDiagnostic("*****************");
 	
 	for (void *cpuIterator = nanos_cpus_begin(); cpuIterator != nanos_cpus_end(); cpuIterator = nanos_cpus_advance(cpuIterator)) {
-		long cpu = nanos_cpus_get(cpuIterator);
+		long cpu = nanos_cpus_get_virtual(cpuIterator);
 		if (cpu != thisCPU) {
 			tap.evaluate(
 				tasksPerCPU[cpu] <= 1,
