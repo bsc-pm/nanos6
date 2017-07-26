@@ -1,4 +1,5 @@
 #include <nanos6/debug.h>
+#include <nanos6/runtime-info.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -90,6 +91,39 @@ static char const *dumpPatches()
 }
 
 
+static char const *dumpRuntimeDetailedInfo()
+{
+	for (void *it = nanos6_runtime_info_begin(); it != nanos6_runtime_info_end(); it = nanos6_runtime_info_advance(it)) {
+		nanos6_runtime_info_entry_t entry;
+		nanos6_runtime_info_get(it, &entry);
+		
+		std::cout << entry.description << " ";
+		switch (entry.type) {
+			case nanos6_integer_runtime_info_entry:
+				std::cout << entry.integer;
+				break;
+			case nanos6_real_runtime_info_entry:
+				std::cout << entry.real;
+				break;
+			case nanos6_text_runtime_info_entry:
+				std::cout << entry.text;
+				break;
+		}
+		
+		if (std::string() != entry.units) {
+			std::cout << " " << entry.units;
+		}
+		
+		std::cout << std::endl;
+	}
+	
+	char const *patches = nanos_get_runtime_patches();
+	if ((patches != nullptr) && (std::string() != patches)) {
+		std::cout << "This runtime contains patches" << std::endl;
+	}
+}
+
+
 
 int main(int argc, char **argv) {
 	commandName = argv[0];
@@ -100,6 +134,7 @@ int main(int argc, char **argv) {
 	optionHelpers["--full-version"] = OptionHelper("display the full runtime version", "", showFullVersion, true);
 	optionHelpers["--runtime-compiler"] = OptionHelper("display the compiler used for this runtime", "Compiled with", nanos_get_runtime_compiler_version);
 	optionHelpers["--runtime-compiler-flags"] = OptionHelper("display the compiler flags used for this runtime", "Compilation flags", nanos_get_runtime_compiler_flags);
+	optionHelpers["--runtime-details"] = OptionHelper("display detailed runtime and execution environment information", "", dumpRuntimeDetailedInfo);
 	optionHelpers["--dump-patches"] = OptionHelper("display code changes over the reported version", "", dumpPatches);
 	
 	if (argc > 1) {
