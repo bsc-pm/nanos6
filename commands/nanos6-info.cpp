@@ -3,40 +3,53 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <map>
+#include <list>
 #include <string>
 #include <utility>
 
 
 struct OptionHelper {
+	std::string _parameter;
 	std::string _helpMessage;
 	std::string _header;
 	char const * (*_retriever)();
 	bool _enabledByDefault;
 	
 	OptionHelper()
+		: _retriever(nullptr), _enabledByDefault(false)
 	{
 	}
 	
-	OptionHelper(std::string &&helpMessage, std::string &&header, char const * (*retriever)(), bool enabledByDefault = false)
-		: _helpMessage(std::move(helpMessage)), _header(std::move(header)), _retriever(retriever),
-		 _enabledByDefault(enabledByDefault)
+	OptionHelper(
+		std::string &&parameter, std::string &&helpMessage,
+		std::string &&header, char const * (*retriever)(), bool enabledByDefault = false
+	)
+		: _parameter(std::move(parameter)), _helpMessage(std::move(helpMessage)),
+		_header(std::move(header)), _retriever(retriever),
+		_enabledByDefault(enabledByDefault)
 	{
+	}
+	
+	bool empty() const
+	{
+		return (_retriever == nullptr);
 	}
 	
 	void emit() const
 	{
-		if (_header != "") {
-			std::cout << _header << " " << _retriever() << std::endl;
-		} else {
-			_retriever();
+		if (!empty()) {
+			if (_header != "") {
+				std::cout << _header << " " << _retriever() << std::endl;
+			} else {
+				_retriever();
+			}
 		}
 	}
 };
 
 
 static std::string commandName;
-static std::map<std::string, OptionHelper> optionHelpers;
+static std::list<OptionHelper> optionHelpers;
 
 
 static char const *emitHelp()
@@ -45,7 +58,11 @@ static char const *emitHelp()
 	std::cout << std::endl;
 	std::cout << "Options:" << std::endl;
 	for (auto const &optionHelper : optionHelpers) {
-		std::cout << "\t" << optionHelper.first << "\t" << optionHelper.second._helpMessage << std::endl;
+		if (!optionHelper.empty()) {
+			std::cout << "\t" << optionHelper._parameter << "\t" << optionHelper._helpMessage << std::endl;
+		} else {
+			std::cout << std::endl;
+		}
 	}
 	std::cout << std::endl;
 	
@@ -125,35 +142,45 @@ static char const *dumpRuntimeDetailedInfo()
 
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 	commandName = argv[0];
 	
-	optionHelpers["--help"] = OptionHelper("display this help message", "", emitHelp);
-	optionHelpers["--version"] = OptionHelper("display the runtime version", "Nanos6 version", nanos_get_runtime_version);
-	optionHelpers["--branch"] = OptionHelper("display the runtime branch", "Nanos6 branch", nanos_get_runtime_branch);
-	optionHelpers["--full-version"] = OptionHelper("display the full runtime version", "", showFullVersion, true);
-	optionHelpers["--runtime-compiler"] = OptionHelper("display the compiler used for this runtime", "Compiled with", nanos_get_runtime_compiler_version);
-	optionHelpers["--runtime-compiler-flags"] = OptionHelper("display the compiler flags used for this runtime", "Compilation flags", nanos_get_runtime_compiler_flags);
-	optionHelpers["--runtime-details"] = OptionHelper("display detailed runtime and execution environment information", "", dumpRuntimeDetailedInfo);
-	optionHelpers["--dump-patches"] = OptionHelper("display code changes over the reported version", "", dumpPatches);
-	optionHelpers["--copyright"] = OptionHelper("display the copyright notice", "Copyright (C)", nanos_get_runtime_copyright, true);
+	optionHelpers.emplace_back("--help", "display this help message", "", emitHelp);
+	optionHelpers.emplace_back();
+	optionHelpers.emplace_back("--full-version", "display the full runtime version", "", showFullVersion, true);
+	optionHelpers.emplace_back("--copyright", "display the copyright notice", "Copyright (C)", nanos_get_runtime_copyright, true);
+	optionHelpers.emplace_back();
+	optionHelpers.emplace_back("--version", "display the runtime version", "Nanos6 version", nanos_get_runtime_version);
+	optionHelpers.emplace_back("--branch", "display the runtime branch", "Nanos6 branch", nanos_get_runtime_branch);
+	optionHelpers.emplace_back();
+	optionHelpers.emplace_back("--runtime-compiler", "display the compiler used for this runtime", "Compiled with", nanos_get_runtime_compiler_version);
+	optionHelpers.emplace_back("--runtime-compiler-flags", "display the compiler flags used for this runtime", "Compilation flags", nanos_get_runtime_compiler_flags);
+	optionHelpers.emplace_back();
+	optionHelpers.emplace_back("--runtime-details", "display detailed runtime and execution environment information", "", dumpRuntimeDetailedInfo);
+	optionHelpers.emplace_back("--dump-patches", "display code changes over the reported version", "", dumpPatches);
 	
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
-			auto it = optionHelpers.find(argv[i]);
+			auto it = optionHelpers.begin();
+			for (; it != optionHelpers.end(); it++) {
+				if (it->_parameter == argv[i]) {
+					break;
+				}
+			}
 			if (it == optionHelpers.end()) {
 				std::cerr << "Unknown option " << argv[i] << std::endl;
 				emitHelp();
 				exit(1);
+			} else {
+				it->emit();
 			}
-			
-			it->second.emit();
 		}
 	} else {
 		// Default output
-		for (auto const &p : optionHelpers) {
-			if (p.second._enabledByDefault) {
-				p.second.emit();
+		for (auto const &optionHelper : optionHelpers) {
+			if (optionHelper._enabledByDefault) {
+				optionHelper.emit();
 			}
 		}
 	}
