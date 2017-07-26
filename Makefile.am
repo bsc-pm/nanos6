@@ -900,7 +900,9 @@ if EMBED_CODE_CHANGES
 else
 	echo -n 'char const * nanos6_patches = nullptr;' >> src/version/CodeVersionInfo.cpp
 endif
+	echo >> src/version/CodeVersionInfo.cpp
 	
+	echo -n 'char const * nanos6_copyright = "2015-2017 Barcelona Supercomputing Center (BSC)";' >> src/version/CodeVersionInfo.cpp
 	echo >> src/version/CodeVersionInfo.cpp
 
 

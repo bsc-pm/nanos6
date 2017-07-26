@@ -136,6 +136,7 @@ int main(int argc, char **argv) {
 	optionHelpers["--runtime-compiler-flags"] = OptionHelper("display the compiler flags used for this runtime", "Compilation flags", nanos_get_runtime_compiler_flags);
 	optionHelpers["--runtime-details"] = OptionHelper("display detailed runtime and execution environment information", "", dumpRuntimeDetailedInfo);
 	optionHelpers["--dump-patches"] = OptionHelper("display code changes over the reported version", "", dumpPatches);
+	optionHelpers["--copyright"] = OptionHelper("display the copyright notice", "Copyright (C)", nanos_get_runtime_copyright, true);
 	
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {

@@ -7,6 +7,11 @@ char const *nanos_get_runtime_version(void)
 	return nanos6_version;
 }
 
+char const *nanos_get_runtime_copyright(void)
+{
+	return nanos6_copyright;
+}
+
 char const *nanos_get_runtime_branch(void)
 {
 	return nanos6_branch;

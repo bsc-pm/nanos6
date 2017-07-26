@@ -11,6 +11,10 @@ extern "C" {
 //! For instance "2015-11-13 11:27:48 +0100 ff1221e"
 char const *nanos_get_runtime_version(void);
 
+//! \brief returns a string that describes the copyright of the runtime
+//! For instance "Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)"
+char const *nanos_get_runtime_copyright(void);
+
 //! \brief returns a string with the name of the branch of the runtime
 //! For instance "master"
 char const *nanos_get_runtime_branch(void);
