@@ -8,7 +8,15 @@ AC_DEFUN([AC_CHECK_BACKTRACE],
 			[  --with-libunwind=[prefix]   set the libunwind installation to be used],
 			[
 				ac_cv_use_libunwind_prefix=$withval
-				LIBS="-L$ac_cv_use_libunwind_prefix/lib $LIBS"
+				if test -d "$ac_cv_use_libunwind_prefix/lib" ; then
+					LIBS="-L$ac_cv_use_libunwind_prefix/lib $LIBS"
+				elif test -d "$ac_cv_use_libunwind_prefix/lib64" ; then
+					LIBS="-L$ac_cv_use_libunwind_prefix/lib64 $LIBS"
+				elif test -d "$ac_cv_use_libunwind_prefix/lib32" ; then
+					LIBS="-L$ac_cv_use_libunwind_prefix/lib32 $LIBS"
+				else
+					AC_MSG_WARN([cannot find libunwind library directory])
+				fi
 				CPPFLAGS="-I$ac_cv_use_libunwind_prefix/include $CPPFLAGS"
 			],
 			[
