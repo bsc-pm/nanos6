@@ -9,6 +9,8 @@
 
 RESOLVE_API_FUNCTION(nanos_get_runtime_version, "debugging", NULL);
 RESOLVE_API_FUNCTION(nanos_get_runtime_copyright, "licensing", NULL);
+RESOLVE_API_FUNCTION(nanos_get_runtime_license, "licensing", NULL);
+RESOLVE_API_FUNCTION(nanos_get_runtime_full_license, "licensing", NULL);
 RESOLVE_API_FUNCTION(nanos_get_runtime_branch, "debugging", NULL);
 RESOLVE_API_FUNCTION(nanos_get_runtime_patches, "debugging", NULL);
 RESOLVE_API_FUNCTION(nanos_get_runtime_compiler_version, "debugging", NULL);

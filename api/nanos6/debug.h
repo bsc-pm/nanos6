@@ -15,6 +15,12 @@ char const *nanos_get_runtime_version(void);
 //! For instance "Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)"
 char const *nanos_get_runtime_copyright(void);
 
+//! \brief returns a short string that describes the license of the runtime
+char const *nanos_get_runtime_license(void);
+
+//! \brief returns the full text of the license of the runtime
+char const *nanos_get_runtime_full_license(void);
+
 //! \brief returns a string with the name of the branch of the runtime
 //! For instance "master"
 char const *nanos_get_runtime_branch(void);

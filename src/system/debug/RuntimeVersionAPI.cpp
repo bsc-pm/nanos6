@@ -18,6 +18,16 @@ char const *nanos_get_runtime_copyright(void)
 	return nanos6_copyright;
 }
 
+char const *nanos_get_runtime_license(void)
+{
+	return nanos6_license;
+}
+
+char const *nanos_get_runtime_full_license(void)
+{
+	return nanos6_full_license;
+}
+
 char const *nanos_get_runtime_branch(void)
 {
 	return nanos6_branch;

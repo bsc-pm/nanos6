@@ -34,6 +34,32 @@ char const *nanos_get_runtime_copyright(void)
 }
 
 
+char const *nanos_get_runtime_license(void)
+{
+	typedef char const *nanos_get_runtime_license_t();
+	
+	static nanos_get_runtime_license_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos_get_runtime_license_t *) _nanos6_resolve_symbol("nanos_get_runtime_license", "licensing", NULL);
+	}
+	
+	return (*symbol)();
+}
+
+
+char const *nanos_get_runtime_full_license(void)
+{
+	typedef char const *nanos_get_runtime_full_license_t();
+	
+	static nanos_get_runtime_full_license_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos_get_runtime_full_license_t *) _nanos6_resolve_symbol("nanos_get_runtime_full_license", "licensing", NULL);
+	}
+	
+	return (*symbol)();
+}
+
+
 char const *nanos_get_runtime_branch(void)
 {
 	typedef char const *nanos_get_runtime_branch_t();

@@ -161,6 +161,9 @@ int main(int argc, char **argv)
 	optionHelpers.emplace_back("--full-version", "display the full runtime version", "", showFullVersion, true);
 	optionHelpers.emplace_back("--copyright", "display the copyright notice", "Copyright (C)", nanos_get_runtime_copyright, true);
 	optionHelpers.emplace_back();
+	optionHelpers.emplace_back("--license", "display the license type", "Licensed as", nanos_get_runtime_license, true);
+	optionHelpers.emplace_back("--full-license", "display the license terms", "Licensing terms:\n", nanos_get_runtime_full_license);
+	optionHelpers.emplace_back();
 	optionHelpers.emplace_back("--version", "display the runtime version", "Nanos6 version", nanos_get_runtime_version);
 	optionHelpers.emplace_back("--branch", "display the runtime branch", "Nanos6 branch", nanos_get_runtime_branch);
 	optionHelpers.emplace_back();
