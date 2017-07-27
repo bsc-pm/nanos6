@@ -187,56 +187,54 @@ am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN     " $@;
 am__v_GEN_1 =
 
+AM_V_GEN2 = $(am__v_GEN2_@AM_V@)
+am__v_GEN2_ = $(am__v_GEN2_@AM_DEFAULT_V@)
+am__v_GEN2_0 = @echo "  GEN2    " $@;
+am__v_GEN2_1 =
+
+AM_V_GEN3 = $(am__v_GEN3_@AM_V@)
+am__v_GEN3_ = $(am__v_GEN3_@AM_DEFAULT_V@)
+am__v_GEN3_0 = @echo "  GEN3    " $@;
+am__v_GEN3_1 =
+
 nanos6/multidimensional-dependencies.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_prototypes.sh Makefile
-	$(AM_V_GEN)
-	@mkdir -p nanos6
-	@$(top_srcdir)/loader/scripts/generate_regions_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)mkdir -p nanos6 ; \
+	$(top_srcdir)/loader/scripts/generate_regions_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 multidim-region-dependency-fallbacks.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_fallback_prototypes.sh Makefile
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_regions_fallback_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_regions_fallback_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 multidim-region-dependency-fallbacks.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_fallback_functions.sh Makefile multidim-region-dependency-fallbacks.h nanos6/multidimensional-dependencies.h
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_regions_fallback_functions.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_regions_fallback_functions.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 multidim-region-dependency-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_symbol_resolvers.sh Makefile multidim-region-dependency-fallbacks.h
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_regions_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_regions_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 multidim-region-dependency-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_indirect_symbol_resolvers.sh Makefile multidim-region-dependency-fallbacks.h nanos6/multidimensional-dependencies.h
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_regions_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_regions_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 nanos6/multidimensional-release.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_prototypes.sh Makefile
-	$(AM_V_GEN)
-	@mkdir -p nanos6
-	@$(top_srcdir)/loader/scripts/generate_release_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)mkdir -p nanos6 ; \
+	$(top_srcdir)/loader/scripts/generate_release_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 multidim-release-fallbacks.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_fallback_prototypes.sh Makefile
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_release_fallback_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_release_fallback_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 multidim-release-fallbacks.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_fallback_functions.sh Makefile multidim-release-fallbacks.h nanos6/multidimensional-release.h
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_release_fallback_functions.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_release_fallback_functions.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 multidim-release-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_symbol_resolvers.sh Makefile multidim-release-fallbacks.h
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_release_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_release_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 multidim-release-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh Makefile multidim-release-fallbacks.h nanos6/multidimensional-release.h
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 
 MultidimensionalAPIToLinear.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh Makefile
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 MultidimensionalAPIToDiscrete.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh Makefile
-	$(AM_V_GEN)
-	@$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 
 if HAVE_EXTRAE
@@ -875,53 +873,53 @@ libtool: $(LIBTOOL_DEPS)
 
 
 if FROM_GIT_REPOSITORY
-src/version/CodeVersionInfo.cpp: $(srcdir)/.git
-	mkdir -p src/version/
-	echo '#include "src/version/VersionInfo.hpp"' > src/version/CodeVersionInfo.cpp
-	echo >> src/version/CodeVersionInfo.cpp
-	echo >> src/version/CodeVersionInfo.cpp
-	
-	echo -n 'char const * nanos6_version = "' >> src/version/CodeVersionInfo.cpp
-	ver=`$(GIT) --git-dir="$(srcdir)/.git" show --pretty=format:'%ci %h' -s HEAD` ; echo -n $$ver >> src/version/CodeVersionInfo.cpp
-	echo '";' >> src/version/CodeVersionInfo.cpp
-	
-	echo -n 'char const * nanos6_branch = "' >> src/version/CodeVersionInfo.cpp
-	branch=`$(GIT) --git-dir="$(srcdir)/.git" symbolic-ref HEAD | sed 's@refs/heads/@@'` ; echo -n $$branch >> src/version/CodeVersionInfo.cpp
-	echo '";' >> src/version/CodeVersionInfo.cpp
-	
+src/version/CodeVersionInfo.cpp: $(srcdir)/.git COPYING
+	$(AM_V_GEN)mkdir -p src/version/ ; \
+	echo '#include "src/version/VersionInfo.hpp"' > src/version/CodeVersionInfo.cpp ; \
+	echo >> src/version/CodeVersionInfo.cpp ; \
+	echo >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo -n 'char const * nanos6_version = "' >> src/version/CodeVersionInfo.cpp ; \
+	ver=`$(GIT) --git-dir="$(srcdir)/.git" show --pretty=format:'%ci %h' -s HEAD` ; echo -n $$ver >> src/version/CodeVersionInfo.cpp ; \
+	echo '";' >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo -n 'char const * nanos6_branch = "' >> src/version/CodeVersionInfo.cpp ; \
+	branch=`$(GIT) --git-dir="$(srcdir)/.git" symbolic-ref HEAD | sed 's@refs/heads/@@'` ; echo -n $$branch >> src/version/CodeVersionInfo.cpp ; \
+	echo '";' >> src/version/CodeVersionInfo.cpp ; \
+	\
 	echo >> src/version/CodeVersionInfo.cpp
 endif
 if EMBED_CODE_CHANGES
-	echo -n 'char const * nanos6_patches = "' >> src/version/CodeVersionInfo.cpp
+	$(AM_V_GEN2)echo -n 'char const * nanos6_patches = "' >> src/version/CodeVersionInfo.cpp ; \
 	( \
 		cd $(srcdir) ; \
 		git diff ; \
 		for i in `git ls-files --others --exclude-standard`; do \
 			git diff --no-index /dev/null $$i ; \
 		done \
-	) | sed 's@\\@\\\\@g;s@"@\\"@g' | awk 'BEGIN {ORS="\\n";} {print $$0;}' >> src/version/CodeVersionInfo.cpp
+	) | sed 's@\\@\\\\@g;s@"@\\"@g' | awk 'BEGIN {ORS="\\n";} {print $$0;}' >> src/version/CodeVersionInfo.cpp ; \
 	echo '";' >> src/version/CodeVersionInfo.cpp
 else
-	echo -n 'char const * nanos6_patches = nullptr;' >> src/version/CodeVersionInfo.cpp
+	$(AM_V_GEN2)echo 'char const * nanos6_patches = nullptr;' >> src/version/CodeVersionInfo.cpp
 endif
-	echo >> src/version/CodeVersionInfo.cpp
-	
-	echo -n 'char const * nanos6_copyright = "2015-2017 Barcelona Supercomputing Center (BSC)";' >> src/version/CodeVersionInfo.cpp
+	$(AM_V_GEN3)echo >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo 'char const * nanos6_copyright = "2015-2017 Barcelona Supercomputing Center (BSC)";' >> src/version/CodeVersionInfo.cpp ; \
 	echo >> src/version/CodeVersionInfo.cpp
 
 
 src/version/CompilerVersionInfo.cpp: Makefile
-	mkdir -p src/version/
-	echo '#include "src/version/VersionInfo.hpp"' > src/version/CompilerVersionInfo.cpp
-	echo >> src/version/CompilerVersionInfo.cpp
-	echo >> src/version/CompilerVersionInfo.cpp
-	
-	echo 'char const * nanos6_compiler_version = "$(CXX_VERSION)";' >> src/version/CompilerVersionInfo.cpp
-	echo '#ifdef NDEBUG' >> src/version/CompilerVersionInfo.cpp
-	echo 'char const * nanos6_compiler_flags = "-DNDEBUG $(OPT_CXXFLAGS)";' >> src/version/CompilerVersionInfo.cpp
-	echo '#else' >> src/version/CompilerVersionInfo.cpp
-	echo 'char const * nanos6_compiler_flags = "$(DEBUG_CXXFLAGS)";' >> src/version/CompilerVersionInfo.cpp
-	echo '#endif' >> src/version/CompilerVersionInfo.cpp
+	$(AM_V_GEN)mkdir -p src/version/ ; \
+	echo '#include "src/version/VersionInfo.hpp"' > src/version/CompilerVersionInfo.cpp ; \
+	echo >> src/version/CompilerVersionInfo.cpp ; \
+	echo >> src/version/CompilerVersionInfo.cpp ; \
+	\
+	echo 'char const * nanos6_compiler_version = "$(CXX_VERSION)";' >> src/version/CompilerVersionInfo.cpp ; \
+	echo '#ifdef NDEBUG' >> src/version/CompilerVersionInfo.cpp ; \
+	echo 'char const * nanos6_compiler_flags = "-DNDEBUG $(OPT_CXXFLAGS)";' >> src/version/CompilerVersionInfo.cpp ; \
+	echo '#else' >> src/version/CompilerVersionInfo.cpp ; \
+	echo 'char const * nanos6_compiler_flags = "$(DEBUG_CXXFLAGS)";' >> src/version/CompilerVersionInfo.cpp ; \
+	echo '#endif' >> src/version/CompilerVersionInfo.cpp ; \
 	echo >> src/version/CompilerVersionInfo.cpp
 
 
