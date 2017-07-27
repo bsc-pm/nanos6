@@ -310,7 +310,7 @@ struct DataAccess : public DataAccessBase {
 	
 	
 	bool isRemovable(
-		bool hasForcedRemoval,
+		bool forceRemoval,
 		bool assumeHasPropagatedReadSatisfiability = false,
 		bool assumeHasPropagatedWriteSatisfiability = false
 	) const {
@@ -318,7 +318,7 @@ struct DataAccess : public DataAccessBase {
 			&& readSatisfied() && writeSatisfied()
 			&& complete()
 			&& (
-					hasForcedRemoval
+					forceRemoval
 					||
 					( (!isInBottomMap() || hasNext()) && hasAlreadyPropagated(assumeHasPropagatedReadSatisfiability, assumeHasPropagatedWriteSatisfiability))
 				)
