@@ -21,6 +21,9 @@
 #include <stdlib.h>
 
 
+char const *nanos_get_runtime_path(void);
+
+
 #define RESOLVE_API_FUNCTION(fname, area, fallback) \
 void (*_##fname##_resolver(void)) (void) \
 { \
@@ -34,11 +37,11 @@ void (*_##fname##_resolver(void)) (void) \
 	if ((symbol == NULL) && (#fallback != NULL)) { \
 		symbol = (void (*)(void)) dlsym(_nanos6_lib_handle, #fallback); \
 		if (symbol != NULL) { \
-			fprintf(stderr, "Nanos 6 loader warning: " #area " runtime function " #fname " is undefined in '%s' falling back to function " #fallback " instead\n", _nanos6_lib_filename); \
+			fprintf(stderr, "Nanos 6 loader warning: " #area " runtime function " #fname " is undefined in '%s' falling back to function " #fallback " instead\n", nanos_get_runtime_path()); \
 		} \
 	} \
 	if (symbol == NULL) { \
-		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", _nanos6_lib_filename); \
+		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos_get_runtime_path()); \
 		handle_error(); \
 		return NULL; \
 	} \
@@ -63,7 +66,7 @@ void (*_##fname##_resolver(void)) (void) \
 		symbol = (void (*)(void)) fallback; \
 	} \
 	if (symbol == NULL) { \
-		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", _nanos6_lib_filename); \
+		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos_get_runtime_path()); \
 		handle_error(); \
 		return NULL; \
 	} \
@@ -91,7 +94,7 @@ void (*_##fname##_resolver(void)) (void) \
 		symbol = (void (*)(void)) dlsym(RTLD_NEXT, #fname); \
 	} \
 	if (symbol == NULL) { \
-		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", _nanos6_lib_filename); \
+		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos_get_runtime_path()); \
 		handle_error(); \
 		return NULL; \
 	} \

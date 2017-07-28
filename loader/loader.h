@@ -11,7 +11,6 @@
 __attribute__ ((visibility ("hidden"))) void _nanos6_loader(void);
 
 __attribute__ ((visibility ("hidden"))) extern void *_nanos6_lib_handle;
-__attribute__ ((visibility ("hidden"))) extern char const *_nanos6_lib_filename;
 
 __attribute__ ((visibility ("hidden"))) extern int _nanos6_has_started;
 extern int _nanos6_exit_with_error;

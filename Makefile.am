@@ -9,6 +9,17 @@ AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 SUBDIRS = . commands tests/directive_based
 
 
+# See info page of libtool "Updating version info"
+# https://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
+lib_current = 0
+lib_revision = 0
+lib_age = 0
+
+# Expected shared object numbers
+lib_major = $(shell expr $(lib_current) - $(lib_age))
+lib_suffix = $(lib_major).$(lib_age).$(lib_revision)
+
+
 MAX_REGION_DIMENSIONS = 8
 MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative reduction
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES = 
@@ -146,6 +157,7 @@ libnanos6_la_SOURCES = \
 	loader/loader.c \
 	loader/loader.h
 
+libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\"
 libnanos6_la_LDFLAGS = $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
@@ -246,12 +258,6 @@ endif
 if HAVE_PAPI
    lib_LTLIBRARIES += libnanos6-stats-papi.la
 endif
-
-
-# See info page of libtool "Updating version info"
-lib_current = 0
-lib_revision = 0
-lib_age = 0
 
 
 
