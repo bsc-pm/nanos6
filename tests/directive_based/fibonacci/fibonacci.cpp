@@ -8,7 +8,12 @@
 #include "Timer.hpp"
 
 
+#if TEST_LESS_THREADS
+#define N 14
+#else
 #define N 26
+#endif
+
 #define INTEGER unsigned long
 
 

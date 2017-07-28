@@ -58,7 +58,11 @@ int main() {
 	long activeCPUs = nanos_get_num_cpus();
 	delayMultiplier = sqrt(activeCPUs);
 	
+#if TEST_LESS_THREADS
+	totalTasks = std::min(NUM_TASKS_PER_CPU*activeCPUs, 1000); // Maximum, it gets rounded to closest complete level
+#else
 	totalTasks = NUM_TASKS_PER_CPU*activeCPUs; // Maximum, it gets rounded to closest complete level
+#endif
 	branchingFactor = BRANCHING_FACTOR;
 	
 	assert(totalTasks > 1);

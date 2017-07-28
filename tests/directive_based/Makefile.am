@@ -13,6 +13,11 @@ AM_LDFLAGS += -L$(top_builddir)/.libs -rpath $(abs_top_builddir)/.libs $(top_bui
 endif
 
 
+if LESS_TEST_THREADS
+AM_CXXFLAGS += -DTEST_LESS_THREADS
+endif
+
+
 #
 # Tests
 #

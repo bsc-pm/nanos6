@@ -198,6 +198,27 @@ fi
 AM_CONDITIONAL([EMBED_CODE_CHANGES], [test x"${ac_embed_code_changes}" = x"yes"])
 
 
+AC_ARG_ENABLE(
+	[less-test-threads],
+	[AS_HELP_STRING([--enable-less-test-threads], [reduce the size of tests that create additional threads])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_less_test_threads=yes
+			;;
+		no)
+			ac_less_test_threads=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-less-test-threads])
+			;;
+		esac
+	],
+	[ac_less_test_threads=no]
+)
+AM_CONDITIONAL([LESS_TEST_THREADS], [test x"${ac_less_test_threads}" = x"yes"])
+
+
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
