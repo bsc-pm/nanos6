@@ -12,7 +12,7 @@
 #define _GNU_SOURCE
 #endif
 
-
+#include "error.h"
 #include "loader.h"
 
 #include "api/nanos6.h"
@@ -29,7 +29,8 @@ static void *_nanos6_resolve_symbol(char const *fname, char const *area, char co
 		_nanos6_loader();
 		if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) {
 			fprintf(stderr, "Nanos 6 loader error: call to %s before library initialization\n", fname);
-			abort();
+			handle_error();
+			return NULL;
 		}
 	}
 	
@@ -44,7 +45,8 @@ static void *_nanos6_resolve_symbol(char const *fname, char const *area, char co
 	}
 	if (symbol == NULL) {
 		fprintf(stderr, "Nanos 6 loader error: %s runtime function %s is undefined in '%s'\n", area, fname, _nanos6_lib_filename);
-		abort();
+		handle_error();
+		return NULL;
 	}
 	
 	return symbol;
@@ -57,7 +59,8 @@ static void *_nanos6_resolve_symbol_with_local_fallback(char const *fname, char 
 		_nanos6_loader();
 		if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) {
 			fprintf(stderr, "Nanos 6 loader error: call to %s before library initialization\n", fname);
-			abort();
+			handle_error();
+			return NULL;
 		}
 	}
 	
@@ -97,7 +100,8 @@ static void *_nanos6_resolve_intercepted_symbol_with_global_fallback(char const 
 		dlerror();
 		if (symbol == NULL) {
 			fprintf(stderr, "Nanos 6 loader error: %s intercepted function %s is undefined in '%s'\n", area, fname, _nanos6_lib_filename);
-			abort();
+			handle_error();
+			return NULL;
 		}
 	}
 	

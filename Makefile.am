@@ -70,6 +70,7 @@ endif
 
 libnanos6_main_wrapper_a_SOURCES = \
 	$(main_interception) \
+	loader/error.h \
 	loader/function-interception.h \
 	loader/intercept-main-common.c \
 	loader/intercept-main-common.h \
@@ -141,6 +142,7 @@ endif
 libnanos6_la_SOURCES = \
 	$(symbol_resolution_header) \
 	$(symbol_resolution) \
+	loader/error.h \
 	loader/loader.c \
 	loader/loader.h
 

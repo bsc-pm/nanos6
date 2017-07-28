@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "loader.h"
 #include "function-interception.h"
 #include "main-wrapper.h"
 #include "api/nanos6/bootstrap.h"
@@ -106,8 +107,15 @@ static void main_completion_callback(void *args)
 
 
 int _nanos6_loader_main(int argc, char **argv, char **envp) {
+	if (_nanos6_exit_with_error) {
+		return _nanos6_exit_with_error;
+	}
+	
 	// First half of the initialization
 	nanos_preinit();
+	if (_nanos6_exit_with_error) {
+		return _nanos6_exit_with_error;
+	}
 	
 	nanos_start_function_interception();
 	
@@ -116,6 +124,10 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 	// Spawn the main task
 	main_task_args_block_t argsBlock = { argc, argv, envp, 0 };
 	nanos_spawn_function(main_task_wrapper, &argsBlock, main_completion_callback, &condVar, "main");
+	
+	if (_nanos6_exit_with_error) {
+		return _nanos6_exit_with_error;
+	}
 	
 	// Second half of the initialization
 	nanos_init();

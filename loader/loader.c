@@ -32,6 +32,9 @@
 __attribute__ ((visibility ("hidden"))) void *_nanos6_lib_handle = NULL;
 __attribute__ ((visibility ("hidden"))) char const *_nanos6_lib_filename = NULL;
 
+__attribute__ ((visibility ("hidden"))) int _nanos6_has_started = 0;
+int _nanos6_exit_with_error = 0;
+
 
 __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 {
@@ -131,9 +134,8 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 		} else {
 			fprintf(stderr, "Please set or check the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
 		}
-		abort();
+		_nanos6_exit_with_error = 1;
 	}
-	assert(_nanos6_lib_handle != NULL);
 }
 
 
@@ -149,13 +151,18 @@ char const *nanos_get_runtime_path(void)
 	
 	if (initialized == 0) {
 		void *symbol = dlsym(_nanos6_lib_handle, "nanos_preinit");
-		assert(symbol != NULL);
-		
-		Dl_info di;
-		int rc = dladdr(symbol, &di);
-		assert(rc != 0);
-		
-		lib_path = strdup(di.dli_fname);
+		if (symbol == NULL) {
+			lib_path = strdup(dlerror());
+		} else {
+			Dl_info di;
+			int rc = dladdr(symbol, &di);
+			
+			if (rc != 0) {
+				lib_path = strdup(di.dli_fname);
+			} else {
+				lib_path = strdup(dlerror());
+			}
+		}
 		
 		initialized = 1;
 	}

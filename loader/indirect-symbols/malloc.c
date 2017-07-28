@@ -4,8 +4,10 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#include "error.h"
 #include "resolve.h"
 
+#include <errno.h>
 #include <stddef.h>
 
 #ifndef HAVE_CONFIG_H
@@ -65,7 +67,8 @@ int posix_memalign(void **memptr, size_t alignment, size_t size)
 		posix_memalign_libc_symbol = (posix_memalign_t) dlsym(RTLD_NEXT, "posix_memalign");
 		if (posix_memalign_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'posix_memalign': %s\n", dlerror());
-			abort();
+			handle_error();
+			return EINVAL;
 		}
 		
 		posix_memalign_symbol = posix_memalign_libc_symbol;
@@ -88,7 +91,8 @@ void *aligned_alloc(size_t alignment, size_t size)
 		aligned_alloc_libc_symbol = (aligned_alloc_t) dlsym(RTLD_NEXT, "aligned_alloc");
 		if (aligned_alloc_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'aligned_alloc': %s\n", dlerror());
-			abort();
+			handle_error();
+			return NULL;
 		}
 		
 		aligned_alloc_symbol = aligned_alloc_libc_symbol;
@@ -112,7 +116,8 @@ void *reallocarray(void *ptr, size_t nmemb, size_t size)
 		reallocarray_libc_symbol = (reallocarray_t) dlsym(RTLD_NEXT, "reallocarray");
 		if (reallocarray_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'reallocarray': %s\n", dlerror());
-			abort();
+			handle_error();
+			return NULL;
 		}
 		
 		reallocarray_symbol = reallocarray_libc_symbol;
@@ -131,7 +136,7 @@ void nanos_start_function_interception()
 		posix_memalign_libc_symbol = (posix_memalign_t) dlsym(RTLD_NEXT, "posix_memalign");
 		if (posix_memalign_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'posix_memalign': %s\n", dlerror());
-			abort();
+			handle_error();
 		}
 		
 		posix_memalign_symbol = posix_memalign_libc_symbol;
@@ -143,7 +148,7 @@ void nanos_start_function_interception()
 		aligned_alloc_libc_symbol = (aligned_alloc_t) dlsym(RTLD_NEXT, "aligned_alloc");
 		if (aligned_alloc_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'aligned_alloc': %s\n", dlerror());
-			abort();
+			handle_error();
 		}
 		
 		aligned_alloc_symbol = aligned_alloc_libc_symbol;
@@ -156,7 +161,7 @@ void nanos_start_function_interception()
 		reallocarray_libc_symbol = (reallocarray_t) dlsym(RTLD_NEXT, "reallocarray");
 		if (reallocarray_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'reallocarray': %s\n", dlerror());
-			abort();
+			handle_error();
 		}
 		
 		reallocarray_symbol = reallocarray_libc_symbol;

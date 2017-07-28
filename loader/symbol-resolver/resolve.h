@@ -12,7 +12,7 @@
 #define _GNU_SOURCE
 #endif
 
-
+#include "error.h"
 #include "loader.h"
 
 #include <assert.h>
@@ -26,7 +26,8 @@ void (*_##fname##_resolver(void)) (void) \
 { \
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
 		fprintf(stderr, "Nanos 6 loader error: call to " #fname " before library initialization\n"); \
-		abort(); \
+		handle_error(); \
+		return NULL; \
 	} \
 	\
 	void *symbol = (void (*)(void)) dlsym(_nanos6_lib_handle, #fname); \
@@ -38,7 +39,8 @@ void (*_##fname##_resolver(void)) (void) \
 	} \
 	if (symbol == NULL) { \
 		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", _nanos6_lib_filename); \
-		abort(); \
+		handle_error(); \
+		return NULL; \
 	} \
 	\
 	return (void (*)(void)) symbol; \
@@ -52,7 +54,8 @@ void (*_##fname##_resolver(void)) (void) \
 { \
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
 		fprintf(stderr, "Nanos 6 loader error: call to " #fname " before library initialization\n"); \
-		abort(); \
+		handle_error(); \
+		return NULL; \
 	} \
 	\
 	void *symbol = (void (*)(void)) dlsym(_nanos6_lib_handle, #fname); \
@@ -61,7 +64,8 @@ void (*_##fname##_resolver(void)) (void) \
 	} \
 	if (symbol == NULL) { \
 		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", _nanos6_lib_filename); \
-		abort(); \
+		handle_error(); \
+		return NULL; \
 	} \
 	\
 	return (void (*)(void)) symbol; \
@@ -77,7 +81,8 @@ void (*_##fname##_resolver(void)) (void) \
 		_nanos6_loader(); \
 		if (_nanos6_lib_handle == NULL) { \
 			fprintf(stderr, "Nanos 6 loader error: call to " #fname " before library initialization\n"); \
-			abort(); \
+			handle_error(); \
+		return NULL; \
 		} \
 	} \
 	\
@@ -87,7 +92,8 @@ void (*_##fname##_resolver(void)) (void) \
 	} \
 	if (symbol == NULL) { \
 		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", _nanos6_lib_filename); \
-		abort(); \
+		handle_error(); \
+		return NULL; \
 	} \
 	\
 	return (void (*)(void)) symbol; \
