@@ -118,6 +118,8 @@ static char const *dumpPatches()
 
 static char const *dumpRuntimeDetailedInfo()
 {
+	std::cout << "Runtime path " << nanos_get_runtime_path() << std::endl;
+	
 	for (void *it = nanos6_runtime_info_begin(); it != nanos6_runtime_info_end(); it = nanos6_runtime_info_advance(it)) {
 		nanos6_runtime_info_entry_t entry;
 		nanos6_runtime_info_get(it, &entry);
@@ -169,6 +171,7 @@ int main(int argc, char **argv)
 	optionHelpers.emplace_back();
 	optionHelpers.emplace_back("--runtime-compiler", "display the compiler used for this runtime", "Compiled with", nanos_get_runtime_compiler_version);
 	optionHelpers.emplace_back("--runtime-compiler-flags", "display the compiler flags used for this runtime", "Compilation flags", nanos_get_runtime_compiler_flags);
+	optionHelpers.emplace_back("--runtime-path", "display the path of the loaded runtime", "Runtime path", nanos_get_runtime_path);
 	optionHelpers.emplace_back();
 	optionHelpers.emplace_back("--runtime-details", "display detailed runtime and execution environment information", "", dumpRuntimeDetailedInfo);
 	optionHelpers.emplace_back("--dump-patches", "display code changes over the reported version", "", dumpPatches);

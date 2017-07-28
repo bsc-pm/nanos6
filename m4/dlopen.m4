@@ -16,8 +16,10 @@ AC_DEFUN([AC_CHECK_DLOPEN],
 			],
 			[ ${ac_saved_LIBS} ]
 		)
+		AC_CHECK_FUNCS([dlinfo])
 		LIBS="${ac_saved_LIBS}"
 		
 		AC_SUBST([DLOPEN_LIBS])
 	]
 )
+

@@ -4,6 +4,10 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -14,8 +18,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if HAVE_DLINFO
+#include <link.h>
+#endif
+
 #include "main-wrapper.h"
 #include "loader.h"
+
+
+#define MAX_LIB_PATH 8192
 
 
 __attribute__ ((visibility ("hidden"))) void *_nanos6_lib_handle = NULL;
@@ -126,3 +137,31 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 }
 
 
+char const *nanos_get_runtime_path(void)
+{
+#if HAVE_DLINFO
+	if (_nanos6_lib_handle == NULL) {
+		_nanos6_loader();
+	}
+	
+	static char const *lib_path = NULL;
+	static int initialized = 0;
+	
+	if (initialized == 0) {
+		void *symbol = dlsym(_nanos6_lib_handle, "nanos_preinit");
+		assert(symbol != NULL);
+		
+		Dl_info di;
+		int rc = dladdr(symbol, &di);
+		assert(rc != 0);
+		
+		lib_path = strdup(di.dli_fname);
+		
+		initialized = 1;
+	}
+	
+	return lib_path;
+#else
+	return "not available";
+#endif
+}
