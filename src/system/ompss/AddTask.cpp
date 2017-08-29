@@ -24,6 +24,8 @@
 
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskStatus.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 
 #include <cassert>
 #include <cstdlib>
@@ -111,6 +113,7 @@ void nanos_submit_task(void *taskHandle)
 	nanos_task_info *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);
 	if (taskInfo->register_depinfo != 0) {
+		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace);
 	}
 	

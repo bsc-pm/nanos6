@@ -15,6 +15,7 @@
 
 #include "executors/threads/ThreadManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "system/RuntimeInfo.hpp"
 
 #include <fstream>

@@ -31,8 +31,10 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void leaderThreadSpin(InstrumentationContext const &context) {
+	void leaderThreadSpin() {
 		static SpinLock lock;
+		
+		ExternalThreadLocalData &threadLocal = getExternalThreadLocalData();
 		
 		// This is needed since this method can be called by a regular thread on abort
 		std::lock_guard<SpinLock> guard(lock);
@@ -42,7 +44,7 @@ namespace Instrument {
 			LogEntry *logEntry = getLogEntry();
 			assert(logEntry != nullptr);
 			
-			logEntry->appendLocation(context);
+			logEntry->appendLocation(threadLocal._context);
 			logEntry->_contents << " --- LeaderThreadSpin";
 			
 			addLogEntry(logEntry);

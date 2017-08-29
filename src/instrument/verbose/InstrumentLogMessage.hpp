@@ -11,7 +11,9 @@
 #include <cassert>
 
 #include "../api/InstrumentLogMessage.hpp"
-
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
+#include "../support/InstrumentThreadLocalDataSupportImplementation.hpp"
+#include "InstrumentExternalThreadLocalData.hpp"
 #include "InstrumentVerbose.hpp"
 
 

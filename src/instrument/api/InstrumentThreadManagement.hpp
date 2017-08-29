@@ -7,13 +7,24 @@
 #ifndef INSTRUMENT_THREAD_MANAGEMENT_HPP
 #define INSTRUMENT_THREAD_MANAGEMENT_HPP
 
+#include <string>
+
+#include <InstrumentComputePlaceId.hpp>
+#include <InstrumentExternalThreadId.hpp>
+#include <InstrumentThreadId.hpp>
 
 
 namespace Instrument {
 	//! This function is called when the runtime creates a new thread and
 	//! must return an instrumentation-specific thread identifier that will
 	//! be used to identify it throughout the rest of the instrumentation API.
-	thread_id_t createdThread();
+	void createdThread(/* OUT */ thread_id_t &threadId);
+	
+	//! This function is called when the runtime creates a new non-worker thread and
+	//! must return an instrumentation-specific thread identifier that will
+	//! be used to identify it throughout the rest of the instrumentation API.
+	template<typename... TS>
+	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, TS... nameComponents);
 	
 	void threadWillSuspend(thread_id_t threadId, compute_place_id_t cpu);
 	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu);

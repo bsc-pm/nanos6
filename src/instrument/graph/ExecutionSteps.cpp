@@ -9,27 +9,50 @@
 #include <string>
 
 #include "ExecutionSteps.hpp"
+#include "InstrumentComputePlaceId.hpp"
 #include "InstrumentGraph.hpp"
+#include "InstrumentTaskId.hpp"
 
 
 namespace Instrument {
 	namespace Graph {
+		void execution_step_t::emitCPUAndTask(std::ostringstream & oss)
+		{
+			if (_instrumentationContext._externalThreadName != nullptr) {
+				oss << "External Thread " << *_instrumentationContext._externalThreadName << " task " << _instrumentationContext._taskId;
+			} else {
+				oss << "CPU " << _instrumentationContext._computePlaceId;
+				if (_instrumentationContext._taskId != task_id_t()) {
+					oss << " task " << _instrumentationContext._taskId;
+				}
+			}
+		}
+		
+		void execution_step_t::emitCPU(std::ostringstream & oss)
+		{
+			if (_instrumentationContext._externalThreadName != nullptr) {
+				oss << "External Thread " << *_instrumentationContext._externalThreadName;
+			} else {
+				oss << "CPU " << _instrumentationContext._computePlaceId;
+			}
+		}
 		
 		
 		void create_task_step_t::execute()
 		{
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_newTaskId];
 			assert(taskInfo._status == not_created_status);
 			
 			taskInfo._status = not_started_status;
-			taskInfo._lastCPU = _cpu;
+			taskInfo._lastCPU = _instrumentationContext._computePlaceId;
 		}
 		
 		
 		std::string create_task_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << ": start creating task " << _triggererTaskId;
+			emitCPUAndTask(oss);
+			oss << ": start creating task " << _newTaskId;
 			return oss.str();
 		}
 		
@@ -43,18 +66,19 @@ namespace Instrument {
 		
 		void enter_task_step_t::execute()
 		{
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_instrumentationContext._taskId];
 			assert((taskInfo._status == not_started_status) || (taskInfo._status == blocked_status));
 			
 			taskInfo._status = started_status;
-			taskInfo._lastCPU = _cpu;
+			taskInfo._lastCPU = _instrumentationContext._computePlaceId;
 		}
 		
 		
 		std::string enter_task_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << ": enter task " << _triggererTaskId;
+			emitCPU(oss);
+			oss << ": enter task " << _instrumentationContext._taskId;
 			return oss.str();
 		}
 		
@@ -68,18 +92,19 @@ namespace Instrument {
 		
 		void exit_task_step_t::execute()
 		{
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_instrumentationContext._taskId];
 			assert(taskInfo._status == started_status);
 			
 			taskInfo._status = finished_status;
-			taskInfo._lastCPU = _cpu;
+			taskInfo._lastCPU = _instrumentationContext._computePlaceId;
 		}
 		
 		
 		std::string exit_task_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << ": exit task " << _triggererTaskId;
+			emitCPU(oss);
+			oss << ": exit task " << _instrumentationContext._taskId;
 			return oss.str();
 		}
 		
@@ -93,7 +118,7 @@ namespace Instrument {
 		
 		void enter_taskwait_step_t::execute()
 		{
-			if (_triggererTaskId == task_id_t()) {
+			if (_instrumentationContext._taskId == task_id_t()) {
 				return;
 			}
 			
@@ -101,38 +126,39 @@ namespace Instrument {
 			assert(taskwait != nullptr);
 			
 			taskwait->_status = started_status;
-			taskwait->_lastCPU = _cpu;
+			taskwait->_lastCPU = _instrumentationContext._computePlaceId;
 			
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_instrumentationContext._taskId];
 			assert(taskInfo._status == started_status);
 			
 			taskInfo._status = blocked_status;
-			taskInfo._lastCPU = _cpu;
+			taskInfo._lastCPU = _instrumentationContext._computePlaceId;
 		}
 		
 		
 		std::string enter_taskwait_step_t::describe()
 		{
-			if (_triggererTaskId == task_id_t()) {
+			if (_instrumentationContext._taskId == task_id_t()) {
 				return "An external thread enters a taskwait";
 			}
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": enter taskwait " << _taskwaitId;
+			emitCPUAndTask(oss);
+			oss << ": enter taskwait " << _taskwaitId;
 			return oss.str();
 		}
 		
 		
 		bool enter_taskwait_step_t::visible()
 		{
-			return (_triggererTaskId != task_id_t());
+			return (_instrumentationContext._taskId != task_id_t());
 		}
 		
 		
 		
 		void exit_taskwait_step_t::execute()
 		{
-			if (_triggererTaskId == task_id_t()) {
+			if (_instrumentationContext._taskId == task_id_t()) {
 				return;
 			}
 			
@@ -140,48 +166,50 @@ namespace Instrument {
 			assert(taskwait != nullptr);
 			
 			taskwait->_status = finished_status;
-			taskwait->_lastCPU =_cpu;
+			taskwait->_lastCPU =_instrumentationContext._computePlaceId;
 			
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_instrumentationContext._taskId];
 			assert(taskInfo._status == blocked_status);
 			taskInfo._status = started_status;
-			taskInfo._lastCPU = _cpu;
+			taskInfo._lastCPU = _instrumentationContext._computePlaceId;
 		}
 		
 		
 		std::string exit_taskwait_step_t::describe()
 		{
-			if (_triggererTaskId == task_id_t()) {
+			if (_instrumentationContext._taskId == task_id_t()) {
 				return "An external thread exits a taskwait";
 			}
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": exit taskwait " << _taskwaitId;
+			emitCPUAndTask(oss);
+			oss << ": exit taskwait " << _taskwaitId;
 			return oss.str();
 		}
 		
 		
 		bool exit_taskwait_step_t::visible()
 		{
-			return (_triggererTaskId != task_id_t());
+			return (_instrumentationContext._taskId != task_id_t());
 		}
 		
 		
 		
 		void enter_usermutex_step_t::execute()
 		{
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_instrumentationContext._taskId];
 			assert((taskInfo._status == started_status) || (taskInfo._status == blocked_status));
 			
 			taskInfo._status = started_status;
-			taskInfo._lastCPU = _cpu;
+			taskInfo._lastCPU = _instrumentationContext._computePlaceId;
 		}
 		
 		
 		std::string enter_usermutex_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": enter usermutex " << _usermutexId;
+			emitCPUAndTask(oss);
+			oss << ": enter usermutex " << _usermutexId;
 			return oss.str();
 		}
 		
@@ -195,18 +223,19 @@ namespace Instrument {
 		
 		void block_on_usermutex_step_t::execute()
 		{
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_instrumentationContext._taskId];
 			assert(taskInfo._status == started_status);
 			
 			taskInfo._status = blocked_status;
-			taskInfo._lastCPU = _cpu;
+			taskInfo._lastCPU = _instrumentationContext._computePlaceId;
 		}
 		
 		
 		std::string block_on_usermutex_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": blocks on usermutex " << _usermutexId;
+			emitCPUAndTask(oss);
+			oss << ": blocks on usermutex " << _usermutexId;
 			return oss.str();
 		}
 		
@@ -220,22 +249,23 @@ namespace Instrument {
 		
 		void exit_usermutex_step_t::execute()
 		{
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_instrumentationContext._taskId];
 			assert(taskInfo._status == started_status);
 			
-			if (taskInfo._lastCPU == _cpu) {
+			if (taskInfo._lastCPU == _instrumentationContext._computePlaceId) {
 				// Not doing anything for now
 				// Perhaps will represent the state of the mutex, its allocation slots,
 				// and links from those to task-internal critical nodes
 			}
-			taskInfo._lastCPU = _cpu;
+			taskInfo._lastCPU = _instrumentationContext._computePlaceId;
 		}
 		
 		
 		std::string exit_usermutex_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": exit usermutex " << _usermutexId;
+			emitCPUAndTask(oss);
+			oss << ": exit usermutex " << _usermutexId;
 			return oss.str();
 		}
 		
@@ -253,7 +283,7 @@ namespace Instrument {
 			assert(access != nullptr);
 			
 			access->_superAccess = _superAccessId;
-			access->_originator = _triggererTaskId;
+			access->_originator = _originatorTaskId;
 			access->_type = _accessType;
 			access->_accessRange = _range;
 			access->weak() = _weak;
@@ -262,7 +292,7 @@ namespace Instrument {
 			access->satisfied() = _globallySatisfied;
 			access->_status = created_access_status;
 			
-			task_info_t &taskInfo = _taskToInfoMap[_triggererTaskId];
+			task_info_t &taskInfo = _taskToInfoMap[_originatorTaskId];
 			assert(!taskInfo._liveAccesses.contains(_range));
 			taskInfo._liveAccesses.insert(AccessWrapper(access));
 		}
@@ -271,7 +301,8 @@ namespace Instrument {
 		std::string create_data_access_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": creates";
+			emitCPUAndTask(oss);
+			oss << ": creates";
 			if (_globallySatisfied) {
 				oss << " satisfied";
 			}
@@ -329,7 +360,8 @@ namespace Instrument {
 		std::string upgrade_data_access_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": upgrades access " << _accessId << " to";
+			emitCPUAndTask(oss);
+			oss << ": upgrades access " << _accessId << " to";
 			if (_becomesUnsatisfied) {
 				oss << " unsatisfied";
 			}
@@ -380,7 +412,8 @@ namespace Instrument {
 		std::string data_access_becomes_satisfied_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": makes access " << _accessId << " of task " << _targetTaskId;
+			emitCPUAndTask(oss);
+			oss << ": makes access " << _accessId << " of task " << _targetTaskId;
 			if (_readSatisfied) {
 				oss << " read";
 			}
@@ -429,7 +462,8 @@ namespace Instrument {
 			assert(access != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": changes range of "
+			emitCPUAndTask(oss);
+			oss << ": changes range of "
 				<< (access->fragment() ? "entry fragment " : "access ") << _accessId << " to [" << _range << "]";
 			return oss.str();
 		}
@@ -506,7 +540,8 @@ namespace Instrument {
 			assert(newFragment != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": fragments " << (newFragment->fragment() ? "entry fragment " : "access ") ;
+			emitCPUAndTask(oss);
+			oss << ": fragments " << (newFragment->fragment() ? "entry fragment " : "access ") ;
 			oss << _originalAccessId << " of task " << newFragment->_originator << " into " << _newFragmentAccessId << " with range [" << _newRange << "]";
 			return oss.str();
 		}
@@ -548,7 +583,8 @@ namespace Instrument {
 			assert(original != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": creates entry fragment " << _fragmentAccessId << " from access " << _accessId << " of task " << original->_originator;
+			emitCPUAndTask(oss);
+			oss << ": creates entry fragment " << _fragmentAccessId << " from access " << _accessId << " of task " << original->_originator;
 			return oss.str();
 		}
 		
@@ -575,7 +611,8 @@ namespace Instrument {
 			assert(access != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": completes " << (access->fragment() ? "entry fragment " : "access ") << _accessId;
+			emitCPUAndTask(oss);
+			oss << ": completes " << (access->fragment() ? "entry fragment " : "access ") << _accessId;
 			return oss.str();
 		}
 		
@@ -602,7 +639,8 @@ namespace Instrument {
 			assert(access != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": makes " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator << " become removable";
+			emitCPUAndTask(oss);
+			oss << ": makes " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator << " become removable";
 			return oss.str();
 		}
 		
@@ -632,7 +670,8 @@ namespace Instrument {
 			assert(access != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": removes " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator;
+			emitCPUAndTask(oss);
+			oss << ": removes " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator;
 			return oss.str();
 		}
 		
@@ -671,7 +710,8 @@ namespace Instrument {
 			assert(sourceAccess != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": links "
+			emitCPUAndTask(oss);
+			oss << ": links "
 			<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator << " to task " << _sinkTaskId << " over range [" << _range << "]";
 			return oss.str();
 		}
@@ -710,7 +750,8 @@ namespace Instrument {
 			assert(sourceAccess != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": unlinks "
+			emitCPUAndTask(oss);
+			oss << ": unlinks "
 				<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator << " from task " << _sinkTaskId;
 			return oss.str();
 		}
@@ -747,8 +788,8 @@ namespace Instrument {
 			}
 			
 			std::ostringstream oss;
-			
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": moves access " << _accessId << " of task " << original->_originator << " from son of task " << oldSuperAccess->_originator << " to ";
+			emitCPUAndTask(oss);
+			oss << ": moves access " << _accessId << " of task " << original->_originator << " from son of task " << oldSuperAccess->_originator << " to ";
 			if (newSuperAccess != nullptr) {
 				oss << newSuperAccess->_originator;
 			} else {
@@ -781,7 +822,8 @@ namespace Instrument {
 			assert(access != nullptr);
 			
 			std::ostringstream oss;
-			oss << "CPU " << _cpu << " task " << _triggererTaskId << ": " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator << " has new property [" << _longName << " (" << _shortName <<") ]";
+			emitCPUAndTask(oss);
+			oss << ": " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator << " has new property [" << _longName << " (" << _shortName <<") ]";
 			return oss.str();
 		}
 		
@@ -801,11 +843,18 @@ namespace Instrument {
 		std::string log_message_step_t::describe()
 		{
 			std::ostringstream oss;
-			oss << "CPU " << _cpu;
-			if (_triggererTaskId != task_id_t()) {
-				oss << " task " << _triggererTaskId;
+			
+			if (_instrumentationContext._externalThreadName == nullptr) {
+				oss << "CPU " << _instrumentationContext._computePlaceId;
+				if (_instrumentationContext._taskId != task_id_t()) {
+					oss << " task " << _instrumentationContext._taskId;
+				}
+			} else {
+				oss << "ExternalThread " << *_instrumentationContext._externalThreadName;
 			}
+			
 			oss << ": " << _message;
+			
 			return oss.str();
 		}
 		

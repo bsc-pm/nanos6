@@ -17,6 +17,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "lowlevel/threads/ExternalThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
 #include "system/ompss/SpawnFunction.hpp"
@@ -27,6 +28,8 @@
 
 
 static std::atomic<int> shutdownDueToSignalNumber(0);
+
+static ExternalThread *mainThread = nullptr;
 
 void nanos_shutdown(void);
 
@@ -63,7 +66,11 @@ void nanos_preinit(void) {
 	CPUManager::preinitialize();
 	Scheduler::initialize();
 	ThreadManagerPolicy::initialize();
+	
 	Instrument::initialize();
+	mainThread = new ExternalThread("main-thread");
+	mainThread->initializeExternalThread();
+	
 	DependencySystem::initialize();
 	LeaderThread::initialize();
 }
@@ -98,6 +105,7 @@ void nanos_shutdown(void) {
 	
 	LeaderThread::shutdown();
 	Instrument::shutdown();
+	delete mainThread;
 	
 	if (shutdownDueToSignalNumber.load() != 0) {
 		raise(shutdownDueToSignalNumber.load());

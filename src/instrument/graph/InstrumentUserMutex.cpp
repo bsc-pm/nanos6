@@ -45,7 +45,7 @@ namespace Instrument {
 		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		enter_usermutex_step_t *enterUsermutexStep = new enter_usermutex_step_t(context._computePlaceId, context._threadId, usermutexId, context._taskId);
+		enter_usermutex_step_t *enterUsermutexStep = new enter_usermutex_step_t(context, usermutexId);
 		_executionSequence.push_back(enterUsermutexStep);
 	}
 	
@@ -55,7 +55,7 @@ namespace Instrument {
 		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		block_on_usermutex_step_t *blockOnUsermutexStep = new block_on_usermutex_step_t(context._computePlaceId, context._threadId, usermutexId, context._taskId);
+		block_on_usermutex_step_t *blockOnUsermutexStep = new block_on_usermutex_step_t(context, usermutexId);
 		_executionSequence.push_back(blockOnUsermutexStep);
 	}
 	
@@ -65,7 +65,7 @@ namespace Instrument {
 		
 		usermutex_id_t usermutexId = getUserMutexId(userMutex, guard);
 		
-		exit_usermutex_step_t *exitUsermutexStep = new exit_usermutex_step_t(context._computePlaceId, context._threadId, usermutexId, context._taskId);
+		exit_usermutex_step_t *exitUsermutexStep = new exit_usermutex_step_t(context, usermutexId);
 		_executionSequence.push_back(exitUsermutexStep);
 	}
 	

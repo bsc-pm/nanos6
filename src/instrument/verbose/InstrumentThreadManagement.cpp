@@ -9,8 +9,6 @@
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 
 #include "InstrumentThreadManagement.hpp"
 #include "InstrumentVerbose.hpp"
@@ -22,22 +20,39 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	thread_id_t createdThread() {
-		thread_id_t::inner_type_t threadId = GenericIds::getNewThreadId();
+	void createdThread(/* OUT */ thread_id_t &threadId) {
+		threadId = GenericIds::getNewThreadId();
 		
 		if (!_verboseThreadManagement) {
-			return thread_id_t(threadId);
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry();
+		assert(logEntry != nullptr);
+		
+		Instrument::InstrumentationContext tmpContext;
+		tmpContext._threadId = threadId;
+		logEntry->appendLocation(tmpContext);
+		logEntry->_contents << " <-> CreateThread " << threadId;
+		
+		addLogEntry(logEntry);
+	}
+	
+	
+	void createdExternalThread_private(/* OUT */ external_thread_id_t &threadId, std::string const &name) {
+		threadId = GenericIds::getNewExternalThreadId();
+		
+		if (!_verboseThreadManagement) {
+			return;
 		}
 		
 		LogEntry *logEntry = getLogEntry();
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation();
-		logEntry->_contents << " <-> CreateThread " << threadId;
+		logEntry->_contents << " <-> CreateExternalThread " << name << " " << threadId;
 		
 		addLogEntry(logEntry);
-		
-		return thread_id_t(threadId);
 	}
 	
 	

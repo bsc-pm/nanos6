@@ -15,24 +15,58 @@
 #include "../api/InstrumentInitAndShutdown.hpp"
 #include "../generic_ids/GenericIds.hpp"
 #include "system/RuntimeInfo.hpp"
+
 #include "InstrumentExtrae.hpp"
+#include "InstrumentThreadLocalData.hpp"
+
+#include <InstrumentThreadLocalDataSupport.hpp>
+#include <InstrumentThreadLocalDataSupportImplementation.hpp>
 
 
 namespace Instrument {
-	static unsigned int extrae_nanos_get_num_cpus()
+	static unsigned int extrae_nanos_get_thread_id()
+	{
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		if (threadLocal._currentThreadId == thread_id_t()) {
+			ExternalThreadLocalData &externalThreadLocalData = getExternalThreadLocalData();
+			return externalThreadLocalData._currentThreadId;
+		} else {
+			return threadLocal._currentThreadId;
+		}
+	}
+	
+	static unsigned int extrae_nanos_get_virtual_cpu_or_external_thread_id()
+	{
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		if (threadLocal._currentThreadId == thread_id_t()) {
+			ExternalThreadLocalData &externalThreadLocalData = getExternalThreadLocalData();
+			return nanos_get_num_cpus() + externalThreadLocalData._currentThreadId;
+		} else {
+			return nanos_get_current_virtual_cpu();
+		}
+	}
+	
+	
+	static unsigned int extrae_nanos_get_thread_id_for_initialization()
+	{
+		return 0;
+	}
+	
+	static unsigned int extrae_nanos_get_virtual_cpu_or_external_thread_id_for_initialization()
 	{
 		return nanos_get_num_cpus();
 	}
 	
-	static unsigned int extrae_nanos_get_thread_id()
+	static unsigned int extrae_nanos_get_num_threads_for_initialization()
 	{
-		ThreadLocalData &threadLocal = getThreadLocalData();
-		if (threadLocal._currentThreadId != nullptr) {
-			return *threadLocal._currentThreadId;
-		} else {
-			return 0;
-		}
+		return 1;
 	}
+	
+	static unsigned int extrae_nanos_get_num_cpus_and_external_threads_for_initialization()
+	{
+		return nanos_get_num_cpus() + 1;
+	}
+	
 	
 	void initialize()
 	{
@@ -47,14 +81,16 @@ namespace Instrument {
 			RuntimeInfo::addEntry("extrae_config_file", "Extrae Configuration File", getenv("EXTRAE_CONFIG_FILE"));
 		}
 		
-		// Common thread information callbacks
+		// Initial thread information callbacks
+		// We set up a temporary thread_id function since the initialization calls
+		// it (#@!?!) but the real one is not ready to be called yet
 		if (_traceAsThreads) {
-			Extrae_set_threadid_function ( extrae_nanos_get_thread_id );
-			Extrae_set_numthreads_function ( extrae_nanos_get_num_threads );
+			Extrae_set_threadid_function ( extrae_nanos_get_thread_id_for_initialization );
+			Extrae_set_numthreads_function ( extrae_nanos_get_num_threads_for_initialization );
 			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "thread");
 		} else {
-			Extrae_set_threadid_function ( nanos_get_current_virtual_cpu );
-			Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus );
+			Extrae_set_threadid_function ( extrae_nanos_get_virtual_cpu_or_external_thread_id_for_initialization );
+			Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus_and_external_threads_for_initialization );
 			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "cpu");
 		}
 		
@@ -73,6 +109,15 @@ namespace Instrument {
 		Extrae_get_version(&extraeMajor, &extraeMinor, &extraeRevision);
 		oss << extraeMajor << "." << extraeMinor << "." << extraeRevision;
 		RuntimeInfo::addEntry("extrae_version", "Extrae Version", oss.str());
+		
+		// Final thread information callbacks
+		if (_traceAsThreads) {
+			Extrae_set_threadid_function ( extrae_nanos_get_thread_id );
+			Extrae_set_numthreads_function ( extrae_nanos_get_num_threads );
+		} else {
+			Extrae_set_threadid_function ( extrae_nanos_get_virtual_cpu_or_external_thread_id );
+			Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus_and_external_threads );
+		}
 	}
 	
 	

@@ -48,20 +48,14 @@ void LeaderThread::shutdown()
 
 
 LeaderThread::LeaderThread()
-	: _mustExit(false)
+	: HelperThread("leader-thread"), _mustExit(false)
 {
 }
 
 
 void LeaderThread::body()
 {
-	Instrument::task_id_t instrumentationTaskId;
-	Instrument::compute_place_id_t instrumentationComputePlaceId;
-	Instrument::thread_id_t instrumentationThreadId;
-	
-	Instrument::InstrumentationContext instrumentationContext(
-		instrumentationTaskId, instrumentationComputePlaceId, instrumentationThreadId
-	);
+	initializeHelperThread();
 	
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {
 		struct timespec delay = { 0, 1000000}; // 1000 Hz
@@ -72,7 +66,7 @@ void LeaderThread::body()
 		
 		PollingAPI::handleServices();
 		
-		Instrument::leaderThreadSpin(instrumentationContext);
+		Instrument::leaderThreadSpin();
 	}
 	
 	return;

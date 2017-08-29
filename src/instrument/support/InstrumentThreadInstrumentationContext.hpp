@@ -10,6 +10,8 @@
 
 #include <InstrumentInstrumentationContext.hpp>
 
+#include <string>
+
 
 namespace Instrument {
 	//! \brief Creates a thread-local instrumentation context with the scope of the lifetime of the object itself
@@ -22,6 +24,7 @@ namespace Instrument {
 		inline ThreadInstrumentationContext(task_id_t const &taskId);
 		inline ThreadInstrumentationContext(compute_place_id_t const &computePlaceId);
 		inline ThreadInstrumentationContext(thread_id_t const &threadId);
+		inline ThreadInstrumentationContext(std::string const *externalThreadName);
 		
 		inline ~ThreadInstrumentationContext();
 		

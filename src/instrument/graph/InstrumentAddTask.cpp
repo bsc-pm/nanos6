@@ -36,7 +36,7 @@ namespace Instrument {
 		// Get an ID for the task
 		task_id_t taskId = _nextTaskId++;
 		
-		create_task_step_t *createTaskStep = new create_task_step_t(context._computePlaceId, context._threadId, taskId, context._taskId);
+		create_task_step_t *createTaskStep = new create_task_step_t(context, taskId);
 		_executionSequence.push_back(createTaskStep);
 		
 		return taskId;

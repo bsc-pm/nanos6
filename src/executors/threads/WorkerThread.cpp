@@ -30,9 +30,11 @@
 
 void WorkerThread::initialize()
 {
-	setInstrumentationId(Instrument::createdThread());
+	Instrument::createdThread(/* OUT */ _instrumentationId);
 	
 	assert(getComputePlace() != nullptr);
+	
+	Instrument::ThreadInstrumentationContext instrumentationContext((Instrument::task_id_t(), getComputePlace()->getInstrumentationId(), _instrumentationId));
 	
 	markAsCurrentWorkerThread();
 	
@@ -47,10 +49,14 @@ void WorkerThread::body()
 {
 	initialize();
 	
+	CPU *cpu = getComputePlace();
+	Instrument::ThreadInstrumentationContext instrumentationContext((Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId));
+	
 	while (!_mustShutDown) {
 		CPUActivation::activationCheck(this);
 		
-		CPU *cpu = getComputePlace();
+		cpu = getComputePlace();
+		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 		
 		if (_task == nullptr) {
 			Scheduler::polling_slot_t pollingSlot;

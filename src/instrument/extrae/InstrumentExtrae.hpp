@@ -54,6 +54,8 @@ namespace Instrument {
 	
 	extern RWSpinLock _extraeThreadCountLock;
 	
+	extern int _externalThreadCount;
+	
 	inline bool ExtraeTaskInfoCompare::operator()(nanos_task_info *a, nanos_task_info *b) const
 	{
 		std::string labelA(a->task_label != nullptr ? a->task_label : a->declaration_source);
@@ -73,6 +75,7 @@ namespace Instrument {
 	}
 	
 	unsigned int extrae_nanos_get_num_threads();
+	unsigned int extrae_nanos_get_num_cpus_and_external_threads();
 }
 
 #endif

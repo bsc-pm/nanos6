@@ -71,21 +71,19 @@ namespace Instrument {
 			
 			void appendLocation(InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent())
 			{
-				_contents << "Thread:";
-				if (context._threadId != thread_id_t()) {
-					_contents << context._threadId;
+				if (context._externalThreadName != nullptr) {
+					_contents << "ExternalThread:" << *context._externalThreadName;
 				} else {
-					_contents << "external";
-				}
-				
-				_contents << " ComputePlace:";
-				if (context._computePlaceId != compute_place_id_t()) {
-					_contents << context._computePlaceId;
-				} else {
-					_contents << "unknown";
+					assert(context._threadId != thread_id_t());
+					
+					_contents << "Thread:" << context._threadId << " ComputePlace:";
+					if (context._computePlaceId != compute_place_id_t()) {
+						_contents << context._computePlaceId;
+					} else {
+						_contents << "unknown";
+					}
 				}
 			}
-			
 		};
 		
 		extern std::atomic<LogEntry *> _lastEntry;

@@ -15,9 +15,16 @@
 
 
 namespace Instrument {
-	inline thread_id_t createdThread()
+	inline void createdThread(/* OUT */ thread_id_t &threadId)
 	{
-		return Profile::createdThread();
+		threadId = Profile::createdThread();
+	}
+	
+	template<typename... TS>
+	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	{
+		// For now, external threads are not profiled
+		threadId = external_thread_id_t();
 	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)

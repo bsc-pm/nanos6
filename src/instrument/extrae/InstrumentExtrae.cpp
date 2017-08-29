@@ -33,14 +33,20 @@ namespace Instrument {
 	
 	RWSpinLock _extraeThreadCountLock;
 	
+	int _externalThreadCount = 0;
+	
 	unsigned int extrae_nanos_get_num_threads()
 	{
-		if (_traceAsThreads) {
-			return GenericIds::getTotalThreads() + 1 /* Starts counting at 1 */;
-		} else {
-			return nanos_get_num_cpus();
-		}
+		assert(_traceAsThreads);
+		return GenericIds::getTotalThreads();
 	}
-
+	
+	unsigned int extrae_nanos_get_num_cpus_and_external_threads()
+	{
+		assert(!_traceAsThreads);
+		return nanos_get_num_cpus() + GenericIds::getTotalExternalThreads();
+	}
+	
+	
 }
 

@@ -16,13 +16,13 @@
 
 namespace Instrument {
 	struct ThreadLocalData {
-		thread_id_t *_currentThreadId;
+		thread_id_t _currentThreadId;
 		std::vector<int> _nestingLevels;
 		
 		InstrumentationContext _context;
 		
 		ThreadLocalData()
-			: _currentThreadId(nullptr), _nestingLevels()
+			: _currentThreadId(), _nestingLevels()
 		{
 		}
 	};

@@ -13,12 +13,13 @@
 
 #include "InstrumentStats.hpp"
 #include "InstrumentThreadId.hpp"
+#include "InstrumentThreadLocalData.hpp"
 
 #include "performance/HardwareCounters.hpp"
 
 
 namespace Instrument {
-	inline thread_id_t createdThread()
+	inline void createdThread(/* OUT */ thread_id_t &threadId)
 	{
 		HardwareCounters::initializeThread();
 		
@@ -28,7 +29,14 @@ namespace Instrument {
 		Stats::_threadInfoList.push_back(&threadLocal._threadInfo);
 		Stats::_threadInfoListSpinLock.unlock();
 		
-		return thread_id_t();
+		threadId = thread_id_t();
+	}
+	
+	template<typename... TS>
+	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	{
+		// For now, external threads are not instrumented
+		threadId = external_thread_id_t();
 	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceId)

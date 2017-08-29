@@ -14,11 +14,19 @@
 #include "../api/InstrumentThreadManagement.hpp"
 #include "../generic_ids/GenericIds.hpp"
 
+#include <support/StringComposer.hpp>
+
 
 namespace Instrument {
-	inline thread_id_t createdThread()
+	inline void createdThread(/* OUT */ thread_id_t &threadId)
 	{
-		return GenericIds::getNewThreadId();
+		threadId = GenericIds::getNewThreadId();
+	}
+	
+	template<typename... TS>
+	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	{
+		threadId = GenericIds::getCommonPoolNewExternalThreadId();
 	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)

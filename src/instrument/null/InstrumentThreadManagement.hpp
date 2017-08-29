@@ -8,14 +8,21 @@
 #define INSTRUMENT_NULL_THREAD_MANAGEMENT_HPP
 
 
+#include "InstrumentExternalThreadId.hpp"
 #include "InstrumentThreadId.hpp"
 #include "../api/InstrumentThreadManagement.hpp"
 
 
 namespace Instrument {
-	inline thread_id_t createdThread()
+	inline void createdThread(/* OUT */ thread_id_t &threadId)
 	{
-		return thread_id_t();
+		threadId = thread_id_t();
+	}
+	
+	template<typename... TS>
+	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	{
+		threadId = external_thread_id_t();
 	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)

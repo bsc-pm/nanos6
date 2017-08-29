@@ -10,7 +10,26 @@
 
 #include "InstrumentThreadLocalDataSupport.hpp"
 
+#include <lowlevel/threads/ExternalThread.hpp>
 #include <executors/threads/WorkerThread.hpp>
+
+#include <cassert>
+
+
+inline Instrument::ExternalThreadLocalData &Instrument::getExternalThreadLocalData()
+{
+	ExternalThread *currentThread = ExternalThread::getCurrentExternalThread();
+	assert(currentThread != nullptr);
+	
+	return currentThread->getInstrumentationData();
+}
+
+
+inline Instrument::ThreadLocalData &Instrument::getSentinelNonWorkerThreadLocalData()
+{
+	static thread_local ThreadLocalData nonWorkerThreadLocalData;
+	return nonWorkerThreadLocalData;
+}
 
 
 inline Instrument::ThreadLocalData &Instrument::getThreadLocalData()
@@ -19,8 +38,7 @@ inline Instrument::ThreadLocalData &Instrument::getThreadLocalData()
 	if (currentWorkerThread != nullptr) {
 		return currentWorkerThread->getInstrumentationData();
 	} else {
-		static thread_local ThreadLocalData nonWorkerThreadLocalData;
-		return nonWorkerThreadLocalData;
+		return getSentinelNonWorkerThreadLocalData();
 	}
 }
 

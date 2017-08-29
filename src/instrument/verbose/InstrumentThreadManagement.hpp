@@ -13,5 +13,18 @@
 
 #include "../api/InstrumentThreadManagement.hpp"
 
+#include <support/StringComposer.hpp>
+
+
+namespace Instrument {
+	void createdExternalThread_private(/* OUT */ external_thread_id_t &threadId, std::string const &name);
+	
+	template<typename... TS>
+	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, TS... nameComponents)
+	{
+		createdExternalThread_private(threadId, StringComposer::compose(nameComponents...));
+	}
+}
+
 
 #endif // INSTRUMENT_VERBOSE_THREAD_MANAGEMENT_HPP

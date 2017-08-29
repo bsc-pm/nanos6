@@ -44,6 +44,14 @@ inline Instrument::ThreadInstrumentationContext::ThreadInstrumentationContext(th
 	threadLocal._context = InstrumentationContext(_oldContext._taskId, _oldContext._computePlaceId, threadId);
 }
 
+inline Instrument::ThreadInstrumentationContext::ThreadInstrumentationContext(std::string const *externalThreadName)
+{
+	Instrument::ThreadLocalData &threadLocal = Instrument::getThreadLocalData();
+	
+	_oldContext = threadLocal._context;
+	threadLocal._context = InstrumentationContext(externalThreadName);
+}
+
 inline Instrument::ThreadInstrumentationContext::~ThreadInstrumentationContext()
 {
 	Instrument::ThreadLocalData &threadLocal = Instrument::getThreadLocalData();
@@ -54,15 +62,23 @@ inline Instrument::ThreadInstrumentationContext::~ThreadInstrumentationContext()
 inline Instrument::InstrumentationContext const &Instrument::ThreadInstrumentationContext::get() const
 {
 	Instrument::ThreadLocalData &threadLocal = Instrument::getThreadLocalData();
-	
-	return threadLocal._context;
+	if (&threadLocal != &Instrument::getSentinelNonWorkerThreadLocalData()) {
+		return threadLocal._context;
+	} else {
+		Instrument::ExternalThreadLocalData &externalThreadLocal = Instrument::getExternalThreadLocalData();
+		return externalThreadLocal._context;
+	}
 }
 
 inline Instrument::InstrumentationContext const &Instrument::ThreadInstrumentationContext::getCurrent()
 {
 	Instrument::ThreadLocalData &threadLocal = Instrument::getThreadLocalData();
-	
-	return threadLocal._context;
+	if (&threadLocal != &Instrument::getSentinelNonWorkerThreadLocalData()) {
+		return threadLocal._context;
+	} else {
+		Instrument::ExternalThreadLocalData &externalThreadLocal = Instrument::getExternalThreadLocalData();
+		return externalThreadLocal._context;
+	}
 }
 
 inline void Instrument::ThreadInstrumentationContext::updateComputePlace(compute_place_id_t const &computePlaceId)

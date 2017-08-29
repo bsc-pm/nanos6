@@ -8,13 +8,15 @@
 #define INSTRUMENT_THREAD_LOCAL_DATA_SUPPORT_HPP
 
 
+#include <InstrumentExternalThreadLocalData.hpp>
 #include <InstrumentThreadLocalData.hpp>
 
 
 namespace Instrument {
-	struct ThreadLocalData;
-	
+	inline ExternalThreadLocalData &getExternalThreadLocalData();
 	inline ThreadLocalData &getThreadLocalData();
+	
+	inline ThreadLocalData &getSentinelNonWorkerThreadLocalData();
 }
 
 

@@ -10,11 +10,11 @@
 
 #include <atomic>
 
-#include "lowlevel/threads/KernelLevelThread.hpp"
+#include "lowlevel/threads/HelperThread.hpp"
 
 
 //! \brief This class contains the code of the leader thread that consists in performing maintenance duties
-class LeaderThread : public KernelLevelThread {
+class LeaderThread : public HelperThread {
 	static LeaderThread *_singleton;
 	
 	std::atomic<bool> _mustExit;

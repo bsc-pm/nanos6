@@ -341,6 +341,9 @@ common_sources = \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/lowlevel/threads/ExternalThread.cpp \
+	src/lowlevel/threads/ExternalThread.hpp \
+	src/lowlevel/threads/HelperThread.hpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
 	src/lowlevel/threads/KernelLevelThread.hpp \
 	src/lowlevel/threads/posix/KernelLevelThread.hpp \
@@ -380,6 +383,7 @@ common_sources = \
 	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/support/InstrumentedThread.hpp \
+	src/support/StringComposer.hpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
 	src/system/If0Task.hpp \
@@ -563,6 +567,8 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentDependenciesByAccess.hpp \
 	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
+	src/instrument/null/InstrumentExternalThreadId.hpp \
+	src/instrument/null/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
 	src/instrument/null/InstrumentInstrumentationContext.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
@@ -581,6 +587,7 @@ noinstrument_sources = \
 instrument_generic_ids_sources = \
 	src/instrument/generic_ids/GenericIds.cpp \
 	src/instrument/generic_ids/GenericIds.hpp \
+	src/instrument/generic_ids/InstrumentExternalThreadId.hpp \
 	src/instrument/generic_ids/InstrumentThreadId.hpp
 
 instrument_graph_sources = \
@@ -599,6 +606,8 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.cpp \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
+	src/instrument/graph/InstrumentExternalThreadId.hpp \
+	src/instrument/graph/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/graph/InstrumentGraph.cpp \
 	src/instrument/graph/InstrumentGraph.hpp \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
@@ -623,7 +632,6 @@ instrument_graph_sources = \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
-
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentAddTask.hpp \
 	src/instrument/profile/InstrumentComputePlaceId.hpp \
@@ -632,6 +640,8 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentDependenciesByAccess.hpp \
 	src/instrument/profile/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
+	src/instrument/profile/InstrumentExternalThreadId.hpp \
+	src/instrument/profile/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
 	src/instrument/profile/InstrumentInstrumentationContext.hpp \
@@ -678,6 +688,7 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
 
@@ -694,6 +705,8 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
+	src/instrument/verbose/InstrumentExternalThreadId.hpp \
+	src/instrument/verbose/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.cpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
 	src/instrument/verbose/InstrumentLeaderThread.cpp \
@@ -715,6 +728,7 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentVerbose.cpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
+	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
 
@@ -727,6 +741,8 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
+	src/instrument/extrae/InstrumentExternalThreadId.hpp \
+	src/instrument/extrae/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/extrae/InstrumentExtrae.cpp \
 	src/instrument/extrae/InstrumentExtrae.hpp \
 	src/instrument/extrae/InstrumentInitAndShutdown.hpp \

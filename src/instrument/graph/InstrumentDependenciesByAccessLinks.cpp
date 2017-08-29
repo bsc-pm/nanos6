@@ -35,7 +35,7 @@ namespace Instrument {
 		data_access_id_t dataAccessId = Graph::_nextDataAccessId++;
 		
 		create_data_access_step_t *step = new create_data_access_step_t(
-			context._computePlaceId, context._threadId,
+			context,
 			superAccessId, dataAccessId, accessType, range, weak,
 			readSatisfied, writeSatisfied, globallySatisfied,
 			originatorTaskId
@@ -80,11 +80,10 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		upgrade_data_access_step_t *step = new upgrade_data_access_step_t(
-			context._computePlaceId, context._threadId,
+			context,
 			dataAccessId,
 			newAccessType, newWeakness,
-			becomesUnsatisfied,
-			context._taskId
+			becomesUnsatisfied
 		);
 		_executionSequence.push_back(step);
 		
@@ -103,10 +102,10 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		data_access_becomes_satisfied_step_t *step = new data_access_becomes_satisfied_step_t(
-			context._computePlaceId, context._threadId,
+			context,
 			dataAccessId,
 			readSatisfied, writeSatisfied, globallySatisfied,
-			context._taskId, targetTaskId
+			targetTaskId
 		);
 		_executionSequence.push_back(step);
 	}
@@ -120,10 +119,9 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		modified_data_access_range_step_t *step = new modified_data_access_range_step_t(
-			context._computePlaceId, context._threadId,
+			context,
 			dataAccessId,
-			newRange,
-			context._taskId
+			newRange
 		);
 		_executionSequence.push_back(step);
 		
@@ -147,9 +145,8 @@ namespace Instrument {
 		data_access_id_t newDataAccessId = Graph::_nextDataAccessId++;
 		
 		fragment_data_access_step_t *step = new fragment_data_access_step_t(
-			context._computePlaceId, context._threadId,
-			dataAccessId, newDataAccessId, newRange,
-			context._taskId
+			context,
+			dataAccessId, newDataAccessId, newRange
 		);
 		_executionSequence.push_back(step);
 		
@@ -206,9 +203,8 @@ namespace Instrument {
 		data_access_id_t newDataAccessId = Graph::_nextDataAccessId++;
 		
 		create_subaccess_fragment_step_t *step = new create_subaccess_fragment_step_t(
-			context._computePlaceId, context._threadId,
-			dataAccessId, newDataAccessId,
-			context._taskId
+			context,
+			dataAccessId, newDataAccessId
 		);
 		_executionSequence.push_back(step);
 		
@@ -249,9 +245,8 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		completed_data_access_step_t *step = new completed_data_access_step_t(
-			context._computePlaceId, context._threadId,
-			dataAccessId,
-			context._taskId
+			context,
+			dataAccessId
 		);
 		_executionSequence.push_back(step);
 	}
@@ -264,8 +259,8 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		data_access_becomes_removable_step_t *step = new data_access_becomes_removable_step_t(
-			context._computePlaceId, context._threadId,
-			dataAccessId, context._taskId
+			context,
+			dataAccessId
 		);
 		_executionSequence.push_back(step);
 	}
@@ -278,8 +273,8 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		removed_data_access_step_t *step = new removed_data_access_step_t(
-			context._computePlaceId, context._threadId,
-			dataAccessId, context._taskId
+			context,
+			dataAccessId
 		);
 		_executionSequence.push_back(step);
 	}
@@ -300,11 +295,10 @@ namespace Instrument {
 		); // A "not created" link
 		
 		linked_data_accesses_step_t *step = new linked_data_accesses_step_t(
-			context._computePlaceId, context._threadId,
+			context,
 			sourceAccessId, sinkTaskId,
 			range,
-			direct, bidirectional,
-			context._taskId
+			direct, bidirectional
 		);
 		_executionSequence.push_back(step);
 	}
@@ -319,9 +313,8 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		unlinked_data_accesses_step_t *step = new unlinked_data_accesses_step_t(
-			context._computePlaceId, context._threadId,
-			sourceAccessId, sinkTaskId, direct,
-			context._taskId
+			context,
+			sourceAccessId, sinkTaskId, direct
 		);
 		_executionSequence.push_back(step);
 	}
@@ -336,9 +329,8 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		reparented_data_access_step_t *step = new reparented_data_access_step_t(
-			context._computePlaceId, context._threadId,
-			oldSuperAccessId, newSuperAccessId, dataAccessId,
-			context._taskId
+			context,
+			oldSuperAccessId, newSuperAccessId, dataAccessId
 		);
 		_executionSequence.push_back(step);
 	}
@@ -353,10 +345,9 @@ namespace Instrument {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
 		new_data_access_property_step_t *step = new new_data_access_property_step_t(
-			context._computePlaceId, context._threadId,
+			context,
 			dataAccessId,
-			shortPropertyName, longPropertyName,
-			context._taskId
+			shortPropertyName, longPropertyName
 		);
 		_executionSequence.push_back(step);
 	}
