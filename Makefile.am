@@ -557,12 +557,12 @@ no_hardware_counters_sources = \
 
 noinstrument_sources = \
 	src/instrument/null/InstrumentAddTask.hpp \
+	src/instrument/null/InstrumentComputePlaceId.hpp \
+	src/instrument/null/InstrumentComputePlaceManagement.hpp \
 	src/instrument/null/InstrumentDataAccessId.hpp \
 	src/instrument/null/InstrumentDependenciesByAccess.hpp \
 	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
-	src/instrument/null/InstrumentComputePlaceId.hpp \
-	src/instrument/null/InstrumentComputePlaceManagement.hpp \
 	src/instrument/null/InstrumentInitAndShutdown.hpp \
 	src/instrument/null/InstrumentInstrumentationContext.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
@@ -592,6 +592,8 @@ instrument_graph_sources = \
 	src/instrument/graph/GenerateEdges.hpp \
 	src/instrument/graph/InstrumentAddTask.cpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
+	src/instrument/graph/InstrumentComputePlaceId.hpp \
+	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.cpp \
@@ -599,8 +601,6 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
 	src/instrument/graph/InstrumentGraph.cpp \
 	src/instrument/graph/InstrumentGraph.hpp \
-	src/instrument/graph/InstrumentComputePlaceId.hpp \
-	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
 	src/instrument/graph/InstrumentInitAndShutdown.cpp \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
@@ -626,12 +626,12 @@ instrument_graph_sources = \
 
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentAddTask.hpp \
+	src/instrument/profile/InstrumentComputePlaceId.hpp \
+	src/instrument/profile/InstrumentComputePlaceManagement.hpp \
 	src/instrument/profile/InstrumentDataAccessId.hpp \
 	src/instrument/profile/InstrumentDependenciesByAccess.hpp \
 	src/instrument/profile/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
-	src/instrument/profile/InstrumentComputePlaceId.hpp \
-	src/instrument/profile/InstrumentComputePlaceManagement.hpp \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
 	src/instrument/profile/InstrumentInstrumentationContext.hpp \
@@ -654,12 +654,14 @@ instrument_profile_sources = \
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentAddTask.hpp \
+	src/instrument/stats/InstrumentComputePlaceId.hpp \
+	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
 	src/instrument/stats/InstrumentDataAccessId.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
-	src/instrument/stats/InstrumentComputePlaceId.hpp \
-	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
+	src/instrument/stats/InstrumentExternalThreadId.hpp \
+	src/instrument/stats/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
@@ -683,6 +685,8 @@ instrument_verbose_sources = \
 	$(instrument_generic_ids_sources) \
 	src/instrument/verbose/InstrumentAddTask.cpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
+	src/instrument/verbose/InstrumentComputePlaceId.hpp \
+	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.cpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
@@ -690,8 +694,6 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
-	src/instrument/verbose/InstrumentComputePlaceId.hpp \
-	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.cpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
 	src/instrument/verbose/InstrumentLeaderThread.cpp \
@@ -719,14 +721,14 @@ instrument_verbose_sources = \
 instrument_extrae_sources = \
 	$(instrument_generic_ids_sources) \
 	src/instrument/extrae/InstrumentAddTask.hpp \
+	src/instrument/extrae/InstrumentComputePlaceId.hpp \
+	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
 	src/instrument/extrae/InstrumentDataAccessId.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
 	src/instrument/extrae/InstrumentExtrae.cpp \
 	src/instrument/extrae/InstrumentExtrae.hpp \
-	src/instrument/extrae/InstrumentComputePlaceId.hpp \
-	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
 	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
