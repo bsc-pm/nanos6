@@ -58,7 +58,7 @@ void *nanos6_intercepted_reallocarray(void *ptr, size_t nmemb, size_t size)
 int nanos6_intercepted_posix_memalign(void **memptr, size_t alignment, size_t size)
 {
 	Instrument::Profile::lightweightDisableForCurrentThread();
-	auto result = SymbolResolver<int, void **, size_t, size_t>::call("memalign", memptr, alignment, size);
+	auto result = SymbolResolver<int, void **, size_t, size_t>::call("posix_memalign", memptr, alignment, size);
 	Instrument::Profile::lightweightEnableForCurrentThread();
 	
 	return result;
