@@ -61,6 +61,11 @@ struct BottomMapEntry {
 		return _range;
 	}
 	
+	void setAccessRange(DataAccessRange const &newRange)
+	{
+		_range = newRange;
+	}
+	
 };
 
 

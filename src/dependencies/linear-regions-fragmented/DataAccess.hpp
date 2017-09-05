@@ -29,9 +29,14 @@ class Task;
 #include "DataAccessRange.hpp"
 #include "ReductionSpecific.hpp"
 
+#include <InstrumentDependenciesByAccessLinks.hpp>
+
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
-struct DataAccess : public DataAccessBase {
+struct DataAccess : protected DataAccessBase {
+	friend struct TaskDataAccessLinkingArtifacts;
+	
+private:
 	enum status_bit_coding {
 		COMPLETE_BIT = 0,
 		READ_SATISFIED_BIT,
@@ -57,10 +62,14 @@ struct DataAccess : public DataAccessBase {
 		TOTAL_STATUS_BITS
 	};
 	
+public:
+	typedef std::bitset<TOTAL_STATUS_BITS> status_t;
+	
+	
+private:
 	//! The range of data covered by the access
 	DataAccessRange _range;
 	
-	typedef std::bitset<TOTAL_STATUS_BITS> status_t;
 	status_t _status;
 	
 	//! Direct next access
@@ -69,76 +78,161 @@ struct DataAccess : public DataAccessBase {
 	//! An index that determines the data type and the operation of the reduction (if applicable)
 	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
 	
+	
+public:
 	DataAccess(
 		DataAccessType type, bool weak,
 		Task *originator,
 		DataAccessRange accessRange,
 		bool fragment,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
-		Instrument::data_access_id_t instrumentationId
+		Instrument::data_access_id_t instrumentationId = Instrument::data_access_id_t(),
+		status_t status = 0, Task *next = nullptr
 	)
 		: DataAccessBase(type, weak, originator, instrumentationId),
 		_range(accessRange),
-		_status(0),
-		_next(nullptr),
+		_status(status),
+		_next(next),
 		_reductionTypeAndOperatorIndex(reductionTypeAndOperatorIndex)
 	{
-		assert(originator != 0);
+		assert(originator != nullptr);
 		
 		if (fragment) {
 			_status[FRAGMENT_BIT] = true;
 		}
 	}
 	
-	
-	typename status_t::reference complete()
+	~DataAccess()
 	{
-		return _status[COMPLETE_BIT];
+		Instrument::removedDataAccess(_instrumentationId);
+	}
+	
+	inline DataAccessType getType() const
+	{
+		return _type;
+	}
+	
+	inline bool isWeak() const
+	{
+		return _weak;
+	}
+	
+	inline Task *getOriginator() const
+	{
+		return _originator;
+	}
+	
+	inline void setNewInstrumentationId(Instrument::task_id_t const &taskInstrumentationId)
+	{
+		_instrumentationId = Instrument::createdDataAccess(
+			Instrument::data_access_id_t(),
+			_type, _weak, _range,
+			false, false, /* false, */ false,
+			taskInstrumentationId
+		);
+	}
+	
+	inline void setUpNewFragment(Instrument::data_access_id_t originalAccessInstrumentationId)
+	{
+		_instrumentationId = Instrument::fragmentedDataAccess(originalAccessInstrumentationId, _range);
+		if (isTopmost()) {
+			Instrument::newDataAccessProperty(_instrumentationId, "T", "Topmost");
+		}
+		if (hasPropagatedReadSatisfiability()) {
+			Instrument::newDataAccessProperty(_instrumentationId, "PropR", "Propagated Read Satisfiability");
+		}
+		if (hasPropagatedWriteSatisfiability()) {
+			Instrument::newDataAccessProperty(_instrumentationId, "PropW", "Propagated Write Satisfiability");
+		}
+	}
+	
+	inline bool upgrade(bool newWeak, DataAccessType newType)
+	{
+		if ((newWeak != _weak) || (newType != _type)) {
+			bool oldWeak = _weak;
+			DataAccessType oldType = _type;
+			
+			bool wasSatisfied = satisfied();
+			
+			_weak = newWeak;
+			_type = newType;
+			
+			Instrument::upgradedDataAccess(
+				_instrumentationId,
+				oldType, oldWeak,
+				newType, newWeak,
+				wasSatisfied && !satisfied()
+			);
+			
+			return true;
+		}
+		
+		return false;
+	}
+	
+	status_t const &getStatus() const
+	{
+		return _status;
+	}
+	
+	void setComplete()
+	{
+		assert(!complete());
+		_status[COMPLETE_BIT] = true;
+		Instrument::completedDataAccess(_instrumentationId);
 	}
 	bool complete() const
 	{
 		return _status[COMPLETE_BIT];
 	}
 	
-	typename status_t::reference readSatisfied()
+	void setReadSatisfied()
 	{
-		return _status[READ_SATISFIED_BIT];
+		assert(!readSatisfied());
+		_status[READ_SATISFIED_BIT] = true;
 	}
 	bool readSatisfied() const
 	{
 		return _status[READ_SATISFIED_BIT];
 	}
 	
-	typename status_t::reference writeSatisfied()
+	void setWriteSatisfied()
 	{
-		return _status[WRITE_SATISFIED_BIT];
+		assert(!writeSatisfied());
+		_status[WRITE_SATISFIED_BIT] = true;
 	}
 	bool writeSatisfied() const
 	{
 		return _status[WRITE_SATISFIED_BIT];
 	}
 	
-	typename status_t::reference concurrentSatisfied()
+	void setConcurrentSatisfied()
 	{
-		return _status[CONCURRENT_SATISFIED_BIT];
+		assert(!concurrentSatisfied());
+		_status[CONCURRENT_SATISFIED_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "ConSat", "Concurrent Satisfied");
 	}
 	bool concurrentSatisfied() const
 	{
 		return _status[CONCURRENT_SATISFIED_BIT];
 	}
 	
-	typename status_t::reference anyReductionSatisfied()
+	void setAnyReductionSatisfied()
 	{
-		return _status[ANY_REDUCTION_SATISFIED_BIT];
+		assert(!anyReductionSatisfied());
+		_status[ANY_REDUCTION_SATISFIED_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "ARSat", "Any Reduction Satisfied");
 	}
 	bool anyReductionSatisfied() const
 	{
 		return _status[ANY_REDUCTION_SATISFIED_BIT];
 	}
 	
-	typename status_t::reference matchingReductionSatisfied()
+	void setMatchingReductionSatisfied()
 	{
-		return _status[MATCHING_REDUCTION_SATISFIED_BIT];
+		assert(!matchingReductionSatisfied());
+		_status[MATCHING_REDUCTION_SATISFIED_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "MRSat", "Matching Reduction Satisfied");
 	}
 	bool matchingReductionSatisfied() const
 	{
@@ -150,18 +244,30 @@ struct DataAccess : public DataAccessBase {
 		return _status[FRAGMENT_BIT];
 	}
 	
-	typename status_t::reference hasSubaccesses()
+	void setHasSubaccesses()
 	{
-		return _status[HAS_SUBACCESSES_BIT];
+		assert(!hasSubaccesses());
+		_status[HAS_SUBACCESSES_BIT] = true;
+	}
+	void unsetHasSubaccesses()
+	{
+		assert(hasSubaccesses());
+		_status[HAS_SUBACCESSES_BIT] = false;
 	}
 	bool hasSubaccesses() const
 	{
 		return _status[HAS_SUBACCESSES_BIT];
 	}
 	
-	typename status_t::reference isInBottomMap()
+	void setInBottomMap()
 	{
-		return _status[IN_BOTTOM_MAP];
+		assert(!isInBottomMap());
+		_status[IN_BOTTOM_MAP] = true;
+	}
+	void unsetInBottomMap()
+	{
+		assert(isInBottomMap());
+		_status[IN_BOTTOM_MAP] = false;
 	}
 	bool isInBottomMap() const
 	{
@@ -169,63 +275,77 @@ struct DataAccess : public DataAccessBase {
 	}
 	
 	
-	typename status_t::reference isTopmost()
+	void setTopmost()
 	{
-		return _status[TOPMOST_BIT];
+		assert(!isTopmost());
+		_status[TOPMOST_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "T", "Topmost");
 	}
 	bool isTopmost() const
 	{
 		return _status[TOPMOST_BIT];
 	}
 	
-	typename status_t::reference hasForcedRemoval()
+	void forceRemoval()
 	{
-		return _status[FORCE_REMOVAL_BIT];
+		assert(!hasForcedRemoval());
+		_status[FORCE_REMOVAL_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "F", "Forced Removal");
 	}
 	bool hasForcedRemoval() const
 	{
 		return _status[FORCE_REMOVAL_BIT];
 	}
 	
-	typename status_t::reference hasPropagatedReadSatisfiability()
+	void setPropagatedReadSatisfiability()
 	{
-		return _status[HAS_PROPAGATED_READ_SATISFIABILITY_BIT];
+		assert(!hasPropagatedReadSatisfiability());
+		_status[HAS_PROPAGATED_READ_SATISFIABILITY_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "PropR", "Propagated Read Satisfiability");
 	}
 	bool hasPropagatedReadSatisfiability() const
 	{
 		return _status[HAS_PROPAGATED_READ_SATISFIABILITY_BIT];
 	}
 	
-	typename status_t::reference hasPropagatedWriteSatisfiability()
+	void setPropagatedWriteSatisfiability()
 	{
-		return _status[HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT];
+		assert(!hasPropagatedWriteSatisfiability());
+		_status[HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "PropW", "Propagated Write Satisfiability");
 	}
 	bool hasPropagatedWriteSatisfiability() const
 	{
 		return _status[HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT];
 	}
 	
-	typename status_t::reference hasPropagatedConcurrentSatisfiability()
+	void setPropagatedConcurrentSatisfiability()
 	{
-		return _status[HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT];
+		assert(!hasPropagatedConcurrentSatisfiability());
+		_status[HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
 	}
 	bool hasPropagatedConcurrentSatisfiability() const
 	{
 		return _status[HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT];
 	}
 	
-	typename status_t::reference hasPropagatedAnyReductionSatisfiability()
+	void setPropagatedAnyReductionSatisfiability()
 	{
-		return _status[HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT];
+		assert(!hasPropagatedAnyReductionSatisfiability());
+		_status[HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "PropAR", "Propagated Any Reduction Satisfiability");
 	}
 	bool hasPropagatedAnyReductionSatisfiability() const
 	{
 		return _status[HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT];
 	}
 	
-	typename status_t::reference hasPropagatedMatchingReductionSatisfiability()
+	void setPropagatedMatchingReductionSatisfiability()
 	{
-		return _status[HAS_PROPAGATED_MATCHING_REDUCTION_SATISFIABILITY_BIT];
+		assert(!hasPropagatedMatchingReductionSatisfiability());
+		_status[HAS_PROPAGATED_MATCHING_REDUCTION_SATISFIABILITY_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "PropMR", "Propagated Matching Reduction Satisfiability");
 	}
 	bool hasPropagatedMatchingReductionSatisfiability() const
 	{
@@ -234,18 +354,21 @@ struct DataAccess : public DataAccessBase {
 	
 	
 #ifndef NDEBUG
-	typename status_t::reference hasPropagatedTopmostProperty()
+	void setPropagatedTopmostProperty()
 	{
-		return _status[HAS_PROPAGATED_TOPMOST_PROPERTY_BIT];
+		assert(!hasPropagatedTopmostProperty());
+		_status[HAS_PROPAGATED_TOPMOST_PROPERTY_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "PropT", "Propagated Topmost Property");
 	}
 	bool hasPropagatedTopmostProperty() const
 	{
 		return _status[HAS_PROPAGATED_TOPMOST_PROPERTY_BIT];
 	}
 	
-	typename status_t::reference isReachable()
+	void setReachable()
 	{
-		return _status[IS_REACHABLE_BIT];
+		assert(!isReachable());
+		_status[IS_REACHABLE_BIT] = true;
 	}
 	bool isReachable() const
 	{
@@ -259,6 +382,7 @@ struct DataAccess : public DataAccessBase {
 		assert(!_status[HAS_BEEN_DISCOUNTED_BIT]);
 		_status[HAS_BEEN_DISCOUNTED_BIT] = true;
 #endif
+		Instrument::dataAccessBecomesRemovable(_instrumentationId);
 	}
 	
 #ifndef NDEBUG
@@ -268,14 +392,39 @@ struct DataAccess : public DataAccessBase {
 	}
 #endif
 	
+	void inheritFragmentStatus(DataAccess const *other)
+	{
+		if (other->readSatisfied()) {
+			setReadSatisfied();
+		}
+		if (other->writeSatisfied()) {
+			setWriteSatisfied();
+		}
+		if (other->concurrentSatisfied()) {
+			setConcurrentSatisfied();
+		}
+		if (other->anyReductionSatisfied()) {
+			setAnyReductionSatisfied();
+		}
+		if (other->matchingReductionSatisfied()) {
+			setMatchingReductionSatisfied();
+		}
+		if (other->complete()) {
+			setComplete();
+		}
+	}
+	
 	DataAccessRange const &getAccessRange() const
 	{
 		return _range;
 	}
 	
-	DataAccessRange &getAccessRange()
+	void setAccessRange(DataAccessRange const &newRange)
 	{
-		return _range;
+		_range = newRange;
+		if (_instrumentationId != Instrument::data_access_id_t()) {
+			Instrument::modifiedDataAccessRange(_instrumentationId, _range);
+		}
 	}
 	
 	
@@ -307,7 +456,24 @@ struct DataAccess : public DataAccessBase {
 	{
 		return (_next != nullptr);
 	}
+	void setNext(Task *next)
+	{
+		_next = next;
+	}
+	Task *getNext() const
+	{
+		return _next;
+	}
 	
+	reduction_type_and_operator_index_t getReductionTypeAndOperatorIndex() const
+	{
+		return _reductionTypeAndOperatorIndex;
+	}
+	
+	Instrument::data_access_id_t const &getInstrumentationId() const
+	{
+		return _instrumentationId;
+	}
 	
 	bool isRemovable(
 		bool forceRemoval,

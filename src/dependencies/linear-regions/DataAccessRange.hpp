@@ -162,7 +162,7 @@ public:
 		ThisOnlyProcessorType thisOnlyProcessor,
 		IntersectingProcessorType intersectingProcessor,
 		OtherOnlyProcessorType otherOnlyProcessor
-	) {
+	) const {
 		FragmentBoundaries boundaries(*this, fragmeterRange);
 		
 		char *intersectionStart = std::max(boundaries._firstStart, boundaries._secondStart);

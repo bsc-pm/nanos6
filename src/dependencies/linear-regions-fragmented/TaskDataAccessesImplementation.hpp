@@ -9,8 +9,6 @@
 
 #include <boost/intrusive/parent_from_member.hpp>
 
-#include <InstrumentDependenciesByAccessLinks.hpp>
-
 #include "BottomMapEntry.hpp"
 #include "DataAccess.hpp"
 #include "TaskDataAccesses.hpp"
@@ -31,7 +29,6 @@ inline TaskDataAccesses::~TaskDataAccesses()
 	std::lock_guard<spinlock_t> guard(_lock);
 	_accesses.deleteAll(
 		[&](DataAccess *access) {
-			Instrument::removedDataAccess(access->_instrumentationId);
 			delete access;
 		}
 	);
@@ -44,7 +41,6 @@ inline TaskDataAccesses::~TaskDataAccesses()
 	
 	_accessFragments.deleteAll(
 		[&](DataAccess *fragment) {
-			Instrument::removedDataAccess(fragment->_instrumentationId);
 			delete fragment;
 		}
 	);

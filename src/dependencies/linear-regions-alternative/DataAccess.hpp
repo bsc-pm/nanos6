@@ -157,6 +157,11 @@ struct DataAccess : public DataAccessBase {
 	}
 #endif
 	
+	void setAccessRange(DataAccessRange const &newRange)
+	{
+		_range = newRange;
+	}
+	
 	DataAccessRange const &getAccessRange() const
 	{
 		return _range;

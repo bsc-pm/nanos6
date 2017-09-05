@@ -30,7 +30,7 @@ void *nanos_get_original_reduction_address(const void *address)
 		bool isReductionAccess = currentTask->getDataAccesses().
 			_accesses.exists(range, [&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 					DataAccess *targetAccess = &(*position);
-					return targetAccess->_type == REDUCTION_ACCESS_TYPE;
+					return targetAccess->getType() == REDUCTION_ACCESS_TYPE;
 				});
 		
 		if (isReductionAccess) {
