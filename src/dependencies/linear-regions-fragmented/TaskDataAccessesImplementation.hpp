@@ -18,6 +18,7 @@
 inline TaskDataAccesses::~TaskDataAccesses()
 {
 	assert(!hasBeenDeleted());
+	assert(_removalBlockers == 0);
 	
 #ifndef NDEBUG
 	Task *task = boost::intrusive::get_parent_from_member<Task>(this, &Task::_dataAccesses);
