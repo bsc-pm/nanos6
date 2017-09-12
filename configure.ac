@@ -82,6 +82,7 @@ AC_CHECK_PAPI
 AC_CHECK_LIBNUMA
 
 AC_CHECK_FUNCS([reallocarray aligned_alloc])
+AC_CHECK_MADV_FREE
 
 AC_CHECK_LIB([rt], [clock_gettime], [CLOCK_LIBS="${CLOCK_LIBS} -lrt"])
 AC_SUBST(CLOCK_LIBS)

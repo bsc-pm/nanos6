@@ -4,6 +4,10 @@
 	Copyright (C) 2017 Barcelona Supercomputing Center (BSC)
 */
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifndef NDEBUG
 #include <loader/malloc.h>
 #include <lowlevel/SymbolResolver.hpp>
@@ -273,11 +277,19 @@ static void nanos6_protected_memory_deallocation(void *address)
 	FatalErrorHandler::check(!allocationInfo->_deallocated, "Attempt to free memory twice");
 	
 	size_t userPagesSize = ((size_t) allocationInfo->_protected2Start) - ((size_t) allocationInfo->_firstUserPage);
+#if HAVE_MADV_FREE
 	int rc = madvise(allocationInfo->_firstUserPage, userPagesSize, MADV_FREE);
 	FatalErrorHandler::handle(rc, "Failed to discard pages during memory deallocation");
 	
 	rc = mprotect(allocationInfo->_firstUserPage, userPagesSize, PROT_NONE);
 	FatalErrorHandler::handle(rc, "Failed to protect pages during memory deallocation");
+#else
+	int rc = munmap(allocationInfo->_firstUserPage, userPagesSize);
+	FatalErrorHandler::handle(rc, "Failed to unmap pages during memory deallocation");
+	
+	void *memory = mmap(allocationInfo->_firstUserPage, userPagesSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+	FatalErrorHandler::check(memory != nullptr, "Failed to map protected pages during memory deallocation");
+#endif
 	
 	allocationInfo->_deallocated = true;
 }
