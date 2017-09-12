@@ -8,9 +8,18 @@
 if test -z ${NANOS6} ; then
 	if test "${*}" = "${*/.debug/}" ; then
 		export NANOS6=optimized
+		exec "${@}"
 	else
 		export NANOS6=debug
+		
+		# Regular execution
+		"${@}"
+		
+		# Execution with memory debugging (underflow)
+		NANOS6_DEBUG_MEMORY=1 NANOS6_DEBUG_MEMORY_PROTECT_AFTER=0 "${@}"
+		
+		# Execution with memory debugging (overflow)
+		NANOS6_DEBUG_MEMORY=1 NANOS6_DEBUG_MEMORY_PROTECT_AFTER=1 "${@}"
 	fi
 fi
 
-exec "${@}"
