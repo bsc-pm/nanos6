@@ -9,7 +9,8 @@ CXX = $(NANOS6_MCXX) --parallel
 
 if MCC_SUPORTS_EXTERNAL_INSTALL
 AM_CXXFLAGS += --no-default-nanos6-inc --no-default-nanos6-lib -I$(top_srcdir)/api -I$(top_builddir) -include nanos6.h 
-AM_LDFLAGS += -L$(top_builddir)/.libs -rpath $(abs_top_builddir)/.libs $(top_builddir)/libnanos6-main-wrapper.a -lnanos6 -ldl
+AM_LDFLAGS += -L$(top_builddir)/.libs -rpath $(abs_top_builddir)/.libs
+LDADD = $(top_builddir)/libnanos6-main-wrapper.a ../../libnanos6.la -ldl
 endif
 
 
