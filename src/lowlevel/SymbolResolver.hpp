@@ -29,6 +29,14 @@ public:
 		
 		return (*symbol)(parameters...);
 	}
+	
+	static RETURN_T globalScopeCall(char const *name, PARAMETERS_T... parameters)
+	{
+		static function_t symbol = (function_t) dlsym(RTLD_DEFAULT, name);
+		assert(symbol != nullptr);
+		
+		return (*symbol)(parameters...);
+	}
 };
 
 
