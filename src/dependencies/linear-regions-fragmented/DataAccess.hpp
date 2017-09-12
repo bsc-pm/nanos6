@@ -105,6 +105,7 @@ public:
 	~DataAccess()
 	{
 		Instrument::removedDataAccess(_instrumentationId);
+		assert(hasBeenDiscounted());
 	}
 	
 	inline DataAccessType getType() const
