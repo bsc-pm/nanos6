@@ -129,7 +129,7 @@ void *reallocarray(void *ptr, size_t nmemb, size_t size)
 #endif
 
 
-void nanos_start_function_interception()
+void nanos6_start_function_interception()
 {
 	typedef int (*posix_memalign_t)(void **, size_t, size_t);
 	if (posix_memalign_symbol == NULL) {
@@ -189,7 +189,7 @@ void nanos_start_function_interception()
 }
 
 
-void nanos_stop_function_interception()
+void nanos6_stop_function_interception()
 {
 	malloc_symbol = __libc_malloc;
 	free_symbol = __libc_free;
@@ -208,5 +208,15 @@ void nanos_stop_function_interception()
 #if HAVE_REALLOCARRAY
 	reallocarray_symbol = reallocarray_libc_symbol;
 #endif
+}
+
+
+void nanos6_memory_allocation_interception_fini()
+{
+	void (*fini_function)() = (void (*)()) dlsym(_nanos6_lib_handle, "nanos6_memory_allocation_interception_fini");
+	
+	if (fini_function != NULL) {
+		fini_function();
+	}
 }
 

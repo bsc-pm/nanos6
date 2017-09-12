@@ -19,6 +19,11 @@
 #include "api/nanos6/taskwait.h"
 
 
+// Function interception is triggered when loading the actual runtime
+// The following function is called so that the runtime can prepare for library unloading
+void nanos6_memory_allocation_interception_fini();
+
+
 main_function_t *_nanos6_loader_wrapped_main = 0;
 
 
@@ -117,8 +122,6 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 		return _nanos6_exit_with_error;
 	}
 	
-	nanos_start_function_interception();
-	
 	condition_variable_t condVar = {PTHREAD_MUTEX_INITIALIZER, PTHREAD_COND_INITIALIZER, 0};
 	
 	// Spawn the main task
@@ -139,10 +142,10 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 	}
 	pthread_mutex_unlock(&condVar._mutex);
 	
-	nanos_stop_function_interception();
-	
 	// Terminate
 	nanos_shutdown();
+	
+	nanos6_memory_allocation_interception_fini();
 	
 	return argsBlock.returnCode;
 }

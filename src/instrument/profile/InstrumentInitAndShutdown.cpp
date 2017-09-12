@@ -11,16 +11,20 @@
 
 
 namespace Instrument {
+	extern bool _profilingIsReady;
+
 	void initialize()
 	{
 		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "profile");
 		Profile::init();
+		_profilingIsReady = true;
 	}
 	
 	
 	void shutdown()
 	{
 		Profile::shutdown();
+		_profilingIsReady = false;
 	}
 	
 	
