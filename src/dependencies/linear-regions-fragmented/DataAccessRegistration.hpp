@@ -183,8 +183,7 @@ private:
 	
 	static inline DataAccess *fragmentAccess(
 		DataAccess *dataAccess, DataAccessRange range,
-		TaskDataAccesses &accessStructures,
-		bool considerTaskBlocking
+		TaskDataAccesses &accessStructures
 	) {
 		assert(dataAccess != nullptr);
 		// assert(accessStructures._lock.isLockedByThisThread()); // Not necessary when fragmenting an access that is not reachable
@@ -208,7 +207,7 @@ private:
 				position, range,
 				false,
 				[&](DataAccess const &toBeDuplicated) -> DataAccess * {
-					return duplicateDataAccess(toBeDuplicated, accessStructures, considerTaskBlocking);
+					return duplicateDataAccess(toBeDuplicated, accessStructures, /* Count Blocking */ true);
 				},
 				[&](DataAccess *fragment, DataAccess *originalDataAccess) {
 					if (fragment != originalDataAccess) {
@@ -227,7 +226,7 @@ private:
 				position, range,
 				false,
 				[&](DataAccess const &toBeDuplicated) -> DataAccess * {
-					return duplicateDataAccess(toBeDuplicated, accessStructures, considerTaskBlocking);
+					return duplicateDataAccess(toBeDuplicated, accessStructures, /* Count Blocking */ true);
 				},
 				[&](DataAccess *fragment, DataAccess *originalDataAccess) {
 					if (fragment != originalDataAccess) {
@@ -511,10 +510,7 @@ private:
 				assert(!targetFragment->hasBeenDiscounted());
 				
 				// Fragment if necessary
-				targetFragment = fragmentAccess(
-					targetFragment, range, targetTaskAccessStructures,
-					/* Do not affect originator blocking counter */ false
-				);
+				targetFragment = fragmentAccess(targetFragment, range, targetTaskAccessStructures);
 				assert(targetFragment != nullptr);
 				assert(targetFragment->getAccessRange().fullyContainedIn(range));
 				
@@ -594,10 +590,7 @@ private:
 				assert(!targetAccess->hasBeenDiscounted());
 				
 				// Fragment if necessary
-				targetAccess = fragmentAccess(
-					targetAccess, range, targetTaskAccessStructures,
-					/* Affect originator blocking counter */ true
-				);
+				targetAccess = fragmentAccess(targetAccess, range, targetTaskAccessStructures);
 				assert(targetAccess != nullptr);
 				assert(targetAccess->getAccessRange().fullyContainedIn(range));
 				
@@ -734,10 +727,7 @@ private:
 							
 							assert(!dataAccess->hasForcedRemoval());
 							
-							dataAccess = fragmentAccess(
-								dataAccess, subrange, subtaskAccessStructures,
-								/* Affect originator blocking counter */ true
-							);
+							dataAccess = fragmentAccess(dataAccess, subrange, subtaskAccessStructures);
 							
 							assert(dataAccess->getNext() == nullptr);
 							dataAccess->forceRemoval();
@@ -768,10 +758,7 @@ private:
 							assert(fragment->isInBottomMap());
 							assert(!fragment->hasBeenDiscounted());
 							
-							fragment = fragmentAccess(
-								fragment, subrange, accessStructures,
-								/* Affect originator blocking counter */ true
-							);
+							fragment = fragmentAccess(fragment, subrange, accessStructures);
 							
 							assert(fragment->getNext() == nullptr);
 							fragment->forceRemoval();
@@ -825,10 +812,7 @@ private:
 							
 							assert(!dataAccess->hasForcedRemoval());
 							
-							dataAccess = fragmentAccess(
-								dataAccess, bottomMapEntry->getAccessRange(), subtaskAccessStructures,
-								/* Affect originator blocking counter */ true
-							);
+							dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRange(), subtaskAccessStructures);
 							
 							assert(dataAccess->getNext() == nullptr);
 							dataAccess->forceRemoval();
@@ -861,10 +845,7 @@ private:
 							
 							assert(!fragment->hasForcedRemoval());
 							
-							fragment = fragmentAccess(
-								fragment, bottomMapEntry->getAccessRange(), accessStructures,
-								/* Affect originator blocking counter */ true
-							);
+							fragment = fragmentAccess(fragment, bottomMapEntry->getAccessRange(), accessStructures);
 							
 							assert(fragment->getNext() == nullptr);
 							fragment->forceRemoval();
@@ -1053,10 +1034,7 @@ private:
 							assert(previous->isInBottomMap());
 							assert(!previous->hasBeenDiscounted());
 							
-							previous = fragmentAccess(
-								previous, subrange, subtaskAccessStructures,
-								/* Affect originator blocking counter */ true
-							);
+							previous = fragmentAccess(previous, subrange, subtaskAccessStructures);
 							
 							return matchingProcessor(previous, bottomMapEntry);
 						}
@@ -1076,10 +1054,7 @@ private:
 							assert(previous->isInBottomMap());
 							assert(!previous->hasBeenDiscounted());
 							
-							previous = fragmentAccess(
-								previous, subrange, parentAccessStructures,
-								/* Affect originator blocking counter */ true
-							);
+							previous = fragmentAccess(previous, subrange, parentAccessStructures);
 							
 							return matchingProcessor(previous, bottomMapEntry);
 						}
@@ -1108,10 +1083,7 @@ private:
 						assert(previous->isFragment());
 						
 						previous->setTopmost();
-						previous = fragmentAccess(
-							previous, missingRange, parentAccessStructures,
-							/* Affect originator blocking counter */ true
-						);
+						previous = fragmentAccess(previous, missingRange, parentAccessStructures);
 						
 						return matchingProcessor(previous, bottomMapEntry);
 					},
@@ -1169,7 +1141,7 @@ private:
 		assert(accessStructures._lock.isLockedByThisThread());
 		assert(next != nullptr);
 		
-		dataAccess = fragmentAccess(dataAccess, range, accessStructures, /* Consider blocking */ true);
+		dataAccess = fragmentAccess(dataAccess, range, accessStructures);
 		assert(dataAccess != nullptr);
 		assert(dataAccess->getNext() == nullptr);
 		
@@ -1271,10 +1243,7 @@ private:
 							assert(subaccess->isInBottomMap());
 							assert(!subaccess->hasBeenDiscounted());
 							
-							subaccess = fragmentAccess(
-								subaccess, subrange, subtaskAccessStructures,
-								/* Affect originator blocking counter */ true
-							);
+							subaccess = fragmentAccess(subaccess, subrange, subtaskAccessStructures);
 							
 							// Avoid propagating satisfiability that has already been propagated by an ancestor
 							if (propagationMask._read) {
@@ -1316,10 +1285,7 @@ private:
 							assert(fragment->isInBottomMap());
 							assert(!fragment->hasBeenDiscounted());
 							
-							fragment = fragmentAccess(
-								fragment, subrange, accessStructures,
-								/* Affect originator blocking counter */ true
-							);
+							fragment = fragmentAccess(fragment, subrange, accessStructures);
 							
 							// Avoid propagating satisfiability that has already been propagated by an ancestor
 							if (propagationMask._read) {
@@ -1440,10 +1406,7 @@ private:
 						assert(targetAccess != nullptr);
 						assert(!targetAccess->hasBeenDiscounted());
 						
-						targetAccess = fragmentAccess(
-							targetAccess, missingRange, accessStructures,
-							/* Consider blocking */ true
-						);
+						targetAccess = fragmentAccess(targetAccess, missingRange, accessStructures);
 						
 						targetAccess->setReadSatisfied();
 						targetAccess->setWriteSatisfied();
@@ -1629,7 +1592,7 @@ private:
 		assert(!accessStructures.hasBeenDeleted());
 		
 		// Fragment if necessary
-		dataAccess = fragmentAccess(dataAccess, range, accessStructures, /* Do not consider blocking */ false );
+		dataAccess = fragmentAccess(dataAccess, range, accessStructures);
 		assert(dataAccess != nullptr);
 		range = dataAccess->getAccessRange();
 		
@@ -1647,10 +1610,7 @@ private:
 					assert(fragment->isFragment());
 					assert(!fragment->hasBeenDiscounted());
 					
-					fragment = fragmentAccess(
-						fragment, range, accessStructures,
-						/* Do not consider blocking */ false
-					);
+					fragment = fragmentAccess(fragment, range, accessStructures);
 					assert(fragment != nullptr);
 					
 					finalizeFragment(fragment, finishedTask, accessStructures, hpDependencyData);
@@ -1866,11 +1826,7 @@ public:
 						DataAccess *dataAccess = &(*position2);
 						assert(dataAccess != nullptr);
 						
-						dataAccess = fragmentAccess(
-							dataAccess, bottomMapEntry->getAccessRange(),
-							subtaskAccessStructures,
-							/* Consider blocking */ true
-						);
+						dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRange(), subtaskAccessStructures);
 						
 						if (dataAccess->hasForcedRemoval()) {
 							return true;
