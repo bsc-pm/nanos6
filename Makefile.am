@@ -798,8 +798,8 @@ nodist_libnanos6_optimized_la_SOURCES = $(nodist_common_sources) $(nodist_univer
 
 libnanos6_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
-libnanos6_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_debug_la_SOURCES = $(common_sources) $(noinstrument_sources) $(universal_debug_sources) src/instrument/null/InstrumentMalloc.cpp
+libnanos6_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(DLOPEN_LIBS)
 nodist_libnanos6_debug_la_SOURCES = $(nodist_common_sources) $(nodist_universal_debug_sources)
 
 libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
