@@ -10,6 +10,7 @@
 #include "DefaultThreadManagerPolicy.hpp"
 
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 
 bool DefaultThreadManagerPolicy::checkIfMustRunInline(Task *replacementTask, Task *currentTask, CPU *cpu)

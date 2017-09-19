@@ -66,5 +66,8 @@ public:
 };
 
 
+#include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
+
+
 #endif // EXTERNAL_THREAD_HPP
 

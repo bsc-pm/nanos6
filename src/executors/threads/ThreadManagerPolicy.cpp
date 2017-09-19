@@ -6,7 +6,7 @@
 
 #include "DefaultThreadManagerPolicy.hpp"
 #include "ThreadManagerPolicy.hpp"
-
+#include "tasks/TaskImplementation.hpp"
 
 ThreadManagerPolicyInterface *ThreadManagerPolicy::_policy = nullptr;
 

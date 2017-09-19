@@ -405,6 +405,7 @@ common_sources = \
 	src/system/ompss/UserMutex.cpp \
 	src/system/ompss/UserMutex.hpp \
 	src/tasks/Task.hpp \
+	src/tasks/TaskImplementation.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/Taskloop.cpp \
 	src/tasks/Taskloop.hpp \

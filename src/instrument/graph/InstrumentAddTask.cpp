@@ -16,6 +16,7 @@
 
 
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <cassert>
 #include <mutex>

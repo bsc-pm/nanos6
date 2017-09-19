@@ -17,6 +17,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskloop.hpp"
 #include "tasks/TaskloopInfo.hpp"
 

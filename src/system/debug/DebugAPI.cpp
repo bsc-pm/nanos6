@@ -11,6 +11,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 
 void nanos_wait_for_full_initialization(void)

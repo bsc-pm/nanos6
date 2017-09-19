@@ -8,6 +8,7 @@
 
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <cassert>
 

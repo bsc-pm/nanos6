@@ -19,6 +19,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <atomic>
 #include <cassert>
@@ -26,8 +27,6 @@
 
 class HardwareDescription;
 class ComputePlace;
-
-class Task;
 
 
 //! \brief This class is the main interface within the runtime to interact with the scheduler

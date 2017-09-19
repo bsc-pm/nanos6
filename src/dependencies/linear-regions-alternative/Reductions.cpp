@@ -9,6 +9,7 @@
 #include <cassert>
 
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
 

@@ -17,8 +17,8 @@
 #include "lowlevel/SpinLock.hpp"
 
 #include <InstrumentTaskId.hpp>
+
 #include <TaskDataAccesses.hpp>
-#include <TaskDataAccessLinkingArtifacts.hpp>
 
 
 struct DataAccess;
@@ -80,30 +80,14 @@ private:
 	void *_schedulerInfo;
 	
 public:
-	Task(
+	inline Task(
 		void *argsBlock,
 		nanos_task_info *taskInfo,
 		nanos_task_invocation_info *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags
-	)
-		: _argsBlock(argsBlock),
-		_taskInfo(taskInfo),
-		_taskInvokationInfo(taskInvokationInfo),
-		_countdownToBeWokenUp(1),
-		_parent(parent),
-		_thread(nullptr),
-		_dataAccesses(),
-		_flags(flags),
-		_predecessorCount(0),
-		_instrumentationTaskId(instrumentationTaskId),
-		_schedulerInfo(nullptr)
-	{
-		if (parent != nullptr) {
-			parent->addChild(this);
-		}
-	}
+	);
 	
 	//! Set the address of the arguments block
 	inline void setArgsBlock(void *argsBlock)
@@ -420,9 +404,6 @@ public:
 
 
 #pragma GCC diagnostic push
-
-
-#include <TaskDataAccessLinkingArtifactsImplementation.hpp>
 
 
 #endif // TASK_HPP

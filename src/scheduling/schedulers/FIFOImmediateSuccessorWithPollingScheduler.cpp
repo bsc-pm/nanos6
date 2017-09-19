@@ -11,6 +11,7 @@
 #include "hardware/places/CPUPlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <algorithm>
 #include <cassert>

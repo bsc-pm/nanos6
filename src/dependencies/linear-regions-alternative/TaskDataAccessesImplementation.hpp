@@ -14,6 +14,7 @@
 #include "BottomMapEntry.hpp"
 #include "DataAccess.hpp"
 #include "TaskDataAccesses.hpp"
+#include "TaskDataAccessLinkingArtifacts.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -35,6 +36,9 @@ inline TaskDataAccesses::~TaskDataAccesses()
 	hasBeenDeleted() = true;
 #endif
 }
+
+
+#include "TaskDataAccessLinkingArtifactsImplementation.hpp"
 
 
 #endif // TASK_DATA_ACCESSES_IMPLEMENTATION_HPP

@@ -14,6 +14,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "system/RuntimeInfo.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "tasks/TaskloopGenerator.hpp"
 #include "tasks/TaskloopInfo.hpp"
 #include "tasks/TaskloopLogic.hpp"

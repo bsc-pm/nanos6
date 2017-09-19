@@ -16,6 +16,7 @@
 #include "lowlevel/SpinLock.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <InstrumentUserMutex.hpp>
 

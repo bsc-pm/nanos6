@@ -12,6 +12,7 @@
 #include "hardware/places/CPUPlace.hpp"
 #include "scheduling/TaskloopSchedulingPolicy.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskloop.hpp"
 #include "tasks/TaskloopGenerator.hpp"
 

@@ -11,6 +11,7 @@
 #include <nanos6.h>
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include "../DataAccessType.hpp"
 #include "DataAccessRegistration.hpp"

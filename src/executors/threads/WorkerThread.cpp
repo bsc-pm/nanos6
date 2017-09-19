@@ -13,6 +13,7 @@
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
 

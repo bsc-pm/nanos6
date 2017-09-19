@@ -12,6 +12,7 @@
 
 #include "hardware/places/ComputePlace.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "DataAccessRegistration.hpp"
 
 

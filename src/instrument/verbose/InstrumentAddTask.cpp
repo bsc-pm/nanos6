@@ -10,6 +10,7 @@
 #include "InstrumentAddTask.hpp"
 #include "InstrumentVerbose.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
