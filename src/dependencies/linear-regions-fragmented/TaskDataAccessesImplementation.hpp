@@ -53,15 +53,6 @@ inline TaskDataAccesses::~TaskDataAccesses()
 }
 
 
-// inline void TaskDataAccesses::addRemovableChild(Task *child)
-// {
-// 	assert(child != nullptr);
-// 	
-// 	Task *lastRemovableChild = _removableChildren;
-// 	do {
-// 		child->_dataAccesses._nextRemovableSibling = lastRemovableChild;
-// 	} while (!_removableChildren.compare_exchange_strong(lastRemovableChild, child));
-// }
 
 
 #endif // TASK_DATA_ACCESSES_IMPLEMENTATION_HPP
