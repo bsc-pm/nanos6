@@ -109,7 +109,7 @@ private:
 					Instrument::linkedDataAccesses(
 						previousOfFirst->_instrumentationId,
 						subaccess._originator->getInstrumentationTaskId(),
-						dataAccessSequence->_accessRange,
+						dataAccessSequence->_accessRegion,
 						true, true
 					);
 				}
@@ -128,7 +128,7 @@ private:
 						Instrument::linkedDataAccesses(
 							subaccess._instrumentationId,
 							next->_originator->getInstrumentationTaskId(),
-							dataAccessSequence->_accessRange,
+							dataAccessSequence->_accessRegion,
 							true, true
 						);
 					}
@@ -155,7 +155,7 @@ private:
 						Instrument::linkedDataAccesses(
 							effectivePrevious->_instrumentationId,
 							next->_originator->getInstrumentationTaskId(),
-							dataAccessSequence->_accessRange,
+							dataAccessSequence->_accessRegion,
 							false /* not direct */,
 							false /* unidirectional */
 						);
@@ -241,7 +241,7 @@ public:
 		Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
 			(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			accessType, weak,
-			accessSequence->_accessRange,
+			accessSequence->_accessRegion,
 			false, false, satisfied,
 			task->getInstrumentationTaskId()
 		);
@@ -249,14 +249,14 @@ public:
 			Instrument::linkedDataAccesses(
 				effectivePrevious->_instrumentationId,
 				task->getInstrumentationTaskId(),
-				accessSequence->_accessRange,
+				accessSequence->_accessRegion,
 				!accessSequence->_accessSequence.empty() /* Direct? */,
 				!accessSequence->_accessSequence.empty() /* Bidirectional? */
 			);
 		}
 		Instrument::addTaskToAccessGroup(accessSequence, task->getInstrumentationTaskId());
 		
-		dataAccess = new DataAccess(accessSequence, accessType, weak, satisfied, task, accessSequence->_accessRange, dataAccessInstrumentationId, reductionInfo...);
+		dataAccess = new DataAccess(accessSequence, accessType, weak, satisfied, task, accessSequence->_accessRegion, dataAccessInstrumentationId, reductionInfo...);
 		accessSequence->_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer
 		
 		return satisfied || weak;

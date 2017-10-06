@@ -20,7 +20,7 @@ class Task;
 
 #include "../DataAccessType.hpp"
 #include "../DataAccessBase.hpp"
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
@@ -48,7 +48,7 @@ struct DataAccess : public DataAccessBase {
 		bool weak,
 		bool satisfied,
 		Task *originator,
-		DataAccessRange accessRange,
+		DataAccessRegion accessRegion,
 		Instrument::data_access_id_t instrumentationId
 	);
 	
@@ -58,7 +58,7 @@ struct DataAccess : public DataAccessBase {
 		bool weak,
 		bool satisfied,
 		Task *originator,
-		DataAccessRange accessRange,
+		DataAccessRegion accessRegion,
 		Instrument::data_access_id_t instrumentationId,
 		int reductionInfo
 	);

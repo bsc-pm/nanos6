@@ -17,8 +17,8 @@ namespace Instrument {
 		
 		static void sortAccessGroup(data_access_id_t representantId)
 		{
-			// Find an order according to the DataAccessRangeIndexer
-			DataAccessRangeIndexer<AccessWrapper> accesses;
+			// Find an order according to the DataAccessRegionIndexer
+			DataAccessRegionIndexer<AccessWrapper> accesses;
 			{
 				data_access_id_t currentId = representantId;
 				while (currentId != data_access_id_t()) {
@@ -35,7 +35,7 @@ namespace Instrument {
 				access_t *previous = nullptr;
 				data_access_id_t newRepresentantId = representantId;
 				accesses.processAll(
-					[&](DataAccessRangeIndexer<AccessWrapper>::iterator position) -> bool {
+					[&](DataAccessRegionIndexer<AccessWrapper>::iterator position) -> bool {
 						AccessWrapper &wrapper = *position;
 						access_t *current = wrapper._access;
 						assert(current != nullptr);
@@ -83,7 +83,7 @@ namespace Instrument {
 				}
 			);
 			
-			// Clear the list of live accesses since it will be rebuilt with the right ranges
+			// Clear the list of live accesses since it will be rebuilt with the right regions
 			// during replay
 			taskInfo._liveAccesses.clear();
 			
@@ -109,7 +109,7 @@ namespace Instrument {
 					}
 				);
 				
-				// Clear the list of live fragments since it will be rebuilt with the right ranges
+				// Clear the list of live fragments since it will be rebuilt with the right regions
 				// during replay
 				taskGroup->_liveFragments.clear();
 				
@@ -131,7 +131,7 @@ namespace Instrument {
 		{
 			task_info_t &taskInfo = _taskToInfoMap[taskId];
 			
-			// Clear the list of live accesses since it will be rebuilt with the right ranges
+			// Clear the list of live accesses since it will be rebuilt with the right regions
 			// during replay
 			taskInfo._liveAccesses.clear();
 			
@@ -142,7 +142,7 @@ namespace Instrument {
 					continue;
 				}
 				
-				// Clear the list of live fragments since it will be rebuilt with the right ranges
+				// Clear the list of live fragments since it will be rebuilt with the right regions
 				// during replay
 				taskGroup->_liveFragments.clear();
 				

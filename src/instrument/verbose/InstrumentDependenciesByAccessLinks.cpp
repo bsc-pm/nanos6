@@ -25,7 +25,7 @@ namespace Instrument {
 	
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType, bool weak, DataAccessRange range,
+		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId,
 		InstrumentationContext const &context
@@ -60,7 +60,7 @@ namespace Instrument {
 				break;
 		}
 		
-		logEntry->_contents << " " << range;
+		logEntry->_contents << " " << region;
 		
 		if (readSatisfied) {
 			logEntry->_contents << " read_safistied";
@@ -189,9 +189,9 @@ namespace Instrument {
 	}
 	
 	
-	void modifiedDataAccessRange(
+	void modifiedDataAccessRegion(
 		data_access_id_t dataAccessId,
-		DataAccessRange newRange,
+		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
@@ -202,7 +202,7 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> ModifiedDataAccessRange " << dataAccessId << " newRange:" << newRange << " triggererTask:" << context._taskId;
+		logEntry->_contents << " <-> ModifiedDataAccessRegion " << dataAccessId << " newRegion:" << newRegion << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -210,7 +210,7 @@ namespace Instrument {
 	
 	data_access_id_t fragmentedDataAccess(
 		data_access_id_t dataAccessId,
-		DataAccessRange newRange,
+		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
@@ -223,7 +223,7 @@ namespace Instrument {
 		data_access_id_t id = _nextDataAccessId++;
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> FragmentedDataAccess " << dataAccessId << " newFragment:" << id << " newRange:" << newRange << " triggererTask:" << context._taskId;
+		logEntry->_contents << " <-> FragmentedDataAccess " << dataAccessId << " newFragment:" << id << " newRegion:" << newRegion << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 		
@@ -310,7 +310,7 @@ namespace Instrument {
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId,
 		task_id_t sinkTaskId,
-		DataAccessRange range,
+		DataAccessRegion region,
 		bool direct,
 		__attribute__((unused)) bool bidirectional,
 		InstrumentationContext const &context
@@ -323,7 +323,7 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << " [" << range << "]" << (direct ? " direct" : "indirect") << " triggererTask:" << context._taskId;
+		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << " [" << region << "]" << (direct ? " direct" : "indirect") << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}

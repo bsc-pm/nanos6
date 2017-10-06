@@ -13,7 +13,7 @@
 #include <boost/intrusive/options.hpp>
 #include <boost/intrusive/parent_from_member.hpp>
 #include <boost/version.hpp>
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 
 
 namespace LinearRegionMapInternals {
@@ -34,8 +34,8 @@ namespace LinearRegionMapInternals {
 		Node(Node const &other) = delete;
 		Node(Node &&other) = delete;
 		
-		Node(DataAccessRange accessRange)
-		: _mapLinks(), _contents(accessRange)
+		Node(DataAccessRegion accessRegion)
+		: _mapLinks(), _contents(accessRegion)
 		{
 		}
 		
@@ -49,14 +49,14 @@ namespace LinearRegionMapInternals {
 		{
 		}
 		
-		DataAccessRange const &getAccessRange() const
+		DataAccessRegion const &getAccessRegion() const
 		{
-			return _contents.getAccessRange();
+			return _contents.getAccessRegion();
 		}
 		
-		DataAccessRange &getAccessRange()
+		DataAccessRegion &getAccessRegion()
 		{
-			return _contents.getAccessRange();
+			return _contents.getAccessRegion();
 		}
 	};
 	
@@ -85,14 +85,14 @@ namespace LinearRegionMapInternals {
 		
 		type operator()(Node<ContentType> const &node)
 		{ 
-			return node.getAccessRange().getStartAddressConstRef();
+			return node.getAccessRegion().getStartAddressConstRef();
 		}
 #else
 		typedef void *type;
 		
 		type const &operator()(Node<ContentType> const &node)
 		{ 
-			return node.getAccessRange().getStartAddressConstRef();
+			return node.getAccessRegion().getStartAddressConstRef();
 		}
 #endif
 	};
@@ -200,19 +200,19 @@ public:
 		return _map.size();
 	}
 	
-	const_iterator find(DataAccessRange const &range) const
+	const_iterator find(DataAccessRegion const &region) const
 	{
-		return _map.find(range.getStartAddress());
+		return _map.find(region.getStartAddress());
 	}
 	
-	iterator find(DataAccessRange const &range)
+	iterator find(DataAccessRegion const &region)
 	{
-		return _map.find(range.getStartAddress());
+		return _map.find(region.getStartAddress());
 	}
 	
 	iterator insert(ContentType &&content)
 	{
-		assert(!exists(content.getAccessRange(), [&](__attribute__((unused)) iterator position) -> bool { return true; }));
+		assert(!exists(content.getAccessRegion(), [&](__attribute__((unused)) iterator position) -> bool { return true; }));
 		
 		LinearRegionMapInternals::Node<ContentType> *node = new LinearRegionMapInternals::Node<ContentType>(std::move(content));
 		std::pair<typename map_t::iterator, bool> insertReturnValue = _map.insert(*node);
@@ -221,7 +221,7 @@ public:
 	
 	iterator insert(ContentType const &content)
 	{
-		assert(!exists(content.getAccessRange(), [&](__attribute__((unused)) iterator position) -> bool { return true; }));
+		assert(!exists(content.getAccessRegion(), [&](__attribute__((unused)) iterator position) -> bool { return true; }));
 		
 		LinearRegionMapInternals::Node<ContentType> *node = new LinearRegionMapInternals::Node<ContentType>(content);
 		std::pair<typename map_t::iterator, bool> insertReturnValue = _map.insert(*node);
@@ -264,44 +264,44 @@ public:
 	template <typename ProcessorType>
 	bool processAll(ProcessorType processor);
 	
-	//! \brief Pass all elements that intersect a given range through a lambda
+	//! \brief Pass all elements that intersect a given region through a lambda
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] processor a lambda that receives an iterator to each element intersecting the range and that returns a boolean, that is false to stop the traversal
+	//! \param[in] region the region to explore
+	//! \param[in] processor a lambda that receives an iterator to each element intersecting the region and that returns a boolean, that is false to stop the traversal
 	//! 
 	//! \returns false if the traversal was stopped before finishing
 	template <typename ProcessorType>
-	bool processIntersecting(DataAccessRange const &range, ProcessorType processor);
+	bool processIntersecting(DataAccessRegion const &region, ProcessorType processor);
 	
-	//! \brief Pass all elements that intersect a given range through a lambda and any missing subranges through another lambda
+	//! \brief Pass all elements that intersect a given region through a lambda and any missing subregions through another lambda
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] intersectingProcessor a lambda that receives an iterator to each element intersecting the range and that returns a boolean equal to false to stop the traversal
-	//! \param[in] missingProcessor a lambda that receives each missing subrange as a DataAccessRange  and that returns a boolean equal to false to stop the traversal
+	//! \param[in] region the region to explore
+	//! \param[in] intersectingProcessor a lambda that receives an iterator to each element intersecting the region and that returns a boolean equal to false to stop the traversal
+	//! \param[in] missingProcessor a lambda that receives each missing subregion as a DataAccessRegion  and that returns a boolean equal to false to stop the traversal
 	//! 
 	//! \returns false if the traversal was stopped before finishing
 	template <typename IntersectionProcessorType, typename MissingProcessorType>
-	bool processIntersectingAndMissing(DataAccessRange const &range, IntersectionProcessorType intersectingProcessor, MissingProcessorType missingProcessor);
+	bool processIntersectingAndMissing(DataAccessRegion const &region, IntersectionProcessorType intersectingProcessor, MissingProcessorType missingProcessor);
 	
-	//! \brief Traverse a range of elements to check if there is an element that matches a given condition
+	//! \brief Traverse a region of elements to check if there is an element that matches a given condition
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] condition a lambda that receives an iterator to each element intersecting the range and that returns the result of evaluating the condition
+	//! \param[in] region the region to explore
+	//! \param[in] condition a lambda that receives an iterator to each element intersecting the region and that returns the result of evaluating the condition
 	//! 
 	//! \returns true if the condition evaluated to true for any element
 	template <typename PredicateType>
-	bool exists(DataAccessRange const &range, PredicateType condition);
+	bool exists(DataAccessRegion const &region, PredicateType condition);
 	
 	
-	//! \brief Check if there is any element in a given range
+	//! \brief Check if there is any element in a given region
 	//! 
-	//! \param[in] range the range to explore
+	//! \param[in] region the region to explore
 	//! 
-	//! \returns true if there was at least one element at least partially in the range
-	bool contains(DataAccessRange const &range);
+	//! \returns true if there was at least one element at least partially in the region
+	bool contains(DataAccessRegion const &region);
 	
 	
-	iterator fragmentByIntersection(iterator position, DataAccessRange const &range, bool removeIntersection);
+	iterator fragmentByIntersection(iterator position, DataAccessRegion const &region, bool removeIntersection);
 	
 };
 

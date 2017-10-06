@@ -7,43 +7,43 @@
 #ifndef LINEAR_REGION_DATA_ACCESS_MAP_HPP
 #define LINEAR_REGION_DATA_ACCESS_MAP_HPP
 
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 #include "LinearRegionMap.hpp"
 
 
 struct DataAccess;
 struct LinearRegionDataAccessMapNode {
-	DataAccessRange _accessRange;
+	DataAccessRegion _accessRegion;
 	DataAccess *_access;
 	
 	LinearRegionDataAccessMapNode()
-		: _accessRange(), _access(nullptr)
+		: _accessRegion(), _access(nullptr)
 	{
 	}
 	
-	LinearRegionDataAccessMapNode(DataAccessRange accessRange)
-		: _accessRange(accessRange), _access(nullptr)
+	LinearRegionDataAccessMapNode(DataAccessRegion accessRegion)
+		: _accessRegion(accessRegion), _access(nullptr)
 	{
 	}
 	
-	LinearRegionDataAccessMapNode(DataAccessRange accessRange, DataAccess *access)
-	: _accessRange(accessRange), _access(access)
+	LinearRegionDataAccessMapNode(DataAccessRegion accessRegion, DataAccess *access)
+	: _accessRegion(accessRegion), _access(access)
 	{
 	}
 	
 	LinearRegionDataAccessMapNode(LinearRegionDataAccessMapNode const &other)
-		: _accessRange(other._accessRange), _access(other._access)
+		: _accessRegion(other._accessRegion), _access(other._access)
 	{
 	}
 	
-	DataAccessRange const &getAccessRange() const
+	DataAccessRegion const &getAccessRegion() const
 	{
-		return _accessRange;
+		return _accessRegion;
 	}
 	
-	DataAccessRange &getAccessRange()
+	DataAccessRegion &getAccessRegion()
 	{
-		return _accessRange;
+		return _accessRegion;
 	}
 };
 
@@ -65,35 +65,35 @@ public:
 
 
 struct DataAccessNextLinkContents {
-	DataAccessRange _accessRange;
+	DataAccessRegion _accessRegion;
 	DataAccess *_access;
 	bool _satisfied;
 	
 	DataAccessNextLinkContents()
-		: _accessRange(), _access(nullptr), _satisfied(false)
+		: _accessRegion(), _access(nullptr), _satisfied(false)
 	{
 	}
 	
 	DataAccessNextLinkContents(DataAccessNextLinkContents const &other) = delete;
 	
 	DataAccessNextLinkContents(DataAccessNextLinkContents &&other)
-		: _accessRange(other._accessRange), _access(other._access), _satisfied(other._satisfied)
+		: _accessRegion(other._accessRegion), _access(other._access), _satisfied(other._satisfied)
 	{
 	}
 	
-	DataAccessNextLinkContents(DataAccessRange accessRange, DataAccess *access, bool satisfied)
-		: _accessRange(accessRange), _access(access), _satisfied(satisfied)
+	DataAccessNextLinkContents(DataAccessRegion accessRegion, DataAccess *access, bool satisfied)
+		: _accessRegion(accessRegion), _access(access), _satisfied(satisfied)
 	{
 	}
 	
-	DataAccessRange const &getAccessRange() const
+	DataAccessRegion const &getAccessRegion() const
 	{
-		return _accessRange;
+		return _accessRegion;
 	}
 	
-	DataAccessRange &getAccessRange()
+	DataAccessRegion &getAccessRegion()
 	{
-		return _accessRange;
+		return _accessRegion;
 	}
 };
 

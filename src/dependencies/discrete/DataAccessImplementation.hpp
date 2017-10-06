@@ -25,13 +25,13 @@ inline DataAccess::DataAccess(
 	bool weak,
 	bool satisfied,
 	Task *originator,
-	DataAccessRange accessRange,
+	DataAccessRegion accessRegion,
 	Instrument::data_access_id_t instrumentationId
 )
 	: DataAccessBase(type, weak, originator, instrumentationId),
 	_satisfied(satisfied),
 	_accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
-	_subaccesses(accessRange, this, dataAccessSequence->_lock),
+	_subaccesses(accessRegion, this, dataAccessSequence->_lock),
 	_reductionInfo(0)
 {
 	assert(dataAccessSequence != 0);
@@ -44,14 +44,14 @@ inline DataAccess::DataAccess(
 	bool weak,
 	bool satisfied,
 	Task *originator,
-	DataAccessRange accessRange,
+	DataAccessRegion accessRegion,
 	Instrument::data_access_id_t instrumentationId,
 	int reductionInfo
 )
 	: DataAccessBase(type, weak, originator, instrumentationId),
 	_satisfied(satisfied),
 	_accessSequenceLinks(), _dataAccessSequence(dataAccessSequence),
-	_subaccesses(accessRange, this, dataAccessSequence->_lock),
+	_subaccesses(accessRegion, this, dataAccessSequence->_lock),
 	_reductionInfo(reductionInfo)
 {
 	assert(dataAccessSequence != 0);
@@ -289,7 +289,7 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 				Instrument::createdDataAccess(
 					(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 					newAccessType, true,
-					accessSequence->_accessRange,
+					accessSequence->_accessRegion,
 					false, false, satisfied,
 					task->getInstrumentationTaskId()
 				);
@@ -297,7 +297,7 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 			Instrument::linkedDataAccesses(
 				dataAccess->_instrumentationId,
 				task->getInstrumentationTaskId(),
-				accessSequence->_accessRange,
+				accessSequence->_accessRegion,
 				true /* Direct? */,
 				true /* Bidirectional? */
 			);
@@ -306,7 +306,7 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 				accessSequence,
 				newAccessType, true,
 				satisfied,
-				task, accessSequence->_accessRange,
+				task, accessSequence->_accessRegion,
 				newDataAccessInstrumentationId
 			);
 			accessSequence->_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer
@@ -408,7 +408,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				Instrument::createdDataAccess(
 					(accessSequence->_superAccess != nullptr ? accessSequence->_superAccess->_instrumentationId : Instrument::data_access_id_t()),
 					oldAccessType, true,
-					accessSequence->_accessRange,
+					accessSequence->_accessRegion,
 					false, false, false,
 					task->getInstrumentationTaskId()
 				);
@@ -416,7 +416,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 			Instrument::linkedDataAccesses(
 				effectivePrevious->_instrumentationId,
 				task->getInstrumentationTaskId(),
-				accessSequence->_accessRange,
+				accessSequence->_accessRegion,
 				!accessSequence->_accessSequence.empty() /* Direct? */,
 				!accessSequence->_accessSequence.empty() /* Bidirectional? */
 			);
@@ -425,7 +425,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				accessSequence,
 				oldAccessType, true,
 				false,
-				task, accessSequence->_accessRange,
+				task, accessSequence->_accessRegion,
 				newDataAccessInstrumentationId
 			);
 			accessSequence->_accessSequence.push_back(*dataAccess); // NOTE: It actually does get the pointer

@@ -10,7 +10,7 @@
 #include <mutex>
 #include <boost/intrusive/list.hpp>
 
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 #include "DataAccessSequenceLinkingArtifacts.hpp"
 #include "../DataAccessType.hpp"
 #include "lowlevel/SpinLock.hpp"
@@ -21,8 +21,8 @@ struct DataAccess;
 
 
 struct DataAccessSequence {
-	//! The range of data covered by the accesses of this sequence
-	DataAccessRange _accessRange;
+	//! The region of data covered by the accesses of this sequence
+	DataAccessRegion _accessRegion;
 	
 	//! \brief Access originated by the direct parent to the tasks of this access sequence
 	DataAccess *_superAccess;
@@ -38,8 +38,8 @@ struct DataAccessSequence {
 	
 	DataAccessSequence() = delete;
 	inline DataAccessSequence(SpinLock *lock);
-	inline DataAccessSequence(DataAccessRange accessRange, SpinLock *lock);
-	inline DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess, SpinLock *lock);
+	inline DataAccessSequence(DataAccessRegion accessRegion, SpinLock *lock);
+	inline DataAccessSequence(DataAccessRegion accessRegion, DataAccess *superAccess, SpinLock *lock);
 	
 	
 	//! \brief Get a locking guard

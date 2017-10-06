@@ -24,7 +24,7 @@ class SpinLock;
 
 
 #include "../DataAccessBase.hpp"
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 #include "LinearRegionDataAccessMap.hpp"
 
 
@@ -43,8 +43,8 @@ struct DataAccess : public DataAccessBase {
 	//! Pointer to the bottom map of accesses that allows to calculate dependencies related to this access
 	LinearRegionDataAccessMap *_bottomMap;
 	
-	//! The range of data covered by the access
-	DataAccessRange _range;
+	//! The region of data covered by the access
+	DataAccessRegion _region;
 	
 	//! Equal to 0 when the data access can be performed
 	int _blockerCount;
@@ -60,13 +60,13 @@ struct DataAccess : public DataAccessBase {
 		DataAccessType type, bool weak,
 		int blockerCount,
 		Task *originator,
-		DataAccessRange accessRange,
+		DataAccessRegion accessRegion,
 		Instrument::data_access_id_t instrumentationId
 	)
 		: DataAccessBase(type, weak, originator, instrumentationId),
 		_previous(), _next(),
 		_superAccess(superAccess), _lock(lock), _bottomMap(bottomMap),
-		_range(accessRange), _blockerCount(blockerCount),
+		_region(accessRegion), _blockerCount(blockerCount),
 		_topSubaccesses(this), _bottomSubaccesses(this)
 	{
 		assert(bottomMap != 0);
@@ -74,22 +74,22 @@ struct DataAccess : public DataAccessBase {
 	}
 	
 	
-	DataAccessRange const &getAccessRange() const
+	DataAccessRegion const &getAccessRegion() const
 	{
-		return _range;
+		return _region;
 	}
 	
-	DataAccessRange &getAccessRange()
+	DataAccessRegion &getAccessRegion()
 	{
-		return _range;
+		return _region;
 	}
 	
 	
-	inline void fullLinkTo(DataAccessRange const &range, DataAccess *target, bool blocker, Instrument::task_id_t triggererTaskInstrumentationId);
+	inline void fullLinkTo(DataAccessRegion const &region, DataAccess *target, bool blocker, Instrument::task_id_t triggererTaskInstrumentationId);
 	
-	//! \brief Pass the Effective Previous at a given range through a lambda
+	//! \brief Pass the Effective Previous at a given region through a lambda
 	//! 
-	//! \param[in] range the range over which to look up the effective previous
+	//! \param[in] region the region over which to look up the effective previous
 	//! \param[in] processDirectPrevious include also the directly linked previous accesses
 	//! \param[in] effectivePreviousProcessor the lambda that receives the effective previous through a DataAccessPreviousLinks::iterator and returns false if the traversal should be stoped
 	//! 
@@ -97,7 +97,7 @@ struct DataAccess : public DataAccessBase {
 	//!
 	//! NOTE: This function assumes that the whole hierarchy has already been locked
 	template <typename EffectivePreviousProcessorType>
-	bool processEffectivePrevious(DataAccessRange const &range, bool processDirectPrevious, EffectivePreviousProcessorType effectivePreviousProcessor);
+	bool processEffectivePrevious(DataAccessRegion const &region, bool processDirectPrevious, EffectivePreviousProcessorType effectivePreviousProcessor);
 	
 	//! \brief Updates the blocker count according to a new (upgraded) access type
 	//! 

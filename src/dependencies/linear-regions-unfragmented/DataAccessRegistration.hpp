@@ -28,7 +28,7 @@
 class DataAccessRegistration {
 private:
 	static inline void replaceOutdatedMapProjection(
-		LinearRegionDataAccessMap *map, DataAccessRange const &range,
+		LinearRegionDataAccessMap *map, DataAccessRegion const &region,
 		DataAccess *outdatedContent, DataAccess *replacement
 	) {
 		assert(outdatedContent != nullptr);
@@ -36,10 +36,10 @@ private:
 		assert(outdatedContent->_lock->isLockedByThisThread());
 		
 		map->processIntersecting(
-			range,
+			region,
 			[&](LinearRegionDataAccessMap::iterator position) -> bool {
 				if (position->_access == outdatedContent) {
-					auto intersectingFragmentPosition = map->fragmentByIntersection(position, range, false);
+					auto intersectingFragmentPosition = map->fragmentByIntersection(position, region, false);
 					
 					assert(intersectingFragmentPosition != map->end());
 					intersectingFragmentPosition->_access = replacement;
@@ -62,7 +62,7 @@ private:
 		// NOTE: This could be implemented as a "merge"-like operation
 		for (auto replacementPosition = replacement.begin(); replacementPosition != replacement.end(); replacementPosition++) {
 			replaceOutdatedMapProjection(
-				map, replacementPosition->_accessRange,
+				map, replacementPosition->_accessRegion,
 				outdatedContent, replacementPosition->_access
 			);
 		}
@@ -147,7 +147,7 @@ private:
 		assert(dataAccess->_lock->isLockedByThisThread());
 		
 		map->processIntersecting(
-			dataAccess->_range,
+			dataAccess->_region,
 			[&](LinearRegionDataAccessMap::iterator position) -> bool {
 				if (position->_access == dataAccess) {
 					map->erase(position);
@@ -160,20 +160,20 @@ private:
 	
 	
 	static inline void linkExistingDataAccesses(
-		DataAccess *source, DataAccessRange const &sourceRange,
-		DataAccess *target, DataAccessRange const &targetRange,
+		DataAccess *source, DataAccessRegion const &sourceRegion,
+		DataAccess *target, DataAccessRegion const &targetRegion,
 		bool countUnsatisfiabilityAsBlocker,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
 		assert(source != nullptr);
 		assert(target != nullptr);
-		assert(!sourceRange.empty());
-		assert(!targetRange.empty());
+		assert(!sourceRegion.empty());
+		assert(!targetRegion.empty());
 		assert(source->_lock != nullptr);
 		assert(source->_lock->isLockedByThisThread());
 		assert(source->_lock == target->_lock);
 		
-		DataAccessRange intersection = targetRange.intersect(sourceRange);
+		DataAccessRegion intersection = targetRegion.intersect(sourceRegion);
 		assert(!intersection.empty());
 		
 		bool newLinkSatisfied = DataAccess::evaluateSatisfiability(source, target->_type);
@@ -187,7 +187,7 @@ private:
 	
 	static inline void handleLinksToNext(
 		DataAccess *dataAccess, DataAccess *next,
-		DataAccessRange const &nextRange,
+		DataAccessRegion const &nextRegion,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
 		assert(dataAccess != nullptr);
@@ -197,20 +197,20 @@ private:
 		assert(dataAccess->_lock == next->_lock);
 		
 		dataAccess->_bottomSubaccesses.processIntersectingAndMissing(
-			nextRange,
+			nextRegion,
 			// Bottom subaccesses that have an intersection with "next"
 			[&](LinearRegionDataAccessMap::iterator bottomIntersectingPosition) -> bool {
 				linkExistingDataAccesses(
-					bottomIntersectingPosition->_access, bottomIntersectingPosition->_accessRange,
-					next, nextRange,
+					bottomIntersectingPosition->_access, bottomIntersectingPosition->_accessRegion,
+					next, nextRegion,
 					true /* Count unsatisfied links as blockers */,
 					triggererTaskInstrumentationId
 				);
 				
 				return true;
 			},
-			// Ranges of "next" not covered by any bottom subaccess
-			[&](DataAccessRange const &unmatchedNextFragment) -> bool {
+			// Regions of "next" not covered by any bottom subaccess
+			[&](DataAccessRegion const &unmatchedNextFragment) -> bool {
 				dataAccess->_previous.processIntersecting(
 					unmatchedNextFragment,
 					// The previous of the DataAccess to be removed constrained to the "holes" and the same graph
@@ -218,12 +218,12 @@ private:
 						DataAccess *previous = previousPosition->_access;
 						assert(previous != nullptr);
 						
-						DataAccessRange const &previousRange = previousPosition->_accessRange;
-						assert(!unmatchedNextFragment.intersect(previousRange).empty());
+						DataAccessRegion const &previousRegion = previousPosition->_accessRegion;
+						assert(!unmatchedNextFragment.intersect(previousRegion).empty());
 						
 						linkExistingDataAccesses(
-							previous, previousRange,
-							next, nextRange,
+							previous, previousRegion,
+							next, nextRegion,
 							true /* Do consider satisfiability */,
 							triggererTaskInstrumentationId
 						);
@@ -240,7 +240,7 @@ private:
 	
 	static inline void handleLinksToPrevious(
 		DataAccess *dataAccess, DataAccess *previous,
-		DataAccessRange const &previousRange,
+		DataAccessRegion const &previousRegion,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
 		assert(dataAccess != nullptr);
@@ -250,12 +250,12 @@ private:
 		assert(dataAccess->_lock == previous->_lock);
 		
 		dataAccess->_topSubaccesses.processIntersecting(
-			previousRange,
+			previousRegion,
 			// Top subaccesses that have an intersection with "previous"
 			[&](LinearRegionDataAccessMap::iterator intersectingPosition) -> bool {
 				linkExistingDataAccesses(
-					previous, previousRange,
-					intersectingPosition->_access, intersectingPosition->_accessRange,
+					previous, previousRegion,
+					intersectingPosition->_access, intersectingPosition->_accessRegion,
 					false /* Do not count unsatisfied links as blockers, since they were already counted in the effective previous relation */,
 					triggererTaskInstrumentationId
 				);
@@ -267,7 +267,7 @@ private:
 	
 	
 	static void propagateSatisfiabilityChangeToNext(
-		DataAccessRange const &range, DataAccess *fromDataAccess,
+		DataAccessRegion const &region, DataAccess *fromDataAccess,
 		DataAccessNextLinks::iterator &nextLink,
 		CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
 		Instrument::task_id_t triggererTaskInstrumentationId
@@ -302,15 +302,15 @@ private:
 					satisfiedOriginators.push_back(nextAccess->_originator);
 				}
 				
-				DataAccessRange effectiveRange = range.intersect(nextAccess->_range);
-				propagateSatisfiabilityChange(effectiveRange, nextAccess, satisfiedOriginators, triggererTaskInstrumentationId);
+				DataAccessRegion effectiveRegion = region.intersect(nextAccess->_region);
+				propagateSatisfiabilityChange(effectiveRegion, nextAccess, satisfiedOriginators, triggererTaskInstrumentationId);
 			}
 		}
 	}
 	
 	
 	static void propagateSatisfiabilityChangeToSubaccess(
-		DataAccessRange const &range, DataAccess *fromDataAccess,
+		DataAccessRegion const &region, DataAccess *fromDataAccess,
 		LinearRegionDataAccessMap::iterator &subaccessPosition,
 		CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
 		Instrument::task_id_t triggererTaskInstrumentationId
@@ -329,7 +329,7 @@ private:
 			subaccess->_blockerCount--;
 			assert(subaccess->_blockerCount >= 0);
 			
-			DataAccessRange effectiveRange = range.intersect(subaccess->_range);
+			DataAccessRegion effectiveRegion = region.intersect(subaccess->_region);
 			
 			if (subaccess->_blockerCount == 0) {
 				Instrument::dataAccessBecomesSatisfied(
@@ -342,14 +342,14 @@ private:
 				if (!subaccess->_weak) {
 					satisfiedOriginators.push_back(subaccess->_originator);
 				}
-				propagateSatisfiabilityChange(effectiveRange, subaccess, satisfiedOriginators, triggererTaskInstrumentationId);
+				propagateSatisfiabilityChange(effectiveRegion, subaccess, satisfiedOriginators, triggererTaskInstrumentationId);
 			}
 		}
 	}
 	
 	
 	static void propagateSatisfiabilityChange(
-		DataAccessRange const &range, DataAccess *fromDataAccess,
+		DataAccessRegion const &region, DataAccess *fromDataAccess,
 		CPUDependencyData::satisfied_originator_list_t /* OUT */ &satisfiedOriginators,
 		Instrument::task_id_t triggererTaskInstrumentationId
 	) {
@@ -359,10 +359,10 @@ private:
 		assert(fromDataAccess->_lock->isLockedByThisThread());
 		
 		fromDataAccess->_next.processIntersecting(
-			range,
+			region,
 			[&](DataAccessNextLinks::iterator nextLink) -> bool {
 				if (!nextLink->_satisfied) {
-					propagateSatisfiabilityChangeToNext(range, fromDataAccess, nextLink, /* OUT */ satisfiedOriginators, triggererTaskInstrumentationId);
+					propagateSatisfiabilityChangeToNext(region, fromDataAccess, nextLink, /* OUT */ satisfiedOriginators, triggererTaskInstrumentationId);
 				}
 				
 				return true;
@@ -370,9 +370,9 @@ private:
 		);
 		
 		fromDataAccess->_topSubaccesses.processIntersecting(
-			range,
+			region,
 			[&](LinearRegionDataAccessMap::iterator subaccessPosition) -> bool {
-				propagateSatisfiabilityChangeToSubaccess(range, fromDataAccess, subaccessPosition, /* OUT */ satisfiedOriginators, triggererTaskInstrumentationId);
+				propagateSatisfiabilityChangeToSubaccess(region, fromDataAccess, subaccessPosition, /* OUT */ satisfiedOriginators, triggererTaskInstrumentationId);
 				
 				return true;
 			}
@@ -404,20 +404,20 @@ private:
 		
 		// Remove links from "previous" objects (half link) since they will be replaced in the next loop
 		for (auto previousLinkPosition = dataAccess->_previous.begin(); previousLinkPosition != dataAccess->_previous.end(); previousLinkPosition++) {
-			DataAccessRange const &previousRange = previousLinkPosition->_accessRange;
+			DataAccessRegion const &previousRegion = previousLinkPosition->_accessRegion;
 			DataAccess *previous = previousLinkPosition->_access;
 			
 			// Check that there is a correct reverse link
 			assert(previous != nullptr);
 			assert(dataAccess->_lock == previous->_lock);
-			assert(previous->_next.find(previousRange) != previous->_next.end());
-			assert(previous->_next.find(previousRange)->_access == dataAccess);
+			assert(previous->_next.find(previousRegion) != previous->_next.end());
+			assert(previous->_next.find(previousRegion)->_access == dataAccess);
 			
 			// Erase the link from the DataAccess to be removed
 			{
-				auto reverseLinkPosition = previous->_next.find(previousRange);
+				auto reverseLinkPosition = previous->_next.find(previousRegion);
 				assert(reverseLinkPosition != previous->_next.end());
-				assert(reverseLinkPosition->_accessRange == previousRange);
+				assert(reverseLinkPosition->_accessRegion == previousRegion);
 				assert(reverseLinkPosition->_access == dataAccess);
 				assert(reverseLinkPosition->_satisfied || dataAccess->_weak);
 				assert(dataAccess->_originator != nullptr);
@@ -435,23 +435,23 @@ private:
 		
 		// Remove (back) links (from) next and (fully) link them back to their new previous
 		for (auto nextLinkPosition = dataAccess->_next.begin(); nextLinkPosition != dataAccess->_next.end(); nextLinkPosition++) {
-			DataAccessRange const &nextRange = nextLinkPosition->_accessRange;
+			DataAccessRegion const &nextRegion = nextLinkPosition->_accessRegion;
 			DataAccess *next = nextLinkPosition->_access;
 			
 			// Check that there is a correct reverse link
 			assert(next != nullptr);
 			assert(dataAccess->_lock == next->_lock);
-			assert(next->_previous.find(nextRange) != next->_previous.end());
-			assert(!next->_previous.find(nextRange)->getAccessRange().intersect(nextRange).empty());
-			assert(next->_previous.find(nextRange)->_access == dataAccess);
+			assert(next->_previous.find(nextRegion) != next->_previous.end());
+			assert(!next->_previous.find(nextRegion)->getAccessRegion().intersect(nextRegion).empty());
+			assert(next->_previous.find(nextRegion)->_access == dataAccess);
 			
 			int originalBlockerCount = next->_blockerCount;
 			
 			// Erase the link from the DataAccess to be removed
 			{
-				auto reverseLinkPosition = next->_previous.find(nextRange);
+				auto reverseLinkPosition = next->_previous.find(nextRegion);
 				assert(reverseLinkPosition != next->_previous.end());
-				assert(reverseLinkPosition->_accessRange == nextRange);
+				assert(reverseLinkPosition->_accessRegion == nextRegion);
 				assert(reverseLinkPosition->_access == dataAccess);
 				assert(next->_originator != nullptr);
 				
@@ -472,12 +472,12 @@ private:
 			
 			// Update the top map with any projection of "next" that becomes unobstructed
 			if (topMap != nullptr) {
-				replaceOutdatedMapProjection(topMap, nextRange, dataAccess, next);
+				replaceOutdatedMapProjection(topMap, nextRegion, dataAccess, next);
 			}
 			
 			// Link bottom subaccesses and previous as necessary to "next". Also increase the blocker count
 			// due to effective previous at outer levels
-			handleLinksToNext(dataAccess, next, nextRange, instrumentationTaskId);
+			handleLinksToNext(dataAccess, next, nextRegion, instrumentationTaskId);
 			
 			// Check if the access becomes satisfied
 			assert(next->_blockerCount >= 0);
@@ -495,26 +495,26 @@ private:
 				if (!next->_weak) {
 					satisfiedOriginators.push_back(nextOriginator);
 				}
-				propagateSatisfiabilityChange(nextRange, next, satisfiedOriginators, instrumentationTaskId);
+				propagateSatisfiabilityChange(nextRegion, next, satisfiedOriginators, instrumentationTaskId);
 			}
 		}
 		
 		// Process effects over the "previous" objects
 		for (auto previousLinkPosition = dataAccess->_previous.begin(); previousLinkPosition != dataAccess->_previous.end(); previousLinkPosition++) {
-			DataAccessRange const &previousRange = previousLinkPosition->_accessRange;
+			DataAccessRegion const &previousRegion = previousLinkPosition->_accessRegion;
 			DataAccess *previous = previousLinkPosition->_access;
 			assert(dataAccess->_lock == previous->_lock);
 			
 			// Update the bottom map with any projection of "previous" that becomes unobstructed
-			replaceOutdatedMapProjection(bottomMap, previousRange, dataAccess, previous);
+			replaceOutdatedMapProjection(bottomMap, previousRegion, dataAccess, previous);
 			
 			// Link top subaccesses as necessary to "previous"
-			handleLinksToPrevious(dataAccess, previous, previousRange, instrumentationTaskId);
+			handleLinksToPrevious(dataAccess, previous, previousRegion, instrumentationTaskId);
 			
 			// The removal of the DataAccess does not affect the satisfiability of the previous accesses
 		}
 		
-		// Remove in the top and bottom maps any lingering range still covered by the DataAccess to be removed
+		// Remove in the top and bottom maps any lingering region still covered by the DataAccess to be removed
 		if (topMap != nullptr) {
 			removeMapProjection(topMap, dataAccess);
 		}
@@ -557,7 +557,7 @@ private:
 	) {
 		assert(positionOfPreviousAccess != bottomMap->end());
 		
-		DataAccessRange intersectingFragment = positionOfPreviousAccess->_accessRange;
+		DataAccessRegion intersectingFragment = positionOfPreviousAccess->_accessRegion;
 		DataAccess *previousAccess = positionOfPreviousAccess->_access;
 		assert(previousAccess != nullptr);
 		assert(previousAccess->_lock != nullptr);
@@ -616,14 +616,14 @@ private:
 	
 	
 	static inline void handleFullDataAccessUpgrade(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRange accessRange, LinearRegionDataAccessMap *bottomMap
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion accessRegion, LinearRegionDataAccessMap *bottomMap
 	) {
 		assert(task != nullptr);
 		assert(bottomMap != nullptr);
 		
-		LinearRegionDataAccessMap::iterator accessPosition = bottomMap->find(accessRange);
+		LinearRegionDataAccessMap::iterator accessPosition = bottomMap->find(accessRegion);
 		assert(accessPosition != bottomMap->end());
-		assert(accessPosition->_accessRange == accessRange);
+		assert(accessPosition->_accessRegion == accessRegion);
 		
 		handleFullDataAccessUpgrade(task, accessType, weak, accessPosition);
 	}
@@ -631,14 +631,14 @@ private:
 	
 	static inline void handleFullAndPartialDataAccessUpgrade(
 		LinearRegionDataAccessMap::iterator oldAccessPosition,
-		Task *task, DataAccessType accessType, bool weak, DataAccessRange accessRange,
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion accessRegion,
 		DataAccess *superAccess, SpinLock *lock,
 		LinearRegionDataAccessMap *topMap, LinearRegionDataAccessMap *bottomMap
 	) {
 		DataAccess *oldDataAccess = oldAccessPosition->_access;
 		assert(oldDataAccess != nullptr);
 		
-		DataAccessRange oldAccessRange = oldAccessPosition->_accessRange;
+		DataAccessRegion oldAccessRegion = oldAccessPosition->_accessRegion;
 		DataAccessType oldAccessType = oldDataAccess->_type;
 		bool oldWeak = oldDataAccess->_weak;
 		assert(oldDataAccess->_lock == lock);
@@ -647,7 +647,7 @@ private:
 		assert(lock->isLockedByThisThread());
 		
 		// Simple case: perfectly matching upgrade
-		if (oldAccessRange == accessRange) {
+		if (oldAccessRegion == accessRegion) {
 			handleFullDataAccessUpgrade(task, accessType, weak, oldAccessPosition);
 			return;
 		}
@@ -673,19 +673,19 @@ private:
 		}
 		
 		// Add back each fragment of the old access and add each new fragment (which may trigger perfectly overlapping updates)
-		accessRange.processIntersectingFragments(
-			oldAccessRange,
-			// A fragment in the current DataAccessRange that does not need to be upgraded
-			[&](DataAccessRange const &fragment) {
+		accessRegion.processIntersectingFragments(
+			oldAccessRegion,
+			// A fragment in the current DataAccessRegion that does not need to be upgraded
+			[&](DataAccessRegion const &fragment) {
 				registerTaskDataAccessPrelocked(task, accessType, weak, fragment, superAccess, lock, topMap, bottomMap, false);
 			},
 			// A fragment that must be upgraded
-			[&](DataAccessRange const &fragment) {
+			[&](DataAccessRegion const &fragment) {
 				registerTaskDataAccessPrelocked(task, oldAccessType, oldWeak, fragment, superAccess, lock, topMap, bottomMap, false);
 				handleFullDataAccessUpgrade(task, accessType, weak, fragment, bottomMap);
 			},
-			// A fragment from a previous access that is not covered in the curent DataAccessRange
-			[&](DataAccessRange const &fragment) {
+			// A fragment from a previous access that is not covered in the curent DataAccessRegion
+			[&](DataAccessRegion const &fragment) {
 				registerTaskDataAccessPrelocked(task, oldAccessType, oldWeak, fragment, superAccess, lock, topMap, bottomMap, false);
 			}
 		);
@@ -693,7 +693,7 @@ private:
 	
 	
 	static inline void registerTaskDataAccessPrelocked(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRange accessRange,
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion accessRegion,
 		DataAccess *superAccess, SpinLock *lock,
 		LinearRegionDataAccessMap *topMap, LinearRegionDataAccessMap *bottomMap,
 		bool checkUpgrades = true
@@ -712,7 +712,7 @@ private:
 		if (checkUpgrades) {
 			bool containsUpgrades = false;
 			bottomMap->processIntersecting(
-				accessRange,
+				accessRegion,
 				[&](LinearRegionDataAccessMap::iterator position) -> bool {
 					DataAccess *intersectingDataAccess = position->_access;
 					assert(intersectingDataAccess != nullptr);
@@ -720,7 +720,7 @@ private:
 					if (intersectingDataAccess->_originator == task) {
 						containsUpgrades = true;
 						
-						handleFullAndPartialDataAccessUpgrade(position, task, accessType, weak, accessRange, superAccess, lock, topMap, bottomMap);
+						handleFullAndPartialDataAccessUpgrade(position, task, accessType, weak, accessRegion, superAccess, lock, topMap, bottomMap);
 					}
 					
 					return true;
@@ -741,7 +741,7 @@ private:
 		Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
 			(superAccess != nullptr ? superAccess->_instrumentationId : Instrument::data_access_id_t()),
 			accessType, weak,
-			accessRange,
+			accessRegion,
 			false, false, false, // Not satisfied
 			task->getInstrumentationTaskId()
 		);
@@ -750,20 +750,20 @@ private:
 		DataAccess *dataAccess = new DataAccess(
 			superAccess, lock, bottomMap,
 			accessType, weak, 0,
-			task, accessRange,
+			task, accessRegion,
 			dataAccessInstrumentationId
 		);
 		
 		
 		bottomMap->processIntersectingAndMissing(
-			accessRange,
+			accessRegion,
 			// Handle regions in the map that intersect
 			[&](LinearRegionDataAccessMap::iterator intersectingPosition) -> bool {
 				assert(intersectingPosition != bottomMap->end());
 				
 				DataAccess *intersectingDataAccess = intersectingPosition->_access;
 				assert(intersectingDataAccess != nullptr);
-				DataAccessRange const &insersectingFragment = intersectingPosition->_accessRange.intersect(accessRange);
+				DataAccessRegion const &insersectingFragment = intersectingPosition->_accessRegion.intersect(accessRegion);
 				
 				// Link and count blockers
 				bool satisfied = DataAccess::evaluateSatisfiability(intersectingDataAccess, accessType);
@@ -773,12 +773,12 @@ private:
 				}
 				
 				// Fragment partial overlaps and remove the fully contained fragment
-				bottomMap->fragmentByIntersection(intersectingPosition, accessRange, /* remove instersection */ true);
+				bottomMap->fragmentByIntersection(intersectingPosition, accessRegion, /* remove instersection */ true);
 				
 				return true;
 			},
 			// Handle fragments not in the map (holes)
-			[&](DataAccessRange const &missingFragment) -> bool {
+			[&](DataAccessRegion const &missingFragment) -> bool {
 				// Increase the blocker count due to effective previous accesses that are in an outer scope
 				if (superAccess != nullptr) {
 					superAccess->processEffectivePrevious(
@@ -806,11 +806,11 @@ private:
 			}
 		);
 		
-		// Check that we have actually fully removed the whole range from the bottom map
-		assert(!bottomMap->exists(accessRange, [&](__attribute__((unused)) LinearRegionDataAccessMap::iterator position) -> bool { return true; }));
+		// Check that we have actually fully removed the whole region from the bottom map
+		assert(!bottomMap->exists(accessRegion, [&](__attribute__((unused)) LinearRegionDataAccessMap::iterator position) -> bool { return true; }));
 		
 		// Insert the new DataAccess
-		bottomMap->insert(LinearRegionDataAccessMapNode(accessRange, dataAccess));
+		bottomMap->insert(LinearRegionDataAccessMapNode(accessRegion, dataAccess));
 		task->getDataAccesses().push_back(*dataAccess);
 		
 		if (dataAccess->_blockerCount == 0) {
@@ -833,13 +833,13 @@ public:
 	//! \param[inout] task the task that performs the access
 	//! \param[in] accessType the type of access
 	//! \param[in] weak true iff the access is weak
-	//! \param[in] accessRange the range of data covered by the access
+	//! \param[in] accessRegion the region of data covered by the access
 	//! \param[in] superAccess the access of the parent that contains the new access or nullptr if there is none
 	//! \param[in] lock a pointer to the lock that protects the hierarchy of accesses that leads to the new access
 	//! \param[inout] topMap the map that contains the information to calculate input dependencies
 	//! \param[inout] bottomMap the map that contains the information to calculate output dependencies
 	static inline void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRange accessRange,
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion accessRegion,
 		DataAccess *superAccess, SpinLock *lock,
 		LinearRegionDataAccessMap *topMap, LinearRegionDataAccessMap *bottomMap
 	) {
@@ -849,7 +849,7 @@ public:
 		
 		std::unique_lock<SpinLock> guard(*lock);
 		
-		registerTaskDataAccessPrelocked(task, accessType, weak, accessRange, superAccess, lock, topMap, bottomMap);
+		registerTaskDataAccessPrelocked(task, accessType, weak, accessRegion, superAccess, lock, topMap, bottomMap);
 	}
 	
 	

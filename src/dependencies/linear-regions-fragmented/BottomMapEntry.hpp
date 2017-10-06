@@ -11,7 +11,7 @@
 #include <boost/intrusive/avl_set.hpp>
 #include <boost/intrusive/avl_set_hook.hpp>
 
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 
 
 class Task;
@@ -42,23 +42,23 @@ struct BottomMapEntryLinkingArtifacts {
 struct BottomMapEntry {
 	BottomMapEntryLinkingArtifacts::hook_type _links;
 	
-	DataAccessRange _range;
+	DataAccessRegion _region;
 	Task *_task;
 	bool _local;
 	
-	BottomMapEntry(DataAccessRange range, Task *task, bool local)
-		: _links(), _range(range), _task(task), _local(local)
+	BottomMapEntry(DataAccessRegion region, Task *task, bool local)
+		: _links(), _region(region), _task(task), _local(local)
 	{
 	}
 	
-	DataAccessRange const &getAccessRange() const
+	DataAccessRegion const &getAccessRegion() const
 	{
-		return _range;
+		return _region;
 	}
 	
-	void setAccessRange(DataAccessRange const &newRange)
+	void setAccessRegion(DataAccessRegion const &newRegion)
 	{
-		_range = newRange;
+		_region = newRegion;
 	}
 	
 };

@@ -26,7 +26,7 @@ class Task;
 
 
 #include "../DataAccessBase.hpp"
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
@@ -45,8 +45,8 @@ struct DataAccess : public DataAccessBase {
 		TOTAL_STATUS_BITS
 	};
 	
-	//! The range of data covered by the access
-	DataAccessRange _range;
+	//! The region of data covered by the access
+	DataAccessRegion _region;
 	
 	typedef std::bitset<TOTAL_STATUS_BITS> status_t;
 	status_t _status;
@@ -54,7 +54,7 @@ struct DataAccess : public DataAccessBase {
 	//! Direct next access
 	Task *_next;
 	
-	//! First child with accesses within this range
+	//! First child with accesses within this region
 	Task *_child;
 	
 	//! Reduction type and operator
@@ -63,11 +63,11 @@ struct DataAccess : public DataAccessBase {
 	DataAccess(
 		DataAccessType type, bool weak,
 		Task *originator,
-		DataAccessRange accessRange,
+		DataAccessRegion accessRegion,
 		Instrument::data_access_id_t instrumentationId
 	)
 		: DataAccessBase(type, weak, originator, instrumentationId),
-		_range(accessRange),
+		_region(accessRegion),
 		_status(0),
 		_next(nullptr),
 		_child(nullptr),
@@ -157,19 +157,19 @@ struct DataAccess : public DataAccessBase {
 	}
 #endif
 	
-	void setAccessRange(DataAccessRange const &newRange)
+	void setAccessRegion(DataAccessRegion const &newRegion)
 	{
-		_range = newRange;
+		_region = newRegion;
 	}
 	
-	DataAccessRange const &getAccessRange() const
+	DataAccessRegion const &getAccessRegion() const
 	{
-		return _range;
+		return _region;
 	}
 	
-	DataAccessRange &getAccessRange()
+	DataAccessRegion &getAccessRegion()
 	{
-		return _range;
+		return _region;
 	}
 	
 	

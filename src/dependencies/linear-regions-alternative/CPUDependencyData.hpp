@@ -12,7 +12,7 @@
 #include <bitset>
 #include <deque>
 
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 
 
 class Task;
@@ -21,12 +21,12 @@ class Task;
 struct CPUDependencyData {
 	typedef std::deque<Task *> satisfied_originator_list_t;
 	typedef std::deque<Task *> removable_task_list_t;
-	typedef std::deque<DataAccessRange> data_access_range_list_t;
+	typedef std::deque<DataAccessRegion> data_access_region_list_t;
 	
 	//! Tasks whose accesses have been satified after ending a task
 	satisfied_originator_list_t _satisfiedOriginators;
 	removable_task_list_t _removableTasks;
-	data_access_range_list_t _removedRangesFromBottomMap;
+	data_access_region_list_t _removedRegionsFromBottomMap;
 	
 #ifndef NDEBUG
 	std::atomic<bool> _inUse;

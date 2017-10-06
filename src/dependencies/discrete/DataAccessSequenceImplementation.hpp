@@ -15,21 +15,21 @@
 
 
 inline DataAccessSequence::DataAccessSequence(SpinLock *lock)
-	: _accessRange(),
+	: _accessRegion(),
 	_superAccess(0), _lock(lock), _accessSequence()
 {
 }
 
 
-inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, SpinLock *lock)
-	: _accessRange(accessRange),
+inline DataAccessSequence::DataAccessSequence(DataAccessRegion accessRegion, SpinLock *lock)
+	: _accessRegion(accessRegion),
 	_superAccess(nullptr), _lock(lock), _accessSequence()
 {
 }
 
 
-inline DataAccessSequence::DataAccessSequence(DataAccessRange accessRange, DataAccess *superAccess, SpinLock *lock)
-	: _accessRange(accessRange),
+inline DataAccessSequence::DataAccessSequence(DataAccessRegion accessRegion, DataAccess *superAccess, SpinLock *lock)
+	: _accessRegion(accessRegion),
 	_superAccess(superAccess), _lock(lock), _accessSequence()
 {
 }

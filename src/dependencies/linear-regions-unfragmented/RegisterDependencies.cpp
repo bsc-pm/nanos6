@@ -29,7 +29,7 @@ void register_access(void *handler, void *start, size_t length)
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != 0); // NOTE: The "main" task is not created by a WorkerThread, but in any case it is not supposed to have dependencies
 	
-	DataAccessRange accessRange(start, length);
+	DataAccessRegion accessRegion(start, length);
 	
 	LinearRegionDataAccessMap *topMap = nullptr;
 	LinearRegionDataAccessMap *bottomMap = nullptr;
@@ -40,10 +40,10 @@ void register_access(void *handler, void *start, size_t length)
 	if (parent != 0) {
 		for (DataAccessBase &parentAccessBase : parent->getDataAccesses()) {
 			DataAccess &parentAccess = (DataAccess &) parentAccessBase;
-			DataAccessRange intersection = parentAccess._range.intersect(accessRange);
+			DataAccessRegion intersection = parentAccess._region.intersect(accessRegion);
 			
 			if (!intersection.empty()) {
-				assert("A subaccess cannot extend beyond that of its parent access" && (intersection == accessRange));
+				assert("A subaccess cannot extend beyond that of its parent access" && (intersection == accessRegion));
 				topMap = &parentAccess._topSubaccesses;
 				bottomMap = &parentAccess._bottomSubaccesses;
 				
@@ -68,7 +68,7 @@ void register_access(void *handler, void *start, size_t length)
 		lock = &domain->_lock;
 	}
 	
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal(), accessRange, superAccess, lock, topMap, bottomMap);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal(), accessRegion, superAccess, lock, topMap, bottomMap);
 }
 
 

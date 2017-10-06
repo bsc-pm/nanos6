@@ -32,7 +32,7 @@ void register_access(void *handler, void *start, size_t length, ReductionInfo...
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != 0); // NOTE: The "main" task is not created by a WorkerThread, but in any case it is not supposed to have dependencies
 	
-	DataAccessRange accessRange(start, length);
+	DataAccessRegion accessRegion(start, length);
 	
 	DataAccessSequence *accessSequence = 0;
 	Task *parent = task->getParent();
@@ -42,7 +42,7 @@ void register_access(void *handler, void *start, size_t length, ReductionInfo...
 			DataAccessSequence *parentSequence = parentAccess._dataAccessSequence;
 			assert(parentSequence != 0);
 			
-			if (parentSequence->_accessRange == accessRange) {
+			if (parentSequence->_accessRegion == accessRegion) {
 				accessSequence = &parentAccess._subaccesses;
 				break;
 			}
@@ -53,7 +53,7 @@ void register_access(void *handler, void *start, size_t length, ReductionInfo...
 		// An access that is not a subset of the parent accesses, therefore
 		// (if the code is correct) it must be temporary data created by the parent
 		DependencyDomain *dependencyDomain = currentWorkerThread->getDependencyDomain();
-		accessSequence = & (*dependencyDomain)[accessRange]._accessSequence;
+		accessSequence = & (*dependencyDomain)[accessRegion]._accessSequence;
 	}
 	
 	DataAccess *dataAccess;

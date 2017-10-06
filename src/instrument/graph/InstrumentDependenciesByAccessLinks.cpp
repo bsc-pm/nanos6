@@ -26,7 +26,7 @@ namespace Instrument {
 	
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType, bool weak, DataAccessRange range,
+		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId, InstrumentationContext const &context
 	) {
@@ -36,7 +36,7 @@ namespace Instrument {
 		
 		create_data_access_step_t *step = new create_data_access_step_t(
 			context,
-			superAccessId, dataAccessId, accessType, range, weak,
+			superAccessId, dataAccessId, accessType, region, weak,
 			readSatisfied, writeSatisfied, globallySatisfied,
 			originatorTaskId
 		);
@@ -50,9 +50,9 @@ namespace Instrument {
 		access->_originator = originatorTaskId;
 		access->_firstGroupAccess = dataAccessId;
 		
-		// We need the final range and type of each access to calculate the full graph
+		// We need the final region and type of each access to calculate the full graph
 		access->_type = accessType;
-		access->_accessRange = range;
+		access->_accessRegion = region;
 		
 		_accessIdToAccessMap[dataAccessId] = access;
 		
@@ -111,30 +111,30 @@ namespace Instrument {
 	}
 	
 	
-	void modifiedDataAccessRange(
+	void modifiedDataAccessRegion(
 		data_access_id_t dataAccessId,
-		DataAccessRange newRange,
+		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		
-		modified_data_access_range_step_t *step = new modified_data_access_range_step_t(
+		modified_data_access_region_step_t *step = new modified_data_access_region_step_t(
 			context,
 			dataAccessId,
-			newRange
+			newRegion
 		);
 		_executionSequence.push_back(step);
 		
-		// We need the final range of each access to calculate the full graph
+		// We need the final region of each access to calculate the full graph
 		access_t *access = _accessIdToAccessMap[dataAccessId];
 		assert(access != nullptr);
-		access->_accessRange = newRange;
+		access->_accessRegion = newRegion;
 	}
 	
 	
 	data_access_id_t fragmentedDataAccess(
 		data_access_id_t dataAccessId,
-		DataAccessRange newRange,
+		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
@@ -146,7 +146,7 @@ namespace Instrument {
 		
 		fragment_data_access_step_t *step = new fragment_data_access_step_t(
 			context,
-			dataAccessId, newDataAccessId, newRange
+			dataAccessId, newDataAccessId, newRegion
 		);
 		_executionSequence.push_back(step);
 		
@@ -156,7 +156,7 @@ namespace Instrument {
 			// Copy all the contents so that we also get any already existing link
 			access_t *newAccess = new access_t();
 			*newAccess = *originalAccess;
-			newAccess->_accessRange = newRange;
+			newAccess->_accessRegion = newRegion;
 			
 			newAccess->_id = newDataAccessId;
 			
@@ -173,7 +173,7 @@ namespace Instrument {
 			// Copy all the contents so that we also get any already existing link
 			access_fragment_t *newFragment = new access_fragment_t();
 			*newFragment = *originalFragment;
-			newFragment->_accessRange = newRange;
+			newFragment->_accessRegion = newRegion;
 			
 			newFragment->_id = newDataAccessId;
 			
@@ -282,7 +282,7 @@ namespace Instrument {
 	
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
-		DataAccessRange range,
+		DataAccessRegion region,
 		bool direct, bool bidirectional,
 		InstrumentationContext const &context
 	) {
@@ -297,7 +297,7 @@ namespace Instrument {
 		linked_data_accesses_step_t *step = new linked_data_accesses_step_t(
 			context,
 			sourceAccessId, sinkTaskId,
-			range,
+			region,
 			direct, bidirectional
 		);
 		_executionSequence.push_back(step);

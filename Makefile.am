@@ -422,8 +422,8 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/CPUDependencyData.hpp \
 	src/dependencies/discrete/DataAccess.hpp \
 	src/dependencies/discrete/DataAccessImplementation.hpp \
-	src/dependencies/discrete/DataAccessRange.hpp \
-	src/dependencies/discrete/DataAccessRangeIndexer.hpp \
+	src/dependencies/discrete/DataAccessRegion.hpp \
+	src/dependencies/discrete/DataAccessRegionIndexer.hpp \
 	src/dependencies/discrete/DataAccessRegistration.hpp \
 	src/dependencies/discrete/DataAccessSequence.hpp \
 	src/dependencies/discrete/DataAccessSequenceImplementation.hpp \
@@ -444,8 +444,8 @@ discrete_dependency_sources = $(common_dependency_sources) \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
 
 common_linear_regions_dependency_sources = \
-	src/dependencies/linear-regions/DataAccessRange.hpp \
-	src/dependencies/linear-regions/DataAccessRangeIndexer.hpp \
+	src/dependencies/linear-regions/DataAccessRegion.hpp \
+	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \
 	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
 	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \

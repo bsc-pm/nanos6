@@ -226,7 +226,7 @@ namespace Instrument {
 			data_access_id_t _superAccessId;
 			data_access_id_t _accessId;
 			DataAccessType _accessType;
-			DataAccessRange _range;
+			DataAccessRegion _region;
 			bool _weak;
 			bool _readSatisfied, _writeSatisfied, _globallySatisfied;
 			task_id_t _originatorTaskId;
@@ -234,13 +234,13 @@ namespace Instrument {
 			create_data_access_step_t(
 				InstrumentationContext const &instrumentationContext,
 				data_access_id_t superAccessId, data_access_id_t accessId,
-				DataAccessType accessType, DataAccessRange const &range, bool weak,
+				DataAccessType accessType, DataAccessRegion const &region, bool weak,
 				bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 				task_id_t originatorTaskId
 			)
 				: execution_step_t(instrumentationContext),
 				_superAccessId(superAccessId), _accessId(accessId),
-				_accessType(accessType), _range(range), _weak(weak),
+				_accessType(accessType), _region(region), _weak(weak),
 				_readSatisfied(readSatisfied), _writeSatisfied(writeSatisfied), _globallySatisfied(globallySatisfied),
 				_originatorTaskId(originatorTaskId)
 			{
@@ -314,18 +314,18 @@ namespace Instrument {
 		};
 		
 		
-		struct modified_data_access_range_step_t : public execution_step_t {
+		struct modified_data_access_region_step_t : public execution_step_t {
 			data_access_id_t _accessId;
-			DataAccessRange _range;
+			DataAccessRegion _region;
 			
-			modified_data_access_range_step_t(
+			modified_data_access_region_step_t(
 				InstrumentationContext const &instrumentationContext,
 				data_access_id_t accessId,
-				DataAccessRange range
+				DataAccessRegion region
 			)
 				: execution_step_t(instrumentationContext),
 				_accessId(accessId),
-				_range(range)
+				_region(region)
 			{
 			}
 			
@@ -338,16 +338,16 @@ namespace Instrument {
 		struct fragment_data_access_step_t : public execution_step_t {
 			data_access_id_t _originalAccessId;
 			data_access_id_t _newFragmentAccessId;
-			DataAccessRange _newRange;
+			DataAccessRegion _newRegion;
 			
 			fragment_data_access_step_t(
 				InstrumentationContext const &instrumentationContext,
 				data_access_id_t originalAccessId, data_access_id_t newFragmentAccessId,
-				DataAccessRange newRange
+				DataAccessRegion newRegion
 			)
 				: execution_step_t(instrumentationContext),
 				_originalAccessId(originalAccessId), _newFragmentAccessId(newFragmentAccessId),
-				_newRange(newRange)
+				_newRegion(newRegion)
 			{
 			}
 			
@@ -433,19 +433,19 @@ namespace Instrument {
 		struct linked_data_accesses_step_t : public execution_step_t {
 			data_access_id_t _sourceAccessId;
 			task_id_t _sinkTaskId;
-			DataAccessRange _range;
+			DataAccessRegion _region;
 			bool _direct, _bidirectional;
 			bool _producedChanges;
 			
 			linked_data_accesses_step_t(
 				InstrumentationContext const &instrumentationContext,
 				data_access_id_t sourceAccessId, task_id_t sinkTaskId,
-				DataAccessRange range,
+				DataAccessRegion region,
 				bool direct, bool bidirectional
 			)
 				: execution_step_t(instrumentationContext),
 				_sourceAccessId(sourceAccessId), _sinkTaskId(sinkTaskId),
-				_range(range),
+				_region(region),
 				_direct(direct), _bidirectional(bidirectional),
 				_producedChanges(false)
 			{

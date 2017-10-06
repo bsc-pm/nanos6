@@ -4,19 +4,19 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef DATA_ACCESS_RANGE_HPP
-#define DATA_ACCESS_RANGE_HPP
+#ifndef DATA_ACCESS_REGION_HPP
+#define DATA_ACCESS_REGION_HPP
 
 
 #include <cstddef>
 #include <ostream>
 
 
-class DataAccessRange;
-inline std::ostream & operator<<(std::ostream &o, DataAccessRange const &range);
+class DataAccessRegion;
+inline std::ostream & operator<<(std::ostream &o, DataAccessRegion const &region);
 
 
-class DataAccessRange {
+class DataAccessRegion {
 private:
 	//! The starting address of the data access
 	void *_startAddress;
@@ -24,27 +24,27 @@ private:
 	//! For now we are not considering the length of the accesses
 	
 public:
-	DataAccessRange(void *startAddress, __attribute__((unused)) size_t length)
+	DataAccessRegion(void *startAddress, __attribute__((unused)) size_t length)
 		: _startAddress(startAddress)
 	{
 	}
 	
-	DataAccessRange()
+	DataAccessRegion()
 		: _startAddress(0)
 	{
 	}
 	
-	bool operator<(DataAccessRange const &other) const
+	bool operator<(DataAccessRegion const &other) const
 	{
 		return _startAddress < other._startAddress;
 	}
 	
-	bool operator==(DataAccessRange const &other) const
+	bool operator==(DataAccessRegion const &other) const
 	{
 		return _startAddress == other._startAddress;
 	}
 	
-	bool operator!=(DataAccessRange const &other) const
+	bool operator!=(DataAccessRegion const &other) const
 	{
 		return _startAddress != other._startAddress;
 	}
@@ -64,18 +64,18 @@ public:
 		return _startAddress;
 	}
 	
-	//! \brief Returns the intersection or an empty DataAccessRange if there is none
-	DataAccessRange intersect(DataAccessRange const &other) const
+	//! \brief Returns the intersection or an empty DataAccessRegion if there is none
+	DataAccessRegion intersect(DataAccessRegion const &other) const
 	{
 		if (other == *this) {
 			return other;
 		} else {
-			return DataAccessRange();
+			return DataAccessRegion();
 		}
 	}
 	
 	
-	bool fullyContainedIn(DataAccessRange const &other) const
+	bool fullyContainedIn(DataAccessRegion const &other) const
 	{
 		return other == *this;
 	}
@@ -83,30 +83,30 @@ public:
 	
 	template <typename ThisOnlyProcessorType, typename IntersectingProcessorType, typename OtherOnlyProcessorType>
 	void processIntersectingFragments(
-		DataAccessRange const &fragmeterRange,
+		DataAccessRegion const &fragmeterRegion,
 		ThisOnlyProcessorType thisOnlyProcessor,
 		IntersectingProcessorType intersectingProcessor,
 		OtherOnlyProcessorType otherOnlyProcessor
 	) {
-		if (fragmeterRange == *this) {
-			intersectingProcessor(fragmeterRange);
+		if (fragmeterRegion == *this) {
+			intersectingProcessor(fragmeterRegion);
 		} else {
 			thisOnlyProcessor(*this);
-			otherOnlyProcessor(fragmeterRange);
+			otherOnlyProcessor(fragmeterRegion);
 		}
 	}
 	
 	
-	friend std::ostream & ::operator<<(std::ostream &o, DataAccessRange const &range);
+	friend std::ostream & ::operator<<(std::ostream &o, DataAccessRegion const &region);
 };
 
 
-inline std::ostream & operator<<(std::ostream &o, const DataAccessRange& range)
+inline std::ostream & operator<<(std::ostream &o, const DataAccessRegion& region)
 {
-	return o << range._startAddress;
+	return o << region._startAddress;
 }
 
 
 
 
-#endif // DATA_ACCESS_RANGE_HPP
+#endif // DATA_ACCESS_REGION_HPP

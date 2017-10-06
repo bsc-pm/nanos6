@@ -14,7 +14,7 @@
 #include <boost/intrusive/options.hpp>
 #include <boost/version.hpp>
 
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 #include "RootDataAccessSequence.hpp"
 #include "RootDataAccessSequenceLinkingArtifacts.hpp"
 #include "RootDataAccessSequenceLinkingArtifactsImplementation.hpp"
@@ -25,18 +25,18 @@ namespace FixedAddressDataAccessMapInternals {
 	struct KeyOfNodeArtifact
 	{
 #if BOOST_VERSION >= 106200
-		typedef DataAccessRange type;
+		typedef DataAccessRegion type;
 		
 		type operator()(ContentType const &node)
 		{ 
-			return node.getAccessRange();
+			return node.getAccessRegion();
 		}
 #else
-		typedef DataAccessRange type;
+		typedef DataAccessRegion type;
 		
 		type const &operator()(ContentType const &node)
 		{ 
-			return node.getAccessRange();
+			return node.getAccessRegion();
 		}
 #endif
 	};
@@ -58,13 +58,13 @@ private:
 	> BaseType;
 	
 public:
-	RootDataAccessSequence &operator[](DataAccessRange accessRange)
+	RootDataAccessSequence &operator[](DataAccessRegion accessRegion)
 	{
-		auto it = BaseType::find(accessRange);
+		auto it = BaseType::find(accessRegion);
 		if (it != BaseType::end()) {
 			return *it;
 		} else {
-			RootDataAccessSequence *newNode = new RootDataAccessSequence(accessRange);
+			RootDataAccessSequence *newNode = new RootDataAccessSequence(accessRegion);
 			BaseType::insert(*newNode);
 			return *newNode;
 		}

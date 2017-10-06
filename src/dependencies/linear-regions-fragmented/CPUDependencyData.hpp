@@ -14,7 +14,7 @@
 
 #include <limits.h>
 
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 #include "ReductionSpecific.hpp"
 
 
@@ -60,13 +60,13 @@ struct CPUDependencyData {
 		
 		Task *_next; // This is only for link_bottom_map_accesses_operation
 		
-		DataAccessRange _range;
+		DataAccessRegion _region;
 		Task *_target;
 		
 		DelayedOperation()
 			: _propagationBits(),
 			_next(nullptr),
-			_range(), _target(nullptr)
+			_region(), _target(nullptr)
 		{
 		}
 	};

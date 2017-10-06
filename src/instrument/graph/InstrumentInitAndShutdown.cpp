@@ -284,8 +284,8 @@ namespace Instrument {
 				break;
 		}
 		
-		if (_showRanges && (access._status != not_created_access_status)) {
-			text << "\\n" << access._accessRange;
+		if (_showRegions && (access._status != not_created_access_status)) {
+			text << "\\n" << access._accessRegion;
 		}
 		
 		bool haveStatusText = false;
@@ -554,7 +554,7 @@ namespace Instrument {
 													sourceLinkIsSet = true;
 												} else if (link._status == created_link_status) {
 													nextTaskInfo._liveAccesses.processIntersecting(
-														accessGroupFragment->_accessRange,
+														accessGroupFragment->_accessRegion,
 														[&](task_live_accesses_t::iterator nextAccessPosition) -> bool {
 															access_t *nextAccess = nextAccessPosition->_access;
 															assert(nextAccess != nullptr);
@@ -1123,7 +1123,7 @@ namespace Instrument {
 						for (access_t *superAccess : taskInfo._allAccesses) {
 							assert(superAccess != nullptr);
 							
-							if (superAccess->_accessRange.intersect(fragment->_accessRange).empty()) {
+							if (superAccess->_accessRegion.intersect(fragment->_accessRegion).empty()) {
 								continue;
 							}
 							

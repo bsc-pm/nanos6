@@ -19,19 +19,19 @@
 
 template <typename EffectivePreviousProcessorType>
 bool DataAccess::processEffectivePrevious(
-	DataAccessRange const &range,
+	DataAccessRegion const &region,
 	bool processDirectPrevious,
 	EffectivePreviousProcessorType effectivePreviousProcessor
 ) {
 	if (_previous.empty()) {
 		if (_superAccess != nullptr) {
-			return _superAccess->processEffectivePrevious(range, true, effectivePreviousProcessor);
+			return _superAccess->processEffectivePrevious(region, true, effectivePreviousProcessor);
 		} else {
 			return true;
 		}
 	} else {
 		return _previous.processIntersectingAndMissing(
-			range,
+			region,
 			[&](DataAccessPreviousLinks::iterator previousPosition) -> bool {
 				if (processDirectPrevious) {
 					return effectivePreviousProcessor(previousPosition);
@@ -39,9 +39,9 @@ bool DataAccess::processEffectivePrevious(
 					return true;
 				}
 			},
-			[&](DataAccessRange const &missingRange) -> bool {
+			[&](DataAccessRegion const &missingRegion) -> bool {
 				if (_superAccess != nullptr) {
-					return _superAccess->processEffectivePrevious(missingRange, true, effectivePreviousProcessor);
+					return _superAccess->processEffectivePrevious(missingRegion, true, effectivePreviousProcessor);
 				}
 				return true;
 			}
@@ -50,21 +50,21 @@ bool DataAccess::processEffectivePrevious(
 }
 
 
-inline void DataAccess::fullLinkTo(DataAccessRange const &range, DataAccess *target, bool blocker, Instrument::task_id_t triggererTaskInstrumentationId)
+inline void DataAccess::fullLinkTo(DataAccessRegion const &region, DataAccess *target, bool blocker, Instrument::task_id_t triggererTaskInstrumentationId)
 {
 	assert(target != nullptr);
 	assert(target->_originator != nullptr);
 	
 	Instrument::linkedDataAccesses(
 		_instrumentationId, target->_originator->getInstrumentationTaskId(),
-		range,
+		region,
 		/* direct */ true,
 		/* bidirectional */ true,
 		triggererTaskInstrumentationId
 	);
 	
-	_next.insert(DataAccessNextLinkContents(range, target, !blocker));
-	target->_previous.insert(LinearRegionDataAccessMapNode(range, this));
+	_next.insert(DataAccessNextLinkContents(region, target, !blocker));
+	target->_previous.insert(LinearRegionDataAccessMapNode(region, this));
 }
 
 
@@ -148,8 +148,8 @@ bool DataAccess::updateBlockerCountAndLinkSatisfiability()
 		}
 		
 		// Update the satisfiability on the link from the previous to "this"
-		DataAccessRange const &range = previousLink.getAccessRange();
-		DataAccessNextLinks::iterator forwardLinkPosition = previous->_next.find(range);
+		DataAccessRegion const &region = previousLink.getAccessRegion();
+		DataAccessNextLinks::iterator forwardLinkPosition = previous->_next.find(region);
 		assert(forwardLinkPosition != previous->_next.end());
 		assert(forwardLinkPosition->_access == this);
 		forwardLinkPosition->_satisfied = satisfied;
@@ -157,7 +157,7 @@ bool DataAccess::updateBlockerCountAndLinkSatisfiability()
 	
 	// Count the non-directly linked effective previous blockers
 	processEffectivePrevious(
-		_range,
+		_region,
 		false,
 		[&](DataAccessPreviousLinks::iterator effectivePreviousPosition) -> bool {
 			bool satisfied = evaluateSatisfiability(effectivePreviousPosition->_access, _type);
@@ -187,7 +187,7 @@ int DataAccess::calculateBlockerCount(DataAccessType accessType)
 	}
 	
 	processEffectivePrevious(
-		_range,
+		_region,
 		false,
 		[&](DataAccessPreviousLinks::iterator effectivePreviousPosition) -> bool {
 			bool satisfied = evaluateSatisfiability(effectivePreviousPosition->_access, accessType);
@@ -296,7 +296,7 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 			Instrument::data_access_id_t newDataAccessInstrumentationId = Instrument::createdDataAccess(
 				superAccessId,
 				newAccessType, true,
-				dataAccess->_range,
+				dataAccess->_region,
 				false, false, false, // Not satisfied
 				taskInstrumentationId
 			);
@@ -305,12 +305,12 @@ bool DataAccess::upgradeStrongAccessWithWeak(Task *task, DataAccess /* INOUT */ 
 				oldDataAccess->_superAccess, oldDataAccess->_lock, oldDataAccess->_bottomMap,
 				newAccessType, true,
 				1, /* Blocked by the previous "strong" read */
-				task, dataAccess->_range,
+				task, dataAccess->_region,
 				newDataAccessInstrumentationId
 			);
 			
 			assert(oldDataAccess->_next.empty());
-			oldDataAccess->fullLinkTo(dataAccess->_range, dataAccess, true /* Blocking */, taskInstrumentationId);
+			oldDataAccess->fullLinkTo(dataAccess->_region, dataAccess, true /* Blocking */, taskInstrumentationId);
 			
 			return true; // Do not count it since it is a weak access
 		}
@@ -387,7 +387,7 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 			Instrument::createdDataAccess(
 				superAccessId,
 				oldAccessType, true,
-				dataAccess->_range,
+				dataAccess->_region,
 				false, false, false /* Not satisfied */,
 				taskInstrumentationId
 			);
@@ -398,12 +398,12 @@ bool DataAccess::upgradeWeakAccessWithStrong(Task *task, DataAccess /* INOUT */ 
 				oldDataAccess->_superAccess, oldDataAccess->_lock, oldDataAccess->_bottomMap,
 				oldAccessType, true,
 				1, /* Blocked by the previous "strong" read */
-				task, dataAccess->_range,
+				task, dataAccess->_region,
 				newDataAccessInstrumentationId
 			);
 			
 			assert(oldDataAccess->_next.empty());
-			oldDataAccess->fullLinkTo(oldDataAccess->_range, dataAccess, true, taskInstrumentationId);
+			oldDataAccess->fullLinkTo(oldDataAccess->_region, dataAccess, true, taskInstrumentationId);
 			
 			return (oldDataAccess->_blockerCount == 0);
 		}

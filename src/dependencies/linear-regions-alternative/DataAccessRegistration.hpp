@@ -32,13 +32,13 @@
 class DataAccessRegistration {
 private:
 	
-	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRange range)
+	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRegion region)
 	{
 		Instrument::data_access_id_t newDataAccessInstrumentationId;
 		
 		// Regular object duplication
 		DataAccess *dataAccess = new DataAccess(
-			accessType, weak, originator, range,
+			accessType, weak, originator, region,
 			newDataAccessInstrumentationId
 		);
 		
@@ -46,9 +46,9 @@ private:
 	}
 	
 	
-	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRange range, int reductionOperation)
+	static inline DataAccess *createAccess(Task *originator, DataAccessType accessType, bool weak, DataAccessRegion region, int reductionOperation)
 	{
-		DataAccess *dataAccess = createAccess(originator, accessType, weak, range);
+		DataAccess *dataAccess = createAccess(originator, accessType, weak, region);
 		dataAccess->_reductionInfo = reductionOperation;
 		
 		return dataAccess;
@@ -112,7 +112,7 @@ private:
 			toBeDuplicated._originator,
 			toBeDuplicated._type,
 			toBeDuplicated._weak,
-			toBeDuplicated._range,
+			toBeDuplicated._region,
 			toBeDuplicated._reductionInfo
 		);
 		
@@ -141,24 +141,24 @@ private:
 		assert(dataAccess->readSatisfied());
 		assert(dataAccess->writeSatisfied());
 		
-		DataAccessRange range = dataAccess->_range;
-		assert(!range.empty());
+		DataAccessRegion region = dataAccess->_region;
+		assert(!region.empty());
 		
 		if (dataAccess->isInBottomMap()) {
-			CPUDependencyData::data_access_range_list_t &removedRangeList =
-				cpuDependencyData._removedRangesFromBottomMap;
+			CPUDependencyData::data_access_region_list_t &removedRegionList =
+				cpuDependencyData._removedRegionsFromBottomMap;
 			
-			if (removedRangeList.empty()) {
-				removedRangeList.push_back(range);
+			if (removedRegionList.empty()) {
+				removedRegionList.push_back(region);
 			} else {
-				DataAccessRange lastRange(removedRangeList.back());
-				assert(range.intersect(lastRange).empty());
+				DataAccessRegion lastRegion(removedRegionList.back());
+				assert(region.intersect(lastRegion).empty());
 				
-				if (lastRange.contiguous(range)) {
-					removedRangeList.pop_back();
-					removedRangeList.push_back(lastRange.contiguousUnion(range));
+				if (lastRegion.contiguous(region)) {
+					removedRegionList.pop_back();
+					removedRegionList.push_back(lastRegion.contiguousUnion(region));
 				} else {
-					removedRangeList.push_back(range);
+					removedRegionList.push_back(region);
 				}
 			}
 		}
@@ -193,10 +193,10 @@ private:
 	
 	
 	static inline BottomMapEntry *fragmentBottomMapEntry(
-		BottomMapEntry *bottomMapEntry, DataAccessRange range,
+		BottomMapEntry *bottomMapEntry, DataAccessRegion region,
 		TaskDataAccesses &accessStructures
 	) {
-		if (bottomMapEntry->_range.fullyContainedIn(range)) {
+		if (bottomMapEntry->_region.fullyContainedIn(region)) {
 			// Nothing to fragment
 			return bottomMapEntry;
 		}
@@ -207,10 +207,10 @@ private:
 		TaskDataAccesses::subaccess_bottom_map_t::iterator position =
 			accessStructures._subaccessBottomMap.iterator_to(*bottomMapEntry);
 		position = accessStructures._subaccessBottomMap.fragmentByIntersection(
-			position, range,
+			position, region,
 			false,
 			[&](BottomMapEntry const &toBeDuplicated) -> BottomMapEntry * {
-				return new BottomMapEntry(DataAccessRange(), toBeDuplicated._task, toBeDuplicated._local);
+				return new BottomMapEntry(DataAccessRegion(), toBeDuplicated._task, toBeDuplicated._local);
 			},
 			[&](__attribute__((unused)) BottomMapEntry *fragment, __attribute__((unused)) BottomMapEntry *originalBottomMapEntry) {
 			}
@@ -218,14 +218,14 @@ private:
 		
 		bottomMapEntry = &(*position);
 		assert(bottomMapEntry != nullptr);
-		assert(bottomMapEntry->_range.fullyContainedIn(range));
+		assert(bottomMapEntry->_region.fullyContainedIn(region));
 		
 		return bottomMapEntry;
 	}
 	
 	
 	static inline DataAccess *fragmentAccess(
-		DataAccess *dataAccess, DataAccessRange range,
+		DataAccess *dataAccess, DataAccessRegion region,
 		TaskDataAccesses &accessStructures,
 		bool considerTaskBlocking
 	) {
@@ -236,7 +236,7 @@ private:
 		assert(!accessStructures.hasBeenDeleted());
 		assert(!dataAccess->hasBeenDiscounted());
 		
-		if (dataAccess->_range.fullyContainedIn(range)) {
+		if (dataAccess->_region.fullyContainedIn(region)) {
 			// Nothing to fragment
 			return dataAccess;
 		}
@@ -244,7 +244,7 @@ private:
 		TaskDataAccesses::accesses_t::iterator position =
 			accessStructures._accesses.iterator_to(*dataAccess);
 		position = accessStructures._accesses.fragmentByIntersection(
-			position, range,
+			position, region,
 			false,
 			[&](DataAccess const &toBeDuplicated) -> DataAccess * {
 				return duplicateDataAccess(toBeDuplicated, accessStructures, considerTaskBlocking);
@@ -252,16 +252,16 @@ private:
 			[&](DataAccess *fragment, DataAccess *originalDataAccess) {
 				if (fragment != originalDataAccess) {
 					fragment->_instrumentationId =
-						Instrument::fragmentedDataAccess(originalDataAccess->_instrumentationId, fragment->_range);
+						Instrument::fragmentedDataAccess(originalDataAccess->_instrumentationId, fragment->_region);
 				} else {
-					Instrument::modifiedDataAccessRange(fragment->_instrumentationId, fragment->_range);
+					Instrument::modifiedDataAccessRegion(fragment->_instrumentationId, fragment->_region);
 				}
 			}
 		);
 		
 		dataAccess = &(*position);
 		assert(dataAccess != nullptr);
-		assert(dataAccess->_range.fullyContainedIn(range));
+		assert(dataAccess->_region.fullyContainedIn(region));
 		
 		return dataAccess;
 	}
@@ -302,7 +302,7 @@ private:
 	}
 	
 	
-	static inline void processRemovedRangesFromBottomMap(
+	static inline void processRemovedRegionsFromBottomMap(
 		__attribute__((unused)) Task *task,
 		__attribute__((unused)) Task *parent,
 		TaskDataAccesses &parentAccessStructures,
@@ -312,20 +312,20 @@ private:
 		assert(parent != nullptr);
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
-		for (DataAccessRange range : cpuDependencyData._removedRangesFromBottomMap) {
-			assert(!range.empty());
+		for (DataAccessRegion region : cpuDependencyData._removedRegionsFromBottomMap) {
+			assert(!region.empty());
 			
 			parentAccessStructures._accesses.processIntersecting(
-				range,
+				region,
 				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 					DataAccess *parentAccess = &(*position);
 					assert(parentAccess != nullptr);
 					assert(parentAccess->_child != nullptr);
 					assert(parentAccess->hasSubaccesses());
 					
-					if (!parentAccess->_range.fullyContainedIn(range)) {
+					if (!parentAccess->_region.fullyContainedIn(region)) {
 						parentAccess = fragmentAccess(
-							parentAccess, range,
+							parentAccess, region,
 							parentAccessStructures,
 							/* Consider blocking */ true
 						);
@@ -340,15 +340,15 @@ private:
 			);
 			
 			parentAccessStructures._subaccessBottomMap.processIntersecting(
-				range,
+				region,
 				[&](TaskDataAccesses::subaccess_bottom_map_t::iterator position) -> bool {
 					BottomMapEntry *bottomMapEntry = &(*position);
 					assert(bottomMapEntry != nullptr);
 					assert(bottomMapEntry->_task == task);
 					
-					if (!bottomMapEntry->_range.fullyContainedIn(range)) {
+					if (!bottomMapEntry->_region.fullyContainedIn(region)) {
 						bottomMapEntry = fragmentBottomMapEntry(
-							bottomMapEntry, range,
+							bottomMapEntry, region,
 							parentAccessStructures
 						);
 						assert(bottomMapEntry != nullptr);
@@ -361,30 +361,30 @@ private:
 			);
 		}
 		
-		cpuDependencyData._removedRangesFromBottomMap.clear();
+		cpuDependencyData._removedRegionsFromBottomMap.clear();
 	}
 	
 	
 	template <typename MatchingProcessorType, typename MissingProcessorType>
-	static inline bool foreachBottomMapMatchingAndMissingRange(
+	static inline bool foreachBottomMapMatchingAndMissingRegion(
 		Task *parent, TaskDataAccesses &parentAccessStructures,
-		DataAccessRange range, __attribute__((unused)) Task *task, TaskDataAccesses &accessStructures,
+		DataAccessRegion region, __attribute__((unused)) Task *task, TaskDataAccesses &accessStructures,
 		MatchingProcessorType matchingProcessor, MissingProcessorType missingProcessor,
 		bool removeBottomMapEntry
 	) {
 		assert(parent != nullptr);
 		assert(task != nullptr);
-		assert(!range.empty());
+		assert(!region.empty());
 		assert((&parentAccessStructures) == (&parent->getDataAccesses()));
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
 		return parentAccessStructures._subaccessBottomMap.processIntersectingAndMissing(
-			range,
+			region,
 			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator bottomMapPosition) -> bool {
 				BottomMapEntry *bottomMapEntry = &(*bottomMapPosition);
 				assert(bottomMapEntry != nullptr);
 				
-				DataAccessRange subrange = range.intersect(bottomMapEntry->_range);
+				DataAccessRegion subregion = region.intersect(bottomMapEntry->_region);
 				
 				Task *subtask = bottomMapEntry->_task;
 				assert(subtask != nullptr);
@@ -404,7 +404,7 @@ private:
 				
 				// For each access of the subtask that matches
 				bool result = subtaskAccessStructures._accesses.processIntersectingWithRecentAdditions(
-					subrange,
+					subregion,
 					[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
 						DataAccess *previous = &(*accessPosition);
 						
@@ -422,24 +422,24 @@ private:
 				
 				// Remove bottom map entries indexed in the actual parent
 				if (removeBottomMapEntry) {
-					bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, range, parentAccessStructures);
+					bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, region, parentAccessStructures);
 					parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
 					delete bottomMapEntry;
 				}
 				
 				return result;
 			},
-			[&](DataAccessRange missingRange) -> bool {
+			[&](DataAccessRegion missingRegion) -> bool {
 				parentAccessStructures._accesses.processIntersectingAndMissingWithRecentAdditions(
-					missingRange,
+					missingRegion,
 					[&](TaskDataAccesses::accesses_t::iterator superaccessPosition) -> bool {
 						DataAccess *previous = &(*superaccessPosition);
 						assert(previous != nullptr);
 						
 						return matchingProcessor(previous, nullptr);
 					},
-					[&](DataAccessRange rangeUncoveredByParent) -> bool {
-						return missingProcessor(rangeUncoveredByParent);
+					[&](DataAccessRegion regionUncoveredByParent) -> bool {
+						return missingProcessor(regionUncoveredByParent);
 					}
 				);
 				
@@ -484,7 +484,7 @@ private:
 			
 			TaskDataAccesses &nextAccessStructures = next->getDataAccesses();
 			nextAccessStructures.decreaseRemovalCount(
-				nextAccess->_range.getSize()
+				nextAccess->_region.getSize()
 			);
 		}
 		
@@ -506,7 +506,7 @@ private:
 		
 		propagateSatisfiability(
 			task, dataAccess, 
-			dataAccess->_range, next,
+			dataAccess->_region, next,
 			cpuDependencyData
 		);
 	}
@@ -566,20 +566,20 @@ private:
 	
 	static inline void propagateSatisfiability(
 		Task *task, DataAccess *dataAccess,
-		DataAccessRange range, Task *nextTask,
+		DataAccessRegion region, Task *nextTask,
 		CPUDependencyData &cpuDependencyData,
 		bool parentalRelation = false
 	) {
 		assert(task != nullptr);
 		assert(nextTask != nullptr);
-		assert(!range.empty());
+		assert(!region.empty());
 		
 		TaskDataAccesses &nextAccessStructures = nextTask->getDataAccesses();
 		assert(!nextAccessStructures.hasBeenDeleted());
 		nextAccessStructures._lock.lock();
 		
 		nextAccessStructures._accesses.processIntersecting(
-			range,
+			region,
 			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 				DataAccess *nextAccess = &(*position);
 				assert(nextAccess != nullptr);
@@ -622,9 +622,9 @@ private:
 				assert(!(topmostSatisfiability && wasTopmostSatisfied));
 				
 				// Fragment next access if needed
-				if (!nextAccess->_range.fullyContainedIn(range)) {
+				if (!nextAccess->_region.fullyContainedIn(region)) {
 					nextAccess = fragmentAccess(
-						nextAccess, range.intersect(nextAccess->_range),
+						nextAccess, region.intersect(nextAccess->_region),
 						nextAccessStructures,
 						/* Consider blocking */ true
 					);
@@ -655,7 +655,7 @@ private:
 				if (nextAccess->hasSubaccesses()) {
 					propagateSatisfiability(
 						nextTask, nextAccess,
-						nextAccess->_range,
+						nextAccess->_region,
 						nextAccess->_child,
 						cpuDependencyData,
 						true
@@ -665,7 +665,7 @@ private:
 				if (topmostSatisfiability) {
 					Instrument::dataAccessBecomesRemovable(nextAccess->_instrumentationId);
 					
-					size_t bytes = nextAccess->_range.getSize();
+					size_t bytes = nextAccess->_region.getSize();
 					if (nextAccessStructures.decreaseRemovalCount(bytes)) {
 						if (nextTask->decreaseRemovalBlockingCount()) {
 							cpuDependencyData._removableTasks.push_back(nextTask);
@@ -684,7 +684,7 @@ private:
 				if (nextAccess->_next != nullptr) {
 					propagateSatisfiability(
 						nextTask, nextAccess,
-						nextAccess->_range,
+						nextAccess->_region,
 						nextAccess->_next,
 						cpuDependencyData
 					);
@@ -700,7 +700,7 @@ private:
 	
 	static inline DataAccess *linkAndPropagateAfterFirstLinking(
 		DataAccess *dataAccess, Task *task, TaskDataAccesses &accessStructures,
-		DataAccessRange range, DataAccess *nextDataAccess, Task *next,
+		DataAccessRegion region, DataAccess *nextDataAccess, Task *next,
 		TaskDataAccesses &nextAccessStructures
 	) {
 		assert(dataAccess != nullptr);
@@ -725,7 +725,7 @@ private:
 		assert(dataAccess->_next == nullptr || parentalRelation);
 		
 		dataAccess = fragmentAccess(
-			dataAccess, range,
+			dataAccess, region,
 			accessStructures,
 			/* Consider blocking */ true
 		);
@@ -734,7 +734,7 @@ private:
 		assert(dataAccess->_next == nullptr || parentalRelation);
 		
 		nextDataAccess = fragmentAccess(
-			nextDataAccess, range,
+			nextDataAccess, region,
 			nextAccessStructures,
 			/* Consider blocking */ true
 		);
@@ -754,7 +754,7 @@ private:
 		
 		Instrument::linkedDataAccesses(
 			dataAccess->_instrumentationId, next->getInstrumentationTaskId(),
-			dataAccess->_range,
+			dataAccess->_region,
 			true, false
 		);
 		
@@ -772,17 +772,17 @@ private:
 	static inline void linkBottomMapAccessesToNext(
 		__attribute__((unused)) Task *task,
 		TaskDataAccesses &accessStructures,
-		DataAccessRange range, Task *next,
+		DataAccessRegion region, Task *next,
 		CPUDependencyData &cpuDependencyData
 	) {
 		assert(task != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
 		assert(accessStructures._lock.isLockedByThisThread());
-		assert(!range.empty());
+		assert(!region.empty());
 		assert(next != nullptr);
 		
 		accessStructures._subaccessBottomMap.processIntersecting(
-			range,
+			region,
 			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator bottomMapPosition) -> bool {
 				BottomMapEntry *bottomMapEntry = &(*bottomMapPosition);
 				assert(bottomMapEntry != nullptr);
@@ -791,15 +791,15 @@ private:
 				assert(subtask != nullptr);
 				assert(subtask != task);
 				
-				DataAccessRange subrange = range.intersect(bottomMapEntry->_range);
-				assert(!subrange.empty());
+				DataAccessRegion subregion = region.intersect(bottomMapEntry->_region);
+				assert(!subregion.empty());
 				
 				TaskDataAccesses &subtaskAccessStructures = subtask->getDataAccesses();
 				subtaskAccessStructures._lock.lock();
 				
 				// For each access of the subtask that matches
 				subtaskAccessStructures._accesses.processIntersectingWithRecentAdditions(
-					subrange,
+					subregion,
 					[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
 						DataAccess *subaccess = &(*accessPosition);
 						assert(subaccess != nullptr);
@@ -808,13 +808,13 @@ private:
 						assert(subaccess->isInBottomMap());
 						assert(!subaccess->hasBeenDiscounted());
 						
-						DataAccessRange rangeToBeProcessed = subrange.intersect(subaccess->_range);
-						assert(!rangeToBeProcessed.empty());
+						DataAccessRegion regionToBeProcessed = subregion.intersect(subaccess->_region);
+						assert(!regionToBeProcessed.empty());
 						
 						if (!subaccess->hasSubaccesses() || !subaccess->complete()) {
 							// Fragment the subaccess if needed
 							subaccess = fragmentAccess(
-								subaccess, rangeToBeProcessed,
+								subaccess, regionToBeProcessed,
 								subtaskAccessStructures,
 								/* Affect originator blocking counter */ true
 							);
@@ -826,7 +826,7 @@ private:
 							Instrument::linkedDataAccesses(
 								subaccess->_instrumentationId,
 								next->getInstrumentationTaskId(),
-								rangeToBeProcessed, true, false
+								regionToBeProcessed, true, false
 							);
 							
 							// Propagate the satisfiability to the recently linked access
@@ -838,7 +838,7 @@ private:
 						} else {
 							linkBottomMapAccessesToNext(
 								subtask, subtaskAccessStructures,
-								rangeToBeProcessed, next,
+								regionToBeProcessed, next,
 								cpuDependencyData
 							);
 						}
@@ -865,8 +865,8 @@ private:
 		assert(!accessStructures.hasBeenDeleted());
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
-		DataAccessRange range = dataAccess->_range;
-		assert(!range.empty());
+		DataAccessRegion region = dataAccess->_region;
+		assert(!region.empty());
 		
 		// The satisfiability propagation will decrease the predecessor count as needed
 		if (!dataAccess->_weak) {
@@ -877,27 +877,27 @@ private:
 
 		linkToNotCompletedOrWithoutSubaccessesPredecessors(
 			task, accessStructures,
-			dataAccess, range,
+			dataAccess, region,
 			parent, parentAccessStructures,
 			local
 		);
 		
 		// Add the entry to the bottom map
-		BottomMapEntry *bottomMapEntry = new BottomMapEntry(range, task, local);
+		BottomMapEntry *bottomMapEntry = new BottomMapEntry(region, task, local);
 		parentAccessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 	}
 	
 	
 	static inline void linkToNotCompletedOrWithoutSubaccessesPredecessors(
 		Task *task, TaskDataAccesses &accessStructures,
-		DataAccess *dataAccess, DataAccessRange range,
+		DataAccess *dataAccess, DataAccessRegion region,
 		Task *parent, TaskDataAccesses &parentAccessStructures,
 		bool &local
 	) {
 		assert(parent != nullptr);
 		assert(task != nullptr);
 		assert(dataAccess != nullptr);
-		assert(range.fullyContainedIn(dataAccess->_range));
+		assert(region.fullyContainedIn(dataAccess->_region));
 		assert(!accessStructures.hasBeenDeleted());
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
@@ -909,22 +909,22 @@ private:
 		bool parentalRelation = (task->getParent() == parent);
 		
 		// Link accesses to their corresponding predecessor
-		foreachBottomMapMatchingAndMissingRange(
+		foreachBottomMapMatchingAndMissingRegion(
 			parent, parentAccessStructures,
-			range, task, accessStructures,
+			region, task, accessStructures,
 			[&](DataAccess *previous, BottomMapEntry *bottomMapEntry) -> bool {
 				assert(previous != nullptr);
 				assert(previous->isReachable());
 				assert(!previous->hasBeenDiscounted());
-				assert(!range.intersect(previous->_range).empty());
+				assert(!region.intersect(previous->_region).empty());
 				assert(partialDataAccessPosition != accessStructures._accesses.end());
 				
 				DataAccess *partialDataAccess = &(*partialDataAccessPosition);
 				assert(partialDataAccess != nullptr);
 				assert(!partialDataAccess->hasBeenDiscounted());
 				
-				DataAccessRange rangeToBeProcessed = range.intersect(previous->_range);
-				assert(!rangeToBeProcessed.empty());
+				DataAccessRegion regionToBeProcessed = region.intersect(previous->_region);
+				assert(!regionToBeProcessed.empty());
 				
 				Task *previousTask = previous->_originator;
 				assert(previousTask != nullptr);
@@ -952,19 +952,19 @@ private:
 					// Explore and link it to previous's subaccesses
 					linkToNotCompletedOrWithoutSubaccessesPredecessors(
         				task, accessStructures,
-        				partialDataAccess, rangeToBeProcessed,
+        				partialDataAccess, regionToBeProcessed,
         				previousTask, previousAccessStructures,
 						local
 					);
 					
 					if (parentalRelation) {
 						previous = fragmentAccess(
-							previous, rangeToBeProcessed,
+							previous, regionToBeProcessed,
 							previousAccessStructures,
 							/* Consider blocking */ true
 						);
 						assert(previous != nullptr);
-						assert(previous->_range.fullyContainedIn(range));
+						assert(previous->_region.fullyContainedIn(region));
 						
 						previous->isInBottomMap() = false;
 					}
@@ -975,7 +975,7 @@ private:
 				else {
 					previous = linkAndPropagateAfterFirstLinking(
 						previous, previousTask, previousAccessStructures,
-						rangeToBeProcessed, partialDataAccess,
+						regionToBeProcessed, partialDataAccess,
 						task, accessStructures
 					);
 					
@@ -985,9 +985,9 @@ private:
 				
 				return true;
 			},
-			[&](DataAccessRange missingRange) -> bool {
+			[&](DataAccessRegion missingRegion) -> bool {
 				assert(parentalRelation);
-				assert(!parentAccessStructures._accesses.contains(missingRange));
+				assert(!parentAccessStructures._accesses.contains(missingRegion));
 				assert(partialDataAccessPosition != accessStructures._accesses.end());
 				
 				// Not part of the parent
@@ -995,11 +995,11 @@ private:
 				
 				DataAccess *partialDataAccess = &(*partialDataAccessPosition);
 				assert(partialDataAccess != nullptr);
-				assert(partialDataAccess->_range.fullyContainedIn(range));
+				assert(partialDataAccess->_region.fullyContainedIn(region));
 				assert(!partialDataAccess->hasBeenDiscounted());
 				
 				partialDataAccess = fragmentAccess(
-					partialDataAccess, missingRange,
+					partialDataAccess, missingRegion,
 					accessStructures,
 					/* Consider blocking */ true
 				);
@@ -1016,7 +1016,7 @@ private:
 				);
 				
 				accessStructures.decreaseRemovalCount(
-					partialDataAccess->_range.getSize()
+					partialDataAccess->_region.getSize()
 				);
 				
 				Instrument::dataAccessBecomesSatisfied(
@@ -1067,7 +1067,7 @@ private:
 					dataAccess->_instrumentationId = Instrument::createdDataAccess(
 						Instrument::data_access_id_t(),
 						dataAccess->_type, dataAccess->_weak,
-						dataAccess->_range,
+						dataAccess->_region,
 						false, false, false,
 						task->getInstrumentationTaskId()
 					);
@@ -1132,8 +1132,8 @@ private:
 		TaskDataAccesses &accessStructures = finishedTask->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		
-		DataAccessRange range = dataAccess->_range;
-		assert(!range.empty());
+		DataAccessRegion region = dataAccess->_region;
+		assert(!region.empty());
 		
 		// Mark it as complete
 		Instrument::completedDataAccess(dataAccess->_instrumentationId);
@@ -1143,7 +1143,7 @@ private:
 		if (dataAccess->hasSubaccesses() && dataAccess->_next != nullptr) {
 			// Link bottom map subaccesses to the next
 			linkBottomMapAccessesToNext(
-				dataAccess->_originator, accessStructures, range,
+				dataAccess->_originator, accessStructures, region,
 				dataAccess->_next,
 				cpuDependencyData
 			);
@@ -1166,7 +1166,7 @@ private:
 			if (readSatisfied || writeSatisfied) {
 				propagateSatisfiability(
 					finishedTask, dataAccess,
-					range, dataAccess->_next,
+					region, dataAccess->_next,
 					cpuDependencyData
 				);
 			}
@@ -1181,17 +1181,17 @@ public:
 	//! \param[in,out] task the task that performs the access
 	//! \param[in] accessType the type of access
 	//! \param[in] weak true iff the access is weak
-	//! \param[in] range the range of data covered by the access
+	//! \param[in] region the region of data covered by the access
 	template<typename... ReductionInfo>
 	static inline void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRange range, ReductionInfo... reductionInfo
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, ReductionInfo... reductionInfo
 	) {
 		assert(task != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		accessStructures._accesses.fragmentIntersecting(
-			range,
+			region,
 			[&](DataAccess const &toBeDuplicated) -> DataAccess * {
 				return duplicateDataAccess(toBeDuplicated, accessStructures, false);
 			},
@@ -1199,7 +1199,7 @@ public:
 		);
 		
 		accessStructures._accesses.processIntersectingAndMissing(
-			range,
+			region,
 			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 				DataAccess *oldAccess = &(*position);
 				assert(oldAccess != nullptr);
@@ -1208,10 +1208,10 @@ public:
 				
 				return true;
 			},
-			[&](DataAccessRange missingRange) -> bool {
-				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange, reductionInfo...);
+			[&](DataAccessRegion missingRegion) -> bool {
+				DataAccess *newAccess = createAccess(task, accessType, weak, missingRegion, reductionInfo...);
 				
-				accessStructures.increaseRemovalCount(missingRange.getSize());
+				accessStructures.increaseRemovalCount(missingRegion.getSize());
 				accessStructures._accesses.insert(*newAccess);
 				
 				return true;
@@ -1418,7 +1418,7 @@ public:
 			assert(accesses.empty());
 			
 			// NOTE: mutexes must be held
-			processRemovedRangesFromBottomMap(
+			processRemovedRegionsFromBottomMap(
 				task, parent,
 				parentAccessStructures,
 				cpuDependencyData

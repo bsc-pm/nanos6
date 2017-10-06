@@ -4,7 +4,7 @@ generate_regions_full_prototype() {
 	local type=$2
 	local commaatend
 	
-	/bin/echo '/** \brief Register a task '${type}' access on a '${dimensions}'-dimensional range of addresses */'
+	/bin/echo '/** \brief Register a task '${type}' access on a '${dimensions}'-dimensional region of addresses */'
 	/bin/echo 'void nanos_register_region_'${type}'_depinfo'${dimensions}'('
 	
 	if [ "${type}" = "reduction" ] ; then
@@ -70,7 +70,7 @@ generate_release_full_prototype() {
 	local type=$2
 	local commaatend
 	
-	/bin/echo '/** \brief Inform that the rest of the task code will no longer perform any '${type}' operation over a '${dimensions}'-dimensional range of addresses */'
+	/bin/echo '/** \brief Inform that the rest of the task code will no longer perform any '${type}' operation over a '${dimensions}'-dimensional region of addresses */'
 	/bin/echo 'void nanos_release_'${type}'_'${dimensions}'('
 	/bin/echo '	void *base_address,'
 	/bin/echo '	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */'

@@ -16,7 +16,7 @@ namespace Instrument {
 		__attribute__((unused)) data_access_id_t superAccessId,
 		__attribute__((unused)) DataAccessType accessType,
 		__attribute__((unused)) bool weak,
-		__attribute__((unused)) DataAccessRange range,
+		__attribute__((unused)) DataAccessRegion region,
 		__attribute__((unused)) bool readSatisfied,
 		__attribute__((unused)) bool writeSatisfied,
 		__attribute__((unused)) bool globallySatisfied,
@@ -47,16 +47,16 @@ namespace Instrument {
 	) {
 	}
 	
-	inline void modifiedDataAccessRange(
+	inline void modifiedDataAccessRegion(
 		__attribute__((unused)) data_access_id_t dataAccessId,
-		__attribute__((unused)) DataAccessRange newRange,
+		__attribute__((unused)) DataAccessRegion newRegion,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
 	
 	inline data_access_id_t fragmentedDataAccess(
 		__attribute__((unused)) data_access_id_t dataAccessId,
-		__attribute__((unused)) DataAccessRange newRange,
+		__attribute__((unused)) DataAccessRegion newRegion,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		return data_access_id_t();
@@ -90,7 +90,7 @@ namespace Instrument {
 	inline void linkedDataAccesses(
 		__attribute__((unused)) data_access_id_t sourceAccessId,
 		__attribute__((unused)) task_id_t sinkTaskId,
-		__attribute__((unused)) DataAccessRange range,
+		__attribute__((unused)) DataAccessRegion region,
 		__attribute__((unused)) bool direct,
 		__attribute__((unused)) bool bidirectional,
 		__attribute__((unused)) InstrumentationContext const &context

@@ -8,7 +8,7 @@
 #define ROOT_DATA_ACCESS_SEQUENCE_HPP
 
 
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 #include "DataAccessSequence.hpp"
 #include "RootDataAccessSequenceLinkingArtifacts.hpp"
 
@@ -25,14 +25,14 @@ struct RootDataAccessSequence {
 	{
 	}
 	
-	RootDataAccessSequence(DataAccessRange accessRange)
-		: _lock(), _rootDataAccessSequenceLinks(), _accessSequence(accessRange, &_lock)
+	RootDataAccessSequence(DataAccessRegion accessRegion)
+		: _lock(), _rootDataAccessSequenceLinks(), _accessSequence(accessRegion, &_lock)
 	{
 	}
 	
-	DataAccessRange const &getAccessRange() const
+	DataAccessRegion const &getAccessRegion() const
 	{
-		return _accessSequence._accessRange;
+		return _accessSequence._accessRegion;
 	}
 };
 

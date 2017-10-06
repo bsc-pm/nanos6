@@ -28,7 +28,7 @@ std::vector<size_t> CPUManager::_systemToVirtualCPUId;
 
 
 namespace cpumanager_internals {
-	static inline std::string maskToRangeList(boost::dynamic_bitset<> const &mask, std::vector<CPU *> const &cpus)
+	static inline std::string maskToRegionList(boost::dynamic_bitset<> const &mask, std::vector<CPU *> const &cpus)
 	{
 		std::ostringstream oss;
 		
@@ -49,16 +49,16 @@ namespace cpumanager_internals {
 			
 			if ((virtualCPUId < mask.size()) && mask[virtualCPUId]) {
 				if (end >= start) {
-					// Valid range: extend
+					// Valid region: extend
 					end = systemCPUId;
 				} else {
-					// Invalid range: start
+					// Invalid region: start
 					start = systemCPUId;
 					end = systemCPUId;
 				}
 			} else {
 				if (end >= start) {
-					// Valid range: emit and invalidate
+					// Valid region: emit and invalidate
 					if (first) {
 						first = false;
 					} else {
@@ -71,7 +71,7 @@ namespace cpumanager_internals {
 					}
 					end = -1;
 				} else {
-					// Invalid range: do nothing
+					// Invalid region: do nothing
 				}
 			}
 		}
@@ -80,7 +80,7 @@ namespace cpumanager_internals {
 	}
 	
 	
-	static inline std::string maskToRangeList(cpu_set_t const &mask, size_t size)
+	static inline std::string maskToRegionList(cpu_set_t const &mask, size_t size)
 	{
 		std::ostringstream oss;
 		
@@ -90,16 +90,16 @@ namespace cpumanager_internals {
 		for (size_t i = 0; i < size+1; i++) {
 			if ((i < size) && CPU_ISSET(i, &mask)) {
 				if (end >= start) {
-					// Valid range: extend
+					// Valid region: extend
 					end = i;
 				} else {
-					// Invalid range: start
+					// Invalid region: start
 					start = i;
 					end = i;
 				}
 			} else {
 				if (end >= start) {
-					// Valid range: emit and invalidate
+					// Valid region: emit and invalidate
 					if (first) {
 						first = false;
 					} else {
@@ -112,7 +112,7 @@ namespace cpumanager_internals {
 					}
 					end = -1;
 				} else {
-					// Invalid range: do nothing
+					// Invalid region: do nothing
 				}
 			}
 		}
@@ -170,15 +170,15 @@ void CPUManager::preinitialize()
 		_systemToVirtualCPUId[cpu->_systemCPUId] = cpu->_virtualCPUId;
 	}
 	
-	RuntimeInfo::addEntry("initial_cpu_list", "Initial CPU List", cpumanager_internals::maskToRangeList(processCPUMask, cpus.size()));
+	RuntimeInfo::addEntry("initial_cpu_list", "Initial CPU List", cpumanager_internals::maskToRegionList(processCPUMask, cpus.size()));
 	for (size_t i = 0; i < _NUMANodeMask.size(); ++i) {
 		std::ostringstream oss, oss2;
 		
 		oss << "numa_node_" << i << "_cpu_list";
 		oss2 << "NUMA Node " << i << " CPU List";
-		std::string cpuRangeList = cpumanager_internals::maskToRangeList(_NUMANodeMask[i], _cpus);
+		std::string cpuRegionList = cpumanager_internals::maskToRegionList(_NUMANodeMask[i], _cpus);
 		
-		RuntimeInfo::addEntry(oss.str(), oss2.str(), cpuRangeList);
+		RuntimeInfo::addEntry(oss.str(), oss2.str(), cpuRegionList);
 	}
 	
 	// Set all CPUs as not idle

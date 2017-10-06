@@ -4,8 +4,8 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef DATA_ACCESS_RANGE_HPP
-#define DATA_ACCESS_RANGE_HPP
+#ifndef DATA_ACCESS_REGION_HPP
+#define DATA_ACCESS_REGION_HPP
 
 
 #include <algorithm>
@@ -15,11 +15,11 @@
 #include <utility>
 
 
-class DataAccessRange;
-inline std::ostream & operator<<(std::ostream &o, DataAccessRange const &range);
+class DataAccessRegion;
+inline std::ostream & operator<<(std::ostream &o, DataAccessRegion const &region);
 
 
-class DataAccessRange {
+class DataAccessRegion {
 private:
 	//! The starting address of the data access
 	void *_startAddress;
@@ -33,7 +33,7 @@ private:
 		char *_secondStart;
 		char *_secondEnd;
 		
-		FragmentBoundaries(DataAccessRange const &first, DataAccessRange const &second)
+		FragmentBoundaries(DataAccessRegion const &first, DataAccessRegion const &second)
 		{
 			_firstStart = (char *) first._startAddress;
 			_firstEnd = _firstStart + first._length;
@@ -44,12 +44,12 @@ private:
 	
 	
 public:
-	DataAccessRange(void *startAddress, size_t length)
+	DataAccessRegion(void *startAddress, size_t length)
 		: _startAddress(startAddress), _length(length)
 	{
 	}
 	
-	DataAccessRange(void *startAddress, void *endAddress)
+	DataAccessRegion(void *startAddress, void *endAddress)
 	: _startAddress(startAddress)
 	{
 		char *start = (char *)startAddress;
@@ -57,7 +57,7 @@ public:
 		_length = (size_t) (end - start);
 	}
 	
-	DataAccessRange()
+	DataAccessRegion()
 		: _startAddress(0), _length(0)
 	{
 	}
@@ -67,12 +67,12 @@ public:
 		return (_startAddress == nullptr) && (_length == 0);
 	}
 	
-	bool operator==(DataAccessRange const &other) const
+	bool operator==(DataAccessRegion const &other) const
 	{
 		return (_startAddress == other._startAddress) && (_length == other._length);
 	}
 	
-	bool operator!=(DataAccessRange const &other) const
+	bool operator!=(DataAccessRegion const &other) const
 	{
 		return (_startAddress != other._startAddress) || (_length != other._length);
 	}
@@ -111,8 +111,8 @@ public:
 	}
 	
 	
-	//! \brief Returns the intersection or an empty DataAccessRange if there is none
-	DataAccessRange intersect(DataAccessRange const &other) const
+	//! \brief Returns the intersection or an empty DataAccessRegion if there is none
+	DataAccessRegion intersect(DataAccessRegion const &other) const
 	{
 		FragmentBoundaries boundaries(*this, other);
 		
@@ -120,14 +120,14 @@ public:
 		char *end = std::min(boundaries._firstEnd, boundaries._secondEnd);
 		
 		if (start < end) {
-			return DataAccessRange(start, end);
+			return DataAccessRegion(start, end);
 		} else {
-			return DataAccessRange();
+			return DataAccessRegion();
 		}
 	}
 	
 	
-	bool contiguous(DataAccessRange const &other) const
+	bool contiguous(DataAccessRegion const &other) const
 	{
 		FragmentBoundaries boundaries(*this, other);
 		
@@ -136,7 +136,7 @@ public:
 	}
 	
 	
-	DataAccessRange contiguousUnion(DataAccessRange const &other) const
+	DataAccessRegion contiguousUnion(DataAccessRegion const &other) const
 	{
 		assert(contiguous(other));
 		assert(intersect(other).empty());
@@ -146,11 +146,11 @@ public:
 		char *start = std::min(boundaries._firstStart, boundaries._secondStart);
 		char *end = std::max(boundaries._firstEnd, boundaries._secondEnd);
 		
-		return DataAccessRange(start, end);
+		return DataAccessRegion(start, end);
 	}
 	
 	
-	bool fullyContainedIn(DataAccessRange const &other) const
+	bool fullyContainedIn(DataAccessRegion const &other) const
 	{
 		return intersect(other) == *this;
 	}
@@ -158,12 +158,12 @@ public:
 	
 	template <typename ThisOnlyProcessorType, typename IntersectingProcessorType, typename OtherOnlyProcessorType>
 	void processIntersectingFragments(
-		DataAccessRange const &fragmeterRange,
+		DataAccessRegion const &fragmeterRegion,
 		ThisOnlyProcessorType thisOnlyProcessor,
 		IntersectingProcessorType intersectingProcessor,
 		OtherOnlyProcessorType otherOnlyProcessor
 	) const {
-		FragmentBoundaries boundaries(*this, fragmeterRange);
+		FragmentBoundaries boundaries(*this, fragmeterRegion);
 		
 		char *intersectionStart = std::max(boundaries._firstStart, boundaries._secondStart);
 		char *intersectionEnd = std::min(boundaries._firstEnd, boundaries._secondEnd);
@@ -172,36 +172,36 @@ public:
 		assert(intersectionStart < intersectionEnd);
 		
 		// Intersection
-		DataAccessRange intersection(intersectionStart, intersectionEnd);
+		DataAccessRegion intersection(intersectionStart, intersectionEnd);
 		intersectingProcessor(intersection);
 		
 		// Left of intersection
 		if (boundaries._firstStart < intersectionStart) {
-			DataAccessRange leftOfIntersection(boundaries._firstStart, intersectionStart);
+			DataAccessRegion leftOfIntersection(boundaries._firstStart, intersectionStart);
 			thisOnlyProcessor(leftOfIntersection);
 		} else if (boundaries._secondStart < intersectionStart) {
-			DataAccessRange leftOfIntersection(boundaries._secondStart, intersectionStart);
+			DataAccessRegion leftOfIntersection(boundaries._secondStart, intersectionStart);
 			otherOnlyProcessor(leftOfIntersection);
 		}
 		
 		// Right of intersection
 		if (intersectionEnd < boundaries._firstEnd) {
-			DataAccessRange rightOfIntersection(intersectionEnd, boundaries._firstEnd);
+			DataAccessRegion rightOfIntersection(intersectionEnd, boundaries._firstEnd);
 			thisOnlyProcessor(rightOfIntersection);
 		} else if (intersectionEnd < boundaries._secondEnd) {
-			DataAccessRange rightOfIntersection(intersectionEnd, boundaries._secondEnd);
+			DataAccessRegion rightOfIntersection(intersectionEnd, boundaries._secondEnd);
 			otherOnlyProcessor(rightOfIntersection);
 		}
 	}
 	
-	friend std::ostream & ::operator<<(std::ostream &o, DataAccessRange const &range);
+	friend std::ostream & ::operator<<(std::ostream &o, DataAccessRegion const &region);
 };
 
 
-inline std::ostream & operator<<(std::ostream &o, const DataAccessRange& range)
+inline std::ostream & operator<<(std::ostream &o, const DataAccessRegion& region)
 {
-	return o << range._startAddress << ":" << range._length;
+	return o << region._startAddress << ":" << region._length;
 }
 
 
-#endif // DATA_ACCESS_RANGE_HPP
+#endif // DATA_ACCESS_REGION_HPP

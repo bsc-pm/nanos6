@@ -18,7 +18,7 @@
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentTaskId.hpp>
 
-#include <DataAccessRangeIndexer.hpp>
+#include <DataAccessRegionIndexer.hpp>
 
 #include <atomic>
 #include <bitset>
@@ -135,7 +135,7 @@ namespace Instrument {
 			data_access_id_t _id;
 			data_access_id_t _superAccess;
 			DataAccessType _type;
-			DataAccessRange _accessRange;
+			DataAccessRegion _accessRegion;
 			task_id_t _originator;
 			
 			bitset_t _bitset;
@@ -151,7 +151,7 @@ namespace Instrument {
 			access_t():
 				_id(),
 				_superAccess(),
-				_type(READ_ACCESS_TYPE), _accessRange(),
+				_type(READ_ACCESS_TYPE), _accessRegion(),
 				_originator(-1),
 				_bitset(),
 				_nextLinks(),
@@ -160,13 +160,13 @@ namespace Instrument {
 			{
 			}
 			
-			DataAccessRange const &getAccessRange() const
+			DataAccessRegion const &getAccessRegion() const
 			{
-				return _accessRange;
+				return _accessRegion;
 			}
-			DataAccessRange &getAccessRange()
+			DataAccessRegion &getAccessRegion()
 			{
-				return _accessRange;
+				return _accessRegion;
 			}
 			
 			bool weak() const
@@ -266,19 +266,19 @@ namespace Instrument {
 				assert(fragment != nullptr);
 			}
 			
-			DataAccessRange const &getAccessRange() const
+			DataAccessRegion const &getAccessRegion() const
 			{
-				return _fragment->_accessRange;
+				return _fragment->_accessRegion;
 			}
 			
-			DataAccessRange &getAccessRange()
+			DataAccessRegion &getAccessRegion()
 			{
-				return _fragment->_accessRange;
+				return _fragment->_accessRegion;
 			}
 		};
 		
 		
-		typedef DataAccessRangeIndexer<AccessFragmentWrapper> task_live_access_fragments_t;
+		typedef DataAccessRegionIndexer<AccessFragmentWrapper> task_live_access_fragments_t;
 		typedef std::set<access_fragment_t *> task_all_access_fragments_t;
 		
 		
@@ -340,21 +340,21 @@ namespace Instrument {
 				assert(access != nullptr);
 			}
 			
-			DataAccessRange const &getAccessRange() const
+			DataAccessRegion const &getAccessRegion() const
 			{
-				return _access->_accessRange;
+				return _access->_accessRegion;
 			}
 			
-			DataAccessRange &getAccessRange()
+			DataAccessRegion &getAccessRegion()
 			{
-				return _access->_accessRange;
+				return _access->_accessRegion;
 			}
 		};
 		
 		
 		typedef std::vector<phase_t *> phase_list_t;
 		
-		typedef DataAccessRangeIndexer<AccessWrapper> task_live_accesses_t;
+		typedef DataAccessRegionIndexer<AccessWrapper> task_live_accesses_t;
 		typedef std::set<access_t *> task_all_accesses_t;
 		
 		struct dependency_edge_t {
@@ -463,7 +463,7 @@ namespace Instrument {
 		extern SpinLock _graphLock;
 		
 		extern EnvironmentVariable<bool> _showDependencyStructures;
-		extern EnvironmentVariable<bool> _showRanges;
+		extern EnvironmentVariable<bool> _showRegions;
 		extern EnvironmentVariable<bool> _showLog;
 		
 		
@@ -480,7 +480,7 @@ namespace Instrument {
 				
 				task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
 				nextTaskInfo._liveAccesses.processIntersecting(
-					access->_accessRange,
+					access->_accessRegion,
 					[&](task_live_accesses_t::iterator position) -> bool {
 						access_t *nextAccess = position->_access;
 						assert(nextAccess != nullptr);
@@ -494,7 +494,7 @@ namespace Instrument {
 					task_group_t *taskGroup = dynamic_cast<task_group_t *> (*nextTaskInfo._phaseList.begin());
 					if (taskGroup != nullptr) {
 						taskGroup->_liveFragments.processIntersecting(
-							access->_accessRange,
+							access->_accessRegion,
 							[&](task_live_access_fragments_t::iterator fragmentPosition) -> bool {
 								access_fragment_t *fragment = fragmentPosition->_fragment;
 								assert(fragment != nullptr);
@@ -525,7 +525,7 @@ namespace Instrument {
 				for (access_t *nextAccess : nextTaskInfo._allAccesses) {
 					assert (nextAccess != nullptr);
 					
-					if (access->_accessRange.intersect(nextAccess->_accessRange).empty()) {
+					if (access->_accessRegion.intersect(nextAccess->_accessRegion).empty()) {
 						continue;
 					}
 					

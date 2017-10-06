@@ -37,8 +37,8 @@ void register_access(void *handler, void *start, size_t length, int reductionTyp
 		return;
 	}
 	
-	DataAccessRange accessRange(start, length);
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), accessRange, reductionTypeAndOperatorIndex);
+	DataAccessRegion accessRegion(start, length);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), accessRegion, reductionTypeAndOperatorIndex);
 }
 
 

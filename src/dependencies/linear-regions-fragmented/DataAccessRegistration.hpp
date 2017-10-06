@@ -47,14 +47,14 @@ private:
 	
 	static inline DataAccess *createAccess(
 		Task *originator,
-		DataAccessType accessType, bool weak, DataAccessRange range,
+		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool fragment,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
 		DataAccess::status_t status = 0, Task *next = nullptr
 	) {
 		// Regular object duplication
 		DataAccess *dataAccess = new DataAccess(
-			accessType, weak, originator, range,
+			accessType, weak, originator, region,
 			fragment,
 			reductionTypeAndOperatorIndex,
 			Instrument::data_access_id_t(),
@@ -117,7 +117,7 @@ private:
 		// Regular object duplication
 		DataAccess *newFragment = createAccess(
 			toBeDuplicated.getOriginator(),
-			toBeDuplicated.getType(), toBeDuplicated.isWeak(), toBeDuplicated.getAccessRange(),
+			toBeDuplicated.getType(), toBeDuplicated.isWeak(), toBeDuplicated.getAccessRegion(),
 			toBeDuplicated.isFragment(),
 			toBeDuplicated.getReductionTypeAndOperatorIndex(),
 			toBeDuplicated.getStatus(), toBeDuplicated.getNext()
@@ -150,10 +150,10 @@ private:
 	
 	
 	static inline BottomMapEntry *fragmentBottomMapEntry(
-		BottomMapEntry *bottomMapEntry, DataAccessRange range,
+		BottomMapEntry *bottomMapEntry, DataAccessRegion region,
 		TaskDataAccesses &accessStructures
 	) {
-		if (bottomMapEntry->getAccessRange().fullyContainedIn(range)) {
+		if (bottomMapEntry->getAccessRegion().fullyContainedIn(region)) {
 			// Nothing to fragment
 			return bottomMapEntry;
 		}
@@ -164,10 +164,10 @@ private:
 		TaskDataAccesses::subaccess_bottom_map_t::iterator position =
 			accessStructures._subaccessBottomMap.iterator_to(*bottomMapEntry);
 		position = accessStructures._subaccessBottomMap.fragmentByIntersection(
-			position, range,
+			position, region,
 			false,
 			[&](BottomMapEntry const &toBeDuplicated) -> BottomMapEntry * {
-				return new BottomMapEntry(DataAccessRange(), toBeDuplicated._task, toBeDuplicated._local);
+				return new BottomMapEntry(DataAccessRegion(), toBeDuplicated._task, toBeDuplicated._local);
 			},
 			[&](__attribute__((unused)) BottomMapEntry *fragment, __attribute__((unused)) BottomMapEntry *originalBottomMapEntry) {
 			}
@@ -175,14 +175,14 @@ private:
 		
 		bottomMapEntry = &(*position);
 		assert(bottomMapEntry != nullptr);
-		assert(bottomMapEntry->getAccessRange().fullyContainedIn(range));
+		assert(bottomMapEntry->getAccessRegion().fullyContainedIn(region));
 		
 		return bottomMapEntry;
 	}
 	
 	
 	static inline DataAccess *fragmentAccess(
-		DataAccess *dataAccess, DataAccessRange range,
+		DataAccess *dataAccess, DataAccessRegion region,
 		TaskDataAccesses &accessStructures
 	) {
 		assert(dataAccess != nullptr);
@@ -192,7 +192,7 @@ private:
 		assert(!accessStructures.hasBeenDeleted());
 		assert(!dataAccess->hasBeenDiscounted());
 		
-		if (dataAccess->getAccessRange().fullyContainedIn(range)) {
+		if (dataAccess->getAccessRegion().fullyContainedIn(region)) {
 			// Nothing to fragment
 			return dataAccess;
 		}
@@ -204,7 +204,7 @@ private:
 			TaskDataAccesses::access_fragments_t::iterator position =
 				accessStructures._accessFragments.iterator_to(*dataAccess);
 			position = accessStructures._accessFragments.fragmentByIntersection(
-				position, range,
+				position, region,
 				false,
 				[&](DataAccess const &toBeDuplicated) -> DataAccess * {
 					return duplicateDataAccess(toBeDuplicated, accessStructures, /* Count Blocking */ true);
@@ -218,12 +218,12 @@ private:
 			
 			dataAccess = &(*position);
 			assert(dataAccess != nullptr);
-			assert(dataAccess->getAccessRange().fullyContainedIn(range));
+			assert(dataAccess->getAccessRegion().fullyContainedIn(region));
 		} else {
 			TaskDataAccesses::accesses_t::iterator position =
 				accessStructures._accesses.iterator_to(*dataAccess);
 			position = accessStructures._accesses.fragmentByIntersection(
-				position, range,
+				position, region,
 				false,
 				[&](DataAccess const &toBeDuplicated) -> DataAccess * {
 					return duplicateDataAccess(toBeDuplicated, accessStructures, /* Count Blocking */ true);
@@ -237,7 +237,7 @@ private:
 			
 			dataAccess = &(*position);
 			assert(dataAccess != nullptr);
-			assert(dataAccess->getAccessRange().fullyContainedIn(range));
+			assert(dataAccess->getAccessRegion().fullyContainedIn(region));
 		}
 		
 		return dataAccess;
@@ -487,11 +487,11 @@ private:
 	) {
 		PropagationBits const &propagationBits = delayedOperation._propagationBits;
 		Task *targetTask = delayedOperation._target;
-		DataAccessRange range = delayedOperation._range;
+		DataAccessRegion region = delayedOperation._region;
 		
 		assert(propagationBits.propagates());
 		assert(targetTask != nullptr);
-		assert(!range.empty());
+		assert(!region.empty());
 		
 		TaskDataAccesses &targetTaskAccessStructures = targetTask->getDataAccesses();
 		assert(!targetTaskAccessStructures.hasBeenDeleted());
@@ -500,7 +500,7 @@ private:
 		// NOTE: An access is discounted before traversing the fragments, so by the time we reach this point, the counter could be 0
 		
 		targetTaskAccessStructures._accessFragments.processIntersecting(
-			range,
+			region,
 			[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
 				DataAccess *targetFragment = &(*position);
 				assert(targetFragment != nullptr);
@@ -510,9 +510,9 @@ private:
 				assert(!targetFragment->hasBeenDiscounted());
 				
 				// Fragment if necessary
-				targetFragment = fragmentAccess(targetFragment, range, targetTaskAccessStructures);
+				targetFragment = fragmentAccess(targetFragment, region, targetTaskAccessStructures);
 				assert(targetFragment != nullptr);
-				assert(targetFragment->getAccessRange().fullyContainedIn(range));
+				assert(targetFragment->getAccessRegion().fullyContainedIn(region));
 				
 				PropagationBits nextPropagation = applyPropagationBits(targetFragment, propagationBits);
 				
@@ -548,7 +548,7 @@ private:
 				nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
 #endif
 				nextOperation._propagationBits = nextPropagation;
-				nextOperation._range = targetFragment->getAccessRange();
+				nextOperation._region = targetFragment->getAccessRegion();
 				nextOperation._target = nextTask;
 				
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
@@ -570,18 +570,18 @@ private:
 	) {
 		PropagationBits const &propagationBits = delayedOperation._propagationBits;
 		Task *targetTask = delayedOperation._target;
-		DataAccessRange range = delayedOperation._range;
+		DataAccessRegion region = delayedOperation._region;
 		
 		assert(propagationBits.propagates());
 		assert(targetTask != nullptr);
-		assert(!range.empty());
+		assert(!region.empty());
 		
 		TaskDataAccesses &targetTaskAccessStructures = targetTask->getDataAccesses();
 		assert(!targetTaskAccessStructures.hasBeenDeleted());
 		assert(targetTaskAccessStructures._lock.isLockedByThisThread());
 		
 		targetTaskAccessStructures._accesses.processIntersecting(
-			range,
+			region,
 			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 				DataAccess *targetAccess = &(*position);
 				assert(targetAccess != nullptr);
@@ -590,9 +590,9 @@ private:
 				assert(!targetAccess->hasBeenDiscounted());
 				
 				// Fragment if necessary
-				targetAccess = fragmentAccess(targetAccess, range, targetTaskAccessStructures);
+				targetAccess = fragmentAccess(targetAccess, region, targetTaskAccessStructures);
 				assert(targetAccess != nullptr);
-				assert(targetAccess->getAccessRange().fullyContainedIn(range));
+				assert(targetAccess->getAccessRegion().fullyContainedIn(region));
 				
 				bool wasSatisfied = targetAccess->satisfied();
 				
@@ -635,7 +635,7 @@ private:
 						nextDelayedOperation._propagationBits = propagationBits;
 						nextDelayedOperation._propagationBits._makesNextTopmost = false;
 						
-						nextDelayedOperation._range = targetAccess->getAccessRange();
+						nextDelayedOperation._region = targetAccess->getAccessRegion();
 						nextDelayedOperation._target = targetTask;
 						
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
@@ -674,7 +674,7 @@ private:
 				nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
 #endif
 				nextOperation._propagationBits = nextPropagation;
-				nextOperation._range = targetAccess->getAccessRange();
+				nextOperation._region = targetAccess->getAccessRegion();
 				nextOperation._target = nextTask;
 				
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
@@ -692,7 +692,7 @@ private:
 	
 	static inline void activateForcedRemovalOfBottomMapAccesses(
 		Task *task, TaskDataAccesses &accessStructures,
-		DataAccessRange range,
+		DataAccessRegion region,
 		/* OUT */ CPUDependencyData &hpDependencyData
 	) {
 		assert(!accessStructures.hasBeenDeleted());
@@ -700,12 +700,12 @@ private:
 		
 		// For each bottom map entry
 		accessStructures._subaccessBottomMap.processIntersecting(
-			range,
+			region,
 			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator position) -> bool {
 				BottomMapEntry *bottomMapEntry = &(*position);
 				assert(bottomMapEntry != nullptr);
 				
-				DataAccessRange subrange = range.intersect(bottomMapEntry->getAccessRange());
+				DataAccessRegion subregion = region.intersect(bottomMapEntry->getAccessRegion());
 				
 				Task *subtask = bottomMapEntry->_task;
 				assert(subtask != nullptr);
@@ -717,7 +717,7 @@ private:
 					
 					// For each access of the subtask that matches
 					subtaskAccessStructures._accesses.processIntersecting(
-						subrange,
+						subregion,
 						[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
 							DataAccess *dataAccess = &(*accessPosition);
 							
@@ -727,13 +727,13 @@ private:
 							
 							assert(!dataAccess->hasForcedRemoval());
 							
-							dataAccess = fragmentAccess(dataAccess, subrange, subtaskAccessStructures);
+							dataAccess = fragmentAccess(dataAccess, subregion, subtaskAccessStructures);
 							
 							assert(dataAccess->getNext() == nullptr);
 							dataAccess->forceRemoval();
 							
 							if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
-								activateForcedRemovalOfBottomMapAccesses(subtask, subtaskAccessStructures, dataAccess->getAccessRange(), hpDependencyData);
+								activateForcedRemovalOfBottomMapAccesses(subtask, subtaskAccessStructures, dataAccess->getAccessRegion(), hpDependencyData);
 							}
 							
 							if (!dataAccess->isRemovable(false) && dataAccess->isRemovable(true)) {
@@ -749,7 +749,7 @@ private:
 				} else {
 					// A fragment
 					accessStructures._accessFragments.processIntersecting(
-						subrange,
+						subregion,
 						[&] (TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
 							DataAccess *fragment = &(*fragmentPosition);
 							assert(fragment != nullptr);
@@ -758,7 +758,7 @@ private:
 							assert(fragment->isInBottomMap());
 							assert(!fragment->hasBeenDiscounted());
 							
-							fragment = fragmentAccess(fragment, subrange, accessStructures);
+							fragment = fragmentAccess(fragment, subregion, accessStructures);
 							
 							assert(fragment->getNext() == nullptr);
 							fragment->forceRemoval();
@@ -802,7 +802,7 @@ private:
 					
 					// For each access of the subtask that matches
 					subtaskAccessStructures._accesses.processIntersecting(
-						bottomMapEntry->getAccessRange(),
+						bottomMapEntry->getAccessRegion(),
 						[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
 							DataAccess *dataAccess = &(*accessPosition);
 							
@@ -812,13 +812,13 @@ private:
 							
 							assert(!dataAccess->hasForcedRemoval());
 							
-							dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRange(), subtaskAccessStructures);
+							dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRegion(), subtaskAccessStructures);
 							
 							assert(dataAccess->getNext() == nullptr);
 							dataAccess->forceRemoval();
 							
 							if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
-								activateForcedRemovalOfBottomMapAccesses(subtask, subtaskAccessStructures, dataAccess->getAccessRange(), hpDependencyData);
+								activateForcedRemovalOfBottomMapAccesses(subtask, subtaskAccessStructures, dataAccess->getAccessRegion(), hpDependencyData);
 							}
 							
 							if (!dataAccess->isRemovable(false) && dataAccess->isRemovable(true)) {
@@ -834,7 +834,7 @@ private:
 				} else {
 					// A fragment
 					accessStructures._accessFragments.processIntersecting(
-						bottomMapEntry->getAccessRange(),
+						bottomMapEntry->getAccessRegion(),
 						[&] (TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
 							DataAccess *fragment = &(*fragmentPosition);
 							assert(fragment != nullptr);
@@ -845,7 +845,7 @@ private:
 							
 							assert(!fragment->hasForcedRemoval());
 							
-							fragment = fragmentAccess(fragment, bottomMapEntry->getAccessRange(), accessStructures);
+							fragment = fragmentAccess(fragment, bottomMapEntry->getAccessRegion(), accessStructures);
 							
 							assert(fragment->getNext() == nullptr);
 							fragment->forceRemoval();
@@ -937,15 +937,15 @@ private:
 	static inline DataAccess *createInitialFragment(
 		TaskDataAccesses::accesses_t::iterator accessPosition,
 		TaskDataAccesses &accessStructures,
-		DataAccessRange subrange,
-		bool createSubrangeBottomMapEntry, /* Out */ BottomMapEntry *&bottomMapEntry
+		DataAccessRegion subregion,
+		bool createSubregionBottomMapEntry, /* Out */ BottomMapEntry *&bottomMapEntry
 	) {
 		DataAccess *dataAccess = &(*accessPosition);
 		assert(dataAccess != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
 		assert(bottomMapEntry == nullptr);
 		
-		assert(!accessStructures._accessFragments.contains(dataAccess->getAccessRange()));
+		assert(!accessStructures._accessFragments.contains(dataAccess->getAccessRegion()));
 		
 		Instrument::data_access_id_t instrumentationId =
 			Instrument::createdDataSubaccessFragment(dataAccess->getInstrumentationId());
@@ -953,7 +953,7 @@ private:
 			dataAccess->getType(),
 			dataAccess->isWeak(),
 			dataAccess->getOriginator(),
-			dataAccess->getAccessRange(),
+			dataAccess->getAccessRegion(),
 			/* A fragment */ true,
 			dataAccess->getReductionTypeAndOperatorIndex(),
 			instrumentationId
@@ -970,20 +970,20 @@ private:
 		fragment->setInBottomMap();
 		dataAccess->setHasSubaccesses();
 		
-		if (createSubrangeBottomMapEntry) {
-			bottomMapEntry = new BottomMapEntry(dataAccess->getAccessRange(), dataAccess->getOriginator(), /* Not local */ false);
+		if (createSubregionBottomMapEntry) {
+			bottomMapEntry = new BottomMapEntry(dataAccess->getAccessRegion(), dataAccess->getOriginator(), /* Not local */ false);
 			accessStructures._subaccessBottomMap.insert(*bottomMapEntry);
-		} else if (subrange != dataAccess->getAccessRange()) {
-			dataAccess->getAccessRange().processIntersectingFragments(
-				subrange,
-				[&](DataAccessRange excludedSubrange) {
-					bottomMapEntry = new BottomMapEntry(excludedSubrange, dataAccess->getOriginator(), /* Not local */ false);
+		} else if (subregion != dataAccess->getAccessRegion()) {
+			dataAccess->getAccessRegion().processIntersectingFragments(
+				subregion,
+				[&](DataAccessRegion excludedSubregion) {
+					bottomMapEntry = new BottomMapEntry(excludedSubregion, dataAccess->getOriginator(), /* Not local */ false);
 					accessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 				},
-				[&](__attribute__((unused)) DataAccessRange intersection) {
-					assert(!createSubrangeBottomMapEntry);
+				[&](__attribute__((unused)) DataAccessRegion intersection) {
+					assert(!createSubregionBottomMapEntry);
 				},
-				[&](__attribute__((unused)) DataAccessRange unmatchedRange) {
+				[&](__attribute__((unused)) DataAccessRegion unmatchedRegion) {
 					// This part is not covered by the access
 				}
 			);
@@ -997,9 +997,9 @@ private:
 	
 	
 	template <typename MatchingProcessorType, typename MissingProcessorType>
-	static inline bool foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRange(
+	static inline bool foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRegion(
 		Task *parent, TaskDataAccesses &parentAccessStructures,
-		DataAccessRange range,
+		DataAccessRegion region,
 		MatchingProcessorType matchingProcessor, MissingProcessorType missingProcessor,
 		bool removeBottomMapEntry
 	) {
@@ -1008,12 +1008,12 @@ private:
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
 		return parentAccessStructures._subaccessBottomMap.processIntersectingAndMissing(
-			range,
+			region,
 			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator bottomMapPosition) -> bool {
 				BottomMapEntry *bottomMapEntry = &(*bottomMapPosition);
 				assert(bottomMapEntry != nullptr);
 				
-				DataAccessRange subrange = range.intersect(bottomMapEntry->getAccessRange());
+				DataAccessRegion subregion = region.intersect(bottomMapEntry->getAccessRegion());
 				
 				Task *subtask = bottomMapEntry->_task;
 				assert(subtask != nullptr);
@@ -1026,7 +1026,7 @@ private:
 					
 					// For each access of the subtask that matches
 					result = subtaskAccessStructures._accesses.processIntersecting(
-						subrange,
+						subregion,
 						[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
 							DataAccess *previous = &(*accessPosition);
 							
@@ -1034,7 +1034,7 @@ private:
 							assert(previous->isInBottomMap());
 							assert(!previous->hasBeenDiscounted());
 							
-							previous = fragmentAccess(previous, subrange, subtaskAccessStructures);
+							previous = fragmentAccess(previous, subregion, subtaskAccessStructures);
 							
 							return matchingProcessor(previous, bottomMapEntry);
 						}
@@ -1046,7 +1046,7 @@ private:
 					
 					// For each fragment of the parent that matches
 					result = parentAccessStructures._accessFragments.processIntersecting(
-						subrange,
+						subregion,
 						[&] (TaskDataAccesses::accesses_t::iterator fragmentPosition) -> bool {
 							DataAccess *previous = &(*fragmentPosition);
 							
@@ -1054,7 +1054,7 @@ private:
 							assert(previous->isInBottomMap());
 							assert(!previous->hasBeenDiscounted());
 							
-							previous = fragmentAccess(previous, subrange, parentAccessStructures);
+							previous = fragmentAccess(previous, subregion, parentAccessStructures);
 							
 							return matchingProcessor(previous, bottomMapEntry);
 						}
@@ -1062,33 +1062,33 @@ private:
 				}
 				
 				if (removeBottomMapEntry) {
-					bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, subrange, parentAccessStructures);
+					bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, subregion, parentAccessStructures);
 					parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
 					delete bottomMapEntry;
 				}
 				
 				return result;
 			},
-			[&](DataAccessRange missingRange) -> bool {
+			[&](DataAccessRegion missingRegion) -> bool {
 				parentAccessStructures._accesses.processIntersectingAndMissing(
-					missingRange,
+					missingRegion,
 					[&](TaskDataAccesses::accesses_t::iterator superaccessPosition) -> bool {
 						BottomMapEntry *bottomMapEntry = nullptr;
 						
 						DataAccess *previous = createInitialFragment(
 							superaccessPosition, parentAccessStructures,
-							missingRange, !removeBottomMapEntry, /* Out */ bottomMapEntry
+							missingRegion, !removeBottomMapEntry, /* Out */ bottomMapEntry
 						);
 						assert(previous != nullptr);
 						assert(previous->isFragment());
 						
 						previous->setTopmost();
-						previous = fragmentAccess(previous, missingRange, parentAccessStructures);
+						previous = fragmentAccess(previous, missingRegion, parentAccessStructures);
 						
 						return matchingProcessor(previous, bottomMapEntry);
 					},
-					[&](DataAccessRange rangeUncoveredByParent) -> bool {
-						return missingProcessor(rangeUncoveredByParent);
+					[&](DataAccessRegion regionUncoveredByParent) -> bool {
+						return missingProcessor(regionUncoveredByParent);
 					}
 				);
 				
@@ -1100,11 +1100,11 @@ private:
 	
 	static inline void propagate(
 		PropagationBits const &propagationBits,
-		DataAccessRange range, Task *next,
+		DataAccessRegion region, Task *next,
 		/* inout */ CPUDependencyData &hpDependencyData
 	) {
 		assert(propagationBits.propagates());
-		assert(!range.empty());
+		assert(!region.empty());
 		assert(next != nullptr);
 		
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
@@ -1114,7 +1114,7 @@ private:
 		nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
 #endif
 		nextOperation._propagationBits = propagationBits;
-		nextOperation._range = range;
+		nextOperation._region = region;
 		nextOperation._target = next;
 		
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
@@ -1128,20 +1128,20 @@ private:
 	
 	static inline DataAccess *linkAndPropagate(
 		DataAccess *dataAccess, Task *task, TaskDataAccesses &accessStructures,
-		DataAccessRange range, Task *next,
+		DataAccessRegion region, Task *next,
 		/* inout */ CPUDependencyData &hpDependencyData
 	) {
 		assert(dataAccess != nullptr);
 		assert(dataAccess->isReachable());
 		assert(dataAccess->isInBottomMap());
 		assert(!dataAccess->hasBeenDiscounted());
-		assert(dataAccess->getAccessRange().fullyContainedIn(range));
+		assert(dataAccess->getAccessRegion().fullyContainedIn(region));
 		assert(task != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
 		assert(accessStructures._lock.isLockedByThisThread());
 		assert(next != nullptr);
 		
-		dataAccess = fragmentAccess(dataAccess, range, accessStructures);
+		dataAccess = fragmentAccess(dataAccess, region, accessStructures);
 		assert(dataAccess != nullptr);
 		assert(dataAccess->getNext() == nullptr);
 		
@@ -1154,7 +1154,7 @@ private:
 		
 		Instrument::linkedDataAccesses(
 			dataAccess->getInstrumentationId(), next->getInstrumentationTaskId(),
-			dataAccess->getAccessRange(),
+			dataAccess->getAccessRegion(),
 			true, false
 		);
 		
@@ -1172,7 +1172,7 @@ private:
 			DelayedOperation delayedOperation;
 			delayedOperation._propagationBits = propagationMask;
 			delayedOperation._next = next;
-			delayedOperation._range = dataAccess->getAccessRange();
+			delayedOperation._region = dataAccess->getAccessRegion();
 			delayedOperation._target = task;
 			linkBottomMapAccessesToNext(delayedOperation, hpDependencyData);
 			
@@ -1180,13 +1180,13 @@ private:
 			if (propagationBits._makesNextTopmost) {
 				PropagationBits makeNextTopmostBits;
 				makeNextTopmostBits._makesNextTopmost = true;
-				propagate(makeNextTopmostBits, dataAccess->getAccessRange(), next, hpDependencyData);
+				propagate(makeNextTopmostBits, dataAccess->getAccessRegion(), next, hpDependencyData);
 			}
 		} else if (propagationBits.propagates()) {
 			// Regular propagation
 			
 			assert(!dataAccess->complete() || !dataAccess->hasSubaccesses());
-			propagate(propagationBits, dataAccess->getAccessRange(), next, hpDependencyData);
+			propagate(propagationBits, dataAccess->getAccessRegion(), next, hpDependencyData);
 		}
 		
 		// Update the number of non removable accesses of the task
@@ -1203,13 +1203,13 @@ private:
 		DelayedOperation const &delayedOperation,
 		/* OUT */ CPUDependencyData &hpDependencyData
 	) {
-		DataAccessRange range = delayedOperation._range;
+		DataAccessRegion region = delayedOperation._region;
 		Task *task = delayedOperation._target;
 		Task *next = delayedOperation._next;
 		PropagationBits const &propagationMask = delayedOperation._propagationBits;
 		
 		assert(task != nullptr);
-		assert(!range.empty());
+		assert(!region.empty());
 		assert(next != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
@@ -1218,7 +1218,7 @@ private:
 		assert(accessStructures._lock.isLockedByThisThread());
 		
 		accessStructures._subaccessBottomMap.processIntersecting(
-			range,
+			region,
 			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator bottomMapPosition) -> bool {
 				BottomMapEntry *bottomMapEntry = &(*bottomMapPosition);
 				assert(bottomMapEntry != nullptr);
@@ -1226,7 +1226,7 @@ private:
 				Task *subtask = bottomMapEntry->_task;
 				assert(subtask != nullptr);
 				
-				DataAccessRange subrange = range.intersect(bottomMapEntry->getAccessRange());
+				DataAccessRegion subregion = region.intersect(bottomMapEntry->getAccessRegion());
 				
 				if (subtask != task) {
 					TaskDataAccesses &subtaskAccessStructures = subtask->getDataAccesses();
@@ -1234,7 +1234,7 @@ private:
 					
 					// For each access of the subtask that matches
 					subtaskAccessStructures._accesses.processIntersecting(
-						subrange,
+						subregion,
 						[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
 							DataAccess *subaccess = &(*accessPosition);
 							assert(subaccess != nullptr);
@@ -1243,7 +1243,7 @@ private:
 							assert(subaccess->isInBottomMap());
 							assert(!subaccess->hasBeenDiscounted());
 							
-							subaccess = fragmentAccess(subaccess, subrange, subtaskAccessStructures);
+							subaccess = fragmentAccess(subaccess, subregion, subtaskAccessStructures);
 							
 							// Avoid propagating satisfiability that has already been propagated by an ancestor
 							if (propagationMask._read) {
@@ -1264,7 +1264,7 @@ private:
 							
 							linkAndPropagate(
 								subaccess, subtask, subtaskAccessStructures,
-								subrange.intersect(subaccess->getAccessRange()), next,
+								subregion.intersect(subaccess->getAccessRegion()), next,
 								hpDependencyData
 							);
 							
@@ -1276,7 +1276,7 @@ private:
 				} else {
 					// A fragment
 					accessStructures._accessFragments.processIntersecting(
-						subrange,
+						subregion,
 						[&] (TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
 							DataAccess *fragment = &(*fragmentPosition);
 							assert(fragment != nullptr);
@@ -1285,7 +1285,7 @@ private:
 							assert(fragment->isInBottomMap());
 							assert(!fragment->hasBeenDiscounted());
 							
-							fragment = fragmentAccess(fragment, subrange, accessStructures);
+							fragment = fragmentAccess(fragment, subregion, accessStructures);
 							
 							// Avoid propagating satisfiability that has already been propagated by an ancestor
 							if (propagationMask._read) {
@@ -1307,7 +1307,7 @@ private:
 							
 							linkAndPropagate(
 								fragment, task, accessStructures,
-								subrange.intersect(fragment->getAccessRange()), next,
+								subregion.intersect(fragment->getAccessRegion()), next,
 								hpDependencyData
 							);
 							
@@ -1324,7 +1324,7 @@ private:
 	
 	static inline void replaceMatchingInBottomMapLinkAndPropagate(
 		Task *task,  TaskDataAccesses &accessStructures,
-		DataAccessRange range, bool weak,
+		DataAccessRegion region, bool weak,
 		Task *parent, TaskDataAccesses &parentAccessStructures,
 		/* inout */ CPUDependencyData &hpDependencyData
 	) {
@@ -1345,9 +1345,9 @@ private:
 		#endif
 		
 		// Link accesses to their corresponding predecessor
-		foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRange(
+		foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRegion(
 			parent, parentAccessStructures,
-			range,
+			region,
 			[&](DataAccess *previous, BottomMapEntry *bottomMapEntry) -> bool {
 				assert(previous != nullptr);
 				assert(previous->isReachable());
@@ -1373,18 +1373,18 @@ private:
 				
 				TaskDataAccesses &previousAccessStructures = previousTask->getDataAccesses();
 				assert(!previousAccessStructures.hasBeenDeleted());
-				assert(previous->getAccessRange().fullyContainedIn(range));
+				assert(previous->getAccessRegion().fullyContainedIn(region));
 				
 				previous = linkAndPropagate(
 					previous, previousTask, previousAccessStructures,
-					previous->getAccessRange(), task,
+					previous->getAccessRegion(), task,
 					hpDependencyData
 				);
 				
 				return true;
 			},
-			[&](DataAccessRange missingRange) -> bool {
-				assert(!parentAccessStructures._accesses.contains(missingRange));
+			[&](DataAccessRegion missingRegion) -> bool {
+				assert(!parentAccessStructures._accesses.contains(missingRegion));
 				
 				// Not part of the parent
 				local = true;
@@ -1400,13 +1400,13 @@ private:
 				// Holes in the parent bottom map that are not in the parent accesses become fully satisfied
 				std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock); // Need the lock since an access of data allocated in the parent may partially overlap a previous one
 				accessStructures._accesses.processIntersecting(
-					missingRange,
+					missingRegion,
 					[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 						DataAccess *targetAccess = &(*position);
 						assert(targetAccess != nullptr);
 						assert(!targetAccess->hasBeenDiscounted());
 						
-						targetAccess = fragmentAccess(targetAccess, missingRange, accessStructures);
+						targetAccess = fragmentAccess(targetAccess, missingRegion, accessStructures);
 						
 						targetAccess->setReadSatisfied();
 						targetAccess->setWriteSatisfied();
@@ -1435,7 +1435,7 @@ private:
 		);
 		
 		// Add the entry to the bottom map
-		BottomMapEntry *bottomMapEntry = new BottomMapEntry(range, task, local);
+		BottomMapEntry *bottomMapEntry = new BottomMapEntry(region, task, local);
 		parentAccessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 	}
 	
@@ -1506,7 +1506,7 @@ private:
 					
 					replaceMatchingInBottomMapLinkAndPropagate(
 						task, accessStructures,
-						dataAccess->getAccessRange(), dataAccess->isWeak(),
+						dataAccess->getAccessRegion(), dataAccess->isWeak(),
 						parent, parentAccessStructures,
 						hpDependencyData
 					);
@@ -1533,7 +1533,7 @@ private:
 		assert(!propagationBits.propagatesSatisfiability());
 		
 		if ((fragment->getNext() != nullptr) && propagationBits.propagates() /* Topmost property */) {
-			propagate(propagationBits, fragment->getAccessRange(), fragment->getNext(), hpDependencyData);
+			propagate(propagationBits, fragment->getAccessRegion(), fragment->getNext(), hpDependencyData);
 		}
 		
 		// Update the number of non removable accesses if the fragment has become removable
@@ -1573,14 +1573,14 @@ private:
 	
 	
 	static inline void finalizeAccess(
-		Task *finishedTask, DataAccess *dataAccess, DataAccessRange range,
+		Task *finishedTask, DataAccess *dataAccess, DataAccessRegion region,
 		/* OUT */ CPUDependencyData &hpDependencyData
 	) {
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
 		
 		assert(dataAccess->getOriginator() == finishedTask);
-		assert(!range.empty());
+		assert(!region.empty());
 		
 		// The access may already have been released through the "release" directive
 		if (dataAccess->complete()) {
@@ -1592,9 +1592,9 @@ private:
 		assert(!accessStructures.hasBeenDeleted());
 		
 		// Fragment if necessary
-		dataAccess = fragmentAccess(dataAccess, range, accessStructures);
+		dataAccess = fragmentAccess(dataAccess, region, accessStructures);
 		assert(dataAccess != nullptr);
-		range = dataAccess->getAccessRange();
+		region = dataAccess->getAccessRegion();
 		
 		Task *next = dataAccess->getNext();
 		
@@ -1603,14 +1603,14 @@ private:
 		if (dataAccess->hasSubaccesses()) {
 			// Mark the fragments as completed and propagate topmost property
 			accessStructures._accessFragments.processIntersecting(
-				range,
+				region,
 				[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
 					DataAccess *fragment = &(*position);
 					assert(fragment != nullptr);
 					assert(fragment->isFragment());
 					assert(!fragment->hasBeenDiscounted());
 					
-					fragment = fragmentAccess(fragment, range, accessStructures);
+					fragment = fragmentAccess(fragment, region, accessStructures);
 					assert(fragment != nullptr);
 					
 					finalizeFragment(fragment, finishedTask, accessStructures, hpDependencyData);
@@ -1625,7 +1625,7 @@ private:
 				DelayedOperation delayedOperation;
 				delayedOperation._propagationBits = calculatePropagationMask(dataAccess);
 				delayedOperation._next = next;
-				delayedOperation._range = dataAccess->getAccessRange();
+				delayedOperation._region = dataAccess->getAccessRegion();
 				delayedOperation._target = dataAccess->getOriginator();
 				
 				// The call to calculatePropagationMask must precede the following code
@@ -1661,18 +1661,18 @@ private:
 		
 		if (!dataAccess->hasSubaccesses() && (next != nullptr) && propagationBits.propagates()) {
 			// Direct propagation
-			propagate(propagationBits, dataAccess->getAccessRange(), next, hpDependencyData);
+			propagate(propagationBits, dataAccess->getAccessRegion(), next, hpDependencyData);
 		} else if (propagationBits._makesNextTopmost) {
 			// Propagate only topmost property (the rest go through the fragments)
 			PropagationBits makeNextTopmostBits;
 			makeNextTopmostBits._makesNextTopmost = true;
-			propagate(makeNextTopmostBits, dataAccess->getAccessRange(), next, hpDependencyData);
+			propagate(makeNextTopmostBits, dataAccess->getAccessRegion(), next, hpDependencyData);
 		}
 		
 		// Handle propagation of forced removal of accesses
 		if (dataAccess->hasForcedRemoval() && dataAccess->hasSubaccesses()) {
 			activateForcedRemovalOfBottomMapAccesses(
-				finishedTask, accessStructures, dataAccess->getAccessRange(),
+				finishedTask, accessStructures, dataAccess->getAccessRegion(),
 				hpDependencyData
 			);
 		}
@@ -1702,17 +1702,17 @@ public:
 	//! \param[in,out] task the task that performs the access
 	//! \param[in] accessType the type of access
 	//! \param[in] weak true iff the access is weak
-	//! \param[in] range the range of data covered by the access
+	//! \param[in] region the region of data covered by the access
 	//! \param[in] reductionTypeAndOperatorIndex an index that identifies the type and the operation of the reduction
 	static inline void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRange range, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
 	) {
 		assert(task != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		accessStructures._accesses.fragmentIntersecting(
-			range,
+			region,
 			[&](DataAccess const &toBeDuplicated) -> DataAccess * {
 				return duplicateDataAccess(toBeDuplicated, accessStructures, false);
 			},
@@ -1720,7 +1720,7 @@ public:
 		);
 		
 		accessStructures._accesses.processIntersectingAndMissing(
-			range,
+			region,
 			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 				DataAccess *oldAccess = &(*position);
 				assert(oldAccess != nullptr);
@@ -1729,8 +1729,8 @@ public:
 				
 				return true;
 			},
-			[&](DataAccessRange missingRange) -> bool {
-				DataAccess *newAccess = createAccess(task, accessType, weak, missingRange, false, reductionTypeAndOperatorIndex);
+			[&](DataAccessRegion missingRegion) -> bool {
+				DataAccess *newAccess = createAccess(task, accessType, weak, missingRegion, false, reductionTypeAndOperatorIndex);
 				
 				accessStructures._removalBlockers++;
 				accessStructures._accesses.insert(*newAccess);
@@ -1821,12 +1821,12 @@ public:
 				std::lock_guard<TaskDataAccesses::spinlock_t> subTaskGuard(subtaskAccessStructures._lock);
 				
 				subaccesses.processIntersecting(
-					bottomMapEntry->getAccessRange(),
+					bottomMapEntry->getAccessRegion(),
 					[&](TaskDataAccesses::accesses_t::iterator position2) -> bool {
 						DataAccess *dataAccess = &(*position2);
 						assert(dataAccess != nullptr);
 						
-						dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRange(), subtaskAccessStructures);
+						dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRegion(), subtaskAccessStructures);
 						
 						if (dataAccess->hasForcedRemoval()) {
 							return true;
@@ -1839,7 +1839,7 @@ public:
 						if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
 							activateForcedRemovalOfBottomMapAccesses(
 								subtask, subtaskAccessStructures,
-								dataAccess->getAccessRange(),
+								dataAccess->getAccessRegion(),
 								hpDependencyData
 							);
 						}
@@ -1862,8 +1862,8 @@ public:
 	
 	
 	
-	static inline void releaseAccessRange(
-		Task *task, DataAccessRange range,
+	static inline void releaseAccessRegion(
+		Task *task, DataAccessRegion region,
 		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
 		ComputePlace *computePlace
 	) {
@@ -1887,14 +1887,14 @@ public:
 			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 			
 			accesses.processIntersecting(
-				range,
+				region,
 				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					assert(dataAccess->getType() == accessType);
 					assert(dataAccess->isWeak() == weak);
 					
-					finalizeAccess(task, dataAccess, range, /* OUT */ hpDependencyData);
+					finalizeAccess(task, dataAccess, region, /* OUT */ hpDependencyData);
 					
 					return true;
 				}
@@ -1938,7 +1938,7 @@ public:
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					
-					finalizeAccess(task, dataAccess, dataAccess->getAccessRange(), /* OUT */ hpDependencyData);
+					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), /* OUT */ hpDependencyData);
 					
 					return true;
 				}

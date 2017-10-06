@@ -27,7 +27,7 @@ namespace Instrument {
 		SpinLock _graphLock;
 		
 		EnvironmentVariable<bool> _showDependencyStructures("NANOS6_GRAPH_SHOW_DEPENDENCY_STRUCTURES", false);
-		EnvironmentVariable<bool> _showRanges("NANOS6_GRAPH_SHOW_RANGES", false);
+		EnvironmentVariable<bool> _showRegions("NANOS6_GRAPH_SHOW_REGIONS", false);
 		EnvironmentVariable<bool> _showLog("NANOS6_GRAPH_SHOW_LOG", false);
 	}
 }

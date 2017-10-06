@@ -26,7 +26,7 @@ class Task;
 
 
 #include "../DataAccessBase.hpp"
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 #include "ReductionSpecific.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
@@ -67,8 +67,8 @@ public:
 	
 	
 private:
-	//! The range of data covered by the access
-	DataAccessRange _range;
+	//! The region of data covered by the access
+	DataAccessRegion _region;
 	
 	status_t _status;
 	
@@ -83,14 +83,14 @@ public:
 	DataAccess(
 		DataAccessType type, bool weak,
 		Task *originator,
-		DataAccessRange accessRange,
+		DataAccessRegion accessRegion,
 		bool fragment,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
 		Instrument::data_access_id_t instrumentationId = Instrument::data_access_id_t(),
 		status_t status = 0, Task *next = nullptr
 	)
 		: DataAccessBase(type, weak, originator, instrumentationId),
-		_range(accessRange),
+		_region(accessRegion),
 		_status(status),
 		_next(next),
 		_reductionTypeAndOperatorIndex(reductionTypeAndOperatorIndex)
@@ -127,7 +127,7 @@ public:
 	{
 		_instrumentationId = Instrument::createdDataAccess(
 			Instrument::data_access_id_t(),
-			_type, _weak, _range,
+			_type, _weak, _region,
 			false, false, /* false, */ false,
 			taskInstrumentationId
 		);
@@ -135,7 +135,7 @@ public:
 	
 	inline void setUpNewFragment(Instrument::data_access_id_t originalAccessInstrumentationId)
 	{
-		_instrumentationId = Instrument::fragmentedDataAccess(originalAccessInstrumentationId, _range);
+		_instrumentationId = Instrument::fragmentedDataAccess(originalAccessInstrumentationId, _region);
 		if (isTopmost()) {
 			Instrument::newDataAccessProperty(_instrumentationId, "T", "Topmost");
 		}
@@ -415,16 +415,16 @@ public:
 		}
 	}
 	
-	DataAccessRange const &getAccessRange() const
+	DataAccessRegion const &getAccessRegion() const
 	{
-		return _range;
+		return _region;
 	}
 	
-	void setAccessRange(DataAccessRange const &newRange)
+	void setAccessRegion(DataAccessRegion const &newRegion)
 	{
-		_range = newRange;
+		_region = newRegion;
 		if (_instrumentationId != Instrument::data_access_id_t()) {
-			Instrument::modifiedDataAccessRange(_instrumentationId, _range);
+			Instrument::modifiedDataAccessRegion(_instrumentationId, _region);
 		}
 	}
 	

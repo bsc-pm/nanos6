@@ -35,13 +35,13 @@ namespace Instrument {
 		
 		
 		static void buildPredecessorList(
-			DataAccessRange range,
+			DataAccessRegion region,
 			predecessors_t &lastReaders, predecessors_t &lastWriters, predecessors_t &newWriters,
 			link_to_next_t &link, access_t *access, task_info_t &taskInfo
 		) {
 			assert(access != nullptr);
 // 			assert(access->hasPrevious());
-			assert(range.fullyContainedIn(access->_accessRange));
+			assert(region.fullyContainedIn(access->_accessRegion));
 			
 			
 			// Advance through the fragments
@@ -53,21 +53,21 @@ namespace Instrument {
 				}
 				
 				taskGroup->_liveFragments.processIntersecting(
-					range,
+					region,
 					[&](task_live_access_fragments_t::iterator position) -> bool {
 						access_t *fragment = position->_fragment;
 						assert(fragment != nullptr);
 						
-						DataAccessRange subrange = fragment->_accessRange.intersect(range);
-						assert(!subrange.empty());
+						DataAccessRegion subregion = fragment->_accessRegion.intersect(region);
+						assert(!subregion.empty());
 						
 						foreachLiveNextOfAccess(fragment,
 							[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-								DataAccessRange nextRange = subrange.intersect(nextAccess._accessRange);
+								DataAccessRegion nextRegion = subregion.intersect(nextAccess._accessRegion);
 								
-								if (!nextRange.empty()) {
+								if (!nextRegion.empty()) {
 									buildPredecessorList(
-										nextRange,
+										nextRegion,
 										lastReaders, lastWriters, newWriters,
 										linkToNext, &nextAccess, nextTaskInfo
 									);
@@ -105,22 +105,22 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-						DataAccessRange nextRange = range.intersect(nextAccess._accessRange);
+						DataAccessRegion nextRegion = region.intersect(nextAccess._accessRegion);
 						
-						if (!nextRange.empty()) {
+						if (!nextRegion.empty()) {
 							predecessors_t nextNewWriters;
 							// Next access hasn't type read so we flush writers
 							if (nextAccess._type != READ_ACCESS_TYPE) {
 								predecessors_t nextLastWriters;
 								
 								buildPredecessorList(
-									nextRange,
+									nextRegion,
 									lastReaders, nextLastWriters, nextNewWriters,
 									linkToNext, &nextAccess, nextTaskInfo
 								);
 							} else {
 								buildPredecessorList(
-									nextRange,
+									nextRegion,
 									lastReaders, lastWriters, nextNewWriters,
 									linkToNext, &nextAccess, nextTaskInfo
 								);
@@ -167,9 +167,9 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-						DataAccessRange nextRange = range.intersect(nextAccess._accessRange);
+						DataAccessRegion nextRegion = region.intersect(nextAccess._accessRegion);
 						
-						if (!nextRange.empty()) {
+						if (!nextRegion.empty()) {
 							// Next access hasn't type concurrent so we flush readers and writers
 							if (nextAccess._type != CONCURRENT_ACCESS_TYPE) {
 								predecessors_t nextLastReaders;
@@ -177,13 +177,13 @@ namespace Instrument {
 								predecessors_t& nextLastWriters = newWriters;
 								
 								buildPredecessorList(
-									nextRange,
+									nextRegion,
 									nextLastReaders, nextLastWriters, nextNewWriters,
 									linkToNext, &nextAccess, nextTaskInfo
 								);
 							} else {
 								buildPredecessorList(
-									nextRange,
+									nextRegion,
 									lastReaders, lastWriters, newWriters,
 									linkToNext, &nextAccess, nextTaskInfo
 								);
@@ -230,9 +230,9 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-						DataAccessRange nextRange = range.intersect(nextAccess._accessRange);
+						DataAccessRegion nextRegion = region.intersect(nextAccess._accessRegion);
 						
-						if (!nextRange.empty()) {
+						if (!nextRegion.empty()) {
 							// Next access hasn't type reduction so we flush readers and writers
 							if (nextAccess._type != REDUCTION_ACCESS_TYPE) {
 								predecessors_t nextLastReaders;
@@ -240,13 +240,13 @@ namespace Instrument {
 								predecessors_t& nextLastWriters = newWriters;
 								
 								buildPredecessorList(
-									nextRange,
+									nextRegion,
 									nextLastReaders, nextLastWriters, nextNewWriters,
 									linkToNext, &nextAccess, nextTaskInfo
 								);
 							} else {
 								buildPredecessorList(
-									nextRange,
+									nextRegion,
 									lastReaders, lastWriters, newWriters,
 									linkToNext, &nextAccess, nextTaskInfo
 								);
@@ -296,15 +296,15 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-						DataAccessRange nextRange = range.intersect(nextAccess._accessRange);
+						DataAccessRegion nextRegion = region.intersect(nextAccess._accessRegion);
 						
-						if (!nextRange.empty()) {
+						if (!nextRegion.empty()) {
 							predecessors_t nextLastReaders;
 							predecessors_t nextNewWriters;
 							predecessors_t& nextLastWriters = newWriters;
 							
 							buildPredecessorList(
-								nextRange,
+								nextRegion,
 								nextLastReaders, nextLastWriters, nextNewWriters,
 								linkToNext, &nextAccess, nextTaskInfo
 							);
@@ -328,9 +328,9 @@ namespace Instrument {
 			
 			foreachLiveNextOfAccess(access,
 				[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-					DataAccessRange range = access->_accessRange.intersect(nextAccess._accessRange);
+					DataAccessRegion region = access->_accessRegion.intersect(nextAccess._accessRegion);
 					
-					if (!range.empty()) {
+					if (!region.empty()) {
 						predecessors_t lastReaders;
 						predecessors_t lastWriters;
 						predecessors_t newWriters;
@@ -360,7 +360,7 @@ namespace Instrument {
 						}
 						
 						buildPredecessorList(
-							range,
+							region,
 							lastReaders, lastWriters, newWriters,
 							linkToNext, &nextAccess, nextTaskInfo
 						);
@@ -383,9 +383,9 @@ namespace Instrument {
 			
 			foreachLiveNextOfAccess(fragment,
 				[&](access_t &nextAccess, __attribute__((unused)) link_to_next_t &linkToNext, __attribute__((unused)) task_info_t &nextTaskInfo) -> bool {
-					DataAccessRange range = fragment->_accessRange.intersect(nextAccess._accessRange);
+					DataAccessRegion region = fragment->_accessRegion.intersect(nextAccess._accessRegion);
 					
-					if (!range.empty()) {
+					if (!region.empty()) {
 						buildPredecessorList(&nextAccess);
 					}
 					

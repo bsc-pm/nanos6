@@ -285,7 +285,7 @@ namespace Instrument {
 			access->_superAccess = _superAccessId;
 			access->_originator = _originatorTaskId;
 			access->_type = _accessType;
-			access->_accessRange = _range;
+			access->_accessRegion = _region;
 			access->weak() = _weak;
 			access->readSatisfied() = _readSatisfied;
 			access->writeSatisfied() = _writeSatisfied;
@@ -293,7 +293,7 @@ namespace Instrument {
 			access->_status = created_access_status;
 			
 			task_info_t &taskInfo = _taskToInfoMap[_originatorTaskId];
-			assert(!taskInfo._liveAccesses.contains(_range));
+			assert(!taskInfo._liveAccesses.contains(_region));
 			taskInfo._liveAccesses.insert(AccessWrapper(access));
 		}
 		
@@ -333,7 +333,7 @@ namespace Instrument {
 					break;
 			}
 			oss << " access " << _accessId;
-			oss << " [" << _range << "]";
+			oss << " [" << _region << "]";
 			return oss.str();
 		}
 		
@@ -435,12 +435,12 @@ namespace Instrument {
 		
 		
 		
-		void modified_data_access_range_step_t::execute()
+		void modified_data_access_region_step_t::execute()
 		{
 			access_t *access = _accessIdToAccessMap[_accessId];
 			assert(access != nullptr);
 			
-			access->_accessRange = _range;
+			access->_accessRegion = _region;
 			
 // 			if (access->fragment()) {
 // 				access_fragment_t *fragment = (access_fragment_t *) access;
@@ -456,22 +456,22 @@ namespace Instrument {
 		}
 		
 		
-		std::string modified_data_access_range_step_t::describe()
+		std::string modified_data_access_region_step_t::describe()
 		{
 			access_t *access = _accessIdToAccessMap[_accessId];
 			assert(access != nullptr);
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": changes range of "
-				<< (access->fragment() ? "entry fragment " : "access ") << _accessId << " to [" << _range << "]";
+			oss << ": changes region of "
+				<< (access->fragment() ? "entry fragment " : "access ") << _accessId << " to [" << _region << "]";
 			return oss.str();
 		}
 		
 		
-		bool modified_data_access_range_step_t::visible()
+		bool modified_data_access_region_step_t::visible()
 		{
-			return _showDependencyStructures && _showRanges;
+			return _showDependencyStructures && _showRegions;
 		}
 		
 		
@@ -484,7 +484,7 @@ namespace Instrument {
 			assert(newFragment != nullptr);
 			
 			newFragment->_type = original->_type;
-			newFragment->_accessRange = _newRange;
+			newFragment->_accessRegion = _newRegion;
 			newFragment->_bitset = original->_bitset;
 			newFragment->_status = original->_status;
 			
@@ -493,11 +493,11 @@ namespace Instrument {
 				assert(fragment->_taskGroup != nullptr);
 				
 				task_group_t *taskGroup = fragment->_taskGroup;
-				assert(!taskGroup->_liveFragments.contains(_newRange));
+				assert(!taskGroup->_liveFragments.contains(_newRegion));
 				taskGroup->_liveFragments.insert(AccessFragmentWrapper(fragment));
 			} else {
 				task_info_t &taskInfo = _taskToInfoMap[newFragment->_originator];
-				assert(!taskInfo._liveAccesses.contains(_newRange));
+				assert(!taskInfo._liveAccesses.contains(_newRegion));
 				taskInfo._liveAccesses.insert(AccessWrapper(newFragment));
 			}
 			
@@ -542,7 +542,7 @@ namespace Instrument {
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
 			oss << ": fragments " << (newFragment->fragment() ? "entry fragment " : "access ") ;
-			oss << _originalAccessId << " of task " << newFragment->_originator << " into " << _newFragmentAccessId << " with range [" << _newRange << "]";
+			oss << _originalAccessId << " of task " << newFragment->_originator << " into " << _newFragmentAccessId << " with region [" << _newRegion << "]";
 			return oss.str();
 		}
 		
@@ -562,7 +562,7 @@ namespace Instrument {
 			assert(newSubaccessFragment != nullptr);
 			
 			newSubaccessFragment->_type = original->_type;
-			newSubaccessFragment->_accessRange = original->_accessRange;
+			newSubaccessFragment->_accessRegion = original->_accessRegion;
 			newSubaccessFragment->weak() = original->weak();
 			assert(newSubaccessFragment->fragment());
 			newSubaccessFragment->readSatisfied() = original->readSatisfied();
@@ -572,7 +572,7 @@ namespace Instrument {
 			
 			assert(newSubaccessFragment->_taskGroup != nullptr);
 			task_group_t *taskGroup = newSubaccessFragment->_taskGroup;
-			assert(!taskGroup->_liveFragments.contains(newSubaccessFragment->_accessRange));
+			assert(!taskGroup->_liveFragments.contains(newSubaccessFragment->_accessRegion));
 			taskGroup->_liveFragments.insert(AccessFragmentWrapper(newSubaccessFragment));
 		}
 		
@@ -712,7 +712,7 @@ namespace Instrument {
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
 			oss << ": links "
-			<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator << " to task " << _sinkTaskId << " over range [" << _range << "]";
+			<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator << " to task " << _sinkTaskId << " over region [" << _region << "]";
 			return oss.str();
 		}
 		

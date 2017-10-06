@@ -12,7 +12,7 @@
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 
-#include <DataAccessRange.hpp>
+#include <DataAccessRegion.hpp>
 
 #include "dependencies/DataAccessType.hpp"
 
@@ -48,7 +48,7 @@ namespace Instrument {
 	//! \param superAccessId the identifier of the superaccess that contains the new DataAccess as returned by Instrument::createdDataAccess or data_access_id_t() if there is no superaccess
 	//! \param accessType the type of access of the new DataAccess
 	//! \param weak true if the access is weak
-	//! \param range the range of data that the new access covers
+	//! \param region the region of data that the new access covers
 	//! \param readSatisfied whether the access is ready to perform a potential read operation
 	//! \param writeSatisfied whether the access is ready to perform a potential write operation
 	//! \param globallySatisfied whether the access does not preclude the task from running immediately
@@ -57,7 +57,7 @@ namespace Instrument {
 	//! \returns an identifier for the new data access
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType, bool weak, DataAccessRange range,
+		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
@@ -96,27 +96,27 @@ namespace Instrument {
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
-	//! \brief Called when a DataAccess has its range modified
+	//! \brief Called when a DataAccess has its region modified
 	//! 
 	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
-	//! \param newRange the range of data that the access covers now
-	void modifiedDataAccessRange(
+	//! \param newRegion the region of data that the access covers now
+	void modifiedDataAccessRegion(
 		data_access_id_t dataAccessId,
-		DataAccessRange newRange,
+		DataAccessRegion newRegion,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
 	//! \brief Called when a DataAccess gets fragmented
 	//! 
 	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
-	//! \param newRange the range of data of the new fragment
+	//! \param newRegion the region of data of the new fragment
 	//! 
-	//! The original data access and any newly created fragments will have the modifiedDataAccessRange method called
+	//! The original data access and any newly created fragments will have the modifiedDataAccessRegion method called
 	//! 
 	//! \returns an identifier for the new data access
 	data_access_id_t fragmentedDataAccess(
 		data_access_id_t dataAccessId,
-		DataAccessRange newRange,
+		DataAccessRegion newRegion,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
@@ -158,12 +158,12 @@ namespace Instrument {
 	//! 
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkTaskId the identifier of the sink Task
-	//! \param range the range of data covered by the link
+	//! \param region the region of data covered by the link
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	//! \param bidirectional tru if the link is bidirectional
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
-		DataAccessRange range,
+		DataAccessRegion region,
 		bool direct, bool bidirectional,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);

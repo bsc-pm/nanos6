@@ -12,7 +12,7 @@
 #include <boost/intrusive/avl_set.hpp>
 #include <boost/intrusive/options.hpp>
 #include <boost/version.hpp>
-#include "DataAccessRange.hpp"
+#include "DataAccessRegion.hpp"
 
 
 namespace IntrusiveLinearRegionMapInternals {
@@ -40,14 +40,14 @@ namespace IntrusiveLinearRegionMapInternals {
 		
 		type operator()(ContentType const &node)
 		{ 
-			return node.getAccessRange().getStartAddressConstRef();
+			return node.getAccessRegion().getStartAddressConstRef();
 		}
 #else
 		typedef void *type;
 		
 		type const &operator()(ContentType const &node)
 		{ 
-			return node.getAccessRange().getStartAddressConstRef();
+			return node.getAccessRegion().getStartAddressConstRef();
 		}
 #endif
 	};
@@ -78,16 +78,16 @@ public:
 	{
 	}
 	
-	const_iterator find(DataAccessRange const &range) const
+	const_iterator find(DataAccessRegion const &region) const
 	{
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
-		return BaseType::find(range.getStartAddress());
+		return BaseType::find(region.getStartAddress());
 	}
 	
-	iterator find(DataAccessRange const &range)
+	iterator find(DataAccessRegion const &region)
 	{
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
-		return BaseType::find(range.getStartAddress());
+		return BaseType::find(region.getStartAddress());
 	}
 	
 	void clear()
@@ -134,100 +134,100 @@ public:
 	//! 
 	//! \param[in] processor a lambda that receives an iterator to each element that returns a boolean that is false to have the traversal restart from the next logical position in the event of invasive content changes
 	template <typename ProcessorType>
-	void processAllWithRearrangement(ProcessorType processor);
+	void processAllWithRearregionment(ProcessorType processor);
 	
-	//! \brief Pass all elements that intersect a given range through a lambda
+	//! \brief Pass all elements that intersect a given region through a lambda
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] processor a lambda that receives an iterator to each element intersecting the range and that returns a boolean, that is false to stop the traversal
+	//! \param[in] region the region to explore
+	//! \param[in] processor a lambda that receives an iterator to each element intersecting the region and that returns a boolean, that is false to stop the traversal
 	//! 
 	//! \returns false if the traversal was stopped before finishing
 	template <typename ProcessorType>
-	bool processIntersecting(DataAccessRange const &range, ProcessorType processor);
+	bool processIntersecting(DataAccessRegion const &region, ProcessorType processor);
 	
-	//! \brief Pass all elements that intersect a given range through a lambda
+	//! \brief Pass all elements that intersect a given region through a lambda
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] processor a lambda that receives an iterator to each element intersecting the range and that returns a boolean, that is false to stop the traversal. Unless the processor returns false, it should not invalidate the iterator passed as a parameter
+	//! \param[in] region the region to explore
+	//! \param[in] processor a lambda that receives an iterator to each element intersecting the region and that returns a boolean, that is false to stop the traversal. Unless the processor returns false, it should not invalidate the iterator passed as a parameter
 	//! 
 	//! \returns false if the traversal was stopped before finishing
 	template <typename ProcessorType>
-	bool processIntersectingWithRecentAdditions(DataAccessRange const &range, ProcessorType processor);
+	bool processIntersectingWithRecentAdditions(DataAccessRegion const &region, ProcessorType processor);
 	
-	//! \brief Pass all elements that intersect a given range through a lambda and any missing subranges through another lambda
+	//! \brief Pass all elements that intersect a given region through a lambda and any missing subregions through another lambda
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] intersectingProcessor a lambda that receives an iterator to each element intersecting the range and that returns a boolean equal to false to stop the traversal
-	//! \param[in] missingProcessor a lambda that receives each missing subrange as a DataAccessRange and that returns a boolean equal to false to stop the traversal
+	//! \param[in] region the region to explore
+	//! \param[in] intersectingProcessor a lambda that receives an iterator to each element intersecting the region and that returns a boolean equal to false to stop the traversal
+	//! \param[in] missingProcessor a lambda that receives each missing subregion as a DataAccessRegion and that returns a boolean equal to false to stop the traversal
 	//! 
 	//! \returns false if the traversal was stopped before finishing
 	template <typename IntersectionProcessorType, typename MissingProcessorType>
-	bool processIntersectingAndMissing(DataAccessRange const &range, IntersectionProcessorType intersectingProcessor, MissingProcessorType missingProcessor);
+	bool processIntersectingAndMissing(DataAccessRegion const &region, IntersectionProcessorType intersectingProcessor, MissingProcessorType missingProcessor);
 	
-	//! \brief Pass all elements that intersect a given range through a lambda and any missing subranges through another lambda
+	//! \brief Pass all elements that intersect a given region through a lambda and any missing subregions through another lambda
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] intersectingProcessor a lambda that receives an iterator to each element intersecting the range and that returns a boolean equal to false to stop the traversal. Unless the processor returns false, it should not invalidate the iterator passed as a parameter
-	//! \param[in] missingProcessor a lambda that receives each missing subrange as a DataAccessRange and that returns a boolean equal to false to stop the traversal
+	//! \param[in] region the region to explore
+	//! \param[in] intersectingProcessor a lambda that receives an iterator to each element intersecting the region and that returns a boolean equal to false to stop the traversal. Unless the processor returns false, it should not invalidate the iterator passed as a parameter
+	//! \param[in] missingProcessor a lambda that receives each missing subregion as a DataAccessRegion and that returns a boolean equal to false to stop the traversal
 	//! 
 	//! \returns false if the traversal was stopped before finishing
 	template <typename IntersectionProcessorType, typename MissingProcessorType>
-	bool processIntersectingAndMissingWithRecentAdditions(DataAccessRange const &range, IntersectionProcessorType intersectingProcessor, MissingProcessorType missingProcessor);
+	bool processIntersectingAndMissingWithRecentAdditions(DataAccessRegion const &region, IntersectionProcessorType intersectingProcessor, MissingProcessorType missingProcessor);
 	
-	//! \brief Pass all elements that intersect a given range through a lambda with the posibility of restarting
+	//! \brief Pass all elements that intersect a given region through a lambda with the posibility of restarting
 	//! the traversal from the last location if instructed
 	//! 
-	//! \param[in] range the range to explore
+	//! \param[in] region the region to explore
 	//! \param[in] processor a lambda that receives an iterator to each element intersecting
-	//! the range and that returns a boolean equal to false to have the traversal restart from the current
+	//! the region and that returns a boolean equal to false to have the traversal restart from the current
 	//! logical position (since the contents may have changed)
 	template <typename ProcessorType>
-	void processIntersectingWithRestart(DataAccessRange const &range, ProcessorType processor);
+	void processIntersectingWithRestart(DataAccessRegion const &region, ProcessorType processor);
 	
-	//! \brief Pass any missing subranges through a lambda
+	//! \brief Pass any missing subregions through a lambda
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] missingProcessor a lambda that receives each missing subrange as a DataAccessRange and that returns a boolean equal to false to stop the traversal
+	//! \param[in] region the region to explore
+	//! \param[in] missingProcessor a lambda that receives each missing subregion as a DataAccessRegion and that returns a boolean equal to false to stop the traversal
 	//! 
 	//! \returns false if the traversal was stopped before finishing
 	template <typename MissingProcessorType>
-	bool processMissing(DataAccessRange const &range, MissingProcessorType missingProcessor);
+	bool processMissing(DataAccessRegion const &region, MissingProcessorType missingProcessor);
 	
-	//! \brief Traverse a range of elements to check if there is an element that matches a given condition
+	//! \brief Traverse a region of elements to check if there is an element that matches a given condition
 	//! 
-	//! \param[in] range the range to explore
-	//! \param[in] condition a lambda that receives an iterator to each element intersecting the range and that returns the result of evaluating the condition
+	//! \param[in] region the region to explore
+	//! \param[in] condition a lambda that receives an iterator to each element intersecting the region and that returns the result of evaluating the condition
 	//! 
 	//! \returns true if the condition evaluated to true for any element
 	template <typename PredicateType>
-	bool exists(DataAccessRange const &range, PredicateType condition);
+	bool exists(DataAccessRegion const &region, PredicateType condition);
 	
-	//! \brief Check if there is any element in a given range
+	//! \brief Check if there is any element in a given region
 	//! 
-	//! \param[in] range the range to explore
+	//! \param[in] region the region to explore
 	//! 
-	//! \returns true if there was at least one element at least partially in the range
-	bool contains(DataAccessRange const &range);
+	//! \returns true if there was at least one element at least partially in the region
+	bool contains(DataAccessRegion const &region);
 	
-	//! \brief Fragment an already existing node by the intersection of a given range
+	//! \brief Fragment an already existing node by the intersection of a given region
 	//! 
 	//! \param[in] position an iterator to the node to be fragmented
-	//! \param[in] range the DataAccessRange that determines the fragmentation point(s)
+	//! \param[in] region the DataAccessRegion that determines the fragmentation point(s)
 	//! \param[in] removeIntersection true if the intersection is to be left empty
 	//! \param[in] duplicator a lambda that receives a reference to a node and returns a pointer to a new copy
-	//! \param[in] postprocessor a lambda that receives a pointer to each node after it has had its range corrected and has been inserted, and a pointer to the original node (that may have already been updated)
+	//! \param[in] postprocessor a lambda that receives a pointer to each node after it has had its region corrected and has been inserted, and a pointer to the original node (that may have already been updated)
 	//! 
 	//! \returns an iterator to the intersecting fragment or end() if removeIntersection is true
 	template <typename DuplicatorType, typename PostProcessorType>
-	iterator fragmentByIntersection(iterator position, DataAccessRange const &range, bool removeIntersection, DuplicatorType duplicator, PostProcessorType postprocessor);
+	iterator fragmentByIntersection(iterator position, DataAccessRegion const &region, bool removeIntersection, DuplicatorType duplicator, PostProcessorType postprocessor);
 	
 	//! \brief Fragment any node that intersects by a intersection boundary
 	//! 
-	//! \param[in] range the DataAccessRange that determines the fragmentation point(s)
+	//! \param[in] region the DataAccessRegion that determines the fragmentation point(s)
 	//! \param[in] duplicator a lambda that receives a reference to a node and returns a pointer to a new copy
-	//! \param[in] postprocessor a lambda that receives a pointer to each node after it has had its range corrected and has been inserted, and a pointer to the original node (that may have already been updated)
+	//! \param[in] postprocessor a lambda that receives a pointer to each node after it has had its region corrected and has been inserted, and a pointer to the original node (that may have already been updated)
 	template <typename DuplicatorType, typename PostProcessorType>
-	void fragmentIntersecting(DataAccessRange const &range, DuplicatorType duplicator, PostProcessorType postprocessor);
+	void fragmentIntersecting(DataAccessRegion const &region, DuplicatorType duplicator, PostProcessorType postprocessor);
 	
 	
 	void replace(ContentType &toBeReplaced, ContentType &replacement)

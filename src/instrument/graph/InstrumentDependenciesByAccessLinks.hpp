@@ -16,7 +16,7 @@
 namespace Instrument {
 	data_access_id_t createdDataAccess(
 		data_access_id_t superAccessId,
-		DataAccessType accessType, bool weak, DataAccessRange range,
+		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		task_id_t originatorTaskId, InstrumentationContext const &context
 	);
@@ -37,9 +37,9 @@ namespace Instrument {
 		task_id_t targetTaskId, InstrumentationContext const &context
 	);
 	
-	void modifiedDataAccessRange(
+	void modifiedDataAccessRegion(
 		data_access_id_t dataAccessId,
-		DataAccessRange newRange,
+		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	);
 	
@@ -70,7 +70,7 @@ namespace Instrument {
 	
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
-		DataAccessRange range,
+		DataAccessRegion region,
 		bool direct, bool bidirectional,
 		InstrumentationContext const &context
 	);
