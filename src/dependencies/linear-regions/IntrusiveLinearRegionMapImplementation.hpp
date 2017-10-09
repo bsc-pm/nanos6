@@ -59,7 +59,7 @@ void IntrusiveLinearRegionMap<ContentType, Hook>::processAllWithRestart(Processo
 
 
 template <typename ContentType, class Hook> template <typename ProcessorType>
-void IntrusiveLinearRegionMap<ContentType, Hook>::processAllWithRearregionment(ProcessorType processor)
+void IntrusiveLinearRegionMap<ContentType, Hook>::processAllWithRearangement(ProcessorType processor)
 {
 	assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
 	for (iterator it = BaseType::begin(); it != BaseType::end(); ) {

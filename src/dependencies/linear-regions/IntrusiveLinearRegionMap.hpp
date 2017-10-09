@@ -134,7 +134,7 @@ public:
 	//! 
 	//! \param[in] processor a lambda that receives an iterator to each element that returns a boolean that is false to have the traversal restart from the next logical position in the event of invasive content changes
 	template <typename ProcessorType>
-	void processAllWithRearregionment(ProcessorType processor);
+	void processAllWithRearangement(ProcessorType processor);
 	
 	//! \brief Pass all elements that intersect a given region through a lambda
 	//! 
