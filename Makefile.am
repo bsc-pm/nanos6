@@ -1088,3 +1088,6 @@ build-tests-local: all $(check_PROGRAMS)
 
 rpm: dist-bzip2
 	$(MAKE) -C scripts rpm
+
+deb: dist-bzip2
+	$(MAKE) -C scripts deb
