@@ -233,6 +233,7 @@ AC_CONFIG_FILES([
 	docs/Doxyfile
 	commands/Makefile
 	tests/directive_based/Makefile
+	scripts/Makefile
 ])
 AC_OUTPUT
 

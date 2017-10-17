@@ -6,7 +6,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 
-SUBDIRS = . commands tests/directive_based
+SUBDIRS = . commands tests/directive_based scripts
 
 
 # See info page of libtool "Updating version info"
@@ -1085,3 +1085,9 @@ MOSTLYCLEANFILES = $(DX_CLEANFILES)
 
 
 build-tests-local: all $(check_PROGRAMS)
+
+rpm: dist-bzip2
+	$(MAKE) -C scripts rpm
+
+deb: dist-bzip2
+	$(MAKE) -C scripts deb

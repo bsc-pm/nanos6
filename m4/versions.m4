@@ -63,5 +63,11 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 		AC_SUBST([SOURCE_BRANCH])
 		
 		AM_CONDITIONAL([FROM_GIT_REPOSITORY], [test x"${ac_source_in_git}" = x"true"])
+		
+		RELEASE_DATE=$(date +%Y%m%d)
+		AC_CHECK_PROG([DEB_RELEASE], [lsb_release], [$(lsb_release -sc)], [])
+		AC_SUBST([RELEASE_DATE])
+		AC_SUBST([DEB_RELEASE])
 	]
 )
+
