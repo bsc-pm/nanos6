@@ -18,12 +18,18 @@
 
 #define SUSTAIN_MICROSECONDS 200000L
 
+//#define FINE_SELF_CHECK
+
 
 TestAnyProtocolProducer tap;
 
 static int nextTaskId = 0;
 
+#if FINE_SELF_CHECK
 static int numTests = 0;
+#else
+static int numTests = 1;
+#endif
 
 static unsigned int ncpus = 0;
 static double delayMultiplier = 1.0;
@@ -232,14 +238,19 @@ struct VerifierConstraintCalculator {
 				
 				writerVerifier->_runsBefore = _lastReaders;
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
-				numTests += _lastReaders.size()*2;
+				numTests += _lastReaders.size();
+#if FINE_SELF_CHECK
+				numTests += _lastReaders.size();
+#endif
 				
 				for (int other : _lastWriters) {
 					if (other != writer)
 						writerVerifier->_runsConcurrentlyWith.insert(other);
 				}
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
+#if FINE_SELF_CHECK
 				numTests += writerVerifier->_runsConcurrentlyWith.size();
+#endif
 				numTests +=  writerVerifier->_runsConcurrentlyWith.empty() ? 0 : 1;
 			}
 			_lastWriters.clear();
@@ -253,14 +264,18 @@ struct VerifierConstraintCalculator {
 				
 				readerVerifier->_runsBefore = _newWriters;
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
-				numTests += _newWriters.size()*2;
-				
+#if FINE_SELF_CHECK
+				numTests += _newWriters.size();
+#endif
+				numTests += _newWriters.size();
 				for (int other : _lastReaders) {
 					if (other != reader)
 						readerVerifier->_runsConcurrentlyWith.insert(other);
 				}
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
+#if FINE_SELF_CHECK
 				numTests += readerVerifier->_runsConcurrentlyWith.size();
+#endif
 				numTests += readerVerifier->_runsConcurrentlyWith.empty() ? 0 : 1;
 			}
 			_lastReaders.clear();
@@ -273,14 +288,19 @@ struct VerifierConstraintCalculator {
 				
 				writerVerifier->_runsBefore = _newWriters;
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
-				numTests += _newWriters.size()*2;
+#if FINE_SELF_CHECK
+				numTests += _newWriters.size();
+#endif
+				numTests += _newWriters.size();
 				
 				for (int other : _lastWriters) {
 					if (other != writer)
 						writerVerifier->_runsConcurrentlyWith.insert(other);
 				}
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
+#if FINE_SELF_CHECK
 				numTests += writerVerifier->_runsConcurrentlyWith.size();
+#endif
 				numTests += writerVerifier->_runsConcurrentlyWith.empty() ? 0 : 1;
 			}
 			_lastWriters = _newWriters;
@@ -301,7 +321,9 @@ struct VerifierConstraintCalculator {
 						readerVerifier->_runsConcurrentlyWith.insert(other);
 				}
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
+#if FINE_SELF_CHECK
 				numTests += readerVerifier->_runsConcurrentlyWith.size();
+#endif
 				numTests += readerVerifier->_runsConcurrentlyWith.empty() ? 0 : 1;
 			}
 		} else {
@@ -316,7 +338,9 @@ struct VerifierConstraintCalculator {
 						writerVerifier->_runsConcurrentlyWith.insert(other);
 				}
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
+#if FINE_SELF_CHECK
 				numTests += writerVerifier->_runsConcurrentlyWith.size();
+#endif
 				numTests +=  writerVerifier->_runsConcurrentlyWith.empty() ? 0 : 1;
 			}
 		}
@@ -336,7 +360,10 @@ struct VerifierConstraintCalculator {
 		if (!_lastWriters.empty()) {
 			verifier->_runsAfter = _lastWriters;
 			// Increment number of tests, corresponding to tests run by selfcheck and verify
-			numTests += _lastWriters.size()*2;
+#if FINE_SELF_CHECK
+			numTests += _lastWriters.size();
+#endif
+			numTests += _lastWriters.size();
 		}
 		
 		_lastReaders.insert(verifier->_id);
@@ -352,13 +379,19 @@ struct VerifierConstraintCalculator {
 		if (!_lastWriters.empty()) {
 			verifier->_runsAfter = _lastWriters;
 			// Increment number of tests, corresponding to tests run by selfcheck and verify
-			numTests += _lastWriters.size()*2;
+#if FINE_SELF_CHECK
+			numTests += _lastWriters.size();
+#endif
+			numTests += _lastWriters.size();
 		// Readers before writer (either this or previous condition will be
 		// true, unless it's the first access)
 		} else if (!_lastReaders.empty()) {
 			verifier->_runsAfter = _lastReaders;
 			// Increment number of tests, corresponding to tests run by selfcheck and verify
-			numTests += _lastReaders.size()*2;
+#if FINE_SELF_CHECK
+			numTests += _lastReaders.size();
+#endif
+			numTests += _lastReaders.size();
 		}
 		
 		_lastAccessType = WRITER;
@@ -379,13 +412,19 @@ struct VerifierConstraintCalculator {
 		if (!_lastWriters.empty()) {
 			verifier->_runsAfter = _lastWriters;
 			// Increment number of tests, corresponding to tests run by selfcheck and verify
-			numTests += _lastWriters.size()*2;
+#if FINE_SELF_CHECK
+			numTests += _lastWriters.size();
+#endif
+			numTests += _lastWriters.size();
 		// Readers before writers (either this or previous condition will be
 		// true, unless it's the first access)
 		} else if (!_lastReaders.empty()) {
 			verifier->_runsAfter = _lastReaders;
 			// Increment number of tests, corresponding to tests run by selfcheck and verify
-			numTests += _lastReaders.size()*2;
+#if FINE_SELF_CHECK
+			numTests += _lastReaders.size();
+#endif
+			numTests += _lastReaders.size();
 		}
 		
 		_newWriters.insert(verifier->_id);
@@ -405,13 +444,19 @@ struct VerifierConstraintCalculator {
 		if (!_lastWriters.empty()) {
 			verifier->_runsAfter = _lastWriters;
 			// Increment number of tests, corresponding to tests run by selfcheck and verify
-			numTests += _lastWriters.size()*2;
+#if FINE_SELF_CHECK
+			numTests += _lastWriters.size();
+#endif
+			numTests += _lastWriters.size();
 		// Readers before writers (either this or previous condition will be
 		// true, unless it's the first access)
 		} else if (!_lastReaders.empty()) {
 			verifier->_runsAfter = _lastReaders;
 			// Increment number of tests, corresponding to tests run by selfcheck and verify
-			numTests += _lastReaders.size()*2;
+#if FINE_SELF_CHECK
+			numTests += _lastReaders.size();
+#endif
+			numTests += _lastReaders.size();
 		}
 		
 		_newWriters.insert(verifier->_id);
@@ -419,6 +464,10 @@ struct VerifierConstraintCalculator {
 	
 	static void selfcheck()
 	{
+#if FINE_SELF_CHECK
+#else
+		bool globallyValid = true;
+#endif
 		for (TaskVerifier *verifier : verifiers) {
 			assert(verifier != 0);
 			
@@ -427,9 +476,13 @@ struct VerifierConstraintCalculator {
 				assert(predecessorVerifier != 0);
 				
 				{
+#if FINE_SELF_CHECK
 					std::ostringstream oss;
 					oss << "Self verification: " << verifier->_id << " runs after " << predecessorVerifier->_id << " implies " << predecessorVerifier->_id << " runs before " << verifier->_id;
 					tap.evaluate(predecessorVerifier->_runsBefore.find(verifier->_id) != predecessorVerifier->_runsBefore.end(), oss.str());
+#else
+					globallyValid = globallyValid && (predecessorVerifier->_runsBefore.find(verifier->_id) != predecessorVerifier->_runsBefore.end());
+#endif
 				}
 			}
 			
@@ -438,9 +491,13 @@ struct VerifierConstraintCalculator {
 				assert(successorVerifier != 0);
 				
 				{
+#if FINE_SELF_CHECK
 					std::ostringstream oss;
 					oss << "Self verification: " << verifier->_id << " runs before " << successorVerifier->_id << " implies " << successorVerifier->_id << " runs after " << verifier->_id;
 					tap.evaluate(successorVerifier->_runsAfter.find(verifier->_id) != successorVerifier->_runsAfter.end(), oss.str());
+#else
+					globallyValid = globallyValid && (successorVerifier->_runsAfter.find(verifier->_id) != successorVerifier->_runsAfter.end());
+#endif
 				}
 			}
 			
@@ -449,13 +506,22 @@ struct VerifierConstraintCalculator {
 				assert(concurrentVerifier != 0);
 				
 				{
+#if FINE_SELF_CHECK
 					std::ostringstream oss;
 					oss << "Self verification: " << verifier->_id << " runs concurrently with " << concurrentVerifier->_id << " implies " <<
 						concurrentVerifier->_id << " runs concurrently with " << verifier->_id;
 					tap.evaluate(concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(), oss.str());
+#else
+					globallyValid = globallyValid && (concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end());
+#endif
 				}
 			}
 		}
+		
+#if FINE_SELF_CHECK
+#else
+		tap.evaluate(globallyValid, "Self verification");
+#endif
 	}
 	
 };
