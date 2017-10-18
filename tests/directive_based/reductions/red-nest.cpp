@@ -10,6 +10,7 @@
  *
  */
 
+#include <algorithm>
 #include <atomic>
 #include <vector>
 
@@ -26,6 +27,9 @@
 #define NUM_TASKS_PER_CPU 500
 #define BRANCHING_FACTOR 3
 #define SUSTAIN_MICROSECONDS 10000L
+
+#define MAX_TASKS 8000
+#define MIN_TASKS_PER_CPU 16
 
 
 TestAnyProtocolProducer tap;
@@ -73,10 +77,15 @@ void recursion(int& x, int depth, std::atomic_bool& parentReady) {
 }
 
 int main() {
-	long activeCPUs = nanos_get_num_cpus();
+	int activeCPUs = nanos_get_num_cpus();
 	delayMultiplier = sqrt(activeCPUs);
 	
-	totalTasks = NUM_TASKS_PER_CPU*activeCPUs; // Maximum, it gets rounded to closest complete level
+	// Maximum, it gets rounded to closest complete level
+	totalTasks =
+		std::min(
+			NUM_TASKS_PER_CPU*activeCPUs,
+			std::max(MAX_TASKS, MIN_TASKS_PER_CPU*activeCPUs)
+		);
 	branchingFactor = BRANCHING_FACTOR;
 	
 	assert(totalTasks > 1);
