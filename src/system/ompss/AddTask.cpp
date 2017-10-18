@@ -14,6 +14,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "memory/allocator/MemoryAllocator.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "tasks/Task.hpp"
@@ -58,10 +59,8 @@ void nanos_create_task(
 	args_block_size += correction;
 	
 	// Allocation and layout
-	int rc = posix_memalign(args_block_pointer, TASK_ALIGNMENT, args_block_size + taskSize);
-	FatalErrorHandler::handle(rc, " when trying to allocate memory for a new task of type '", taskInfo->implementations[0].task_label, "' with args block of size ", args_block_size); // TODO: Temporary check until multiple implementations are supported	
-
-
+	*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize);
+	
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
 	void *&task = *task_pointer;

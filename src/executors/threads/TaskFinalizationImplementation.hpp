@@ -7,8 +7,10 @@
 #ifndef TASK_FINALIZATION_IMPLEMENTATION_HPP
 #define TASK_FINALIZATION_IMPLEMENTATION_HPP
 
+#include "memory/allocator/MemoryAllocator.hpp"
 #include "DataAccessRegistration.hpp"
 #include "TaskFinalization.hpp"
+#include "tasks/Taskloop.hpp"
 
 #include <InstrumentTaskStatus.hpp>
 
@@ -46,6 +48,14 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			void *disposableBlock = task->getArgsBlock();
 			assert(disposableBlock != nullptr);
 			
+			size_t disposableBlockSize = (char *)task - (char *)disposableBlock;
+				
+			if (task->isTaskloop()) {
+				disposableBlockSize += sizeof(Taskloop);
+			} else {
+				disposableBlockSize += sizeof(Task);
+			}
+			
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 			
 			// Call the taskinfo destructor if not null
@@ -55,7 +65,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			}
 			
 			task->~Task();
-			free(disposableBlock); // FIXME: Need a proper object recycling mechanism here
+			MemoryAllocator::free(disposableBlock, disposableBlockSize);
 			task = parent;
 			
 			// A task without parent must be a spawned function

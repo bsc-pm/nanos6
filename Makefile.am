@@ -311,6 +311,7 @@ common_sources = \
 	src/lowlevel/SymbolResolver.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
+	src/memory/allocator/MemoryAllocator.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
@@ -853,6 +854,9 @@ noinst_HEADERS = \
 	src/lowlevel/threads/KernelLevelThread.hpp \
 	src/lowlevel/threads/posix/KernelLevelThread.hpp \
 	src/memory/AddressSpace.hpp \
+	src/memory/allocator/MemoryAllocator.hpp \
+	src/memory/allocator/MemoryPool.hpp \
+	src/memory/allocator/MemoryPoolGlobal.hpp \
 	src/performance/HardwareCounters.hpp \
 	src/performance/HardwareCountersThreadLocalData.hpp \
 	src/performance/HardwareCountersThreadLocalDataImplementation.hpp \

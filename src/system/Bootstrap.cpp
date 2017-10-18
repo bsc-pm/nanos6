@@ -20,6 +20,7 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
+#include "memory/allocator/MemoryAllocator.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
@@ -85,6 +86,7 @@ void nanos_preinit(void) {
 	
 	RuntimeInfoEssentials::initialize();
 	HardwareInfo::initialize();
+	MemoryAllocator::initialize();
 	CPUManager::preinitialize();
 	Scheduler::initialize();
 	ThreadManagerPolicy::initialize();
@@ -151,6 +153,7 @@ void nanos_shutdown(void) {
 	}
 	
 	Scheduler::shutdown();
+	MemoryAllocator::shutdown();
 	RuntimeInfoEssentials::shutdown();
 }
 
