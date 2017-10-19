@@ -21,6 +21,7 @@
 
 std::vector<MemoryPlace*> HardwareInfo::_memoryNodes;
 std::vector<ComputePlace*> HardwareInfo::_computeNodes;
+size_t HardwareInfo::_cacheLineSize;
 
 void HardwareInfo::initialize()
 {
@@ -108,7 +109,18 @@ void HardwareInfo::initialize()
 		CPU * cpu = new CPU( /*systemCPUID*/ obj->os_index, /*virtualCPUID*/ obj->logical_index, NUMANodeId);
 		_computeNodes[obj->logical_index] = cpu;
 	}
-
+	
+	hwloc_obj_t cache;
+#if HWLOC_API_VERSION >= 0x00020000
+	cache = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L1CACHE, 0);
+	assert(cache != nullptr);
+#else
+	int cacheDepth = hwloc_get_cache_type_depth(topology, 1, HWLOC_OBJ_CACHE_DATA);
+	assert(cacheDepth != HWLOC_TYPE_DEPTH_MULTIPLE && cacheDepth != HWLOC_TYPE_DEPTH_UNKNOWN);
+	cache = hwloc_get_obj_by_depth(topology, cacheDepth, 0);
+#endif
+	_cacheLineSize = cache->attr->cache.linesize;
+	
 	//! Associate CPUs with NUMA nodes
 	for(memory_nodes_t::iterator numaNode = _memoryNodes.begin(); numaNode != _memoryNodes.end(); ++numaNode) {
 		for(compute_nodes_t::iterator cpu = _computeNodes.begin(); cpu != _computeNodes.end(); ++cpu) {

@@ -13,14 +13,12 @@
 
 #include "MemoryAllocator.hpp"
 
-#define CACHE_LINE_SIZE 64
-
 SpinLock MemoryAllocator::_lock;
 std::vector<MemoryPoolGlobal *> MemoryAllocator::_globalMemoryPool;
 std::vector<MemoryAllocator::size_to_pool_t> MemoryAllocator::_NUMAMemoryPool;
 std::vector<MemoryAllocator::size_to_pool_t> MemoryAllocator::_localMemoryPool;
 
-MemoryPool *MemoryAllocator::getPool(size_t cacheLines)
+MemoryPool *MemoryAllocator::getPool(size_t size)
 {
 	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 	size_t CPUId;
@@ -35,6 +33,11 @@ MemoryPool *MemoryAllocator::getPool(size_t cacheLines)
 		NUMANodeId = 0;
 	}
 	
+	// Round to the nearest multiple of the cache line size
+	size_t cacheLineSize = HardwareInfo::getCacheLineSize();
+	size_t roundedSize = (size + cacheLineSize - 1) & ~(cacheLineSize - 1);
+	size_t cacheLines = roundedSize / cacheLineSize;
+	
 	MemoryPool *pool = nullptr;
 	auto it = _localMemoryPool[CPUId].find(cacheLines);
 	if (it == _localMemoryPool[CPUId].end()) {
@@ -43,7 +46,7 @@ MemoryPool *MemoryAllocator::getPool(size_t cacheLines)
 		auto itNUMA = _NUMAMemoryPool[NUMANodeId].find(cacheLines);
 		if (itNUMA == _NUMAMemoryPool[NUMANodeId].end()) {
 			// No pool of this size in the NUMA node
-			pool = new MemoryPool(_globalMemoryPool[NUMANodeId], cacheLines * CACHE_LINE_SIZE);
+			pool = new MemoryPool(_globalMemoryPool[NUMANodeId], roundedSize);
 			_NUMAMemoryPool[NUMANodeId][cacheLines] = pool;
 		} else {
 			pool = itNUMA->second;
@@ -83,26 +86,14 @@ void MemoryAllocator::shutdown()
 
 void *MemoryAllocator::alloc(size_t size)
 {
-	size_t cacheLines = size / CACHE_LINE_SIZE;
-	
-	if (size % CACHE_LINE_SIZE != 0) {
-		cacheLines += 1;
-	}
-	
-	MemoryPool *pool = getPool(cacheLines);
+	MemoryPool *pool = getPool(size);
 	
 	return pool->getChunk();
 }
 
 void MemoryAllocator::free(void *chunk, size_t size)
 {
-	size_t cacheLines = size / CACHE_LINE_SIZE;
-	
-	if (size % CACHE_LINE_SIZE != 0) {
-		cacheLines += 1;
-	}
-	
-	MemoryPool *pool = getPool(cacheLines);
+	MemoryPool *pool = getPool(size);
 	
 	pool->returnChunk(chunk);
 }

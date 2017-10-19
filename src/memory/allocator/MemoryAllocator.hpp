@@ -22,7 +22,7 @@ private:
 	static std::vector<size_to_pool_t> _NUMAMemoryPool;
 	static std::vector<size_to_pool_t> _localMemoryPool;
 	
-	static MemoryPool *getPool(size_t cacheLines);
+	static MemoryPool *getPool(size_t size);
 
 public:
 	static void initialize();

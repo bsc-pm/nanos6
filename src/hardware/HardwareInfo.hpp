@@ -22,6 +22,8 @@ private:
 	static memory_nodes_t _memoryNodes;
 	// \brief Logical compute places.
 	static compute_nodes_t _computeNodes;
+	// \brief L1 cache line size
+	static size_t _cacheLineSize;
 
 public:
 	// Generic methods
@@ -59,6 +61,12 @@ public:
 	static inline std::vector<MemoryPlace*> const &getMemoryNodes()
 	{
 		return _memoryNodes;
+	}
+	
+	// Cache methods
+	static inline size_t getCacheLineSize(void)
+	{
+		return _cacheLineSize;
 	}
 };
 
