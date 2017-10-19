@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos_preinit()
 {
 	typedef void nanos_preinit_t();
@@ -46,3 +48,4 @@ void nanos_shutdown()
 }
 
 
+#pragma GCC visibility pop

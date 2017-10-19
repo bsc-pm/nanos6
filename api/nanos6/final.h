@@ -1,6 +1,8 @@
 #ifndef NANOS6_FINAL_H
 #define NANOS6_FINAL_H
 
+#pragma GCC visibility push(default)
+
 enum nanos6_final_api_t { nanos6_final_api = 1 };
 
 
@@ -16,6 +18,8 @@ signed int nanos_in_final(void);
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_FINAL_H */

@@ -137,6 +137,7 @@ static void nanos6_memory_allocation_interception_init()
 }
 
 
+#pragma GCC visibility push(default)
 void nanos6_memory_allocation_interception_fini()
 {
 	// Since some libraries may have been loaded before the interception, we do not know how distinguish which memory comes from where
@@ -144,6 +145,7 @@ void nanos6_memory_allocation_interception_fini()
 	
 // 	SymbolResolver<void>::globalScopeCall("nanos6_stop_function_interception");
 }
+#pragma GCC visibility pop
 
 
 static size_t nanos6_calculate_memory_allocation_size(size_t requestedSize, size_t alignment = sizeof(void *))
@@ -296,6 +298,8 @@ static void nanos6_protected_memory_deallocation(void *address)
 
 
 
+#pragma GCC visibility push(default)
+
 void *nanos6_intercepted_malloc(size_t size)
 {
 	if (_debugMemory) {
@@ -422,5 +426,8 @@ void *nanos6_intercepted_pvalloc(size_t size)
 		return SymbolResolver<void *, size_t>::call("pvalloc", size);
 	}
 }
+
+#pragma GCC visibility pop
+
 #endif
 

@@ -48,8 +48,7 @@ void (*_##fname##_resolver(void)) (void) \
 	\
 	return (void (*)(void)) symbol; \
 } \
-\
-void *fname() __attribute__ (( ifunc("_" #fname "_resolver") ))
+void *fname() __attribute__ (( ifunc("_" #fname "_resolver"), visibility("default") ))
 
 
 #define RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(fname, area, fallback) \
@@ -74,7 +73,7 @@ void (*_##fname##_resolver(void)) (void) \
 	return (void (*)(void)) symbol; \
 } \
 \
-void *fname() __attribute__ (( ifunc("_" #fname "_resolver") ))
+void *fname() __attribute__ (( ifunc("_" #fname "_resolver"), visibility("default") ))
 
 
 #define RESOLVE_INTERCEPTED_FUNCTION_WITH_GLOBAL_FALLBACK(fname, area, rtype, ...) \
@@ -102,7 +101,7 @@ void (*_##fname##_resolver(void)) (void) \
 	return (void (*)(void)) symbol; \
 } \
 \
-rtype fname(__VA_ARGS__) __attribute__ (( ifunc("_" #fname "_resolver") ))
+rtype fname(__VA_ARGS__) __attribute__ (( ifunc("_" #fname "_resolver"), visibility("default") ))
 
 
 #endif /* RESOLVE_H */

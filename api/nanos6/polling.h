@@ -1,6 +1,8 @@
 #ifndef NANOS6_POLLING_H
 #define NANOS6_POLLING_H
 
+#pragma GCC visibility push(default)
+
 enum nanos6_polling_api_t { nanos6_polling_api = 1 };
 
 
@@ -68,6 +70,8 @@ void nanos_unregister_polling_service(char const *service_name, nanos_polling_se
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_POLLING_H */

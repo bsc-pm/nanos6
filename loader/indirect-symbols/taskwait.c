@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos_taskwait(char const *invocation_source)
 {
 	typedef void nanos_taskwait_t(char const *invocation_source);
@@ -19,4 +21,5 @@ void nanos_taskwait(char const *invocation_source)
 	(*symbol)(invocation_source);
 }
 
+#pragma GCC visibility pop
 

@@ -2,6 +2,8 @@
 #define NANOS6_CONSTANTS_H
 
 
+#pragma GCC visibility push(default)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -16,5 +18,7 @@ typedef enum {
 }
 #endif
 
+
+#pragma GCC visibility pop
 
 #endif /* NANOS6_CONSTANTS_H */

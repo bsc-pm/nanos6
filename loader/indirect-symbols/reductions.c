@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void *nanos_get_original_reduction_address(const void *private_address)
 {
 	typedef void *nanos_get_original_reduction_address_t(const void *private_address);
@@ -20,3 +22,5 @@ void *nanos_get_original_reduction_address(const void *private_address)
 	
 	(*symbol)(private_address);
 }
+
+#pragma GCC visibility pop

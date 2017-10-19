@@ -35,6 +35,8 @@
 #include <InstrumentTaskId.hpp>
 
 
+#pragma GCC visibility push(hidden)
+
 class DataAccessRegistration {
 public:
 	typedef CPUDependencyData::removable_task_list_t removable_task_list_t;
@@ -2088,6 +2090,8 @@ public:
 	}
 	
 };
+
+#pragma GCC visibility pop
 
 
 #endif // DATA_ACCESS_REGISTRATION_HPP

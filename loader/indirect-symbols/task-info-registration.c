@@ -12,6 +12,8 @@ static void nanos_register_task_info_unused(__attribute__((unused)) nanos_task_i
 }
 
 
+#pragma GCC visibility push(default)
+
 void nanos_register_task_info(nanos_task_info *task_info)
 {
 	typedef void nanos_register_task_info_t(nanos_task_info *task_info);
@@ -23,4 +25,6 @@ void nanos_register_task_info(nanos_task_info *task_info)
 	
 	(*symbol)(task_info);
 }
+
+#pragma GCC visibility pop
 

@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos_register_taskloop_boundsinfo1(
 		void *handler,
 		char const *it1_text, size_t it1_lower_bound, size_t it1_upper_bound, size_t it1_step_size, size_t it1_grid_size
@@ -44,4 +46,5 @@ void nanos_register_taskloop_boundsinfo2(
 	);
 }
 
+#pragma GCC visibility pop
 

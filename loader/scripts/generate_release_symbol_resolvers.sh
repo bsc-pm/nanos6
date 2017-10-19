@@ -19,6 +19,9 @@ echo '#include "multidim-release-fallbacks.h"'
 # echo '#include "nanos6/multidimensional-dependencies.h"'
 echo
 echo
+echo '#pragma GCC visibility push(default)'
+echo
+echo
 for type in $* ; do
 	if [ "${type}" = "reduction" ] ; then
 		continue
@@ -29,3 +32,6 @@ for type in $* ; do
 	done
 	echo
 done
+echo
+echo
+echo '#pragma GCC visibility pop'

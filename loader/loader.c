@@ -216,6 +216,8 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 }
 
 
+#pragma GCC visibility push(default)
+
 char const *nanos_get_runtime_path(void)
 {
 #if HAVE_DLINFO
@@ -249,3 +251,5 @@ char const *nanos_get_runtime_path(void)
 	return "not available";
 #endif
 }
+
+#pragma GCC visibility pop

@@ -1,6 +1,8 @@
 #ifndef NANOS6_USER_MUTEX_H
 #define NANOS6_USER_MUTEX_H
 
+#pragma GCC visibility push(default)
+
 enum nanos6_locking_api_t { nanos6_locking_api = 1 };
 
 
@@ -31,6 +33,8 @@ void nanos_user_unlock(void **handlerPointer);
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_USER_MUTEX_H */

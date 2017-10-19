@@ -1,6 +1,9 @@
 #ifndef NANOS6_TASKWAIT_H
 #define NANOS6_TASKWAIT_H
 
+
+#pragma GCC visibility push(default)
+
 enum nanos6_taskwait_api_t { nanos6_taskwait_api = 1 };
 
 
@@ -18,6 +21,8 @@ void nanos_taskwait(char const *invocation_source);
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif // NANOS6_TASKWAIT_H

@@ -1,6 +1,8 @@
 #ifndef NANOS6_BLOCKING_H
 #define NANOS6_BLOCKING_H
 
+#pragma GCC visibility push(default)
+
 enum nanos6_blocking_api_t { nanos6_blocking_api = 1 };
 
 #ifdef __cplusplus
@@ -52,5 +54,6 @@ void nanos_unblock_task(void *blocking_context);
 }
 #endif
 
+#pragma GCC visibility pop
 
 #endif /* NANOS6_BLOCKING_H */

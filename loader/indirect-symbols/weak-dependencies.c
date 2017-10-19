@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos_register_weak_read_depinfo(void *handler, void *start, size_t length)
 {
 	typedef void nanos_register_weak_read_depinfo_t(void *handler, void *start, size_t length);
@@ -45,4 +47,5 @@ void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t le
 	(*symbol)(handler, start, length);
 }
 
+#pragma GCC visibility pop
 

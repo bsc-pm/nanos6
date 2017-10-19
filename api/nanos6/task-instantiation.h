@@ -2,9 +2,10 @@
 #define NANOS6_TASK_INSTANTIATION_H
 
 
-
 #include <stddef.h>
 
+
+#pragma GCC visibility push(default)
 
 #ifdef __cplusplus
 extern "C" {
@@ -128,6 +129,8 @@ void nanos_submit_task(void *task);
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_TASK_INSTANTIATION_H */

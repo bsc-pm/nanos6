@@ -16,6 +16,9 @@ shift
 echo '#ifndef NANOS6_MULTIDIMENSIONAL_RELEASE_H'
 echo '#define NANOS6_MULTIDIMENSIONAL_RELEASE_H'
 echo
+echo '#pragma GCC visibility push(default)'
+echo
+echo
 echo 'enum nanos6_multidimensional_release_api_t { nanos6_multidimensional_release_api = 1 };'
 echo
 echo
@@ -47,6 +50,9 @@ echo
 echo "#ifdef __cplusplus"
 echo "}"
 echo "#endif"
+echo
+echo
+echo '#pragma GCC visibility pop'
 echo
 echo
 echo '#endif /* NANOS6_MULTIDIMENSIONAL_RELEASE_H */'

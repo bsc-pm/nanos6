@@ -30,6 +30,8 @@ typedef void libc_start_main_function_t(
 __attribute__ ((visibility ("hidden")))  libc_start_main_function_t *_nanos6_loader_next_libc_start_main = NULL;
 
 
+#pragma GCC visibility push(default)
+
 //! \brief This function overrides the function of the same name and is in charge of loading the Nanos6 runtime
 void __libc_init(
 	void *raw_args,
@@ -46,3 +48,4 @@ void __libc_init(
 	_nanos6_loader_next_libc_start_main(raw_args, onexit, _nanos6_loader_main, structors);
 }
 
+#pragma GCC visibility pop

@@ -3,6 +3,8 @@
 
 #include <stddef.h>
 
+#pragma GCC visibility push(default)
+
 enum nanos6_unidimensional_dependencies_api_t { nanos6_unidimensional_dependencies_api = 1 };
 
 
@@ -72,6 +74,8 @@ void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t le
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_DEPENDENCIES_H */

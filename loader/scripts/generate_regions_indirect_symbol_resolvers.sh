@@ -19,6 +19,10 @@ echo '#include "multidim-region-dependency-fallbacks.h"'
 echo '#include "api/nanos6.h"'
 echo
 echo
+echo '#pragma GCC visibility push(default)'
+echo ''
+echo ''
+
 for type in $* ; do
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		name=nanos_register_region_${type}_depinfo${dimensions}
@@ -54,3 +58,7 @@ for type in $* ; do
 	done
 	echo
 done
+
+echo ''
+echo ''
+echo '#pragma GCC visibility pop'

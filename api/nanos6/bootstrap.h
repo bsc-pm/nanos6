@@ -1,6 +1,8 @@
 #ifndef NANOS6_BOOTSTRAP_H
 #define NANOS6_BOOTSTRAP_H
 
+#pragma GCC visibility push(default)
+
 enum nanos6_bootstrap_api_t { nanos6_bootstrap_api = 1 };
 
 
@@ -25,5 +27,7 @@ void nanos_shutdown(void);
 }
 #endif
 
+
+#pragma GCC visibility pop
 
 #endif /* NANOS6_BOOTSTRAP_H */

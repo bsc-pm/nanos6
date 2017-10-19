@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos_register_polling_service(char const *service_name, nanos_polling_service_t service_function, void *service_data)
 {
 	typedef void nanos_register_polling_service_t(char const *service_name, nanos_polling_service_t service_function, void *service_data);
@@ -31,4 +33,6 @@ void nanos_unregister_polling_service(char const *service_name, nanos_polling_se
 	
 	(*symbol)(service_name, service_function, service_data);
 }
+
+#pragma GCC visibility pop
 

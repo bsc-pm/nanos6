@@ -5,6 +5,8 @@
 #include <stddef.h>
 
 
+#pragma GCC visibility push(default)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,6 +62,8 @@ int nanos6_snprint_runtime_info_entry_value(char *str, size_t size, nanos6_runti
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_RUNTIME_INFO_H */

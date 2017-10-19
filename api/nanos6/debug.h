@@ -2,6 +2,8 @@
 #define NANOS6_DEBUG_H
 
 
+#pragma GCC visibility push(default)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -94,6 +96,8 @@ long nanos_cpus_get_virtual(void *cpuIterator);
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_DEBUG_H */

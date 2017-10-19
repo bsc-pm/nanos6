@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos6_bzero(void *buffer, size_t size)
 {
 	typedef void nanos6_bzero_t(void *buffer, size_t size);
@@ -18,4 +20,6 @@ void nanos6_bzero(void *buffer, size_t size)
 	
 	(*symbol)(buffer, size);
 }
+
+#pragma GCC visibility pop
 

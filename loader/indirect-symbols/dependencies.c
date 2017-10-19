@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos_register_read_depinfo(void *handler, void *start, size_t length)
 {
 	typedef void nanos_register_read_depinfo_t(void *handler, void *start, size_t length);
@@ -72,3 +74,4 @@ void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length
 }
 
 
+#pragma GCC visibility pop

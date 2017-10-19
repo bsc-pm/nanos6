@@ -8,6 +8,8 @@
 #include "api/nanos6/debug.h"
 
 
+#pragma GCC visibility push(default)
+
 char const *nanos_get_runtime_version(void)
 {
 	typedef char const *nanos_get_runtime_version_t();
@@ -138,3 +140,5 @@ unsigned int nanos_get_num_cpus(void)
 	return (*symbol)();
 }
 
+
+#pragma GCC visibility pop

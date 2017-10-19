@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void *nanos_get_current_blocking_context()
 {
 	typedef void *nanos_get_current_blocking_context_t();
@@ -45,3 +47,5 @@ void nanos_unblock_task(void *blocking_context)
 	(*symbol)(blocking_context);
 }
 
+
+#pragma GCC visibility pop

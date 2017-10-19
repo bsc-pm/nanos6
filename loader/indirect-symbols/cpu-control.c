@@ -8,6 +8,8 @@
 #include "api/nanos6/debug.h"
 
 
+#pragma GCC visibility push(default)
+
 long nanos_get_current_system_cpu()
 {
 	typedef long nanos_get_current_system_cpu_t();
@@ -137,3 +139,5 @@ long nanos_cpus_get_virtual(void *cpuIterator)
 	return (*symbol)(cpuIterator);
 }
 
+
+#pragma GCC visibility pop

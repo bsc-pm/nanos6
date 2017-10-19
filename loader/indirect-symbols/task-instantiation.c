@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos_create_task(
 	nanos_task_info *task_info,
 	nanos_task_invocation_info *task_invocation_info,
@@ -59,5 +61,7 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 	
 	(*symbol)(function, args, completion_callback, completion_args, label);
 }
+
+#pragma GCC visibility pop
 
 

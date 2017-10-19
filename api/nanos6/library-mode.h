@@ -1,6 +1,8 @@
 #ifndef NANOS6_LIBRARY_MODE_H
 #define NANOS6_LIBRARY_MODE_H
 
+#pragma GCC visibility push(default)
+
 enum nanos6_library_mode_api_t { nanos6_library_mode_api = 1 };
 
 
@@ -28,6 +30,8 @@ void nanos_spawn_function(
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_LIBRARY_MODE_H */

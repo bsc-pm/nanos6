@@ -1,6 +1,8 @@
 #ifndef NANOS6_REDUCTIONS_H
 #define NANOS6_REDUCTIONS_H
 
+#pragma GCC visibility push(default)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +55,8 @@ void *nanos_get_original_reduction_address(const void *address);
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_REDUCTIONS_H */

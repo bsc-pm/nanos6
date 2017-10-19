@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 static signed int signed_int_always_false(void) { return 0; }
 signed int nanos_in_final(void)
 {
@@ -20,3 +22,5 @@ signed int nanos_in_final(void)
 	return (*symbol)();
 }
 
+
+#pragma GCC visibility pop

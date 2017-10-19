@@ -29,6 +29,8 @@ static void nanos6_memory_allocation_interception_fini()
 }
 
 
+#pragma GCC visibility push(default)
+
 void *nanos6_intercepted_malloc(size_t size)
 {
 	if (Instrument::_profilingIsReady) {
@@ -154,3 +156,5 @@ void *nanos6_intercepted_pvalloc(size_t size)
 	
 	return result;
 }
+
+#pragma GCC visibility pop

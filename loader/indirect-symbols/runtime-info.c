@@ -8,6 +8,8 @@
 #include "api/nanos6/runtime-info.h"
 
 
+#pragma GCC visibility push(default)
+
 void *nanos6_runtime_info_begin(void)
 {
 	typedef void *nanos6_runtime_info_begin_t(void);
@@ -72,4 +74,5 @@ int nanos6_snprint_runtime_info_entry_value(char *str, size_t size, nanos6_runti
 	return (*symbol)(str, size, entry);
 }
 
+#pragma GCC visibility pop
 

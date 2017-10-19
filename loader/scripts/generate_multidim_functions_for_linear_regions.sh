@@ -20,6 +20,9 @@ echo ''
 echo '#include "MultidimensionalAPI.hpp"'
 echo ''
 echo ''
+echo '#pragma GCC visibility push(default)'
+echo ''
+echo ''
 
 
 
@@ -92,3 +95,7 @@ for type in $* ; do
 	done
 	echo
 done
+
+echo ''
+echo ''
+echo '#pragma GCC visibility pop'

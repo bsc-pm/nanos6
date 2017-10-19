@@ -7,6 +7,8 @@
 #include "resolve.h"
 
 
+#pragma GCC visibility push(default)
+
 void nanos_user_lock(void **handlerPointer, char const *invocation_source)
 {
 	typedef void nanos_user_lock_t(void **handlerPointer, char const *invocation_source);
@@ -32,4 +34,5 @@ void nanos_user_unlock(void **handlerPointer)
 	(*symbol)(handlerPointer);
 }
 
+#pragma GCC visibility pop
 

@@ -16,6 +16,9 @@ shift
 echo '#ifndef NANOS6_MULTIDIMENSIONAL_DEPENDENCIES_H'
 echo '#define NANOS6_MULTIDIMENSIONAL_DEPENDENCIES_H'
 echo
+echo '#pragma GCC visibility push(default)'
+echo
+echo
 echo 'enum nanos6_multidimensional_dependencies_api_t { nanos6_multidimensional_dependencies_api = 2 };'
 echo
 echo

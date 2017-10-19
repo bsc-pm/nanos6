@@ -11,6 +11,8 @@
 #include <stddef.h>
 
 
+#pragma GCC visibility push(default)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,6 +33,8 @@ void *nanos6_intercepted_pvalloc(size_t size);
 #ifdef __cplusplus
 }
 #endif
+
+#pragma GCC visibility pop
 
 
 #endif /* NANOS6_MALLOC_H */
