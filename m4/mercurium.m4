@@ -129,10 +129,62 @@ AC_DEFUN([SSS_CHECK_NANOS6_MERCURIUM],
 		AC_MSG_CHECKING([the Nanos6 Mercurium installation prefix])
 		if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
 			AC_MSG_RESULT([${ac_use_nanos6_mercurium_prefix}])
-			NANOS6_MCC="${NANOS6_MCC} --ompss-v2"
-			NANOS6_MCXX="${NANOS6_MCXX} --ompss-v2"
 		else
 			AC_MSG_RESULT([not found])
+		fi
+		
+		if test x"${NANOS6_MCC}" != x"" ; then
+			ac_save_CC="${CC}"
+			AC_LANG_PUSH(C)
+			
+			AC_MSG_CHECKING([which flag enables OmpsSs-2 support in Mercurium])
+			OMPSS2_FLAG=none
+			
+			# Try --ompss-v2
+			CC="${NANOS6_MCC} --ompss-v2"
+			AC_COMPILE_IFELSE(
+				[ AC_LANG_SOURCE( [[
+#ifndef __NANOS6__
+#error Not Nanos6!
+#endif
+
+int main(int argc, char ** argv) {
+	return 0;
+}
+]]
+					) ],
+				[ OMPSS2_FLAG=--ompss-v2 ],
+				[ ]
+			)
+			
+			# Try --ompss-2
+			CC="${NANOS6_MCC} --ompss-2"
+			AC_COMPILE_IFELSE(
+				[ AC_LANG_SOURCE( [[
+#ifndef __NANOS6__
+#error Not Nanos6!
+#endif
+
+int main(int argc, char ** argv) {
+	return 0;
+}
+]]
+					) ],
+				[ OMPSS2_FLAG=--ompss-2 ],
+				[ ]
+			)
+			
+			if test x"${OMPSS2_FLAG}" != x"none" ; then
+				AC_MSG_RESULT([${OMPSS2_FLAG}])
+			else
+				AC_MSG_ERROR([${OMPSS2_FLAG}])
+			fi
+			
+			AC_LANG_POP(C)
+			CC="${ac_save_CC}"
+			
+			NANOS6_MCC="${NANOS6_MCC} ${OMPSS2_FLAG}"
+			NANOS6_MCXX="${NANOS6_MCXX} ${OMPSS2_FLAG}"
 		fi
 		
 		NANOS6_MCC_PREFIX="${ac_use_nanos6_mercurium_prefix}"
@@ -355,7 +407,7 @@ AC_DEFUN([SSS_CHECK_MERCURIUM_ACCEPTS_EXTERNAL_INSTALLATION],
 		AC_MSG_CHECKING([if Mercurium allows using an external runtime])
 		AC_LANG_PUSH([C])
 		ac_save_[]_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS"
-		_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS --ompss-v2 --no-default-nanos6-inc"
+		_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS ${OMPSS2_FLAG} --no-default-nanos6-inc"
 		AC_LINK_IFELSE(
 			[AC_LANG_PROGRAM([[]], [[]])],
 			[ac_mercurium_supports_external_installation=no],
