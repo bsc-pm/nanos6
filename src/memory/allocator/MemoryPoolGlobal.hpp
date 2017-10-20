@@ -11,12 +11,12 @@
 #include "lowlevel/SpinLock.hpp"
 
 #define GLOBAL_ALLOC_SIZE (16*1024*1024)
-#define GLOBAL_ALIGNMENT 1024
 #define MEMORY_CHUNK_SIZE (1*1024*1024)
 
 class MemoryPoolGlobal {
 private:
 	SpinLock _lock;
+	size_t _pageSize;
 	std::vector<void *> _oldMemoryChunks;
 	void *_curMemoryChunk;
 	size_t _curAvailable;
@@ -27,16 +27,16 @@ private:
 		assert(_curAvailable == 0);
 		_curAvailable = GLOBAL_ALLOC_SIZE;
 		// TODO: alloc on an specific NUMA node
-		int rc = posix_memalign(&_curMemoryChunk, GLOBAL_ALIGNMENT, GLOBAL_ALLOC_SIZE);
+		int rc = posix_memalign(&_curMemoryChunk, _pageSize, GLOBAL_ALLOC_SIZE);
 		FatalErrorHandler::handle(rc, " when trying to allocate a memory chunk for the global allocator");
-		//_curMemoryChunk = malloc(_curAvailable);
 		_oldMemoryChunks.push_back(_curMemoryChunk);
 	}
 
 public:
 	MemoryPoolGlobal(size_t NUMANodeId)
-		: _oldMemoryChunks(0), _curMemoryChunk(nullptr),
-		_curAvailable(0), _NUMANodeId(NUMANodeId)
+		: _pageSize(sysconf(_SC_PAGESIZE)), _oldMemoryChunks(0),
+		_curMemoryChunk(nullptr), _curAvailable(0),
+		_NUMANodeId(NUMANodeId)
 	{
 		fillPool();
 	}
