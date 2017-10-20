@@ -867,7 +867,7 @@ if HAVE_EXTRAE
 libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
 libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
-libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ @extrae_LIBS@
+libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ @extrae_LIBS@ $(DLOPEN_LIBS)
 nodist_libnanos6_extrae_la_SOURCES = $(nodist_common_sources) $(nodist_universal_debug_sources)
 endif
 
