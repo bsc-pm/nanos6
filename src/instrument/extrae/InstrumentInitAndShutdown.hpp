@@ -103,6 +103,21 @@ namespace Instrument {
 		Extrae_define_event_type((extrae_type_t *) &_taskInstanceId, (char *) "Task instance", &zero, nullptr, nullptr);
 		Extrae_define_event_type((extrae_type_t *) &_nestingLevel, (char *) "Task nesting level", &zero, nullptr, nullptr);
 		
+		// Register runtime states
+		{
+			unsigned int nval = NANOS_EVENT_STATE_TYPES;
+			extrae_value_t values[nval];
+			unsigned int i;
+			
+			for (i = 0; i < nval; i++) {
+				values[i] = i;
+			}
+			Extrae_define_event_type(
+				(extrae_type_t *) &_runtimeState, (char *) "Runtime state",
+				&nval, values, (char **) _eventStateValueStr
+			);
+		}
+		
 		std::stringstream oss;
 		unsigned extraeMajor, extraeMinor, extraeRevision;
 		
@@ -123,31 +138,6 @@ namespace Instrument {
 	
 	void shutdown()
 	{
-		unsigned int nval = NANOS_EVENT_STATE_TYPES;
-		extrae_value_t values[nval];
-		unsigned int i;
-		
-		for (i = 0; i < nval; i++) {
-			values[i] = i;
-		}
-		Extrae_define_event_type(
-			(extrae_type_t *) &_runtimeState, (char *) "Runtime state",
-			&nval, values, (char **) _eventStateValueStr
-		);
-		
-		std::set<nanos_task_info *, ExtraeTaskInfoCompare> orderedTaskInfoMap(_userFunctionMap.begin(), _userFunctionMap.end());
-		for (nanos_task_info *taskInfo : orderedTaskInfoMap) {
-			assert(taskInfo != nullptr);
-			
-			if (taskInfo->run != nullptr) {
-				Extrae_register_function_address (
-					(void *) (taskInfo->run),
-					(taskInfo->task_label != nullptr ? taskInfo->task_label : taskInfo->declaration_source),
-					taskInfo->declaration_source, 0
-				);
-			}
-		}
-		
 		// Finalize extrae library
 		Extrae_fini();
 	}
