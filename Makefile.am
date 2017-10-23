@@ -934,6 +934,11 @@ enabled_variants =
 disabled_variants =
 
 
+if HAVE_MEMKIND
+common_libnanos6_cppflags += $(memkind_CPPFLAGS) -DHAVE_MEMKIND
+common_libnanos6_ldflags += $(memkind_LIBS)
+endif
+
 libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_optimized_la_LDFLAGS = $(common_libnanos6_ldflags)

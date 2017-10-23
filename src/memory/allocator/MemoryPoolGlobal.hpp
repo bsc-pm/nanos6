@@ -8,6 +8,10 @@
 #define MEMORY_POOL_GLOBAL_HPP
 #include <vector>
 
+#if HAVE_MEMKIND
+#include <memkind.h>
+#endif
+
 #include "lowlevel/SpinLock.hpp"
 
 #define GLOBAL_ALLOC_SIZE (16*1024*1024)
@@ -21,14 +25,21 @@ private:
 	void *_curMemoryChunk;
 	size_t _curAvailable;
 	size_t _NUMANodeId;
+#if HAVE_MEMKIND
+	memkind_t _memoryKind;
+#endif
 
 	void fillPool()
 	{
 		assert(_curAvailable == 0);
 		_curAvailable = GLOBAL_ALLOC_SIZE;
-		// TODO: alloc on an specific NUMA node
+#if HAVE_MEMKIND
+		int rc = memkind_posix_memalign(_memoryKind, &_curMemoryChunk, _pageSize, GLOBAL_ALLOC_SIZE);
+		FatalErrorHandler::check(rc == MEMKIND_SUCCESS, " when trying to allocate a memory chunk for the global allocator");
+#else
 		int rc = posix_memalign(&_curMemoryChunk, _pageSize, GLOBAL_ALLOC_SIZE);
 		FatalErrorHandler::handle(rc, " when trying to allocate a memory chunk for the global allocator");
+#endif
 		_oldMemoryChunks.push_back(_curMemoryChunk);
 	}
 
@@ -38,14 +49,22 @@ public:
 		_curMemoryChunk(nullptr), _curAvailable(0),
 		_NUMANodeId(NUMANodeId)
 	{
+#if HAVE_MEMKIND
+		int rc = memkind_create_kind(MEMKIND_MEMTYPE_DEFAULT, MEMKIND_POLICY_PREFERRED_LOCAL, (memkind_bits_t)0, &_memoryKind);
+		FatalErrorHandler::check(rc == MEMKIND_SUCCESS, " when trying to create a new memory kind");
+#endif
+
 		fillPool();
 	}
 	
 	~MemoryPoolGlobal()
 	{
 		for (auto it : _oldMemoryChunks) {
-			// TODO: free from an specific NUMA node
+#if HAVE_MEMKIND
+			memkind_free(_memoryKind, it);
+#else
 			free(it);
+#endif
 		}
 	}
 	
