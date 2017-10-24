@@ -30,6 +30,22 @@ public:
 	
 	static void *alloc(size_t size);
 	static void free(void *chunk, size_t size);
+	
+	/* Simplifications for using "new" and "delete" with the allocator */
+	template <typename T, typename... Args>
+	static T *newObject(Args... args)
+	{
+		void *ptr = MemoryAllocator::alloc(sizeof(T));
+		new (ptr) T(args...);
+		return (T*)ptr;
+	}
+	
+	template <typename T>
+	static void deleteObject(T *ptr)
+	{
+		ptr->~T();
+		MemoryAllocator::free(ptr, sizeof(T));
+	}
 };
 
 #endif // MEMORY_ALLOCATOR_HPP
