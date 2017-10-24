@@ -404,7 +404,7 @@ namespace DataAccessRegistration {
 			if (wasLastCombination) {
 				const DataAccessRegion& originalRegion = prevReductionInfo->getOriginalRegion();
 				
-				delete prevReductionInfo;
+				MemoryAllocator::deleteObject<ReductionInfo>(prevReductionInfo);
 				
 				Instrument::deallocatedReductionInfo(
 					access->getInstrumentationId(),
@@ -628,7 +628,7 @@ namespace DataAccessRegistration {
 				
 				if (access->getAccessRegion() == bottomMapEntry->getAccessRegion()) {
 					accessStructures._subaccessBottomMap.erase(bottomMapEntry);
-					delete bottomMapEntry;
+					MemoryAllocator::deleteObject<BottomMapEntry>(bottomMapEntry);
 				} else {
 					fragmentBottomMapEntry(
 						bottomMapEntry, access->getAccessRegion(),
@@ -642,7 +642,7 @@ namespace DataAccessRegistration {
 		);
 		
 		accessStructures._taskwaitFragments.erase(access);
-		delete access;
+		MemoryAllocator::deleteObject<DataAccess>(access);
 	}
 	
 	
@@ -655,7 +655,7 @@ namespace DataAccessRegistration {
 		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink()
 	) {
 		// Regular object duplication
-		DataAccess *dataAccess = new DataAccess(
+		DataAccess *dataAccess = MemoryAllocator::newObject<DataAccess>(
 			objectType,
 			accessType, weak, originator, region,
 			reductionTypeAndOperatorIndex,
@@ -715,7 +715,7 @@ namespace DataAccessRegistration {
 		assert(!toBeDuplicated.hasBeenDiscounted());
 		
 		// Regular object duplication
-		DataAccess *newFragment = new DataAccess(toBeDuplicated);
+		DataAccess *newFragment = MemoryAllocator::newObject<DataAccess>(toBeDuplicated);
 
 		// Copy symbols
 		newFragment->addToSymbols(toBeDuplicated.getSymbols()); // TODO: Consider removing the pointer from declaration and make it a reference	
@@ -757,7 +757,7 @@ namespace DataAccessRegistration {
 			position, region,
 			removeIntersection,
 			[&](BottomMapEntry const &toBeDuplicated) -> BottomMapEntry * {
-				return new BottomMapEntry(DataAccessRegion(), toBeDuplicated._link, toBeDuplicated._accessType);
+				return MemoryAllocator::newObject<BottomMapEntry>(DataAccessRegion(), toBeDuplicated._link, toBeDuplicated._accessType);
 			},
 			[&](__attribute__((unused)) BottomMapEntry *fragment, __attribute__((unused)) BottomMapEntry *originalBottomMapEntry) {
 			}
@@ -1140,7 +1140,7 @@ namespace DataAccessRegistration {
 		
 		Instrument::data_access_id_t instrumentationId =
 			Instrument::createdDataSubaccessFragment(dataAccess->getInstrumentationId());
-		DataAccess *fragment = new DataAccess(
+		DataAccess *fragment = MemoryAllocator::newObject<DataAccess>(
 			fragment_type,
 			dataAccess->getType(),
 			dataAccess->isWeak(),
@@ -1170,7 +1170,7 @@ namespace DataAccessRegistration {
 			dataAccess->getAccessRegion().processIntersectingFragments(
 				subregion,
 				[&](DataAccessRegion excludedSubregion) {
-					BottomMapEntry *bottomMapEntry = new BottomMapEntry(
+					BottomMapEntry *bottomMapEntry = MemoryAllocator::newObject<BottomMapEntry>(
 						excludedSubregion,
 						DataAccessLink(dataAccess->getOriginator(), fragment_type),
 						dataAccess->getType()
@@ -1300,7 +1300,7 @@ namespace DataAccessRegistration {
 				
 				bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, subregion, parentAccessStructures);
 				parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
-				delete bottomMapEntry;
+				MemoryAllocator::deleteObject<BottomMapEntry>(bottomMapEntry);
 				
 				return result;
 			},
@@ -1540,7 +1540,7 @@ namespace DataAccessRegistration {
 		
 		reduction_index_t reductionIndex = dataAccess.getReductionIndex();
 		
-		ReductionInfo *newReductionInfo = new ReductionInfo(
+		ReductionInfo *newReductionInfo = MemoryAllocator::newObject<ReductionInfo>(
 				dataAccess.getAccessRegion(),
 				dataAccess.getReductionTypeAndOperatorIndex(),
 				taskInfo->reduction_initializers[reductionIndex],
@@ -1704,7 +1704,7 @@ namespace DataAccessRegistration {
 		);
 		
 		// Add the entry to the bottom map
-		BottomMapEntry *bottomMapEntry = new BottomMapEntry(region, next, parentAccessType);
+		BottomMapEntry *bottomMapEntry = MemoryAllocator::newObject<BottomMapEntry>(region, next, parentAccessType);
 		parentAccessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 	}
 	
@@ -2375,7 +2375,7 @@ namespace DataAccessRegistration {
 					
 					Instrument::removedDataAccess(dataAccess->getInstrumentationId());
 					accessStructures._accessFragments.erase(dataAccess);
-					delete dataAccess;
+					MemoryAllocator::deleteObject<DataAccess>(dataAccess);
 					
 					return true;
 				}
@@ -2395,7 +2395,7 @@ namespace DataAccessRegistration {
 					
 					Instrument::removedDataAccess(dataAccess->getInstrumentationId());
 					accessStructures._taskwaitFragments.erase(dataAccess);
-					delete dataAccess;
+					MemoryAllocator::deleteObject<DataAccess>(dataAccess);
 					
 					return true;
 				}
@@ -2411,7 +2411,7 @@ namespace DataAccessRegistration {
 				assert((bottomMapEntry->_link._objectType == taskwait_type) || (bottomMapEntry->_link._objectType == top_level_sink_type));
 				
 				accessStructures._subaccessBottomMap.erase(bottomMapEntry);
-				delete bottomMapEntry;
+				MemoryAllocator::deleteObject<BottomMapEntry>(bottomMapEntry);
 				
 				return true;
 			}
