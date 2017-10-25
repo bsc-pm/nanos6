@@ -38,24 +38,27 @@ struct DataAccess : protected DataAccessBase {
 	
 private:
 	enum status_bit_coding {
-		COMPLETE_BIT = 0,
+		REGISTERED_BIT = 0,
+		
+		COMPLETE_BIT,
+		
 		READ_SATISFIED_BIT,
 		WRITE_SATISFIED_BIT,
 		CONCURRENT_SATISFIED_BIT,
 		ANY_REDUCTION_SATISFIED_BIT,
 		MATCHING_REDUCTION_SATISFIED_BIT,
+		
+		READ_PROPAGATION_INHIBITED_BIT,
+		CONCURRENT_PROPAGATION_INHIBITED_BIT,
+		ANY_REDUCTION_PROPAGATION_INHIBITED_BIT,
+		MATCHING_REDUCTION_PROPAGATION_INHIBITED_BIT,
+		
 		FRAGMENT_BIT,
 		HAS_SUBACCESSES_BIT,
-		IN_BOTTOM_MAP,
+		IN_BOTTOM_MAP_BIT,
 		TOPMOST_BIT,
 		FORCE_REMOVAL_BIT,
-		HAS_PROPAGATED_READ_SATISFIABILITY_BIT,
-		HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT,
-		HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT,
-		HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT,
-		HAS_PROPAGATED_MATCHING_REDUCTION_SATISFIABILITY_BIT,
 #ifndef NDEBUG
-		HAS_PROPAGATED_TOPMOST_PROPERTY_BIT,
 		IS_REACHABLE_BIT,
 		HAS_BEEN_DISCOUNTED_BIT,
 #endif
@@ -139,12 +142,6 @@ public:
 		if (isTopmost()) {
 			Instrument::newDataAccessProperty(_instrumentationId, "T", "Topmost");
 		}
-		if (hasPropagatedReadSatisfiability()) {
-			Instrument::newDataAccessProperty(_instrumentationId, "PropR", "Propagated Read Satisfiability");
-		}
-		if (hasPropagatedWriteSatisfiability()) {
-			Instrument::newDataAccessProperty(_instrumentationId, "PropW", "Propagated Write Satisfiability");
-		}
 	}
 	
 	inline bool upgrade(bool newWeak, DataAccessType newType)
@@ -174,6 +171,21 @@ public:
 	status_t const &getStatus() const
 	{
 		return _status;
+	}
+	
+	void setRegistered()
+	{
+		assert(!isRegistered());
+		_status[REGISTERED_BIT] = true;
+	}
+	bool isRegistered() const
+	{
+		return _status[REGISTERED_BIT];
+	}
+	void clearRegistered()
+	{
+		// No assertion here since it is a clear method instead of an unset method
+		_status[REGISTERED_BIT] = false;
 	}
 	
 	void setComplete()
@@ -240,6 +252,46 @@ public:
 		return _status[MATCHING_REDUCTION_SATISFIED_BIT];
 	}
 	
+	bool canPropagateReadSatisfiability() const
+	{
+		return !_status[READ_PROPAGATION_INHIBITED_BIT];
+	}
+	void unsetCanPropagateReadSatisfiability()
+	{
+		assert(canPropagateReadSatisfiability());
+		_status[READ_PROPAGATION_INHIBITED_BIT] = true;
+	}
+	
+	bool canPropagateConcurrentSatisfiability() const
+	{
+		return !_status[CONCURRENT_PROPAGATION_INHIBITED_BIT];
+	}
+	void unsetCanPropagateConcurrentSatisfiability()
+	{
+		assert(canPropagateConcurrentSatisfiability());
+		_status[CONCURRENT_PROPAGATION_INHIBITED_BIT] = true;
+	}
+	
+	bool canPropagateAnyReductionSatisfiability() const
+	{
+		return !_status[ANY_REDUCTION_PROPAGATION_INHIBITED_BIT];
+	}
+	void unsetCanPropagateAnyReductionSatisfiability()
+	{
+		assert(canPropagateAnyReductionSatisfiability());
+		_status[ANY_REDUCTION_PROPAGATION_INHIBITED_BIT] = true;
+	}
+	
+	bool canPropagateMatchingReductionSatisfiability() const
+	{
+		return !_status[MATCHING_REDUCTION_PROPAGATION_INHIBITED_BIT];
+	}
+	void unsetCanPropagateMatchingReductionSatisfiability()
+	{
+		assert(canPropagateMatchingReductionSatisfiability());
+		_status[MATCHING_REDUCTION_PROPAGATION_INHIBITED_BIT] = true;
+	}
+	
 	bool isFragment() const
 	{
 		return _status[FRAGMENT_BIT];
@@ -263,16 +315,16 @@ public:
 	void setInBottomMap()
 	{
 		assert(!isInBottomMap());
-		_status[IN_BOTTOM_MAP] = true;
+		_status[IN_BOTTOM_MAP_BIT] = true;
 	}
 	void unsetInBottomMap()
 	{
 		assert(isInBottomMap());
-		_status[IN_BOTTOM_MAP] = false;
+		_status[IN_BOTTOM_MAP_BIT] = false;
 	}
 	bool isInBottomMap() const
 	{
-		return _status[IN_BOTTOM_MAP];
+		return _status[IN_BOTTOM_MAP_BIT];
 	}
 	
 	
@@ -298,74 +350,8 @@ public:
 		return _status[FORCE_REMOVAL_BIT];
 	}
 	
-	void setPropagatedReadSatisfiability()
-	{
-		assert(!hasPropagatedReadSatisfiability());
-		_status[HAS_PROPAGATED_READ_SATISFIABILITY_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "PropR", "Propagated Read Satisfiability");
-	}
-	bool hasPropagatedReadSatisfiability() const
-	{
-		return _status[HAS_PROPAGATED_READ_SATISFIABILITY_BIT];
-	}
-	
-	void setPropagatedWriteSatisfiability()
-	{
-		assert(!hasPropagatedWriteSatisfiability());
-		_status[HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "PropW", "Propagated Write Satisfiability");
-	}
-	bool hasPropagatedWriteSatisfiability() const
-	{
-		return _status[HAS_PROPAGATED_WRITE_SATISFIABILITY_BIT];
-	}
-	
-	void setPropagatedConcurrentSatisfiability()
-	{
-		assert(!hasPropagatedConcurrentSatisfiability());
-		_status[HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "PropC", "Propagated Concurrent Satisfiability");
-	}
-	bool hasPropagatedConcurrentSatisfiability() const
-	{
-		return _status[HAS_PROPAGATED_CONCURRENT_SATISFIABILITY_BIT];
-	}
-	
-	void setPropagatedAnyReductionSatisfiability()
-	{
-		assert(!hasPropagatedAnyReductionSatisfiability());
-		_status[HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "PropAR", "Propagated Any Reduction Satisfiability");
-	}
-	bool hasPropagatedAnyReductionSatisfiability() const
-	{
-		return _status[HAS_PROPAGATED_ANY_REDUCTION_SATISFIABILITY_BIT];
-	}
-	
-	void setPropagatedMatchingReductionSatisfiability()
-	{
-		assert(!hasPropagatedMatchingReductionSatisfiability());
-		_status[HAS_PROPAGATED_MATCHING_REDUCTION_SATISFIABILITY_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "PropMR", "Propagated Matching Reduction Satisfiability");
-	}
-	bool hasPropagatedMatchingReductionSatisfiability() const
-	{
-		return _status[HAS_PROPAGATED_MATCHING_REDUCTION_SATISFIABILITY_BIT];
-	}
-	
 	
 #ifndef NDEBUG
-	void setPropagatedTopmostProperty()
-	{
-		assert(!hasPropagatedTopmostProperty());
-		_status[HAS_PROPAGATED_TOPMOST_PROPERTY_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "PropT", "Propagated Topmost Property");
-	}
-	bool hasPropagatedTopmostProperty() const
-	{
-		return _status[HAS_PROPAGATED_TOPMOST_PROPERTY_BIT];
-	}
-	
 	void setReachable()
 	{
 		assert(!isReachable());
@@ -443,16 +429,6 @@ public:
 	}
 	
 	
-	bool hasAlreadyPropagated(
-		bool assumeHasPropagatedReadSatisfiability = false,
-		bool assumeHasPropagatedWriteSatisfiability = false
-	) const {
-		return
-			(assumeHasPropagatedReadSatisfiability || hasPropagatedReadSatisfiability())
-			&& (assumeHasPropagatedWriteSatisfiability || hasPropagatedWriteSatisfiability());
-	}
-	
-	
 	bool hasNext() const
 	{
 		return (_next != nullptr);
@@ -474,22 +450,6 @@ public:
 	Instrument::data_access_id_t const &getInstrumentationId() const
 	{
 		return _instrumentationId;
-	}
-	
-	bool isRemovable(
-		bool forceRemoval,
-		bool assumeHasPropagatedReadSatisfiability = false,
-		bool assumeHasPropagatedWriteSatisfiability = false
-	) const {
-		return isTopmost() 
-			&& readSatisfied() && writeSatisfied()
-			&& complete()
-			&& (
-					forceRemoval
-					||
-					( (!isInBottomMap() || hasNext()) && hasAlreadyPropagated(assumeHasPropagatedReadSatisfiability, assumeHasPropagatedWriteSatisfiability))
-				)
-		;
 	}
 	
 };

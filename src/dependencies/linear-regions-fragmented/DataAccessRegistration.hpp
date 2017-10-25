@@ -43,8 +43,423 @@ public:
 	
 	
 private:
-	typedef CPUDependencyData::DelayedOperation DelayedOperation;
-	typedef CPUDependencyData::PropagationBits PropagationBits;
+	typedef CPUDependencyData::UpdateOperation UpdateOperation;
+	
+	
+	
+	struct DataAccessStatusEffects {
+		bool _isRegistered;
+		bool _isSatisfied;
+		bool _enforcesDependency;
+		
+		bool _hasNext;
+		bool _propagatesReadSatisfiabilityToNext;
+		bool _propagatesWriteSatisfiabilityToNext;
+		bool _propagatesConcurrentSatisfiabilityToNext;
+		reduction_type_and_operator_index_t _propagatesReductionSatisfiabilityToNext;
+		bool _makesNextTopmost;
+		
+		bool _propagatesReadSatisfiabilityToFragments;
+		bool _propagatesWriteSatisfiabilityToFragments;
+		bool _propagatesConcurrentSatisfiabilityToFragments;
+		reduction_type_and_operator_index_t _propagatesReductionSatisfiabilityToFragments;
+		
+		bool _activatesForcedRemovalOfBottomMapAccesses;
+		bool _linksBottomMapAccessesToNextAndInhibitsPropagation;
+		
+		bool _isRemovable;
+		
+	public:
+		DataAccessStatusEffects()
+			: _isRegistered(false),
+			_isSatisfied(false), _enforcesDependency(false),
+			
+			_hasNext(false),
+			_propagatesReadSatisfiabilityToNext(false), _propagatesWriteSatisfiabilityToNext(false), _propagatesConcurrentSatisfiabilityToNext(false),
+			_propagatesReductionSatisfiabilityToNext(no_reduction_type_and_operator),
+			_makesNextTopmost(false),
+			
+			_propagatesReadSatisfiabilityToFragments(false), _propagatesWriteSatisfiabilityToFragments(false), _propagatesConcurrentSatisfiabilityToFragments(false),
+			_propagatesReductionSatisfiabilityToFragments(no_reduction_type_and_operator),
+			
+			_activatesForcedRemovalOfBottomMapAccesses(false),
+			_linksBottomMapAccessesToNextAndInhibitsPropagation(false),
+			
+			_isRemovable(false)
+		{
+		}
+		
+		DataAccessStatusEffects(DataAccess const *access)
+		{
+			_isRegistered = access->isRegistered();
+			
+			_isSatisfied = access->satisfied();
+			_enforcesDependency = !access->isWeak() && !access->satisfied();
+			_hasNext = access->hasNext();
+			
+			// Propagation to fragments
+			if (access->hasSubaccesses()) {
+				_propagatesReadSatisfiabilityToFragments = access->readSatisfied();
+				_propagatesWriteSatisfiabilityToFragments = access->writeSatisfied();
+				_propagatesConcurrentSatisfiabilityToFragments = access->concurrentSatisfied();
+				if (access->anyReductionSatisfied()) {
+					_propagatesReductionSatisfiabilityToFragments = any_reduction_type_and_operator;
+				} else if (access->matchingReductionSatisfied()) {
+					_propagatesReductionSatisfiabilityToFragments = access->getReductionTypeAndOperatorIndex();
+				} else {
+					_propagatesReductionSatisfiabilityToFragments = no_reduction_type_and_operator;
+				}
+			} else {
+				_propagatesReadSatisfiabilityToFragments = false;
+				_propagatesWriteSatisfiabilityToFragments = false;
+				_propagatesConcurrentSatisfiabilityToFragments = false;
+				_propagatesReductionSatisfiabilityToFragments = no_reduction_type_and_operator;
+			}
+			
+			// Propagation to next
+			if (_hasNext) {
+				if (access->hasSubaccesses()) {
+					assert(!access->isFragment());
+					_propagatesReadSatisfiabilityToNext =
+						access->readSatisfied() && access->canPropagateReadSatisfiability()
+						&& (access->getType() == READ_ACCESS_TYPE);
+					_propagatesWriteSatisfiabilityToNext = false; // Write satisfiability is propagated through the fragments
+					_propagatesConcurrentSatisfiabilityToNext =
+						access->canPropagateConcurrentSatisfiability()
+						&& access->concurrentSatisfied() && (access->getType() == CONCURRENT_ACCESS_TYPE);
+					
+					if (
+						!access->canPropagateAnyReductionSatisfiability()
+						&& !access->canPropagateMatchingReductionSatisfiability()
+					) {
+						_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
+					} else if (
+						access->canPropagateMatchingReductionSatisfiability()
+						&& (access->matchingReductionSatisfied() || access->anyReductionSatisfied())
+						&& (access->getType() == REDUCTION_ACCESS_TYPE)
+					) {
+						_propagatesReductionSatisfiabilityToNext = access->getReductionTypeAndOperatorIndex();
+					} else {
+						// Reduction satisfiability of non-reductions is propagated through the fragments
+						_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
+					}
+				} else if (access->isFragment()) {
+					_propagatesReadSatisfiabilityToNext =
+						access->canPropagateReadSatisfiability()
+						&& access->readSatisfied();
+					_propagatesWriteSatisfiabilityToNext = access->writeSatisfied();
+					_propagatesConcurrentSatisfiabilityToNext =
+						access->canPropagateConcurrentSatisfiability()
+						&& access->concurrentSatisfied();
+					
+					if (
+						access->canPropagateAnyReductionSatisfiability()
+						&& access->anyReductionSatisfied()
+					) {
+						_propagatesReductionSatisfiabilityToNext = any_reduction_type_and_operator;
+					} else if (
+						access->canPropagateMatchingReductionSatisfiability()
+						&& access->matchingReductionSatisfied()
+					) {
+						_propagatesReductionSatisfiabilityToNext = access->getReductionTypeAndOperatorIndex();
+					} else {
+						_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
+					}
+				} else {
+					// A regular access without subaccesses but with a next
+					_propagatesReadSatisfiabilityToNext =
+						access->canPropagateReadSatisfiability()
+						&& access->readSatisfied()
+						&& ((access->getType() == READ_ACCESS_TYPE) || access->complete());
+					_propagatesWriteSatisfiabilityToNext =
+						access->writeSatisfied() && access->complete();
+					_propagatesConcurrentSatisfiabilityToNext =
+						access->canPropagateConcurrentSatisfiability()
+						&& access->concurrentSatisfied()
+						&& (access->complete() || (access->getType() == CONCURRENT_ACCESS_TYPE));
+					
+					if (
+						access->canPropagateAnyReductionSatisfiability()
+						&& access->anyReductionSatisfied()
+						&& access->complete()
+					) {
+						_propagatesReductionSatisfiabilityToNext = any_reduction_type_and_operator;
+					} else if (
+						access->canPropagateMatchingReductionSatisfiability()
+						&& access->anyReductionSatisfied()
+						&& (access->getType() == REDUCTION_ACCESS_TYPE)
+					) {
+						_propagatesReductionSatisfiabilityToNext = access->getReductionTypeAndOperatorIndex();
+					} else if (
+						access->canPropagateMatchingReductionSatisfiability()
+						&& access->matchingReductionSatisfied()
+						&& (access->getType() == REDUCTION_ACCESS_TYPE)
+					) {
+						_propagatesReductionSatisfiabilityToNext = access->getReductionTypeAndOperatorIndex();
+					} else {
+						_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
+					}
+				}
+			} else {
+				assert(!access->hasNext());
+				_propagatesReadSatisfiabilityToNext = false;
+				_propagatesWriteSatisfiabilityToNext = false;
+				_propagatesConcurrentSatisfiabilityToNext = false;
+				_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
+			}
+			
+			_isRemovable = access->isTopmost()
+				&& access->readSatisfied() && access->writeSatisfied()
+				&& access->complete()
+				&& ( access->hasForcedRemoval() || !access->isInBottomMap() || access->hasNext() );
+			
+			if (_isRemovable && access->hasNext()) {
+				assert(access->getOriginator() != nullptr);
+				
+				// Find out the task that would be the parent of the next in case it became the topmost of the domain
+				Task *domainParent;
+				if (access->isFragment()) {
+					domainParent = access->getOriginator();
+				} else {
+					domainParent = access->getOriginator()->getParent();
+				}
+				assert(domainParent != nullptr);
+				
+				_makesNextTopmost = (access->getNext()->getParent() == domainParent);
+			} else {
+				_makesNextTopmost = false;
+			}
+			
+			_activatesForcedRemovalOfBottomMapAccesses = 
+				!access->isFragment()
+				&& access->hasForcedRemoval() && access->complete() && access->hasSubaccesses();
+			
+			// NOTE: Calculate inhibition from initial status
+			_linksBottomMapAccessesToNextAndInhibitsPropagation =
+				access->hasNext() && access->complete() && access->hasSubaccesses();
+			
+		}
+	};
+	
+	
+	struct BottomMapUpdateOperation {
+		DataAccessRegion _region;
+		
+		bool _activateForcedRemovalOfBottomMapAccesses;
+		bool _linkBottomMapAccessesToNext;
+		
+		bool _inhibitReadPropagation;
+		bool _inhibitConcurrentPropagation;
+		reduction_type_and_operator_index_t _inhibitReductionPropagation;
+		
+		Task *_next;
+		
+		BottomMapUpdateOperation()
+			: _region(),
+			_activateForcedRemovalOfBottomMapAccesses(false),
+			_linkBottomMapAccessesToNext(false),
+			_inhibitReadPropagation(false),
+			_inhibitConcurrentPropagation(false),
+			_inhibitReductionPropagation(no_reduction_type_and_operator),
+			_next(nullptr)
+		{
+		}
+		
+		BottomMapUpdateOperation(DataAccessRegion const &region)
+			: _region(region),
+			_activateForcedRemovalOfBottomMapAccesses(false),
+			_linkBottomMapAccessesToNext(false),
+			_inhibitReadPropagation(false),
+			_inhibitConcurrentPropagation(false),
+			_inhibitReductionPropagation(no_reduction_type_and_operator),
+			_next(nullptr)
+		{
+		}
+		
+		bool empty() const
+		{
+			return !_activateForcedRemovalOfBottomMapAccesses && !_linkBottomMapAccessesToNext;
+		}
+	};
+	
+	
+	static inline void handleDataAccessStatusChanges(
+		DataAccessStatusEffects const &initialStatus,
+		DataAccessStatusEffects const &updatedStatus,
+		DataAccess *access, TaskDataAccesses &accessStructures, Task *task,
+		/* OUT */ CPUDependencyData &hpDependencyData
+	) {
+		// Registration
+		if (initialStatus._isRegistered != updatedStatus._isRegistered) {
+			assert(!initialStatus._isRegistered);
+			
+			// Count the access
+			if (!initialStatus._isRemovable) {
+				accessStructures._removalBlockers++;
+			}
+			
+			if (updatedStatus._enforcesDependency) {
+				task->increasePredecessors();
+			}
+		}
+		
+		if (!updatedStatus._isRegistered) {
+			return;
+		}
+		
+		// NOTE: After this point, all actions assume the access is registered
+		
+		// Satisfiability
+		if (initialStatus._isSatisfied != updatedStatus._isSatisfied) {
+			assert(!initialStatus._isSatisfied);
+			Instrument::dataAccessBecomesSatisfied(
+				access->getInstrumentationId(),
+				true, true, /* true, */ false,
+				task->getInstrumentationTaskId()
+			);
+		}
+		
+		// Link to Next
+		if (initialStatus._hasNext != updatedStatus._hasNext) {
+			assert(!initialStatus._hasNext);
+			Instrument::linkedDataAccesses(
+				access->getInstrumentationId(), access->getNext()->getInstrumentationTaskId(),
+				access->getAccessRegion(),
+				true, false
+			);
+		}
+		
+		// Dependency updates
+		if (initialStatus._enforcesDependency != updatedStatus._enforcesDependency) {
+			if (updatedStatus._enforcesDependency) {
+				// A new access that enforces a dependency.
+				// Already counted as part of the registration status change.
+				assert(!initialStatus._isRegistered && updatedStatus._isRegistered);
+			} else {
+				// The access no longer enforces a dependency (has become satisified)
+				if (task->decreasePredecessors()) {
+					// The task becomes ready
+					hpDependencyData._satisfiedOriginators.push_back(task);
+				}
+			}
+		}
+		
+		// Propagation to Next
+		if (access->hasNext()) {
+			UpdateOperation updateOperation(access->getNext(), access->getAccessRegion(), /* To Next */ true);
+			
+			if (initialStatus._propagatesReadSatisfiabilityToNext != updatedStatus._propagatesReadSatisfiabilityToNext) {
+				assert(!initialStatus._propagatesReadSatisfiabilityToNext);
+				updateOperation._makeReadSatisfied = true;
+			}
+			
+			if (initialStatus._propagatesWriteSatisfiabilityToNext != updatedStatus._propagatesWriteSatisfiabilityToNext) {
+				assert(!initialStatus._propagatesWriteSatisfiabilityToNext);
+				updateOperation._makeWriteSatisfied = true;
+			}
+			
+			if (initialStatus._propagatesConcurrentSatisfiabilityToNext != updatedStatus._propagatesConcurrentSatisfiabilityToNext) {
+				assert(!initialStatus._propagatesConcurrentSatisfiabilityToNext);
+				updateOperation._makeConcurrentSatisfied = true;
+			}
+			
+			if (initialStatus._propagatesReductionSatisfiabilityToNext != updatedStatus._propagatesReductionSatisfiabilityToNext) {
+				assert(updatedStatus._propagatesReductionSatisfiabilityToNext != no_reduction_type_and_operator);
+				updateOperation._makeReductionSatisfied = updatedStatus._propagatesReductionSatisfiabilityToNext;
+			}
+			
+			// Make Next Topmost
+			if (initialStatus._makesNextTopmost != updatedStatus._makesNextTopmost) {
+				assert(!initialStatus._makesNextTopmost);
+				updateOperation._makeTopmost = true;
+			}
+			
+			if (!updateOperation.empty()) {
+				hpDependencyData._delayedOperations.emplace_back(updateOperation);
+			}
+		}
+		
+		// Propagation to Fragments
+		if (access->hasSubaccesses()) {
+			UpdateOperation updateOperation(task, access->getAccessRegion(), /* To Fragments */ false);
+			
+			if (initialStatus._propagatesReadSatisfiabilityToFragments != updatedStatus._propagatesReadSatisfiabilityToFragments) {
+				assert(!initialStatus._propagatesReadSatisfiabilityToFragments);
+				updateOperation._makeReadSatisfied = true;
+			}
+			
+			if (initialStatus._propagatesWriteSatisfiabilityToFragments != updatedStatus._propagatesWriteSatisfiabilityToFragments) {
+				assert(!initialStatus._propagatesWriteSatisfiabilityToFragments);
+				updateOperation._makeWriteSatisfied = true;
+			}
+			
+			if (initialStatus._propagatesConcurrentSatisfiabilityToFragments != updatedStatus._propagatesConcurrentSatisfiabilityToFragments) {
+				assert(!initialStatus._propagatesConcurrentSatisfiabilityToFragments);
+				updateOperation._makeConcurrentSatisfied = true;
+			}
+			
+			if (initialStatus._propagatesReductionSatisfiabilityToFragments != updatedStatus._propagatesReductionSatisfiabilityToFragments) {
+				assert(updatedStatus._propagatesReductionSatisfiabilityToFragments != no_reduction_type_and_operator);
+				updateOperation._makeReductionSatisfied = updatedStatus._propagatesReductionSatisfiabilityToFragments;
+			}
+			
+			if (!updateOperation.empty()) {
+				hpDependencyData._delayedOperations.emplace_back(updateOperation);
+			}
+		}
+		
+		// Bottom Map Updates
+		if (access->hasSubaccesses()) {
+			BottomMapUpdateOperation bottomMapUpdateOperation(access->getAccessRegion());
+			
+			if (initialStatus._activatesForcedRemovalOfBottomMapAccesses != updatedStatus._activatesForcedRemovalOfBottomMapAccesses) {
+				assert(!initialStatus._activatesForcedRemovalOfBottomMapAccesses);
+				bottomMapUpdateOperation._activateForcedRemovalOfBottomMapAccesses = true;
+			}
+			
+			if (
+				initialStatus._linksBottomMapAccessesToNextAndInhibitsPropagation
+				!= updatedStatus._linksBottomMapAccessesToNextAndInhibitsPropagation
+			) {
+				assert(!initialStatus._linksBottomMapAccessesToNextAndInhibitsPropagation);
+				bottomMapUpdateOperation._linkBottomMapAccessesToNext = true;
+				bottomMapUpdateOperation._next = access->getNext();
+				
+				bottomMapUpdateOperation._inhibitReadPropagation = (access->getType() == READ_ACCESS_TYPE);
+				assert(!updatedStatus._propagatesWriteSatisfiabilityToNext);
+				bottomMapUpdateOperation._inhibitConcurrentPropagation = (access->getType() == CONCURRENT_ACCESS_TYPE);
+				bottomMapUpdateOperation._inhibitReductionPropagation =
+					(access->getType() == REDUCTION_ACCESS_TYPE ? access->getReductionTypeAndOperatorIndex() : no_reduction_type_and_operator);
+			}
+			
+			if (!bottomMapUpdateOperation.empty()) {
+				processBottomMapUpdate(bottomMapUpdateOperation, accessStructures, task, hpDependencyData);
+			}
+		}
+		
+		// Removable
+		if (initialStatus._isRemovable != updatedStatus._isRemovable) {
+			assert(!initialStatus._isRemovable);
+			
+			assert(accessStructures._removalBlockers > 0);
+			accessStructures._removalBlockers--;
+			access->markAsDiscounted();
+			
+			if (access->getNext() != nullptr) {
+				Instrument::unlinkedDataAccesses(
+					access->getInstrumentationId(),
+					access->getNext()->getInstrumentationTaskId(),
+					/* direct */ true
+				);
+			}
+			
+			if (accessStructures._removalBlockers == 0) {
+				if (task->decreaseRemovalBlockingCount()) {
+					hpDependencyData._removableTasks.push_back(task);
+				}
+			}
+		}
+	}
 	
 	
 	static inline DataAccess *createAccess(
@@ -65,8 +480,6 @@ private:
 		
 		return dataAccess;
 	}
-	
-	
 	
 	
 	static inline void upgradeAccess(
@@ -109,8 +522,7 @@ private:
 	// NOTE: locking should be handled from the outside
 	static inline DataAccess *duplicateDataAccess(
 		DataAccess const &toBeDuplicated,
-		TaskDataAccesses &accessStructures,
-		bool updateTaskBlockingCount
+		__attribute__((unused)) TaskDataAccesses &accessStructures
 	) {
 		assert(toBeDuplicated.getOriginator() != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
@@ -125,14 +537,7 @@ private:
 			toBeDuplicated.getStatus(), toBeDuplicated.getNext()
 		);
 		
-		if (updateTaskBlockingCount && !toBeDuplicated.isFragment() && !newFragment->isWeak() && !newFragment->satisfied()) {
-			toBeDuplicated.getOriginator()->increasePredecessors();
-		}
-		
-		assert(accessStructures._lock.isLockedByThisThread() || noAccessIsReachable(accessStructures));
-		if (!newFragment->isRemovable(newFragment->hasForcedRemoval())) {
-			accessStructures._removalBlockers++;
-		}
+		newFragment->clearRegistered();
 		
 		return newFragment;
 	}
@@ -183,6 +588,29 @@ private:
 	}
 	
 	
+	static inline void setUpNewFragment(
+		DataAccess *fragment, DataAccess *originalDataAccess,
+		TaskDataAccesses &accessStructures
+	) {
+		if (fragment != originalDataAccess) {
+			CPUDependencyData hpDependencyData;
+			
+			DataAccessStatusEffects initialStatus(fragment);
+			fragment->setUpNewFragment(originalDataAccess->getInstrumentationId());
+			fragment->setRegistered();
+			DataAccessStatusEffects updatedStatus(fragment);
+			
+			handleDataAccessStatusChanges(
+				initialStatus, updatedStatus,
+				fragment, accessStructures, fragment->getOriginator(),
+				hpDependencyData
+			);
+			
+			assert(hpDependencyData.empty());
+		}
+	}
+	
+	
 	static inline DataAccess *fragmentAccess(
 		DataAccess *dataAccess, DataAccessRegion region,
 		TaskDataAccesses &accessStructures
@@ -209,12 +637,11 @@ private:
 				position, region,
 				false,
 				[&](DataAccess const &toBeDuplicated) -> DataAccess * {
-					return duplicateDataAccess(toBeDuplicated, accessStructures, /* Count Blocking */ true);
+					assert(toBeDuplicated.isRegistered());
+					return duplicateDataAccess(toBeDuplicated, accessStructures);
 				},
 				[&](DataAccess *fragment, DataAccess *originalDataAccess) {
-					if (fragment != originalDataAccess) {
-						fragment->setUpNewFragment(originalDataAccess->getInstrumentationId());
-					}
+					setUpNewFragment(fragment, originalDataAccess, accessStructures);
 				}
 			);
 			
@@ -228,12 +655,11 @@ private:
 				position, region,
 				false,
 				[&](DataAccess const &toBeDuplicated) -> DataAccess * {
-					return duplicateDataAccess(toBeDuplicated, accessStructures, /* Count Blocking */ true);
+					assert(toBeDuplicated.isRegistered());
+					return duplicateDataAccess(toBeDuplicated, accessStructures);
 				},
 				[&](DataAccess *fragment, DataAccess *originalDataAccess) {
-					if (fragment != originalDataAccess) {
-						fragment->setUpNewFragment(originalDataAccess->getInstrumentationId());
-					}
+					setUpNewFragment(fragment, originalDataAccess, accessStructures);
 				}
 			);
 			
@@ -266,521 +692,6 @@ private:
 	}
 	
 	
-	static inline DelayedOperation &getNewDelayedOperation(/* OUT */ CPUDependencyData &hpDependencyData)
-	{
-		hpDependencyData._delayedOperations.emplace_back();
-		return hpDependencyData._delayedOperations.back();
-	}
-	
-	
-	static inline void handleAccessRemoval(
-		DataAccess *targetAccess, TaskDataAccesses &targetTaskAccessStructures, Task *targetTask,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
-		assert(targetTaskAccessStructures._removalBlockers > 0);
-		targetTaskAccessStructures._removalBlockers--;
-		targetAccess->markAsDiscounted();
-		
-		if (targetAccess->getNext() != nullptr) {
-			Instrument::unlinkedDataAccesses(
-				targetAccess->getInstrumentationId(),
-				targetAccess->getNext()->getInstrumentationTaskId(),
-				/* direct */ true
-			);
-		}
-		
-		if (targetTaskAccessStructures._removalBlockers == 0) {
-			if (targetTask->decreaseRemovalBlockingCount()) {
-				hpDependencyData._removableTasks.push_back(targetTask);
-			}
-		}
-		
-		assert(targetAccess->hasForcedRemoval() || !targetAccess->isInBottomMap());
-	}
-	
-	
-	static inline PropagationBits calculatePropagationBits(
-		DataAccess *dataAccess, bool wasRemovable
-	) {
-		assert(dataAccess != nullptr);
-		assert(dataAccess->isReachable());
-		assert(!dataAccess->hasBeenDiscounted());
-		
-		Task *next = dataAccess->getNext();
-		
-		PropagationBits result;
-		
-		// Only propagate when there is a next to propagate to
-		if (next != nullptr) {
-			result._read =
-				dataAccess->readSatisfied()
-				&& !dataAccess->hasPropagatedReadSatisfiability()
-				&& (dataAccess->complete() || (dataAccess->getType() == READ_ACCESS_TYPE) || dataAccess->isFragment());
-			result._write =
-				dataAccess->writeSatisfied()
-				&& !dataAccess->hasPropagatedWriteSatisfiability()
-				&& (dataAccess->complete() || dataAccess->isFragment());
-			result._concurrent =
-				!dataAccess->hasPropagatedConcurrentSatisfiability()
-				&& ( result._write  ||  (dataAccess->concurrentSatisfied() && (dataAccess->getType() == CONCURRENT_ACCESS_TYPE)) );
-			
-			if (
-				!dataAccess->hasPropagatedAnyReductionSatisfiability()
-				&& dataAccess->writeSatisfied()
-				&& (dataAccess->complete() || dataAccess->isFragment())
-			) {
-				result._reductionTypeAndOperatorIndex = any_reduction_type_and_operator;
-			} else if (
-				!dataAccess->hasPropagatedMatchingReductionSatisfiability()
-				&& (dataAccess->matchingReductionSatisfied() || dataAccess->anyReductionSatisfied())
-				&& (dataAccess->getType() == REDUCTION_ACCESS_TYPE)
-			) {
-				result._reductionTypeAndOperatorIndex = dataAccess->getReductionTypeAndOperatorIndex();
-			} else {
-				result._reductionTypeAndOperatorIndex = no_reduction_type_and_operator;
-			}
-		}
-		
-		result._becomesRemovable =
-			!wasRemovable
-			&& dataAccess->isRemovable(dataAccess->hasForcedRemoval(), result._read, result._write);
-		
-		// The next can become topmost only when this one becomes removable
-		if (result._becomesRemovable) {
-			if (next != nullptr) {
-				assert(dataAccess->getOriginator() != nullptr);
-				
-				// Find out the task that would be the parent of the next in case it became the topmost of the domain
-				Task *domainParent;
-				if (dataAccess->isFragment()) {
-					domainParent = dataAccess->getOriginator();
-				} else {
-					domainParent = dataAccess->getOriginator()->getParent();
-				}
-				assert(domainParent != nullptr);
-				
-				result._makesNextTopmost = (next->getParent() == domainParent);
-			}
-		}
-		
-		return result;
-	}
-	
-	
-	static inline void updatePropagation(
-		DataAccess *dataAccess, PropagationBits const &propagationBits
-	) {
-		assert(dataAccess != nullptr);
-		assert(dataAccess->isReachable());
-		assert(!dataAccess->hasBeenDiscounted());
-		
-		if (propagationBits._read) {
-			assert(!dataAccess->hasPropagatedReadSatisfiability());
-			dataAccess->setPropagatedReadSatisfiability();
-		}
-		
-		if (propagationBits._write) {
-			dataAccess->setPropagatedWriteSatisfiability();
-		}
-		
-		if (propagationBits._concurrent) {
-			dataAccess->setPropagatedConcurrentSatisfiability();
-		}
-		
-		if (propagationBits._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
-			dataAccess->setPropagatedAnyReductionSatisfiability();
-			
-			if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !dataAccess->hasPropagatedMatchingReductionSatisfiability()) {
-				dataAccess->setPropagatedMatchingReductionSatisfiability();
-			}
-		} else if (propagationBits._reductionTypeAndOperatorIndex == no_reduction_type_and_operator) {
-			// Nothing to do
-		} else if (propagationBits._reductionTypeAndOperatorIndex == dataAccess->getReductionTypeAndOperatorIndex()) {
-			dataAccess->setPropagatedMatchingReductionSatisfiability();
-		} else {
-			assert("Propagating a mismatched reduction type or operator" == nullptr);
-		}
-		
-#ifndef NDEBUG
-		if (propagationBits._makesNextTopmost) {
-			dataAccess->setPropagatedTopmostProperty();
-		}
-#endif
-	}
-	
-	
-	static inline PropagationBits calculateAndUpdatePropagationBits(
-		DataAccess *dataAccess, bool wasRemovable
-	) {
-		PropagationBits result = calculatePropagationBits(dataAccess, wasRemovable);
-		updatePropagation(dataAccess, result);
-		return result;
-	}
-	
-	
-	static inline PropagationBits calculatePropagationMask(DataAccess *dataAccess)
-	{
-		assert(dataAccess != nullptr);
-		assert(dataAccess->isReachable());
-		assert(!dataAccess->hasBeenDiscounted());
-		
-		PropagationBits result;
-		result._read = dataAccess->hasPropagatedReadSatisfiability();
-		result._write = dataAccess->hasPropagatedWriteSatisfiability();
-		result._concurrent = dataAccess->hasPropagatedConcurrentSatisfiability();
-		
-		if (dataAccess->hasPropagatedAnyReductionSatisfiability()) {
-			result._reductionTypeAndOperatorIndex = any_reduction_type_and_operator;
-		} else if (dataAccess->hasPropagatedMatchingReductionSatisfiability()) {
-			result._reductionTypeAndOperatorIndex = dataAccess->getReductionTypeAndOperatorIndex();
-		} else {
-			result._reductionTypeAndOperatorIndex = no_reduction_type_and_operator;
-		}
-		
-		return result;
-	}
-	
-	
-	static inline PropagationBits applyPropagationBits(
-		DataAccess *dataAccess, PropagationBits const &propagationBits
-	) {
-		assert(dataAccess != nullptr);
-		assert(dataAccess->isReachable());
-		assert(!dataAccess->hasBeenDiscounted());
-		assert(propagationBits.propagates());
-		
-		bool wasRemovable = dataAccess->isRemovable(dataAccess->hasForcedRemoval());
-		
-		// Updates the state bits according to propagationBits
-		if (propagationBits._read) {
-			dataAccess->setReadSatisfied();
-		}
-		if (propagationBits._write) {
-			dataAccess->setWriteSatisfied();
-		}
-		if (propagationBits._concurrent) {
-			dataAccess->setConcurrentSatisfied();
-		}
-		
-		if (propagationBits._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
-			dataAccess->setAnyReductionSatisfied();
-		} else if (
-			(propagationBits._reductionTypeAndOperatorIndex != no_reduction_type_and_operator)
-			&& (propagationBits._reductionTypeAndOperatorIndex == dataAccess->getReductionTypeAndOperatorIndex())
-		) {
-			dataAccess->setMatchingReductionSatisfied();
-		}
-		
-		if (propagationBits._makesNextTopmost) {
-			dataAccess->setTopmost();
-		}
-		
-		// NOTE: _becomesRemovable refers only to the access that produces the propagation.
-		// Hence it is ignored here
-		
-		// Calculates the new propagation and returns it
-		return calculateAndUpdatePropagationBits(dataAccess, wasRemovable);
-	}
-	
-	
-	static inline void propagateSatisfiabilityToFragments(
-		DelayedOperation const &delayedOperation,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
-		PropagationBits const &propagationBits = delayedOperation._propagationBits;
-		Task *targetTask = delayedOperation._target;
-		DataAccessRegion region = delayedOperation._region;
-		
-		assert(propagationBits.propagates());
-		assert(targetTask != nullptr);
-		assert(!region.empty());
-		
-		TaskDataAccesses &targetTaskAccessStructures = targetTask->getDataAccesses();
-		assert(!targetTaskAccessStructures.hasBeenDeleted());
-		assert(targetTaskAccessStructures._lock.isLockedByThisThread());
-		
-		// NOTE: An access is discounted before traversing the fragments, so by the time we reach this point, the counter could be 0
-		
-		targetTaskAccessStructures._accessFragments.processIntersecting(
-			region,
-			[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
-				DataAccess *targetFragment = &(*position);
-				assert(targetFragment != nullptr);
-				assert(targetFragment->isFragment());
-				assert(targetFragment->isReachable());
-				assert(targetFragment->getOriginator() == targetTask);
-				assert(!targetFragment->hasBeenDiscounted());
-				
-				// Fragment if necessary
-				targetFragment = fragmentAccess(targetFragment, region, targetTaskAccessStructures);
-				assert(targetFragment != nullptr);
-				assert(targetFragment->getAccessRegion().fullyContainedIn(region));
-				
-				PropagationBits nextPropagation = applyPropagationBits(targetFragment, propagationBits);
-				
-				Instrument::dataAccessBecomesSatisfied(
-					targetFragment->getInstrumentationId(),
-					propagationBits._read, propagationBits._write, /* propagationBits._concurrent, */ false,
-					targetTask->getInstrumentationTaskId()
-				);
-				
-				Task *nextTask = targetFragment->getNext();
-				
-				assert((nextTask != nullptr) || targetFragment->isInBottomMap());
-				
-				// Update the number of non removable accesses of the task
-				if (nextPropagation._becomesRemovable) {
-					handleAccessRemoval(targetFragment, targetTaskAccessStructures, targetTask, hpDependencyData);
-				}
-				
-				if (nextTask == nullptr) {
-					// Nothing else to propagate
-					return true;
-				}
-				
-				// Continue to next iteration if there is nothing to propagate
-				if (!nextPropagation.propagates()) {
-					return true;
-				}
-				
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-				DelayedOperation nextOperation;
-#else
-				DelayedOperation &nextOperation = getNewDelayedOperation(hpDependencyData);
-				nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
-#endif
-				nextOperation._propagationBits = nextPropagation;
-				nextOperation._region = targetFragment->getAccessRegion();
-				nextOperation._target = nextTask;
-				
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-				TaskDataAccesses &nextTaskAccessStructures = nextTask->getDataAccesses();
-				std::lock_guard<TaskDataAccesses::spinlock_t> guard(nextTaskAccessStructures._lock);
-				
-				propagateSatisfiabilityPlain(nextOperation, hpDependencyData);
-#endif
-				
-				return true;
-			}
-		);
-	}
-	
-	
-	static inline void propagateSatisfiabilityPlain(
-		DelayedOperation const &delayedOperation,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
-		PropagationBits const &propagationBits = delayedOperation._propagationBits;
-		Task *targetTask = delayedOperation._target;
-		DataAccessRegion region = delayedOperation._region;
-		
-		assert(propagationBits.propagates());
-		assert(targetTask != nullptr);
-		assert(!region.empty());
-		
-		TaskDataAccesses &targetTaskAccessStructures = targetTask->getDataAccesses();
-		assert(!targetTaskAccessStructures.hasBeenDeleted());
-		assert(targetTaskAccessStructures._lock.isLockedByThisThread());
-		
-		targetTaskAccessStructures._accesses.processIntersecting(
-			region,
-			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
-				DataAccess *targetAccess = &(*position);
-				assert(targetAccess != nullptr);
-				assert(targetAccess->isReachable());
-				assert(targetAccess->getOriginator() == targetTask);
-				assert(!targetAccess->hasBeenDiscounted());
-				
-				// Fragment if necessary
-				targetAccess = fragmentAccess(targetAccess, region, targetTaskAccessStructures);
-				assert(targetAccess != nullptr);
-				assert(targetAccess->getAccessRegion().fullyContainedIn(region));
-				
-				bool wasSatisfied = targetAccess->satisfied();
-				
-				PropagationBits nextPropagation = applyPropagationBits(targetAccess, propagationBits);
-				
-				Instrument::dataAccessBecomesSatisfied(
-					targetAccess->getInstrumentationId(),
-					propagationBits._read, propagationBits._write, /* propagationBits._concurrent, */ false,
-					targetTask->getInstrumentationTaskId()
-				);
-				
-				
-				// If the target access becomes satisfied decrease the predecessor count of the task
-				// If it becomes 0 then add it to the list of satisfied originators
-				if (!targetAccess->isWeak() && !wasSatisfied && targetAccess->satisfied()) {
-					if (targetTask->decreasePredecessors()) {
-						hpDependencyData._satisfiedOriginators.push_back(targetTask);
-					}
-				}
-				
-				if (targetAccess->hasSubaccesses()) {
-					// Propagate to fragments
-					
-					// NOTE: The call to applyPropagationBits marks the access as having propagated.
-					// This is correct, since the actual propagation will be partially made from:
-					// 	the fragments for the accesses that have finished
-					// 	the access for accesses that have not finished (but that can propagate)
-					
-					// Only propagate to fragments if there is satisfiability to propagate.
-					// The topmost property is internal to the inner dependency domain.
-					// Otherwise we may end up accessing a fragment that has already been
-					// discounted.
-					if (propagationBits.propagatesSatisfiability()) {
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-						DelayedOperation nextDelayedOperation;
-#else
-						DelayedOperation &nextDelayedOperation = getNewDelayedOperation(hpDependencyData);
-						nextDelayedOperation._operationType = DelayedOperation::propagate_satisfiability_to_fragments_operation;
-#endif
-						nextDelayedOperation._propagationBits = propagationBits;
-						nextDelayedOperation._propagationBits._makesNextTopmost = false;
-						
-						nextDelayedOperation._region = targetAccess->getAccessRegion();
-						nextDelayedOperation._target = targetTask;
-						
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-						propagateSatisfiabilityToFragments(nextDelayedOperation, hpDependencyData);
-#endif
-					}
-				}
-				
-				// Update the number of non removable accesses of the task
-				if (nextPropagation._becomesRemovable) {
-					handleAccessRemoval(targetAccess, targetTaskAccessStructures, targetTask, hpDependencyData);
-				}
-				
-				// Continue to next iteration if there is nothing to propagate
-				if (!nextPropagation.propagates()) {
-					return true;
-				}
-				
-				Task *nextTask = targetAccess->getNext();
-				assert(nextTask != nullptr);
-				
-				if (targetAccess->hasSubaccesses() && targetAccess->complete()) {
-					// The regular propagation happens through the fragments but we may still need to propagate the topmost property
-					if (nextPropagation._makesNextTopmost) {
-						nextPropagation = PropagationBits();
-						nextPropagation._makesNextTopmost = true;
-					} else {
-						return true;
-					}
-				}
-				
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-				DelayedOperation nextOperation;
-#else
-				DelayedOperation &nextOperation = getNewDelayedOperation(hpDependencyData);
-				nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
-#endif
-				nextOperation._propagationBits = nextPropagation;
-				nextOperation._region = targetAccess->getAccessRegion();
-				nextOperation._target = nextTask;
-				
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-				TaskDataAccesses &nextTaskAccessStructures = nextTask->getDataAccesses();
-				std::lock_guard<TaskDataAccesses::spinlock_t> guard(nextTaskAccessStructures._lock);
-				
-				propagateSatisfiabilityPlain(nextOperation, hpDependencyData);
-#endif
-				
-				return true;
-			}
-		);
-	}
-	
-	
-	static inline void activateForcedRemovalOfBottomMapAccesses(
-		Task *task, TaskDataAccesses &accessStructures,
-		DataAccessRegion region,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
-		assert(!accessStructures.hasBeenDeleted());
-		assert(accessStructures._lock.isLockedByThisThread());
-		
-		// For each bottom map entry
-		accessStructures._subaccessBottomMap.processIntersecting(
-			region,
-			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator position) -> bool {
-				BottomMapEntry *bottomMapEntry = &(*position);
-				assert(bottomMapEntry != nullptr);
-				
-				DataAccessRegion subregion = region.intersect(bottomMapEntry->getAccessRegion());
-				
-				Task *subtask = bottomMapEntry->_task;
-				assert(subtask != nullptr);
-				
-				if (subtask != task) {
-					TaskDataAccesses &subtaskAccessStructures = subtask->getDataAccesses();
-					
-					subtaskAccessStructures._lock.lock();
-					
-					// For each access of the subtask that matches
-					subtaskAccessStructures._accesses.processIntersecting(
-						subregion,
-						[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
-							DataAccess *dataAccess = &(*accessPosition);
-							
-							assert(dataAccess->getNext() == nullptr);
-							assert(dataAccess->isInBottomMap());
-							assert(!dataAccess->hasBeenDiscounted());
-							
-							assert(!dataAccess->hasForcedRemoval());
-							
-							dataAccess = fragmentAccess(dataAccess, subregion, subtaskAccessStructures);
-							
-							assert(dataAccess->getNext() == nullptr);
-							dataAccess->forceRemoval();
-							
-							if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
-								activateForcedRemovalOfBottomMapAccesses(subtask, subtaskAccessStructures, dataAccess->getAccessRegion(), hpDependencyData);
-							}
-							
-							if (!dataAccess->isRemovable(false) && dataAccess->isRemovable(true)) {
-								// The access has become removable
-								handleAccessRemoval(dataAccess, subtaskAccessStructures, subtask, hpDependencyData);
-							}
-							
-							return true;
-						}
-					);
-					
-					subtaskAccessStructures._lock.unlock();
-				} else {
-					// A fragment
-					accessStructures._accessFragments.processIntersecting(
-						subregion,
-						[&] (TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
-							DataAccess *fragment = &(*fragmentPosition);
-							assert(fragment != nullptr);
-							assert(fragment->isReachable());
-							assert(fragment->getNext() == nullptr);
-							assert(fragment->isInBottomMap());
-							assert(!fragment->hasBeenDiscounted());
-							
-							fragment = fragmentAccess(fragment, subregion, accessStructures);
-							
-							assert(fragment->getNext() == nullptr);
-							fragment->forceRemoval();
-							
-							if (!fragment->isRemovable(false) && fragment->isRemovable(true)) {
-								// The access has become removable
-								handleAccessRemoval(fragment, accessStructures, task, hpDependencyData);
-							}
-							
-							return true;
-						}
-					);
-				}
-				
-				return true;
-			}
-		);
-	}
-	
-	
 	static inline void activateForcedRemovalOfBottomMapAccesses(
 		Task *task, TaskDataAccesses &accessStructures,
 		/* OUT */ CPUDependencyData &hpDependencyData
@@ -789,103 +700,110 @@ private:
 		assert(accessStructures._lock.isLockedByThisThread());
 		
 		// For each bottom map entry
-		accessStructures._subaccessBottomMap.processAll(
-			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator position) -> bool {
-				BottomMapEntry *bottomMapEntry = &(*position);
-				assert(bottomMapEntry != nullptr);
+		foreachBottomMapEntry(
+			accessStructures, task,
+			[&] (DataAccess *access, TaskDataAccesses &currentAccessStructures, Task *currentTask) {
+				assert(access->getNext() == nullptr);
+				assert(access->isInBottomMap());
+				assert(!access->hasBeenDiscounted());
+				assert(!access->hasForcedRemoval());
 				
-				Task *subtask = bottomMapEntry->_task;
-				assert(subtask != nullptr);
+				DataAccessStatusEffects initialStatus(access);
+				access->forceRemoval();
+				DataAccessStatusEffects updatedStatus(access);
 				
-				if (subtask != task) {
-					TaskDataAccesses &subtaskAccessStructures = subtask->getDataAccesses();
-					
-					subtaskAccessStructures._lock.lock();
-					
-					// For each access of the subtask that matches
-					subtaskAccessStructures._accesses.processIntersecting(
-						bottomMapEntry->getAccessRegion(),
-						[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
-							DataAccess *dataAccess = &(*accessPosition);
-							
-							assert(dataAccess->getNext() == nullptr);
-							assert(dataAccess->isInBottomMap());
-							assert(!dataAccess->hasBeenDiscounted());
-							
-							assert(!dataAccess->hasForcedRemoval());
-							
-							dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRegion(), subtaskAccessStructures);
-							
-							assert(dataAccess->getNext() == nullptr);
-							dataAccess->forceRemoval();
-							
-							if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
-								activateForcedRemovalOfBottomMapAccesses(subtask, subtaskAccessStructures, dataAccess->getAccessRegion(), hpDependencyData);
-							}
-							
-							if (!dataAccess->isRemovable(false) && dataAccess->isRemovable(true)) {
-								// The access has become removable
-								handleAccessRemoval(dataAccess, subtaskAccessStructures, subtask, hpDependencyData);
-							}
-							
-							return true;
-						}
-					);
-					
-					subtaskAccessStructures._lock.unlock();
-				} else {
-					// A fragment
-					accessStructures._accessFragments.processIntersecting(
-						bottomMapEntry->getAccessRegion(),
-						[&] (TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
-							DataAccess *fragment = &(*fragmentPosition);
-							assert(fragment != nullptr);
-							assert(fragment->isReachable());
-							assert(fragment->getNext() == nullptr);
-							assert(fragment->isInBottomMap());
-							assert(!fragment->hasBeenDiscounted());
-							
-							assert(!fragment->hasForcedRemoval());
-							
-							fragment = fragmentAccess(fragment, bottomMapEntry->getAccessRegion(), accessStructures);
-							
-							assert(fragment->getNext() == nullptr);
-							fragment->forceRemoval();
-							
-							if (!fragment->isRemovable(false) && fragment->isRemovable(true)) {
-								// The access has become removable
-								handleAccessRemoval(fragment, accessStructures, task, hpDependencyData);
-							}
-							
-							return true;
-						}
-					);
-				}
-				
+				handleDataAccessStatusChanges(
+					initialStatus, updatedStatus,
+					access, currentAccessStructures, currentTask,
+					hpDependencyData
+				);
+			},
+			[&] (BottomMapEntry *bottomMapEntry) {
 				// Remove the bottom map entry
 				accessStructures._subaccessBottomMap.erase(bottomMapEntry);
 				delete bottomMapEntry;
-				
-				return true;
 			}
 		);
 	}
 	
 	
-	static void processDelayedOperation(
-		DelayedOperation const &delayedOperation,
+	static void applyUpdateOperationOnAccess(
+		UpdateOperation const &updateOperation,
+		DataAccess *access, TaskDataAccesses &accessStructures,
 		/* OUT */ CPUDependencyData &hpDependencyData
 	) {
-		switch (delayedOperation._operationType) {
-			case DelayedOperation::link_bottom_map_accesses_operation:
-				linkBottomMapAccessesToNext(delayedOperation, hpDependencyData);
-				break;
-			case DelayedOperation::propagate_satisfiability_to_fragments_operation:
-				propagateSatisfiabilityToFragments(delayedOperation, hpDependencyData);
-				break;
-			case DelayedOperation::propagate_satisfiability_plain_operation:
-				propagateSatisfiabilityPlain(delayedOperation, hpDependencyData);
-				break;
+		// Fragment if necessary
+		access = fragmentAccess(access, updateOperation._region, accessStructures);
+		assert(access != nullptr);
+		
+		DataAccessStatusEffects initialStatus(access);
+		
+		// Read, Write, Concurrent Satisfiability
+		if (updateOperation._makeReadSatisfied) {
+			access->setReadSatisfied();
+		}
+		if (updateOperation._makeWriteSatisfied) {
+			access->setWriteSatisfied();
+		}
+		if (updateOperation._makeConcurrentSatisfied) {
+			access->setConcurrentSatisfied();
+		}
+		
+		// Reduction Satisfiability
+		if (updateOperation._makeReductionSatisfied == any_reduction_type_and_operator) {
+			access->setAnyReductionSatisfied();
+		} else if (
+			(updateOperation._makeReductionSatisfied != no_reduction_type_and_operator)
+			&& (updateOperation._makeReductionSatisfied == access->getReductionTypeAndOperatorIndex())
+		) {
+			access->setMatchingReductionSatisfied();
+		}
+		
+		// Topmost
+		if (updateOperation._makeTopmost) {
+			access->setTopmost();
+		}
+		
+		DataAccessStatusEffects updatedStatus(access);
+		
+		handleDataAccessStatusChanges(
+			initialStatus, updatedStatus,
+			access, accessStructures, updateOperation._task, 
+			hpDependencyData
+		);
+	}
+	
+	static void processUpdateOperation(
+		UpdateOperation const &updateOperation,
+		/* OUT */ CPUDependencyData &hpDependencyData
+	) {
+		assert(!updateOperation.empty());
+		TaskDataAccesses &accessStructures = updateOperation._task->getDataAccesses();
+		
+		if (updateOperation._toAccesses) {
+			// Update over Accesses
+			accessStructures._accesses.processIntersecting(
+				updateOperation._region,
+				[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
+					DataAccess *access = &(*accessPosition);
+					
+					applyUpdateOperationOnAccess(updateOperation, access, accessStructures, hpDependencyData);
+					
+					return true;
+				}
+			);
+		} else {
+			// Update over Fragments
+			accessStructures._accessFragments.processIntersecting(
+				updateOperation._region,
+				[&] (TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
+					DataAccess *fragment = &(*fragmentPosition);
+					
+					applyUpdateOperationOnAccess(updateOperation, fragment, accessStructures, hpDependencyData);
+					
+					return true;
+				}
+			);
 		}
 	}
 	
@@ -896,18 +814,18 @@ private:
 		Task *lastLocked = nullptr;
 		
 		while (!hpDependencyData._delayedOperations.empty()) {
-			DelayedOperation const &delayedOperation = hpDependencyData._delayedOperations.front();
+			UpdateOperation &delayedOperation = hpDependencyData._delayedOperations.front();
 			
-			assert(delayedOperation._target != nullptr);
-			if (delayedOperation._target != lastLocked) {
+			assert(delayedOperation._task != nullptr);
+			if (delayedOperation._task != lastLocked) {
 				if (lastLocked != nullptr) {
 					lastLocked->getDataAccesses()._lock.unlock();
 				}
-				lastLocked = delayedOperation._target;
+				lastLocked = delayedOperation._task;
 				lastLocked->getDataAccesses()._lock.lock();
 			}
 			
-			processDelayedOperation(delayedOperation, hpDependencyData);
+			processUpdateOperation(delayedOperation, hpDependencyData);
 			
 			hpDependencyData._delayedOperations.pop_front();
 		}
@@ -970,6 +888,8 @@ private:
 		
 		accessStructures._accessFragments.insert(*fragment);
 		fragment->setInBottomMap();
+		
+		// NOTE: This may in the future need to be included in the common status changes code
 		dataAccess->setHasSubaccesses();
 		
 		if (createSubregionBottomMapEntry) {
@@ -990,9 +910,6 @@ private:
 				}
 			);
 		}
-		
-		// Fragments also participate in the counter of non removable accesses
-		accessStructures._removalBlockers++;
 		
 		return fragment;
 	}
@@ -1077,6 +994,8 @@ private:
 					[&](TaskDataAccesses::accesses_t::iterator superaccessPosition) -> bool {
 						BottomMapEntry *bottomMapEntry = nullptr;
 						
+						DataAccessStatusEffects initialStatus;
+						
 						DataAccess *previous = createInitialFragment(
 							superaccessPosition, parentAccessStructures,
 							missingRegion, !removeBottomMapEntry, /* Out */ bottomMapEntry
@@ -1085,6 +1004,20 @@ private:
 						assert(previous->isFragment());
 						
 						previous->setTopmost();
+						previous->setRegistered();
+						
+						DataAccessStatusEffects updatedStatus(previous);
+						
+						{
+							CPUDependencyData hpDependencyData;
+							handleDataAccessStatusChanges(
+								initialStatus, updatedStatus,
+								previous, parentAccessStructures, parent,
+								hpDependencyData
+							);
+							assert(hpDependencyData.empty());
+						}
+						
 						previous = fragmentAccess(previous, missingRegion, parentAccessStructures);
 						
 						return matchingProcessor(previous, bottomMapEntry);
@@ -1100,122 +1033,13 @@ private:
 	}
 	
 	
-	static inline void propagate(
-		PropagationBits const &propagationBits,
-		DataAccessRegion region, Task *next,
-		/* inout */ CPUDependencyData &hpDependencyData
+	template <typename ProcessorType, typename BottomMapEntryProcessorType>
+	static inline void foreachBottomMapMatch(
+		DataAccessRegion const &region,
+		TaskDataAccesses &accessStructures, Task *task,
+		ProcessorType processor,
+		BottomMapEntryProcessorType bottomMapEntryProcessor = [] (BottomMapEntry *) {}
 	) {
-		assert(propagationBits.propagates());
-		assert(!region.empty());
-		assert(next != nullptr);
-		
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-		DelayedOperation nextOperation;
-#else
-		DelayedOperation &nextOperation = getNewDelayedOperation(hpDependencyData);
-		nextOperation._operationType = DelayedOperation::propagate_satisfiability_plain_operation;
-#endif
-		nextOperation._propagationBits = propagationBits;
-		nextOperation._region = region;
-		nextOperation._target = next;
-		
-#if NO_DEPENDENCY_DELAYED_OPERATIONS
-		TaskDataAccesses &nextTaskAccessStructures = next->getDataAccesses();
-		std::lock_guard<TaskDataAccesses::spinlock_t> guard(nextTaskAccessStructures._lock);
-		
-		propagateSatisfiabilityPlain(nextOperation, hpDependencyData);
-#endif
-	}
-	
-	
-	static inline DataAccess *linkAndPropagate(
-		DataAccess *dataAccess, Task *task, TaskDataAccesses &accessStructures,
-		DataAccessRegion region, Task *next,
-		/* inout */ CPUDependencyData &hpDependencyData
-	) {
-		assert(dataAccess != nullptr);
-		assert(dataAccess->isReachable());
-		assert(dataAccess->isInBottomMap());
-		assert(!dataAccess->hasBeenDiscounted());
-		assert(dataAccess->getAccessRegion().fullyContainedIn(region));
-		assert(task != nullptr);
-		assert(!accessStructures.hasBeenDeleted());
-		assert(accessStructures._lock.isLockedByThisThread());
-		assert(next != nullptr);
-		
-		dataAccess = fragmentAccess(dataAccess, region, accessStructures);
-		assert(dataAccess != nullptr);
-		assert(dataAccess->getNext() == nullptr);
-		
-		assert(!dataAccess->hasForcedRemoval());
-		assert(!dataAccess->isRemovable(false));
-		
-		// Link the dataAccess
-		dataAccess->setNext(next);
-		dataAccess->unsetInBottomMap();
-		
-		Instrument::linkedDataAccesses(
-			dataAccess->getInstrumentationId(), next->getInstrumentationTaskId(),
-			dataAccess->getAccessRegion(),
-			true, false
-		);
-		
-		// Calculate the propagation mask before performing any other change
-		PropagationBits propagationMask = calculatePropagationMask(dataAccess);
-		
-		// Update the propagation bits and calculate the propagation.
-		// NOTE: Even if the propagation is performed through the fragments, the propagation bits must be updated.
-		PropagationBits propagationBits = calculateAndUpdatePropagationBits(dataAccess, /* Was not removable */ false);
-		
-		if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
-			// Deep-link (and propagate to) the next
-			
-			// This operation cannot be delayed since otherwise there could be update races
-			DelayedOperation delayedOperation;
-			delayedOperation._propagationBits = propagationMask;
-			delayedOperation._next = next;
-			delayedOperation._region = dataAccess->getAccessRegion();
-			delayedOperation._target = task;
-			linkBottomMapAccessesToNext(delayedOperation, hpDependencyData);
-			
-			// The next could become topmost
-			if (propagationBits._makesNextTopmost) {
-				PropagationBits makeNextTopmostBits;
-				makeNextTopmostBits._makesNextTopmost = true;
-				propagate(makeNextTopmostBits, dataAccess->getAccessRegion(), next, hpDependencyData);
-			}
-		} else if (propagationBits.propagates()) {
-			// Regular propagation
-			
-			assert(!dataAccess->complete() || !dataAccess->hasSubaccesses());
-			propagate(propagationBits, dataAccess->getAccessRegion(), next, hpDependencyData);
-		}
-		
-		// Update the number of non removable accesses of the task
-		if (propagationBits._becomesRemovable) {
-			handleAccessRemoval(dataAccess, accessStructures, task, hpDependencyData);
-		}
-		
-		// Return the data access since it may have been fragmented
-		return dataAccess;
-	}
-	
-	
-	static inline void linkBottomMapAccessesToNext(
-		DelayedOperation const &delayedOperation,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
-		DataAccessRegion region = delayedOperation._region;
-		Task *task = delayedOperation._target;
-		Task *next = delayedOperation._next;
-		PropagationBits const &propagationMask = delayedOperation._propagationBits;
-		
-		assert(task != nullptr);
-		assert(!region.empty());
-		assert(next != nullptr);
-		
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		
 		assert(!accessStructures.hasBeenDeleted());
 		assert(accessStructures._lock.isLockedByThisThread());
 		
@@ -1231,6 +1055,8 @@ private:
 				DataAccessRegion subregion = region.intersect(bottomMapEntry->getAccessRegion());
 				
 				if (subtask != task) {
+					// A regular access
+					
 					TaskDataAccesses &subtaskAccessStructures = subtask->getDataAccesses();
 					subtaskAccessStructures._lock.lock();
 					
@@ -1241,34 +1067,12 @@ private:
 							DataAccess *subaccess = &(*accessPosition);
 							assert(subaccess != nullptr);
 							assert(subaccess->isReachable());
-							assert(subaccess->getNext() == nullptr);
 							assert(subaccess->isInBottomMap());
 							assert(!subaccess->hasBeenDiscounted());
 							
 							subaccess = fragmentAccess(subaccess, subregion, subtaskAccessStructures);
 							
-							// Avoid propagating satisfiability that has already been propagated by an ancestor
-							if (propagationMask._read) {
-								subaccess->setPropagatedReadSatisfiability();
-							}
-							if (propagationMask._write) {
-								subaccess->setPropagatedWriteSatisfiability();
-							}
-							if (propagationMask._concurrent) {
-								subaccess->setPropagatedConcurrentSatisfiability();
-							}
-							if (propagationMask._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
-								subaccess->setPropagatedAnyReductionSatisfiability();
-							} else if (propagationMask._reductionTypeAndOperatorIndex != no_reduction_type_and_operator) {
-								assert(propagationMask._reductionTypeAndOperatorIndex == subaccess->getReductionTypeAndOperatorIndex());
-								subaccess->setPropagatedMatchingReductionSatisfiability();
-							}
-							
-							linkAndPropagate(
-								subaccess, subtask, subtaskAccessStructures,
-								subregion.intersect(subaccess->getAccessRegion()), next,
-								hpDependencyData
-							);
+							processor(subaccess, subtaskAccessStructures, subtask);
 							
 							return true;
 						}
@@ -1283,40 +1087,19 @@ private:
 							DataAccess *fragment = &(*fragmentPosition);
 							assert(fragment != nullptr);
 							assert(fragment->isReachable());
-							assert(fragment->getNext() == nullptr);
 							assert(fragment->isInBottomMap());
 							assert(!fragment->hasBeenDiscounted());
 							
 							fragment = fragmentAccess(fragment, subregion, accessStructures);
 							
-							// Avoid propagating satisfiability that has already been propagated by an ancestor
-							if (propagationMask._read) {
-								fragment->setPropagatedReadSatisfiability();
-							}
-							if (propagationMask._write) {
-								fragment->setPropagatedWriteSatisfiability();
-							}
-							if (propagationMask._concurrent) {
-								fragment->setPropagatedConcurrentSatisfiability();
-							}
-							
-							if (propagationMask._reductionTypeAndOperatorIndex == any_reduction_type_and_operator) {
-								fragment->setPropagatedAnyReductionSatisfiability();
-							} else if (propagationMask._reductionTypeAndOperatorIndex != no_reduction_type_and_operator) {
-								assert(propagationMask._reductionTypeAndOperatorIndex == fragment->getReductionTypeAndOperatorIndex());
-								fragment->setPropagatedMatchingReductionSatisfiability();
-							}
-							
-							linkAndPropagate(
-								fragment, task, accessStructures,
-								subregion.intersect(fragment->getAccessRegion()), next,
-								hpDependencyData
-							);
+							processor(fragment, accessStructures, task);
 							
 							return true;
 						}
 					);
 				}
+				
+				bottomMapEntryProcessor(bottomMapEntry);
 				
 				return true;
 			}
@@ -1324,9 +1107,152 @@ private:
 	}
 	
 	
+	template <typename ProcessorType, typename BottomMapEntryProcessorType>
+	static inline void foreachBottomMapEntry(
+		TaskDataAccesses &accessStructures, Task *task,
+		ProcessorType processor,
+		BottomMapEntryProcessorType bottomMapEntryProcessor = [] (BottomMapEntry *) {}
+	) {
+		assert(!accessStructures.hasBeenDeleted());
+		assert(accessStructures._lock.isLockedByThisThread());
+		
+		accessStructures._subaccessBottomMap.processAll(
+			[&](TaskDataAccesses::subaccess_bottom_map_t::iterator bottomMapPosition) -> bool {
+				BottomMapEntry *bottomMapEntry = &(*bottomMapPosition);
+				assert(bottomMapEntry != nullptr);
+				
+				Task *subtask = bottomMapEntry->_task;
+				assert(subtask != nullptr);
+				
+				DataAccessRegion const &region = bottomMapEntry->getAccessRegion();
+				
+				if (subtask != task) {
+					// A regular access
+					
+					TaskDataAccesses &subtaskAccessStructures = subtask->getDataAccesses();
+					subtaskAccessStructures._lock.lock();
+					
+					// For each access of the subtask that matches
+					subtaskAccessStructures._accesses.processIntersecting(
+						region,
+						[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
+							DataAccess *subaccess = &(*accessPosition);
+							assert(subaccess != nullptr);
+							assert(subaccess->isReachable());
+							assert(subaccess->isInBottomMap());
+							assert(!subaccess->hasBeenDiscounted());
+							
+							subaccess = fragmentAccess(subaccess, region, subtaskAccessStructures);
+							
+							processor(subaccess, subtaskAccessStructures, subtask);
+							
+							return true;
+						}
+					);
+					
+					subtaskAccessStructures._lock.unlock();
+				} else {
+					// A fragment
+					accessStructures._accessFragments.processIntersecting(
+						region,
+						[&] (TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
+							DataAccess *fragment = &(*fragmentPosition);
+							assert(fragment != nullptr);
+							assert(fragment->isReachable());
+							assert(fragment->isInBottomMap());
+							assert(!fragment->hasBeenDiscounted());
+							
+							fragment = fragmentAccess(fragment, region, accessStructures);
+							
+							processor(fragment, accessStructures, task);
+							
+							return true;
+						}
+					);
+				}
+				
+				bottomMapEntryProcessor(bottomMapEntry);
+				
+				return true;
+			}
+		);
+	}
+	
+	
+	static inline void processBottomMapUpdate(
+		BottomMapUpdateOperation &operation,
+		TaskDataAccesses &accessStructures, Task *task,
+		/* OUT */ CPUDependencyData &hpDependencyData
+	) {
+		assert(task != nullptr);
+		assert(!operation.empty());
+		assert(!operation._region.empty());
+		assert(!accessStructures.hasBeenDeleted());
+		assert(accessStructures._lock.isLockedByThisThread());
+		
+		if (operation._linkBottomMapAccessesToNext) {
+			assert(!operation._activateForcedRemovalOfBottomMapAccesses);
+			foreachBottomMapMatch(
+				operation._region,
+				accessStructures, task,
+				[&] (DataAccess *access, TaskDataAccesses &currentAccessStructures, Task *currentTask) {
+					DataAccessStatusEffects initialStatus(access);
+					
+					if (operation._inhibitReadPropagation) {
+						assert(access->canPropagateReadSatisfiability());
+						access->unsetCanPropagateReadSatisfiability();
+					}
+					
+					if (operation._inhibitConcurrentPropagation) {
+						assert(access->canPropagateConcurrentSatisfiability());
+						access->unsetCanPropagateConcurrentSatisfiability();
+					}
+					
+					if (operation._inhibitReductionPropagation == any_reduction_type_and_operator) {
+						access->unsetCanPropagateAnyReductionSatisfiability();
+					} else if (
+						(operation._inhibitReductionPropagation != no_reduction_type_and_operator)
+						&& (access->getReductionTypeAndOperatorIndex() == operation._inhibitReductionPropagation)
+					) {
+						access->unsetCanPropagateMatchingReductionSatisfiability();
+					}
+					
+					access->setNext(operation._next);
+					
+					DataAccessStatusEffects updatedStatus(access);
+					
+					handleDataAccessStatusChanges(
+						initialStatus, updatedStatus,
+						access, currentAccessStructures, currentTask,
+						hpDependencyData
+					);
+				},
+				[] (BottomMapEntry *) {}
+			);
+		} else if (operation._activateForcedRemovalOfBottomMapAccesses) {
+			foreachBottomMapMatch(
+				operation._region,
+				accessStructures, task,
+				[&] (DataAccess *access, TaskDataAccesses &currentAccessStructures, Task *currentTask) {
+					DataAccessStatusEffects initialStatus(access);
+					access->forceRemoval();
+					DataAccessStatusEffects updatedStatus(access);
+					
+					handleDataAccessStatusChanges(
+						initialStatus, updatedStatus,
+						access, currentAccessStructures, currentTask,
+						hpDependencyData
+					);
+				},
+				[] (BottomMapEntry *) {}
+			);
+		}
+	}
+	
+	
 	static inline void replaceMatchingInBottomMapLinkAndPropagate(
 		Task *task,  TaskDataAccesses &accessStructures,
-		DataAccessRegion region, bool weak,
+		DataAccessRegion region,
 		Task *parent, TaskDataAccesses &parentAccessStructures,
 		/* inout */ CPUDependencyData &hpDependencyData
 	) {
@@ -1334,11 +1260,6 @@ private:
 		assert(task != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
 		assert(!parentAccessStructures.hasBeenDeleted());
-		
-		// The satisfiability propagation will decrease the predecessor count as needed
-		if (!weak) {
-			task->increasePredecessors();
-		}
 		
 		bool local = false;
 		#ifndef NDEBUG
@@ -1354,6 +1275,8 @@ private:
 				assert(previous != nullptr);
 				assert(previous->isReachable());
 				assert(!previous->hasBeenDiscounted());
+				assert(previous->getNext() == nullptr);
+				assert(!previous->hasForcedRemoval());
 				
 				Task *previousTask = previous->getOriginator();
 				assert(previousTask != nullptr);
@@ -1377,9 +1300,17 @@ private:
 				assert(!previousAccessStructures.hasBeenDeleted());
 				assert(previous->getAccessRegion().fullyContainedIn(region));
 				
-				previous = linkAndPropagate(
-					previous, previousTask, previousAccessStructures,
-					previous->getAccessRegion(), task,
+				DataAccessStatusEffects initialStatus(previous);
+				
+				// Link the dataAccess
+				previous->setNext(task);
+				previous->unsetInBottomMap();
+				
+				DataAccessStatusEffects updatedStatus(previous);
+				
+				handleDataAccessStatusChanges(
+					initialStatus, updatedStatus,
+					previous, previousAccessStructures, previousTask,
 					hpDependencyData
 				);
 				
@@ -1410,21 +1341,19 @@ private:
 						
 						targetAccess = fragmentAccess(targetAccess, missingRegion, accessStructures);
 						
+						DataAccessStatusEffects initialStatus(targetAccess);
 						targetAccess->setReadSatisfied();
 						targetAccess->setWriteSatisfied();
 						targetAccess->setConcurrentSatisfied();
 						targetAccess->setAnyReductionSatisfied();
 						targetAccess->setMatchingReductionSatisfied();
 						targetAccess->setTopmost();
+						DataAccessStatusEffects updatedStatus(targetAccess);
 						
-						if (!targetAccess->isWeak()) {
-							task->decreasePredecessors();
-						}
-						
-						Instrument::dataAccessBecomesSatisfied(
-							targetAccess->getInstrumentationId(),
-							true, true, /* true, */ false,
-							task->getInstrumentationTaskId()
+						handleDataAccessStatusChanges(
+							initialStatus, updatedStatus,
+							targetAccess, accessStructures, task,
+							hpDependencyData
 						);
 						
 						return true;
@@ -1462,87 +1391,56 @@ private:
 		assert(!parentAccessStructures.hasBeenDeleted());
 		
 		
-		// NOTE: expensive operation that we only need if this part is instrumented
-		if (sizeof(Instrument::data_access_id_t) != 0) {
-			accessStructures._accesses.processAll(
-				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
-					DataAccess *dataAccess = &(*position);
-					assert(dataAccess != nullptr);
-					assert(!dataAccess->hasBeenDiscounted());
-					
-					dataAccess->setNewInstrumentationId(task->getInstrumentationTaskId());
-					
-					return true;
-				}
-			);
-		}
+		std::lock_guard<TaskDataAccesses::spinlock_t> parentGuard(parentAccessStructures._lock);
+		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 		
-		{
-			std::lock_guard<TaskDataAccesses::spinlock_t> parentGuard(parentAccessStructures._lock);
-			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-			
-			// Create any initial missing fragments in the parent, link the previous accesses
-			// and possibly some parent fragments to the new task, and create propagation
-			// operations from the previous accesses to the new task.
-			// 
-			// The new task cannot be locked since it may have a predecessor multiple times,
-			// and that could produce a dead lock if the latter is finishing (this one would
-			// lock the new task first, and the predecessor later; the finishing task would
-			// do the same in the reverse order). However, we need to protect the traversal
-			// itself, since an already linked predecessor may produce fragmentation and thus
-			// may rebalance the tree. Therefore, we just lock for advancing the iteration.
-			accessStructures._accesses.processAll(
-				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
-					DataAccess *dataAccess = &(*position);
-					assert(dataAccess != nullptr);
-					assert(!dataAccess->hasBeenDiscounted());
-					
-					// Unlock to avoid potential deadlock
-					accessStructures._lock.unlock();
-					
-					dataAccess->setInBottomMap();
-					
+		// Create any initial missing fragments in the parent, link the previous accesses
+		// and possibly some parent fragments to the new task, and create propagation
+		// operations from the previous accesses to the new task.
+		// 
+		// The new task cannot be locked since it may have a predecessor multiple times,
+		// and that could produce a dead lock if the latter is finishing (this one would
+		// lock the new task first, and the predecessor later; the finishing task would
+		// do the same in the reverse order). However, we need to protect the traversal
+		// itself, since an already linked predecessor may produce fragmentation and thus
+		// may rebalance the tree. Therefore, we just lock for advancing the iteration.
+		accessStructures._accesses.processAll(
+			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+				DataAccess *dataAccess = &(*position);
+				assert(dataAccess != nullptr);
+				assert(!dataAccess->hasBeenDiscounted());
+				
+				DataAccessStatusEffects initialStatus(dataAccess);
+				dataAccess->setNewInstrumentationId(task->getInstrumentationTaskId());
+				dataAccess->setInBottomMap();
+				dataAccess->setRegistered();
 #ifndef NDEBUG
-					dataAccess->setReachable();
+				dataAccess->setReachable();
 #endif
-					
-					replaceMatchingInBottomMapLinkAndPropagate(
-						task, accessStructures,
-						dataAccess->getAccessRegion(), dataAccess->isWeak(),
-						parent, parentAccessStructures,
-						hpDependencyData
-					);
-					
-					// Relock to advance the iterator
-					accessStructures._lock.lock();
-					
-					return true;
-				}
-			);
-		}
-	}
-	
-	
-	static inline void finalizeFragment(
-		DataAccess *fragment,
-		Task *task, TaskDataAccesses &accessStructures,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
-		fragment->setComplete();
-		
-		// Essentially calculate if the next becomes topmost and if the fragment becomes removable
-		PropagationBits propagationBits = calculateAndUpdatePropagationBits(fragment, /* Was not removable */ false);
-		assert(!propagationBits.propagatesSatisfiability());
-		
-		if ((fragment->getNext() != nullptr) && propagationBits.propagates() /* Topmost property */) {
-			propagate(propagationBits, fragment->getAccessRegion(), fragment->getNext(), hpDependencyData);
-		}
-		
-		// Update the number of non removable accesses if the fragment has become removable
-		if (propagationBits._becomesRemovable) {
-			handleAccessRemoval(fragment, accessStructures, task, hpDependencyData);
-			assert(accessStructures._removalBlockers > 0);
-		}
+				DataAccessStatusEffects updatedStatus(dataAccess);
+				
+				handleDataAccessStatusChanges(
+					initialStatus, updatedStatus,
+					dataAccess, accessStructures, task,
+					hpDependencyData
+				);
+				
+				// Unlock to avoid potential deadlock
+				accessStructures._lock.unlock();
+				
+				replaceMatchingInBottomMapLinkAndPropagate(
+					task, accessStructures,
+					dataAccess->getAccessRegion(),
+					parent, parentAccessStructures,
+					hpDependencyData
+				);
+				
+				// Relock to advance the iterator
+				accessStructures._lock.lock();
+				
+				return true;
+			}
+		);
 	}
 	
 	
@@ -1566,11 +1464,54 @@ private:
 					return true;
 				}
 				
-				finalizeFragment(fragment, task, accessStructures, hpDependencyData);
+				DataAccessStatusEffects initialStatus(fragment);
+				fragment->setComplete();
+				DataAccessStatusEffects updatedStatus(fragment);
+				
+				handleDataAccessStatusChanges(
+					initialStatus, updatedStatus,
+					fragment, accessStructures, task,
+					hpDependencyData
+				);
 				
 				return true;
 			}
 		);
+	}
+	
+	
+	template <typename ProcessorType>
+	static inline void applyToAccessAndFragments(
+		DataAccess *dataAccess, DataAccessRegion const &region,
+		TaskDataAccesses &accessStructures,
+		ProcessorType processor
+	) {
+		// Fragment if necessary
+		dataAccess = fragmentAccess(dataAccess, region, accessStructures);
+		assert(dataAccess != nullptr);
+		
+		bool hasSubaccesses = dataAccess->hasSubaccesses();
+		DataAccessRegion finalRegion = dataAccess->getAccessRegion();
+		bool alsoSubaccesses = processor(dataAccess);
+		
+		if (alsoSubaccesses && hasSubaccesses) {
+			accessStructures._accessFragments.processIntersecting(
+				finalRegion,
+				[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
+					DataAccess *fragment = &(*position);
+					assert(fragment != nullptr);
+					assert(fragment->isFragment());
+					assert(!fragment->hasBeenDiscounted());
+					
+					fragment = fragmentAccess(fragment, finalRegion, accessStructures);
+					assert(fragment != nullptr);
+					
+					processor(fragment);
+					
+					return true;
+				}
+			);
+		}
 	}
 	
 	
@@ -1590,99 +1531,25 @@ private:
 		}
 		assert(!dataAccess->hasBeenDiscounted());
 		
-		TaskDataAccesses &accessStructures = finishedTask->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		
-		// Fragment if necessary
-		dataAccess = fragmentAccess(dataAccess, region, accessStructures);
-		assert(dataAccess != nullptr);
-		region = dataAccess->getAccessRegion();
-		
-		Task *next = dataAccess->getNext();
-		
-		assert(!dataAccess->hasForcedRemoval() || (next == nullptr));
-		
-		if (dataAccess->hasSubaccesses()) {
-			// Mark the fragments as completed and propagate topmost property
-			accessStructures._accessFragments.processIntersecting(
-				region,
-				[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
-					DataAccess *fragment = &(*position);
-					assert(fragment != nullptr);
-					assert(fragment->isFragment());
-					assert(!fragment->hasBeenDiscounted());
-					
-					fragment = fragmentAccess(fragment, region, accessStructures);
-					assert(fragment != nullptr);
-					
-					finalizeFragment(fragment, finishedTask, accessStructures, hpDependencyData);
-					
-					return true;
-				}
-			);
-			
-			// Link bottom map subaccesses to the next of the current access and remove them from the bottom map
-			if (next != nullptr) {
-				// This also propagates
-				DelayedOperation delayedOperation;
-				delayedOperation._propagationBits = calculatePropagationMask(dataAccess);
-				delayedOperation._next = next;
-				delayedOperation._region = dataAccess->getAccessRegion();
-				delayedOperation._target = dataAccess->getOriginator();
+		applyToAccessAndFragments(
+			dataAccess, region,
+			finishedTask->getDataAccesses(),
+			[&] (DataAccess *accessOrFragment) -> bool {
+				assert(!accessOrFragment->complete());
 				
-				// The call to calculatePropagationMask must precede the following code
-				if (dataAccess->readSatisfied() && !dataAccess->hasPropagatedReadSatisfiability()) {
-					dataAccess->setPropagatedReadSatisfiability();
-				}
-				if (dataAccess->writeSatisfied() && !dataAccess->hasPropagatedWriteSatisfiability()) {
-					// The actual propagation will occur through the bottom map accesses
-					dataAccess->setPropagatedWriteSatisfiability();
-				}
-				if (dataAccess->concurrentSatisfied() && !dataAccess->hasPropagatedConcurrentSatisfiability()) {
-					// The actual propagation will occur through the bottom map accesses
-					dataAccess->setPropagatedConcurrentSatisfiability();
-				}
-				if (dataAccess->anyReductionSatisfied() && ! dataAccess->hasPropagatedAnyReductionSatisfiability()) {
-					// The actual propagation will occur through the bottom map accesses
-					dataAccess->setPropagatedAnyReductionSatisfiability();
-				}
-				if (dataAccess->matchingReductionSatisfied() && ! dataAccess->hasPropagatedMatchingReductionSatisfiability()) {
-					// The actual propagation will occur through the bottom map accesses
-					dataAccess->setPropagatedMatchingReductionSatisfiability();
-				}
+				DataAccessStatusEffects initialStatus(accessOrFragment);
+				accessOrFragment->setComplete();
+				DataAccessStatusEffects updatedStatus(accessOrFragment);
 				
-				// Must be done synchronously
-				linkBottomMapAccessesToNext(delayedOperation, hpDependencyData);
+				handleDataAccessStatusChanges(
+					initialStatus, updatedStatus,
+					accessOrFragment, finishedTask->getDataAccesses(), finishedTask,
+					hpDependencyData
+				);
+				
+				return true; // Apply also to subaccesses if any
 			}
-		}
-		
-		// Mark it as complete
-		dataAccess->setComplete();
-		
-		PropagationBits propagationBits = calculateAndUpdatePropagationBits(dataAccess, /* Was not removable */ false);
-		
-		if (!dataAccess->hasSubaccesses() && (next != nullptr) && propagationBits.propagates()) {
-			// Direct propagation
-			propagate(propagationBits, dataAccess->getAccessRegion(), next, hpDependencyData);
-		} else if (propagationBits._makesNextTopmost) {
-			// Propagate only topmost property (the rest go through the fragments)
-			PropagationBits makeNextTopmostBits;
-			makeNextTopmostBits._makesNextTopmost = true;
-			propagate(makeNextTopmostBits, dataAccess->getAccessRegion(), next, hpDependencyData);
-		}
-		
-		// Handle propagation of forced removal of accesses
-		if (dataAccess->hasForcedRemoval() && dataAccess->hasSubaccesses()) {
-			activateForcedRemovalOfBottomMapAccesses(
-				finishedTask, accessStructures, dataAccess->getAccessRegion(),
-				hpDependencyData
-			);
-		}
-		
-		// Update the number of non removable accesses of the task
-		if (propagationBits._becomesRemovable) {
-			handleAccessRemoval(dataAccess, accessStructures, finishedTask, hpDependencyData);
-		}
+		);
 	}
 	
 	
@@ -1716,7 +1583,8 @@ public:
 		accessStructures._accesses.fragmentIntersecting(
 			region,
 			[&](DataAccess const &toBeDuplicated) -> DataAccess * {
-				return duplicateDataAccess(toBeDuplicated, accessStructures, false);
+				assert(!toBeDuplicated.isRegistered());
+				return duplicateDataAccess(toBeDuplicated, accessStructures);
 			},
 			[](DataAccess *, DataAccess *) {}
 		);
@@ -1734,7 +1602,6 @@ public:
 			[&](DataAccessRegion missingRegion) -> bool {
 				DataAccess *newAccess = createAccess(task, accessType, weak, missingRegion, false, reductionTypeAndOperatorIndex);
 				
-				accessStructures._removalBlockers++;
 				accessStructures._accesses.insert(*newAccess);
 				
 				return true;
@@ -1827,31 +1694,23 @@ public:
 					[&](TaskDataAccesses::accesses_t::iterator position2) -> bool {
 						DataAccess *dataAccess = &(*position2);
 						assert(dataAccess != nullptr);
-						
-						dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRegion(), subtaskAccessStructures);
+						assert(dataAccess->getNext() == nullptr);
 						
 						if (dataAccess->hasForcedRemoval()) {
 							return true;
 						}
 						
-						assert(dataAccess->getNext() == nullptr);
+						dataAccess = fragmentAccess(dataAccess, bottomMapEntry->getAccessRegion(), subtaskAccessStructures);
+						
+						DataAccessStatusEffects initialStatus(dataAccess);
 						dataAccess->forceRemoval();
+						DataAccessStatusEffects updatedStatus(dataAccess);
 						
-						// Handle propagation of forced removal of accesses
-						if (dataAccess->complete() && dataAccess->hasSubaccesses()) {
-							activateForcedRemovalOfBottomMapAccesses(
-								subtask, subtaskAccessStructures,
-								dataAccess->getAccessRegion(),
-								hpDependencyData
-							);
-						}
-						
-						// Update the number of non removable accesses of the task
-						if (dataAccess->isRemovable(true)) {
-							assert(!dataAccess->isRemovable(false));
-							
-							handleAccessRemoval(dataAccess, subtaskAccessStructures, subtask, hpDependencyData);
-						}
+						handleDataAccessStatusChanges(
+							initialStatus, updatedStatus,
+							dataAccess, subtaskAccessStructures, subtask,
+							hpDependencyData
+						);
 						
 						return true;
 					}
@@ -2063,13 +1922,10 @@ public:
 					assert(dataAccess != nullptr);
 					assert(dataAccess->isFragment());
 					
-					if (dataAccess->isRemovable(dataAccess->hasForcedRemoval())) {
-						// Already discounted
-					} else {
-						assert(accessStructures._removalBlockers > 0);
-						accessStructures._removalBlockers--;
-						assert(accessStructures._removalBlockers >= 0);
-					}
+#ifndef NDEBUG
+					DataAccessStatusEffects currentStatus(dataAccess);
+					assert(currentStatus._isRemovable);
+#endif
 					
 					Instrument::removedDataAccess(dataAccess->getInstrumentationId());
 					accessStructures._accessFragments.erase(dataAccess);

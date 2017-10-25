@@ -22,57 +22,46 @@ class Task;
 
 
 struct CPUDependencyData {
-	struct PropagationBits {
-		bool _read;
-		bool _write;
-		bool _concurrent;
-		reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
-		bool _becomesRemovable;
-		bool _makesNextTopmost;
-		
-		PropagationBits()
-			: _read(false), _write(false), _concurrent(false), _reductionTypeAndOperatorIndex(no_reduction_type_and_operator),
-			_becomesRemovable(false), _makesNextTopmost(false)
-		{
-		}
-		
-		inline bool propagates() const
-		{
-			return (_read || _write || _concurrent || (_reductionTypeAndOperatorIndex != no_reduction_type_and_operator) || _makesNextTopmost);
-		}
-		
-		inline bool propagatesSatisfiability() const
-		{
-			return (_read || _write || _concurrent || (_reductionTypeAndOperatorIndex != no_reduction_type_and_operator));
-		}
-	};
-	
-	
-	struct DelayedOperation {
-		enum operation_type_t {
-			link_bottom_map_accesses_operation,
-			propagate_satisfiability_plain_operation,
-			propagate_satisfiability_to_fragments_operation
-		};
-		
-		operation_type_t _operationType;
-		PropagationBits _propagationBits;
-		
-		Task *_next; // This is only for link_bottom_map_accesses_operation
-		
+	struct UpdateOperation {
+		Task *_task;
 		DataAccessRegion _region;
-		Task *_target;
 		
-		DelayedOperation()
-			: _propagationBits(),
-			_next(nullptr),
-			_region(), _target(nullptr)
+		bool _toAccesses; // As opposed to "to fragments"
+		
+		bool _makeReadSatisfied;
+		bool _makeWriteSatisfied;
+		bool _makeConcurrentSatisfied;
+		
+		bool _makeTopmost;
+		
+		reduction_type_and_operator_index_t _makeReductionSatisfied;
+		
+		UpdateOperation()
+			: _task(nullptr), _region(), _toAccesses(true),
+			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
+			_makeTopmost(false),
+			_makeReductionSatisfied(no_reduction_type_and_operator)
 		{
+		}
+		
+		UpdateOperation(Task *task, DataAccessRegion const &region, bool toAccesses)
+			: _task(task), _region(region), _toAccesses(toAccesses),
+			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
+			_makeTopmost(false),
+			_makeReductionSatisfied(no_reduction_type_and_operator)
+		{
+		}
+		
+		bool empty() const
+		{
+			return !_makeReadSatisfied && !_makeWriteSatisfied && !_makeConcurrentSatisfied
+				&& !_makeTopmost
+				&& (_makeReductionSatisfied == no_reduction_type_and_operator);
 		}
 	};
 	
 	
-	typedef std::deque<DelayedOperation> delayed_operations_t;
+	typedef std::deque<UpdateOperation> delayed_operations_t;
 	typedef std::deque<Task *> satisfied_originator_list_t;
 	typedef std::deque<Task *> removable_task_list_t;
 	
@@ -91,6 +80,11 @@ struct CPUDependencyData {
 		, _inUse(false)
 #endif
 	{
+	}
+	
+	inline bool empty() const
+	{
+		return _satisfiedOriginators.empty() && _delayedOperations.empty() && _removableTasks.empty();
 	}
 };
 
