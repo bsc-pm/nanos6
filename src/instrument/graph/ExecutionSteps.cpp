@@ -293,13 +293,27 @@ namespace Instrument {
 			access->_status = created_access_status;
 			
 			task_info_t &taskInfo = _taskToInfoMap[_originatorTaskId];
-			assert(!taskInfo._liveAccesses.contains(_region));
-			taskInfo._liveAccesses.insert(AccessWrapper(access));
+			
+			if (!access->_isTaskwait) {
+				assert(!taskInfo._liveAccesses.contains(_region));
+				taskInfo._liveAccesses.insert(AccessWrapper(access));
+			} else {
+				assert(taskInfo._parent != task_id_t());
+				
+				task_group_t *taskGroup = dynamic_cast<task_group_t *> (taskInfo._phaseList[access->_parentPhase]);
+				assert(taskGroup != nullptr);
+				
+				assert(!taskGroup->_liveTaskwaitFragments.contains(_region));
+				taskGroup->_liveTaskwaitFragments.insert(TaskwaitFragmentWrapper((taskwait_fragment_t *) access));
+			}
 		}
 		
 		
 		std::string create_data_access_step_t::describe()
 		{
+			access_t *access = _accessIdToAccessMap[_accessId];
+			assert(access != nullptr);
+			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
 			oss << ": creates";
@@ -312,6 +326,7 @@ namespace Instrument {
 			if (_readSatisfied) {
 				oss << " writeSatisfied";
 			}
+			
 			if (_weak) {
 				oss << " weak";
 			}
@@ -331,8 +346,16 @@ namespace Instrument {
 				case REDUCTION_ACCESS_TYPE:
 					oss << " RED";
 					break;
+				case NO_ACCESS_TYPE:
+					oss << " LOC";
+					break;
 			}
-			oss << " access " << _accessId;
+			
+			if (!access->_isTaskwait) {
+				oss << " access " << _accessId;
+			} else {
+				oss << " taskwait fragment " << _accessId;
+			}
 			oss << " [" << _region << "]";
 			return oss.str();
 		}
@@ -386,6 +409,9 @@ namespace Instrument {
 				case REDUCTION_ACCESS_TYPE:
 					oss << " RED";
 					break;
+				case NO_ACCESS_TYPE:
+					oss << " LOC";
+					break;
 			}
 			return oss.str();
 		}
@@ -411,9 +437,20 @@ namespace Instrument {
 		
 		std::string data_access_becomes_satisfied_step_t::describe()
 		{
+			access_t *access = _accessIdToAccessMap[_accessId];
+			assert(access != nullptr);
+			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": makes access " << _accessId << " of task " << _targetTaskId;
+			oss << ": makes";
+			
+			if (!access->_isTaskwait) {
+				oss << " access ";
+			} else {
+				oss << " taskwait fragment ";
+			}
+			
+			oss << _accessId << " of task " << _targetTaskId;
 			if (_readSatisfied) {
 				oss << " read";
 			}
@@ -463,8 +500,17 @@ namespace Instrument {
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": changes region of "
-				<< (access->fragment() ? "entry fragment " : "access ") << _accessId << " to [" << _region << "]";
+			oss << ": changes region of ";
+			
+			if (access->fragment()) {
+				oss << "entry fragment ";
+			} else if (access->_isTaskwait) {
+				oss << "taskwait fragment ";
+			} else {
+				oss << "access ";
+			}
+			oss << _accessId << " to [" << _region << "]";
+			
 			return oss.str();
 		}
 		
@@ -495,6 +541,13 @@ namespace Instrument {
 				task_group_t *taskGroup = fragment->_taskGroup;
 				assert(!taskGroup->_liveFragments.contains(_newRegion));
 				taskGroup->_liveFragments.insert(AccessFragmentWrapper(fragment));
+			} else if (newFragment->_isTaskwait) {
+				taskwait_fragment_t *taskwaitFragment = (taskwait_fragment_t *) newFragment;
+				assert(taskwaitFragment->_taskGroup != nullptr);
+				
+				task_group_t *taskGroup = taskwaitFragment->_taskGroup;
+				assert(!taskGroup->_liveTaskwaitFragments.contains(_newRegion));
+				taskGroup->_liveTaskwaitFragments.insert(TaskwaitFragmentWrapper(taskwaitFragment));
 			} else {
 				task_info_t &taskInfo = _taskToInfoMap[newFragment->_originator];
 				assert(!taskInfo._liveAccesses.contains(_newRegion));
@@ -541,7 +594,16 @@ namespace Instrument {
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": fragments " << (newFragment->fragment() ? "entry fragment " : "access ") ;
+			oss << ": fragments ";
+			
+			if (newFragment->fragment()) {
+				oss << "entry fragment ";
+			} else if (newFragment->_isTaskwait) {
+				oss << "taskwait fragment ";
+			} else {
+				oss << "access ";
+			}
+			
 			oss << _originalAccessId << " of task " << newFragment->_originator << " into " << _newFragmentAccessId << " with region [" << _newRegion << "]";
 			return oss.str();
 		}
@@ -612,7 +674,18 @@ namespace Instrument {
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": completes " << (access->fragment() ? "entry fragment " : "access ") << _accessId;
+			oss << ": completes ";
+			
+			if (access->fragment()) {
+				oss << "entry fragment ";
+			} else if (access->_isTaskwait) {
+				oss << "taskwait fragment ";
+			} else {
+				oss << "access ";
+			}
+			
+			oss << _accessId;
+			
 			return oss.str();
 		}
 		
@@ -640,7 +713,17 @@ namespace Instrument {
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": makes " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator << " become removable";
+			oss << ": makes ";
+			
+			if (access->fragment()) {
+				oss << "entry fragment ";
+			} else if (access->_isTaskwait) {
+				oss << "taskwait fragment ";
+			} else {
+				oss << "access ";
+			}
+			
+			oss << _accessId << " of task " << access->_originator << " become removable";
 			return oss.str();
 		}
 		
@@ -671,7 +754,18 @@ namespace Instrument {
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": removes " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator;
+			oss << ": removes ";
+			
+			if (access->fragment()) {
+				oss << "entry fragment ";
+			} else if (access->_isTaskwait) {
+				oss << "taskwait fragment ";
+			} else {
+				oss << "access ";
+			}
+			
+			oss << _accessId << " of task " << access->_originator;
+			
 			return oss.str();
 		}
 		
@@ -690,6 +784,11 @@ namespace Instrument {
 			
 			link_to_next_t &link = sourceAccess->_nextLinks[_sinkTaskId];
 			link._status = created_link_status;
+			
+			if (link._sinkIsTaskwait) {
+				return;
+			}
+			
 			for (task_id_t predecessorId : link._predecessors) {
 				task_info_t &predecessor = _taskToInfoMap[predecessorId];
 				predecessor._outputEdges[_sinkTaskId]._hasBeenMaterialized = true;
@@ -708,11 +807,20 @@ namespace Instrument {
 		{
 			access_t *sourceAccess = _accessIdToAccessMap[_sourceAccessId];
 			assert(sourceAccess != nullptr);
+			link_to_next_t &link = sourceAccess->_nextLinks[_sinkTaskId];
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
 			oss << ": links "
-			<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator << " to task " << _sinkTaskId << " over region [" << _region << "]";
+			<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator;
+			
+			if (!link._sinkIsTaskwait) {
+				oss << " to task " << _sinkTaskId;
+			} else {
+				oss << " to taskwait from task " << _sinkTaskId;
+			}
+			
+			oss << " over region [" << _region << "]";
 			return oss.str();
 		}
 		
@@ -731,6 +839,11 @@ namespace Instrument {
 			
 			link_to_next_t &link = sourceAccess->_nextLinks[_sinkTaskId];
 			link._status = dead_link_status;
+			
+			if (link._sinkIsTaskwait) {
+				return;
+			}
+			
 			for (task_id_t predecessorId : link._predecessors) {
 				task_info_t &predecessor = _taskToInfoMap[predecessorId];
 				if (sourceAccess->weak()) {
@@ -748,11 +861,18 @@ namespace Instrument {
 		{
 			access_t *sourceAccess = _accessIdToAccessMap[_sourceAccessId];
 			assert(sourceAccess != nullptr);
+			link_to_next_t &link = sourceAccess->_nextLinks[_sinkTaskId];
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
 			oss << ": unlinks "
-				<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator << " from task " << _sinkTaskId;
+				<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator;
+			
+			if (!link._sinkIsTaskwait) {
+				oss << " from task " << _sinkTaskId;
+			} else {
+				oss << " from taskwait in " << _sinkTaskId;
+			}
 			return oss.str();
 		}
 		

@@ -47,6 +47,12 @@ inline TaskDataAccesses::~TaskDataAccesses()
 		}
 	);
 	
+	_taskwaitFragments.deleteAll(
+		[&](DataAccess *fragment) {
+			delete fragment;
+		}
+	);
+	
 #ifndef NDEBUG
 	hasBeenDeleted() = true;
 #endif

@@ -14,6 +14,7 @@
 
 #include <limits.h>
 
+#include "DataAccessLink.hpp"
 #include "DataAccessRegion.hpp"
 #include "ReductionSpecific.hpp"
 
@@ -23,31 +24,30 @@ class Task;
 
 struct CPUDependencyData {
 	struct UpdateOperation {
-		Task *_task;
+		DataAccessLink _target;
 		DataAccessRegion _region;
-		
-		bool _toAccesses; // As opposed to "to fragments"
 		
 		bool _makeReadSatisfied;
 		bool _makeWriteSatisfied;
 		bool _makeConcurrentSatisfied;
 		
 		bool _makeTopmost;
+		bool _makeTopLevel;
 		
 		reduction_type_and_operator_index_t _makeReductionSatisfied;
 		
 		UpdateOperation()
-			: _task(nullptr), _region(), _toAccesses(true),
+			: _target(), _region(),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
-			_makeTopmost(false),
+			_makeTopmost(false), _makeTopLevel(false),
 			_makeReductionSatisfied(no_reduction_type_and_operator)
 		{
 		}
 		
-		UpdateOperation(Task *task, DataAccessRegion const &region, bool toAccesses)
-			: _task(task), _region(region), _toAccesses(toAccesses),
+		UpdateOperation(DataAccessLink const &target, DataAccessRegion const &region)
+			: _target(target), _region(region),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
-			_makeTopmost(false),
+			_makeTopmost(false), _makeTopLevel(false),
 			_makeReductionSatisfied(no_reduction_type_and_operator)
 		{
 		}
@@ -55,7 +55,7 @@ struct CPUDependencyData {
 		bool empty() const
 		{
 			return !_makeReadSatisfied && !_makeWriteSatisfied && !_makeConcurrentSatisfied
-				&& !_makeTopmost
+				&& !_makeTopmost && !_makeTopLevel
 				&& (_makeReductionSatisfied == no_reduction_type_and_operator);
 		}
 	};

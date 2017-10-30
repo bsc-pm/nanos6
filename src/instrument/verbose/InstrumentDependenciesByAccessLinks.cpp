@@ -27,6 +27,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+		bool isTaskwaitFragment,
 		task_id_t originatorTaskId,
 		InstrumentationContext const &context
 	) {
@@ -37,7 +38,11 @@ namespace Instrument {
 			assert(logEntry != nullptr);
 			
 			logEntry->appendLocation(context);
-			logEntry->_contents << " <-> CreateDataAccess " << id << " superaccess:" << superAccessId << " ";
+			if (!isTaskwaitFragment) {
+				logEntry->_contents << " <-> CreateDataAccess " << id << " superaccess:" << superAccessId << " ";
+			} else {
+				logEntry->_contents << " <-> CreateTaskwaitFragment " << id << " superaccess:" << superAccessId << " ";
+			}
 			
 			if (weak) {
 				logEntry->_contents << "weak";
@@ -51,6 +56,10 @@ namespace Instrument {
 					break;
 				case WRITE_ACCESS_TYPE:
 					logEntry->_contents << " output";
+					break;
+				case NO_ACCESS_TYPE:
+					assert(isTaskwaitFragment);
+					logEntry->_contents << " local";
 					break;
 				default:
 					logEntry->_contents << " unknown_access_type";
@@ -303,7 +312,7 @@ namespace Instrument {
 	
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		task_id_t sinkTaskId,
+		task_id_t sinkTaskId, bool sinkIsTaskwait,
 		DataAccessRegion region,
 		bool direct,
 		__attribute__((unused)) bool bidirectional,
@@ -317,7 +326,16 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << " [" << region << "]" << (direct ? " direct" : "indirect") << " triggererTask:" << context._taskId;
+		if (!sinkIsTaskwait) {
+			logEntry->_contents << " <-> LinkDataAccesses "
+				<< sourceAccessId << " -> Task:" << sinkTaskId;
+		} else {
+			logEntry->_contents << " <-> LinkDataAccesses "
+				<< sourceAccessId << " -> Taskwait from task:" << sinkTaskId;
+		}
+			logEntry->_contents << " [" << region << "]"
+				<< (direct ? " direct" : "indirect")
+				<< " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -325,7 +343,7 @@ namespace Instrument {
 	
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		task_id_t sinkTaskId,
+		task_id_t sinkTaskId, bool sinkIsTaskwait,
 		bool direct,
 		InstrumentationContext const &context
 	) {
@@ -337,7 +355,15 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> UnlinkDataAccesses " << sourceAccessId << " -> Task:" << sinkTaskId << (direct ? " direct" : "indirect") << " triggererTask:" << context._taskId;
+		if (!sinkIsTaskwait) {
+			logEntry->_contents << " <-> UnlinkDataAccesses "
+				<< sourceAccessId << " -> Task:" << sinkTaskId;
+		} else {
+			logEntry->_contents << " <-> LinkDataAccesses "
+				<< sourceAccessId << " -> Taskwait from task:" << sinkTaskId;
+		}
+			logEntry->_contents << (direct ? " direct" : "indirect")
+				<< " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}

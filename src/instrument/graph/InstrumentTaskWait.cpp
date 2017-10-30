@@ -34,6 +34,12 @@ namespace Instrument {
 		taskwait->_taskPhaseIndex = taskInfo._phaseList.size();
 		_taskwaitToInfoMap[taskwaitId] = taskwait;
 		
+		// Save the taskwait identifier in the current phase
+		if (!taskInfo._phaseList.empty()) {
+			phase_t *currentPhase = taskInfo._phaseList.back();
+			currentPhase->_nextTaskwaitId = taskwaitId;
+		}
+		
 		enter_taskwait_step_t *enterTaskwaitStep = new enter_taskwait_step_t(context, taskwaitId);
 		taskInfo._phaseList.push_back(taskwait);
 		_executionSequence.push_back(enterTaskwaitStep);

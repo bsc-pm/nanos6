@@ -20,6 +20,7 @@ namespace Instrument {
 		__attribute__((unused)) bool readSatisfied,
 		__attribute__((unused)) bool writeSatisfied,
 		__attribute__((unused)) bool globallySatisfied,
+		__attribute__((unused)) bool isTaskwaitFragment,
 		__attribute__((unused)) task_id_t originatorTaskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
@@ -90,6 +91,7 @@ namespace Instrument {
 	inline void linkedDataAccesses(
 		__attribute__((unused)) data_access_id_t sourceAccessId,
 		__attribute__((unused)) task_id_t sinkTaskId,
+		__attribute__((unused)) bool sinkIsTaskwait,
 		__attribute__((unused)) DataAccessRegion region,
 		__attribute__((unused)) bool direct,
 		__attribute__((unused)) bool bidirectional,
@@ -100,6 +102,7 @@ namespace Instrument {
 	inline void unlinkedDataAccesses(
 		__attribute__((unused)) data_access_id_t sourceAccessId,
 		__attribute__((unused)) task_id_t sinkTaskId,
+		__attribute__((unused)) bool sinkIsTaskwait,
 		__attribute__((unused)) bool direct,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {

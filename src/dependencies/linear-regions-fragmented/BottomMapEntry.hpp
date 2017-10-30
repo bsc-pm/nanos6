@@ -11,10 +11,11 @@
 #include <boost/intrusive/avl_set.hpp>
 #include <boost/intrusive/avl_set_hook.hpp>
 
+#include "DataAccessLink.hpp"
 #include "DataAccessRegion.hpp"
+#include "../DataAccessType.hpp"
 
 
-class Task;
 struct BottomMapEntry;
 
 
@@ -43,11 +44,11 @@ struct BottomMapEntry {
 	BottomMapEntryLinkingArtifacts::hook_type _links;
 	
 	DataAccessRegion _region;
-	Task *_task;
-	bool _local;
+	DataAccessLink _link;
+	DataAccessType _accessType;
 	
-	BottomMapEntry(DataAccessRegion region, Task *task, bool local)
-		: _links(), _region(region), _task(task), _local(local)
+	BottomMapEntry(DataAccessRegion region, DataAccessLink link, DataAccessType accessType)
+		: _links(), _region(region), _link(link), _accessType(accessType)
 	{
 	}
 	

@@ -52,6 +52,7 @@ namespace Instrument {
 	//! \param readSatisfied whether the access is ready to perform a potential read operation
 	//! \param writeSatisfied whether the access is ready to perform a potential write operation
 	//! \param globallySatisfied whether the access does not preclude the task from running immediately
+	//! \param isTaskwaitFragment whether the access is actually a taskwait fragment
 	//! \param originatorTaskId the identifier of the task that will perform the access as returned in the call to Instrument::enterAddTask
 	//! 
 	//! \returns an identifier for the new data access
@@ -59,6 +60,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+		bool isTaskwaitFragment,
 		task_id_t originatorTaskId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
@@ -158,11 +160,13 @@ namespace Instrument {
 	//! 
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkTaskId the identifier of the sink Task
+	//! \param sinkIsTaskwait the sink is actually a Taskwait
 	//! \param region the region of data covered by the link
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	//! \param bidirectional tru if the link is bidirectional
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
+		data_access_id_t sourceAccessId,
+		task_id_t sinkTaskId, bool sinkIsTaskwait,
 		DataAccessRegion region,
 		bool direct, bool bidirectional,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
@@ -172,9 +176,12 @@ namespace Instrument {
 	//! 
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkTaskId the identifier of the sink Task
+	//! \param sinkIsTaskwait the sink is actually a Taskwait
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	void unlinkedDataAccesses(
-		data_access_id_t sourceAccessId, task_id_t sinkTaskId, bool direct,
+		data_access_id_t sourceAccessId,
+		task_id_t sinkTaskId, bool sinkIsTaskwait,
+		bool direct,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	

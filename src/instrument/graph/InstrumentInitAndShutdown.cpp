@@ -229,6 +229,10 @@ namespace Instrument {
 					text << "RED";
 					color1 = "#00AFFF";
 					break;
+				case LOCAL:
+					text << "LOC";
+					color1 = "#00FFAF";
+					break;
 			}
 		}
 		
@@ -521,7 +525,7 @@ namespace Instrument {
 					ofs << indentation << "style=\"invisible\";" << std::endl;
 					
 					
-					// Emit the fragments
+					// Emit the access fragments and the taskwait fragments
 					if (_showDependencyStructures) {
 						for (access_fragment_t *fragment : taskGroup->_allFragments) {
 							assert(fragment != nullptr);
@@ -583,7 +587,18 @@ namespace Instrument {
 								
 								currentFragmentId = accessGroupFragment->_nextGroupAccess;
 							}
-						} // For each fragment
+						} // For each access fragment
+						
+						for (taskwait_fragment_t *fragment : taskGroup->_allTaskwaitFragments) {
+							assert(fragment != nullptr);
+							
+							// Work at the access group level
+							if (fragment->_firstGroupAccess != fragment->_id) {
+								continue;
+							}
+							
+							emitAccessGroup(ofs, *fragment);
+						} // For each taskwait fragment
 					} // If must show dependency structures
 					
 					
@@ -649,6 +664,49 @@ namespace Instrument {
 							
 							if (!childInfo._isIf0) {
 								index++;
+							}
+						}
+					}
+					
+					// Check if there are taskwait fragments so that they can be used as phase sinks
+					// and link to the actual taskwait
+					if (_showDependencyStructures && (taskGroup->_nextTaskwaitId != taskwait_id_t())) {
+						taskwait_t *taskwait = _taskwaitToInfoMap[taskGroup->_nextTaskwaitId];
+						assert(taskwait != nullptr);
+						
+						if (_showDeadDependencyStructures && !taskGroup->_allTaskwaitFragments.empty()) {
+							for (taskwait_fragment_t *taskwaitFragment : taskGroup->_allTaskwaitFragments) {
+								assert(taskwaitFragment != nullptr);
+								
+								linksStream << "\t"
+									<< "data_access_" << taskwaitFragment->_id
+									<< " -> "
+									<< "taskwait" << taskwait->_taskwaitId
+									<< " [";
+								if (
+									(taskwait->_status == not_created_status)
+									|| (taskwait->_status == finished_status)
+									|| (taskwait->_status == deleted_status)
+									|| (taskwaitFragment->_status == not_created_access_status)
+									|| (taskwaitFragment->_status == removed_access_status)
+								) {
+									if (!_showDeadDependencyStructures) {
+										linksStream << " style=invis";
+									} else {
+										linksStream << " style=dotted"
+										<< " color=\"#AAAAAA\""
+										<< " fillcolor=\"#AAAAAA\"";
+									}
+								} else {
+									linksStream << " style=dashed"
+									<< " color=\"#000000\""
+									<< " fillcolor=\"#000000\"";
+								}
+								linksStream << " ]"
+#ifndef NDEBUG
+									<< "\t// " << __FILE__ << ":" << __LINE__
+#endif
+									<< std::endl;
 							}
 						}
 					}

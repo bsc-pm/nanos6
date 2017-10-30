@@ -35,6 +35,10 @@ struct TaskDataAccesses {
 		boost::intrusive::function_hook< TaskDataAccessLinkingArtifacts >
 	> access_fragments_t;
 	typedef IntrusiveLinearRegionMap<
+		DataAccess,
+		boost::intrusive::function_hook< TaskDataAccessLinkingArtifacts >
+	> taskwait_fragments_t;
+	typedef IntrusiveLinearRegionMap<
 		BottomMapEntry,
 		boost::intrusive::function_hook< BottomMapEntryLinkingArtifacts >
 	> subaccess_bottom_map_t;
@@ -50,6 +54,7 @@ struct TaskDataAccesses {
 	spinlock_t _lock;
 	accesses_t _accesses;
 	access_fragments_t _accessFragments;
+	taskwait_fragments_t _taskwaitFragments;
 	subaccess_bottom_map_t _subaccessBottomMap;
 	
 	int _removalBlockers;
@@ -59,7 +64,7 @@ struct TaskDataAccesses {
 	
 	TaskDataAccesses()
 		: _lock(),
-		_accesses(), _accessFragments(),
+		_accesses(), _accessFragments(), _taskwaitFragments(),
 		_subaccessBottomMap(),
 		_removalBlockers(0)
 #ifndef NDEBUG

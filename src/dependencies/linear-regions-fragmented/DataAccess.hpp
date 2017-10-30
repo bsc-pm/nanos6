@@ -26,6 +26,8 @@ class Task;
 
 
 #include "../DataAccessBase.hpp"
+#include "DataAccessLink.hpp"
+#include "DataAccessObjectType.hpp"
 #include "DataAccessRegion.hpp"
 #include "ReductionSpecific.hpp"
 
@@ -53,11 +55,10 @@ private:
 		ANY_REDUCTION_PROPAGATION_INHIBITED_BIT,
 		MATCHING_REDUCTION_PROPAGATION_INHIBITED_BIT,
 		
-		FRAGMENT_BIT,
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP_BIT,
 		TOPMOST_BIT,
-		FORCE_REMOVAL_BIT,
+		TOP_LEVEL_BIT,
 #ifndef NDEBUG
 		IS_REACHABLE_BIT,
 		HAS_BEEN_DISCOUNTED_BIT,
@@ -70,13 +71,15 @@ public:
 	
 	
 private:
+	DataAccessObjectType _objectType;
+	
 	//! The region of data covered by the access
 	DataAccessRegion _region;
 	
 	status_t _status;
 	
 	//! Direct next access
-	Task *_next;
+	DataAccessLink _next;
 	
 	//! An index that determines the data type and the operation of the reduction (if applicable)
 	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
@@ -84,31 +87,33 @@ private:
 	
 public:
 	DataAccess(
+		DataAccessObjectType objectType,
 		DataAccessType type, bool weak,
 		Task *originator,
 		DataAccessRegion accessRegion,
-		bool fragment,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
 		Instrument::data_access_id_t instrumentationId = Instrument::data_access_id_t(),
-		status_t status = 0, Task *next = nullptr
+		status_t status = 0, DataAccessLink next = DataAccessLink()
 	)
 		: DataAccessBase(type, weak, originator, instrumentationId),
+		_objectType(objectType),
 		_region(accessRegion),
 		_status(status),
 		_next(next),
 		_reductionTypeAndOperatorIndex(reductionTypeAndOperatorIndex)
 	{
 		assert(originator != nullptr);
-		
-		if (fragment) {
-			_status[FRAGMENT_BIT] = true;
-		}
 	}
 	
 	~DataAccess()
 	{
 		Instrument::removedDataAccess(_instrumentationId);
 		assert(hasBeenDiscounted());
+	}
+	
+	inline DataAccessObjectType getObjectType() const
+	{
+		return _objectType;
 	}
 	
 	inline DataAccessType getType() const
@@ -131,7 +136,8 @@ public:
 		_instrumentationId = Instrument::createdDataAccess(
 			Instrument::data_access_id_t(),
 			_type, _weak, _region,
-			false, false, /* false, */ false,
+			/* Read Satisfied */ false, /* Write Satisfied */ false, /* Globally Satisfied */ false,
+			/* Taskwait? */ (_objectType == taskwait_type) || (_objectType == top_level_sink_type),
 			taskInstrumentationId
 		);
 	}
@@ -292,11 +298,6 @@ public:
 		_status[MATCHING_REDUCTION_PROPAGATION_INHIBITED_BIT] = true;
 	}
 	
-	bool isFragment() const
-	{
-		return _status[FRAGMENT_BIT];
-	}
-	
 	void setHasSubaccesses()
 	{
 		assert(!hasSubaccesses());
@@ -327,7 +328,6 @@ public:
 		return _status[IN_BOTTOM_MAP_BIT];
 	}
 	
-	
 	void setTopmost()
 	{
 		assert(!isTopmost());
@@ -339,15 +339,18 @@ public:
 		return _status[TOPMOST_BIT];
 	}
 	
-	void forceRemoval()
+	void setTopLevel()
 	{
-		assert(!hasForcedRemoval());
-		_status[FORCE_REMOVAL_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "F", "Forced Removal");
+		assert(!isTopLevel());
+		_status[TOP_LEVEL_BIT] = true;
 	}
-	bool hasForcedRemoval() const
+	void clearTopLevel()
 	{
-		return _status[FORCE_REMOVAL_BIT];
+		_status[TOP_LEVEL_BIT] = false;
+	}
+	bool isTopLevel() const
+	{
+		return _status[TOP_LEVEL_BIT];
 	}
 	
 	
@@ -431,13 +434,13 @@ public:
 	
 	bool hasNext() const
 	{
-		return (_next != nullptr);
+		return (_next._task != nullptr);
 	}
-	void setNext(Task *next)
+	void setNext(DataAccessLink const &next)
 	{
 		_next = next;
 	}
-	Task *getNext() const
+	DataAccessLink const &getNext() const
 	{
 		return _next;
 	}

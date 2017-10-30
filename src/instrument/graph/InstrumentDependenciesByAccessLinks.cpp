@@ -28,6 +28,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+		bool isTaskwaitFragment,
 		task_id_t originatorTaskId, InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
@@ -44,20 +45,44 @@ namespace Instrument {
 		
 		task_info_t &taskInfo = _taskToInfoMap[originatorTaskId];
 		
-		access_t *access = new access_t();
+		assert(context._taskId != task_id_t());
+		task_info_t &parentInfo = _taskToInfoMap[context._taskId];
+		
+		access_t *access;
+		if (!isTaskwaitFragment) {
+			access = new access_t();
+		} else {
+			access = new taskwait_fragment_t();
+		}
+		
 		access->_id = dataAccessId;
 		access->_superAccess = superAccessId;
 		access->_originator = originatorTaskId;
+		access->_parentPhase = parentInfo._phaseList.size() - 1;
 		access->_firstGroupAccess = dataAccessId;
 		
 		// We need the final region and type of each access to calculate the full graph
 		access->_type = accessType;
 		access->_accessRegion = region;
 		
+		access->_isTaskwait = isTaskwaitFragment;
+		
 		_accessIdToAccessMap[dataAccessId] = access;
 		
-		taskInfo._allAccesses.insert(access);
-		taskInfo._liveAccesses.insert(AccessWrapper(access));
+		if (!isTaskwaitFragment) {
+			taskInfo._allAccesses.insert(access);
+			taskInfo._liveAccesses.insert(AccessWrapper(access));
+		} else {
+			assert(originatorTaskId == context._taskId);
+			assert(parentInfo._phaseList.size() > 1);
+			
+			// The last phase id the actual taskwait_t and the one before it, the task_group_t
+			task_group_t *parentTaskGroup = dynamic_cast<task_group_t *> (parentInfo._phaseList[parentInfo._phaseList.size() - 2]);
+			assert(parentTaskGroup != nullptr);
+			
+			parentTaskGroup->_allTaskwaitFragments.insert((taskwait_fragment_t *) access);
+			parentTaskGroup->_liveTaskwaitFragments.insert(TaskwaitFragmentWrapper((taskwait_fragment_t *) access));
+		}
 		
 		return dataAccessId;
 	}
@@ -150,7 +175,7 @@ namespace Instrument {
 		);
 		_executionSequence.push_back(step);
 		
-		if (!originalAccess->fragment()) {
+		if (!originalAccess->fragment() && !originalAccess->_isTaskwait) {
 			task_info_t &taskInfo = _taskToInfoMap[originalAccess->_originator];
 			
 			// Copy all the contents so that we also get any already existing link
@@ -164,6 +189,24 @@ namespace Instrument {
 			taskInfo._liveAccesses.insert(AccessWrapper(newAccess));
 			
 			_accessIdToAccessMap[newDataAccessId] = newAccess;
+		} else if (originalAccess->_isTaskwait) {
+			taskwait_fragment_t *originalTaskwaitFragment = (taskwait_fragment_t *) originalAccess;
+			
+			task_group_t *taskGroup = originalTaskwaitFragment->_taskGroup;
+			assert(taskGroup != nullptr);
+			
+			// Copy all the contents so that we also get any already existing link
+			taskwait_fragment_t *newTaskwaitFragment = new taskwait_fragment_t();
+			*newTaskwaitFragment = *originalTaskwaitFragment;
+			newTaskwaitFragment->_accessRegion = newRegion;
+			
+			newTaskwaitFragment->_id = newDataAccessId;
+			
+			// Taskwait Fragments are inserted in the task group that corresponds to the phase in which they are created
+			taskGroup->_allTaskwaitFragments.insert(newTaskwaitFragment);
+			taskGroup->_liveTaskwaitFragments.insert(TaskwaitFragmentWrapper(newTaskwaitFragment));
+			
+			_accessIdToAccessMap[newDataAccessId] = newTaskwaitFragment;
 		} else {
 			access_fragment_t *originalFragment = (access_fragment_t *) originalAccess;
 			
@@ -281,7 +324,7 @@ namespace Instrument {
 	
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
+		data_access_id_t sourceAccessId, task_id_t sinkTaskId, bool sinkIsTaskwait,
 		DataAccessRegion region,
 		bool direct, bool bidirectional,
 		InstrumentationContext const &context
@@ -291,7 +334,7 @@ namespace Instrument {
 		access_t *sourceAccess = _accessIdToAccessMap[sourceAccessId];
 		assert(sourceAccess != nullptr);
 		sourceAccess->_nextLinks.emplace(
-			std::pair<task_id_t, link_to_next_t> (sinkTaskId, link_to_next_t(direct, bidirectional))
+			std::pair<task_id_t, link_to_next_t> (sinkTaskId, link_to_next_t(direct, bidirectional, sinkIsTaskwait))
 		); // A "not created" link
 		
 		linked_data_accesses_step_t *step = new linked_data_accesses_step_t(
@@ -306,7 +349,7 @@ namespace Instrument {
 	
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		task_id_t sinkTaskId,
+		task_id_t sinkTaskId, __attribute__((unused)) bool sinkIsTaskwait,
 		bool direct,
 		InstrumentationContext const &context
 	) {

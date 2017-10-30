@@ -18,6 +18,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+		bool isTaskwaitFragment,
 		task_id_t originatorTaskId, InstrumentationContext const &context
 	);
 	
@@ -69,7 +70,7 @@ namespace Instrument {
 	);
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId, task_id_t sinkTaskId,
+		data_access_id_t sourceAccessId, task_id_t sinkTaskId, bool sinkIsTaskwait,
 		DataAccessRegion region,
 		bool direct, bool bidirectional,
 		InstrumentationContext const &context
@@ -77,7 +78,7 @@ namespace Instrument {
 	
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		task_id_t sinkTaskId,
+		task_id_t sinkTaskId, bool sinkIsTaskwait,
 		bool direct,
 		InstrumentationContext const &context
 	);

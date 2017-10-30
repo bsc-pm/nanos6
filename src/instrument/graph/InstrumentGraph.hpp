@@ -81,6 +81,7 @@ namespace Instrument {
 			READWRITE = READWRITE_ACCESS_TYPE,
 			CONCURRENT = CONCURRENT_ACCESS_TYPE,
 			REDUCTION = REDUCTION_ACCESS_TYPE,
+			LOCAL = NO_ACCESS_TYPE,
 			NOT_CREATED
 		} access_type_t;
 		
@@ -95,6 +96,7 @@ namespace Instrument {
 		struct link_to_next_t {
 			bool _direct;
 			bool _bidirectional;
+			bool _sinkIsTaskwait;
 			link_status_t _status;
 			predecessors_t _predecessors; // Predecessors of next that the link "enables"
 			
@@ -103,8 +105,9 @@ namespace Instrument {
 				assert("Instrument::Graph did not find a link between two data accesses" == 0);
 			}
 			
-			link_to_next_t(bool direct, bool bidirectional)
-				: _direct(direct), _bidirectional(bidirectional), _status(not_created_link_status),
+			link_to_next_t(bool direct, bool bidirectional, bool sinkIsTaskwait)
+				: _direct(direct), _bidirectional(bidirectional), _sinkIsTaskwait(sinkIsTaskwait),
+				_status(not_created_link_status),
 				_predecessors()
 			{
 			}
@@ -137,6 +140,8 @@ namespace Instrument {
 			DataAccessType _type;
 			DataAccessRegion _accessRegion;
 			task_id_t _originator;
+			int _parentPhase;
+			bool _isTaskwait;
 			
 			bitset_t _bitset;
 			std::set<std::string> _otherProperties;
@@ -153,6 +158,8 @@ namespace Instrument {
 				_superAccess(),
 				_type(READ_ACCESS_TYPE), _accessRegion(),
 				_originator(-1),
+				_parentPhase(-1),
+				_isTaskwait(false),
 				_bitset(),
 				_nextLinks(),
 				_status(not_created_access_status),
@@ -277,12 +284,47 @@ namespace Instrument {
 			}
 		};
 		
-		
 		typedef DataAccessRegionIndexer<AccessFragmentWrapper> task_live_access_fragments_t;
 		typedef std::set<access_fragment_t *> task_all_access_fragments_t;
 		
 		
+		struct taskwait_fragment_t : public access_t {
+			task_group_t *_taskGroup;
+			
+			taskwait_fragment_t()
+				: access_t(), _taskGroup(nullptr)
+			{
+			}
+		};
+		
+		struct TaskwaitFragmentWrapper {
+			taskwait_fragment_t *_taskwaitFragment;
+			
+			TaskwaitFragmentWrapper(taskwait_fragment_t *taskwaitFragment)
+			: _taskwaitFragment(taskwaitFragment)
+			{
+				assert(taskwaitFragment != nullptr);
+			}
+			
+			DataAccessRegion const &getAccessRegion() const
+			{
+				return _taskwaitFragment->_accessRegion;
+			}
+			
+			DataAccessRegion &getAccessRegion()
+			{
+				return _taskwaitFragment->_accessRegion;
+			}
+		};
+		
+		
+		typedef DataAccessRegionIndexer<TaskwaitFragmentWrapper> task_live_taskwait_fragments_t;
+		typedef std::set<taskwait_fragment_t *> task_all_taskwait_fragments_t;
+		
+		
 		struct phase_t {
+			taskwait_id_t _nextTaskwaitId;
+			
 			virtual ~phase_t()
 			{
 			}
@@ -296,13 +338,16 @@ namespace Instrument {
 			taskwait_id_t _clusterId;
 			task_live_access_fragments_t _liveFragments;
 			task_all_access_fragments_t _allFragments;
+			task_live_taskwait_fragments_t _liveTaskwaitFragments;
+			task_all_taskwait_fragments_t _allTaskwaitFragments;
 			
 			task_group_t(taskwait_id_t id)
 				: phase_t(),
 				_children(),
 				_longestPathFirstTaskId(), _longestPathLastTaskId(),
 				_clusterId(id),
-				_liveFragments(), _allFragments()
+				_liveFragments(), _allFragments(),
+				_liveTaskwaitFragments(), _allTaskwaitFragments()
 			{
 			}
 		};
@@ -478,36 +523,52 @@ namespace Instrument {
 				task_id_t nextTaskId = nextAndLink.first;
 				link_to_next_t &linkToNext = nextAndLink.second;
 				
-				task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
-				nextTaskInfo._liveAccesses.processIntersecting(
-					access->_accessRegion,
-					[&](task_live_accesses_t::iterator position) -> bool {
-						access_t *nextAccess = position->_access;
-						assert(nextAccess != nullptr);
-						
-						return processor(*nextAccess, linkToNext, nextTaskInfo);
+				if (!linkToNext._sinkIsTaskwait) {
+					task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
+					
+					nextTaskInfo._liveAccesses.processIntersecting(
+						access->_accessRegion,
+						[&](task_live_accesses_t::iterator position) -> bool {
+							access_t *nextAccess = position->_access;
+							assert(nextAccess != nullptr);
+							
+							return processor(*nextAccess, linkToNext, nextTaskInfo);
+						}
+					);
+					
+					if (!nextTaskInfo._phaseList.empty()) {
+						// Forward through the fragments of the first task group (that is, limited up to the first barrier)
+						task_group_t *taskGroup = dynamic_cast<task_group_t *> (*nextTaskInfo._phaseList.begin());
+						if (taskGroup != nullptr) {
+							taskGroup->_liveFragments.processIntersecting(
+								access->_accessRegion,
+								[&](task_live_access_fragments_t::iterator fragmentPosition) -> bool {
+									access_fragment_t *fragment = fragmentPosition->_fragment;
+									assert(fragment != nullptr);
+									assert(fragment->fragment());
+									
+									foreachLiveNextOfAccess(fragment, processor);
+									
+									return true;
+								}
+							);
+						}
 					}
-				);
-				
-				if (!nextTaskInfo._phaseList.empty()) {
-					// Forward through the fragments of the first task group (that is, limited up to the first barrier)
-					task_group_t *taskGroup = dynamic_cast<task_group_t *> (*nextTaskInfo._phaseList.begin());
-					if (taskGroup != nullptr) {
-						taskGroup->_liveFragments.processIntersecting(
-							access->_accessRegion,
-							[&](task_live_access_fragments_t::iterator fragmentPosition) -> bool {
-								access_fragment_t *fragment = fragmentPosition->_fragment;
-								assert(fragment != nullptr);
-								assert(fragment->fragment());
-								
-								foreachLiveNextOfAccess(fragment, processor);
-								
-								return true;
-							}
-						);
-					}
+				} else {
+					task_info_t &parentTaskInfo = _taskToInfoMap[nextTaskId];
+					task_group_t *parentTaskGroup = dynamic_cast<task_group_t *> (parentTaskInfo._phaseList[access->_parentPhase]);
+					assert(parentTaskGroup != nullptr);
+					
+					parentTaskGroup->_liveTaskwaitFragments.processIntersecting(
+						access->_accessRegion,
+						[&](task_live_taskwait_fragments_t::iterator taskwaitFragmentPosition) -> bool {
+							taskwait_fragment_t *taskwaitFragment = taskwaitFragmentPosition->_taskwaitFragment;
+							assert(taskwaitFragment != nullptr);
+							
+							return processor(*taskwaitFragment, linkToNext, parentTaskInfo);
+						}
+					);
 				}
-				
 			}
 		}
 		
@@ -521,17 +582,36 @@ namespace Instrument {
 				task_id_t nextTaskId = nextAndLink.first;
 				link_to_next_t &linkToNext = nextAndLink.second;
 				
-				task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
-				for (access_t *nextAccess : nextTaskInfo._allAccesses) {
-					assert (nextAccess != nullptr);
-					
-					if (access->_accessRegion.intersect(nextAccess->_accessRegion).empty()) {
-						continue;
+				if (!linkToNext._sinkIsTaskwait) {
+					task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
+					for (access_t *nextAccess : nextTaskInfo._allAccesses) {
+						assert (nextAccess != nullptr);
+						
+						if (access->_accessRegion.intersect(nextAccess->_accessRegion).empty()) {
+							continue;
+						}
+						
+						bool result = processor(*nextAccess, linkToNext, nextTaskInfo);
+						if (!result) {
+							break;
+						}
 					}
+				} else {
+					task_info_t &parentTaskInfo = _taskToInfoMap[nextTaskId];
+					task_group_t *parentTaskGroup = dynamic_cast<task_group_t *> (parentTaskInfo._phaseList[access->_parentPhase]);
+					assert(parentTaskGroup != nullptr);
 					
-					bool result = processor(*nextAccess, linkToNext, nextTaskInfo);
-					if (!result) {
-						break;
+					for (taskwait_fragment_t *taskwaitFragment : parentTaskGroup->_allTaskwaitFragments) {
+						assert(taskwaitFragment != nullptr);
+						
+						if (access->_accessRegion.intersect(taskwaitFragment->_accessRegion).empty()) {
+							continue;
+						}
+						
+						bool result = processor(*taskwaitFragment, linkToNext, parentTaskInfo);
+						if (!result) {
+							break;
+						}
 					}
 				}
 			}

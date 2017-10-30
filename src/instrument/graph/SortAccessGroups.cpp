@@ -113,6 +113,23 @@ namespace Instrument {
 				// during replay
 				taskGroup->_liveFragments.clear();
 				
+				// Sort the taskwait fragments if any
+				taskGroup->_liveTaskwaitFragments.processAll(
+					[&](task_live_taskwait_fragments_t::iterator position) -> bool {
+						taskwait_fragment_t *fragment = position->_taskwaitFragment;
+						
+						if (fragment->_id == fragment->_firstGroupAccess) {
+							sortAccessGroup(fragment->_id);
+						}
+						
+						return true;
+					}
+				);
+				
+				// Clear the list of live taskwait fragments since it will be rebuilt with the right regions
+				// during replay
+				taskGroup->_liveTaskwaitFragments.clear();
+				
 				// Recurse to children
 				for (task_id_t childId : taskGroup->_children) {
 					sortTaskAccessGroups(childId);

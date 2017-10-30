@@ -63,6 +63,10 @@ namespace Instrument {
 						
 						foreachLiveNextOfAccess(fragment,
 							[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+								if (linkToNext._sinkIsTaskwait) {
+									return true;
+								}
+								
 								DataAccessRegion nextRegion = subregion.intersect(nextAccess._accessRegion);
 								
 								if (!nextRegion.empty()) {
@@ -105,6 +109,10 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+						if (linkToNext._sinkIsTaskwait) {
+							return true;
+						}
+						
 						DataAccessRegion nextRegion = region.intersect(nextAccess._accessRegion);
 						
 						if (!nextRegion.empty()) {
@@ -167,6 +175,10 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+						if (linkToNext._sinkIsTaskwait) {
+							return true;
+						}
+						
 						DataAccessRegion nextRegion = region.intersect(nextAccess._accessRegion);
 						
 						if (!nextRegion.empty()) {
@@ -230,6 +242,10 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+						if (linkToNext._sinkIsTaskwait) {
+							return true;
+						}
+						
 						DataAccessRegion nextRegion = region.intersect(nextAccess._accessRegion);
 						
 						if (!nextRegion.empty()) {
@@ -296,6 +312,10 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+						if (linkToNext._sinkIsTaskwait) {
+							return true;
+						}
+						
 						DataAccessRegion nextRegion = region.intersect(nextAccess._accessRegion);
 						
 						if (!nextRegion.empty()) {
@@ -328,6 +348,10 @@ namespace Instrument {
 			
 			foreachLiveNextOfAccess(access,
 				[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
+					if (linkToNext._sinkIsTaskwait) {
+						return true;
+					}
+					
 					DataAccessRegion region = access->_accessRegion.intersect(nextAccess._accessRegion);
 					
 					if (!region.empty()) {
@@ -357,6 +381,11 @@ namespace Instrument {
 								else
 									lastWriters.insert(access->_originator);
 								break;
+							case NO_ACCESS_TYPE:
+								// NOTE: This is not supposed to happen, but to play it safe
+								// we mimic the most restrictive scenario
+								lastWriters.insert(access->_originator);
+								break;
 						}
 						
 						buildPredecessorList(
@@ -382,7 +411,11 @@ namespace Instrument {
 			assert(fragment->fragment());
 			
 			foreachLiveNextOfAccess(fragment,
-				[&](access_t &nextAccess, __attribute__((unused)) link_to_next_t &linkToNext, __attribute__((unused)) task_info_t &nextTaskInfo) -> bool {
+				[&](access_t &nextAccess, link_to_next_t &linkToNext, __attribute__((unused)) task_info_t &nextTaskInfo) -> bool {
+					if (linkToNext._sinkIsTaskwait) {
+						return true;
+					}
+					
 					DataAccessRegion region = fragment->_accessRegion.intersect(nextAccess._accessRegion);
 					
 					if (!region.empty()) {
