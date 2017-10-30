@@ -3,7 +3,7 @@ Maintainer: The Nanos6 developers <pm-tools@bsc.es>
 Section: devel
 Priority: optional
 Standards-Version: 3.9.3
-Build-Depends: debhelper (>= 9)
+Build-Depends: debhelper (>= 9), libdw-dev, libhwloc-dev, libpapi-dev, libunwind-dev
 
 Package: nanos6
 Architecture: any
