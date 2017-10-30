@@ -34,13 +34,13 @@ namespace Instrument {
 	void leaderThreadSpin() {
 		static SpinLock lock;
 		
-		ExternalThreadLocalData &threadLocal = getExternalThreadLocalData();
-		
 		// This is needed since this method can be called by a regular thread on abort
 		std::lock_guard<SpinLock> guard(lock);
 		
 		// Logging part
 		if (_verboseLeaderThread) {
+			ExternalThreadLocalData &threadLocal = getExternalThreadLocalData();
+			
 			LogEntry *logEntry = getLogEntry();
 			assert(logEntry != nullptr);
 			
