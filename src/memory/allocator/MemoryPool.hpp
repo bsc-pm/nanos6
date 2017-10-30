@@ -11,7 +11,6 @@
 #include "lowlevel/SpinLock.hpp"
 #include "MemoryPoolGlobal.hpp"
 
-#define MAX_CHUNK_REQUEST 20
 #define NEXT_CHUNK(_r) *((void **)_r)
 
 class MemoryPool {
@@ -31,7 +30,6 @@ private:
 		
 		/* If globalChunkSize % _chunkSize != 0, some memory will be left unused */
 		size_t numChunks = globalChunkSize / _chunkSize;
-		void *tmpTopChunk = allocMemory;
 		void *prevChunk = allocMemory;
 		for (size_t i = 1; i < numChunks; ++i) {
 			// Link chunks to each other, by writing a pointer to the next chunk in this chunk
@@ -39,15 +37,10 @@ private:
 			prevChunk = (char *)allocMemory + (i * _chunkSize);
 		}
 		
-		NEXT_CHUNK(prevChunk) = nullptr;
-
 		// Update the "public" stack, and combine it with any chunks that may have been
 		// returned while we were generating a new stack
-		void *expected = nullptr;
-		while (!_topChunk.compare_exchange_strong(expected, tmpTopChunk))
-		{
-			NEXT_CHUNK(prevChunk) = expected;
-		}
+		NEXT_CHUNK(prevChunk) = _topChunk;
+		while (!_topChunk.compare_exchange_strong(NEXT_CHUNK(prevChunk), allocMemory));
 	}
 
 public:
