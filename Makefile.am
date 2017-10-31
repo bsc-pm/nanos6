@@ -53,12 +53,55 @@ include_HEADERS = \
 
 
 lib_LTLIBRARIES = \
-	libnanos6.la \
-	libnanos6-optimized.la libnanos6-debug.la \
-	libnanos6-graph.la libnanos6-graph-debug.la \
-	libnanos6-profile.la \
-	libnanos6-stats.la \
-	libnanos6-verbose.la libnanos6-verbose-debug.la
+	libnanos6.la
+
+if BUILD_OPTIMIZED_VARIANT
+lib_LTLIBRARIES += \
+	libnanos6-optimized.la
+endif
+
+if BUILD_DEBUG_VARIANTS
+lib_LTLIBRARIES += \
+	libnanos6-debug.la
+endif
+
+if BUILD_EXTRAE_INSTRUMENTATION_VARIANT
+if HAVE_EXTRAE
+   lib_LTLIBRARIES += libnanos6-extrae.la
+endif
+endif
+
+if BUILD_GRAPH_INSTRUMENTATION_VARIANT
+lib_LTLIBRARIES += \
+	libnanos6-graph.la
+if BUILD_DEBUG_VARIANTS
+lib_LTLIBRARIES += \
+	libnanos6-graph-debug.la
+endif
+endif
+
+if BUILD_PROFILE_INSTRUMENTATION_VARIANT
+lib_LTLIBRARIES += \
+	libnanos6-profile.la
+endif
+
+if BUILD_STATS_INSTRUMENTATION_VARIANT
+lib_LTLIBRARIES += \
+	libnanos6-stats.la
+if HAVE_PAPI
+   lib_LTLIBRARIES += libnanos6-stats-papi.la
+endif
+endif
+
+if BUILD_PROFILE_INSTRUMENTATION_VARIANT
+lib_LTLIBRARIES += \
+	libnanos6-verbose.la
+if BUILD_DEBUG_VARIANTS
+lib_LTLIBRARIES += \
+	libnanos6-verbose-debug.la
+endif
+endif
+
 
 noinst_LIBRARIES = libnanos6-main-wrapper.a
 lib_OBJECTS = nanos6-main-wrapper.o
@@ -259,15 +302,6 @@ MultidimensionalAPIToLinear.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_sr
 
 MultidimensionalAPIToDiscrete.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh Makefile
 	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
-
-
-if HAVE_EXTRAE
-   lib_LTLIBRARIES += libnanos6-extrae.la
-endif
-
-if HAVE_PAPI
-   lib_LTLIBRARIES += libnanos6-stats-papi.la
-endif
 
 
 
