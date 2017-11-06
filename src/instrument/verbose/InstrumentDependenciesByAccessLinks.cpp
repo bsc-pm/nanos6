@@ -359,7 +359,7 @@ namespace Instrument {
 			logEntry->_contents << " <-> UnlinkDataAccesses "
 				<< sourceAccessId << " -> Task:" << sinkTaskId;
 		} else {
-			logEntry->_contents << " <-> LinkDataAccesses "
+			logEntry->_contents << " <-> UnlinkDataAccesses "
 				<< sourceAccessId << " -> Taskwait from task:" << sinkTaskId;
 		}
 			logEntry->_contents << (direct ? " direct" : "indirect")
