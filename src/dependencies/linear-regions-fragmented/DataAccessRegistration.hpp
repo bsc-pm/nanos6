@@ -353,7 +353,7 @@ private:
 			Instrument::linkedDataAccesses(
 				access->getInstrumentationId(),
 				access->getNext()._task->getInstrumentationTaskId(),
-				/* taskwait? */ (access->getObjectType() == taskwait_type) ||( access->getObjectType() == top_level_sink_type),
+				/* taskwait? */ (access->getNext()._objectType == taskwait_type) || (access->getNext()._objectType == top_level_sink_type),
 				access->getAccessRegion(),
 				/* direct */ true, /* unidirectional */ false
 			);
