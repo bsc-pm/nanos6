@@ -40,15 +40,24 @@ struct BottomMapEntryLinkingArtifacts {
 };
 
 
-struct BottomMapEntry {
-	BottomMapEntryLinkingArtifacts::hook_type _links;
-	
-	DataAccessRegion _region;
+struct BottomMapEntryContents {
 	DataAccessLink _link;
 	DataAccessType _accessType;
 	
+	BottomMapEntryContents(DataAccessLink link, DataAccessType accessType)
+		: _link(link), _accessType(accessType)
+	{
+	}
+};
+
+
+struct BottomMapEntry : public BottomMapEntryContents {
+	BottomMapEntryLinkingArtifacts::hook_type _links;
+	
+	DataAccessRegion _region;
+	
 	BottomMapEntry(DataAccessRegion region, DataAccessLink link, DataAccessType accessType)
-		: _links(), _region(region), _link(link), _accessType(accessType)
+		: BottomMapEntryContents(link, accessType), _links(), _region(region)
 	{
 	}
 	

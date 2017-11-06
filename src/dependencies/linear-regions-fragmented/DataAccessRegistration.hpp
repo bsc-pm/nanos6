@@ -118,6 +118,9 @@ private:
 			
 			// Propagation to next
 			if (_hasNext) {
+				assert(access->getObjectType() != taskwait_type);
+				assert(access->getObjectType() != top_level_sink_type);
+				
 				if (access->hasSubaccesses()) {
 					assert(access->getObjectType() == access_type);
 					_propagatesReadSatisfiabilityToNext =
@@ -260,7 +263,7 @@ private:
 			_propagatesTopLevel =
 				access->isTopLevel()
 				&& access->hasNext()
-				&& (domainParent == access->getNext()._task->getParent());
+				&& (access->getOriginator()->getParent() == access->getNext()._task->getParent());
 			
 			// NOTE: Calculate inhibition from initial status
 			_linksBottomMapAccessesToNextAndInhibitsPropagation =
@@ -981,16 +984,15 @@ private:
 	}
 	
 	
+	// NOTE: This method does not create the bottom map entry
 	static inline DataAccess *createInitialFragment(
 		TaskDataAccesses::accesses_t::iterator accessPosition,
 		TaskDataAccesses &accessStructures,
-		DataAccessRegion subregion,
-		bool createSubregionBottomMapEntry, /* Out */ BottomMapEntry *&bottomMapEntry
+		DataAccessRegion subregion
 	) {
 		DataAccess *dataAccess = &(*accessPosition);
 		assert(dataAccess != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
-		assert(bottomMapEntry == nullptr);
 		
 		assert(!accessStructures._accessFragments.contains(dataAccess->getAccessRegion()));
 		
@@ -1019,18 +1021,11 @@ private:
 		// NOTE: This may in the future need to be included in the common status changes code
 		dataAccess->setHasSubaccesses();
 		
-		if (createSubregionBottomMapEntry) {
-			bottomMapEntry = new BottomMapEntry(
-				dataAccess->getAccessRegion(),
-				DataAccessLink(dataAccess->getOriginator(), fragment_type),
-				dataAccess->getType()
-			);
-			accessStructures._subaccessBottomMap.insert(*bottomMapEntry);
-		} else if (subregion != dataAccess->getAccessRegion()) {
+		if (subregion != dataAccess->getAccessRegion()) {
 			dataAccess->getAccessRegion().processIntersectingFragments(
 				subregion,
 				[&](DataAccessRegion excludedSubregion) {
-					bottomMapEntry = new BottomMapEntry(
+					 BottomMapEntry *bottomMapEntry = new BottomMapEntry(
 						excludedSubregion,
 						DataAccessLink(dataAccess->getOriginator(), fragment_type),
 						dataAccess->getType()
@@ -1038,7 +1033,6 @@ private:
 					accessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 				},
 				[&](__attribute__((unused)) DataAccessRegion intersection) {
-					assert(!createSubregionBottomMapEntry);
 				},
 				[&](__attribute__((unused)) DataAccessRegion unmatchedRegion) {
 					// This part is not covered by the access
@@ -1107,8 +1101,7 @@ private:
 	static inline bool foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRegion(
 		Task *parent, TaskDataAccesses &parentAccessStructures,
 		DataAccessRegion region,
-		MatchingProcessorType matchingProcessor, MissingProcessorType missingProcessor,
-		bool removeBottomMapEntry
+		MatchingProcessorType matchingProcessor, MissingProcessorType missingProcessor
 	) {
 		assert(parent != nullptr);
 		assert((&parentAccessStructures) == (&parent->getDataAccesses()));
@@ -1121,8 +1114,9 @@ private:
 				assert(bottomMapEntry != nullptr);
 				
 				DataAccessRegion subregion = region.intersect(bottomMapEntry->getAccessRegion());
+				BottomMapEntryContents bmeContents = *bottomMapEntry;
 				
-				DataAccessLink target = bottomMapEntry->_link;
+				DataAccessLink target = bmeContents._link;
 				assert(target._task != nullptr);
 				
 				bool result = true;
@@ -1138,7 +1132,7 @@ private:
 							assert(!previous->hasNext());
 							assert(previous->isInBottomMap());
 							
-							return matchingProcessor(previous, bottomMapEntry);
+							return matchingProcessor(previous, bmeContents);
 						}
 					);
 					
@@ -1154,16 +1148,14 @@ private:
 							assert(!previous->hasNext());
 							assert(previous->isInBottomMap());
 							
-							return matchingProcessor(previous, bottomMapEntry);
+							return matchingProcessor(previous, bmeContents);
 						}
 					);
 				}
 				
-				if (removeBottomMapEntry) {
-					bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, subregion, parentAccessStructures);
-					parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
-					delete bottomMapEntry;
-				}
+				bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, subregion, parentAccessStructures);
+				parentAccessStructures._subaccessBottomMap.erase(*bottomMapEntry);
+				delete bottomMapEntry;
 				
 				return result;
 			},
@@ -1171,13 +1163,11 @@ private:
 				parentAccessStructures._accesses.processIntersectingAndMissing(
 					missingRegion,
 					[&](TaskDataAccesses::accesses_t::iterator superaccessPosition) -> bool {
-						BottomMapEntry *bottomMapEntry = nullptr;
-						
 						DataAccessStatusEffects initialStatus;
 						
 						DataAccess *previous = createInitialFragment(
 							superaccessPosition, parentAccessStructures,
-							missingRegion, !removeBottomMapEntry, /* Out */ bottomMapEntry
+							missingRegion
 						);
 						assert(previous != nullptr);
 						assert(previous->getObjectType() == fragment_type);
@@ -1186,6 +1176,11 @@ private:
 						previous->setRegistered();
 						
 						DataAccessStatusEffects updatedStatus(previous);
+						
+						BottomMapEntryContents bmeContents(
+							DataAccessLink(parent, fragment_type),
+							previous->getType()
+						);
 						
 						{
 							CPUDependencyData hpDependencyData;
@@ -1199,7 +1194,7 @@ private:
 						
 						previous = fragmentAccess(previous, missingRegion, parentAccessStructures);
 						
-						return matchingProcessor(previous, bottomMapEntry);
+						return matchingProcessor(previous, bmeContents);
 					},
 					[&](DataAccessRegion regionUncoveredByParent) -> bool {
 						return missingProcessor(regionUncoveredByParent);
@@ -1383,6 +1378,7 @@ private:
 					access->unsetCanPropagateMatchingReductionSatisfiability();
 				}
 				
+				assert(!access->hasNext());
 				access->setNext(operation._next);
 				
 				DataAccessStatusEffects updatedStatus(access);
@@ -1417,11 +1413,11 @@ private:
 		
 		DataAccessType parentAccessType = NO_ACCESS_TYPE;
 		
-		// Link accesses to their corresponding predecessor
+		// Link accesses to their corresponding predecessor and removes the bottom map entry
 		foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRegion(
 			parent, parentAccessStructures,
 			region,
-			[&](DataAccess *previous, BottomMapEntry *bottomMapEntry) -> bool {
+			[&](DataAccess *previous, BottomMapEntryContents const &bottomMapEntryContents) -> bool {
 				assert(previous != nullptr);
 				assert(previous->isReachable());
 				assert(!previous->hasBeenDiscounted());
@@ -1430,13 +1426,8 @@ private:
 				Task *previousTask = previous->getOriginator();
 				assert(previousTask != nullptr);
 				
-				if (bottomMapEntry != nullptr) {
-					parentAccessType = bottomMapEntry->_accessType;
-					local = (bottomMapEntry->_accessType == NO_ACCESS_TYPE);
-				} else {
-					// The first subaccess of a parent access
-					local = false;
-				}
+				parentAccessType = bottomMapEntryContents._accessType;
+				local = (bottomMapEntryContents._accessType == NO_ACCESS_TYPE);
 				
 				#ifndef NDEBUG
 					if (!first) {
@@ -1514,8 +1505,7 @@ private:
 				);
 				
 				return true;
-			},
-			true /* Erase the entry from the bottom map */
+			}
 		);
 		
 		// Add the entry to the bottom map
@@ -1687,6 +1677,7 @@ private:
 			finishedTask->getDataAccesses(),
 			[&] (DataAccess *accessOrFragment) -> bool {
 				assert(!accessOrFragment->complete());
+				assert(accessOrFragment->getOriginator() == finishedTask);
 				
 				DataAccessStatusEffects initialStatus(accessOrFragment);
 				accessOrFragment->setComplete();
