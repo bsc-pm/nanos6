@@ -13,6 +13,7 @@
 #include "schedulers/ImmediateSuccessorScheduler.hpp"
 #include "schedulers/ImmediateSuccessorWithMultiPollingScheduler.hpp"
 #include "schedulers/ImmediateSuccessorWithPollingScheduler.hpp"
+#include "schedulers/NaiveScheduler.hpp"
 #include "schedulers/NUMAHierarchicalScheduler.hpp"
 #include "schedulers/PriorityScheduler.hpp"
 
@@ -27,6 +28,8 @@ SchedulerInterface *SchedulerGenerator::createCPUScheduler(std::string const &sc
 {
 	if (schedulerName == "default") {
 		return new DefaultScheduler(nodeIndex);
+	} else if (schedulerName == "naive") {
+		return new NaiveScheduler(nodeIndex);
 	} else if (schedulerName == "fifo") {
 		return new FIFOScheduler(nodeIndex);
 	} else if (schedulerName == "immediatesuccessor") {
