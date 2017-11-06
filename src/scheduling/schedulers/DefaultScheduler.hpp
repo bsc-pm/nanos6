@@ -8,10 +8,10 @@
 #define DEFAULT_SCHEDULER_HPP
 
 
-#include "NaiveScheduler.hpp"
+#include "PriorityScheduler.hpp"
 
 
-typedef NaiveScheduler DefaultScheduler;
+typedef PriorityScheduler DefaultScheduler;
 
 
 #endif // DEFAULT_SCHEDULER_HPP
