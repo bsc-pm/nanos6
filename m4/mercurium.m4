@@ -137,7 +137,7 @@ AC_DEFUN([SSS_CHECK_NANOS6_MERCURIUM],
 			ac_save_CC="${CC}"
 			AC_LANG_PUSH(C)
 			
-			AC_MSG_CHECKING([which flag enables OmpsSs-2 support in Mercurium])
+			AC_MSG_CHECKING([which flag enables OmpSs-2 support in Mercurium])
 			OMPSS2_FLAG=none
 			
 			# Try --ompss-v2
