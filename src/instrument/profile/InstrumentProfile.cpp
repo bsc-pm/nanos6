@@ -23,6 +23,7 @@
 
 #include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
 #include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
+#include <instrument/support/backtrace/BacktraceWalker.hpp>
 
 #include <dlfcn.h>
 #include <signal.h>
@@ -34,15 +35,6 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <sys/types.h>
-
-#if HAVE_EXECINFO_H
-#include <execinfo.h>
-#endif
-
-#if HAVE_LIBUNWIND_H
-#define UNW_LOCAL_ONLY
-#include <libunwind.h>
-#endif
 
 #include <atomic>
 #include <cstdlib>
@@ -65,9 +57,6 @@
 #include <elfutils/libdw.h>
 #include <elfutils/libdwfl.h>
 #endif
-
-
-#define LOWEST_VALID_ADDRESS 1024UL
 
 
 using namespace Instrument;
@@ -111,43 +100,18 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 		_singleton._bufferListSpinLock.unlock();
 	}
 	
-#if HAVE_LIBUNWIND_H
-	unw_context_t context;
-	unw_getcontext(&context);
-	unw_cursor_t cursor;
-	unw_init_local(&cursor, &context);
-	
-	int currentFrame = 0;
-	
-	bool haveAFrame = (unw_step(&cursor) > 0); // Skip this function
-	haveAFrame = (unw_step(&cursor) > 0); // Skip the signal frame
-	
-	while (haveAFrame && (currentFrame < depth)) {
-		if (unw_get_reg(&cursor, UNW_REG_IP, (unw_word_t *) &threadLocal._currentBuffer[threadLocal._nextBufferPosition]) == 0) {
-			if (threadLocal._currentBuffer[threadLocal._nextBufferPosition] >= (address_t) LOWEST_VALID_ADDRESS) {
-				threadLocal._nextBufferPosition++;
-				currentFrame++;
-			}
-			haveAFrame = (unw_step(&cursor) > 0);
-		} else {
-			haveAFrame = false;
-		}
-	}
-#elif defined(HAVE_EXECINFO_H) && defined(HAVE_BACKTRACE)
-	// Get the number of backtrace addresses + one for this function + one for the signal frame
-	address_t addresses[depth+2];
-	int frames = backtrace((void **) &threadLocal._currentBuffer[threadLocal._nextBufferPosition], depth+2);
-	
-	// Skip this function and the signal frame
-	for (int frame=2; frame < frames; frame++) {
-		if (addresses[frame]  >= (address_t) LOWEST_VALID_ADDRESS) {
-			threadLocal._currentBuffer[threadLocal._nextBufferPosition] = addresses[frame];
+	{
+		auto it = BacktraceWalker::begin();
+		
+		// Skip the signal handler frame and the signal frame
+		++it; ++it;
+		
+		for (int currentFrame = 0; (currentFrame < depth) && (it != BacktraceWalker::end()); currentFrame++) {
+			threadLocal._currentBuffer[threadLocal._nextBufferPosition] = *it;
 			threadLocal._nextBufferPosition++;
+			++it;
 		}
 	}
-#else
-	#warning Profiling is not supported in this platform
-#endif
 	
 	// End of backtrace mark
 	threadLocal._currentBuffer[threadLocal._nextBufferPosition] = 0;
