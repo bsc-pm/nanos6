@@ -11,22 +11,14 @@
 #include "config.h"
 #endif
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-
-#ifndef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 200112L
-#endif
-
-#include <signal.h>
-#include <time.h>
-
-
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
 
+#include "Address.hpp"
 #include "InstrumentThreadId.hpp"
+#include "InstrumentThreadLocalData.hpp"
+
+#include <instrument/support/sampling/SigProf.hpp>
 
 #include <list>
 #include <map>
@@ -40,10 +32,6 @@
 
 namespace Instrument {
 	class Profile {
-	public:
-		// Basic types
-		typedef void *address_t;
-		
 	private:
 		// Environment variables
 		EnvironmentVariable<long> _profilingNSResolution;
@@ -103,8 +91,6 @@ namespace Instrument {
 		// All the buffers with the collected samples
 		SpinLock _bufferListSpinLock;
 		std::list<address_t *> _bufferList;
-		
-		static bool _enabled;
 		
 #if HAVE_LIBDW
 		Dwfl *_dwfl;
@@ -335,12 +321,11 @@ namespace Instrument {
 		// Singleton object
 		static Profile _singleton;
 		
-		static void sigprofHandler(int signal, siginfo_t *sigInfo, void *signalContext);
+		static void signalHandler(Sampling::ThreadLocalData &threadLocal);
 		
 		inline AddrInfo const &resolveAddress(address_t address);
 		void buildExecutableMemoryMap(pid_t pid);
 		
-		void doInit();
 		void doShutdown();
 		thread_id_t doCreatedThread();
 		void threadEnable();
@@ -376,7 +361,9 @@ namespace Instrument {
 		
 		static inline void init()
 		{
-			_singleton.doInit();
+			Sampling::SigProf::setPeriod(_singleton._profilingNSResolution);
+			Sampling::SigProf::setHandler(&signalHandler);
+			Sampling::SigProf::init();
 		}
 		static inline void shutdown()
 		{
@@ -390,20 +377,20 @@ namespace Instrument {
 		
 		static inline void enableForCurrentThread()
 		{
-			_singleton.threadEnable();
+			Sampling::SigProf::enableThread();
 		}
 		static inline void disableForCurrentThread()
 		{
-			_singleton.threadDisable();
+			Sampling::SigProf::disableThread();
 		}
 		
 		static inline void lightweightEnableForCurrentThread()
 		{
-			_singleton.lightweightThreadEnable();
+			Sampling::SigProf::lightweightEnableThread();
 		}
 		static inline void lightweightDisableForCurrentThread()
 		{
-			_singleton.lightweightThreadDisable();
+			Sampling::SigProf::lightweightDisableThread();
 		}
 	};
 }

@@ -29,3 +29,7 @@ namespace Instrument {
 	
 	
 }
+
+
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
+

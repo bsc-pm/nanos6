@@ -170,3 +170,7 @@ void *nanos6_intercepted_pvalloc(size_t size)
 }
 
 #pragma GCC visibility pop
+
+
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
+

@@ -633,7 +633,9 @@ instrument_graph_sources = \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
+
 instrument_profile_sources = \
+	src/instrument/profile/Address.hpp \
 	src/instrument/profile/InstrumentAddTask.hpp \
 	src/instrument/profile/InstrumentComputePlaceId.hpp \
 	src/instrument/profile/InstrumentComputePlaceManagement.hpp \
@@ -660,8 +662,11 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentThreadInstrumentationContextImplementation.hpp \
 	src/instrument/profile/InstrumentThreadLocalData.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
-	src/instrument/profile/InstrumentUserMutex.hpp
-	
+	src/instrument/profile/InstrumentUserMutex.hpp \
+	src/instrument/support/sampling/SigProf.cpp \
+	src/instrument/support/sampling/SigProf.hpp \
+	src/instrument/support/sampling/ThreadLocalData.hpp
+
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentAddTask.hpp \

@@ -24,17 +24,7 @@
 #include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
 #include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 #include <instrument/support/backtrace/BacktraceWalker.hpp>
-
-#include <dlfcn.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/time.h>
-#include <sys/types.h>
+#include <instrument/support/sampling/SigProf.hpp>
 
 #include <atomic>
 #include <cstdlib>
@@ -44,11 +34,6 @@
 #include <map>
 #include <sstream>
 #include <string>
-
-// Workaround for missing definition
-#ifndef sigev_notify_thread_id
-#define sigev_notify_thread_id _sigev_un._tid
-#endif
 
 
 #include <cxxabi.h>
@@ -63,28 +48,11 @@ using namespace Instrument;
 
 
 Instrument::Profile Instrument::Profile::_singleton;
-bool Instrument::Profile::_enabled;
 
 
-void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __attribute__((unused)) siginfo_t *sigInfo, __attribute__((unused))  void *signalContext)
+void Instrument::Profile::signalHandler(Sampling::ThreadLocalData &samplingThreadLocal)
 {
-	ThreadLocalData &threadLocal = getThreadLocalData();
-	
-	if (__builtin_expect(!_enabled, 0)) {
-		struct itimerspec it;
-		it.it_interval = {0, 0};
-		it.it_value = {0, 0};
-		
-		// Disarm the timer
-		timer_settime(threadLocal._profilingTimer, 0, &it, 0);
-		
-		return;
-	}
-	
-	if ((threadLocal._disableCount > 0) || (threadLocal._lightweightDisableCount > 0)) {
-		// Temporarily disabled
-		return;
-	}
+	ThreadLocalData &threadLocal = (ThreadLocalData &) samplingThreadLocal;
 	
 	long depth = _singleton._profilingBacktraceDepth;
 	long bufferSize = _singleton._profilingBufferSize;
@@ -123,78 +91,9 @@ void Instrument::Profile::sigprofHandler(__attribute__((unused)) int signal, __a
 }
 
 
-void Instrument::Profile::threadEnable()
-{
-	ThreadLocalData &threadLocal = getThreadLocalData();
-	assert(threadLocal._disableCount > 0);
-	
-	threadLocal._disableCount--;
-	if (threadLocal._disableCount > 0) {
-		return;
-	}
-	
-	struct itimerspec it = {
-		.it_interval = { .tv_sec = 0, .tv_nsec = _profilingNSResolution },
-		.it_value = { .tv_sec = 0, .tv_nsec = _profilingNSResolution }
-	};
-	
-	int rc = timer_settime(threadLocal._profilingTimer, 0, &it, 0);
-	FatalErrorHandler::handle(rc, " arming the timer for profiling");
-}
-
-
-void Instrument::Profile::threadDisable()
-{
-	ThreadLocalData &threadLocal = getThreadLocalData();
-	assert(threadLocal._disableCount >= 0);
-	
-	threadLocal._disableCount++;
-	if (threadLocal._disableCount > 1) {
-		return;
-	}
-	
-	struct itimerspec it = {
-		.it_interval = { .tv_sec = 0, .tv_nsec = 0 },
-		.it_value = { .tv_sec = 0, .tv_nsec = 0 }
-	};
-	
-	int rc = timer_settime(threadLocal._profilingTimer, 0, &it, 0);
-	FatalErrorHandler::handle(rc, " disarming the timer for profiling");
-}
-
-
-void Instrument::Profile::lightweightThreadEnable()
-{
-	ThreadLocalData &threadLocal = getThreadLocalData();
-	assert(threadLocal._lightweightDisableCount > 0);
-	
-	threadLocal._lightweightDisableCount--;
-}
-
-
-void Instrument::Profile::lightweightThreadDisable()
-{
-	ThreadLocalData &threadLocal = getThreadLocalData();
-	assert(threadLocal._lightweightDisableCount >= 0);
-	
-	threadLocal._lightweightDisableCount++;
-}
-
-
 thread_id_t Instrument::Profile::doCreatedThread()
 {
-	#if !defined(HAVE_BACKTRACE) && !defined(HAVE_LIBUNWIND)
-		std::cerr << "Warning: profiling currently not supported in this platform." << std::endl;
-		return thread_id_t();
-	#endif
-	
 	ThreadLocalData &threadLocal = getThreadLocalData();
-	
-	struct sigevent se;
-	se.sigev_notify = SIGEV_THREAD_ID;
-	se.sigev_signo = SIGPROF;
-	se.sigev_value.sival_int = 1;
-	se.sigev_notify_thread_id = syscall(SYS_gettid);
 	
 	int rc = posix_memalign((void **) &threadLocal._currentBuffer, 128, sizeof(address_t) * _profilingBufferSize);
 	FatalErrorHandler::handle(rc, " allocating a buffer of ", sizeof(address_t) * _profilingBufferSize, " bytes for profiling");
@@ -211,43 +110,20 @@ thread_id_t Instrument::Profile::doCreatedThread()
 	_bufferList.push_back(threadLocal._currentBuffer);
 	_bufferListSpinLock.unlock();
 	
+	Sampling::SigProf::setUpThread(threadLocal);
+	
 	// We call the signal handler once since the first call to backtrace allocates memory.
 	// If the signal is delivered within a memory allocation, the thread can deadlock.
-	sigprofHandler(0, 0, 0);
+	Sampling::SigProf::forceHandler();
 	
 	// Remove the sample
 	threadLocal._nextBufferPosition = 0;
 	threadLocal._currentBuffer[0] = 0; // End of backtrace
 	threadLocal._currentBuffer[1] = 0; // End of buffer
 	
-	// Profiling actually starts after the follwoing lines
-	rc = timer_create(CLOCK_THREAD_CPUTIME_ID, &se, &threadLocal._profilingTimer);
-	FatalErrorHandler::handle(rc, " creating a timer for profiling");
-	
-	threadEnable();
+	Sampling::SigProf::enableThread(threadLocal);
 	
 	return thread_id_t();
-}
-
-
-void Instrument::Profile::doInit()
-{
-	#if !defined(HAVE_BACKTRACE) && !defined(HAVE_LIBUNWIND)
-		std::cerr << "Warning: profiling currently not supported in this platform." << std::endl;
-		return;
-	#endif
-	
-	struct sigaction sa;
-	sa.sa_sigaction = (void (*)(int, siginfo_t *, void *)) sigprofHandler;
-	sigemptyset(&sa.sa_mask);
-	sigaddset(&sa.sa_mask, SIGPROF);
-	sa.sa_flags = SA_SIGINFO | SA_RESTART;
-	
-	int rc = sigaction(SIGPROF, &sa, 0);
-	FatalErrorHandler::handle(rc, " programming the SIGPROF signal handler");
-	
-	_enabled = true;
-	std::atomic_thread_fence(std::memory_order_seq_cst);
 }
 
 
@@ -361,7 +237,7 @@ inline void Instrument::Profile::addInfoStep(AddrInfo &addrInfo, std::string fun
 #endif
 
 
-inline Instrument::Profile::AddrInfo const &Instrument::Profile::resolveAddress(Instrument::Profile::address_t address)
+inline Instrument::Profile::AddrInfo const &Instrument::Profile::resolveAddress(Instrument::address_t address)
 {
 	{
 		auto it = _addr2Cache.find(address);
@@ -722,7 +598,7 @@ void Instrument::Profile::buildExecutableMemoryMap(pid_t pid)
 void Instrument::Profile::doShutdown()
 {
 	// After this, on the next profiling signal, the corresponding timer gets disarmed
-	_enabled = false;
+	Sampling::SigProf::disable();
 	std::atomic_thread_fence(std::memory_order_seq_cst);
 	
 	#if !defined(HAVE_BACKTRACE) && !defined(HAVE_LIBUNWIND)
