@@ -527,6 +527,23 @@ SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read we
 endif
 
 
+introspection_sources = \
+	src/instrument/support/introspection/CodeAddressInfoBase.cpp \
+	src/instrument/support/introspection/CodeAddressInfoBase.hpp
+introspection_cppflags =
+
+if HAVE_ELFUTILS
+introspection_sources += \
+	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.cpp \
+	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp
+introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/ElfUtils
+else
+introspection_sources += \
+	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.cpp \
+	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp
+introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/Addr2Line
+endif
+
 AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
 common_sources += \
 	src/executors/threads/kernel-level/CPUThreadingModelData.cpp \
@@ -666,7 +683,8 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentUserMutex.hpp \
 	src/instrument/support/sampling/SigProf.cpp \
 	src/instrument/support/sampling/SigProf.hpp \
-	src/instrument/support/sampling/ThreadLocalData.hpp
+	src/instrument/support/sampling/ThreadLocalData.hpp \
+	$(introspection_sources)
 
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
@@ -821,7 +839,7 @@ libnanos6_graph_debug_la_SOURCES = $(common_sources) $(instrument_graph_sources)
 libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 nodist_libnanos6_graph_debug_la_SOURCES = $(nodist_common_sources) $(nodist_universal_debug_sources)
 
-libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS)
+libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS) $(introspection_cppflags)
 libnanos6_profile_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_SOURCES = $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
 libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS) $(DLOPEN_LIBS)

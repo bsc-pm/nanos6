@@ -91,8 +91,15 @@ AC_CHECK_LIB([log], [__android_log_print], [ANDROID_LOG_LIBS="${ANDROID_LOG_LIBS
 AC_SUBST(ANDROID_LOG_LIBS)
 
 PKG_CHECK_MODULES([elfutils], [libdw >= 0.164],
-   [AC_DEFINE([HAVE_LIBDW], [1], [Use elfutils libdw])], [AC_MSG_WARN([The profiling instrumenter is more accurate when the headers and libraries of elfutils are available.])]
+   [
+		AC_DEFINE([HAVE_LIBDW], [1], [Use elfutils libdw])
+		ac_have_elfutils=yes
+	], [
+		AC_MSG_WARN([The profiling instrumenter is more accurate and efficient when the headers and libraries of elfutils are available.])
+		ac_have_elfutils=no
+	]
 )
+AM_CONDITIONAL([HAVE_ELFUTILS], [test "x${ac_have_elfutils}" = "xyes"])
 
 CHECK_UNDEFINED_SYMBOL_VERIFICATION_FLAGS
 CHECK_AS_NEEDED_FLAGS
