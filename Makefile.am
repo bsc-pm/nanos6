@@ -382,6 +382,7 @@ common_sources = \
 	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/support/InstrumentedThread.hpp \
+	src/support/Objectified.hpp \
 	src/support/StringComposer.hpp \
 	src/support/StringLiteral.hpp \
 	src/system/BlockingAPI.cpp \
