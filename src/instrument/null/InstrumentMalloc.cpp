@@ -14,8 +14,11 @@
 
 #include <lowlevel/EnvironmentVariable.hpp>
 #include <lowlevel/FatalErrorHandler.hpp>
+#include <lowlevel/SpinLock.hpp>
 
 #include <algorithm>
+#include <atomic>
+#include <mutex>
 
 #include <string.h>
 #include <unistd.h>
@@ -24,8 +27,16 @@
 static EnvironmentVariable<bool> _debugMemory("NANOS6_DEBUG_MEMORY", false);
 static EnvironmentVariable<bool> _protectAfter("NANOS6_DEBUG_MEMORY_PROTECT_AFTER", true);
 static EnvironmentVariable<size_t> _guardPages("NANOS6_DEBUG_MEMORY_GUARD_PAGES", 1);
+static EnvironmentVariable<size_t> _maxMemory("NANOS6_DEBUG_MAX_MEMORY", 1UL * 1024UL * 1024UL * 1024UL * 1024UL);
+
 static int _pageSize = 0;
 static bool _noFree = false;
+
+static SpinLock _mappingLock;
+
+static std::atomic<void *> _lowestAddress(nullptr);
+static std::atomic<void *> _nextAddress(nullptr);
+static std::atomic<void *> _highestAddress(nullptr);
 
 static const StringLiteral _nanos6_start_function_interception_sl("nanos6_start_function_interception");
 static const StringLiteral _nanos6_stop_function_interception_sl("nanos6_stop_function_interception");
@@ -82,7 +93,6 @@ struct memory_allocation_info_t {
 	
 	bool _backupOfDeallocated;
 	
-	
 	memory_allocation_info_t()
 	{
 		strcpy(_magic, "NANOS6 MEMORY DEBUGGING INFORMATION");
@@ -105,6 +115,12 @@ struct memory_allocation_info_t {
 		}
 		return (strcmp(_magic, "NANOS6 MEMORY DEBUGGING INFORMATION") == 0);
 #else
+		if (this < _lowestAddress.load()) {
+			return false;
+		}
+		if (this > _highestAddress.load()) {
+			return false;
+		}
 		return true;
 #endif
 	}
@@ -123,6 +139,7 @@ struct memory_allocation_info_t {
 	
 	void verifyConsistency() const
 	{
+		FatalErrorHandler::check(strcmp(_magic, "NANOS6 MEMORY DEBUGGING INFORMATION") == 0, "Detected corruption in the memory allocation registry");
 		FatalErrorHandler::check(_backupOfBlockStart == _blockStart, "Detected corruption in the memory allocation registry");
 		FatalErrorHandler::check(_backupOfBlockLength == _blockLength, "Detected corruption in the memory allocation registry");
 		FatalErrorHandler::check(_backupOfPadding1Size == _padding1Size, "Detected corruption in the memory allocation registry");
@@ -197,10 +214,54 @@ static memory_allocation_info_t *nanos6_protected_memory_get_allocation_info(voi
 
 static void *nanos6_protected_memory_allocation(size_t requestedSize, size_t alignment = sizeof(void *))
 {
+	char errorBuffer[256];
+	
+	// Initialization
+	if (_lowestAddress.load() == nullptr) {
+		std::lock_guard<SpinLock> guard(_mappingLock);
+		if (_lowestAddress.load() == nullptr) {
+			void *lowestAddress = nullptr;
+			do {
+				lowestAddress = mmap(nullptr, _maxMemory, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+				if (lowestAddress == nullptr) {
+					_maxMemory.setValue(_maxMemory / 2UL);
+				}
+			} while (lowestAddress == nullptr);
+			
+			_highestAddress = (void *) (((size_t) lowestAddress) + ((size_t) _maxMemory));
+			_nextAddress = lowestAddress;
+			_lowestAddress = lowestAddress;
+		}
+	}
+	
 	size_t actualSize = nanos6_calculate_memory_allocation_size(requestedSize, alignment);
 	
-	void *memory = mmap(nullptr, actualSize, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-	FatalErrorHandler::check(memory != nullptr, "Cannot allocate ", actualSize, " bytes for an allocation of ", requestedSize, " bytes");
+	void *memory = nullptr;
+	{
+		std::lock_guard<SpinLock> guard(_mappingLock);
+		memory = _nextAddress.load();
+		
+		void *nextAddress = (void *) (((size_t) memory) + actualSize);
+		if (nextAddress > _highestAddress) {
+			return nullptr;
+		}
+		_nextAddress.store(nextAddress);
+		
+		// Split out the memory region
+		int rc = munmap(memory, actualSize);
+		if (rc != 0) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to split the memory out during a memory allocation");
+		}
+		
+		void *pages = mmap(memory, actualSize, PROT_EXEC | PROT_READ | PROT_WRITE , MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+		if (pages != memory) {
+			if (pages != nullptr) {
+				FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to rellocate a memory segmrent during a memory allocation");
+			} else {
+				return nullptr;
+			}
+		}
+	}
 	
 	pointer_arithmetic_t pointer;
 	pointer._void_pointer = memory;
@@ -227,17 +288,56 @@ static void *nanos6_protected_memory_allocation(size_t requestedSize, size_t ali
 	pointer._void_pointer = memory;
 	
 	if (pagePadding1 != 0) {
-		int rc = mprotect(pointer._void_pointer, pagePadding1, PROT_NONE);
-		FatalErrorHandler::handle(rc, "Failed to protect the leading alignment padding during a memory allocation");
+		// Split the memory in two regions
+		std::lock_guard<SpinLock> guard(_mappingLock);
+		int rc = munmap(pointer._void_pointer, pagePadding1);
+		if (rc != 0) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to deallocate the leading alignment padding during a memory allocation");
+		}
+		
+#if ENFORCE_PADDING
+		void *pages = mmap(pointer._void_pointer, pagePadding1, PROT_NONE , MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+		if (pages != pointer._void_pointer) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to protect the leading alignment padding during a memory allocation");
+		}
+#endif
 		pointer._offset += pagePadding1;
 	}
 	
+	// Split the memory region for the allocation info
+	{
+		std::lock_guard<SpinLock> guard(_mappingLock);
+		int rc = munmap(pointer._void_pointer, _pageSize);
+		if (rc != 0) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to deallocate the allocation info during a memory allocation");
+		}
+		
+		void *pages = mmap(pointer._void_pointer, _pageSize, PROT_READ | PROT_WRITE , MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+		if (pages != pointer._void_pointer) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to protect the allocation info during a memory allocation");
+		}
+		
+	}
 	memory_allocation_info_t *allocationInfo = (memory_allocation_info_t *) pointer._void_pointer;
 	new (allocationInfo) memory_allocation_info_t();
 	pointer._offset += _pageSize;
 	
-	int rc = mprotect(pointer._void_pointer, _pageSize * _guardPages, PROT_NONE);
-	FatalErrorHandler::handle(rc, "Failed to protect the leading guard page(s) during a memory allocation");
+	
+	// Split the memory region for the leading guard pages
+	{
+		std::lock_guard<SpinLock> guard(_mappingLock);
+		int rc = munmap(pointer._void_pointer, _pageSize * _guardPages);
+		if (rc != 0) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to deallocate the leading guard page(s) during a memory allocation");
+		}
+		
+#if ENFORCE_PADDING
+		void *pages = mmap(pointer._void_pointer, _pageSize * _guardPages, PROT_NONE , MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+		if (pages != pointer._void_pointer) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to protect the leading guard page(s) during a memory allocation");
+		}
+#endif
+	}
 	pointer._offset += _pageSize * _guardPages;
 	
 	void *firstUserPage = pointer._void_pointer;
@@ -254,8 +354,21 @@ static void *nanos6_protected_memory_allocation(size_t requestedSize, size_t ali
 		}
 	}
 	
-	rc = mprotect(pointer._void_pointer, _pageSize * _guardPages, PROT_NONE);
-	FatalErrorHandler::handle(rc, "Failed to protect the trailing guard page(s) during a memory allocation");
+	// Split the memory region for the trailing guard pages
+	{
+		std::lock_guard<SpinLock> guard(_mappingLock);
+		int rc = munmap(pointer._void_pointer, _pageSize * _guardPages);
+		if (rc != 0) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to deallocate the trailing guard page(s) during a memory allocation");
+		}
+		
+#if ENFORCE_PADDING
+		void *pages = mmap(pointer._void_pointer, _pageSize * _guardPages, PROT_NONE , MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+		if (pages != pointer._void_pointer) {
+			FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to protect the trailing guard page(s) during a memory allocation");
+		}
+#endif
+	}
 	
 	allocationInfo->_blockStart = memory;
 	allocationInfo->_blockLength = actualSize;
@@ -287,24 +400,56 @@ static void nanos6_protected_memory_deallocation(void *address)
 		return;
 	}
 	
+#if 1
+#if ENFORCE_PADDING
+	int rc = munmap(allocationInfo->_blockStart, allocationInfo->_blockLength);
+	if (rc != 0) {
+		FatalErrorHandler::handle(errno, "Failed to discard pages during memory deallocation");
+	}
+#else
+	size_t userSize = (size_t) allocationInfo->_protected2Start - (size_t) allocationInfo->_firstUserPage;
+	int rc = munmap(allocationInfo->_firstUserPage, userSize);
+	if (rc != 0) {
+		FatalErrorHandler::handle(errno, "Failed to discard pages during memory deallocation");
+	}
+	
+	rc = munmap(allocationInfo, _pageSize);
+	if (rc != 0) {
+		FatalErrorHandler::handle(errno, "Failed to discard pages during memory deallocation");
+	}
+#endif
+#else
 	FatalErrorHandler::check(!allocationInfo->_deallocated, "Attempt to free memory twice");
 	
 	size_t userPagesSize = ((size_t) allocationInfo->_protected2Start) - ((size_t) allocationInfo->_firstUserPage);
 #if HAVE_MADV_FREE
 	int rc = madvise(allocationInfo->_firstUserPage, userPagesSize, MADV_FREE);
-	FatalErrorHandler::handle(rc, "Failed to discard pages during memory deallocation");
+	if (rc != 0) {
+		FatalErrorHandler::handle(errno, "Failed to discard pages during memory deallocation");
+	}
 	
 	rc = mprotect(allocationInfo->_firstUserPage, userPagesSize, PROT_NONE);
-	FatalErrorHandler::handle(rc, "Failed to protect pages during memory deallocation");
+	if (rc != 0) {
+		FatalErrorHandler::handle(errno, "Failed to protect pages during memory deallocation");
+	}
 #else
-	int rc = munmap(allocationInfo->_firstUserPage, userPagesSize);
-	FatalErrorHandler::handle(rc, "Failed to unmap pages during memory deallocation");
-	
-	void *memory = mmap(allocationInfo->_firstUserPage, userPagesSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-	FatalErrorHandler::check(memory != nullptr, "Failed to map protected pages during memory deallocation");
+	{
+		std::lock_guard<SpinLock> guard(_mappingLock);
+		
+		int rc = munmap(allocationInfo->_firstUserPage, userPagesSize);
+		if (rc != 0) {
+			FatalErrorHandler::handle(errno, "Failed to unmap pages during memory deallocation");
+		}
+		
+		void *memory = mmap(allocationInfo->_firstUserPage, userPagesSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+		if (memory == nullptr) {
+			FatalErrorHandler::handle(errno, "Failed to map protected pages during memory deallocation");
+		}
+	}
 #endif
 	
 	allocationInfo->_deallocated = true;
+#endif
 }
 
 
