@@ -60,8 +60,7 @@ lib_LTLIBRARIES = \
 	libnanos6-graph.la libnanos6-graph-debug.la \
 	libnanos6-profile.la \
 	libnanos6-stats.la \
-	libnanos6-verbose.la libnanos6-verbose-debug.la \
-	libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la
+	libnanos6-verbose.la libnanos6-verbose-debug.la
 
 lib_LIBRARIES = libnanos6-main-wrapper.a
 
@@ -764,22 +763,22 @@ instrument_extrae_sources = \
 	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
 
 
-null_common_sources = \
-	src/null/NullDebug.cpp \
-	src/null/NullAPI.cpp \
-	src/null/NullSpawn.cpp
-
-null_sources = \
-	$(null_common_sources) \
-	src/null/NullDynamicBlock.cpp
-
-null_cb_sources = \
-	$(null_common_sources) \
-	src/null/NullConstantBlock.cpp
-
-null_sb_sources = \
-	$(null_common_sources) \
-	src/null/NullStaticBlock.cpp
+# null_common_sources = \
+# 	src/null/NullDebug.cpp \
+# 	src/null/NullAPI.cpp \
+# 	src/null/NullSpawn.cpp
+# 
+# null_sources = \
+# 	$(null_common_sources) \
+# 	src/null/NullDynamicBlock.cpp
+# 
+# null_cb_sources = \
+# 	$(null_common_sources) \
+# 	src/null/NullConstantBlock.cpp
+# 
+# null_sb_sources = \
+# 	$(null_common_sources) \
+# 	src/null/NullStaticBlock.cpp
 
 noinst_HEADERS = \
 	tests/TestAnyProtocolProducer.hpp \
@@ -849,20 +848,20 @@ libnanos6_verbose_debug_la_SOURCES = $(common_sources) $(instrument_verbose_sour
 libnanos6_verbose_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 nodist_libnanos6_verbose_debug_la_SOURCES = $(nodist_common_sources) $(nodist_universal_debug_sources)
 
-libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
-libnanos6_null_la_LDFLAGS = $(common_libnanos6_ldflags)
-nodist_libnanos6_null_la_SOURCES = $(nodist_universal_debug_sources)
-
-libnanos6_null_cb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_null_cb_la_SOURCES = $(null_cb_sources) $(universal_debug_sources)
-libnanos6_null_cb_la_LDFLAGS = $(common_libnanos6_ldflags)
-nodist_libnanos6_null_cb_la_SOURCES = $(nodist_universal_debug_sources)
-
-libnanos6_null_sb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
-libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
-nodist_libnanos6_null_sb_la_SOURCES = $(nodist_universal_debug_sources)
+# libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+# libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
+# libnanos6_null_la_LDFLAGS = $(common_libnanos6_ldflags)
+# nodist_libnanos6_null_la_SOURCES = $(nodist_universal_debug_sources)
+# 
+# libnanos6_null_cb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+# libnanos6_null_cb_la_SOURCES = $(null_cb_sources) $(universal_debug_sources)
+# libnanos6_null_cb_la_LDFLAGS = $(common_libnanos6_ldflags)
+# nodist_libnanos6_null_cb_la_SOURCES = $(nodist_universal_debug_sources)
+# 
+# libnanos6_null_sb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+# libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
+# libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
+# nodist_libnanos6_null_sb_la_SOURCES = $(nodist_universal_debug_sources)
 
 if HAVE_EXTRAE
 libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
