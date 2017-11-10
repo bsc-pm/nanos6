@@ -15,7 +15,7 @@
 #include "lowlevel/SpinLock.hpp"
 
 #define GLOBAL_ALLOC_SIZE (16*1024*1024)
-#define MEMORY_CHUNK_SIZE (1*1024*1024)
+#define MEMORY_CHUNK_SIZE (64*1024)
 
 class MemoryPoolGlobal {
 private:

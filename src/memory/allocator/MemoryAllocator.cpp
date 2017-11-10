@@ -13,9 +13,7 @@
 
 #include "MemoryAllocator.hpp"
 
-SpinLock MemoryAllocator::_lock;
 std::vector<MemoryPoolGlobal *> MemoryAllocator::_globalMemoryPool;
-std::vector<MemoryAllocator::size_to_pool_t> MemoryAllocator::_NUMAMemoryPool;
 std::vector<MemoryAllocator::size_to_pool_t> MemoryAllocator::_localMemoryPool;
 
 MemoryPool *MemoryAllocator::getPool(size_t size)
@@ -42,16 +40,7 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 	auto it = _localMemoryPool[CPUId].find(cacheLines);
 	if (it == _localMemoryPool[CPUId].end()) {
 		// No pool of this size locally
-		std::lock_guard<SpinLock> guard(_lock);
-		auto itNUMA = _NUMAMemoryPool[NUMANodeId].find(cacheLines);
-		if (itNUMA == _NUMAMemoryPool[NUMANodeId].end()) {
-			// No pool of this size in the NUMA node
-			pool = new MemoryPool(_globalMemoryPool[NUMANodeId], roundedSize);
-			_NUMAMemoryPool[NUMANodeId][cacheLines] = pool;
-		} else {
-			pool = itNUMA->second;
-		}
-	
+		pool = new MemoryPool(_globalMemoryPool[NUMANodeId], roundedSize);
 		_localMemoryPool[CPUId][cacheLines] = pool;
 	} else {
 		pool = it->second;
@@ -71,7 +60,6 @@ void MemoryAllocator::initialize()
 		_globalMemoryPool[i] = new MemoryPoolGlobal(i);
 	}
 	
-	_NUMAMemoryPool.resize(NUMANodeCount);
 	_localMemoryPool.resize(HardwareInfo::getComputeNodeCount());
 }
 

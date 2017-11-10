@@ -17,9 +17,7 @@ class MemoryAllocator {
 private:
 	typedef std::map<size_t, MemoryPool *> size_to_pool_t;
 	
-	static SpinLock _lock;
 	static std::vector<MemoryPoolGlobal *> _globalMemoryPool;
-	static std::vector<size_to_pool_t> _NUMAMemoryPool;
 	static std::vector<size_to_pool_t> _localMemoryPool;
 	
 	static MemoryPool *getPool(size_t size);
