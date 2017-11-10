@@ -385,6 +385,7 @@ common_sources = \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/support/InstrumentedThread.hpp \
 	src/support/StringComposer.hpp \
+	src/support/StringLiteral.hpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
 	src/system/If0Task.hpp \
