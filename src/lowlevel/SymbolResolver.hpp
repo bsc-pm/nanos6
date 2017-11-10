@@ -16,23 +16,25 @@
 #include <cassert>
 #include <dlfcn.h>
 
+#include <support/StringLiteral.hpp>
 
-template <typename RETURN_T, typename... PARAMETERS_T>
+
+template <typename RETURN_T, StringLiteral const *NAME, typename... PARAMETERS_T>
 class SymbolResolver {
 public:
 	typedef RETURN_T (*function_t)(PARAMETERS_T...);
 	
-	static RETURN_T call(char const *name, PARAMETERS_T... parameters)
+	static RETURN_T call(PARAMETERS_T... parameters)
 	{
-		static function_t symbol = (function_t) dlsym(RTLD_NEXT, name);
+		static function_t symbol = (function_t) dlsym(RTLD_NEXT, *NAME);
 		assert(symbol != nullptr);
 		
 		return (*symbol)(parameters...);
 	}
 	
-	static RETURN_T globalScopeCall(char const *name, PARAMETERS_T... parameters)
+	static RETURN_T globalScopeCall(PARAMETERS_T... parameters)
 	{
-		static function_t symbol = (function_t) dlsym(RTLD_DEFAULT, name);
+		static function_t symbol = (function_t) dlsym(RTLD_DEFAULT, *NAME);
 		assert(symbol != nullptr);
 		
 		return (*symbol)(parameters...);

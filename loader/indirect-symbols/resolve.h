@@ -78,6 +78,27 @@ static void *_nanos6_resolve_symbol_with_local_fallback(char const *fname, char 
 }
 
 
+static void *_nanos6_resolve_symbol_with_silent_local_fallback(char const *fname, char const *area, void *fallback)
+{
+	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) {
+		_nanos6_loader();
+		if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) {
+			fprintf(stderr, "Nanos 6 loader error: call to %s before library initialization\n", fname);
+			handle_error();
+			return NULL;
+		}
+	}
+	
+	void *symbol = dlsym(_nanos6_lib_handle, fname);
+	dlerror();
+	if (symbol == NULL) {
+		symbol = fallback;
+	}
+	
+	return symbol;
+}
+
+
 static void *_nanos6_resolve_intercepted_symbol_with_global_fallback(char const *fname, char const *iname, char const *area)
 {
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) {

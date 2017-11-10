@@ -21,7 +21,8 @@
 
 #pragma GCC visibility push(default)
 
-// Function interception is triggered when loading the actual runtime
+// Function interception is no longer triggered when loading the actual runtime
+void nanos6_memory_allocation_interception_init();
 // The following function is called so that the runtime can prepare for library unloading
 void nanos6_memory_allocation_interception_fini();
 
@@ -116,6 +117,8 @@ static void main_completion_callback(void *args)
 
 
 int _nanos6_loader_main(int argc, char **argv, char **envp) {
+	nanos6_memory_allocation_interception_init();
+	
 	if (_nanos6_exit_with_error) {
 		return _nanos6_exit_with_error;
 	}

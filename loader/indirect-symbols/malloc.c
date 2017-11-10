@@ -221,6 +221,16 @@ void nanos6_stop_function_interception()
 }
 
 
+void nanos6_memory_allocation_interception_init()
+{
+	void (*init_function)() = (void (*)()) dlsym(_nanos6_lib_handle, "nanos6_memory_allocation_interception_init");
+	
+	if (init_function != NULL) {
+		init_function();
+	}
+}
+
+
 void nanos6_memory_allocation_interception_fini()
 {
 	void (*fini_function)() = (void (*)()) dlsym(_nanos6_lib_handle, "nanos6_memory_allocation_interception_fini");
@@ -229,6 +239,7 @@ void nanos6_memory_allocation_interception_fini()
 		fini_function();
 	}
 }
+
 
 #pragma GCC visibility pop
 
