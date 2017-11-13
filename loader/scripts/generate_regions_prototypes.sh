@@ -13,6 +13,13 @@ shift
 
 . $(dirname $0)/common.sh
 
+echo '/*'
+echo '	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.'
+echo '	'
+echo '	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)'
+echo '*/'
+echo
+echo
 echo '#ifndef NANOS6_MULTIDIMENSIONAL_DEPENDENCIES_H'
 echo '#define NANOS6_MULTIDIMENSIONAL_DEPENDENCIES_H'
 echo
