@@ -877,6 +877,12 @@ uninstall-hook:
 			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
 		fi ; \
 	done
+	@echo Removing deprecated runtime implementations
+	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la ; do \
+		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
+			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
+		fi ; \
+	done
 
 
 #
