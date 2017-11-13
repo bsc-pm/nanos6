@@ -122,7 +122,7 @@ Each page represents the graph at a given point in time.
 Setting the `NANOS6_GRAPH_SHOW_DEAD_DEPENDENCIES` envar to `1` forces future and previous dependencies to be shown with different graphical attributes.
 
 The `NANOS6_GRAPH_DISPLAY` envar, if set to `1`, will make the resulting PDF to be opened automatically.
-The default viewer is `xdg-open`, but it can be overriden through the `NANOS6_GRAPH_DISPLAY_COMMAND` envar.
+The default viewer is `xdg-open`, but it can be overridden through the `NANOS6_GRAPH_DISPLAY_COMMAND` envar.
 
 For best results, we suggest to display the PDF with "single page" view, showing a full page and to advance page by page.
 
@@ -152,7 +152,7 @@ The case is ignored, and the `all` keyword enables all of them.
 Additionally, and area can have the `!` prepended to it to disable it.
 For instance, `NANOS6_VERBOSE=AddTask,TaskExecution,TaskWait` is a good starting point.
 
-By default, the output is emitted to standard error, but it can be sent to a file by specifying it through the `NANOS6_VERBOSE_FILE` envvar.
+By default, the output is emitted to standard error, but it can be sent to a file by specifying it through the `NANOS6_VERBOSE_FILE` envar.
 Also the `NANOS6_VERBOSE_DUMP_ONLY_ON_EXIT` can be set to `1` to delay the output to the end of the program to avoid getting it mixed with the output of the program.
 
 
@@ -178,18 +178,15 @@ __line-profile-PID.txt__: Source code lines
 __function-profile-PID.txt__: Function names
 
 __inline-profile-PID.txt__: Function names and source code lines including inlines
-    
-    Since the sampling is performed over the return addresses in the stack, if the compiler performs inlining, a given address can correspond to several functions. This file shows for the number of samples that have the same associated source code lines.
+> Since the sampling is performed over the return addresses in the stack, if the compiler performs inlining, a given address can correspond to several functions. This file shows for the number of samples that have the same associated source code lines.
 
 
 __backtrace-profile-by-line-PID.txt__: Function names and source code lines including inlines of a full backtrace
-
-    Shows the number of samples that have a full backtrace that corresponds to the same exact source code lines.
+> Shows the number of samples that have a full backtrace that corresponds to the same exact source code lines.
 
 
 __backtrace-profile-by-address-PID.txt__: Function names and source code lines including inlines of a full backtrace
-
-    Shows the number of samples that have a full backtrace with the same exact return addresses.
+> Shows the number of samples that have a full backtrace with the same exact return addresses.
 
 
 When compiling, Mercurium performs transformations to the original source code.
@@ -206,7 +203,7 @@ These appear in the backtraces and their names begin with `nanos6_ol_` and `nano
 To enable collecting statistics, run the application with the `NANOS6` envar set to either `stats` or `stats-papi`.
 The first collects timing statistics and the second also records hardware counters.
 
-By default, the statistics are emited to standard error when the program ends.
+By default, the statistics are emitted standard error when the program ends.
 The output can be sent to a file through the `NANOS6_STATS_FILE` envar.
 
 The contents of the output contains the average for each task type and the total task average of the following metrics:
@@ -246,7 +243,7 @@ In the future we may include a validation mode that will perform extensive appli
 To debug an application with a regular debugger, please compile its code with the regular debugging flags and also the `-keep` flag.
 This flag will force Mercurium to dump the transformed code in the local file system, so that it will be available for the debugger.
 
-To debug dependencies, it is advised to reduce the problem size so that very few tasks trigger the problem, and then use let the runtime make a graphical representation of the dependency graph as shown previsouly.
+To debug dependencies, it is advised to reduce the problem size so that very few tasks trigger the problem, and then use let the runtime make a graphical representation of the dependency graph as shown previously.
 
 Processing the `NANOS6` envar involves selecting at run time a runtime compiled for the corresponding instrumentation.
 This part of the bootstrap is performed by a component of the runtime called "loader.
