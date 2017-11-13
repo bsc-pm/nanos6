@@ -960,7 +960,8 @@ src/version/CompilerVersionInfo.cpp: Makefile
 
 
 EXTRA_DIST += \
-	COPYING
+	COPYING \
+	README.md
 
 CLEANFILES += LICENSE.txt
 
