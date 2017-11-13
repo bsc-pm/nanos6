@@ -985,6 +985,26 @@ doc_DATA = \
 	LICENSE.txt
 
 
+AM_V_CHECK = $(am__v_CHECK_@AM_V@)
+am__v_CHECK_ = $(am__v_CHECK_@AM_DEFAULT_V@)
+am__v_CHECK_0 = @echo "  CHECK   " $@;
+am__v_CHECK_1 =
+
+
+check-copyright: $(nodist_nanos6include_HEADERS)
+	@for f in \
+		$$(find $(top_srcdir) -name '*.[ch]pp' -or -name '*.[ch]') \
+		$(nodist_nanos6include_HEADERS) \
+		$(top_srcdir)/loader/scripts/*.sh \
+	; do \
+		if ! grep Copyright $$f > /dev/null ; then \
+			echo Error: $$f is missing the copyright notice 1>&2 ; \
+			fail=true; \
+		fi ; \
+	done ; \
+	test -z $$fail
+
+
 ## --------------------------------- ##
 ## Format-independent Doxygen rules. ##
 ## --------------------------------- ##
