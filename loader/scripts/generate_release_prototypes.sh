@@ -1,5 +1,9 @@
 #!/bin/sh
 
+#	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+#	
+#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
 
 if [ $# -lt 2 ] ; then
 	echo Usage: $0 '<max dimensions>' '<type1> [type2 [type3 [...]]]' 1>&2
