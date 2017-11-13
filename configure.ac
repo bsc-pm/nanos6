@@ -243,3 +243,51 @@ if test x"${ac_have_nanos6_mercurium}" = x"no" ; then
 	AC_MSG_WARN([the directive based tests will not be checked since there is no Mercurium compiler available])
 fi
 
+
+_AS_ECHO([])
+_AS_ECHO([])
+_AS_ECHO([Configuration summary:])
+_AS_ECHO([   Compiler version... ${CXX_VERSION}])
+_AS_ECHO([   Compiler optimization flags... ${OPT_CXXFLAGS}])
+_AS_ECHO([   Compiler debug flags... ${DEBUG_CXXFLAGS}])
+_AS_ECHO([])
+_AS_ECHO([   Dependency implementation... ${ac_with_dependencies}])
+_AS_ECHO([   Symbol resolution method... ${ac_cv_use_symbol_resolution}])
+_AS_ECHO([])
+_AS_ECHO([   Mercurium prefix... ${NANOS6_MCC_PREFIX}])
+_AS_ECHO([])
+_AS_ECHO([   Boost CPPFLAGS... ${BOOST_CPPFLAGS}])
+_AS_ECHO([   Boost LDFLAGS... ${BOOST_LDFLAGS}])
+_AS_ECHO([])
+_AS_ECHO([   Backtrace LIBS... ${BACKTRACE_LIBS}])
+_AS_ECHO([])
+_AS_ECHO([   libnuma CPPFLAGS... ${libnuma_CPPFLAGS}])
+_AS_ECHO([   libnuma LIBS... ${libnuma_LIBS}])
+_AS_ECHO([])
+_AS_ECHO([   hwloc CPPFLAGS... ${hwloc_CFLAGS}])
+_AS_ECHO([   hwloc LIBS... ${hwloc_LIBS}])
+_AS_ECHO([])
+_AS_ECHO([   clock LIBS... ${CLOCK_LIBS}])
+
+_AS_ECHO([])
+_AS_ECHO_N([   Extrae is enabled... ])
+if test x"${have_extrae}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   PAPI is enabled... ])
+if test x"${ac_use_papi}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   PAPI CPPFLAGS... ${papi_CPPFLAGS}])
+	_AS_ECHO([   PAPI LIBS... ${papi_LIBS}])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO([   elfutils CPPFLAGS... ${elfutils_CFLAGS}])
+_AS_ECHO([   elfutils LIBS... ${elfutils_LIBS}])
+
