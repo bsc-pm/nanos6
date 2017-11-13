@@ -28,8 +28,6 @@ SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES =
 nanos6includedir = $(includedir)/nanos6
 
 nanos6include_HEADERS = \
-	api/nanos6/nanos6_rt_interface.h \
-	api/nanos6/nanos6_debug_interface.h \
 	api/nanos6/blocking.h \
 	api/nanos6/bootstrap.h \
 	api/nanos6/constants.h \
@@ -871,6 +869,14 @@ libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ @extr
 nodist_libnanos6_extrae_la_SOURCES = $(nodist_common_sources) $(nodist_universal_debug_sources)
 endif
 
+
+uninstall-hook:
+	@echo Removing deprecated headers
+	for f in nanos6_rt_interface.h nanos6_debug_interface.h ; do \
+		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
+			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
+		fi ; \
+	done
 
 
 #
