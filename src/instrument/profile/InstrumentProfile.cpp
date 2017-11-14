@@ -51,15 +51,25 @@ void Instrument::Profile::signalHandler(Sampling::ThreadLocalData &samplingThrea
 	long depth = _singleton._profilingBacktraceDepth;
 	long bufferSize = _singleton._profilingBufferSize;
 	
-	if (threadLocal._nextBufferPosition + depth > (bufferSize + 2)) {
-		int rc = posix_memalign((void **) &threadLocal._currentBuffer, 128, sizeof(address_t) * bufferSize);
-		FatalErrorHandler::handle(rc, " allocating a buffer of ", sizeof(address_t) * bufferSize, " bytes for profiling");
-		
-		threadLocal._nextBufferPosition = 0;
+	// Pre-allocate the next buffer as soon as possible
+	if (!threadLocal._inMemoryAllocation && (threadLocal._nextBuffer == nullptr)) {
+		threadLocal.allocateNextBuffer(bufferSize);
 		
 		_singleton._bufferListSpinLock.lock();
-		_singleton._bufferList.push_back(threadLocal._currentBuffer);
+		_singleton._bufferList.push_back(threadLocal._nextBuffer);
 		_singleton._bufferListSpinLock.unlock();
+	}
+	
+	// Replace the current buffer if necessary
+	if (threadLocal._nextBufferPosition + depth > (bufferSize + 2)) {
+		threadLocal._currentBuffer = threadLocal._nextBuffer;
+		threadLocal._nextBuffer = nullptr;
+		threadLocal._nextBufferPosition = 0;
+	}
+	
+	// Either out of memory too many consecutive samples within a memory allocation
+	if (threadLocal._currentBuffer == nullptr) {
+		return;
 	}
 	
 	{
@@ -88,9 +98,8 @@ void Instrument::Profile::signalHandler(Sampling::ThreadLocalData &samplingThrea
 thread_id_t Instrument::Profile::doCreatedThread()
 {
 	ThreadLocalData &threadLocal = getThreadLocalData();
-	
-	int rc = posix_memalign((void **) &threadLocal._currentBuffer, 128, sizeof(address_t) * _profilingBufferSize);
-	FatalErrorHandler::handle(rc, " allocating a buffer of ", sizeof(address_t) * _profilingBufferSize, " bytes for profiling");
+	threadLocal.init(_profilingBufferSize);
+	threadLocal.allocateNextBuffer(_profilingBufferSize);
 	
 	threadLocal._nextBufferPosition = 0;
 	

@@ -49,7 +49,9 @@ void *nanos6_intercepted_malloc(size_t size)
 		Instrument::Profile::lightweightDisableForCurrentThread();
 	}
 	auto result = SymbolResolver<void *, &_malloc_sl, size_t>::call(size);
-	Instrument::Profile::lightweightEnableForCurrentThread();
+	if (Instrument::_profilingIsReady) {
+		Instrument::Profile::lightweightEnableForCurrentThread();
+	}
 	
 	return result;
 }
@@ -61,7 +63,9 @@ void nanos6_intercepted_free(void *ptr)
 			Instrument::Profile::lightweightDisableForCurrentThread();
 		}
 		SymbolResolver<void, &_free_sl, void *>::call(ptr);
-		Instrument::Profile::lightweightEnableForCurrentThread();
+		if (Instrument::_profilingIsReady) {
+			Instrument::Profile::lightweightEnableForCurrentThread();
+		}
 	}
 }
 

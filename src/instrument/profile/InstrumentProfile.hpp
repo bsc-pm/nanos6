@@ -14,6 +14,7 @@
 #include "InstrumentThreadId.hpp"
 #include "InstrumentThreadLocalData.hpp"
 
+#include <BacktraceWalker.hpp>
 #include <CodeAddressInfo.hpp>
 #include <instrument/support/sampling/SigProf.hpp>
 
@@ -187,11 +188,26 @@ namespace Instrument {
 		
 		static inline void lightweightEnableForCurrentThread()
 		{
-			Sampling::SigProf::lightweightEnableThread();
+			if (BacktraceWalker::involves_libc_malloc) {
+				Sampling::SigProf::lightweightEnableThread();
+			} else {
+				ThreadLocalData &threadLocal = getThreadLocalData();
+				threadLocal._inMemoryAllocation--;
+			}
 		}
 		static inline void lightweightDisableForCurrentThread()
 		{
-			Sampling::SigProf::lightweightDisableThread();
+			if (BacktraceWalker::involves_libc_malloc) {
+				Sampling::SigProf::lightweightDisableThread();
+			} else {
+				ThreadLocalData &threadLocal = getThreadLocalData();
+				threadLocal._inMemoryAllocation++;
+			}
+		}
+		
+		static inline long getBufferSize()
+		{
+			return _singleton._profilingBufferSize;
 		}
 	};
 }

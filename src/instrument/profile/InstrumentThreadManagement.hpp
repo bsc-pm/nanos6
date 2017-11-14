@@ -9,6 +9,7 @@
 
 
 #include "../api/InstrumentThreadManagement.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include "InstrumentProfile.hpp"
 
@@ -25,6 +26,12 @@ namespace Instrument {
 	{
 		// For now, external threads are not profiled
 		threadId = external_thread_id_t();
+		
+		// Force the sentinel worker TLS to be initialized
+		{
+			ThreadLocalData &sentinelThreadLocal = getThreadLocalData();
+			sentinelThreadLocal.init(Profile::getBufferSize());
+		}
 	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
