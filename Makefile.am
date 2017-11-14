@@ -784,8 +784,10 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentExtrae.cpp \
 	src/instrument/extrae/InstrumentExtrae.hpp \
 	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
+	src/instrument/extrae/InstrumentInitAndShutdown.cpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
+	src/instrument/extrae/InstrumentMalloc.cpp \
 	src/instrument/extrae/InstrumentTaskExecution.hpp \
 	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
@@ -796,7 +798,11 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentUserMutex.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
+	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp \
+	src/instrument/support/sampling/SigProf.cpp \
+	src/instrument/support/sampling/SigProf.hpp \
+	src/instrument/support/sampling/ThreadLocalData.hpp \
+	$(introspection_sources)
 
 
 # null_common_sources = \
@@ -900,10 +906,10 @@ nodist_libnanos6_verbose_debug_la_SOURCES = $(nodist_common_sources) $(nodist_un
 # nodist_libnanos6_null_sb_la_SOURCES = $(nodist_universal_debug_sources)
 
 if HAVE_EXTRAE
-libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
-libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ $(elfutils_CFLAGS) $(introspection_cppflags)
+libnanos6_extrae_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
-libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ @extrae_LIBS@ $(DLOPEN_LIBS)
+libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ @extrae_LIBS@ $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS) $(DLOPEN_LIBS)
 nodist_libnanos6_extrae_la_SOURCES = $(nodist_common_sources) $(nodist_universal_debug_sources)
 endif
 

@@ -14,6 +14,8 @@
 #include "../generic_ids/GenericIds.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 
+#include <instrument/support/sampling/SigProf.hpp>
+
 
 // This is not defined in the extrae headers
 extern "C" void Extrae_change_num_threads (unsigned n);
@@ -23,10 +25,20 @@ namespace Instrument {
 	inline void createdThread(/* OUT */ thread_id_t &threadId)
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
+		threadLocal.init();
+		
 		threadLocal._nestingLevels.push_back(0);
 		
 		threadId = GenericIds::getNewThreadId();
 		threadLocal._currentThreadId = threadId;
+		
+		if (_sampleBacktraceDepth > 0) {
+			Sampling::SigProf::setUpThread(threadLocal);
+			
+			// We call the signal handler once since the first call to backtrace allocates memory.
+			// If the signal is delivered within a memory allocation, the thread can deadlock.
+			Sampling::SigProf::forceHandler();
+		}
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.writeLock();
@@ -55,12 +67,26 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
+		
+		if (_sampleBacktraceDepth > 0) {
+			_backtraceAddressSetsLock.lock();
+			_backtraceAddressSets.push_back(&threadLocal._backtraceAddresses);
+			_backtraceAddressSetsLock.unlock();
+			
+			Sampling::SigProf::enableThread(threadLocal);
+		}
 	}
 	
 	template<typename... TS>
 	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
 	{
 		ExternalThreadLocalData &threadLocal = getExternalThreadLocalData();
+		
+		// Force the sentinel worker TLS to be initialized
+		{
+			ThreadLocalData &sentinelThreadLocal = getThreadLocalData();
+			sentinelThreadLocal.init();
+		}
 		
 		if (_traceAsThreads) {
 			// Same thread counter as regular worker threads

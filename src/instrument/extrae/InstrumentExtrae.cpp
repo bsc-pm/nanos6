@@ -13,12 +13,15 @@
 
 namespace Instrument {
 	const EnvironmentVariable<bool> _traceAsThreads("NANOS6_EXTRAE_AS_THREADS", 0);
+	const EnvironmentVariable<int> _sampleBacktraceDepth("NANOS6_EXTRAE_SAMPLE_BACKTRACE_DEPTH", 0);
+	const EnvironmentVariable<long> _sampleBacktracePeriod("NANOS6_EXTRAE_SAMPLE_BACKTRACE_PERIOD", 1000);
 	
 	const extrae_type_t       _taskInstanceId = 9200002;
 	const extrae_type_t       _runtimeState = 9000000;     //!< Runtime state (extrae event type)
 	const extrae_type_t       _functionName = 9200011;     //!< Task function name
 	const extrae_type_t       _codeLocation = 9200021;     //!< Task code location
 	const extrae_type_t       _nestingLevel = 9500001;     //!< Nesting level
+	const extrae_type_t       _samplingEventType = 30000000;
 	
 	SpinLock                  _extraeLock;
 	
@@ -28,6 +31,9 @@ namespace Instrument {
 	
 	SpinLock _userFunctionMapLock;
 	user_fct_map_t            _userFunctionMap;
+	
+	SpinLock _backtraceAddressSetsLock;
+	std::list<std::set<void *> *> _backtraceAddressSets;
 	
 	std::atomic<size_t> _nextTaskId(1);
 	
@@ -46,7 +52,6 @@ namespace Instrument {
 		assert(!_traceAsThreads);
 		return nanos_get_num_cpus() + GenericIds::getTotalExternalThreads();
 	}
-	
 	
 }
 

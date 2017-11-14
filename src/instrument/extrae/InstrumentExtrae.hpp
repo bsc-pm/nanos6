@@ -19,6 +19,7 @@
 
 #include <atomic>
 #include <cstddef>
+#include <list>
 #include <map>
 #include <set>
 #include <string>
@@ -33,12 +34,15 @@ namespace Instrument {
 	typedef std::set<nanos_task_info *>              user_fct_map_t;
 	
 	extern const EnvironmentVariable<bool>           _traceAsThreads;
+	extern const EnvironmentVariable<int>            _sampleBacktraceDepth;
+	extern const EnvironmentVariable<long>           _sampleBacktracePeriod;
 	
 	extern const extrae_type_t                       _taskInstanceId;
 	extern const extrae_type_t                       _runtimeState;      //!< Runtime state (extrae event type)
 	extern const extrae_type_t                       _functionName;      //!< Task function name
 	extern const extrae_type_t                       _codeLocation;      //!< Task function location
 	extern const extrae_type_t                       _nestingLevel;      //!< Task nesting level
+	extern const extrae_type_t                       _samplingEventType;
 	
 	typedef enum { NANOS_NO_STATE, NANOS_NOT_RUNNING, NANOS_STARTUP, NANOS_SHUTDOWN, NANOS_ERROR, NANOS_IDLE,
 						NANOS_RUNTIME, NANOS_RUNNING, NANOS_SYNCHRONIZATION, NANOS_SCHEDULING, NANOS_CREATION,
@@ -49,6 +53,9 @@ namespace Instrument {
 	
 	extern SpinLock _userFunctionMapLock;
 	extern user_fct_map_t                            _userFunctionMap;
+	
+	extern SpinLock _backtraceAddressSetsLock;
+	extern std::list<std::set<void *> *> _backtraceAddressSets;
 	
 	extern std::atomic<size_t> _nextTaskId;
 	
@@ -76,6 +83,11 @@ namespace Instrument {
 	
 	unsigned int extrae_nanos_get_num_threads();
 	unsigned int extrae_nanos_get_num_cpus_and_external_threads();
+	
+	namespace Extrae {
+		void lightweightDisableSamplingForCurrentThread();
+		void lightweightEnableSamplingForCurrentThread();
+	}
 }
 
 #endif
