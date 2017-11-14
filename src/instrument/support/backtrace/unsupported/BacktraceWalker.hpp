@@ -52,6 +52,11 @@ public:
 			return *this;
 		}
 		
+		inline void *operator*() const
+		{
+			return nullptr;
+		}
+		
 		inline bool operator==(const_iterator const &other)
 		{
 			// Assume always the end
