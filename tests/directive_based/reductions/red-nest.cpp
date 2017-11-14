@@ -54,9 +54,12 @@ void recursion(int& x, int depth, Atomic<bool>& parentReady) {
 		
 		nextReady = false;
 		
-		#pragma oss task reduction(+: x) shared(parentReady, nextReady)
+		#pragma oss task weakreduction(+: x) shared(parentReady, nextReady)
 		{
-			x++;
+			#pragma oss task reduction(+: x)
+			{
+				x++;
+			}
 			
 			for (int i = 0; i < branchingFactor; ++i) {
 				recursion(x, depth + 1, nextReady);
