@@ -66,7 +66,7 @@ void Instrument::Profile::signalHandler(Sampling::ThreadLocalData &samplingThrea
 		auto it = BacktraceWalker::begin();
 		
 		// Skip the signal handler frame and the signal frame
-		++it; ++it;
+		++it; ++it; ++it;
 		
 		for (int currentFrame = 0; (currentFrame < depth) && (it != BacktraceWalker::end()); currentFrame++) {
 			threadLocal._currentBuffer[threadLocal._nextBufferPosition] = *it;
