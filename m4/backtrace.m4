@@ -45,7 +45,7 @@ AC_DEFUN([AC_CHECK_BACKTRACE],
 		
 		AC_SUBST([BACKTRACE_LIBS])
 		
-		AM_CONDITIONAL([HAVE_LIBUNWIND], [test x"${ac_cv_lib_unwind_backtrace}" = x"yes"])
-		AM_CONDITIONAL([HAVE_BACKTRACE], [test x"${ac_cv_func_backtrace}" = x"yes"])
+		AM_CONDITIONAL([HAVE_LIBUNWIND], [test x"${ac_cv_header_libunwind_h}" = x"yes" -a x"${ac_cv_lib_unwind_backtrace}" = x"yes"])
+		AM_CONDITIONAL([HAVE_BACKTRACE], [test x"${ac_cv_header_execinfo_h}" = x"yes" -a test x"${ac_cv_func_backtrace}" = x"yes"])
 	]
 )
