@@ -322,7 +322,9 @@ common_sources = \
 	src/instrument/api/InstrumentTaskWait.hpp \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
-	src/instrument/support/backtrace/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp \
@@ -543,6 +545,17 @@ introspection_sources += \
 	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp
 introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/Addr2Line
 endif
+
+if HAVE_LIBUNWIND
+introspection_cppflags += -I$(srcdir)/src/instrument/support/backtrace/libunwind
+else
+if HAVE_BACKTRACE
+introspection_cppflags += -I$(srcdir)/src/instrument/support/backtrace/backtrace
+else
+introspection_cppflags += -I$(srcdir)/src/instrument/support/backtrace/unsupported
+endif
+endif
+
 
 AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
 common_sources += \

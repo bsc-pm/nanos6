@@ -34,11 +34,18 @@ AC_DEFUN([AC_CHECK_BACKTRACE],
 				AC_DEFINE([HAVE_LIBUNWIND], 1, [use libunwind to generate backtraces])
 			],
 			[
-				AC_MSG_WARN([libunwind cannot be found. Unwind information will not be available.])
+				if test x"${ac_cv_func_backtrace}" ; then
+					AC_MSG_WARN([libunwind cannot be found. Will use backtrace from libc instead.])
+				else
+					AC_MSG_WARN([libunwind cannot be found. Unwind information will not be available.])
+				fi
 				AC_DEFINE([HAVE_LIBUNWIND], 0, [use libunwind to generate backtraces])
 			]
 		)
 		
 		AC_SUBST([BACKTRACE_LIBS])
+		
+		AM_CONDITIONAL([HAVE_LIBUNWIND], [test x"${ac_cv_lib_unwind_backtrace}" = x"yes"])
+		AM_CONDITIONAL([HAVE_BACKTRACE], [test x"${ac_cv_func_backtrace}" = x"yes"])
 	]
 )
