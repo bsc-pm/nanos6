@@ -50,7 +50,7 @@ inline std::string CodeAddressInfo::getDebugInformationEntryName(Dwarf_Die *debu
 		linkageName = "";
 	}
 	
-	return CodeAddressInfo::demangleSymbol(linkageName);
+	return linkageName;
 }
 
 
@@ -90,7 +90,7 @@ void CodeAddressInfo::shutdown()
 }
 
 
-CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
+CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void *address)
 {
 	{
 		auto it = _address2Entry.find(address);
@@ -121,7 +121,7 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
 	}
 	
 	// Get the name of the function
-	std::string function;
+	std::string mangledFunction;
 	for (int scopeEntryIndex = 0; scopeEntryIndex < scopeEntryCount; scopeEntryIndex++) {
 		Dwarf_Die *scopeEntry = &scopeDebugInformationEntries[scopeEntryIndex];
 		int dwarfTag = dwarf_tag(scopeEntry);
@@ -131,7 +131,7 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
 			|| (dwarfTag == DW_TAG_inlined_subroutine)
 			|| (dwarfTag == DW_TAG_entry_point)
 		) {
-			function = getDebugInformationEntryName(scopeEntry);
+			mangledFunction = getDebugInformationEntryName(scopeEntry);
 			break;
 		}
 	}
@@ -154,7 +154,8 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
 	
 	// Add the current function and source location
 	{
-		InlineFrame currentFrame = functionAndSourceToFrame(function, sourceLine);
+		std::string function = CodeAddressInfo::demangleSymbol(mangledFunction);
+		InlineFrame currentFrame = functionAndSourceToFrame(mangledFunction, function, sourceLine);
 		entry._inlinedFrames.push_back(currentFrame);
 	}
 	
@@ -194,7 +195,7 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
 					}
 				}
 				
-				function.clear();
+				mangledFunction.clear();
 				sourceLine.clear();
 				
 				// Look up the function name
@@ -207,7 +208,7 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
 						|| (dwarfTag == DW_TAG_inlined_subroutine)
 						|| (dwarfTag == DW_TAG_entry_point)
 					) {
-						function = getDebugInformationEntryName(parentEntry);
+						mangledFunction = getDebugInformationEntryName(parentEntry);
 						break;
 					}
 				}
@@ -255,7 +256,8 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
 				}
 				
 				// Add the current function and source location
-				InlineFrame currentFrame = functionAndSourceToFrame(function, sourceLine);
+				std::string function = CodeAddressInfo::demangleSymbol(mangledFunction);
+				InlineFrame currentFrame = functionAndSourceToFrame(mangledFunction, function, sourceLine);
 				entry._inlinedFrames.push_back(currentFrame);
 			}
 		}

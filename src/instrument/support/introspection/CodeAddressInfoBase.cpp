@@ -21,6 +21,7 @@ std::map<void *, CodeAddressInfoBase::Entry> CodeAddressInfoBase::_address2Entry
 
 std::map<std::string, CodeAddressInfoBase::function_id_t> CodeAddressInfoBase::_functionName2Id;
 std::map<std::string, CodeAddressInfoBase::source_location_id_t> CodeAddressInfoBase::_sourceLocation2Id;
+std::vector<std::string> CodeAddressInfoBase::_mangledFunctionNames;
 std::vector<std::string> CodeAddressInfoBase::_functionNames;
 std::vector<std::string> CodeAddressInfoBase::_sourceLocations;
 
@@ -65,8 +66,11 @@ std::string CodeAddressInfoBase::sourceToString(char const *source, int line, in
 }
 
 
-CodeAddressInfoBase::InlineFrame CodeAddressInfoBase::functionAndSourceToFrame(std::string const &functionName, std::string const &sourceLocation)
-{
+CodeAddressInfoBase::InlineFrame CodeAddressInfoBase::functionAndSourceToFrame(
+	std::string const &mangledFunctionName,
+	std::string const &functionName,
+	std::string const &sourceLocation
+) {
 	InlineFrame result;
 	
 	{
@@ -76,6 +80,7 @@ CodeAddressInfoBase::InlineFrame CodeAddressInfoBase::functionAndSourceToFrame(s
 		} else {
 			_functionName2Id[functionName] = _functionNames.size();
 			result._functionId = _functionNames.size();
+			_mangledFunctionNames.push_back(mangledFunctionName);
 			_functionNames.push_back(functionName);
 		}
 	}

@@ -108,7 +108,7 @@ void CodeAddressInfo::shutdown()
 }
 
 
-CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
+CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void *address)
 {
 	{
 		auto it = _address2Entry.find(address);
@@ -135,7 +135,7 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
 	size_t relativeAddress = (size_t)address - (size_t)it->first;
 	
 	std::ostringstream addr2lineCommandLine;
-	addr2lineCommandLine << "addr2line -i -f -C -e " << memoryMapSegment._filename << " " << std::hex << relativeAddress;
+	addr2lineCommandLine << "addr2line -i -f -e " << memoryMapSegment._filename << " " << std::hex << relativeAddress;
 	
 	FILE *addr2lineOutput = popen(addr2lineCommandLine.str().c_str(), "r");
 	if (addr2lineOutput == NULL) {
@@ -150,19 +150,20 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void* address)
 	pclose(addr2lineOutput);
 	
 	std::istringstream output(cpp_buffer);
-	std::string function;
+	std::string mangledFunction;
 	std::string sourceLine;
-	std::getline(output, function);
+	std::getline(output, mangledFunction);
 	std::getline(output, sourceLine);
 	
 	while (!output.eof()) {
-		if ((function != "??") && (sourceLine != "??:0") && (sourceLine != "??:?")) {
+		if ((mangledFunction != "??") && (sourceLine != "??:0") && (sourceLine != "??:?")) {
 			// Add the current function and source location
-			InlineFrame currentFrame = functionAndSourceToFrame(function, sourceLine);
+			std::string function = CodeAddressInfo::demangleSymbol(mangledFunction);
+			InlineFrame currentFrame = functionAndSourceToFrame(mangledFunction, function, sourceLine);
 			entry._inlinedFrames.push_back(currentFrame);
 		}
 		
-		std::getline(output, function);
+		std::getline(output, mangledFunction);
 		std::getline(output, sourceLine);
 	}
 	

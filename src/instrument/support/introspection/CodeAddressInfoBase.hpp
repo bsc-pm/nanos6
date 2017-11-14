@@ -62,11 +62,12 @@ public:
 	
 	
 	struct FrameNames {
+		std::string const &_mangledFunction;
 		std::string const &_function;
 		std::string const &_sourceLocation;
 		
-		FrameNames(std::string const &function, std::string const &sourceLocation)
-			: _function(function), _sourceLocation(sourceLocation)
+		FrameNames(std::string const &mangledFunction, std::string const &function, std::string const &sourceLocation)
+			: _mangledFunction(mangledFunction), _function(function), _sourceLocation(sourceLocation)
 		{
 		}
 	};
@@ -151,15 +152,25 @@ protected:
 	static std::map<void *, Entry> _address2Entry;
 	static std::map<std::string, function_id_t> _functionName2Id;
 	static std::map<std::string, source_location_id_t> _sourceLocation2Id;
+	static std::vector<std::string> _mangledFunctionNames;
 	static std::vector<std::string> _functionNames;
 	static std::vector<std::string> _sourceLocations;
 	
 	static std::string demangleSymbol(std::string const &symbol);
 	static std::string sourceToString(char const *source, int line, int column);
 	
-	static InlineFrame functionAndSourceToFrame(std::string const &functionName, std::string const &sourceLocation);
+	static InlineFrame functionAndSourceToFrame(std::string const &mangledFunctionName, std::string const &functionName, std::string const &sourceLocation);
 	
 public:
+	static inline std::string const &getMangledFunctionName(function_id_t functionId)
+	{
+		if (functionId != function_id_t()) {
+			return _mangledFunctionNames[functionId];
+		} else {
+			return _unknownFunctionName;
+		}
+	}
+	
 	static inline std::string const &getFunctionName(function_id_t functionId)
 	{
 		if (functionId != function_id_t()) {
@@ -181,6 +192,7 @@ public:
 	static inline FrameNames getFrameNames(InlineFrame const &frame)
 	{
 		return FrameNames(
+			getMangledFunctionName(frame._functionId),
 			getFunctionName(frame._functionId),
 			getSourceLocation(frame._sourceLocationId)
 		);
