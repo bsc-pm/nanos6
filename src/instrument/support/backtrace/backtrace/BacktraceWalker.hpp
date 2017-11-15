@@ -10,6 +10,7 @@
 
 #include <execinfo.h>
 
+#include <climits>
 #include <cstddef>
 
 
@@ -21,10 +22,6 @@ namespace Instrument {
 
 class BacktraceWalker {
 private:
-	enum begin_tag_t {
-		begin_tag_value
-	};
-	
 	enum special_address_values_t : size_t {
 		lowest_valid_address = 1024
 	};
@@ -33,75 +30,41 @@ public:
 	typedef void *address_t;
 	
 	enum {
-		max_backtrace_frames = 20,
-		internal_max_backtrace_frames = max_backtrace_frames + 2
+		max_backtrace_frames = INT_MAX
 	};
 	
 	enum {
 		involves_libc_malloc = 1
 	};
 	
-	class const_iterator {
-	private:
-		address_t _buffer[internal_max_backtrace_frames];
-		int _index;
-		int _total;
+	
+	template <typename CONSUMER_T>
+	static inline void walk(int maxFrames, int skipFrames, CONSUMER_T consumer)
+	{
+		int allocatedFrames = (maxFrames + skipFrames) * 2;
+		address_t buffer[allocatedFrames];
 		
-	public:
-		inline const_iterator()
-			: _index(-1)
-		{
-		}
+		int total = backtrace(buffer, allocatedFrames);
+		int currentIndex = 0;
+		int currentFrame = 0;
 		
-		inline const_iterator(begin_tag_t)
-		{
-			_total = backtrace(_buffer, internal_max_backtrace_frames);
-			_index = 0;
-		}
-		
-		inline const_iterator &operator++()
-		{
-			do {
-				_index++;
-				if (_index == _total) {
-					_index = -1;
-				}
-			} while ((_index != -1) && (_buffer[_index] < (address_t) lowest_valid_address));
-			
-			return *this;
-		}
-		
-		inline void *operator*() const
-		{
-			if (_index != -1) {
-				return _buffer[_index];
-			} else {
-				return nullptr;
+		// Skip as many frames as necessary
+		while ((currentFrame < skipFrames) && (currentIndex < allocatedFrames)) {
+			if (buffer[currentIndex] >= (address_t) lowest_valid_address) {
+				currentFrame++;
 			}
+			currentIndex++;
 		}
 		
-		inline bool operator==(const_iterator const &other)
-		{
-			// WARNING: We only check whether we are at the end
-			return (_index == other._index);
+		// Process
+		currentFrame = 0;
+		while ((currentFrame < maxFrames) && (currentIndex < allocatedFrames)) {
+			if (buffer[currentIndex] >= (address_t) lowest_valid_address) {
+				consumer(buffer[currentIndex], currentFrame);
+				currentFrame++;
+			}
+			currentIndex++;
 		}
-		
-		inline bool operator!=(const_iterator const &other)
-		{
-			// WARNING: We only check whether we are at the end
-			return (_index != other._index);
-		}
-	};
-	
-	
-	static inline const_iterator begin()
-	{
-		return const_iterator(begin_tag_value);
-	}
-	
-	static inline const_iterator end()
-	{
-		return const_iterator();
 	}
 };
 

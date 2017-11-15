@@ -79,7 +79,7 @@ namespace Instrument {
 		ce.HardwareCounters = 0;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = _sampleBacktraceDepth;
+		ce.nEvents = 0;
 		ce.nCommunications = 0;
 		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
@@ -87,30 +87,25 @@ namespace Instrument {
 		
 		Instrument::ThreadLocalData &threadLocal = (Instrument::ThreadLocalData &) samplingThreadLocal;
 		
-		{
-			auto it = BacktraceWalker::begin();
-			
-			// Skip the signal handler frame and the signal frame
-			++it; ++it; ++it;
-			
-			int currentFrame = 0;
-			for (; (currentFrame < _sampleBacktraceDepth) && (it != BacktraceWalker::end()); currentFrame++) {
+		BacktraceWalker::walk(
+			_sampleBacktraceDepth,
+			/* Skip */ 3,
+			[&](void *address, int currentFrame) {
 				ce.Types[currentFrame] = _samplingEventType + currentFrame;
-				ce.Values[currentFrame] = (extrae_value_t) *it;
+				ce.Values[currentFrame] = (extrae_value_t) address;
 				
 				if (threadLocal._inMemoryAllocation == 0) {
-					threadLocal._backtraceAddresses.insert(*it);
+					threadLocal._backtraceAddresses.insert(address);
 				} else if (threadLocal._backtraceAddressBacklog.size() + 1 < threadLocal._backtraceAddressBacklog.capacity()) {
-					threadLocal._backtraceAddressBacklog.push_back(*it);
+					threadLocal._backtraceAddressBacklog.push_back(address);
 				}
-				++it;
+				
+				ce.nEvents = currentFrame + 1;
 			}
-			
-			ce.nEvents = currentFrame;
-			
-			if (currentFrame == 0) {
-				return;
-			}
+		);
+		
+		if (ce.nEvents == 0) {
+			return;
 		}
 		
 		if (_traceAsThreads) {

@@ -15,19 +15,8 @@
 namespace Instrument {
 
 class BacktraceWalker {
-private:
-	enum begin_tag_t {
-		begin_tag_value
-	};
-	
-	enum special_address_values_t : size_t {
-		lowest_valid_address = 1024
-	};
-	
 public:
 	typedef void *address_t;
-	
-	#warning Backtraces are not supported in this platform
 	
 	enum {
 		max_backtrace_frames = 0
@@ -37,48 +26,13 @@ public:
 		involves_libc_malloc = 0
 	};
 	
-	class const_iterator {
-	public:
-		const_iterator()
-		{
-		}
-		
-		const_iterator(begin_tag_t)
-		{
-		}
-		
-		const_iterator &operator++()
-		{
-			return *this;
-		}
-		
-		inline void *operator*() const
-		{
-			return nullptr;
-		}
-		
-		inline bool operator==(const_iterator const &other)
-		{
-			// Assume always the end
-			return true;
-		}
-		
-		inline bool operator!=(const_iterator const &other)
-		{
-			// Assume always the end
-			return false;
-		}
-	};
-	
-	
-	static inline const_iterator begin()
-	{
-		return const_iterator(begin_tag_value);
-	}
-	
-	static inline const_iterator end()
-	{
-		return const_iterator();
+	template <typename CONSUMER_T>
+	static inline void walk(
+		__attribute__((unused)) int maxFrames,
+		__attribute__((unused)) int skipFrames,
+		__attribute__((unused)) CONSUMER_T consumer
+	) {
+		#warning Backtraces are not supported in this platform
 	}
 };
 

@@ -11,6 +11,8 @@
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 
+#include <climits>
+
 
 // Attempt to avoid this code appearing in the backtrace
 #define inline __attribute__((always_inline))
@@ -18,12 +20,9 @@
 
 namespace Instrument {
 
+
 class BacktraceWalker {
 private:
-	enum begin_tag_t {
-		begin_tag_value
-	};
-	
 	enum special_address_values_t : size_t {
 		lowest_valid_address = 1024
 	};
@@ -32,76 +31,46 @@ public:
 	typedef void *address_t;
 	
 	enum {
-		max_backtrace_frames = 1000
+		max_backtrace_frames = INT_MAX
 	};
 	
 	enum {
 		involves_libc_malloc = 0
 	};
 	
-	class const_iterator {
-	private:
+	template <typename CONSUMER_T>
+	static inline void walk(int maxFrames, int skipFrames, CONSUMER_T consumer)
+	{
 		unw_context_t _context;
 		unw_cursor_t _cursor;
-		unw_word_t _address;
-		bool _valid;
+		unw_word_t address;
 		
-	public:
-		inline const_iterator()
-			: _valid(false)
-		{
+		unw_getcontext(&_context);
+		unw_init_local(&_cursor, &_context);
+		
+		int currentFrame = 0;
+		
+		bool valid = true;
+		while (valid && (currentFrame < skipFrames)) {
+			valid = (unw_step(&_cursor) > 0);
+			currentFrame++;
 		}
 		
-		inline const_iterator(begin_tag_t)
-			: _valid(true)
-		{
-			unw_getcontext(&_context);
-			unw_init_local(&_cursor, &_context);
-		}
-		
-		inline const_iterator &operator++()
-		{
+		currentFrame = 0;
+		while (valid && (currentFrame < maxFrames)) {
 			do {
-				_valid = (unw_step(&_cursor) > 0);
-				if (_valid) {
-					_valid = (unw_get_reg(&_cursor, UNW_REG_IP, &_address) == 0);
+				valid = (unw_get_reg(&_cursor, UNW_REG_IP, &address) == 0);
+				if ((address_t) address < (address_t) lowest_valid_address) {
+					valid = (unw_step(&_cursor) > 0);
 				}
-			} while (_valid && ((address_t) _address < (address_t) lowest_valid_address));
+			} while (valid && ((address_t) address < (address_t) lowest_valid_address));
 			
-			return *this;
-		}
-		
-		inline void *operator*() const
-		{
-			if (_valid) {
-				return (void *) _address;
-			} else {
-				return nullptr;
+			if (valid) {
+				consumer((address_t) address, currentFrame);
+				valid = (unw_step(&_cursor) > 0);
+				currentFrame++;
 			}
 		}
-		
-		inline bool operator==(const_iterator const &other)
-		{
-			// WARNING: We only check whether we are at the end
-			return (_valid == other._valid);
-		}
-		
-		inline bool operator!=(const_iterator const &other)
-		{
-			// WARNING: We only check whether we are at the end
-			return (_valid != other._valid);
-		}
-	};
-	
-	
-	static inline const_iterator begin()
-	{
-		return const_iterator(begin_tag_value);
-	}
-	
-	static inline const_iterator end()
-	{
-		return const_iterator();
 	}
 };
 

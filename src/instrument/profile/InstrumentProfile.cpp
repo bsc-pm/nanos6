@@ -72,18 +72,14 @@ void Instrument::Profile::signalHandler(Sampling::ThreadLocalData &samplingThrea
 		return;
 	}
 	
-	{
-		auto it = BacktraceWalker::begin();
-		
-		// Skip the signal handler frame and the signal frame
-		++it; ++it; ++it;
-		
-		for (int currentFrame = 0; (currentFrame < depth) && (it != BacktraceWalker::end()); currentFrame++) {
-			threadLocal._currentBuffer[threadLocal._nextBufferPosition] = *it;
+	BacktraceWalker::walk(
+		depth,
+		/* Skip */ 3,
+		[&](void *address, __attribute__((unused)) int currentFrame) {
+			threadLocal._currentBuffer[threadLocal._nextBufferPosition] = address;
 			threadLocal._nextBufferPosition++;
-			++it;
 		}
-	}
+	);
 	
 	// End of backtrace mark
 	threadLocal._currentBuffer[threadLocal._nextBufferPosition] = 0;
