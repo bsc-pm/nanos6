@@ -82,8 +82,8 @@ namespace Instrument {
 		ce.nEvents = 0;
 		ce.nCommunications = 0;
 		
-		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
-		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+		ce.Types  = (extrae_type_t *)  alloca (_sampleBacktraceDepth * sizeof (extrae_type_t) );
+		ce.Values = (extrae_value_t *) alloca (_sampleBacktraceDepth * sizeof (extrae_value_t));
 		
 		Instrument::ThreadLocalData &threadLocal = (Instrument::ThreadLocalData &) samplingThreadLocal;
 		
