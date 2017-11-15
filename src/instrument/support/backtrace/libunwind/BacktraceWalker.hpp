@@ -14,10 +14,6 @@
 #include <climits>
 
 
-// Attempt to avoid this code appearing in the backtrace
-#define inline __attribute__((always_inline))
-
-
 namespace Instrument {
 
 
@@ -39,8 +35,12 @@ public:
 	};
 	
 	template <typename CONSUMER_T>
-	static inline void walk(int maxFrames, int skipFrames, CONSUMER_T consumer)
+	__attribute__((noinline)) static void walk(int maxFrames, int skipFrames, CONSUMER_T consumer)
 	{
+		// This method is not inline because some implementations of unw_getcontext are expanded to a call
+		// to getcontext, which cause GCC to fail to inline the contaning function.
+		skipFrames++;
+		
 		unw_context_t _context;
 		unw_cursor_t _cursor;
 		unw_word_t address;
