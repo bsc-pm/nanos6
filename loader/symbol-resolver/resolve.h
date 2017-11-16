@@ -22,13 +22,18 @@
 
 
 char const *nanos_get_runtime_path(void);
+void _nanos6_loader(void);
 
 
 #define RESOLVE_API_FUNCTION(fname, area, fallback) \
 void (*_##fname##_resolver(void)) (void) \
 { \
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
-		fprintf(stderr, "Nanos 6 loader error: call to " #fname " before library initialization\n"); \
+		fprintf(stderr, "Nanos 6 loader warning: attempt to resolve the address of " #fname " before library initialization\n"); \
+		_nanos6_loader(); \
+	} \
+	\
+	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
 		handle_error(); \
 		return NULL; \
 	} \
