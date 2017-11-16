@@ -295,11 +295,10 @@ namespace Instrument {
 			task_info_t &taskInfo = _taskToInfoMap[_originatorTaskId];
 			
 			if (!access->_isTaskwait) {
+				assert(taskInfo._parent != task_id_t());
 				assert(!taskInfo._liveAccesses.contains(_region));
 				taskInfo._liveAccesses.insert(AccessWrapper(access));
 			} else {
-				assert(taskInfo._parent != task_id_t());
-				
 				task_group_t *taskGroup = dynamic_cast<task_group_t *> (taskInfo._phaseList[access->_parentPhase]);
 				assert(taskGroup != nullptr);
 				

@@ -162,6 +162,7 @@ namespace Instrument {
 				// Clear the list of live fragments since it will be rebuilt with the right regions
 				// during replay
 				taskGroup->_liveFragments.clear();
+				taskGroup->_liveTaskwaitFragments.clear();
 				
 				// Recurse to children
 				for (task_id_t childId : taskGroup->_children) {

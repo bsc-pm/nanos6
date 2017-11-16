@@ -45,20 +45,40 @@ namespace Instrument {
 		
 		task_info_t &taskInfo = _taskToInfoMap[originatorTaskId];
 		
-		assert(context._taskId != task_id_t());
-		task_info_t &parentInfo = _taskToInfoMap[context._taskId];
-		
+		task_id_t parentId;
 		access_t *access;
 		if (!isTaskwaitFragment) {
 			access = new access_t();
+			parentId = taskInfo._parent;
 		} else {
 			access = new taskwait_fragment_t();
+			parentId = originatorTaskId;
 		}
+		
+		task_info_t &parentInfo = _taskToInfoMap[parentId];
 		
 		access->_id = dataAccessId;
 		access->_superAccess = superAccessId;
 		access->_originator = originatorTaskId;
-		access->_parentPhase = parentInfo._phaseList.size() - 1;
+		if (!isTaskwaitFragment) {
+			access->_parentPhase = parentInfo._phaseList.size() - 1;
+		} else {
+			assert(parentInfo._phaseList.size() >= 1);
+			
+			task_group_t *parentTaskGroup = dynamic_cast<task_group_t *> (parentInfo._phaseList[parentInfo._phaseList.size() - 1]);
+			if (parentTaskGroup != nullptr) {
+				// There is no actual taskwait
+				// The task has the "wait" clause
+				access->_parentPhase = parentInfo._phaseList.size() - 1;
+			} else {
+				assert(parentInfo._phaseList.size() >= 2);
+				assert(dynamic_cast<task_group_t *> (parentInfo._phaseList[parentInfo._phaseList.size() - 2]) != nullptr);
+				
+				// The last phase is the taskwait, but we want the taskwait access at the end of the previous taskgroup
+				access->_parentPhase = parentInfo._phaseList.size() - 2;
+			}
+			
+		}
 		access->_firstGroupAccess = dataAccessId;
 		
 		// We need the final region and type of each access to calculate the full graph
@@ -74,14 +94,17 @@ namespace Instrument {
 			taskInfo._liveAccesses.insert(AccessWrapper(access));
 		} else {
 			assert(originatorTaskId == context._taskId);
-			assert(parentInfo._phaseList.size() > 1);
+			assert(parentInfo._phaseList.size() >= 1);
 			
 			// The last phase id the actual taskwait_t and the one before it, the task_group_t
-			task_group_t *parentTaskGroup = dynamic_cast<task_group_t *> (parentInfo._phaseList[parentInfo._phaseList.size() - 2]);
+			task_group_t *parentTaskGroup = dynamic_cast<task_group_t *> (parentInfo._phaseList[access->_parentPhase]);
 			assert(parentTaskGroup != nullptr);
 			
 			parentTaskGroup->_allTaskwaitFragments.insert((taskwait_fragment_t *) access);
 			parentTaskGroup->_liveTaskwaitFragments.insert(TaskwaitFragmentWrapper((taskwait_fragment_t *) access));
+			
+			taskwait_fragment_t *taskwaitFragment = (taskwait_fragment_t *) access;
+			taskwaitFragment->_taskGroup = parentTaskGroup;
 		}
 		
 		return dataAccessId;
@@ -271,6 +294,7 @@ namespace Instrument {
 		fragment->_firstGroupAccess = newDataAccessId;
 		fragment->_nextGroupAccess = data_access_id_t();
 		fragment->_taskGroup = taskGroup;
+		fragment->_parentPhase = taskInfo._phaseList.size() - 1;
 		
 		taskGroup->_allFragments.insert(fragment);
 		taskGroup->_liveFragments.insert(AccessFragmentWrapper(fragment));

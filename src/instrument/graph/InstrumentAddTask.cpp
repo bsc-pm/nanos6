@@ -37,6 +37,28 @@ namespace Instrument {
 		// Get an ID for the task
 		task_id_t taskId = _nextTaskId++;
 		
+		// Set up the parent phase
+		if (context._taskId != task_id_t()) {
+			task_info_t &parentInfo = _taskToInfoMap[context._taskId];
+			
+			parentInfo._hasChildren = true;
+			
+			task_group_t *taskGroup = nullptr;
+			if (parentInfo._phaseList.empty()) {
+				taskGroup = new task_group_t(_nextTaskwaitId++);
+				parentInfo._phaseList.push_back(taskGroup);
+			} else {
+				phase_t *currentPhase = parentInfo._phaseList.back();
+				
+				taskGroup = dynamic_cast<task_group_t *> (currentPhase);
+				if (taskGroup == nullptr) {
+					// First task after a taskwait
+					taskGroup = new task_group_t(_nextTaskwaitId++);
+					parentInfo._phaseList.push_back(taskGroup);
+				}
+			}
+		}
+		
 		create_task_step_t *createTaskStep = new create_task_step_t(context, taskId);
 		_executionSequence.push_back(createTaskStep);
 		
