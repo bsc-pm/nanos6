@@ -140,8 +140,12 @@ AC_DEFUN([SSS_CHECK_NANOS6_MERCURIUM],
 			AC_MSG_CHECKING([which flag enables OmpSs-2 support in Mercurium])
 			OMPSS2_FLAG=none
 			
+			mkdir -p conftest-header-dir/nanos6
+			echo 'enum nanos6_multidimensional_dependencies_api_t { nanos6_multidimensional_dependencies_api = 2 };' > conftest-header-dir/nanos6/multidimensional-dependencies.h
+			echo 'enum nanos6_multidimensional_release_api_t { nanos6_multidimensional_release_api = 1 };' > conftest-header-dir/nanos6/multidimensional-release.h
+			
 			# Try --ompss-v2
-			CC="${NANOS6_MCC} --ompss-v2"
+			CC="${NANOS6_MCC} --ompss-v2 -I${srcdir}/api -Iconftest-header-dir"
 			AC_COMPILE_IFELSE(
 				[ AC_LANG_SOURCE( [[
 #ifndef __NANOS6__
@@ -158,7 +162,7 @@ int main(int argc, char ** argv) {
 			)
 			
 			# Try --ompss-2
-			CC="${NANOS6_MCC} --ompss-2"
+			CC="${NANOS6_MCC} --ompss-2 -I${srcdir}/api -Iconftest-header-dir"
 			AC_COMPILE_IFELSE(
 				[ AC_LANG_SOURCE( [[
 #ifndef __NANOS6__
@@ -173,6 +177,8 @@ int main(int argc, char ** argv) {
 				[ OMPSS2_FLAG=--ompss-2 ],
 				[ ]
 			)
+			
+			rm -Rf conftest-header-dir
 			
 			if test x"${OMPSS2_FLAG}" != x"none" ; then
 				AC_MSG_RESULT([${OMPSS2_FLAG}])
