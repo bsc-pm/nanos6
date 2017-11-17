@@ -13,6 +13,9 @@
 #include "InstrumentGraph.hpp"
 #include "InstrumentTaskId.hpp"
 
+#include <instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
+
 
 namespace Instrument {
 	namespace Graph {
@@ -294,7 +297,7 @@ namespace Instrument {
 			
 			task_info_t &taskInfo = _taskToInfoMap[_originatorTaskId];
 			
-			if (!access->_isTaskwait) {
+			if ((access->_objectType == regular_access_type) || (access->_objectType == entry_fragment_type)) {
 				assert(taskInfo._parent != task_id_t());
 				assert(!taskInfo._liveAccesses.contains(_region));
 				taskInfo._liveAccesses.insert(AccessWrapper(access));
@@ -350,12 +353,24 @@ namespace Instrument {
 					break;
 			}
 			
-			if (!access->_isTaskwait) {
-				oss << " access " << _accessId;
-			} else {
-				oss << " taskwait fragment " << _accessId;
+			oss << " ";
+			switch (access->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
 			}
-			oss << " [" << _region << "]";
+			
+			oss << " " << _accessId << " [" << _region << "]";
+			
 			return oss.str();
 		}
 		
@@ -443,11 +458,22 @@ namespace Instrument {
 			emitCPUAndTask(oss);
 			oss << ": makes";
 			
-			if (!access->_isTaskwait) {
-				oss << " access ";
-			} else {
-				oss << " taskwait fragment ";
+			oss << " ";
+			switch (access->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
 			}
+			oss << " ";
 			
 			oss << _accessId << " of task " << _targetTaskId;
 			if (_readSatisfied) {
@@ -501,14 +527,22 @@ namespace Instrument {
 			emitCPUAndTask(oss);
 			oss << ": changes region of ";
 			
-			if (access->fragment()) {
-				oss << "entry fragment ";
-			} else if (access->_isTaskwait) {
-				oss << "taskwait fragment ";
-			} else {
-				oss << "access ";
+			switch (access->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
 			}
-			oss << _accessId << " to [" << _region << "]";
+			
+			oss << " " << _accessId << " to [" << _region << "]";
 			
 			return oss.str();
 		}
@@ -533,14 +567,14 @@ namespace Instrument {
 			newFragment->_bitset = original->_bitset;
 			newFragment->_status = original->_status;
 			
-			if (newFragment->fragment()) {
+			if (newFragment->_objectType == entry_fragment_type) {
 				access_fragment_t *fragment = (access_fragment_t *) newFragment;
 				assert(fragment->_taskGroup != nullptr);
 				
 				task_group_t *taskGroup = fragment->_taskGroup;
 				assert(!taskGroup->_liveFragments.contains(_newRegion));
 				taskGroup->_liveFragments.insert(AccessFragmentWrapper(fragment));
-			} else if (newFragment->_isTaskwait) {
+			} else if ((newFragment->_objectType == taskwait_type) || (newFragment->_objectType == top_level_sink_type)) {
 				taskwait_fragment_t *taskwaitFragment = (taskwait_fragment_t *) newFragment;
 				assert(taskwaitFragment->_taskGroup != nullptr);
 				
@@ -548,6 +582,7 @@ namespace Instrument {
 				assert(!taskGroup->_liveTaskwaitFragments.contains(_newRegion));
 				taskGroup->_liveTaskwaitFragments.insert(TaskwaitFragmentWrapper(taskwaitFragment));
 			} else {
+				assert(newFragment->_objectType == regular_access_type);
 				task_info_t &taskInfo = _taskToInfoMap[newFragment->_originator];
 				assert(!taskInfo._liveAccesses.contains(_newRegion));
 				taskInfo._liveAccesses.insert(AccessWrapper(newFragment));
@@ -595,15 +630,22 @@ namespace Instrument {
 			emitCPUAndTask(oss);
 			oss << ": fragments ";
 			
-			if (newFragment->fragment()) {
-				oss << "entry fragment ";
-			} else if (newFragment->_isTaskwait) {
-				oss << "taskwait fragment ";
-			} else {
-				oss << "access ";
+			switch (newFragment->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
 			}
 			
-			oss << _originalAccessId << " of task " << newFragment->_originator << " into " << _newFragmentAccessId << " with region [" << _newRegion << "]";
+			oss << " " << _originalAccessId << " of task " << newFragment->_originator << " into " << _newFragmentAccessId << " with region [" << _newRegion << "]";
 			return oss.str();
 		}
 		
@@ -625,7 +667,7 @@ namespace Instrument {
 			newSubaccessFragment->_type = original->_type;
 			newSubaccessFragment->_accessRegion = original->_accessRegion;
 			newSubaccessFragment->weak() = original->weak();
-			assert(newSubaccessFragment->fragment());
+			assert(newSubaccessFragment->_objectType == entry_fragment_type);
 			newSubaccessFragment->readSatisfied() = original->readSatisfied();
 			newSubaccessFragment->writeSatisfied() = original->writeSatisfied();
 			newSubaccessFragment->satisfied() = original->satisfied();
@@ -675,15 +717,22 @@ namespace Instrument {
 			emitCPUAndTask(oss);
 			oss << ": completes ";
 			
-			if (access->fragment()) {
-				oss << "entry fragment ";
-			} else if (access->_isTaskwait) {
-				oss << "taskwait fragment ";
-			} else {
-				oss << "access ";
+			switch (access->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
 			}
 			
-			oss << _accessId;
+			oss << " " << _accessId;
 			
 			return oss.str();
 		}
@@ -714,15 +763,22 @@ namespace Instrument {
 			emitCPUAndTask(oss);
 			oss << ": makes ";
 			
-			if (access->fragment()) {
-				oss << "entry fragment ";
-			} else if (access->_isTaskwait) {
-				oss << "taskwait fragment ";
-			} else {
-				oss << "access ";
+			switch (access->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
 			}
 			
-			oss << _accessId << " of task " << access->_originator << " become removable";
+			oss << " " << _accessId << " of task " << access->_originator << " become removable";
 			return oss.str();
 		}
 		
@@ -755,15 +811,22 @@ namespace Instrument {
 			emitCPUAndTask(oss);
 			oss << ": removes ";
 			
-			if (access->fragment()) {
-				oss << "entry fragment ";
-			} else if (access->_isTaskwait) {
-				oss << "taskwait fragment ";
-			} else {
-				oss << "access ";
+			switch (access->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
 			}
 			
-			oss << _accessId << " of task " << access->_originator;
+			oss << " " << _accessId << " of task " << access->_originator;
 			
 			return oss.str();
 		}
@@ -784,7 +847,7 @@ namespace Instrument {
 			link_to_next_t &link = sourceAccess->_nextLinks[_sinkTaskId];
 			link._status = created_link_status;
 			
-			if (link._sinkIsTaskwait) {
+			if ((link._sinkObjectType == taskwait_type) || (link._sinkObjectType == top_level_sink_type)) {
 				return;
 			}
 			
@@ -810,10 +873,26 @@ namespace Instrument {
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": links "
-			<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator;
+			oss << ": links ";
 			
-			if (!link._sinkIsTaskwait) {
+			switch (sourceAccess->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
+			}
+			
+			oss << " " << _sourceAccessId << " of task " << sourceAccess->_originator;
+			
+			if ((link._sinkObjectType == regular_access_type) || (link._sinkObjectType == entry_fragment_type)) {
 				oss << " to task " << _sinkTaskId;
 			} else {
 				oss << " to taskwait from task " << _sinkTaskId;
@@ -839,7 +918,7 @@ namespace Instrument {
 			link_to_next_t &link = sourceAccess->_nextLinks[_sinkTaskId];
 			link._status = dead_link_status;
 			
-			if (link._sinkIsTaskwait) {
+			if ((link._sinkObjectType == taskwait_type) || (link._sinkObjectType == top_level_sink_type)) {
 				return;
 			}
 			
@@ -864,10 +943,26 @@ namespace Instrument {
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": unlinks "
-				<< (sourceAccess->fragment() ? "entry fragment " : "access ") << _sourceAccessId << " of task " << sourceAccess->_originator;
+			oss << ": unlinks ";
 			
-			if (!link._sinkIsTaskwait) {
+			switch (sourceAccess->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
+			}
+			
+			oss << " " << _sourceAccessId << " of task " << sourceAccess->_originator;
+			
+			if ((link._sinkObjectType == regular_access_type) || (link._sinkObjectType == entry_fragment_type)) {
 				oss << " from task " << _sinkTaskId;
 			} else {
 				oss << " from taskwait in " << _sinkTaskId;
@@ -942,7 +1037,24 @@ namespace Instrument {
 			
 			std::ostringstream oss;
 			emitCPUAndTask(oss);
-			oss << ": " << (access->fragment() ? "entry fragment " : "access ") << _accessId << " of task " << access->_originator << " has new property [" << _longName << " (" << _shortName <<") ]";
+			oss << ": ";
+			
+			switch (access->_objectType) {
+				case regular_access_type:
+					oss << "access";
+					break;
+				case entry_fragment_type:
+					oss << "entry fragment";
+					break;
+				case taskwait_type:
+					oss << "taskwait";
+					break;
+				case top_level_sink_type:
+					oss << "top level sink";
+					break;
+			}
+			
+			oss << " " << _accessId << " of task " << access->_originator << " has new property [" << _longName << " (" << _shortName <<") ]";
 			return oss.str();
 		}
 		

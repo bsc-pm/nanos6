@@ -27,7 +27,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
-		bool isTaskwaitFragment,
+		access_object_type_t objectType,
 		task_id_t originatorTaskId,
 		InstrumentationContext const &context
 	) {
@@ -38,11 +38,22 @@ namespace Instrument {
 			assert(logEntry != nullptr);
 			
 			logEntry->appendLocation(context);
-			if (!isTaskwaitFragment) {
-				logEntry->_contents << " <-> CreateDataAccess " << id << " superaccess:" << superAccessId << " ";
-			} else {
-				logEntry->_contents << " <-> CreateTaskwaitFragment " << id << " superaccess:" << superAccessId << " ";
+			logEntry->_contents << " <-> ";
+			switch (objectType) {
+				case regular_access_type:
+					logEntry->_contents << "CreateDataAccess";
+					break;
+				case entry_fragment_type:
+					logEntry->_contents << "CreatedDataSubaccessFragment";
+					break;
+				case taskwait_type:
+					logEntry->_contents << "CreatedTaskwaitFragment";
+					break;
+				case top_level_sink_type:
+					logEntry->_contents << "CreatedTopLevelSink";
+					break;
 			}
+			logEntry->_contents << " " << id << " superaccess:" << superAccessId << " ";
 			
 			if (weak) {
 				logEntry->_contents << "weak";
@@ -58,7 +69,6 @@ namespace Instrument {
 					logEntry->_contents << " output";
 					break;
 				case NO_ACCESS_TYPE:
-					assert(isTaskwaitFragment);
 					logEntry->_contents << " local";
 					break;
 				default:
@@ -312,7 +322,7 @@ namespace Instrument {
 	
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		task_id_t sinkTaskId, bool sinkIsTaskwait,
+		task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		DataAccessRegion region,
 		bool direct,
 		__attribute__((unused)) bool bidirectional,
@@ -326,16 +336,26 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		if (!sinkIsTaskwait) {
-			logEntry->_contents << " <-> LinkDataAccesses "
-				<< sourceAccessId << " -> Task:" << sinkTaskId;
-		} else {
-			logEntry->_contents << " <-> LinkDataAccesses "
-				<< sourceAccessId << " -> Taskwait from task:" << sinkTaskId;
+		logEntry->_contents << " <-> LinkDataAccesses " << sourceAccessId << " -> ";
+		switch(sinkObjectType) {
+			case regular_access_type:
+				logEntry->_contents << " Access";
+				break;
+			case entry_fragment_type:
+				logEntry->_contents << " Entry fragment";
+				break;
+			case taskwait_type:
+				logEntry->_contents << " Taskwait";
+				break;
+			case top_level_sink_type:
+				logEntry->_contents << " Top level sink";
+				break;
 		}
-			logEntry->_contents << " [" << region << "]"
-				<< (direct ? " direct" : "indirect")
-				<< " triggererTask:" << context._taskId;
+		logEntry->_contents << " from Task:" << sinkTaskId;
+		
+		logEntry->_contents << " [" << region << "]"
+			<< (direct ? " direct" : "indirect")
+			<< " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -343,7 +363,7 @@ namespace Instrument {
 	
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		task_id_t sinkTaskId, bool sinkIsTaskwait,
+		task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		bool direct,
 		InstrumentationContext const &context
 	) {
@@ -355,15 +375,25 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		if (!sinkIsTaskwait) {
-			logEntry->_contents << " <-> UnlinkDataAccesses "
-				<< sourceAccessId << " -> Task:" << sinkTaskId;
-		} else {
-			logEntry->_contents << " <-> UnlinkDataAccesses "
-				<< sourceAccessId << " -> Taskwait from task:" << sinkTaskId;
+		logEntry->_contents << " <-> UnlinkDataAccesses " << sourceAccessId << " -> ";
+		switch(sinkObjectType) {
+			case regular_access_type:
+				logEntry->_contents << " Access";
+				break;
+			case entry_fragment_type:
+				logEntry->_contents << " Entry fragment";
+				break;
+			case taskwait_type:
+				logEntry->_contents << " Taskwait";
+				break;
+			case top_level_sink_type:
+				logEntry->_contents << " Top level sink";
+				break;
 		}
-			logEntry->_contents << (direct ? " direct" : "indirect")
-				<< " triggererTask:" << context._taskId;
+		logEntry->_contents << " from Task:" << sinkTaskId;
+		
+		logEntry->_contents << (direct ? " direct" : "indirect")
+			<< " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}

@@ -43,6 +43,13 @@ namespace Instrument {
 	//! Sequences of data accesses are identified by their superaccess. For the outermost accesses, the identifier of
 	//! their superaccess is the default value returned by calling the constructor if the type without parameters.
 	
+	enum access_object_type_t {
+		regular_access_type,
+		entry_fragment_type,
+		taskwait_type,
+		top_level_sink_type
+	};
+	
 	//! \brief Called when a new DataAccess is created
 	//! 
 	//! \param superAccessId the identifier of the superaccess that contains the new DataAccess as returned by Instrument::createdDataAccess or data_access_id_t() if there is no superaccess
@@ -52,7 +59,7 @@ namespace Instrument {
 	//! \param readSatisfied whether the access is ready to perform a potential read operation
 	//! \param writeSatisfied whether the access is ready to perform a potential write operation
 	//! \param globallySatisfied whether the access does not preclude the task from running immediately
-	//! \param isTaskwaitFragment whether the access is actually a taskwait fragment
+	//! \param objectType the type of object
 	//! \param originatorTaskId the identifier of the task that will perform the access as returned in the call to Instrument::enterAddTask
 	//! 
 	//! \returns an identifier for the new data access
@@ -60,7 +67,7 @@ namespace Instrument {
 		data_access_id_t superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
-		bool isTaskwaitFragment,
+		access_object_type_t objectType,
 		task_id_t originatorTaskId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
@@ -160,13 +167,13 @@ namespace Instrument {
 	//! 
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkTaskId the identifier of the sink Task
-	//! \param sinkIsTaskwait the sink is actually a Taskwait
+	//! \param sinkObjectType the object type of the sink
 	//! \param region the region of data covered by the link
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	//! \param bidirectional tru if the link is bidirectional
 	void linkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		task_id_t sinkTaskId, bool sinkIsTaskwait,
+		task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		DataAccessRegion region,
 		bool direct, bool bidirectional,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
@@ -176,11 +183,11 @@ namespace Instrument {
 	//! 
 	//! \param sourceAccessId the identifier of the source DataAccess
 	//! \param sinkTaskId the identifier of the sink Task
-	//! \param sinkIsTaskwait the sink is actually a Taskwait
+	//! \param sinkObjectType the object type of the sink
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	void unlinkedDataAccesses(
 		data_access_id_t sourceAccessId,
-		task_id_t sinkTaskId, bool sinkIsTaskwait,
+		task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		bool direct,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);

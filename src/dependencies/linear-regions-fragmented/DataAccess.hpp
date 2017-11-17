@@ -137,7 +137,7 @@ public:
 			Instrument::data_access_id_t(),
 			_type, _weak, _region,
 			/* Read Satisfied */ false, /* Write Satisfied */ false, /* Globally Satisfied */ false,
-			/* Taskwait? */ (_objectType == taskwait_type) || (_objectType == top_level_sink_type),
+			(Instrument::access_object_type_t) _objectType,
 			taskInstrumentationId
 		);
 	}

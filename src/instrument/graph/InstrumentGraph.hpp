@@ -18,6 +18,8 @@
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentTaskId.hpp>
 
+#include <instrument/api/InstrumentDependenciesByAccessLinks.hpp>
+
 #include <DataAccessRegionIndexer.hpp>
 
 #include <atomic>
@@ -96,7 +98,7 @@ namespace Instrument {
 		struct link_to_next_t {
 			bool _direct;
 			bool _bidirectional;
-			bool _sinkIsTaskwait;
+			access_object_type_t _sinkObjectType;
 			link_status_t _status;
 			predecessors_t _predecessors; // Predecessors of next that the link "enables"
 			
@@ -105,8 +107,8 @@ namespace Instrument {
 				assert("Instrument::Graph did not find a link between two data accesses" == 0);
 			}
 			
-			link_to_next_t(bool direct, bool bidirectional, bool sinkIsTaskwait)
-				: _direct(direct), _bidirectional(bidirectional), _sinkIsTaskwait(sinkIsTaskwait),
+			link_to_next_t(bool direct, bool bidirectional, access_object_type_t sinkObjectType)
+				: _direct(direct), _bidirectional(bidirectional), _sinkObjectType(sinkObjectType),
 				_status(not_created_link_status),
 				_predecessors()
 			{
@@ -125,7 +127,6 @@ namespace Instrument {
 		struct access_t {
 			enum {
 				ACCESS_WEAK_BIT=0,
-				ACCESS_FRAGMENT_BIT,
 				ACCESS_READ_SATISFIED_BIT,
 				ACCESS_WRITE_SATISFIED_BIT,
 				ACCESS_SATISFIED_BIT,
@@ -135,13 +136,13 @@ namespace Instrument {
 			};
 			typedef std::bitset<ACCESS_BITSET_SIZE> bitset_t;
 			
+			access_object_type_t _objectType;
 			data_access_id_t _id;
 			data_access_id_t _superAccess;
 			DataAccessType _type;
 			DataAccessRegion _accessRegion;
 			task_id_t _originator;
 			int _parentPhase;
-			bool _isTaskwait;
 			
 			bitset_t _bitset;
 			std::set<std::string> _otherProperties;
@@ -153,13 +154,13 @@ namespace Instrument {
 			data_access_id_t _firstGroupAccess; // The initial access
 			data_access_id_t _nextGroupAccess; // The next fragment of the original access
 			
-			access_t():
+			access_t(access_object_type_t objectType):
+				_objectType(objectType),
 				_id(),
 				_superAccess(),
 				_type(READ_ACCESS_TYPE), _accessRegion(),
 				_originator(-1),
 				_parentPhase(-1),
-				_isTaskwait(false),
 				_bitset(),
 				_nextLinks(),
 				_status(not_created_access_status),
@@ -184,17 +185,6 @@ namespace Instrument {
 			bitset_t::reference weak()
 			{
 				return _bitset[ACCESS_WEAK_BIT];
-			}
-			
-			
-			bool fragment() const
-			{
-				return _bitset[ACCESS_FRAGMENT_BIT];
-			}
-			
-			bitset_t::reference fragment()
-			{
-				return _bitset[ACCESS_FRAGMENT_BIT];
 			}
 			
 			
@@ -258,9 +248,10 @@ namespace Instrument {
 		struct access_fragment_t : public access_t {
 			task_group_t *_taskGroup;
 			
-			access_fragment_t()
-				: access_t(), _taskGroup(nullptr)
+			access_fragment_t(access_object_type_t objectType)
+				: access_t(objectType), _taskGroup(nullptr)
 			{
+				assert(objectType == entry_fragment_type);
 			}
 		};
 		
@@ -291,9 +282,10 @@ namespace Instrument {
 		struct taskwait_fragment_t : public access_t {
 			task_group_t *_taskGroup;
 			
-			taskwait_fragment_t()
-				: access_t(), _taskGroup(nullptr)
+			taskwait_fragment_t(access_object_type_t objectType)
+				: access_t(objectType), _taskGroup(nullptr)
 			{
+				assert((objectType == taskwait_type) || (objectType == top_level_sink_type));
 			}
 		};
 		
@@ -523,7 +515,7 @@ namespace Instrument {
 				task_id_t nextTaskId = nextAndLink.first;
 				link_to_next_t &linkToNext = nextAndLink.second;
 				
-				if (!linkToNext._sinkIsTaskwait) {
+				if ((linkToNext._sinkObjectType == regular_access_type) || (linkToNext._sinkObjectType == entry_fragment_type)) {
 					task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
 					
 					nextTaskInfo._liveAccesses.processIntersecting(
@@ -545,7 +537,7 @@ namespace Instrument {
 								[&](task_live_access_fragments_t::iterator fragmentPosition) -> bool {
 									access_fragment_t *fragment = fragmentPosition->_fragment;
 									assert(fragment != nullptr);
-									assert(fragment->fragment());
+									assert(fragment->_objectType == entry_fragment_type);
 									
 									foreachLiveNextOfAccess(fragment, processor);
 									
@@ -582,7 +574,7 @@ namespace Instrument {
 				task_id_t nextTaskId = nextAndLink.first;
 				link_to_next_t &linkToNext = nextAndLink.second;
 				
-				if (!linkToNext._sinkIsTaskwait) {
+				if ((linkToNext._sinkObjectType == regular_access_type) || (linkToNext._sinkObjectType == entry_fragment_type)) {
 					task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
 					for (access_t *nextAccess : nextTaskInfo._allAccesses) {
 						assert (nextAccess != nullptr);

@@ -7,6 +7,9 @@
 #include "GenerateEdges.hpp"
 #include "InstrumentGraph.hpp"
 
+#include <instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
+
 #include <cassert>
 
 
@@ -19,7 +22,7 @@ namespace Instrument {
 				access_t *access = idAndAccess.second;
 				assert(access != nullptr);
 				
-				if (access->fragment()) {
+				if (access->_objectType == entry_fragment_type) {
 					continue;
 				}
 				
@@ -63,7 +66,7 @@ namespace Instrument {
 						
 						foreachLiveNextOfAccess(fragment,
 							[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-								if (linkToNext._sinkIsTaskwait) {
+								if ((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type)) {
 									return true;
 								}
 								
@@ -109,7 +112,7 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-						if (linkToNext._sinkIsTaskwait) {
+						if ((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type)) {
 							return true;
 						}
 						
@@ -175,7 +178,7 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-						if (linkToNext._sinkIsTaskwait) {
+						if ((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type)) {
 							return true;
 						}
 						
@@ -242,7 +245,7 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-						if (linkToNext._sinkIsTaskwait) {
+						if ((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type)) {
 							return true;
 						}
 						
@@ -312,7 +315,7 @@ namespace Instrument {
 				// Advance to the next access
 				foreachLiveNextOfAccess(access,
 					[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-						if (linkToNext._sinkIsTaskwait) {
+						if ((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type)) {
 							return true;
 						}
 						
@@ -348,7 +351,7 @@ namespace Instrument {
 			
 			foreachLiveNextOfAccess(access,
 				[&](access_t &nextAccess, link_to_next_t &linkToNext, task_info_t &nextTaskInfo) -> bool {
-					if (linkToNext._sinkIsTaskwait) {
+					if ((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type)) {
 						return true;
 					}
 					
@@ -408,11 +411,11 @@ namespace Instrument {
 		static void buildPredecessorListFromFragment(access_t *fragment)
 		{
 			assert(fragment != nullptr);
-			assert(fragment->fragment());
+			assert(fragment->_objectType == entry_fragment_type);
 			
 			foreachLiveNextOfAccess(fragment,
 				[&](access_t &nextAccess, link_to_next_t &linkToNext, __attribute__((unused)) task_info_t &nextTaskInfo) -> bool {
-					if (linkToNext._sinkIsTaskwait) {
+					if ((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type)) {
 						return true;
 					}
 					
@@ -517,10 +520,13 @@ namespace Instrument {
 				assert(access != nullptr);
 				
 // 				if (!access->fragment() && !access->hasPrevious()) {
-				if (!access->fragment()) {
+				if (access->_objectType == regular_access_type) {
 					buildPredecessorList(access);
-				} else {
+				} else if (access->_objectType == entry_fragment_type) {
 					buildPredecessorListFromFragment(access);
+				} else {
+					// The rest do not have next
+					assert(access->_nextLinks.empty());
 				}
 			}
 			

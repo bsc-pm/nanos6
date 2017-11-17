@@ -18,6 +18,9 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "system/RuntimeInfo.hpp"
 
+#include <instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
+
 #include <fstream>
 #include <sstream>
 
@@ -197,8 +200,7 @@ namespace Instrument {
 	static void emitAccess(
 		std::ofstream &ofs, access_t &access
 	) {
-		bool bicolor = false;
-		std::string color1, color2;
+		std::string color;
 		std::ostringstream text;
 		
 		text << access._id;
@@ -209,29 +211,27 @@ namespace Instrument {
 			switch (access._type) {
 				case READ:
 					text << (access.weak() ? "r" : "R");
-					color1 = "#00FF00";
+					color = "#00FF00";
 					break;
 				case WRITE:
 					text << (access.weak() ? "w" : "W");
-					color1 = "#FF0000";
+					color = "#FF0000";
 					break;
 				case READWRITE:
 					text << (access.weak() ? "rw" : "RW");
-					bicolor = true;
-					color1 = "#00FF00";
-					color2 = "#FF0000";
+					color = "#FFB507";
 					break;
 				case CONCURRENT:
 					text << "C";
-					color1 = "#FFFF00";
+					color = "#FFFF00";
 					break;
 				case REDUCTION:
 					text << "RED";
-					color1 = "#00AFFF";
+					color = "#00AFFF";
 					break;
 				case LOCAL:
 					text << "LOC";
-					color1 = "#00FFAF";
+					color = "#00FFAF";
 					break;
 			}
 		}
@@ -240,51 +240,22 @@ namespace Instrument {
 		std::ostringstream colorList;
 		switch (access._status) {
 			case not_created_access_status:
-				bicolor = false;
-				color1 = "#AAAAAA";
+				color = "#AAAAAA";
 				style = "filled";
-				colorList << color1;
+				colorList << color;
 				break;
 			case created_access_status:
-				if (bicolor) {
-					colorList << color1 << ";0.5:" << color2 << ";0.5";
-					style = "dashed,wedged";
-				} else {
-					colorList << color1;
-				}
 				style = "filled";
+				colorList << color;
 				break;
 			case removable_access_status:
-				if (bicolor) {
-					colorList
-						<< color1 << ";0.10:" << color2 << ";0.10:" << "white;0.05"
-						<< ":" << color1 << ";0.10:" << color2 << ";0.10:" << "white;0.05"
-						<< ":" << color1 << ";0.10:" << color2 << ";0.10:" << "white;0.05"
-						<< ":" << color1 << ";0.10:" << color2 << ";0.10:" << "white;0.05";
-				} else {
-					colorList
-						<< color1 << ";0.20:" << "white;0.05"
-						<< ":" << color1 << ";0.20:" << "white;0.05"
-						<< ":" << color1 << ";0.20:" << "white;0.05"
-						<< ":" << color1 << ";0.20:" << "white;0.05";
-				}
-				style = "wedged";
+				style = "filled,dashed";
+				colorList << color;
 				break;
 			case removed_access_status:
-				if (bicolor) {
-					colorList
-						<< color1 << ";0.05:" << color2 << ";0.05:" << "white;0.15"
-						<< ":" << color1 << ";0.05:" << color2 << ";0.05:" << "white;0.15"
-						<< ":" << color1 << ";0.05:" << color2 << ";0.05:" << "white;0.15"
-						<< ":" << color1 << ";0.05:" << color2 << ";0.05:" << "white;0.15";
-				} else {
-					colorList
-						<< color1 << ";0.10:" << "white;0.15"
-						<< ":" << color1 << ";0.10:" << "white;0.15"
-						<< ":" << color1 << ";0.10:" << "white;0.15"
-						<< ":" << color1 << ";0.10:" << "white;0.15";
-				}
-				style = "wedged";
+				color = "#AAAAAA";
+				style = "filled,dotted";
+				colorList << color;
 				break;
 		}
 		
@@ -330,10 +301,26 @@ namespace Instrument {
 			blocker = false;
 		}
 		
+		std::string shape;
+		switch (access._objectType) {
+			case regular_access_type:
+				shape = "ellipse";
+				break;
+			case entry_fragment_type:
+				shape = "invhouse";
+				break;
+			case taskwait_type:
+				shape = "octagon";
+				break;
+			case top_level_sink_type:
+				shape = "house";
+				break;
+		}
+		
 		ofs << indentation
 			<< "data_access_" << access._id
 			<< "["
-				<< " shape=ellipse"
+				<< " shape=" << shape
 				<< " style=\"" << style << "\""
 				<< " label=\"" << text.str() << "\""
 				<< " fillcolor=\"" << colorList.str() << "\"";
@@ -342,7 +329,7 @@ namespace Instrument {
 				<< " penwidth=2 ";
 		} else {
 			ofs
-				<< " color=\"invis\" ";
+				<< " penwidth=1 ";
 		}
 		ofs
 			<< "]"
@@ -634,7 +621,7 @@ namespace Instrument {
 							if (_showDependencyStructures) {
 								for (access_t *access : childInfo._allAccesses) {
 									assert(access != nullptr);
-									assert(!access->fragment());
+									assert(access->_objectType == regular_access_type);
 									
 									if (_showDeadDependencyStructures || (access->_status == created_access_status)) {
 										if (!access->hasPrevious()) {
@@ -869,7 +856,7 @@ namespace Instrument {
 #endif
 					<< std::endl;
 				
-				if (!access.fragment()) {
+				if (access._objectType != entry_fragment_type) {
 					ofs << "\t" << sourceLinkingLabels._outLabel << " -> " << "data_access_" << nextAccess._id;
 					ofs << " [";
 					if (sourceLinkingLabels._outLabel != sourceLinkingLabels._nodeLabel) {

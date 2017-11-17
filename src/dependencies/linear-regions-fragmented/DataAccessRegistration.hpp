@@ -356,7 +356,7 @@ private:
 			Instrument::linkedDataAccesses(
 				access->getInstrumentationId(),
 				access->getNext()._task->getInstrumentationTaskId(),
-				/* taskwait? */ (access->getNext()._objectType == taskwait_type) || (access->getNext()._objectType == top_level_sink_type),
+				(Instrument::access_object_type_t) access->getNext()._objectType,
 				access->getAccessRegion(),
 				/* direct */ true, /* unidirectional */ false
 			);
@@ -479,7 +479,7 @@ private:
 				Instrument::unlinkedDataAccesses(
 					access->getInstrumentationId(),
 					access->getNext()._task->getInstrumentationTaskId(),
-					/* taskwait? */ (access->getNext()._objectType == taskwait_type) || (access->getNext()._objectType == top_level_sink_type),
+					(Instrument::access_object_type_t) access->getNext()._objectType,
 					/* direct */ true
 				);
 			} else {
