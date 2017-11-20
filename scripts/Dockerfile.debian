@@ -19,24 +19,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         flex \
         gfortran \
         gperf \
+        libdw-dev \
+        libelf-dev \
+        libhwloc-dev \
         libiberty-dev \
         libltdl-dev \
+        liblzma-dev \
+        libpapi-dev \
         libsqlite3-dev \
         libtool \
+		  libunwind-dev \
         libxml2-dev \
         lsb-release \
+        numactl \
         pkg-config \
         reprepro \
         sqlite3 \
         texinfo \
-        numactl \
-        libhwloc-dev \
-        libpapi-dev \
-        libelf-dev \
-        libdw-dev \
-        zlib1g-dev \
-        liblzma-dev \
         wget \
+        zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget -qO- http://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.bz2 \

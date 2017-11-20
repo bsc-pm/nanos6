@@ -9,3 +9,5 @@ Package: nanos6
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: The Nanos6 runtime library
+Suggests: graphviz, texlive-extra-utils
+
