@@ -44,11 +44,11 @@ namespace PollingAPI {
 		//! \brief Indicates whether the service is being processed at that moment
 		bool _processing;
 		
-		//! \brief Indicates whether the service has been marked for removal
-		bool _discard;
+		//! \brief A pointer to an area that is set when the service has been marked for removal and that will be set to true once the service has been unregistered
+		std::atomic<bool> *_discard;
 		
 		ServiceData()
-			: _processing(false), _discard(false)
+			: _processing(false), _discard(nullptr)
 		{
 		}
 	};
@@ -111,10 +111,10 @@ extern "C" void nanos_register_polling_service(char const *service_name, nanos_p
 		ServiceData &serviceData = result.first->second;
 		
 		// So it must have been marked as discarded
-		assert(serviceData._discard);
+		assert(serviceData._discard != nullptr);
 		
 		// Remove the mark
-		serviceData._discard = false;
+		serviceData._discard = nullptr;
 	} else {
 		auto it = uniqueRegisteredServices.find(service_function);
 		if (it == uniqueRegisteredServices.end()) {
@@ -139,8 +139,17 @@ extern "C" void nanos_unregister_polling_service(char const *service_name, nanos
 	assert((it != PollingAPI::_services.end()) && "Attempt to unregister a non-existing polling service");
 	ServiceData &serviceData = it->second;
 	
-	assert(!serviceData._discard && "Attempt to unregister an already unregistered polling service");
-	serviceData._discard = true;
+	assert((serviceData._discard == nullptr) && "Attempt to unregister an already unregistered polling service");
+	
+	// Set up unregistering protocol
+	std::atomic<bool> unregistered(false);
+	serviceData._discard = &unregistered;
+	
+	// Wait until fully unregistered
+	while (unregistered.load() == false) {
+		// Try to speed up the unregistration
+		PollingAPI::handleServices();
+	}
 }
 
 
@@ -183,7 +192,13 @@ void PollingAPI::handleServices()
 		// By construction, even in the presence of concurrent calls to this method, the iterator remains valid
 		
 		// If the function returns true or the service had been marked for unregistration, remove the service
-		if (unregister || serviceData._discard) {
+		if (unregister || (serviceData._discard != nullptr)) {
+			
+			if (serviceData._discard != nullptr) {
+				// Signal the unregistration
+				serviceData._discard->store(true);
+			}
+			
 			it = _services.erase(it);
 		} else {
 			it++;
