@@ -60,7 +60,15 @@ lib_LTLIBRARIES = \
 	libnanos6-stats.la \
 	libnanos6-verbose.la libnanos6-verbose-debug.la
 
-lib_LIBRARIES = libnanos6-main-wrapper.a
+noinst_LIBRARIES = libnanos6-main-wrapper.a
+lib_OBJECTS = nanos6-main-wrapper.o
+
+
+AM_V_LD = $(am__v_LD_@AM_V@)
+am__v_LD_ = $(am__v_LD_@AM_DEFAULT_V@)
+am__v_LD_0 = @echo "  LD      " $@;
+am__v_LD_1 = 
+
 
 
 #
@@ -86,6 +94,10 @@ libnanos6_main_wrapper_a_SOURCES = \
 	loader/main-wrapper.c \
 	loader/main-wrapper.h \
 	loader/malloc.h
+
+
+nanos6-main-wrapper.o: libnanos6-main-wrapper.a
+	$(AM_V_LD)$(LD) -r --whole-archive libnanos6-main-wrapper.a -o nanos6-main-wrapper.o
 
 
 #
@@ -914,6 +926,25 @@ nodist_libnanos6_extrae_la_SOURCES = $(nodist_common_sources) $(nodist_universal
 endif
 
 
+all-local: $(lib_OBJECTS)
+
+
+install-exec-local: $(lib_OBJECTS)
+	@$(NORMAL_INSTALL)
+	@list='$(lib_OBJECTS)'; test -n "$(libdir)" || list=; \
+	list2=; for p in $$list; do \
+		if test -f $$p; then \
+		list2="$$list2 $$p"; \
+		else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+		echo " $(MKDIR_P) '$(DESTDIR)$(libdir)'"; \
+		$(MKDIR_P) "$(DESTDIR)$(libdir)" || exit 1; \
+		echo " $(INSTALL) $$list2 '$(DESTDIR)$(libdir)'"; \
+		$(INSTALL) $$list2 "$(DESTDIR)$(libdir)"; \
+	}
+
+
 uninstall-hook:
 	@echo Removing deprecated headers
 	for f in nanos6_rt_interface.h nanos6_debug_interface.h ; do \
@@ -925,6 +956,12 @@ uninstall-hook:
 	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
+		fi ; \
+	done
+	@echo Removing deprecated helper library
+	for l in libnanos6-main-wrapper.a ; do \
+		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
+			rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
 	done
 
