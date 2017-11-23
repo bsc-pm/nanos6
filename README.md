@@ -14,7 +14,7 @@ To install Nanos6 the following tools and libraries must be installed:
 1. [boost](http://boost.org) >= 1.59
 1. [hwloc](https://www.open-mpi.org/projects/hwloc/)
 1. [numactl](http://oss.sgi.com/projects/libnuma/)
-1. [Mercurium](https://github.com/bsc-pm/mcxx) with OmpSs-2 support enabled
+1. Finally, it's highly recommended to have a installation of [Mercurium](https://github.com/bsc-pm/mcxx) with OmpSs-2 support enabled. When installing OmpSs-2 for the first time, you can break the chicken and egg dependence between Nanos6 and Mercurium in both sides: on one hand, you can install Nanos6 without specifying a valid installation of Mercurium. On the other hand, you can install Mercurium without a valid installation of Nanos6 using the `--enable-nanos6-bootstrap` configuration flag.
 
 ### Optional libraries and tools
 
