@@ -11,7 +11,6 @@
  */
 
 #include <algorithm>
-#include <atomic>
 #include <vector>
 
 #include <cassert>
@@ -21,6 +20,8 @@
 
 #include <nanos6/debug.h>
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 
 
@@ -32,21 +33,24 @@
 #define MIN_TASKS_PER_CPU 16
 
 
+using namespace Functors;
+
+
 TestAnyProtocolProducer tap;
-static std::atomic_int numTasks(0);
+static Atomic<int> numTasks(0);
 static int totalTasks;
 static int finalDepth;
 static int branchingFactor;
 static double delayMultiplier = 1.0;
 
-std::vector<std::atomic_bool> ready;
+std::vector< Atomic<bool> > ready;
 
-void recursion(int& x, int depth, std::atomic_bool& parentReady) {
+void recursion(int& x, int depth, Atomic<bool>& parentReady) {
 	if (depth < finalDepth) {
 		int id = ++numTasks; // Id from next reduction task
 		assert (id <= totalTasks);
 		
-		std::atomic_bool& nextReady = ready[id];
+		Atomic<bool>& nextReady = ready[id];
 		
 		nextReady = false;
 		
@@ -62,10 +66,11 @@ void recursion(int& x, int depth, std::atomic_bool& parentReady) {
 			std::ostringstream oss;
 			oss << "Task " << id << "'s parent reduction task has finished execution";
 			tap.timedEvaluate(
-					[&]() {return parentReady.load();},
-					SUSTAIN_MICROSECONDS*delayMultiplier,
-					oss.str(),
-					/* weak */ true);
+				True< Atomic<bool> >(parentReady),
+				SUSTAIN_MICROSECONDS*delayMultiplier,
+				oss.str(),
+				/* weak */ true
+			);
 			usleep(SUSTAIN_MICROSECONDS);
 			
 			tap.emitDiagnostic("Task ", id, "/", totalTasks,
@@ -96,10 +101,10 @@ int main() {
 	// Compute real aggregate total number of tasks (for any branching factor >= 2)
 	totalTasks = (pow(branchingFactor, finalDepth) - 1)/(branchingFactor - 1);
 	
-	ready = std::vector<std::atomic_bool>(totalTasks + 1);
+	ready = std::vector< Atomic<bool> >(totalTasks + 1);
 	
 	int x = 0;
-	std::atomic_bool& initReady = ready[0];
+	Atomic<bool>& initReady = ready[0];
 	
 	initReady = true;
 	

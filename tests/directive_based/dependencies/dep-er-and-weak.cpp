@@ -6,7 +6,6 @@
 
 #include <nanos6/debug.h>
 
-#include <atomic>
 #include <cassert>
 #include <cstdio>
 #include <sstream>
@@ -14,11 +13,18 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #define SUSTAIN_MICROSECONDS 100000L
+
+
+using namespace Functors;
 
 
 TestAnyProtocolProducer tap;
@@ -26,8 +32,8 @@ TestAnyProtocolProducer tap;
 
 struct TaskInformation {
 	std::string _label;
-	std::atomic<bool> _hasStarted;
-	std::atomic<bool> _hasFinished;
+	Atomic<bool> _hasStarted;
+	Atomic<bool> _hasFinished;
 	
 	TaskInformation()
 		: _hasStarted(false), _hasFinished(false)
@@ -62,7 +68,7 @@ static void verifyStrictOrder(StrictOrder const &constraint, TaskInformation *ta
 			<< " finishes";
 		
 		tap.sustainedEvaluate(
-			[&]() {return !taskInformation[constraint._startsAfter]._hasStarted.load();},
+			False< Atomic<bool> >(taskInformation[constraint._startsAfter]._hasStarted),
 			SUSTAIN_MICROSECONDS,
 			oss.str()
 		);
@@ -91,7 +97,7 @@ static void verifyRelaxedOrder(RelaxedOrder const &constraint, TaskInformation *
 		<< " has started";
 		
 		tap.timedEvaluate(
-			[&]() {return taskInformation[constraint._canStartBeforeEnding]._hasStarted.load();},
+			True< Atomic<bool> >(taskInformation[constraint._canStartBeforeEnding]._hasStarted),
 			SUSTAIN_MICROSECONDS,
 			oss.str()
 		);

@@ -835,6 +835,8 @@ instrument_extrae_sources = \
 # 	src/null/NullStaticBlock.cpp
 
 noinst_HEADERS = \
+	tests/Atomic.hpp \
+	tests/Functors.hpp \
 	tests/TestAnyProtocolProducer.hpp \
 	tests/Timer.hpp
 

@@ -10,28 +10,29 @@
  *
  */
 
-#include <atomic>
-
 #include <math.h>
 #include <unistd.h>
 #include <stdio.h>
 
 #include <nanos6/debug.h>
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 
 
 #define SUSTAIN_MICROSECONDS 100000L
 
 
-TestAnyProtocolProducer tap;
-std::atomic_int numTasks(0);
-std::atomic_bool ready(false);
+using namespace Functors;
 
-auto isReady = [&]() {
-	bool var = ready.load();
-	return var;
-};
+
+TestAnyProtocolProducer tap;
+Atomic<int> numTasks(0);
+Atomic<bool> ready(false);
+
+True< Atomic<bool> > isReady(ready);
+
 
 int main()
 {

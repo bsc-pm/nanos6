@@ -72,7 +72,7 @@ AC_LANG_POP(C++)
 
 
 if test x"${ac_have_nanos6_mercurium}" = x"yes" ; then
-	NANOS6_MCXX="${NANOS6_MCXX} -std=c++11"
+	NANOS6_MCXX="${NANOS6_MCXX} -std=c++03"
 fi
 
 # Checks for library functions.

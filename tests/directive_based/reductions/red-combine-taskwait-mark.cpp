@@ -17,20 +17,23 @@
 
 #include <nanos6/debug.h>
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
+
+
+using namespace Functors;
 
 
 #define SUSTAIN_MICROSECONDS 100000L
 
 
 TestAnyProtocolProducer tap;
-std::atomic_int numTasks(0);
-std::atomic_bool ready(false);
+Atomic<int> numTasks(0);
+Atomic<bool> ready(false);
 
-auto isReady = [&]() {
-	bool var = ready.load();
-	return var;
-};
+True< Atomic<bool> > isReady(ready);
+
 
 int main()
 {

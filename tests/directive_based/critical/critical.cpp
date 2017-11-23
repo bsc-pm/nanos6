@@ -6,10 +6,10 @@
 
 #include <nanos6/debug.h>
 
+#include <Atomic.hpp>
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
-#include <atomic>
 #include <cassert>
 
 
@@ -38,8 +38,8 @@ static void initialize(long participant)
 }
 
 
-static std::atomic<int> concurrent_tasks;
-static void *critical_handle = nullptr;
+static Atomic<int> concurrent_tasks;
+static void *critical_handle = 0;
 volatile long sum_result = 0;
 
 

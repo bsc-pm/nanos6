@@ -6,17 +6,17 @@
 
 #include <iostream>
 #include <unistd.h>
-#include <atomic>
 #include <cassert>
 #include <string>
 
+#include <Atomic.hpp>
 #include "TestAnyProtocolProducer.hpp"
 
 #define DEPTH 10000
 
 TestAnyProtocolProducer tap;
 
-std::atomic<size_t> counter;
+Atomic<size_t> counter;
 
 void task(int depth, int n)
 {
