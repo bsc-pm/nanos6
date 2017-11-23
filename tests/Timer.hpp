@@ -21,7 +21,7 @@ class Timer {
 	{
 		struct timeval currentTime;
 		
-		gettimeofday(&currentTime, nullptr);
+		gettimeofday(&currentTime, 0);
 		
 		return ( (double)currentTime.tv_sec * (double)1e6 ) + (double)currentTime.tv_usec ;
 	}

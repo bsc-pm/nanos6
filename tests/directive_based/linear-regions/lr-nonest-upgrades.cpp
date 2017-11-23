@@ -6,7 +6,6 @@
 
 #include <nanos6/debug.h>
 
-#include <atomic>
 #include <cassert>
 #include <cstdio>
 #include <sstream>
@@ -14,6 +13,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
@@ -21,13 +22,16 @@
 #define SUSTAIN_MICROSECONDS 100000L
 
 
+using namespace Functors;
+
+
 TestAnyProtocolProducer tap;
 
 
 template <int NUM_TASKS>
 struct ExperimentStatus {
-	std::atomic<bool> _taskHasStarted[NUM_TASKS];
-	std::atomic<bool> _taskHasFinished[NUM_TASKS];
+	Atomic<bool> _taskHasStarted[NUM_TASKS];
+	Atomic<bool> _taskHasFinished[NUM_TASKS];
 	
 	ExperimentStatus()
 		: _taskHasStarted(), _taskHasFinished()
@@ -66,7 +70,7 @@ static void dependencyVerification(int currentTaskNumber, ExperimentStatus<NUM_T
 			oss << "Evaluating that T" << otherTaskNumber << " does not start before T" << currentTaskNumber << " finishes";
 			
 			tap.sustainedEvaluate(
-				[&]() -> bool {return !status._taskHasStarted[otherTaskNumber].load();},
+				False< Atomic<bool> >(status._taskHasStarted[otherTaskNumber]),
 				SUSTAIN_MICROSECONDS,
 				oss.str()
 			);
@@ -74,7 +78,7 @@ static void dependencyVerification(int currentTaskNumber, ExperimentStatus<NUM_T
 			oss << "Evaluating that T" << otherTaskNumber << " can finish before T" << currentTaskNumber << " finishes";
 			
 			tap.timedEvaluate(
-				[&]() -> bool {return status._taskHasFinished[otherTaskNumber].load();},
+				True< Atomic<bool> >(status._taskHasFinished[otherTaskNumber]),
 				SUSTAIN_MICROSECONDS*2L,
 				oss.str(),
 				true
@@ -119,7 +123,7 @@ static inline void taskCode(int currentTaskNumber, ExperimentStatus<NUM_TASKS> &
 			oss << "Evaluating that T" << otherTaskNumber << " can finish before T" << currentTaskNumber << " finishes";
 			
 			tap.timedEvaluate(
-				[&]() -> bool {return status._taskHasFinished[otherTaskNumber].load();},
+				True< Atomic<bool> >(status._taskHasFinished[otherTaskNumber]),
 				SUSTAIN_MICROSECONDS,
 				oss.str(),
 				true
@@ -137,7 +141,7 @@ static inline void taskCode(int currentTaskNumber, ExperimentStatus<NUM_TASKS> &
 			oss << "Evaluating that T" << otherTaskNumber << " does not start before T" << currentTaskNumber << " finishes";
 			
 			tap.sustainedEvaluate(
-				[&]() -> bool {return !status._taskHasStarted[otherTaskNumber].load();},
+				False< Atomic<bool> >(status._taskHasStarted[otherTaskNumber]),
 				SUSTAIN_MICROSECONDS,
 				oss.str()
 			);

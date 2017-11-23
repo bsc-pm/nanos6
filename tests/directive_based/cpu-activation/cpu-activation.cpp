@@ -6,12 +6,13 @@
 
 #include <nanos6/debug.h>
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
 #include "ConditionVariable.hpp"
 
-#include <atomic>
 #include <cassert>
 #include <vector>
 
@@ -21,10 +22,13 @@
 #define VALIDATION_STEPS_PER_CPU 16
 
 
+using namespace Functors;
+
+
 TestAnyProtocolProducer tap;
 
 
-static std::atomic<long> _blockerCPU;
+static Atomic<long> _blockerCPU;
 
 class Blocker {
 public:
@@ -42,12 +46,30 @@ public:
 };
 
 
+class CPUStatusFunctor : public Functor {
+	long _cpu;
+	
+public:
+	typedef nanos_cpu_status_t type;
+	
+	CPUStatusFunctor(long cpu)
+		: _cpu(cpu)
+	{
+	}
+	
+	nanos_cpu_status_t operator()()
+	{
+		return nanos_get_cpu_status(_cpu);
+	}
+};
+
+
 class PlacementEvaluator {
 public:
 	long _expectedCPU;
-	std::vector<std::atomic<int>> &_tasksPerCPU;
+	std::vector< Atomic<int> > &_tasksPerCPU;
 	
-	PlacementEvaluator(long expectedCPU, std::vector<std::atomic<int>> &tasksPerCPU)
+	PlacementEvaluator(long expectedCPU, std::vector< Atomic<int> > &tasksPerCPU)
 		: _expectedCPU(expectedCPU), _tasksPerCPU(tasksPerCPU)
 	{
 	}
@@ -135,11 +157,12 @@ int main(int argc, char **argv) {
 	); // 3
 	tap.bailOutAndExitIfAnyFailed();
 	
+	CPUStatusFunctor cpuStatusFunctor(blockerCPU);
+	nanos_cpu_status_t expectedStatus = nanos_disabled_cpu;
+	
 	blocker->_condVar.signal();
 	tap.timedEvaluate(
-		[&]() {
-			return (nanos_get_cpu_status(blockerCPU) == nanos_disabled_cpu);
-		},
+		Equal<CPUStatusFunctor, nanos_cpu_status_t>(cpuStatusFunctor, expectedStatus),
 		1000000, // 1 second
 		"Check that the CPU completes the deactivation in a reasonable amount of time"
 	); // 4
@@ -151,11 +174,10 @@ int main(int argc, char **argv) {
 		"Check that attempting to disable an already disabled CPU keeps it untouched"
 	); // 5
 	
+	expectedStatus = nanos_enabled_cpu;
 	nanos_enable_cpu(blockerCPU);
 	tap.timedEvaluate(
-		[&]() {
-			return (nanos_get_cpu_status(blockerCPU) == nanos_enabled_cpu);
-		},
+		Equal<CPUStatusFunctor, nanos_cpu_status_t>(cpuStatusFunctor, expectedStatus),
 		1000000, // 1 second
 		"Check that enabling a CPU will eventually set it to enabled"
 	); // 6
@@ -196,8 +218,9 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	std::vector<std::atomic<int>> tasksPerCPU(activeCPUs);
-	for (std::atomic<int> &tasks : tasksPerCPU) {
+	std::vector< Atomic<int> > tasksPerCPU(activeCPUs);
+	for (std::vector< Atomic<int> >::iterator it = tasksPerCPU.begin(); it != tasksPerCPU.end(); it++) {
+		Atomic<int> &tasks = *it;
 		tasks = 0;
 	}
 	

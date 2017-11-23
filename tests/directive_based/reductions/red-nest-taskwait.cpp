@@ -18,6 +18,7 @@
 
 #include <nanos6/debug.h>
 
+#include <Atomic.hpp>
 #include "TestAnyProtocolProducer.hpp"
 
 
@@ -27,7 +28,7 @@
 
 
 TestAnyProtocolProducer tap;
-static std::atomic_int numTasks(0);
+static Atomic<int> numTasks(0);
 static int totalTasks;
 static int finalDepth;
 static int branchingFactor;

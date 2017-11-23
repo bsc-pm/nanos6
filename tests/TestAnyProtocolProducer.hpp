@@ -12,11 +12,54 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <mutex>
 #include <string>
 #include <sstream>
 
 #include <sys/time.h>
+
+#if __cplusplus >= 201103L
+#include <mutex>
+#else
+
+#include <pthread.h>
+
+namespace std {
+	struct mutex {
+		pthread_mutex_t _mutex;
+		
+		mutex()
+		{
+			pthread_mutex_init(&_mutex, 0);
+		}
+		
+		void lock()
+		{
+			pthread_mutex_lock(&_mutex);
+		}
+		void unlock()
+		{
+			pthread_mutex_unlock(&_mutex);
+		}
+	};
+	
+	template <typename T>
+	struct lock_guard {
+		mutex &_mutex;
+		
+		lock_guard(mutex &mutex)
+			: _mutex(mutex)
+		{
+			_mutex.lock();
+		}
+		
+		~lock_guard()
+		{
+			_mutex.unlock();
+		}
+	};
+}
+
+#endif
 
 
 //! \brief a class for generating the TAP testing protocol that the autotools recognizes
@@ -26,34 +69,26 @@ private:
 	int _currentTest;
 	bool _hasFailed;
 	std::string _component;
+	
 	std::mutex _outputAndCounterMutex;
 	
 	void emitOutcome(std::string const &outcome, std::string const &detail, std::string const &special = "")
 	{
 		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
-		std::cout << outcome << " " << _currentTest;
-		if (_component != "") {
-			std::cout << " " << _component << ":";
+		{
+			std::cout << outcome << " " << _currentTest;
+			if (_component != "") {
+				std::cout << " " << _component << ":";
+			}
+			if (detail != "") {
+				std::cout << " " << detail;
+			}
+			if (special != "") {
+				std::cout << " # " << special;
+			}
+			std::cout << std::endl;
+			_currentTest++;
 		}
-		if (detail != "") {
-			std::cout << " " << detail;
-		}
-		if (special != "") {
-			std::cout << " # " << special;
-		}
-		std::cout << std::endl;
-		_currentTest++;
-	}
-	
-	template<typename T, typename... TS>
-	void emitDiagnosticParts(T const &diagnostic, TS... diagnostics)
-	{
-		std::cout << diagnostic;
-		emitDiagnosticParts(diagnostics...);
-	}
-	
-	void emitDiagnosticParts()
-	{
 	}
 	
 public:
@@ -95,7 +130,9 @@ public:
 			std::cout << "1.." << _testCount << std::endl;
 		}
 		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
-		_currentTest = 1;
+		{
+			_currentTest = 1;
+		}
 	}
 	
 	//! \brief finish the set of tests (sequentially)
@@ -156,11 +193,13 @@ public:
 	void bailOut(std::string const &detail="")
 	{
 		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
-		std::cout << "Bail out!";
-		if (detail != "") {
-			std::cout << " " << detail;
+		{
+			std::cout << "Bail out!";
+			if (detail != "") {
+				std::cout << " " << detail;
+			}
+			std::cout << std::endl;
 		}
-		std::cout << std::endl;
 	}
 	
 	
@@ -197,11 +236,12 @@ public:
 	//! \param[in] microseconds grace period to assert the condition
 	//! \param[in] detail optionally any additional information about the test
 	//! \param[in] weak true if a timeout does not necessarily mean incorrectness
-	void timedEvaluate(std::function<bool ()> condition, long microseconds, std::string const &detail="", bool weak=false)
+	template <typename ConditionType>
+	void timedEvaluate(ConditionType condition, long microseconds, std::string const &detail="", bool weak=false)
 	{
 		struct timeval start, end, maximum;
 		
-		int rc = gettimeofday(&start, nullptr);
+		int rc = gettimeofday(&start, 0);
 		if (rc != 0) {
 			failure("Failed to get time for a timed check");
 			return;
@@ -215,7 +255,7 @@ public:
 		}
 		
 		while (!condition()) {
-			rc = gettimeofday(&end, nullptr);
+			rc = gettimeofday(&end, 0);
 			bool timeout = (end.tv_sec > maximum.tv_sec);
 			timeout = timeout || ((end.tv_sec == maximum.tv_sec) && (end.tv_usec > maximum.tv_usec));
 			
@@ -242,11 +282,12 @@ public:
 	//! \param[in] condition true during the time period for the test to be successful
 	//! \param[in] microseconds period of time furing which the condition is expected to be asserted
 	//! \param[in] detail optionally any additional information about the test
-	void sustainedEvaluate(std::function<bool ()> condition, long microseconds, std::string const &detail="")
+	template <typename ConditionType>
+	void sustainedEvaluate(ConditionType condition, long microseconds, std::string const &detail="")
 	{
 		struct timeval start, end, maximum;
 		
-		int rc = gettimeofday(&start, nullptr);
+		int rc = gettimeofday(&start, 0);
 		if (rc != 0) {
 			failure("Failed to get time for a timed check");
 			return;
@@ -260,7 +301,7 @@ public:
 		}
 		
 		while (condition()) {
-			rc = gettimeofday(&end, nullptr);
+			rc = gettimeofday(&end, 0);
 			bool timeout = (end.tv_sec > maximum.tv_sec);
 			timeout = timeout || ((end.tv_sec == maximum.tv_sec) && (end.tv_usec > maximum.tv_usec));
 			
@@ -300,14 +341,74 @@ public:
 		_hasFailed = false;
 	}
 	
-	//! \brief emit an additional comment in the output
-	template<typename T, typename... TS>
-	void emitDiagnostic(T const &diagnostic, TS... diagnostics)
+	template <typename T1>
+	void emitDiagnostic(T1 v1)
 	{
 		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
-		std::cout << "# " << diagnostic;
-		emitDiagnosticParts(diagnostics...);
-		std::cout << std::endl;
+		std::cout << "# " << v1 << std::endl;
+	}
+	
+	template <typename T1, typename T2>
+	void emitDiagnostic(T1 v1, T2 v2)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << std::endl;
+	}
+	
+	template <typename T1, typename T2, typename T3>
+	void emitDiagnostic(T1 v1, T2 v2, T3 v3)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << v3 << std::endl;
+	}
+	
+	template <typename T1, typename T2, typename T3, typename T4>
+	void emitDiagnostic(T1 v1, T2 v2, T3 v3, T4 v4)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << v3 << v4 << std::endl;
+	}
+	
+	template <typename T1, typename T2, typename T3, typename T4, typename T5>
+	void emitDiagnostic(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << v3 << v4 << v5 << std::endl;
+	}
+	
+	template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+	void emitDiagnostic(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5, T6 v6)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << v3 << v4 << v5 << v6 << std::endl;
+	}
+	
+	template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+	void emitDiagnostic(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5, T6 v6, T7 v7)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << v3 << v4 << v5 << v6 << v7 << std::endl;
+	}
+	
+	template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+	void emitDiagnostic(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5, T6 v6, T7 v7, T8 v8)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << v3 << v4 << v5 << v6 << v7 << v8 << std::endl;
+	}
+	
+	template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+	void emitDiagnostic(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5, T6 v6, T7 v7, T8 v8, T9 v9)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << v3 << v4 << v5 << v6 << v7 << v8 << v9 << std::endl;
+	}
+	
+	template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9, typename T10>
+	void emitDiagnostic(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5, T6 v6, T7 v7, T8 v8, T9 v9, T10 v10)
+	{
+		std::lock_guard<std::mutex> guard(_outputAndCounterMutex);
+		std::cout << "# " << v1 << v2 << v3 << v4 << v5 << v6 << v7 << v8 << v9 << v10 << std::endl;
 	}
 	
 };

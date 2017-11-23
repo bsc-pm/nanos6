@@ -4,7 +4,6 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include <atomic>
 #include <cassert>
 #include <cstdio>
 #include <list>
@@ -17,6 +16,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
@@ -26,6 +27,9 @@
 #define SUSTAIN_MICROSECONDS 200000L
 
 //#define FINE_SELF_CHECK
+
+
+using namespace Functors;
 
 
 TestAnyProtocolProducer tap;
@@ -77,11 +81,14 @@ struct TaskVerifier {
 	status_t _status;
 	type_t _type;
 	int *_variable;
-	std::atomic_int *_numConcurrentTasks;
 	
-	TaskVerifier() = delete;
+	Atomic<int> *_numConcurrentTasks;
 	
-	TaskVerifier(type_t type, int *variable, std::atomic_int *numConcurrentTasks = nullptr)
+private:
+	TaskVerifier();
+	
+public:
+	TaskVerifier(type_t type, int *variable, Atomic<int> *numConcurrentTasks = 0)
 		: _id(nextTaskId++), _runsAfter(), _runsBefore(), _runsConcurrentlyWith(), _status(NOT_STARTED)
 		, _type(type), _variable(variable), _numConcurrentTasks(numConcurrentTasks)
 	{
@@ -108,6 +115,8 @@ struct TaskVerifier {
 			case CONCURRENT:
 				return "CONCURRENT";
 		}
+		
+		return "UNKNOWN";
 	}
 	
 	void submit();
@@ -118,7 +127,9 @@ struct TaskVerifier {
 		tap.emitDiagnostic("Task ", _id, " (", type2String(), ") starts");
 		_status = STARTED;
 		
-		for (int predecessor : _runsAfter) {
+		for (std::set<int>::const_iterator it = _runsAfter.begin(); it != _runsAfter.end(); it++) {
+			int predecessor = *it;
+			
 			TaskVerifier *predecessorTask = verifiers[predecessor];
 			assert(predecessorTask != 0);
 			{
@@ -132,17 +143,14 @@ struct TaskVerifier {
 			// FIXME can be extended to a full wait when taskyield is implemented
 			int nwait = (ncpus < _runsConcurrentlyWith.size() + 1) ? ncpus : _runsConcurrentlyWith.size() + 1;
 			
-			assert(_numConcurrentTasks != nullptr);
+			assert(_numConcurrentTasks != 0);
 			int var = ++(*_numConcurrentTasks);
 			tap.emitDiagnostic("Task ", var, "/", nwait, ", running concurrently within its group, enters synchronization");
 			
 			std::ostringstream oss;
 			oss << "Task " << _id << " can run concurrently with other tasks filling up the number of available CPUs";
 			tap.timedEvaluate(
-				[&]() {
-					var = _numConcurrentTasks->load();
-					return var >= nwait;
-				},
+				GreaterOrEqual<Atomic<int>, int>(*_numConcurrentTasks, nwait),
 				SUSTAIN_MICROSECONDS * delayMultiplier,
 				oss.str()
 			);
@@ -151,7 +159,9 @@ struct TaskVerifier {
 		struct timespec delay = { 0, 1000000};
 		nanosleep(&delay, &delay);
 		
-		for (int successor : _runsBefore) {
+		for (std::set<int>::const_iterator it = _runsBefore.begin(); it != _runsBefore.end(); it++) {
+			int successor = *it;
+			
 			TaskVerifier *successorTask = verifiers[successor];
 			assert(successorTask != 0);
 			{
@@ -284,7 +294,9 @@ struct VerifierConstraintCalculator {
 	{
 		if (_lastAccessType == READERS) {
 			// There can only be writers before last access, unless it's the first access
-			for (int writer : _lastWriters) {
+			for (std::set<int>::const_iterator it = _lastWriters.begin(); it != _lastWriters.end(); it++) {
+				int writer = *it;
+				
 				TaskVerifier *writerVerifier = verifiers[writer];
 				assert(writerVerifier != 0);
 				
@@ -295,7 +307,9 @@ struct VerifierConstraintCalculator {
 				numTests += _lastReaders.size();
 #endif
 				
-				for (int other : _lastWriters) {
+				for (std::set<int>::const_iterator it2 = _lastWriters.begin(); it2 != _lastWriters.end(); it2++) {
+					int other = *it2;
+					
 					if (other != writer)
 						writerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -310,7 +324,9 @@ struct VerifierConstraintCalculator {
 			assert(_lastAccessType == WRITER || _lastAccessType == CONCURRENT);
 			
 			// Readers before last access
-			for (int reader : _lastReaders) {
+			for (std::set<int>::const_iterator it = _lastReaders.begin(); it != _lastReaders.end(); it++) {
+				int reader = *it;
+				
 				TaskVerifier *readerVerifier = verifiers[reader];
 				assert(readerVerifier != 0);
 				
@@ -320,7 +336,9 @@ struct VerifierConstraintCalculator {
 				numTests += _newWriters.size();
 #endif
 				numTests += _newWriters.size();
-				for (int other : _lastReaders) {
+				for (std::set<int>::const_iterator it2 = _lastReaders.begin(); it2 != _lastReaders.end(); it2++) {
+					int other = *it2;
+					
 					if (other != reader)
 						readerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -334,7 +352,9 @@ struct VerifierConstraintCalculator {
 			
 			// Writer(s) before last access (either this or previous set will
 			// be non-empty, but not both unless it's the first access)
-			for (int writer : _lastWriters) {
+			for (std::set<int>::const_iterator it = _lastWriters.begin(); it != _lastWriters.end(); it++) {
+				int writer = *it;
+				
 				TaskVerifier *writerVerifier = verifiers[writer];
 				assert(writerVerifier != 0);
 				
@@ -345,7 +365,9 @@ struct VerifierConstraintCalculator {
 #endif
 				numTests += _newWriters.size();
 				
-				for (int other : _lastWriters) {
+				for (std::set<int>::const_iterator it2 = _lastWriters.begin(); it2 != _lastWriters.end(); it2++) {
+					int other = *it2;
+					
 					if (other != writer)
 						writerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -364,11 +386,15 @@ struct VerifierConstraintCalculator {
 	void flushConcurrent()
 	{
 		if (_lastAccessType == READERS) {
-			for (int reader : _lastReaders) {
+			for (std::set<int>::const_iterator it = _lastReaders.begin(); it != _lastReaders.end(); it++) {
+				int reader = *it;
+				
 				TaskVerifier *readerVerifier = verifiers[reader];
 				assert(readerVerifier != 0);
 				
-				for (int other : _lastReaders) {
+				for (std::set<int>::const_iterator it2 = _lastReaders.begin(); it2 != _lastReaders.end(); it2++) {
+					int other = *it2;
+					
 					if (other != reader)
 						readerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -381,11 +407,15 @@ struct VerifierConstraintCalculator {
 		} else {
 			assert(_lastAccessType == WRITER || _lastAccessType == CONCURRENT);
 			
-			for (int writer : _lastWriters) {
+			for (std::set<int>::const_iterator it = _lastWriters.begin(); it != _lastWriters.end(); it++) {
+				int writer = *it;
+				
 				TaskVerifier *writerVerifier = verifiers[writer];
 				assert(writerVerifier != 0);
 				
-				for (int other : _lastWriters) {
+				for (std::set<int>::const_iterator it2 = _lastWriters.begin(); it2 != _lastWriters.end(); it2++) {
+					int other = *it2;
+					
 					if (other != writer)
 						writerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -489,10 +519,13 @@ struct VerifierConstraintCalculator {
 #else
 		bool globallyValid = true;
 #endif
-		for (TaskVerifier *verifier : verifiers) {
+		for (std::vector<TaskVerifier *>::const_iterator vit = verifiers.begin(); vit != verifiers.end(); vit++) {
+			TaskVerifier *verifier = *vit;
 			assert(verifier != 0);
 			
-			for (int predecessor : verifier->_runsAfter) {
+			for (std::set<int>::const_iterator it = verifier->_runsAfter.begin(); it != verifier->_runsAfter.end(); it++) {
+				int predecessor = *it;
+				
 				TaskVerifier *predecessorVerifier = verifiers[predecessor];
 				assert(predecessorVerifier != 0);
 				
@@ -507,7 +540,9 @@ struct VerifierConstraintCalculator {
 				}
 			}
 			
-			for (int successor : verifier->_runsBefore) {
+			for (std::set<int>::const_iterator it = verifier->_runsBefore.begin(); it != verifier->_runsBefore.end(); it++) {
+				int successor = *it;
+				
 				TaskVerifier *successorVerifier = verifiers[successor];
 				assert(successorVerifier != 0);
 				
@@ -522,7 +557,9 @@ struct VerifierConstraintCalculator {
 				}
 			}
 			
-			for (int concurrent : verifier->_runsConcurrentlyWith) {
+			for (std::set<int>::const_iterator it = verifier->_runsConcurrentlyWith.begin(); it != verifier->_runsConcurrentlyWith.end(); it++) {
+				int concurrent = *it;
+				
 				TaskVerifier *concurrentVerifier = verifiers[concurrent];
 				assert(concurrentVerifier != 0);
 				
@@ -562,7 +599,7 @@ int main(int argc, char **argv)
 	TaskVerifier firstWriter(TaskVerifier::WRITE, &var1); verifiers.push_back(&firstWriter); _constraintCalculator.handleWriter(&firstWriter);
 	
 	// NCPUS readers
-	std::atomic_int numConcurrentReaders1(0);
+	Atomic<int> numConcurrentReaders1(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders1);
 		verifiers.push_back(reader);
@@ -576,7 +613,7 @@ int main(int argc, char **argv)
 	TaskVerifier thirdWriter(TaskVerifier::WRITE, &var1); verifiers.push_back(&thirdWriter); _constraintCalculator.handleWriter(&thirdWriter);
 	
 	// NCPUS readers
-	std::atomic_int numConcurrentReaders2(0);
+	Atomic<int> numConcurrentReaders2(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders2);
 		verifiers.push_back(reader);
@@ -587,7 +624,7 @@ int main(int argc, char **argv)
 	TaskVerifier firstRewriter(TaskVerifier::DOUBLE_WRITE, &var1); verifiers.push_back(&firstRewriter); _constraintCalculator.handleWriter(&firstRewriter);
 	
 	// NCPUS double readers
-	std::atomic_int numConcurrentReaders3(0);
+	Atomic<int> numConcurrentReaders3(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::DOUBLE_READ, &var1, &numConcurrentReaders3);
 		verifiers.push_back(reader);
@@ -611,7 +648,7 @@ int main(int argc, char **argv)
 	
 #ifdef HAVE_CONCURRENT_SUPPORT
 	// NCPUS concurrent
-	std::atomic_int numConcurrents1(0);
+	Atomic<int> numConcurrents1(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents1);
 		verifiers.push_back(concurrent);
@@ -622,7 +659,7 @@ int main(int argc, char **argv)
 	TaskVerifier fourthWriter(TaskVerifier::WRITE, &var1); verifiers.push_back(&fourthWriter); _constraintCalculator.handleWriter(&fourthWriter);
 	
 	// NCPUS concurrent
-	std::atomic_int numConcurrents2(0);
+	Atomic<int> numConcurrents2(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents2);
 		verifiers.push_back(concurrent);
@@ -630,7 +667,7 @@ int main(int argc, char **argv)
 	}
 	
 	// NCPUS readers
-	std::atomic_int numConcurrentReaders5(0);
+	Atomic<int> numConcurrentReaders5(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders5);
 		verifiers.push_back(reader);
@@ -638,7 +675,7 @@ int main(int argc, char **argv)
 	}
 	
 	// NCPUS concurrent
-	std::atomic_int numConcurrents3(0);
+	Atomic<int> numConcurrents3(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents3);
 		verifiers.push_back(concurrent);
@@ -646,7 +683,7 @@ int main(int argc, char **argv)
 	}
 	
 	// NCPUS readers
-	std::atomic_int numConcurrentReaders6(0);
+	Atomic<int> numConcurrentReaders6(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders6);
 		verifiers.push_back(reader);
@@ -654,7 +691,7 @@ int main(int argc, char **argv)
 	}
 	
 	// NCPUS concurrent
-	std::atomic_int numConcurrents4(0);
+	Atomic<int> numConcurrents4(0);
 	for (long i=0; i < ncpus; i++) {
 		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents4);
 		verifiers.push_back(concurrent);
@@ -674,7 +711,8 @@ int main(int argc, char **argv)
 	
 	_constraintCalculator.selfcheck();
 	
-	for (TaskVerifier *verifier : verifiers) {
+	for (std::vector<TaskVerifier *>::const_iterator vit = verifiers.begin(); vit != verifiers.end(); vit++) {
+		TaskVerifier *verifier = *vit;
 		assert(verifier != 0);
 		verifier->submit();
 	}

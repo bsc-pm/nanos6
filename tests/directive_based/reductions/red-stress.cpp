@@ -10,8 +10,7 @@
  *
  */
 
-#include <atomic>
-
+#include <Atomic.hpp>
 #include "TestAnyProtocolProducer.hpp"
 
 
@@ -22,7 +21,7 @@
 
 
 TestAnyProtocolProducer tap;
-std::atomic_int numReductions(0);
+Atomic<int> numReductions(0);
 
 int main() {
 	int array[N_REDUCTIONS] = { 0 };

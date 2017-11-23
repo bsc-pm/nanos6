@@ -8,14 +8,18 @@
 
 #include <nanos6/multidimensional-release.h>
 
-#include <atomic>
 #include <cassert>
 #include <cstdio>
 #include <sstream>
 
 #include <string.h>
 #include <unistd.h>
+#include <Atomic.hpp>
+#include <Functors.hpp>
+#include <Functors.hpp>
 
+#include <Atomic.hpp>
+#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
@@ -26,13 +30,16 @@ static const int NSEGMENTS = 8;
 #define SUSTAIN_MICROSECONDS 100000L
 
 
+using namespace Functors;
+
+
 TestAnyProtocolProducer tap;
 
 
 template <int NUM_TASKS>
 struct ExperimentStatus {
-	std::atomic<int> _taskHasStarted[NUM_TASKS];
-	std::atomic<int> _taskHasFinished[NUM_TASKS];
+	Atomic<int> _taskHasStarted[NUM_TASKS];
+	Atomic<int> _taskHasFinished[NUM_TASKS];
 	bool _taskHasBeenReleased[NUM_TASKS];
 	
 	ExperimentStatus()
@@ -56,7 +63,7 @@ static void verifyNonReleased(ExperimentStatus<NSEGMENTS+1> &status)
 			oss << "T" << i+1 << " does not start before its segment" << i << " has been released";
 			
 			tap.sustainedEvaluate(
-				[&]() -> bool {return (status._taskHasStarted[i+1].load() == 0);},
+				Zero< Atomic<int> >(status._taskHasStarted[i+1]),
 				SUSTAIN_MICROSECONDS,
 				oss.str()
 			);
@@ -116,7 +123,7 @@ int main(int argc, char **argv)
 				std::ostringstream oss;
 				oss << "T" << segment+1 << " starts after releasing segment " << segment;
 				tap.timedEvaluate(
-					[&]() -> bool {return (status._taskHasStarted[segment+1].load() == 1);},
+					One< Atomic<int> >(status._taskHasStarted[segment+1]),
 					SUSTAIN_MICROSECONDS*2L,
 					oss.str(),
 					true
@@ -132,7 +139,7 @@ int main(int argc, char **argv)
 			std::ostringstream oss;
 			oss << "T" << i+1 << " can finish before T0";
 			tap.timedEvaluate(
-				[&]() -> bool {return (status._taskHasFinished[i+1].load() == 1);},
+				One< Atomic<int> >(status._taskHasFinished[i+1]),
 				SUSTAIN_MICROSECONDS*2L,
 				oss.str(),
 				true
@@ -157,7 +164,7 @@ int main(int argc, char **argv)
 			std::ostringstream oss;
 			oss << "T0 does not finish before T" << i+1;
 			tap.timedEvaluate(
-				[&]() -> bool {return (status._taskHasFinished[i+1].load() == 0);},
+				Zero< Atomic<int> >(status._taskHasFinished[i+1]),
 				SUSTAIN_MICROSECONDS*2L,
 				oss.str(),
 				true
@@ -185,7 +192,7 @@ int main(int argc, char **argv)
 	
 	#pragma oss taskwait
 	
-	std::atomic<bool> secondHasFinished(false);
+	Atomic<bool> secondHasFinished(false);
 	
 	#pragma oss task weakout(var[0;NSEGMENTS]) shared(secondHasFinished) label(weak waiter)
 	{
