@@ -131,19 +131,22 @@ extern "C" void nanos_register_polling_service(char const *service_name, nanos_p
 
 extern "C" void nanos_unregister_polling_service(char const *service_name, nanos_polling_service_t service_function, void *service_data)
 {
+	std::atomic<bool> unregistered(false);
+	
 	ServiceKey key(service_name, service_function, service_data);
 	
-	std::lock_guard<PollingAPI::lock_t> guard(PollingAPI::_lock);
-	auto it = PollingAPI::_services.find(key);
-	
-	assert((it != PollingAPI::_services.end()) && "Attempt to unregister a non-existing polling service");
-	ServiceData &serviceData = it->second;
-	
-	assert((serviceData._discard == nullptr) && "Attempt to unregister an already unregistered polling service");
-	
-	// Set up unregistering protocol
-	std::atomic<bool> unregistered(false);
-	serviceData._discard = &unregistered;
+	{
+		std::lock_guard<PollingAPI::lock_t> guard(PollingAPI::_lock);
+		auto it = PollingAPI::_services.find(key);
+		
+		assert((it != PollingAPI::_services.end()) && "Attempt to unregister a non-existing polling service");
+		ServiceData &serviceData = it->second;
+		
+		assert((serviceData._discard == nullptr) && "Attempt to unregister an already unregistered polling service");
+		
+		// Set up unregistering protocol
+		serviceData._discard = &unregistered;
+	}
 	
 	// Wait until fully unregistered
 	while (unregistered.load() == false) {
@@ -171,7 +174,12 @@ void PollingAPI::handleServices()
 			continue;
 		}
 		
-		if (serviceData._discard) {
+		if (serviceData._discard != nullptr) {
+			if (serviceData._discard != nullptr) {
+				// Signal the unregistration
+				serviceData._discard->store(true);
+			}
+			
 			it = _services.erase(it);
 			continue;
 		}
