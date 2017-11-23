@@ -143,7 +143,7 @@ namespace Instrument {
 	
 	void dataAccessBecomesSatisfied(
 		data_access_id_t dataAccessId,
-		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+		bool globallySatisfied,
 		task_id_t targetTaskId, InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
@@ -151,7 +151,7 @@ namespace Instrument {
 		data_access_becomes_satisfied_step_t *step = new data_access_becomes_satisfied_step_t(
 			context,
 			dataAccessId,
-			readSatisfied, writeSatisfied, globallySatisfied,
+			globallySatisfied,
 			targetTaskId
 		);
 		_executionSequence.push_back(step);

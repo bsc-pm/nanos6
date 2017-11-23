@@ -94,13 +94,11 @@ namespace Instrument {
 	//! \brief Called when a DataAccess becomes satisfied
 	//! 
 	//! \param dataAccessId the identifier of the DataAccess that becomes satisfied as returned in the previous call to Instrument::createdDataAccess
-	//! \param readSatisfied whether the access becomes read satisfied
-	//! \param writeSatisfied whether the access begomes write satisfied
 	//! \param globallySatisfied whether the access becomes globally satisfied
 	//! \param targetTaskId the identifier of the task that will perform the now satisfied DataAccess
 	void dataAccessBecomesSatisfied(
 		data_access_id_t dataAccessId,
-		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+		bool globallySatisfied,
 		task_id_t targetTaskId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);

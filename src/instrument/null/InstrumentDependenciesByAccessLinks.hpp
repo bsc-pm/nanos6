@@ -40,8 +40,6 @@ namespace Instrument {
 	
 	inline void dataAccessBecomesSatisfied(
 		__attribute__((unused)) data_access_id_t dataAccessId,
-		__attribute__((unused)) bool readSatisfied,
-		__attribute__((unused)) bool writeSatisfied,
 		__attribute__((unused)) bool globallySatisfied,
 		__attribute__((unused)) task_id_t targetTaskId,
 		__attribute__((unused)) InstrumentationContext const &context

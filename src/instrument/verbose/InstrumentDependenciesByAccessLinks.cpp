@@ -175,7 +175,7 @@ namespace Instrument {
 	
 	void dataAccessBecomesSatisfied(
 		data_access_id_t dataAccessId,
-		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+		bool globallySatisfied,
 		task_id_t targetTaskId,
 		InstrumentationContext const &context
 	) {
@@ -189,16 +189,10 @@ namespace Instrument {
 		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> DataAccessBecomesSatisfied " << dataAccessId << " triggererTask:" << context._taskId << " targetTask:" << targetTaskId;
 		
-		if (readSatisfied) {
-			logEntry->_contents << " +read_safistied";
-		}
-		if (writeSatisfied) {
-			logEntry->_contents << " +write_safistied";
-		}
 		if (globallySatisfied) {
 			logEntry->_contents << " +safistied";
 		}
-		if (!readSatisfied && !writeSatisfied && !globallySatisfied) {
+		if (!globallySatisfied) {
 			logEntry->_contents << " remains_unsatisfied";
 		}
 		

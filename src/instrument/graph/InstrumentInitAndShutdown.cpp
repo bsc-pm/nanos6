@@ -270,14 +270,6 @@ namespace Instrument {
 			haveStatusText = true;
 			statusText << "Sat";
 		}
-		if (access.readSatisfied()) {
-			haveStatusText = true;
-			statusText << "R";
-		}
-		if (access.writeSatisfied()) {
-			haveStatusText = true;
-			statusText << "W";
-		}
 		if (access.complete()) {
 			haveStatusText = true;
 			statusText << "C";
@@ -290,15 +282,6 @@ namespace Instrument {
 		
 		if (haveStatusText) {
 			text << "\\n" << statusText.str() << "+";
-		}
-		
-		bool blocker = true;
-		if (access.satisfied()) {
-			blocker = false;
-		} else if ((access._type == READ_ACCESS_TYPE) && access.readSatisfied()) {
-			blocker = false;
-		} else if (access.readSatisfied() && access.writeSatisfied()) {
-			blocker = false;
 		}
 		
 		std::string shape;
@@ -324,7 +307,7 @@ namespace Instrument {
 				<< " style=\"" << style << "\""
 				<< " label=\"" << text.str() << "\""
 				<< " fillcolor=\"" << colorList.str() << "\"";
-		if (blocker) {
+		if (!access.satisfied()) {
 			ofs
 				<< " penwidth=2 ";
 		} else {
@@ -1128,9 +1111,7 @@ namespace Instrument {
 				}
 				if ((access->_status == not_created_access_status) || (access->_status == removed_access_status)) {
 					ofs << " style=dotted color=\"#AAAAAA\" fillcolor=\"#AAAAAA\"";
-				} else if (access->weak() || access->satisfied() || (access->readSatisfied() && access->writeSatisfied())) {
-					ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
-				} else if (access->readSatisfied() && (access->_type == READ_ACCESS_TYPE)) {
+				} else if (access->weak() || access->satisfied()) {
 					ofs << " style=dashed color=\"#888888\" fillcolor=\"#888888\"";
 				} else {
 					ofs << " style=dashed color=\"#000000\" fillcolor=\"#000000\"";

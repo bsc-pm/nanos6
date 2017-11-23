@@ -34,7 +34,7 @@ namespace Instrument {
 	
 	void dataAccessBecomesSatisfied(
 		data_access_id_t dataAccessId,
-		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+		bool globallySatisfied,
 		task_id_t targetTaskId, InstrumentationContext const &context
 	);
 	

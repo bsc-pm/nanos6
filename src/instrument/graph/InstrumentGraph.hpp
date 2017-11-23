@@ -127,8 +127,6 @@ namespace Instrument {
 		struct access_t {
 			enum {
 				ACCESS_WEAK_BIT=0,
-				ACCESS_READ_SATISFIED_BIT,
-				ACCESS_WRITE_SATISFIED_BIT,
 				ACCESS_SATISFIED_BIT,
 				ACCESS_COMPLETE_BIT,
 				ACCESS_HAS_PREVIOUS_BIT,
@@ -185,28 +183,6 @@ namespace Instrument {
 			bitset_t::reference weak()
 			{
 				return _bitset[ACCESS_WEAK_BIT];
-			}
-			
-			
-			bool readSatisfied() const
-			{
-				return _bitset[ACCESS_READ_SATISFIED_BIT];
-			}
-			
-			bitset_t::reference readSatisfied()
-			{
-				return _bitset[ACCESS_READ_SATISFIED_BIT];
-			}
-			
-			
-			bool writeSatisfied() const
-			{
-				return _bitset[ACCESS_WRITE_SATISFIED_BIT];
-			}
-			
-			bitset_t::reference writeSatisfied()
-			{
-				return _bitset[ACCESS_WRITE_SATISFIED_BIT];
 			}
 			
 			

@@ -345,7 +345,7 @@ private:
 			assert(!initialStatus._isSatisfied);
 			Instrument::dataAccessBecomesSatisfied(
 				access->getInstrumentationId(),
-				true, true, /* true, */ false,
+				true,
 				task->getInstrumentationTaskId()
 			);
 		}

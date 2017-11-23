@@ -290,8 +290,6 @@ namespace Instrument {
 			access->_type = _accessType;
 			access->_accessRegion = _region;
 			access->weak() = _weak;
-			access->readSatisfied() = _readSatisfied;
-			access->writeSatisfied() = _writeSatisfied;
 			access->satisfied() = _globallySatisfied;
 			access->_status = created_access_status;
 			
@@ -443,8 +441,6 @@ namespace Instrument {
 			access_t *access = _accessIdToAccessMap[_accessId];
 			assert(access != nullptr);
 			
-			access->readSatisfied() = access->readSatisfied() | _readSatisfied;
-			access->writeSatisfied() = access->writeSatisfied() | _writeSatisfied;
 			access->satisfied() = access->satisfied() | _globallySatisfied;
 		}
 		
@@ -476,16 +472,9 @@ namespace Instrument {
 			oss << " ";
 			
 			oss << _accessId << " of task " << _targetTaskId;
-			if (_readSatisfied) {
-				oss << " read";
-			}
-			if (_writeSatisfied) {
-				oss << " write";
-			}
 			if (_globallySatisfied) {
-				oss << " globally";
+				oss << " satisfied";
 			}
-			oss << " satisfied";
 			return oss.str();
 		}
 		
@@ -668,8 +657,6 @@ namespace Instrument {
 			newSubaccessFragment->_accessRegion = original->_accessRegion;
 			newSubaccessFragment->weak() = original->weak();
 			assert(newSubaccessFragment->_objectType == entry_fragment_type);
-			newSubaccessFragment->readSatisfied() = original->readSatisfied();
-			newSubaccessFragment->writeSatisfied() = original->writeSatisfied();
 			newSubaccessFragment->satisfied() = original->satisfied();
 			newSubaccessFragment->_status = created_access_status;
 			

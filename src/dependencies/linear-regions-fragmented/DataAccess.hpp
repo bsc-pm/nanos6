@@ -209,6 +209,7 @@ public:
 	{
 		assert(!readSatisfied());
 		_status[READ_SATISFIED_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "RSat", "Read Satisfied");
 	}
 	bool readSatisfied() const
 	{
@@ -219,6 +220,7 @@ public:
 	{
 		assert(!writeSatisfied());
 		_status[WRITE_SATISFIED_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "WSat", "Write Satisfied");
 	}
 	bool writeSatisfied() const
 	{

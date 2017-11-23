@@ -292,18 +292,18 @@ namespace Instrument {
 		
 		struct data_access_becomes_satisfied_step_t : public execution_step_t {
 			data_access_id_t _accessId;
-			bool _readSatisfied, _writeSatisfied, _globallySatisfied;
+			bool _globallySatisfied;
 			task_id_t _targetTaskId;
 			
 			data_access_becomes_satisfied_step_t(
 				InstrumentationContext const &instrumentationContext,
 				data_access_id_t accessId,
-				bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
+				bool globallySatisfied,
 				task_id_t targetTaskId
 			)
 				: execution_step_t(instrumentationContext),
 				_accessId(accessId),
-				_readSatisfied(readSatisfied), _writeSatisfied(writeSatisfied), _globallySatisfied(globallySatisfied),
+				_globallySatisfied(globallySatisfied),
 				_targetTaskId(targetTaskId)
 			{
 			}
