@@ -51,6 +51,13 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			assert(disposableBlock != nullptr);
 			
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
+			
+			// Call the taskinfo destructor if not null
+			nanos_task_info * taskInfo = task->getTaskInfo();
+			if (taskInfo->destroy != nullptr) {
+				taskInfo->destroy(task->getArgsBlock());
+			}
+			
 			task->~Task();
 			free(disposableBlock); // FIXME: Need a proper object recycling mechanism here
 			task = parent;
