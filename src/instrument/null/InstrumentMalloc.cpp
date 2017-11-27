@@ -223,10 +223,10 @@ static void *nanos6_protected_memory_allocation(size_t requestedSize, size_t ali
 			void *lowestAddress = nullptr;
 			do {
 				lowestAddress = mmap(nullptr, _maxMemory, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-				if (lowestAddress == nullptr) {
+				if (lowestAddress == MAP_FAILED) {
 					_maxMemory.setValue(_maxMemory / 2UL);
 				}
-			} while (lowestAddress == nullptr);
+			} while (lowestAddress == MAP_FAILED);
 			
 			_highestAddress = (void *) (((size_t) lowestAddress) + ((size_t) _maxMemory));
 			_nextAddress = lowestAddress;
@@ -255,8 +255,8 @@ static void *nanos6_protected_memory_allocation(size_t requestedSize, size_t ali
 		
 		void *pages = mmap(memory, actualSize, PROT_EXEC | PROT_READ | PROT_WRITE , MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
 		if (pages != memory) {
-			if (pages != nullptr) {
-				FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to rellocate a memory segmrent during a memory allocation");
+			if (pages != MAP_FAILED) {
+				FatalErrorHandler::safeHandle(errno, errorBuffer, 256, "Failed to rellocate a memory segment during a memory allocation");
 			} else {
 				return nullptr;
 			}
@@ -442,7 +442,7 @@ static void nanos6_protected_memory_deallocation(void *address)
 		}
 		
 		void *memory = mmap(allocationInfo->_firstUserPage, userPagesSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-		if (memory == nullptr) {
+		if (memory == MAP_FAILED) {
 			FatalErrorHandler::handle(errno, "Failed to map protected pages during memory deallocation");
 		}
 	}
