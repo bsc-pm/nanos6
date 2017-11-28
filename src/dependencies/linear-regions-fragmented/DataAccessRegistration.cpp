@@ -119,12 +119,12 @@ namespace DataAccessRegistration {
 				if (access->hasSubaccesses()) {
 					assert(access->getObjectType() == access_type);
 					_propagatesReadSatisfiabilityToNext =
-						access->readSatisfied() && access->canPropagateReadSatisfiability()
+						access->canPropagateReadSatisfiability() && access->readSatisfied()
 						&& (access->getType() == READ_ACCESS_TYPE);
 					_propagatesWriteSatisfiabilityToNext = false; // Write satisfiability is propagated through the fragments
 					_propagatesConcurrentSatisfiabilityToNext =
-						access->canPropagateConcurrentSatisfiability()
-						&& access->concurrentSatisfied() && (access->getType() == CONCURRENT_ACCESS_TYPE);
+						access->canPropagateConcurrentSatisfiability() && access->concurrentSatisfied()
+						&& (access->getType() == CONCURRENT_ACCESS_TYPE);
 					
 					if (
 						!access->canPropagateAnyReductionSatisfiability()
@@ -181,7 +181,7 @@ namespace DataAccessRegistration {
 					_propagatesConcurrentSatisfiabilityToNext =
 						access->canPropagateConcurrentSatisfiability()
 						&& access->concurrentSatisfied()
-						&& (access->complete() || (access->getType() == CONCURRENT_ACCESS_TYPE));
+						&& ((access->getType() == CONCURRENT_ACCESS_TYPE) || access->complete());
 					
 					if (
 						access->canPropagateAnyReductionSatisfiability()
@@ -272,18 +272,18 @@ namespace DataAccessRegistration {
 		
 		bool _linkBottomMapAccessesToNext;
 		
-		bool _inhibitReadPropagation;
-		bool _inhibitConcurrentPropagation;
-		reduction_type_and_operator_index_t _inhibitReductionPropagation;
+		bool _inhibitReadSatisfiabilityPropagation;
+		bool _inhibitConcurrentSatisfiabilityPropagation;
+		reduction_type_and_operator_index_t _inhibitReductionSatisfiabilityPropagation;
 		
 		DataAccessLink _next;
 		
 		BottomMapUpdateOperation()
 			: _region(),
 			_linkBottomMapAccessesToNext(false),
-			_inhibitReadPropagation(false),
-			_inhibitConcurrentPropagation(false),
-			_inhibitReductionPropagation(no_reduction_type_and_operator),
+			_inhibitReadSatisfiabilityPropagation(false),
+			_inhibitConcurrentSatisfiabilityPropagation(false),
+			_inhibitReductionSatisfiabilityPropagation(no_reduction_type_and_operator),
 			_next()
 		{
 		}
@@ -291,9 +291,9 @@ namespace DataAccessRegistration {
 		BottomMapUpdateOperation(DataAccessRegion const &region)
 			: _region(region),
 			_linkBottomMapAccessesToNext(false),
-			_inhibitReadPropagation(false),
-			_inhibitConcurrentPropagation(false),
-			_inhibitReductionPropagation(no_reduction_type_and_operator),
+			_inhibitReadSatisfiabilityPropagation(false),
+			_inhibitConcurrentSatisfiabilityPropagation(false),
+			_inhibitReductionSatisfiabilityPropagation(no_reduction_type_and_operator),
 			_next()
 		{
 		}
@@ -474,10 +474,10 @@ namespace DataAccessRegistration {
 				bottomMapUpdateOperation._linkBottomMapAccessesToNext = true;
 				bottomMapUpdateOperation._next = access->getNext();
 				
-				bottomMapUpdateOperation._inhibitReadPropagation = (access->getType() == READ_ACCESS_TYPE);
+				bottomMapUpdateOperation._inhibitReadSatisfiabilityPropagation = (access->getType() == READ_ACCESS_TYPE);
 				assert(!updatedStatus._propagatesWriteSatisfiabilityToNext);
-				bottomMapUpdateOperation._inhibitConcurrentPropagation = (access->getType() == CONCURRENT_ACCESS_TYPE);
-				bottomMapUpdateOperation._inhibitReductionPropagation =
+				bottomMapUpdateOperation._inhibitConcurrentSatisfiabilityPropagation = (access->getType() == CONCURRENT_ACCESS_TYPE);
+				bottomMapUpdateOperation._inhibitReductionSatisfiabilityPropagation =
 					(access->getType() == REDUCTION_ACCESS_TYPE ? access->getReductionTypeAndOperatorIndex() : no_reduction_type_and_operator);
 				
 				processBottomMapUpdate(bottomMapUpdateOperation, accessStructures, task, hpDependencyData);
@@ -1401,21 +1401,19 @@ namespace DataAccessRegistration {
 			[&] (DataAccess *access, TaskDataAccesses &currentAccessStructures, Task *currentTask) {
 				DataAccessStatusEffects initialStatus(access);
 				
-				if (operation._inhibitReadPropagation) {
-					assert(access->canPropagateReadSatisfiability());
+				if (operation._inhibitReadSatisfiabilityPropagation) {
 					access->unsetCanPropagateReadSatisfiability();
 				}
 				
-				if (operation._inhibitConcurrentPropagation) {
-					assert(access->canPropagateConcurrentSatisfiability());
+				if (operation._inhibitConcurrentSatisfiabilityPropagation) {
 					access->unsetCanPropagateConcurrentSatisfiability();
 				}
 				
-				if (operation._inhibitReductionPropagation == any_reduction_type_and_operator) {
+				if (operation._inhibitReductionSatisfiabilityPropagation == any_reduction_type_and_operator) {
 					access->unsetCanPropagateAnyReductionSatisfiability();
 				} else if (
-					(operation._inhibitReductionPropagation != no_reduction_type_and_operator)
-					&& (access->getReductionTypeAndOperatorIndex() == operation._inhibitReductionPropagation)
+					(operation._inhibitReductionSatisfiabilityPropagation != no_reduction_type_and_operator)
+					&& (access->getReductionTypeAndOperatorIndex() == operation._inhibitReductionSatisfiabilityPropagation)
 				) {
 					access->unsetCanPropagateMatchingReductionSatisfiability();
 				}

@@ -50,10 +50,10 @@ private:
 		ANY_REDUCTION_SATISFIED_BIT,
 		MATCHING_REDUCTION_SATISFIED_BIT,
 		
-		READ_PROPAGATION_INHIBITED_BIT,
-		CONCURRENT_PROPAGATION_INHIBITED_BIT,
-		ANY_REDUCTION_PROPAGATION_INHIBITED_BIT,
-		MATCHING_REDUCTION_PROPAGATION_INHIBITED_BIT,
+		READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
+		CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
+		ANY_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
+		MATCHING_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP_BIT,
@@ -262,42 +262,42 @@ public:
 	
 	bool canPropagateReadSatisfiability() const
 	{
-		return !_status[READ_PROPAGATION_INHIBITED_BIT];
+		return !_status[READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT];
 	}
 	void unsetCanPropagateReadSatisfiability()
 	{
 		assert(canPropagateReadSatisfiability());
-		_status[READ_PROPAGATION_INHIBITED_BIT] = true;
+		_status[READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
 	}
 	
 	bool canPropagateConcurrentSatisfiability() const
 	{
-		return !_status[CONCURRENT_PROPAGATION_INHIBITED_BIT];
+		return !_status[CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT];
 	}
 	void unsetCanPropagateConcurrentSatisfiability()
 	{
 		assert(canPropagateConcurrentSatisfiability());
-		_status[CONCURRENT_PROPAGATION_INHIBITED_BIT] = true;
+		_status[CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
 	}
 	
 	bool canPropagateAnyReductionSatisfiability() const
 	{
-		return !_status[ANY_REDUCTION_PROPAGATION_INHIBITED_BIT];
+		return !_status[ANY_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT];
 	}
 	void unsetCanPropagateAnyReductionSatisfiability()
 	{
 		assert(canPropagateAnyReductionSatisfiability());
-		_status[ANY_REDUCTION_PROPAGATION_INHIBITED_BIT] = true;
+		_status[ANY_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
 	}
 	
 	bool canPropagateMatchingReductionSatisfiability() const
 	{
-		return !_status[MATCHING_REDUCTION_PROPAGATION_INHIBITED_BIT];
+		return !_status[MATCHING_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT];
 	}
 	void unsetCanPropagateMatchingReductionSatisfiability()
 	{
 		assert(canPropagateMatchingReductionSatisfiability());
-		_status[MATCHING_REDUCTION_PROPAGATION_INHIBITED_BIT] = true;
+		_status[MATCHING_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
 	}
 	
 	void setHasSubaccesses()
