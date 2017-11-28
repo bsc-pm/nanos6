@@ -22,6 +22,7 @@ namespace Instrument {
 		bool _verboseDependenciesByAccessLinks = false;
 		bool _verboseDependenciesByGroup = false;
 		bool _verboseLeaderThread = false;
+		bool _verboseReductions = false;
 		bool _verboseTaskExecution = false;
 		bool _verboseTaskStatus = false;
 		bool _verboseTaskWait = false;

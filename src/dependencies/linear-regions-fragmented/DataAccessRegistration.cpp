@@ -25,10 +25,12 @@
 #include "tasks/Task.hpp"
 
 #include "TaskDataAccessesImplementation.hpp"
+#include "ReductionInfo.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentComputePlaceId.hpp>
 #include <InstrumentLogMessage.hpp>
+#include <InstrumentReductions.hpp>
 #include <InstrumentTaskId.hpp>
 
 #include <iostream>
@@ -51,14 +53,17 @@ namespace DataAccessRegistration {
 		bool _propagatesReadSatisfiabilityToNext;
 		bool _propagatesWriteSatisfiabilityToNext;
 		bool _propagatesConcurrentSatisfiabilityToNext;
-		reduction_type_and_operator_index_t _propagatesReductionSatisfiabilityToNext;
+		bool _propagatesReductionInfoToNext;
 		bool _makesNextTopmost;
 		bool _propagatesTopLevel;
 		
 		bool _propagatesReadSatisfiabilityToFragments;
 		bool _propagatesWriteSatisfiabilityToFragments;
 		bool _propagatesConcurrentSatisfiabilityToFragments;
-		reduction_type_and_operator_index_t _propagatesReductionSatisfiabilityToFragments;
+		bool _propagatesReductionInfoToFragments;
+		
+		bool _allocatesReductionInfo;
+		bool _closesPreviousReduction;
 		
 		bool _linksBottomMapAccessesToNextAndInhibitsPropagation;
 		
@@ -71,12 +76,15 @@ namespace DataAccessRegistration {
 			
 			_hasNext(false),
 			_propagatesReadSatisfiabilityToNext(false), _propagatesWriteSatisfiabilityToNext(false), _propagatesConcurrentSatisfiabilityToNext(false),
-			_propagatesReductionSatisfiabilityToNext(no_reduction_type_and_operator),
+			_propagatesReductionInfoToNext(false),
 			_makesNextTopmost(false),
 			_propagatesTopLevel(false),
 			
 			_propagatesReadSatisfiabilityToFragments(false), _propagatesWriteSatisfiabilityToFragments(false), _propagatesConcurrentSatisfiabilityToFragments(false),
-			_propagatesReductionSatisfiabilityToFragments(no_reduction_type_and_operator),
+			_propagatesReductionInfoToFragments(false),
+			
+			_allocatesReductionInfo(false),
+			_closesPreviousReduction(false),
 			
 			_linksBottomMapAccessesToNextAndInhibitsPropagation(false),
 			
@@ -97,18 +105,13 @@ namespace DataAccessRegistration {
 				_propagatesReadSatisfiabilityToFragments = access->readSatisfied();
 				_propagatesWriteSatisfiabilityToFragments = access->writeSatisfied();
 				_propagatesConcurrentSatisfiabilityToFragments = access->concurrentSatisfied();
-				if (access->anyReductionSatisfied()) {
-					_propagatesReductionSatisfiabilityToFragments = any_reduction_type_and_operator;
-				} else if (access->matchingReductionSatisfied()) {
-					_propagatesReductionSatisfiabilityToFragments = access->getReductionTypeAndOperatorIndex();
-				} else {
-					_propagatesReductionSatisfiabilityToFragments = no_reduction_type_and_operator;
-				}
+				// Can be null, but will be allocated before the propagation
+				_propagatesReductionInfoToFragments = access->receivedReductionInfo();
 			} else {
 				_propagatesReadSatisfiabilityToFragments = false;
 				_propagatesWriteSatisfiabilityToFragments = false;
 				_propagatesConcurrentSatisfiabilityToFragments = false;
-				_propagatesReductionSatisfiabilityToFragments = no_reduction_type_and_operator;
+				_propagatesReductionInfoToFragments = false;
 			}
 			
 			// Propagation to next
@@ -125,22 +128,10 @@ namespace DataAccessRegistration {
 					_propagatesConcurrentSatisfiabilityToNext =
 						access->canPropagateConcurrentSatisfiability() && access->concurrentSatisfied()
 						&& (access->getType() == CONCURRENT_ACCESS_TYPE);
-					
-					if (
-						!access->canPropagateAnyReductionSatisfiability()
-						&& !access->canPropagateMatchingReductionSatisfiability()
-					) {
-						_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
-					} else if (
-						access->canPropagateMatchingReductionSatisfiability()
-						&& (access->matchingReductionSatisfied() || access->anyReductionSatisfied())
-						&& (access->getType() == REDUCTION_ACCESS_TYPE)
-					) {
-						_propagatesReductionSatisfiabilityToNext = access->getReductionTypeAndOperatorIndex();
-					} else {
-						// Reduction satisfiability of non-reductions is propagated through the fragments
-						_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
-					}
+					_propagatesReductionInfoToNext =
+						access->canPropagateReductionInfo() && access->receivedReductionInfo()
+						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
+								|| access->satisfied());
 				} else if (
 					(access->getObjectType() == fragment_type)
 					|| (access->getObjectType() == taskwait_type)
@@ -153,20 +144,11 @@ namespace DataAccessRegistration {
 					_propagatesConcurrentSatisfiabilityToNext =
 						access->canPropagateConcurrentSatisfiability()
 						&& access->concurrentSatisfied();
-					
-					if (
-						access->canPropagateAnyReductionSatisfiability()
-						&& access->anyReductionSatisfied()
-					) {
-						_propagatesReductionSatisfiabilityToNext = any_reduction_type_and_operator;
-					} else if (
-						access->canPropagateMatchingReductionSatisfiability()
-						&& access->matchingReductionSatisfied()
-					) {
-						_propagatesReductionSatisfiabilityToNext = access->getReductionTypeAndOperatorIndex();
-					} else {
-						_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
-					}
+					_propagatesReductionInfoToNext =
+						access->canPropagateReductionInfo()
+						&& access->receivedReductionInfo()
+						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
+								|| access->satisfied());
 				} else {
 					assert(access->getObjectType() == access_type);
 					assert(!access->hasSubaccesses());
@@ -182,36 +164,36 @@ namespace DataAccessRegistration {
 						access->canPropagateConcurrentSatisfiability()
 						&& access->concurrentSatisfied()
 						&& ((access->getType() == CONCURRENT_ACCESS_TYPE) || access->complete());
-					
-					if (
-						access->canPropagateAnyReductionSatisfiability()
-						&& access->anyReductionSatisfied()
-						&& access->complete()
-					) {
-						_propagatesReductionSatisfiabilityToNext = any_reduction_type_and_operator;
-					} else if (
-						access->canPropagateMatchingReductionSatisfiability()
-						&& access->anyReductionSatisfied()
-						&& (access->getType() == REDUCTION_ACCESS_TYPE)
-					) {
-						_propagatesReductionSatisfiabilityToNext = access->getReductionTypeAndOperatorIndex();
-					} else if (
-						access->canPropagateMatchingReductionSatisfiability()
-						&& access->matchingReductionSatisfied()
-						&& (access->getType() == REDUCTION_ACCESS_TYPE)
-					) {
-						_propagatesReductionSatisfiabilityToNext = access->getReductionTypeAndOperatorIndex();
-					} else {
-						_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
-					}
+					_propagatesReductionInfoToNext =
+						access->canPropagateReductionInfo()
+						&& access->receivedReductionInfo()
+						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
+								|| access->satisfied());
 				}
 			} else {
 				assert(!access->hasNext());
 				_propagatesReadSatisfiabilityToNext = false;
 				_propagatesWriteSatisfiabilityToNext = false;
 				_propagatesConcurrentSatisfiabilityToNext = false;
-				_propagatesReductionSatisfiabilityToNext = no_reduction_type_and_operator;
+				_propagatesReductionInfoToNext = false;
 			}
+			
+			ReductionInfo *prevReductionInfo = access->getPreviousReductionInfo();
+			
+			_allocatesReductionInfo =
+				(access->getObjectType() == access_type)
+				&& (access->getType() == REDUCTION_ACCESS_TYPE)
+				&& access->receivedReductionInfo()
+				&& (access->getReductionInfo() == nullptr);
+			
+			_closesPreviousReduction =
+				access->writeSatisfied()
+				&& access->receivedReductionInfo()
+				&& (prevReductionInfo != nullptr)
+				&& (((access->getObjectType() == taskwait_type)
+						&& (access->getType() != REDUCTION_ACCESS_TYPE))
+					|| ((access->getObjectType() == access_type)
+						&& (access->getReductionInfo() != prevReductionInfo)));
 			
 			_isRemovable = access->isTopmost()
 				&& access->readSatisfied() && access->writeSatisfied()
@@ -274,7 +256,7 @@ namespace DataAccessRegistration {
 		
 		bool _inhibitReadSatisfiabilityPropagation;
 		bool _inhibitConcurrentSatisfiabilityPropagation;
-		reduction_type_and_operator_index_t _inhibitReductionSatisfiabilityPropagation;
+		bool _inhibitReductionInfoPropagation;
 		
 		DataAccessLink _next;
 		
@@ -283,7 +265,7 @@ namespace DataAccessRegistration {
 			_linkBottomMapAccessesToNext(false),
 			_inhibitReadSatisfiabilityPropagation(false),
 			_inhibitConcurrentSatisfiabilityPropagation(false),
-			_inhibitReductionSatisfiabilityPropagation(no_reduction_type_and_operator),
+			_inhibitReductionInfoPropagation(false),
 			_next()
 		{
 		}
@@ -293,7 +275,7 @@ namespace DataAccessRegistration {
 			_linkBottomMapAccessesToNext(false),
 			_inhibitReadSatisfiabilityPropagation(false),
 			_inhibitConcurrentSatisfiabilityPropagation(false),
-			_inhibitReductionSatisfiabilityPropagation(no_reduction_type_and_operator),
+			_inhibitReductionInfoPropagation(false),
 			_next()
 		{
 		}
@@ -394,6 +376,55 @@ namespace DataAccessRegistration {
 			}
 		}
 		
+		// Reduction combination
+		if (initialStatus._closesPreviousReduction != updatedStatus._closesPreviousReduction) {
+			assert(!initialStatus._closesPreviousReduction);
+			assert(access->getObjectType() == access_type || access->getObjectType() == taskwait_type);
+			
+			ReductionInfo *prevReductionInfo = access->getPreviousReductionInfo();
+			assert(prevReductionInfo != nullptr);
+			bool wasLastCombination = prevReductionInfo->combineRegion(access->getAccessRegion());
+			
+			if (wasLastCombination) {
+				const DataAccessRegion& originalRegion = prevReductionInfo->getOriginalRegion();
+				
+				delete prevReductionInfo;
+				
+				Instrument::deallocatedReductionInfo(
+					access->getInstrumentationId(),
+					prevReductionInfo,
+					originalRegion
+				);
+			}
+		}
+		
+		// Reduction initialization
+		if (initialStatus._allocatesReductionInfo != updatedStatus._allocatesReductionInfo) {
+			assert(!initialStatus._allocatesReductionInfo);
+			assert(access->getObjectType() == access_type);
+			assert(access->getReductionInfo() == nullptr);
+			
+			// Note: This needs to be done before propagating reduction satisfiability
+			
+			nanos_task_info *taskInfo = task->getTaskInfo();
+			assert(taskInfo != nullptr);
+			
+			reduction_index_t reductionIndex = access->getReductionIndex();
+			
+			ReductionInfo *newReductionInfo = new ReductionInfo(
+					access->getAccessRegion(),
+					access->getReductionTypeAndOperatorIndex(),
+					taskInfo->reduction_initializers[reductionIndex],
+					taskInfo->reduction_combiners[reductionIndex]);
+			
+			access->setReductionInfo(newReductionInfo);
+			
+			Instrument::allocatedReductionInfo(
+				access->getInstrumentationId(),
+				*newReductionInfo
+			);
+		}
+		
 		// Propagation to Next
 		if (access->hasNext()) {
 			UpdateOperation updateOperation(access->getNext(), access->getAccessRegion());
@@ -405,6 +436,7 @@ namespace DataAccessRegistration {
 			
 			if (initialStatus._propagatesWriteSatisfiabilityToNext != updatedStatus._propagatesWriteSatisfiabilityToNext) {
 				assert(!initialStatus._propagatesWriteSatisfiabilityToNext);
+				assert(!access->canPropagateReductionInfo() || updatedStatus._propagatesReductionInfoToNext);
 				updateOperation._makeWriteSatisfied = true;
 			}
 			
@@ -413,9 +445,11 @@ namespace DataAccessRegistration {
 				updateOperation._makeConcurrentSatisfied = true;
 			}
 			
-			if (initialStatus._propagatesReductionSatisfiabilityToNext != updatedStatus._propagatesReductionSatisfiabilityToNext) {
-				assert(updatedStatus._propagatesReductionSatisfiabilityToNext != no_reduction_type_and_operator);
-				updateOperation._makeReductionSatisfied = updatedStatus._propagatesReductionSatisfiabilityToNext;
+			if (initialStatus._propagatesReductionInfoToNext != updatedStatus._propagatesReductionInfoToNext) {
+				assert(!initialStatus._propagatesReductionInfoToNext);
+				assert((access->getType() != REDUCTION_ACCESS_TYPE) || access->getReductionInfo() != nullptr);
+				updateOperation._setReductionInfo = true;
+				updateOperation._reductionInfo = access->getReductionInfo();
 			}
 			
 			// Make Next Topmost
@@ -453,9 +487,11 @@ namespace DataAccessRegistration {
 				updateOperation._makeConcurrentSatisfied = true;
 			}
 			
-			if (initialStatus._propagatesReductionSatisfiabilityToFragments != updatedStatus._propagatesReductionSatisfiabilityToFragments) {
-				assert(updatedStatus._propagatesReductionSatisfiabilityToFragments != no_reduction_type_and_operator);
-				updateOperation._makeReductionSatisfied = updatedStatus._propagatesReductionSatisfiabilityToFragments;
+			if (initialStatus._propagatesReductionInfoToFragments != updatedStatus._propagatesReductionInfoToFragments) {
+				assert(!initialStatus._propagatesReductionInfoToFragments);
+				assert(!(access->getType() == REDUCTION_ACCESS_TYPE) || access->getReductionInfo() != nullptr);
+				updateOperation._setReductionInfo = true;
+				updateOperation._reductionInfo = access->getReductionInfo();
 			}
 			
 			if (!updateOperation.empty()) {
@@ -477,8 +513,8 @@ namespace DataAccessRegistration {
 				bottomMapUpdateOperation._inhibitReadSatisfiabilityPropagation = (access->getType() == READ_ACCESS_TYPE);
 				assert(!updatedStatus._propagatesWriteSatisfiabilityToNext);
 				bottomMapUpdateOperation._inhibitConcurrentSatisfiabilityPropagation = (access->getType() == CONCURRENT_ACCESS_TYPE);
-				bottomMapUpdateOperation._inhibitReductionSatisfiabilityPropagation =
-					(access->getType() == REDUCTION_ACCESS_TYPE ? access->getReductionTypeAndOperatorIndex() : no_reduction_type_and_operator);
+				// Subaccesses should never propagate the ReductionInfo
+				bottomMapUpdateOperation._inhibitReductionInfoPropagation = true;
 				
 				processBottomMapUpdate(bottomMapUpdateOperation, accessStructures, task, hpDependencyData);
 			}
@@ -567,7 +603,8 @@ namespace DataAccessRegistration {
 		Task *originator,
 		DataAccessObjectType objectType,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
-		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex = no_reduction_type_and_operator,
+		reduction_index_t reductionIndex = -1,
 		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink()
 	) {
 		// Regular object duplication
@@ -575,6 +612,7 @@ namespace DataAccessRegistration {
 			objectType,
 			accessType, weak, originator, region,
 			reductionTypeAndOperatorIndex,
+			reductionIndex,
 			Instrument::data_access_id_t(),
 			status, next
 		);
@@ -630,13 +668,7 @@ namespace DataAccessRegistration {
 		assert(!toBeDuplicated.hasBeenDiscounted());
 		
 		// Regular object duplication
-		DataAccess *newFragment = createAccess(
-			toBeDuplicated.getOriginator(),
-			toBeDuplicated.getObjectType(),
-			toBeDuplicated.getType(), toBeDuplicated.isWeak(), toBeDuplicated.getAccessRegion(),
-			toBeDuplicated.getReductionTypeAndOperatorIndex(),
-			toBeDuplicated.getStatus(), toBeDuplicated.getNext()
-		);
+		DataAccess *newFragment = new DataAccess(toBeDuplicated);
 
 		// Copy symbols
 		newFragment->addToSymbols(toBeDuplicated.getSymbols()); // TODO: Consider removing the pointer from declaration and make it a reference	
@@ -900,14 +932,24 @@ namespace DataAccessRegistration {
 			access->setConcurrentSatisfied();
 		}
 		
-		// Reduction Satisfiability
-		if (updateOperation._makeReductionSatisfied == any_reduction_type_and_operator) {
-			access->setAnyReductionSatisfied();
-		} else if (
-			(updateOperation._makeReductionSatisfied != no_reduction_type_and_operator)
-			&& (updateOperation._makeReductionSatisfied == access->getReductionTypeAndOperatorIndex())
-		) {
-			access->setMatchingReductionSatisfied();
+		// ReductionInfo
+		if (updateOperation._setReductionInfo) {
+			access->setPreviousReductionInfo(updateOperation._reductionInfo);
+			
+			if ((access->getType() == REDUCTION_ACCESS_TYPE)
+					&& (updateOperation._reductionInfo != nullptr)
+					&& (access->getReductionTypeAndOperatorIndex() ==
+						updateOperation._reductionInfo->getTypeAndOperatorIndex())) {
+				// Received compatible ReductionInfo
+				access->setReductionInfo(updateOperation._reductionInfo);
+				
+				Instrument::receivedCompatibleReductionInfo(
+					access->getInstrumentationId(),
+					*updateOperation._reductionInfo
+				);
+			}
+			
+			access->setReceivedReductionInfo();
 		}
 		
 		// Topmost
@@ -1045,6 +1087,7 @@ namespace DataAccessRegistration {
 			dataAccess->getOriginator(),
 			dataAccess->getAccessRegion(),
 			dataAccess->getReductionTypeAndOperatorIndex(),
+			dataAccess->getReductionIndex(),
 			instrumentationId
 		);
 
@@ -1409,13 +1452,8 @@ namespace DataAccessRegistration {
 					access->unsetCanPropagateConcurrentSatisfiability();
 				}
 				
-				if (operation._inhibitReductionSatisfiabilityPropagation == any_reduction_type_and_operator) {
-					access->unsetCanPropagateAnyReductionSatisfiability();
-				} else if (
-					(operation._inhibitReductionSatisfiabilityPropagation != no_reduction_type_and_operator)
-					&& (access->getReductionTypeAndOperatorIndex() == operation._inhibitReductionSatisfiabilityPropagation)
-				) {
-					access->unsetCanPropagateMatchingReductionSatisfiability();
+				if (operation._inhibitReductionInfoPropagation) {
+					access->unsetCanPropagateReductionInfo();
 				}
 				
 				assert(!access->hasNext());
@@ -1526,8 +1564,7 @@ namespace DataAccessRegistration {
 						targetAccess->setReadSatisfied();
 						targetAccess->setWriteSatisfied();
 						targetAccess->setConcurrentSatisfied();
-						targetAccess->setAnyReductionSatisfied();
-						targetAccess->setMatchingReductionSatisfied();
+						targetAccess->setReceivedReductionInfo();
 						targetAccess->setTopmost();
 						targetAccess->setTopLevel();
 						DataAccessStatusEffects updatedStatus(targetAccess);
@@ -1773,8 +1810,7 @@ namespace DataAccessRegistration {
 					DataAccess *taskwaitFragment = createAccess(
 						task,
 						taskwait_type,
-						accessType, /* not weak */ false, region,
-						no_reduction_type_and_operator 
+						accessType, /* not weak */ false, region
 					);
 
 					// No need for symbols in a taskwait
@@ -1869,8 +1905,7 @@ namespace DataAccessRegistration {
 					DataAccess *topLevelSinkFragment = createAccess(
 						task,
 						top_level_sink_type,
-						accessType, /* not weak */ false, region,
-						no_reduction_type_and_operator 
+						accessType, /* not weak */ false, region
 					);
 
 					// TODO, top level sink fragment, what to do with the symbols?
@@ -1943,7 +1978,8 @@ namespace DataAccessRegistration {
 	
 	
 	void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, int symbolIndex, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, int symbolIndex,
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex
 	) {
 		assert(task != nullptr);
 		
@@ -1976,9 +2012,10 @@ namespace DataAccessRegistration {
 				return true;
 			},
 			[&](DataAccessRegion missingRegion) -> bool {
-				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion, reductionTypeAndOperatorIndex);
+				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion,
+						reductionTypeAndOperatorIndex, reductionIndex);
 				newAccess->addToSymbols(symbol_list);
-	
+				
 				accessStructures._accesses.insert(*newAccess);
 				
 				return true;

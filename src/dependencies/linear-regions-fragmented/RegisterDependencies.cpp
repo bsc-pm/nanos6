@@ -20,7 +20,9 @@
 #include <Dependencies.hpp>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
-void register_access(void *handler, void *start, size_t length, int symbolIndex, int reductionTypeAndOperatorIndex = no_reduction_type_and_operator)
+void register_access(void *handler, void *start, size_t length, int symbolIndex,
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex = no_reduction_type_and_operator,
+		reduction_index_t reductionIndex = no_reduction_index)
 {
 	assert(handler != 0);
 	Task *task = (Task *) handler;
@@ -39,7 +41,7 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	}
 	
 	DataAccessRegion accessRegion(start, length);
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), accessRegion, symbolIndex, reductionTypeAndOperatorIndex);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), accessRegion, symbolIndex, reductionTypeAndOperatorIndex, reductionIndex);
 }
 
 
@@ -91,7 +93,7 @@ void nanos_register_commutative_depinfo(void *handler, void *start, size_t lengt
 
 void nanos_register_region_reduction_depinfo1(
 		int reduction_operation,
-		__attribute__((unused)) int reduction_index,
+		int reduction_index,
 		void *handler,
 		__attribute__((unused)) int symbol_index,
 		__attribute__((unused)) char const *region_text,
@@ -103,12 +105,12 @@ void nanos_register_region_reduction_depinfo1(
 	// Currently we only support non-arrays
 	assert(dim1start == 0L);
 	
-	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, symbol_index, reduction_operation);
+	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, symbol_index, reduction_operation, reduction_index);
 }
 
 void nanos_register_region_weak_reduction_depinfo1(
 		int reduction_operation,
-		__attribute__((unused)) int reduction_index,
+		int reduction_index,
 		void *handler,
 		int symbol_index,
 		__attribute__((unused)) char const *region_text,
@@ -120,5 +122,5 @@ void nanos_register_region_weak_reduction_depinfo1(
 	// Currently we only support non-arrays
 	assert(dim1start == 0L);
 	
-	register_access<REDUCTION_ACCESS_TYPE, true>(handler, base_address, dim1size, symbol_index, reduction_operation);
+	register_access<REDUCTION_ACCESS_TYPE, true>(handler, base_address, dim1size, symbol_index, reduction_operation, reduction_index);
 }

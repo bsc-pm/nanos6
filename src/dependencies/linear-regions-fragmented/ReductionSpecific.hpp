@@ -12,11 +12,15 @@
 
 
 typedef int reduction_type_and_operator_index_t;
+typedef int reduction_index_t;
 
 
 enum specialReductionTypeAndOperatorIndexes_t {
-	no_reduction_type_and_operator = INT_MAX,
-	any_reduction_type_and_operator = INT_MAX - 1
+	no_reduction_type_and_operator = INT_MAX
+};
+
+enum specialReductionIndexes_t {
+	no_reduction_index = INT_MAX
 };
 
 

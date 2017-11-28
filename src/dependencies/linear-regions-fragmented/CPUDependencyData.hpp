@@ -16,10 +16,10 @@
 
 #include "DataAccessLink.hpp"
 #include "DataAccessRegion.hpp"
-#include "ReductionSpecific.hpp"
 
 
 class Task;
+class ReductionInfo;
 
 
 struct CPUDependencyData {
@@ -34,13 +34,14 @@ struct CPUDependencyData {
 		bool _makeTopmost;
 		bool _makeTopLevel;
 		
-		reduction_type_and_operator_index_t _makeReductionSatisfied;
+		bool _setReductionInfo; // Note: Both this and next field are required, as a null ReductionInfo can be propagated
+		ReductionInfo *_reductionInfo;
 		
 		UpdateOperation()
 			: _target(), _region(),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
 			_makeTopmost(false), _makeTopLevel(false),
-			_makeReductionSatisfied(no_reduction_type_and_operator)
+			_setReductionInfo(false), _reductionInfo(nullptr)
 		{
 		}
 		
@@ -48,7 +49,7 @@ struct CPUDependencyData {
 			: _target(target), _region(region),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
 			_makeTopmost(false), _makeTopLevel(false),
-			_makeReductionSatisfied(no_reduction_type_and_operator)
+			_setReductionInfo(false), _reductionInfo(nullptr)
 		{
 		}
 		
@@ -56,7 +57,7 @@ struct CPUDependencyData {
 		{
 			return !_makeReadSatisfied && !_makeWriteSatisfied && !_makeConcurrentSatisfied
 				&& !_makeTopmost && !_makeTopLevel
-				&& (_makeReductionSatisfied == no_reduction_type_and_operator);
+				&& !_setReductionInfo;
 		}
 	};
 	

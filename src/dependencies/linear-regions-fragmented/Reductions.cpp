@@ -4,44 +4,46 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include <nanos6.h>
-
 #include <cassert>
 
-#include "tasks/Task.hpp"
-#include "tasks/TaskImplementation.hpp"
-#include "executors/threads/WorkerThread.hpp"
+#include <nanos6.h>
+#include <tasks/Task.hpp>
+#include <executors/threads/WorkerThread.hpp>
 
+#include "DataAccess.hpp"
+#include "TaskDataAccessesImplementation.hpp"
+#include "ReductionInfo.hpp"
 
-void *nanos_get_original_reduction_address(const void *address)
-{
+void *nanos_get_reduction_storage(void *original) {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
 	
-	Task *currentTask = currentThread->getTask();
-	assert(currentTask != nullptr);
-	assert(currentTask->getThread() == currentThread);
+	Task *task = currentThread->getTask();
+	assert(task != nullptr);
 	
-	void *argsBlock = currentTask->getArgsBlock();
+	DataAccess *dataAccess = nullptr;
+	TaskDataAccesses::accesses_t &accesses = task->getDataAccesses()._accesses;
+	accesses.processIntersecting(
+		DataAccessRegion(original, /* length */ 1),
+		[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+			assert(dataAccess == nullptr); // This intersection should only match once
+			
+			dataAccess = &(*position);
+			assert(dataAccess != nullptr);
+			
+			return true;
+		}
+	);
 	
-	if (argsBlock <= address && currentTask > address) {
-		void *original = (void*)*(((void**)address) - 1);
-		
-		DataAccessRegion region(original, 1);
-		bool isReductionAccess = currentTask->getDataAccesses().
-			_accesses.exists(region, [&](TaskDataAccesses::accesses_t::iterator position) -> bool {
-					DataAccess *targetAccess = &(*position);
-					return targetAccess->getType() == REDUCTION_ACCESS_TYPE;
-				});
-		
-		if (isReductionAccess) {
-			return original;
-		}
-		else {
-			return (void*)address;
-		}
-	}
-	else {
-		return (void*)address;
-	}
+	assert(dataAccess != nullptr);
+	
+	CPU *currentCPU = currentThread->getComputePlace();
+	size_t cpuId = currentCPU->_virtualCPUId;
+	
+	ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
+	assert(reductionInfo != nullptr);
+	
+	void *address = reductionInfo->getCPUPrivateStorage(cpuId).getStartAddress();
+	
+	return address;
 }

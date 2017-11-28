@@ -24,6 +24,7 @@
 
 struct DataAccess;
 class Task;
+class ReductionInfo;
 
 
 #include "../DataAccessBase.hpp"
@@ -47,13 +48,11 @@ private:
 		READ_SATISFIED_BIT,
 		WRITE_SATISFIED_BIT,
 		CONCURRENT_SATISFIED_BIT,
-		ANY_REDUCTION_SATISFIED_BIT,
-		MATCHING_REDUCTION_SATISFIED_BIT,
+		RECEIVED_REDUCTION_INFO_BIT,
 		
 		READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
-		ANY_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
-		MATCHING_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
+		REDUCTION_INFO_PROPAGATION_INHIBITED_BIT,
 		
 		HAS_SUBACCESSES_BIT,
 		IN_BOTTOM_MAP_BIT,
@@ -87,6 +86,15 @@ private:
 	//! A bitmap of the "symbols" this access is related to
 	symbols_t _symbols; 
 	
+	//! An index that identifies the reduction within the task (if applicable)
+	reduction_index_t _reductionIndex;
+	
+	//! Reduction-specific information of current access
+	ReductionInfo *_reductionInfo;
+	
+	//! Reduction-specific information of previous access
+	ReductionInfo *_previousReductionInfo;
+	
 	
 public:
 	DataAccess(
@@ -95,6 +103,7 @@ public:
 		Task *originator,
 		DataAccessRegion accessRegion,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
+		reduction_index_t reductionIndex,
 		Instrument::data_access_id_t instrumentationId = Instrument::data_access_id_t(),
 		status_t status = 0, DataAccessLink next = DataAccessLink()
 	)
@@ -103,10 +112,25 @@ public:
 		_region(accessRegion),
 		_status(status),
 		_next(next),
-		_reductionTypeAndOperatorIndex(reductionTypeAndOperatorIndex)
+		_reductionTypeAndOperatorIndex(reductionTypeAndOperatorIndex),
+		_reductionIndex(reductionIndex),
+		_reductionInfo(nullptr),
+		_previousReductionInfo(nullptr)
 	{
 		assert(originator != nullptr);
 	}
+	
+	DataAccess(const DataAccess &other)
+		: DataAccessBase(other.getType(), other.isWeak(), other.getOriginator(), Instrument::data_access_id_t()),
+		_objectType(other.getObjectType()),
+		_region(other.getAccessRegion()),
+		_status(other.getStatus()),
+		_next(other.getNext()),
+		_reductionTypeAndOperatorIndex(other.getReductionTypeAndOperatorIndex()),
+		_reductionIndex(other.getReductionIndex()),
+		_reductionInfo(other.getReductionInfo()),
+		_previousReductionInfo(other.getPreviousReductionInfo())
+	{}
 	
 	~DataAccess()
 	{
@@ -238,26 +262,15 @@ public:
 		return _status[CONCURRENT_SATISFIED_BIT];
 	}
 	
-	void setAnyReductionSatisfied()
+	void setReceivedReductionInfo()
 	{
-		assert(!anyReductionSatisfied());
-		_status[ANY_REDUCTION_SATISFIED_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "ARSat", "Any Reduction Satisfied");
+		assert(!receivedReductionInfo());
+		_status[RECEIVED_REDUCTION_INFO_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "RIRec", "ReductionInfo Received");
 	}
-	bool anyReductionSatisfied() const
+	bool receivedReductionInfo() const
 	{
-		return _status[ANY_REDUCTION_SATISFIED_BIT];
-	}
-	
-	void setMatchingReductionSatisfied()
-	{
-		assert(!matchingReductionSatisfied());
-		_status[MATCHING_REDUCTION_SATISFIED_BIT] = true;
-		Instrument::newDataAccessProperty(_instrumentationId, "MRSat", "Matching Reduction Satisfied");
-	}
-	bool matchingReductionSatisfied() const
-	{
-		return _status[MATCHING_REDUCTION_SATISFIED_BIT];
+		return _status[RECEIVED_REDUCTION_INFO_BIT];
 	}
 	
 	bool canPropagateReadSatisfiability() const
@@ -280,24 +293,14 @@ public:
 		_status[CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
 	}
 	
-	bool canPropagateAnyReductionSatisfiability() const
+	bool canPropagateReductionInfo() const
 	{
-		return !_status[ANY_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT];
+		return !_status[REDUCTION_INFO_PROPAGATION_INHIBITED_BIT];
 	}
-	void unsetCanPropagateAnyReductionSatisfiability()
+	void unsetCanPropagateReductionInfo()
 	{
-		assert(canPropagateAnyReductionSatisfiability());
-		_status[ANY_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
-	}
-	
-	bool canPropagateMatchingReductionSatisfiability() const
-	{
-		return !_status[MATCHING_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT];
-	}
-	void unsetCanPropagateMatchingReductionSatisfiability()
-	{
-		assert(canPropagateMatchingReductionSatisfiability());
-		_status[MATCHING_REDUCTION_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
+		assert(canPropagateReductionInfo());
+		_status[REDUCTION_INFO_PROPAGATION_INHIBITED_BIT] = true;
 	}
 	
 	void setHasSubaccesses()
@@ -395,11 +398,12 @@ public:
 		if (other->concurrentSatisfied()) {
 			setConcurrentSatisfied();
 		}
-		if (other->anyReductionSatisfied()) {
-			setAnyReductionSatisfied();
+		if (other->receivedReductionInfo()) {
+			setReceivedReductionInfo();
+			setPreviousReductionInfo(other->getPreviousReductionInfo());
 		}
-		if (other->matchingReductionSatisfied()) {
-			setMatchingReductionSatisfied();
+		if (other->getReductionInfo() != nullptr) {
+			setReductionInfo(other->getReductionInfo());
 		}
 		if (other->complete()) {
 			setComplete();
@@ -427,7 +431,8 @@ public:
 		} else if (_type == CONCURRENT_ACCESS_TYPE) {
 			return concurrentSatisfied();
 		} else if (_type == REDUCTION_ACCESS_TYPE) {
-			return (anyReductionSatisfied() || matchingReductionSatisfied());
+			return (receivedReductionInfo()
+					&& (writeSatisfied() || (_reductionInfo == _previousReductionInfo)));
 		} else {
 			return readSatisfied() && writeSatisfied();
 		}
@@ -450,6 +455,34 @@ public:
 	reduction_type_and_operator_index_t getReductionTypeAndOperatorIndex() const
 	{
 		return _reductionTypeAndOperatorIndex;
+	}
+	
+	reduction_index_t getReductionIndex() const
+	{
+		return _reductionIndex;
+	}
+	
+	ReductionInfo *getReductionInfo() const
+	{
+		return _reductionInfo;
+	}
+	
+	void setReductionInfo(ReductionInfo *reductionInfo)
+	{
+		assert(_reductionInfo == nullptr);
+		assert(_type == REDUCTION_ACCESS_TYPE);
+		_reductionInfo = reductionInfo;
+	}
+	
+	ReductionInfo *getPreviousReductionInfo() const
+	{
+		return _previousReductionInfo;
+	}
+	
+	void setPreviousReductionInfo(ReductionInfo *previousReductionInfo)
+	{
+		assert(_previousReductionInfo == nullptr);
+		_previousReductionInfo = previousReductionInfo;
 	}
 	
 	Instrument::data_access_id_t const &getInstrumentationId() const

@@ -344,6 +344,7 @@ linear_regions_unfragmented_dependency_sources = \
 
 linear_regions_fragmented_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.cpp \
+	src/dependencies/linear-regions-fragmented/ReductionInfo.cpp \
 	src/dependencies/linear-regions-fragmented/Reductions.cpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp
@@ -471,6 +472,7 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.cpp \
 	src/instrument/verbose/InstrumentLeaderThread.cpp \
+	src/instrument/verbose/InstrumentReductions.cpp \
 	src/instrument/verbose/InstrumentTaskExecution.cpp \
 	src/instrument/verbose/InstrumentTaskStatus.cpp \
 	src/instrument/verbose/InstrumentTaskWait.cpp \
@@ -549,6 +551,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
+	src/dependencies/linear-regions-fragmented/ReductionInfo.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionSpecific.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
@@ -611,6 +614,7 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
+	src/instrument/api/InstrumentReductions.hpp \
 	src/instrument/api/InstrumentTaskExecution.hpp \
 	src/instrument/api/InstrumentTaskStatus.hpp \
 	src/instrument/api/InstrumentTaskWait.hpp \
@@ -633,6 +637,7 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
+	src/instrument/extrae/InstrumentReductions.hpp \
 	src/instrument/extrae/InstrumentTaskExecution.hpp \
 	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
@@ -664,6 +669,7 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
 	src/instrument/graph/InstrumentLogMessage.hpp \
+	src/instrument/graph/InstrumentReductions.hpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
 	src/instrument/graph/InstrumentTaskId.hpp \
 	src/instrument/graph/InstrumentTaskStatus.hpp \
@@ -690,6 +696,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentInstrumentationContext.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
+	src/instrument/null/InstrumentReductions.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
 	src/instrument/null/InstrumentTaskStatus.hpp \
@@ -717,6 +724,7 @@ noinst_HEADERS = \
 	src/instrument/profile/InstrumentInstrumentationContext.hpp \
 	src/instrument/profile/InstrumentLeaderThread.hpp \
 	src/instrument/profile/InstrumentLogMessage.hpp \
+	src/instrument/profile/InstrumentReductions.hpp \
 	src/instrument/profile/InstrumentProfile.hpp \
 	src/instrument/profile/InstrumentTaskExecution.hpp \
 	src/instrument/profile/InstrumentTaskId.hpp \
@@ -743,6 +751,7 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
+	src/instrument/stats/InstrumentReductions.hpp \
 	src/instrument/stats/InstrumentStats.hpp \
 	src/instrument/stats/InstrumentTaskExecution.hpp \
 	src/instrument/stats/InstrumentTaskId.hpp \
@@ -788,6 +797,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
 	src/instrument/verbose/InstrumentLeaderThread.hpp \
 	src/instrument/verbose/InstrumentLogMessage.hpp \
+	src/instrument/verbose/InstrumentReductions.hpp \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \
 	src/instrument/verbose/InstrumentTaskId.hpp \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \
