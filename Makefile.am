@@ -522,6 +522,7 @@ linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(co
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessLink.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessObjectType.hpp \
+	src/dependencies/linear-regions-fragmented/DataAccessRegistration.cpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \

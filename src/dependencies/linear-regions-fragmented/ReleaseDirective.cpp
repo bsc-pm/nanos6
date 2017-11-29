@@ -10,9 +10,11 @@
 
 #include <nanos6/multidimensional-release.h>
 
+#include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
+
 #include "DataAccessRegistration.hpp"
 
 
