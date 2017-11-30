@@ -13,12 +13,13 @@
 #endif
 
 #include "lowlevel/SpinLock.hpp"
-
-#define GLOBAL_ALLOC_SIZE (16*1024*1024)
-#define MEMORY_CHUNK_SIZE (64*1024)
+#include "lowlevel/EnvironmentVariable.hpp"
 
 class MemoryPoolGlobal {
 private:
+	size_t _globalAllocSize;
+	size_t _memoryChunkSize;
+
 	SpinLock _lock;
 	size_t _pageSize;
 	std::vector<void *> _oldMemoryChunks;
@@ -32,12 +33,12 @@ private:
 	void fillPool()
 	{
 		assert(_curAvailable == 0);
-		_curAvailable = GLOBAL_ALLOC_SIZE;
+		_curAvailable = _globalAllocSize;
 #if HAVE_MEMKIND
-		int rc = memkind_posix_memalign(_memoryKind, &_curMemoryChunk, _pageSize, GLOBAL_ALLOC_SIZE);
+		int rc = memkind_posix_memalign(_memoryKind, &_curMemoryChunk, _pageSize, _globalAllocSize);
 		FatalErrorHandler::check(rc == MEMKIND_SUCCESS, " when trying to allocate a memory chunk for the global allocator");
 #else
-		int rc = posix_memalign(&_curMemoryChunk, _pageSize, GLOBAL_ALLOC_SIZE);
+		int rc = posix_memalign(&_curMemoryChunk, _pageSize, _globalAllocSize);
 		FatalErrorHandler::handle(rc, " when trying to allocate a memory chunk for the global allocator");
 #endif
 		_oldMemoryChunks.push_back(_curMemoryChunk);
@@ -49,6 +50,12 @@ public:
 		_curMemoryChunk(nullptr), _curAvailable(0),
 		_NUMANodeId(NUMANodeId)
 	{
+		EnvironmentVariable<size_t> globalAllocSize("NANOS6_GLOBAL_ALLOC_SIZE", 64 * 1024 * 1024);
+		_globalAllocSize = globalAllocSize;
+		
+		EnvironmentVariable<size_t> memoryChunkSize("NANOS6_ALLOCATOR_CHUNK_SIZE", 64 * 1024);
+		_memoryChunkSize = memoryChunkSize;
+		
 #if HAVE_MEMKIND
 		int rc = memkind_create_kind(MEMKIND_MEMTYPE_DEFAULT, MEMKIND_POLICY_PREFERRED_LOCAL, (memkind_bits_t)0, &_memoryKind);
 		FatalErrorHandler::check(rc == MEMKIND_SUCCESS, " when trying to create a new memory kind");
@@ -77,7 +84,7 @@ public:
 		
 		void *curAddr = _curMemoryChunk;
 		
-		chunkSize = MEMORY_CHUNK_SIZE;
+		chunkSize = _memoryChunkSize;
 		_curAvailable -= chunkSize;
 		_curMemoryChunk = (char *)_curMemoryChunk + chunkSize;
 		
