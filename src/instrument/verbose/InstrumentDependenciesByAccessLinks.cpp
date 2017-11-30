@@ -30,54 +30,52 @@ namespace Instrument {
 		task_id_t originatorTaskId,
 		InstrumentationContext const &context
 	) {
-		if (!_verboseDependenciesByAccessLinks) {
-			return data_access_id_t();
-		}
-		
-		LogEntry *logEntry = getLogEntry();
-		assert(logEntry != nullptr);
-		
 		data_access_id_t id = _nextDataAccessId++;
 		
-		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> CreateDataAccess " << id << " superaccess:" << superAccessId << " ";
-		
-		if (weak) {
-			logEntry->_contents << "weak";
+		if (_verboseDependenciesByAccessLinks) {
+			LogEntry *logEntry = getLogEntry();
+			assert(logEntry != nullptr);
+			
+			logEntry->appendLocation(context);
+			logEntry->_contents << " <-> CreateDataAccess " << id << " superaccess:" << superAccessId << " ";
+			
+			if (weak) {
+				logEntry->_contents << "weak";
+			}
+			switch (accessType) {
+				case READ_ACCESS_TYPE:
+					logEntry->_contents << " input";
+					break;
+				case READWRITE_ACCESS_TYPE:
+					logEntry->_contents << " inout";
+					break;
+				case WRITE_ACCESS_TYPE:
+					logEntry->_contents << " output";
+					break;
+				default:
+					logEntry->_contents << " unknown_access_type";
+					break;
+			}
+			
+			logEntry->_contents << " " << region;
+			
+			if (readSatisfied) {
+				logEntry->_contents << " read_safistied";
+			}
+			if (writeSatisfied) {
+				logEntry->_contents << " write_safistied";
+			}
+			if (globallySatisfied) {
+				logEntry->_contents << " safistied";
+			}
+			if (!readSatisfied && !writeSatisfied && !globallySatisfied) {
+				logEntry->_contents << " unsatisfied";
+			}
+			
+			logEntry->_contents << " originator:" << originatorTaskId;
+			
+			addLogEntry(logEntry);
 		}
-		switch (accessType) {
-			case READ_ACCESS_TYPE:
-				logEntry->_contents << " input";
-				break;
-			case READWRITE_ACCESS_TYPE:
-				logEntry->_contents << " inout";
-				break;
-			case WRITE_ACCESS_TYPE:
-				logEntry->_contents << " output";
-				break;
-			default:
-				logEntry->_contents << " unknown_access_type";
-				break;
-		}
-		
-		logEntry->_contents << " " << region;
-		
-		if (readSatisfied) {
-			logEntry->_contents << " read_safistied";
-		}
-		if (writeSatisfied) {
-			logEntry->_contents << " write_safistied";
-		}
-		if (globallySatisfied) {
-			logEntry->_contents << " safistied";
-		}
-		if (!readSatisfied && !writeSatisfied && !globallySatisfied) {
-			logEntry->_contents << " unsatisfied";
-		}
-		
-		logEntry->_contents << " originator:" << originatorTaskId;
-		
-		addLogEntry(logEntry);
 		
 		return id;
 	}
@@ -213,19 +211,17 @@ namespace Instrument {
 		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
-		if (!_verboseDependenciesByAccessLinks) {
-			return data_access_id_t();
-		}
-		
-		LogEntry *logEntry = getLogEntry();
-		assert(logEntry != nullptr);
-		
 		data_access_id_t id = _nextDataAccessId++;
 		
-		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> FragmentedDataAccess " << dataAccessId << " newFragment:" << id << " newRegion:" << newRegion << " triggererTask:" << context._taskId;
-		
-		addLogEntry(logEntry);
+		if (_verboseDependenciesByAccessLinks) {
+			LogEntry *logEntry = getLogEntry();
+			assert(logEntry != nullptr);
+			
+			logEntry->appendLocation(context);
+			logEntry->_contents << " <-> FragmentedDataAccess " << dataAccessId << " newFragment:" << id << " newRegion:" << newRegion << " triggererTask:" << context._taskId;
+			
+			addLogEntry(logEntry);
+		}
 		
 		return id;
 	}
@@ -235,19 +231,17 @@ namespace Instrument {
 		data_access_id_t dataAccessId,
 		InstrumentationContext const &context
 	) {
-		if (!_verboseDependenciesByAccessLinks) {
-			return data_access_id_t();
-		}
-		
-		LogEntry *logEntry = getLogEntry();
-		assert(logEntry != nullptr);
-		
 		data_access_id_t id = _nextDataAccessId++;
 		
-		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> CreatedDataSubaccessFragment " << dataAccessId << " newSubaccessFragment:" << id << " triggererTask:" << context._taskId;
-		
-		addLogEntry(logEntry);
+		if (_verboseDependenciesByAccessLinks) {
+			LogEntry *logEntry = getLogEntry();
+			assert(logEntry != nullptr);
+			
+			logEntry->appendLocation(context);
+			logEntry->_contents << " <-> CreatedDataSubaccessFragment " << dataAccessId << " newSubaccessFragment:" << id << " triggererTask:" << context._taskId;
+			
+			addLogEntry(logEntry);
+		}
 		
 		return id;
 	}
