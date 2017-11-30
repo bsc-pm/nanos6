@@ -29,25 +29,24 @@ namespace Instrument {
 	) {
 		static std::atomic<task_id_t::inner_type_t> _nextTaskId(0);
 		
-		if (!_verboseAddTask) {
-			return task_id_t();
-		}
-		
-		LogEntry *logEntry = getLogEntry();
-		assert(logEntry != nullptr);
-		
 		task_id_t taskId = _nextTaskId++;
-		logEntry->appendLocation(context);
 		
-		logEntry->_contents << " --> AddTask " << taskId;
-		if (taskInfo && taskInfo->task_label) {
-			logEntry->_contents << " " << taskInfo->task_label;
+		if (_verboseAddTask) {
+			LogEntry *logEntry = getLogEntry();
+			assert(logEntry != nullptr);
+			
+			logEntry->appendLocation(context);
+			
+			logEntry->_contents << " --> AddTask " << taskId;
+			if (taskInfo && taskInfo->task_label) {
+				logEntry->_contents << " " << taskInfo->task_label;
+			}
+			if (taskInvokationInfo && taskInvokationInfo->invocation_source) {
+				logEntry->_contents << " " << taskInvokationInfo->invocation_source;
+			}
+			
+			addLogEntry(logEntry);
 		}
-		if (taskInvokationInfo && taskInvokationInfo->invocation_source) {
-			logEntry->_contents << " " << taskInvokationInfo->invocation_source;
-		}
-		
-		addLogEntry(logEntry);
 		
 		return taskId;
 	}
