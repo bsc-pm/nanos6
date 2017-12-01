@@ -27,6 +27,10 @@
 #include <instrument/support/sampling/SigProf.hpp>
 
 
+// This is not defined in the extrae headers
+extern "C" void Extrae_change_num_threads (unsigned n);
+
+
 namespace Instrument {
 	
 	extern bool _profilingIsReady;
@@ -148,7 +152,7 @@ namespace Instrument {
 	
 	static unsigned int extrae_nanos_get_virtual_cpu_or_external_thread_id_for_initialization()
 	{
-		return nanos_get_num_cpus();
+		return 0;
 	}
 	
 	static unsigned int extrae_nanos_get_num_threads_for_initialization()
@@ -158,7 +162,7 @@ namespace Instrument {
 	
 	static unsigned int extrae_nanos_get_num_cpus_and_external_threads_for_initialization()
 	{
-		return nanos_get_num_cpus() + 1;
+		return 1;
 	}
 	
 	
