@@ -58,6 +58,7 @@ struct TaskDataAccesses {
 	subaccess_bottom_map_t _subaccessBottomMap;
 	
 	int _removalBlockers;
+	int _liveTaskwaitFragmentCount;
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
@@ -66,7 +67,7 @@ struct TaskDataAccesses {
 		: _lock(),
 		_accesses(), _accessFragments(), _taskwaitFragments(),
 		_subaccessBottomMap(),
-		_removalBlockers(0)
+		_removalBlockers(0), _liveTaskwaitFragmentCount(0)
 #ifndef NDEBUG
 		,_flags()
 #endif

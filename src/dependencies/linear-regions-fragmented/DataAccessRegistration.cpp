@@ -341,6 +341,9 @@ namespace DataAccessRegistration {
 					task->increaseRemovalBlockingCount();
 				}
 				accessStructures._removalBlockers++;
+				if (access->getObjectType() == taskwait_type) {
+					accessStructures._liveTaskwaitFragmentCount++;
+				}
 			}
 			
 			if (updatedStatus._enforcesDependency) {
@@ -488,6 +491,18 @@ namespace DataAccessRegistration {
 			assert(accessStructures._removalBlockers > 0);
 			accessStructures._removalBlockers--;
 			access->markAsDiscounted();
+			
+			// The last taskwait fragment that finishes removes the blocking over the task
+			if (access->getObjectType() == taskwait_type) {
+				assert(accessStructures._liveTaskwaitFragmentCount > 0);
+				accessStructures._liveTaskwaitFragmentCount--;
+				
+				if (accessStructures._liveTaskwaitFragmentCount == 0) {
+					if (task->decreaseRemovalBlockingCount()) {
+						hpDependencyData._removableTasks.push_back(task);
+					}
+				}
+			}
 			
 			if (access->hasNext()) {
 				Instrument::unlinkedDataAccesses(
@@ -1723,6 +1738,14 @@ namespace DataAccessRegistration {
 	static void createTaskwait(
 		Task *task, TaskDataAccesses &accessStructures, /* OUT */ CPUDependencyData &hpDependencyData)
 	{
+		if (accessStructures._subaccessBottomMap.empty()) {
+			return;
+		}
+		
+		// The last taskwait fragment will decreate the removal blocking count.
+		// This is necessary to force the task to wait until all taskwait fragments have finished.
+		task->increaseRemovalBlockingCount();
+		
 		// For each bottom map entry
 		assert(accessStructures._taskwaitFragments.empty());
 		accessStructures._subaccessBottomMap.processAll(
@@ -2151,7 +2174,6 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-		
 		
 		if (!accessStructures._accesses.empty()) {
 			assert(accessStructures._removalBlockers > 0);
