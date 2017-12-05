@@ -7,8 +7,7 @@
 #ifndef INSTRUMENT_EXTRAE_HPP
 #define INSTRUMENT_EXTRAE_HPP
 
-#include "extrae_user_events.h"
-#include "extrae_types.h"
+#include "PreloadedExtraeBouncer.hpp"
 
 #include <nanos6.h>
 

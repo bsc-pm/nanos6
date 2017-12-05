@@ -784,6 +784,10 @@ instrument_verbose_sources = \
 
 instrument_extrae_sources = \
 	$(instrument_generic_ids_sources) \
+	src/instrument/extrae/ExtraeSymbolLiterals.cpp \
+	src/instrument/extrae/ExtraeSymbolLiterals.hpp \
+	src/instrument/extrae/ExtraeSymbolResolver.cpp \
+	src/instrument/extrae/ExtraeSymbolResolver.hpp \
 	src/instrument/extrae/InstrumentAddTask.hpp \
 	src/instrument/extrae/InstrumentComputePlaceId.hpp \
 	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
@@ -808,6 +812,7 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentThreadLocalData.hpp \
 	src/instrument/extrae/InstrumentThreadManagement.hpp \
 	src/instrument/extrae/InstrumentUserMutex.hpp \
+	src/instrument/extrae/PreloadedExtraeBouncer.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp \
@@ -923,7 +928,7 @@ if HAVE_EXTRAE
 libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ $(elfutils_CFLAGS) $(introspection_cppflags)
 libnanos6_extrae_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_extrae_la_SOURCES = $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
-libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ @extrae_LIBS@ $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS) $(DLOPEN_LIBS)
+libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS) $(DLOPEN_LIBS)
 nodist_libnanos6_extrae_la_SOURCES = $(nodist_common_sources) $(nodist_universal_debug_sources)
 endif
 

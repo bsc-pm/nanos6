@@ -66,7 +66,7 @@ static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char con
 		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
 	}
 	
-	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_GLOBAL);
+	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_LOCAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
 			fprintf(stderr, "Successfully loaded: %s\n", nanos_get_runtime_path());
@@ -83,7 +83,7 @@ static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char con
 		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
 	}
 	
-	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_GLOBAL);
+	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_LOCAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
 			fprintf(stderr, "Successfully loaded: %s\n", nanos_get_runtime_path());
@@ -104,7 +104,7 @@ static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *var
 		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
 	}
 	
-	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_GLOBAL);
+	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_LOCAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
 			fprintf(stderr, "Successfully loaded: %s\n", nanos_get_runtime_path());
