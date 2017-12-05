@@ -32,6 +32,23 @@ public:
 		return (*symbol)(parameters...);
 	}
 	
+	static function_t getFunction()
+	{
+		static function_t symbol = (function_t) dlsym(RTLD_NEXT, *NAME);
+		assert(symbol != nullptr);
+		
+		return symbol;
+	}
+	
+	static void *getSymbol()
+	{
+		static void *symbol = dlsym(RTLD_NEXT, *NAME);
+		assert(symbol != nullptr);
+		
+		return symbol;
+	}
+	
+	
 	static RETURN_T globalScopeCall(PARAMETERS_T... parameters)
 	{
 		static function_t symbol = (function_t) dlsym(RTLD_DEFAULT, *NAME);
@@ -39,6 +56,23 @@ public:
 		
 		return (*symbol)(parameters...);
 	}
+	
+	static function_t getGlobalScopeFunction()
+	{
+		static function_t symbol = (function_t) dlsym(RTLD_DEFAULT, *NAME);
+		assert(symbol != nullptr);
+		
+		return symbol;
+	}
+	
+	static void *getGlobalScopeSymbol()
+	{
+		static void *symbol = dlsym(RTLD_DEFAULT, *NAME);
+		assert(symbol != nullptr);
+		
+		return symbol;
+	}
+	
 };
 
 
