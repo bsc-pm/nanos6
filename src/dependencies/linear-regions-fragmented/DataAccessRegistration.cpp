@@ -387,7 +387,7 @@ namespace DataAccessRegistration {
 				// Already counted as part of the registration status change.
 				assert(!initialStatus._isRegistered && updatedStatus._isRegistered);
 			} else {
-				// The access no longer enforces a dependency (has become satisified)
+				// The access no longer enforces a dependency (has become satisfied)
 				if (task->decreasePredecessors()) {
 					// The task becomes ready
 					hpDependencyData._satisfiedOriginators.push_back(task);
@@ -1068,7 +1068,7 @@ namespace DataAccessRegistration {
 			dataAccess->getAccessRegion().processIntersectingFragments(
 				subregion,
 				[&](DataAccessRegion excludedSubregion) {
-					 BottomMapEntry *bottomMapEntry = new BottomMapEntry(
+					BottomMapEntry *bottomMapEntry = new BottomMapEntry(
 						excludedSubregion,
 						DataAccessLink(dataAccess->getOriginator(), fragment_type),
 						dataAccess->getType()
