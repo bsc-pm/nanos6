@@ -197,6 +197,7 @@ namespace DataAccessRegistration {
 			
 			_isRemovable = access->isTopmost()
 				&& access->readSatisfied() && access->writeSatisfied()
+				&& access->receivedReductionInfo()
 				&& access->complete()
 				&& (
 					!access->isInBottomMap() || access->hasNext()
