@@ -427,14 +427,17 @@ public:
 	bool satisfied() const
 	{
 		if (_type == READ_ACCESS_TYPE) {
-			return readSatisfied();
+			return readSatisfied() && receivedReductionInfo();
 		} else if (_type == CONCURRENT_ACCESS_TYPE) {
-			return concurrentSatisfied();
+			return concurrentSatisfied() && receivedReductionInfo();
 		} else if (_type == REDUCTION_ACCESS_TYPE) {
+			// Note: _reductionInfo can be 'nullptr' even when (receivedReductionInfo() == true):
+			// A non-matching ReductionInfo was received and the receiver hasn't yet allocated a
+			// new ReductionInfo (event triggered by separate conditions)
 			return (receivedReductionInfo()
-					&& (writeSatisfied() || (_reductionInfo == _previousReductionInfo)));
+					&& (writeSatisfied() || (_reductionInfo != nullptr && _reductionInfo == _previousReductionInfo)));
 		} else {
-			return readSatisfied() && writeSatisfied();
+			return readSatisfied() && writeSatisfied() && receivedReductionInfo();
 		}
 	}
 	
