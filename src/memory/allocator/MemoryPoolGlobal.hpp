@@ -50,10 +50,10 @@ public:
 		_curMemoryChunk(nullptr), _curAvailable(0),
 		_NUMANodeId(NUMANodeId)
 	{
-		EnvironmentVariable<size_t> globalAllocSize("NANOS6_GLOBAL_ALLOC_SIZE", 64 * 1024 * 1024);
+		EnvironmentVariable<size_t> globalAllocSize("NANOS6_GLOBAL_ALLOC_SIZE", 8 * 1024 * 1024);
 		_globalAllocSize = globalAllocSize;
 		
-		EnvironmentVariable<size_t> memoryChunkSize("NANOS6_ALLOCATOR_CHUNK_SIZE", 64 * 1024);
+		EnvironmentVariable<size_t> memoryChunkSize("NANOS6_ALLOCATOR_CHUNK_SIZE", 128 * 1024);
 		_memoryChunkSize = memoryChunkSize;
 		
 #if HAVE_MEMKIND
