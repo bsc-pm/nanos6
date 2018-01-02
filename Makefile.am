@@ -1044,6 +1044,10 @@ check-copyright: $(nodist_nanos6include_HEADERS)
 	test -z $$fail
 
 
+show-test-env:
+	@echo env LD_LIBRARY_PATH=\"$$(readlink -f $(top_builddir)/.libs):"$$"{LD_LIBRARY_PATH}\"
+
+
 ## --------------------------------- ##
 ## Format-independent Doxygen rules. ##
 ## --------------------------------- ##
