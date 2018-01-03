@@ -20,7 +20,7 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void createdThread(/* OUT */ thread_id_t &threadId) {
+	void createdThread(/* OUT */ thread_id_t &threadId, compute_place_id_t const &computePlaceId) {
 		threadId = GenericIds::getNewThreadId();
 		
 		if (!_verboseThreadManagement) {

@@ -22,7 +22,7 @@ extern "C" void Extrae_change_num_threads (unsigned n);
 
 
 namespace Instrument {
-	inline void createdThread(/* OUT */ thread_id_t &threadId)
+	inline void createdThread(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 		threadLocal.init();
