@@ -15,7 +15,7 @@
 #include "hardware/places/CPUPlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 
-#include "instrument/support/InstrumentHardwarePlaceManagement.hpp"
+#include <InstrumentComputePlaceManagement.hpp>
 
 #include <atomic>
 #include <cassert>
