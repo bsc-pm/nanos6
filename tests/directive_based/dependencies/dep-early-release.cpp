@@ -93,17 +93,16 @@ int main(int argc, char **argv)
 	nanos_wait_for_full_initialization();
 	
 	long activeCPUs = nanos_get_num_cpus();
-	if (activeCPUs == 1) {
-		// This test only works correctly with more than 1 CPU
+	if (activeCPUs <= 2) {
+		// This test only works correctly with more than 2 CPUs
 		tap.registerNewTests(1);
 		tap.begin();
-		tap.skip("This test does not work with just 1 CPU");
+		tap.skip("This test requires more than 2 CPUs");
 		tap.end();
 		return 0;
 	}
 	
 	tap.registerNewTests(4 * 8);
-// tap.registerNewTests(4 * 1);
 	tap.begin();
 	
 	int var1, var2;
