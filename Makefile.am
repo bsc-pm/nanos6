@@ -955,6 +955,11 @@ install-exec-local: $(lib_OBJECTS)
 
 
 uninstall-hook:
+	for l in $(lib_OBJECTS) ; do \
+		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
+			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
+		fi ; \
+	done
 	@echo Removing deprecated headers
 	for f in nanos6_rt_interface.h nanos6_debug_interface.h ; do \
 		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
