@@ -593,6 +593,15 @@ int main(int argc, char **argv)
 	ncpus = nanos_get_num_cpus();
 	delayMultiplier = sqrt(ncpus);
 	
+	if (ncpus < 2) {
+		// This test only works correctly with at least 2 CPUs
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.skip("This test requires at least 2 CPUs");
+		tap.end();
+		return 0;
+	}
+	
 	int var1;
 	
 	// 1 writer
