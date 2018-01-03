@@ -391,6 +391,7 @@ common_sources = \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
 	src/scheduling/TaskloopSchedulingPolicy.hpp \
+	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.cpp \
 	src/support/GlobalLock.hpp \
