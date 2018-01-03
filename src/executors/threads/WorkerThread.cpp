@@ -35,7 +35,7 @@ void WorkerThread::initialize()
 	
 	assert(getComputePlace() != nullptr);
 	
-	Instrument::ThreadInstrumentationContext instrumentationContext((Instrument::task_id_t(), getComputePlace()->getInstrumentationId(), _instrumentationId));
+	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), getComputePlace()->getInstrumentationId(), _instrumentationId);
 	
 	markAsCurrentWorkerThread();
 	
@@ -51,7 +51,7 @@ void WorkerThread::body()
 	initialize();
 	
 	CPU *cpu = getComputePlace();
-	Instrument::ThreadInstrumentationContext instrumentationContext((Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId));
+	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId);
 	
 	while (!_mustShutDown) {
 		CPUActivation::activationCheck(this);
