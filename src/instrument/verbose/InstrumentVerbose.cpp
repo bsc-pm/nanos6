@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
 #include <InstrumentInstrumentationContext.hpp>
@@ -32,7 +32,9 @@ namespace Instrument {
 		
 		std::ofstream *_output = nullptr;
 		
-		std::atomic<LogEntry *> _lastEntry(nullptr);
-		std::atomic<LogEntry *> _freeEntries(nullptr);
+		ConcurrentUnorderedListSlotManager _concurrentUnorderedListSlotManager;
+		ConcurrentUnorderedList<LogEntry *> _entries(_concurrentUnorderedListSlotManager);
+		ConcurrentUnorderedList<LogEntry *> _freeEntries(_concurrentUnorderedListSlotManager);
+		ConcurrentUnorderedListSlotManager::Slot _concurrentUnorderedListExternSlot;
 	}
 }

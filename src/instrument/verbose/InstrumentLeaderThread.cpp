@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -41,7 +41,7 @@ namespace Instrument {
 		if (_verboseLeaderThread) {
 			ExternalThreadLocalData &threadLocal = getExternalThreadLocalData();
 			
-			LogEntry *logEntry = getLogEntry();
+			LogEntry *logEntry = getLogEntry(threadLocal._context);
 			assert(logEntry != nullptr);
 			
 			logEntry->appendLocation(threadLocal._context);
@@ -56,25 +56,14 @@ namespace Instrument {
 		
 		// After this we flush the current log
 		
-		// Swap the current log
-		LogEntry *currentEntry = _lastEntry.load();
-		while (!_lastEntry.compare_exchange_strong(currentEntry, nullptr)) {
-		}
-		
 		// Move the log to a vector
 		static std::vector<LogEntry *> entries;
-		LogEntry *firstEntry = currentEntry;
-		LogEntry *lastEntry = currentEntry;
-		while (currentEntry != nullptr) {
-			entries.push_back(currentEntry);
-			lastEntry = currentEntry;
-			currentEntry = currentEntry->_next;
-		}
-		
-		if (firstEntry == nullptr) {
-			return;
-		}
-		assert(lastEntry != nullptr);
+		_entries.consume_all(
+			[&](LogEntry *entry, __attribute__((unused)) ConcurrentUnorderedListSlotManager::Slot slot)
+			{
+				entries.push_back(entry);
+			}
+		);
 		
 		// If using timestamps, sort the vector
 		if (_useTimestamps) {
@@ -135,13 +124,12 @@ namespace Instrument {
 			}
 		}
 		
-		// Prepend the processed log entries to the list of free entries
-		LogEntry *firstFreeEntry = _freeEntries;
-		do {
-			lastEntry->_next = firstFreeEntry;
-		} while (!_freeEntries.compare_exchange_strong(firstFreeEntry, firstEntry));
+		// Recycle the entries
+		for (LogEntry *logEntry : entries) {
+			_freeEntries.push(logEntry, logEntry->_queueSlot);
+		}
 		
-		// Clean the vector, which is reused
+		// Clear the vector, since we reuse it
 		entries.clear();
 	}
 	

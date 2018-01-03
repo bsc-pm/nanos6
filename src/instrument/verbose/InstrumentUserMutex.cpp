@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -25,7 +25,7 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
@@ -40,7 +40,7 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
@@ -55,7 +55,7 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);

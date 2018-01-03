@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_INIT_AND_SHUTDOWN_HPP
@@ -123,15 +123,7 @@ namespace Instrument {
 		}
 #endif
 		
-		// Prepopulate the list of free log entries
-		LogEntry *lastEntry = new LogEntry();
-		lastEntry->_next = nullptr;
-		for (int i = 1; i < VERBOSE_INITIAL_LOG_ENTRIES; i++) {
-			LogEntry *newEntry = new LogEntry();
-			newEntry->_next = lastEntry;
-			lastEntry = newEntry;
-		}
-		_freeEntries.store(lastEntry);
+		_concurrentUnorderedListExternSlot = _concurrentUnorderedListSlotManager.getSlot();
 	}
 	
 	

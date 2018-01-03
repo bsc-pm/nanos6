@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_VERBOSE_LOG_MESSAGE_HPP
@@ -40,7 +40,7 @@ namespace Instrument {
 	template<typename... TS>
 	void logMessage(InstrumentationContext const &context, TS... contents)
 	{
-		LogEntry *logEntry = getLogEntry();
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);

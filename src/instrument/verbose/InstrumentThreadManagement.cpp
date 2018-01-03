@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -27,11 +27,13 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
-		assert(logEntry != nullptr);
-		
 		Instrument::InstrumentationContext tmpContext;
 		tmpContext._threadId = threadId;
+		tmpContext._computePlaceId = computePlaceId;
+		
+		LogEntry *logEntry = getLogEntry(tmpContext);
+		assert(logEntry != nullptr);
+		
 		logEntry->appendLocation(tmpContext);
 		logEntry->_contents << " <-> CreateThread " << threadId;
 		
@@ -46,10 +48,12 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
-		logEntry->appendLocation();
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> CreateExternalThread " << name << " " << threadId;
 		
 		addLogEntry(logEntry);
@@ -61,10 +65,12 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
-		logEntry->appendLocation();
+		logEntry->appendLocation(context);
 		logEntry->_contents << " --> SuspendThread ";
 		
 		addLogEntry(logEntry);
@@ -76,10 +82,12 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
-		logEntry->appendLocation();
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-- SuspendThread ";
 		
 		addLogEntry(logEntry);
@@ -90,10 +98,12 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
-		logEntry->appendLocation();
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> ShutdownThread ";
 		
 		addLogEntry(logEntry);
@@ -105,10 +115,12 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
-		logEntry->appendLocation();
+		logEntry->appendLocation(context);
 		logEntry->_contents << " --> BusyWait ";
 		switch (reason) {
 			case scheduling_polling_slot_busy_wait_reason:
@@ -125,10 +137,12 @@ namespace Instrument {
 			return;
 		}
 		
-		LogEntry *logEntry = getLogEntry();
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
 		
-		logEntry->appendLocation();
+		logEntry->appendLocation(context);
 		logEntry->_contents << " <-- BusyWait ";
 		
 		addLogEntry(logEntry);

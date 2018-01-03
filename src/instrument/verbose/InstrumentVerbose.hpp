@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_VERBOSE_HPP
@@ -30,6 +30,8 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include <support/ConcurrentUnorderedList.hpp>
+
 
 namespace Instrument {
 	namespace Verbose {
@@ -55,21 +57,21 @@ namespace Instrument {
 		
 		struct LogEntry {
 			timestamp_t _timestamp;
+			ConcurrentUnorderedListSlotManager::Slot _queueSlot;
 			std::ostringstream _contents;
-			LogEntry *_next;
 			
-			LogEntry(timestamp_t timestamp, std::ostringstream const &contents)
-				: _timestamp(timestamp), _contents(), _next(nullptr)
+			LogEntry(timestamp_t timestamp, ConcurrentUnorderedListSlotManager::Slot queueSlot, std::ostringstream const &contents)
+				: _timestamp(timestamp), _queueSlot(queueSlot), _contents()
 			{
 				_contents << contents.str();
 			}
 			
-			LogEntry()
-				: _next(nullptr)
+			LogEntry(ConcurrentUnorderedListSlotManager::Slot queueSlot)
+				: _queueSlot(queueSlot)
 			{
 			}
 			
-			void appendLocation(InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent())
+			void appendLocation(InstrumentationContext const &context)
 			{
 				if (context._externalThreadName != nullptr) {
 					_contents << "ExternalThread:" << *context._externalThreadName;
@@ -86,8 +88,10 @@ namespace Instrument {
 			}
 		};
 		
-		extern std::atomic<LogEntry *> _lastEntry;
-		extern std::atomic<LogEntry *> _freeEntries;
+		extern ConcurrentUnorderedListSlotManager _concurrentUnorderedListSlotManager;
+		extern ConcurrentUnorderedList<LogEntry *> _entries;
+		extern ConcurrentUnorderedList<LogEntry *> _freeEntries;
+		extern ConcurrentUnorderedListSlotManager::Slot _concurrentUnorderedListExternSlot;
 		
 		
 		static inline void stampTime(LogEntry *logEntry)
@@ -100,20 +104,22 @@ namespace Instrument {
 		}
 		
 		
-		inline LogEntry *getLogEntry()
+		inline LogEntry *getLogEntry(InstrumentationContext const &context)
 		{
-			LogEntry *currentEntry = _freeEntries;
-			while (currentEntry != nullptr) {
-				LogEntry *nextEntry = currentEntry->_next;
-				if (_freeEntries.compare_exchange_strong(currentEntry, nextEntry)) {
-					assert(currentEntry != nullptr);
-					currentEntry->_contents.clear();
-					stampTime(currentEntry);
-					return currentEntry;
-				}
+			ConcurrentUnorderedListSlotManager::Slot queueSlot = _concurrentUnorderedListExternSlot;
+			if (context._externalThreadName == nullptr) {
+				queueSlot = context._computePlaceId.getConcurrentUnorderedListSlot();
 			}
 			
-			currentEntry = new LogEntry();
+			LogEntry *currentEntry = nullptr;
+			if (_freeEntries.pop(currentEntry, queueSlot)) {
+				assert(currentEntry != nullptr);
+				assert(currentEntry->_queueSlot == queueSlot);
+				currentEntry->_contents.clear();
+			} else {
+				currentEntry = new LogEntry(queueSlot);
+			}
+			
 			stampTime(currentEntry);
 			return currentEntry;
 		}
@@ -123,10 +129,7 @@ namespace Instrument {
 		{
 			assert(logEntry != nullptr);
 			
-			LogEntry *lastEntry = _lastEntry;
-			do {
-				logEntry->_next = lastEntry;
-			} while (!_lastEntry.compare_exchange_strong(lastEntry, logEntry));
+			_entries.push(logEntry, logEntry->_queueSlot);
 		}
 		
 	}

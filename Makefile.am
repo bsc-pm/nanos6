@@ -748,6 +748,7 @@ instrument_verbose_sources = \
 	src/instrument/verbose/InstrumentAddTask.cpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
+	src/instrument/verbose/InstrumentComputePlaceManagement.cpp \
 	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.cpp \
