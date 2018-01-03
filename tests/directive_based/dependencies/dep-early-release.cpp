@@ -103,7 +103,6 @@ int main(int argc, char **argv)
 	}
 	
 	tap.registerNewTests(4 * 8);
-// tap.registerNewTests(4 * 1);
 	tap.begin();
 	
 	int var1, var2;
