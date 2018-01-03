@@ -4,6 +4,7 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#include <algorithm>
 #include <cassert>
 #include <set>
 #include <vector>
