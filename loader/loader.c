@@ -37,7 +37,7 @@ __attribute__ ((visibility ("hidden"))) int _nanos6_has_started = 0;
 int _nanos6_exit_with_error = 0;
 
 
-static char lib_name[MAX_LIB_PATH];
+static char lib_name[MAX_LIB_PATH+1];
 
 
 static void _nanos6_loader_set_up_lib_name(char const *variant, char const *path, char const *suffix)
