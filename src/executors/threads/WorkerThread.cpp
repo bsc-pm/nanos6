@@ -66,7 +66,7 @@ void WorkerThread::body()
 				Instrument::threadEnterBusyWait(Instrument::scheduling_polling_slot_busy_wait_reason);
 				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(cpu)) {
 					// Keep trying
-					pollingSlot._task.compare_exchange_strong(_task, nullptr);
+					_task = pollingSlot.getTask();
 					if (_task == nullptr) {
 						PollingAPI::handleServices();
 					}

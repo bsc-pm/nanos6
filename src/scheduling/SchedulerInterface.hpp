@@ -33,6 +33,13 @@ public:
 			: _task(nullptr), _schedulerInfo(nullptr)
 		{
 		}
+		
+		Task *getTask()
+		{
+			Task *result = nullptr;
+			_task.compare_exchange_strong(result, nullptr);
+			return result;
+		}
 	};
 	
 	
