@@ -79,7 +79,7 @@ typedef struct
 
 
 //! \brief This needs to be incremented every time that there is a change in nanos_task_info
-enum nanos6_task_info_contents_t { nanos6_task_info_contents = 5 };
+enum nanos6_task_info_contents_t { nanos6_task_info_contents = 6 };
 
 //! \brief Struct that contains the common parts that all tasks of the same type share
 typedef struct
@@ -119,6 +119,23 @@ typedef struct
 	void (*destroy)(void *args_block);
 
 	
+	//! \brief Array of functions that the runtime calls to initialize task
+	//! reductions' private storage
+	//!
+	//! \param[out] oss_priv a pointer to the data to be initialized
+	//! \param[in] oss_orig a pointer to the original data, which may be used
+	//! \param[in] size the (in Bytes) size of the data to be initialized
+	//! during initialization
+	void (**reduction_initializers)(void *oss_priv, void *oss_orig, size_t size);
+	
+	//! \brief Array of functions that the runtime calls to combine task
+	//! reductions' private storage
+	//!
+	//! \param[out] oss_out a pointer to the data where the combination is to
+	//! be performed
+	//! \param[in] oss_in a pointer to the data which needs to be combined
+	//! \param[in] size the size (in Bytes) of the data to be combined
+	void (**reduction_combiners)(void *oss_out, void *oss_in, size_t size);
 } nanos_task_info __attribute__((aligned(64)));
 
 

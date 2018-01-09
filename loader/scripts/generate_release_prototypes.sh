@@ -45,7 +45,7 @@ echo
 echo
 
 for type in $* ; do
-	if [ "${type}" = "reduction" ] ; then
+	if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
 		continue
 	fi
 	

@@ -11,7 +11,7 @@ generate_regions_full_prototype() {
 	/bin/echo '/** \brief Register a task '${type}' access on a '${dimensions}'-dimensional region of addresses */'
 	/bin/echo 'void nanos_register_region_'${type}'_depinfo'${dimensions}'('
 	
-	if [ "${type}" = "reduction" ] ; then
+	if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
 		/bin/echo "${indentation}	int reduction_operation, int reduction_index,"
 	fi
 	

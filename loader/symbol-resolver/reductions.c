@@ -7,4 +7,4 @@
 #include "resolve.h"
 
 
-RESOLVE_API_FUNCTION(nanos_get_original_reduction_address, "reductions", NULL);
+RESOLVE_API_FUNCTION(nanos_get_reduction_storage, "reductions", NULL);

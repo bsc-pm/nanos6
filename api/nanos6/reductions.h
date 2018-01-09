@@ -50,12 +50,14 @@ enum ReductionType {
 };
 
 
-//! \brief Retrieve the original address of a reduction given the (possibly local)
-//! reduction address set by the parent task on creation time
+//! \brief Retrieve the adequate private storage corresponding to the reduction
+//! registered on the given original address
 //!
-//! \param[in] address the (possibly local) reduction address set by the parent task
-//! \return the original address of the reduction
-void *nanos_get_original_reduction_address(const void *address);
+//! \param[in] original the reduction address from which to obtain the private
+//! storage
+//! \return the address of the private storage corresponding to the reduction
+//! registered on the original address
+void *nanos_get_reduction_storage(void *original);
 
 
 #ifdef __cplusplus

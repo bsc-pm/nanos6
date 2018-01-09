@@ -57,7 +57,10 @@ for type in $* ; do
 			registration_function="register_data_access<COMMUTATIVE_ACCESS_TYPE, false>"
 		;;
 		reduction)
-			registration_function="register_reduction_access"
+			registration_function="register_reduction_access<false>"
+		;;
+		weak_reduction)
+			registration_function="register_reduction_access<true>"
 		;;
 		*)
 			echo "Warning: unimplemented access type ${type}." 1>&2
@@ -67,7 +70,7 @@ for type in $* ; do
 	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		if [ ${dimensions} -eq 1 ] ; then
-			if [ "${type}" = "reduction" ] ; then
+			if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
 				# Reductions are already implemented using the multidimensional API for 1 dimension
 				continue
 			fi
@@ -77,7 +80,7 @@ for type in $* ; do
 		echo " {"
 		echo "	${registration_function}("
 		
-		if [ "${type}" = "reduction" ] ; then
+		if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
 			echo "		reduction_operation, reduction_index,"
 		fi
 		

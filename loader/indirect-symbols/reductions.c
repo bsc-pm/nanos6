@@ -9,18 +9,18 @@
 
 #pragma GCC visibility push(default)
 
-void *nanos_get_original_reduction_address(const void *private_address)
+void *nanos_get_reduction_storage(const void *address)
 {
-	typedef void *nanos_get_original_reduction_address_t(const void *private_address);
+	typedef void *nanos_get_reduction_storage_t(const void *address);
 	
-	static nanos_get_original_reduction_address_t *symbol = NULL;
+	static nanos_get_reduction_storage_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_get_original_reduction_address_t *)
-			_nanos6_resolve_symbol("nanos_get_original_reduction_address",
+		symbol = (nanos_get_reduction_storage_t *)
+			_nanos6_resolve_symbol("nanos_get_reduction_storage",
 					"reductions", NULL);
 	}
 	
-	(*symbol)(private_address);
+	(*symbol)(address);
 }
 
 #pragma GCC visibility pop

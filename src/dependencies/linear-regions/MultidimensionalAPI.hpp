@@ -25,7 +25,7 @@
 #define _UU_ __attribute__((unused))
 
 
-template <DataAccessType ACCESS_TYPE, bool WEAK, typename... TS>
+template <DataAccessType ACCESS_TYPE, bool WEAK>
 _AI_ void register_data_access_base(
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
 	long currentDimSize, long currentDimStart, long currentDimEnd
@@ -161,13 +161,13 @@ static _AI_ void register_data_access_skip_next(
 	_UU_ long nextDimSize, _UU_ long nextDimStart, _UU_ long nextDimEnd,
 	TS... otherDimensions
 ) {
-	register_data_access<ACCESS_TYPE, WEAK, TS...>(handler, symbolIndex, regionText, baseAddress, currentDimSize, currentDimStart, currentDimEnd, otherDimensions...);
+	register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, baseAddress, currentDimSize, currentDimStart, currentDimEnd, otherDimensions...);
 }
 
 
 // The following is only for reductions
 
-template <typename... TS>
+template <bool WEAK, typename... TS>
 static _AI_ void register_reduction_access_skip_next(
 	int reduction_operation, int reduction_index,
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
@@ -177,8 +177,28 @@ static _AI_ void register_reduction_access_skip_next(
 );
 
 
-template <typename... TS>
+template <bool WEAK>
 static _AI_ void register_reduction_access(
+	int reduction_operation, int reduction_index,
+	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
+	long currentDimSize, long currentDimStart, long currentDimEnd
+);
+
+template<>
+_AI_ void register_reduction_access<true>(
+	int reduction_operation, int reduction_index,
+	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
+	long currentDimSize, long currentDimStart, long currentDimEnd
+) {
+	nanos_register_region_weak_reduction_depinfo1(
+		reduction_operation, reduction_index,
+		handler, symbolIndex, regionText, baseAddress,
+		currentDimSize, currentDimStart, currentDimEnd
+	);
+}
+
+template<>
+_AI_ void register_reduction_access<false>(
 	int reduction_operation, int reduction_index,
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
 	long currentDimSize, long currentDimStart, long currentDimEnd
@@ -190,7 +210,7 @@ static _AI_ void register_reduction_access(
 	);
 }
 
-template <typename... TS>
+template <bool WEAK, typename... TS>
 static _AI_ void register_reduction_access(
 	int reduction_operation, int reduction_index,
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
@@ -198,7 +218,7 @@ static _AI_ void register_reduction_access(
 	TS... otherDimensions
 ) {
 	if (currentDimensionIsContinuous(otherDimensions...)) {
-		register_reduction_access_skip_next(
+		register_reduction_access_skip_next<WEAK>(
 			reduction_operation, reduction_index,
 			handler, symbolIndex, regionText, baseAddress,
 			currentDimSize * getCurrentDimensionSize(otherDimensions...),
@@ -212,14 +232,14 @@ static _AI_ void register_reduction_access(
 		currentBaseAddress += currentDimStart * stride;
 		
 		for (long index = currentDimStart; index < currentDimEnd; index++) {
-			register_reduction_access<>(reduction_operation, reduction_index, handler, symbolIndex, regionText, baseAddress, otherDimensions...);
+			register_reduction_access<WEAK>(reduction_operation, reduction_index, handler, symbolIndex, regionText, baseAddress, otherDimensions...);
 			currentBaseAddress += stride;
 		}
 	}
 }
 
 
-template <typename... TS>
+template <bool WEAK, typename... TS>
 static _AI_ void register_reduction_access_skip_next(
 	int reduction_operation, int reduction_index,
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
@@ -227,7 +247,7 @@ static _AI_ void register_reduction_access_skip_next(
 	_UU_ long nextDimSize, _UU_ long nextDimStart, _UU_ long nextDimEnd,
 	TS... otherDimensions
 ) {
-	register_reduction_access<TS...>(reduction_operation, reduction_index, handler, symbolIndex, regionText, baseAddress, currentDimSize, currentDimStart, currentDimEnd, otherDimensions...);
+	register_reduction_access<WEAK>(reduction_operation, reduction_index, handler, symbolIndex, regionText, baseAddress, currentDimSize, currentDimStart, currentDimEnd, otherDimensions...);
 }
 
 #undef _AI_
