@@ -32,49 +32,98 @@ runtime_handled_reductions_tests =
 
 
 if HAVE_NANOS6_MERCURIUM
+if BUILD_OPTIMIZED_VARIANT
 base_tests += \
-	fibonacci.debug.test fibonacci.test \
-	dep-nonest.debug.test dep-nonest.test \
-	dep-early-release.debug.test dep-early-release.test \
-	dep-er-and-weak.debug.test dep-er-and-weak.test \
-	if0.debug.test if0.test \
-	dep-wait.debug.test dep-wait.test
+	fibonacci.test \
+	dep-nonest.test \
+	dep-early-release.test \
+	dep-er-and-weak.test \
+	if0.test \
+	dep-wait.test
 	
 # These ones are disabled for now
-# 	taskloop-multiaxpy.debug.test taskloop-multiaxpy.test \
-# 	taskloop-dep-multiaxpy.debug.test taskloop-dep-multiaxpy.test \
-# 	taskloop-nqueens.debug.test taskloop-nqueens.test
+# 	taskloop-multiaxpy.test \
+# 	taskloop-dep-multiaxpy.test \
+# 	taskloop-nqueens.test
 
 cpu_management_tests += \
-	cpu-activation.debug.test cpu-activation.test
+	cpu-activation.test
 
 user_mutex_tests += \
-	critical.debug.test critical.test
+	critical.test
 
 linear_region_tests += \
-	lr-nonest.debug.test lr-nonest.test \
-	lr-nonest-upgrades.debug.test lr-nonest-upgrades.test \
-	lr-early-release.debug.test lr-early-release.test  \
-	lr-er-and-weak.debug.test lr-er-and-weak.test \
-	lr-release.debug.test lr-release.test
+	lr-nonest.test \
+	lr-nonest-upgrades.test \
+	lr-early-release.test  \
+	lr-er-and-weak.test \
+	lr-release.test
 
 reductions_tests += \
-	red-firstprivate.debug.test red-firstprivate.test \
-	red-nonest.debug.test red-nonest.test \
-	red-nest.debug.test red-nest.test \
-	red-nqueens.debug.test red-nqueens.test \
-	red-stress.debug.test red-stress.test
+	red-firstprivate.test \
+	red-nonest.test \
+	red-nest.test \
+	red-nqueens.test \
+	red-stress.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
 # moment, as the current implementation is based on task privatization and the
 # combination is handled at compile time.
 #runtime_handled_reductions_tests += \
-#	red-nest-taskwait.debug.test red-nest-taskwait.test \
-#	red-combine-finish-access.debug.test red-combine-finish-access.test \
-#	red-combine-new-access.debug.test red-combine-new-access.test \
-#	red-combine-taskwait.debug.test red-combine-taskwait.test \
-#	red-combine-taskwait-mark.debug.test red-combine-taskwait-mark.test
+#	red-nest-taskwait.test \
+#	red-combine-finish-access.test \
+#	red-combine-new-access.test \
+#	red-combine-taskwait.test \
+#	red-combine-taskwait-mark.test
+endif
+
+if BUILD_DEBUG_VARIANTS
+base_tests += \
+	fibonacci.debug.test \
+	dep-nonest.debug.test \
+	dep-early-release.debug.test \
+	dep-er-and-weak.debug.test \
+	if0.debug.test \
+	dep-wait.debug.test
+	
+# These ones are disabled for now
+# 	taskloop-multiaxpy.debug.test \
+# 	taskloop-dep-multiaxpy.debug.test \
+# 	taskloop-nqueens.debug.test
+
+cpu_management_tests += \
+	cpu-activation.debug.test
+
+user_mutex_tests += \
+	critical.debug.test
+
+linear_region_tests += \
+	lr-nonest.debug.test \
+	lr-nonest-upgrades.debug.test \
+	lr-early-release.debug.test  \
+	lr-er-and-weak.debug.test \
+	lr-release.debug.test
+
+reductions_tests += \
+	red-firstprivate.debug.test \
+	red-nonest.debug.test \
+	red-nest.debug.test \
+	red-nqueens.debug.test \
+	red-stress.debug.test
+
+# The following tests are designed for testing reductions implementations where
+# the combination is handled by the runtime. They are not enabled at the
+# moment, as the current implementation is based on task privatization and the
+# combination is handled at compile time.
+#runtime_handled_reductions_tests += \
+#	red-nest-taskwait.debug.test \
+#	red-combine-finish-access.debug.test \
+#	red-combine-new-access.debug.test \
+#	red-combine-taskwait.debug.test \
+#	red-combine-taskwait-mark.debug.test
+endif
+
 endif
 
 
