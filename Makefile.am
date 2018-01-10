@@ -309,13 +309,10 @@ MultidimensionalAPIToDiscrete.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_
 # Sources for debugging both the regular and the null runtime
 universal_debug_sources = \
 	src/lowlevel/FatalErrorHandler.cpp \
-	src/lowlevel/FatalErrorHandler.hpp \
 	src/system/RuntimeInfo.cpp \
-	src/system/RuntimeInfo.hpp \
 	src/system/RuntimeInfoAPI.cpp \
 	src/system/debug/RuntimeVersionAPI.cpp \
-	src/version/CodeVersionInfo.cpp \
-	src/version/VersionInfo.hpp
+	src/version/CodeVersionInfo.cpp
 
 nodist_universal_debug_sources = \
 	src/version/CompilerVersionInfo.cpp
@@ -330,224 +327,65 @@ nodist_common_sources = \
 
 common_sources = \
 	src/executors/threads/CPU.cpp \
-	src/executors/threads/CPU.hpp \
-	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.cpp \
-	src/executors/threads/CPUManager.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.cpp \
-	src/executors/threads/DefaultThreadManagerPolicy.hpp \
-	src/executors/threads/TaskFinalization.hpp \
-	src/executors/threads/TaskFinalizationImplementation.hpp \
 	src/executors/threads/ThreadManager.cpp \
-	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/ThreadManagerPolicy.cpp \
-	src/executors/threads/ThreadManagerPolicy.hpp \
-	src/executors/threads/ThreadManagerPolicyInterface.hpp \
 	src/executors/threads/WorkerThread.cpp \
-	src/executors/threads/WorkerThread.hpp \
-	src/executors/threads/WorkerThreadImplementation.hpp \
-	src/hardware/HardwareInfo.hpp \
 	src/hardware/HardwareInfo.cpp \
-	src/hardware/places/MemoryPlace.hpp \
-	src/hardware/places/NUMAPlace.hpp \
 	src/hardware/places/NUMAPlace.cpp \
-	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/ComputePlace.cpp \
-	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/CPUPlace.cpp \
-	src/instrument/api/InstrumentAddTask.hpp \
-	src/instrument/api/InstrumentDependenciesByAccess.hpp \
-	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/api/InstrumentDependenciesByGroup.hpp \
-	src/instrument/api/InstrumentComputePlaceManagement.hpp \
-	src/instrument/api/InstrumentInitAndShutdown.hpp \
-	src/instrument/api/InstrumentLeaderThread.hpp \
-	src/instrument/api/InstrumentLogMessage.hpp \
-	src/instrument/api/InstrumentTaskExecution.hpp \
-	src/instrument/api/InstrumentTaskStatus.hpp \
-	src/instrument/api/InstrumentTaskWait.hpp \
-	src/instrument/api/InstrumentThreadManagement.hpp \
-	src/instrument/api/InstrumentUserMutex.hpp \
-	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
-	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
-	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
-	src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
-	src/lowlevel/ConditionVariable.hpp \
-	src/lowlevel/EnvironmentVariable.hpp \
-	src/lowlevel/PaddedSpinLock.hpp \
-	src/lowlevel/PaddedTicketSpinLock.hpp \
-	src/lowlevel/RWSpinLock.hpp \
-	src/lowlevel/RWTicketSpinLock.hpp \
-	src/lowlevel/SpinLock.hpp \
-	src/lowlevel/SymbolResolver.hpp \
-	src/lowlevel/TicketSpinLock.hpp \
-	src/lowlevel/TokenizedEnvironmentVariable.hpp \
-	src/lowlevel/apple/SpinLockImplementation.hpp \
-	src/lowlevel/cxx/SpinLockImplementation.hpp \
-	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/threads/ExternalThread.cpp \
-	src/lowlevel/threads/ExternalThread.hpp \
-	src/lowlevel/threads/HelperThread.hpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
-	src/lowlevel/threads/KernelLevelThread.hpp \
-	src/lowlevel/threads/posix/KernelLevelThread.hpp \
-	src/memory/AddressSpace.hpp \
 	src/scheduling/Scheduler.cpp \
-	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerGenerator.cpp \
-	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.cpp \
-	src/scheduling/SchedulerInterface.hpp \
-	src/scheduling/schedulers/DefaultScheduler.hpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.cpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.hpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/schedulers/FIFOScheduler.cpp \
-	src/scheduling/schedulers/FIFOScheduler.hpp \
 	src/scheduling/schedulers/HostHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/HostHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/schedulers/NaiveScheduler.cpp \
-	src/scheduling/schedulers/NaiveScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
-	src/scheduling/schedulers/PriorityScheduler.hpp \
-	src/scheduling/TaskloopSchedulingPolicy.hpp \
-	src/support/ConcurrentUnorderedList.hpp \
-	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.cpp \
-	src/support/GlobalLock.hpp \
-	src/support/InlineDoublyLinkedList.hpp \
-	src/support/InstrumentedThread.hpp \
-	src/support/Objectified.hpp \
-	src/support/StringComposer.hpp \
-	src/support/StringLiteral.hpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
-	src/system/If0Task.hpp \
 	src/system/LeaderThread.cpp \
-	src/system/LeaderThread.hpp \
 	src/system/PollingAPI.cpp \
-	src/system/PollingAPI.hpp \
 	src/system/RuntimeInfoEssentials.cpp \
-	src/system/RuntimeInfoEssentials.hpp \
 	src/system/UtilsAPI.cpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
-	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.cpp \
-	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
-	src/system/ompss/UserMutex.hpp \
-	src/tasks/Task.hpp \
-	src/tasks/TaskImplementation.hpp \
-	src/tasks/TaskDebuggingInterface.hpp \
-	src/tasks/Taskloop.cpp \
-	src/tasks/Taskloop.hpp \
-	src/tasks/TaskloopGenerator.hpp \
-	src/tasks/TaskloopInfo.hpp \
-	src/tasks/TaskloopLogic.hpp
+	src/tasks/Taskloop.cpp
 
-common_dependency_sources = \
-	src/dependencies/DataAccessType.hpp \
-	src/dependencies/DataAccessBase.hpp \
-	src/dependencies/MultidimensionalAPITraversal.hpp
 
-discrete_dependency_sources = $(common_dependency_sources) \
-	src/dependencies/discrete/CPUDependencyData.hpp \
-	src/dependencies/discrete/DataAccess.hpp \
-	src/dependencies/discrete/DataAccessImplementation.hpp \
-	src/dependencies/discrete/DataAccessRegion.hpp \
-	src/dependencies/discrete/DataAccessRegionIndexer.hpp \
-	src/dependencies/discrete/DataAccessRegistration.hpp \
-	src/dependencies/discrete/DataAccessSequence.hpp \
-	src/dependencies/discrete/DataAccessSequenceImplementation.hpp \
-	src/dependencies/discrete/DataAccessSequenceLinkingArtifacts.hpp \
-	src/dependencies/discrete/DataAccessSequenceLinkingArtifactsImplementation.hpp \
-	src/dependencies/discrete/DependencyDomain.hpp \
-	src/dependencies/discrete/DependencySystem.hpp \
-	src/dependencies/discrete/DiscreteAddressMap.hpp \
-	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
-	src/dependencies/discrete/MultidimensionalAPI.hpp \
+discrete_dependency_sources = \
 	src/dependencies/discrete/Reductions.cpp \
-	src/dependencies/discrete/RegisterDependencies.cpp \
-	src/dependencies/discrete/RootDataAccessSequence.hpp \
-	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
-	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifactsImplementation.hpp \
-	src/dependencies/discrete/TaskDataAccesses.hpp \
-	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
-	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp
+	src/dependencies/discrete/RegisterDependencies.cpp
 
-common_linear_regions_dependency_sources = \
-	src/dependencies/linear-regions/DataAccessRegion.hpp \
-	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \
-	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
-	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
-	src/dependencies/linear-regions/LinearRegionMap.hpp \
-	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
-	src/dependencies/linear-regions/MultidimensionalAPI.hpp
+linear_regions_unfragmented_dependency_sources = \
+	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp
 
-linear_regions_unfragmented_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
-	src/dependencies/linear-regions-unfragmented/CPUDependencyData.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccessRegistration.hpp \
-	src/dependencies/linear-regions-unfragmented/DependencyDomain.hpp \
-	src/dependencies/linear-regions-unfragmented/DependencySystem.hpp \
-	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMap.hpp \
-	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifacts.hpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
-
-linear_regions_fragmented_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
-	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
-	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
-	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
-	src/dependencies/linear-regions-fragmented/DataAccessLink.hpp \
-	src/dependencies/linear-regions-fragmented/DataAccessObjectType.hpp \
+linear_regions_fragmented_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.cpp \
-	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
-	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
-	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
-	src/dependencies/linear-regions-fragmented/ReductionSpecific.hpp \
 	src/dependencies/linear-regions-fragmented/Reductions.cpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
-	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp \
-	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
-	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
-	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp
+	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp
 
-linear_regions_alternative_dependency_sources = $(common_dependency_sources) $(common_linear_regions_dependency_sources) \
-	src/dependencies/linear-regions-alternative/BottomMapEntry.hpp \
-	src/dependencies/linear-regions-alternative/CPUDependencyData.hpp \
-	src/dependencies/linear-regions-alternative/DataAccess.hpp \
-	src/dependencies/linear-regions-alternative/DataAccessRegistration.hpp \
-	src/dependencies/linear-regions-alternative/DependencyDomain.hpp \
-	src/dependencies/linear-regions-alternative/DependencySystem.hpp \
+linear_regions_alternative_dependency_sources = \
 	src/dependencies/linear-regions-alternative/Reductions.cpp \
-	src/dependencies/linear-regions-alternative/RegisterDependencies.cpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifacts.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifactsImplementation.hpp
+	src/dependencies/linear-regions-alternative/RegisterDependencies.cpp
 
 multidimensional_adaptor_sources =
 
@@ -580,19 +418,16 @@ endif
 
 
 introspection_sources = \
-	src/instrument/support/introspection/CodeAddressInfoBase.cpp \
-	src/instrument/support/introspection/CodeAddressInfoBase.hpp
+	src/instrument/support/introspection/CodeAddressInfoBase.cpp
 introspection_cppflags =
 
 if HAVE_ELFUTILS
 introspection_sources += \
-	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.cpp \
-	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp
+	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.cpp
 introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/ElfUtils
 else
 introspection_sources += \
-	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.cpp \
-	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp
+	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.cpp
 introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/Addr2Line
 endif
 
@@ -610,9 +445,7 @@ endif
 AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
 common_sources += \
 	src/executors/threads/kernel-level/CPUThreadingModelData.cpp \
-	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
-	src/executors/threads/kernel-level/WorkerThreadBase.cpp \
-	src/executors/threads/kernel-level/WorkerThreadBase.hpp
+	src/executors/threads/kernel-level/WorkerThreadBase.cpp
 
 
 nodist_common_sources += \
@@ -624,24 +457,238 @@ CLEANFILES += \
 
 
 hardware_counters_sources = \
-	src/performance/HardwareCounters.cpp \
-	src/performance/HardwareCounters.hpp \
-	src/performance/HardwareCountersThreadLocalData.hpp \
-	src/performance/HardwareCountersThreadLocalDataImplementation.hpp
+	src/performance/HardwareCounters.cpp
 
 papi_hardware_counters_sources = \
-	src/performance/PAPI/PAPIHardwareCounters.cpp \
-	src/performance/PAPI/PAPIHardwareCounters.hpp \
-	src/performance/PAPI/PAPIHardwareCountersThreadLocalData.hpp \
-	src/performance/PAPI/PAPIHardwareCountersThreadLocalDataImplementation.hpp
+	src/performance/PAPI/PAPIHardwareCounters.cpp
 
-no_hardware_counters_sources = \
-	src/performance/no-HC/NoHardwareCounters.hpp \
-	src/performance/no-HC/NoHardwareCountersThreadLocalData.hpp \
-	src/performance/no-HC/NoHardwareCountersThreadLocalDataImplementation.hpp
+no_hardware_counters_sources = 
+
+noinstrument_sources = 
+
+instrument_generic_ids_sources = \
+	src/instrument/generic_ids/GenericIds.cpp
+
+instrument_graph_sources = \
+	$(instrument_generic_ids_sources) \
+	src/instrument/graph/ExecutionSteps.cpp \
+	src/instrument/graph/GenerateEdges.cpp \
+	src/instrument/graph/InstrumentAddTask.cpp \
+	src/instrument/graph/InstrumentDependenciesByAccessLinks.cpp \
+	src/instrument/graph/InstrumentGraph.cpp \
+	src/instrument/graph/InstrumentInitAndShutdown.cpp \
+	src/instrument/graph/InstrumentTaskExecution.cpp \
+	src/instrument/graph/InstrumentTaskWait.cpp \
+	src/instrument/graph/InstrumentUserMutex.cpp \
+	src/instrument/graph/PathLength.cpp \
+	src/instrument/graph/SortAccessGroups.cpp
+
+instrument_profile_sources = \
+	src/instrument/profile/InstrumentInitAndShutdown.cpp \
+	src/instrument/profile/InstrumentMalloc.cpp \
+	src/instrument/profile/InstrumentProfile.cpp \
+	src/instrument/support/sampling/SigProf.cpp \
+	$(introspection_sources)
+
+instrument_stats_sources = \
+	$(hardware_counters_sources) \
+	src/instrument/stats/InstrumentInitAndShutdown.cpp \
+	src/instrument/stats/InstrumentStats.cpp
+
+instrument_verbose_sources = \
+	$(instrument_generic_ids_sources) \
+	src/instrument/verbose/InstrumentAddTask.cpp \
+	src/instrument/verbose/InstrumentComputePlaceManagement.cpp \
+	src/instrument/verbose/InstrumentDependenciesByAccess.cpp \
+	src/instrument/verbose/InstrumentDependenciesByAccessLinks.cpp \
+	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
+	src/instrument/verbose/InstrumentInitAndShutdown.cpp \
+	src/instrument/verbose/InstrumentLeaderThread.cpp \
+	src/instrument/verbose/InstrumentTaskExecution.cpp \
+	src/instrument/verbose/InstrumentTaskStatus.cpp \
+	src/instrument/verbose/InstrumentTaskWait.cpp \
+	src/instrument/verbose/InstrumentThreadManagement.cpp \
+	src/instrument/verbose/InstrumentUserMutex.cpp \
+	src/instrument/verbose/InstrumentVerbose.cpp
+
+instrument_extrae_sources = \
+	$(instrument_generic_ids_sources) \
+	src/instrument/extrae/ExtraeSymbolLiterals.cpp \
+	src/instrument/extrae/ExtraeSymbolResolver.cpp \
+	src/instrument/extrae/InstrumentExtrae.cpp \
+	src/instrument/extrae/InstrumentInitAndShutdown.cpp \
+	src/instrument/extrae/InstrumentMalloc.cpp \
+	src/instrument/support/sampling/SigProf.cpp \
+	$(introspection_sources)
 
 
-noinstrument_sources = \
+# null_common_sources = \
+# 	src/null/NullDebug.cpp \
+# 	src/null/NullAPI.cpp \
+# 	src/null/NullSpawn.cpp
+# 
+# null_sources = \
+# 	$(null_common_sources) \
+# 	src/null/NullDynamicBlock.cpp
+# 
+# null_cb_sources = \
+# 	$(null_common_sources) \
+# 	src/null/NullConstantBlock.cpp
+# 
+# null_sb_sources = \
+# 	$(null_common_sources) \
+# 	src/null/NullStaticBlock.cpp
+
+noinst_HEADERS = \
+	src/dependencies/DataAccessBase.hpp \
+	src/dependencies/DataAccessType.hpp \
+	src/dependencies/discrete/CPUDependencyData.hpp \
+	src/dependencies/discrete/DataAccess.hpp \
+	src/dependencies/discrete/DataAccessImplementation.hpp \
+	src/dependencies/discrete/DataAccessRegion.hpp \
+	src/dependencies/discrete/DataAccessRegionIndexer.hpp \
+	src/dependencies/discrete/DataAccessRegistration.hpp \
+	src/dependencies/discrete/DataAccessSequence.hpp \
+	src/dependencies/discrete/DataAccessSequenceImplementation.hpp \
+	src/dependencies/discrete/DataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/discrete/DataAccessSequenceLinkingArtifactsImplementation.hpp \
+	src/dependencies/discrete/DependencyDomain.hpp \
+	src/dependencies/discrete/DependencySystem.hpp \
+	src/dependencies/discrete/DiscreteAddressMap.hpp \
+	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
+	src/dependencies/discrete/MultidimensionalAPI.hpp \
+	src/dependencies/discrete/RootDataAccessSequence.hpp \
+	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
+	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifactsImplementation.hpp \
+	src/dependencies/discrete/TaskDataAccesses.hpp \
+	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
+	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp \
+	src/dependencies/linear-regions-alternative/BottomMapEntry.hpp \
+	src/dependencies/linear-regions-alternative/CPUDependencyData.hpp \
+	src/dependencies/linear-regions-alternative/DataAccess.hpp \
+	src/dependencies/linear-regions-alternative/DataAccessRegistration.hpp \
+	src/dependencies/linear-regions-alternative/DependencyDomain.hpp \
+	src/dependencies/linear-regions-alternative/DependencySystem.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifacts.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifactsImplementation.hpp \
+	src/dependencies/linear-regions/DataAccessRegion.hpp \
+	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \
+	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
+	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
+	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
+	src/dependencies/linear-regions-fragmented/DataAccessLink.hpp \
+	src/dependencies/linear-regions-fragmented/DataAccessObjectType.hpp \
+	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
+	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
+	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
+	src/dependencies/linear-regions-fragmented/ReductionSpecific.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
+	src/dependencies/linear-regions/LinearRegionMap.hpp \
+	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
+	src/dependencies/linear-regions/MultidimensionalAPI.hpp \
+	src/dependencies/linear-regions-unfragmented/CPUDependencyData.hpp \
+	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
+	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
+	src/dependencies/linear-regions-unfragmented/DataAccessRegistration.hpp \
+	src/dependencies/linear-regions-unfragmented/DependencyDomain.hpp \
+	src/dependencies/linear-regions-unfragmented/DependencySystem.hpp \
+	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMap.hpp \
+	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
+	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifacts.hpp \
+	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
+	src/dependencies/MultidimensionalAPITraversal.hpp \
+	src/executors/threads/CPUActivation.hpp \
+	src/executors/threads/CPU.hpp \
+	src/executors/threads/CPUManager.hpp \
+	src/executors/threads/DefaultThreadManagerPolicy.hpp \
+	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
+	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
+	src/executors/threads/TaskFinalization.hpp \
+	src/executors/threads/TaskFinalizationImplementation.hpp \
+	src/executors/threads/ThreadManager.hpp \
+	src/executors/threads/ThreadManagerPolicy.hpp \
+	src/executors/threads/ThreadManagerPolicyInterface.hpp \
+	src/executors/threads/WorkerThread.hpp \
+	src/executors/threads/WorkerThreadImplementation.hpp \
+	src/hardware/HardwareInfo.hpp \
+	src/hardware/places/ComputePlace.hpp \
+	src/hardware/places/CPUPlace.hpp \
+	src/hardware/places/MemoryPlace.hpp \
+	src/hardware/places/NUMAPlace.hpp \
+	src/instrument/api/InstrumentAddTask.hpp \
+	src/instrument/api/InstrumentComputePlaceManagement.hpp \
+	src/instrument/api/InstrumentDependenciesByAccess.hpp \
+	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/api/InstrumentDependenciesByGroup.hpp \
+	src/instrument/api/InstrumentInitAndShutdown.hpp \
+	src/instrument/api/InstrumentLeaderThread.hpp \
+	src/instrument/api/InstrumentLogMessage.hpp \
+	src/instrument/api/InstrumentTaskExecution.hpp \
+	src/instrument/api/InstrumentTaskStatus.hpp \
+	src/instrument/api/InstrumentTaskWait.hpp \
+	src/instrument/api/InstrumentThreadManagement.hpp \
+	src/instrument/api/InstrumentUserMutex.hpp \
+	src/instrument/extrae/ExtraeSymbolLiterals.hpp \
+	src/instrument/extrae/ExtraeSymbolResolver.hpp \
+	src/instrument/extrae/InstrumentAddTask.hpp \
+	src/instrument/extrae/InstrumentComputePlaceId.hpp \
+	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
+	src/instrument/extrae/InstrumentDataAccessId.hpp \
+	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
+	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
+	src/instrument/extrae/InstrumentExternalThreadId.hpp \
+	src/instrument/extrae/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/extrae/InstrumentExtrae.hpp \
+	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
+	src/instrument/extrae/InstrumentLeaderThread.hpp \
+	src/instrument/extrae/InstrumentLogMessage.hpp \
+	src/instrument/extrae/InstrumentTaskExecution.hpp \
+	src/instrument/extrae/InstrumentTaskId.hpp \
+	src/instrument/extrae/InstrumentTaskStatus.hpp \
+	src/instrument/extrae/InstrumentTaskWait.hpp \
+	src/instrument/extrae/InstrumentThreadId.hpp \
+	src/instrument/extrae/InstrumentThreadLocalData.hpp \
+	src/instrument/extrae/InstrumentThreadManagement.hpp \
+	src/instrument/extrae/InstrumentUserMutex.hpp \
+	src/instrument/extrae/PreloadedExtraeBouncer.hpp \
+	src/instrument/generic_ids/GenericIds.hpp \
+	src/instrument/generic_ids/InstrumentExternalThreadId.hpp \
+	src/instrument/generic_ids/InstrumentThreadId.hpp \
+	src/instrument/graph/Color.hpp \
+	src/instrument/graph/ExecutionSteps.hpp \
+	src/instrument/graph/GenerateEdges.hpp \
+	src/instrument/graph/InstrumentAddTask.hpp \
+	src/instrument/graph/InstrumentComputePlaceId.hpp \
+	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
+	src/instrument/graph/InstrumentDataAccessId.hpp \
+	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
+	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
+	src/instrument/graph/InstrumentExternalThreadId.hpp \
+	src/instrument/graph/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/graph/InstrumentGraph.hpp \
+	src/instrument/graph/InstrumentInitAndShutdown.hpp \
+	src/instrument/graph/InstrumentLeaderThread.hpp \
+	src/instrument/graph/InstrumentLogMessage.hpp \
+	src/instrument/graph/InstrumentTaskExecution.hpp \
+	src/instrument/graph/InstrumentTaskId.hpp \
+	src/instrument/graph/InstrumentTaskStatus.hpp \
+	src/instrument/graph/InstrumentTaskWait.hpp \
+	src/instrument/graph/InstrumentThreadId.hpp \
+	src/instrument/graph/InstrumentThreadLocalData.hpp \
+	src/instrument/graph/InstrumentThreadManagement.hpp \
+	src/instrument/graph/InstrumentUserMutex.hpp \
+	src/instrument/graph/PathLength.hpp \
+	src/instrument/graph/SortAccessGroups.hpp \
 	src/instrument/null/InstrumentAddTask.hpp \
 	src/instrument/null/InstrumentComputePlaceId.hpp \
 	src/instrument/null/InstrumentComputePlaceManagement.hpp \
@@ -664,58 +711,7 @@ noinstrument_sources = \
 	src/instrument/null/InstrumentThreadInstrumentationContextImplementation.hpp \
 	src/instrument/null/InstrumentThreadLocalData.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
-	src/instrument/null/InstrumentUserMutex.hpp
-
-instrument_generic_ids_sources = \
-	src/instrument/generic_ids/GenericIds.cpp \
-	src/instrument/generic_ids/GenericIds.hpp \
-	src/instrument/generic_ids/InstrumentExternalThreadId.hpp \
-	src/instrument/generic_ids/InstrumentThreadId.hpp
-
-instrument_graph_sources = \
-	$(instrument_generic_ids_sources) \
-	src/instrument/graph/Color.hpp \
-	src/instrument/graph/ExecutionSteps.cpp \
-	src/instrument/graph/ExecutionSteps.hpp \
-	src/instrument/graph/GenerateEdges.cpp \
-	src/instrument/graph/GenerateEdges.hpp \
-	src/instrument/graph/InstrumentAddTask.cpp \
-	src/instrument/graph/InstrumentAddTask.hpp \
-	src/instrument/graph/InstrumentComputePlaceId.hpp \
-	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
-	src/instrument/graph/InstrumentDataAccessId.hpp \
-	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
-	src/instrument/graph/InstrumentDependenciesByAccessLinks.cpp \
-	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
-	src/instrument/graph/InstrumentExternalThreadId.hpp \
-	src/instrument/graph/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/graph/InstrumentGraph.cpp \
-	src/instrument/graph/InstrumentGraph.hpp \
-	src/instrument/graph/InstrumentInitAndShutdown.cpp \
-	src/instrument/graph/InstrumentInitAndShutdown.hpp \
-	src/instrument/graph/InstrumentLeaderThread.hpp \
-	src/instrument/graph/InstrumentLogMessage.hpp \
-	src/instrument/graph/InstrumentTaskExecution.cpp \
-	src/instrument/graph/InstrumentTaskExecution.hpp \
-	src/instrument/graph/InstrumentTaskId.hpp \
-	src/instrument/graph/InstrumentTaskStatus.hpp \
-	src/instrument/graph/InstrumentTaskWait.cpp \
-	src/instrument/graph/InstrumentTaskWait.hpp \
-	src/instrument/graph/InstrumentThreadId.hpp \
-	src/instrument/graph/InstrumentThreadLocalData.hpp \
-	src/instrument/graph/InstrumentThreadManagement.hpp \
-	src/instrument/graph/InstrumentUserMutex.cpp \
-	src/instrument/graph/InstrumentUserMutex.hpp \
-	src/instrument/graph/PathLength.cpp \
-	src/instrument/graph/PathLength.hpp \
-	src/instrument/graph/SortAccessGroups.cpp \
-	src/instrument/graph/SortAccessGroups.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
-
-instrument_profile_sources = \
+	src/instrument/null/InstrumentUserMutex.hpp \
 	src/instrument/profile/Address.hpp \
 	src/instrument/profile/InstrumentAddTask.hpp \
 	src/instrument/profile/InstrumentComputePlaceId.hpp \
@@ -726,13 +722,10 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
 	src/instrument/profile/InstrumentExternalThreadId.hpp \
 	src/instrument/profile/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentInitAndShutdown.hpp \
 	src/instrument/profile/InstrumentInstrumentationContext.hpp \
 	src/instrument/profile/InstrumentLeaderThread.hpp \
 	src/instrument/profile/InstrumentLogMessage.hpp \
-	src/instrument/profile/InstrumentMalloc.cpp \
-	src/instrument/profile/InstrumentProfile.cpp \
 	src/instrument/profile/InstrumentProfile.hpp \
 	src/instrument/profile/InstrumentTaskExecution.hpp \
 	src/instrument/profile/InstrumentTaskId.hpp \
@@ -744,13 +737,6 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentThreadLocalData.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp \
-	src/instrument/support/sampling/SigProf.cpp \
-	src/instrument/support/sampling/SigProf.hpp \
-	src/instrument/support/sampling/ThreadLocalData.hpp \
-	$(introspection_sources)
-
-instrument_stats_sources = \
-	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentComputePlaceId.hpp \
 	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
@@ -760,11 +746,9 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
 	src/instrument/stats/InstrumentExternalThreadId.hpp \
 	src/instrument/stats/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
-	src/instrument/stats/InstrumentStats.cpp \
 	src/instrument/stats/InstrumentStats.hpp \
 	src/instrument/stats/InstrumentTaskExecution.hpp \
 	src/instrument/stats/InstrumentTaskId.hpp \
@@ -775,110 +759,111 @@ instrument_stats_sources = \
 	src/instrument/stats/InstrumentThreadManagement.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp \
+	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
+	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
-
-instrument_verbose_sources = \
-	$(instrument_generic_ids_sources) \
-	src/instrument/verbose/InstrumentAddTask.cpp \
+	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp \
+	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
+	src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp \
+	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
+	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
+	src/instrument/support/sampling/SigProf.hpp \
+	src/instrument/support/sampling/ThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
-	src/instrument/verbose/InstrumentComputePlaceManagement.cpp \
 	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
-	src/instrument/verbose/InstrumentDependenciesByAccess.cpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
-	src/instrument/verbose/InstrumentDependenciesByAccessLinks.cpp \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/verbose/InstrumentDependenciesByGroup.cpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
 	src/instrument/verbose/InstrumentExternalThreadId.hpp \
 	src/instrument/verbose/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/verbose/InstrumentInitAndShutdown.cpp \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
-	src/instrument/verbose/InstrumentLeaderThread.cpp \
 	src/instrument/verbose/InstrumentLeaderThread.hpp \
 	src/instrument/verbose/InstrumentLogMessage.hpp \
-	src/instrument/verbose/InstrumentTaskExecution.cpp \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \
 	src/instrument/verbose/InstrumentTaskId.hpp \
-	src/instrument/verbose/InstrumentTaskStatus.cpp \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \
-	src/instrument/verbose/InstrumentTaskWait.cpp \
 	src/instrument/verbose/InstrumentTaskWait.hpp \
 	src/instrument/verbose/InstrumentThreadId.hpp \
 	src/instrument/verbose/InstrumentThreadLocalData.hpp \
-	src/instrument/verbose/InstrumentThreadManagement.cpp \
 	src/instrument/verbose/InstrumentThreadManagement.hpp \
-	src/instrument/verbose/InstrumentUserMutex.cpp \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
-	src/instrument/verbose/InstrumentVerbose.cpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.hpp \
-	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp
-
-instrument_extrae_sources = \
-	$(instrument_generic_ids_sources) \
-	src/instrument/extrae/ExtraeSymbolLiterals.cpp \
-	src/instrument/extrae/ExtraeSymbolLiterals.hpp \
-	src/instrument/extrae/ExtraeSymbolResolver.cpp \
-	src/instrument/extrae/ExtraeSymbolResolver.hpp \
-	src/instrument/extrae/InstrumentAddTask.hpp \
-	src/instrument/extrae/InstrumentComputePlaceId.hpp \
-	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
-	src/instrument/extrae/InstrumentDataAccessId.hpp \
-	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
-	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
-	src/instrument/extrae/InstrumentExternalThreadId.hpp \
-	src/instrument/extrae/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/extrae/InstrumentExtrae.cpp \
-	src/instrument/extrae/InstrumentExtrae.hpp \
-	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
-	src/instrument/extrae/InstrumentInitAndShutdown.cpp \
-	src/instrument/extrae/InstrumentLeaderThread.hpp \
-	src/instrument/extrae/InstrumentLogMessage.hpp \
-	src/instrument/extrae/InstrumentMalloc.cpp \
-	src/instrument/extrae/InstrumentTaskExecution.hpp \
-	src/instrument/extrae/InstrumentTaskId.hpp \
-	src/instrument/extrae/InstrumentTaskStatus.hpp \
-	src/instrument/extrae/InstrumentTaskWait.hpp \
-	src/instrument/extrae/InstrumentThreadId.hpp \
-	src/instrument/extrae/InstrumentThreadLocalData.hpp \
-	src/instrument/extrae/InstrumentThreadManagement.hpp \
-	src/instrument/extrae/InstrumentUserMutex.hpp \
-	src/instrument/extrae/PreloadedExtraeBouncer.hpp \
-	src/instrument/support/InstrumentInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp \
-	src/instrument/support/sampling/SigProf.cpp \
-	src/instrument/support/sampling/SigProf.hpp \
-	src/instrument/support/sampling/ThreadLocalData.hpp \
-	$(introspection_sources)
-
-
-# null_common_sources = \
-# 	src/null/NullDebug.cpp \
-# 	src/null/NullAPI.cpp \
-# 	src/null/NullSpawn.cpp
-# 
-# null_sources = \
-# 	$(null_common_sources) \
-# 	src/null/NullDynamicBlock.cpp
-# 
-# null_cb_sources = \
-# 	$(null_common_sources) \
-# 	src/null/NullConstantBlock.cpp
-# 
-# null_sb_sources = \
-# 	$(null_common_sources) \
-# 	src/null/NullStaticBlock.cpp
-
-noinst_HEADERS = \
+	src/lowlevel/apple/SpinLockImplementation.hpp \
+	src/lowlevel/ConditionVariable.hpp \
+	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/EnvironmentVariable.hpp \
+	src/lowlevel/FatalErrorHandler.hpp \
+	src/lowlevel/PaddedSpinLock.hpp \
+	src/lowlevel/PaddedTicketSpinLock.hpp \
+	src/lowlevel/posix/SpinLockImplementation.hpp \
+	src/lowlevel/RWSpinLock.hpp \
+	src/lowlevel/RWTicketSpinLock.hpp \
+	src/lowlevel/SpinLock.hpp \
+	src/lowlevel/SymbolResolver.hpp \
+	src/lowlevel/threads/ExternalThread.hpp \
+	src/lowlevel/threads/HelperThread.hpp \
+	src/lowlevel/threads/KernelLevelThread.hpp \
+	src/lowlevel/threads/posix/KernelLevelThread.hpp \
+	src/lowlevel/TicketSpinLock.hpp \
+	src/lowlevel/TokenizedEnvironmentVariable.hpp \
+	src/memory/AddressSpace.hpp \
+	src/performance/HardwareCounters.hpp \
+	src/performance/HardwareCountersThreadLocalData.hpp \
+	src/performance/HardwareCountersThreadLocalDataImplementation.hpp \
+	src/performance/no-HC/NoHardwareCounters.hpp \
+	src/performance/no-HC/NoHardwareCountersThreadLocalData.hpp \
+	src/performance/no-HC/NoHardwareCountersThreadLocalDataImplementation.hpp \
+	src/performance/PAPI/PAPIHardwareCounters.hpp \
+	src/performance/PAPI/PAPIHardwareCountersThreadLocalData.hpp \
+	src/performance/PAPI/PAPIHardwareCountersThreadLocalDataImplementation.hpp \
+	src/scheduling/SchedulerGenerator.hpp \
+	src/scheduling/Scheduler.hpp \
+	src/scheduling/SchedulerInterface.hpp \
+	src/scheduling/schedulers/DefaultScheduler.hpp \
+	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
+	src/scheduling/schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.hpp \
+	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
+	src/scheduling/schedulers/FIFOScheduler.hpp \
+	src/scheduling/schedulers/HostHierarchicalScheduler.hpp \
+	src/scheduling/schedulers/ImmediateSuccessorScheduler.hpp \
+	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.hpp \
+	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
+	src/scheduling/schedulers/NaiveScheduler.hpp \
+	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
+	src/scheduling/schedulers/PriorityScheduler.hpp \
+	src/scheduling/TaskloopSchedulingPolicy.hpp \
+	src/support/ConcurrentUnorderedList.hpp \
+	src/support/ConstPropagator.hpp \
+	src/support/GlobalLock.hpp \
+	src/support/InlineDoublyLinkedList.hpp \
+	src/support/InstrumentedThread.hpp \
+	src/support/Objectified.hpp \
+	src/support/StringComposer.hpp \
+	src/support/StringLiteral.hpp \
+	src/system/If0Task.hpp \
+	src/system/LeaderThread.hpp \
+	src/system/ompss/SpawnFunction.hpp \
+	src/system/ompss/TaskBlocking.hpp \
+	src/system/ompss/UserMutex.hpp \
+	src/system/PollingAPI.hpp \
+	src/system/RuntimeInfoEssentials.hpp \
+	src/system/RuntimeInfo.hpp \
+	src/tasks/TaskDebuggingInterface.hpp \
+	src/tasks/Task.hpp \
+	src/tasks/TaskImplementation.hpp \
+	src/tasks/TaskloopGenerator.hpp \
+	src/tasks/Taskloop.hpp \
+	src/tasks/TaskloopInfo.hpp \
+	src/tasks/TaskloopLogic.hpp \
+	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \
 	tests/TestAnyProtocolProducer.hpp \
