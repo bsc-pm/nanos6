@@ -1045,7 +1045,6 @@ src/version/CodeVersionInfo.cpp: $(srcdir)/.git COPYING
 	echo '";' >> src/version/CodeVersionInfo.cpp ; \
 	\
 	echo >> src/version/CodeVersionInfo.cpp
-endif
 if EMBED_CODE_CHANGES
 	$(AM_V_GEN2)echo -n 'char const * nanos6_patches = "' >> src/version/CodeVersionInfo.cpp ; \
 	( \
@@ -1071,6 +1070,11 @@ endif
 	cat $(top_srcdir)/COPYING | sed 's@\\@\\\\@g;s@"@\\"@g' | awk 'BEGIN {ORS="\\n";} {print $$0;}' >> src/version/CodeVersionInfo.cpp ; \
 	echo '";' >> src/version/CodeVersionInfo.cpp ; \
 	echo >> src/version/CodeVersionInfo.cpp
+else
+src/version/CodeVersionInfo.cpp:
+	@echo Error: this Nanos6 distribution does not come neither from a git repository nor a "make dist" tarball.
+	@exit 1
+endif
 
 
 src/version/CompilerVersionInfo.cpp: Makefile

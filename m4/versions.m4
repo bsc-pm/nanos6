@@ -41,7 +41,7 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 			AC_PATH_PROG([GIT], [git], [])
 		fi
 		AC_MSG_CHECKING([the source code version])
-		if test -d "${srcdir}/$3/.git" ; then
+		if test -d "${srcdir}/$3/.git" -o -f "${srcdir}/$3/.git" ; then
 			if test x"${GIT}" = x"" ; then
 				AC_MSG_ERROR([need git to retrieve the source version information. Check the --with-git parameter.])
 			fi
