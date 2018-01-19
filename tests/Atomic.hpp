@@ -139,6 +139,11 @@ public:
 		pthread_mutex_init(&_mutex, 0);
 	}
 	
+	~Atomic()
+	{
+		pthread_mutex_destroy(&_mutex);
+	}
+	
 	T load()
 	{
 		volatile T value;
