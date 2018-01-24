@@ -44,6 +44,14 @@ namespace Instrument {
 		Profile::enableForCurrentThread();
 	}
 	
+	inline void threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
+	{
+	}
+	
+	inline void threadHasResumed(__attribute__((unused)) external_thread_id_t threadId)
+	{
+	}
+	
 	inline void threadWillShutdown()
 	{
 		Profile::disableForCurrentThread();

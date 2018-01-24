@@ -25,6 +25,7 @@
 
 #include <DependencySystem.hpp>
 #include <InstrumentInitAndShutdown.hpp>
+#include <InstrumentThreadManagement.hpp>
 
 
 static std::atomic<int> shutdownDueToSignalNumber(0);
@@ -70,6 +71,7 @@ void nanos_preinit(void) {
 	Instrument::initialize();
 	mainThread = new ExternalThread("main-thread");
 	mainThread->initializeExternalThread();
+	Instrument::threadHasResumed(mainThread->getInstrumentationId());
 	
 	DependencySystem::initialize();
 	LeaderThread::initialize();
@@ -95,10 +97,15 @@ void nanos_init(void) {
 	#ifndef NDEBUG
 		programSignal(SIGABRT);
 	#endif
+	
+	Instrument::threadWillSuspend(mainThread->getInstrumentationId());
 }
 
 
 void nanos_shutdown(void) {
+	Instrument::threadHasResumed(mainThread->getInstrumentationId());
+	Instrument::threadWillShutdown();
+	
 	while (SpawnedFunctions::_pendingSpawnedFunctions > 0) {
 		// Wait for spawned functions to fully end
 	}

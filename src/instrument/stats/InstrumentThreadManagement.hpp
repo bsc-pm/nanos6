@@ -55,6 +55,14 @@ namespace Instrument {
 		currentPhase._blockedTime.continueAt(currentPhase._runningTime);
 	}
 	
+	inline void threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
+	{
+	}
+	
+	inline void threadHasResumed(__attribute__((unused)) external_thread_id_t threadId)
+	{
+	}
+	
 	inline void threadWillShutdown()
 	{
 		// Clean PAPI events for the current thread

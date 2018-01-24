@@ -51,6 +51,7 @@ namespace Instrument {
 			std::transform(area.begin(), area.end(), area.begin(), ::tolower);
 			if (area == "all") {
 				_verboseAddTask = true;
+				_verboseComputePlaceManagement = true;
 				_verboseDependenciesByAccess = true;
 				_verboseDependenciesByAccessLinks = true;
 				_verboseDependenciesByGroup = true;
@@ -63,6 +64,8 @@ namespace Instrument {
 				_verboseLoggingMessages = true;
 			} else if (area == "addtask") {
 				_verboseAddTask = true;
+			} else if (area == "computeplacemanagement") {
+				_verboseComputePlaceManagement = true;
 			} else if (area == "dependenciesbyaccess") {
 				_verboseDependenciesByAccess = true;
 			} else if (area == "dependenciesbyaccesslinks") {

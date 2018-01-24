@@ -30,6 +30,9 @@ namespace Instrument {
 	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu);
 	void threadWillShutdown();
 	
+	void threadWillSuspend(external_thread_id_t threadId);
+	void threadHasResumed(external_thread_id_t threadId);
+	
 	enum busy_wait_reason_t {
 		scheduling_polling_slot_busy_wait_reason = 1
 	};

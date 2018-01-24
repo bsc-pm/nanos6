@@ -21,6 +21,14 @@ namespace Instrument {
 	//! must return an instrumentation-specific computePlace identifier that will
 	//! be used to identify it throughout the rest of the instrumentation API.
 	compute_place_id_t createdCUDAGPU();
+	
+	//! Indicates that a compute place is about to be suspended.
+	void suspendingComputePlace(compute_place_id_t const &computePlace);
+	
+	//! Indicates that a compute place has been resumed.
+	void resumedComputePlace(compute_place_id_t const &computePlace);
+	
+	void shuttingDownComputePlace(compute_place_id_t const &computePlace);
 }
 
 

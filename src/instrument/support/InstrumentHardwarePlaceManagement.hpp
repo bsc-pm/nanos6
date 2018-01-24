@@ -27,6 +27,18 @@ namespace Instrument {
 	{
 		return compute_place_id_t(-2);
 	}
+	
+	inline void suspendingComputePlace(__attribute__((unused)) compute_place_id_t const &computePlace)
+	{
+	}
+	
+	inline void resumedComputePlace(__attribute__((unused)) compute_place_id_t const &computePlace)
+	{
+	}
+	
+	inline void shuttingDownComputePlace(__attribute__((unused)) compute_place_id_t const &computePlace)
+	{
+	}
 }
 
 

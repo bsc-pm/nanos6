@@ -17,6 +17,7 @@
 
 #include <DataAccessRegistration.hpp>
 
+#include <InstrumentComputePlaceManagement.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentInstrumentationContext.hpp>
@@ -129,7 +130,11 @@ void WorkerThread::body()
 			// there is a task to be run and thus the program cannot be performing (a regular) shutdown.
 			if (!_mustShutDown) {
 				ThreadManager::addIdler(this);
+				
+				Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 				switchTo(nullptr);
+				cpu = getComputePlace();
+				Instrument::resumedComputePlace(cpu->getInstrumentationId());
 			}
 		}
 	}

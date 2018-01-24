@@ -15,6 +15,8 @@
 #include "ThreadManager.hpp"
 #include "CPUManager.hpp"
 
+#include <InstrumentComputePlaceManagement.hpp>
+
 
 class CPUActivation {
 public:
@@ -123,6 +125,7 @@ public:
 					{
 						__attribute__((unused)) bool enabled = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
 						assert(enabled); // There should be no other thread changing this
+						Instrument::resumedComputePlace(cpu->getInstrumentationId());
 					}
 					break;
 				case CPU::enabled_status:
@@ -132,6 +135,7 @@ public:
 				case CPU::enabling_status:
 					successful = cpu->_activationStatus.compare_exchange_strong(currentStatus, CPU::enabled_status);
 					if (successful) {
+						Instrument::resumedComputePlace(cpu->getInstrumentationId());
 						Scheduler::enableComputePlace(cpu);
 					}
 					break;
@@ -156,6 +160,7 @@ public:
 					break;
 				case CPU::disabled_status:
 					if (!currentThread->hasPendingShutdown()) {
+						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 						ThreadManager::addIdler(currentThread);
 						currentThread->switchTo(nullptr);
 					} else {

@@ -8,6 +8,8 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
+#include <InstrumentComputePlaceManagement.hpp>
+
 
 void WorkerThreadBase::shutdownSequence()
 {
@@ -18,6 +20,8 @@ void WorkerThreadBase::shutdownSequence()
 	
 	if (threadingModelData._shutdownControllerThread.load() == this) {
 		// This thread is the shutdown controller (of the CPU)
+		
+		Instrument::shuttingDownComputePlace(cpu->getInstrumentationId());
 		
 		bool isMainController = (threadingModelData._mainShutdownControllerThread.load() == this);
 		

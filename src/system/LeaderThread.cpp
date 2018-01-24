@@ -61,13 +61,17 @@ void LeaderThread::body()
 		struct timespec delay = { 0, 1000000}; // 1000 Hz
 		
 		// The loop repeats the call with the remaining time in the event that the thread received a signal with a handler that has SA_RESTART set
+		Instrument::threadWillSuspend(getInstrumentationId());
 		while (nanosleep(&delay, &delay)) {
 		}
+		Instrument::threadHasResumed(getInstrumentationId());
 		
 		PollingAPI::handleServices();
 		
 		Instrument::leaderThreadSpin();
 	}
+	
+	Instrument::threadWillShutdown();
 	
 	return;
 }

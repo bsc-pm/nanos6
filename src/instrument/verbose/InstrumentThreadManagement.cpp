@@ -93,6 +93,51 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
+	void threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId) {
+		if (!_verboseThreadManagement) {
+			return;
+		}
+		
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		if (context._externalThreadName != nullptr) {
+			if (!_verboseLeaderThread && (*context._externalThreadName == "leader-thread")) {
+				return;
+			}
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " --> SuspendThread ";
+		
+		addLogEntry(logEntry);
+	}
+	
+	
+	void threadHasResumed(__attribute__((unused)) external_thread_id_t threadId) {
+		if (!_verboseThreadManagement) {
+			return;
+		}
+		
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		if (context._externalThreadName != nullptr) {
+			if (!_verboseLeaderThread && (*context._externalThreadName == "leader-thread")) {
+				return;
+			}
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-- SuspendThread ";
+		
+		addLogEntry(logEntry);
+	}
+	
 	void threadWillShutdown() {
 		if (!_verboseThreadManagement) {
 			return;

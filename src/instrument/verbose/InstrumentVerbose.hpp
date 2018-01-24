@@ -38,6 +38,7 @@ namespace Instrument {
 		typedef struct timespec timestamp_t;
 		
 		extern bool _verboseAddTask;
+		extern bool _verboseComputePlaceManagement;
 		extern bool _verboseDependenciesByAccess;
 		extern bool _verboseDependenciesByAccessLinks;
 		extern bool _verboseDependenciesByGroup;
