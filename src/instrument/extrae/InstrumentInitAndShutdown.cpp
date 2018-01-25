@@ -208,6 +208,9 @@ namespace Instrument {
 		Extrae_define_event_type((extrae_type_t *) &_taskInstanceId, (char *) "Task instance", &zero, nullptr, nullptr);
 		Extrae_define_event_type((extrae_type_t *) &_nestingLevel, (char *) "Task nesting level", &zero, nullptr, nullptr);
 		
+		Extrae_define_event_type((extrae_type_t *) &_readyTasksEventType, (char *) "Number of ready tasks", &zero, nullptr, nullptr);
+		Extrae_define_event_type((extrae_type_t *) &_liveTasksEventType, (char *) "Number of live tasks", &zero, nullptr, nullptr);
+		
 		// Register the events for the backtrace
 		if (_sampleBacktraceDepth > 0) {
 			for (int i = 0; i < _sampleBacktraceDepth; i++) {

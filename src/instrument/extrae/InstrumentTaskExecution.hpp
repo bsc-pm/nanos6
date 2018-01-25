@@ -28,6 +28,10 @@ namespace Instrument {
 		ce.nEvents = 4;
 		ce.nCommunications = 0;
 		
+		if (!_sampleTaskCount) {
+			ce.nEvents += 1;
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
@@ -42,6 +46,12 @@ namespace Instrument {
 		
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) taskId._taskId;
+		
+		size_t readyTasks = --_readyTasks;
+		if (!_sampleTaskCount) {
+			ce.Types[4] = _readyTasksEventType;
+			ce.Values[4] = (extrae_value_t) readyTasks;
+		}
 		
 		ThreadLocalData &threadLocal = getThreadLocalData();
 		threadLocal._nestingLevels.push_back(taskId._nestingLevel);
@@ -68,6 +78,10 @@ namespace Instrument {
 		ce.nEvents = 4;
 		ce.nCommunications = 0;
 		
+		if (!_sampleTaskCount) {
+			ce.nEvents += 1;
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
@@ -82,6 +96,12 @@ namespace Instrument {
 		
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) taskId._taskId;
+		
+		size_t readyTasks = --_readyTasks;
+		if (!_sampleTaskCount) {
+			ce.Types[4] = _readyTasksEventType;
+			ce.Values[4] = (extrae_value_t) readyTasks;
+		}
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
@@ -105,6 +125,10 @@ namespace Instrument {
 		ce.nEvents = 4;
 		ce.nCommunications = 0;
 		
+		if (!_sampleTaskCount) {
+			ce.nEvents += 1;
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
@@ -119,6 +143,12 @@ namespace Instrument {
 		
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) nullptr;
+		
+		size_t liveTasks = --_liveTasks;
+		if (!_sampleTaskCount) {
+			ce.Types[4] = _liveTasksEventType;
+			ce.Values[4] = (extrae_value_t) liveTasks;
+		}
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();

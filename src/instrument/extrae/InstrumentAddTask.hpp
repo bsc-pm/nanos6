@@ -26,6 +26,8 @@ namespace Instrument {
 		__attribute__((unused)) size_t flags,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		size_t liveTasks = ++_liveTasks;
+		
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 0;
@@ -34,11 +36,20 @@ namespace Instrument {
 		ce.nEvents = 1;
 		ce.nCommunications = 0;
 		
+		if (!_sampleTaskCount) {
+			ce.nEvents += 1;
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
 		ce.Types[0] = _runtimeState;
 		ce.Values[0] = (extrae_value_t) NANOS_CREATION;
+		
+		if (!_sampleTaskCount) {
+			ce.Types[0] = _liveTasksEventType;
+			ce.Values[0] = (extrae_value_t) liveTasks;
+		}
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();

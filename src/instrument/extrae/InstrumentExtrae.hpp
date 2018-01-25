@@ -35,11 +35,14 @@ namespace Instrument {
 	extern const EnvironmentVariable<bool>           _traceAsThreads;
 	extern const EnvironmentVariable<int>            _sampleBacktraceDepth;
 	extern const EnvironmentVariable<long>           _sampleBacktracePeriod;
+	extern const EnvironmentVariable<bool>           _sampleTaskCount;
 	
 	extern const extrae_type_t                       _taskInstanceId;
 	extern const extrae_type_t                       _runtimeState;      //!< Runtime state (extrae event type)
 	extern const extrae_type_t                       _functionName;      //!< Task function name
 	extern const extrae_type_t                       _codeLocation;      //!< Task function location
+	extern const extrae_type_t                       _readyTasksEventType;
+	extern const extrae_type_t                       _liveTasksEventType;
 	extern const extrae_type_t                       _nestingLevel;      //!< Task nesting level
 	extern const extrae_type_t                       _samplingEventType;
 	
@@ -57,6 +60,8 @@ namespace Instrument {
 	extern std::list<std::set<void *> *> _backtraceAddressSets;
 	
 	extern std::atomic<size_t> _nextTaskId;
+	extern std::atomic<size_t> _readyTasks;
+	extern std::atomic<size_t> _liveTasks;
 	
 	extern RWSpinLock _extraeThreadCountLock;
 	
