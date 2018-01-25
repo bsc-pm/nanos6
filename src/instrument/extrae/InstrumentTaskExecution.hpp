@@ -51,6 +51,11 @@ namespace Instrument {
 		if (!_sampleTaskCount) {
 			ce.Types[4] = _readyTasksEventType;
 			ce.Values[4] = (extrae_value_t) readyTasks;
+			
+			// This counter is not so reliable, so try to skip underflows
+			if (((signed long long) ce.Values[4]) < 0) {
+				ce.Values[4] = 0;
+			}
 		}
 		
 		ThreadLocalData &threadLocal = getThreadLocalData();
@@ -101,6 +106,11 @@ namespace Instrument {
 		if (!_sampleTaskCount) {
 			ce.Types[4] = _readyTasksEventType;
 			ce.Values[4] = (extrae_value_t) readyTasks;
+			
+			// This counter is not so reliable, so try to skip underflows
+			if (((signed long long) ce.Values[4]) < 0) {
+				ce.Values[4] = 0;
+			}
 		}
 		
 		if (_traceAsThreads) {
@@ -148,6 +158,11 @@ namespace Instrument {
 		if (!_sampleTaskCount) {
 			ce.Types[4] = _liveTasksEventType;
 			ce.Values[4] = (extrae_value_t) liveTasks;
+			
+			// This counter is not so reliable, so try to skip underflows
+			if (((signed long long) ce.Values[4]) < 0) {
+				ce.Values[4] = 0;
+			}
 		}
 		
 		if (_traceAsThreads) {

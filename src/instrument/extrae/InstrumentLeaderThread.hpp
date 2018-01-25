@@ -32,6 +32,15 @@ namespace Instrument {
 			ce.Types[1] = _liveTasksEventType;
 			ce.Values[1] = (extrae_value_t) _liveTasks;
 			
+			
+			// These counters are not so reliable, so try to skip underflows
+			if (((signed long long) ce.Values[0]) < 0) {
+				ce.Values[0] = 0;
+			}
+			if (((signed long long) ce.Values[1]) < 0) {
+				ce.Values[1] = 0;
+			}
+			
 			if (_traceAsThreads) {
 				_extraeThreadCountLock.readLock();
 			}

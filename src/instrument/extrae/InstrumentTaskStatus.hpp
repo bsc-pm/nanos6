@@ -41,6 +41,11 @@ namespace Instrument {
 		ce.Types[0] = _readyTasksEventType;
 		ce.Values[0] = (extrae_value_t) ++_readyTasks;
 		
+		// This counter is not so reliable, so try to skip underflows
+		if (((signed long long) ce.Values[0]) < 0) {
+			ce.Values[0] = 0;
+		}
+		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
