@@ -35,10 +35,6 @@ namespace Instrument {
 		ce.nEvents = 1;
 		ce.nCommunications = 0;
 		
-		if (!_sampleTaskCount) {
-			ce.nEvents += 1;
-		}
-		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
