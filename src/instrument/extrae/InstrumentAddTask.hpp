@@ -47,8 +47,8 @@ namespace Instrument {
 		ce.Values[0] = (extrae_value_t) NANOS_CREATION;
 		
 		if (!_sampleTaskCount) {
-			ce.Types[0] = _liveTasksEventType;
-			ce.Values[0] = (extrae_value_t) liveTasks;
+			ce.Types[1] = _liveTasksEventType;
+			ce.Values[1] = (extrae_value_t) liveTasks;
 		}
 		
 		if (_traceAsThreads) {
