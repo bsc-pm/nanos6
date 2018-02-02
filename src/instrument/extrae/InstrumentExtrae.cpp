@@ -16,6 +16,7 @@ namespace Instrument {
 	const EnvironmentVariable<int> _sampleBacktraceDepth("NANOS6_EXTRAE_SAMPLE_BACKTRACE_DEPTH", 0);
 	const EnvironmentVariable<long> _sampleBacktracePeriod("NANOS6_EXTRAE_SAMPLE_BACKTRACE_PERIOD", 1000);
 	const EnvironmentVariable<bool> _sampleTaskCount("NANOS6_EXTRAE_SAMPLE_TASK_COUNT", 0);
+	const EnvironmentVariable<bool> _emitGraph("NANOS6_EXTRAE_EMIT_GRAPH", 0);
 	
 	const extrae_type_t       _taskInstanceId = 9200002;
 	const extrae_type_t       _runtimeState = 9000000;     //!< Runtime state (extrae event type)

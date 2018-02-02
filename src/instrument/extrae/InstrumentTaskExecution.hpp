@@ -32,20 +32,43 @@ namespace Instrument {
 			ce.nEvents += 1;
 		}
 		
+		if (_emitGraph) {
+			taskId._taskInfo->_lock.lock();
+			ce.nCommunications += taskId._taskInfo->_predecessors.size();
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+		
+		if (ce.nCommunications > 0) {
+			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+		}
 		
 		ce.Types[0] = _runtimeState;
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
 		ce.Types[1] = _codeLocation;
-		ce.Values[1] = (extrae_value_t) taskId._taskInfo->run;
+		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->run;
 		
 		ce.Types[2] = _nestingLevel;
-		ce.Values[2] = (extrae_value_t) taskId._nestingLevel;
+		ce.Values[2] = (extrae_value_t) taskId._taskInfo->_nestingLevel;
 		
 		ce.Types[3] = _taskInstanceId;
-		ce.Values[3] = (extrae_value_t) taskId._taskId;
+		ce.Values[3] = (extrae_value_t) taskId._taskInfo->_taskId;
+		
+		if (_emitGraph) {
+			int index = 0;
+			for (auto const &taskAndTag : taskId._taskInfo->_predecessors) {
+				ce.Communications[index].type = EXTRAE_USER_RECV;
+				ce.Communications[index].tag = taskAndTag.second;
+				ce.Communications[index].size = 0;
+				ce.Communications[index].partner = EXTRAE_COMM_PARTNER_MYSELF;
+				ce.Communications[index].id = (taskAndTag.first << 32) + taskId._taskInfo->_taskId;
+				index++;
+			}
+			taskId._taskInfo->_predecessors.clear();
+			taskId._taskInfo->_lock.unlock();
+		}
 		
 		size_t readyTasks = --_readyTasks;
 		if (!_sampleTaskCount) {
@@ -59,7 +82,7 @@ namespace Instrument {
 		}
 		
 		ThreadLocalData &threadLocal = getThreadLocalData();
-		threadLocal._nestingLevels.push_back(taskId._nestingLevel);
+		threadLocal._nestingLevels.push_back(taskId._taskInfo->_nestingLevel);
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
@@ -87,20 +110,29 @@ namespace Instrument {
 			ce.nEvents += 1;
 		}
 		
+		if (_emitGraph) {
+			taskId._taskInfo->_lock.lock();
+			ce.nCommunications += taskId._taskInfo->_predecessors.size();
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+		
+		if (ce.nCommunications > 0) {
+			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+		}
 		
 		ce.Types[0] = _runtimeState;
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
 		ce.Types[1] = _codeLocation;
-		ce.Values[1] = (extrae_value_t) taskId._taskInfo->run;
+		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->run;
 		
 		ce.Types[2] = _nestingLevel;
-		ce.Values[2] = (extrae_value_t) taskId._nestingLevel;
+		ce.Values[2] = (extrae_value_t) taskId._taskInfo->_nestingLevel;
 		
 		ce.Types[3] = _taskInstanceId;
-		ce.Values[3] = (extrae_value_t) taskId._taskId;
+		ce.Values[3] = (extrae_value_t) taskId._taskInfo->_taskId;
 		
 		size_t readyTasks = --_readyTasks;
 		if (!_sampleTaskCount) {
@@ -111,6 +143,20 @@ namespace Instrument {
 			if (((signed long long) ce.Values[4]) < 0) {
 				ce.Values[4] = 0;
 			}
+		}
+		
+		if (_emitGraph) {
+			int index = 0;
+			for (auto const &taskAndTag : taskId._taskInfo->_predecessors) {
+				ce.Communications[index].type = EXTRAE_USER_RECV;
+				ce.Communications[index].tag = taskAndTag.second;
+				ce.Communications[index].size = 0;
+				ce.Communications[index].partner = EXTRAE_COMM_PARTNER_MYSELF;
+				ce.Communications[index].id = (taskAndTag.first << 32) + taskId._taskInfo->_taskId;
+				index++;
+			}
+			taskId._taskInfo->_predecessors.clear();
+			taskId._taskInfo->_lock.unlock();
 		}
 		
 		if (_traceAsThreads) {
@@ -124,7 +170,7 @@ namespace Instrument {
 	
 	
 	inline void endTask(
-		__attribute__((unused)) task_id_t taskId,
+		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		extrae_combined_events_t ce;
@@ -139,8 +185,26 @@ namespace Instrument {
 			ce.nEvents += 1;
 		}
 		
+		size_t parentInTaskwait = 0;
+		if (_emitGraph) {
+			if ((taskId._taskInfo->_parent != nullptr) && taskId._taskInfo->_parent->_inTaskwait) {
+				taskId._taskInfo->_parent->_lock.lock();
+				if (taskId._taskInfo->_parent->_inTaskwait) {
+					parentInTaskwait = taskId._taskInfo->_parent->_taskId;
+					ce.nCommunications++;
+					
+					taskId._taskInfo->_parent->_predecessors.emplace(taskId._taskInfo->_taskId, control_dependency_tag);
+				}
+				taskId._taskInfo->_parent->_lock.unlock();
+			}
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+		
+		if (ce.nCommunications > 0) {
+			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+		}
 		
 		ce.Types[0] = _runtimeState;
 		ce.Values[0] = (extrae_value_t) NANOS_IDLE;
@@ -153,6 +217,14 @@ namespace Instrument {
 		
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) nullptr;
+		
+		if (parentInTaskwait != 0) {
+			ce.Communications[0].type = EXTRAE_USER_SEND;
+			ce.Communications[0].tag = control_dependency_tag;
+			ce.Communications[0].size = 0;
+			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
+			ce.Communications[0].id = (taskId._taskInfo->_taskId << 32) + parentInTaskwait;
+		}
 		
 		size_t liveTasks = --_liveTasks;
 		if (!_sampleTaskCount) {

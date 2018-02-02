@@ -24,9 +24,18 @@ namespace Instrument {
 		nanos_task_info *taskInfo,
 		__attribute__((unused)) nanos_task_invocation_info *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
-		__attribute__((unused)) InstrumentationContext const &context
+		InstrumentationContext const &context
 	) {
 		size_t liveTasks = ++_liveTasks;
+		
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		Extrae::TaskInfo *_extraeTaskInfo = nullptr;
+		if (threadLocal._nestingLevels.empty()) {
+			// This may be an external thread, therefore assume that it is a spawned task
+			_extraeTaskInfo = new Extrae::TaskInfo(taskInfo, 0, context._taskId._taskInfo);
+		} else {
+			_extraeTaskInfo = new Extrae::TaskInfo(taskInfo, threadLocal._nestingLevels.back()+1, context._taskId._taskInfo);
+		}
 		
 		extrae_combined_events_t ce;
 		
@@ -35,6 +44,10 @@ namespace Instrument {
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
 		ce.nEvents = 1;
 		ce.nCommunications = 0;
+		
+		if (_emitGraph) {
+			ce.nCommunications++;
+		}
 		
 		if (!_sampleTaskCount) {
 			ce.nEvents += 1;
@@ -49,6 +62,19 @@ namespace Instrument {
 		if (!_sampleTaskCount) {
 			ce.Types[1] = _liveTasksEventType;
 			ce.Values[1] = (extrae_value_t) liveTasks;
+		}
+		
+		if (ce.nCommunications > 0) {
+			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+		}
+		
+		if (_emitGraph) {
+			ce.Communications[0].type = EXTRAE_USER_SEND;
+			ce.Communications[0].tag = control_dependency_tag;
+			ce.Communications[0].size = 0;
+			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
+			ce.Communications[0].id = _extraeTaskInfo->_taskId;
+			_extraeTaskInfo->_predecessors.emplace(0, control_dependency_tag);
 		}
 		
 		if (_traceAsThreads) {
@@ -75,13 +101,7 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 		
-		ThreadLocalData &threadLocal = getThreadLocalData();
-		if (threadLocal._nestingLevels.empty()) {
-			// This may be an external thread, therefore assume that it is a spawned task
-			return task_id_t(taskInfo, 0);
-		}
-		
-		return task_id_t(taskInfo, threadLocal._nestingLevels.back()+1);
+		return task_id_t(_extraeTaskInfo);
 	}
 	
 	

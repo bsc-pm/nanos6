@@ -36,6 +36,7 @@ namespace Instrument {
 	extern const EnvironmentVariable<int>            _sampleBacktraceDepth;
 	extern const EnvironmentVariable<long>           _sampleBacktracePeriod;
 	extern const EnvironmentVariable<bool>           _sampleTaskCount;
+	extern const EnvironmentVariable<bool>           _emitGraph;
 	
 	extern const extrae_type_t                       _taskInstanceId;
 	extern const extrae_type_t                       _runtimeState;      //!< Runtime state (extrae event type)
@@ -66,6 +67,13 @@ namespace Instrument {
 	extern RWSpinLock _extraeThreadCountLock;
 	
 	extern int _externalThreadCount;
+	
+	enum dependency_tag_t {
+		control_dependency_tag = 0,
+		strong_data_dependency_tag,
+		weak_data_dependency_tag
+	};
+	
 	
 	inline bool ExtraeTaskInfoCompare::operator()(nanos_task_info *a, nanos_task_info *b) const
 	{

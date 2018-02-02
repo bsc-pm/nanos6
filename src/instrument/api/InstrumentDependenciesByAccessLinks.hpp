@@ -57,7 +57,7 @@ namespace Instrument {
 	//! 
 	//! \returns an identifier for the new data access
 	data_access_id_t createdDataAccess(
-		data_access_id_t superAccessId,
+		data_access_id_t *superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		access_object_type_t objectType,
@@ -77,7 +77,7 @@ namespace Instrument {
 	//! \param becomesUnsatisfied indicates if the DataAccess was satisfied and has become unsatisfied as a result of the upgrade
 	//! 
 	void upgradedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		DataAccessType previousAccessType, bool previousWeakness,
 		DataAccessType newAccessType, bool newWeakness,
 		bool becomesUnsatisfied,
@@ -90,7 +90,7 @@ namespace Instrument {
 	//! \param globallySatisfied whether the access becomes globally satisfied
 	//! \param targetTaskId the identifier of the task that will perform the now satisfied DataAccess
 	void dataAccessBecomesSatisfied(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		bool globallySatisfied,
 		task_id_t targetTaskId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
@@ -101,7 +101,7 @@ namespace Instrument {
 	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
 	//! \param newRegion the region of data that the access covers now
 	void modifiedDataAccessRegion(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		DataAccessRegion newRegion,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
@@ -115,7 +115,7 @@ namespace Instrument {
 	//! 
 	//! \returns an identifier for the new data access
 	data_access_id_t fragmentedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		DataAccessRegion newRegion,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
@@ -126,7 +126,7 @@ namespace Instrument {
 	//! 
 	//! \returns an identifier for the subaccess fragment
 	data_access_id_t createdDataSubaccessFragment(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
@@ -134,7 +134,7 @@ namespace Instrument {
 	//! 
 	//! \param dataAccessId the identifier of the affected DataAccess as returned in the previous call to Instrument::createdDataAccess
 	void completedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
@@ -142,7 +142,7 @@ namespace Instrument {
 	//! 
 	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
 	void dataAccessBecomesRemovable(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
@@ -150,7 +150,7 @@ namespace Instrument {
 	//! 
 	//! \param dataAccessId the identifier of the DataAccess as returned in the previous call to Instrument::createdDataAccess
 	void removedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
@@ -163,7 +163,7 @@ namespace Instrument {
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	//! \param bidirectional tru if the link is bidirectional
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId,
+		data_access_id_t &sourceAccessId,
 		task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		DataAccessRegion region,
 		bool direct, bool bidirectional,
@@ -177,7 +177,7 @@ namespace Instrument {
 	//! \param sinkObjectType the object type of the sink
 	//! \param direct true if it is a direct link, false if it is an indirect effective previous relation
 	void unlinkedDataAccesses(
-		data_access_id_t sourceAccessId,
+		data_access_id_t &sourceAccessId,
 		task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		bool direct,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
@@ -190,8 +190,8 @@ namespace Instrument {
 	//! \param dataAccessId the identifier of the DataAccess that is moved
 	//! 
 	void reparentedDataAccess(
-		data_access_id_t oldSuperAccessId, data_access_id_t newSuperAccessId,
-		data_access_id_t dataAccessId,
+		data_access_id_t &oldSuperAccessId, data_access_id_t &newSuperAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	
@@ -201,7 +201,7 @@ namespace Instrument {
 	//! \param shortPropertyName a short name to give to the property (1 to 3 characters)
 	//! \param longPropertyName a name for the property with unconstrained length
 	void newDataAccessProperty(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		char const *shortPropertyName,
 		char const *longPropertyName,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
