@@ -242,12 +242,16 @@ namespace Instrument {
 			);
 		}
 		
-		std::stringstream oss;
-		unsigned extraeMajor, extraeMinor, extraeRevision;
 		
-		Extrae_get_version(&extraeMajor, &extraeMinor, &extraeRevision);
-		oss << extraeMajor << "." << extraeMinor << "." << extraeRevision;
-		RuntimeInfo::addEntry("extrae_version", "Extrae Version", oss.str());
+		{
+			std::stringstream oss;
+			unsigned extraeMajor, extraeMinor, extraeRevision;
+			
+			Extrae_get_version(&extraeMajor, &extraeMinor, &extraeRevision);
+			oss << extraeMajor << "." << extraeMinor << "." << extraeRevision;
+			RuntimeInfo::addEntry("extrae_version", "Extrae Version", oss.str());
+			RuntimeInfo::addEntry("extrae_shared_object", "Extrae Shared Object", ExtraeSymbolResolverBase::getSharedObjectPath());
+		}
 		
 		// Final thread information callbacks
 		if (_traceAsThreads) {

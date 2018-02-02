@@ -16,6 +16,8 @@
 #include <cassert>
 #include <dlfcn.h>
 
+#include <string>
+
 #include <support/StringLiteral.hpp>
 
 
@@ -32,6 +34,8 @@ protected:
 	
 public:
 	ExtraeSymbolResolverBase();
+	
+	static std::string getSharedObjectPath();
 };
 
 

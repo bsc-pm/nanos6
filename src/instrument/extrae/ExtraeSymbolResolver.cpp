@@ -9,6 +9,7 @@
 #endif
 
 #include <dlfcn.h>
+#include <link.h>
 
 #include "ExtraeSymbolResolver.hpp"
 
@@ -41,4 +42,16 @@ ExtraeSymbolResolverBase::ExtraeSymbolResolverBase()
 	}
 }
 
+
+std::string ExtraeSymbolResolverBase::getSharedObjectPath()
+{
+	struct link_map *lm = nullptr;
+	
+	int rc = dlinfo(_singleton._handle, RTLD_DI_LINKMAP, &lm);
+	if ((rc == 0) && (lm != nullptr)) {
+		return lm->l_name;
+	} else {
+		return std::string();
+	}
+}
 
