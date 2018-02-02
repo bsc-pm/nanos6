@@ -242,6 +242,24 @@ namespace Instrument {
 			);
 		}
 		
+		// Force an event that allows to detect the trace as an OmpSs trace
+		{
+			extrae_combined_events_t ce;
+			
+			ce.HardwareCounters = 0;
+			ce.Callers = 0;
+			ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
+			ce.nEvents = 1;
+			ce.nCommunications = 0;
+			
+			ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
+			ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+			
+			ce.Types[0] = 9200001;
+			ce.Values[0] = 0;
+			
+			Extrae_emit_CombinedEvents ( &ce );
+		}
 		
 		{
 			std::stringstream oss;
