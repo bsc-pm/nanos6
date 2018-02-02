@@ -70,11 +70,11 @@ namespace Instrument {
 		
 		if (_emitGraph) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
-			ce.Communications[0].tag = control_dependency_tag;
+			ce.Communications[0].tag = instanciation_dependency_tag;
 			ce.Communications[0].size = 0;
 			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
 			ce.Communications[0].id = _extraeTaskInfo->_taskId;
-			_extraeTaskInfo->_predecessors.emplace(0, control_dependency_tag);
+			_extraeTaskInfo->_predecessors.emplace(0, instanciation_dependency_tag);
 		}
 		
 		if (_traceAsThreads) {
