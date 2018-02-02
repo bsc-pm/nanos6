@@ -124,4 +124,21 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
+	void taskHasNewPriority(
+		task_id_t taskId,
+		long priority,
+		InstrumentationContext const &context
+	) {
+		if (!_verboseTaskStatus) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> TaskPriorityChanged: " << taskId << " priority:" << priority;
+		
+		addLogEntry(logEntry);
+	}
 }

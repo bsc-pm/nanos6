@@ -13,6 +13,8 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
+#include <InstrumentTaskStatus.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <mutex>
@@ -23,10 +25,7 @@ inline bool PriorityScheduler::TaskPriorityCompare::operator()(Task *a, Task *b)
 	assert(a != nullptr);
 	assert(b != nullptr);
 	
-	size_t priorityA = (size_t) a->getSchedulerInfo();
-	size_t priorityB = (size_t) b->getSchedulerInfo();
-	
-	return (priorityA < priorityB);
+	return (a->getPriority() < b->getPriority());
 }
 
 
@@ -46,11 +45,12 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 	
 	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
 	
-	size_t priority = 0;
+	Task::priority_t priority = 0;
 	if ((task->getTaskInfo() != nullptr) && (task->getTaskInfo()->get_priority != nullptr)) {
 		priority = task->getTaskInfo()->get_priority(task->getArgsBlock());
+		task->setPriority(priority);
+		Instrument::taskHasNewPriority(task->getInstrumentationTaskId(), priority);
 	}
-	task->setSchedulerInfo((void *) priority);
 	
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
@@ -161,7 +161,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
-	size_t bestPriority = 0;
+	Task::priority_t bestPriority = 0;
 	enum {
 		non_existant = 0,
 		from_immediate_successor_slot,
@@ -173,7 +173,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 	bool haveImmediateSuccessor = (computePlace->_schedulerData != nullptr);
 	if (haveImmediateSuccessor) {
 		Task *task = (Task *) computePlace->_schedulerData;
-		bestPriority = (size_t) task->getSchedulerInfo();
+		bestPriority = task->getPriority();
 		bestIs = from_immediate_successor_slot;
 	}
 	
@@ -183,7 +183,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 		Task *task = _unblockedTasks.top();
 		assert(task != nullptr);
 		
-		size_t topPriority = (size_t) task->getSchedulerInfo();
+		Task::priority_t topPriority = task->getPriority();
 		
 		if ((bestIs == non_existant) || (bestPriority < topPriority)) {
 			bestIs = from_unblocked_task_queue;
@@ -196,7 +196,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 		Task *topTask = _readyTasks.top();
 		assert(topTask != nullptr);
 		
-		size_t topPriority = (size_t) topTask->getSchedulerInfo();
+		Task::priority_t topPriority = topTask->getPriority();
 		
 		if ((bestIs == non_existant) || (bestPriority < topPriority)) {
 			bestIs = from_ready_task_queue;
@@ -283,7 +283,7 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
-	size_t bestPriority = 0;
+	Task::priority_t bestPriority = 0;
 	enum {
 		non_existant = 0,
 		from_immediate_successor_slot,
@@ -295,7 +295,7 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 	bool haveImmediateSuccessor = (computePlace->_schedulerData != nullptr);
 	if (haveImmediateSuccessor) {
 		Task *task = (Task *) computePlace->_schedulerData;
-		bestPriority = (size_t) task->getSchedulerInfo();
+		bestPriority = task->getPriority();
 		bestIs = from_immediate_successor_slot;
 	}
 	
@@ -305,7 +305,7 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 		Task *task = _unblockedTasks.top();
 		assert(task != nullptr);
 		
-		size_t topPriority = (size_t) task->getSchedulerInfo();
+		Task::priority_t topPriority = task->getPriority();
 		
 		if ((bestIs == non_existant) || (bestPriority < topPriority)) {
 			bestIs = from_unblocked_task_queue;
@@ -318,7 +318,7 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 		Task *topTask = _readyTasks.top();
 		assert(topTask != nullptr);
 		
-		size_t topPriority = (size_t) topTask->getSchedulerInfo();
+		Task::priority_t topPriority = topTask->getPriority();
 		
 		if ((bestIs == non_existant) || (bestPriority < topPriority)) {
 			bestIs = from_ready_task_queue;

@@ -29,6 +29,7 @@ inline Task::Task(
 	_taskInvokationInfo(taskInvokationInfo),
 	_countdownToBeWokenUp(1),
 	_parent(parent),
+	_priority(0),
 	_thread(nullptr),
 	_dataAccesses(),
 	_flags(flags),

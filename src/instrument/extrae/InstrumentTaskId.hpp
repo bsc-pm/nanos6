@@ -68,6 +68,7 @@ namespace Instrument {
 			nanos_task_info *_taskInfo;
 			size_t _taskId;
 			int _nestingLevel;
+			long _priority;
 			Instrument::Extrae::TaskInfo *_parent;
 			
 			std::atomic<bool> _inTaskwait;
@@ -76,13 +77,13 @@ namespace Instrument {
 			std::set<predecessor_entry_t> _predecessors;
 			
 			TaskInfo()
-				: _taskInfo(nullptr), _taskId(~0UL), _nestingLevel(-1), _parent(),
+				: _taskInfo(nullptr), _taskId(~0UL), _nestingLevel(-1), _priority(0), _parent(),
 				_inTaskwait(false), _lock(), _predecessors()
 			{
 			}
 			
 			TaskInfo(nanos_task_info *taskInfo, int nestingLevel, Instrument::Extrae::TaskInfo *parent)
-				: _taskInfo(taskInfo), _nestingLevel(nestingLevel), _parent(parent),
+				: _taskInfo(taskInfo), _nestingLevel(nestingLevel), _priority(0), _parent(parent),
 				_inTaskwait(false), _lock(), _predecessors()
 			{
 				_taskId = _nextTaskId++;

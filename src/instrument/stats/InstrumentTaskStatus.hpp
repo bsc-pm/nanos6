@@ -76,6 +76,12 @@ namespace Instrument {
 	) {
 	}
 	
+	inline void taskHasNewPriority(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) long priority,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+	}
 }
 
 

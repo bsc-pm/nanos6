@@ -43,6 +43,8 @@ public:
 		total_flags
 	};
 	
+	typedef long priority_t;
+	
 private:
 	typedef std::bitset<total_flags> flags_t;
 	
@@ -56,6 +58,8 @@ private:
 	
 	//! Task to which this one is closely nested
 	Task *_parent;
+	
+	priority_t _priority;
 	
 protected:
 	//! The thread assigned to this task, nullptr if the task has finished (but possibly waiting its children)
@@ -216,6 +220,17 @@ public:
 		} else {
 			return (_countdownToBeWokenUp == 0);
 		}
+	}
+	
+	
+	inline priority_t getPriority() const
+	{
+		return _priority;
+	}
+	
+	inline void setPriority(priority_t priority)
+	{
+		_priority = priority;
 	}
 	
 	

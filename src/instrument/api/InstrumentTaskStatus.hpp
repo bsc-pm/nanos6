@@ -72,7 +72,7 @@ namespace Instrument {
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void taskIsBeingDeleted(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
-	//! NOTE: The next step would be a call to Instrument::destroyTask
+	void taskHasNewPriority(task_id_t taskId, long priority, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 }
 
 

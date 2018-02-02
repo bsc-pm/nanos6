@@ -25,7 +25,7 @@ namespace Instrument {
 		ce.HardwareCounters = 1;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 4;
+		ce.nEvents = 5;
 		ce.nCommunications = 0;
 		
 		if (!_sampleTaskCount) {
@@ -56,6 +56,9 @@ namespace Instrument {
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) taskId._taskInfo->_taskId;
 		
+		ce.Types[4] = _priorityEventType;
+		ce.Values[4] = (extrae_value_t) taskId._taskInfo->_priority;
+		
 		if (_emitGraph) {
 			int index = 0;
 			for (auto const &taskAndTag : taskId._taskInfo->_predecessors) {
@@ -72,12 +75,12 @@ namespace Instrument {
 		
 		size_t readyTasks = --_readyTasks;
 		if (!_sampleTaskCount) {
-			ce.Types[4] = _readyTasksEventType;
-			ce.Values[4] = (extrae_value_t) readyTasks;
+			ce.Types[5] = _readyTasksEventType;
+			ce.Values[5] = (extrae_value_t) readyTasks;
 			
 			// This counter is not so reliable, so try to skip underflows
-			if (((signed long long) ce.Values[4]) < 0) {
-				ce.Values[4] = 0;
+			if (((signed long long) ce.Values[5]) < 0) {
+				ce.Values[5] = 0;
 			}
 		}
 		
@@ -103,7 +106,7 @@ namespace Instrument {
 		ce.HardwareCounters = 1;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 4;
+		ce.nEvents = 5;
 		ce.nCommunications = 0;
 		
 		if (!_sampleTaskCount) {
@@ -134,14 +137,17 @@ namespace Instrument {
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) taskId._taskInfo->_taskId;
 		
+		ce.Types[4] = _priorityEventType;
+		ce.Values[4] = (extrae_value_t) taskId._taskInfo->_priority;
+		
 		size_t readyTasks = --_readyTasks;
 		if (!_sampleTaskCount) {
-			ce.Types[4] = _readyTasksEventType;
-			ce.Values[4] = (extrae_value_t) readyTasks;
+			ce.Types[5] = _readyTasksEventType;
+			ce.Values[5] = (extrae_value_t) readyTasks;
 			
 			// This counter is not so reliable, so try to skip underflows
-			if (((signed long long) ce.Values[4]) < 0) {
-				ce.Values[4] = 0;
+			if (((signed long long) ce.Values[5]) < 0) {
+				ce.Values[5] = 0;
 			}
 		}
 		
@@ -178,7 +184,7 @@ namespace Instrument {
 		ce.HardwareCounters = 1;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 4;
+		ce.nEvents = 5;
 		ce.nCommunications = 0;
 		
 		if (!_sampleTaskCount) {
@@ -218,6 +224,9 @@ namespace Instrument {
 		ce.Types[3] = _taskInstanceId;
 		ce.Values[3] = (extrae_value_t) nullptr;
 		
+		ce.Types[4] = _priorityEventType;
+		ce.Values[4] = (extrae_value_t) nullptr;
+		
 		if (parentInTaskwait != 0) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
 			ce.Communications[0].tag = control_dependency_tag;
@@ -228,12 +237,12 @@ namespace Instrument {
 		
 		size_t liveTasks = --_liveTasks;
 		if (!_sampleTaskCount) {
-			ce.Types[4] = _liveTasksEventType;
-			ce.Values[4] = (extrae_value_t) liveTasks;
+			ce.Types[5] = _liveTasksEventType;
+			ce.Values[5] = (extrae_value_t) liveTasks;
 			
 			// This counter is not so reliable, so try to skip underflows
-			if (((signed long long) ce.Values[4]) < 0) {
-				ce.Values[4] = 0;
+			if (((signed long long) ce.Values[5]) < 0) {
+				ce.Values[5] = 0;
 			}
 		}
 		

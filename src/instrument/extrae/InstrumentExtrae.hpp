@@ -39,14 +39,20 @@ namespace Instrument {
 	extern const EnvironmentVariable<bool>           _emitGraph;
 	
 	enum event_types {
-		_taskInstanceId = 9200002,
+		// OmpSs common
 		_runtimeState = 9000000,     //!< Runtime state (extrae event type)
+		
+		_taskInstanceId = 9200002,
 		_functionName = 9200011,     //!< Task function name
 		_codeLocation = 9200021,     //!< Task code location
 		_readyTasksEventType = 9200022,
 		_liveTasksEventType = 9200023,
+		_priorityEventType = 9200038,
 		
+		// Nanos6-specific (for now)
 		_nestingLevel = 9500001,     //!< Nesting level
+		
+		// Common to extrae
 		_samplingEventType = 30000000,
 	};
 	
