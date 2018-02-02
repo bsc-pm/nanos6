@@ -10,6 +10,8 @@
 #include "DataAccessRegistration.hpp"
 #include "TaskFinalization.hpp"
 
+#include <InstrumentTaskStatus.hpp>
+
 
 void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace)
 {
@@ -48,6 +50,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			}
 			assert(disposableBlock != nullptr);
 			
+			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 			task->~Task();
 			free(disposableBlock); // FIXME: Need a proper object recycling mechanism here
 			task = parent;

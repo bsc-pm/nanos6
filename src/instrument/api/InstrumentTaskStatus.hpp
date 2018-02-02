@@ -68,6 +68,10 @@ namespace Instrument {
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void taskIsZombie(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
+	//! \brief Indicates that the task is about to be destroyed
+	//! \param[in] taskId the task identifier returned in the call to enterAddTask
+	void taskIsBeingDeleted(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	
 	//! NOTE: The next step would be a call to Instrument::destroyTask
 }
 

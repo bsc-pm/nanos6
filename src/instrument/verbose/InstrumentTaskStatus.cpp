@@ -107,4 +107,21 @@ namespace Instrument {
 	}
 	
 	
+	void taskIsBeingDeleted(
+		task_id_t taskId,
+		InstrumentationContext const &context
+	) {
+		if (!_verboseTaskStatus) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> TaskStatusChange " << taskId << " to:destroyed";
+		
+		addLogEntry(logEntry);
+	}
+	
 }

@@ -74,6 +74,13 @@ namespace Instrument {
 	) {
 	}
 	
+	inline void taskIsBeingDeleted(
+		task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+	}
+	
+	
 }
 
 
