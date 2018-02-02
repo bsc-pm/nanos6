@@ -61,7 +61,7 @@ namespace Instrument {
 			for (auto const &taskAndTag : taskId._taskInfo->_predecessors) {
 				ce.Communications[index].type = EXTRAE_USER_RECV;
 				ce.Communications[index].tag = taskAndTag.second;
-				ce.Communications[index].size = 0;
+				ce.Communications[index].size = (taskAndTag.first << 32) + taskId._taskInfo->_taskId;
 				ce.Communications[index].partner = EXTRAE_COMM_PARTNER_MYSELF;
 				ce.Communications[index].id = (taskAndTag.first << 32) + taskId._taskInfo->_taskId;
 				index++;
@@ -150,7 +150,7 @@ namespace Instrument {
 			for (auto const &taskAndTag : taskId._taskInfo->_predecessors) {
 				ce.Communications[index].type = EXTRAE_USER_RECV;
 				ce.Communications[index].tag = taskAndTag.second;
-				ce.Communications[index].size = 0;
+				ce.Communications[index].size = (taskAndTag.first << 32) + taskId._taskInfo->_taskId;
 				ce.Communications[index].partner = EXTRAE_COMM_PARTNER_MYSELF;
 				ce.Communications[index].id = (taskAndTag.first << 32) + taskId._taskInfo->_taskId;
 				index++;
@@ -221,7 +221,7 @@ namespace Instrument {
 		if (parentInTaskwait != 0) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
 			ce.Communications[0].tag = control_dependency_tag;
-			ce.Communications[0].size = 0;
+			ce.Communications[0].size = (taskId._taskInfo->_taskId << 32) + parentInTaskwait;
 			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
 			ce.Communications[0].id = (taskId._taskInfo->_taskId << 32) + parentInTaskwait;
 		}

@@ -58,7 +58,7 @@ namespace Instrument {
 		if (_emitGraph) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
 			ce.Communications[0].tag = /* NOT RUNNING - RUNNING */ 0;
-			ce.Communications[0].size = 0;
+			ce.Communications[0].size = taskId._taskInfo->_taskId;
 			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
 			ce.Communications[0].id = taskId._taskInfo->_taskId;
 			
