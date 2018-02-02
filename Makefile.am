@@ -625,6 +625,7 @@ noinst_HEADERS = \
 	src/hardware/places/NUMAPlace.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
 	src/instrument/api/InstrumentComputePlaceManagement.hpp \
+	src/instrument/api/InstrumentDataAccessTypes.hpp \
 	src/instrument/api/InstrumentDependenciesByAccess.hpp \
 	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/api/InstrumentDependenciesByGroup.hpp \

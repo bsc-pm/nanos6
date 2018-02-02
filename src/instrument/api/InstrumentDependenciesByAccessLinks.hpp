@@ -14,7 +14,7 @@
 
 #include <DataAccessRegion.hpp>
 
-#include "dependencies/DataAccessType.hpp"
+#include "InstrumentDataAccessTypes.hpp"
 
 
 namespace Instrument {
@@ -42,13 +42,6 @@ namespace Instrument {
 	//! 
 	//! Sequences of data accesses are identified by their superaccess. For the outermost accesses, the identifier of
 	//! their superaccess is the default value returned by calling the constructor if the type without parameters.
-	
-	enum access_object_type_t {
-		regular_access_type,
-		entry_fragment_type,
-		taskwait_type,
-		top_level_sink_type
-	};
 	
 	//! \brief Called when a new DataAccess is created
 	//! 
