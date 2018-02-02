@@ -23,7 +23,9 @@ namespace Instrument {
 	inline compute_place_id_t createdCPU(unsigned int virtualCPUId)
 	{
 		if (!_traceAsThreads) {
+			_extraeThreadCountLock.writeLock();
 			Extrae_change_num_threads(extrae_nanos_get_num_cpus_and_external_threads());
+			_extraeThreadCountLock.writeUnlock();
 		}
 		
 		return compute_place_id_t(virtualCPUId);
