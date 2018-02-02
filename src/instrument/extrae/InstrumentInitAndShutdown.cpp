@@ -202,14 +202,12 @@ namespace Instrument {
 		// Initialize extrae library
 		Extrae_init();
 		
-		unsigned int zero = 0;
-		
 		Extrae_register_codelocation_type( _functionName, _codeLocation, (char *) "User Function Name", (char *) "User Function Location" );
-		Extrae_define_event_type((extrae_type_t *) &_taskInstanceId, (char *) "Task instance", &zero, nullptr, nullptr);
-		Extrae_define_event_type((extrae_type_t *) &_nestingLevel, (char *) "Task nesting level", &zero, nullptr, nullptr);
+		Extrae_define_event_type(_taskInstanceId, "Task instance", 0, nullptr, nullptr);
+		Extrae_define_event_type(_nestingLevel, "Task nesting level", 0, nullptr, nullptr);
 		
-		Extrae_define_event_type((extrae_type_t *) &_readyTasksEventType, (char *) "Number of ready tasks", &zero, nullptr, nullptr);
-		Extrae_define_event_type((extrae_type_t *) &_liveTasksEventType, (char *) "Number of live tasks", &zero, nullptr, nullptr);
+		Extrae_define_event_type(_readyTasksEventType, "Number of ready tasks", 0, nullptr, nullptr);
+		Extrae_define_event_type(_liveTasksEventType, "Number of live tasks", 0, nullptr, nullptr);
 		
 		// Register the events for the backtrace
 		if (_sampleBacktraceDepth > 0) {
@@ -229,17 +227,13 @@ namespace Instrument {
 		
 		// Register runtime states
 		{
-			unsigned int nval = NANOS_EVENT_STATE_TYPES;
-			extrae_value_t values[nval];
+			extrae_value_t values[NANOS_EVENT_STATE_TYPES];
 			unsigned int i;
 			
-			for (i = 0; i < nval; i++) {
+			for (i = 0; i < NANOS_EVENT_STATE_TYPES; i++) {
 				values[i] = i;
 			}
-			Extrae_define_event_type(
-				(extrae_type_t *) &_runtimeState, (char *) "Runtime state",
-				&nval, values, (char **) _eventStateValueStr
-			);
+			Extrae_define_event_type(_runtimeState, "Runtime state", NANOS_EVENT_STATE_TYPES, values, _eventStateValueStr);
 		}
 		
 		// Force an event that allows to detect the trace as an OmpSs trace

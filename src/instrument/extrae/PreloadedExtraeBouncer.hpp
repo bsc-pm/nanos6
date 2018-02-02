@@ -92,4 +92,12 @@ inline void Extrae_set_threadid_function (unsigned (*threadid_function)(void))
 
 } // extern "C"
 
+
+// De-Fortranized interface
+inline void Extrae_define_event_type (extrae_type_t type, char const *type_description, unsigned nvalues, extrae_value_t *values, char const * const *values_description)
+{
+	Extrae_define_event_type(&type, (char *) type_description, &nvalues, values, (char **) values_description);
+}
+
+
 #endif // PRELOADED_EXTRAE_BOUNCER_HPP

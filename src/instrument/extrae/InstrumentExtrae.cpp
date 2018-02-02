@@ -18,16 +18,6 @@ namespace Instrument {
 	const EnvironmentVariable<bool> _sampleTaskCount("NANOS6_EXTRAE_SAMPLE_TASK_COUNT", 0);
 	const EnvironmentVariable<bool> _emitGraph("NANOS6_EXTRAE_EMIT_GRAPH", 0);
 	
-	const extrae_type_t       _taskInstanceId = 9200002;
-	const extrae_type_t       _runtimeState = 9000000;     //!< Runtime state (extrae event type)
-	const extrae_type_t       _functionName = 9200011;     //!< Task function name
-	const extrae_type_t       _codeLocation = 9200021;     //!< Task code location
-	const extrae_type_t       _readyTasksEventType = 9200022;
-	const extrae_type_t       _liveTasksEventType = 9200023;
-	
-	const extrae_type_t       _nestingLevel = 9500001;     //!< Nesting level
-	const extrae_type_t       _samplingEventType = 30000000;
-	
 	SpinLock                  _extraeLock;
 	
 	char const               *_eventStateValueStr[NANOS_EVENT_STATE_TYPES] = {

@@ -38,14 +38,18 @@ namespace Instrument {
 	extern const EnvironmentVariable<bool>           _sampleTaskCount;
 	extern const EnvironmentVariable<bool>           _emitGraph;
 	
-	extern const extrae_type_t                       _taskInstanceId;
-	extern const extrae_type_t                       _runtimeState;      //!< Runtime state (extrae event type)
-	extern const extrae_type_t                       _functionName;      //!< Task function name
-	extern const extrae_type_t                       _codeLocation;      //!< Task function location
-	extern const extrae_type_t                       _readyTasksEventType;
-	extern const extrae_type_t                       _liveTasksEventType;
-	extern const extrae_type_t                       _nestingLevel;      //!< Task nesting level
-	extern const extrae_type_t                       _samplingEventType;
+	enum event_types {
+		_taskInstanceId = 9200002,
+		_runtimeState = 9000000,     //!< Runtime state (extrae event type)
+		_functionName = 9200011,     //!< Task function name
+		_codeLocation = 9200021,     //!< Task code location
+		_readyTasksEventType = 9200022,
+		_liveTasksEventType = 9200023,
+		
+		_nestingLevel = 9500001,     //!< Nesting level
+		_samplingEventType = 30000000,
+	};
+	
 	
 	typedef enum { NANOS_NO_STATE, NANOS_NOT_RUNNING, NANOS_STARTUP, NANOS_SHUTDOWN, NANOS_ERROR, NANOS_IDLE,
 						NANOS_RUNTIME, NANOS_RUNNING, NANOS_SYNCHRONIZATION, NANOS_SCHEDULING, NANOS_CREATION,
