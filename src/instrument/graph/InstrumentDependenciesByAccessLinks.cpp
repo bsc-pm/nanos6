@@ -25,7 +25,7 @@ namespace Instrument {
 	using namespace Graph;
 	
 	data_access_id_t createdDataAccess(
-		data_access_id_t superAccessId,
+		data_access_id_t *superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		access_object_type_t objectType,
@@ -37,7 +37,8 @@ namespace Instrument {
 		
 		create_data_access_step_t *step = new create_data_access_step_t(
 			context,
-			superAccessId, dataAccessId, accessType, region, weak,
+			(superAccessId != nullptr ? *superAccessId : data_access_id_t()),
+			dataAccessId, accessType, region, weak,
 			readSatisfied, writeSatisfied, globallySatisfied,
 			originatorTaskId
 		);
@@ -59,7 +60,12 @@ namespace Instrument {
 		task_info_t &parentInfo = _taskToInfoMap[parentId];
 		
 		access->_id = dataAccessId;
-		access->_superAccess = superAccessId;
+		if (superAccessId != nullptr) {
+			access->_superAccess = *superAccessId;
+		} else {
+			access->_superAccess = data_access_id_t();
+		}
+		
 		access->_originator = originatorTaskId;
 		if (!isTaskwaitFragment) {
 			access->_parentPhase = parentInfo._phaseList.size() - 1;
@@ -111,7 +117,7 @@ namespace Instrument {
 	
 	
 	void upgradedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		__attribute__((unused)) DataAccessType previousAccessType,
 		__attribute__((unused)) bool previousWeakness,
 		DataAccessType newAccessType,
@@ -142,7 +148,7 @@ namespace Instrument {
 	
 	
 	void dataAccessBecomesSatisfied(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		bool globallySatisfied,
 		task_id_t targetTaskId, InstrumentationContext const &context
 	) {
@@ -159,7 +165,7 @@ namespace Instrument {
 	
 	
 	void modifiedDataAccessRegion(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
@@ -180,7 +186,7 @@ namespace Instrument {
 	
 	
 	data_access_id_t fragmentedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
@@ -258,7 +264,7 @@ namespace Instrument {
 	
 	
 	data_access_id_t createdDataSubaccessFragment(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
@@ -305,7 +311,7 @@ namespace Instrument {
 	
 	
 	void completedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
@@ -319,7 +325,7 @@ namespace Instrument {
 	
 	
 	void dataAccessBecomesRemovable(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
@@ -333,7 +339,7 @@ namespace Instrument {
 	
 	
 	void removedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
@@ -347,7 +353,7 @@ namespace Instrument {
 	
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId, task_id_t sinkTaskId, access_object_type_t sinkObjectType,
+		data_access_id_t &sourceAccessId, task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		DataAccessRegion region,
 		bool direct, bool bidirectional,
 		InstrumentationContext const &context
@@ -371,7 +377,7 @@ namespace Instrument {
 	
 	
 	void unlinkedDataAccesses(
-		data_access_id_t sourceAccessId,
+		data_access_id_t &sourceAccessId,
 		task_id_t sinkTaskId, __attribute__((unused)) access_object_type_t sinkObjectType,
 		bool direct,
 		InstrumentationContext const &context
@@ -387,9 +393,9 @@ namespace Instrument {
 	
 	
 	void reparentedDataAccess(
-		data_access_id_t oldSuperAccessId,
-		data_access_id_t newSuperAccessId,
-		data_access_id_t dataAccessId,
+		data_access_id_t &oldSuperAccessId,
+		data_access_id_t &newSuperAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
@@ -403,7 +409,7 @@ namespace Instrument {
 	
 	
 	void newDataAccessProperty(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		char const *shortPropertyName,
 		char const *longPropertyName,
 		InstrumentationContext const &context

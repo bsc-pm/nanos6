@@ -24,7 +24,7 @@ namespace Instrument {
 	static std::atomic<data_access_id_t::inner_type_t> _nextDataAccessId(1);
 	
 	data_access_id_t createdDataAccess(
-		data_access_id_t superAccessId,
+		data_access_id_t *superAccessId,
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		bool readSatisfied, bool writeSatisfied, bool globallySatisfied,
 		access_object_type_t objectType,
@@ -53,7 +53,10 @@ namespace Instrument {
 					logEntry->_contents << "CreatedTopLevelSink";
 					break;
 			}
-			logEntry->_contents << " " << id << " superaccess:" << superAccessId << " ";
+			logEntry->_contents << " " << id;
+			if (superAccessId != nullptr) {
+				logEntry->_contents << " superaccess:" << *superAccessId << " ";
+			}
 			
 			if (weak) {
 				logEntry->_contents << "weak";
@@ -101,7 +104,7 @@ namespace Instrument {
 	
 	
 	void upgradedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		DataAccessType previousAccessType,
 		bool previousWeakness,
 		DataAccessType newAccessType,
@@ -174,7 +177,7 @@ namespace Instrument {
 	
 	
 	void dataAccessBecomesSatisfied(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		bool globallySatisfied,
 		task_id_t targetTaskId,
 		InstrumentationContext const &context
@@ -201,7 +204,7 @@ namespace Instrument {
 	
 	
 	void modifiedDataAccessRegion(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
@@ -220,7 +223,7 @@ namespace Instrument {
 	
 	
 	data_access_id_t fragmentedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		DataAccessRegion newRegion,
 		InstrumentationContext const &context
 	) {
@@ -241,7 +244,7 @@ namespace Instrument {
 	
 	
 	data_access_id_t createdDataSubaccessFragment(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		data_access_id_t id = _nextDataAccessId++;
@@ -261,7 +264,7 @@ namespace Instrument {
 	
 	
 	void completedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
@@ -279,7 +282,7 @@ namespace Instrument {
 	
 	
 	void dataAccessBecomesRemovable(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
@@ -297,7 +300,7 @@ namespace Instrument {
 	
 	
 	void removedDataAccess(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
@@ -315,7 +318,7 @@ namespace Instrument {
 	
 	
 	void linkedDataAccesses(
-		data_access_id_t sourceAccessId,
+		data_access_id_t &sourceAccessId,
 		task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		DataAccessRegion region,
 		bool direct,
@@ -356,7 +359,7 @@ namespace Instrument {
 	
 	
 	void unlinkedDataAccesses(
-		data_access_id_t sourceAccessId,
+		data_access_id_t &sourceAccessId,
 		task_id_t sinkTaskId, access_object_type_t sinkObjectType,
 		bool direct,
 		InstrumentationContext const &context
@@ -394,9 +397,9 @@ namespace Instrument {
 	
 	
 	void reparentedDataAccess(
-		data_access_id_t oldSuperAccessId,
-		data_access_id_t newSuperAccessId,
-		data_access_id_t dataAccessId,
+		data_access_id_t &oldSuperAccessId,
+		data_access_id_t &newSuperAccessId,
+		data_access_id_t &dataAccessId,
 		InstrumentationContext const &context
 	) {
 		if (!_verboseDependenciesByAccessLinks) {
@@ -414,7 +417,7 @@ namespace Instrument {
 	
 	
 	void newDataAccessProperty(
-		data_access_id_t dataAccessId,
+		data_access_id_t &dataAccessId,
 		char const *shortPropertyName,
 		char const *longPropertyName,
 		InstrumentationContext const &context

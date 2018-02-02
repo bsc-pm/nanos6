@@ -134,7 +134,7 @@ public:
 	inline void setNewInstrumentationId(Instrument::task_id_t const &taskInstrumentationId)
 	{
 		_instrumentationId = Instrument::createdDataAccess(
-			Instrument::data_access_id_t(),
+			nullptr,
 			_type, _weak, _region,
 			/* Read Satisfied */ false, /* Write Satisfied */ false, /* Globally Satisfied */ false,
 			(Instrument::access_object_type_t) _objectType,
@@ -453,6 +453,11 @@ public:
 	}
 	
 	Instrument::data_access_id_t const &getInstrumentationId() const
+	{
+		return _instrumentationId;
+	}
+	
+	Instrument::data_access_id_t &getInstrumentationId()
 	{
 		return _instrumentationId;
 	}
