@@ -17,8 +17,8 @@
 
 class MemoryPoolGlobal {
 private:
-	size_t _globalAllocSize;
-	size_t _memoryChunkSize;
+	EnvironmentVariable<size_t> _globalAllocSize;
+	EnvironmentVariable<size_t> _memoryChunkSize;
 
 	SpinLock _lock;
 	size_t _pageSize;
@@ -46,16 +46,13 @@ private:
 
 public:
 	MemoryPoolGlobal(size_t NUMANodeId)
-		: _pageSize(sysconf(_SC_PAGESIZE)), _oldMemoryChunks(0),
+		: _globalAllocSize("NANOS6_GLOBAL_ALLOC_SIZE", 8 * 1024 * 1024),
+		_memoryChunkSize("NANOS6_ALLOCATOR_CHUNK_SIZE", 128 * 1024),
+		_pageSize(sysconf(_SC_PAGESIZE)), _oldMemoryChunks(0),
 		_curMemoryChunk(nullptr), _curAvailable(0),
 		_NUMANodeId(NUMANodeId)
 	{
-		EnvironmentVariable<size_t> globalAllocSize("NANOS6_GLOBAL_ALLOC_SIZE", 8 * 1024 * 1024);
-		_globalAllocSize = globalAllocSize;
-		
-		EnvironmentVariable<size_t> memoryChunkSize("NANOS6_ALLOCATOR_CHUNK_SIZE", 128 * 1024);
-		_memoryChunkSize = memoryChunkSize;
-		
+		assert((_globalAllocSize % _memoryChunkSize) == 0);
 #if HAVE_MEMKIND
 		int rc = memkind_create_kind(MEMKIND_MEMTYPE_DEFAULT, MEMKIND_POLICY_PREFERRED_LOCAL, (memkind_bits_t)0, &_memoryKind);
 		FatalErrorHandler::check(rc == MEMKIND_SUCCESS, " when trying to create a new memory kind");
