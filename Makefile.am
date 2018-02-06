@@ -498,6 +498,7 @@ instrument_stats_sources = \
 instrument_verbose_sources = \
 	$(instrument_generic_ids_sources) \
 	src/instrument/verbose/InstrumentAddTask.cpp \
+	src/instrument/verbose/InstrumentBlocking.cpp \
 	src/instrument/verbose/InstrumentComputePlaceManagement.cpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.cpp \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.cpp \
@@ -624,6 +625,7 @@ noinst_HEADERS = \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
+	src/instrument/api/InstrumentBlocking.hpp \
 	src/instrument/api/InstrumentComputePlaceManagement.hpp \
 	src/instrument/api/InstrumentDataAccessTypes.hpp \
 	src/instrument/api/InstrumentDependenciesByAccess.hpp \
@@ -640,6 +642,7 @@ noinst_HEADERS = \
 	src/instrument/extrae/ExtraeSymbolLiterals.hpp \
 	src/instrument/extrae/ExtraeSymbolResolver.hpp \
 	src/instrument/extrae/InstrumentAddTask.hpp \
+	src/instrument/extrae/InstrumentBlocking.hpp \
 	src/instrument/extrae/InstrumentComputePlaceId.hpp \
 	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
 	src/instrument/extrae/InstrumentDataAccessId.hpp \
@@ -668,6 +671,7 @@ noinst_HEADERS = \
 	src/instrument/graph/ExecutionSteps.hpp \
 	src/instrument/graph/GenerateEdges.hpp \
 	src/instrument/graph/InstrumentAddTask.hpp \
+	src/instrument/graph/InstrumentBlocking.hpp \
 	src/instrument/graph/InstrumentComputePlaceId.hpp \
 	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
@@ -691,6 +695,7 @@ noinst_HEADERS = \
 	src/instrument/graph/PathLength.hpp \
 	src/instrument/graph/SortAccessGroups.hpp \
 	src/instrument/null/InstrumentAddTask.hpp \
+	src/instrument/null/InstrumentBlocking.hpp \
 	src/instrument/null/InstrumentComputePlaceId.hpp \
 	src/instrument/null/InstrumentComputePlaceManagement.hpp \
 	src/instrument/null/InstrumentDataAccessId.hpp \
@@ -715,6 +720,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentUserMutex.hpp \
 	src/instrument/profile/Address.hpp \
 	src/instrument/profile/InstrumentAddTask.hpp \
+	src/instrument/profile/InstrumentBlocking.hpp \
 	src/instrument/profile/InstrumentComputePlaceId.hpp \
 	src/instrument/profile/InstrumentComputePlaceManagement.hpp \
 	src/instrument/profile/InstrumentDataAccessId.hpp \
@@ -739,6 +745,7 @@ noinst_HEADERS = \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp \
 	src/instrument/stats/InstrumentAddTask.hpp \
+	src/instrument/stats/InstrumentBlocking.hpp \
 	src/instrument/stats/InstrumentComputePlaceId.hpp \
 	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
 	src/instrument/stats/InstrumentDataAccessId.hpp \
@@ -777,6 +784,7 @@ noinst_HEADERS = \
 	src/instrument/support/sampling/SigProf.hpp \
 	src/instrument/support/sampling/ThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
+	src/instrument/verbose/InstrumentBlocking.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
 	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \

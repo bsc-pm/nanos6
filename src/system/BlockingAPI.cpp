@@ -16,6 +16,8 @@
 
 #include "scheduling/Scheduler.hpp"
 
+#include <InstrumentBlocking.hpp>
+
 
 extern "C" void *nanos_get_current_blocking_context()
 {
@@ -44,11 +46,13 @@ extern "C" void nanos_block_current_task(__attribute__((unused)) void *blocking_
 	assert(blocking_context == currentTask);
 	
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
+	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
 	
 	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask, false);
 	DataAccessRegistration::handleExitBlocking(currentTask);
 	
+	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 }
 
@@ -57,6 +61,7 @@ extern "C" void nanos_unblock_task(void *blocking_context)
 {
 	Task *task = static_cast<Task *>(blocking_context);
 	
+	Instrument::unblockTask(task->getInstrumentationTaskId());
 	Scheduler::taskGetsUnblocked(task, nullptr);
 	
 	CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
