@@ -109,12 +109,12 @@ namespace Instrument {
 		ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
 		ce.Communications[0].id = taskId._taskInfo->_taskId;
 		
-		// Form unblocker to actual resumption
-		ce.Communications[0].type = EXTRAE_USER_SEND;
-		ce.Communications[0].tag = control_dependency_tag;
-		ce.Communications[0].size = taskId._taskInfo->_taskId;
-		ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
-		ce.Communications[0].id = taskId._taskInfo->_taskId;
+		// From unblocker to actual resumption
+		ce.Communications[1].type = EXTRAE_USER_SEND;
+		ce.Communications[1].tag = control_dependency_tag;
+		ce.Communications[1].size = taskId._taskInfo->_taskId;
+		ce.Communications[1].partner = EXTRAE_COMM_PARTNER_MYSELF;
+		ce.Communications[1].id = taskId._taskInfo->_taskId;
 		
 		taskId._taskInfo->_lock.lock();
 		taskId._taskInfo->_predecessors.emplace(0, control_dependency_tag);
