@@ -136,7 +136,8 @@ libnanos6_main_wrapper_a_SOURCES = \
 	loader/intercept-main-common.h \
 	loader/main-wrapper.c \
 	loader/main-wrapper.h \
-	loader/malloc.h
+	loader/malloc.h \
+	loader/device_strings.c 
 
 
 nanos6-main-wrapper.o: libnanos6-main-wrapper.a
