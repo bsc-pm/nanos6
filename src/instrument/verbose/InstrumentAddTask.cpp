@@ -38,8 +38,8 @@ namespace Instrument {
 			logEntry->appendLocation(context);
 			
 			logEntry->_contents << " --> AddTask " << taskId;
-			if (taskInfo && taskInfo->task_label) {
-				logEntry->_contents << " " << taskInfo->task_label;
+			if (taskInfo && taskInfo->implementations[0].task_label) {
+				logEntry->_contents << " " << taskInfo->implementations[0].task_label;
 			}
 			if (taskInvokationInfo && taskInvokationInfo->invocation_source) {
 				logEntry->_contents << " " << taskInvokationInfo->invocation_source;

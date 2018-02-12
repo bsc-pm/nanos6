@@ -67,7 +67,7 @@ void Taskloop::run(Taskloop &source)
 		// Try to get a chunk of iterations
 		bool work = source.getPendingIterationsFromPartition(partitionId, bounds);
 		if (work) {
-			taskInfo.run(argsBlock, &bounds);
+			taskInfo.implementations[0].run(argsBlock, nullptr, nullptr/*&bounds*/); // TODO: Revise where &bounds must be used
 		} else {
 			++visitedPartitions;
 			

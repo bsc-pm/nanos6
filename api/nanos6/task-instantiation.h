@@ -52,7 +52,7 @@ typedef struct
 {
 	size_t local_address;
 	size_t device_address;
-} nanos6_address_tranlation_entry_t;
+} nanos6_address_translation_entry_t;
 
 
 typedef struct
@@ -68,7 +68,7 @@ typedef struct
 	//! \param[in,out] args_block A pointer to a block of data for the parameters
 	//! \param[in] device_env a pointer to device-specific data
 	//! \param[in] address_translation_table one entry per task symbol that maps host addresses to device addresses
-	void (*run)(void *args_block, void *device_env, nanos6_address_tranlation_entry_t *address_translation_table);
+	void (*run)(void *args_block, void *device_env, nanos6_address_translation_entry_t *address_translation_table);
 	
 	//! \brief Function to retrieve constraint information about the task (cost, memory requirements, ...)
 	//! 
@@ -92,7 +92,7 @@ enum nanos6_task_info_contents_t { nanos6_task_info_contents = 4 };
 typedef struct
 {
 	//! \brief Number of symbols accessible by the task
-	int const num_symbols;
+	int /*const*/ num_symbols; //TODO: removed const for obstructing construction, until further decision
 	
 	//! \brief Function that the runtime calls to retrieve the information needed to calculate the dependencies
 	//! 
@@ -115,15 +115,17 @@ typedef struct
 	char const *type_identifier;
 	
 	// \brief Number of implementations of the task
-	int const implementation_count;
+	int /*const*/ implementation_count; //TODO: removed const for obstructing construction, until further decision
 	
 	//! \brief Array of implementations
-	nanos6_task_implementation_info_t const *implementations;
+	nanos6_task_implementation_info_t /*const*/ *implementations; //TODO: removed const for obstructing construction, until further decision
 	
 	//! \brief Function that the runtime calls to perform any cleanup needed in the block of data of the parameters
 	//! 
 	//! \param[in,out] args_block A pointer to a block of data for the parameters
 	void (*destroy)(void *args_block);
+
+	
 } nanos_task_info __attribute__((aligned(64)));
 
 

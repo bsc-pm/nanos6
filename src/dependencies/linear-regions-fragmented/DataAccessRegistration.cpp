@@ -596,9 +596,9 @@ namespace DataAccessRegistration {
 			FatalErrorHandler::failIf(
 				(accessType == REDUCTION_ACCESS_TYPE) || (dataAccess->getType() == REDUCTION_ACCESS_TYPE),
 				"Task ",
-				(dataAccess->getOriginator()->getTaskInfo()->task_label != nullptr ?
-					dataAccess->getOriginator()->getTaskInfo()->task_label :
-					dataAccess->getOriginator()->getTaskInfo()->declaration_source
+				(dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr ?
+					dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label :
+					dataAccess->getOriginator()->getTaskInfo()->implementations[0].declaration_source
 				),
 				" has non-reduction accesses that overlap a reduction"
 			);
@@ -608,9 +608,9 @@ namespace DataAccessRegistration {
 				(accessType == REDUCTION_ACCESS_TYPE)
 					&& (dataAccess->getReductionTypeAndOperatorIndex() != reductionTypeAndOperatorIndex),
 				"Task ",
-				(dataAccess->getOriginator()->getTaskInfo()->task_label != nullptr ?
-					dataAccess->getOriginator()->getTaskInfo()->task_label :
-					dataAccess->getOriginator()->getTaskInfo()->declaration_source
+				(dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr ?
+					dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label :
+					dataAccess->getOriginator()->getTaskInfo()->implementations[0].declaration_source
 				),
 				" has two overlapping reductions over different types or with different operators"
 			);

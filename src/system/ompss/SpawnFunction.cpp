@@ -46,7 +46,7 @@ struct SpawnedFunctionArgsBlock {
 };
 
 
-static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) nanos6_taskloop_bounds_t *taskloop_bounds)
+static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) void *device_env, __attribute__((unused)) nanos6_address_translation_entry_t *translations)
 {
 	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
 	assert(argsBlock != nullptr);
@@ -74,13 +74,13 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 		
 		if (itAndBool.second) {
 			// New task info
-			taskInfo->run = nanos_spawned_function_wrapper;
+			taskInfo->implementations[0].run = nanos_spawned_function_wrapper;
 			taskInfo->register_depinfo = nullptr;
 			
 			// We use the stored copy since we do not know the actual lifetime of "label"
-			taskInfo->task_label = it->first.second.c_str();
-			taskInfo->declaration_source = "Spawned Task";
-			taskInfo->get_cost = nullptr;
+			taskInfo->implementations[0].task_label = it->first.second.c_str();
+			taskInfo->implementations[0].declaration_source = "Spawned Task";
+			taskInfo->implementations[0].get_constraints = nullptr;
 		}
 	}
 	

@@ -45,6 +45,8 @@ void nanos_create_task(
 	void **task_pointer,
 	size_t flags
 ) {
+	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
+	
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	
 	bool isTaskloop = flags & nanos_task_flag::nanos_taskloop_task;
@@ -58,8 +60,9 @@ void nanos_create_task(
 	
 	// Allocation and layout
 	int rc = posix_memalign(args_block_pointer, TASK_ALIGNMENT, args_block_size + taskSize);
-	FatalErrorHandler::handle(rc, " when trying to allocate memory for a new task of type '", taskInfo->task_label, "' with args block of size ", args_block_size);
-	
+	FatalErrorHandler::handle(rc, " when trying to allocate memory for a new task of type '", taskInfo->implementations[0].task_label, "' with args block of size ", args_block_size); // TODO: Temporary check until multiple implementations are supported	
+
+
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
 	void *&task = *task_pointer;

@@ -135,10 +135,10 @@ namespace Instrument {
 			
 			assert(userSideTaskInfo != 0);
 			std::string name;
-			if ((userSideTaskInfo->task_label != nullptr) && (userSideTaskInfo->task_label[0] != '\0')) {
-				name = userSideTaskInfo->task_label;
-			} else if (userSideTaskInfo->declaration_source != 0) {
-				name = userSideTaskInfo->declaration_source;
+			if ((userSideTaskInfo->implementations[0].task_label != nullptr) && (userSideTaskInfo->implementations[0].task_label[0] != '\0')) {
+				name = userSideTaskInfo->implementations[0].task_label;
+			} else if (userSideTaskInfo->implementations[0].declaration_source != 0) {
+				name = userSideTaskInfo->implementations[0].declaration_source;
 			} else {
 				name = "Unknown task";
 			}
@@ -157,10 +157,10 @@ namespace Instrument {
 					
 					assert(userSideTaskInfo != 0);
 					std::string name;
-					if ((userSideTaskInfo->task_label != nullptr) && (userSideTaskInfo->task_label[0] != '\0')) {
-						name = userSideTaskInfo->task_label;
-					} else if (userSideTaskInfo->declaration_source != 0) {
-						name = userSideTaskInfo->declaration_source;
+					if ((userSideTaskInfo->implementations[0].task_label != nullptr) && (userSideTaskInfo->implementations[0].task_label[0] != '\0')) {
+						name = userSideTaskInfo->implementations[0].task_label;
+					} else if (userSideTaskInfo->implementations[0].declaration_source != 0) {
+						name = userSideTaskInfo->implementations[0].declaration_source;
 					} else {
 						name = "Unknown task";
 					}

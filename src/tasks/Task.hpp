@@ -117,17 +117,18 @@ public:
 	//! Actual code of the task
 	virtual inline void body()
 	{
+		assert(_taskInfo->implementation_count == 1); // TODO temporary check for a single implementation
 		assert(hasCode());
-		assert(_taskInfo != nullptr);
-		
-		_taskInfo->run(_argsBlock, nullptr);
+		assert(_taskInfo != nullptr);	
+		_taskInfo->implementations[0].run(_argsBlock, nullptr, nullptr); // TODO: solution until multiple implementations are allowed, add arguments
 	}
 	
 	//! Check if the task has an actual body
 	inline bool hasCode()
 	{
+		assert(_taskInfo->implementation_count == 1); // TODO: temporary check for a single implementation
 		assert(_taskInfo != nullptr);
-		return (_taskInfo->run != nullptr);
+		return (_taskInfo->implementations[0].run != nullptr); // TODO: solution until multiple implementations are allowed
 	}
 	
 	//! \brief sets the thread assigned to tun the task
