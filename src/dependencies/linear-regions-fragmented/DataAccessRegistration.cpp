@@ -851,13 +851,20 @@ namespace DataAccessRegistration {
 	//! Process all the originators that have become ready
 	static inline void processSatisfiedOriginators(
 		/* INOUT */ CPUDependencyData &hpDependencyData,
-		ComputePlace *computePlace
+		ComputePlace *computePlace,
+		bool fromBusyThread
 	) {
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 			
-			ComputePlace *idleComputePlace = Scheduler::addReadyTask(satisfiedOriginator, computePlace, SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT);
+			ComputePlace *idleComputePlace = Scheduler::addReadyTask(
+				satisfiedOriginator, computePlace,
+				(fromBusyThread ?
+					SchedulerInterface::SchedulerInterface::BUSY_COMPUTE_PLACE_TASK_HINT
+					: SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT
+				)
+			);
 			
 			if (idleComputePlace != nullptr) {
 				ThreadManager::resumeIdle((CPU *) idleComputePlace);
@@ -997,7 +1004,8 @@ namespace DataAccessRegistration {
 	
 	static void processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
 		CPUDependencyData &hpDependencyData,
-		ComputePlace *computePlace
+		ComputePlace *computePlace,
+		bool fromBusyThread
 	) {
 		assert(computePlace != nullptr);
 		
@@ -1006,7 +1014,7 @@ namespace DataAccessRegistration {
 		processDelayedOperations(hpDependencyData);
 #endif
 		
-		processSatisfiedOriginators(hpDependencyData, computePlace);
+		processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
 		assert(hpDependencyData._satisfiedOriginators.empty());
 		
 		handleRemovableTasks(hpDependencyData._removableTasks, computePlace);
@@ -1991,7 +1999,7 @@ namespace DataAccessRegistration {
 			// This part actually inserts the accesses into the dependency system
 			linkTaskAccesses(hpDependencyData, task);
 			
-			processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace);
+			processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, true);
 			
 #ifndef NDEBUG
 			{
@@ -2045,7 +2053,7 @@ namespace DataAccessRegistration {
 				}
 			);
 		}
-		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace);
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, true);
 		
 #ifndef NDEBUG
 		{
@@ -2092,7 +2100,7 @@ namespace DataAccessRegistration {
 			);
 		}
 		
-		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace);
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, false);
 		
 #ifndef NDEBUG
 		{
@@ -2156,7 +2164,7 @@ namespace DataAccessRegistration {
 			
 			finalizeFragments(task, accessStructures, hpDependencyData);
 		}
-		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace);
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, true);
 		
 #ifndef NDEBUG
 		{

@@ -46,7 +46,8 @@ public:
 	enum ReadyTaskHint {
 		NO_HINT,
 		CHILD_TASK_HINT,
-		SIBLING_TASK_HINT
+		SIBLING_TASK_HINT,
+		BUSY_COMPUTE_PLACE_TASK_HINT
 	};
 
 	
