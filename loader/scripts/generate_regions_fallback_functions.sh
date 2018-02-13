@@ -18,7 +18,7 @@ shift
 . $(dirname $0)/common.sh
 
 
-echo '#include "api/nanos6/dependencies.h"'
+echo '#include "nanos6/dependencies.h"'
 echo '#include "nanos6/multidimensional-dependencies.h"'
 echo
 echo
@@ -55,7 +55,7 @@ for type in $* ; do
 		for level in $(seq ${dimensions} -1 2) ; do
 			echo -n "[index${level}]"
 		done
-		echo "[dim1start], dim1end - dim1start);"
+		echo "[dim1start], dim1end - dim1start, symbol_index);"
 		
 		for level in $(seq ${dimensions} -1 2) ; do
 			emit_tabs $((${level} - 1))

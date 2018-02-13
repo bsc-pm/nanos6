@@ -9,6 +9,7 @@
 
 
 #include <nanos6/multidimensional-dependencies.h>
+
 #include <nanos6/dependencies.h>
 
 #include "../DataAccessType.hpp"
@@ -37,7 +38,7 @@ _AI_ void register_data_access_base<READ_ACCESS_TYPE, true>(
 ) {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
-	nanos_register_weak_read_depinfo(handler, (void *) start, currentDimEnd - currentDimStart);
+	nanos_register_weak_read_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
 }
 
 template<>
@@ -47,7 +48,7 @@ _AI_ void register_data_access_base<READ_ACCESS_TYPE, false>(
 ) {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
-	nanos_register_read_depinfo(handler, (void *) start, currentDimEnd - currentDimStart);
+	nanos_register_read_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
 }
 
 template<>
@@ -57,7 +58,7 @@ _AI_ void register_data_access_base<WRITE_ACCESS_TYPE, true>(
 ) {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
-	nanos_register_weak_write_depinfo(handler, (void *) start, currentDimEnd - currentDimStart);
+	nanos_register_weak_write_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
 }
 
 template<>
@@ -67,7 +68,7 @@ _AI_ void register_data_access_base<WRITE_ACCESS_TYPE, false>(
 ) {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
-	nanos_register_write_depinfo(handler, (void *) start, currentDimEnd - currentDimStart);
+	nanos_register_write_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
 }
 
 template<>
@@ -77,7 +78,7 @@ _AI_ void register_data_access_base<READWRITE_ACCESS_TYPE, true>(
 ) {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
-	nanos_register_weak_readwrite_depinfo(handler, (void *) start, currentDimEnd - currentDimStart);
+	nanos_register_weak_readwrite_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
 }
 
 template<>
@@ -87,7 +88,7 @@ _AI_ void register_data_access_base<READWRITE_ACCESS_TYPE, false>(
 ) {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
-	nanos_register_readwrite_depinfo(handler, (void *) start, currentDimEnd - currentDimStart);
+	nanos_register_readwrite_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
 }
 
 template<>
@@ -97,7 +98,7 @@ _AI_ void register_data_access_base<CONCURRENT_ACCESS_TYPE, false>(
 ) {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
-	nanos_register_concurrent_depinfo(handler, (void *) start, currentDimEnd - currentDimStart);
+	nanos_register_concurrent_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
 }
 
 

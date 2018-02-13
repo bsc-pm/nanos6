@@ -17,6 +17,7 @@
 #include "DataAccessRegistration.hpp"
 #include "ReductionSpecific.hpp"
 
+#include <nanos6/dependencies.h>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
 void register_access(void *handler, void *start, size_t length, int reductionTypeAndOperatorIndex = no_reduction_type_and_operator)
@@ -42,43 +43,43 @@ void register_access(void *handler, void *start, size_t length, int reductionTyp
 }
 
 
-void nanos_register_read_depinfo(void *handler, void *start, size_t length)
+void nanos_register_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<READ_ACCESS_TYPE, false>(handler, start, length);
 }
 
 
-void nanos_register_write_depinfo(void *handler, void *start, size_t length)
+void nanos_register_write_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<WRITE_ACCESS_TYPE, false>(handler, start, length);
 }
 
 
-void nanos_register_readwrite_depinfo(void *handler, void *start, size_t length)
+void nanos_register_readwrite_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<READWRITE_ACCESS_TYPE, false>(handler, start, length);
 }
 
 
-void nanos_register_weak_read_depinfo(void *handler, void *start, size_t length)
+void nanos_register_weak_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<READ_ACCESS_TYPE, true>(handler, start, length);
 }
 
 
-void nanos_register_weak_write_depinfo(void *handler, void *start, size_t length)
+void nanos_register_weak_write_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<WRITE_ACCESS_TYPE, true>(handler, start, length);
 }
 
 
-void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t length)
+void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<READWRITE_ACCESS_TYPE, true>(handler, start, length);
 }
 
 
-void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length)
+void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<CONCURRENT_ACCESS_TYPE, false>(handler, start, length);
 }
@@ -93,7 +94,8 @@ void nanos_register_region_reduction_depinfo1(
 		void *base_address,
 		long dim1size,
 		__attribute__((unused)) long dim1start,
-		__attribute__((unused)) long dim1end
+		__attribute__((unused)) long dim1end,
+		int symbolIndex
 ) {
 	// Currently we only support non-arrays
 	assert(dim1start == 0L);
