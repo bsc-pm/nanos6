@@ -6,8 +6,6 @@
 
 #include <nanos6/debug.h>
 
-#include <nanos6/multidimensional-release.h>
-
 #include <cassert>
 #include <cstdio>
 #include <sstream>
@@ -117,8 +115,7 @@ int main(int argc, char **argv)
 				
 				status._taskHasBeenReleased[segment] = true;
 				
-				// #pragma oss release out(var[segment])
-				nanos_release_write_1(&var[segment], sizeof(var[segment]), 0, sizeof(var[segment]));
+				#pragma oss release out(var[segment])
 				
 				std::ostringstream oss;
 				oss << "T" << segment+1 << " starts after releasing segment " << segment;
@@ -185,8 +182,7 @@ int main(int argc, char **argv)
 		for (int segment = 0; segment < NSEGMENTS; segment++){
 			tap.emitDiagnostic("Releasing segment ", segment);
 			
-			// #pragma oss release out(var[segment])
-			nanos_release_write_1(&var[segment], sizeof(var[segment]), 0, sizeof(var[segment]));
+			#pragma oss release out(var[segment])
 		}
 	}
 	
