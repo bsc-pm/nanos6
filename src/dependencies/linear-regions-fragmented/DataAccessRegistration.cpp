@@ -637,7 +637,14 @@ namespace DataAccessRegistration {
 			toBeDuplicated.getReductionTypeAndOperatorIndex(),
 			toBeDuplicated.getStatus(), toBeDuplicated.getNext()
 		);
-		
+
+		// Copy symbols
+		for (int i = 0; i < toBeDuplicated.getOriginator()->getSymbolNum(); ++i){
+			if(toBeDuplicated.isSymbol(i)){
+				newFragment->setSymbol(i);
+			}
+		}		
+
 		newFragment->clearRegistered();
 		
 		return newFragment;
@@ -1044,6 +1051,8 @@ namespace DataAccessRegistration {
 			dataAccess->getReductionTypeAndOperatorIndex(),
 			instrumentationId
 		);
+
+		// TODO what is this? How do I set symbols?
 		
 		fragment->inheritFragmentStatus(dataAccess);
 #ifndef NDEBUG
@@ -1773,6 +1782,8 @@ namespace DataAccessRegistration {
 						accessType, /* not weak */ false, region,
 						no_reduction_type_and_operator 
 					);
+
+					// No need for symbols in a taskwait
 					
 					DataAccessStatusEffects initialStatus(taskwaitFragment);
 					taskwaitFragment->setNewInstrumentationId(task->getInstrumentationTaskId());
@@ -1867,6 +1878,8 @@ namespace DataAccessRegistration {
 						accessType, /* not weak */ false, region,
 						no_reduction_type_and_operator 
 					);
+
+					// TODO, what is this? How to threat symbols?
 					
 					DataAccessStatusEffects initialStatus(topLevelSinkFragment);
 					topLevelSinkFragment->setNewInstrumentationId(task->getInstrumentationTaskId());
@@ -1936,7 +1949,7 @@ namespace DataAccessRegistration {
 	
 	
 	void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, int symbolIndex, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
 	) {
 		assert(task != nullptr);
 		
@@ -1963,7 +1976,8 @@ namespace DataAccessRegistration {
 			},
 			[&](DataAccessRegion missingRegion) -> bool {
 				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion, reductionTypeAndOperatorIndex);
-				
+				newAccess->setSymbol(symbolIndex);			
+	
 				accessStructures._accesses.insert(*newAccess);
 				
 				return true;

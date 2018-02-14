@@ -130,7 +130,7 @@ public:
 		assert(_taskInfo != nullptr);
 		return (_taskInfo->implementations[0].run != nullptr); // TODO: solution until multiple implementations are allowed
 	}
-	
+
 	//! \brief sets the thread assigned to tun the task
 	//!
 	//! \param in thread the thread that will run the task
@@ -415,6 +415,10 @@ public:
 	inline void setSchedulerInfo(void *schedulerInfo)
 	{
 		_schedulerInfo = schedulerInfo;
+	}
+
+	inline int getSymbolNum(){
+		return _taskInfo->num_symbols;
 	}
 };
 
