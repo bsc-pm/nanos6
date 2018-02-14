@@ -639,11 +639,7 @@ namespace DataAccessRegistration {
 		);
 
 		// Copy symbols
-		for (int i = 0; i < toBeDuplicated.getOriginator()->getSymbolNum(); ++i){
-			if(toBeDuplicated.isSymbol(i)){
-				newFragment->setSymbol(i);
-			}
-		}		
+		newFragment->inheritFragmentSymbols(&toBeDuplicated); // TODO: Consider removing the pointer from declaration and make it a reference	
 
 		newFragment->clearRegistered();
 		
