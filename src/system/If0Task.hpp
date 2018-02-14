@@ -89,7 +89,7 @@ namespace If0Task {
 		// The thread can migrate during the execution of the task
 		computePlace = currentThread->getComputePlace();
 		
-		Scheduler::taskGetsUnblocked(parent, computePlace);
+		Scheduler::addReadyTask(parent, computePlace, SchedulerInterface::UNBLOCKED_TASK_HINT);
 	}
 	
 }

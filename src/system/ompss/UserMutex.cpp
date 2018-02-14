@@ -131,13 +131,13 @@ void nanos_user_unlock(void **handlerPointer)
 				// Wake up the unblocked task in an idle CPU
 				releasedThread->resume(idleCPU, false);
 			} else {
-				Scheduler::taskGetsUnblocked(currentTask, cpu);
+				Scheduler::addReadyTask(currentTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);
 				
 				currentThread->switchTo(releasedThread);
 				Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
 			}
 		} else {
-			Scheduler::taskGetsUnblocked(releasedTask, cpu);
+			Scheduler::addReadyTask(releasedTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);
 			
 			CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
 			if (idleCPU != nullptr) {

@@ -56,6 +56,12 @@ public:
 		assert(task != 0);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		
+		if (hint == SchedulerInterface::UNBLOCKED_TASK_HINT) {
+			_scheduler->taskGetsUnblocked(task, computePlace);
+			
+			return nullptr;
+		}
+		
 		if (task->isTaskloop()) {
 			_scheduler->addReadyTask(task, computePlace, hint, false);
 			
@@ -69,17 +75,6 @@ public:
 		} else {
 			return _scheduler->addReadyTask(task, computePlace, hint);
 		}
-	}
-	
-	//! \brief Add back a task that was blocked but that is now unblocked
-	//!
-	//! \param[in] unblockedTask the task that has been unblocked
-	//! \param[in] computePlace the hardware place of the unblocker
-	static inline void taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace)
-	{
-		assert(unblockedTask != 0);
-		Instrument::taskIsReady(unblockedTask->getInstrumentationTaskId());
-		_scheduler->taskGetsUnblocked(unblockedTask, computePlace);
 	}
 	
 	//! \brief Get a ready task for execution

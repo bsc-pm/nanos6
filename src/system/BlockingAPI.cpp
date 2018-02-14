@@ -62,7 +62,7 @@ extern "C" void nanos_unblock_task(void *blocking_context)
 	Task *task = static_cast<Task *>(blocking_context);
 	
 	Instrument::unblockTask(task->getInstrumentationTaskId());
-	Scheduler::taskGetsUnblocked(task, nullptr);
+	Scheduler::addReadyTask(task, nullptr, SchedulerInterface::UNBLOCKED_TASK_HINT);
 	
 	CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
 	if (idleCPU != nullptr) {

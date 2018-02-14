@@ -76,7 +76,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			assert(!task->hasFinished());
 			
 			// An ancestor in a taskwait that finishes at this point
-			Scheduler::taskGetsUnblocked(task, computePlace);
+			Scheduler::addReadyTask(task, computePlace, SchedulerInterface::UNBLOCKED_TASK_HINT);
 			readyOrDisposable = false;
 			
 			if (computePlace != nullptr) {
