@@ -84,7 +84,11 @@ private:
 	//! An index that determines the data type and the operation of the reduction (if applicable)
 	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
 
-	std::bitset<MAX_SYMBOLS> _symbols; 
+	//! A bitmap of the "symbols" this access is related to
+	std::bitset<MAX_SYMBOLS> _symbols;
+
+	//! A integer representing the original symbol to which this access belongs
+	 int _originalSymbol;
 	
 	
 public:
@@ -117,6 +121,9 @@ public:
 	void setSymbol(int index);
 	void unsetSymbol(int index);	
 	
+	void setOriginalSymbol(int symbol);
+	int getOriginalSymbol() const;
+
 	inline DataAccessObjectType getObjectType() const
 	{
 		return _objectType;

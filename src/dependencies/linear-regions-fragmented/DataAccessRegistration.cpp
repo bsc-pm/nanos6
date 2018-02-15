@@ -1048,9 +1048,9 @@ namespace DataAccessRegistration {
 			instrumentationId
 		);
 
-		// TODO what is this? How do I set symbols?
-		
-		fragment->inheritFragmentStatus(dataAccess);
+		fragment->inheritFragmentStatus(dataAccess); //TODO is it necessary?
+
+
 #ifndef NDEBUG
 		fragment->setReachable();
 #endif
@@ -1875,7 +1875,7 @@ namespace DataAccessRegistration {
 						no_reduction_type_and_operator 
 					);
 
-					// TODO, what is this? How to threat symbols?
+					// TODO, top level sink fragment, what to do with the symbols?
 					
 					DataAccessStatusEffects initialStatus(topLevelSinkFragment);
 					topLevelSinkFragment->setNewInstrumentationId(task->getInstrumentationTaskId());
@@ -1949,6 +1949,8 @@ namespace DataAccessRegistration {
 	) {
 		assert(task != nullptr);
 		
+		std::vector<int> symbol_list; //TODO consider alternative to vector
+
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		accessStructures._accesses.fragmentIntersecting(
@@ -1957,7 +1959,13 @@ namespace DataAccessRegistration {
 				assert(!toBeDuplicated.isRegistered());
 				return duplicateDataAccess(toBeDuplicated, accessStructures);
 			},
-			[](DataAccess *, DataAccess *) {}
+			[&](DataAccess *newAccess, DataAccess *originalAccess) {
+				newAccess->setSymbol(symbolIndex);
+				originalAccess->setSymbol(symbolIndex);
+				
+				//save original symbol to mark it on the new dataAccesses
+				symbol_list.push_back(originalAccess->getOriginalSymbol());
+			}
 		);
 		
 		accessStructures._accesses.processIntersectingAndMissing(
@@ -1972,7 +1980,12 @@ namespace DataAccessRegistration {
 			},
 			[&](DataAccessRegion missingRegion) -> bool {
 				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion, reductionTypeAndOperatorIndex);
-				newAccess->setSymbol(symbolIndex);			
+				newAccess->setOriginalSymbol(symbolIndex);			
+
+				// TODO change if vector changes
+				for(int i = 0; i < symbol_list.size(); ++i){
+					newAccess->setSymbol(symbol_list[i]);
+				}
 	
 				accessStructures._accesses.insert(*newAccess);
 				
