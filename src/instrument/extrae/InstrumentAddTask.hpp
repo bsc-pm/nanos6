@@ -85,14 +85,6 @@ namespace Instrument {
 		{
 			std::lock_guard<SpinLock> guard(_userFunctionMapLock);
 			auto p = _userFunctionMap.insert(taskInfo);
-			
-			if (p.second) {
-				Extrae_register_function_address (
-					(void *) (taskInfo->run),
-					(taskInfo->task_label != nullptr ? taskInfo->task_label : taskInfo->declaration_source),
-					taskInfo->declaration_source, 0
-				);
-			}
 		}
 		
 		Extrae_emit_CombinedEvents ( &ce );

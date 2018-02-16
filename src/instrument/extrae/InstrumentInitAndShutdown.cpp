@@ -286,6 +286,39 @@ namespace Instrument {
 	
 	void shutdown()
 	{
+		{
+			std::lock_guard<SpinLock> guard(_userFunctionMapLock);
+			for (nanos_task_info *taskInfo : _userFunctionMap) {
+				std::string codeLocation = taskInfo->declaration_source;
+				
+				// Remove column
+				codeLocation = codeLocation.substr(0, codeLocation.find_last_of(':'));
+				
+				std::string label;
+				if (taskInfo->task_label != nullptr) {
+					label = taskInfo->task_label;
+				} else {
+					label = codeLocation;
+				}
+				
+				// Splice off the line number
+				int lineNumber = 0;
+				size_t linePosition = codeLocation.find_last_of(':');
+				if (linePosition != std::string::npos) {
+					std::istringstream iss(codeLocation.substr(linePosition+1));
+					iss >> lineNumber;
+					
+					codeLocation.substr(0, linePosition);
+				}
+				
+				Extrae_register_function_address (
+					(void *) (taskInfo->run),
+					label.c_str(),
+					codeLocation.c_str(), lineNumber
+				);
+			}
+		}
+		
 		if (_sampleBacktraceDepth > 0) {
 			// After this, on the next profiling signal, the corresponding timer gets disarmed
 			Sampling::SigProf::disable();
