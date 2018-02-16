@@ -83,12 +83,9 @@ private:
 	
 	//! An index that determines the data type and the operation of the reduction (if applicable)
 	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
-
+	
 	//! A bitmap of the "symbols" this access is related to
-	std::bitset<MAX_SYMBOLS> _symbols;
-
-	//! A integer representing the original symbol to which this access belongs
-	 int _originalSymbol;
+	std::bitset<MAX_SYMBOLS> _symbols; 
 	
 	
 public:
@@ -117,13 +114,6 @@ public:
 		assert(hasBeenDiscounted());
 	}
 	
-	bool isSymbol(int index) const;
-	void setSymbol(int index);
-	void unsetSymbol(int index);	
-	
-	void setOriginalSymbol(int symbol);
-	int getOriginalSymbol() const;
-
 	inline DataAccessObjectType getObjectType() const
 	{
 		return _objectType;
@@ -415,10 +405,6 @@ public:
 			setComplete();
 		}
 	}
-
-	void inheritFragmentSymbols(DataAccess const *other){
-		_symbols = other->_symbols;
-	}
 	
 	DataAccessRegion const &getAccessRegion() const
 	{
@@ -446,7 +432,8 @@ public:
 			return readSatisfied() && writeSatisfied();
 		}
 	}
-
+	
+	
 	bool hasNext() const
 	{
 		return (_next._task != nullptr);
@@ -475,6 +462,23 @@ public:
 		return _instrumentationId;
 	}
 	
+	bool DataAccess::isInSymbol(int symbol) const 
+	{
+		return _symbols[index];
+	}
+	void DataAccess::addToSymbol(int symbol)
+	{
+		_symbols.set(index);
+	}
+	void DataAccess::removeFromSymbol(int symbol)
+	{
+		_symbols.reset(index);
+	}
+	
+	void inheritFragmentSymbols(DataAccess const *other)
+	{
+		_symbols = other->_symbols;
+	}	
 };
 
 
