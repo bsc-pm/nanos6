@@ -178,6 +178,24 @@ public:
 #endif
 	}
 	
+	template<typename... TS>
+	static inline void warnIf(bool failure, TS... reasonParts)
+	{
+		if (__builtin_expect(!failure, 1)) {
+			return;
+		}
+		
+		std::ostringstream oss;
+		oss << "Warning: ";
+		emitReasonParts(oss, reasonParts...);
+		oss << std::endl;
+		
+		{
+			std::lock_guard<SpinLock> guard(_lock);
+			std::cerr << oss.str();
+		}
+	}
+	
 };
 
 
