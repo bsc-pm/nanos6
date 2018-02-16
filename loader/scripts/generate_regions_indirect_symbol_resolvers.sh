@@ -19,7 +19,6 @@ shift
 
 
 echo '#include "indirect-symbols/resolve.h"'
-echo '#include "multidim-region-dependency-fallbacks.h"'
 echo '#include "api/nanos6.h"'
 echo
 echo
@@ -38,17 +37,11 @@ for type in $* ; do
 		generate_regions_api_type ${dimensions} ${name}_t
 		echo ";"
 		echo "	"
-	
-		if [ "${type}" = "reduction" ] ; then
-			fallback_name=nanos_register_region_readwrite_depinfo${dimensions}_fallback
-		else
-			fallback_name=${name}_fallback
-		fi
 		
 		echo "	static ${name}_t *symbol = NULL;"
 		echo "	if (__builtin_expect(symbol == NULL, 0)) {"
 		echo "		symbol = (${name}_t *) _nanos6_resolve_symbol_with_local_fallback("
-		echo "			\"${name}\", \"multidimensional dependency\", ${fallback_name}, \"${fallback_name}\""
+		echo "			\"${name}\", \"multidimensional dependency\", NULL, \"NULL\""
 		echo "		);"
 		echo "	}"
 		echo "	"

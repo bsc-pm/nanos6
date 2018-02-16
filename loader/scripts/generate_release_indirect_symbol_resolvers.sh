@@ -19,7 +19,6 @@ shift
 
 
 echo '#include "indirect-symbols/resolve.h"'
-echo '#include "multidim-release-fallbacks.h"'
 echo '#include "api/nanos6.h"'
 echo
 echo
@@ -45,7 +44,7 @@ for type in $* ; do
 		echo "	static ${name}_t *symbol = NULL;"
 		echo "	if (__builtin_expect(symbol == NULL, 0)) {"
 		echo "		symbol = (${name}_t *) _nanos6_resolve_symbol_with_local_fallback("
-		echo "			\"${name}\", \"multidimensional release\", ${name}_fallback, \"${name}_fallback\""
+		echo "			\"${name}\", \"multidimensional release\", NULL, \"NULL\""
 		echo "		);"
 		echo "	}"
 		echo "	"

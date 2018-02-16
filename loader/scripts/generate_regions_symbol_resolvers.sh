@@ -19,19 +19,13 @@ shift
 
 
 echo '#include "symbol-resolver/resolve.h"'
-echo '#include "multidim-region-dependency-fallbacks.h"'
 # echo '#include "nanos6/multidimensional-dependencies.h"'
 echo
 echo
 for type in $* ; do
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
-		if [ "${type}" = "reduction" ] ; then
-			fallback_name=nanos_register_region_readwrite_depinfo${dimensions}_fallback
-		else
-			fallback_name=nanos_register_region_${type}_depinfo${dimensions}_fallback
-		fi
-		
-		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_register_region_${type}_depinfo${dimensions}, \"multidimensional dependency\", ${fallback_name});"
+	
+		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_register_region_${type}_depinfo${dimensions}, \"multidimensional dependency\", NULL);"
 	done
 	echo
 done

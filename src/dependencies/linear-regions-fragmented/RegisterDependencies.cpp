@@ -17,7 +17,7 @@
 #include "DataAccessRegistration.hpp"
 #include "ReductionSpecific.hpp"
 
-#include <nanos6/dependencies.h>
+#include <Dependencies.hpp>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
 void register_access(void *handler, void *start, size_t length, int symbolIndex, int reductionTypeAndOperatorIndex = no_reduction_type_and_operator)

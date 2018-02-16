@@ -32,7 +32,6 @@ nanos6include_HEADERS = \
 	api/nanos6/bootstrap.h \
 	api/nanos6/constants.h \
 	api/nanos6/debug.h \
-	api/nanos6/dependencies.h \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/polling.h \
@@ -221,10 +220,6 @@ nanos6_generated_headers = \
 	
 nodist_libnanos6_la_SOURCES = \
 	$(nanos6_generated_headers) \
-	multidim-region-dependency-fallbacks.h \
-	multidim-region-dependency-fallbacks.c \
-	multidim-release-fallbacks.h \
-	multidim-release-fallbacks.c \
 	$(multidimensional_regions)
 CLEANFILES = $(nodist_libnanos6_la_SOURCES)
 
@@ -238,13 +233,9 @@ BUILT_SOURCES = \
 EXTRA_DIST = \
 	loader/scripts/common.sh \
 	loader/scripts/generate_multidim_functions_for_linear_regions.sh \
-	loader/scripts/generate_regions_fallback_functions.sh \
-	loader/scripts/generate_regions_fallback_prototypes.sh \
 	loader/scripts/generate_regions_indirect_symbol_resolvers.sh \
 	loader/scripts/generate_regions_prototypes.sh \
 	loader/scripts/generate_regions_symbol_resolvers.sh \
-	loader/scripts/generate_release_fallback_functions.sh \
-	loader/scripts/generate_release_fallback_prototypes.sh \
 	loader/scripts/generate_release_indirect_symbol_resolvers.sh \
 	loader/scripts/generate_release_prototypes.sh \
 	loader/scripts/generate_release_symbol_resolvers.sh
@@ -269,32 +260,20 @@ nanos6/multidimensional-dependencies.h: $(top_srcdir)/loader/scripts/common.sh $
 	$(AM_V_GEN)mkdir -p nanos6 ; \
 	$(top_srcdir)/loader/scripts/generate_regions_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
-multidim-region-dependency-fallbacks.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_fallback_prototypes.sh Makefile
-	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_regions_fallback_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
-
-multidim-region-dependency-fallbacks.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_fallback_functions.sh Makefile multidim-region-dependency-fallbacks.h nanos6/multidimensional-dependencies.h
-	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_regions_fallback_functions.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
-
-multidim-region-dependency-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_symbol_resolvers.sh Makefile multidim-region-dependency-fallbacks.h
+multidim-region-dependency-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_symbol_resolvers.sh Makefile
 	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_regions_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
-multidim-region-dependency-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_indirect_symbol_resolvers.sh Makefile multidim-region-dependency-fallbacks.h nanos6/multidimensional-dependencies.h
+multidim-region-dependency-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_regions_indirect_symbol_resolvers.sh Makefile nanos6/multidimensional-dependencies.h
 	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_regions_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 nanos6/multidimensional-release.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_prototypes.sh Makefile
 	$(AM_V_GEN)mkdir -p nanos6 ; \
 	$(top_srcdir)/loader/scripts/generate_release_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
-multidim-release-fallbacks.h: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_fallback_prototypes.sh Makefile
-	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_release_fallback_prototypes.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
-
-multidim-release-fallbacks.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_fallback_functions.sh Makefile multidim-release-fallbacks.h nanos6/multidimensional-release.h
-	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_release_fallback_functions.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
-
-multidim-release-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_symbol_resolvers.sh Makefile multidim-release-fallbacks.h
+multidim-release-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_symbol_resolvers.sh Makefile
 	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_release_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
-multidim-release-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh Makefile multidim-release-fallbacks.h nanos6/multidimensional-release.h
+multidim-release-indirect-resolvers.c: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh Makefile nanos6/multidimensional-release.h
 	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_release_indirect_symbol_resolvers.sh $(MAX_REGION_DIMENSIONS) $(MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 
@@ -381,7 +360,6 @@ linear_regions_unfragmented_dependency_sources = \
 	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp
 
 linear_regions_fragmented_dependency_sources = \
-	src/dependencies/linear-regions-fragmented/DataAccess.cpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.cpp \
 	src/dependencies/linear-regions-fragmented/Reductions.cpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
@@ -580,6 +558,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifactsImplementation.hpp \
 	src/dependencies/linear-regions/DataAccessRegion.hpp \
 	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \
+	src/dependencies/linear-regions/Dependencies.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \

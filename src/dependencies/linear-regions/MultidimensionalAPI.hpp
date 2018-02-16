@@ -10,7 +10,7 @@
 
 #include <nanos6/multidimensional-dependencies.h>
 
-#include <nanos6/dependencies.h>
+#include "Dependencies.hpp"
 
 #include "../DataAccessType.hpp"
 #include "../MultidimensionalAPITraversal.hpp"
