@@ -46,7 +46,7 @@ namespace Instrument {
 	{
 		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "verbose");
 		
-		TokenizedEnvironmentVariable<std::string> verboseAreas("NANOS6_VERBOSE", ',', "all,!LeaderThread");
+		TokenizedEnvironmentVariable<std::string> verboseAreas("NANOS6_VERBOSE", ',', "all,!ComputePlaceManagement,!DependenciesByAccess,!DependenciesByAccessLinks,!DependenciesByGroup,!LeaderThread,!TaskStatus,!ThreadManagement");
 		for (auto area : verboseAreas) {
 			std::transform(area.begin(), area.end(), area.begin(), ::tolower);
 			if (area == "all") {
