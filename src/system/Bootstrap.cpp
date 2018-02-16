@@ -112,6 +112,8 @@ void nanos_shutdown(void) {
 	}
 	
 	LeaderThread::shutdown();
+	ThreadManager::shutdown();
+	
 	Instrument::shutdown();
 	delete mainThread;
 	
@@ -119,7 +121,6 @@ void nanos_shutdown(void) {
 		raise(shutdownDueToSignalNumber.load());
 	}
 	
-	ThreadManager::shutdown();
 	Scheduler::shutdown();
 	RuntimeInfoEssentials::shutdown();
 }
