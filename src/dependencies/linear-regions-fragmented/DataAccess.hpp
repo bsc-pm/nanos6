@@ -462,17 +462,17 @@ public:
 		return _instrumentationId;
 	}
 	
-	bool DataAccess::isInSymbol(int symbol) const 
+	bool isInSymbol(int symbol) const 
 	{
-		return _symbols[index];
+		return _symbols[symbol];
 	}
-	void DataAccess::addToSymbol(int symbol)
+	void addToSymbol(int symbol)
 	{
-		_symbols.set(index);
+		_symbols.set(symbol);
 	}
-	void DataAccess::removeFromSymbol(int symbol)
+	void removeFromSymbol(int symbol)
 	{
-		_symbols.reset(index);
+		_symbols.reset(symbol);
 	}
 	
 	void inheritFragmentSymbols(DataAccess const *other)

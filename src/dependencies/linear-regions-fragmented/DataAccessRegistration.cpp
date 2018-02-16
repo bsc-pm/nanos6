@@ -1960,11 +1960,11 @@ namespace DataAccessRegistration {
 				return duplicateDataAccess(toBeDuplicated, accessStructures);
 			},
 			[&](DataAccess *newAccess, DataAccess *originalAccess) {
-				newAccess->setSymbol(symbolIndex);
-				originalAccess->setSymbol(symbolIndex);
+				newAccess->addToSymbol(symbolIndex);
+				originalAccess->addToSymbol(symbolIndex);
 				
 				//save original symbol to mark it on the new dataAccesses
-				symbol_list.push_back(originalAccess->getOriginalSymbol());
+				//symbol_list.push_back(originalAccess->getOriginalSymbol());
 			}
 		);
 		
@@ -1980,10 +1980,10 @@ namespace DataAccessRegistration {
 			},
 			[&](DataAccessRegion missingRegion) -> bool {
 				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion, reductionTypeAndOperatorIndex);
-				newAccess->setOriginalSymbol(symbolIndex);			
+				newAccess->addToSymbol(symbolIndex);
 
 				for(int i: symbol_list){
-					newAccess->setSymbol(symbol_list[i]);
+					newAccess->addToSymbol(symbol_list[i]);
 				}
 	
 				accessStructures._accesses.insert(*newAccess);
