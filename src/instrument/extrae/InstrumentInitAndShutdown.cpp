@@ -146,27 +146,6 @@ namespace Instrument {
 	}
 	
 	
-	static unsigned int extrae_nanos_get_thread_id_for_initialization()
-	{
-		return 0;
-	}
-	
-	static unsigned int extrae_nanos_get_virtual_cpu_or_external_thread_id_for_initialization()
-	{
-		return 0;
-	}
-	
-	static unsigned int extrae_nanos_get_num_threads_for_initialization()
-	{
-		return 1;
-	}
-	
-	static unsigned int extrae_nanos_get_num_cpus_and_external_threads_for_initialization()
-	{
-		return 1;
-	}
-	
-	
 	void initialize()
 	{
 		// This is a workaround to avoid an extrae segfault
@@ -185,19 +164,6 @@ namespace Instrument {
 		
 		if (getenv("EXTRAE_CONFIG_FILE") != nullptr) {
 			RuntimeInfo::addEntry("extrae_config_file", "Extrae Configuration File", getenv("EXTRAE_CONFIG_FILE"));
-		}
-		
-		// Initial thread information callbacks
-		// We set up a temporary thread_id function since the initialization calls
-		// it (#@!?!) but the real one is not ready to be called yet
-		if (_traceAsThreads) {
-			Extrae_set_threadid_function ( extrae_nanos_get_thread_id_for_initialization );
-			Extrae_set_numthreads_function ( extrae_nanos_get_num_threads_for_initialization );
-			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "thread");
-		} else {
-			Extrae_set_threadid_function ( extrae_nanos_get_virtual_cpu_or_external_thread_id_for_initialization );
-			Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus_and_external_threads_for_initialization );
-			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "cpu");
 		}
 		
 		// Initialize extrae library
@@ -237,6 +203,19 @@ namespace Instrument {
 			Extrae_define_event_type(_runtimeState, "Runtime state", NANOS_EVENT_STATE_TYPES, values, _eventStateValueStr);
 		}
 		
+		// Thread information callbacks
+		if (_traceAsThreads) {
+			Extrae_set_threadid_function ( extrae_nanos_get_thread_id );
+			Extrae_set_numthreads_function ( extrae_nanos_get_num_threads );
+			Extrae_change_num_threads(extrae_nanos_get_num_threads());
+			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "thread");
+		} else {
+			Extrae_set_threadid_function ( extrae_nanos_get_virtual_cpu_or_external_thread_id );
+			Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus_and_external_threads );
+			Extrae_change_num_threads(extrae_nanos_get_num_cpus_and_external_threads());
+			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "cpu");
+		}
+		
 		// Force an event that allows to detect the trace as an OmpSs trace
 		{
 			extrae_combined_events_t ce;
@@ -264,15 +243,6 @@ namespace Instrument {
 			oss << extraeMajor << "." << extraeMinor << "." << extraeRevision;
 			RuntimeInfo::addEntry("extrae_version", "Extrae Version", oss.str());
 			RuntimeInfo::addEntry("extrae_shared_object", "Extrae Shared Object", ExtraeSymbolResolverBase::getSharedObjectPath());
-		}
-		
-		// Final thread information callbacks
-		if (_traceAsThreads) {
-			Extrae_set_threadid_function ( extrae_nanos_get_thread_id );
-			Extrae_set_numthreads_function ( extrae_nanos_get_num_threads );
-		} else {
-			Extrae_set_threadid_function ( extrae_nanos_get_virtual_cpu_or_external_thread_id );
-			Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus_and_external_threads );
 		}
 		
 		if (_sampleBacktraceDepth > 0) {
