@@ -11,9 +11,6 @@
 
 #pragma GCC visibility push(default)
 
-enum nanos6_unidimensional_dependencies_api_t { nanos6_unidimensional_dependencies_api = 2 };
-
-
 #ifdef __cplusplus
 extern "C" {
 #endif
