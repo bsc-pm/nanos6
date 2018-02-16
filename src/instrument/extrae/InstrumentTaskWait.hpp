@@ -18,7 +18,7 @@
 namespace Instrument {
 	inline void enterTaskWait(
 		task_id_t taskId,
-		__attribute__((unused)) char const *invocationSource,
+		char const *invocationSource,
 		__attribute__((unused)) task_id_t if0TaskId,
 		__attribute__((unused)) InstrumentationContext const &context)
 	{
@@ -81,8 +81,8 @@ namespace Instrument {
 	
 	
 	inline void exitTaskWait(
-		__attribute__((unused)) task_id_t taskId,
-		__attribute__((unused)) InstrumentationContext const &context)
+		task_id_t taskId,
+		InstrumentationContext const &context)
 	{
 		taskId._taskInfo->_inTaskwait = false;
 		returnToTask(taskId, context);
