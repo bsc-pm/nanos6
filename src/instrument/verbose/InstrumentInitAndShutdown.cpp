@@ -51,6 +51,7 @@ namespace Instrument {
 			std::transform(area.begin(), area.end(), area.begin(), ::tolower);
 			if (area == "all") {
 				_verboseAddTask = true;
+				_verboseBlocking = true;
 				_verboseComputePlaceManagement = true;
 				_verboseDependenciesByAccess = true;
 				_verboseDependenciesByAccessLinks = true;
@@ -64,6 +65,8 @@ namespace Instrument {
 				_verboseLoggingMessages = true;
 			} else if (area == "addtask") {
 				_verboseAddTask = true;
+			} else if (area == "blocking") {
+				_verboseBlocking = true;
 			} else if (area == "computeplacemanagement") {
 				_verboseComputePlaceManagement = true;
 			} else if (area == "dependenciesbyaccess") {
@@ -89,6 +92,10 @@ namespace Instrument {
 			
 			} else if (area == "!addtask") {
 				_verboseAddTask = false;
+			} else if (area == "!blocking") {
+				_verboseBlocking = false;
+			} else if (area == "!computeplacemanagement") {
+				_verboseComputePlaceManagement = false;
 			} else if (area == "!dependenciesbyaccess") {
 				_verboseDependenciesByAccess = false;
 			} else if (area == "!dependenciesbyaccesslinks") {
