@@ -109,10 +109,10 @@ namespace HardwareCounters {
 		PAPI_stop(threadLocal._eventSet, stopValues);
 		
 		int rc = PAPI_cleanup_eventset(threadLocal._eventSet);
-		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to clean up an event set");
+		FatalErrorHandler::warnIf(rc != PAPI_OK, "PAPI failed to clean up an event set");
 		
 		rc = PAPI_destroy_eventset(&threadLocal._eventSet);
-		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to destroy an event set");
+		FatalErrorHandler::warnIf(rc != PAPI_OK, "PAPI failed to destroy an event set");
 	}
 	
 	
