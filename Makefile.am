@@ -130,14 +130,14 @@ endif
 
 libnanos6_main_wrapper_a_SOURCES = \
 	$(main_interception) \
+	loader/device_strings.c \ 
 	loader/error.h \
 	loader/function-interception.h \
 	loader/intercept-main-common.c \
 	loader/intercept-main-common.h \
 	loader/main-wrapper.c \
 	loader/main-wrapper.h \
-	loader/malloc.h \
-	loader/device_strings.c 
+	loader/malloc.h 
 
 
 nanos6-main-wrapper.o: libnanos6-main-wrapper.a
