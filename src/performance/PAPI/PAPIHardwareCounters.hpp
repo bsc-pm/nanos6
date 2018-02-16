@@ -100,14 +100,13 @@ namespace HardwareCounters {
 		
 		assert(threadLocal._eventSet != PAPI_NULL);
 		
-		assert(threadLocal._initializationCount > 0);
 		threadLocal._initializationCount--;
-		
-		if (threadLocal._initializationCount > 0) {
+		if (threadLocal._initializationCount < 0) {
 			return;
 		}
 		
-		PAPI_stop(threadLocal._eventSet, nullptr);
+		long long stopValues[PAPI::_papiEventCodes.size()];
+		PAPI_stop(threadLocal._eventSet, stopValues);
 		
 		int rc = PAPI_cleanup_eventset(threadLocal._eventSet);
 		FatalErrorHandler::failIf(rc != PAPI_OK, "PAPI failed to clean up an event set");
