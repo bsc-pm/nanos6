@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <sstream>
 
 #include <dlfcn.h>
 
