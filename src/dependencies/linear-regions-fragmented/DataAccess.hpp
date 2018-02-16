@@ -68,7 +68,7 @@ private:
 	
 public:
 	typedef std::bitset<TOTAL_STATUS_BITS> status_t;
-	
+	typedef std::bitset<MAX_SYMBOLS> symbols_t;	
 	
 private:
 	DataAccessObjectType _objectType;
@@ -85,7 +85,7 @@ private:
 	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
 	
 	//! A bitmap of the "symbols" this access is related to
-	std::bitset<MAX_SYMBOLS> _symbols; 
+	symbols_t _symbols; 
 	
 	
 public:
@@ -474,11 +474,15 @@ public:
 	{
 		_symbols.reset(symbol);
 	}
-	
-	void inheritFragmentSymbols(DataAccess const *other)
+	void addToSymbols(const symbols_t &symbols)
 	{
-		_symbols = other->_symbols;
+		_symbols |= symbols;
+	}
+	symbols_t getSymbols() const
+	{
+		return _symbols;
 	}	
+
 };
 
 

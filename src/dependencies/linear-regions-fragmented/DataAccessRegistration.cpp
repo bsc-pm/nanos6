@@ -639,7 +639,7 @@ namespace DataAccessRegistration {
 		);
 
 		// Copy symbols
-		newFragment->inheritFragmentSymbols(&toBeDuplicated); // TODO: Consider removing the pointer from declaration and make it a reference	
+		newFragment->addToSymbols(toBeDuplicated.getSymbols()); // TODO: Consider removing the pointer from declaration and make it a reference	
 
 		newFragment->clearRegistered();
 		
@@ -1949,7 +1949,8 @@ namespace DataAccessRegistration {
 	) {
 		assert(task != nullptr);
 		
-		std::vector<int> symbol_list; //TODO consider alternative to vector
+		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
+		symbol_list.set(symbolIndex);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
@@ -1960,11 +1961,7 @@ namespace DataAccessRegistration {
 				return duplicateDataAccess(toBeDuplicated, accessStructures);
 			},
 			[&](DataAccess *newAccess, DataAccess *originalAccess) {
-				newAccess->addToSymbol(symbolIndex);
-				originalAccess->addToSymbol(symbolIndex);
-				
-				//save original symbol to mark it on the new dataAccesses
-				//symbol_list.push_back(originalAccess->getOriginalSymbol());
+				symbol_list |= originalAccess->getSymbols();
 			}
 		);
 		
@@ -1975,16 +1972,13 @@ namespace DataAccessRegistration {
 				assert(oldAccess != nullptr);
 				
 				upgradeAccess(oldAccess, accessType, weak, reductionTypeAndOperatorIndex);
-				
+				oldAccess->addToSymbols(symbol_list);			
+	
 				return true;
 			},
 			[&](DataAccessRegion missingRegion) -> bool {
 				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion, reductionTypeAndOperatorIndex);
-				newAccess->addToSymbol(symbolIndex);
-
-				for(int i: symbol_list){
-					newAccess->addToSymbol(symbol_list[i]);
-				}
+				newAccess->addToSymbols(symbol_list);
 	
 				accessStructures._accesses.insert(*newAccess);
 				
