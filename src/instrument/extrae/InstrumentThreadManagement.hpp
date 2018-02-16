@@ -77,8 +77,7 @@ namespace Instrument {
 		}
 	}
 	
-	template<typename... TS>
-	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	inline void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)
 	{
 		ExternalThreadLocalData &threadLocal = getExternalThreadLocalData();
 		
@@ -97,7 +96,11 @@ namespace Instrument {
 		}
 		
 		threadLocal._currentThreadId = threadId;
-		
+	}
+	
+	template<typename... TS>
+	void createdExternalThread(__attribute__((unused)) external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	{
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;

@@ -68,9 +68,10 @@ void nanos_preinit(void) {
 	Scheduler::initialize();
 	ThreadManagerPolicy::initialize();
 	
-	Instrument::initialize();
 	mainThread = new ExternalThread("main-thread");
-	mainThread->initializeExternalThread();
+	mainThread->preinitializeExternalThread();
+	Instrument::initialize();
+	mainThread->initializeExternalThread(/* already preinitialized */ false);
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
 	
 	DependencySystem::initialize();

@@ -41,9 +41,12 @@ namespace Instrument {
 	}
 	
 	
-	void createdExternalThread_private(/* OUT */ external_thread_id_t &threadId, std::string const &name) {
+	void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId) {
 		threadId = GenericIds::getNewExternalThreadId();
-		
+	}
+	
+	
+	void createdExternalThread_private(external_thread_id_t &threadId, std::string const &name) {
 		if (!_verboseThreadManagement) {
 			return;
 		}

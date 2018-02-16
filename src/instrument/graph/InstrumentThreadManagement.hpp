@@ -23,10 +23,14 @@ namespace Instrument {
 		threadId = GenericIds::getNewThreadId();
 	}
 	
-	template<typename... TS>
-	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	inline void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)
 	{
 		threadId = GenericIds::getCommonPoolNewExternalThreadId();
+	}
+	
+	template<typename... TS>
+	void createdExternalThread(__attribute__((unused)) external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	{
 	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)

@@ -57,10 +57,20 @@ public:
 		return _instrumentationId;
 	}
 	
-	inline void initializeExternalThread()
+	inline void preinitializeExternalThread()
 	{
 		ExternalThread::setCurrentExternalThread(this);
-		Instrument::createdExternalThread(/* OUT */ _instrumentationId, _name);
+		Instrument::precreatedExternalThread(/* OUT */ _instrumentationId);
+	}
+	
+	
+	inline void initializeExternalThread(bool preinitialize = true)
+	{
+		ExternalThread::setCurrentExternalThread(this);
+		if (preinitialize) {
+			Instrument::precreatedExternalThread(/* OUT */ _instrumentationId);
+		}
+		Instrument::createdExternalThread(_instrumentationId, _name);
 	}
 	
 };

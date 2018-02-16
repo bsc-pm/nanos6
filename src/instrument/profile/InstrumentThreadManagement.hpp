@@ -21,8 +21,7 @@ namespace Instrument {
 		threadId = Profile::createdThread();
 	}
 	
-	template<typename... TS>
-	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	inline void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)
 	{
 		// For now, external threads are not profiled
 		threadId = external_thread_id_t();
@@ -32,6 +31,11 @@ namespace Instrument {
 			ThreadLocalData &sentinelThreadLocal = getThreadLocalData();
 			sentinelThreadLocal.init(Profile::getBufferSize());
 		}
+	}
+	
+	template<typename... TS>
+	inline void createdExternalThread(__attribute__((unused)) external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	{
 	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)

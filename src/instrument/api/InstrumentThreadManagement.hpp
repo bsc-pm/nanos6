@@ -23,8 +23,10 @@ namespace Instrument {
 	//! This function is called when the runtime creates a new non-worker thread and
 	//! must return an instrumentation-specific thread identifier that will
 	//! be used to identify it throughout the rest of the instrumentation API.
+	void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId);
+	
 	template<typename... TS>
-	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, TS... nameComponents);
+	void createdExternalThread(external_thread_id_t &threadId, TS... nameComponents);
 	
 	void threadWillSuspend(thread_id_t threadId, compute_place_id_t cpu);
 	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu);
