@@ -16,6 +16,11 @@ namespace Instrument {
 		{
 			return true;
 		}
+		
+		operator long() const
+		{
+			return -1;
+		}
 	};
 }
 

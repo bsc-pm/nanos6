@@ -52,6 +52,8 @@ namespace Instrument {
 		// Nanos6-specific (for now)
 		_nestingLevel = 9500001,     //!< Nesting level
 		
+		_tracingPointBase = 9600000,
+		
 		// Common to extrae
 		_samplingEventType = 30000000,
 	};
@@ -73,6 +75,7 @@ namespace Instrument {
 	extern std::atomic<size_t> _nextTaskId;
 	extern std::atomic<size_t> _readyTasks;
 	extern std::atomic<size_t> _liveTasks;
+	extern std::atomic<size_t> _nextTracingPointKey;
 	
 	extern RWSpinLock _extraeThreadCountLock;
 	

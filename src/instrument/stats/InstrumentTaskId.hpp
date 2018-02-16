@@ -62,6 +62,10 @@ namespace Instrument {
 			return (_contents != other._contents);
 		}
 		
+		operator long() const
+		{
+			return -1;
+		}
 	};
 }
 

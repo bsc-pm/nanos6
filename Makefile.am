@@ -638,6 +638,7 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentTaskStatus.hpp \
 	src/instrument/api/InstrumentTaskWait.hpp \
 	src/instrument/api/InstrumentThreadManagement.hpp \
+	src/instrument/api/InstrumentTracingPoints.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
 	src/instrument/extrae/ExtraeSymbolLiterals.hpp \
 	src/instrument/extrae/ExtraeSymbolResolver.hpp \
@@ -662,6 +663,8 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentThreadId.hpp \
 	src/instrument/extrae/InstrumentThreadLocalData.hpp \
 	src/instrument/extrae/InstrumentThreadManagement.hpp \
+	src/instrument/extrae/InstrumentTracingPointTypes.hpp\
+	src/instrument/extrae/InstrumentTracingPoints.hpp \
 	src/instrument/extrae/InstrumentUserMutex.hpp \
 	src/instrument/extrae/PreloadedExtraeBouncer.hpp \
 	src/instrument/generic_ids/GenericIds.hpp \
@@ -691,6 +694,8 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentThreadId.hpp \
 	src/instrument/graph/InstrumentThreadLocalData.hpp \
 	src/instrument/graph/InstrumentThreadManagement.hpp \
+	src/instrument/graph/InstrumentTracingPointTypes.hpp \
+	src/instrument/graph/InstrumentTracingPoints.hpp \
 	src/instrument/graph/InstrumentUserMutex.hpp \
 	src/instrument/graph/PathLength.hpp \
 	src/instrument/graph/SortAccessGroups.hpp \
@@ -717,6 +722,8 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentThreadInstrumentationContextImplementation.hpp \
 	src/instrument/null/InstrumentThreadLocalData.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
+	src/instrument/null/InstrumentTracingPointTypes.hpp \
+	src/instrument/null/InstrumentTracingPoints.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp \
 	src/instrument/profile/Address.hpp \
 	src/instrument/profile/InstrumentAddTask.hpp \
@@ -743,6 +750,8 @@ noinst_HEADERS = \
 	src/instrument/profile/InstrumentThreadInstrumentationContextImplementation.hpp \
 	src/instrument/profile/InstrumentThreadLocalData.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
+	src/instrument/profile/InstrumentTracingPointTypes.hpp \
+	src/instrument/profile/InstrumentTracingPoints.hpp \
 	src/instrument/profile/InstrumentUserMutex.hpp \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentBlocking.hpp \
@@ -765,6 +774,8 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentThreadId.hpp \
 	src/instrument/stats/InstrumentThreadLocalData.hpp \
 	src/instrument/stats/InstrumentThreadManagement.hpp \
+	src/instrument/stats/InstrumentTracingPointTypes.hpp \
+	src/instrument/stats/InstrumentTracingPoints.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp \
 	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
@@ -803,6 +814,8 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentThreadId.hpp \
 	src/instrument/verbose/InstrumentThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentThreadManagement.hpp \
+	src/instrument/verbose/InstrumentTracingPointTypes.hpp \
+	src/instrument/verbose/InstrumentTracingPoints.hpp \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \

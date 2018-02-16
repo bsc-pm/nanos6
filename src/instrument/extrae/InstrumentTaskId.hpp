@@ -60,6 +60,7 @@ namespace Instrument {
 			return (_taskInfo < other._taskInfo);
 		}
 		
+		inline operator long() const;
 	};
 	
 	
@@ -89,6 +90,16 @@ namespace Instrument {
 				_taskId = _nextTaskId++;
 			}
 		};
+	}
+	
+	
+	inline task_id_t::operator long() const
+	{
+		if (_taskInfo != nullptr) {
+			return (long) _taskInfo->_taskId;
+		} else {
+			return 0;
+		}
 	}
 }
 

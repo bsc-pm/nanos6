@@ -33,6 +33,7 @@ namespace Instrument {
 	std::atomic<size_t> _nextTaskId(1);
 	std::atomic<size_t> _readyTasks(0);
 	std::atomic<size_t> _liveTasks(0);
+	std::atomic<size_t> _nextTracingPointKey(1);
 	
 	RWSpinLock _extraeThreadCountLock;
 	
