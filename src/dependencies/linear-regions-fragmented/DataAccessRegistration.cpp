@@ -1982,8 +1982,7 @@ namespace DataAccessRegistration {
 				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion, reductionTypeAndOperatorIndex);
 				newAccess->setOriginalSymbol(symbolIndex);			
 
-				// TODO change if vector changes
-				for(int i = 0; i < symbol_list.size(); ++i){
+				for(int i: symbol_list){
 					newAccess->setSymbol(symbol_list[i]);
 				}
 	
