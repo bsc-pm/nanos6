@@ -15,6 +15,7 @@
 #include "lowlevel/RWSpinLock.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "InstrumentThreadId.hpp"
+#include "InstrumentTracingPointTypes.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -31,6 +32,32 @@ namespace Instrument {
 	};
 	
 	typedef std::set<nanos_task_info *>              user_fct_map_t;
+	
+	struct scope_tracing_point_info_t {
+		std::string _name;
+		std::string _startDescription;
+		std::string _endDescription;
+		
+		scope_tracing_point_info_t(std::string const &name, std::string const &startDescription, std::string const &endDescription)
+			: _name(name), _startDescription(startDescription), _endDescription(endDescription)
+		{
+		}
+	};
+	
+	struct enumerated_tracing_point_info_t {
+		std::string _name;
+		std::vector<std::string> _valueDescriptions;
+		
+		enumerated_tracing_point_info_t(std::string const &name, std::vector<std::string> const &valueDescriptions)
+			: _name(name), _valueDescriptions(valueDescriptions)
+		{
+		}
+	};
+	
+	extern bool _initialized;
+	extern std::map<tracing_point_type_t, std::string> _delayedNumericTracingPoints;
+	extern std::map<tracing_point_type_t, scope_tracing_point_info_t> _delayedScopeTracingPoints;
+	extern std::map<tracing_point_type_t, enumerated_tracing_point_info_t> _delayedEnumeratedTracingPoints;
 	
 	extern const EnvironmentVariable<bool>           _traceAsThreads;
 	extern const EnvironmentVariable<int>            _sampleBacktraceDepth;

@@ -18,6 +18,11 @@ namespace Instrument {
 			: _type(~ ((extrae_type_t) 0) )
 		{
 		}
+		
+		bool operator<(tracing_point_type_t const &other) const
+		{
+			return (_type < other._type);
+		}
 	};
 }
 

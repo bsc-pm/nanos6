@@ -235,6 +235,32 @@ namespace Instrument {
 			Extrae_emit_CombinedEvents ( &ce );
 		}
 		
+		_initialized = true;
+		
+		// Register any tracing point that arrived too early
+		for (auto &p : _delayedNumericTracingPoints) {
+			Extrae_define_event_type(_tracingPointBase + p.first._type, p.second.c_str(), 0, nullptr, nullptr);
+		}
+		for (auto &p : _delayedScopeTracingPoints) {
+			extrae_value_t values[2] = {0, 1};
+			char const *valueDescriptions[2] = {p.second._startDescription.c_str(), p.second._endDescription.c_str()};
+			Extrae_define_event_type(_tracingPointBase + p.first._type, p.second._name.c_str(), 2, values, valueDescriptions);
+		}
+		for (auto &p : _delayedEnumeratedTracingPoints) {
+			extrae_value_t values[p.second._valueDescriptions.size()];
+			char const *extraeValueDescriptions[p.second._valueDescriptions.size()];
+			
+			for (size_t i = 0; i < p.second._valueDescriptions.size(); i++) {
+				values[i] = i;
+				extraeValueDescriptions[i] = p.second._valueDescriptions[i].c_str();
+			}
+			
+			Extrae_define_event_type(
+				_tracingPointBase + p.first._type, p.second._name.c_str(),
+				p.second._valueDescriptions.size(), values, extraeValueDescriptions
+			);
+		}
+		
 		{
 			std::stringstream oss;
 			unsigned extraeMajor, extraeMinor, extraeRevision;

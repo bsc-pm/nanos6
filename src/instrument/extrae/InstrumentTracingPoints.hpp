@@ -22,6 +22,12 @@ namespace Instrument {
 		std::string const &description
 	) {
 		tracingPointType._type = _nextTracingPointKey++;
+		
+		if (!_initialized) {
+			_delayedNumericTracingPoints.emplace(tracingPointType, description);
+			return;
+		}
+		
 		Extrae_define_event_type(_tracingPointBase + tracingPointType._type, description.c_str(), 0, nullptr, nullptr);
 	}
 	
@@ -32,10 +38,16 @@ namespace Instrument {
 		std::string const &startDescription,
 		std::string const &endDescription
 	) {
+		tracingPointType._type = _nextTracingPointKey++;
+		
+		if (!_initialized) {
+			_delayedScopeTracingPoints.emplace(tracingPointType,scope_tracing_point_info_t(name, startDescription, endDescription));
+			return;
+		}
+		
 		extrae_value_t values[2] = {0, 1};
 		char const *valueDescriptions[2];
 		
-		tracingPointType._type = _nextTracingPointKey++;
 		valueDescriptions[0] = startDescription.c_str();
 		valueDescriptions[1] = endDescription.c_str();
 		Extrae_define_event_type(_tracingPointBase + tracingPointType._type, name.c_str(), 2, values, valueDescriptions);
@@ -47,6 +59,13 @@ namespace Instrument {
 		std::string const &name,
 		std::vector<std::string> const &valueDescriptions
 	) {
+		tracingPointType._type = _nextTracingPointKey++;
+		
+		if (!_initialized) {
+			_delayedEnumeratedTracingPoints.emplace(tracingPointType, enumerated_tracing_point_info_t(name, valueDescriptions));
+			return;
+		}
+		
 		extrae_value_t values[valueDescriptions.size()];
 		char const *extraeValueDescriptions[valueDescriptions.size()];
 		
@@ -55,7 +74,6 @@ namespace Instrument {
 			extraeValueDescriptions[i] = valueDescriptions[i].c_str();
 		}
 		
-		tracingPointType._type = _nextTracingPointKey++;
 		Extrae_define_event_type(_tracingPointBase + tracingPointType._type, name.c_str(), valueDescriptions.size(), values, extraeValueDescriptions);
 	}
 	
