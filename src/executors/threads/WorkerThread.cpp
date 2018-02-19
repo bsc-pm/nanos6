@@ -62,36 +62,7 @@ void WorkerThread::body()
 		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 		
 		if (_task == nullptr) {
-			Scheduler::polling_slot_t pollingSlot;
-			
-			if (Scheduler::requestPolling(cpu, &pollingSlot)) {
-				Instrument::threadEnterBusyWait(Instrument::scheduling_polling_slot_busy_wait_reason);
-				while ((_task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork(cpu)) {
-					// Keep trying
-					_task = pollingSlot.getTask();
-					if (_task == nullptr) {
-						PollingAPI::handleServices();
-					}
-				}
-				
-				if (ThreadManager::mustExit()) {
-					__attribute__((unused)) bool worked = Scheduler::releasePolling(cpu, &pollingSlot);
-					assert(worked && "A failure to release the scheduler polling slot means that the thread has got a task assigned, however the runtime is shutting down");
-				}
-				Instrument::threadExitBusyWait();
-				
-				if (!CPUActivation::acceptsWork(cpu)) {
-					// The CPU is about to be disabled
-					
-					// Release the polling slot
-					Scheduler::releasePolling(cpu, &pollingSlot);
-					
-					// We may already have a task assigned through
-					pollingSlot._task.compare_exchange_strong(_task, nullptr);
-				}
-			} else {
-				// Did not receive neither the polling slot nor a task
-			}
+			_task = Scheduler::getReadyTask(cpu, nullptr, true);
 		} else {
 			// The thread has been preassigned a task before being resumed
 		}
