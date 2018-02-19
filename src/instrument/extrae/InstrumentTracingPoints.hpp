@@ -69,6 +69,7 @@ namespace Instrument {
 		inline void fillEventTypeAndValues(extrae_type_t *types, extrae_value_t *values, tracing_point_instance_t const &instance, TS... tracePointInstances)
 		{
 			types[0] = instance._tracingPointType._type;
+			types[0] += _tracingPointBase;
 			types++;
 			values[0] = instance._value;
 			values++;
@@ -92,8 +93,6 @@ namespace Instrument {
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
 		Extrae::fillEventTypeAndValues(ce.Types, ce.Values, tracePointInstances...);
-		ce.Types[0] = _runtimeState;
-		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
