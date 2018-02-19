@@ -56,7 +56,7 @@ namespace Instrument {
 		}
 		
 		tracingPointType._type = _nextTracingPointKey++;
-		Extrae_define_event_type(_tracingPointBase + tracingPointType._type, name.c_str(), 2, values, extraeValueDescriptions);
+		Extrae_define_event_type(_tracingPointBase + tracingPointType._type, name.c_str(), valueDescriptions.size(), values, extraeValueDescriptions);
 	}
 	
 	
