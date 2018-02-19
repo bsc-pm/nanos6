@@ -9,7 +9,7 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
-#include "scheduling/Scheduler.hpp"
+#include "Scheduler.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 

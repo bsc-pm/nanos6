@@ -14,7 +14,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
-#include "scheduling/Scheduler.hpp"
+#include "Scheduler.hpp"
 
 #include <InstrumentBlocking.hpp>
 

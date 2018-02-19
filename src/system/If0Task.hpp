@@ -15,7 +15,7 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
-#include "scheduling/Scheduler.hpp"
+#include "Scheduler.hpp"
 #include "tasks/Task.hpp"
 
 

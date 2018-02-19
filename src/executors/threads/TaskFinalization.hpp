@@ -13,7 +13,7 @@
 
 #include "hardware/places/ComputePlace.hpp"
 #include "WorkerThread.hpp"
-#include "scheduling/Scheduler.hpp"
+#include "Scheduler.hpp"
 #include "system/ompss/SpawnFunction.hpp"
 #include "tasks/Task.hpp"
 

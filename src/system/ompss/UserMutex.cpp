@@ -7,6 +7,7 @@
 #include <nanos6.h>
 
 #include "DataAccessRegistration.hpp"
+#include "Scheduler.hpp"
 #include "TaskBlocking.hpp"
 #include "UserMutex.hpp"
 
@@ -14,7 +15,6 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 

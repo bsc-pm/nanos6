@@ -7,7 +7,7 @@
 
 AC_PREREQ([2.69])
 AC_INIT([nanos6], [2.0], [pm-tools-users@bsc.es])
-AC_CONFIG_SRCDIR([src/scheduling/Scheduler.hpp])
+AC_CONFIG_SRCDIR([src/tasks/Task.hpp])
 AC_CONFIG_AUX_DIR([config-aux])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -271,6 +271,29 @@ if test x"${ac_use_cuda}" = x"yes" ; then
 	AC_DEFINE([USE_CUDA], [1], [Define if CUDA is enabled.])
 fi
 
+AC_ARG_ENABLE(
+	[new-scheduler],
+	[AS_HELP_STRING([--enable-new-scheduler], [enable the new scheduler model])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_new_scheduler=yes
+			;;
+		no)
+			ac_new_scheduler=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-new-scheduler])
+			;;
+		esac
+	],
+	[ac_new_scheduler=no]
+)
+AM_CONDITIONAL([NEW_SCHEDULER], [test x"${ac_new_scheduler}" = x"yes"])
+
+if test x"${ac_use_cuda}" = x"yes" -a x"${ac_new_scheduler}" = x"yes"; then
+	AC_MSG_ERROR([CUDA is not suppored in the new scheduler])
+fi
 
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY

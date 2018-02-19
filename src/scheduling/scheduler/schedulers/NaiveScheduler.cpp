@@ -4,13 +4,13 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "FIFOScheduler.hpp"
-#include "executors/threads/CPUManager.hpp"
+#include "NaiveScheduler.hpp"
+#include "../TaskloopSchedulingPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "hardware/places/CPUPlace.hpp"
-#include "scheduling/TaskloopSchedulingPolicy.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskloop.hpp"
@@ -22,16 +22,16 @@
 #include <cassert>
 #include <mutex>
 
-FIFOScheduler::FIFOScheduler(__attribute__((unused)) int numaNodeIndex)
+NaiveScheduler::NaiveScheduler(__attribute__((unused)) int numaNodeIndex)
 {
 }
 
-FIFOScheduler::~FIFOScheduler()
+NaiveScheduler::~NaiveScheduler()
 {
 }
 
 
-Task *FIFOScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlace)
+Task *NaiveScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlace)
 {
 	if (!_unblockedTasks.empty()) {
 		Task *replacementTask = _unblockedTasks.front();
@@ -46,16 +46,15 @@ Task *FIFOScheduler::getReplacementTask(__attribute__((unused)) CPU *computePlac
 }
 
 
-ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint, bool doGetIdle)
+ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	FatalErrorHandler::failIf(task->getDeviceType() != nanos6_device_t::nanos6_host_device, "Device tasks not supported by this scheduler");
 	
 	std::lock_guard<SpinLock> guard(_globalLock);
-	
 	if (hint == UNBLOCKED_TASK_HINT) {
-		_unblockedTasks.push_back(task);
+		_unblockedTasks.push_front(task);
 	} else {
-		_readyTasks.push_back(task);
+		_readyTasks.push_front(task);
 	}
 	
 	if (doGetIdle) {
@@ -66,9 +65,9 @@ ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) C
 }
 
 
-Task *FIFOScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
+Task *NaiveScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
-	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) { 
+	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
 		return nullptr;
 	}
 	
@@ -146,7 +145,7 @@ Task *FIFOScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unu
 }
 
 
-ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
+ComputePlace *NaiveScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<SpinLock> guard(_globalLock);
 	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
@@ -157,7 +156,7 @@ ComputePlace *FIFOScheduler::getIdleComputePlace(bool force)
 }
 
 
-std::string FIFOScheduler::getName() const
+std::string NaiveScheduler::getName() const
 {
-	return "fifo";
+	return "naive";
 }

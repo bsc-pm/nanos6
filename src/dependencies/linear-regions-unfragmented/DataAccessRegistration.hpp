@@ -18,8 +18,9 @@
 
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+
+#include "Scheduler.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentTaskId.hpp>

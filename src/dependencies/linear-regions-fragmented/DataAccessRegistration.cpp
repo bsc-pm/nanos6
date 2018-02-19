@@ -21,9 +21,9 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
-#include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
+#include "Scheduler.hpp"
 #include "TaskDataAccessesImplementation.hpp"
 #include "ReductionInfo.hpp"
 

@@ -9,7 +9,7 @@
 #include "TaskFinalizationImplementation.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
-#include "scheduling/Scheduler.hpp"
+#include "Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
 #include "tasks/Task.hpp"
