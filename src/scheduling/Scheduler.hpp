@@ -56,19 +56,7 @@ public:
 		assert(task != 0);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		
-		if (task->isTaskloop()) {
-			_scheduler->addReadyTask(task, computePlace, hint, false);
-			
-			std::vector<CPU *> idleCPUs;
-			CPUManager::getIdleCPUs(idleCPUs);
-			if (!idleCPUs.empty()) {
-				ThreadManager::resumeIdle(idleCPUs);
-			}
-			
-			return nullptr;
-		} else {
-			return _scheduler->addReadyTask(task, computePlace, hint);
-		}
+		return _scheduler->addReadyTask(task, computePlace, hint);
 	}
 	
 	//! \brief Add back a task that was blocked but that is now unblocked

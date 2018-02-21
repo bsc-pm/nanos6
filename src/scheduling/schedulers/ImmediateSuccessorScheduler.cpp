@@ -45,8 +45,6 @@ ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlac
 {
 	assert(task != nullptr);
 	
-	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
-	
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
 		if ((hint != CHILD_TASK_HINT) && (computePlace->_schedulerData == nullptr)) {

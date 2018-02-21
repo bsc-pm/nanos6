@@ -25,16 +25,9 @@ typedef signed long nanos6_priority_t;
 enum nanos6_task_execution_api_t { nanos6_task_execution_api = 1 };
 
 
-typedef struct {
-    size_t lower_bound; // Inclusive
-    size_t upper_bound; // Exclusive
-    size_t step;
-    size_t chunksize;
-} nanos6_taskloop_bounds_t;
-
-
 //! \brief This needs to be incremented every time there is an update to nanos6_task_constraints_t
 enum nanos6_task_constraints_api_t { nanos6_task_constraints_api = 1 };
+
 
 typedef struct
 {
@@ -42,10 +35,12 @@ typedef struct
 } nanos6_task_constraints_t;
 
 
-// Predefined device type names
-extern char const * const nanos6_hostcpu_device_name;
-extern char const * const nanos6_cuda_device_name;
-extern char const * const nanos6_opencl_device_name;
+typedef enum
+{
+	nanos6_host_device=0,
+	nanos6_cuda_device,
+	nanos6_opencl_device
+} nanos6_device_t;
 
 
 typedef struct
@@ -57,10 +52,8 @@ typedef struct
 
 typedef struct
 {
-	//! \brief Name of the device
-	char const * const device_type_name;
 	
-	//! \brief Internal runtime device identifier, initially initialized to 0, initialized by the runtime according to the value and contents of device_type_name
+	//! \brief Runtime device identifier (original type nanos6_device_t)
 	int device_type_id;
 	
 	//! \brief Wrapper around the actual task implementation
@@ -82,11 +75,11 @@ typedef struct
 	//! \brief A string that identifies the source location of the definition of the task
 	char const *declaration_source;
 	
-} nanos6_task_implementation_info_t __attribute__((aligned(64)));
+} nanos6_task_implementation_info_t;
 
 
 //! \brief This needs to be incremented every time that there is a change in nanos_task_info
-enum nanos6_task_info_contents_t { nanos6_task_info_contents = 4 };
+enum nanos6_task_info_contents_t { nanos6_task_info_contents = 5 };
 
 //! \brief Struct that contains the common parts that all tasks of the same type share
 typedef struct
@@ -168,7 +161,6 @@ void nanos_create_task(
 	nanos_task_invocation_info *task_invocation_info,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
-	/* OUT */ void **taskloop_bounds_pointer,
 	/* OUT */ void **task_pointer,
 	size_t flags
 );

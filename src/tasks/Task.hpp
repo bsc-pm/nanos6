@@ -35,7 +35,6 @@ public:
 	enum {
 		final_flag=0,
 		if0_flag,
-		taskloop_flag,
 		wait_flag,
 		non_runnable_flag, // NOTE: Must be at the end
 		non_owner_args_flag, // NOTE: Must be at the end
@@ -353,17 +352,6 @@ public:
 	bool isIf0() const
 	{
 		return _flags[if0_flag];
-	}
-	
-	//! \brief Set or unset the taskloop flag
-	void setTaskloop(bool taskloopValue)
-	{
-		_flags[taskloop_flag] = taskloopValue;
-	}
-	//! \brief Check if the task is a taskloop
-	bool isTaskloop() const
-	{
-		return _flags[taskloop_flag];
 	}
 	
 	//! \brief Set or unset the wait flag

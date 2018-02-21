@@ -15,7 +15,6 @@
 
 
 class Task;
-class Taskloop;
 
 
 class NUMAHierarchicalScheduler: public SchedulerInterface {
@@ -29,8 +28,6 @@ class NUMAHierarchicalScheduler: public SchedulerInterface {
 	std::vector<std::atomic<int>> _enabledCPUs;
 	
 	size_t getAvailableNUMANodeCount();
-	
-	void distributeTaskloopAmongNUMANodes(Taskloop *taskloop, ComputePlace *computePlace, ReadyTaskHint hint);
 	
 public:
 	NUMAHierarchicalScheduler();

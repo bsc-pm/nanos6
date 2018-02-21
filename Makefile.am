@@ -350,8 +350,7 @@ common_sources = \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskWait.cpp \
-	src/system/ompss/UserMutex.cpp \
-	src/tasks/Taskloop.cpp
+	src/system/ompss/UserMutex.cpp
 
 
 discrete_dependency_sources = \
@@ -847,7 +846,6 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
-	src/scheduling/TaskloopSchedulingPolicy.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.hpp \
@@ -867,10 +865,6 @@ noinst_HEADERS = \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskImplementation.hpp \
-	src/tasks/TaskloopGenerator.hpp \
-	src/tasks/Taskloop.hpp \
-	src/tasks/TaskloopInfo.hpp \
-	src/tasks/TaskloopLogic.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \

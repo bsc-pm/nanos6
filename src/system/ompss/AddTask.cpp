@@ -18,8 +18,6 @@
 #include "system/If0Task.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "tasks/Taskloop.hpp"
-#include "tasks/TaskloopInfo.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -41,7 +39,6 @@ void nanos_create_task(
 	nanos_task_invocation_info *taskInvocationInfo,
 	size_t args_block_size,
 	void **args_block_pointer,
-	void **taskloop_bounds_pointer,
 	void **task_pointer,
 	size_t flags
 ) {
@@ -49,9 +46,8 @@ void nanos_create_task(
 	
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	
-	bool isTaskloop = flags & nanos_task_flag::nanos_taskloop_task;
 	size_t originalArgsBlockSize = args_block_size;
-	size_t taskSize = (isTaskloop) ? sizeof(Taskloop) : sizeof(Task);
+	size_t taskSize = sizeof(Task);
 	
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
@@ -69,18 +65,8 @@ void nanos_create_task(
 	
 	task = (char *)args_block + args_block_size;
 	
-	if (isTaskloop) {
-		void *&bounds = *taskloop_bounds_pointer;
-		
-		Taskloop *taskloop = new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
-		assert(taskloop != nullptr);
-		
-		TaskloopInfo &taskloopInfo = taskloop->getTaskloopInfo();
-		bounds = &(taskloopInfo.getBounds());
-	} else {
-		// Construct the Task object
-		new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
-	}
+	// Construct the Task object
+	new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
 }
 
 
@@ -107,11 +93,6 @@ void nanos_submit_task(void *taskHandle)
 	}
 	
 	Instrument::createdTask(task, taskInstrumentationId);
-	
-	if (task->isTaskloop()) {
-		TaskloopInfo &taskloopInfo = ((Taskloop *)task)->getTaskloopInfo();
-		taskloopInfo.initialize();
-	}
 	
 	bool ready = true;
 	nanos_task_info *taskInfo = task->getTaskInfo();

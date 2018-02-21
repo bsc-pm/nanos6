@@ -25,11 +25,7 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	assert(handler != 0);
 	Task *task = (Task *) handler;
 	
-	if (WEAK && task->isTaskloop()) {
-		std::cerr << "Warning: task loop cannot have weak dependencies. Changing them to strong dependencies." << std::endl;
-	}
-	
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), start, length);
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal(), start, length);
 	
 	if (start == nullptr) {
 		return;
@@ -39,7 +35,7 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	}
 	
 	DataAccessRegion accessRegion(start, length);
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), accessRegion, symbolIndex, reductionTypeAndOperatorIndex);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal(), accessRegion, symbolIndex, reductionTypeAndOperatorIndex);
 }
 
 

@@ -15,9 +15,6 @@
 #include "system/RuntimeInfo.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "tasks/TaskloopGenerator.hpp"
-#include "tasks/TaskloopInfo.hpp"
-#include "tasks/TaskloopLogic.hpp"
 
 #include <InstrumentAddTask.hpp>
 
@@ -61,8 +58,6 @@ NUMAHierarchicalScheduler::~NUMAHierarchicalScheduler()
 ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	assert(task != nullptr);
-	
-	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
 	
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
 	
@@ -220,49 +215,4 @@ size_t NUMAHierarchicalScheduler::getAvailableNUMANodeCount()
 	}
 	
 	return availableNUMANodeCount;
-}
-
-void NUMAHierarchicalScheduler::distributeTaskloopAmongNUMANodes(Taskloop *taskloop, ComputePlace *computePlace, ReadyTaskHint hint)
-{
-	assert(taskloop != nullptr);
-	assert(computePlace != nullptr);
-	
-	size_t totalNodes = HardwareInfo::getMemoryNodeCount();
-	size_t availableNodes = getAvailableNUMANodeCount();
-	assert(totalNodes > 0);
-	assert(availableNodes > 0);
-	assert(availableNodes <= totalNodes);
-	
-	// Get the original taskloop bounds
-	const Taskloop::bounds_t originalBounds = taskloop->getTaskloopInfo().getBounds();
-	
-	Taskloop::bounds_t auxBounds;
-	auxBounds.chunksize = originalBounds.chunksize;
-	auxBounds.step = originalBounds.step;
-	
-	std::vector<Taskloop::bounds_t> partitionBounds;
-	TaskloopLogic::splitIterations(availableNodes, originalBounds, partitionBounds);
-	
-	size_t numa = 0, partition = 0;
-	while (partition < availableNodes) {
-		if (_enabledCPUs[numa] > 0) {
-			// Set taskloop bounds
-			auxBounds.lower_bound = partitionBounds[partition].lower_bound;
-			auxBounds.upper_bound = partitionBounds[partition].upper_bound;
-			
-			// Create a partition taskloop for this NUMA node
-			Taskloop *partitionTaskloop = TaskloopGenerator::createPartition(taskloop, auxBounds);
-			assert(partitionTaskloop != nullptr);
-			
-			// Send the work to the NUMA Node
-			_NUMANodeScheduler[numa]->addReadyTask(partitionTaskloop, computePlace, hint);
-			++partition;
-		}
-		
-		numa = (numa + 1) % totalNodes;
-	}
-	
-	if (taskloop->markAsFinished()) {
-		TaskFinalization::disposeOrUnblockTask(taskloop, computePlace);
-	}
 }
