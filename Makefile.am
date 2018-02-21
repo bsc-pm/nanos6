@@ -31,7 +31,9 @@ nanos6include_HEADERS = \
 	api/nanos6/blocking.h \
 	api/nanos6/bootstrap.h \
 	api/nanos6/constants.h \
+	api/nanos6/cuda_device.h \
 	api/nanos6/debug.h \
+	api/nanos6/devices.h \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/polling.h \
