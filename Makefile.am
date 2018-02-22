@@ -534,6 +534,11 @@ memory_allocator_debug_cppflags = -I$(srcdir)/src/memory/allocator/malloc
 # 	src/null/NullStaticBlock.cpp
 
 if NEW_SCHEDULER
+AM_CXXFLAGS += -I$(srcdir)/src/scheduling/new-scheduler/
+common_sources += \
+	src/scheduling/new-scheduler/Scheduler.cpp \
+	src/scheduling/new-scheduler/SchedulerQueueInterface.cpp \
+	src/scheduling/new-scheduler/queue/FIFOQueue.cpp
 else
 AM_CXXFLAGS += -I$(srcdir)/src/scheduling/scheduler/
 common_sources += \
@@ -906,6 +911,12 @@ noinst_HEADERS = \
 	src/scheduling/scheduler/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/scheduler/schedulers/PriorityScheduler.hpp \
 	src/scheduling/scheduler/schedulers/cuda/CUDANaiveScheduler.hpp \
+	src/scheduling/new-scheduler/LeafScheduler.hpp \
+	src/scheduling/new-scheduler/NodeScheduler.hpp \
+	src/scheduling/new-scheduler/Scheduler.hpp \
+	src/scheduling/new-scheduler/SchedulerInterface.hpp \
+	src/scheduling/new-scheduler/SchedulerQueueInterface.hpp \
+	src/scheduling/new-scheduler/queue/FIFOQueue.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.hpp \
