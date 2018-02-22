@@ -538,7 +538,8 @@ AM_CXXFLAGS += -I$(srcdir)/src/scheduling/new-scheduler/
 common_sources += \
 	src/scheduling/new-scheduler/Scheduler.cpp \
 	src/scheduling/new-scheduler/SchedulerQueueInterface.cpp \
-	src/scheduling/new-scheduler/queue/FIFOQueue.cpp
+	src/scheduling/new-scheduler/queue/FIFOQueue.cpp \
+	src/scheduling/new-scheduler/queue/LIFOQueue.cpp
 else
 AM_CXXFLAGS += -I$(srcdir)/src/scheduling/scheduler/
 common_sources += \
@@ -917,6 +918,7 @@ noinst_HEADERS = \
 	src/scheduling/new-scheduler/SchedulerInterface.hpp \
 	src/scheduling/new-scheduler/SchedulerQueueInterface.hpp \
 	src/scheduling/new-scheduler/queue/FIFOQueue.hpp \
+	src/scheduling/new-scheduler/queue/LIFOQueue.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.hpp \

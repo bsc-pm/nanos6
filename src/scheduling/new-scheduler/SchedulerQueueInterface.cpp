@@ -8,13 +8,16 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "SchedulerQueueInterface.hpp"
 #include "queue/FIFOQueue.hpp"
+#include "queue/LIFOQueue.hpp"
 
 SchedulerQueueInterface *SchedulerQueueInterface::initialize()
 {
-	EnvironmentVariable<std::string> queueName("NANOS6_SCHEDULER_QUEUE", "fifo");
+	EnvironmentVariable<std::string> queueName("NANOS6_SCHEDULER_QUEUE", "lifo");
 	
 	if (queueName.getValue() == "fifo") {
 		return new FIFOQueue();
+	} else if (queueName.getValue() == "lifo") {
+		return new LIFOQueue();
 	} else {
 		FatalErrorHandler::failIf(true, "Invalid scheduler queue name ", queueName.getValue());
 		return nullptr;
