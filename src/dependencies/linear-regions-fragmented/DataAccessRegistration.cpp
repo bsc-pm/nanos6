@@ -11,7 +11,6 @@
 #include <cassert>
 #include <deque>
 #include <mutex>
-#include <vector>
 
 #include "BottomMapEntry.hpp"
 #include "CPUDependencyData.hpp"
