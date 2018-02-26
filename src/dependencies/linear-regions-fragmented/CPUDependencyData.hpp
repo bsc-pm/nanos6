@@ -82,6 +82,11 @@ struct CPUDependencyData {
 	{
 	}
 	
+	~CPUDependencyData()
+	{
+		assert(empty());
+	}
+	
 	inline bool empty() const
 	{
 		return _satisfiedOriginators.empty() && _delayedOperations.empty() && _removableTasks.empty();
