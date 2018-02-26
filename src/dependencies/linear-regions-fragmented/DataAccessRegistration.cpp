@@ -550,8 +550,33 @@ namespace DataAccessRegistration {
 			accessStructures._removalBlockers--;
 			access->markAsDiscounted();
 			
-			// The last taskwait fragment that finishes removes the blocking over the task
 			if (access->getObjectType() == taskwait_type) {
+				// Update data access ReductionCpuSet with information collected at the taskwait
+				if (access->getType() == REDUCTION_ACCESS_TYPE) {
+					assert(access->getReductionCpuSet().size() > 0);
+					
+					accessStructures._accesses.processIntersecting(
+						access->getAccessRegion(),
+						[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+							DataAccess *dataAccess = &(*position);
+							assert(dataAccess != nullptr);
+							assert(!dataAccess->hasBeenDiscounted());
+							
+							assert(dataAccess->getType() == REDUCTION_ACCESS_TYPE);
+							assert(dataAccess->isWeak());
+							
+							assert(dataAccess->getReductionInfo() != nullptr);
+							assert(dataAccess->getReductionInfo() == access->getReductionInfo());
+							assert(dataAccess->getReductionCpuSet().size() == access->getReductionCpuSet().size());
+							
+							dataAccess->getReductionCpuSet() |= access->getPreviousReductionCpuSet();
+							
+							return true;
+						}
+					);
+				}
+				
+				// The last taskwait fragment that finishes removes the blocking over the task
 				assert(accessStructures._liveTaskwaitFragmentCount > 0);
 				accessStructures._liveTaskwaitFragmentCount--;
 				
