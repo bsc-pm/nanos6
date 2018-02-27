@@ -20,7 +20,7 @@ ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operato
 		std::function<void(void*, void*, size_t)> initializationFunction, std::function<void(void*, void*, size_t)> combinationFunction) :
 	_region(region), _typeAndOperatorIndex(typeAndOperatorIndex),
 	_initializationFunction(std::bind(initializationFunction, std::placeholders::_1, _region.getStartAddress(), std::placeholders::_2)),
-	_combinationFunction(std::bind(combinationFunction, _region.getStartAddress(), std::placeholders::_1, std::placeholders::_2))
+	_combinationFunction(combinationFunction)
 {
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
@@ -82,14 +82,13 @@ DataAccessRegion ReductionInfo::getCPUPrivateStorage(size_t virtualCpuId) {
 	return DataAccessRegion(cpuStorage, _region.getSize());
 }
 
-bool ReductionInfo::combineRegion(const DataAccessRegion& region) {
+bool ReductionInfo::combineRegion(const DataAccessRegion& region, const boost::dynamic_bitset<>& reductionCpuSet) {
 	assert(region == _region); // FIXME partial combinations not supported at the moment
 	
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
 	
-	// FIXME lock guard will be required here to access _isCpuStorageInitialized simultaneously:
-	// Combinations can happen simultaneously, but not for the (current) unfragmented combination
+	assert(reductionCpuSet.size() > 0);
 	
 	for (size_t i = 0; i < (size_t)nCpus; ++i) {
 		if (reductionCpuSet[i]) {

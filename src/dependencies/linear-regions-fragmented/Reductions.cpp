@@ -43,7 +43,14 @@ void *nanos_get_reduction_storage(void *original) {
 	ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
 	assert(reductionInfo != nullptr);
 	
-	void *address = reductionInfo->getCPUPrivateStorage(cpuId).getStartAddress();
+	dataAccess->setReductionCpu(cpuId);
+	
+	assert(((char*)original) >= ((char*)reductionInfo->getOriginalRegion().getStartAddress()));
+	assert(((char*)original) < (((char*)reductionInfo->getOriginalRegion().getStartAddress())
+				+ reductionInfo->getOriginalRegion().getSize()));
+	
+	void *address = ((char*)reductionInfo->getCPUPrivateStorage(cpuId).getStartAddress()) +
+		((char*)original - (char*)reductionInfo->getOriginalRegion().getStartAddress());
 	
 	return address;
 }

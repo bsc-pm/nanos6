@@ -51,7 +51,7 @@ class ReductionInfo
 		
 		std::function<void(void*, size_t)> _initializationFunction;
 		
-		std::function<void(void*, size_t)> _combinationFunction;
+		std::function<void(void*, void*, size_t)> _combinationFunction;
 		
 		spinlock_t _lock;
 };
