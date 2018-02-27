@@ -55,9 +55,15 @@ enum ReductionType {
 //!
 //! \param[in] original the reduction address from which to obtain the private
 //! storage
+//! \param[in] dim1size the continuous dimension in bytes
+//! \param[in] dim1start the first byte/index
+//! \param[in] dim1end the next byte/index outside of the region
 //! \return the address of the private storage corresponding to the reduction
 //! registered on the original address
-void *nanos_get_reduction_storage(void *original);
+void *nanos_get_reduction_storage1(
+	void *original,
+	long dim1size, long dim1start, long dim1end
+);
 
 
 #ifdef __cplusplus

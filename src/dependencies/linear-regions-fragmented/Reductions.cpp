@@ -14,36 +14,50 @@
 #include "TaskDataAccessesImplementation.hpp"
 #include "ReductionInfo.hpp"
 
-void *nanos_get_reduction_storage(void *original) {
+void *nanos_get_reduction_storage1(void *original,
+		long dim1size,
+		__attribute__((unused)) long dim1start,
+		__attribute__((unused)) long dim1end)
+{
+	assert(dim1start == 0L);
+	
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
 	
 	Task *task = currentThread->getTask();
 	assert(task != nullptr);
 	
-	DataAccess *dataAccess = nullptr;
+	DataAccess *firstAccess = nullptr;
+	
+	// Need the lock, as access can be fragmented while we access it
+	std::lock_guard<TaskDataAccesses::spinlock_t> guard(task->getDataAccesses()._lock);
+	
+	CPU *currentCPU = currentThread->getComputePlace();
+	size_t cpuId = currentCPU->_virtualCPUId;
+	
 	TaskDataAccesses::accesses_t &accesses = task->getDataAccesses()._accesses;
 	accesses.processIntersecting(
-		DataAccessRegion(original, /* length */ 1),
+		DataAccessRegion(original, dim1size),
 		[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
-			assert(dataAccess == nullptr); // This intersection should only match once
+			DataAccess *dataAccess = &(*position);
 			
-			dataAccess = &(*position);
-			assert(dataAccess != nullptr);
+			assert(dataAccess->getType() == REDUCTION_ACCESS_TYPE);
+			
+			dataAccess->setReductionCpu(cpuId);
+			
+			if ((firstAccess == nullptr) ||
+					(firstAccess->getAccessRegion().getStartAddress() <
+					dataAccess->getAccessRegion().getStartAddress()))
+				firstAccess = dataAccess;
 			
 			return true;
 		}
 	);
 	
-	assert(dataAccess != nullptr);
+	assert(firstAccess != nullptr);
 	
-	CPU *currentCPU = currentThread->getComputePlace();
-	size_t cpuId = currentCPU->_virtualCPUId;
-	
-	ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
+	ReductionInfo *reductionInfo = firstAccess->getReductionInfo();
 	assert(reductionInfo != nullptr);
-	
-	dataAccess->setReductionCpu(cpuId);
 	
 	assert(((char*)original) >= ((char*)reductionInfo->getOriginalRegion().getStartAddress()));
 	assert(((char*)original) < (((char*)reductionInfo->getOriginalRegion().getStartAddress())
