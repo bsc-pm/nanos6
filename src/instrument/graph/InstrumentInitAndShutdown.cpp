@@ -226,7 +226,7 @@ namespace Instrument {
 					color = "#FFFF00";
 					break;
 				case REDUCTION:
-					text << "RED";
+					text << (access.weak() ? "red" : "RED");
 					color = "#00AFFF";
 					break;
 				case LOCAL:
