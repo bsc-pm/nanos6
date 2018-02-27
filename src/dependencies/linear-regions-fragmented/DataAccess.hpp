@@ -16,6 +16,9 @@
 #include <bitset>
 #include <cassert>
 #include <set>
+#include <boost/dynamic_bitset.hpp>
+
+#include <executors/threads/CPUManager.hpp>
 
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentTaskId.hpp>
@@ -49,6 +52,7 @@ private:
 		WRITE_SATISFIED_BIT,
 		CONCURRENT_SATISFIED_BIT,
 		RECEIVED_REDUCTION_INFO_BIT,
+		RECEIVED_CPU_SET_BIT,
 		
 		READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
@@ -95,6 +99,12 @@ private:
 	//! Reduction-specific information of previous access
 	ReductionInfo *_previousReductionInfo;
 	
+	//! CPUs executing tasks accessing this reduction region (if applicable)
+	boost::dynamic_bitset<> _reductionCpuSet;
+	
+	//! CPUs executing tasks accessing previous access' reduction region (if applicable)
+	boost::dynamic_bitset<> _previousReductionCpuSet;
+	
 	
 public:
 	DataAccess(
@@ -118,6 +128,10 @@ public:
 		_previousReductionInfo(nullptr)
 	{
 		assert(originator != nullptr);
+		
+		if (_type == REDUCTION_ACCESS_TYPE) {
+			_reductionCpuSet.resize(CPUManager::getTotalCPUs());
+		}
 	}
 	
 	DataAccess(const DataAccess &other)
@@ -129,7 +143,9 @@ public:
 		_reductionTypeAndOperatorIndex(other.getReductionTypeAndOperatorIndex()),
 		_reductionIndex(other.getReductionIndex()),
 		_reductionInfo(other.getReductionInfo()),
-		_previousReductionInfo(other.getPreviousReductionInfo())
+		_previousReductionInfo(other.getPreviousReductionInfo()),
+		_reductionCpuSet(other.getReductionCpuSet()),
+		_previousReductionCpuSet(other.getPreviousReductionCpuSet())
 	{}
 	
 	~DataAccess()
@@ -273,6 +289,16 @@ public:
 		return _status[RECEIVED_REDUCTION_INFO_BIT];
 	}
 	
+	void setReceivedReductionCpuSet()
+	{
+		assert(!receivedReductionCpuSet());
+		_status[RECEIVED_CPU_SET_BIT] = true;
+	}
+	bool receivedReductionCpuSet() const
+	{
+		return _status[RECEIVED_CPU_SET_BIT];
+	}
+	
 	bool canPropagateReadSatisfiability() const
 	{
 		return !_status[READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT];
@@ -405,6 +431,13 @@ public:
 		if (other->getReductionInfo() != nullptr) {
 			setReductionInfo(other->getReductionInfo());
 		}
+		if (other->receivedReductionCpuSet()) {
+			setReceivedReductionCpuSet();
+			setPreviousReductionCpuSet(other->getPreviousReductionCpuSet());
+		}
+		if (other->getReductionCpuSet().size() > 0) {
+			setReductionCpuSet(other->getReductionCpuSet());
+		}
 		if (other->complete()) {
 			setComplete();
 		}
@@ -426,10 +459,13 @@ public:
 	
 	bool satisfied() const
 	{
+		bool receivedReductionStructures = receivedReductionInfo() &&
+			((_previousReductionInfo == nullptr) || receivedReductionCpuSet());
+		
 		if (_type == READ_ACCESS_TYPE) {
-			return readSatisfied() && receivedReductionInfo();
+			return readSatisfied() && receivedReductionStructures;
 		} else if (_type == CONCURRENT_ACCESS_TYPE) {
-			return concurrentSatisfied() && receivedReductionInfo();
+			return concurrentSatisfied() && receivedReductionStructures;
 		} else if (_type == REDUCTION_ACCESS_TYPE) {
 			// Note: _reductionInfo can be 'nullptr' even when (receivedReductionInfo() == true):
 			// A non-matching ReductionInfo was received and the receiver hasn't yet allocated a
@@ -437,7 +473,7 @@ public:
 			return (receivedReductionInfo()
 					&& (writeSatisfied() || (_reductionInfo != nullptr && _reductionInfo == _previousReductionInfo)));
 		} else {
-			return readSatisfied() && writeSatisfied() && receivedReductionInfo();
+			return readSatisfied() && writeSatisfied() && receivedReductionStructures;
 		}
 	}
 	
@@ -486,6 +522,39 @@ public:
 	{
 		assert(_previousReductionInfo == nullptr);
 		_previousReductionInfo = previousReductionInfo;
+	}
+	
+	boost::dynamic_bitset<> const &getReductionCpuSet() const
+	{
+		return _reductionCpuSet;
+	}
+	
+	boost::dynamic_bitset<> &getReductionCpuSet()
+	{
+		return _reductionCpuSet;
+	}
+	
+	void setReductionCpuSet(const boost::dynamic_bitset<> &reductionCpuSet)
+	{
+		assert(_reductionCpuSet.none());
+		assert(_type == REDUCTION_ACCESS_TYPE);
+		_reductionCpuSet = reductionCpuSet;
+	}
+	
+	void setReductionCpu(size_t cpuId)
+	{
+		_reductionCpuSet.set(cpuId);
+	}
+	
+	boost::dynamic_bitset<> const &getPreviousReductionCpuSet() const
+	{
+		return _previousReductionCpuSet;
+	}
+	
+	void setPreviousReductionCpuSet(const boost::dynamic_bitset<> &previousReductionCpuSet)
+	{
+		assert(_previousReductionCpuSet.size() == 0);
+		_previousReductionCpuSet = previousReductionCpuSet;
 	}
 	
 	Instrument::data_access_id_t const &getInstrumentationId() const

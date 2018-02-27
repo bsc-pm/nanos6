@@ -11,6 +11,7 @@
 #include <atomic>
 #include <bitset>
 #include <deque>
+#include <boost/dynamic_bitset.hpp>
 
 #include <limits.h>
 
@@ -37,6 +38,8 @@ struct CPUDependencyData {
 		bool _setReductionInfo; // Note: Both this and next field are required, as a null ReductionInfo can be propagated
 		ReductionInfo *_reductionInfo;
 		
+		boost::dynamic_bitset<> _reductionCpuSet;
+		
 		UpdateOperation()
 			: _target(), _region(),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
@@ -57,7 +60,8 @@ struct CPUDependencyData {
 		{
 			return !_makeReadSatisfied && !_makeWriteSatisfied && !_makeConcurrentSatisfied
 				&& !_makeTopmost && !_makeTopLevel
-				&& !_setReductionInfo;
+				&& !_setReductionInfo
+				&& (_reductionCpuSet.size() == 0);
 		}
 	};
 	

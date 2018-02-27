@@ -54,6 +54,7 @@ namespace DataAccessRegistration {
 		bool _propagatesWriteSatisfiabilityToNext;
 		bool _propagatesConcurrentSatisfiabilityToNext;
 		bool _propagatesReductionInfoToNext;
+		bool _propagatesReductionCpuSetToNext;
 		bool _makesNextTopmost;
 		bool _propagatesTopLevel;
 		
@@ -61,6 +62,7 @@ namespace DataAccessRegistration {
 		bool _propagatesWriteSatisfiabilityToFragments;
 		bool _propagatesConcurrentSatisfiabilityToFragments;
 		bool _propagatesReductionInfoToFragments;
+		bool _propagatesReductionCpuSetToFragments;
 		
 		bool _allocatesReductionInfo;
 		bool _closesPreviousReduction;
@@ -76,12 +78,12 @@ namespace DataAccessRegistration {
 			
 			_hasNext(false),
 			_propagatesReadSatisfiabilityToNext(false), _propagatesWriteSatisfiabilityToNext(false), _propagatesConcurrentSatisfiabilityToNext(false),
-			_propagatesReductionInfoToNext(false),
+			_propagatesReductionInfoToNext(false), _propagatesReductionCpuSetToNext(false),
 			_makesNextTopmost(false),
 			_propagatesTopLevel(false),
 			
 			_propagatesReadSatisfiabilityToFragments(false), _propagatesWriteSatisfiabilityToFragments(false), _propagatesConcurrentSatisfiabilityToFragments(false),
-			_propagatesReductionInfoToFragments(false),
+			_propagatesReductionInfoToFragments(false), _propagatesReductionCpuSetToFragments(false),
 			
 			_allocatesReductionInfo(false),
 			_closesPreviousReduction(false),
@@ -107,11 +109,16 @@ namespace DataAccessRegistration {
 				_propagatesConcurrentSatisfiabilityToFragments = access->concurrentSatisfied();
 				// Can be null, but will be allocated before the propagation
 				_propagatesReductionInfoToFragments = access->receivedReductionInfo();
+				// Propagate to fragments only when strictly necessary, the
+				// fragment will directly propagate to subaccesses otherwise
+				_propagatesReductionCpuSetToFragments = (access->getType() == REDUCTION_ACCESS_TYPE)
+					&& access->receivedReductionCpuSet();
 			} else {
 				_propagatesReadSatisfiabilityToFragments = false;
 				_propagatesWriteSatisfiabilityToFragments = false;
 				_propagatesConcurrentSatisfiabilityToFragments = false;
 				_propagatesReductionInfoToFragments = false;
+				_propagatesReductionCpuSetToFragments = false;
 			}
 			
 			// Propagation to next
@@ -132,6 +139,7 @@ namespace DataAccessRegistration {
 						access->canPropagateReductionInfo() && access->receivedReductionInfo()
 						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
 								|| access->satisfied());
+					_propagatesReductionCpuSetToNext = false; // ReductionCpuSet is propagated through the fragments
 				} else if (
 					(access->getObjectType() == fragment_type)
 					|| (access->getObjectType() == taskwait_type)
@@ -149,6 +157,12 @@ namespace DataAccessRegistration {
 						&& access->receivedReductionInfo()
 						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
 								|| access->satisfied());
+					_propagatesReductionCpuSetToNext =
+						(access->getType() == REDUCTION_ACCESS_TYPE)
+						&& access->complete()
+						&& access->receivedReductionInfo()
+						&& ((access->getReductionInfo() != access->getPreviousReductionInfo())
+								|| access->receivedReductionCpuSet());
 				} else {
 					assert(access->getObjectType() == access_type);
 					assert(!access->hasSubaccesses());
@@ -169,6 +183,12 @@ namespace DataAccessRegistration {
 						&& access->receivedReductionInfo()
 						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
 								|| access->satisfied());
+					_propagatesReductionCpuSetToNext =
+						(access->getType() == REDUCTION_ACCESS_TYPE)
+						&& access->complete()
+						&& access->receivedReductionInfo()
+						&& ((access->getReductionInfo() != access->getPreviousReductionInfo())
+								|| access->receivedReductionCpuSet());
 				}
 			} else {
 				assert(!access->hasNext());
@@ -176,6 +196,7 @@ namespace DataAccessRegistration {
 				_propagatesWriteSatisfiabilityToNext = false;
 				_propagatesConcurrentSatisfiabilityToNext = false;
 				_propagatesReductionInfoToNext = false;
+				_propagatesReductionCpuSetToNext = false;
 			}
 			
 			ReductionInfo *prevReductionInfo = access->getPreviousReductionInfo();
@@ -189,6 +210,7 @@ namespace DataAccessRegistration {
 			_closesPreviousReduction =
 				access->writeSatisfied()
 				&& access->receivedReductionInfo()
+				&& access->receivedReductionCpuSet()
 				&& (prevReductionInfo != nullptr)
 				&& (((access->getObjectType() == taskwait_type)
 						&& (access->getType() != REDUCTION_ACCESS_TYPE))
@@ -198,6 +220,7 @@ namespace DataAccessRegistration {
 			_isRemovable = access->isTopmost()
 				&& access->readSatisfied() && access->writeSatisfied()
 				&& access->receivedReductionInfo()
+				&& ((prevReductionInfo == nullptr) || access->receivedReductionCpuSet())
 				&& access->complete()
 				&& (
 					!access->isInBottomMap() || access->hasNext()
@@ -453,6 +476,24 @@ namespace DataAccessRegistration {
 				updateOperation._reductionInfo = access->getReductionInfo();
 			}
 			
+			if (initialStatus._propagatesReductionCpuSetToNext != updatedStatus._propagatesReductionCpuSetToNext) {
+				assert(!initialStatus._propagatesReductionCpuSetToNext);
+				
+				// Reduction CPU set computation
+				
+				assert(access->getReductionInfo() != nullptr);
+				assert(access->getReductionCpuSet().size() > 0);
+				assert((access->getType() != REDUCTION_ACCESS_TYPE) || access->isWeak() || access->getReductionCpuSet().any());
+				
+				if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
+					assert(access->getPreviousReductionCpuSet().size() > 0);
+					assert(access->getReductionCpuSet().size() == access->getPreviousReductionCpuSet().size());
+					access->getReductionCpuSet() |= access->getPreviousReductionCpuSet();
+				}
+				
+				updateOperation._reductionCpuSet = access->getReductionCpuSet();
+			}
+			
 			// Make Next Topmost
 			if (initialStatus._makesNextTopmost != updatedStatus._makesNextTopmost) {
 				assert(!initialStatus._makesNextTopmost);
@@ -493,6 +534,21 @@ namespace DataAccessRegistration {
 				assert(!(access->getType() == REDUCTION_ACCESS_TYPE) || access->getReductionInfo() != nullptr);
 				updateOperation._setReductionInfo = true;
 				updateOperation._reductionInfo = access->getReductionInfo();
+			}
+			
+			if (initialStatus._propagatesReductionCpuSetToFragments != updatedStatus._propagatesReductionCpuSetToFragments) {
+				assert(!initialStatus._propagatesReductionCpuSetToFragments);
+				
+				// Reduction CPU set computation
+				assert(access->getReductionInfo() != nullptr);
+				
+				if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
+					assert(access->getPreviousReductionCpuSet().size() > 0);
+					assert(access->getReductionCpuSet().size() == access->getPreviousReductionCpuSet().size());
+					access->getReductionCpuSet() |= access->getPreviousReductionCpuSet();
+				}
+				
+				updateOperation._reductionCpuSet = access->getReductionCpuSet();
 			}
 			
 			if (!updateOperation.empty()) {
@@ -951,6 +1007,12 @@ namespace DataAccessRegistration {
 			}
 			
 			access->setReceivedReductionInfo();
+		}
+		
+		// ReductionCpuSet
+		if (updateOperation._reductionCpuSet.size() > 0) {
+			access->setPreviousReductionCpuSet(updateOperation._reductionCpuSet);
+			access->setReceivedReductionCpuSet();
 		}
 		
 		// Topmost
@@ -1566,6 +1628,7 @@ namespace DataAccessRegistration {
 						targetAccess->setWriteSatisfied();
 						targetAccess->setConcurrentSatisfied();
 						targetAccess->setReceivedReductionInfo();
+						// Note: setting reductionCpuSet as received is not necessary, as its not always propagated
 						targetAccess->setTopmost();
 						targetAccess->setTopLevel();
 						DataAccessStatusEffects updatedStatus(targetAccess);
