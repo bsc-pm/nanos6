@@ -14,6 +14,8 @@
 #include <DataAccessRegion.hpp>
 #include <lowlevel/SpinLock.hpp>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include "ReductionSpecific.hpp"
 
 class ReductionInfo
@@ -33,7 +35,7 @@ class ReductionInfo
 		
 		DataAccessRegion getCPUPrivateStorage(size_t virtualCpuId);
 		
-		bool combineRegion(const DataAccessRegion& region);
+		bool combineRegion(const DataAccessRegion& region, const boost::dynamic_bitset<>& reductionCpuSet);
 		
 	private:
 		

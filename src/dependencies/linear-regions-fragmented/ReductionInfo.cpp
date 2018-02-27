@@ -92,10 +92,11 @@ bool ReductionInfo::combineRegion(const DataAccessRegion& region) {
 	// Combinations can happen simultaneously, but not for the (current) unfragmented combination
 	
 	for (size_t i = 0; i < (size_t)nCpus; ++i) {
-		if (_isCpuStorageInitialized[i]) {
-			void *cpuStorage = ((char*)_storage.getStartAddress()) + region.getSize()*i; // FIXME will need to compute offset to support partial combinations
-			_combinationFunction(cpuStorage, region.getSize());
-			_isCpuStorageInitialized[i] = false;
+		if (reductionCpuSet[i]) {
+			void *originalRegion = ((char*)_region.getStartAddress()) + ((char*)region.getStartAddress() - (char*)_region.getStartAddress());
+			void *cpuStorage = ((char*)_storage.getStartAddress()) + _region.getSize()*i + ((char*)region.getStartAddress() - (char*)_region.getStartAddress());
+			
+			_combinationFunction(originalRegion, cpuStorage, region.getSize());
 			
 			Instrument::combinedPrivateReductionStorage(
 				/* reductionInfo */ *this,

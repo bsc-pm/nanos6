@@ -399,7 +399,7 @@ namespace DataAccessRegistration {
 			
 			ReductionInfo *prevReductionInfo = access->getPreviousReductionInfo();
 			assert(prevReductionInfo != nullptr);
-			bool wasLastCombination = prevReductionInfo->combineRegion(access->getAccessRegion());
+			bool wasLastCombination = prevReductionInfo->combineRegion(access->getAccessRegion(), access->getPreviousReductionCpuSet());
 			
 			if (wasLastCombination) {
 				const DataAccessRegion& originalRegion = prevReductionInfo->getOriginalRegion();
