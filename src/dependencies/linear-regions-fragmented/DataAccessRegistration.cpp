@@ -64,7 +64,6 @@ namespace DataAccessRegistration {
 		bool _propagatesReductionInfoToFragments;
 		bool _propagatesReductionCpuSetToFragments;
 		
-		bool _allocatesReductionInfo;
 		bool _closesPreviousReduction;
 		
 		bool _linksBottomMapAccessesToNextAndInhibitsPropagation;
@@ -85,7 +84,6 @@ namespace DataAccessRegistration {
 			_propagatesReadSatisfiabilityToFragments(false), _propagatesWriteSatisfiabilityToFragments(false), _propagatesConcurrentSatisfiabilityToFragments(false),
 			_propagatesReductionInfoToFragments(false), _propagatesReductionCpuSetToFragments(false),
 			
-			_allocatesReductionInfo(false),
 			_closesPreviousReduction(false),
 			
 			_linksBottomMapAccessesToNextAndInhibitsPropagation(false),
@@ -200,12 +198,6 @@ namespace DataAccessRegistration {
 			}
 			
 			ReductionInfo *prevReductionInfo = access->getPreviousReductionInfo();
-			
-			_allocatesReductionInfo =
-				(access->getObjectType() == access_type)
-				&& (access->getType() == REDUCTION_ACCESS_TYPE)
-				&& access->receivedReductionInfo()
-				&& (access->getReductionInfo() == nullptr);
 			
 			_closesPreviousReduction =
 				access->writeSatisfied()
@@ -420,33 +412,6 @@ namespace DataAccessRegistration {
 					originalRegion
 				);
 			}
-		}
-		
-		// Reduction initialization
-		if (initialStatus._allocatesReductionInfo != updatedStatus._allocatesReductionInfo) {
-			assert(!initialStatus._allocatesReductionInfo);
-			assert(access->getObjectType() == access_type);
-			assert(access->getReductionInfo() == nullptr);
-			
-			// Note: This needs to be done before propagating reduction satisfiability
-			
-			nanos_task_info *taskInfo = task->getTaskInfo();
-			assert(taskInfo != nullptr);
-			
-			reduction_index_t reductionIndex = access->getReductionIndex();
-			
-			ReductionInfo *newReductionInfo = new ReductionInfo(
-					access->getAccessRegion(),
-					access->getReductionTypeAndOperatorIndex(),
-					taskInfo->reduction_initializers[reductionIndex],
-					taskInfo->reduction_combiners[reductionIndex]);
-			
-			access->setReductionInfo(newReductionInfo);
-			
-			Instrument::allocatedReductionInfo(
-				access->getInstrumentationId(),
-				*newReductionInfo
-			);
 		}
 		
 		// Propagation to Next
@@ -993,7 +958,11 @@ namespace DataAccessRegistration {
 		if (updateOperation._setReductionInfo) {
 			access->setPreviousReductionInfo(updateOperation._reductionInfo);
 			
-			if ((access->getType() == REDUCTION_ACCESS_TYPE)
+			// ReductionInfo can be already assigned for partially overlapping reductions
+			if (access->getReductionInfo() != nullptr) {
+				assert(access->getType() == REDUCTION_ACCESS_TYPE);
+			}
+			else if ((access->getType() == REDUCTION_ACCESS_TYPE)
 					&& (updateOperation._reductionInfo != nullptr)
 					&& (access->getReductionTypeAndOperatorIndex() ==
 						updateOperation._reductionInfo->getTypeAndOperatorIndex())) {
@@ -1535,16 +1504,47 @@ namespace DataAccessRegistration {
 	}
 	
 	
+	static inline void allocateReductionInfo(DataAccess &dataAccess, const Task &task) {
+		assert(dataAccess.getType() == REDUCTION_ACCESS_TYPE);
+		
+		nanos_task_info *taskInfo = task.getTaskInfo();
+		assert(taskInfo != nullptr);
+		
+		reduction_index_t reductionIndex = dataAccess.getReductionIndex();
+		
+		ReductionInfo *newReductionInfo = new ReductionInfo(
+				dataAccess.getAccessRegion(),
+				dataAccess.getReductionTypeAndOperatorIndex(),
+				taskInfo->reduction_initializers[reductionIndex],
+				taskInfo->reduction_combiners[reductionIndex]);
+		
+		// Note: ReceivedReductionInfo flag is not set, as the access will still receive
+		// an (invalid) reduction info from the propagation system
+		dataAccess.setReductionInfo(newReductionInfo);
+		
+		Instrument::allocatedReductionInfo(
+			dataAccess.getInstrumentationId(),
+			*newReductionInfo
+		);
+	}
+	
+	
 	static inline void replaceMatchingInBottomMapLinkAndPropagate(
 		DataAccessLink const &next, TaskDataAccesses &accessStructures,
-		DataAccessRegion region,
+		DataAccess *dataAccess,
 		Task *parent, TaskDataAccesses &parentAccessStructures,
 		/* inout */ CPUDependencyData &hpDependencyData
 	) {
+		assert(dataAccess != nullptr);
 		assert(parent != nullptr);
 		assert(next._task != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
 		assert(!parentAccessStructures.hasBeenDeleted());
+		
+		DataAccessRegion region = dataAccess->getAccessRegion();
+		
+		bool hasAllocatedReductionInfo = false;
+		ReductionInfo *previousReductionInfo = nullptr;
 		
 		bool local = false;
 		#ifndef NDEBUG
@@ -1569,6 +1569,27 @@ namespace DataAccessRegistration {
 				
 				parentAccessType = bottomMapEntryContents._accessType;
 				local = (bottomMapEntryContents._accessType == NO_ACCESS_TYPE);
+				
+				// When a reduction access is to be linked with any non-matching access, we want to
+				// allocate a new reductionInfo to it before it gets fragmented by propagation operations
+				if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !hasAllocatedReductionInfo &&
+						(previous->getReductionTypeAndOperatorIndex() != dataAccess->getReductionTypeAndOperatorIndex())) {
+					hasAllocatedReductionInfo = true;
+					allocateReductionInfo(*dataAccess, *next._task);
+				}
+				
+				if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && !hasAllocatedReductionInfo &&
+						(previous->getReductionTypeAndOperatorIndex() == dataAccess->getReductionTypeAndOperatorIndex())) {
+					if (previousReductionInfo == nullptr) {
+						previousReductionInfo = previous->getReductionInfo();
+					}
+					else if (previous->getReductionInfo() != previousReductionInfo)
+					{
+						// Has multiple previous reductions, need to allocate new reduction info
+						hasAllocatedReductionInfo = true;
+						allocateReductionInfo(*dataAccess, *next._task);
+					}
+				}
 				
 				#ifndef NDEBUG
 					if (!first) {
@@ -1613,13 +1634,18 @@ namespace DataAccessRegistration {
 				#endif
 				
 				// Holes in the parent bottom map that are not in the parent accesses become fully satisfied
-				std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock); // Need the lock since an access of data allocated in the parent may partially overlap a previous one
 				accessStructures._accesses.processIntersecting(
 					missingRegion,
 					[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 						DataAccess *targetAccess = &(*position);
 						assert(targetAccess != nullptr);
 						assert(!targetAccess->hasBeenDiscounted());
+						
+						// We need to allocate the reductionInfo before fragmenting the access
+						if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !hasAllocatedReductionInfo) {
+							hasAllocatedReductionInfo = true;
+							allocateReductionInfo(*dataAccess, *next._task);
+						}
 						
 						targetAccess = fragmentAccess(targetAccess, missingRegion, accessStructures);
 						
@@ -1709,18 +1735,12 @@ namespace DataAccessRegistration {
 					hpDependencyData
 				);
 				
-				// Unlock to avoid potential deadlock
-				accessStructures._lock.unlock();
-				
 				replaceMatchingInBottomMapLinkAndPropagate(
 					DataAccessLink(task, access_type), accessStructures,
-					dataAccess->getAccessRegion(),
+					dataAccess,
 					parent, parentAccessStructures,
 					hpDependencyData
 				);
-				
-				// Relock to advance the iterator
-				accessStructures._lock.lock();
 				
 				return true;
 			}
