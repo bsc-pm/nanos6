@@ -41,7 +41,7 @@ class ReductionInfo
 		
 		DataAccessRegion _storage;
 		
-		std::vector<bool> _isCpuStorageInitialized;
+		boost::dynamic_bitset<> _isCpuStorageInitialized;
 		
 		std::atomic_size_t _sizeCounter;
 		
