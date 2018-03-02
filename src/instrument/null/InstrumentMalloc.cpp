@@ -162,6 +162,18 @@ union pointer_arithmetic_t {
 #pragma GCC visibility push(default)
 extern "C" void nanos6_memory_allocation_interception_init()
 {
+	// Resolve all the symbols before we intercept malloc, since the resolution itself does call malloc !?!
+	SymbolResolver<void *, &_malloc_sl, size_t>::resolveNext();
+	SymbolResolver<void, &_free_sl, void *>::resolveNext();
+	SymbolResolver<void *, &_calloc_sl, size_t, size_t>::resolveNext();
+	SymbolResolver<void *, &_realloc_sl, void *, size_t>::resolveNext();
+	SymbolResolver<void *, &_reallocarray_sl, void *, size_t, size_t>::resolveNext();
+	SymbolResolver<int, &_posix_memalign_sl, void **, size_t, size_t>::resolveNext();
+	SymbolResolver<void *, &_aligned_alloc_sl, size_t, size_t>::resolveNext();
+	SymbolResolver<void *, &_valloc_sl, size_t>::resolveNext();
+	SymbolResolver<void *, &_memalign_sl, size_t, size_t>::resolveNext();
+	SymbolResolver<void *, &_pvalloc_sl, size_t>::resolveNext();
+	
 	_pageSize = sysconf(_SC_PAGE_SIZE);
 	SymbolResolver<void, &_nanos6_start_function_interception_sl>::globalScopeCall();
 }
@@ -461,7 +473,7 @@ void *nanos6_intercepted_malloc(size_t size)
 	if (_debugMemory) {
 		return nanos6_protected_memory_allocation(size);
 	} else {
-		return SymbolResolver<void *, &_malloc_sl, size_t>::call(size);
+		return SymbolResolver<void *, &_malloc_sl, size_t>::callNext(size);
 	}
 }
 
@@ -471,7 +483,7 @@ void nanos6_intercepted_free(void *ptr)
 		if (_debugMemory) {
 			nanos6_protected_memory_deallocation(ptr);
 		} else {
-			SymbolResolver<void, &_free_sl, void *>::call(ptr);
+			SymbolResolver<void, &_free_sl, void *>::callNext(ptr);
 		}
 	}
 }
@@ -482,7 +494,7 @@ void *nanos6_intercepted_calloc(size_t nmemb, size_t size)
 		void *result = nanos6_protected_memory_allocation(nmemb * size, size);
 		return memset(result, 0, nmemb* size);
 	} else {
-		return SymbolResolver<void *, &_calloc_sl, size_t, size_t>::call(nmemb, size);
+		return SymbolResolver<void *, &_calloc_sl, size_t, size_t>::callNext(nmemb, size);
 	}
 }
 
@@ -500,7 +512,7 @@ void *nanos6_intercepted_realloc(void *ptr, size_t size)
 		}
 		return result;
 	} else {
-		return SymbolResolver<void *, &_realloc_sl, void *, size_t>::call(ptr, size);
+		return SymbolResolver<void *, &_realloc_sl, void *, size_t>::callNext(ptr, size);
 	}
 }
 
@@ -518,7 +530,7 @@ void *nanos6_intercepted_reallocarray(void *ptr, size_t nmemb, size_t size)
 		}
 		return result;
 	} else {
-		return SymbolResolver<void *, &_reallocarray_sl, void *, size_t, size_t>::call(ptr, nmemb, size);
+		return SymbolResolver<void *, &_reallocarray_sl, void *, size_t, size_t>::callNext(ptr, nmemb, size);
 	}
 }
 
@@ -529,7 +541,7 @@ int nanos6_intercepted_posix_memalign(void **memptr, size_t alignment, size_t si
 		*memptr = nanos6_protected_memory_allocation(size, alignment);
 		return 0;
 	} else {
-		return SymbolResolver<int, &_posix_memalign_sl, void **, size_t, size_t>::call(memptr, alignment, size);
+		return SymbolResolver<int, &_posix_memalign_sl, void **, size_t, size_t>::callNext(memptr, alignment, size);
 	}
 }
 
@@ -539,7 +551,7 @@ void *nanos6_intercepted_aligned_alloc(size_t alignment, size_t size)
 	if (_debugMemory) {
 		return nanos6_protected_memory_allocation(size, alignment);
 	} else {
-		return SymbolResolver<void *, &_aligned_alloc_sl, size_t, size_t>::call(alignment, size);
+		return SymbolResolver<void *, &_aligned_alloc_sl, size_t, size_t>::callNext(alignment, size);
 	}
 }
 
@@ -553,7 +565,7 @@ void *nanos6_intercepted_valloc(size_t size)
 		
 		return nanos6_protected_memory_allocation(size, _pageSize);
 	} else {
-		return SymbolResolver<void *, &_valloc_sl, size_t>::call(size);
+		return SymbolResolver<void *, &_valloc_sl, size_t>::callNext(size);
 	}
 }
 
@@ -563,7 +575,7 @@ void *nanos6_intercepted_memalign(size_t alignment, size_t size)
 	if (_debugMemory) {
 		return nanos6_protected_memory_allocation(size, alignment);
 	} else {
-		return SymbolResolver<void *, &_memalign_sl, size_t, size_t>::call(alignment, size);
+		return SymbolResolver<void *, &_memalign_sl, size_t, size_t>::callNext(alignment, size);
 	}
 }
 
@@ -579,7 +591,7 @@ void *nanos6_intercepted_pvalloc(size_t size)
 		
 		return nanos6_protected_memory_allocation(size);
 	} else {
-		return SymbolResolver<void *, &_pvalloc_sl, size_t>::call(size);
+		return SymbolResolver<void *, &_pvalloc_sl, size_t>::callNext(size);
 	}
 }
 

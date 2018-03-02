@@ -33,6 +33,18 @@ static const StringLiteral _pvalloc_sl("pvalloc");
 
 extern "C" void nanos6_memory_allocation_interception_init()
 {
+	// Resolve all the symbols before we intercept malloc, since the resolution itself does call malloc !?!
+	SymbolResolver<void *, &_malloc_sl, size_t>::resolveNext();
+	SymbolResolver<void, &_free_sl, void *>::resolveNext();
+	SymbolResolver<void *, &_calloc_sl, size_t, size_t>::resolveNext();
+	SymbolResolver<void *, &_realloc_sl, void *, size_t>::resolveNext();
+	SymbolResolver<void *, &_reallocarray_sl, void *, size_t, size_t>::resolveNext();
+	SymbolResolver<int, &_posix_memalign_sl, void **, size_t, size_t>::resolveNext();
+	SymbolResolver<void *, &_aligned_alloc_sl, size_t, size_t>::resolveNext();
+	SymbolResolver<void *, &_valloc_sl, size_t>::resolveNext();
+	SymbolResolver<void *, &_memalign_sl, size_t, size_t>::resolveNext();
+	SymbolResolver<void *, &_pvalloc_sl, size_t>::resolveNext();
+	
 	SymbolResolver<void, &_nanos6_start_function_interception_sl>::globalScopeCall();
 }
 
@@ -48,7 +60,7 @@ void *nanos6_intercepted_malloc(size_t size)
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<void *, &_malloc_sl, size_t>::call(size);
+	auto result = SymbolResolver<void *, &_malloc_sl, size_t>::callNext(size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
@@ -62,7 +74,7 @@ void nanos6_intercepted_free(void *ptr)
 		if (Instrument::_profilingIsReady) {
 			Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 		}
-		SymbolResolver<void, &_free_sl, void *>::call(ptr);
+		SymbolResolver<void, &_free_sl, void *>::callNext(ptr);
 		if (Instrument::_profilingIsReady) {
 			Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 		}
@@ -74,7 +86,7 @@ void *nanos6_intercepted_calloc(size_t nmemb, size_t size)
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<void *, &_calloc_sl, size_t, size_t>::call(nmemb, size);
+	auto result = SymbolResolver<void *, &_calloc_sl, size_t, size_t>::callNext(nmemb, size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
@@ -87,7 +99,7 @@ void *nanos6_intercepted_realloc(void *ptr, size_t size)
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<void *, &_realloc_sl, void *, size_t>::call(ptr, size);
+	auto result = SymbolResolver<void *, &_realloc_sl, void *, size_t>::callNext(ptr, size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
@@ -100,7 +112,7 @@ void *nanos6_intercepted_reallocarray(void *ptr, size_t nmemb, size_t size)
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<void *, &_reallocarray_sl, void *, size_t, size_t>::call(ptr, nmemb, size);
+	auto result = SymbolResolver<void *, &_reallocarray_sl, void *, size_t, size_t>::callNext(ptr, nmemb, size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
@@ -113,7 +125,7 @@ int nanos6_intercepted_posix_memalign(void **memptr, size_t alignment, size_t si
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<int, &_posix_memalign_sl, void **, size_t, size_t>::call(memptr, alignment, size);
+	auto result = SymbolResolver<int, &_posix_memalign_sl, void **, size_t, size_t>::callNext(memptr, alignment, size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
@@ -126,7 +138,7 @@ void *nanos6_intercepted_aligned_alloc(size_t alignment, size_t size)
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<void *, &_aligned_alloc_sl, size_t, size_t>::call(alignment, size);
+	auto result = SymbolResolver<void *, &_aligned_alloc_sl, size_t, size_t>::callNext(alignment, size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
@@ -139,7 +151,7 @@ void *nanos6_intercepted_valloc(size_t size)
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<void *, &_valloc_sl, size_t>::call(size);
+	auto result = SymbolResolver<void *, &_valloc_sl, size_t>::callNext(size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
@@ -152,7 +164,7 @@ void *nanos6_intercepted_memalign(size_t alignment, size_t size)
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<void *, &_memalign_sl, size_t, size_t>::call(alignment, size);
+	auto result = SymbolResolver<void *, &_memalign_sl, size_t, size_t>::callNext(alignment, size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
@@ -165,7 +177,7 @@ void *nanos6_intercepted_pvalloc(size_t size)
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightDisableSamplingForCurrentThread();
 	}
-	auto result = SymbolResolver<void *, &_pvalloc_sl, size_t>::call(size);
+	auto result = SymbolResolver<void *, &_pvalloc_sl, size_t>::callNext(size);
 	if (Instrument::_profilingIsReady) {
 		Instrument::Extrae::lightweightEnableSamplingForCurrentThread();
 	}
