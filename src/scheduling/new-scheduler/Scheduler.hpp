@@ -9,6 +9,9 @@
 
 #include <vector>
 
+#include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/Task.hpp"
