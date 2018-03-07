@@ -43,9 +43,8 @@ void Scheduler::initialize()
 
 void Scheduler::shutdown() 
 {
-	// TODO: delete
+	delete _topScheduler;
 }
 
-// TODO: check if necessary
 #include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
 #include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"

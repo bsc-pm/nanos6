@@ -17,6 +17,7 @@ private:
 	SpinLock _lock;
 	std::deque<Task *> _queue;
 public:
+	~FIFOQueue();
 	size_t addTask(Task *task, SchedulerInterface::ReadyTaskHint hint);
 	size_t addTaskBatch(const std::vector<Task *> &taskBatch);
 	Task *getTask();

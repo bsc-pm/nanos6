@@ -52,6 +52,14 @@ public:
 			_parent->setChild(this);
 		}
 	}
+	
+	~NodeScheduler()
+	{
+		delete _queue;
+		for (SchedulerInterface *sched : _children) {
+			delete sched;
+		}
+	}
 
 	inline void addTaskBatch(std::vector<Task *> &taskBatch)
 	{

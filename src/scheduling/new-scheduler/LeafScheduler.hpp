@@ -49,6 +49,11 @@ public:
 		_queue = SchedulerQueueInterface::initialize();
 		_parent->setChild(this);
 	}
+	
+	~LeafScheduler()
+	{
+		delete _queue;
+	}
 
 	inline void addTask(Task *task, SchedulerInterface::ReadyTaskHint hint)
 	{

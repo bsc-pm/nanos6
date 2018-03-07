@@ -6,6 +6,11 @@
 
 #include "LIFOQueue.hpp"
 
+LIFOQueue::~LIFOQueue()
+{
+	assert(_queue.size() == 0);
+}
+
 size_t LIFOQueue::addTask(Task *task, __attribute__((unused)) SchedulerInterface::ReadyTaskHint hint)
 {
 	std::lock_guard<SpinLock> guard(_lock);

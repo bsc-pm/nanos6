@@ -45,6 +45,10 @@ public:
 		UNBLOCKED_TASK_HINT
 	};
 	
+	virtual ~SchedulerInterface()
+	{
+	}
+	
 	virtual void addTaskBatch(std::vector<Task *> &taskBatch) = 0;
 };
 
