@@ -37,7 +37,12 @@ public:
 		if (computePlace != nullptr) {
 			_CPUScheduler[((CPU *)computePlace)->_virtualCPUId]->addTask(task, hint);
 		} else {
-			_CPUScheduler[0]->addTask(task, hint); // TODO: make sure this CPU is enabled
+			for (LeafScheduler *sched : _CPUScheduler) {
+				if (sched != nullptr) {
+					sched->addTask(task, hint);
+					break;
+				}
+			}
 		}
 		
 		return nullptr;

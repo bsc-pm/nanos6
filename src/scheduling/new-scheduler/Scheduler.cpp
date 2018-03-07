@@ -6,6 +6,7 @@
 
 #include <vector>
 
+#include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "LeafScheduler.hpp"
 #include "NodeScheduler.hpp"
@@ -19,9 +20,9 @@ void Scheduler::initialize()
 	_topScheduler = new NodeScheduler();
 	
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
-	const std::vector<ComputePlace *> &computePlaces = HardwareInfo::getComputeNodes();
+	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
 	
-	_CPUScheduler.resize(computePlaces.size());
+	_CPUScheduler.resize(cpus.size());
 	
 	if (NUMANodeCount > 1) {
 		std::vector<NodeScheduler *> NUMAScheduler(NUMANodeCount, nullptr);
@@ -29,14 +30,16 @@ void Scheduler::initialize()
 			NUMAScheduler[i] = new NodeScheduler(_topScheduler);
 		}
 		
-		for (ComputePlace *computePlace : computePlaces) {
-			CPU *cpu = (CPU *)computePlace;
-			_CPUScheduler[cpu->_virtualCPUId] = new LeafScheduler(cpu, NUMAScheduler[cpu->_NUMANodeId]);
+		for (CPU *cpu : cpus) {
+			if (cpu != nullptr) {
+				_CPUScheduler[cpu->_virtualCPUId] = new LeafScheduler(cpu, NUMAScheduler[cpu->_NUMANodeId]);
+			}
 		}
 	} else {
-		for (ComputePlace *computePlace : computePlaces) {
-			CPU *cpu = (CPU *)computePlace;
-			_CPUScheduler[cpu->_virtualCPUId] = new LeafScheduler(cpu, _topScheduler);
+		for (CPU *cpu : cpus) {
+			if (cpu != nullptr) {
+				_CPUScheduler[cpu->_virtualCPUId] = new LeafScheduler(cpu, _topScheduler);
+			}
 		}
 	}
 }
