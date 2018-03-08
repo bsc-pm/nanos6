@@ -56,9 +56,10 @@ std::vector<Task *> FIFOQueue::getTaskBatch(int elements)
 	
 	std::vector<Task *> taskBatch(elements);
 	for (int i = 0; i < elements; ++i) {
-		// The task that should be ran the earliest is at the end
-		taskBatch[elements - i - 1] = _queue.front();
-		_queue.pop_front();
+		// The task that should be ran the earliest is at the end of the vector
+		// Get the most recently added tasks (the ones that will run the latest)
+		taskBatch[i] = _queue.back();
+		_queue.pop_back();
 	}
 	
 	return taskBatch;
