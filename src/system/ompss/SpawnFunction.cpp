@@ -75,6 +75,7 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 		
 		if (itAndBool.second) {
 			// New task info
+			taskInfo->implementation_count = 1;
 			taskInfo->implementations[0].run = nanos_spawned_function_wrapper;
 			taskInfo->register_depinfo = nullptr;
 			
