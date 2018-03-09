@@ -32,6 +32,7 @@
 #include <InstrumentLogMessage.hpp>
 #include <InstrumentTaskId.hpp>
 
+#include <iostream>
 
 #pragma GCC visibility push(hidden)
 
@@ -1950,7 +1951,8 @@ namespace DataAccessRegistration {
 		assert(task != nullptr);
 		
 		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
-		symbol_list.set(symbolIndex);
+	
+		if(symbolIndex >= 0) symbol_list.set(symbolIndex);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
