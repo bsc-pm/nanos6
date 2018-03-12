@@ -145,9 +145,6 @@ public:
 	inline void setUpNewFragment(Instrument::data_access_id_t originalAccessInstrumentationId)
 	{
 		_instrumentationId = Instrument::fragmentedDataAccess(originalAccessInstrumentationId, _region);
-		if (isTopmost()) {
-			Instrument::newDataAccessProperty(_instrumentationId, "T", "Topmost");
-		}
 	}
 	
 	inline bool upgrade(bool newWeak, DataAccessType newType)
