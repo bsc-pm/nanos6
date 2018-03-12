@@ -555,6 +555,7 @@ namespace Instrument {
 			newFragment->_accessRegion = _newRegion;
 			newFragment->_bitset = original->_bitset;
 			newFragment->_status = original->_status;
+			newFragment->_otherProperties = original->_otherProperties;
 			
 			if (newFragment->_objectType == entry_fragment_type) {
 				access_fragment_t *fragment = (access_fragment_t *) newFragment;

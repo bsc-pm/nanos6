@@ -8,6 +8,9 @@
 #define INSTRUMENT_STATS_TASK_ID_HPP
 
 
+#include <ostream>
+
+
 namespace Instrument {
 	namespace Stats {
 		struct TaskTypeAndTimes;
@@ -67,6 +70,12 @@ namespace Instrument {
 			return -1;
 		}
 	};
+}
+
+
+inline std::ostream &operator<<(std::ostream &o, Instrument::task_id_t const &)
+{
+	return o;
 }
 
 #endif // INSTRUMENT_STATS_TASK_ID_HPP
