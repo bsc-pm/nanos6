@@ -861,6 +861,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/schedulers/NaiveScheduler.hpp \
+	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
 	src/scheduling/TaskloopSchedulingPolicy.hpp \
