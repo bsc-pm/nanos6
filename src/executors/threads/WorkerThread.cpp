@@ -168,6 +168,7 @@ void WorkerThread::handleTask(CPU *cpu)
 	
 	// Update the CPU since the thread may have migrated
 	cpu = getComputePlace();
+	instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 	
 	// The release must be delayed until all children has finished
 	if (_task->mustDelayDataAccessRelease()) {
