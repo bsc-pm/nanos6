@@ -4,10 +4,17 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include "error.h"
 #include "resolve.h"
 
+#include <dlfcn.h>
 #include <errno.h>
+#include <link.h>
+#include <stdbool.h>
 #include <stddef.h>
 
 #ifndef HAVE_CONFIG_H
@@ -75,12 +82,102 @@ void *pvalloc(size_t size)
 { return (*pvalloc_symbol)(size); }
 
 
+typedef struct {
+	char const *name;
+	void *ourFunction;
+	void *result;
+	bool foundOurFunction;
+} next_function_lookup_info_t;
+
+
+static int nanos6_find_next_function_iterator(
+	struct dl_phdr_info *info, size_t size, void *data
+) {
+	next_function_lookup_info_t *lookupInfo = (next_function_lookup_info_t *) data;
+	
+	if (lookupInfo->result != NULL) {
+		// We already have a result
+	} else {
+		void *handle = dlopen(info->dlpi_name, RTLD_LAZY | RTLD_LOCAL);
+		if (handle != NULL) {
+			void *current = dlsym(handle, lookupInfo->name);
+			if (current != NULL) {
+				if (lookupInfo->foundOurFunction) {
+					lookupInfo->result = current;
+				} else if (current == lookupInfo->ourFunction) {
+					lookupInfo->foundOurFunction = true;
+				} else {
+					// Skip
+				}
+			}
+			dlclose(handle);
+		} else {
+			fprintf(stderr, "Warning: Could not load '%s' to look up symbol '%s'\n", info->dlpi_name, lookupInfo->name);
+		}
+	}
+	
+	return 0;
+}
+
+
+static int nanos6_find_next_function_error_tracer(
+	struct dl_phdr_info *info, size_t size, void *data
+) {
+	next_function_lookup_info_t *lookupInfo = (next_function_lookup_info_t *) data;
+	
+	if (lookupInfo->result != NULL) {
+		// We already have a result
+	} else {
+		fprintf(stderr, "\tChecking in '%s'\n", info->dlpi_name);
+		void *handle = dlopen(info->dlpi_name, RTLD_LAZY | RTLD_LOCAL);
+		if (handle != NULL) {
+			void *current = dlsym(handle, lookupInfo->name);
+			if (current != NULL) {
+				if (lookupInfo->foundOurFunction) {
+					fprintf(stderr, "\t\tFound '%s' after our own version\n", lookupInfo->name);
+					lookupInfo->result = current;
+				} else if (current == lookupInfo->ourFunction) {
+					fprintf(stderr, "\t\tFound our own version of '%s'\n", lookupInfo->name);
+					lookupInfo->foundOurFunction = true;
+				} else {
+					fprintf(stderr, "\t\tFound '%s' before our own version, so we are skipping it\n", lookupInfo->name);
+				}
+			} else {
+				fprintf(stderr, "\t\tDid not find '%s' in this library\n", lookupInfo->name);
+			}
+			dlclose(handle);
+		} else {
+			fprintf(stderr, "\t\tCould not load '%s' to look up symbol '%s'\n", info->dlpi_name, lookupInfo->name);
+		}
+	}
+	
+	return 0;
+}
+
+
+static void *nanos6_loader_find_next_function(void *ourFunction, char const *name, bool silentFailure)
+{
+	next_function_lookup_info_t nextFunctionLookup = { name, ourFunction, NULL, false };
+	__attribute__((unused)) int rc = dl_iterate_phdr(nanos6_find_next_function_iterator, (void *) &nextFunctionLookup);
+	
+	if (!silentFailure && (nextFunctionLookup.result == NULL)) {
+		fprintf(stderr, "Error resolving '%s'. Lookup trace follows:\n", name);
+		nextFunctionLookup.foundOurFunction = false;
+		rc = dl_iterate_phdr(nanos6_find_next_function_error_tracer, (void *) &nextFunctionLookup);
+		handle_error();
+		return NULL;
+	}
+	
+	return nextFunctionLookup.result;
+}
+
+
 int posix_memalign(void **memptr, size_t alignment, size_t size)
 {
 	typedef int (*posix_memalign_t)(void **, size_t, size_t);
 	
 	if (posix_memalign_symbol == NULL) {
-		posix_memalign_libc_symbol = (posix_memalign_t) dlsym(RTLD_NEXT, "posix_memalign");
+		posix_memalign_libc_symbol = (posix_memalign_t) nanos6_loader_find_next_function((void *) posix_memalign, "posix_memalign", false);
 		if (posix_memalign_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'posix_memalign': %s\n", dlerror());
 			handle_error();
@@ -101,7 +198,7 @@ void *aligned_alloc(size_t alignment, size_t size)
 	typedef void *(*aligned_alloc_t)(size_t, size_t);
 	
 	if (aligned_alloc_symbol == NULL) {
-		aligned_alloc_libc_symbol = (aligned_alloc_t) dlsym(RTLD_NEXT, "aligned_alloc");
+		aligned_alloc_libc_symbol = (aligned_alloc_t) nanos6_loader_find_next_function((void *) aligned_alloc, "aligned_alloc", false);
 		if (aligned_alloc_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'aligned_alloc': %s\n", dlerror());
 			handle_error();
@@ -123,7 +220,7 @@ void *reallocarray(void *ptr, size_t nmemb, size_t size)
 	typedef void *(*reallocarray_t)(void *, size_t, size_t);
 	
 	if (reallocarray_symbol == NULL) {
-		reallocarray_libc_symbol = (reallocarray_t) dlsym(RTLD_NEXT, "reallocarray");
+		reallocarray_libc_symbol = (reallocarray_t) nanos6_loader_find_next_function((void *) reallocarray, "reallocarray", false);
 		if (reallocarray_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'reallocarray': %s\n", dlerror());
 			handle_error();
@@ -143,7 +240,7 @@ void nanos6_start_function_interception()
 {
 	typedef int (*posix_memalign_t)(void **, size_t, size_t);
 	if (posix_memalign_symbol == NULL) {
-		posix_memalign_libc_symbol = (posix_memalign_t) dlsym(RTLD_NEXT, "posix_memalign");
+		posix_memalign_libc_symbol = (posix_memalign_t) nanos6_loader_find_next_function((void *) posix_memalign, "posix_memalign", false);
 		if (posix_memalign_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'posix_memalign': %s\n", dlerror());
 			handle_error();
@@ -155,7 +252,7 @@ void nanos6_start_function_interception()
 #if HAVE_ALIGNED_ALLOC
 	typedef void *(*aligned_alloc_t)(size_t, size_t);
 	if (aligned_alloc_symbol == NULL) {
-		aligned_alloc_libc_symbol = (aligned_alloc_t) dlsym(RTLD_NEXT, "aligned_alloc");
+		aligned_alloc_libc_symbol = (aligned_alloc_t) nanos6_loader_find_next_function((void *) aligned_alloc, "aligned_alloc", false);
 		if (aligned_alloc_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'aligned_alloc': %s\n", dlerror());
 			handle_error();
@@ -168,7 +265,7 @@ void nanos6_start_function_interception()
 #if HAVE_REALLOCARRAY
 	typedef void *(*reallocarray_t)(void *, size_t, size_t);
 	if (reallocarray_symbol == NULL) {
-		reallocarray_libc_symbol = (reallocarray_t) dlsym(RTLD_NEXT, "reallocarray");
+		reallocarray_libc_symbol = (reallocarray_t) nanos6_loader_find_next_function((void *) reallocarray, "reallocarray", false);
 		if (reallocarray_libc_symbol == NULL) {
 			fprintf(stderr, "Error resolving 'reallocarray': %s\n", dlerror());
 			handle_error();
