@@ -353,6 +353,7 @@ common_sources = \
 	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.cpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/schedulers/NaiveScheduler.cpp \
+	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
 	src/support/GlobalLock.cpp \
 	src/system/BlockingAPI.cpp \

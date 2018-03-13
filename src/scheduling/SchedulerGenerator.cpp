@@ -15,6 +15,7 @@
 #include "schedulers/ImmediateSuccessorWithPollingScheduler.hpp"
 #include "schedulers/NaiveScheduler.hpp"
 #include "schedulers/NUMAHierarchicalScheduler.hpp"
+#include "schedulers/NoSleepPriorityScheduler.hpp"
 #include "schedulers/PriorityScheduler.hpp"
 
 #include "SchedulerGenerator.hpp"
@@ -44,6 +45,8 @@ SchedulerInterface *SchedulerGenerator::createCPUScheduler(std::string const &sc
 		return new FIFOImmediateSuccessorWithMultiPollingScheduler(nodeIndex);
 	} else if (schedulerName == "priority") {
 		return new PriorityScheduler(nodeIndex);
+	} else if (schedulerName == "nosleep-priority") {
+		return new NoSleepPriorityScheduler(nodeIndex);
 	} else {
 		std::cerr << "Warning: invalid scheduler name '" << schedulerName << "', using default instead." << std::endl;
 		return new DefaultScheduler(nodeIndex);
