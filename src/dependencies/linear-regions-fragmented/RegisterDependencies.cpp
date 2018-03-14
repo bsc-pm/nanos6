@@ -90,11 +90,10 @@ void nanos_register_region_reduction_depinfo1(
 		void *base_address,
 		long dim1size,
 		__attribute__((unused)) long dim1start,
-		__attribute__((unused)) long dim1end,
-		int symbolIndex
+		__attribute__((unused)) long dim1end
 ) {
 	// Currently we only support non-arrays
 	assert(dim1start == 0L);
 	
-	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, symbolIndex, reduction_operation);
+	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, symbol_index, reduction_operation);
 }
