@@ -80,6 +80,10 @@ void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length
 	register_access<CONCURRENT_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
 }
 
+void nanos_register_commutative_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+{
+    register_access<READWRITE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
+}
 
 void nanos_register_region_reduction_depinfo1(
 		int reduction_operation,

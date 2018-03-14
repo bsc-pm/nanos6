@@ -101,6 +101,15 @@ _AI_ void register_data_access_base<CONCURRENT_ACCESS_TYPE, false>(
 	nanos_register_concurrent_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
 }
 
+template<>
+_AI_ void register_data_access_base<COMMUTATIVE_ACCESS_TYPE, false>(
+	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
+	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd
+) {
+	size_t start = (size_t) baseAddress;
+	start += currentDimStart;
+	nanos_register_commutative_depinfo(handler, (void *) start, currentDimEnd - currentDimStart, symbolIndex);
+}
 
 template <DataAccessType ACCESS_TYPE, bool WEAK, typename... TS>
 static _AI_ void register_data_access_skip_next(
