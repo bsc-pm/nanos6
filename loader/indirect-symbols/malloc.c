@@ -102,10 +102,10 @@ static int nanos6_find_next_function_iterator(
 		if (handle != NULL) {
 			void *current = dlsym(handle, lookupInfo->name);
 			if (current != NULL) {
-				if (lookupInfo->foundOurFunction) {
-					lookupInfo->result = current;
-				} else if (current == lookupInfo->ourFunction) {
+				if (current == lookupInfo->ourFunction) {
 					lookupInfo->foundOurFunction = true;
+				} else if (lookupInfo->foundOurFunction) {
+					lookupInfo->result = current;
 				} else {
 					// Skip
 				}
