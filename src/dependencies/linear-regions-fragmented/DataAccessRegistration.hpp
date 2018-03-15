@@ -25,7 +25,7 @@ namespace DataAccessRegistration {
 	//! \param[in] region the region of data covered by the access
 	//! \param[in] reductionTypeAndOperatorIndex an index that identifies the type and the operation of the reduction
 	void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, int symbolIndex, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
 	);
 	
 	//! \brief Performs the task dependency registration procedure

@@ -77,12 +77,12 @@ namespace Instrument {
 		}
 		
 		std::string label;
-		if (taskInfo._nanos_task_info->task_label != nullptr) {
-			label = taskInfo._nanos_task_info->task_label;
+		if (taskInfo._nanos_task_info->implementations[0].task_label != nullptr) {
+			label = taskInfo._nanos_task_info->implementations[0].task_label;
 		} else if ((taskInfo._nanos_task_invocation_info != nullptr) && (taskInfo._nanos_task_invocation_info->invocation_source != nullptr)) {
 			label = taskInfo._nanos_task_invocation_info->invocation_source;
-		} else if (taskInfo._nanos_task_info->declaration_source != nullptr) {
-			label = taskInfo._nanos_task_info->declaration_source;
+		} else if (taskInfo._nanos_task_info->implementations[0].declaration_source != nullptr) {
+			label = taskInfo._nanos_task_info->implementations[0].declaration_source;
 		} else {
 			label = std::string();
 		}

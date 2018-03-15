@@ -19,7 +19,6 @@ shift
 
 
 echo '#include "symbol-resolver/resolve.h"'
-echo '#include "multidim-release-fallbacks.h"'
 # echo '#include "nanos6/multidimensional-dependencies.h"'
 echo
 echo
@@ -32,7 +31,7 @@ for type in $* ; do
 	fi
 	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
-		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_release_${type}_${dimensions}, \"multidimensional release\", nanos_release_${type}_${dimensions}_fallback);"
+		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_release_${type}_${dimensions}, \"multidimensional release\", NULL);"
 	done
 	echo
 done

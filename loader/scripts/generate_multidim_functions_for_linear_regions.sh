@@ -19,9 +19,9 @@ shift
 
 
 echo '#include <nanos6/multidimensional-dependencies.h>'
-echo '#include <nanos6/dependencies.h>'
 echo ''
 echo '#include "MultidimensionalAPI.hpp"'
+echo '#include "Dependencies.hpp"'
 echo ''
 echo ''
 echo '#pragma GCC visibility push(default)'

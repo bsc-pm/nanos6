@@ -7,6 +7,7 @@
 #ifndef DATA_ACCESS_HPP
 #define DATA_ACCESS_HPP
 
+#define MAX_SYMBOLS 64 // TODO: Temporary solution to use a fixed bitset size
 
 #include <boost/intrusive/avl_set.hpp>
 #include <boost/intrusive/avl_set_hook.hpp>
@@ -32,7 +33,6 @@ class Task;
 #include "ReductionSpecific.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
-
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
 struct DataAccess : protected DataAccessBase {
@@ -68,7 +68,7 @@ private:
 	
 public:
 	typedef std::bitset<TOTAL_STATUS_BITS> status_t;
-	
+	typedef std::bitset<MAX_SYMBOLS> symbols_t;	
 	
 private:
 	DataAccessObjectType _objectType;
@@ -83,6 +83,9 @@ private:
 	
 	//! An index that determines the data type and the operation of the reduction (if applicable)
 	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
+	
+	//! A bitmap of the "symbols" this access is related to
+	symbols_t _symbols; 
 	
 	
 public:
@@ -459,6 +462,27 @@ public:
 		return _instrumentationId;
 	}
 	
+	bool isInSymbol(int symbol) const 
+	{
+		return _symbols[symbol];
+	}
+	void addToSymbol(int symbol)
+	{
+		_symbols.set(symbol);
+	}
+	void removeFromSymbol(int symbol)
+	{
+		_symbols.reset(symbol);
+	}
+	void addToSymbols(const symbols_t &symbols)
+	{
+		_symbols |= symbols;
+	}
+	symbols_t getSymbols() const
+	{
+		return _symbols;
+	}	
+
 };
 
 

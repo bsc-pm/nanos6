@@ -32,6 +32,7 @@
 #include <InstrumentLogMessage.hpp>
 #include <InstrumentTaskId.hpp>
 
+#include <iostream>
 
 #pragma GCC visibility push(hidden)
 
@@ -596,9 +597,9 @@ namespace DataAccessRegistration {
 			FatalErrorHandler::failIf(
 				(accessType == REDUCTION_ACCESS_TYPE) || (dataAccess->getType() == REDUCTION_ACCESS_TYPE),
 				"Task ",
-				(dataAccess->getOriginator()->getTaskInfo()->task_label != nullptr ?
-					dataAccess->getOriginator()->getTaskInfo()->task_label :
-					dataAccess->getOriginator()->getTaskInfo()->declaration_source
+				(dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr ?
+					dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label :
+					dataAccess->getOriginator()->getTaskInfo()->implementations[0].declaration_source
 				),
 				" has non-reduction accesses that overlap a reduction"
 			);
@@ -608,9 +609,9 @@ namespace DataAccessRegistration {
 				(accessType == REDUCTION_ACCESS_TYPE)
 					&& (dataAccess->getReductionTypeAndOperatorIndex() != reductionTypeAndOperatorIndex),
 				"Task ",
-				(dataAccess->getOriginator()->getTaskInfo()->task_label != nullptr ?
-					dataAccess->getOriginator()->getTaskInfo()->task_label :
-					dataAccess->getOriginator()->getTaskInfo()->declaration_source
+				(dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr ?
+					dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label :
+					dataAccess->getOriginator()->getTaskInfo()->implementations[0].declaration_source
 				),
 				" has two overlapping reductions over different types or with different operators"
 			);
@@ -637,7 +638,10 @@ namespace DataAccessRegistration {
 			toBeDuplicated.getReductionTypeAndOperatorIndex(),
 			toBeDuplicated.getStatus(), toBeDuplicated.getNext()
 		);
-		
+
+		// Copy symbols
+		newFragment->addToSymbols(toBeDuplicated.getSymbols()); // TODO: Consider removing the pointer from declaration and make it a reference	
+
 		newFragment->clearRegistered();
 		
 		return newFragment;
@@ -1044,8 +1048,10 @@ namespace DataAccessRegistration {
 			dataAccess->getReductionTypeAndOperatorIndex(),
 			instrumentationId
 		);
-		
-		fragment->inheritFragmentStatus(dataAccess);
+
+		fragment->inheritFragmentStatus(dataAccess); //TODO is it necessary?
+
+
 #ifndef NDEBUG
 		fragment->setReachable();
 #endif
@@ -1773,6 +1779,8 @@ namespace DataAccessRegistration {
 						accessType, /* not weak */ false, region,
 						no_reduction_type_and_operator 
 					);
+
+					// No need for symbols in a taskwait
 					
 					DataAccessStatusEffects initialStatus(taskwaitFragment);
 					taskwaitFragment->setNewInstrumentationId(task->getInstrumentationTaskId());
@@ -1867,6 +1875,8 @@ namespace DataAccessRegistration {
 						accessType, /* not weak */ false, region,
 						no_reduction_type_and_operator 
 					);
+
+					// TODO, top level sink fragment, what to do with the symbols?
 					
 					DataAccessStatusEffects initialStatus(topLevelSinkFragment);
 					topLevelSinkFragment->setNewInstrumentationId(task->getInstrumentationTaskId());
@@ -1936,10 +1946,14 @@ namespace DataAccessRegistration {
 	
 	
 	void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
+		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, int symbolIndex, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
 	) {
 		assert(task != nullptr);
 		
+		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
+	
+		if(symbolIndex >= 0) symbol_list.set(symbolIndex);
+
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		accessStructures._accesses.fragmentIntersecting(
@@ -1948,7 +1962,9 @@ namespace DataAccessRegistration {
 				assert(!toBeDuplicated.isRegistered());
 				return duplicateDataAccess(toBeDuplicated, accessStructures);
 			},
-			[](DataAccess *, DataAccess *) {}
+			[&](DataAccess *newAccess, DataAccess *originalAccess) {
+				symbol_list |= originalAccess->getSymbols();
+			}
 		);
 		
 		accessStructures._accesses.processIntersectingAndMissing(
@@ -1958,12 +1974,14 @@ namespace DataAccessRegistration {
 				assert(oldAccess != nullptr);
 				
 				upgradeAccess(oldAccess, accessType, weak, reductionTypeAndOperatorIndex);
-				
+				oldAccess->addToSymbols(symbol_list);			
+	
 				return true;
 			},
 			[&](DataAccessRegion missingRegion) -> bool {
 				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion, reductionTypeAndOperatorIndex);
-				
+				newAccess->addToSymbols(symbol_list);
+	
 				accessStructures._accesses.insert(*newAccess);
 				
 				return true;

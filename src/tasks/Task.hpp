@@ -35,7 +35,6 @@ public:
 	enum {
 		final_flag=0,
 		if0_flag,
-		taskloop_flag,
 		wait_flag,
 		non_runnable_flag, // NOTE: Must be at the end
 		non_owner_args_flag, // NOTE: Must be at the end
@@ -117,19 +116,20 @@ public:
 	//! Actual code of the task
 	virtual inline void body()
 	{
+		assert(_taskInfo->implementation_count == 1); // TODO temporary check for a single implementation
 		assert(hasCode());
-		assert(_taskInfo != nullptr);
-		
-		_taskInfo->run(_argsBlock, nullptr);
+		assert(_taskInfo != nullptr);	
+		_taskInfo->implementations[0].run(_argsBlock, nullptr, nullptr); // TODO: solution until multiple implementations are allowed, add arguments
 	}
 	
 	//! Check if the task has an actual body
 	inline bool hasCode()
 	{
+		assert(_taskInfo->implementation_count == 1); // TODO: temporary check for a single implementation
 		assert(_taskInfo != nullptr);
-		return (_taskInfo->run != nullptr);
+		return (_taskInfo->implementations[0].run != nullptr); // TODO: solution until multiple implementations are allowed
 	}
-	
+
 	//! \brief sets the thread assigned to tun the task
 	//!
 	//! \param in thread the thread that will run the task
@@ -354,17 +354,6 @@ public:
 		return _flags[if0_flag];
 	}
 	
-	//! \brief Set or unset the taskloop flag
-	void setTaskloop(bool taskloopValue)
-	{
-		_flags[taskloop_flag] = taskloopValue;
-	}
-	//! \brief Check if the task is a taskloop
-	bool isTaskloop() const
-	{
-		return _flags[taskloop_flag];
-	}
-	
 	//! \brief Set or unset the wait flag
 	void setDelayDataAccessRelease(bool delayValue)
 	{
@@ -414,6 +403,10 @@ public:
 	inline void setSchedulerInfo(void *schedulerInfo)
 	{
 		_schedulerInfo = schedulerInfo;
+	}
+
+	inline int getSymbolNum(){
+		return _taskInfo->num_symbols;
 	}
 };
 
