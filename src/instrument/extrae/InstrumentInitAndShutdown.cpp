@@ -286,14 +286,14 @@ namespace Instrument {
 		{
 			std::lock_guard<SpinLock> guard(_userFunctionMapLock);
 			for (nanos_task_info *taskInfo : _userFunctionMap) {
-				std::string codeLocation = taskInfo->declaration_source;
+				std::string codeLocation = taskInfo->implementations[0].declaration_source;
 				
 				// Remove column
 				codeLocation = codeLocation.substr(0, codeLocation.find_last_of(':'));
 				
 				std::string label;
-				if (taskInfo->task_label != nullptr) {
-					label = taskInfo->task_label;
+				if (taskInfo->implementations[0].task_label != nullptr) {
+					label = taskInfo->implementations[0].task_label;
 				} else {
 					label = codeLocation;
 				}
@@ -309,7 +309,7 @@ namespace Instrument {
 				}
 				
 				Extrae_register_function_address (
-					(void *) (taskInfo->run),
+					(void *) (taskInfo->implementations[0].run),
 					label.c_str(),
 					codeLocation.c_str(), lineNumber
 				);

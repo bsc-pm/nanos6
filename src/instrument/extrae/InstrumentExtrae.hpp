@@ -118,20 +118,20 @@ namespace Instrument {
 	
 	inline bool ExtraeTaskInfoCompare::operator()(nanos_task_info *a, nanos_task_info *b) const
 	{
-		std::string labelA(a->task_label != nullptr ? a->task_label : a->declaration_source);
-		std::string labelB(b->task_label != nullptr ? b->task_label : b->declaration_source);
+		std::string labelA(a->implementations[0].task_label != nullptr ? a->implementations[0].task_label : a->implementations[0].declaration_source);
+		std::string labelB(b->implementations[0].task_label != nullptr ? b->implementations[0].task_label : b->implementations[0].declaration_source);
 		
 		if (labelA != labelB) {
 			return (labelA < labelB);
 		}
-		std::string sourceA(a->declaration_source);
-		std::string sourceB(b->declaration_source);
+		std::string sourceA(a->implementations[0].declaration_source);
+		std::string sourceB(b->implementations[0].declaration_source);
 		
 		if (sourceA != sourceB) {
 			return (sourceA < sourceB);
 		}
 		
-		return (a->run < b->run);
+		return (a->implementations[0].run < b->implementations[0].run);
 	}
 	
 	unsigned int extrae_nanos_get_num_threads();
