@@ -48,7 +48,7 @@ namespace Instrument {
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
 		ce.Types[1] = _codeLocation;
-		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->run;
+		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->implementations[0].run;
 		
 		ce.Types[2] = _nestingLevel;
 		ce.Values[2] = (extrae_value_t) taskId._taskInfo->_nestingLevel;
@@ -129,7 +129,7 @@ namespace Instrument {
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
 		ce.Types[1] = _codeLocation;
-		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->run;
+		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->implementations[0].run;
 		
 		ce.Types[2] = _nestingLevel;
 		ce.Values[2] = (extrae_value_t) taskId._taskInfo->_nestingLevel;
