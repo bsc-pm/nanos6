@@ -22,7 +22,7 @@ In addition to the build requirements, the following libraries and tools enable 
 
 1. [extrae](https://tools.bsc.es/extrae) to generate execution traces for offline performance analysis with [paraver](https://tools.bsc.es/paraver)
 1. [elfutils](https://sourceware.org/elfutils/) and [libunwind](http://www.nongnu.org/libunwind) to generate sample-based profiling
-1. [graphviz](http://www.graphviz.org/) and pdfjam or pdfjoin from (TeX)[http://www.tug.org/texlive/] to generate graphical representations of the dependency graph
+1. [graphviz](http://www.graphviz.org/) and pdfjam or pdfjoin from [TeX](http://www.tug.org/texlive/) to generate graphical representations of the dependency graph
 1. [parallel](https://www.gnu.org/software/parallel/) to generate the graph representation in parallel
 1. [PAPI](https://icl.cs.utk.edu/papi/software/index.html)  to generate statistics that include hardware counters
 
