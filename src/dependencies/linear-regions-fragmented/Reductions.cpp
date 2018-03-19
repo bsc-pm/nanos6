@@ -41,6 +41,17 @@ void *nanos_get_reduction_storage1(void *original,
 		[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 			DataAccess *dataAccess = &(*position);
 			
+			if (dataAccess->getType() != REDUCTION_ACCESS_TYPE)
+			{
+				assert(task->isFinal());
+				assert((dataAccess->getType() == READWRITE_ACCESS_TYPE) ||
+						(dataAccess->getType() == WRITE_ACCESS_TYPE) ||
+						(dataAccess->getType() == CONCURRENT_ACCESS_TYPE));
+				assert(firstAccess == nullptr);
+				
+				return false;
+			}
+			
 			assert(dataAccess->getType() == REDUCTION_ACCESS_TYPE);
 			
 			dataAccess->setReductionCpu(cpuId);
@@ -54,17 +65,21 @@ void *nanos_get_reduction_storage1(void *original,
 		}
 	);
 	
-	assert(firstAccess != nullptr);
+	void *address = original;
 	
-	ReductionInfo *reductionInfo = firstAccess->getReductionInfo();
-	assert(reductionInfo != nullptr);
-	
-	assert(((char*)original) >= ((char*)reductionInfo->getOriginalRegion().getStartAddress()));
-	assert(((char*)original) < (((char*)reductionInfo->getOriginalRegion().getStartAddress())
-				+ reductionInfo->getOriginalRegion().getSize()));
-	
-	void *address = ((char*)reductionInfo->getCPUPrivateStorage(cpuId).getStartAddress()) +
-		((char*)original - (char*)reductionInfo->getOriginalRegion().getStartAddress());
+	// If reduction is registered, obtain the corresponding reduction storage
+	if (firstAccess != nullptr)
+	{
+		ReductionInfo *reductionInfo = firstAccess->getReductionInfo();
+		assert(reductionInfo != nullptr);
+
+		assert(((char*)original) >= ((char*)reductionInfo->getOriginalRegion().getStartAddress()));
+		assert(((char*)original) < (((char*)reductionInfo->getOriginalRegion().getStartAddress())
+					+ reductionInfo->getOriginalRegion().getSize()));
+
+		address = ((char*)reductionInfo->getCPUPrivateStorage(cpuId).getStartAddress()) +
+			((char*)original - (char*)reductionInfo->getOriginalRegion().getStartAddress());
+	}
 	
 	return address;
 }
