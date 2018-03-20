@@ -65,10 +65,14 @@ void MemoryAllocator::initialize()
 
 void MemoryAllocator::shutdown()
 {
-	// TODO: delete other structures
-	
 	for (size_t i = 0; i < _globalMemoryPool.size(); ++i) {
 		delete _globalMemoryPool[i];
+	}
+	
+	for (size_t i = 0; i < _localMemoryPool.size(); ++i) {
+		for (auto it = _localMemoryPool[i].begin(); it != _localMemoryPool[i].end(); ++it) {
+			delete it->second;
+		}
 	}
 }
 
