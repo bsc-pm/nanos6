@@ -36,7 +36,7 @@ static void initialize(double *data, double value, long N, long TS) {
 
 
 static void axpy(double *x, double *y, double alpha, long N, long TS) {
-	#pragma oss task loop chunksize(TS)
+	#pragma oss loop chunksize(TS)
 	for (long i=0; i < N; ++i) {
 		y[i] += alpha * x[i];
 	}

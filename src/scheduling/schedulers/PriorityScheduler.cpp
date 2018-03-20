@@ -43,6 +43,8 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 {
 	assert(task != nullptr);
 	
+	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
+	
 	Task::priority_t priority = 0;
 	if ((task->getTaskInfo() != nullptr) && (task->getTaskInfo()->get_priority != nullptr)) {
 		priority = task->getTaskInfo()->get_priority(task->getArgsBlock());

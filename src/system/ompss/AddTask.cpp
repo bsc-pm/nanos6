@@ -18,6 +18,8 @@
 #include "system/If0Task.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
+#include "tasks/Taskloop.hpp"
+#include "tasks/TaskloopInfo.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -46,8 +48,9 @@ void nanos_create_task(
 	
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	
+	bool isTaskloop = flags & nanos_task_flag::nanos_taskloop_task;
 	size_t originalArgsBlockSize = args_block_size;
-	size_t taskSize = sizeof(Task);
+	size_t taskSize = (isTaskloop) ? sizeof(Taskloop) : sizeof(Task);
 	
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
@@ -65,8 +68,12 @@ void nanos_create_task(
 	
 	task = (char *)args_block + args_block_size;
 	
-	// Construct the Task object
-	new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
+	if (isTaskloop) {
+		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+	} else {
+		// Construct the Task object
+		new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
+	}
 }
 
 

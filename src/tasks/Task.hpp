@@ -35,9 +35,9 @@ public:
 	enum {
 		final_flag=0,
 		if0_flag,
+		taskloop_flag,
 		wait_flag,
 		non_runnable_flag, // NOTE: Must be at the end
-		non_owner_args_flag, // NOTE: Must be at the end
 		delayed_release_flag, // NOTE: Must be at the end
 		total_flags
 	};
@@ -354,6 +354,17 @@ public:
 		return _flags[if0_flag];
 	}
 	
+	//! \brief Set or unset the taskloop flag
+	void setTaskloop(bool taskloopValue)
+	{
+		_flags[taskloop_flag] = taskloopValue;
+	}
+	//! \brief Check if the task is a taskloop
+	bool isTaskloop() const
+	{
+		return _flags[taskloop_flag];
+	}
+	
 	//! \brief Set or unset the wait flag
 	void setDelayDataAccessRelease(bool delayValue)
 	{
@@ -375,11 +386,6 @@ public:
 	bool hasDelayedDataAccessRelease() const
 	{
 		return _flags[delayed_release_flag];
-	}
-	
-	virtual bool isArgsBlockOwner() const
-	{
-		return true;
 	}
 	
 	inline size_t getFlags() const

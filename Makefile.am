@@ -41,6 +41,7 @@ nanos6include_HEADERS = \
 	api/nanos6/runtime-info.h \
 	api/nanos6/task-info-registration.h \
 	api/nanos6/task-instantiation.h \
+	api/nanos6/taskloop.h \
 	api/nanos6/taskwait.h \
 	api/nanos6/user-mutex.h \
 	api/nanos6/utils.h
@@ -131,7 +132,7 @@ endif
 
 libnanos6_main_wrapper_a_SOURCES = \
 	$(main_interception) \
-	loader/device_strings.c \ 
+	loader/device_strings.c \
 	loader/error.h \
 	loader/function-interception.h \
 	loader/intercept-main-common.c \
@@ -167,6 +168,7 @@ symbol_resolution += \
 	loader/symbol-resolver/runtime-info.c \
 	loader/symbol-resolver/task-info-registration.c \
 	loader/symbol-resolver/task-instantiation.c \
+	loader/symbol-resolver/taskloop.c \
 	loader/symbol-resolver/taskwait.c \
 	loader/symbol-resolver/user-mutex.c \
 	loader/symbol-resolver/utils.c \
@@ -192,6 +194,7 @@ symbol_resolution += \
 	loader/indirect-symbols/runtime-info.c \
 	loader/indirect-symbols/task-info-registration.c \
 	loader/indirect-symbols/task-instantiation.c \
+	loader/indirect-symbols/taskloop.c \
 	loader/indirect-symbols/taskwait.c \
 	loader/indirect-symbols/user-mutex.c \
 	loader/indirect-symbols/utils.c \
@@ -349,8 +352,10 @@ common_sources = \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskBlocking.cpp \
+	src/system/ompss/TaskLoop.cpp \
 	src/system/ompss/TaskWait.cpp \
-	src/system/ompss/UserMutex.cpp
+	src/system/ompss/UserMutex.cpp \
+	src/tasks/Taskloop.cpp
 
 
 discrete_dependency_sources = \
@@ -846,6 +851,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
+	src/scheduling/TaskloopSchedulingPolicy.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.hpp \
@@ -865,6 +871,10 @@ noinst_HEADERS = \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskImplementation.hpp \
+	src/tasks/TaskloopGenerator.hpp \
+	src/tasks/Taskloop.hpp \
+	src/tasks/TaskloopInfo.hpp \
+	src/tasks/TaskloopLogic.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \

@@ -46,6 +46,8 @@ ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *ta
 {
 	assert(task != nullptr);
 	
+	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
+	
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
 		// 1. Send the task to the immediate successor slot

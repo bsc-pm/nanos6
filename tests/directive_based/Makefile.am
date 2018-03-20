@@ -39,12 +39,10 @@ base_tests += \
 	dep-early-release.test \
 	dep-er-and-weak.test \
 	if0.test \
-	dep-wait.test
-	
-# These ones are disabled for now
-# 	taskloop-multiaxpy.test \
-# 	taskloop-dep-multiaxpy.test \
-# 	taskloop-nqueens.test
+	dep-wait.test \
+	taskloop-multiaxpy.test \
+	taskloop-dep-multiaxpy.test \
+	taskloop-nqueens.test
 
 cpu_management_tests += \
 	cpu-activation.test
@@ -85,12 +83,10 @@ base_tests += \
 	dep-early-release.debug.test \
 	dep-er-and-weak.debug.test \
 	if0.debug.test \
-	dep-wait.debug.test
-	
-# These ones are disabled for now
-# 	taskloop-multiaxpy.debug.test \
-# 	taskloop-dep-multiaxpy.debug.test \
-# 	taskloop-nqueens.debug.test
+	dep-wait.debug.test \
+	taskloop-multiaxpy.debug.test \
+	taskloop-dep-multiaxpy.debug.test \
+	taskloop-nqueens.debug.test
 
 cpu_management_tests += \
 	cpu-activation.debug.test
@@ -232,32 +228,32 @@ dep_wait_test_CPPFLAGS = -DNDEBUG
 dep_wait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 dep_wait_test_LDFLAGS = $(test_common_ldflags)
 
-# taskloop_multiaxpy_debug_test_SOURCES = taskloop/taskloop-multiaxpy.cpp
-# taskloop_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-# taskloop_multiaxpy_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-# 
-# taskloop_multiaxpy_test_SOURCES = taskloop/taskloop-multiaxpy.cpp
-# taskloop_multiaxpy_test_CPPFLAGS = -DNDEBUG
-# taskloop_multiaxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-# taskloop_multiaxpy_test_LDFLAGS = $(test_common_ldflags)
-# 
-# taskloop_dep_multiaxpy_debug_test_SOURCES = taskloop/taskloop-dep-multiaxpy.cpp
-# taskloop_dep_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-# taskloop_dep_multiaxpy_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-# 
-# taskloop_dep_multiaxpy_test_SOURCES = taskloop/taskloop-dep-multiaxpy.cpp
-# taskloop_dep_multiaxpy_test_CPPFLAGS = -DNDEBUG
-# taskloop_dep_multiaxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-# taskloop_dep_multiaxpy_test_LDFLAGS = $(test_common_ldflags)
-# 
-# taskloop_nqueens_debug_test_SOURCES = taskloop/taskloop-nqueens.cpp
-# taskloop_nqueens_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-# taskloop_nqueens_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-# 
-# taskloop_nqueens_test_SOURCES = taskloop/taskloop-nqueens.cpp
-# taskloop_nqueens_test_CPPFLAGS = -DNDEBUG
-# taskloop_nqueens_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-# taskloop_nqueens_test_LDFLAGS = $(test_common_ldflags)
+taskloop_multiaxpy_debug_test_SOURCES = taskloop/taskloop-multiaxpy.cpp
+taskloop_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_multiaxpy_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_multiaxpy_test_SOURCES = taskloop/taskloop-multiaxpy.cpp
+taskloop_multiaxpy_test_CPPFLAGS = -DNDEBUG
+taskloop_multiaxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_multiaxpy_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_dep_multiaxpy_debug_test_SOURCES = taskloop/taskloop-dep-multiaxpy.cpp
+taskloop_dep_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_dep_multiaxpy_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_dep_multiaxpy_test_SOURCES = taskloop/taskloop-dep-multiaxpy.cpp
+taskloop_dep_multiaxpy_test_CPPFLAGS = -DNDEBUG
+taskloop_dep_multiaxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_dep_multiaxpy_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_nqueens_debug_test_SOURCES = taskloop/taskloop-nqueens.cpp
+taskloop_nqueens_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_nqueens_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_nqueens_test_SOURCES = taskloop/taskloop-nqueens.cpp
+taskloop_nqueens_test_CPPFLAGS = -DNDEBUG
+taskloop_nqueens_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_nqueens_test_LDFLAGS = $(test_common_ldflags)
 
 lr_nonest_debug_test_SOURCES = linear-regions/lr-nonest.cpp
 lr_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

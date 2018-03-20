@@ -49,7 +49,7 @@ void solve(int n, const int col, sol_node_t& sol)
 	if (col == n) {
 		__sync_fetch_and_add(&count, 1);
 	} else {
-		#pragma oss task loop chunksize(chunksize) final(final_depth <= col)
+		#pragma oss loop chunksize(chunksize) final(final_depth <= col)
 		for (int row = 0; row < n; row++) {
 			if (!check_attack(col, row, &sol)) {
 				sol_node_t new_sol;

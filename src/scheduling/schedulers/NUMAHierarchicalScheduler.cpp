@@ -59,6 +59,8 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 {
 	assert(task != nullptr);
 	
+	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
+	
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
 	
 	/* Get the least loaded NUMA node */
