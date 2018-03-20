@@ -14,7 +14,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "memory/allocator/MemoryAllocator.hpp"
+#include "MemoryAllocator.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "tasks/Task.hpp"

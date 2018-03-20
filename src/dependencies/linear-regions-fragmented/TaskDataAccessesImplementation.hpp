@@ -11,7 +11,7 @@
 
 #include "BottomMapEntry.hpp"
 #include "DataAccess.hpp"
-#include "memory/allocator/MemoryAllocator.hpp"
+#include "MemoryAllocator.hpp"
 #include "TaskDataAccesses.hpp"
 #include "TaskDataAccessLinkingArtifacts.hpp"
 #include "tasks/Task.hpp"

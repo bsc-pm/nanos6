@@ -7,8 +7,8 @@
 #ifndef TASK_FINALIZATION_IMPLEMENTATION_HPP
 #define TASK_FINALIZATION_IMPLEMENTATION_HPP
 
-#include "memory/allocator/MemoryAllocator.hpp"
 #include "DataAccessRegistration.hpp"
+#include "MemoryAllocator.hpp"
 #include "TaskFinalization.hpp"
 #include "tasks/Taskloop.hpp"
 

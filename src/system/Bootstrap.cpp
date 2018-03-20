@@ -11,6 +11,7 @@
 #include <signal.h>
 
 #include "LeaderThread.hpp"
+#include "MemoryAllocator.hpp"
 
 #include <nanos6.h>
 #include <nanos6/bootstrap.h>
@@ -20,7 +21,6 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
-#include "memory/allocator/MemoryAllocator.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
