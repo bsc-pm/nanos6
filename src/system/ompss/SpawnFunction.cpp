@@ -71,10 +71,10 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 		auto itAndBool = _spawnedFunctionInfos.emplace( std::make_pair(taskInfoKey, nanos_task_info()) );
 		auto it = itAndBool.first;
 		taskInfo = &(it->second);
-		taskInfo->implementations = (nanos6_task_implementation_info_t *) malloc(sizeof(nanos6_task_implementation_info_t) * 1);
 		
 		if (itAndBool.second) {
 			// New task info
+			taskInfo->implementations = (nanos6_task_implementation_info_t *) malloc(sizeof(nanos6_task_implementation_info_t) * 1);
 			taskInfo->implementation_count = 1;
 			taskInfo->implementations[0].run = nanos_spawned_function_wrapper;
 			taskInfo->register_depinfo = nullptr;
