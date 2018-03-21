@@ -68,20 +68,26 @@ static void validate(double *y, long N, long TS, double expectedValue, volatile 
 }
 
 
-
-
-int main() {
-	// Taskloop is only supported by Default and FIFO schedulers
+bool validScheduler() {
+	// Taskloop is only supported by Naive and FIFO schedulers
 	char const *schedulerName = getenv("NANOS6_SCHEDULER");
 	if (schedulerName != nullptr) {
 		std::string scheduler(schedulerName);
-		if (scheduler != "default" && scheduler != "fifo") {
-			tap.registerNewTests(1);
-			tap.begin();
-			tap.skip("This test does not work with this scheduler");
-			tap.end();
-			return 0;
+		if (scheduler == "naive" || scheduler == "fifo") {
+			return true;
 		}
+	}
+	return false;
+}
+
+
+int main() {
+	if (!validScheduler()) {
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.skip("This test does not work with this scheduler");
+		tap.end();
+		return 0;
 	}
 	
 	long n = TOTALSIZE;

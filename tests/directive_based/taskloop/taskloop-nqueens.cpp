@@ -63,19 +63,27 @@ void solve(int n, const int col, sol_node_t& sol)
 	}
 }
 
-int main(int argc, char **argv)
-{
-	// Taskloop is only supported by Default and FIFO schedulers
+
+bool validScheduler() {
+	// Taskloop is only supported by Naive and FIFO schedulers
 	char const *schedulerName = getenv("NANOS6_SCHEDULER");
 	if (schedulerName != nullptr) {
 		std::string scheduler(schedulerName);
-		if (scheduler != "default" && scheduler != "fifo") {
-			tap.registerNewTests(1);
-			tap.begin();
-			tap.skip("This test does not work with this scheduler");
-			tap.end();
-			return 0;
+		if (scheduler == "naive" || scheduler == "fifo") {
+			return true;
 		}
+	}
+	return false;
+}
+
+
+int main() {
+	if (!validScheduler()) {
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.skip("This test does not work with this scheduler");
+		tap.end();
+		return 0;
 	}
 	
 	int n = TOTAL_SIZE;
