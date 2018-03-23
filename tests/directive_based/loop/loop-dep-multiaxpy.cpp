@@ -7,10 +7,6 @@
 #include <algorithm>
 #include <cstdlib>
 
-#ifndef __ICC
-#include <atomic>
-#endif
-
 #include "TestAnyProtocolProducer.hpp"
 
 #define TOTALSIZE (128*1024*1024)
@@ -43,35 +39,20 @@ static void axpy(double *x, double *y, double alpha, long N, long TS) {
 }
 
 
-#pragma oss task label(block validation)
-static void validate_task(double *y, long size, double expectedValue, volatile bool *validates) {
-	for (long i=0; i<size; i++) {
+static bool validate(double *y, long N, double expectedValue) {
+	for (long i=0; i < N; ++i) {
 		if (y[i] != expectedValue) {
-			*validates = false;
-#ifndef __ICC
-			std::atomic_thread_fence(std::memory_order_seq_cst);
-#endif
-			return;
-		}
-		if (!*validates) {
-			return;
+			return false;
 		}
 	}
-}
-
-
-static void validate(double *y, long N, long TS, double expectedValue, volatile bool *validates) {
-	for (long i=0; i < N; i+=TS) {
-		long elements = std::min(TS, N-i);
-		validate_task(&y[i], elements, expectedValue, validates);
-	}
+	return true;
 }
 
 
 bool validScheduler() {
 	// Taskloop is only supported by Naive and FIFO schedulers
 	char const *schedulerName = getenv("NANOS6_SCHEDULER");
-	if (schedulerName != nullptr) {
+	if (schedulerName != 0) {
 		std::string scheduler(schedulerName);
 		if (scheduler == "naive" || scheduler == "fifo") {
 			return true;
@@ -111,10 +92,8 @@ int main() {
 	#pragma oss taskwait
 	
 	// Validation
-	volatile bool validates = true;
 	double expectedValue = its;
-	validate(y, n, ts, expectedValue, &validates);
-	#pragma oss taskwait
+	bool validates = validate(y, n, expectedValue);
 	
 	tap.evaluate(validates, "The result of the multiaxpy program is correct");
 	

@@ -67,7 +67,7 @@ void solve(int n, const int col, sol_node_t& sol)
 bool validScheduler() {
 	// Taskloop is only supported by Naive and FIFO schedulers
 	char const *schedulerName = getenv("NANOS6_SCHEDULER");
-	if (schedulerName != nullptr) {
+	if (schedulerName != 0) {
 		std::string scheduler(schedulerName);
 		if (scheduler == "naive" || scheduler == "fifo") {
 			return true;
