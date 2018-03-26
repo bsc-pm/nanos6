@@ -986,6 +986,24 @@ install-exec-local: $(lib_OBJECTS)
 		echo " $(INSTALL) $$list2 '$(DESTDIR)$(libdir)'"; \
 		$(INSTALL) $$list2 "$(DESTDIR)$(libdir)"; \
 	}
+	@echo Removing deprecated headers
+	for f in nanos6_rt_interface.h nanos6_debug_interface.h ; do \
+		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
+			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
+		fi ; \
+	done
+	@echo Removing deprecated runtime implementations
+	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la ; do \
+		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
+			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
+		fi ; \
+	done
+	@echo Removing deprecated helper library
+	for l in libnanos6-main-wrapper.a ; do \
+		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
+			rm -f "$(DESTDIR)$(libdir)/$$l" ; \
+		fi ; \
+	done
 
 
 uninstall-hook:
