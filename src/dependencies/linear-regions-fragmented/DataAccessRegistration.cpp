@@ -1962,7 +1962,7 @@ namespace DataAccessRegistration {
 				assert(!toBeDuplicated.isRegistered());
 				return duplicateDataAccess(toBeDuplicated, accessStructures);
 			},
-			[&](DataAccess *newAccess, DataAccess *originalAccess) {
+			[&](__attribute__((unused)) DataAccess *newAccess, DataAccess *originalAccess) {
 				symbol_list |= originalAccess->getSymbols();
 			}
 		);

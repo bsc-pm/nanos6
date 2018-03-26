@@ -18,7 +18,7 @@
 namespace Instrument {
 	inline void enterTaskWait(
 		task_id_t taskId,
-		char const *invocationSource,
+		__attribute__((unused)) char const *invocationSource,
 		__attribute__((unused)) task_id_t if0TaskId,
 		__attribute__((unused)) InstrumentationContext const &context)
 	{
