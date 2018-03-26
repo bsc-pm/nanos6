@@ -987,7 +987,7 @@ install-exec-local: $(lib_OBJECTS)
 		$(INSTALL) $$list2 "$(DESTDIR)$(libdir)"; \
 	}
 	@echo Removing deprecated headers
-	for f in nanos6_rt_interface.h nanos6_debug_interface.h ; do \
+	for f in nanos6_rt_interface.h nanos6_debug_interface.h dependencies.h ; do \
 		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
 			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
 		fi ; \
@@ -1013,7 +1013,7 @@ uninstall-hook:
 		fi ; \
 	done
 	@echo Removing deprecated headers
-	for f in nanos6_rt_interface.h nanos6_debug_interface.h ; do \
+	for f in nanos6_rt_interface.h nanos6_debug_interface.h dependencies.h ; do \
 		if test -f "$(DESTDIR)$(nanos6includedir)/$$f" ; then \
 			rm "$(DESTDIR)$(nanos6includedir)/$$f" ; \
 		fi ; \
