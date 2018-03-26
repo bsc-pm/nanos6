@@ -853,6 +853,10 @@ common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLE
 common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS)
 
 
+enabled_variants =
+disabled_variants =
+
+
 libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_optimized_la_LDFLAGS = $(common_libnanos6_ldflags)
@@ -860,9 +864,11 @@ libnanos6_optimized_la_SOURCES =
 nodist_libnanos6_optimized_la_SOURCES =
 
 if BUILD_OPTIMIZED_VARIANT
+enabled_variants += optimized
 libnanos6_optimized_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources)
 nodist_libnanos6_optimized_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += optimized
 libnanos6_optimized_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -874,9 +880,11 @@ libnanos6_debug_la_SOURCES =
 nodist_libnanos6_debug_la_SOURCES =
 
 if BUILD_DEBUG_VARIANTS
+enabled_variants += debug
 libnanos6_debug_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) src/instrument/null/InstrumentMalloc.cpp
 nodist_libnanos6_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += debug
 libnanos6_debug_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -888,9 +896,11 @@ libnanos6_graph_la_SOURCES =
 nodist_libnanos6_graph_la_SOURCES =
 
 if BUILD_GRAPH_INSTRUMENTATION_VARIANT
+enabled_variants += graph
 libnanos6_graph_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 nodist_libnanos6_graph_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += graph
 libnanos6_graph_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -903,12 +913,15 @@ nodist_libnanos6_graph_debug_la_SOURCES =
 
 if BUILD_GRAPH_INSTRUMENTATION_VARIANT
 if BUILD_DEBUG_VARIANTS
+enabled_variants += graph-debug
 libnanos6_graph_debug_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources)
 nodist_libnanos6_graph_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += graph-debug
 libnanos6_graph_debug_la_SOURCES += loader/disabled_variant.c
 endif
 else
+disabled_variants += graph-debug
 libnanos6_graph_debug_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -920,9 +933,11 @@ libnanos6_profile_la_SOURCES =
 nodist_libnanos6_profile_la_SOURCES =
 
 if BUILD_PROFILE_INSTRUMENTATION_VARIANT
+enabled_variants += profile
 libnanos6_profile_la_SOURCES += $(common_sources) $(instrument_profile_sources) $(universal_debug_sources)
 nodist_libnanos6_profile_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += profile
 libnanos6_profile_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -933,9 +948,11 @@ libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
 libnanos6_stats_la_SOURCES =
 nodist_libnanos6_stats_la_SOURCES =
 if BUILD_STATS_INSTRUMENTATION_VARIANT
+enabled_variants += stats
 libnanos6_stats_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources)
 nodist_libnanos6_stats_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += stats
 libnanos6_stats_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -948,12 +965,15 @@ nodist_libnanos6_stats_papi_la_SOURCES =
 
 if BUILD_STATS_INSTRUMENTATION_VARIANT
 if HAVE_PAPI
+enabled_variants += stats-papi
 libnanos6_stats_papi_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources)
 nodist_libnanos6_stats_papi_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += stats-papi
 libnanos6_stats_papi_la_SOURCES += loader/disabled_variant.c
 endif
 else
+disabled_variants += stats-papi
 libnanos6_stats_papi_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -965,9 +985,11 @@ libnanos6_verbose_la_SOURCES =
 nodist_libnanos6_verbose_la_SOURCES =
 
 if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
+enabled_variants += verbose
 libnanos6_verbose_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
 nodist_libnanos6_verbose_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += verbose
 nodist_libnanos6_verbose_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -980,12 +1002,15 @@ nodist_libnanos6_verbose_debug_la_SOURCES =
 
 if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
 if BUILD_DEBUG_VARIANTS
+enabled_variants += verbose-debug
 libnanos6_verbose_debug_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources)
 nodist_libnanos6_verbose_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += verbose-debug
 libnanos6_verbose_debug_la_SOURCES += loader/disabled_variant.c
 endif
 else
+disabled_variants += verbose-debug
 libnanos6_verbose_debug_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -1015,12 +1040,15 @@ nodist_libnanos6_extrae_la_SOURCES =
 
 if HAVE_EXTRAE
 if BUILD_EXTRAE_INSTRUMENTATION_VARIANT
+enabled_variants += extrae
 libnanos6_extrae_la_SOURCES += $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources)
 nodist_libnanos6_extrae_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
+disabled_variants += extrae
 libnanos6_extrae_la_SOURCES += loader/disabled_variant.c
 endif
 else
+disabled_variants += extrae
 libnanos6_extrae_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -1214,6 +1242,12 @@ check-copyright: $(nodist_nanos6include_HEADERS)
 
 show-test-env:
 	@echo env LD_LIBRARY_PATH=\"$$(readlink -f $(top_builddir)/.libs):"$$"{LD_LIBRARY_PATH}\"
+
+show-enabled-variants:
+	@echo $(enabled_variants)
+
+show-disabled-variants:
+	@echo $(disabled_variants)
 
 
 ## --------------------------------- ##
