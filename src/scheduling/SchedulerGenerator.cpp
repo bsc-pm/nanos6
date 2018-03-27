@@ -6,12 +6,10 @@
 
 #include "schedulers/DefaultScheduler.hpp"
 #include "schedulers/DeviceHierarchicalScheduler.hpp"
-#include "schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.hpp"
 #include "schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp"
 #include "schedulers/FIFOScheduler.hpp"
 #include "schedulers/HostHierarchicalScheduler.hpp"
 #include "schedulers/ImmediateSuccessorScheduler.hpp"
-#include "schedulers/ImmediateSuccessorWithMultiPollingScheduler.hpp"
 #include "schedulers/ImmediateSuccessorWithPollingScheduler.hpp"
 #include "schedulers/NaiveScheduler.hpp"
 #include "schedulers/NUMAHierarchicalScheduler.hpp"
@@ -39,10 +37,6 @@ SchedulerInterface *SchedulerGenerator::createCPUScheduler(std::string const &sc
 		return new ImmediateSuccessorWithPollingScheduler(nodeIndex);
 	} else if (schedulerName == "fifoiswp") {
 		return new FIFOImmediateSuccessorWithPollingScheduler(nodeIndex);
-	} else if (schedulerName == "iswmp") {
-		return new ImmediateSuccessorWithMultiPollingScheduler(nodeIndex);
-	} else if (schedulerName == "fifoiswmp") {
-		return new FIFOImmediateSuccessorWithMultiPollingScheduler(nodeIndex);
 	} else if (schedulerName == "priority") {
 		return new PriorityScheduler(nodeIndex);
 	} else if (schedulerName == "nosleep-priority") {

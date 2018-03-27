@@ -291,14 +291,12 @@ common_sources = \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.cpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/schedulers/FIFOScheduler.cpp \
 	src/scheduling/schedulers/HostHierarchicalScheduler.cpp \
 	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
 	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.cpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/schedulers/NaiveScheduler.cpp \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
@@ -803,12 +801,10 @@ noinst_HEADERS = \
 	src/scheduling/SchedulerInterface.hpp \
 	src/scheduling/schedulers/DefaultScheduler.hpp \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithMultiPollingScheduler.hpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/schedulers/FIFOScheduler.hpp \
 	src/scheduling/schedulers/HostHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorScheduler.hpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithMultiPollingScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
 	src/scheduling/schedulers/NaiveScheduler.hpp \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
