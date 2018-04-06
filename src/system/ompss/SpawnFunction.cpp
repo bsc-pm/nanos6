@@ -52,6 +52,13 @@ static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) v
 	assert(argsBlock != nullptr);
 	
 	argsBlock->_function(argsBlock->_args);
+}
+
+
+static void nanos_spawned_function_destructor(void *args)
+{
+	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
+	assert(argsBlock != nullptr);
 	
 	if (argsBlock->_completion_callback != nullptr) {
 		argsBlock->_completion_callback(argsBlock->_completion_args);
@@ -78,6 +85,7 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 			taskInfo->implementation_count = 1;
 			taskInfo->implementations[0].run = nanos_spawned_function_wrapper;
 			taskInfo->register_depinfo = nullptr;
+			taskInfo->destroy = nanos_spawned_function_destructor;
 			
 			// We use the stored copy since we do not know the actual lifetime of "label"
 			taskInfo->implementations[0].task_label = it->first.second.c_str();
@@ -89,7 +97,7 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 	SpawnedFunctionArgsBlock *argsBlock = nullptr;
 	Task *task = nullptr;
 	
-	nanos_create_task(taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, 0);
+	nanos_create_task(taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, nanos_waiting_task);
 	
 	assert(argsBlock != nullptr);
 	assert(task != nullptr);

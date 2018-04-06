@@ -60,8 +60,6 @@ static void main_task_wrapper(void *argsBlock)
 		realArgsBlock->envp
 	);
 	
-	nanos_taskwait("NanosLoader Bootstrap code");
-	
 	char *reportPrefix = getenv("NANOS6_REPORT_PREFIX");
 	if (reportPrefix != NULL) {
 		for (void *it = nanos6_runtime_info_begin(); it != nanos6_runtime_info_end(); it = nanos6_runtime_info_advance(it)) {
