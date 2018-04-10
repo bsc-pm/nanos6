@@ -26,7 +26,7 @@ private:
 	NodeScheduler *_parent;
 	std::vector<SchedulerInterface *> _children;
 	
-	SpinLock _idleChildrenLock;
+	SpinLock _lock;
 	
 	inline void handleQueueOverflow()
 	{
@@ -64,40 +64,48 @@ public:
 	inline void addTaskBatch(std::vector<Task *> &taskBatch)
 	{
 		SchedulerInterface *idleChild = nullptr;
-		
+		bool overflow = false;
+	
 		{
-			std::lock_guard<SpinLock> guard(_idleChildrenLock);
+			std::lock_guard<SpinLock> guard(_lock);
+			
 			if (_idleChildren.size() > 0) {
 				idleChild = _idleChildren.front();
 				_idleChildren.pop_front();
+			} else {
+				size_t elements = _queue->addTaskBatch(taskBatch);
+				if (elements > _maxQueueThreshold) {
+					overflow = true;
+				}
 			}
 		}
 		
+		/* Outside lock, call other nodes */
 		if (idleChild != nullptr) {
 			idleChild->addTaskBatch(taskBatch);
-		} else {
-			size_t elements = _queue->addTaskBatch(taskBatch);
-			if (elements > _maxQueueThreshold) {
-				handleQueueOverflow();
-			}
+		} else if (overflow) {
+			handleQueueOverflow();
 		}
 	}
 	
 	inline void getTask(SchedulerInterface *child)
 	{
-		std::vector<Task *> taskBatch = _queue->getTaskBatch(_minQueueThreshold);
-		
-		if (taskBatch.size() > 0) {
-			child->addTaskBatch(taskBatch);
-		} else {
-			{
-				std::lock_guard<SpinLock> guard(_idleChildrenLock);
+		std::vector<Task *> taskBatch;
+	
+		{
+			std::lock_guard<SpinLock> guard(_lock);
+			taskBatch = _queue->getTaskBatch(_minQueueThreshold);
+			
+			if (taskBatch.size() == 0) {
 				_idleChildren.push_back(child);
 			}
-			
-			if (_parent != nullptr) {
-				_parent->getTask(this);
-			}
+		}
+		
+		/* Outside lock, call other nodes */
+		if (taskBatch.size() > 0) {
+			child->addTaskBatch(taskBatch);
+		} else if (_parent != nullptr) {
+			_parent->getTask(this);
 		}
 	}
 	
@@ -109,7 +117,7 @@ public:
 	inline void unidleChild(SchedulerInterface *child)
 	{
 		{
-			std::lock_guard<SpinLock> guard(_idleChildrenLock);
+			std::lock_guard<SpinLock> guard(_lock);
 			for (auto it = _idleChildren.begin(); it != _idleChildren.end(); ++it) {
 				if (*it == child) {
 					_idleChildren.erase(it);
