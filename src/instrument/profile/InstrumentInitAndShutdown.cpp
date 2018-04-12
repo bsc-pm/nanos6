@@ -12,7 +12,8 @@
 
 namespace Instrument {
 	extern bool _profilingIsReady;
-
+	
+	
 	void initialize()
 	{
 		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "profile");
