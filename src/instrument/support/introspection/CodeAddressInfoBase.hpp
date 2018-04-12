@@ -75,6 +75,7 @@ public:
 	
 	struct Entry {
 		std::vector<InlineFrame> _inlinedFrames;
+		void *_realAddress; // If generated from a return address, this one will (if possible) hold the actual call site
 		
 		bool empty() const
 		{
@@ -150,6 +151,8 @@ protected:
 	static std::string _unknownSourceLocation;
 	
 	static std::map<void *, Entry> _address2Entry;
+	static std::map<void *, Entry> _returnAddress2Entry;
+	
 	static std::map<std::string, function_id_t> _functionName2Id;
 	static std::map<std::string, source_location_id_t> _sourceLocation2Id;
 	static std::vector<std::string> _mangledFunctionNames;

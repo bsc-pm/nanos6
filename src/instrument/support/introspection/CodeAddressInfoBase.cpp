@@ -18,6 +18,7 @@ std::string CodeAddressInfoBase::_unknownSourceLocation = "??:??";
 
 
 std::map<void *, CodeAddressInfoBase::Entry> CodeAddressInfoBase::_address2Entry;
+std::map<void *, CodeAddressInfoBase::Entry> CodeAddressInfoBase::_returnAddress2Entry;
 
 std::map<std::string, CodeAddressInfoBase::function_id_t> CodeAddressInfoBase::_functionName2Id;
 std::map<std::string, CodeAddressInfoBase::source_location_id_t> CodeAddressInfoBase::_sourceLocation2Id;

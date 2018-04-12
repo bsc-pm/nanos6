@@ -112,9 +112,14 @@ void Addr2LineCodeAddressInfo::shutdown()
 }
 
 
-Addr2LineCodeAddressInfo::Entry const &Addr2LineCodeAddressInfo::resolveAddress(void *address)
+Addr2LineCodeAddressInfo::Entry const &Addr2LineCodeAddressInfo::resolveAddress(void *address, bool callSiteFromReturnAddress)
 {
-	{
+	if (callSiteFromReturnAddress) {
+		auto it = _returnAddress2Entry.find(address);
+		if (it != _returnAddress2Entry.end()) {
+			return it->second;
+		}
+	} else {
 		auto it = _address2Entry.find(address);
 		if (it != _address2Entry.end()) {
 			return it->second;
@@ -126,7 +131,7 @@ Addr2LineCodeAddressInfo::Entry const &Addr2LineCodeAddressInfo::resolveAddress(
 		// The address cannot be resolved
 		
 		// Fall back to resolving through DL
-		return DLCodeAddressInfo::resolveAddress(address);
+		return DLCodeAddressInfo::resolveAddress(address, callSiteFromReturnAddress);
 	}
 	it--;
 	
@@ -134,12 +139,18 @@ Addr2LineCodeAddressInfo::Entry const &Addr2LineCodeAddressInfo::resolveAddress(
 	
 	if (memoryMapSegment._filename.empty()) {
 		// Fall back to resolving through DL
-		return DLCodeAddressInfo::resolveAddress(address);
+		return DLCodeAddressInfo::resolveAddress(address, callSiteFromReturnAddress);
 	}
 	
 	Entry entry;
 	
-	size_t relativeAddress = (size_t)address - (size_t)it->first;
+	entry._realAddress = address;
+	if (callSiteFromReturnAddress) {
+		// We cannot recover the call site address, but apparently addr2line jumps back to the previous line just by subtracting 1 byte
+		entry._realAddress = (void *) ((size_t) address - 1);
+	}
+	
+	size_t relativeAddress = (size_t)entry._realAddress - (size_t)it->first;
 	
 	std::ostringstream addr2lineCommandLine;
 	addr2lineCommandLine << "addr2line -i -f -e " << memoryMapSegment._filename << " " << std::hex << relativeAddress;
@@ -166,6 +177,12 @@ Addr2LineCodeAddressInfo::Entry const &Addr2LineCodeAddressInfo::resolveAddress(
 		if ((mangledFunction != "??") && (sourceLine != "??:0") && (sourceLine != "??:?")) {
 			// Add the current function and source location
 			std::string function = Addr2LineCodeAddressInfo::demangleSymbol(mangledFunction);
+			
+			if (callSiteFromReturnAddress) {
+				mangledFunction = mangledFunction + std::string(" [return address]");
+				function = function + std::string(" [return address]");
+			}
+			
 			InlineFrame currentFrame = functionAndSourceToFrame(mangledFunction, function, sourceLine);
 			entry._inlinedFrames.push_back(currentFrame);
 		}
@@ -174,7 +191,12 @@ Addr2LineCodeAddressInfo::Entry const &Addr2LineCodeAddressInfo::resolveAddress(
 		std::getline(output, sourceLine);
 	}
 	
-	_address2Entry[address] = std::move(entry);
-	return _address2Entry[address];
+	if (callSiteFromReturnAddress) {
+		_returnAddress2Entry[address] = std::move(entry);
+		return _returnAddress2Entry[address];
+	} else {
+		_address2Entry[address] = std::move(entry);
+		return _address2Entry[address];
+	}
 }
 

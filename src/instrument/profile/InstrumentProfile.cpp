@@ -198,7 +198,7 @@ void Instrument::Profile::doShutdown()
 					}
 				}
 				
-				CodeAddressInfo::Entry const &addrInfo = CodeAddressInfo::resolveAddress(address);
+				CodeAddressInfo::Entry const &addrInfo = CodeAddressInfo::resolveAddress(address, /* return address? */ (position > 0));
 				for (CodeAddressInfo::InlineFrame const &frameContents : addrInfo._inlinedFrames) {
 					if (frameContents._functionId != id_t()) {
 						_id2sourceFunctionFrequency[frameContents._functionId]++;
@@ -208,16 +208,16 @@ void Instrument::Profile::doShutdown()
 					}
 				}
 				
-				backtrace.push_back(address);
+				backtrace.push_back(address); // In the backtrace we push the return address
 				symbolicBacktrace.push_back(addrInfo);
 				frame++;
 				
 				{
-					auto it = address2Frequency.find(address);
+					auto it = address2Frequency.find(addrInfo._realAddress); // Record the statistics per call site (as opposed to return address)
 					if (it != address2Frequency.end()) {
 						it->second++;
 					} else {
-						address2Frequency[address] = 1;
+						address2Frequency[addrInfo._realAddress] = 1;
 					}
 				}
 				
@@ -257,7 +257,7 @@ void Instrument::Profile::doShutdown()
 						break;
 					}
 					
-					CodeAddressInfo::Entry const &addrInfo = CodeAddressInfo::resolveAddress(address);
+					CodeAddressInfo::Entry const &addrInfo = CodeAddressInfo::resolveAddress(address, /* return address? */ !first);
 					for (CodeAddressInfo::InlineFrame const &frame : addrInfo._inlinedFrames) {
 						if (first) {
 							// Frequency on the innermost function

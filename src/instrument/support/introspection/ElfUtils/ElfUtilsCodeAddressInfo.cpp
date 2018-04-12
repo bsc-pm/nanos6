@@ -95,9 +95,14 @@ void ElfUtilsCodeAddressInfo::shutdown()
 }
 
 
-ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(void *address)
+ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(void *address, bool callSiteFromReturnAddress)
 {
-	{
+	if (callSiteFromReturnAddress) {
+		auto it = _returnAddress2Entry.find(address);
+		if (it != _returnAddress2Entry.end()) {
+			return it->second;
+		}
+	} else {
 		auto it = _address2Entry.find(address);
 		if (it != _address2Entry.end()) {
 			return it->second;
@@ -106,7 +111,7 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	
 	if (_dwfl == nullptr) {
 		// Fall back to resolving through DL
-		return DLCodeAddressInfo::resolveAddress(address);
+		return DLCodeAddressInfo::resolveAddress(address, callSiteFromReturnAddress);
 	}
 	
 	Dwarf_Addr dwflAddress = (Dwarf_Addr) address;
@@ -114,7 +119,7 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	Dwfl_Module *module = dwfl_addrmodule(_dwfl, dwflAddress);
 	if (module == nullptr) {
 		// Fall back to resolving through DL
-		return DLCodeAddressInfo::resolveAddress(address);
+		return DLCodeAddressInfo::resolveAddress(address, callSiteFromReturnAddress);
 	}
 	
 	Dwarf_Addr addressBias = 0;
@@ -125,7 +130,7 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	int scopeEntryCount = dwarf_getscopes(compilationUnitDebugInformationEntry, dwflAddress - addressBias, &scopeDebugInformationEntries);
 	if (scopeEntryCount <= 0) {
 		// Fall back to resolving through DL
-		return DLCodeAddressInfo::resolveAddress(address);
+		return DLCodeAddressInfo::resolveAddress(address, callSiteFromReturnAddress);
 	}
 	
 	// Get the name of the function
@@ -144,21 +149,26 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 		}
 	}
 	
+	// Create the entry
+	Entry &entry = (callSiteFromReturnAddress ? _returnAddress2Entry[address] : _address2Entry[address]);
+	
 	// Get the source code location
 	std::string sourceLine;
 	{
-		Dwfl_Line *dwarfLine = dwfl_module_getsrc (module, dwflAddress);
+		// The following function searches for the closest line with address <= to what is given.
+		// So just subtracting 1 byte should be enough to retrieve the call site.
+		Dwfl_Line *dwarfLine = dwfl_module_getsrc (module, dwflAddress - (callSiteFromReturnAddress ? 1 : 0));
 		
-		Dwarf_Addr dwarfAddress = dwflAddress;
+		Dwarf_Addr dwarfAddress = 0;
 		int line = 0;
 		int column = 0;
 		const char *source = dwfl_lineinfo(dwarfLine, &dwarfAddress, &line, &column, nullptr, nullptr);
 		
 		sourceLine = sourceToString(source, line, column);
+		
+		// Fill out the real address
+		entry._realAddress = (void *) dwarfAddress;
 	}
-	
-	// Create the entry
-	Entry &entry = _address2Entry[address];
 	
 	// Add the current function and source location
 	{
@@ -271,6 +281,11 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 		}
 		
 		free(scopeDebugInformationEntries);
+	}
+	
+	// If resolving a return address, register also the original call site address
+	if (callSiteFromReturnAddress) {
+		_address2Entry[entry._realAddress] = entry;
 	}
 	
 	return entry;

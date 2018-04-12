@@ -29,12 +29,19 @@ void DLCodeAddressInfo::shutdown()
 }
 
 
-CodeAddressInfoBase::Entry const &DLCodeAddressInfo::resolveAddress(void *address)
+CodeAddressInfoBase::Entry const &DLCodeAddressInfo::resolveAddress(void *address, bool callSiteFromReturnAddress)
 {
 	// Check in the cache
-	auto it = _address2Entry.find(address);
-	if (it != _address2Entry.end()) {
-		return it->second;
+	if (callSiteFromReturnAddress) {
+		auto it = _returnAddress2Entry.find(address);
+		if (it != _returnAddress2Entry.end()) {
+			return it->second;
+		}
+	} else {
+		auto it = _address2Entry.find(address);
+		if (it != _address2Entry.end()) {
+			return it->second;
+		}
 	}
 	
 	Dl_info dlInfo;
@@ -52,6 +59,7 @@ CodeAddressInfoBase::Entry const &DLCodeAddressInfo::resolveAddress(void *addres
 	
 	// Create the entry
 	Entry &entry = _address2Entry[address];
+	entry._realAddress = address; // We do not know how to recover the call site
 	
 	// Add the current function and source location
 	{
@@ -68,6 +76,12 @@ CodeAddressInfoBase::Entry const &DLCodeAddressInfo::resolveAddress(void *addres
 			function = function + std::string(" [inside]");
 		} else {
 			sourceLine = function;
+		}
+		
+		if (callSiteFromReturnAddress) {
+			mangledFunction = mangledFunction + std::string(" [return address]");
+			function = function + std::string(" [return address]");
+			sourceLine = sourceLine + std::string(" [return address]");
 		}
 		
 		InlineFrame currentFrame = functionAndSourceToFrame(mangledFunction, function, sourceLine);

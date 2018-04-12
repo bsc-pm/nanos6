@@ -24,7 +24,7 @@ private:
 public:
 	static void init();
 	static void shutdown();
-	static Entry const &resolveAddress(void *address);
+	static Entry const &resolveAddress(void *address, bool callSiteFromReturnAddress = false);
 	
 };
 
