@@ -4,7 +4,7 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "CodeAddressInfo.hpp"
+#include "Addr2LineCodeAddressInfo.hpp"
 
 #include <cassert>
 #include <fstream>
@@ -15,10 +15,10 @@
 #include <sys/types.h>
 
 
-std::map<void *, CodeAddressInfo::MemoryMapSegment> CodeAddressInfo::_executableMemoryMap;
+std::map<void *, Addr2LineCodeAddressInfo::MemoryMapSegment> Addr2LineCodeAddressInfo::_executableMemoryMap;
 
 
-void CodeAddressInfo::init()
+void Addr2LineCodeAddressInfo::init()
 {
 	pid_t pid = getpid();
 	
@@ -103,12 +103,12 @@ void CodeAddressInfo::init()
 }
 
 
-void CodeAddressInfo::shutdown()
+void Addr2LineCodeAddressInfo::shutdown()
 {
 }
 
 
-CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void *address)
+Addr2LineCodeAddressInfo::Entry const &Addr2LineCodeAddressInfo::resolveAddress(void *address)
 {
 	{
 		auto it = _address2Entry.find(address);
@@ -158,7 +158,7 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void *address)
 	while (!output.eof()) {
 		if ((mangledFunction != "??") && (sourceLine != "??:0") && (sourceLine != "??:?")) {
 			// Add the current function and source location
-			std::string function = CodeAddressInfo::demangleSymbol(mangledFunction);
+			std::string function = Addr2LineCodeAddressInfo::demangleSymbol(mangledFunction);
 			InlineFrame currentFrame = functionAndSourceToFrame(mangledFunction, function, sourceLine);
 			entry._inlinedFrames.push_back(currentFrame);
 		}

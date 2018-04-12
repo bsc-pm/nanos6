@@ -1,32 +1,16 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_SUPPORT_INSTROSPECTION_ELFUTILS_CODE_ADDRESS_INFO_HPP
-#define INSTRUMENT_SUPPORT_INSTROSPECTION_ELFUTILS_CODE_ADDRESS_INFO_HPP
+#ifndef INSTRUMENT_SUPPORT_INSTROSPECTION_CODE_ADDRESS_INFO_HPP
+#define INSTRUMENT_SUPPORT_INSTROSPECTION_CODE_ADDRESS_INFO_HPP
+
+#include "ElfUtilsCodeAddressInfo.hpp"
 
 
-#include <elfutils/libdwfl.h>
-
-#include <string>
-
-#include "../CodeAddressInfoBase.hpp"
+typedef ElfUtilsCodeAddressInfo CodeAddressInfo;
 
 
-class CodeAddressInfo : public CodeAddressInfoBase {
-private:
-	static Dwfl *_dwfl;
-	
-	static inline std::string getDebugInformationEntryName(Dwarf_Die *debugInformationEntry);
-	
-public:
-	static void init();
-	static void shutdown();
-	static Entry const &resolveAddress(void *address);
-	
-};
-
-
-#endif // INSTRUMENT_SUPPORT_INSTROSPECTION_ELFUTILS_CODE_ADDRESS_INFO_BASE_HPP
+#endif // INSTRUMENT_SUPPORT_INSTROSPECTION_CODE_ADDRESS_INFO_HPP

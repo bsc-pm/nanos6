@@ -372,11 +372,11 @@ introspection_cppflags =
 
 if HAVE_ELFUTILS
 introspection_sources += \
-	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.cpp
+	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.cpp
 introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/ElfUtils
 else
 introspection_sources += \
-	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.cpp
+	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.cpp
 introspection_cppflags += -I$(srcdir)/src/instrument/support/introspection/Addr2Line
 endif
 
@@ -739,9 +739,11 @@ noinst_HEADERS = \
 	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
 	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
 	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
+	src/instrument/support/introspection/Addr2Line/Addr2LineCodeAddressInfo.hpp \
 	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
 	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
 	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
+	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
 	src/instrument/support/sampling/SigProf.hpp \
 	src/instrument/support/sampling/ThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \

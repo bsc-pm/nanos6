@@ -4,7 +4,7 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "CodeAddressInfo.hpp"
+#include "ElfUtilsCodeAddressInfo.hpp"
 
 #include <dwarf.h>
 #include <elfutils/libdw.h>
@@ -17,10 +17,10 @@
 #include <sys/types.h>
 
 
-Dwfl *CodeAddressInfo::_dwfl = nullptr;
+Dwfl *ElfUtilsCodeAddressInfo::_dwfl = nullptr;
 
 
-inline std::string CodeAddressInfo::getDebugInformationEntryName(Dwarf_Die *debugInformationEntry)
+inline std::string ElfUtilsCodeAddressInfo::getDebugInformationEntryName(Dwarf_Die *debugInformationEntry)
 {
 	assert(debugInformationEntry != nullptr);
 	
@@ -54,7 +54,7 @@ inline std::string CodeAddressInfo::getDebugInformationEntryName(Dwarf_Die *debu
 }
 
 
-void CodeAddressInfo::init()
+void ElfUtilsCodeAddressInfo::init()
 {
 	pid_t pid = getpid();
 	
@@ -82,7 +82,7 @@ void CodeAddressInfo::init()
 }
 
 
-void CodeAddressInfo::shutdown()
+void ElfUtilsCodeAddressInfo::shutdown()
 {
 	if (_dwfl != nullptr) {
 		dwfl_end(_dwfl);
@@ -90,7 +90,7 @@ void CodeAddressInfo::shutdown()
 }
 
 
-CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void *address)
+ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(void *address)
 {
 	{
 		auto it = _address2Entry.find(address);
@@ -154,7 +154,7 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void *address)
 	
 	// Add the current function and source location
 	{
-		std::string function = CodeAddressInfo::demangleSymbol(mangledFunction);
+		std::string function = ElfUtilsCodeAddressInfo::demangleSymbol(mangledFunction);
 		InlineFrame currentFrame = functionAndSourceToFrame(mangledFunction, function, sourceLine);
 		entry._inlinedFrames.push_back(currentFrame);
 	}
@@ -256,7 +256,7 @@ CodeAddressInfo::Entry const &CodeAddressInfo::resolveAddress(void *address)
 				}
 				
 				// Add the current function and source location
-				std::string function = CodeAddressInfo::demangleSymbol(mangledFunction);
+				std::string function = ElfUtilsCodeAddressInfo::demangleSymbol(mangledFunction);
 				InlineFrame currentFrame = functionAndSourceToFrame(mangledFunction, function, sourceLine);
 				entry._inlinedFrames.push_back(currentFrame);
 			}
