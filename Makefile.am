@@ -281,9 +281,9 @@ common_sources = \
 	src/executors/threads/ThreadManagerPolicy.cpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/hardware/HardwareInfo.cpp \
-	src/hardware/places/NUMAPlace.cpp \
-	src/hardware/places/ComputePlace.cpp \
 	src/hardware/places/CPUPlace.cpp \
+	src/hardware/places/ComputePlace.cpp \
+	src/hardware/places/NUMAPlace.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/SymbolResolver.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
@@ -291,13 +291,13 @@ common_sources = \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
+	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/schedulers/FIFOScheduler.cpp \
 	src/scheduling/schedulers/HostHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
 	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
 	src/scheduling/schedulers/NaiveScheduler.cpp \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
@@ -492,6 +492,7 @@ instrument_extrae_sources = \
 noinst_HEADERS = \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
+	src/dependencies/MultidimensionalAPITraversal.hpp \
 	src/dependencies/discrete/CPUDependencyData.hpp \
 	src/dependencies/discrete/DataAccess.hpp \
 	src/dependencies/discrete/DataAccessImplementation.hpp \
@@ -510,22 +511,19 @@ noinst_HEADERS = \
 	src/dependencies/discrete/RootDataAccessSequence.hpp \
 	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
 	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifactsImplementation.hpp \
-	src/dependencies/discrete/TaskDataAccesses.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp \
+	src/dependencies/discrete/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-alternative/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-alternative/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-alternative/DataAccess.hpp \
 	src/dependencies/linear-regions-alternative/DataAccessRegistration.hpp \
 	src/dependencies/linear-regions-alternative/DependencyDomain.hpp \
 	src/dependencies/linear-regions-alternative/DependencySystem.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \
 	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifactsImplementation.hpp \
-	src/dependencies/linear-regions/DataAccessRegion.hpp \
-	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \
-	src/dependencies/linear-regions/Dependencies.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
@@ -535,15 +533,10 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionSpecific.hpp \
-	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
-	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
-	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
-	src/dependencies/linear-regions/LinearRegionMap.hpp \
-	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
-	src/dependencies/linear-regions/MultidimensionalAPI.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
 	src/dependencies/linear-regions-unfragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
@@ -552,16 +545,21 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-unfragmented/DependencySystem.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMap.hpp \
 	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
-	src/dependencies/MultidimensionalAPITraversal.hpp \
-	src/executors/threads/CPUActivation.hpp \
+	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
+	src/dependencies/linear-regions/DataAccessRegion.hpp \
+	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \
+	src/dependencies/linear-regions/Dependencies.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMap.hpp \
+	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
+	src/dependencies/linear-regions/LinearRegionMap.hpp \
+	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
+	src/dependencies/linear-regions/MultidimensionalAPI.hpp \
 	src/executors/threads/CPU.hpp \
+	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.hpp \
 	src/executors/threads/DefaultThreadManagerPolicy.hpp \
-	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
-	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/executors/threads/TaskFinalization.hpp \
 	src/executors/threads/TaskFinalizationImplementation.hpp \
 	src/executors/threads/ThreadManager.hpp \
@@ -569,9 +567,11 @@ noinst_HEADERS = \
 	src/executors/threads/ThreadManagerPolicyInterface.hpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/executors/threads/WorkerThreadImplementation.hpp \
+	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
+	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/hardware/HardwareInfo.hpp \
-	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/CPUPlace.hpp \
+	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
@@ -728,9 +728,6 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentTracingPoints.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp \
-	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
-	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
@@ -739,6 +736,9 @@ noinst_HEADERS = \
 	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp \
+	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
+	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \
 	src/instrument/support/introspection/Addr2Line/CodeAddressInfo.hpp \
 	src/instrument/support/introspection/CodeAddressInfoBase.hpp \
 	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
@@ -768,37 +768,38 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentTracingPoints.hpp \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
-	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/ConditionVariable.hpp \
-	src/lowlevel/cxx/SpinLockImplementation.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
 	src/lowlevel/PaddedSpinLock.hpp \
 	src/lowlevel/PaddedTicketSpinLock.hpp \
-	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/RWSpinLock.hpp \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/SymbolResolver.hpp \
+	src/lowlevel/TicketSpinLock.hpp \
+	src/lowlevel/TokenizedEnvironmentVariable.hpp \
+	src/lowlevel/apple/SpinLockImplementation.hpp \
+	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/threads/ExternalThread.hpp \
 	src/lowlevel/threads/HelperThread.hpp \
 	src/lowlevel/threads/KernelLevelThread.hpp \
 	src/lowlevel/threads/posix/KernelLevelThread.hpp \
-	src/lowlevel/TicketSpinLock.hpp \
-	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/memory/AddressSpace.hpp \
 	src/performance/HardwareCounters.hpp \
 	src/performance/HardwareCountersThreadLocalData.hpp \
 	src/performance/HardwareCountersThreadLocalDataImplementation.hpp \
-	src/performance/no-HC/NoHardwareCounters.hpp \
-	src/performance/no-HC/NoHardwareCountersThreadLocalData.hpp \
-	src/performance/no-HC/NoHardwareCountersThreadLocalDataImplementation.hpp \
 	src/performance/PAPI/PAPIHardwareCounters.hpp \
 	src/performance/PAPI/PAPIHardwareCountersThreadLocalData.hpp \
 	src/performance/PAPI/PAPIHardwareCountersThreadLocalDataImplementation.hpp \
-	src/scheduling/SchedulerGenerator.hpp \
+	src/performance/no-HC/NoHardwareCounters.hpp \
+	src/performance/no-HC/NoHardwareCountersThreadLocalData.hpp \
+	src/performance/no-HC/NoHardwareCountersThreadLocalDataImplementation.hpp \
 	src/scheduling/Scheduler.hpp \
+	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
+	src/scheduling/TaskloopSchedulingPolicy.hpp \
 	src/scheduling/schedulers/DefaultScheduler.hpp \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
@@ -806,11 +807,10 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/HostHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorScheduler.hpp \
 	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
+	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/NaiveScheduler.hpp \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
-	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
-	src/scheduling/TaskloopSchedulingPolicy.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.hpp \
@@ -821,17 +821,17 @@ noinst_HEADERS = \
 	src/support/StringLiteral.hpp \
 	src/system/If0Task.hpp \
 	src/system/LeaderThread.hpp \
+	src/system/PollingAPI.hpp \
+	src/system/RuntimeInfo.hpp \
+	src/system/RuntimeInfoEssentials.hpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/UserMutex.hpp \
-	src/system/PollingAPI.hpp \
-	src/system/RuntimeInfoEssentials.hpp \
-	src/system/RuntimeInfo.hpp \
-	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/Task.hpp \
+	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/TaskImplementation.hpp \
-	src/tasks/TaskloopGenerator.hpp \
 	src/tasks/Taskloop.hpp \
+	src/tasks/TaskloopGenerator.hpp \
 	src/tasks/TaskloopInfo.hpp \
 	src/tasks/TaskloopLogic.hpp \
 	src/version/VersionInfo.hpp \
