@@ -5,6 +5,7 @@
 */
 
 #include "ElfUtilsCodeAddressInfo.hpp"
+#include "../DL/DLCodeAddressInfo.hpp"
 
 #include <dwarf.h>
 #include <elfutils/libdw.h>
@@ -56,6 +57,8 @@ inline std::string ElfUtilsCodeAddressInfo::getDebugInformationEntryName(Dwarf_D
 
 void ElfUtilsCodeAddressInfo::init()
 {
+	DLCodeAddressInfo::init();
+	
 	pid_t pid = getpid();
 	
 	static char *debugInfoPath = nullptr;
@@ -87,6 +90,8 @@ void ElfUtilsCodeAddressInfo::shutdown()
 	if (_dwfl != nullptr) {
 		dwfl_end(_dwfl);
 	}
+	
+	DLCodeAddressInfo::shutdown();
 }
 
 
@@ -100,14 +105,16 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	}
 	
 	if (_dwfl == nullptr) {
-		return _nullEntry;
+		// Fall back to resolving through DL
+		return DLCodeAddressInfo::resolveAddress(address);
 	}
 	
 	Dwarf_Addr dwflAddress = (Dwarf_Addr) address;
 	
 	Dwfl_Module *module = dwfl_addrmodule(_dwfl, dwflAddress);
 	if (module == nullptr) {
-		return _nullEntry;
+		// Fall back to resolving through DL
+		return DLCodeAddressInfo::resolveAddress(address);
 	}
 	
 	Dwarf_Addr addressBias = 0;
@@ -117,7 +124,8 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	Dwarf_Die *scopeDebugInformationEntries = nullptr;
 	int scopeEntryCount = dwarf_getscopes(compilationUnitDebugInformationEntry, dwflAddress - addressBias, &scopeDebugInformationEntries);
 	if (scopeEntryCount <= 0) {
-		return _nullEntry;
+		// Fall back to resolving through DL
+		return DLCodeAddressInfo::resolveAddress(address);
 	}
 	
 	// Get the name of the function

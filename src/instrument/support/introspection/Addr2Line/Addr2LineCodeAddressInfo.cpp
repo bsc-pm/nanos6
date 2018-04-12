@@ -5,6 +5,7 @@
 */
 
 #include "Addr2LineCodeAddressInfo.hpp"
+#include "../DL/DLCodeAddressInfo.hpp"
 
 #include <cassert>
 #include <fstream>
@@ -20,6 +21,8 @@ std::map<void *, Addr2LineCodeAddressInfo::MemoryMapSegment> Addr2LineCodeAddres
 
 void Addr2LineCodeAddressInfo::init()
 {
+	DLCodeAddressInfo::init();
+	
 	pid_t pid = getpid();
 	
 	std::string mapsFilename;
@@ -105,6 +108,7 @@ void Addr2LineCodeAddressInfo::init()
 
 void Addr2LineCodeAddressInfo::shutdown()
 {
+	DLCodeAddressInfo::shutdown();
 }
 
 
@@ -120,14 +124,17 @@ Addr2LineCodeAddressInfo::Entry const &Addr2LineCodeAddressInfo::resolveAddress(
 	auto it = _executableMemoryMap.upper_bound(address);
 	if (it == _executableMemoryMap.begin()) {
 		// The address cannot be resolved
-		return _nullEntry;
+		
+		// Fall back to resolving through DL
+		return DLCodeAddressInfo::resolveAddress(address);
 	}
 	it--;
 	
 	MemoryMapSegment const &memoryMapSegment = it->second;
 	
 	if (memoryMapSegment._filename.empty()) {
-		return _nullEntry;
+		// Fall back to resolving through DL
+		return DLCodeAddressInfo::resolveAddress(address);
 	}
 	
 	Entry entry;
