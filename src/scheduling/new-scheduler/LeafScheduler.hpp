@@ -17,9 +17,9 @@
 
 class LeafScheduler: public SchedulerInterface {
 private:
-	EnvironmentVariable<size_t> _minQueueThreshold;
-	EnvironmentVariable<size_t> _maxQueueThreshold;
 	EnvironmentVariable<size_t> _pollingIterations;
+	
+	std::atomic<size_t> _queueThreshold;
 	
 	polling_slot_t _pollingSlot;
 	SchedulerQueueInterface *_queue;
@@ -33,21 +33,27 @@ private:
 	
 	inline void handleQueueOverflow()
 	{
-		std::vector<Task *> taskBatch = _queue->getTaskBatch(_maxQueueThreshold - _minQueueThreshold);
-		_parent->addTaskBatch(taskBatch);
+		size_t th = _queueThreshold / 2;
+		
+		if (th == 0) {
+			th = 1;
+		}
+		
+		std::vector<Task *> taskBatch = _queue->getTaskBatch(th);
+		if (taskBatch.size() > 0) {
+			// queue might have been emptied just a moment ago
+			_parent->addTaskBatch(taskBatch);
+		}
 	}
 
 public:
 	LeafScheduler(ComputePlace *computePlace, NodeScheduler *parent) :
-		_minQueueThreshold("NANOS6_SCHEDULER_QUEUE_MIN_THRESHOLD", 10),
-		_maxQueueThreshold("NANOS6_SCHEDULER_QUEUE_MAX_THRESHOLD", 20),
 		_pollingIterations("NANOS6_SCHEDULER_POLLING_ITER", 100000),
+		_queueThreshold(0),
 		_parent(parent),
 		_computePlace(computePlace),
 		_idle(false)
 	{
-		assert(_maxQueueThreshold >= _minQueueThreshold);
-		
 		_queue = SchedulerQueueInterface::initialize();
 		_parent->setChild(this);
 	}
@@ -59,13 +65,19 @@ public:
 
 	inline void addTask(Task *task, SchedulerInterface::ReadyTaskHint hint)
 	{
-		// addTask is always called from a thread in the same CPU. Therefore,
-		// there is no need to check polling slots, or to wake up any CPUs.
-		
-		size_t elements = _queue->addTask(task, hint);		
-		
-		if (elements > _maxQueueThreshold) {
-			handleQueueOverflow();
+		if (hint == SchedulerInterface::MAIN_TASK_HINT) {
+			// This is the main task. Run here
+			_pollingSlot.setTask(task);
+			assert(!_idle);
+		} else {
+			// addTask is always called from a thread in the same CPU. Therefore,
+			// there is no need to check polling slots, or to wake up any CPUs.
+			
+			size_t elements = _queue->addTask(task, hint);
+			
+			if (elements > _queueThreshold) {
+				handleQueueOverflow();
+			}
 		}
 	}
 
@@ -143,11 +155,19 @@ public:
 		}
 		
 		std::vector<Task *> taskBatch = _queue->getTaskBatch(-1);
-		_parent->addTaskBatch(taskBatch);
+		
+		if (taskBatch.size() > 0) {
+			_parent->addTaskBatch(taskBatch);
+		}
 	}
 	
 	inline void enable()
 	{
+	}
+	
+	inline void updateQueueThreshold(size_t queueThreshold)
+	{
+		_queueThreshold = queueThreshold;
 	}
 };
 

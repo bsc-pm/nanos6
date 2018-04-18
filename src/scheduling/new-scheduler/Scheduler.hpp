@@ -39,7 +39,7 @@ public:
 		} else {
 			for (LeafScheduler *sched : _CPUScheduler) {
 				if (sched != nullptr) {
-					sched->addTask(task, hint);
+					sched->addTask(task, SchedulerInterface::MAIN_TASK_HINT);
 					break;
 				}
 			}

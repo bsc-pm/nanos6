@@ -42,7 +42,8 @@ public:
 		CHILD_TASK_HINT,
 		SIBLING_TASK_HINT,
 		BUSY_COMPUTE_PLACE_TASK_HINT,
-		UNBLOCKED_TASK_HINT
+		UNBLOCKED_TASK_HINT,
+		MAIN_TASK_HINT
 	};
 	
 	virtual ~SchedulerInterface()
@@ -50,6 +51,7 @@ public:
 	}
 	
 	virtual void addTaskBatch(std::vector<Task *> &taskBatch) = 0;
+	virtual void updateQueueThreshold(size_t queueThreshold) = 0;
 };
 
 

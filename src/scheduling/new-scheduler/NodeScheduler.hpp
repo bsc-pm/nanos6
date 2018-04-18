@@ -16,9 +16,9 @@
 
 class NodeScheduler: public SchedulerInterface {
 private:
-	EnvironmentVariable<size_t> _minQueueThreshold;
-	EnvironmentVariable<size_t> _maxQueueThreshold;
 	EnvironmentVariable<size_t> _pollingIterations;
+	
+	std::atomic<size_t> _queueThreshold;
 	
 	std::deque<SchedulerInterface *> _idleChildren;
 	SchedulerQueueInterface *_queue;
@@ -26,27 +26,42 @@ private:
 	NodeScheduler *_parent;
 	std::vector<SchedulerInterface *> _children;
 	
-	SpinLock _lock;
+	SpinLock _globalLock;
+	SpinLock _thresholdLock;
 	
 	inline void handleQueueOverflow()
 	{
 		if (_parent != nullptr) {
-			std::vector<Task *> taskBatch = _queue->getTaskBatch(_maxQueueThreshold - _minQueueThreshold);
-			_parent->addTaskBatch(taskBatch);
+			size_t elements = _queueThreshold / 2;
+			
+			if (elements == 0) {
+				elements = 1;
+			}
+			
+			std::vector<Task *> taskBatch = _queue->getTaskBatch(elements);
+			if (taskBatch.size() > 0) {
+				// queue might have been emptied just a moment ago
+				_parent->addTaskBatch(taskBatch);
+			}
 		} else {
-			// Do nothing, just stack more tasks
+			// Increase threshold and propagate downwards
+			std::lock_guard<SpinLock> guard(_thresholdLock);
+			size_t th = _queueThreshold * 2;
+			
+			if (th == 0) {
+				th = 2;
+			}
+			
+			updateQueueThreshold(th);
 		}
 	}
 
 public:
 	NodeScheduler(NodeScheduler *parent = nullptr) :
-		_minQueueThreshold("NANOS6_SCHEDULER_QUEUE_MIN_THRESHOLD", 10),
-		_maxQueueThreshold("NANOS6_SCHEDULER_QUEUE_MAX_THRESHOLD", 20),
 		_pollingIterations("NANOS6_SCHEDULER_POLLING_ITER", 100000),
+		_queueThreshold(0),
 		_parent(parent)
 	{
-		assert(_maxQueueThreshold >= _minQueueThreshold);
-		
 		_queue = SchedulerQueueInterface::initialize();
 		if (_parent != nullptr) {
 			_parent->setChild(this);
@@ -67,14 +82,14 @@ public:
 		bool overflow = false;
 	
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_globalLock);
 			
 			if (_idleChildren.size() > 0) {
 				idleChild = _idleChildren.front();
 				_idleChildren.pop_front();
 			} else {
 				size_t elements = _queue->addTaskBatch(taskBatch);
-				if (elements > _maxQueueThreshold) {
+				if (elements > _queueThreshold) {
 					overflow = true;
 				}
 			}
@@ -90,22 +105,37 @@ public:
 	
 	inline void getTask(SchedulerInterface *child)
 	{
+		size_t th = _queueThreshold;
+		size_t elements = th / 2;
+		
+		if (elements == 0) {
+			elements = 1;
+		}
+		
 		std::vector<Task *> taskBatch;
 	
 		{
-			std::lock_guard<SpinLock> guard(_lock);
-			taskBatch = _queue->getTaskBatch(_minQueueThreshold);
+			std::lock_guard<SpinLock> guard(_globalLock);
+			taskBatch = _queue->getTaskBatch(elements);
 			
 			if (taskBatch.size() == 0) {
 				_idleChildren.push_back(child);
 			}
 		}
 		
-		/* Outside lock, call other nodes */
+		// Outside lock, call other nodes
 		if (taskBatch.size() > 0) {
 			child->addTaskBatch(taskBatch);
-		} else if (_parent != nullptr) {
-			_parent->getTask(this);
+		} else {
+			if (_parent != nullptr) {
+				_parent->getTask(this);
+			}
+		}
+		
+		if (_parent == nullptr && _queueThreshold > 0) {
+			// Reduce threshold and propagate
+			std::lock_guard<SpinLock> guard(_thresholdLock);
+			updateQueueThreshold(_queueThreshold / 2);
 		}
 	}
 	
@@ -117,7 +147,7 @@ public:
 	inline void unidleChild(SchedulerInterface *child)
 	{
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			std::lock_guard<SpinLock> guard(_globalLock);
 			for (auto it = _idleChildren.begin(); it != _idleChildren.end(); ++it) {
 				if (*it == child) {
 					_idleChildren.erase(it);
@@ -128,6 +158,15 @@ public:
 		
 		if (_parent != nullptr) {
 			_parent->unidleChild(this);
+		}
+	}
+	
+	inline void updateQueueThreshold(size_t queueThreshold)
+	{
+		_queueThreshold = queueThreshold;
+		
+		for (SchedulerInterface *child : _children) {
+			child->updateQueueThreshold(_queueThreshold);
 		}
 	}
 };
