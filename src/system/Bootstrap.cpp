@@ -73,7 +73,7 @@ void nanos_preinit(void) {
 		
 		FatalErrorHandler::failIf(
 			!nanos6_api_has_been_checked_successfully(),
-			"this executable was compiled for a different runtime version. Please recompile and link it."
+			"this executable was compiled for a different Nanos6 version. Please recompile and link it."
 		);
 	}
 	
