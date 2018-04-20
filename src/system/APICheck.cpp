@@ -9,6 +9,11 @@
 #include <string.h>
 
 
+namespace APICheck {
+	static bool _apiHasBeenCheckedSuccessfully = false;
+}
+
+
 static const nanos6_api_versions_t apiVersions = {
 	.api_check_api_version = nanos6_api_check_api,
 	
@@ -34,8 +39,15 @@ extern "C" int nanos6_check_api_versions(nanos6_api_versions_t const *api_versio
 	int rc = memcmp(&apiVersions, api_versions, sizeof(nanos6_api_versions_t));
 	
 	if (rc == 0) {
+		APICheck::_apiHasBeenCheckedSuccessfully = true;
 		return 1;
 	} else {
 		return 0;
 	}
+}
+
+
+bool nanos6_api_has_been_checked_successfully()
+{
+	return APICheck::_apiHasBeenCheckedSuccessfully;
 }

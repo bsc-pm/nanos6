@@ -827,6 +827,7 @@ noinst_HEADERS = \
 	src/support/Objectified.hpp \
 	src/support/StringComposer.hpp \
 	src/support/StringLiteral.hpp \
+	src/system/APICheck.hpp \
 	src/system/If0Task.hpp \
 	src/system/LeaderThread.hpp \
 	src/system/PollingAPI.hpp \
