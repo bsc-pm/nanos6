@@ -97,7 +97,6 @@ static int nanos6_find_next_function_iterator(
 	if (lookupInfo->result != NULL) {
 		// We already have a result
 	} else {
-#if 1 //SAFE_DLOPEN
 		void *handle = dlopen(info->dlpi_name, RTLD_LAZY | RTLD_LOCAL);
 		if (handle != NULL) {
 			void *current = dlsym(handle, lookupInfo->name);
@@ -114,27 +113,6 @@ static int nanos6_find_next_function_iterator(
 		} else {
 			fprintf(stderr, "Warning: Could not load '%s' to look up symbol '%s'\n", info->dlpi_name, lookupInfo->name);
 		}
-#else
-		for (struct link_map *lm = _r_debug.r_map; lm != NULL; lm = lm->l_next) {
-			// The pointers should be the same
-			if (lm->l_name == info->dlpi_name) {
-				void *handle = lm; // Turns out that the dlopen handles are just pointers to the link_map entry of the library
-				
-				void *current = dlsym(handle, lookupInfo->name);
-				if (current != NULL) {
-					if (current == lookupInfo->ourFunction) {
-						lookupInfo->foundOurFunction = true;
-					} else if (lookupInfo->foundOurFunction) {
-						lookupInfo->result = current;
-					} else {
-						// Skip
-					}
-				}
-				
-				break;
-			}
-		}
-#endif
 	}
 	
 	return 0;
