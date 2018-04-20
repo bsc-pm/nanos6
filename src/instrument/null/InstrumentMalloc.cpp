@@ -9,7 +9,7 @@
 #endif
 
 #ifndef NDEBUG
-#include <loader/malloc.h>
+#include <api/nanos6/bootstrap.h>
 #include <lowlevel/SymbolResolver.hpp>
 
 #include <lowlevel/EnvironmentVariable.hpp>
@@ -38,18 +38,7 @@ static std::atomic<void *> _lowestAddress(nullptr);
 static std::atomic<void *> _nextAddress(nullptr);
 static std::atomic<void *> _highestAddress(nullptr);
 
-static const StringLiteral _nanos6_start_function_interception_sl("nanos6_start_function_interception");
-static const StringLiteral _nanos6_stop_function_interception_sl("nanos6_stop_function_interception");
-static const StringLiteral _malloc_sl("malloc");
 static const StringLiteral _free_sl("free");
-static const StringLiteral _calloc_sl("calloc");
-static const StringLiteral _realloc_sl("realloc");
-static const StringLiteral _reallocarray_sl("reallocarray");
-static const StringLiteral _posix_memalign_sl("posix_memalign");
-static const StringLiteral _aligned_alloc_sl("aligned_alloc");
-static const StringLiteral _valloc_sl("valloc");
-static const StringLiteral _memalign_sl("memalign");
-static const StringLiteral _pvalloc_sl("pvalloc");
 
 
 // Allocation Schema:
@@ -157,35 +146,6 @@ union pointer_arithmetic_t {
 	memory_allocation_info_t *_allocation_info_pointer;
 	size_t _offset;
 };
-
-
-#pragma GCC visibility push(default)
-extern "C" void nanos6_memory_allocation_interception_init()
-{
-	// Resolve all the symbols before we intercept malloc, since the resolution itself does call malloc !?!
-	SymbolResolver<void *, &_malloc_sl, size_t>::resolveNext();
-	SymbolResolver<void, &_free_sl, void *>::resolveNext();
-	SymbolResolver<void *, &_calloc_sl, size_t, size_t>::resolveNext();
-	SymbolResolver<void *, &_realloc_sl, void *, size_t>::resolveNext();
-	SymbolResolver<void *, &_reallocarray_sl, void *, size_t, size_t>::resolveNext();
-	SymbolResolver<int, &_posix_memalign_sl, void **, size_t, size_t>::resolveNext();
-	SymbolResolver<void *, &_aligned_alloc_sl, size_t, size_t>::resolveNext();
-	SymbolResolver<void *, &_valloc_sl, size_t>::resolveNext();
-	SymbolResolver<void *, &_memalign_sl, size_t, size_t>::resolveNext();
-	SymbolResolver<void *, &_pvalloc_sl, size_t>::resolveNext();
-	
-	_pageSize = sysconf(_SC_PAGE_SIZE);
-	SymbolResolver<void, &_nanos6_start_function_interception_sl>::globalScopeCall();
-}
-
-extern "C" void nanos6_memory_allocation_interception_fini()
-{
-	// Since some libraries may have been loaded before the interception, we do not know how distinguish which memory comes from where
-	_noFree = true;
-	
-// 	SymbolResolver<void, &_nanos6_stop_function_interception_sl>::globalScopeCall();
-}
-#pragma GCC visibility pop
 
 
 static size_t nanos6_calculate_memory_allocation_size(size_t requestedSize, size_t alignment = sizeof(void *))
@@ -465,6 +425,8 @@ static void nanos6_protected_memory_deallocation(void *address)
 }
 
 
+static nanos6_memory_allocation_functions_t _nextMemoryFunctions;
+
 
 #pragma GCC visibility push(default)
 
@@ -473,7 +435,7 @@ void *nanos6_intercepted_malloc(size_t size)
 	if (_debugMemory) {
 		return nanos6_protected_memory_allocation(size);
 	} else {
-		return SymbolResolver<void *, &_malloc_sl, size_t>::callNext(size);
+		return _nextMemoryFunctions.malloc(size);
 	}
 }
 
@@ -483,7 +445,7 @@ void nanos6_intercepted_free(void *ptr)
 		if (_debugMemory) {
 			nanos6_protected_memory_deallocation(ptr);
 		} else {
-			SymbolResolver<void, &_free_sl, void *>::callNext(ptr);
+			_nextMemoryFunctions.free(ptr);
 		}
 	}
 }
@@ -494,7 +456,7 @@ void *nanos6_intercepted_calloc(size_t nmemb, size_t size)
 		void *result = nanos6_protected_memory_allocation(nmemb * size, size);
 		return memset(result, 0, nmemb* size);
 	} else {
-		return SymbolResolver<void *, &_calloc_sl, size_t, size_t>::callNext(nmemb, size);
+		return _nextMemoryFunctions.calloc(nmemb, size);
 	}
 }
 
@@ -512,7 +474,7 @@ void *nanos6_intercepted_realloc(void *ptr, size_t size)
 		}
 		return result;
 	} else {
-		return SymbolResolver<void *, &_realloc_sl, void *, size_t>::callNext(ptr, size);
+		return _nextMemoryFunctions.realloc(ptr, size);
 	}
 }
 
@@ -530,7 +492,7 @@ void *nanos6_intercepted_reallocarray(void *ptr, size_t nmemb, size_t size)
 		}
 		return result;
 	} else {
-		return SymbolResolver<void *, &_reallocarray_sl, void *, size_t, size_t>::callNext(ptr, nmemb, size);
+		return _nextMemoryFunctions.reallocarray(ptr, nmemb, size);
 	}
 }
 
@@ -541,7 +503,7 @@ int nanos6_intercepted_posix_memalign(void **memptr, size_t alignment, size_t si
 		*memptr = nanos6_protected_memory_allocation(size, alignment);
 		return 0;
 	} else {
-		return SymbolResolver<int, &_posix_memalign_sl, void **, size_t, size_t>::callNext(memptr, alignment, size);
+		return _nextMemoryFunctions.posix_memalign(memptr, alignment, size);
 	}
 }
 
@@ -551,7 +513,7 @@ void *nanos6_intercepted_aligned_alloc(size_t alignment, size_t size)
 	if (_debugMemory) {
 		return nanos6_protected_memory_allocation(size, alignment);
 	} else {
-		return SymbolResolver<void *, &_aligned_alloc_sl, size_t, size_t>::callNext(alignment, size);
+		return _nextMemoryFunctions.aligned_alloc(alignment, size);
 	}
 }
 
@@ -565,7 +527,7 @@ void *nanos6_intercepted_valloc(size_t size)
 		
 		return nanos6_protected_memory_allocation(size, _pageSize);
 	} else {
-		return SymbolResolver<void *, &_valloc_sl, size_t>::callNext(size);
+		return _nextMemoryFunctions.valloc(size);
 	}
 }
 
@@ -575,7 +537,7 @@ void *nanos6_intercepted_memalign(size_t alignment, size_t size)
 	if (_debugMemory) {
 		return nanos6_protected_memory_allocation(size, alignment);
 	} else {
-		return SymbolResolver<void *, &_memalign_sl, size_t, size_t>::callNext(alignment, size);
+		return _nextMemoryFunctions.memalign(alignment, size);
 	}
 }
 
@@ -591,9 +553,42 @@ void *nanos6_intercepted_pvalloc(size_t size)
 		
 		return nanos6_protected_memory_allocation(size);
 	} else {
-		return SymbolResolver<void *, &_pvalloc_sl, size_t>::callNext(size);
+		return _nextMemoryFunctions.pvalloc(size);
 	}
 }
+
+
+static nanos6_memory_allocation_functions_t _nanos6MemoryFunctions = {
+	.malloc = nanos6_intercepted_malloc,
+	.free = nanos6_intercepted_free,
+	.calloc = nanos6_intercepted_calloc,
+	.realloc = nanos6_intercepted_realloc,
+	.reallocarray = nanos6_intercepted_reallocarray,
+	.posix_memalign = nanos6_intercepted_posix_memalign,
+	.aligned_alloc = nanos6_intercepted_aligned_alloc,
+	.valloc = nanos6_intercepted_valloc,
+	.memalign = nanos6_intercepted_memalign,
+	.pvalloc = nanos6_intercepted_pvalloc
+};
+
+
+extern "C" void nanos6_memory_allocation_interception_init(
+	nanos6_memory_allocation_functions_t const *nextMemoryFunctions, 
+	nanos6_memory_allocation_functions_t *nanos6MemoryFunctions
+) {
+	_pageSize = sysconf(_SC_PAGE_SIZE);
+	
+	_nextMemoryFunctions = *nextMemoryFunctions;
+	*nanos6MemoryFunctions = _nanos6MemoryFunctions;
+}
+
+
+extern "C" void nanos6_memory_allocation_interception_fini()
+{
+	// Since some libraries may have been loaded before the interception, we do not know how distinguish which memory comes from where
+	_noFree = true;
+}
+
 
 #pragma GCC visibility pop
 

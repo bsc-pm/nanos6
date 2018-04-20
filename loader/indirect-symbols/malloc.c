@@ -8,78 +8,77 @@
 #define _GNU_SOURCE
 #endif
 
+
 #include "error.h"
 #include "resolve.h"
+
+#include <api/nanos6/bootstrap.h>
 
 #include <dlfcn.h>
 #include <errno.h>
 #include <link.h>
+#include <malloc.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/mman.h>
 
 #ifndef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 
-#pragma GCC visibility push(default)
+#define MAX_PRIVATE_LOADING_MEMORY  (4 * 1024 * 1024)
 
-// The following functions have strong __libc_ counterparts that we can use during initialization,
-// since dlopen and dlsym also perform memory allocations
-DECLARE_LIBC_FALLBACK(__libc_, malloc, void *, size_t);
-DECLARE_LIBC_FALLBACK(__libc_, free, void, void *);
-DECLARE_LIBC_FALLBACK(__libc_, calloc, void *, size_t, size_t);
-DECLARE_LIBC_FALLBACK(__libc_, realloc, void *, void *, size_t);
-DECLARE_LIBC_FALLBACK(__libc_, valloc, void *, size_t);
-DECLARE_LIBC_FALLBACK(__libc_, memalign, void *, size_t, size_t);
-DECLARE_LIBC_FALLBACK(__libc_, pvalloc, void *, size_t);
-
-#pragma GCC visibility pop
+static int nanos6LoaderInMemoryInitialization = 0;
+static char *nanos6PrivateLoadingMemoryBase = NULL;
+static char *nanos6NextPrivateLoadingMemoryFreeBlock = NULL;
 
 
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(malloc_symbol, malloc, void *, size_t) = __libc_malloc;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(free_symbol, free, void, void *) = __libc_free;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(calloc_symbol, calloc, void *, size_t, size_t) = __libc_calloc;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(realloc_symbol, realloc, void *, void *, size_t) = __libc_realloc;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(valloc_symbol, valloc, void *, size_t) = __libc_valloc;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(memalign_symbol, memalign, void *, size_t, size_t) = __libc_memalign;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(pvalloc_symbol, pvalloc, void *, size_t) = __libc_pvalloc;
-
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(posix_memalign_symbol, posix_memalign, int, void **, size_t, size_t) = NULL;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(posix_memalign_libc_symbol, posix_memalign, int, void **, size_t, size_t) = NULL;
-
-#if HAVE_ALIGNED_ALLOC
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(aligned_alloc_symbol, aligned_alloc, void *, size_t, size_t) = NULL;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(aligned_alloc_libc_symbol, aligned_alloc, void *, size_t, size_t) = NULL;
-#endif
-#if HAVE_REALLOCARRAY
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(reallocarray_symbol, reallocarray, void *, void *, size_t, size_t) = NULL;
-static DECLARE_INTERCEPTED_FUNCTION_POINTER(reallocarray_libc_symbol, reallocarray, void *, void *, size_t, size_t) = NULL;
-#endif
-
-#pragma GCC visibility push(default)
+static int nextMemoryFunctionsInitialized = 0;
+static int nanos6MemoryFunctionsInitialized = 0;
+static nanos6_memory_allocation_functions_t nextMemoryFunctions = {
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+};
+static nanos6_memory_allocation_functions_t nanos6MemoryFunctions = {
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+};
 
 
-void *malloc(size_t size)
-{ return (*malloc_symbol)(size); }
+static char errorMessage[4096];
 
-void free(void *ptr)
-{ (*free_symbol)(ptr); }
+#define MEM_ALLOC_FAIL(size)  do { int bytes = snprintf(errorMessage, 4096, "Error: failed to allocate %lu bytes during nanos6 loader initialization (%s:%i)\n", size, __FILE__, __LINE__); write(1, errorMessage, bytes); } while (0)
 
-void *calloc(size_t nmemb, size_t size)
-{ return (*calloc_symbol)(nmemb, size); }
 
-void *realloc(void *ptr, size_t size)
-{ return (*realloc_symbol)(ptr, size); }
+static void *nanos6_loader_malloc(size_t size)
+{
+	if (nanos6PrivateLoadingMemoryBase == NULL) {
+		nanos6PrivateLoadingMemoryBase = mmap(NULL, MAX_PRIVATE_LOADING_MEMORY, PROT_EXEC|PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+		
+		if (nanos6PrivateLoadingMemoryBase == NULL) {
+			MEM_ALLOC_FAIL(size);
+			return NULL;
+		}
+		nanos6NextPrivateLoadingMemoryFreeBlock = nanos6PrivateLoadingMemoryBase;
+	}
+	
+	if ((nanos6NextPrivateLoadingMemoryFreeBlock + size) > (nanos6PrivateLoadingMemoryBase + MAX_PRIVATE_LOADING_MEMORY)) {
+		MEM_ALLOC_FAIL(size);
+		return NULL;
+	}
+	
+	void *result = nanos6NextPrivateLoadingMemoryFreeBlock;
+	nanos6NextPrivateLoadingMemoryFreeBlock += size;
+	
+	return result;
+}
 
-void *valloc(size_t size)
-{ return (*valloc_symbol)(size); }
 
-void *memalign(size_t alignment, size_t size)
-{ return (*memalign_symbol)(alignment, size); }
-
-void *pvalloc(size_t size)
-{ return (*pvalloc_symbol)(size); }
+static void *nanos6_loader_free(__attribute__((unused)) void *ptr)
+{
+}
 
 
 typedef struct {
@@ -98,6 +97,7 @@ static int nanos6_find_next_function_iterator(
 	if (lookupInfo->result != NULL) {
 		// We already have a result
 	} else {
+#if 1 //SAFE_DLOPEN
 		void *handle = dlopen(info->dlpi_name, RTLD_LAZY | RTLD_LOCAL);
 		if (handle != NULL) {
 			void *current = dlsym(handle, lookupInfo->name);
@@ -114,6 +114,27 @@ static int nanos6_find_next_function_iterator(
 		} else {
 			fprintf(stderr, "Warning: Could not load '%s' to look up symbol '%s'\n", info->dlpi_name, lookupInfo->name);
 		}
+#else
+		for (struct link_map *lm = _r_debug.r_map; lm != NULL; lm = lm->l_next) {
+			// The pointers should be the same
+			if (lm->l_name == info->dlpi_name) {
+				void *handle = lm; // Turns out that the dlopen handles are just pointers to the link_map entry of the library
+				
+				void *current = dlsym(handle, lookupInfo->name);
+				if (current != NULL) {
+					if (current == lookupInfo->ourFunction) {
+						lookupInfo->foundOurFunction = true;
+					} else if (lookupInfo->foundOurFunction) {
+						lookupInfo->result = current;
+					} else {
+						// Skip
+					}
+				}
+				
+				break;
+			}
+		}
+#endif
 	}
 	
 	return 0;
@@ -172,44 +193,167 @@ static void *nanos6_loader_find_next_function(void *ourFunction, char const *nam
 }
 
 
-int posix_memalign(void **memptr, size_t alignment, size_t size)
+static void nanos6_loader_resolve_next_memory_allocation_functions()
 {
-	typedef int (*posix_memalign_t)(void **, size_t, size_t);
-	
-	if (posix_memalign_symbol == NULL) {
-		posix_memalign_libc_symbol = (posix_memalign_t) nanos6_loader_find_next_function((void *) posix_memalign, "posix_memalign", false);
-		if (posix_memalign_libc_symbol == NULL) {
-			fprintf(stderr, "Error resolving 'posix_memalign': %s\n", dlerror());
-			handle_error();
-			return EINVAL;
-		}
-		
-		posix_memalign_symbol = posix_memalign_libc_symbol;
-		REDIRECT_INTERCEPTED_FUNCTION(posix_memalign_symbol, posix_memalign, int, void **, size_t, size_t);
+	if (nextMemoryFunctionsInitialized) {
+		return;
 	}
 	
-	return (posix_memalign_symbol)(memptr, alignment, size);
+	nanos6LoaderInMemoryInitialization = 1;
+	
+	nextMemoryFunctions.malloc = nanos6_loader_find_next_function(malloc, "malloc", 0);
+	nextMemoryFunctions.free = nanos6_loader_find_next_function(free, "free", 0);
+	nextMemoryFunctions.calloc = nanos6_loader_find_next_function(calloc, "calloc", 0);
+	nextMemoryFunctions.realloc = nanos6_loader_find_next_function(realloc, "realloc", 0);
+#if HAVE_REALLOCARRAY
+	nextMemoryFunctions.reallocarray = nanos6_loader_find_next_function(reallocarray, "reallocarray", 0);
+#endif
+	nextMemoryFunctions.posix_memalign = nanos6_loader_find_next_function(posix_memalign, "posix_memalign", 0);
+#if HAVE_ALIGNED_ALLOC
+	nextMemoryFunctions.aligned_alloc = nanos6_loader_find_next_function(aligned_alloc, "aligned_alloc", 0);
+#endif
+	nextMemoryFunctions.valloc = nanos6_loader_find_next_function(valloc, "valloc", 0);
+	nextMemoryFunctions.memalign = nanos6_loader_find_next_function(memalign, "memalign", 0);
+	nextMemoryFunctions.pvalloc = nanos6_loader_find_next_function(pvalloc, "pvalloc", 0);
+	
+	nanos6LoaderInMemoryInitialization = 0;
+	
+	nextMemoryFunctionsInitialized = 1;
+}
+
+
+
+
+#pragma GCC visibility push(default)
+
+
+void *malloc(size_t size)
+{
+	if (nanos6LoaderInMemoryInitialization) {
+		return nanos6_loader_malloc(size);
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.malloc(size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.malloc(size);
+	}
+}
+
+
+void free(void *ptr)
+{
+	if (nanos6LoaderInMemoryInitialization) {
+		nanos6_loader_free(ptr);
+	} else if (
+		(ptr >= (void *) nanos6PrivateLoadingMemoryBase)
+		&& (ptr < (void *) nanos6NextPrivateLoadingMemoryFreeBlock)
+	) {
+		nanos6_loader_free(ptr);
+	} else if (nanos6MemoryFunctionsInitialized) {
+		nanos6MemoryFunctions.free(ptr);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		nextMemoryFunctions.free(ptr);
+	}
+}
+
+
+void *calloc(size_t nmemb, size_t size)
+{
+	if (nanos6LoaderInMemoryInitialization) {
+		return nanos6_loader_malloc(nmemb*size);
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.calloc(nmemb, size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.calloc(nmemb, size);
+	}
+}
+
+
+void *realloc(void *ptr, size_t size)
+{
+	if (nanos6LoaderInMemoryInitialization) {
+		MEM_ALLOC_FAIL(size);
+		return NULL;
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.realloc(ptr, size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.realloc(ptr, size);
+	}
+}
+
+
+void *valloc(size_t size)
+{
+	if (nanos6LoaderInMemoryInitialization) {
+		MEM_ALLOC_FAIL(size);
+		return NULL;
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.valloc(size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.valloc(size);
+	}
+}
+
+
+void *memalign(size_t alignment, size_t size)
+{
+	if (nanos6LoaderInMemoryInitialization) {
+		MEM_ALLOC_FAIL(size);
+		return NULL;
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.memalign(alignment, size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.memalign(alignment, size);
+	}
+}
+
+
+void *pvalloc(size_t size)
+{
+	if (nanos6LoaderInMemoryInitialization) {
+		MEM_ALLOC_FAIL(size);
+		return NULL;
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.pvalloc(size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.pvalloc(size);
+	}
+}
+
+
+int posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+	if (nanos6LoaderInMemoryInitialization) {
+		MEM_ALLOC_FAIL(size);
+		*memptr = NULL;
+		return ENOMEM;
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.posix_memalign(memptr, alignment, size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.posix_memalign(memptr, alignment, size);
+	}
 }
 
 
 #if HAVE_ALIGNED_ALLOC
 void *aligned_alloc(size_t alignment, size_t size)
 {
-	typedef void *(*aligned_alloc_t)(size_t, size_t);
-	
-	if (aligned_alloc_symbol == NULL) {
-		aligned_alloc_libc_symbol = (aligned_alloc_t) nanos6_loader_find_next_function((void *) aligned_alloc, "aligned_alloc", false);
-		if (aligned_alloc_libc_symbol == NULL) {
-			fprintf(stderr, "Error resolving 'aligned_alloc': %s\n", dlerror());
-			handle_error();
-			return NULL;
-		}
-		
-		aligned_alloc_symbol = aligned_alloc_libc_symbol;
-		REDIRECT_INTERCEPTED_FUNCTION(aligned_alloc_symbol, aligned_alloc, void *, size_t, size_t);
+	if (nanos6LoaderInMemoryInitialization) {
+		MEM_ALLOC_FAIL(size);
+		return NULL;
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.aligned_alloc(alignment, size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.aligned_alloc(alignment, size);
 	}
-	
-	return (aligned_alloc_symbol)(alignment, size);
 }
 #endif
 
@@ -217,113 +361,44 @@ void *aligned_alloc(size_t alignment, size_t size)
 #if HAVE_REALLOCARRAY
 void *reallocarray(void *ptr, size_t nmemb, size_t size)
 {
-	typedef void *(*reallocarray_t)(void *, size_t, size_t);
-	
-	if (reallocarray_symbol == NULL) {
-		reallocarray_libc_symbol = (reallocarray_t) nanos6_loader_find_next_function((void *) reallocarray, "reallocarray", false);
-		if (reallocarray_libc_symbol == NULL) {
-			fprintf(stderr, "Error resolving 'reallocarray': %s\n", dlerror());
-			handle_error();
-			return NULL;
-		}
-		
-		reallocarray_symbol = reallocarray_libc_symbol;
-		REDIRECT_INTERCEPTED_FUNCTION(reallocarray_symbol, reallocarray, void *, void *, size_t, size_t);
+	if (nanos6LoaderInMemoryInitialization) {
+		MEM_ALLOC_FAIL(size);
+		return NULL;
+	} else if (nanos6MemoryFunctionsInitialized) {
+		return nanos6MemoryFunctions.reallocarray(ptr, nmemb, size);
+	} else {
+		nanos6_loader_resolve_next_memory_allocation_functions();
+		return nextMemoryFunctions.reallocarray(ptr, nmemb, size);
 	}
-	
-	return (reallocarray_symbol)(ptr, nmemb, size);
 }
 #endif
 
 
-void nanos6_start_function_interception()
+void nanos6_loader_memory_allocation_interception_init()
 {
-	typedef int (*posix_memalign_t)(void **, size_t, size_t);
-	if (posix_memalign_symbol == NULL) {
-		posix_memalign_libc_symbol = (posix_memalign_t) nanos6_loader_find_next_function((void *) posix_memalign, "posix_memalign", false);
-		if (posix_memalign_libc_symbol == NULL) {
-			fprintf(stderr, "Error resolving 'posix_memalign': %s\n", dlerror());
-			handle_error();
-		}
-		
-		posix_memalign_symbol = posix_memalign_libc_symbol;
-	}
-	
-#if HAVE_ALIGNED_ALLOC
-	typedef void *(*aligned_alloc_t)(size_t, size_t);
-	if (aligned_alloc_symbol == NULL) {
-		aligned_alloc_libc_symbol = (aligned_alloc_t) nanos6_loader_find_next_function((void *) aligned_alloc, "aligned_alloc", false);
-		if (aligned_alloc_libc_symbol == NULL) {
-			fprintf(stderr, "Error resolving 'aligned_alloc': %s\n", dlerror());
-			handle_error();
-		}
-		
-		aligned_alloc_symbol = aligned_alloc_libc_symbol;
-	}
-#endif
-	
-#if HAVE_REALLOCARRAY
-	typedef void *(*reallocarray_t)(void *, size_t, size_t);
-	if (reallocarray_symbol == NULL) {
-		reallocarray_libc_symbol = (reallocarray_t) nanos6_loader_find_next_function((void *) reallocarray, "reallocarray", false);
-		if (reallocarray_libc_symbol == NULL) {
-			fprintf(stderr, "Error resolving 'reallocarray': %s\n", dlerror());
-			handle_error();
-		}
-		
-		reallocarray_symbol = reallocarray_libc_symbol;
-	}
-#endif
-
-#if HAVE_ALIGNED_ALLOC
-	REDIRECT_INTERCEPTED_FUNCTION(aligned_alloc_symbol, aligned_alloc, void *, size_t, size_t);
-#endif
-	
-#if HAVE_REALLOCARRAY
-	REDIRECT_INTERCEPTED_FUNCTION(reallocarray_symbol, reallocarray, void *, void *, size_t, size_t);
-#endif
-	
-	REDIRECT_INTERCEPTED_FUNCTION(posix_memalign_symbol, posix_memalign, int, void **, size_t, size_t);
-	
-	REDIRECT_INTERCEPTED_FUNCTION(malloc_symbol, malloc, void *, size_t);
-	REDIRECT_INTERCEPTED_FUNCTION(free_symbol, free, void, void *);
-	REDIRECT_INTERCEPTED_FUNCTION(calloc_symbol, calloc, void *, size_t, size_t);
-	REDIRECT_INTERCEPTED_FUNCTION(realloc_symbol, realloc, void *, void *, size_t);
-	REDIRECT_INTERCEPTED_FUNCTION(valloc_symbol, valloc, void *, size_t);
-	REDIRECT_INTERCEPTED_FUNCTION(memalign_symbol, memalign, void *, size_t, size_t);
-	REDIRECT_INTERCEPTED_FUNCTION(pvalloc_symbol, pvalloc, void *, size_t);
-	
+	nanos6_loader_resolve_next_memory_allocation_functions();
+	nanos6_memory_allocation_interception_init(&nextMemoryFunctions, &nanos6MemoryFunctions);
 }
 
 
-void nanos6_stop_function_interception()
+void nanos6_memory_allocation_interception_init(nanos6_memory_allocation_functions_t const *nextMemoryFunctions, nanos6_memory_allocation_functions_t *nanos6MemoryFunctions)
 {
-	malloc_symbol = __libc_malloc;
-	free_symbol = __libc_free;
-	calloc_symbol = __libc_calloc;
-	realloc_symbol = __libc_realloc;
-	valloc_symbol = __libc_valloc;
-	memalign_symbol = __libc_memalign;
-	pvalloc_symbol = __libc_pvalloc;
-	
-	posix_memalign_symbol = posix_memalign_libc_symbol;
-	
-#if HAVE_ALIGNED_ALLOC
-	aligned_alloc_symbol = aligned_alloc_libc_symbol;
-#endif
-	
-#if HAVE_REALLOCARRAY
-	reallocarray_symbol = reallocarray_libc_symbol;
-#endif
-}
-
-
-void nanos6_memory_allocation_interception_init()
-{
-	void (*init_function)() = (void (*)()) dlsym(_nanos6_lib_handle, "nanos6_memory_allocation_interception_init");
+	void (*init_function)(nanos6_memory_allocation_functions_t const *, nanos6_memory_allocation_functions_t *) =
+		(void (*)(nanos6_memory_allocation_functions_t const *, nanos6_memory_allocation_functions_t *))
+		dlsym(_nanos6_lib_handle, "nanos6_memory_allocation_interception_init");
 	
 	if (init_function != NULL) {
-		init_function();
+		init_function(nextMemoryFunctions, nanos6MemoryFunctions);
+		nanos6MemoryFunctionsInitialized = 1;
+	}
+}
+
+
+void nanos6_memory_allocation_interception_postinit()
+{
+	void (*postinit_function)() = (void (*)()) dlsym(_nanos6_lib_handle, "nanos6_memory_allocation_interception_postinit");
+	if (postinit_function != NULL) {
+		postinit_function();
 	}
 }
 
@@ -334,6 +409,7 @@ void nanos6_memory_allocation_interception_fini()
 	
 	if (fini_function != NULL) {
 		fini_function();
+		nanos6MemoryFunctionsInitialized = 0;
 	}
 }
 

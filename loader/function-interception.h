@@ -7,8 +7,8 @@
 #ifndef NANOS6_FUNCTION_INTERCEPTION_H
 #define NANOS6_FUNCTION_INTERCEPTION_H
 
-void nanos6_start_function_interception();
-void nanos6_stop_function_interception();
+void nanos6_loader_memory_allocation_interception_init();
+
 
 #endif /* NANOS6_FUNCTION_INTERCEPTION_H */
 

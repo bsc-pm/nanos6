@@ -13,6 +13,8 @@
 #include "LeaderThread.hpp"
 
 #include <nanos6.h>
+#include <nanos6/bootstrap.h>
+
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"

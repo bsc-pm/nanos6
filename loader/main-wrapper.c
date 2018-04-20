@@ -20,16 +20,6 @@
 #include "api/nanos6/taskwait.h"
 
 
-#pragma GCC visibility push(default)
-
-// Function interception is no longer triggered when loading the actual runtime
-void nanos6_memory_allocation_interception_init();
-// The following function is called so that the runtime can prepare for library unloading
-void nanos6_memory_allocation_interception_fini();
-
-#pragma GCC visibility pop
-
-
 main_function_t *_nanos6_loader_wrapped_main = 0;
 
 
@@ -140,7 +130,8 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 		return 1;
 	}
 	
-	nanos6_memory_allocation_interception_init();
+	nanos6_loader_memory_allocation_interception_init();
+	nanos6_memory_allocation_interception_postinit();
 	
 	if (_nanos6_exit_with_error) {
 		return _nanos6_exit_with_error;
