@@ -28,6 +28,7 @@ SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES =
 nanos6includedir = $(includedir)/nanos6
 
 nanos6include_HEADERS = \
+	api/nanos6/api-check.h \
 	api/nanos6/blocking.h \
 	api/nanos6/bootstrap.h \
 	api/nanos6/constants.h \
@@ -120,6 +121,7 @@ if RESOLVE_SYMBOLS_USING_IFUNC
 symbol_resolution_header += loader/symbol-resolver/resolve.h
 symbol_resolution += \
 	loader/indirect-symbols/malloc.c \
+	loader/symbol-resolver/api-check.c \
 	loader/symbol-resolver/blocking.c \
 	loader/symbol-resolver/bootstrap.c \
 	loader/symbol-resolver/cpu-control.c \
@@ -145,6 +147,7 @@ endif
 if RESOLVE_SYMBOLS_USING_INDIRECTION
 symbol_resolution_header += loader/indirect-symbols/resolve.h
 symbol_resolution += \
+	loader/indirect-symbols/api-check.c \
 	loader/indirect-symbols/blocking.c \
 	loader/indirect-symbols/bootstrap.c \
 	loader/indirect-symbols/cpu-control.c \
@@ -302,6 +305,7 @@ common_sources = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
 	src/support/GlobalLock.cpp \
+	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
 	src/system/LeaderThread.cpp \

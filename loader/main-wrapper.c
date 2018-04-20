@@ -13,6 +13,7 @@
 #include "loader.h"
 #include "function-interception.h"
 #include "main-wrapper.h"
+#include "api/nanos6/api-check.h"
 #include "api/nanos6/bootstrap.h"
 #include "api/nanos6/library-mode.h"
 #include "api/nanos6/runtime-info.h"
@@ -115,6 +116,30 @@ static void main_completion_callback(void *args)
 
 
 int _nanos6_loader_main(int argc, char **argv, char **envp) {
+	const nanos6_api_versions_t apiVersions = {
+		.api_check_api_version = nanos6_api_check_api,
+		
+		.blocking_api_version = nanos6_blocking_api,
+		.bootstrap_api_version = nanos6_bootstrap_api,
+// 		.cuda_device_api_version = nanos6_cuda_device_api,
+		.final_api_version = nanos6_final_api,
+		.instantiation_api_version = nanos6_instantiation_api,
+		.library_mode_api_version = nanos6_library_mode_api,
+		.locking_api_version = nanos6_locking_api,
+		.polling_api_version = nanos6_polling_api,
+		.task_constraints_api_version = nanos6_task_constraints_api,
+		.task_execution_api_version = nanos6_task_execution_api,
+		.task_info_registration_api_version = nanos6_task_info_registration_api,
+		.taskloop_api_version = nanos6_taskloop_api,
+		.taskwait_api_version = nanos6_taskwait_api,
+		.utils_api_version = nanos6_utils_api
+	};
+	
+	if (nanos6_check_api_versions(&apiVersions) != 1) {
+		fprintf(stderr, "Error: this executable was compiled for a different Nanos6 version. Please recompile and link it.\n");
+		return 1;
+	}
+	
 	nanos6_memory_allocation_interception_init();
 	
 	if (_nanos6_exit_with_error) {
