@@ -64,10 +64,14 @@ static void *nanos6_loader_malloc(size_t size)
 		nanos6NextPrivateLoadingMemoryFreeBlock = nanos6PrivateLoadingMemoryBase;
 	}
 	
-	if ((nanos6NextPrivateLoadingMemoryFreeBlock + size) > (nanos6PrivateLoadingMemoryBase + MAX_PRIVATE_LOADING_MEMORY)) {
+	if ((nanos6NextPrivateLoadingMemoryFreeBlock + size + sizeof(size_t)) > (nanos6PrivateLoadingMemoryBase + MAX_PRIVATE_LOADING_MEMORY)) {
 		MEM_ALLOC_FAIL(size);
 		return NULL;
 	}
+	
+	size_t *sizePtr = (size_t *) nanos6NextPrivateLoadingMemoryFreeBlock;
+	nanos6NextPrivateLoadingMemoryFreeBlock += sizeof(size_t);
+	*sizePtr = size;
 	
 	void *result = nanos6NextPrivateLoadingMemoryFreeBlock;
 	nanos6NextPrivateLoadingMemoryFreeBlock += size;
@@ -252,8 +256,18 @@ void *calloc(size_t nmemb, size_t size)
 void *realloc(void *ptr, size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
-		MEM_ALLOC_FAIL(size);
-		return NULL;
+		size_t *size_ptr = ptr;
+		size_ptr--;
+		
+		if (*size_ptr >= size) {
+			return ptr;
+		} else {
+			void *result = malloc(size);
+			if (result != NULL) {
+				memcpy(result, ptr, *size_ptr);
+			}
+			return result;
+		}
 	} else if (nanos6MemoryFunctionsInitialized) {
 		return nanos6MemoryFunctions.realloc(ptr, size);
 	} else {
