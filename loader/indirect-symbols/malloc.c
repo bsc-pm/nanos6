@@ -161,12 +161,12 @@ static int nanos6_find_next_function_error_tracer(
 static void *nanos6_loader_find_next_function(void *ourFunction, char const *name, bool silentFailure)
 {
 	next_function_lookup_info_t nextFunctionLookup = { name, ourFunction, NULL, false };
-	__attribute__((unused)) int rc = dl_iterate_phdr(nanos6_find_next_function_iterator, (void *) &nextFunctionLookup);
+	nextFunctionLookup.result = dlsym(RTLD_NEXT, name);
 	
 	if (!silentFailure && (nextFunctionLookup.result == NULL)) {
 		fprintf(stderr, "Error resolving '%s'. Lookup trace follows:\n", name);
 		nextFunctionLookup.foundOurFunction = false;
-		rc = dl_iterate_phdr(nanos6_find_next_function_error_tracer, (void *) &nextFunctionLookup);
+		dl_iterate_phdr(nanos6_find_next_function_error_tracer, (void *) &nextFunctionLookup);
 		handle_error();
 		return NULL;
 	}
