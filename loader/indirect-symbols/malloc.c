@@ -76,7 +76,7 @@ static void *nanos6_loader_malloc(size_t size)
 }
 
 
-static void *nanos6_loader_free(__attribute__((unused)) void *ptr)
+static void nanos6_loader_free(__attribute__((unused)) void *ptr)
 {
 }
 
