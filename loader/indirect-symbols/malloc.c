@@ -139,30 +139,38 @@ static int nanos6_find_next_function_error_tracer(
 		char const *name = info->dlpi_name;
 		if (name[0] == 0) {
 			name = NULL;
-			fprintf(stderr, "\tChecking in main program\n");
+			fprintf(stderr, "\tMain program: ");
 		} else {
-			fprintf(stderr, "\tChecking in '%s'\n", info->dlpi_name);
+			fprintf(stderr, "\t%s: ", info->dlpi_name);
 		}
 		
 		void *handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
 		if (handle != NULL) {
 			void *current = dlsym(handle, lookupInfo->name);
 			if (current != NULL) {
+				Dl_info dlInfo;
+				int rc = dladdr(current, &dlInfo);
+				if (rc != 0) {
+					fprintf(stderr, "[%p] -> %s", current, dlInfo.dli_fname);
+				} else {
+					fprintf(stderr, "[%p] -> ???", current);
+				}
+				
 				if (lookupInfo->foundOurFunction) {
-					fprintf(stderr, "\t\tFound '%s' after our own version\n", lookupInfo->name);
+					fprintf(stderr, " after nanos6 version\n");
 					lookupInfo->result = current;
 				} else if (current == lookupInfo->ourFunction) {
-					fprintf(stderr, "\t\tFound our own version of '%s'\n", lookupInfo->name);
+					fprintf(stderr, " nanos6 version\n");
 					lookupInfo->foundOurFunction = true;
 				} else {
-					fprintf(stderr, "\t\tFound '%s' before our own version, so we are skipping it\n", lookupInfo->name);
+					fprintf(stderr, " before nanos6 version\n");
 				}
 			} else {
-				fprintf(stderr, "\t\tDid not find '%s' in this library\n", lookupInfo->name);
+				fprintf(stderr, "does not contain the symbol\n");
 			}
 			dlclose(handle);
 		} else {
-			fprintf(stderr, "\t\tCould not load '%s' to look up symbol '%s': %s\n", info->dlpi_name, lookupInfo->name, dlerror());
+			fprintf(stderr, "%s\n", dlerror());
 		}
 	}
 	
@@ -176,9 +184,18 @@ static void *nanos6_loader_find_next_function(void *ourFunction, char const *nam
 	nextFunctionLookup.result = dlsym(RTLD_NEXT, name);
 	
 	if (!silentFailure && (nextFunctionLookup.result == NULL)) {
-		fprintf(stderr, "Nanos6 loader: Error resolving '%s': %s. Lookup trace follows:\n", name, dlerror());
+		char const *error = dlerror();
+		if (error == NULL) {
+			fprintf(stderr, "Nanos6 loader: Error resolving '%s'.\n", name);
+		} else {
+			fprintf(stderr, "Nanos6 loader: Error resolving '%s': %s.\n", name, error);
+		}
+		fprintf(stderr, "\tThis happens if the library that provides that function is linked before Nanos6.\n");
+		fprintf(stderr, "\tFor instance the C library.\n");
+		fprintf(stderr, "Lookup trace follows:\n");
 		nextFunctionLookup.foundOurFunction = false;
 		dl_iterate_phdr(nanos6_find_next_function_error_tracer, (void *) &nextFunctionLookup);
+		fprintf(stderr, "\n");
 		handle_error();
 		return NULL;
 	}
@@ -187,41 +204,10 @@ static void *nanos6_loader_find_next_function(void *ourFunction, char const *nam
 }
 
 
-static void nanos6_loader_resolve_next_memory_allocation_functions()
-{
-	if (nextMemoryFunctionsInitialized) {
-		return;
-	}
-	
-	nanos6LoaderInMemoryInitialization = 1;
-	
-	nextMemoryFunctions.malloc = nanos6_loader_find_next_function(malloc, "malloc", 0);
-	nextMemoryFunctions.free = nanos6_loader_find_next_function(free, "free", 0);
-	nextMemoryFunctions.calloc = nanos6_loader_find_next_function(calloc, "calloc", 0);
-	nextMemoryFunctions.realloc = nanos6_loader_find_next_function(realloc, "realloc", 0);
-#if HAVE_REALLOCARRAY
-	nextMemoryFunctions.reallocarray = nanos6_loader_find_next_function(reallocarray, "reallocarray", 0);
-#endif
-	nextMemoryFunctions.posix_memalign = nanos6_loader_find_next_function(posix_memalign, "posix_memalign", 0);
-#if HAVE_ALIGNED_ALLOC
-	nextMemoryFunctions.aligned_alloc = nanos6_loader_find_next_function(aligned_alloc, "aligned_alloc", 0);
-#endif
-	nextMemoryFunctions.valloc = nanos6_loader_find_next_function(valloc, "valloc", 0);
-	nextMemoryFunctions.memalign = nanos6_loader_find_next_function(memalign, "memalign", 0);
-	nextMemoryFunctions.pvalloc = nanos6_loader_find_next_function(pvalloc, "pvalloc", 0);
-	
-	nanos6LoaderInMemoryInitialization = 0;
-	
-	nextMemoryFunctionsInitialized = 1;
-}
+static void nanos6_loader_resolve_next_memory_allocation_functions();
 
 
-
-
-#pragma GCC visibility push(default)
-
-
-void *malloc(size_t size)
+static void *nanos6_loader_intercepted_malloc(size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		return nanos6_loader_malloc(size);
@@ -234,7 +220,7 @@ void *malloc(size_t size)
 }
 
 
-void free(void *ptr)
+static void nanos6_loader_intercepted_free(void *ptr)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		nanos6_loader_free(ptr);
@@ -252,7 +238,7 @@ void free(void *ptr)
 }
 
 
-void *calloc(size_t nmemb, size_t size)
+static void *nanos6_loader_intercepted_calloc(size_t nmemb, size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		return nanos6_loader_malloc(nmemb*size);
@@ -265,7 +251,7 @@ void *calloc(size_t nmemb, size_t size)
 }
 
 
-void *realloc(void *ptr, size_t size)
+static void *nanos6_loader_intercepted_realloc(void *ptr, size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		size_t *size_ptr = ptr;
@@ -289,7 +275,7 @@ void *realloc(void *ptr, size_t size)
 }
 
 
-void *valloc(size_t size)
+static void *nanos6_loader_intercepted_valloc(size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		MEM_ALLOC_FAIL(size);
@@ -303,7 +289,7 @@ void *valloc(size_t size)
 }
 
 
-void *memalign(size_t alignment, size_t size)
+static void *nanos6_loader_intercepted_memalign(size_t alignment, size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		MEM_ALLOC_FAIL(size);
@@ -317,7 +303,7 @@ void *memalign(size_t alignment, size_t size)
 }
 
 
-void *pvalloc(size_t size)
+static void *nanos6_loader_intercepted_pvalloc(size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		MEM_ALLOC_FAIL(size);
@@ -331,7 +317,7 @@ void *pvalloc(size_t size)
 }
 
 
-int posix_memalign(void **memptr, size_t alignment, size_t size)
+static int nanos6_loader_intercepted_posix_memalign(void **memptr, size_t alignment, size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		MEM_ALLOC_FAIL(size);
@@ -347,7 +333,7 @@ int posix_memalign(void **memptr, size_t alignment, size_t size)
 
 
 #if HAVE_ALIGNED_ALLOC
-void *aligned_alloc(size_t alignment, size_t size)
+static void *nanos6_loader_intercepted_aligned_alloc(size_t alignment, size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		MEM_ALLOC_FAIL(size);
@@ -363,7 +349,7 @@ void *aligned_alloc(size_t alignment, size_t size)
 
 
 #if HAVE_REALLOCARRAY
-void *reallocarray(void *ptr, size_t nmemb, size_t size)
+static void *nanos6_loader_intercepted_reallocarray(void *ptr, size_t nmemb, size_t size)
 {
 	if (nanos6LoaderInMemoryInitialization) {
 		MEM_ALLOC_FAIL(size);
@@ -376,6 +362,56 @@ void *reallocarray(void *ptr, size_t nmemb, size_t size)
 	}
 }
 #endif
+
+
+static void nanos6_loader_resolve_next_memory_allocation_functions()
+{
+	if (nextMemoryFunctionsInitialized) {
+		return;
+	}
+	
+	nanos6LoaderInMemoryInitialization = 1;
+	
+	nextMemoryFunctions.malloc = nanos6_loader_find_next_function(nanos6_loader_intercepted_malloc, "malloc", 0);
+	nextMemoryFunctions.free = nanos6_loader_find_next_function(nanos6_loader_intercepted_free, "free", 0);
+	nextMemoryFunctions.calloc = nanos6_loader_find_next_function(nanos6_loader_intercepted_calloc, "calloc", 0);
+	nextMemoryFunctions.realloc = nanos6_loader_find_next_function(nanos6_loader_intercepted_realloc, "realloc", 0);
+#if HAVE_REALLOCARRAY
+	nextMemoryFunctions.reallocarray = nanos6_loader_find_next_function(nanos6_loader_intercepted_reallocarray, "reallocarray", 0);
+#endif
+	nextMemoryFunctions.posix_memalign = nanos6_loader_find_next_function(nanos6_loader_intercepted_posix_memalign, "posix_memalign", 0);
+#if HAVE_ALIGNED_ALLOC
+	nextMemoryFunctions.aligned_alloc = nanos6_loader_find_next_function(nanos6_loader_intercepted_aligned_alloc, "aligned_alloc", 0);
+#endif
+	nextMemoryFunctions.valloc = nanos6_loader_find_next_function(nanos6_loader_intercepted_valloc, "valloc", 0);
+	nextMemoryFunctions.memalign = nanos6_loader_find_next_function(nanos6_loader_intercepted_memalign, "memalign", 0);
+	nextMemoryFunctions.pvalloc = nanos6_loader_find_next_function(nanos6_loader_intercepted_pvalloc, "pvalloc", 0);
+	
+	nanos6LoaderInMemoryInitialization = 0;
+	
+	nextMemoryFunctionsInitialized = 1;
+}
+
+
+#pragma GCC visibility push(default)
+
+
+void *malloc(size_t size) __attribute__((alias("nanos6_loader_intercepted_malloc")));
+void free(void *ptr) __attribute__((alias("nanos6_loader_intercepted_free")));
+void *calloc(size_t nmemb, size_t size) __attribute__((alias("nanos6_loader_intercepted_calloc")));
+void *realloc(void *ptr, size_t size) __attribute__((alias("nanos6_loader_intercepted_realloc")));
+void *valloc(size_t size) __attribute__((alias("nanos6_loader_intercepted_valloc")));
+void *memalign(size_t alignment, size_t size) __attribute__((alias("nanos6_loader_intercepted_memalign")));
+void *pvalloc(size_t size) __attribute__((alias("nanos6_loader_intercepted_pvalloc")));
+int posix_memalign(void **memptr, size_t alignment, size_t size) __attribute__((alias("nanos6_loader_intercepted_posix_memalign")));
+#if HAVE_ALIGNED_ALLOC
+void *aligned_alloc(size_t alignment, size_t size) __attribute__((alias("nanos6_loader_intercepted_aligned_alloc")));
+#endif
+#if HAVE_REALLOCARRAY
+void *reallocarray(void *ptr, size_t nmemb, size_t size) __attribute__((alias("nanos6_loader_intercepted_reallocarray")));
+#endif
+
+
 
 
 void nanos6_loader_memory_allocation_interception_init()
