@@ -101,7 +101,12 @@ static int nanos6_find_next_function_iterator(
 	if (lookupInfo->result != NULL) {
 		// We already have a result
 	} else {
-		void *handle = dlopen(info->dlpi_name, RTLD_LAZY | RTLD_LOCAL);
+		char const *name = info->dlpi_name;
+		if (name[0] == 0) {
+			name = NULL;
+		}
+		
+		void *handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
 		if (handle != NULL) {
 			void *current = dlsym(handle, lookupInfo->name);
 			if (current != NULL) {
@@ -115,7 +120,7 @@ static int nanos6_find_next_function_iterator(
 			}
 			dlclose(handle);
 		} else {
-			fprintf(stderr, "Warning: Could not load '%s' to look up symbol '%s'\n", info->dlpi_name, lookupInfo->name);
+			fprintf(stderr, "Nanos6 loader: Warning: Could not load '%s' to look up symbol '%s': %s\n", info->dlpi_name, lookupInfo->name, dlerror());
 		}
 	}
 	
@@ -131,8 +136,15 @@ static int nanos6_find_next_function_error_tracer(
 	if (lookupInfo->result != NULL) {
 		// We already have a result
 	} else {
-		fprintf(stderr, "\tChecking in '%s'\n", info->dlpi_name);
-		void *handle = dlopen(info->dlpi_name, RTLD_LAZY | RTLD_LOCAL);
+		char const *name = info->dlpi_name;
+		if (name[0] == 0) {
+			name = NULL;
+			fprintf(stderr, "\tChecking in main program\n");
+		} else {
+			fprintf(stderr, "\tChecking in '%s'\n", info->dlpi_name);
+		}
+		
+		void *handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
 		if (handle != NULL) {
 			void *current = dlsym(handle, lookupInfo->name);
 			if (current != NULL) {
@@ -150,7 +162,7 @@ static int nanos6_find_next_function_error_tracer(
 			}
 			dlclose(handle);
 		} else {
-			fprintf(stderr, "\t\tCould not load '%s' to look up symbol '%s'\n", info->dlpi_name, lookupInfo->name);
+			fprintf(stderr, "\t\tCould not load '%s' to look up symbol '%s': %s\n", info->dlpi_name, lookupInfo->name, dlerror());
 		}
 	}
 	
@@ -164,7 +176,7 @@ static void *nanos6_loader_find_next_function(void *ourFunction, char const *nam
 	nextFunctionLookup.result = dlsym(RTLD_NEXT, name);
 	
 	if (!silentFailure && (nextFunctionLookup.result == NULL)) {
-		fprintf(stderr, "Error resolving '%s'. Lookup trace follows:\n", name);
+		fprintf(stderr, "Nanos6 loader: Error resolving '%s': %s. Lookup trace follows:\n", name, dlerror());
 		nextFunctionLookup.foundOurFunction = false;
 		dl_iterate_phdr(nanos6_find_next_function_error_tracer, (void *) &nextFunctionLookup);
 		handle_error();
