@@ -4,8 +4,8 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef ENVIORNMENT_VARIABLE_HPP
-#define ENVIORNMENT_VARIABLE_HPP
+#ifndef ENVIRONMENT_VARIABLE_HPP
+#define ENVIRONMENT_VARIABLE_HPP
 
 
 #include <cstdlib>
@@ -81,4 +81,4 @@ public:
 };
 
 
-#endif // ENVIORNMENT_VARIABLE_HPP
+#endif // ENVIRONMENT_VARIABLE_HPP
