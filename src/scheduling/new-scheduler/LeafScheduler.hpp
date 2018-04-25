@@ -29,6 +29,8 @@ private:
 	
 	std::atomic<bool> _idle;
 	
+	SpinLock _globalLock;
+	
 	inline void handleQueueOverflow()
 	{
 		std::vector<Task *> taskBatch = _queue->getTaskBatch(_maxQueueThreshold - _minQueueThreshold);
@@ -71,10 +73,18 @@ public:
 	{
 		assert(taskBatch.size() > 0);
 		
-		_pollingSlot.setTask(taskBatch.back());
+		Task *task = taskBatch.back();
 		taskBatch.pop_back();
-
-		if (_idle) {
+		
+		bool idle;
+		
+		{
+			std::lock_guard<SpinLock> guard(_globalLock);
+			_pollingSlot.setTask(task);
+			idle = _idle;
+		}
+		
+		if (idle) {
 			ThreadManager::resumeIdle((CPU *)_computePlace);
 		}
 		
@@ -114,8 +124,12 @@ public:
 		
 		if (task == nullptr) {
 			// Timedout
-			// Mark as idle. Where?
-			_idle = true;
+			// Mark as idle. Here, and somewhere else?
+			std::lock_guard<SpinLock> guard(_globalLock);
+			task = _pollingSlot.getTask();
+			if (task == nullptr) {
+				_idle = true;
+			}
 		}
 		
 		return task;
