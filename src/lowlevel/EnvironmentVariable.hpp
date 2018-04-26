@@ -14,6 +14,34 @@
 #include <string>
 
 
+class StringifiedBool
+{
+private:
+	bool _value;
+	
+public:
+	StringifiedBool()
+		: _value(false)
+	{
+	}
+	
+	StringifiedBool(bool value)
+		: _value(value)
+	{
+	}
+	
+	StringifiedBool(StringifiedBool const &other)
+		: _value(other._value)
+	{
+	}
+	
+	operator bool() const
+	{
+		return _value;
+	}
+};
+
+
 //! \brief A class to read environment variables
 template <typename T>
 class EnvironmentVariable {
@@ -79,6 +107,59 @@ public:
 	}
 	
 };
+
+
+template <>
+class EnvironmentVariable<StringifiedBool> {
+private:
+	StringifiedBool _value;
+	bool _isPresent;
+	std::string _name;
+	
+public:
+	EnvironmentVariable(std::string const &name, StringifiedBool defaultValue = StringifiedBool())
+		: _value(defaultValue), _name(name)
+	{
+		char const *valueString = getenv(name.c_str());
+		if (valueString != nullptr) {
+			if (std::string("true") == valueString) {
+				_value = true;
+				_isPresent = true;
+			} else if (std::string("false") == valueString) {
+				_value = false;
+				_isPresent = true;
+			} else {
+				std::cerr << "Warning: invalid value for environment variable " << name << ". Defaulting to " << defaultValue << "." << std::endl;
+				_isPresent = false;
+			}
+		} else {
+			_isPresent = false;
+		}
+	}
+	
+	inline bool isPresent() const
+	{
+		return _isPresent;
+	}
+	
+	inline StringifiedBool getValue() const
+	{
+		return _value;
+	}
+	
+	operator StringifiedBool() const
+	{
+		return _value;
+	}
+	
+	inline void setValue(StringifiedBool value, bool makePresent=false)
+	{
+		_value = value;
+		_isPresent |= makePresent;
+	}
+	
+};
+
 
 
 #endif // ENVIRONMENT_VARIABLE_HPP
