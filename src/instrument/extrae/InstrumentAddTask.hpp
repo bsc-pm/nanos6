@@ -42,7 +42,7 @@ namespace Instrument {
 		ce.HardwareCounters = 0;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 1;
+		ce.nEvents = 2;
 		ce.nCommunications = 0;
 		
 		if (_emitGraph) {
@@ -59,9 +59,12 @@ namespace Instrument {
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_CREATION;
 		
+		ce.Types[1] = (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION;
+		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
+		
 		if (!_sampleTaskCount) {
-			ce.Types[1] = (extrae_type_t) EventType::LIVE_TASKS;
-			ce.Values[1] = (extrae_value_t) liveTasks;
+			ce.Types[2] = (extrae_type_t) EventType::LIVE_TASKS;
+			ce.Values[2] = (extrae_value_t) liveTasks;
 		}
 		
 		if (ce.nCommunications > 0) {
@@ -109,7 +112,7 @@ namespace Instrument {
 		ce.HardwareCounters = 0;
 		ce.Callers = 0;
 		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 1;
+		ce.nEvents = 2;
 		ce.nCommunications = 0;
 		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
@@ -117,6 +120,9 @@ namespace Instrument {
 		
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
+		
+		ce.Types[1] = (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION;
+		ce.Values[1] = (extrae_value_t) nullptr;
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();

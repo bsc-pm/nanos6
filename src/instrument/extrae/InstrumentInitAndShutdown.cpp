@@ -169,7 +169,8 @@ namespace Instrument {
 		// Initialize extrae library
 		Extrae_init();
 		
-		Extrae_register_codelocation_type((extrae_type_t) EventType::FUNCTION_NAME, (extrae_type_t) EventType::CODE_LOCATION, (char *) "User Function Name", (char *) "User Function Location");
+		Extrae_register_codelocation_type((extrae_type_t) EventType::RUNNING_FUNCTION_NAME, (extrae_type_t) EventType::RUNNING_CODE_LOCATION, (char *) "Running Name", (char *) "Running Location");
+		Extrae_register_codelocation_type((extrae_type_t) EventType::INSTANTIATING_FUNCTION_NAME, (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION, (char *) "Instantiating Name", (char *) "Instantiating Location");
 		Extrae_define_event_type((extrae_type_t) EventType::TASK_INSTANCE_ID, "Task instance", 0, nullptr, nullptr);
 		Extrae_define_event_type((extrae_type_t) EventType::NESTING_LEVEL, "Task nesting level", 0, nullptr, nullptr);
 		

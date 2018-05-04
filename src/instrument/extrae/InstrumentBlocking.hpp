@@ -42,7 +42,7 @@ namespace Instrument {
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_SYNCHRONIZATION;
 		
-		ce.Types[1] = (extrae_type_t) EventType::CODE_LOCATION;
+		ce.Types[1] = (extrae_type_t) EventType::RUNNING_CODE_LOCATION;
 		ce.Values[1] = (extrae_value_t) nullptr;
 		
 		ce.Types[2] = (extrae_type_t) EventType::NESTING_LEVEL;
