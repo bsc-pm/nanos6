@@ -177,6 +177,8 @@ namespace Instrument {
 		Extrae_define_event_type((extrae_type_t) EventType::READY_TASKS, "Number of ready tasks", 0, nullptr, nullptr);
 		Extrae_define_event_type((extrae_type_t) EventType::LIVE_TASKS, "Number of live tasks", 0, nullptr, nullptr);
 		
+		Extrae_define_event_type((extrae_type_t) EventType::PRIORITY, "Task priority", 0, nullptr, nullptr);
+		
 		// Register the events for the backtrace
 		if (_sampleBacktraceDepth > 0) {
 			for (int i = 0; i < _sampleBacktraceDepth; i++) {
