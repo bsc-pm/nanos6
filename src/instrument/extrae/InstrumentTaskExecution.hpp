@@ -44,19 +44,19 @@ namespace Instrument {
 			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
 		}
 		
-		ce.Types[0] = _runtimeState;
+		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
-		ce.Types[1] = _codeLocation;
+		ce.Types[1] = (extrae_type_t) EventType::CODE_LOCATION;
 		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->implementations[0].run;
 		
-		ce.Types[2] = _nestingLevel;
+		ce.Types[2] = (extrae_type_t) EventType::NESTING_LEVEL;
 		ce.Values[2] = (extrae_value_t) taskId._taskInfo->_nestingLevel;
 		
-		ce.Types[3] = _taskInstanceId;
+		ce.Types[3] = (extrae_type_t) EventType::TASK_INSTANCE_ID;
 		ce.Values[3] = (extrae_value_t) taskId._taskInfo->_taskId;
 		
-		ce.Types[4] = _priorityEventType;
+		ce.Types[4] = (extrae_type_t) EventType::PRIORITY;
 		ce.Values[4] = (extrae_value_t) taskId._taskInfo->_priority;
 		
 		if (_emitGraph) {
@@ -75,7 +75,7 @@ namespace Instrument {
 		
 		size_t readyTasks = --_readyTasks;
 		if (!_sampleTaskCount) {
-			ce.Types[5] = _readyTasksEventType;
+			ce.Types[5] = (extrae_type_t) EventType::READY_TASKS;
 			ce.Values[5] = (extrae_value_t) readyTasks;
 			
 			// This counter is not so reliable, so try to skip underflows
@@ -125,24 +125,24 @@ namespace Instrument {
 			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
 		}
 		
-		ce.Types[0] = _runtimeState;
+		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
-		ce.Types[1] = _codeLocation;
+		ce.Types[1] = (extrae_type_t) EventType::CODE_LOCATION;
 		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->implementations[0].run;
 		
-		ce.Types[2] = _nestingLevel;
+		ce.Types[2] = (extrae_type_t) EventType::NESTING_LEVEL;
 		ce.Values[2] = (extrae_value_t) taskId._taskInfo->_nestingLevel;
 		
-		ce.Types[3] = _taskInstanceId;
+		ce.Types[3] = (extrae_type_t) EventType::TASK_INSTANCE_ID;
 		ce.Values[3] = (extrae_value_t) taskId._taskInfo->_taskId;
 		
-		ce.Types[4] = _priorityEventType;
+		ce.Types[4] = (extrae_type_t) EventType::PRIORITY;
 		ce.Values[4] = (extrae_value_t) taskId._taskInfo->_priority;
 		
 		size_t readyTasks = --_readyTasks;
 		if (!_sampleTaskCount) {
-			ce.Types[5] = _readyTasksEventType;
+			ce.Types[5] = (extrae_type_t) EventType::READY_TASKS;
 			ce.Values[5] = (extrae_value_t) readyTasks;
 			
 			// This counter is not so reliable, so try to skip underflows
@@ -212,19 +212,19 @@ namespace Instrument {
 			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
 		}
 		
-		ce.Types[0] = _runtimeState;
+		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_IDLE;
 		
-		ce.Types[1] = _codeLocation;
+		ce.Types[1] = (extrae_type_t) EventType::CODE_LOCATION;
 		ce.Values[1] = (extrae_value_t) nullptr;
 		
-		ce.Types[2] = _nestingLevel;
+		ce.Types[2] = (extrae_type_t) EventType::NESTING_LEVEL;
 		ce.Values[2] = (extrae_value_t) nullptr;
 		
-		ce.Types[3] = _taskInstanceId;
+		ce.Types[3] = (extrae_type_t) EventType::TASK_INSTANCE_ID;
 		ce.Values[3] = (extrae_value_t) nullptr;
 		
-		ce.Types[4] = _priorityEventType;
+		ce.Types[4] = (extrae_type_t) EventType::PRIORITY;
 		ce.Values[4] = (extrae_value_t) nullptr;
 		
 		if (parentInTaskwait != 0) {
@@ -237,7 +237,7 @@ namespace Instrument {
 		
 		size_t liveTasks = --_liveTasks;
 		if (!_sampleTaskCount) {
-			ce.Types[5] = _liveTasksEventType;
+			ce.Types[5] = (extrae_type_t) EventType::LIVE_TASKS;
 			ce.Values[5] = (extrae_value_t) liveTasks;
 			
 			// This counter is not so reliable, so try to skip underflows

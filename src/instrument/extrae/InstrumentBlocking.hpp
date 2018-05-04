@@ -39,19 +39,19 @@ namespace Instrument {
 			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
 		}
 		
-		ce.Types[0] = _runtimeState;
+		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_SYNCHRONIZATION;
 		
-		ce.Types[1] = _codeLocation;
+		ce.Types[1] = (extrae_type_t) EventType::CODE_LOCATION;
 		ce.Values[1] = (extrae_value_t) nullptr;
 		
-		ce.Types[2] = _nestingLevel;
+		ce.Types[2] = (extrae_type_t) EventType::NESTING_LEVEL;
 		ce.Values[2] = (extrae_value_t) nullptr;
 		
-		ce.Types[3] = _taskInstanceId;
+		ce.Types[3] = (extrae_type_t) EventType::TASK_INSTANCE_ID;
 		ce.Values[3] = (extrae_value_t) nullptr;
 		
-		ce.Types[4] = _priorityEventType;
+		ce.Types[4] = (extrae_type_t) EventType::PRIORITY;
 		ce.Values[4] = (extrae_value_t) nullptr;
 		
 		if (_emitGraph) {

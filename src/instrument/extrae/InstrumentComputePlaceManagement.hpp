@@ -51,7 +51,7 @@ namespace Instrument {
 			ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 			ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 			
-			ce.Types[0] = _runtimeState;
+			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_NOT_RUNNING;
 			
 			Extrae_emit_CombinedEvents ( &ce );
@@ -72,7 +72,7 @@ namespace Instrument {
 			ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 			ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 			
-			ce.Types[0] = _runtimeState;
+			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_IDLE;
 			
 			Extrae_emit_CombinedEvents ( &ce );
@@ -93,7 +93,7 @@ namespace Instrument {
 			ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 			ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 			
-			ce.Types[0] = _runtimeState;
+			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_SHUTDOWN;
 			
 			Extrae_emit_CombinedEvents ( &ce );

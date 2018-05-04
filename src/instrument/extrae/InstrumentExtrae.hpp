@@ -65,24 +65,28 @@ namespace Instrument {
 	extern const EnvironmentVariable<bool>           _sampleTaskCount;
 	extern const EnvironmentVariable<bool>           _emitGraph;
 	
-	enum event_types {
+	enum struct EventType {
 		// OmpSs common
-		_runtimeState = 9000000,     //!< Runtime state (extrae event type)
-		
-		_taskInstanceId = 9200002,
-		_functionName = 9200011,     //!< Task function name
-		_codeLocation = 9200021,     //!< Task code location
-		_readyTasksEventType = 9200022,
-		_liveTasksEventType = 9200023,
-		_priorityEventType = 9200038,
-		
-		// Nanos6-specific (for now)
-		_nestingLevel = 9500001,     //!< Nesting level
-		
-		_tracingPointBase = 9600000,
+			RUNTIME_STATE = 9000000,
+			
+			TASK_INSTANCE_ID = 9200002,
+			FUNCTION_NAME = 9200011,
+			CODE_LOCATION = 9200021,
+			
+			READY_TASKS = 9200022,
+			LIVE_TASKS = 9200023,
+			
+			PRIORITY = 9200038,
+			
+		// [9500000:9699999] -- Nanos6-specific
+			// 9500XXXX -- Nanos6 Tasking
+				NESTING_LEVEL = 9500001,
+			
+			// 96XXXXX -- Tracing points
+				TRACING_POINT_BASE = 9600000,
 		
 		// Common to extrae
-		_samplingEventType = 30000000,
+			SAMPLING = 30000000,
 	};
 	
 	

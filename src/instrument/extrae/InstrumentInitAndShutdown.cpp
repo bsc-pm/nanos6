@@ -96,7 +96,7 @@ namespace Instrument {
 			_sampleBacktraceDepth,
 			/* Skip */ 3,
 			[&](void *address, int currentFrame) {
-				ce.Types[currentFrame] = _samplingEventType + currentFrame;
+				ce.Types[currentFrame] = (int) EventType::SAMPLING + currentFrame;
 				ce.Values[currentFrame] = (extrae_value_t) address;
 				
 				if (threadLocal._inMemoryAllocation == 0) {
@@ -169,17 +169,17 @@ namespace Instrument {
 		// Initialize extrae library
 		Extrae_init();
 		
-		Extrae_register_codelocation_type( _functionName, _codeLocation, (char *) "User Function Name", (char *) "User Function Location" );
-		Extrae_define_event_type(_taskInstanceId, "Task instance", 0, nullptr, nullptr);
-		Extrae_define_event_type(_nestingLevel, "Task nesting level", 0, nullptr, nullptr);
+		Extrae_register_codelocation_type((extrae_type_t) EventType::FUNCTION_NAME, (extrae_type_t) EventType::CODE_LOCATION, (char *) "User Function Name", (char *) "User Function Location");
+		Extrae_define_event_type((extrae_type_t) EventType::TASK_INSTANCE_ID, "Task instance", 0, nullptr, nullptr);
+		Extrae_define_event_type((extrae_type_t) EventType::NESTING_LEVEL, "Task nesting level", 0, nullptr, nullptr);
 		
-		Extrae_define_event_type(_readyTasksEventType, "Number of ready tasks", 0, nullptr, nullptr);
-		Extrae_define_event_type(_liveTasksEventType, "Number of live tasks", 0, nullptr, nullptr);
+		Extrae_define_event_type((extrae_type_t) EventType::READY_TASKS, "Number of ready tasks", 0, nullptr, nullptr);
+		Extrae_define_event_type((extrae_type_t) EventType::LIVE_TASKS, "Number of live tasks", 0, nullptr, nullptr);
 		
 		// Register the events for the backtrace
 		if (_sampleBacktraceDepth > 0) {
 			for (int i = 0; i < _sampleBacktraceDepth; i++) {
-				extrae_type_t functionEventType = _samplingEventType + i;
+				extrae_type_t functionEventType = (extrae_type_t) EventType::SAMPLING + i;
 				extrae_type_t locationEventType = functionEventType + 100;
 				
 				std::ostringstream ossF, ossL;
@@ -200,7 +200,7 @@ namespace Instrument {
 			for (i = 0; i < NANOS_EVENT_STATE_TYPES; i++) {
 				values[i] = i;
 			}
-			Extrae_define_event_type(_runtimeState, "Runtime state", NANOS_EVENT_STATE_TYPES, values, _eventStateValueStr);
+			Extrae_define_event_type((extrae_type_t) EventType::RUNTIME_STATE, "Runtime state", NANOS_EVENT_STATE_TYPES, values, _eventStateValueStr);
 		}
 		
 		// Thread information callbacks
@@ -239,12 +239,12 @@ namespace Instrument {
 		
 		// Register any tracing point that arrived too early
 		for (auto &p : _delayedNumericTracingPoints) {
-			Extrae_define_event_type(_tracingPointBase + p.first._type, p.second.c_str(), 0, nullptr, nullptr);
+			Extrae_define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + p.first._type, p.second.c_str(), 0, nullptr, nullptr);
 		}
 		for (auto &p : _delayedScopeTracingPoints) {
 			extrae_value_t values[2] = {0, 1};
 			char const *valueDescriptions[2] = {p.second._startDescription.c_str(), p.second._endDescription.c_str()};
-			Extrae_define_event_type(_tracingPointBase + p.first._type, p.second._name.c_str(), 2, values, valueDescriptions);
+			Extrae_define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + p.first._type, p.second._name.c_str(), 2, values, valueDescriptions);
 		}
 		for (auto &p : _delayedEnumeratedTracingPoints) {
 			extrae_value_t values[p.second._valueDescriptions.size()];
@@ -256,7 +256,7 @@ namespace Instrument {
 			}
 			
 			Extrae_define_event_type(
-				_tracingPointBase + p.first._type, p.second._name.c_str(),
+				(extrae_type_t) EventType::TRACING_POINT_BASE + p.first._type, p.second._name.c_str(),
 				p.second._valueDescriptions.size(), values, extraeValueDescriptions
 			);
 		}

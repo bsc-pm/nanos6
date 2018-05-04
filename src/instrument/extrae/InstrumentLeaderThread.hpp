@@ -27,9 +27,9 @@ namespace Instrument {
 			ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 			ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 			
-			ce.Types[0] = _readyTasksEventType;
+			ce.Types[0] = (extrae_type_t) EventType::READY_TASKS;
 			ce.Values[0] = (extrae_value_t) _readyTasks;
-			ce.Types[1] = _liveTasksEventType;
+			ce.Types[1] = (extrae_type_t) EventType::LIVE_TASKS;
 			ce.Values[1] = (extrae_value_t) _liveTasks;
 			
 			
