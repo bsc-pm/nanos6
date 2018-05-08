@@ -9,12 +9,20 @@
 
 #pragma GCC visibility push(default)
 
-enum nanos6_library_mode_api_t { nanos6_library_mode_api = 1 };
+enum nanos6_library_mode_api_t { nanos6_library_mode_api = 2 };
 
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+//! \brief Initialize the runtime in library mode
+//! 
+//! \returns NULL if successful, otherwise a string that describes the error
+//! 
+//! NOTE: this function is not defined in the loader. Instead it is defined in nanos6-library-mode.o which
+//! needs to be linked with the application to correctly check if the API versions match.
+__attribute__ ((used)) char const * nanos6_library_mode_init();
 
 
 //! \brief Spawn asynchronously a function

@@ -69,8 +69,8 @@ lib_LTLIBRARIES = \
 	libnanos6-verbose-debug.la
 
 
-noinst_LIBRARIES = libnanos6-main-wrapper.a
-lib_OBJECTS = nanos6-main-wrapper.o
+noinst_LIBRARIES = libnanos6-main-wrapper.a libnanos6-library-mode.a
+lib_OBJECTS = nanos6-main-wrapper.o nanos6-library-mode.o
 
 
 AM_V_LD = $(am__v_LD_@AM_V@)
@@ -109,6 +109,18 @@ libnanos6_main_wrapper_a_SOURCES = \
 
 nanos6-main-wrapper.o: libnanos6-main-wrapper.a
 	$(AM_V_LD)$(LD) -r --whole-archive libnanos6-main-wrapper.a -o nanos6-main-wrapper.o
+
+
+libnanos6_library_mode_a_SOURCES = \
+	$(library_interception) \
+	loader/api-versions.c \
+	loader/api-versions.h \
+	loader/device_strings.c \
+	loader/library-mode-init.c
+
+
+nanos6-library-mode.o: libnanos6-library-mode.a
+	$(AM_V_LD)$(LD) -r --whole-archive libnanos6-library-mode.a -o nanos6-library-mode.o
 
 
 #
