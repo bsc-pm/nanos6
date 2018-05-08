@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "api-versions.h"
 #include "loader.h"
 #include "function-interception.h"
 #include "main-wrapper.h"
@@ -106,40 +107,26 @@ static void main_completion_callback(void *args)
 
 
 int _nanos6_loader_main(int argc, char **argv, char **envp) {
-	const nanos6_api_versions_t apiVersions = {
-		.api_check_api_version = nanos6_api_check_api,
+	if (nanos6_check_api_versions(&__user_code_expected_nanos6_api_versions) != 1) {
+		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "This executable was compiled for a different version of Nanos6. Please recompile and relink it.");
+		_nanos6_exit_with_error = 1;
 		
-		.blocking_api_version = nanos6_blocking_api,
-		.bootstrap_api_version = nanos6_bootstrap_api,
-// 		.cuda_device_api_version = nanos6_cuda_device_api,
-		.final_api_version = nanos6_final_api,
-		.instantiation_api_version = nanos6_instantiation_api,
-		.library_mode_api_version = nanos6_library_mode_api,
-		.locking_api_version = nanos6_locking_api,
-		.polling_api_version = nanos6_polling_api,
-		.task_constraints_api_version = nanos6_task_constraints_api,
-		.task_execution_api_version = nanos6_task_execution_api,
-		.task_info_registration_api_version = nanos6_task_info_registration_api,
-		.taskloop_api_version = nanos6_taskloop_api,
-		.taskwait_api_version = nanos6_taskwait_api,
-		.utils_api_version = nanos6_utils_api
-	};
-	
-	if (nanos6_check_api_versions(&apiVersions) != 1) {
-		fprintf(stderr, "Error: this executable was compiled for a different Nanos6 version. Please recompile and link it.\n");
-		return 1;
+		fprintf(stderr, "Error: %s\n", _nanos6_error_text);
+		return _nanos6_exit_with_error;
 	}
 	
 	nanos6_loader_memory_allocation_interception_init();
 	nanos6_memory_allocation_interception_postinit();
 	
 	if (_nanos6_exit_with_error) {
+		fprintf(stderr, "Error: %s\n", _nanos6_error_text);
 		return _nanos6_exit_with_error;
 	}
 	
 	// First half of the initialization
 	nanos_preinit();
 	if (_nanos6_exit_with_error) {
+		fprintf(stderr, "Error: %s\n", _nanos6_error_text);
 		return _nanos6_exit_with_error;
 	}
 	

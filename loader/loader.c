@@ -35,6 +35,8 @@ __attribute__ ((visibility ("hidden"))) void *_nanos6_lib_handle = NULL;
 
 __attribute__ ((visibility ("hidden"))) int _nanos6_has_started = 0;
 int _nanos6_exit_with_error = 0;
+char _nanos6_error_text[ERROR_TEXT_SIZE];
+
 
 
 static char lib_name[MAX_LIB_PATH+1];
@@ -163,7 +165,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 	if (_nanos6_lib_handle != NULL) {
 		void *disabled_symbol = dlsym(_nanos6_lib_handle, "nanos6_disabled_variant");
 		if (disabled_symbol != NULL) {
-			fprintf(stderr, "Error: this installation of Nanos6 does not include the %s variant.\n", variant);
+			snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "This installation of Nanos6 does not include the %s variant.");
 			_nanos6_exit_with_error = 1;
 			
 			return;
@@ -171,7 +173,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 	}
 	
 	if (_nanos6_lib_handle == NULL) {
-		fprintf(stderr, "Error: Nanos6 loader failed to load the runtime library.\n");
+		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Nanos6 loader failed to load the runtime library.");
 		_nanos6_exit_with_error = 1;
 		
 		//

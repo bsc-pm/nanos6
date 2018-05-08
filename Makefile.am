@@ -96,6 +96,8 @@ endif
 
 libnanos6_main_wrapper_a_SOURCES = \
 	$(main_interception) \
+	loader/api-versions.c \
+	loader/api-versions.h \
 	loader/device_strings.c \
 	loader/error.h \
 	loader/function-interception.h \
