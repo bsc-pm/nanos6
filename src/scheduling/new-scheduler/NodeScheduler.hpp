@@ -41,7 +41,7 @@ private:
 			std::vector<Task *> taskBatch = _queue->getTaskBatch(elements);
 			if (taskBatch.size() > 0) {
 				// queue might have been emptied just a moment ago
-				_parent->addTaskBatch(taskBatch);
+				_parent->addTaskBatch(this, taskBatch);
 			}
 		} else {
 			// Increase threshold and propagate downwards
@@ -76,18 +76,23 @@ public:
 		}
 	}
 
-	inline void addTaskBatch(std::vector<Task *> &taskBatch)
+	inline void addTaskBatch(SchedulerInterface *who, std::vector<Task *> &taskBatch)
 	{
-		SchedulerInterface *idleChild = nullptr;
+		SchedulerInterface *idleChild = who;
 		bool overflow = false;
 	
+		assert(who != nullptr);
+
 		{
 			std::lock_guard<SpinLock> guard(_globalLock);
 			
-			if (_idleChildren.size() > 0) {
+			// If the caller is an idle child and is adding tasks, it is not idle anymore
+			while (_idleChildren.size() > 0 && idleChild == who) {
 				idleChild = _idleChildren.front();
 				_idleChildren.pop_front();
-			} else {
+			}
+			
+			if (idleChild == who) {
 				size_t elements = _queue->addTaskBatch(taskBatch);
 				if (elements > _queueThreshold) {
 					overflow = true;
@@ -95,9 +100,9 @@ public:
 			}
 		}
 		
-		/* Outside lock, call other nodes */
-		if (idleChild != nullptr) {
-			idleChild->addTaskBatch(taskBatch);
+		// Outside lock, call other nodes
+		if (idleChild != who) {
+			idleChild->addTaskBatch(this, taskBatch);
 		} else if (overflow) {
 			handleQueueOverflow();
 		}
@@ -125,7 +130,7 @@ public:
 		
 		// Outside lock, call other nodes
 		if (taskBatch.size() > 0) {
-			child->addTaskBatch(taskBatch);
+			child->addTaskBatch(this, taskBatch);
 		} else {
 			if (_parent != nullptr) {
 				_parent->getTask(this);

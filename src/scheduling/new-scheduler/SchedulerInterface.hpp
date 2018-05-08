@@ -50,7 +50,7 @@ public:
 	{
 	}
 	
-	virtual void addTaskBatch(std::vector<Task *> &taskBatch) = 0;
+	virtual void addTaskBatch(SchedulerInterface *who, std::vector<Task *> &taskBatch) = 0;
 	virtual void updateQueueThreshold(size_t queueThreshold) = 0;
 };
 

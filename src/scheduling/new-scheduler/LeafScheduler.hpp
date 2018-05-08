@@ -42,7 +42,7 @@ private:
 		std::vector<Task *> taskBatch = _queue->getTaskBatch(th);
 		if (taskBatch.size() > 0) {
 			// queue might have been emptied just a moment ago
-			_parent->addTaskBatch(taskBatch);
+			_parent->addTaskBatch(this, taskBatch);
 		}
 	}
 
@@ -81,9 +81,10 @@ public:
 		}
 	}
 
-	inline void addTaskBatch(std::vector<Task *> &taskBatch)
+	inline void addTaskBatch(__attribute__((unused)) SchedulerInterface *who, std::vector<Task *> &taskBatch)
 	{
 		assert(taskBatch.size() > 0);
+		assert(who == _parent);
 		
 		Task *task = taskBatch.back();
 		taskBatch.pop_back();
@@ -157,7 +158,7 @@ public:
 		std::vector<Task *> taskBatch = _queue->getTaskBatch(-1);
 		
 		if (taskBatch.size() > 0) {
-			_parent->addTaskBatch(taskBatch);
+			_parent->addTaskBatch(this, taskBatch);
 		}
 	}
 	
