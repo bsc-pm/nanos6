@@ -118,7 +118,7 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		Extrae_emit_CombinedEvents ( &ce );
+		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}

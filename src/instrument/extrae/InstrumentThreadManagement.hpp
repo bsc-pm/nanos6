@@ -17,10 +17,6 @@
 #include <instrument/support/sampling/SigProf.hpp>
 
 
-// This is not defined in the extrae headers
-extern "C" void Extrae_change_num_threads (unsigned n);
-
-
 namespace Instrument {
 	inline void createdThread(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
@@ -42,7 +38,7 @@ namespace Instrument {
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.writeLock();
-			Extrae_change_num_threads(extrae_nanos_get_num_threads());
+			ExtraeAPI::change_num_threads(extrae_nanos_get_num_threads());
 			_extraeThreadCountLock.writeUnlock();
 		}
 		
@@ -63,7 +59,7 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		Extrae_emit_CombinedEvents ( &ce );
+		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
@@ -117,16 +113,16 @@ namespace Instrument {
 		
 		_extraeThreadCountLock.writeLock();
 		if (_traceAsThreads) {
-			Extrae_change_num_threads(extrae_nanos_get_num_threads());
+			ExtraeAPI::change_num_threads(extrae_nanos_get_num_threads());
 		} else {
-			Extrae_change_num_threads(extrae_nanos_get_num_cpus_and_external_threads());
+			ExtraeAPI::change_num_threads(extrae_nanos_get_num_cpus_and_external_threads());
 		}
 		_extraeThreadCountLock.writeUnlock();
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		Extrae_emit_CombinedEvents ( &ce );
+		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
@@ -149,7 +145,7 @@ namespace Instrument {
 			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_NOT_RUNNING;
 			
-			Extrae_emit_CombinedEvents ( &ce );
+			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}
 	}
 	
@@ -170,7 +166,7 @@ namespace Instrument {
 			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_IDLE;
 			
-			Extrae_emit_CombinedEvents ( &ce );
+			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}
 	}
 	
@@ -193,7 +189,7 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		Extrae_emit_CombinedEvents ( &ce );
+		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
@@ -218,7 +214,7 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		Extrae_emit_CombinedEvents ( &ce );
+		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
@@ -241,7 +237,7 @@ namespace Instrument {
 			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_SHUTDOWN;
 			
-			Extrae_emit_CombinedEvents ( &ce );
+			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}
 	}
 	

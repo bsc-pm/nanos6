@@ -8,10 +8,6 @@
 #define INSTRUMENT_EXTRAE_INIT_AND_SHUTDOWN_HPP
 
 
-// This is not defined in the extrae headers
-extern "C" void Extrae_change_num_threads (unsigned n);
-
-
 namespace Instrument {
 	void initialize();
 	void shutdown();

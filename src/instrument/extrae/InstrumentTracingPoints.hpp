@@ -28,7 +28,7 @@ namespace Instrument {
 			return;
 		}
 		
-		Extrae_define_event_type(PRACING_POINT_BASE + tracingPointType._type, description.c_str(), 0, nullptr, nullptr);
+		ExtraeAPI::define_event_type(PRACING_POINT_BASE + tracingPointType._type, description.c_str(), 0, nullptr, nullptr);
 	}
 	
 	
@@ -50,7 +50,7 @@ namespace Instrument {
 		
 		valueDescriptions[0] = startDescription.c_str();
 		valueDescriptions[1] = endDescription.c_str();
-		Extrae_define_event_type(PRACING_POINT_BASE + tracingPointType._type, name.c_str(), 2, values, valueDescriptions);
+		ExtraeAPI::define_event_type(PRACING_POINT_BASE + tracingPointType._type, name.c_str(), 2, values, valueDescriptions);
 	}
 	
 	
@@ -74,7 +74,7 @@ namespace Instrument {
 			extraeValueDescriptions[i] = valueDescriptions[i].c_str();
 		}
 		
-		Extrae_define_event_type(PRACING_POINT_BASE + tracingPointType._type, name.c_str(), valueDescriptions.size(), values, extraeValueDescriptions);
+		ExtraeAPI::define_event_type(PRACING_POINT_BASE + tracingPointType._type, name.c_str(), valueDescriptions.size(), values, extraeValueDescriptions);
 	}
 	
 	
@@ -115,7 +115,7 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		Extrae_emit_CombinedEvents ( &ce );
+		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}

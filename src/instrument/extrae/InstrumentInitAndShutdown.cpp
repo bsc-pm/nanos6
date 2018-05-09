@@ -28,10 +28,6 @@
 #include <instrument/support/sampling/SigProf.hpp>
 
 
-// This is not defined in the extrae headers
-extern "C" void Extrae_change_num_threads (unsigned n);
-
-
 namespace Instrument {
 	
 	extern bool _profilingIsReady;
@@ -116,7 +112,7 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		Extrae_emit_CombinedEvents ( &ce );
+		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
@@ -167,17 +163,17 @@ namespace Instrument {
 		}
 		
 		// Initialize extrae library
-		Extrae_init();
+		ExtraeAPI::init();
 		
-		Extrae_register_codelocation_type((extrae_type_t) EventType::RUNNING_FUNCTION_NAME, (extrae_type_t) EventType::RUNNING_CODE_LOCATION, (char *) "Running Name", (char *) "Running Location");
-		Extrae_register_codelocation_type((extrae_type_t) EventType::INSTANTIATING_FUNCTION_NAME, (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION, (char *) "Instantiating Name", (char *) "Instantiating Location");
-		Extrae_define_event_type((extrae_type_t) EventType::TASK_INSTANCE_ID, "Task instance", 0, nullptr, nullptr);
-		Extrae_define_event_type((extrae_type_t) EventType::NESTING_LEVEL, "Task nesting level", 0, nullptr, nullptr);
+		ExtraeAPI::register_codelocation_type((extrae_type_t) EventType::RUNNING_FUNCTION_NAME, (extrae_type_t) EventType::RUNNING_CODE_LOCATION, (char *) "Running Name", (char *) "Running Location");
+		ExtraeAPI::register_codelocation_type((extrae_type_t) EventType::INSTANTIATING_FUNCTION_NAME, (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION, (char *) "Instantiating Name", (char *) "Instantiating Location");
+		ExtraeAPI::define_event_type((extrae_type_t) EventType::TASK_INSTANCE_ID, "Task instance", 0, nullptr, nullptr);
+		ExtraeAPI::define_event_type((extrae_type_t) EventType::NESTING_LEVEL, "Task nesting level", 0, nullptr, nullptr);
 		
-		Extrae_define_event_type((extrae_type_t) EventType::READY_TASKS, "Number of ready tasks", 0, nullptr, nullptr);
-		Extrae_define_event_type((extrae_type_t) EventType::LIVE_TASKS, "Number of live tasks", 0, nullptr, nullptr);
+		ExtraeAPI::define_event_type((extrae_type_t) EventType::READY_TASKS, "Number of ready tasks", 0, nullptr, nullptr);
+		ExtraeAPI::define_event_type((extrae_type_t) EventType::LIVE_TASKS, "Number of live tasks", 0, nullptr, nullptr);
 		
-		Extrae_define_event_type((extrae_type_t) EventType::PRIORITY, "Task priority", 0, nullptr, nullptr);
+		ExtraeAPI::define_event_type((extrae_type_t) EventType::PRIORITY, "Task priority", 0, nullptr, nullptr);
 		
 		// Register the events for the backtrace
 		if (_sampleBacktraceDepth > 0) {
@@ -188,7 +184,7 @@ namespace Instrument {
 				std::ostringstream ossF, ossL;
 				ossF << "Sampled functions (depth " << i << ")";
 				ossL << "Sampled line functions (depth " << i << ")";
-				Extrae_register_codelocation_type(
+				ExtraeAPI::register_codelocation_type(
 					functionEventType, locationEventType,
 					(char *) ossF.str().c_str(), (char *) ossL.str().c_str()
 				);
@@ -203,19 +199,19 @@ namespace Instrument {
 			for (i = 0; i < NANOS_EVENT_STATE_TYPES; i++) {
 				values[i] = i;
 			}
-			Extrae_define_event_type((extrae_type_t) EventType::RUNTIME_STATE, "Runtime state", NANOS_EVENT_STATE_TYPES, values, _eventStateValueStr);
+			ExtraeAPI::define_event_type((extrae_type_t) EventType::RUNTIME_STATE, "Runtime state", NANOS_EVENT_STATE_TYPES, values, _eventStateValueStr);
 		}
 		
 		// Thread information callbacks
 		if (_traceAsThreads) {
-			Extrae_set_threadid_function ( extrae_nanos_get_thread_id );
-			Extrae_set_numthreads_function ( extrae_nanos_get_num_threads );
-			Extrae_change_num_threads(extrae_nanos_get_num_threads());
+			ExtraeAPI::set_threadid_function ( extrae_nanos_get_thread_id );
+			ExtraeAPI::set_numthreads_function ( extrae_nanos_get_num_threads );
+			ExtraeAPI::change_num_threads(extrae_nanos_get_num_threads());
 			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "thread");
 		} else {
-			Extrae_set_threadid_function ( extrae_nanos_get_virtual_cpu_or_external_thread_id );
-			Extrae_set_numthreads_function ( extrae_nanos_get_num_cpus_and_external_threads );
-			Extrae_change_num_threads(extrae_nanos_get_num_cpus_and_external_threads());
+			ExtraeAPI::set_threadid_function ( extrae_nanos_get_virtual_cpu_or_external_thread_id );
+			ExtraeAPI::set_numthreads_function ( extrae_nanos_get_num_cpus_and_external_threads );
+			ExtraeAPI::change_num_threads(extrae_nanos_get_num_cpus_and_external_threads());
 			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "cpu");
 		}
 		
@@ -235,19 +231,19 @@ namespace Instrument {
 			ce.Types[0] = 9200001;
 			ce.Values[0] = 0;
 			
-			Extrae_emit_CombinedEvents ( &ce );
+			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}
 		
 		_initialized = true;
 		
 		// Register any tracing point that arrived too early
 		for (auto &p : _delayedNumericTracingPoints) {
-			Extrae_define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + p.first._type, p.second.c_str(), 0, nullptr, nullptr);
+			ExtraeAPI::define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + p.first._type, p.second.c_str(), 0, nullptr, nullptr);
 		}
 		for (auto &p : _delayedScopeTracingPoints) {
 			extrae_value_t values[2] = {0, 1};
 			char const *valueDescriptions[2] = {p.second._startDescription.c_str(), p.second._endDescription.c_str()};
-			Extrae_define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + p.first._type, p.second._name.c_str(), 2, values, valueDescriptions);
+			ExtraeAPI::define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + p.first._type, p.second._name.c_str(), 2, values, valueDescriptions);
 		}
 		for (auto &p : _delayedEnumeratedTracingPoints) {
 			extrae_value_t values[p.second._valueDescriptions.size()];
@@ -258,7 +254,7 @@ namespace Instrument {
 				extraeValueDescriptions[i] = p.second._valueDescriptions[i].c_str();
 			}
 			
-			Extrae_define_event_type(
+			ExtraeAPI::define_event_type(
 				(extrae_type_t) EventType::TRACING_POINT_BASE + p.first._type, p.second._name.c_str(),
 				p.second._valueDescriptions.size(), values, extraeValueDescriptions
 			);
@@ -268,7 +264,7 @@ namespace Instrument {
 			std::stringstream oss;
 			unsigned extraeMajor, extraeMinor, extraeRevision;
 			
-			Extrae_get_version(&extraeMajor, &extraeMinor, &extraeRevision);
+			ExtraeAPI::get_version(&extraeMajor, &extraeMinor, &extraeRevision);
 			oss << extraeMajor << "." << extraeMinor << "." << extraeRevision;
 			RuntimeInfo::addEntry("extrae_version", "Extrae Version", oss.str());
 			RuntimeInfo::addEntry("extrae_shared_object", "Extrae Shared Object", ExtraeSymbolResolverBase::getSharedObjectPath());
@@ -311,7 +307,7 @@ namespace Instrument {
 					codeLocation.substr(0, linePosition);
 				}
 				
-				Extrae_register_function_address (
+				ExtraeAPI::register_function_address (
 					(void *) (taskInfo->implementations[0].run),
 					label.c_str(),
 					codeLocation.c_str(), lineNumber
@@ -374,7 +370,7 @@ namespace Instrument {
 						continue;
 					}
 					
-					Extrae_register_function_address (
+					ExtraeAPI::register_function_address (
 						address,
 						functionList.str().c_str(),
 						locationList.str().c_str(), 0
@@ -406,7 +402,7 @@ namespace Instrument {
 		
 		// Finalize extrae library
 		if (mustShutDownExtrae) {
-			Extrae_fini();
+			ExtraeAPI::fini();
 		}
 	}
 }
