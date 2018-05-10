@@ -20,6 +20,7 @@ private:
 	EnvironmentVariable<size_t> _pollingIterations;
 	
 	std::atomic<size_t> _queueThreshold;
+	std::atomic<bool> _rebalance;
 	
 	polling_slot_t _pollingSlot;
 	SchedulerQueueInterface *_queue;
@@ -50,6 +51,7 @@ public:
 	LeafScheduler(ComputePlace *computePlace, NodeScheduler *parent) :
 		_pollingIterations("NANOS6_SCHEDULER_POLLING_ITER", 100000),
 		_queueThreshold(0),
+		_rebalance(false),
 		_parent(parent),
 		_computePlace(computePlace),
 		_idle(false)
@@ -79,6 +81,9 @@ public:
 				handleQueueOverflow();
 			}
 		}
+		
+		// Queue is already balanced
+		_rebalance = false;
 	}
 
 	inline void addTaskBatch(__attribute__((unused)) SchedulerInterface *who, std::vector<Task *> &taskBatch)
@@ -114,13 +119,25 @@ public:
 		
 		task = _pollingSlot.getTask();
 		if (task != nullptr) {
+			_rebalance = false;
 			return task;
 		}
 		
 		task = _queue->getTask();
 		if (task != nullptr) {
+			if (_rebalance) {
+				bool expected = true;
+				if (_rebalance.compare_exchange_strong(expected, false)) {
+					if (_queue->getSize() > (_queueThreshold * 1.5)) {
+						handleQueueOverflow();
+					}
+				}
+			}
+			
 			return task;
 		}
+		
+		_rebalance = false;
 		
 		_parent->getTask(this);
 		
@@ -168,6 +185,10 @@ public:
 	
 	inline void updateQueueThreshold(size_t queueThreshold)
 	{
+		if (queueThreshold < _queueThreshold) {
+			_rebalance = true;
+		}
+		
 		_queueThreshold = queueThreshold;
 	}
 };

@@ -19,6 +19,7 @@ private:
 	EnvironmentVariable<size_t> _pollingIterations;
 	
 	std::atomic<size_t> _queueThreshold;
+	std::atomic<bool> _rebalance;
 	
 	std::deque<SchedulerInterface *> _idleChildren;
 	SchedulerQueueInterface *_queue;
@@ -60,6 +61,7 @@ public:
 	NodeScheduler(NodeScheduler *parent = nullptr) :
 		_pollingIterations("NANOS6_SCHEDULER_POLLING_ITER", 100000),
 		_queueThreshold(0),
+		_rebalance(false),
 		_parent(parent)
 	{
 		_queue = SchedulerQueueInterface::initialize();
@@ -80,7 +82,7 @@ public:
 	{
 		SchedulerInterface *idleChild = who;
 		bool overflow = false;
-	
+		
 		assert(who != nullptr);
 
 		{
@@ -106,6 +108,9 @@ public:
 		} else if (overflow) {
 			handleQueueOverflow();
 		}
+		
+		// Queue is already balanced
+		_rebalance = false;
 	}
 	
 	inline void getTask(SchedulerInterface *child)
@@ -125,6 +130,7 @@ public:
 			
 			if (taskBatch.size() == 0) {
 				_idleChildren.push_back(child);
+				_rebalance = false;
 			}
 		}
 		
@@ -141,6 +147,13 @@ public:
 			// Reduce threshold and propagate
 			std::lock_guard<SpinLock> guard(_thresholdLock);
 			updateQueueThreshold(_queueThreshold / 2);
+		} else if (_rebalance) {
+			bool expected = true;
+			if (_rebalance.compare_exchange_strong(expected, false)) {
+				if (_queue->getSize() > (_queueThreshold * 1.5)) {
+					handleQueueOverflow();
+				}
+			}
 		}
 	}
 	
@@ -168,6 +181,10 @@ public:
 	
 	inline void updateQueueThreshold(size_t queueThreshold)
 	{
+		if (queueThreshold < _queueThreshold) {
+			_rebalance = true;
+		}
+		
 		_queueThreshold = queueThreshold;
 		
 		for (SchedulerInterface *child : _children) {

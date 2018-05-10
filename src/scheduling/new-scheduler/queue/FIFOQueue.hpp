@@ -22,6 +22,7 @@ public:
 	size_t addTaskBatch(const std::vector<Task *> &taskBatch);
 	Task *getTask();
 	std::vector<Task *> getTaskBatch(int elements);
+	size_t getSize();
 };
 
 

@@ -64,3 +64,10 @@ std::vector<Task *> LIFOQueue::getTaskBatch(int elements)
 	
 	return taskBatch;
 }
+
+size_t LIFOQueue::getSize()
+{
+	std::lock_guard<SpinLock> guard(_lock);
+	
+	return _queue.size();
+}

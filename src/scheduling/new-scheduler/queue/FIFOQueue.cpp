@@ -64,3 +64,10 @@ std::vector<Task *> FIFOQueue::getTaskBatch(int elements)
 	
 	return taskBatch;
 }
+
+size_t FIFOQueue::getSize()
+{
+	std::lock_guard<SpinLock> guard(_lock);
+	
+	return _queue.size();
+}
