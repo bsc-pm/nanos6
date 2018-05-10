@@ -116,8 +116,7 @@ namespace Instrument {
 	extern int _externalThreadCount;
 	
 	enum dependency_tag_t {
-		// 'N' 'A' 'N' 'O' 'S' '6' 00 00 -- 5638874311050002432
-		instantiation_dependency_tag = 0x4e414e4f53360000,
+		instantiation_dependency_tag = 0xffffff00,
 		strong_data_dependency_tag,
 		weak_data_dependency_tag,
 		control_dependency_tag

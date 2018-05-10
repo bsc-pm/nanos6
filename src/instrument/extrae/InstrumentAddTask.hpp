@@ -73,7 +73,7 @@ namespace Instrument {
 		
 		if (_emitGraph) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
-			ce.Communications[0].tag = instantiation_dependency_tag;
+			ce.Communications[0].tag = (extrae_comm_tag_t) instantiation_dependency_tag;
 			ce.Communications[0].size = 0;
 			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
 			ce.Communications[0].id = _extraeTaskInfo->_taskId;

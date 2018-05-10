@@ -110,7 +110,7 @@ namespace Instrument {
 		ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
 		
 		ce.Communications[0].type = EXTRAE_USER_SEND;
-		ce.Communications[0].tag = emitTag;
+		ce.Communications[0].tag = (extrae_comm_tag_t) emitTag;
 		ce.Communications[0].size = (context._taskId._taskInfo->_taskId << 32) + targetTaskId._taskInfo->_taskId;
 		ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
 		ce.Communications[0].id = (context._taskId._taskInfo->_taskId << 32) + targetTaskId._taskInfo->_taskId;

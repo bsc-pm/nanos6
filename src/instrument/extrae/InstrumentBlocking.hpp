@@ -56,7 +56,7 @@ namespace Instrument {
 		
 		if (_emitGraph) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
-			ce.Communications[0].tag = control_dependency_tag;
+			ce.Communications[0].tag = (extrae_comm_tag_t) control_dependency_tag;
 			ce.Communications[0].size = taskId._taskInfo->_taskId;
 			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
 			ce.Communications[0].id = taskId._taskInfo->_taskId;
@@ -104,14 +104,14 @@ namespace Instrument {
 		
 		// From blocking to unblocker
 		ce.Communications[0].type = EXTRAE_USER_RECV;
-		ce.Communications[0].tag = control_dependency_tag;
+		ce.Communications[0].tag = (extrae_comm_tag_t) control_dependency_tag;
 		ce.Communications[0].size = taskId._taskInfo->_taskId;
 		ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
 		ce.Communications[0].id = taskId._taskInfo->_taskId;
 		
 		// From unblocker to actual resumption
 		ce.Communications[1].type = EXTRAE_USER_SEND;
-		ce.Communications[1].tag = control_dependency_tag;
+		ce.Communications[1].tag = (extrae_comm_tag_t) control_dependency_tag;
 		ce.Communications[1].size = taskId._taskInfo->_taskId;
 		ce.Communications[1].partner = EXTRAE_COMM_PARTNER_MYSELF;
 		ce.Communications[1].id = taskId._taskInfo->_taskId;
