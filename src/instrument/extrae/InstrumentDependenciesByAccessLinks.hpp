@@ -50,7 +50,7 @@ namespace Instrument {
 		__attribute__((unused)) task_id_t targetTaskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		if (!_emitGraph || (dataAccessId._originator._taskInfo == nullptr)) {
+		if ((_detailLevel < 1) || (dataAccessId._originator._taskInfo == nullptr)) {
 			return;
 		}
 		

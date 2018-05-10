@@ -59,11 +59,11 @@ namespace Instrument {
 	extern std::map<tracing_point_type_t, scope_tracing_point_info_t> _delayedScopeTracingPoints;
 	extern std::map<tracing_point_type_t, enumerated_tracing_point_info_t> _delayedEnumeratedTracingPoints;
 	
-	extern const EnvironmentVariable<bool>           _traceAsThreads;
-	extern const EnvironmentVariable<int>            _sampleBacktraceDepth;
-	extern const EnvironmentVariable<long>           _sampleBacktracePeriod;
-	extern const EnvironmentVariable<bool>           _sampleTaskCount;
-	extern const EnvironmentVariable<bool>           _emitGraph;
+	extern const EnvironmentVariable<bool> _traceAsThreads;
+	extern const EnvironmentVariable<int> _sampleBacktraceDepth;
+	extern const EnvironmentVariable<long> _sampleBacktracePeriod;
+	extern const EnvironmentVariable<bool> _sampleTaskCount;
+	extern const EnvironmentVariable<unsigned int> _detailLevel;
 	
 	enum struct EventType {
 		// OmpSs common

@@ -32,7 +32,8 @@ namespace Instrument {
 		ce.nEvents = 5;
 		ce.nCommunications = 0;
 		
-		if (_emitGraph) {
+		// Generate graph information
+		if (_detailLevel >= 1) {
 			ce.nCommunications ++;
 		}
 		
@@ -58,7 +59,8 @@ namespace Instrument {
 		ce.Types[4] = (extrae_type_t) EventType::PRIORITY;
 		ce.Values[4] = (extrae_value_t) nullptr;
 		
-		if (_emitGraph) {
+		// Generate graph information
+		if (_detailLevel >= 1) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
 			ce.Communications[0].tag = (extrae_comm_tag_t) control_dependency_tag;
 			ce.Communications[0].size = taskId._taskInfo->_taskId;

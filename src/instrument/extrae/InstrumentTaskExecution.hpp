@@ -32,7 +32,8 @@ namespace Instrument {
 			ce.nEvents += 1;
 		}
 		
-		if (_emitGraph) {
+		// Generate graph information
+		if (_detailLevel >= 1) {
 			taskId._taskInfo->_lock.lock();
 			ce.nCommunications += taskId._taskInfo->_predecessors.size();
 		}
@@ -59,7 +60,8 @@ namespace Instrument {
 		ce.Types[4] = (extrae_type_t) EventType::PRIORITY;
 		ce.Values[4] = (extrae_value_t) taskId._taskInfo->_priority;
 		
-		if (_emitGraph) {
+		// Generate graph information
+		if (_detailLevel >= 1) {
 			int index = 0;
 			for (auto const &taskAndTag : taskId._taskInfo->_predecessors) {
 				ce.Communications[index].type = EXTRAE_USER_RECV;
@@ -113,7 +115,8 @@ namespace Instrument {
 			ce.nEvents += 1;
 		}
 		
-		if (_emitGraph) {
+		// Generate graph information
+		if (_detailLevel >= 1) {
 			taskId._taskInfo->_lock.lock();
 			ce.nCommunications += taskId._taskInfo->_predecessors.size();
 		}
@@ -151,7 +154,8 @@ namespace Instrument {
 			}
 		}
 		
-		if (_emitGraph) {
+		// Generate graph information
+		if (_detailLevel >= 1) {
 			int index = 0;
 			for (auto const &taskAndTag : taskId._taskInfo->_predecessors) {
 				ce.Communications[index].type = EXTRAE_USER_RECV;
@@ -191,8 +195,9 @@ namespace Instrument {
 			ce.nEvents += 1;
 		}
 		
+		// Generate graph information
 		size_t parentInTaskwait = 0;
-		if (_emitGraph) {
+		if (_detailLevel >= 1) {
 			if ((taskId._taskInfo->_parent != nullptr) && taskId._taskInfo->_parent->_inTaskwait) {
 				taskId._taskInfo->_parent->_lock.lock();
 				if (taskId._taskInfo->_parent->_inTaskwait) {

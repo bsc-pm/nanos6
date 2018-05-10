@@ -45,7 +45,8 @@ namespace Instrument {
 		ce.nEvents = 2;
 		ce.nCommunications = 0;
 		
-		if (_emitGraph) {
+		// Generate graph information
+		if (_detailLevel >= 1) {
 			ce.nCommunications++;
 		}
 		
@@ -71,7 +72,8 @@ namespace Instrument {
 			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
 		}
 		
-		if (_emitGraph) {
+		// Generate graph information
+		if (_detailLevel >= 1) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
 			ce.Communications[0].tag = (extrae_comm_tag_t) instantiation_dependency_tag;
 			ce.Communications[0].size = 0;
