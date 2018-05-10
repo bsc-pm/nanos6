@@ -62,7 +62,6 @@ namespace Instrument {
 	extern const EnvironmentVariable<bool> _traceAsThreads;
 	extern const EnvironmentVariable<int> _sampleBacktraceDepth;
 	extern const EnvironmentVariable<long> _sampleBacktracePeriod;
-	extern const EnvironmentVariable<bool> _sampleTaskCount;
 	extern const EnvironmentVariable<unsigned int> _detailLevel;
 	
 	enum struct EventType {

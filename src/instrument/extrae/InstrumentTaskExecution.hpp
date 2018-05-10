@@ -28,7 +28,8 @@ namespace Instrument {
 		ce.nEvents = 5;
 		ce.nCommunications = 0;
 		
-		if (!_sampleTaskCount) {
+		// Precise task count (not sampled)
+		if (_detailLevel >= 1) {
 			ce.nEvents += 1;
 		}
 		
@@ -76,7 +77,9 @@ namespace Instrument {
 		}
 		
 		size_t readyTasks = --_readyTasks;
-		if (!_sampleTaskCount) {
+		
+		// Precise task count (not sampled)
+		if (_detailLevel >= 1) {
 			ce.Types[5] = (extrae_type_t) EventType::READY_TASKS;
 			ce.Values[5] = (extrae_value_t) readyTasks;
 			
@@ -111,7 +114,8 @@ namespace Instrument {
 		ce.nEvents = 5;
 		ce.nCommunications = 0;
 		
-		if (!_sampleTaskCount) {
+		// Precise task count (not sampled)
+		if (_detailLevel >= 1) {
 			ce.nEvents += 1;
 		}
 		
@@ -144,7 +148,9 @@ namespace Instrument {
 		ce.Values[4] = (extrae_value_t) taskId._taskInfo->_priority;
 		
 		size_t readyTasks = --_readyTasks;
-		if (!_sampleTaskCount) {
+		
+		// Precise task count (not sampled)
+		if (_detailLevel >= 1) {
 			ce.Types[5] = (extrae_type_t) EventType::READY_TASKS;
 			ce.Values[5] = (extrae_value_t) readyTasks;
 			
@@ -191,7 +197,8 @@ namespace Instrument {
 		ce.nEvents = 5;
 		ce.nCommunications = 0;
 		
-		if (!_sampleTaskCount) {
+		// Precise task count (not sampled)
+		if (_detailLevel >= 1) {
 			ce.nEvents += 1;
 		}
 		
@@ -241,7 +248,9 @@ namespace Instrument {
 		}
 		
 		size_t liveTasks = --_liveTasks;
-		if (!_sampleTaskCount) {
+		
+		// Precise task count (not sampled)
+		if (_detailLevel >= 1) {
 			ce.Types[5] = (extrae_type_t) EventType::LIVE_TASKS;
 			ce.Values[5] = (extrae_value_t) liveTasks;
 			

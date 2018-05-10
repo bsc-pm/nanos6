@@ -15,7 +15,8 @@
 namespace Instrument {
 	inline void leaderThreadSpin()
 	{
-		if (_sampleTaskCount) {
+		// Non-precise task count (sampled)
+		if (_detailLevel < 1) {
 			extrae_combined_events_t ce;
 			
 			ce.HardwareCounters = 0;

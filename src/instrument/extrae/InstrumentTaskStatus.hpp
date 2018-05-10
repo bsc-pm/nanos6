@@ -23,7 +23,8 @@ namespace Instrument {
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		if (_sampleTaskCount) {
+		// Non-precise task count (sampled)
+		if (_detailLevel < 1) {
 			return;
 		}
 		

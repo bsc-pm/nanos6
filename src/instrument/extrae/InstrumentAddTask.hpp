@@ -50,7 +50,8 @@ namespace Instrument {
 			ce.nCommunications++;
 		}
 		
-		if (!_sampleTaskCount) {
+		// Precise task count (not sampled)
+		if (_detailLevel >= 1) {
 			ce.nEvents += 1;
 		}
 		
@@ -63,7 +64,8 @@ namespace Instrument {
 		ce.Types[1] = (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION;
 		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
 		
-		if (!_sampleTaskCount) {
+		// Precise task count (not sampled)
+		if (_detailLevel >= 1) {
 			ce.Types[2] = (extrae_type_t) EventType::LIVE_TASKS;
 			ce.Values[2] = (extrae_value_t) liveTasks;
 		}
