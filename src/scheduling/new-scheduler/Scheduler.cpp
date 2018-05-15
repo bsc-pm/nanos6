@@ -14,9 +14,12 @@
 
 std::vector<LeafScheduler *> Scheduler::_CPUScheduler;
 NodeScheduler *Scheduler::_topScheduler;
+std::atomic<size_t> Scheduler::_schedRRCounter;
 
 void Scheduler::initialize()
 {
+	_schedRRCounter = 0;
+
 	_topScheduler = new NodeScheduler();
 	
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();

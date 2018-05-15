@@ -22,6 +22,7 @@
 class Scheduler {
 	static std::vector<LeafScheduler *> _CPUScheduler;
 	static NodeScheduler *_topScheduler;
+	static std::atomic<size_t> _schedRRCounter;
 	
 public:
 	static void initialize();
@@ -34,15 +35,25 @@ public:
 		FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported yet"); // TODO
 		
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
+		
 		if (computePlace != nullptr) {
 			_CPUScheduler[((CPU *)computePlace)->_virtualCPUId]->addTask(task, hint);
 		} else {
-			for (LeafScheduler *sched : _CPUScheduler) {
-				if (sched != nullptr) {
-					sched->addTask(task, SchedulerInterface::MAIN_TASK_HINT);
-					break;
-				}
+			// No computePlace means that this is the main task, or a task unblocked from outside
+			SchedulerInterface::ReadyTaskHint newHint = hint;
+			if (newHint == SchedulerInterface::NO_HINT) {
+				newHint = SchedulerInterface::MAIN_TASK_HINT;
 			}
+			
+			LeafScheduler *sched = nullptr;
+			while (sched == nullptr) {
+				size_t pos = _schedRRCounter;
+				while(!_schedRRCounter.compare_exchange_strong(pos, (pos + 1) % _CPUScheduler.size()));
+				
+				sched = _CPUScheduler[pos];
+			}
+			
+			sched->addTask(task, newHint);
 		}
 		
 		return nullptr;

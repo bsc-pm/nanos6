@@ -71,9 +71,33 @@ public:
 			// This is the main task. Run here
 			_pollingSlot.setTask(task);
 			assert(!_idle);
+		} else if (hint == SchedulerInterface::UNBLOCKED_TASK_HINT) {
+			bool success;
+			bool idle;
+			
+			{
+				// Try to put it in the polling slot
+				std::lock_guard<SpinLock> guard(_globalLock);
+				success = _pollingSlot.setTask(task);
+				idle = _idle;
+			}
+			
+			if (success) {
+				if (idle) {
+					ThreadManager::resumeIdle((CPU *)_computePlace);
+				}
+			} else {
+				size_t elements = _queue->addTask(task, hint);
+				
+				if (elements > _queueThreshold) {
+					handleQueueOverflow();
+				}
+			}
 		} else {
-			// addTask is always called from a thread in the same CPU. Therefore,
-			// there is no need to check polling slots, or to wake up any CPUs.
+			// For ready tasks, addTask is always called from a thread in the
+			// same CPU. Therefore, there is no need to check polling slots,
+			// or to wake up any CPUs.
+			assert(!_idle);
 			
 			size_t elements = _queue->addTask(task, hint);
 			
@@ -92,18 +116,21 @@ public:
 		assert(who == _parent);
 		
 		Task *task = taskBatch.back();
-		taskBatch.pop_back();
 		
 		bool idle;
+		bool success;
 		
 		{
 			std::lock_guard<SpinLock> guard(_globalLock);
-			_pollingSlot.setTask(task);
+			success = _pollingSlot.setTask(task);
 			idle = _idle;
 		}
 		
-		if (idle) {
-			ThreadManager::resumeIdle((CPU *)_computePlace);
+		if (success) {
+			taskBatch.pop_back();
+			if (idle) {
+				ThreadManager::resumeIdle((CPU *)_computePlace);
+			}
 		}
 		
 		_queue->addTaskBatch(taskBatch);
@@ -113,9 +140,7 @@ public:
 	{
 		Task *task;
 		
-		if (_idle) {
-			_idle = false;
-		}
+		_idle = false;
 		
 		task = _pollingSlot.getTask();
 		if (task != nullptr) {

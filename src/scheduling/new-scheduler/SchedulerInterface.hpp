@@ -29,11 +29,11 @@ public:
 			return result;
 		}
 		
-		void setTask(Task *task)
+		bool setTask(Task *task)
 		{
 			Task *expected = nullptr;
-			__attribute__((unused)) bool success = _task.compare_exchange_strong(expected, task);
-			assert(success);
+			bool success = _task.compare_exchange_strong(expected, task);
+			return success;
 		}
 	};
 	
