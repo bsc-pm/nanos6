@@ -43,7 +43,11 @@ namespace Instrument {
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
 		if (ce.nCommunications > 0) {
-			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+			if (ce.nCommunications < 100) {
+				ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+			} else {
+				ce.Communications = (extrae_user_communication_t *) malloc(sizeof(extrae_user_communication_t) * ce.nCommunications);
+			}
 		}
 		
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
@@ -99,6 +103,10 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
+		
+		if (ce.nCommunications >= 100) {
+			free(ce.Communications);
+		}
 	}
 	
 	
@@ -129,7 +137,11 @@ namespace Instrument {
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
 		if (ce.nCommunications > 0) {
-			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+			if (ce.nCommunications < 100) {
+				ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+			} else {
+				ce.Communications = (extrae_user_communication_t *) malloc(sizeof(extrae_user_communication_t) * ce.nCommunications);
+			}
 		}
 		
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
@@ -181,6 +193,10 @@ namespace Instrument {
 		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
+		}
+		
+		if (ce.nCommunications >= 100) {
+			free(ce.Communications);
 		}
 	}
 	
