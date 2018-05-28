@@ -34,27 +34,27 @@ namespace Instrument {
 	
 	
 	namespace Extrae {
-		void lightweightDisableSamplingForCurrentThread()
+		bool lightweightDisableSamplingForCurrentThread()
 		{
 			if (BacktraceWalker::involves_libc_malloc) {			
-				Sampling::SigProf::lightweightDisableThread();
+				return Sampling::SigProf::lightweightDisableThread();
 			} else {
 				ThreadLocalData &threadLocal = getThreadLocalData();
-				threadLocal._inMemoryAllocation++;
+				return (threadLocal._inMemoryAllocation++ == 0) && (threadLocal._disableCount == 0) && (threadLocal._lightweightDisableCount == 0);
 			}
 		}
 		
-		void lightweightEnableSamplingForCurrentThread()
+		bool lightweightEnableSamplingForCurrentThread()
 		{
 			if (BacktraceWalker::involves_libc_malloc) {
-				Sampling::SigProf::lightweightEnableThread();
+				return Sampling::SigProf::lightweightEnableThread();
 			} else {
 				ThreadLocalData &threadLocal = getThreadLocalData();
 				threadLocal._inMemoryAllocation--;
 				
 				if ((threadLocal._disableCount > 0) || (threadLocal._lightweightDisableCount > 0)) {
 					// Temporarily disabled
-					return;
+					return false;
 				}
 				
 				// Perform operations previously delayed because they involved memory allocations
@@ -68,6 +68,8 @@ namespace Instrument {
 					
 					Sampling::SigProf::lightweightEnableThread();
 				}
+				
+				return (threadLocal._inMemoryAllocation == 0) && (threadLocal._disableCount == 0) && (threadLocal._lightweightDisableCount == 0);
 			}
 		}
 	}

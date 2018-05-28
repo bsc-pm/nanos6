@@ -144,8 +144,11 @@ namespace Instrument {
 	unsigned int extrae_nanos_get_num_cpus_and_external_threads();
 	
 	namespace Extrae {
-		void lightweightDisableSamplingForCurrentThread();
-		void lightweightEnableSamplingForCurrentThread();
+		// Returns true if this is the call that actually disables it
+		bool lightweightDisableSamplingForCurrentThread();
+		
+		// Returns true is this is the call that actually reenables it
+		bool lightweightEnableSamplingForCurrentThread();
 	}
 }
 
