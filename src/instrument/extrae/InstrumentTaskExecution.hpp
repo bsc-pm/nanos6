@@ -218,9 +218,9 @@ namespace Instrument {
 			ce.nEvents += 1;
 		}
 		
-		// Generate graph information
+		// Generate control dependency information
 		size_t parentInTaskwait = 0;
-		if (_detailLevel >= 1) {
+		if (_detailLevel >= 2) {
 			if ((taskId._taskInfo->_parent != nullptr) && taskId._taskInfo->_parent->_inTaskwait) {
 				taskId._taskInfo->_parent->_lock.lock();
 				if (taskId._taskInfo->_parent->_inTaskwait) {

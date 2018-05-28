@@ -28,7 +28,8 @@ namespace Instrument {
 		ce.nEvents = 5;
 		ce.nCommunications = 0;
 		
-		// Generate graph information
+		// Generate control dependency information
+		// At level 1 we show "explicit" blocking calls but not taskwait dependencies
 		if (_detailLevel >= 1) {
 			ce.nCommunications ++;
 		}
@@ -55,7 +56,8 @@ namespace Instrument {
 		ce.Types[4] = (extrae_type_t) EventType::PRIORITY;
 		ce.Values[4] = (extrae_value_t) nullptr;
 		
-		// Generate graph information
+		// Generate control dependency information
+		// At level 1 we show "explicit" blocking calls but not taskwait dependencies
 		if (_detailLevel >= 1) {
 			ce.Communications[0].type = EXTRAE_USER_SEND;
 			ce.Communications[0].tag = (extrae_comm_tag_t) control_dependency_tag;
@@ -88,7 +90,8 @@ namespace Instrument {
 		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		// Generate graph information
+		// Generate control dependency information
+		// At level 1 we show "explicit" blocking calls but not taskwait dependencies
 		if (_detailLevel < 1) {
 			return;
 		}

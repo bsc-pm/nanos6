@@ -69,6 +69,11 @@ namespace Instrument {
 			return;
 		}
 		
+		// Taskwait control dependencies are only emitted when the detail level is at least 2
+		if ((dataAccessId._objectType == taskwait_type) && (_detailLevel < 2)) {
+			return;
+		}
+		
 		dependency_tag_t emitTag;
 		if (dataAccessId._objectType == taskwait_type) {
 			emitTag = control_dependency_tag;
