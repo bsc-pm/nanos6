@@ -58,7 +58,7 @@ CodeAddressInfoBase::Entry const &DLCodeAddressInfo::resolveAddress(void *addres
 	}
 	
 	// Create the entry
-	Entry &entry = _address2Entry[address];
+	Entry &entry = (callSiteFromReturnAddress ? _returnAddress2Entry[address] : _address2Entry[address]);
 	entry._realAddress = address; // We do not know how to recover the call site
 	
 	// Add the current function and source location
