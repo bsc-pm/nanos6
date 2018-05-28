@@ -199,7 +199,10 @@ extern "C" void nanos6_memory_allocation_interception_postinit()
 	FatalErrorHandler::failIf(_tlsAllocationCaller != nullptr, "spurious TLS memory allocation");
 	
 	_tlsInitializationForcer = 1;
-	FatalErrorHandler::failIf(_tlsAllocationCaller == nullptr, "could not detect TLS memory allocation");
+	if (_tlsAllocationCaller == nullptr) {
+		// In some configurations the TLS initialization calls to memory allocation functions in a non-interposable way
+		_tlsAllocationCaller = (void *) ~ (size_t) 0;
+	}
 }
 
 
