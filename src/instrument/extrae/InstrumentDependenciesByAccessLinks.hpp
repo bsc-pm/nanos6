@@ -45,10 +45,10 @@ namespace Instrument {
 	}
 	
 	inline void dataAccessBecomesSatisfied(
-		__attribute__((unused)) data_access_id_t &dataAccessId,
+		data_access_id_t &dataAccessId,
 		__attribute__((unused)) bool globallySatisfied,
-		__attribute__((unused)) task_id_t targetTaskId,
-		__attribute__((unused)) InstrumentationContext const &context
+		task_id_t targetTaskId,
+		InstrumentationContext const &context
 	) {
 		if ((_detailLevel < 1) || (dataAccessId._originator._taskInfo == nullptr)) {
 			return;
