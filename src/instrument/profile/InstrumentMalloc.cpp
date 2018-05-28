@@ -186,20 +186,20 @@ extern "C" void nanos6_memory_allocation_interception_init(
 ) {
 	_nextMemoryFunctions = *nextMemoryFunctions;
 	*nanos6MemoryFunctions = _nanos6MemoryFunctions;
-	
-	_nonTlsAllocationCaller = nullptr;
-	_tlsAllocationCaller = nullptr;
-	
-	malloc(0);
-	FatalErrorHandler::failIf(_nonTlsAllocationCaller == nullptr, "Error intercepting malloc");
-	FatalErrorHandler::failIf(_tlsAllocationCaller != nullptr, "Error: spurious TLS memory allocation");
 }
 
 
 extern "C" void nanos6_memory_allocation_interception_postinit()
 {
+	_nonTlsAllocationCaller = nullptr;
+	_tlsAllocationCaller = nullptr;
+	
+	malloc(0);
+	FatalErrorHandler::failIf(_nonTlsAllocationCaller == nullptr, "could not intercept malloc");
+	FatalErrorHandler::failIf(_tlsAllocationCaller != nullptr, "spurious TLS memory allocation");
+	
 	_tlsInitializationForcer = 1;
-	FatalErrorHandler::failIf(_tlsAllocationCaller == nullptr, "Error: could not detect TLS memory allocation");
+	FatalErrorHandler::failIf(_tlsAllocationCaller == nullptr, "could not detect TLS memory allocation");
 }
 
 
