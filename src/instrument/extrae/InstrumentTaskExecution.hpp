@@ -220,7 +220,7 @@ namespace Instrument {
 		
 		// Generate control dependency information
 		size_t parentInTaskwait = 0;
-		if (_detailLevel >= 2) {
+		if (_detailLevel >= 8) {
 			if ((taskId._taskInfo->_parent != nullptr) && taskId._taskInfo->_parent->_inTaskwait) {
 				taskId._taskInfo->_parent->_lock.lock();
 				if (taskId._taskInfo->_parent->_inTaskwait) {
