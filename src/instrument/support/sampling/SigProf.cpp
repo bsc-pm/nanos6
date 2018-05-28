@@ -159,17 +159,17 @@ void SigProf::disableThread(Instrument::Sampling::ThreadLocalData &threadLocal)
 }
 
 
-void SigProf::lightweightEnableThread(Instrument::Sampling::ThreadLocalData &threadLocal)
+bool SigProf::lightweightEnableThread(Instrument::Sampling::ThreadLocalData &threadLocal)
 {
 	assert(threadLocal._lightweightDisableCount > 0);
-	threadLocal._lightweightDisableCount--;
+	return threadLocal._lightweightDisableCount-- == 0;
 }
 
 
-void SigProf::lightweightDisableThread(Instrument::Sampling::ThreadLocalData &threadLocal)
+bool SigProf::lightweightDisableThread(Instrument::Sampling::ThreadLocalData &threadLocal)
 {
 	assert(threadLocal._lightweightDisableCount >= 0);
-	threadLocal._lightweightDisableCount++;
+	return threadLocal._lightweightDisableCount++ == 0;
 }
 
 

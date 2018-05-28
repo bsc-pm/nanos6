@@ -58,8 +58,12 @@ public:
 	static void setUpThread(Instrument::Sampling::ThreadLocalData &threadLocal = getThreadLocalData());
 	static void enableThread(Instrument::Sampling::ThreadLocalData &threadLocal = getThreadLocalData());
 	static void disableThread(Instrument::Sampling::ThreadLocalData &threadLocal = getThreadLocalData());
-	static void lightweightEnableThread(Instrument::Sampling::ThreadLocalData &threadLocal = getThreadLocalData());
-	static void lightweightDisableThread(Instrument::Sampling::ThreadLocalData &threadLocal = getThreadLocalData());
+	
+	// Returns true is this is the call that actually reenables it
+	static bool lightweightEnableThread(Instrument::Sampling::ThreadLocalData &threadLocal = getThreadLocalData());
+	
+	// Returns true if this is the call that actually disables it
+	static bool lightweightDisableThread(Instrument::Sampling::ThreadLocalData &threadLocal = getThreadLocalData());
 	
 	static void forceHandler();
 };
