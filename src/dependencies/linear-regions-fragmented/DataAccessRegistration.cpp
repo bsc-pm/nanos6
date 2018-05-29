@@ -2226,11 +2226,6 @@ namespace DataAccessRegistration {
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					
-#ifndef NDEBUG
-					DataAccessStatusEffects currentStatus(dataAccess);
-					assert(currentStatus._isRemovable);
-#endif
-					
 					Instrument::removedDataAccess(dataAccess->getInstrumentationId());
 					accessStructures._accessFragments.erase(dataAccess);
 					delete dataAccess;
