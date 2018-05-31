@@ -28,7 +28,7 @@ namespace Instrument {
 			return;
 		}
 		
-		ExtraeAPI::define_event_type(PRACING_POINT_BASE + tracingPointType._type, description.c_str(), 0, nullptr, nullptr);
+		ExtraeAPI::define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + tracingPointType._type, description.c_str(), 0, nullptr, nullptr);
 	}
 	
 	
@@ -50,7 +50,7 @@ namespace Instrument {
 		
 		valueDescriptions[0] = startDescription.c_str();
 		valueDescriptions[1] = endDescription.c_str();
-		ExtraeAPI::define_event_type(PRACING_POINT_BASE + tracingPointType._type, name.c_str(), 2, values, valueDescriptions);
+		ExtraeAPI::define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + tracingPointType._type, name.c_str(), 2, values, valueDescriptions);
 	}
 	
 	
@@ -74,7 +74,7 @@ namespace Instrument {
 			extraeValueDescriptions[i] = valueDescriptions[i].c_str();
 		}
 		
-		ExtraeAPI::define_event_type(PRACING_POINT_BASE + tracingPointType._type, name.c_str(), valueDescriptions.size(), values, extraeValueDescriptions);
+		ExtraeAPI::define_event_type((extrae_type_t) EventType::TRACING_POINT_BASE + tracingPointType._type, name.c_str(), valueDescriptions.size(), values, extraeValueDescriptions);
 	}
 	
 	
@@ -87,7 +87,7 @@ namespace Instrument {
 		inline void fillEventTypeAndValues(extrae_type_t *types, extrae_value_t *values, tracing_point_instance_t const &instance, TS... tracePointInstances)
 		{
 			types[0] = instance._tracingPointType._type;
-			types[0] += PRACING_POINT_BASE;
+			types[0] += (extrae_type_t) EventType::TRACING_POINT_BASE;
 			types++;
 			values[0] = instance._value;
 			values++;
