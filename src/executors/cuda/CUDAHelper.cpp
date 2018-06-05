@@ -10,6 +10,7 @@
 
 #include "hardware/cuda/CUDAManager.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "lowlevel/cuda/CUDAErrorHandler.hpp"
 
 #include "tasks/Task.hpp"
 #include "tasks/TaskDeviceData.hpp"
@@ -42,6 +43,9 @@ void CUDAHelper::stop()
 
 void CUDAHelper::finishTask(Task *task)
 {
+	cudaError_t err = cudaPeekAtLastError();	
+	CUDAErrorHandler::handle(err);
+	
 	_computePlace->postRunTask(task);
 	_memoryPlace->postRunTask(task);
 	
