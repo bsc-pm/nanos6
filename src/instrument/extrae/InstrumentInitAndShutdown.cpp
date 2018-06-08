@@ -384,28 +384,8 @@ namespace Instrument {
 			CodeAddressInfo::shutdown();
 		}
 		
-		void *MPItrace_network_counters = dlsym(RTLD_DEFAULT, "MPItrace_network_counters");
-		
-		bool mustShutDownExtrae = true;
-		if (MPItrace_network_counters != nullptr) {
-			// Running under MPItrace
-			
-			typedef int MPI_Finalized_t(int *);
-			MPI_Finalized_t *MPI_Finalized = (MPI_Finalized_t *) dlsym(RTLD_DEFAULT, "MPI_Finalized");
-			if (MPI_Finalized != nullptr) {
-				int finalized = 0;
-				(*MPI_Finalized)(&finalized);
-				
-				mustShutDownExtrae = !finalized;
-			} else {
-				// Running under MPItrace but not an MPI program
-			}
-		}
-		
 		// Finalize extrae library
-		if (mustShutDownExtrae) {
-			ExtraeAPI::fini();
-		}
+		ExtraeAPI::fini();
 	}
 }
 
