@@ -1257,7 +1257,27 @@ show-disabled-variants:
 
 paraverconfigdir = ${docdir}
 nobase_dist_paraverconfig_DATA = \
-	paraver-cfg/nanos6/2d_general.cfg \
+	paraver-cfg/nanos6/00_overview.cfg \
+	paraver-cfg/nanos6/01_overview_histograms.cfg \
+	paraver-cfg/nanos6/02_overview_hardware_counters.cfg \
+	paraver-cfg/nanos6/03_overview_hardware_counter_histograms.cfg \
+	paraver-cfg/nanos6/advanced/2d_general.cfg \
+	paraver-cfg/nanos6/advanced/2dh_effective_paralelism.cfg \
+	paraver-cfg/nanos6/advanced/3dh_cycles_per_us_by_runtime_state.cfg \
+	paraver-cfg/nanos6/advanced/3dh_cycles_per_us_by_task.cfg \
+	paraver-cfg/nanos6/advanced/3dh_instructions_vs_cycles.cfg \
+	paraver-cfg/nanos6/advanced/3dh_runtime_state_duration.cfg \
+	paraver-cfg/nanos6/advanced/3dh_task_duration.cfg \
+	paraver-cfg/nanos6/advanced/3dh_task_frequency.cfg \
+	paraver-cfg/nanos6/advanced/3dh_task_instructions.cfg \
+	paraver-cfg/nanos6/advanced/3dh_task_ipc.cfg \
+	paraver-cfg/nanos6/advanced/3dh_task_l2d_miss_ratio.cfg \
+	paraver-cfg/nanos6/advanced/effective_paralelism.cfg \
+	paraver-cfg/nanos6/advanced/instantiating_function_name_and_code_line.cfg \
+	paraver-cfg/nanos6/advanced/nesting_level.cfg \
+	paraver-cfg/nanos6/advanced/reference_clock.cfg \
+	paraver-cfg/nanos6/advanced/running_function_name_and_code_line.cfg \
+	paraver-cfg/nanos6/advanced/runtime_state.cfg \
 	paraver-cfg/nanos6/graph_and_scheduling/creating_submitting_task.cfg \
 	paraver-cfg/nanos6/graph_and_scheduling/nb_ready_tasks.cfg \
 	paraver-cfg/nanos6/graph_and_scheduling/nb_tasks_in_graph.cfg \
@@ -1268,7 +1288,6 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/tasks/task_and_deps.cfg \
 	paraver-cfg/nanos6/tasks/task_number.cfg \
 	paraver-cfg/nanos6/tasks/task_priority.cfg
-
 
 
 ## --------------------------------- ##
