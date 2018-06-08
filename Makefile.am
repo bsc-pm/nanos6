@@ -1255,6 +1255,22 @@ show-disabled-variants:
 	@echo $(disabled_variants)
 
 
+paraverconfigdir = ${docdir}
+nobase_dist_paraverconfig_DATA = \
+	paraver-cfg/nanos6/2d_general.cfg \
+	paraver-cfg/nanos6/graph_and_scheduling/creating_submitting_task.cfg \
+	paraver-cfg/nanos6/graph_and_scheduling/nb_ready_tasks.cfg \
+	paraver-cfg/nanos6/graph_and_scheduling/nb_tasks_in_graph.cfg \
+	paraver-cfg/nanos6/graph_and_scheduling/task_being_created.cfg \
+	paraver-cfg/nanos6/tasks/3dh_duration_task.cfg \
+	paraver-cfg/nanos6/tasks/3dh_instr_task.cfg \
+	paraver-cfg/nanos6/tasks/3dh_ipc_task.cfg \
+	paraver-cfg/nanos6/tasks/task_and_deps.cfg \
+	paraver-cfg/nanos6/tasks/task_number.cfg \
+	paraver-cfg/nanos6/tasks/task_priority.cfg
+
+
+
 ## --------------------------------- ##
 ## Format-independent Doxygen rules. ##
 ## --------------------------------- ##
