@@ -15,7 +15,7 @@
 
 DeviceHierarchicalScheduler::DeviceHierarchicalScheduler(int numaNodeIndex)
 {
-	_CPUScheduler = SchedulerGenerator::createDeviceScheduler(numaNodeIndex);
+	_CPUScheduler = SchedulerGenerator::createDeviceScheduler(numaNodeIndex, nanos6_device_t::nanos6_host_device);
 	
 	std::ostringstream oss, oss2;
 	if (numaNodeIndex != -1) {

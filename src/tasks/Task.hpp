@@ -245,8 +245,13 @@ public:
 	//! \returns true if the change makes the task disposable
 	virtual inline bool markAsFinished() __attribute__((warn_unused_result))
 	{
-		assert(_thread != nullptr);
-		_thread = nullptr;
+		if (_taskInfo->implementations[0].device_type_id == nanos6_device_t::nanos6_host_device) {
+			assert(_thread != nullptr);
+			_thread = nullptr;
+		} else {
+			assert(_computePlace != nullptr);
+			_computePlace = nullptr;
+		}
 		
 		int countdown = (--_countdownToBeWokenUp);
 		assert(countdown >= 0);
@@ -258,12 +263,22 @@ public:
 	//! \returns true if the change makes the task disposable
 	inline bool markAsFinishedAfterDataAccessRelease() __attribute__((warn_unused_result))
 	{
-		if (hasDelayedDataAccessRelease()) {
-			assert(_thread == nullptr);
-			setDelayedDataAccessRelease(false);
+		if( _taskInfo->implementations[0].device_type_id == nanos6_device_t::nanos6_host_device) {
+			if (hasDelayedDataAccessRelease()) {
+				assert(_thread == nullptr);
+				setDelayedDataAccessRelease(false);
+			} else {
+				assert(_thread != nullptr);
+				_thread = nullptr;
+			}
 		} else {
-			assert(_thread != nullptr);
-			_thread = nullptr;
+			if (hasDelayedDataAccessRelease()) {
+				assert(_computePlace == nullptr);
+				setDelayedDataAccessRelease(false);
+			} else {
+				assert(_computePlace != nullptr);
+				_computePlace = nullptr;
+			}
 		}
 		
 		int countdown = (--_countdownToBeWokenUp);
@@ -295,7 +310,11 @@ public:
 	//! \brief Indicates whether it has finished
 	inline bool hasFinished()
 	{
-		return (_thread == nullptr);
+		if (_taskInfo->implementations[0].device_type_id) {
+			return (_computePlace == nullptr);
+		} else {
+			return (_thread == nullptr);
+		}
 	}
 	
 	//! \brief Indicates if it can be woken up

@@ -42,6 +42,8 @@ ComputePlace * NoSleepPriorityScheduler::addReadyTask(Task *task, ComputePlace *
 {
 	assert(task != nullptr);
 	
+	FatalErrorHandler::failIf(task->getDeviceType() != nanos6_device_t::nanos6_host_device, "Device tasks not supported by this scheduler");
+	
 	Task::priority_t priority = 0;
 	if ((task->getTaskInfo() != nullptr) && (task->getTaskInfo()->get_priority != nullptr)) {
 		priority = task->getTaskInfo()->get_priority(task->getArgsBlock());
@@ -106,6 +108,10 @@ void NoSleepPriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribut
 
 Task *NoSleepPriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
+	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
+		return nullptr;
+	}
+	
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	Task::priority_t bestPriority = 0;

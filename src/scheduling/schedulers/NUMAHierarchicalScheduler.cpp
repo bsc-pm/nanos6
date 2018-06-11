@@ -59,6 +59,7 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 {
 	assert(task != nullptr);
 	
+	FatalErrorHandler::failIf(task->getDeviceType() != nanos6_device_t::nanos6_host_device, "Device tasks not supported by this scheduler");	
 	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
 	
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
@@ -108,6 +109,10 @@ void NUMAHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePl
 
 Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, bool canMarkAsIdle)
 {
+	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
+		return nullptr;
+	}
+	
 	size_t numa_node = ((CPU *)computePlace)->_NUMANodeId;
 	Task *task = nullptr;
 	

@@ -326,7 +326,8 @@ cuda_sources = \
 	src/hardware/cuda/CUDAManager.cpp \
 	src/hardware/cuda/compute/CUDAComputePlace.cpp \
 	src/hardware/cuda/memory/CUDAMemoryPlace.cpp \
-	src/hardware/cuda/memory/CUDAUnifiedMemory.cpp 
+	src/hardware/cuda/memory/CUDAUnifiedMemory.cpp \ 
+	src/scheduling/schedulers/cuda/CUDANaiveScheduler.cpp 
 
 if USE_CUDA
 common_sources += $(cuda_sources)
@@ -810,6 +811,7 @@ noinst_HEADERS = \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
+	src/lowlevel/cuda/CUDAErrorHandler.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/threads/ExternalThread.hpp \

@@ -43,6 +43,7 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 {
 	assert(task != nullptr);
 	
+	FatalErrorHandler::failIf(task->getDeviceType() != nanos6_device_t::nanos6_host_device, "Device tasks not supported by this scheduler");	
 	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
 	
 	Task::priority_t priority = 0;
@@ -159,6 +160,10 @@ void PriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((un
 
 Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
+	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
+		return nullptr;
+	}
+	
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
 	Task::priority_t bestPriority = 0;

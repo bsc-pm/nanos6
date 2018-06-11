@@ -10,9 +10,8 @@
 
 #include <atomic>
 #include <string>
+#include "hardware/places/ComputePlace.hpp"
 
-
-class ComputePlace;
 class Task;
 
 

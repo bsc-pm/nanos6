@@ -15,7 +15,8 @@ class Task;
 
 class HostHierarchicalScheduler: public SchedulerInterface {
 	SchedulerInterface *_NUMAScheduler;
-
+	SchedulerInterface *_CUDAScheduler;
+	
 public:
 	HostHierarchicalScheduler();
 	~HostHierarchicalScheduler();

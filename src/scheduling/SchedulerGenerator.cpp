@@ -16,6 +16,12 @@
 #include "schedulers/NoSleepPriorityScheduler.hpp"
 #include "schedulers/PriorityScheduler.hpp"
 
+#include <config.h>
+
+#if defined(USE_CUDA)
+#include "schedulers/cuda/CUDANaiveScheduler.hpp"
+#endif
+
 #include "SchedulerGenerator.hpp"
 
 
@@ -47,13 +53,31 @@ SchedulerInterface *SchedulerGenerator::createCPUScheduler(std::string const &sc
 	}
 }
 
+/*
+ * When CUDA is not available, createCUDAScheduler will return nullptr
+ */
+SchedulerInterface *SchedulerGenerator::createCUDAScheduler(std::string const &schedulerName, int nodeIndex)
+{
+#if defined(USE_CUDA)
+	if (schedulerName == "default") {
+		return new CUDANaiveScheduler(nodeIndex);
+	} else if (schedulerName == "naive"){
+		return new CUDANaiveScheduler(nodeIndex);
+	} else {
+		std::cerr << "Warning: invalid scheduler name '" << schedulerName << "', using default instead." << std::endl;
+		return new CUDANaiveScheduler(nodeIndex);
+	}
+#endif
+	return nullptr;
+}
+
 
 // Get the Host scheduler
 // This is the scheduler that is called through the Scheduler class. Therefor, this is the initializer
 SchedulerInterface *SchedulerGenerator::createHostScheduler()
 {
 	EnvironmentVariable<std::string> schedulerName("NANOS6_SCHEDULER", "default");
-
+	
 	if (schedulerName.getValue() == "hierarchical") {
 		return new HostHierarchicalScheduler();
 	} else if (schedulerName.getValue() == "collapsable") {
@@ -67,7 +91,7 @@ SchedulerInterface *SchedulerGenerator::createHostScheduler()
 		} else {
 			scheduler = new HostHierarchicalScheduler();
 		}
-
+		
 		return scheduler;
 	} else {
 		return createCPUScheduler(schedulerName.getValue(), -1);
@@ -97,7 +121,7 @@ SchedulerInterface *SchedulerGenerator::createNUMANodeScheduler(int nodeIndex)
 	
 	// Check if this scheduler level can be collapsed
 	if (_collapsable && DeviceHierarchicalScheduler::canBeCollapsed()) {
-		scheduler = createDeviceScheduler(nodeIndex);
+		scheduler = createDeviceScheduler(nodeIndex, nanos6_device_t::nanos6_host_device);
 	} else {
 		scheduler = new DeviceHierarchicalScheduler(nodeIndex);
 	}
@@ -106,11 +130,18 @@ SchedulerInterface *SchedulerGenerator::createNUMANodeScheduler(int nodeIndex)
 }
 
 
-SchedulerInterface *SchedulerGenerator::createDeviceScheduler(int nodeIndex)
+SchedulerInterface *SchedulerGenerator::createDeviceScheduler(int nodeIndex, nanos6_device_t type)
 {
-	// TODO: when other devices are introduced, add "type" parameter
-	EnvironmentVariable<std::string> schedulerName("NANOS6_CPU_SCHEDULER", "default");
-	
-	return SchedulerGenerator::createCPUScheduler(schedulerName.getValue(), nodeIndex);
+	if (type == nanos6_device_t::nanos6_host_device) {	
+		EnvironmentVariable<std::string> schedulerName("NANOS6_CPU_SCHEDULER", "default");
+		return SchedulerGenerator::createCPUScheduler(schedulerName.getValue(), nodeIndex);
+	} else if (type == nanos6_device_t::nanos6_cuda_device) {
+		EnvironmentVariable<std::string> schedulerName("NANOS6_CUDA_SCHEDULER", "default");
+		return SchedulerGenerator::createCUDAScheduler(schedulerName.getValue(), nodeIndex);
+	} else {
+		std::cerr << "Warning: invalid scheduler type '" << type << "', creating host scheduler instead." << std::endl;
+		EnvironmentVariable<std::string> schedulerName("NANOS6_CPU_SCHEDULER", "default");
+		return SchedulerGenerator::createCPUScheduler(schedulerName.getValue(), nodeIndex);
+	}
 }
 

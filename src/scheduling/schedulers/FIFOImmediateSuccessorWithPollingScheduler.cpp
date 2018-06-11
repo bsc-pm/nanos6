@@ -46,6 +46,7 @@ ComputePlace * FIFOImmediateSuccessorWithPollingScheduler::addReadyTask(Task *ta
 {
 	assert(task != nullptr);
 	
+	FatalErrorHandler::failIf(task->getDeviceType() != nanos6_device_t::nanos6_host_device, "Device tasks not supported by this scheduler");
 	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
 	
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
@@ -155,6 +156,10 @@ void FIFOImmediateSuccessorWithPollingScheduler::taskGetsUnblocked(Task *unblock
 
 Task *FIFOImmediateSuccessorWithPollingScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
+	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) { 
+		return nullptr;
+	}
+	
 	Task *task = nullptr;
 	
 	// 1. Get the immediate successor

@@ -8,9 +8,9 @@
 #define SCHEDULER_GENERATOR_HPP
 
 #include "SchedulerInterface.hpp"
-
 #include "lowlevel/EnvironmentVariable.hpp"
 
+#include <nanos6/task-instantiation.h>
 
 class SchedulerGenerator {
 private:
@@ -20,6 +20,9 @@ private:
 	
 	// Get the CPU scheduler
 	static SchedulerInterface *createCPUScheduler(std::string const &schedulerName, int nodeIndex);
+	
+	// Get the CUDA scheduler
+	static SchedulerInterface *createCUDAScheduler(std::string const &schedulerName, int nodeIndex);
 	
 public:
 	// Get the Host scheduler
@@ -31,7 +34,7 @@ public:
 	
 	static SchedulerInterface *createNUMANodeScheduler(int nodeIndex);
 	
-	static SchedulerInterface *createDeviceScheduler(int nodeIndex);
+	static SchedulerInterface *createDeviceScheduler(int nodeIndex, nanos6_device_t type);
 };
 
 

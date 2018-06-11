@@ -84,6 +84,7 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 			taskInfo->implementations = (nanos6_task_implementation_info_t *) malloc(sizeof(nanos6_task_implementation_info_t) * 1);
 			taskInfo->implementation_count = 1;
 			taskInfo->implementations[0].run = nanos_spawned_function_wrapper;
+			taskInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
 			taskInfo->register_depinfo = nullptr;
 			taskInfo->destroy = nanos_spawned_function_destructor;
 			
