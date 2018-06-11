@@ -11,21 +11,38 @@
 #include <map>
 #include "memory/AddressSpace.hpp"
 
+#include <nanos6/task-instantiation.h>
+
 class ComputePlace;
 
 class MemoryPlace {
 protected:
 	AddressSpace * _addressSpace;
 	int _index;	
+	nanos6_device_t _type;	
 	
 public:
-	MemoryPlace(int index, AddressSpace * addressSpace = nullptr)
-		: _addressSpace(addressSpace), _index(index)
+	MemoryPlace(int index, nanos6_device_t type, AddressSpace * addressSpace = nullptr)
+		: _addressSpace(addressSpace), _index(index), _type(type)
 	{}
 	
-	virtual ~MemoryPlace() {}
-	inline int getIndex(void){ return _index; } 
-	inline AddressSpace * getAddressSpace(){ return _addressSpace; } 
+	virtual ~MemoryPlace() 
+	{}
+	
+	inline int getIndex(void) 
+	{ 
+		return _index; 
+	} 
+	
+	inline nanos6_device_t getType()
+	{
+		return _type;
+	}
+	
+	inline AddressSpace * getAddressSpace()
+	{ 
+		return _addressSpace; 
+	} 
 };
 
 #endif //MEMORY_PLACE_HPP

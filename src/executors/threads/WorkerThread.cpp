@@ -159,7 +159,7 @@ void WorkerThread::handleTask(CPU *cpu)
 		
 		// Run the task
 		std::atomic_thread_fence(std::memory_order_acquire);
-		_task->body();
+		_task->body(nullptr);
 		std::atomic_thread_fence(std::memory_order_release);
 		
 		Instrument::taskIsZombie(taskId);

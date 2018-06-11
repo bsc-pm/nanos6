@@ -15,7 +15,7 @@ private:
 	computePlaces_t _computePlaces; //ComputePlaces able to interact with this MemoryPlace
 public:
 	NUMAPlace(int index, AddressSpace * addressSpace = nullptr)
-		: MemoryPlace(index, addressSpace)
+		: MemoryPlace(index, nanos6_device_t::nanos6_host_device, addressSpace)
 	{}
 	
 	virtual ~NUMAPlace() {}

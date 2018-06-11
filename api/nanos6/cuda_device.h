@@ -12,6 +12,7 @@
 enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 1 };
 
 #include <cuda.h>
+#include <cuda_runtime_api.h>
 
 #ifdef __cplusplus
 extern "C" {

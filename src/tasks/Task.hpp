@@ -24,7 +24,7 @@
 struct DataAccess;
 struct DataAccessBase;
 class WorkerThread;
-
+class ComputePlace;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wunused-result"
@@ -82,6 +82,12 @@ private:
 	//! Opaque data that is scheduler-dependent
 	void *_schedulerInfo;
 	
+	//! Compute Place where the task is running
+	ComputePlace *_computePlace;	
+	
+	//! Device Specific data
+	void *_deviceData;
+	
 public:
 	inline Task(
 		void *argsBlock,
@@ -114,12 +120,12 @@ public:
 	}
 	
 	//! Actual code of the task
-	virtual inline void body()
+	virtual inline void body(void *deviceEnvironment)
 	{
-		assert(_taskInfo->implementation_count == 1); // TODO temporary check for a single implementation
+		assert(_taskInfo->implementation_count == 1);
 		assert(hasCode());
 		assert(_taskInfo != nullptr);	
-		_taskInfo->implementations[0].run(_argsBlock, nullptr, nullptr); // TODO: solution until multiple implementations are allowed, add arguments
+		_taskInfo->implementations[0].run(_argsBlock, deviceEnvironment, nullptr);
 	}
 	
 	//! Check if the task has an actual body
@@ -410,9 +416,33 @@ public:
 	{
 		_schedulerInfo = schedulerInfo;
 	}
-
+	
+	//! \brief Return the number of symbols on the task
 	inline int getSymbolNum(){
 		return _taskInfo->num_symbols;
+	}
+	
+	inline ComputePlace *getComputePlace()
+	{
+		return _computePlace;
+	}
+	inline void setComputePlace(ComputePlace *computePlace){
+		_computePlace = computePlace;
+	}
+	
+	//! \brief Get the device type for which this task is implemented
+	inline int getDeviceType()
+	{
+		return _taskInfo->implementations[0].device_type_id;
+	}
+	
+	inline void *getDeviceData()
+	{
+		return _deviceData;
+	}
+	inline void setDeviceData(void *deviceData)
+	{
+		_deviceData = deviceData;	
 	}
 };
 

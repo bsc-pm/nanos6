@@ -11,8 +11,8 @@
 
 class CPUPlace: public ComputePlace {
 public:
-	CPUPlace (int index = 0/*, ComputePlace *parent = nullptr*/)
-		: ComputePlace(index/*, parent*/)
+	CPUPlace (int index = 0)
+		: ComputePlace(index, nanos6_device_t::nanos6_host_device)
 	{
 	}
 	

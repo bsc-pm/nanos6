@@ -13,6 +13,8 @@
 #include <map>
 #include <vector>
 
+#include <nanos6/task-instantiation.h>
+
 class MemoryPlace;
 
 //! \brief A class that represents a place where code can be executed either directly, or in a sub-place within
@@ -23,7 +25,8 @@ private:
 
 protected:
 	//ComputePlace * _parent;
-	int _index;	
+	int _index;
+	nanos6_device_t _type;	
 
 	Instrument::compute_place_id_t _instrumentationId;
 
@@ -32,20 +35,37 @@ protected:
 public:
 	void *_schedulerData;
 	
-	ComputePlace(int index/*, ComputePlace *parent = nullptr*/)
-		: _index(index)/*, _parent(parent)*/, _schedulerData(nullptr)
+	ComputePlace(int index, nanos6_device_t type)
+		: _index(index), _type(type), _schedulerData(nullptr)
 	{}
 	
-	virtual ~ComputePlace() {}
-	size_t getMemoryPlacesCount(void) const { return _memoryPlaces.size(); }
-	MemoryPlace* getMemoryPlace(int index) { 
+	virtual ~ComputePlace() 
+	{}
+	
+	size_t getMemoryPlacesCount(void) const 
+	{ 
+		return _memoryPlaces.size(); 
+	}
+	
+	MemoryPlace* getMemoryPlace(int index) 
+	{ 
 		memoryPlaces_t::iterator it = _memoryPlaces.find(index);
-		if(it != _memoryPlaces.end()) {
+		if (it != _memoryPlaces.end()) {
 			return it->second;
 		}
 		return nullptr;
 	}
-	inline int getIndex(void) const{ return _index; } 
+	
+	inline int getIndex(void) const 
+	{ 
+		return _index; 
+	} 
+
+	inline nanos6_device_t getType() 
+	{
+		return _type;
+	}	
+
 	void addMemoryPlace(MemoryPlace* mem);
 	std::vector<int> getMemoryPlacesIndexes();
 	std::vector<MemoryPlace*> getMemoryPlaces();

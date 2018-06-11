@@ -21,7 +21,7 @@
 
 
 class FatalErrorHandler {
-private:
+protected:
 	static SpinLock _lock;
 	
 	template<typename T, typename... TS>

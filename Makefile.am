@@ -321,6 +321,18 @@ common_sources = \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/Taskloop.cpp
 
+cuda_sources = \
+	src/executors/cuda/CUDAHelper.cpp \
+	src/hardware/cuda/CUDAManager.cpp \
+	src/hardware/cuda/compute/CUDAComputePlace.cpp \
+	src/hardware/cuda/memory/CUDAMemoryPlace.cpp \
+	src/hardware/cuda/memory/CUDAUnifiedMemory.cpp 
+
+if USE_CUDA
+common_sources += $(cuda_sources)
+endif
+
+
 
 discrete_dependency_sources = \
 	src/dependencies/discrete/Reductions.cpp \
@@ -560,6 +572,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/MultidimensionalAPI.hpp \
+	src/executors/cuda/CUDAHelper.hpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.hpp \
@@ -573,6 +586,15 @@ noinst_HEADERS = \
 	src/executors/threads/WorkerThreadImplementation.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
+	src/hardware/cuda/CUDAManager.hpp \
+	src/hardware/cuda/compute/CUDAComputePlace.hpp \
+	src/hardware/cuda/compute/stream/CUDAStream.hpp \
+	src/hardware/cuda/compute/stream/CUDAStreamPool.hpp \
+	src/hardware/cuda/compute/synchronization/CUDAEvent.hpp \ 
+	src/hardware/cuda/compute/synchronization/CUDAEventPool.hpp \
+	src/hardware/cuda/memory/CUDAMemoryPlace.hpp \
+	src/hardware/cuda/memory/CUDAUnifiedMemory.hpp \
+	src/lowlevel/cuda/CUDAErrorHandler.hpp \
 	src/hardware/HardwareInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
@@ -819,6 +841,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/NaiveScheduler.hpp \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
+	src/scheduling/schedulers/cuda/CUDANaiveScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GlobalLock.hpp \
@@ -837,6 +860,7 @@ noinst_HEADERS = \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/UserMutex.hpp \
 	src/tasks/Task.hpp \
+	src/tasks/TaskDeviceData.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/TaskImplementation.hpp \
 	src/tasks/Taskloop.hpp \
@@ -849,13 +873,14 @@ noinst_HEADERS = \
 	tests/TestAnyProtocolProducer.hpp \
 	tests/Timer.hpp
 
+
 EXTRA_DIST += \
 	tests/select-version.sh \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS)
 
 
 enabled_variants =

@@ -228,6 +228,47 @@ AC_ARG_ENABLE(
 )
 AM_CONDITIONAL([LESS_TEST_THREADS], [test x"${ac_less_test_threads}" = x"yes"])
 
+AC_ARG_ENABLE([cuda], [AS_HELP_STRING([--enable-cuda], [Enable CUDA task support])])
+
+
+if test x"${enable_cuda}" = x"yes" ; then
+	PKG_CHECK_MODULES(
+		[CUDA],
+		[cudart-8.0],
+		[
+			ac_use_cuda=yes
+		],
+		[
+			PKG_CHECK_MODULES(
+				[CUDA],
+				[cudart-9.0],
+				[
+					ac_use_cuda=yes
+				],
+				[
+					PKG_CHECK_MODULES(
+						[CUDA],
+						[cudart-9.1],
+						[
+							ac_use_cuda=yes
+						],
+						[
+							ac_use_cuda=no
+						]
+					)
+				]
+			)
+		]
+	)
+else
+	ac_use_cuda=no
+fi
+AM_CONDITIONAL([USE_CUDA], [test x${ac_use_cuda} = x"yes"])
+
+if test x"${ac_use_cuda}" = x"yes" ; then
+	AC_DEFINE([USE_CUDA], [1], [Define if CUDA is enabled.])
+fi
+
 
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
@@ -298,4 +339,14 @@ fi
 _AS_ECHO([])
 _AS_ECHO([   elfutils CPPFLAGS... ${elfutils_CFLAGS}])
 _AS_ECHO([   elfutils LIBS... ${elfutils_LIBS}])
+
+_AS_ECHO([])
+_AS_ECHO_N([   CUDA is enabled... ])
+if test x"${ac_use_cuda}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([	CUDA CFLAGS... ${CUDA_CFLAGS}])
+	_AS_ECHO([	CUDA LIBS... ${CUDA_LIBS}])
+else
+	AC_MSG_RESULT([no])
+fi
 
