@@ -83,8 +83,6 @@ DataAccessRegion ReductionInfo::getCPUPrivateStorage(size_t virtualCpuId) {
 }
 
 bool ReductionInfo::combineRegion(const DataAccessRegion& region, const boost::dynamic_bitset<>& reductionCpuSet) {
-	assert(region == _region); // FIXME partial combinations not supported at the moment
-	
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
 	

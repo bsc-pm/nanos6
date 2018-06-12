@@ -916,9 +916,6 @@ namespace DataAccessRegistration {
 			return dataAccess;
 		}
 		
-		// Partial overlapping of reductions is not supported at this time
-		assert(dataAccess->getType() != REDUCTION_ACCESS_TYPE);
-		
 		if (dataAccess->getObjectType() == access_type) {
 			return fragmentAccessObject(dataAccess, region, accessStructures);
 		} else if (dataAccess->getObjectType() == fragment_type) {
