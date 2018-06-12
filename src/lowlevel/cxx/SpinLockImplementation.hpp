@@ -19,22 +19,22 @@
 #endif
 
 
-inline SpinLock::SpinLock()
+template <class DEBUG_KIND>
+inline CustomizableSpinLock<DEBUG_KIND>::CustomizableSpinLock()
 	: _lock(0)
 {
-#ifndef NDEBUG
-	_owner = nullptr;
-#endif
 }
 
-inline SpinLock::~SpinLock()
+template <class DEBUG_KIND>
+inline CustomizableSpinLock<DEBUG_KIND>::~CustomizableSpinLock()
 {
-	assertUnowned();
+	DEBUG_KIND::assertUnowned();
 }
 
-inline void SpinLock::lock()
+template <class DEBUG_KIND>
+inline void CustomizableSpinLock<DEBUG_KIND>::lock()
 {
-	assertNotCurrentOwner();
+	DEBUG_KIND::assertNotCurrentOwner();
 	
 	bool expected = false;
 	while (!_lock.compare_exchange_weak(expected, true, std::memory_order_acquire)) {
@@ -47,29 +47,31 @@ inline void SpinLock::lock()
 		expected = false;
 	}
 	
-	assertUnowned();
-	setOwner();
+	DEBUG_KIND::assertUnowned();
+	DEBUG_KIND::setOwner();
 }
 
-inline bool SpinLock::tryLock()
+template <class DEBUG_KIND>
+inline bool CustomizableSpinLock<DEBUG_KIND>::tryLock()
 {
-	assertNotCurrentOwner();
+	DEBUG_KIND::assertNotCurrentOwner();
 	
 	bool expected = false;
 	bool success = _lock.compare_exchange_strong(expected, true, std::memory_order_acquire);
 	
 	if (success) {
-		assertUnowned();
-		setOwner();
+		DEBUG_KIND::assertUnowned();
+		DEBUG_KIND::setOwner();
 	}
 	
 	return success;
 }
 
-inline void SpinLock::unlock(bool ignoreOwner)
+template <class DEBUG_KIND>
+inline void CustomizableSpinLock<DEBUG_KIND>::unlock(bool ignoreOwner)
 {
-	assertCurrentOwner(ignoreOwner);
-	unsetOwner();
+	DEBUG_KIND::assertCurrentOwner(ignoreOwner);
+	DEBUG_KIND::unsetOwner();
 	_lock.store(false, std::memory_order_release);
 }
 

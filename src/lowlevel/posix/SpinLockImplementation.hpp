@@ -13,46 +13,48 @@
 #endif
 
 
-inline SpinLock::SpinLock()
+template <class DEBUG_KIND>
+inline CustomizableSpinLock<DEBUG_KIND>::CustomizableSpinLock()
 {
 	pthread_spin_init(&_lock, PTHREAD_PROCESS_PRIVATE);
-#ifndef NDEBUG
-	_owner = nullptr;
-#endif
 }
 
-inline SpinLock::~SpinLock()
+template <class DEBUG_KIND>
+inline CustomizableSpinLock<DEBUG_KIND>::~CustomizableSpinLock()
 {
-	assertUnowned();
+	DEBUG_KIND::assertUnowned();
 	pthread_spin_destroy(&_lock);
 }
 
-inline void SpinLock::lock()
+template <class DEBUG_KIND>
+inline void CustomizableSpinLock<DEBUG_KIND>::lock()
 {
-	assertNotCurrentOwner();
+	DEBUG_KIND::assertNotCurrentOwner();
 	pthread_spin_lock(&_lock);
-	assertUnowned();
-	setOwner();
+	DEBUG_KIND::assertUnowned();
+	DEBUG_KIND::setOwner();
 }
 
-inline bool SpinLock::tryLock()
+template <class DEBUG_KIND>
+inline bool CustomizableSpinLock<DEBUG_KIND>::tryLock()
 {
-	assertNotCurrentOwner();
+	DEBUG_KIND::assertNotCurrentOwner();
 	
 	bool success = (pthread_spin_trylock(&_lock) == 0);
 	
 	if (success) {
-		assertUnowned();
-		setOwner();
+		DEBUG_KIND::assertUnowned();
+		DEBUG_KIND::setOwner();
 	}
 	
 	return success;
 }
 
-inline void SpinLock::unlock(bool ignoreOwner)
+template <class DEBUG_KIND>
+inline void CustomizableSpinLock<DEBUG_KIND>::unlock(bool ignoreOwner)
 {
-	assertCurrentOwner(ignoreOwner);
-	unsetOwner();
+	DEBUG_KIND::assertCurrentOwner(ignoreOwner);
+	DEBUG_KIND::unsetOwner();
 	pthread_spin_unlock(&_lock);
 }
 
