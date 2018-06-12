@@ -44,10 +44,12 @@ public:
 		_lock.unlock();
 	}
 	
+#ifndef NDEBUG
 	inline bool isLockedByThisThread()
 	{
 		return _lock.isLockedByThisThread();
 	}
+#endif
 	
 	inline SpinLock &getSpinLock()
 	{

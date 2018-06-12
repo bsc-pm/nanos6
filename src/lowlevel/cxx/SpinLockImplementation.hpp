@@ -34,6 +34,8 @@ inline SpinLock::~SpinLock()
 
 inline void SpinLock::lock()
 {
+	assertNotCurrentOwner();
+	
 	bool expected = false;
 	while (!_lock.compare_exchange_weak(expected, true, std::memory_order_acquire)) {
 		int spinsLeft = SPIN_LOCK_READS_BETWEEN_CMPXCHG;
@@ -51,6 +53,8 @@ inline void SpinLock::lock()
 
 inline bool SpinLock::tryLock()
 {
+	assertNotCurrentOwner();
+	
 	bool expected = false;
 	bool success = _lock.compare_exchange_strong(expected, true, std::memory_order_acquire);
 	
@@ -68,13 +72,6 @@ inline void SpinLock::unlock(bool ignoreOwner)
 	unsetOwner();
 	_lock.store(false, std::memory_order_release);
 }
-
-#ifndef NDEBUG
-inline bool SpinLock::isLockedByThisThread()
-{
-	return (_owner == ompss_debug::getCurrentWorkerThread());
-}
-#endif
 
 
 #endif // CXX_SPIN_LOCK_IMPLEMENTATION_HPP
