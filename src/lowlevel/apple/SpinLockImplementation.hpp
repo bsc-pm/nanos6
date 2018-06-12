@@ -28,6 +28,7 @@ inline SpinLock::~SpinLock()
 
 inline void SpinLock::lock()
 {
+	assertNotCurrentOwner();
 	OSSpinLockLock(&_lock);
 	assertUnowned();
 	setOwner();
@@ -35,6 +36,7 @@ inline void SpinLock::lock()
 
 inline bool SpinLock::tryLock()
 {
+	assertNotCurrentOwner();
 	bool success = OSSpinLockTry(&_lock);
 	
 	if (success) {
@@ -52,11 +54,5 @@ inline void SpinLock::unlock(bool ignoreOwner)
 	OSSpinLockUnlock(&_lock);
 }
 
-#ifndef NDEBUG
-inline bool SpinLock::isLockedByThisThread()
-{
-	return (_owner == ompss_debug::getCurrentWorkerThread());
-}
-#endif
 
 #endif // APPLE_SPIN_LOCK_IMPLEMENTATION_HPP
