@@ -60,11 +60,12 @@ public:
 		return _taskloopInfo;
 	}
 	
-	inline void body()
+	inline void body(__attribute__((unused)) void *deviceEnvironment)
 	{
 		assert(hasCode());
 		assert(isRunnable());
 		assert(_thread != nullptr);
+		assert(deviceEnvironment == nullptr);
 		
 		Task *parent = getParent();
 		assert(parent != nullptr);
