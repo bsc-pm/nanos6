@@ -57,6 +57,11 @@ inline std::string ElfUtilsCodeAddressInfo::getDebugInformationEntryName(Dwarf_D
 
 void ElfUtilsCodeAddressInfo::init()
 {
+	// Already initialized
+	if (_dwfl != nullptr) {
+		return;
+	}
+	
 	DLCodeAddressInfo::init();
 	
 	pid_t pid = getpid();
