@@ -21,6 +21,11 @@ std::map<void *, Addr2LineCodeAddressInfo::MemoryMapSegment> Addr2LineCodeAddres
 
 void Addr2LineCodeAddressInfo::init()
 {
+	// Already initialized
+	if (!_executableMemoryMap.empty()) {
+		return;
+	}
+	
 	DLCodeAddressInfo::init();
 	
 	pid_t pid = getpid();
