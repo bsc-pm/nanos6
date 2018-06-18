@@ -472,8 +472,7 @@ instrument_profile_sources = \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentMalloc.cpp \
 	src/instrument/profile/InstrumentProfile.cpp \
-	src/instrument/support/sampling/SigProf.cpp \
-	$(introspection_sources)
+	src/instrument/support/sampling/SigProf.cpp
 
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
@@ -505,8 +504,7 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentExtrae.cpp \
 	src/instrument/extrae/InstrumentInitAndShutdown.cpp \
 	src/instrument/extrae/InstrumentMalloc.cpp \
-	src/instrument/support/sampling/SigProf.cpp \
-	$(introspection_sources)
+	src/instrument/support/sampling/SigProf.cpp
 
 
 # null_common_sources = \
@@ -826,6 +824,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentTracingPoints.hpp \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
+	src/lowlevel/BacktraceRecording.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \
 	src/lowlevel/FatalErrorHandler.hpp \
@@ -912,6 +911,12 @@ EXTRA_DIST += \
 
 common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS)
 common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS)
+
+
+common_sources += $(introspection_sources)
+AM_CXXFLAGS += $(introspection_cppflags) $(elfutils_CFLAGS) 
+common_libnanos6_ldflags  += $(BACKTRACE_LIBS) $(elfutils_LIBS)
+
 
 
 enabled_variants =
