@@ -837,6 +837,7 @@ noinst_HEADERS = \
 	src/lowlevel/RWSpinLock.hpp \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
+	src/lowlevel/SpinLockBacktracingDebug.hpp \
 	src/lowlevel/SpinLockNoDebug.hpp \
 	src/lowlevel/SpinLockOwnerDebug.hpp \
 	src/lowlevel/SymbolResolver.hpp \
@@ -917,6 +918,7 @@ common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLE
 common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS)
 
 
+# This is needed for debuggable spinlocks
 common_sources += $(introspection_sources)
 AM_CXXFLAGS += $(introspection_cppflags) $(elfutils_CFLAGS) 
 common_libnanos6_ldflags  += $(BACKTRACE_LIBS) $(elfutils_LIBS)
