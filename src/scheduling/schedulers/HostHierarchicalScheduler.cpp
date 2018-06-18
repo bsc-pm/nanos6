@@ -12,6 +12,7 @@
 
 #include "tasks/Task.hpp"
 
+#include <config.h>
 
 HostHierarchicalScheduler::HostHierarchicalScheduler()
 {

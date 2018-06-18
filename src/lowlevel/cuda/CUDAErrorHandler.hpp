@@ -60,7 +60,7 @@ public:
 	static inline bool handleEvent(cudaError_t err, TS... reasonParts)
 	{
 		if (__builtin_expect(err == cudaErrorNotReady || err == cudaSuccess, 1)) {
-			if (errno == cudaErrorNotReady) {
+			if (err == cudaErrorNotReady) {
 				return false;
 			} else {
 				return true;
