@@ -120,6 +120,9 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	}
 	
 	Dwarf_Addr dwflAddress = (Dwarf_Addr) address;
+	if (callSiteFromReturnAddress) {
+		dwflAddress--;
+	}
 	
 	Dwfl_Module *module = dwfl_addrmodule(_dwfl, dwflAddress);
 	if (module == nullptr) {
@@ -129,30 +132,42 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	
 	Dwarf_Addr addressBias = 0;
 	Dwarf_Die *compilationUnitDebugInformationEntry = dwfl_module_addrdie(module, dwflAddress, &addressBias);
-	
 	assert(compilationUnitDebugInformationEntry != nullptr);
+	
+	// Get the name of the function
+	std::string mangledFunction;
+	
 	Dwarf_Die *scopeDebugInformationEntries = nullptr;
 	int scopeEntryCount = dwarf_getscopes(compilationUnitDebugInformationEntry, dwflAddress - addressBias, &scopeDebugInformationEntries);
-	if (scopeEntryCount <= 0) {
+	int scopeEntryIndex = -1;
+	if (scopeEntryCount > 0) {
+		for (scopeEntryIndex = 0; scopeEntryIndex < scopeEntryCount; scopeEntryIndex++) {
+			Dwarf_Die *scopeEntry = &scopeDebugInformationEntries[scopeEntryIndex];
+			int dwarfTag = dwarf_tag(scopeEntry);
+			
+			if (
+				(dwarfTag == DW_TAG_subprogram)
+				|| (dwarfTag == DW_TAG_inlined_subroutine)
+				|| (dwarfTag == DW_TAG_entry_point)
+			) {
+				mangledFunction = getDebugInformationEntryName(scopeEntry);
+				break;
+			}
+		}
+	}
+	
+	if (mangledFunction.empty()) {
+		char const *mangledName = dwfl_module_addrname(module, dwflAddress);
+		if (mangledName != nullptr) {
+			mangledFunction = mangledName;
+		}
+	}
+	
+	if (mangledFunction.empty()) {
 		// Fall back to resolving through DL
 		return DLCodeAddressInfo::resolveAddress(address, callSiteFromReturnAddress);
 	}
 	
-	// Get the name of the function
-	std::string mangledFunction;
-	for (int scopeEntryIndex = 0; scopeEntryIndex < scopeEntryCount; scopeEntryIndex++) {
-		Dwarf_Die *scopeEntry = &scopeDebugInformationEntries[scopeEntryIndex];
-		int dwarfTag = dwarf_tag(scopeEntry);
-		
-		if (
-			(dwarfTag == DW_TAG_subprogram)
-			|| (dwarfTag == DW_TAG_inlined_subroutine)
-			|| (dwarfTag == DW_TAG_entry_point)
-		) {
-			mangledFunction = getDebugInformationEntryName(scopeEntry);
-			break;
-		}
-	}
 	
 	// Create the entry
 	Entry &entry = (callSiteFromReturnAddress ? _returnAddress2Entry[address] : _address2Entry[address]);
@@ -162,7 +177,7 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	{
 		// The following function searches for the closest line with address <= to what is given.
 		// So just subtracting 1 byte should be enough to retrieve the call site.
-		Dwfl_Line *dwarfLine = dwfl_module_getsrc (module, dwflAddress - (callSiteFromReturnAddress ? 1 : 0));
+		Dwfl_Line *dwarfLine = dwfl_module_getsrc (module, dwflAddress);
 		
 		Dwarf_Addr dwarfAddress = 0;
 		int line = 0;
@@ -182,15 +197,26 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 		entry._inlinedFrames.push_back(currentFrame);
 	}
 	
-	Dwarf_Off scopeOffset = dwarf_dieoffset(&scopeDebugInformationEntries[0]);
-	Dwarf_Addr moduleBias = 0;
-	Dwarf *moduleDwarf = dwfl_module_getdwarf(module, &moduleBias);
-	Dwarf_Die addressDebugInformationEntry;
-	dwarf_offdie(moduleDwarf, scopeOffset, &addressDebugInformationEntry);
-	free(scopeDebugInformationEntries);
-	
-	scopeDebugInformationEntries = nullptr;
-	scopeEntryCount = dwarf_getscopes_die(&addressDebugInformationEntry, &scopeDebugInformationEntries);
+	if ((scopeEntryIndex != -1) && (scopeEntryIndex < scopeEntryCount)) {
+		Dwarf_Off scopeOffset = dwarf_dieoffset(&scopeDebugInformationEntries[scopeEntryIndex]);
+		Dwarf_Addr moduleBias = 0;
+		Dwarf *moduleDwarf = dwfl_module_getdwarf(module, &moduleBias);
+		Dwarf_Die addressDebugInformationEntry;
+		dwarf_offdie(moduleDwarf, scopeOffset, &addressDebugInformationEntry);
+		free(scopeDebugInformationEntries);
+		
+		scopeDebugInformationEntries = nullptr;
+		scopeEntryCount = dwarf_getscopes_die(&addressDebugInformationEntry, &scopeDebugInformationEntries);
+	} else {
+		if (scopeDebugInformationEntries != nullptr) {
+			free(scopeDebugInformationEntries);
+			scopeDebugInformationEntries = nullptr;
+		}
+		
+		Dwarf_Addr moduleBias = 0;
+		Dwarf_Die *addressDebugInformationEntry = dwfl_module_addrdie (module, dwflAddress, &moduleBias);
+		scopeEntryCount = dwarf_getscopes(addressDebugInformationEntry, dwflAddress - moduleBias, &scopeDebugInformationEntries);
+	}
 	
 	// May correspond to more than one function due to inlining
 	if (scopeEntryCount > 1) {
@@ -208,7 +234,7 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 		}
 		
 		if (rc == 0) {
-			for (int scopeEntryIndex = 0; scopeEntryIndex < scopeEntryCount-1; scopeEntryIndex++) {
+			for (scopeEntryIndex = 0; scopeEntryIndex < scopeEntryCount-1; scopeEntryIndex++) {
 				Dwarf_Die *scopeEntry = &scopeDebugInformationEntries[scopeEntryIndex];
 				{
 					int dwarfTag = dwarf_tag(scopeEntry);
