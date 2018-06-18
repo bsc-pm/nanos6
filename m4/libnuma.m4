@@ -27,7 +27,7 @@ AC_DEFUN([AC_CHECK_LIBNUMA],
 		AC_CHECK_HEADERS([numa.h], [], [AC_MSG_ERROR([libnuma header files cannot be found])])
 		AC_CHECK_LIB([numa],
 			[numa_alloc_interleaved],
-			[libnuma_LIBS"${libnuma_LIBS} -lnuma"],
+			[libnuma_LIBS="${libnuma_LIBS} -lnuma"],
 			[AC_MSG_ERROR([libnuma cannot be found])],
 			[${ac_save_LIBS}]
 		)
