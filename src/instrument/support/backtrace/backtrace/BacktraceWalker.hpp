@@ -49,7 +49,7 @@ public:
 		int currentFrame = 0;
 		
 		// Skip as many frames as necessary
-		while ((currentFrame < skipFrames) && (currentIndex < allocatedFrames)) {
+		while ((currentFrame < skipFrames) && (currentIndex < allocatedFrames) && (currentIndex < total)) {
 			if (buffer[currentIndex] >= (address_t) lowest_valid_address) {
 				currentFrame++;
 			}
@@ -58,7 +58,7 @@ public:
 		
 		// Process
 		currentFrame = 0;
-		while ((currentFrame < maxFrames) && (currentIndex < allocatedFrames)) {
+		while ((currentFrame < maxFrames) && (currentIndex < allocatedFrames) && (currentIndex < total)) {
 			if (buffer[currentIndex] >= (address_t) lowest_valid_address) {
 				consumer(buffer[currentIndex], currentFrame);
 				currentFrame++;
