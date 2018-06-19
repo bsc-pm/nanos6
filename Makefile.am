@@ -340,7 +340,7 @@ cuda_sources = \
 	src/hardware/cuda/CUDAManager.cpp \
 	src/hardware/cuda/compute/CUDAComputePlace.cpp \
 	src/hardware/cuda/memory/CUDAMemoryPlace.cpp \
-	src/hardware/cuda/memory/CUDAUnifiedMemory.cpp \ 
+	src/hardware/cuda/memory/CUDAUnifiedMemory.cpp \
 	src/scheduling/schedulers/cuda/CUDANaiveScheduler.cpp 
 
 if USE_CUDA
@@ -608,11 +608,10 @@ noinst_HEADERS = \
 	src/hardware/cuda/compute/CUDAComputePlace.hpp \
 	src/hardware/cuda/compute/stream/CUDAStream.hpp \
 	src/hardware/cuda/compute/stream/CUDAStreamPool.hpp \
-	src/hardware/cuda/compute/synchronization/CUDAEvent.hpp \ 
+	src/hardware/cuda/compute/synchronization/CUDAEvent.hpp \
 	src/hardware/cuda/compute/synchronization/CUDAEventPool.hpp \
 	src/hardware/cuda/memory/CUDAMemoryPlace.hpp \
 	src/hardware/cuda/memory/CUDAUnifiedMemory.hpp \
-	src/lowlevel/cuda/CUDAErrorHandler.hpp \
 	src/hardware/HardwareInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
