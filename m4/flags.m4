@@ -87,6 +87,23 @@ AC_DEFUN([AC_CHECK_FIRST_COMPILER_FLAG],
 )
 
 
+dnl AC_CHECK_EXTRACT_FIRST_COMPILER_FLAG(VARIABLE-NAME, [list of flags])
+AC_DEFUN([AC_CHECK_EXTRACT_FIRST_COMPILER_FLAG],
+	[
+		ac_save2_[]_AC_LANG_PREFIX[]FLAGS="$[]_AC_LANG_PREFIX[]FLAGS"
+		for flag in $2 ; do
+			AC_CHECK_COMPILER_FLAG([$flag])
+			if test x"$ac_save2_[]_AC_LANG_PREFIX[]FLAGS" != x"$[]_AC_LANG_PREFIX[]FLAGS" ; then
+				$1[]="$flag"
+				break;
+			fi
+		done
+		[]_AC_LANG_PREFIX[]FLAGS="$ac_save2_[]_AC_LANG_PREFIX[]FLAGS"
+		AC_SUBST($1)
+	]
+)
+
+
 # This should be called before AC_PROG_CXX
 AC_DEFUN([SSS_PREPARE_COMPILER_FLAGS],
 	[
