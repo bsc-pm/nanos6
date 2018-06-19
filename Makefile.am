@@ -106,6 +106,8 @@ libnanos6_main_wrapper_a_SOURCES = \
 	loader/main-wrapper.c \
 	loader/main-wrapper.h
 
+libnanos6_main_wrapper_a_CPPFLAGS = $(CUDA_CFLAGS)
+
 
 nanos6-main-wrapper.o: libnanos6-main-wrapper.a
 	$(AM_V_LD)$(LD) -r --whole-archive libnanos6-main-wrapper.a -o nanos6-main-wrapper.o
@@ -117,6 +119,8 @@ libnanos6_library_mode_a_SOURCES = \
 	loader/api-versions.h \
 	loader/device_strings.c \
 	loader/library-mode-init.c
+
+libnanos6_library_mode_a_CPPFLAGS = $(CUDA_CFLAGS)
 
 
 nanos6-library-mode.o: libnanos6-library-mode.a
@@ -194,7 +198,7 @@ libnanos6_la_SOURCES = \
 	loader/loader.c \
 	loader/loader.h
 
-libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\"
+libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" $(CUDA_CFLAGS)
 libnanos6_la_LDFLAGS = $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
