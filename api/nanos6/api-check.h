@@ -7,9 +7,12 @@
 #ifndef NANOS6_API_CHECK_H
 #define NANOS6_API_CHECK_H
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "blocking.h"
 #include "bootstrap.h"
-// #include "cuda_device.h"
 #include "final.h"
 #include "library-mode.h"
 #include "polling.h"
@@ -22,6 +25,12 @@
 #include "user-mutex.h"
 #include "utils.h"
 
+
+#if USE_CUDA
+#include "cuda_device.h"
+#else
+enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 0 };
+#endif
 
 #pragma GCC visibility push(default)
 
@@ -39,7 +48,7 @@ typedef struct {
 	
 	enum nanos6_blocking_api_t blocking_api_version;
 	enum nanos6_bootstrap_api_t bootstrap_api_version;
-// 	enum nanos6_cuda_device_api_t cuda_device_api_version;
+	enum nanos6_cuda_device_api_t cuda_device_api_version;
 	enum nanos6_final_api_t final_api_version;
 	enum nanos6_instantiation_api_t instantiation_api_version;
 	enum nanos6_library_mode_api_t library_mode_api_version;
