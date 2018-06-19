@@ -107,6 +107,7 @@ ADD_AS_NEEDED_SUPPORT_TO_LIBTOOL
 
 SSS_FIXUP_COMPILER_FLAGS
 
+AC_CHECK_EXTRACT_FIRST_COMPILER_FLAG([MCMODEL_FLAGS], [-mcmodel=large -mcmodel=medium])
 
 CONFIGURE_NANOS6_FEATURES
 SELECT_NANOS6_INSTRUMENTATION_VARIANTS
@@ -304,6 +305,8 @@ _AS_ECHO([   Dependency implementation... ${ac_with_dependencies}])
 _AS_ECHO([   Symbol resolution method... ${ac_cv_use_symbol_resolution}])
 _AS_ECHO([])
 _AS_ECHO([   Mercurium prefix... ${NANOS6_MCC_PREFIX}])
+_AS_ECHO([])
+_AS_ECHO([   Code model flags... ${MCMODEL_FLAGS}])
 _AS_ECHO([])
 _AS_ECHO([   Boost CPPFLAGS... ${BOOST_CPPFLAGS}])
 _AS_ECHO([   Boost LDFLAGS... ${BOOST_LDFLAGS}])
