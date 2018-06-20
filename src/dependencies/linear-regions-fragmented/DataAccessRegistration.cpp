@@ -938,7 +938,8 @@ namespace DataAccessRegistration {
 			assert(satisfiedOriginator != 0);
 			
 			ComputePlace *idleComputePlace = Scheduler::addReadyTask(
-				satisfiedOriginator, computePlace,
+				satisfiedOriginator, 
+				(computePlace->getType() == satisfiedOriginator->getDeviceType()) ? computePlace : nullptr,
 				(fromBusyThread ?
 					SchedulerInterface::SchedulerInterface::BUSY_COMPUTE_PLACE_TASK_HINT
 					: SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT
