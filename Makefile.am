@@ -1288,6 +1288,7 @@ am__v_CHECK_1 =
 check-copyright: $(nodist_nanos6include_HEADERS)
 	@for f in \
 		$$(find $(top_srcdir) -name '*.[ch]pp' -or -name '*.[ch]') \
+		$$(find $(top_srcdir)/m4 -name '*.m4') \
 		$(nodist_nanos6include_HEADERS) \
 		$(top_srcdir)/loader/scripts/*.sh \
 	; do \
