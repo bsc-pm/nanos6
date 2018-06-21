@@ -1,3 +1,7 @@
+#	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+#	
+#	Copyright (C) 2010-2017 Barcelona Supercomputing Center (BSC)
+
 AC_DEFUN([AX_CHECK_EXTRAE],[
 
 AC_ARG_WITH(extrae,
