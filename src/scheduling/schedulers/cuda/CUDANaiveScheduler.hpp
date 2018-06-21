@@ -1,3 +1,9 @@
+/*
+	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+	
+	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
+*/
+
 #ifndef NAIVE_GPU_SCHEDULER_HPP
 #define NAIVE_GPU_SCHEDULER_HPP
 
