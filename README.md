@@ -25,6 +25,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [graphviz](http://www.graphviz.org/) and pdfjam or pdfjoin from [TeX](http://www.tug.org/texlive/) to generate graphical representations of the dependency graph
 1. [parallel](https://www.gnu.org/software/parallel/) to generate the graph representation in parallel
 1. [PAPI](https://icl.cs.utk.edu/papi/software/index.html)  to generate statistics that include hardware counters
+1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
 
 
 ## Build procedure
@@ -56,6 +57,7 @@ The configure script accepts the following options:
 1. `--with-papi=prefix` to specify the prefix of the PAPI installation
 1. `--with-libnuma=prefix` to specify the prefix of the numactl installation
 1. `--with-extrae=prefix` to specify the prefix of the extrae installation
+1. `--enable-cuda` to enable support for CUDA tasks
 
 The location of elfutils and hwloc is always retrieved through pkg-config.
 The location of PAPI can also be retrieved through pkg-config if it is not specified through the `--with-papi` parameter.
