@@ -20,6 +20,8 @@ extern "C" {
 //! \brief Check if running in a final context
 signed int nanos_in_final(void);
 
+//! \brief Check if running in a serial context
+signed int nanos_in_serial_context(void);
 
 #ifdef __cplusplus
 }

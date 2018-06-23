@@ -25,3 +25,15 @@ signed int nanos_in_final(void)
 	return currentTask->isFinal();
 }
 
+signed int nanos_in_serial_context(void)
+{
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentThread != nullptr);
+	
+	Task *currentTask = currentThread->getTask();
+	assert(currentTask != nullptr);
+	assert(currentTask->getThread() == currentThread);
+	
+	return currentTask->isFinal() || currentTask->isIf0();
+}
+
