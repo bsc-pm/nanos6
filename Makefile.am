@@ -35,6 +35,7 @@ nanos6include_HEADERS = \
 	api/nanos6/cuda_device.h \
 	api/nanos6/debug.h \
 	api/nanos6/devices.h \
+	api/nanos6/events.h \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/polling.h \
@@ -144,6 +145,7 @@ symbol_resolution += \
 	loader/symbol-resolver/cpu-control.c \
 	loader/symbol-resolver/debugging.c \
 	loader/symbol-resolver/dependencies.c \
+	loader/symbol-resolver/events.c \
 	loader/symbol-resolver/final.c \
 	loader/symbol-resolver/polling.c \
 	loader/symbol-resolver/reductions.c \
@@ -170,6 +172,7 @@ symbol_resolution += \
 	loader/indirect-symbols/cpu-control.c \
 	loader/indirect-symbols/debugging.c \
 	loader/indirect-symbols/dependencies.c \
+	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
 	loader/indirect-symbols/malloc.c \
 	loader/indirect-symbols/polling.c \
@@ -325,6 +328,7 @@ common_sources = \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
 	src/system/Bootstrap.cpp \
+	src/system/EventsAPI.cpp \
 	src/system/LeaderThread.cpp \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \

@@ -937,9 +937,16 @@ namespace DataAccessRegistration {
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 			
+			ComputePlace *computePlaceHint = nullptr;
+			if (computePlace != nullptr) {
+				if (computePlace->getType() == satisfiedOriginator->getDeviceType()) {
+					computePlaceHint = computePlace;
+				}
+			}
+			
 			ComputePlace *idleComputePlace = Scheduler::addReadyTask(
-				satisfiedOriginator, 
-				(computePlace->getType() == satisfiedOriginator->getDeviceType()) ? computePlace : nullptr,
+				satisfiedOriginator,
+				computePlaceHint,
 				(fromBusyThread ?
 					SchedulerInterface::SchedulerInterface::BUSY_COMPUTE_PLACE_TASK_HINT
 					: SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT
@@ -1107,8 +1114,6 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace,
 		bool fromBusyThread
 	) {
-		assert(computePlace != nullptr);
-		
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
 #else
 		processDelayedOperations(hpDependencyData);
@@ -2227,13 +2232,14 @@ namespace DataAccessRegistration {
 	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
-		assert(computePlace != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
-		CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
+		CPUDependencyData localDependencyData;
+		CPUDependencyData &hpDependencyData = (computePlace != nullptr) ?
+				computePlace->getDependencyData() : localDependencyData;
 		
 #ifndef NDEBUG
 		{

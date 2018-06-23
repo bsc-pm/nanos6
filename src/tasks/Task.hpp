@@ -37,8 +37,7 @@ public:
 		if0_flag,
 		taskloop_flag,
 		wait_flag,
-		non_runnable_flag, // NOTE: Must be at the end
-		delayed_release_flag, // NOTE: Must be at the end
+		non_runnable_flag, // Note: Must be at the end
 		total_flags
 	};
 	
@@ -87,6 +86,9 @@ private:
 	
 	//! Device Specific data
 	void *_deviceData;
+	
+	//! Number of internal and external events that prevent the release of dependencies
+	std::atomic<int> _countdownToRelease;
 	
 public:
 	inline Task(
@@ -239,52 +241,45 @@ public:
 		_priority = priority;
 	}
 	
-	
-	//! \brief Mark it as finished
+	//! \brief Mark that the task has finished its execution
+	//! It marks the task as finished and determines if the
+	//! dependencies can be released. The release could be
+	//! postponed due to uncompleted external events. It could
+	//! also be postponed due to a wait clause, in which the
+	//! last child task should release the dependencies
 	//!
-	//! \returns true if the change makes the task disposable
-	virtual inline bool markAsFinished() __attribute__((warn_unused_result))
+	//! Note: This should be called only from the body of the
+	//! thread that has executed the task
+	//!
+	//! \param computePlace in the compute place of the calling thread
+	//!
+	//! \returns true if its dependencies can be released
+	inline bool markAsFinished(ComputePlace *computePlace);
+	
+	//! \brief Mark that the dependencies of the task have been released
+	//!
+	//! \returns true if the task can be disposed
+	inline bool markAsReleased() __attribute__((warn_unused_result))
 	{
-		if (_taskInfo->implementations[0].device_type_id == nanos6_device_t::nanos6_host_device) {
-			assert(_thread != nullptr);
-			_thread = nullptr;
-		} else {
-			assert(_computePlace != nullptr);
-			_computePlace = nullptr;
-		}
-		
-		int countdown = (--_countdownToBeWokenUp);
-		assert(countdown >= 0);
-		return (countdown == 0);
+		assert(_thread == nullptr);
+		assert(_computePlace == nullptr);
+		return decreaseRemovalBlockingCount();
 	}
 	
-	//! \brief Mark it as finished after the data access release
+	//! \brief Mark that all its child tasks have finished
+	//! It marks that all children have finished and determines
+	//! if the dependencies can be released. It completes the
+	//! delay of the dependency release in case the task has a
+	//! wait clause, however, some external events could be still
+	//! uncompleted
 	//!
-	//! \returns true if the change makes the task disposable
-	inline bool markAsFinishedAfterDataAccessRelease() __attribute__((warn_unused_result))
-	{
-		if( _taskInfo->implementations[0].device_type_id == nanos6_device_t::nanos6_host_device) {
-			if (hasDelayedDataAccessRelease()) {
-				assert(_thread == nullptr);
-				setDelayedDataAccessRelease(false);
-			} else {
-				assert(_thread != nullptr);
-				_thread = nullptr;
-			}
-		} else {
-			if (hasDelayedDataAccessRelease()) {
-				assert(_computePlace == nullptr);
-				setDelayedDataAccessRelease(false);
-			} else {
-				assert(_computePlace != nullptr);
-				_computePlace = nullptr;
-			}
-		}
-		
-		int countdown = (--_countdownToBeWokenUp);
-		assert(countdown >= 0);
-		return (countdown == 0);
-	}
+	//! Note: This should be called when unlinking the last child
+	//! task (i.e. the removal counter becomes zero)
+	//!
+	//! \param computePlace in the compute place of the calling thread
+	//!
+	//! \returns true if its depedencies can be released
+	inline bool markAllChildrenAsFinished(ComputePlace *computePlace);
 	
 	//! \brief Mark it as blocked
 	//!
@@ -390,27 +385,24 @@ public:
 		return _flags[taskloop_flag];
 	}
 	
-	//! \brief Set or unset the wait flag
-	void setDelayDataAccessRelease(bool delayValue)
+	inline bool isRunnable() const
 	{
-		_flags[wait_flag] = delayValue;
+		return !_flags[Task::non_runnable_flag];
 	}
+	
 	//! \brief Check if the task has the wait clause
-	bool mustDelayDataAccessRelease() const
+	bool mustDelayRelease() const
 	{
 		return _flags[wait_flag];
 	}
 	
-	//! \brief Set or unset the delayed release flag
-	void setDelayedDataAccessRelease(bool delayedValue)
+	//! \brief Complete the delay of the dependency release
+	//! It completes the delay of the dependency release
+	//! enforced by a wait clause
+	void completeDelayedRelease()
 	{
-		_flags[delayed_release_flag] = delayedValue;
-	}
-	
-	//! \brief Check if the task has delayed the data access release
-	bool hasDelayedDataAccessRelease() const
-	{
-		return _flags[delayed_release_flag];
+		assert(_flags[wait_flag]);
+		_flags[wait_flag] = false;
 	}
 	
 	inline size_t getFlags() const
@@ -434,6 +426,22 @@ public:
 	inline void setSchedulerInfo(void *schedulerInfo)
 	{
 		_schedulerInfo = schedulerInfo;
+	}
+	
+	//! \brief Increase the counter of events
+	inline void increaseReleaseCount(int amount = 1)
+	{
+		_countdownToRelease += amount;
+	}
+	
+	//! \brief Decrease the counter of events
+	//!
+	//! \returns true iff the dependencies can be released
+	inline bool decreaseReleaseCount(int amount = 1)
+	{
+		int count = (_countdownToRelease -= amount);
+		assert(count >= 0);
+		return (count == 0);
 	}
 	
 	//! \brief Return the number of symbols on the task

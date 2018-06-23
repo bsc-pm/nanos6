@@ -52,22 +52,12 @@ void CUDAHelper::finishTask(Task *task)
 	CUDADeviceData *deviceData = (CUDADeviceData *) task->getDeviceData();
 	delete deviceData;
 	
-	if (task->mustDelayDataAccessRelease()) {
-		task->setDelayedDataAccessRelease(true);
-		DataAccessRegistration::handleEnterTaskwait(task, _computePlace);
-		if (!task->markAsFinished()) {
-			task = nullptr;
-			return;
-		}
+	if (task->markAsFinished(_computePlace)) {
+		DataAccessRegistration::unregisterTaskDataAccesses(task, _computePlace);
 		
-		DataAccessRegistration::handleExitTaskwait(task, _computePlace);
-		task->increaseRemovalBlockingCount();
-	}
-	
-	DataAccessRegistration::unregisterTaskDataAccesses(task, _computePlace);
-	
-	if (task->markAsFinishedAfterDataAccessRelease()) {
-		TaskFinalization::disposeOrUnblockTask(task, _computePlace);
+		if (task->markAsReleased()) {
+			TaskFinalization::disposeOrUnblockTask(task, _computePlace);
+		}
 	}
 }
 

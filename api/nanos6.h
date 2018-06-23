@@ -13,6 +13,7 @@
 #include "nanos6/blocking.h"
 #include "nanos6/constants.h"
 #include "nanos6/devices.h"
+#include "nanos6/events.h"
 #include "nanos6/final.h"
 #include "nanos6/polling.h"
 #include "nanos6/multidimensional-dependencies.h"

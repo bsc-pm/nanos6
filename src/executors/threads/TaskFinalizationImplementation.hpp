@@ -21,17 +21,19 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 	while ((task != nullptr) && readyOrDisposable) {
 		Task *parent = task->getParent();
 		
-		if (task->hasDelayedDataAccessRelease()) {
-			DataAccessRegistration::handleExitTaskwait(task, computePlace);
-			
-			// Unregister data accesses preventing the removal of the task
-			task->increaseRemovalBlockingCount();
-			DataAccessRegistration::unregisterTaskDataAccesses(task, computePlace);
-			if (!task->markAsFinishedAfterDataAccessRelease()) {
-				break;
+		// Complete the delayed release of dependencies of the task if it has a wait clause
+		if (task->hasFinished() && task->mustDelayRelease()) {
+			readyOrDisposable = false;
+			if (task->markAllChildrenAsFinished(computePlace)) {
+				DataAccessRegistration::unregisterTaskDataAccesses(task, computePlace);
+				if (task->markAsReleased()) {
+					readyOrDisposable = true;
+				}
 			}
+			assert(!task->mustDelayRelease());
+			if (!readyOrDisposable)
+				break;
 		}
-		assert(!task->hasDelayedDataAccessRelease());
 		
 		if (task->hasFinished()) {
 			// NOTE: Handle task removal before unlinking from parent

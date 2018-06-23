@@ -170,25 +170,12 @@ void WorkerThread::handleTask(CPU *cpu)
 	cpu = getComputePlace();
 	instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 	
-	// The release must be delayed until all children has finished
-	if (_task->mustDelayDataAccessRelease()) {
-		_task->setDelayedDataAccessRelease(true);
-		DataAccessRegistration::handleEnterTaskwait(_task, cpu);
-		if (!_task->markAsFinished()) {
-			_task = nullptr;
-			return;
-		}
+	if (_task->markAsFinished(cpu)) {
+		DataAccessRegistration::unregisterTaskDataAccesses(_task, cpu);
 		
-		DataAccessRegistration::handleExitTaskwait(_task, cpu);
-		_task->increaseRemovalBlockingCount();
-	}
-	
-	// Release the accesses
-	DataAccessRegistration::unregisterTaskDataAccesses(_task, cpu);
-	
-	// Try to dispose the task
-	if (_task->markAsFinishedAfterDataAccessRelease()) {
-		TaskFinalization::disposeOrUnblockTask(_task, cpu);
+		if (_task->markAsReleased()) {
+			TaskFinalization::disposeOrUnblockTask(_task, cpu);
+		}
 	}
 	
 	_task = nullptr;

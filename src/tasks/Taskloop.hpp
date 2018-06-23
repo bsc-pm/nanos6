@@ -74,27 +74,9 @@ public:
 		run(*((Taskloop *)parent));
 	}
 	
-	inline bool markAsFinished() __attribute__((warn_unused_result))
-	{
-		if (isRunnable()) {
-			assert(_thread != nullptr);
-			_thread = nullptr;
-		}
-		
-		int countdown = decreaseAndGetRemovalBlockingCount();
-		assert(countdown >= 0);
-		
-		return (countdown == 0);
-	}
-	
 	inline void setRunnable(bool runnableValue)
 	{
 		_flags[Task::non_runnable_flag] = !runnableValue;
-	}
-	
-	inline bool isRunnable() const
-	{
-		return !_flags[Task::non_runnable_flag];
 	}
 	
 	inline bool hasPendingIterations()

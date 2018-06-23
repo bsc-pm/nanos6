@@ -22,6 +22,8 @@ public:
 		assert(parent != nullptr);
 		
 		size_t flags = parent->getFlags();
+		flags = flags & ~Task::wait_flag;
+		
 		nanos_task_info *taskInfo = parent->getTaskInfo();
 		nanos_task_invocation_info *taskInvocationInfo = parent->getTaskInvokationInfo();
 		
@@ -41,7 +43,6 @@ public:
 		
 		// Set the flags
 		taskloop->setRunnable(true);
-		taskloop->setDelayedDataAccessRelease(false);
 		
 		// Set the parent
 		taskloop->setParent(parent);
