@@ -28,5 +28,7 @@ if test -z ${NANOS6} ; then
 # 		# Execution with memory debugging (overflow)
 # 		NANOS6_DEBUG_MEMORY=1 NANOS6_DEBUG_MEMORY_PROTECT_AFTER=1 "${@}"
 	fi
+else
+	exec "${@}"
 fi
 
