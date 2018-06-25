@@ -107,6 +107,11 @@ static void main_completion_callback(void *args)
 
 
 int _nanos6_loader_main(int argc, char **argv, char **envp) {
+	if (_nanos6_exit_with_error) {
+		fprintf(stderr, "Error: %s\n", _nanos6_error_text);
+		return _nanos6_exit_with_error;
+	}
+	
 	if (nanos6_check_api_versions(&__user_code_expected_nanos6_api_versions) != 1) {
 		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "This executable was compiled for a different version of Nanos6. Please recompile and relink it.");
 		_nanos6_exit_with_error = 1;
