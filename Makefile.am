@@ -834,6 +834,7 @@ noinst_HEADERS = \
 	src/lowlevel/RWTicketSpinLock.hpp \
 	src/lowlevel/SpinLock.hpp \
 	src/lowlevel/SpinLockBacktracingDebug.hpp \
+	src/lowlevel/SpinLockDeadlockDebug.hpp \
 	src/lowlevel/SpinLockNoDebug.hpp \
 	src/lowlevel/SpinLockOwnerDebug.hpp \
 	src/lowlevel/SymbolResolver.hpp \
