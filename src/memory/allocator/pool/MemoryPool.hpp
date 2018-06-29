@@ -21,16 +21,14 @@ private:
 	
 	void fillPool()
 	{
-		assert(_topChunk == nullptr);
-		
 		size_t globalChunkSize;
 		_topChunk = _globalAllocator->getMemory(globalChunkSize);
 		
-		assert(_topChunk != nullptr);
-		assert(_chunkSize < globalChunkSize);
-		
 		// If globalChunkSize % _chunkSize != 0, some memory will be left unused
 		size_t numChunks = globalChunkSize / _chunkSize;
+		
+		FatalErrorHandler::failIf(numChunks == 0, "Memory returned from global pool is smaller than chunk size (", _chunkSize, "B)");
+		
 		void *prevChunk = _topChunk;
 		for (size_t i = 1; i < numChunks; ++i) {
 			// Link chunks to each other, by writing a pointer to the next chunk in this chunk
@@ -47,7 +45,6 @@ public:
 		_chunkSize(chunkSize),
 		_topChunk(nullptr)
 	{
-		assert(chunkSize > sizeof(void *));
 		fillPool();
 	}
 	

@@ -4,7 +4,6 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include <assert.h>
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
@@ -46,7 +45,6 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 		pool = it->second;
 	}
 
-	assert(pool != nullptr);
 	return pool;
 }
 

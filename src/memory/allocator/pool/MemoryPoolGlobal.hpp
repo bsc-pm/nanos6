@@ -32,7 +32,6 @@ private:
 
 	void fillPool()
 	{
-		assert(_curAvailable == 0);
 		_curAvailable = _globalAllocSize;
 #if HAVE_MEMKIND
 		int rc = memkind_posix_memalign(_memoryKind, &_curMemoryChunk, _pageSize, _globalAllocSize);
@@ -52,7 +51,7 @@ public:
 		_curMemoryChunk(nullptr), _curAvailable(0),
 		_NUMANodeId(NUMANodeId)
 	{
-		assert((_globalAllocSize % _memoryChunkSize) == 0);
+		FatalErrorHandler::failIf((_globalAllocSize % _memoryChunkSize) != 0, "Pool size and chunk size must be multiples of eachother");
 #if HAVE_MEMKIND
 		int rc = memkind_create_kind(MEMKIND_MEMTYPE_DEFAULT, MEMKIND_POLICY_PREFERRED_LOCAL, (memkind_bits_t)0, &_memoryKind);
 		FatalErrorHandler::check(rc == MEMKIND_SUCCESS, " when trying to create a new memory kind");
