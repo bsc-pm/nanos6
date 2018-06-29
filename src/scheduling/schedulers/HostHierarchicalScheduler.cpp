@@ -11,6 +11,7 @@
 #include "../SchedulerGenerator.hpp"
 
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <config.h>
 
