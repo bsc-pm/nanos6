@@ -33,10 +33,10 @@ public:
 	
 	/* Simplifications for using "new" and "delete" with the allocator */
 	template <typename T, typename... Args>
-	static T *newObject(Args... args)
+	static T *newObject(Args &&... args)
 	{
 		void *ptr = MemoryAllocator::alloc(sizeof(T));
-		new (ptr) T(args...);
+		new (ptr) T(std::forward<Args>(args)...);
 		return (T*)ptr;
 	}
 	
