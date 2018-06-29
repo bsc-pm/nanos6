@@ -35,6 +35,7 @@ template <class DEBUG_KIND>
 inline void CustomizableSpinLock<DEBUG_KIND>::lock()
 {
 	DEBUG_KIND::assertNotCurrentOwner();
+	DEBUG_KIND::willLock();
 	
 	bool expected = false;
 	while (!_lock.compare_exchange_weak(expected, true, std::memory_order_acquire)) {

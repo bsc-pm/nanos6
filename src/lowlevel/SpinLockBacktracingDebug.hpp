@@ -40,6 +40,10 @@ public:
 	{
 	}
 	
+	inline void willLock()
+	{
+	}
+	
 	inline void assertCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 	{
 		if (!ignoreOwner && (_owner != ompss_debug::getCurrentWorkerThread())) {
