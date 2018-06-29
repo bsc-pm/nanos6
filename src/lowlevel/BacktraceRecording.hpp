@@ -47,6 +47,17 @@ public:
 	{
 	}
 	
+	RecordedBacktrace(RecordedBacktrace &&other)
+		: _backtrace(std::move(other._backtrace))
+	{
+	}
+	
+	RecordedBacktrace &operator=(RecordedBacktrace &&other)
+	{
+		_backtrace = std::move(other._backtrace);
+		return *this;
+	}
+	
 	__attribute__((always_inline)) void capture(int skipFrames = 0)
 	{
 		_backtrace.clear();
