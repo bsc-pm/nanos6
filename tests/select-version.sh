@@ -4,12 +4,6 @@
 #	
 #	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 
-if test -z ${NANOS6_SCHEDULER} ; then
-	if [[ "${*}" == *"loop-"* ]] ; then
-		# Set a scheduler that supports the oss loop construct
-		export NANOS6_SCHEDULER=fifo
-	fi
-fi
 
 if test -z ${NANOS6} ; then
 	if test "${*}" = "${*/.debug/}" ; then
