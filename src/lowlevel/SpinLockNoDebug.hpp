@@ -14,6 +14,10 @@ public:
 	{
 	}
 	
+	inline void willLock()
+	{
+	}
+	
 	inline void assertCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 	{
 	}

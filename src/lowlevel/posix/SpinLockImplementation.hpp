@@ -30,6 +30,7 @@ template <class DEBUG_KIND>
 inline void CustomizableSpinLock<DEBUG_KIND>::lock()
 {
 	DEBUG_KIND::assertNotCurrentOwner();
+	DEBUG_KIND::willLock();
 	pthread_spin_lock(&_lock);
 	DEBUG_KIND::assertUnowned();
 	DEBUG_KIND::setOwner();
