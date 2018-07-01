@@ -354,3 +354,13 @@ else
 	AC_MSG_RESULT([no])
 fi
 
+_AS_ECHO([])
+_AS_ECHO_N([   Memkind is enabled... ])
+if test x"${ac_use_memkind}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([	Memkind CPPFLAGS... ${memkind_CPPFLAGS}])
+	_AS_ECHO([	Memkind LIBS... ${memkind_LIBS}])
+else
+	AC_MSG_RESULT([no])
+fi
+

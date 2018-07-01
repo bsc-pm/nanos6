@@ -8,6 +8,10 @@
 #define MEMORY_POOL_GLOBAL_HPP
 #include <vector>
 
+#if HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #if HAVE_MEMKIND
 #include <memkind.h>
 #endif

@@ -61,6 +61,10 @@ AC_DEFUN([AC_CHECK_MEMKIND],
 			LIBS="${ac_save_LIBS}"
 		fi
 		
+		if test "x${ac_use_memkind}" = x"yes"; then
+			AC_DEFINE(HAVE_MEMKIND, 1, [use memkind])
+		fi
+		
 		AM_CONDITIONAL(HAVE_MEMKIND, test x"${ac_use_memkind}" = x"yes")
 		
 		AC_SUBST([memkind_LIBS])

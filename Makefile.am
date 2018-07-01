@@ -923,8 +923,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(memkind_CPPFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(memkind_LIBS)
 
 
 # This is needed for debuggable spinlocks
@@ -937,11 +937,6 @@ common_libnanos6_ldflags  += $(BACKTRACE_LIBS) $(elfutils_LIBS)
 enabled_variants =
 disabled_variants =
 
-
-if HAVE_MEMKIND
-common_libnanos6_cppflags += $(memkind_CPPFLAGS) -DHAVE_MEMKIND
-common_libnanos6_ldflags += $(memkind_LIBS)
-endif
 
 libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_allocator_default_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
