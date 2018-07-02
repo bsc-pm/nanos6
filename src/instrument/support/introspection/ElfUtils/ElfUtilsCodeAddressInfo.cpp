@@ -132,7 +132,10 @@ ElfUtilsCodeAddressInfo::Entry const &ElfUtilsCodeAddressInfo::resolveAddress(vo
 	
 	Dwarf_Addr addressBias = 0;
 	Dwarf_Die *compilationUnitDebugInformationEntry = dwfl_module_addrdie(module, dwflAddress, &addressBias);
-	assert(compilationUnitDebugInformationEntry != nullptr);
+	if (compilationUnitDebugInformationEntry == nullptr) {
+		// The module does not have debugging information
+		return DLCodeAddressInfo::resolveAddress(address, callSiteFromReturnAddress);
+	}
 	
 	// Get the name of the function
 	std::string mangledFunction;
