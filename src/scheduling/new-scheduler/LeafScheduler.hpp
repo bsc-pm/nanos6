@@ -199,6 +199,12 @@ public:
 		
 		std::vector<Task *> taskBatch = _queue->getTaskBatch(-1);
 		
+		Task *pollingTask = _pollingSlot.getTask();
+		if (pollingTask != nullptr) {
+			// A task may be added before the scheduler has been marked as non-idle in the parent
+			taskBatch.push_back(pollingTask);
+		}
+		
 		if (taskBatch.size() > 0) {
 			_parent->addTaskBatch(this, taskBatch);
 		}
