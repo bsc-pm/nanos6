@@ -16,15 +16,14 @@
 #include <iostream>
 
 
-class WorkerThread;
 namespace ompss_debug {
-	__attribute__((weak)) WorkerThread *getCurrentWorkerThread();
+	void *getCurrentThread();
 }
 
 
 class SpinLockBacktracingDebug {
 private:
-	WorkerThread *_owner;
+	void *_owner;
 	RecordedBacktrace _lastStatusChangeBacktrace;
 	
 	inline void lockOutput()
@@ -46,7 +45,7 @@ public:
 	
 	inline void assertCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 	{
-		if (!ignoreOwner && (_owner != ompss_debug::getCurrentWorkerThread())) {
+		if (!ignoreOwner && (_owner != ompss_debug::getCurrentThread()) && (ompss_debug::getCurrentThread() != nullptr)) {
 			lockOutput();
 			
 			RecordedBacktrace currentBacktrace;
@@ -80,7 +79,7 @@ public:
 	
 	inline void assertUnownedOrCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 	{
-		if (!ignoreOwner && (_owner != nullptr) && (_owner != ompss_debug::getCurrentWorkerThread())) {
+		if (!ignoreOwner && (_owner != nullptr) && (_owner != ompss_debug::getCurrentThread())) {
 			lockOutput();
 			
 			RecordedBacktrace currentBacktrace;
@@ -97,7 +96,7 @@ public:
 	
 	inline void assertNotCurrentOwner()
 	{
-		if (_owner == ompss_debug::getCurrentWorkerThread()) {
+		if ((_owner == ompss_debug::getCurrentThread()) && (ompss_debug::getCurrentThread() != nullptr)) {
 			lockOutput();
 			
 			RecordedBacktrace currentBacktrace;
@@ -114,19 +113,23 @@ public:
 	
 	inline void setOwner()
 	{
-		_owner = ompss_debug::getCurrentWorkerThread();
-		_lastStatusChangeBacktrace.capture(0);
+		_owner = ompss_debug::getCurrentThread();
+		if (_owner != nullptr) {
+			_lastStatusChangeBacktrace.capture(0);
+		}
 	}
 	
 	inline void unsetOwner()
 	{
-		_owner = nullptr;
-		_lastStatusChangeBacktrace.capture(0);
+		if (_owner != nullptr) {
+			_owner = nullptr;
+			_lastStatusChangeBacktrace.capture(0);
+		}
 	}
 	
 	inline bool isLockedByThisThread()
 	{
-		return (_owner == ompss_debug::getCurrentWorkerThread());
+		return (_owner == ompss_debug::getCurrentThread());
 	}
 	
 };
