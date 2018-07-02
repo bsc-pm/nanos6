@@ -8,3 +8,12 @@
 
 
 __thread KernelLevelThread *KernelLevelThread::_currentKernelLevelThread(nullptr);
+
+#ifndef NDEBUG
+namespace ompss_debug {
+	void *getCurrentThread()
+	{
+		return KernelLevelThread::getCurrentKernelLevelThread();
+	}
+}
+#endif

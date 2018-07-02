@@ -18,15 +18,14 @@
 #include <set>
 
 
-class WorkerThread;
 namespace ompss_debug {
-	__attribute__((weak)) WorkerThread *getCurrentWorkerThread();
+	void *getCurrentThread();
 }
 
 
 class SpinLockDeadlockDebug {
 private:
-	WorkerThread *_owner;
+	void *_owner;
 	RecordedBacktrace _lastStatusChangeBacktrace;
 	
 	typedef CustomizableSpinLock<SpinLockNoDebug> aux_lock_t;
@@ -38,7 +37,7 @@ private:
 	}
 	
 	struct DeadlockCheckInfo {
-		typedef std::map<WorkerThread *, std::map<SpinLockDeadlockDebug *, RecordedBacktrace>> map_t;
+		typedef std::map<void *, std::map<SpinLockDeadlockDebug *, RecordedBacktrace>> map_t;
 		
 		aux_lock_t _lock;
 		map_t _lockingMap;
@@ -60,7 +59,11 @@ public:
 	
 	inline void willLock()
 	{
-		WorkerThread *thisThread = ompss_debug::getCurrentWorkerThread();
+		void *thisThread = ompss_debug::getCurrentThread();
+		if (thisThread == nullptr) {
+			// Not initialized yet
+			return;
+		}
 		
 		RecordedBacktrace currentBacktrace;
 		currentBacktrace.capture(0);
@@ -71,7 +74,7 @@ public:
 		auto &ourLocks = deadlockCheckInfo._lockingMap[thisThread];
 		ourLocks[this] = std::move(currentBacktrace);
 		
-		WorkerThread *owner = _owner;
+		void *owner = _owner;
 		if (owner != nullptr) {
 			auto &ownerLocks = deadlockCheckInfo._lockingMap[owner];
 			
@@ -108,7 +111,7 @@ public:
 	
 	inline void assertCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 	{
-		if (!ignoreOwner && (_owner != ompss_debug::getCurrentWorkerThread())) {
+		if (!ignoreOwner && (_owner != ompss_debug::getCurrentThread()) && (nullptr != ompss_debug::getCurrentThread())) {
 			lockOutput();
 			
 			RecordedBacktrace currentBacktrace;
@@ -144,7 +147,7 @@ public:
 	
 	inline void assertUnownedOrCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 	{
-		if (!ignoreOwner && (_owner != nullptr) && (_owner != ompss_debug::getCurrentWorkerThread())) {
+		if (!ignoreOwner && (_owner != nullptr) && (_owner != ompss_debug::getCurrentThread())) {
 			lockOutput();
 			
 			RecordedBacktrace currentBacktrace;
@@ -162,7 +165,7 @@ public:
 	
 	inline void assertNotCurrentOwner()
 	{
-		if (_owner == ompss_debug::getCurrentWorkerThread()) {
+		if ((_owner == ompss_debug::getCurrentThread()) && (ompss_debug::getCurrentThread() != nullptr)) {
 			lockOutput();
 			
 			RecordedBacktrace currentBacktrace;
@@ -180,7 +183,11 @@ public:
 	
 	inline void setOwner()
 	{
-		WorkerThread *thisThread = ompss_debug::getCurrentWorkerThread();
+		void *thisThread = ompss_debug::getCurrentThread();
+		if (thisThread == nullptr) {
+			// Not initialized yet
+			return;
+		}
 		
 		DeadlockCheckInfo &deadlockCheckInfo = getDeadlockCheckInfo();
 		deadlockCheckInfo._lock.lock();
@@ -203,7 +210,11 @@ public:
 	
 	inline void unsetOwner()
 	{
-		WorkerThread *thisThread = ompss_debug::getCurrentWorkerThread();
+		void *thisThread = ompss_debug::getCurrentThread();
+		if (thisThread == nullptr) {
+			// Not initialized yet
+			return;
+		}
 		
 		DeadlockCheckInfo &deadlockCheckInfo = getDeadlockCheckInfo();
 		deadlockCheckInfo._lock.lock();
@@ -220,7 +231,7 @@ public:
 	
 	inline bool isLockedByThisThread()
 	{
-		return (_owner == ompss_debug::getCurrentWorkerThread());
+		return (_owner == ompss_debug::getCurrentThread());
 	}
 	
 };

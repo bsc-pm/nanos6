@@ -11,4 +11,11 @@
 #include "posix/KernelLevelThread.hpp"
 
 
+#ifndef NDEBUG
+namespace ompss_debug {
+	void *getCurrentThread();
+}
+#endif
+
+
 #endif // KERNEL_LEVEL_THREAD_HPP
