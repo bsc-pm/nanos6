@@ -22,7 +22,7 @@ public:
 		assert(parent != nullptr);
 		
 		size_t flags = parent->getFlags();
-		flags = flags & ~Task::wait_flag;
+		flags = flags & ~(1 << Task::wait_flag);
 		
 		nanos_task_info *taskInfo = parent->getTaskInfo();
 		nanos_task_invocation_info *taskInvocationInfo = parent->getTaskInvokationInfo();
