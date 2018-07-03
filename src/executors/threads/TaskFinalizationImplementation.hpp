@@ -79,10 +79,12 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			Scheduler::taskGetsUnblocked(task, computePlace);
 			readyOrDisposable = false;
 			
-			if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
-				CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
-				if (idleCPU != nullptr) {
-					ThreadManager::resumeIdle(idleCPU);
+			if (computePlace != nullptr) {
+				if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
+					CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
+					if (idleCPU != nullptr) {
+						ThreadManager::resumeIdle(idleCPU);
+					}
 				}
 			}
 		}
