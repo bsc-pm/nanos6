@@ -18,7 +18,6 @@
 
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/CPUManager.hpp"
-#include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -89,7 +88,6 @@ void nanos_preinit(void) {
 	MemoryAllocator::initialize();
 	CPUManager::preinitialize();
 	Scheduler::initialize();
-	ThreadManagerPolicy::initialize();
 	
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();

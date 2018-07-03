@@ -313,9 +313,7 @@ nodist_common_sources = \
 common_sources = \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPUManager.cpp \
-	src/executors/threads/DefaultThreadManagerPolicy.cpp \
 	src/executors/threads/ThreadManager.cpp \
-	src/executors/threads/ThreadManagerPolicy.cpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/places/CPUPlace.cpp \
@@ -622,12 +620,10 @@ noinst_HEADERS = \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.hpp \
-	src/executors/threads/DefaultThreadManagerPolicy.hpp \
 	src/executors/threads/TaskFinalization.hpp \
 	src/executors/threads/TaskFinalizationImplementation.hpp \
 	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/ThreadManagerPolicy.hpp \
-	src/executors/threads/ThreadManagerPolicyInterface.hpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/executors/threads/WorkerThreadImplementation.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \

@@ -7,6 +7,7 @@
 #ifndef TASK_BLOCKING_HPP
 #define TASK_BLOCKING_HPP
 
+#include "executors/threads/ThreadManagerPolicy.hpp"
 
 class WorkerThread;
 class Task;
@@ -14,7 +15,7 @@ class Task;
 
 class TaskBlocking {
 public:
-	static void taskBlocks(WorkerThread *currentThread, Task *currentTask, bool allowRunningInline);
+	static void taskBlocks(WorkerThread *currentThread, Task *currentTask, ThreadManagerPolicy::thread_run_inline_policy_t);
 };
 
 

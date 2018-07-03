@@ -12,6 +12,7 @@
 #include "ompss/TaskBlocking.hpp"
 
 #include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
 #include "scheduling/Scheduler.hpp"
@@ -49,7 +50,7 @@ extern "C" void nanos_block_current_task(__attribute__((unused)) void *blocking_
 	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
 	
 	DataAccessRegistration::handleEnterBlocking(currentTask);
-	TaskBlocking::taskBlocks(currentThread, currentTask, false);
+	TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_NO_INLINE);
 	DataAccessRegistration::handleExitBlocking(currentTask);
 	
 	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());

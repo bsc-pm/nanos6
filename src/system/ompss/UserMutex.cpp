@@ -84,7 +84,7 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 	Instrument::blockedOnUserMutex(&userMutex);
 	
 	DataAccessRegistration::handleEnterBlocking(currentTask);
-	TaskBlocking::taskBlocks(currentThread, currentTask, false);
+	TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_NO_INLINE);
 	
 	computePlace = currentThread->getComputePlace();
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());

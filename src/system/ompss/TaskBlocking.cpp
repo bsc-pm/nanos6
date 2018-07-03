@@ -16,7 +16,7 @@
 #include <cassert>
 
 
-void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, bool allowRunningInline)
+void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, ThreadManagerPolicy::thread_run_inline_policy_t policy)
 {
 	assert(currentThread != nullptr);
 	assert(currentTask != nullptr);
@@ -56,9 +56,8 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, bo
 			replacementThread = replacementTask->getThread();
 			
 			if (replacementThread == nullptr) {
-				if (allowRunningInline) {
-					runReplacementInline = ThreadManagerPolicy::checkIfMustRunInline(replacementTask, currentTask, cpu);
-				}
+				runReplacementInline = ThreadManagerPolicy::checkIfMustRunInline(replacementTask, currentTask, cpu, policy);
+				
 				if (!runReplacementInline) {
 					// Set up case (2)
 					replacementThread = ThreadManager::getIdleThread(cpu);

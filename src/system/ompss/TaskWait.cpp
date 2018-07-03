@@ -64,7 +64,7 @@ void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
 	
 	if (!done) {
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
-		TaskBlocking::taskBlocks(currentThread, currentTask, true);
+		TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_CHILDREN_INLINE);
 		Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
 	}
 	
