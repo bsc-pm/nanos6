@@ -69,24 +69,23 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, Th
 		if (runReplacementInline) {
 			assert(replacementThread == nullptr);
 			
-			currentThread->handleTask(cpu, replacementTask);
-			
-			// The thread can have migrated while running the replacement task
-			cpu = currentThread->getComputePlace();
-			
-			// The following code can only be executed while in a taskwait
-			if (currentTask->canBeWokenUp()) {
-				// The task has or is entering the unblocked queue.
-				// So switch to an idle thread that will remove it from there and wake it up.
-				//
-				// NOTE: This could be optimized by having a call in the scheduler to do it
-				// and cleaning up the immediate resumption flag. However we do not have any
-				// guarantee of how long it is going to take to have the task in the queue,
-				// and the thread (pre-)signaled.
-				replacementThread = ThreadManager::getIdleThread(cpu);
-				currentThread->switchTo(replacementThread);
+			// The blocking condition may released while this thread is running a task. Avoid that
+			if (currentTask->disableScheduling()) {
+				currentThread->handleTask(cpu, replacementTask);
 				
-				// At this point the condition of the taskwait has been fulfilled
+				// The thread can have migrated while running the replacement task
+				cpu = currentThread->getComputePlace();
+				
+				if (currentTask->enableScheduling()) {					
+					// At this point the blocking condition has been fulfilled. The task is not in the scheduler
+					done = true;
+				}
+			} else {
+				// The task has or is entering the unblocked queue.
+				// Run the task that was obtained in a new thread, so this thread can be woken up
+				replacementThread = ThreadManager::getIdleThread(cpu);
+				replacementThread->setTask(replacementTask);
+				currentThread->switchTo(replacementThread);
 				done = true;
 			}
 		} else {

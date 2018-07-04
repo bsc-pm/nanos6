@@ -17,6 +17,7 @@ public:
 	enum thread_run_inline_policy_t {
 		POLICY_NO_INLINE = 0,
 		POLICY_CHILDREN_INLINE,
+		POLICY_ALL_INLINE
 	};
 
 	//! \brief check if a task must be run within the thread of a blocked task
@@ -47,6 +48,9 @@ public:
 				break;
 			case POLICY_CHILDREN_INLINE:
 				mustRunInline = replacementTask->getParent() == currentTask;
+				break;
+			case POLICY_ALL_INLINE:
+				mustRunInline = true;
 				break;
 		}
 		

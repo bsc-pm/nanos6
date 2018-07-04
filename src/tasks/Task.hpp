@@ -327,6 +327,31 @@ public:
 		return (_countdownToBeWokenUp == 1);
 	}
 	
+	//! \brief Prevent this task to be scheduled when it is unblocked
+	//!
+	//! \returns true if this task is still not unblocked
+	inline bool disableScheduling()
+	{
+		int countdown = _countdownToBeWokenUp.load();
+		assert(countdown >= 0);
+		
+		// If it is 0 (unblocked), do not increment
+		while (countdown > 0 && !_countdownToBeWokenUp.compare_exchange_strong(countdown, countdown + 1)) {
+		}
+		
+		return (countdown > 0);
+	}
+	
+	//! \brief Enable shceduling again for this task
+	//!
+	//! \returns true if this task is unblocked
+	inline bool enableScheduling()
+	{
+		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
+	}
+	
 	//! \brief Retrieve the list of data accesses
 	TaskDataAccesses const &getDataAccesses() const
 	{
