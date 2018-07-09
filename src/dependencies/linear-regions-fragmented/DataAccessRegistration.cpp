@@ -97,7 +97,12 @@ namespace DataAccessRegistration {
 			_isRegistered = access->isRegistered();
 			
 			_isSatisfied = access->satisfied();
-			_enforcesDependency = !access->isWeak() && !access->satisfied() && (access->getObjectType() == access_type);
+			_enforcesDependency =
+				!access->isWeak() &&
+				!access->satisfied() &&
+				// Reduction accesses can begin as soon as they have a ReductionInfo (even without CpuSet)
+				!((access->getType() == REDUCTION_ACCESS_TYPE) && (access->getReductionInfo() != nullptr)) &&
+				(access->getObjectType() == access_type);
 			_hasNext = access->hasNext();
 			
 			// Propagation to fragments
@@ -134,9 +139,7 @@ namespace DataAccessRegistration {
 						access->canPropagateConcurrentSatisfiability() && access->concurrentSatisfied()
 						&& (access->getType() == CONCURRENT_ACCESS_TYPE);
 					_propagatesReductionInfoToNext =
-						access->canPropagateReductionInfo() && access->receivedReductionInfo()
-						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
-								|| access->satisfied());
+						access->canPropagateReductionInfo() && access->receivedReductionInfo();
 					_propagatesReductionCpuSetToNext = false; // ReductionCpuSet is propagated through the fragments
 				} else if (
 					(access->getObjectType() == fragment_type)
@@ -152,9 +155,7 @@ namespace DataAccessRegistration {
 						&& access->concurrentSatisfied();
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
-						&& access->receivedReductionInfo()
-						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
-								|| access->satisfied());
+						&& access->receivedReductionInfo();
 					_propagatesReductionCpuSetToNext =
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()
@@ -178,9 +179,7 @@ namespace DataAccessRegistration {
 						&& ((access->getType() == CONCURRENT_ACCESS_TYPE) || access->complete());
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
-						&& access->receivedReductionInfo()
-						&& ((access->getType() != REDUCTION_ACCESS_TYPE)
-								|| access->satisfied());
+						&& access->receivedReductionInfo();
 					_propagatesReductionCpuSetToNext =
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()

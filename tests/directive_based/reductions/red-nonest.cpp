@@ -278,12 +278,22 @@ struct VerifierConstraintCalculator {
 				TaskVerifier *readerVerifier = verifiers[reader];
 				assert(readerVerifier != 0);
 				
-				readerVerifier->_runsBefore = _newWriters;
-				// Increment number of tests, corresponding to tests run by selfcheck and verify
+				if (_lastAccessType != REDUCTION) {
+					// Reductions can run concurrently with previous readers
+					readerVerifier->_runsBefore = _newWriters;
+					// Increment number of tests, corresponding to tests run by selfcheck and verify
 #if FINE_SELF_CHECK
-				numTests += _newWriters.size();
+					numTests += _newWriters.size();
 #endif
-				numTests += _newWriters.size();
+					numTests += _newWriters.size();
+				}
+				else {
+					for (std::set<int>::const_iterator it_red = _newWriters.begin(); it_red != _newWriters.end(); it_red++) {
+						readerVerifier->_runsConcurrentlyWith.insert(*it_red);
+						verifiers[*it_red]->_runsConcurrentlyWith.insert(reader);
+					}
+				}
+				
 				for (std::set<int>::const_iterator it2 = _lastReaders.begin(); it2 != _lastReaders.end(); it2++) {
 					int other = *it2;
 					
@@ -306,12 +316,21 @@ struct VerifierConstraintCalculator {
 				TaskVerifier *writerVerifier = verifiers[writer];
 				assert(writerVerifier != 0);
 				
-				writerVerifier->_runsBefore = _newWriters;
-				// Increment number of tests, corresponding to tests run by selfcheck and verify
+				if (_lastAccessType != REDUCTION) {
+					// Reductions can run concurrently with previous writers
+					writerVerifier->_runsBefore = _newWriters;
+					// Increment number of tests, corresponding to tests run by selfcheck and verify
 #if FINE_SELF_CHECK
-				numTests += _newWriters.size();
+					numTests += _newWriters.size();
 #endif
-				numTests += _newWriters.size();
+					numTests += _newWriters.size();
+				}
+				else {
+					for (std::set<int>::const_iterator it_red = _newWriters.begin(); it_red != _newWriters.end(); it_red++) {
+						writerVerifier->_runsConcurrentlyWith.insert(*it_red);
+						verifiers[*it_red]->_runsConcurrentlyWith.insert(writer);
+					}
+				}
 				
 				for (std::set<int>::const_iterator it2 = _lastWriters.begin(); it2 != _lastWriters.end(); it2++) {
 					int other = *it2;
@@ -468,25 +487,6 @@ struct VerifierConstraintCalculator {
 			_lastAccessType = REDUCTION;
 		}
 		
-		// Writer(s) before writers
-		if (!_lastWriters.empty()) {
-			verifier->_runsAfter = _lastWriters;
-			// Increment number of tests, corresponding to tests run by selfcheck and verify
-#if FINE_SELF_CHECK
-			numTests += _lastWriters.size();
-#endif
-			numTests += _lastWriters.size();
-		// Readers before writers (either this or previous condition will be
-		// true, unless it's the first access)
-		} else if (!_lastReaders.empty()) {
-			verifier->_runsAfter = _lastReaders;
-			// Increment number of tests, corresponding to tests run by selfcheck and verify
-#if FINE_SELF_CHECK
-			numTests += _lastReaders.size();
-#endif
-			numTests += _lastReaders.size();
-		}
-		
 		_newWriters.insert(verifier->_id);
 	}
 	
@@ -577,57 +577,60 @@ int main(int argc, char **argv)
 	
 	int var1;
 	
+	Atomic<int> numConcurrentTasks1(0);
+	
 	// 1 writer
-	TaskVerifier firstWriter(TaskVerifier::WRITE, &var1); verifiers.push_back(&firstWriter); _constraintCalculator.handleWriter(&firstWriter);
+	TaskVerifier firstWriter(TaskVerifier::WRITE, &var1, &numConcurrentTasks1); verifiers.push_back(&firstWriter); _constraintCalculator.handleWriter(&firstWriter);
 	
 	// NCPUS reducers
-	Atomic<int> numReducers1(0);
 	for (long i=0; i < ncpus; i++) {
-		TaskVerifier *reducer = new TaskVerifier(TaskVerifier::REDUCTION, &var1, &numReducers1);
+		TaskVerifier *reducer = new TaskVerifier(TaskVerifier::REDUCTION, &var1, &numConcurrentTasks1);
 		verifiers.push_back(reducer);
 		_constraintCalculator.handleReducer(reducer);
 	}
 	
+	Atomic<int> numConcurrentTasks2(0);
+	
 	// NCPUS readers
-	Atomic<int> numConcurrentReaders1(0);
 	for (long i=0; i < ncpus; i++) {
-		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentReaders1);
+		TaskVerifier *reader = new TaskVerifier(TaskVerifier::READ, &var1, &numConcurrentTasks2);
 		verifiers.push_back(reader);
 		_constraintCalculator.handleReader(reader);
 	}
 	
 	// NCPUS reducers
-	Atomic<int> numReducers2(0);
 	for (long i=0; i < ncpus; i++) {
-		TaskVerifier *reducer = new TaskVerifier(TaskVerifier::REDUCTION, &var1, &numReducers2);
+		TaskVerifier *reducer = new TaskVerifier(TaskVerifier::REDUCTION, &var1, &numConcurrentTasks1);
 		verifiers.push_back(reducer);
 		_constraintCalculator.handleReducer(reducer);
 	}
 
+	Atomic<int> numConcurrentTasks3(0);
+	
 	// NCPUS concurrent
-	Atomic<int> numConcurrents1(0);
 	for (long i=0; i < ncpus; i++) {
-		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrents1);
+		TaskVerifier *concurrent = new TaskVerifier(TaskVerifier::CONCURRENT, &var1, &numConcurrentTasks3);
 		verifiers.push_back(concurrent);
 		_constraintCalculator.handleConcurrent(concurrent);
 	}
 	
 	// NCPUS reducers
-	Atomic<int> numReducers3(0);
 	for (long i=0; i < ncpus; i++) {
-		TaskVerifier *reducer = new TaskVerifier(TaskVerifier::REDUCTION, &var1, &numReducers3);
+		TaskVerifier *reducer = new TaskVerifier(TaskVerifier::REDUCTION, &var1, &numConcurrentTasks1);
 		verifiers.push_back(reducer);
 		_constraintCalculator.handleReducer(reducer);
 	}
 	
 	// NCPUS reducers (different operation)
 	_constraintCalculator.flush();
-	Atomic<int> numReducers4(0);
 	for (long i=0; i < ncpus; i++) {
-		TaskVerifier *reducer = new TaskVerifier(TaskVerifier::REDUCTION_OTHER, &var1, &numReducers4);
+		TaskVerifier *reducer = new TaskVerifier(TaskVerifier::REDUCTION_OTHER, &var1, &numConcurrentTasks1);
 		verifiers.push_back(reducer);
 		_constraintCalculator.handleReducer(reducer);
 	}
+	
+	// 1 writer
+	TaskVerifier lastWriter(TaskVerifier::WRITE, &var1); verifiers.push_back(&lastWriter); _constraintCalculator.handleWriter(&lastWriter);
 	
 	// Forced flush
 	_constraintCalculator.flush();
