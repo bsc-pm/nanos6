@@ -50,27 +50,24 @@ ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlac
 	
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
-		if ((hint != CHILD_TASK_HINT) && (computePlace->_schedulerData == nullptr)) {
+		if ((hint != CHILD_TASK_HINT) && (hint != UNBLOCKED_TASK_HINT) && (computePlace->_schedulerData == nullptr)) {
 			computePlace->_schedulerData = task;
 			return nullptr;
 		}
 	}
 	
 	std::lock_guard<SpinLock> guard(_globalLock);
-	_readyTasks.push_front(task);
+	if (hint == UNBLOCKED_TASK_HINT) {
+		_unblockedTasks.push_front(task);
+	} else {
+		_readyTasks.push_front(task);
+	}
 	
 	if (doGetIdle) {
 		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}
-}
-
-
-void ImmediateSuccessorScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
-{
-	std::lock_guard<SpinLock> guard(_globalLock);
-	_unblockedTasks.push_front(unblockedTask);
 }
 
 

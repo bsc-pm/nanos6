@@ -54,7 +54,7 @@ ComputePlace * NoSleepPriorityScheduler::addReadyTask(Task *task, ComputePlace *
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
 		// 1. Send the task to the immediate successor slot
-		if ((hint != CHILD_TASK_HINT) && (hint != BUSY_COMPUTE_PLACE_TASK_HINT) &&(computePlace->_schedulerData == nullptr)) {
+		if ((hint != CHILD_TASK_HINT) && (hint != UNBLOCKED_TASK_HINT) && (hint != BUSY_COMPUTE_PLACE_TASK_HINT) && (computePlace->_schedulerData == nullptr)) {
 			computePlace->_schedulerData = task;
 			
 			return nullptr;
@@ -75,7 +75,11 @@ ComputePlace * NoSleepPriorityScheduler::addReadyTask(Task *task, ComputePlace *
 	}
 	
 	// 3. At this point the polling slot queue is empty, so send the task to the queue
-	_readyTasks.push(task);
+	if (hint == UNBLOCKED_TASK_HINT) {
+		_unblockedTasks.push(task);
+	} else {
+		_readyTasks.push(task);
+	}
 	
 	// Attempt to get a CPU to resume the task
 	if (doGetIdle) {
@@ -83,26 +87,6 @@ ComputePlace * NoSleepPriorityScheduler::addReadyTask(Task *task, ComputePlace *
 	} else {
 		return nullptr;
 	}
-}
-
-
-void NoSleepPriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
-{
-	std::lock_guard<spinlock_t> guard(_globalLock);
-	
-	// 1. Attempt to send the task to a polling thread
-	if (!_pollingSlots.empty()) {
-		polling_slot_t *pollingSlot = _pollingSlots.front();
-		_pollingSlots.pop_front();
-		
-		assert(pollingSlot != nullptr);
-		pollingSlot->_task.store(unblockedTask);
-		
-		return;
-	}
-	
-	// 2. At this point the polling slot queue is empty, so send the task to the queue
-	_unblockedTasks.push(unblockedTask);
 }
 
 

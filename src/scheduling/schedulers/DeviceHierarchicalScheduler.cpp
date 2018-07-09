@@ -39,12 +39,6 @@ ComputePlace * DeviceHierarchicalScheduler::addReadyTask(Task *task, ComputePlac
 }
 
 
-void DeviceHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace)
-{
-	_CPUScheduler->taskGetsUnblocked(unblockedTask, hardwarePlace);
-}
-
-
 Task *DeviceHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask, bool canMarkAsIdle)
 {
 	return _CPUScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle);

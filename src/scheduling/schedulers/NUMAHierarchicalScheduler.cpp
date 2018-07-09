@@ -62,48 +62,47 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 	FatalErrorHandler::failIf(task->getDeviceType() != nanos6_device_t::nanos6_host_device, "Device tasks not supported by this scheduler");	
 	FatalErrorHandler::failIf(task->isTaskloop(), "Task loop not supported by this scheduler");
 	
-	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
-	
-	/* Get the least loaded NUMA node */
-	int min_load = -1;
-	int min_idx = -1;
-	
-	for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
-		if (_enabledCPUs[numa] > 0) {
-			if (min_load == -1 || _readyTasks[numa] < min_load) {
-				min_load = _readyTasks[numa];
-				min_idx = numa;
+	if (hint == UNBLOCKED_TASK_HINT) {
+		CPU *cpu = task->getThread()->getComputePlace();
+		size_t numa_node = cpu->_NUMANodeId;
+
+		_readyTasks[numa_node] += 1;
+		_NUMANodeScheduler[numa_node]->addReadyTask(task, computePlace, hint, doGetIdle);
+		
+		return nullptr;
+	} else {
+		size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+		
+		/* Get the least loaded NUMA node */
+		int min_load = -1;
+		int min_idx = -1;
+		
+		for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
+			if (_enabledCPUs[numa] > 0) {
+				if (min_load == -1 || _readyTasks[numa] < min_load) {
+					min_load = _readyTasks[numa];
+					min_idx = numa;
+				}
 			}
 		}
-	}
-	
-	assert(min_idx != -1);
-	
-	_readyTasks[min_idx] += 1;
-	_NUMANodeScheduler[min_idx]->addReadyTask(task, computePlace, hint, false);
-	if (doGetIdle) {
-		ComputePlace *cp;
-		cp = CPUManager::getIdleNUMANodeCPU(min_idx);
-		if (cp == nullptr) {
-			// If this NUMA node does not have any idle CPUs, get any other idle CPU
-			cp = CPUManager::getIdleCPU();
+		
+		assert(min_idx != -1);
+		
+		_readyTasks[min_idx] += 1;
+		_NUMANodeScheduler[min_idx]->addReadyTask(task, computePlace, hint, false);
+		if (doGetIdle) {
+			ComputePlace *cp;
+			cp = CPUManager::getIdleNUMANodeCPU(min_idx);
+			if (cp == nullptr) {
+				// If this NUMA node does not have any idle CPUs, get any other idle CPU
+				cp = CPUManager::getIdleCPU();
+			}
+		
+			return cp;
+		} else {
+			return nullptr;
 		}
-	
-		return cp;
-	} else {
-		return nullptr;
 	}
-}
-
-
-void NUMAHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace)
-{
-	/* This is not pretty. But this function is seldom called */
-	CPU *cpu = unblockedTask->getThread()->getComputePlace();
-	size_t numa_node = cpu->_NUMANodeId;
-
-	_readyTasks[numa_node] += 1;
-	_NUMANodeScheduler[numa_node]->taskGetsUnblocked(unblockedTask, hardwarePlace);
 }
 
 

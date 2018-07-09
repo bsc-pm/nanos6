@@ -55,12 +55,6 @@ ComputePlace * HostHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 }
 
 
-void HostHierarchicalScheduler::taskGetsUnblocked(Task *unblockedTask, ComputePlace *hardwarePlace)
-{
-	_NUMAScheduler->taskGetsUnblocked(unblockedTask, hardwarePlace);
-}
-
-
 Task *HostHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask, bool canMarkAsIdle)
 {
 	switch (hardwarePlace->getType()) {

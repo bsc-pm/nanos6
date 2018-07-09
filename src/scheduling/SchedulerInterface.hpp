@@ -63,12 +63,6 @@ public:
 	//! \returns an idle ComputePlace that is to be resumed or nullptr
 	virtual ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true) = 0;
 	
-	//! \brief Add back a task that was blocked but that is now unblocked
-	//!
-	//! \param[in] unblockedTask the task that has been unblocked
-	//! \param[in] computePlace the hardware place of the unblocker
-	virtual void taskGetsUnblocked(Task *unblockedTask, ComputePlace *computePlace) = 0;
-	
 	//! \brief Get a ready task for execution
 	//!
 	//! \param[in] computePlace the hardware place asking for scheduling orders

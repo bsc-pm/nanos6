@@ -57,12 +57,8 @@ public:
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		
 		if (hint == SchedulerInterface::UNBLOCKED_TASK_HINT) {
-			_scheduler->taskGetsUnblocked(task, computePlace);
-			
-			return nullptr;
-		}
-		
-		if (task->isTaskloop()) {
+			return _scheduler->addReadyTask(task, computePlace, hint, false);
+		} else if (task->isTaskloop()) {
 			_scheduler->addReadyTask(task, computePlace, hint, false);
 			
 			std::vector<CPU *> idleCPUs;

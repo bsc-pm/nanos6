@@ -41,11 +41,6 @@ ComputePlace * CUDANaiveScheduler::addReadyTask(Task *task, __attribute__((unuse
 }
 
 
-void CUDANaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *hardwarePlace)
-{
-}
-
-
 Task *CUDANaiveScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
 {
 	assert(computePlace->getType() == nanos6_device_t::nanos6_cuda_device);

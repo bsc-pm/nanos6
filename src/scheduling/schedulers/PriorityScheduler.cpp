@@ -56,7 +56,7 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
 		// 1. Send the task to the immediate successor slot
-		if ((hint != CHILD_TASK_HINT) && (hint != BUSY_COMPUTE_PLACE_TASK_HINT) &&(computePlace->_schedulerData == nullptr)) {
+		if ((hint != CHILD_TASK_HINT) && (hint != UNBLOCKED_TASK_HINT) && (hint != BUSY_COMPUTE_PLACE_TASK_HINT) && (computePlace->_schedulerData == nullptr)) {
 			computePlace->_schedulerData = task;
 			
 			return nullptr;
@@ -102,7 +102,12 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 	
 	// 4. At this point the polling slot is empty, so send the task to the queue
 	assert(_pollingSlot.load() == nullptr);
-	_readyTasks.push(task);
+	if (hint == UNBLOCKED_TASK_HINT) {
+		_unblockedTasks.push(task);
+	} else {
+		_readyTasks.push(task);
+	}
+	
 	
 	// Attempt to get a CPU to resume the task
 	if (doGetIdle) {
@@ -110,51 +115,6 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 	} else {
 		return nullptr;
 	}
-}
-
-
-void PriorityScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
-{
-	// 1. Attempt to send the task to a polling thread without locking
-	{
-		polling_slot_t *pollingSlot = _pollingSlot.load();
-		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
-			// Keep trying
-		}
-		if (pollingSlot != nullptr) {
-			// Obtained the polling slot
-			Task *expect = nullptr;
-			
-			pollingSlot->_task.compare_exchange_strong(expect, unblockedTask);
-			assert(expect == nullptr);
-			
-			return;
-		}
-	}
-	
-	std::lock_guard<spinlock_t> guard(_globalLock);
-	
-	// 2. Attempt to send the task to polling thread with locking, since the polling slot
-	// can only be set when locked (but unset at any time).
-	{
-		polling_slot_t *pollingSlot = _pollingSlot.load();
-		while ((pollingSlot != nullptr) && !_pollingSlot.compare_exchange_strong(pollingSlot, nullptr)) {
-			// Keep trying
-		}
-		if (pollingSlot != nullptr) {
-			// Obtained the polling slot
-			Task *expect = nullptr;
-			
-			pollingSlot->_task.compare_exchange_strong(expect, unblockedTask);
-			assert(expect == nullptr);
-			
-			return;
-		}
-	}
-	
-	// 3. At this point the polling slot is empty, so send the task to the queue
-	assert(_pollingSlot.load() == nullptr);
-	_unblockedTasks.push(unblockedTask);
 }
 
 

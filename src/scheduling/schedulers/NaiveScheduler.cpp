@@ -46,25 +46,22 @@ Task *NaiveScheduler::getReplacementTask(__attribute__((unused)) CPU *computePla
 }
 
 
-ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) ReadyTaskHint hint, bool doGetIdle)
+ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	FatalErrorHandler::failIf(task->getDeviceType() != nanos6_device_t::nanos6_host_device, "Device tasks not supported by this scheduler");
 	
 	std::lock_guard<SpinLock> guard(_globalLock);
-	_readyTasks.push_front(task);
+	if (hint == UNBLOCKED_TASK_HINT) {
+		_unblockedTasks.push_front(task);
+	} else {
+		_readyTasks.push_front(task);
+	}
 	
 	if (doGetIdle) {
 		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}
-}
-
-
-void NaiveScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
-{
-	std::lock_guard<SpinLock> guard(_globalLock);
-	_unblockedTasks.push_front(unblockedTask);
 }
 
 

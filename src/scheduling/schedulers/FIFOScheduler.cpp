@@ -51,20 +51,18 @@ ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) C
 	FatalErrorHandler::failIf(task->getDeviceType() != nanos6_device_t::nanos6_host_device, "Device tasks not supported by this scheduler");
 	
 	std::lock_guard<SpinLock> guard(_globalLock);
-	_readyTasks.push_back(task);
+	
+	if (hint == UNBLOCKED_TASK_HINT) {
+		_unblockedTasks.push_back(task);
+	} else {
+		_readyTasks.push_back(task);
+	}
 	
 	if (doGetIdle) {
 		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
 	}
-}
-
-
-void FIFOScheduler::taskGetsUnblocked(Task *unblockedTask, __attribute__((unused)) ComputePlace *computePlace)
-{
-	std::lock_guard<SpinLock> guard(_globalLock);
-	_unblockedTasks.push_back(unblockedTask);
 }
 
 
