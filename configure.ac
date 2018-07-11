@@ -236,26 +236,35 @@ AC_ARG_ENABLE([cuda], [AS_HELP_STRING([--enable-cuda], [Enable CUDA task support
 if test x"${enable_cuda}" = x"yes" ; then
 	PKG_CHECK_MODULES(
 		[CUDA],
-		[cudart-8.0],
+		[cudart-9.2],
 		[
 			ac_use_cuda=yes
 		],
 		[
 			PKG_CHECK_MODULES(
 				[CUDA],
-				[cudart-9.0],
+				[cudart-9.1],
 				[
 					ac_use_cuda=yes
 				],
 				[
 					PKG_CHECK_MODULES(
 						[CUDA],
-						[cudart-9.1],
+						[cudart-9.0],
 						[
 							ac_use_cuda=yes
 						],
 						[
-							ac_use_cuda=no
+							PKG_CHECK_MODULES(
+								[CUDA],
+								[cudart-8.0],
+								[
+									ac_use_cuda=yes
+								],
+								[
+									ac_use_cuda=no
+								]
+							)
 						]
 					)
 				]
