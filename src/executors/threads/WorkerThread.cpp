@@ -27,6 +27,7 @@
 
 #include <atomic>
 
+#include <alloca.h>
 #include <pthread.h>
 #include <cstring>
 
@@ -154,12 +155,23 @@ void WorkerThread::handleTask(CPU *cpu)
 	Instrument::ThreadInstrumentationContext instrumentationContext(taskId, cpu->getInstrumentationId(), _instrumentationId);
 	
 	if (_task->hasCode()) {
+		nanos6_address_translation_entry_t *translationTable = nullptr;
+		
+		nanos_task_info const * const taskInfo = _task->getTaskInfo();
+		if (taskInfo->num_symbols >= 0) {
+			translationTable = (nanos6_address_translation_entry_t *) alloca(sizeof(nanos6_address_translation_entry_t) * taskInfo->num_symbols);
+			
+			for (int index = 0; index < taskInfo->num_symbols; index++) {
+				translationTable[index] = {0, 0};
+			}
+		}
+		
 		Instrument::startTask(taskId);
 		Instrument::taskIsExecuting(taskId);
 		
 		// Run the task
 		std::atomic_thread_fence(std::memory_order_acquire);
-		_task->body(nullptr);
+		_task->body(nullptr, translationTable);
 		std::atomic_thread_fence(std::memory_order_release);
 		
 		Instrument::taskIsZombie(taskId);

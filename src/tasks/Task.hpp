@@ -120,12 +120,12 @@ public:
 	}
 	
 	//! Actual code of the task
-	virtual inline void body(void *deviceEnvironment)
+	virtual inline void body(void *deviceEnvironment, nanos6_address_translation_entry_t *translationTable = nullptr)
 	{
 		assert(_taskInfo->implementation_count == 1);
 		assert(hasCode());
 		assert(_taskInfo != nullptr);	
-		_taskInfo->implementations[0].run(_argsBlock, deviceEnvironment, nullptr);
+		_taskInfo->implementations[0].run(_argsBlock, deviceEnvironment, translationTable);
 	}
 	
 	//! Check if the task has an actual body
