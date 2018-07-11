@@ -60,8 +60,10 @@ public:
 		return _taskloopInfo;
 	}
 	
-	inline void body(__attribute__((unused)) void *deviceEnvironment)
-	{
+	inline void body(
+		__attribute__((unused)) void *deviceEnvironment,
+		__attribute__((unused)) nanos6_address_translation_entry_t *translationTable = nullptr
+	) {
 		assert(hasCode());
 		assert(isRunnable());
 		assert(_thread != nullptr);
