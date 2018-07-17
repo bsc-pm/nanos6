@@ -55,20 +55,20 @@ ComputePlace * HostHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 }
 
 
-Task *HostHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask, bool canMarkAsIdle)
+Task *HostHierarchicalScheduler::getReadyTask(ComputePlace *hardwarePlace, Task *currentTask, bool canMarkAsIdle, bool doWait)
 {
 	switch (hardwarePlace->getType()) {
 		case nanos6_device_t::nanos6_host_device:
-			return _NUMAScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle);
+			return _NUMAScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle, doWait);
 			break;
 #ifdef USE_CUDA
 		case nanos6_device_t::nanos6_cuda_device:
-			return _CUDAScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle);
+			return _CUDAScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle, doWait);
 			break;
 #endif //USE_CUDA
 		default:
 			std::cerr << "Device type " << hardwarePlace->getType() << "is not supported, defaulting to CPU" << std::endl;
-			return _NUMAScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle);
+			return _NUMAScheduler->getReadyTask(hardwarePlace, currentTask, canMarkAsIdle, doWait);
 			break;
 	}
 }

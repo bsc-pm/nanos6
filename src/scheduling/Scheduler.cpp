@@ -32,8 +32,8 @@ Task *Scheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, boo
 {
 	Task *task = nullptr;
 	
-	if (!doWait) {
-		task = _scheduler->getReadyTask(computePlace, currentTask);
+	if (_scheduler->canWait() || !doWait) {
+		task = _scheduler->getReadyTask(computePlace, currentTask, true, doWait);
 	} else {
 		polling_slot_t pollingSlot;
 		

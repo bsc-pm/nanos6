@@ -10,6 +10,11 @@
 
 #include <cassert>
 
+bool SchedulerInterface::canWait()
+{
+	return false;
+}
+
 void SchedulerInterface::disableComputePlace(__attribute__((unused)) ComputePlace *computePlace)
 {
 }

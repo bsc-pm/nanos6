@@ -71,7 +71,7 @@ ComputePlace * ImmediateSuccessorScheduler::addReadyTask(Task *task, ComputePlac
 }
 
 
-Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
+Task *ImmediateSuccessorScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle, __attribute__((unused)) bool doWait)
 {
 	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
 		return nullptr;

@@ -106,7 +106,7 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 }
 
 
-Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, bool canMarkAsIdle)
+Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, bool canMarkAsIdle, bool doWait)
 {
 	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
 		return nullptr;
@@ -116,7 +116,7 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 	Task *task = nullptr;
 	
 	if (_readyTasks[numa_node] > 0) {
-		task = _NUMANodeScheduler[numa_node]->getReadyTask(computePlace, currentTask, false);
+		task = _NUMANodeScheduler[numa_node]->getReadyTask(computePlace, currentTask, false, doWait);
 
 		if (task != nullptr) {
 			_readyTasks[numa_node] -= 1;
@@ -135,7 +135,7 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 			}
 		}
 		
-		task = _NUMANodeScheduler[max_idx]->getReadyTask(computePlace, currentTask, false);
+		task = _NUMANodeScheduler[max_idx]->getReadyTask(computePlace, currentTask, false, doWait);
 		if (task != nullptr) {
 			_readyTasks[max_idx] -= 1;
 		}

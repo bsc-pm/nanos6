@@ -30,7 +30,9 @@ public:
 
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, SchedulerInterface::ReadyTaskHint hint, bool doGetIdle);
 	
-	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask, bool canMarkAsIdle = true);
+	Task *getReadyTask(ComputePlace *computePlace, Task *currentTask, bool canMarkAsIdle, bool doWait);
+	
+	bool canWait();
 	
 	ComputePlace *getIdleComputePlace(bool force = false);
 	

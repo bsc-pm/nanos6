@@ -65,7 +65,7 @@ ComputePlace * NaiveScheduler::addReadyTask(Task *task, __attribute__((unused)) 
 }
 
 
-Task *NaiveScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
+Task *NaiveScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle, __attribute__((unused)) bool doWait)
 {
 	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) {
 		return nullptr;

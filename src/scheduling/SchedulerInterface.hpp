@@ -77,9 +77,15 @@ public:
 	//! \param[in] computePlace the hardware place asking for scheduling orders
 	//! \param[in] currentTask a task within whose context the resulting task will run
 	//! \param[in] canMarkAsIdle true if the scheduler should mark the computePlace as idle if there are no pending tasks
+	//! \param[in] doWait true if the scheduler should poll from some time before returning
 	//!
 	//! \returns a ready task or nullptr
-	virtual Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true) = 0;
+	virtual Task *getReadyTask(ComputePlace *computePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true, bool doWait = false) = 0;
+	
+	//! \brief Check if it can wait, or if it has to wait using polling slots
+	//!
+	//! \returns True if it can wait.
+	virtual bool canWait();
 	
 	//! \brief Get an idle hardware place
 	//!

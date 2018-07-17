@@ -72,11 +72,17 @@ ComputePlace *TreeScheduler::addReadyTask(Task *task, ComputePlace *computePlace
 }
 
 
-Task *TreeScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, __attribute__((unused)) bool canMarkAsIdle)
+Task *TreeScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, __attribute__((unused)) bool canMarkAsIdle, bool doWait)
 {
 	assert(computePlace != nullptr);
 	
-	return _CPUScheduler[((CPU *)computePlace)->_virtualCPUId]->getTask(false);
+	return _CPUScheduler[((CPU *)computePlace)->_virtualCPUId]->getTask(doWait);
+}
+
+
+bool TreeScheduler::canWait()
+{
+	return true;
 }
 
 

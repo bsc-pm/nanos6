@@ -66,7 +66,7 @@ ComputePlace * FIFOScheduler::addReadyTask(Task *task, __attribute__((unused)) C
 }
 
 
-Task *FIFOScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle)
+Task *FIFOScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unused)) Task *currentTask, bool canMarkAsIdle, __attribute__((unused)) bool doWait)
 {
 	if (computePlace->getType() != nanos6_device_t::nanos6_host_device) { 
 		return nullptr;
