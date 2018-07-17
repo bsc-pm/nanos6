@@ -9,6 +9,7 @@
 
 #include <vector>
 
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "../../SchedulerInterface.hpp"
@@ -138,7 +139,10 @@ public:
 	{
 		Task *task;
 		
-		_idle = false;
+		if (_idle) {
+			_idle = false;
+			CPUManager::unidleCPU((CPU *)_computePlace);
+		}
 		
 		task = _pollingSlot.getTask();
 		if (task != nullptr) {
@@ -182,6 +186,7 @@ public:
 			task = _pollingSlot.getTask();
 			if (task == nullptr) {
 				_idle = true;
+				CPUManager::cpuBecomesIdle((CPU *)_computePlace);
 			}
 		}
 		
@@ -193,6 +198,7 @@ public:
 		if (_idle) {
 			_idle = false;
 			_parent->unidleChild(this);
+			CPUManager::unidleCPU((CPU *)_computePlace);
 		}
 		
 		std::vector<Task *> taskBatch = _queue->getTaskBatch(-1);
