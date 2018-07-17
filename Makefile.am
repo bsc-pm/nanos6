@@ -325,6 +325,23 @@ common_sources = \
 	src/lowlevel/SymbolResolver.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
+	src/scheduling/Scheduler.cpp \
+	src/scheduling/SchedulerGenerator.cpp \
+	src/scheduling/SchedulerInterface.cpp \
+	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
+	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/schedulers/FIFOScheduler.cpp \
+	src/scheduling/schedulers/HostHierarchicalScheduler.cpp \
+	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
+	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
+	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
+	src/scheduling/schedulers/NaiveScheduler.cpp \
+	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
+	src/scheduling/schedulers/PriorityScheduler.cpp \
+	src/scheduling/schedulers/TreeScheduler.cpp \
+	src/scheduling/schedulers/tree-scheduler/TreeSchedulerQueueInterface.cpp \
+	src/scheduling/schedulers/tree-scheduler/queue/FIFOQueue.cpp \
+	src/scheduling/schedulers/tree-scheduler/queue/LIFOQueue.cpp \
 	src/support/GlobalLock.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
@@ -532,31 +549,6 @@ memory_allocator_debug_cppflags = -I$(srcdir)/src/memory/allocator/malloc
 # null_sb_sources = \
 # 	$(null_common_sources) \
 # 	src/null/NullStaticBlock.cpp
-
-if NEW_SCHEDULER
-AM_CXXFLAGS += -I$(srcdir)/src/scheduling/schedulers/tree-scheduler/
-common_sources += \
-	src/scheduling/schedulers/tree-scheduler/Scheduler.cpp \
-	src/scheduling/schedulers/tree-scheduler/SchedulerQueueInterface.cpp \
-	src/scheduling/schedulers/tree-scheduler/queue/FIFOQueue.cpp \
-	src/scheduling/schedulers/tree-scheduler/queue/LIFOQueue.cpp
-else
-AM_CXXFLAGS += -I$(srcdir)/src/scheduling/
-common_sources += \
-	src/scheduling/Scheduler.cpp \
-	src/scheduling/SchedulerGenerator.cpp \
-	src/scheduling/SchedulerInterface.cpp \
-	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/schedulers/FIFOScheduler.cpp \
-	src/scheduling/schedulers/HostHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/NaiveScheduler.cpp \
-	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
-	src/scheduling/schedulers/PriorityScheduler.cpp
-endif
 
 noinst_HEADERS = \
 	src/dependencies/DataAccessBase.hpp \
@@ -911,12 +903,12 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/NaiveScheduler.hpp \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
+	src/scheduling/schedulers/TreeScheduler.hpp \
 	src/scheduling/schedulers/cuda/CUDANaiveScheduler.hpp \
 	src/scheduling/schedulers/tree-scheduler/LeafScheduler.hpp \
 	src/scheduling/schedulers/tree-scheduler/NodeScheduler.hpp \
-	src/scheduling/schedulers/tree-scheduler/Scheduler.hpp \
-	src/scheduling/schedulers/tree-scheduler/SchedulerInterface.hpp \
-	src/scheduling/schedulers/tree-scheduler/SchedulerQueueInterface.hpp \
+	src/scheduling/schedulers/tree-scheduler/TreeSchedulerInterface.hpp \
+	src/scheduling/schedulers/tree-scheduler/TreeSchedulerQueueInterface.hpp \
 	src/scheduling/schedulers/tree-scheduler/queue/FIFOQueue.hpp \
 	src/scheduling/schedulers/tree-scheduler/queue/LIFOQueue.hpp \
 	src/support/ConcurrentUnorderedList.hpp \

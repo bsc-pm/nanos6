@@ -11,21 +11,21 @@
 
 #include "executors/threads/ThreadManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
-#include "SchedulerInterface.hpp"
-#include "SchedulerQueueInterface.hpp"
+#include "TreeSchedulerInterface.hpp"
+#include "TreeSchedulerQueueInterface.hpp"
 
-class NodeScheduler: public SchedulerInterface {
+class NodeScheduler: public TreeSchedulerInterface {
 private:
 	EnvironmentVariable<size_t> _pollingIterations;
 	
 	std::atomic<size_t> _queueThreshold;
 	std::atomic<bool> _rebalance;
 	
-	std::deque<SchedulerInterface *> _idleChildren;
-	SchedulerQueueInterface *_queue;
+	std::deque<TreeSchedulerInterface *> _idleChildren;
+	TreeSchedulerQueueInterface *_queue;
 	
 	NodeScheduler *_parent;
-	std::vector<SchedulerInterface *> _children;
+	std::vector<TreeSchedulerInterface *> _children;
 	
 	SpinLock _globalLock;
 	SpinLock _thresholdLock;
@@ -64,7 +64,7 @@ public:
 		_rebalance(false),
 		_parent(parent)
 	{
-		_queue = SchedulerQueueInterface::initialize();
+		_queue = TreeSchedulerQueueInterface::initialize();
 		if (_parent != nullptr) {
 			_parent->setChild(this);
 		}
@@ -73,14 +73,14 @@ public:
 	~NodeScheduler()
 	{
 		delete _queue;
-		for (SchedulerInterface *sched : _children) {
+		for (TreeSchedulerInterface *sched : _children) {
 			delete sched;
 		}
 	}
 
-	inline void addTaskBatch(SchedulerInterface *who, std::vector<Task *> &taskBatch)
+	inline void addTaskBatch(TreeSchedulerInterface *who, std::vector<Task *> &taskBatch)
 	{
-		SchedulerInterface *idleChild = who;
+		TreeSchedulerInterface *idleChild = who;
 		bool overflow = false;
 		
 		assert(who != nullptr);
@@ -113,7 +113,7 @@ public:
 		_rebalance = false;
 	}
 	
-	inline void getTask(SchedulerInterface *child)
+	inline void getTask(TreeSchedulerInterface *child)
 	{
 		size_t th = _queueThreshold;
 		size_t elements = th / 2;
@@ -157,12 +157,12 @@ public:
 		}
 	}
 	
-	inline void setChild(SchedulerInterface *child)
+	inline void setChild(TreeSchedulerInterface *child)
 	{
 		_children.push_back(child);
 	}
 	
-	inline void unidleChild(SchedulerInterface *child)
+	inline void unidleChild(TreeSchedulerInterface *child)
 	{
 		{
 			std::lock_guard<SpinLock> guard(_globalLock);
@@ -187,7 +187,7 @@ public:
 		
 		_queueThreshold = queueThreshold;
 		
-		for (SchedulerInterface *child : _children) {
+		for (TreeSchedulerInterface *child : _children) {
 			child->updateQueueThreshold(_queueThreshold);
 		}
 	}

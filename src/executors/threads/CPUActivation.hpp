@@ -11,7 +11,7 @@
 #include <cassert>
 
 #include "CPU.hpp"
-#include "Scheduler.hpp"
+#include "scheduling/Scheduler.hpp"
 #include "ThreadManager.hpp"
 #include "CPUManager.hpp"
 

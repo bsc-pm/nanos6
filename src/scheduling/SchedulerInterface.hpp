@@ -35,7 +35,16 @@ public:
 		
 		Task *getTask()
 		{
-			return _task.load();
+			Task *result = _task.load();
+			while(!_task.compare_exchange_strong(result, nullptr)) {}
+			return result;
+		}
+		
+		bool setTask(Task *task)
+		{
+			Task *expected = nullptr;
+			bool success = _task.compare_exchange_strong(expected, task);
+			return success;
 		}
 	};
 	

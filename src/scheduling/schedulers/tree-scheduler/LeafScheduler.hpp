@@ -11,19 +11,21 @@
 
 #include "executors/threads/ThreadManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
-#include "NodeScheduler.hpp"
-#include "SchedulerInterface.hpp"
-#include "SchedulerQueueInterface.hpp"
+#include "../../SchedulerInterface.hpp"
 
-class LeafScheduler: public SchedulerInterface {
+#include "NodeScheduler.hpp"
+#include "TreeSchedulerInterface.hpp"
+#include "TreeSchedulerQueueInterface.hpp"
+
+class LeafScheduler: public TreeSchedulerInterface {
 private:
 	EnvironmentVariable<size_t> _pollingIterations;
 	
 	std::atomic<size_t> _queueThreshold;
 	std::atomic<bool> _rebalance;
 	
-	polling_slot_t _pollingSlot;
-	SchedulerQueueInterface *_queue;
+	SchedulerInterface::polling_slot_t _pollingSlot;
+	TreeSchedulerQueueInterface *_queue;
 	
 	NodeScheduler *_parent;
 	ComputePlace *_computePlace;
@@ -56,7 +58,7 @@ public:
 		_computePlace(computePlace),
 		_idle(false)
 	{
-		_queue = SchedulerQueueInterface::initialize();
+		_queue = TreeSchedulerQueueInterface::initialize();
 		_parent->setChild(this);
 	}
 	
@@ -65,13 +67,20 @@ public:
 		delete _queue;
 	}
 
-	inline void addTask(Task *task, SchedulerInterface::ReadyTaskHint hint)
+	inline void addTask(Task *task, bool hasComputePlace, SchedulerInterface::ReadyTaskHint hint)
 	{
-		if (hint == SchedulerInterface::MAIN_TASK_HINT) {
-			// This is the main task. Run here
-			_pollingSlot.setTask(task);
+		if (hasComputePlace) {
+			// For ready tasks, addTask is always called from a thread in the
+			// same CPU. Therefore, there is no need to check polling slots,
+			// or to wake up any CPUs.
 			assert(!_idle);
-		} else if (hint == SchedulerInterface::UNBLOCKED_TASK_HINT) {
+			
+			size_t elements = _queue->addTask(task, hint);
+			
+			if (elements > _queueThreshold) {
+				handleQueueOverflow();
+			}
+		} else {
 			bool success;
 			bool idle;
 			
@@ -93,24 +102,13 @@ public:
 					handleQueueOverflow();
 				}
 			}
-		} else {
-			// For ready tasks, addTask is always called from a thread in the
-			// same CPU. Therefore, there is no need to check polling slots,
-			// or to wake up any CPUs.
-			assert(!_idle);
-			
-			size_t elements = _queue->addTask(task, hint);
-			
-			if (elements > _queueThreshold) {
-				handleQueueOverflow();
-			}
 		}
 		
 		// Queue is already balanced
 		_rebalance = false;
 	}
 
-	inline void addTaskBatch(__attribute__((unused)) SchedulerInterface *who, std::vector<Task *> &taskBatch)
+	inline void addTaskBatch(__attribute__((unused)) TreeSchedulerInterface *who, std::vector<Task *> &taskBatch)
 	{
 		assert(taskBatch.size() > 0);
 		assert(who == _parent);

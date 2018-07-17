@@ -12,7 +12,6 @@
 
 #include "LeaderThread.hpp"
 #include "MemoryAllocator.hpp"
-#include "Scheduler.hpp"
 
 #include <nanos6.h>
 #include <nanos6/bootstrap.h>
@@ -22,6 +21,7 @@
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
+#include "scheduling/Scheduler.hpp"
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
 #include "system/ompss/SpawnFunction.hpp"

@@ -6,11 +6,11 @@
 
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "SchedulerQueueInterface.hpp"
+#include "TreeSchedulerQueueInterface.hpp"
 #include "queue/FIFOQueue.hpp"
 #include "queue/LIFOQueue.hpp"
 
-SchedulerQueueInterface *SchedulerQueueInterface::initialize()
+TreeSchedulerQueueInterface *TreeSchedulerQueueInterface::initialize()
 {
 	EnvironmentVariable<std::string> queueName("NANOS6_SCHEDULER_QUEUE", "lifo");
 	

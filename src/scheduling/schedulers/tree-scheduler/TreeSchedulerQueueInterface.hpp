@@ -4,19 +4,19 @@
 	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef SCHEDULER_QUEUE_INTERFACE_HPP
-#define SCHEDULER_QUEUE_INTERFACE_HPP
+#ifndef TREE_SCHEDULER_QUEUE_INTERFACE_HPP
+#define TREE_SCHEDULER_QUEUE_INTERFACE_HPP
 
 #include <vector>
 
-#include "SchedulerInterface.hpp"
+#include "../../SchedulerInterface.hpp"
 #include "tasks/Task.hpp"
 
-class SchedulerQueueInterface {
+class TreeSchedulerQueueInterface {
 public:
-	static SchedulerQueueInterface *initialize();
+	static TreeSchedulerQueueInterface *initialize();
 
-	virtual ~SchedulerQueueInterface()
+	virtual ~TreeSchedulerQueueInterface()
 	{
 	}
 	
@@ -28,4 +28,4 @@ public:
 };
 
 
-#endif // SCHEDULER_QUEUE_INTERFACE_HPP
+#endif // TREE_SCHEDULER_QUEUE_INTERFACE_HPP

@@ -10,9 +10,9 @@
 #include <deque>
 
 #include "lowlevel/SpinLock.hpp"
-#include "../SchedulerQueueInterface.hpp"
+#include "../TreeSchedulerQueueInterface.hpp"
 
-class FIFOQueue: public SchedulerQueueInterface {
+class FIFOQueue: public TreeSchedulerQueueInterface {
 private:
 	SpinLock _lock;
 	std::deque<Task *> _queue;
