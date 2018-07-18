@@ -75,7 +75,7 @@ public:
 		}
 	}
 	
-	void *getMemory(size_t &chunkSize)
+	void *getMemory(size_t minSize, size_t &chunkSize)
 	{
 		std::lock_guard<SpinLock> guard(_lock);
 		if (_curAvailable == 0) {
@@ -85,6 +85,13 @@ public:
 		void *curAddr = _curMemoryChunk;
 		
 		chunkSize = _memoryChunkSize;
+		
+		if (chunkSize < minSize) {
+			// Get minimum acceptable chunkSize
+			chunkSize = ((minSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize;
+			_memoryChunkSize.setValue(chunkSize);
+		}
+		
 		_curAvailable -= chunkSize;
 		_curMemoryChunk = (char *)_curMemoryChunk + chunkSize;
 		

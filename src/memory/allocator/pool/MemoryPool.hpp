@@ -22,7 +22,7 @@ private:
 	void fillPool()
 	{
 		size_t globalChunkSize;
-		_topChunk = _globalAllocator->getMemory(globalChunkSize);
+		_topChunk = _globalAllocator->getMemory(_chunkSize, globalChunkSize);
 		
 		// If globalChunkSize % _chunkSize != 0, some memory will be left unused
 		size_t numChunks = globalChunkSize / _chunkSize;
