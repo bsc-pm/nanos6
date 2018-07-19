@@ -78,7 +78,12 @@ public:
 	void *getMemory(size_t minSize, size_t &chunkSize)
 	{
 		std::lock_guard<SpinLock> guard(_lock);
-		if (_curAvailable == 0) {
+		if (_curAvailable < _memoryChunkSize) {
+			if (_curAvailable != 0) {
+				// Chunk size was changed previously, update also alloc size to make all sizes fit again
+				_globalAllocSize.setValue(((_globalAllocSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize);
+			}
+			
 			fillPool();
 		}
 		
@@ -90,6 +95,11 @@ public:
 			// Get minimum acceptable chunkSize
 			chunkSize = ((minSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize;
 			_memoryChunkSize.setValue(chunkSize);
+			
+			if (_curAvailable < chunkSize) {
+				_globalAllocSize.setValue(((_globalAllocSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize);
+				fillPool();
+			}
 		}
 		
 		_curAvailable -= chunkSize;
