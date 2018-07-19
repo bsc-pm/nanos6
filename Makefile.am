@@ -2,6 +2,20 @@
 #	
 #	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 
+# A workaround for http://debbugs.gnu.org/cgi/bugreport.cgi?bug=18744
+am__is_gnu_make = { \
+  if test -z '$(MAKELEVEL)'; then \
+    false; \
+  elif test -n '$(MAKE_HOST)'; then \
+    true; \
+  elif test -n '$(MAKE_VERSION)' && test -n '$(CURDIR)'; then \
+    true; \
+  else \
+    false; \
+  fi; \
+}
+
+
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
