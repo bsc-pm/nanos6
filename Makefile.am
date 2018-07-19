@@ -121,7 +121,7 @@ libnanos6_main_wrapper_a_SOURCES = \
 	loader/main-wrapper.c \
 	loader/main-wrapper.h
 
-libnanos6_main_wrapper_a_CPPFLAGS = $(CUDA_CFLAGS) $(MCMODEL_FLAGS)
+libnanos6_main_wrapper_a_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(MCMODEL_FLAGS)
 
 
 nanos6-main-wrapper.o: libnanos6-main-wrapper.a
@@ -135,7 +135,7 @@ libnanos6_library_mode_a_SOURCES = \
 	loader/device_strings.c \
 	loader/library-mode-init.c
 
-libnanos6_library_mode_a_CPPFLAGS = $(CUDA_CFLAGS) $(MCMODEL_FLAGS)
+libnanos6_library_mode_a_CPPFLAGS = $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(MCMODEL_FLAGS)
 
 
 nanos6-library-mode.o: libnanos6-library-mode.a
@@ -215,7 +215,7 @@ libnanos6_la_SOURCES = \
 	loader/loader.c \
 	loader/loader.h
 
-libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" $(CUDA_CFLAGS)
+libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
 libnanos6_la_LDFLAGS = $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
@@ -371,7 +371,16 @@ if USE_CUDA
 common_sources += $(cuda_sources)
 endif
 
+cluster_sources = \
+	src/cluster/ClusterManager.cpp \
+	src/cluster/messages/Message.cpp \
+	src/cluster/messages/MessageSysFinish.cpp \
+	src/cluster/messages/MessageType.cpp \
+	src/cluster/messenger/MPIMessenger.cpp
 
+if USE_CLUSTER
+common_sources += $(cluster_sources)
+endif
 
 discrete_dependency_sources = \
 	src/dependencies/discrete/Reductions.cpp \
@@ -549,6 +558,10 @@ memory_allocator_debug_cppflags = -I$(srcdir)/src/memory/allocator/malloc
 # 	src/null/NullStaticBlock.cpp
 
 noinst_HEADERS = \
+	src/cluster/ClusterManager.hpp \
+	src/cluster/messages/Message.hpp \
+	src/cluster/messages/MessageSysFinish.hpp \
+	src/cluster/messages/MessageType.hpp \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
@@ -628,6 +641,7 @@ noinst_HEADERS = \
 	src/executors/threads/WorkerThreadImplementation.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
+	src/hardware/cluster/ClusterNode.hpp \
 	src/hardware/cuda/CUDAManager.hpp \
 	src/hardware/cuda/compute/CUDAComputePlace.hpp \
 	src/hardware/cuda/compute/stream/CUDAStream.hpp \
@@ -909,6 +923,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/tree-scheduler/queue/LIFOQueue.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
+	src/support/GenericFactory.hpp \
 	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/support/InstrumentedThread.hpp \
@@ -944,8 +959,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(memkind_CPPFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(memkind_LIBS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS)
 
 
 # This is needed for debuggable spinlocks

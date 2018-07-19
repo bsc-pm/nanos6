@@ -280,6 +280,21 @@ if test x"${ac_use_cuda}" = x"yes" ; then
 	AC_DEFINE([USE_CUDA], [1], [Define if CUDA is enabled.])
 fi
 
+# Check support for Cluster
+AC_ARG_ENABLE([cluster], [AS_HELP_STRING([--enable-cluster], [Enable OmpSs@Cluster support])])
+
+if test x"${enable_cluster}" = x"yes" ; then
+	ac_use_cluster=yes
+	AC_DEMAND_MPI
+else
+	ac_use_cluster=no
+fi
+AM_CONDITIONAL([USE_CLUSTER], [test x${ac_use_cluster} = x"yes"])
+AM_CONDITIONAL([HAVE_MPI], [test x${ac_use_cluster} = x"yes"])
+
+if test x"${ac_use_cluster}" = x"yes" ; then
+	AC_DEFINE([USE_CLUSTER], [1], [Define if Cluster is enabled.])
+fi
 
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
@@ -359,6 +374,16 @@ if test x"${ac_use_cuda}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	_AS_ECHO([	CUDA CFLAGS... ${CUDA_CFLAGS}])
 	_AS_ECHO([	CUDA LIBS... ${CUDA_LIBS}])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   Cluster support is enabled... ])
+if test x"${ac_use_cluster}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   MPI CXXFLAGS... ${MPI_CXXFLAGS}])
+	_AS_ECHO([   MPI CXXLDFLAGS... ${MPI_CXXLDFLAGS}])
 else
 	AC_MSG_RESULT([no])
 fi

@@ -36,6 +36,10 @@
 #include "hardware/cuda/CUDAManager.hpp"
 #endif
 
+#ifdef USE_CLUSTER
+#include "cluster/ClusterManager.hpp"
+#endif
+
 
 static std::atomic<int> shutdownDueToSignalNumber(0);
 
@@ -101,6 +105,10 @@ void nanos_preinit(void) {
 	#ifdef USE_CUDA
 	CUDAManager::initialize();
 	#endif
+	
+	#ifdef USE_CLUSTER
+	ClusterManager::initialize();
+	#endif
 }
 
 
@@ -135,6 +143,10 @@ void nanos_shutdown(void) {
 	while (SpawnedFunctions::_pendingSpawnedFunctions > 0) {
 		// Wait for spawned functions to fully end
 	}
+	
+	#ifdef USE_CLUSTER
+	ClusterManager::shutdown();
+	#endif
 	
 	#ifdef USE_CUDA
 	CUDAManager::shutdown();

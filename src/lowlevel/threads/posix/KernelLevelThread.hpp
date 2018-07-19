@@ -67,6 +67,11 @@ public:
 		_tid = tid;
 	}
 	
+	inline int getTid()
+	{
+		return _tid;
+	}
+	
 	inline void start(pthread_attr_t const *pthreadAttr);
 	
 	inline void bind(CPU const *cpu);
