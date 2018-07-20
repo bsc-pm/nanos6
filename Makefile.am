@@ -1243,7 +1243,7 @@ else
 endif
 	$(AM_V_GEN3)echo >> src/version/CodeVersionInfo.cpp ; \
 	\
-	echo 'char const * nanos6_copyright = "2015-2017 Barcelona Supercomputing Center (BSC)";' >> src/version/CodeVersionInfo.cpp ; \
+	echo 'char const * nanos6_copyright = "2015-2018 Barcelona Supercomputing Center (BSC)";' >> src/version/CodeVersionInfo.cpp ; \
 	echo >> src/version/CodeVersionInfo.cpp ; \
 	\
 	echo 'char const * nanos6_license = "GPL3";' >> src/version/CodeVersionInfo.cpp ; \
