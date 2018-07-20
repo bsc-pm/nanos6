@@ -10,6 +10,7 @@
 #include <sys/mman.h>
 
 #include <executors/threads/CPUManager.hpp>
+#include <hardware/HardwareInfo.hpp>
 
 #include <InstrumentReductions.hpp>
 
@@ -18,6 +19,7 @@
 
 ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operator_index_t typeAndOperatorIndex,
 		std::function<void(void*, void*, size_t)> initializationFunction, std::function<void(void*, void*, size_t)> combinationFunction) :
+	_paddedRegionSize(((region.getSize() + HardwareInfo::getCacheLineSize() - 1)/HardwareInfo::getCacheLineSize())*HardwareInfo::getCacheLineSize()),
 	_region(region), _typeAndOperatorIndex(typeAndOperatorIndex),
 	_initializationFunction(std::bind(initializationFunction, std::placeholders::_1, _region.getStartAddress(), std::placeholders::_2)),
 	_combinationFunction(combinationFunction)
@@ -25,13 +27,13 @@ ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operato
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
 	
-	void *storage = mmap(nullptr, _region.getSize()*nCpus,
+	void *storage = mmap(nullptr, _paddedRegionSize*nCpus,
 			PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, /* fd */ -1, /* offset */ 0);
 	
 	FatalErrorHandler::check(storage != MAP_FAILED, "Cannot allocate ",
-			_region.getSize()*nCpus, " bytes");
+			_paddedRegionSize*nCpus, " bytes");
 	
-	_storage = DataAccessRegion(storage, _region.getSize()*nCpus);
+	_storage = DataAccessRegion(storage, _paddedRegionSize*nCpus);
 	
 	_isCpuStorageInitialized.resize(nCpus, false);
 	
@@ -59,7 +61,7 @@ DataAccessRegion ReductionInfo::getCPUPrivateStorage(size_t virtualCpuId) {
 	assert(nCpus > 0);
 	assert(virtualCpuId < (size_t)nCpus);
 	
-	void *cpuStorage = ((char*)_storage.getStartAddress()) + _region.getSize()*virtualCpuId;
+	void *cpuStorage = ((char*)_storage.getStartAddress()) + _paddedRegionSize*virtualCpuId;
 	
 	// Lock required to access _isCpuStorageInitialized simultaneously
 	std::lock_guard<spinlock_t> guard(_lock);
@@ -91,7 +93,7 @@ bool ReductionInfo::combineRegion(const DataAccessRegion& region, const boost::d
 	for (size_t i = 0; i < (size_t)nCpus; ++i) {
 		if (reductionCpuSet[i]) {
 			void *originalRegion = ((char*)_region.getStartAddress()) + ((char*)region.getStartAddress() - (char*)_region.getStartAddress());
-			void *cpuStorage = ((char*)_storage.getStartAddress()) + _region.getSize()*i + ((char*)region.getStartAddress() - (char*)_region.getStartAddress());
+			void *cpuStorage = ((char*)_storage.getStartAddress()) + _paddedRegionSize*i + ((char*)region.getStartAddress() - (char*)_region.getStartAddress());
 			
 			_combinationFunction(originalRegion, cpuStorage, region.getSize());
 			

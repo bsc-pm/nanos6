@@ -39,6 +39,8 @@ class ReductionInfo
 		
 	private:
 		
+		const size_t _paddedRegionSize;
+		
 		DataAccessRegion _region;
 		
 		DataAccessRegion _storage;
