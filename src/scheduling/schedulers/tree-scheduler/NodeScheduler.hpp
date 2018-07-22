@@ -30,7 +30,7 @@ private:
 	SpinLock _globalLock;
 	SpinLock _thresholdLock;
 	
-	inline void handleQueueOverflow()
+	inline void handleQueueOverflow(bool handleThreshold = true)
 	{
 		if (_parent != nullptr) {
 			size_t elements = _queueThreshold / 2;
@@ -42,18 +42,20 @@ private:
 			std::vector<Task *> taskBatch = _queue->getTaskBatch(elements);
 			if (taskBatch.size() > 0) {
 				// queue might have been emptied just a moment ago
-				_parent->addTaskBatch(this, taskBatch);
+				_parent->addTaskBatch(this, taskBatch, handleThreshold);
 			}
 		} else {
-			// Increase threshold and propagate downwards
-			std::lock_guard<SpinLock> guard(_thresholdLock);
-			size_t th = _queueThreshold * 2;
-			
-			if (th == 0) {
-				th = 2;
+			if (handleThreshold) {
+				// Increase threshold and propagate downwards
+				std::lock_guard<SpinLock> guard(_thresholdLock);
+				size_t th = _queueThreshold * 2;
+				
+				if (th == 0) {
+					th = 2;
+				}
+				
+				updateQueueThreshold(th);
 			}
-			
-			updateQueueThreshold(th);
 		}
 	}
 
@@ -78,7 +80,7 @@ public:
 		}
 	}
 
-	inline void addTaskBatch(TreeSchedulerInterface *who, std::vector<Task *> &taskBatch)
+	inline void addTaskBatch(TreeSchedulerInterface *who, std::vector<Task *> &taskBatch, bool handleThreshold)
 	{
 		TreeSchedulerInterface *idleChild = who;
 		bool overflow = false;
@@ -104,9 +106,9 @@ public:
 		
 		// Outside lock, call other nodes
 		if (idleChild != who) {
-			idleChild->addTaskBatch(this, taskBatch);
+			idleChild->addTaskBatch(this, taskBatch, handleThreshold);
 		} else if (overflow) {
-			handleQueueOverflow();
+			handleQueueOverflow(handleThreshold);
 		}
 		
 		// Queue is already balanced
@@ -136,14 +138,14 @@ public:
 		
 		// Outside lock, call other nodes
 		if (taskBatch.size() > 0) {
-			child->addTaskBatch(this, taskBatch);
+			child->addTaskBatch(this, taskBatch, true);
 		} else {
 			if (_parent != nullptr) {
 				_parent->getTask(this);
 			}
 		}
 		
-		if (_parent == nullptr && _queueThreshold > 0) {
+		if (_parent == nullptr) {
 			// Reduce threshold and propagate
 			std::lock_guard<SpinLock> guard(_thresholdLock);
 			updateQueueThreshold(_queueThreshold / 2);

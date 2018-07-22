@@ -32,6 +32,7 @@ private:
 	ComputePlace *_computePlace;
 	
 	std::atomic<bool> _idle;
+	std::atomic<bool> _running;
 	
 	SpinLock _globalLock;
 	
@@ -46,9 +47,18 @@ private:
 		std::vector<Task *> taskBatch = _queue->getTaskBatch(th);
 		if (taskBatch.size() > 0) {
 			// queue might have been emptied just a moment ago
-			_parent->addTaskBatch(this, taskBatch);
+			_parent->addTaskBatch(this, taskBatch, true);
 		}
 	}
+	
+	inline void forceRebalance()
+	{
+		std::vector<Task *> taskBatch = _queue->getTaskBatch(1);
+		if (taskBatch.size() > 0) {
+			_parent->addTaskBatch(this, taskBatch, false);
+		}
+	}
+
 
 public:
 	LeafScheduler(ComputePlace *computePlace, NodeScheduler *parent) :
@@ -57,7 +67,8 @@ public:
 		_rebalance(false),
 		_parent(parent),
 		_computePlace(computePlace),
-		_idle(false)
+		_idle(false),
+		_running(false)
 	{
 		_queue = TreeSchedulerQueueInterface::initialize();
 		_parent->setChild(this);
@@ -75,6 +86,7 @@ public:
 			// same CPU. Therefore, there is no need to check polling slots,
 			// or to wake up any CPUs.
 			assert(!_idle);
+			assert(_running);
 			
 			size_t elements = _queue->addTask(task, hint);
 			
@@ -82,21 +94,24 @@ public:
 				handleQueueOverflow();
 			}
 		} else {
-			bool success;
-			bool idle;
+			bool success = false;
 			
-			{
-				// Try to put it in the polling slot
-				std::lock_guard<SpinLock> guard(_globalLock);
-				success = _pollingSlot.setTask(task);
-				idle = _idle;
-			}
 			
-			if (success) {
-				if (idle) {
+			if (!_running) {
+				bool idle;
+				{
+					// Try to put it in the polling slot
+					std::lock_guard<SpinLock> guard(_globalLock);
+					success = _pollingSlot.setTask(task);
+					idle = _idle;
+				}
+			
+				if (success && idle) {
 					ThreadManager::resumeIdle((CPU *)_computePlace);
 				}
-			} else {
+			}
+			
+			if (!success) {
 				size_t elements = _queue->addTask(task, hint);
 				
 				if (elements > _queueThreshold) {
@@ -109,7 +124,7 @@ public:
 		_rebalance = false;
 	}
 
-	inline void addTaskBatch(__attribute__((unused)) TreeSchedulerInterface *who, std::vector<Task *> &taskBatch)
+	inline void addTaskBatch(__attribute__((unused)) TreeSchedulerInterface *who, std::vector<Task *> &taskBatch, __attribute__((unused)) bool handleThreshold)
 	{
 		assert(taskBatch.size() > 0);
 		assert(who == _parent);
@@ -139,6 +154,8 @@ public:
 	{
 		Task *task;
 		
+		_running = false;
+		
 		if (_idle) {
 			_idle = false;
 			CPUManager::unidleCPU((CPU *)_computePlace);
@@ -147,6 +164,7 @@ public:
 		task = _pollingSlot.getTask();
 		if (task != nullptr) {
 			_rebalance = false;
+			_running = true;
 			return task;
 		}
 		
@@ -161,6 +179,7 @@ public:
 				}
 			}
 			
+			_running = true;
 			return task;
 		}
 		
@@ -190,6 +209,10 @@ public:
 			}
 		}
 		
+		if (task != nullptr) {
+			_running = true;
+		}
+		
 		return task;
 	}
 	
@@ -210,7 +233,7 @@ public:
 		}
 		
 		if (taskBatch.size() > 0) {
-			_parent->addTaskBatch(this, taskBatch);
+			_parent->addTaskBatch(this, taskBatch, true);
 		}
 	}
 	
@@ -220,7 +243,15 @@ public:
 	
 	inline void updateQueueThreshold(size_t queueThreshold)
 	{
-		if (queueThreshold < _queueThreshold) {
+		if (queueThreshold == 0) {
+			if (_rebalance && _running) {
+				// We may be causing starvation to other nodes
+				forceRebalance();
+			} else if (queueThreshold < _queueThreshold) {
+				_rebalance = true;
+			}
+		} else if (queueThreshold < _queueThreshold) {
+			// Rebalance later. Don't block the CPU that triggered the update
 			_rebalance = true;
 		}
 		
