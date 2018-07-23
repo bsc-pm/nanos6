@@ -26,6 +26,7 @@ private:
 	
 	NodeScheduler *_parent;
 	std::vector<TreeSchedulerInterface *> _children;
+	std::atomic<size_t> _enabledChildren;
 	
 	SpinLock _globalLock;
 	SpinLock _thresholdLock;
@@ -64,7 +65,8 @@ public:
 		_pollingIterations("NANOS6_SCHEDULER_POLLING_ITER", 100000),
 		_queueThreshold(0),
 		_rebalance(false),
-		_parent(parent)
+		_parent(parent),
+		_enabledChildren(0)
 	{
 		_queue = TreeSchedulerQueueInterface::initialize();
 		if (_parent != nullptr) {
@@ -115,7 +117,7 @@ public:
 		_rebalance = false;
 	}
 	
-	inline void getTask(TreeSchedulerInterface *child)
+	inline void getTask(TreeSchedulerInterface *child, bool force = false)
 	{
 		size_t th = _queueThreshold;
 		size_t elements = th / 2;
@@ -141,14 +143,20 @@ public:
 			child->addTaskBatch(this, taskBatch, true);
 		} else {
 			if (_parent != nullptr) {
-				_parent->getTask(this);
+				_parent->getTask(this, force);
 			}
 		}
 		
 		if (_parent == nullptr) {
-			// Reduce threshold and propagate
-			std::lock_guard<SpinLock> guard(_thresholdLock);
-			updateQueueThreshold(_queueThreshold / 2);
+			if (force) {
+				// Rare case, move threshold to 0. Hope this kicks a rebalance
+				std::lock_guard<SpinLock> guard(_thresholdLock);
+				updateQueueThreshold(0);
+			} else {
+				// Reduce threshold and propagate
+				std::lock_guard<SpinLock> guard(_thresholdLock);
+				updateQueueThreshold(_queueThreshold / 2);
+			}
 		} else if (_rebalance) {
 			bool expected = true;
 			if (_rebalance.compare_exchange_strong(expected, false)) {
@@ -161,6 +169,7 @@ public:
 	
 	inline void setChild(TreeSchedulerInterface *child)
 	{
+		++_enabledChildren;
 		_children.push_back(child);
 	}
 	
@@ -192,6 +201,25 @@ public:
 		for (TreeSchedulerInterface *child : _children) {
 			child->updateQueueThreshold(_queueThreshold);
 		}
+	}
+	
+	inline void disableChild(__attribute__((unused)) TreeSchedulerInterface *child)
+	{
+		assert(_enabledChildren > 0);
+		
+		if ((--_enabledChildren) == 0 && _parent != nullptr) {
+			std::vector<Task *> taskBatch = _queue->getTaskBatch(-1);
+		
+			if (taskBatch.size() > 0) {
+				_parent->addTaskBatch(this, taskBatch, true);
+			}
+			_parent->disableChild(this);
+		}
+	}
+	
+	inline void enableChild(__attribute__((unused)) TreeSchedulerInterface *child)
+	{
+		++_enabledChildren;
 	}
 };
 

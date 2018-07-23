@@ -200,7 +200,12 @@ public:
 		
 		if (task == nullptr) {
 			// Timedout
-			// Mark as idle. Here, and somewhere else?
+			
+			if (_queueThreshold != 0) {
+				// Something weird is going on. Force rebalancing the rest of the system
+				_parent->getTask(this, true);
+			}
+			
 			std::lock_guard<SpinLock> guard(_globalLock);
 			task = _pollingSlot.getTask();
 			if (task == nullptr) {
@@ -235,10 +240,13 @@ public:
 		if (taskBatch.size() > 0) {
 			_parent->addTaskBatch(this, taskBatch, true);
 		}
+		
+		_parent->disableChild(this);
 	}
 	
 	inline void enable()
 	{
+		_parent->enableChild(this);
 	}
 	
 	inline void updateQueueThreshold(size_t queueThreshold)
