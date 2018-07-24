@@ -20,6 +20,9 @@ private:
 	static std::vector<MemoryPoolGlobal *> _globalMemoryPool;
 	static std::vector<size_to_pool_t> _localMemoryPool;
 	
+	static size_to_pool_t _externalMemoryPool;
+	static SpinLock _externalMemoryPoolLock;
+	
 	static MemoryPool *getPool(size_t size);
 
 public:

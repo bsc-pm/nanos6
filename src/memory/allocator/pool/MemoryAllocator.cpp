@@ -14,37 +14,50 @@
 
 std::vector<MemoryPoolGlobal *> MemoryAllocator::_globalMemoryPool;
 std::vector<MemoryAllocator::size_to_pool_t> MemoryAllocator::_localMemoryPool;
+MemoryAllocator::size_to_pool_t MemoryAllocator::_externalMemoryPool;
+SpinLock MemoryAllocator::_externalMemoryPoolLock;
 
 MemoryPool *MemoryAllocator::getPool(size_t size)
 {
 	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 	size_t CPUId;
 	size_t NUMANodeId;
-	
-	if (thread != nullptr) {
-		CPU *currentCPU = thread->getComputePlace();
-		CPUId = currentCPU->_virtualCPUId;
-		NUMANodeId = currentCPU->_NUMANodeId;
-	} else {
-		CPUId = 0;
-		NUMANodeId = 0;
-	}
+	MemoryPool *pool = nullptr;
 	
 	// Round to the nearest multiple of the cache line size
 	size_t cacheLineSize = HardwareInfo::getCacheLineSize();
 	size_t roundedSize = (size + cacheLineSize - 1) & ~(cacheLineSize - 1);
 	size_t cacheLines = roundedSize / cacheLineSize;
 	
-	MemoryPool *pool = nullptr;
-	auto it = _localMemoryPool[CPUId].find(cacheLines);
-	if (it == _localMemoryPool[CPUId].end()) {
-		// No pool of this size locally
-		pool = new MemoryPool(_globalMemoryPool[NUMANodeId], roundedSize);
-		_localMemoryPool[CPUId][cacheLines] = pool;
-	} else {
-		pool = it->second;
+	if (thread != nullptr) {
+		CPU *currentCPU = thread->getComputePlace();
+		
+		if (currentCPU != nullptr) {
+			CPUId = currentCPU->_virtualCPUId;
+			NUMANodeId = currentCPU->_NUMANodeId;
+			
+			auto it = _localMemoryPool[CPUId].find(cacheLines);
+			if (it == _localMemoryPool[CPUId].end()) {
+				// No pool of this size locally
+				pool = new MemoryPool(_globalMemoryPool[NUMANodeId], roundedSize);
+				_localMemoryPool[CPUId][cacheLines] = pool;
+			} else {
+				pool = it->second;
+			}
+		}
 	}
-
+	
+	if (pool == nullptr) {
+		std::lock_guard<SpinLock> guard(_externalMemoryPoolLock);
+		auto it = _externalMemoryPool.find(cacheLines);
+		if (it == _externalMemoryPool.end()) {
+			pool = new MemoryPool(_globalMemoryPool[0], roundedSize);
+			_externalMemoryPool[cacheLines] = pool;
+		} else {
+			pool = it->second;
+		}
+	}
+	
 	return pool;
 }
 
@@ -71,6 +84,10 @@ void MemoryAllocator::shutdown()
 		for (auto it = _localMemoryPool[i].begin(); it != _localMemoryPool[i].end(); ++it) {
 			delete it->second;
 		}
+	}
+	
+	for (auto it = _externalMemoryPool.begin(); it != _externalMemoryPool.end(); ++it) {
+		delete it->second;
 	}
 }
 

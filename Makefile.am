@@ -886,6 +886,7 @@ noinst_HEADERS = \
 	src/lowlevel/threads/posix/KernelLevelThread.hpp \
 	src/memory/AddressSpace.hpp \
 	src/memory/allocator/malloc/MemoryAllocator.hpp \
+	src/memory/allocator/pool/ExternalMemoryPool.hpp \
 	src/memory/allocator/pool/MemoryAllocator.hpp \
 	src/memory/allocator/pool/MemoryPool.hpp \
 	src/memory/allocator/pool/MemoryPoolGlobal.hpp \
