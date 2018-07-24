@@ -61,6 +61,7 @@ reductions_tests += \
 	red-firstprivate.test \
 	red-nonest.test \
 	red-nest.test \
+	red-nest-other.test \
 	red-nqueens.test \
 	red-stress.test
 
@@ -105,6 +106,7 @@ reductions_tests += \
 	red-firstprivate.debug.test \
 	red-nonest.debug.test \
 	red-nest.debug.test \
+	red-nest-other.debug.test \
 	red-nqueens.debug.test \
 	red-stress.debug.test
 
@@ -326,6 +328,15 @@ red_nest_test_SOURCES = reductions/red-nest.cpp
 red_nest_test_CPPFLAGS = -DNDEBUG
 red_nest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_nest_test_LDFLAGS = $(test_common_ldflags)
+
+red_nest_other_debug_test_SOURCES = reductions/red-nest-other.cpp
+red_nest_other_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+red_nest_other_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+red_nest_other_test_SOURCES = reductions/red-nest-other.cpp
+red_nest_other_test_CPPFLAGS = -DNDEBUG
+red_nest_other_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+red_nest_other_test_LDFLAGS = $(test_common_ldflags)
 
 #red_nest_taskwait_debug_test_SOURCES = reductions/red-nest-taskwait.cpp
 #red_nest_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

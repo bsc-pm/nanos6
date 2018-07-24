@@ -138,7 +138,10 @@ namespace DataAccessRegistration {
 						access->canPropagateConcurrentSatisfiability() && access->concurrentSatisfied()
 						&& (access->getType() == CONCURRENT_ACCESS_TYPE);
 					_propagatesReductionInfoToNext =
-						access->canPropagateReductionInfo() && access->receivedReductionInfo();
+						access->canPropagateReductionInfo() && access->receivedReductionInfo()
+						// For 'write' and 'readwrite' accesses we need to propagate the ReductionInfo through fragments only,
+						// in order to be able to propagate a nested reduction ReductionInfo outside
+						&& ((access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE));
 					_propagatesReductionCpuSetToNext = false; // ReductionCpuSet is propagated through the fragments
 				} else if (
 					(access->getObjectType() == fragment_type)
@@ -178,7 +181,11 @@ namespace DataAccessRegistration {
 						&& ((access->getType() == CONCURRENT_ACCESS_TYPE) || access->complete());
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
-						&& access->receivedReductionInfo();
+						&& access->receivedReductionInfo()
+						// For 'write' and 'readwrite' accesses we need to propagate the ReductionInfo to next only when
+						// complete, otherwise subaccesses can still appear
+						&& (((access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE))
+							|| access->complete());
 					_propagatesReductionCpuSetToNext =
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()
@@ -265,6 +272,7 @@ namespace DataAccessRegistration {
 	
 	struct BottomMapUpdateOperation {
 		DataAccessRegion _region;
+		DataAccessType _parentAccessType;
 		
 		bool _linkBottomMapAccessesToNext;
 		
@@ -276,6 +284,7 @@ namespace DataAccessRegistration {
 		
 		BottomMapUpdateOperation()
 			: _region(),
+			_parentAccessType(NO_ACCESS_TYPE),
 			_linkBottomMapAccessesToNext(false),
 			_inhibitReadSatisfiabilityPropagation(false),
 			_inhibitConcurrentSatisfiabilityPropagation(false),
@@ -286,6 +295,7 @@ namespace DataAccessRegistration {
 		
 		BottomMapUpdateOperation(DataAccessRegion const &region)
 			: _region(region),
+			_parentAccessType(NO_ACCESS_TYPE),
 			_linkBottomMapAccessesToNext(false),
 			_inhibitReadSatisfiabilityPropagation(false),
 			_inhibitConcurrentSatisfiabilityPropagation(false),
@@ -539,14 +549,20 @@ namespace DataAccessRegistration {
 			) {
 				BottomMapUpdateOperation bottomMapUpdateOperation(access->getAccessRegion());
 				
+				bottomMapUpdateOperation._parentAccessType = access->getType();
+				
 				bottomMapUpdateOperation._linkBottomMapAccessesToNext = true;
 				bottomMapUpdateOperation._next = access->getNext();
 				
 				bottomMapUpdateOperation._inhibitReadSatisfiabilityPropagation = (access->getType() == READ_ACCESS_TYPE);
 				assert(!updatedStatus._propagatesWriteSatisfiabilityToNext);
 				bottomMapUpdateOperation._inhibitConcurrentSatisfiabilityPropagation = (access->getType() == CONCURRENT_ACCESS_TYPE);
-				// Subaccesses should never propagate the ReductionInfo
-				bottomMapUpdateOperation._inhibitReductionInfoPropagation = true;
+				// 'write' and 'readwrite' accesses can have a nested reduction that is combined outside the parent task itself, and thus
+				// their ReductionInfo needs to be propagates through the bottom map
+				// Subaccesses of an access that can't have a nested reduction which is visible outside
+				// should never propagate the ReductionInfo (it is already propagated by the parent access)
+				bottomMapUpdateOperation._inhibitReductionInfoPropagation =
+					(access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE);
 				
 				processBottomMapUpdate(bottomMapUpdateOperation, accessStructures, task, hpDependencyData);
 			}
@@ -1513,6 +1529,23 @@ namespace DataAccessRegistration {
 			operation._region,
 			accessStructures, task,
 			[&] (DataAccess *access, TaskDataAccesses &currentAccessStructures, Task *currentTask) {
+				FatalErrorHandler::failIf(
+					((operation._parentAccessType == CONCURRENT_ACCESS_TYPE) || (operation._parentAccessType == COMMUTATIVE_ACCESS_TYPE))
+						&& access->getType() == REDUCTION_ACCESS_TYPE,
+					"Task '",
+					(access->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr) ?
+						access->getOriginator()->getTaskInfo()->implementations[0].task_label :
+						access->getOriginator()->getTaskInfo()->implementations[0].declaration_source
+					,
+					"' declares a reduction within a region registered as ",
+					(operation._parentAccessType == CONCURRENT_ACCESS_TYPE) ? "concurrent" : "commutative",
+					" by task '",
+					(task->getTaskInfo()->implementations[0].task_label != nullptr) ?
+						task->getTaskInfo()->implementations[0].task_label :
+						task->getTaskInfo()->implementations[0].declaration_source,
+					"' without a taskwait"
+				);
+				
 				DataAccessStatusEffects initialStatus(access);
 				
 				if (operation._inhibitReadSatisfiabilityPropagation) {
