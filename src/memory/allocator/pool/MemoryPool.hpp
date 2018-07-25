@@ -45,7 +45,6 @@ public:
 		_chunkSize(chunkSize),
 		_topChunk(nullptr)
 	{
-		fillPool();
 	}
 	
 	void *getChunk()
