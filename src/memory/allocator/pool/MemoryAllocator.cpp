@@ -7,6 +7,7 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include <VirtualMemoryManagement.hpp>
 
 #include "MemoryPool.hpp"
 
@@ -20,8 +21,8 @@ SpinLock MemoryAllocator::_externalMemoryPoolLock;
 MemoryPool *MemoryAllocator::getPool(size_t size)
 {
 	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-	size_t CPUId;
-	size_t NUMANodeId;
+	size_t cpuId;
+	size_t numaNodeId;
 	MemoryPool *pool = nullptr;
 	
 	// Round to the nearest multiple of the cache line size
@@ -33,14 +34,14 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 		CPU *currentCPU = thread->getComputePlace();
 		
 		if (currentCPU != nullptr) {
-			CPUId = currentCPU->_virtualCPUId;
-			NUMANodeId = currentCPU->_NUMANodeId;
+			cpuId = currentCPU->_virtualCPUId;
+			numaNodeId = currentCPU->_NUMANodeId;
 			
-			auto it = _localMemoryPool[CPUId].find(cacheLines);
-			if (it == _localMemoryPool[CPUId].end()) {
+			auto it = _localMemoryPool[cpuId].find(cacheLines);
+			if (it == _localMemoryPool[cpuId].end()) {
 				// No pool of this size locally
-				pool = new MemoryPool(_globalMemoryPool[NUMANodeId], roundedSize);
-				_localMemoryPool[CPUId][cacheLines] = pool;
+				pool = new MemoryPool(_globalMemoryPool[numaNodeId], roundedSize);
+				_localMemoryPool[cpuId][cacheLines] = pool;
 			} else {
 				pool = it->second;
 			}
@@ -63,11 +64,12 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 
 void MemoryAllocator::initialize()
 {
-	size_t NUMANodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
+	VirtualMemoryManagement::initialize();
+	size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	
-	_globalMemoryPool.resize(NUMANodeCount);
+	_globalMemoryPool.resize(numaNodeCount);
 	
-	for (size_t i = 0; i < NUMANodeCount; ++i) {
+	for (size_t i = 0; i < numaNodeCount; ++i) {
 		_globalMemoryPool[i] = new MemoryPoolGlobal(i);
 	}
 	

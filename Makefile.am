@@ -546,6 +546,24 @@ memory_allocator_default_cppflags = -I$(srcdir)/src/memory/allocator/pool
 memory_allocator_debug_sources =
 memory_allocator_debug_cppflags = -I$(srcdir)/src/memory/allocator/malloc
 
+vmm_smp_sources = src/memory/vmm/smp/VirtualMemoryManagement.cpp
+vmm_smp_cppflags = -I$(srcdir)/src/memory/vmm/smp
+
+vmm_cluster_sources = src/memory/vmm/cluster/VirtualMemoryManagement.cpp
+vmm_cluster_cppflags = -I$(srcdir)/src/memory/vmm/cluster
+
+if USE_CLUSTER
+memory_default_sources = $(memory_allocator_default_sources) $(vmm_cluster_sources)
+memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_cluster_cppflags)
+memory_debug_sources = $(memory_default_sources)
+memory_debug_cppflags = $(memory_default_cppflags)
+else
+memory_default_sources = $(memory_allocator_default_sources) $(vmm_smp_sources)
+memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_smp_cppflags)
+memory_debug_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
+memory_debug_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
+endif
+
 # null_common_sources = \
 # 	src/null/NullDebug.cpp \
 # 	src/null/NullAPI.cpp \
@@ -900,6 +918,10 @@ noinst_HEADERS = \
 	src/memory/allocator/pool/MemoryAllocator.hpp \
 	src/memory/allocator/pool/MemoryPool.hpp \
 	src/memory/allocator/pool/MemoryPoolGlobal.hpp \
+	src/memory/vmm/VirtualMemoryAllocation.hpp \
+	src/memory/vmm/VirtualMemoryArea.hpp \
+	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
+	src/memory/vmm/smp/VirtualMemoryManagement.hpp \
 	src/performance/HardwareCounters.hpp \
 	src/performance/HardwareCountersThreadLocalData.hpp \
 	src/performance/HardwareCountersThreadLocalDataImplementation.hpp \
@@ -986,7 +1008,7 @@ enabled_variants =
 disabled_variants =
 
 
-libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_allocator_default_cppflags) -I$(srcdir)/src/instrument/null
+libnanos6_optimized_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_optimized_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_optimized_la_LDFLAGS = $(common_libnanos6_ldflags)
 libnanos6_optimized_la_SOURCES =
@@ -994,7 +1016,7 @@ nodist_libnanos6_optimized_la_SOURCES =
 
 if BUILD_OPTIMIZED_VARIANT
 enabled_variants += optimized
-libnanos6_optimized_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_allocator_default_sources)
+libnanos6_optimized_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_default_sources)
 nodist_libnanos6_optimized_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += optimized
@@ -1002,7 +1024,7 @@ libnanos6_optimized_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_allocator_debug_cppflags) -I$(srcdir)/src/instrument/null
+libnanos6_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/null
 libnanos6_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 libnanos6_debug_la_SOURCES =
@@ -1010,7 +1032,7 @@ nodist_libnanos6_debug_la_SOURCES =
 
 if BUILD_DEBUG_VARIANTS
 enabled_variants += debug
-libnanos6_debug_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_allocator_debug_sources) src/instrument/null/InstrumentMalloc.cpp
+libnanos6_debug_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_debug_sources) src/instrument/null/InstrumentMalloc.cpp
 nodist_libnanos6_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += debug
@@ -1018,7 +1040,7 @@ libnanos6_debug_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_allocator_default_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
+libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
 libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
 libnanos6_graph_la_SOURCES =
@@ -1026,7 +1048,7 @@ nodist_libnanos6_graph_la_SOURCES =
 
 if BUILD_GRAPH_INSTRUMENTATION_VARIANT
 enabled_variants += graph
-libnanos6_graph_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_allocator_default_sources)
+libnanos6_graph_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_default_sources)
 nodist_libnanos6_graph_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += graph
@@ -1034,7 +1056,7 @@ libnanos6_graph_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_graph_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_allocator_debug_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
+libnanos6_graph_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
 libnanos6_graph_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags)
 libnanos6_graph_debug_la_SOURCES =
@@ -1043,7 +1065,7 @@ nodist_libnanos6_graph_debug_la_SOURCES =
 if BUILD_GRAPH_INSTRUMENTATION_VARIANT
 if BUILD_DEBUG_VARIANTS
 enabled_variants += graph-debug
-libnanos6_graph_debug_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_allocator_debug_sources)
+libnanos6_graph_debug_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_debug_sources)
 nodist_libnanos6_graph_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += graph-debug
@@ -1055,7 +1077,7 @@ libnanos6_graph_debug_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_allocator_default_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS) $(introspection_cppflags)
+libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS) $(introspection_cppflags)
 libnanos6_profile_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
 libnanos6_profile_la_SOURCES =
@@ -1063,7 +1085,7 @@ nodist_libnanos6_profile_la_SOURCES =
 
 if BUILD_PROFILE_INSTRUMENTATION_VARIANT
 enabled_variants += profile
-libnanos6_profile_la_SOURCES += $(common_sources) $(instrument_profile_sources) $(universal_debug_sources) $(memory_allocator_default_sources)
+libnanos6_profile_la_SOURCES += $(common_sources) $(instrument_profile_sources) $(universal_debug_sources) $(memory_default_sources)
 nodist_libnanos6_profile_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += profile
@@ -1071,14 +1093,14 @@ libnanos6_profile_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_allocator_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
+libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
 libnanos6_stats_la_SOURCES =
 nodist_libnanos6_stats_la_SOURCES =
 if BUILD_STATS_INSTRUMENTATION_VARIANT
 enabled_variants += stats
-libnanos6_stats_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources) $(memory_allocator_default_sources)
+libnanos6_stats_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources) $(memory_default_sources)
 nodist_libnanos6_stats_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += stats
@@ -1086,7 +1108,7 @@ libnanos6_stats_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_stats_papi_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_allocator_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support $(papi_CPPFLAGS) -DHAVE_PAPI
+libnanos6_stats_papi_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support $(papi_CPPFLAGS) -DHAVE_PAPI
 libnanos6_stats_papi_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_stats_papi_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
 libnanos6_stats_papi_la_SOURCES =
@@ -1095,7 +1117,7 @@ nodist_libnanos6_stats_papi_la_SOURCES =
 if BUILD_STATS_INSTRUMENTATION_VARIANT
 if HAVE_PAPI
 enabled_variants += stats-papi
-libnanos6_stats_papi_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources) $(memory_allocator_default_sources)
+libnanos6_stats_papi_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources) $(memory_default_sources)
 nodist_libnanos6_stats_papi_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += stats-papi
@@ -1107,7 +1129,7 @@ libnanos6_stats_papi_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_allocator_default_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
+libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 libnanos6_verbose_la_SOURCES =
@@ -1115,7 +1137,7 @@ nodist_libnanos6_verbose_la_SOURCES =
 
 if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
 enabled_variants += verbose
-libnanos6_verbose_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_allocator_default_sources)
+libnanos6_verbose_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_default_sources)
 nodist_libnanos6_verbose_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += verbose
@@ -1123,7 +1145,7 @@ nodist_libnanos6_verbose_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_verbose_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_allocator_debug_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
+libnanos6_verbose_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
 libnanos6_verbose_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 libnanos6_verbose_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 libnanos6_verbose_debug_la_SOURCES =
@@ -1132,7 +1154,7 @@ nodist_libnanos6_verbose_debug_la_SOURCES =
 if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
 if BUILD_DEBUG_VARIANTS
 enabled_variants += verbose-debug
-libnanos6_verbose_debug_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_allocator_debug_sources)
+libnanos6_verbose_debug_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_debug_sources)
 nodist_libnanos6_verbose_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += verbose-debug
@@ -1161,7 +1183,7 @@ endif
 # nodist_libnanos6_null_sb_la_SOURCES = $(nodist_universal_debug_sources)
 
 
-libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_allocator_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ $(elfutils_CFLAGS) $(introspection_cppflags)
+libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ $(elfutils_CFLAGS) $(introspection_cppflags)
 libnanos6_extrae_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
 libnanos6_extrae_la_SOURCES =
@@ -1170,7 +1192,7 @@ nodist_libnanos6_extrae_la_SOURCES =
 if HAVE_EXTRAE
 if BUILD_EXTRAE_INSTRUMENTATION_VARIANT
 enabled_variants += extrae
-libnanos6_extrae_la_SOURCES += $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources) $(memory_allocator_default_sources)
+libnanos6_extrae_la_SOURCES += $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources) $(memory_default_sources)
 nodist_libnanos6_extrae_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += extrae
