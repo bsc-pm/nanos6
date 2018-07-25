@@ -141,27 +141,27 @@ public:
 		// Outside lock, call other nodes
 		if (taskBatch.size() > 0) {
 			child->addTaskBatch(this, taskBatch, true);
+			
+			if (_parent != nullptr && _rebalance) {
+				bool expected = true;
+				if (_rebalance.compare_exchange_strong(expected, false)) {
+					if (_queue->getSize() > (_queueThreshold * 1.5)) {
+						handleQueueOverflow();
+					}
+				}
+			}
 		} else {
 			if (_parent != nullptr) {
 				_parent->getTask(this, force);
-			}
-		}
-		
-		if (_parent == nullptr) {
-			if (force) {
-				// Rare case, move threshold to 0. Hope this kicks a rebalance
-				std::lock_guard<SpinLock> guard(_thresholdLock);
-				updateQueueThreshold(0);
 			} else {
-				// Reduce threshold and propagate
-				std::lock_guard<SpinLock> guard(_thresholdLock);
-				updateQueueThreshold(_queueThreshold / 2);
-			}
-		} else if (_rebalance) {
-			bool expected = true;
-			if (_rebalance.compare_exchange_strong(expected, false)) {
-				if (_queue->getSize() > (_queueThreshold * 1.5)) {
-					handleQueueOverflow();
+				if (force) {
+					// Rare case, move threshold to 0. Hope this kicks a rebalance
+					std::lock_guard<SpinLock> guard(_thresholdLock);
+					updateQueueThreshold(0);
+				} else {
+					// Reduce threshold and propagate
+					std::lock_guard<SpinLock> guard(_thresholdLock);
+					updateQueueThreshold(_queueThreshold / 2);
 				}
 			}
 		}
