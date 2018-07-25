@@ -7,6 +7,7 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include <VirtualMemoryManagement.hpp>
 
 #include "MemoryPool.hpp"
 
@@ -63,6 +64,7 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 
 void MemoryAllocator::initialize()
 {
+	VirtualMemoryManagement::initialize();
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
 	
 	_globalMemoryPool.resize(NUMANodeCount);
