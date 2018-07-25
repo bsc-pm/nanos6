@@ -19,7 +19,7 @@ public:
 	}
 	
 	virtual void addTaskBatch(TreeSchedulerInterface *who, std::vector<Task *> &taskBatch, bool handleThreshold) = 0;
-	virtual void updateQueueThreshold(size_t queueThreshold) = 0;
+	virtual void updateQueueThreshold() = 0;
 };
 
 

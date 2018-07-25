@@ -29,7 +29,6 @@ private:
 	std::atomic<size_t> _enabledChildren;
 	
 	SpinLock _globalLock;
-	SpinLock _thresholdLock;
 	
 	inline void handleQueueOverflow(bool handleThreshold = true)
 	{
@@ -47,17 +46,31 @@ private:
 			}
 		} else {
 			if (handleThreshold) {
-				// Increase threshold and propagate downwards
-				std::lock_guard<SpinLock> guard(_thresholdLock);
-				size_t th = _queueThreshold * 2;
-				
-				if (th == 0) {
-					th = 2;
-				}
-				
-				updateQueueThreshold(th);
+				increaseQueueThreshold();
 			}
 		}
+	}
+	
+	inline void decreaseQueueThreshold()
+	{
+		// Only called from the topmost node
+		assert(_parent == nullptr);
+		
+		size_t expected = _queueThreshold;
+		while(!_queueThreshold.compare_exchange_strong(expected, expected / 2)) {}
+		
+		updateQueueThreshold();
+	}
+	
+	inline void increaseQueueThreshold()
+	{
+		// Only called from the topmost node
+		assert(_parent == nullptr);
+		
+		size_t expected = _queueThreshold;
+		while(!_queueThreshold.compare_exchange_strong(expected, expected * 2)) {}
+		
+		updateQueueThreshold();
 	}
 
 public:
@@ -156,12 +169,11 @@ public:
 			} else {
 				if (force) {
 					// Rare case, move threshold to 0. Hope this kicks a rebalance
-					std::lock_guard<SpinLock> guard(_thresholdLock);
-					updateQueueThreshold(0);
+					_queueThreshold = 0;
+					updateQueueThreshold();
 				} else {
 					// Reduce threshold and propagate
-					std::lock_guard<SpinLock> guard(_thresholdLock);
-					updateQueueThreshold(_queueThreshold / 2);
+					decreaseQueueThreshold();
 				}
 			}
 		}
@@ -190,16 +202,29 @@ public:
 		}
 	}
 	
-	inline void updateQueueThreshold(size_t queueThreshold)
+	inline void updateQueueThreshold()
 	{
-		if (queueThreshold < _queueThreshold) {
-			_rebalance = true;
+		if (_parent != nullptr) {
+			size_t queueThreshold = _parent->getQueueThreshold();
+		
+			if (queueThreshold < _queueThreshold) {
+				_rebalance = true;
+			}
+		
+			_queueThreshold = queueThreshold;
 		}
 		
-		_queueThreshold = queueThreshold;
-		
 		for (TreeSchedulerInterface *child : _children) {
-			child->updateQueueThreshold(_queueThreshold);
+			child->updateQueueThreshold();
+		}
+	}
+	
+	inline size_t getQueueThreshold()
+	{
+		if (_parent == nullptr) {
+			return _queueThreshold;
+		} else {
+			return _parent->getQueueThreshold();
 		}
 	}
 	

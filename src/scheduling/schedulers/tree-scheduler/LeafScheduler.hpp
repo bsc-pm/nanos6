@@ -249,8 +249,15 @@ public:
 		_parent->enableChild(this);
 	}
 	
-	inline void updateQueueThreshold(size_t queueThreshold)
+	inline void updateQueueThreshold()
 	{
+		// We ask our parent for the current value, so we get the most updated value.
+		// If it was passed by parameter, it would be necessary to hold a lock while
+		// updating the whole tree, to avoid having two different thresholds in
+		// different scheduler nodes.
+		
+		size_t queueThreshold = _parent->getQueueThreshold();
+		
 		if (queueThreshold == 0) {
 			if (_rebalance && _running) {
 				// We may be causing starvation to other nodes
