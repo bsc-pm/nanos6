@@ -52,12 +52,27 @@ extern "C" void nanos_decrease_task_event_counter(void *event_counter, unsigned 
 	
 	// Release dependencies if the event counter becomes zero
 	if (task->decreaseReleaseCount(decrement)) {
+		// Note: At this moment, the CPU assigned to the current worker thread (if applicable)
+		// can be incorrect. We temporally unset the CPU to prevent the dependency system and
+		// the memory allocator from using an invalid CPU
+		CPU *originalCPU = nullptr;
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread != nullptr) {
+			originalCPU = currentThread->getComputePlace();
+			currentThread->setComputePlace(nullptr);
+		}
+		
 		// Release the accesses
 		DataAccessRegistration::unregisterTaskDataAccesses(task, nullptr);
 		
 		// Try to dispose the task
 		if (task->markAsReleased()) {
 			TaskFinalization::disposeOrUnblockTask(task, nullptr);
+		}
+		
+		// Restore the previous CPU
+		if (currentThread != nullptr) {
+			currentThread->setComputePlace(originalCPU);
 		}
 	}
 }

@@ -96,6 +96,14 @@ public:
 		return _cpu;
 	}
 	
+	//! \brief set the current hardware place
+	//!
+	//! Note: This function should only be used in very exceptional circumstances.
+	//! Use "migrate" function to migrate the thread to another CPU.
+	inline void setComputePlace(CPU *cpu)
+	{
+		_cpu = cpu;
+	}
 	
 	//! \brief returns the WorkerThread that runs the call
 	static inline WorkerThreadBase *getCurrentWorkerThread()
