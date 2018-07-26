@@ -1593,24 +1593,37 @@ namespace DataAccessRegistration {
 				parentAccessType = bottomMapEntryContents._accessType;
 				local = (bottomMapEntryContents._accessType == NO_ACCESS_TYPE);
 				
-				// When a reduction access is to be linked with any non-matching access, we want to
-				// allocate a new reductionInfo to it before it gets fragmented by propagation operations
-				if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !hasAllocatedReductionInfo &&
-						(previous->getReductionTypeAndOperatorIndex() != dataAccess->getReductionTypeAndOperatorIndex())) {
-					hasAllocatedReductionInfo = true;
-					allocateReductionInfo(*dataAccess, *next._task);
-				}
-				
-				if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && !hasAllocatedReductionInfo &&
-						(previous->getReductionTypeAndOperatorIndex() == dataAccess->getReductionTypeAndOperatorIndex())) {
-					if (previousReductionInfo == nullptr) {
-						previousReductionInfo = previous->getReductionInfo();
+				if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !hasAllocatedReductionInfo) {
+					bool allocatesReductionInfo = false;
+					
+					if (previous->getReductionTypeAndOperatorIndex() != dataAccess->getReductionTypeAndOperatorIndex()) {
+						// When a reduction access is to be linked with any non-matching access, we want to
+						// allocate a new reductionInfo to it before it gets fragmented by propagation operations
+						allocatesReductionInfo = true;
 					}
-					else if (previous->getReductionInfo() != previousReductionInfo)
-					{
-						// Has multiple previous reductions, need to allocate new reduction info
+					else {
+						if (previousReductionInfo == nullptr) {
+							previousReductionInfo = previous->getReductionInfo();
+						}
+						else if (previous->getReductionInfo() != previousReductionInfo)
+						{
+							// Has multiple previous reductions, need to allocate new reduction info
+							allocatesReductionInfo = true;
+						}
+					}
+					
+					if (allocatesReductionInfo) {
 						hasAllocatedReductionInfo = true;
+						
+						DataAccessStatusEffects initialStatus(dataAccess);
 						allocateReductionInfo(*dataAccess, *next._task);
+						DataAccessStatusEffects updatedStatus(dataAccess);
+						
+						handleDataAccessStatusChanges(
+							initialStatus, updatedStatus,
+							dataAccess, accessStructures, next._task,
+							hpDependencyData
+						);
 					}
 				}
 				
@@ -1667,7 +1680,16 @@ namespace DataAccessRegistration {
 						// We need to allocate the reductionInfo before fragmenting the access
 						if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !hasAllocatedReductionInfo) {
 							hasAllocatedReductionInfo = true;
+							
+							DataAccessStatusEffects initialStatus(dataAccess);
 							allocateReductionInfo(*dataAccess, *next._task);
+							DataAccessStatusEffects updatedStatus(dataAccess);
+							
+							handleDataAccessStatusChanges(
+								initialStatus, updatedStatus,
+								dataAccess, accessStructures, next._task,
+								hpDependencyData
+							);
 						}
 						
 						targetAccess = fragmentAccess(targetAccess, missingRegion, accessStructures);
