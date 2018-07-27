@@ -99,17 +99,17 @@ public:
 		}
 	}
 	
-	void erase(ContentType &node)
+	void erase(ContentType &victim)
 	{
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
-		const_iterator position = BaseType::iterator_to(node);
+		const_iterator position = BaseType::iterator_to(victim);
 		BaseType::erase(position);
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
 	}
-	void erase(ContentType *node)
+	void erase(ContentType *victim)
 	{
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
-		const_iterator position = BaseType::iterator_to(*node);
+		const_iterator position = BaseType::iterator_to(*victim);
 		BaseType::erase(position);
 		assert(BaseType::node_algorithms::verify(BaseType::header_ptr()));
 	}
