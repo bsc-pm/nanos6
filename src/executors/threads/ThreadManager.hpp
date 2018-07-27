@@ -17,6 +17,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
+#include <hardware/HardwareInfo.hpp>
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 
@@ -57,6 +58,9 @@ public:
 	//!
 	//! \returns a WorkerThread or nullptr
 	static inline WorkerThread *getIdleThread(CPU *cpu, bool doNotCreate=false);
+	
+	//! \brief get any remaining idle thread
+	static inline WorkerThread *getAnyIdleThread();
 	
 	//! \brief add a thread to the list of idle threads
 	//!
@@ -115,6 +119,28 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 	assert(!_mustExit);
 	
 	return new WorkerThread(cpu);
+}
+
+
+inline WorkerThread *ThreadManager::getAnyIdleThread()
+{
+	size_t numNumaNodes = HardwareInfo::getMemoryNodeCount();
+	for (size_t i = 0; i < numNumaNodes; i++) {
+		IdleThreads &idleThreads = _idleThreads[i];
+		
+		std::lock_guard<SpinLock> guard(idleThreads._lock);
+		if (!idleThreads._threads.empty()) {
+			WorkerThread *idleThread = idleThreads._threads.front();
+			idleThreads._threads.pop_front();
+			
+			assert(idleThread != nullptr);
+			assert(idleThread->getTask() == nullptr);
+			
+			return idleThread;
+		}
+	}
+	
+	return nullptr;
 }
 
 

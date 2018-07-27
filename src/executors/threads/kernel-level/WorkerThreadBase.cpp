@@ -29,7 +29,7 @@ void WorkerThreadBase::shutdownSequence()
 		bool done = false;
 		while (!done) {
 			// Find next to wake up
-			WorkerThread *next = ThreadManager::getIdleThread(cpu, true);
+			WorkerThread *next = ThreadManager::getAnyIdleThread();
 			
 			if (next != nullptr) {
 				assert(next->getTask() == nullptr);
