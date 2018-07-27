@@ -16,6 +16,9 @@
 #include <memkind.h>
 #endif
 
+#include <linux/mempolicy.h>
+#include <numaif.h>
+
 #include "lowlevel/SpinLock.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 
@@ -44,6 +47,7 @@ private:
 		int rc = posix_memalign(&_curMemoryChunk, _pageSize, _globalAllocSize);
 		FatalErrorHandler::handle(rc, " when trying to allocate a memory chunk for the global allocator");
 #endif
+		rc = mbind(_curMemoryChunk, _globalAllocSize, MPOL_LOCAL, nullptr, 0, 0);
 		_oldMemoryChunks.push_back(_curMemoryChunk);
 	}
 
