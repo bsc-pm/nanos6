@@ -30,11 +30,27 @@ namespace Instrument {
 		ce.nEvents = 1;
 		ce.nCommunications = 0;
 		
+		if (_detailLevel > 0) {
+			ce.nCommunications++;
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
+		if (ce.nCommunications > 0) {
+			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+		}
+		
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_THREAD_CREATION;
+		
+		if (_detailLevel > 0) {
+			ce.Communications[0].type = EXTRAE_USER_SEND;
+			ce.Communications[0].tag = (extrae_comm_tag_t) thread_creation_tag;
+			ce.Communications[0].size = 0;
+			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
+			ce.Communications[0].id = threadId;
+		}
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
@@ -102,11 +118,27 @@ namespace Instrument {
 		ce.nEvents = 1;
 		ce.nCommunications = 0;
 		
+		if (_detailLevel > 0) {
+			ce.nCommunications++;
+		}
+		
 		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 		
+		if (ce.nCommunications > 0) {
+			ce.Communications = (extrae_user_communication_t *) alloca(sizeof(extrae_user_communication_t) * ce.nCommunications);
+		}
+		
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
-		ce.Values[0] = (extrae_value_t) NANOS_IDLE;
+		ce.Values[0] = (extrae_value_t) NANOS_STARTUP;
+		
+		if (_detailLevel > 0) {
+			ce.Communications[0].type = EXTRAE_USER_RECV;
+			ce.Communications[0].tag = (extrae_comm_tag_t) thread_creation_tag;
+			ce.Communications[0].size = 0;
+			ce.Communications[0].partner = EXTRAE_COMM_PARTNER_MYSELF;
+			ce.Communications[0].id = threadId;
+		}
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();

@@ -119,7 +119,8 @@ namespace Instrument {
 		instantiation_dependency_tag = 0xffffff00,
 		strong_data_dependency_tag,
 		weak_data_dependency_tag,
-		control_dependency_tag
+		control_dependency_tag,
+		thread_creation_tag
 	};
 	
 	
