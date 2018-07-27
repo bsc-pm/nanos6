@@ -24,7 +24,12 @@ private:
 	static compute_nodes_t _computeNodes;
 	// \brief L1 cache line size
 	static size_t _cacheLineSize;
-
+	
+	// \brief PAGE_SIZE of the system
+	static size_t _pageSize;
+	// \brief total amount of physical memory of the system
+	static size_t _physicalMemorySize;
+	
 public:
 	// Generic methods
 	static void initialize();
@@ -67,6 +72,16 @@ public:
 	static inline size_t getCacheLineSize(void)
 	{
 		return _cacheLineSize;
+	}
+	
+	static inline size_t getPageSize(void)
+	{
+		return _pageSize;
+	}
+	
+	static inline size_t getPhysicalMemorySize(void)
+	{
+		return _physicalMemorySize;
 	}
 };
 

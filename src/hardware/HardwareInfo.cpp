@@ -8,6 +8,7 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include <hwloc.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "hardware/places/NUMAPlace.hpp"
 #include "executors/threads/CPU.hpp"
@@ -24,6 +25,8 @@
 std::vector<MemoryPlace*> HardwareInfo::_memoryNodes;
 std::vector<ComputePlace*> HardwareInfo::_computeNodes;
 size_t HardwareInfo::_cacheLineSize;
+size_t HardwareInfo::_pageSize;
+size_t HardwareInfo::_physicalMemorySize;
 
 void HardwareInfo::initialize()
 {
@@ -129,6 +132,12 @@ void HardwareInfo::initialize()
 		// In some machines (such as HCA-Merlin), hwloc cannot obtain cache information
 		_cacheLineSize = DEFAULT_CACHE_LINE_SIZE;
 	}
+	
+	//! Attributes of system's memory
+	_pageSize = sysconf(_SC_PAGESIZE);
+	//! This is not so portable, but it works for more Unix-like stuff
+	size_t nrPhysicalPages = sysconf(_SC_PHYS_PAGES);
+	_physicalMemorySize = nrPhysicalPages * _pageSize;
 	
 	//! Associate CPUs with NUMA nodes
 	for(memory_nodes_t::iterator numaNode = _memoryNodes.begin(); numaNode != _memoryNodes.end(); ++numaNode) {
