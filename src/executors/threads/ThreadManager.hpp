@@ -29,19 +29,23 @@ class ThreadManagerDebuggingInterface;
 
 class ThreadManager {
 private:
+	struct IdleThreads {
+		SpinLock _lock;
+		std::deque<WorkerThread *> _threads;
+	};
+	
 	//! \brief indicates if the runtime is shutting down
 	static std::atomic<bool> _mustExit;
 	
-	static SpinLock _idleThreadsLock;
-	
-	//! \brief threads blocked due to idleness
-	static std::deque<WorkerThread *> _idleThreads;
+	//! \brief threads blocked due to idleness by NUMA node
+	static IdleThreads *_idleThreads;
 	
 	//! \brief number of threads in the system
 	static std::atomic<long> _totalThreads;
 	
 	
 public:
+	static void initialize();
 	static void shutdown();
 	
 	
@@ -83,10 +87,12 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 	
 	// Try to recycle an idle thread
 	{
-		std::lock_guard<SpinLock> guard(_idleThreadsLock);
-		if (!_idleThreads.empty()) {
-			WorkerThread *idleThread = _idleThreads.front();
-			_idleThreads.pop_front();
+		IdleThreads &idleThreads = _idleThreads[cpu->_NUMANodeId];
+		
+		std::lock_guard<SpinLock> guard(idleThreads._lock);
+		if (!idleThreads._threads.empty()) {
+			WorkerThread *idleThread = idleThreads._threads.front();
+			idleThreads._threads.pop_front();
 			
 			assert(idleThread != nullptr);
 			assert(idleThread->getTask() == nullptr);
@@ -118,10 +124,13 @@ inline void ThreadManager::addIdler(WorkerThread *idleThread)
 	
 	// Return the current thread to the idle list
 	{
-		std::lock_guard<SpinLock> guard(_idleThreadsLock);
+		size_t numaNode = idleThread->getOriginalNumaNode();
+		IdleThreads &idleThreads = _idleThreads[numaNode];
 		
-		assert(std::find(_idleThreads.begin(), _idleThreads.end(), idleThread) == _idleThreads.end());
-		_idleThreads.push_front(idleThread);
+		std::lock_guard<SpinLock> guard(idleThreads._lock);
+		
+		assert(std::find(idleThreads._threads.begin(), idleThreads._threads.end(), idleThread) == idleThreads._threads.end());
+		idleThreads._threads.push_front(idleThread);
 	}
 }
 
