@@ -56,8 +56,10 @@ SchedulerInterface *SchedulerGenerator::createCPUScheduler(std::string const &sc
 /*
  * When CUDA is not available, createCUDAScheduler will return nullptr
  */
-SchedulerInterface *SchedulerGenerator::createCUDAScheduler(std::string const &schedulerName, int nodeIndex)
-{
+SchedulerInterface *SchedulerGenerator::createCUDAScheduler(
+	__attribute__((unused)) std::string const &schedulerName,
+	__attribute__((unused)) int nodeIndex
+) {
 #if defined(USE_CUDA)
 	if (schedulerName == "default") {
 		return new CUDANaiveScheduler(nodeIndex);
