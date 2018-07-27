@@ -112,10 +112,9 @@ namespace DataAccessRegistration {
 				_propagatesConcurrentSatisfiabilityToFragments = access->concurrentSatisfied();
 				// Can be null, but will be allocated before the propagation
 				_propagatesReductionInfoToFragments = access->receivedReductionInfo();
-				// Propagate to fragments only when strictly necessary, the
-				// fragment will directly propagate to subaccesses otherwise
-				_propagatesReductionCpuSetToFragments = (access->getType() == REDUCTION_ACCESS_TYPE)
-					&& access->receivedReductionCpuSet();
+				// Non-reduction accesses will propagate received ReductionCpuSet to their fragments
+				// to make their status consistent with the access itself
+				_propagatesReductionCpuSetToFragments = access->receivedReductionCpuSet();
 			} else {
 				_propagatesReadSatisfiabilityToFragments = false;
 				_propagatesWriteSatisfiabilityToFragments = false;
@@ -445,9 +444,10 @@ namespace DataAccessRegistration {
 				
 				// Reduction CPU set computation
 				
+				assert(access->getType() == REDUCTION_ACCESS_TYPE);
 				assert(access->getReductionInfo() != nullptr);
 				assert(access->getReductionCpuSet().size() > 0);
-				assert((access->getType() != REDUCTION_ACCESS_TYPE) || access->isWeak() || access->getReductionCpuSet().any());
+				assert(access->isWeak() || access->getReductionCpuSet().any());
 				
 				if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
 					assert(access->getPreviousReductionCpuSet().size() > 0);
@@ -503,16 +503,27 @@ namespace DataAccessRegistration {
 			if (initialStatus._propagatesReductionCpuSetToFragments != updatedStatus._propagatesReductionCpuSetToFragments) {
 				assert(!initialStatus._propagatesReductionCpuSetToFragments);
 				
-				// Reduction CPU set computation
-				assert(access->getReductionInfo() != nullptr);
-				
-				if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
-					assert(access->getPreviousReductionCpuSet().size() > 0);
-					assert(access->getReductionCpuSet().size() == access->getPreviousReductionCpuSet().size());
-					access->getReductionCpuSet() |= access->getPreviousReductionCpuSet();
+				if (access->getType() == REDUCTION_ACCESS_TYPE)
+				{
+					// Reduction CPU set computation
+					assert(access->getReductionInfo() != nullptr);
+
+					if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
+						assert(access->getPreviousReductionCpuSet().size() > 0);
+						assert(access->getReductionCpuSet().size() == access->getPreviousReductionCpuSet().size());
+						access->getReductionCpuSet() |= access->getPreviousReductionCpuSet();
+					}
+					
+					updateOperation._reductionCpuSet = access->getReductionCpuSet();
 				}
-				
-				updateOperation._reductionCpuSet = access->getReductionCpuSet();
+				else
+				{
+					assert(access->getReductionCpuSet().size() == 0);
+					
+					// If access is not a reduction, propagate received ReductionCpuSet
+					// to fragments to make their status consistent
+					updateOperation._reductionCpuSet = access->getPreviousReductionCpuSet();
+				}
 			}
 			
 			if (!updateOperation.empty()) {
@@ -550,7 +561,8 @@ namespace DataAccessRegistration {
 			access->markAsDiscounted();
 			
 			if (access->getObjectType() == taskwait_type) {
-				// Update data access ReductionCpuSet with information collected at the taskwait
+				// Update parent data access ReductionCpuSet with information from its subaccesses
+				// collected at the taskwait
 				if (access->getType() == REDUCTION_ACCESS_TYPE) {
 					assert(access->getReductionCpuSet().size() > 0);
 					
@@ -1703,7 +1715,7 @@ namespace DataAccessRegistration {
 						targetAccess->setWriteSatisfied();
 						targetAccess->setConcurrentSatisfied();
 						targetAccess->setReceivedReductionInfo();
-						// Note: setting reductionCpuSet as received is not necessary, as its not always propagated
+						// Note: setting ReductionCpuSet as received is not necessary, as its not always propagated
 						targetAccess->setTopmost();
 						targetAccess->setTopLevel();
 						DataAccessStatusEffects updatedStatus(targetAccess);
