@@ -22,6 +22,7 @@ inline WorkerThread::WorkerThread(CPU * cpu)
 	: WorkerThreadBase(cpu), _mustShutDown(false), _task(nullptr), _dependencyDomain(),
 	_hardwareCounters(), _instrumentationData()
 {
+	_originalNumaNode = cpu->_NUMANodeId;
 	WorkerThreadBase::start();
 }
 

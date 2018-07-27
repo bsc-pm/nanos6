@@ -30,6 +30,9 @@ private:
 	//! The Task currently assigned to this thread
 	Task *_task;
 	
+	//! The NUMA node to which this thread should have affinity
+	size_t _originalNumaNode;
+	
 	//! Dependency domain of the tasks instantiated by this thread
 	DependencyDomain _dependencyDomain;
 	
@@ -58,6 +61,11 @@ public:
 	//!
 	//! \param[in] task the task that the thread will run when it is resumed
 	inline void setTask(Task *task);
+	
+	inline size_t getOriginalNumaNode() const
+	{
+		return _originalNumaNode;
+	}
 	
 	//! \brief Retrieves the dependency domain used to calculate the dependencies of the tasks instantiated by this thread
 	inline DependencyDomain const *getDependencyDomain() const;

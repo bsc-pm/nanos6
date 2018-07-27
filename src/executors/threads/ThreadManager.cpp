@@ -20,12 +20,19 @@
 #include "CPUManager.hpp"
 #include "ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include <hardware/HardwareInfo.hpp>
 
 
 std::atomic<bool> ThreadManager::_mustExit(false);
-SpinLock ThreadManager::_idleThreadsLock;
-std::deque<WorkerThread *> ThreadManager::_idleThreads;
+ThreadManager::IdleThreads *ThreadManager::_idleThreads;
 std::atomic<long> ThreadManager::_totalThreads(0);
+
+
+void ThreadManager::initialize()
+{
+	size_t numaNodeCount = HardwareInfo::getMemoryNodeCount();
+	_idleThreads = new IdleThreads[numaNodeCount];
+}
 
 
 void ThreadManager::shutdown()
