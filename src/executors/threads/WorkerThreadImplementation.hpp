@@ -14,6 +14,8 @@
 #include "WorkerThreadBase.hpp"
 #include "performance/HardwareCountersThreadLocalData.hpp"
 
+#include <InstrumentThreadManagement.hpp>
+
 #include <cassert>
 #include <typeinfo>
 
@@ -23,7 +25,9 @@ inline WorkerThread::WorkerThread(CPU * cpu)
 	_hardwareCounters(), _instrumentationData()
 {
 	_originalNumaNode = cpu->_NUMANodeId;
+	Instrument::enterThreadCreation(/* OUT */ _instrumentationId, cpu->getInstrumentationId());
 	WorkerThreadBase::start();
+	Instrument::exitThreadCreation(_instrumentationId);
 }
 
 

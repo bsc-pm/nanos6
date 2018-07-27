@@ -91,7 +91,7 @@ void Instrument::Profile::signalHandler(Sampling::ThreadLocalData &samplingThrea
 }
 
 
-thread_id_t Instrument::Profile::doCreatedThread()
+void Instrument::Profile::doCreatedThread()
 {
 	ThreadLocalData &threadLocal = getThreadLocalData();
 	threadLocal.init(_profilingBufferSize);
@@ -121,8 +121,6 @@ thread_id_t Instrument::Profile::doCreatedThread()
 	threadLocal._currentBuffer[1] = 0; // End of buffer
 	
 	Sampling::SigProf::enableThread(threadLocal);
-	
-	return thread_id_t();
 }
 
 

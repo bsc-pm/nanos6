@@ -18,14 +18,66 @@
 
 
 namespace Instrument {
-	inline void createdThread(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
+	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
+	{
+		threadId = GenericIds::getNewThreadId();
+		
+		extrae_combined_events_t ce;
+		
+		ce.HardwareCounters = 1;
+		ce.Callers = 0;
+		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
+		ce.nEvents = 1;
+		ce.nCommunications = 0;
+		
+		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
+		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+		
+		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
+		ce.Values[0] = (extrae_value_t) NANOS_THREAD_CREATION;
+		
+		if (_traceAsThreads) {
+			_extraeThreadCountLock.readLock();
+		}
+		ExtraeAPI::emit_CombinedEvents ( &ce );
+		if (_traceAsThreads) {
+			_extraeThreadCountLock.readUnlock();
+		}
+	}
+	
+	
+	inline void exitThreadCreation(__attribute__((unused)) thread_id_t threadId)
+	{
+		extrae_combined_events_t ce;
+		
+		ce.HardwareCounters = 1;
+		ce.Callers = 0;
+		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
+		ce.nEvents = 1;
+		ce.nCommunications = 0;
+		
+		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
+		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+		
+		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
+		ce.Values[0] = (extrae_value_t) NANOS_IDLE;
+		
+		if (_traceAsThreads) {
+			_extraeThreadCountLock.readLock();
+		}
+		ExtraeAPI::emit_CombinedEvents ( &ce );
+		if (_traceAsThreads) {
+			_extraeThreadCountLock.readUnlock();
+		}
+	}
+	
+	inline void createdThread(thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 		threadLocal.init();
 		
 		threadLocal._nestingLevels.push_back(0);
 		
-		threadId = GenericIds::getNewThreadId();
 		threadLocal._currentThreadId = threadId;
 		
 		if (_sampleBacktraceDepth > 0) {

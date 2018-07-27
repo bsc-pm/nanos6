@@ -15,10 +15,14 @@
 
 
 namespace Instrument {
+	
 	//! This function is called when the runtime creates a new thread and
 	//! must return an instrumentation-specific thread identifier that will
 	//! be used to identify it throughout the rest of the instrumentation API.
-	void createdThread(/* OUT */ thread_id_t &threadId, compute_place_id_t const &computePlaceId);
+	void enterThreadCreation(/* OUT */ thread_id_t &threadId, compute_place_id_t const &computePlaceId);
+	void exitThreadCreation(thread_id_t threadId);
+	
+	void createdThread(thread_id_t threadId, compute_place_id_t const &computePlaceId);
 	
 	//! This function is called when the runtime creates a new non-worker thread and
 	//! must return an instrumentation-specific thread identifier that will

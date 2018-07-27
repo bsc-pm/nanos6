@@ -145,7 +145,7 @@ namespace Instrument {
 		
 		
 		void doShutdown();
-		thread_id_t doCreatedThread();
+		void doCreatedThread();
 		void threadEnable();
 		void threadDisable();
 		void lightweightThreadEnable();
@@ -172,9 +172,9 @@ namespace Instrument {
 			_singleton.doShutdown();
 		}
 		
-		static inline thread_id_t createdThread()
+		static inline void createdThread()
 		{
-			return _singleton.doCreatedThread();
+			_singleton.doCreatedThread();
 		}
 		
 		static inline void enableForCurrentThread()

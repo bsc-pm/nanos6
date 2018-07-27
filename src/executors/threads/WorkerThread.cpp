@@ -33,7 +33,7 @@
 
 void WorkerThread::initialize()
 {
-	Instrument::createdThread(/* OUT */ _instrumentationId, getComputePlace()->getInstrumentationId());
+	Instrument::createdThread(_instrumentationId, getComputePlace()->getInstrumentationId());
 	
 	assert(getComputePlace() != nullptr);
 	

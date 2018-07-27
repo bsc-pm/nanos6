@@ -18,9 +18,17 @@
 
 
 namespace Instrument {
-	inline void createdThread(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
+	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
 		threadId = GenericIds::getNewThreadId();
+	}
+	
+	inline void exitThreadCreation(__attribute__((unused)) thread_id_t threadId)
+	{
+	}
+	
+	inline void createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
+	{
 	}
 	
 	inline void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)

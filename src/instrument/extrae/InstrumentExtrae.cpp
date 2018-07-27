@@ -26,7 +26,7 @@ namespace Instrument {
 	
 	char const               *_eventStateValueStr[NANOS_EVENT_STATE_TYPES] = {
 		"NOT CREATED", "NOT RUNNING", "STARTUP", "SHUTDOWN", "ERROR", "IDLE",
-		"RUNTIME", "RUNNING", "SYNCHRONIZATION", "SCHEDULING", "CREATION" };
+		"RUNTIME", "RUNNING", "SYNCHRONIZATION", "SCHEDULING", "CREATION", "THREAD CREATION" };
 	
 	SpinLock _userFunctionMapLock;
 	user_fct_map_t            _userFunctionMap;

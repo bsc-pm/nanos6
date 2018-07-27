@@ -20,9 +20,45 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void createdThread(/* OUT */ thread_id_t &threadId, compute_place_id_t const &computePlaceId) {
+	void enterThreadCreation(/* OUT */ thread_id_t &threadId, compute_place_id_t const &computePlaceId) {
 		threadId = GenericIds::getNewThreadId();
 		
+		if (!_verboseThreadManagement) {
+			return;
+		}
+		
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " --> CreateThread " << threadId;
+		
+		addLogEntry(logEntry);
+	}
+	
+	
+	void exitThreadCreation(thread_id_t threadId) {
+		threadId = GenericIds::getNewThreadId();
+		
+		if (!_verboseThreadManagement) {
+			return;
+		}
+		
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-- CreateThread " << threadId;
+		
+		addLogEntry(logEntry);
+	}
+	
+	
+	void createdThread(thread_id_t threadId, compute_place_id_t const &computePlaceId) {
 		if (!_verboseThreadManagement) {
 			return;
 		}
@@ -35,12 +71,11 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(tmpContext);
-		logEntry->_contents << " <-> CreateThread " << threadId;
+		logEntry->_contents << " <-> StartThread " << threadId;
 		
 		addLogEntry(logEntry);
 	}
-	
-	
+
 	void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId) {
 		threadId = GenericIds::getNewExternalThreadId();
 	}
