@@ -336,6 +336,7 @@ common_sources = \
 	src/scheduling/schedulers/NaiveScheduler.cpp \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
+	src/scheduling/schedulers/PriorityScheduler1.cpp \
 	src/scheduling/schedulers/TreeScheduler.cpp \
 	src/scheduling/schedulers/tree-scheduler/TreeSchedulerQueueInterface.cpp \
 	src/scheduling/schedulers/tree-scheduler/queue/FIFOQueue.cpp \
@@ -914,6 +915,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/NaiveScheduler.hpp \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
+	src/scheduling/schedulers/PriorityScheduler1.hpp \
 	src/scheduling/schedulers/TreeScheduler.hpp \
 	src/scheduling/schedulers/cuda/CUDANaiveScheduler.hpp \
 	src/scheduling/schedulers/tree-scheduler/LeafScheduler.hpp \

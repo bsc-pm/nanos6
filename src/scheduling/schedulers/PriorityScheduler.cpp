@@ -20,15 +20,6 @@
 #include <mutex>
 
 
-inline bool PriorityScheduler::TaskPriorityCompare::operator()(Task *a, Task *b)
-{
-	assert(a != nullptr);
-	assert(b != nullptr);
-	
-	return (a->getPriority() < b->getPriority());
-}
-
-
 PriorityScheduler::PriorityScheduler(__attribute__((unused)) int numaNodeIndex)
 	: _pollingSlot(nullptr)
 {
@@ -80,7 +71,7 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 		}
 	}
 	
-	std::lock_guard<spinlock_t> guard(_globalLock);
+	_globalLock.lock();
 	
 	// 3. Attempt to send the task to polling thread with locking, since the polling slot
 	// can only be set when locked (but unset at any time).
@@ -96,18 +87,24 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 			pollingSlot->_task.compare_exchange_strong(expect, task);
 			assert(expect == nullptr);
 			
+			_globalLock.unlock();
 			return nullptr;
 		}
 	}
 	
 	// 4. At this point the polling slot is empty, so send the task to the queue
 	assert(_pollingSlot.load() == nullptr);
-	if (hint == UNBLOCKED_TASK_HINT) {
-		_unblockedTasks.push(task);
-	} else {
-		_readyTasks.push(task);
-	}
+	PriorityClass &priorityClass = _tasks[-priority];
 	
+	priorityClass._lock.lock();
+	_globalLock.unlock();
+	
+	if (hint == UNBLOCKED_TASK_HINT) {
+		priorityClass._queue.push_front(task);
+	} else {
+		priorityClass._queue.push_back(task);
+	}
+	priorityClass._lock.unlock();
 	
 	// Attempt to get a CPU to resume the task
 	if (doGetIdle) {
@@ -124,98 +121,105 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 		return nullptr;
 	}
 	
-	std::lock_guard<spinlock_t> guard(_globalLock);
-	
 	Task::priority_t bestPriority = 0;
 	enum {
 		non_existant = 0,
 		from_immediate_successor_slot,
-		from_unblocked_task_queue,
-		from_ready_task_queue
+		from_task_queue
 	} bestIs = non_existant;
 	
+	Task *immediateSuccessor = nullptr;
+	Task *queuedTask = nullptr;
+	
 	// 1. Check the immediate successor
-	bool haveImmediateSuccessor = (computePlace->_schedulerData != nullptr);
-	if (haveImmediateSuccessor) {
-		Task *task = (Task *) computePlace->_schedulerData;
-		bestPriority = task->getPriority();
+	immediateSuccessor = (Task *) computePlace->_schedulerData;
+	if (immediateSuccessor != nullptr) {
+		bestPriority = immediateSuccessor->getPriority();
 		bestIs = from_immediate_successor_slot;
 	}
 	
+	_globalLock.lock();
 	
-	// 2. Check the unblocked tasks
-	if (!_unblockedTasks.empty()) {
-		Task *task = _unblockedTasks.top();
-		assert(task != nullptr);
+	// 2. Check the highest priority class
+	std::map</* Task::priority_t */ long, PriorityClass>::iterator it;
+	PriorityClass *priorityClass = nullptr;
+	if (!_tasks.empty()) {
+		it = _tasks.begin();
+		assert(it != _tasks.end());
 		
-		Task::priority_t topPriority = task->getPriority();
+		priorityClass = &it->second;
+		priorityClass->_lock.lock();
+		
+		assert(!priorityClass->_queue.empty());
+		queuedTask = priorityClass->_queue.front();
+		assert(queuedTask != nullptr);
+		
+		Task::priority_t topPriority = queuedTask->getPriority();
 		
 		if ((bestIs == non_existant) || (bestPriority < topPriority)) {
-			bestIs = from_unblocked_task_queue;
+			bestIs = from_task_queue;
 			bestPriority = topPriority;
+		} else {
+			priorityClass->_lock.unlock();
+			priorityClass = nullptr;
 		}
 	}
 	
-	// 3. Check the ready tasks
-	if (!_readyTasks.empty()) {
-		Task *topTask = _readyTasks.top();
-		assert(topTask != nullptr);
-		
-		Task::priority_t topPriority = topTask->getPriority();
-		
-		if ((bestIs == non_existant) || (bestPriority < topPriority)) {
-			bestIs = from_ready_task_queue;
-			bestPriority = topPriority;
-		}
-	}
-	
-	// 4. Queue the immediate successor if necessary and return the choosen task
+	// 3. Queue the immediate successor if necessary and return the chosen task
 	if (bestIs != non_existant) {
-		// The immediate successor was choosen
+		// The immediate successor was chosen
 		if (bestIs == from_immediate_successor_slot) {
-			Task *task = (Task *) computePlace->_schedulerData;
+			_globalLock.unlock();
 			computePlace->_schedulerData = nullptr;
 			
-			return task;
+			return immediateSuccessor;
 		}
 		
-		// After this point the immediate successor was not choosen
+		// After this point the immediate successor was not chosen
+		assert(bestIs == from_task_queue);
+		assert(queuedTask != nullptr);
+		priorityClass->_queue.pop_front();
+		if (priorityClass->_queue.empty()) {
+			priorityClass->_lock.unlock();
+			priorityClass = nullptr;
+			_tasks.erase(it);
+		}
 		
 		// Queue the immediate successor
-		if (haveImmediateSuccessor) {
+		if (immediateSuccessor != nullptr) {
 			assert(bestIs != from_immediate_successor_slot);
 			
-			Task *task = (Task *) computePlace->_schedulerData;
+			// Clear the immediate successor
 			computePlace->_schedulerData = nullptr;
 			
-			_readyTasks.push(task);
-		}
-		
-		if (bestIs == from_ready_task_queue) {
-			Task *task = _readyTasks.top();
-			_readyTasks.pop();
-			assert(task != nullptr);
+			Task::priority_t immediateSuccessorPriority = immediateSuccessor->getPriority();
+			PriorityClass *immediateSuccessorPriorityClass = &_tasks[-immediateSuccessorPriority];
 			
-			return task;
+			if (immediateSuccessorPriorityClass == priorityClass) {
+				priorityClass->_queue.push_back(immediateSuccessor);
+				priorityClass->_lock.unlock();
+			} else {
+				if (priorityClass != nullptr) {
+					priorityClass->_lock.unlock();
+				}
+				immediateSuccessorPriorityClass->_lock.lock();
+				immediateSuccessorPriorityClass->_queue.push_back(immediateSuccessor);
+				immediateSuccessorPriorityClass->_lock.unlock();
+			}
+		} else if (priorityClass != nullptr) {
+			priorityClass->_lock.unlock();
 		}
 		
-		if (bestIs == from_unblocked_task_queue) {
-			Task *task = _unblockedTasks.top();
-			_unblockedTasks.pop();
-			assert(task != nullptr);
-			
-			return task;
-		}
-		
-		assert("Internal logic error" == nullptr);
+		_globalLock.unlock();
+		return queuedTask;
 	}
-	
 	assert(bestIs == non_existant);
 	
 	// 4. Or mark the CPU as idle
 	if (canMarkAsIdle) {
 		CPUManager::cpuBecomesIdle((CPU *) computePlace);
 	}
+	_globalLock.unlock();
 	
 	return nullptr;
 }
@@ -224,7 +228,7 @@ Task *PriorityScheduler::getReadyTask(ComputePlace *computePlace, __attribute__(
 ComputePlace *PriorityScheduler::getIdleComputePlace(bool force)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
-	if (force || !_readyTasks.empty() || !_unblockedTasks.empty()) {
+	if (force || !_tasks.empty()) {
 		return CPUManager::getIdleCPU();
 	} else {
 		return nullptr;
@@ -238,110 +242,123 @@ void PriorityScheduler::disableComputePlace(ComputePlace *computePlace)
 		Task *task = (Task *) computePlace->_schedulerData;
 		computePlace->_schedulerData = nullptr;
 		
-		std::lock_guard<spinlock_t> guard(_globalLock);
-		_readyTasks.push(task);
+		Task::priority_t priority = task->getPriority();
+		
+		_globalLock.lock();
+		PriorityClass &priorityClass = _tasks[-priority];
+		
+		priorityClass._lock.lock();
+		_globalLock.unlock();
+		
+		priorityClass._queue.push_back(task);
+		priorityClass._lock.unlock();
 	}
 }
 
 
 bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
 {
-	std::lock_guard<spinlock_t> guard(_globalLock);
-	
 	Task::priority_t bestPriority = 0;
 	enum {
 		non_existant = 0,
 		from_immediate_successor_slot,
-		from_unblocked_task_queue,
-		from_ready_task_queue
+		from_task_queue
 	} bestIs = non_existant;
 	
+	Task *immediateSuccessor = nullptr;
+	Task *queuedTask = nullptr;
+	
 	// 1. Check the immediate successor
-	bool haveImmediateSuccessor = (computePlace->_schedulerData != nullptr);
-	if (haveImmediateSuccessor) {
-		Task *task = (Task *) computePlace->_schedulerData;
-		bestPriority = task->getPriority();
+	immediateSuccessor = (Task *) computePlace->_schedulerData;
+	if (immediateSuccessor != nullptr) {
+		bestPriority = immediateSuccessor->getPriority();
 		bestIs = from_immediate_successor_slot;
 	}
 	
+	_globalLock.lock();
 	
-	// 2. Check the unblocked tasks
-	if (!_unblockedTasks.empty()) {
-		Task *task = _unblockedTasks.top();
-		assert(task != nullptr);
+	// 2. Check the highest priority class
+	std::map</* Task::priority_t */ long, PriorityClass>::iterator it;
+	PriorityClass *priorityClass = nullptr;
+	if (!_tasks.empty()) {
+		it = _tasks.begin();
+		assert(it != _tasks.end());
 		
-		Task::priority_t topPriority = task->getPriority();
+		priorityClass = &it->second;
+		priorityClass->_lock.lock();
+		
+		assert(!priorityClass->_queue.empty());
+		queuedTask = priorityClass->_queue.front();
+		assert(queuedTask != nullptr);
+		
+		Task::priority_t topPriority = queuedTask->getPriority();
 		
 		if ((bestIs == non_existant) || (bestPriority < topPriority)) {
-			bestIs = from_unblocked_task_queue;
+			bestIs = from_task_queue;
 			bestPriority = topPriority;
+		} else {
+			priorityClass->_lock.unlock();
+			priorityClass = nullptr;
 		}
 	}
 	
-	// 3. Check the ready tasks
-	if (!_readyTasks.empty()) {
-		Task *topTask = _readyTasks.top();
-		assert(topTask != nullptr);
-		
-		Task::priority_t topPriority = topTask->getPriority();
-		
-		if ((bestIs == non_existant) || (bestPriority < topPriority)) {
-			bestIs = from_ready_task_queue;
-			bestPriority = topPriority;
-		}
-	}
-	
-	// 4. Queue the immediate successor if necessary and return the choosen task
+	// 3. Queue the immediate successor if necessary and return the chosen task
 	if (bestIs != non_existant) {
-		// The immediate successor was choosen
+		// The immediate successor was chosen
 		if (bestIs == from_immediate_successor_slot) {
-			Task *task = (Task *) computePlace->_schedulerData;
+			_globalLock.unlock();
+			
 			computePlace->_schedulerData = nullptr;
 			
 			// Same thread, so there is no need to operate atomically
 			assert(pollingSlot->_task.load() == nullptr);
-			pollingSlot->_task.store(task);
+			pollingSlot->_task.store(immediateSuccessor);
 			
 			return true;
 		}
 		
-		// After this point the immediate successor was not choosen
+		// After this point the immediate successor was not chosen
+		assert(bestIs == from_task_queue);
+		assert(queuedTask != nullptr);
+		priorityClass->_queue.pop_front();
+		if (priorityClass->_queue.empty()) {
+			priorityClass->_lock.unlock();
+			priorityClass = nullptr;
+			_tasks.erase(it);
+		}
 		
 		// Queue the immediate successor
-		if (haveImmediateSuccessor) {
+		if (immediateSuccessor != nullptr) {
 			assert(bestIs != from_immediate_successor_slot);
 			
-			Task *task = (Task *) computePlace->_schedulerData;
+			// Clear the immediate successor
 			computePlace->_schedulerData = nullptr;
 			
-			_readyTasks.push(task);
+			Task::priority_t immediateSuccessorPriority = immediateSuccessor->getPriority();
+			PriorityClass *immediateSuccessorPriorityClass = &_tasks[-immediateSuccessorPriority];
+			
+			if (immediateSuccessorPriorityClass == priorityClass) {
+				priorityClass->_queue.push_back(immediateSuccessor);
+				priorityClass->_lock.unlock();
+			} else {
+				if (priorityClass != nullptr) {
+					priorityClass->_lock.unlock();
+				}
+				immediateSuccessorPriorityClass->_lock.lock();
+				immediateSuccessorPriorityClass->_queue.push_back(immediateSuccessor);
+				immediateSuccessorPriorityClass->_lock.unlock();
+			}
+		} else if (priorityClass != nullptr) {
+			priorityClass->_lock.unlock();
 		}
 		
-		if (bestIs == from_ready_task_queue) {
-			Task *task = _readyTasks.top();
-			_readyTasks.pop();
-			assert(task != nullptr);
-			
-			// Same thread, so there is no need to operate atomically
-			assert(pollingSlot->_task.load() == nullptr);
-			pollingSlot->_task.store(task);
-			
-			return true;
-		}
+		_globalLock.unlock();
 		
-		if (bestIs == from_unblocked_task_queue) {
-			Task *task = _unblockedTasks.top();
-			_unblockedTasks.pop();
-			assert(task != nullptr);
-			
-			// Same thread, so there is no need to operate atomically
-			assert(pollingSlot->_task.load() == nullptr);
-			pollingSlot->_task.store(task);
-			
-			return true;
-		}
+		// Same thread, so there is no need to operate atomically
+		assert(pollingSlot->_task.load() == nullptr);
+		pollingSlot->_task.store(queuedTask);
 		
-		assert("Internal logic error" == nullptr);
+		return true;
 	}
 	
 	assert(bestIs == non_existant);
@@ -351,10 +368,12 @@ bool PriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_
 	if (_pollingSlot.compare_exchange_strong(expect, pollingSlot)) {
 		
 		// 4.a. Successful
+		_globalLock.unlock();
 		return true;
 	} else {
 		// 5.b. There is already another thread polling. Therefore, mark the CPU as idle
 		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		_globalLock.unlock();
 		
 		return false;
 	}

@@ -4,14 +4,13 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef PRIORITY_SCHEDULER_HPP
-#define PRIORITY_SCHEDULER_HPP
+#ifndef PRIORITY_SCHEDULER_1_HPP
+#define PRIORITY_SCHEDULER_1_HPP
 
 
 #include <atomic>
 #include <deque>
 #include <queue>
-#include <map>
 #include <vector>
 
 #include "../SchedulerInterface.hpp"
@@ -23,23 +22,30 @@
 class Task;
 
 
-class PriorityScheduler: public SchedulerInterface {
+class PriorityScheduler1: public SchedulerInterface {
 	typedef PaddedTicketSpinLock<> spinlock_t;
 	
-	struct PriorityClass {
-		spinlock_t _lock;
-		std::deque<Task *> _queue;
+	
+	
+	
+	struct TaskPriorityCompare {
+		inline bool operator()(Task *a, Task *b);
 	};
 	
+	typedef std::priority_queue<Task *, std::vector<Task *>, TaskPriorityCompare> task_queue_t;
+	
+	
 	spinlock_t _globalLock;
-	std::map</* Task::priority_t */ long, PriorityClass> _tasks;
+	
+	task_queue_t _readyTasks;
+	task_queue_t _unblockedTasks;
 	
 	std::atomic<polling_slot_t *> _pollingSlot;
 	
 	
 public:
-	PriorityScheduler(int numaNodeIndex);
-	~PriorityScheduler();
+	PriorityScheduler1(int numaNodeIndex);
+	~PriorityScheduler1();
 	
 	ComputePlace *addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint, bool doGetIdle = true);
 	
@@ -56,5 +62,5 @@ public:
 };
 
 
-#endif // PRIORITY_SCHEDULER_HPP
+#endif // PRIORITY_SCHEDULER_1_HPP
 
