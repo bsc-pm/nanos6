@@ -68,7 +68,7 @@ private:
 		assert(_parent == nullptr);
 		
 		size_t expected = _queueThreshold;
-		while(!_queueThreshold.compare_exchange_strong(expected, expected * 2)) {}
+		while(!_queueThreshold.compare_exchange_strong(expected, expected == 0 ? 1 : expected * 2)) {}
 		
 		updateQueueThreshold();
 	}
