@@ -1433,6 +1433,7 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/advanced/thread.cfg \
 	paraver-cfg/nanos6/advanced/thread_creation.cfg \
 	paraver-cfg/nanos6/advanced/thread_creation_and_runtime_state.cfg \
+	paraver-cfg/nanos6/advanced/thread_creation_latency.cfg \
 	paraver-cfg/nanos6/graph_and_scheduling/creating_submitting_task.cfg \
 	paraver-cfg/nanos6/graph_and_scheduling/nb_ready_tasks.cfg \
 	paraver-cfg/nanos6/graph_and_scheduling/nb_tasks_in_graph.cfg \
