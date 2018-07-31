@@ -52,6 +52,7 @@ private:
 		WRITE_SATISFIED_BIT,
 		CONCURRENT_SATISFIED_BIT,
 		RECEIVED_REDUCTION_INFO_BIT,
+		ALLOCATED_REDUCTION_INFO_BIT,
 		RECEIVED_CPU_SET_BIT,
 		
 		READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
@@ -287,6 +288,17 @@ public:
 	bool receivedReductionInfo() const
 	{
 		return _status[RECEIVED_REDUCTION_INFO_BIT];
+	}
+	
+	void setAllocatedReductionInfo()
+	{
+		assert(!allocatedReductionInfo());
+		_status[ALLOCATED_REDUCTION_INFO_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "RIAlloc", "ReductionInfo Allocated");
+	}
+	bool allocatedReductionInfo() const
+	{
+		return _status[ALLOCATED_REDUCTION_INFO_BIT];
 	}
 	
 	void setReceivedReductionCpuSet()

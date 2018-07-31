@@ -101,7 +101,7 @@ namespace DataAccessRegistration {
 				!access->isWeak() &&
 				!access->satisfied() &&
 				// Reduction accesses can begin as soon as they have a ReductionInfo (even without CpuSet)
-				!((access->getType() == REDUCTION_ACCESS_TYPE) && (access->getReductionInfo() != nullptr)) &&
+				!((access->getType() == REDUCTION_ACCESS_TYPE) && (access->receivedReductionInfo() || access->allocatedReductionInfo())) &&
 				(access->getObjectType() == access_type);
 			_hasNext = access->hasNext();
 			
@@ -444,7 +444,7 @@ namespace DataAccessRegistration {
 			
 			if (initialStatus._propagatesReductionInfoToNext != updatedStatus._propagatesReductionInfoToNext) {
 				assert(!initialStatus._propagatesReductionInfoToNext);
-				assert((access->getType() != REDUCTION_ACCESS_TYPE) || access->getReductionInfo() != nullptr);
+				assert((access->getType() != REDUCTION_ACCESS_TYPE) || (access->receivedReductionInfo() || access->allocatedReductionInfo()));
 				updateOperation._setReductionInfo = true;
 				updateOperation._reductionInfo = access->getReductionInfo();
 			}
@@ -455,7 +455,7 @@ namespace DataAccessRegistration {
 				// Reduction CPU set computation
 				
 				assert(access->getType() == REDUCTION_ACCESS_TYPE);
-				assert(access->getReductionInfo() != nullptr);
+				assert(access->receivedReductionInfo() || access->allocatedReductionInfo());
 				assert(access->getReductionCpuSet().size() > 0);
 				assert(access->isWeak() || access->getReductionCpuSet().any());
 				
@@ -505,7 +505,7 @@ namespace DataAccessRegistration {
 			
 			if (initialStatus._propagatesReductionInfoToFragments != updatedStatus._propagatesReductionInfoToFragments) {
 				assert(!initialStatus._propagatesReductionInfoToFragments);
-				assert(!(access->getType() == REDUCTION_ACCESS_TYPE) || access->getReductionInfo() != nullptr);
+				assert(!(access->getType() == REDUCTION_ACCESS_TYPE) || (access->receivedReductionInfo() || access->allocatedReductionInfo()));
 				updateOperation._setReductionInfo = true;
 				updateOperation._reductionInfo = access->getReductionInfo();
 			}
@@ -516,7 +516,7 @@ namespace DataAccessRegistration {
 				if (access->getType() == REDUCTION_ACCESS_TYPE)
 				{
 					// Reduction CPU set computation
-					assert(access->getReductionInfo() != nullptr);
+					assert(access->receivedReductionInfo() || access->allocatedReductionInfo());
 
 					if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
 						assert(access->getPreviousReductionCpuSet().size() > 0);
@@ -592,7 +592,8 @@ namespace DataAccessRegistration {
 							assert(dataAccess->getType() == REDUCTION_ACCESS_TYPE);
 							assert(dataAccess->isWeak());
 							
-							assert(dataAccess->getReductionInfo() != nullptr);
+							assert(dataAccess->receivedReductionInfo() || dataAccess->allocatedReductionInfo());
+							assert(access->receivedReductionInfo());
 							assert(dataAccess->getReductionInfo() == access->getReductionInfo());
 							assert(dataAccess->getReductionCpuSet().size() == access->getReductionCpuSet().size());
 							
@@ -1018,6 +1019,7 @@ namespace DataAccessRegistration {
 			// ReductionInfo can be already assigned for partially overlapping reductions
 			if (access->getReductionInfo() != nullptr) {
 				assert(access->getType() == REDUCTION_ACCESS_TYPE);
+				assert(access->allocatedReductionInfo());
 			}
 			else if ((access->getType() == REDUCTION_ACCESS_TYPE)
 					&& (updateOperation._reductionInfo != nullptr)
@@ -1593,6 +1595,7 @@ namespace DataAccessRegistration {
 		// Note: ReceivedReductionInfo flag is not set, as the access will still receive
 		// an (invalid) reduction info from the propagation system
 		dataAccess.setReductionInfo(newReductionInfo);
+		dataAccess.setAllocatedReductionInfo();
 		
 		Instrument::allocatedReductionInfo(
 			dataAccess.getInstrumentationId(),
