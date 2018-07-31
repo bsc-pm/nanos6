@@ -59,11 +59,13 @@ linear_region_tests += \
 
 reductions_tests += \
 	red-firstprivate.test \
-	red-nonest.test \
 	red-nest.test \
 	red-nest-other.test \
 	red-nqueens.test \
 	red-stress.test
+
+# The following test is temporarily disabled
+#	red-nonest.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -104,11 +106,13 @@ linear_region_tests += \
 
 reductions_tests += \
 	red-firstprivate.debug.test \
-	red-nonest.debug.test \
 	red-nest.debug.test \
 	red-nest-other.debug.test \
 	red-nqueens.debug.test \
 	red-stress.debug.test
+
+# The following test is temporarily disabled
+#	red-nonest.debug.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -311,14 +315,14 @@ red_firstprivate_test_CPPFLAGS = -DNDEBUG
 red_firstprivate_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_firstprivate_test_LDFLAGS = $(test_common_ldflags)
 
-red_nonest_debug_test_SOURCES = reductions/red-nonest.cpp
-red_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-red_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+#red_nonest_debug_test_SOURCES = reductions/red-nonest.cpp
+#red_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+#red_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-red_nonest_test_SOURCES = reductions/red-nonest.cpp
-red_nonest_test_CPPFLAGS = -DNDEBUG
-red_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-red_nonest_test_LDFLAGS = $(test_common_ldflags)
+#red_nonest_test_SOURCES = reductions/red-nonest.cpp
+#red_nonest_test_CPPFLAGS = -DNDEBUG
+#red_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+#red_nonest_test_LDFLAGS = $(test_common_ldflags)
 
 red_nest_debug_test_SOURCES = reductions/red-nest.cpp
 red_nest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
