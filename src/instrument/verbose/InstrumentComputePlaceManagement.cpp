@@ -13,7 +13,7 @@
 
 
 namespace Instrument {
-	compute_place_id_t createdCPU(unsigned int virtualCPUId)
+	compute_place_id_t createdCPU(unsigned int virtualCPUId, size_t NUMANode)
 	{
 		compute_place_id_t computePlace(virtualCPUId, Verbose::_concurrentUnorderedListSlotManager.getSlot());
 		
@@ -27,7 +27,7 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " Created Compute Place " << computePlace;
+		logEntry->_contents << " Created Compute Place " << computePlace << " in NUMA node " << NUMANode;
 		
 		addLogEntry(logEntry);
 		

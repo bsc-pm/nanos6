@@ -82,7 +82,7 @@ struct CPU: public CPUPlace {
 		
 		if (worked) {
 			_threadingModelData.initialize(this);
-			_instrumentationId = Instrument::createdCPU(_virtualCPUId);
+			_instrumentationId = Instrument::createdCPU(_virtualCPUId, _NUMANodeId);
 		} else {
 			assert(_activationStatus != starting_status);
 		}

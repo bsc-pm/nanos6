@@ -10,12 +10,14 @@
 
 #include <InstrumentComputePlaceId.hpp>
 
+#include <cstddef>
+
 
 namespace Instrument {
 	//! This function is called when the runtime creates a new CPU and
 	//! must return an instrumentation-specific computePlace identifier that will
 	//! be used to identify it throughout the rest of the instrumentation API.
-	inline compute_place_id_t createdCPU(unsigned int virtualCPUId)
+	inline compute_place_id_t createdCPU(unsigned int virtualCPUId, __attribute__((unused)) size_t NUMANode)
 	{
 		return compute_place_id_t(virtualCPUId);
 	}

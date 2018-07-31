@@ -16,7 +16,7 @@
 
 
 namespace Instrument {
-	inline compute_place_id_t createdCPU(unsigned int virtualCPUId)
+	inline compute_place_id_t createdCPU(unsigned int virtualCPUId, size_t NUMANode)
 	{
 		if (!_traceAsThreads) {
 			_extraeThreadCountLock.writeLock();
@@ -24,7 +24,7 @@ namespace Instrument {
 			_extraeThreadCountLock.writeUnlock();
 		}
 		
-		return compute_place_id_t(virtualCPUId);
+		return compute_place_id_t(virtualCPUId, NUMANode);
 	}
 	
 	inline compute_place_id_t createdGPU()

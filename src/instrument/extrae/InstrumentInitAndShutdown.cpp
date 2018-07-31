@@ -177,6 +177,15 @@ namespace Instrument {
 		
 		ExtraeAPI::define_event_type((extrae_type_t) EventType::PRIORITY, "Task priority", 0, nullptr, nullptr);
 		
+		if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+			if (_traceAsThreads) {
+				ExtraeAPI::define_event_type((extrae_type_t) EventType::CPU, "CPU", 0, nullptr, nullptr);
+				ExtraeAPI::define_event_type((extrae_type_t) EventType::THREAD_NUMA_NODE, "NUMA Node", 0, nullptr, nullptr);
+			} else {
+				ExtraeAPI::define_event_type((extrae_type_t) EventType::THREAD, "Thread", 0, nullptr, nullptr);
+			}
+		}
+		
 		// Register the events for the backtrace
 		if (_sampleBacktraceDepth > 0) {
 			for (int i = 0; i < _sampleBacktraceDepth; i++) {

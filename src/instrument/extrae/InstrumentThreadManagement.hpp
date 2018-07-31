@@ -118,6 +118,14 @@ namespace Instrument {
 		ce.nEvents = 1;
 		ce.nCommunications = 0;
 		
+		if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+			if (_traceAsThreads) {
+				ce.nEvents += 2; // CPU, THREAD_NUMA_NODE
+			} else {
+				ce.nEvents++; // THREAD
+			}
+		}
+		
 		if (_detailLevel > 0) {
 			ce.nCommunications++;
 		}
@@ -131,6 +139,18 @@ namespace Instrument {
 		
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_STARTUP;
+		
+		if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+			if (_traceAsThreads) {
+				ce.Types[1] = (extrae_type_t) EventType::CPU;
+				ce.Values[1] = (extrae_value_t) (computePlaceId._id + 1);
+				ce.Types[2] = (extrae_type_t) EventType::THREAD_NUMA_NODE;
+				ce.Values[2] = (extrae_value_t) (computePlaceId._NUMANode + 1);
+			} else {
+				ce.Types[1] = (extrae_type_t) EventType::THREAD;
+				ce.Values[1] = (extrae_value_t) (threadId + 1);
+			}
+		}
 		
 		if (_detailLevel > 0) {
 			ce.Communications[0].type = EXTRAE_USER_RECV;
@@ -223,11 +243,31 @@ namespace Instrument {
 			ce.nEvents = 1;
 			ce.nCommunications = 0;
 			
+			if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+				if (_traceAsThreads) {
+					ce.nEvents += 2; // CPU, THREAD_NUMA_NODE
+				} else {
+					ce.nEvents++; // THREAD
+				}
+			}
+			
 			ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 			ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 			
 			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_NOT_RUNNING;
+			
+			if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+				if (_traceAsThreads) {
+					ce.Types[1] = (extrae_type_t) EventType::CPU;
+					ce.Values[1] = (extrae_value_t) 0;
+					ce.Types[2] = (extrae_type_t) EventType::THREAD_NUMA_NODE;
+					ce.Values[2] = (extrae_value_t) 0;
+				} else {
+					ce.Types[1] = (extrae_type_t) EventType::THREAD;
+					ce.Values[1] = (extrae_value_t) 0;
+				}
+			}
 			
 			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}
@@ -244,11 +284,31 @@ namespace Instrument {
 			ce.nEvents = 1;
 			ce.nCommunications = 0;
 			
+			if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+				if (_traceAsThreads) {
+					ce.nEvents += 2; // CPU, THREAD_NUMA_NODE
+				} else {
+					ce.nEvents++; // THREAD
+				}
+			}
+			
 			ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 			ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 			
 			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_IDLE;
+			
+			if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+				if (_traceAsThreads) {
+					ce.Types[1] = (extrae_type_t) EventType::CPU;
+					ce.Values[1] = (extrae_value_t) (cpu._id + 1);
+					ce.Types[2] = (extrae_type_t) EventType::THREAD_NUMA_NODE;
+					ce.Values[2] = (extrae_value_t) (cpu._NUMANode + 1);
+				} else {
+					ce.Types[1] = (extrae_type_t) EventType::THREAD;
+					ce.Values[1] = (extrae_value_t) (threadId + 1);
+				}
+			}
 			
 			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}
@@ -315,11 +375,31 @@ namespace Instrument {
 			ce.nEvents = 1;
 			ce.nCommunications = 0;
 			
+			if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+				if (_traceAsThreads) {
+					ce.nEvents += 2; // CPU, THREAD_NUMA_NODE
+				} else {
+					ce.nEvents++; // THREAD
+				}
+			}
+			
 			ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
 			ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
 			
 			ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 			ce.Values[0] = (extrae_value_t) NANOS_SHUTDOWN;
+			
+			if (_detailLevel >= (int) THREADS_AND_CPUS_LEVEL) {
+				if (_traceAsThreads) {
+					ce.Types[1] = (extrae_type_t) EventType::CPU;
+					ce.Values[1] = (extrae_value_t) 0;
+					ce.Types[2] = (extrae_type_t) EventType::THREAD_NUMA_NODE;
+					ce.Values[2] = (extrae_value_t) 0;
+				} else {
+					ce.Types[1] = (extrae_type_t) EventType::THREAD;
+					ce.Values[1] = (extrae_value_t) 0;
+				}
+			}
 			
 			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}

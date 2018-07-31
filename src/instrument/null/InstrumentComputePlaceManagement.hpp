@@ -13,7 +13,7 @@
 
 
 namespace Instrument {
-	inline compute_place_id_t createdCPU(unsigned int virtualCPUId)
+	inline compute_place_id_t createdCPU(unsigned int virtualCPUId, __attribute__((unused)) size_t NUMANode)
 	{
 		return compute_place_id_t(virtualCPUId);
 	}

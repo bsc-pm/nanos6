@@ -1388,12 +1388,15 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/advanced/3dh_task_instructions.cfg \
 	paraver-cfg/nanos6/advanced/3dh_task_ipc.cfg \
 	paraver-cfg/nanos6/advanced/3dh_task_l2d_miss_ratio.cfg \
+	paraver-cfg/nanos6/advanced/cpu.cfg \
 	paraver-cfg/nanos6/advanced/effective_paralelism.cfg \
 	paraver-cfg/nanos6/advanced/instantiating_function_name_and_code_line.cfg \
 	paraver-cfg/nanos6/advanced/nesting_level.cfg \
+	paraver-cfg/nanos6/advanced/numa_node.cfg \
 	paraver-cfg/nanos6/advanced/reference_clock.cfg \
 	paraver-cfg/nanos6/advanced/running_function_name_and_code_line.cfg \
 	paraver-cfg/nanos6/advanced/runtime_state.cfg \
+	paraver-cfg/nanos6/advanced/thread.cfg \
 	paraver-cfg/nanos6/advanced/thread_creation.cfg \
 	paraver-cfg/nanos6/advanced/thread_creation_and_runtime_state.cfg \
 	paraver-cfg/nanos6/graph_and_scheduling/creating_submitting_task.cfg \

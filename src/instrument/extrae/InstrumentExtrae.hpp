@@ -27,6 +27,10 @@
 
 
 namespace Instrument {
+	enum {
+		THREADS_AND_CPUS_LEVEL = 2
+	};
+	
 	struct ExtraeTaskInfoCompare {
 		inline bool operator()(nanos_task_info *a, nanos_task_info *b) const;
 	};
@@ -77,12 +81,17 @@ namespace Instrument {
 			
 			PRIORITY = 9200038,
 			
+			CPU = 9200042,
+			THREAD_NUMA_NODE = 9200064,
+			
 		// [9500000:9699999] -- Nanos6-specific
 			// 9500XXXX -- Nanos6 Tasking
 				NESTING_LEVEL = 9500001,
 				
 				INSTANTIATING_FUNCTION_NAME = 9500002,
 				INSTANTIATING_CODE_LOCATION = 9500003,
+				
+				THREAD = 9500004,
 				
 			// 96XXXXX -- Tracing points
 				TRACING_POINT_BASE = 9600000,
