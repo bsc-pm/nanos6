@@ -165,10 +165,6 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 {
 	assert(idleCPU != nullptr);
 	
-	if (!inInitializationOrShutdown) {
-		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->getComputePlace() != nullptr));
-	}
-	
 	// Get an idle thread for the CPU
 	WorkerThread *idleThread = getIdleThread(idleCPU, doNotCreate);
 	
@@ -184,10 +180,6 @@ inline WorkerThread *ThreadManager::resumeIdle(CPU *idleCPU, bool inInitializati
 
 inline void ThreadManager::resumeIdle(const std::vector<CPU *> &idleCPUs, bool inInitializationOrShutdown, bool doNotCreate)
 {
-	if (!inInitializationOrShutdown) {
-		assert((WorkerThread::getCurrentWorkerThread() == nullptr) || (WorkerThread::getCurrentWorkerThread()->_cpu != nullptr));
-	}
-	
 	for (CPU *idleCPU : idleCPUs) {
 		assert(idleCPU != nullptr);
 		
