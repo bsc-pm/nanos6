@@ -99,7 +99,7 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 	priorityClass._lock.lock();
 	_globalLock.unlock();
 	
-	if (hint == UNBLOCKED_TASK_HINT) {
+	if ((hint == UNBLOCKED_TASK_HINT) || (hint == CHILD_TASK_HINT)) {
 		priorityClass._queue.push_front(task);
 	} else {
 		priorityClass._queue.push_back(task);
