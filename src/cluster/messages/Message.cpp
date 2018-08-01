@@ -5,6 +5,7 @@
 */
 
 #include "Message.hpp"
+#include <ClusterNode.hpp>
 
 Message::Message(const char* name, MessageType type, size_t size, const ClusterNode *from)
 {

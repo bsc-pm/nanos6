@@ -1,5 +1,6 @@
 #include "MPIMessenger.hpp"
 #include "cluster/messages/Message.hpp"
+#include <ClusterNode.hpp>
 
 #include "alloca.h"
 #include <cstdlib>

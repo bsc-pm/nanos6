@@ -7,11 +7,12 @@
 #ifndef __MESSAGE_HPP__
 #define __MESSAGE_HPP__
 
-#include "hardware/cluster/ClusterNode.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/threads/KernelLevelThread.hpp"
 #include "support/GenericFactory.hpp"
 #include "MessageType.hpp"
+
+class ClusterNode;
 
 class Message {
 public:

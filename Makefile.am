@@ -372,16 +372,20 @@ if USE_CUDA
 common_sources += $(cuda_sources)
 endif
 
-cluster_sources = \
+cluster_sources =
+if USE_CLUSTER
+cluster_sources += \
 	src/cluster/ClusterManager.cpp \
 	src/cluster/messages/Message.cpp \
 	src/cluster/messages/MessageSysFinish.cpp \
 	src/cluster/messages/MessageType.cpp \
 	src/cluster/messenger/MPIMessenger.cpp
-
-if USE_CLUSTER
-common_sources += $(cluster_sources)
+cluster_cppflags = -I$(srcdir)/src/cluster -I$(srcdir)/src/hardware/cluster
+else
+cluster_cppflags = -I$(srcdir)/src/cluster/null -I$(srcdir)/src/hardware/cluster/null
 endif
+
+common_sources += $(cluster_sources)
 
 discrete_dependency_sources = \
 	src/dependencies/discrete/Reductions.cpp \
@@ -563,6 +567,7 @@ noinst_HEADERS = \
 	src/cluster/messages/Message.hpp \
 	src/cluster/messages/MessageSysFinish.hpp \
 	src/cluster/messages/MessageType.hpp \
+	src/cluster/null/ClusterManager.hpp \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
@@ -643,6 +648,7 @@ noinst_HEADERS = \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/hardware/cluster/ClusterNode.hpp \
+	src/hardware/cluster/null/ClusterNode.hpp \
 	src/hardware/cuda/CUDAManager.hpp \
 	src/hardware/cuda/compute/CUDAComputePlace.hpp \
 	src/hardware/cuda/compute/stream/CUDAStream.hpp \
@@ -962,7 +968,7 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags)
 common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS)
 
 

@@ -26,6 +26,7 @@
 #include "system/ompss/SpawnFunction.hpp"
 #include "hardware/HardwareInfo.hpp"
 
+#include <ClusterManager.hpp>
 #include <DependencySystem.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
@@ -35,11 +36,6 @@
 #ifdef USE_CUDA
 #include "hardware/cuda/CUDAManager.hpp"
 #endif
-
-#ifdef USE_CLUSTER
-#include "cluster/ClusterManager.hpp"
-#endif
-
 
 static std::atomic<int> shutdownDueToSignalNumber(0);
 
@@ -89,6 +85,7 @@ void nanos_preinit(void) {
 	
 	RuntimeInfoEssentials::initialize();
 	HardwareInfo::initialize();
+	ClusterManager::initialize();
 	MemoryAllocator::initialize();
 	CPUManager::preinitialize();
 	Scheduler::initialize();
@@ -105,10 +102,6 @@ void nanos_preinit(void) {
 	
 	#ifdef USE_CUDA
 	CUDAManager::initialize();
-	#endif
-	
-	#ifdef USE_CLUSTER
-	ClusterManager::initialize();
 	#endif
 }
 
@@ -145,10 +138,6 @@ void nanos_shutdown(void) {
 		// Wait for spawned functions to fully end
 	}
 	
-	#ifdef USE_CLUSTER
-	ClusterManager::shutdown();
-	#endif
-	
 	#ifdef USE_CUDA
 	CUDAManager::shutdown();
 	#endif
@@ -165,6 +154,7 @@ void nanos_shutdown(void) {
 	
 	Scheduler::shutdown();
 	MemoryAllocator::shutdown();
+	ClusterManager::shutdown();
 	RuntimeInfoEssentials::shutdown();
 }
 

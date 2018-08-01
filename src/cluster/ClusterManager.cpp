@@ -5,7 +5,7 @@
 */
 
 #include "ClusterManager.hpp"
-#include "hardware/cluster/ClusterNode.hpp"
+#include <ClusterNode.hpp>
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "messenger/Messenger.hpp"
 #include "system/RuntimeInfo.hpp"

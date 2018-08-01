@@ -4,6 +4,9 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
+#ifndef __CLUSTER_MANAGER_HPP__
+#define __CLUSTER_MANAGER_HPP__
+
 #include <vector>
 #include <string>
 
@@ -59,4 +62,11 @@ public:
 	{
 		return _clusterSize;
 	}
+	
+	static inline bool inClusterMode()
+	{
+		return _clusterSize > 1;
+	}
 };
+
+#endif /* __CLUSTER_MANAGER_HPP__ */
