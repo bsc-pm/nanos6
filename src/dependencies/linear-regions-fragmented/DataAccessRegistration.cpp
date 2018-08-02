@@ -110,8 +110,7 @@ namespace DataAccessRegistration {
 				_propagatesReadSatisfiabilityToFragments = access->readSatisfied();
 				_propagatesWriteSatisfiabilityToFragments = access->writeSatisfied();
 				_propagatesConcurrentSatisfiabilityToFragments = access->concurrentSatisfied();
-				// Can be null, but will be allocated before the propagation
-				_propagatesReductionInfoToFragments = access->receivedReductionInfo();
+				_propagatesReductionInfoToFragments = access->receivedReductionInfo() || access->allocatedReductionInfo();
 				// Non-reduction accesses will propagate received ReductionCpuSet to their fragments
 				// to make their status consistent with the access itself
 				_propagatesReductionCpuSetToFragments = access->receivedReductionCpuSet();
@@ -138,7 +137,8 @@ namespace DataAccessRegistration {
 						access->canPropagateConcurrentSatisfiability() && access->concurrentSatisfied()
 						&& (access->getType() == CONCURRENT_ACCESS_TYPE);
 					_propagatesReductionInfoToNext =
-						access->canPropagateReductionInfo() && access->receivedReductionInfo()
+						access->canPropagateReductionInfo()
+						&& (access->receivedReductionInfo() || access->allocatedReductionInfo())
 						// For 'write' and 'readwrite' accesses we need to propagate the ReductionInfo through fragments only,
 						// in order to be able to propagate a nested reduction ReductionInfo outside
 						&& ((access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE));
@@ -157,7 +157,7 @@ namespace DataAccessRegistration {
 						&& access->concurrentSatisfied();
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
-						&& access->receivedReductionInfo();
+						&& (access->receivedReductionInfo() || access->allocatedReductionInfo());
 					_propagatesReductionCpuSetToNext =
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()
@@ -181,7 +181,7 @@ namespace DataAccessRegistration {
 						&& ((access->getType() == CONCURRENT_ACCESS_TYPE) || access->complete());
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
-						&& access->receivedReductionInfo()
+						&& (access->receivedReductionInfo() || access->allocatedReductionInfo())
 						// For 'write' and 'readwrite' accesses we need to propagate the ReductionInfo to next only when
 						// complete, otherwise subaccesses can still appear
 						&& (((access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE))
