@@ -605,7 +605,7 @@ int main(int argc, char **argv)
 	}
 	
 	std::vector<std::vector<TaskVerifier *> *> testVerifiers;
-	std::vector<std::pair<VerifierConstraintCalculator, int> > testConstraintCalculators;
+	std::vector<std::pair<VerifierConstraintCalculator, std::string> > testConstraintCalculators;
 	std::vector<Atomic<int> *> testCounters;
 	
 	int var1;
@@ -637,7 +637,8 @@ int main(int argc, char **argv)
 		constraintCalculator.flushConcurrent();
 		
 		testVerifiers.push_back(verifiers);
-		testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 1));
+		testConstraintCalculators.push_back(
+				std::make_pair(constraintCalculator, "Subtest 1: Reduction before write"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
@@ -669,7 +670,8 @@ int main(int argc, char **argv)
 		constraintCalculator.flushConcurrent();
 		
 		testVerifiers.push_back(verifiers);
-		testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 2));
+		testConstraintCalculators.push_back(
+				std::make_pair(constraintCalculator, "Subtest 2: Reduction after write"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
@@ -701,7 +703,8 @@ int main(int argc, char **argv)
 		constraintCalculator.flushConcurrent();
 		
 		testVerifiers.push_back(verifiers);
-		testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 3));
+		testConstraintCalculators.push_back(
+				std::make_pair(constraintCalculator, "Subtest 3: Reduction before read"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
@@ -733,7 +736,8 @@ int main(int argc, char **argv)
 		constraintCalculator.flushConcurrent();
 		
 		testVerifiers.push_back(verifiers);
-		testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 4));
+		testConstraintCalculators.push_back(
+				std::make_pair(constraintCalculator, "Subtest 4: Reduction after read"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
@@ -769,7 +773,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 5));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 5: Reduction after read after reduction (single)"));
 			testCounters.push_back(numConcurrentTasks);
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
@@ -815,7 +820,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 6));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 6: Reduction after read after reduction (double)"));
 			testCounters.push_back(numConcurrentTasks1);
 			testCounters.push_back(numConcurrentTasks2);
 			testCounters.push_back(numConcurrentReductionTasks);
@@ -854,7 +860,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 7));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 7: Reduction after write after reduction (single)"));
 			testCounters.push_back(numConcurrentTasks1);
 			testCounters.push_back(numConcurrentTasks2);
 			testCounters.push_back(numConcurrentReductionTasks);
@@ -901,7 +908,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 8));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 8: Reduction after write after reduction (double)"));
 			testCounters.push_back(numConcurrentTasks1);
 			testCounters.push_back(numConcurrentTasks2);
 			testCounters.push_back(numConcurrentReductionTasks);
@@ -935,7 +943,8 @@ int main(int argc, char **argv)
 		constraintCalculator.flushConcurrent();
 		
 		testVerifiers.push_back(verifiers);
-		testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 9));
+		testConstraintCalculators.push_back(
+				std::make_pair(constraintCalculator, "Subtest 9: Reduction after different reduction (single)"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
@@ -977,7 +986,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 10));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 10: Reduction after different reduction (double)"));
 			testCounters.push_back(numConcurrentTasks);
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
@@ -1015,7 +1025,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 11));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 11: Reduction after write after different reduction (single)"));
 			testCounters.push_back(numConcurrentTasks1);
 			testCounters.push_back(numConcurrentTasks2);
 			testCounters.push_back(numConcurrentReductionTasks);
@@ -1062,7 +1073,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 12));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 12: Reduction after write after different reduction (double)"));
 			testCounters.push_back(numConcurrentTasks1);
 			testCounters.push_back(numConcurrentTasks2);
 			testCounters.push_back(numConcurrentReductionTasks);
@@ -1101,7 +1113,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 13));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 13: Reduction after read after different reduction (single)"));
 			testCounters.push_back(numConcurrentTasks1);
 			testCounters.push_back(numConcurrentTasks2);
 			testCounters.push_back(numConcurrentReductionTasks);
@@ -1148,7 +1161,8 @@ int main(int argc, char **argv)
 			constraintCalculator.flushConcurrent();
 			
 			testVerifiers.push_back(verifiers);
-			testConstraintCalculators.push_back(std::make_pair(constraintCalculator, 14));
+			testConstraintCalculators.push_back(
+					std::make_pair(constraintCalculator, "Subtest 14: Reduction after read after different reduction (double)"));
 			testCounters.push_back(numConcurrentTasks1);
 			testCounters.push_back(numConcurrentTasks2);
 			testCounters.push_back(numConcurrentReductionTasks);
@@ -1159,11 +1173,11 @@ int main(int argc, char **argv)
 	
 	tap.begin();
 	
-	for (std::vector<std::pair<VerifierConstraintCalculator, int> >::const_iterator it = testConstraintCalculators.begin();
+	for (std::vector<std::pair<VerifierConstraintCalculator, std::string> >::const_iterator it = testConstraintCalculators.begin();
 			it != testConstraintCalculators.end();
 			it++)
 	{
-		tap.emitDiagnostic("Subtest ", it->second);
+		tap.emitDiagnostic(it->second);
 		
 		it->first.selfcheck();
 		it->first.submit();
