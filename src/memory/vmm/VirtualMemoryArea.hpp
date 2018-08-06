@@ -15,21 +15,25 @@
 
 class VirtualMemoryArea {
 	//! start address of the area
-	void *_address;
+	char *_start;
 	
 	//! size of the area
 	size_t _size;
 	
+	//! first address not belonging in the area
+	char *_end;
+	
 	//! next free pointer in the area
-	void *_nextFree;
+	char *_nextFree;
 	
 	//! amount of available memory
 	size_t _available;
 	
 public:
 	VirtualMemoryArea(void *address, size_t size)
-		: _address(address), _size(size),
-		_nextFree(address), _available(size)
+		: _start((char *)address), _size(size),
+		_end(_start + _size), _nextFree(_start),
+		_available(size)
 	{
 	}
 	
@@ -54,12 +58,25 @@ public:
 			return nullptr;
 		}
 		
-		void *ret = _nextFree;
+		void *ret = (void *)_nextFree;
 		
 		_available -= size;
-		_nextFree = (void *)((char *)_nextFree + size);
+		_nextFree = _nextFree + size;
 		
 		return ret;
+	}
+	
+	inline bool includesRange(void *address, size_t size)
+	{
+		char *startAddress = (char *)address;
+		char *endAddress = startAddress + size;
+		
+		return (startAddress >= _start) && (endAddress < _end);
+	}
+	
+	inline bool includesAddress(void *address)
+	{
+		return ((char *)address >= _start) && ((char *)address < _end);
 	}
 };
 
