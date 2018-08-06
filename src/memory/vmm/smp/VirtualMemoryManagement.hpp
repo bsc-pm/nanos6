@@ -84,6 +84,22 @@ public:
 		vma = _localNUMAVMA[numaNodeId].back();
 		return vma->allocBlock(size);
 	}
+	
+	//! return the NUMA node id of the node containing 'ptr' or
+	//! the NUMA node count if not found
+	static inline size_t findNUMA(void *ptr)
+	{
+		for (size_t i = 0; i < _localNUMAVMA.size(); ++i) {
+			for (auto vma : _localNUMAVMA[i]) {
+				if (vma->includesAddress(ptr)) {
+					return i;
+				}
+			}
+		}
+		
+		//! Non-NUMA allocation
+		return _localNUMAVMA.size();
+	}
 };
 
 
