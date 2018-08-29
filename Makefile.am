@@ -539,7 +539,9 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentMalloc.cpp \
 	src/instrument/support/sampling/SigProf.cpp
 
-memory_allocator_default_sources = src/memory/allocator/pool/MemoryAllocator.cpp
+memory_allocator_default_sources = \
+	src/memory/allocator/pool/MemoryAllocator.cpp \
+	src/memory/allocator/pool/ObjectAllocator.cpp
 memory_allocator_default_cppflags = -I$(srcdir)/src/memory/allocator/pool
 
 memory_allocator_debug_sources =
@@ -911,10 +913,15 @@ noinst_HEADERS = \
 	src/lowlevel/threads/posix/KernelLevelThread.hpp \
 	src/memory/AddressSpace.hpp \
 	src/memory/allocator/malloc/MemoryAllocator.hpp \
+	src/memory/allocator/malloc/ObjectAllocator.hpp \
+	src/memory/allocator/pool/CPUObjectCache.hpp \
 	src/memory/allocator/pool/ExternalMemoryPool.hpp \
 	src/memory/allocator/pool/MemoryAllocator.hpp \
 	src/memory/allocator/pool/MemoryPool.hpp \
 	src/memory/allocator/pool/MemoryPoolGlobal.hpp \
+	src/memory/allocator/pool/NUMAObjectCache.hpp \
+	src/memory/allocator/pool/ObjectAllocator.hpp \
+	src/memory/allocator/pool/ObjectCache.hpp \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
 	src/memory/vmm/smp/VirtualMemoryManagement.hpp \
