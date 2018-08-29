@@ -12,6 +12,7 @@
 #include "MemoryPool.hpp"
 
 #include "MemoryAllocator.hpp"
+#include "ObjectAllocator.hpp"
 
 std::vector<MemoryPoolGlobal *> MemoryAllocator::_globalMemoryPool;
 std::vector<MemoryAllocator::size_to_pool_t> MemoryAllocator::_localMemoryPool;
@@ -65,15 +66,21 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 void MemoryAllocator::initialize()
 {
 	VirtualMemoryManagement::initialize();
-	size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	
+	size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
+	size_t cpuCount = HardwareInfo::getComputePlaceCount(nanos6_device_t::nanos6_host_device);	
 	_globalMemoryPool.resize(numaNodeCount);
 	
 	for (size_t i = 0; i < numaNodeCount; ++i) {
 		_globalMemoryPool[i] = new MemoryPoolGlobal(i);
 	}
 	
-	_localMemoryPool.resize(HardwareInfo::getComputePlaceCount(nanos6_device_t::nanos6_host_device));
+	_localMemoryPool.resize(cpuCount);
+	
+	//! Initialize the Object caches
+	ObjectAllocator<DataAccess>::initialize();
+	ObjectAllocator<ReductionInfo>::initialize();
+	ObjectAllocator<BottomMapEntry>::initialize();
 }
 
 void MemoryAllocator::shutdown()
@@ -91,6 +98,11 @@ void MemoryAllocator::shutdown()
 	for (auto it = _externalMemoryPool.begin(); it != _externalMemoryPool.end(); ++it) {
 		delete it->second;
 	}
+	
+	//! Initialize the Object caches
+	ObjectAllocator<BottomMapEntry>::shutdown();
+	ObjectAllocator<ReductionInfo>::shutdown();
+	ObjectAllocator<DataAccess>::shutdown();
 }
 
 void *MemoryAllocator::alloc(size_t size)
