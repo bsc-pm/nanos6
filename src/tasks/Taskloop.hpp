@@ -38,6 +38,7 @@ public:
 		_taskloopInfo()
 	{
 		setRunnable(runnable);
+		setDelayedRelease(true);
 	}
 	
 	inline void setArgsBlockSize(size_t argsBlockSize)
@@ -79,6 +80,11 @@ public:
 	inline void setRunnable(bool runnableValue)
 	{
 		_flags[Task::non_runnable_flag] = !runnableValue;
+	}
+	
+	inline void setDelayedRelease(bool delayedReleaseValue)
+	{
+		_flags[Task::wait_flag] = delayedReleaseValue;
 	}
 	
 	inline bool hasPendingIterations()

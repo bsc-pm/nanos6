@@ -21,9 +21,6 @@ public:
 	{
 		assert(parent != nullptr);
 		
-		size_t flags = parent->getFlags();
-		flags = flags & ~(1 << Task::wait_flag);
-		
 		nanos_task_info *taskInfo = parent->getTaskInfo();
 		nanos_task_invocation_info *taskInvocationInfo = parent->getTaskInvokationInfo();
 		
@@ -34,7 +31,7 @@ public:
 		void *argsBlock = nullptr;
 		
 		// Create the task for this partition
-		nanos_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, (void **) &argsBlock, (void **) &taskloop, flags);
+		nanos_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, (void **) &argsBlock, (void **) &taskloop, parent->getFlags());
 		assert(argsBlock != nullptr);
 		assert(taskloop != nullptr);
 		
@@ -43,6 +40,7 @@ public:
 		
 		// Set the flags
 		taskloop->setRunnable(true);
+		taskloop->setDelayedRelease(false);
 		
 		// Set the parent
 		taskloop->setParent(parent);
