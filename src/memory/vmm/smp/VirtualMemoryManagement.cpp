@@ -48,6 +48,9 @@ void VirtualMemoryManagement::initialize()
 		"mapping virtual address space failed"
 	);
 	
+	//! mmap might not have returned the requested address
+	_address = ret;
+	
 	setupMemoryLayout(_address, _size);
 	
 	RuntimeInfo::addEntry("local_memory_size", "Size of local memory per node", _size);
