@@ -62,6 +62,9 @@ void VirtualMemoryManagement::initialize()
 		"mapping virtual address space failed"
 	);
 	
+	//! mmap might not have returned the requested address
+	_address = ret;
+	
 	setupMemoryLayout(_address, distribSize, localSize);
 	
 	RuntimeInfo::addEntry("distributed_memory_size", "Size of distributed memory", distribSize);
