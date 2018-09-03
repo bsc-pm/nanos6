@@ -12,8 +12,6 @@
 
 class MemoryPool;
 class MemoryPoolGlobal;
-class Task;
-class DataAccess;
 
 class MemoryAllocator {
 private:
@@ -26,7 +24,7 @@ private:
 	static SpinLock _externalMemoryPoolLock;
 	
 	static MemoryPool *getPool(size_t size);
-	
+
 public:
 	static void initialize();
 	static void shutdown();

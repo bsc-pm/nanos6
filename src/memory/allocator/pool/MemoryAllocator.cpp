@@ -12,7 +12,6 @@
 #include "MemoryPool.hpp"
 
 #include "MemoryAllocator.hpp"
-#include "ObjectAllocator.hpp"
 
 std::vector<MemoryPoolGlobal *> MemoryAllocator::_globalMemoryPool;
 std::vector<MemoryAllocator::size_to_pool_t> MemoryAllocator::_localMemoryPool;
@@ -67,7 +66,6 @@ void MemoryAllocator::initialize()
 {
 	VirtualMemoryManagement::initialize();
 	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
-	size_t CPUCount = HardwareInfo::getComputeNodeCount();
 	
 	_globalMemoryPool.resize(NUMANodeCount);
 	
@@ -75,12 +73,7 @@ void MemoryAllocator::initialize()
 		_globalMemoryPool[i] = new MemoryPoolGlobal(i);
 	}
 	
-	_localMemoryPool.resize(CPUCount);
-	
-	//! Initialize the Object caches
-	ObjectAllocator<DataAccess>::initialize();
-	ObjectAllocator<ReductionInfo>::initialize();
-	ObjectAllocator<BottomMapEntry>::initialize();
+	_localMemoryPool.resize(HardwareInfo::getComputeNodeCount());
 }
 
 void MemoryAllocator::shutdown()
@@ -98,11 +91,6 @@ void MemoryAllocator::shutdown()
 	for (auto it = _externalMemoryPool.begin(); it != _externalMemoryPool.end(); ++it) {
 		delete it->second;
 	}
-	
-	//! Initialize the Object caches
-	ObjectAllocator<BottomMapEntry>::shutdown();
-	ObjectAllocator<ReductionInfo>::shutdown();
-	ObjectAllocator<DataAccess>::shutdown();
 }
 
 void *MemoryAllocator::alloc(size_t size)
