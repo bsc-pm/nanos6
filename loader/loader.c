@@ -63,6 +63,14 @@ static void _nanos6_loader_set_up_lib_name(char const *variant, char const *path
 
 static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char const *path)
 {
+	// A dummy memory reallocation to force preloaded libraries that intercept the memory allocation
+	// functions to get initialized, since calls to dlerror cause a call to realloc. If the first call
+	// to realloc triggers a dlopen, that call will overwrite the structures used by dlerror and cause
+	// an inconsistency and will eventually lead to a crash
+	malloc(0);
+	realloc(NULL, 0);
+	free(NULL);
+	
 	_nanos6_loader_set_up_lib_name(variant, path, SONAME_SUFFIX);
 	if (verbose) {
 		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
