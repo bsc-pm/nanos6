@@ -40,8 +40,6 @@ public:
 		
 	//! \brief Release the compute resources of the CUDA task 
 	void postRunTask(Task *task);
-	
-	virtual void resumeIdle() { }
 };
 
 #endif //CUDA_COMPUTE_PLACE_HPP
