@@ -16,10 +16,11 @@ class CUDAComputePlace;
 class CUDAStream {
 
 private:
+	size_t _index;
 	cudaStream_t _stream;
 	
 public:
-	CUDAStream()
+	CUDAStream(size_t index): _index(index)
 	{
 		cudaError_t err = cudaStreamCreate(&_stream);
 		CUDAErrorHandler::handle(err, "When creating stream");
@@ -33,6 +34,12 @@ public:
 	{
 		cudaError_t err = cudaStreamDestroy(_stream);
 		CUDAErrorHandler::handle(err, "When destroying stream");
+	}
+
+	//! \brief Get the assigned index of the stream
+	size_t getIndex() const 
+	{
+		return _index;
 	}
 	
 	//! \brief Get the underlying cudaStream_t object

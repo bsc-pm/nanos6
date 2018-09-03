@@ -16,25 +16,21 @@
 class CUDAStreamPool {
 private:
 	std::queue<CUDAStream *> _pool;
-#ifndef NDEBUG
-	int _poolSize; /*! Debbuging counter to check that all streams are cleared from the system on shutdown */
-#endif
+	int _size;
 	
 public:
 	
 	CUDAStreamPool()
 	{
 		for (int i = 0; i < CUDA_STARTING_STREAM_NUM; ++i) {
-			_pool.push(new CUDAStream());
+			_pool.push(new CUDAStream(i));
 		}
-#ifndef NDEBUG
-		_poolSize = CUDA_STARTING_STREAM_NUM;
-#endif
+		_size = CUDA_STARTING_STREAM_NUM;
 	}
 	
 	~CUDAStreamPool()
 	{
-		assert(_pool.size() == _poolSize);
+		assert(_pool.size() == _size);
 		
 		while (!_pool.empty()) {
 			delete _pool.front();
@@ -42,28 +38,21 @@ public:
 		}
 	}
 	
-	/*
-	 * \!brief Get a CUDA stream
-	 *
-	 * Get a CUDA stream from the pool. 
-	 * If no streams are available a new stream is returned, which will be eventually returned to the pool instead of released.
-	 */
+	//!	\!brief Get a CUDA stream
+	//!	Get a CUDA stream from the pool. 
+	//!	If no streams are available a new stream is returned, which will be eventually returned to the pool instead of released.
 	CUDAStream *getStream() 
 	{
 		if (_pool.empty()) {
-#ifndef NDEBUG
-			++_poolSize;
-#endif
-			return new CUDAStream();
+			++_size;
+			return new CUDAStream(_size - 1);
 		} else {
 			CUDAStream *stream = _pool.front();
 			_pool.pop();
 			return stream;
 		}
 	}
-	/*
-	 *	\!brief Return a CUDA stream to the pool
-	 */
+	//!	\!brief Return a CUDA stream to the pool
 	void returnStream(CUDAStream *stream)
 	{
 		_pool.push(stream);	
