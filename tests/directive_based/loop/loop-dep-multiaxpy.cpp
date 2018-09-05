@@ -10,46 +10,54 @@
 #include "TestAnyProtocolProducer.hpp"
 
 #define TOTALSIZE (128*1024*1024)
-#define CHUNKSIZE (2048)
+#define BLOCKSIZE (1024*1024)
+#define CHUNKSIZE (256)
 #define ITERATIONS (10)
 
 TestAnyProtocolProducer tap;
 
-#pragma oss task label(init block)
-static void initialize_task(double *data, long size, double value) {
-	for (long i=0; i<size; i++) {
-		data[i] = value;
-	}
-}
-
-
-static void initialize(double *data, double value, long N, long TS) {
-	for (long i=0; i < N; i+=TS) {
-		long elements = std::min(TS, N-i);
-		initialize_task(&data[i], elements, value);
-	}
-}
-
-
-static void axpy(double *x, double *y, double alpha, long N, long TS) {
-	#pragma oss loop chunksize(TS) in(x[0;N]) inout(y[0;N])
-	for (long i=0; i < N; ++i) {
-		y[i] += alpha * x[i];
-	}
-}
-
-
-static bool validate(double *y, long N, double expectedValue) {
-	for (long i=0; i < N; ++i) {
-		if (y[i] != expectedValue) {
-			return false;
+static void initialize(double *data, double value, long N, long BS) {
+	for (long i = 0; i < N; i += BS) {
+		long elements = std::min(BS, N - i);
+		
+		#pragma oss task out(data[i;elements])
+		for (long j = 0; j < elements; ++j) {
+			data[i + j] = value;
 		}
 	}
-	return true;
 }
 
+static void axpy(const double *x, double *y, double alpha, long N, long BS, long CS) {
+	for (long i = 0; i < N; i += BS) {
+		long elements = std::min(BS, N - i);
+		
+		#pragma oss loop in(x[i;elements]) inout(y[i;elements]) chunksize(CS)
+		for (long j = 0; j < elements; ++j) {
+			y[i + j] += alpha * x[i + j];
+		}
+	}
+}
 
-bool validScheduler() {
+static bool validate(double *y, long N, long BS, double expectedValue) {
+	int errors = 0;
+	
+	for (long i = 0; i < N; i += BS) {
+		long elements = std::min(BS, N - i);
+		
+		#pragma oss task in(y[i;elements]) reduction(+:errors)
+		for (long j = 0; j < elements; ++j) {
+			if (y[i + j] != expectedValue) {
+				errors += 1;
+				break;
+			}
+		}
+	}
+	#pragma oss taskwait
+	
+	return (errors == 0);
+}
+
+static bool validScheduler() {
 	// Taskloop is only supported by Naive and FIFO schedulers
 	char const *schedulerName = getenv("NANOS6_SCHEDULER");
 	if (schedulerName != 0) {
@@ -61,7 +69,6 @@ bool validScheduler() {
 	return false;
 }
 
-
 int main() {
 	if (!validScheduler()) {
 		tap.registerNewTests(1);
@@ -72,32 +79,33 @@ int main() {
 	}
 	
 	long n = TOTALSIZE;
-	long ts = CHUNKSIZE;
+	long bs = BLOCKSIZE;
+	long cs = CHUNKSIZE;
 	long its = ITERATIONS;
 	
 	// Initialization
 	double *x = new double[n];
 	double *y = new double[n];
-	initialize(x, 1.0, n, ts);
-	initialize(y, 0.0, n, ts);
-	#pragma oss taskwait
 	
 	tap.registerNewTests(1);
 	tap.begin();
 	
+	initialize(x, 1.0, n, bs);
+	initialize(y, 0.0, n, bs);
+	
 	// Main algorithm
-	for (int iteration=0; iteration < its; iteration++) {
-		axpy(x, y, 1.0, n, ts);
+	for (int iteration = 0; iteration < its; iteration++) {
+		axpy(x, y, 1.0, n, bs, cs);
 	}
 	#pragma oss taskwait
 	
 	// Validation
-	double expectedValue = its;
-	bool validates = validate(y, n, expectedValue);
+	bool validates = validate(y, n, bs, its);
 	
 	tap.evaluate(validates, "The result of the multiaxpy program is correct");
-	
 	tap.end();
 	
+	delete[] x;
+	delete[] y;
 	return 0;
 }
