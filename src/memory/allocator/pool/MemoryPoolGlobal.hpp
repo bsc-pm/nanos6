@@ -20,7 +20,6 @@
 
 #include "lowlevel/SpinLock.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
-#include <VirtualMemoryManagement.hpp>
 
 class MemoryPoolGlobal {
 private:
@@ -44,12 +43,8 @@ private:
 		int rc = memkind_posix_memalign(_memoryKind, &_curMemoryChunk, _pageSize, _globalAllocSize);
 		FatalErrorHandler::check(rc == MEMKIND_SUCCESS, " when trying to allocate a memory chunk for the global allocator");
 #else
-		_curMemoryChunk = VirtualMemoryManagement::allocLocalNUMA(_globalAllocSize, _NUMANodeId);
-		FatalErrorHandler::failIf(
-			_curMemoryChunk == nullptr,
-			"could not allocate a memory chunk for the global allocator"
-		);
-
+		int rc = posix_memalign(&_curMemoryChunk, _pageSize, _globalAllocSize);
+		FatalErrorHandler::handle(rc, " when trying to allocate a memory chunk for the global allocator");
 #endif
 		numa_setlocal_memory(_curMemoryChunk, _globalAllocSize);
 		_oldMemoryChunks.push_back(_curMemoryChunk);
@@ -74,11 +69,13 @@ public:
 	
 	~MemoryPoolGlobal()
 	{
-#if HAVE_MEMKIND
 		for (auto it : _oldMemoryChunks) {
+#if HAVE_MEMKIND
 			memkind_free(_memoryKind, it);
-		}
+#else
+			free(it);
 #endif
+		}
 	}
 	
 	void *getMemory(size_t minSize, size_t &chunkSize)
