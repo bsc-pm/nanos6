@@ -9,7 +9,6 @@
 
 #include "tasks/Task.hpp"
 #include "tasks/TaskDeviceData.hpp"
-#include "hardware/cuda/CUDAManager.hpp"
 
 #include <nanos6/cuda_device.h>
 
@@ -17,7 +16,7 @@
 #include <cuda_runtime_api.h>
 #endif
 
-CUDAComputePlace::CUDAComputePlace(int device, cudaDeviceProp &properties)
+CUDAComputePlace::CUDAComputePlace(int device)
 	: ComputePlace(device, nanos6_device_t::nanos6_cuda_device)
 {
 }
@@ -65,7 +64,6 @@ void CUDAComputePlace::runTask(Task *task)
 	nanos6_cuda_device_environment_t env;
 	env.stream = taskData->_stream->getStream();
 	
-	/* Call the task body */
 	task->body((void *) &env);
 	
 	CUDAEvent *event = _eventPool.getEvent();

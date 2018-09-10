@@ -132,10 +132,10 @@ void CPUManager::preinitialize()
 	FatalErrorHandler::handle(rc, " when retrieving the affinity of the process");
 	
 	// Get NUMA nodes
-	_NUMANodeMask.resize(HardwareInfo::getMemoryNodeCount());
+	_NUMANodeMask.resize(HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device));
 	
 	// Get CPU objects that can run a thread
-	std::vector<ComputePlace *> const &cpus = HardwareInfo::getComputeNodes();
+	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
 	
 	size_t maxSystemCPUId = 0;
 	for (auto const *computePlace : cpus) {

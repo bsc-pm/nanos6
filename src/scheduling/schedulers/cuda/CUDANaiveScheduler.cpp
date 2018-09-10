@@ -7,8 +7,8 @@
 #include "CUDANaiveScheduler.hpp"
 
 #include "tasks/Task.hpp"
+#include "hardware/HardwareInfo.hpp"
 #include "hardware/cuda/compute/CUDAComputePlace.hpp"
-#include "hardware/cuda/CUDAManager.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -18,8 +18,8 @@
 CUDANaiveScheduler::CUDANaiveScheduler(__attribute__((unused)) int numaNodeIndex)
 {
 	// Populate idle queues
-	for(unsigned int i = 0; i < CUDAManager::getDeviceCount(); ++i){
-		CUDAComputePlace *gpu = CUDAManager::getComputePlace(i);
+	for (unsigned int i = 0; i < HardwareInfo::getComputePlaceCount(nanos6_device_t::nanos6_cuda_device); ++i) {
+		CUDAComputePlace *gpu = (CUDAComputePlace *) HardwareInfo::getComputePlace(nanos6_device_t::nanos6_cuda_device, i);
 		_idleGpus.push_back(gpu);
 	}
 }

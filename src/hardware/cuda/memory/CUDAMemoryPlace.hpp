@@ -15,18 +15,17 @@ class Task;
 
 class CUDAMemoryPlace: public MemoryPlace {
 public:
-	CUDAMemoryPlace(int device, cudaDeviceProp &properties)
+	CUDAMemoryPlace(int device)
 		: MemoryPlace(device, nanos6_device_t::nanos6_cuda_device) 
 	{}
 	
 	~CUDAMemoryPlace()
 	{}
 	
-	virtual void preRunTask(Task *task) = 0;
-	virtual void runTask(Task *task) = 0;
-	virtual void postRunTask(Task *task) = 0;
+	void preRunTask(Task *task);
+	void runTask(Task *task);
+	void postRunTask(Task *task);
 	
-	static CUDAMemoryPlace *createCUDAMemory(std::string const &memoryMode, int device, cudaDeviceProp &properties);
 };
 
 #endif //CUDA_MEMORY_PLACE_HPP

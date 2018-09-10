@@ -33,10 +33,6 @@
 
 #include <config.h>
 
-#ifdef USE_CUDA
-#include "hardware/cuda/CUDAManager.hpp"
-#endif
-
 static std::atomic<int> shutdownDueToSignalNumber(0);
 
 static ExternalThread *mainThread = nullptr;
@@ -99,10 +95,6 @@ void nanos_preinit(void) {
 	ThreadManager::initialize();
 	DependencySystem::initialize();
 	LeaderThread::initialize();
-	
-	#ifdef USE_CUDA
-	CUDAManager::initialize();
-	#endif
 }
 
 
@@ -137,10 +129,6 @@ void nanos_shutdown(void) {
 	while (SpawnedFunctions::_pendingSpawnedFunctions > 0) {
 		// Wait for spawned functions to fully end
 	}
-	
-	#ifdef USE_CUDA
-	CUDAManager::shutdown();
-	#endif
 	
 	LeaderThread::shutdown();
 	ThreadManager::shutdown();

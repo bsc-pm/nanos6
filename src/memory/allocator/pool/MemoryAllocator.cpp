@@ -63,7 +63,7 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 
 void MemoryAllocator::initialize()
 {
-	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+	size_t NUMANodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	
 	_globalMemoryPool.resize(NUMANodeCount);
 	
@@ -71,7 +71,7 @@ void MemoryAllocator::initialize()
 		_globalMemoryPool[i] = new MemoryPoolGlobal(i);
 	}
 	
-	_localMemoryPool.resize(HardwareInfo::getComputeNodeCount());
+	_localMemoryPool.resize(HardwareInfo::getComputePlaceCount(nanos6_device_t::nanos6_host_device));
 }
 
 void MemoryAllocator::shutdown()

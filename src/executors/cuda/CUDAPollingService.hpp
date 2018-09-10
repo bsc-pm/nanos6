@@ -11,28 +11,26 @@
 
 #include "lowlevel/SpinLock.hpp" 
 
-#include "hardware/cuda/compute/CUDAComputePlace.hpp"
-#include "hardware/cuda/memory/CUDAMemoryPlace.hpp"
+#include "hardware/cuda/CUDADevice.hpp"
 
 class Task;
 
-class CUDAHelper {
+class CUDAPollingService {
 
 private:
 	std::string _serviceName;
-	CUDAComputePlace *_computePlace;
-	CUDAMemoryPlace *_memoryPlace;
+	CUDADevice *_device;
 	SpinLock _lock;
 	
 	void finishTask(Task *task);
 	void launchTask(Task *task);	
 public:	
-	CUDAHelper(CUDAComputePlace *computePlace, CUDAMemoryPlace *memoryPlace);
+	CUDAPollingService(CUDADevice *device);
 	
-	CUDAHelper(CUDAHelper const &) = delete;
-	CUDAHelper operator=(CUDAHelper const &) = delete;
+	CUDAPollingService(CUDAPollingService const &) = delete;
+	CUDAPollingService operator=(CUDAPollingService const &) = delete;
 	
-	~CUDAHelper();
+	~CUDAPollingService();
 	
 	//! \brief Register the polling service 
 	void start();

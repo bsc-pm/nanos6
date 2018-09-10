@@ -49,7 +49,7 @@ public:
 
 	static inline bool canBeCollapsed()
 	{
-		return (HardwareInfo::getMemoryNodeCount() == 1);
+		return (HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device) == 1);
 	}
 	
 	std::string getName() const;

@@ -24,11 +24,11 @@
 
 
 NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
-	: _NUMANodeScheduler(HardwareInfo::getMemoryNodeCount()),
-	_readyTasks(HardwareInfo::getMemoryNodeCount()),
-	_enabledCPUs(HardwareInfo::getMemoryNodeCount())
+	: _NUMANodeScheduler(HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device)),
+	_readyTasks(HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device)),
+	_enabledCPUs(HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device))
 {
-	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+	size_t NUMANodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
 
 	for (CPU *cpu : cpus) {
@@ -71,7 +71,7 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 		
 		return nullptr;
 	} else {
-		size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+		size_t NUMANodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 		
 		/* Get the least loaded NUMA node */
 		int min_load = -1;
@@ -154,7 +154,7 @@ ComputePlace *NUMAHierarchicalScheduler::getIdleComputePlace(bool force)
 	if (force) {
 		return CPUManager::getIdleCPU();
 	} else {
-		size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+		size_t NUMANodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 		ComputePlace *computePlace = nullptr;
 
 		for (size_t numa = 0; numa < NUMANodeCount; ++numa) {
@@ -211,7 +211,7 @@ std::string NUMAHierarchicalScheduler::getName() const
 
 size_t NUMAHierarchicalScheduler::getAvailableNUMANodeCount()
 {
-	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+	size_t NUMANodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	size_t availableNUMANodeCount = 0;
 	
 	for (size_t numa = 0; numa < NUMANodeCount; ++numa) {

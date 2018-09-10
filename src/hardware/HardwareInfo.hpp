@@ -12,76 +12,51 @@
 #include "places/MemoryPlace.hpp"
 #include "places/ComputePlace.hpp"
 
+#include "hwinfo/DeviceInfo.hpp"
+#include "hwinfo/HostInfo.hpp"
+
 class HardwareInfo {
 private:
-	typedef std::vector<MemoryPlace*> memory_nodes_t;
-	// When new compute places are added, this can become a vector of vectors ([device type][device id])
-	typedef std::vector<ComputePlace*> compute_nodes_t;
-	
-	// \brief Physical memory places. For instance, 2 NUMA nodes are 2 different memory places.
-	static memory_nodes_t _memoryNodes;
-	// \brief Logical compute places.
-	static compute_nodes_t _computeNodes;
-	// \brief L1 cache line size
-	static size_t _cacheLineSize;
-	
-	// \brief PAGE_SIZE of the system
-	static size_t _pageSize;
-	// \brief total amount of physical memory of the system
-	static size_t _physicalMemorySize;
+	static std::vector<DeviceInfo *> _infos;
 	
 public:
-	// Generic methods
 	static void initialize();
 	static void shutdown();
-
-	// ComputeNodes related methods
-	// When new compute places are added, a new parameter type could be added
-	static inline size_t getComputeNodeCount(void)
+	
+	static inline size_t getComputePlaceCount(nanos6_device_t type)
 	{
-		return _computeNodes.size();
+		return _infos[type]->getComputePlaceCount();
 	}
-
-	static inline ComputePlace* getComputeNode(int index)
+	static inline ComputePlace* getComputePlace(nanos6_device_t type, int index)
 	{
-		return _computeNodes[index];
-	}
-
-	static inline std::vector<ComputePlace*> const &getComputeNodes()
-	{
-		return _computeNodes;
-	}
-
-	// MemoryNodes related methods
-	static inline size_t getMemoryNodeCount(void)
-	{
-		return _memoryNodes.size();
-	}
-
-	static inline MemoryPlace* getMemoryNode(int index)
-	{
-		return _memoryNodes[index];
-	}
-
-	static inline std::vector<MemoryPlace*> const &getMemoryNodes()
-	{
-		return _memoryNodes;
+		return _infos[type]->getComputePlace(index);
 	}
 	
-	// Cache methods
+	static inline size_t getMemoryPlaceCount(nanos6_device_t type)
+	{
+		return _infos[type]->getMemoryPlaceCount();
+	}
+	static inline MemoryPlace* getMemoryPlace(nanos6_device_t type, int index)
+	{
+		return _infos[type]->getMemoryPlace(index);
+	}
+	
+ 	static DeviceInfo *getDeviceInfo(nanos6_device_t type)
+	{
+		return _infos[type];
+	}
+	
 	static inline size_t getCacheLineSize(void)
 	{
-		return _cacheLineSize;
-	}
-	
+		return ((HostInfo *)_infos[nanos6_device_t::nanos6_host_device])->getCacheLineSize();
+	}	
 	static inline size_t getPageSize(void)
 	{
-		return _pageSize;
+		return ((HostInfo *)_infos[nanos6_device_t::nanos6_host_device])->getPageSize();
 	}
-	
 	static inline size_t getPhysicalMemorySize(void)
 	{
-		return _physicalMemorySize;
+		return ((HostInfo *)_infos[nanos6_device_t::nanos6_host_device])->getPhysicalMemorySize();
 	}
 };
 

@@ -26,7 +26,7 @@ private:
 public:
 	using CUDATaskList = std::vector<Task*>;
 	
-	CUDAComputePlace(int device, cudaDeviceProp &properties);
+	CUDAComputePlace(int device);
 	~CUDAComputePlace();
 	
 	//! \brief Returns a list of tasks which kernels have finished 

@@ -124,7 +124,7 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 
 inline WorkerThread *ThreadManager::getAnyIdleThread()
 {
-	size_t numNumaNodes = HardwareInfo::getMemoryNodeCount();
+	size_t numNumaNodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	for (size_t i = 0; i < numNumaNodes; i++) {
 		IdleThreads &idleThreads = _idleThreads[i];
 		

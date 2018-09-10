@@ -16,7 +16,7 @@ TreeScheduler::TreeScheduler() : _schedRRCounter(0)
 {
 	_topScheduler = new NodeScheduler();
 	
-	size_t NUMANodeCount = HardwareInfo::getMemoryNodeCount();
+	size_t NUMANodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
 	
 	_CPUScheduler.resize(cpus.size());

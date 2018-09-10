@@ -5,13 +5,15 @@
 */
 
 #include "CUDAMemoryPlace.hpp"
-#include "CUDAUnifiedMemory.hpp"
 
-#include "lowlevel/FatalErrorHandler.hpp"
+#include "tasks/Task.hpp"
 
-CUDAMemoryPlace *CUDAMemoryPlace::createCUDAMemory(std::string const &memoryMode, int index, cudaDeviceProp &properties)
-{
-	FatalErrorHandler::failIf(memoryMode != "unified" && memoryMode != "default", "Only \"unified\" memory mode is supported");
-	return new CUDAUnifiedMemory(index, properties);
-}
+void CUDAMemoryPlace::preRunTask(Task *task)
+{}
+
+void CUDAMemoryPlace::runTask(Task *task)
+{}
+
+void CUDAMemoryPlace::postRunTask(Task *task)
+{}
 

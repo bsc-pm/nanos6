@@ -30,7 +30,7 @@ std::atomic<long> ThreadManager::_totalThreads(0);
 
 void ThreadManager::initialize()
 {
-	size_t numaNodeCount = HardwareInfo::getMemoryNodeCount();
+	size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_idleThreads = new IdleThreads[numaNodeCount];
 }
 
