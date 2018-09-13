@@ -658,6 +658,7 @@ noinst_HEADERS = \
 	src/hardware/cuda/compute/synchronization/CUDAEventPool.hpp \
 	src/hardware/cuda/memory/CUDAMemoryPlace.hpp \
 	src/hardware/HardwareInfo.hpp \
+	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
