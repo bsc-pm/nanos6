@@ -25,7 +25,7 @@ extern "C" {
 //! \returns true to signal that the purpose of the function has been
 //! achieved and that the function should not be called again with the given
 //! service_data
-typedef int (*nanos_polling_service_t)(void *service_data);
+typedef int (*nanos6_polling_service_t)(void *service_data);
 
 
 //! \brief Register a function and parameter of that function that the runtime
@@ -46,22 +46,22 @@ typedef int (*nanos_polling_service_t)(void *service_data);
 //! 
 //! The service will remain registered as long as the function returns false and
 //! the service has not been explicitly deregistered through a call to
-//! nanos_unregister_polling_service.
+//! nanos6_unregister_polling_service.
 //! 
 //! \param[in] service_name a string that identifies the kind of service that will
 //! be serviced
 //! \param[in] service the function that the runtime should call periodically
 //! \param service_data an opaque pointer to data that is passed to the service
 //! function
-void nanos_register_polling_service(char const *service_name, nanos_polling_service_t service_function, void *service_data);
+void nanos6_register_polling_service(char const *service_name, nanos6_polling_service_t service_function, void *service_data);
 
 
 //! \brief Unregister a function and parameter of that function previously
-//! registered through a call to nanos_register_polling_service.
+//! registered through a call to nanos6_register_polling_service.
 //! 
 //! Unregister a service instance identified by the service_function and
 //! service_data previously registered through a call to
-//! nanos_register_polling_service. The service_function must not have returned
+//! nanos6_register_polling_service. The service_function must not have returned
 //! true when called with the given service_data, since that return value is
 //! equivalent to a call to this function.
 //! 
@@ -70,7 +70,7 @@ void nanos_register_polling_service(char const *service_name, nanos_polling_serv
 //! periodically with the given service_data
 //! \param service_data an opaque pointer to the data that was passed to the
 //! service function
-void nanos_unregister_polling_service(char const *service_name, nanos_polling_service_t service_function, void *service_data);
+void nanos6_unregister_polling_service(char const *service_name, nanos6_polling_service_t service_function, void *service_data);
 
 
 #ifdef __cplusplus

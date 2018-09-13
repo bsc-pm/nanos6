@@ -15,7 +15,7 @@
 #include "tasks/TaskImplementation.hpp"
 
 
-extern "C" void *nanos_get_current_event_counter()
+extern "C" void *nanos6_get_current_event_counter()
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
@@ -27,7 +27,7 @@ extern "C" void *nanos_get_current_event_counter()
 }
 
 
-extern "C" void nanos_increase_current_task_event_counter(__attribute__((unused)) void *event_counter, unsigned int increment)
+extern "C" void nanos6_increase_current_task_event_counter(__attribute__((unused)) void *event_counter, unsigned int increment)
 {
 	assert(event_counter != 0);
 	if (increment == 0) return;
@@ -43,7 +43,7 @@ extern "C" void nanos_increase_current_task_event_counter(__attribute__((unused)
 }
 
 
-extern "C" void nanos_decrease_task_event_counter(void *event_counter, unsigned int decrement)
+extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned int decrement)
 {
 	assert(event_counter != 0);
 	if (decrement == 0) return;

@@ -9,39 +9,39 @@
 
 #pragma GCC visibility push(default)
 
-void nanos_preinit()
+void nanos6_preinit()
 {
-	typedef void nanos_preinit_t();
+	typedef void nanos6_preinit_t();
 	
-	static nanos_preinit_t *symbol = NULL;
+	static nanos6_preinit_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_preinit_t *) _nanos6_resolve_symbol("nanos_preinit", "essential", NULL);
+		symbol = (nanos6_preinit_t *) _nanos6_resolve_symbol("nanos6_preinit", "essential", NULL);
 	}
 	
 	(*symbol)();
 }
 
 
-void nanos_init()
+void nanos6_init()
 {
-	typedef void nanos_init_t();
+	typedef void nanos6_init_t();
 	
-	static nanos_init_t *symbol = NULL;
+	static nanos6_init_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_init_t *) _nanos6_resolve_symbol("nanos_init", "essential", NULL);
+		symbol = (nanos6_init_t *) _nanos6_resolve_symbol("nanos6_init", "essential", NULL);
 	}
 	
 	(*symbol)();
 }
 
 
-void nanos_shutdown()
+void nanos6_shutdown()
 {
-	typedef void nanos_shutdown_t();
+	typedef void nanos6_shutdown_t();
 	
-	static nanos_shutdown_t *symbol = NULL;
+	static nanos6_shutdown_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_shutdown_t *) _nanos6_resolve_symbol("nanos_shutdown", "essential", NULL);
+		symbol = (nanos6_shutdown_t *) _nanos6_resolve_symbol("nanos6_shutdown", "essential", NULL);
 	}
 	
 	(*symbol)();

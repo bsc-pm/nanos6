@@ -21,7 +21,7 @@ extern "C" {
 typedef signed long nanos6_priority_t;
 
 
-//! \brief This needs to be incremented every time there is an update to the nanos_task_info::run
+//! \brief This needs to be incremented every time there is an update to the nanos6_task_info::run
 enum nanos6_task_execution_api_t { nanos6_task_execution_api = 1 };
 
 
@@ -79,7 +79,7 @@ typedef struct
 } nanos6_task_implementation_info_t;
 
 
-//! \brief This needs to be incremented every time that there is a change in nanos_task_info
+//! \brief This needs to be incremented every time that there is a change in nanos6_task_info
 enum nanos6_task_info_contents_t { nanos6_task_info_contents = 6 };
 
 //! \brief Struct that contains the common parts that all tasks of the same type share
@@ -90,7 +90,7 @@ typedef struct
 	
 	//! \brief Function that the runtime calls to retrieve the information needed to calculate the dependencies
 	//! 
-	//! This function should call the nanos_register_input_dep, nanos_register_output_dep and nanos_register_inout_dep
+	//! This function should call the nanos6_register_input_dep, nanos6_register_output_dep and nanos6_register_inout_dep
 	//! functions to pass to the runtime the information needed to calculate the dependencies
 	//! 
 	//! \param[in] handler a handler to be passed on to the registration functions
@@ -137,7 +137,7 @@ typedef struct
 	//! \param[in] oss_in a pointer to the data which needs to be combined
 	//! \param[in] size the size (in Bytes) of the data to be combined
 	void (**reduction_combiners)(void *oss_out, void *oss_in, size_t size);
-} nanos_task_info __attribute__((aligned(64)));
+} nanos6_task_info __attribute__((aligned(64)));
 
 
 //! \brief Struct that contains data shared by all tasks invoked at fixed location in the source code
@@ -145,7 +145,7 @@ typedef struct
 {
 	//! \brief A string that identifies the source code location of the task invocation
 	char const *invocation_source;
-} nanos_task_invocation_info __attribute__((aligned(64)));
+} nanos6_task_invocation_info __attribute__((aligned(64)));
 
 
 //! \brief This needs to be incremented on every change to the instantiation API
@@ -153,30 +153,30 @@ enum nanos6_instantiation_api_t { nanos6_instantiation_api = 3 };
 
 typedef enum {
 	//! Specifies that the task will be a final task
-	nanos_final_task = (1 << 0),
+	nanos6_final_task = (1 << 0),
 	//! Specifies that the task is in "if(0)" mode
-	nanos_if_0_task = (1 << 1),
+	nanos6_if_0_task = (1 << 1),
 	//! Specifies that the task is really a taskloop
-	nanos_taskloop_task = (1 << 2),
+	nanos6_taskloop_task = (1 << 2),
 	//! Specifies that the task has the "wait" clause
-	nanos_waiting_task = (1 << 3)
-} nanos_task_flag;
+	nanos6_waiting_task = (1 << 3)
+} nanos6_task_flag;
 
 
 //! \brief Allocate space for a task and its parameters
 //! 
 //! This function creates a task and allocates space for its parameters.
 //! After calling it, the user code should fill out the block of data stored in args_block_pointer,
-//! and call nanos_submit_task with the contents stored in task_pointer.
+//! and call nanos6_submit_task with the contents stored in task_pointer.
 //! 
-//! \param[in] task_info a pointer to the nanos_task_info structure
-//! \param[in] task_invocation_info a pointer to the nanos_task_invocation_info structure
+//! \param[in] task_info a pointer to the nanos6_task_info structure
+//! \param[in] task_invocation_info a pointer to the nanos6_task_invocation_info structure
 //! \param[in] args_block_size size needed to store the paramerters passed to the task call
 //! \param[out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call
 //! \param[out] task_pointer a pointer to a location to store the task handler
-void nanos_create_task(
-	nanos_task_info *task_info,
-	nanos_task_invocation_info *task_invocation_info,
+void nanos6_create_task(
+	nanos6_task_info *task_info,
+	nanos6_task_invocation_info *task_invocation_info,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
 	/* OUT */ void **task_pointer,
@@ -186,10 +186,10 @@ void nanos_create_task(
 
 //! \brief Submit a task
 //! 
-//! This function should be called after filling out the block of parameters of the task. See nanos_create_task.
+//! This function should be called after filling out the block of parameters of the task. See nanos6_create_task.
 //! 
 //! \param[in] task The task handler
-void nanos_submit_task(void *task);
+void nanos6_submit_task(void *task);
 
 
 #ifdef __cplusplus

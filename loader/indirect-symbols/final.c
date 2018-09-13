@@ -10,25 +10,25 @@
 #pragma GCC visibility push(default)
 
 static signed int signed_int_always_false(void) { return 0; }
-signed int nanos_in_final(void)
+signed int nanos6_in_final(void)
 {
-	typedef signed int nanos_in_final_t();
+	typedef signed int nanos6_in_final_t();
 	
-	static nanos_in_final_t *symbol = NULL;
+	static nanos6_in_final_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_in_final_t *) _nanos6_resolve_symbol_with_local_fallback("nanos_in_final", "final tasks", signed_int_always_false, "always false");
+		symbol = (nanos6_in_final_t *) _nanos6_resolve_symbol_with_local_fallback("nanos6_in_final", "final tasks", signed_int_always_false, "always false");
 	}
 	
 	return (*symbol)();
 }
 
-signed int nanos_in_serial_context(void)
+signed int nanos6_in_serial_context(void)
 {
-	typedef signed int nanos_in_serial_context_t();
+	typedef signed int nanos6_in_serial_context_t();
 	
-	static nanos_in_serial_context_t *symbol = NULL;
+	static nanos6_in_serial_context_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_in_serial_context_t *) _nanos6_resolve_symbol_with_local_fallback("nanos_in_serial_context", "final tasks", signed_int_always_false, "always false");
+		symbol = (nanos6_in_serial_context_t *) _nanos6_resolve_symbol_with_local_fallback("nanos6_in_serial_context", "final tasks", signed_int_always_false, "always false");
 	}
 	
 	return (*symbol)();

@@ -31,7 +31,7 @@ for type in $* ; do
 	fi
 	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
-		name=nanos_release_${type}_${dimensions}
+		name=nanos6_release_${type}_${dimensions}
 		
 		generate_release_full_prototype ${dimensions} ${type}
 		echo " {"

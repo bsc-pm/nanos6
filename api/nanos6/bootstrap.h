@@ -37,15 +37,15 @@ typedef struct {
 
 
 //! \brief Initialize the runtime at least to the point that it will accept tasks
-void nanos_preinit(void);
+void nanos6_preinit(void);
 
 //! \brief Continue with the rest of the runtime initialization
-void nanos_init(void);
+void nanos6_init(void);
 
 //! \brief Force the runtime to be shut down
 // 
 // This function is used to shut down the runtime
-void nanos_shutdown(void);
+void nanos6_shutdown(void);
 
 //! \brief Initialize memory interception
 //! 

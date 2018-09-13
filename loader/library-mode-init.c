@@ -22,12 +22,12 @@ __attribute__ ((used)) char const * nanos6_library_mode_init()
 		return _nanos6_error_text;
 	}
 	
-	nanos_preinit();
+	nanos6_preinit();
 	if (_nanos6_exit_with_error) {
 		return _nanos6_error_text;
 	}
 	
-	nanos_init();
+	nanos6_init();
 	if (_nanos6_exit_with_error) {
 		return _nanos6_error_text;
 	}

@@ -40,7 +40,7 @@ public:
 	
 	void body()
 	{
-		_blockerCPU = nanos_get_current_system_cpu();
+		_blockerCPU = nanos6_get_current_system_cpu();
 		_condVar.wait();
 	}
 };
@@ -50,16 +50,16 @@ class CPUStatusFunctor : public Functor {
 	long _cpu;
 	
 public:
-	typedef nanos_cpu_status_t type;
+	typedef nanos6_cpu_status_t type;
 	
 	CPUStatusFunctor(long cpu)
 		: _cpu(cpu)
 	{
 	}
 	
-	nanos_cpu_status_t operator()()
+	nanos6_cpu_status_t operator()()
 	{
-		return nanos_get_cpu_status(_cpu);
+		return nanos6_get_cpu_status(_cpu);
 	}
 };
 
@@ -76,7 +76,7 @@ public:
 	
 	void body()
 	{
-		long cpu = nanos_get_current_system_cpu();
+		long cpu = nanos6_get_current_system_cpu();
 		
 		// Weak check since we cannot guarantee that a CPU will not run (only) one task
 		tap.evaluateWeak(
@@ -86,8 +86,8 @@ public:
 		);
 		if (cpu != _expectedCPU) {
 			tap.emitDiagnostic("Expected ", _expectedCPU, " got ", cpu);
-			tap.emitDiagnostic("CPU ", _expectedCPU, " in activation status ", nanos_get_cpu_status(_expectedCPU));
-			tap.emitDiagnostic("CPU ", cpu, " in activation status ", nanos_get_cpu_status(_expectedCPU));
+			tap.emitDiagnostic("CPU ", _expectedCPU, " in activation status ", nanos6_get_cpu_status(_expectedCPU));
+			tap.emitDiagnostic("CPU ", cpu, " in activation status ", nanos6_get_cpu_status(_expectedCPU));
 		}
 		
 		_tasksPerCPU[cpu]++;
@@ -97,9 +97,9 @@ public:
 
 
 int main(int argc, char **argv) {
-	nanos_wait_for_full_initialization();
+	nanos6_wait_for_full_initialization();
 	
-	long activeCPUs = nanos_get_num_cpus();
+	long activeCPUs = nanos6_get_num_cpus();
 	tap.emitDiagnostic("Detected ", activeCPUs, " CPUs");
 	
 	if (activeCPUs == 1) {
@@ -146,46 +146,46 @@ int main(int argc, char **argv) {
 	long blockerCPU = _blockerCPU;
 	
 	tap.evaluate(
-		nanos_get_cpu_status(blockerCPU) == nanos_enabled_cpu,
+		nanos6_get_cpu_status(blockerCPU) == nanos6_enabled_cpu,
 		"Check that the CPU that runs a task is enabled"
 	); // 2
 	
-	nanos_disable_cpu(blockerCPU);
+	nanos6_disable_cpu(blockerCPU);
 	tap.evaluate(
-		nanos_get_cpu_status(blockerCPU) == nanos_disabling_cpu,
+		nanos6_get_cpu_status(blockerCPU) == nanos6_disabling_cpu,
 		"Check that attempting to disable a CPU will set it to disabling status"
 	); // 3
 	tap.bailOutAndExitIfAnyFailed();
 	
 	CPUStatusFunctor cpuStatusFunctor(blockerCPU);
-	nanos_cpu_status_t expectedStatus = nanos_disabled_cpu;
+	nanos6_cpu_status_t expectedStatus = nanos6_disabled_cpu;
 	
 	blocker->_condVar.signal();
 	tap.timedEvaluate(
-		Equal<CPUStatusFunctor, nanos_cpu_status_t>(cpuStatusFunctor, expectedStatus),
+		Equal<CPUStatusFunctor, nanos6_cpu_status_t>(cpuStatusFunctor, expectedStatus),
 		1000000, // 1 second
 		"Check that the CPU completes the deactivation in a reasonable amount of time"
 	); // 4
 	tap.bailOutAndExitIfAnyFailed();
 	
-	nanos_disable_cpu(blockerCPU);
+	nanos6_disable_cpu(blockerCPU);
 	tap.evaluate(
-		nanos_get_cpu_status(blockerCPU) == nanos_disabled_cpu,
+		nanos6_get_cpu_status(blockerCPU) == nanos6_disabled_cpu,
 		"Check that attempting to disable an already disabled CPU keeps it untouched"
 	); // 5
 	
-	expectedStatus = nanos_enabled_cpu;
-	nanos_enable_cpu(blockerCPU);
+	expectedStatus = nanos6_enabled_cpu;
+	nanos6_enable_cpu(blockerCPU);
 	tap.timedEvaluate(
-		Equal<CPUStatusFunctor, nanos_cpu_status_t>(cpuStatusFunctor, expectedStatus),
+		Equal<CPUStatusFunctor, nanos6_cpu_status_t>(cpuStatusFunctor, expectedStatus),
 		1000000, // 1 second
 		"Check that enabling a CPU will eventually set it to enabled"
 	); // 6
 	tap.bailOutAndExitIfAnyFailed();
 	
-	nanos_enable_cpu(blockerCPU);
+	nanos6_enable_cpu(blockerCPU);
 	tap.evaluate(
-		nanos_get_cpu_status(blockerCPU) == nanos_enabled_cpu,
+		nanos6_get_cpu_status(blockerCPU) == nanos6_enabled_cpu,
 		"Check that reenabling a CPU does not change its status"
 	); // 7
 	tap.bailOutAndExitIfAnyFailed();
@@ -203,16 +203,16 @@ int main(int argc, char **argv) {
 	tap.emitDiagnostic("***  ", activeCPUs*VALIDATION_STEPS_PER_CPU, " tests ***");
 	tap.emitDiagnostic("*****************");
 	
-	long thisCPU = nanos_get_current_system_cpu();
+	long thisCPU = nanos6_get_current_system_cpu();
 	
 	tap.emitDiagnostic("Will be using CPU ", thisCPU);
 	
 	// Disable all other CPUs
-	for (void *cpuIterator = nanos_cpus_begin(); cpuIterator != nanos_cpus_end(); cpuIterator = nanos_cpus_advance(cpuIterator)) {
-		long cpu = nanos_cpus_get(cpuIterator);
+	for (void *cpuIterator = nanos6_cpus_begin(); cpuIterator != nanos6_cpus_end(); cpuIterator = nanos6_cpus_advance(cpuIterator)) {
+		long cpu = nanos6_cpus_get(cpuIterator);
 		if (cpu != thisCPU) {
 			tap.emitDiagnostic("Disabling CPU ", cpu);
-			nanos_disable_cpu(cpu);
+			nanos6_disable_cpu(cpu);
 		} else {
 			tap.emitDiagnostic("Not disabling CPU ", cpu);
 		}
@@ -244,8 +244,8 @@ int main(int argc, char **argv) {
 	tap.emitDiagnostic("*** ", activeCPUs-1, " tests  ***");
 	tap.emitDiagnostic("*****************");
 	
-	for (void *cpuIterator = nanos_cpus_begin(); cpuIterator != nanos_cpus_end(); cpuIterator = nanos_cpus_advance(cpuIterator)) {
-		long cpu = nanos_cpus_get_virtual(cpuIterator);
+	for (void *cpuIterator = nanos6_cpus_begin(); cpuIterator != nanos6_cpus_end(); cpuIterator = nanos6_cpus_advance(cpuIterator)) {
+		long cpu = nanos6_cpus_get_virtual(cpuIterator);
 		if (cpu != thisCPU) {
 			tap.evaluate(
 				tasksPerCPU[cpu] <= 1,

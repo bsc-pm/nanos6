@@ -14,7 +14,7 @@
 #include "executors/threads/WorkerThread.hpp"
 
 
-void *nanos_get_original_reduction_address(const void *address)
+void *nanos6_get_original_reduction_address(const void *address)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);

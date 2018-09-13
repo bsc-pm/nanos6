@@ -34,7 +34,7 @@ Atomic<bool> ready(false);
 
 int main()
 {
-	long activeCPUs = nanos_get_num_cpus();
+	long activeCPUs = nanos6_get_num_cpus();
 	double delayMultiplier = sqrt(activeCPUs);
 	
 	int fourTimesActiveCPUs = 4*activeCPUs;

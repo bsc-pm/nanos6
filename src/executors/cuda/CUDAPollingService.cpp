@@ -33,12 +33,12 @@ CUDAPollingService::~CUDAPollingService()
 
 void CUDAPollingService::start()
 {
-	nanos_register_polling_service(_serviceName.c_str(), (nanos_polling_service_t) &CUDAPollingService::runHelper, (void *) this);
+	nanos6_register_polling_service(_serviceName.c_str(), (nanos6_polling_service_t) &CUDAPollingService::runHelper, (void *) this);
 }
 
 void CUDAPollingService::stop()
 {
-	nanos_unregister_polling_service(_serviceName.c_str(), (nanos_polling_service_t) &CUDAPollingService::runHelper, (void *) this);
+	nanos6_unregister_polling_service(_serviceName.c_str(), (nanos6_polling_service_t) &CUDAPollingService::runHelper, (void *) this);
 }
 
 void CUDAPollingService::finishTask(Task *task)

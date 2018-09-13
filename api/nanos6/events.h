@@ -21,7 +21,7 @@ extern "C" {
 //!
 //! \returns the associated event counter with the executing task
 //!
-void *nanos_get_current_event_counter();
+void *nanos6_get_current_event_counter();
 
 //! \brief Increase the counter of events of the current task to prevent the release of dependencies
 //!
@@ -29,7 +29,7 @@ void *nanos_get_current_event_counter();
 //!
 //! \param[in] event_counter The event counter according with the current task
 //! \param[in] value The value to be incremented (must be positive or zero)
-void nanos_increase_current_task_event_counter(void *event_counter, unsigned int increment);
+void nanos6_increase_current_task_event_counter(void *event_counter, unsigned int increment);
 
 //! \brief Decrease the counter of events of a task and release the dependencies if required
 //!
@@ -39,7 +39,7 @@ void nanos_increase_current_task_event_counter(void *event_counter, unsigned int
 //!
 //! \param[in] event_counter The event counter of the task
 //! \param[in] value The value to be decremented (must be positive or zero)
-void nanos_decrease_task_event_counter(void *event_counter, unsigned int decrement);
+void nanos6_decrease_task_event_counter(void *event_counter, unsigned int decrement);
 
 #ifdef __cplusplus
 }

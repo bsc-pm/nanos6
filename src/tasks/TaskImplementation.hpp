@@ -19,8 +19,8 @@
 
 inline Task::Task(
 	void *argsBlock,
-	nanos_task_info *taskInfo,
-	nanos_task_invocation_info *taskInvokationInfo,
+	nanos6_task_info *taskInfo,
+	nanos6_task_invocation_info *taskInvokationInfo,
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags

@@ -71,48 +71,48 @@ void register_access(void *handler, void *start, size_t length, ReductionInfo...
 }
 
 
-void nanos_register_read_depinfo(void *handler, void *start, size_t length)
+void nanos6_register_read_depinfo(void *handler, void *start, size_t length)
 {
 	register_access<READ_ACCESS_TYPE, false>(handler, start, length);
 }
 
 
-void nanos_register_write_depinfo(void *handler, void *start, size_t length)
+void nanos6_register_write_depinfo(void *handler, void *start, size_t length)
 {
 	register_access<WRITE_ACCESS_TYPE, false>(handler, start, length);
 }
 
 
-void nanos_register_readwrite_depinfo(void *handler, void *start, size_t length)
+void nanos6_register_readwrite_depinfo(void *handler, void *start, size_t length)
 {
 	register_access<READWRITE_ACCESS_TYPE, false>(handler, start, length);
 }
 
 
-void nanos_register_weak_read_depinfo(void *handler, void *start, size_t length)
+void nanos6_register_weak_read_depinfo(void *handler, void *start, size_t length)
 {
 	register_access<READ_ACCESS_TYPE, true>(handler, start, length);
 }
 
 
-void nanos_register_weak_write_depinfo(void *handler, void *start, size_t length)
+void nanos6_register_weak_write_depinfo(void *handler, void *start, size_t length)
 {
 	register_access<WRITE_ACCESS_TYPE, true>(handler, start, length);
 }
 
 
-void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t length)
+void nanos6_register_weak_readwrite_depinfo(void *handler, void *start, size_t length)
 {
 	register_access<READWRITE_ACCESS_TYPE, true>(handler, start, length);
 }
 
 
-void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length)
+void nanos6_register_concurrent_depinfo(void *handler, void *start, size_t length)
 {
 	register_access<CONCURRENT_ACCESS_TYPE, false>(handler, start, length);
 }
 
-void nanos_register_region_reduction_depinfo1(
+void nanos6_register_region_reduction_depinfo1(
 		int reduction_operation, int reduction_index,
 		void *handler,
 		int symbol_index,

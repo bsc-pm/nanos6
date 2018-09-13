@@ -37,7 +37,7 @@ True< Atomic<bool> > isReady(ready);
 
 int main()
 {
-	long activeCPUs = nanos_get_num_cpus();
+	long activeCPUs = nanos6_get_num_cpus();
 	double delayMultiplier = sqrt(activeCPUs);
 	
 	int x = 0;

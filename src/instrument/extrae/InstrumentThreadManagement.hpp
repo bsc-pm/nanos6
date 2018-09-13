@@ -106,7 +106,7 @@ namespace Instrument {
 		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.writeLock();
-			ExtraeAPI::change_num_threads(extrae_nanos_get_num_threads());
+			ExtraeAPI::change_num_threads(extrae_nanos6_get_num_threads());
 			_extraeThreadCountLock.writeUnlock();
 		}
 		
@@ -217,9 +217,9 @@ namespace Instrument {
 		
 		_extraeThreadCountLock.writeLock();
 		if (_traceAsThreads) {
-			ExtraeAPI::change_num_threads(extrae_nanos_get_num_threads());
+			ExtraeAPI::change_num_threads(extrae_nanos6_get_num_threads());
 		} else {
-			ExtraeAPI::change_num_threads(extrae_nanos_get_num_cpus_and_external_threads());
+			ExtraeAPI::change_num_threads(extrae_nanos6_get_num_cpus_and_external_threads());
 		}
 		_extraeThreadCountLock.writeUnlock();
 		

@@ -32,7 +32,7 @@ __attribute__ ((used)) char const * nanos6_library_mode_init();
 //! \param completion_callback an optional function that will be called when the function finishes
 //! \param completion_args a parameter that is passed to the completion callback
 //! \param label an optional name for the function
-void nanos_spawn_function(
+void nanos6_spawn_function(
 	void (*function)(void *),
 	void *args,
 	void (*completion_callback)(void *),

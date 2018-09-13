@@ -31,7 +31,7 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " --> nanos_block_current_task task:" << taskId;
+		logEntry->_contents << " --> nanos6_block_current_task task:" << taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -48,7 +48,7 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-- nanos_block_current_task task:" << taskId;
+		logEntry->_contents << " <-- nanos6_block_current_task task:" << taskId;
 		
 		addLogEntry(logEntry);
 	}
@@ -65,7 +65,7 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> nanos_unblock_task task:" << taskId;
+		logEntry->_contents << " <-> nanos6_unblock_task task:" << taskId;
 		
 		addLogEntry(logEntry);
 	}

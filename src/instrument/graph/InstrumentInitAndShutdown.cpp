@@ -70,19 +70,19 @@ namespace Instrument {
 	
 	static inline std::string const &getTaskName(task_info_t &taskInfo)
 	{
-		assert(taskInfo._nanos_task_invocation_info != nullptr);
-		task_invocation_info_label_map_t::iterator it = _taskInvocationLabel.find(taskInfo._nanos_task_invocation_info);
+		assert(taskInfo._nanos6_task_invocation_info != nullptr);
+		task_invocation_info_label_map_t::iterator it = _taskInvocationLabel.find(taskInfo._nanos6_task_invocation_info);
 		if (it != _taskInvocationLabel.end()) {
 			return it->second;
 		}
 		
 		std::string label;
-		if (taskInfo._nanos_task_info->implementations[0].task_label != nullptr) {
-			label = taskInfo._nanos_task_info->implementations[0].task_label;
-		} else if ((taskInfo._nanos_task_invocation_info != nullptr) && (taskInfo._nanos_task_invocation_info->invocation_source != nullptr)) {
-			label = taskInfo._nanos_task_invocation_info->invocation_source;
-		} else if (taskInfo._nanos_task_info->implementations[0].declaration_source != nullptr) {
-			label = taskInfo._nanos_task_info->implementations[0].declaration_source;
+		if (taskInfo._nanos6_task_info->implementations[0].task_label != nullptr) {
+			label = taskInfo._nanos6_task_info->implementations[0].task_label;
+		} else if ((taskInfo._nanos6_task_invocation_info != nullptr) && (taskInfo._nanos6_task_invocation_info->invocation_source != nullptr)) {
+			label = taskInfo._nanos6_task_invocation_info->invocation_source;
+		} else if (taskInfo._nanos6_task_info->implementations[0].declaration_source != nullptr) {
+			label = taskInfo._nanos6_task_info->implementations[0].declaration_source;
 		} else {
 			label = std::string();
 		}
@@ -91,8 +91,8 @@ namespace Instrument {
 			shortenString(label);
 		}
 		
-		_taskInvocationLabel[taskInfo._nanos_task_invocation_info] = std::move(label);
-		return _taskInvocationLabel[taskInfo._nanos_task_invocation_info];
+		_taskInvocationLabel[taskInfo._nanos6_task_invocation_info] = std::move(label);
+		return _taskInvocationLabel[taskInfo._nanos6_task_invocation_info];
 	}
 	
 	static std::string indentation;
@@ -1303,20 +1303,20 @@ namespace Instrument {
 		ofs << "digraph {" << std::endl;
 		indentation = "\t";
 		ofs << indentation << "compound=true;" << std::endl;
-		ofs << indentation << "nanos_start [shape=Mdiamond];" << std::endl;
-		ofs << indentation << "nanos_end [shape=Msquare];" << std::endl;
+		ofs << indentation << "nanos6_start [shape=Mdiamond];" << std::endl;
+		ofs << indentation << "nanos6_end [shape=Msquare];" << std::endl;
 		
 		std::ostringstream linksStream;
 		emitTask(ofs, 0, linksStream);
 		dot_linking_labels &mainTaskLinkingLabels = _taskToDotLinkingLabels[0];
 		
-		ofs << indentation << "nanos_start -> " << mainTaskLinkingLabels._inLabel;
+		ofs << indentation << "nanos6_start -> " << mainTaskLinkingLabels._inLabel;
 		if (mainTaskLinkingLabels._inLabel != mainTaskLinkingLabels._nodeLabel) {
 			ofs << "[ lhead=\"" << mainTaskLinkingLabels._nodeLabel << "\" ]";
 		}
 		ofs << ";" << std::endl;
 		
-		ofs << indentation << mainTaskLinkingLabels._outLabel << " -> nanos_end";
+		ofs << indentation << mainTaskLinkingLabels._outLabel << " -> nanos6_end";
 		if (mainTaskLinkingLabels._outLabel != mainTaskLinkingLabels._nodeLabel) {
 			ofs << " [ ltail=\"" << mainTaskLinkingLabels._nodeLabel << "\" ]";
 		}

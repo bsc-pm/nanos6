@@ -129,7 +129,7 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 	}
 	
 	// First half of the initialization
-	nanos_preinit();
+	nanos6_preinit();
 	if (_nanos6_exit_with_error) {
 		fprintf(stderr, "Error: %s\n", _nanos6_error_text);
 		return _nanos6_exit_with_error;
@@ -139,14 +139,14 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 	
 	// Spawn the main task
 	main_task_args_block_t argsBlock = { argc, argv, envp, 0 };
-	nanos_spawn_function(main_task_wrapper, &argsBlock, main_completion_callback, &condVar, "main");
+	nanos6_spawn_function(main_task_wrapper, &argsBlock, main_completion_callback, &condVar, "main");
 	
 	if (_nanos6_exit_with_error) {
 		return _nanos6_exit_with_error;
 	}
 	
 	// Second half of the initialization
-	nanos_init();
+	nanos6_init();
 	
 	// Wait for the completion callback
 	pthread_mutex_lock(&condVar._mutex);
@@ -156,7 +156,7 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 	pthread_mutex_unlock(&condVar._mutex);
 	
 	// Terminate
-	nanos_shutdown();
+	nanos6_shutdown();
 	
 	nanos6_memory_allocation_interception_fini();
 	

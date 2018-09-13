@@ -16,8 +16,8 @@
 namespace Instrument {
 	
 	inline task_id_t enterAddTask(
-		nanos_task_info *taskInfo,
-		__attribute__((unused)) nanos_task_invocation_info *taskInvokationInfo,
+		nanos6_task_info *taskInfo,
+		__attribute__((unused)) nanos6_task_invocation_info *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {

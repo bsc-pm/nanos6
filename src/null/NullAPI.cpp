@@ -12,29 +12,29 @@
 #include <nanos6.h>
 
 
-void nanos_taskwait(__attribute__((unused)) char const *invocationSource)
+void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 {
 }
 
 
-void nanos_user_lock(__attribute__((unused)) void **handlerPointer, __attribute__((unused)) char const *invocationSource)
+void nanos6_user_lock(__attribute__((unused)) void **handlerPointer, __attribute__((unused)) char const *invocationSource)
 {
 }
 
 
-void nanos_user_unlock(__attribute__((unused)) void **handlerPointer)
+void nanos6_user_unlock(__attribute__((unused)) void **handlerPointer)
 {
 }
 
 
-void nanos_preinit(void)
+void nanos6_preinit(void)
 {
 }
 
-void nanos_init(void)
+void nanos6_init(void)
 {
 }
 
-void nanos_shutdown(void)
+void nanos6_shutdown(void)
 {
 }

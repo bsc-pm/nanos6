@@ -587,7 +587,7 @@ struct VerifierConstraintCalculator {
 
 int main(int argc, char **argv)
 {
-	ncpus = nanos_get_num_cpus();
+	ncpus = nanos6_get_num_cpus();
 	
 #if TEST_LESS_THREADS
 	ncpus = std::min(ncpus, 64U);

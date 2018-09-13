@@ -26,7 +26,7 @@
 typedef std::atomic<UserMutex *> mutex_t;
 
 
-void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *invocationSource)
+void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const *invocationSource)
 {
 	assert(handlerPointer != nullptr);
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
@@ -99,7 +99,7 @@ void nanos_user_lock(void **handlerPointer, __attribute__((unused)) char const *
 }
 
 
-void nanos_user_unlock(void **handlerPointer)
+void nanos6_user_unlock(void **handlerPointer)
 {
 	assert(handlerPointer != nullptr);
 	assert(*handlerPointer != nullptr);

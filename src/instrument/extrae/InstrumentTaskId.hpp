@@ -66,7 +66,7 @@ namespace Instrument {
 	
 	namespace Extrae {
 		struct TaskInfo {
-			nanos_task_info *_taskInfo;
+			nanos6_task_info *_taskInfo;
 			size_t _taskId;
 			int _nestingLevel;
 			long _priority;
@@ -83,7 +83,7 @@ namespace Instrument {
 			{
 			}
 			
-			TaskInfo(nanos_task_info *taskInfo, int nestingLevel, Instrument::Extrae::TaskInfo *parent)
+			TaskInfo(nanos6_task_info *taskInfo, int nestingLevel, Instrument::Extrae::TaskInfo *parent)
 				: _taskInfo(taskInfo), _nestingLevel(nestingLevel), _priority(0), _parent(parent),
 				_inTaskwait(false), _lock(), _predecessors()
 			{

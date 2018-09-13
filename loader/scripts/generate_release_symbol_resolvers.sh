@@ -31,7 +31,7 @@ for type in $* ; do
 	fi
 	
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
-		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_release_${type}_${dimensions}, \"multidimensional release\", NULL);"
+		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos6_release_${type}_${dimensions}, \"multidimensional release\", NULL);"
 	done
 	echo
 done

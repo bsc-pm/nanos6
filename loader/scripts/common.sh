@@ -9,7 +9,7 @@ generate_regions_full_prototype() {
 	local commaatend
 	
 	/bin/echo '/** \brief Register a task '${type}' access on a '${dimensions}'-dimensional region of addresses */'
-	/bin/echo 'void nanos_register_region_'${type}'_depinfo'${dimensions}'('
+	/bin/echo 'void nanos6_register_region_'${type}'_depinfo'${dimensions}'('
 	
 	if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
 		/bin/echo "${indentation}	int reduction_operation, int reduction_index,"
@@ -75,7 +75,7 @@ generate_release_full_prototype() {
 	local commaatend
 	
 	/bin/echo '/** \brief Inform that the rest of the task code will no longer perform any '${type}' operation over a '${dimensions}'-dimensional region of addresses */'
-	/bin/echo 'void nanos_release_'${type}'_'${dimensions}'('
+	/bin/echo 'void nanos6_release_'${type}'_'${dimensions}'('
 	/bin/echo '	void *base_address,'
 	/bin/echo '	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */'
 	/bin/echo '	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */'

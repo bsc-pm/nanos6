@@ -1231,7 +1231,7 @@ public:
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
 		
-		nanos_task_info *taskInfo = task->getTaskInfo();
+		nanos6_task_info *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
 		
 		// This part creates the DataAccesses and calculates any possible upgrade

@@ -44,7 +44,7 @@ void Taskloop::getPartitionPath(int CPUId, std::vector<int> &partitionPath)
 void Taskloop::run(Taskloop &source)
 {
 	// Get the arguments and the task information
-	const nanos_task_info &taskInfo = *getTaskInfo();
+	const nanos6_task_info &taskInfo = *getTaskInfo();
 	void *argsBlock = getArgsBlock();
 	bounds_t &bounds = _taskloopInfo.getBounds();
 	

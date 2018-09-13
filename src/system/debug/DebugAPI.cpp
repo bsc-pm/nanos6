@@ -14,19 +14,19 @@
 #include "tasks/TaskImplementation.hpp"
 
 
-void nanos_wait_for_full_initialization(void)
+void nanos6_wait_for_full_initialization(void)
 {
 	while (!CPUManager::hasFinishedInitialization()) {
 		// Wait
 	}
 }
 
-unsigned int nanos_get_num_cpus(void)
+unsigned int nanos6_get_num_cpus(void)
 {
 	return CPUManager::getTotalCPUs();
 }
 
-long nanos_get_current_system_cpu()
+long nanos6_get_current_system_cpu()
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	
@@ -37,7 +37,7 @@ long nanos_get_current_system_cpu()
 	return currentCPU->_systemCPUId;
 }
 
-unsigned int nanos_get_current_virtual_cpu()
+unsigned int nanos6_get_current_virtual_cpu()
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	
@@ -51,18 +51,18 @@ unsigned int nanos_get_current_virtual_cpu()
 	return currentCPU->_virtualCPUId;
 }
 
-void nanos_enable_cpu(long systemCPUId)
+void nanos6_enable_cpu(long systemCPUId)
 {
 	CPUActivation::enable(systemCPUId);
 }
 
-void nanos_disable_cpu(long systemCPUId)
+void nanos6_disable_cpu(long systemCPUId)
 {
 	CPUActivation::disable(systemCPUId);
 }
 
 
-nanos_cpu_status_t nanos_get_cpu_status(long systemCPUId)
+nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 {
 	CPU *cpu = CPUManager::getCPU(systemCPUId);
 	
@@ -70,26 +70,26 @@ nanos_cpu_status_t nanos_get_cpu_status(long systemCPUId)
 	switch (cpu->_activationStatus.load()) {
 		//TODO: FIXME: IS THIS CORRECT? Just introduced to fix a compilation warning.
 		case CPU::uninitialized_status:
-			return nanos_disabled_cpu; 
+			return nanos6_disabled_cpu; 
 		case CPU::starting_status:
-			return nanos_starting_cpu;
+			return nanos6_starting_cpu;
 		case CPU::enabling_status:
-			return nanos_enabling_cpu;
+			return nanos6_enabling_cpu;
 		case CPU::enabled_status:
-			return nanos_enabled_cpu;
+			return nanos6_enabled_cpu;
 		case CPU::disabling_status:
-			return nanos_disabling_cpu;
+			return nanos6_disabling_cpu;
 		case CPU::disabled_status:
-			return nanos_disabled_cpu;
+			return nanos6_disabled_cpu;
 	}
 	
 	assert("Unknown CPU status" == 0);
-	return nanos_invalid_cpu_status;
+	return nanos6_invalid_cpu_status;
 }
 
 
 #if 0
-void nanos_wait_until_task_starts(void *taskHandle)
+void nanos6_wait_until_task_starts(void *taskHandle)
 {
 	assert(taskHandle != 0);
 	
@@ -100,7 +100,7 @@ void nanos_wait_until_task_starts(void *taskHandle)
 }
 
 
-long nanos_get_system_cpu_of_task(void *taskHandle)
+long nanos6_get_system_cpu_of_task(void *taskHandle)
 {
 	assert(taskHandle != 0);
 	
@@ -119,7 +119,7 @@ long nanos_get_system_cpu_of_task(void *taskHandle)
 typedef std::vector<CPU *>::const_iterator cpu_iterator_t;
 
 
-static void *nanos_cpus_skip_uninitialized(void *cpuIterator) {
+static void *nanos6_cpus_skip_uninitialized(void *cpuIterator) {
 	std::vector<CPU *> const &cpuList = CPUManager::getCPUListReference();
 	
 	cpu_iterator_t *itp = (cpu_iterator_t *) cpuIterator;
@@ -144,7 +144,7 @@ static void *nanos_cpus_skip_uninitialized(void *cpuIterator) {
 }
 
 
-void *nanos_cpus_begin(void)
+void *nanos6_cpus_begin(void)
 {
 	std::vector<CPU *> const &cpuList = CPUManager::getCPUListReference();
 	cpu_iterator_t it = cpuList.begin();
@@ -153,16 +153,16 @@ void *nanos_cpus_begin(void)
 		return 0;
 	} else {
 		void *result = new cpu_iterator_t(it);
-		return nanos_cpus_skip_uninitialized(result);
+		return nanos6_cpus_skip_uninitialized(result);
 	}
 }
 
-void *nanos_cpus_end(void)
+void *nanos6_cpus_end(void)
 {
 	return 0;
 }
 
-void *nanos_cpus_advance(void *cpuIterator)
+void *nanos6_cpus_advance(void *cpuIterator)
 {
 	cpu_iterator_t *itp = (cpu_iterator_t *) cpuIterator;
 	if (itp == 0) {
@@ -170,10 +170,10 @@ void *nanos_cpus_advance(void *cpuIterator)
 	}
 	
 	(*itp)++;
-	return nanos_cpus_skip_uninitialized(itp);
+	return nanos6_cpus_skip_uninitialized(itp);
 }
 
-long nanos_cpus_get(void *cpuIterator)
+long nanos6_cpus_get(void *cpuIterator)
 {
 	cpu_iterator_t *it = (cpu_iterator_t *) cpuIterator;
 	assert (it != 0);
@@ -184,7 +184,7 @@ long nanos_cpus_get(void *cpuIterator)
 	return cpu->_systemCPUId;
 }
 
-long nanos_cpus_get_virtual(void *cpuIterator)
+long nanos6_cpus_get_virtual(void *cpuIterator)
 {
 	cpu_iterator_t *it = (cpu_iterator_t *) cpuIterator;
 	assert (it != 0);

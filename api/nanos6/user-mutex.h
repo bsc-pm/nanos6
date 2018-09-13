@@ -25,15 +25,15 @@ extern "C" {
 //!
 //! \param[in,out] handlerPointer a pointer to the handler, which is of type void *, that represent the mutex
 //! \param[in] invocation_source A string that identifies the location of the critical region in the source code
-void nanos_user_lock(void **handlerPointer, char const *invocation_source);
+void nanos6_user_lock(void **handlerPointer, char const *invocation_source);
 
 //! \brief User-side unlock primitive
 //!
 //! Performs an user-side unlock over a mutex (of type void *) initialized during
-//! the first call to nanos_user_lock.
+//! the first call to nanos6_user_lock.
 //!
 //! \param[in] handlerPointer a pointer to the handler, which is of type void *, that represent the mutex
-void nanos_user_unlock(void **handlerPointer);
+void nanos6_user_unlock(void **handlerPointer);
 
 
 #ifdef __cplusplus

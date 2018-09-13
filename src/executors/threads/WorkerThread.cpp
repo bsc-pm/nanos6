@@ -130,7 +130,7 @@ void WorkerThread::handleTask(CPU *cpu)
 	if (_task->hasCode()) {
 		nanos6_address_translation_entry_t *translationTable = nullptr;
 		
-		nanos_task_info const * const taskInfo = _task->getTaskInfo();
+		nanos6_task_info const * const taskInfo = _task->getTaskInfo();
 		if (taskInfo->num_symbols >= 0) {
 			translationTable = (nanos6_address_translation_entry_t *) alloca(sizeof(nanos6_address_translation_entry_t) * taskInfo->num_symbols);
 			

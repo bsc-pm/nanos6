@@ -89,13 +89,13 @@ static char const *emitHelp()
 
 static char const *showFullVersion()
 {
-	char const *branch = nanos_get_runtime_branch();
-	std::cout << "Nanos6 version " << nanos_get_runtime_version();
+	char const *branch = nanos6_get_runtime_branch();
+	std::cout << "Nanos6 version " << nanos6_get_runtime_version();
 	if ((branch != 0) && (std::string(branch) != "master")) {
 		std::cout << " " << branch << " branch";
 	}
 	
-	char const *patches = nanos_get_runtime_patches();
+	char const *patches = nanos6_get_runtime_patches();
 	if ((patches != 0) && (std::string() != patches)) {
 		std::cout << " +changes";
 	}
@@ -108,7 +108,7 @@ static char const *showFullVersion()
 
 static char const *dumpPatches()
 {
-	char const *patches = nanos_get_runtime_patches();
+	char const *patches = nanos6_get_runtime_patches();
 	
 	if (patches == 0) {
 		std::cerr << "Error: this is either a runtime compiled from a distributed tarball or it has been compiled with code change reporting disabled." << std::endl;
@@ -129,7 +129,7 @@ static char const *dumpPatches()
 
 static char const *dumpRuntimeDetailedInfo()
 {
-	std::cout << "Runtime path " << nanos_get_runtime_path() << std::endl;
+	std::cout << "Runtime path " << nanos6_get_runtime_path() << std::endl;
 	
 	for (void *it = nanos6_runtime_info_begin(); it != nanos6_runtime_info_end(); it = nanos6_runtime_info_advance(it)) {
 		nanos6_runtime_info_entry_t entry;
@@ -155,7 +155,7 @@ static char const *dumpRuntimeDetailedInfo()
 		std::cout << std::endl;
 	}
 	
-	char const *patches = nanos_get_runtime_patches();
+	char const *patches = nanos6_get_runtime_patches();
 	if ((patches != 0) && (std::string() != patches)) {
 		std::cout << "This runtime contains patches" << std::endl;
 	}
@@ -172,17 +172,17 @@ int main(int argc, char **argv)
 	optionHelpers.push_back(OptionHelper("--help", "display this help message", "", emitHelp));
 	optionHelpers.push_back(OptionHelper());
 	optionHelpers.push_back(OptionHelper("--full-version", "display the full runtime version", "", showFullVersion, true));
-	optionHelpers.push_back(OptionHelper("--copyright", "display the copyright notice", "Copyright (C)", nanos_get_runtime_copyright, true));
+	optionHelpers.push_back(OptionHelper("--copyright", "display the copyright notice", "Copyright (C)", nanos6_get_runtime_copyright, true));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--license", "display the license type", "Licensed as", nanos_get_runtime_license, true));
-	optionHelpers.push_back(OptionHelper("--full-license", "display the license terms", "Licensing terms:\n", nanos_get_runtime_full_license));
+	optionHelpers.push_back(OptionHelper("--license", "display the license type", "Licensed as", nanos6_get_runtime_license, true));
+	optionHelpers.push_back(OptionHelper("--full-license", "display the license terms", "Licensing terms:\n", nanos6_get_runtime_full_license));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--version", "display the runtime version", "Nanos6 version", nanos_get_runtime_version));
-	optionHelpers.push_back(OptionHelper("--branch", "display the runtime branch", "Nanos6 branch", nanos_get_runtime_branch));
+	optionHelpers.push_back(OptionHelper("--version", "display the runtime version", "Nanos6 version", nanos6_get_runtime_version));
+	optionHelpers.push_back(OptionHelper("--branch", "display the runtime branch", "Nanos6 branch", nanos6_get_runtime_branch));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--runtime-compiler", "display the compiler used for this runtime", "Compiled with", nanos_get_runtime_compiler_version));
-	optionHelpers.push_back(OptionHelper("--runtime-compiler-flags", "display the compiler flags used for this runtime", "Compilation flags", nanos_get_runtime_compiler_flags));
-	optionHelpers.push_back(OptionHelper("--runtime-path", "display the path of the loaded runtime", "Runtime path", nanos_get_runtime_path));
+	optionHelpers.push_back(OptionHelper("--runtime-compiler", "display the compiler used for this runtime", "Compiled with", nanos6_get_runtime_compiler_version));
+	optionHelpers.push_back(OptionHelper("--runtime-compiler-flags", "display the compiler flags used for this runtime", "Compilation flags", nanos6_get_runtime_compiler_flags));
+	optionHelpers.push_back(OptionHelper("--runtime-path", "display the path of the loaded runtime", "Runtime path", nanos6_get_runtime_path));
 	optionHelpers.push_back(OptionHelper());
 	optionHelpers.push_back(OptionHelper("--runtime-details", "display detailed runtime and execution environment information", "", dumpRuntimeDetailedInfo));
 	optionHelpers.push_back(OptionHelper("--dump-patches", "display code changes over the reported version", "", dumpPatches));

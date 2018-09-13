@@ -76,7 +76,7 @@ for type in $* ; do
 			fi
 		fi
 		
-		generate_regions_named_prototype ${dimensions} "nanos_register_region_${type}_depinfo${dimensions}"
+		generate_regions_named_prototype ${dimensions} "nanos6_register_region_${type}_depinfo${dimensions}"
 		echo " {"
 		echo "	${registration_function}("
 		

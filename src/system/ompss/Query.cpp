@@ -13,7 +13,7 @@
 #include <cassert>
 
 
-signed int nanos_in_final(void)
+signed int nanos6_in_final(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
@@ -25,7 +25,7 @@ signed int nanos_in_final(void)
 	return currentTask->isFinal();
 }
 
-signed int nanos_in_serial_context(void)
+signed int nanos6_in_serial_context(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);

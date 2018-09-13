@@ -41,11 +41,11 @@ static void *_nanos6_resolve_symbol(char const *fname, char const *area, char co
 		symbol = dlsym(_nanos6_lib_handle, fallback);
 		dlerror();
 		if (symbol != NULL) {
-			fprintf(stderr, "Nanos 6 loader warning: %s runtime function %s is undefined in '%s' falling back to function %s instead\n", area, fname, nanos_get_runtime_path(), fallback);
+			fprintf(stderr, "Nanos 6 loader warning: %s runtime function %s is undefined in '%s' falling back to function %s instead\n", area, fname, nanos6_get_runtime_path(), fallback);
 		}
 	}
 	if (symbol == NULL) {
-		fprintf(stderr, "Nanos 6 loader error: %s runtime function %s is undefined in '%s'\n", area, fname, nanos_get_runtime_path());
+		fprintf(stderr, "Nanos 6 loader error: %s runtime function %s is undefined in '%s'\n", area, fname, nanos6_get_runtime_path());
 		handle_error();
 		return NULL;
 	}
@@ -70,7 +70,7 @@ static void *_nanos6_resolve_symbol_with_local_fallback(char const *fname, char 
 	if (symbol == NULL) {
 		symbol = fallback;
 		if (symbol != NULL) {
-			fprintf(stderr, "Nanos 6 loader warning: %s runtime function %s is undefined in '%s' falling back to function %s instead\n", area, fname, nanos_get_runtime_path(), fallback_name);
+			fprintf(stderr, "Nanos 6 loader warning: %s runtime function %s is undefined in '%s' falling back to function %s instead\n", area, fname, nanos6_get_runtime_path(), fallback_name);
 		}
 	}
 	
@@ -121,7 +121,7 @@ static void *_nanos6_resolve_intercepted_symbol_with_global_fallback(char const 
 		symbol = dlsym(RTLD_NEXT, fname);
 		dlerror();
 		if (symbol == NULL) {
-			fprintf(stderr, "Nanos 6 loader error: %s intercepted function %s is undefined in '%s'\n", area, fname, nanos_get_runtime_path());
+			fprintf(stderr, "Nanos 6 loader error: %s intercepted function %s is undefined in '%s'\n", area, fname, nanos6_get_runtime_path());
 			handle_error();
 			return NULL;
 		}

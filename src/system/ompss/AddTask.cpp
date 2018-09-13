@@ -37,9 +37,9 @@
 #define TASK_ALIGNMENT 128
 
 
-void nanos_create_task(
-	nanos_task_info *taskInfo,
-	nanos_task_invocation_info *taskInvocationInfo,
+void nanos6_create_task(
+	nanos6_task_info *taskInfo,
+	nanos6_task_invocation_info *taskInvocationInfo,
 	size_t args_block_size,
 	void **args_block_pointer,
 	void **task_pointer,
@@ -49,7 +49,7 @@ void nanos_create_task(
 	
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	
-	bool isTaskloop = flags & nanos_task_flag::nanos_taskloop_task;
+	bool isTaskloop = flags & nanos6_task_flag::nanos6_taskloop_task;
 	size_t originalArgsBlockSize = args_block_size;
 	size_t taskSize = (isTaskloop) ? sizeof(Taskloop) : sizeof(Task);
 	
@@ -76,7 +76,7 @@ void nanos_create_task(
 }
 
 
-void nanos_submit_task(void *taskHandle)
+void nanos6_submit_task(void *taskHandle)
 {
 	Task *task = (Task *) taskHandle;
 	assert(task != nullptr);
@@ -101,7 +101,7 @@ void nanos_submit_task(void *taskHandle)
 	Instrument::createdTask(task, taskInstrumentationId);
 	
 	bool ready = true;
-	nanos_task_info *taskInfo = task->getTaskInfo();
+	nanos6_task_info *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);
 	if (taskInfo->register_depinfo != 0) {
 		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);

@@ -45,53 +45,53 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 }
 
 
-void nanos_register_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+void nanos6_register_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<READ_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
 }
 
 
-void nanos_register_write_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+void nanos6_register_write_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<WRITE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
 }
 
 
-void nanos_register_readwrite_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+void nanos6_register_readwrite_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<READWRITE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
 }
 
 
-void nanos_register_weak_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+void nanos6_register_weak_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<READ_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 
-void nanos_register_weak_write_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+void nanos6_register_weak_write_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<WRITE_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 
-void nanos_register_weak_readwrite_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+void nanos6_register_weak_readwrite_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<READWRITE_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 
-void nanos_register_concurrent_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+void nanos6_register_concurrent_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
 	register_access<CONCURRENT_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
 }
 
-void nanos_register_commutative_depinfo(void *handler, void *start, size_t length, int symbolIndex)
+void nanos6_register_commutative_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
     register_access<READWRITE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
 }
 
-void nanos_register_region_reduction_depinfo1(
+void nanos6_register_region_reduction_depinfo1(
 		int reduction_operation,
 		int reduction_index,
 		void *handler,
@@ -108,7 +108,7 @@ void nanos_register_region_reduction_depinfo1(
 	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, symbol_index, reduction_operation, reduction_index);
 }
 
-void nanos_register_region_weak_reduction_depinfo1(
+void nanos6_register_region_weak_reduction_depinfo1(
 		int reduction_operation,
 		int reduction_index,
 		void *handler,

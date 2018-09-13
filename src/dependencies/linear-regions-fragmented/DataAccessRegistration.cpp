@@ -1581,7 +1581,7 @@ namespace DataAccessRegistration {
 	static inline void allocateReductionInfo(DataAccess &dataAccess, const Task &task) {
 		assert(dataAccess.getType() == REDUCTION_ACCESS_TYPE);
 		
-		nanos_task_info *taskInfo = task.getTaskInfo();
+		nanos6_task_info *taskInfo = task.getTaskInfo();
 		assert(taskInfo != nullptr);
 		
 		reduction_index_t reductionIndex = dataAccess.getReductionIndex();
@@ -2212,7 +2212,7 @@ namespace DataAccessRegistration {
 		assert(task != 0);
 		assert(computePlace != nullptr);
 		
-		nanos_task_info *taskInfo = task->getTaskInfo();
+		nanos6_task_info *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
 		
 		// This part creates the DataAccesses and calculates any possible upgrade

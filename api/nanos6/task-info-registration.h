@@ -21,8 +21,8 @@ extern "C" {
 
 //! \brief Register a type of task
 //! 
-//! \param[in] task_info a pointer to the nanos_task_info structure
-void nanos_register_task_info(nanos_task_info *task_info);
+//! \param[in] task_info a pointer to the nanos6_task_info structure
+void nanos6_register_task_info(nanos6_task_info *task_info);
 
 
 #ifdef __cplusplus

@@ -43,16 +43,16 @@ namespace Instrument {
 	
 	int _externalThreadCount = 0;
 	
-	unsigned int extrae_nanos_get_num_threads()
+	unsigned int extrae_nanos6_get_num_threads()
 	{
 		assert(_traceAsThreads);
 		return GenericIds::getTotalThreads();
 	}
 	
-	unsigned int extrae_nanos_get_num_cpus_and_external_threads()
+	unsigned int extrae_nanos6_get_num_cpus_and_external_threads()
 	{
 		assert(!_traceAsThreads);
-		return nanos_get_num_cpus() + GenericIds::getTotalExternalThreads();
+		return nanos6_get_num_cpus() + GenericIds::getTotalExternalThreads();
 	}
 	
 }

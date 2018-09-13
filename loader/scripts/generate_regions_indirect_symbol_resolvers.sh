@@ -28,7 +28,7 @@ echo ''
 
 for type in $* ; do
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
-		name=nanos_register_region_${type}_depinfo${dimensions}
+		name=nanos6_register_region_${type}_depinfo${dimensions}
 		
 		generate_regions_full_prototype ${dimensions} ${type}
 		echo " {"

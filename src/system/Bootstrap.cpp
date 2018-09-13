@@ -37,7 +37,7 @@ static std::atomic<int> shutdownDueToSignalNumber(0);
 
 static ExternalThread *mainThread = nullptr;
 
-void nanos_shutdown(void);
+void nanos6_shutdown(void);
 
 
 static void signalHandler(int signum)
@@ -50,7 +50,7 @@ static void signalHandler(int signum)
 	
 	// For the rest, just set up the termination flag
 	shutdownDueToSignalNumber.store(signum);
-	nanos_shutdown();
+	nanos6_shutdown();
 	
 }
 
@@ -66,7 +66,7 @@ static void programSignal(int signum) {
 }
 
 
-void nanos_preinit(void) {
+void nanos6_preinit(void) {
 	if (!nanos6_api_has_been_checked_successfully()) {
 		int *_nanos6_exit_with_error_ptr = (int *) dlsym(nullptr, "_nanos6_exit_with_error");
 		if (_nanos6_exit_with_error_ptr != nullptr) {
@@ -98,7 +98,7 @@ void nanos_preinit(void) {
 }
 
 
-void nanos_init(void) {
+void nanos6_init(void) {
 	CPUManager::initialize();
 	
 	EnvironmentVariable<bool> handleSigInt("NANOS6_HANDLE_SIGINT", 0);
@@ -122,7 +122,7 @@ void nanos_init(void) {
 }
 
 
-void nanos_shutdown(void) {
+void nanos6_shutdown(void) {
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
 	Instrument::threadWillShutdown();
 	

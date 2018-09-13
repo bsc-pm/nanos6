@@ -21,8 +21,8 @@ public:
 	{
 		assert(parent != nullptr);
 		
-		nanos_task_info *taskInfo = parent->getTaskInfo();
-		nanos_task_invocation_info *taskInvocationInfo = parent->getTaskInvokationInfo();
+		nanos6_task_info *taskInfo = parent->getTaskInfo();
+		nanos6_task_invocation_info *taskInvocationInfo = parent->getTaskInvokationInfo();
 		
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();
@@ -31,7 +31,7 @@ public:
 		void *argsBlock = nullptr;
 		
 		// Create the task for this partition
-		nanos_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, (void **) &argsBlock, (void **) &taskloop, parent->getFlags());
+		nanos6_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, (void **) &argsBlock, (void **) &taskloop, parent->getFlags());
 		assert(argsBlock != nullptr);
 		assert(taskloop != nullptr);
 		

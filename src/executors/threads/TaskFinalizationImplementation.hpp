@@ -44,7 +44,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			readyOrDisposable = task->unlinkFromParent();
 			Instrument::destroyTask(task->getInstrumentationTaskId());
 			
-			// NOTE: The memory layout is defined in nanos_create_task
+			// NOTE: The memory layout is defined in nanos6_create_task
 			void *disposableBlock = task->getArgsBlock();
 			assert(disposableBlock != nullptr);
 			
@@ -59,7 +59,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 			
 			// Call the taskinfo destructor if not null
-			nanos_task_info * taskInfo = task->getTaskInfo();
+			nanos6_task_info * taskInfo = task->getTaskInfo();
 			if (taskInfo->destroy != nullptr) {
 				taskInfo->destroy(task->getArgsBlock());
 			}

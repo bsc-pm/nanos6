@@ -7,9 +7,9 @@
 #include "resolve.h"
 
 
-static void nanos_register_task_info_unused(__attribute__((unused)) void *task_info)
+static void nanos6_register_task_info_unused(__attribute__((unused)) void *task_info)
 {
 }
 
 
-RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_register_task_info, "essential", nanos_register_task_info_unused);
+RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos6_register_task_info, "essential", nanos6_register_task_info_unused);

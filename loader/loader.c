@@ -79,7 +79,7 @@ static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char con
 	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_LOCAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
-			fprintf(stderr, "Successfully loaded: %s\n", nanos_get_runtime_path());
+			fprintf(stderr, "Successfully loaded: %s\n", nanos6_get_runtime_path());
 		}
 		return;
 	}
@@ -96,7 +96,7 @@ static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char con
 	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_LOCAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
-			fprintf(stderr, "Successfully loaded: %s\n", nanos_get_runtime_path());
+			fprintf(stderr, "Successfully loaded: %s\n", nanos6_get_runtime_path());
 		}
 		return;
 	}
@@ -117,7 +117,7 @@ static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *var
 	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_LOCAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
-			fprintf(stderr, "Successfully loaded: %s\n", nanos_get_runtime_path());
+			fprintf(stderr, "Successfully loaded: %s\n", nanos6_get_runtime_path());
 		}
 		return;
 	}
@@ -219,7 +219,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 		if (_nanos6_lib_handle != NULL) {
 			fprintf(stderr, "Error: there is a mismatch between the installed runtime so version and the linked so version\n");
 			fprintf(stderr, "\tExpected so version: %s or at least %s\n", SONAME_SUFFIX, SONAME_MAJOR);
-			fprintf(stderr, "\tFound instead this so: %s\n", nanos_get_runtime_path());
+			fprintf(stderr, "\tFound instead this so: %s\n", nanos6_get_runtime_path());
 			fprintf(stderr, "\tPlease recompile your application.\n");
 			
 			dlclose(_nanos6_lib_handle);
@@ -239,7 +239,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 
 #pragma GCC visibility push(default)
 
-char const *nanos_get_runtime_path(void)
+char const *nanos6_get_runtime_path(void)
 {
 #if HAVE_DLINFO
 	if (_nanos6_lib_handle == NULL) {
@@ -250,7 +250,7 @@ char const *nanos_get_runtime_path(void)
 	static int initialized = 0;
 	
 	if (initialized == 0) {
-		void *symbol = dlsym(_nanos6_lib_handle, "nanos_preinit");
+		void *symbol = dlsym(_nanos6_lib_handle, "nanos6_preinit");
 		if (symbol == NULL) {
 			lib_path = strdup(dlerror());
 		} else {

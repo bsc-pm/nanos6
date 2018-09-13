@@ -67,9 +67,9 @@ static void sum(long participant)
 
 
 int main(int argc, char **argv) {
-	nanos_wait_for_full_initialization();
+	nanos6_wait_for_full_initialization();
 	
-	numCPUs = nanos_get_num_cpus();
+	numCPUs = nanos6_get_num_cpus();
 	
 	tap.registerNewTests(numCPUs * 2L + 1);
 	

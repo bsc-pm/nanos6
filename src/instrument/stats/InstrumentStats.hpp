@@ -128,13 +128,13 @@ namespace Instrument {
 		};
 		
 		struct TaskTypeAndTimes {
-			nanos_task_info const *_type;
+			nanos6_task_info const *_type;
 			TaskTimes _times;
 			bool _hasParent;
 			Timer *_currentTimer;
 			HardwareCounters::ThreadCounters<> _hardwareCounters;
 			
-			TaskTypeAndTimes(nanos_task_info const *type, bool hasParent)
+			TaskTypeAndTimes(nanos6_task_info const *type, bool hasParent)
 				: _type(type), _times(false), _hasParent(hasParent), _currentTimer(&_times._instantiationTime), _hardwareCounters()
 			{
 			}
@@ -142,7 +142,7 @@ namespace Instrument {
 		
 		
 		struct PhaseInfo {
-			std::map<nanos_task_info const *, TaskInfo> _perTask;
+			std::map<nanos6_task_info const *, TaskInfo> _perTask;
 			Timer _runningTime;
 			Timer _blockedTime;
 			HardwareCounters::Counters<> _hardwareCounters;

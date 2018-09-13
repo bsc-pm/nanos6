@@ -32,10 +32,10 @@ namespace Instrument {
 	};
 	
 	struct ExtraeTaskInfoCompare {
-		inline bool operator()(nanos_task_info *a, nanos_task_info *b) const;
+		inline bool operator()(nanos6_task_info *a, nanos6_task_info *b) const;
 	};
 	
-	typedef std::set<nanos_task_info *>              user_fct_map_t;
+	typedef std::set<nanos6_task_info *>              user_fct_map_t;
 	
 	struct scope_tracing_point_info_t {
 		std::string _name;
@@ -105,7 +105,7 @@ namespace Instrument {
 						NANOS_RUNTIME, NANOS_RUNNING, NANOS_SYNCHRONIZATION, NANOS_SCHEDULING, NANOS_CREATION,
 						NANOS_THREAD_CREATION,
 						NANOS_EVENT_STATE_TYPES
-	} nanos_event_state_t;
+	} nanos6_event_state_t;
 	
 	extern char const                               *_eventStateValueStr[];
 	
@@ -133,7 +133,7 @@ namespace Instrument {
 	};
 	
 	
-	inline bool ExtraeTaskInfoCompare::operator()(nanos_task_info *a, nanos_task_info *b) const
+	inline bool ExtraeTaskInfoCompare::operator()(nanos6_task_info *a, nanos6_task_info *b) const
 	{
 		std::string labelA(a->implementations[0].task_label != nullptr ? a->implementations[0].task_label : a->implementations[0].declaration_source);
 		std::string labelB(b->implementations[0].task_label != nullptr ? b->implementations[0].task_label : b->implementations[0].declaration_source);
@@ -151,8 +151,8 @@ namespace Instrument {
 		return (a->implementations[0].run < b->implementations[0].run);
 	}
 	
-	unsigned int extrae_nanos_get_num_threads();
-	unsigned int extrae_nanos_get_num_cpus_and_external_threads();
+	unsigned int extrae_nanos6_get_num_threads();
+	unsigned int extrae_nanos6_get_num_cpus_and_external_threads();
 	
 	namespace Extrae {
 		// Returns true if this is the call that actually disables it

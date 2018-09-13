@@ -41,33 +41,33 @@ void release_access(void *base_address, __attribute__((unused)) long dim1size, l
 }
 
 
-void nanos_release_read_1(void *base_address, long dim1size, long dim1start, long dim1end)
+void nanos6_release_read_1(void *base_address, long dim1size, long dim1start, long dim1end)
 {
 	release_access<READ_ACCESS_TYPE, false>(base_address, dim1size, dim1start, dim1end);
 }
 
-void nanos_release_write_1(void *base_address, long dim1size, long dim1start, long dim1end)
+void nanos6_release_write_1(void *base_address, long dim1size, long dim1start, long dim1end)
 {
 	release_access<WRITE_ACCESS_TYPE, false>(base_address, dim1size, dim1start, dim1end);
 }
 
-void nanos_release_readwrite_1(void *base_address, long dim1size, long dim1start, long dim1end)
+void nanos6_release_readwrite_1(void *base_address, long dim1size, long dim1start, long dim1end)
 {
 	release_access<READWRITE_ACCESS_TYPE, false>(base_address, dim1size, dim1start, dim1end);
 }
 
 
-void nanos_release_weak_read_1(void *base_address, long dim1size, long dim1start, long dim1end)
+void nanos6_release_weak_read_1(void *base_address, long dim1size, long dim1start, long dim1end)
 {
 	release_access<READ_ACCESS_TYPE, true>(base_address, dim1size, dim1start, dim1end);
 }
 
-void nanos_release_weak_write_1(void *base_address, long dim1size, long dim1start, long dim1end)
+void nanos6_release_weak_write_1(void *base_address, long dim1size, long dim1start, long dim1end)
 {
 	release_access<WRITE_ACCESS_TYPE, true>(base_address, dim1size, dim1start, dim1end);
 }
 
-void nanos_release_weak_readwrite_1(void *base_address, long dim1size, long dim1start, long dim1end)
+void nanos6_release_weak_readwrite_1(void *base_address, long dim1size, long dim1start, long dim1end)
 {
 	release_access<READWRITE_ACCESS_TYPE, true>(base_address, dim1size, dim1start, dim1end);
 }

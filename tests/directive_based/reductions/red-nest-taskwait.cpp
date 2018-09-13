@@ -56,7 +56,7 @@ void recursion(int& x, int depth) {
 }
 
 int main() {
-	long activeCPUs = nanos_get_num_cpus();
+	long activeCPUs = nanos6_get_num_cpus();
 	delayMultiplier = sqrt(activeCPUs);
 	
 #if TEST_LESS_THREADS

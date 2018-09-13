@@ -155,8 +155,8 @@ public:
 		// Initialize for next time
 		_signaled.store(false);
 		
-		_blockingContext.store(nanos_get_current_blocking_context());
-		nanos_block_current_task(_blockingContext);
+		_blockingContext.store(nanos6_get_current_blocking_context());
+		nanos6_block_current_task(_blockingContext);
 	}
 	
 	
@@ -177,7 +177,7 @@ public:
 		void *blockingContext = _blockingContext;
 		_blockingContext.store(0);
 		
-		nanos_unblock_task(blockingContext);
+		nanos6_unblock_task(blockingContext);
 	}
 	
 	bool isPresignaled()

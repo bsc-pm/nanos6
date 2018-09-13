@@ -121,7 +121,7 @@ namespace Instrument {
 	}
 	
 	
-	static unsigned int extrae_nanos_get_thread_id()
+	static unsigned int extrae_nanos6_get_thread_id()
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 		if (threadLocal._currentThreadId == thread_id_t()) {
@@ -132,14 +132,14 @@ namespace Instrument {
 		}
 	}
 	
-	static unsigned int extrae_nanos_get_virtual_cpu_or_external_thread_id()
+	static unsigned int extrae_nanos6_get_virtual_cpu_or_external_thread_id()
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 		if (threadLocal._currentThreadId == thread_id_t()) {
 			ExternalThreadLocalData &externalThreadLocalData = getExternalThreadLocalData();
-			return nanos_get_num_cpus() + externalThreadLocalData._currentThreadId;
+			return nanos6_get_num_cpus() + externalThreadLocalData._currentThreadId;
 		} else {
-			return nanos_get_current_virtual_cpu();
+			return nanos6_get_current_virtual_cpu();
 		}
 	}
 	
@@ -215,14 +215,14 @@ namespace Instrument {
 		
 		// Thread information callbacks
 		if (_traceAsThreads) {
-			ExtraeAPI::set_threadid_function ( extrae_nanos_get_thread_id );
-			ExtraeAPI::set_numthreads_function ( extrae_nanos_get_num_threads );
-			ExtraeAPI::change_num_threads(extrae_nanos_get_num_threads());
+			ExtraeAPI::set_threadid_function ( extrae_nanos6_get_thread_id );
+			ExtraeAPI::set_numthreads_function ( extrae_nanos6_get_num_threads );
+			ExtraeAPI::change_num_threads(extrae_nanos6_get_num_threads());
 			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "thread");
 		} else {
-			ExtraeAPI::set_threadid_function ( extrae_nanos_get_virtual_cpu_or_external_thread_id );
-			ExtraeAPI::set_numthreads_function ( extrae_nanos_get_num_cpus_and_external_threads );
-			ExtraeAPI::change_num_threads(extrae_nanos_get_num_cpus_and_external_threads());
+			ExtraeAPI::set_threadid_function ( extrae_nanos6_get_virtual_cpu_or_external_thread_id );
+			ExtraeAPI::set_numthreads_function ( extrae_nanos6_get_num_cpus_and_external_threads );
+			ExtraeAPI::change_num_threads(extrae_nanos6_get_num_cpus_and_external_threads());
 			RuntimeInfo::addEntry("extrae_tracing_target", "Extrae Tracing Target", "cpu");
 		}
 		
@@ -295,7 +295,7 @@ namespace Instrument {
 	{
 		{
 			std::lock_guard<SpinLock> guard(_userFunctionMapLock);
-			for (nanos_task_info *taskInfo : _userFunctionMap) {
+			for (nanos6_task_info *taskInfo : _userFunctionMap) {
 				std::string codeLocation = taskInfo->implementations[0].declaration_source;
 				
 				// Remove column

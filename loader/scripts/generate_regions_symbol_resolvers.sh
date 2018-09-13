@@ -26,12 +26,12 @@ echo
 for type in $* ; do
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		if [ "${type}" = "commutative" ] ; then
-			fallback_name=nanos_register_region_readwrite_depinfo${dimensions}
+			fallback_name=nanos6_register_region_readwrite_depinfo${dimensions}
 		else
 			fallback_name=NULL
 		fi
 	
-		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos_register_region_${type}_depinfo${dimensions}, \"multidimensional dependency\", NULL);"
+		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos6_register_region_${type}_depinfo${dimensions}, \"multidimensional dependency\", NULL);"
 	done
 	echo
 done

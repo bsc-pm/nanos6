@@ -7,6 +7,6 @@
 #include "resolve.h"
 
 
-RESOLVE_API_FUNCTION(nanos_get_current_event_counter, "essential", NULL);
-RESOLVE_API_FUNCTION(nanos_increase_current_task_event_counter, "essential", NULL);
-RESOLVE_API_FUNCTION(nanos_decrease_task_event_counter, "essential", NULL);
+RESOLVE_API_FUNCTION(nanos6_get_current_event_counter, "essential", NULL);
+RESOLVE_API_FUNCTION(nanos6_increase_current_task_event_counter, "essential", NULL);
+RESOLVE_API_FUNCTION(nanos6_decrease_task_event_counter, "essential", NULL);

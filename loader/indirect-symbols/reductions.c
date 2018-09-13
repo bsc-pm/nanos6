@@ -9,16 +9,16 @@
 
 #pragma GCC visibility push(default)
 
-void *nanos_get_reduction_storage1(
+void *nanos6_get_reduction_storage1(
 	void *original,
 	long dim1size, long dim1start, long dim1end)
 {
-	typedef void *nanos_get_reduction_storage1_t(void *original, long dim1size, long dim1start, long dim1end);
+	typedef void *nanos6_get_reduction_storage1_t(void *original, long dim1size, long dim1start, long dim1end);
 	
-	static nanos_get_reduction_storage1_t *symbol = NULL;
+	static nanos6_get_reduction_storage1_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_get_reduction_storage1_t *)
-			_nanos6_resolve_symbol("nanos_get_reduction_storage1",
+		symbol = (nanos6_get_reduction_storage1_t *)
+			_nanos6_resolve_symbol("nanos6_get_reduction_storage1",
 					"reductions", NULL);
 	}
 	

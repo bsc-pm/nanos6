@@ -14,7 +14,7 @@
 #include "TaskDataAccessesImplementation.hpp"
 #include "ReductionInfo.hpp"
 
-void *nanos_get_reduction_storage1(void *original,
+void *nanos6_get_reduction_storage1(void *original,
 		long dim1size,
 		__attribute__((unused)) long dim1start,
 		__attribute__((unused)) long dim1end)

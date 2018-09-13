@@ -7,4 +7,4 @@
 #include "resolve.h"
 
 
-RESOLVE_API_FUNCTION(nanos_register_taskloop_bounds, "essential", NULL);
+RESOLVE_API_FUNCTION(nanos6_register_taskloop_bounds, "essential", NULL);

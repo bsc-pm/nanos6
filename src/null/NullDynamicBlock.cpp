@@ -27,12 +27,12 @@ static bool _inFinal = false;
 class NullTask {
 public:
 	void *_argsBlock;
-	nanos_task_info *_taskInfo;
+	nanos6_task_info *_taskInfo;
 	size_t _flags;
 	
 	NullTask(
 		void *argsBlock,
-		nanos_task_info *taskInfo,
+		nanos6_task_info *taskInfo,
 		size_t flags
 	)
 		: _argsBlock(argsBlock),
@@ -43,9 +43,9 @@ public:
 };
 
 
-void nanos_create_task(
-	nanos_task_info *taskInfo,
-	__attribute__((unused)) nanos_task_invocation_info *taskInvocationInfo,
+void nanos6_create_task(
+	nanos6_task_info *taskInfo,
+	__attribute__((unused)) nanos6_task_invocation_info *taskInvocationInfo,
 	size_t args_block_size,
 	void **args_block_pointer,
 	void **taskloop_bounds_pointer,
@@ -73,14 +73,14 @@ void nanos_create_task(
 }
 
 
-void nanos_submit_task(void *taskHandle)
+void nanos6_submit_task(void *taskHandle)
 {
 	NullTask *task = (NullTask *) taskHandle;
 	assert(task != nullptr);
 	
 	bool wasInFinal = _inFinal;
 	assert(task->_taskInfo != nullptr);
-	_inFinal = (task->_flags & nanos_final_task);
+	_inFinal = (task->_flags & nanos6_final_task);
 	task->_taskInfo->run(task->_argsBlock, nullptr);
 	_inFinal = wasInFinal;
 	
@@ -88,7 +88,7 @@ void nanos_submit_task(void *taskHandle)
 }
 
 
-signed int nanos_in_final(void)
+signed int nanos6_in_final(void)
 {
 	return _inFinal;
 }

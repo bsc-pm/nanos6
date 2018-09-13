@@ -85,7 +85,7 @@ void recursion(int& x, int depth, Atomic<bool>& parentReady) {
 }
 
 int main() {
-	int activeCPUs = nanos_get_num_cpus();
+	int activeCPUs = nanos6_get_num_cpus();
 	delayMultiplier = sqrt(activeCPUs);
 	
 	// Maximum, it gets rounded to closest complete level

@@ -6,56 +6,56 @@
 
 #include <nanos6/debug.h>
 
-void nanos_wait_for_full_initialization(void)
+void nanos6_wait_for_full_initialization(void)
 {
 }
 
-unsigned int nanos_get_num_cpus()
+unsigned int nanos6_get_num_cpus()
 {
 	return 1;
 }
 
-long nanos_get_current_system_cpu(void)
+long nanos6_get_current_system_cpu(void)
 {
 	return 0;
 }
 
-unsigned int nanos_get_current_virtual_cpu(void)
+unsigned int nanos6_get_current_virtual_cpu(void)
 {
 	return 0;
 }
 
-void nanos_enable_cpu(__attribute__((unused)) long systemCPUId)
+void nanos6_enable_cpu(__attribute__((unused)) long systemCPUId)
 {
 }
 
-void nanos_disable_cpu(__attribute__((unused)) long systemCPUId)
+void nanos6_disable_cpu(__attribute__((unused)) long systemCPUId)
 {
 }
 
 
-nanos_cpu_status_t nanos_get_cpu_status(__attribute__((unused)) long systemCPUId)
+nanos6_cpu_status_t nanos6_get_cpu_status(__attribute__((unused)) long systemCPUId)
 {
-	return nanos_enabled_cpu;
+	return nanos6_enabled_cpu;
 }
 
 
-void *nanos_cpus_begin(void)
-{
-	return 0;
-}
-
-void *nanos_cpus_end(void)
+void *nanos6_cpus_begin(void)
 {
 	return 0;
 }
 
-void *nanos_cpus_advance(__attribute__((unused)) void *cpuIterator)
+void *nanos6_cpus_end(void)
 {
 	return 0;
 }
 
-long nanos_cpus_get(__attribute__((unused)) void *cpuIterator)
+void *nanos6_cpus_advance(__attribute__((unused)) void *cpuIterator)
+{
+	return 0;
+}
+
+long nanos6_cpus_get(__attribute__((unused)) void *cpuIterator)
 {
 	return 0;
 }

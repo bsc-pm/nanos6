@@ -11,7 +11,7 @@
 
 class Task;
 
-static nanos_task_invocation_info _spawnedFunctionInvocationInfo = { "Spawned from external code" };
+static nanos6_task_invocation_info _spawnedFunctionInvocationInfo = { "Spawned from external code" };
 
 struct SpawnedFunctionArgsBlock {
 	void (*_function)(void *);
@@ -26,7 +26,7 @@ struct SpawnedFunctionArgsBlock {
 };
 
 
-static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) nanos6_taskloop_bounds_t *bounds)
+static void nanos6_spawned_function_wrapper(void *args, __attribute__((unused)) nanos6_taskloop_bounds_t *bounds)
 {
 	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
 	assert(argsBlock != nullptr);
@@ -39,10 +39,10 @@ static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) n
 }
 
 
-void nanos_spawn_function(void (*function)(void *), void *args, void (*completion_callback)(void *), void *completion_args, char const *label)
+void nanos6_spawn_function(void (*function)(void *), void *args, void (*completion_callback)(void *), void *completion_args, char const *label)
 {
-	nanos_task_info taskInfo;
-	taskInfo.run = nanos_spawned_function_wrapper;
+	nanos6_task_info taskInfo;
+	taskInfo.run = nanos6_spawned_function_wrapper;
 	taskInfo.register_depinfo = nullptr;
 	taskInfo.task_label = label;
 	taskInfo.declaration_source = "Spawned Task";
@@ -51,7 +51,7 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 	SpawnedFunctionArgsBlock *argsBlock = nullptr;
 	nanos6_taskloop_bounds_t *bounds = nullptr;
 	Task *task = nullptr;
-	nanos_create_task(&taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &bounds, (void **) &task, 0);
+	nanos6_create_task(&taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &bounds, (void **) &task, 0);
 	
 	assert(argsBlock != nullptr);
 	assert(task != nullptr);
@@ -61,6 +61,6 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 	argsBlock->_completion_callback = completion_callback;
 	argsBlock->_completion_args = completion_args;
 	
-	nanos_submit_task(task);
+	nanos6_submit_task(task);
 }
 

@@ -27,8 +27,8 @@ namespace Instrument {
 	
 	
 	task_id_t enterAddTask(
-		__attribute__((unused)) nanos_task_info *taskInfo,
-		__attribute__((unused)) nanos_task_invocation_info *taskInvokationInfo,
+		__attribute__((unused)) nanos6_task_info *taskInfo,
+		__attribute__((unused)) nanos6_task_invocation_info *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
 		InstrumentationContext const &context
 	) {
@@ -78,8 +78,8 @@ namespace Instrument {
 		assert(taskInfo._phaseList.empty());
 		
 		Task *task = (Task *) taskObject;
-		taskInfo._nanos_task_info = task->getTaskInfo();
-		taskInfo._nanos_task_invocation_info = task->getTaskInvokationInfo();
+		taskInfo._nanos6_task_info = task->getTaskInfo();
+		taskInfo._nanos6_task_invocation_info = task->getTaskInvokationInfo();
 		taskInfo._parent = context._taskId;
 		taskInfo._status = not_created_status; // The simulation comes afterwards
 		

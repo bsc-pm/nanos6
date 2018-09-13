@@ -20,7 +20,7 @@
 #include <InstrumentBlocking.hpp>
 
 
-extern "C" void *nanos_get_current_blocking_context()
+extern "C" void *nanos6_get_current_blocking_context()
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
@@ -32,7 +32,7 @@ extern "C" void *nanos_get_current_blocking_context()
 }
 
 
-extern "C" void nanos_block_current_task(__attribute__((unused)) void *blocking_context)
+extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking_context)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
@@ -58,7 +58,7 @@ extern "C" void nanos_block_current_task(__attribute__((unused)) void *blocking_
 }
 
 
-extern "C" void nanos_unblock_task(void *blocking_context)
+extern "C" void nanos6_unblock_task(void *blocking_context)
 {
 	Task *task = static_cast<Task *>(blocking_context);
 	

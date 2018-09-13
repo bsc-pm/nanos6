@@ -21,7 +21,7 @@ extern "C" {
 //! \brief Block the control flow of the current task until all of its children have finished
 //!
 //! \param[in] invocation_source A string that identifies the source code location of the invocation
-void nanos_taskwait(char const *invocation_source);
+void nanos6_taskwait(char const *invocation_source);
 
 
 #ifdef __cplusplus

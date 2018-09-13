@@ -23,9 +23,9 @@ class Task;
 typedef std::pair<void (*)(void *), std::string> task_info_key_t;
 
 static SpinLock _spawnedFunctionInfosLock;
-static std::map<task_info_key_t, nanos_task_info> _spawnedFunctionInfos;
+static std::map<task_info_key_t, nanos6_task_info> _spawnedFunctionInfos;
 
-static nanos_task_invocation_info _spawnedFunctionInvocationInfo = { "Spawned from external code" };
+static nanos6_task_invocation_info _spawnedFunctionInvocationInfo = { "Spawned from external code" };
 
 
 namespace SpawnedFunctions {
@@ -46,7 +46,7 @@ struct SpawnedFunctionArgsBlock {
 };
 
 
-static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) void *device_env, __attribute__((unused)) nanos6_address_translation_entry_t *translations)
+static void nanos6_spawned_function_wrapper(void *args, __attribute__((unused)) void *device_env, __attribute__((unused)) nanos6_address_translation_entry_t *translations)
 {
 	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
 	assert(argsBlock != nullptr);
@@ -55,7 +55,7 @@ static void nanos_spawned_function_wrapper(void *args, __attribute__((unused)) v
 }
 
 
-static void nanos_spawned_function_destructor(void *args)
+static void nanos6_spawned_function_destructor(void *args)
 {
 	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
 	assert(argsBlock != nullptr);
@@ -66,16 +66,16 @@ static void nanos_spawned_function_destructor(void *args)
 }
 
 
-void nanos_spawn_function(void (*function)(void *), void *args, void (*completion_callback)(void *), void *completion_args, char const *label)
+void nanos6_spawn_function(void (*function)(void *), void *args, void (*completion_callback)(void *), void *completion_args, char const *label)
 {
 	SpawnedFunctions::_pendingSpawnedFunctions++;
 	
-	nanos_task_info *taskInfo = nullptr;
+	nanos6_task_info *taskInfo = nullptr;
 	{
 		task_info_key_t taskInfoKey(function, (label != nullptr ? label : ""));
 		
 		std::lock_guard<SpinLock> guard(_spawnedFunctionInfosLock);
-		auto itAndBool = _spawnedFunctionInfos.emplace( std::make_pair(taskInfoKey, nanos_task_info()) );
+		auto itAndBool = _spawnedFunctionInfos.emplace( std::make_pair(taskInfoKey, nanos6_task_info()) );
 		auto it = itAndBool.first;
 		taskInfo = &(it->second);
 		
@@ -83,10 +83,10 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 			// New task info
 			taskInfo->implementations = (nanos6_task_implementation_info_t *) malloc(sizeof(nanos6_task_implementation_info_t) * 1);
 			taskInfo->implementation_count = 1;
-			taskInfo->implementations[0].run = nanos_spawned_function_wrapper;
+			taskInfo->implementations[0].run = nanos6_spawned_function_wrapper;
 			taskInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
 			taskInfo->register_depinfo = nullptr;
-			taskInfo->destroy = nanos_spawned_function_destructor;
+			taskInfo->destroy = nanos6_spawned_function_destructor;
 			
 			// We use the stored copy since we do not know the actual lifetime of "label"
 			taskInfo->implementations[0].task_label = it->first.second.c_str();
@@ -98,7 +98,7 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 	SpawnedFunctionArgsBlock *argsBlock = nullptr;
 	Task *task = nullptr;
 	
-	nanos_create_task(taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, nanos_waiting_task);
+	nanos6_create_task(taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, nanos6_waiting_task);
 	
 	assert(argsBlock != nullptr);
 	assert(task != nullptr);
@@ -108,6 +108,6 @@ void nanos_spawn_function(void (*function)(void *), void *args, void (*completio
 	argsBlock->_completion_callback = completion_callback;
 	argsBlock->_completion_args = completion_args;
 	
-	nanos_submit_task(task);
+	nanos6_submit_task(task);
 }
 

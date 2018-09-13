@@ -90,9 +90,9 @@ static void t2_verification(ExperimentStatus &status, ExpectedOutcome &expected)
 
 int main(int argc, char **argv)
 {
-	nanos_wait_for_full_initialization();
+	nanos6_wait_for_full_initialization();
 	
-	long activeCPUs = nanos_get_num_cpus();
+	long activeCPUs = nanos6_get_num_cpus();
 	if (activeCPUs <= 2) {
 		// This test only works correctly with more than 2 CPUs
 		tap.registerNewTests(1);

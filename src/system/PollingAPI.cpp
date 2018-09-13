@@ -21,13 +21,13 @@ namespace PollingAPI {
 	typedef PaddedSpinLock<128> lock_t;
 	
 	
-	//! \brief the parameters of the nanos_register_polling_service function
+	//! \brief the parameters of the nanos6_register_polling_service function
 	struct ServiceKey {
 		std::string _name;
-		nanos_polling_service_t _function;
+		nanos6_polling_service_t _function;
 		void *_functionData;
 		
-		ServiceKey(char const *name, nanos_polling_service_t function, void *functionData)
+		ServiceKey(char const *name, nanos6_polling_service_t function, void *functionData)
 			: _name(name), _function(function), _functionData(functionData)
 		{
 		}
@@ -95,11 +95,11 @@ namespace PollingAPI {
 using namespace PollingAPI;
 
 
-extern "C" void nanos_register_polling_service(char const *service_name, nanos_polling_service_t service_function, void *service_data)
+extern "C" void nanos6_register_polling_service(char const *service_name, nanos6_polling_service_t service_function, void *service_data)
 {
 	std::lock_guard<PollingAPI::lock_t> guard(PollingAPI::_lock);
 	
-	static std::map<nanos_polling_service_t, std::string> uniqueRegisteredServices;
+	static std::map<nanos6_polling_service_t, std::string> uniqueRegisteredServices;
 	
 	auto result = PollingAPI::_services.emplace(
 		ServiceKey(service_name, service_function, service_data),
@@ -129,7 +129,7 @@ extern "C" void nanos_register_polling_service(char const *service_name, nanos_p
 }
 
 
-extern "C" void nanos_unregister_polling_service(char const *service_name, nanos_polling_service_t service_function, void *service_data)
+extern "C" void nanos6_unregister_polling_service(char const *service_name, nanos6_polling_service_t service_function, void *service_data)
 {
 	std::atomic<bool> unregistered(false);
 	

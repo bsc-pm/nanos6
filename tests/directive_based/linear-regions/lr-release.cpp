@@ -72,9 +72,9 @@ static void verifyNonReleased(ExperimentStatus<NSEGMENTS+1> &status)
 
 int main(int argc, char **argv)
 {
-	nanos_wait_for_full_initialization();
+	nanos6_wait_for_full_initialization();
 	
-	long activeCPUs = nanos_get_num_cpus();
+	long activeCPUs = nanos6_get_num_cpus();
 	if (activeCPUs < 2) {
 		// This test only works correctly with at least 2 CPUs
 		tap.registerNewTests(1);
@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 			tap.emitDiagnostic("T1 Releasing segment ", segment);
 			
 			// #pragma oss release weakout(var[segment])
-			nanos_release_weak_write_1(&var[segment], sizeof(var[segment]), 0, sizeof(var[segment]));
+			nanos6_release_weak_write_1(&var[segment], sizeof(var[segment]), 0, sizeof(var[segment]));
 		}
 		tap.emitDiagnostic("T1 finishes");
 		secondHasFinished.store(true);

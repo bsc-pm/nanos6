@@ -10,130 +10,130 @@
 
 #pragma GCC visibility push(default)
 
-long nanos_get_current_system_cpu()
+long nanos6_get_current_system_cpu()
 {
-	typedef long nanos_get_current_system_cpu_t();
+	typedef long nanos6_get_current_system_cpu_t();
 	
-	static nanos_get_current_system_cpu_t *symbol = NULL;
+	static nanos6_get_current_system_cpu_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_get_current_system_cpu_t *) _nanos6_resolve_symbol("nanos_get_current_system_cpu", "cpu control", NULL);
+		symbol = (nanos6_get_current_system_cpu_t *) _nanos6_resolve_symbol("nanos6_get_current_system_cpu", "cpu control", NULL);
 	}
 	
 	return (*symbol)();
 }
 
 
-unsigned int nanos_get_current_virtual_cpu()
+unsigned int nanos6_get_current_virtual_cpu()
 {
-	typedef unsigned int nanos_get_current_virtual_cpu_t();
+	typedef unsigned int nanos6_get_current_virtual_cpu_t();
 	
-	static nanos_get_current_virtual_cpu_t *symbol = NULL;
+	static nanos6_get_current_virtual_cpu_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_get_current_virtual_cpu_t *) _nanos6_resolve_symbol("nanos_get_current_virtual_cpu", "cpu control", NULL);
+		symbol = (nanos6_get_current_virtual_cpu_t *) _nanos6_resolve_symbol("nanos6_get_current_virtual_cpu", "cpu control", NULL);
 	}
 	
 	return (*symbol)();
 }
 
 
-void nanos_enable_cpu(long systemCPUId)
+void nanos6_enable_cpu(long systemCPUId)
 {
-	typedef void nanos_enable_cpu_t(long systemCPUId);
+	typedef void nanos6_enable_cpu_t(long systemCPUId);
 	
-	static nanos_enable_cpu_t *symbol = NULL;
+	static nanos6_enable_cpu_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_enable_cpu_t *) _nanos6_resolve_symbol("nanos_enable_cpu", "cpu control", NULL);
+		symbol = (nanos6_enable_cpu_t *) _nanos6_resolve_symbol("nanos6_enable_cpu", "cpu control", NULL);
 	}
 	
 	(*symbol)(systemCPUId);
 }
 
 
-void nanos_disable_cpu(long systemCPUId)
+void nanos6_disable_cpu(long systemCPUId)
 {
-	typedef void nanos_disable_cpu_t(long systemCPUId);
+	typedef void nanos6_disable_cpu_t(long systemCPUId);
 	
-	static nanos_disable_cpu_t *symbol = NULL;
+	static nanos6_disable_cpu_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_disable_cpu_t *) _nanos6_resolve_symbol("nanos_disable_cpu", "cpu control", NULL);
+		symbol = (nanos6_disable_cpu_t *) _nanos6_resolve_symbol("nanos6_disable_cpu", "cpu control", NULL);
 	}
 	
 	(*symbol)(systemCPUId);
 }
 
 
-nanos_cpu_status_t nanos_get_cpu_status(long systemCPUId)
+nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 {
-	typedef nanos_cpu_status_t nanos_get_cpu_status_t(long systemCPUId);
+	typedef nanos6_cpu_status_t nanos6_get_cpu_status_t(long systemCPUId);
 	
-	static nanos_get_cpu_status_t *symbol = NULL;
+	static nanos6_get_cpu_status_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_get_cpu_status_t *) _nanos6_resolve_symbol("nanos_get_cpu_status", "cpu control", NULL);
+		symbol = (nanos6_get_cpu_status_t *) _nanos6_resolve_symbol("nanos6_get_cpu_status", "cpu control", NULL);
 	}
 	
 	return (*symbol)(systemCPUId);
 }
 
 
-void *nanos_cpus_begin(void)
+void *nanos6_cpus_begin(void)
 {
-	typedef void *nanos_cpus_begin_t(void);
+	typedef void *nanos6_cpus_begin_t(void);
 	
-	static nanos_cpus_begin_t *symbol = NULL;
+	static nanos6_cpus_begin_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_cpus_begin_t *) _nanos6_resolve_symbol("nanos_cpus_begin", "cpu control", NULL);
+		symbol = (nanos6_cpus_begin_t *) _nanos6_resolve_symbol("nanos6_cpus_begin", "cpu control", NULL);
 	}
 	
 	return (*symbol)();
 }
 
 
-void *nanos_cpus_end(void)
+void *nanos6_cpus_end(void)
 {
-	typedef void *nanos_cpus_end_t(void);
+	typedef void *nanos6_cpus_end_t(void);
 	
-	static nanos_cpus_end_t *symbol = NULL;
+	static nanos6_cpus_end_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_cpus_end_t *) _nanos6_resolve_symbol("nanos_cpus_end", "cpu control", NULL);
+		symbol = (nanos6_cpus_end_t *) _nanos6_resolve_symbol("nanos6_cpus_end", "cpu control", NULL);
 	}
 	
 	return (*symbol)();
 }
 
 
-void *nanos_cpus_advance(void *cpuIterator)
+void *nanos6_cpus_advance(void *cpuIterator)
 {
-	typedef void *nanos_cpus_advance_t(void *cpuIterator);
+	typedef void *nanos6_cpus_advance_t(void *cpuIterator);
 	
-	static nanos_cpus_advance_t *symbol = NULL;
+	static nanos6_cpus_advance_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_cpus_advance_t *) _nanos6_resolve_symbol("nanos_cpus_advance", "cpu control", NULL);
+		symbol = (nanos6_cpus_advance_t *) _nanos6_resolve_symbol("nanos6_cpus_advance", "cpu control", NULL);
 	}
 	
 	return (*symbol)(cpuIterator);
 }
 
 
-long nanos_cpus_get(void *cpuIterator)
+long nanos6_cpus_get(void *cpuIterator)
 {
-	typedef long nanos_cpus_get_t(void *cpuIterator);
+	typedef long nanos6_cpus_get_t(void *cpuIterator);
 	
-	static nanos_cpus_get_t *symbol = NULL;
+	static nanos6_cpus_get_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_cpus_get_t *) _nanos6_resolve_symbol("nanos_cpus_get", "cpu control", NULL);
+		symbol = (nanos6_cpus_get_t *) _nanos6_resolve_symbol("nanos6_cpus_get", "cpu control", NULL);
 	}
 	
 	return (*symbol)(cpuIterator);
 }
 
 
-long nanos_cpus_get_virtual(void *cpuIterator)
+long nanos6_cpus_get_virtual(void *cpuIterator)
 {
-	typedef long nanos_cpus_get_virtual_t(void *cpuIterator);
+	typedef long nanos6_cpus_get_virtual_t(void *cpuIterator);
 	
-	static nanos_cpus_get_virtual_t *symbol = NULL;
+	static nanos6_cpus_get_virtual_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos_cpus_get_virtual_t *) _nanos6_resolve_symbol("nanos_cpus_get_virtual", "cpu control", NULL);
+		symbol = (nanos6_cpus_get_virtual_t *) _nanos6_resolve_symbol("nanos6_cpus_get_virtual", "cpu control", NULL);
 	}
 	
 	return (*symbol)(cpuIterator);
