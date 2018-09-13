@@ -93,9 +93,9 @@ typedef struct
 	//! This function should call the nanos6_register_input_dep, nanos6_register_output_dep and nanos6_register_inout_dep
 	//! functions to pass to the runtime the information needed to calculate the dependencies
 	//! 
-	//! \param[in] handler a handler to be passed on to the registration functions
 	//! \param[in] args_block a pointer to a block of data for the parameters partially initialized
-	void (*register_depinfo)(void *handler, void *args_block);
+	//! \param[in] handler a handler to be passed on to the registration functions
+	void (*register_depinfo)(void *args_block, void *handler);
 	
 	//! \brief Function that the runtime calls to obtain a user-specified priority for the task instance
 	//! 

@@ -2216,7 +2216,7 @@ namespace DataAccessRegistration {
 		assert(taskInfo != 0);
 		
 		// This part creates the DataAccesses and calculates any possible upgrade
-		taskInfo->register_depinfo(task, task->getArgsBlock());
+		taskInfo->register_depinfo(task->getArgsBlock(), task);
 		
 		if (!task->getDataAccesses()._accesses.empty()) {
 			task->increasePredecessors(2);
