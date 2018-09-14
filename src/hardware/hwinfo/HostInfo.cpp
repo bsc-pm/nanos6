@@ -147,10 +147,10 @@ void HostInfo::initialize()
 
 void HostInfo::shutdown()
 {
-	for (int i = 0; i < _memoryPlaces.size(); ++i) {
+	for (size_t i = 0; i < _memoryPlaces.size(); ++i) {
 		delete _memoryPlaces[i];
 	}
-	for (int i = 0; i < _computePlaces.size(); ++i) {
+	for (size_t i = 0; i < _computePlaces.size(); ++i) {
 		delete _computePlaces[i];
 	}
 }
