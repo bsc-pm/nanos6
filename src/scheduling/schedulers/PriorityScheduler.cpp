@@ -39,7 +39,7 @@ ComputePlace * PriorityScheduler::addReadyTask(Task *task, ComputePlace *compute
 	
 	Task::priority_t priority = 0;
 	if ((task->getTaskInfo() != nullptr) && (task->getTaskInfo()->get_priority != nullptr)) {
-		priority = task->getTaskInfo()->get_priority(task->getArgsBlock());
+		task->getTaskInfo()->get_priority(task->getArgsBlock(), &priority);
 		task->setPriority(priority);
 		Instrument::taskHasNewPriority(task->getInstrumentationTaskId(), priority);
 	}
