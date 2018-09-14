@@ -24,6 +24,8 @@
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
+#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 
 #include <atomic>
 
