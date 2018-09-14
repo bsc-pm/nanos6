@@ -541,7 +541,7 @@ namespace HardwareCounters {
 		}
 		
 		//! \brief Stop the counters
-		inline void stop(int set = 0)
+		inline void stop(__attribute__((unused)) int set = 0)
 		{
 			if (_valid) {
 				PAPI::ThreadLocal &threadLocal = PAPI::getCurrentThreadHardwareCounters();
