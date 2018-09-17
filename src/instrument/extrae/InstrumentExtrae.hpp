@@ -32,10 +32,10 @@ namespace Instrument {
 	};
 	
 	struct ExtraeTaskInfoCompare {
-		inline bool operator()(nanos6_task_info *a, nanos6_task_info *b) const;
+		inline bool operator()(nanos6_task_info_t *a, nanos6_task_info_t *b) const;
 	};
 	
-	typedef std::set<nanos6_task_info *>              user_fct_map_t;
+	typedef std::set<nanos6_task_info_t *>              user_fct_map_t;
 	
 	struct scope_tracing_point_info_t {
 		std::string _name;
@@ -133,7 +133,7 @@ namespace Instrument {
 	};
 	
 	
-	inline bool ExtraeTaskInfoCompare::operator()(nanos6_task_info *a, nanos6_task_info *b) const
+	inline bool ExtraeTaskInfoCompare::operator()(nanos6_task_info_t *a, nanos6_task_info_t *b) const
 	{
 		std::string labelA(a->implementations[0].task_label != nullptr ? a->implementations[0].task_label : a->implementations[0].declaration_source);
 		std::string labelB(b->implementations[0].task_label != nullptr ? b->implementations[0].task_label : b->implementations[0].declaration_source);

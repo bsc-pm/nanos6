@@ -48,8 +48,8 @@ private:
 	
 	void *_argsBlock;
 	
-	nanos6_task_info *_taskInfo;
-	nanos6_task_invocation_info *_taskInvokationInfo;
+	nanos6_task_info_t *_taskInfo;
+	nanos6_task_invocation_info_t *_taskInvokationInfo;
 	
 	//! Number of children that are still alive (may have live references to data from this task), +1 if not blocked
 	std::atomic<int> _countdownToBeWokenUp;
@@ -93,8 +93,8 @@ private:
 public:
 	inline Task(
 		void *argsBlock,
-		nanos6_task_info *taskInfo,
-		nanos6_task_invocation_info *taskInvokationInfo,
+		nanos6_task_info_t *taskInfo,
+		nanos6_task_invocation_info_t *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags
@@ -111,12 +111,12 @@ public:
 		return _argsBlock;
 	}
 	
-	inline nanos6_task_info *getTaskInfo() const
+	inline nanos6_task_info_t *getTaskInfo() const
 	{
 		return _taskInfo;
 	}
 	
-	inline nanos6_task_invocation_info *getTaskInvokationInfo() const
+	inline nanos6_task_invocation_info_t *getTaskInvokationInfo() const
 	{
 		return _taskInvokationInfo;
 	}

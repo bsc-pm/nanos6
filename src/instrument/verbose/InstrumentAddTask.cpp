@@ -24,7 +24,7 @@ using namespace Instrument::Verbose;
 
 namespace Instrument {
 	task_id_t enterAddTask(
-		nanos6_task_info *taskInfo, nanos6_task_invocation_info *taskInvokationInfo, __attribute__((unused)) size_t flags,
+		nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, __attribute__((unused)) size_t flags,
 		InstrumentationContext const &context
 	) {
 		static std::atomic<task_id_t::inner_type_t> _nextTaskId(0);

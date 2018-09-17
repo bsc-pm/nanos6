@@ -131,7 +131,7 @@ namespace Instrument {
 		
 		
 		for (auto &taskInfoEntry : accumulatedPhaseInfo._perTask) {
-			nanos6_task_info const *userSideTaskInfo = taskInfoEntry.first;
+			nanos6_task_info_t const *userSideTaskInfo = taskInfoEntry.first;
 			
 			assert(userSideTaskInfo != 0);
 			std::string name;
@@ -153,7 +153,7 @@ namespace Instrument {
 				TaskInfo currentPhaseAccumulatedTaskInfo;
 				
 				for (auto &taskInfoEntry : phaseInfo._perTask) {
-					nanos6_task_info const *userSideTaskInfo = taskInfoEntry.first;
+					nanos6_task_info_t const *userSideTaskInfo = taskInfoEntry.first;
 					
 					assert(userSideTaskInfo != 0);
 					std::string name;

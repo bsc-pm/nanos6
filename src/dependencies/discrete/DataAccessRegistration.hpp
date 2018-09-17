@@ -277,7 +277,7 @@ public:
 		// We do it by 2 because we add the data access and unlock access to it before increasing the number of predecessors.
 		task->increasePredecessors(2);
 		
-		nanos6_task_info *taskInfo = task->getTaskInfo();
+		nanos6_task_info_t *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
 		taskInfo->register_depinfo(task, task->getArgsBlock());
 		

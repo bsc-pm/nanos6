@@ -295,7 +295,7 @@ namespace Instrument {
 	{
 		{
 			std::lock_guard<SpinLock> guard(_userFunctionMapLock);
-			for (nanos6_task_info *taskInfo : _userFunctionMap) {
+			for (nanos6_task_info_t *taskInfo : _userFunctionMap) {
 				std::string codeLocation = taskInfo->implementations[0].declaration_source;
 				
 				// Remove column

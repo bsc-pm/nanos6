@@ -23,9 +23,9 @@ class Task;
 typedef std::pair<void (*)(void *), std::string> task_info_key_t;
 
 static SpinLock _spawnedFunctionInfosLock;
-static std::map<task_info_key_t, nanos6_task_info> _spawnedFunctionInfos;
+static std::map<task_info_key_t, nanos6_task_info_t> _spawnedFunctionInfos;
 
-static nanos6_task_invocation_info _spawnedFunctionInvocationInfo = { "Spawned from external code" };
+static nanos6_task_invocation_info_t _spawnedFunctionInvocationInfo = { "Spawned from external code" };
 
 
 namespace SpawnedFunctions {
@@ -70,12 +70,12 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 {
 	SpawnedFunctions::_pendingSpawnedFunctions++;
 	
-	nanos6_task_info *taskInfo = nullptr;
+	nanos6_task_info_t *taskInfo = nullptr;
 	{
 		task_info_key_t taskInfoKey(function, (label != nullptr ? label : ""));
 		
 		std::lock_guard<SpinLock> guard(_spawnedFunctionInfosLock);
-		auto itAndBool = _spawnedFunctionInfos.emplace( std::make_pair(taskInfoKey, nanos6_task_info()) );
+		auto itAndBool = _spawnedFunctionInfos.emplace( std::make_pair(taskInfoKey, nanos6_task_info_t()) );
 		auto it = itAndBool.first;
 		taskInfo = &(it->second);
 		

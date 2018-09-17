@@ -137,7 +137,7 @@ typedef struct
 	//! \param[in] oss_in a pointer to the data which needs to be combined
 	//! \param[in] size the size (in Bytes) of the data to be combined
 	void (**reduction_combiners)(void *oss_out, void *oss_in, size_t size);
-} nanos6_task_info __attribute__((aligned(64)));
+} nanos6_task_info_t __attribute__((aligned(64)));
 
 
 //! \brief Struct that contains data shared by all tasks invoked at fixed location in the source code
@@ -145,7 +145,7 @@ typedef struct
 {
 	//! \brief A string that identifies the source code location of the task invocation
 	char const *invocation_source;
-} nanos6_task_invocation_info __attribute__((aligned(64)));
+} nanos6_task_invocation_info_t __attribute__((aligned(64)));
 
 
 //! \brief This needs to be incremented on every change to the instantiation API
@@ -160,7 +160,7 @@ typedef enum {
 	nanos6_taskloop_task = (1 << 2),
 	//! Specifies that the task has the "wait" clause
 	nanos6_waiting_task = (1 << 3)
-} nanos6_task_flag;
+} nanos6_task_flag_t;
 
 
 //! \brief Allocate space for a task and its parameters
@@ -169,14 +169,14 @@ typedef enum {
 //! After calling it, the user code should fill out the block of data stored in args_block_pointer,
 //! and call nanos6_submit_task with the contents stored in task_pointer.
 //! 
-//! \param[in] task_info a pointer to the nanos6_task_info structure
-//! \param[in] task_invocation_info a pointer to the nanos6_task_invocation_info structure
+//! \param[in] task_info a pointer to the nanos6_task_info_t structure
+//! \param[in] task_invocation_info a pointer to the nanos6_task_invocation_info_t structure
 //! \param[in] args_block_size size needed to store the paramerters passed to the task call
 //! \param[out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call
 //! \param[out] task_pointer a pointer to a location to store the task handler
 void nanos6_create_task(
-	nanos6_task_info *task_info,
-	nanos6_task_invocation_info *task_invocation_info,
+	nanos6_task_info_t *task_info,
+	nanos6_task_invocation_info_t *task_invocation_info,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
 	/* OUT */ void **task_pointer,

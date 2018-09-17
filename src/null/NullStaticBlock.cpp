@@ -39,12 +39,12 @@ static bool _inFinal = false;
 class NullTask {
 public:
 	void *_argsBlock;
-	nanos6_task_info *_taskInfo;
+	nanos6_task_info_t *_taskInfo;
 	size_t _flags;
 	
 	NullTask(
 		void *argsBlock,
-		nanos6_task_info *taskInfo,
+		nanos6_task_info_t *taskInfo,
 		size_t flags
 	)
 		: _argsBlock(argsBlock),
@@ -56,8 +56,8 @@ public:
 
 
 void nanos6_create_task(
-	nanos6_task_info *taskInfo,
-	__attribute__((unused)) nanos6_task_invocation_info *taskInvocationInfo,
+	nanos6_task_info_t *taskInfo,
+	__attribute__((unused)) nanos6_task_invocation_info_t *taskInvocationInfo,
 	size_t args_block_size,
 	void **args_block_pointer,
 	void **taskloop_bounds_pointer,

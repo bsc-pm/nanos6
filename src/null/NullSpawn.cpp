@@ -11,7 +11,7 @@
 
 class Task;
 
-static nanos6_task_invocation_info _spawnedFunctionInvocationInfo = { "Spawned from external code" };
+static nanos6_task_invocation_info_t _spawnedFunctionInvocationInfo = { "Spawned from external code" };
 
 struct SpawnedFunctionArgsBlock {
 	void (*_function)(void *);
@@ -41,7 +41,7 @@ static void nanos6_spawned_function_wrapper(void *args, __attribute__((unused)) 
 
 void nanos6_spawn_function(void (*function)(void *), void *args, void (*completion_callback)(void *), void *completion_args, char const *label)
 {
-	nanos6_task_info taskInfo;
+	nanos6_task_info_t taskInfo;
 	taskInfo.run = nanos6_spawned_function_wrapper;
 	taskInfo.register_depinfo = nullptr;
 	taskInfo.task_label = label;

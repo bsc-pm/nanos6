@@ -21,8 +21,8 @@ public:
 	{
 		assert(parent != nullptr);
 		
-		nanos6_task_info *taskInfo = parent->getTaskInfo();
-		nanos6_task_invocation_info *taskInvocationInfo = parent->getTaskInvokationInfo();
+		nanos6_task_info_t *taskInfo = parent->getTaskInfo();
+		nanos6_task_invocation_info_t *taskInvocationInfo = parent->getTaskInvokationInfo();
 		
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();

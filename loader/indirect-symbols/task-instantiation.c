@@ -10,16 +10,16 @@
 #pragma GCC visibility push(default)
 
 void nanos6_create_task(
-	nanos6_task_info *task_info,
-	nanos6_task_invocation_info *task_invocation_info,
+	nanos6_task_info_t *task_info,
+	nanos6_task_invocation_info_t *task_invocation_info,
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
 	/* OUT */ void **task_pointer,
 	size_t flags
 ) {
 	typedef void nanos6_create_task_t(
-		nanos6_task_info *task_info,
-		nanos6_task_invocation_info *task_invocation_info,
+		nanos6_task_info_t *task_info,
+		nanos6_task_invocation_info_t *task_invocation_info,
 		size_t args_block_size,
 		/* OUT */ void **args_block_pointer,
 		/* OUT */ void **task_pointer,

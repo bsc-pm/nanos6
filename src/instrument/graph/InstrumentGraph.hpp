@@ -383,8 +383,8 @@ namespace Instrument {
 		typedef std::map<task_id_t, dependency_edge_t> output_edges_t;
 		
 		struct task_info_t {
-			nanos6_task_info *_nanos6_task_info;
-			nanos6_task_invocation_info *_nanos6_task_invocation_info;
+			nanos6_task_info_t *_nanos6_task_info;
+			nanos6_task_invocation_info_t *_nanos6_task_invocation_info;
 			
 			task_id_t _parent;
 			size_t _taskGroupPhaseIndex;
@@ -428,7 +428,7 @@ namespace Instrument {
 		typedef std::map<task_id_t, task_info_t> task_to_info_map_t;
 		
 		//! \brief maps task invocations to the text to use as label
-		typedef std::map<nanos6_task_invocation_info *, std::string> task_invocation_info_label_map_t;
+		typedef std::map<nanos6_task_invocation_info_t *, std::string> task_invocation_info_label_map_t;
 		
 		
 		struct execution_step_t;
