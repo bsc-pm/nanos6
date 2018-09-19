@@ -86,7 +86,7 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 			taskInfo->implementations[0].run = nanos6_spawned_function_wrapper;
 			taskInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
 			taskInfo->register_depinfo = nullptr;
-			taskInfo->destroy = nanos6_spawned_function_destructor;
+			taskInfo->destroy_args_block = nanos6_spawned_function_destructor;
 			
 			// We use the stored copy since we do not know the actual lifetime of "label"
 			taskInfo->implementations[0].task_label = it->first.second.c_str();

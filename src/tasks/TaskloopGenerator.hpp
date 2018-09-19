@@ -36,7 +36,11 @@ public:
 		assert(taskloop != nullptr);
 		
 		// Copy the args block
-		memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
+		if (taskInfo->duplicate_args_block != nullptr) {
+			taskInfo->duplicate_args_block(originalArgsBlock, argsBlock);
+		} else {
+			memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
+		}
 		
 		// Set the flags
 		taskloop->setRunnable(true);

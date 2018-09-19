@@ -76,6 +76,8 @@ typedef struct
 	//! \brief A string that identifies the source location of the definition of the task
 	char const *declaration_source;
 	
+	//! Similar to run but initially set to null and initialized by the runtime if needed
+	void (*run_wrapper)(void *args_block, void *device_env, nanos6_address_translation_entry_t *address_translation_table);
 } nanos6_task_implementation_info_t;
 
 
@@ -117,8 +119,13 @@ typedef struct
 	//! \brief Function that the runtime calls to perform any cleanup needed in the block of data of the parameters
 	//! 
 	//! \param[in,out] args_block A pointer to a block of data for the parameters
-	void (*destroy)(void *args_block);
-
+	void (*destroy_args_block)(void *args_block);
+	
+	//! \brief Function that the runtime calls to perform a copy of the block of data of the parameters
+	//! 
+	//! \param[in] src_args_block A pointer to the source block of parameters to be copied
+	//! \param[in,out] dest_args_block A pointer to the destination array where the block of parameters is to be copied
+	void (*duplicate_args_block)(const void *src_args_block, void *dest_args_block);
 	
 	//! \brief Array of functions that the runtime calls to initialize task
 	//! reductions' private storage
