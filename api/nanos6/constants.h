@@ -8,6 +8,9 @@
 #define NANOS6_CONSTANTS_H
 
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
 #ifdef __cplusplus

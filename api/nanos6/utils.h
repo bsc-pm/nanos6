@@ -7,6 +7,7 @@
 #ifndef NANOS6_UTILS_H
 #define NANOS6_UTILS_H
 
+#include "major.h"
 
 #include <stddef.h>
 
@@ -20,6 +21,9 @@ extern "C" {
 #endif
 
 
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_utils_api
 //! \brief Fill up a buffer with zeros
 void nanos6_bzero(void *buffer, size_t size);
 

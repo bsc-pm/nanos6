@@ -7,8 +7,14 @@
 #ifndef NANOS6_BLOCKING_H
 #define NANOS6_BLOCKING_H
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_blocking_api
 enum nanos6_blocking_api_t { nanos6_blocking_api = 1 };
 
 #ifdef __cplusplus

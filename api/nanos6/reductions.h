@@ -7,6 +7,9 @@
 #ifndef NANOS6_REDUCTIONS_H
 #define NANOS6_REDUCTIONS_H
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
 

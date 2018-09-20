@@ -7,8 +7,14 @@
 #ifndef NANOS6_CUDA_DEVICE_H
 #define NANOS6_CUDA_DEVICE_H
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_cuda_device_api
 enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 1 };
 
 #include <cuda.h>

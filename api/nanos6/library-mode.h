@@ -7,9 +7,15 @@
 #ifndef NANOS6_LIBRARY_MODE_H
 #define NANOS6_LIBRARY_MODE_H
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
-enum nanos6_library_mode_api_t { nanos6_library_mode_api = 2 };
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_library_mode_api
+enum nanos6_library_mode_api_t { nanos6_library_mode_api = 1 };
 
 
 #ifdef __cplusplus

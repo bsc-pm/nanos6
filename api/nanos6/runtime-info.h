@@ -7,6 +7,8 @@
 #ifndef NANOS6_RUNTIME_INFO_H
 #define NANOS6_RUNTIME_INFO_H
 
+#include "major.h"
+
 
 #include <stddef.h>
 

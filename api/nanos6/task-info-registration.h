@@ -7,10 +7,16 @@
 #ifndef NANOS6_TASK_INFO_REGISTRATION_H
 #define NANOS6_TASK_INFO_REGISTRATION_H
 
+#include "major.h"
+
 #include "task-instantiation.h"
+
 
 #pragma GCC visibility push(default)
 
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_task_info_registration_api
 enum nanos6_task_info_registration_api_t { nanos6_task_info_registration_api = 1 };
 
 

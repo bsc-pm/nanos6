@@ -7,8 +7,14 @@
 #ifndef NANOS6_TASKLOOP_H
 #define NANOS6_TASKLOOP_H
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_taskloop_api
 enum nanos6_taskloop_api_t { nanos6_taskloop_api = 1 };
 
 

@@ -8,8 +8,14 @@
 #define NANOS6_EVENTS_H
 
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_events_api
 enum nanos6_events_api_t { nanos6_events_api = 1 };
 
 

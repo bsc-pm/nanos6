@@ -15,6 +15,7 @@
 #include "bootstrap.h"
 #include "final.h"
 #include "library-mode.h"
+#include "major.h"
 #include "polling.h"
 #include "task-info-registration.h"
 #include "task-instantiation.h"
@@ -34,7 +35,7 @@ enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 0 };
 
 #pragma GCC visibility push(default)
 
-enum nanos6_api_check_api_t { nanos6_api_check_api = 1 };
+enum nanos6_api_check_api_t { nanos6_api_check_api = 2 };
 
 
 #ifdef __cplusplus
@@ -45,6 +46,7 @@ extern "C" {
 // NOTE: the value of nanos6_api_check_api needs to be updated whenever this struct is updated
 typedef struct {
 	enum nanos6_api_check_api_t api_check_api_version;
+	enum nanos6_major_api_t major_api_version;
 	
 	enum nanos6_blocking_api_t blocking_api_version;
 	enum nanos6_bootstrap_api_t bootstrap_api_version;

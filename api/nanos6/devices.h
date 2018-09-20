@@ -7,6 +7,9 @@
 #ifndef NANOS6_DEVICES_H
 #define NANOS6_DEVICES_H
 
+#include "major.h"
+
+
 #if NANOS6_CUDA
 #include "cuda_device.h"
 #endif

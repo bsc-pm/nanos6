@@ -7,8 +7,14 @@
 #ifndef NANOS6_POLLING_H
 #define NANOS6_POLLING_H
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_polling_api
 enum nanos6_polling_api_t { nanos6_polling_api = 1 };
 
 

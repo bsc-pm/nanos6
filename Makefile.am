@@ -52,6 +52,7 @@ nanos6include_HEADERS = \
 	api/nanos6/events.h \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
+	api/nanos6/major.h \
 	api/nanos6/polling.h \
 	api/nanos6/reductions.h \
 	api/nanos6/runtime-info.h \

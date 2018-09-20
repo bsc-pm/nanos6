@@ -7,8 +7,14 @@
 #ifndef NANOS6_USER_MUTEX_H
 #define NANOS6_USER_MUTEX_H
 
+#include "major.h"
+
+
 #pragma GCC visibility push(default)
 
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_locking_api
 enum nanos6_locking_api_t { nanos6_locking_api = 1 };
 
 
