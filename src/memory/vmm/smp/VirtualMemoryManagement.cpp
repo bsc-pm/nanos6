@@ -31,22 +31,14 @@ void VirtualMemoryManagement::initialize()
 	assert(_size > 0);
 	_size = ROUND_UP(_size, HardwareInfo::getPageSize());
 	
-	/* At the moment we use as default value for start address 256MB,
-	 * because it seems to be working (lower values not always succeed).
-	 * TODO: Create a robust protocol that will reduce chances of
-	 * failing. */
-	EnvironmentVariable<void *> startAddress("NANOS6_VA_START", (void *)(2UL << 27));
-	void *address = startAddress.getValue();
-	
 	_allocations.resize(1);
-	_allocations[0] = new VirtualMemoryAllocation(address, _size);
+	_allocations[0] = new VirtualMemoryAllocation(nullptr, _size);
 	
 	_localNUMAVMA.resize(HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device));
 	HostInfo *deviceInfo = (HostInfo *)HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device);
 	setupMemoryLayout(_allocations[0], deviceInfo->getMemoryPlaces());
 	
 	RuntimeInfo::addEntry("local_memory_size", "Size of local memory per node", _size);
-	RuntimeInfo::addEntry("va_start", "Virtual address space start", (unsigned long)address);
 }
 
 void VirtualMemoryManagement::shutdown()
