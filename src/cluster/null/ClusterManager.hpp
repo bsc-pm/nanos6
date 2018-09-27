@@ -17,6 +17,10 @@ class ClusterManager {
 	ClusterManager()
 	{}
 public:
+	class ShutdownCallback
+	{
+	};
+	
 	static inline void initialize()
 	{
 	}
@@ -25,7 +29,7 @@ public:
 	{
 	}
 	
-	static inline ClusterNode *getClusterNode(__attribute__((unused)) int nodeId = 0)
+	static inline ClusterNode *getClusterNode(__attribute__((unused)) int id = 0)
 	{
 		static ClusterNode ourDummyNode;
 		return &ourDummyNode;
@@ -44,6 +48,17 @@ public:
 	static inline bool inClusterMode()
 	{
 		return false;
+	}
+	
+	static inline void setShutdownCallback(
+		__attribute__((unused)) void (*func)(void *),
+		__attribute__((unused)) void *args)
+	{
+	}
+	
+	static inline ShutdownCallback *getShutdownCallback()
+	{
+		return nullptr;
 	}
 };
 

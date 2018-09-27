@@ -5,16 +5,19 @@
 */
 
 #include "ClusterManager.hpp"
-#include <ClusterNode.hpp>
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "messages/MessageSysFinish.hpp"
 #include "messenger/Messenger.hpp"
 #include "system/RuntimeInfo.hpp"
+
+#include <ClusterNode.hpp>
 
 int ClusterManager::_clusterSize;
 std::vector<ClusterNode *> ClusterManager::_clusterNodes;
 ClusterNode *ClusterManager::_thisNode = nullptr;
 ClusterNode *ClusterManager::_masterNode = nullptr;
 Messenger *ClusterManager::_msn = nullptr;
+std::atomic<ClusterManager::ShutdownCallback *> ClusterManager::_callback;
 
 
 void ClusterManager::initializeCluster(std::string const &commType)
@@ -38,6 +41,7 @@ void ClusterManager::initializeCluster(std::string const &commType)
 	_masterNode = _clusterNodes[masterIndex];
 	
 	_msn->synchronizeAll();
+	_callback.store(nullptr);
 }
 
 void ClusterManager::initialize()
@@ -61,9 +65,19 @@ void ClusterManager::initialize()
 
 void ClusterManager::shutdown()
 {
+	if (isMasterNode() && inClusterMode()) {
+		std::vector<ClusterNode *> slaveNodes = _clusterNodes;
+		slaveNodes.erase(slaveNodes.begin() + _msn->getNodeIndex());
+		MessageSysFinish msg(_thisNode);
+		_msn->sendMessage(&msg, slaveNodes);
+		_msn->synchronizeAll();
+	}
+	
 	for (auto &node : _clusterNodes) {
 		delete node;
 	}
+	
+	delete _msn;
 	
 	_thisNode = nullptr;
 	_masterNode = nullptr;

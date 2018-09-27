@@ -8,6 +8,8 @@
 
 
 RESOLVE_API_FUNCTION(nanos6_preinit, "essential", NULL);
+RESOLVE_API_FUNCTION(nanos6_can_run_main, "essential", NULL);
+RESOLVE_API_FUNCTION(nanos6_register_completion_callback, "essential", NULL);
 RESOLVE_API_FUNCTION(nanos6_init, "essential", NULL);
 RESOLVE_API_FUNCTION(nanos6_shutdown, "essential", NULL);
 

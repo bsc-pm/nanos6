@@ -66,6 +66,20 @@ static void programSignal(int signum) {
 	FatalErrorHandler::handle(rc, "Programming signal handler for signal number ", signum);
 }
 
+int nanos6_can_run_main(void)
+{
+	if (ClusterManager::isMasterNode()) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+void nanos6_register_completion_callback(void (*shutdown_callback)(void *), void *callback_args)
+{
+	assert(shutdown_callback != nullptr);
+	ClusterManager::setShutdownCallback(shutdown_callback, callback_args);
+}
 
 void nanos6_preinit(void) {
 	if (!nanos6_api_has_been_checked_successfully()) {

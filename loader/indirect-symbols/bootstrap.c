@@ -21,6 +21,29 @@ void nanos6_preinit()
 	(*symbol)();
 }
 
+int nanos6_can_run_main()
+{
+	typedef int nanos6_can_run_main_t();
+	
+	static nanos6_can_run_main_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_can_run_main_t *) _nanos6_resolve_symbol("nanos6_can_run_main", "essential", NULL);
+	}
+	
+	return (*symbol)();
+}
+
+void nanos6_register_completion_callback()
+{
+	typedef void nanos6_register_completion_callback_t();
+	
+	static nanos6_register_completion_callback_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_register_completion_callback_t *) _nanos6_resolve_symbol("nanos6_register_completion_callback", "essential", NULL);
+	}
+	
+	(*symbol)();
+}
 
 void nanos6_init()
 {
