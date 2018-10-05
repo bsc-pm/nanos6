@@ -7,8 +7,6 @@
 #ifndef NANOS6_MAJOR_H
 #define NANOS6_MAJOR_H
 
-#include "major.h"
-
 
 //! NOTE: Every change in the major version resets every other version to 1 except api_check
 enum nanos6_major_api_t { nanos6_major_api = 2 };
