@@ -461,11 +461,23 @@ linear_regions_fragmented_dependency_sources = \
 
 multidimensional_adaptor_sources = MultidimensionalLintAPI.cpp
 
+discrete_simple_dependency_sources = \
+	src/dependencies/discrete-simple/DataAccessRegistration.cpp \
+	src/dependencies/discrete-simple/RegisterDependencies.cpp
+
 if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
 common_sources += $(linear_regions_fragmented_dependency_sources)
 multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent commutative weak_commutative reduction weak_reduction
+
+if DISCRETE_SIMPLE_DEPENDENCIES
+AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete-simple
+common_sources += $(discrete_simple_dependency_sources)
+multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent commutative reduction weak_reduction
+endif
+
 endif
 
 introspection_sources = \
@@ -690,6 +702,19 @@ noinst_HEADERS = \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
+	src/dependencies/discrete-simple/BottomMapEntry.hpp \
+	src/dependencies/discrete-simple/CPUDependencyData.hpp \
+	src/dependencies/discrete-simple/DataAccess.hpp \
+	src/dependencies/discrete-simple/DataAccessRegion.hpp \
+	src/dependencies/discrete-simple/DataAccessRegistration.hpp \
+	src/dependencies/discrete-simple/DataAccessSequence.hpp \
+	src/dependencies/discrete-simple/DataAccessSequenceImplementation.hpp \
+	src/dependencies/discrete-simple/Dependencies.hpp \
+	src/dependencies/discrete-simple/DependencyDomain.hpp \
+	src/dependencies/discrete-simple/DependencySystem.hpp \
+	src/dependencies/discrete-simple/MultidimensionalAPI.hpp \
+	src/dependencies/discrete-simple/ReductionInfo.hpp \
+	src/dependencies/discrete-simple/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \

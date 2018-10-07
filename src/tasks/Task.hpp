@@ -487,6 +487,11 @@ public:
 		return !_flags[Task::non_runnable_flag];
 	}
 	
+	//! \brief Set the wait behavior
+	inline void setDelayedRelease(bool delayedReleaseValue)
+	{
+		_flags[Task::wait_flag] = delayedReleaseValue;
+	}
 	//! \brief Check if the task has the wait clause
 	bool mustDelayRelease() const
 	{
