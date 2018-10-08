@@ -52,7 +52,7 @@ public:
 			return 0;
 		}
 		
-		size_t nrObjects = std::max(requestedObjects, poolSize);
+		size_t nrObjects = std::min(requestedObjects, poolSize);
 		std::move(numaPool.begin(), numaPool.begin() + nrObjects, pool.begin());
 		
 		return nrObjects;
