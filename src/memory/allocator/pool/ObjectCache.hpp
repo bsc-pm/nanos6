@@ -45,8 +45,11 @@ public:
 						numaNodeCount
 					);
 		}
-		_externalObjectCache = new CPUObjectCache<T>(_NUMACache, cpuCount,
-						numaNodeCount);
+		_externalObjectCache = new CPUObjectCache<T>(
+						_NUMACache,
+						/* NUMA Id */ 0,
+						numaNodeCount
+					);
 	}
 	
 	~ObjectCache()
