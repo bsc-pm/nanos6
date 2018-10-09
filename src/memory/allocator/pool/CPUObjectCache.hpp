@@ -81,6 +81,8 @@ public:
 	{
 		size_t nodeId = VirtualMemoryManagement::findNUMA((void *)ptr);
 		
+		ptr->~T();
+		
 		_available[nodeId].push_front(ptr);
 		if ((nodeId != _NUMANodeId) && (_available[nodeId].size() == 64)) {
 			_NUMAObjectCache->returnObjects(nodeId, _available[nodeId]);
