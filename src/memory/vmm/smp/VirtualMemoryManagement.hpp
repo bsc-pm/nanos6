@@ -72,6 +72,10 @@ public:
 		/** If allocation from already mapped regions failed create a
 		 * new mapping */
 		size_t allocation_size = (size < _size) ? _size : 2 * size;
+		
+		//! We need the size of allocations to be a multiple of page size
+		allocation_size = ROUND_UP(allocation_size, HardwareInfo::getPageSize());
+		
 		VirtualMemoryAllocation *alloc = new VirtualMemoryAllocation(
 				nullptr, allocation_size);
 		_allocations.push_back(alloc);
