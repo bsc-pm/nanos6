@@ -57,7 +57,7 @@ namespace DataAccessRegistration {
 		bool _propagatesConcurrentSatisfiabilityToNext;
 		bool _propagatesCommutativeSatisfiabilityToNext;
 		bool _propagatesReductionInfoToNext;
-		bool _propagatesReductionCpuSetToNext;
+		bool _propagatesReductionSlotSetToNext;
 		bool _makesNextTopmost;
 		bool _propagatesTopLevel;
 		bool _releasesCommutativeRegion;
@@ -67,7 +67,7 @@ namespace DataAccessRegistration {
 		bool _propagatesConcurrentSatisfiabilityToFragments;
 		bool _propagatesCommutativeSatisfiabilityToFragments;
 		bool _propagatesReductionInfoToFragments;
-		bool _propagatesReductionCpuSetToFragments;
+		bool _propagatesReductionSlotSetToFragments;
 		
 		bool _combinesReduction;
 		
@@ -83,14 +83,14 @@ namespace DataAccessRegistration {
 			_hasNext(false),
 			_propagatesReadSatisfiabilityToNext(false), _propagatesWriteSatisfiabilityToNext(false), _propagatesConcurrentSatisfiabilityToNext(false),
 			_propagatesCommutativeSatisfiabilityToNext(false),
-			_propagatesReductionInfoToNext(false), _propagatesReductionCpuSetToNext(false),
+			_propagatesReductionInfoToNext(false), _propagatesReductionSlotSetToNext(false),
 			_makesNextTopmost(false),
 			_propagatesTopLevel(false),
 			_releasesCommutativeRegion(false),
 			
 			_propagatesReadSatisfiabilityToFragments(false), _propagatesWriteSatisfiabilityToFragments(false),
 			_propagatesConcurrentSatisfiabilityToFragments(false), _propagatesCommutativeSatisfiabilityToFragments(false),
-			_propagatesReductionInfoToFragments(false), _propagatesReductionCpuSetToFragments(false),
+			_propagatesReductionInfoToFragments(false), _propagatesReductionSlotSetToFragments(false),
 			
 			_combinesReduction(false),
 			
@@ -108,7 +108,7 @@ namespace DataAccessRegistration {
 			_enforcesDependency =
 				!access->isWeak() &&
 				!access->satisfied() &&
-				// Reduction accesses can begin as soon as they have a ReductionInfo (even without CpuSet)
+				// Reduction accesses can begin as soon as they have a ReductionInfo (even without SlotSet)
 				!((access->getType() == REDUCTION_ACCESS_TYPE) && (access->receivedReductionInfo() || access->allocatedReductionInfo())) &&
 				(access->getObjectType() == access_type);
 			_hasNext = access->hasNext();
@@ -120,16 +120,16 @@ namespace DataAccessRegistration {
 				_propagatesConcurrentSatisfiabilityToFragments = access->concurrentSatisfied();
 				_propagatesCommutativeSatisfiabilityToFragments = access->commutativeSatisfied();
 				_propagatesReductionInfoToFragments = access->receivedReductionInfo() || access->allocatedReductionInfo();
-				// Non-reduction accesses will propagate received ReductionCpuSet to their fragments
+				// Non-reduction accesses will propagate received ReductionSlotSet to their fragments
 				// to make their status consistent with the access itself
-				_propagatesReductionCpuSetToFragments = access->receivedReductionCpuSet();
+				_propagatesReductionSlotSetToFragments = access->receivedReductionSlotSet();
 			} else {
 				_propagatesReadSatisfiabilityToFragments = false;
 				_propagatesWriteSatisfiabilityToFragments = false;
 				_propagatesConcurrentSatisfiabilityToFragments = false;
 				_propagatesCommutativeSatisfiabilityToFragments = false;
 				_propagatesReductionInfoToFragments = false;
-				_propagatesReductionCpuSetToFragments = false;
+				_propagatesReductionSlotSetToFragments = false;
 			}
 			
 			// Propagation to next
@@ -155,7 +155,7 @@ namespace DataAccessRegistration {
 						// For 'write' and 'readwrite' accesses we need to propagate the ReductionInfo through fragments only,
 						// in order to be able to propagate a nested reduction ReductionInfo outside
 						&& ((access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE));
-					_propagatesReductionCpuSetToNext = false; // ReductionCpuSet is propagated through the fragments
+					_propagatesReductionSlotSetToNext = false; // ReductionSlotSet is propagated through the fragments
 				} else if (
 					(access->getObjectType() == fragment_type)
 					|| (access->getObjectType() == taskwait_type)
@@ -174,13 +174,13 @@ namespace DataAccessRegistration {
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
 						&& (access->receivedReductionInfo() || access->allocatedReductionInfo());
-					_propagatesReductionCpuSetToNext =
+					_propagatesReductionSlotSetToNext =
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()
 						&& access->receivedReductionInfo()
 						&& !access->closesReduction()
 						&& (access->allocatedReductionInfo()
-								|| access->receivedReductionCpuSet());
+								|| access->receivedReductionSlotSet());
 				} else {
 					assert(access->getObjectType() == access_type);
 					assert(!access->hasSubaccesses());
@@ -216,13 +216,13 @@ namespace DataAccessRegistration {
 						// complete, otherwise subaccesses can still appear
 						&& (((access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE))
 							|| access->complete());
-					_propagatesReductionCpuSetToNext =
+					_propagatesReductionSlotSetToNext =
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()
 						&& access->receivedReductionInfo()
 						&& !access->closesReduction()
 						&& (access->allocatedReductionInfo()
-								|| access->receivedReductionCpuSet());
+								|| access->receivedReductionSlotSet());
 				}
 			} else {
 				assert(!access->hasNext());
@@ -231,7 +231,7 @@ namespace DataAccessRegistration {
 				_propagatesConcurrentSatisfiabilityToNext = false;
 				_propagatesCommutativeSatisfiabilityToNext = false;
 				_propagatesReductionInfoToNext = false;
-				_propagatesReductionCpuSetToNext = false;
+				_propagatesReductionSlotSetToNext = false;
 			}
 			
 			_combinesReduction =
@@ -245,9 +245,9 @@ namespace DataAccessRegistration {
 				&& access->readSatisfied() && access->writeSatisfied()
 				&& access->receivedReductionInfo()
 				// Read as: If this (reduction) access is part of its predecessor reduction,
-				// it needs to have received the 'ReductionCpuSet' before being removed
+				// it needs to have received the 'ReductionSlotSet' before being removed
 				&& ((access->getType() != REDUCTION_ACCESS_TYPE)
-					|| access->allocatedReductionInfo() || access->receivedReductionCpuSet())
+					|| access->allocatedReductionInfo() || access->receivedReductionSlotSet())
 				&& access->complete()
 				&& (
 					!access->isInBottomMap() || access->hasNext()
@@ -459,11 +459,11 @@ namespace DataAccessRegistration {
 			
 			assert(access->getType() == REDUCTION_ACCESS_TYPE);
 			assert(access->receivedReductionInfo());
-			assert(access->allocatedReductionInfo() || access->receivedReductionCpuSet());
+			assert(access->allocatedReductionInfo() || access->receivedReductionSlotSet());
 			
 			ReductionInfo *reductionInfo = access->getReductionInfo();
 			assert(reductionInfo != nullptr);
-			bool wasLastCombination = reductionInfo->combineRegion(access->getAccessRegion(), access->getReductionCpuSet());
+			bool wasLastCombination = reductionInfo->combineRegion(access->getAccessRegion(), access->getReductionSlotSet());
 			
 			if (wasLastCombination) {
 				const DataAccessRegion& originalRegion = reductionInfo->getOriginalRegion();
@@ -515,17 +515,17 @@ namespace DataAccessRegistration {
 				updateOperation._reductionInfo = access->getReductionInfo();
 			}
 			
-			if (initialStatus._propagatesReductionCpuSetToNext != updatedStatus._propagatesReductionCpuSetToNext) {
-				assert(!initialStatus._propagatesReductionCpuSetToNext);
+			if (initialStatus._propagatesReductionSlotSetToNext != updatedStatus._propagatesReductionSlotSetToNext) {
+				assert(!initialStatus._propagatesReductionSlotSetToNext);
 				
-				// Reduction CPU set computation
+				// Reduction slot set computation
 				
 				assert(access->getType() == REDUCTION_ACCESS_TYPE);
 				assert(access->receivedReductionInfo() || access->allocatedReductionInfo());
-				assert(access->getReductionCpuSet().size() > 0);
-				assert(access->isWeak() || task->isFinal() || access->getReductionCpuSet().any());
+				assert(access->getReductionSlotSet().size() > 0);
+				assert(access->isWeak() || task->isFinal() || access->getReductionSlotSet().any());
 				
-				updateOperation._reductionCpuSet = access->getReductionCpuSet();
+				updateOperation._reductionSlotSet = access->getReductionSlotSet();
 			}
 			
 			// Make Next Topmost
@@ -575,13 +575,13 @@ namespace DataAccessRegistration {
 				updateOperation._reductionInfo = access->getReductionInfo();
 			}
 			
-			if (initialStatus._propagatesReductionCpuSetToFragments != updatedStatus._propagatesReductionCpuSetToFragments) {
-				assert(!initialStatus._propagatesReductionCpuSetToFragments);
+			if (initialStatus._propagatesReductionSlotSetToFragments != updatedStatus._propagatesReductionSlotSetToFragments) {
+				assert(!initialStatus._propagatesReductionSlotSetToFragments);
 				
-				assert(access->receivedReductionCpuSet() || ((access->getType() == REDUCTION_ACCESS_TYPE) && access->allocatedReductionInfo()));
-				assert(access->getReductionCpuSet().size() > 0);
+				assert(access->receivedReductionSlotSet() || ((access->getType() == REDUCTION_ACCESS_TYPE) && access->allocatedReductionInfo()));
+				assert(access->getReductionSlotSet().size() > 0);
 				
-				updateOperation._reductionCpuSet = access->getReductionCpuSet();
+				updateOperation._reductionSlotSet = access->getReductionSlotSet();
 			}
 			
 			if (!updateOperation.empty()) {
@@ -628,13 +628,13 @@ namespace DataAccessRegistration {
 			access->markAsDiscounted();
 			
 			if (access->getObjectType() == taskwait_type) {
-				// Update parent data access ReductionCpuSet with information from its subaccesses
+				// Update parent data access ReductionSlotSet with information from its subaccesses
 				// collected at the taskwait fragment
 				// Note: This shouldn't be done for top-level sink fragments, as their presence
 				// in the bottomMap just mean that there is no matching access in the parent
 				// (the reduction is local and not waited for)
 				if (access->getType() == REDUCTION_ACCESS_TYPE) {
-					assert(access->getReductionCpuSet().size() > 0);
+					assert(access->getReductionSlotSet().size() > 0);
 					
 					accessStructures._accesses.processIntersecting(
 						access->getAccessRegion(),
@@ -649,9 +649,9 @@ namespace DataAccessRegistration {
 							assert(dataAccess->receivedReductionInfo() || dataAccess->allocatedReductionInfo());
 							assert(access->receivedReductionInfo());
 							assert(dataAccess->getReductionInfo() == access->getReductionInfo());
-							assert(dataAccess->getReductionCpuSet().size() == access->getReductionCpuSet().size());
+							assert(dataAccess->getReductionSlotSet().size() == access->getReductionSlotSet().size());
 							
-							dataAccess->getReductionCpuSet() |= access->getReductionCpuSet();
+							dataAccess->getReductionSlotSet() |= access->getReductionSlotSet();
 							
 							return true;
 						}
@@ -1123,16 +1123,16 @@ namespace DataAccessRegistration {
 			access->setReceivedReductionInfo();
 		}
 		
-		// ReductionCpuSet
-		if (updateOperation._reductionCpuSet.size() > 0) {
+		// ReductionSlotSet
+		if (updateOperation._reductionSlotSet.size() > 0) {
 			assert((access->getObjectType() == access_type) ||
 				(access->getObjectType() == fragment_type) ||
 				(access->getObjectType() == taskwait_type));
 			assert(access->getType() == REDUCTION_ACCESS_TYPE);
-			assert(access->getReductionCpuSet().size() == updateOperation._reductionCpuSet.size());
+			assert(access->getReductionSlotSet().size() == updateOperation._reductionSlotSet.size());
 			
-			access->getReductionCpuSet() |= updateOperation._reductionCpuSet;
-			access->setReceivedReductionCpuSet();
+			access->getReductionSlotSet() |= updateOperation._reductionSlotSet;
+			access->setReceivedReductionSlotSet();
 		}
 		
 		// Topmost
@@ -1913,7 +1913,7 @@ namespace DataAccessRegistration {
 						targetAccess->setConcurrentSatisfied();
 						targetAccess->setCommutativeSatisfied();
 						targetAccess->setReceivedReductionInfo();
-						// Note: setting ReductionCpuSet as received is not necessary, as its not always propagated
+						// Note: setting ReductionSlotSet as received is not necessary, as its not always propagated
 						targetAccess->setTopmost();
 						targetAccess->setTopLevel();
 						DataAccessStatusEffects updatedStatus(targetAccess);
@@ -2088,10 +2088,12 @@ namespace DataAccessRegistration {
 	
 	static inline void finalizeAccess(
 		Task *finishedTask, DataAccess *dataAccess, DataAccessRegion region,
+		ComputePlace *computePlace,
 		/* OUT */ CPUDependencyData &hpDependencyData
 	) {
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
+		assert(computePlace != nullptr);
 		
 		assert(dataAccess->getOriginator() == finishedTask);
 		assert(!region.empty());
@@ -2101,6 +2103,25 @@ namespace DataAccessRegistration {
 			return;
 		}
 		assert(!dataAccess->hasBeenDiscounted());
+		
+		// Release reduction slots (only when necessary)
+		// Note: Remember weak accesses in final tasks will be promoted to strong
+		if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !dataAccess->isWeak())
+		{
+			assert(computePlace->getType() == nanos6_device_t::nanos6_host_device);
+			
+#ifdef NDEBUG
+			CPU *cpu = static_cast<CPU*>(computePlace);
+#else
+			CPU *cpu = dynamic_cast<CPU*>(computePlace);
+			assert(cpu != nullptr);
+#endif
+			
+			ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
+			assert(reductionInfo != nullptr);
+			
+			reductionInfo->releaseSlotsInUse(cpu->_virtualCPUId);
+		}
 		
 		applyToAccessAndFragments(
 			dataAccess, region,
@@ -2498,7 +2519,7 @@ namespace DataAccessRegistration {
 					assert(dataAccess->getType() == accessType);
 					assert(dataAccess->isWeak() == weak);
 					
-					finalizeAccess(task, dataAccess, region, /* OUT */ hpDependencyData);
+					finalizeAccess(task, dataAccess, region, computePlace, /* OUT */ hpDependencyData);
 					
 					return true;
 				}
@@ -2541,7 +2562,7 @@ namespace DataAccessRegistration {
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					
-					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), /* OUT */ hpDependencyData);
+					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), computePlace, /* OUT */ hpDependencyData);
 					
 					return true;
 				}

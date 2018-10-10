@@ -40,7 +40,7 @@ struct CPUDependencyData {
 		bool _setReductionInfo; // Note: Both this and next field are required, as a null ReductionInfo can be propagated
 		ReductionInfo *_reductionInfo;
 		
-		boost::dynamic_bitset<> _reductionCpuSet;
+		boost::dynamic_bitset<> _reductionSlotSet;
 		
 		UpdateOperation()
 			: _target(), _region(),
@@ -66,7 +66,7 @@ struct CPUDependencyData {
 				&& !_makeConcurrentSatisfied && !_makeCommutativeSatisfied
 				&& !_makeTopmost && !_makeTopLevel
 				&& !_setReductionInfo
-				&& (_reductionCpuSet.size() == 0);
+				&& (_reductionSlotSet.size() == 0);
 		}
 	};
 	

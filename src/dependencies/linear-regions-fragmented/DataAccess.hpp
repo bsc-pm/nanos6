@@ -27,7 +27,6 @@
 
 struct DataAccess;
 class Task;
-class ReductionInfo;
 
 
 #include "../DataAccessBase.hpp"
@@ -35,6 +34,7 @@ class ReductionInfo;
 #include "DataAccessObjectType.hpp"
 #include "DataAccessRegion.hpp"
 #include "ReductionSpecific.hpp"
+#include "ReductionInfo.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 
@@ -54,7 +54,7 @@ private:
 		COMMUTATIVE_SATISFIED_BIT,
 		RECEIVED_REDUCTION_INFO_BIT,
 		ALLOCATED_REDUCTION_INFO_BIT,
-		RECEIVED_CPU_SET_BIT,
+		RECEIVED_SLOT_SET_BIT,
 		CLOSES_REDUCTION_BIT,
 		
 		READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
@@ -103,8 +103,9 @@ private:
 	//! Reduction-specific information of previous access
 	ReductionInfo *_previousReductionInfo;
 	
-	//! CPUs executing tasks accessing this reduction region (if applicable)
-	boost::dynamic_bitset<> _reductionCpuSet;
+	//! Reduction slots that may contain uncombined data belonging to the
+	//! reduction this access is part of (if applicable)
+	boost::dynamic_bitset<> _reductionSlotSet;
 	
 public:
 	DataAccess(
@@ -130,7 +131,7 @@ public:
 		assert(originator != nullptr);
 		
 		if (_type == REDUCTION_ACCESS_TYPE) {
-			_reductionCpuSet.resize(CPUManager::getTotalCPUs());
+			_reductionSlotSet.resize(ReductionInfo::getMaxSlots());
 		}
 	}
 	
@@ -144,7 +145,7 @@ public:
 		_reductionIndex(other.getReductionIndex()),
 		_reductionInfo(other.getReductionInfo()),
 		_previousReductionInfo(other.getPreviousReductionInfo()),
-		_reductionCpuSet(other.getReductionCpuSet())
+		_reductionSlotSet(other.getReductionSlotSet())
 	{}
 	
 	~DataAccess()
@@ -311,15 +312,15 @@ public:
 		return _status[ALLOCATED_REDUCTION_INFO_BIT];
 	}
 	
-	void setReceivedReductionCpuSet()
+	void setReceivedReductionSlotSet()
 	{
-		assert(!receivedReductionCpuSet());
-		_status[RECEIVED_CPU_SET_BIT] = true;
+		assert(!receivedReductionSlotSet());
+		_status[RECEIVED_SLOT_SET_BIT] = true;
 		Instrument::newDataAccessProperty(_instrumentationId, "RSetRec", "Reduction Set Received");
 	}
-	bool receivedReductionCpuSet() const
+	bool receivedReductionSlotSet() const
 	{
-		return _status[RECEIVED_CPU_SET_BIT];
+		return _status[RECEIVED_SLOT_SET_BIT];
 	}
 	
 	void setClosesReduction()
@@ -483,11 +484,11 @@ public:
 			assert(other->getReductionInfo() != nullptr);
 			setAllocatedReductionInfo();
 		}
-		if (other->receivedReductionCpuSet()) {
-			setReceivedReductionCpuSet();
+		if (other->receivedReductionSlotSet()) {
+			setReceivedReductionSlotSet();
 		}
-		if (other->getReductionCpuSet().size() > 0) {
-			setReductionCpuSet(other->getReductionCpuSet());
+		if (other->getReductionSlotSet().size() > 0) {
+			setReductionSlotSet(other->getReductionSlotSet());
 		}
 		if (other->complete()) {
 			setComplete();
@@ -522,7 +523,7 @@ public:
 			// reduction have been received and that the original region can be
 			// safely accessed for combination
 			return writeSatisfied()
-				&& (allocatedReductionInfo() || (receivedReductionInfo() && receivedReductionCpuSet()));
+				&& (allocatedReductionInfo() || (receivedReductionInfo() && receivedReductionSlotSet()));
 		} else {
 			return readSatisfied() && writeSatisfied();
 		}
@@ -575,25 +576,25 @@ public:
 		_previousReductionInfo = previousReductionInfo;
 	}
 	
-	boost::dynamic_bitset<> const &getReductionCpuSet() const
+	boost::dynamic_bitset<> const &getReductionSlotSet() const
 	{
-		return _reductionCpuSet;
+		return _reductionSlotSet;
 	}
 	
-	boost::dynamic_bitset<> &getReductionCpuSet()
+	boost::dynamic_bitset<> &getReductionSlotSet()
 	{
-		return _reductionCpuSet;
+		return _reductionSlotSet;
 	}
 	
-	void setReductionCpuSet(const boost::dynamic_bitset<> &reductionCpuSet)
+	void setReductionSlotSet(const boost::dynamic_bitset<> &reductionSlotSet)
 	{
-		assert(_reductionCpuSet.none());
-		_reductionCpuSet = reductionCpuSet;
+		assert(_reductionSlotSet.none());
+		_reductionSlotSet = reductionSlotSet;
 	}
 	
-	void setReductionCpu(size_t cpuId)
+	void setReductionAccessedSlot(size_t slotIndex)
 	{
-		_reductionCpuSet.set(cpuId);
+		_reductionSlotSet.set(slotIndex);
 	}
 	
 	Instrument::data_access_id_t const &getInstrumentationId() const

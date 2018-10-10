@@ -470,7 +470,7 @@ public:
 	}
 	
 	//! \brief Return the number of symbols on the task
-	inline int getSymbolNum(){
+	inline int getNumSymbols(){
 		return _taskInfo->num_symbols;
 	}
 	
