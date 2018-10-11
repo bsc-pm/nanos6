@@ -53,7 +53,8 @@ public:
 		}
 		
 		size_t nrObjects = std::min(requestedObjects, poolSize);
-		std::move(numaPool.begin(), numaPool.begin() + nrObjects, pool.begin());
+		std::move(numaPool.begin(), numaPool.begin() + nrObjects, std::front_inserter(pool));
+		numaPool.erase(numaPool.begin(), numaPool.begin() + nrObjects);
 		
 		return nrObjects;
 	}
@@ -67,7 +68,8 @@ public:
 	{
 		std::lock_guard<PaddedSpinLock<64>> lock(_NUMAPools[numaId]._lock);
 		pool_t &numaPool = _NUMAPools[numaId]._pool;
-		std::move(pool.begin(), pool.end(), numaPool.end());
+		std::move(pool.begin(), pool.end(), std::back_inserter(numaPool));
+		pool.erase(pool.begin(), pool.end());
 	}
 };
 
