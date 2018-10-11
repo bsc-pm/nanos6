@@ -458,7 +458,7 @@ namespace DataAccessRegistration {
 				assert(access->getType() == REDUCTION_ACCESS_TYPE);
 				assert(access->receivedReductionInfo() || access->allocatedReductionInfo());
 				assert(access->getReductionCpuSet().size() > 0);
-				assert(access->isWeak() || access->getReductionCpuSet().any());
+				assert(access->isWeak() || task->isFinal() || access->getReductionCpuSet().any());
 				
 				if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
 					assert(access->getPreviousReductionCpuSet().size() > 0);
