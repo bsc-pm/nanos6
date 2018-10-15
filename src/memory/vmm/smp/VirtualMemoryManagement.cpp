@@ -16,6 +16,7 @@
 size_t VirtualMemoryManagement::_size;
 std::vector<VirtualMemoryAllocation *> VirtualMemoryManagement::_allocations;
 std::vector<VirtualMemoryManagement::node_allocations_t> VirtualMemoryManagement::_localNUMAVMA;
+VirtualMemoryManagement::vmm_lock_t VirtualMemoryManagement::_lock;
 
 void VirtualMemoryManagement::initialize()
 {

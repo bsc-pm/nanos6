@@ -7,6 +7,7 @@
 #ifndef __VIRTUAL_MEMORY_MANAGEMENT_HPP__
 #define __VIRTUAL_MEMORY_MANAGEMENT_HPP__
 
+#include "lowlevel/PaddedSpinLock.hpp"
 #include "memory/vmm/VirtualMemoryAllocation.hpp"
 #include "memory/vmm/VirtualMemoryArea.hpp"
 
@@ -26,6 +27,9 @@ private:
 	//! addresses for local NUMA allocations
 	typedef std::vector<VirtualMemoryArea *> node_allocations_t;
 	static std::vector<node_allocations_t> _localNUMAVMA;
+	
+	typedef PaddedSpinLock<64> vmm_lock_t;
+	static vmm_lock_t _lock;
 	
 	/** Set up the memory layout based.
 	 *
@@ -62,6 +66,8 @@ public:
 	 */
 	static inline void *allocLocalNUMA(size_t size, size_t numaNodeId)
 	{
+		std::lock_guard<vmm_lock_t> guard(_lock);
+		
 		//! Try to allocate from the last available memory allocation
 		VirtualMemoryArea *vma = _localNUMAVMA[numaNodeId].back();
 		void *ret = vma->allocBlock(size);
@@ -78,6 +84,7 @@ public:
 		
 		VirtualMemoryAllocation *alloc = new VirtualMemoryAllocation(
 				nullptr, allocation_size);
+		
 		_allocations.push_back(alloc);
 		_localNUMAVMA[numaNodeId].push_back(
 			new VirtualMemoryArea(alloc->getAddress(),
@@ -93,6 +100,7 @@ public:
 	//! the NUMA node count if not found
 	static inline size_t findNUMA(void *ptr)
 	{
+		std::lock_guard<vmm_lock_t> guard(_lock);
 		for (size_t i = 0; i < _localNUMAVMA.size(); ++i) {
 			for (auto vma : _localNUMAVMA[i]) {
 				if (vma->includesAddress(ptr)) {
