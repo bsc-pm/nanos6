@@ -11,6 +11,8 @@
 #include <atomic>
 #include <deque>
 
+#include "lowlevel/EnvironmentVariable.hpp"
+
 
 struct CPU;
 class WorkerThread;
@@ -27,6 +29,8 @@ private:
 	//! \brief last thread that joins any other thread
 	static std::atomic<WorkerThread *> _mainShutdownControllerThread;
 	
+	static EnvironmentVariable<size_t> _defaultThreadStackSize;
+	
 	friend class WorkerThreadBase;
 	
 public:
@@ -38,6 +42,11 @@ public:
 	void initialize(CPU *cpu);
 	void shutdownPhase1(CPU *cpu);
 	void shutdownPhase2(CPU *cpu);
+	
+	static size_t getDefaultStackSize()
+	{
+		return _defaultThreadStackSize;
+	}
 };
 
 

@@ -5,6 +5,8 @@
 */
 
 #include "CPU.hpp"
+#include "CPUThreadingModelData.hpp"
+
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include <pthread.h>
@@ -18,6 +20,9 @@ CPU::CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId)
 	CPU_SET_S(systemCPUId, sizeof(cpu_set_t), &_cpuMask);
 	
 	int rc = pthread_attr_init(&_pthreadAttr);
+	FatalErrorHandler::handle(rc, " in call to pthread_attr_init");
+	
+	rc = pthread_attr_setstacksize(&_pthreadAttr, CPUThreadingModelData::getDefaultStackSize());
 	FatalErrorHandler::handle(rc, " in call to pthread_attr_init");
 }
 
