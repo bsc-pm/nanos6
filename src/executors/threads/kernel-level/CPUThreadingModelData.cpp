@@ -16,7 +16,7 @@
 std::atomic<long> CPUThreadingModelData::_shutdownThreads(0);
 std::atomic<WorkerThread *> CPUThreadingModelData::_mainShutdownControllerThread(nullptr);
 
-EnvironmentVariable<size_t> CPUThreadingModelData::_defaultThreadStackSize("NANOS6_STACK_SIZE", 8 * 1024 * 1024);
+EnvironmentVariable<StringifiedMemorySize> CPUThreadingModelData::_defaultThreadStackSize("NANOS6_STACK_SIZE", 8 * 1024 * 1024);
 
 
 void CPUThreadingModelData::initialize(__attribute__((unused)) CPU *cpu)
@@ -28,7 +28,7 @@ void CPUThreadingModelData::initialize(__attribute__((unused)) CPU *cpu)
 		RuntimeInfo::addEntry("threading_model", "Threading Model", "pthreads");
 	}
 	
-	RuntimeInfo::addEntry("stack_size", "Stack Size", _defaultThreadStackSize);
+	RuntimeInfo::addEntry("stack_size", "Stack Size", getDefaultStackSize());
 }
 
 

@@ -29,7 +29,7 @@ private:
 	//! \brief last thread that joins any other thread
 	static std::atomic<WorkerThread *> _mainShutdownControllerThread;
 	
-	static EnvironmentVariable<size_t> _defaultThreadStackSize;
+	static EnvironmentVariable<StringifiedMemorySize> _defaultThreadStackSize;
 	
 	friend class WorkerThreadBase;
 	
@@ -45,7 +45,7 @@ public:
 	
 	static size_t getDefaultStackSize()
 	{
-		return _defaultThreadStackSize;
+		return (size_t) _defaultThreadStackSize.getValue();
 	}
 };
 
