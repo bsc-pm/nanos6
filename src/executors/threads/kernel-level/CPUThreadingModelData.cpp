@@ -26,9 +26,8 @@ void CPUThreadingModelData::initialize(__attribute__((unused)) CPU *cpu)
 	bool worked = firstTime.compare_exchange_strong(expect, false);
 	if (worked) {
 		RuntimeInfo::addEntry("threading_model", "Threading Model", "pthreads");
+		RuntimeInfo::addEntry("stack_size", "Stack Size", getDefaultStackSize());
 	}
-	
-	RuntimeInfo::addEntry("stack_size", "Stack Size", getDefaultStackSize());
 }
 
 
