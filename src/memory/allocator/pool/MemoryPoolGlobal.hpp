@@ -93,8 +93,6 @@ public:
 			fillPool();
 		}
 		
-		void *curAddr = _curMemoryChunk;
-		
 		chunkSize = _memoryChunkSize;
 		
 		if (chunkSize < minSize) {
@@ -108,6 +106,7 @@ public:
 			}
 		}
 		
+		void *curAddr = _curMemoryChunk;
 		_curAvailable -= chunkSize;
 		_curMemoryChunk = (char *)_curMemoryChunk + chunkSize;
 		
