@@ -173,7 +173,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 	if (_nanos6_lib_handle != NULL) {
 		void *disabled_symbol = dlsym(_nanos6_lib_handle, "nanos6_disabled_variant");
 		if (disabled_symbol != NULL) {
-			snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "This installation of Nanos6 does not include the %s variant.");
+			snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "This installation of Nanos6 does not include the %s variant.", variant);
 			_nanos6_exit_with_error = 1;
 			
 			return;
