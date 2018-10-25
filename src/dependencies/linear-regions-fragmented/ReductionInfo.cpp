@@ -24,6 +24,7 @@ ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operato
 	_paddedRegionSize(((_region.getSize() + HardwareInfo::getCacheLineSize() - 1)/HardwareInfo::getCacheLineSize())*HardwareInfo::getCacheLineSize()),
 	_typeAndOperatorIndex(typeAndOperatorIndex),
 	_originalStorageCombinationCounter(_region.getSize()),
+	_isOriginalStorageAvailable(false), _originalStorageAvailabilityCounter(_region.getSize()),
 	_initializationFunction(std::bind(initializationFunction, std::placeholders::_1, _region.getStartAddress(), std::placeholders::_2)),
 	_combinationFunction(combinationFunction)
 {
@@ -90,7 +91,8 @@ size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId) {
 		_freeSlotIndices.pop_back();
 	}
 	else {
-		FatalErrorHandler::failIf(_slots.size() > getMaxSlots(), "Maximum number of private storage slots reached");
+		FatalErrorHandler::failIf(_slots.size() > getMaxSlots() + (_isOriginalStorageAvailable ? 0 : -1),
+				"Maximum number of private storage slots reached");
 		freeSlotIndex = _slots.size();
 		_slots.emplace_back();
 	}
@@ -135,6 +137,23 @@ DataAccessRegion ReductionInfo::getFreeSlotStorage(size_t slotIndex) {
 	}
 	
 	return DataAccessRegion(slot.storage, _region.getSize());
+}
+
+void ReductionInfo::makeOriginalStorageRegionAvailable(const DataAccessRegion &region) {
+	_originalStorageAvailabilityCounter -= region.getSize();
+	
+	if (_originalStorageAvailabilityCounter == 0) {
+		std::lock_guard<spinlock_t> guard(_lock);
+		// Add original region to reduction slot pool. FIXME This won't work for UDRs
+		size_t freeSlotIndex = _slots.size();
+		_slots.emplace_back();
+		ReductionSlot& slot = _slots.back();
+		assert(_region.getStartAddress() != nullptr);
+		slot.storage = _region.getStartAddress();
+		slot.initialized = true;
+		_freeSlotIndices.push_back(freeSlotIndex);
+		_isOriginalStorageAvailable = true;
+	}
 }
 
 bool ReductionInfo::combineRegion(const DataAccessRegion& region, const reduction_slot_set_t& accessedSlots) {

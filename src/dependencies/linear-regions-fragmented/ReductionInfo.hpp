@@ -51,6 +51,8 @@ class ReductionInfo
 		
 		DataAccessRegion getFreeSlotStorage(size_t slotIndex);
 		
+		void makeOriginalStorageRegionAvailable(const DataAccessRegion &region);
+		
 	private:
 		
 		DataAccessRegion _region;
@@ -60,6 +62,9 @@ class ReductionInfo
 		reduction_type_and_operator_index_t _typeAndOperatorIndex;
 		
 		std::atomic_size_t _originalStorageCombinationCounter;
+		
+		bool _isOriginalStorageAvailable;
+		std::atomic_size_t _originalStorageAvailabilityCounter;
 		
 		std::vector<ReductionSlot> _slots;
 		std::vector<long int> _currentCpuSlotIndices;
@@ -75,7 +80,8 @@ inline size_t ReductionInfo::getMaxSlots()
 {
 	// Note: This can't become a const static member because on its definition
 	// it would call 'getTotalCPUs' before the runtime is properly initialized
-	return CPUManager::getTotalCPUs();
+	// Note: '+1' when original storage is available
+	return CPUManager::getTotalCPUs() + 1;
 }
 
 #endif // REDUCTION_INFO_HPP

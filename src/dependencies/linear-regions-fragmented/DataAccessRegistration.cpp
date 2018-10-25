@@ -69,6 +69,7 @@ namespace DataAccessRegistration {
 		bool _propagatesReductionInfoToFragments;
 		bool _propagatesReductionSlotSetToFragments;
 		
+		bool _makesReductionOriginalStorageAvailable;
 		bool _combinesReduction;
 		
 		bool _linksBottomMapAccessesToNextAndInhibitsPropagation;
@@ -92,6 +93,7 @@ namespace DataAccessRegistration {
 			_propagatesConcurrentSatisfiabilityToFragments(false), _propagatesCommutativeSatisfiabilityToFragments(false),
 			_propagatesReductionInfoToFragments(false), _propagatesReductionSlotSetToFragments(false),
 			
+			_makesReductionOriginalStorageAvailable(false),
 			_combinesReduction(false),
 			
 			_linksBottomMapAccessesToNextAndInhibitsPropagation(false),
@@ -233,6 +235,10 @@ namespace DataAccessRegistration {
 				_propagatesReductionInfoToNext = false;
 				_propagatesReductionSlotSetToNext = false;
 			}
+			
+			_makesReductionOriginalStorageAvailable =
+				access->allocatedReductionInfo()
+				&& access->writeSatisfied();
 			
 			_combinesReduction =
 				access->closesReduction()
@@ -449,6 +455,18 @@ namespace DataAccessRegistration {
 					}
 				}
 			}
+		}
+		
+		// Notify reduction original storage has become available
+		if (initialStatus._makesReductionOriginalStorageAvailable !=
+				updatedStatus._makesReductionOriginalStorageAvailable) {
+			assert(!initialStatus._makesReductionOriginalStorageAvailable);
+			assert(access->getObjectType() == access_type);
+			
+			ReductionInfo *reductionInfo = access->getReductionInfo();
+			assert(reductionInfo != nullptr);
+			
+			reductionInfo->makeOriginalStorageRegionAvailable(access->getAccessRegion());
 		}
 		
 		// Reduction combination
