@@ -42,7 +42,7 @@ void *nanos6_get_reduction_storage1(void *original,
 		task->isTaskloop() ? task->getParent()->getDataAccesses() : task->getDataAccesses();
 	
 	// Need the lock, as access can be fragmented while we access it
-	std::lock_guard<TaskDataAccesses::spinlock_t> guard(taskAccesses._lock);
+	taskAccesses._lock.lock();
 	
 	TaskDataAccesses::accesses_t &accesses = taskAccesses._accesses;
 	accesses.processIntersecting(
@@ -74,14 +74,18 @@ void *nanos6_get_reduction_storage1(void *original,
 		}
 	);
 	
-	void *address = original;
-	
 	// If reduction is registered, obtain the corresponding reduction storage
-	if (firstAccess != nullptr)
-	{
-		ReductionInfo *reductionInfo = firstAccess->getReductionInfo();
+	
+	ReductionInfo *reductionInfo = nullptr;
+	if (firstAccess != nullptr) {
+		reductionInfo = firstAccess->getReductionInfo();
 		assert(reductionInfo != nullptr);
-
+	}
+	
+	taskAccesses._lock.unlock();
+	
+	void *address = original;
+	if (reductionInfo != nullptr) {
 		assert(((char*)original) >= ((char*)reductionInfo->getOriginalRegion().getStartAddress()));
 		assert(((char*)original) < (((char*)reductionInfo->getOriginalRegion().getStartAddress())
 					+ reductionInfo->getOriginalRegion().getSize()));
