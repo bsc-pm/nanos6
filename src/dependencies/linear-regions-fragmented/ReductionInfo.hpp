@@ -13,7 +13,7 @@
 
 #include <executors/threads/CPUManager.hpp>
 #include <DataAccessRegion.hpp>
-#include <lowlevel/SpinLock.hpp>
+#include <lowlevel/PaddedSpinLock.hpp>
 
 #include <boost/dynamic_bitset.hpp>
 
@@ -23,7 +23,7 @@ class ReductionInfo
 {
 	public:
 		
-		typedef SpinLock spinlock_t;
+		typedef PaddedSpinLock<> spinlock_t;
 		
 		struct ReductionSlot {
 			void *storage = nullptr;
