@@ -64,12 +64,16 @@ public:
 	template<typename... TS>
 	inline T *newObject(TS &&... args)
 	{
+		CPU *cpu = nullptr;
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		if (thread == nullptr) {
+		if (thread != nullptr) {
+			cpu = thread->getComputePlace();
+		}
+		
+		if (thread == nullptr || cpu == nullptr) {
 			std::lock_guard<SpinLock> guard(_externalLock);
 			return _externalObjectCache->newObject(std::forward<TS>(args)...);
 		} else {
-			CPU *cpu = thread->getComputePlace();
 			size_t cpuId = cpu->_virtualCPUId;
 			return _CPUCaches[cpuId]->newObject(std::forward<TS>(args)...);
 		}
@@ -77,12 +81,16 @@ public:
 	
 	inline void deleteObject(T *ptr)
 	{
+		CPU *cpu = nullptr;
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		if (thread == nullptr) {
+		if (thread != nullptr) {
+			cpu = thread->getComputePlace();
+		}
+		
+		if (thread == nullptr || cpu == nullptr) {
 			std::lock_guard<SpinLock> guard(_externalLock);
 			_externalObjectCache->deleteObject(ptr);
 		} else {
-			CPU *cpu = thread->getComputePlace();
 			size_t cpuId = cpu->_virtualCPUId;
 			_CPUCaches[cpuId]->deleteObject(ptr);
 		}
