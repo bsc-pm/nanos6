@@ -88,29 +88,14 @@ size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId) {
 		// Reuse free slot in pool
 		freeSlotIndex = _freeSlotIndices.back();
 		_freeSlotIndices.pop_back();
-		
-		_lock.unlock();
 	}
 	else {
-		// Allocate new storage
-		Instrument::enterAllocatePrivateReductionStorage(
-			/* reductionInfo */ *this
-		);
-		
 		FatalErrorHandler::failIf(_slots.size() > getMaxSlots(), "Maximum number of private storage slots reached");
 		freeSlotIndex = _slots.size();
 		_slots.emplace_back();
-		ReductionSlot& newSlot = _slots.back();
-		
-		_lock.unlock();
-		
-		newSlot.storage = MemoryAllocator::alloc(_paddedRegionSize);
-		
-		Instrument::exitAllocatePrivateReductionStorage(
-			/* reductionInfo */ *this,
-			DataAccessRegion(newSlot.storage, _region.getSize())
-		);
 	}
+	_lock.unlock();
+	
 	_currentCpuSlotIndices[virtualCpuId] = freeSlotIndex;
 	
 	return freeSlotIndex;
@@ -120,9 +105,21 @@ DataAccessRegion ReductionInfo::getFreeSlotStorage(size_t slotIndex) {
 	assert(slotIndex < _slots.size());
 	
 	ReductionSlot& slot = _slots[slotIndex];
-	assert(slot.storage != nullptr);
+	assert(slot.initialized || slot.storage == nullptr);
 	
 	if (!slot.initialized) {
+		// Allocate new storage
+		Instrument::enterAllocatePrivateReductionStorage(
+			/* reductionInfo */ *this
+		);
+		
+		slot.storage = MemoryAllocator::alloc(_paddedRegionSize);
+		
+		Instrument::exitAllocatePrivateReductionStorage(
+			/* reductionInfo */ *this,
+			DataAccessRegion(slot.storage, _region.getSize())
+		);
+		
 		Instrument::enterInitializePrivateReductionStorage(
 			/* reductionInfo */ *this,
 			DataAccessRegion(slot.storage, _region.getSize())
