@@ -196,7 +196,7 @@ void CPUManager::initialize()
 			
 			bool worked = cpu->initializeIfNeeded();
 			if (worked) {
-				WorkerThread *initialThread = ThreadManager::getIdleThread(cpu, false);
+				WorkerThread *initialThread = ThreadManager::createWorkerThread(cpu);
 				initialThread->resume(cpu, true);
 			} else {
 				// Already initialized?

@@ -50,6 +50,14 @@ public:
 	static void shutdown();
 	
 	
+	//! \brief create a WorkerThread
+	//! The thread is returned in a blocked (or about to block) status
+	//!
+	//! \param[in,out] cpu the CPU on which to get a new thread
+	//!
+	//! \returns a WorkerThread
+	static inline WorkerThread *createWorkerThread(CPU *cpu);
+	
 	//! \brief create or recycle a WorkerThread
 	//! The thread is returned in a blocked (or about to block) status
 	//!
@@ -85,6 +93,24 @@ public:
 	friend struct CPUThreadingModelData;
 };
 
+
+inline WorkerThread *ThreadManager::createWorkerThread(CPU *cpu)
+{
+	assert(cpu != nullptr);
+	
+	// The shutdown code is not ready to have _totalThreads changing
+	assert(!_mustExit);
+	
+	// Otherwise create a new one
+	_totalThreads++;
+	
+	// The shutdown code is not ready to have _totalThreads changing
+	assert(!_mustExit);
+	
+	return new WorkerThread(cpu);
+}
+
+
 inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 {
 	assert(cpu != nullptr);
@@ -109,16 +135,7 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 		return nullptr;
 	}
 	
-	// The shutdown code is not ready to have _totalThreads changing
-	assert(!_mustExit);
-	
-	// Otherwise create a new one
-	_totalThreads++;
-	
-	// The shutdown code is not ready to have _totalThreads changing
-	assert(!_mustExit);
-	
-	return new WorkerThread(cpu);
+	return createWorkerThread(cpu);
 }
 
 

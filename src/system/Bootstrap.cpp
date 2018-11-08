@@ -95,12 +95,12 @@ void nanos6_preinit(void) {
 	ThreadManager::initialize();
 	DependencySystem::initialize();
 	LeaderThread::initialize();
+	
+	CPUManager::initialize();
 }
 
 
 void nanos6_init(void) {
-	CPUManager::initialize();
-	
 	EnvironmentVariable<bool> handleSigInt("NANOS6_HANDLE_SIGINT", 0);
 	if (handleSigInt) {
 		programSignal(SIGINT);
