@@ -560,8 +560,10 @@ memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_cluster_cpp
 memory_debug_sources = $(memory_default_sources)
 memory_debug_cppflags = $(memory_default_cppflags)
 else
-memory_default_sources = $(memory_allocator_default_sources) $(vmm_smp_sources)
-memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_smp_cppflags)
+# memory_default_sources = $(memory_allocator_default_sources) $(vmm_smp_sources)
+# memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_smp_cppflags)
+memory_default_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
+memory_default_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 memory_debug_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
 memory_debug_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 endif
