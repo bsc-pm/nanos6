@@ -2740,7 +2740,7 @@ namespace DataAccessRegistration {
 	}
 	
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location)
+	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location, bool fromBusyThread)
 	{
 		assert(task != nullptr);
 		
@@ -2806,7 +2806,7 @@ namespace DataAccessRegistration {
 			);
 		}
 		
-		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, false);
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, fromBusyThread);
 		
 #ifndef NDEBUG
 		{

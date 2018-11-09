@@ -89,14 +89,14 @@ void HostHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 	_NUMAScheduler->enableComputePlace(hardwarePlace);
 }
 
-bool HostHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool HostHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
-	return _NUMAScheduler->requestPolling(computePlace, pollingSlot);
+	return _NUMAScheduler->requestPolling(computePlace, pollingSlot, canMarkAsIdle);
 }
 
-bool HostHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool HostHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
-	return _NUMAScheduler->releasePolling(computePlace, pollingSlot);
+	return _NUMAScheduler->releasePolling(computePlace, pollingSlot, canMarkAsIdle);
 }
 
 

@@ -58,6 +58,7 @@ void WorkerThread::body()
 	CPU *cpu = getComputePlace();
 	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId);
 	
+	bool myCPUShouldBecomeIdleIfNoTask = false;
 	while (!_mustShutDown) {
 		CPUActivation::activationCheck(this);
 		
@@ -65,12 +66,13 @@ void WorkerThread::body()
 		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 		
 		if (_task == nullptr) {
-			_task = Scheduler::getReadyTask(cpu, nullptr, true);
+			_task = Scheduler::getReadyTask(cpu, nullptr, myCPUShouldBecomeIdleIfNoTask, true);
 		} else {
 			// The thread has been preassigned a task before being resumed
 		}
 		
 		if (_task != nullptr) {
+			myCPUShouldBecomeIdleIfNoTask = false;
 			WorkerThread *assignedThread = _task->getThread();
 			
 			// A task already assigned to another thread
@@ -94,10 +96,11 @@ void WorkerThread::body()
 				
 				_task = nullptr;
 			}
-		} else {
+		} else if (!myCPUShouldBecomeIdleIfNoTask) {
 			// Try to advance work before going to sleep
 			PollingAPI::handleServices();
-			
+			myCPUShouldBecomeIdleIfNoTask = true;
+		} else {
 			// The code below is protected by a condition because under certain CPU activation/deactivation
 			// cases, the call to CPUActivation::activationCheck may have put the thread in the idle queue
 			// and the shutdown mechanism may have waken up the thread. In that case we do not want the
@@ -110,6 +113,7 @@ void WorkerThread::body()
 				switchTo(nullptr);
 				cpu = getComputePlace();
 				Instrument::resumedComputePlace(cpu->getInstrumentationId());
+				myCPUShouldBecomeIdleIfNoTask = false;
 			}
 		}
 	}

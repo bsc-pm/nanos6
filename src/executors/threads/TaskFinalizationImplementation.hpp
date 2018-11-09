@@ -19,6 +19,10 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 {
 	bool readyOrDisposable = true;
 	
+	CPUDependencyData localHpDependencyData;
+	CPUDependencyData &hpDependencyData = (computePlace != nullptr) ?
+		computePlace->getDependencyData() : localHpDependencyData;
+	
 	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
 	while ((task != nullptr) && readyOrDisposable) {
 		Task *parent = task->getParent();
@@ -27,20 +31,11 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 		if (task->hasFinished() && task->mustDelayRelease()) {
 			readyOrDisposable = false;
 			if (task->markAllChildrenAsFinished(computePlace)) {
-				if (computePlace != nullptr) {
-					DataAccessRegistration::unregisterTaskDataAccesses(
-						task,
-						computePlace,
-						computePlace->getDependencyData()
-					);
-				} else {
-					CPUDependencyData hpDependencyData;
-					DataAccessRegistration::unregisterTaskDataAccesses(
-						task,
-						nullptr,
-						hpDependencyData
-					);
-				}
+				DataAccessRegistration::unregisterTaskDataAccesses(
+					task, computePlace,
+					hpDependencyData
+				);
+				
 				if (task->markAsReleased()) {
 					readyOrDisposable = true;
 				}

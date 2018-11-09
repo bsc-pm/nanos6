@@ -192,16 +192,16 @@ void NUMAHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 	_NUMANodeScheduler[NUMANode]->enableComputePlace(hardwarePlace);
 }
 
-bool NUMAHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool NUMAHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
 	size_t NUMANode = ((CPU *)computePlace)->_NUMANodeId;
-	return _NUMANodeScheduler[NUMANode]->requestPolling(computePlace, pollingSlot);
+	return _NUMANodeScheduler[NUMANode]->requestPolling(computePlace, pollingSlot, canMarkAsIdle);
 }
 
-bool NUMAHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool NUMAHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
 	size_t NUMANode = ((CPU *)computePlace)->_NUMANodeId;
-	return _NUMANodeScheduler[NUMANode]->releasePolling(computePlace, pollingSlot);
+	return _NUMANodeScheduler[NUMANode]->releasePolling(computePlace, pollingSlot, canMarkAsIdle);
 }
 
 std::string NUMAHierarchicalScheduler::getName() const

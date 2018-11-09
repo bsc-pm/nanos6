@@ -28,16 +28,17 @@ void Scheduler::shutdown()
 	delete _scheduler;
 }
 
-Task *Scheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, bool doWait)
+Task *Scheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, bool canMarkAsIdle, bool doWait)
 {
+	assert(computePlace != nullptr);
 	Task *task = nullptr;
 	
 	if (_scheduler->canWait() || !doWait) {
-		task = _scheduler->getReadyTask(computePlace, currentTask, true, doWait);
+		task = _scheduler->getReadyTask(computePlace, currentTask, canMarkAsIdle, doWait);
 	} else {
 		polling_slot_t pollingSlot;
 		
-		if (_scheduler->requestPolling(computePlace, &pollingSlot)) {
+		if (_scheduler->requestPolling(computePlace, &pollingSlot, canMarkAsIdle)) {
 			Instrument::threadEnterBusyWait(Instrument::scheduling_polling_slot_busy_wait_reason);
 			while ((task == nullptr) && !ThreadManager::mustExit() && CPUActivation::acceptsWork((CPU *)computePlace)) {
 				// Keep trying
@@ -49,7 +50,7 @@ Task *Scheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, boo
 			Instrument::threadExitBusyWait();
 			
 			if (ThreadManager::mustExit()) {
-				__attribute__((unused)) bool worked = _scheduler->releasePolling(computePlace, &pollingSlot);
+				__attribute__((unused)) bool worked = _scheduler->releasePolling(computePlace, &pollingSlot, canMarkAsIdle);
 				assert(worked);
 			}
 			
@@ -57,7 +58,7 @@ Task *Scheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, boo
 				// The CPU is about to be disabled
 				
 				// Release the polling slot
-				_scheduler->releasePolling(computePlace, &pollingSlot);
+				_scheduler->releasePolling(computePlace, &pollingSlot, canMarkAsIdle);
 				
 				// We may already have a task assigned through
 				task = pollingSlot.getTask();
