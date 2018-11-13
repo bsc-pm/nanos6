@@ -55,6 +55,7 @@ private:
 		RECEIVED_REDUCTION_INFO_BIT,
 		ALLOCATED_REDUCTION_INFO_BIT,
 		RECEIVED_CPU_SET_BIT,
+		CLOSES_REDUCTION_BIT,
 		
 		READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
@@ -305,6 +306,7 @@ public:
 	
 	void setAllocatedReductionInfo()
 	{
+		assert(_type == REDUCTION_ACCESS_TYPE);
 		assert(!allocatedReductionInfo());
 		_status[ALLOCATED_REDUCTION_INFO_BIT] = true;
 		Instrument::newDataAccessProperty(_instrumentationId, "RIAlloc", "ReductionInfo Allocated");
@@ -323,6 +325,18 @@ public:
 	bool receivedReductionCpuSet() const
 	{
 		return _status[RECEIVED_CPU_SET_BIT];
+	}
+	
+	void setClosesReduction()
+	{
+		assert(_type == REDUCTION_ACCESS_TYPE);
+		assert(!closesReduction());
+		_status[CLOSES_REDUCTION_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "Rc", "Closes Reduction");
+	}
+	bool closesReduction() const
+	{
+		return _status[CLOSES_REDUCTION_BIT];
 	}
 	
 	bool canPropagateReadSatisfiability() const

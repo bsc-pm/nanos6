@@ -69,7 +69,7 @@ namespace DataAccessRegistration {
 		bool _propagatesReductionInfoToFragments;
 		bool _propagatesReductionCpuSetToFragments;
 		
-		bool _closesPreviousReduction;
+		bool _combinesReduction;
 		
 		bool _linksBottomMapAccessesToNextAndInhibitsPropagation;
 		
@@ -92,7 +92,7 @@ namespace DataAccessRegistration {
 			_propagatesConcurrentSatisfiabilityToFragments(false), _propagatesCommutativeSatisfiabilityToFragments(false),
 			_propagatesReductionInfoToFragments(false), _propagatesReductionCpuSetToFragments(false),
 			
-			_closesPreviousReduction(false),
+			_combinesReduction(false),
 			
 			_linksBottomMapAccessesToNextAndInhibitsPropagation(false),
 			
@@ -188,12 +188,21 @@ namespace DataAccessRegistration {
 					_propagatesReadSatisfiabilityToNext =
 						access->canPropagateReadSatisfiability()
 						&& access->readSatisfied()
+						// Note: 'satisfied' as opposed to 'readSatisfied', because otherwise read
+						// satisfiability could be propagated before reductions are combined
+						&& access->satisfied()
 						&& ((access->getType() == READ_ACCESS_TYPE) || access->complete());
 					_propagatesWriteSatisfiabilityToNext =
-						access->writeSatisfied() && access->complete();
+						access->writeSatisfied() && access->complete()
+						// Note: This is important for not propagating write
+						// satisfiability before reductions are combined
+						&& access->satisfied();
 					_propagatesConcurrentSatisfiabilityToNext =
 						access->canPropagateConcurrentSatisfiability()
 						&& access->concurrentSatisfied()
+						// Note: If a reduction is to be combined, being the (reduction) access 'satisfied'
+						// and 'complete' should allow it to be done before propagating this satisfiability
+						&& access->satisfied()
 						&& ((access->getType() == CONCURRENT_ACCESS_TYPE) || access->complete());
 					_propagatesCommutativeSatisfiabilityToNext =
 						access->canPropagateCommutativeSatisfiability()
@@ -223,17 +232,12 @@ namespace DataAccessRegistration {
 				_propagatesReductionCpuSetToNext = false;
 			}
 			
-			ReductionInfo *prevReductionInfo = access->getPreviousReductionInfo();
-			
-			_closesPreviousReduction =
-				access->writeSatisfied()
-				&& access->receivedReductionInfo()
-				&& access->receivedReductionCpuSet()
-				&& (prevReductionInfo != nullptr)
-				&& (((access->getObjectType() == taskwait_type)
-						&& (access->getType() != REDUCTION_ACCESS_TYPE))
-					|| ((access->getObjectType() == access_type)
-						&& (access->getReductionInfo() != prevReductionInfo)));
+			_combinesReduction =
+				access->closesReduction()
+				// If there are subaccesses, it's the last subaccess that should combine
+				&& !access->hasSubaccesses()
+				&& access->satisfied()
+				&& access->complete();
 			
 			_isRemovable = access->isTopmost()
 				&& access->readSatisfied() && access->writeSatisfied()
@@ -439,22 +443,27 @@ namespace DataAccessRegistration {
 		}
 		
 		// Reduction combination
-		if (initialStatus._closesPreviousReduction != updatedStatus._closesPreviousReduction) {
-			assert(!initialStatus._closesPreviousReduction);
-			assert(access->getObjectType() == access_type || access->getObjectType() == taskwait_type);
+		if (initialStatus._combinesReduction != updatedStatus._combinesReduction) {
+			assert(!initialStatus._combinesReduction);
 			
-			ReductionInfo *prevReductionInfo = access->getPreviousReductionInfo();
-			assert(prevReductionInfo != nullptr);
-			bool wasLastCombination = prevReductionInfo->combineRegion(access->getAccessRegion(), access->getPreviousReductionCpuSet());
+			assert(!access->hasBeenDiscounted());
+			
+			assert(access->getType() == REDUCTION_ACCESS_TYPE);
+			assert(access->receivedReductionInfo());
+			assert(access->allocatedReductionInfo() || access->receivedReductionCpuSet());
+			
+			ReductionInfo *reductionInfo = access->getReductionInfo();
+			assert(reductionInfo != nullptr);
+			bool wasLastCombination = reductionInfo->combineRegion(access->getAccessRegion(), access->getReductionCpuSet());
 			
 			if (wasLastCombination) {
-				const DataAccessRegion& originalRegion = prevReductionInfo->getOriginalRegion();
+				const DataAccessRegion& originalRegion = reductionInfo->getOriginalRegion();
 				
-				ObjectAllocator<ReductionInfo>::deleteObject(prevReductionInfo);
+				ObjectAllocator<ReductionInfo>::deleteObject(reductionInfo);
 				
 				Instrument::deallocatedReductionInfo(
 					access->getInstrumentationId(),
-					prevReductionInfo,
+					reductionInfo,
 					originalRegion
 				);
 			}
@@ -1722,6 +1731,7 @@ namespace DataAccessRegistration {
 		
 		bool hasAllocatedReductionInfo = false;
 		ReductionInfo *previousReductionInfo = nullptr;
+		std::vector<DataAccess*> previousReductionAccesses;
 		
 		bool local = false;
 		#ifndef NDEBUG
@@ -1794,6 +1804,25 @@ namespace DataAccessRegistration {
 				assert(previous->getAccessRegion().fullyContainedIn(region));
 				
 				DataAccessStatusEffects initialStatus(previous);
+				
+				// Mark end of reduction
+				if (previous->getType() == REDUCTION_ACCESS_TYPE) {
+					if (dataAccess->getReductionTypeAndOperatorIndex() !=
+							previous->getReductionTypeAndOperatorIndex()) {
+						// When any access is to be linked with a non-matching reduction access,
+						// we want to mark the preceding reduction access so that it is the
+						// last access of its reduction chain
+						previous->setClosesReduction();
+					}
+					else {
+						assert(dataAccess->getType() == REDUCTION_ACCESS_TYPE);
+						// When a reduction access is to be linked with a matching reduction
+						// access, we don't know whether a ReductionInfo will be allocated yet
+						// (it can partially overlap), so we want to keep track of the preceding
+						// reduction access so that it can be later marked for closure if needed
+						previousReductionAccesses.push_back(previous);
+					}
+				}
 				
 				// Link the dataAccess
 				previous->setNext(next);
@@ -1874,6 +1903,15 @@ namespace DataAccessRegistration {
 				return true;
 			}
 		);
+		
+		if (hasAllocatedReductionInfo && !previousReductionAccesses.empty()) {
+			assert(dataAccess->getType() == REDUCTION_ACCESS_TYPE);
+			
+			for (DataAccess *&previousAccess : previousReductionAccesses) {
+				assert(previousAccess->getType() == REDUCTION_ACCESS_TYPE);
+				previousAccess->setClosesReduction();
+			}
+		}
 		
 		// Add the entry to the bottom map
 		BottomMapEntry *bottomMapEntry = ObjectAllocator<BottomMapEntry>::newObject(region, next, parentAccessType);
@@ -2138,8 +2176,15 @@ namespace DataAccessRegistration {
 					previous, region,
 					[&](DataAccess *previousAccess) -> bool
 					{
-						// Link to the taskwait
 						DataAccessStatusEffects initialStatus(previousAccess);
+						// Mark end of reduction
+						if (previousAccess->getType() == REDUCTION_ACCESS_TYPE) {
+							// When a reduction access is to be linked with a taskwait, we want to mark the
+							// reduction access so that it is the last access of its reduction chain
+							previousAccess->setClosesReduction();
+						}
+						
+						// Link to the taskwait
 						previousAccess->setNext(DataAccessLink(task, taskwait_type));
 						previousAccess->unsetInBottomMap();
 						DataAccessStatusEffects updatedStatus(previousAccess);
@@ -2233,8 +2278,15 @@ namespace DataAccessRegistration {
 					previous, region,
 					[&](DataAccess *previousAccess) -> bool
 					{
-						// Link to the taskwait
 						DataAccessStatusEffects initialStatus(previousAccess);
+						// Mark end of reduction
+						if (previousAccess->getType() == REDUCTION_ACCESS_TYPE) {
+							// When a reduction access is to be linked with a top-level sink, we want to mark the
+							// reduction access so that it is the last access of its reduction chain
+							previousAccess->setClosesReduction();
+						}
+						
+						// Link to the taskwait
 						previousAccess->setNext(DataAccessLink(task, taskwait_type));
 						previousAccess->unsetInBottomMap();
 						DataAccessStatusEffects updatedStatus(previousAccess);
