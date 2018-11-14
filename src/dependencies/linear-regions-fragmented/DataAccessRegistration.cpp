@@ -843,7 +843,8 @@ namespace DataAccessRegistration {
 			position, region,
 			removeIntersection,
 			[&](BottomMapEntry const &toBeDuplicated) -> BottomMapEntry * {
-				return ObjectAllocator<BottomMapEntry>::newObject(DataAccessRegion(), toBeDuplicated._link, toBeDuplicated._accessType);
+				return ObjectAllocator<BottomMapEntry>::newObject(DataAccessRegion(), toBeDuplicated._link,
+						toBeDuplicated._accessType, toBeDuplicated._reductionTypeAndOperatorIndex);
 			},
 			[&](__attribute__((unused)) BottomMapEntry *fragment, __attribute__((unused)) BottomMapEntry *originalBottomMapEntry) {
 			}
@@ -1303,7 +1304,8 @@ namespace DataAccessRegistration {
 					BottomMapEntry *bottomMapEntry = ObjectAllocator<BottomMapEntry>::newObject(
 						excludedSubregion,
 						DataAccessLink(dataAccess->getOriginator(), fragment_type),
-						dataAccess->getType()
+						dataAccess->getType(),
+						dataAccess->getReductionTypeAndOperatorIndex()
 					);
 					accessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 				},
@@ -1454,7 +1456,8 @@ namespace DataAccessRegistration {
 						
 						BottomMapEntryContents bmeContents(
 							DataAccessLink(parent, fragment_type),
-							previous->getType()
+							previous->getType(),
+							previous->getReductionTypeAndOperatorIndex()
 						);
 						
 						{
@@ -1757,6 +1760,7 @@ namespace DataAccessRegistration {
 		#endif
 		
 		DataAccessType parentAccessType = NO_ACCESS_TYPE;
+		reduction_type_and_operator_index_t parentReductionTypeAndOperatorIndex = no_reduction_type_and_operator;
 		
 		// Link accesses to their corresponding predecessor and removes the bottom map entry
 		foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRegion(
@@ -1772,6 +1776,7 @@ namespace DataAccessRegistration {
 				assert(previousTask != nullptr);
 				
 				parentAccessType = bottomMapEntryContents._accessType;
+				parentReductionTypeAndOperatorIndex = bottomMapEntryContents._reductionTypeAndOperatorIndex;
 				local = (bottomMapEntryContents._accessType == NO_ACCESS_TYPE);
 				
 				if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !hasAllocatedReductionInfo) {
@@ -1931,7 +1936,8 @@ namespace DataAccessRegistration {
 		}
 		
 		// Add the entry to the bottom map
-		BottomMapEntry *bottomMapEntry = ObjectAllocator<BottomMapEntry>::newObject(region, next, parentAccessType);
+		BottomMapEntry *bottomMapEntry = ObjectAllocator<BottomMapEntry>::newObject(
+				region, next, parentAccessType, parentReductionTypeAndOperatorIndex);
 		parentAccessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 	}
 	
@@ -2143,13 +2149,16 @@ namespace DataAccessRegistration {
 				DataAccessLink previous = bottomMapEntry->_link;
 				DataAccessRegion region = bottomMapEntry->_region;
 				DataAccessType accessType = bottomMapEntry->_accessType;
+				reduction_type_and_operator_index_t reductionTypeAndOperatorIndex =
+					bottomMapEntry->_reductionTypeAndOperatorIndex;
 				
 				// Create the taskwait fragment
 				{
 					DataAccess *taskwaitFragment = createAccess(
 						task,
 						taskwait_type,
-						accessType, /* not weak */ false, region
+						accessType, /* not weak */ false, region,
+						reductionTypeAndOperatorIndex
 					);
 
 					// No need for symbols in a taskwait
@@ -2195,9 +2204,17 @@ namespace DataAccessRegistration {
 					{
 						DataAccessStatusEffects initialStatus(previousAccess);
 						// Mark end of reduction
-						if (previousAccess->getType() == REDUCTION_ACCESS_TYPE) {
+						if ((previousAccess->getType() == REDUCTION_ACCESS_TYPE)
+							&& (previousAccess->getReductionTypeAndOperatorIndex()
+								!= reductionTypeAndOperatorIndex)) {
 							// When a reduction access is to be linked with a taskwait, we want to mark the
 							// reduction access so that it is the last access of its reduction chain
+							//
+							// Note: This should only be done when the reductionType of the parent access
+							// (obtained by 'reductionTypeAndOperatorIndex')
+							// is different from the reduction access reductionType.
+							// Ie. The reduction in which the subaccess participates is different from its
+							// parent's reduction, and thus it should be closed by the nested taskwait
 							previousAccess->setClosesReduction();
 						}
 						
@@ -2245,6 +2262,7 @@ namespace DataAccessRegistration {
 				DataAccessLink previous = bottomMapEntry->_link;
 				DataAccessRegion region = bottomMapEntry->_region;
 				DataAccessType accessType = bottomMapEntry->_accessType;
+				assert(bottomMapEntry->_reductionTypeAndOperatorIndex == no_reduction_type_and_operator);
 				
 				// Create the top level sink fragment
 				{
@@ -2300,6 +2318,9 @@ namespace DataAccessRegistration {
 						if (previousAccess->getType() == REDUCTION_ACCESS_TYPE) {
 							// When a reduction access is to be linked with a top-level sink, we want to mark the
 							// reduction access so that it is the last access of its reduction chain
+							//
+							// Note: This is different from the taskwait above in that a top-level sink will
+							// _always_ mean the reduction is to be closed
 							previousAccess->setClosesReduction();
 						}
 						

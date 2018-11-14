@@ -14,6 +14,7 @@
 #include "DataAccessLink.hpp"
 #include "DataAccessRegion.hpp"
 #include "../DataAccessType.hpp"
+#include "ReductionSpecific.hpp"
 
 
 struct BottomMapEntry;
@@ -43,9 +44,12 @@ struct BottomMapEntryLinkingArtifacts {
 struct BottomMapEntryContents {
 	DataAccessLink _link;
 	DataAccessType _accessType;
+	reduction_type_and_operator_index_t _reductionTypeAndOperatorIndex;
 	
-	BottomMapEntryContents(DataAccessLink link, DataAccessType accessType)
-		: _link(link), _accessType(accessType)
+	BottomMapEntryContents(DataAccessLink link, DataAccessType accessType,
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex)
+		: _link(link), _accessType(accessType),
+		_reductionTypeAndOperatorIndex(reductionTypeAndOperatorIndex)
 	{
 	}
 };
@@ -56,8 +60,10 @@ struct BottomMapEntry : public BottomMapEntryContents {
 	
 	DataAccessRegion _region;
 	
-	BottomMapEntry(DataAccessRegion region, DataAccessLink link, DataAccessType accessType)
-		: BottomMapEntryContents(link, accessType), _links(), _region(region)
+	BottomMapEntry(DataAccessRegion region, DataAccessLink link, DataAccessType accessType,
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex)
+		: BottomMapEntryContents(link, accessType, reductionTypeAndOperatorIndex),
+		_links(), _region(region)
 	{
 	}
 	
