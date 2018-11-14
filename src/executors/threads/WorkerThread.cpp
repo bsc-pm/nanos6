@@ -156,7 +156,11 @@ void WorkerThread::handleTask(CPU *cpu)
 	instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 	
 	if (_task->markAsFinished(cpu)) {
-		DataAccessRegistration::unregisterTaskDataAccesses(_task, cpu);
+		DataAccessRegistration::unregisterTaskDataAccesses(
+			_task,
+			cpu,
+			cpu->getDependencyData()
+		);
 		
 		if (_task->markAsReleased()) {
 			TaskFinalization::disposeOrUnblockTask(_task, cpu);

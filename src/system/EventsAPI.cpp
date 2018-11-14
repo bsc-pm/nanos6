@@ -7,6 +7,7 @@
 #include <cassert>
 
 #include "DataAccessRegistration.hpp"
+#include "CPUDependencyData.hpp"
 
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
@@ -63,7 +64,8 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 		}
 		
 		// Release the accesses
-		DataAccessRegistration::unregisterTaskDataAccesses(task, nullptr);
+		CPUDependencyData dependencyData;
+		DataAccessRegistration::unregisterTaskDataAccesses(task, nullptr, dependencyData);
 		
 		// Try to dispose the task
 		if (task->markAsReleased()) {

@@ -116,7 +116,11 @@ Task *FIFOScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((unu
 	bool shouldRecheckUnblockedTasks = false;
 	for (Taskloop *taskloop : completeTaskloops) {
 		if (taskloop->markAsFinished(computePlace)) {
-			DataAccessRegistration::unregisterTaskDataAccesses(taskloop, computePlace);
+			DataAccessRegistration::unregisterTaskDataAccesses(
+				taskloop,
+				computePlace,
+				computePlace->getDependencyData()
+			);
 			if (taskloop->markAsReleased()) {
 				TaskFinalization::disposeOrUnblockTask(taskloop, computePlace);
 			}

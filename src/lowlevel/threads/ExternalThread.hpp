@@ -11,6 +11,7 @@
 
 #include <InstrumentExternalThreadLocalData.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include "CPUDependencyData.hpp"
 
 #include <support/StringComposer.hpp>
 
@@ -25,6 +26,9 @@ private:
 	std::string _name;
 	Instrument::external_thread_id_t _instrumentationId;
 	Instrument::ExternalThreadLocalData _instrumentationData;
+	
+	//! Dependency data to interact with the dependecy system
+	CPUDependencyData _dependencyData;
 	
 	
 public:

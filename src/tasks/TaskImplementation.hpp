@@ -47,7 +47,7 @@ inline Task::Task(
 
 inline bool Task::markAsFinished(ComputePlace *computePlace)
 {
-	assert(computePlace != nullptr);
+	CPUDependencyData hpDependencyData;
 	
 	// Non-runnable taskloops should avoid these checks
 	if (isRunnable()) {
@@ -64,7 +64,7 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 	// delayed (at least) until the task finishes its execution and all
 	// its children complete and become disposable
 	if (mustDelayRelease()) {
-		DataAccessRegistration::handleEnterTaskwait(this, computePlace);
+		DataAccessRegistration::handleEnterTaskwait(this, computePlace, hpDependencyData);
 		
 		if (!decreaseRemovalBlockingCount()) {
 			return false;
@@ -73,7 +73,7 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 		// All its children are completed, so the delayed release of
 		// dependencies has successfully completed
 		completeDelayedRelease();
-		DataAccessRegistration::handleExitTaskwait(this, computePlace);
+		DataAccessRegistration::handleExitTaskwait(this, computePlace, hpDependencyData);
 		increaseRemovalBlockingCount();
 	}
 	
@@ -85,13 +85,13 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 // Return if the task can release its dependencies
 inline bool Task::markAllChildrenAsFinished(ComputePlace *computePlace)
 {
-	assert(computePlace != nullptr);
 	assert(_thread == nullptr);
-	assert(_computePlace == nullptr);
+	
+	CPUDependencyData hpDependencyData;
 	
 	// Complete the delayed release of dependencies
 	completeDelayedRelease();
-	DataAccessRegistration::handleExitTaskwait(this, computePlace);
+	DataAccessRegistration::handleExitTaskwait(this, computePlace, hpDependencyData);
 	increaseRemovalBlockingCount();
 	
 	// Return whether all external events have been also fulfilled, so

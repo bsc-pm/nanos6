@@ -27,7 +27,20 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 		if (task->hasFinished() && task->mustDelayRelease()) {
 			readyOrDisposable = false;
 			if (task->markAllChildrenAsFinished(computePlace)) {
-				DataAccessRegistration::unregisterTaskDataAccesses(task, computePlace);
+				if (computePlace != nullptr) {
+					DataAccessRegistration::unregisterTaskDataAccesses(
+						task,
+						computePlace,
+						computePlace->getDependencyData()
+					);
+				} else {
+					CPUDependencyData hpDependencyData;
+					DataAccessRegistration::unregisterTaskDataAccesses(
+						task,
+						nullptr,
+						hpDependencyData
+					);
+				}
 				if (task->markAsReleased()) {
 					readyOrDisposable = true;
 				}

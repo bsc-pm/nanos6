@@ -105,7 +105,7 @@ void nanos6_submit_task(void *taskHandle)
 	assert(taskInfo != 0);
 	if (taskInfo->register_depinfo != 0) {
 		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);
-		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace);
+		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}
 	
 	bool isIf0 = task->isIf0();

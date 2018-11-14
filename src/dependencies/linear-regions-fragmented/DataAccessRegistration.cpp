@@ -2310,7 +2310,8 @@ namespace DataAccessRegistration {
 	
 	bool registerTaskDataAccesses(
 		Task *task,
-		ComputePlace *computePlace
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData
 	) {
 		assert(task != 0);
 		assert(computePlace != nullptr);
@@ -2324,7 +2325,6 @@ namespace DataAccessRegistration {
 		if (!task->getDataAccesses()._accesses.empty()) {
 			task->increasePredecessors(2);
 			
-			CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
 #ifndef NDEBUG
 			{
 				bool alreadyTaken = false;
@@ -2372,7 +2372,8 @@ namespace DataAccessRegistration {
 	void releaseAccessRegion(
 		Task *task, DataAccessRegion region,
 		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
-		ComputePlace *computePlace
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData
 	) {
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
@@ -2380,8 +2381,6 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
-		
-		CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		{
@@ -2419,17 +2418,13 @@ namespace DataAccessRegistration {
 	
 	
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace)
+	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData)
 	{
 		assert(task != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
-		
-		CPUDependencyData localDependencyData;
-		CPUDependencyData &hpDependencyData = (computePlace != nullptr) ?
-				computePlace->getDependencyData() : localDependencyData;
 		
 #ifndef NDEBUG
 		{
@@ -2492,12 +2487,9 @@ namespace DataAccessRegistration {
 	}
 	
 	
-	void handleEnterTaskwait(Task *task, ComputePlace *computePlace)
+	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData)
 	{
 		assert(task != nullptr);
-		assert(computePlace != nullptr);
-		
-		CPUDependencyData &hpDependencyData = computePlace->getDependencyData();
 		
 #ifndef NDEBUG
 		{
@@ -2530,7 +2522,8 @@ namespace DataAccessRegistration {
 	}
 	
 	
-	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace)
+	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace,
+			__attribute__((unused)) CPUDependencyData &hpDependencyData)
 	{
 		assert(task != nullptr);
 		

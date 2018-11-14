@@ -45,7 +45,9 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 		return;
 	}
 	
-	DataAccessRegistration::handleEnterTaskwait(currentTask, currentThread->getComputePlace());
+	ComputePlace *cpu = currentThread->getComputePlace();
+	assert(cpu != nullptr);
+	DataAccessRegistration::handleEnterTaskwait(currentTask, cpu, cpu->getDependencyData());
 	bool done = currentTask->markAsBlocked();
 	
 	// done == true:
@@ -76,7 +78,7 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();
 	
-	DataAccessRegistration::handleExitTaskwait(currentTask, currentThread->getComputePlace());
+	DataAccessRegistration::handleExitTaskwait(currentTask, cpu, cpu->getDependencyData());
 	
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked

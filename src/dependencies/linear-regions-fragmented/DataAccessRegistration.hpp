@@ -11,6 +11,7 @@
 
 #include "../DataAccessType.hpp"
 #include "ReductionSpecific.hpp"
+#include "CPUDependencyData.hpp"
 
 class ComputePlace;
 class Task;
@@ -36,21 +37,27 @@ namespace DataAccessRegistration {
 	//! \returns true if the task is already ready
 	bool registerTaskDataAccesses(
 		Task *task,
-		ComputePlace *computePlace
+		ComputePlace *computePlace,
+		CPUDependencyData &dependencyData
 	);
 	
 	void releaseAccessRegion(
 		Task *task, DataAccessRegion region,
 		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
-		ComputePlace *computePlace
+		ComputePlace *computePlace,
+		CPUDependencyData &dependencyData
 	);
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace);
+	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	
 	void handleEnterBlocking(Task *task);
 	void handleExitBlocking(Task *task);
-	void handleEnterTaskwait(Task *task, ComputePlace *computePlace);
-	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace);
+	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
+	void handleExitTaskwait(
+		Task *task,
+		__attribute__((unused)) ComputePlace *computePlace,
+		__attribute__((unused))CPUDependencyData &dependencyData
+	);
 	
 	static inline void handleTaskRemoval(
 			__attribute__((unused)) Task *task,

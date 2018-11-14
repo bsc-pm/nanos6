@@ -37,7 +37,7 @@ void release_access(void *base_address, __attribute__((unused)) long dim1size, l
 	address._asCharPointer += dim1start;
 	
 	DataAccessRegion accessRegion(address._asVoidPointer, dim1end - dim1start);
-	DataAccessRegistration::releaseAccessRegion(task, accessRegion, ACCESS_TYPE, WEAK, computePlace);
+	DataAccessRegistration::releaseAccessRegion(task, accessRegion, ACCESS_TYPE, WEAK, computePlace, computePlace->getDependencyData());
 }
 
 

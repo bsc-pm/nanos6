@@ -115,7 +115,11 @@ Task *NaiveScheduler::getReadyTask(ComputePlace *computePlace, __attribute__((un
 	bool shouldRecheckUnblockedTasks = false;
 	for (Taskloop *taskloop : completeTaskloops) {
 		if (taskloop->markAsFinished(computePlace)) {
-			DataAccessRegistration::unregisterTaskDataAccesses(taskloop, computePlace);
+			DataAccessRegistration::unregisterTaskDataAccesses(
+				taskloop,
+				computePlace,
+				computePlace->getDependencyData()
+			);
 			if (taskloop->markAsReleased()) {
 				TaskFinalization::disposeOrUnblockTask(taskloop, computePlace);
 			}
