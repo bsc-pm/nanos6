@@ -318,6 +318,7 @@ public:
 	{
 		assert(!receivedReductionCpuSet());
 		_status[RECEIVED_CPU_SET_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "RSetRec", "Reduction Set Received");
 	}
 	bool receivedReductionCpuSet() const
 	{
@@ -468,6 +469,10 @@ public:
 		}
 		if (other->getReductionInfo() != nullptr) {
 			setReductionInfo(other->getReductionInfo());
+		}
+		if (other->allocatedReductionInfo()) {
+			assert(other->getReductionInfo() != nullptr);
+			setAllocatedReductionInfo();
 		}
 		if (other->receivedReductionCpuSet()) {
 			setReceivedReductionCpuSet();
