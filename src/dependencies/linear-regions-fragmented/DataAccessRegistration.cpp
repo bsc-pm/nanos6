@@ -178,6 +178,7 @@ namespace DataAccessRegistration {
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()
 						&& access->receivedReductionInfo()
+						&& !access->closesReduction()
 						&& ((access->getReductionInfo() != access->getPreviousReductionInfo())
 								|| access->receivedReductionCpuSet());
 				} else {
@@ -219,6 +220,7 @@ namespace DataAccessRegistration {
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()
 						&& access->receivedReductionInfo()
+						&& !access->closesReduction()
 						&& ((access->getReductionInfo() != access->getPreviousReductionInfo())
 								|| access->receivedReductionCpuSet());
 				}
@@ -242,7 +244,10 @@ namespace DataAccessRegistration {
 			_isRemovable = access->isTopmost()
 				&& access->readSatisfied() && access->writeSatisfied()
 				&& access->receivedReductionInfo()
-				&& ((prevReductionInfo == nullptr) || access->receivedReductionCpuSet())
+				// Read as: If this (reduction) access is part of its predecessor reduction,
+				// it needs to have received the 'ReductionCpuSet' before being removed
+				&& ((access->getType() != REDUCTION_ACCESS_TYPE)
+					|| access->allocatedReductionInfo() || access->receivedReductionCpuSet())
 				&& access->complete()
 				&& (
 					!access->isInBottomMap() || access->hasNext()
@@ -520,12 +525,6 @@ namespace DataAccessRegistration {
 				assert(access->getReductionCpuSet().size() > 0);
 				assert(access->isWeak() || task->isFinal() || access->getReductionCpuSet().any());
 				
-				if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
-					assert(access->getPreviousReductionCpuSet().size() > 0);
-					assert(access->getReductionCpuSet().size() == access->getPreviousReductionCpuSet().size());
-					access->getReductionCpuSet() |= access->getPreviousReductionCpuSet();
-				}
-				
 				updateOperation._reductionCpuSet = access->getReductionCpuSet();
 			}
 			
@@ -579,27 +578,10 @@ namespace DataAccessRegistration {
 			if (initialStatus._propagatesReductionCpuSetToFragments != updatedStatus._propagatesReductionCpuSetToFragments) {
 				assert(!initialStatus._propagatesReductionCpuSetToFragments);
 				
-				if (access->getType() == REDUCTION_ACCESS_TYPE)
-				{
-					// Reduction CPU set computation
-					assert(access->receivedReductionInfo() || access->allocatedReductionInfo());
-
-					if (access->getReductionInfo() == access->getPreviousReductionInfo()) {
-						assert(access->getPreviousReductionCpuSet().size() > 0);
-						assert(access->getReductionCpuSet().size() == access->getPreviousReductionCpuSet().size());
-						access->getReductionCpuSet() |= access->getPreviousReductionCpuSet();
-					}
-					
-					updateOperation._reductionCpuSet = access->getReductionCpuSet();
-				}
-				else
-				{
-					assert(access->getReductionCpuSet().size() == 0);
-					
-					// If access is not a reduction, propagate received ReductionCpuSet
-					// to fragments to make their status consistent
-					updateOperation._reductionCpuSet = access->getPreviousReductionCpuSet();
-				}
+				assert(access->receivedReductionCpuSet() || ((access->getType() == REDUCTION_ACCESS_TYPE) && access->allocatedReductionInfo()));
+				assert(access->getReductionCpuSet().size() > 0);
+				
+				updateOperation._reductionCpuSet = access->getReductionCpuSet();
 			}
 			
 			if (!updateOperation.empty()) {
@@ -666,7 +648,7 @@ namespace DataAccessRegistration {
 							assert(dataAccess->getReductionInfo() == access->getReductionInfo());
 							assert(dataAccess->getReductionCpuSet().size() == access->getReductionCpuSet().size());
 							
-							dataAccess->getReductionCpuSet() |= access->getPreviousReductionCpuSet();
+							dataAccess->getReductionCpuSet() |= access->getReductionCpuSet();
 							
 							return true;
 						}
@@ -1139,7 +1121,13 @@ namespace DataAccessRegistration {
 		
 		// ReductionCpuSet
 		if (updateOperation._reductionCpuSet.size() > 0) {
-			access->setPreviousReductionCpuSet(updateOperation._reductionCpuSet);
+			assert((access->getObjectType() == access_type) ||
+				(access->getObjectType() == fragment_type) ||
+				(access->getObjectType() == taskwait_type));
+			assert(access->getType() == REDUCTION_ACCESS_TYPE);
+			assert(access->getReductionCpuSet().size() == updateOperation._reductionCpuSet.size());
+			
+			access->getReductionCpuSet() |= updateOperation._reductionCpuSet;
 			access->setReceivedReductionCpuSet();
 		}
 		

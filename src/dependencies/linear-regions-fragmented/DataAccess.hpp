@@ -106,10 +106,6 @@ private:
 	//! CPUs executing tasks accessing this reduction region (if applicable)
 	boost::dynamic_bitset<> _reductionCpuSet;
 	
-	//! CPUs executing tasks accessing previous access' reduction region (if applicable)
-	boost::dynamic_bitset<> _previousReductionCpuSet;
-	
-	
 public:
 	DataAccess(
 		DataAccessObjectType objectType,
@@ -148,8 +144,7 @@ public:
 		_reductionIndex(other.getReductionIndex()),
 		_reductionInfo(other.getReductionInfo()),
 		_previousReductionInfo(other.getPreviousReductionInfo()),
-		_reductionCpuSet(other.getReductionCpuSet()),
-		_previousReductionCpuSet(other.getPreviousReductionCpuSet())
+		_reductionCpuSet(other.getReductionCpuSet())
 	{}
 	
 	~DataAccess()
@@ -490,7 +485,6 @@ public:
 		}
 		if (other->receivedReductionCpuSet()) {
 			setReceivedReductionCpuSet();
-			setPreviousReductionCpuSet(other->getPreviousReductionCpuSet());
 		}
 		if (other->getReductionCpuSet().size() > 0) {
 			setReductionCpuSet(other->getReductionCpuSet());
@@ -516,23 +510,21 @@ public:
 	
 	bool satisfied() const
 	{
-		bool receivedReductionStructures = receivedReductionInfo() &&
-			((_previousReductionInfo == nullptr) || receivedReductionCpuSet());
-		
 		if (_type == READ_ACCESS_TYPE) {
-			return readSatisfied() && receivedReductionStructures;
+			return readSatisfied();
 		} else if (_type == CONCURRENT_ACCESS_TYPE) {
-			return concurrentSatisfied() && receivedReductionStructures;
+			return concurrentSatisfied();
 		} else if (_type == COMMUTATIVE_ACCESS_TYPE) {
-			return commutativeSatisfied() && receivedReductionStructures;
+			return commutativeSatisfied();
 		} else if (_type == REDUCTION_ACCESS_TYPE) {
-			// Note: _reductionInfo can be 'nullptr' even when (receivedReductionInfo() == true):
-			// A non-matching ReductionInfo was received and the receiver hasn't yet allocated a
-			// new ReductionInfo (event triggered by separate conditions)
-			return (receivedReductionInfo()
-					&& (writeSatisfied() || (_reductionInfo != nullptr && _reductionInfo == _previousReductionInfo)));
+			// Semantic note: For a reduction access to be satisfied it means
+			// that the necessary structures for executing and combining the
+			// reduction have been received and that the original region can be
+			// safely accessed for combination
+			return writeSatisfied()
+				&& (allocatedReductionInfo() || (receivedReductionInfo() && receivedReductionCpuSet()));
 		} else {
-			return readSatisfied() && writeSatisfied() && receivedReductionStructures;
+			return readSatisfied() && writeSatisfied();
 		}
 	}
 	
@@ -596,24 +588,12 @@ public:
 	void setReductionCpuSet(const boost::dynamic_bitset<> &reductionCpuSet)
 	{
 		assert(_reductionCpuSet.none());
-		assert(_type == REDUCTION_ACCESS_TYPE);
 		_reductionCpuSet = reductionCpuSet;
 	}
 	
 	void setReductionCpu(size_t cpuId)
 	{
 		_reductionCpuSet.set(cpuId);
-	}
-	
-	boost::dynamic_bitset<> const &getPreviousReductionCpuSet() const
-	{
-		return _previousReductionCpuSet;
-	}
-	
-	void setPreviousReductionCpuSet(const boost::dynamic_bitset<> &previousReductionCpuSet)
-	{
-		assert(_previousReductionCpuSet.size() == 0);
-		_previousReductionCpuSet = previousReductionCpuSet;
 	}
 	
 	Instrument::data_access_id_t const &getInstrumentationId() const
