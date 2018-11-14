@@ -311,6 +311,8 @@ namespace DataAccessRegistration {
 		bool _inhibitCommutativeSatisfiabilityPropagation;
 		bool _inhibitReductionInfoPropagation;
 		
+		bool _setCloseReduction;
+		
 		DataAccessLink _next;
 		
 		BottomMapUpdateOperation()
@@ -321,6 +323,7 @@ namespace DataAccessRegistration {
 			_inhibitConcurrentSatisfiabilityPropagation(false),
 			_inhibitCommutativeSatisfiabilityPropagation(false),
 			_inhibitReductionInfoPropagation(false),
+			_setCloseReduction(false),
 			_next()
 		{
 		}
@@ -333,6 +336,7 @@ namespace DataAccessRegistration {
 			_inhibitConcurrentSatisfiabilityPropagation(false),
 			_inhibitCommutativeSatisfiabilityPropagation(false),
 			_inhibitReductionInfoPropagation(false),
+			_setCloseReduction(false),
 			_next()
 		{
 		}
@@ -626,6 +630,8 @@ namespace DataAccessRegistration {
 				// should never propagate the ReductionInfo (it is already propagated by the parent access)
 				bottomMapUpdateOperation._inhibitReductionInfoPropagation =
 					(access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE);
+				
+				bottomMapUpdateOperation._setCloseReduction = (access->getType() != REDUCTION_ACCESS_TYPE) || access->closesReduction();
 				
 				processBottomMapUpdate(bottomMapUpdateOperation, accessStructures, task, hpDependencyData);
 			}
@@ -1671,6 +1677,29 @@ namespace DataAccessRegistration {
 				
 				if (operation._inhibitReductionInfoPropagation) {
 					access->unsetCanPropagateReductionInfo();
+				}
+				
+				if (operation._setCloseReduction) {
+					// Note: It is currently unsupported that a strong reduction access has
+					// subaccesses, as this implies a task-scheduling point.
+					// Even if this becomes supported in the future, the following scenario
+					// needs to be controlled, possibly by inserting a nested taskwait
+					FatalErrorHandler::failIf(
+						(operation._parentAccessType == REDUCTION_ACCESS_TYPE) && (access->getType() != REDUCTION_ACCESS_TYPE),
+						"Task '",
+						(access->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr) ?
+							access->getOriginator()->getTaskInfo()->implementations[0].task_label :
+							access->getOriginator()->getTaskInfo()->implementations[0].declaration_source,
+						"' declares a non-reduction access within a region registered as reduction by task '",
+						(task->getTaskInfo()->implementations[0].task_label != nullptr) ?
+							task->getTaskInfo()->implementations[0].task_label :
+							task->getTaskInfo()->implementations[0].declaration_source,
+						"'"
+					);
+					
+					if (access->getType() == REDUCTION_ACCESS_TYPE) {
+						access->setClosesReduction();
+					}
 				}
 				
 				assert(!access->hasNext());
