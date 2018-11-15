@@ -29,17 +29,17 @@ public:
 	virtual ~MemoryPlace() 
 	{}
 	
-	inline int getIndex(void) 
+	inline int getIndex(void) const
 	{ 
 		return _index; 
 	} 
 	
-	inline nanos6_device_t getType()
+	inline nanos6_device_t getType() const
 	{
 		return _type;
 	}
 	
-	inline AddressSpace * getAddressSpace()
+	inline AddressSpace * getAddressSpace() const
 	{ 
 		return _addressSpace; 
 	} 

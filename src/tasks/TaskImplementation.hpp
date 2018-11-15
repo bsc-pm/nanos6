@@ -38,7 +38,8 @@ inline Task::Task(
 	_instrumentationTaskId(instrumentationTaskId),
 	_schedulerInfo(nullptr),
 	_computePlace(nullptr),
-	_countdownToRelease(1)
+	_countdownToRelease(1),
+	_workflow(nullptr)
 {
 	if (parent != nullptr) {
 		parent->addChild(this);

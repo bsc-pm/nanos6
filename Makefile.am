@@ -388,6 +388,21 @@ endif
 
 common_sources += $(cluster_sources)
 
+workflow_sources=
+if USE_EXEC_WORKFLOW
+workflow_sources += \
+	src/executors/workflow/ExecutionStep.cpp \
+	src/executors/workflow/ExecutionWorkflow.cpp \
+	src/executors/workflow/ExecutionWorkflowHost.cpp
+workflow_cppflags = -I$(srcdir)/src/executors/workflow
+else
+workflow_sources += \
+	src/executors/workflow/null/ExecutionWorkflow.cpp
+workflow_cppflags = -I$(srcdir)/src/executors/workflow/null
+endif
+
+common_sources += ${workflow_sources}
+
 discrete_dependency_sources = \
 	src/dependencies/discrete/Reductions.cpp \
 	src/dependencies/discrete/RegisterDependencies.cpp
@@ -673,6 +688,11 @@ noinst_HEADERS = \
 	src/executors/threads/WorkerThreadImplementation.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
+	src/executors/workflow/ExecutionStep.hpp \
+	src/executors/workflow/ExecutionWorkflow.hpp \
+	src/executors/workflow/ExecutionWorkflowHost.hpp \
+	src/executors/workflow/null/ExecutionStep.hpp \
+	src/executors/workflow/null/ExecutionWorkflow.hpp \
 	src/hardware/cluster/ClusterNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
 	src/hardware/cuda/CUDADevice.hpp \
@@ -1005,7 +1025,7 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags)
 common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS)
 
 

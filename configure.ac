@@ -296,6 +296,22 @@ if test x"${ac_use_cluster}" = x"yes" ; then
 	AC_DEFINE([USE_CLUSTER], [1], [Define if Cluster is enabled.])
 fi
 
+# Check if we should enable Execution Workflow support
+AC_ARG_ENABLE(
+	[execution-workflow],
+	[AS_HELP_STRING([--enable-execution-workflow], [Enable execution using the Execution Workflow])]
+)
+if test x"${enable_execution_workflow}" = x"yes" ; then
+	ac_use_workflow=yes
+else
+	ac_use_workflow=no
+fi
+
+AM_CONDITIONAL([USE_EXEC_WORKFLOW], [test x${ac_use_workflow} = x"yes"])
+if test x"{ac_cv_use_workflow}" = x"yes" ; then
+	AC_DEFINE([USE_CLUSTER], [1], [Define if Execution Workflow feature is enabled.])
+fi
+
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
@@ -384,6 +400,14 @@ if test x"${ac_use_cluster}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	_AS_ECHO([   MPI CXXFLAGS... ${MPI_CXXFLAGS}])
 	_AS_ECHO([   MPI CXXLDFLAGS... ${MPI_CXXLDFLAGS}])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   Execution Workflow feature enabled... ])
+if test x"${ac_use_workflow}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
 else
 	AC_MSG_RESULT([no])
 fi

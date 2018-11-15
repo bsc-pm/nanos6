@@ -46,7 +46,8 @@ typedef enum
 	nanos6_host_device=0,
 	nanos6_cuda_device,
 	nanos6_opencl_device,
-	nanos6_device_type_num=3
+	nanos6_cluster_device,
+	nanos6_device_type_num=4
 } nanos6_device_t;
 
 

@@ -20,6 +20,7 @@
 
 #include <TaskDataAccesses.hpp>
 
+#include <ExecutionWorkflow.hpp>
 
 struct DataAccess;
 struct DataAccessBase;
@@ -29,6 +30,7 @@ class ComputePlace;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wunused-result"
 
+using namespace ExecutionWorkflow;
 
 class Task {
 public:
@@ -90,6 +92,13 @@ private:
 	//! Number of internal and external events that prevent the release of dependencies
 	std::atomic<int> _countdownToRelease;
 	
+	//! Execution workflow to execute this Task
+	Workflow<TaskExecutionWorkflowData> *_workflow;
+	
+	//! At the moment we will store the Execution step of the task
+	//! here in order to invoke it after previous asynchronous
+	//! steps have been completed.
+	Step *_executionStep;
 public:
 	inline Task(
 		void *argsBlock,
@@ -495,6 +504,27 @@ public:
 	inline void setDeviceData(void *deviceData)
 	{
 		_deviceData = deviceData;	
+	}
+	
+	//! \brief Set the Execution Workflow for this Task
+	inline void setWorkflow(Workflow<TaskExecutionWorkflowData> *workflow)
+	{
+		assert(workflow != nullptr);
+		_workflow = workflow;
+	}
+	//! \brief Get the Execution Workflow of the Task
+	inline Workflow<TaskExecutionWorkflowData> *getWorkflow() const
+	{
+		return _workflow;
+	}
+	
+	inline void setExecutionStep(ExecutionWorkflow::Step *step)
+	{
+		_executionStep = step;
+	}
+	inline ExecutionWorkflow::Step *getExecutionStep() const
+	{
+		return _executionStep;
 	}
 };
 

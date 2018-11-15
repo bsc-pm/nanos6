@@ -16,6 +16,7 @@
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
+#include <ExecutionWorkflow.hpp>
 
 #include <InstrumentComputePlaceManagement.hpp>
 #include <InstrumentTaskExecution.hpp>
@@ -121,52 +122,13 @@ void WorkerThread::body()
 
 void WorkerThread::handleTask(CPU *cpu)
 {
-	_task->setThread(this);
-	
-	Instrument::task_id_t taskId = _task->getInstrumentationTaskId();
-	
-	Instrument::ThreadInstrumentationContext instrumentationContext(taskId, cpu->getInstrumentationId(), _instrumentationId);
-	
-	if (_task->hasCode()) {
-		nanos6_address_translation_entry_t *translationTable = nullptr;
-		
-		nanos6_task_info_t const * const taskInfo = _task->getTaskInfo();
-		if (taskInfo->num_symbols >= 0) {
-			translationTable = (nanos6_address_translation_entry_t *) alloca(sizeof(nanos6_address_translation_entry_t) * taskInfo->num_symbols);
-			
-			for (int index = 0; index < taskInfo->num_symbols; index++) {
-				translationTable[index] = {0, 0};
-			}
-		}
-		
-		Instrument::startTask(taskId);
-		Instrument::taskIsExecuting(taskId);
-		
-		// Run the task
-		std::atomic_thread_fence(std::memory_order_acquire);
-		_task->body(nullptr, translationTable);
-		std::atomic_thread_fence(std::memory_order_release);
-		
-		Instrument::taskIsZombie(taskId);
-		Instrument::endTask(taskId);
-	}
-	
-	// Update the CPU since the thread may have migrated
-	cpu = getComputePlace();
-	instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
-	
-	if (_task->markAsFinished(cpu)) {
-		DataAccessRegistration::unregisterTaskDataAccesses(
-			_task,
-			cpu,
-			cpu->getDependencyData()
-		);
-		
-		if (_task->markAsReleased()) {
-			TaskFinalization::disposeOrUnblockTask(_task, cpu);
-		}
-	}
-	
+	size_t NUMAId = cpu->_NUMANodeId;
+	//MemoryPlace *targetPlace = cpu->getMemoryPlace(NUMAId);
+	MemoryPlace *targetMemoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
+	assert(targetMemoryPlace != nullptr);
+
+	ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
+
 	_task = nullptr;
 }
 
