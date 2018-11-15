@@ -523,17 +523,29 @@ namespace Instrument {
 						}
 					}
 				} else {
-					task_info_t &parentTaskInfo = _taskToInfoMap[nextTaskId];
-					task_group_t *parentTaskGroup = dynamic_cast<task_group_t *> (parentTaskInfo._phaseList[access->_parentPhase]);
-					assert(parentTaskGroup != nullptr);
+					assert((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type));
 					
-					parentTaskGroup->_liveTaskwaitFragments.processIntersecting(
+					task_info_t *ancestorTaskInfo = &_taskToInfoMap[access->_originator]; // Originator TaskInfo
+					while (ancestorTaskInfo->_parent != nextTaskId) {
+						ancestorTaskInfo = &_taskToInfoMap[ancestorTaskInfo->_parent];
+					}
+					
+					task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
+					// Next's taskGroup phase index: In a taskwait/top-level sink it corresponds to
+					// a taskgroup immediately previous to the taskwait, which can be found in the
+					// ancestor path starting from the current 'access'
+					size_t nextTaskGroupPhaseIndex = ancestorTaskInfo->_taskGroupPhaseIndex;
+					
+					task_group_t *nextTaskGroup = dynamic_cast<task_group_t *> (nextTaskInfo._phaseList[nextTaskGroupPhaseIndex]);
+					assert(nextTaskGroup != nullptr);
+					
+					nextTaskGroup->_liveTaskwaitFragments.processIntersecting(
 						access->_accessRegion,
 						[&](task_live_taskwait_fragments_t::iterator taskwaitFragmentPosition) -> bool {
 							taskwait_fragment_t *taskwaitFragment = taskwaitFragmentPosition->_taskwaitFragment;
 							assert(taskwaitFragment != nullptr);
 							
-							return processor(*taskwaitFragment, linkToNext, parentTaskInfo);
+							return processor(*taskwaitFragment, linkToNext, nextTaskInfo);
 						}
 					);
 				}
@@ -565,18 +577,30 @@ namespace Instrument {
 						}
 					}
 				} else {
-					task_info_t &parentTaskInfo = _taskToInfoMap[nextTaskId];
-					task_group_t *parentTaskGroup = dynamic_cast<task_group_t *> (parentTaskInfo._phaseList[access->_parentPhase]);
-					assert(parentTaskGroup != nullptr);
+					assert((linkToNext._sinkObjectType == taskwait_type) || (linkToNext._sinkObjectType == top_level_sink_type));
 					
-					for (taskwait_fragment_t *taskwaitFragment : parentTaskGroup->_allTaskwaitFragments) {
+					task_info_t *ancestorTaskInfo = &_taskToInfoMap[access->_originator]; // Originator TaskInfo
+					while (ancestorTaskInfo->_parent != nextTaskId) {
+						ancestorTaskInfo = &_taskToInfoMap[ancestorTaskInfo->_parent];
+					}
+					
+					task_info_t &nextTaskInfo = _taskToInfoMap[nextTaskId];
+					// Next's taskGroup phase index: In a taskwait/top-level sink it corresponds to
+					// a taskgroup immediately previous to the taskwait, which can be found in the
+					// ancestor path starting from the current 'access'
+					size_t nextTaskGroupPhaseIndex = ancestorTaskInfo->_taskGroupPhaseIndex;
+					
+					task_group_t *nextTaskGroup = dynamic_cast<task_group_t *> (nextTaskInfo._phaseList[nextTaskGroupPhaseIndex]);
+					assert(nextTaskGroup != nullptr);
+					
+					for (taskwait_fragment_t *taskwaitFragment : nextTaskGroup->_allTaskwaitFragments) {
 						assert(taskwaitFragment != nullptr);
 						
 						if (access->_accessRegion.intersect(taskwaitFragment->_accessRegion).empty()) {
 							continue;
 						}
 						
-						bool result = processor(*taskwaitFragment, linkToNext, parentTaskInfo);
+						bool result = processor(*taskwaitFragment, linkToNext, nextTaskInfo);
 						if (!result) {
 							break;
 						}
