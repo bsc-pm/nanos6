@@ -179,7 +179,7 @@ namespace DataAccessRegistration {
 						&& access->complete()
 						&& access->receivedReductionInfo()
 						&& !access->closesReduction()
-						&& ((access->getReductionInfo() != access->getPreviousReductionInfo())
+						&& (access->allocatedReductionInfo()
 								|| access->receivedReductionCpuSet());
 				} else {
 					assert(access->getObjectType() == access_type);
@@ -221,7 +221,7 @@ namespace DataAccessRegistration {
 						&& access->complete()
 						&& access->receivedReductionInfo()
 						&& !access->closesReduction()
-						&& ((access->getReductionInfo() != access->getPreviousReductionInfo())
+						&& (access->allocatedReductionInfo()
 								|| access->receivedReductionCpuSet());
 				}
 			} else {
