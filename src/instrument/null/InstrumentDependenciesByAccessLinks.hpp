@@ -122,6 +122,12 @@ namespace Instrument {
 	) {
 	}
 	
+	inline void newDataAccessLocation(
+		__attribute__((unused)) data_access_id_t &dataAccessId,
+		__attribute__((unused)) MemoryPlace const *newLocation,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+	}
 }
 
 

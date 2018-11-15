@@ -546,6 +546,8 @@ namespace DataAccessRegistration {
 			if (initialStatus._propagatesReadSatisfiabilityToNext != updatedStatus._propagatesReadSatisfiabilityToNext) {
 				assert(!initialStatus._propagatesReadSatisfiabilityToNext);
 				updateOperation._makeReadSatisfied = true;
+				assert(access->hasLocation());
+				updateOperation._location = access->getLocation();
 			}
 			
 			if (initialStatus._propagatesWriteSatisfiabilityToNext != updatedStatus._propagatesWriteSatisfiabilityToNext) {
@@ -606,6 +608,8 @@ namespace DataAccessRegistration {
 			if (initialStatus._propagatesReadSatisfiabilityToFragments != updatedStatus._propagatesReadSatisfiabilityToFragments) {
 				assert(!initialStatus._propagatesReadSatisfiabilityToFragments);
 				updateOperation._makeReadSatisfied = true;
+				assert(access->hasLocation());
+				updateOperation._location = access->getLocation();
 			}
 			
 			if (initialStatus._propagatesWriteSatisfiabilityToFragments != updatedStatus._propagatesWriteSatisfiabilityToFragments) {
@@ -789,6 +793,7 @@ namespace DataAccessRegistration {
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex = no_reduction_type_and_operator,
 		reduction_index_t reductionIndex = -1,
+		MemoryPlace *location = nullptr,
 		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink()
 	) {
 		// Regular object duplication
@@ -797,6 +802,7 @@ namespace DataAccessRegistration {
 			accessType, weak, originator, region,
 			reductionTypeAndOperatorIndex,
 			reductionIndex,
+			location,
 			Instrument::data_access_id_t(),
 			status, next
 		);
@@ -1141,7 +1147,7 @@ namespace DataAccessRegistration {
 		
 		// Read, Write, Concurrent Satisfiability
 		if (updateOperation._makeReadSatisfied) {
-			access->setReadSatisfied();
+			access->setReadSatisfied(updateOperation._location);
 		}
 		if (updateOperation._makeWriteSatisfied) {
 			access->setWriteSatisfied();
@@ -1337,6 +1343,7 @@ namespace DataAccessRegistration {
 			dataAccess->getAccessRegion(),
 			dataAccess->getReductionTypeAndOperatorIndex(),
 			dataAccess->getReductionIndex(),
+			dataAccess->getLocation(),
 			instrumentationId
 		);
 
@@ -1963,7 +1970,9 @@ namespace DataAccessRegistration {
 						targetAccess = fragmentAccess(targetAccess, missingRegion, accessStructures);
 						
 						DataAccessStatusEffects initialStatus(targetAccess);
-						targetAccess->setReadSatisfied();
+						//! This is a local access, so no location is setup yet.
+						//! For now we set the first NUMA node as the location.
+						targetAccess->setReadSatisfied(HardwareInfo::getMemoryPlace(nanos6_host_device, 0));
 						targetAccess->setWriteSatisfied();
 						targetAccess->setConcurrentSatisfied();
 						targetAccess->setCommutativeSatisfied();
@@ -2176,7 +2185,7 @@ namespace DataAccessRegistration {
 	
 	static inline void finalizeAccess(
 		Task *finishedTask, DataAccess *dataAccess, DataAccessRegion region,
-		/* OUT */ CPUDependencyData &hpDependencyData
+		MemoryPlace *location, /* OUT */ CPUDependencyData &hpDependencyData
 	) {
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
@@ -2199,6 +2208,7 @@ namespace DataAccessRegistration {
 				
 				DataAccessStatusEffects initialStatus(accessOrFragment);
 				accessOrFragment->setComplete();
+				accessOrFragment->setLocation(location);
 				DataAccessStatusEffects updatedStatus(accessOrFragment);
 				
 				handleDataAccessStatusChanges(
@@ -2559,7 +2569,8 @@ namespace DataAccessRegistration {
 		Task *task, DataAccessRegion region,
 		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
 		ComputePlace *computePlace,
-		CPUDependencyData &hpDependencyData
+		CPUDependencyData &hpDependencyData,
+		MemoryPlace *location
 	) {
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
@@ -2568,6 +2579,12 @@ namespace DataAccessRegistration {
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
+		if (location == nullptr) {
+			//! If a valid location has not been provided then we use
+			//! the NUMA node attached to the computePlace.
+			assert(computePlace != nullptr);
+			location = computePlace->getMemoryPlace(0);
+		}
 #ifndef NDEBUG
 		{
 			bool alreadyTaken = false;
@@ -2589,7 +2606,7 @@ namespace DataAccessRegistration {
 					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && task->isRunnable()) {
 						releaseReductionStorage(task, dataAccess, region, computePlace);
 					}
-					finalizeAccess(task, dataAccess, region, /* OUT */ hpDependencyData);
+					finalizeAccess(task, dataAccess, region, location, /* OUT */ hpDependencyData);
 					
 					return true;
 				}
@@ -2607,7 +2624,7 @@ namespace DataAccessRegistration {
 	
 	
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData)
+	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location)
 	{
 		assert(task != nullptr);
 		
@@ -2640,6 +2657,12 @@ namespace DataAccessRegistration {
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
+		if (location == nullptr) {
+			//! If a valid location has not been provided then we use
+			//! the NUMA node attached to the computePlace.
+			assert(computePlace != nullptr);
+			location = computePlace->getMemoryPlace(0);
+		}
 #ifndef NDEBUG
 		{
 			bool alreadyTaken = false;
@@ -2660,7 +2683,7 @@ namespace DataAccessRegistration {
 					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && task->isRunnable()) {
 						releaseReductionStorage(task, dataAccess, dataAccess->getAccessRegion(), computePlace);
 					}
-					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), /* OUT */ hpDependencyData);
+					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), location, /* OUT */ hpDependencyData);
 					
 					return true;
 				}
@@ -2677,6 +2700,51 @@ namespace DataAccessRegistration {
 #endif
 	}
 	
+	void propagateSatisfiability(Task *task, DataAccessRegion &region,
+		ComputePlace *computePlace, CPUDependencyData &hpDependencyData,
+		bool readSatisfied, bool writeSatisfied, MemoryPlace *location)
+	{
+		assert(task != nullptr);
+		
+		UpdateOperation updateOperation;
+		updateOperation._target = DataAccessLink(task, access_type);
+		updateOperation._region = region;
+		updateOperation._makeReadSatisfied = readSatisfied;
+		updateOperation._makeWriteSatisfied = writeSatisfied;
+		updateOperation._location = location;
+		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		assert(!accessStructures.hasBeenDeleted());
+		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
+		
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = false;
+			assert(hpDependencyData._inUse.compare_exchange_strong(
+				alreadyTaken, true));
+		}
+#endif
+		
+		{
+			std::lock_guard<TaskDataAccesses::spinlock_t>
+				guard(accessStructures._lock);
+			processUpdateOperation(updateOperation, hpDependencyData);
+		}
+
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
+			hpDependencyData,
+			computePlace,
+			true
+		);
+		
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = true;
+			assert(hpDependencyData._inUse.compare_exchange_strong(
+				alreadyTaken, false));
+		}
+#endif
+	}
 	
 	void handleEnterBlocking(Task *task)
 	{

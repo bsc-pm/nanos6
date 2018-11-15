@@ -45,10 +45,35 @@ namespace DataAccessRegistration {
 		Task *task, DataAccessRegion region,
 		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
 		ComputePlace *computePlace,
-		CPUDependencyData &dependencyData
+		CPUDependencyData &dependencyData,
+		MemoryPlace *location = nullptr
 	);
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
+	void unregisterTaskDataAccesses(
+		Task *task,
+		ComputePlace *computePlace,
+		CPUDependencyData &dependencyData,
+		MemoryPlace *location = nullptr
+	);
+	
+	//! \brief propagates satisfiability for an access.
+	//!
+	//! \param[in] task is the Task that includes the access for which we propagate.
+	//! \param[in] region is the region for which propagate satisfiability
+	//! \param[in] computePlace is the ComputePlace assigned to the current thread, or nullptr if none assigned
+	//! \param[in] dependencyData is the CPUDependencyData struct used for the propagation operation.
+	//! \param[in] readSatisfied is true if the region becomes read satisfied.
+	//! \param[in] writeSatisfied is true if the region becomes write satisfied.
+	//! \param[in] location is not a nullptr if we have an update for the location of the region.
+	void propagateSatisfiability(
+		Task *task,
+		DataAccessRegion &region,
+		ComputePlace *computePlace,
+		CPUDependencyData &dependencyData,
+		bool readSatisfied,
+		bool writeSatisfied,
+		MemoryPlace *location
+	);
 	
 	void handleEnterBlocking(Task *task);
 	void handleExitBlocking(Task *task);

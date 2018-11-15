@@ -27,7 +27,7 @@
 
 struct DataAccess;
 class Task;
-
+class MemoryPlace;
 
 #include "../DataAccessBase.hpp"
 #include "DataAccessLink.hpp"
@@ -107,6 +107,9 @@ private:
 	//! reduction this access is part of (if applicable)
 	boost::dynamic_bitset<> _reductionSlotSet;
 	
+	//! Location of the DataAccess
+	MemoryPlace *_location;
+	
 public:
 	DataAccess(
 		DataAccessObjectType objectType,
@@ -115,6 +118,7 @@ public:
 		DataAccessRegion accessRegion,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
 		reduction_index_t reductionIndex,
+		MemoryPlace *location = nullptr,
 		Instrument::data_access_id_t instrumentationId = Instrument::data_access_id_t(),
 		status_t status = 0, DataAccessLink next = DataAccessLink()
 	)
@@ -126,7 +130,8 @@ public:
 		_reductionTypeAndOperatorIndex(reductionTypeAndOperatorIndex),
 		_reductionIndex(reductionIndex),
 		_reductionInfo(nullptr),
-		_previousReductionInfo(nullptr)
+		_previousReductionInfo(nullptr),
+		_location(location)
 	{
 		assert(originator != nullptr);
 		
@@ -145,7 +150,8 @@ public:
 		_reductionIndex(other.getReductionIndex()),
 		_reductionInfo(other.getReductionInfo()),
 		_previousReductionInfo(other.getPreviousReductionInfo()),
-		_reductionSlotSet(other.getReductionSlotSet())
+		_reductionSlotSet(other.getReductionSlotSet()),
+		_location(other.getLocation())
 	{}
 	
 	~DataAccess()
@@ -245,10 +251,11 @@ public:
 		return _status[COMPLETE_BIT];
 	}
 	
-	void setReadSatisfied()
+	void setReadSatisfied(MemoryPlace *location = nullptr)
 	{
 		assert(!readSatisfied());
 		_status[READ_SATISFIED_BIT] = true;
+		setLocation(location);
 		Instrument::newDataAccessProperty(_instrumentationId, "RSat", "Read Satisfied");
 	}
 	bool readSatisfied() const
@@ -430,6 +437,19 @@ public:
 		return _status[TOP_LEVEL_BIT];
 	}
 	
+	void setLocation(MemoryPlace *location)
+	{
+		_location = location;
+		Instrument::newDataAccessLocation(_instrumentationId, location);
+	}
+	MemoryPlace *getLocation() const
+	{
+		return _location;
+	}
+	bool hasLocation() const
+	{
+		return (_location != nullptr);
+	}
 	
 #ifndef NDEBUG
 	void setReachable()
@@ -462,7 +482,7 @@ public:
 	void inheritFragmentStatus(DataAccess const *other)
 	{
 		if (other->readSatisfied()) {
-			setReadSatisfied();
+			setReadSatisfied(other->getLocation());
 		}
 		if (other->writeSatisfied()) {
 			setWriteSatisfied();

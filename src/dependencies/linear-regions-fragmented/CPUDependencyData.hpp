@@ -22,6 +22,7 @@
 
 class Task;
 class ReductionInfo;
+class MemoryPlace;
 
 
 struct CPUDependencyData {
@@ -33,6 +34,7 @@ struct CPUDependencyData {
 		bool _makeWriteSatisfied;
 		bool _makeConcurrentSatisfied;
 		bool _makeCommutativeSatisfied;
+		MemoryPlace *_location;
 		
 		bool _makeTopmost;
 		bool _makeTopLevel;

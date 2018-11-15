@@ -444,4 +444,21 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
+	void newDataAccessLocation(
+		data_access_id_t &dataAccessId,
+		MemoryPlace const *newLocation,
+		InstrumentationContext const &context
+	) {
+		if (!_verboseDependenciesByAccessLinks) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-> DataAccessNewLocation " << dataAccessId << " MemoryPlaceId:" << newLocation->getIndex() << " triggererTask:" << context._taskId;
+		
+		addLogEntry(logEntry);
+	}
 }

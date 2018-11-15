@@ -13,6 +13,7 @@
 #include <InstrumentThreadInstrumentationContext.hpp>
 
 #include <DataAccessRegion.hpp>
+#include "hardware/places/MemoryPlace.hpp"
 
 #include "InstrumentDataAccessTypes.hpp"
 
@@ -204,6 +205,16 @@ namespace Instrument {
 		data_access_id_t &dataAccessId,
 		char const *shortPropertyName,
 		char const *longPropertyName,
+		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
+	);
+	
+	//! \brief Called when a DataAccess has an new location
+	//!
+	//! \param dataAccessId is the the instrumentation id of the access with the new Location
+	//! \param newLocation is the updated MemoryPlace which stores the DataAccess
+	void newDataAccessLocation(
+		data_access_id_t &dataAccessId,
+		MemoryPlace const *newLocation,
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent()
 	);
 	//! @}
