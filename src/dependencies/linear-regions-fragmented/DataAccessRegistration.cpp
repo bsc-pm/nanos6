@@ -629,7 +629,10 @@ namespace DataAccessRegistration {
 			
 			if (access->getObjectType() == taskwait_type) {
 				// Update parent data access ReductionCpuSet with information from its subaccesses
-				// collected at the taskwait
+				// collected at the taskwait fragment
+				// Note: This shouldn't be done for top-level sink fragments, as their presence
+				// in the bottomMap just mean that there is no matching access in the parent
+				// (the reduction is local and not waited for)
 				if (access->getType() == REDUCTION_ACCESS_TYPE) {
 					assert(access->getReductionCpuSet().size() > 0);
 					
