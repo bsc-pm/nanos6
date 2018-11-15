@@ -4,8 +4,8 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef __CLUSTER_MANAGER_HPP__
-#define __CLUSTER_MANAGER_HPP__
+#ifndef CLUSTER_MANAGER_HPP
+#define CLUSTER_MANAGER_HPP
 
 #include <vector>
 #include <string>
@@ -29,9 +29,27 @@ public:
 	{
 	}
 	
-	static inline ClusterNode *getClusterNode(__attribute__((unused)) int id = 0)
+	static inline ClusterNode *getClusterNode(__attribute__((unused)) int id)
 	{
 		static ClusterNode ourDummyNode;
+		return &ourDummyNode;
+	}
+	
+	static inline ClusterNode *getCurrentClusterNode()
+	{
+		static ClusterNode ourDummyNode;
+		return &ourDummyNode;
+	}
+	
+	static inline ClusterMemoryNode *getMemoryNode(__attribute__((unused)) int id)
+	{
+		static ClusterMemoryNode ourDummyNode;
+		return &ourDummyNode;
+	}
+	
+	static inline ClusterMemoryNode *getCurrentMemoryNode()
+	{
+		static ClusterMemoryNode ourDummyNode;
 		return &ourDummyNode;
 	}
 	
@@ -62,4 +80,4 @@ public:
 	}
 };
 
-#endif /* __CLUSTER_MANAGER_HPP__ */
+#endif /* CLUSTER_MANAGER_HPP */

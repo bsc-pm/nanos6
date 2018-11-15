@@ -9,26 +9,47 @@
 
 #include "hardware/places/ComputePlace.hpp"
 
+#include <ClusterMemoryNode.hpp>
+
 class ClusterNode : public ComputePlace {
 private:
-	//! This the index of the node related to the communication layer
+	//! MemoryPlace associated with this cluster node
+	ClusterMemoryNode *_memoryNode;
+	
+	//! This is the index of the node related to the
+	//! communication layer
 	int _commIndex;
 	
 public:
 	ClusterNode(int index, int commIndex)
-		: ComputePlace(index, nanos6_device_t::nanos6_host_device),
+		: ComputePlace(index, nanos6_device_t::nanos6_cluster_device),
 		_commIndex(commIndex)
 	{
+		_memoryNode = new ClusterMemoryNode(index, commIndex);
 	}
 	
 	~ClusterNode()
 	{
 	}
 	
-	inline int getCommIndex() const
+	//! \brief Get the MemoryNode of the cluster node
+	ClusterMemoryNode *getMemoryNode() const
+	{
+		return _memoryNode;
+	}
+	
+	//! \brief Get the index of the ClusterNode
+	int getIndex() const
+	{
+		return _index;
+	}
+	
+	//! \brief Get the communicator index of the ClusterNode
+	int getCommIndex() const
 	{
 		return _commIndex;
 	}
 };
+
 
 #endif /* CLUSTER_NODE_HPP */

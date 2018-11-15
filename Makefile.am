@@ -382,9 +382,16 @@ cluster_sources += \
 	src/cluster/messages/MessageSysFinish.cpp \
 	src/cluster/messages/MessageType.cpp \
 	src/cluster/messenger/MPIMessenger.cpp
-cluster_cppflags = -I$(srcdir)/src/cluster -I$(srcdir)/src/hardware/cluster
+
+cluster_cppflags = \
+	-I$(srcdir)/src/cluster \
+	-I$(srcdir)/src/hardware/cluster \
+	-I$(srcdir)/src/hardware/cluster/memory
 else
-cluster_cppflags = -I$(srcdir)/src/cluster/null -I$(srcdir)/src/hardware/cluster/null
+cluster_cppflags = \
+	-I$(srcdir)/src/cluster/null \
+	-I$(srcdir)/src/hardware/cluster/null \
+	-I$(srcdir)/src/hardware/cluster/memory/null
 endif
 
 common_sources += $(cluster_sources)
@@ -622,6 +629,8 @@ noinst_HEADERS = \
 	src/executors/workflow/null/ExecutionStep.hpp \
 	src/executors/workflow/null/ExecutionWorkflow.hpp \
 	src/hardware/cluster/ClusterNode.hpp \
+	src/hardware/cluster/memory/ClusterMemoryNode.hpp \
+	src/hardware/cluster/memory/null/ClusterMemoryNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
 	src/hardware/cuda/CUDADevice.hpp \
 	src/hardware/cuda/CUDAInfo.hpp \

@@ -22,7 +22,7 @@ extern "C" int nanos6_is_master_node()
 
 extern "C" int nanos6_get_cluster_node_id()
 {
-	return ClusterManager::getClusterNode()->getIndex();
+	return ClusterManager::getCurrentClusterNode()->getIndex();
 }
 
 extern "C" int nanos6_get_num_cluster_nodes()

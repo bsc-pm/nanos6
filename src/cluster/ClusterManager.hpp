@@ -9,12 +9,14 @@
 
 #include <atomic>
 #include <cassert>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "cluster/messenger/Messenger.hpp"
 
-class ClusterNode;
+#include <ClusterNode.hpp>
+
+class ClusterMemoryNode;
 
 class ClusterManager {
 public:
@@ -91,9 +93,29 @@ public:
 	//! \brief Get the current ClusterNode
 	//!
 	//! \returns the ClusterNode object of the current node
-	static inline ClusterNode *getClusterNode()
+	static inline ClusterNode *getCurrentClusterNode()
 	{
 		return _thisNode;
+	}
+	
+	//! \brief Get The ClusterMemoryNode with index id;
+	//!
+	//! \param[in] id is the index of the ClusterMemoryNode we request
+	//!
+	//! \returns The ClusterMemoryNode object with index 'id'
+	static inline ClusterMemoryNode *getMemoryNode(int id)
+	{
+		assert(_clusterNodes[id] != nullptr);
+		return _clusterNodes[id]->getMemoryNode();
+	}
+	
+	//! \brief Get the current ClusterMemoryNode
+	//!
+	//! \returns the ClusterMemoryNode object of the current node
+	static inline ClusterMemoryNode *getCurrentMemoryNode()
+	{
+		assert(_thisNode != nullptr);
+		return _thisNode->getMemoryNode();
 	}
 	
 	//! \brief Check if current node is the master
@@ -132,6 +154,7 @@ public:
 	//! synchronization point.
 	static inline void synchronizeAll()
 	{
+		assert(_msn != nullptr);
 		_msn->synchronizeAll();
 	}
 	
