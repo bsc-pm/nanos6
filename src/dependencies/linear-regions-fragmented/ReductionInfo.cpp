@@ -91,11 +91,6 @@ DataAccessRegion ReductionInfo::getCPUPrivateStorage(size_t virtualCpuId) {
 		);
 	}
 	
-	Instrument::retrievedPrivateReductionStorage(
-		/* reductionInfo */ *this,
-		DataAccessRegion(cpuStorage, _region.getSize())
-	);
-	
 	return DataAccessRegion(cpuStorage, _region.getSize());
 }
 

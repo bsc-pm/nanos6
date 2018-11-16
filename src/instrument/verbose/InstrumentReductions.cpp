@@ -55,25 +55,6 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
-	void retrievedPrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context) {
-		if (!_verboseReductions) {
-			return;
-		}
-		
-		LogEntry *logEntry = getLogEntry(context);
-		assert(logEntry != nullptr);
-		
-		DataAccessRegion originalRegion = reductionInfo.getOriginalRegion();
-		
-		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> RetrievedPrivateReductionStorage " << privateStorage.getStartAddress() << ":" << privateStorage.getSize()
-			<< " reductionInfo:" << &reductionInfo
-			<< " region:" << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
-			<< " triggererTask:" << context._taskId;
-		
-		addLogEntry(logEntry);
-	}
-	
 	void enterAllocateReductionInfo(data_access_id_t dataAccessId, const DataAccessRegion& accessRegion, const InstrumentationContext &context) {
 		if (!_verboseReductions) {
 			return;
@@ -103,6 +84,37 @@ namespace Instrument {
 		logEntry->_contents << " <-- ExitAllocateReductionInfo " << &reductionInfo
 			<< " region: " << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
 			<< " dataAccess:" << dataAccessId << " triggererTask:" << context._taskId;
+		
+		addLogEntry(logEntry);
+	}
+	void enterRetrievePrivateReductionStorage(const DataAccessRegion& originalRegion, const InstrumentationContext &context) {
+		if (!_verboseReductions) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " --> EnterRetrievePrivateReductionStorage "
+			<< " region:" << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
+			<< " triggererTask:" << context._taskId;
+		
+		addLogEntry(logEntry);
+	}
+	void exitRetrievePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const DataAccessRegion& originalRegion, const InstrumentationContext &context) {
+		if (!_verboseReductions) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-- ExitRetrievePrivateReductionStorage " << privateStorage.getStartAddress() << ":" << privateStorage.getSize()
+			<< " reductionInfo:" << &reductionInfo
+			<< " region:" << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
+			<< " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}

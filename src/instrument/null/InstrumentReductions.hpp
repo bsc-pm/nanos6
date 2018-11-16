@@ -27,13 +27,6 @@ namespace Instrument {
 	) {
 	}
 	
-	inline void retrievedPrivateReductionStorage(
-		__attribute__((unused)) const ReductionInfo& reductionInfo,
-		__attribute__((unused)) const DataAccessRegion& privateStorage,
-		__attribute__((unused)) const InstrumentationContext &context
-	) {
-	}
-	
 	inline void enterAllocateReductionInfo(
 		__attribute__((unused)) data_access_id_t dataAccessId,
 		__attribute__((unused)) const DataAccessRegion& accessRegion,
@@ -54,6 +47,18 @@ namespace Instrument {
 	inline void exitAllocatePrivateReductionStorage(
 		__attribute__((unused)) const ReductionInfo& reductionInfo,
 		__attribute__((unused)) const DataAccessRegion& privateStorage,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
+	inline void enterRetrievePrivateReductionStorage(
+		__attribute__((unused)) const DataAccessRegion& originalRegion,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
+	inline void exitRetrievePrivateReductionStorage(
+		__attribute__((unused)) const ReductionInfo& reductionInfo,
+		__attribute__((unused)) const DataAccessRegion& privateStorage,
+		__attribute__((unused)) const DataAccessRegion& originalRegion,
 		__attribute__((unused)) const InstrumentationContext &context
 	) {
 	}

@@ -10,6 +10,8 @@
 #include <tasks/Task.hpp>
 #include <executors/threads/WorkerThread.hpp>
 
+#include <InstrumentReductions.hpp>
+
 #include "DataAccess.hpp"
 #include "TaskDataAccessesImplementation.hpp"
 #include "ReductionInfo.hpp"
@@ -20,6 +22,10 @@ void *nanos6_get_reduction_storage1(void *original,
 		__attribute__((unused)) long dim1end)
 {
 	assert(dim1start == 0L);
+	
+	Instrument::enterRetrievePrivateReductionStorage(
+		DataAccessRegion(original, dim1size)
+	);
 	
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
@@ -83,6 +89,12 @@ void *nanos6_get_reduction_storage1(void *original,
 		address = ((char*)reductionInfo->getCPUPrivateStorage(cpuId).getStartAddress()) +
 			((char*)original - (char*)reductionInfo->getOriginalRegion().getStartAddress());
 	}
+	
+	Instrument::exitRetrievePrivateReductionStorage(
+		*reductionInfo,
+		DataAccessRegion(address, dim1size),
+		DataAccessRegion(original, dim1size)
+	);
 	
 	return address;
 }

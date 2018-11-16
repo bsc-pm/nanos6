@@ -20,10 +20,10 @@ namespace Instrument {
 	void receivedCompatibleReductionInfo(data_access_id_t dataAccessId, const ReductionInfo& reductionInfo, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
 	void deallocatedReductionInfo(data_access_id_t dataAccessId, const ReductionInfo *reductionInfo, const DataAccessRegion& originalRegion, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
 	
-	void retrievedPrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
-	
 	void enterAllocateReductionInfo(data_access_id_t dataAccessId, const DataAccessRegion& accessRegion, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
 	void exitAllocateReductionInfo(data_access_id_t dataAccessId, const ReductionInfo& reductionInfo, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
+	void enterRetrievePrivateReductionStorage(const DataAccessRegion& originalRegion, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
+	void exitRetrievePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const DataAccessRegion& originalRegion, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
 	void enterAllocatePrivateReductionStorage(const ReductionInfo& reductionInfo, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
 	void exitAllocatePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
 	void enterInitializePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context = ThreadInstrumentationContext::getCurrent());
