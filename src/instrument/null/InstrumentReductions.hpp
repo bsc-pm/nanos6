@@ -33,21 +33,36 @@ namespace Instrument {
 	) {
 	}
 	
-	inline void initializedPrivateReductionStorage(
-		__attribute__((unused)) const ReductionInfo& reductionInfo,
-		__attribute__((unused)) const DataAccessRegion& privateStorage,
-		__attribute__((unused)) const InstrumentationContext &context
-	) {
-	}
 	inline void retrievedPrivateReductionStorage(
 		__attribute__((unused)) const ReductionInfo& reductionInfo,
 		__attribute__((unused)) const DataAccessRegion& privateStorage,
 		__attribute__((unused)) const InstrumentationContext &context
 	) {
 	}
-	inline void combinedPrivateReductionStorage(
+	
+	inline void enterInitializePrivateReductionStorage(
 		__attribute__((unused)) const ReductionInfo& reductionInfo,
 		__attribute__((unused)) const DataAccessRegion& privateStorage,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
+	inline void exitInitializePrivateReductionStorage(
+		__attribute__((unused)) const ReductionInfo& reductionInfo,
+		__attribute__((unused)) const DataAccessRegion& privateStorage,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
+	inline void enterCombinePrivateReductionStorage(
+		__attribute__((unused)) const ReductionInfo& reductionInfo,
+		__attribute__((unused)) const DataAccessRegion& privateStorage,
+		__attribute__((unused)) const DataAccessRegion& originalRegion,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
+	inline void exitCombinePrivateReductionStorage(
+		__attribute__((unused)) const ReductionInfo& reductionInfo,
+		__attribute__((unused)) const DataAccessRegion& privateStorage,
+		__attribute__((unused)) const DataAccessRegion& originalRegion,
 		__attribute__((unused)) const InstrumentationContext &context
 	) {
 	}

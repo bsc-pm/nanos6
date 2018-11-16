@@ -67,10 +67,15 @@ DataAccessRegion ReductionInfo::getCPUPrivateStorage(size_t virtualCpuId) {
 	std::lock_guard<spinlock_t> guard(_lock);
 	
 	if (!_isCpuStorageInitialized[virtualCpuId]) {
+		Instrument::enterInitializePrivateReductionStorage(
+			/* reductionInfo */ *this,
+			DataAccessRegion(cpuStorage, _region.getSize())
+		);
+		
 		_initializationFunction(cpuStorage, _region.getSize());
 		_isCpuStorageInitialized[virtualCpuId] = true;
 		
-		Instrument::initializedPrivateReductionStorage(
+		Instrument::exitInitializePrivateReductionStorage(
 			/* reductionInfo */ *this,
 			DataAccessRegion(cpuStorage, _region.getSize())
 		);
@@ -95,11 +100,18 @@ bool ReductionInfo::combineRegion(const DataAccessRegion& region, const boost::d
 			void *originalRegion = ((char*)_region.getStartAddress()) + ((char*)region.getStartAddress() - (char*)_region.getStartAddress());
 			void *cpuStorage = ((char*)_storage.getStartAddress()) + _paddedRegionSize*i + ((char*)region.getStartAddress() - (char*)_region.getStartAddress());
 			
+			Instrument::enterCombinePrivateReductionStorage(
+				/* reductionInfo */ *this,
+				DataAccessRegion(cpuStorage, region.getSize()),
+				DataAccessRegion(originalRegion, region.getSize())
+			);
+			
 			_combinationFunction(originalRegion, cpuStorage, region.getSize());
 			
-			Instrument::combinedPrivateReductionStorage(
+			Instrument::exitCombinePrivateReductionStorage(
 				/* reductionInfo */ *this,
-				DataAccessRegion(cpuStorage, region.getSize())
+				DataAccessRegion(cpuStorage, region.getSize()),
+				DataAccessRegion(originalRegion, region.getSize())
 			);
 		}
 	}
