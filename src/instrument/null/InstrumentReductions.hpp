@@ -13,12 +13,6 @@
 
 
 namespace Instrument {
-	inline void allocatedReductionInfo(
-		__attribute__((unused)) data_access_id_t dataAccessId,
-		__attribute__((unused)) const ReductionInfo& reductionInfo,
-		__attribute__((unused)) const InstrumentationContext &context
-	) {
-	}
 	inline void receivedCompatibleReductionInfo(
 		__attribute__((unused)) data_access_id_t dataAccessId,
 		__attribute__((unused)) const ReductionInfo& reductionInfo,
@@ -40,6 +34,29 @@ namespace Instrument {
 	) {
 	}
 	
+	inline void enterAllocateReductionInfo(
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) const DataAccessRegion& accessRegion,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
+	inline void exitAllocateReductionInfo(
+		__attribute__((unused)) data_access_id_t dataAccessId,
+		__attribute__((unused)) const ReductionInfo& reductionInfo,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
+	inline void enterAllocatePrivateReductionStorage(
+		__attribute__((unused)) const ReductionInfo& reductionInfo,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
+	inline void exitAllocatePrivateReductionStorage(
+		__attribute__((unused)) const ReductionInfo& reductionInfo,
+		__attribute__((unused)) const DataAccessRegion& privateStorage,
+		__attribute__((unused)) const InstrumentationContext &context
+	) {
+	}
 	inline void enterInitializePrivateReductionStorage(
 		__attribute__((unused)) const ReductionInfo& reductionInfo,
 		__attribute__((unused)) const DataAccessRegion& privateStorage,

@@ -1715,6 +1715,11 @@ namespace DataAccessRegistration {
 	static inline void allocateReductionInfo(DataAccess &dataAccess, const Task &task) {
 		assert(dataAccess.getType() == REDUCTION_ACCESS_TYPE);
 		
+		Instrument::enterAllocateReductionInfo(
+			dataAccess.getInstrumentationId(),
+			dataAccess.getAccessRegion()
+		);
+		
 		nanos6_task_info_t *taskInfo = task.getTaskInfo();
 		assert(taskInfo != nullptr);
 		
@@ -1731,7 +1736,7 @@ namespace DataAccessRegistration {
 		dataAccess.setReductionInfo(newReductionInfo);
 		dataAccess.setAllocatedReductionInfo();
 		
-		Instrument::allocatedReductionInfo(
+		Instrument::exitAllocateReductionInfo(
 			dataAccess.getInstrumentationId(),
 			*newReductionInfo
 		);

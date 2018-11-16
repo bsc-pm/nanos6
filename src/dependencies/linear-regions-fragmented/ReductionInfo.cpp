@@ -27,8 +27,18 @@ ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operato
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
 	
+	// Allocate private reduction storage
+	Instrument::enterAllocatePrivateReductionStorage(
+		/* reductionInfo */ *this
+	);
+	
 	void *storage = mmap(nullptr, _paddedRegionSize*nCpus,
 			PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, /* fd */ -1, /* offset */ 0);
+	
+	Instrument::exitAllocatePrivateReductionStorage(
+		/* reductionInfo */ *this,
+		DataAccessRegion(storage, _paddedRegionSize*nCpus)
+	);
 	
 	FatalErrorHandler::check(storage != MAP_FAILED, "Cannot allocate ",
 			_paddedRegionSize*nCpus, " bytes");

@@ -22,23 +22,6 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void allocatedReductionInfo(data_access_id_t dataAccessId, const ReductionInfo& reductionInfo, const InstrumentationContext &context) {
-		if (!_verboseReductions) {
-			return;
-		}
-		
-		LogEntry *logEntry = getLogEntry(context);
-		assert(logEntry != nullptr);
-		
-		DataAccessRegion originalRegion = reductionInfo.getOriginalRegion();
-		
-		logEntry->appendLocation(context);
-		logEntry->_contents << " --> AllocatedReductionInfo " << &reductionInfo
-			<< " region: " << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
-			<< " dataAccess:" << dataAccessId << " triggererTask:" << context._taskId;
-		
-		addLogEntry(logEntry);
-	}
 	void receivedCompatibleReductionInfo(data_access_id_t dataAccessId, const ReductionInfo& reductionInfo, const InstrumentationContext &context) {
 		if (!_verboseReductions) {
 			return;
@@ -65,7 +48,7 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-- DeallocatedReductionInfo " << reductionInfo
+		logEntry->_contents << " <-> DeallocatedReductionInfo " << reductionInfo
 			<< " region:" << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
 			<< " dataAccess:" << dataAccessId << " triggererTask:" << context._taskId;
 		
@@ -91,6 +74,74 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
+	void enterAllocateReductionInfo(data_access_id_t dataAccessId, const DataAccessRegion& accessRegion, const InstrumentationContext &context) {
+		if (!_verboseReductions) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " --> EnterAllocateReductionInfo "
+			<< " region: " << accessRegion.getStartAddress() << ":" << accessRegion.getSize()
+			<< " dataAccess:" << dataAccessId << " triggererTask:" << context._taskId;
+		
+		addLogEntry(logEntry);
+	}
+	void exitAllocateReductionInfo(data_access_id_t dataAccessId, const ReductionInfo& reductionInfo, const InstrumentationContext &context) {
+		if (!_verboseReductions) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		DataAccessRegion originalRegion = reductionInfo.getOriginalRegion();
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-- ExitAllocateReductionInfo " << &reductionInfo
+			<< " region: " << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
+			<< " dataAccess:" << dataAccessId << " triggererTask:" << context._taskId;
+		
+		addLogEntry(logEntry);
+	}
+	void enterAllocatePrivateReductionStorage(const ReductionInfo& reductionInfo, const InstrumentationContext &context) {
+		if (!_verboseReductions) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		DataAccessRegion originalRegion = reductionInfo.getOriginalRegion();
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " --> EnterAllocatePrivateReductionStorage "
+			<< " reductionInfo:" << &reductionInfo
+			<< " region:" << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
+			<< " triggererTask:" << context._taskId;
+		
+		addLogEntry(logEntry);
+	}
+	void exitAllocatePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context) {
+		if (!_verboseReductions) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		DataAccessRegion originalRegion = reductionInfo.getOriginalRegion();
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " <-- ExitAllocatePrivateReductionStorage " << privateStorage.getStartAddress() << ":" << privateStorage.getSize()
+			<< " reductionInfo:" << &reductionInfo
+			<< " region:" << originalRegion.getStartAddress() << ":" << originalRegion.getSize()
+			<< " triggererTask:" << context._taskId;
+		
+		addLogEntry(logEntry);
+	}
 	void enterInitializePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context) {
 		if (!_verboseReductions) {
 			return;
