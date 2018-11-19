@@ -237,7 +237,8 @@ namespace DataAccessRegistration {
 			}
 			
 			_makesReductionOriginalStorageAvailable =
-				access->allocatedReductionInfo()
+				access->getObjectType() == access_type
+				&& access->allocatedReductionInfo()
 				&& access->writeSatisfied();
 			
 			_combinesReduction =
