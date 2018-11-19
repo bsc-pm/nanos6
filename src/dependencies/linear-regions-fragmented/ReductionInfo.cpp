@@ -19,8 +19,10 @@
 
 ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operator_index_t typeAndOperatorIndex,
 		std::function<void(void*, void*, size_t)> initializationFunction, std::function<void(void*, void*, size_t)> combinationFunction) :
-	_paddedRegionSize(((region.getSize() + HardwareInfo::getCacheLineSize() - 1)/HardwareInfo::getCacheLineSize())*HardwareInfo::getCacheLineSize()),
-	_region(region), _typeAndOperatorIndex(typeAndOperatorIndex),
+	_region(region),
+	_paddedRegionSize(((_region.getSize() + HardwareInfo::getCacheLineSize() - 1)/HardwareInfo::getCacheLineSize())*HardwareInfo::getCacheLineSize()),
+	_typeAndOperatorIndex(typeAndOperatorIndex),
+	_originalStorageCombinationCounter(_region.getSize()),
 	_initializationFunction(std::bind(initializationFunction, std::placeholders::_1, _region.getStartAddress(), std::placeholders::_2)),
 	_combinationFunction(combinationFunction)
 {
@@ -46,8 +48,6 @@ ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operato
 	_storage = DataAccessRegion(storage, _paddedRegionSize*nCpus);
 	
 	_isCpuStorageInitialized.resize(nCpus, false);
-	
-	_sizeCounter = _region.getSize();
 }
 
 ReductionInfo::~ReductionInfo()
@@ -121,7 +121,7 @@ bool ReductionInfo::combineRegion(const DataAccessRegion& region, const boost::d
 		}
 	}
 	
-	_sizeCounter -= region.getSize();
+	_originalStorageCombinationCounter -= region.getSize();
 	
-	return _sizeCounter == 0;
+	return _originalStorageCombinationCounter == 0;
 }

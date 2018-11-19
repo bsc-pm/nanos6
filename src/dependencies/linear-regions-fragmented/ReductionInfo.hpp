@@ -39,20 +39,19 @@ class ReductionInfo
 		
 	private:
 		
+		DataAccessRegion _region;
+		
 		const size_t _paddedRegionSize;
 		
-		DataAccessRegion _region;
+		reduction_type_and_operator_index_t _typeAndOperatorIndex;
+		
+		std::atomic_size_t _originalStorageCombinationCounter;
 		
 		DataAccessRegion _storage;
 		
 		boost::dynamic_bitset<> _isCpuStorageInitialized;
 		
-		std::atomic_size_t _sizeCounter;
-		
-		reduction_type_and_operator_index_t _typeAndOperatorIndex;
-		
 		std::function<void(void*, size_t)> _initializationFunction;
-		
 		std::function<void(void*, void*, size_t)> _combinationFunction;
 		
 		spinlock_t _lock;
