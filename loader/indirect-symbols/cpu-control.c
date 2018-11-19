@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include "resolve.h"
@@ -139,5 +139,16 @@ long nanos6_cpus_get_virtual(void *cpuIterator)
 	return (*symbol)(cpuIterator);
 }
 
+long nanos6_cpus_get_numa(void *cpuIterator)
+{
+	typedef long nanos6_cpus_get_numa_t(void *cpuIterator);
+	
+	static nanos6_cpus_get_numa_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_cpus_get_numa_t *) _nanos6_resolve_symbol("nanos6_cpus_get_numa", "cpu control", NULL);
+	}
+	
+	return (*symbol)(cpuIterator);
+}
 
 #pragma GCC visibility pop

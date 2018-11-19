@@ -7,6 +7,7 @@
 #include <cassert>
 
 #include <nanos6/debug.h>
+#include "executors/threads/CPU.hpp"
 #include "executors/threads/CPUActivation.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -197,5 +198,14 @@ long nanos6_cpus_get_virtual(void *cpuIterator)
 	return cpu->getIndex();
 }
 
-
+long nanos6_cpus_get_numa(void *cpuIterator)
+{
+	cpu_iterator_t *it = (cpu_iterator_t *) cpuIterator;
+	assert (it != 0);
+	
+	CPU *cpu = *(*it);
+	assert(cpu != 0);
+	
+	return cpu->getNumaNodeId();
+}
 
