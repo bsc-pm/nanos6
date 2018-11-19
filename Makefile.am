@@ -539,6 +539,7 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentExtrae.cpp \
 	src/instrument/extrae/InstrumentInitAndShutdown.cpp \
 	src/instrument/extrae/InstrumentMalloc.cpp \
+	src/instrument/extrae/InstrumentReductions.cpp \
 	src/instrument/support/sampling/SigProf.cpp
 
 memory_allocator_default_sources = \

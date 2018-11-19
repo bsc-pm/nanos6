@@ -93,6 +93,9 @@ namespace Instrument {
 				
 				THREAD = 9500004,
 				
+			// 9504XXX -- Reductions
+				REDUCTION_STATE = 9504001,
+				
 			// 96XXXXX -- Tracing points
 				TRACING_POINT_BASE = 9600000,
 		
@@ -108,6 +111,14 @@ namespace Instrument {
 	} nanos6_event_state_t;
 	
 	extern char const                               *_eventStateValueStr[];
+	
+	typedef enum { NANOS_OUTSIDE_REDUCTION, NANOS_ALLOCATE_REDUCTION_INFO,
+						NANOS_RETRIEVE_REDUCTION_STORAGE, NANOS_ALLOCATE_REDUCTION_STORAGE,
+						NANOS_INITIALIZE_REDUCTION_STORAGE, NANOS_COMBINE_REDUCTION_STORAGE,
+						NANOS_REDUCTION_STATE_TYPES
+	} nanos6_reduction_state_t;
+	
+	extern char const                               *_reductionStateValueStr[];
 	
 	extern SpinLock _userFunctionMapLock;
 	extern user_fct_map_t                            _userFunctionMap;

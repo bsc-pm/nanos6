@@ -28,6 +28,12 @@ namespace Instrument {
 		"NOT CREATED", "NOT RUNNING", "STARTUP", "SHUTDOWN", "ERROR", "IDLE",
 		"RUNTIME", "RUNNING", "SYNCHRONIZATION", "SCHEDULING", "CREATION", "THREAD CREATION" };
 	
+	char const               *_reductionStateValueStr[NANOS_REDUCTION_STATE_TYPES] = {
+		"OUTSIDE REDUCTION",
+		"ALLOCATE REDUCTION INFO",
+		"RETRIEVE REDUCTION STORAGE", "ALLOCATE REDUCTION STORAGE",
+		"INITIALIZE REDUCTION STORAGE", "COMBINE REDUCTION STORAGE" };
+	
 	SpinLock _userFunctionMapLock;
 	user_fct_map_t            _userFunctionMap;
 	

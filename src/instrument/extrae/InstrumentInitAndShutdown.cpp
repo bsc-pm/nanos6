@@ -213,6 +213,17 @@ namespace Instrument {
 			ExtraeAPI::define_event_type((extrae_type_t) EventType::RUNTIME_STATE, "Runtime state", NANOS_EVENT_STATE_TYPES, values, _eventStateValueStr);
 		}
 		
+		// Register reduction states
+		{
+			extrae_value_t values[NANOS_REDUCTION_STATE_TYPES];
+			unsigned int i;
+			
+			for (i = 0; i < NANOS_REDUCTION_STATE_TYPES; i++) {
+				values[i] = i;
+			}
+			ExtraeAPI::define_event_type((extrae_type_t) EventType::REDUCTION_STATE, "Reduction state", NANOS_REDUCTION_STATE_TYPES, values, _reductionStateValueStr);
+		}
+		
 		// Thread information callbacks
 		if (_traceAsThreads) {
 			ExtraeAPI::set_threadid_function ( extrae_nanos6_get_thread_id );
