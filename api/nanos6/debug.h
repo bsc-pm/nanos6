@@ -101,6 +101,8 @@ long nanos6_cpus_get(void *cpuIterator);
 //! \brief retrieve the runtime-assigned identifier to the CPU pointed to by the iterator
 long nanos6_cpus_get_virtual(void *cpuIterator);
 
+//! \brief retrieve the NUMA identifier where the CPU pointed to by the iterator is located
+long nanos6_cpus_get_numa(void *cpuIterator);
 
 #ifdef __cplusplus
 }
