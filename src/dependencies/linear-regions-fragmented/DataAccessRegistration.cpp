@@ -2105,10 +2105,10 @@ namespace DataAccessRegistration {
 	}
 	
 	
-	static inline void finalizeAccess(
-		Task *finishedTask, DataAccess *dataAccess, DataAccessRegion region,
-		ComputePlace *computePlace,
-		/* OUT */ CPUDependencyData &hpDependencyData
+	static inline void releaseReductionStorage(
+		__attribute__((unused)) Task *finishedTask, DataAccess *dataAccess,
+		__attribute__((unused)) DataAccessRegion region,
+		ComputePlace *computePlace
 	) {
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
@@ -2116,12 +2116,6 @@ namespace DataAccessRegistration {
 		
 		assert(dataAccess->getOriginator() == finishedTask);
 		assert(!region.empty());
-		
-		// The access may already have been released through the "release" directive
-		if (dataAccess->complete()) {
-			return;
-		}
-		assert(!dataAccess->hasBeenDiscounted());
 		
 		// Release reduction slots (only when necessary)
 		// Note: Remember weak accesses in final tasks will be promoted to strong
@@ -2141,6 +2135,24 @@ namespace DataAccessRegistration {
 			
 			reductionInfo->releaseSlotsInUse(cpu->_virtualCPUId);
 		}
+	}
+	
+	
+	static inline void finalizeAccess(
+		Task *finishedTask, DataAccess *dataAccess, DataAccessRegion region,
+		/* OUT */ CPUDependencyData &hpDependencyData
+	) {
+		assert(finishedTask != nullptr);
+		assert(dataAccess != nullptr);
+		
+		assert(dataAccess->getOriginator() == finishedTask);
+		assert(!region.empty());
+		
+		// The access may already have been released through the "release" directive
+		if (dataAccess->complete()) {
+			return;
+		}
+		assert(!dataAccess->hasBeenDiscounted());
 		
 		applyToAccessAndFragments(
 			dataAccess, region,
@@ -2538,7 +2550,10 @@ namespace DataAccessRegistration {
 					assert(dataAccess->getType() == accessType);
 					assert(dataAccess->isWeak() == weak);
 					
-					finalizeAccess(task, dataAccess, region, computePlace, /* OUT */ hpDependencyData);
+					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && task->isRunnable()) {
+						releaseReductionStorage(task, dataAccess, region, computePlace);
+					}
+					finalizeAccess(task, dataAccess, region, /* OUT */ hpDependencyData);
 					
 					return true;
 				}
@@ -2560,7 +2575,32 @@ namespace DataAccessRegistration {
 	{
 		assert(task != nullptr);
 		
+		if (task->isTaskloop() && task->isRunnable()) {
+			// Loop implicit tasks only
+			TaskDataAccesses &parentAccessStructures = task->getParent()->getDataAccesses();
+			
+			assert(!parentAccessStructures.hasBeenDeleted());
+			TaskDataAccesses::accesses_t &parentAccesses = parentAccessStructures._accesses;
+			
+			std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccessStructures._lock);
+			
+			// Process parent reduction access and release their storage
+			parentAccesses.processAll(
+				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+					DataAccess *dataAccess = &(*position);
+					assert(dataAccess != nullptr);
+					
+					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE) {
+						releaseReductionStorage(task->getParent(), dataAccess, dataAccess->getAccessRegion(), computePlace);
+					}
+					
+					return true;
+				}
+			);
+		}
+		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
@@ -2581,7 +2621,10 @@ namespace DataAccessRegistration {
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					
-					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), computePlace, /* OUT */ hpDependencyData);
+					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && task->isRunnable()) {
+						releaseReductionStorage(task, dataAccess, dataAccess->getAccessRegion(), computePlace);
+					}
+					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), /* OUT */ hpDependencyData);
 					
 					return true;
 				}
