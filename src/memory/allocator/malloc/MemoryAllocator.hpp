@@ -24,9 +24,17 @@ public:
 	
 	static inline void *alloc(size_t size)
 	{
+		static size_t cacheLineSize = HardwareInfo::getCacheLineSize();
+		
 		void *ptr;
-		int rc = posix_memalign(&ptr, HardwareInfo::getCacheLineSize(), size);
-		FatalErrorHandler::handle(rc, " when trying to allocate memory");
+		
+		if (size < cacheLineSize / 2) {
+			ptr = malloc(size);
+			FatalErrorHandler::failIf(ptr == nullptr, " when trying to allocate memory");
+		} else {
+			int rc = posix_memalign(&ptr, cacheLineSize, size);
+			FatalErrorHandler::handle(rc, " when trying to allocate memory");
+		}
 		
 		return ptr;
 	}
