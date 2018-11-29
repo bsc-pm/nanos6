@@ -120,10 +120,11 @@ void HostInfo::initialize()
 	}
 #endif
 
-	if (cache != nullptr) {
+	if ((cache != nullptr) && (cache->attr->cache.linesize != 0)) {
 		_cacheLineSize = cache->attr->cache.linesize;
 	} else {
-		// In some machines (such as HCA-Merlin), hwloc cannot obtain cache information
+		// In some machines, such as HCA-Merlin or Dibona,
+		// hwloc cannot obtain cache information or just returns 0
 		_cacheLineSize = DEFAULT_CACHE_LINE_SIZE;
 	}
 	
