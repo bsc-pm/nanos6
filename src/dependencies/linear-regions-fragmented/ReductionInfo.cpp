@@ -9,6 +9,8 @@
 #include <cassert>
 #include <sys/mman.h>
 
+#include <api/nanos6/reductions.h>
+
 #include <hardware/HardwareInfo.hpp>
 
 #include <MemoryAllocator.hpp>
@@ -139,12 +141,23 @@ DataAccessRegion ReductionInfo::getFreeSlotStorage(size_t slotIndex) {
 	return DataAccessRegion(slot.storage, _region.getSize());
 }
 
+namespace {
+	bool isBuiltinReduction(reduction_type_and_operator_index_t typeAndOperatorIndex) {
+		assert((typeAndOperatorIndex != 0) && "Unknown reduction type and operator");
+		return (typeAndOperatorIndex >= RED_TYPE_CHAR)
+			&& (typeAndOperatorIndex < NUM_RED_TYPES)
+			&& (typeAndOperatorIndex%1000 < NUM_RED_OPS);
+	}
+};
+
 void ReductionInfo::makeOriginalStorageRegionAvailable(const DataAccessRegion &region) {
 	_originalStorageAvailabilityCounter -= region.getSize();
 	
-	if (_originalStorageAvailabilityCounter == 0) {
+	if ((_originalStorageAvailabilityCounter == 0)
+			&& isBuiltinReduction(_typeAndOperatorIndex)) {
 		std::lock_guard<spinlock_t> guard(_lock);
-		// Add original region to reduction slot pool. FIXME This won't work for UDRs
+		// Add original region to reduction slot pool
+		// Note: Disabled for UDRs, as might be initialized with 'oss_orig'
 		size_t freeSlotIndex = _slots.size();
 		_slots.emplace_back();
 		ReductionSlot& slot = _slots.back();
