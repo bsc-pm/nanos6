@@ -82,7 +82,10 @@ void nanos6_release_weak_readwrite_1(void *base_address, long dim1size, long dim
 	release_access<READWRITE_ACCESS_TYPE, true>(base_address, dim1size, dim1start, dim1end);
 }
 
-
+void nanos6_release_weak_commutative_1(void *base_address, long dim1size, long dim1start, long dim1end)
+{
+	release_access<COMMUTATIVE_ACCESS_TYPE, true>(base_address, dim1size, dim1start, dim1end);
+}
 
 
 

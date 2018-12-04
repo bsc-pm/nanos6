@@ -173,6 +173,7 @@ int main(int argc, char **argv)
 	
 	tap.registerNewTests(
 		numSubtests(9, 8, 6) +
+		numSubtests(9, 0, 20) +
 		numSubtests(9, 0, 20)
 	);
 	
@@ -309,6 +310,92 @@ int main(int argc, char **argv)
 		
 		#pragma oss task commutative(var[4], var[5]) label(                    CM8  CM8 )  shared(status, expected)
 		taskCode(8, status, expected);
+		
+		#pragma oss taskwait
+	}
+	
+	// Test 2
+	{
+		tap.emitDiagnostic("Test 2:   VAR0  VAR1  VAR2  VAR3  VAR4  VAR5 ");
+		tap.emitDiagnostic("Test 2:  ------------------------------------");
+		tap.emitDiagnostic("Test 2:   cm0   cm0   cm0   cm0   cm0        ");
+		tap.emitDiagnostic("Test 2:   CM0.0                   CM0.0      ");
+		tap.emitDiagnostic("Test 2:   CM0.1             CM0.1            ");
+		tap.emitDiagnostic("Test 2:   cm1   cm1   cm1                    ");
+		tap.emitDiagnostic("Test 2:   CM1.2       CM1.2                  ");
+		tap.emitDiagnostic("Test 2:   CM1.3 CM1.3                        ");
+		tap.emitDiagnostic("Test 2:   CM2_4_                             ");
+		tap.emitDiagnostic("Test 2:        cm3  cm3           cm3        ");
+		tap.emitDiagnostic("Test 2:        CM3.5              CM3.5      ");
+		tap.emitDiagnostic("Test 2:             CM3.6         CM3.6      ");
+		tap.emitDiagnostic("Test 2:                     cm4   cm4   cm4  ");
+		tap.emitDiagnostic("Test 2:                     CM4.7       CM4.7");
+		tap.emitDiagnostic("Test 2:                           CM4.8 CM4.8");
+		
+		ExperimentStatus<9> status;
+		ExpectedOutcome<9> expected;
+		
+		expected._taskACannotRunConcurrentlyWithB[0][1] = true;
+		expected._taskACannotRunConcurrentlyWithB[0][2] = true;
+		expected._taskACannotRunConcurrentlyWithB[0][3] = true;
+		expected._taskACannotRunConcurrentlyWithB[0][4] = true;
+		expected._taskACannotRunConcurrentlyWithB[1][2] = true;
+		expected._taskACannotRunConcurrentlyWithB[1][3] = true;
+		expected._taskACannotRunConcurrentlyWithB[1][4] = true;
+		expected._taskACannotRunConcurrentlyWithB[2][3] = true;
+		expected._taskACannotRunConcurrentlyWithB[2][4] = true;
+		expected._taskACannotRunConcurrentlyWithB[3][4] = true;
+		
+		expected._taskACannotRunConcurrentlyWithB[3][5] = true;
+		expected._taskACannotRunConcurrentlyWithB[2][6] = true;
+		expected._taskACannotRunConcurrentlyWithB[1][7] = true;
+		expected._taskACannotRunConcurrentlyWithB[0][8] = true;
+		
+		expected._taskACannotRunConcurrentlyWithB[5][6] = true;
+		expected._taskACannotRunConcurrentlyWithB[5][7] = true;
+		expected._taskACannotRunConcurrentlyWithB[5][8] = true;
+		expected._taskACannotRunConcurrentlyWithB[6][7] = true;
+		expected._taskACannotRunConcurrentlyWithB[6][8] = true;
+		expected._taskACannotRunConcurrentlyWithB[7][8] = true;
+		
+		#pragma oss task weakcommutative(var[0:4]) label(cm0   cm0   cm0   cm0   cm0        ) shared(status, expected)
+		{
+			#pragma oss task commutative(var[0], var[4]) label(CM0.0                   CM0.0      )  shared(status, expected)
+			taskCode(0, status, expected);
+			
+			#pragma oss task commutative(var[0], var[3]) label(CM0.1             CM0.1            )  shared(status, expected)
+			taskCode(1, status, expected);
+		}
+		
+		#pragma oss task weakcommutative(var[0:2]) label(cm1   cm1   cm1                    ) shared(status, expected)
+		{
+			#pragma oss task commutative(var[0], var[2]) label(CM1.2       CM1.2                  )  shared(status, expected)
+			taskCode(2, status, expected);
+			
+			#pragma oss task commutative(var[0], var[1]) label(CM1.3 CM1.3                        )  shared(status, expected)
+			taskCode(3, status, expected);
+		}
+		
+		#pragma oss task commutative(var[0]) label(CM2_4_                             )  shared(status, expected)
+		taskCode(4, status, expected);
+		
+		#pragma oss task weakcommutative(var[1:2], var[4]) label(     cm3  cm3           cm3        ) shared(status, expected)
+		{
+			#pragma oss task commutative(var[1], var[5]) label(     CM3.5              CM3.5      )  shared(status, expected)
+			taskCode(5, status, expected);
+			
+			#pragma oss task commutative(var[2], var[5]) label(          CM3.6         CM3.6      )  shared(status, expected)
+			taskCode(6, status, expected);
+		}
+		
+		#pragma oss task weakcommutative(var[3:5]) label(                  cm4   cm4   cm4  ) shared(status, expected)
+		{
+			#pragma oss task commutative(var[3], var[5]) label(                  CM4.7       CM4.7)  shared(status, expected)
+			taskCode(7, status, expected);
+			
+			#pragma oss task commutative(var[4], var[5]) label(                        CM4.8 CM4.8)  shared(status, expected)
+			taskCode(8, status, expected);
+		}
 		
 		#pragma oss taskwait
 	}

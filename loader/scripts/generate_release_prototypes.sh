@@ -30,7 +30,7 @@ echo
 echo '#pragma GCC visibility push(default)'
 echo
 echo
-echo 'enum nanos6_multidimensional_release_api_t { nanos6_multidimensional_release_api = 1 };'
+echo 'enum nanos6_multidimensional_release_api_t { nanos6_multidimensional_release_api = 2 };'
 echo
 echo
 echo "#ifndef NANOS6_MAX_DEPENDENCY_DIMENSIONS"

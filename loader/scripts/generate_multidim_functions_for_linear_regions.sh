@@ -2,7 +2,7 @@
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #	
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 
 
 if [ $# -lt 2 ] ; then
@@ -55,6 +55,9 @@ for type in $* ; do
 		;;
 		commutative)
 			registration_function="register_data_access<COMMUTATIVE_ACCESS_TYPE, false>"
+		;;
+		weak_commutative)
+			registration_function="register_data_access<COMMUTATIVE_ACCESS_TYPE, true>"
 		;;
 		reduction)
 			registration_function="register_reduction_access<false>"
