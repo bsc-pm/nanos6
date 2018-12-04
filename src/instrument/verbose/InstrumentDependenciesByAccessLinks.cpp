@@ -71,6 +71,9 @@ namespace Instrument {
 				case WRITE_ACCESS_TYPE:
 					logEntry->_contents << " output";
 					break;
+				case CONCURRENT_ACCESS_TYPE:
+					logEntry->_contents << " concurrent";
+					break;
 				case NO_ACCESS_TYPE:
 					logEntry->_contents << " local";
 					break;
