@@ -222,7 +222,7 @@ namespace Instrument {
 					color = "#FFB507";
 					break;
 				case CONCURRENT:
-					text << "C";
+					text << (access.weak() ? "c" : "C");
 					color = "#FFFF00";
 					break;
 				case REDUCTION:
