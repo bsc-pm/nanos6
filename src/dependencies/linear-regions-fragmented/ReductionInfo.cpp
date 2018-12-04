@@ -26,6 +26,7 @@ ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operato
 	_paddedRegionSize(((_region.getSize() + HardwareInfo::getCacheLineSize() - 1)/HardwareInfo::getCacheLineSize())*HardwareInfo::getCacheLineSize()),
 	_typeAndOperatorIndex(typeAndOperatorIndex),
 	_originalStorageCombinationCounter(_region.getSize()),
+	_privateStorageCombinationCounter(_region.getSize()),
 	_isOriginalStorageAvailable(false), _originalStorageAvailabilityCounter(_region.getSize()),
 	_initializationFunction(std::bind(initializationFunction, std::placeholders::_1, _region.getStartAddress(), std::placeholders::_2)),
 	_combinationFunction(combinationFunction)
@@ -37,6 +38,7 @@ ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operato
 	_slots.reserve(maxSlots);
 	_freeSlotIndices.reserve(maxSlots);
 	_currentCpuSlotIndices.resize(nCpus, -1);
+	_isAggregatingSlotIndex.resize(maxSlots);
 }
 
 ReductionInfo::~ReductionInfo()
@@ -47,11 +49,19 @@ ReductionInfo::~ReductionInfo()
 #endif
 	
 	void *originalRegionStorage = _region.getStartAddress();
-	for (ReductionSlot& slot : _slots)
-	{
+	for (size_t i = 0; i < _slots.size(); ++i) {
+		ReductionSlot& slot = _slots[i];
 		if (slot.storage != originalRegionStorage) {
-			assert(slot.storage != nullptr);
-			MemoryAllocator::free(slot.storage, _paddedRegionSize);
+			assert(!_isAggregatingSlotIndex[i] || slot.storage != nullptr);
+			
+			if (slot.storage != nullptr) {
+				assert(slot.initialized);
+				MemoryAllocator::free(slot.storage, _paddedRegionSize);
+#ifndef NDEBUG
+				slot.storage = nullptr;
+				slot.initialized = false;
+#endif
+			}
 		}
 	}
 }
@@ -106,7 +116,11 @@ size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId) {
 }
 
 DataAccessRegion ReductionInfo::getFreeSlotStorage(size_t slotIndex) {
+#ifndef NDEBUG
+	_lock.lock();
 	assert(slotIndex < _slots.size());
+	_lock.unlock();
+#endif
 	
 	ReductionSlot& slot = _slots[slotIndex];
 	assert(slot.initialized || slot.storage == nullptr);
@@ -169,34 +183,109 @@ void ReductionInfo::makeOriginalStorageRegionAvailable(const DataAccessRegion &r
 	}
 }
 
-bool ReductionInfo::combineRegion(const DataAccessRegion& region, const reduction_slot_set_t& accessedSlots) {
+bool ReductionInfo::combineRegion(const DataAccessRegion& subregion, reduction_slot_set_t& accessedSlots, bool canCombineToOriginalStorage) {
 	assert(accessedSlots.size() > 0);
 	
-	void *originalRegionStorage = region.getStartAddress();
+	char *originalRegionAddress = (char*)_region.getStartAddress();
+	char *originalSubregionAddress = (char*)subregion.getStartAddress();
+	ptrdiff_t originalSubregionOffset = originalSubregionAddress - originalRegionAddress;
 	
-	for (size_t i = 0; i < accessedSlots.size(); i++) {
-		ReductionSlot& slot = _slots[i];
-		if (accessedSlots[i] && (slot.storage != _region.getStartAddress()))
-		{
-			void *privateStorage = ((char*)slot.storage) + ((char*)region.getStartAddress() - (char*)_region.getStartAddress());
+	size_t subregionSize = subregion.getSize();
+	
+	char *targetStorage = canCombineToOriginalStorage? originalRegionAddress : nullptr;
+	size_t targetPrivateSlotIndex;
+	
+	reduction_slot_set_t::size_type accessedSlotIndex = accessedSlots.find_first();
+	while (accessedSlotIndex < reduction_slot_set_t::npos) {
+		ReductionSlot& slot = _slots[accessedSlotIndex];
+		assert(accessedSlots[accessedSlotIndex]);
+		if (slot.storage != targetRegionAddress) {
+			char *privateStorage = ((char*)slot.storage) + originalSubregionOffset;
+			
+			if (targetStorage == nullptr) {
+				assert(!canCombineToOriginalStorage);
+				targetStorage = privateStorage;
+				targetPrivateSlotIndex = accessedSlotIndex;
+				continue;
+			}
 			
 			Instrument::enterCombinePrivateReductionStorage(
 				/* reductionInfo */ *this,
-				DataAccessRegion(privateStorage, region.getSize()),
-				DataAccessRegion(originalRegionStorage, region.getSize())
+				DataAccessRegion(privateStorage, subregionSize),
+				DataAccessRegion(targetStorage, subregionSize)
 			);
 			
-			_combinationFunction(originalRegionStorage, privateStorage, region.getSize());
+			_combinationFunction(targetStorage, privateStorage, subregionSize);
 			
 			Instrument::exitCombinePrivateReductionStorage(
 				/* reductionInfo */ *this,
-				DataAccessRegion(privateStorage, region.getSize()),
-				DataAccessRegion(originalRegionStorage, region.getSize())
+				DataAccessRegion(privateStorage, subregionSize),
+				DataAccessRegion(targetStorage, subregionSize)
 			);
+		}
+		
+		accessedSlotIndex = accessedSlots.find_next(accessedSlotIndex);
+	}
+	
+	if (!canCombineToOriginalStorage && (targetStorage != nullptr)) {
+		assert(_privateStorageCombinationCounter > 0);
+		accessedSlots.reset();
+		accessedSlots.set(targetPrivateSlotIndex);
+		std::lock_guard<spinlock_t> guard(_lock);
+		_isAggregatingSlotIndex.set(targetPrivateSlotIndex);
+	}
+	
+	_privateStorageCombinationCounter -= subregionSize;
+	if (_privateStorageCombinationCounter == 0) {
+#ifndef NDEBUG
+		for (int slotIndex : _currentCpuSlotIndices)
+			assert(slotIndex == -1);
+		
+		// At this point slots shouldn't be requested anymore
+		_freeSlotIndices.clear();
+#endif
+		
+		// Note: This code is only executed when all private slots have been *completely*
+		// combined into aggregation slots.
+		// And thus, it can't be concurrently executed with running reduction tasks,
+		// only with other combinations to the original region (for a distinct access)
+		
+		_lock.lock();
+		// Note: '_slots' size can still change, as original region can still
+		// be made available as a slot
+		size_t numSlots = _slots.size();
+		_lock.unlock();
+		
+		// Note: '_slots' elements can't be erased, as positional indices kept at
+		// other structures would be messed up
+		for (size_t i = 0; i < numSlots; i++) {
+			ReductionSlot &slot = _slots[i];
+			if (_isAggregatingSlotIndex[i]) {
+				// Keep slots containing aggregated contributions
+				assert(slot.storage != originalRegionAddress);
+			}
+			else if (slot.storage != originalRegionAddress) {
+				// Non-aggregating private slots can be deallocated and disabled
+				assert(slot.storage != nullptr);
+				MemoryAllocator::free(slot.storage, _paddedRegionSize);
+				
+				// Clear slot content so that we can later detect deallocation has been done
+				slot.storage = nullptr;
+				slot.initialized = false;
+			}
+			else {
+				// Original storage shouldn't be used anymore either
+#ifndef NDEBUG
+				slot.storage = nullptr;
+				slot.initialized = false;
+#endif
+			}
 		}
 	}
 	
-	_originalStorageCombinationCounter -= region.getSize();
+	if (canCombineToOriginalStorage) {
+		_originalStorageCombinationCounter -= subregionSize;
+	}
 	
 	return _originalStorageCombinationCounter == 0;
 }

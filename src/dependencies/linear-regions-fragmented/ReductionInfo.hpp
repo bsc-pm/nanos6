@@ -43,7 +43,7 @@ class ReductionInfo
 		
 		const DataAccessRegion& getOriginalRegion() const;
 		
-		bool combineRegion(const DataAccessRegion& region, const reduction_slot_set_t& accessedSlots);
+		bool combineRegion(const DataAccessRegion& subregion, reduction_slot_set_t& accessedSlots, bool canCombineToOriginalStorage);
 		
 		void releaseSlotsInUse(size_t virtualCpuId);
 		
@@ -63,12 +63,17 @@ class ReductionInfo
 		
 		std::atomic_size_t _originalStorageCombinationCounter;
 		
+		std::atomic_size_t _privateStorageCombinationCounter;
+		
 		bool _isOriginalStorageAvailable;
 		std::atomic_size_t _originalStorageAvailabilityCounter;
 		
 		std::vector<ReductionSlot> _slots;
 		std::vector<long int> _currentCpuSlotIndices;
 		std::vector<size_t> _freeSlotIndices;
+		// Aggregating slots are private slots used to aggregate combinations
+		// when the original region is not available for combination
+		reduction_slot_set_t _isAggregatingSlotIndex;
 		
 		std::function<void(void*, size_t)> _initializationFunction;
 		std::function<void(void*, void*, size_t)> _combinationFunction;

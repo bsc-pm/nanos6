@@ -70,7 +70,8 @@ namespace DataAccessRegistration {
 		bool _propagatesReductionSlotSetToFragments;
 		
 		bool _makesReductionOriginalStorageAvailable;
-		bool _combinesReduction;
+		bool _combinesReductionToPrivateStorage;
+		bool _combinesReductionToOriginal;
 		
 		bool _linksBottomMapAccessesToNextAndInhibitsPropagation;
 		
@@ -94,7 +95,8 @@ namespace DataAccessRegistration {
 			_propagatesReductionInfoToFragments(false), _propagatesReductionSlotSetToFragments(false),
 			
 			_makesReductionOriginalStorageAvailable(false),
-			_combinesReduction(false),
+			_combinesReductionToPrivateStorage(false),
+			_combinesReductionToOriginal(false),
 			
 			_linksBottomMapAccessesToNextAndInhibitsPropagation(false),
 			
@@ -221,7 +223,6 @@ namespace DataAccessRegistration {
 					_propagatesReductionSlotSetToNext =
 						(access->getType() == REDUCTION_ACCESS_TYPE)
 						&& access->complete()
-						&& access->receivedReductionInfo()
 						&& !access->closesReduction()
 						&& (access->allocatedReductionInfo()
 								|| access->receivedReductionSlotSet());
@@ -241,12 +242,21 @@ namespace DataAccessRegistration {
 				&& access->allocatedReductionInfo()
 				&& access->writeSatisfied();
 			
-			_combinesReduction =
+			_combinesReductionToPrivateStorage =
 				access->closesReduction()
 				// If there are subaccesses, it's the last subaccess that should combine
 				&& !access->hasSubaccesses()
-				&& access->satisfied()
+				// Having received 'ReductionSlotSet' implies that previously inserted reduction accesses
+				// (forming part of the same reduction) are completed, but access' predecessors are
+				// not necessarily so
+				&& (access->allocatedReductionInfo()
+						|| access->receivedReductionSlotSet())
 				&& access->complete();
+			
+			_combinesReductionToOriginal =
+				_combinesReductionToPrivateStorage
+				// Being satisfied implies all predecessors (reduction or not) have been completed
+				&& access->satisfied();
 			
 			_isRemovable = access->isTopmost()
 				&& access->readSatisfied() && access->writeSatisfied()
@@ -470,9 +480,30 @@ namespace DataAccessRegistration {
 			reductionInfo->makeOriginalStorageRegionAvailable(access->getAccessRegion());
 		}
 		
-		// Reduction combination
-		if (initialStatus._combinesReduction != updatedStatus._combinesReduction) {
-			assert(!initialStatus._combinesReduction);
+		// Reduction combination to a private reduction storage
+		if ((initialStatus._combinesReductionToPrivateStorage != updatedStatus._combinesReductionToPrivateStorage)
+				// If we can already combine to the original region directly, we just skip this step
+				&& (initialStatus._combinesReductionToOriginal == updatedStatus._combinesReductionToOriginal)) {
+			assert(!initialStatus._combinesReductionToPrivateStorage);
+			assert(!initialStatus._combinesReductionToOriginal);
+			
+			assert(!access->hasBeenDiscounted());
+			
+			assert(access->getType() == REDUCTION_ACCESS_TYPE);
+			assert(access->allocatedReductionInfo() ||
+					(access->receivedReductionInfo() && access->receivedReductionSlotSet()));
+			
+			ReductionInfo *reductionInfo = access->getReductionInfo();
+			assert(reductionInfo != nullptr);
+			__attribute__((unused)) bool wasLastCombination =
+				reductionInfo->combineRegion(access->getAccessRegion(), access->getReductionSlotSet(), /* canCombineToOriginalStorage */ false);
+			assert(!wasLastCombination);
+		}
+		
+		// Reduction combination to original region
+		if (initialStatus._combinesReductionToOriginal != updatedStatus._combinesReductionToOriginal) {
+			assert(!initialStatus._combinesReductionToOriginal);
+			assert(updatedStatus._combinesReductionToPrivateStorage);
 			
 			assert(!access->hasBeenDiscounted());
 			
@@ -482,7 +513,7 @@ namespace DataAccessRegistration {
 			
 			ReductionInfo *reductionInfo = access->getReductionInfo();
 			assert(reductionInfo != nullptr);
-			bool wasLastCombination = reductionInfo->combineRegion(access->getAccessRegion(), access->getReductionSlotSet());
+			bool wasLastCombination = reductionInfo->combineRegion(access->getAccessRegion(), access->getReductionSlotSet(), /* canCombineToOriginalStorage */ true);
 			
 			if (wasLastCombination) {
 				const DataAccessRegion& originalRegion = reductionInfo->getOriginalRegion();
