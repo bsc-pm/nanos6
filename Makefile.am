@@ -397,6 +397,7 @@ linear_regions_unfragmented_dependency_sources = \
 
 linear_regions_fragmented_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.cpp \
+	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.cpp \
 	src/dependencies/linear-regions-fragmented/ReductionInfo.cpp \
 	src/dependencies/linear-regions-fragmented/Reductions.cpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
@@ -626,6 +627,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
+	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccess.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessLink.hpp \

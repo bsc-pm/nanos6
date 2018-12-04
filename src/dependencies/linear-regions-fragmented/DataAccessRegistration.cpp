@@ -13,6 +13,7 @@
 #include <mutex>
 
 #include "BottomMapEntry.hpp"
+#include "CommutativeScoreboard.hpp"
 #include "CPUDependencyData.hpp"
 #include "DataAccess.hpp"
 #include "DataAccessRegistration.hpp"
@@ -54,14 +55,17 @@ namespace DataAccessRegistration {
 		bool _propagatesReadSatisfiabilityToNext;
 		bool _propagatesWriteSatisfiabilityToNext;
 		bool _propagatesConcurrentSatisfiabilityToNext;
+		bool _propagatesCommutativeSatisfiabilityToNext;
 		bool _propagatesReductionInfoToNext;
 		bool _propagatesReductionCpuSetToNext;
 		bool _makesNextTopmost;
 		bool _propagatesTopLevel;
+		bool _releasesCommutativeRegion;
 		
 		bool _propagatesReadSatisfiabilityToFragments;
 		bool _propagatesWriteSatisfiabilityToFragments;
 		bool _propagatesConcurrentSatisfiabilityToFragments;
+		bool _propagatesCommutativeSatisfiabilityToFragments;
 		bool _propagatesReductionInfoToFragments;
 		bool _propagatesReductionCpuSetToFragments;
 		
@@ -78,11 +82,14 @@ namespace DataAccessRegistration {
 			
 			_hasNext(false),
 			_propagatesReadSatisfiabilityToNext(false), _propagatesWriteSatisfiabilityToNext(false), _propagatesConcurrentSatisfiabilityToNext(false),
+			_propagatesCommutativeSatisfiabilityToNext(false),
 			_propagatesReductionInfoToNext(false), _propagatesReductionCpuSetToNext(false),
 			_makesNextTopmost(false),
 			_propagatesTopLevel(false),
+			_releasesCommutativeRegion(false),
 			
-			_propagatesReadSatisfiabilityToFragments(false), _propagatesWriteSatisfiabilityToFragments(false), _propagatesConcurrentSatisfiabilityToFragments(false),
+			_propagatesReadSatisfiabilityToFragments(false), _propagatesWriteSatisfiabilityToFragments(false),
+			_propagatesConcurrentSatisfiabilityToFragments(false), _propagatesCommutativeSatisfiabilityToFragments(false),
 			_propagatesReductionInfoToFragments(false), _propagatesReductionCpuSetToFragments(false),
 			
 			_closesPreviousReduction(false),
@@ -111,6 +118,7 @@ namespace DataAccessRegistration {
 				_propagatesReadSatisfiabilityToFragments = access->readSatisfied();
 				_propagatesWriteSatisfiabilityToFragments = access->writeSatisfied();
 				_propagatesConcurrentSatisfiabilityToFragments = access->concurrentSatisfied();
+				_propagatesCommutativeSatisfiabilityToFragments = access->commutativeSatisfied();
 				_propagatesReductionInfoToFragments = access->receivedReductionInfo() || access->allocatedReductionInfo();
 				// Non-reduction accesses will propagate received ReductionCpuSet to their fragments
 				// to make their status consistent with the access itself
@@ -119,6 +127,7 @@ namespace DataAccessRegistration {
 				_propagatesReadSatisfiabilityToFragments = false;
 				_propagatesWriteSatisfiabilityToFragments = false;
 				_propagatesConcurrentSatisfiabilityToFragments = false;
+				_propagatesCommutativeSatisfiabilityToFragments = false;
 				_propagatesReductionInfoToFragments = false;
 				_propagatesReductionCpuSetToFragments = false;
 			}
@@ -137,6 +146,9 @@ namespace DataAccessRegistration {
 					_propagatesConcurrentSatisfiabilityToNext =
 						access->canPropagateConcurrentSatisfiability() && access->concurrentSatisfied()
 						&& (access->getType() == CONCURRENT_ACCESS_TYPE);
+					_propagatesCommutativeSatisfiabilityToNext =
+						access->canPropagateCommutativeSatisfiability() && access->commutativeSatisfied()
+						&& (access->getType() == COMMUTATIVE_ACCESS_TYPE);
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
 						&& (access->receivedReductionInfo() || access->allocatedReductionInfo())
@@ -156,6 +168,9 @@ namespace DataAccessRegistration {
 					_propagatesConcurrentSatisfiabilityToNext =
 						access->canPropagateConcurrentSatisfiability()
 						&& access->concurrentSatisfied();
+					_propagatesCommutativeSatisfiabilityToNext =
+						access->canPropagateCommutativeSatisfiability()
+						&& access->commutativeSatisfied();
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
 						&& (access->receivedReductionInfo() || access->allocatedReductionInfo());
@@ -180,6 +195,10 @@ namespace DataAccessRegistration {
 						access->canPropagateConcurrentSatisfiability()
 						&& access->concurrentSatisfied()
 						&& ((access->getType() == CONCURRENT_ACCESS_TYPE) || access->complete());
+					_propagatesCommutativeSatisfiabilityToNext =
+						access->canPropagateCommutativeSatisfiability()
+						&& access->commutativeSatisfied()
+						&& ((access->getType() == COMMUTATIVE_ACCESS_TYPE) || access->complete());
 					_propagatesReductionInfoToNext =
 						access->canPropagateReductionInfo()
 						&& (access->receivedReductionInfo() || access->allocatedReductionInfo())
@@ -199,6 +218,7 @@ namespace DataAccessRegistration {
 				_propagatesReadSatisfiabilityToNext = false;
 				_propagatesWriteSatisfiabilityToNext = false;
 				_propagatesConcurrentSatisfiabilityToNext = false;
+				_propagatesCommutativeSatisfiabilityToNext = false;
 				_propagatesReductionInfoToNext = false;
 				_propagatesReductionCpuSetToNext = false;
 			}
@@ -264,6 +284,11 @@ namespace DataAccessRegistration {
 				&& access->hasNext()
 				&& (access->getOriginator()->getParent() == access->getNext()._task->getParent());
 			
+			_releasesCommutativeRegion =
+				(access->getType() == COMMUTATIVE_ACCESS_TYPE)
+				&& !access->isWeak()
+				&& access->complete();
+			
 			// NOTE: Calculate inhibition from initial status
 			_linksBottomMapAccessesToNextAndInhibitsPropagation =
 				access->hasNext() && access->complete() && access->hasSubaccesses();
@@ -279,6 +304,7 @@ namespace DataAccessRegistration {
 		
 		bool _inhibitReadSatisfiabilityPropagation;
 		bool _inhibitConcurrentSatisfiabilityPropagation;
+		bool _inhibitCommutativeSatisfiabilityPropagation;
 		bool _inhibitReductionInfoPropagation;
 		
 		DataAccessLink _next;
@@ -289,6 +315,7 @@ namespace DataAccessRegistration {
 			_linkBottomMapAccessesToNext(false),
 			_inhibitReadSatisfiabilityPropagation(false),
 			_inhibitConcurrentSatisfiabilityPropagation(false),
+			_inhibitCommutativeSatisfiabilityPropagation(false),
 			_inhibitReductionInfoPropagation(false),
 			_next()
 		{
@@ -300,6 +327,7 @@ namespace DataAccessRegistration {
 			_linkBottomMapAccessesToNext(false),
 			_inhibitReadSatisfiabilityPropagation(false),
 			_inhibitConcurrentSatisfiabilityPropagation(false),
+			_inhibitCommutativeSatisfiabilityPropagation(false),
 			_inhibitReductionInfoPropagation(false),
 			_next()
 		{
@@ -353,6 +381,11 @@ namespace DataAccessRegistration {
 				}
 			}
 			
+			// (Strong) Commutative accounting
+			if (!access->isWeak() && (access->getType() == COMMUTATIVE_ACCESS_TYPE)) {
+				accessStructures._totalCommutativeBytes += access->getAccessRegion().getSize();
+			}
+			
 			if (updatedStatus._enforcesDependency) {
 				task->increasePredecessors();
 			}
@@ -396,7 +429,11 @@ namespace DataAccessRegistration {
 				// The access no longer enforces a dependency (has become satisfied)
 				if (task->decreasePredecessors()) {
 					// The task becomes ready
-					hpDependencyData._satisfiedOriginators.push_back(task);
+					if (accessStructures._totalCommutativeBytes != 0UL) {
+						hpDependencyData._satisfiedCommutativeOriginators.push_back(task);
+					} else {
+						hpDependencyData._satisfiedOriginators.push_back(task);
+					}
 				}
 			}
 		}
@@ -423,6 +460,12 @@ namespace DataAccessRegistration {
 			}
 		}
 		
+		// Release of commutative region
+		if (initialStatus._releasesCommutativeRegion != updatedStatus._releasesCommutativeRegion) {
+			assert(!initialStatus._releasesCommutativeRegion);
+			hpDependencyData._releasedCommutativeRegions.emplace_back(task, access->getAccessRegion());
+		}
+		
 		// Propagation to Next
 		if (access->hasNext()) {
 			UpdateOperation updateOperation(access->getNext(), access->getAccessRegion());
@@ -441,6 +484,10 @@ namespace DataAccessRegistration {
 			if (initialStatus._propagatesConcurrentSatisfiabilityToNext != updatedStatus._propagatesConcurrentSatisfiabilityToNext) {
 				assert(!initialStatus._propagatesConcurrentSatisfiabilityToNext);
 				updateOperation._makeConcurrentSatisfied = true;
+			}
+			if (initialStatus._propagatesCommutativeSatisfiabilityToNext != updatedStatus._propagatesCommutativeSatisfiabilityToNext) {
+				assert(!initialStatus._propagatesCommutativeSatisfiabilityToNext);
+				updateOperation._makeCommutativeSatisfied = true;
 			}
 			
 			if (initialStatus._propagatesReductionInfoToNext != updatedStatus._propagatesReductionInfoToNext) {
@@ -504,6 +551,11 @@ namespace DataAccessRegistration {
 				updateOperation._makeConcurrentSatisfied = true;
 			}
 			
+			if (initialStatus._propagatesCommutativeSatisfiabilityToFragments != updatedStatus._propagatesCommutativeSatisfiabilityToFragments) {
+				assert(!initialStatus._propagatesCommutativeSatisfiabilityToFragments);
+				updateOperation._makeCommutativeSatisfied = true;
+			}
+			
 			if (initialStatus._propagatesReductionInfoToFragments != updatedStatus._propagatesReductionInfoToFragments) {
 				assert(!initialStatus._propagatesReductionInfoToFragments);
 				assert(!(access->getType() == REDUCTION_ACCESS_TYPE) || (access->receivedReductionInfo() || access->allocatedReductionInfo()));
@@ -558,6 +610,7 @@ namespace DataAccessRegistration {
 				bottomMapUpdateOperation._inhibitReadSatisfiabilityPropagation = (access->getType() == READ_ACCESS_TYPE);
 				assert(!updatedStatus._propagatesWriteSatisfiabilityToNext);
 				bottomMapUpdateOperation._inhibitConcurrentSatisfiabilityPropagation = (access->getType() == CONCURRENT_ACCESS_TYPE);
+				bottomMapUpdateOperation._inhibitCommutativeSatisfiabilityPropagation = (access->getType() == COMMUTATIVE_ACCESS_TYPE);
 				// 'write' and 'readwrite' accesses can have a nested reduction that is combined outside the parent task itself, and thus
 				// their ReductionInfo needs to be propagates through the bottom map
 				// Subaccesses of an access that can't have a nested reduction which is visible outside
@@ -716,7 +769,14 @@ namespace DataAccessRegistration {
 				),
 				" has non-reduction accesses that overlap a reduction"
 			);
-			newDataAccessType = READWRITE_ACCESS_TYPE;
+			if (
+				((accessType == COMMUTATIVE_ACCESS_TYPE) && (dataAccess->getType() == CONCURRENT_ACCESS_TYPE))
+				||((accessType == CONCURRENT_ACCESS_TYPE) && (dataAccess->getType() == COMMUTATIVE_ACCESS_TYPE))
+			) {
+				newDataAccessType = COMMUTATIVE_ACCESS_TYPE;
+			} else {
+				newDataAccessType = READWRITE_ACCESS_TYPE;
+			}
 		} else {
 			FatalErrorHandler::failIf(
 				(accessType == REDUCTION_ACCESS_TYPE)
@@ -956,12 +1016,33 @@ namespace DataAccessRegistration {
 	}
 	
 	
+	static inline void processSatisfiedCommutativeOriginators(/* INOUT */ CPUDependencyData &hpDependencyData) {
+		if (!hpDependencyData._satisfiedCommutativeOriginators.empty()) {
+			CommutativeScoreboard::_lock.lock();
+			for (Task *satisfiedCommutativeOriginator : hpDependencyData._satisfiedCommutativeOriginators) {
+				assert(satisfiedCommutativeOriginator != 0);
+				
+				bool acquiredCommutativeSlots =
+					CommutativeScoreboard::addAndEvaluateTask(satisfiedCommutativeOriginator, hpDependencyData);
+				if (acquiredCommutativeSlots) {
+					hpDependencyData._satisfiedOriginators.push_back(satisfiedCommutativeOriginator);
+				}
+			}
+			CommutativeScoreboard::_lock.unlock();
+			
+			hpDependencyData._satisfiedCommutativeOriginators.clear();
+		}
+	}
+	
+	
 	//! Process all the originators that have become ready
 	static inline void processSatisfiedOriginators(
 		/* INOUT */ CPUDependencyData &hpDependencyData,
 		ComputePlace *computePlace,
 		bool fromBusyThread
 	) {
+		processSatisfiedCommutativeOriginators(hpDependencyData);
+		
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
@@ -1011,6 +1092,9 @@ namespace DataAccessRegistration {
 		}
 		if (updateOperation._makeConcurrentSatisfied) {
 			access->setConcurrentSatisfied();
+		}
+		if (updateOperation._makeCommutativeSatisfied) {
+			access->setCommutativeSatisfied();
 		}
 		
 		// ReductionInfo
@@ -1139,11 +1223,24 @@ namespace DataAccessRegistration {
 	}
 	
 	
+	static inline void processReleasedCommutativeRegions(
+		/* INOUT */ CPUDependencyData &hpDependencyData
+	) {
+		if (!hpDependencyData._releasedCommutativeRegions.empty()) {
+			CommutativeScoreboard::_lock.lock();
+			CommutativeScoreboard::processReleasedCommutativeRegions(hpDependencyData);
+			CommutativeScoreboard::_lock.unlock();
+		}
+	}
+	
+	
 	static void processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
 		CPUDependencyData &hpDependencyData,
 		ComputePlace *computePlace,
 		bool fromBusyThread
 	) {
+		processReleasedCommutativeRegions(hpDependencyData);
+		
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
 #else
 		processDelayedOperations(hpDependencyData);
@@ -1559,6 +1656,10 @@ namespace DataAccessRegistration {
 					access->unsetCanPropagateConcurrentSatisfiability();
 				}
 				
+				if (operation._inhibitCommutativeSatisfiabilityPropagation) {
+					access->unsetCanPropagateCommutativeSatisfiability();
+				}
+				
 				if (operation._inhibitReductionInfoPropagation) {
 					access->unsetCanPropagateReductionInfo();
 				}
@@ -1751,6 +1852,7 @@ namespace DataAccessRegistration {
 						targetAccess->setReadSatisfied();
 						targetAccess->setWriteSatisfied();
 						targetAccess->setConcurrentSatisfied();
+						targetAccess->setCommutativeSatisfied();
 						targetAccess->setReceivedReductionInfo();
 						// Note: setting ReductionCpuSet as received is not necessary, as its not always propagated
 						targetAccess->setTopmost();
@@ -2242,7 +2344,25 @@ namespace DataAccessRegistration {
 			}
 #endif
 			
-			return task->decreasePredecessors(2);
+			bool ready = task->decreasePredecessors(2);
+			
+			// Special handling for tasks with commutative accesses
+			if (ready && (task->getDataAccesses()._totalCommutativeBytes > 0UL)) {
+				assert(hpDependencyData._satisfiedCommutativeOriginators.empty());
+				assert(hpDependencyData._satisfiedOriginators.empty());
+				
+				hpDependencyData._satisfiedCommutativeOriginators.push_back(task);
+				processSatisfiedCommutativeOriginators(hpDependencyData);
+				
+				if (!hpDependencyData._satisfiedOriginators.empty()) {
+					assert(hpDependencyData._satisfiedOriginators.front() == task);
+					hpDependencyData._satisfiedOriginators.clear();
+				} else {
+					// Failed to acquire all the commutative entries
+					ready = false;
+				}
+			}
+			return ready;
 		} else {
 			return true;
 		}

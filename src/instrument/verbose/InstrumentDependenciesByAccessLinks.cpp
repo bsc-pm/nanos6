@@ -74,6 +74,9 @@ namespace Instrument {
 				case CONCURRENT_ACCESS_TYPE:
 					logEntry->_contents << " concurrent";
 					break;
+				case COMMUTATIVE_ACCESS_TYPE:
+					logEntry->_contents << " commutative";
+					break;
 				case REDUCTION_ACCESS_TYPE:
 					logEntry->_contents << " reduction";
 					break;

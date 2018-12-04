@@ -225,6 +225,10 @@ namespace Instrument {
 					text << (access.weak() ? "c" : "C");
 					color = "#FFFF00";
 					break;
+				case COMMUTATIVE:
+					text << (access.weak() ? "cm" : "CM");
+					color = "#FF00FF";
+					break;
 				case REDUCTION:
 					text << (access.weak() ? "red" : "RED");
 					color = "#00AFFF";

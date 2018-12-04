@@ -51,12 +51,14 @@ private:
 		READ_SATISFIED_BIT,
 		WRITE_SATISFIED_BIT,
 		CONCURRENT_SATISFIED_BIT,
+		COMMUTATIVE_SATISFIED_BIT,
 		RECEIVED_REDUCTION_INFO_BIT,
 		ALLOCATED_REDUCTION_INFO_BIT,
 		RECEIVED_CPU_SET_BIT,
 		
 		READ_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
+		COMMUTATIVE_SATISFIABILITY_PROPAGATION_INHIBITED_BIT,
 		REDUCTION_INFO_PROPAGATION_INHIBITED_BIT,
 		
 		HAS_SUBACCESSES_BIT,
@@ -279,6 +281,17 @@ public:
 		return _status[CONCURRENT_SATISFIED_BIT];
 	}
 	
+	void setCommutativeSatisfied()
+	{
+		assert(!commutativeSatisfied());
+		_status[COMMUTATIVE_SATISFIED_BIT] = true;
+		Instrument::newDataAccessProperty(_instrumentationId, "CommSat", "Commutative Satisfied");
+	}
+	bool commutativeSatisfied() const
+	{
+		return _status[COMMUTATIVE_SATISFIED_BIT];
+	}
+	
 	void setReceivedReductionInfo()
 	{
 		assert(!receivedReductionInfo());
@@ -329,6 +342,16 @@ public:
 	{
 		assert(canPropagateConcurrentSatisfiability());
 		_status[CONCURRENT_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
+	}
+	
+	bool canPropagateCommutativeSatisfiability() const
+	{
+		return !_status[COMMUTATIVE_SATISFIABILITY_PROPAGATION_INHIBITED_BIT];
+	}
+	void unsetCanPropagateCommutativeSatisfiability()
+	{
+		assert(canPropagateCommutativeSatisfiability());
+		_status[COMMUTATIVE_SATISFIABILITY_PROPAGATION_INHIBITED_BIT] = true;
 	}
 	
 	bool canPropagateReductionInfo() const
@@ -436,6 +459,9 @@ public:
 		if (other->concurrentSatisfied()) {
 			setConcurrentSatisfied();
 		}
+		if (other->commutativeSatisfied()) {
+			setCommutativeSatisfied();
+		}
 		if (other->receivedReductionInfo()) {
 			setReceivedReductionInfo();
 			setPreviousReductionInfo(other->getPreviousReductionInfo());
@@ -478,6 +504,8 @@ public:
 			return readSatisfied() && receivedReductionStructures;
 		} else if (_type == CONCURRENT_ACCESS_TYPE) {
 			return concurrentSatisfied() && receivedReductionStructures;
+		} else if (_type == COMMUTATIVE_ACCESS_TYPE) {
+			return commutativeSatisfied() && receivedReductionStructures;
 		} else if (_type == REDUCTION_ACCESS_TYPE) {
 			// Note: _reductionInfo can be 'nullptr' even when (receivedReductionInfo() == true):
 			// A non-matching ReductionInfo was received and the receiver hasn't yet allocated a

@@ -40,6 +40,7 @@ base_tests += \
 	dep-er-and-weak.test \
 	if0.test \
 	dep-wait.test \
+	simple-commutative.test \
 	loop-multiaxpy.test \
 	loop-dep-multiaxpy.test \
 	loop-nqueens.test
@@ -85,6 +86,7 @@ base_tests += \
 	dep-er-and-weak.debug.test \
 	if0.debug.test \
 	dep-wait.debug.test \
+	simple-commutative.debug.test \
 	loop-multiaxpy.debug.test \
 	loop-dep-multiaxpy.debug.test \
 	loop-nqueens.debug.test
@@ -229,6 +231,15 @@ dep_wait_test_SOURCES = dependencies/dep-wait.cpp
 dep_wait_test_CPPFLAGS = -DNDEBUG
 dep_wait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 dep_wait_test_LDFLAGS = $(test_common_ldflags)
+
+simple_commutative_debug_test_SOURCES = commutative/simple-commutative.cpp
+simple_commutative_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+simple_commutative_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+simple_commutative_test_SOURCES = commutative/simple-commutative.cpp
+simple_commutative_test_CPPFLAGS = -DNDEBUG
+simple_commutative_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+simple_commutative_test_LDFLAGS = $(test_common_ldflags)
 
 loop_multiaxpy_debug_test_SOURCES = loop/loop-multiaxpy.cpp
 loop_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

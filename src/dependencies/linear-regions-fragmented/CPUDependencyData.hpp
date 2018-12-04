@@ -17,6 +17,7 @@
 
 #include "DataAccessLink.hpp"
 #include "DataAccessRegion.hpp"
+#include "CommutativeScoreboard.hpp"
 
 
 class Task;
@@ -31,6 +32,7 @@ struct CPUDependencyData {
 		bool _makeReadSatisfied;
 		bool _makeWriteSatisfied;
 		bool _makeConcurrentSatisfied;
+		bool _makeCommutativeSatisfied;
 		
 		bool _makeTopmost;
 		bool _makeTopLevel;
@@ -42,7 +44,8 @@ struct CPUDependencyData {
 		
 		UpdateOperation()
 			: _target(), _region(),
-			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
+			_makeReadSatisfied(false), _makeWriteSatisfied(false),
+			_makeConcurrentSatisfied(false), _makeCommutativeSatisfied(false),
 			_makeTopmost(false), _makeTopLevel(false),
 			_setReductionInfo(false), _reductionInfo(nullptr)
 		{
@@ -50,7 +53,8 @@ struct CPUDependencyData {
 		
 		UpdateOperation(DataAccessLink const &target, DataAccessRegion const &region)
 			: _target(target), _region(region),
-			_makeReadSatisfied(false), _makeWriteSatisfied(false), _makeConcurrentSatisfied(false),
+			_makeReadSatisfied(false), _makeWriteSatisfied(false),
+			_makeConcurrentSatisfied(false), _makeCommutativeSatisfied(false),
 			_makeTopmost(false), _makeTopLevel(false),
 			_setReductionInfo(false), _reductionInfo(nullptr)
 		{
@@ -58,29 +62,75 @@ struct CPUDependencyData {
 		
 		bool empty() const
 		{
-			return !_makeReadSatisfied && !_makeWriteSatisfied && !_makeConcurrentSatisfied
+			return !_makeReadSatisfied && !_makeWriteSatisfied
+				&& !_makeConcurrentSatisfied && !_makeCommutativeSatisfied
 				&& !_makeTopmost && !_makeTopLevel
 				&& !_setReductionInfo
 				&& (_reductionCpuSet.size() == 0);
 		}
 	};
 	
+	struct TaskAndRegion {
+		Task *_task;
+		DataAccessRegion _region;
+		
+		TaskAndRegion(Task *task, DataAccessRegion const &region)
+			: _task(task), _region(region)
+		{
+		}
+		
+		bool operator<(TaskAndRegion const &other) const
+		{
+			if (_task < other._task) {
+				return true;
+			} else if (_task > other._task) {
+				return false;
+			} else {
+				return (_region.getStartAddress() < other._region.getStartAddress());
+			}
+		}
+		bool operator>(TaskAndRegion const &other) const
+		{
+			if (_task > other._task) {
+				return true;
+			} else if (_task < other._task) {
+				return false;
+			} else {
+				return (_region.getStartAddress() > other._region.getStartAddress());
+			}
+		}
+		bool operator==(TaskAndRegion const &other) const
+		{
+			return (_task == other._task) && (_region == other._region);
+		}
+		bool operator!=(TaskAndRegion const &other) const
+		{
+			return (_task == other._task) && (_region == other._region);
+		}
+	};
 	
 	typedef std::deque<UpdateOperation> delayed_operations_t;
 	typedef std::deque<Task *> satisfied_originator_list_t;
 	typedef std::deque<Task *> removable_task_list_t;
+	typedef std::deque<CommutativeScoreboard::entry_t *> acquired_commutative_scoreboard_entries_t;
+	typedef std::deque<TaskAndRegion> released_commutative_regions_t;
 	
 	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators;
+	satisfied_originator_list_t _satisfiedCommutativeOriginators;
 	delayed_operations_t _delayedOperations;
 	removable_task_list_t _removableTasks;
+	acquired_commutative_scoreboard_entries_t _acquiredCommutativeScoreboardEntries;
+	released_commutative_regions_t _releasedCommutativeRegions;
 	
 #ifndef NDEBUG
 	std::atomic<bool> _inUse;
 #endif
 	
 	CPUDependencyData()
-		: _satisfiedOriginators(), _delayedOperations(), _removableTasks()
+		: _satisfiedOriginators(), _satisfiedCommutativeOriginators(),
+		_delayedOperations(), _removableTasks(),
+		_acquiredCommutativeScoreboardEntries(), _releasedCommutativeRegions()
 #ifndef NDEBUG
 		, _inUse(false)
 #endif
@@ -94,7 +144,9 @@ struct CPUDependencyData {
 	
 	inline bool empty() const
 	{
-		return _satisfiedOriginators.empty() && _delayedOperations.empty() && _removableTasks.empty();
+		return _satisfiedOriginators.empty() && _satisfiedCommutativeOriginators.empty()
+			&& _delayedOperations.empty() && _removableTasks.empty()
+			&& _acquiredCommutativeScoreboardEntries.empty();
 	}
 };
 

@@ -61,6 +61,11 @@ void nanos6_release_concurrent_1(void *base_address, long dim1size, long dim1sta
 	release_access<CONCURRENT_ACCESS_TYPE, false>(base_address, dim1size, dim1start, dim1end);
 }
 
+void nanos6_release_commutative_1(void *base_address, long dim1size, long dim1start, long dim1end)
+{
+	release_access<COMMUTATIVE_ACCESS_TYPE, false>(base_address, dim1size, dim1start, dim1end);
+}
+
 
 void nanos6_release_weak_read_1(void *base_address, long dim1size, long dim1start, long dim1end)
 {

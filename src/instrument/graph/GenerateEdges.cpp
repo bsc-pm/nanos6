@@ -145,7 +145,7 @@ namespace Instrument {
 				// Remove self as reader to return
 				lastReaders.erase(positionAndConfirmation.first);
 				
-			} else if (access->_type == CONCURRENT_ACCESS_TYPE) {
+			} else if ((access->_type == CONCURRENT_ACCESS_TYPE) || (access->_type == COMMUTATIVE_ACCESS_TYPE)) {
 				// Either there are previous readers or writers, but not both
 				assert((lastReaders.empty() != lastWriters.empty()) || !newWriters.empty());
 				
@@ -186,7 +186,7 @@ namespace Instrument {
 						
 						if (!nextRegion.empty()) {
 							// Next access hasn't type concurrent so we flush readers and writers
-							if (nextAccess._type != CONCURRENT_ACCESS_TYPE) {
+							if ((nextAccess._type != CONCURRENT_ACCESS_TYPE) && (nextAccess._type != COMMUTATIVE_ACCESS_TYPE)) {
 								predecessors_t nextLastReaders;
 								predecessors_t nextNewWriters;
 								predecessors_t& nextLastWriters = newWriters;
@@ -374,6 +374,12 @@ namespace Instrument {
 								break;
 							case CONCURRENT_ACCESS_TYPE:
 								if (nextAccess._type == CONCURRENT_ACCESS_TYPE)
+									newWriters.insert(access->_originator);
+								else
+									lastWriters.insert(access->_originator);
+								break;
+							case COMMUTATIVE_ACCESS_TYPE:
+								if (nextAccess._type == COMMUTATIVE_ACCESS_TYPE)
 									newWriters.insert(access->_originator);
 								else
 									lastWriters.insert(access->_originator);
