@@ -228,6 +228,18 @@ public:
 		return insertReturnValue.first;
 	}
 	
+	template <typename... TS>
+	iterator emplace(TS... constructorParameters)
+	{
+		LinearRegionMapInternals::Node<ContentType> *node =
+			new LinearRegionMapInternals::Node<ContentType>(constructorParameters...);
+		
+		assert(!exists(node->getAccessRegion(), [&](__attribute__((unused)) iterator position) -> bool { return true; }));
+		
+		std::pair<typename map_t::iterator, bool> insertReturnValue = _map.insert(*node);
+		return insertReturnValue.first;
+	}
+	
 	iterator erase(iterator position)
 	{
 		typename map_t::iterator it = position;
