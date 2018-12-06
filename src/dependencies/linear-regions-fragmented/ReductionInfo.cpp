@@ -189,11 +189,32 @@ bool ReductionInfo::combineRegion(const DataAccessRegion& subregion, reduction_s
 	char *originalRegionAddress = (char*)_region.getStartAddress();
 	char *originalSubregionAddress = (char*)subregion.getStartAddress();
 	ptrdiff_t originalSubregionOffset = originalSubregionAddress - originalRegionAddress;
-	
 	size_t subregionSize = subregion.getSize();
 	
-	char *targetStorage = canCombineToOriginalStorage? originalRegionAddress : nullptr;
-	size_t targetPrivateSlotIndex;
+	// Select aggregating private slot
+	reduction_slot_set_t::size_type aggregatingSlotIndex = reduction_slot_set_t::npos;
+	if (!canCombineToOriginalStorage) {
+		std::lock_guard<spinlock_t> guard(_lock);
+		// Try to pick one accessed slot that is already an aggregating slot
+		reduction_slot_set_t candidateAggregatingSlots = accessedSlots & _isAggregatingSlotIndex;
+		
+		aggregatingSlotIndex = candidateAggregatingSlots.find_first();
+		
+		if (aggregatingSlotIndex == reduction_slot_set_t::npos) {
+			// Add new aggregating slot
+			aggregatingSlotIndex = accessedSlots.find_first();
+			assert(aggregatingSlotIndex != reduction_slot_set_t::npos);
+			assert(_slots[aggregatingSlotIndex].storage != originalRegionAddress);
+			
+			_isAggregatingSlotIndex.set(aggregatingSlotIndex);
+		}
+	}
+	
+	assert(canCombineToOriginalStorage || (aggregatingSlotIndex != reduction_slot_set_t::npos));
+	char *targetRegionAddress = canCombineToOriginalStorage?
+		originalRegionAddress : (char*)_slots[aggregatingSlotIndex].storage;
+	assert(targetRegionAddress != nullptr);
+	char *targetStorage = targetRegionAddress + originalSubregionOffset;
 	
 	reduction_slot_set_t::size_type accessedSlotIndex = accessedSlots.find_first();
 	while (accessedSlotIndex < reduction_slot_set_t::npos) {
@@ -201,13 +222,6 @@ bool ReductionInfo::combineRegion(const DataAccessRegion& subregion, reduction_s
 		assert(accessedSlots[accessedSlotIndex]);
 		if (slot.storage != targetRegionAddress) {
 			char *privateStorage = ((char*)slot.storage) + originalSubregionOffset;
-			
-			if (targetStorage == nullptr) {
-				assert(!canCombineToOriginalStorage);
-				targetStorage = privateStorage;
-				targetPrivateSlotIndex = accessedSlotIndex;
-				continue;
-			}
 			
 			Instrument::enterCombinePrivateReductionStorage(
 				/* reductionInfo */ *this,
@@ -227,12 +241,12 @@ bool ReductionInfo::combineRegion(const DataAccessRegion& subregion, reduction_s
 		accessedSlotIndex = accessedSlots.find_next(accessedSlotIndex);
 	}
 	
-	if (!canCombineToOriginalStorage && (targetStorage != nullptr)) {
+	// Update 'accessedSlots', preparing the combination of the
+	// 'aggregatingSlot' to the original region for this subregion
+	if (!canCombineToOriginalStorage) {
 		assert(_privateStorageCombinationCounter > 0);
 		accessedSlots.reset();
-		accessedSlots.set(targetPrivateSlotIndex);
-		std::lock_guard<spinlock_t> guard(_lock);
-		_isAggregatingSlotIndex.set(targetPrivateSlotIndex);
+		accessedSlots.set(aggregatingSlotIndex);
 	}
 	
 	_privateStorageCombinationCounter -= subregionSize;
