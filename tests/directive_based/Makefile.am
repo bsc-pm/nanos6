@@ -41,6 +41,7 @@ base_tests += \
 	if0.test \
 	dep-wait.test \
 	simple-commutative.test \
+	commutative-stencil.test \
 	loop-multiaxpy.test \
 	loop-dep-multiaxpy.test \
 	loop-nqueens.test
@@ -87,6 +88,7 @@ base_tests += \
 	if0.debug.test \
 	dep-wait.debug.test \
 	simple-commutative.debug.test \
+	commutative-stencil.debug.test \
 	loop-multiaxpy.debug.test \
 	loop-dep-multiaxpy.debug.test \
 	loop-nqueens.debug.test
@@ -240,6 +242,15 @@ simple_commutative_test_SOURCES = commutative/simple-commutative.cpp
 simple_commutative_test_CPPFLAGS = -DNDEBUG
 simple_commutative_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 simple_commutative_test_LDFLAGS = $(test_common_ldflags)
+
+commutative_stencil_debug_test_SOURCES = commutative/commutative-stencil.cpp
+commutative_stencil_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+commutative_stencil_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+commutative_stencil_test_SOURCES = commutative/commutative-stencil.cpp
+commutative_stencil_test_CPPFLAGS = -DNDEBUG
+commutative_stencil_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+commutative_stencil_test_LDFLAGS = $(test_common_ldflags)
 
 loop_multiaxpy_debug_test_SOURCES = loop/loop-multiaxpy.cpp
 loop_multiaxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
