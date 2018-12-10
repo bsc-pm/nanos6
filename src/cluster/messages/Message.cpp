@@ -5,6 +5,7 @@
 */
 
 #include "Message.hpp"
+#include "MessageId.hpp"
 
 #include <ClusterNode.hpp>
 
@@ -22,7 +23,7 @@ Message::Message(const char* name, MessageType type, size_t size, const ClusterN
 	/*! initialize the message id to 0 for now. In the
 	 * future, it will probably be something related to
 	 * the Task related with this message. */
-	_deliverable->header.id = 0;
+	_deliverable->header.id = MessageId::nextMessageId();
 	_deliverable->header.snd_id = from->getIndex();
 	
 	_messengerData = nullptr;

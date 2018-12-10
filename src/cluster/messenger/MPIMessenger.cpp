@@ -52,9 +52,9 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	const int mpiDst = toNode->getCommIndex();
 	size_t msgSize = sizeof(delv->header) + delv->header.size;
 	
-	//! At the moment we use the Message type as the MPI
-	//! tag of the communication
-	int tag = delv->header.type;
+	//! At the moment we use the Message id and the Message type to create
+	//! the MPI tag of the communication
+	int tag = (delv->header.id << 8) | delv->header.type;
 
 	assert(mpiDst < wsize && mpiDst != wrank);
 	assert(delv->header.size != 0);
@@ -83,31 +83,35 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	msg->setMessengerData((void *)request);
 }
 
-void MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *to)
+void MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *to, int messageId)
 {
-	int ret;
+	int ret, tag;
 	const int mpiDst = to->getCommIndex();
 	void *address = region.getStartAddress();
 	size_t size = region.getSize();
 	
 	assert(mpiDst < wsize && mpiDst != wrank);
 	
-	ret = MPI_Send(address, size, MPI_BYTE, mpiDst, DATA_SEND, INTRA_COMM);
+	tag = (messageId << 8) | DATA_RAW;
+	
+	ret = MPI_Send(address, size, MPI_BYTE, mpiDst, tag, INTRA_COMM);
        	if (ret != MPI_SUCCESS)	{
 		MPI_Abort(INTRA_COMM, ret);
 	}
 }
 
-void MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *from)
+void MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *from, int messageId)
 {
-	int ret;
+	int ret, tag;
 	const int mpiSrc = from->getCommIndex();
 	void *address = region.getStartAddress();
 	size_t size = region.getSize();
 	
 	assert(mpiSrc < wsize && mpiSrc != wrank);
 	
-	ret = MPI_Recv(address, size, MPI_BYTE, mpiSrc, DATA_SEND, INTRA_COMM, MPI_STATUS_IGNORE);
+	tag = (messageId << 8) | DATA_RAW;
+	
+	ret = MPI_Recv(address, size, MPI_BYTE, mpiSrc, tag, INTRA_COMM, MPI_STATUS_IGNORE);
 	if (ret != MPI_SUCCESS) {
 		MPI_Abort(INTRA_COMM, ret);
 	}
@@ -136,8 +140,10 @@ Message *MPIMessenger::checkMail(void)
 		return nullptr;
 	}
 	
-	type = status.MPI_TAG;
-	if (type == DATA_SEND) {
+	//! DATA_RAW type of messages will be received by matching 'fetchData'
+	//! methods
+	type = status.MPI_TAG & 0xff;
+	if (type == DATA_RAW) {
 		return nullptr;
 	}
 	
@@ -161,7 +167,7 @@ Message *MPIMessenger::checkMail(void)
 		MPI_Abort(INTRA_COMM, ret);
 	}
 	
-	return GenericFactory<int, Message*, Message::Deliverable*>::getInstance().create(status.MPI_TAG, msg);
+	return GenericFactory<int, Message*, Message::Deliverable*>::getInstance().create(type, msg);
 }
 
 void MPIMessenger::testMessageCompletion(

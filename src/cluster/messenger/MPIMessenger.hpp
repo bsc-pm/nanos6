@@ -30,8 +30,8 @@ public:
 	
 	void sendMessage(Message *msg, ClusterNode const *toNode, bool block = false);
 	void synchronizeAll(void);
-	void sendData(const DataAccessRegion &region, const ClusterNode *toNode);
-	void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode);
+	void sendData(const DataAccessRegion &region, const ClusterNode *toNode, int messageId);
+	void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode, int messageId);
 	Message *checkMail();
 	void testMessageCompletion(std::vector<Message *> &messages);
 	void testDataTransferCompletion(std::vector<DataTransfer *> &transfers);

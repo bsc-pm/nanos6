@@ -12,7 +12,7 @@
 
 typedef enum {
 	SYS_FINISH = 0,
-	DATA_SEND,
+	DATA_RAW,
 	TOTAL_MESSAGE_TYPES
 } MessageType;
 

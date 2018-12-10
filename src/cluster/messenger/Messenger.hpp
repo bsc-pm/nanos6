@@ -45,14 +45,18 @@ public:
 	//!
 	//! \param[in] region is the data region to send
 	//! \param[in] toNode is the receiver node
-	virtual void sendData(const DataAccessRegion &region, const ClusterNode *toNode) = 0;
+	//! \param[in] messageId is the id of the Message related with this
+	//!		data transfer
+	virtual void sendData(const DataAccessRegion &region, const ClusterNode *toNode, int messageId) = 0;
 	
 	//! \brief Receive a data region from a remote node, related to a previous message
 	//!
 	//! \param[in] region is the data region to fetch
 	//! \param[in] fromNode is the node to fetch the data from
 	//!		with this data transfer
-	virtual void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode) = 0;
+	//! \param[in] messageId is the id of the Message related with this
+	//!		data transfer
+	virtual void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode, int messageId) = 0;
 	
 	//! \brief Check for incoming messages
 	//!

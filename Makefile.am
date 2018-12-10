@@ -584,6 +584,7 @@ endif
 noinst_HEADERS = \
 	src/cluster/ClusterManager.hpp \
 	src/cluster/messages/Message.hpp \
+	src/cluster/messages/MessageId.hpp \
 	src/cluster/messages/MessageSysFinish.hpp \
 	src/cluster/messages/MessageType.hpp \
 	src/cluster/messenger/DataTransfer.hpp \
