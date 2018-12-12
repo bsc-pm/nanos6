@@ -24,6 +24,9 @@ public:
 		nanos6_task_info_t *taskInfo = parent->getTaskInfo();
 		nanos6_task_invocation_info_t *taskInvocationInfo = parent->getTaskInvokationInfo();
 		
+		Instrument::task_id_t parentTaskId = parent->getInstrumentationTaskId();
+		Instrument::ThreadInstrumentationContext instrumentationContext(parentTaskId);
+		
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();
 		
