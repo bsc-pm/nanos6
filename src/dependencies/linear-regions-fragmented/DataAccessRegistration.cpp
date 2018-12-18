@@ -123,7 +123,12 @@ namespace DataAccessRegistration {
 				_propagatesWriteSatisfiabilityToFragments = access->writeSatisfied();
 				_propagatesConcurrentSatisfiabilityToFragments = access->concurrentSatisfied();
 				_propagatesCommutativeSatisfiabilityToFragments = access->commutativeSatisfied();
-				_propagatesReductionInfoToFragments = access->receivedReductionInfo() || access->allocatedReductionInfo();
+				// If an access allocates a ReductionInfo, its fragments will have the ReductionInfo
+				// set as soon as they are created (being created as a copy of the parent access)
+				// For this, this trigger is used to propagate to the fragments the information of
+				// *having received* (not having allocated) a ReductionInfo, as this is what is actually
+				// tracked in the fragment's 'receivedReductionInfo' status bit
+				_propagatesReductionInfoToFragments = access->receivedReductionInfo();
 				// Non-reduction accesses will propagate received ReductionSlotSet to their fragments
 				// to make their status consistent with the access itself
 				_propagatesReductionSlotSetToFragments = access->receivedReductionSlotSet();
