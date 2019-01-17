@@ -116,10 +116,10 @@ static inline void taskCode(int currentTaskNumber, ExperimentStatus<NUM_TASKS> &
 			bool otherFinished = status._taskHasFinished[otherTaskNumber].load();
 			
 			Equal<bool, bool> cond1(otherStarted, otherFinished);
-			Equal<bool, Atomic<bool>> cond2(otherStarted, status._taskHasStarted[otherTaskNumber]);
-			Equal<bool, Atomic<bool>> cond3(otherFinished, status._taskHasFinished[otherTaskNumber]);
-			And< Equal<bool, bool>, Equal<bool, Atomic<bool>> > cond12(cond1, cond2);
-			And<  And< Equal<bool, bool>, Equal<bool, Atomic<bool>> >,  Equal<bool, Atomic<bool>>  > cond123(cond12, cond3);
+			Equal<bool, Atomic<bool> > cond2(otherStarted, status._taskHasStarted[otherTaskNumber]);
+			Equal<bool, Atomic<bool> > cond3(otherFinished, status._taskHasFinished[otherTaskNumber]);
+			And< Equal<bool, bool>, Equal<bool, Atomic<bool> > > cond12(cond1, cond2);
+			And<  And< Equal<bool, bool>, Equal<bool, Atomic<bool> > >,  Equal<bool, Atomic<bool> >  > cond123(cond12, cond3);
 			
 			tap.sustainedEvaluate(
 				cond123,
