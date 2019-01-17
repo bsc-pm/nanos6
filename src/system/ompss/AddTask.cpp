@@ -49,23 +49,30 @@ void nanos6_create_task(
 	
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	
-	bool isTaskloop = flags & nanos6_task_flag_t::nanos6_taskloop_task;
-	size_t originalArgsBlockSize = args_block_size;
-	size_t taskSize = (isTaskloop) ? sizeof(Taskloop) : sizeof(Task);
-	
-	// Alignment fixup
-	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
-	size_t correction = (DATA_ALIGNMENT_SIZE - missalignment) & (DATA_ALIGNMENT_SIZE - 1);
-	args_block_size += correction;
-	
-	// Allocation and layout
-	*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize);
-	
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
 	void *&task = *task_pointer;
 	
-	task = (char *)args_block + args_block_size;
+	bool isTaskloop = flags & nanos6_task_flag_t::nanos6_taskloop_task;
+	size_t originalArgsBlockSize = args_block_size;
+	size_t taskSize = (isTaskloop) ? sizeof(Taskloop) : sizeof(Task);
+	
+	bool has_preallocated_args_block = (flags & nanos6_preallocated_args_block);
+	
+	if (has_preallocated_args_block) {
+		// assert(args_block != nullptr); // Disabled for TaskLoop cloning
+		task = MemoryAllocator::alloc(taskSize);
+	} else {
+		// Alignment fixup
+		size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
+		size_t correction = (DATA_ALIGNMENT_SIZE - missalignment) & (DATA_ALIGNMENT_SIZE - 1);
+		args_block_size += correction;
+		
+		// Allocation and layout
+		*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize);
+		
+		task = (char *)args_block + args_block_size;
+	}
 	
 	if (isTaskloop) {
 		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);

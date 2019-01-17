@@ -40,8 +40,9 @@ public:
 		
 		// Copy the args block
 		if (taskInfo->duplicate_args_block != nullptr) {
-			taskInfo->duplicate_args_block(originalArgsBlock, argsBlock);
+			taskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
 		} else {
+			assert(!parent->hasPreallocatedArgsBlock());
 			memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
 		}
 		

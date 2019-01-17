@@ -55,10 +55,18 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			Instrument::destroyTask(task->getInstrumentationTaskId());
 			
 			// NOTE: The memory layout is defined in nanos6_create_task
-			void *disposableBlock = task->getArgsBlock();
-			assert(disposableBlock != nullptr);
+			void *disposableBlock;
+			size_t disposableBlockSize;
 			
-			size_t disposableBlockSize = (char *)task - (char *)disposableBlock;
+			if (task->hasPreallocatedArgsBlock()) {
+				disposableBlock = task;
+				disposableBlockSize = 0;
+			} else {
+				disposableBlock = task->getArgsBlock();
+				assert(disposableBlock != nullptr);
+				
+				disposableBlockSize = (char *)task - (char *)disposableBlock;
+			}
 			
 			if (task->isTaskloop()) {
 				disposableBlockSize += sizeof(Taskloop);

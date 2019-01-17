@@ -40,6 +40,7 @@ public:
 		if0_flag,
 		taskloop_flag,
 		wait_flag,
+		preallocated_args_block_flag,
 		non_runnable_flag, // Note: Must be at the end
 		spawned_flag,
 		total_flags
@@ -442,6 +443,11 @@ public:
 	{
 		assert(_flags[wait_flag]);
 		_flags[wait_flag] = false;
+	}
+	
+	bool hasPreallocatedArgsBlock() const
+	{
+		return _flags[preallocated_args_block_flag];
 	}
 	
 	bool isSpawned() const
