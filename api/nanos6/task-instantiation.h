@@ -133,7 +133,7 @@ typedef struct
 	//! \brief Function that the runtime calls to perform a copy of the block of data of the parameters
 	//! 
 	//! \param[in] src_args_block A pointer to the source block of parameters to be copied
-	//! \param[in,out] dest_args_block A pointer to a location to store the pointer to the destination array where the block of parameters is to be copied. If the task was created with the nanos6_preallocated_args_block flag, then it will be initialized by this function, otherwise, the runtime will initialize it
+	//! \param[in,out] dest_args_block_pointer A pointer to a location to store the pointer to the destination array where the block of parameters is to be copied. If the task was created with the nanos6_preallocated_args_block flag, then it will be initialized by this function, otherwise, the runtime will initialize it
 	void (*duplicate_args_block)(const void *src_args_block, void **dest_args_block_pointer);
 	
 	//! \brief Array of functions that the runtime calls to initialize task
