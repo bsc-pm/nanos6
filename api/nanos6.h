@@ -7,6 +7,10 @@
 #ifndef NANOS6_H
 #define NANOS6_H
 
+#ifdef __cplusplus
+#include <new>
+#endif
+
 #define __NANOS6__
 
 
