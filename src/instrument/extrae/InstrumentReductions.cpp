@@ -10,12 +10,22 @@
 
 
 namespace Instrument {
-	void receivedCompatibleReductionInfo(data_access_id_t dataAccessId, const ReductionInfo& reductionInfo, const InstrumentationContext &context) {
+    void receivedCompatibleReductionInfo(
+            __attribute__((unused)) data_access_id_t dataAccessId,
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const InstrumentationContext &context) {
 	}
-	void deallocatedReductionInfo(data_access_id_t dataAccessId, const ReductionInfo *reductionInfo, const DataAccessRegion& originalRegion, const InstrumentationContext &context) {
+	void deallocatedReductionInfo(
+            __attribute__((unused)) data_access_id_t dataAccessId,
+            __attribute__((unused)) const ReductionInfo *reductionInfo,
+            __attribute__((unused)) const DataAccessRegion& originalRegion,
+            __attribute__((unused)) const InstrumentationContext &context) {
 	}
 	
-	void enterAllocateReductionInfo(data_access_id_t dataAccessId, const DataAccessRegion& accessRegion, const InstrumentationContext &context) {
+	void enterAllocateReductionInfo(
+            __attribute__((unused)) data_access_id_t dataAccessId,
+            __attribute__((unused)) const DataAccessRegion& accessRegion,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -38,7 +48,10 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void exitAllocateReductionInfo(data_access_id_t dataAccessId, const ReductionInfo& reductionInfo, const InstrumentationContext &context) {
+	void exitAllocateReductionInfo(
+            __attribute__((unused)) data_access_id_t dataAccessId,
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -61,7 +74,9 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void enterRetrievePrivateReductionStorage(const DataAccessRegion& originalRegion, const InstrumentationContext &context) {
+	void enterRetrievePrivateReductionStorage(
+            __attribute__((unused)) const DataAccessRegion& originalRegion,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -84,7 +99,11 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void exitRetrievePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const DataAccessRegion& originalRegion, const InstrumentationContext &context) {
+	void exitRetrievePrivateReductionStorage(
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const DataAccessRegion& privateStorage,
+            __attribute__((unused)) const DataAccessRegion& originalRegion,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -107,7 +126,9 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void enterAllocatePrivateReductionStorage(const ReductionInfo& reductionInfo, const InstrumentationContext &context) {
+	void enterAllocatePrivateReductionStorage(
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -130,7 +151,10 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void exitAllocatePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context) {
+	void exitAllocatePrivateReductionStorage(
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const DataAccessRegion& privateStorage,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -153,7 +177,10 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void enterInitializePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context) {
+	void enterInitializePrivateReductionStorage(
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const DataAccessRegion& privateStorage,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -176,7 +203,10 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void exitInitializePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const InstrumentationContext &context) {
+	void exitInitializePrivateReductionStorage(
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const DataAccessRegion& privateStorage,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -199,7 +229,11 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void enterCombinePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const DataAccessRegion& originalRegion, const InstrumentationContext &context) {
+	void enterCombinePrivateReductionStorage(
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const DataAccessRegion& privateStorage,
+            __attribute__((unused)) const DataAccessRegion& originalRegion,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -222,7 +256,11 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
-	void exitCombinePrivateReductionStorage(const ReductionInfo& reductionInfo, const DataAccessRegion& privateStorage, const DataAccessRegion& originalRegion, const InstrumentationContext &context) {
+	void exitCombinePrivateReductionStorage(
+            __attribute__((unused)) const ReductionInfo& reductionInfo,
+            __attribute__((unused)) const DataAccessRegion& privateStorage,
+            __attribute__((unused)) const DataAccessRegion& originalRegion,
+            __attribute__((unused)) const InstrumentationContext &context) {
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
