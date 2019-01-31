@@ -53,7 +53,7 @@ void CUDAPollingService::finishTask(Task *task)
 	delete deviceData;
 	
 	if (task->markAsFinished(_device->getComputePlace())) {
-		DataAccessRegistration::unregisterTaskDataAccesses(task, _device->getComputePlace());
+		DataAccessRegistration::unregisterTaskDataAccesses(task, _device->getComputePlace(), _device->getComputePlace()->getDependencyData());
 		
 		if (task->markAsReleased()) {
 			TaskFinalization::disposeOrUnblockTask(task, _device->getComputePlace());
