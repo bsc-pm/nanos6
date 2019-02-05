@@ -170,7 +170,7 @@ namespace DataAccessRegistration {
 		sequence->finalizeDataAccess(task, accessType, hpDependencyData._satisfiedOriginators);
 	}
 	
-	bool registerTaskDataAccesses(Task *task, __attribute__((unused)) ComputePlace *computePlace)
+	bool registerTaskDataAccesses(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) CPUDependencyData &hpDependencyData)
 	{
 		assert(task != nullptr);
 		
@@ -194,7 +194,7 @@ namespace DataAccessRegistration {
 		return task->decreasePredecessors(2);
 	}
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace)
+	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, __attribute__((unused)) CPUDependencyData &hpDependencyData)
 	{
 		assert(task != nullptr);
 		
@@ -202,11 +202,7 @@ namespace DataAccessRegistration {
 		assert(!accessStruct.hasBeenDeleted());
 		
 		if (!accessStruct.hasDataAccesses()) return;
-		
-		CPUDependencyData localDependencyData;
-		CPUDependencyData &hpDependencyData = (computePlace != nullptr) ?
-				computePlace->getDependencyData() : localDependencyData;
-		
+				
 #ifndef NDEBUG
 		{
 			bool alreadyTaken = false;
@@ -260,7 +256,7 @@ namespace DataAccessRegistration {
 		}
 	}
 	
-	void handleEnterTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace)
+	void handleEnterTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) CPUDependencyData &dependencyData)
 	{
 		assert(task != nullptr);
 		
@@ -272,7 +268,7 @@ namespace DataAccessRegistration {
 	}
 	
 	
-	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace)
+	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) CPUDependencyData &dependencyData)
 	{
 		assert(task != nullptr);
 		

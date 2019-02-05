@@ -8,6 +8,7 @@
 #define DATA_ACCESS_REGISTRATION_HPP
 
 #include "../DataAccessType.hpp"
+#include "CPUDependencyData.hpp"
 
 class ComputePlace;
 class Task;
@@ -26,14 +27,14 @@ namespace DataAccessRegistration {
 	//! \param[in] task the Task whose dependencies need to be calculated
 	//! 
 	//! \returns true if the task is already ready
-	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace);
+	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData);
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace);
+	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData);
 	
 	void handleEnterBlocking(Task *task);
 	void handleExitBlocking(Task *task);
-	void handleEnterTaskwait(Task *task, ComputePlace *computePlace);
-	void handleExitTaskwait(Task *task, ComputePlace *computePlace);
+	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
+	void handleExitTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	void handleTaskRemoval(Task *task, ComputePlace *computePlace);
 }
 
