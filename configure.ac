@@ -119,33 +119,54 @@ SELECT_NANOS6_INSTRUMENTATION_VARIANTS
 AC_CHECK_FUNCS([gethostid])
 
 # Dependency engine to use
-AC_ARG_WITH(
-	[dependencies],
-	[AS_HELP_STRING([--with-dependencies=type], [specify the type of dependencies to handle @<:@default=linear-regions-fragmented@:>@])],
-	[ac_with_dependencies="${withval}"],
-	[ac_with_dependencies="linear-regions-fragmented"]
+
+AC_MSG_CHECKING([if linear fragmented dependencies should be included])
+AC_ARG_ENABLE(
+	[linear-fragmented-deps],
+	[AS_HELP_STRING([--enable-linear-fragmented-deps], [enable linear fragmented dependencies])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_linear_fragmented_deps=yes
+			;;
+		no)
+			ac_linear_fragmented_deps=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-linear-fragmented-deps])
+			;;
+		esac
+	],
+	[ac_linear_fragmented_deps=yes]
 )
-AC_MSG_CHECKING([the type of dependencies to handle])
-case x"${ac_with_dependencies}" in
-	x"discrete-simple")
-		AC_MSG_RESULT([${ac_with_dependencies}])
-		ac_supports_concurrent=no
-		ac_supports_reductions=no
-		;;
-	x"linear-regions-fragmented")
-		AC_MSG_RESULT([${ac_with_dependencies}])
-		ac_supports_concurrent=yes
-		ac_supports_reductions=yes
-		;;
-	*)
-		AC_MSG_ERROR([unknown dependency type ${ac_with_dependencies}])
-		;;
-esac
-AM_CONDITIONAL([DISCRETE_SIMPLE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdiscrete-simple"])
-AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-fragmented"])
-AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
-AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [test x"${ac_supports_concurrent}" = x"yes"])
-AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [test x"${ac_supports_reductions}" = x"yes"])
+
+AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test x"${ac_linear_fragmented_deps}" = x"yes"])
+
+AC_MSG_CHECKING([if discrete simple dependencies should be included])
+AC_ARG_ENABLE(
+	[discrete-simple-deps],
+	[AS_HELP_STRING([--enable-discrete-simple-deps], [enable discrete simple dependencies])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_discrete_simple_deps=yes
+			;;
+		no)
+			ac_discrete_simple_deps=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-discrete-simple-deps])
+			;;
+		esac
+	],
+	[ac_discrete_simple_deps=yes]
+)
+
+AM_CONDITIONAL([DISCRETE_SIMPLE_DEPENDENCIES], [test x"${ac_discrete_simple_deps}" = x"yes"])
+
+AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [1])
+AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [1])
+AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [1])
 
 
 AC_ARG_ENABLE(
@@ -415,7 +436,8 @@ _AS_ECHO([   Compiler version... ${CXX_VERSION}])
 _AS_ECHO([   Compiler optimization flags... ${OPT_CXXFLAGS}])
 _AS_ECHO([   Compiler debug flags... ${DEBUG_CXXFLAGS}])
 _AS_ECHO([])
-_AS_ECHO([   Dependency implementation... ${ac_with_dependencies}])
+_AS_ECHO([   Include linear fragmented dependencies... ${ac_linear_fragmented_deps}])
+_AS_ECHO([   Include discrete simple dependencies... ${ac_discrete_simple_deps}])
 _AS_ECHO([   Symbol resolution method... ${ac_cv_use_symbol_resolution}])
 _AS_ECHO([])
 _AS_ECHO([   Mercurium prefix... ${NANOS6_MCC_PREFIX}])

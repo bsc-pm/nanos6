@@ -42,7 +42,7 @@ char _nanos6_error_text[ERROR_TEXT_SIZE];
 static char lib_name[MAX_LIB_PATH+1];
 
 
-static void _nanos6_loader_set_up_lib_name(char const *variant, char const *path, char const *suffix)
+static void _nanos6_loader_set_up_lib_name(char const *variant, char const *dependencies, char const *path, char const *suffix)
 {
 	if (path != NULL) {
 		strncpy(lib_name, path, MAX_LIB_PATH);
@@ -52,6 +52,8 @@ static void _nanos6_loader_set_up_lib_name(char const *variant, char const *path
 	}
 	
 	strncat(lib_name, variant, MAX_LIB_PATH);
+	strncat(lib_name, "-", MAX_LIB_PATH);
+	strncat(lib_name, dependencies, MAX_LIB_PATH);
 	strncat(lib_name, ".so", MAX_LIB_PATH);
 	
 	if (suffix != NULL) {
@@ -61,9 +63,10 @@ static void _nanos6_loader_set_up_lib_name(char const *variant, char const *path
 }
 
 
-static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char const *path)
+static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char const *dependencies, char const *path)
 {
-	_nanos6_loader_set_up_lib_name(variant, path, SONAME_SUFFIX);
+	_nanos6_loader_set_up_lib_name(variant, dependencies, path, SONAME_SUFFIX);
+	
 	if (verbose) {
 		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
 	}
@@ -80,7 +83,7 @@ static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char con
 		fprintf(stderr, "Failed: %s\n", dlerror());
 	}
 	
-	_nanos6_loader_set_up_lib_name(variant, path, SONAME_MAJOR);
+	_nanos6_loader_set_up_lib_name(variant, dependencies, path, SONAME_MAJOR);
 	if (verbose) {
 		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
 	}
@@ -99,9 +102,9 @@ static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char con
 }
 
 
-static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *variant, char const *path)
+static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *variant, char const *dependencies, char const *path)
 {
-	_nanos6_loader_set_up_lib_name(variant, path, NULL);
+	_nanos6_loader_set_up_lib_name(variant, dependencies, path, NULL);
 	if (verbose) {
 		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
 	}
@@ -145,6 +148,15 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 	if (verbose) {
 		fprintf(stderr, "Nanos6 loader using variant: %s\n", variant);
 	}
+
+	char const *dependencies = getenv("NANOS6_DEPENDENCIES");
+	if(dependencies == NULL) {
+		dependencies = "discrete-simple";
+	}
+	
+	if(verbose) {
+		fprintf(stderr, "Nanos6 loader using dependency implementation: %s\n", dependencies);
+	}
 	
 	char *lib_path = getenv("NANOS6_LIBRARY_PATH");
 	if (lib_path != NULL) {
@@ -154,7 +166,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 	}
 	
 	// Try the global or the NANOS6_LIBRARY_PATH scope
-	_nanos6_loader_try_load(verbose, variant, lib_path);
+	_nanos6_loader_try_load(verbose, variant, dependencies, lib_path);
 	if (_nanos6_lib_handle != NULL) {
 		return;
 	}
@@ -171,7 +183,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 			break;
 		}
 	}
-	_nanos6_loader_try_load(verbose, variant, lib_path);
+	_nanos6_loader_try_load(verbose, variant, dependencies, lib_path);
 	
 	// Check if this is a disabled variant
 	if (_nanos6_lib_handle != NULL) {
@@ -197,12 +209,12 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 			fprintf(stderr, "Checking if the variant was not correct\n");
 		}
 		
-		_nanos6_loader_try_load(verbose, "optimized", getenv("NANOS6_LIBRARY_PATH"));
+		_nanos6_loader_try_load(verbose, "optimized", "discrete-simple", getenv("NANOS6_LIBRARY_PATH"));
 		if (_nanos6_lib_handle == NULL) {
-			_nanos6_loader_try_load(verbose, "optimized", lib_path);
+			_nanos6_loader_try_load(verbose, "optimized", "discrete-simple", lib_path);
 		}
 		if (_nanos6_lib_handle != NULL) {
-			fprintf(stderr, "Error: the %s variant of the runtime is not available in this installation.\n", variant);
+			fprintf(stderr, "Error: the %s variant of the runtime with the dependencies implementation %s is not available in this installation.\n", variant, dependencies);
 			fprintf(stderr, "\tPlease check that the NANOS6 environment variable is valid.\n");
 			
 			dlclose(_nanos6_lib_handle);
@@ -216,9 +228,9 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 			fprintf(stderr, "Checking for a mismatch between the linked version and the installed version\n");
 		}
 		
-		_nanos6_loader_try_load_without_major(verbose, variant, getenv("NANOS6_LIBRARY_PATH"));
+		_nanos6_loader_try_load_without_major(verbose, variant, dependencies, getenv("NANOS6_LIBRARY_PATH"));
 		if (_nanos6_lib_handle == NULL) {
-			_nanos6_loader_try_load_without_major(verbose, variant, lib_path);
+			_nanos6_loader_try_load_without_major(verbose, variant, dependencies, lib_path);
 		}
 		if (_nanos6_lib_handle != NULL) {
 			fprintf(stderr, "Error: there is a mismatch between the installed runtime so version and the linked so version\n");
@@ -234,6 +246,8 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 		
 		if (_nanos6_get_requested_variant() != NULL) {
 			fprintf(stderr, "Please check that the value of the NANOS6 environment variable is correct and set the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
+		} else if(getenv("NANOS6_DEPENDENCIES") != NULL) {
+			fprintf(stderr, "Please check that the value of the NANOS6_DEPENDENCIES environment variable is correct and set the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
 		} else {
 			fprintf(stderr, "Please set or check the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
 		}
