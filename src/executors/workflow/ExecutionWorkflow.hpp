@@ -206,6 +206,12 @@ namespace ExecutionWorkflow {
 		ComputePlace *targetComputePlace,
 		MemoryPlace *targetMemoryPlace
 	);
+	
+	//! \brief Creates a workflow for handling taskwaits
+	//!
+	//! \param[in] task is the Task to which the taskwait fragment belongs to
+	//! \param[in] taskwaitFragment is the taskwait fragment for which we setup the workflow
+	void setupTaskwaitWorkflow(Task *task, DataAccess *taskwaitFragment);
 };
 
 

@@ -44,6 +44,11 @@ namespace ExecutionWorkflow {
 		ComputePlace *targetComputePlace,
 		MemoryPlace *targetMemoryPlace
 	);
+	
+	void setupTaskwaitWorkflow(
+		Task *task,
+		DataAccess *taskwaitFragment
+	);
 }
 
 #endif /* __EXECUTION_WORKFLOW_HPP__ */

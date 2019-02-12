@@ -20,6 +20,7 @@
 #include "CommutativeScoreboard.hpp"
 
 
+class DataAccess;
 class Task;
 class ReductionInfo;
 class MemoryPlace;
@@ -116,6 +117,7 @@ struct CPUDependencyData {
 	typedef std::deque<Task *> removable_task_list_t;
 	typedef std::deque<CommutativeScoreboard::entry_t *> acquired_commutative_scoreboard_entries_t;
 	typedef std::deque<TaskAndRegion> released_commutative_regions_t;
+	typedef std::deque<DataAccess *> satisfied_taskwait_accesses_t;
 	
 	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators;
@@ -124,6 +126,7 @@ struct CPUDependencyData {
 	removable_task_list_t _removableTasks;
 	acquired_commutative_scoreboard_entries_t _acquiredCommutativeScoreboardEntries;
 	released_commutative_regions_t _releasedCommutativeRegions;
+	satisfied_taskwait_accesses_t _completedTaskwaits;
 	
 #ifndef NDEBUG
 	std::atomic<bool> _inUse;
@@ -132,7 +135,8 @@ struct CPUDependencyData {
 	CPUDependencyData()
 		: _satisfiedOriginators(), _satisfiedCommutativeOriginators(),
 		_delayedOperations(), _removableTasks(),
-		_acquiredCommutativeScoreboardEntries(), _releasedCommutativeRegions()
+		_acquiredCommutativeScoreboardEntries(), _releasedCommutativeRegions(),
+		_completedTaskwaits()
 #ifndef NDEBUG
 		, _inUse(false)
 #endif
@@ -148,7 +152,8 @@ struct CPUDependencyData {
 	{
 		return _satisfiedOriginators.empty() && _satisfiedCommutativeOriginators.empty()
 			&& _delayedOperations.empty() && _removableTasks.empty()
-			&& _acquiredCommutativeScoreboardEntries.empty();
+			&& _acquiredCommutativeScoreboardEntries.empty()
+			&& _completedTaskwaits.empty();
 	}
 };
 

@@ -88,7 +88,20 @@ namespace DataAccessRegistration {
 			__attribute__((unused)) Task *task,
 			__attribute__((unused)) ComputePlace *computePlace
 	) {
-	}	
+	}
+	
+	//! \brief Mark a Taskwait fragment as completed
+	//!
+	//! \param[in] task is the Task that created the taskwait fragment
+	//! \param[in] region is the taskwait region that has been completed
+	//! \param[in] computePlace is the current ComputePlace of the caller
+	//! \param[in] hpDependencyData is the CPUDependencyData used for delayed operations
+	void releaseTaskwaitFragment(
+		Task *task,
+		DataAccessRegion const &region,
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData
+	);
 }
 
 

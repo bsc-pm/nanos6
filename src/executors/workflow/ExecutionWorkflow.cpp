@@ -102,7 +102,11 @@ namespace ExecutionWorkflow {
 		std::function<void ()> const &callback,
 		ComputePlace *computePlace
 	) {
-		switch (computePlace->getType()) {
+		nanos6_device_t type =
+			(computePlace == nullptr) ?
+				nanos6_host_device : computePlace->getType();
+		
+		switch (type) {
 			case nanos6_host_device:
 				return new HostNotificationStep(callback);
 			case nanos6_cluster_device:
@@ -265,6 +269,64 @@ namespace ExecutionWorkflow {
 		//! completion (if there are not pending transfers for the
 		//! task), or it will setup all the Execution Step will
 		//! execute when ready.
+		workflow->start();
+	}
+	
+	void setupTaskwaitWorkflow(
+		Task *task,
+		DataAccess *taskwaitFragment
+	) {
+		ComputePlace *computePlace = nullptr;
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		if (currentThread != nullptr) {
+			computePlace = currentThread->getComputePlace();
+		}
+		
+		ExecutionWorkflow::Workflow<RegionTranslation> *workflow =
+			createWorkflow<RegionTranslation>();
+		
+		DataAccessRegion region = taskwaitFragment->getAccessRegion();
+		
+		//! This for the time works, but probably for devices with address
+		//! translation we might need to revise it.
+		RegionTranslation translation(region, region.getStartAddress());
+		
+		Step *notificationStep =
+			workflow->createNotificationStep(
+				[=]() {
+					CPUDependencyData hpDependencyData;
+					DataAccessRegistration::releaseTaskwaitFragment(
+						task,
+						region,
+						computePlace,
+						hpDependencyData
+					);
+					
+					delete workflow;
+				},
+				computePlace
+			);
+		
+		MemoryPlace *currLocation = taskwaitFragment->getLocation();
+		MemoryPlace *targetLocation = taskwaitFragment->getOutputLocation();
+		
+		//! No need to perform any copy for this taskwait fragment
+		if (targetLocation == nullptr) {
+			workflow->addRootStep(notificationStep);
+			workflow->start();
+			return;
+		}
+		
+		Step *copyStep =
+			workflow->createDataCopyStep(
+				currLocation,
+				targetLocation,
+				translation,
+				taskwaitFragment
+			);
+		
+		workflow->addRootStep(copyStep);
+		workflow->enforceOrder(copyStep, notificationStep);
 		workflow->start();
 	}
 };

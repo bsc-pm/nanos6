@@ -110,6 +110,9 @@ private:
 	//! Location of the DataAccess
 	MemoryPlace *_location;
 	
+	//! Output memory location of the access
+	MemoryPlace *_outputLocation;
+	
 public:
 	DataAccess(
 		DataAccessObjectType objectType,
@@ -119,6 +122,7 @@ public:
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
 		reduction_index_t reductionIndex,
 		MemoryPlace *location = nullptr,
+		MemoryPlace *outputLocation = nullptr,
 		Instrument::data_access_id_t instrumentationId = Instrument::data_access_id_t(),
 		status_t status = 0, DataAccessLink next = DataAccessLink()
 	)
@@ -131,7 +135,8 @@ public:
 		_reductionIndex(reductionIndex),
 		_reductionInfo(nullptr),
 		_previousReductionInfo(nullptr),
-		_location(location)
+		_location(location),
+		_outputLocation(outputLocation)
 	{
 		assert(originator != nullptr);
 		
@@ -151,7 +156,8 @@ public:
 		_reductionInfo(other.getReductionInfo()),
 		_previousReductionInfo(other.getPreviousReductionInfo()),
 		_reductionSlotSet(other.getReductionSlotSet()),
-		_location(other.getLocation())
+		_location(other.getLocation()),
+		_outputLocation(other.getOutputLocation())
 	{}
 	
 	~DataAccess()
@@ -449,6 +455,19 @@ public:
 	bool hasLocation() const
 	{
 		return (_location != nullptr);
+	}
+	
+	void setOutputLocation(MemoryPlace *location)
+	{
+		_outputLocation = location;
+	}
+	MemoryPlace *getOutputLocation() const
+	{
+		return _outputLocation;
+	}
+	bool hasOutputLocation() const
+	{
+		return (_outputLocation != nullptr);
 	}
 	
 #ifndef NDEBUG

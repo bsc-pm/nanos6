@@ -19,6 +19,8 @@
 #include "DataAccessRegistration.hpp"
 #include <ObjectAllocator.hpp>
 
+#include <ExecutionWorkflow.hpp>
+
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -77,6 +79,8 @@ namespace DataAccessRegistration {
 		
 		bool _isRemovable;
 		
+		bool _triggersTaskwaitWorkflow;
+		
 	public:
 		DataAccessStatusEffects()
 			: _isRegistered(false),
@@ -100,7 +104,9 @@ namespace DataAccessRegistration {
 			
 			_linksBottomMapAccessesToNextAndInhibitsPropagation(false),
 			
-			_isRemovable(false)
+			_isRemovable(false),
+			
+			_triggersTaskwaitWorkflow(false)
 		{
 		}
 		
@@ -277,6 +283,10 @@ namespace DataAccessRegistration {
 					|| (access->getObjectType() == top_level_sink_type)
 				);
 			
+			_triggersTaskwaitWorkflow = (access->getObjectType() == taskwait_type)
+				&& access->readSatisfied()
+				&& access->writeSatisfied();
+			
 			Task *domainParent;
 			assert(access->getOriginator() != nullptr);
 			if (access->getObjectType() == access_type) {
@@ -392,7 +402,14 @@ namespace DataAccessRegistration {
 		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks,
 		ComputePlace *computePlace
 	);
-	
+	static void handleCompletedTaskwaits(
+		CPUDependencyData::satisfied_taskwait_accesses_t &completedTaskwaits,
+		__attribute__((unused))ComputePlace *computePlace
+	);
+	static inline DataAccess *fragmentAccess(
+		DataAccess *dataAccess, DataAccessRegion const &region,
+		TaskDataAccesses &accessStructures
+	);
 	
 	static inline void handleDataAccessStatusChanges(
 		DataAccessStatusEffects const &initialStatus,
@@ -678,6 +695,16 @@ namespace DataAccessRegistration {
 			}
 		}
 		
+		if (initialStatus._triggersTaskwaitWorkflow != updatedStatus._triggersTaskwaitWorkflow) {
+			assert(!initialStatus._triggersTaskwaitWorkflow);
+			assert(access->getObjectType() == taskwait_type);
+			assert(access->readSatisfied());
+			assert(access->writeSatisfied());
+			assert(!access->complete());
+			
+			hpDependencyData._completedTaskwaits.emplace_back(access);
+		}
+		
 		// Removable
 		if (initialStatus._isRemovable != updatedStatus._isRemovable) {
 			assert(!initialStatus._isRemovable);
@@ -794,6 +821,7 @@ namespace DataAccessRegistration {
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex = no_reduction_type_and_operator,
 		reduction_index_t reductionIndex = -1,
 		MemoryPlace *location = nullptr,
+		MemoryPlace *outputLocation = nullptr,
 		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink()
 	) {
 		// Regular object duplication
@@ -803,6 +831,7 @@ namespace DataAccessRegistration {
 			reductionTypeAndOperatorIndex,
 			reductionIndex,
 			location,
+			outputLocation,
 			Instrument::data_access_id_t(),
 			status, next
 		);
@@ -1314,6 +1343,7 @@ namespace DataAccessRegistration {
 		processDelayedOperations(hpDependencyData);
 #endif
 		
+		handleCompletedTaskwaits(hpDependencyData._completedTaskwaits, computePlace);
 		processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
 		assert(hpDependencyData._satisfiedOriginators.empty());
 		
@@ -1344,6 +1374,7 @@ namespace DataAccessRegistration {
 			dataAccess->getReductionTypeAndOperatorIndex(),
 			dataAccess->getReductionIndex(),
 			dataAccess->getLocation(),
+			dataAccess->getOutputLocation(),
 			instrumentationId
 		);
 
@@ -2205,6 +2236,7 @@ namespace DataAccessRegistration {
 			[&] (DataAccess *accessOrFragment) -> bool {
 				assert(!accessOrFragment->complete());
 				assert(accessOrFragment->getOriginator() == finishedTask);
+				assert(location != nullptr);
 				
 				DataAccessStatusEffects initialStatus(accessOrFragment);
 				accessOrFragment->setComplete();
@@ -2233,9 +2265,24 @@ namespace DataAccessRegistration {
 		removableTasks.clear();
 	}
 	
+	static void handleCompletedTaskwaits(
+		CPUDependencyData::satisfied_taskwait_accesses_t &completedTaskwaits,
+		__attribute__((unused))ComputePlace *computePlace
+	) {
+		for (DataAccess *taskwait : completedTaskwaits) {
+			assert(taskwait->getObjectType() == taskwait_type);
+			ExecutionWorkflow::setupTaskwaitWorkflow(
+				taskwait->getOriginator(),
+				taskwait
+			);
+		}
+		completedTaskwaits.clear();
+	}
+	
 	
 	static void createTaskwait(
-		Task *task, TaskDataAccesses &accessStructures, /* OUT */ CPUDependencyData &hpDependencyData)
+		Task *task, TaskDataAccesses &accessStructures, ComputePlace *computePlace,
+		/* OUT */ CPUDependencyData &hpDependencyData)
 	{
 		if (accessStructures._subaccessBottomMap.empty()) {
 			return;
@@ -2273,11 +2320,14 @@ namespace DataAccessRegistration {
 					taskwaitFragment->setNewInstrumentationId(task->getInstrumentationTaskId());
 					taskwaitFragment->setInBottomMap();
 					taskwaitFragment->setRegistered();
+					if (computePlace != nullptr) {
+						taskwaitFragment->setOutputLocation(computePlace->getMemoryPlace(0));
+					}
 					
 					// NOTE: For now we create it as completed, but we could actually link
 					// that part of the status to any other actions that needed to be carried
 					// out. For instance, data transfers.
-					taskwaitFragment->setComplete();
+					// taskwaitFragment->setComplete();
 #ifndef NDEBUG
 					taskwaitFragment->setReachable();
 #endif
@@ -2579,12 +2629,14 @@ namespace DataAccessRegistration {
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
+		//! If location == nullptr (for example the use program actually
+		//! calls the release directive we use the memory attached to the
+		//! computePlace
 		if (location == nullptr) {
-			//! If a valid location has not been provided then we use
-			//! the NUMA node attached to the computePlace.
 			assert(computePlace != nullptr);
 			location = computePlace->getMemoryPlace(0);
 		}
+		
 #ifndef NDEBUG
 		{
 			bool alreadyTaken = false;
@@ -2622,6 +2674,61 @@ namespace DataAccessRegistration {
 #endif
 	}
 	
+	void releaseTaskwaitFragment(
+		Task *task,
+		DataAccessRegion const &region,
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData
+	) {
+		assert(task != nullptr);
+		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		assert(!accessStructures.hasBeenDeleted());
+		
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = false;
+			assert(hpDependencyData._inUse.compare_exchange_strong(
+					alreadyTaken, true));
+		}
+#endif
+		
+		{
+			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+			accessStructures._taskwaitFragments.processIntersecting(
+				region,
+				[&](TaskDataAccesses::taskwait_fragments_t::iterator position) -> bool {
+					DataAccess *taskwait = &(*position);
+					
+					DataAccessStatusEffects initialStatus(taskwait);
+					taskwait->setComplete();
+					DataAccessStatusEffects updatedStatus(taskwait);
+					
+					handleDataAccessStatusChanges(
+						initialStatus, updatedStatus,
+						taskwait, accessStructures, task,
+						hpDependencyData
+					);
+					
+					return true;
+				}
+			);
+		}
+		
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
+			hpDependencyData,
+			computePlace,
+			true
+		);
+		
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = true;
+			assert(hpDependencyData._inUse.compare_exchange_strong(
+					alreadyTaken, false));
+		}
+#endif
+	}
 	
 	
 	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location)
@@ -2715,7 +2822,6 @@ namespace DataAccessRegistration {
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
-		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
 #ifndef NDEBUG
 		{
@@ -2792,7 +2898,7 @@ namespace DataAccessRegistration {
 				task->decreaseRemovalBlockingCount();
 			}
 			
-			createTaskwait(task, accessStructures, hpDependencyData);
+			createTaskwait(task, accessStructures, computePlace, hpDependencyData);
 			
 			finalizeFragments(task, accessStructures, hpDependencyData);
 		}
