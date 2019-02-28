@@ -9,15 +9,13 @@
 
 #include "SpawnFunction.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "tasks/Task.hpp"
 
 #include <cassert>
 #include <map>
 #include <mutex>
 #include <string>
 #include <utility>
-
-
-class Task;
 
 
 typedef std::pair<void (*)(void *), std::string> task_info_key_t;
@@ -108,6 +106,7 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 	argsBlock->_completion_callback = completion_callback;
 	argsBlock->_completion_args = completion_args;
 	
+	task->setSpawned();
 	nanos6_submit_task(task);
 }
 

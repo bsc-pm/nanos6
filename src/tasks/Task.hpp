@@ -40,6 +40,7 @@ public:
 		taskloop_flag,
 		wait_flag,
 		non_runnable_flag, // Note: Must be at the end
+		spawned_flag,
 		total_flags
 	};
 	
@@ -437,6 +438,16 @@ public:
 	{
 		assert(_flags[wait_flag]);
 		_flags[wait_flag] = false;
+	}
+	
+	bool isSpawned() const
+	{
+		return _flags[spawned_flag];
+	}
+	
+	void setSpawned(bool value=true)
+	{
+		_flags[spawned_flag] = value;
 	}
 	
 	inline size_t getFlags() const

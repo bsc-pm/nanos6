@@ -77,12 +77,13 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				taskInfo->destroy_args_block(task->getArgsBlock());
 			}
 			
+			bool isSpawned = task->isSpawned();
+			
 			task->~Task();
 			MemoryAllocator::free(disposableBlock, disposableBlockSize);
 			task = parent;
 			
-			// A task without parent must be a spawned function
-			if (parent == nullptr) {
+			if (isSpawned) {
 				SpawnedFunctions::_pendingSpawnedFunctions--;
 			}
 		} else {
