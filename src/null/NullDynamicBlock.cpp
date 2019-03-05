@@ -50,7 +50,8 @@ void nanos6_create_task(
 	void **args_block_pointer,
 	void **taskloop_bounds_pointer,
 	void **task_pointer,
-	size_t flags
+	size_t flags,
+	__attribute__((unused)) size_t num_deps
 ) {
 	// Alignment fixup
 	size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);

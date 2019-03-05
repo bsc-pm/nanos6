@@ -51,7 +51,7 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 	SpawnedFunctionArgsBlock *argsBlock = nullptr;
 	nanos6_taskloop_bounds_t *bounds = nullptr;
 	Task *task = nullptr;
-	nanos6_create_task(&taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &bounds, (void **) &task, 0);
+	nanos6_create_task(&taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &bounds, (void **) &task, 0, 0);
 	
 	assert(argsBlock != nullptr);
 	assert(task != nullptr);

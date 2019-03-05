@@ -50,7 +50,8 @@ void nanos6_create_task(
 	void **args_block_pointer,
 	void **taskloop_bounds_pointer,
 	void **task_pointer,
-	size_t flags
+	size_t flags,
+	__attribute__((unused)) size_t num_deps
 ) {
 	static char __attribute__((aligned(TASK_ALIGNMENT))) theMem[16384];
 	

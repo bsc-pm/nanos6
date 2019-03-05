@@ -34,7 +34,7 @@ public:
 		void *argsBlock = nullptr;
 		
 		// Create the task for this partition
-		nanos6_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, (void **) &argsBlock, (void **) &taskloop, parent->getFlags());
+		nanos6_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, (void **) &argsBlock, (void **) &taskloop, parent->getFlags(), 0);
 		assert(argsBlock != nullptr);
 		assert(taskloop != nullptr);
 		

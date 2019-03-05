@@ -36,14 +36,14 @@
 #define DATA_ALIGNMENT_SIZE sizeof(void *)
 #define TASK_ALIGNMENT 128
 
-
 void nanos6_create_task(
 	nanos6_task_info_t *taskInfo,
 	nanos6_task_invocation_info_t *taskInvocationInfo,
 	size_t args_block_size,
 	void **args_block_pointer,
 	void **task_pointer,
-	size_t flags
+	size_t flags,
+	__attribute__((unused)) size_t num_deps
 ) {
 	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
 	

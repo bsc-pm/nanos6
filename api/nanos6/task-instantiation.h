@@ -198,7 +198,8 @@ void nanos6_create_task(
 	size_t args_block_size,
 	/* OUT */ void **args_block_pointer,
 	/* OUT */ void **task_pointer,
-	size_t flags
+	size_t flags,
+	size_t num_deps
 );
 
 

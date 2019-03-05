@@ -96,7 +96,7 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 	SpawnedFunctionArgsBlock *argsBlock = nullptr;
 	Task *task = nullptr;
 	
-	nanos6_create_task(taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, nanos6_waiting_task);
+	nanos6_create_task(taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, nanos6_waiting_task, 0);
 	
 	assert(argsBlock != nullptr);
 	assert(task != nullptr);
