@@ -65,7 +65,10 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 	// delayed (at least) until the task finishes its execution and all
 	// its children complete and become disposable
 	if (mustDelayRelease()) {
-		DataAccessRegistration::handleEnterTaskwait(this, computePlace, hpDependencyData);
+		//! We need to pass 'nullptr' here as a ComputePlace to notify
+		//! the DataAccessRegistration system that it is creating
+		//! taskwait fragments for a 'wait' task.
+		DataAccessRegistration::handleEnterTaskwait(this, nullptr, hpDependencyData);
 		
 		if (!decreaseRemovalBlockingCount()) {
 			return false;

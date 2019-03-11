@@ -285,7 +285,8 @@ namespace DataAccessRegistration {
 			
 			_triggersTaskwaitWorkflow = (access->getObjectType() == taskwait_type)
 				&& access->readSatisfied()
-				&& access->writeSatisfied();
+				&& access->writeSatisfied()
+				&& access->hasOutputLocation();
 			
 			Task *domainParent;
 			assert(access->getOriginator() != nullptr);
@@ -701,6 +702,8 @@ namespace DataAccessRegistration {
 			assert(access->readSatisfied());
 			assert(access->writeSatisfied());
 			assert(!access->complete());
+			assert(!access->hasNext());
+			assert(access->isInBottomMap());
 			
 			hpDependencyData._completedTaskwaits.emplace_back(access);
 		}
@@ -2322,6 +2325,8 @@ namespace DataAccessRegistration {
 					taskwaitFragment->setRegistered();
 					if (computePlace != nullptr) {
 						taskwaitFragment->setOutputLocation(computePlace->getMemoryPlace(0));
+					} else {
+						taskwaitFragment->setComplete();
 					}
 					
 					// NOTE: For now we create it as completed, but we could actually link
