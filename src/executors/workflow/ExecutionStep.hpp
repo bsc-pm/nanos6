@@ -85,7 +85,11 @@ namespace ExecutionWorkflow {
 		//! \brief Release successor steps
 		inline void releaseSuccessors()
 		{
-			std::lock_guard<SpinLock> guard(_lock);
+			/* Commenting out the following lock, because it is
+			 * actually not needed and it might lead to a deadlock.
+			 * At this point, the Workflow is created and the
+			 * _successors vector will not be further modified. */
+			//std::lock_guard<SpinLock> guard(_lock);
 			for (auto step: _successors) {
 				if (step->release()) {
 					step->start();
@@ -103,6 +107,7 @@ namespace ExecutionWorkflow {
 		virtual void start()
 		{
 			releaseSuccessors();
+			delete this;
 		}
 	};
 	
@@ -110,11 +115,8 @@ namespace ExecutionWorkflow {
 	protected:
 		DataAccess const *_access;
 		
-		//! Total bytes that this Step covers
-		size_t _total_bytes;
-		
-		//! The number of bytes that this Step has linked
-		size_t _linked_bytes;
+		//! The number of bytes that this Step has to link
+		std::atomic<size_t> _bytes_to_link;
 		
 	public:
 		DataLinkStep(DataAccess const *access);
@@ -134,24 +136,22 @@ namespace ExecutionWorkflow {
 		//! The access for which this steps handles releases
 		DataAccess const *_access;
 		
-		//! Total bytes that this Step covers
-		size_t _total_bytes;
-		
-		//! The number of bytes that this Step has released
-		size_t _released_bytes;
+		//! The number of bytes that this Step has to release
+		std::atomic<size_t> _bytes_to_release;
 		
 	public:
 		DataReleaseStep(DataAccess const *access);
 		
 		//! Release a region
-		virtual void releaseRegion(
-			DataAccessRegion const &region,
-			DataAccessType type,
-			bool weak,
-			MemoryPlace *location
-		) = 0;
+		virtual inline void releaseRegion(
+			__attribute__((unused))DataAccessRegion const &region,
+			__attribute__((unused))DataAccessType type,
+			__attribute__((unused))bool weak,
+			__attribute__((unused))MemoryPlace *location
+		) {
+		}
 		
-		virtual void start() = 0;
+		virtual void start();
 	};
 };
 

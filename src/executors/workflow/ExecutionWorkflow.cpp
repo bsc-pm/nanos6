@@ -123,9 +123,9 @@ namespace ExecutionWorkflow {
 	
 	Step *WorkflowBase::createDataReleaseStep(
 		__attribute__((unused))Task const *task,
-		__attribute__((unused))DataAccess *access
+		DataAccess *access
 	) {
-		return new Step();
+		return new DataReleaseStep(access);
 	}
 	
 	Step *WorkflowBase::createUnpinningStep(MemoryPlace const *targetMemoryPlace,
@@ -155,8 +155,6 @@ namespace ExecutionWorkflow {
 		for (Step *step : _rootSteps) {
 			step->start();
 		}
-		
-		_rootSteps.clear();
 	}
 	
 	void executeTask(
@@ -184,6 +182,37 @@ namespace ExecutionWorkflow {
 		
 		Step *executionStep =
 			workflow->createExecutionStep(task, targetComputePlace);
+		
+		Step *notificationStep = workflow->createNotificationStep(
+			[=]() {
+				WorkerThread *currThread = WorkerThread::getCurrentWorkerThread();
+				CPUDependencyData hpDependencyData;
+				
+				/* At the moment unregistering accesses should happen
+				 * using a NULL cpu because if this is called from
+				 * within a polling service. However calling the
+				 * disposeOrUnblockTask call *NEEDS* to have a valid CPU */
+				CPU *cpu = nullptr;
+				if (currThread != nullptr) {
+					cpu = currThread->getComputePlace();
+				}
+				if (task->markAsFinished(cpu/* cpu */)) {
+					DataAccessRegistration::unregisterTaskDataAccesses(
+						task,
+						cpu, /*cpu, */
+						hpDependencyData,
+						targetMemoryPlace
+					);
+					
+					if (task->markAsReleased()) {
+						TaskFinalization::disposeOrUnblockTask(task, cpu);
+					}
+				}
+				
+				delete workflow;
+			},
+			targetComputePlace
+		);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		
@@ -218,45 +247,15 @@ namespace ExecutionWorkflow {
 					step = workflow->createDataReleaseStep(task,
 							dataAccess);
 					workflow->enforceOrder(executionStep, step);
+					workflow->enforceOrder(step, notificationStep);
 					
 					return true;
 				}
 			);
 		}
 		
-		Step *notificationStep = workflow->createNotificationStep(
-			[=]() {
-				WorkerThread *currThread = WorkerThread::getCurrentWorkerThread();
-				CPUDependencyData hpDependencyData;
-				
-				/* At the moment unregistering accesses should happen
-				 * using a NULL cpu because if this is called from
-				 * within a polling service. However calling the
-				 * disposeOrUnblockTask call *NEEDS* to have a valid CPU */
-				CPU *cpu;
-				if (currThread != nullptr) {
-					cpu = currThread->getComputePlace();
-				} else {
-					cpu = nullptr;
-				}
-				if (task->markAsFinished(nullptr/* cpu */)) {
-					DataAccessRegistration::unregisterTaskDataAccesses(
-						task,
-						cpu, /*cpu, */
-						hpDependencyData,
-						targetMemoryPlace
-					);
-					
-					if (task->markAsReleased()) {
-						TaskFinalization::disposeOrUnblockTask(task, cpu);
-					}
-				}
-			},
-			targetComputePlace
-		);
-		
-		workflow->enforceOrder(executionStep, notificationStep);
 		if (executionStep->ready()) {
+			workflow->enforceOrder(executionStep, notificationStep);
 			workflow->addRootStep(executionStep);
 		}
 		
