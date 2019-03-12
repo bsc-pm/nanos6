@@ -26,6 +26,7 @@ struct DataAccess;
 struct DataAccessBase;
 class WorkerThread;
 class ComputePlace;
+class MemoryPlace;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wunused-result"
@@ -86,6 +87,9 @@ private:
 	
 	//! Compute Place where the task is running
 	ComputePlace *_computePlace;	
+
+	//! MemoryPlace "attached" to the ComputePlace the Task is running on
+	MemoryPlace *_memoryPlace;
 	
 	//! Device Specific data
 	void *_deviceData;
@@ -494,12 +498,30 @@ public:
 		return _taskInfo->num_symbols;
 	}
 	
-	inline ComputePlace *getComputePlace()
+	inline ComputePlace *getComputePlace() const
 	{
 		return _computePlace;
 	}
-	inline void setComputePlace(ComputePlace *computePlace){
+	inline void setComputePlace(ComputePlace *computePlace)
+	{
 		_computePlace = computePlace;
+	}
+	inline bool hasComputePlace() const
+	{
+		return _computePlace != nullptr;
+	}
+	
+	inline MemoryPlace *getMemoryPlace() const
+	{
+		return _memoryPlace;
+	}
+	inline void setMemoryPlace(MemoryPlace *memoryPlace)
+	{
+		_memoryPlace = memoryPlace;
+	}
+	inline bool hasMemoryPlace() const
+	{
+		return _memoryPlace != nullptr;
 	}
 	
 	//! \brief Get the device type for which this task is implemented

@@ -55,6 +55,14 @@ void Taskloop::run(Taskloop &source)
 	CPU *currentCPU = getThread()->getComputePlace();
 	assert(currentCPU != nullptr);
 	
+	/* Temporary hack in order to solve the problem of updating
+	 * the location of the DataAccess objects of the Taskloop,
+	 * when we unregister them, until we solve this properly,
+	 * by supporting the Taskloop construct through the execution
+	 * Workflow */
+	MemoryPlace *memoryPlace = currentCPU->getMemoryPlace(0);
+	source.setMemoryPlace(memoryPlace);
+	
 	// Get the path of partitions to vist
 	std::vector<int> partitionPath;
 	getPartitionPath(currentCPU->_virtualCPUId, partitionPath);

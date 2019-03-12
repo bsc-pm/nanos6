@@ -180,6 +180,13 @@ namespace ExecutionWorkflow {
 			return;
 		}
 		
+		//! This is the target MemoryPlace that we will use later on,
+		//! once the Task has completed, to update the location of its
+		//! DataAccess objects. This can be overriden, if we
+		//! release/unregister the accesses passing a different
+		//! MemoryPlace.
+		task->setMemoryPlace(targetMemoryPlace);
+		
 		//int numSymbols = task->getSymbolNum();
 		Workflow<TaskExecutionWorkflowData> *workflow =
 			createWorkflow<TaskExecutionWorkflowData>(0 /* numSymbols */);
@@ -192,10 +199,6 @@ namespace ExecutionWorkflow {
 				WorkerThread *currThread = WorkerThread::getCurrentWorkerThread();
 				CPUDependencyData hpDependencyData;
 				
-				/* At the moment unregistering accesses should happen
-				 * using a NULL cpu because if this is called from
-				 * within a polling service. However calling the
-				 * disposeOrUnblockTask call *NEEDS* to have a valid CPU */
 				CPU *cpu = nullptr;
 				if (currThread != nullptr) {
 					cpu = currThread->getComputePlace();

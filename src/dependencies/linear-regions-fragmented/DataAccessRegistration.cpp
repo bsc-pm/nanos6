@@ -2223,6 +2223,7 @@ namespace DataAccessRegistration {
 	) {
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
+		assert(location != nullptr);
 		
 		assert(dataAccess->getOriginator() == finishedTask);
 		assert(!region.empty());
@@ -2635,11 +2636,11 @@ namespace DataAccessRegistration {
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
 		//! If location == nullptr (for example the use program actually
-		//! calls the release directive we use the memory attached to the
-		//! computePlace
+		//! calls the release directive we use the MemoryPlace assigned
+		//! to the Task
 		if (location == nullptr) {
-			assert(computePlace != nullptr);
-			location = computePlace->getMemoryPlace(0);
+			assert(task->hasMemoryPlace());
+			location = task->getMemoryPlace();
 		}
 		
 #ifndef NDEBUG
@@ -2769,11 +2770,11 @@ namespace DataAccessRegistration {
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
+		//! If a valid location has not been provided then we use
+		//! the MemoryPlace assigned to the Task
 		if (location == nullptr) {
-			//! If a valid location has not been provided then we use
-			//! the NUMA node attached to the computePlace.
-			assert(computePlace != nullptr);
-			location = computePlace->getMemoryPlace(0);
+			assert(task->hasMemoryPlace());
+			location = task->getMemoryPlace();
 		}
 #ifndef NDEBUG
 		{

@@ -38,6 +38,7 @@ inline Task::Task(
 	_instrumentationTaskId(instrumentationTaskId),
 	_schedulerInfo(nullptr),
 	_computePlace(nullptr),
+	_memoryPlace(nullptr),
 	_countdownToRelease(1),
 	_workflow(nullptr)
 {

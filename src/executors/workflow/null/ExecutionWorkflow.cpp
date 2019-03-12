@@ -21,15 +21,16 @@ namespace ExecutionWorkflow {
 	void executeTask(
 		Task *task,
 		ComputePlace *targetComputePlace,
-		__attribute__((unused))MemoryPlace *targetMemoryPlace
+		MemoryPlace *targetMemoryPlace
 	) {
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		CPU *cpu = (CPU *)targetComputePlace;
 		
 		task->setThread(currentThread);
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
+		task->setMemoryPlace(targetMemoryPlace);
 		
+		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 		Instrument::ThreadInstrumentationContext instrumentationContext(
 			taskId,
 			cpu->getInstrumentationId(),
