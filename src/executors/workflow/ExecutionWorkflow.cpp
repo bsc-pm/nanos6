@@ -297,11 +297,19 @@ namespace ExecutionWorkflow {
 		Step *notificationStep =
 			workflow->createNotificationStep(
 				[=]() {
+					/* We cannot re-use the 'computePlace', we need to
+					 * retrieve the current Thread and associated
+					 * ComputePlace */
+					ComputePlace *releasingComputePlace = nullptr;
+					WorkerThread *releasingThread = WorkerThread::getCurrentWorkerThread();
+					if (releasingThread != nullptr) {
+						releasingComputePlace = releasingThread->getComputePlace();
+					}
 					CPUDependencyData hpDependencyData;
 					DataAccessRegistration::releaseTaskwaitFragment(
 						task,
 						region,
-						computePlace,
+						releasingComputePlace,
 						hpDependencyData
 					);
 					
