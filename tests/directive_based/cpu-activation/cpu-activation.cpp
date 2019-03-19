@@ -67,32 +67,32 @@ public:
 class PlacementEvaluator {
 public:
 	long _expectedCPU;
-	std::vector< Atomic<int> > &_tasksPerCPU;
+	std::vector< Atomic<int> > &_tasksPerVirtualCPU;
 	
-	PlacementEvaluator(long expectedCPU, std::vector< Atomic<int> > &tasksPerCPU)
-		: _expectedCPU(expectedCPU), _tasksPerCPU(tasksPerCPU)
+	PlacementEvaluator(long expectedCPU, std::vector< Atomic<int> > &tasksPerVirtualCPU)
+		: _expectedCPU(expectedCPU), _tasksPerVirtualCPU(tasksPerVirtualCPU)
 	{
 	}
 	
 	void body()
 	{
-		long cpu = nanos6_get_current_system_cpu();
+		long systemCPU = nanos6_get_current_system_cpu();
+		long virtualCPU = nanos6_get_current_virtual_cpu();
 		
 		// Weak check since we cannot guarantee that a CPU will not run (only) one task
 		tap.evaluateWeak(
-			cpu == _expectedCPU,
+			systemCPU == _expectedCPU,
 			"Check that when only one CPU is enabled, all tasks run in that CPU",
 			"Cannot guarantee that one task will not get past the status transition"
 		);
-		if (cpu != _expectedCPU) {
-			tap.emitDiagnostic("Expected ", _expectedCPU, " got ", cpu);
+		if (systemCPU != _expectedCPU) {
+			tap.emitDiagnostic("Expected ", _expectedCPU, " got ", systemCPU);
 			tap.emitDiagnostic("CPU ", _expectedCPU, " in activation status ", nanos6_get_cpu_status(_expectedCPU));
-			tap.emitDiagnostic("CPU ", cpu, " in activation status ", nanos6_get_cpu_status(_expectedCPU));
+			tap.emitDiagnostic("CPU ", systemCPU, " in activation status ", nanos6_get_cpu_status(systemCPU));
 		}
 		
-		_tasksPerCPU[cpu]++;
+		_tasksPerVirtualCPU[virtualCPU]++;
 	}
-	
 };
 
 
@@ -203,14 +203,15 @@ int main(int argc, char **argv) {
 	tap.emitDiagnostic("***  ", activeCPUs*VALIDATION_STEPS_PER_CPU, " tests ***");
 	tap.emitDiagnostic("*****************");
 	
-	long thisCPU = nanos6_get_current_system_cpu();
+	long currentSystemCPU = nanos6_get_current_system_cpu();
+	long currentVirtualCPU = nanos6_get_current_virtual_cpu();
 	
-	tap.emitDiagnostic("Will be using CPU ", thisCPU);
+	tap.emitDiagnostic("Will be using CPU ", currentSystemCPU);
 	
 	// Disable all other CPUs
 	for (void *cpuIterator = nanos6_cpus_begin(); cpuIterator != nanos6_cpus_end(); cpuIterator = nanos6_cpus_advance(cpuIterator)) {
 		long cpu = nanos6_cpus_get(cpuIterator);
-		if (cpu != thisCPU) {
+		if (cpu != currentSystemCPU) {
 			tap.emitDiagnostic("Disabling CPU ", cpu);
 			nanos6_disable_cpu(cpu);
 		} else {
@@ -218,14 +219,14 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	std::vector< Atomic<int> > tasksPerCPU(activeCPUs);
-	for (std::vector< Atomic<int> >::iterator it = tasksPerCPU.begin(); it != tasksPerCPU.end(); it++) {
-		Atomic<int> &tasks = *it;
-		tasks = 0;
+	// Should be indexed with virtual CPU identifiers
+	std::vector< Atomic<int> > tasksPerVirtualCPU(activeCPUs);
+	for (int i=0; i < activeCPUs; i++) {
+		tasksPerVirtualCPU[i] = 0;
 	}
 	
 	for (int i=0; i < activeCPUs*VALIDATION_STEPS_PER_CPU; i++) {
-		PlacementEvaluator *placementEvaluator = new PlacementEvaluator(thisCPU, tasksPerCPU);
+		PlacementEvaluator *placementEvaluator = new PlacementEvaluator(currentSystemCPU, tasksPerVirtualCPU);
 		
 		#pragma oss task label(placement_evaluator)
 		placementEvaluator->body();
@@ -245,13 +246,14 @@ int main(int argc, char **argv) {
 	tap.emitDiagnostic("*****************");
 	
 	for (void *cpuIterator = nanos6_cpus_begin(); cpuIterator != nanos6_cpus_end(); cpuIterator = nanos6_cpus_advance(cpuIterator)) {
-		long cpu = nanos6_cpus_get_virtual(cpuIterator);
-		if (cpu != thisCPU) {
+		long systemCPU = nanos6_cpus_get(cpuIterator);
+		long virtualCPU = nanos6_cpus_get_virtual(cpuIterator);
+		if (virtualCPU != currentVirtualCPU) {
 			tap.evaluate(
-				tasksPerCPU[cpu] <= 1,
+				tasksPerVirtualCPU[virtualCPU] <= 1,
 				"Check that disabled CPUs will at most run 1 task"
 			);
-			tap.emitDiagnostic("CPU ", cpu, " has run ", (int) tasksPerCPU[cpu], " tasks after being disabled");
+			tap.emitDiagnostic("CPU ", systemCPU, " has run ", (int) tasksPerVirtualCPU[virtualCPU], " tasks after being disabled");
 		}
 	}
 	
