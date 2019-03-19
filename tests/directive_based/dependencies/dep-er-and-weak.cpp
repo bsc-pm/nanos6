@@ -98,7 +98,7 @@ static void verifyRelaxedOrder(RelaxedOrder const &constraint, TaskInformation *
 		
 		tap.timedEvaluate(
 			True< Atomic<bool> >(taskInformation[constraint._canStartBeforeEnding]._hasStarted),
-			SUSTAIN_MICROSECONDS,
+			2 * SUSTAIN_MICROSECONDS,
 			oss.str()
 		);
 	} else {
