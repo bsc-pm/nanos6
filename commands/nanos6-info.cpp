@@ -4,7 +4,9 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#include <nanos6/bootstrap.h>
 #include <nanos6/debug.h>
+#include <nanos6/library-mode.h>
 #include <nanos6/runtime-info.h>
 
 #include <cstdlib>
@@ -167,6 +169,13 @@ static char const *dumpRuntimeDetailedInfo()
 
 int main(int argc, char **argv)
 {
+	// Runtime initialization
+	char const *error = nanos6_library_mode_init();
+	if (error != NULL) {
+		std::cerr << "Error initializing Nanos6 runtime system: " << error << std::endl;
+		return 1;
+	}
+	
 	commandName = argv[0];
 	
 	optionHelpers.push_back(OptionHelper("--help", "display this help message", "", emitHelp));
@@ -212,6 +221,9 @@ int main(int argc, char **argv)
 			}
 		}
 	}
+	
+	// Runtime shutdown
+	nanos6_shutdown();
 	
 	return 0;
 }
