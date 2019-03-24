@@ -339,10 +339,6 @@ common_sources = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler1.cpp \
-	src/scheduling/schedulers/TreeScheduler.cpp \
-	src/scheduling/schedulers/tree-scheduler/TreeSchedulerQueueInterface.cpp \
-	src/scheduling/schedulers/tree-scheduler/queue/FIFOQueue.cpp \
-	src/scheduling/schedulers/tree-scheduler/queue/LIFOQueue.cpp \
 	src/support/GlobalLock.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
@@ -906,14 +902,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler1.hpp \
-	src/scheduling/schedulers/TreeScheduler.hpp \
 	src/scheduling/schedulers/cuda/CUDANaiveScheduler.hpp \
-	src/scheduling/schedulers/tree-scheduler/LeafScheduler.hpp \
-	src/scheduling/schedulers/tree-scheduler/NodeScheduler.hpp \
-	src/scheduling/schedulers/tree-scheduler/TreeSchedulerInterface.hpp \
-	src/scheduling/schedulers/tree-scheduler/TreeSchedulerQueueInterface.hpp \
-	src/scheduling/schedulers/tree-scheduler/queue/FIFOQueue.hpp \
-	src/scheduling/schedulers/tree-scheduler/queue/LIFOQueue.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GenericFactory.hpp \
