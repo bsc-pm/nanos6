@@ -52,7 +52,7 @@ ComputePlace * ImmediateSuccessorWithPollingScheduler::addReadyTask(Task *task, 
 	// The following condition is only needed for the "main" task, that is added by something that is not a hardware place and thus should end up in a queue
 	if (computePlace != nullptr) {
 		// 1. Send the task to the immediate successor slot
-		if ((hint != CHILD_TASK_HINT) && (hint != UNBLOCKED_TASK_HINT) && (computePlace->_schedulerData == nullptr)) {
+		if ((hint != CHILD_TASK_HINT) && (hint != UNBLOCKED_TASK_HINT) && (hint != BUSY_COMPUTE_PLACE_TASK_HINT) && (computePlace->_schedulerData == nullptr)) {
 			computePlace->_schedulerData = task;
 			
 			return nullptr;
