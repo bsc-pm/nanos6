@@ -126,12 +126,14 @@ AC_ARG_WITH(
 AC_MSG_CHECKING([the type of dependencies to handle])
 case x"${ac_with_dependencies}" in
 	x"discrete")
-		AC_MSG_RESULT([${ac_with_dependencies}])
-		ac_supports_concurrent=yes
-		ac_supports_reductions=yes
+		AC_MSG_ERROR([${ac_with_dependencies} is no longer available])
+		#AC_MSG_RESULT([${ac_with_dependencies}])
+		#ac_supports_concurrent=yes
+		#ac_supports_reductions=yes
 		;;
 	x"linear-regions-unfragmented")
-		AC_MSG_RESULT([${ac_with_dependencies}])
+		AC_MSG_ERROR([${ac_with_dependencies} is no longer available])
+		#AC_MSG_RESULT([${ac_with_dependencies}])
 		;;
 	x"linear-regions-fragmented")
 		AC_MSG_RESULT([${ac_with_dependencies}])
@@ -139,9 +141,10 @@ case x"${ac_with_dependencies}" in
 		ac_supports_reductions=yes
 		;;
 	x"linear-regions-alternative")
-		AC_MSG_RESULT([${ac_with_dependencies}])
-		ac_supports_concurrent=yes
-		ac_supports_reductions=yes
+		AC_MSG_ERROR([${ac_with_dependencies} is no longer available])
+		#AC_MSG_RESULT([${ac_with_dependencies}])
+		#ac_supports_concurrent=yes
+		#ac_supports_reductions=yes
 		;;
 	*)
 		AC_MSG_ERROR([unknown dependency type ${ac_with_dependencies}])
