@@ -16,7 +16,6 @@
 #include "schedulers/NoSleepPriorityScheduler.hpp"
 #include "schedulers/PriorityScheduler.hpp"
 #include "schedulers/PriorityScheduler1.hpp"
-#include "schedulers/TreeScheduler.hpp"
 
 #include <config.h>
 
@@ -99,8 +98,6 @@ SchedulerInterface *SchedulerGenerator::createHostScheduler()
 		}
 		
 		return scheduler;
-	} else if (schedulerName.getValue() == "tree") {
-		return new TreeScheduler();
 	} else {
 		return createCPUScheduler(schedulerName.getValue(), -1);
 	}
