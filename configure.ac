@@ -125,35 +125,16 @@ AC_ARG_WITH(
 )
 AC_MSG_CHECKING([the type of dependencies to handle])
 case x"${ac_with_dependencies}" in
-	x"discrete")
-		AC_MSG_ERROR([${ac_with_dependencies} is no longer available])
-		#AC_MSG_RESULT([${ac_with_dependencies}])
-		#ac_supports_concurrent=yes
-		#ac_supports_reductions=yes
-		;;
-	x"linear-regions-unfragmented")
-		AC_MSG_ERROR([${ac_with_dependencies} is no longer available])
-		#AC_MSG_RESULT([${ac_with_dependencies}])
-		;;
 	x"linear-regions-fragmented")
 		AC_MSG_RESULT([${ac_with_dependencies}])
 		ac_supports_concurrent=yes
 		ac_supports_reductions=yes
 		;;
-	x"linear-regions-alternative")
-		AC_MSG_ERROR([${ac_with_dependencies} is no longer available])
-		#AC_MSG_RESULT([${ac_with_dependencies}])
-		#ac_supports_concurrent=yes
-		#ac_supports_reductions=yes
-		;;
 	*)
 		AC_MSG_ERROR([unknown dependency type ${ac_with_dependencies}])
 		;;
 esac
-AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xdiscrete"])
-AM_CONDITIONAL([LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-unfragmented"])
 AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-fragmented"])
-AM_CONDITIONAL([LINEAR_REGION_ALTERNATIVE_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-alternative"])
 AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
 AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [test x"${ac_supports_concurrent}" = x"yes"])
 AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [test x"${ac_supports_reductions}" = x"yes"])

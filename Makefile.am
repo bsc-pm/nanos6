@@ -403,13 +403,6 @@ endif
 
 common_sources += ${workflow_sources}
 
-discrete_dependency_sources = \
-	src/dependencies/discrete/Reductions.cpp \
-	src/dependencies/discrete/RegisterDependencies.cpp
-
-linear_regions_unfragmented_dependency_sources = \
-	src/dependencies/linear-regions-unfragmented/RegisterDependencies.cpp
-
 linear_regions_fragmented_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.cpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.cpp \
@@ -418,37 +411,13 @@ linear_regions_fragmented_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp
 
-linear_regions_alternative_dependency_sources = \
-	src/dependencies/linear-regions-alternative/Reductions.cpp \
-	src/dependencies/linear-regions-alternative/RegisterDependencies.cpp
-
 multidimensional_adaptor_sources =
-
-if DISCRETE_DEPENDENCIES
-AM_CXXFLAGS += -I$(srcdir)/src/dependencies/discrete
-common_sources += $(discrete_dependency_sources)
-multidimensional_adaptor_sources += MultidimensionalAPIToDiscrete.cpp
-SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent reduction
-endif
-
-if LINEAR_REGION_UNFRAGMENTED_DEPENDENCIES
-AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-unfragmented
-common_sources += $(linear_regions_unfragmented_dependency_sources)
-multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
-SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite
-endif
 
 if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
 common_sources += $(linear_regions_fragmented_dependency_sources)
 multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent commutative weak_commutative reduction weak_reduction
-endif
-if LINEAR_REGION_ALTERNATIVE_DEPENDENCIES
-AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-alternative
-common_sources += $(linear_regions_alternative_dependency_sources)
-multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
-SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent reduction
 endif
 
 introspection_sources = \
@@ -611,37 +580,6 @@ noinst_HEADERS = \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
-	src/dependencies/discrete/CPUDependencyData.hpp \
-	src/dependencies/discrete/DataAccess.hpp \
-	src/dependencies/discrete/DataAccessImplementation.hpp \
-	src/dependencies/discrete/DataAccessRegion.hpp \
-	src/dependencies/discrete/DataAccessRegionIndexer.hpp \
-	src/dependencies/discrete/DataAccessRegistration.hpp \
-	src/dependencies/discrete/DataAccessSequence.hpp \
-	src/dependencies/discrete/DataAccessSequenceImplementation.hpp \
-	src/dependencies/discrete/DataAccessSequenceLinkingArtifacts.hpp \
-	src/dependencies/discrete/DataAccessSequenceLinkingArtifactsImplementation.hpp \
-	src/dependencies/discrete/DependencyDomain.hpp \
-	src/dependencies/discrete/DependencySystem.hpp \
-	src/dependencies/discrete/DiscreteAddressMap.hpp \
-	src/dependencies/discrete/FixedAddressDataAccessMap.hpp \
-	src/dependencies/discrete/MultidimensionalAPI.hpp \
-	src/dependencies/discrete/RootDataAccessSequence.hpp \
-	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifacts.hpp \
-	src/dependencies/discrete/RootDataAccessSequenceLinkingArtifactsImplementation.hpp \
-	src/dependencies/discrete/TaskDataAccessLinkingArtifacts.hpp \
-	src/dependencies/discrete/TaskDataAccessLinkingArtifactsImplementation.hpp \
-	src/dependencies/discrete/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-alternative/BottomMapEntry.hpp \
-	src/dependencies/linear-regions-alternative/CPUDependencyData.hpp \
-	src/dependencies/linear-regions-alternative/DataAccess.hpp \
-	src/dependencies/linear-regions-alternative/DataAccessRegistration.hpp \
-	src/dependencies/linear-regions-alternative/DependencyDomain.hpp \
-	src/dependencies/linear-regions-alternative/DependencySystem.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifacts.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccessLinkingArtifactsImplementation.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-alternative/TaskDataAccessesImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
@@ -657,17 +595,6 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/CPUDependencyData.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccess.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccessImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/DataAccessRegistration.hpp \
-	src/dependencies/linear-regions-unfragmented/DependencyDomain.hpp \
-	src/dependencies/linear-regions-unfragmented/DependencySystem.hpp \
-	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMap.hpp \
-	src/dependencies/linear-regions-unfragmented/LinearRegionDataAccessMapImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifacts.hpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
-	src/dependencies/linear-regions-unfragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions/DataAccessRegion.hpp \
 	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \
 	src/dependencies/linear-regions/Dependencies.hpp \
