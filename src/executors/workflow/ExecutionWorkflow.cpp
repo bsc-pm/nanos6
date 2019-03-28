@@ -1,15 +1,16 @@
-#include <ExecutionWorkflow.hpp>
-#include <ExecutionWorkflowHost.hpp>
-#include "lowlevel/FatalErrorHandler.hpp"
-#include <DataAccessRegistration.hpp>
-#include <DataAccess.hpp>
-#include "executors/threads/TaskFinalization.hpp"
-
 #include <cassert>
 
-// Include these to avoid annoying compiler warnings
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include "executors/threads/TaskFinalization.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
+
+#include <DataAccess.hpp>
+#include <DataAccessRegistration.hpp>
+#include <ExecutionWorkflow.hpp>
+#include <ExecutionWorkflowHost.hpp>
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <Monitoring.hpp>
+
 
 namespace ExecutionWorkflow {
 	
@@ -214,6 +215,8 @@ namespace ExecutionWorkflow {
 						hpDependencyData,
 						targetMemoryPlace
 					);
+					
+					Monitoring::taskFinished(task);
 					
 					if (task->markAsReleased()) {
 						TaskFinalization::disposeOrUnblockTask(task, cpu);

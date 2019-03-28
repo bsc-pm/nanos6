@@ -28,6 +28,7 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <Monitoring.hpp>
 
 #include <cassert>
 #include <cstdlib>
@@ -48,6 +49,14 @@ void nanos6_create_task(
 	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
 	
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
+	
+	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
+	if (currentWorkerThread != nullptr) {
+		Task *parent = currentWorkerThread->getTask();
+		if (parent != nullptr) {
+			Monitoring::taskChangedStatus(parent, runtime_status);
+		}
+	}
 	
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
@@ -107,6 +116,8 @@ void nanos6_submit_task(void *taskHandle)
 	
 	Instrument::createdTask(task, taskInstrumentationId);
 	
+	Monitoring::taskCreated(task);
+	
 	bool ready = true;
 	nanos6_task_info_t *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);
@@ -132,6 +143,12 @@ void nanos6_submit_task(void *taskHandle)
 		}
 	} else if (!ready) {
 		Instrument::taskIsPending(taskInstrumentationId);
+		
+		Monitoring::taskChangedStatus(task, pending_status);
+	}
+	
+	if (parent != nullptr) {
+		Monitoring::taskChangedStatus(parent, executing_status);
 	}
 	
 	Instrument::exitAddTask(taskInstrumentationId);

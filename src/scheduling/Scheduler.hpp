@@ -7,22 +7,21 @@
 #ifndef SCHEDULER_HPP
 #define SCHEDULER_HPP
 
+#include <atomic>
+#include <cassert>
 
 #include "SchedulerInterface.hpp"
-
-#include "hardware/places/ComputePlace.hpp"
-
-#include <InstrumentInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <InstrumentTaskStatus.hpp>
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "hardware/places/ComputePlace.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#include <atomic>
-#include <cassert>
+#include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentTaskStatus.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <Monitoring.hpp>
 
 
 class HardwareDescription;
@@ -55,6 +54,8 @@ public:
 	{
 		assert(task != 0);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
+		
+		Monitoring::taskChangedStatus(task, ready_status);
 		
 		if (hint == SchedulerInterface::UNBLOCKED_TASK_HINT) {
 			return _scheduler->addReadyTask(task, computePlace, hint, false);

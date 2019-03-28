@@ -1,20 +1,19 @@
-#include <ExecutionWorkflow.hpp>
-#include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/TaskFinalization.hpp"
-#include "hardware/places/MemoryPlace.hpp"
+#include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "hardware/places/MemoryPlace.hpp"
 #include "tasks/Task.hpp"
 
 #include <DataAccessRegistration.hpp>
-
+#include <ExecutionWorkflow.hpp>
+#include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
-#include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include <Monitoring.hpp>
 #include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-
 
 
 namespace ExecutionWorkflow {
@@ -56,18 +55,24 @@ namespace ExecutionWorkflow {
 			Instrument::startTask(taskId);
 			Instrument::taskIsExecuting(taskId);
 			
+			Monitoring::taskChangedStatus(task, executing_status);
+			
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
 			task->body(nullptr, translationTable);
 			std::atomic_thread_fence(std::memory_order_release);
 			
+			// Update the CPU since the thread may have migrated
+			cpu = currentThread->getComputePlace();
+			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
+			
+			Monitoring::taskChangedStatus(task, runtime_status);
+			
 			Instrument::taskIsZombie(taskId);
 			Instrument::endTask(taskId);
+		} else {
+			Monitoring::taskChangedStatus(task, runtime_status);
 		}
-		
-		// Update the CPU since the thread may have migrated
-		cpu = currentThread->getComputePlace();
-		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 		
 		if (task->markAsFinished(cpu)) {
 			DataAccessRegistration::unregisterTaskDataAccesses(
@@ -75,6 +80,8 @@ namespace ExecutionWorkflow {
 				cpu,
 				cpu->getDependencyData()
 			);
+			
+			Monitoring::taskFinished(task);
 			
 			if (task->markAsReleased()) {
 				TaskFinalization::disposeOrUnblockTask(task, cpu);

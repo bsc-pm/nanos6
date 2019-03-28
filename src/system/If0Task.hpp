@@ -9,14 +9,15 @@
 
 #include <cassert>
 
-#include <InstrumentTaskWait.hpp>
-#include <InstrumentTaskStatus.hpp>
-
 #include "executors/threads/CPU.hpp"
-#include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+
+#include <InstrumentTaskWait.hpp>
+#include <InstrumentTaskStatus.hpp>
+#include <Monitoring.hpp>
 
 
 class ComputePlace;
@@ -36,6 +37,8 @@ namespace If0Task {
 		
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		
+		Monitoring::taskChangedStatus(currentTask, blocked_status);
+		
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		currentThread->switchTo(replacementThread);
 		
@@ -46,6 +49,8 @@ namespace If0Task {
 		
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+		
+		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 	
 	
@@ -63,6 +68,8 @@ namespace If0Task {
 		
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		if (hasCode) {
+			Monitoring::taskChangedStatus(currentTask, blocked_status);
+			
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}
 		
@@ -72,6 +79,8 @@ namespace If0Task {
 		
 		if (hasCode) {
 			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+			
+			Monitoring::taskChangedStatus(currentTask, executing_status);
 		}
 	}
 	

@@ -564,6 +564,26 @@ memory_debug_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
 memory_debug_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 endif
 
+
+# Chronometers
+chronometers_CPPFLAGS = -I$(srcdir)/src/support/chronometers/std
+
+# Monitoring
+monitoring_sources =
+monitoring_CPPFLAGS =
+if MONITORING_ENABLED
+monitoring_sources += \
+	src/monitoring/monitoring/Monitoring.cpp \
+	src/monitoring/monitoring/TaskMonitor.cpp
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/monitoring
+else
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/null
+endif
+
+# Add monitoring-related sources to common sources
+common_sources += $(monitoring_sources)
+
+
 noinst_HEADERS = \
 	src/cluster/ClusterManager.hpp \
 	src/cluster/messages/Message.hpp \
@@ -896,6 +916,11 @@ noinst_HEADERS = \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
 	src/memory/vmm/smp/VirtualMemoryManagement.hpp \
+	src/monitoring/monitoring/Monitoring.hpp \
+	src/monitoring/monitoring/TaskMonitor.hpp \
+	src/monitoring/monitoring/TaskStatistics.hpp \
+	src/monitoring/null/Monitoring.hpp \
+	src/monitoring/null/TaskStatistics.hpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
@@ -922,6 +947,7 @@ noinst_HEADERS = \
 	src/support/Objectified.hpp \
 	src/support/StringComposer.hpp \
 	src/support/StringLiteral.hpp \
+	src/support/chronometers/std/Chrono.hpp \
 	src/system/APICheck.hpp \
 	src/system/If0Task.hpp \
 	src/system/LeaderThread.hpp \
@@ -951,7 +977,7 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS)
 common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS)
 
 

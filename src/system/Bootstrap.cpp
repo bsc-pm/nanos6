@@ -4,20 +4,20 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include <iostream>
-
 #include <assert.h>
+#include <config.h>
 #include <dlfcn.h>
+#include <iostream>
 #include <signal.h>
-
-#include "LeaderThread.hpp"
-#include "MemoryAllocator.hpp"
 
 #include <nanos6.h>
 #include <nanos6/bootstrap.h>
 
-#include "executors/threads/ThreadManager.hpp"
+#include "LeaderThread.hpp"
+#include "MemoryAllocator.hpp"
 #include "executors/threads/CPUManager.hpp"
+#include "executors/threads/ThreadManager.hpp"
+#include "hardware/HardwareInfo.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
 #include "lowlevel/threads/ExternalThreadGroup.hpp"
@@ -25,14 +25,13 @@
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
 #include "system/ompss/SpawnFunction.hpp"
-#include "hardware/HardwareInfo.hpp"
 
 #include <ClusterManager.hpp>
 #include <DependencySystem.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include <Monitoring.hpp>
 
-#include <config.h>
 
 static std::atomic<int> shutdownDueToSignalNumber(0);
 
@@ -105,6 +104,9 @@ void nanos6_preinit(void) {
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
 	Instrument::initialize();
+	
+	Monitoring::initialize();
+	
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
 	
 	// Register mainThread so that it will be automatically deleted
@@ -161,6 +163,8 @@ void nanos6_shutdown(void) {
 	if (shutdownDueToSignalNumber.load() != 0) {
 		raise(shutdownDueToSignalNumber.load());
 	}
+	
+	Monitoring::shutdown();
 	
 	Scheduler::shutdown();
 	MemoryAllocator::shutdown();

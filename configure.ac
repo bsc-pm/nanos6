@@ -296,6 +296,29 @@ if test x"{ac_cv_use_workflow}" = x"yes" ; then
 	AC_DEFINE([USE_CLUSTER], [1], [Define if Execution Workflow feature is enabled.])
 fi
 
+AC_ARG_ENABLE(
+	[monitoring],
+	[AS_HELP_STRING([--enable-monitoring], [enable monitoring techniques of statistics])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_monitoring=yes
+			;;
+		no)
+			ac_monitoring=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-monitoring])
+			;;
+		esac
+	],
+	[ac_monitoring=no]
+)
+AM_CONDITIONAL([MONITORING_ENABLED], [test x"${ac_monitoring}" = x"yes"])
+if test x"${ac_monitoring}" = x"yes" ; then
+	AC_DEFINE([MONITORING_ENABLED], [1], [Define if Monitoring is enabled.])
+fi
+
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
@@ -402,6 +425,14 @@ if test x"${ac_use_memkind}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	_AS_ECHO([	Memkind CPPFLAGS... ${memkind_CPPFLAGS}])
 	_AS_ECHO([	Memkind LIBS... ${memkind_LIBS}])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   Monitoring is enabled... ])
+if test x"${ac_monitoring}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
 else
 	AC_MSG_RESULT([no])
 fi

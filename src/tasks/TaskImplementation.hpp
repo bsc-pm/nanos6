@@ -40,7 +40,8 @@ inline Task::Task(
 	_computePlace(nullptr),
 	_memoryPlace(nullptr),
 	_countdownToRelease(1),
-	_workflow(nullptr)
+	_workflow(nullptr),
+	_taskStatistics()
 {
 	if (parent != nullptr) {
 		parent->addChild(this);

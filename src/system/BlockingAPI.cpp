@@ -9,15 +9,14 @@
 #include <nanos6/blocking.h>
 
 #include "DataAccessRegistration.hpp"
-#include "ompss/TaskBlocking.hpp"
-
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
-
+#include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
 
 #include <InstrumentBlocking.hpp>
+#include <Monitoring.hpp>
 
 
 extern "C" void *nanos6_get_current_blocking_context()
@@ -45,6 +44,8 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	
 	assert(blocking_context == currentTask);
 	
+	Monitoring::taskChangedStatus(currentTask, blocked_status);
+	
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
 	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
 	
@@ -60,6 +61,8 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	
 	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+	
+	Monitoring::taskChangedStatus(currentTask, executing_status);
 }
 
 

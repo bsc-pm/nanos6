@@ -4,12 +4,13 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#include <cassert>
+
 #include <nanos6.h>
 
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 #include "UserMutex.hpp"
-
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -19,8 +20,7 @@
 #include "tasks/TaskImplementation.hpp"
 
 #include <InstrumentUserMutex.hpp>
-
-#include <cassert>
+#include <Monitoring.hpp>
 
 
 typedef std::atomic<UserMutex *> mutex_t;
@@ -80,6 +80,8 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 		return;
 	}
 	
+	Monitoring::taskChangedStatus(currentTask, blocked_status);
+
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 	Instrument::blockedOnUserMutex(&userMutex);
 	
@@ -98,6 +100,8 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	
 	Instrument::acquiredUserMutex(&userMutex);
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+	
+	Monitoring::taskChangedStatus(currentTask, executing_status);
 }
 
 
@@ -141,6 +145,9 @@ void nanos6_user_unlock(void **handlerPointer)
 				cpu = currentThread->getComputePlace();
 				assert(cpu != nullptr);
 				Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
+				
+				// Resume execution timing for the current task
+				Monitoring::taskChangedStatus(currentTask, executing_status);
 			}
 		} else {
 			Scheduler::addReadyTask(releasedTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);

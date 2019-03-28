@@ -7,20 +7,21 @@
 #ifndef TASK_HPP
 #define TASK_HPP
 
-
 #include <atomic>
 #include <bitset>
 #include <cassert>
 #include <set>
+#include <string>
 
 #include <nanos6.h>
+
 #include "lowlevel/SpinLock.hpp"
 
-#include <InstrumentTaskId.hpp>
-
-#include <TaskDataAccesses.hpp>
-
 #include <ExecutionWorkflow.hpp>
+#include <InstrumentTaskId.hpp>
+#include <TaskDataAccesses.hpp>
+#include <TaskStatistics.hpp>
+
 
 struct DataAccess;
 struct DataAccessBase;
@@ -109,6 +110,10 @@ private:
 	//! here in order to invoke it after previous asynchronous
 	//! steps have been completed.
 	Step *_executionStep;
+	
+	//! Monitoring-related statistics about the task
+	TaskStatistics _taskStatistics;
+	
 public:
 	inline Task(
 		void *argsBlock,
@@ -568,6 +573,50 @@ public:
 	inline ExecutionWorkflow::Step *getExecutionStep() const
 	{
 		return _executionStep;
+	}
+	
+	//! \brief Get a label that identifies the tasktype
+	inline const std::string getLabel() const
+	{
+		if (_taskInfo->implementations != nullptr) {
+			if (_taskInfo->implementations->task_label != nullptr) {
+				return std::string(_taskInfo->implementations->task_label);
+			}
+			else if (_taskInfo->implementations->declaration_source != nullptr) {
+				return std::string(_taskInfo->implementations->declaration_source);
+			}
+		}
+		
+		// If the label is empty, use the invocation source
+		return std::string(_taskInvokationInfo->invocation_source);
+	}
+	
+	//! \brief Check whether cost is available for the task
+	inline bool hasCost() const
+	{
+		if (_taskInfo->implementations != nullptr) {
+			return (_taskInfo->implementations->get_constraints != nullptr);
+		}
+		else {
+			return false;
+		}
+	}
+	
+	//! \brief Get the task's cost
+	inline size_t getCost() const
+	{
+		assert(_taskInfo->implementations != nullptr);
+		
+		nanos6_task_constraints_t constraints;
+		_taskInfo->implementations->get_constraints(_argsBlock, &constraints);
+		
+		return constraints.cost;
+	}
+	
+	//! \brief Get the task's statistics
+	inline TaskStatistics *getTaskStatistics()
+	{
+		return &_taskStatistics;
 	}
 };
 

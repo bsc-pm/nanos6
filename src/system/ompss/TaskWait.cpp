@@ -4,22 +4,20 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#include <cassert>
+
 #include <nanos6.h>
 
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
-
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware/HardwareInfo.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#include "hardware/HardwareInfo.hpp"
-
-#include <InstrumentTaskWait.hpp>
 #include <InstrumentTaskStatus.hpp>
-
-#include <cassert>
-
+#include <InstrumentTaskWait.hpp>
+#include <Monitoring.hpp>
 
 
 void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
@@ -65,6 +63,8 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 	// 		on the "old" CPU)
 	
 	if (!done) {
+		Monitoring::taskChangedStatus(currentTask, blocked_status);
+		
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_CHILDREN_INLINE);
 		
@@ -87,6 +87,8 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+		
+		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 }
 

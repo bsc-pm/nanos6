@@ -1,25 +1,22 @@
 #include "ExecutionWorkflowHost.hpp"
-#include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/TaskFinalization.hpp"
-#include "hardware/places/MemoryPlace.hpp"
+#include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "hardware/places/MemoryPlace.hpp"
+#include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
 #include "tasks/Task.hpp"
 
 #include <DataAccessRegistration.hpp>
-
+#include <InstrumentInstrumentationContext.hpp>
+#include <InstrumentLogMessage.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
-#include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include <Monitoring.hpp>
 #include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
 
-#include <InstrumentLogMessage.hpp>
-
-// Include these to avoid annoying compiler warnings
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include "src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
 
 namespace ExecutionWorkflow {
 	void HostAllocationAndPinningStep::start()
@@ -95,18 +92,24 @@ namespace ExecutionWorkflow {
 			Instrument::startTask(taskId);
 			Instrument::taskIsExecuting(taskId);
 			
+			Monitoring::taskChangedStatus(_task, executing_status);
+			
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
 			_task->body(nullptr, translationTable);
 			std::atomic_thread_fence(std::memory_order_release);
 			
+			// Update the CPU since the thread may have migrated
+			cpu = currentThread->getComputePlace();
+			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
+			
+			Monitoring::taskChangedStatus(_task, runtime_status);
+			
 			Instrument::taskIsZombie(taskId);
 			Instrument::endTask(taskId);
+		} else {
+			Monitoring::taskChangedStatus(_task, runtime_status);
 		}
-		
-		// Update the CPU since the thread may have migrated
-		cpu = currentThread->getComputePlace();
-		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 		
 		//! Release the subsequent steps.
 		releaseSuccessors();
