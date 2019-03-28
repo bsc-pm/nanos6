@@ -15,7 +15,7 @@
 #include <InstrumentTaskStatus.hpp>
 
 
-void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace)
+void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace, bool fromBusyThread)
 {
 	bool readyOrDisposable = true;
 	
@@ -33,7 +33,9 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			if (task->markAllChildrenAsFinished(computePlace)) {
 				DataAccessRegistration::unregisterTaskDataAccesses(
 					task, computePlace,
-					hpDependencyData
+					hpDependencyData,
+					/* memory place */ nullptr,
+					fromBusyThread
 				);
 				
 				if (task->markAsReleased()) {
@@ -57,7 +59,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			assert(disposableBlock != nullptr);
 			
 			size_t disposableBlockSize = (char *)task - (char *)disposableBlock;
-				
+			
 			if (task->isTaskloop()) {
 				disposableBlockSize += sizeof(Taskloop);
 			} else {
