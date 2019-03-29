@@ -197,12 +197,16 @@ namespace ExecutionWorkflow {
 		Step *notificationStep = workflow->createNotificationStep(
 			[=]() {
 				WorkerThread *currThread = WorkerThread::getCurrentWorkerThread();
-				CPUDependencyData hpDependencyData;
 				
 				CPU *cpu = nullptr;
 				if (currThread != nullptr) {
 					cpu = currThread->getComputePlace();
 				}
+				
+				CPUDependencyData localDependencyData;
+				CPUDependencyData &hpDependencyData = (cpu != nullptr) ?
+					cpu->getDependencyData() : localDependencyData;
+				
 				if (task->markAsFinished(cpu/* cpu */)) {
 					DataAccessRegistration::unregisterTaskDataAccesses(
 						task,
@@ -305,12 +309,21 @@ namespace ExecutionWorkflow {
 					if (releasingThread != nullptr) {
 						releasingComputePlace = releasingThread->getComputePlace();
 					}
-					CPUDependencyData hpDependencyData;
+					
+					/* Here, we are always using a local CPUDependencyData
+					 * object, to avoid the issue where we end-up calling
+					 * this while the thread is already in the dependency
+					 * system, using the CPUDependencyData of its
+					 * ComputePlace. This is a *TEMPORARY* solution, until
+					 * we fix how we handle taskwaits in a more clean 
+					 * way. */
+					CPUDependencyData localDependencyData;
+					
 					DataAccessRegistration::releaseTaskwaitFragment(
 						task,
 						region,
 						releasingComputePlace,
-						hpDependencyData
+						localDependencyData
 					);
 					
 					delete workflow;
