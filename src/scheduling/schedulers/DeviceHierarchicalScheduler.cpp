@@ -60,14 +60,14 @@ void DeviceHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace
 	_CPUScheduler->enableComputePlace(hardwarePlace);
 }
 
-bool DeviceHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool DeviceHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
-	return _CPUScheduler->requestPolling(computePlace, pollingSlot);
+	return _CPUScheduler->requestPolling(computePlace, pollingSlot, canMarkAsIdle);
 }
 
-bool DeviceHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool DeviceHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
-	return _CPUScheduler->releasePolling(computePlace, pollingSlot);
+	return _CPUScheduler->releasePolling(computePlace, pollingSlot, canMarkAsIdle);
 }
 
 

@@ -53,7 +53,8 @@ namespace DataAccessRegistration {
 		Task *task,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData,
-		MemoryPlace *location = nullptr
+		MemoryPlace *location = nullptr,
+		bool fromBusyThread = false
 	);
 	
 	//! \brief propagates satisfiability for an access.

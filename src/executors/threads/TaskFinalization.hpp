@@ -21,7 +21,7 @@
 
 class TaskFinalization {
 public:
-	static void disposeOrUnblockTask(Task *task, ComputePlace *computePlace);
+	static void disposeOrUnblockTask(Task *task, ComputePlace *computePlace, bool fromBusyThread = false);
 	
 };
 

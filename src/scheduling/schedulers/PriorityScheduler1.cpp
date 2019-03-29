@@ -244,7 +244,7 @@ void PriorityScheduler1::disableComputePlace(ComputePlace *computePlace)
 }
 
 
-bool PriorityScheduler1::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool PriorityScheduler1::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
@@ -354,18 +354,22 @@ bool PriorityScheduler1::requestPolling(ComputePlace *computePlace, polling_slot
 		return true;
 	} else {
 		// 5.b. There is already another thread polling. Therefore, mark the CPU as idle
-		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		if (canMarkAsIdle) {
+			CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		}
 		
 		return false;
 	}
 }
 
 
-bool PriorityScheduler1::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool PriorityScheduler1::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
 	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
-		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		if (canMarkAsIdle) {
+			CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		}
 		return true;
 	} else {
 		return false;

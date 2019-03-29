@@ -25,13 +25,13 @@ void SchedulerInterface::enableComputePlace(__attribute__((unused)) ComputePlace
 }
 
 
-bool SchedulerInterface::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool SchedulerInterface::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
 	assert(pollingSlot != nullptr);
 	assert(pollingSlot->_task == nullptr);
 	
 	// Default implementation: attempt to get a ready task and fail if not possible
-	Task *task = Scheduler::getReadyTask(computePlace);
+	Task *task = Scheduler::getReadyTask(computePlace, nullptr, canMarkAsIdle);
 	
 	if (task != nullptr) {
 		Task *expected = nullptr;
@@ -46,7 +46,7 @@ bool SchedulerInterface::requestPolling(ComputePlace *computePlace, polling_slot
 }
 
 
-bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) polling_slot_t *pollingSlot)
+bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) polling_slot_t *pollingSlot, __attribute__((unused)) bool canMarkAsIdle)
 {
 	// The default implementation should never be called if there is a default implementation of requestPolling
 	// otherwise there should be an implementation of this method that matches requestPolling

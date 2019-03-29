@@ -4,6 +4,7 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "schedulers/DefaultScheduler.hpp"
 #include "schedulers/DeviceHierarchicalScheduler.hpp"
 #include "schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp"

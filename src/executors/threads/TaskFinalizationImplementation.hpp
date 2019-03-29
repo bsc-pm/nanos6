@@ -15,9 +15,13 @@
 #include <InstrumentTaskStatus.hpp>
 
 
-void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace)
+void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace, bool fromBusyThread)
 {
 	bool readyOrDisposable = true;
+	
+	CPUDependencyData localHpDependencyData;
+	CPUDependencyData &hpDependencyData = (computePlace != nullptr) ?
+		computePlace->getDependencyData() : localHpDependencyData;
 	
 	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
 	while ((task != nullptr) && readyOrDisposable) {
@@ -27,20 +31,13 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 		if (task->hasFinished() && task->mustDelayRelease()) {
 			readyOrDisposable = false;
 			if (task->markAllChildrenAsFinished(computePlace)) {
-				if (computePlace != nullptr) {
-					DataAccessRegistration::unregisterTaskDataAccesses(
-						task,
-						computePlace,
-						computePlace->getDependencyData()
-					);
-				} else {
-					CPUDependencyData hpDependencyData;
-					DataAccessRegistration::unregisterTaskDataAccesses(
-						task,
-						nullptr,
-						hpDependencyData
-					);
-				}
+				DataAccessRegistration::unregisterTaskDataAccesses(
+					task, computePlace,
+					hpDependencyData,
+					/* memory place */ nullptr,
+					fromBusyThread
+				);
+				
 				if (task->markAsReleased()) {
 					readyOrDisposable = true;
 				}
@@ -62,7 +59,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			assert(disposableBlock != nullptr);
 			
 			size_t disposableBlockSize = (char *)task - (char *)disposableBlock;
-				
+			
 			if (task->isTaskloop()) {
 				disposableBlockSize += sizeof(Taskloop);
 			} else {

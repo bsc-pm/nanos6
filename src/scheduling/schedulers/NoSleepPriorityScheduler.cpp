@@ -216,7 +216,7 @@ void NoSleepPriorityScheduler::disableComputePlace(ComputePlace *computePlace)
 }
 
 
-bool NoSleepPriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool NoSleepPriorityScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, __attribute__((unused)) bool canMarkAsIdle)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
@@ -324,7 +324,7 @@ bool NoSleepPriorityScheduler::requestPolling(ComputePlace *computePlace, pollin
 }
 
 
-bool NoSleepPriorityScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool NoSleepPriorityScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
 	std::lock_guard<spinlock_t> guard(_globalLock);
 	
@@ -337,7 +337,9 @@ bool NoSleepPriorityScheduler::releasePolling(ComputePlace *computePlace, pollin
 	} else {
 		_pollingSlots.erase(it);
 		
-		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		if (canMarkAsIdle) {
+			CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		}
 		return true;
 	}
 }

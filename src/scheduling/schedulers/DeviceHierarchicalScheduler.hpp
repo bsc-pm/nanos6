@@ -30,9 +30,9 @@ public:
 	
 	void enableComputePlace(ComputePlace *hardwarePlace);
 	
-	bool requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
+	bool requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle = true);
 	
-	bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
+	bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle = true);
 	
 	std::string getName() const;
 	

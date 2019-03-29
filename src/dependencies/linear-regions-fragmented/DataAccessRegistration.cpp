@@ -401,7 +401,7 @@ namespace DataAccessRegistration {
 	);
 	static void handleRemovableTasks(
 		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks,
-		ComputePlace *computePlace
+		ComputePlace *computePlace, bool fromBusyThread
 	);
 	static void handleCompletedTaskwaits(
 		CPUDependencyData::satisfied_taskwait_accesses_t &completedTaskwaits,
@@ -1350,7 +1350,7 @@ namespace DataAccessRegistration {
 		processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
 		assert(hpDependencyData._satisfiedOriginators.empty());
 		
-		handleRemovableTasks(hpDependencyData._removableTasks, computePlace);
+		handleRemovableTasks(hpDependencyData._removableTasks, computePlace, fromBusyThread);
 	}
 	
 	
@@ -2261,10 +2261,10 @@ namespace DataAccessRegistration {
 	
 	static void handleRemovableTasks(
 		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks,
-		ComputePlace *computePlace
+		ComputePlace *computePlace, bool fromBusyThread
 	) {
 		for (Task *removableTask : removableTasks) {
-			TaskFinalization::disposeOrUnblockTask(removableTask, computePlace);
+			TaskFinalization::disposeOrUnblockTask(removableTask, computePlace, fromBusyThread);
 		}
 		removableTasks.clear();
 	}
@@ -2740,7 +2740,7 @@ namespace DataAccessRegistration {
 	}
 	
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location)
+	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location, bool fromBusyThread)
 	{
 		assert(task != nullptr);
 		
@@ -2806,7 +2806,7 @@ namespace DataAccessRegistration {
 			);
 		}
 		
-		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, false);
+		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, fromBusyThread);
 		
 #ifndef NDEBUG
 		{

@@ -180,7 +180,7 @@ void FIFOImmediateSuccessorWithPollingScheduler::disableComputePlace(ComputePlac
 }
 
 
-bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
 	Task *task = nullptr;
 	
@@ -230,18 +230,22 @@ bool FIFOImmediateSuccessorWithPollingScheduler::requestPolling(ComputePlace *co
 		return true;
 	} else {
 		// 5.b. There is already another thread polling. Therefore, mark the CPU as idle
-		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		if (canMarkAsIdle) {
+			CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		}
 		
 		return false;
 	}
 }
 
 
-bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot)
+bool FIFOImmediateSuccessorWithPollingScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
 	polling_slot_t *expect = pollingSlot;
 	if (_pollingSlot.compare_exchange_strong(expect, nullptr)) {
-		CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		if (canMarkAsIdle) {
+			CPUManager::cpuBecomesIdle((CPU *) computePlace);
+		}
 		return true;
 	} else {
 		return false;

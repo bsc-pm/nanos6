@@ -116,7 +116,7 @@ public:
 	//! \returns true if the caller is allowed to poll that memory position for a single ready task or if it actually got a task, otherwise false and the hardware place is assumed to become idle
 	//! 
 	//! This method has a default implementation that just falls back to getReadyTask.
-	virtual bool requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
+	virtual bool requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle = true);
 	
 	//! \brief Attempt to release the polling slot
 	//! 
@@ -126,7 +126,7 @@ public:
 	//! \returns true if the caller has successfully released the polling slot otherwise false indicating that there already is a taskl assigned or it is on the way
 	//! 
 	//! This method has a default implementation that matches the default implementation of requestPolling.
-	virtual bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
+	virtual bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle = true);
 	
 	virtual std::string getName() const = 0;
 };
