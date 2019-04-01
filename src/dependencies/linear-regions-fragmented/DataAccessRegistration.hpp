@@ -99,7 +99,7 @@ namespace DataAccessRegistration {
 	//! \param[in] hpDependencyData is the CPUDependencyData used for delayed operations
 	void releaseTaskwaitFragment(
 		Task *task,
-		DataAccessRegion const &region,
+		DataAccessRegion region,
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData
 	);

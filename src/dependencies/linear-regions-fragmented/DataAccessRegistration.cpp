@@ -2685,7 +2685,7 @@ namespace DataAccessRegistration {
 	
 	void releaseTaskwaitFragment(
 		Task *task,
-		DataAccessRegion const &region,
+		DataAccessRegion region,
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData
 	) {
