@@ -10,6 +10,7 @@ MessageSysFinish::MessageSysFinish(const ClusterNode *from)
 	: Message("MessageSysFinish", SYS_FINISH, 1, from)
 {}
 
-void MessageSysFinish::handleMessage()
+bool MessageSysFinish::handleMessage()
 {
+	return true;
 }

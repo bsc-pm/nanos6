@@ -66,11 +66,11 @@ public:
 	
 	/** Handles the received message.
 	 *
-	 * Specific to each type of message. This method should handle the
-	 * destruction of the message.
-	 *
+	 * Specific to each type of message. This method handles the
+	 * MessageType specific operation. It returns true if the Message
+	 * can be delete or false otherwise.
 	 **/
-	virtual void handleMessage() = 0;
+	virtual bool handleMessage() = 0;
 	
 	//! prints info about the message.
 	virtual void toString(std::ostream& where) const = 0;

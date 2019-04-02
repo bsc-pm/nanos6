@@ -15,6 +15,7 @@ nanos6_api_versions_t const __user_code_expected_nanos6_api_versions = {
 	
 	.blocking_api_version = nanos6_blocking_api,
 	.bootstrap_api_version = nanos6_bootstrap_api,
+	.cluster_api_version = nanos6_cluster_api,
 	.cuda_device_api_version = nanos6_cuda_device_api,
 	.final_api_version = nanos6_final_api,
 	.instantiation_api_version = nanos6_instantiation_api,

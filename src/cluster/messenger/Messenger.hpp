@@ -21,7 +21,7 @@ public:
 	{
 	}
 	
-	~Messenger()
+	virtual ~Messenger()
 	{
 	}
 	
