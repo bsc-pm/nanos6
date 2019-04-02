@@ -20,6 +20,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
+#include "lowlevel/threads/ExternalThreadGroup.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
@@ -85,11 +86,16 @@ void nanos6_preinit(void) {
 	MemoryAllocator::initialize();
 	CPUManager::preinitialize();
 	Scheduler::initialize();
+	ExternalThreadGroup::initialize();
 	
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
 	Instrument::initialize();
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
+	
+	// Register mainThread so that it will be automatically deleted
+	// when shutting down Nanos6
+	ExternalThreadGroup::registerExternalThread(mainThread);
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
 	
 	ThreadManager::initialize();
@@ -134,7 +140,9 @@ void nanos6_shutdown(void) {
 	ThreadManager::shutdown();
 	
 	Instrument::shutdown();
-	delete mainThread;
+	
+	// Delete all registered external threads, including mainThread
+	ExternalThreadGroup::shutdown();
 	
 	if (shutdownDueToSignalNumber.load() != 0) {
 		raise(shutdownDueToSignalNumber.load());

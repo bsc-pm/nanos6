@@ -11,6 +11,7 @@
 #include "InstrumentThreadLocalDataSupport.hpp"
 
 #include <lowlevel/threads/ExternalThread.hpp>
+#include <lowlevel/threads/ExternalThreadGroup.hpp>
 #include <executors/threads/WorkerThread.hpp>
 
 #include <cassert>
@@ -19,6 +20,18 @@
 inline Instrument::ExternalThreadLocalData &Instrument::getExternalThreadLocalData()
 {
 	ExternalThread *currentThread = ExternalThread::getCurrentExternalThread();
+	if (currentThread == nullptr) {
+		// Create a new ExternalThread structure for this
+		// unknown external thread
+		currentThread = new ExternalThread("external");
+		assert(currentThread != nullptr);
+		
+		currentThread->initializeExternalThread();
+		
+		// Register it in the group so that it will be deleted
+		// when shutting down Nanos6
+		ExternalThreadGroup::registerExternalThread(currentThread);
+	}
 	assert(currentThread != nullptr);
 	
 	return currentThread->getInstrumentationData();

@@ -327,6 +327,7 @@ common_sources = \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/SymbolResolver.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
+	src/lowlevel/threads/ExternalThreadGroup.cpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
@@ -863,6 +864,7 @@ noinst_HEADERS = \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/threads/ExternalThread.hpp \
+	src/lowlevel/threads/ExternalThreadGroup.hpp \
 	src/lowlevel/threads/HelperThread.hpp \
 	src/lowlevel/threads/KernelLevelThread.hpp \
 	src/lowlevel/threads/posix/KernelLevelThread.hpp \
