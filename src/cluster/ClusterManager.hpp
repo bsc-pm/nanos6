@@ -145,6 +145,21 @@ public:
 	{
 		return _clusterSize > 1;
 	}
+
+	//! \brief Test Messages for completion
+	//!
+	//! This is just a wrapper on top of the Messenger API
+	//!
+	//! \param[in] messages is a deque containing Message objects
+	//!		to check for completion
+	//! \param[in] completed is a deque which, upon return will
+	//!		contain completed messages
+	static inline void testMessageCompletion(
+		std::deque<Message *> &messages,
+		std::deque<Message *> &completed
+	) {
+		_msn->testMessageCompletion(messages, completed);
+	}
 	
 	//! \brief A barrier across all cluster nodes
 	//!

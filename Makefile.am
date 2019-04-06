@@ -385,6 +385,8 @@ cluster_sources += \
 
 cluster_cppflags = \
 	-I$(srcdir)/src/cluster \
+	-I$(srcdir)/src/cluster/messages \
+	-I$(srcdir)/src/cluster/messenger \
 	-I$(srcdir)/src/hardware/cluster \
 	-I$(srcdir)/src/hardware/cluster/memory
 else

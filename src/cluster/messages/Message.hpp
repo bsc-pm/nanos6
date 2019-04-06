@@ -4,17 +4,21 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef __MESSAGE_HPP__
-#define __MESSAGE_HPP__
+#ifndef MESSAGE_HPP
+#define MESSAGE_HPP
 
+#include "MessageType.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/threads/KernelLevelThread.hpp"
 #include "support/GenericFactory.hpp"
-#include "MessageType.hpp"
 
 class ClusterNode;
 
 class Message {
+private:
+	//! An opaque pointer to Messenger-specific data
+	void * _messengerData;
+	
 public:
 	struct msg_header {
 		//! string containing the message type
@@ -33,11 +37,10 @@ public:
 		int snd_id;
 	};
 	
-	/** Deliverable is the structure that is actually sent over the network.
-	 *
-	 * It contains a message header and a payload that is MessageType specific.
-	 * This struct is sent as is over the network without any serialisation.
-	 */
+	//! Deliverable is the structure that is actually sent over the network.
+	//!
+	//! It contains a message header and a payload that is MessageType specific.
+	//! This struct is sent as is over the network without any serialisation.
 	typedef struct {
 		struct msg_header header;
 		char payload[];
@@ -51,6 +54,7 @@ public:
 	{
 		assert(dlv != nullptr);
 		_deliverable = dlv;
+		_messengerData = nullptr;
 	}
 	
 	virtual ~Message()
@@ -59,20 +63,32 @@ public:
 		free(_deliverable);
 	}
 	
-	inline Deliverable *getDeliverable()
+	//! \brief Return the Deliverable data of the Message
+	inline Deliverable *getDeliverable() const
 	{
 		return _deliverable;
 	}
 	
-	/** Handles the received message.
-	 *
-	 * Specific to each type of message. This method handles the
-	 * MessageType specific operation. It returns true if the Message
-	 * can be delete or false otherwise.
-	 **/
+	//! \brief Return the Messenger-specific data
+	inline void *getMessengerData() const
+	{
+		return _messengerData;
+	}
+	
+	//! \brief Set the Messenger-specific data
+	inline void setMessengerData(void *data)
+	{
+		_messengerData = data;
+	}
+	
+	//! \brief Handles the received message
+	//!
+	//! Specific to each type of message. This method handles the
+	//! MessageType specific operation. It returns true if the Message
+	//! can be delete or false otherwise.
 	virtual bool handleMessage() = 0;
 	
-	//! prints info about the message.
+	//! \brief prints info about the message
 	virtual void toString(std::ostream& where) const = 0;
 	
 	friend std::ostream& operator<<(std::ostream& out, const Message& msg)
@@ -88,4 +104,4 @@ protected:
 #define REGISTER_MSG_CLASS(NAME, CREATEFN) \
 	GenericFactory<int, Message*, Message::Deliverable*>::getInstance().emplace(NAME, CREATEFN)
 
-#endif /* __MESSAGE_HPP__ */
+#endif /* MESSAGE_HPP */

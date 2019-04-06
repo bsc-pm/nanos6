@@ -4,8 +4,8 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef __MPI_MESSENGER_H__
-#define __MPI_MESSENGER_H__
+#ifndef MPI_MESSENGER_H
+#define MPI_MESSENGER_H
 
 #include <vector>
 
@@ -27,12 +27,12 @@ public:
 	MPIMessenger();
 	~MPIMessenger();
 	
-	void sendMessage(Message *msg, ClusterNode *toNode);
-	void sendMessage(Message *msg, std::vector<ClusterNode *> const &toNodes);
+	void sendMessage(Message *msg, ClusterNode const *toNode, bool block = false);
 	void synchronizeAll(void);
 	void sendData(const DataAccessRegion &region, const ClusterNode *toNode);
 	void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode);
 	Message *checkMail();
+	void testMessageCompletion(std::deque<Message *> &messages, std::deque<Message *> &completed);
 	
 	inline int getNodeIndex() const
 	{
@@ -64,4 +64,4 @@ namespace
 		REGISTER_MSN_CLASS("mpi-2sided", createMPImsn);
 }
 
-#endif /* __MPI_MESSENGER_H__ */
+#endif /* MPI_MESSENGER_H */

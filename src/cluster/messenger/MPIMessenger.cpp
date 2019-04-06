@@ -1,10 +1,12 @@
-#include "MPIMessenger.hpp"
-#include "cluster/messages/Message.hpp"
-#include <ClusterNode.hpp>
-
-#include "alloca.h"
 #include <cstdlib>
 #include <vector>
+
+#include "MPIMessenger.hpp"
+#include "cluster/messages/Message.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
+
+#include <ClusterNode.hpp>
+#include <MemoryAllocator.hpp>
 
 #pragma GCC visibility push(default)
 #include <mpi.h>
@@ -42,87 +44,53 @@ MPIMessenger::~MPIMessenger()
 	MPI_Finalize();
 }
 
-void MPIMessenger::sendMessage(Message *msg, ClusterNode *toNode)
+void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool block)
 {
 	int ret;
 	Message::Deliverable *delv = msg->getDeliverable();
-	const int MPI_to = toNode->getCommIndex();
+	const int mpiDst = toNode->getCommIndex();
+	size_t msgSize = sizeof(delv->header) + delv->header.size;
 	
-	assert(MPI_to < wsize && MPI_to != wrank);
+	//! At the moment we use the Message type as the MPI
+	//! tag of the communication
+	int tag = delv->header.type;
+
+	assert(mpiDst < wsize && mpiDst != wrank);
 	assert(delv->header.size != 0);
 	
-	/*! At the moment we use the Message type as the MPI
-	 * tag of the communication */
-	int tag = delv->header.type;
-	ret = MPI_Send((void *)delv, sizeof(delv->header) + delv->header.size,
-			MPI_BYTE, MPI_to, tag, INTRA_COMM);
+	if (block) {
+		ret = MPI_Send((void *)delv, msgSize, MPI_BYTE, mpiDst,
+				tag, INTRA_COMM);
+		return;
+	}
+	
+	MPI_Request *request =
+		(MPI_Request *)MemoryAllocator::alloc(
+				sizeof(MPI_Request));
+	FatalErrorHandler::failIf(
+		request == nullptr,
+		"Could not allocate memory for MPI_Request"
+	);
+	
+	ret = MPI_Isend((void *)delv, msgSize, MPI_BYTE, mpiDst,
+			tag, INTRA_COMM, request);
 	if (ret != MPI_SUCCESS) {
 		MPI_Abort(INTRA_COMM, ret);
 	}
-}
-
-void MPIMessenger::sendMessage(Message *msg, std::vector<ClusterNode *> const &toNodes)
-{
-	Message::Deliverable *delv = msg->getDeliverable();
-	assert(delv->header.size != 0);
 	
-	const int nr_nodes = toNodes.size();
-	assert(nr_nodes != 0);
-	
-	/*! At the moment we use the Message type as the MPI
-	 * tag of the communication */
-	const int tag = delv->header.type;
-	
-	/*! nr_nodes should be in the order of 1000s, so alloca should
-	 * probably be the best option now */
-	MPI_Request *requests = (MPI_Request *) alloca(nr_nodes * sizeof(MPI_Request));
-	MPI_Status *status = (MPI_Status *) alloca(nr_nodes * sizeof(MPI_Status));
-	
-	int i = 0;
-	for (auto &node : toNodes) {
-		int MPI_to = node->getCommIndex();
-		assert(MPI_to != wrank);
-		
-		int ret = MPI_Isend((void *)delv,
-				sizeof(delv->header) + delv->header.size,
-				MPI_BYTE, MPI_to, tag, INTRA_COMM,
-				&requests[i]);
-		if (ret != MPI_SUCCESS) {
-			MPI_Abort(INTRA_COMM, ret);
-		}
-		
-		++i;
-	}
-	
-	//! Check that all sends were fine or print some information;
-	int ret = MPI_Waitall(nr_nodes, requests, status);
-	if(ret == MPI_ERR_IN_STATUS) {
-		for(i = 0; i < nr_nodes; ++i){
-			if(status[i].MPI_ERROR != MPI_SUCCESS){
-				std::cerr << "MPI_Error "
-					<< status[i].MPI_ERROR
-					<< " sending collective message "
-					<< status[i].MPI_TAG
-					<< " to rank:"
-					<< status[i].MPI_SOURCE
-					<< std::endl;
-			}
-		}
-		
-		MPI_Abort(INTRA_COMM, ret);
-	}
+	msg->setMessengerData((void *)request);
 }
 
 void MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *to)
 {
 	int ret;
-	const int MPI_to = to->getCommIndex();
+	const int mpiDst = to->getCommIndex();
 	void *address = region.getStartAddress();
 	size_t size = region.getSize();
 	
-	assert(MPI_to < wsize && MPI_to != wrank);
+	assert(mpiDst < wsize && mpiDst != wrank);
 	
-	ret = MPI_Send(address, size, MPI_BYTE, MPI_to, DATA_SEND, INTRA_COMM);
+	ret = MPI_Send(address, size, MPI_BYTE, mpiDst, DATA_SEND, INTRA_COMM);
        	if (ret != MPI_SUCCESS)	{
 		MPI_Abort(INTRA_COMM, ret);
 	}
@@ -131,13 +99,13 @@ void MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *t
 void MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *from)
 {
 	int ret;
-	const int MPI_from = from->getCommIndex();
+	const int mpiSrc = from->getCommIndex();
 	void *address = region.getStartAddress();
 	size_t size = region.getSize();
 	
-	assert(MPI_from < wsize && MPI_from != wrank);
+	assert(mpiSrc < wsize && mpiSrc != wrank);
 	
-	ret = MPI_Recv(address, size, MPI_BYTE, MPI_from, DATA_SEND, INTRA_COMM, MPI_STATUS_IGNORE);
+	ret = MPI_Recv(address, size, MPI_BYTE, mpiSrc, DATA_SEND, INTRA_COMM, MPI_STATUS_IGNORE);
 	if (ret != MPI_SUCCESS) {
 		MPI_Abort(INTRA_COMM, ret);
 	}
@@ -192,4 +160,47 @@ Message *MPIMessenger::checkMail(void)
 	}
 	
 	return GenericFactory<int, Message*, Message::Deliverable*>::getInstance().create(status.MPI_TAG, msg);
+}
+
+void MPIMessenger::testMessageCompletion(
+	std::deque<Message *> &messages,
+	std::deque<Message *> &completed
+) {
+	int msgCount = messages.size();
+	MPI_Request requests[msgCount];
+	
+	for (int i = 0; i < msgCount; ++i) {
+		Message *msg = messages[i];
+		MPI_Request *req =
+			(MPI_Request *)msg->getMessengerData();
+		requests[i] = *req;
+	}
+	
+	for (int i = 0; i < msgCount; ++i) {
+		int index, ret, flag;
+		MPI_Status status;
+		
+		ret = MPI_Testany(msgCount, requests, &index, &flag, &status);
+		FatalErrorHandler::failIf(
+			ret != MPI_SUCCESS,
+			"Error during MPI_Testany"
+		);
+		
+		//! None finished request
+		if (!flag) {
+			break;
+		}
+		
+		//! Message at position 'index' has been delivered.
+		//! Remove it from 'messages' and add it to completed
+		completed.push_back(messages[index]);
+		messages.erase(messages.begin() + index);
+		
+		//! Deallocate the MPI_Request object of the
+		//! completed Message
+		MemoryAllocator::free(
+			requests[index],
+			sizeof(MPI_Request)
+		);
+	}
 }

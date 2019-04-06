@@ -66,10 +66,13 @@ void ClusterManager::initialize()
 void ClusterManager::shutdown()
 {
 	if (isMasterNode() && inClusterMode()) {
-		std::vector<ClusterNode *> slaveNodes = _clusterNodes;
-		slaveNodes.erase(slaveNodes.begin() + _msn->getNodeIndex());
-		MessageSysFinish msg(_thisNode);
-		_msn->sendMessage(&msg, slaveNodes);
+		for (ClusterNode *slaveNode : _clusterNodes) {
+			if (slaveNode != _thisNode) {
+				MessageSysFinish msg(_thisNode);
+				_msn->sendMessage(&msg, slaveNode, true);
+			}
+		}
+		
 		_msn->synchronizeAll();
 	}
 	
