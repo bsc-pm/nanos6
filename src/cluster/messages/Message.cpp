@@ -26,4 +26,5 @@ Message::Message(const char* name, MessageType type, size_t size, const ClusterN
 	_deliverable->header.snd_id = from->getIndex();
 	
 	_messengerData = nullptr;
+	_delivered = false;
 }

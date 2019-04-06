@@ -152,13 +152,10 @@ public:
 	//!
 	//! \param[in] messages is a deque containing Message objects
 	//!		to check for completion
-	//! \param[in] completed is a deque which, upon return will
-	//!		contain completed messages
 	static inline void testMessageCompletion(
-		std::deque<Message *> &messages,
-		std::deque<Message *> &completed
+		std::vector<Message *> &messages
 	) {
-		_msn->testMessageCompletion(messages, completed);
+		_msn->testMessageCompletion(messages);
 	}
 	
 	//! \brief A barrier across all cluster nodes

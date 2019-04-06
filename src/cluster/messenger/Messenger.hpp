@@ -76,15 +76,11 @@ public:
 	//!
 	//! This tests whether messages stored in the 'messages'
 	//! queue has been succesfully sent. All succesfully sent
-	//! messages are removed from the 'messages' queue and
-	//! placed in the 'completed' queue.
+	//! messages are marked as completed
 	//!
-	//! \param[inout] messages holds the pending outgoing messages
-	//! \param[out] at exit 'completed' includes all messages
-	//!		that have been succesfully sent
+	//! \param[in] messages holds the pending outgoing messages
 	virtual void testMessageCompletion(
-		std::deque<Message *> &messages,
-		std::deque<Message *> &completed
+		std::vector<Message *> &messages
 	) = 0;
 };
 

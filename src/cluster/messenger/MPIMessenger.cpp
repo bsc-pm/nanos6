@@ -61,6 +61,7 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	if (block) {
 		ret = MPI_Send((void *)delv, msgSize, MPI_BYTE, mpiDst,
 				tag, INTRA_COMM);
+		msg->markAsDelivered();
 		return;
 	}
 	
@@ -163,44 +164,35 @@ Message *MPIMessenger::checkMail(void)
 }
 
 void MPIMessenger::testMessageCompletion(
-	std::deque<Message *> &messages,
-	std::deque<Message *> &completed
+	std::vector<Message *> &messages
 ) {
-	int msgCount = messages.size();
+	assert(!messages.empty());
+	
+	int msgCount = messages.size(), ret, completedCount;
 	MPI_Request requests[msgCount];
+	int finished[msgCount];
+	MPI_Status status[msgCount];
 	
 	for (int i = 0; i < msgCount; ++i) {
 		Message *msg = messages[i];
+		assert(msg != nullptr);
+		
 		MPI_Request *req =
 			(MPI_Request *)msg->getMessengerData();
+		assert(req != nullptr);
+		
 		requests[i] = *req;
 	}
 	
-	for (int i = 0; i < msgCount; ++i) {
-		int index, ret, flag;
-		MPI_Status status;
+	ret = MPI_Testsome(msgCount, requests, &completedCount,
+			finished, status);
+	
+	for (int i = 0; i < completedCount; ++i) {
+		int index = finished[i];
+		Message *msg = messages[index];
 		
-		ret = MPI_Testany(msgCount, requests, &index, &flag, &status);
-		FatalErrorHandler::failIf(
-			ret != MPI_SUCCESS,
-			"Error during MPI_Testany"
-		);
-		
-		//! None finished request
-		if (!flag) {
-			break;
-		}
-		
-		//! Message at position 'index' has been delivered.
-		//! Remove it from 'messages' and add it to completed
-		completed.push_back(messages[index]);
-		messages.erase(messages.begin() + index);
-		
-		//! Deallocate the MPI_Request object of the
-		//! completed Message
-		MemoryAllocator::free(
-			requests[index],
-			sizeof(MPI_Request)
-		);
+		msg->markAsDelivered();
+		MPI_Request *req = (MPI_Request *)msg->getMessengerData();
+		MemoryAllocator::free(req, sizeof(MPI_Request));
 	}
 }

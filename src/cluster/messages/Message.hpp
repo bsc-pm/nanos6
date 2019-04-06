@@ -15,11 +15,7 @@
 class ClusterNode;
 
 class Message {
-private:
-	//! An opaque pointer to Messenger-specific data
-	void * _messengerData;
-	
-public:
+public:	
 	struct msg_header {
 		//! string containing the message type
 		char name[MSG_NAMELEN];
@@ -46,15 +42,27 @@ public:
 		char payload[];
 	} Deliverable;
 	
+private:
+	//! An opaque pointer to Messenger-specific data
+	void * _messengerData;
+	
+	//! Flag indicating whether the Message has been delivered
+	bool _delivered;
+	
+protected:
+	//! The part of the message we actually send over the network
+	Deliverable *_deliverable;
+	
+public:
 	Message() = delete;
 	Message(const char* name, MessageType type, size_t size, const ClusterNode *from);
 	
 	//! Construct a message from a received(?) Deliverable structure
 	Message(Deliverable *dlv)
+		: _messengerData(nullptr), _delivered(false),
+		_deliverable(dlv)
 	{
 		assert(dlv != nullptr);
-		_deliverable = dlv;
-		_messengerData = nullptr;
 	}
 	
 	virtual ~Message()
@@ -81,6 +89,18 @@ public:
 		_messengerData = data;
 	}
 	
+	//! \brief Mark the Message as delivered
+	inline void markAsDelivered()
+	{
+		_delivered = true;
+	}
+	
+	//! \brief Check if the Message is delivered
+	inline bool isDelivered() const
+	{
+		return _delivered;
+	}
+	
 	//! \brief Handles the received message
 	//!
 	//! Specific to each type of message. This method handles the
@@ -96,9 +116,6 @@ public:
 		msg.toString(out);
 		return out;
 	}
-	
-protected:
-	Deliverable *_deliverable;
 };
 
 #define REGISTER_MSG_CLASS(NAME, CREATEFN) \

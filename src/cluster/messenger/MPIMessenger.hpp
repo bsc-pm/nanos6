@@ -32,7 +32,7 @@ public:
 	void sendData(const DataAccessRegion &region, const ClusterNode *toNode);
 	void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode);
 	Message *checkMail();
-	void testMessageCompletion(std::deque<Message *> &messages, std::deque<Message *> &completed);
+	void testMessageCompletion(std::vector<Message *> &messages);
 	
 	inline int getNodeIndex() const
 	{
