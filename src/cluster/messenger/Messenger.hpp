@@ -14,8 +14,9 @@
 #include <DataAccessRegion.hpp>
 #include <support/GenericFactory.hpp>
 
-class Message;
 class ClusterNode;
+class DataTransfer;
+class Message;
 
 class Messenger {
 public:
@@ -81,6 +82,17 @@ public:
 	//! \param[in] messages holds the pending outgoing messages
 	virtual void testMessageCompletion(
 		std::vector<Message *> &messages
+	) = 0;
+	
+	//! \brief Test if pending DataTransfers have completed
+	//!
+	//! This tests whether DataTransfer objects stored in the 'transfers'
+	//! vector have completed. All succesfully completed DataTransfers
+	//! are marked as completed
+	//!
+	//! \param[in] transfers holds the pending data transfers
+	virtual void testDataTransferCompletion(
+		std::vector<DataTransfer *> &transfers
 	) = 0;
 };
 

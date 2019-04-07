@@ -15,8 +15,9 @@
 
 #include "Messenger.hpp"
 
-class Message;
 class ClusterPlace;
+class DataTransfer;
+class Message;
 
 class MPIMessenger : public Messenger {
 private:
@@ -33,6 +34,7 @@ public:
 	void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode);
 	Message *checkMail();
 	void testMessageCompletion(std::vector<Message *> &messages);
+	void testDataTransferCompletion(std::vector<DataTransfer *> &transfers);
 	
 	inline int getNodeIndex() const
 	{

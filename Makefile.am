@@ -586,6 +586,10 @@ noinst_HEADERS = \
 	src/cluster/messages/Message.hpp \
 	src/cluster/messages/MessageSysFinish.hpp \
 	src/cluster/messages/MessageType.hpp \
+	src/cluster/messenger/DataTransfer.hpp \
+	src/cluster/messenger/Messenger.hpp \
+	src/cluster/messenger/MPIDataTransfer.hpp \
+	src/cluster/messenger/MPIMessenger.hpp \
 	src/cluster/null/ClusterManager.hpp \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \

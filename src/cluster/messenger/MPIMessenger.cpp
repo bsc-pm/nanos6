@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <vector>
 
+#include "MPIDataTransfer.hpp"
 #include "MPIMessenger.hpp"
 #include "cluster/messages/Message.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -193,6 +194,39 @@ void MPIMessenger::testMessageCompletion(
 		
 		msg->markAsDelivered();
 		MPI_Request *req = (MPI_Request *)msg->getMessengerData();
+		MemoryAllocator::free(req, sizeof(MPI_Request));
+	}
+}
+
+void MPIMessenger::testDataTransferCompletion(
+	std::vector<DataTransfer *> &transfers
+) {
+	assert(!transfers.empty());
+	
+	int msgCount = transfers.size(), ret, completedCount;
+	MPI_Request requests[msgCount];
+	int finished[msgCount];
+	MPI_Status status[msgCount];
+	
+	for (int i = 0; i < msgCount; ++i) {
+		MPIDataTransfer *dt = (MPIDataTransfer *)transfers[i];
+		assert(dt != nullptr);
+		
+		MPI_Request *req = dt->getMPIRequest();
+		assert(req != nullptr);
+		
+		requests[i] = *req;
+	}
+	
+	ret = MPI_Testsome(msgCount, requests, &completedCount, finished,
+			status);
+	
+	for (int i = 0; i < completedCount; ++i) {
+		int index = finished[i];
+		MPIDataTransfer *dt = (MPIDataTransfer *)transfers[index];
+		
+		dt->markAsCompleted();
+		MPI_Request *req = dt->getMPIRequest();
 		MemoryAllocator::free(req, sizeof(MPI_Request));
 	}
 }
