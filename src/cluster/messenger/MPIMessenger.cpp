@@ -15,7 +15,7 @@
 
 MPIMessenger::MPIMessenger()
 {
-	int support;
+	int support, ret;
 	
 	MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, &support);
 	if (support != MPI_THREAD_MULTIPLE) {
@@ -27,22 +27,33 @@ MPIMessenger::MPIMessenger()
 	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 	
 	//! Save the parent communicator
-	MPI_Comm_get_parent(&PARENT_COMM);
+	ret = MPI_Comm_get_parent(&PARENT_COMM);
+	checkSuccess(ret, MPI_COMM_WORLD);
 	
 	//! Create a new communicator
-	MPI_Comm_dup(MPI_COMM_WORLD, &INTRA_COMM);
+	ret = MPI_Comm_dup(MPI_COMM_WORLD, &INTRA_COMM);
+	checkSuccess(ret, MPI_COMM_WORLD);
 	
 	//! make sure the new communicator returns errors
 	MPI_Comm_set_errhandler(INTRA_COMM, MPI_ERRORS_RETURN);
-	MPI_Comm_rank(INTRA_COMM, &wrank);
-	MPI_Comm_size(INTRA_COMM, &wsize);
+	
+	ret = MPI_Comm_rank(INTRA_COMM, &wrank);
+	checkSuccess(ret, INTRA_COMM);
+	
+	ret = MPI_Comm_size(INTRA_COMM, &wsize);
+	checkSuccess(ret, INTRA_COMM);
 }
 
 MPIMessenger::~MPIMessenger()
 {
+	int ret;
+	
 	//! Release the intra-communicator
-	MPI_Comm_free(&INTRA_COMM);
-	MPI_Finalize();
+	ret = MPI_Comm_free(&INTRA_COMM);
+	checkSuccess(ret, INTRA_COMM);
+	
+	ret = MPI_Finalize();
+	checkSuccess(ret, MPI_COMM_WORLD);
 }
 
 void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool block)
@@ -62,6 +73,8 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	if (block) {
 		ret = MPI_Send((void *)delv, msgSize, MPI_BYTE, mpiDst,
 				tag, INTRA_COMM);
+		checkSuccess(ret, INTRA_COMM);
+		
 		msg->markAsDelivered();
 		return;
 	}
@@ -76,9 +89,7 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	
 	ret = MPI_Isend((void *)delv, msgSize, MPI_BYTE, mpiDst,
 			tag, INTRA_COMM, request);
-	if (ret != MPI_SUCCESS) {
-		MPI_Abort(INTRA_COMM, ret);
-	}
+	checkSuccess(ret, INTRA_COMM);
 	
 	msg->setMessengerData((void *)request);
 }
@@ -95,9 +106,7 @@ void MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *t
 	tag = (messageId << 8) | DATA_RAW;
 	
 	ret = MPI_Send(address, size, MPI_BYTE, mpiDst, tag, INTRA_COMM);
-       	if (ret != MPI_SUCCESS)	{
-		MPI_Abort(INTRA_COMM, ret);
-	}
+	checkSuccess(ret, INTRA_COMM);
 }
 
 void MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *from, int messageId)
@@ -112,17 +121,13 @@ void MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *
 	tag = (messageId << 8) | DATA_RAW;
 	
 	ret = MPI_Recv(address, size, MPI_BYTE, mpiSrc, tag, INTRA_COMM, MPI_STATUS_IGNORE);
-	if (ret != MPI_SUCCESS) {
-		MPI_Abort(INTRA_COMM, ret);
-	}
+	checkSuccess(ret, INTRA_COMM);
 }
 
 void MPIMessenger::synchronizeAll(void)
 {
 	int ret = MPI_Barrier(INTRA_COMM);
-	if (ret != MPI_SUCCESS) {
-		MPI_Abort(INTRA_COMM, ret);
-	}
+	checkSuccess(ret, INTRA_COMM);
 }
 
 Message *MPIMessenger::checkMail(void)
@@ -132,9 +137,7 @@ Message *MPIMessenger::checkMail(void)
 	Message::Deliverable *msg;
 	
 	ret = MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, INTRA_COMM, &flag, &status);
-	if (ret != MPI_SUCCESS) {
-		MPI_Abort(INTRA_COMM, ret);
-	}
+	checkSuccess(ret, INTRA_COMM);
 	
 	if (!flag) {
 		return nullptr;
@@ -148,10 +151,7 @@ Message *MPIMessenger::checkMail(void)
 	}
 	
 	ret = MPI_Get_count(&status, MPI_BYTE, &count);
-	if (ret != MPI_SUCCESS) {
-		std::cerr << "Error while trying to determing size of message\n" << std::endl;
-		MPI_Abort(INTRA_COMM, ret);
-	}
+	checkSuccess(ret, INTRA_COMM);
 	
 	msg = (Message::Deliverable *)malloc(count);
 	if (!msg) {
@@ -162,10 +162,7 @@ Message *MPIMessenger::checkMail(void)
 	assert(count != 0);
 	ret = MPI_Recv((void *)msg, count, MPI_BYTE, status.MPI_SOURCE,
 			status.MPI_TAG, INTRA_COMM, MPI_STATUS_IGNORE);
-	if (ret != MPI_SUCCESS) {
-		std::cerr << "Error receiving incoming message" << std::endl;
-		MPI_Abort(INTRA_COMM, ret);
-	}
+	checkSuccess(ret, INTRA_COMM);
 	
 	return GenericFactory<int, Message*, Message::Deliverable*>::getInstance().create(type, msg);
 }
@@ -193,6 +190,7 @@ void MPIMessenger::testMessageCompletion(
 	
 	ret = MPI_Testsome(msgCount, requests, &completedCount,
 			finished, status);
+	checkSuccess(ret, status, completedCount, INTRA_COMM);
 	
 	for (int i = 0; i < completedCount; ++i) {
 		int index = finished[i];
@@ -226,6 +224,7 @@ void MPIMessenger::testDataTransferCompletion(
 	
 	ret = MPI_Testsome(msgCount, requests, &completedCount, finished,
 			status);
+	checkSuccess(ret, status, completedCount, INTRA_COMM);
 	
 	for (int i = 0; i < completedCount; ++i) {
 		int index = finished[i];
