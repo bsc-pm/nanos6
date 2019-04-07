@@ -8,8 +8,8 @@
 #define MESSENGER_HPP
 
 #include <deque>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include <DataAccessRegion.hpp>
 #include <support/GenericFactory.hpp>
@@ -41,13 +41,19 @@ public:
 	//! by all nodes
 	virtual void synchronizeAll(void) = 0;
 	
-	//! Send a data region to a remote node, related to a previous message.
+	//! \brief Send a data region to a remote node, related to a previous message.
 	//!
 	//! \param[in] region is the data region to send
 	//! \param[in] toNode is the receiver node
 	//! \param[in] messageId is the id of the Message related with this
 	//!		data transfer
-	virtual void sendData(const DataAccessRegion &region, const ClusterNode *toNode, int messageId) = 0;
+	//!
+	//! \returns A DataTransfer object representing the pending data transfer
+	virtual DataTransfer *sendData(
+		const DataAccessRegion &region,
+		const ClusterNode *toNode,
+		int messageId
+	) = 0;
 	
 	//! \brief Receive a data region from a remote node, related to a previous message
 	//!
@@ -56,7 +62,13 @@ public:
 	//!		with this data transfer
 	//! \param[in] messageId is the id of the Message related with this
 	//!		data transfer
-	virtual void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode, int messageId) = 0;
+	//!
+	//! \returns A DataTransfer object representing the pending data transfer
+	virtual DataTransfer *fetchData(
+		const DataAccessRegion &region,
+		const ClusterNode *fromNode,
+		int messageId
+	) = 0;
 	
 	//! \brief Check for incoming messages
 	//!

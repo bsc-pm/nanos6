@@ -6,6 +6,7 @@
 #include "cluster/messages/Message.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include <ClusterManager.hpp>
 #include <ClusterNode.hpp>
 #include <MemoryAllocator.hpp>
 
@@ -94,7 +95,7 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	msg->setMessengerData((void *)request);
 }
 
-void MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *to, int messageId)
+DataTransfer *MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *to, int messageId)
 {
 	int ret, tag;
 	const int mpiDst = to->getCommIndex();
@@ -105,11 +106,21 @@ void MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *t
 	
 	tag = (messageId << 8) | DATA_RAW;
 	
-	ret = MPI_Send(address, size, MPI_BYTE, mpiDst, tag, INTRA_COMM);
+	MPI_Request *request = (MPI_Request *)MemoryAllocator::alloc(sizeof(MPI_Request));
+	FatalErrorHandler::failIf(
+		request == nullptr,
+		"Could not allocate memory for MPI_Request"
+	);
+	
+	ret = MPI_Isend(address, size, MPI_BYTE, mpiDst, tag, INTRA_COMM,
+			request);
 	checkSuccess(ret, INTRA_COMM);
+	
+	return new MPIDataTransfer(region, ClusterManager::getCurrentMemoryNode(),
+			to->getMemoryNode(), request);
 }
 
-void MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *from, int messageId)
+DataTransfer *MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *from, int messageId)
 {
 	int ret, tag;
 	const int mpiSrc = from->getCommIndex();
@@ -120,8 +131,18 @@ void MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *
 	
 	tag = (messageId << 8) | DATA_RAW;
 	
-	ret = MPI_Recv(address, size, MPI_BYTE, mpiSrc, tag, INTRA_COMM, MPI_STATUS_IGNORE);
+	MPI_Request *request = (MPI_Request *)MemoryAllocator::alloc(sizeof(MPI_Request));
+	FatalErrorHandler::failIf(
+		request == nullptr,
+		"Could not allocate memory for MPI_Request"
+	);
+	
+	ret = MPI_Irecv(address, size, MPI_BYTE, mpiSrc, tag, INTRA_COMM,
+			request);
 	checkSuccess(ret, INTRA_COMM);
+	
+	return new MPIDataTransfer(region, from->getMemoryNode(),
+			ClusterManager::getCurrentMemoryNode(), request);
 }
 
 void MPIMessenger::synchronizeAll(void)
