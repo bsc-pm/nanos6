@@ -7,10 +7,14 @@
 #ifndef CLUSTER_MANAGER_HPP
 #define CLUSTER_MANAGER_HPP
 
-#include <vector>
 #include <string>
+#include <vector>
 
+#include <ClusterMemoryNode.hpp>
 #include <ClusterNode.hpp>
+
+class Message;
+class DataTransfer;
 
 class ClusterManager {
 	//! private constructor. This is a singleton.
@@ -66,6 +70,37 @@ public:
 	static inline bool inClusterMode()
 	{
 		return false;
+	}
+	
+	static inline Message *checkMail()
+	{
+		return nullptr;
+	}
+	
+	static inline void testMessageCompletion(
+		__attribute__((unused)) std::vector<Message *> &messages
+	) {
+	}
+	
+	static inline void testDataTransferCompletion(
+		__attribute__((unused)) std::vector<Message *> &transfer
+	) {
+	}
+	
+	static inline DataTransfer *fetchDataRaw(
+		__attribute__((unused)) DataAccessRegion const &region,
+		__attribute__((unused)) MemoryPlace const *from,
+		__attribute__((unused)) int messageId
+	) {
+		return nullptr;
+	}
+	
+	static inline DataTransfer *sendDataRaw(
+		__attribute__((unused)) DataAccessRegion const &region,
+		__attribute__((unused)) MemoryPlace const *to,
+		__attribute__((unused)) int messageId
+	) {
+		return nullptr;
 	}
 	
 	static inline void setShutdownCallback(

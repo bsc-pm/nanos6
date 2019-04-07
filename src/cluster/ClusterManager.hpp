@@ -146,16 +146,90 @@ public:
 		return _clusterSize > 1;
 	}
 
+	//! \brief Check for incoming messages
+	//!
+	//! This is just a wrapper on top of the Messenger API
+	//!
+	//! \returns a Message object if one has been received otherwise,
+	//!		nullptr
+	static inline Message *checkMail()
+	{
+		assert(_msn != nullptr);
+		return _msn->checkMail();
+	}
+	
+	//! \brief Send a Message to a remote Node
+	//!
+	//! This is just a wrapper on top of the Messenger API
+	//!
+	//! \param[in] msg is the Message to send
+	//! \param[in] recipient is the remote node to send the Message
+	static inline void sendMessage(Message *msg, ClusterNode *recipient)
+	{
+		assert(_msn != nullptr);
+		_msn->sendMessage(msg, recipient);
+	}
+
 	//! \brief Test Messages for completion
 	//!
 	//! This is just a wrapper on top of the Messenger API
 	//!
-	//! \param[in] messages is a deque containing Message objects
+	//! \param[in] messages is a vector containing Message objects
 	//!		to check for completion
 	static inline void testMessageCompletion(
 		std::vector<Message *> &messages
 	) {
+		assert(_msn != nullptr);
 		_msn->testMessageCompletion(messages);
+	}
+	
+	//! \brief Test DataTransfers for completion
+	//!
+	//! This is just a wrapper on top of the Messenger API
+	//!
+	//! \param[in] transfers is a vector containing DataTransfer objects
+	//!		to check for completion
+	static inline void testDataTransferCompletion(
+		std::vector<DataTransfer *> &transfers
+	) {
+		assert(_msn != nullptr);
+		_msn->testDataTransferCompletion(transfers);
+	}
+	
+	//! \brief Fetch a DataAccessRegion from a remote node
+	//!
+	//! \param[in] region is the address region to fetch
+	//! \param[in] from is the remote MemoryPlace we are fetching from
+	//! \param[in] messageId is the index of the Message with which this
+	//!		DataTransfer is related
+	static inline DataTransfer *fetchDataRaw(
+		DataAccessRegion const &region,
+		MemoryPlace const *from,
+		int messageId
+	) {
+		assert(_msn != nullptr);
+		assert(from != nullptr);
+		
+		ClusterNode *remoteNode = getClusterNode(from->getIndex());
+		return _msn->fetchData(region, remoteNode, messageId);
+	}
+	
+	//! \brief Send a DataAccessRegion to a remote node
+	//!
+	//! \param[in] region is the address region to send
+	//! \param[in] to is the remote MemoryPlace we are sending to
+	//! \param[in] messageId is the index of the Message with which this
+	//!		DataTransfer is related
+	static inline DataTransfer *sendDataRaw(
+		DataAccessRegion const &region,
+		MemoryPlace *to,
+		int messageId
+	) {
+		assert(_msn != nullptr);
+		assert(to != nullptr);
+		
+		ClusterNode *remoteNode = getClusterNode(to->getIndex());
+		return _msn->sendData(region, remoteNode, messageId);
 	}
 	
 	//! \brief A barrier across all cluster nodes
