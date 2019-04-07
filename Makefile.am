@@ -381,12 +381,16 @@ cluster_sources += \
 	src/cluster/messages/Message.cpp \
 	src/cluster/messages/MessageSysFinish.cpp \
 	src/cluster/messages/MessageType.cpp \
-	src/cluster/messenger/MPIMessenger.cpp
+	src/cluster/messenger/MPIMessenger.cpp \
+	src/cluster/polling-services/DataTransferCompletion.cpp \
+	src/cluster/polling-services/MessageDelivery.cpp \
+	src/cluster/polling-services/MessageHandler.cpp
 
 cluster_cppflags = \
 	-I$(srcdir)/src/cluster \
 	-I$(srcdir)/src/cluster/messages \
 	-I$(srcdir)/src/cluster/messenger \
+	-I$(srcdir)/src/cluster/polling-services \
 	-I$(srcdir)/src/hardware/cluster \
 	-I$(srcdir)/src/hardware/cluster/memory
 else
@@ -592,6 +596,10 @@ noinst_HEADERS = \
 	src/cluster/messenger/MPIDataTransfer.hpp \
 	src/cluster/messenger/MPIMessenger.hpp \
 	src/cluster/null/ClusterManager.hpp \
+	src/cluster/polling-services/ClusterPollingServices.hpp \
+	src/cluster/polling-services/DataTransferCompletion.hpp \
+	src/cluster/polling-services/MessageDelivery.hpp \
+	src/cluster/polling-services/MessageHandler.hpp \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \

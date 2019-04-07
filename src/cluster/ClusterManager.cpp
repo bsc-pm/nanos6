@@ -8,6 +8,7 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "messages/MessageSysFinish.hpp"
 #include "messenger/Messenger.hpp"
+#include "polling-services/ClusterPollingServices.hpp"
 #include "system/RuntimeInfo.hpp"
 
 #include <ClusterNode.hpp>
@@ -39,6 +40,10 @@ void ClusterManager::initializeCluster(std::string const &commType)
 	
 	_thisNode = _clusterNodes[nodeIndex];
 	_masterNode = _clusterNodes[masterIndex];
+	
+	if (inClusterMode()) {
+		ClusterPollingServices::initialize();
+	}
 	
 	_msn->synchronizeAll();
 	_callback.store(nullptr);
@@ -78,6 +83,10 @@ void ClusterManager::shutdown()
 	
 	for (auto &node : _clusterNodes) {
 		delete node;
+	}
+	
+	if (inClusterMode()) {
+		ClusterPollingServices::shutdown();
 	}
 	
 	delete _msn;

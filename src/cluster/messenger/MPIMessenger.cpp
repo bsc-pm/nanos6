@@ -4,6 +4,7 @@
 #include "MPIDataTransfer.hpp"
 #include "MPIMessenger.hpp"
 #include "cluster/messages/Message.hpp"
+#include "cluster/polling-services/ClusterPollingServices.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include <ClusterManager.hpp>
@@ -93,6 +94,7 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	checkSuccess(ret, INTRA_COMM);
 	
 	msg->setMessengerData((void *)request);
+	ClusterPollingServices::addPendingMessage(msg);
 }
 
 DataTransfer *MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *to, int messageId)
