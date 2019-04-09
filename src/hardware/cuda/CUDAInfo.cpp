@@ -8,18 +8,25 @@
 
 void CUDAInfo::initialize()
 {
-	int deviceCount;
-	cudaGetDeviceCount(&deviceCount);
-	
-	if (deviceCount == 0) {
-		return;	
+	int deviceCount = 0;
+	cudaError_t err = cudaGetDeviceCount(&deviceCount);
+	if (err != cudaSuccess) {
+		// Warn if there are no devices
+		CUDAErrorHandler::warnIf(err == cudaErrorNoDevice, "No CUDA device was found. Instantiation of CUDA tasks may lead to undefined behaviour");
+		
+		if (err != cudaErrorNoDevice) {
+			CUDAErrorHandler::handle(err);
+		}
+		return;
 	}
+	assert(deviceCount > 0);
 	
 	_devices.resize(deviceCount);
 	_pollingServices.resize(deviceCount);
-    	for (int i = 0; i < deviceCount; ++i) {
-		setDevice(i);	
-			
+	
+	for (int i = 0; i < deviceCount; ++i) {
+		setDevice(i);
+		
 		_devices[i] = new CUDADevice(i);
 		
 		_pollingServices[i] = new CUDAPollingService(_devices[i]);
