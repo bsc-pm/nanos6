@@ -54,6 +54,7 @@ nanos6include_HEADERS = \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/major.h \
+	api/nanos6/monitoring.h \
 	api/nanos6/polling.h \
 	api/nanos6/reductions.h \
 	api/nanos6/runtime-info.h \
@@ -163,6 +164,7 @@ symbol_resolution += \
 	loader/symbol-resolver/dependencies.c \
 	loader/symbol-resolver/events.c \
 	loader/symbol-resolver/final.c \
+	loader/symbol-resolver/monitoring.c \
 	loader/symbol-resolver/polling.c \
 	loader/symbol-resolver/reductions.c \
 	loader/symbol-resolver/runtime-info.c \
@@ -191,6 +193,7 @@ symbol_resolution += \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
 	loader/indirect-symbols/malloc.c \
+	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/polling.c \
 	loader/indirect-symbols/reductions.c \
 	loader/indirect-symbols/runtime-info.c \
@@ -347,6 +350,7 @@ common_sources = \
 	src/system/ClusterAPI.cpp \
 	src/system/EventsAPI.cpp \
 	src/system/LeaderThread.cpp \
+	src/system/MonitoringAPI.cpp \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
 	src/system/debug/DebugAPI.cpp \

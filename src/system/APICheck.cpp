@@ -26,6 +26,7 @@ static const nanos6_api_versions_t apiVersions = {
 	.instantiation_api_version = nanos6_instantiation_api,
 	.library_mode_api_version = nanos6_library_mode_api,
 	.locking_api_version = nanos6_locking_api,
+	.monitoring_api_version = nanos6_monitoring_api,
 	.polling_api_version = nanos6_polling_api,
 	.task_constraints_api_version = nanos6_task_constraints_api,
 	.task_execution_api_version = nanos6_task_execution_api,

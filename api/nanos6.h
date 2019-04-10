@@ -22,6 +22,7 @@
 #include "nanos6/final.h"
 #include "nanos6/polling.h"
 #include "nanos6/major.h"
+#include "nanos6/monitoring.h"
 #include "nanos6/multidimensional-dependencies.h"
 #include "nanos6/multidimensional-release.h"
 #include "nanos6/task-info-registration.h"

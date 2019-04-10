@@ -209,3 +209,26 @@ void Monitoring::shutdownThread()
 	}
 }
 
+
+//    PREDICTORS    //
+
+double Monitoring::getPredictedElapsedTime()
+{
+	if (_enabled) {
+		const double cpuUtilization = CPUMonitor::getTotalActiveness();
+		const double instantiated   = WorkloadPredictor::getPredictedWorkload(instantiated_load);
+		const double finished       = WorkloadPredictor::getPredictedWorkload(finished_load);
+		
+		// Convert completion times -- current elapsed execution time of tasks
+		// that have not finished execution yet -- from ticks to microseconds
+		Chrono completionTime(WorkloadPredictor::getTaskCompletionTimes());
+		const double completion = ((double) completionTime);
+		
+		double timeLeft = ((instantiated - finished - completion) / cpuUtilization);
+		
+		// Check if the elapsed time substracted from the predictions underflows
+		return (timeLeft < 0.0 ? 0.0 : timeLeft);
+	}
+	
+	return 0.0;
+}

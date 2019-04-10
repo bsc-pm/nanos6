@@ -90,6 +90,13 @@ public:
 	//! \brief Propagate monitoring operations when a thread is shutdown
 	static void shutdownThread();
 	
+	
+	//    PREDICTORS    //
+	
+	//! \brief Poll the expected time until completion of the current execution
+	//! \return An estimation of the time to completion in microseconds
+	static double getPredictedElapsedTime();
+	
 };
 
 #endif // MONITORING_HPP

@@ -45,6 +45,11 @@ public:
 	{
 	}
 	
+	static inline double getPredictedElapsedTime()
+	{
+		return 0.0;
+	}
+	
 };
 
 #endif // NULL_MONITORING_HPP
