@@ -31,6 +31,7 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include <support/ConcurrentUnorderedList.hpp>
+#include <ClusterManager.hpp>
 
 
 namespace Instrument {
@@ -76,6 +77,9 @@ namespace Instrument {
 			
 			void appendLocation(InstrumentationContext const &context)
 			{
+				ClusterNode *clusterNode = ClusterManager::getCurrentClusterNode();
+				assert(clusterNode != nullptr);
+				_contents << "Node:" << clusterNode->getIndex() << " ";
 				if (context._externalThreadName != nullptr) {
 					_contents << "ExternalThread:" << *context._externalThreadName;
 				} else {
