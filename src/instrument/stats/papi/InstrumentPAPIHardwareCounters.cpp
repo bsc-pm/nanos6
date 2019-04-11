@@ -4,11 +4,6 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "PAPIHardwareCounters.hpp"
-#include "executors/threads/WorkerThread.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
-#include "system/RuntimeInfo.hpp"
-
 // Work around bug in PAPI header
 #define ffsll papi_ffsll
 #include <papi.h>
@@ -20,8 +15,13 @@
 #include <string>
 #include <sstream>
 
+#include "InstrumentPAPIHardwareCounters.hpp"
+#include "executors/threads/WorkerThread.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
+#include "system/RuntimeInfo.hpp"
 
-namespace HardwareCounters {
+
+namespace InstrumentHardwareCounters {
 	namespace PAPI {
 		int _initializationCount = 0;
 		
@@ -247,7 +247,7 @@ namespace HardwareCounters {
 			rc = PAPI_destroy_eventset(&eventSet);
 			FatalErrorHandler::failIf(rc != PAPI_OK, "destroying PAPI training event set");
 		}
-	} // HardwareCounters::PAPI
+	} // InstrumentHardwareCounters::PAPI
 	
 	
 	void initialize()
@@ -323,5 +323,5 @@ namespace HardwareCounters {
 		PAPI::_initializationCount--;
 	}
 	
-} // HardwareCounters
+} // InstrumentHardwareCounters
 

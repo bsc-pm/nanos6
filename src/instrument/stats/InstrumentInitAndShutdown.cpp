@@ -4,15 +4,16 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
+#include <fstream>
+
+#include "InstrumentHardwareCounters.hpp"
 #include "InstrumentInitAndShutdown.hpp"
 #include "InstrumentStats.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
-#include <executors/threads/ThreadManager.hpp>
-#include <executors/threads/CPUManager.hpp>
-#include "performance/HardwareCounters.hpp"
 #include "system/RuntimeInfo.hpp"
 
-#include <fstream>
+#include <executors/threads/CPUManager.hpp>
+#include <executors/threads/ThreadManager.hpp>
 
 
 namespace Instrument {
@@ -46,7 +47,7 @@ namespace Instrument {
 			output << "STATS\t" << name << " mean lifetime\t"
 				<< meanTimes.getTotal() << "\t" << Timer::getUnits() << std::endl;
 			
-			for (HardwareCounters::counter_value_t const &counterValue : taskInfo._hardwareCounters[0]) {
+			for (InstrumentHardwareCounters::counter_value_t const &counterValue : taskInfo._hardwareCounters[0]) {
 				output << "STATS\t" << name << " " << counterValue._name << "\t";
 				
 				if (counterValue._isInteger) {
@@ -72,7 +73,7 @@ namespace Instrument {
 	void initialize()
 	{
 		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "stats");
-		HardwareCounters::initialize();
+		InstrumentHardwareCounters::initialize();
 		
 		_phasesSpinLock.writeLock();
 		_phaseTimes.emplace_back(true);
@@ -85,7 +86,7 @@ namespace Instrument {
 		_totalTime.stop();
 		double totalTime = _totalTime;
 		
-		HardwareCounters::shutdown();
+		InstrumentHardwareCounters::shutdown();
 		
 		ThreadInfo accumulatedThreadInfo(false);
 		int numThreads = 0;

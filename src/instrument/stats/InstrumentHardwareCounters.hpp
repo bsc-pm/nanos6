@@ -4,8 +4,8 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef HARDWARE_COUNTERS_HPP
-#define HARDWARE_COUNTERS_HPP
+#ifndef INSTRUMENT_HARDWARE_COUNTERS_HPP
+#define INSTRUMENT_HARDWARE_COUNTERS_HPP
 
 
 #include <cstddef>
@@ -13,7 +13,7 @@
 #include <utility>
 
 
-namespace HardwareCounters {
+namespace InstrumentHardwareCounters {
 	enum counter_types_t {
 		no_counters_counters_type = 0,
 		papi_counters_type
@@ -75,10 +75,10 @@ namespace HardwareCounters {
 
 
 #if HAVE_PAPI
-#include "PAPI/PAPIHardwareCounters.hpp"
+#include "papi/InstrumentPAPIHardwareCounters.hpp"
 #else
-#include "no-HC/NoHardwareCounters.hpp"
+#include "null/InstrumentNullHardwareCounters.hpp"
 #endif
 
 
-#endif // HARDWARE_COUNTERS_HPP
+#endif // INSTRUMENT_HARDWARE_COUNTERS_HPP

@@ -4,8 +4,8 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef PAPI_HARDWARE_COUNTERS_HPP
-#define PAPI_HARDWARE_COUNTERS_HPP
+#ifndef INSTRUMENT_PAPI_HARDWARE_COUNTERS_HPP
+#define INSTRUMENT_PAPI_HARDWARE_COUNTERS_HPP
 
 #include <cassert>
 #include <cstddef>
@@ -16,12 +16,12 @@
 #include <papi.h>
 #undef ffsll
 
-#include "../HardwareCounters.hpp"
-#include "PAPIHardwareCountersThreadLocalData.hpp"
+#include "InstrumentPAPIHardwareCountersThreadLocalData.hpp"
+#include "../InstrumentHardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-namespace HardwareCounters {
+namespace InstrumentHardwareCounters {
 	namespace PAPI {
 		extern int _initializationCount;
 		
@@ -155,7 +155,7 @@ namespace HardwareCounters {
 		
 		class iterator {
 		protected:
-			friend class HardwareCounters::CounterSetReference;
+			friend class InstrumentHardwareCounters::CounterSetReference;
 			
 			CounterSetReference const &_counterSetReference;
 			int _index;
@@ -556,4 +556,4 @@ namespace HardwareCounters {
 };
 
 
-#endif // PAPI_HARDWARE_COUNTERS_HPP
+#endif // INSTRUMENT_PAPI_HARDWARE_COUNTERS_HPP

@@ -13,11 +13,10 @@
 
 #include <nanos6.h>
 
+#include "Timer.hpp"
+#include "instrument/stats/InstrumentHardwareCounters.hpp"
 #include "lowlevel/RWTicketSpinLock.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "Timer.hpp"
-
-#include "performance/HardwareCounters.hpp"
 
 
 namespace Instrument {
@@ -90,7 +89,7 @@ namespace Instrument {
 		struct TaskInfo {
 			long _numInstances;
 			TaskTimes _times;
-			HardwareCounters::Counters<> _hardwareCounters;
+			InstrumentHardwareCounters::Counters<> _hardwareCounters;
 			
 			TaskInfo()
 				: _numInstances(0), _times(true), _hardwareCounters()
@@ -105,7 +104,7 @@ namespace Instrument {
 				return *this;
 			}
 			
-			TaskInfo &operator+=(HardwareCounters::Counters<> const &instanceHardwareCounters)
+			TaskInfo &operator+=(InstrumentHardwareCounters::Counters<> const &instanceHardwareCounters)
 			{
 				_hardwareCounters += instanceHardwareCounters;
 				
@@ -132,7 +131,7 @@ namespace Instrument {
 			TaskTimes _times;
 			bool _hasParent;
 			Timer *_currentTimer;
-			HardwareCounters::ThreadCounters<> _hardwareCounters;
+			InstrumentHardwareCounters::ThreadCounters<> _hardwareCounters;
 			
 			TaskTypeAndTimes(nanos6_task_info_t const *type, bool hasParent)
 				: _type(type), _times(false), _hasParent(hasParent), _currentTimer(&_times._instantiationTime), _hardwareCounters()
@@ -145,7 +144,7 @@ namespace Instrument {
 			std::map<nanos6_task_info_t const *, TaskInfo> _perTask;
 			Timer _runningTime;
 			Timer _blockedTime;
-			HardwareCounters::Counters<> _hardwareCounters;
+			InstrumentHardwareCounters::Counters<> _hardwareCounters;
 			
 			PhaseInfo(bool active=true)
 				: _perTask(),

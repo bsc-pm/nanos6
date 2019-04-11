@@ -4,10 +4,10 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "HardwareCounters.hpp"
+#include "InstrumentHardwareCounters.hpp"
 
 
-namespace HardwareCounters {
+namespace InstrumentHardwareCounters {
 	char const * const _presetCounterNames[total_preset_counter] = {
 		"Real frequency",
 		"Virtual frequency",
@@ -24,5 +24,5 @@ namespace HardwareCounters {
 };
 
 
-#include "performance/HardwareCountersThreadLocalData.hpp"
-#include "performance/HardwareCountersThreadLocalDataImplementation.hpp"
+#include "InstrumentHardwareCountersThreadLocalData.hpp"
+#include "InstrumentHardwareCountersThreadLocalDataImplementation.hpp"

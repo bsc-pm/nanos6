@@ -4,10 +4,10 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include <performance/HardwareCountersThreadLocalData.hpp>
-#include <performance/HardwareCountersThreadLocalDataImplementation.hpp>
-
 #include "InstrumentStats.hpp"
+
+#include <InstrumentHardwareCountersThreadLocalData.hpp>
+#include <InstrumentHardwareCountersThreadLocalDataImplementation.hpp>
 
 
 namespace Instrument {

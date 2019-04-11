@@ -462,10 +462,10 @@ CLEANFILES += \
 
 
 hardware_counters_sources = \
-	src/performance/HardwareCounters.cpp
+	src/instrument/stats/InstrumentHardwareCounters.cpp
 
 papi_hardware_counters_sources = \
-	src/performance/PAPI/PAPIHardwareCounters.cpp
+	src/instrument/stats/papi/InstrumentPAPIHardwareCounters.cpp
 
 no_hardware_counters_sources = 
 
@@ -782,6 +782,9 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
 	src/instrument/stats/InstrumentExternalThreadId.hpp \
 	src/instrument/stats/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/stats/InstrumentHardwareCounters.hpp \
+	src/instrument/stats/InstrumentHardwareCountersThreadLocalData.hpp \
+	src/instrument/stats/InstrumentHardwareCountersThreadLocalDataImplementation.hpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
@@ -798,6 +801,12 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentTracingPoints.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp \
+	src/instrument/stats/null/InstrumentNullHardwareCounters.hpp \
+	src/instrument/stats/null/InstrumentNullHardwareCountersThreadLocalData.hpp \
+	src/instrument/stats/null/InstrumentNullHardwareCountersThreadLocalDataImplementation.hpp \
+	src/instrument/stats/papi/InstrumentPAPIHardwareCounters.hpp \
+	src/instrument/stats/papi/InstrumentPAPIHardwareCountersThreadLocalData.hpp \
+	src/instrument/stats/papi/InstrumentPAPIHardwareCountersThreadLocalDataImplementation.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
@@ -883,15 +892,6 @@ noinst_HEADERS = \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
 	src/memory/vmm/smp/VirtualMemoryManagement.hpp \
-	src/performance/HardwareCounters.hpp \
-	src/performance/HardwareCountersThreadLocalData.hpp \
-	src/performance/HardwareCountersThreadLocalDataImplementation.hpp \
-	src/performance/PAPI/PAPIHardwareCounters.hpp \
-	src/performance/PAPI/PAPIHardwareCountersThreadLocalData.hpp \
-	src/performance/PAPI/PAPIHardwareCountersThreadLocalDataImplementation.hpp \
-	src/performance/no-HC/NoHardwareCounters.hpp \
-	src/performance/no-HC/NoHardwareCountersThreadLocalData.hpp \
-	src/performance/no-HC/NoHardwareCountersThreadLocalDataImplementation.hpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \

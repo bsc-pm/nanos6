@@ -8,14 +8,12 @@
 #define INSTRUMENT_STATS_THREAD_MANAGEMENT_HPP
 
 
-#include "../api/InstrumentThreadManagement.hpp"
-#include "../support/InstrumentThreadLocalDataSupport.hpp"
-
+#include "InstrumentHardwareCounters.hpp"
 #include "InstrumentStats.hpp"
 #include "InstrumentThreadId.hpp"
 #include "InstrumentThreadLocalData.hpp"
-
-#include "performance/HardwareCounters.hpp"
+#include "../api/InstrumentThreadManagement.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 
 namespace Instrument {
@@ -30,7 +28,7 @@ namespace Instrument {
 	
 	inline void createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
-		HardwareCounters::initializeThread();
+		InstrumentHardwareCounters::initializeThread();
 		
 		ThreadLocalData &threadLocal = getThreadLocalData();
 		
@@ -77,7 +75,7 @@ namespace Instrument {
 	inline void threadWillShutdown()
 	{
 		// Clean PAPI events for the current thread
-		HardwareCounters::shutdownThread();
+		InstrumentHardwareCounters::shutdownThread();
 	}
 	
 	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)

@@ -8,12 +8,13 @@
 #define WORKER_THREAD_HPP
 
 
+#include <atomic>
+
 #include "DependencyDomain.hpp"
 #include "WorkerThreadBase.hpp"
-#include "performance/HardwareCountersThreadLocalData.hpp"
-#include <InstrumentThreadLocalData.hpp>
+#include "instrument/stats/InstrumentHardwareCountersThreadLocalData.hpp"
 
-#include <atomic>
+#include <InstrumentThreadLocalData.hpp>
 
 
 struct CPU;
@@ -105,9 +106,9 @@ namespace ompss_debug {
 #endif
 
 
+#include "WorkerThreadImplementation.hpp"
 #include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
 #include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
-#include "WorkerThreadImplementation.hpp"
 
 
 #endif // WORKER_THREAD_HPP

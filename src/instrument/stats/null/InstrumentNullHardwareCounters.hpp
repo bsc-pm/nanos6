@@ -4,17 +4,17 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef NO_HARDWARE_COUNTERS_HPP
-#define NO_HARDWARE_COUNTERS_HPP
+#ifndef INSTRUMENT_NULL_HARDWARE_COUNTERS_HPP
+#define INSTRUMENT_NULL_HARDWARE_COUNTERS_HPP
 
-
-#include "system/RuntimeInfo.hpp"
 
 #include <cassert>
 #include <cstddef>
 
+#include "system/RuntimeInfo.hpp"
 
-namespace HardwareCounters {
+
+namespace InstrumentHardwareCounters {
 	enum implementation_type_t {
 		counters_type = no_counters_counters_type
 	};
@@ -57,7 +57,7 @@ namespace HardwareCounters {
 		
 		class iterator {
 		protected:
-			friend class HardwareCounters::CounterSetReference;
+			friend class InstrumentHardwareCounters::CounterSetReference;
 			
 			iterator()
 			{
@@ -169,4 +169,4 @@ namespace HardwareCounters {
 }
 
 
-#endif // NO_HARDWARE_COUNTERS_HPP
+#endif // INSTRUMENT_NULL_HARDWARE_COUNTERS_HPP

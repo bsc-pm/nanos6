@@ -7,17 +7,16 @@
 #ifndef WORKER_THREAD_IMPLEMENTATION_HPP
 #define WORKER_THREAD_IMPLEMENTATION_HPP
 
+#include <cassert>
+#include <typeinfo>
 
 #include "CPU.hpp"
 #include "DependencyDomain.hpp"
 #include "WorkerThread.hpp"
 #include "WorkerThreadBase.hpp"
-#include "performance/HardwareCountersThreadLocalData.hpp"
+#include "instrument/stats/InstrumentHardwareCountersThreadLocalData.hpp"
 
 #include <InstrumentThreadManagement.hpp>
-
-#include <cassert>
-#include <typeinfo>
 
 
 inline WorkerThread::WorkerThread(CPU * cpu)
@@ -129,7 +128,7 @@ namespace ompss_debug {
 #endif
 
 
-#include "performance/HardwareCountersThreadLocalDataImplementation.hpp"
+#include "instrument/stats/InstrumentHardwareCountersThreadLocalDataImplementation.hpp"
 
 
 #endif // WORKER_THREAD_IMPLEMENTATION_HPP

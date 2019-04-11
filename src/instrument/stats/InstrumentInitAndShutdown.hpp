@@ -9,8 +9,7 @@
 
 
 #include "../api/InstrumentInitAndShutdown.hpp"
-
-#include "performance/HardwareCounters.hpp"
+#include "instrument/stats/InstrumentHardwareCounters.hpp"
 
 
 namespace Instrument {

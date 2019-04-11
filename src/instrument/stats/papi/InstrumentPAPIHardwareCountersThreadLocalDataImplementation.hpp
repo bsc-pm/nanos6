@@ -4,20 +4,17 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
-#define PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
+#ifndef INSTRUMENT_PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
+#define INSTRUMENT_PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
 
 
-
-#include "PAPIHardwareCountersThreadLocalData.hpp"
-
-#include "PAPIHardwareCounters.hpp"
-
+#include "InstrumentPAPIHardwareCounters.hpp"
+#include "InstrumentPAPIHardwareCountersThreadLocalData.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/WorkerThreadImplementation.hpp"
 
 
-namespace HardwareCounters {
+namespace InstrumentHardwareCounters {
 	namespace PAPI {
 		inline HardwareCountersThreadLocalData &getCurrentThreadHardwareCounters()
 		{
@@ -33,4 +30,4 @@ namespace HardwareCounters {
 }
 
 
-#endif // PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
+#endif // INSTRUMENT_PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
