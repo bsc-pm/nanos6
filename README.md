@@ -26,6 +26,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [parallel](https://www.gnu.org/software/parallel/) to generate the graph representation in parallel
 1. [PAPI](https://icl.cs.utk.edu/papi/software/index.html)  to generate statistics that include hardware counters
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
+1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
 
 
 ## Build procedure
@@ -58,6 +59,10 @@ The configure script accepts the following options:
 1. `--with-libnuma=prefix` to specify the prefix of the numactl installation
 1. `--with-extrae=prefix` to specify the prefix of the extrae installation
 1. `--enable-cuda` to enable support for CUDA tasks
+1. `--with-pqos=prefix` to specify the prefix of the PQoS installation
+1. `--enable-monitoring` to enable monitoring and predictions of task/CPU/thread statistics
+1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
+1. `--enable-monitoring-hwevents` to enable monitoring of hardware counters (which must be paired with an appropriate library)
 
 The location of elfutils and hwloc is always retrieved through pkg-config.
 The location of PAPI can also be retrieved through pkg-config if it is not specified through the `--with-papi` parameter.
@@ -287,4 +292,53 @@ Some application output ...
 #	string	dependency_implementation	linear-regions-fragmented		Dependency Implementation
 #	string	threading_model	pthreads		Threading Model
 ```
+
+
+## Monitoring
+
+Gathering metrics and generating predictions for these metrics is possible and enabled through the Monitoring infrastructure.
+Monitoring is an infrastructure composed of several modules.
+Each of these modules controls the monitoring and prediction generation of specific elements of the runtime core.
+At this moment, Monitoring includes the following modules/predictors:
+
+1. A module to monitor and predict metrics for Tasks
+1. A module to monitor and predict metrics for Threads
+1. A module to monitor and predict metrics for CPUs
+1. A predictor that generates predictions of the elapsed time until completion of the application
+1. A predictor that generates real-time workload estimations
+1. A predictor that inferrs the CPU usage for a specific time range
+
+All of these metrics and predictions can be obtained at real-time within the runtime.
+The infrastructure also includes an external API to poll some of the predictions from user code.
+This external API can be used including `nanos6/monitoring.h` in applications.
+
+In addition, checkpointing of predictions is enabled through the Wisdom mechanism.
+This mechanism allows saving predictions for later usage, to enable earlier predictions in future executions.
+
+The Monitoring infrastructure is enabled at configure time, however, both the infrastructure and the Wisdom mechanism are controlled through additional environment variables:
+
+* `NANOS6_MONITORING_ENABLE`: To enable/disable monitoring and predictions of task, CPU, and thread statistics. Enabled by default if the runtime is configured with Monitoring.
+* `NANOS6_MONITORING_VERBOSE`: To enable/disable the verbose mode for monitoring. Enabled by default if the runtime is configured with Monitoring.
+* `NANOS6_MONITORING_ROLLING_WINDOW`: To specify the number of metrics used for accumulators (moving average's window). By default, the latest 20 metrics.
+* `NANOS6_WISDOM_ENABLE`: To enable/disable the wisdom mechanism. Disabled by default.
+* `NANOS6_WISDOM_PATH`: To specify a path in which the wisdom file is located (to load and/or store metrics). By default `.nanos6_monitoring_wisdom.json`.
+
+
+
+## Hardware Counters
+
+As well as the Monitoring Infrastructure and the `stats-papi` version of the runtime, Nanos6 offers a real-time API for Hardware Counter statistics.
+This API allows to obtain and predict hardware counters for tasks, similarly to Monitoring.
+
+By default, the NULL option is used, which records no hardware counters.
+At configure time, however, several options may be used to enable hardware counter monitoring using third party libraries.
+Enabling this API is as easy as configuring the runtime with the `enable-monitoring-hwevents` option.
+
+At this moment, Nanos6 offers intel-cmt-cat or PQoS to both obtain and generate metrics and predictions.
+This library is enabled like so: `--with-pqos=prefix` where `prefix` specifies the installation path of PQoS.
+
+The Hardware Counters API is controlled further with the following environment variables:
+* `NANOS6_HARDWARE_COUNTERS_ENABLE`: To enable/disable hardware counter monitoring.
+* `NANOS6_HARDWARE_COUNTERS_VERBOSE`: To enable/disable the verbose mode for hardware counter monitoring.
+* `NANOS6_HARDWARE_COUNTERS_VERBOSE_FILE`: To specify an output file name to report hardware counter statistics.
 

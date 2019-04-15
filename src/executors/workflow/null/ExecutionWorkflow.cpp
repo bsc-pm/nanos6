@@ -1,3 +1,9 @@
+/*
+	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+	
+	Copyright (C) 2018-2019 Barcelona Supercomputing Center (BSC)
+*/
+
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
