@@ -60,6 +60,9 @@ struct CPU: public CPUPlace {
 	cpu_set_t _cpuMask;
 	
 	//! \brief the pthread attr that is used for all the threads of this CPU
+	//!
+	//! Making changes in this attribute is *NOT* thread-safe. We assume that only
+	//! one thread is touching this at a time.
 	pthread_attr_t _pthreadAttr;
 	
 	//! \brief Per-CPU data that is specific to the threading model

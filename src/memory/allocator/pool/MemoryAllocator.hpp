@@ -10,6 +10,8 @@
 #include <map>
 #include <vector>
 
+#include "lowlevel/SpinLock.hpp"
+
 class MemoryPool;
 class MemoryPoolGlobal;
 class Task;

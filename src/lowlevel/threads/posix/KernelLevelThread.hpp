@@ -18,6 +18,8 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+#include <MemoryAllocator.hpp>
+
 #include "executors/threads/CPU.hpp"
 #include "lowlevel/ConditionVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -72,7 +74,7 @@ public:
 		return _tid;
 	}
 	
-	inline void start(pthread_attr_t const *pthreadAttr);
+	inline void start(pthread_attr_t *pthreadAttr);
 	
 	inline void bind(CPU const *cpu);
 	
@@ -129,9 +131,25 @@ void *kernel_level_thread_body_wrapper(void *parameter)
 }
 
 
-void KernelLevelThread::start(pthread_attr_t const *pthreadAttr)
+void KernelLevelThread::start(pthread_attr_t *pthreadAttr)
 {
-	int rc = pthread_create(&_pthread, pthreadAttr, &kernel_level_thread_body_wrapper, this);
+	void *stackptr;
+	size_t stacksize;
+	int rc;
+	
+	if (pthreadAttr != nullptr) {
+		rc = pthread_attr_getstacksize(pthreadAttr, &stacksize);
+		FatalErrorHandler::handle(rc, " when getting pthread's stacksize");
+
+		stackptr = MemoryAllocator::alloc(stacksize);
+		FatalErrorHandler::failIf(stackptr == nullptr,
+				" when allocating pthread stack");
+
+		rc = pthread_attr_setstack(pthreadAttr, stackptr, stacksize);
+		FatalErrorHandler::handle(rc, " when setting pthread's stack");
+	}
+	
+	rc = pthread_create(&_pthread, pthreadAttr, &kernel_level_thread_body_wrapper, this);
 	FatalErrorHandler::handle(rc, " when creating a pthread");
 }
 
