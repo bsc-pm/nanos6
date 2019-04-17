@@ -4,7 +4,7 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#include "CUDAPollingService.hpp" 
+#include "CUDAPollingService.hpp"
 
 #include <DataAccessRegistration.hpp>
 
@@ -25,7 +25,7 @@ CUDAPollingService::CUDAPollingService(CUDADevice *device)
 	std::stringstream ss;
 	ss << "CUDAPollingService-" << _device->getIndex();
 	_serviceName = ss.str();
-}	
+}
 
 CUDAPollingService::~CUDAPollingService()
 {
@@ -43,7 +43,7 @@ void CUDAPollingService::stop()
 
 void CUDAPollingService::finishTask(Task *task)
 {
-	cudaError_t err = cudaPeekAtLastError();	
+	cudaError_t err = cudaPeekAtLastError();
 	CUDAErrorHandler::handle(err);
 	
 	_device->getComputePlace()->postRunTask(task);
@@ -63,21 +63,32 @@ void CUDAPollingService::finishTask(Task *task)
 
 void CUDAPollingService::launchTask(Task *task)
 {
+	assert(_device != nullptr);
+	assert(task != nullptr);
+	
 	cudaSetDevice(_device->getIndex());
 	
 	CUDADeviceData *deviceData = new CUDADeviceData();
-	task->setDeviceData((void *) deviceData);	
+	task->setDeviceData((void *) deviceData);
 	
-	_device->getComputePlace()->preRunTask(task);
-	_device->getMemoryPlace()->preRunTask(task);
+	CUDAComputePlace *computePlace = _device->getComputePlace();
+	assert(computePlace != nullptr);
 	
-	_device->getMemoryPlace()->runTask(task);
-	_device->getComputePlace()->runTask(task);
+	CUDAMemoryPlace *memoryPlace = _device->getMemoryPlace();
+	assert(memoryPlace != nullptr);
+	
+	task->setMemoryPlace(memoryPlace);
+	
+	computePlace->preRunTask(task);
+	memoryPlace->preRunTask(task);
+	
+	memoryPlace->runTask(task);
+	computePlace->runTask(task);
 }
 
 void CUDAPollingService::run()
 {
-	// Discover finished kernels and free their dependencies 
+	// Discover finished kernels and free their dependencies
 	auto finishedTasks = _device->getComputePlace()->getListFinishedTasks();
 	
 	auto it = finishedTasks.begin();
@@ -89,7 +100,7 @@ void CUDAPollingService::run()
 	
 	/* Check for ready tasks */
 	Task *task = Scheduler::getReadyTask(_device->getComputePlace());
-	while (task != nullptr) { 
+	while (task != nullptr) {
 		launchTask(task);
 		task = Scheduler::getReadyTask(_device->getComputePlace());
 	}
