@@ -1,8 +1,12 @@
 
+#include <fstream>
+
 #include "Monitoring.hpp"
 
 
 EnvironmentVariable<bool> Monitoring::_enabled("NANOS6_MONITORING_ENABLE", true);
+EnvironmentVariable<bool> Monitoring::_verbose("NANOS6_MONITORING_VERBOSE", true);
+EnvironmentVariable<std::string> Monitoring::_outputFile("NANOS6_MONITORING_VERBOSE_FILE", "output-monitoring.txt");
 Monitoring *Monitoring::_monitor;
 
 
@@ -24,6 +28,9 @@ void Monitoring::initialize()
 void Monitoring::shutdown()
 {
 	if (_enabled) {
+		// Display monitoring statistics
+		displayStatistics();
+		
 		// Propagate shutdown to the task monitoring module
 		TaskMonitor::shutdown();
 		
@@ -33,6 +40,34 @@ void Monitoring::shutdown()
 		}
 		
 		_enabled.setValue(false);
+	}
+}
+
+void Monitoring::displayStatistics()
+{
+	if (_enabled && _verbose) {
+		// Try opening the output file
+		std::ios_base::openmode openMode = std::ios::out;
+		std::ofstream output(_outputFile.getValue(), openMode);
+		FatalErrorHandler::warnIf(
+			!output.is_open(),
+			"Could not create or open the verbose file: ",
+			_outputFile.getValue(),
+			". Using standard output."
+		);
+		
+		// Retrieve statistics from every module
+		std::stringstream outputStream;
+		TaskMonitor::displayStatistics(outputStream);
+		
+		if (output.is_open()) {
+			// Output into the file and close it
+			output << outputStream.str();
+			output.close();
+		}
+		else {
+			std::cout << outputStream.str();
+		}
 	}
 }
 

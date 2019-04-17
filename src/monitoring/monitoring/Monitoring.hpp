@@ -3,6 +3,7 @@
 
 #include "TaskMonitor.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -12,6 +13,12 @@ private:
 	
 	//! Whether monitoring has to be performed or not
 	static EnvironmentVariable<bool> _enabled;
+	
+	//! Whether verbose mode is enabled
+	static EnvironmentVariable<bool> _verbose;
+	
+	//! The file where output must be saved when verbose mode is enabled
+	static EnvironmentVariable<std::string> _outputFile;
 	
 	// The "monitor", singleton instance
 	static Monitoring *_monitor;
@@ -40,6 +47,9 @@ public:
 	
 	//! \brief Shutdown monitoring
 	static void shutdown();
+	
+	//! \brief Display monitoring statistics
+	static void displayStatistics();
 	
 	//! \brief Whether monitoring is enabled
 	static bool isEnabled();

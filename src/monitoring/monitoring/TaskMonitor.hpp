@@ -1,7 +1,10 @@
 #ifndef TASK_MONITOR_HPP
 #define TASK_MONITOR_HPP
 
+#include <iomanip>
+#include <iostream>
 #include <map>
+#include <sstream>
 #include <string>
 
 #include "TasktypePredictions.hpp"
@@ -63,6 +66,54 @@ public:
 			}
 			
 			delete _monitor;
+		}
+	}
+	
+	//! \brief Display task statistics
+	//! \param stream The output stream
+	static inline void displayStatistics(std::stringstream &stream)
+	{
+		if (_monitor != nullptr) {
+			stream << std::left << std::fixed << std::setprecision(5) << "\n";
+			stream << "+-----------------------------+\n";
+			stream << "|       TASK STATISTICS       |\n";
+			stream << "+-----------------------------+\n";
+			
+			for (auto const &it : _monitor->_tasktypeMap) {
+				int instances = it.second->getInstances();
+				if (instances) {
+					double avgCost        = it.second->getAverageTimePerUnitOfCost();
+					double stdevCost      = it.second->getStdevTimePerUnitOfCost();
+					double accuracy       = it.second->getPredictionAccuracy();
+					std::string typeLabel = it.first + " (" + std::to_string(instances) + ")";
+					std::string accur = "NA";
+					
+					// Make sure there was at least one prediction to report accuracy
+					if (!std::isnan(accuracy)) {
+						std::stringstream accuracyStream;
+						accuracyStream << std::setprecision(2) << std::fixed << accuracy << "%";
+						accur = accuracyStream.str();
+					}
+					stream <<
+						std::setw(7)  << "STATS"                    << " " <<
+						std::setw(12) << "MONITORING"               << " " <<
+						std::setw(26) << "TASK-TYPE (INSTANCES)"    << " " <<
+						std::setw(20) << typeLabel                  << "\n";
+					stream <<
+						std::setw(7)  << "STATS"                    << " "   <<
+						std::setw(12) << "MONITORING"               << " "   <<
+						std::setw(26) << "UNITARY COST AVG / STDEV" << " "   <<
+						std::setw(10) << avgCost                    << " / " <<
+						std::setw(10) << stdevCost                  << "\n";
+					stream <<
+						std::setw(7)  << "STATS"                    << " " <<
+						std::setw(12) << "MONITORING"               << " " <<
+						std::setw(26) << "PREDICTION ACCURACY (%)"  << " " <<
+						std::setw(10) << accur                      << "\n";
+					stream << "+-----------------------------+\n";
+				}
+			}
+			stream << "\n";
 		}
 	}
 	
