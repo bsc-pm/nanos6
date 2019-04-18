@@ -33,19 +33,19 @@ public:
 	}
 	
 	//! \brief Get the MemoryNode of the cluster node
-	ClusterMemoryNode *getMemoryNode() const
+	inline ClusterMemoryNode *getMemoryNode() const
 	{
 		return _memoryNode;
 	}
 	
 	//! \brief Get the index of the ClusterNode
-	int getIndex() const
+	inline int getIndex() const
 	{
 		return _index;
 	}
 	
 	//! \brief Get the communicator index of the ClusterNode
-	int getCommIndex() const
+	inline int getCommIndex() const
 	{
 		return _commIndex;
 	}

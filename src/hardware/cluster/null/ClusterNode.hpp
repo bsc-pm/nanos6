@@ -22,18 +22,18 @@ public:
 	{
 	}
 	
-	ClusterMemoryNode *getMemoryNode() const
+	inline ClusterMemoryNode *getMemoryNode() const
 	{
 		static ClusterMemoryNode ourDummyNode;
 		return &ourDummyNode;
 	}
 	
-	int getIndex() const
+	inline int getIndex() const
 	{
 		return 0;
 	}
 	
-	int getCommIndex() const
+	inline int getCommIndex() const
 	{
 		return 0;
 	}
