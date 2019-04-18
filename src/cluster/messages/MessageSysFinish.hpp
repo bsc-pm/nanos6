@@ -4,8 +4,8 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef __MESSAGE_SYS_FINISH_HPP__
-#define __MESSAGE_SYS_FINISH_HPP__
+#ifndef MESSAGE_SYS_FINISH_HPP
+#define MESSAGE_SYS_FINISH_HPP
 
 #include "Message.hpp"
 
@@ -36,4 +36,4 @@ namespace {
 		REGISTER_MSG_CLASS(SYS_FINISH, createSysFinishMessage);
 }
 
-#endif /* __MESSAGE_SYS_FINISH_HPP__ */
+#endif /* MESSAGE_SYS_FINISH_HPP */

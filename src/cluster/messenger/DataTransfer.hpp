@@ -1,5 +1,5 @@
-#ifndef DATA_TRANSFER_HPP__
-#define DATA_TRANSFER_HPP__
+#ifndef DATA_TRANSFER_HPP
+#define DATA_TRANSFER_HPP
 
 #include <functional>
 
@@ -79,4 +79,4 @@ public:
 	}
 };
 
-#endif /* DATA_TRANSFER_HPP__ */
+#endif /* DATA_TRANSFER_HPP */

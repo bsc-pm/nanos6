@@ -4,8 +4,8 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef MPI_MESSENGER_H
-#define MPI_MESSENGER_H
+#ifndef MPI_MESSENGER_HPP
+#define MPI_MESSENGER_HPP
 
 #include <sstream>
 #include <vector>
@@ -121,4 +121,4 @@ namespace
 		REGISTER_MSN_CLASS("mpi-2sided", createMPImsn);
 }
 
-#endif /* MPI_MESSENGER_H */
+#endif /* MPI_MESSENGER_HPP */

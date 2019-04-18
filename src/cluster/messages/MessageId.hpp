@@ -4,8 +4,8 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef MESSAGE_ID_HPP__
-#define MESSAGE_ID_HPP__
+#ifndef MESSAGE_ID_HPP
+#define MESSAGE_ID_HPP
 
 #include <atomic>
 
@@ -27,4 +27,4 @@ namespace MessageId {
 };
 
 
-#endif /* MESSAGE_ID_HPP__ */
+#endif /* MESSAGE_ID_HPP */

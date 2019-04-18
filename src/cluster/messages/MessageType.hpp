@@ -4,8 +4,8 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef __MESSAGE_TYPE_HPP__
-#define __MESSAGE_TYPE_HPP__
+#ifndef MESSAGE_TYPE_HPP
+#define MESSAGE_TYPE_HPP
 
 //! Maximum length of the name of a message
 #define MSG_NAMELEN 32
@@ -19,4 +19,4 @@ typedef enum {
 //! Defined in MessageType.cpp
 extern const char MessageTypeStr[TOTAL_MESSAGE_TYPES][MSG_NAMELEN];
 
-#endif /* __MESSAGE_TYPE_HPP__ */
+#endif /* MESSAGE_TYPE_HPP */

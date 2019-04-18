@@ -1,5 +1,5 @@
-#ifndef MPI_DATA_TRANSFER_HPP__
-#define MPI_DATA_TRANSFER_HPP__
+#ifndef MPI_DATA_TRANSFER_HPP
+#define MPI_DATA_TRANSFER_HPP
 
 #pragma GCC visibility push(default)
 #include <mpi.h>
@@ -32,4 +32,4 @@ public:
 	}
 };
 
-#endif /* MPI_DATA_TRANSFER_HPP__ */
+#endif /* MPI_DATA_TRANSFER_HPP */
