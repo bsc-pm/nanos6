@@ -6,6 +6,7 @@
 #include "cluster/messages/Message.hpp"
 #include "cluster/polling-services/ClusterPollingServices.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "lowlevel/mpi/MPIErrorHandler.hpp"
 
 #include <ClusterManager.hpp>
 #include <ClusterNode.hpp>
@@ -30,20 +31,20 @@ MPIMessenger::MPIMessenger()
 	
 	//! Save the parent communicator
 	ret = MPI_Comm_get_parent(&PARENT_COMM);
-	checkSuccess(ret, MPI_COMM_WORLD);
+	MPIErrorHandler::handle(ret, MPI_COMM_WORLD);
 	
 	//! Create a new communicator
 	ret = MPI_Comm_dup(MPI_COMM_WORLD, &INTRA_COMM);
-	checkSuccess(ret, MPI_COMM_WORLD);
+	MPIErrorHandler::handle(ret, MPI_COMM_WORLD);
 	
 	//! make sure the new communicator returns errors
 	MPI_Comm_set_errhandler(INTRA_COMM, MPI_ERRORS_RETURN);
 	
 	ret = MPI_Comm_rank(INTRA_COMM, &wrank);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	ret = MPI_Comm_size(INTRA_COMM, &wsize);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 }
 
 MPIMessenger::~MPIMessenger()
@@ -52,10 +53,10 @@ MPIMessenger::~MPIMessenger()
 	
 	//! Release the intra-communicator
 	ret = MPI_Comm_free(&INTRA_COMM);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	ret = MPI_Finalize();
-	checkSuccess(ret, MPI_COMM_WORLD);
+	MPIErrorHandler::handle(ret, MPI_COMM_WORLD);
 }
 
 void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool block)
@@ -75,7 +76,7 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	if (block) {
 		ret = MPI_Send((void *)delv, msgSize, MPI_BYTE, mpiDst,
 				tag, INTRA_COMM);
-		checkSuccess(ret, INTRA_COMM);
+		MPIErrorHandler::handle(ret, INTRA_COMM);
 		
 		msg->markAsDelivered();
 		return;
@@ -91,7 +92,7 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	
 	ret = MPI_Isend((void *)delv, msgSize, MPI_BYTE, mpiDst,
 			tag, INTRA_COMM, request);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	msg->setMessengerData((void *)request);
 	ClusterPollingServices::addPendingMessage(msg);
@@ -116,7 +117,7 @@ DataTransfer *MPIMessenger::sendData(const DataAccessRegion &region, const Clust
 	
 	ret = MPI_Isend(address, size, MPI_BYTE, mpiDst, tag, INTRA_COMM,
 			request);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	return new MPIDataTransfer(region, ClusterManager::getCurrentMemoryNode(),
 			to->getMemoryNode(), request);
@@ -141,7 +142,7 @@ DataTransfer *MPIMessenger::fetchData(const DataAccessRegion &region, const Clus
 	
 	ret = MPI_Irecv(address, size, MPI_BYTE, mpiSrc, tag, INTRA_COMM,
 			request);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	return new MPIDataTransfer(region, from->getMemoryNode(),
 			ClusterManager::getCurrentMemoryNode(), request);
@@ -150,7 +151,7 @@ DataTransfer *MPIMessenger::fetchData(const DataAccessRegion &region, const Clus
 void MPIMessenger::synchronizeAll(void)
 {
 	int ret = MPI_Barrier(INTRA_COMM);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 }
 
 Message *MPIMessenger::checkMail(void)
@@ -160,7 +161,7 @@ Message *MPIMessenger::checkMail(void)
 	Message::Deliverable *msg;
 	
 	ret = MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, INTRA_COMM, &flag, &status);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	if (!flag) {
 		return nullptr;
@@ -174,7 +175,7 @@ Message *MPIMessenger::checkMail(void)
 	}
 	
 	ret = MPI_Get_count(&status, MPI_BYTE, &count);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	msg = (Message::Deliverable *)malloc(count);
 	if (!msg) {
@@ -185,7 +186,7 @@ Message *MPIMessenger::checkMail(void)
 	assert(count != 0);
 	ret = MPI_Recv((void *)msg, count, MPI_BYTE, status.MPI_SOURCE,
 			status.MPI_TAG, INTRA_COMM, MPI_STATUS_IGNORE);
-	checkSuccess(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	return GenericFactory<int, Message*, Message::Deliverable*>::getInstance().create(type, msg);
 }
@@ -213,7 +214,7 @@ void MPIMessenger::testMessageCompletion(
 	
 	ret = MPI_Testsome(msgCount, requests, &completedCount,
 			finished, status);
-	checkSuccess(ret, status, completedCount, INTRA_COMM);
+	MPIErrorHandler::handleErrorInStatus(ret, status, completedCount, INTRA_COMM);
 	
 	for (int i = 0; i < completedCount; ++i) {
 		int index = finished[i];
@@ -247,7 +248,7 @@ void MPIMessenger::testDataTransferCompletion(
 	
 	ret = MPI_Testsome(msgCount, requests, &completedCount, finished,
 			status);
-	checkSuccess(ret, status, completedCount, INTRA_COMM);
+	MPIErrorHandler::handleErrorInStatus(ret, status, completedCount, INTRA_COMM);
 	
 	for (int i = 0; i < completedCount; ++i) {
 		int index = finished[i];

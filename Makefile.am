@@ -895,6 +895,7 @@ noinst_HEADERS = \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cuda/CUDAErrorHandler.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/mpi/MPIErrorHandler.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/threads/ExternalThread.hpp \
 	src/lowlevel/threads/ExternalThreadGroup.hpp \
