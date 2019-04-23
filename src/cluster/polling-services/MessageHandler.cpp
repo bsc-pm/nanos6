@@ -17,27 +17,24 @@
 #include "src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
 
 namespace ClusterPollingServices {
-	
-	namespace {
-		//! Polling service that checks for incoming messages
-		int message_handler(__attribute__((unused)) void *service_data)
-		{
-			Message *msg = ClusterManager::checkMail();
-			if (msg != nullptr) {
-				Instrument::logMessage(
-					Instrument::ThreadInstrumentationContext::getCurrent(),
-					"Received message ",
-					msg
-				);
-				if (msg->handleMessage()) {
-					delete msg;
-				}
+	//! Polling service that checks for incoming messages
+	static int messageHandler(void *)
+	{
+		Message *msg = ClusterManager::checkMail();
+		if (msg != nullptr) {
+			Instrument::logMessage(
+				Instrument::ThreadInstrumentationContext::getCurrent(),
+				"Received message ",
+				msg
+			);
+			if (msg->handleMessage()) {
+				delete msg;
 			}
-			
-			//! Always return false. This will be
-			//! unregistered by the ClusterManager
-			return 0;
 		}
+		
+		//! Always return false. This will be
+		//! unregistered by the ClusterManager
+		return 0;
 	}
 	
 	//! Register service
@@ -46,7 +43,7 @@ namespace ClusterPollingServices {
 		//! register message handler
 		nanos6_register_polling_service(
 			"cluster message handler",
-			message_handler,
+			messageHandler,
 			nullptr
 		);
 	}
@@ -57,7 +54,7 @@ namespace ClusterPollingServices {
 		//! unregister message handler
 		nanos6_unregister_polling_service(
 			"cluster message handler",
-			message_handler,
+			messageHandler,
 			nullptr
 		);
 	}

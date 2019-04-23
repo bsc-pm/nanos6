@@ -10,59 +10,63 @@
 #include <Message.hpp>
 
 namespace ClusterPollingServices {
+	struct PendingMessages {
+		std::vector<Message *> _messages;
+		PaddedSpinLock<64> _lock;
+	};
 	
-	namespace {
-		struct pending_messages {
-			std::vector<Message *> _messages;
-			PaddedSpinLock<64> _lock;
-		};
+	static PendingMessages _outgoingMessages;
+	
+	static int checkMessageDelivery(void *service_data)
+	{
+		PendingMessages *pending = (PendingMessages *)service_data;
+		assert(pending != nullptr);
 		
-		struct pending_messages _outgoing;
+		std::vector<Message *> &messages = pending->_messages;
 		
-		int check_message_delivery(void *service_data)
-		{
-			struct pending_messages *pending =
-				(struct pending_messages *)service_data;
-			std::vector<Message *> &messages = pending->_messages;
-			
-			std::lock_guard<PaddedSpinLock<64>> guard(pending->_lock);
-			if (messages.size() > 0) {
-				ClusterManager::testMessageCompletion(messages);
-				
-				messages.erase(
-					std::remove_if(
-						messages.begin(), messages.end(),
-						[](Message *msg) {
-							bool delivered = msg->isDelivered();
-							if (delivered) {
-								delete msg;
-							}
-							
-							return delivered;
-						}
-					),
-					std::end(messages)
-				);
-			}
-			
+		std::lock_guard<PaddedSpinLock<64>> guard(pending->_lock);
+		if (messages.size() == 0) {
 			//! We will only unregister this service from the
 			//! ClusterManager at shutdown
 			return 0;
 		}
-	};
+		
+		ClusterManager::testMessageCompletion(messages);
+		
+		messages.erase(
+			std::remove_if(
+				messages.begin(), messages.end(),
+				[](Message *msg) {
+					assert(msg != nullptr);
+					
+					bool delivered = msg->isDelivered();
+					if (delivered) {
+						delete msg;
+					}
+					
+					return delivered;
+				}
+			),
+			std::end(messages)
+		);
+	
+		//! We will only unregister this service from the
+		//! ClusterManager at shutdown
+		return 0;
+	}
 	
 	void addPendingMessage(Message *msg)
 	{
-		std::lock_guard<PaddedSpinLock<64>> guard(_outgoing._lock);
-		_outgoing._messages.push_back(msg);
+		std::lock_guard<PaddedSpinLock<64>> guard(_outgoingMessages._lock);
+		_outgoingMessages._messages.push_back(msg);
 	}
 	
 	void registerMessageDelivery()
 	{
 		nanos6_register_polling_service(
 			"cluster message delivery",
-			check_message_delivery,
-			(void *)&_outgoing
+			checkMessageDelivery,
+			(void *)&_outgoingMessages
 		);
 	}
 	
@@ -70,12 +74,13 @@ namespace ClusterPollingServices {
 	{
 		nanos6_unregister_polling_service(
 			"cluster message delivery",
-			check_message_delivery,
-			(void *)&_outgoing
+			checkMessageDelivery,
+			(void *)&_outgoingMessages
 		);
+		
 #ifndef NDEBUG
-		std::lock_guard<PaddedSpinLock<64>> guard(_outgoing._lock);
-		assert(_outgoing._messages.empty());
+		std::lock_guard<PaddedSpinLock<64>> guard(_outgoingMessages._lock);
+		assert(_outgoingMessages._messages.empty());
 #endif
 	}
-};
+}

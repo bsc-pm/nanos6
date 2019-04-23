@@ -15,61 +15,63 @@
 #include "src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
 
 namespace ClusterPollingServices {
-	namespace {
-		struct pending_transfers {
-			std::vector<DataTransfer *> _transfers;
-			PaddedSpinLock<64> _lock;
-		};
+	struct PendingTransfers {
+		std::vector<DataTransfer *> _transfers;
+		PaddedSpinLock<64> _lock;
+	};
+	
+	static PendingTransfers _pendingTransfers;
+	
+	static int checkDataTransfers(void *service_data)
+	{
+		PendingTransfers *pending =
+			(PendingTransfers *)service_data;
+		assert(pending != nullptr);
 		
-		struct pending_transfers _pending;
+		std::vector<DataTransfer *> &transfers = pending->_transfers;
 		
-		int check_data_transfer(void *service_data)
-		{
-			struct pending_transfers *pending =
-				(struct pending_transfers *)service_data;
-			std::vector<DataTransfer *> &transfers = pending->_transfers;
-			
-			std::lock_guard<PaddedSpinLock<64>> guard(pending->_lock);
-			if (transfers.size() == 0) {
-				//! We will only unregister this service from the
-				//! ClusterManager at shutdown
-				return 0;
-			}
-			
-			ClusterManager::testDataTransferCompletion(transfers);
-			transfers.erase(
-				std::remove_if(
-					transfers.begin(), transfers.end(),
-					[](DataTransfer *dt) {
-						bool completed = dt->isCompleted();
-						if (completed) {
-							delete dt;
-						}
-						
-						return completed;
-					}
-				),
-				std::end(transfers)
-			);
-			
+		std::lock_guard<PaddedSpinLock<64>> guard(pending->_lock);
+		if (transfers.size() == 0) {
 			//! We will only unregister this service from the
 			//! ClusterManager at shutdown
 			return 0;
 		}
+		
+		ClusterManager::testDataTransferCompletion(transfers);
+		transfers.erase(
+			std::remove_if(
+				transfers.begin(), transfers.end(),
+				[](DataTransfer *dt) {
+					assert(dt != nullptr);
+					
+					bool completed = dt->isCompleted();
+					if (completed) {
+						delete dt;
+					}
+					
+					return completed;
+				}
+			),
+			std::end(transfers)
+		);
+		
+		//! We will only unregister this service from the
+		//! ClusterManager at shutdown
+		return 0;
 	}
 	
 	void addPendingDataTransfer(DataTransfer *dt)
 	{
-		std::lock_guard<PaddedSpinLock<64>> guard(_pending._lock);
-		_pending._transfers.push_back(dt);
+		std::lock_guard<PaddedSpinLock<64>> guard(_pendingTransfers._lock);
+		_pendingTransfers._transfers.push_back(dt);
 	}
 	
 	void registerDataTransferCompletion()
 	{
 		nanos6_register_polling_service(
 			"cluster data transfer completion",
-			check_data_transfer,
-			(void *)&_pending
+			checkDataTransfers,
+			(void *)&_pendingTransfers
 		);
 	}
 	
@@ -77,12 +79,13 @@ namespace ClusterPollingServices {
 	{
 		nanos6_unregister_polling_service(
 			"cluster data transfer completion",
-			check_data_transfer,
-			(void *)&_pending
+			checkDataTransfers,
+			(void *)&_pendingTransfers
 		);
+		
 #ifndef NDEBUG
-		std::lock_guard<PaddedSpinLock<64>> guard(_pending._lock);
-		assert(_pending._transfers.empty());
+		std::lock_guard<PaddedSpinLock<64>> guard(_pendingTransfers._lock);
+		assert(_pendingTransfers._transfers.empty());
 #endif
 	}
-};
+}

@@ -19,4 +19,4 @@ namespace ClusterPollingServices {
 	void unregisterDataTransferCompletion();
 };
 
-#endif /* DATA_TRANSFER_COMPLETION_HPP__ */
+#endif /* DATA_TRANSFER_COMPLETION_HPP */
