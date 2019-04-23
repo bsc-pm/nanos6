@@ -295,7 +295,7 @@ MultidimensionalAPIToDiscrete.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_
 
 
 
-# Sources for debugging both the regular and the null runtime
+# Sources for debugging
 universal_debug_sources = \
 	src/lowlevel/FatalErrorHandler.cpp \
 	src/system/RuntimeInfo.cpp \
@@ -567,23 +567,6 @@ memory_default_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 memory_debug_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
 memory_debug_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 endif
-
-# null_common_sources = \
-# 	src/null/NullDebug.cpp \
-# 	src/null/NullAPI.cpp \
-# 	src/null/NullSpawn.cpp
-# 
-# null_sources = \
-# 	$(null_common_sources) \
-# 	src/null/NullDynamicBlock.cpp
-# 
-# null_cb_sources = \
-# 	$(null_common_sources) \
-# 	src/null/NullConstantBlock.cpp
-# 
-# null_sb_sources = \
-# 	$(null_common_sources) \
-# 	src/null/NullStaticBlock.cpp
 
 noinst_HEADERS = \
 	src/cluster/ClusterManager.hpp \
@@ -1143,23 +1126,6 @@ else
 disabled_variants += verbose-debug
 libnanos6_verbose_debug_la_SOURCES += loader/disabled_variant.c
 endif
-
-
-
-# libnanos6_null_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-# libnanos6_null_la_SOURCES = $(null_sources) $(universal_debug_sources)
-# libnanos6_null_la_LDFLAGS = $(common_libnanos6_ldflags)
-# nodist_libnanos6_null_la_SOURCES = $(nodist_universal_debug_sources)
-# 
-# libnanos6_null_cb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-# libnanos6_null_cb_la_SOURCES = $(null_cb_sources) $(universal_debug_sources)
-# libnanos6_null_cb_la_LDFLAGS = $(common_libnanos6_ldflags)
-# nodist_libnanos6_null_cb_la_SOURCES = $(nodist_universal_debug_sources)
-# 
-# libnanos6_null_sb_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-# libnanos6_null_sb_la_SOURCES = $(null_sb_sources) $(universal_debug_sources)
-# libnanos6_null_sb_la_LDFLAGS = $(common_libnanos6_ldflags)
-# nodist_libnanos6_null_sb_la_SOURCES = $(nodist_universal_debug_sources)
 
 
 libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ $(elfutils_CFLAGS) $(introspection_cppflags)
