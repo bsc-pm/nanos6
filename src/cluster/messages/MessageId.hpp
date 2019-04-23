@@ -10,21 +10,17 @@
 #include <atomic>
 
 namespace MessageId {
-	namespace {
-		//! At the moment, the Message identifiers are 16 bits
-		//! unsigned integers
-		std::atomic<uint16_t> _nextMessageId(0);
-	};
 	
 	//! \brief Get the next available MessageId
 	uint16_t nextMessageId()
 	{
+		static std::atomic<uint16_t> _nextMessageId(0);
+		
 		uint16_t ret = _nextMessageId++;
 		assert(ret != UINT16_MAX);
 		
 		return ret;
 	}
-};
-
+}
 
 #endif /* MESSAGE_ID_HPP */
