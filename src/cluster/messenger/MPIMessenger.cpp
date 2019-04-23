@@ -20,14 +20,16 @@ MPIMessenger::MPIMessenger()
 {
 	int support, ret;
 	
-	MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, &support);
+	ret = MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, &support);
+	MPIErrorHandler::handle(ret, MPI_COMM_WORLD);
 	if (support != MPI_THREAD_MULTIPLE) {
 		std::cerr << "Could not initialize multithreaded MPI" << std::endl;
 		abort();
 	}
 	
 	//! make sure that MPI errors are returned in the COMM_WORLD
-	MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+	ret = MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+	MPIErrorHandler::handle(ret, MPI_COMM_WORLD);
 	
 	//! Save the parent communicator
 	ret = MPI_Comm_get_parent(&PARENT_COMM);
@@ -38,12 +40,13 @@ MPIMessenger::MPIMessenger()
 	MPIErrorHandler::handle(ret, MPI_COMM_WORLD);
 	
 	//! make sure the new communicator returns errors
-	MPI_Comm_set_errhandler(INTRA_COMM, MPI_ERRORS_RETURN);
+	ret = MPI_Comm_set_errhandler(INTRA_COMM, MPI_ERRORS_RETURN);
+	MPIErrorHandler(ret, INTRA_COMM);
 	
-	ret = MPI_Comm_rank(INTRA_COMM, &wrank);
+	ret = MPI_Comm_rank(INTRA_COMM, &_wrank);
 	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
-	ret = MPI_Comm_size(INTRA_COMM, &wsize);
+	ret = MPI_Comm_size(INTRA_COMM, &_wsize);
 	MPIErrorHandler::handle(ret, INTRA_COMM);
 }
 
@@ -70,7 +73,7 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	//! the MPI tag of the communication
 	int tag = (delv->header.id << 8) | delv->header.type;
 
-	assert(mpiDst < wsize && mpiDst != wrank);
+	assert(mpiDst < _wsize && mpiDst != _wrank);
 	assert(delv->header.size != 0);
 	
 	if (block) {
@@ -105,7 +108,7 @@ DataTransfer *MPIMessenger::sendData(const DataAccessRegion &region, const Clust
 	void *address = region.getStartAddress();
 	size_t size = region.getSize();
 	
-	assert(mpiDst < wsize && mpiDst != wrank);
+	assert(mpiDst < _wsize && mpiDst != _wrank);
 	
 	tag = (messageId << 8) | DATA_RAW;
 	
@@ -130,7 +133,7 @@ DataTransfer *MPIMessenger::fetchData(const DataAccessRegion &region, const Clus
 	void *address = region.getStartAddress();
 	size_t size = region.getSize();
 	
-	assert(mpiSrc < wsize && mpiSrc != wrank);
+	assert(mpiSrc < _wsize && mpiSrc != _wrank);
 	
 	tag = (messageId << 8) | DATA_RAW;
 	

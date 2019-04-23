@@ -22,7 +22,7 @@ class Message;
 
 class MPIMessenger : public Messenger {
 private:
-	int wrank, wsize;
+	int _wrank, _wsize;
 	MPI_Comm INTRA_COMM, PARENT_COMM;
 	
 public:
@@ -39,7 +39,7 @@ public:
 	
 	inline int getNodeIndex() const
 	{
-		return wrank;
+		return _wrank;
 	}
 	
 	inline int getMasterIndex() const
@@ -49,12 +49,12 @@ public:
 	
 	inline int getClusterSize() const
 	{
-		return wsize;
+		return _wsize;
 	}
 	
 	inline bool isMasterNode() const
 	{
-		return wrank == 0;
+		return _wrank == 0;
 	}
 };
 
