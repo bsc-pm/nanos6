@@ -164,7 +164,7 @@ public:
 	//!
 	//! \param[in] msg is the Message to send
 	//! \param[in] recipient is the remote node to send the Message
-	static inline void sendMessage(Message *msg, ClusterNode *recipient)
+	static inline void sendMessage(Message *msg, ClusterNode const *recipient)
 	{
 		assert(_msn != nullptr);
 		_msn->sendMessage(msg, recipient);
@@ -210,7 +210,7 @@ public:
 		assert(_msn != nullptr);
 		assert(from != nullptr);
 		
-		ClusterNode *remoteNode = getClusterNode(from->getIndex());
+		ClusterNode const *remoteNode = getClusterNode(from->getIndex());
 		return _msn->fetchData(region, remoteNode, messageId);
 	}
 	
@@ -222,13 +222,13 @@ public:
 	//!		DataTransfer is related
 	static inline DataTransfer *sendDataRaw(
 		DataAccessRegion const &region,
-		MemoryPlace *to,
+		MemoryPlace const *to,
 		int messageId
 	) {
 		assert(_msn != nullptr);
 		assert(to != nullptr);
 		
-		ClusterNode *remoteNode = getClusterNode(to->getIndex());
+		ClusterNode const *remoteNode = getClusterNode(to->getIndex());
 		return _msn->sendData(region, remoteNode, messageId);
 	}
 	
