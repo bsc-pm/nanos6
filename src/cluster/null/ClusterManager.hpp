@@ -4,13 +4,17 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef __CLUSTER_MANAGER_HPP__
-#define __CLUSTER_MANAGER_HPP__
+#ifndef CLUSTER_MANAGER_HPP
+#define CLUSTER_MANAGER_HPP
 
-#include <vector>
 #include <string>
+#include <vector>
 
+#include <ClusterMemoryNode.hpp>
 #include <ClusterNode.hpp>
+
+class Message;
+class DataTransfer;
 
 class ClusterManager {
 	//! private constructor. This is a singleton.
@@ -29,9 +33,27 @@ public:
 	{
 	}
 	
-	static inline ClusterNode *getClusterNode(__attribute__((unused)) int id = 0)
+	static inline ClusterNode *getClusterNode(__attribute__((unused)) int id)
 	{
 		static ClusterNode ourDummyNode;
+		return &ourDummyNode;
+	}
+	
+	static inline ClusterNode *getCurrentClusterNode()
+	{
+		static ClusterNode ourDummyNode;
+		return &ourDummyNode;
+	}
+	
+	static inline ClusterMemoryNode *getMemoryNode(__attribute__((unused)) int id)
+	{
+		static ClusterMemoryNode ourDummyNode;
+		return &ourDummyNode;
+	}
+	
+	static inline ClusterMemoryNode *getCurrentMemoryNode()
+	{
+		static ClusterMemoryNode ourDummyNode;
 		return &ourDummyNode;
 	}
 	
@@ -50,6 +72,37 @@ public:
 		return false;
 	}
 	
+	static inline Message *checkMail()
+	{
+		return nullptr;
+	}
+	
+	static inline void testMessageCompletion(
+		__attribute__((unused)) std::vector<Message *> &messages
+	) {
+	}
+	
+	static inline void testDataTransferCompletion(
+		__attribute__((unused)) std::vector<Message *> &transfer
+	) {
+	}
+	
+	static inline DataTransfer *fetchDataRaw(
+		__attribute__((unused)) DataAccessRegion const &region,
+		__attribute__((unused)) MemoryPlace const *from,
+		__attribute__((unused)) int messageId
+	) {
+		return nullptr;
+	}
+	
+	static inline DataTransfer *sendDataRaw(
+		__attribute__((unused)) DataAccessRegion const &region,
+		__attribute__((unused)) MemoryPlace const *to,
+		__attribute__((unused)) int messageId
+	) {
+		return nullptr;
+	}
+	
 	static inline void setShutdownCallback(
 		__attribute__((unused)) void (*func)(void *),
 		__attribute__((unused)) void *args)
@@ -62,4 +115,4 @@ public:
 	}
 };
 
-#endif /* __CLUSTER_MANAGER_HPP__ */
+#endif /* CLUSTER_MANAGER_HPP */

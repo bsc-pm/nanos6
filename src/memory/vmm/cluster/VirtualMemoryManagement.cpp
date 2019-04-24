@@ -77,7 +77,7 @@ void VirtualMemoryManagement::shutdown()
 
 void VirtualMemoryManagement::setupMemoryLayout(void *address, size_t distribSize, size_t localSize)
 {
-	ClusterNode *current = ClusterManager::getClusterNode();
+	ClusterNode *current = ClusterManager::getCurrentClusterNode();
 	int nodeIndex = current->getIndex();
 	int clusterSize = ClusterManager::clusterSize();
 	

@@ -9,12 +9,14 @@
 
 #include <atomic>
 #include <cassert>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "cluster/messenger/Messenger.hpp"
 
-class ClusterNode;
+#include <ClusterNode.hpp>
+
+class ClusterMemoryNode;
 
 class ClusterManager {
 public:
@@ -91,9 +93,29 @@ public:
 	//! \brief Get the current ClusterNode
 	//!
 	//! \returns the ClusterNode object of the current node
-	static inline ClusterNode *getClusterNode()
+	static inline ClusterNode *getCurrentClusterNode()
 	{
 		return _thisNode;
+	}
+	
+	//! \brief Get The ClusterMemoryNode with index id;
+	//!
+	//! \param[in] id is the index of the ClusterMemoryNode we request
+	//!
+	//! \returns The ClusterMemoryNode object with index 'id'
+	static inline ClusterMemoryNode *getMemoryNode(int id)
+	{
+		assert(_clusterNodes[id] != nullptr);
+		return _clusterNodes[id]->getMemoryNode();
+	}
+	
+	//! \brief Get the current ClusterMemoryNode
+	//!
+	//! \returns the ClusterMemoryNode object of the current node
+	static inline ClusterMemoryNode *getCurrentMemoryNode()
+	{
+		assert(_thisNode != nullptr);
+		return _thisNode->getMemoryNode();
 	}
 	
 	//! \brief Check if current node is the master
@@ -123,6 +145,92 @@ public:
 	{
 		return _clusterSize > 1;
 	}
+
+	//! \brief Check for incoming messages
+	//!
+	//! This is just a wrapper on top of the Messenger API
+	//!
+	//! \returns a Message object if one has been received otherwise,
+	//!		nullptr
+	static inline Message *checkMail()
+	{
+		assert(_msn != nullptr);
+		return _msn->checkMail();
+	}
+	
+	//! \brief Send a Message to a remote Node
+	//!
+	//! This is just a wrapper on top of the Messenger API
+	//!
+	//! \param[in] msg is the Message to send
+	//! \param[in] recipient is the remote node to send the Message
+	static inline void sendMessage(Message *msg, ClusterNode const *recipient)
+	{
+		assert(_msn != nullptr);
+		_msn->sendMessage(msg, recipient);
+	}
+
+	//! \brief Test Messages for completion
+	//!
+	//! This is just a wrapper on top of the Messenger API
+	//!
+	//! \param[in] messages is a vector containing Message objects
+	//!		to check for completion
+	static inline void testMessageCompletion(
+		std::vector<Message *> &messages
+	) {
+		assert(_msn != nullptr);
+		_msn->testMessageCompletion(messages);
+	}
+	
+	//! \brief Test DataTransfers for completion
+	//!
+	//! This is just a wrapper on top of the Messenger API
+	//!
+	//! \param[in] transfers is a vector containing DataTransfer objects
+	//!		to check for completion
+	static inline void testDataTransferCompletion(
+		std::vector<DataTransfer *> &transfers
+	) {
+		assert(_msn != nullptr);
+		_msn->testDataTransferCompletion(transfers);
+	}
+	
+	//! \brief Fetch a DataAccessRegion from a remote node
+	//!
+	//! \param[in] region is the address region to fetch
+	//! \param[in] from is the remote MemoryPlace we are fetching from
+	//! \param[in] messageId is the index of the Message with which this
+	//!		DataTransfer is related
+	static inline DataTransfer *fetchDataRaw(
+		DataAccessRegion const &region,
+		MemoryPlace const *from,
+		int messageId
+	) {
+		assert(_msn != nullptr);
+		assert(from != nullptr);
+		
+		ClusterNode const *remoteNode = getClusterNode(from->getIndex());
+		return _msn->fetchData(region, remoteNode, messageId);
+	}
+	
+	//! \brief Send a DataAccessRegion to a remote node
+	//!
+	//! \param[in] region is the address region to send
+	//! \param[in] to is the remote MemoryPlace we are sending to
+	//! \param[in] messageId is the index of the Message with which this
+	//!		DataTransfer is related
+	static inline DataTransfer *sendDataRaw(
+		DataAccessRegion const &region,
+		MemoryPlace const *to,
+		int messageId
+	) {
+		assert(_msn != nullptr);
+		assert(to != nullptr);
+		
+		ClusterNode const *remoteNode = getClusterNode(to->getIndex());
+		return _msn->sendData(region, remoteNode, messageId);
+	}
 	
 	//! \brief A barrier across all cluster nodes
 	//!
@@ -132,6 +240,7 @@ public:
 	//! synchronization point.
 	static inline void synchronizeAll()
 	{
+		assert(_msn != nullptr);
 		_msn->synchronizeAll();
 	}
 	

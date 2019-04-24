@@ -9,10 +9,12 @@
 
 #include "hardware/places/ComputePlace.hpp"
 
+#include <ClusterMemoryNode.hpp>
+
 class ClusterNode : public ComputePlace {
 public:
-	ClusterNode(__attribute__((unused)) int index = 0, __attribute__((unused)) int commIndex = 0)
-		: ComputePlace(index, nanos6_device_t::nanos6_host_device)
+	ClusterNode(__attribute__((unused))int index = 0, __attribute__((unused))int commIndex = 0)
+		: ComputePlace(index, nanos6_device_t::nanos6_cluster_device)
 	{
 	}
 	
@@ -20,10 +22,22 @@ public:
 	{
 	}
 	
+	inline ClusterMemoryNode *getMemoryNode() const
+	{
+		static ClusterMemoryNode ourDummyNode;
+		return &ourDummyNode;
+	}
+	
+	inline int getIndex() const
+	{
+		return 0;
+	}
+	
 	inline int getCommIndex() const
 	{
 		return 0;
 	}
 };
+
 
 #endif /* CLUSTER_NODE_HPP */

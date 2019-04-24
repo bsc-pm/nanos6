@@ -381,10 +381,23 @@ cluster_sources += \
 	src/cluster/messages/Message.cpp \
 	src/cluster/messages/MessageSysFinish.cpp \
 	src/cluster/messages/MessageType.cpp \
-	src/cluster/messenger/MPIMessenger.cpp
-cluster_cppflags = -I$(srcdir)/src/cluster -I$(srcdir)/src/hardware/cluster
+	src/cluster/messenger/MPIMessenger.cpp \
+	src/cluster/polling-services/DataTransferCompletion.cpp \
+	src/cluster/polling-services/MessageDelivery.cpp \
+	src/cluster/polling-services/MessageHandler.cpp
+
+cluster_cppflags = \
+	-I$(srcdir)/src/cluster \
+	-I$(srcdir)/src/cluster/messages \
+	-I$(srcdir)/src/cluster/messenger \
+	-I$(srcdir)/src/cluster/polling-services \
+	-I$(srcdir)/src/hardware/cluster \
+	-I$(srcdir)/src/hardware/cluster/memory
 else
-cluster_cppflags = -I$(srcdir)/src/cluster/null -I$(srcdir)/src/hardware/cluster/null
+cluster_cppflags = \
+	-I$(srcdir)/src/cluster/null \
+	-I$(srcdir)/src/hardware/cluster/null \
+	-I$(srcdir)/src/hardware/cluster/memory/null
 endif
 
 common_sources += $(cluster_sources)
@@ -575,9 +588,18 @@ endif
 noinst_HEADERS = \
 	src/cluster/ClusterManager.hpp \
 	src/cluster/messages/Message.hpp \
+	src/cluster/messages/MessageId.hpp \
 	src/cluster/messages/MessageSysFinish.hpp \
 	src/cluster/messages/MessageType.hpp \
+	src/cluster/messenger/DataTransfer.hpp \
+	src/cluster/messenger/Messenger.hpp \
+	src/cluster/messenger/MPIDataTransfer.hpp \
+	src/cluster/messenger/MPIMessenger.hpp \
 	src/cluster/null/ClusterManager.hpp \
+	src/cluster/polling-services/ClusterPollingServices.hpp \
+	src/cluster/polling-services/DataTransferCompletion.hpp \
+	src/cluster/polling-services/MessageDelivery.hpp \
+	src/cluster/polling-services/MessageHandler.hpp \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
@@ -622,6 +644,8 @@ noinst_HEADERS = \
 	src/executors/workflow/null/ExecutionStep.hpp \
 	src/executors/workflow/null/ExecutionWorkflow.hpp \
 	src/hardware/cluster/ClusterNode.hpp \
+	src/hardware/cluster/memory/ClusterMemoryNode.hpp \
+	src/hardware/cluster/memory/null/ClusterMemoryNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
 	src/hardware/cuda/CUDADevice.hpp \
 	src/hardware/cuda/CUDAInfo.hpp \
@@ -871,6 +895,7 @@ noinst_HEADERS = \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cuda/CUDAErrorHandler.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
+	src/lowlevel/mpi/MPIErrorHandler.hpp \
 	src/lowlevel/posix/SpinLockImplementation.hpp \
 	src/lowlevel/threads/ExternalThread.hpp \
 	src/lowlevel/threads/ExternalThreadGroup.hpp \

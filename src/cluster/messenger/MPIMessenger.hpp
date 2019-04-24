@@ -4,9 +4,10 @@
 	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef __MPI_MESSENGER_H__
-#define __MPI_MESSENGER_H__
+#ifndef MPI_MESSENGER_HPP
+#define MPI_MESSENGER_HPP
 
+#include <sstream>
 #include <vector>
 
 #pragma GCC visibility push(default)
@@ -15,28 +16,30 @@
 
 #include "Messenger.hpp"
 
-class Message;
 class ClusterPlace;
+class DataTransfer;
+class Message;
 
 class MPIMessenger : public Messenger {
 private:
-	int wrank, wsize;
+	int _wrank, _wsize;
 	MPI_Comm INTRA_COMM, PARENT_COMM;
 	
 public:
 	MPIMessenger();
 	~MPIMessenger();
 	
-	void sendMessage(Message *msg, ClusterNode *toNode);
-	void sendMessage(Message *msg, std::vector<ClusterNode *> const &toNodes);
+	void sendMessage(Message *msg, ClusterNode const *toNode, bool block = false);
 	void synchronizeAll(void);
-	void sendData(const DataAccessRegion &region, const ClusterNode *toNode);
-	void fetchData(const DataAccessRegion &region, const ClusterNode *fromNode);
+	DataTransfer *sendData(const DataAccessRegion &region, const ClusterNode *toNode, int messageId);
+	DataTransfer *fetchData(const DataAccessRegion &region, const ClusterNode *fromNode, int messageId);
 	Message *checkMail();
+	void testMessageCompletion(std::vector<Message *> &messages);
+	void testDataTransferCompletion(std::vector<DataTransfer *> &transfers);
 	
 	inline int getNodeIndex() const
 	{
-		return wrank;
+		return _wrank;
 	}
 	
 	inline int getMasterIndex() const
@@ -46,12 +49,12 @@ public:
 	
 	inline int getClusterSize() const
 	{
-		return wsize;
+		return _wsize;
 	}
 	
 	inline bool isMasterNode() const
 	{
-		return wrank == 0;
+		return _wrank == 0;
 	}
 };
 
@@ -64,4 +67,4 @@ namespace
 		REGISTER_MSN_CLASS("mpi-2sided", createMPImsn);
 }
 
-#endif /* __MPI_MESSENGER_H__ */
+#endif /* MPI_MESSENGER_HPP */
