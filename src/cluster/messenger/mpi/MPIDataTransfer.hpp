@@ -5,7 +5,7 @@
 #include <mpi.h>
 #pragma GCC visibility pop
 
-#include "DataTransfer.hpp"
+#include "../DataTransfer.hpp"
 
 class MPIDataTransfer : public DataTransfer {
 	//! MPI_Request object related with the pending data transfer.

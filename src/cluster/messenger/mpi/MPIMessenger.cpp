@@ -41,7 +41,7 @@ MPIMessenger::MPIMessenger()
 	
 	//! make sure the new communicator returns errors
 	ret = MPI_Comm_set_errhandler(INTRA_COMM, MPI_ERRORS_RETURN);
-	MPIErrorHandler(ret, INTRA_COMM);
+	MPIErrorHandler::handle(ret, INTRA_COMM);
 	
 	ret = MPI_Comm_rank(INTRA_COMM, &_wrank);
 	MPIErrorHandler::handle(ret, INTRA_COMM);
