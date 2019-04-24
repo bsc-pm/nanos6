@@ -14,7 +14,7 @@
 #include <mpi.h>
 #pragma GCC visibility pop
 
-#include "Messenger.hpp"
+#include "../Messenger.hpp"
 
 class ClusterPlace;
 class DataTransfer;

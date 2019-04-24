@@ -381,7 +381,7 @@ cluster_sources += \
 	src/cluster/messages/Message.cpp \
 	src/cluster/messages/MessageSysFinish.cpp \
 	src/cluster/messages/MessageType.cpp \
-	src/cluster/messenger/MPIMessenger.cpp \
+	src/cluster/messenger/mpi/MPIMessenger.cpp \
 	src/cluster/polling-services/DataTransferCompletion.cpp \
 	src/cluster/polling-services/MessageDelivery.cpp \
 	src/cluster/polling-services/MessageHandler.cpp
@@ -593,8 +593,8 @@ noinst_HEADERS = \
 	src/cluster/messages/MessageType.hpp \
 	src/cluster/messenger/DataTransfer.hpp \
 	src/cluster/messenger/Messenger.hpp \
-	src/cluster/messenger/MPIDataTransfer.hpp \
-	src/cluster/messenger/MPIMessenger.hpp \
+	src/cluster/messenger/mpi/MPIDataTransfer.hpp \
+	src/cluster/messenger/mpi/MPIMessenger.hpp \
 	src/cluster/null/ClusterManager.hpp \
 	src/cluster/polling-services/ClusterPollingServices.hpp \
 	src/cluster/polling-services/DataTransferCompletion.hpp \
