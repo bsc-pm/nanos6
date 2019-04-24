@@ -38,7 +38,7 @@ namespace ClusterPollingServices {
 		unregisterMessageDelivery();
 		unregisterMessageHandler();
 	}
-};
+}
 
 
 #endif /* CLUSTER_POLLING_SERVICES_HPP */

@@ -17,6 +17,6 @@ namespace ClusterPollingServices {
 	
 	//! \brief Shutdown the polling service
 	void unregisterDataTransferCompletion();
-};
+}
 
 #endif /* DATA_TRANSFER_COMPLETION_HPP */

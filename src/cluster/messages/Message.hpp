@@ -15,7 +15,7 @@
 class ClusterNode;
 
 class Message {
-public:	
+public:
 	struct msg_header {
 		//! string containing the message type
 		char name[MSG_NAMELEN];

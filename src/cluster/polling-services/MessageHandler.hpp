@@ -14,6 +14,6 @@ namespace ClusterPollingServices {
 	
 	//! \brief Shutdown the polling service
 	void unregisterMessageHandler();
-};
+}
 
 #endif /* MESSAGE_HANDLER_HPP */

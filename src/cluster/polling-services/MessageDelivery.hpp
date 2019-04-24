@@ -19,6 +19,6 @@ namespace ClusterPollingServices {
 	
 	//! Shutdown the polling service
 	void unregisterMessageDelivery();
-};
+}
 
 #endif /* MESSAGE_DELIVERY_HPP */
