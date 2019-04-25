@@ -25,7 +25,6 @@
 #include "taskloop.h"
 #include "taskwait.h"
 #include "user-mutex.h"
-#include "utils.h"
 
 
 #if USE_CUDA
@@ -36,7 +35,7 @@ enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 0 };
 
 #pragma GCC visibility push(default)
 
-enum nanos6_api_check_api_t { nanos6_api_check_api = 3 };
+enum nanos6_api_check_api_t { nanos6_api_check_api = 4 };
 
 
 #ifdef __cplusplus
@@ -63,7 +62,6 @@ typedef struct {
 	enum nanos6_task_info_registration_api_t task_info_registration_api_version;
 	enum nanos6_taskloop_api_t taskloop_api_version;
 	enum nanos6_taskwait_api_t taskwait_api_version;
-	enum nanos6_utils_api_t utils_api_version;
 } nanos6_api_versions_t;
 
 

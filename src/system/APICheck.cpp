@@ -32,7 +32,6 @@ static const nanos6_api_versions_t apiVersions = {
 	.task_info_registration_api_version = nanos6_task_info_registration_api,
 	.taskloop_api_version = nanos6_taskloop_api,
 	.taskwait_api_version = nanos6_taskwait_api,
-	.utils_api_version = nanos6_utils_api
 };
 
 
