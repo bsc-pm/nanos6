@@ -7,6 +7,7 @@
 #include <nanos6/cluster.h>
 
 #include <ClusterManager.hpp>
+#include <ClusterMemoryManagement.hpp>
 #include <ClusterNode.hpp>
 
 
@@ -28,4 +29,36 @@ extern "C" int nanos6_get_cluster_node_id()
 extern "C" int nanos6_get_num_cluster_nodes()
 {
 	return ClusterManager::clusterSize();
+}
+
+extern "C" void *nanos6_dmalloc(
+	size_t size,
+	nanos6_data_distribution_t policy,
+	size_t num_dimensions,
+	size_t *dimensions
+) {
+	if (size == 0) {
+		return nullptr;
+	}
+	
+	return ClusterMemoryManagement::dmalloc(size, policy, num_dimensions, dimensions);
+}
+
+extern "C" void nanos6_dfree(void *ptr, size_t size)
+{
+	ClusterMemoryManagement::dfree(ptr, size);
+}
+
+extern "C" void *nanos6_lmalloc(size_t size)
+{
+	if (size == 0) {
+		return nullptr;
+	}
+	
+	return ClusterMemoryManagement::lmalloc(size);
+}
+
+extern "C" void nanos6_lfree(void *ptr, size_t size)
+{
+	ClusterMemoryManagement::lfree(ptr, size);
 }
