@@ -256,8 +256,10 @@ public:
 	//! synchronization point.
 	static inline void synchronizeAll()
 	{
-		assert(_msn != nullptr);
-		_msn->synchronizeAll();
+		if (inClusterMode()) {
+			assert(_msn != nullptr);
+			_msn->synchronizeAll();
+		}
 	}
 	
 	//! \brief Set a callback function to invoke when we have to shutdown
