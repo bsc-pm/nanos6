@@ -47,12 +47,17 @@ public:
 	//! \param[in] toNode is the receiver node
 	//! \param[in] messageId is the id of the Message related with this
 	//!		data transfer
+	//! \param[in] if block is true then the call will block until the data
+	//!		is sent
 	//!
-	//! \returns A DataTransfer object representing the pending data transfer
+	//! \returns A DataTransfer object representing the pending data
+	//!		transfer if the data is sent in non-blocking mode,
+	//!		otherwise nullptr
 	virtual DataTransfer *sendData(
 		const DataAccessRegion &region,
 		const ClusterNode *toNode,
-		int messageId
+		int messageId,
+		bool block
 	) = 0;
 	
 	//! \brief Receive a data region from a remote node, related to a previous message
@@ -62,12 +67,17 @@ public:
 	//!		with this data transfer
 	//! \param[in] messageId is the id of the Message related with this
 	//!		data transfer
+	//! \param[in] if block is true then the call will block until the data
+	//!		is received
 	//!
-	//! \returns A DataTransfer object representing the pending data transfer
+	//! \returns A DataTransfer object representing the pending data
+	//!		transfer if the data is sent in non-blocking mode,
+	//!		otherwise nullptr
 	virtual DataTransfer *fetchData(
 		const DataAccessRegion &region,
 		const ClusterNode *fromNode,
-		int messageId
+		int messageId,
+		bool block
 	) = 0;
 	
 	//! \brief Check for incoming messages

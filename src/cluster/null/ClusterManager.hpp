@@ -90,7 +90,8 @@ public:
 	static inline DataTransfer *fetchDataRaw(
 		__attribute__((unused)) DataAccessRegion const &region,
 		__attribute__((unused)) MemoryPlace const *from,
-		__attribute__((unused)) int messageId
+		__attribute__((unused)) int messageId,
+		__attribute__((unused)) bool block
 	) {
 		return nullptr;
 	}
@@ -98,7 +99,8 @@ public:
 	static inline DataTransfer *sendDataRaw(
 		__attribute__((unused)) DataAccessRegion const &region,
 		__attribute__((unused)) MemoryPlace const *to,
-		__attribute__((unused)) int messageId
+		__attribute__((unused)) int messageId,
+		__attribute__((unused)) bool block
 	) {
 		return nullptr;
 	}

@@ -223,16 +223,22 @@ public:
 	//! \param[in] from is the remote MemoryPlace we are fetching from
 	//! \param[in] messageId is the index of the Message with which this
 	//!		DataTransfer is related
+	//! \param[in] if block is true the call will block until the data is
+	//!		received
+	//!
+	//! \returns a DataTransfer object if data was received non-blocking,
+	//!		otherwise nullptr
 	static inline DataTransfer *fetchDataRaw(
 		DataAccessRegion const &region,
 		MemoryPlace const *from,
-		int messageId
+		int messageId,
+		bool block = false
 	) {
 		assert(_msn != nullptr);
 		assert(from != nullptr);
 		
 		ClusterNode const *remoteNode = getClusterNode(from->getIndex());
-		return _msn->fetchData(region, remoteNode, messageId);
+		return _msn->fetchData(region, remoteNode, messageId, block);
 	}
 	
 	//! \brief Send a DataAccessRegion to a remote node
@@ -241,16 +247,22 @@ public:
 	//! \param[in] to is the remote MemoryPlace we are sending to
 	//! \param[in] messageId is the index of the Message with which this
 	//!		DataTransfer is related
+	//! \param[in] if block is true the call will block until the data is
+	//!		sent
+	//!
+	//! \returns a DataTransfer object if data was sent non-blocking,
+	//!		otherwise nullptr
 	static inline DataTransfer *sendDataRaw(
 		DataAccessRegion const &region,
 		MemoryPlace const *to,
-		int messageId
+		int messageId,
+		bool block = false
 	) {
 		assert(_msn != nullptr);
 		assert(to != nullptr);
 		
 		ClusterNode const *remoteNode = getClusterNode(to->getIndex());
-		return _msn->sendData(region, remoteNode, messageId);
+		return _msn->sendData(region, remoteNode, messageId, block);
 	}
 	
 	//! \brief A barrier across all cluster nodes
