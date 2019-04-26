@@ -30,7 +30,7 @@ public:
 		int id;
 		
 		//! Cluster index of the sender node
-		int snd_id;
+		int senderId;
 	};
 	
 	//! Deliverable is the structure that is actually sent over the network.
@@ -69,6 +69,30 @@ public:
 	{
 		assert(_deliverable != nullptr);
 		free(_deliverable);
+	}
+	
+	//! \brief Returns the type of the Message
+	inline MessageType getType() const
+	{
+		return _deliverable->header.type;
+	}
+	
+	//! \brief Returns the size of the Message
+	inline size_t getSize() const
+	{
+		return _deliverable->header.type;
+	}
+	
+	//! \brief Returns the id of the Message
+	inline int getId() const
+	{
+		return _deliverable->header.id;
+	}
+	
+	//! \brief Returns the cluster id of the node that sent the  Message
+	inline int getSenderId() const
+	{
+		return _deliverable->header.senderId;
 	}
 	
 	//! \brief Return the Deliverable data of the Message
