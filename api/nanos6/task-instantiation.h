@@ -91,7 +91,7 @@ typedef struct
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_task_info_contents
 //! \brief This needs to be incremented every time that there is a change in nanos6_task_info
-enum nanos6_task_info_contents_t { nanos6_task_info_contents = 2 };
+enum nanos6_task_info_contents_t { nanos6_task_info_contents = 1 };
 
 //! \brief Struct that contains the common parts that all tasks of the same type share
 typedef struct
@@ -167,7 +167,7 @@ typedef struct
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_instantiation_api
 //! \brief This needs to be incremented on every change to the instantiation API
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 3 };
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 1 };
 
 typedef enum {
 	//! Specifies that the task will be a final task

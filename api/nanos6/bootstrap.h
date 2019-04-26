@@ -17,7 +17,7 @@
 
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_bootstrap_api
-enum nanos6_bootstrap_api_t { nanos6_bootstrap_api = 2 };
+enum nanos6_bootstrap_api_t { nanos6_bootstrap_api = 1 };
 
 
 #ifdef __cplusplus

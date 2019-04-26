@@ -30,7 +30,7 @@
 #if USE_CUDA
 #include "cuda_device.h"
 #else
-enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 0 };
+enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 1 };
 #endif
 
 #pragma GCC visibility push(default)

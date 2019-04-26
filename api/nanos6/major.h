@@ -9,7 +9,7 @@
 
 
 //! NOTE: Every change in the major version resets every other version to 1 except api_check
-enum nanos6_major_api_t { nanos6_major_api = 2 };
+enum nanos6_major_api_t { nanos6_major_api = 3 };
 
 
 #endif /* NANOS6_MAJOR_H */
