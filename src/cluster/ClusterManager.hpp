@@ -80,6 +80,22 @@ public:
 	//! \brief Shutdown the ClusterManager
 	static void shutdown();
 	
+	//! \brief Get a vector containing all ClusterNode objects
+	//!
+	//! \returns A vector containing all ClusterNode objects
+	static inline std::vector<ClusterNode *> const &getClusterNodes()
+	{
+		return _clusterNodes;
+	}
+	
+	//! \brief Get the ClusterNode representing the master node
+	//!
+	//! \returns the master node ClusterNode
+	static inline ClusterNode *getMasterNode()
+	{
+		return _masterNode;
+	}
+	
 	//! \brief Get the ClusterNode with index 'id'
 	//!
 	//! \param[in] id is the index of the ClusterNode we request
