@@ -329,6 +329,8 @@ common_sources = \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/ExternalThreadGroup.cpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
+	src/memory/directory/Directory.cpp \
+	src/memory/directory/HomeNodeMap.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
@@ -981,6 +983,9 @@ noinst_HEADERS = \
 	src/memory/allocator/pool/NUMAObjectCache.hpp \
 	src/memory/allocator/pool/ObjectAllocator.hpp \
 	src/memory/allocator/pool/ObjectCache.hpp \
+	src/memory/directory/Directory.hpp \
+	src/memory/directory/HomeMapEntry.hpp \
+	src/memory/directory/HomeNodeMap.hpp \
 	src/memory/vmm/VirtualMemoryAllocation.hpp \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
