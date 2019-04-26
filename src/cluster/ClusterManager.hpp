@@ -180,10 +180,15 @@ public:
 	//!
 	//! \param[in] msg is the Message to send
 	//! \param[in] recipient is the remote node to send the Message
-	static inline void sendMessage(Message *msg, ClusterNode const *recipient)
+	//! \param[in] if block is true the the call will block until the
+	//!		Message is sent
+	static inline void sendMessage(Message *msg,
+			ClusterNode const *recipient, bool block = false)
 	{
 		assert(_msn != nullptr);
-		_msn->sendMessage(msg, recipient);
+		assert(msg != nullptr);
+		assert(recipient != nullptr);
+		_msn->sendMessage(msg, recipient, block);
 	}
 
 	//! \brief Test Messages for completion
