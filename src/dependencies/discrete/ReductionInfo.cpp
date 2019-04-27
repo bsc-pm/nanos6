@@ -33,7 +33,7 @@ ReductionInfo::ReductionInfo(void * address, size_t length, reduction_type_and_o
 {
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
-
+	assert(_paddedLength >= _length);
 	const size_t maxSlots = getMaxSlots();
 	_slots.reserve(maxSlots);
 	_freeSlotIndices.reserve(maxSlots);
@@ -312,5 +312,9 @@ void ReductionInfo::releaseSlotsInUse(size_t virtualCpuId)
 		_freeSlotIndices.push_back(currentCpuSlotIndex);
 		_currentCpuSlotIndices[virtualCpuId] = -1;
 	}
+}
+
+size_t ReductionInfo::getPaddedLength() const {
+	return _paddedLength;
 }
 

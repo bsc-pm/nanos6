@@ -5,6 +5,7 @@
 */
 
 #include <cassert>
+#include <iostream>
 
 #include <nanos6.h>
 #include <tasks/Task.hpp>
@@ -75,9 +76,12 @@ void *nanos6_get_reduction_storage1(void *original,
 		assert(((char*)original) < (((char*)originalAddress)
 					+ originalLength));
 
+		assert(reductionInfo->getPaddedLength() >= (size_t) dim1size);
+		assert(((char*)original - (char*)originalAddress) < reductionInfo->getPaddedLength());
+
 		address = ((char*)reductionInfo->getFreeSlotStorage(slotIndex)) +
 			((char*)original - (char*)originalAddress);
 	}
-
+	
 	return address;
 }

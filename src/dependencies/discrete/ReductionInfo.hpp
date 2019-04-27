@@ -48,6 +48,8 @@ class ReductionInfo
 
 		size_t getOriginalLength() const;
 
+		size_t getPaddedLength() const;
+
 		bool combine(bool canCombineToOriginalStorage);
 
 		void releaseSlotsInUse(size_t virtualCpuId);

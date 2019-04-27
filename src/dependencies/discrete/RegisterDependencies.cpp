@@ -10,12 +10,12 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-
 #include "../DataAccessType.hpp"
 #include "DataAccessRegistration.hpp"
 #include "ReductionSpecific.hpp"
 
 #include <Dependencies.hpp>
+#include <InstrumentDependenciesByAccess.hpp>
 
 #include <stdlib.h>
 #include <iostream>
@@ -35,6 +35,8 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 	if(length == 0) {
 		return;
 	}
+
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length);
 
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length, reductionTypeAndOperatorIndex, reductionIndex);
 }
@@ -56,17 +58,17 @@ void nanos6_register_readwrite_depinfo(void *handler, void *start, size_t length
 
 void nanos6_register_weak_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
-	register_access<READ_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
+	register_access<READ_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 void nanos6_register_weak_write_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
-	register_access<WRITE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
+	register_access<WRITE_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 void nanos6_register_weak_readwrite_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
-	register_access<READWRITE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
+	register_access<READWRITE_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 void nanos6_register_concurrent_depinfo(void *handler, void *start, size_t length, int symbolIndex)

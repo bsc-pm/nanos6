@@ -12,12 +12,10 @@
 
 struct BottomMapEntry {
 	DataAccess * _access;
-	bool _satisfied;
 	ReductionInfo * _reductionInfo;
 
 	BottomMapEntry(DataAccess * access) :
 	_access(access),
-	_satisfied(true),
 	_reductionInfo(nullptr)
 	{
 	}
