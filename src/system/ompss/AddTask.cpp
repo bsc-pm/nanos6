@@ -57,10 +57,10 @@ void nanos6_create_task(
 	size_t originalArgsBlockSize = args_block_size;
 	size_t taskSize = (isTaskloop) ? sizeof(Taskloop) : sizeof(Task);
 	
-	bool has_preallocated_args_block = (flags & nanos6_preallocated_args_block);
+	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	
-	if (has_preallocated_args_block) {
-		// assert(args_block != nullptr); // Disabled for TaskLoop cloning
+	if (hasPreallocatedArgsBlock) {
+		assert(args_block != nullptr);
 		task = MemoryAllocator::alloc(taskSize);
 	} else {
 		// Alignment fixup
