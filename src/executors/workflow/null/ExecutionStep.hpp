@@ -86,8 +86,6 @@ namespace ExecutionWorkflow {
 		
 		inline void releaseRegion(
 			__attribute__((unused))DataAccessRegion const &region,
-			__attribute__((unused))DataAccessType type,
-			__attribute__((unused))bool weak,
 			__attribute__((unused))MemoryPlace *location
 		) {
 		}
