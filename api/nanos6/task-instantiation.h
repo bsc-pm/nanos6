@@ -133,8 +133,8 @@ typedef struct
 	//! \brief Function that the runtime calls to perform a copy of the block of data of the parameters
 	//! 
 	//! \param[in] src_args_block A pointer to the source block of parameters to be copied
-	//! \param[in,out] dest_args_block A pointer to the destination array where the block of parameters is to be copied
-	void (*duplicate_args_block)(const void *src_args_block, void *dest_args_block);
+	//! \param[in,out] dest_args_block_pointer A pointer to a location to store the pointer to the destination array where the block of parameters is to be copied. If the task was created with the nanos6_preallocated_args_block flag, then it will be initialized by this function, otherwise, the runtime will initialize it
+	void (*duplicate_args_block)(const void *src_args_block, void **dest_args_block_pointer);
 	
 	//! \brief Array of functions that the runtime calls to initialize task
 	//! reductions' private storage
@@ -167,7 +167,7 @@ typedef struct
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_instantiation_api
 //! \brief This needs to be incremented on every change to the instantiation API
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 2 };
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 1 };
 
 typedef enum {
 	//! Specifies that the task will be a final task
@@ -177,7 +177,9 @@ typedef enum {
 	//! Specifies that the task is really a taskloop
 	nanos6_taskloop_task = (1 << 2),
 	//! Specifies that the task has the "wait" clause
-	nanos6_waiting_task = (1 << 3)
+	nanos6_waiting_task = (1 << 3),
+	//! Specifies that the args_block is preallocated from user side
+	nanos6_preallocated_args_block = (1 << 4)
 } nanos6_task_flag_t;
 
 
@@ -190,7 +192,7 @@ typedef enum {
 //! \param[in] task_info a pointer to the nanos6_task_info_t structure
 //! \param[in] task_invocation_info a pointer to the nanos6_task_invocation_info_t structure
 //! \param[in] args_block_size size needed to store the paramerters passed to the task call
-//! \param[out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call
+//! \param[in,out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call. Input if flags contains nanos6_preallocated_args_block, out otherwise
 //! \param[out] task_pointer a pointer to a location to store the task handler
 void nanos6_create_task(
 	nanos6_task_info_t *task_info,

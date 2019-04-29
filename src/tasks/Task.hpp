@@ -36,11 +36,16 @@ using namespace ExecutionWorkflow;
 class Task {
 public:
 	enum {
+		//! Flags added by the Mercurium compiler
 		final_flag=0,
 		if0_flag,
 		taskloop_flag,
 		wait_flag,
-		non_runnable_flag, // Note: Must be at the end
+		preallocated_args_block_flag,
+		//! Flags added by the Nanos6 runtime. Note that
+		//! these flags must be always declared after the
+		//! Mercurium flags
+		non_runnable_flag,
 		spawned_flag,
 		total_flags
 	};
@@ -442,6 +447,11 @@ public:
 	{
 		assert(_flags[wait_flag]);
 		_flags[wait_flag] = false;
+	}
+	
+	bool hasPreallocatedArgsBlock() const
+	{
+		return _flags[preallocated_args_block_flag];
 	}
 	
 	bool isSpawned() const
