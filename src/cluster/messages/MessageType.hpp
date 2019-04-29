@@ -15,6 +15,8 @@ typedef enum {
 	DATA_RAW,
 	DMALLOC,
 	DFREE,
+	DATA_FETCH,
+	DATA_SEND,
 	TOTAL_MESSAGE_TYPES
 } MessageType;
 

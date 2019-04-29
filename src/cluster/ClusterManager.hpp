@@ -15,6 +15,8 @@
 #include "cluster/messenger/Messenger.hpp"
 
 #include <ClusterNode.hpp>
+#include <MessageDataFetch.hpp>
+#include <MessageDataSend.hpp>
 
 class ClusterMemoryNode;
 
@@ -42,11 +44,10 @@ private:
 	//! Number of cluster nodes
 	static int _clusterSize;
 	
-	/** A vector of all ClusterNodes in the system.
-	 *
-	 * We might need to make this a map later on, when we start
-	 * adding/removing nodes
-	 */
+	//! A vector of all ClusterNodes in the system.
+	//!
+	//! We might need to make this a map later on, when we start
+	//! adding/removing nodes
 	static std::vector<ClusterNode *> _clusterNodes;
 	
 	//! ClusterNode object of the current node
@@ -263,6 +264,70 @@ public:
 		
 		ClusterNode const *remoteNode = getClusterNode(to->getIndex());
 		return _msn->sendData(region, remoteNode, messageId, block);
+	}
+	
+	//! \brief Initiate a data fetch operation
+	//!
+	//! \param[in] region is the local region we want to update with data
+	//!		from the remote node
+	//! \param[in] from is the MemoryPlace we fetch the data from. This
+	//!		must be a cluster memory place
+	//! \param[in] block determines whether the operation will be blocking.
+	//!		If block is true then upon return, the data will have
+	//!		been succesfully fetched and region will be updated.
+	//!
+	//! \returns In non-blocking mode, this method returns a DataTransfer
+	//!		object which can be used to track the completion of the
+	//!		data transfer. In blocking mode this always returns
+	//!		nullptr
+	static inline DataTransfer *fetchData(DataAccessRegion const &region,
+		MemoryPlace const *from, bool block = false)
+	{
+		assert(_msn != nullptr);
+		assert(from != nullptr);
+		
+		ClusterNode const *remoteNode =
+			getClusterNode(from->getIndex());
+		
+		//! At the moment we do not translate addresses on remote
+		//! nodes, so the region we are fetching, on the remote node is
+		//! the same as the local one
+		MessageDataFetch msg(_thisNode, region);
+		_msn->sendMessage(&msg, remoteNode, true);
+		
+		return fetchDataRaw(region, from, msg.getId(), block);
+	}
+	
+	//! \brief Initiate a data send operation
+	//!
+	//! \param[in] region is the local region we send to the remote node
+	//! \param[in] to is the MemoryPlace we send the data to. This must be a
+	//!		cluster memory place
+	//! \param[in] block determines whether the operation will be blocking.
+	//!		If block is true then upon return, the data will have
+	//!		been succesfully sent and region is allowed to be
+	//!		modified.
+	//!
+	//! \returns In non-blocking mode, this method returns a DataTransfer
+	//!		object which can be used to track the completion of the
+	//!		data transfer. In blocking mode this always returns
+	//!		nullptr
+	static inline DataTransfer *sendData(DataAccessRegion const &region,
+		MemoryPlace const *to, bool block = false)
+	{
+		assert(_msn != nullptr);
+		assert(to != nullptr);
+		
+		ClusterNode const *remoteNode =
+			getClusterNode(to->getIndex());
+		
+		//! At the moment we do not translate addresses on remote
+		//! nodes, so the region we are sending, on the remote node is
+		//! the same as the local one
+		MessageDataSend msg(_thisNode, region);
+		_msn->sendMessage(&msg, remoteNode, true);
+		
+		return sendDataRaw(region, to, msg.getId(), block);
 	}
 	
 	//! \brief A barrier across all cluster nodes

@@ -12,5 +12,7 @@ const char MessageTypeStr[TOTAL_MESSAGE_TYPES][MSG_NAMELEN] =
 	"SYS_FINISH",
 	"DATA_RAW",
 	"DMALLOC",
-	"DFREE"
+	"DFREE",
+	"DATA_FETCH",
+	"DATA_SEND"
 };
