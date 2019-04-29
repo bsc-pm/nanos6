@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef THREAD_MANAGER_HPP
@@ -34,6 +34,10 @@ private:
 		SpinLock _lock;
 		std::deque<WorkerThread *> _threads;
 	};
+	struct ShutdownThreads {
+		SpinLock _lock;
+		std::deque<WorkerThread *> _threads;
+	};
 	
 	//! \brief indicates if the runtime is shutting down
 	static std::atomic<bool> _mustExit;
@@ -44,10 +48,14 @@ private:
 	//! \brief number of threads in the system
 	static std::atomic<long> _totalThreads;
 	
+	//! \brief threads that already completed the shutdown process
+	static ShutdownThreads *_shutdownThreads;
+	
 	
 public:
 	static void initialize();
-	static void shutdown();
+	static void shutdownPhase1();
+	static void shutdownPhase2();
 	
 	
 	//! \brief create a WorkerThread
@@ -88,6 +96,8 @@ public:
 	
 	//! \brief returns true if the thread must shut down
 	static inline bool mustExit();
+	
+	static void addShutdownThread(WorkerThread *shutdownThread);
 	
 	friend class ThreadManagerDebuggingInterface;
 	friend struct CPUThreadingModelData;
@@ -213,6 +223,14 @@ inline void ThreadManager::resumeIdle(const std::vector<CPU *> &idleCPUs, bool i
 inline bool ThreadManager::mustExit()
 {
 	return _mustExit;
+}
+
+inline void ThreadManager::addShutdownThread(WorkerThread *shutdownThread)
+{
+	assert(shutdownThread != nullptr);
+	assert(_shutdownThreads != nullptr);
+	std::lock_guard<SpinLock> guard(_shutdownThreads->_lock);
+	_shutdownThreads->_threads.push_back(shutdownThread);
 }
 
 

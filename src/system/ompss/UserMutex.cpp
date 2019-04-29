@@ -136,27 +136,12 @@ void nanos6_user_unlock(void **handlerPointer)
 			WorkerThread *releasedThread = releasedTask->getThread();
 			assert(releasedThread != nullptr);
 			
-			CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
-			if (idleCPU != nullptr) {
-				// Wake up the unblocked task in an idle CPU
-				releasedThread->resume(idleCPU, false);
-			} else {
-				Scheduler::addReadyTask(currentTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);
-				
-				currentThread->switchTo(releasedThread);
-				
-				// Update the CPU since the thread may have migrated
-				cpu = currentThread->getComputePlace();
-				assert(cpu != nullptr);
-				Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
-			}
-		} else {
-			Scheduler::addReadyTask(releasedTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);
+			Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 			
-			CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
-			if (idleCPU != nullptr) {
-				ThreadManager::resumeIdle(idleCPU);
-			}
+			currentThread->switchTo(releasedThread);
+			Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
+		} else {
+			Scheduler::addReadyTask(releasedTask, cpu, UNBLOCKED_TASK_HINT);
 		}
 	}
 }

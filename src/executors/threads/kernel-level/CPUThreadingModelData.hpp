@@ -40,8 +40,6 @@ public:
 	}
 	
 	void initialize(CPU *cpu);
-	void shutdownPhase1(CPU *cpu);
-	void shutdownPhase2(CPU *cpu);
 	
 	static size_t getDefaultStackSize()
 	{

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -1251,18 +1251,9 @@ namespace DataAccessRegistration {
 				}
 			}
 			
-			ComputePlace *idleComputePlace = Scheduler::addReadyTask(
-				satisfiedOriginator,
-				computePlaceHint,
-				(fromBusyThread ?
-					SchedulerInterface::SchedulerInterface::BUSY_COMPUTE_PLACE_TASK_HINT
-					: SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT
-				)
+			Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint,
+				(fromBusyThread ? BUSY_COMPUTE_PLACE_TASK_HINT : SIBLING_TASK_HINT)
 			);
-			
-			if (idleComputePlace != nullptr) {
-				ThreadManager::resumeIdle((CPU *) idleComputePlace);
-			}
 		}
 		
 		hpDependencyData._satisfiedOriginators.clear();

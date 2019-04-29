@@ -116,9 +116,13 @@ void nanos6_shutdown(void) {
 	
 	StreamManager::shutdown();
 	LeaderThread::shutdown();
-	ThreadManager::shutdown();
+	//Finalize threads.
+	ThreadManager::shutdownPhase1();
 	
 	Instrument::shutdown();
+	
+	//Delete threads, after Instrument::shutdown since it may need thread info.
+	ThreadManager::shutdownPhase2();
 	
 	// Delete all registered external threads, including mainThread
 	ExternalThreadGroup::shutdown();

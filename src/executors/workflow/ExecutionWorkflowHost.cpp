@@ -43,16 +43,11 @@ namespace ExecutionWorkflow {
 		) {
 			_task->setExecutionStep(this);
 			
-			ComputePlace *idleComputePlace =
-				Scheduler::addReadyTask(
-					_task,
-					nullptr,
-					SchedulerInterface::BUSY_COMPUTE_PLACE_TASK_HINT
-				);
-			
-			if (idleComputePlace != nullptr) {
-				ThreadManager::resumeIdle((CPU *) idleComputePlace);
-			}
+			Scheduler::addReadyTask(
+				_task,
+				nullptr,
+				BUSY_COMPUTE_PLACE_TASK_HINT
+			);
 			
 			return;
 		}

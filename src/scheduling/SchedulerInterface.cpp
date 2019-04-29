@@ -1,55 +1,58 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
-#include "SchedulerInterface.hpp"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include "Scheduler.hpp"
+#include "SchedulerGenerator.hpp"
+#include "lowlevel/EnvironmentVariable.hpp"
+#include "system/RuntimeInfo.hpp"
 
-#include <cassert>
-
-bool SchedulerInterface::canWait()
+SchedulerInterface::SchedulerInterface()
 {
-	return false;
-}
-
-void SchedulerInterface::disableComputePlace(__attribute__((unused)) ComputePlace *computePlace)
-{
-}
-
-
-void SchedulerInterface::enableComputePlace(__attribute__((unused)) ComputePlace *computePlace)
-{
-}
-
-
-bool SchedulerInterface::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
-{
-	assert(pollingSlot != nullptr);
-	assert(pollingSlot->_task == nullptr);
+	const EnvironmentVariable<std::string> schedulingPolicy("NANOS6_SCHEDULING_POLICY", "FIFO");
+	RuntimeInfo::addEntry("schedulingPolicy", "SchedulingPolicy", schedulingPolicy.getValue());
+	SchedulingPolicy policy = (schedulingPolicy.getValue() == "LIFO" || schedulingPolicy.getValue() == "lifo") ? LIFO_POLICY : FIFO_POLICY;
 	
-	// Default implementation: attempt to get a ready task and fail if not possible
-	Task *task = Scheduler::getReadyTask(computePlace, nullptr, canMarkAsIdle);
+	const EnvironmentVariable<bool> enableImmediateSuccessor("NANOS6_IMMEDIATE_SUCCESSOR", "1");
+	const EnvironmentVariable<bool> enablePriority("NANOS6_PRIORITY", "1");
 	
-	if (task != nullptr) {
-		Task *expected = nullptr;
-		
-		pollingSlot->_task.compare_exchange_strong(expected, task);
-		assert(expected == nullptr);
-		
-		return true;
-	} else {
-		return false;
+	_hostScheduler = SchedulerGenerator::createHostScheduler(policy, enablePriority, enableImmediateSuccessor);
+	
+	size_t totalDevices = (nanos6_device_t::nanos6_device_type_num);
+	
+	assert(_deviceSchedulers != nullptr);
+	
+	for (size_t i = 0; i < totalDevices; i++) {
+		_deviceSchedulers[i] = nullptr;
 	}
+	
+#if USE_CUDA
+	_deviceSchedulers[nanos6_cuda_device] = SchedulerGenerator::createDeviceScheduler(policy, enablePriority, enableImmediateSuccessor, nanos6_cuda_device);
+#endif
+#if NANOS6_OPENCL
+	FatalErrorHandler::failIf(true, "OpenCL is not supported yet.");
+#endif
+#if USE_FPGA
+	_deviceScheduler[nanos6_fpga_device] = SchedulerGenerator::createDeviceScheduler(policy, enablePriority, enableImmediateSuccessor, nanos6_fpga_device);
+#endif
 }
 
-
-bool SchedulerInterface::releasePolling(__attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) polling_slot_t *pollingSlot, __attribute__((unused)) bool canMarkAsIdle)
+SchedulerInterface::~SchedulerInterface()
 {
-	// The default implementation should never be called if there is a default implementation of requestPolling
-	// otherwise there should be an implementation of this method that matches requestPolling
-	return (pollingSlot->_task.load(std::memory_order_seq_cst) == nullptr);
+	delete _hostScheduler;
+#if USE_CUDA
+	delete _deviceSchedulers[nanos6_cuda_device];
+#endif
+#if NANOS6_OPENCL
+	FatalErrorHandler::failIf(true, "OpenCL is not supported yet.");
+#endif
+#if USE_FPGA
+	delete _deviceSchedulers[nanos6_fpga_device]);
+#endif
 }
-

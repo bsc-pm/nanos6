@@ -335,19 +335,12 @@ common_sources = \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
-	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/schedulers/FIFOScheduler.cpp \
-	src/scheduling/schedulers/HostHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/NaiveScheduler.cpp \
-	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
-	src/scheduling/schedulers/PriorityScheduler.cpp \
-	src/scheduling/schedulers/PriorityScheduler1.cpp \
+	src/scheduling/schedulers/HostUnsyncScheduler.cpp \
+	src/scheduling/schedulers/SyncScheduler.cpp \
+	src/scheduling/schedulers/UnsyncScheduler.cpp \
 	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.cpp \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.cpp \
+	src/scheduling/schedulers/device/DeviceUnsyncScheduler.cpp \
 	src/support/GlobalLock.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
@@ -477,8 +470,7 @@ endif
 
 AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
 common_sources += \
-	src/executors/threads/kernel-level/CPUThreadingModelData.cpp \
-	src/executors/threads/kernel-level/WorkerThreadBase.cpp
+	src/executors/threads/kernel-level/CPUThreadingModelData.cpp
 
 
 nodist_common_sources += \
@@ -1023,25 +1015,26 @@ noinst_HEADERS = \
 	src/monitoring/null/TaskMonitor.hpp \
 	src/monitoring/null/TaskPredictions.hpp \
 	src/monitoring/null/TaskStatistics.hpp \
+	src/scheduling/ClusterScheduler.hpp \
+	src/scheduling/LocalScheduler.hpp \
+	src/scheduling/ReadyQueue.hpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
-	src/scheduling/TaskloopSchedulingPolicy.hpp \
-	src/scheduling/schedulers/DefaultScheduler.hpp \
-	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
-	src/scheduling/schedulers/FIFOScheduler.hpp \
-	src/scheduling/schedulers/HostHierarchicalScheduler.hpp \
-	src/scheduling/schedulers/ImmediateSuccessorScheduler.hpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
-	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
-	src/scheduling/schedulers/NaiveScheduler.hpp \
-	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
-	src/scheduling/schedulers/PriorityScheduler.hpp \
-	src/scheduling/schedulers/PriorityScheduler1.hpp \
+	src/scheduling/Support.hpp \
+	src/scheduling/ready-queues/ReadyQueueDeque.hpp \
+	src/scheduling/ready-queues/ReadyQueueMap.hpp \
+	src/scheduling/schedulers/HostScheduler.hpp \
+	src/scheduling/schedulers/HostUnsyncScheduler.hpp \
+	src/scheduling/schedulers/SyncScheduler.hpp \
+	src/scheduling/schedulers/UnsyncScheduler.hpp \
 	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.hpp \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.hpp \
-	src/scheduling/schedulers/cuda/CUDANaiveScheduler.hpp \
+	src/scheduling/schedulers/device/CUDADeviceScheduler.hpp \
+	src/scheduling/schedulers/device/DeviceScheduler.hpp \
+	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
+	src/scheduling/schedulers/device/FPGADeviceScheduler.hpp \
+	src/scheduling/schedulers/device/SubDeviceScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GenericFactory.hpp \

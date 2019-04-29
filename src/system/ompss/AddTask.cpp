@@ -164,17 +164,13 @@ void nanos6_submit_task(void *taskHandle)
 	
 	if (ready && !isIf0) {
 		// Queue the task if ready but not if0
-		SchedulerInterface::ReadyTaskHint schedulingHint = SchedulerInterface::NO_HINT;
+		ReadyTaskHint schedulingHint = NO_HINT;
 		
 		if (currentWorkerThread != nullptr) {
-			schedulingHint = SchedulerInterface::CHILD_TASK_HINT;
+			schedulingHint = CHILD_TASK_HINT;
 		}
 		
-		ComputePlace *idleComputePlace = Scheduler::addReadyTask(task, computePlace, schedulingHint);
-		
-		if (idleComputePlace != nullptr) {
-			ThreadManager::resumeIdle((CPU *) idleComputePlace);
-		}
+		Scheduler::addReadyTask(task, computePlace, schedulingHint);
 	}
 	
 	if (parent != nullptr) {
