@@ -37,9 +37,8 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
 	
-	__attribute__((unused)) CPU *cpu = nullptr;
-	cpu = currentThread->getComputePlace();
-	assert(cpu != nullptr);
+	ComputePlace *computePlace = currentThread->getComputePlace();
+	assert(computePlace != nullptr);
 	
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
@@ -51,6 +50,11 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	
 	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_NO_INLINE);
+	
+	// Update the CPU since the thread may have migrated
+	computePlace = currentThread->getComputePlace();
+	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
+	
 	DataAccessRegistration::handleExitBlocking(currentTask);
 	
 	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());

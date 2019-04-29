@@ -67,7 +67,10 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 	if (!done) {
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_CHILDREN_INLINE);
-		Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
+		
+		// Update the CPU since the thread may have migrated
+		cpu = currentThread->getComputePlace();
+		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 	}
 	
 	// This in combination with a release from the children makes their changes visible to this thread
