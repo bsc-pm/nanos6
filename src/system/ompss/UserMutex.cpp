@@ -86,7 +86,9 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_NO_INLINE);
 	
+	// Update the CPU since the thread may have migrated
 	computePlace = currentThread->getComputePlace();
+	assert(computePlace != nullptr);
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 	
 	DataAccessRegistration::handleExitBlocking(currentTask);
@@ -134,7 +136,11 @@ void nanos6_user_unlock(void **handlerPointer)
 				Scheduler::addReadyTask(currentTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);
 				
 				currentThread->switchTo(releasedThread);
-				Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
+				
+				// Update the CPU since the thread may have migrated
+				cpu = currentThread->getComputePlace();
+				assert(cpu != nullptr);
+				Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 			}
 		} else {
 			Scheduler::addReadyTask(releasedTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);
@@ -144,8 +150,6 @@ void nanos6_user_unlock(void **handlerPointer)
 				ThreadManager::resumeIdle(idleCPU);
 			}
 		}
-		
-		// WARNING: cpu is no longer valid here, refresh its value if needed
 	}
 }
 

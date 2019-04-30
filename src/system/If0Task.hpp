@@ -39,6 +39,11 @@ namespace If0Task {
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		currentThread->switchTo(replacementThread);
 		
+		//Update the CPU since the thread may have migrated
+		cpu = currentThread->getComputePlace();
+		assert(cpu != nullptr);
+		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
+		
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 	}

@@ -62,7 +62,9 @@ void WorkerThread::body()
 	while (!_mustShutDown) {
 		CPUActivation::activationCheck(this);
 		
+		// Update the CPU since the thread may have migrated
 		cpu = getComputePlace();
+		assert(cpu != nullptr);
 		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 		
 		if (_task == nullptr) {

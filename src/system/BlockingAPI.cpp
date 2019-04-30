@@ -53,6 +53,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	
 	// Update the CPU since the thread may have migrated
 	computePlace = currentThread->getComputePlace();
+	assert(computePlace != nullptr);
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 	
 	DataAccessRegistration::handleExitBlocking(currentTask);

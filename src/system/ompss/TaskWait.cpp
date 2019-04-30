@@ -70,6 +70,7 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 		
 		// Update the CPU since the thread may have migrated
 		cpu = currentThread->getComputePlace();
+		assert(cpu != nullptr);
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 	}
 	
