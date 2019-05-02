@@ -36,9 +36,9 @@ private:
 	WorkerThread *_owner;
 #endif
 	
-	inline void assertCurrentOwner();
+	inline void assertCurrentOwner(__attribute__((unused)) bool ignoreOwner);
 	inline void assertUnowned();
-	inline void assertUnownedOrCurrentOwner();
+	inline void assertUnownedOrCurrentOwner(__attribute__((unused)) bool ignoreOwner);
 	inline void setOwner();
 	inline void unsetOwner();
 	
@@ -92,9 +92,9 @@ public:
 		}
 	}
 	
-	inline void unlock()
+	inline void unlock(bool ignoreOwner = false)
 	{
-		assertCurrentOwner();
+		assertCurrentOwner(ignoreOwner);
 		unsetOwner();
 		
 		_currentTicket.fetch_add(1, std::memory_order_release);
@@ -106,9 +106,9 @@ public:
 
 #ifndef NDEBUG
 template <typename TICKET_T>
-inline void TicketSpinLock<TICKET_T>::assertCurrentOwner()
+inline void TicketSpinLock<TICKET_T>::assertCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 {
-	assert(_owner == ompss_debug::getCurrentWorkerThread());
+	assert(ignoreOwner || (_owner == ompss_debug::getCurrentWorkerThread()));
 }
 
 template <typename TICKET_T>
@@ -118,9 +118,9 @@ inline void TicketSpinLock<TICKET_T>::assertUnowned()
 }
 
 template <typename TICKET_T>
-inline void TicketSpinLock<TICKET_T>::assertUnownedOrCurrentOwner()
+inline void TicketSpinLock<TICKET_T>::assertUnownedOrCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 {
-	assert( (_owner == nullptr) || (_owner == ompss_debug::getCurrentWorkerThread()) ) ;
+	assert( ignoreOwner || (_owner == nullptr) || (_owner == ompss_debug::getCurrentWorkerThread()) ) ;
 }
 
 template <typename TICKET_T>
@@ -136,7 +136,7 @@ inline void TicketSpinLock<TICKET_T>::unsetOwner()
 }
 #else
 template <typename TICKET_T>
-inline void TicketSpinLock<TICKET_T>::assertCurrentOwner()
+inline void TicketSpinLock<TICKET_T>::assertCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 {
 }
 
@@ -146,7 +146,7 @@ inline void TicketSpinLock<TICKET_T>::assertUnowned()
 }
 
 template <typename TICKET_T>
-inline void TicketSpinLock<TICKET_T>::assertUnownedOrCurrentOwner()
+inline void TicketSpinLock<TICKET_T>::assertUnownedOrCurrentOwner(__attribute__((unused)) bool ignoreOwner)
 {
 }
 

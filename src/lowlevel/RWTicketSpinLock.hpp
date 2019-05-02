@@ -37,7 +37,7 @@ public:
 	{
 		_readersSpinLock.lock();
 		if (--_readers == 0) {
-			_writerSpinLock.unlock();
+			_writerSpinLock.unlock(/* Ignore the owner */ true);
 		}
 		_readersSpinLock.unlock();
 	}
