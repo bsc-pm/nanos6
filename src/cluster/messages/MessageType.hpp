@@ -17,6 +17,8 @@ typedef enum {
 	DFREE,
 	DATA_FETCH,
 	DATA_SEND,
+	TASK_NEW,
+	TASK_FINISHED,
 	TOTAL_MESSAGE_TYPES
 } MessageType;
 

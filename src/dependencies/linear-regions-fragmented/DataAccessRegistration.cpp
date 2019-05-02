@@ -2081,10 +2081,14 @@ namespace DataAccessRegistration {
 						targetAccess = fragmentAccess(targetAccess, missingRegion, accessStructures);
 						
 						DataAccessStatusEffects initialStatus(targetAccess);
-						//! This is a local access, so no location is setup yet.
+						//! If this is a remote task, we will receive satisfiability
+						//! information later on, otherwise this is a local access,
+						//! so no location is setup yet.
 						//! For now we set it to the Directory MemoryPlace.
-						targetAccess->setReadSatisfied(Directory::getDirectoryMemoryPlace());
-						targetAccess->setWriteSatisfied();
+						if (!targetAccess->getOriginator()->isRemote()) {
+							targetAccess->setReadSatisfied(Directory::getDirectoryMemoryPlace());
+							targetAccess->setWriteSatisfied();
+						}
 						targetAccess->setConcurrentSatisfied();
 						targetAccess->setCommutativeSatisfied();
 						targetAccess->setReceivedReductionInfo();
@@ -2893,7 +2897,7 @@ namespace DataAccessRegistration {
 #endif
 	}
 	
-	void propagateSatisfiability(Task *task, DataAccessRegion &region,
+	void propagateSatisfiability(Task *task, DataAccessRegion const &region,
 		ComputePlace *computePlace, CPUDependencyData &hpDependencyData,
 		bool readSatisfied, bool writeSatisfied,
 		MemoryPlace const *location)

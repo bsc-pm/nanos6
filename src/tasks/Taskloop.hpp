@@ -17,8 +17,6 @@
 
 class Taskloop : public Task {
 private:
-	size_t _argsBlockSize;
-	
 	TaskloopInfo _taskloopInfo;
 	
 public:
@@ -33,22 +31,11 @@ public:
 		size_t flags,
 		bool runnable = false
 	)
-		: Task(argsBlock, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags),
-		_argsBlockSize(argsBlockSize),
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags),
 		_taskloopInfo()
 	{
 		setRunnable(runnable);
 		setDelayedRelease(true);
-	}
-	
-	inline void setArgsBlockSize(size_t argsBlockSize)
-	{
-		_argsBlockSize = argsBlockSize;
-	}
-	
-	inline size_t getArgsBlockSize() const
-	{
-		return _argsBlockSize;
 	}
 	
 	inline TaskloopInfo const &getTaskloopInfo() const

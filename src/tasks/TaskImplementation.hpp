@@ -16,6 +16,7 @@
 
 inline Task::Task(
 	void *argsBlock,
+	size_t argsBlockSize,
 	nanos6_task_info_t *taskInfo,
 	nanos6_task_invocation_info_t *taskInvokationInfo,
 	Task *parent,
@@ -23,6 +24,7 @@ inline Task::Task(
 	size_t flags
 )
 	: _argsBlock(argsBlock),
+	_argsBlockSize(argsBlockSize),
 	_taskInfo(taskInfo),
 	_taskInvokationInfo(taskInvokationInfo),
 	_countdownToBeWokenUp(1),
@@ -38,13 +40,22 @@ inline Task::Task(
 	_memoryPlace(nullptr),
 	_countdownToRelease(1),
 	_workflow(nullptr),
+	_executionStep(nullptr),
 	_taskStatistics(),
 	_taskPredictions(),
 	_taskCounters(),
-	_taskCountersPredictions()
+	_taskCountersPredictions(),
+	_clusterContext(nullptr)
 {
 	if (parent != nullptr) {
 		parent->addChild(this);
+	}
+}
+
+inline Task::~Task()
+{
+	if (_clusterContext != nullptr) {
+		delete _clusterContext;
 	}
 }
 

@@ -387,8 +387,11 @@ cluster_sources += \
 	src/cluster/messages/MessageDfree.cpp \
 	src/cluster/messages/MessageDmalloc.cpp \
 	src/cluster/messages/MessageSysFinish.cpp \
+	src/cluster/messages/MessageTaskFinished.cpp \
+	src/cluster/messages/MessageTaskNew.cpp \
 	src/cluster/messages/MessageType.cpp \
 	src/cluster/messenger/mpi/MPIMessenger.cpp \
+	src/cluster/offloading/TaskOffloading.cpp \
 	src/cluster/polling-services/DataTransferCompletion.cpp \
 	src/cluster/polling-services/MessageDelivery.cpp \
 	src/cluster/polling-services/MessageHandler.cpp \
@@ -398,6 +401,7 @@ cluster_cppflags = \
 	-I$(srcdir)/src/cluster \
 	-I$(srcdir)/src/cluster/messages \
 	-I$(srcdir)/src/cluster/messenger \
+	-I$(srcdir)/src/cluster/offloading \
 	-I$(srcdir)/src/cluster/polling-services \
 	-I$(srcdir)/src/memory/directory \
 	-I$(srcdir)/src/memory/directory/cluster \
@@ -406,6 +410,7 @@ cluster_cppflags = \
 else
 cluster_cppflags = \
 	-I$(srcdir)/src/cluster/null \
+	-I$(srcdir)/src/cluster/offloading/null \
 	-I$(srcdir)/src/hardware/cluster/null \
 	-I$(srcdir)/src/hardware/cluster/memory/null
 endif
@@ -671,6 +676,8 @@ noinst_HEADERS = \
 	src/cluster/messages/MessageDmalloc.hpp \
 	src/cluster/messages/MessageId.hpp \
 	src/cluster/messages/MessageSysFinish.hpp \
+	src/cluster/messages/MessageTaskFinished.hpp \
+	src/cluster/messages/MessageTaskNew.hpp \
 	src/cluster/messages/MessageType.hpp \
 	src/cluster/messenger/DataTransfer.hpp \
 	src/cluster/messenger/Messenger.hpp \
@@ -678,6 +685,9 @@ noinst_HEADERS = \
 	src/cluster/messenger/mpi/MPIMessenger.hpp \
 	src/cluster/null/ClusterManager.hpp \
 	src/cluster/null/ClusterMemoryManagement.hpp \
+	src/cluster/offloading/ClusterTaskContext.hpp \
+	src/cluster/offloading/TaskOffloading.hpp \
+	src/cluster/offloading/null/ClusterTaskContext.hpp \
 	src/cluster/polling-services/ClusterPollingServices.hpp \
 	src/cluster/polling-services/DataTransferCompletion.hpp \
 	src/cluster/polling-services/MessageDelivery.hpp \

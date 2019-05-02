@@ -68,7 +68,7 @@ namespace DataAccessRegistration {
 	//! \param[in] location is not a nullptr if we have an update for the location of the region.
 	void propagateSatisfiability(
 		Task *task,
-		DataAccessRegion &region,
+		DataAccessRegion const &region,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData,
 		bool readSatisfied,

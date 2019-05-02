@@ -14,5 +14,7 @@ const char MessageTypeStr[TOTAL_MESSAGE_TYPES][MSG_NAMELEN] =
 	"DMALLOC",
 	"DFREE",
 	"DATA_FETCH",
-	"DATA_SEND"
+	"DATA_SEND",
+	"TASK_NEW",
+	"TASK_FINISHED"
 };

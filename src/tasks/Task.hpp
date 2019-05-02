@@ -17,6 +17,7 @@
 
 #include "lowlevel/SpinLock.hpp"
 
+#include <ClusterTaskContext.hpp>
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
@@ -51,6 +52,7 @@ public:
 		//! Mercurium flags
 		non_runnable_flag,
 		spawned_flag,
+		remote_flag,
 		total_flags
 	};
 	
@@ -60,6 +62,7 @@ private:
 	typedef std::bitset<total_flags> flags_t;
 	
 	void *_argsBlock;
+	size_t _argsBlockSize;
 	
 	nanos6_task_info_t *_taskInfo;
 	nanos6_task_invocation_info_t *_taskInvokationInfo;
@@ -126,15 +129,20 @@ private:
 	//! Hardware counter prediction structures of the task
 	TaskHardwareCountersPredictions _taskCountersPredictions;
 	
+	//! Cluster-related data for remote tasks
+	TaskOffloading::ClusterTaskContext *_clusterContext;
 public:
 	inline Task(
 		void *argsBlock,
+		size_t argsBlockSize,
 		nanos6_task_info_t *taskInfo,
 		nanos6_task_invocation_info_t *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags
 	);
+	
+	inline ~Task();
 	
 	//! Set the address of the arguments block
 	inline void setArgsBlock(void *argsBlock)
@@ -145,6 +153,15 @@ public:
 	inline void *getArgsBlock() const
 	{
 		return _argsBlock;
+	}
+	//! Get the arguments block size
+	inline size_t getArgsBlockSize() const
+	{
+		return _argsBlockSize;
+	}
+	inline void setArgsBlockSize(size_t argsBlockSize)
+	{
+		_argsBlockSize = argsBlockSize;
 	}
 	
 	inline nanos6_task_info_t *getTaskInfo() const
@@ -647,6 +664,26 @@ public:
 	inline TaskHardwareCountersPredictions *getTaskHardwareCountersPredictions()
 	{
 		return &_taskCountersPredictions;
+	}
+	
+	inline void markAsRemote()
+	{
+		_flags[remote_flag] = true;
+	}
+	inline bool isRemote() const
+	{
+		return _flags[remote_flag];
+	}
+	
+	inline void setClusterContext(
+		TaskOffloading::ClusterTaskContext *clusterContext)
+	{
+		_clusterContext = clusterContext;
+	}
+	
+	inline TaskOffloading::ClusterTaskContext *getClusterContext() const
+	{
+		return _clusterContext;
 	}
 };
 
