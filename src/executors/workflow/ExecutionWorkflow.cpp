@@ -244,7 +244,7 @@ namespace ExecutionWorkflow {
 					assert(dataAccess != nullptr);
 					DataAccessRegion region = dataAccess->getAccessRegion();
 					
-					MemoryPlace *currLocation = dataAccess->getLocation();
+					MemoryPlace const *currLocation = dataAccess->getLocation();
 					/* TODO: This will be provided by the corresponding
 					 * AllocationAndPinning step, once we fix this functionality.
 					 * At the moment (and since we support only cluster and SMP
@@ -335,8 +335,8 @@ namespace ExecutionWorkflow {
 				computePlace
 			);
 		
-		MemoryPlace *currLocation = taskwaitFragment->getLocation();
-		MemoryPlace *targetLocation = taskwaitFragment->getOutputLocation();
+		MemoryPlace const *currLocation = taskwaitFragment->getLocation();
+		MemoryPlace const *targetLocation = taskwaitFragment->getOutputLocation();
 		
 		//! No need to perform any copy for this taskwait fragment
 		if (targetLocation == nullptr) {

@@ -73,7 +73,7 @@ namespace DataAccessRegistration {
 		CPUDependencyData &dependencyData,
 		bool readSatisfied,
 		bool writeSatisfied,
-		MemoryPlace *location
+		MemoryPlace const *location
 	);
 	
 	void handleEnterBlocking(Task *task);

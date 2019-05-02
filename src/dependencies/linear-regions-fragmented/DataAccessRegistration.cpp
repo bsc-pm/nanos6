@@ -823,8 +823,8 @@ namespace DataAccessRegistration {
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex = no_reduction_type_and_operator,
 		reduction_index_t reductionIndex = -1,
-		MemoryPlace *location = nullptr,
-		MemoryPlace *outputLocation = nullptr,
+		MemoryPlace const *location = nullptr,
+		MemoryPlace const *outputLocation = nullptr,
 		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink()
 	) {
 		// Regular object duplication
@@ -2818,7 +2818,8 @@ namespace DataAccessRegistration {
 	
 	void propagateSatisfiability(Task *task, DataAccessRegion &region,
 		ComputePlace *computePlace, CPUDependencyData &hpDependencyData,
-		bool readSatisfied, bool writeSatisfied, MemoryPlace *location)
+		bool readSatisfied, bool writeSatisfied,
+		MemoryPlace const *location)
 	{
 		assert(task != nullptr);
 		

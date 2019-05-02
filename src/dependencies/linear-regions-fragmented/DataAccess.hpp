@@ -108,10 +108,10 @@ private:
 	boost::dynamic_bitset<> _reductionSlotSet;
 	
 	//! Location of the DataAccess
-	MemoryPlace *_location;
+	MemoryPlace const *_location;
 	
 	//! Output memory location of the access
-	MemoryPlace *_outputLocation;
+	MemoryPlace const *_outputLocation;
 	
 public:
 	DataAccess(
@@ -121,8 +121,8 @@ public:
 		DataAccessRegion accessRegion,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
 		reduction_index_t reductionIndex,
-		MemoryPlace *location = nullptr,
-		MemoryPlace *outputLocation = nullptr,
+		MemoryPlace const *location = nullptr,
+		MemoryPlace const *outputLocation = nullptr,
 		Instrument::data_access_id_t instrumentationId = Instrument::data_access_id_t(),
 		status_t status = 0, DataAccessLink next = DataAccessLink()
 	)
@@ -257,7 +257,7 @@ public:
 		return _status[COMPLETE_BIT];
 	}
 	
-	void setReadSatisfied(MemoryPlace *location = nullptr)
+	void setReadSatisfied(MemoryPlace const *location = nullptr)
 	{
 		assert(!readSatisfied());
 		_status[READ_SATISFIED_BIT] = true;
@@ -443,12 +443,12 @@ public:
 		return _status[TOP_LEVEL_BIT];
 	}
 	
-	void setLocation(MemoryPlace *location)
+	void setLocation(MemoryPlace const *location)
 	{
 		_location = location;
 		Instrument::newDataAccessLocation(_instrumentationId, location);
 	}
-	MemoryPlace *getLocation() const
+	MemoryPlace const *getLocation() const
 	{
 		return _location;
 	}
@@ -457,11 +457,11 @@ public:
 		return (_location != nullptr);
 	}
 	
-	void setOutputLocation(MemoryPlace *location)
+	void setOutputLocation(MemoryPlace const *location)
 	{
 		_outputLocation = location;
 	}
-	MemoryPlace *getOutputLocation() const
+	MemoryPlace const *getOutputLocation() const
 	{
 		return _outputLocation;
 	}

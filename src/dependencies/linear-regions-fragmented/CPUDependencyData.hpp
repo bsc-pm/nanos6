@@ -35,7 +35,7 @@ struct CPUDependencyData {
 		bool _makeWriteSatisfied;
 		bool _makeConcurrentSatisfied;
 		bool _makeCommutativeSatisfied;
-		MemoryPlace *_location;
+		MemoryPlace const *_location;
 		
 		bool _makeTopmost;
 		bool _makeTopLevel;
