@@ -148,8 +148,8 @@ namespace Instrument {
 			
 			PhaseInfo(bool active=true)
 				: _perTask(),
-				_runningTime(false),
-				_blockedTime(active),
+				_runningTime(active),
+				_blockedTime(false),
 				_hardwareCounters()
 			{
 			}
