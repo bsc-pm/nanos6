@@ -19,6 +19,7 @@ typedef enum {
 	DATA_SEND,
 	TASK_NEW,
 	TASK_FINISHED,
+	SATISFIABILITY,
 	TOTAL_MESSAGE_TYPES
 } MessageType;
 

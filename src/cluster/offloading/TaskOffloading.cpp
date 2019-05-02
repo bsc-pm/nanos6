@@ -17,6 +17,7 @@
 #include <ClusterManager.hpp>
 #include <DataAccessRegistration.hpp>
 #include <Directory.hpp>
+#include <MessageSatisfiability.hpp>
 #include <MessageTaskFinished.hpp>
 #include <MessageTaskNew.hpp>
 
@@ -230,5 +231,41 @@ namespace TaskOffloading {
 		
 		registerRemoteTask(localTask);
 		propagateSatisfiability(localTask, satInfo);
+	}
+	
+	void sendSatisfiability(Task *task, ClusterNode *remoteNode,
+			SatisfiabilityInfo const &satInfo)
+	{
+		assert(task != nullptr);
+		assert(remoteNode != nullptr);
+		assert(!satInfo.empty());
+		
+		ClusterNode *current = ClusterManager::getCurrentClusterNode();
+		MessageSatisfiability *msg =
+			new MessageSatisfiability(current, (void *)task,
+					satInfo);
+		
+		ClusterManager::sendMessage(msg, remoteNode);
+	}
+	
+	void propagateSatisfiability(void *offloadedTaskId, ClusterNode *offloader,
+			SatisfiabilityInfo const &satInfo)
+	{
+		RemoteTaskInfo &taskInfo = _remoteTasks.getTaskInfo(offloadedTaskId,
+								offloader->getIndex());
+		
+		taskInfo._lock.lock();
+		if (taskInfo._localTask == nullptr) {
+			//! The remote task has not been created yet, so we
+			//! just add the info to the temporary vector
+			taskInfo._satInfo.push_back(satInfo);
+			taskInfo._lock.unlock();
+		} else {
+			//! We *HAVE* to leave the lock now, because propagating
+			//! satisfiability might lead to unregistering the remote
+			//! task
+			taskInfo._lock.unlock();
+			propagateSatisfiability(taskInfo._localTask, satInfo);
+		}
 	}
 }

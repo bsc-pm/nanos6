@@ -49,6 +49,25 @@ namespace TaskOffloading {
 	//!		remote task
 	void registerRemoteTask(Task *localTask,
 			std::vector<SatisfiabilityInfo> const &satInfo);
+	
+	//! \brief Send satisfiability information to an offloaded Task
+	//!
+	//! \param[in] task is the offloaded task
+	//! \param[in] remoteNode is the cluster node, where there is the
+	//!		remote task
+	//! \param[in] satInfo is the Satisfiability information we are
+	//!		sending
+	void sendSatisfiability(Task *task, ClusterNode *remoteNode,
+			SatisfiabilityInfo const &satInfo);
+	
+	//! \brief Propagate satisfiability information for a remote task
+	//!
+	//! \param[in] offloadedTaskId is the task identifier of the offloader
+	//!		node
+	//! \param[in] offloader is the clusterNode that offloaded the task
+	//! \param[in] satInfo is satisfiability info we are propagating
+	void propagateSatisfiability(void *offloadedTaskId,
+			ClusterNode *offloader, SatisfiabilityInfo const &satInfo);
 }
 
-#endif /* TASK_OFFLOADING_HPP */
+#endif // TASK_OFFLOADING_HPP

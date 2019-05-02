@@ -35,9 +35,21 @@ namespace TaskOffloading {
 		{
 			return !_readSat && !_writeSat;
 		}
+		
+		friend std::ostream& operator<<(std::ostream &o,
+				TaskOffloading::SatisfiabilityInfo const &satInfo);
 	};
-}
 
+	inline std::ostream& operator<<(std::ostream &o,
+			TaskOffloading::SatisfiabilityInfo const &satInfo)
+	{
+		return o << "Satisfiability info for region:" << satInfo._region <<
+			" read:" << satInfo._readSat <<
+			" write:" << satInfo._writeSat <<
+			" location:" << satInfo._src;
+	}
+
+}
 
 
 #endif /* SATISFIABILITY_INFO_HPP */
