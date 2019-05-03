@@ -147,8 +147,30 @@ namespace ExecutionWorkflow {
 		
 		//! Release a region
 		virtual inline void releaseRegion(
-			DataAccessRegion const &, MemoryPlace const *) 
+			DataAccessRegion const &, MemoryPlace const *)
 		{
+		}
+		
+		//! \brief Check if a DataAccess is ready to release data
+		//!
+		//! Whether a DataAccess is ready to release data or not
+		//! depends on the kind of task which originates it (e.g.
+		//! cluster, CUDA, etc.).
+		//!
+		//! This method serves the purpose to provide a way for each
+		//! ExecutionWorkflow implementation (e.g. cluster, CUDA) that
+		//! uses the DataReleaseStep to define when an access, that has
+		//! an associated DataReleaseStep, is ready to release data.
+		//!
+		//! \param[in] access is the DataAccess which is related with
+		//!		this Step and we check whether it is ready to
+		//!		release data
+		//!
+		//! \returns true if access is ready to release data
+		virtual inline bool checkDataRelease(
+			__attribute__((unused))DataAccess const *access)
+		{
+			return false;
 		}
 		
 		virtual inline void start()
@@ -157,6 +179,6 @@ namespace ExecutionWorkflow {
 			delete this;
 		}
 	};
-};
+}
 
 #endif /* EXECUTION_STEP_HPP */
