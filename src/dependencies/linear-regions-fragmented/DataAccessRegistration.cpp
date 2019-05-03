@@ -825,6 +825,8 @@ namespace DataAccessRegistration {
 		reduction_index_t reductionIndex = -1,
 		MemoryPlace const *location = nullptr,
 		MemoryPlace const *outputLocation = nullptr,
+		ExecutionWorkflow::DataReleaseStep *dataReleaseStep = nullptr,
+		ExecutionWorkflow::DataLinkStep *dataLinkStep = nullptr,
 		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink()
 	) {
 		// Regular object duplication
@@ -835,6 +837,8 @@ namespace DataAccessRegistration {
 			reductionIndex,
 			location,
 			outputLocation,
+			dataReleaseStep,
+			dataLinkStep,
 			Instrument::data_access_id_t(),
 			status, next
 		);
@@ -1378,6 +1382,8 @@ namespace DataAccessRegistration {
 			dataAccess->getReductionIndex(),
 			dataAccess->getLocation(),
 			dataAccess->getOutputLocation(),
+			dataAccess->getDataReleaseStep(),
+			dataAccess->getDataLinkStep(),
 			instrumentationId
 		);
 
