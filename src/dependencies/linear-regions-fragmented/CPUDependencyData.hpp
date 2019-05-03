@@ -10,14 +10,16 @@
 
 #include <atomic>
 #include <bitset>
-#include <deque>
 #include <boost/dynamic_bitset.hpp>
-
+#include <deque>
 #include <limits.h>
 
+
+#include "CommutativeScoreboard.hpp"
 #include "DataAccessLink.hpp"
 #include "DataAccessRegion.hpp"
-#include "CommutativeScoreboard.hpp"
+
+#include <ExecutionStep.hpp>
 
 
 class DataAccess;
@@ -36,6 +38,7 @@ struct CPUDependencyData {
 		bool _makeConcurrentSatisfied;
 		bool _makeCommutativeSatisfied;
 		MemoryPlace const *_location;
+		ExecutionWorkflow::DataReleaseStep *_releaseStep;
 		
 		bool _makeTopmost;
 		bool _makeTopLevel;
@@ -49,6 +52,7 @@ struct CPUDependencyData {
 			: _target(), _region(),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false),
 			_makeConcurrentSatisfied(false), _makeCommutativeSatisfied(false),
+			_location(nullptr), _releaseStep(nullptr),
 			_makeTopmost(false), _makeTopLevel(false),
 			_setReductionInfo(false), _reductionInfo(nullptr)
 		{
@@ -58,6 +62,7 @@ struct CPUDependencyData {
 			: _target(target), _region(region),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false),
 			_makeConcurrentSatisfied(false), _makeCommutativeSatisfied(false),
+			_location(nullptr), _releaseStep(nullptr),
 			_makeTopmost(false), _makeTopLevel(false),
 			_setReductionInfo(false), _reductionInfo(nullptr)
 		{
@@ -67,6 +72,7 @@ struct CPUDependencyData {
 		{
 			return !_makeReadSatisfied && !_makeWriteSatisfied
 				&& !_makeConcurrentSatisfied && !_makeCommutativeSatisfied
+				&& (_releaseStep == nullptr)
 				&& !_makeTopmost && !_makeTopLevel
 				&& !_setReductionInfo
 				&& (_reductionSlotSet.size() == 0);
