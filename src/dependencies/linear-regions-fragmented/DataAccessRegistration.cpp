@@ -31,6 +31,7 @@
 #include <ClusterManager.hpp>
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentComputePlaceId.hpp>
+#include <InstrumentDependenciesByAccess.hpp>
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentLogMessage.hpp>
 #include <InstrumentReductions.hpp>
@@ -166,7 +167,7 @@ namespace DataAccessRegistration {
 					assert(access->getObjectType() == access_type);
 					_propagatesReadSatisfiabilityToNext =
 						access->canPropagateReadSatisfiability() && access->readSatisfied()
-						&& (access->getType() == READ_ACCESS_TYPE);
+						&& ((access->getType() == READ_ACCESS_TYPE) || (access->getType() == NO_ACCESS_TYPE));
 					_propagatesWriteSatisfiabilityToNext = false; // Write satisfiability is propagated through the fragments
 					_propagatesConcurrentSatisfiabilityToNext =
 						access->canPropagateConcurrentSatisfiability() && access->concurrentSatisfied()
@@ -219,7 +220,7 @@ namespace DataAccessRegistration {
 						// Note: 'satisfied' as opposed to 'readSatisfied', because otherwise read
 						// satisfiability could be propagated before reductions are combined
 						&& access->satisfied()
-						&& ((access->getType() == READ_ACCESS_TYPE) || access->complete());
+						&& ((access->getType() == READ_ACCESS_TYPE) || (access->getType() == NO_ACCESS_TYPE) || access->complete());
 					_propagatesWriteSatisfiabilityToNext =
 						access->writeSatisfied() && access->complete()
 						// Note: This is important for not propagating write
@@ -294,6 +295,7 @@ namespace DataAccessRegistration {
 				&& access->complete()
 				&& (
 					!access->isInBottomMap() || access->hasNext()
+					|| (access->getType() == NO_ACCESS_TYPE)
 					|| (access->getObjectType() == taskwait_type)
 					|| (access->getObjectType() == top_level_sink_type)
 				);
@@ -322,7 +324,11 @@ namespace DataAccessRegistration {
 			Task *domainParent;
 			assert(access->getOriginator() != nullptr);
 			if (access->getObjectType() == access_type) {
-				domainParent = access->getOriginator()->getParent();
+				if (access->getType() == NO_ACCESS_TYPE) {
+					domainParent = access->getOriginator();
+				} else {
+					domainParent = access->getOriginator()->getParent();
+				}
 			} else {
 				assert(
 					(access->getObjectType() == fragment_type)
@@ -828,8 +834,20 @@ namespace DataAccessRegistration {
 					/* direct */ true
 				);
 			} else {
-				assert((access->getObjectType() == taskwait_type) || (access->getObjectType() == top_level_sink_type));
-				removeBottomMapTaskwaitOrTopLevelSink(access, accessStructures, task);
+				if ((access->getObjectType() == taskwait_type) ||
+					(access->getObjectType() == top_level_sink_type))
+				{
+					removeBottomMapTaskwaitOrTopLevelSink(access, accessStructures, task);
+				} else {
+					assert(access->getObjectType() == access_type
+						&& access->getType() == NO_ACCESS_TYPE);
+					
+					Instrument::removedDataAccess(
+							access->getInstrumentationId());
+					accessStructures._accesses.erase(access);
+					ObjectAllocator<DataAccess>::deleteObject(
+							access);
+				}
 			}
 			
 			if (accessStructures._removalBlockers == 0) {
@@ -869,6 +887,25 @@ namespace DataAccessRegistration {
 						/* remove intersection */ true
 					);
 				}
+				
+				return true;
+			}
+		);
+		
+		//! We are about to delete the taskwait fragment. Before doing so,
+		//! move the location info back to the original access
+		accessStructures._accesses.processIntersecting(
+			access->getAccessRegion(),
+			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+				DataAccess *originalAccess = &(*position);
+				assert(originalAccess != nullptr);
+				assert(!originalAccess->hasBeenDiscounted());
+				
+				originalAccess =
+					fragmentAccess(originalAccess,
+						access->getAccessRegion(),
+						accessStructures);
+				originalAccess->setLocation(access->getLocation());
 				
 				return true;
 			}
@@ -2820,6 +2857,114 @@ namespace DataAccessRegistration {
 #endif
 	}
 	
+	void registerLocalAccess(Task *task, DataAccessRegion const &region)
+	{
+		assert(task != nullptr);
+		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		assert(!accessStructures.hasBeenDeleted());
+		
+		Instrument::registerTaskAccess(task->getInstrumentationTaskId(),
+			NO_ACCESS_TYPE, false, region.getStartAddress(),
+			region.getSize());
+		
+		DataAccess *newLocalAccess =
+			createAccess(task, access_type, NO_ACCESS_TYPE,
+					/* not weak */false, region);
+		
+		DataAccessStatusEffects initialStatus(newLocalAccess);
+		newLocalAccess->setNewInstrumentationId(
+				task->getInstrumentationTaskId());
+		newLocalAccess->setReadSatisfied(
+				Directory::getDirectoryMemoryPlace());
+		newLocalAccess->setWriteSatisfied();
+		newLocalAccess->setConcurrentSatisfied();
+		newLocalAccess->setCommutativeSatisfied();
+		newLocalAccess->setReceivedReductionInfo();
+		newLocalAccess->setRegistered();
+		newLocalAccess->setTopmost();
+		newLocalAccess->setTopLevel();
+#ifndef NDEBUG
+		newLocalAccess->setReachable();
+#endif
+		DataAccessStatusEffects updatedStatus(newLocalAccess);
+		
+		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+		
+		accessStructures._accesses.insert(*newLocalAccess);
+		
+		CPUDependencyData hpDependencyData;
+		handleDataAccessStatusChanges(initialStatus, updatedStatus,
+				newLocalAccess, accessStructures, task,
+				hpDependencyData);
+	}
+	
+	void unregisterLocalAccess(Task *task, DataAccessRegion const &region)
+	{
+		assert(task != nullptr);
+		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		assert(!accessStructures.hasBeenDeleted());
+
+		using spinlock_t = TaskDataAccesses::spinlock_t;
+		using access_fragments_t = TaskDataAccesses::access_fragments_t;
+		using accesses_t = TaskDataAccesses::accesses_t;
+		
+		std::lock_guard<spinlock_t> guard(accessStructures._lock);
+		
+		//! Mark all the access fragments as complete
+		accessStructures._accessFragments.processIntersecting(region,
+			[&](access_fragments_t::iterator position) -> bool {
+				DataAccess *fragment = &(*position);
+				assert(fragment != nullptr);
+				assert(fragment->getType() == NO_ACCESS_TYPE);
+				
+				fragment = fragmentAccess(fragment, region,
+						accessStructures);
+				
+				DataAccessStatusEffects initialStatus(fragment);
+				fragment->setComplete();
+				DataAccessStatusEffects updatedStatus(fragment);
+				
+				CPUDependencyData hpDependencyData;
+				handleDataAccessStatusChanges(initialStatus,
+					updatedStatus, fragment, accessStructures,
+					task, hpDependencyData);
+				
+				return true;
+			}
+		);
+		
+		//! By now all fragments of the local region should be removed
+		assert(!accessStructures._accessFragments.contains(region));
+		
+		//! Mark all the accesses as complete
+		accessStructures._accesses.processIntersecting(region,
+			[&](accesses_t::iterator position) -> bool {
+				DataAccess *access = &(*position);
+				assert(access != nullptr);
+				assert(!access->hasBeenDiscounted());
+				assert(access->getType() == NO_ACCESS_TYPE);
+				
+				access = fragmentAccess(access, region,
+						accessStructures);
+				
+				DataAccessStatusEffects initialStatus(access);
+				access->setComplete();
+				DataAccessStatusEffects updatedStatus(access);
+				
+				CPUDependencyData hpDependencyData;
+				handleDataAccessStatusChanges(initialStatus,
+					updatedStatus, access, accessStructures,
+					task, hpDependencyData);
+				
+				return true;
+			}
+		);
+		
+		//! By now all access of the local region should be removed
+		assert(!accessStructures._accesses.contains(region));
+	}
 	
 	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location, bool fromBusyThread)
 	{

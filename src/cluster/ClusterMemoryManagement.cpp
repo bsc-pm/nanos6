@@ -6,8 +6,10 @@
 
 #include "ClusterManager.hpp"
 #include "ClusterMemoryManagement.hpp"
+#include "executors/threads/WorkerThread.hpp"
 #include "memory/directory/Directory.hpp"
 
+#include <DataAccessRegistration.hpp>
 #include <DistributionPolicy.hpp>
 #include <MemoryAllocator.hpp>
 #include <MessageDfree.hpp>
@@ -95,6 +97,14 @@ namespace ClusterMemoryManagement {
 		ClusterDirectory::registerAllocation(allocatedRegion, policy,
 			numDimensions, dimensions);
 		
+		//! Register the new 'local' access
+		WorkerThread *currentThread =
+			WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		Task *task = currentThread->getTask();
+		DataAccessRegistration::registerLocalAccess(task, allocatedRegion);
+		
 		//! Synchronize across all nodes
 		ClusterManager::synchronizeAll();
 		
@@ -107,6 +117,14 @@ namespace ClusterMemoryManagement {
 		assert(size > 0);
 		
 		DataAccessRegion distributedRegion(ptr, size);
+		
+		//! Unregister region from the DataAccesses list of the Task
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		Task *currentTask = currentThread->getTask();
+		DataAccessRegistration::unregisterLocalAccess(currentTask,
+						distributedRegion);
 		
 		//! Unregister region from the home node map
 		ClusterDirectory::unregisterAllocation(distributedRegion);
