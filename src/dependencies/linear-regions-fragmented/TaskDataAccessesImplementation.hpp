@@ -11,7 +11,7 @@
 
 #include "BottomMapEntry.hpp"
 #include "DataAccess.hpp"
-#include "MemoryAllocator.hpp"
+#include "ObjectAllocator.hpp"
 #include "TaskDataAccesses.hpp"
 #include "TaskDataAccessLinkingArtifacts.hpp"
 #include "tasks/Task.hpp"
@@ -32,25 +32,25 @@ inline TaskDataAccesses::~TaskDataAccesses()
 	std::lock_guard<spinlock_t> guard(_lock);
 	_accesses.deleteAll(
 		[&](DataAccess *access) {
-			MemoryAllocator::deleteObject<DataAccess>(access);
+			ObjectAllocator<DataAccess>::deleteObject(access);
 		}
 	);
 	
 	_subaccessBottomMap.deleteAll(
 		[&](BottomMapEntry *bottomMapEntry) {
-			MemoryAllocator::deleteObject<BottomMapEntry>(bottomMapEntry);
+			ObjectAllocator<BottomMapEntry>::deleteObject(bottomMapEntry);
 		}
 	);
 	
 	_accessFragments.deleteAll(
 		[&](DataAccess *fragment) {
-			MemoryAllocator::deleteObject<DataAccess>(fragment);
+			ObjectAllocator<DataAccess>::deleteObject(fragment);
 		}
 	);
 	
 	_taskwaitFragments.deleteAll(
 		[&](DataAccess *fragment) {
-			MemoryAllocator::deleteObject<DataAccess>(fragment);
+			ObjectAllocator<DataAccess>::deleteObject(fragment);
 		}
 	);
 	
