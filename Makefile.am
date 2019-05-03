@@ -386,6 +386,7 @@ cluster_sources += \
 	src/cluster/messages/MessageDataSend.cpp \
 	src/cluster/messages/MessageDfree.cpp \
 	src/cluster/messages/MessageDmalloc.cpp \
+	src/cluster/messages/MessageReleaseAccess.cpp \
 	src/cluster/messages/MessageSatisfiability.cpp \
 	src/cluster/messages/MessageSysFinish.cpp \
 	src/cluster/messages/MessageTaskFinished.cpp \
@@ -676,6 +677,7 @@ noinst_HEADERS = \
 	src/cluster/messages/MessageDfree.hpp \
 	src/cluster/messages/MessageDmalloc.hpp \
 	src/cluster/messages/MessageId.hpp \
+	src/cluster/messages/MessageReleaseAccess.hpp \
 	src/cluster/messages/MessageSatisfiability.hpp \
 	src/cluster/messages/MessageSysFinish.hpp \
 	src/cluster/messages/MessageTaskFinished.hpp \

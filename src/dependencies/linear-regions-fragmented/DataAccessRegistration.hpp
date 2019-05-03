@@ -43,10 +43,11 @@ namespace DataAccessRegistration {
 	
 	void releaseAccessRegion(
 		Task *task, DataAccessRegion region,
-		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
+		__attribute__((unused)) DataAccessType accessType,
+		__attribute__((unused)) bool weak,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData,
-		MemoryPlace *location = nullptr
+		MemoryPlace const *location = nullptr
 	);
 	
 	void unregisterTaskDataAccesses(

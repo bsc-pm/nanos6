@@ -17,6 +17,7 @@
 #include <ClusterManager.hpp>
 #include <DataAccessRegistration.hpp>
 #include <Directory.hpp>
+#include <MessageReleaseAccess.hpp>
 #include <MessageSatisfiability.hpp>
 #include <MessageTaskFinished.hpp>
 #include <MessageTaskNew.hpp>
@@ -251,8 +252,9 @@ namespace TaskOffloading {
 	void propagateSatisfiability(void *offloadedTaskId, ClusterNode *offloader,
 			SatisfiabilityInfo const &satInfo)
 	{
-		RemoteTaskInfo &taskInfo = _remoteTasks.getTaskInfo(offloadedTaskId,
-								offloader->getIndex());
+		RemoteTaskInfo &taskInfo =
+			_remoteTasks.getTaskInfo(offloadedTaskId,
+					offloader->getIndex());
 		
 		taskInfo._lock.lock();
 		if (taskInfo._localTask == nullptr) {
@@ -267,5 +269,47 @@ namespace TaskOffloading {
 			taskInfo._lock.unlock();
 			propagateSatisfiability(taskInfo._localTask, satInfo);
 		}
+	}
+	
+	void sendRemoteAccessRelease(void *offloadedTaskId,
+			ClusterNode const *offloader,
+			DataAccessRegion const &region, DataAccessType type,
+			bool weak, MemoryPlace const *location)
+	{
+		assert(location != nullptr);
+		
+		/* If location is a host device on this node it is a cluster
+		 * device from the point of view of the remote node */
+		if (location->getType() == nanos6_host_device) {
+			location = ClusterManager::getCurrentMemoryNode();
+		}
+		
+		ClusterNode *current = ClusterManager::getCurrentClusterNode();
+		MessageReleaseAccess *msg =
+			new MessageReleaseAccess(current, offloadedTaskId,
+					region, type, weak,
+					location->getIndex());
+		
+		ClusterManager::sendMessage(msg, offloader);
+	}
+	
+	void releaseRemoteAccess(Task *task, DataAccessRegion const &region,
+			DataAccessType type, bool weak, MemoryPlace const *location)
+	{
+		assert(task != nullptr);
+		assert(location->getType() == nanos6_cluster_device);
+		
+		WorkerThread *currentThread =
+			WorkerThread::getCurrentWorkerThread();
+		
+		CPU *cpu = (currentThread == nullptr) ? nullptr :
+				currentThread->getComputePlace();
+		
+		CPUDependencyData localDependencyData;
+		CPUDependencyData &hpDependencyData = (cpu != nullptr) ?
+			cpu->getDependencyData() : localDependencyData;
+		
+		DataAccessRegistration::releaseAccessRegion(task, region, type,
+				weak, cpu, hpDependencyData, location);
 	}
 }

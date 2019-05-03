@@ -12,8 +12,10 @@
 #include <vector>
 
 #include "SatisfiabilityInfo.hpp"
+#include "dependencies/DataAccessType.hpp"
 
 class ClusterNode;
+class MemoryPlace;
 class Task;
 
 namespace TaskOffloading {
@@ -68,6 +70,34 @@ namespace TaskOffloading {
 	//! \param[in] satInfo is satisfiability info we are propagating
 	void propagateSatisfiability(void *offloadedTaskId,
 			ClusterNode *offloader, SatisfiabilityInfo const &satInfo);
+	
+	//! \brief Notify that a region is released on a remote node
+	//!
+	//! \param[in] offloadedTaskId is the task identifier of the offloader
+	//!		node
+	//! \param[in] offloader is the cluster node that offloaded the task
+	//! \param[in] region is the DataAccessRegion that is released
+	//! \param[in] type is the DataAccessType of the associated DataAccess
+	//! \param[in] weak is true if the associated DataAccess is weak
+	//! \param[in] location is the ClusterMemoryPlace on which the access
+	//!		is released
+	void sendRemoteAccessRelease(void *offloadedTaskId,
+			ClusterNode const *offloader,
+			DataAccessRegion const &region,
+			DataAccessType type, bool weak,
+			MemoryPlace const *location);
+	
+	//! \brief Release a region of an offloaded Task
+	//!
+	//! \param[in] task is the offloaded task
+	//! \param[in] region is the DataAccessRegion to release
+	//! \param[in] type is the DataAcessType of the associated DataAccess
+	//! \param[in] weak is true if the associated DataAccess is weak
+	//! \param[in] location is the ClusterMemoryPlace on which the access
+	//!		is released
+	void releaseRemoteAccess(Task *task, DataAccessRegion const &region,
+			DataAccessType type, bool weak,
+			MemoryPlace const *location);
 }
 
 #endif // TASK_OFFLOADING_HPP

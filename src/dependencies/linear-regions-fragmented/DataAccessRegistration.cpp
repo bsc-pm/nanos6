@@ -2300,7 +2300,7 @@ namespace DataAccessRegistration {
 	
 	static inline void finalizeAccess(
 		Task *finishedTask, DataAccess *dataAccess, DataAccessRegion region,
-		MemoryPlace *location, /* OUT */ CPUDependencyData &hpDependencyData
+		MemoryPlace const *location, /* OUT */ CPUDependencyData &hpDependencyData
 	) {
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
@@ -2707,7 +2707,7 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData,
-		MemoryPlace *location
+		MemoryPlace const *location
 	) {
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
