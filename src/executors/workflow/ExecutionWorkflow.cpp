@@ -8,6 +8,7 @@
 #include <DataAccess.hpp>
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflowHost.hpp>
+#include <ExecutionWorkflowCluster.hpp>
 #include <HardwareCounters.hpp>
 #include <Monitoring.hpp>
 
@@ -16,10 +17,10 @@ namespace ExecutionWorkflow {
 	
 	transfers_map_t _transfersMap {
 			/*  host      cuda     opencl    cluster   */
-	/* host */	{ nullCopy, nullCopy, nullCopy, nullCopy },
+	/* host */	{ nullCopy, nullCopy, nullCopy, clusterCopy },
 	/* cuda */	{ nullCopy, nullCopy, nullCopy, nullCopy },
 	/* opencl */	{ nullCopy, nullCopy, nullCopy, nullCopy },
-	/* cluster */	{ nullCopy, nullCopy, nullCopy, nullCopy }
+	/* cluster */	{ clusterCopy, nullCopy, nullCopy, clusterCopy }
 	};
 	
 	Step *WorkflowBase::createAllocationAndPinningStep(
@@ -31,6 +32,8 @@ namespace ExecutionWorkflow {
 				return new HostAllocationAndPinningStep(
 						regionTranslation, memoryPlace);
 			case nanos6_cluster_device:
+				return new ClusterAllocationAndPinningStep(
+						regionTranslation, memoryPlace);
 			case nanos6_cuda_device:
 			case nanos6_opencl_device:
 			default:
@@ -63,12 +66,12 @@ namespace ExecutionWorkflow {
 		}
 		
 		assert(targetMemoryPlace != nullptr);
+		//assert(sourceMemoryPlace != nullptr);
 		
-		/* the source MemoryPlace might be NULL at this point,
-		 * in the case of weak accesses */
-		nanos6_device_t sourceType = (sourceMemoryPlace != nullptr) ?
-			sourceMemoryPlace->getType() : nanos6_host_device;
-		
+		nanos6_device_t sourceType =
+			(sourceMemoryPlace == nullptr)
+				? nanos6_host_device
+				: sourceMemoryPlace->getType();
 		nanos6_device_t targetType = targetMemoryPlace->getType();
 		
 		return _transfersMap[sourceType][targetType](
@@ -84,6 +87,7 @@ namespace ExecutionWorkflow {
 			case nanos6_host_device:
 				return new HostExecutionStep(task, computePlace);
 			case nanos6_cluster_device:
+				return new ClusterExecutionStep(task, computePlace);
 			case nanos6_cuda_device:
 			case nanos6_opencl_device:
 			default:
@@ -111,6 +115,7 @@ namespace ExecutionWorkflow {
 			case nanos6_host_device:
 				return new HostNotificationStep(callback);
 			case nanos6_cluster_device:
+				return new ClusterNotificationStep(callback);
 			case nanos6_cuda_device:
 			case nanos6_opencl_device:
 			default:
@@ -127,9 +132,14 @@ namespace ExecutionWorkflow {
 	}
 	
 	Step *WorkflowBase::createDataReleaseStep(
-		__attribute__((unused))Task const *task,
+		Task const *task,
 		DataAccess *access
 	) {
+		if (task->isRemote()) {
+			return new ClusterDataReleaseStep(
+					task->getClusterContext(), access);
+		}
+		
 		return new DataReleaseStep(access);
 	}
 	
@@ -140,6 +150,7 @@ namespace ExecutionWorkflow {
 			case nanos6_host_device:
 				return new HostUnpinningStep(targetMemoryPlace, targetTranslation);
 			case nanos6_cluster_device:
+				return new ClusterUnpinningStep(targetMemoryPlace, targetTranslation);
 			case nanos6_cuda_device:
 			case nanos6_opencl_device:
 			default:
@@ -219,6 +230,8 @@ namespace ExecutionWorkflow {
 					Monitoring::taskFinished(task);
 					HardwareCounters::taskFinished(task);
 					
+					task->setComputePlace(nullptr);
+					
 					if (task->markAsReleased()) {
 						TaskFinalization::disposeOrUnblockTask(task, cpu);
 					}
@@ -275,6 +288,7 @@ namespace ExecutionWorkflow {
 		}
 		
 		task->setWorkflow(workflow);
+		task->setComputePlace(targetComputePlace);
 		
 		//! Starting the workflow will either execute the task to
 		//! completion (if there are not pending transfers for the
@@ -335,8 +349,10 @@ namespace ExecutionWorkflow {
 				computePlace
 			);
 		
-		MemoryPlace const *currLocation = taskwaitFragment->getLocation();
-		MemoryPlace const *targetLocation = taskwaitFragment->getOutputLocation();
+		MemoryPlace const *currLocation =
+			taskwaitFragment->getLocation();
+		MemoryPlace const *targetLocation =
+			taskwaitFragment->getOutputLocation();
 		
 		//! No need to perform any copy for this taskwait fragment
 		if (targetLocation == nullptr) {

@@ -66,7 +66,10 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 	// Non-runnable taskloops should avoid these checks
 	if (isRunnable()) {
 		if (_taskInfo->implementations[0].device_type_id == nanos6_device_t::nanos6_host_device) {
-			assert(_thread != nullptr);
+			// Not true anymore, a Task might have been offloaded
+			// to a remote device, in which case it wouldn't have
+			// a thread assigned to it.
+			// assert(_thread != nullptr);
 			_thread = nullptr;
 		} else {
 			assert(_computePlace != nullptr);

@@ -397,6 +397,7 @@ cluster_sources += \
 	src/cluster/polling-services/DataTransferCompletion.cpp \
 	src/cluster/polling-services/MessageDelivery.cpp \
 	src/cluster/polling-services/MessageHandler.cpp \
+	src/executors/workflow/cluster/ExecutionWorkflowCluster.cpp \
 	src/memory/directory/cluster/DistributionPolicy.cpp
 
 cluster_cppflags = \
@@ -405,12 +406,14 @@ cluster_cppflags = \
 	-I$(srcdir)/src/cluster/messenger \
 	-I$(srcdir)/src/cluster/offloading \
 	-I$(srcdir)/src/cluster/polling-services \
+	-I$(srcdir)/src/executors/workflow/cluster \
 	-I$(srcdir)/src/memory/directory \
 	-I$(srcdir)/src/memory/directory/cluster \
 	-I$(srcdir)/src/hardware/cluster \
 	-I$(srcdir)/src/hardware/cluster/memory
 else
 cluster_cppflags = \
+	-I$(srcdir)/src/executors/workflow/cluster/null \
 	-I$(srcdir)/src/cluster/null \
 	-I$(srcdir)/src/cluster/offloading/null \
 	-I$(srcdir)/src/hardware/cluster/null \
@@ -739,6 +742,7 @@ noinst_HEADERS = \
 	src/executors/workflow/ExecutionStep.hpp \
 	src/executors/workflow/ExecutionWorkflow.hpp \
 	src/executors/workflow/ExecutionWorkflowHost.hpp \
+	src/executors/workflow/cluster/ExecutionWorkflowCluster.hpp \
 	src/executors/workflow/null/ExecutionStep.hpp \
 	src/executors/workflow/null/ExecutionWorkflow.hpp \
 	src/hardware/cluster/ClusterNode.hpp \

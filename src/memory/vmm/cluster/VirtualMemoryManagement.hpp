@@ -70,6 +70,13 @@ public:
 		//! Non-NUMA allocation
 		return _localNUMAVMA.size();
 	}
+	
+	//! check if a region is within the distributed memory regions
+	static inline bool isDistributedRegion(DataAccessRegion const &region)
+	{
+		return _genericVMA->includesRange(region.getStartAddress(),
+				region.getSize());
+	}
 };
 
 
