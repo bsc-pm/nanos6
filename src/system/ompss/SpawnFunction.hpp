@@ -7,11 +7,20 @@
 #ifndef SPAWN_FUNCTION_HPP
 #define SPAWN_FUNCTION_HPP
 
+#include <nanos6.h>
+
 #include <atomic>
 
 
 namespace SpawnedFunctions {
 	extern std::atomic<unsigned int> _pendingSpawnedFunctions;
+	
+	//! \brief Indicates whether the task type is spawned
+	//! 
+	//! \param[in] taskInfo the task type
+	//! 
+	//! \returns true if it is a spawned task type
+	bool isSpawned(const nanos6_task_info_t *taskInfo);
 }
 
 

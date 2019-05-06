@@ -26,11 +26,6 @@ static std::map<task_info_key_t, nanos6_task_info_t> _spawnedFunctionInfos;
 static nanos6_task_invocation_info_t _spawnedFunctionInvocationInfo = { "Spawned from external code" };
 
 
-namespace SpawnedFunctions {
-	std::atomic<unsigned int> _pendingSpawnedFunctions(0);
-}
-
-
 struct SpawnedFunctionArgsBlock {
 	void (*_function)(void *);
 	void *_args;
@@ -110,3 +105,13 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 	nanos6_submit_task(task);
 }
 
+namespace SpawnedFunctions {
+	std::atomic<unsigned int> _pendingSpawnedFunctions(0);
+	
+	bool isSpawned(const nanos6_task_info_t *taskInfo)
+	{
+		assert(taskInfo != nullptr);
+		assert(taskInfo->implementations != nullptr);
+		return (taskInfo->implementations[0].run == nanos6_spawned_function_wrapper);
+	}
+}

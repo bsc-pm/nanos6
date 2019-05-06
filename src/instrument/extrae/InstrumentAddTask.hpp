@@ -8,9 +8,10 @@
 #define INSTRUMENT_EXTRAE_ADD_TASK_HPP
 
 
+#include "InstrumentExtrae.hpp"
+#include "system/ompss/SpawnFunction.hpp"
 #include "../api/InstrumentAddTask.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
-#include "InstrumentExtrae.hpp"
 
 #include <cassert>
 #include <mutex>
@@ -63,6 +64,11 @@ namespace Instrument {
 		
 		ce.Types[1] = (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION;
 		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
+		
+		// Use the unique taskInfo address in case it is a spawned task
+		if (SpawnedFunctions::isSpawned(taskInfo)) {
+			ce.Values[1] = (extrae_value_t) taskInfo;
+		}
 		
 		// Precise task count (not sampled)
 		if (_detailLevel >= 1) {

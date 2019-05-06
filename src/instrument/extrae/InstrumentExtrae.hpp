@@ -11,11 +11,12 @@
 
 #include <nanos6.h>
 
+#include "InstrumentThreadId.hpp"
+#include "InstrumentTracingPointTypes.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/RWSpinLock.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "InstrumentThreadId.hpp"
-#include "InstrumentTracingPointTypes.hpp"
+#include "system/ompss/SpawnFunction.hpp"
 
 #include <atomic>
 #include <cstddef>
@@ -159,7 +160,10 @@ namespace Instrument {
 			return (sourceA < sourceB);
 		}
 		
-		return (a->implementations[0].run < b->implementations[0].run);
+		void *runA = SpawnedFunctions::isSpawned(a) ? (void *) a : (void *) a->implementations[0].run;
+		void *runB = SpawnedFunctions::isSpawned(b) ? (void *) b : (void *) b->implementations[0].run;
+		
+		return (runA < runB);
 	}
 	
 	unsigned int extrae_nanos6_get_num_threads();

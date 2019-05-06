@@ -8,9 +8,10 @@
 #define INSTRUMENT_EXTRAE_TASK_EXECUTION_HPP
 
 
+#include "InstrumentExtrae.hpp"
+#include "system/ompss/SpawnFunction.hpp"
 #include "../api/InstrumentTaskExecution.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
-#include "InstrumentExtrae.hpp"
 
 #include <cassert>
 
@@ -53,8 +54,16 @@ namespace Instrument {
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
+		nanos6_task_info_t *taskInfo = taskId._taskInfo->_taskInfo;
+		assert(taskInfo != nullptr);
+		
 		ce.Types[1] = (extrae_type_t) EventType::RUNNING_CODE_LOCATION;
-		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->implementations[0].run;
+		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
+		
+		// Use the unique taskInfo address in case it is a spawned task
+		if (SpawnedFunctions::isSpawned(taskInfo)) {
+			ce.Values[1] = (extrae_value_t) taskInfo;
+		}
 		
 		ce.Types[2] = (extrae_type_t) EventType::NESTING_LEVEL;
 		ce.Values[2] = (extrae_value_t) taskId._taskInfo->_nestingLevel;
@@ -147,8 +156,16 @@ namespace Instrument {
 		ce.Types[0] = (extrae_type_t) EventType::RUNTIME_STATE;
 		ce.Values[0] = (extrae_value_t) NANOS_RUNNING;
 		
+		nanos6_task_info_t *taskInfo = taskId._taskInfo->_taskInfo;
+		assert(taskInfo != nullptr);
+		
 		ce.Types[1] = (extrae_type_t) EventType::RUNNING_CODE_LOCATION;
-		ce.Values[1] = (extrae_value_t) taskId._taskInfo->_taskInfo->implementations[0].run;
+		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
+		
+		// Use the unique taskInfo address in case it is a spawned task
+		if (SpawnedFunctions::isSpawned(taskInfo)) {
+			ce.Values[1] = (extrae_value_t) taskInfo;
+		}
 		
 		ce.Types[2] = (extrae_type_t) EventType::NESTING_LEVEL;
 		ce.Values[2] = (extrae_value_t) taskId._taskInfo->_nestingLevel;

@@ -15,6 +15,7 @@
 #include "../api/InstrumentInitAndShutdown.hpp"
 #include "../generic_ids/GenericIds.hpp"
 #include "system/RuntimeInfo.hpp"
+#include "system/ompss/SpawnFunction.hpp"
 
 #include "InstrumentExtrae.hpp"
 #include "InstrumentInitAndShutdown.hpp"
@@ -329,8 +330,15 @@ namespace Instrument {
 					codeLocation.substr(0, linePosition);
 				}
 				
+				void *runFunction = (void *) taskInfo->implementations[0].run;
+				
+				// Use the unique taskInfo address in case it is a spawned task
+				if (SpawnedFunctions::isSpawned(taskInfo)) {
+					runFunction = taskInfo;
+				}
+				
 				ExtraeAPI::register_function_address (
-					(void *) (taskInfo->implementations[0].run),
+					runFunction,
 					label.c_str(),
 					codeLocation.c_str(), lineNumber
 				);
