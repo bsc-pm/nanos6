@@ -104,7 +104,7 @@ namespace ExecutionWorkflow {
 		}
 		
 		//! \brief start the execution of a Step
-		virtual void start()
+		virtual inline void start()
 		{
 			releaseSuccessors();
 			delete this;
@@ -117,17 +117,22 @@ namespace ExecutionWorkflow {
 		std::atomic<size_t> _bytes_to_link;
 		
 	public:
-		DataLinkStep(DataAccess const *access);
+		//! \brief Create a DataLinkStep
+		//!
+		//! Create a DataLinkStep associated with a DataAccess. This is
+		//! meant to be used in cases where we need to link information
+		//! regarding the access, to a matching access on a device.
+		//!
+		//! \param[in] access is the DataAccess this DataLinkStep is
+		//!		associated with. The access is a non-const
+		//!		pointer, because the constructor might need to
+		//!		set the corresponding field in the DataAccess
+		//!		object.
+		DataLinkStep(DataAccess *access);
 		
 		virtual inline void linkRegion(DataAccessRegion const &,
 			MemoryPlace const *, bool, bool)
 		{
-		}
-		
-		virtual void inline start()
-		{
-			releaseSuccessors();
-			delete this;
 		}
 	};
 	
@@ -143,7 +148,20 @@ namespace ExecutionWorkflow {
 		std::atomic<size_t> _bytes_to_release;
 		
 	public:
-		DataReleaseStep(DataAccess const *access);
+		//! \brief Create a DataReleaseStep
+		//!
+		//! Create a DataReleaseStep associated with a DataAccess. This
+		//! is meant to be used in cases where we need to notify, once
+		//! a condition has been met, that the data of the
+		//! corresponding access are released from the device we have
+		//! offloaded the originator Task.
+		//!
+		//! \param[in] access is the DataAccess this DataReleaseStep is
+		//!		associated with. The access is a non-const
+		//!		pointer, because the constructor might need to
+		//!		set the corresponding field in the DataAccess
+		//!		object.
+		DataReleaseStep(DataAccess *access);
 		
 		//! Release a region
 		virtual inline void releaseRegion(
@@ -171,12 +189,6 @@ namespace ExecutionWorkflow {
 			__attribute__((unused))DataAccess const *access)
 		{
 			return false;
-		}
-		
-		virtual inline void start()
-		{
-			releaseSuccessors();
-			delete this;
 		}
 	};
 }

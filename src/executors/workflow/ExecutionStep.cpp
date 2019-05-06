@@ -4,7 +4,7 @@
 
 namespace ExecutionWorkflow {
 	
-	DataLinkStep::DataLinkStep(DataAccess const *access) :
+	DataLinkStep::DataLinkStep(DataAccess *access) :
 		Step(),
 		/* We count twice the bytes of the region, because we
 		 * need to link both for Read and Write satisfiability */
@@ -12,7 +12,7 @@ namespace ExecutionWorkflow {
 	{
 	}
 	
-	DataReleaseStep::DataReleaseStep(DataAccess const *access) :
+	DataReleaseStep::DataReleaseStep(DataAccess *access) :
 		Step(),
 		_type(access->getType()),
 		_weak(access->isWeak()),

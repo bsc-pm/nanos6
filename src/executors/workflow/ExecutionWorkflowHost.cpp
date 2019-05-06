@@ -23,17 +23,6 @@
 
 
 namespace ExecutionWorkflow {
-	void HostAllocationAndPinningStep::start()
-	{
-		releaseSuccessors();
-		delete this;
-	}
-	
-	void HostDataLinkStep::start()
-	{
-		releaseSuccessors();
-		delete this;
-	}
 	
 	void HostExecutionStep::start()
 	{
@@ -121,19 +110,6 @@ namespace ExecutionWorkflow {
 		}
 		
 		//! Release the subsequent steps.
-		releaseSuccessors();
-		delete this;
-	}
-
-	void HostNotificationStep::start()
-	{
-		_callback();
-		releaseSuccessors();
-		delete this;
-	}
-
-	void HostUnpinningStep::start()
-	{
 		releaseSuccessors();
 		delete this;
 	}

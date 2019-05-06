@@ -1,5 +1,5 @@
-#ifndef __EXECUTION_WORKFLOW_HOST_HPP__
-#define __EXECUTION_WORKFLOW_HOST_HPP__
+#ifndef EXECUTION_WORKFLOW_HOST_HPP
+#define EXECUTION_WORKFLOW_HOST_HPP
 
 #include "ExecutionStep.hpp"
 #include <functional>
@@ -18,9 +18,6 @@ namespace ExecutionWorkflow {
 		) : Step()
 		{
 		}
-		
-		//! Start the execution of the Step
-		void start();
 	};
 	
 	class HostDataLinkStep : public Step {
@@ -33,9 +30,6 @@ namespace ExecutionWorkflow {
 		Step()
 		{
 		}
-		
-		//! start the execution of the Step
-		void start();
 	};
 	
 	class HostExecutionStep : public Step {
@@ -62,7 +56,12 @@ namespace ExecutionWorkflow {
 		}
 		
 		//! start the execution of the Step
-		void start();
+		inline void start()
+		{
+			_callback();
+			releaseSuccessors();
+			delete this;
+		}
 	};
 	
 	class HostUnpinningStep : public Step {
@@ -73,9 +72,6 @@ namespace ExecutionWorkflow {
 		) : Step()
 		{
 		}
-		
-		//! start the execution of the Step
-		void start();
 	};
 };
 
