@@ -5,6 +5,7 @@
 */
 
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "schedulers/ClusterRandomScheduler.hpp"
 #include "schedulers/DefaultScheduler.hpp"
 #include "schedulers/DeviceHierarchicalScheduler.hpp"
 #include "schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp"
@@ -84,7 +85,9 @@ SchedulerInterface *SchedulerGenerator::createHostScheduler()
 {
 	EnvironmentVariable<std::string> schedulerName("NANOS6_SCHEDULER", "default");
 	
-	if (schedulerName.getValue() == "hierarchical") {
+	if (schedulerName.getValue() == "cluster-random") {
+		return new ClusterRandomScheduler();
+	} else if (schedulerName.getValue() == "hierarchical") {
 		return new HostHierarchicalScheduler();
 	} else if (schedulerName.getValue() == "collapsable") {
 		_collapsable = true;

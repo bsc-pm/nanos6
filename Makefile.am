@@ -334,6 +334,7 @@ common_sources = \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
+	src/scheduling/schedulers/ClusterRandomScheduler.cpp \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/schedulers/FIFOScheduler.cpp \
@@ -1047,6 +1048,7 @@ noinst_HEADERS = \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
 	src/scheduling/TaskloopSchedulingPolicy.hpp \
+	src/scheduling/schedulers/ClusterRandomScheduler.hpp \
 	src/scheduling/schedulers/DefaultScheduler.hpp \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
