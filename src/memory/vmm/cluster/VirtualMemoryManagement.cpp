@@ -4,18 +4,20 @@
 	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
+#include <string>
+#include <sys/mman.h>
+
+#include "VirtualMemoryManagement.hpp"
+#include "cluster/ClusterManager.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/cluster/ClusterNode.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "memory/vmm/VirtualMemoryAllocation.hpp"
 #include "memory/vmm/VirtualMemoryArea.hpp"
-#include "VirtualMemoryManagement.hpp"
 #include "system/RuntimeInfo.hpp"
-#include "cluster/ClusterManager.hpp"
 
-#include <string>
-#include <sys/mman.h>
+#include <Directory.hpp>
 
 std::vector<VirtualMemoryAllocation *> VirtualMemoryManagement::_allocations;
 std::vector<VirtualMemoryArea *> VirtualMemoryManagement::_localNUMAVMA;
@@ -85,6 +87,17 @@ void VirtualMemoryManagement::setupMemoryLayout(void *address, size_t distribSiz
 	_genericVMA = new VirtualMemoryArea(distribAddress, distribSize);
 	void *localAddress = (void *)((char *)address + nodeIndex * localSize);
 	
+	/* Register local addresses with the Directory */
+	for (int i = 0; i < clusterSize; ++i) {
+		if (i == nodeIndex) {
+			continue;
+		}
+		
+		void *ptr = (void *)((char *)address + i * localSize);
+		DataAccessRegion localRegion(ptr, localSize);
+		Directory::insert(localRegion, ClusterManager::getMemoryNode(i));
+	}
+	
 	/** We have one VMA per NUMA node. At the moment we divide the local
 	 * address space equally among these areas. */
 	size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
@@ -105,6 +118,12 @@ void VirtualMemoryManagement::setupMemoryLayout(void *address, size_t distribSiz
 			extraPages--;
 		}
 		_localNUMAVMA[i] = new VirtualMemoryArea(ptr, numaSize);
+		
+		//! Register the region with the Directory
+		DataAccessRegion numaRegion(ptr, numaSize);
+		Directory::insert(numaRegion, HardwareInfo::getMemoryPlace(
+					nanos6_host_device, i));
+		
 		ptr += numaSize;
 	}
 }
