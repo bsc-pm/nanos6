@@ -1,6 +1,8 @@
 
 #include <fstream>
 
+#include <config.h>
+
 #include "Monitoring.hpp"
 
 
@@ -15,6 +17,11 @@ Monitoring *Monitoring::_monitor;
 void Monitoring::initialize()
 {
 	if (_enabled) {
+		#if CHRONO_ARCH
+			// Start measuring time to compute the tick conversion rate
+			TickConversionUpdater::initialize();
+		#endif
+		
 		// Create the monitoring module
 		if (_monitor == nullptr) {
 			_monitor = new Monitoring();
@@ -22,12 +29,22 @@ void Monitoring::initialize()
 		
 		// Initialize the task monitoring module
 		TaskMonitor::initialize();
+		
+		#if CHRONO_ARCH
+			// Stop measuring time and compute the tick conversion rate
+			TickConversionUpdater::finishUpdate();
+		#endif
 	}
 }
 
 void Monitoring::shutdown()
 {
 	if (_enabled) {
+		#if CHRONO_ARCH
+			// Destroy the tick conversion updater service
+			TickConversionUpdater::shutdown();
+		#endif
+		
 		// Display monitoring statistics
 		displayStatistics();
 		

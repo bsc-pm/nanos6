@@ -319,6 +319,29 @@ if test x"${ac_monitoring}" = x"yes" ; then
 	AC_DEFINE([MONITORING_ENABLED], [1], [Define if Monitoring is enabled.])
 fi
 
+AC_ARG_ENABLE(
+	[chrono-arch],
+	[AS_HELP_STRING([--enable-chrono-arch], [use an architecture-dependent chrono for timing instead of the default one (std)])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_chrono_arch=yes
+			;;
+		no)
+			ac_chrono_arch=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-chrono-arch])
+			;;
+		esac
+	],
+	[ac_chrono_arch=no]
+)
+AM_CONDITIONAL([CHRONO_ARCH], [test x"${ac_chrono_arch}" = x"yes"])
+if test x"${ac_chrono_arch}" = x"yes" ; then
+	AC_DEFINE([CHRONO_ARCH], [1], [Define if the architecture-dependent chrono is used.])
+fi
+
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
@@ -432,6 +455,14 @@ fi
 _AS_ECHO([])
 _AS_ECHO_N([   Monitoring is enabled... ])
 if test x"${ac_monitoring}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   Chrono Arch is enabled... ])
+if test x"${ac_chrono_arch}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 else
 	AC_MSG_RESULT([no])

@@ -566,7 +566,14 @@ endif
 
 
 # Chronometers
-chronometers_CPPFLAGS = -I$(srcdir)/src/support/chronometers/std
+chronometers_sources =
+chronometers_CPPFLAGS =
+if CHRONO_ARCH
+chronometers_sources  += src/support/chronometers/arch/Chrono.cpp
+chronometers_CPPFLAGS += -I$(srcdir)/src/support/chronometers/arch
+else
+chronometers_CPPFLAGS += -I$(srcdir)/src/support/chronometers/std
+endif
 
 # Monitoring
 monitoring_sources =
@@ -582,7 +589,7 @@ monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/null
 endif
 
 # Add monitoring-related sources to common sources
-common_sources += $(monitoring_sources)
+common_sources += $(monitoring_sources) $(chronometers_sources)
 
 
 noinst_HEADERS = \
@@ -951,6 +958,7 @@ noinst_HEADERS = \
 	src/support/Objectified.hpp \
 	src/support/StringComposer.hpp \
 	src/support/StringLiteral.hpp \
+	src/support/chronometers/arch/Chrono.hpp \
 	src/support/chronometers/std/Chrono.hpp \
 	src/system/APICheck.hpp \
 	src/system/If0Task.hpp \
