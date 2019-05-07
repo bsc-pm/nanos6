@@ -1,0 +1,7 @@
+#ifndef NULL_TASK_PREDICTIONS_HPP
+#define NULL_TASK_PREDICTIONS_HPP
+
+class TaskPredictions {
+};
+
+#endif // NULL_TASK_PREDICTIONS_HPP

@@ -298,7 +298,7 @@ fi
 
 AC_ARG_ENABLE(
 	[monitoring],
-	[AS_HELP_STRING([--enable-monitoring], [enable monitoring techniques of statistics])],
+	[AS_HELP_STRING([--enable-monitoring], [enable monitoring and prediction techniques of statistics])],
 	[
 		case "${enableval}" in
 		yes)

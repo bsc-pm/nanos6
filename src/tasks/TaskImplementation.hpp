@@ -7,14 +7,12 @@
 #ifndef TASK_IMPLEMENTATION_HPP
 #define TASK_IMPLEMENTATION_HPP
 
-
 #include "Task.hpp"
 
-#include <TaskDataAccessesImplementation.hpp>
 #include <DataAccessRegistration.hpp>
-
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <TaskDataAccessesImplementation.hpp>
 
 
 inline Task::Task(
@@ -41,7 +39,8 @@ inline Task::Task(
 	_memoryPlace(nullptr),
 	_countdownToRelease(1),
 	_workflow(nullptr),
-	_taskStatistics()
+	_taskStatistics(),
+	_taskPredictions()
 {
 	if (parent != nullptr) {
 		parent->addChild(this);

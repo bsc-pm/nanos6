@@ -20,6 +20,7 @@
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
+#include <TaskPredictions.hpp>
 #include <TaskStatistics.hpp>
 
 
@@ -113,6 +114,9 @@ private:
 	
 	//! Monitoring-related statistics about the task
 	TaskStatistics _taskStatistics;
+	
+	//! Monitoring-related predictions about the task
+	TaskPredictions _taskPredictions;
 	
 public:
 	inline Task(
@@ -617,6 +621,12 @@ public:
 	inline TaskStatistics *getTaskStatistics()
 	{
 		return &_taskStatistics;
+	}
+	
+	//! \brief Get the task's predictions
+	inline TaskPredictions *getTaskPredictions()
+	{
+		return &_taskPredictions;
 	}
 };
 

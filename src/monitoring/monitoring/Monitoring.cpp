@@ -48,15 +48,21 @@ void Monitoring::taskCreated(Task *task)
 {
 	if (_enabled) {
 		assert(task != nullptr);
-		TaskStatistics *taskStatistics = task->getTaskStatistics();
-		assert(taskStatistics != nullptr);
 		
 		// Retrieve information about the task
+		TaskStatistics  *parentStatistics  = (task->getParent() != nullptr ? task->getParent()->getTaskStatistics() : nullptr);
+		TaskPredictions *parentPredictions = (task->getParent() != nullptr ? task->getParent()->getTaskPredictions() : nullptr);
+		TaskStatistics  *taskStatistics    = task->getTaskStatistics();
+		TaskPredictions *taskPredictions   = task->getTaskPredictions();
 		const std::string &label = task->getLabel();
 		size_t cost = (task->hasCost() ? task->getCost() : DEFAULT_COST);
 		
-		// Create task statistic structures
-		TaskMonitor::taskCreated(taskStatistics, label, cost);
+		assert(taskStatistics != nullptr);
+		assert(taskPredictions != nullptr);
+		
+		// Create task statistic structures and predict its execution time
+		TaskMonitor::taskCreated(parentStatistics, taskStatistics, parentPredictions, taskPredictions, label, cost);
+		TaskMonitor::predictTime(taskPredictions, label, cost);
 	}
 }
 
@@ -76,7 +82,7 @@ void Monitoring::taskFinished(Task *task)
 		assert(task != nullptr);
 		
 		// Mark task as completely executed
-		TaskMonitor::stopTiming(task->getTaskStatistics());
+		TaskMonitor::stopTiming(task->getTaskStatistics(), task->getTaskPredictions());
 	}
 }
 

@@ -1,9 +1,8 @@
 #ifndef TASK_STATISTICS_HPP
 #define TASK_STATISTICS_HPP
 
+#include <atomic>
 #include <string>
-
-#include "lowlevel/SpinLock.hpp"
 
 #include <Chrono.hpp>
 
@@ -45,13 +44,30 @@ private:
 	//! Id of the currently active stopwatch (status)
 	monitoring_task_status_t _currentId;
 	
+	//! A pointer to the TaskStatistics of the parent task
+	TaskStatistics *_parentStatistics;
+	
+	//! Number of alive children of the task + 1 (+1 due to this task also
+	//! being accounted)
+	//! When this counter reaches 0, it means timing data can be accumulated
+	//! by whoever decreased it to 0 (hence why +1 is needed for the task
+	//! itself to avoid early accumulations)
+	std::atomic<size_t> _aliveChildren;
+	
+	//! Elapsed execution ticks of children tasks (not converted to time)
+	std::atomic<size_t> _childrenTimes[num_status];
+	
 	
 public:
 	
 	inline TaskStatistics() :
 		_cost(DEFAULT_COST),
-		_currentId(null_status)
+		_currentId(null_status),
+		_aliveChildren(1) // Start as 1, marking
 	{
+		for (short i = 0; i < num_status; ++i) {
+			_childrenTimes[i] = 0;
+		}
 	}
 	
 	
@@ -101,12 +117,63 @@ public:
 		return _currentId;
 	}
 	
+	inline void setParentStatistics(TaskStatistics *parentStatistics)
+	{
+		_parentStatistics = parentStatistics;
+	}
+	
+	inline TaskStatistics *getParentStatistics() const
+	{
+		return _parentStatistics;
+	}
+	
+	inline const std::atomic<size_t> *getChildTimes() const
+	{
+		return _childrenTimes;
+	}
+	
+	inline size_t getChildTiming(monitoring_task_status_t statusId) const
+	{
+		return _childrenTimes[statusId].load();
+	}
+	
+	inline void increaseAliveChildren()
+	{
+		++_aliveChildren;
+	}
+	
+	//! \brief Decrease the number of alive children
+	//! \return Whether the decreased child was the last child
+	inline bool decreaseAliveChildren()
+	{
+		int aliveChildren = (--_aliveChildren);
+		assert(aliveChildren >= 0);
+		
+		return (aliveChildren == 0);
+	}
+	
+	inline size_t getAliveChildren() const
+	{
+		return _aliveChildren.load();
+	}
+	
+	//! \brief Mark this task as finished, decreasing the extra unit of alive
+	//! children, which is the current task.
+	//! \return Whether there are no more children alive
+	inline bool markAsFinished()
+	{
+		int aliveChildren = (--_aliveChildren);
+		assert(aliveChildren >= 0);
+		
+		return (aliveChildren == 0);
+	}
+	
 	
 	//    TIMING-RELATED    //
 	
 	//! \brief Start/resume a chrono. If resumed, the active chrono must pause
 	//! \param[in] id the timing status of the stopwatch to start/resume
-	//! \return The previous status of the task
+	//! \return The previous timing status of the task
 	inline monitoring_task_status_t startTiming(monitoring_task_status_t id)
 	{
 		// Change the current timing status
@@ -142,8 +209,34 @@ public:
 	//! \brief Get the elapsed execution time of the task
 	inline double getElapsedTime() const
 	{
+		// First convert children ticks into Chronos to obtain elapsed time
+		Chrono executionTimer(getChildTiming(executing_status));
+		Chrono runtimeTimer(getChildTiming(runtime_status));
+		
+		// Return the aggregation of timing of the task plus its child tasks
 		return getElapsedTiming(executing_status) +
-			getElapsedTiming(runtime_status);
+			getElapsedTiming(runtime_status)      +
+			(double) executionTimer               +
+			(double) runtimeTimer;
+	}
+	
+	//! \brief Accumulate children tasks timing
+	//! \param[in] childChronos An array of stopwatches that contain timing
+	//! data of the execution of a children task
+	//! \param[in] childTimes Accumulated elapsed ticks (one per timing status)
+	//! of children tasks created by a child task of the current one
+	inline void accumulateChildTiming(
+		const Chrono *childChronos,
+		const std::atomic<size_t> *childTimes
+	) {
+		assert(childChronos != nullptr);
+		assert(childTimes != nullptr);
+		
+		for (short i = 0; i < num_status; ++i) {
+			_childrenTimes[i] +=
+				childChronos[i].getAccumulated() +
+				childTimes[i].load();
+		}
 	}
 	
 };
