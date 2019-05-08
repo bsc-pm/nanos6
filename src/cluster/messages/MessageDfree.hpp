@@ -7,6 +7,8 @@
 #ifndef MESSAGE_DFREE_HPP
 #define MESSAGE_DFREE_HPP
 
+#include <sstream>
+
 #include "Message.hpp"
 #include <DataAccessRegion.hpp>
 
@@ -57,11 +59,15 @@ public:
 		return _content->_size;
 	}
 	
-	//! \brief Write to a stream a description of the Message
-	inline void toString(std::ostream &where) const
+	//! \brief Return a string with a description of the Message
+	inline std::string toString() const
 	{
+		std::stringstream ss;
+		
 		DataAccessRegion region(_content->_address, _content->_size);
-		where << "Distributed deallocation of " << region;
+		ss << "[region:" << region << "]";
+		
+		return ss.str();
 	}
 };
 

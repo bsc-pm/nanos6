@@ -7,6 +7,8 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
+#include <string>
+
 #include "MessageType.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/threads/KernelLevelThread.hpp"
@@ -133,11 +135,11 @@ public:
 	virtual bool handleMessage() = 0;
 	
 	//! \brief prints info about the message
-	virtual void toString(std::ostream& where) const = 0;
+	virtual std::string toString() const = 0;
 	
 	friend std::ostream& operator<<(std::ostream& out, const Message& msg)
 	{
-		msg.toString(out);
+		out << msg.toString();
 		return out;
 	}
 };

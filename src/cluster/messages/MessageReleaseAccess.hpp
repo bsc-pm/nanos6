@@ -7,6 +7,8 @@
 #ifndef MESSAGE_RELEASE_ACCESS_HPP
 #define MESSAGE_RELEASE_ACCESS_HPP
 
+#include <sstream>
+
 #include "Message.hpp"
 #include "dependencies/DataAccessType.hpp"
 
@@ -46,10 +48,14 @@ public:
 	
 	bool handleMessage();
 	
-	inline void toString(std::ostream &where) const
+	inline std::string toString() const
 	{
-		where << "ReleaseAccess region:" << _content->_region
-			<< " location:" << _content->_location;
+		std::stringstream ss;
+		
+		ss << "[region:" << _content->_region
+			<< " location:" << _content->_location << "]";
+		
+		return ss.str();
 	}
 };
 
