@@ -21,7 +21,7 @@
 
 inline WorkerThread::WorkerThread(CPU * cpu)
 	: WorkerThreadBase(cpu), _mustShutDown(false), _task(nullptr), _dependencyDomain(),
-	_hardwareCounters(), _instrumentationData()
+	_hardwareCounters(), _instrumentationData(), _threadCounters()
 {
 	_originalNumaNode = cpu->_NUMANodeId;
 	Instrument::enterThreadCreation(/* OUT */ _instrumentationId, cpu->getInstrumentationId());
@@ -108,6 +108,11 @@ inline WorkerThread *WorkerThread::getCurrentWorkerThread()
 	} else {
 		return nullptr;
 	}
+}
+
+inline ThreadHardwareCounters *WorkerThread::getThreadHardwareCounters()
+{
+	return &(_threadCounters);
 }
 
 

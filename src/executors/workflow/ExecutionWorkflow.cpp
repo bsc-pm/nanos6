@@ -8,6 +8,7 @@
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
 #include <ExecutionWorkflowHost.hpp>
+#include <HardwareCounters.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <Monitoring.hpp>
 
@@ -217,6 +218,7 @@ namespace ExecutionWorkflow {
 					);
 					
 					Monitoring::taskFinished(task);
+					HardwareCounters::taskFinished(task);
 					
 					if (task->markAsReleased()) {
 						TaskFinalization::disposeOrUnblockTask(task, cpu);

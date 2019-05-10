@@ -81,6 +81,7 @@ AC_CHECK_BACKTRACE
 AC_CHECK_PAPI
 AC_CHECK_LIBNUMA
 AC_CHECK_MEMKIND
+AC_CHECK_PQOS
 
 AC_CHECK_FUNCS([reallocarray aligned_alloc])
 AC_CHECK_MADV_FREE
@@ -342,6 +343,29 @@ if test x"${ac_chrono_arch}" = x"yes" ; then
 	AC_DEFINE([CHRONO_ARCH], [1], [Define if the architecture-dependent chrono is used.])
 fi
 
+AC_ARG_ENABLE(
+	[monitoring-hwevents],
+	[AS_HELP_STRING([--enable-monitoring-hwevents], [enable monitoring and prediction techniques for hardware events])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_monitoring_hwevents=yes
+			;;
+		no)
+			ac_monitoring_hwevents=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-monitoring-hwevents])
+			;;
+		esac
+	],
+	[ac_monitoring_hwevents=no]
+)
+AM_CONDITIONAL([MONITORING_HWEVENTS_ENABLED], [test x"${ac_monitoring_hwevents}" = x"yes"])
+if test x"${ac_monitoring_hwevents}" = x"yes" ; then
+	AC_DEFINE([MONITORING_HWEVENTS_ENABLED], [1], [Define if Monitoring for Hardware Events is enabled.])
+fi
+
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
@@ -464,6 +488,20 @@ _AS_ECHO([])
 _AS_ECHO_N([   Chrono Arch is enabled... ])
 if test x"${ac_chrono_arch}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   PQOS is enabled... ])
+if test x"${ac_use_pqos}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   PQOS CPPFLAGS... ${pqos_CPPFLAGS}])
+	_AS_ECHO([   PQOS LIBS... ${pqos_LIBS}])
+	if test x"${ac_use_papi}" = x"yes" ; then
+		AC_MSG_WARN([Both PQoS hardware event monitoring and PAPI Instrumentation are enabled.])
+		AC_MSG_WARN([Using both at the same time may cause conflicts when polling events.])
+	fi
 else
 	AC_MSG_RESULT([no])
 fi

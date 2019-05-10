@@ -40,7 +40,9 @@ inline Task::Task(
 	_countdownToRelease(1),
 	_workflow(nullptr),
 	_taskStatistics(),
-	_taskPredictions()
+	_taskPredictions(),
+	_taskCounters(),
+	_taskCountersPredictions()
 {
 	if (parent != nullptr) {
 		parent->addChild(this);

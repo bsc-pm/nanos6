@@ -7,6 +7,7 @@
 #include "tasks/Task.hpp"
 
 #include <DataAccessRegistration.hpp>
+#include <HardwareCounters.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentLogMessage.hpp>
 #include <InstrumentTaskExecution.hpp>
@@ -92,6 +93,7 @@ namespace ExecutionWorkflow {
 			Instrument::startTask(taskId);
 			Instrument::taskIsExecuting(taskId);
 			
+			HardwareCounters::startTaskMonitoring(_task);
 			Monitoring::taskChangedStatus(_task, executing_status, cpu);
 			
 			// Run the task
@@ -105,12 +107,14 @@ namespace ExecutionWorkflow {
 			
 			Monitoring::taskChangedStatus(_task, runtime_status);
 			Monitoring::taskCompletedUserCode(_task, cpu);
+			HardwareCounters::stopTaskMonitoring(_task);
 			
 			Instrument::taskIsZombie(taskId);
 			Instrument::endTask(taskId);
 		} else {
 			Monitoring::taskChangedStatus(_task, runtime_status);
 			Monitoring::taskCompletedUserCode(_task, cpu);
+			HardwareCounters::stopTaskMonitoring(_task);
 		}
 		
 		//! Release the subsequent steps.

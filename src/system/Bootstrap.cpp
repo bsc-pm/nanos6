@@ -28,6 +28,7 @@
 
 #include <ClusterManager.hpp>
 #include <DependencySystem.hpp>
+#include <HardwareCounters.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>
@@ -105,6 +106,7 @@ void nanos6_preinit(void) {
 	mainThread->preinitializeExternalThread();
 	Instrument::initialize();
 	
+	HardwareCounters::initialize();
 	Monitoring::initialize();
 	
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
@@ -165,6 +167,7 @@ void nanos6_shutdown(void) {
 	}
 	
 	Monitoring::shutdown();
+	HardwareCounters::shutdown();
 	
 	Scheduler::shutdown();
 	MemoryAllocator::shutdown();

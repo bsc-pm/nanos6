@@ -6,6 +6,7 @@
 
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
+#include <HardwareCounters.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -55,6 +56,7 @@ namespace ExecutionWorkflow {
 			Instrument::startTask(taskId);
 			Instrument::taskIsExecuting(taskId);
 			
+			HardwareCounters::startTaskMonitoring(task);
 			Monitoring::taskChangedStatus(task, executing_status, cpu);
 			
 			// Run the task
@@ -68,12 +70,14 @@ namespace ExecutionWorkflow {
 			
 			Monitoring::taskChangedStatus(task, runtime_status);
 			Monitoring::taskCompletedUserCode(task, cpu);
+			HardwareCounters::stopTaskMonitoring(task);
 			
 			Instrument::taskIsZombie(taskId);
 			Instrument::endTask(taskId);
 		} else {
 			Monitoring::taskChangedStatus(task, runtime_status);
 			Monitoring::taskCompletedUserCode(task, cpu);
+			HardwareCounters::stopTaskMonitoring(task);
 		}
 		
 		if (task->markAsFinished(cpu)) {
@@ -84,6 +88,7 @@ namespace ExecutionWorkflow {
 			);
 			
 			Monitoring::taskFinished(task);
+			HardwareCounters::taskFinished(task);
 			
 			if (task->markAsReleased()) {
 				TaskFinalization::disposeOrUnblockTask(task, cpu);

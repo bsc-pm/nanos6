@@ -22,6 +22,7 @@
 
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
+#include <HardwareCounters.hpp>
 #include <InstrumentComputePlaceManagement.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskExecution.hpp>
@@ -49,6 +50,7 @@ void WorkerThread::initialize()
 	
 	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
 	
+	HardwareCounters::initializeThread();
 	Monitoring::initializeThread();
 }
 
@@ -125,6 +127,7 @@ void WorkerThread::body()
 	Instrument::threadWillShutdown();
 	
 	Monitoring::shutdownThread();
+	HardwareCounters::shutdownThread();
 	
 	shutdownSequence();
 }

@@ -15,6 +15,7 @@
 #include "instrument/stats/InstrumentHardwareCountersThreadLocalData.hpp"
 
 #include <InstrumentThreadLocalData.hpp>
+#include <ThreadHardwareCounters.hpp>
 
 
 struct CPU;
@@ -40,6 +41,8 @@ private:
 	HardwareCountersThreadLocalData _hardwareCounters;
 	
 	Instrument::ThreadLocalData _instrumentationData;
+	
+	ThreadHardwareCounters _threadCounters;
 	
 	void initialize();
 	void handleTask(CPU *cpu);
@@ -94,6 +97,9 @@ public:
 	
 	//! \brief returns the WorkerThread that runs the call
 	static inline WorkerThread *getCurrentWorkerThread();
+	
+	//! \brief Returns the thread's hardware counter structures
+	inline ThreadHardwareCounters *getThreadHardwareCounters();
 	
 };
 

@@ -17,6 +17,7 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
+#include <HardwareCounters.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
@@ -60,6 +61,7 @@ public:
 			cpu = task->getThread()->getComputePlace();
 		}
 		
+		HardwareCounters::stopTaskMonitoring(task);
 		Monitoring::taskChangedStatus(task, ready_status, cpu);
 		
 		if (hint == SchedulerInterface::UNBLOCKED_TASK_HINT) {

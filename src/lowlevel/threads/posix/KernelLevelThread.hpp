@@ -69,7 +69,7 @@ public:
 		_tid = tid;
 	}
 	
-	inline int getTid()
+	inline pid_t getTid()
 	{
 		return _tid;
 	}

@@ -594,8 +594,29 @@ else
 monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/null
 endif
 
+# Monitoring hardware events
+hw_monitoring_sources =
+hw_monitoring_CPPFLAGS =
+hw_monitoring_LDFLAGS =
+if MONITORING_HWEVENTS_ENABLED
+if HAVE_PQOS
+hw_monitoring_LDFLAGS  += $(pqos_LIBS)
+hw_monitoring_CPPFLAGS += $(pqos_CPPFLAGS)
+hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/pqos
+hw_monitoring_sources += \
+	src/hardware-counters/pqos/HardwareCounters.cpp \
+	src/hardware-counters/pqos/TaskHardwareCountersMonitor.cpp \
+	src/hardware-counters/pqos/TasktypeHardwareCountersPredictions.cpp \
+	src/hardware-counters/pqos/ThreadHardwareCountersMonitor.cpp
+else
+hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/null
+endif
+else
+hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/null
+endif
+
 # Add monitoring-related sources to common sources
-common_sources += $(monitoring_sources) $(chronometers_sources)
+common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_sources)
 
 
 noinst_HEADERS = \
@@ -675,6 +696,18 @@ noinst_HEADERS = \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
+	src/hardware-counters/SupportedHardwareCounters.hpp \
+	src/hardware-counters/null/HardwareCounters.hpp \
+	src/hardware-counters/null/TaskHardwareCounters.hpp \
+	src/hardware-counters/null/TaskHardwareCountersPredictions.hpp \
+	src/hardware-counters/null/ThreadHardwareCounters.hpp \
+	src/hardware-counters/pqos/HardwareCounters.hpp \
+	src/hardware-counters/pqos/TaskHardwareCounters.hpp \
+	src/hardware-counters/pqos/TaskHardwareCountersMonitor.hpp \
+	src/hardware-counters/pqos/TaskHardwareCountersPredictions.hpp \
+	src/hardware-counters/pqos/TasktypeHardwareCountersPredictions.hpp \
+	src/hardware-counters/pqos/ThreadHardwareCounters.hpp \
+	src/hardware-counters/pqos/ThreadHardwareCountersMonitor.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
 	src/instrument/api/InstrumentBlocking.hpp \
 	src/instrument/api/InstrumentComputePlaceManagement.hpp \
@@ -999,8 +1032,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(hw_monitoring_CPPFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(hw_monitoring_LDFLAGS)
 
 
 # This is needed for debuggable spinlocks

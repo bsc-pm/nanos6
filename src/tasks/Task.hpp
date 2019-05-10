@@ -20,6 +20,8 @@
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
+#include <TaskHardwareCounters.hpp>
+#include <TaskHardwareCountersPredictions.hpp>
 #include <TaskPredictions.hpp>
 #include <TaskStatistics.hpp>
 
@@ -117,6 +119,12 @@ private:
 	
 	//! Monitoring-related predictions about the task
 	TaskPredictions _taskPredictions;
+	
+	//! Hardware counter structures of the task
+	TaskHardwareCounters _taskCounters;
+	
+	//! Hardware counter prediction structures of the task
+	TaskHardwareCountersPredictions _taskCountersPredictions;
 	
 public:
 	inline Task(
@@ -627,6 +635,18 @@ public:
 	inline TaskPredictions *getTaskPredictions()
 	{
 		return &_taskPredictions;
+	}
+	
+	//! \brief Get the task's hardware counter structures
+	inline TaskHardwareCounters *getTaskHardwareCounters()
+	{
+		return &_taskCounters;
+	}
+	
+	//! \brief Get the task's hardware counter predictions structures
+	inline TaskHardwareCountersPredictions *getTaskHardwareCountersPredictions()
+	{
+		return &_taskCountersPredictions;
 	}
 };
 

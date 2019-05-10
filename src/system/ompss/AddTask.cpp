@@ -23,7 +23,7 @@
 #include "tasks/TaskloopInfo.hpp"
 
 #include <DataAccessRegistration.hpp>
-
+#include <HardwareCounters.hpp>
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
@@ -55,6 +55,7 @@ void nanos6_create_task(
 		Task *parent = currentWorkerThread->getTask();
 		if (parent != nullptr) {
 			Monitoring::taskChangedStatus(parent, runtime_status, currentWorkerThread->getComputePlace());
+			HardwareCounters::stopTaskMonitoring(parent);
 		}
 	}
 	
@@ -116,6 +117,7 @@ void nanos6_submit_task(void *taskHandle)
 	
 	Instrument::createdTask(task, taskInstrumentationId);
 	
+	HardwareCounters::taskCreated(task);
 	Monitoring::taskCreated(task);
 	
 	bool ready = true;
@@ -145,9 +147,11 @@ void nanos6_submit_task(void *taskHandle)
 		Instrument::taskIsPending(taskInstrumentationId);
 		
 		Monitoring::taskChangedStatus(task, pending_status);
+		HardwareCounters::stopTaskMonitoring(task);
 	}
 	
 	if (parent != nullptr) {
+		HardwareCounters::startTaskMonitoring(parent);
 		Monitoring::taskChangedStatus(parent, executing_status, currentWorkerThread->getComputePlace());
 	}
 	

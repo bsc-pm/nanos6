@@ -111,6 +111,11 @@ public:
 		return static_cast<WorkerThreadBase *> (getCurrentKernelLevelThread());
 	}
 	
+	inline pid_t getTid()
+	{
+		return KernelLevelThread::getTid();
+	}
+	
 };
 
 

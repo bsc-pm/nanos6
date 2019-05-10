@@ -15,6 +15,7 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
+#include <HardwareCounters.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
 #include <Monitoring.hpp>
@@ -64,6 +65,7 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 	
 	if (!done) {
 		Monitoring::taskChangedStatus(currentTask, blocked_status, cpu);
+		HardwareCounters::stopTaskMonitoring(currentTask);
 		
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_CHILDREN_INLINE);
@@ -88,6 +90,7 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 		// The instrumentation was notified that the task had been blocked
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 		
+		HardwareCounters::startTaskMonitoring(currentTask);
 		Monitoring::taskChangedStatus(currentTask, executing_status, cpu);
 	}
 }
