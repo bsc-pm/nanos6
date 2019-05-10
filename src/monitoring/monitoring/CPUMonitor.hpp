@@ -86,6 +86,14 @@ public:
 		return _monitor->_cpuStatistics[virtualCPUId].getActiveness();
 	}
 	
+	//! \brief Return the number of CPUs in the system
+	static inline size_t getNumCPUs()
+	{
+		assert(_monitor != nullptr);
+		
+		return _monitor->_numCPUs;
+	}
+	
 	//! \brief Get the total amount of activeness of all CPUs
 	static inline float getTotalActiveness()
 	{

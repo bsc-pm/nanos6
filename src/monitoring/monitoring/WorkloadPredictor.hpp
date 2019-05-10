@@ -246,9 +246,18 @@ public:
 	//! \param loadId The workload's id
 	static double getPredictedWorkload(workload_t loadId);
 	
-	//! \brief Retreive the aggregated execution time of tasks that have
+	//! \brief Retrieve the aggregated execution time of tasks that have
 	//! completed user code
 	static size_t getTaskCompletionTimes();
+	
+	//! \brief Retreive the number of instances of a workload
+	//! \param loadId The identifier of the workload
+	static inline size_t getNumInstances(workload_t loadId)
+	{
+		assert(_predictor != nullptr);
+		
+		return _predictor->_instances[loadId].load();
+	}
 	
 };
 

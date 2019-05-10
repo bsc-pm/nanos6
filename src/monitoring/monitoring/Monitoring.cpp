@@ -33,6 +33,9 @@ void Monitoring::initialize()
 		// Initialize the CPU monitoring module
 		CPUMonitor::initialize();
 		
+		// Initialize the CPU usage predictor
+		CPUUsagePredictor::initialize();
+		
 		// Initialize the workload predictor
 		WorkloadPredictor::initialize();
 		
@@ -60,6 +63,9 @@ void Monitoring::shutdown()
 		// Propagate shutdown to the CPU monitoring module
 		CPUMonitor::shutdown();
 		
+		// Propagate shutdown to the CPU usage predictor
+		CPUUsagePredictor::shutdown();
+		
 		// Propagate shutdown to the task monitoring module
 		TaskMonitor::shutdown();
 		
@@ -85,9 +91,10 @@ void Monitoring::displayStatistics()
 			". Using standard output."
 		);
 		
-		// Retrieve statistics from every module
+		// Retrieve statistics from every module / predictor
 		std::stringstream outputStream;
 		CPUMonitor::displayStatistics(outputStream);
+		CPUUsagePredictor::displayStatistics(outputStream);
 		TaskMonitor::displayStatistics(outputStream);
 		WorkloadPredictor::displayStatistics(outputStream);
 		

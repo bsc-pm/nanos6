@@ -585,6 +585,7 @@ monitoring_CPPFLAGS =
 if MONITORING_ENABLED
 monitoring_sources += \
 	src/monitoring/monitoring/CPUMonitor.cpp \
+	src/monitoring/monitoring/CPUUsagePredictor.cpp \
 	src/monitoring/monitoring/Monitoring.cpp \
 	src/monitoring/monitoring/TaskMonitor.cpp \
 	src/monitoring/monitoring/TasktypePredictions.cpp \
@@ -986,6 +987,7 @@ noinst_HEADERS = \
 	src/memory/vmm/smp/VirtualMemoryManagement.hpp \
 	src/monitoring/monitoring/CPUMonitor.hpp \
 	src/monitoring/monitoring/CPUStatistics.hpp \
+	src/monitoring/monitoring/CPUUsagePredictor.hpp \
 	src/monitoring/monitoring/Monitoring.hpp \
 	src/monitoring/monitoring/TaskMonitor.hpp \
 	src/monitoring/monitoring/TaskPredictions.hpp \
