@@ -114,16 +114,18 @@ public:
 	//! \param counterId An array with counter identifiers
 	//! \param counterValues An array with unitary values
 	inline void insertCounterValuesPerUnitOfCost(
-		std::vector<short> &counterIds,
+		std::vector<HWCounters::counters_t> &counterIds,
 		std::vector<double> &counterValues
 	) {
 		assert(counterIds.size() == counterValues.size());
 		
 		_accumulatorLock.lock();
+		
 		for (unsigned short id = 0; id < counterIds.size(); ++id) {
 			_normalizedCounters[counterIds[id]](counterValues[id]);
 		}
 		++_instances;
+		
 		_accumulatorLock.unlock();
 	}
 	

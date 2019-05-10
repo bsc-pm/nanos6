@@ -615,6 +615,27 @@ else
 hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/null
 endif
 
+
+# Wisdom manager (monitoring-related)
+if MONITORING_ENABLED
+monitoring_sources += \
+	src/monitoring/support/wisdom/wisdom/WisdomManager.cpp
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/wisdom
+endif
+if !MONITORING_ENABLED
+if MONITORING_HWEVENTS_ENABLED
+monitoring_sources += \
+	src/monitoring/support/wisdom/wisdom/WisdomManager.cpp
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/wisdom
+endif
+endif
+if !MONITORING_ENABLED
+if !MONITORING_HWEVENTS_ENABLED
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/null
+endif
+endif
+
+
 # Add monitoring-related sources to common sources
 common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_sources)
 
@@ -973,8 +994,11 @@ noinst_HEADERS = \
 	src/monitoring/monitoring/WorkloadPredictor.hpp \
 	src/monitoring/monitoring/WorkloadStatistics.hpp \
 	src/monitoring/null/Monitoring.hpp \
+	src/monitoring/null/TaskMonitor.hpp \
 	src/monitoring/null/TaskPredictions.hpp \
 	src/monitoring/null/TaskStatistics.hpp \
+	src/monitoring/support/wisdom/null/WisdomManager.hpp \
+	src/monitoring/support/wisdom/wisdom/WisdomManager.hpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \

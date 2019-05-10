@@ -153,9 +153,26 @@ public:
 	//! \return The status before the change
 	static monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions, int &ancestorsUpdated);
 	
-	//! \brief Get an average time per unit of cost value of a tasktype
+	//! \brief Get the average unitary time value of a tasktype (normalized using cost)
 	//! \param label The tasktype
 	static double getAverageTimePerUnitOfCost(const std::string &label);
+	
+	//! \brief Insert an unitary time value (normalized using cost) into the 
+	//! appropriate TasktypePredictions structure
+	//! \param label The tasktype
+	//! \param unitaryTime The time per unit of cost to insert
+	static void insertTimePerUnitOfCost(const std::string &label, double unitaryTime);
+	
+	//! \brief Get the average unitary time values of all the tasktypes
+	//! being monitored
+	//! \param[out] labels The reference of a vector in which all the available
+	//! tasktypes will be inserted
+	//! \param[out] unitaryTimes The reference of a vector in which the
+	//! times per unit of cost will be inserted
+	static void getAverageTimesPerUnitOfCost(
+		std::vector<std::string> &labels,
+		std::vector<double> &unitaryTimes
+	);
 	
 };
 

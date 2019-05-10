@@ -89,3 +89,61 @@ void TaskHardwareCountersMonitor::taskFinished(TaskHardwareCounters *taskCounter
 	taskPredictions->getTypePredictions()->accumulateCounters(taskCounters, taskPredictions);
 }
 
+void TaskHardwareCountersMonitor::insertCounterValuesPerUnitOfCost(
+		const std::string &label,
+		std::vector<HWCounters::counters_t> &counterIds,
+		std::vector<double> &counterValues
+) {
+	assert(_monitor != nullptr);
+	tasktype_hardware_counters_map_t &tasktypeMap = _monitor->_tasktypeMap;
+	TasktypeHardwareCountersPredictions *predictions = nullptr;
+	
+	// Find (or create if unexistent) the tasktype HW counter predictions
+	_monitor->_spinlock.lock();
+	
+	tasktype_hardware_counters_map_t::iterator it = tasktypeMap.find(label);
+	if (it == tasktypeMap.end()) {
+		predictions = new TasktypeHardwareCountersPredictions();
+		tasktypeMap.emplace(label, predictions);
+	}
+	else {
+		predictions = it->second;
+	}
+	
+	_monitor->_spinlock.unlock();
+	
+	predictions->insertCounterValuesPerUnitOfCost(counterIds, counterValues);
+}
+
+void TaskHardwareCountersMonitor::getAverageCounterValuesPerUnitOfCost(
+	std::vector<std::string> &labels,
+	std::vector<std::vector<std::pair<HWCounters::counters_t, double>>> &unitaryValues
+) {
+	assert(_monitor != nullptr);
+	
+	_monitor->_spinlock.lock();
+	
+	// Retrieve all the labels and unitary counter ids and values
+	short index = 0;
+	short numCounters = HWCounters::num_counters;
+	for (auto const &it : _monitor->_tasktypeMap) {
+		const std::string &label = it.first;
+		TasktypeHardwareCountersPredictions *predictions = it.second;
+		
+		if (predictions != nullptr) {
+			labels.push_back(label);
+			unitaryValues.push_back(std::vector<std::pair<HWCounters::counters_t, double>>(numCounters));
+			for (unsigned short counterId = 0; counterId < numCounters; ++counterId) {
+				unitaryValues[index].push_back(
+					std::make_pair(
+						(HWCounters::counters_t) counterId,
+						predictions->getNormalizedCounterRollingAverage((HWCounters::counters_t) counterId)
+					)
+				);
+			}
+			index++;
+		}
+	}
+	
+	_monitor->_spinlock.unlock();
+}

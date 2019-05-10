@@ -184,6 +184,27 @@ public:
 	//! \param threadData The monitoring data of the thread executing the task
 	static void taskFinished(TaskHardwareCounters *taskCounters, TaskHardwareCountersPredictions *taskPredictions);
 	
+	//! \brief Insert normalized counter values (values per unit of cost)
+	//! \param label The tasktype
+	//! \param counterIds A vector of counter identifiers
+	//! \param counterValues A vector of normalized counter values
+	static void insertCounterValuesPerUnitOfCost(
+		const std::string &label,
+		std::vector<HWCounters::counters_t> &counterIds,
+		std::vector<double> &counterValues
+	);
+	
+	//! \brief Get the average counter values per unit of cost of all the
+	//! tasktypes being monitored
+	//! \param[out] labels The reference of a vector in which all the available
+	//! tasktypes will be inserted
+	//! \param[out] unitaryValues The reference of a vector in which the respective
+	//! vectors of counter identifiers and counter values will be inserted
+	static void getAverageCounterValuesPerUnitOfCost(
+		std::vector<std::string> &labels,
+		std::vector<std::vector<std::pair<HWCounters::counters_t, double>>> &unitaryValues
+	);
+	
 };
 
 #endif // PQOS_TASK_HARDWARE_COUNTERS_MONITOR_HPP

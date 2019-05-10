@@ -142,3 +142,46 @@ double TaskMonitor::getAverageTimePerUnitOfCost(const std::string &label)
 	
 	return unitaryTime;
 }
+
+void TaskMonitor::insertTimePerUnitOfCost(const std::string &label, double unitaryTime)
+{
+	assert(_monitor != nullptr);
+	TasktypePredictions *predictions = nullptr;
+	
+	_monitor->_spinlock.lock();
+	
+	// Find (or create if unexistent) the tasktype predictions
+	tasktype_map_t::iterator it = _monitor->_tasktypeMap.find(label);
+	if (it == _monitor->_tasktypeMap.end()) {
+		predictions = new TasktypePredictions();
+		_monitor->_tasktypeMap.emplace(label, predictions);
+	}
+	else {
+		predictions = it->second;
+	}
+	
+	_monitor->_spinlock.unlock();
+	
+	// Predict the execution time of the newly created task
+	assert(predictions != nullptr);
+	predictions->insertTimePerUnitOfCost(unitaryTime);
+}
+
+void TaskMonitor::getAverageTimesPerUnitOfCost(
+	std::vector<std::string> &labels,
+	std::vector<double> &unitaryTimes
+) {
+	assert(_monitor != nullptr);
+	
+	_monitor->_spinlock.lock();
+	
+	// Retrieve all the labels and unitary times
+	for (auto const &it : _monitor->_tasktypeMap) {
+		if (it.second != nullptr) {
+			labels.push_back(it.first);
+			unitaryTimes.push_back(it.second->getAverageTimePerUnitOfCost());
+		}
+	}
+	
+	_monitor->_spinlock.unlock();
+}

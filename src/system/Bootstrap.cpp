@@ -32,6 +32,7 @@
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>
+#include <WisdomManager.hpp>
 
 
 static std::atomic<int> shutdownDueToSignalNumber(0);
@@ -108,6 +109,7 @@ void nanos6_preinit(void) {
 	
 	HardwareCounters::initialize();
 	Monitoring::initialize();
+	WisdomManager::initialize();
 	
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
 	
@@ -166,6 +168,7 @@ void nanos6_shutdown(void) {
 		raise(shutdownDueToSignalNumber.load());
 	}
 	
+	WisdomManager::shutdown();
 	Monitoring::shutdown();
 	HardwareCounters::shutdown();
 	
