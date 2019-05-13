@@ -583,7 +583,8 @@ monitoring_sources += \
 	src/monitoring/monitoring/CPUMonitor.cpp \
 	src/monitoring/monitoring/Monitoring.cpp \
 	src/monitoring/monitoring/TaskMonitor.cpp \
-	src/monitoring/monitoring/TasktypePredictions.cpp
+	src/monitoring/monitoring/TasktypePredictions.cpp \
+	src/monitoring/monitoring/WorkloadPredictor.cpp
 monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/monitoring
 else
 monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/null
@@ -932,6 +933,8 @@ noinst_HEADERS = \
 	src/monitoring/monitoring/TaskPredictions.hpp \
 	src/monitoring/monitoring/TaskStatistics.hpp \
 	src/monitoring/monitoring/TasktypePredictions.hpp \
+	src/monitoring/monitoring/WorkloadPredictor.hpp \
+	src/monitoring/monitoring/WorkloadStatistics.hpp \
 	src/monitoring/null/Monitoring.hpp \
 	src/monitoring/null/TaskPredictions.hpp \
 	src/monitoring/null/TaskStatistics.hpp \

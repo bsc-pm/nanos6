@@ -66,12 +66,14 @@ namespace ExecutionWorkflow {
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 			
-			Monitoring::taskChangedStatus(task, runtime_status, cpu);
+			Monitoring::taskChangedStatus(task, runtime_status);
+			Monitoring::taskCompletedUserCode(task, cpu);
 			
 			Instrument::taskIsZombie(taskId);
 			Instrument::endTask(taskId);
 		} else {
-			Monitoring::taskChangedStatus(task, runtime_status, cpu);
+			Monitoring::taskChangedStatus(task, runtime_status);
+			Monitoring::taskCompletedUserCode(task, cpu);
 		}
 		
 		if (task->markAsFinished(cpu)) {

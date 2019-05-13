@@ -33,6 +33,9 @@ void Monitoring::initialize()
 		// Initialize the CPU monitoring module
 		CPUMonitor::initialize();
 		
+		// Initialize the workload predictor
+		WorkloadPredictor::initialize();
+		
 		#if CHRONO_ARCH
 			// Stop measuring time and compute the tick conversion rate
 			TickConversionUpdater::finishUpdate();
@@ -50,6 +53,9 @@ void Monitoring::shutdown()
 		
 		// Display monitoring statistics
 		displayStatistics();
+		
+		// Propagate shutdown to the workload predictor
+		WorkloadPredictor::shutdown();
 		
 		// Propagate shutdown to the CPU monitoring module
 		CPUMonitor::shutdown();
@@ -83,6 +89,7 @@ void Monitoring::displayStatistics()
 		std::stringstream outputStream;
 		CPUMonitor::displayStatistics(outputStream);
 		TaskMonitor::displayStatistics(outputStream);
+		WorkloadPredictor::displayStatistics(outputStream);
 		
 		if (output.is_open()) {
 			// Output into the file and close it
@@ -122,6 +129,9 @@ void Monitoring::taskCreated(Task *task)
 		// Create task statistic structures and predict its execution time
 		TaskMonitor::taskCreated(parentStatistics, taskStatistics, parentPredictions, taskPredictions, label, cost);
 		TaskMonitor::predictTime(taskPredictions, label, cost);
+		
+		// Account this task in workloads
+		WorkloadPredictor::taskCreated(taskStatistics, taskPredictions);
 	}
 }
 
@@ -133,7 +143,7 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 		// Start timing for the appropriate stopwatch
 		const monitoring_task_status_t oldStatus = TaskMonitor::startTiming(task->getTaskStatistics(), newStatus);
 		
-		// Update CPU statistics only after a change of status
+		// Update CPU and workload statistics only after a change of status
 		if (oldStatus != newStatus) {
 			if (cpu != nullptr) {
 				// If the task is about to be executed, resume CPU activeness
@@ -145,7 +155,24 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 					CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->_virtualCPUId);
 				}
 			}
+			
+			// Account this task in the appropriate workload
+			WorkloadPredictor::taskChangedStatus(task->getTaskStatistics(), task->getTaskPredictions(), oldStatus, newStatus);
 		}
+	}
+}
+
+void Monitoring::taskCompletedUserCode(Task *task, ComputePlace *cpu)
+{
+	if (_enabled) {
+		assert(task != nullptr);
+		assert(cpu != nullptr);
+		
+		// Update CPU statistics when the task completes user code
+		CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->_virtualCPUId);
+		
+		// Account the task's elapsed execution time in predictions
+		WorkloadPredictor::taskCompletedUserCode(task->getTaskStatistics(), task->getTaskPredictions());
 	}
 }
 
@@ -154,8 +181,14 @@ void Monitoring::taskFinished(Task *task)
 	if (_enabled) {
 		assert(task != nullptr);
 		
+		// Number of ancestors updated by this task in TaskMonitor
+		int ancestorsUpdated = 0;
+		
 		// Mark task as completely executed
-		TaskMonitor::stopTiming(task->getTaskStatistics(), task->getTaskPredictions());
+		const monitoring_task_status_t oldStatus = TaskMonitor::stopTiming(task->getTaskStatistics(), task->getTaskPredictions(), ancestorsUpdated);
+		
+		// Account this task in workloads
+		WorkloadPredictor::taskFinished(task->getTaskStatistics(), task->getTaskPredictions(), oldStatus, ancestorsUpdated);
 	}
 }
 

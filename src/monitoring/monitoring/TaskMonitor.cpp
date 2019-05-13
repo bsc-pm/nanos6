@@ -72,7 +72,7 @@ monitoring_task_status_t TaskMonitor::startTiming(TaskStatistics *taskStatistics
 	return taskStatistics->startTiming(execStatus);
 }
 
-monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions)
+monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions, int &ancestorsUpdated)
 {
 	assert(_monitor != nullptr);
 	assert(taskStatistics != nullptr);
@@ -87,6 +87,10 @@ monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics,
 	// Follow the chain of ancestors and keep updating finished tasks
 	bool canAccumulate = taskStatistics->markAsFinished();
 	if (canAccumulate) {
+		// Increase the number of ancestors that have been updated
+		// This is the own task having finished
+		++ancestorsUpdated;
+		
 		// Update tasktype predictions with this task's statistics
 		typePredictions = taskPredictions->getTypePredictions();
 		typePredictions->accumulatePredictions(taskStatistics, taskPredictions);
@@ -101,6 +105,9 @@ monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics,
 		// Backpropagate the update of parent tasks
 		if (parentStatistics != nullptr) {
 			while (parentStatistics->decreaseAliveChildren()) {
+				// Increase the number of ancestors that have been updated
+				++ancestorsUpdated;
+				
 				// Accumulate the task's statistics into the parent task
 				parentStatistics->accumulateChildTiming(
 					taskStatistics->getChronos(),

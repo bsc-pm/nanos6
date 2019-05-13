@@ -103,12 +103,14 @@ namespace ExecutionWorkflow {
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 			
-			Monitoring::taskChangedStatus(_task, runtime_status, cpu);
+			Monitoring::taskChangedStatus(_task, runtime_status);
+			Monitoring::taskCompletedUserCode(_task, cpu);
 			
 			Instrument::taskIsZombie(taskId);
 			Instrument::endTask(taskId);
 		} else {
-			Monitoring::taskChangedStatus(_task, runtime_status, cpu);
+			Monitoring::taskChangedStatus(_task, runtime_status);
+			Monitoring::taskCompletedUserCode(_task, cpu);
 		}
 		
 		//! Release the subsequent steps.

@@ -146,9 +146,12 @@ public:
 	static monitoring_task_status_t startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus);
 	
 	//! \brief Stop time monitoring for a task
-	//! \param taskStatistics The task's statistics
+	//! \param[in,out] taskStatistics The task's statistics
+	//! \param[in,out] taskPredictions The predictions of the task
+	//! \param[out] ancestorsUpdated The number of ancestors that this task has
+	//! updated during shutdown of timing monitoring
 	//! \return The status before the change
-	static monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions);
+	static monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions, int &ancestorsUpdated);
 	
 	//! \brief Get an average time per unit of cost value of a tasktype
 	//! \param label The tasktype

@@ -3,6 +3,8 @@
 
 #include "CPUMonitor.hpp"
 #include "TaskMonitor.hpp"
+#include "WorkloadPredictor.hpp"
+
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/Task.hpp"
@@ -68,6 +70,12 @@ public:
 	//! \param newStatus The new execution status of the task
 	//! \param cpu The cpu onto which a thread is running the task
 	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus, ComputePlace *cpu = nullptr);
+	
+	//! \brief Propagate monitoring operations after a task has
+	//! completed user code execution
+	//! \param task The task that has completed the execution
+	//! \param cpu The cpu in which a thread was running the task
+	static void taskCompletedUserCode(Task *task, ComputePlace *cpu);
 	
 	//! \brief Propagate monitoring operations after a task has finished
 	//! \param task The task that has finished

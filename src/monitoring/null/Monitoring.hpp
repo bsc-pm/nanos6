@@ -29,6 +29,10 @@ public:
 	{
 	}
 	
+	static inline void taskCompletedUserCode(Task *, ComputePlace *)
+	{
+	}
+	
 	static inline void taskFinished(Task *)
 	{
 	}
