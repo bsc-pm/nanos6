@@ -92,7 +92,7 @@ namespace ExecutionWorkflow {
 			Instrument::startTask(taskId);
 			Instrument::taskIsExecuting(taskId);
 			
-			Monitoring::taskChangedStatus(_task, executing_status);
+			Monitoring::taskChangedStatus(_task, executing_status, cpu);
 			
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
@@ -103,12 +103,12 @@ namespace ExecutionWorkflow {
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 			
-			Monitoring::taskChangedStatus(_task, runtime_status);
+			Monitoring::taskChangedStatus(_task, runtime_status, cpu);
 			
 			Instrument::taskIsZombie(taskId);
 			Instrument::endTask(taskId);
 		} else {
-			Monitoring::taskChangedStatus(_task, runtime_status);
+			Monitoring::taskChangedStatus(_task, runtime_status, cpu);
 		}
 		
 		//! Release the subsequent steps.

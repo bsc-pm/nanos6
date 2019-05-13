@@ -30,6 +30,9 @@ void Monitoring::initialize()
 		// Initialize the task monitoring module
 		TaskMonitor::initialize();
 		
+		// Initialize the CPU monitoring module
+		CPUMonitor::initialize();
+		
 		#if CHRONO_ARCH
 			// Stop measuring time and compute the tick conversion rate
 			TickConversionUpdater::finishUpdate();
@@ -47,6 +50,9 @@ void Monitoring::shutdown()
 		
 		// Display monitoring statistics
 		displayStatistics();
+		
+		// Propagate shutdown to the CPU monitoring module
+		CPUMonitor::shutdown();
 		
 		// Propagate shutdown to the task monitoring module
 		TaskMonitor::shutdown();
@@ -75,6 +81,7 @@ void Monitoring::displayStatistics()
 		
 		// Retrieve statistics from every module
 		std::stringstream outputStream;
+		CPUMonitor::displayStatistics(outputStream);
 		TaskMonitor::displayStatistics(outputStream);
 		
 		if (output.is_open()) {
@@ -118,13 +125,27 @@ void Monitoring::taskCreated(Task *task)
 	}
 }
 
-void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatus)
+void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatus, ComputePlace *cpu)
 {
 	if (_enabled) {
 		assert(task != nullptr);
 		
 		// Start timing for the appropriate stopwatch
-		TaskMonitor::startTiming(task->getTaskStatistics(), newStatus);
+		const monitoring_task_status_t oldStatus = TaskMonitor::startTiming(task->getTaskStatistics(), newStatus);
+		
+		// Update CPU statistics only after a change of status
+		if (oldStatus != newStatus) {
+			if (cpu != nullptr) {
+				// If the task is about to be executed, resume CPU activeness
+				if (newStatus == executing_status || newStatus == runtime_status) {
+					CPUMonitor::cpuBecomesActive(((CPU *) cpu)->_virtualCPUId);
+				}
+				// If the task is about to end or block, resume CPU idleness
+				else if (newStatus == blocked_status || newStatus == ready_status || newStatus == pending_status) {
+					CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->_virtualCPUId);
+				}
+			}
+		}
 	}
 }
 
@@ -135,6 +156,23 @@ void Monitoring::taskFinished(Task *task)
 		
 		// Mark task as completely executed
 		TaskMonitor::stopTiming(task->getTaskStatistics(), task->getTaskPredictions());
+	}
+}
+
+
+//    THREADS    //
+
+void Monitoring::initializeThread()
+{
+	if (_enabled) {
+		// Empty thread API
+	}
+}
+
+void Monitoring::shutdownThread()
+{
+	if (_enabled) {
+		// Empty thread API
 	}
 }
 

@@ -44,7 +44,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	
 	assert(blocking_context == currentTask);
 	
-	Monitoring::taskChangedStatus(currentTask, blocked_status);
+	Monitoring::taskChangedStatus(currentTask, blocked_status, computePlace);
 	
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
 	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
@@ -62,7 +62,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 	
-	Monitoring::taskChangedStatus(currentTask, executing_status);
+	Monitoring::taskChangedStatus(currentTask, executing_status, computePlace);
 }
 
 

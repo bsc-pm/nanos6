@@ -34,6 +34,7 @@ void TaskMonitor::taskCreated(
 
 void TaskMonitor::predictTime(TaskPredictions *taskPredictions, const std::string &label, size_t cost)
 {
+	assert(_monitor != nullptr);
 	assert(taskPredictions != nullptr);
 	TasktypePredictions *predictions = nullptr;
 	
@@ -73,6 +74,7 @@ monitoring_task_status_t TaskMonitor::startTiming(TaskStatistics *taskStatistics
 
 monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions)
 {
+	assert(_monitor != nullptr);
 	assert(taskStatistics != nullptr);
 	assert(taskPredictions != nullptr);
 	TaskStatistics      *parentStatistics;

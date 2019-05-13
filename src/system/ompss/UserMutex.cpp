@@ -80,7 +80,7 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 		return;
 	}
 	
-	Monitoring::taskChangedStatus(currentTask, blocked_status);
+	Monitoring::taskChangedStatus(currentTask, blocked_status, computePlace);
 
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 	Instrument::blockedOnUserMutex(&userMutex);
@@ -101,7 +101,8 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	Instrument::acquiredUserMutex(&userMutex);
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 	
-	Monitoring::taskChangedStatus(currentTask, executing_status);
+	assert(currentTask->getThread() != nullptr);
+	Monitoring::taskChangedStatus(currentTask, executing_status, computePlace);
 }
 
 
@@ -147,7 +148,7 @@ void nanos6_user_unlock(void **handlerPointer)
 				Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 				
 				// Resume execution timing for the current task
-				Monitoring::taskChangedStatus(currentTask, executing_status);
+				Monitoring::taskChangedStatus(currentTask, executing_status, cpu);
 			}
 		} else {
 			Scheduler::addReadyTask(releasedTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);

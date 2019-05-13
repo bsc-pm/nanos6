@@ -55,7 +55,12 @@ public:
 		assert(task != 0);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		
-		Monitoring::taskChangedStatus(task, ready_status);
+		ComputePlace *cpu = nullptr;
+		if (task->getThread() != nullptr) {
+			cpu = task->getThread()->getComputePlace();
+		}
+		
+		Monitoring::taskChangedStatus(task, ready_status, cpu);
 		
 		if (hint == SchedulerInterface::UNBLOCKED_TASK_HINT) {
 			return _scheduler->addReadyTask(task, computePlace, hint, false);

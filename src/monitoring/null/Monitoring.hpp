@@ -25,11 +25,19 @@ public:
 	{
 	}
 	
-	static inline void taskChangedStatus(Task *, monitoring_task_status_t)
+	static inline void taskChangedStatus(Task *, monitoring_task_status_t, ComputePlace * = nullptr)
 	{
 	}
 	
 	static inline void taskFinished(Task *)
+	{
+	}
+	
+	static inline void initializeThread()
+	{
+	}
+	
+	static inline void shutdownThread()
 	{
 	}
 	

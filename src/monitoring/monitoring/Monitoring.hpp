@@ -1,6 +1,7 @@
 #ifndef MONITORING_HPP
 #define MONITORING_HPP
 
+#include "CPUMonitor.hpp"
 #include "TaskMonitor.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -65,11 +66,21 @@ public:
 	//! execution status
 	//! \param task The task that's changing status
 	//! \param newStatus The new execution status of the task
-	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus);
+	//! \param cpu The cpu onto which a thread is running the task
+	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus, ComputePlace *cpu = nullptr);
 	
 	//! \brief Propagate monitoring operations after a task has finished
 	//! \param task The task that has finished
 	static void taskFinished(Task *task);
+	
+	
+	//    THREADS    //
+	
+	//! \brief Propagate monitoring operations when a thread is initialized
+	static void initializeThread();
+	
+	//! \brief Propagate monitoring operations when a thread is shutdown
+	static void shutdownThread();
 	
 };
 

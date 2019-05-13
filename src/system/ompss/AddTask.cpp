@@ -54,7 +54,7 @@ void nanos6_create_task(
 	if (currentWorkerThread != nullptr) {
 		Task *parent = currentWorkerThread->getTask();
 		if (parent != nullptr) {
-			Monitoring::taskChangedStatus(parent, runtime_status);
+			Monitoring::taskChangedStatus(parent, runtime_status, currentWorkerThread->getComputePlace());
 		}
 	}
 	
@@ -148,7 +148,7 @@ void nanos6_submit_task(void *taskHandle)
 	}
 	
 	if (parent != nullptr) {
-		Monitoring::taskChangedStatus(parent, executing_status);
+		Monitoring::taskChangedStatus(parent, executing_status, currentWorkerThread->getComputePlace());
 	}
 	
 	Instrument::exitAddTask(taskInstrumentationId);
