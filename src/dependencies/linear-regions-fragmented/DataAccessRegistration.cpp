@@ -2747,7 +2747,9 @@ namespace DataAccessRegistration {
 		MemoryPlace const *location
 	) {
 		assert(task != nullptr);
-		assert(computePlace != nullptr);
+		//! Not true any more, since a region might be released from
+		//! inside a polling service
+		//! assert(computePlace != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
