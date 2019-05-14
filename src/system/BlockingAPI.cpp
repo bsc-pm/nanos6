@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -9,15 +9,15 @@
 #include <nanos6/blocking.h>
 
 #include "DataAccessRegistration.hpp"
-#include "ompss/TaskBlocking.hpp"
-
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
-
+#include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
 
+#include <HardwareCounters.hpp>
 #include <InstrumentBlocking.hpp>
+#include <Monitoring.hpp>
 
 
 extern "C" void *nanos6_get_current_blocking_context()
@@ -45,6 +45,9 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	
 	assert(blocking_context == currentTask);
 	
+	Monitoring::taskChangedStatus(currentTask, blocked_status, computePlace);
+	HardwareCounters::stopTaskMonitoring(currentTask);
+	
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
 	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
 	
@@ -60,6 +63,9 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	
 	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+	
+	HardwareCounters::startTaskMonitoring(currentTask);
+	Monitoring::taskChangedStatus(currentTask, executing_status, computePlace);
 }
 
 

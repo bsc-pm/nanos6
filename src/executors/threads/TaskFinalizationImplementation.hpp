@@ -12,7 +12,9 @@
 #include "TaskFinalization.hpp"
 #include "tasks/Taskloop.hpp"
 
+#include <HardwareCounters.hpp>
 #include <InstrumentTaskStatus.hpp>
+#include <Monitoring.hpp>
 
 
 void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace, bool fromBusyThread)
@@ -37,6 +39,9 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 					/* memory place */ nullptr,
 					fromBusyThread
 				);
+				
+				Monitoring::taskFinished(task);
+				HardwareCounters::taskFinished(task);
 				
 				if (task->markAsReleased()) {
 					readyOrDisposable = true;

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef POSIX_KERNEL_LEVEL_THREAD_HPP
@@ -69,7 +69,7 @@ public:
 		_tid = tid;
 	}
 	
-	inline int getTid()
+	inline pid_t getTid()
 	{
 		return _tid;
 	}

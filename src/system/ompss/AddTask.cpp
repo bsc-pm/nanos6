@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 // This is for posix_memalign
@@ -23,11 +23,12 @@
 #include "tasks/TaskloopInfo.hpp"
 
 #include <DataAccessRegistration.hpp>
-
+#include <HardwareCounters.hpp>
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <Monitoring.hpp>
 
 #include <cassert>
 #include <cstdlib>
@@ -48,6 +49,15 @@ void nanos6_create_task(
 	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
 	
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
+	
+	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
+	if (currentWorkerThread != nullptr) {
+		Task *parent = currentWorkerThread->getTask();
+		if (parent != nullptr) {
+			Monitoring::taskChangedStatus(parent, runtime_status, currentWorkerThread->getComputePlace());
+			HardwareCounters::stopTaskMonitoring(parent);
+		}
+	}
 	
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
@@ -107,6 +117,9 @@ void nanos6_submit_task(void *taskHandle)
 	
 	Instrument::createdTask(task, taskInstrumentationId);
 	
+	HardwareCounters::taskCreated(task);
+	Monitoring::taskCreated(task);
+	
 	bool ready = true;
 	nanos6_task_info_t *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);
@@ -132,6 +145,14 @@ void nanos6_submit_task(void *taskHandle)
 		}
 	} else if (!ready) {
 		Instrument::taskIsPending(taskInstrumentationId);
+		
+		Monitoring::taskChangedStatus(task, pending_status);
+		HardwareCounters::stopTaskMonitoring(task);
+	}
+	
+	if (parent != nullptr) {
+		HardwareCounters::startTaskMonitoring(parent);
+		Monitoring::taskChangedStatus(parent, executing_status, currentWorkerThread->getComputePlace());
 	}
 	
 	Instrument::exitAddTask(taskInstrumentationId);

@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #	
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 # A workaround for http://debbugs.gnu.org/cgi/bugreport.cgi?bug=18744
 am__is_gnu_make = { \
@@ -54,6 +54,7 @@ nanos6include_HEADERS = \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
 	api/nanos6/major.h \
+	api/nanos6/monitoring.h \
 	api/nanos6/polling.h \
 	api/nanos6/reductions.h \
 	api/nanos6/runtime-info.h \
@@ -163,6 +164,7 @@ symbol_resolution += \
 	loader/symbol-resolver/dependencies.c \
 	loader/symbol-resolver/events.c \
 	loader/symbol-resolver/final.c \
+	loader/symbol-resolver/monitoring.c \
 	loader/symbol-resolver/polling.c \
 	loader/symbol-resolver/reductions.c \
 	loader/symbol-resolver/runtime-info.c \
@@ -191,6 +193,7 @@ symbol_resolution += \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
 	loader/indirect-symbols/malloc.c \
+	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/polling.c \
 	loader/indirect-symbols/reductions.c \
 	loader/indirect-symbols/runtime-info.c \
@@ -347,6 +350,7 @@ common_sources = \
 	src/system/ClusterAPI.cpp \
 	src/system/EventsAPI.cpp \
 	src/system/LeaderThread.cpp \
+	src/system/MonitoringAPI.cpp \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
 	src/system/debug/DebugAPI.cpp \
@@ -564,6 +568,79 @@ memory_debug_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
 memory_debug_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 endif
 
+
+# Chronometers
+chronometers_sources =
+chronometers_CPPFLAGS =
+if CHRONO_ARCH
+chronometers_sources  += src/support/chronometers/arch/Chrono.cpp
+chronometers_CPPFLAGS += -I$(srcdir)/src/support/chronometers/arch
+else
+chronometers_CPPFLAGS += -I$(srcdir)/src/support/chronometers/std
+endif
+
+# Monitoring
+monitoring_sources =
+monitoring_CPPFLAGS =
+if MONITORING_ENABLED
+monitoring_sources += \
+	src/monitoring/monitoring/CPUMonitor.cpp \
+	src/monitoring/monitoring/CPUUsagePredictor.cpp \
+	src/monitoring/monitoring/Monitoring.cpp \
+	src/monitoring/monitoring/TaskMonitor.cpp \
+	src/monitoring/monitoring/TasktypePredictions.cpp \
+	src/monitoring/monitoring/WorkloadPredictor.cpp
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/monitoring
+else
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/null
+endif
+
+# Monitoring hardware events
+hw_monitoring_sources =
+hw_monitoring_CPPFLAGS =
+hw_monitoring_LDFLAGS =
+if MONITORING_HWEVENTS_ENABLED
+if HAVE_PQOS
+hw_monitoring_LDFLAGS  += $(pqos_LIBS)
+hw_monitoring_CPPFLAGS += $(pqos_CPPFLAGS)
+hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/pqos
+hw_monitoring_sources += \
+	src/hardware-counters/pqos/HardwareCounters.cpp \
+	src/hardware-counters/pqos/TaskHardwareCountersMonitor.cpp \
+	src/hardware-counters/pqos/TasktypeHardwareCountersPredictions.cpp \
+	src/hardware-counters/pqos/ThreadHardwareCountersMonitor.cpp
+else
+hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/null
+endif
+else
+hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/null
+endif
+
+
+# Wisdom manager (monitoring-related)
+if MONITORING_ENABLED
+monitoring_sources += \
+	src/monitoring/support/wisdom/wisdom/WisdomManager.cpp
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/wisdom
+endif
+if !MONITORING_ENABLED
+if MONITORING_HWEVENTS_ENABLED
+monitoring_sources += \
+	src/monitoring/support/wisdom/wisdom/WisdomManager.cpp
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/wisdom
+endif
+endif
+if !MONITORING_ENABLED
+if !MONITORING_HWEVENTS_ENABLED
+monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/null
+endif
+endif
+
+
+# Add monitoring-related sources to common sources
+common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_sources)
+
+
 noinst_HEADERS = \
 	src/cluster/ClusterManager.hpp \
 	src/cluster/messages/Message.hpp \
@@ -641,6 +718,18 @@ noinst_HEADERS = \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
+	src/hardware-counters/SupportedHardwareCounters.hpp \
+	src/hardware-counters/null/HardwareCounters.hpp \
+	src/hardware-counters/null/TaskHardwareCounters.hpp \
+	src/hardware-counters/null/TaskHardwareCountersPredictions.hpp \
+	src/hardware-counters/null/ThreadHardwareCounters.hpp \
+	src/hardware-counters/pqos/HardwareCounters.hpp \
+	src/hardware-counters/pqos/TaskHardwareCounters.hpp \
+	src/hardware-counters/pqos/TaskHardwareCountersMonitor.hpp \
+	src/hardware-counters/pqos/TaskHardwareCountersPredictions.hpp \
+	src/hardware-counters/pqos/TasktypeHardwareCountersPredictions.hpp \
+	src/hardware-counters/pqos/ThreadHardwareCounters.hpp \
+	src/hardware-counters/pqos/ThreadHardwareCountersMonitor.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
 	src/instrument/api/InstrumentBlocking.hpp \
 	src/instrument/api/InstrumentComputePlaceManagement.hpp \
@@ -896,6 +985,22 @@ noinst_HEADERS = \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
 	src/memory/vmm/smp/VirtualMemoryManagement.hpp \
+	src/monitoring/monitoring/CPUMonitor.hpp \
+	src/monitoring/monitoring/CPUStatistics.hpp \
+	src/monitoring/monitoring/CPUUsagePredictor.hpp \
+	src/monitoring/monitoring/Monitoring.hpp \
+	src/monitoring/monitoring/TaskMonitor.hpp \
+	src/monitoring/monitoring/TaskPredictions.hpp \
+	src/monitoring/monitoring/TaskStatistics.hpp \
+	src/monitoring/monitoring/TasktypePredictions.hpp \
+	src/monitoring/monitoring/WorkloadPredictor.hpp \
+	src/monitoring/monitoring/WorkloadStatistics.hpp \
+	src/monitoring/null/Monitoring.hpp \
+	src/monitoring/null/TaskMonitor.hpp \
+	src/monitoring/null/TaskPredictions.hpp \
+	src/monitoring/null/TaskStatistics.hpp \
+	src/monitoring/support/wisdom/null/WisdomManager.hpp \
+	src/monitoring/support/wisdom/wisdom/WisdomManager.hpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
@@ -922,6 +1027,8 @@ noinst_HEADERS = \
 	src/support/Objectified.hpp \
 	src/support/StringComposer.hpp \
 	src/support/StringLiteral.hpp \
+	src/support/chronometers/arch/Chrono.hpp \
+	src/support/chronometers/std/Chrono.hpp \
 	src/system/APICheck.hpp \
 	src/system/If0Task.hpp \
 	src/system/LeaderThread.hpp \
@@ -951,8 +1058,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags)
-common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(hw_monitoring_CPPFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(hw_monitoring_LDFLAGS)
 
 
 # This is needed for debuggable spinlocks

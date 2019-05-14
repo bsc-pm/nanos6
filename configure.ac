@@ -3,7 +3,7 @@
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #	
-#	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 AC_PREREQ([2.69])
 AC_INIT([nanos6], [2.1], [pm-tools-users@bsc.es])
@@ -81,6 +81,7 @@ AC_CHECK_BACKTRACE
 AC_CHECK_PAPI
 AC_CHECK_LIBNUMA
 AC_CHECK_MEMKIND
+AC_CHECK_PQOS
 
 AC_CHECK_FUNCS([reallocarray aligned_alloc])
 AC_CHECK_MADV_FREE
@@ -296,6 +297,75 @@ if test x"{ac_cv_use_workflow}" = x"yes" ; then
 	AC_DEFINE([USE_CLUSTER], [1], [Define if Execution Workflow feature is enabled.])
 fi
 
+AC_ARG_ENABLE(
+	[monitoring],
+	[AS_HELP_STRING([--enable-monitoring], [enable monitoring and prediction techniques of statistics])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_monitoring=yes
+			;;
+		no)
+			ac_monitoring=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-monitoring])
+			;;
+		esac
+	],
+	[ac_monitoring=no]
+)
+AM_CONDITIONAL([MONITORING_ENABLED], [test x"${ac_monitoring}" = x"yes"])
+if test x"${ac_monitoring}" = x"yes" ; then
+	AC_DEFINE([MONITORING_ENABLED], [1], [Define if Monitoring is enabled.])
+fi
+
+AC_ARG_ENABLE(
+	[chrono-arch],
+	[AS_HELP_STRING([--enable-chrono-arch], [use an architecture-dependent chrono for timing instead of the default one (std)])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_chrono_arch=yes
+			;;
+		no)
+			ac_chrono_arch=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-chrono-arch])
+			;;
+		esac
+	],
+	[ac_chrono_arch=no]
+)
+AM_CONDITIONAL([CHRONO_ARCH], [test x"${ac_chrono_arch}" = x"yes"])
+if test x"${ac_chrono_arch}" = x"yes" ; then
+	AC_DEFINE([CHRONO_ARCH], [1], [Define if the architecture-dependent chrono is used.])
+fi
+
+AC_ARG_ENABLE(
+	[monitoring-hwevents],
+	[AS_HELP_STRING([--enable-monitoring-hwevents], [enable monitoring and prediction techniques for hardware events])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_monitoring_hwevents=yes
+			;;
+		no)
+			ac_monitoring_hwevents=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-monitoring-hwevents])
+			;;
+		esac
+	],
+	[ac_monitoring_hwevents=no]
+)
+AM_CONDITIONAL([MONITORING_HWEVENTS_ENABLED], [test x"${ac_monitoring_hwevents}" = x"yes"])
+if test x"${ac_monitoring_hwevents}" = x"yes" ; then
+	AC_DEFINE([MONITORING_HWEVENTS_ENABLED], [1], [Define if Monitoring for Hardware Events is enabled.])
+fi
+
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
@@ -402,6 +472,36 @@ if test x"${ac_use_memkind}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	_AS_ECHO([	Memkind CPPFLAGS... ${memkind_CPPFLAGS}])
 	_AS_ECHO([	Memkind LIBS... ${memkind_LIBS}])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   Monitoring is enabled... ])
+if test x"${ac_monitoring}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   Chrono Arch is enabled... ])
+if test x"${ac_chrono_arch}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   PQOS is enabled... ])
+if test x"${ac_use_pqos}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   PQOS CPPFLAGS... ${pqos_CPPFLAGS}])
+	_AS_ECHO([   PQOS LIBS... ${pqos_LIBS}])
+	if test x"${ac_use_papi}" = x"yes" ; then
+		AC_MSG_WARN([Both PQoS hardware event monitoring and PAPI Instrumentation are enabled.])
+		AC_MSG_WARN([Using both at the same time may cause conflicts when polling events.])
+	fi
 else
 	AC_MSG_RESULT([no])
 fi

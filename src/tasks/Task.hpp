@@ -1,26 +1,30 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_HPP
 #define TASK_HPP
 
-
 #include <atomic>
 #include <bitset>
 #include <cassert>
 #include <set>
+#include <string>
 
 #include <nanos6.h>
+
 #include "lowlevel/SpinLock.hpp"
 
-#include <InstrumentTaskId.hpp>
-
-#include <TaskDataAccesses.hpp>
-
 #include <ExecutionWorkflow.hpp>
+#include <InstrumentTaskId.hpp>
+#include <TaskDataAccesses.hpp>
+#include <TaskHardwareCounters.hpp>
+#include <TaskHardwareCountersPredictions.hpp>
+#include <TaskPredictions.hpp>
+#include <TaskStatistics.hpp>
+
 
 struct DataAccess;
 struct DataAccessBase;
@@ -109,6 +113,19 @@ private:
 	//! here in order to invoke it after previous asynchronous
 	//! steps have been completed.
 	Step *_executionStep;
+	
+	//! Monitoring-related statistics about the task
+	TaskStatistics _taskStatistics;
+	
+	//! Monitoring-related predictions about the task
+	TaskPredictions _taskPredictions;
+	
+	//! Hardware counter structures of the task
+	TaskHardwareCounters _taskCounters;
+	
+	//! Hardware counter prediction structures of the task
+	TaskHardwareCountersPredictions _taskCountersPredictions;
+	
 public:
 	inline Task(
 		void *argsBlock,
@@ -568,6 +585,68 @@ public:
 	inline ExecutionWorkflow::Step *getExecutionStep() const
 	{
 		return _executionStep;
+	}
+	
+	//! \brief Get a label that identifies the tasktype
+	inline const std::string getLabel() const
+	{
+		if (_taskInfo->implementations != nullptr) {
+			if (_taskInfo->implementations->task_label != nullptr) {
+				return std::string(_taskInfo->implementations->task_label);
+			}
+			else if (_taskInfo->implementations->declaration_source != nullptr) {
+				return std::string(_taskInfo->implementations->declaration_source);
+			}
+		}
+		
+		// If the label is empty, use the invocation source
+		return std::string(_taskInvokationInfo->invocation_source);
+	}
+	
+	//! \brief Check whether cost is available for the task
+	inline bool hasCost() const
+	{
+		if (_taskInfo->implementations != nullptr) {
+			return (_taskInfo->implementations->get_constraints != nullptr);
+		}
+		else {
+			return false;
+		}
+	}
+	
+	//! \brief Get the task's cost
+	inline size_t getCost() const
+	{
+		assert(_taskInfo->implementations != nullptr);
+		
+		nanos6_task_constraints_t constraints;
+		_taskInfo->implementations->get_constraints(_argsBlock, &constraints);
+		
+		return constraints.cost;
+	}
+	
+	//! \brief Get the task's statistics
+	inline TaskStatistics *getTaskStatistics()
+	{
+		return &_taskStatistics;
+	}
+	
+	//! \brief Get the task's predictions
+	inline TaskPredictions *getTaskPredictions()
+	{
+		return &_taskPredictions;
+	}
+	
+	//! \brief Get the task's hardware counter structures
+	inline TaskHardwareCounters *getTaskHardwareCounters()
+	{
+		return &_taskCounters;
+	}
+	
+	//! \brief Get the task's hardware counter predictions structures
+	inline TaskHardwareCountersPredictions *getTaskHardwareCountersPredictions()
+	{
+		return &_taskCountersPredictions;
 	}
 };
 

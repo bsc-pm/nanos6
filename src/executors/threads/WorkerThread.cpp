@@ -1,8 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
+
+#include <alloca.h>
+#include <atomic>
+#include <cstring>
+#include <pthread.h>
 
 #include "CPUActivation.hpp"
 #include "TaskFinalization.hpp"
@@ -17,22 +22,18 @@
 
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
-
+#include <HardwareCounters.hpp>
 #include <InstrumentComputePlaceManagement.hpp>
+#include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
-#include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include <Monitoring.hpp>
 #include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
 #include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 
-#include <atomic>
-
-#include <alloca.h>
-#include <pthread.h>
-#include <cstring>
 
 void WorkerThread::initialize()
 {
@@ -48,6 +49,9 @@ void WorkerThread::initialize()
 	synchronizeInitialization();
 	
 	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
+	
+	HardwareCounters::initializeThread();
+	Monitoring::initializeThread();
 }
 
 
@@ -121,6 +125,9 @@ void WorkerThread::body()
 	}
 	
 	Instrument::threadWillShutdown();
+	
+	Monitoring::shutdownThread();
+	HardwareCounters::shutdownThread();
 	
 	shutdownSequence();
 }

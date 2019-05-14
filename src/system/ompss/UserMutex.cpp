@@ -1,15 +1,16 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
+
+#include <cassert>
 
 #include <nanos6.h>
 
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 #include "UserMutex.hpp"
-
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -18,9 +19,9 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
+#include <HardwareCounters.hpp>
 #include <InstrumentUserMutex.hpp>
-
-#include <cassert>
+#include <Monitoring.hpp>
 
 
 typedef std::atomic<UserMutex *> mutex_t;
@@ -80,6 +81,9 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 		return;
 	}
 	
+	Monitoring::taskChangedStatus(currentTask, blocked_status, computePlace);
+	HardwareCounters::stopTaskMonitoring(currentTask);
+
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 	Instrument::blockedOnUserMutex(&userMutex);
 	
@@ -98,6 +102,10 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	
 	Instrument::acquiredUserMutex(&userMutex);
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+	
+	assert(currentTask->getThread() != nullptr);
+	HardwareCounters::startTaskMonitoring(currentTask);
+	Monitoring::taskChangedStatus(currentTask, executing_status, computePlace);
 }
 
 
@@ -141,6 +149,10 @@ void nanos6_user_unlock(void **handlerPointer)
 				cpu = currentThread->getComputePlace();
 				assert(cpu != nullptr);
 				Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
+				
+				// Resume execution timing for the current task
+				HardwareCounters::startTaskMonitoring(currentTask);
+				Monitoring::taskChangedStatus(currentTask, executing_status, cpu);
 			}
 		} else {
 			Scheduler::addReadyTask(releasedTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);

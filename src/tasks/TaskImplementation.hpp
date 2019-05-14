@@ -1,20 +1,18 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_IMPLEMENTATION_HPP
 #define TASK_IMPLEMENTATION_HPP
 
-
 #include "Task.hpp"
 
-#include <TaskDataAccessesImplementation.hpp>
 #include <DataAccessRegistration.hpp>
-
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <TaskDataAccessesImplementation.hpp>
 
 
 inline Task::Task(
@@ -40,7 +38,11 @@ inline Task::Task(
 	_computePlace(nullptr),
 	_memoryPlace(nullptr),
 	_countdownToRelease(1),
-	_workflow(nullptr)
+	_workflow(nullptr),
+	_taskStatistics(),
+	_taskPredictions(),
+	_taskCounters(),
+	_taskCountersPredictions()
 {
 	if (parent != nullptr) {
 		parent->addChild(this);

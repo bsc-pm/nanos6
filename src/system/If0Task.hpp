@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef IF0_TASK_HPP
@@ -9,14 +9,16 @@
 
 #include <cassert>
 
-#include <InstrumentTaskWait.hpp>
-#include <InstrumentTaskStatus.hpp>
-
 #include "executors/threads/CPU.hpp"
-#include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+
+#include <HardwareCounters.hpp>
+#include <InstrumentTaskStatus.hpp>
+#include <InstrumentTaskWait.hpp>
+#include <Monitoring.hpp>
 
 
 class ComputePlace;
@@ -36,6 +38,9 @@ namespace If0Task {
 		
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		
+		Monitoring::taskChangedStatus(currentTask, blocked_status, cpu);
+		HardwareCounters::stopTaskMonitoring(currentTask);
+		
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		currentThread->switchTo(replacementThread);
 		
@@ -46,6 +51,10 @@ namespace If0Task {
 		
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+		
+		assert(currentTask->getThread() != nullptr);
+		HardwareCounters::startTaskMonitoring(currentTask);
+		Monitoring::taskChangedStatus(currentTask, executing_status, cpu);
 	}
 	
 	
@@ -63,6 +72,9 @@ namespace If0Task {
 		
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		if (hasCode) {
+			Monitoring::taskChangedStatus(currentTask, blocked_status, computePlace);
+			HardwareCounters::stopTaskMonitoring(currentTask);
+			
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}
 		
@@ -72,6 +84,10 @@ namespace If0Task {
 		
 		if (hasCode) {
 			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+			
+			assert(currentTask->getThread() != nullptr);
+			HardwareCounters::startTaskMonitoring(currentTask);
+			Monitoring::taskChangedStatus(currentTask, executing_status, currentTask->getThread()->getComputePlace());
 		}
 	}
 	

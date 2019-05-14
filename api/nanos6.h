@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_H
@@ -22,6 +22,7 @@
 #include "nanos6/final.h"
 #include "nanos6/polling.h"
 #include "nanos6/major.h"
+#include "nanos6/monitoring.h"
 #include "nanos6/multidimensional-dependencies.h"
 #include "nanos6/multidimensional-release.h"
 #include "nanos6/task-info-registration.h"

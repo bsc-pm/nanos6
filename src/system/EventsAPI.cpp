@@ -15,6 +15,9 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
+#include <HardwareCounters.hpp>
+#include <Monitoring.hpp>
+
 
 extern "C" void *nanos6_get_current_event_counter()
 {
@@ -67,6 +70,9 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 				/* memory place */ nullptr,
 				/* from a busy thread */ true
 		);
+		
+		Monitoring::taskFinished(task);
+		HardwareCounters::taskFinished(task);
 		
 		// Try to dispose the task
 		if (task->markAsReleased()) {
