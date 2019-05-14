@@ -453,7 +453,25 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 		
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> DataAccessNewLocation " << dataAccessId << " MemoryPlaceId:" << newLocation->getIndex() << " triggererTask:" << context._taskId;
+		logEntry->_contents << " <-> DataAccessNewLocation " << dataAccessId << " MemoryPlaceId:" << newLocation->getIndex() << " type:";
+		switch (newLocation->getType()) {
+			case nanos6_host_device:
+				logEntry->_contents << "host";
+				break;
+			case nanos6_cuda_device:
+				logEntry->_contents << "cuda";
+				break;
+			case nanos6_opencl_device:
+				logEntry->_contents << "opencl";
+				break;
+			case nanos6_cluster_device:
+				logEntry->_contents << "cluster";
+				break;
+			default:
+				logEntry->_contents << "unknown";
+		}
+		
+		logEntry->_contents << " triggererTask:" << context._taskId;
 		
 		addLogEntry(logEntry);
 	}
