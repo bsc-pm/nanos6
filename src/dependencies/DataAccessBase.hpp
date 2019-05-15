@@ -13,8 +13,7 @@
 #include <boost/intrusive/list_hook.hpp>
 
 #include <InstrumentDataAccessId.hpp>
-#include <TaskDataAccesses.hpp>
-#include <TaskDataAccessLinkingArtifacts.hpp>
+#include <TaskDataAccessHooks.hpp>
 
 
 class Task;

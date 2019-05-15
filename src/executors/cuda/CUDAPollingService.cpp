@@ -14,6 +14,7 @@
 
 #include "tasks/Task.hpp"
 #include "tasks/TaskDeviceData.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include "executors/threads/TaskFinalization.hpp"
 

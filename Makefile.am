@@ -682,6 +682,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionInfo.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionSpecific.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessHooks.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \

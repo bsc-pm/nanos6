@@ -16,6 +16,7 @@
 #include "IntrusiveLinearRegionMap.hpp"
 #include "IntrusiveLinearRegionMapImplementation.hpp"
 #include "TaskDataAccessLinkingArtifacts.hpp"
+#include "TaskDataAccessLinkingArtifactsImplementation.hpp"
 #include "lowlevel/PaddedTicketSpinLock.hpp"
 
 
@@ -92,14 +93,6 @@ struct TaskDataAccesses {
 	}
 #endif
 	
-};
-
-
-typedef typename TaskDataAccessLinkingArtifacts::hook_type TaskDataAccessesHook;
-
-
-struct TaskDataAccessHooks {
-	TaskDataAccessesHook _accessesHook;
 };
 
 

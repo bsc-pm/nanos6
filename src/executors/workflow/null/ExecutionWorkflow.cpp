@@ -9,6 +9,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
