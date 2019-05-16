@@ -8,7 +8,6 @@
 
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 
 #include "InstrumentThreadManagement.hpp"
 #include "InstrumentVerbose.hpp"

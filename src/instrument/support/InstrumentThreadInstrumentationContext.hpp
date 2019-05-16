@@ -20,18 +20,18 @@ namespace Instrument {
 		InstrumentationContext _oldContext;
 		
 	public:
-		inline ThreadInstrumentationContext(task_id_t const &taskId, compute_place_id_t const &computePlaceId, thread_id_t const &threadId);
-		inline ThreadInstrumentationContext(task_id_t const &taskId);
-		inline ThreadInstrumentationContext(compute_place_id_t const &computePlaceId);
-		inline ThreadInstrumentationContext(thread_id_t const &threadId);
-		inline ThreadInstrumentationContext(std::string const *externalThreadName);
+		ThreadInstrumentationContext(task_id_t const &taskId, compute_place_id_t const &computePlaceId, thread_id_t const &threadId);
+		ThreadInstrumentationContext(task_id_t const &taskId);
+		ThreadInstrumentationContext(compute_place_id_t const &computePlaceId);
+		ThreadInstrumentationContext(thread_id_t const &threadId);
+		ThreadInstrumentationContext(std::string const *externalThreadName);
 		
-		inline ~ThreadInstrumentationContext();
+		~ThreadInstrumentationContext();
 		
-		inline InstrumentationContext const &get() const;
+		InstrumentationContext const &get() const;
 		
-		inline static InstrumentationContext const &getCurrent();
-		inline static void updateComputePlace(compute_place_id_t const &computePlaceId);
+		static InstrumentationContext const &getCurrent();
+		static void updateComputePlace(compute_place_id_t const &computePlaceId);
 	};
 }
 

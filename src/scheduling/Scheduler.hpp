@@ -18,10 +18,7 @@
 #include "tasks/TaskImplementation.hpp"
 
 #include <HardwareCounters.hpp>
-#include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskStatus.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <Monitoring.hpp>
 
 

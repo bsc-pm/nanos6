@@ -13,10 +13,14 @@
 
 
 namespace Instrument {
-	inline ExternalThreadLocalData &getExternalThreadLocalData();
-	inline ThreadLocalData &getThreadLocalData();
+	ExternalThreadLocalData &getExternalThreadLocalData();
+	ThreadLocalData &getThreadLocalData();
 	
-	inline ThreadLocalData &getSentinelNonWorkerThreadLocalData();
+	inline ThreadLocalData &getSentinelNonWorkerThreadLocalData()
+	{
+		static thread_local ThreadLocalData nonWorkerThreadLocalData;
+		return nonWorkerThreadLocalData;
+	}
 }
 
 

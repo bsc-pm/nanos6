@@ -4,20 +4,17 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_THREAD_LOCAL_DATA_SUPPORT_IMPLEMENTATION_HPP
-#define INSTRUMENT_THREAD_LOCAL_DATA_SUPPORT_IMPLEMENTATION_HPP
-
-
-#include "InstrumentThreadLocalDataSupport.hpp"
-
-#include <lowlevel/threads/ExternalThread.hpp>
-#include <lowlevel/threads/ExternalThreadGroup.hpp>
-#include <executors/threads/WorkerThread.hpp>
 
 #include <cassert>
 
+#include "InstrumentThreadLocalDataSupport.hpp"
 
-inline Instrument::ExternalThreadLocalData &Instrument::getExternalThreadLocalData()
+#include <executors/threads/WorkerThread.hpp>
+#include <lowlevel/threads/ExternalThread.hpp>
+#include <lowlevel/threads/ExternalThreadGroup.hpp>
+
+
+Instrument::ExternalThreadLocalData &Instrument::getExternalThreadLocalData()
 {
 	ExternalThread *currentThread = ExternalThread::getCurrentExternalThread();
 	if (currentThread == nullptr) {
@@ -38,14 +35,7 @@ inline Instrument::ExternalThreadLocalData &Instrument::getExternalThreadLocalDa
 }
 
 
-inline Instrument::ThreadLocalData &Instrument::getSentinelNonWorkerThreadLocalData()
-{
-	static thread_local ThreadLocalData nonWorkerThreadLocalData;
-	return nonWorkerThreadLocalData;
-}
-
-
-inline Instrument::ThreadLocalData &Instrument::getThreadLocalData()
+Instrument::ThreadLocalData &Instrument::getThreadLocalData()
 {
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	if (currentWorkerThread != nullptr) {
@@ -55,5 +45,3 @@ inline Instrument::ThreadLocalData &Instrument::getThreadLocalData()
 	}
 }
 
-
-#endif // INSTRUMENT_THREAD_LOCAL_DATA_SUPPORT_IMPLEMENTATION_HPP

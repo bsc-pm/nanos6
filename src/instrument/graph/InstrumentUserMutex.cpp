@@ -4,22 +4,16 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "system/ompss/UserMutex.hpp"
 
 #include "ExecutionSteps.hpp"
+#include "InstrumentGraph.hpp"
 #include "InstrumentTaskId.hpp"
 #include "InstrumentUserMutex.hpp"
-
-#include "InstrumentGraph.hpp"
-
+#include "system/ompss/UserMutex.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 
 
 namespace Instrument {

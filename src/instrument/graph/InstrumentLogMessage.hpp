@@ -12,14 +12,13 @@
 #include <sstream>
 #include <string>
 
-#include "../api/InstrumentLogMessage.hpp"
-#include "../support/InstrumentThreadLocalDataSupport.hpp"
-#include "../support/InstrumentThreadLocalDataSupportImplementation.hpp"
+#include "ExecutionSteps.hpp"
 #include "InstrumentExternalThreadLocalData.hpp"
 #include "InstrumentGraph.hpp"
 #include "InstrumentTaskId.hpp"
+#include "../api/InstrumentLogMessage.hpp"
 
-#include "ExecutionSteps.hpp"
+#include <InstrumentInstrumentationContext.hpp>
 
 
 using namespace Instrument::Graph;

@@ -27,7 +27,6 @@
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <Monitoring.hpp>
 
 #include <cassert>

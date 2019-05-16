@@ -1,7 +1,6 @@
 #include <cassert>
 
 #include "executors/threads/TaskFinalization.hpp"
-#include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -10,7 +9,6 @@
 #include <ExecutionWorkflow.hpp>
 #include <ExecutionWorkflowHost.hpp>
 #include <HardwareCounters.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <Monitoring.hpp>
 
 

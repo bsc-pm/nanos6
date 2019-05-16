@@ -18,9 +18,6 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "system/RuntimeInfo.hpp"
 
-#include <instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
-
 #include <fstream>
 #include <sstream>
 

@@ -4,22 +4,17 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "InstrumentAddTask.hpp"
-#include <InstrumentInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
-
-#include "ExecutionSteps.hpp"
-#include "InstrumentGraph.hpp"
-
-
-#include "tasks/Task.hpp"
-#include "tasks/TaskImplementation.hpp"
 
 #include <cassert>
 #include <mutex>
+
+#include "ExecutionSteps.hpp"
+#include "InstrumentAddTask.hpp"
+#include "InstrumentGraph.hpp"
+#include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
+
+#include <InstrumentInstrumentationContext.hpp>
 
 
 namespace Instrument {
