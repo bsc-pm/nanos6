@@ -116,10 +116,12 @@ void nanos6_shutdown(void) {
 	
 	StreamManager::shutdown();
 	LeaderThread::shutdown();
+
 	// Signal the shutdown to all CPUs and finalize threads
 	CPUManager::shutdownPhase1();
 	ThreadManager::shutdownPhase1();
-	
+	ClusterManager::notifyShutdown(); // TODO: Rename this to shutdownPhase1()
+
 	Instrument::shutdown();
 	
 	// Delete the worker threads
@@ -134,8 +136,7 @@ void nanos6_shutdown(void) {
 	HardwareCounters::shutdown();
 	
 	Scheduler::shutdown();
+	ClusterManager::shutdown();   // TODO: Rename this to shutdownPhase2
 	MemoryAllocator::shutdown();
-	ClusterManager::shutdown();
 	RuntimeInfoEssentials::shutdown();
 }
-
