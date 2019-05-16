@@ -1,12 +1,12 @@
 #include <cassert>
 
+#include "ExecutionWorkflow.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccess.hpp>
 #include <DataAccessRegistration.hpp>
-#include <ExecutionWorkflow.hpp>
 #include <ExecutionWorkflowHost.hpp>
 #include <HardwareCounters.hpp>
 #include <Monitoring.hpp>
