@@ -13,6 +13,8 @@
 typedef enum {
 	SYS_FINISH = 0,
 	DATA_RAW,
+	DMALLOC,
+	DFREE,
 	TOTAL_MESSAGE_TYPES
 } MessageType;
 

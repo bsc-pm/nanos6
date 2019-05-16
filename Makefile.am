@@ -329,6 +329,8 @@ common_sources = \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/ExternalThreadGroup.cpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
+	src/memory/directory/Directory.cpp \
+	src/memory/directory/HomeNodeMap.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
@@ -378,19 +380,25 @@ cluster_sources =
 if USE_CLUSTER
 cluster_sources += \
 	src/cluster/ClusterManager.cpp \
+	src/cluster/ClusterMemoryManagement.cpp \
 	src/cluster/messages/Message.cpp \
+	src/cluster/messages/MessageDfree.cpp \
+	src/cluster/messages/MessageDmalloc.cpp \
 	src/cluster/messages/MessageSysFinish.cpp \
 	src/cluster/messages/MessageType.cpp \
 	src/cluster/messenger/mpi/MPIMessenger.cpp \
 	src/cluster/polling-services/DataTransferCompletion.cpp \
 	src/cluster/polling-services/MessageDelivery.cpp \
-	src/cluster/polling-services/MessageHandler.cpp
+	src/cluster/polling-services/MessageHandler.cpp \
+	src/memory/directory/cluster/DistributionPolicy.cpp
 
 cluster_cppflags = \
 	-I$(srcdir)/src/cluster \
 	-I$(srcdir)/src/cluster/messages \
 	-I$(srcdir)/src/cluster/messenger \
 	-I$(srcdir)/src/cluster/polling-services \
+	-I$(srcdir)/src/memory/directory \
+	-I$(srcdir)/src/memory/directory/cluster \
 	-I$(srcdir)/src/hardware/cluster \
 	-I$(srcdir)/src/hardware/cluster/memory
 else
@@ -643,7 +651,10 @@ common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_
 
 noinst_HEADERS = \
 	src/cluster/ClusterManager.hpp \
+	src/cluster/ClusterMemoryManagement.hpp \
 	src/cluster/messages/Message.hpp \
+	src/cluster/messages/MessageDfree.hpp \
+	src/cluster/messages/MessageDmalloc.hpp \
 	src/cluster/messages/MessageId.hpp \
 	src/cluster/messages/MessageSysFinish.hpp \
 	src/cluster/messages/MessageType.hpp \
@@ -652,6 +663,7 @@ noinst_HEADERS = \
 	src/cluster/messenger/mpi/MPIDataTransfer.hpp \
 	src/cluster/messenger/mpi/MPIMessenger.hpp \
 	src/cluster/null/ClusterManager.hpp \
+	src/cluster/null/ClusterMemoryManagement.hpp \
 	src/cluster/polling-services/ClusterPollingServices.hpp \
 	src/cluster/polling-services/DataTransferCompletion.hpp \
 	src/cluster/polling-services/MessageDelivery.hpp \
@@ -981,6 +993,10 @@ noinst_HEADERS = \
 	src/memory/allocator/pool/NUMAObjectCache.hpp \
 	src/memory/allocator/pool/ObjectAllocator.hpp \
 	src/memory/allocator/pool/ObjectCache.hpp \
+	src/memory/directory/Directory.hpp \
+	src/memory/directory/HomeMapEntry.hpp \
+	src/memory/directory/HomeNodeMap.hpp \
+	src/memory/directory/cluster/DistributionPolicy.hpp \
 	src/memory/vmm/VirtualMemoryAllocation.hpp \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \

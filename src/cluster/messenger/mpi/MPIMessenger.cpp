@@ -101,7 +101,8 @@ void MPIMessenger::sendMessage(Message *msg, ClusterNode const *toNode, bool blo
 	ClusterPollingServices::addPendingMessage(msg);
 }
 
-DataTransfer *MPIMessenger::sendData(const DataAccessRegion &region, const ClusterNode *to, int messageId)
+DataTransfer *MPIMessenger::sendData(const DataAccessRegion &region,
+		const ClusterNode *to, int messageId, bool block)
 {
 	int ret, tag;
 	const int mpiDst = to->getCommIndex();
@@ -111,6 +112,14 @@ DataTransfer *MPIMessenger::sendData(const DataAccessRegion &region, const Clust
 	assert(mpiDst < _wsize && mpiDst != _wrank);
 	
 	tag = (messageId << 8) | DATA_RAW;
+	
+	if (block) {
+		ret = MPI_Send(address, size, MPI_BYTE, mpiDst, tag,
+				INTRA_COMM);
+		MPIErrorHandler::handle(ret, INTRA_COMM);
+		
+		return nullptr;
+	}
 	
 	MPI_Request *request = (MPI_Request *)MemoryAllocator::alloc(sizeof(MPI_Request));
 	FatalErrorHandler::failIf(
@@ -126,7 +135,8 @@ DataTransfer *MPIMessenger::sendData(const DataAccessRegion &region, const Clust
 			to->getMemoryNode(), request);
 }
 
-DataTransfer *MPIMessenger::fetchData(const DataAccessRegion &region, const ClusterNode *from, int messageId)
+DataTransfer *MPIMessenger::fetchData(const DataAccessRegion &region,
+		const ClusterNode *from, int messageId, bool block)
 {
 	int ret, tag;
 	const int mpiSrc = from->getCommIndex();
@@ -136,6 +146,14 @@ DataTransfer *MPIMessenger::fetchData(const DataAccessRegion &region, const Clus
 	assert(mpiSrc < _wsize && mpiSrc != _wrank);
 	
 	tag = (messageId << 8) | DATA_RAW;
+	
+	if (block) {
+		ret = MPI_Recv(address, size, MPI_BYTE, mpiSrc, tag,
+				INTRA_COMM, MPI_STATUS_IGNORE);
+		MPIErrorHandler::handle(ret, INTRA_COMM);
+		
+		return nullptr;
+	}
 	
 	MPI_Request *request = (MPI_Request *)MemoryAllocator::alloc(sizeof(MPI_Request));
 	FatalErrorHandler::failIf(

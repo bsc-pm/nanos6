@@ -31,8 +31,8 @@ public:
 	
 	void sendMessage(Message *msg, ClusterNode const *toNode, bool block = false);
 	void synchronizeAll(void);
-	DataTransfer *sendData(const DataAccessRegion &region, const ClusterNode *toNode, int messageId);
-	DataTransfer *fetchData(const DataAccessRegion &region, const ClusterNode *fromNode, int messageId);
+	DataTransfer *sendData(const DataAccessRegion &region, const ClusterNode *toNode, int messageId, bool block);
+	DataTransfer *fetchData(const DataAccessRegion &region, const ClusterNode *fromNode, int messageId, bool block);
 	Message *checkMail();
 	void testMessageCompletion(std::vector<Message *> &messages);
 	void testDataTransferCompletion(std::vector<DataTransfer *> &transfers);

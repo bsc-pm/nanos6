@@ -24,7 +24,7 @@ Message::Message(const char* name, MessageType type, size_t size, const ClusterN
 	 * future, it will probably be something related to
 	 * the Task related with this message. */
 	_deliverable->header.id = MessageId::nextMessageId();
-	_deliverable->header.snd_id = from->getIndex();
+	_deliverable->header.senderId = from->getIndex();
 	
 	_messengerData = nullptr;
 	_delivered = false;
