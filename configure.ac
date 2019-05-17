@@ -294,7 +294,7 @@ fi
 
 AM_CONDITIONAL([USE_EXEC_WORKFLOW], [test x${ac_use_workflow} = x"yes"])
 if test x"{ac_cv_use_workflow}" = x"yes" ; then
-	AC_DEFINE([USE_CLUSTER], [1], [Define if Execution Workflow feature is enabled.])
+	AC_DEFINE([USE_EXEC_WORKFLOW], [1], [Define if Execution Workflow feature is enabled.])
 fi
 
 AC_ARG_ENABLE(
