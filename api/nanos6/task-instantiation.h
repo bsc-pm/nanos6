@@ -94,7 +94,7 @@ typedef struct
 enum nanos6_task_info_contents_t { nanos6_task_info_contents = 1 };
 
 //! \brief Struct that contains the common parts that all tasks of the same type share
-typedef struct
+typedef struct __attribute__((aligned(64)))
 {
 	//! \brief Number of symbols accessible by the task
 	int /*const*/ num_symbols; //TODO: removed const for obstructing construction, until further decision
@@ -153,15 +153,15 @@ typedef struct
 	//! \param[in] oss_in a pointer to the data which needs to be combined
 	//! \param[in] size the size (in Bytes) of the data to be combined
 	void (**reduction_combiners)(void *oss_out, void *oss_in, size_t size);
-} nanos6_task_info_t __attribute__((aligned(64)));
+} nanos6_task_info_t;
 
 
 //! \brief Struct that contains data shared by all tasks invoked at fixed location in the source code
-typedef struct
+typedef struct __attribute__((aligned(64)))
 {
 	//! \brief A string that identifies the source code location of the task invocation
 	char const *invocation_source;
-} nanos6_task_invocation_info_t __attribute__((aligned(64)));
+} nanos6_task_invocation_info_t;
 
 
 // NOTE: The full version depends also on nanos6_major_api
