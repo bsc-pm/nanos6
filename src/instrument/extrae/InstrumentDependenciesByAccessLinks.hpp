@@ -8,13 +8,12 @@
 #define INSTRUMENT_EXTRAE_DEPENDENCIES_BY_ACCESS_LINK_HPP
 
 
-#include "../api/InstrumentDependenciesByAccessLinks.hpp"
-#include "../support/InstrumentThreadLocalDataSupport.hpp"
-
 #include "InstrumentDataAccessId.hpp"
-#include "InstrumentTaskId.hpp"
-
 #include "InstrumentExtrae.hpp"
+#include "InstrumentTaskId.hpp"
+#include "../api/InstrumentDependenciesByAccessLinks.hpp"
+
+#include <InstrumentInstrumentationContext.hpp>
 
 
 namespace Instrument {

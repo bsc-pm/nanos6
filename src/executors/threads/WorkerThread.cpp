@@ -28,11 +28,8 @@
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 
 
 void WorkerThread::initialize()

@@ -8,7 +8,6 @@
 
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 
 #include "InstrumentThreadManagement.hpp"
 #include "InstrumentVerbose.hpp"
@@ -20,7 +19,7 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void enterThreadCreation(/* OUT */ thread_id_t &threadId, compute_place_id_t const &computePlaceId) {
+	void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId) {
 		threadId = GenericIds::getNewThreadId();
 		
 		if (!_verboseThreadManagement) {

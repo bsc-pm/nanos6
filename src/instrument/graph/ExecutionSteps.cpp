@@ -13,9 +13,6 @@
 #include "InstrumentGraph.hpp"
 #include "InstrumentTaskId.hpp"
 
-#include <instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
-
 
 namespace Instrument {
 	namespace Graph {
@@ -341,10 +338,13 @@ namespace Instrument {
 					oss << " RW";
 					break;
 				case CONCURRENT_ACCESS_TYPE:
-					oss << " C";
+					oss << " CRR";
 					break;
 				case REDUCTION_ACCESS_TYPE:
 					oss << " RED";
+					break;
+				case COMMUTATIVE_ACCESS_TYPE:
+					oss << " CMM";
 					break;
 				case NO_ACCESS_TYPE:
 					oss << " LOC";
@@ -416,10 +416,13 @@ namespace Instrument {
 					oss << " RW";
 					break;
 				case CONCURRENT_ACCESS_TYPE:
-					oss << " C";
+					oss << " CRR";
 					break;
 				case REDUCTION_ACCESS_TYPE:
 					oss << " RED";
+					break;
+				case COMMUTATIVE_ACCESS_TYPE:
+					oss << " CMM";
 					break;
 				case NO_ACCESS_TYPE:
 					oss << " LOC";

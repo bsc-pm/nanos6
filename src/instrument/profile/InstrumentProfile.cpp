@@ -22,8 +22,6 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include <BacktraceWalker.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 #include <instrument/support/sampling/SigProf.hpp>
 
 #include <atomic>

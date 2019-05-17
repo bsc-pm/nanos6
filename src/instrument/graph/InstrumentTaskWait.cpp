@@ -5,16 +5,11 @@
 */
 
 #include "ExecutionSteps.hpp"
-#include "InstrumentTaskWait.hpp"
 #include "InstrumentGraph.hpp"
-
-#include <InstrumentTaskExecution.hpp>
+#include "InstrumentTaskWait.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
+#include <InstrumentTaskExecution.hpp>
 
 #include <cassert>
 

@@ -9,6 +9,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
@@ -17,10 +18,8 @@
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
 
 
 namespace ExecutionWorkflow {

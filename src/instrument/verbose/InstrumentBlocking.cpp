@@ -8,10 +8,6 @@
 #include "InstrumentVerbose.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 
 
 using namespace Instrument::Verbose;

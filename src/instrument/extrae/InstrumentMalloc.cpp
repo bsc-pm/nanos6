@@ -243,6 +243,3 @@ extern "C" void nanos6_memory_allocation_interception_fini()
 
 #pragma GCC visibility pop
 
-
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
-

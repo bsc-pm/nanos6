@@ -10,9 +10,6 @@
 #include <DataTransfer.hpp>
 #include <InstrumentLogMessage.hpp>
 
-// Include these to avoid annoying compiler warnings
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include "src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
 
 namespace ClusterPollingServices {
 	struct PendingTransfers {

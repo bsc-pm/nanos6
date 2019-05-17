@@ -10,8 +10,7 @@
 #include "Task.hpp"
 
 #include <DataAccessRegistration.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <InstrumentTaskId.hpp>
 #include <TaskDataAccessesImplementation.hpp>
 
 

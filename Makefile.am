@@ -507,21 +507,28 @@ instrument_graph_sources = \
 	src/instrument/graph/InstrumentTaskWait.cpp \
 	src/instrument/graph/InstrumentUserMutex.cpp \
 	src/instrument/graph/PathLength.cpp \
-	src/instrument/graph/SortAccessGroups.cpp
+	src/instrument/graph/SortAccessGroups.cpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
 instrument_profile_sources = \
 	src/instrument/profile/InstrumentInitAndShutdown.cpp \
 	src/instrument/profile/InstrumentMalloc.cpp \
 	src/instrument/profile/InstrumentProfile.cpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp \
 	src/instrument/support/sampling/SigProf.cpp
 
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
-	src/instrument/stats/InstrumentStats.cpp
+	src/instrument/stats/InstrumentStats.cpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
 instrument_verbose_sources = \
 	$(instrument_generic_ids_sources) \
+	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp \
 	src/instrument/verbose/InstrumentAddTask.cpp \
 	src/instrument/verbose/InstrumentBlocking.cpp \
 	src/instrument/verbose/InstrumentComputePlaceManagement.cpp \
@@ -546,6 +553,8 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentInitAndShutdown.cpp \
 	src/instrument/extrae/InstrumentMalloc.cpp \
 	src/instrument/extrae/InstrumentReductions.cpp \
+	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp \
 	src/instrument/support/sampling/SigProf.cpp
 
 memory_allocator_default_sources = \
@@ -682,6 +691,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionInfo.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionSpecific.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessHooks.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
@@ -841,7 +851,6 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentTaskWait.hpp \
 	src/instrument/null/InstrumentThreadId.hpp \
 	src/instrument/null/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/null/InstrumentThreadInstrumentationContextImplementation.hpp \
 	src/instrument/null/InstrumentThreadLocalData.hpp \
 	src/instrument/null/InstrumentThreadManagement.hpp \
 	src/instrument/null/InstrumentTracingPointTypes.hpp \
@@ -870,7 +879,6 @@ noinst_HEADERS = \
 	src/instrument/profile/InstrumentTaskWait.hpp \
 	src/instrument/profile/InstrumentThreadId.hpp \
 	src/instrument/profile/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/profile/InstrumentThreadInstrumentationContextImplementation.hpp \
 	src/instrument/profile/InstrumentThreadLocalData.hpp \
 	src/instrument/profile/InstrumentThreadManagement.hpp \
 	src/instrument/profile/InstrumentTracingPointTypes.hpp \
@@ -915,10 +923,7 @@ noinst_HEADERS = \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp \
-	src/instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.hpp \
-	src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp \
 	src/instrument/support/backtrace/backtrace/BacktraceWalker.hpp \
 	src/instrument/support/backtrace/libunwind/BacktraceWalker.hpp \
 	src/instrument/support/backtrace/unsupported/BacktraceWalker.hpp \

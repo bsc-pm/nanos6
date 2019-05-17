@@ -113,8 +113,6 @@ namespace ompss_debug {
 
 
 #include "WorkerThreadImplementation.hpp"
-#include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
-#include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
 
 
 #endif // WORKER_THREAD_HPP

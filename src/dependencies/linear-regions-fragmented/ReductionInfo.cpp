@@ -4,21 +4,19 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "ReductionInfo.hpp"
 
 #include <cassert>
 #include <sys/mman.h>
 
 #include <api/nanos6/reductions.h>
 
-#include <hardware/HardwareInfo.hpp>
-
-#include <MemoryAllocator.hpp>
+#include "ReductionInfo.hpp"
 
 #include <InstrumentReductions.hpp>
-
+#include <MemoryAllocator.hpp>
 #include <executors/threads/WorkerThread.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <hardware/HardwareInfo.hpp>
+
 
 ReductionInfo::ReductionInfo(DataAccessRegion region, reduction_type_and_operator_index_t typeAndOperatorIndex,
 		std::function<void(void*, void*, size_t)> initializationFunction, std::function<void(void*, void*, size_t)> combinationFunction) :

@@ -8,9 +8,6 @@
 
 #include <InstrumentTaskId.hpp>
 
-#include <instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
-
 
 namespace Instrument {
 	namespace Graph {

@@ -10,11 +10,9 @@
 
 #include <ClusterManager.hpp>
 #include <InstrumentLogMessage.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
 #include <Message.hpp>
 
-// Include these to avoid annoying compiler warnings
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include "src/instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"
 
 namespace ClusterPollingServices {
 	//! Polling service that checks for incoming messages

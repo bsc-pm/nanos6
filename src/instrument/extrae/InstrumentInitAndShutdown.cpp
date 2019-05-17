@@ -6,6 +6,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <mutex>
 #include <sstream>
 
 #include <dlfcn.h>
@@ -24,8 +25,6 @@
 
 #include <BacktraceWalker.hpp>
 #include <CodeAddressInfo.hpp>
-#include <InstrumentThreadLocalDataSupport.hpp>
-#include <InstrumentThreadLocalDataSupportImplementation.hpp>
 #include <instrument/support/sampling/SigProf.hpp>
 
 

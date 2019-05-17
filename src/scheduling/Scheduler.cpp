@@ -69,5 +69,3 @@ Task *Scheduler::getReadyTask(ComputePlace *computePlace, Task *currentTask, boo
 	return task;
 }
 
-#include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
-#include "instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp"

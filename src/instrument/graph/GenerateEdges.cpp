@@ -4,13 +4,11 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#include "GenerateEdges.hpp"
-#include "InstrumentGraph.hpp"
-
-#include <instrument/support/InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 
 #include <cassert>
+
+#include "GenerateEdges.hpp"
+#include "InstrumentGraph.hpp"
 
 
 namespace Instrument {

@@ -7,13 +7,16 @@
 #ifndef TASKLOOP_GENERATOR_HPP
 #define TASKLOOP_GENERATOR_HPP
 
+
 #include <nanos6.h>
+
 #include "Taskloop.hpp"
 #include "TaskloopInfo.hpp"
 
 #include <InstrumentAddTask.hpp>
-#include <InstrumentTaskStatus.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
+#include <InstrumentTaskId.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
+
 
 class TaskloopGenerator {
 public:

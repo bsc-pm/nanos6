@@ -31,8 +31,6 @@
 #include "SigProf.hpp"
 #include "ThreadLocalData.hpp"
 
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
 #include <lowlevel/FatalErrorHandler.hpp>
 
 #include <atomic>

@@ -4,24 +4,18 @@
 	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
-#include <cassert>
-
-#include <InstrumentInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadInstrumentationContextImplementation.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
-#include <instrument/support/InstrumentThreadLocalDataSupportImplementation.hpp>
-
-#include "InstrumentLeaderThread.hpp"
-#include "InstrumentVerbose.hpp"
-
-#include "lowlevel/SpinLock.hpp"
-#include "system/LeaderThread.hpp"
-
 #include <algorithm>
+#include <cassert>
 #include <iomanip>
 #include <mutex>
 #include <vector>
+
+#include "InstrumentLeaderThread.hpp"
+#include "InstrumentVerbose.hpp"
+#include "lowlevel/SpinLock.hpp"
+#include "system/LeaderThread.hpp"
+
+#include <instrument/support/InstrumentThreadLocalDataSupport.hpp>
 
 #ifdef __ANDROID__
 #include <android/log.h>
