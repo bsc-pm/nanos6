@@ -20,6 +20,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 AM_LDFLAGS = $(AS_NEEDED_FLAGS) 
+AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 
 SUBDIRS = . commands tests/directive_based scripts
 
