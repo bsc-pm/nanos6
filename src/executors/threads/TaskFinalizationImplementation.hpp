@@ -21,9 +21,9 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 {
 	bool readyOrDisposable = true;
 	
+	//! We always use a local CPUDependencyData struct here to avoid issues
+	//! with re-using an already used CPUDependencyData
 	CPUDependencyData localHpDependencyData;
-	CPUDependencyData &hpDependencyData = (computePlace != nullptr) ?
-		computePlace->getDependencyData() : localHpDependencyData;
 	
 	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
 	while ((task != nullptr) && readyOrDisposable) {
@@ -35,7 +35,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			if (task->markAllChildrenAsFinished(computePlace)) {
 				DataAccessRegistration::unregisterTaskDataAccesses(
 					task, computePlace,
-					hpDependencyData,
+					localHpDependencyData,
 					/* memory place */ nullptr,
 					fromBusyThread
 				);
