@@ -29,9 +29,9 @@
 
 struct DataAccess;
 struct DataAccessBase;
-class WorkerThread;
 class ComputePlace;
 class MemoryPlace;
+class WorkerThread;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wunused-result"
@@ -53,6 +53,7 @@ public:
 		non_runnable_flag,
 		spawned_flag,
 		remote_flag,
+		stream_executor_flag,
 		total_flags
 	};
 	
@@ -684,6 +685,16 @@ public:
 	inline TaskOffloading::ClusterTaskContext *getClusterContext() const
 	{
 		return _clusterContext;
+	}
+	
+	inline void markAsStreamExecutor()
+	{
+		_flags[stream_executor_flag] = true;
+	}
+	
+	inline bool isStreamExecutor() const
+	{
+		return _flags[stream_executor_flag];
 	}
 };
 

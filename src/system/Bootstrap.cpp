@@ -25,6 +25,7 @@
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
 #include "system/ompss/SpawnFunction.hpp"
+#include "tasks/StreamManager.hpp"
 
 #include <ClusterManager.hpp>
 #include <DependencySystem.hpp>
@@ -143,6 +144,8 @@ void nanos6_init(void) {
 	#endif
 	
 	Instrument::threadWillSuspend(mainThread->getInstrumentationId());
+	
+	StreamManager::initialize();
 }
 
 
@@ -154,6 +157,7 @@ void nanos6_shutdown(void) {
 		// Wait for spawned functions to fully end
 	}
 	
+	StreamManager::shutdown();
 	LeaderThread::shutdown();
 	ThreadManager::shutdown();
 	

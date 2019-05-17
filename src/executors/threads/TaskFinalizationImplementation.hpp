@@ -10,6 +10,7 @@
 #include "DataAccessRegistration.hpp"
 #include "MemoryAllocator.hpp"
 #include "TaskFinalization.hpp"
+#include "tasks/StreamManager.hpp"
 #include "tasks/Taskloop.hpp"
 
 #include <HardwareCounters.hpp>
@@ -77,6 +78,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			
 			bool isSpawned = task->isSpawned();
 			bool isTaskloop = task->isTaskloop();
+			bool isStreamExecutor = task->isStreamExecutor();
 			
 			if (isTaskloop) {
 				disposableBlockSize += sizeof(Taskloop);
@@ -102,6 +104,8 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			
 			if (isSpawned) {
 				SpawnedFunctions::_pendingSpawnedFunctions--;
+			} else if (isStreamExecutor) {
+				StreamManager::_activeStreamExecutors--;
 			}
 		} else {
 			assert(!task->hasFinished());

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6.h>
@@ -9,6 +9,7 @@
 
 #include "SpawnFunction.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 
 #include <cassert>
@@ -115,3 +116,9 @@ namespace SpawnedFunctions {
 		return (taskInfo->implementations[0].run == nanos6_spawned_function_wrapper);
 	}
 }
+
+void nanos6_stream_spawn_function(void (*function)(void *), void *args, char const *label, size_t stream_id)
+{
+	StreamManager::createFunction(function, args, label, stream_id);
+}
+

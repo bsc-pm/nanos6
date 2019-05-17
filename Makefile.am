@@ -365,6 +365,7 @@ common_sources = \
 	src/system/ompss/TaskLoop.cpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
+	src/tasks/StreamManager.cpp \
 	src/tasks/Taskloop.cpp
 
 cuda_sources = \
@@ -1068,6 +1069,8 @@ noinst_HEADERS = \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/UserMutex.hpp \
+	src/tasks/StreamExecutor.hpp \
+	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDeviceData.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
