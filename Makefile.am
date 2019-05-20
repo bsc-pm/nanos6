@@ -982,7 +982,10 @@ noinst_HEADERS = \
 	src/lowlevel/SpinLockDeadlockDebug.hpp \
 	src/lowlevel/SpinLockNoDebug.hpp \
 	src/lowlevel/SpinLockOwnerDebug.hpp \
+	src/lowlevel/SpinWait.hpp \
+	src/lowlevel/SubscriptionLock.hpp \
 	src/lowlevel/SymbolResolver.hpp \
+	src/lowlevel/TicketArraySpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
