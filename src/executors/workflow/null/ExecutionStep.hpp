@@ -1,5 +1,5 @@
-#ifndef __EXECUTION_STEP_HPP__
-#define __EXECUTION_STEP_HPP__
+#ifndef EXECUTION_STEP_HPP
+#define EXECUTION_STEP_HPP
 
 #include <DataAccessRegion.hpp>
 #include "dependencies/DataAccessType.hpp"
@@ -63,13 +63,13 @@ namespace ExecutionWorkflow {
 	public:
 		DataLinkStep(
 			__attribute__((unused))DataAccess const *access
-		) : Step() 
+		) : Step()
 		{
 		}
 		
 		inline void linkRegion(
 			__attribute__((unused))DataAccessRegion const &region,
-			__attribute__((unused))MemoryPlace *location,
+			__attribute__((unused))MemoryPlace const *location,
 			__attribute__((unused))bool read,
 			__attribute__((unused))bool write
 		) {
@@ -77,7 +77,7 @@ namespace ExecutionWorkflow {
 	};
 	
 	class DataReleaseStep : public Step {
-	public:	
+	public:
 		DataReleaseStep(
 			__attribute__((unused))DataAccess const *access
 		) : Step()
@@ -86,12 +86,16 @@ namespace ExecutionWorkflow {
 		
 		inline void releaseRegion(
 			__attribute__((unused))DataAccessRegion const &region,
-			__attribute__((unused))DataAccessType type,
-			__attribute__((unused))bool weak,
-			__attribute__((unused))MemoryPlace *location
+			__attribute__((unused))MemoryPlace const *location
 		) {
+		}
+		
+		inline bool checkDataRelease(
+			__attribute__((unused))DataAccess const *access)
+		{
+			return false;
 		}
 	};
 }
 
-#endif /* __EXECUTION_STEP_HPP__ */
+#endif /* EXECUTION_STEP_HPP */

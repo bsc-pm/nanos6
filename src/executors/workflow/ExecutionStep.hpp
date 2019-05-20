@@ -1,5 +1,5 @@
-#ifndef __EXECUTION_STEP_HPP__
-#define __EXECUTION_STEP_HPP__
+#ifndef EXECUTION_STEP_HPP
+#define EXECUTION_STEP_HPP
 
 #include "dependencies/DataAccessType.hpp"
 #include "lowlevel/SpinLock.hpp"
@@ -104,7 +104,7 @@ namespace ExecutionWorkflow {
 		}
 		
 		//! \brief start the execution of a Step
-		virtual void start()
+		virtual inline void start()
 		{
 			releaseSuccessors();
 			delete this;
@@ -113,46 +113,84 @@ namespace ExecutionWorkflow {
 	
 	class DataLinkStep : public Step {
 	protected:
-		DataAccess const *_access;
-		
 		//! The number of bytes that this Step has to link
-		std::atomic<size_t> _bytes_to_link;
+		std::atomic<size_t> _bytesToLink;
 		
 	public:
-		DataLinkStep(DataAccess const *access);
+		//! \brief Create a DataLinkStep
+		//!
+		//! Create a DataLinkStep associated with a DataAccess. This is
+		//! meant to be used in cases where we need to link information
+		//! regarding the access, to a matching access on a device.
+		//!
+		//! \param[in] access is the DataAccess this DataLinkStep is
+		//!		associated with. The access is a non-const
+		//!		pointer, because the constructor might need to
+		//!		set the corresponding field in the DataAccess
+		//!		object.
+		DataLinkStep(DataAccess *access);
 		
-		virtual void linkRegion(
-			DataAccessRegion const &region,
-			MemoryPlace *location,
-			bool read,
-			bool write
-		) = 0;
-		
-		virtual void start() = 0;
+		virtual inline void linkRegion(DataAccessRegion const &,
+			MemoryPlace const *, bool, bool)
+		{
+		}
 	};
 	
 	class DataReleaseStep : public Step {
 	protected:
-		//! The access for which this steps handles releases
-		DataAccess const *_access;
+		//! type of the DataAccess
+		DataAccessType _type;
+		
+		//! is the DataAccess weak?
+		bool _weak;
 		
 		//! The number of bytes that this Step has to release
-		std::atomic<size_t> _bytes_to_release;
+		std::atomic<size_t> _bytesToRelease;
 		
 	public:
-		DataReleaseStep(DataAccess const *access);
+		//! \brief Create a DataReleaseStep
+		//!
+		//! Create a DataReleaseStep associated with a DataAccess. This
+		//! is meant to be used in cases where we need to notify, once
+		//! a condition has been met, that the data of the
+		//! corresponding access are released from the device we have
+		//! offloaded the originator Task.
+		//!
+		//! \param[in] access is the DataAccess this DataReleaseStep is
+		//!		associated with. The access is a non-const
+		//!		pointer, because the constructor might need to
+		//!		set the corresponding field in the DataAccess
+		//!		object.
+		DataReleaseStep(DataAccess *access);
 		
 		//! Release a region
 		virtual inline void releaseRegion(
-			__attribute__((unused))DataAccessRegion const &region,
-			__attribute__((unused))DataAccessType type,
-			__attribute__((unused))bool weak,
-			__attribute__((unused))MemoryPlace *location
-		) {
+			DataAccessRegion const &, MemoryPlace const *)
+		{
 		}
 		
-		virtual void start();
+		//! \brief Check if a DataAccess is ready to release data
+		//!
+		//! Whether a DataAccess is ready to release data or not
+		//! depends on the kind of task which originates it (e.g.
+		//! cluster, CUDA, etc.).
+		//!
+		//! This method serves the purpose to provide a way for each
+		//! ExecutionWorkflow implementation (e.g. cluster, CUDA) that
+		//! uses the DataReleaseStep to define when an access, that has
+		//! an associated DataReleaseStep, is ready to release data.
+		//!
+		//! \param[in] access is the DataAccess which is related with
+		//!		this Step and we check whether it is ready to
+		//!		release data
+		//!
+		//! \returns true if access is ready to release data
+		virtual inline bool checkDataRelease(
+			__attribute__((unused))DataAccess const *access)
+		{
+			return false;
+		}
 	};
-};
+}
 
-#endif /* __EXECUTION_STEP_HPP__ */
+#endif /* EXECUTION_STEP_HPP */

@@ -4,6 +4,7 @@
 	Copyright (C) 2018-2019 Barcelona Supercomputing Center (BSC)
 */
 
+#include "ExecutionWorkflow.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
@@ -12,7 +13,6 @@
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
-#include <ExecutionWorkflow.hpp>
 #include <HardwareCounters.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskExecution.hpp>

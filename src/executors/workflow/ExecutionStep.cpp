@@ -1,27 +1,22 @@
-#include <ExecutionStep.hpp>
+#include "ExecutionStep.hpp"
+
 #include <DataAccess.hpp>
 
 namespace ExecutionWorkflow {
 	
-	DataLinkStep::DataLinkStep(DataAccess const *access) :
+	DataLinkStep::DataLinkStep(DataAccess *access) :
 		Step(),
-		_access(access),
 		/* We count twice the bytes of the region, because we
 		 * need to link both for Read and Write satisfiability */
-		_bytes_to_link(2 * access->getAccessRegion().getSize())
+		_bytesToLink(2 * access->getAccessRegion().getSize())
 	{
 	}
 	
-	DataReleaseStep::DataReleaseStep(DataAccess const *access) :
+	DataReleaseStep::DataReleaseStep(DataAccess *access) :
 		Step(),
-		_access(access),
-		_bytes_to_release(access->getAccessRegion().getSize())
-	{	
-	}
-	
-	void DataReleaseStep::start()
+		_type(access->getType()),
+		_weak(access->isWeak()),
+		_bytesToRelease(access->getAccessRegion().getSize())
 	{
-		releaseSuccessors();
-		delete this;
 	}
 }

@@ -9,25 +9,13 @@
 
 #define MAX_SYMBOLS 64 // TODO: Temporary solution to use a fixed bitset size
 
-#include <boost/intrusive/avl_set.hpp>
-#include <boost/intrusive/avl_set_hook.hpp>
-
 #include <atomic>
 #include <bitset>
+#include <boost/dynamic_bitset.hpp>
+#include <boost/intrusive/avl_set.hpp>
+#include <boost/intrusive/avl_set_hook.hpp>
 #include <cassert>
 #include <set>
-#include <boost/dynamic_bitset.hpp>
-
-#include <executors/threads/CPUManager.hpp>
-
-#include <InstrumentDataAccessId.hpp>
-#include <InstrumentTaskId.hpp>
-
-#include <lowlevel/SpinLock.hpp>
-
-struct DataAccess;
-class Task;
-class MemoryPlace;
 
 #include "../DataAccessBase.hpp"
 #include "DataAccessLink.hpp"
@@ -36,7 +24,16 @@ class MemoryPlace;
 #include "ReductionSpecific.hpp"
 #include "ReductionInfo.hpp"
 
+#include <ExecutionStep.hpp>
+#include <InstrumentDataAccessId.hpp>
 #include <InstrumentDependenciesByAccessLinks.hpp>
+#include <InstrumentTaskId.hpp>
+#include <executors/threads/CPUManager.hpp>
+#include <lowlevel/SpinLock.hpp>
+
+struct DataAccess;
+class Task;
+class MemoryPlace;
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
 struct DataAccess : protected DataAccessBase {
@@ -108,10 +105,16 @@ private:
 	boost::dynamic_bitset<> _reductionSlotSet;
 	
 	//! Location of the DataAccess
-	MemoryPlace *_location;
+	MemoryPlace const *_location;
 	
 	//! Output memory location of the access
-	MemoryPlace *_outputLocation;
+	MemoryPlace const *_outputLocation;
+	
+	//! DataReleaseStep related with this data access
+	ExecutionWorkflow::DataReleaseStep *_dataReleaseStep;
+	
+	//! DataLinkStep related with this data access
+	ExecutionWorkflow::DataLinkStep *_dataLinkStep;
 	
 public:
 	DataAccess(
@@ -121,8 +124,10 @@ public:
 		DataAccessRegion accessRegion,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
 		reduction_index_t reductionIndex,
-		MemoryPlace *location = nullptr,
-		MemoryPlace *outputLocation = nullptr,
+		MemoryPlace const *location = nullptr,
+		MemoryPlace const *outputLocation = nullptr,
+		ExecutionWorkflow::DataReleaseStep *dataReleaseStep = nullptr,
+		ExecutionWorkflow::DataLinkStep *dataLinkStep = nullptr,
 		Instrument::data_access_id_t instrumentationId = Instrument::data_access_id_t(),
 		status_t status = 0, DataAccessLink next = DataAccessLink()
 	)
@@ -136,7 +141,9 @@ public:
 		_reductionInfo(nullptr),
 		_previousReductionInfo(nullptr),
 		_location(location),
-		_outputLocation(outputLocation)
+		_outputLocation(outputLocation),
+		_dataReleaseStep(dataReleaseStep),
+		_dataLinkStep(dataLinkStep)
 	{
 		assert(originator != nullptr);
 		
@@ -157,7 +164,9 @@ public:
 		_previousReductionInfo(other.getPreviousReductionInfo()),
 		_reductionSlotSet(other.getReductionSlotSet()),
 		_location(other.getLocation()),
-		_outputLocation(other.getOutputLocation())
+		_outputLocation(other.getOutputLocation()),
+		_dataReleaseStep(other.getDataReleaseStep()),
+		_dataLinkStep(other.getDataLinkStep())
 	{}
 	
 	~DataAccess()
@@ -257,7 +266,7 @@ public:
 		return _status[COMPLETE_BIT];
 	}
 	
-	void setReadSatisfied(MemoryPlace *location = nullptr)
+	void setReadSatisfied(MemoryPlace const *location = nullptr)
 	{
 		assert(!readSatisfied());
 		_status[READ_SATISFIED_BIT] = true;
@@ -443,12 +452,12 @@ public:
 		return _status[TOP_LEVEL_BIT];
 	}
 	
-	void setLocation(MemoryPlace *location)
+	void setLocation(MemoryPlace const *location)
 	{
 		_location = location;
 		Instrument::newDataAccessLocation(_instrumentationId, location);
 	}
-	MemoryPlace *getLocation() const
+	MemoryPlace const *getLocation() const
 	{
 		return _location;
 	}
@@ -457,17 +466,79 @@ public:
 		return (_location != nullptr);
 	}
 	
-	void setOutputLocation(MemoryPlace *location)
+	void setOutputLocation(MemoryPlace const *location)
 	{
 		_outputLocation = location;
 	}
-	MemoryPlace *getOutputLocation() const
+	MemoryPlace const *getOutputLocation() const
 	{
 		return _outputLocation;
 	}
 	bool hasOutputLocation() const
 	{
 		return (_outputLocation != nullptr);
+	}
+	
+	//! Set the DataReleaseStep of the access. The access must not
+	//! have a DataReleaseStep already
+	void setDataReleaseStep(ExecutionWorkflow::DataReleaseStep *step)
+	{
+		assert(!hasDataReleaseStep());
+		assert(step != nullptr);
+		
+		_dataReleaseStep = step;
+	}
+	
+	//! Unset the DataReleaseStep of the access. The access must
+	//! have a DataReleaseStep already
+	void unsetDataReleaseStep()
+	{
+		assert(hasDataReleaseStep());
+		
+		_dataReleaseStep = nullptr;
+	}
+	
+	//! Get the DataReleaseStep of the access.
+	ExecutionWorkflow::DataReleaseStep *getDataReleaseStep() const
+	{
+		return _dataReleaseStep;
+	}
+	
+	//! Check if the access has a DataReleaseStep
+	bool hasDataReleaseStep() const
+	{
+		return (_dataReleaseStep != nullptr);
+	}
+	
+	//! Set the DataLinkStep of the access. The access must not
+	//! have a DataLinkStep already
+	void setDataLinkStep(ExecutionWorkflow::DataLinkStep *step)
+	{
+		assert(!hasDataLinkStep());
+		assert(step != nullptr);
+		
+		_dataLinkStep = step;
+	}
+	
+	//! Unset the DataLinkStep of the access. The access must
+	//! have a DataLinkStep already
+	void unsetDataLinkStep()
+	{
+		assert(hasDataLinkStep());
+		
+		_dataLinkStep = nullptr;
+	}
+	
+	//! Get the DataLinkStep of the access.
+	ExecutionWorkflow::DataLinkStep *getDataLinkStep() const
+	{
+		return _dataLinkStep;
+	}
+	
+	//! Check if the access has a DataLinkStep
+	bool hasDataLinkStep() const
+	{
+		return (_dataLinkStep != nullptr);
 	}
 	
 #ifndef NDEBUG

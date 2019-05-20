@@ -10,34 +10,32 @@
 
 #include <cassert>
 #include <deque>
+#include <iostream>
 #include <mutex>
 
 #include "BottomMapEntry.hpp"
-#include "CommutativeScoreboard.hpp"
 #include "CPUDependencyData.hpp"
+#include "CommutativeScoreboard.hpp"
 #include "DataAccess.hpp"
 #include "DataAccessRegistration.hpp"
-#include <ObjectAllocator.hpp>
-
-#include <ExecutionWorkflow.hpp>
-
+#include "ReductionInfo.hpp"
+#include "TaskDataAccessesImplementation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "memory/directory/Directory.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
-#include "TaskDataAccessesImplementation.hpp"
-#include "ReductionInfo.hpp"
-
-#include <InstrumentDependenciesByAccessLinks.hpp>
+#include <ClusterManager.hpp>
+#include <ExecutionWorkflow.hpp>
 #include <InstrumentComputePlaceId.hpp>
+#include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentLogMessage.hpp>
 #include <InstrumentReductions.hpp>
 #include <InstrumentTaskId.hpp>
-
-#include <iostream>
+#include <ObjectAllocator.hpp>
 
 #pragma GCC visibility push(hidden)
 
@@ -81,6 +79,12 @@ namespace DataAccessRegistration {
 		
 		bool _triggersTaskwaitWorkflow;
 		
+		bool _propagatesDataReleaseStepToNext;
+		
+		bool _triggersDataRelease;
+		bool _triggersDataLinkRead;
+		bool _triggersDataLinkWrite;
+		
 	public:
 		DataAccessStatusEffects()
 			: _isRegistered(false),
@@ -106,7 +110,13 @@ namespace DataAccessRegistration {
 			
 			_isRemovable(false),
 			
-			_triggersTaskwaitWorkflow(false)
+			_triggersTaskwaitWorkflow(false),
+			
+			_propagatesDataReleaseStepToNext(false),
+			
+			_triggersDataRelease(false),
+			_triggersDataLinkRead(false),
+			_triggersDataLinkWrite(false)
 		{
 		}
 		
@@ -171,6 +181,7 @@ namespace DataAccessRegistration {
 						// in order to be able to propagate a nested reduction ReductionInfo outside
 						&& ((access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE));
 					_propagatesReductionSlotSetToNext = false; // ReductionSlotSet is propagated through the fragments
+					_propagatesDataReleaseStepToNext = false; // DataReleaseStep is propagated through the fragments
 				} else if (
 					(access->getObjectType() == fragment_type)
 					|| (access->getObjectType() == taskwait_type)
@@ -196,6 +207,7 @@ namespace DataAccessRegistration {
 						&& !access->closesReduction()
 						&& (access->allocatedReductionInfo()
 								|| access->receivedReductionSlotSet());
+					_propagatesDataReleaseStepToNext = access->hasDataReleaseStep();
 				} else {
 					assert(access->getObjectType() == access_type);
 					assert(!access->hasSubaccesses());
@@ -237,6 +249,8 @@ namespace DataAccessRegistration {
 						&& !access->closesReduction()
 						&& (access->allocatedReductionInfo()
 								|| access->receivedReductionSlotSet());
+					_propagatesDataReleaseStepToNext =
+						access->hasDataReleaseStep() && access->complete();
 				}
 			} else {
 				assert(!access->hasNext());
@@ -246,6 +260,7 @@ namespace DataAccessRegistration {
 				_propagatesCommutativeSatisfiabilityToNext = false;
 				_propagatesReductionInfoToNext = false;
 				_propagatesReductionSlotSetToNext = false;
+				_propagatesDataReleaseStepToNext = false;
 			}
 			
 			_makesReductionOriginalStorageAvailable =
@@ -287,6 +302,22 @@ namespace DataAccessRegistration {
 				&& access->readSatisfied()
 				&& access->writeSatisfied()
 				&& access->hasOutputLocation();
+			
+			if (access->hasDataReleaseStep()) {
+				ExecutionWorkflow::DataReleaseStep *releaseStep =
+					access->getDataReleaseStep();
+				
+				_triggersDataRelease =
+					releaseStep->checkDataRelease(access);
+			} else {
+				_triggersDataRelease = false;
+			}
+			
+			_triggersDataLinkRead = access->hasDataLinkStep()
+				&& access->readSatisfied();
+			
+			_triggersDataLinkWrite = access->hasDataLinkStep()
+				&& access->writeSatisfied();
 			
 			Task *domainParent;
 			assert(access->getOriginator() != nullptr);
@@ -603,6 +634,13 @@ namespace DataAccessRegistration {
 				updateOperation._reductionSlotSet = access->getReductionSlotSet();
 			}
 			
+			if (initialStatus._propagatesDataReleaseStepToNext != updatedStatus._propagatesDataReleaseStepToNext) {
+				assert(!initialStatus._propagatesDataReleaseStepToNext);
+				
+				updateOperation._releaseStep = access->getDataReleaseStep();
+				access->unsetDataReleaseStep();
+			}
+			
 			// Make Next Topmost
 			if (initialStatus._makesNextTopmost != updatedStatus._makesNextTopmost) {
 				assert(!initialStatus._makesNextTopmost);
@@ -706,6 +744,30 @@ namespace DataAccessRegistration {
 			assert(access->isInBottomMap());
 			
 			hpDependencyData._completedTaskwaits.emplace_back(access);
+		}
+		
+		// DataReleaseStep triggers
+		if (initialStatus._triggersDataRelease != updatedStatus._triggersDataRelease) {
+			assert(!initialStatus._triggersDataRelease);
+			
+			ExecutionWorkflow::DataReleaseStep *step = access->getDataReleaseStep();
+			access->unsetDataReleaseStep();
+			step->releaseRegion(access->getAccessRegion(), access->getLocation());
+		}
+		
+		bool linksRead = initialStatus._triggersDataLinkRead != updatedStatus._triggersDataLinkRead;
+		bool linksWrite = initialStatus._triggersDataLinkWrite != updatedStatus._triggersDataLinkWrite;
+		if (linksRead || linksWrite) {
+			assert(access->hasDataLinkStep());
+			
+			ExecutionWorkflow::DataLinkStep *step =
+				access->getDataLinkStep();
+			step->linkRegion(access->getAccessRegion(),
+				access->getLocation(), linksRead, linksWrite);
+			
+			if (updatedStatus._triggersDataLinkRead && updatedStatus._triggersDataLinkWrite) {
+				access->unsetDataLinkStep();
+			}
 		}
 		
 		// Removable
@@ -823,8 +885,10 @@ namespace DataAccessRegistration {
 		DataAccessType accessType, bool weak, DataAccessRegion region,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex = no_reduction_type_and_operator,
 		reduction_index_t reductionIndex = -1,
-		MemoryPlace *location = nullptr,
-		MemoryPlace *outputLocation = nullptr,
+		MemoryPlace const *location = nullptr,
+		MemoryPlace const *outputLocation = nullptr,
+		ExecutionWorkflow::DataReleaseStep *dataReleaseStep = nullptr,
+		ExecutionWorkflow::DataLinkStep *dataLinkStep = nullptr,
 		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink()
 	) {
 		// Regular object duplication
@@ -835,6 +899,8 @@ namespace DataAccessRegistration {
 			reductionIndex,
 			location,
 			outputLocation,
+			dataReleaseStep,
+			dataLinkStep,
 			Instrument::data_access_id_t(),
 			status, next
 		);
@@ -1190,6 +1256,9 @@ namespace DataAccessRegistration {
 		if (updateOperation._makeCommutativeSatisfied) {
 			access->setCommutativeSatisfied();
 		}
+		if (updateOperation._releaseStep != nullptr) {
+			access->setDataReleaseStep(updateOperation._releaseStep);
+		}
 		
 		// ReductionInfo
 		if (updateOperation._setReductionInfo) {
@@ -1378,6 +1447,8 @@ namespace DataAccessRegistration {
 			dataAccess->getReductionIndex(),
 			dataAccess->getLocation(),
 			dataAccess->getOutputLocation(),
+			dataAccess->getDataReleaseStep(),
+			dataAccess->getDataLinkStep(),
 			instrumentationId
 		);
 
@@ -2005,8 +2076,8 @@ namespace DataAccessRegistration {
 						
 						DataAccessStatusEffects initialStatus(targetAccess);
 						//! This is a local access, so no location is setup yet.
-						//! For now we set the first NUMA node as the location.
-						targetAccess->setReadSatisfied(HardwareInfo::getMemoryPlace(nanos6_host_device, 0));
+						//! For now we set it to the Directory MemoryPlace.
+						targetAccess->setReadSatisfied(Directory::getDirectoryMemoryPlace());
 						targetAccess->setWriteSatisfied();
 						targetAccess->setConcurrentSatisfied();
 						targetAccess->setCommutativeSatisfied();
@@ -2818,7 +2889,8 @@ namespace DataAccessRegistration {
 	
 	void propagateSatisfiability(Task *task, DataAccessRegion &region,
 		ComputePlace *computePlace, CPUDependencyData &hpDependencyData,
-		bool readSatisfied, bool writeSatisfied, MemoryPlace *location)
+		bool readSatisfied, bool writeSatisfied,
+		MemoryPlace const *location)
 	{
 		assert(task != nullptr);
 		

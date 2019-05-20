@@ -1,7 +1,7 @@
-#ifndef __EXECUTION_WORKFLOW_HPP__
-#define __EXECUTION_WORKFLOW_HPP__
+#ifndef EXECUTION_WORKFLOW_HPP
+#define EXECUTION_WORKFLOW_HPP
 
-#include <ExecutionStep.hpp>
+#include "ExecutionStep.hpp"
 
 class Task;
 class ComputePlace;
@@ -51,4 +51,4 @@ namespace ExecutionWorkflow {
 	);
 }
 
-#endif /* __EXECUTION_WORKFLOW_HPP__ */
+#endif /* EXECUTION_WORKFLOW_HPP */
