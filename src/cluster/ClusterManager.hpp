@@ -78,6 +78,9 @@ public:
 	//! \brief Initialize the ClusterManager
 	static void initialize();
 	
+	//! \brief Notify all cluster nodes that we are shutting down
+	static void notifyShutdown();
+	
 	//! \brief Shutdown the ClusterManager
 	static void shutdown();
 	
