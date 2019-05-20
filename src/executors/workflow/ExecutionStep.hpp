@@ -114,7 +114,7 @@ namespace ExecutionWorkflow {
 	class DataLinkStep : public Step {
 	protected:
 		//! The number of bytes that this Step has to link
-		std::atomic<size_t> _bytes_to_link;
+		std::atomic<size_t> _bytesToLink;
 		
 	public:
 		//! \brief Create a DataLinkStep
@@ -145,7 +145,7 @@ namespace ExecutionWorkflow {
 		bool _weak;
 		
 		//! The number of bytes that this Step has to release
-		std::atomic<size_t> _bytes_to_release;
+		std::atomic<size_t> _bytesToRelease;
 		
 	public:
 		//! \brief Create a DataReleaseStep

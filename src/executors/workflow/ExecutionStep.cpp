@@ -8,7 +8,7 @@ namespace ExecutionWorkflow {
 		Step(),
 		/* We count twice the bytes of the region, because we
 		 * need to link both for Read and Write satisfiability */
-		_bytes_to_link(2 * access->getAccessRegion().getSize())
+		_bytesToLink(2 * access->getAccessRegion().getSize())
 	{
 	}
 	
@@ -16,7 +16,7 @@ namespace ExecutionWorkflow {
 		Step(),
 		_type(access->getType()),
 		_weak(access->isWeak()),
-		_bytes_to_release(access->getAccessRegion().getSize())
-	{	
+		_bytesToRelease(access->getAccessRegion().getSize())
+	{
 	}
 }
