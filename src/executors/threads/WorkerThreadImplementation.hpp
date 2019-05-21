@@ -133,7 +133,4 @@ namespace ompss_debug {
 #endif
 
 
-#include "instrument/stats/InstrumentHardwareCountersThreadLocalDataImplementation.hpp"
-
-
 #endif // WORKER_THREAD_IMPLEMENTATION_HPP

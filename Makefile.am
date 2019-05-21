@@ -486,7 +486,8 @@ hardware_counters_sources = \
 	src/instrument/stats/InstrumentHardwareCounters.cpp
 
 papi_hardware_counters_sources = \
-	src/instrument/stats/papi/InstrumentPAPIHardwareCounters.cpp
+	src/instrument/stats/papi/InstrumentPAPIHardwareCounters.cpp \
+	src/instrument/stats/papi/InstrumentPAPIHardwareCountersThreadLocalData.cpp
 
 no_hardware_counters_sources = 
 
@@ -896,7 +897,6 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentExternalThreadLocalData.hpp \
 	src/instrument/stats/InstrumentHardwareCounters.hpp \
 	src/instrument/stats/InstrumentHardwareCountersThreadLocalData.hpp \
-	src/instrument/stats/InstrumentHardwareCountersThreadLocalDataImplementation.hpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
@@ -915,10 +915,8 @@ noinst_HEADERS = \
 	src/instrument/stats/Timer.hpp \
 	src/instrument/stats/null/InstrumentNullHardwareCounters.hpp \
 	src/instrument/stats/null/InstrumentNullHardwareCountersThreadLocalData.hpp \
-	src/instrument/stats/null/InstrumentNullHardwareCountersThreadLocalDataImplementation.hpp \
 	src/instrument/stats/papi/InstrumentPAPIHardwareCounters.hpp \
 	src/instrument/stats/papi/InstrumentPAPIHardwareCountersThreadLocalData.hpp \
-	src/instrument/stats/papi/InstrumentPAPIHardwareCountersThreadLocalDataImplementation.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \

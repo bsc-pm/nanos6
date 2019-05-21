@@ -1,11 +1,8 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
-
-#ifndef INSTRUMENT_PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
-#define INSTRUMENT_PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
 
 
 #include "InstrumentPAPIHardwareCounters.hpp"
@@ -16,7 +13,7 @@
 
 namespace InstrumentHardwareCounters {
 	namespace PAPI {
-		inline HardwareCountersThreadLocalData &getCurrentThreadHardwareCounters()
+		HardwareCountersThreadLocalData &getCurrentThreadHardwareCounters()
 		{
 			WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 			if (currentWorkerThread != nullptr) {
@@ -29,5 +26,3 @@ namespace InstrumentHardwareCounters {
 	}
 }
 
-
-#endif // INSTRUMENT_PAPI_HARDWARE_COUNTERS_THREAD_LOCAL_DATA_IMPLEMENTATION_HPP
