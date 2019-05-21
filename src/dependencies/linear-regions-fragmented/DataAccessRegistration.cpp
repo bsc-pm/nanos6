@@ -1467,6 +1467,12 @@ namespace DataAccessRegistration {
 		// NOTE: This may in the future need to be included in the common status changes code
 		dataAccess->setHasSubaccesses();
 		
+		//! The DataReleaseStep of the access will be propagated through the fragment(s).
+		//! Unset it here so we avoid needless (and possibly wrong) checks for this access.
+		if (dataAccess->hasDataReleaseStep()) {
+			dataAccess->unsetDataReleaseStep();
+		}
+		
 		if (subregion != dataAccess->getAccessRegion()) {
 			dataAccess->getAccessRegion().processIntersectingFragments(
 				subregion,
