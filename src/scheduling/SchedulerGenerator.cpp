@@ -5,6 +5,7 @@
 */
 
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "schedulers/ClusterLocalityScheduler.hpp"
 #include "schedulers/ClusterRandomScheduler.hpp"
 #include "schedulers/DefaultScheduler.hpp"
 #include "schedulers/DeviceHierarchicalScheduler.hpp"
@@ -87,6 +88,8 @@ SchedulerInterface *SchedulerGenerator::createHostScheduler()
 	
 	if (schedulerName.getValue() == "cluster-random") {
 		return new ClusterRandomScheduler();
+	} else if (schedulerName.getValue() == "cluster-locality") {
+		return new ClusterLocalityScheduler();
 	} else if (schedulerName.getValue() == "hierarchical") {
 		return new HostHierarchicalScheduler();
 	} else if (schedulerName.getValue() == "collapsable") {
