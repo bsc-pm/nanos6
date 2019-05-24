@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DATA_ACCESS_REGISTRATION_HPP
@@ -103,6 +103,17 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData
 	);
+	
+	//! \brief Pass all data accesses from the task through a lambda
+	//!
+	//! \param[in] task the owner of the accesses to be processed
+	//! \param[in] processor a lambda that receives the access region, the access type, a boolean
+	//!            indicating whether it is weak and a pointer to the access' memory place, and
+	//!            that returns a boolean equal to false to stop the traversal
+	//!
+	//! \returns false if the traversal was stopped before finishing
+	template <typename ProcessorType>
+	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
 }
 
 

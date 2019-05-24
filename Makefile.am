@@ -688,6 +688,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/DataAccessLink.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessObjectType.hpp \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.hpp \
+	src/dependencies/linear-regions-fragmented/DataAccessRegistrationImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionInfo.hpp \
