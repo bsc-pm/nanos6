@@ -73,6 +73,11 @@ public:
 		free(_deliverable);
 	}
 	
+	inline const std::string getName() const
+	{
+		return std::string(_deliverable->header.name);
+	}
+	
 	//! \brief Returns the type of the Message
 	inline MessageType getType() const
 	{
