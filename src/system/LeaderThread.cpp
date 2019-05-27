@@ -53,7 +53,7 @@ void LeaderThread::body()
 	initializeHelperThread();
 	
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {
-		struct timespec delay = { 0, 1000000}; // 1000 Hz
+		struct timespec delay = { 0, 100000}; // 10000 Hz
 		
 		// The loop repeats the call with the remaining time in the event that the thread received a signal with a handler that has SA_RESTART set
 		Instrument::threadWillSuspend(getInstrumentationId());
