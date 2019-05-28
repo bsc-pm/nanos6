@@ -94,6 +94,11 @@ static void remoteTaskWrapper(void *args)
 			offloadedTaskId, offloader);
 	
 	task->setClusterContext(clusterContext);
+	
+	//! Register remote Task with TaskOffloading mechanism before
+	//! submitting it to the dependency system
+	TaskOffloading::registerRemoteTask(task);
+	
 	nanos6_submit_task(task);
 	
 	size_t numSatInfo;
@@ -101,9 +106,7 @@ static void remoteTaskWrapper(void *args)
 		msg->getSatisfiabilityInfo(numSatInfo);
 	if (numSatInfo != 0) {
 		std::vector<TaskOffloading::SatisfiabilityInfo> sat(satInfo, satInfo + numSatInfo);
-		TaskOffloading::registerRemoteTask(task, sat);
-	} else {
-		TaskOffloading::registerRemoteTask(task);
+		TaskOffloading::propagateSatisfiability(task, sat);
 	}
 }
 

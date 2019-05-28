@@ -92,7 +92,7 @@ namespace TaskOffloading {
 	//! This is our map for all the remote tasks, currently on the node
 	static RemoteTasks _remoteTasks;
 	
-	static void propagateSatisfiability(Task *localTask,
+	void propagateSatisfiability(Task *localTask,
 			SatisfiabilityInfo const &satInfo)
 	{
 		assert(localTask != nullptr);
@@ -140,7 +140,7 @@ namespace TaskOffloading {
 		delete array;
 	}
 	
-	static void propagateSatisfiability(Task *localTask,
+	void propagateSatisfiability(Task *localTask,
 			std::vector<SatisfiabilityInfo> const &satInfo)
 	{
 		assert(localTask != nullptr);

@@ -71,6 +71,19 @@ namespace TaskOffloading {
 	void propagateSatisfiability(void *offloadedTaskId,
 			ClusterNode *offloader, SatisfiabilityInfo const &satInfo);
 	
+	//! \brief Propagate satisfiability information to a local task
+	//!
+	//! \param[in] task the local Task to which we propagate satisfiability
+	//! \param[in] satInfo the satisfiability updates we propagate
+	void propagateSatisfiability(Task *task, SatisfiabilityInfo const &satInfo);
+	
+	//! \brief Propagate multiple satisfiability updates to a local task
+	//!
+	//! \param[in] task the local Task to which we propagate satisfiability
+	//! \param[in[ satInfo a vector of SatisfiabilityInfo structs we propagate
+	void propagateSatisfiability(Task *task,
+			std::vector<SatisfiabilityInfo> const &satInfo);
+	
 	//! \brief Notify that a region is released on a remote node
 	//!
 	//! \param[in] offloadedTaskId is the task identifier of the offloader
