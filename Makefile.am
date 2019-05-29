@@ -345,6 +345,8 @@ common_sources = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler1.cpp \
+	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.cpp \
+	src/scheduling/schedulers/cluster/ClusterRandomScheduler.cpp \
 	src/support/GlobalLock.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
@@ -1059,6 +1061,8 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler1.hpp \
+	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.hpp \
+	src/scheduling/schedulers/cluster/ClusterRandomScheduler.hpp \
 	src/scheduling/schedulers/cuda/CUDANaiveScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
