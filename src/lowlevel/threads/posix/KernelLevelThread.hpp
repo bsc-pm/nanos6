@@ -140,17 +140,22 @@ void KernelLevelThread::start(pthread_attr_t *pthreadAttr)
 	if (pthreadAttr != nullptr) {
 		rc = pthread_attr_getstacksize(pthreadAttr, &stacksize);
 		FatalErrorHandler::handle(rc, " when getting pthread's stacksize");
-
+		
 		stackptr = MemoryAllocator::alloc(stacksize);
-		FatalErrorHandler::failIf(stackptr == nullptr,
-				" when allocating pthread stack");
-
+		FatalErrorHandler::failIf(stackptr == nullptr, " when allocating pthread stack");
+		
 		rc = pthread_attr_setstack(pthreadAttr, stackptr, stacksize);
 		FatalErrorHandler::handle(rc, " when setting pthread's stack");
 	}
 	
 	rc = pthread_create(&_pthread, pthreadAttr, &kernel_level_thread_body_wrapper, this);
-	FatalErrorHandler::handle(rc, " when creating a pthread");
+	if (rc == EAGAIN) {
+		FatalErrorHandler::failIf(true, " Insufficient resources when creating a pthread. This may happen due to:\n",
+			"  (1) Having reached the system-imposed limit of threads\n",
+			"  (2) The stack size limit is too large, try decreasing it with 'ulimit'");
+	} else {
+		FatalErrorHandler::handle(rc, " when creating a pthread");
+	}
 }
 
 
