@@ -6,6 +6,7 @@
 
 #include <utility>
 #include <map>
+#include <nanos6/task-instantiation.h>
 #include <vector>
 
 #include "ClusterTaskContext.hpp"
@@ -199,41 +200,6 @@ namespace TaskOffloading {
 		ClusterManager::sendMessage(msg, offloader);
 	}
 	
-	void registerRemoteTask(Task *localTask)
-	{
-		assert(localTask != nullptr);
-		
-		ClusterTaskContext *clusterContext =
-			localTask->getClusterContext();
-		
-		void *remoteDescriptor = clusterContext->getRemoteIdentifier();
-		ClusterNode *offloader = clusterContext->getRemoteNode();
-		
-		RemoteTaskInfo &taskInfo =
-			_remoteTasks.getTaskInfo(remoteDescriptor,
-					offloader->getIndex());
-		
-		std::lock_guard<PaddedSpinLock<64>> guard(taskInfo._lock);
-		assert(taskInfo._localTask == nullptr);
-		
-		taskInfo._localTask = localTask;
-		//! propagate any satisfiability that might have already
-		//! arrived
-		if (!taskInfo._satInfo.empty()) {
-			propagateSatisfiability(localTask, taskInfo._satInfo);
-			taskInfo._satInfo.clear();
-		}
-	}
-	
-	void registerRemoteTask(Task *localTask, std::vector<SatisfiabilityInfo> const &satInfo)
-	{
-		assert(localTask != nullptr);
-		assert(!satInfo.empty());
-		
-		registerRemoteTask(localTask);
-		propagateSatisfiability(localTask, satInfo);
-	}
-	
 	void sendSatisfiability(Task *task, ClusterNode *remoteNode,
 			SatisfiabilityInfo const &satInfo)
 	{
@@ -311,5 +277,90 @@ namespace TaskOffloading {
 		
 		DataAccessRegistration::releaseAccessRegion(task, region, type,
 				weak, cpu, hpDependencyData, location);
+	}
+	
+	void remoteTaskWrapper(MessageTaskNew *msg)
+	{
+		assert(msg != nullptr);
+		
+		ClusterNode *offloader =
+			ClusterManager::getClusterNode(msg->getSenderId());
+		
+		nanos6_task_info_t *taskInfo = msg->getTaskInfo();
+		void *offloadedTaskId = msg->getOffloadedTaskId();
+		
+		size_t numTaskImplementations;
+		nanos6_task_implementation_info_t *taskImplementations =
+			msg->getImplementations(numTaskImplementations);
+		
+		taskInfo->implementations = taskImplementations;
+		nanos6_task_invocation_info_t *taskInvocationInfo =
+			msg->getTaskInvocationInfo();
+		
+		size_t argsBlockSize;
+		void *argsBlock = msg->getArgsBlock(argsBlockSize);
+		
+		size_t flags = msg->getFlags();
+		
+		Task *task;
+		void *newArgsBlock;
+		nanos6_create_task(taskInfo, taskInvocationInfo, argsBlockSize,
+				&newArgsBlock, (void **)&task, flags, 0);
+		
+		if (argsBlockSize != 0) {
+			memcpy(newArgsBlock, argsBlock, argsBlockSize);
+		}
+		
+		task->markAsRemote();
+		TaskOffloading::ClusterTaskContext *clusterContext =
+			new TaskOffloading::ClusterTaskContext(
+					offloadedTaskId, offloader);
+		
+		task->setClusterContext(clusterContext);
+		
+		//! Register remote Task with TaskOffloading mechanism before
+		//! submitting it to the dependency system.
+		RemoteTaskInfo &remoteTaskInfo =
+			_remoteTasks.getTaskInfo(offloadedTaskId,
+					offloader->getIndex());
+		
+		std::lock_guard<PaddedSpinLock<64>> lock(remoteTaskInfo._lock);
+		assert(remoteTaskInfo._localTask == nullptr);
+		remoteTaskInfo._localTask = task;
+		
+		nanos6_submit_task(task);
+		
+		//! propagate satisfiability embedded in the Message
+		size_t numSatInfo;
+		TaskOffloading::SatisfiabilityInfo *satInfo =
+			msg->getSatisfiabilityInfo(numSatInfo);
+		for (size_t i = 0; i < numSatInfo; ++i) {
+			propagateSatisfiability(task, satInfo[i]);
+		}
+		
+		//! propagate, also any satisfiability that has already arrived
+		if (!remoteTaskInfo._satInfo.empty()) {
+			propagateSatisfiability(task, remoteTaskInfo._satInfo);
+			remoteTaskInfo._satInfo.clear();
+		}
+	}
+	
+	void remoteTaskCleanup(MessageTaskNew *msg)
+	{
+		assert(msg != nullptr);
+		
+		void *offloadedTaskId = msg->getOffloadedTaskId();
+		ClusterNode *offloader =
+			ClusterManager::getClusterNode(msg->getSenderId());
+		
+		sendRemoteTaskFinished(offloadedTaskId, offloader);
+		
+		//! For the moment, we do not delete the Message since it includes the
+		//! buffers that hold the nanos6_task_info_t and the
+		//! nanos6_task_implementation_info_t which we might need later on,
+		//! e.g. Extrae is using these during shutdown. This will change once
+		//! mercurium gives us access to the respective fields within the
+		//! binary.
+		//! delete msg;
 	}
 }

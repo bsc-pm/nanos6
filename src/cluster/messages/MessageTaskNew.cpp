@@ -7,10 +7,7 @@
 #include <nanos6/library-mode.h>
 
 #include "MessageTaskNew.hpp"
-#include "src/tasks/Task.hpp"
 
-#include <ClusterManager.hpp>
-#include <ClusterTaskContext.hpp>
 #include <TaskOffloading.hpp>
 
 MessageTaskNew::MessageTaskNew(const ClusterNode *from,
@@ -56,84 +53,26 @@ MessageTaskNew::MessageTaskNew(const ClusterNode *from,
 	}
 }
 
-static void remoteTaskWrapper(void *args)
+static inline void remoteTaskWrapper(void *args)
 {
 	assert(args != nullptr);
 	MessageTaskNew *msg = (MessageTaskNew *)args;
-	ClusterNode *offloader =
-		ClusterManager::getClusterNode(msg->getSenderId());
 	
-	nanos6_task_info_t *taskInfo = msg->getTaskInfo();
-	void *offloadedTaskId = msg->getOffloadedTaskId();
-	
-	size_t numTaskImplementations;
-	nanos6_task_implementation_info_t *taskImplementations =
-		msg->getImplementations(numTaskImplementations);
-	
-	taskInfo->implementations = taskImplementations;
-	nanos6_task_invocation_info_t *taskInvocationInfo =
-		msg->getTaskInvocationInfo();
-	
-	size_t argsBlockSize;
-	void *argsBlock = msg->getArgsBlock(argsBlockSize);
-	
-	size_t flags = msg->getFlags();
-	
-	Task *task;
-	void *newArgsBlock;
-	nanos6_create_task(taskInfo, taskInvocationInfo, argsBlockSize,
-		&newArgsBlock, (void **)&task, flags, 0);
-	
-	if (argsBlockSize != 0) {
-		memcpy(newArgsBlock, argsBlock, argsBlockSize);
-	}
-	
-	task->markAsRemote();
-	TaskOffloading::ClusterTaskContext *clusterContext =
-		new TaskOffloading::ClusterTaskContext(
-			offloadedTaskId, offloader);
-	
-	task->setClusterContext(clusterContext);
-	
-	//! Register remote Task with TaskOffloading mechanism before
-	//! submitting it to the dependency system
-	TaskOffloading::registerRemoteTask(task);
-	
-	nanos6_submit_task(task);
-	
-	size_t numSatInfo;
-	TaskOffloading::SatisfiabilityInfo *satInfo =
-		msg->getSatisfiabilityInfo(numSatInfo);
-	if (numSatInfo != 0) {
-		std::vector<TaskOffloading::SatisfiabilityInfo> sat(satInfo, satInfo + numSatInfo);
-		TaskOffloading::propagateSatisfiability(task, sat);
-	}
+	TaskOffloading::remoteTaskWrapper(msg);
 }
 
-static void remoteTaskCleanup(void *args)
+static inline void remoteTaskCleanup(void *args)
 {
 	assert(args != nullptr);
 	MessageTaskNew *msg = (MessageTaskNew *)args;
 	
-	void *offloadedTaskId = msg->getOffloadedTaskId();
-	ClusterNode *offloader =
-		ClusterManager::getClusterNode(msg->getSenderId());
-	
-	TaskOffloading::sendRemoteTaskFinished(offloadedTaskId, offloader);
-	
-	//! For the moment, we do not delete the Message since it includes the
-	//! buffers that hold the nanos6_task_info_t and the
-	//! nanos6_task_implementation_info_t which we might need later on,
-	//! e.g. Extrae is using these during shutdown. This will change once
-	//! mercurium gives us access to the respective fields within the
-	//! binary.
-	//! delete msg;
+	TaskOffloading::remoteTaskCleanup(msg);
 }
 
 bool MessageTaskNew::handleMessage()
 {
-	nanos6_spawn_function(remoteTaskWrapper, this, remoteTaskCleanup,
-			this, "remote-task-wrapper");
+	nanos6_spawn_function(remoteTaskWrapper, this, remoteTaskCleanup, this,
+			"remote-task-wrapper");
 	
 	//! The Message will be deleted by remoteTaskCleanup
 	return false;

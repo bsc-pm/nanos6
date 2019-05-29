@@ -16,6 +16,7 @@
 
 class ClusterNode;
 class MemoryPlace;
+class MessageTaskNew;
 class Task;
 
 namespace TaskOffloading {
@@ -36,21 +37,6 @@ namespace TaskOffloading {
 	//! \param[in] offloader is the ClusterNode that offloaded the task
 	void sendRemoteTaskFinished(void *offloadedTaskId,
 			ClusterNode *offloader);
-	
-	//! \brief Register a remote task
-	//!
-	//! \param[in] localTask is the remote task (which runs on the current
-	//!		node)
-	void registerRemoteTask(Task *localTask);
-	
-	//! \brief Register a remote task and propagate satisfiability info
-	//!
-	//! \param[in] localTask is the remote task (which runs on the current
-	//!		node)
-	//! \param[in] satInfo is a std::vector with satisfiability info about the
-	//!		remote task
-	void registerRemoteTask(Task *localTask,
-			std::vector<SatisfiabilityInfo> const &satInfo);
 	
 	//! \brief Send satisfiability information to an offloaded Task
 	//!
@@ -111,6 +97,16 @@ namespace TaskOffloading {
 	void releaseRemoteAccess(Task *task, DataAccessRegion const &region,
 			DataAccessType type, bool weak,
 			MemoryPlace const *location);
+	
+	//! \brief Create and submit a remote task
+	//!
+	//! \param[in] msg the MessageTaskNew of the remote Task
+	void remoteTaskWrapper(MessageTaskNew *msg);
+	
+	//! \brief Completion callback for a remote task
+	//!
+	//! \param[in] msg the MessageTaskNew of the remote Task
+	void remoteTaskCleanup(MessageTaskNew *msg);
 }
 
 #endif // TASK_OFFLOADING_HPP
