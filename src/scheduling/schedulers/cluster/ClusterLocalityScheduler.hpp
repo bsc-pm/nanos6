@@ -7,7 +7,7 @@
 #ifndef CLUSTER_LOCALITY_SCHEDULER_HPP
 #define CLUSTER_LOCALITY_SCHEDULER_HPP
 
-#include "../SchedulerInterface.hpp"
+#include "scheduling/SchedulerInterface.hpp"
 
 
 class Task;

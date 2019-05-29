@@ -334,8 +334,6 @@ common_sources = \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
-	src/scheduling/schedulers/ClusterLocalityScheduler.cpp \
-	src/scheduling/schedulers/ClusterRandomScheduler.cpp \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
 	src/scheduling/schedulers/FIFOScheduler.cpp \
@@ -347,6 +345,8 @@ common_sources = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler.cpp \
 	src/scheduling/schedulers/PriorityScheduler1.cpp \
+	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.cpp \
+	src/scheduling/schedulers/cluster/ClusterRandomScheduler.cpp \
 	src/support/GlobalLock.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
@@ -1049,8 +1049,6 @@ noinst_HEADERS = \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
 	src/scheduling/TaskloopSchedulingPolicy.hpp \
-	src/scheduling/schedulers/ClusterLocalityScheduler.hpp \
-	src/scheduling/schedulers/ClusterRandomScheduler.hpp \
 	src/scheduling/schedulers/DefaultScheduler.hpp \
 	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
 	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
@@ -1063,6 +1061,8 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler.hpp \
 	src/scheduling/schedulers/PriorityScheduler1.hpp \
+	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.hpp \
+	src/scheduling/schedulers/cluster/ClusterRandomScheduler.hpp \
 	src/scheduling/schedulers/cuda/CUDANaiveScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \

@@ -5,8 +5,8 @@
 */
 
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "schedulers/ClusterLocalityScheduler.hpp"
-#include "schedulers/ClusterRandomScheduler.hpp"
+#include "schedulers/cluster/ClusterLocalityScheduler.hpp"
+#include "schedulers/cluster/ClusterRandomScheduler.hpp"
 #include "schedulers/DefaultScheduler.hpp"
 #include "schedulers/DeviceHierarchicalScheduler.hpp"
 #include "schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp"

@@ -6,9 +6,9 @@
 
 #include <random>
 
-#include "../SchedulerGenerator.hpp"
 #include "ClusterRandomScheduler.hpp"
-#include "HostHierarchicalScheduler.hpp"
+#include "scheduling/schedulers/HostHierarchicalScheduler.hpp"
+#include "scheduling/SchedulerGenerator.hpp"
 #include "system/RuntimeInfo.hpp"
 #include "tasks/Task.hpp"
 

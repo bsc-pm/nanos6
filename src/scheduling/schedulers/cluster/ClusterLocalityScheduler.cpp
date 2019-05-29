@@ -5,8 +5,8 @@
 */
 
 #include "ClusterLocalityScheduler.hpp"
-#include "HostHierarchicalScheduler.hpp"
 #include "memory/directory/Directory.hpp"
+#include "scheduling/schedulers/HostHierarchicalScheduler.hpp"
 #include "system/RuntimeInfo.hpp"
 #include "tasks/Task.hpp"
 
