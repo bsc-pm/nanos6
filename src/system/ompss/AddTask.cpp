@@ -87,8 +87,9 @@ void nanos6_create_task(
 		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else {
 		// Construct the Task object
-		new (task) Task(args_block, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
+		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
 	}
+	
 }
 
 
@@ -103,8 +104,11 @@ void nanos6_submit_task(void *taskHandle)
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	ComputePlace *computePlace = nullptr;
 	
-	if (currentWorkerThread != nullptr) {
-		assert(currentWorkerThread->getTask() != nullptr);
+	//! A WorkerThread might spawn a remote task through a polling service,
+	//! i.e. while not executing a Task already. So here, we need to check
+	//! both, if we are running from inside a WorkerThread as well as if
+	//! we are running a Task
+	if (currentWorkerThread != nullptr && currentWorkerThread->getTask() != nullptr) {
 		parent = currentWorkerThread->getTask();
 		assert(parent != nullptr);
 		

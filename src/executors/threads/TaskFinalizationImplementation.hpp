@@ -43,6 +43,8 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				Monitoring::taskFinished(task);
 				HardwareCounters::taskFinished(task);
 				
+				task->setComputePlace(nullptr);
+				
 				if (task->markAsReleased()) {
 					readyOrDisposable = true;
 				}

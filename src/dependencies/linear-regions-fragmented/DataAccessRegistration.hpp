@@ -43,10 +43,11 @@ namespace DataAccessRegistration {
 	
 	void releaseAccessRegion(
 		Task *task, DataAccessRegion region,
-		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
+		__attribute__((unused)) DataAccessType accessType,
+		__attribute__((unused)) bool weak,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData,
-		MemoryPlace *location = nullptr
+		MemoryPlace const *location = nullptr
 	);
 	
 	void unregisterTaskDataAccesses(
@@ -68,7 +69,7 @@ namespace DataAccessRegistration {
 	//! \param[in] location is not a nullptr if we have an update for the location of the region.
 	void propagateSatisfiability(
 		Task *task,
-		DataAccessRegion &region,
+		DataAccessRegion const &region,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData,
 		bool readSatisfied,
@@ -114,6 +115,28 @@ namespace DataAccessRegistration {
 	//! \returns false if the traversal was stopped before finishing
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
+	
+	//! \brief Register a region as a NO_ACCESS_TYPE access within the Task
+	//!
+	//! This is meant to be used for registering a new DataAccess that
+	//! represents a new memory allocation in the context of a task. This
+	//! way we can keep track of the location of that region in situations
+	//! that we loose all information about it, e.g. after a taskwait
+	//!
+	//! \param[in] task is the Task that registers the access region
+	//! \param[in] region is the DataAccessRegion being registered
+	void registerLocalAccess(Task *task, DataAccessRegion const &region);
+	
+	//! \brief Unregister a local region from the accesses of the Task
+	//!
+	//! This is meant to be used for unregistering a DataAccess with
+	//! NO_ACCESS_TYPE that was previously registered calling
+	//! 'registerLocalAccess', when we are done with this region, i.e. the
+	//! corresponging memory has been deallocated.
+	//!
+	//! \param[in] task is the Task that region is registerd to
+	//! \param[in] region is the DataAccessRegion being unregistered
+	void unregisterLocalAccess(Task *task, DataAccessRegion const &region);
 }
 
 
