@@ -745,6 +745,7 @@ noinst_HEADERS = \
 	src/executors/workflow/ExecutionWorkflow.hpp \
 	src/executors/workflow/ExecutionWorkflowHost.hpp \
 	src/executors/workflow/cluster/ExecutionWorkflowCluster.hpp \
+	src/executors/workflow/cluster/null/ExecutionWorkflowCluster.hpp \
 	src/executors/workflow/null/ExecutionStep.hpp \
 	src/executors/workflow/null/ExecutionWorkflow.hpp \
 	src/hardware/cluster/ClusterNode.hpp \
