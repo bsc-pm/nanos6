@@ -33,16 +33,16 @@ int nanos6_can_run_main()
 	return (*symbol)();
 }
 
-void nanos6_register_completion_callback()
+void nanos6_register_completion_callback(void (*callback_function)(void *), void *callback_args)
 {
-	typedef void nanos6_register_completion_callback_t();
+	typedef void nanos6_register_completion_callback_t(void (*)(void *), void *);
 	
 	static nanos6_register_completion_callback_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
 		symbol = (nanos6_register_completion_callback_t *) _nanos6_resolve_symbol("nanos6_register_completion_callback", "essential", NULL);
 	}
 	
-	(*symbol)();
+	(*symbol)(callback_function, callback_args);
 }
 
 void nanos6_init()
