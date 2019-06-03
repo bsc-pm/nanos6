@@ -51,7 +51,10 @@ private:
 		);
 
 #endif
-		numa_setlocal_memory(_curMemoryChunk, _globalAllocSize);
+		if (numa_available() != -1) {
+			numa_setlocal_memory(_curMemoryChunk, _globalAllocSize);
+		}
+		
 		_oldMemoryChunks.push_back(_curMemoryChunk);
 	}
 
