@@ -60,10 +60,10 @@ void nanos6_wait_for_full_initialization(void);
 unsigned int nanos6_get_num_cpus(void);
 
 //! \brief get the operating system assigned identifier of the CPU where the call to this function originated
-long nanos6_get_current_system_cpu();
+long nanos6_get_current_system_cpu(void);
 
 //! \brief get a CPU identifier assigned to the CPU where the call to this function originated that starts from 0 up to nanos6_get_num_cpus(void)-1
-unsigned int nanos6_get_current_virtual_cpu();
+unsigned int nanos6_get_current_virtual_cpu(void);
 
 //! \brief enable a previously stopped CPU
 void nanos6_enable_cpu(long systemCPUId);

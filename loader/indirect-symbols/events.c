@@ -9,9 +9,9 @@
 
 #pragma GCC visibility push(default)
 
-void *nanos6_get_current_event_counter()
+void *nanos6_get_current_event_counter(void)
 {
-	typedef void *nanos6_get_current_event_counter_t();
+	typedef void *nanos6_get_current_event_counter_t(void);
 	
 	static nanos6_get_current_event_counter_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {

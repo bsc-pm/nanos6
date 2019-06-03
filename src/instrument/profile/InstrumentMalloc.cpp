@@ -189,7 +189,7 @@ extern "C" void nanos6_memory_allocation_interception_init(
 }
 
 
-extern "C" void nanos6_memory_allocation_interception_postinit()
+extern "C" void nanos6_memory_allocation_interception_postinit(void)
 {
 	_nonTlsAllocationCaller = nullptr;
 	_tlsAllocationCaller = nullptr;
@@ -206,7 +206,7 @@ extern "C" void nanos6_memory_allocation_interception_postinit()
 }
 
 
-extern "C" void nanos6_memory_allocation_interception_fini()
+extern "C" void nanos6_memory_allocation_interception_fini(void)
 {
 }
 

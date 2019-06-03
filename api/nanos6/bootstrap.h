@@ -79,10 +79,10 @@ void nanos6_memory_allocation_interception_init(
 );
 
 //! \brief Second phase of the memory interception initialization after it has been enabled
-void nanos6_memory_allocation_interception_postinit();
+void nanos6_memory_allocation_interception_postinit(void);
 
 // The following function is called so that the runtime can prepare for library unloading
-void nanos6_memory_allocation_interception_fini();
+void nanos6_memory_allocation_interception_fini(void);
 
 
 #ifdef __cplusplus

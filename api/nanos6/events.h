@@ -27,7 +27,7 @@ extern "C" {
 //!
 //! \returns the associated event counter with the executing task
 //!
-void *nanos6_get_current_event_counter();
+void *nanos6_get_current_event_counter(void);
 
 //! \brief Increase the counter of events of the current task to prevent the release of dependencies
 //!

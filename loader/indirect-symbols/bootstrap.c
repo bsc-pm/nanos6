@@ -9,9 +9,9 @@
 
 #pragma GCC visibility push(default)
 
-void nanos6_preinit()
+void nanos6_preinit(void)
 {
-	typedef void nanos6_preinit_t();
+	typedef void nanos6_preinit_t(void);
 	
 	static nanos6_preinit_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -21,9 +21,9 @@ void nanos6_preinit()
 	(*symbol)();
 }
 
-int nanos6_can_run_main()
+int nanos6_can_run_main(void)
 {
-	typedef int nanos6_can_run_main_t();
+	typedef int nanos6_can_run_main_t(void);
 	
 	static nanos6_can_run_main_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -45,9 +45,9 @@ void nanos6_register_completion_callback(void (*callback_function)(void *), void
 	(*symbol)(callback_function, callback_args);
 }
 
-void nanos6_init()
+void nanos6_init(void)
 {
-	typedef void nanos6_init_t();
+	typedef void nanos6_init_t(void);
 	
 	static nanos6_init_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -58,9 +58,9 @@ void nanos6_init()
 }
 
 
-void nanos6_shutdown()
+void nanos6_shutdown(void)
 {
-	typedef void nanos6_shutdown_t();
+	typedef void nanos6_shutdown_t(void);
 	
 	static nanos6_shutdown_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {

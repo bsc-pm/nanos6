@@ -33,7 +33,7 @@ extern "C" {
 //! Once the handler has been used once in a call to nanos6_block_current_task
 //! and a call to nanos6_unblock_task, the handler is discarded and a new
 //! one must be obtained to perform another cycle of blocking and unblocking.
-void *nanos6_get_current_blocking_context();
+void *nanos6_get_current_blocking_context(void);
 
 //! \brief Block the current task
 //! 

@@ -9,7 +9,7 @@
 #include <Monitoring.hpp>
 
 
-extern "C" double nanos6_get_predicted_elapsed_time()
+extern "C" double nanos6_get_predicted_elapsed_time(void)
 {
 	return Monitoring::getPredictedElapsedTime();
 }

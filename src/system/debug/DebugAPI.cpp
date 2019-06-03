@@ -26,7 +26,7 @@ unsigned int nanos6_get_num_cpus(void)
 	return CPUManager::getTotalCPUs();
 }
 
-long nanos6_get_current_system_cpu()
+long nanos6_get_current_system_cpu(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	
@@ -37,7 +37,7 @@ long nanos6_get_current_system_cpu()
 	return currentCPU->_systemCPUId;
 }
 
-unsigned int nanos6_get_current_virtual_cpu()
+unsigned int nanos6_get_current_virtual_cpu(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	

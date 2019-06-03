@@ -10,9 +10,9 @@
 
 #pragma GCC visibility push(default)
 
-double nanos6_get_predicted_elapsed_time()
+double nanos6_get_predicted_elapsed_time(void)
 {
-	typedef double nanos6_get_predicted_elapsed_time_t();
+	typedef double nanos6_get_predicted_elapsed_time_t(void);
 	
 	static nanos6_get_predicted_elapsed_time_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {

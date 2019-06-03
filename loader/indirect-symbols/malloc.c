@@ -434,7 +434,7 @@ void nanos6_memory_allocation_interception_init(nanos6_memory_allocation_functio
 }
 
 
-void nanos6_memory_allocation_interception_postinit()
+void nanos6_memory_allocation_interception_postinit(void)
 {
 	void (*postinit_function)() = (void (*)()) dlsym(_nanos6_lib_handle, "nanos6_memory_allocation_interception_postinit");
 	if (postinit_function != NULL) {
@@ -443,7 +443,7 @@ void nanos6_memory_allocation_interception_postinit()
 }
 
 
-void nanos6_memory_allocation_interception_fini()
+void nanos6_memory_allocation_interception_fini(void)
 {
 	void (*fini_function)() = (void (*)()) dlsym(_nanos6_lib_handle, "nanos6_memory_allocation_interception_fini");
 	

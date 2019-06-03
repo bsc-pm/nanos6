@@ -9,9 +9,9 @@
 
 #pragma GCC visibility push(default)
 
-void *nanos6_get_current_blocking_context()
+void *nanos6_get_current_blocking_context(void)
 {
-	typedef void *nanos6_get_current_blocking_context_t();
+	typedef void *nanos6_get_current_blocking_context_t(void);
 	
 	static nanos6_get_current_blocking_context_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {

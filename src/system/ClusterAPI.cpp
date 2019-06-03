@@ -11,22 +11,22 @@
 #include <ClusterNode.hpp>
 
 
-extern "C" int nanos6_in_cluster_mode()
+extern "C" int nanos6_in_cluster_mode(void)
 {
 	return ClusterManager::inClusterMode();
 }
 
-extern "C" int nanos6_is_master_node()
+extern "C" int nanos6_is_master_node(void)
 {
 	return ClusterManager::isMasterNode();
 }
 
-extern "C" int nanos6_get_cluster_node_id()
+extern "C" int nanos6_get_cluster_node_id(void)
 {
 	return ClusterManager::getCurrentClusterNode()->getIndex();
 }
 
-extern "C" int nanos6_get_num_cluster_nodes()
+extern "C" int nanos6_get_num_cluster_nodes(void)
 {
 	return ClusterManager::clusterSize();
 }

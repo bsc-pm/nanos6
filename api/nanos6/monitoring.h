@@ -23,7 +23,7 @@ extern "C" {
 //! \brief Get a prediction of the elapsed execution time
 //! \return The predicted elapsed execution time (microseconds) or 0
 //! if not available
-double nanos6_get_predicted_elapsed_time();
+double nanos6_get_predicted_elapsed_time(void);
 
 #ifdef __cplusplus
 }

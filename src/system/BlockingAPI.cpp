@@ -20,7 +20,7 @@
 #include <Monitoring.hpp>
 
 
-extern "C" void *nanos6_get_current_blocking_context()
+extern "C" void *nanos6_get_current_blocking_context(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);

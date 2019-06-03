@@ -8,9 +8,9 @@
 
 #pragma GCC visibility push(default)
 
-int nanos6_in_cluster_mode()
+int nanos6_in_cluster_mode(void)
 {
-	typedef int nanos6_in_cluster_mode_t();
+	typedef int nanos6_in_cluster_mode_t(void);
 	
 	static nanos6_in_cluster_mode_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -21,9 +21,9 @@ int nanos6_in_cluster_mode()
 	return (*symbol)();
 }
 
-int nanos6_is_master_node()
+int nanos6_is_master_node(void)
 {
-	typedef int nanos6_is_master_node_t();
+	typedef int nanos6_is_master_node_t(void);
 	
 	static nanos6_is_master_node_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -34,9 +34,9 @@ int nanos6_is_master_node()
 	return (*symbol)();
 }
 
-int nanos6_get_cluster_node_id()
+int nanos6_get_cluster_node_id(void)
 {
-	typedef int nanos6_get_cluster_node_id_t();
+	typedef int nanos6_get_cluster_node_id_t(void);
 	
 	static nanos6_get_cluster_node_id_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -47,9 +47,9 @@ int nanos6_get_cluster_node_id()
 	return (*symbol)();
 }
 
-int nanos6_get_num_cluster_nodes()
+int nanos6_get_num_cluster_nodes(void)
 {
-	typedef int nanos6_get_num_cluster_nodes_t();
+	typedef int nanos6_get_num_cluster_nodes_t(void);
 	
 	static nanos6_get_num_cluster_nodes_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {

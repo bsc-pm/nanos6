@@ -19,7 +19,7 @@
 #include <Monitoring.hpp>
 
 
-extern "C" void *nanos6_get_current_event_counter()
+extern "C" void *nanos6_get_current_event_counter(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);

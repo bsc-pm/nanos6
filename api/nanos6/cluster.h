@@ -35,23 +35,23 @@ typedef enum {
 //! \brief Determine whether we are on cluster mode
 //!
 //! \returns true if we are on cluster mode
-int nanos6_in_cluster_mode();
+int nanos6_in_cluster_mode(void);
 
 //! \brief Determine whether current node is the master node
 //!
 //! \returns true if the current node is the master node,
 //! otherwise it returns false
-int nanos6_is_master_node();
+int nanos6_is_master_node(void);
 
 //! \brief Get the id of the current cluster node
 //!
 //! \returns the id of the current cluster node
-int nanos6_get_cluster_node_id();
+int nanos6_get_cluster_node_id(void);
 
 //! \brief Get the number of cluster nodes
 //!
 //! \returns the number of cluster nodes
-int nanos6_get_num_cluster_nodes();
+int nanos6_get_num_cluster_nodes(void);
 
 //! \brief Allocate distributed memory
 //!

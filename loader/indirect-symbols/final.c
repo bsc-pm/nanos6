@@ -12,7 +12,7 @@
 static signed int signed_int_always_false(void) { return 0; }
 signed int nanos6_in_final(void)
 {
-	typedef signed int nanos6_in_final_t();
+	typedef signed int nanos6_in_final_t(void);
 	
 	static nanos6_in_final_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -24,7 +24,7 @@ signed int nanos6_in_final(void)
 
 signed int nanos6_in_serial_context(void)
 {
-	typedef signed int nanos6_in_serial_context_t();
+	typedef signed int nanos6_in_serial_context_t(void);
 	
 	static nanos6_in_serial_context_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {

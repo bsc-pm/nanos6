@@ -10,9 +10,9 @@
 
 #pragma GCC visibility push(default)
 
-long nanos6_get_current_system_cpu()
+long nanos6_get_current_system_cpu(void)
 {
-	typedef long nanos6_get_current_system_cpu_t();
+	typedef long nanos6_get_current_system_cpu_t(void);
 	
 	static nanos6_get_current_system_cpu_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
@@ -23,9 +23,9 @@ long nanos6_get_current_system_cpu()
 }
 
 
-unsigned int nanos6_get_current_virtual_cpu()
+unsigned int nanos6_get_current_virtual_cpu(void)
 {
-	typedef unsigned int nanos6_get_current_virtual_cpu_t();
+	typedef unsigned int nanos6_get_current_virtual_cpu_t(void);
 	
 	static nanos6_get_current_virtual_cpu_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {

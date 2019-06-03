@@ -13,7 +13,7 @@
 #include <nanos6/library-mode.h>
 
 
-__attribute__ ((used)) char const * nanos6_library_mode_init()
+__attribute__ ((used)) char const * nanos6_library_mode_init(void)
 {
 	if (nanos6_check_api_versions(&__user_code_expected_nanos6_api_versions) != 1) {
 		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "This executable was compiled for a different version of Nanos6.");
