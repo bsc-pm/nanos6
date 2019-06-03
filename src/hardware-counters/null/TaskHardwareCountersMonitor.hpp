@@ -7,6 +7,8 @@
 #ifndef NULL_TASK_HARDWARE_COUNTERS_MONITOR_HPP
 #define NULL_TASK_HARDWARE_COUNTERS_MONITOR_HPP
 
+#include "hardware-counters/SupportedHardwareCounters.hpp"
+
 
 class TaskHardwareCountersMonitor {
 
