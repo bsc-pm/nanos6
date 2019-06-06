@@ -770,6 +770,7 @@ noinst_HEADERS = \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
 	src/hardware-counters/null/HardwareCounters.hpp \
 	src/hardware-counters/null/TaskHardwareCounters.hpp \
+	src/hardware-counters/null/TaskHardwareCountersMonitor.hpp \
 	src/hardware-counters/null/TaskHardwareCountersPredictions.hpp \
 	src/hardware-counters/null/ThreadHardwareCounters.hpp \
 	src/hardware-counters/pqos/HardwareCounters.hpp \
