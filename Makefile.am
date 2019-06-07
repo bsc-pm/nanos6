@@ -695,6 +695,7 @@ noinst_HEADERS = \
 	src/cluster/null/ClusterManager.hpp \
 	src/cluster/null/ClusterMemoryManagement.hpp \
 	src/cluster/offloading/ClusterTaskContext.hpp \
+	src/cluster/offloading/SatisfiabilityInfo.hpp \
 	src/cluster/offloading/TaskOffloading.hpp \
 	src/cluster/offloading/null/ClusterTaskContext.hpp \
 	src/cluster/polling-services/ClusterPollingServices.hpp \
