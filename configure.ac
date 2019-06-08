@@ -304,8 +304,8 @@ else
 	fi
 fi
 
-AM_CONDITIONAL([USE_EXEC_WORKFLOW], [test x${ac_use_workflow} = x"yes"])
-if test x"{ac_use_workflow}" = x"yes" ; then
+AM_CONDITIONAL([USE_EXEC_WORKFLOW], [test x"${ac_use_workflow}" = x"yes"])
+if test x"${ac_use_workflow}" = x"yes" ; then
 	AC_DEFINE([USE_EXEC_WORKFLOW], [1], [Define if Execution Workflow feature is enabled.])
 fi
 
