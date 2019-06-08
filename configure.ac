@@ -266,7 +266,12 @@ if test x"${ac_use_cuda}" = x"yes" ; then
 fi
 
 # Check support for Cluster
-AC_ARG_ENABLE([cluster], [AS_HELP_STRING([--enable-cluster], [Enable OmpSs@Cluster support])])
+AC_ARG_ENABLE([cluster],
+	[AS_HELP_STRING([--enable-cluster],
+		[Enable OmpSs@Cluster support. This requires an MPI version that
+		 supports MPI_THREAD_MULTIPLE to be present in your environment.
+		 It implies --enable-execution-workflow])
+	])
 
 if test x"${enable_cluster}" = x"yes" ; then
 	ac_use_cluster=yes
@@ -289,11 +294,18 @@ AC_ARG_ENABLE(
 if test x"${enable_execution_workflow}" = x"yes" ; then
 	ac_use_workflow=yes
 else
-	ac_use_workflow=no
+	# We need to check whether any of the devices that use
+	# the workflow are enabled. The check for enabling these devices
+	# or not *NEEDS* to appear before these checks
+	if test x"${ac_use_cluster}" = x"yes" ; then
+		ac_use_workflow=yes
+	else
+		ac_use_workflow=no
+	fi
 fi
 
-AM_CONDITIONAL([USE_EXEC_WORKFLOW], [test x${ac_use_workflow} = x"yes"])
-if test x"{ac_cv_use_workflow}" = x"yes" ; then
+AM_CONDITIONAL([USE_EXEC_WORKFLOW], [test x"${ac_use_workflow}" = x"yes"])
+if test x"${ac_use_workflow}" = x"yes" ; then
 	AC_DEFINE([USE_EXEC_WORKFLOW], [1], [Define if Execution Workflow feature is enabled.])
 fi
 
