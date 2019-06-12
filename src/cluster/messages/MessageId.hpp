@@ -12,15 +12,7 @@
 namespace MessageId {
 	
 	//! \brief Get the next available MessageId
-	uint16_t nextMessageId()
-	{
-		static std::atomic<uint16_t> _nextMessageId(0);
-		
-		uint16_t ret = _nextMessageId++;
-		assert(ret != UINT16_MAX);
-		
-		return ret;
-	}
+	uint16_t nextMessageId();
 }
 
 #endif /* MESSAGE_ID_HPP */

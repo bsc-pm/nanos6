@@ -388,6 +388,7 @@ cluster_sources += \
 	src/cluster/messages/MessageDataSend.cpp \
 	src/cluster/messages/MessageDfree.cpp \
 	src/cluster/messages/MessageDmalloc.cpp \
+	src/cluster/messages/MessageId.cpp \
 	src/cluster/messages/MessageReleaseAccess.cpp \
 	src/cluster/messages/MessageSatisfiability.cpp \
 	src/cluster/messages/MessageSysFinish.cpp \
