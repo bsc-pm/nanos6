@@ -17,20 +17,36 @@
 
 
 struct OptionHelper {
+	enum retriever_t {
+		command_help = 0,
+		runtime_branch,
+		runtime_compiler_version,
+		runtime_compiler_flags,
+		runtime_copyright,
+		runtime_detailed_info,
+		runtime_full_license,
+		runtime_full_version,
+		runtime_license,
+		runtime_patches,
+		runtime_path,
+		runtime_version,
+		no_retriever
+	};
+
 	std::string _parameter;
 	std::string _helpMessage;
 	std::string _header;
-	char const * (*_retriever)();
+	retriever_t _retriever;
 	bool _enabledByDefault;
 	
 	OptionHelper()
-		: _retriever(0), _enabledByDefault(false)
+		: _retriever(OptionHelper::no_retriever), _enabledByDefault(false)
 	{
 	}
 	
 	OptionHelper(
 		std::string &parameter, std::string &helpMessage,
-		std::string &header, char const * (*retriever)(), bool enabledByDefault = false
+		std::string &header, retriever_t retriever, bool enabledByDefault = false
 	)
 		: _parameter(parameter), _helpMessage(helpMessage),
 		_header(header), _retriever(retriever),
@@ -40,7 +56,7 @@ struct OptionHelper {
 	
 	OptionHelper(
 		char const *parameter, char const *helpMessage,
-		char const *header, char const * (*retriever)(), bool enabledByDefault = false
+		char const *header, retriever_t retriever, bool enabledByDefault = false
 	)
 		: _parameter(parameter), _helpMessage(helpMessage),
 		_header(header), _retriever(retriever),
@@ -50,19 +66,21 @@ struct OptionHelper {
 	
 	bool empty() const
 	{
-		return (_retriever == 0);
+		return (_retriever == OptionHelper::no_retriever);
 	}
 	
 	void emit() const
 	{
 		if (!empty()) {
 			if (_header != "") {
-				std::cout << _header << " " << _retriever() << std::endl;
+				std::cout << _header << " " << retrieve(_retriever) << std::endl;
 			} else {
-				_retriever();
+				retrieve(_retriever);
 			}
 		}
 	}
+	
+	static char const *retrieve(retriever_t retriever);
 };
 
 
@@ -165,6 +183,37 @@ static char const *dumpRuntimeDetailedInfo()
 	return "";
 }
 
+char const *OptionHelper::retrieve(retriever_t retriever)
+{
+	switch (retriever) {
+		case command_help:
+			return emitHelp();
+		case runtime_branch:
+			return nanos6_get_runtime_branch();
+		case runtime_compiler_version:
+			return nanos6_get_runtime_compiler_version();
+		case runtime_compiler_flags:
+			return nanos6_get_runtime_compiler_flags();
+		case runtime_copyright:
+			return nanos6_get_runtime_copyright();
+		case runtime_detailed_info:
+			return dumpRuntimeDetailedInfo();
+		case runtime_full_license:
+			return nanos6_get_runtime_full_license();
+		case runtime_full_version:
+			return showFullVersion();
+		case runtime_license:
+			return nanos6_get_runtime_license();
+		case runtime_patches:
+			return dumpPatches();
+		case runtime_path:
+			return nanos6_get_runtime_path();
+		case runtime_version:
+			return nanos6_get_runtime_version();
+		default:
+			abort();
+	}
+}
 
 
 int main(int argc, char **argv)
@@ -178,23 +227,23 @@ int main(int argc, char **argv)
 	
 	commandName = argv[0];
 	
-	optionHelpers.push_back(OptionHelper("--help", "display this help message", "", emitHelp));
+	optionHelpers.push_back(OptionHelper("--help", "display this help message", "", OptionHelper::command_help));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--full-version", "display the full runtime version", "", showFullVersion, true));
-	optionHelpers.push_back(OptionHelper("--copyright", "display the copyright notice", "Copyright (C)", nanos6_get_runtime_copyright, true));
+	optionHelpers.push_back(OptionHelper("--full-version", "display the full runtime version", "", OptionHelper::runtime_full_version, true));
+	optionHelpers.push_back(OptionHelper("--copyright", "display the copyright notice", "Copyright (C)", OptionHelper::runtime_copyright, true));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--license", "display the license type", "Licensed as", nanos6_get_runtime_license, true));
-	optionHelpers.push_back(OptionHelper("--full-license", "display the license terms", "Licensing terms:\n", nanos6_get_runtime_full_license));
+	optionHelpers.push_back(OptionHelper("--license", "display the license type", "Licensed as", OptionHelper::runtime_license, true));
+	optionHelpers.push_back(OptionHelper("--full-license", "display the license terms", "Licensing terms:\n", OptionHelper::runtime_full_license));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--version", "display the runtime version", "Nanos6 version", nanos6_get_runtime_version));
-	optionHelpers.push_back(OptionHelper("--branch", "display the runtime branch", "Nanos6 branch", nanos6_get_runtime_branch));
+	optionHelpers.push_back(OptionHelper("--version", "display the runtime version", "Nanos6 version", OptionHelper::runtime_version));
+	optionHelpers.push_back(OptionHelper("--branch", "display the runtime branch", "Nanos6 branch", OptionHelper::runtime_branch));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--runtime-compiler", "display the compiler used for this runtime", "Compiled with", nanos6_get_runtime_compiler_version));
-	optionHelpers.push_back(OptionHelper("--runtime-compiler-flags", "display the compiler flags used for this runtime", "Compilation flags", nanos6_get_runtime_compiler_flags));
-	optionHelpers.push_back(OptionHelper("--runtime-path", "display the path of the loaded runtime", "Runtime path", nanos6_get_runtime_path));
+	optionHelpers.push_back(OptionHelper("--runtime-compiler", "display the compiler used for this runtime", "Compiled with", OptionHelper::runtime_compiler_version));
+	optionHelpers.push_back(OptionHelper("--runtime-compiler-flags", "display the compiler flags used for this runtime", "Compilation flags", OptionHelper::runtime_compiler_flags));
+	optionHelpers.push_back(OptionHelper("--runtime-path", "display the path of the loaded runtime", "Runtime path", OptionHelper::runtime_path));
 	optionHelpers.push_back(OptionHelper());
-	optionHelpers.push_back(OptionHelper("--runtime-details", "display detailed runtime and execution environment information", "", dumpRuntimeDetailedInfo));
-	optionHelpers.push_back(OptionHelper("--dump-patches", "display code changes over the reported version", "", dumpPatches));
+	optionHelpers.push_back(OptionHelper("--runtime-details", "display detailed runtime and execution environment information", "", OptionHelper::runtime_detailed_info));
+	optionHelpers.push_back(OptionHelper("--dump-patches", "display code changes over the reported version", "", OptionHelper::runtime_patches));
 	
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
