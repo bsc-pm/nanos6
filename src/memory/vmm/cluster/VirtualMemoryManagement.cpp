@@ -5,10 +5,13 @@
 */
 
 #include <string>
+#include <cstdio>
+#include <cstring>
 #include <sys/mman.h>
 
 #include "VirtualMemoryManagement.hpp"
 #include "cluster/ClusterManager.hpp"
+#include "cluster/messages/MessageId.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/cluster/ClusterNode.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
@@ -17,11 +20,135 @@
 #include "memory/vmm/VirtualMemoryArea.hpp"
 #include "system/RuntimeInfo.hpp"
 
+#include <DataAccessRegion.hpp>
 #include <Directory.hpp>
 
 std::vector<VirtualMemoryAllocation *> VirtualMemoryManagement::_allocations;
 std::vector<VirtualMemoryArea *> VirtualMemoryManagement::_localNUMAVMA;
 VirtualMemoryArea *VirtualMemoryManagement::_genericVMA;
+
+
+//! \brief Returns a vector with all the mappings of the process
+//!
+//! It parses /proc/self/maps to find out all the current mappings of the
+//! process.
+//!
+//! \returns a vector of DataAccessRegion objects describing the mappings
+static std::vector<DataAccessRegion> findMappedRegions()
+{
+	std::vector<DataAccessRegion> maps;
+	const char *mappingsFile = "/proc/self/maps";
+	size_t len = 0;
+	char *line = NULL;
+	
+	FILE *fp = fopen(mappingsFile, "r");
+	assert(fp != NULL);
+	
+	ssize_t ret = getline(&line, &len, fp);
+	FatalErrorHandler::failIf(ret == -1, "Could not find virtual memory mappings");
+	
+	while (ret != -1) {
+		// First, we take the range which appears first to the line
+		// separated by a space with everything that follows
+		char *token = strtok(line, " ");
+		assert(token != NULL);
+		
+		// Then we need to split the range which is two hexadecimals
+		// separated by a '-'
+		token = strtok(token, "-");
+		void *startAddress = (void *)strtoll(token, NULL, 16);
+		token = strtok(NULL, "-");
+		void *endAddress = (void *)strtoll(token, NULL, 16);
+		
+		maps.emplace_back(startAddress, endAddress);
+		
+		// Read next line
+		ret = getline(&line, &len, fp);
+	}
+	
+	fclose(fp);
+	
+	return maps;
+}
+
+//! \brief Finds an memory region to map the Nanos6 region
+//!
+//! This finds the biggest common gap (region not currently mapped in the
+//! virtual address space) of all Nanos6 instances and returns it.
+//!
+//! \returns an available memory region to map Nanos6 memory, or an empty region
+//!          if none available
+static DataAccessRegion findSuitableMemoryRegion()
+{
+	std::vector<DataAccessRegion> maps = findMappedRegions();
+	size_t length = maps.size();
+	DataAccessRegion gap;
+	
+	//! Find the biggest gap locally
+	for (size_t i = 1; i < length; ++i) {
+		void *previousEnd = maps[i - 1].getEndAddress();
+		void *nextStart = maps[i].getStartAddress();
+		
+		DataAccessRegion region(previousEnd, nextStart);
+		if (region.getSize() > gap.getSize()) {
+			gap = region;
+		}
+	}
+	
+	//! If not in cluster mode, we are done here
+	if (!ClusterManager::inClusterMode()) {
+		return gap;
+	}
+	
+	int messageId = MessageId::nextMessageId();
+	if (ClusterManager::isMasterNode()) {
+		// Master node gathers all the gaps from all other nodes and
+		// calculates the intersection of all those.
+		DataAccessRegion remoteGap;
+		DataAccessRegion buffer(&remoteGap, sizeof(remoteGap));
+		
+		std::vector<ClusterNode *> const &nodes =
+			ClusterManager::getClusterNodes();
+		
+		for (ClusterNode *remote : nodes) {
+			if (remote == ClusterManager::getCurrentClusterNode()) {
+				continue;
+			}
+			
+			MemoryPlace *memoryNode = remote->getMemoryNode();
+			ClusterManager::fetchDataRaw(buffer, memoryNode,
+					messageId, true);
+			
+			gap = gap.intersect(remoteGap);
+		}
+		
+		// Finally, it send the common gap to all other nodes.
+		remoteGap = gap;
+		for (ClusterNode *remote : nodes) {
+			if (remote == ClusterManager::getCurrentClusterNode()) {
+				continue;
+			}
+			
+			MemoryPlace *memoryNode = remote->getMemoryNode();
+			ClusterManager::sendDataRaw(buffer, memoryNode,
+					messageId, true);
+		}
+	} else {
+		DataAccessRegion buffer(&gap, sizeof(gap));
+		ClusterNode *master = ClusterManager::getMasterNode();
+		MemoryPlace *masterMemory = master->getMemoryNode();
+		
+		// First send my local gap to master node
+		ClusterManager::sendDataRaw(buffer, masterMemory, messageId,
+				true);
+		
+		// Then receive the intersection of all gaps
+		ClusterManager::fetchDataRaw(buffer, masterMemory, messageId,
+				true);
+	}
+	
+	return gap;
+}
 
 void VirtualMemoryManagement::initialize()
 {
@@ -46,14 +173,12 @@ void VirtualMemoryManagement::initialize()
 	assert(localSize > 0);
 	localSize = ROUND_UP(localSize, HardwareInfo::getPageSize());
 	
-	/* At the moment we use as default value for start address 256MB,
-	 * because it seems to be working (lower values not always succeed).
-	 * TODO: Create a robust protocol that will reduce chances of
-	 * failing. */
-	EnvironmentVariable<void *> startAddress("NANOS6_VA_START", (void *)(2UL << 27));
-	void *address = startAddress.getValue();
-	
+	DataAccessRegion gap = findSuitableMemoryRegion();
+	void *address = gap.getStartAddress();
 	size_t size = distribSize + localSize * ClusterManager::clusterSize();
+	
+	FatalErrorHandler::failIf(gap.getSize() < size,
+				"Cannot allocate virtual memory region");
 	
 	_allocations.resize(1);
 	_allocations[0] = new VirtualMemoryAllocation(address, size);
