@@ -342,3 +342,9 @@ The Hardware Counters API is controlled further with the following environment v
 * `NANOS6_HARDWARE_COUNTERS_VERBOSE`: To enable/disable the verbose mode for hardware counter monitoring.
 * `NANOS6_HARDWARE_COUNTERS_VERBOSE_FILE`: To specify an output file name to report hardware counter statistics.
 
+
+## Cluster support
+
+In order to enable OmpSs-2@Cluster support, you need a working MPI installation in your environment that supports multithreading, i.e. `MPI_THREAD_MULTIPLE`.
+Nanos6 needs to be configured with the `--enable-cluster` flag.
+For more information, on how to write and run cluster applications see [README-CLUSTER.md](docs/cluster/README-CLUSTER.md).
