@@ -60,6 +60,14 @@ static std::vector<DataAccessRegion> findMappedRegions()
 		token = strtok(NULL, "-");
 		void *endAddress = (void *)strtoll(token, NULL, 16);
 		
+		// The lower-end of the canonical virtual addresses finish
+		// at the 2^47 limit. The upper-end of the canonical addresses
+		// are normally used by the linux kernel. So we don't want to
+		// look there.
+		if ((size_t)endAddress >= (1UL << 47)) {
+			break;
+		}
+		
 		maps.emplace_back(startAddress, endAddress);
 		
 		// Read next line
