@@ -13,7 +13,7 @@ Local memory is cluster-capable memory that is allocated on a single node and ca
 Nanos6 uses local memory in for the stack frames of the worker threads executing tasks. Moreover, user applications can allocate local memory through the
 following API:
 
-```C
+```c
 //! Allocate local memory
 //!
 //! \param[in] size is the size (in bytes) of local memory to allocate
@@ -30,7 +30,7 @@ void nanos6_lfree(void *ptr, size_t size);
 
 and example of valid usage of local memory:
 
-```C
+```c
 
 ...
 
@@ -58,7 +58,7 @@ Distributed memory, is cluster-capable memory that is allocated collectively acr
 only through sub-tasks of the task that allocated it. When allocating distributed memory the user application can define a *distribution policy*. This policy
 is meant to pass to the runtime hints regarding the pattern with which the application will access allocated buffer. The allocation API is the following:
 
-```C
+```c
 /* Distributed memory API */
 
 //! \brief Allocate distributed memory
@@ -89,7 +89,7 @@ nodes. In future releases, we plan to add additional distribution policies, matc
 
 Here is a  example of how distributed memory should be allocated and used:
 
-```C
+```c
 int *distributed_array =
 	nanos6_dmalloc(1024 * sizeof(int), nanos6_equpart_distribution,
 		// These arguments are not used by the nanos6_equpart_distribution
