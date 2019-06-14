@@ -28,32 +28,92 @@ std::vector<size_t> CPUManager::_systemToVirtualCPUId;
 
 
 namespace cpumanager_internals {
-	static inline std::string maskToRegionList(boost::dynamic_bitset<> const &mask, size_t size)
+	static inline std::string maskToRegionList(boost::dynamic_bitset<> const &mask, std::vector<CPU *> const &cpus)
 	{
 		std::ostringstream oss;
 		
-		int start = -1;
+		int start = 0;
 		int end = -1;
 		bool first = true;
-		for (size_t i = 0; i < size + 1; i++) {
-			if ((i < size) && mask[i]) {
-				if (start == -1) {
+		for (size_t virtualCPUId = 0; virtualCPUId < mask.size()+1; virtualCPUId++) {
+			size_t systemCPUId = ~0UL;
+			
+			CPU *cpu = nullptr;
+			if (virtualCPUId < mask.size()) {
+				cpu = cpus[virtualCPUId];
+			}
+			
+			if (cpu != nullptr) {
+				systemCPUId = cpu->_systemCPUId;
+			}
+			
+			if ((virtualCPUId < mask.size()) && mask[virtualCPUId]) {
+				if (end >= start) {
+					// Valid region: extend
+					end = systemCPUId;
+				} else {
+					// Invalid region: start
+					start = systemCPUId;
+					end = systemCPUId;
+				}
+			} else {
+				if (end >= start) {
+					// Valid region: emit and invalidate
+					if (first) {
+						first = false;
+					} else {
+						oss << ",";
+					}
+					if (end == start) {
+						oss << start;
+					} else {
+						oss << start << "-" << end;
+					}
+					end = -1;
+				} else {
+					// Invalid region: do nothing
+				}
+			}
+		}
+		
+		return oss.str();
+	}
+	
+	
+	static inline std::string maskToRegionList(cpu_set_t const &mask, size_t size)
+	{
+		std::ostringstream oss;
+		
+		int start = 0;
+		int end = -1;
+		bool first = true;
+		for (size_t i = 0; i < size+1; i++) {
+			if ((i < size) && CPU_ISSET(i, &mask)) {
+				if (end >= start) {
+					// Valid region: extend
+					end = i;
+				} else {
+					// Invalid region: start
 					start = i;
+					end = i;
 				}
-				end = i;
-			} else if (end >= 0) {
-				if (first) {
-					first = false;
+			} else {
+				if (end >= start) {
+					// Valid region: emit and invalidate
+					if (first) {
+						first = false;
+					} else {
+						oss << ",";
+					}
+					if (end == start) {
+						oss << start;
+					} else {
+						oss << start << "-" << end;
+					}
+					end = -1;
 				} else {
-					oss << ",";
+					// Invalid region: do nothing
 				}
-				if (end == start) {
-					oss << start;
-				} else {
-					oss << start << "-" << end;
-				}
-				start = -1;
-				end = -1;
 			}
 		}
 		
@@ -89,13 +149,8 @@ void CPUManager::preinitialize()
 	_cpus.resize(cpus.size());
 	_systemToVirtualCPUId.resize(maxSystemCPUId+1);
 	
-	// Structures used for runtime information
-	boost::dynamic_bitset<> processCPUBitset(cpus.size());
-	std::vector<boost::dynamic_bitset<>> NUMANodeSystemMask(_NUMANodeMask.size());
-	
 	for (size_t i = 0; i < _NUMANodeMask.size(); ++i) {
 		_NUMANodeMask[i].resize(cpus.size());
-		NUMANodeSystemMask[i].resize(cpus.size());
 	}
 	
 	for (size_t i = 0; i < cpus.size(); ++i) {
@@ -108,9 +163,6 @@ void CPUManager::preinitialize()
 			_cpus[virtualCPUId] = cpu;
 			++_totalCPUs;
 			_NUMANodeMask[cpu->_NUMANodeId][virtualCPUId] = true;
-			
-			processCPUBitset[i] = true;
-			NUMANodeSystemMask[cpu->_NUMANodeId][cpu->_systemCPUId] = true;
 		} else {
 			virtualCPUId = (size_t) ~0UL;
 			cpu->_virtualCPUId = virtualCPUId;
@@ -118,13 +170,13 @@ void CPUManager::preinitialize()
 		_systemToVirtualCPUId[cpu->_systemCPUId] = cpu->_virtualCPUId;
 	}
 	
-	RuntimeInfo::addEntry("initial_cpu_list", "Initial CPU List", cpumanager_internals::maskToRegionList(processCPUBitset, cpus.size()));
-	for (size_t i = 0; i < NUMANodeSystemMask.size(); ++i) {
+	RuntimeInfo::addEntry("initial_cpu_list", "Initial CPU List", cpumanager_internals::maskToRegionList(processCPUMask, cpus.size()));
+	for (size_t i = 0; i < _NUMANodeMask.size(); ++i) {
 		std::ostringstream oss, oss2;
 		
 		oss << "numa_node_" << i << "_cpu_list";
 		oss2 << "NUMA Node " << i << " CPU List";
-		std::string cpuRegionList = cpumanager_internals::maskToRegionList(NUMANodeSystemMask[i], cpus.size());
+		std::string cpuRegionList = cpumanager_internals::maskToRegionList(_NUMANodeMask[i], _cpus);
 		
 		RuntimeInfo::addEntry(oss.str(), oss2.str(), cpuRegionList);
 	}
