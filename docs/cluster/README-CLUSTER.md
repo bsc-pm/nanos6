@@ -126,6 +126,16 @@ printf("%d\n", distributed_array[0]);
 nanos6_dfree(distributed_array, 1024 * sizeof(int));
 ```
 
+Nanos6 allows users to manage the size of the local and distributed memory regions, by means of setting environment variables.
+The two environment variables of interest are `NANOS6_LOCAL_MEMORY` and `NANOS6_DISTRIBUTED_MEMORY`, which can be set to size values like:
+
+```sh
+export NANOS6_LOCAL_MEMORY=2GB
+export NANOS6_DISTRIBUTED_MEMORY=120GB
+```
+
+Notice: Nanos6 will allocate the sum of these variables on all instances of the runtime in a clustered execution. This might require the
+user to set accordingly the *overcommit* settings of the platform. Take a look at the [System Requirements](#system-requirements) section.
 
 ## Data-flow semantics
 
@@ -193,4 +203,19 @@ scheduler. For example, a SLURM job script could look like:
 
 export NANOS6_COMMUNICATION=mpi-2sided
 srun ./your_ompss_cluster_app args...
+```
+
+### System requirements
+
+At the moment, cluster execution requires the system to have disabled the address randomization feature. Moreover, depending on the total address space the
+application needs to manage, i.e. `NANOS6_LOCAL_MEMORY` and `NANOS6_DISTRIBUTED_MEMORY` you might need to change the memory overcommit feature of your kernel.
+
+These configurations can be done on a Linux system like this:
+
+```sh
+# Disable address randomization
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+
+# Always allow memory overcommit
+echo 1 | sudo tee /proc/sys/vm/overcommit_memory
 ```
