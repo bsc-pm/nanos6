@@ -1,50 +1,43 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CLUSTER_RANDOM_SCHEDULER_HPP
 #define CLUSTER_RANDOM_SCHEDULER_HPP
 
 #include "scheduling/SchedulerInterface.hpp"
+#include "system/RuntimeInfo.hpp"
 
+#include <ClusterManager.hpp>
 
-class Task;
-class ClusterNode;
-
-
-class ClusterRandomScheduler: public SchedulerInterface {
-	SchedulerInterface *_hostScheduler;
+class ClusterRandomScheduler : public SchedulerInterface {
+	//! Current cluster node
 	ClusterNode *_thisNode;
+	
+	//! Number of cluster nodes
 	int _clusterSize;
 	
 public:
-	ClusterRandomScheduler();
-	~ClusterRandomScheduler();
-	
-	ComputePlace *addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint, bool doGetIdle = true);
-	
-	Task *getReadyTask(ComputePlace *hardwarePlace, Task *currentTask = nullptr, bool canMarkAsIdle = true, bool doWait = false);
-	
-	ComputePlace *getIdleComputePlace(bool force=false);
-	
-	void disableComputePlace(ComputePlace *hardwarePlace);
-	
-	void enableComputePlace(ComputePlace *hardwarePlace);
-	
-	bool requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
-	
-	bool releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot);
-	
-	std::string getName() const;
-	
-	static inline bool canBeCollapsed()
+	ClusterRandomScheduler()
 	{
-		return true;
+		RuntimeInfo::addEntry("cluster-scheduler", "Cluster Scheduler", getName());
+		_thisNode = ClusterManager::getCurrentClusterNode();
+		_clusterSize = ClusterManager::clusterSize();
+	}
+	
+	~ClusterRandomScheduler()
+	{
+	}
+	
+	void addReadyTask(Task *task, ComputePlace *computePlace,
+			ReadyTaskHint hint = NO_HINT);
+	
+	inline std::string getName() const
+	{
+		return "ClusterRandomScheduler";
 	}
 };
 
-
 #endif // CLUSTER_RANDOM_SCHEDULER_HPP
-
