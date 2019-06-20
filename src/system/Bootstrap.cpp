@@ -98,8 +98,8 @@ void nanos6_preinit(void) {
 	RuntimeInfoEssentials::initialize();
 	HardwareInfo::initialize();
 	ClusterManager::initialize();
-	MemoryAllocator::initialize();
 	CPUManager::preinitialize();
+	MemoryAllocator::initialize();
 	Scheduler::initialize();
 	ExternalThreadGroup::initialize();
 	

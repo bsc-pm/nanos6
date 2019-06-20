@@ -57,7 +57,7 @@ protected:
 	
 	inline void start()
 	{
-		KernelLevelThread::start(&_cpu->_pthreadAttr);
+		KernelLevelThread::start(_cpu->getPthreadAttr());
 	}
 	
 	
@@ -87,7 +87,7 @@ public:
 	
 	inline int getCpuId()
 	{
-		return _cpu->_systemCPUId;
+		return _cpu->getSystemCPUId();
 	}
 	
 	//! \brief get the hardware place currently assigned

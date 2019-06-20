@@ -40,7 +40,7 @@ void *nanos6_get_reduction_storage1(void *original,
 	long int slotIndex = -1;
 	
 	CPU *currentCPU = currentThread->getComputePlace();
-	size_t cpuId = currentCPU->_virtualCPUId;
+	size_t cpuId = currentCPU->getIndex();
 	
 	TaskDataAccesses &taskAccesses =
 		task->isTaskloop() ? task->getParent()->getDataAccesses() : task->getDataAccesses();

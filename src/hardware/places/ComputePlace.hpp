@@ -61,6 +61,11 @@ public:
 		return _index; 
 	} 
 
+	inline void setIndex(int index)
+	{
+		_index = index;
+	}
+
 	inline nanos6_device_t getType() 
 	{
 		return _type;

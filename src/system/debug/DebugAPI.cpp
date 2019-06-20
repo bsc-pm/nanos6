@@ -34,7 +34,7 @@ long nanos6_get_current_system_cpu(void)
 	CPU *currentCPU = currentThread->getComputePlace();
 	
 	assert(currentCPU != 0);
-	return currentCPU->_systemCPUId;
+	return currentCPU->getSystemCPUId();
 }
 
 unsigned int nanos6_get_current_virtual_cpu(void)
@@ -48,7 +48,7 @@ unsigned int nanos6_get_current_virtual_cpu(void)
 	CPU *currentCPU = currentThread->getComputePlace();
 	assert(currentCPU != 0);
 	
-	return currentCPU->_virtualCPUId;
+	return currentCPU->getIndex();
 }
 
 void nanos6_enable_cpu(long systemCPUId)
@@ -67,7 +67,7 @@ nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 	CPU *cpu = CPUManager::getCPU(systemCPUId);
 	
 	assert(cpu != 0);
-	switch (cpu->_activationStatus.load()) {
+	switch (cpu->getActivationStatus().load()) {
 		//TODO: FIXME: IS THIS CORRECT? Just introduced to fix a compilation warning.
 		case CPU::uninitialized_status:
 			return nanos6_disabled_cpu; 
@@ -111,7 +111,7 @@ long nanos6_get_system_cpu_of_task(void *taskHandle)
 	CPU *cpu = thread->getComputePlace();
 	
 	assert(cpu != 0);
-	return cpu->_systemCPUId;
+	return cpu->getSystemCPUId();
 }
 #endif
 
@@ -135,7 +135,7 @@ static void *nanos6_cpus_skip_uninitialized(void *cpuIterator) {
 		
 		CPU *cpu = *(*itp);
 		
-		if ((cpu != 0) && (cpu->_activationStatus != CPU::uninitialized_status)) {
+		if ((cpu != 0) && (cpu->getActivationStatus() != CPU::uninitialized_status)) {
 			return itp;
 		}
 		
@@ -181,7 +181,7 @@ long nanos6_cpus_get(void *cpuIterator)
 	CPU *cpu = *(*it);
 	assert(cpu != 0);
 	
-	return cpu->_systemCPUId;
+	return cpu->getSystemCPUId();
 }
 
 long nanos6_cpus_get_virtual(void *cpuIterator)
@@ -192,7 +192,7 @@ long nanos6_cpus_get_virtual(void *cpuIterator)
 	CPU *cpu = *(*it);
 	assert(cpu != 0);
 	
-	return cpu->_virtualCPUId;
+	return cpu->getIndex();
 }
 
 

@@ -2330,7 +2330,7 @@ namespace DataAccessRegistration {
 			ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
 			assert(reductionInfo != nullptr);
 			
-			reductionInfo->releaseSlotsInUse(cpu->_virtualCPUId);
+			reductionInfo->releaseSlotsInUse(cpu->getIndex());
 		}
 	}
 	

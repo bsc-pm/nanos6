@@ -65,7 +65,7 @@ void Taskloop::run(Taskloop &source)
 	
 	// Get the path of partitions to vist
 	std::vector<int> partitionPath;
-	getPartitionPath(currentCPU->_virtualCPUId, partitionPath);
+	getPartitionPath(currentCPU->getIndex(), partitionPath);
 	
 	// Get the initial partition identifier
 	int partitionId = partitionPath[0];

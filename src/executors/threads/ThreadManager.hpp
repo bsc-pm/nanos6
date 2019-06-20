@@ -117,7 +117,7 @@ inline WorkerThread *ThreadManager::getIdleThread(CPU *cpu, bool doNotCreate)
 	
 	// Try to recycle an idle thread
 	{
-		IdleThreads &idleThreads = _idleThreads[cpu->_NUMANodeId];
+		IdleThreads &idleThreads = _idleThreads[cpu->getNumaNodeId()];
 		
 		std::lock_guard<SpinLock> guard(idleThreads._lock);
 		if (!idleThreads._threads.empty()) {

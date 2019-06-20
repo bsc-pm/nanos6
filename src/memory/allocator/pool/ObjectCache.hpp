@@ -37,17 +37,17 @@ public:
 	ObjectCache()
 	{
 		size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
-		size_t cpuCount = HardwareInfo::getComputePlaceCount(nanos6_device_t::nanos6_host_device);
-		HostInfo *deviceInfo = (HostInfo *)HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device);
-		std::vector<ComputePlace *> cpus = deviceInfo->getComputePlaces();
+		size_t cpuCount = CPUManager::getTotalCPUs();
+		std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
+		assert(cpus.size() == cpuCount);
 		
 		_NUMACache = new NUMAObjectCache<T>(numaNodeCount);
 		_CPUCaches.resize(cpuCount);
 		for (size_t i = 0; i < cpuCount; ++i) {
-			CPU *cpu = (CPU *)cpus[i];
+			CPU *cpu = cpus[i];
 			_CPUCaches[i] = new CPUObjectCache<T>(
 						_NUMACache,
-						cpu->_NUMANodeId,
+						cpu->getNumaNodeId(),
 						numaNodeCount
 					);
 		}
@@ -80,7 +80,7 @@ public:
 			std::lock_guard<SpinLock> guard(_externalLock);
 			return _externalObjectCache->newObject(std::forward<TS>(args)...);
 		} else {
-			size_t cpuId = cpu->_virtualCPUId;
+			size_t cpuId = cpu->getIndex();
 			return _CPUCaches[cpuId]->newObject(std::forward<TS>(args)...);
 		}
 	}
@@ -97,7 +97,7 @@ public:
 			std::lock_guard<SpinLock> guard(_externalLock);
 			_externalObjectCache->deleteObject(ptr);
 		} else {
-			size_t cpuId = cpu->_virtualCPUId;
+			size_t cpuId = cpu->getIndex();
 			_CPUCaches[cpuId]->deleteObject(ptr);
 		}
 	}

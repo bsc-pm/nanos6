@@ -33,7 +33,7 @@ NUMAHierarchicalScheduler::NUMAHierarchicalScheduler()
 
 	for (CPU *cpu : cpus) {
 		if (cpu != nullptr) {
-			_enabledCPUs[cpu->_NUMANodeId] += 1;
+			_enabledCPUs[cpu->getNumaNodeId()] += 1;
 		}
 	}
 
@@ -64,7 +64,7 @@ ComputePlace * NUMAHierarchicalScheduler::addReadyTask(Task *task, ComputePlace 
 	
 	if (hint == UNBLOCKED_TASK_HINT) {
 		CPU *cpu = task->getThread()->getComputePlace();
-		size_t numa_node = cpu->_NUMANodeId;
+		size_t numa_node = cpu->getNumaNodeId();
 
 		_readyTasks[numa_node] += 1;
 		_NUMANodeScheduler[numa_node]->addReadyTask(task, computePlace, hint, doGetIdle);
@@ -112,7 +112,7 @@ Task *NUMAHierarchicalScheduler::getReadyTask(ComputePlace *computePlace, Task *
 		return nullptr;
 	}
 	
-	size_t numa_node = ((CPU *)computePlace)->_NUMANodeId;
+	size_t numa_node = ((CPU *)computePlace)->getNumaNodeId();
 	Task *task = nullptr;
 	
 	if (_readyTasks[numa_node] > 0) {
@@ -172,7 +172,7 @@ ComputePlace *NUMAHierarchicalScheduler::getIdleComputePlace(bool force)
 
 void NUMAHierarchicalScheduler::disableComputePlace(ComputePlace *hardwarePlace)
 {
-	size_t NUMANode = ((CPU *)hardwarePlace)->_NUMANodeId;
+	size_t NUMANode = ((CPU *)hardwarePlace)->getNumaNodeId();
 
 	assert(_enabledCPUs[NUMANode] > 0);
 	
@@ -186,7 +186,7 @@ void NUMAHierarchicalScheduler::disableComputePlace(ComputePlace *hardwarePlace)
 
 void NUMAHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 {
-	size_t NUMANode = ((CPU *)hardwarePlace)->_NUMANodeId;
+	size_t NUMANode = ((CPU *)hardwarePlace)->getNumaNodeId();
 
 	_enabledCPUs[NUMANode] += 1;
 	_NUMANodeScheduler[NUMANode]->enableComputePlace(hardwarePlace);
@@ -194,13 +194,13 @@ void NUMAHierarchicalScheduler::enableComputePlace(ComputePlace *hardwarePlace)
 
 bool NUMAHierarchicalScheduler::requestPolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
-	size_t NUMANode = ((CPU *)computePlace)->_NUMANodeId;
+	size_t NUMANode = ((CPU *)computePlace)->getNumaNodeId();
 	return _NUMANodeScheduler[NUMANode]->requestPolling(computePlace, pollingSlot, canMarkAsIdle);
 }
 
 bool NUMAHierarchicalScheduler::releasePolling(ComputePlace *computePlace, polling_slot_t *pollingSlot, bool canMarkAsIdle)
 {
-	size_t NUMANode = ((CPU *)computePlace)->_NUMANodeId;
+	size_t NUMANode = ((CPU *)computePlace)->getNumaNodeId();
 	return _NUMANodeScheduler[NUMANode]->releasePolling(computePlace, pollingSlot, canMarkAsIdle);
 }
 

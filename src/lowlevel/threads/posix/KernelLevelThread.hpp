@@ -76,7 +76,7 @@ public:
 	
 	inline void start(pthread_attr_t *pthreadAttr);
 	
-	inline void bind(CPU const *cpu);
+	inline void bind(CPU *cpu);
 	
 	//! \brief Suspend the thread
 	inline void suspend()
@@ -159,11 +159,11 @@ void KernelLevelThread::start(pthread_attr_t *pthreadAttr)
 }
 
 
-void KernelLevelThread::bind(CPU const *cpu)
+void KernelLevelThread::bind(CPU *cpu)
 {
 	assert(cpu != nullptr);
-	int rc = sched_setaffinity(_tid, CPU_ALLOC_SIZE(cpu->_systemCPUId+1), &cpu->_cpuMask);
-	FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", _tid, " to CPU ", cpu->_systemCPUId);
+	int rc = sched_setaffinity(_tid, CPU_ALLOC_SIZE(cpu->getSystemCPUId()+1), cpu->getCpuMask());
+	FatalErrorHandler::handle(rc, " when changing affinity of pthread with thread id ", _tid, " to CPU ", cpu->getSystemCPUId());
 }
 
 

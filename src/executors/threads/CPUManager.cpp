@@ -44,7 +44,7 @@ namespace cpumanager_internals {
 			}
 			
 			if (cpu != nullptr) {
-				systemCPUId = cpu->_systemCPUId;
+				systemCPUId = cpu->getSystemCPUId();
 			}
 			
 			if ((virtualCPUId < mask.size()) && mask[virtualCPUId]) {
@@ -141,8 +141,8 @@ void CPUManager::preinitialize()
 	for (auto const *computePlace : cpus) {
 		CPU const *cpu = (CPU const *) computePlace;
 		
-		if (cpu->_systemCPUId > maxSystemCPUId) {
-			maxSystemCPUId = cpu->_systemCPUId;
+		if (cpu->getSystemCPUId() > maxSystemCPUId) {
+			maxSystemCPUId = cpu->getSystemCPUId();
 		}
 	}
 	
@@ -157,17 +157,17 @@ void CPUManager::preinitialize()
 		CPU *cpu = (CPU *)cpus[i];
 		
 		size_t virtualCPUId;
-		if (CPU_ISSET(cpu->_systemCPUId, &processCPUMask)) {
+		if (CPU_ISSET(cpu->getSystemCPUId(), &processCPUMask)) {
 			virtualCPUId = _totalCPUs;
-			cpu->_virtualCPUId = virtualCPUId;
+			cpu->setIndex(virtualCPUId);
 			_cpus[virtualCPUId] = cpu;
 			++_totalCPUs;
-			_NUMANodeMask[cpu->_NUMANodeId][virtualCPUId] = true;
+			_NUMANodeMask[cpu->getNumaNodeId()][virtualCPUId] = true;
 		} else {
 			virtualCPUId = (size_t) ~0UL;
-			cpu->_virtualCPUId = virtualCPUId;
+			cpu->setIndex(virtualCPUId);
 		}
-		_systemToVirtualCPUId[cpu->_systemCPUId] = cpu->_virtualCPUId;
+		_systemToVirtualCPUId[cpu->getSystemCPUId()] = cpu->getIndex();
 	}
 	
 	RuntimeInfo::addEntry("initial_cpu_list", "Initial CPU List", cpumanager_internals::maskToRegionList(processCPUMask, cpus.size()));

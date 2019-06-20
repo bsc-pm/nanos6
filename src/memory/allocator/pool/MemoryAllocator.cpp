@@ -35,8 +35,8 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 		CPU *currentCPU = thread->getComputePlace();
 		
 		if (currentCPU != nullptr) {
-			cpuId = currentCPU->_virtualCPUId;
-			numaNodeId = currentCPU->_NUMANodeId;
+			cpuId = currentCPU->getIndex();
+			numaNodeId = currentCPU->getNumaNodeId();
 			
 			auto it = _localMemoryPool[cpuId].find(cacheLines);
 			if (it == _localMemoryPool[cpuId].end()) {

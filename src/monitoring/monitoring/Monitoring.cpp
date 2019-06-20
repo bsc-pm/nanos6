@@ -160,11 +160,11 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 			if (cpu != nullptr) {
 				// If the task is about to be executed, resume CPU activeness
 				if (newStatus == executing_status || newStatus == runtime_status) {
-					CPUMonitor::cpuBecomesActive(((CPU *) cpu)->_virtualCPUId);
+					CPUMonitor::cpuBecomesActive(((CPU *) cpu)->getIndex());
 				}
 				// If the task is about to end or block, resume CPU idleness
 				else if (newStatus == blocked_status || newStatus == ready_status || newStatus == pending_status) {
-					CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->_virtualCPUId);
+					CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->getIndex());
 				}
 			}
 			
@@ -181,7 +181,7 @@ void Monitoring::taskCompletedUserCode(Task *task, ComputePlace *cpu)
 		assert(cpu != nullptr);
 		
 		// Update CPU statistics when the task completes user code
-		CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->_virtualCPUId);
+		CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->getIndex());
 		
 		// Account the task's elapsed execution time in predictions
 		WorkloadPredictor::taskCompletedUserCode(task->getTaskStatistics(), task->getTaskPredictions());

@@ -132,7 +132,7 @@ void WorkerThread::body()
 
 void WorkerThread::handleTask(CPU *cpu)
 {
-	size_t NUMAId = cpu->_NUMANodeId;
+	size_t NUMAId = cpu->getNumaNodeId();
 	//MemoryPlace *targetPlace = cpu->getMemoryPlace(NUMAId);
 	MemoryPlace *targetMemoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
 	assert(targetMemoryPlace != nullptr);
