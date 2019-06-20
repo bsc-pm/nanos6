@@ -142,11 +142,11 @@ public:
 		_currentlyMonitoring = true;
 		
 		_snapshotCounters[llc_usage]._resumed        = data->values.llc;
-		_accumulatingCounters[mbm_local]._resumed    = data->values.mbm_local_delta;
-		_accumulatingCounters[mbm_remote]._resumed   = data->values.mbm_remote_delta;
-		_accumulatingCounters[llc_misses]._resumed   = data->values.llc_misses_delta;
-		_accumulatingCounters[ipc_retired]._resumed  = data->values.ipc_retired_delta;
-		_accumulatingCounters[ipc_unhalted]._resumed = data->values.ipc_unhalted_delta;
+		_accumulatingCounters[mbm_local]._resumed    = data->values.mbm_local;
+		_accumulatingCounters[mbm_remote]._resumed   = data->values.mbm_remote;
+		_accumulatingCounters[llc_misses]._resumed   = data->values.llc_misses;
+		_accumulatingCounters[ipc_retired]._resumed  = data->values.ipc_retired;
+		_accumulatingCounters[ipc_unhalted]._resumed = data->values.ipc_unhalted;
 	}
 	
 	//! \brief Gather counters when a task is stopped or paused
@@ -158,11 +158,11 @@ public:
 		_currentlyMonitoring = false;
 		
 		_snapshotCounters[llc_usage]._paused        = data->values.llc;
-		_accumulatingCounters[mbm_local]._paused    = data->values.mbm_local_delta;
-		_accumulatingCounters[mbm_remote]._paused   = data->values.mbm_remote_delta;
-		_accumulatingCounters[llc_misses]._paused   = data->values.llc_misses_delta;
-		_accumulatingCounters[ipc_retired]._paused  = data->values.ipc_retired_delta;
-		_accumulatingCounters[ipc_unhalted]._paused = data->values.ipc_unhalted_delta;
+		_accumulatingCounters[mbm_local]._paused    = data->values.mbm_local;
+		_accumulatingCounters[mbm_remote]._paused   = data->values.mbm_remote;
+		_accumulatingCounters[llc_misses]._paused   = data->values.llc_misses;
+		_accumulatingCounters[ipc_retired]._paused  = data->values.ipc_retired;
+		_accumulatingCounters[ipc_unhalted]._paused = data->values.ipc_unhalted;
 	}
 	
 	//! \brief Accumulate counters
@@ -182,11 +182,13 @@ public:
 		}
 		
 		// For accumulated events, when tasks start, resume, stop or pause
-		// execution, the value obtained indicates the delta value from this
-		// exact moment w.r.t. the previous polled valued. These "delta" values
-		// are aggregated to obtain the total value of the event
+		// execution, the value obtained indicates the value at that
+		// exact moment. These values must be subtracted to obtain delta
+		// values, and then get aggregated to obtain the total evebt value
 		for (unsigned short i = 0; i < num_accumulating_counters; ++i) {
-			_accumulatingCounters[i]._accumulated += _accumulatingCounters[i]._paused;
+			_accumulatingCounters[i]._accumulated += (
+				_accumulatingCounters[i]._paused - _accumulatingCounters[i]._resumed
+			);
 		}
 	}
 	
