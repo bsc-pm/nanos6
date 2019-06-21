@@ -112,6 +112,21 @@ public:
 		//! Non-NUMA allocation
 		return _localNUMAVMA.size();
 	}
+	
+	static inline bool isDistributedRegion(const DataAccessRegion&)
+	{
+		return false;
+	}
+	
+	static inline bool isLocalRegion(const DataAccessRegion&)
+	{
+		return false;
+	}
+	
+	static inline bool isClusterMemory(const DataAccessRegion&)
+	{
+		return false;
+	}
 };
 
 

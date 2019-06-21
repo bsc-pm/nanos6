@@ -71,11 +71,43 @@ public:
 		return _localNUMAVMA.size();
 	}
 	
-	//! check if a region is within the distributed memory regions
+	//! \brief Check if a region is within the distributed memory region
+	//!
+	//! \param[in] region the DataAccessRegion to check
+	//!
+	//! \return true if the region is within distributed memory
 	static inline bool isDistributedRegion(DataAccessRegion const &region)
 	{
 		return _genericVMA->includesRange(region.getStartAddress(),
 				region.getSize());
+	}
+	
+	//! \brief Check if a memory region is (cluster) local memory
+	//!
+	//! \param[in] region the DataAccessRegion to check
+	//!
+	//! \returns true if the region is within local memory
+	static inline bool isLocalRegion(DataAccessRegion const &region)
+	{
+		for (size_t i = 0; i < _localNUMAVMA.size(); ++i) {
+			if (_localNUMAVMA[i]->includesRange(
+					region.getStartAddress(),
+					region.getSize())) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	//! \brief Check if a memory region can handled correctly by Cluster
+	//!
+	//! \param[in] region the DataAccessRegion to check
+	//!
+	//! \return true if the region is in cluster-capable memory
+	static inline bool isClusterMemory(DataAccessRegion const &region)
+	{
+		return isDistributedRegion(region) || isLocalRegion(region);
 	}
 };
 

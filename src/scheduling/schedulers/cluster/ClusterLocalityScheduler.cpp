@@ -13,6 +13,7 @@
 #include <ClusterManager.hpp>
 #include <DataAccessRegistrationImplementation.hpp>
 #include <ExecutionWorkflow.hpp>
+#include <VirtualMemoryManagement.hpp>
 
 ClusterLocalityScheduler::ClusterLocalityScheduler()
 {
@@ -34,7 +35,7 @@ ComputePlace *ClusterLocalityScheduler::addReadyTask(Task *task, ComputePlace *h
 	}
 	
 	std::vector<size_t> bytes(_clusterSize, 0);
-	
+	bool canBeOffloaded = true;
 	DataAccessRegistration::processAllDataAccesses(task,
 		[&](DataAccessRegion region, __attribute__((unused))DataAccessType type,
 			__attribute__((unused))bool isWeak, MemoryPlace const *location) -> bool {
@@ -42,6 +43,11 @@ ComputePlace *ClusterLocalityScheduler::addReadyTask(Task *task, ComputePlace *h
 				assert(isWeak);
 				
 				location = Directory::getDirectoryMemoryPlace();
+			}
+			
+			if (!VirtualMemoryManagement::isClusterMemory(region)) {
+				canBeOffloaded = false;
+				return false;
 			}
 			
 			if (Directory::isDirectoryMemoryPlace(location)) {
@@ -78,6 +84,10 @@ ComputePlace *ClusterLocalityScheduler::addReadyTask(Task *task, ComputePlace *h
 			return true;
 		}
 	);
+	
+	if (!canBeOffloaded) {
+		return _hostScheduler->addReadyTask(task, hardwarePlace, hint, doGetIdle);
+	}
 	
 	assert(!bytes.empty());
 	std::vector<size_t>::iterator it = bytes.begin();

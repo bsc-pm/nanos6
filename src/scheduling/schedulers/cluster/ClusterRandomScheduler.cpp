@@ -13,7 +13,9 @@
 #include "tasks/Task.hpp"
 
 #include <ClusterManager.hpp>
+#include <DataAccessRegistrationImplementation.hpp>
 #include <ExecutionWorkflow.hpp>
+#include <VirtualMemoryManagement.hpp>
 
 ClusterRandomScheduler::ClusterRandomScheduler()
 {
@@ -31,6 +33,21 @@ ClusterRandomScheduler::~ClusterRandomScheduler()
 ComputePlace *ClusterRandomScheduler::addReadyTask(Task *task, ComputePlace *hardwarePlace, ReadyTaskHint hint, bool doGetIdle)
 {
 	if ((task->getParent() == nullptr) || (_clusterSize == 1) || task->isIf0() || task->isRemote() || task->getWorkflow() != nullptr) {
+		return _hostScheduler->addReadyTask(task, hardwarePlace, hint, doGetIdle);
+	}
+	
+	bool canBeOffloaded = true;
+	DataAccessRegistration::processAllDataAccesses(task,
+		[&](DataAccessRegion region, DataAccessType, bool,
+						MemoryPlace const *) -> bool {
+			if (!VirtualMemoryManagement::isClusterMemory(region)) {
+				canBeOffloaded = false;
+				return false;
+			}
+		}
+	);
+	
+	if (!canBeOffloaded) {
 		return _hostScheduler->addReadyTask(task, hardwarePlace, hint, doGetIdle);
 	}
 	
