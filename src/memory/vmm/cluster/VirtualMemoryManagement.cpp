@@ -181,12 +181,16 @@ void VirtualMemoryManagement::initialize()
 	assert(localSize > 0);
 	localSize = ROUND_UP(localSize, HardwareInfo::getPageSize());
 	
-	DataAccessRegion gap = findSuitableMemoryRegion();
-	void *address = gap.getStartAddress();
+	EnvironmentVariable<void *> startAddress("NANOS6_VA_START", nullptr);
+	void *address = startAddress.getValue();
 	size_t size = distribSize + localSize * ClusterManager::clusterSize();
 	
-	FatalErrorHandler::failIf(gap.getSize() < size,
-				"Cannot allocate virtual memory region");
+	if (address == nullptr) {
+		DataAccessRegion gap = findSuitableMemoryRegion();
+		address = gap.getStartAddress();
+		FatalErrorHandler::failIf(gap.getSize() < size,
+					"Cannot allocate virtual memory region");
+	}
 	
 	_allocations.resize(1);
 	_allocations[0] = new VirtualMemoryAllocation(address, size);
