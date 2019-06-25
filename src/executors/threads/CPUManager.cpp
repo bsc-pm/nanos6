@@ -5,17 +5,16 @@
 */
 
 #include <boost/dynamic_bitset.hpp>
-
-#include "WorkerThread.hpp"
-#include "hardware/HardwareInfo.hpp"
-#include "system/RuntimeInfo.hpp"
+#include <cassert>
+#include <sched.h>
+#include <sstream>
 
 #include "CPU.hpp"
 #include "CPUManager.hpp"
 #include "ThreadManager.hpp"
-
-#include <cassert>
-#include <sstream>
+#include "WorkerThread.hpp"
+#include "hardware/HardwareInfo.hpp"
+#include "system/RuntimeInfo.hpp"
 
 
 std::vector<CPU *> CPUManager::_cpus;
@@ -28,26 +27,20 @@ std::vector<size_t> CPUManager::_systemToVirtualCPUId;
 
 
 namespace cpumanager_internals {
-	static inline std::string maskToRegionList(boost::dynamic_bitset<> const &mask, std::vector<CPU *> const &cpus)
+	static inline std::string maskToRegionList(boost::dynamic_bitset<> const &mask,
+			std::vector<CPU *> cpus)
 	{
 		std::ostringstream oss;
 		
+		size_t size = cpus.size();
 		int start = 0;
 		int end = -1;
 		bool first = true;
-		for (size_t virtualCPUId = 0; virtualCPUId < mask.size()+1; virtualCPUId++) {
-			size_t systemCPUId = ~0UL;
-			
-			CPU *cpu = nullptr;
-			if (virtualCPUId < mask.size()) {
-				cpu = cpus[virtualCPUId];
-			}
-			
-			if (cpu != nullptr) {
-				systemCPUId = cpu->getSystemCPUId();
-			}
-			
-			if ((virtualCPUId < mask.size()) && mask[virtualCPUId]) {
+		
+		for (size_t virtualCPUId = 0; virtualCPUId < size; ++virtualCPUId) {
+			if ((virtualCPUId < size) && mask[virtualCPUId]) {
+				CPU *cpu = cpus[virtualCPUId];
+				size_t systemCPUId = cpu->getSystemCPUId();
 				if (end >= start) {
 					// Valid region: extend
 					end = systemCPUId;
@@ -146,11 +139,12 @@ void CPUManager::preinitialize()
 		}
 	}
 	
-	_cpus.resize(cpus.size());
+	int cpuMaskSize = CPU_COUNT(&processCPUMask);
+	_cpus.resize(cpuMaskSize);;
 	_systemToVirtualCPUId.resize(maxSystemCPUId+1);
 	
 	for (size_t i = 0; i < _NUMANodeMask.size(); ++i) {
-		_NUMANodeMask[i].resize(cpus.size());
+		_NUMANodeMask[i].resize(cpuMaskSize);
 	}
 	
 	for (size_t i = 0; i < cpus.size(); ++i) {
@@ -189,9 +183,9 @@ void CPUManager::preinitialize()
 
 void CPUManager::initialize()
 {
-	for (size_t systemCPUId = 0; systemCPUId < _cpus.size(); ++systemCPUId) {
-		if (_cpus[systemCPUId] != nullptr) {
-			CPU *cpu = _cpus[systemCPUId];
+	for (size_t virtualCPUId = 0; virtualCPUId < _cpus.size(); ++virtualCPUId) {
+		if (_cpus[virtualCPUId] != nullptr) {
+			CPU *cpu = _cpus[virtualCPUId];
 			assert(cpu != nullptr);
 			
 			bool worked = cpu->initializeIfNeeded();
@@ -203,6 +197,6 @@ void CPUManager::initialize()
 			}
 		}
 	}
-
+	
 	_finishedCPUInitialization = true;
 }
