@@ -127,6 +127,18 @@ static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *var
 }
 
 
+static const char *_nanos6_get_requested_variant()
+{
+	char const *variant = getenv("NANOS6");
+	if (variant != NULL) {
+		if (strcmp(variant, "") != 0) {
+			return variant;
+		}
+	}
+	return NULL;
+}
+
+
 __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 {
 	if (_nanos6_lib_handle != NULL) {
@@ -136,7 +148,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 	_Bool verbose = (getenv("NANOS6_LOADER_VERBOSE") != NULL);
 	
 	// Check the name of the replacement library
-	char const *variant = getenv("NANOS6");
+	char const *variant = _nanos6_get_requested_variant();
 	if (variant == NULL) {
 		variant = "optimized";
 	}
@@ -231,7 +243,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 			return;
 		}
 		
-		if (getenv("NANOS6") != NULL) {
+		if (_nanos6_get_requested_variant() != NULL) {
 			fprintf(stderr, "Please check that the value of the NANOS6 environment variable is correct and set the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
 		} else {
 			fprintf(stderr, "Please set or check the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
