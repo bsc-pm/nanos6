@@ -22,25 +22,24 @@
 
 class CPUManager {
 private:
-	//! \brief per-CPU data indexed by system CPU identifier
+	//! \brief Available CPUs indexed by virtual CPU identifier
 	static std::vector<CPU *> _cpus;
-
-	//! \brief number of available CPUs
-	static size_t _totalCPUs;
 	
 	//! \brief indicates if the thread manager has finished initializing the CPUs
 	static std::atomic<bool> _finishedCPUInitialization;
 	
 	//! \brief threads blocked due to idleness
 	static boost::dynamic_bitset<> _idleCPUs;
-
+	
 	//! \brief NUMA node CPU mask
 	static std::vector<boost::dynamic_bitset<>> _NUMANodeMask;
-
+	
 	//! \brief Map from system to virtual CPU id
 	static std::vector<size_t> _systemToVirtualCPUId;
-
+	
 	static SpinLock _idleCPUsLock;
+	
+	static void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
 	
 public:
 	static void preinitialize();
@@ -87,7 +86,7 @@ inline CPU *CPUManager::getCPU(size_t systemCPUId)
 
 inline long CPUManager::getTotalCPUs()
 {
-	return _totalCPUs;
+	return _cpus.size();
 }
 
 inline bool CPUManager::hasFinishedInitialization()
