@@ -175,10 +175,8 @@ void PollingAPI::handleServices()
 		}
 		
 		if (serviceData._discard != nullptr) {
-			if (serviceData._discard != nullptr) {
-				// Signal the unregistration
-				serviceData._discard->store(true);
-			}
+			// Signal the unregistration
+			serviceData._discard->store(true);
 			
 			it = _services.erase(it);
 			continue;
