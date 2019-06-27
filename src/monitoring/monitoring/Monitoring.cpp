@@ -124,9 +124,8 @@ bool Monitoring::isEnabled()
 
 void Monitoring::taskCreated(Task *task)
 {
-	if (_enabled) {
-		assert(task != nullptr);
-		
+	assert(task != nullptr);
+	if (_enabled && !task->isTaskloop()) {
 		// Retrieve information about the task
 		TaskStatistics  *parentStatistics  = (task->getParent() != nullptr ? task->getParent()->getTaskStatistics() : nullptr);
 		TaskPredictions *parentPredictions = (task->getParent() != nullptr ? task->getParent()->getTaskPredictions() : nullptr);
@@ -149,9 +148,8 @@ void Monitoring::taskCreated(Task *task)
 
 void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatus, ComputePlace *cpu)
 {
-	if (_enabled) {
-		assert(task != nullptr);
-		
+	assert(task != nullptr);
+	if (_enabled && !task->isTaskloop()) {
 		// Start timing for the appropriate stopwatch
 		const monitoring_task_status_t oldStatus = TaskMonitor::startTiming(task->getTaskStatistics(), newStatus);
 		
@@ -176,8 +174,8 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 
 void Monitoring::taskCompletedUserCode(Task *task, ComputePlace *cpu)
 {
-	if (_enabled) {
-		assert(task != nullptr);
+	assert(task != nullptr);
+	if (_enabled && !task->isTaskloop()) {
 		assert(cpu != nullptr);
 		
 		// Update CPU statistics when the task completes user code
@@ -190,9 +188,8 @@ void Monitoring::taskCompletedUserCode(Task *task, ComputePlace *cpu)
 
 void Monitoring::taskFinished(Task *task)
 {
-	if (_enabled) {
-		assert(task != nullptr);
-		
+	assert(task != nullptr);
+	if (_enabled && !task->isTaskloop()) {
 		// Number of ancestors updated by this task in TaskMonitor
 		int ancestorsUpdated = 0;
 		
