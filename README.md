@@ -325,7 +325,7 @@ The Monitoring infrastructure is enabled at configure time, however, both the in
 
 ### Known Limitations
 
-Currently, Monitoring capabilities lack support for the Taskloop construct.
+Currently, Monitoring capabilities lack support for the `task for` construct.
 
 
 ## Hardware Counters
@@ -347,7 +347,7 @@ The Hardware Counters API is controlled further with the following environment v
 
 ### Known Limitations
 
-Currently, Monitoring capabilities lack support for the Taskloop construct.
+Currently, Monitoring capabilities lack support for the `task for` construct.
 
 
 ## Cluster support

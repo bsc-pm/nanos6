@@ -31,7 +31,7 @@ static void axpy(const double *x, double *y, double alpha, long N, long BS, long
 	for (long i = 0; i < N; i += BS) {
 		long elements = std::min(BS, N - i);
 		
-		#pragma oss loop in(x[i;elements]) inout(y[i;elements]) chunksize(CS)
+		#pragma oss task for chunksize(CS)
 		for (long j = 0; j < elements; ++j) {
 			y[i + j] += alpha * x[i + j];
 		}
@@ -58,7 +58,7 @@ static bool validate(double *y, long N, long BS, double expectedValue) {
 }
 
 static bool validScheduler() {
-	// Taskloop is only supported by Naive and FIFO schedulers
+	// Task-for is only supported by Naive and FIFO schedulers
 	char const *schedulerName = getenv("NANOS6_SCHEDULER");
 	if (schedulerName != 0) {
 		std::string scheduler(schedulerName);
@@ -92,12 +92,13 @@ int main() {
 	
 	initialize(x, 1.0, n, bs);
 	initialize(y, 0.0, n, bs);
+	#pragma oss taskwait
 	
 	// Main algorithm
 	for (int iteration = 0; iteration < its; iteration++) {
 		axpy(x, y, 1.0, n, bs, cs);
+		#pragma oss taskwait
 	}
-	#pragma oss taskwait
 	
 	// Validation
 	bool validates = validate(y, n, bs, its);
