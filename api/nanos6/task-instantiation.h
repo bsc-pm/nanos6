@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_TASK_INSTANTIATION_H
@@ -47,7 +47,8 @@ typedef enum
 	nanos6_cuda_device,
 	nanos6_opencl_device,
 	nanos6_cluster_device,
-	nanos6_device_type_num=4
+	nanos6_fpga_device,
+	nanos6_device_type_num=5
 } nanos6_device_t;
 
 

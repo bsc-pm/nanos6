@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef HOST_INFO_HPP
@@ -14,19 +14,19 @@ private:
 	std::vector<ComputePlace *> _computePlaces; //!< List of CPUs on the system
 	std::vector<MemoryPlace *> _memoryPlaces;	//!< List of NUMA nodes on the system
 	
-	size_t _cacheLineSize;						//!< L1 Cache line size 
+	size_t _cacheLineSize;						//!< L1 Cache line size
 	size_t _pageSize;							//!< Page size of the system
-	size_t _physicalMemorySize;					//!< Total amount of physical memory on the system 
+	size_t _physicalMemorySize;					//!< Total amount of physical memory on the system
 	
 public:
 	void initialize();
 	void shutdown();
 	
-	inline size_t getComputePlaceCount(void) 
+	inline size_t getComputePlaceCount()
 	{
 		return _computePlaces.size();
 	}
-	inline ComputePlace* getComputePlace(int index) 
+	inline ComputePlace *getComputePlace(int index)
 	{
 		return _computePlaces[index];
 	}
@@ -35,11 +35,11 @@ public:
 		return _computePlaces;
 	}
 	
-	inline size_t getMemoryPlaceCount(void)
+	inline size_t getMemoryPlaceCount()
 	{
 		return _memoryPlaces.size();
 	}
-	inline MemoryPlace* getMemoryPlace(int index)
+	inline MemoryPlace *getMemoryPlace(int index)
 	{
 		return _memoryPlaces[index];
 	}
@@ -48,15 +48,15 @@ public:
 		return _memoryPlaces;
 	}
 	
-	inline size_t getCacheLineSize(void)
+	inline size_t getCacheLineSize()
 	{
 		return _cacheLineSize;
 	}
-	inline size_t getPageSize(void)
+	inline size_t getPageSize()
 	{
 		return _pageSize;
 	}
-	inline size_t getPhysicalMemorySize(void)
+	inline size_t getPhysicalMemorySize()
 	{
 		return _physicalMemorySize;
 	}

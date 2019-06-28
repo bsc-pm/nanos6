@@ -320,9 +320,10 @@ common_sources = \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/hardware/HardwareInfo.cpp \
+	src/hardware/device/Device.cpp \
 	src/hardware/hwinfo/HostInfo.cpp \
-	src/hardware/places/CPUPlace.cpp \
 	src/hardware/places/ComputePlace.cpp \
+	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/SymbolResolver.cpp \
@@ -368,16 +369,6 @@ common_sources = \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Taskloop.cpp
 
-cuda_sources = \
-	src/executors/cuda/CUDAPollingService.cpp \
-	src/hardware/cuda/CUDAInfo.cpp \
-	src/hardware/cuda/compute/CUDAComputePlace.cpp \
-	src/hardware/cuda/memory/CUDAMemoryPlace.cpp \
-	src/scheduling/schedulers/cuda/CUDANaiveScheduler.cpp 
-
-if USE_CUDA
-common_sources += $(cuda_sources)
-endif
 
 cluster_sources =
 if USE_CLUSTER
@@ -712,7 +703,6 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/MultidimensionalAPI.hpp \
-	src/executors/cuda/CUDAPollingService.hpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.hpp \
@@ -731,25 +721,27 @@ noinst_HEADERS = \
 	src/executors/workflow/cluster/null/ExecutionWorkflowCluster.hpp \
 	src/executors/workflow/null/ExecutionStep.hpp \
 	src/executors/workflow/null/ExecutionWorkflow.hpp \
+	src/hardware/HardwareInfo.hpp \
 	src/hardware/cluster/ClusterNode.hpp \
 	src/hardware/cluster/memory/ClusterMemoryNode.hpp \
 	src/hardware/cluster/memory/null/ClusterMemoryNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
-	src/hardware/cuda/CUDADevice.hpp \
-	src/hardware/cuda/CUDAInfo.hpp \
-	src/hardware/cuda/compute/CUDAComputePlace.hpp \
-	src/hardware/cuda/compute/stream/CUDAStream.hpp \
-	src/hardware/cuda/compute/stream/CUDAStreamPool.hpp \
-	src/hardware/cuda/compute/synchronization/CUDAEvent.hpp \
-	src/hardware/cuda/compute/synchronization/CUDAEventPool.hpp \
-	src/hardware/cuda/memory/CUDAMemoryPlace.hpp \
-	src/hardware/HardwareInfo.hpp \
+	src/hardware/device/Device.hpp \
+	src/hardware/device/DeviceFunctionsInterface.hpp \
+	src/hardware/device/DeviceInfoImplementation.hpp \
+	src/hardware/device/implementation/CUDA.hpp \
+	src/hardware/device/implementation/FPGA.hpp \
+	src/hardware/device/implementation/NULLDevice.hpp \
+	src/hardware/device/implementation/cuda/CUDAContext.hpp \
+	src/hardware/device/implementation/cuda/CUDAFunctions.hpp \
 	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
+	src/hardware/places/DeviceComputePlace.hpp \
+	src/hardware/places/DeviceMemoryPlace.hpp \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
 	src/hardware-counters/null/HardwareCounters.hpp \
 	src/hardware-counters/null/TaskHardwareCounters.hpp \
@@ -1075,7 +1067,6 @@ noinst_HEADERS = \
 	src/tasks/StreamExecutor.hpp \
 	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
-	src/tasks/TaskDeviceData.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/TaskImplementation.hpp \
 	src/tasks/Taskloop.hpp \
