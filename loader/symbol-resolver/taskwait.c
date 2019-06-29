@@ -9,3 +9,4 @@
 
 RESOLVE_API_FUNCTION(nanos6_taskwait, "essential", NULL);
 RESOLVE_API_FUNCTION(nanos6_stream_synchronize, "essential", NULL);
+RESOLVE_API_FUNCTION(nanos6_stream_synchronize_all, "essential", NULL);

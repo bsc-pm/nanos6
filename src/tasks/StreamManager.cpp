@@ -50,3 +50,37 @@ void StreamManager::synchronizeStream(size_t streamId)
 	// Wait for the signal until the taskwait is completed
 	condVar.wait();
 }
+
+void StreamManager::synchronizeAllStreams()
+{
+	assert(_manager != nullptr);
+	
+	size_t numTaskwaits = _manager->_executors.size();
+	// Create an array of taskwaits and an array of condition variables
+	StreamFunction *taskwaits[numTaskwaits];
+	ConditionVariable condVars[numTaskwaits];
+	size_t index = 0;
+	
+	// Initialize a taskwait and a condition variable for every executor
+	for (auto &it : _manager->_executors) {
+		taskwaits[index] = new StreamFunction();
+		StreamFunction *taskwait = taskwaits[index];
+		assert(taskwait != nullptr);
+		taskwait->_function = &(StreamExecutor::taskwaitBody);
+		taskwait->_args = (void *) &(condVars[index]);
+		
+		StreamExecutor *executor = it.second;
+		assert(executor != nullptr);
+		executor->addFunction(taskwait);
+		++index;
+	}
+	
+	// Wait for all taskwaits to end
+	for (size_t i = 0; i < numTaskwaits; ++i) {
+		// Wait for the signal until the taskwait is completed
+		condVars[i].wait();
+	}
+	
+	// NOTE: The dynamically created StreamFunction-taskwaits are deleted upon
+	// completion by the appropriate StreamExecutor (see StreamExecutor::body)
+}

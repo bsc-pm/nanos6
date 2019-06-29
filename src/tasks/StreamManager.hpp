@@ -191,6 +191,9 @@ public:
 	//! \param[in] streamId The identifier of the stream to synchronize
 	static void synchronizeStream(size_t streamId);
 	
+	//! \brief Create taskwaits for all streams
+	static void synchronizeAllStreams();
+	
 };
 
 #endif // STREAM_MANAGER_HPP

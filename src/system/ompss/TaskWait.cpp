@@ -101,3 +101,8 @@ void nanos6_stream_synchronize(size_t stream_id)
 	StreamManager::synchronizeStream(stream_id);
 }
 
+void nanos6_stream_synchronize_all(void)
+{
+	StreamManager::synchronizeAllStreams();
+}
+

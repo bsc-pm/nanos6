@@ -15,7 +15,7 @@
 
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_taskwait_api
-enum nanos6_taskwait_api_t { nanos6_taskwait_api = 2 };
+enum nanos6_taskwait_api_t { nanos6_taskwait_api = 3 };
 
 
 #ifdef __cplusplus
@@ -33,6 +33,9 @@ void nanos6_taskwait(char const *invocation_source);
 //! \param[in] stream_id The identifier of the stream to synchronize
 void nanos6_stream_synchronize(size_t stream_id);
 
+//! \brief Block the control flow until all previously spawned functions in
+//! all the existing streams have finished
+void nanos6_stream_synchronize_all(void);
 
 #ifdef __cplusplus
 }
