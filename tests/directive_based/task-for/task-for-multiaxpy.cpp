@@ -57,27 +57,7 @@ static bool validate(double *y, long N, long BS, double expectedValue) {
 	return (errors == 0);
 }
 
-static bool validScheduler() {
-	// Task-for is only supported by Naive and FIFO schedulers
-	char const *schedulerName = getenv("NANOS6_SCHEDULER");
-	if (schedulerName != 0) {
-		std::string scheduler(schedulerName);
-		if (scheduler == "naive" || scheduler == "fifo") {
-			return true;
-		}
-	}
-	return false;
-}
-
 int main() {
-	if (!validScheduler()) {
-		tap.registerNewTests(1);
-		tap.begin();
-		tap.skip("This test does not work with this scheduler");
-		tap.end();
-		return 0;
-	}
-	
 	long n = TOTALSIZE;
 	long bs = BLOCKSIZE;
 	long cs = CHUNKSIZE;
