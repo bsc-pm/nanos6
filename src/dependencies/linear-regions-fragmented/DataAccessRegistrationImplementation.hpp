@@ -35,6 +35,32 @@ namespace DataAccessRegistration {
 			}
 		);
 	}
+
+	inline void updateTaskDataAccessLocation(Task *task,
+			DataAccessRegion const &region, MemoryPlace const *location)
+	{
+		assert(task != nullptr);
+		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		assert(!accessStructures.hasBeenDeleted());
+		
+		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+		
+		// At this point the region must be included in DataAccesses of the task
+		assert(accessStructures._accesses.contains(region));
+		
+		accessStructures._accesses.processIntersecting(region,
+			[&](TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
+				DataAccess *access = &(*accessPosition);
+				assert(access != nullptr);
+				assert(access->getAccessRegion().fullyContainedIn(region));
+				
+				access->setLocation(location);
+				
+				return true;
+			}
+		);
+	}
 }
 
 

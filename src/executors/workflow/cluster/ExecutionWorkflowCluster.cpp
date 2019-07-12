@@ -10,6 +10,7 @@
 #include <ClusterManager.hpp>
 #include <ClusterPollingServices.hpp>
 #include <DataAccess.hpp>
+#include <DataAccessRegistrationImplementation.hpp>
 #include <DataTransfer.hpp>
 #include <Directory.hpp>
 #include <InstrumentLogMessage.hpp>
@@ -148,6 +149,9 @@ namespace ExecutionWorkflow {
 		
 		dt->setCompletionCallback(
 			[&]() {
+				DataAccessRegistration::updateTaskDataAccessLocation(
+						_task, _targetTranslation._hostRegion,
+						_targetMemoryPlace);
 				this->releaseSuccessors();
 				delete this;
 			}

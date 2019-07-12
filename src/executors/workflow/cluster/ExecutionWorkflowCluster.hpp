@@ -90,15 +90,19 @@ namespace ExecutionWorkflow {
 		//! A mapping of the address range in the source node to the target node.
 		RegionTranslation _targetTranslation;
 		
+		//! The task on behalf of which we perform the data copy
+		Task *_task;
 	public:
 		ClusterDataCopyStep(
 			MemoryPlace const *sourceMemoryPlace,
 			MemoryPlace const *targetMemoryPlace,
-			RegionTranslation const &targetTranslation
+			RegionTranslation const &targetTranslation,
+			Task *task
 		) : Step(),
 			_sourceMemoryPlace(sourceMemoryPlace),
 			_targetMemoryPlace(targetMemoryPlace),
-			_targetTranslation(targetTranslation)
+			_targetTranslation(targetTranslation),
+			_task(task)
 		{
 		}
 		
@@ -244,7 +248,8 @@ namespace ExecutionWorkflow {
 			);
 		
 		if (needsTransfer) {
-			return new ClusterDataCopyStep(source, target, translation);
+			return new ClusterDataCopyStep(source, target, translation,
+					access->getOriginator());
 		}
 		
 		return new Step();
