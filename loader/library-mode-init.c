@@ -6,6 +6,8 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "api-versions.h"
 #include "loader.h"
@@ -30,6 +32,13 @@ __attribute__ ((used)) char const * nanos6_library_mode_init(void)
 	nanos6_init();
 	if (_nanos6_exit_with_error) {
 		return _nanos6_error_text;
+	}
+	
+	char *variant = getenv("NANOS6");
+	if (variant != NULL) {
+		if (!strcmp(variant, "graph") || !strcmp(variant, "graph-debug")) {
+			fprintf(stderr, "Warning: Graph variants may yield incorrect results when using nanos6 library mode\n");
+		}
 	}
 	
 	return NULL;
