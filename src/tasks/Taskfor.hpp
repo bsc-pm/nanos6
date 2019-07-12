@@ -20,7 +20,7 @@ private:
 	TaskforInfo _taskforInfo;
 	
 public:
-	typedef nanos6_taskfor_bounds_t bounds_t;
+	typedef nanos6_loop_bounds_t bounds_t;
 	
 	inline Taskfor(
 		void *argsBlock, size_t argsBlockSize,

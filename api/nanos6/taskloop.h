@@ -25,27 +25,30 @@ extern "C" {
 typedef struct {
 	size_t lower_bound; // Inclusive
 	size_t upper_bound; // Exclusive
-	size_t step;
+	size_t grainsize;
 	size_t chunksize;
-} nanos6_taskloop_bounds_t;
-typedef nanos6_taskloop_bounds_t nanos6_taskfor_bounds_t;
+} nanos6_loop_bounds_t;
 
-//! \brief Register the bounds of a taskloop
+typedef nanos6_loop_bounds_t nanos6_taskfor_bounds_t;
+typedef nanos6_loop_bounds_t nanos6_taskloop_bounds_t;
+
+
+//! \brief Register the bounds of a taskloop/taskfor
 //! 
-//! This function registers and initializes the loop bounds of a taskloop. This should be called
+//! This function registers and initializes the loop bounds of a taskloop/taskfor. This should be called
 //! after the creation of the task (see nanos6_create_task) and before the submission of the task
 //! (see nanos6_submit_task).
 //! 
 //! \param[in] task The task handler
 //! \param[in] lower_bound The lower bound of the iteration space (inclusive)
 //! \param[in] upper_bound The upper bound of the iteration space (exclusive)
-//! \param[in] step The step between iterations
-//! \param[in] chunksize The minimum number of iterations which should be executed by a task
+//! \param[in] grainsize The minimum number of iterations which should be executed by a task 
+//! \param[in] chunksize The minimum number of iterations which should be executed by a chunk
 void nanos6_register_taskloop_bounds(
 	void *task,
 	size_t lower_bound,
 	size_t upper_bound,
-	size_t step,
+	size_t grainsize,
 	size_t chunksize
 );
 

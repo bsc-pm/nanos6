@@ -16,7 +16,7 @@
 
 
 struct TaskforInfo {
-	typedef nanos6_taskfor_bounds_t bounds_t;
+	typedef nanos6_loop_bounds_t bounds_t;
 private:
 
 	friend class Taskfor;
@@ -58,12 +58,11 @@ public:
 			_bounds.chunksize = std::max(totalIterations / (_maxCollaborators), (size_t) 1);
 		}
 	}
-
-	inline void initialize(size_t lowerBound, size_t upperBound, size_t step, size_t chunksize)
+	
+	inline void initialize(size_t lowerBound, size_t upperBound, size_t chunksize)
 	{
 		_bounds.lower_bound = lowerBound;
 		_bounds.upper_bound = upperBound;
-		_bounds.step = step;
 		_bounds.chunksize = chunksize;
 
 		initialize();
@@ -74,9 +73,9 @@ public:
 		// Set the bounds
 		_bounds.lower_bound = newBounds.lower_bound;
 		_bounds.upper_bound = newBounds.upper_bound;
+		_bounds.grainsize = newBounds.grainsize;
 		_bounds.chunksize = newBounds.chunksize;
-		_bounds.step = newBounds.step;
-
+		
 		initialize();
 	}
 

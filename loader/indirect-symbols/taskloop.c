@@ -13,11 +13,11 @@ void nanos6_register_taskloop_bounds(
 	void *task,
 	size_t lower_bound,
 	size_t upper_bound,
-	size_t step,
+	size_t grainsize,
 	size_t chunksize
 ) {
 	typedef void nanos6_register_taskloop_bounds_t(
-			void *task, size_t lower_bound, size_t upper_bound, size_t step, size_t chunksize
+			void *task, size_t lower_bound, size_t upper_bound, size_t grainsize, size_t chunksize
 	);
 
 	static nanos6_register_taskloop_bounds_t *symbol = NULL;
@@ -25,7 +25,7 @@ void nanos6_register_taskloop_bounds(
 		symbol = (nanos6_register_taskloop_bounds_t *) _nanos6_resolve_symbol("nanos6_register_taskloop_bounds", "essential", NULL);
 	}
 
-	(*symbol)(task, lower_bound, upper_bound, step, chunksize);
+	(*symbol)(task, lower_bound, upper_bound, grainsize, chunksize);
 }
 
 #pragma GCC visibility pop

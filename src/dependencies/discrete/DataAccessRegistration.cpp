@@ -368,7 +368,7 @@ namespace DataAccessRegistration {
 		task->increasePredecessors(2);
 
 		// This part creates the DataAccesses and inserts it to dependency system
-		taskInfo->register_depinfo(task->getArgsBlock(), task);
+		taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 

@@ -106,8 +106,9 @@ typedef struct __attribute__((aligned(64)))
 	//! functions to pass to the runtime the information needed to calculate the dependencies
 	//! 
 	//! \param[in] args_block a pointer to a block of data for the parameters partially initialized
+	//! \param[in] taskloop_bounds a pointer to the bounds of a taskloop, if the task is taskloop 
 	//! \param[in] handler a handler to be passed on to the registration functions
-	void (*register_depinfo)(void *args_block, void *handler);
+	void (*register_depinfo)(void *args_block, void * taskloop_bounds, void *handler);
 	
 	//! \brief Function that the runtime calls to obtain a user-specified priority for the task instance
 	//! 
@@ -177,12 +178,14 @@ typedef enum {
 	nanos6_if_0_task = (1 << 1),
 	//! Specifies that the task is really a taskloop
 	nanos6_taskloop_task = (1 << 2),
+	//! Specifies that the task is really a taskfor
+	nanos6_taskfor_task = (1 << 3),
 	//! Specifies that the task has the "wait" clause
-	nanos6_waiting_task = (1 << 3),
+	nanos6_waiting_task = (1 << 4),
 	//! Specifies that the args_block is preallocated from user side
-	nanos6_preallocated_args_block = (1 << 4),
+	nanos6_preallocated_args_block = (1 << 5),
 	//! Specifies that the task has been verified by the user, hence it doesn't need runtime linting
-	nanos6_verified_task = (1 << 5)
+	nanos6_verified_task = (1 << 6)
 } nanos6_task_flag_t;
 
 
