@@ -92,17 +92,23 @@ namespace ExecutionWorkflow {
 		
 		//! The task on behalf of which we perform the data copy
 		Task *_task;
+		
+		//! The data copy is for a taskwait
+		bool _isTaskwait;
+		
 	public:
 		ClusterDataCopyStep(
 			MemoryPlace const *sourceMemoryPlace,
 			MemoryPlace const *targetMemoryPlace,
 			RegionTranslation const &targetTranslation,
-			Task *task
+			Task *task,
+			bool isTaskwait
 		) : Step(),
 			_sourceMemoryPlace(sourceMemoryPlace),
 			_targetMemoryPlace(targetMemoryPlace),
 			_targetTranslation(targetTranslation),
-			_task(task)
+			_task(task),
+			_isTaskwait(isTaskwait)
 		{
 		}
 		
@@ -249,7 +255,7 @@ namespace ExecutionWorkflow {
 		
 		if (needsTransfer) {
 			return new ClusterDataCopyStep(source, target, translation,
-					access->getOriginator());
+					access->getOriginator(), (objectType == taskwait_type));
 		}
 		
 		return new Step();

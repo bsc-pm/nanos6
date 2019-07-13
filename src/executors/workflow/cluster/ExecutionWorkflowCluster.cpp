@@ -149,9 +149,11 @@ namespace ExecutionWorkflow {
 		
 		dt->setCompletionCallback(
 			[&]() {
+				//! If this data copy is performed for a taskwait we
+				//! don't need to update the location here.
 				DataAccessRegistration::updateTaskDataAccessLocation(
 						_task, _targetTranslation._hostRegion,
-						_targetMemoryPlace);
+						_targetMemoryPlace, _isTaskwait);
 				this->releaseSuccessors();
 				delete this;
 			}

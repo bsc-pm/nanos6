@@ -37,7 +37,8 @@ namespace DataAccessRegistration {
 	}
 
 	inline void updateTaskDataAccessLocation(Task *task,
-			DataAccessRegion const &region, MemoryPlace const *location)
+			DataAccessRegion const &region, MemoryPlace const *location,
+			bool isTaskwait)
 	{
 		assert(task != nullptr);
 		
@@ -46,10 +47,14 @@ namespace DataAccessRegistration {
 		
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 		
-		// At this point the region must be included in DataAccesses of the task
-		assert(accessStructures._accesses.contains(region));
+		auto &accesses = (isTaskwait) ?
+			accessStructures._taskwaitFragments :
+			accessStructures._accesses;
 		
-		accessStructures._accesses.processIntersecting(region,
+		// At this point the region must be included in DataAccesses of the task
+		assert(accesses.contains(region));
+		
+		accesses.processIntersecting(region,
 			[&](TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
 				DataAccess *access = &(*accessPosition);
 				assert(access != nullptr);
