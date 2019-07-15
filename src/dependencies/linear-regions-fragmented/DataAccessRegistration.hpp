@@ -127,8 +127,9 @@ namespace DataAccessRegistration {
 	//! \param[in] task is the owner of the accesses we are updating
 	//! \param[in] region is the DataAccessRegion of which the location we are updating
 	//! \param[in] location is the new location of the DataAccess
-	inline void updateTaskDataAccessLocation(Task *task,
-			DataAccessRegion const &region, MemoryPlace const *location);
+	//! \param[in] isTaskwait is true if the update refers to a taskwait object
+	void updateTaskDataAccessLocation(Task *task, DataAccessRegion const &region,
+			MemoryPlace const *location, bool isTaskwait);
 
 	//! \brief Register a region as a NO_ACCESS_TYPE access within the Task
 	//!

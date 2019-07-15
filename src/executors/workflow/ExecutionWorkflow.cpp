@@ -265,20 +265,47 @@ namespace ExecutionWorkflow {
 					DataAccessRegion region = dataAccess->getAccessRegion();
 					
 					MemoryPlace const *currLocation = dataAccess->getLocation();
-					/* TODO: This will be provided by the corresponding
-					 * AllocationAndPinning step, once we fix this functionality.
-					 * At the moment (and since we support only cluster and SMP
-					 * we can use a dummy RegionTranslation */
-					RegionTranslation translation(region, region.getStartAddress());
-					Step *step = workflow->createDataCopyStep(
-							currLocation,
-							targetMemoryPlace,
-							translation,
-							dataAccess);
-					
-					workflow->enforceOrder(step, executionStep);
-					workflow->addRootStep(step);
-					
+					Step *step;
+					if (!Directory::isDirectoryMemoryPlace(currLocation)
+						|| (targetComputePlace->getType() != nanos6_host_device)) {
+						/* TODO: This will be provided by the corresponding
+						 * AllocationAndPinning step, once we fix this functionality.
+						 * At the moment (and since we support only cluster and SMP
+						 * we can use a dummy RegionTranslation */
+						RegionTranslation translation(region, region.getStartAddress());
+						step = workflow->createDataCopyStep(
+								currLocation,
+								targetMemoryPlace,
+								translation,
+								dataAccess);
+
+						workflow->enforceOrder(step, executionStep);
+						workflow->addRootStep(step);
+					} else {
+						Directory::HomeNodesArray *homeNodes =
+							Directory::find(region);
+						
+						for (const auto &entry : *homeNodes) {
+							currLocation = entry->getHomeNode();
+							DataAccessRegion subregion = entry->getAccessRegion();
+							
+							subregion = region.intersect(subregion);
+							RegionTranslation translation(subregion,
+									subregion.getStartAddress());
+							
+							step = workflow->createDataCopyStep(
+									currLocation,
+									targetMemoryPlace,
+									translation,
+									dataAccess);
+							
+							workflow->enforceOrder(step, executionStep);
+							workflow->addRootStep(step);
+						}
+						
+						delete homeNodes;
+					}
+
 					step = workflow->createDataReleaseStep(task,
 							dataAccess);
 					workflow->enforceOrder(executionStep, step);
