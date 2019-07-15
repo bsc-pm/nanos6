@@ -22,9 +22,7 @@
 #include "polling.h"
 #include "task-info-registration.h"
 #include "task-instantiation.h"
-#include "task-instantiation.h"
-#include "task-instantiation.h"
-#include "taskloop.h"
+#include "loop.h"
 #include "taskwait.h"
 #include "user-mutex.h"
 
@@ -64,7 +62,7 @@ typedef struct {
 	enum nanos6_task_constraints_api_t task_constraints_api_version;
 	enum nanos6_task_execution_api_t task_execution_api_version;
 	enum nanos6_task_info_registration_api_t task_info_registration_api_version;
-	enum nanos6_taskloop_api_t taskloop_api_version;
+	enum nanos6_taskfor_api_t taskfor_api_version;
 	enum nanos6_taskwait_api_t taskwait_api_version;
 } nanos6_api_versions_t;
 

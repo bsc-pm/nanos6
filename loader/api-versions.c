@@ -27,7 +27,7 @@ nanos6_api_versions_t const __user_code_expected_nanos6_api_versions = {
 	.task_constraints_api_version = nanos6_task_constraints_api,
 	.task_execution_api_version = nanos6_task_execution_api,
 	.task_info_registration_api_version = nanos6_task_info_registration_api,
-	.taskloop_api_version = nanos6_taskloop_api,
+	.taskfor_api_version = nanos6_taskfor_api,
 	.taskwait_api_version = nanos6_taskwait_api,
 };
 

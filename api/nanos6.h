@@ -29,7 +29,7 @@
 #include "nanos6/multidimensional-release.h"
 #include "nanos6/task-info-registration.h"
 #include "nanos6/task-instantiation.h"
-#include "nanos6/taskloop.h"
+#include "nanos6/loop.h"
 #include "nanos6/taskwait.h"
 #include "nanos6/user-mutex.h"
 #include "nanos6/reductions.h"

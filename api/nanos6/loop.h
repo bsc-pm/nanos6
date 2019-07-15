@@ -15,7 +15,7 @@
 
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_taskloop_api
-enum nanos6_taskloop_api_t { nanos6_taskloop_api = 1 };
+enum nanos6_taskfor_api_t { nanos6_taskfor_api = 2 };
 
 
 #ifdef __cplusplus

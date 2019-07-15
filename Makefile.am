@@ -65,7 +65,7 @@ nanos6include_HEADERS = \
 	api/nanos6/runtime-info.h \
 	api/nanos6/task-info-registration.h \
 	api/nanos6/task-instantiation.h \
-	api/nanos6/taskloop.h \
+	api/nanos6/loop.h \
 	api/nanos6/taskwait.h \
 	api/nanos6/user-mutex.h
 
