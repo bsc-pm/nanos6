@@ -2341,7 +2341,7 @@ namespace DataAccessRegistration {
 	) {
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
-		assert(location != nullptr);
+		assert((location != nullptr) || dataAccess->isWeak());
 		
 		assert(dataAccess->getOriginator() == finishedTask);
 		assert(!region.empty());
@@ -2358,11 +2358,12 @@ namespace DataAccessRegistration {
 			[&] (DataAccess *accessOrFragment) -> bool {
 				assert(!accessOrFragment->complete());
 				assert(accessOrFragment->getOriginator() == finishedTask);
-				assert(location != nullptr);
 				
 				DataAccessStatusEffects initialStatus(accessOrFragment);
 				accessOrFragment->setComplete();
-				accessOrFragment->setLocation(location);
+				if (location != nullptr) {
+					accessOrFragment->setLocation(location);
+				}
 				DataAccessStatusEffects updatedStatus(accessOrFragment);
 				
 				handleDataAccessStatusChanges(
@@ -2755,14 +2756,6 @@ namespace DataAccessRegistration {
 		assert(!accessStructures.hasBeenDeleted());
 		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
 		
-		//! If location == nullptr (for example the use program actually
-		//! calls the release directive we use the MemoryPlace assigned
-		//! to the Task
-		if (location == nullptr) {
-			assert(task->hasMemoryPlace());
-			location = task->getMemoryPlace();
-		}
-		
 #ifndef NDEBUG
 		{
 			bool alreadyTaken = false;
@@ -2787,7 +2780,21 @@ namespace DataAccessRegistration {
 					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && task->isRunnable()) {
 						releaseReductionStorage(task, dataAccess, region, computePlace);
 					}
-					finalizeAccess(task, dataAccess, region, location, /* OUT */ hpDependencyData);
+					
+					//! If a valid location has not been provided then we use
+					//! the MemoryPlace assigned to the Task but only for non-weak
+					//! accesses. For weak accesses we do not want to update the
+					//! location of the access
+					MemoryPlace const *releaseLocation;
+					if ((location == nullptr) && !dataAccess->isWeak()){
+						assert(task->hasMemoryPlace());
+						releaseLocation = task->getMemoryPlace();
+					} else {
+						releaseLocation = location;
+					}
+					
+					dataAccess = fragmentAccess(dataAccess, region, accessStructures);
+					finalizeAccess(task, dataAccess, region, releaseLocation, /* OUT */ hpDependencyData);
 					
 					return true;
 				}
@@ -3027,7 +3034,10 @@ namespace DataAccessRegistration {
 					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && task->isRunnable()) {
 						releaseReductionStorage(task, dataAccess, dataAccess->getAccessRegion(), computePlace);
 					}
-					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), location, /* OUT */ hpDependencyData);
+					
+					MemoryPlace *accessLocation = (dataAccess->isWeak()) ? nullptr : location;
+					
+					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), accessLocation, /* OUT */ hpDependencyData);
 					
 					return true;
 				}
