@@ -5,6 +5,7 @@
 */
 
 #include <fstream>
+#include <sys/utsname.h>
 
 #include "HardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -25,6 +26,19 @@ void HardwareCounters::initialize()
 		// Create the hardware counters monitor module
 		if (_monitor == nullptr) {
 			_monitor = new HardwareCounters();
+		}
+		
+		// Retreive kernel information
+		utsname kernelInfo;
+		if (uname(&kernelInfo) != 0) {
+			FatalErrorHandler::warnIf(true, "Could not retreive kernel information for Hardware Counter Monitoring");
+		} else {
+			std::string kernelRelease(kernelInfo.release);
+			if (kernelRelease.find("4.13.", 0) == 0) {
+				if (kernelRelease.find("4.13.0", 0) != 0) {
+					FatalErrorHandler::warnIf(true, "Kernel versions 4.13.x (except 4.13.0) have been found to give incorrect readings for MBM counters");
+				}
+			}
 		}
 		
 		// Declare PQoS configuration and capabilities structures
