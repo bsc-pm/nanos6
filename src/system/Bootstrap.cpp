@@ -4,11 +4,14 @@
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <assert.h>
 #include <config.h>
 #include <dlfcn.h>
 #include <iostream>
-#include <signal.h>
 
 #include <nanos6.h>
 #include <nanos6/bootstrap.h>
@@ -34,38 +37,9 @@
 #include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>
 
-
-static std::atomic<int> shutdownDueToSignalNumber(0);
-
 static ExternalThread *mainThread = nullptr;
 
 void nanos6_shutdown(void);
-
-
-static void signalHandler(int signum)
-{
-	// SIGABRT needs special handling
-	if (signum == SIGABRT) {
-		Instrument::shutdown();
-		return;
-	}
-	
-	// For the rest, just set up the termination flag
-	shutdownDueToSignalNumber.store(signum);
-	nanos6_shutdown();
-	
-}
-
-
-static void programSignal(int signum) {
-	struct sigaction sa;
-	sa.sa_handler = signalHandler;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESETHAND;
-	
-	int rc = sigaction(signum, &sa, nullptr);
-	FatalErrorHandler::handle(rc, "Programming signal handler for signal number ", signum);
-}
 
 int nanos6_can_run_main(void)
 {
@@ -126,23 +100,6 @@ void nanos6_preinit(void) {
 
 
 void nanos6_init(void) {
-	EnvironmentVariable<bool> handleSigInt("NANOS6_HANDLE_SIGINT", 0);
-	if (handleSigInt) {
-		programSignal(SIGINT);
-	}
-	EnvironmentVariable<bool> handleSigTerm("NANOS6_HANDLE_SIGTERM", 0);
-	if (handleSigTerm) {
-		programSignal(SIGTERM);
-	}
-	EnvironmentVariable<bool> handleSigQuit("NANOS6_HANDLE_SIGQUIT", 0);
-	if (handleSigQuit) {
-		programSignal(SIGQUIT);
-	}
-	
-	#ifndef NDEBUG
-		programSignal(SIGABRT);
-	#endif
-	
 	Instrument::threadWillSuspend(mainThread->getInstrumentationId());
 	
 	StreamManager::initialize();
@@ -165,10 +122,6 @@ void nanos6_shutdown(void) {
 	
 	// Delete all registered external threads, including mainThread
 	ExternalThreadGroup::shutdown();
-	
-	if (shutdownDueToSignalNumber.load() != 0) {
-		raise(shutdownDueToSignalNumber.load());
-	}
 	
 	Monitoring::shutdown();
 	HardwareCounters::shutdown();
