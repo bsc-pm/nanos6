@@ -23,7 +23,7 @@ Message::Message(const char* name, MessageType type, size_t size, const ClusterN
 	/*! initialize the message id to 0 for now. In the
 	 * future, it will probably be something related to
 	 * the Task related with this message. */
-	_deliverable->header.id = MessageId::nextMessageId();
+	_deliverable->header.id = MessageId::nextMessageId(type);
 	_deliverable->header.senderId = from->getIndex();
 	
 	_messengerData = nullptr;

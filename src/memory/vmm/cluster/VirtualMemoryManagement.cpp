@@ -108,7 +108,7 @@ static DataAccessRegion findSuitableMemoryRegion()
 		return gap;
 	}
 	
-	int messageId = MessageId::nextMessageId();
+	int messageId = MessageId::nextMessageId(DMALLOC);
 	if (ClusterManager::isMasterNode()) {
 		// Master node gathers all the gaps from all other nodes and
 		// calculates the intersection of all those.

@@ -9,15 +9,17 @@
 
 #include "MessageId.hpp"
 
-
 namespace MessageId {
 	
-	static std::atomic<uint16_t> _nextMessageId(0);
+	typedef std::atomic<uint32_t> message_id_t;
 	
-	uint16_t nextMessageId()
+	static message_id_t _nextMessageId[TOTAL_MESSAGE_TYPES];
+	static uint32_t messageMax = (1UL << 24);
+	
+	uint32_t nextMessageId(MessageType type)
 	{
-		uint16_t ret = _nextMessageId++;
-		assert(ret != UINT16_MAX);
+		uint32_t ret = _nextMessageId[type]++;
+		assert(ret != messageMax);
 		
 		return ret;
 	}
