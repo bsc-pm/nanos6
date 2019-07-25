@@ -45,7 +45,7 @@ namespace ExecutionWorkflow {
 		if (task->hasCode()) {
 			nanos6_address_translation_entry_t *translationTable = nullptr;
 			
-			nanos6_task_info_t const * const taskInfo = task->getTaskInfo();
+			nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
 			if (taskInfo->num_symbols >= 0) {
 				translationTable = (nanos6_address_translation_entry_t *)
 						alloca(

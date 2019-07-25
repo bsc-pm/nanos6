@@ -54,7 +54,7 @@ private:
 public:
 	WorkerThread() = delete;
 	
-	inline WorkerThread(CPU * cpu);
+	inline WorkerThread(CPU *cpu);
 	
 	inline virtual ~WorkerThread();
 	

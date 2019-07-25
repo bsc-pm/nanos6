@@ -56,7 +56,7 @@ protected:
 	
 	
 public:
-	inline WorkerThreadBase(CPU * cpu);
+	inline WorkerThreadBase(CPU *cpu);
 	virtual ~WorkerThreadBase()
 	{
 	}
@@ -113,7 +113,7 @@ public:
 };
 
 
-WorkerThreadBase::WorkerThreadBase(CPU* cpu)
+WorkerThreadBase::WorkerThreadBase(CPU *cpu)
 	: _cpu(cpu), _cpuToBeResumedOn(nullptr)
 {
 }

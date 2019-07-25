@@ -101,7 +101,7 @@ private:
 	
 	//! Compute Place where the task is running
 	ComputePlace *_computePlace;	
-
+	
 	//! MemoryPlace "attached" to the ComputePlace the Task is running on
 	MemoryPlace *_memoryPlace;
 	
@@ -197,7 +197,7 @@ public:
 		assert(_taskInfo != nullptr);
 		return (_taskInfo->implementations[0].run != nullptr); // TODO: solution until multiple implementations are allowed
 	}
-
+	
 	//! \brief sets the thread assigned to tun the task
 	//!
 	//! \param in thread the thread that will run the task
@@ -545,7 +545,8 @@ public:
 	}
 	
 	//! \brief Return the number of symbols on the task
-	inline int getNumSymbols(){
+	inline int getNumSymbols()
+	{
 		return _taskInfo->num_symbols;
 	}
 	

@@ -37,7 +37,6 @@
 #include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>
 
-
 void WorkerThread::initialize()
 {
 	Instrument::createdThread(_instrumentationId, getComputePlace()->getInstrumentationId());
@@ -48,7 +47,7 @@ void WorkerThread::initialize()
 	
 	markAsCurrentWorkerThread();
 	
-	// This is needed for kernel-level threads to stop them after initialization 
+	// This is needed for kernel-level threads to stop them after initialization
 	synchronizeInitialization();
 	
 	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
@@ -129,9 +128,9 @@ void WorkerThread::handleTask(CPU *cpu)
 	//MemoryPlace *targetPlace = cpu->getMemoryPlace(NUMAId);
 	MemoryPlace *targetMemoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
 	assert(targetMemoryPlace != nullptr);
-
+	
 	ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
-
+	
 	_task = nullptr;
 }
 

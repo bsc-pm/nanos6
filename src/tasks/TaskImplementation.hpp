@@ -71,7 +71,7 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 			// Not true anymore. A task might have been offloaded
 			// to a remote device, in which case it wouldn't have
 			// a thread assigned to it.
-			// assert(_thread != nullptr);
+			//assert(_thread != nullptr);
 			_thread = nullptr;
 		} else {
 			assert(_computePlace != nullptr);

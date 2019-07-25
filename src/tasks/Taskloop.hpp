@@ -78,7 +78,6 @@ public:
 	inline bool hasPendingIterations()
 	{
 		assert(!isRunnable());
-		
 		return (_taskloopInfo._remainingPartitions.load() > 0);
 	}
 	
@@ -95,7 +94,7 @@ public:
 		
 		decreaseRemovalBlockingCount();
 	}
-
+	
 private:
 	inline int getPartitionCount()
 	{

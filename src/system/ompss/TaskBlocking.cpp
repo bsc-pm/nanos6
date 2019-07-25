@@ -21,6 +21,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, Th
 	CPU *cpu = currentThread->getComputePlace();
 	assert(cpu != nullptr);
 	
+	
 	bool done = false;
 	while (!done) {
 		Task *replacementTask = nullptr;
@@ -68,7 +69,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, Th
 				// The thread can have migrated while running the replacement task
 				cpu = currentThread->getComputePlace();
 				
-				if (currentTask->enableScheduling()) {					
+				if (currentTask->enableScheduling()) {
 					// At this point the blocking condition has been fulfilled. The task is not in the scheduler
 					done = true;
 				}

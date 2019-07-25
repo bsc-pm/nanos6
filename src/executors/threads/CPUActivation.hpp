@@ -191,9 +191,9 @@ public:
 		
 		return (cpu->getActivationStatus() != CPU::starting_status);
 	}
-
-	//! \brief check if the CPU is being initialized 
-	static inline bool isBeingInitialized(CPU *cpu) 
+	
+	//! \brief check if the CPU is being initialized
+	static inline bool isBeingInitialized(CPU *cpu)
 	{
 		assert(cpu != nullptr);
 		

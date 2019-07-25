@@ -91,7 +91,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 			
 			// Call the taskinfo destructor if not null
-			nanos6_task_info_t * taskInfo = task->getTaskInfo();
+			nanos6_task_info_t *taskInfo = task->getTaskInfo();
 			if (taskInfo->destroy_args_block != nullptr) {
 				taskInfo->destroy_args_block(task->getArgsBlock());
 			}

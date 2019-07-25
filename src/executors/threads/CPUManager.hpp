@@ -57,10 +57,10 @@ public:
 	
 	//! \brief get a reference to the list of CPUs
 	static inline std::vector<CPU *> const &getCPUListReference();
-
+	
 	//! \brief mark a CPU as idle
 	static inline void cpuBecomesIdle(CPU *cpu);
-
+	
 	//! \brief get an idle CPU
 	static inline CPU *getIdleCPU();
 	

@@ -83,7 +83,7 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	
 	Monitoring::taskChangedStatus(currentTask, blocked_status, computePlace);
 	HardwareCounters::stopTaskMonitoring(currentTask);
-
+	
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 	Instrument::blockedOnUserMutex(&userMutex);
 	
