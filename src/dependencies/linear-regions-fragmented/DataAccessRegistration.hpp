@@ -58,6 +58,12 @@ namespace DataAccessRegistration {
 		bool fromBusyThread = false
 	);
 	
+	//! \brief Combines the task reductions without releasing the dependencies
+	//! 
+	//! \param[in] task the Task whose reductions need to be combined
+	//! \param[in] computePlace the ComputePlace assigned to the current thread and where the task has been executed
+	void combineTaskReductions(Task *task, ComputePlace *computePlace);
+	
 	//! \brief propagates satisfiability for an access.
 	//!
 	//! \param[in] task is the Task that includes the access for which we propagate.
