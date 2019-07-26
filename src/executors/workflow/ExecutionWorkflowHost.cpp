@@ -109,6 +109,8 @@ namespace ExecutionWorkflow {
 			HardwareCounters::stopTaskMonitoring(_task);
 		}
 		
+		DataAccessRegistration::combineTaskReductions(task, cpu);
+		
 		//! Release the subsequent steps.
 		releaseSuccessors();
 		delete this;

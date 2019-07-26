@@ -2975,12 +2975,14 @@ namespace DataAccessRegistration {
 		assert(!accessStructures._accesses.contains(region));
 	}
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location, bool fromBusyThread)
+	void combineTaskReductions(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
+		assert(computePlace != nullptr);
+		assert(task->isRunnable());
 		
-		if (task->isTaskloop() && task->isRunnable()) {
-			// Loop implicit tasks only
+		if (task->isTaskloop()) {
+			// Loop callaborators only
 			TaskDataAccesses &parentAccessStructures = task->getParent()->getDataAccesses();
 			
 			assert(!parentAccessStructures.hasBeenDeleted());
@@ -2997,11 +2999,34 @@ namespace DataAccessRegistration {
 					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE) {
 						releaseReductionStorage(task->getParent(), dataAccess, dataAccess->getAccessRegion(), computePlace);
 					}
-					
 					return true;
 				}
 			);
 		}
+		
+		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		
+		assert(!accessStructures.hasBeenDeleted());
+		TaskDataAccesses::accesses_t &accesses = accessStructures._accesses;
+		
+		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+		
+		accesses.processAll(
+			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+				DataAccess *dataAccess = &(*position);
+				assert(dataAccess != nullptr);
+				
+				if (dataAccess->getType() == REDUCTION_ACCESS_TYPE) {
+					releaseReductionStorage(task, dataAccess, dataAccess->getAccessRegion(), computePlace);
+				}
+				return true;
+			}
+		);
+	}
+	
+	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location, bool fromBusyThread)
+	{
+		assert(task != nullptr);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		
@@ -3030,10 +3055,6 @@ namespace DataAccessRegistration {
 				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
-					
-					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && task->isRunnable()) {
-						releaseReductionStorage(task, dataAccess, dataAccess->getAccessRegion(), computePlace);
-					}
 					
 					MemoryPlace *accessLocation = (dataAccess->isWeak()) ? nullptr : location;
 					

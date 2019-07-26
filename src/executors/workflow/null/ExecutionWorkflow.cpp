@@ -85,6 +85,8 @@ namespace ExecutionWorkflow {
 			HardwareCounters::stopTaskMonitoring(task);
 		}
 		
+		DataAccessRegistration::combineTaskReductions(task, cpu);
+		
 		if (task->markAsFinished(cpu)) {
 			DataAccessRegistration::unregisterTaskDataAccesses(
 				task,
