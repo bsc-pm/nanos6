@@ -127,7 +127,13 @@ void nanos6_submit_task(void *taskHandle)
 	nanos6_task_info_t *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);
 	if (taskInfo->register_depinfo != 0) {
+		// Begin as pending status, become ready later, through the scheduler
 		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);
+		Instrument::taskIsPending(taskInstrumentationId);
+		
+		Monitoring::taskChangedStatus(task, pending_status);
+		// No need to stop hardware counters, as the task was created just now
+		
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}
 	
@@ -146,11 +152,6 @@ void nanos6_submit_task(void *taskHandle)
 		if (idleComputePlace != nullptr) {
 			ThreadManager::resumeIdle((CPU *) idleComputePlace);
 		}
-	} else if (!ready) {
-		Instrument::taskIsPending(taskInstrumentationId);
-		
-		Monitoring::taskChangedStatus(task, pending_status);
-		HardwareCounters::stopTaskMonitoring(task);
 	}
 	
 	if (parent != nullptr) {
