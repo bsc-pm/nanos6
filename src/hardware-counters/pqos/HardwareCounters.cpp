@@ -13,6 +13,7 @@
 
 EnvironmentVariable<bool> HardwareCounters::_enabled("NANOS6_HARDWARE_COUNTERS_ENABLE", false);
 EnvironmentVariable<bool> HardwareCounters::_verbose("NANOS6_HARDWARE_COUNTERS_VERBOSE", false);
+EnvironmentVariable<bool> HardwareCounters::_wisdomEnabled("NANOS6_WISDOM_ENABLE", false);
 EnvironmentVariable<std::string> HardwareCounters::_outputFile("NANOS6_HARDWARE_COUNTERS_VERBOSE_FILE", "output-hardware-counters.txt");
 HardwareCounters* HardwareCounters::_monitor;
 enum pqos_mon_event _monitoredEvents;
@@ -105,12 +106,22 @@ void HardwareCounters::initialize()
 		// Propagate initialization to thread and task Hardware counter monitors
 		TaskHardwareCountersMonitor::initialize();
 		ThreadHardwareCountersMonitor::initialize();
+		
+		if (_wisdomEnabled) {
+			// Try to load data from previous executions
+			_monitor->loadHardwareCounterWisdom();
+		}
 	}
 }
 
 void HardwareCounters::shutdown()
 {
 	if (_enabled) {
+		if (_wisdomEnabled) {
+			// Store monitoring data for future executions
+			_monitor->storeHardwareCounterWisdom();
+		}
+		
 		// Shutdown PQoS monitoring
 		int ret = pqos_fini();
 		FatalErrorHandler::failIf(ret != PQOS_RETVAL_OK, "Error '", ret, "' when shutting down the PQoS library");

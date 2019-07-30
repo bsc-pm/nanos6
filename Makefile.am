@@ -650,26 +650,6 @@ hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/null
 endif
 
 
-# Wisdom manager (monitoring-related)
-if MONITORING_ENABLED
-monitoring_sources += \
-	src/monitoring/support/wisdom/wisdom/WisdomManager.cpp
-monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/wisdom
-endif
-if !MONITORING_ENABLED
-if MONITORING_HWEVENTS_ENABLED
-monitoring_sources += \
-	src/monitoring/support/wisdom/wisdom/WisdomManager.cpp
-monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/wisdom
-endif
-endif
-if !MONITORING_ENABLED
-if !MONITORING_HWEVENTS_ENABLED
-monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/support/wisdom/null
-endif
-endif
-
-
 # Add monitoring-related sources to common sources
 common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_sources)
 
@@ -1047,8 +1027,6 @@ noinst_HEADERS = \
 	src/monitoring/null/TaskMonitor.hpp \
 	src/monitoring/null/TaskPredictions.hpp \
 	src/monitoring/null/TaskStatistics.hpp \
-	src/monitoring/support/wisdom/null/WisdomManager.hpp \
-	src/monitoring/support/wisdom/wisdom/WisdomManager.hpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
@@ -1074,6 +1052,8 @@ noinst_HEADERS = \
 	src/support/GlobalLock.hpp \
 	src/support/InlineDoublyLinkedList.hpp \
 	src/support/InstrumentedThread.hpp \
+	src/support/JsonFile.hpp \
+	src/support/JsonNode.hpp \
 	src/support/Objectified.hpp \
 	src/support/StringComposer.hpp \
 	src/support/StringLiteral.hpp \

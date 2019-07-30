@@ -321,7 +321,6 @@ The Monitoring infrastructure is enabled at configure time, however, both the in
 * `NANOS6_MONITORING_VERBOSE`: To enable/disable the verbose mode for monitoring. Enabled by default if the runtime is configured with Monitoring.
 * `NANOS6_MONITORING_ROLLING_WINDOW`: To specify the number of metrics used for accumulators (moving average's window). By default, the latest 20 metrics.
 * `NANOS6_WISDOM_ENABLE`: To enable/disable the wisdom mechanism. Disabled by default.
-* `NANOS6_WISDOM_PATH`: To specify a path in which the wisdom file is located (to load and/or store metrics). By default `.nanos6_monitoring_wisdom.json`.
 
 ### Known Limitations
 
@@ -344,6 +343,7 @@ The Hardware Counters API is controlled further with the following environment v
 * `NANOS6_HARDWARE_COUNTERS_ENABLE`: To enable/disable hardware counter monitoring.
 * `NANOS6_HARDWARE_COUNTERS_VERBOSE`: To enable/disable the verbose mode for hardware counter monitoring.
 * `NANOS6_HARDWARE_COUNTERS_VERBOSE_FILE`: To specify an output file name to report hardware counter statistics.
+* `NANOS6_WISDOM_ENABLE`: To enable/disable the wisdom mechanism. Disabled by default.
 
 ### Known Limitations
 

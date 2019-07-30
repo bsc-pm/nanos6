@@ -13,6 +13,7 @@
 
 EnvironmentVariable<bool> Monitoring::_enabled("NANOS6_MONITORING_ENABLE", true);
 EnvironmentVariable<bool> Monitoring::_verbose("NANOS6_MONITORING_VERBOSE", true);
+EnvironmentVariable<bool> Monitoring::_wisdomEnabled("NANOS6_WISDOM_ENABLE", false);
 EnvironmentVariable<std::string> Monitoring::_outputFile("NANOS6_MONITORING_VERBOSE_FILE", "output-monitoring.txt");
 Monitoring *Monitoring::_monitor;
 
@@ -48,12 +49,22 @@ void Monitoring::initialize()
 			// Stop measuring time and compute the tick conversion rate
 			TickConversionUpdater::finishUpdate();
 		#endif
+		
+		if (_wisdomEnabled) {
+			// Try to load data from previous executions
+			_monitor->loadMonitoringWisdom();
+		}
 	}
 }
 
 void Monitoring::shutdown()
 {
 	if (_enabled) {
+		if (_wisdomEnabled) {
+			// Store monitoring data for future executions
+			_monitor->storeMonitoringWisdom();
+		}
+		
 		#if CHRONO_ARCH
 			// Destroy the tick conversion updater service
 			TickConversionUpdater::shutdown();

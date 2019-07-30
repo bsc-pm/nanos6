@@ -13,6 +13,7 @@
 #include "WorkloadPredictor.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "support/JsonFile.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -26,17 +27,81 @@ private:
 	//! Whether verbose mode is enabled
 	static EnvironmentVariable<bool> _verbose;
 	
+	//! Whether the wisdom mechanism is enabled
+	static EnvironmentVariable<bool> _wisdomEnabled;
+	
 	//! The file where output must be saved when verbose mode is enabled
 	static EnvironmentVariable<std::string> _outputFile;
 	
-	// The "monitor", singleton instance
+	//! The "monitor", singleton instance
 	static Monitoring *_monitor;
+	
+	//! A Json file for monitoring data
+	JsonFile *_wisdom;
 	
 	
 private:
 	
-	inline Monitoring()
+	inline Monitoring() :
+		_wisdom(nullptr)
 	{
+	}
+	
+	//! \brief Try to load previous monitoring data into accumulators
+	inline void loadMonitoringWisdom()
+	{
+		// Create a representation of the system file as a JsonFile
+		_wisdom = new JsonFile("./.nanos6_monitoring_wisdom.json");
+		assert(_wisdom != nullptr);
+		
+		// Try to populate the JsonFile with the system file's data
+		_wisdom->loadData();
+		
+		// Navigate through the file and extract the unitary time of each tasktype
+		_wisdom->getRootNode()->traverseChildrenNodes(
+			[&](const std::string &label, const JsonNode<> &metricsNode) {
+				// For each tasktype, check if the unitary time is available
+				if (metricsNode.dataExists("unitary_time")) {
+					// Insert the metric data for this tasktype into accumulators
+					bool converted = false;
+					double metricValue = metricsNode.getData("unitary_time", converted);
+					if (converted) {
+						TaskMonitor::insertTimePerUnitOfCost(label, metricValue);
+					}
+				}
+			}
+		);
+	}
+	
+	//! \brief Store monitoring data for future executions as warmup data
+	inline void storeMonitoringWisdom()
+	{
+		// Gather monitoring data for all tasktypes
+		std::vector<std::string> labels;
+		std::vector<double> unitaryTimes;
+		TaskMonitor::getAverageTimesPerUnitOfCost(labels, unitaryTimes);
+		
+		assert(_wisdom != nullptr);
+		
+		// The file's root node
+		JsonNode<> *rootNode = _wisdom->getRootNode();
+		for (size_t i = 0; i < labels.size(); ++i) {
+			// Avoid storing information about the main task
+			if (labels[i] != "main") {
+				// A node for metrics (currently only unitary time)
+				JsonNode<double> taskTypeValuesNode;
+				taskTypeValuesNode.addData("unitary_time", unitaryTimes[i]);
+				
+				// Add the metrics to the root node of the file
+				rootNode->addChildNode(labels[i], taskTypeValuesNode);
+			}
+		}
+		
+		// Store the data from the JsonFile in the system file
+		_wisdom->storeData();
+		
+		// Delete the file as it is no longer needed
+		delete _wisdom;
 	}
 	
 	
