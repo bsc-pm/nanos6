@@ -75,7 +75,10 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				disposableBlockSize = (char *)task - (char *)disposableBlock;
 			}
 			
-			if (task->isTaskloop()) {
+			bool isSpawned = task->isSpawned();
+			bool isTaskloop = task->isTaskloop();
+			
+			if (isTaskloop) {
 				disposableBlockSize += sizeof(Taskloop);
 			} else {
 				disposableBlockSize += sizeof(Task);
@@ -89,9 +92,11 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				taskInfo->destroy_args_block(task->getArgsBlock());
 			}
 			
-			bool isSpawned = task->isSpawned();
-			
-			task->~Task();
+			if (isTaskloop) {
+				((Taskloop *)task)->~Taskloop();
+			} else {
+				task->~Task();
+			}
 			MemoryAllocator::free(disposableBlock, disposableBlockSize);
 			task = parent;
 			
