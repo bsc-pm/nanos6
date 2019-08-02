@@ -9,6 +9,7 @@
 
 
 StreamManager *StreamManager::_manager;
+nanos6_task_invocation_info_t StreamManager::_invocationInfo({"Spawned as a StreamExecutor"});
 std::atomic<size_t> StreamManager::_activeStreamExecutors(0);
 
 
@@ -24,25 +25,8 @@ void StreamManager::createFunction(
 	StreamFunction *streamFunction = new StreamFunction(function, args, label);
 	assert(streamFunction != nullptr);
 	
-	StreamExecutor *executor;
-	
-	_manager->_spinlock.lock();
-	
-	// Find or create a stream executor with 'streamId' as identifier
-	stream_executors_t::iterator it = _manager->_executors.find(streamId);
-	if (it == _manager->_executors.end()) {
-		executor = new StreamExecutor(streamId);
-		_manager->_executors.emplace(std::make_pair(streamId, executor));
-		
-		// Increase the number of active stream executors
-		++_activeStreamExecutors;
-	} else {
-		executor = it->second;
-	}
-	
-	_manager->_spinlock.unlock();
-	
 	// Add the new function to be executed in the stream
+	StreamExecutor *executor = _manager->findOrCreateExecutor(streamId);
 	executor->addFunction(streamFunction);
 }
 
@@ -57,23 +41,7 @@ void StreamManager::synchronizeStream(size_t streamId)
 	taskwait->_function = &(StreamExecutor::taskwaitBody);
 	taskwait->_args = (void *) &condVar;
 	
-	StreamExecutor *executor;
-	
-	_manager->_spinlock.lock();
-	
-	// Find or create a stream executor with 'streamId' as identifier
-	stream_executors_t::iterator it = _manager->_executors.find(streamId);
-	if (it == _manager->_executors.end()) {
-		executor = new StreamExecutor(streamId);
-		_manager->_executors.emplace(std::make_pair(streamId, executor));
-		
-		// Increase the number of active stream executors
-		++_activeStreamExecutors;
-	} else {
-		executor = it->second;
-	}
-	
-	_manager->_spinlock.unlock();
+	StreamExecutor *executor = _manager->findOrCreateExecutor(streamId);
 	
 	// Add the taskwait as a new function to be executed in the stream
 	executor->addFunction(taskwait);

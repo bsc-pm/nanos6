@@ -17,6 +17,7 @@
 #include "MemoryAllocator.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
+#include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskloop.hpp"
@@ -63,8 +64,16 @@ void nanos6_create_task(
 	void *&task = *task_pointer;
 	
 	bool isTaskloop = flags & nanos6_task_flag_t::nanos6_taskloop_task;
+	bool isStreamExecutor = flags & (1 << Task::stream_executor_flag);
 	size_t originalArgsBlockSize = args_block_size;
-	size_t taskSize = (isTaskloop) ? sizeof(Taskloop) : sizeof(Task);
+	size_t taskSize;
+	if (isTaskloop) {
+		taskSize = sizeof(Taskloop);
+	} else if (isStreamExecutor) {
+		taskSize = sizeof(StreamExecutor);
+	} else {
+		taskSize = sizeof(Task);
+	}
 	
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	
@@ -85,6 +94,8 @@ void nanos6_create_task(
 	
 	if (isTaskloop) {
 		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+	} else if (isStreamExecutor) {
+		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else {
 		// Construct the Task object
 		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);

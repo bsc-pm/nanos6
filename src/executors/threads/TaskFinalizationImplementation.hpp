@@ -82,6 +82,8 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			
 			if (isTaskloop) {
 				disposableBlockSize += sizeof(Taskloop);
+			} else if (isStreamExecutor) {
+				disposableBlockSize += sizeof(StreamExecutor);
 			} else {
 				disposableBlockSize += sizeof(Task);
 			}
@@ -96,6 +98,8 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			
 			if (isTaskloop) {
 				((Taskloop *)task)->~Taskloop();
+			} else if (isStreamExecutor) {
+				((StreamExecutor *)task)->~StreamExecutor();
 			} else {
 				task->~Task();
 			}

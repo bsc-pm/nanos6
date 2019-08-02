@@ -47,12 +47,9 @@ struct StreamExecutorArgsBlock {
 };
 
 
-class StreamExecutor {
+class StreamExecutor : public Task {
 
 private:
-	
-	//! The executor itself, a task that executes functions from a stream
-	Task *_executor;
 	
 	//! The identifier of the stream this executor is in charge of
 	size_t _streamId;
@@ -72,58 +69,43 @@ private:
 	
 public:
 	
-	inline StreamExecutor(size_t id) :
-		_executor(nullptr),
-		_streamId(id),
+	inline StreamExecutor(
+		void *argsBlock,
+		size_t argsBlockSize,
+		nanos6_task_info_t *taskInfo,
+		nanos6_task_invocation_info_t *taskInvokationInfo,
+		Task *parent,
+		Instrument::task_id_t instrumentationTaskId,
+		size_t flags
+	)
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags),
 		_blockingContext(nullptr),
 		_mustShutdown(false),
 		_queue(),
 		_spinlock()
 	{
-		// The executor's taskinfo's invocation information
-		// The executor's taskinfo
-		// The executor's args block
-		nanos6_task_invocation_info_t *executorInvocationInfo = new nanos6_task_invocation_info_t();
-		nanos6_task_info_t *executorInfo = new nanos6_task_info_t();
-		assert(executorInfo != nullptr);
-		assert(executorInvocationInfo != nullptr);
-		StreamExecutorArgsBlock *argsBlock;
-		
-		executorInfo->implementations = (nanos6_task_implementation_info_t *) malloc(sizeof(nanos6_task_implementation_info_t));
-		assert(executorInfo->implementations != nullptr);
-		executorInfo->implementation_count = 1;
-		executorInfo->implementations[0].run = &(StreamExecutor::bodyWrapper);
-		executorInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
-		executorInfo->implementations[0].task_label = "StreamExecutor";
-		executorInfo->implementations[0].declaration_source = "";
-		executorInfo->implementations[0].get_constraints = nullptr;
-		executorInfo->num_symbols = 0;
-		executorInfo->register_depinfo = nullptr;
-		executorInfo->destroy_args_block = nullptr;
-		executorInfo->get_priority = nullptr;
-		
-		// Create the executor task
-		nanos6_create_task(
-			executorInfo,
-			executorInvocationInfo,
-			sizeof(StreamExecutorArgsBlock),
-			(void **) &argsBlock,
-			(void **) &_executor,
-			1 << Task::stream_executor_flag,
-			0
-		);
-		
-		assert(argsBlock != nullptr);
-		assert(_executor != nullptr);
-		
-		// Complete the args block of the executor
-		// Pass itself as arguments to access the body
-		argsBlock->_executor = (void *) _executor;
-		
-		// Submit the executor to the scheduler
-		nanos6_submit_task(_executor);
 	}
 	
+	inline ~StreamExecutor()
+	{
+		// Delete the executor's structures
+		nanos6_task_info_t *executorInfo = getTaskInfo();
+		assert(executorInfo != nullptr);
+		assert(executorInfo->implementations != nullptr);
+		free(executorInfo->implementations);
+		free(executorInfo);
+	}
+	
+	
+	inline void setStreamId(size_t id)
+	{
+		_streamId = id;
+	}
+	
+	inline size_t getStreamId() const
+	{
+		return _streamId;
+	}
 	
 	//! \brief Notify to the executor that it must be shutdown
 	inline void notifyShutdown()
@@ -140,14 +122,6 @@ public:
 		if (blockingContext != nullptr) {
 			nanos6_unblock_task(blockingContext);
 		}
-		
-		// Delete the executor's structures
-		nanos6_task_invocation_info_t *executorInvocationInfo = _executor->getTaskInvokationInfo();
-		nanos6_task_info_t *executorInfo = _executor->getTaskInfo();
-		assert(executorInvocationInfo != nullptr);
-		assert(executorInfo != nullptr);
-		delete executorInvocationInfo;
-		delete executorInfo;
 	}
 	
 	//! \brief Add a function to this executor's stream queue
@@ -186,6 +160,8 @@ public:
 				
 				// Execute the function
 				function->_function(function->_args);
+				
+				// Delete the executed function
 				delete function;
 			} else {
 				// Release the lock and block the task

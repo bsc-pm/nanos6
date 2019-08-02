@@ -12,6 +12,7 @@
 #include <nanos6.h>
 
 #include "StreamExecutor.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "system/ompss/SpawnFunction.hpp"
 
 
@@ -30,6 +31,9 @@ private:
 	//! Spinlock to add new stream executors and access existent ones
 	SpinLock _spinlock;
 	
+	//! A static invocation info object for all Stream Executors
+	static nanos6_task_invocation_info_t _invocationInfo;
+	
 	
 public:
 	
@@ -43,6 +47,80 @@ private:
 		_executors(),
 		_spinlock()
 	{
+	}
+	
+	//! \brief Find or create a stream executor
+	//! \param[in] streamId The id of the stream the executor is in charge of
+	//! \return A pointer to the stream executor in charge of streamId
+	StreamExecutor *findOrCreateExecutor(size_t streamId)
+	{
+		StreamExecutor *executor;
+		
+		_spinlock.lock();
+		
+		stream_executors_t::iterator it = _executors.find(streamId);
+		if (it == _executors.end()) {
+			// Executor's taskinfo
+			// Executor's args block
+			nanos6_task_info_t *executorInfo = (nanos6_task_info_t *) malloc(sizeof(nanos6_task_info_t));
+			assert(executorInfo != nullptr);
+			StreamExecutorArgsBlock *argsBlock;
+			
+			// Fill in the executor's taskinfo
+			executorInfo->implementations = (nanos6_task_implementation_info_t *) malloc(sizeof(nanos6_task_implementation_info_t) * 1);
+			assert(executorInfo->implementations != nullptr);
+			executorInfo->implementation_count = 1;
+			executorInfo->implementations[0].run = &(StreamExecutor::bodyWrapper);
+			executorInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
+			executorInfo->implementations[0].task_label = "StreamExecutor";
+			executorInfo->implementations[0].declaration_source = "Stream Executor spawned within the runtime";
+			executorInfo->implementations[0].get_constraints = nullptr;
+			executorInfo->num_symbols = 0;
+			executorInfo->destroy_args_block = nullptr;
+			executorInfo->register_depinfo = nullptr;
+			executorInfo->get_priority = nullptr;
+			size_t flags = 1 << Task::stream_executor_flag;
+			
+			// Create the Stream Executor task
+			nanos6_create_task(
+				executorInfo,
+				&(_invocationInfo),
+				sizeof(StreamExecutorArgsBlock),
+				(void **) &argsBlock,
+				(void **) &executor,
+				flags,
+				0
+			);
+			
+			assert(argsBlock != nullptr);
+			assert(executor != nullptr);
+			
+			// Complete the args block of the executor
+			// Pass itself as arguments to access the body
+			argsBlock->_executor = (void *) executor;
+			
+			// Set the identifier of the stream the executor is in charge of
+			executor->setStreamId(streamId);
+			
+			// Emplace the executor in the executors map
+			_executors.emplace(std::make_pair(streamId, executor));
+			
+			// Release the lock as it is no longer needed
+			_spinlock.unlock();
+			
+			// Submit the executor to the scheduler
+			nanos6_submit_task(executor);
+			
+			// Increase the number of active stream executors
+			++_activeStreamExecutors;
+		} else {
+			executor = it->second;
+			
+			// Release the lock as it is no longer needed
+			_spinlock.unlock();
+		}
+		
+		return executor;
 	}
 	
 	
@@ -77,7 +155,6 @@ public:
 				StreamExecutor *executor = it.second;
 				assert(executor != nullptr);
 				executor->notifyShutdown();
-				delete it.second;
 			}
 			
 			_manager->_spinlock.unlock();
@@ -85,9 +162,9 @@ public:
 			while (_activeStreamExecutors.load() > 0) {
 				// Wait for all active stream executors to finalize
 			}
+			
+			delete _manager;
 		}
-		
-		delete _manager;
 	}
 	
 	
