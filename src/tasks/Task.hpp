@@ -29,6 +29,7 @@
 
 struct DataAccess;
 struct DataAccessBase;
+struct StreamFunctionCallback;
 class ComputePlace;
 class MemoryPlace;
 class WorkerThread;
@@ -132,6 +133,11 @@ private:
 	
 	//! Cluster-related data for remote tasks
 	TaskOffloading::ClusterTaskContext *_clusterContext;
+	
+	//! A pointer to the callback of the spawned function that created the
+	//! task, used to trigger a callback from the appropriate stream function
+	//! if the parent of this task is a StreamExecutor
+	StreamFunctionCallback *_parentSpawnCallback;
 public:
 	inline Task(
 		void *argsBlock,
@@ -695,6 +701,16 @@ public:
 	inline bool isStreamExecutor() const
 	{
 		return _flags[stream_executor_flag];
+	}
+	
+	inline void setParentSpawnCallback(StreamFunctionCallback *callback)
+	{
+		_parentSpawnCallback = callback;
+	}
+	
+	inline StreamFunctionCallback *getParentSpawnCallback() const
+	{
+		return _parentSpawnCallback;
 	}
 };
 

@@ -7,6 +7,7 @@
 #ifndef TASK_IMPLEMENTATION_HPP
 #define TASK_IMPLEMENTATION_HPP
 
+#include "StreamExecutor.hpp"
 #include "Task.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -45,7 +46,8 @@ inline Task::Task(
 	_taskPredictions(),
 	_taskCounters(),
 	_taskCountersPredictions(),
-	_clusterContext(nullptr)
+	_clusterContext(nullptr),
+	_parentSpawnCallback(nullptr)
 {
 	if (parent != nullptr) {
 		parent->addChild(this);

@@ -16,13 +16,15 @@ std::atomic<size_t> StreamManager::_activeStreamExecutors(0);
 void StreamManager::createFunction(
 	void (*function)(void *),
 	void *args,
+	void (*callback)(void *),
+	void *callbackArgs,
 	char const *label,
 	size_t streamId
 ) {
 	assert(_manager != nullptr);
 	
 	// Create the new stream function
-	StreamFunction *streamFunction = new StreamFunction(function, args, label);
+	StreamFunction *streamFunction = new StreamFunction(function, args, callback, callbackArgs, label);
 	assert(streamFunction != nullptr);
 	
 	// Add the new function to be executed in the stream
@@ -41,9 +43,8 @@ void StreamManager::synchronizeStream(size_t streamId)
 	taskwait->_function = &(StreamExecutor::taskwaitBody);
 	taskwait->_args = (void *) &condVar;
 	
-	StreamExecutor *executor = _manager->findOrCreateExecutor(streamId);
-	
 	// Add the taskwait as a new function to be executed in the stream
+	StreamExecutor *executor = _manager->findOrCreateExecutor(streamId);
 	executor->addFunction(taskwait);
 	
 	// Wait for the signal until the taskwait is completed

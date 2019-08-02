@@ -20,19 +20,48 @@
 struct StreamFunction {
 	void (*_function)(void *);
 	void *_args;
+	void (*_callback)(void *);
+	void *_callbackArgs;
 	char const *_label;
 	
 	StreamFunction() :
 		_function(nullptr),
 		_args(nullptr),
+		_callback(nullptr),
+		_callbackArgs(nullptr),
 		_label(nullptr)
 	{
 	}
 	
-	StreamFunction(void (*function)(void *), void *args, char const *label) :
+	StreamFunction(
+		void (*function)(void *),
+		void *args,
+		void (*callback)(void *),
+		void *callbackArgs,
+		char const *label
+	) :
 		_function(function),
 		_args(args),
+		_callback(callback),
+		_callbackArgs(callbackArgs),
 		_label(label)
+	{
+	}
+};
+
+struct StreamFunctionCallback {
+	void (*_callback)(void *);
+	void *_callbackArgs;
+	std::atomic<size_t> _callbackParticipants;
+	
+	StreamFunctionCallback(
+		void (*callback)(void *),
+		void *callbackArgs,
+		size_t callbackParticipants
+	) :
+		_callback(callback),
+		_callbackArgs(callbackArgs),
+		_callbackParticipants(callbackParticipants)
 	{
 	}
 };
@@ -66,6 +95,9 @@ private:
 	//! A spinlock to access the queue and block/unblock the executor
 	SpinLock _spinlock;
 	
+	//! Holds the callback of the function currently being executed
+	StreamFunctionCallback *_currentCallback;
+	
 	
 public:
 	
@@ -82,7 +114,8 @@ public:
 		_blockingContext(nullptr),
 		_mustShutdown(false),
 		_queue(),
-		_spinlock()
+		_spinlock(),
+		_currentCallback(nullptr)
 	{
 	}
 	
@@ -142,6 +175,36 @@ public:
 		}
 	}
 	
+	//! \brief Increase the number of participants in a callback. This is so
+	//! that the callback can be called when the last participant finishes
+	//! \param[in] callback The pointer of the callback
+	inline void increaseCallbackParticipants(StreamFunctionCallback *callback)
+	{
+		assert(callback != nullptr);
+		
+		callback->_callbackParticipants++;
+	}
+	
+	//! \brief Decrease the number of participants in a callback. This is so
+	//! that the callback can be called when the last participant finishes
+	//! \param[in] callback The pointer of the callback
+	inline void decreaseCallbackParticipants(StreamFunctionCallback *callback)
+	{
+		assert(callback != nullptr);
+		
+		if ((--(callback->_callbackParticipants)) == 0) {
+			// If this is the last participant, execute and delete the callback
+			callback->_callback(callback->_callbackArgs);
+			delete callback;
+		}
+	}
+	
+	//! \brief Return the callback of the function being currently executed
+	inline StreamFunctionCallback *getCurrentFunctionCallback() const
+	{
+		return _currentCallback;
+	}
+	
 	//! \brief The body of a stream executor
 	inline void body()
 	{
@@ -158,8 +221,33 @@ public:
 				
 				_spinlock.unlock();
 				
+				// If a callback exists for the function about to be executed,
+				// register it in the map for a future trigger
+				if (function->_callback != nullptr) {
+					// The StreamExecutor in charge of the function participates
+					// in the duty of calling the callback, hence by default
+					// there's always one participant when creating callbacks
+					StreamFunctionCallback *callbackObject = new StreamFunctionCallback(
+						function->_callback,
+						function->_callbackArgs,
+						/* callbackParticipants = */ 1
+					);
+					
+					_currentCallback = callbackObject;
+				}
+				
 				// Execute the function
 				function->_function(function->_args);
+				
+				// Decrease the participants of the callback of the executed
+				// function, as this executor may need to execute the callback
+				// if all child tasks have finished or none were created
+				if (_currentCallback != nullptr) {
+					decreaseCallbackParticipants(_currentCallback);
+				}
+				
+				// Reset the pointer to the current callback
+				_currentCallback = nullptr;
 				
 				// Delete the executed function
 				delete function;

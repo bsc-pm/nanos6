@@ -173,11 +173,15 @@ public:
 	//! \brief Create a function to be executed in a stream
 	//! \param[in] function The function to execute
 	//! \param[in] args Arguments of the function
+	//! \param[in] callback An optional callback called upon completion
+	//! \param[in] callbackArgs Parameters passed to the callback
 	//! \param[in] label An optional label for the function
 	//! \param[in] streamId The identifier of the stream
 	static void createFunction(
 		void (*function)(void *),
 		void *args,
+		void (*callback)(void *),
+		void *callbackArgs,
 		char const *label,
 		size_t streamId
 	);

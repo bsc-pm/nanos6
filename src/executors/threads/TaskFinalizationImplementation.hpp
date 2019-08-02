@@ -96,6 +96,13 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				taskInfo->destroy_args_block(task->getArgsBlock());
 			}
 			
+			StreamFunctionCallback *spawnCallback = task->getParentSpawnCallback();
+			if (spawnCallback != nullptr) {
+				StreamExecutor *executor = (StreamExecutor *)(task->getParent());
+				assert(executor != nullptr);
+				executor->decreaseCallbackParticipants(spawnCallback);
+			}
+			
 			if (isTaskloop) {
 				((Taskloop *)task)->~Taskloop();
 			} else if (isStreamExecutor) {

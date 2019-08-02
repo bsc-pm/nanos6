@@ -127,6 +127,18 @@ void nanos6_submit_task(void *taskHandle)
 		assert(computePlace != nullptr);
 		
 		task->setParent(parent);
+		
+		if (parent->isStreamExecutor()) {
+			// Check if we need to save the spawned function's id for a future
+			// trigger of a callback (spawned stream functions)
+			StreamExecutor *executor = (StreamExecutor *) parent;
+			StreamFunctionCallback *callback = executor->getCurrentFunctionCallback();
+			
+			if (callback != nullptr) {
+				task->setParentSpawnCallback(callback);
+				executor->increaseCallbackParticipants(callback);
+			}
+		}
 	}
 	
 	Instrument::createdTask(task, taskInstrumentationId);

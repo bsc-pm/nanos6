@@ -117,8 +117,14 @@ namespace SpawnedFunctions {
 	}
 }
 
-void nanos6_stream_spawn_function(void (*function)(void *), void *args, char const *label, size_t stream_id)
-{
-	StreamManager::createFunction(function, args, label, stream_id);
+void nanos6_stream_spawn_function(
+	void (*function)(void *),
+	void *args,
+	void (*callback)(void *),
+	void *callback_args,
+	char const *label,
+	size_t stream_id
+) {
+	StreamManager::createFunction(function, args, callback, callback_args, label, stream_id);
 }
 
