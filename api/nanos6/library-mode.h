@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_LIBRARY_MODE_H
@@ -15,7 +15,7 @@
 
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_library_mode_api
-enum nanos6_library_mode_api_t { nanos6_library_mode_api = 1 };
+enum nanos6_library_mode_api_t { nanos6_library_mode_api = 3 };
 
 
 #ifdef __cplusplus
@@ -44,6 +44,25 @@ void nanos6_spawn_function(
 	void (*completion_callback)(void *),
 	void *completion_args,
 	char const *label
+);
+
+
+//! \brief Spawn a function to be executed within a stream
+//!
+//! \param[in] function the function to be spawned
+//! \param[in] args a parameter that is passed to the function
+//! \param[in] callback an (optional) function to call when the function finishes
+//! \param[in] callback_args parameters passed to the completion callback
+//! \param[in] label an optional name for the function
+//! \param[in] stream_id the identifier of a stream in which the function will
+//! be executed
+void nanos6_stream_spawn_function(
+	void (*function)(void *),
+	void *args,
+	void (*callback)(void *),
+	void *callback_args,
+	char const *label,
+	size_t stream_id
 );
 
 

@@ -12,6 +12,7 @@
 #include "TaskBlocking.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -93,5 +94,15 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 		HardwareCounters::startTaskMonitoring(currentTask);
 		Monitoring::taskChangedStatus(currentTask, executing_status, cpu);
 	}
+}
+
+void nanos6_stream_synchronize(size_t stream_id)
+{
+	StreamManager::synchronizeStream(stream_id);
+}
+
+void nanos6_stream_synchronize_all(void)
+{
+	StreamManager::synchronizeAllStreams();
 }
 

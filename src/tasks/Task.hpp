@@ -29,9 +29,10 @@
 
 struct DataAccess;
 struct DataAccessBase;
-class WorkerThread;
+struct StreamFunctionCallback;
 class ComputePlace;
 class MemoryPlace;
+class WorkerThread;
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wunused-result"
@@ -53,6 +54,7 @@ public:
 		non_runnable_flag,
 		spawned_flag,
 		remote_flag,
+		stream_executor_flag,
 		total_flags
 	};
 	
@@ -131,6 +133,11 @@ private:
 	
 	//! Cluster-related data for remote tasks
 	TaskOffloading::ClusterTaskContext *_clusterContext;
+	
+	//! A pointer to the callback of the spawned function that created the
+	//! task, used to trigger a callback from the appropriate stream function
+	//! if the parent of this task is a StreamExecutor
+	StreamFunctionCallback *_parentSpawnCallback;
 public:
 	inline Task(
 		void *argsBlock,
@@ -684,6 +691,26 @@ public:
 	inline TaskOffloading::ClusterTaskContext *getClusterContext() const
 	{
 		return _clusterContext;
+	}
+	
+	inline void markAsStreamExecutor()
+	{
+		_flags[stream_executor_flag] = true;
+	}
+	
+	inline bool isStreamExecutor() const
+	{
+		return _flags[stream_executor_flag];
+	}
+	
+	inline void setParentSpawnCallback(StreamFunctionCallback *callback)
+	{
+		_parentSpawnCallback = callback;
+	}
+	
+	inline StreamFunctionCallback *getParentSpawnCallback() const
+	{
+		return _parentSpawnCallback;
 	}
 };
 

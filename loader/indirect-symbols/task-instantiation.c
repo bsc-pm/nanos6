@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include "resolve.h"
@@ -61,6 +61,33 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 	
 	(*symbol)(function, args, completion_callback, completion_args, label);
 }
+
+
+void nanos6_stream_spawn_function(
+	void (*function)(void *),
+	void *args,
+	void (*callback)(void *),
+	void *callback_args,
+	char const *label,
+	size_t stream_id
+) {
+	typedef void nanos6_stream_spawn_function_t(
+		void (*function)(void *),
+		void *args,
+		void (*callback)(void *),
+		void *callback_args,
+		char const *label,
+		size_t stream_id
+	);
+	
+	static nanos6_stream_spawn_function_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_stream_spawn_function_t *) _nanos6_resolve_symbol("nanos6_stream_spawn_function", "essential", NULL);
+	}
+	
+	(*symbol)(function, args, callback, callback_args, label, stream_id);
+}
+
 
 #pragma GCC visibility pop
 

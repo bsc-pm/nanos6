@@ -10,6 +10,7 @@
 #include "DataAccessRegistration.hpp"
 #include "MemoryAllocator.hpp"
 #include "TaskFinalization.hpp"
+#include "tasks/StreamManager.hpp"
 #include "tasks/Taskloop.hpp"
 
 #include <HardwareCounters.hpp>
@@ -77,9 +78,12 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			
 			bool isSpawned = task->isSpawned();
 			bool isTaskloop = task->isTaskloop();
+			bool isStreamExecutor = task->isStreamExecutor();
 			
 			if (isTaskloop) {
 				disposableBlockSize += sizeof(Taskloop);
+			} else if (isStreamExecutor) {
+				disposableBlockSize += sizeof(StreamExecutor);
 			} else {
 				disposableBlockSize += sizeof(Task);
 			}
@@ -92,8 +96,17 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				taskInfo->destroy_args_block(task->getArgsBlock());
 			}
 			
+			StreamFunctionCallback *spawnCallback = task->getParentSpawnCallback();
+			if (spawnCallback != nullptr) {
+				StreamExecutor *executor = (StreamExecutor *)(task->getParent());
+				assert(executor != nullptr);
+				executor->decreaseCallbackParticipants(spawnCallback);
+			}
+			
 			if (isTaskloop) {
 				((Taskloop *)task)->~Taskloop();
+			} else if (isStreamExecutor) {
+				((StreamExecutor *)task)->~StreamExecutor();
 			} else {
 				task->~Task();
 			}
@@ -102,6 +115,8 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			
 			if (isSpawned) {
 				SpawnedFunctions::_pendingSpawnedFunctions--;
+			} else if (isStreamExecutor) {
+				StreamManager::_activeStreamExecutors--;
 			}
 		} else {
 			assert(!task->hasFinished());
