@@ -7,6 +7,9 @@
 #ifndef NANOS6_LIBRARY_MODE_H
 #define NANOS6_LIBRARY_MODE_H
 
+
+#include <stddef.h>
+
 #include "major.h"
 
 
