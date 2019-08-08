@@ -109,7 +109,7 @@ namespace ExecutionWorkflow {
 			HardwareCounters::stopTaskMonitoring(_task);
 		}
 		
-		DataAccessRegistration::combineTaskReductions(task, cpu);
+		DataAccessRegistration::combineTaskReductions(_task, cpu);
 		
 		//! Release the subsequent steps.
 		releaseSuccessors();
