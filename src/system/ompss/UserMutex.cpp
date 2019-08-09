@@ -149,10 +149,6 @@ void nanos6_user_unlock(void **handlerPointer)
 				cpu = currentThread->getComputePlace();
 				assert(cpu != nullptr);
 				Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
-				
-				// Resume execution timing for the current task
-				HardwareCounters::startTaskMonitoring(currentTask);
-				Monitoring::taskChangedStatus(currentTask, executing_status, cpu);
 			}
 		} else {
 			Scheduler::addReadyTask(releasedTask, cpu, SchedulerInterface::UNBLOCKED_TASK_HINT);
