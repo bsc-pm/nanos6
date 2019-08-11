@@ -168,7 +168,7 @@ typedef struct __attribute__((aligned(64)))
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_instantiation_api
 //! \brief This needs to be incremented on every change to the instantiation API
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 1 };
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 2 };
 
 typedef enum {
 	//! Specifies that the task will be a final task
