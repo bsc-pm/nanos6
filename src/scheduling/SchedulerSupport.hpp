@@ -5,9 +5,8 @@
 */
 
 
-
-#ifndef SUPPORT_HPP
-#define SUPPORT_HPP
+#ifndef SCHEDULER_SUPPORT_HPP
+#define SCHEDULER_SUPPORT_HPP
 
 #include <cstdint>
 
@@ -45,5 +44,4 @@ static inline bool isPowOf2(uint64_t const x) {
 	return (__builtin_popcountll(x) == 1);
 }
 
-
-#endif
+#endif // SCHEDULER_SUPPORT_HPP

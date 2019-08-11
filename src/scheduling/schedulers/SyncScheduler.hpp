@@ -17,7 +17,7 @@
 #include "hardware/HardwareInfo.hpp"
 #include "lowlevel/TicketArraySpinLock.hpp"
 #include "lowlevel/SubscriptionLock.hpp"
-#include "scheduling/Support.hpp"
+#include "scheduling/SchedulerSupport.hpp"
 
 class SyncScheduler {
 protected:
