@@ -39,6 +39,8 @@ void ThreadManager::initialize()
 
 void ThreadManager::shutdownPhase1()
 {
+	assert(_shutdownThreads != nullptr);
+	
 	_mustExit = true;
 	const int MIN_SPINS = 100;
 	const int MAX_SPINS = 100*1000*1000;
@@ -73,7 +75,10 @@ void ThreadManager::shutdownPhase1()
 
 void ThreadManager::shutdownPhase2()
 {
+	assert(_shutdownThreads != nullptr);
+	
 	for (WorkerThread *thread : _shutdownThreads->_threads) {
 		delete thread;
 	}
+	delete _shutdownThreads;
 }
