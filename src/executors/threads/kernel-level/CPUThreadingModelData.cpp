@@ -13,9 +13,6 @@
 #include <cassert>
 
 
-std::atomic<long> CPUThreadingModelData::_shutdownThreads(0);
-std::atomic<WorkerThread *> CPUThreadingModelData::_mainShutdownControllerThread(nullptr);
-
 EnvironmentVariable<StringifiedMemorySize> CPUThreadingModelData::_defaultThreadStackSize("NANOS6_STACK_SIZE", 8 * 1024 * 1024);
 
 

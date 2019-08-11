@@ -20,22 +20,12 @@ class WorkerThread;
 
 struct CPUThreadingModelData {
 private:
-	//! \brief a thread responsible for shutting down the rest of the threads and itself
-	std::atomic<WorkerThread *> _shutdownControllerThread;
-	
-	//! \brief number of threads that must be shut down
-	static std::atomic<long> _shutdownThreads;
-	
-	//! \brief last thread that joins any other thread
-	static std::atomic<WorkerThread *> _mainShutdownControllerThread;
-	
 	static EnvironmentVariable<StringifiedMemorySize> _defaultThreadStackSize;
 	
 	friend class WorkerThreadBase;
 	
 public:
 	CPUThreadingModelData()
-		: _shutdownControllerThread(nullptr)
 	{
 	}
 	
