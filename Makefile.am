@@ -20,6 +20,7 @@ ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 AM_LDFLAGS = $(AS_NEEDED_FLAGS) 
+AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 
 SUBDIRS = . commands tests/directive_based scripts
 
@@ -320,9 +321,10 @@ common_sources = \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/hardware/HardwareInfo.cpp \
+	src/hardware/device/Device.cpp \
 	src/hardware/hwinfo/HostInfo.cpp \
-	src/hardware/places/CPUPlace.cpp \
 	src/hardware/places/ComputePlace.cpp \
+	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/SymbolResolver.cpp \
@@ -334,19 +336,12 @@ common_sources = \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
-	src/scheduling/schedulers/DeviceHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/schedulers/FIFOScheduler.cpp \
-	src/scheduling/schedulers/HostHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorScheduler.cpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.cpp \
-	src/scheduling/schedulers/NUMAHierarchicalScheduler.cpp \
-	src/scheduling/schedulers/NaiveScheduler.cpp \
-	src/scheduling/schedulers/NoSleepPriorityScheduler.cpp \
-	src/scheduling/schedulers/PriorityScheduler.cpp \
-	src/scheduling/schedulers/PriorityScheduler1.cpp \
+	src/scheduling/schedulers/HostUnsyncScheduler.cpp \
+	src/scheduling/schedulers/SyncScheduler.cpp \
+	src/scheduling/schedulers/UnsyncScheduler.cpp \
 	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.cpp \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.cpp \
+	src/scheduling/schedulers/device/DeviceUnsyncScheduler.cpp \
 	src/support/GlobalLock.cpp \
 	src/system/APICheck.cpp \
 	src/system/BlockingAPI.cpp \
@@ -368,16 +363,6 @@ common_sources = \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Taskloop.cpp
 
-cuda_sources = \
-	src/executors/cuda/CUDAPollingService.cpp \
-	src/hardware/cuda/CUDAInfo.cpp \
-	src/hardware/cuda/compute/CUDAComputePlace.cpp \
-	src/hardware/cuda/memory/CUDAMemoryPlace.cpp \
-	src/scheduling/schedulers/cuda/CUDANaiveScheduler.cpp 
-
-if USE_CUDA
-common_sources += $(cuda_sources)
-endif
 
 cluster_sources =
 if USE_CLUSTER
@@ -486,8 +471,7 @@ endif
 
 AM_CXXFLAGS += -I$(srcdir)/src/executors/threads/kernel-level
 common_sources += \
-	src/executors/threads/kernel-level/CPUThreadingModelData.cpp \
-	src/executors/threads/kernel-level/WorkerThreadBase.cpp
+	src/executors/threads/kernel-level/CPUThreadingModelData.cpp
 
 
 nodist_common_sources += \
@@ -712,7 +696,6 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/MultidimensionalAPI.hpp \
-	src/executors/cuda/CUDAPollingService.hpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.hpp \
@@ -731,25 +714,27 @@ noinst_HEADERS = \
 	src/executors/workflow/cluster/null/ExecutionWorkflowCluster.hpp \
 	src/executors/workflow/null/ExecutionStep.hpp \
 	src/executors/workflow/null/ExecutionWorkflow.hpp \
+	src/hardware/HardwareInfo.hpp \
 	src/hardware/cluster/ClusterNode.hpp \
 	src/hardware/cluster/memory/ClusterMemoryNode.hpp \
 	src/hardware/cluster/memory/null/ClusterMemoryNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
-	src/hardware/cuda/CUDADevice.hpp \
-	src/hardware/cuda/CUDAInfo.hpp \
-	src/hardware/cuda/compute/CUDAComputePlace.hpp \
-	src/hardware/cuda/compute/stream/CUDAStream.hpp \
-	src/hardware/cuda/compute/stream/CUDAStreamPool.hpp \
-	src/hardware/cuda/compute/synchronization/CUDAEvent.hpp \
-	src/hardware/cuda/compute/synchronization/CUDAEventPool.hpp \
-	src/hardware/cuda/memory/CUDAMemoryPlace.hpp \
-	src/hardware/HardwareInfo.hpp \
+	src/hardware/device/Device.hpp \
+	src/hardware/device/DeviceFunctionsInterface.hpp \
+	src/hardware/device/DeviceInfoImplementation.hpp \
+	src/hardware/device/implementation/CUDA.hpp \
+	src/hardware/device/implementation/FPGA.hpp \
+	src/hardware/device/implementation/NULLDevice.hpp \
+	src/hardware/device/implementation/cuda/CUDAContext.hpp \
+	src/hardware/device/implementation/cuda/CUDAFunctions.hpp \
 	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
+	src/hardware/places/DeviceComputePlace.hpp \
+	src/hardware/places/DeviceMemoryPlace.hpp \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
 	src/hardware-counters/null/HardwareCounters.hpp \
 	src/hardware-counters/null/TaskHardwareCounters.hpp \
@@ -982,7 +967,10 @@ noinst_HEADERS = \
 	src/lowlevel/SpinLockDeadlockDebug.hpp \
 	src/lowlevel/SpinLockNoDebug.hpp \
 	src/lowlevel/SpinLockOwnerDebug.hpp \
+	src/lowlevel/SpinWait.hpp \
+	src/lowlevel/SubscriptionLock.hpp \
 	src/lowlevel/SymbolResolver.hpp \
+	src/lowlevel/TicketArraySpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
@@ -1028,25 +1016,26 @@ noinst_HEADERS = \
 	src/monitoring/null/TaskMonitor.hpp \
 	src/monitoring/null/TaskPredictions.hpp \
 	src/monitoring/null/TaskStatistics.hpp \
+	src/scheduling/ClusterScheduler.hpp \
+	src/scheduling/LocalScheduler.hpp \
+	src/scheduling/ReadyQueue.hpp \
 	src/scheduling/Scheduler.hpp \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
-	src/scheduling/TaskloopSchedulingPolicy.hpp \
-	src/scheduling/schedulers/DefaultScheduler.hpp \
-	src/scheduling/schedulers/DeviceHierarchicalScheduler.hpp \
-	src/scheduling/schedulers/FIFOImmediateSuccessorWithPollingScheduler.hpp \
-	src/scheduling/schedulers/FIFOScheduler.hpp \
-	src/scheduling/schedulers/HostHierarchicalScheduler.hpp \
-	src/scheduling/schedulers/ImmediateSuccessorScheduler.hpp \
-	src/scheduling/schedulers/ImmediateSuccessorWithPollingScheduler.hpp \
-	src/scheduling/schedulers/NUMAHierarchicalScheduler.hpp \
-	src/scheduling/schedulers/NaiveScheduler.hpp \
-	src/scheduling/schedulers/NoSleepPriorityScheduler.hpp \
-	src/scheduling/schedulers/PriorityScheduler.hpp \
-	src/scheduling/schedulers/PriorityScheduler1.hpp \
+	src/scheduling/SchedulerSupport.hpp \
+	src/scheduling/ready-queues/ReadyQueueDeque.hpp \
+	src/scheduling/ready-queues/ReadyQueueMap.hpp \
+	src/scheduling/schedulers/HostScheduler.hpp \
+	src/scheduling/schedulers/HostUnsyncScheduler.hpp \
+	src/scheduling/schedulers/SyncScheduler.hpp \
+	src/scheduling/schedulers/UnsyncScheduler.hpp \
 	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.hpp \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.hpp \
-	src/scheduling/schedulers/cuda/CUDANaiveScheduler.hpp \
+	src/scheduling/schedulers/device/CUDADeviceScheduler.hpp \
+	src/scheduling/schedulers/device/DeviceScheduler.hpp \
+	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
+	src/scheduling/schedulers/device/FPGADeviceScheduler.hpp \
+	src/scheduling/schedulers/device/SubDeviceScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GenericFactory.hpp \
@@ -1072,7 +1061,6 @@ noinst_HEADERS = \
 	src/tasks/StreamExecutor.hpp \
 	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
-	src/tasks/TaskDeviceData.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/TaskImplementation.hpp \
 	src/tasks/Taskloop.hpp \

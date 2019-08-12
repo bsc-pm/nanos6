@@ -19,7 +19,7 @@
 #include <InstrumentThreadManagement.hpp>
 
 
-inline WorkerThread::WorkerThread(CPU * cpu)
+inline WorkerThread::WorkerThread(CPU *cpu)
 	: WorkerThreadBase(cpu), _mustShutDown(false), _task(nullptr), _dependencyDomain(),
 	_hardwareCounters(), _instrumentationData(), _threadCounters()
 {

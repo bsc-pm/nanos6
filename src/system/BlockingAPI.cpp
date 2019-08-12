@@ -74,11 +74,6 @@ extern "C" void nanos6_unblock_task(void *blocking_context)
 	Task *task = static_cast<Task *>(blocking_context);
 	
 	Instrument::unblockTask(task->getInstrumentationTaskId());
-	Scheduler::addReadyTask(task, nullptr, SchedulerInterface::UNBLOCKED_TASK_HINT);
-	
-	CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
-	if (idleCPU != nullptr) {
-		ThreadManager::resumeIdle(idleCPU);
-	}
+	Scheduler::addReadyTask(task, nullptr, UNBLOCKED_TASK_HINT);
 }
 

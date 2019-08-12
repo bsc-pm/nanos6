@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef _GNU_SOURCE
@@ -26,43 +26,59 @@
 std::atomic<bool> ThreadManager::_mustExit(false);
 ThreadManager::IdleThreads *ThreadManager::_idleThreads;
 std::atomic<long> ThreadManager::_totalThreads(0);
+ThreadManager::ShutdownThreads *ThreadManager::_shutdownThreads;
 
 
 void ThreadManager::initialize()
 {
 	size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_idleThreads = new IdleThreads[numaNodeCount];
+	_shutdownThreads = new ShutdownThreads();
 }
 
 
-void ThreadManager::shutdown()
+void ThreadManager::shutdownPhase1()
 {
-	_mustExit = true;
+	assert(_shutdownThreads != nullptr);
 	
-	// Attempt to wake up all (enabled) CPUs so that they start shutting down the threads
-	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
-	std::deque<CPU *> participatingCPUs;
-	for (CPU *cpu : cpus) {
-		// Sanity check
-		if ((cpu != nullptr) && CPUActivation::acceptsWork(cpu)) {
-			cpu->getThreadingModelData().shutdownPhase1(cpu);
-			
-			// Place them in reverse order so the last one we get afterwards is the main shutdown controller
-			participatingCPUs.push_front(cpu);
+	_mustExit = true;
+	const int MIN_SPINS = 100;
+	const int MAX_SPINS = 100*1000*1000;
+	
+	int spins = MIN_SPINS;
+	
+	bool canJoin = false;
+	while (!canJoin) {
+		// Check whether all the threads already added themselves to _shutdownThreads.
+		_shutdownThreads->_lock.lock();
+		canJoin = (_shutdownThreads->_threads.size() == (size_t) _totalThreads);
+		_shutdownThreads->_lock.unlock();
+		
+		// Spin for a while to let threads add them to _shutdownThreads.
+		int i = 0;
+		while (i < spins && !canJoin) {
+			i++;
+		}
+		
+		// Backoff
+		if (spins < MAX_SPINS) {
+			spins *= 2;
 		}
 	}
 	
-	// At this point we have woken as many threads as active CPUs. They perform the
-	// shutdown collectively. The number can actually be smaller than activeCPUs.size().
-	// The reason is that as soon as one starts the shutdown procedure, it will start
-	// collecting other threads. That is, it will be competing to get idle threads too.
-	// However, there will be at least one of them, the main shutdown controller, and it
-	// will be the last controller in "activeCPUs".
+	assert(_shutdownThreads->_threads.size() == (size_t) _totalThreads);
 	
-	// Join all the shutdown controller threads
-	for (auto cpu : participatingCPUs) {
-		cpu->getThreadingModelData().shutdownPhase2(cpu);
+	for (WorkerThread *thread : _shutdownThreads->_threads) {
+		thread->join();
 	}
 }
 
-
+void ThreadManager::shutdownPhase2()
+{
+	assert(_shutdownThreads != nullptr);
+	
+	for (WorkerThread *thread : _shutdownThreads->_threads) {
+		delete thread;
+	}
+	delete _shutdownThreads;
+}

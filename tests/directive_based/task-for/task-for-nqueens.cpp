@@ -64,28 +64,7 @@ void solve(int n, const int col, sol_node_t& sol)
 }
 
 
-bool validScheduler() {
-	// Task-for is only supported by Naive and FIFO schedulers
-	char const *schedulerName = getenv("NANOS6_SCHEDULER");
-	if (schedulerName != 0) {
-		std::string scheduler(schedulerName);
-		if (scheduler == "naive" || scheduler == "fifo") {
-			return true;
-		}
-	}
-	return false;
-}
-
-
 int main() {
-	if (!validScheduler()) {
-		tap.registerNewTests(1);
-		tap.begin();
-		tap.skip("This test does not work with this scheduler");
-		tap.end();
-		return 0;
-	}
-	
 	int n = TOTAL_SIZE;
 	final_depth = FINAL_DEPTH;
 	chunksize = CHUNKSIZE;

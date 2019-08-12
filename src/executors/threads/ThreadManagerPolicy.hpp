@@ -19,7 +19,7 @@ public:
 		POLICY_CHILDREN_INLINE,
 		POLICY_ALL_INLINE
 	};
-
+	
 	//! \brief check if a task must be run within the thread of a blocked task
 	//!
 	//! \param[in] replacementTask the task that is to be run

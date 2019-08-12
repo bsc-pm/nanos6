@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_FINALIZATION_IMPLEMENTATION_HPP
@@ -91,7 +91,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 			
 			// Call the taskinfo destructor if not null
-			nanos6_task_info_t * taskInfo = task->getTaskInfo();
+			nanos6_task_info_t *taskInfo = task->getTaskInfo();
 			if (taskInfo->destroy_args_block != nullptr) {
 				taskInfo->destroy_args_block(task->getArgsBlock());
 			}
@@ -122,20 +122,8 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			assert(!task->hasFinished());
 			
 			// An ancestor in a taskwait that finishes at this point
-			Scheduler::addReadyTask(task, computePlace, SchedulerInterface::UNBLOCKED_TASK_HINT);
+			Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
 			readyOrDisposable = false;
-			
-			bool resumeIdleCPU = true;
-			if (computePlace != nullptr) {
-				resumeIdleCPU = (computePlace->getType() != nanos6_device_t::nanos6_host_device);
-			}
-			
-			if (resumeIdleCPU) {
-				CPU *idleCPU = (CPU *) Scheduler::getIdleComputePlace();
-				if (idleCPU != nullptr) {
-					ThreadManager::resumeIdle(idleCPU);
-				}
-			}
 		}
 	}
 }

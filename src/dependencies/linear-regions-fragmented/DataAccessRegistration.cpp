@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -430,7 +430,7 @@ namespace DataAccessRegistration {
 		/* OUT */ CPUDependencyData &hpDependencyData
 	);
 	static inline void removeBottomMapTaskwaitOrTopLevelSink(
-		DataAccess *access, TaskDataAccesses &accessStructures, __attribute__((unused)) Task *task 
+		DataAccess *access, TaskDataAccesses &accessStructures, __attribute__((unused)) Task *task
 	);
 	static inline BottomMapEntry *fragmentBottomMapEntry(
 		BottomMapEntry *bottomMapEntry, DataAccessRegion region,
@@ -860,7 +860,7 @@ namespace DataAccessRegistration {
 	
 	
 	static inline void removeBottomMapTaskwaitOrTopLevelSink(
-		DataAccess *access, TaskDataAccesses &accessStructures, __attribute__((unused)) Task *task 
+		DataAccess *access, TaskDataAccesses &accessStructures, __attribute__((unused)) Task *task
 	) {
 		assert(access != nullptr);
 		assert(task != nullptr);
@@ -1001,10 +1001,10 @@ namespace DataAccessRegistration {
 		
 		// Regular object duplication
 		DataAccess *newFragment = ObjectAllocator<DataAccess>::newObject(toBeDuplicated);
-
+		
 		// Copy symbols
 		newFragment->addToSymbols(toBeDuplicated.getSymbols()); // TODO: Consider removing the pointer from declaration and make it a reference	
-
+		
 		newFragment->clearRegistered();
 		
 		return newFragment;
@@ -1251,18 +1251,9 @@ namespace DataAccessRegistration {
 				}
 			}
 			
-			ComputePlace *idleComputePlace = Scheduler::addReadyTask(
-				satisfiedOriginator,
-				computePlaceHint,
-				(fromBusyThread ?
-					SchedulerInterface::SchedulerInterface::BUSY_COMPUTE_PLACE_TASK_HINT
-					: SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT
-				)
+			Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint,
+				(fromBusyThread ? BUSY_COMPUTE_PLACE_TASK_HINT : SIBLING_TASK_HINT)
 			);
-			
-			if (idleComputePlace != nullptr) {
-				ThreadManager::resumeIdle((CPU *) idleComputePlace);
-			}
 		}
 		
 		hpDependencyData._satisfiedOriginators.clear();
@@ -1348,7 +1339,7 @@ namespace DataAccessRegistration {
 		
 		handleDataAccessStatusChanges(
 			initialStatus, updatedStatus,
-			access, accessStructures, updateOperation._target._task, 
+			access, accessStructures, updateOperation._target._task,
 			hpDependencyData
 		);
 	}
@@ -1488,10 +1479,10 @@ namespace DataAccessRegistration {
 			dataAccess->getDataLinkStep(),
 			instrumentationId
 		);
-
+		
 		fragment->inheritFragmentStatus(dataAccess); //TODO is it necessary?
-
-
+		
+		
 #ifndef NDEBUG
 		fragment->setReachable();
 #endif
@@ -2192,7 +2183,7 @@ namespace DataAccessRegistration {
 		// Create any initial missing fragments in the parent, link the previous accesses
 		// and possibly some parent fragments to the new task, and create propagation
 		// operations from the previous accesses to the new task.
-		// 
+		//
 		// The new task cannot be locked since it may have a predecessor multiple times,
 		// and that could produce a dead lock if the latter is finishing (this one would
 		// lock the new task first, and the predecessor later; the finishing task would
@@ -2436,7 +2427,7 @@ namespace DataAccessRegistration {
 						accessType, /* not weak */ false, region,
 						reductionTypeAndOperatorIndex
 					);
-
+					
 					// No need for symbols in a taskwait
 					
 					DataAccessStatusEffects initialStatus(taskwaitFragment);
@@ -2552,7 +2543,7 @@ namespace DataAccessRegistration {
 						top_level_sink_type,
 						accessType, /* not weak */ false, region
 					);
-
+					
 					// TODO, top level sink fragment, what to do with the symbols?
 					
 					DataAccessStatusEffects initialStatus(topLevelSinkFragment);
@@ -2641,7 +2632,7 @@ namespace DataAccessRegistration {
 		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
 	
 		if(symbolIndex >= 0) symbol_list.set(symbolIndex);
-
+		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
 		accessStructures._accesses.fragmentIntersecting(
@@ -2914,7 +2905,7 @@ namespace DataAccessRegistration {
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
-
+		
 		using spinlock_t = TaskDataAccesses::spinlock_t;
 		using access_fragments_t = TaskDataAccesses::access_fragments_t;
 		using accesses_t = TaskDataAccesses::accesses_t;
@@ -3105,7 +3096,7 @@ namespace DataAccessRegistration {
 				guard(accessStructures._lock);
 			processUpdateOperation(updateOperation, hpDependencyData);
 		}
-
+		
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
 			hpDependencyData,
 			computePlace,

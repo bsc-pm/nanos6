@@ -1,20 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
-
-#include "TaskBlocking.hpp"
-
-#include "executors/threads/CPU.hpp"
-#include "executors/threads/ThreadManager.hpp"
-#include "executors/threads/ThreadManagerPolicy.hpp"
-#include "scheduling/Scheduler.hpp"
-#include "tasks/Task.hpp"
-#include "tasks/TaskImplementation.hpp"
 
 #include <cassert>
 
+#include "TaskBlocking.hpp"
+#include "executors/threads/CPU.hpp"
+#include "executors/threads/ThreadManager.hpp"
 
 void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, ThreadManagerPolicy::thread_run_inline_policy_t policy)
 {
@@ -27,6 +21,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, Th
 	CPU *cpu = currentThread->getComputePlace();
 	assert(cpu != nullptr);
 	
+	
 	bool done = false;
 	while (!done) {
 		Task *replacementTask = nullptr;
@@ -35,10 +30,8 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, Th
 		// This can cause another thread to migrate it to another CPU and to presignal it, which will cause
 		// it to not block in the call to switchTo.
 		
-		replacementTask = Scheduler::getReadyTask(cpu, currentTask);
+		replacementTask = Scheduler::getReadyTask(cpu);
 		
-		// Case 0: The current task just got woken up and by chance
-		// has been returned to its own thread. So just keep running
 		if (replacementTask == currentTask) {
 			done = true;
 			break;
@@ -76,7 +69,7 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, Th
 				// The thread can have migrated while running the replacement task
 				cpu = currentThread->getComputePlace();
 				
-				if (currentTask->enableScheduling()) {					
+				if (currentTask->enableScheduling()) {
 					// At this point the blocking condition has been fulfilled. The task is not in the scheduler
 					done = true;
 				}
@@ -84,17 +77,23 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, Th
 				// The task has or is entering the unblocked queue.
 				// Run the task that was obtained in a new thread, so this thread can be woken up
 				replacementThread = ThreadManager::getIdleThread(cpu);
+				assert(replacementThread != nullptr);
+				
 				replacementThread->setTask(replacementTask);
 				currentThread->switchTo(replacementThread);
 				done = true;
 			}
 		} else {
-			// Either switch to the replacement thread, or just get blocked
+			if (replacementThread == nullptr) {
+				replacementThread = ThreadManager::getIdleThread(cpu);
+			}
+			assert(replacementThread != nullptr);
+			
+			// Switch to the replacement thread
 			currentThread->switchTo(replacementThread);
 			
 			// At this point the condition of the taskwait has been fulfilled
 			done = true;
 		}
 	}
-	
 }

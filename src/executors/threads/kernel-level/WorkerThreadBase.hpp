@@ -49,12 +49,6 @@ protected:
 		suspend();
 	}
 	
-	//! \brief exit the currently running thread and wake up the next one assigned to the same CPU (so that it can do the same)
-	//! 
-	//! NOTE: This method does not actually cause the thread to exit. Instead the caller is supposed to return from the body of
-	//! the thread.
-	void shutdownSequence();
-	
 	inline void start()
 	{
 		KernelLevelThread::start(_cpu->getPthreadAttr());
@@ -62,7 +56,7 @@ protected:
 	
 	
 public:
-	inline WorkerThreadBase(CPU * cpu);
+	inline WorkerThreadBase(CPU *cpu);
 	virtual ~WorkerThreadBase()
 	{
 	}
@@ -119,7 +113,7 @@ public:
 };
 
 
-WorkerThreadBase::WorkerThreadBase(CPU* cpu)
+WorkerThreadBase::WorkerThreadBase(CPU *cpu)
 	: _cpu(cpu), _cpuToBeResumedOn(nullptr)
 {
 }

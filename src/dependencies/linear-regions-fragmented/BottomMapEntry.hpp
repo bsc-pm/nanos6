@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef BOTTOM_MAP_ENTRY_HPP
@@ -28,11 +28,11 @@ struct BottomMapEntryLinkingArtifacts {
 	#endif
 	
 	typedef boost::intrusive::avl_set_member_hook<link_mode_t> hook_type;
-	typedef hook_type* hook_ptr;
-	typedef const hook_type* const_hook_ptr;
+	typedef hook_type *hook_ptr;
+	typedef const hook_type *const_hook_ptr;
 	typedef BottomMapEntry value_type;
-	typedef value_type* pointer;
-	typedef const value_type* const_pointer;
+	typedef value_type *pointer;
+	typedef const value_type *const_pointer;
 	
 	static inline constexpr hook_ptr to_hook_ptr (value_type &value);
 	static inline constexpr const_hook_ptr to_hook_ptr(const value_type &value);

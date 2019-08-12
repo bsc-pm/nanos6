@@ -4,10 +4,9 @@
 #	
 #	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 
-if test -z ${NANOS6_SCHEDULER} ; then
-	if [[ "${*}" == *"task-for-"* ]] ; then
-		# Set a scheduler that supports the oss task for construct
-		export NANOS6_SCHEDULER=fifo
+if test -z ${NANOS6_SCHEDULING_POLICY} ; then
+	if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"task-for-nqueens"* ]]; then
+		export NANOS6_SCHEDULING_POLICY=lifo
 	fi
 fi
 
