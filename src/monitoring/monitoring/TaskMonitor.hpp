@@ -57,6 +57,7 @@ public:
 		// Create the monitoring module
 		if (_monitor == nullptr) {
 			_monitor = new TaskMonitor();
+			assert(_monitor != nullptr);
 		}
 	}
 	
@@ -76,7 +77,7 @@ public:
 	}
 	
 	//! \brief Display task statistics
-	//! \param stream The output stream
+	//! \param[in,out] stream The output stream
 	static inline void displayStatistics(std::stringstream &stream)
 	{
 		if (_monitor != nullptr) {
@@ -124,12 +125,12 @@ public:
 	}
 	
 	//! \brief Initialize a task's monitoring statistics
-	//! \param parentStatistics The parent task's statistics
-	//! \param taskStatistics The task's statistics
-	//! \param parentPredictions The parent task's predictions
-	//! \param taskPredictions The task's predictions
-	//! \param label The tasktype
-	//! \param cost The task's computational cost
+	//! \param[in] parentStatistics The parent task's statistics
+	//! \param[in] taskStatistics The task's statistics
+	//! \param[in] parentPredictions The parent task's predictions
+	//! \param[in] taskPredictions The task's predictions
+	//! \param[in] label The tasktype
+	//! \param[in] cost The task's computational cost
 	static void taskCreated(
 		TaskStatistics  *parentStatistics,
 		TaskStatistics  *taskStatistics,
@@ -140,33 +141,33 @@ public:
 	);
 	
 	//! \brief Predict the execution time of a task
-	//! \param taskPredictions The predictions of the task
-	//! \param label The tasktype
-	//! \param cost The task's computational task
+	//! \param[in] taskPredictions The predictions of the task
+	//! \param[in] label The tasktype
+	//! \param[in] cost The task's computational task
 	static void predictTime(TaskPredictions *taskPredictions, const std::string &label, size_t cost);
 	
 	//! \brief Start time monitoring for a task
-	//! \param taskStatistics The task's statistics
-	//! \param execStatus The timing status to start
+	//! \param[in] taskStatistics The task's statistics
+	//! \param[in] execStatus The timing status to start
 	//! \return The status before the change
 	static monitoring_task_status_t startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus);
 	
 	//! \brief Stop time monitoring for a task
-	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[in,out] taskPredictions The predictions of the task
+	//! \param[in] taskStatistics The task's statistics
+	//! \param[in] taskPredictions The predictions of the task
 	//! \param[out] ancestorsUpdated The number of ancestors that this task has
 	//! updated during shutdown of timing monitoring
 	//! \return The status before the change
 	static monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions, int &ancestorsUpdated);
 	
 	//! \brief Get the average unitary time value of a tasktype (normalized using cost)
-	//! \param label The tasktype
+	//! \param[in] label The tasktype
 	static double getAverageTimePerUnitOfCost(const std::string &label);
 	
 	//! \brief Insert an unitary time value (normalized using cost) into the 
 	//! appropriate TasktypePredictions structure
-	//! \param label The tasktype
-	//! \param unitaryTime The time per unit of cost to insert
+	//! \param[in] label The tasktype
+	//! \param[in] unitaryTime The time per unit of cost to insert
 	static void insertTimePerUnitOfCost(const std::string &label, double unitaryTime);
 	
 	//! \brief Get the average unitary time values of all the tasktypes

@@ -52,7 +52,7 @@ private:
 	
 	
 	//! \brief Maps task status identifiers to workload identifiers
-	//! \param taskStatus The task status
+	//! \param[in] taskStatus The task status
 	//! \return The workload id related to the task status
 	inline static workload_t getLoadId(monitoring_task_status_t taskStatus)
 	{
@@ -71,21 +71,21 @@ private:
 	}
 	
 	//! \brief Increase the number of instances of a workload
-	//! \param loadId The identifier of the workload
+	//! \param[in] loadId The identifier of the workload
 	inline void increaseInstances(workload_t loadId)
 	{
 		++(_instances[loadId]);
 	}
 	
 	//! \brief Decrease the number of instances of a workload
-	//! \param loadId The identifier of the workload
+	//! \param[in] loadId The identifier of the workload
 	inline void decreaseInstances(workload_t loadId)
 	{
 		--(_instances[loadId]);
 	}
 	
 	//! \brief Retreive the number of instances of a workload
-	//! \param loadId The identifier of the workload
+	//! \param[in] loadId The identifier of the workload
 	inline size_t getInstances(workload_t loadId) const
 	{
 		return _instances[loadId].load();
@@ -105,8 +105,7 @@ private:
 		if (it == _workloads.end()) {
 			statistics = new WorkloadStatistics();
 			_workloads.emplace(label, statistics);
-		}
-		else {
+		} else {
 			statistics = it->second;
 		}
 		
@@ -135,7 +134,7 @@ private:
 	
 	//! \brief Increase the aggregated execution time of tasks that have
 	//! completed user code
-	//! \param taskCompletionTime The amount of time to increase
+	//! \param[in] taskCompletionTime The amount of time to increase
 	inline void increaseTaskCompletionTimes(size_t taskCompletionTime)
 	{
 		_taskCompletionTimes += taskCompletionTime;
@@ -143,7 +142,7 @@ private:
 	
 	//! \brief Decrease the aggregated execution time of tasks that have
 	//! completed user code
-	//! \param taskCompletionTime The amount of time to decrease
+	//! \param[in] taskCompletionTime The amount of time to decrease
 	inline void decreaseTaskCompletionTimes(size_t taskCompletionTime)
 	{
 		_taskCompletionTimes -= taskCompletionTime;
@@ -165,6 +164,7 @@ public:
 		// Create the predictor singleton
 		if (_predictor == nullptr) {
 			_predictor = new WorkloadPredictor();
+			assert(_predictor != nullptr);
 		}
 	}
 	
@@ -185,7 +185,7 @@ public:
 	}
 	
 	//! \brief Display workload statistics
-	//! \param stream The output stream
+	//! \param[in,out] stream The output stream
 	static inline void displayStatistics(std::stringstream &stream)
 	{
 		if (_predictor != nullptr) {
@@ -207,8 +207,8 @@ public:
 	}
 	
 	//! \brief Aggregate a task's statistics into workloads
-	//! \param taskStatistics The task's statistics
-	//! \param taskPredictions The task's predictions
+	//! \param[in] taskStatistics The task's statistics
+	//! \param[in] taskPredictions The task's predictions
 	static void taskCreated(
 		TaskStatistics *taskStatistics,
 		TaskPredictions *taskPredictions
@@ -216,10 +216,10 @@ public:
 	
 	//! \brief Move the aggregation of a task's statistics between workloads
 	//! when the task changes its timing status
-	//! \param taskStatistics The task's statistics
-	//! \param taskPredictions The task's predictions
-	//! \param oldStatus The old timing status
-	//! \param newStatus The new timing status
+	//! \param[in] taskStatistics The task's statistics
+	//! \param[in] taskPredictions The task's predictions
+	//! \param[in] oldStatus The old timing status
+	//! \param[in] newStatus The new timing status
 	static void taskChangedStatus(
 		TaskStatistics *taskStatistics,
 		TaskPredictions *taskPredictions,
@@ -229,8 +229,8 @@ public:
 	
 	//! \brief Account the task's elapsed time for predictions once it
 	//! completes user code
-	//! \param taskStatistics The task's statistics
-	//! \param taskPredictions The task's predictions
+	//! \param[in] taskStatistics The task's statistics
+	//! \param[in] taskPredictions The task's predictions
 	static void taskCompletedUserCode(
 		TaskStatistics *taskStatistics,
 		TaskPredictions *taskPredictions
@@ -238,9 +238,9 @@ public:
 	
 	//! \brief Move the aggregation of a task's statistics between workloads
 	//! when the task finishes execution
-	//! \param taskStatistics The task's statistics
-	//! \param taskPredictions The task's predictions
-	//! \param oldStatus The old timing status
+	//! \param[in] taskStatistics The task's statistics
+	//! \param[in] taskPredictions The task's predictions
+	//! \param[in] oldStatus The old timing status
 	static void taskFinished(
 		TaskStatistics *taskStatistics,
 		TaskPredictions *taskPredictions,
@@ -249,7 +249,7 @@ public:
 	);
 	
 	//! \brief Get a timing prediction of a certain workload
-	//! \param loadId The workload's id
+	//! \param[in] loadId The workload's id
 	static double getPredictedWorkload(workload_t loadId);
 	
 	//! \brief Retrieve the aggregated execution time of tasks that have
@@ -257,7 +257,7 @@ public:
 	static size_t getTaskCompletionTimes();
 	
 	//! \brief Retreive the number of instances of a workload
-	//! \param loadId The identifier of the workload
+	//! \param[in] loadId The identifier of the workload
 	static inline size_t getNumInstances(workload_t loadId)
 	{
 		assert(_predictor != nullptr);

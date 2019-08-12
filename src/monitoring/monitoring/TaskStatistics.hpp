@@ -69,7 +69,7 @@ public:
 	inline TaskStatistics() :
 		_cost(DEFAULT_COST),
 		_currentId(null_status),
-		_aliveChildren(1) // Start as 1, marking
+		_aliveChildren(1)
 	{
 		for (short i = 0; i < num_status; ++i) {
 			_childrenTimes[i] = 0;
@@ -105,14 +105,14 @@ public:
 	}
 	
 	//! \brief Get a representation of the elapsed ticks of a timer
-	//! \param id The timer's timing status id
+	//! \param[in] id The timer's timing status id
 	inline size_t getChronoTicks(monitoring_task_status_t id) const
 	{
 		return _chronos[id].getAccumulated();
 	}
 	
 	//! \brief Get the elapsed execution time of a timer (in microseconds)
-	//! \param id The timer's timing status id
+	//! \param[in] id The timer's timing status id
 	inline double getElapsedTiming(monitoring_task_status_t id) const
 	{
 		return ((double) _chronos[id]);
@@ -152,9 +152,9 @@ public:
 	//! \return Whether the decreased child was the last child
 	inline bool decreaseAliveChildren()
 	{
-		int aliveChildren = (--_aliveChildren);
-		assert(aliveChildren >= 0);
+		assert(_aliveChildren.load() > 0);
 		
+		int aliveChildren = (--_aliveChildren);
 		return (aliveChildren == 0);
 	}
 	
@@ -168,9 +168,9 @@ public:
 	//! \return Whether there are no more children alive
 	inline bool markAsFinished()
 	{
-		int aliveChildren = (--_aliveChildren);
-		assert(aliveChildren >= 0);
+		assert(_aliveChildren.load() > 0);
 		
+		int aliveChildren = (--_aliveChildren);
 		return (aliveChildren == 0);
 	}
 	
@@ -189,8 +189,7 @@ public:
 		// Resume the next chrono
 		if (oldId == null_status) {
 			_chronos[_currentId].start();
-		}
-		else {
+		} else {
 			_chronos[oldId].continueAt(_chronos[_currentId]);
 		}
 		

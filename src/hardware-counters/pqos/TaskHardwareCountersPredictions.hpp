@@ -48,30 +48,30 @@ public:
 	
 	
 	//! \brief Set whether a counter has a prediction
-	//! \param counterId The counter's id
-	//! \param available Whether a prediction is available
+	//! \param[in] counterId The counter's id
+	//! \param[in] available Whether a prediction is available
 	inline void setPredictionAvailable(HWCounters::counters_t counterId, bool available)
 	{
 		_counterPredictions[counterId]._predictionAvailable = available;
 	}
 	
 	//! \brief Check whether a counter has a prediction
-	//! \param counterId The counter's id
+	//! \param[in] counterId The counter's id
 	inline bool hasPrediction(HWCounters::counters_t counterId) const
 	{
 		return _counterPredictions[counterId]._predictionAvailable;
 	}
 	
 	//! \brief Set the prediction for a counter
-	//! \param counterId The counter's id
-	//! \param value The value for the prediction of the counter
+	//! \param[in] counterId The counter's id
+	//! \param[in] value The value for the prediction of the counter
 	inline void setCounterPrediction(HWCounters::counters_t counterId, double value)
 	{
 		_counterPredictions[counterId]._prediction = value;
 	}
 	
 	//! \brief Get the prediction for a certain counter
-	//! \param counterId The counter's id
+	//! \param[in] counterId The counter's id
 	inline double getCounterPrediction(HWCounters::counters_t counterId) const
 	{
 		return _counterPredictions[counterId]._prediction;

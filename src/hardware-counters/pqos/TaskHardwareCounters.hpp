@@ -134,7 +134,7 @@ public:
 	//    COUNTER MANIPULATION    //
 	
 	//! \brief Gather counters when a task is resumed or started
-	//! \param data The pqos data from which to gather counters
+	//! \param[in] data The pqos data from which to gather counters
 	inline void startOrResume(const pqos_mon_data *data)
 	{
 		assert(data != nullptr);
@@ -150,7 +150,7 @@ public:
 	}
 	
 	//! \brief Gather counters when a task is stopped or paused
-	//! \param data The pqos data from which to gather counters
+	//! \param[in] data The pqos data from which to gather counters
 	inline void stopOrPause(const pqos_mon_data *data)
 	{
 		assert(data != nullptr);
@@ -191,7 +191,7 @@ public:
 	}
 	
 	//! \brief Get the value of a hardware counter
-	//! \param counterId The id of the counter
+	//! \param[in] counterId The id of the counter
 	inline double getCounter(HWCounters::counters_t counterId)
 	{
 		switch (counterId) {

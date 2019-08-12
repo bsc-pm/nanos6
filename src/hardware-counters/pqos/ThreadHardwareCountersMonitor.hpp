@@ -7,6 +7,7 @@
 #ifndef PQOS_THREAD_HARDWARE_COUNTERS_MONITOR_HPP
 #define PQOS_THREAD_HARDWARE_COUNTERS_MONITOR_HPP
 
+#include <cassert>
 #include <iomanip>
 #include <iostream>
 #include <pqos.h>
@@ -45,6 +46,7 @@ public:
 		// Create the monitoring module
 		if (_monitor == nullptr) {
 			_monitor = new ThreadHardwareCountersMonitor();
+			assert(_monitor != nullptr);
 		}
 	}
 	
@@ -58,18 +60,18 @@ public:
 	}
 	
 	//! \brief Display thread hardware counter statistics
-	//! \param stream The output stream
+	//! \param[in,out] stream The output stream
 	static inline void displayStatistics(std::stringstream &)
 	{
 	}
 	
 	//! \brief Initialize hardware counter monitoring for a thread
-	//! \param threadCounters The thread's hardware counter statistics
-	//! \param monitoredEvents The PQoS events that must be monitored
+	//! \param[in] threadCounters The thread's hardware counter statistics
+	//! \param[in] monitoredEvents The PQoS events that must be monitored
 	static void initializeThread(ThreadHardwareCounters *threadCounters, pqos_mon_event monitoredEvents);
 	
 	//! \brief Shutdown hardware counter monitoring for a thread
-	//! \param threadCounters The thread's hardware counter statistics
+	//! \param[in] threadCounters The thread's hardware counter statistics
 	static void shutdownThread(ThreadHardwareCounters *threadCounters);
 	
 };

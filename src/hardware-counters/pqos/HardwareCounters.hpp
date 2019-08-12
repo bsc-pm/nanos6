@@ -172,16 +172,16 @@ public:
 	static void taskCreated(Task *task);
 	
 	//! \brief Start/resume hardware counter monitoring for a task
-	//! \param task The task to start monitoring for
+	//! \param[in] task The task to start monitoring for
 	static void startTaskMonitoring(Task *task);
 	
 	//! \brief Stop/pause hardware counter monitoring for a task and aggregate
 	//! the current thread's counter into the task's counters
-	//! \param task The task to start monitoring for
+	//! \param[in] task The task to start monitoring for
 	static void stopTaskMonitoring(Task *task);
 	
 	//! \brief Finish hardware counter monitoring for a task
-	//! \param task The task that has finished
+	//! \param[in] task The task that has finished
 	static void taskFinished(Task *task);
 	
 	

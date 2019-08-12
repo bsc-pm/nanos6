@@ -117,8 +117,8 @@ public:
 	//! Note: The index for an identifier in the counterId vector, and the
 	//! index for a normalized value in the counterValues vector should be the
 	//! same if they both refer to the same counter
-	//! \param counterId An array with counter identifiers
-	//! \param counterValues An array with unitary values
+	//! \param[in] counterId An array with counter identifiers
+	//! \param[in] counterValues An array with unitary values
 	inline void insertCounterValuesPerUnitOfCost(
 		std::vector<HWCounters::counters_t> &counterIds,
 		std::vector<double> &counterValues
@@ -136,8 +136,8 @@ public:
 	}
 	
 	//! \brief Accumulate a task's hardware counters into tasktype predictions
-	//! \param taskCounters The task's hardware counters
-	//! \param taskCountersPredictions The task's hardware counter predictions
+	//! \param[in] taskCounters The task's hardware counters
+	//! \param[in] taskCountersPredictions The task's hardware counter predictions
 	inline void accumulateCounters(
 		TaskHardwareCounters *taskCounters,
 		TaskHardwareCountersPredictions *taskPredictions
@@ -160,8 +160,7 @@ public:
 				// Avoid divisions by 0
 				if (counters[id] == predicted) {
 					accuracies[id] = 100.0;
-				}
-				else {
+				} else {
 					max = std::max(std::abs(counters[id]), std::abs(predicted));
 					abs = std::abs(counters[id] - predicted);
 					accuracies[id] = 100.0 - ((abs / max) * 100.0);
@@ -178,14 +177,15 @@ public:
 				_accuracies[id](accuracies[id]);
 			}
 		}
+		
 		// This task is now accounted in the accumulators
 		++_instances;
 		_accumulatorLock.unlock();
 	}
 	
 	//! \brief Get a hardware counter prediction for a task
-	//! \param counterId The hardware counter's id
-	//! \param cost The task's computational costs
+	//! \param[in] counterId The hardware counter's id
+	//! \param[in] cost The task's computational costs
 	inline double getCounterPrediction(HWCounters::counters_t counterId, size_t cost)
 	{
 		double unitaryValue;
@@ -201,8 +201,7 @@ public:
 		
 		if (canPredict) {
 			return ((double) cost * unitaryValue);
-		}
-		else {
+		} else {
 			return PREDICTION_UNAVAILABLE;
 		}
 	}

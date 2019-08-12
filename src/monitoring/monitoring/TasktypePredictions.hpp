@@ -106,8 +106,8 @@ public:
 	//! \brief Accumulate a task's timing prediction statistics into its
 	//! tasktype prediction statistics
 	//!
-	//! \param taskStatistics The task's statistics
-	//! \param taskPredictions The task's predictions
+	//! \param[in] taskStatistics The task's statistics
+	//! \param[in] taskPredictions The task's predictions
 	inline void accumulatePredictions(
 		const TaskStatistics *taskStatistics,
 		const TaskPredictions *taskPredictions
@@ -145,7 +145,7 @@ public:
 	}
 	
 	//! \brief Get a timing prediction for a task
-	//! \param cost The task's computational costs
+	//! \param[in] cost The task's computational costs
 	inline double getTimePrediction(size_t cost)
 	{
 		double unitaryTime;

@@ -15,6 +15,7 @@ void CPUMonitor::initialize()
 	// Create the monitoring singleton
 	if (_monitor == nullptr) {
 		_monitor = new CPUMonitor();
+		assert(_monitor != nullptr);
 	}
 	
 	// Initialize the array of CPUStatistics

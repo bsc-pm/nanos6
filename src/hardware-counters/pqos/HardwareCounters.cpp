@@ -164,8 +164,7 @@ void HardwareCounters::displayStatistics()
 			// Output into the file and close it
 			output << outputStream.str();
 			output.close();
-		}
-		else {
+		} else {
 			std::cout << outputStream.str();
 		}
 	}
@@ -249,6 +248,7 @@ void HardwareCounters::initializeThread()
 		// Get the thread's hardware counter structures
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
+		
 		ThreadHardwareCounters *threadCounters = thread->getThreadHardwareCounters();
 		
 		// Initialize HW counter monitoring for the thread
@@ -262,6 +262,7 @@ void HardwareCounters::shutdownThread()
 		// Get the thread's hardware counter structures
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
+		
 		ThreadHardwareCounters *threadCounters = thread->getThreadHardwareCounters();
 		
 		// Shutdown hw counter monitoring for the thread

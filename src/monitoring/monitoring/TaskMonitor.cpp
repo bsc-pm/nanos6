@@ -41,6 +41,7 @@ void TaskMonitor::predictTime(TaskPredictions *taskPredictions, const std::strin
 {
 	assert(_monitor != nullptr);
 	assert(taskPredictions != nullptr);
+	
 	TasktypePredictions *predictions = nullptr;
 	
 	_monitor->_spinlock.lock();
@@ -50,8 +51,7 @@ void TaskMonitor::predictTime(TaskPredictions *taskPredictions, const std::strin
 	if (it == _monitor->_tasktypeMap.end()) {
 		predictions = new TasktypePredictions();
 		_monitor->_tasktypeMap.emplace(label, predictions);
-	}
-	else {
+	} else {
 		predictions = it->second;
 	}
 	
@@ -82,6 +82,7 @@ monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics,
 	assert(_monitor != nullptr);
 	assert(taskStatistics != nullptr);
 	assert(taskPredictions != nullptr);
+	
 	TaskStatistics      *parentStatistics;
 	TaskPredictions     *parentPredictions;
 	TasktypePredictions *typePredictions;
@@ -151,6 +152,7 @@ double TaskMonitor::getAverageTimePerUnitOfCost(const std::string &label)
 void TaskMonitor::insertTimePerUnitOfCost(const std::string &label, double unitaryTime)
 {
 	assert(_monitor != nullptr);
+	
 	TasktypePredictions *predictions = nullptr;
 	
 	_monitor->_spinlock.lock();
@@ -160,15 +162,15 @@ void TaskMonitor::insertTimePerUnitOfCost(const std::string &label, double unita
 	if (it == _monitor->_tasktypeMap.end()) {
 		predictions = new TasktypePredictions();
 		_monitor->_tasktypeMap.emplace(label, predictions);
-	}
-	else {
+	} else {
 		predictions = it->second;
 	}
 	
 	_monitor->_spinlock.unlock();
 	
-	// Predict the execution time of the newly created task
 	assert(predictions != nullptr);
+	
+	// Predict the execution time of the newly created task
 	predictions->insertTimePerUnitOfCost(unitaryTime);
 }
 

@@ -23,6 +23,7 @@ void TaskHardwareCountersMonitor::predictTaskCounters(TaskHardwareCountersPredic
 {
 	assert(_monitor != nullptr);
 	assert(taskPredictions != nullptr);
+	
 	tasktype_hardware_counters_map_t &tasktypeMap = _monitor->_tasktypeMap;
 	TasktypeHardwareCountersPredictions *predictions = nullptr;
 	
@@ -33,15 +34,15 @@ void TaskHardwareCountersMonitor::predictTaskCounters(TaskHardwareCountersPredic
 	if (it == tasktypeMap.end()) {
 		predictions = new TasktypeHardwareCountersPredictions();
 		tasktypeMap.emplace(label, predictions);
-	}
-	else {
+	} else {
 		predictions = it->second;
 	}
 	
 	_monitor->_spinlock.unlock();
 	
-	// Predict the execution time of the newly created task
 	assert(predictions != nullptr);
+	
+	// Predict the execution time of the newly created task
 	for (unsigned short counterId = 0; counterId < HWCounters::num_counters; ++counterId) {
 		double counterPrediction = predictions->getCounterPrediction((HWCounters::counters_t) counterId, cost);
 		if (counterPrediction != PREDICTION_UNAVAILABLE) {
@@ -100,6 +101,7 @@ void TaskHardwareCountersMonitor::insertCounterValuesPerUnitOfCost(
 		std::vector<double> &counterValues
 ) {
 	assert(_monitor != nullptr);
+	
 	tasktype_hardware_counters_map_t &tasktypeMap = _monitor->_tasktypeMap;
 	TasktypeHardwareCountersPredictions *predictions = nullptr;
 	
@@ -110,8 +112,7 @@ void TaskHardwareCountersMonitor::insertCounterValuesPerUnitOfCost(
 	if (it == tasktypeMap.end()) {
 		predictions = new TasktypeHardwareCountersPredictions();
 		tasktypeMap.emplace(label, predictions);
-	}
-	else {
+	} else {
 		predictions = it->second;
 	}
 	

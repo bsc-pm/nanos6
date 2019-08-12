@@ -132,22 +132,22 @@ public:
 	//    TASKS    //
 	
 	//! \brief Gather basic information about a task when it is created
-	//! \param task The task to gather information about
+	//! \param[in] task The task to gather information about
 	static void taskCreated(Task *task);
 	
 	//! \brief Propagate monitoring operations after a task has changed its
 	//! execution status
-	//! \param task The task that's changing status
-	//! \param newStatus The new execution status of the task
+	//! \param[in] task The task that's changing status
+	//! \param[in] newStatus The new execution status of the task
 	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus);
 	
 	//! \brief Propagate monitoring operations after a task has
 	//! completed user code execution
-	//! \param task The task that has completed the execution
+	//! \param[in] task The task that has completed the execution
 	static void taskCompletedUserCode(Task *task);
 	
 	//! \brief Propagate monitoring operations after a task has finished
-	//! \param task The task that has finished
+	//! \param[in] task The task that has finished
 	static void taskFinished(Task *task);
 	
 	
@@ -163,11 +163,11 @@ public:
 	//    CPUS    //
 	
 	//! \brief Propagate monitoring operations when a CPU becomes idle
-	//! \param cpuId The identifier of the CPU
+	//! \param[in] cpuId The identifier of the CPU
 	static void cpuBecomesIdle(int cpuId);
 	
 	//! \brief Propagate monitoring operations when a CPU becomes active
-	//! \param cpuId The identifier of the CPU
+	//! \param[in] cpuId The identifier of the CPU
 	static void cpuBecomesActive(int cpuId);
 	
 	

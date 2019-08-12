@@ -48,23 +48,23 @@ public:
 	
 	
 	//! \brief Increase the accumulated cost of a workload by a specific value
-	//! \param loadId The workload's id
-	//! \param cost The value
+	//! \param[in] loadId The workload's id
+	//! \param[in] cost The value
 	inline void increaseAccumulatedCost(workload_t loadId, size_t cost)
 	{
 		_accumulatedCost[loadId] += cost;
 	}
 	
 	//! \brief Decrease the accumulated cost of a workload by a specific value
-	//! \param loadId The workload's id
-	//! \param cost The value
+	//! \param[in] loadId The workload's id
+	//! \param[in] cost The value
 	inline void decreaseAccumulatedCost(workload_t loadId, size_t cost)
 	{
 		_accumulatedCost[loadId] -= cost;
 	}
 	
 	//! \brief Get the accumulated cost of a workload
-	//! \param loadId The workload's id
+	//! \param[in] loadId The workload's id
 	inline size_t getAccumulatedCost(workload_t loadId) const
 	{
 		return _accumulatedCost[loadId].load();

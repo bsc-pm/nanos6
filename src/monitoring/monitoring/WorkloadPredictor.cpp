@@ -73,6 +73,8 @@ void WorkloadPredictor::taskCompletedUserCode(
 	if (taskPredictions->ancestorHasPrediction()) {
 		// Find the ancestor who had accounted this task's cost
 		TaskPredictions *ancestorPredictions = taskPredictions->getParentPredictions();
+		assert(ancestorPredictions != nullptr);
+		
 		while (!ancestorPredictions->hasPrediction()) {
 			ancestorPredictions = ancestorPredictions->getParentPredictions();
 		}
@@ -144,6 +146,8 @@ double WorkloadPredictor::getPredictedWorkload(workload_t loadId)
 	
 	double totalTime = 0.0;
 	for (auto const &it : _predictor->_workloads) {
+		assert(it.second != nullptr);
+		
 		totalTime += (
 			it.second->getAccumulatedCost(loadId) *
 			TaskMonitor::getAverageTimePerUnitOfCost(it.first)

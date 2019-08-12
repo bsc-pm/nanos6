@@ -56,6 +56,7 @@ public:
 		// Create the monitoring module
 		if (_monitor == nullptr) {
 			_monitor = new TaskHardwareCountersMonitor();
+			assert(_monitor != nullptr);
 		}
 	}
 	
@@ -76,7 +77,7 @@ public:
 	}
 	
 	//! \brief Display task hardware counter statistics
-	//! \param output The output stream
+	//! \param[in,out] output The output stream
 	static inline void displayStatistics(std::stringstream &output)
 	{
 		if (_monitor != nullptr) {
@@ -163,37 +164,37 @@ public:
 	}
 	
 	//! \brief Gather information about a task
-	//! \param taskCounters The task's hardware counter structures
-	//! \param label The tasktype
-	//! \param cost The task's computational cost
+	//! \param[in] taskCounters The task's hardware counter structures
+	//! \param[in] label The tasktype
+	//! \param[in] cost The task's computational cost
 	static void taskCreated(TaskHardwareCounters *taskCounters, const std::string &label, size_t cost);
 	
 	//! \brief Predict hardware counter values for a task
-	//! \param taskPredictions The task's hardware counter prediction structures
-	//! \param label The tasktype
-	//! \param cost The task's computational cost
+	//! \param[in] taskPredictions The task's hardware counter prediction structures
+	//! \param[in] label The tasktype
+	//! \param[in] cost The task's computational cost
 	static void predictTaskCounters(TaskHardwareCountersPredictions *taskPredictions, const std::string &label, size_t cost);
 	
 	//! \brief Start hardware counter monitoring for a task
-	//! \param taskCounters The task's hardware counter structures
-	//! \param threadData The monitoring data of the thread executing the task
+	//! \param[in] taskCounters The task's hardware counter structures
+	//! \param[in] threadData The monitoring data of the thread executing the task
 	static void startTaskMonitoring(TaskHardwareCounters *taskCounters, pqos_mon_data *threadData);
 	
 	//! \brief Stop hardware counter monitoring for a task
-	//! \param taskCounters The task's hardware counter structures
-	//! \param threadData The monitoring data of the thread executing the task
+	//! \param[in] taskCounters The task's hardware counter structures
+	//! \param[in] threadData The monitoring data of the thread executing the task
 	static void stopTaskMonitoring(TaskHardwareCounters *taskCounters, pqos_mon_data *threadData);
 	
 	//! \brief Finish hardware counter monitoring for a task and accumulate
 	//! the counters into its tasktype's counters
-	//! \param taskCounters The task's hardware counter structures
-	//! \param threadData The monitoring data of the thread executing the task
+	//! \param[in] taskCounters The task's hardware counter structures
+	//! \param[in] threadData The monitoring data of the thread executing the task
 	static void taskFinished(TaskHardwareCounters *taskCounters, TaskHardwareCountersPredictions *taskPredictions);
 	
 	//! \brief Insert normalized counter values (values per unit of cost)
-	//! \param label The tasktype
-	//! \param counterIds A vector of counter identifiers
-	//! \param counterValues A vector of normalized counter values
+	//! \param[in] label The tasktype
+	//! \param[in] counterIds A vector of counter identifiers
+	//! \param[in] counterValues A vector of normalized counter values
 	static void insertCounterValuesPerUnitOfCost(
 		const std::string &label,
 		std::vector<HWCounters::counters_t> &counterIds,

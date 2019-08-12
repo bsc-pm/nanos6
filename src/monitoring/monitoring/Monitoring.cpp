@@ -118,8 +118,7 @@ void Monitoring::displayStatistics()
 			// Output into the file and close it
 			output << outputStream.str();
 			output.close();
-		}
-		else {
+		} else {
 			std::cout << outputStream.str();
 		}
 	}
@@ -144,9 +143,6 @@ void Monitoring::taskCreated(Task *task)
 		TaskPredictions *taskPredictions   = task->getTaskPredictions();
 		const std::string &label = task->getLabel();
 		size_t cost = (task->hasCost() ? task->getCost() : DEFAULT_COST);
-		
-		assert(taskStatistics != nullptr);
-		assert(taskPredictions != nullptr);
 		
 		// Create task statistic structures and predict its execution time
 		TaskMonitor::taskCreated(parentStatistics, taskStatistics, parentPredictions, taskPredictions, label, cost);

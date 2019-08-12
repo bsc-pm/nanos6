@@ -56,7 +56,7 @@ public:
 	static void shutdown();
 	
 	//! \brief Display CPU statistics
-	//! \param stream The output stream
+	//! \param[in] stream The output stream
 	static void displayStatistics(std::stringstream &stream);
 	
 	
@@ -64,7 +64,7 @@ public:
 	
 	//! \brief Signal that a CPU just became active
 	//!
-	//! \param virtualCPUId The identifier of the CPU
+	//! \param[in] virtualCPUId The identifier of the CPU
 	static inline void cpuBecomesActive(int virtualCPUId)
 	{
 		assert(_monitor != nullptr);
@@ -74,7 +74,7 @@ public:
 	
 	//! \brief Signal that a CPU just became idle
 	//!
-	//! \param virtualCPUId The identifier of the CPU
+	//! \param[in] virtualCPUId The identifier of the CPU
 	static inline void cpuBecomesIdle(int virtualCPUId)
 	{
 		assert(_monitor != nullptr);
@@ -84,7 +84,7 @@ public:
 	
 	//! \brief Retreive the activeness of a CPU
 	//!
-	//! \param virtualCPUId The identifier of the CPU
+	//! \param[in] virtualCPUId The identifier of the CPU
 	static inline float getActiveness(int virtualCPUId)
 	{
 		assert(_monitor != nullptr);

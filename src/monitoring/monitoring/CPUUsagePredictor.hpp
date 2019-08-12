@@ -19,6 +19,7 @@
 class CPUUsagePredictor {
 
 private:
+	
 	typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::sum, boost::accumulators::tag::mean> > accumulator_t;
 	
 	//! The predictor singleton instance
@@ -84,6 +85,7 @@ public:
 		// Create the singleton
 		if (_predictor == nullptr) {
 			_predictor = new CPUUsagePredictor();
+			assert(_predictor != nullptr);
 			
 			// Start the timer that measures the frequency of issuing predictions
 			_predictor->_predictionFrequency.start();
@@ -114,7 +116,7 @@ public:
 	}
 	
 	//! \brief Display CPU usage predictions' statistics
-	//! \param stream The output stream
+	//! \param[in,out] stream The output stream
 	static inline void displayStatistics(std::stringstream &stream)
 	{
 		assert(_predictor != nullptr);
