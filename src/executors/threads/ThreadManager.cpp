@@ -81,4 +81,6 @@ void ThreadManager::shutdownPhase2()
 		delete thread;
 	}
 	delete _shutdownThreads;
+	
+	delete [] _idleThreads;
 }
