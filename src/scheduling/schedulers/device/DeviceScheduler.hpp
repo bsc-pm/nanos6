@@ -45,5 +45,4 @@ public:
 };
 
 
-
-#endif
+#endif // DEVICE_SCHEDULER_HPP

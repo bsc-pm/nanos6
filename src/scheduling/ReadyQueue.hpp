@@ -35,6 +35,7 @@ public:
 	
 	virtual ~ReadyQueue()
 	{}
+	
 	//! \brief Add a (ready) task that has been created or freed
 	//!
 	//! \param[in] task the task to be added

@@ -31,11 +31,11 @@ public:
 		assert(result == nullptr || result->getDeviceType() == nanos6_host_device);
 		return result;
 	}
-		
+	
 	inline std::string getName() const
 	{
 		return "HostScheduler";
 	}
 };
 
-#endif
+#endif // HOST_SCHEDULER_HPP

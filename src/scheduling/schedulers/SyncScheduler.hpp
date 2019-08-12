@@ -34,19 +34,19 @@ protected:
 	add_queue_t *_addQueues;
 	Padded<CPUNode> *_ready; // indexed by cpu_idx
 	
-	void processReadyTasks()
+	inline void processReadyTasks()
 	{
-		for (size_t i=0; i<_totalAddQueues; i++) {
-			if (!_addQueues[i].empty())
-			{
+		for (size_t i = 0; i < _totalAddQueues; i++) {
+			if (!_addQueues[i].empty()) {
 				_addQueues[i].consume_all(
-						[&](TaskSchedulingInfo *const taskSchedulingInfo) {
-							_scheduler->addReadyTask(
-									taskSchedulingInfo->_task,
-									taskSchedulingInfo->_computePlace,
-									taskSchedulingInfo->_hint);
-							delete taskSchedulingInfo;
-						});
+					[&](TaskSchedulingInfo *const taskSchedulingInfo) {
+						_scheduler->addReadyTask(
+							taskSchedulingInfo->_task,
+							taskSchedulingInfo->_computePlace,
+							taskSchedulingInfo->_hint);
+						delete taskSchedulingInfo;
+					}
+				);
 			}
 		}
 	}
@@ -79,7 +79,7 @@ public:
 		
 		_totalNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 		
-		/* Using one queue per NUMA node, and a special queue for cases where there is no computePlace */
+		// Using one queue per NUMA node, and a special queue for cases where there is no computePlace.
 		_totalAddQueues = _totalNUMANodes + 1;
 		
 		_addQueues = (add_queue_t *) MemoryAllocator::alloc(_totalAddQueues * sizeof(add_queue_t));
@@ -128,14 +128,13 @@ public:
 		
 		uint64_t count = 0;
 		while (size > count) {
-			
 			// We need lock because several cpus from the same NUMA may be enqueueing at the same time.
 			_addQueuesLocks[queueIndex].lock();
 			count += _addQueues[queueIndex].push(tasks+count, size-count);
 			_addQueuesLocks[queueIndex].unlock();
 			
 			if ((size > count) && _lock.tryLock()) {
-				//addQueue is full, so we need to process it before pushing new tasks to it.
+				// addQueue is full, so we need to process it before pushing new tasks to it.
 				processReadyTasks();
 				_lock.unsubscribe();
 			}
@@ -149,4 +148,4 @@ public:
 	virtual std::string getName() const = 0;
 };
 
-#endif
+#endif // SYNC_SCHEDULER_HPP

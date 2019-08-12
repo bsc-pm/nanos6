@@ -70,4 +70,4 @@ public:
 	}
 };
 
-#endif
+#endif // FPGA_DEVICE_SCHEDULER_HPP

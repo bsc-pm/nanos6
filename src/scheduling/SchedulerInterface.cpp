@@ -15,7 +15,7 @@
 
 SchedulerInterface::SchedulerInterface()
 {
-	const EnvironmentVariable<std::string> schedulingPolicy("NANOS6_SCHEDULING_POLICY", "FIFO");
+	const EnvironmentVariable<std::string> schedulingPolicy("NANOS6_SCHEDULING_POLICY", "fifo");
 	RuntimeInfo::addEntry("schedulingPolicy", "SchedulingPolicy", schedulingPolicy.getValue());
 	SchedulingPolicy policy = (schedulingPolicy.getValue() == "LIFO" || schedulingPolicy.getValue() == "lifo") ? LIFO_POLICY : FIFO_POLICY;
 	
@@ -53,6 +53,6 @@ SchedulerInterface::~SchedulerInterface()
 	FatalErrorHandler::failIf(true, "OpenCL is not supported yet.");
 #endif
 #if USE_FPGA
-	delete _deviceSchedulers[nanos6_fpga_device]);
+	delete _deviceSchedulers[nanos6_fpga_device];
 #endif
 }

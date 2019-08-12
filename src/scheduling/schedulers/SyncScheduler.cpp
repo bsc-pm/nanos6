@@ -13,18 +13,17 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 {
 	assert(!(device && subdevice));
 	
+	Task *task = nullptr;
+	ComputePlace *deviceComputePlaceOrComputePlace =
+		(deviceComputePlace != nullptr) ? deviceComputePlace : computePlace;
+	
+	// Special case for device polling services that get ready tasks.
 	if (computePlace == nullptr) {
 		_lock.lock();
-		Task *myTask = nullptr;
-		if (deviceComputePlace != nullptr) {
-			myTask = _scheduler->getReadyTask(deviceComputePlace);
-		}
-		else {
-			myTask = _scheduler->getReadyTask(computePlace);
-		}
+		task = _scheduler->getReadyTask(deviceComputePlaceOrComputePlace);
 		_lock.unsubscribe();
-		assert(myTask == nullptr || myTask->isRunnable());
-		return myTask;
+		assert(task == nullptr || task->isRunnable());
+		return task;
 	}
 	
 	assert(computePlace != nullptr);
@@ -33,16 +32,14 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	uint64_t const cpuIndex = computePlace->getIndex();
 	if (device) {
 		((DeviceScheduler *)this)->setCPUToDevice(cpuIndex, deviceComputePlace);
-	}
-	if (subdevice) {
+	} else if (subdevice) {
 		((SubDeviceScheduler *)this)->setCPUToSubDevice(cpuIndex, deviceComputePlace);
 	}
 	
 	// Subscribe to the lock.
-	uint64_t const myTicket = _lock.subscribeOrLock(cpuIndex);
-	Task *task;
+	uint64_t const ticket = _lock.subscribeOrLock(cpuIndex);
 	
-	if (getAssignedTask(cpuIndex, myTicket, task)) {
+	if (getAssignedTask(cpuIndex, ticket, task)) {
 		// Someone got the lock and gave me work to do.
 		assert(task->isRunnable());
 		return task;
@@ -53,7 +50,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	processReadyTasks();
 	
 	uint64_t cpu;
-	uint64_t i = myTicket+1;
+	uint64_t i = ticket + 1;
 	const std::vector<CPU *> &computePlaces = CPUManager::getCPUListReference();
 	
 	// Serve all the subscribers, while there is work to give them.
@@ -61,44 +58,37 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 		ComputePlace *resultComputePlace = nullptr;
 		if (device) {
 			resultComputePlace = ((DeviceScheduler *)this)->getCPUToDevice(cpuIndex);
-		}
-		else if (subdevice) {
+		} else if (subdevice) {
 			resultComputePlace = ((SubDeviceScheduler *)this)->getCPUToSubDevice(cpuIndex);
-		}
-		else {
+		} else {
 			resultComputePlace = computePlaces[cpu];
 		}
 		assert(resultComputePlace != nullptr);
 		
-		Task *const localTask = _scheduler->getReadyTask(resultComputePlace);
-		if (localTask == nullptr)
+		task = _scheduler->getReadyTask(resultComputePlace);
+		if (task == nullptr)
 			break;
-		assert(localTask->isRunnable());
+		
+		assert(task->isRunnable());
 		
 		if (device) {
 			((DeviceScheduler *)this)->setCPUToDevice(cpuIndex, nullptr);
-		}
-		if (subdevice) {
+		} else if (subdevice) {
 			((SubDeviceScheduler *)this)->setCPUToSubDevice(cpuIndex, nullptr);
 		}
 		
 		// Put a task into the subscriber slot.
-		assignTask(cpu, i, localTask);
+		assignTask(cpu, i, task);
 		
 		// Advance the ticket of the subscriber just served.
 		_lock.unsubscribe();
 		i++;
-	};
+	}
 	
 	// No more subscribers. Try to get work for myself.
-	Task *myTask = nullptr;
-	if (deviceComputePlace != nullptr) {
-		myTask = _scheduler->getReadyTask(deviceComputePlace);
-	}
-	else {
-		myTask = _scheduler->getReadyTask(computePlace);
-	}
+	task = _scheduler->getReadyTask(deviceComputePlaceOrComputePlace);
 	_lock.unsubscribe();
-	assert(myTask == nullptr || myTask->isRunnable());
-	return myTask;
+	
+	assert(task == nullptr || task->isRunnable());
+	return task;
 }

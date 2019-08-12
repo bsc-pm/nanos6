@@ -5,7 +5,7 @@
 */
 
 #include <stddef.h>
-#include "api/nanos6/task-instantiation.h" 
+#include "api/nanos6/task-instantiation.h"
 
 #pragma GCC visibility push(default)
 

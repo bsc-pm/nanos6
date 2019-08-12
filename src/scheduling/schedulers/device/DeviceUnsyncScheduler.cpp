@@ -17,7 +17,6 @@ Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 			task = _immediateSuccessorTasks[immediateSuccessorId];
 			_immediateSuccessorTasks[immediateSuccessorId] = nullptr;
 			assert(!task->isTaskloop());
-			FatalErrorHandler::failIf(task->isTaskloop(), "Devices do not support task fors.");
 			return task;
 		}
 	}
@@ -25,21 +24,18 @@ Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	// 2. Check if there is work remaining in the ready queue.
 	task = _readyTasks->getReadyTask(computePlace);
 	
-	 //3. Try to get work from other immediateSuccessorTasks.
+	// 3. Try to get work from other immediateSuccessorTasks.
 	if (task == nullptr && _enableImmediateSuccessor) {
 		for (size_t i = 0; i < _immediateSuccessorTasks.size(); i++) {
 			if (_immediateSuccessorTasks[i] != nullptr) {
 				task = _immediateSuccessorTasks[i];
 				assert(!task->isTaskloop());
-				FatalErrorHandler::failIf(task->isTaskloop(), "Devices do not support task fors.");
 				_immediateSuccessorTasks[i] = nullptr;
 				break;
 			}
 		}
 	}
-	
 	assert(task == nullptr || !task->isTaskloop());
-	FatalErrorHandler::failIf(task != nullptr && task->isTaskloop(), "Devices do not support task fors.");
 	
 	return task;
 }

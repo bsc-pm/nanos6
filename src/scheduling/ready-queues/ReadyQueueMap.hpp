@@ -41,8 +41,7 @@ public:
 		
 		if (unblocked || _policy == SchedulingPolicy::LIFO_POLICY) {
 			it->second.push_front(task);
-		}
-		else {
+		} else {
 			it->second.push_back(task);
 		}
 	}
@@ -56,8 +55,7 @@ public:
 		while (it != _readyMap.end()) {
 			if (it->second.empty()) {
 				it++;
-			}
-			else {
+			} else {
 				Task *result = it->second.front();
 				assert(result != nullptr);
 				

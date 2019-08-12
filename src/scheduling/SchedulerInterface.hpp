@@ -34,11 +34,8 @@ public:
 		
 		if (taskType == nanos6_host_device) {
 			_hostScheduler->addReadyTask(task, computePlace, hint);
-		}
-		else {
+		} else {
 			assert(taskType == _deviceSchedulers[taskType]->getDeviceType());
-			assert(taskType != nanos6_fpga_device ||
-					task->getDeviceSubType() == ((FPGADeviceScheduler *)_deviceSchedulers[taskType])->getDeviceSubType(task->getDeviceSubType()));
 			_deviceSchedulers[taskType]->addReadyTask(task, computePlace, hint);
 		}
 	}
@@ -50,8 +47,7 @@ public:
 		
 		if (computePlaceType == nanos6_host_device) {
 			return _hostScheduler->getReadyTask(computePlace);
-		}
-		else {
+		} else {
 			assert(deviceComputePlace->getType() != nanos6_cluster_device);
 			return _deviceSchedulers[computePlaceType]->getReadyTask(computePlace, deviceComputePlace);
 		}

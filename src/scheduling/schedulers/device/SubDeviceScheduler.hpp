@@ -19,9 +19,10 @@ class SubDeviceScheduler : public DeviceScheduler {
 	std::vector<ComputePlace *> _cpuToSubDevice;
 	
 public:
-	SubDeviceScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType, int deviceSubType)
-		: DeviceScheduler(policy, enablePriority, enableImmediateSuccessor, deviceType),
-		_deviceSubType(deviceSubType), _cpuToSubDevice(_totalCPUs, nullptr)
+	SubDeviceScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType, int deviceSubType) :
+		DeviceScheduler(policy, enablePriority, enableImmediateSuccessor, deviceType),
+		_deviceSubType(deviceSubType),
+		_cpuToSubDevice(_totalCPUs, nullptr)
 	{
 		DeviceInfoImplementation *deviceInfo = static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(deviceType));
 		assert(deviceInfo != nullptr);

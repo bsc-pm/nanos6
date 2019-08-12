@@ -17,8 +17,7 @@ void Scheduler::initialize()
 	bool clusterEnabled = ClusterManager::inClusterMode();
 	if (clusterEnabled) {
 		_instance = new ClusterScheduler();
-	}
-	else {
+	} else {
 		_instance = new LocalScheduler();
 	}
 	

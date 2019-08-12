@@ -64,8 +64,7 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 		if (pendingWork) {
 			assert(_currentTaskloop == nullptr);
 			_currentTaskloop = taskloop;
-		}
-		else {
+		} else {
 			__attribute__((unused)) bool finished = taskloop->markAsFinished(computePlace);
 			assert(!finished);
 		}

@@ -27,8 +27,7 @@ public:
 	{
 		if (unblocked || _policy == SchedulingPolicy::LIFO_POLICY) {
 			_readyDeque.push_front(task);
-		}
-		else {
+		} else {
 			_readyDeque.push_back(task);
 		}
 	}

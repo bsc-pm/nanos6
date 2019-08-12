@@ -5,9 +5,8 @@
 */
 
 
-
-#ifndef TASPIN_LOCK_HPP
-#define TASPIN_LOCK_HPP
+#ifndef TICKET_ARRAY_SPIN_LOCK_HPP
+#define TICKET_ARRAY_SPIN_LOCK_HPP
 
 #include <atomic>
 
@@ -15,16 +14,13 @@
 #include "SpinWait.hpp"
 
 class TicketArraySpinLock {
-	/* These are aligned on a cache line boundary in order to avoid false sharing: */
-	//alignas(CACHELINE_SIZE) std::atomic_flag   producer	= {false};
-	//using PaddedAtomicSize_t = std::pair<std::atomic_size_t,
-	//	  uint8_t[CACHELINE_SIZE-sizeof(std::atomic_size_t)]>;
+	// These are aligned on a cache line boundary in order to avoid false sharing:
 	alignas(CACHELINE_SIZE) Padded<std::atomic_size_t> *_buffer;
 	alignas(CACHELINE_SIZE) std::atomic_size_t _head;
 	alignas(CACHELINE_SIZE) size_t _next;
 	alignas(CACHELINE_SIZE) size_t _size;
 	
-	public:
+public:
 	TicketArraySpinLock(size_t size)
 		: _head(0), _next(0), _size(size)
 	{
@@ -63,4 +59,4 @@ class TicketArraySpinLock {
 	}
 };
 
-#endif // TASPIN_LOCK
+#endif // TICKET_ARRAY_SPIN_LOCK_HPP

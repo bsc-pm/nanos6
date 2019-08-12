@@ -15,8 +15,7 @@ UnsyncScheduler::UnsyncScheduler(SchedulingPolicy policy, bool enablePriority, b
 {
 	if (enablePriority) {
 		_readyTasks = new ReadyQueueMap(policy);
-	}
-	else {
+	} else {
 		_readyTasks = new ReadyQueueDeque(policy);
 	}
 	

@@ -18,8 +18,9 @@ class CUDADeviceScheduler : public DeviceScheduler {
 	std::vector<ComputePlace *> _cpuToDevice;
 	
 public:
-	CUDADeviceScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType)
-		: DeviceScheduler(policy, enablePriority, enableImmediateSuccessor, deviceType), _cpuToDevice(_totalCPUs, nullptr)
+	CUDADeviceScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType) :
+		DeviceScheduler(policy, enablePriority, enableImmediateSuccessor, deviceType),
+		_cpuToDevice(_totalCPUs, nullptr)
 	{
 		DeviceInfoImplementation *deviceInfo = static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(deviceType));
 		assert(deviceInfo != nullptr);
@@ -61,4 +62,4 @@ public:
 	}
 };
 
-#endif
+#endif // CUDA_DEVICE_SCHEDULER_HPP
