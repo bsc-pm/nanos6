@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_HPP
@@ -13,11 +13,10 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include "CPU.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-
-#include "CPU.hpp"
 
 
 class CPUManager {
@@ -59,19 +58,19 @@ public:
 	static inline std::vector<CPU *> const &getCPUListReference();
 	
 	//! \brief mark a CPU as idle
-	static inline void cpuBecomesIdle(CPU *cpu);
+	static void cpuBecomesIdle(CPU *cpu);
 	
 	//! \brief get an idle CPU
-	static inline CPU *getIdleCPU();
+	static CPU *getIdleCPU();
 	
 	//! \brief get all idle CPUs
-	static inline void getIdleCPUs(std::vector<CPU *> &idleCPUs);
+	static void getIdleCPUs(std::vector<CPU *> &idleCPUs);
 	
 	//! \brief get an idle CPU from a specific NUMA node
-	static inline CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
+	static CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
 	
 	//! \brief mark a CPU as not being idle (if possible)
-	static inline bool unidleCPU(CPU *cpu);
+	static bool unidleCPU(CPU *cpu);
 };
 
 
@@ -100,64 +99,5 @@ inline std::vector<CPU *> const &CPUManager::getCPUListReference()
 	return _cpus;
 }
 
-
-inline void CPUManager::cpuBecomesIdle(CPU *cpu)
-{
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	_idleCPUs[cpu->getIndex()] = true;
-}
-
-
-inline CPU *CPUManager::getIdleCPU()
-{
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
-	if (idleCPU != boost::dynamic_bitset<>::npos) {
-		_idleCPUs[idleCPU] = false;
-		return _cpus[idleCPU];
-	} else {
-		return nullptr;
-	}
-}
-
-inline void CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs)
-{
-	assert(idleCPUs.empty());
-	
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
-	while (idleCPU != boost::dynamic_bitset<>::npos) {
-		_idleCPUs[idleCPU] = false;
-		idleCPUs.push_back(_cpus[idleCPU]);
-		idleCPU = _idleCPUs.find_next(idleCPU);
-	}
-}
-
-inline CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
-{
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	boost::dynamic_bitset<> tmpIdleCPUs = _idleCPUs & _NUMANodeMask[NUMANodeId];
-	boost::dynamic_bitset<>::size_type idleCPU = tmpIdleCPUs.find_first();
-	if (idleCPU != boost::dynamic_bitset<>::npos) {
-		_idleCPUs[idleCPU] = false;
-		return _cpus[idleCPU];
-	} else {
-		return nullptr;
-	}
-}
-
-
-inline bool CPUManager::unidleCPU(CPU *cpu)
-{
-	assert(cpu != nullptr);
-	
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	if (_idleCPUs[cpu->getIndex()]) {
-		_idleCPUs[cpu->getIndex()] = false;
-		return true;
-	} else {
-		return false;
-	}
-}
 
 #endif // CPU_MANAGER_HPP

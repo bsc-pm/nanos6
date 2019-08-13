@@ -37,15 +37,12 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
 	
-	ComputePlace *computePlace = currentThread->getComputePlace();
-	assert(computePlace != nullptr);
-	
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 	
 	assert(blocking_context == currentTask);
 	
-	Monitoring::taskChangedStatus(currentTask, blocked_status, computePlace);
+	Monitoring::taskChangedStatus(currentTask, blocked_status);
 	HardwareCounters::stopTaskMonitoring(currentTask);
 	
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
@@ -54,8 +51,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	DataAccessRegistration::handleEnterBlocking(currentTask);
 	TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_NO_INLINE);
 	
-	// Update the CPU since the thread may have migrated
-	computePlace = currentThread->getComputePlace();
+	ComputePlace *computePlace = currentThread->getComputePlace();
 	assert(computePlace != nullptr);
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 	
@@ -65,7 +61,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 	
 	HardwareCounters::startTaskMonitoring(currentTask);
-	Monitoring::taskChangedStatus(currentTask, executing_status, computePlace);
+	Monitoring::taskChangedStatus(currentTask, executing_status);
 }
 
 

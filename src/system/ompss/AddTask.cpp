@@ -54,7 +54,7 @@ void nanos6_create_task(
 	if (currentWorkerThread != nullptr) {
 		Task *parent = currentWorkerThread->getTask();
 		if (parent != nullptr) {
-			Monitoring::taskChangedStatus(parent, runtime_status, currentWorkerThread->getComputePlace());
+			Monitoring::taskChangedStatus(parent, runtime_status);
 			HardwareCounters::stopTaskMonitoring(parent);
 		}
 	}
@@ -175,7 +175,7 @@ void nanos6_submit_task(void *taskHandle)
 	
 	if (parent != nullptr) {
 		HardwareCounters::startTaskMonitoring(parent);
-		Monitoring::taskChangedStatus(parent, executing_status, currentWorkerThread->getComputePlace());
+		Monitoring::taskChangedStatus(parent, executing_status);
 	}
 	
 	Instrument::exitAddTask(taskInstrumentationId);

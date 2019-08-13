@@ -65,7 +65,7 @@ public:
 	//! \brief Signal that a CPU just became active
 	//!
 	//! \param virtualCPUId The identifier of the CPU
-	static inline void cpuBecomesActive(size_t virtualCPUId)
+	static inline void cpuBecomesActive(int virtualCPUId)
 	{
 		assert(_monitor != nullptr);
 		
@@ -75,7 +75,7 @@ public:
 	//! \brief Signal that a CPU just became idle
 	//!
 	//! \param virtualCPUId The identifier of the CPU
-	static inline void cpuBecomesIdle(size_t virtualCPUId)
+	static inline void cpuBecomesIdle(int virtualCPUId)
 	{
 		assert(_monitor != nullptr);
 		
@@ -85,7 +85,7 @@ public:
 	//! \brief Retreive the activeness of a CPU
 	//!
 	//! \param virtualCPUId The identifier of the CPU
-	static inline float getActiveness(size_t virtualCPUId)
+	static inline float getActiveness(int virtualCPUId)
 	{
 		assert(_monitor != nullptr);
 		

@@ -40,7 +40,7 @@ public:
 		assert(task != nullptr);
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		HardwareCounters::stopTaskMonitoring(task);
-		Monitoring::taskChangedStatus(task, ready_status, computePlace);
+		Monitoring::taskChangedStatus(task, ready_status);
 		
 		bool unblocked = (hint == UNBLOCKED_TASK_HINT);
 		
