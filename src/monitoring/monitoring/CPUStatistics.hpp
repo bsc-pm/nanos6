@@ -10,6 +10,8 @@
 #include <Chrono.hpp>
 
 
+//! NOTE: Currently thread safety is provided through CPUManager's idle
+//! CPUs' spinlock, however this class is not thread-safe on its own
 class CPUStatistics {
 
 private:
@@ -17,59 +19,51 @@ private:
 	enum cpu_status_t
 	{
 		idle_status = 0,
-		active_status
+		active_status,
+		num_cpu_status
 	};
 	
 	//! The status in which the CPU currently is
-	cpu_status_t _status;
+	cpu_status_t _currentStatus;
 	
-	//! Holds timing while a CPU is active
-	Chrono _active;
-	
-	//! Holds timing while a CPU is idle
-	Chrono _idle;
-	
-	//! Percentage of time that the CPU is active
-	float _activeness;
+	//! An array of chronos, one per status
+	Chrono _chronos[num_cpu_status];
 	
 	
 public:
 	
 	inline CPUStatistics() :
-		_status(idle_status),
-		_active(),
-		_idle(),
-		_activeness(0.0)
+		_currentStatus(idle_status)
 	{
 		// Start this CPU as currently idle
-		_idle.start();
+		_chronos[_currentStatus].start();
 	}
 	
 	
-	inline float getActiveness() const
+	inline float getActiveness()
 	{
-		return _activeness;
+		// Start & stop the current chrono to update the accumulated values
+		_chronos[_currentStatus].stop();
+		_chronos[_currentStatus].start();
+		
+		double idle   = ((double) _chronos[idle_status]);
+		double active = ((double) _chronos[active_status]);
+		
+		return ( active / (active + idle) );
 	}
 	
 	inline void cpuBecomesActive()
 	{
-		if (_status != active_status) {
-			_idle.stop();
-			_active.start();
-			_status = active_status;
-		}
+		_chronos[_currentStatus].stop();
+		_currentStatus = active_status;
+		_chronos[_currentStatus].start();
 	}
 	
 	inline void cpuBecomesIdle()
 	{
-		if (_status != idle_status) {
-			_active.stop();
-			_idle.start();
-			_status = idle_status;
-			
-			// Update the activeness of the CPU
-			_activeness = ( ((double)_active) / (((double)_active) + ((double)_idle)) );
-		}
+		_chronos[_currentStatus].stop();
+		_currentStatus = idle_status;
+		_chronos[_currentStatus].start();
 	}
 	
 };
