@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include <boost/dynamic_bitset.hpp>
@@ -15,6 +15,8 @@
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "system/RuntimeInfo.hpp"
+
+#include <Monitoring.hpp>
 
 
 std::vector<CPU *> CPUManager::_cpus;
@@ -58,7 +60,6 @@ namespace cpumanager_internals {
 		return oss.str();
 	}
 }
-
 
 void CPUManager::preinitialize()
 {
@@ -123,6 +124,9 @@ void CPUManager::initialize()
 			CPU *cpu = _cpus[virtualCPUId];
 			assert(cpu != nullptr);
 			
+			// Inform monitoring that the task becomes active by default
+			Monitoring::cpuBecomesActive(cpu->getIndex());
+			
 			bool worked = cpu->initializeIfNeeded();
 			if (worked) {
 				WorkerThread *initialThread = ThreadManager::createWorkerThread(cpu);
@@ -160,5 +164,69 @@ void CPUManager::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
 		std::string cpuRegionList = cpumanager_internals::maskToRegionList(NUMANodeSystemMask[i], numSystemCPUs);
 		
 		RuntimeInfo::addEntry(oss.str(), oss2.str(), cpuRegionList);
+	}
+}
+
+void CPUManager::cpuBecomesIdle(CPU *cpu)
+{
+	const int index = cpu->getIndex();
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	_idleCPUs[index] = true;
+	Monitoring::cpuBecomesIdle(index);
+}
+
+CPU *CPUManager::getIdleCPU()
+{
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	if (idleCPU != boost::dynamic_bitset<>::npos) {
+		_idleCPUs[idleCPU] = false;
+		Monitoring::cpuBecomesActive(idleCPU);
+		return _cpus[idleCPU];
+	} else {
+		return nullptr;
+	}
+}
+
+void CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs)
+{
+	assert(idleCPUs.empty());
+	
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	while (idleCPU != boost::dynamic_bitset<>::npos) {
+		_idleCPUs[idleCPU] = false;
+		Monitoring::cpuBecomesActive(idleCPU);
+		idleCPUs.push_back(_cpus[idleCPU]);
+		idleCPU = _idleCPUs.find_next(idleCPU);
+	}
+}
+
+CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
+{
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<> tmpIdleCPUs = _idleCPUs & _NUMANodeMask[NUMANodeId];
+	boost::dynamic_bitset<>::size_type idleCPU = tmpIdleCPUs.find_first();
+	if (idleCPU != boost::dynamic_bitset<>::npos) {
+		_idleCPUs[idleCPU] = false;
+		Monitoring::cpuBecomesActive(idleCPU);
+		return _cpus[idleCPU];
+	} else {
+		return nullptr;
+	}
+}
+
+bool CPUManager::unidleCPU(CPU *cpu)
+{
+	assert(cpu != nullptr);
+	const int index = cpu->getIndex();
+	
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	if (_idleCPUs[index]) {
+		_idleCPUs[index] = false;
+		Monitoring::cpuBecomesActive(index);
+		return true;
+	} else {
+		return false;
 	}
 }

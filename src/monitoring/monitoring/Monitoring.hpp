@@ -139,14 +139,12 @@ public:
 	//! execution status
 	//! \param task The task that's changing status
 	//! \param newStatus The new execution status of the task
-	//! \param cpu The cpu onto which a thread is running the task
-	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus, ComputePlace *cpu = nullptr);
+	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus);
 	
 	//! \brief Propagate monitoring operations after a task has
 	//! completed user code execution
 	//! \param task The task that has completed the execution
-	//! \param cpu The cpu in which a thread was running the task
-	static void taskCompletedUserCode(Task *task, ComputePlace *cpu);
+	static void taskCompletedUserCode(Task *task);
 	
 	//! \brief Propagate monitoring operations after a task has finished
 	//! \param task The task that has finished
@@ -160,6 +158,17 @@ public:
 	
 	//! \brief Propagate monitoring operations when a thread is shutdown
 	static void shutdownThread();
+	
+	
+	//    CPUS    //
+	
+	//! \brief Propagate monitoring operations when a CPU becomes idle
+	//! \param cpuId The identifier of the CPU
+	static void cpuBecomesIdle(int cpuId);
+	
+	//! \brief Propagate monitoring operations when a CPU becomes active
+	//! \param cpuId The identifier of the CPU
+	static void cpuBecomesActive(int cpuId);
 	
 	
 	//    PREDICTORS    //

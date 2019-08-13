@@ -38,7 +38,7 @@ namespace If0Task {
 		
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		
-		Monitoring::taskChangedStatus(currentTask, blocked_status, cpu);
+		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		HardwareCounters::stopTaskMonitoring(currentTask);
 		
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
@@ -54,7 +54,7 @@ namespace If0Task {
 		
 		assert(currentTask->getThread() != nullptr);
 		HardwareCounters::startTaskMonitoring(currentTask);
-		Monitoring::taskChangedStatus(currentTask, executing_status, cpu);
+		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 	
 	
@@ -72,7 +72,7 @@ namespace If0Task {
 		
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		if (hasCode) {
-			Monitoring::taskChangedStatus(currentTask, blocked_status, computePlace);
+			Monitoring::taskChangedStatus(currentTask, blocked_status);
 			HardwareCounters::stopTaskMonitoring(currentTask);
 			
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
@@ -87,7 +87,7 @@ namespace If0Task {
 			
 			assert(currentTask->getThread() != nullptr);
 			HardwareCounters::startTaskMonitoring(currentTask);
-			Monitoring::taskChangedStatus(currentTask, executing_status, currentTask->getThread()->getComputePlace());
+			Monitoring::taskChangedStatus(currentTask, executing_status);
 		}
 	}
 	

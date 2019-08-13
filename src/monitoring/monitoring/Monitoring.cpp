@@ -157,41 +157,25 @@ void Monitoring::taskCreated(Task *task)
 	}
 }
 
-void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatus, ComputePlace *cpu)
+void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatus)
 {
 	assert(task != nullptr);
 	if (_enabled && !task->isTaskloop()) {
 		// Start timing for the appropriate stopwatch
 		const monitoring_task_status_t oldStatus = TaskMonitor::startTiming(task->getTaskStatistics(), newStatus);
 		
-		// Update CPU and workload statistics only after a change of status
+		// Update workload statistics only after a change of status
 		if (oldStatus != newStatus) {
-			if (cpu != nullptr) {
-				// If the task is about to be executed, resume CPU activeness
-				if (newStatus == executing_status || newStatus == runtime_status) {
-					CPUMonitor::cpuBecomesActive(((CPU *) cpu)->getIndex());
-				}
-				// If the task is about to end or block, resume CPU idleness
-				else if (newStatus == blocked_status || newStatus == ready_status || newStatus == pending_status) {
-					CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->getIndex());
-				}
-			}
-			
 			// Account this task in the appropriate workload
 			WorkloadPredictor::taskChangedStatus(task->getTaskStatistics(), task->getTaskPredictions(), oldStatus, newStatus);
 		}
 	}
 }
 
-void Monitoring::taskCompletedUserCode(Task *task, ComputePlace *cpu)
+void Monitoring::taskCompletedUserCode(Task *task)
 {
 	assert(task != nullptr);
 	if (_enabled && !task->isTaskloop()) {
-		assert(cpu != nullptr);
-		
-		// Update CPU statistics when the task completes user code
-		CPUMonitor::cpuBecomesIdle(((CPU *) cpu)->getIndex());
-		
 		// Account the task's elapsed execution time in predictions
 		WorkloadPredictor::taskCompletedUserCode(task->getTaskStatistics(), task->getTaskPredictions());
 	}
@@ -226,6 +210,23 @@ void Monitoring::shutdownThread()
 {
 	if (_enabled) {
 		// Empty thread API
+	}
+}
+
+
+//    CPUS    //
+
+void Monitoring::cpuBecomesIdle(int cpuId)
+{
+	if (_enabled) {
+		CPUMonitor::cpuBecomesIdle(cpuId);
+	}
+}
+
+void Monitoring::cpuBecomesActive(int cpuId)
+{
+	if (_enabled) {
+		CPUMonitor::cpuBecomesActive(cpuId);
 	}
 }
 

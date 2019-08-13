@@ -31,11 +31,11 @@ public:
 	{
 	}
 	
-	static inline void taskChangedStatus(Task *, monitoring_task_status_t, ComputePlace * = nullptr)
+	static inline void taskChangedStatus(Task *, monitoring_task_status_t)
 	{
 	}
 	
-	static inline void taskCompletedUserCode(Task *, ComputePlace *)
+	static inline void taskCompletedUserCode(Task *)
 	{
 	}
 	
@@ -48,6 +48,14 @@ public:
 	}
 	
 	static inline void shutdownThread()
+	{
+	}
+	
+	static inline void cpuBecomesIdle(int)
+	{
+	}
+	
+	static inline void cpuBecomesActive(int)
 	{
 	}
 	
