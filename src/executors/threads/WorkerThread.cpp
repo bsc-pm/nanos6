@@ -65,8 +65,12 @@ void WorkerThread::body()
 	
 	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId);
 	
+	// NOTE: If no tasks are available, the first time this happens the CPU
+	// will be dedicated to executing services. The second time it happens,
+	// it may become idle
 	// The WorkerThread will iterate until its CPU status signals that there is
 	// an ongoing shutdown and thus the thread must stop executing
+	bool mustHandleServices = true;
 	while (CPUActivation::checkCPUStatusTransitions(this) != CPU::shutting_down_status) {
 		// Update the CPU since the thread may have migrated
 		cpu = getComputePlace();
@@ -80,6 +84,7 @@ void WorkerThread::body()
 		}
 		
 		if (_task != nullptr) {
+			mustHandleServices = true;
 			WorkerThread *assignedThread = _task->getThread();
 			
 			// A task already assigned to another thread
@@ -103,8 +108,14 @@ void WorkerThread::body()
 				
 				_task = nullptr;
 			}
-		} else {
+		} else if (mustHandleServices) {
+			mustHandleServices = false;
 			PollingAPI::handleServices();
+		} else {
+			mustHandleServices = true;
+			
+			// If no task is available, the CPUManager may want to idle this CPU
+			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, IDLE_CANDIDATE);
 		}
 	}
 	

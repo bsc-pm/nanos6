@@ -10,6 +10,7 @@
 #include "DataAccessRegistration.hpp"
 #include "MemoryAllocator.hpp"
 #include "TaskFinalization.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
 
@@ -151,6 +152,10 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			
 			// An ancestor in a taskwait that finishes at this point
 			Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
+			
+			// After adding a task, the CPUManager may want to unidle a CPU
+			CPUManager::executeCPUManagerPolicy(computePlace, ADDED_TASKS, 1);
+			
 			readyOrDisposable = false;
 		}
 	}

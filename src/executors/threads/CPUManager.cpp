@@ -27,6 +27,7 @@ boost::dynamic_bitset<> CPUManager::_idleCPUs;
 std::vector<boost::dynamic_bitset<>> CPUManager::_NUMANodeMask;
 std::vector<size_t> CPUManager::_systemToVirtualCPUId;
 EnvironmentVariable<size_t> CPUManager::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
+size_t CPUManager::_numIdleCPUs;
 
 
 namespace cpumanager_internals {
@@ -141,6 +142,7 @@ void CPUManager::preinitialize()
 	// Set all CPUs as not idle
 	_idleCPUs.resize(numAvailableCPUs);
 	_idleCPUs.reset();
+	_numIdleCPUs = 0;
 }
 
 void CPUManager::initialize()
@@ -208,6 +210,9 @@ bool CPUManager::cpuBecomesIdle(CPU *cpu)
 	const int index = cpu->getIndex();
 	_idleCPUsLock.lock();
 	_idleCPUs[index] = true;
+	++_numIdleCPUs;
+	assert(_numIdleCPUs <= _cpus.size());
+	
 	Monitoring::cpuBecomesIdle(index);
 	_idleCPUsLock.unlock();
 	
@@ -230,6 +235,9 @@ CPU *CPUManager::getIdleCPU()
 	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
 	if (idleCPU != boost::dynamic_bitset<>::npos) {
 		_idleCPUs[idleCPU] = false;
+		assert(_numIdleCPUs > 0);
+		
+		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(idleCPU);
 		return _cpus[idleCPU];
 	} else {
@@ -249,6 +257,37 @@ void CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs)
 		idleCPUs.push_back(_cpus[idleCPU]);
 		idleCPU = _idleCPUs.find_next(idleCPU);
 	}
+	
+	// Reset the counter of idle CPUs as none should be idle now
+	_numIdleCPUs = 0;
+}
+
+size_t CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs)
+{
+	assert(idleCPUs.size() >= numCPUs);
+	
+	size_t numObtainedCPUs = 0;
+	
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	while (numObtainedCPUs < numCPUs && idleCPU != boost::dynamic_bitset<>::npos) {
+		// Signal that the CPU becomes active
+		_idleCPUs[idleCPU] = false;
+		Monitoring::cpuBecomesActive(idleCPU);
+		
+		// Place the CPU in the vector
+		idleCPUs[numObtainedCPUs] = _cpus[idleCPU];
+		++numObtainedCPUs;
+		
+		// Iterate to the next idle CPU
+		idleCPU = _idleCPUs.find_next(idleCPU);
+	}
+	
+	// Decrease the counter of idle CPUs by the obtained amount
+	assert(_numIdleCPUs >= numObtainedCPUs);
+	_numIdleCPUs -= numObtainedCPUs;
+	
+	return numObtainedCPUs;
 }
 
 CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
@@ -258,6 +297,9 @@ CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
 	boost::dynamic_bitset<>::size_type idleCPU = tmpIdleCPUs.find_first();
 	if (idleCPU != boost::dynamic_bitset<>::npos) {
 		_idleCPUs[idleCPU] = false;
+		assert(_numIdleCPUs > 0);
+		
+		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(idleCPU);
 		return _cpus[idleCPU];
 	} else {
@@ -273,9 +315,48 @@ bool CPUManager::unidleCPU(CPU *cpu)
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	if (_idleCPUs[index]) {
 		_idleCPUs[index] = false;
+		assert(_numIdleCPUs > 0);
+		
+		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(index);
 		return true;
 	} else {
 		return false;
+	}
+}
+
+void CPUManager::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)
+{
+	if (hint == IDLE_CANDIDATE) {
+		assert(cpu != nullptr);
+		
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+		
+		// Account this CPU as idle and mark the thread as idle
+		Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+		bool cpuIsIdle = cpuBecomesIdle((CPU *) cpu);
+		if (cpuIsIdle) {
+			ThreadManager::addIdler(currentThread);
+			currentThread->switchTo(nullptr);
+		
+			// The thread may have migrated, update the compute place
+			cpu = currentThread->getComputePlace();
+			assert(cpu != nullptr);
+		}
+		Instrument::resumedComputePlace(cpu->getInstrumentationId());
+	} else { // hint = ADDED_TASKS
+		// At most we will obtain as many idle CPUs as the maximum amount
+		size_t numCPUsToObtain = std::min(_cpus.size(), numTasks);
+		std::vector<CPU *> idleCPUs(numCPUsToObtain, nullptr);
+		
+		// Try to get as many idle CPUs as we need
+		size_t numCPUsObtained = getIdleCPUs(idleCPUs, numCPUsToObtain);
+		
+		// Resume an idle thread for every idle CPU that has awakened
+		for (size_t i = 0; i < numCPUsObtained; ++i) {
+			assert(idleCPUs[i] != nullptr);
+			ThreadManager::resumeIdle(idleCPUs[i]);
+		}
 	}
 }

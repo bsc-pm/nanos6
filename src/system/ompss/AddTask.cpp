@@ -14,6 +14,7 @@
 
 #include <nanos6.h>
 
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
@@ -196,6 +197,9 @@ void nanos6_submit_task(void *taskHandle)
 		}
 		
 		Scheduler::addReadyTask(task, computePlace, schedulingHint);
+		
+		// After adding a task, the CPUManager may want to unidle a CPU
+		CPUManager::executeCPUManagerPolicy(computePlace, ADDED_TASKS, 1);
 	}
 	
 	if (parent != nullptr) {

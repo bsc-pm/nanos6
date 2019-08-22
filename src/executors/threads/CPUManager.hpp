@@ -14,10 +14,20 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include "CPU.hpp"
+#include "CPUManager.hpp"
+#include "ThreadManager.hpp"
+#include "WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/SpinLock.hpp"
 
+#include <InstrumentComputePlaceManagement.hpp>
+
+
+enum CPUManagerPolicyHint {
+	IDLE_CANDIDATE,
+	ADDED_TASKS
+};
 
 class CPUManager {
 private:
@@ -40,6 +50,9 @@ private:
 	
 	//! \brief Number of different groups that can collaborate to execute a single taskfor
 	static EnvironmentVariable<size_t> _taskforGroups;
+	
+	//! The current number of idle CPUs, kept atomic through idleCPUsLock
+	static size_t _numIdleCPUs;
 	
 	static void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
 
@@ -75,6 +88,14 @@ public:
 	//! \brief get all idle CPUs
 	static void getIdleCPUs(std::vector<CPU *> &idleCPUs);
 	
+	//! \brief Get a specific number of idle CPUs
+	//!
+	//! \param[in,out] idleCPUs A vector of at least size 'numCPUs' where the
+	//! retreived idle CPUs will be placed
+	//! \param[in] numCPUs The amount of CPUs to retreive
+	//! \return The number of idle CPUs obtained/valid references in the vector
+	static size_t getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs);
+	
 	//! \brief get an idle CPU from a specific NUMA node
 	static CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
 	
@@ -86,6 +107,15 @@ public:
 	
 	//! \brief Get number of CPUs that can collaborate to execute a single taskfor. i.e. number of CPUs per taskfor group.
 	static size_t getNumCPUsPerTaskforGroup();
+	
+	//! \brief Taking into account the current workload and the amount of
+	//! active or idle CPUs, reconsider idling/waking up CPUs
+	//!
+	//! \param[in] cpu The CPU that triggered the call, if any
+	//! \param[in] hint A hint what kind of change triggered this call
+	//! \param[in] numTasks If the change (hint) was related to creating tasks,
+	//! this parameter contains the amount of tasks that were added
+	static void executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks = 0);
 };
 
 

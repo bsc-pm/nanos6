@@ -14,6 +14,7 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "CPUManager.hpp"
 #include "ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
@@ -35,6 +36,18 @@ void ThreadManager::initialize()
 void ThreadManager::shutdownPhase1()
 {
 	assert(_shutdownThreads != nullptr);
+	
+	// If all worker threads are idle, we must wake up one of them so it
+	// triggers a chain shutdown for all idle threads
+	WorkerThread *idleThread = getAnyIdleThread();
+	if (idleThread != nullptr) {
+		CPU *idleCPU = CPUManager::getIdleCPU();
+		if (idleCPU != nullptr) {
+			idleThread->resume(idleCPU, true);
+		} else {
+			addIdler(idleThread);
+		}
+	}
 	
 	const int MIN_SPINS = 100;
 	const int MAX_SPINS = 100*1000*1000;
