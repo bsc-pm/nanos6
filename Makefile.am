@@ -357,11 +357,11 @@ common_sources = \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskBlocking.cpp \
-	src/system/ompss/TaskLoop.cpp \
+	src/system/ompss/TaskFor.cpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
-	src/tasks/Taskloop.cpp
+	src/tasks/Taskfor.cpp
 
 
 cluster_sources =
@@ -1062,11 +1062,10 @@ noinst_HEADERS = \
 	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
+	src/tasks/Taskfor.hpp \
+	src/tasks/TaskforGenerator.hpp \
+	src/tasks/TaskforInfo.hpp \
 	src/tasks/TaskImplementation.hpp \
-	src/tasks/Taskloop.hpp \
-	src/tasks/TaskloopGenerator.hpp \
-	src/tasks/TaskloopInfo.hpp \
-	src/tasks/TaskloopLogic.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \

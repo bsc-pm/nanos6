@@ -181,7 +181,7 @@ bool HardwareCounters::isEnabled()
 void HardwareCounters::taskCreated(Task *task)
 {
 	assert(task != nullptr);
-	if (_enabled && !task->isTaskloop()) {
+	if (_enabled && !task->isTaskfor()) {
 		// Retrieve information about the task
 		TaskHardwareCounters *taskCounters               = task->getTaskHardwareCounters();
 		TaskHardwareCountersPredictions *taskPredictions = task->getTaskHardwareCountersPredictions();
@@ -197,7 +197,7 @@ void HardwareCounters::taskCreated(Task *task)
 void HardwareCounters::startTaskMonitoring(Task *task)
 {
 	assert(task != nullptr);
-	if (_enabled && !task->isTaskloop()) {
+	if (_enabled && !task->isTaskfor()) {
 		// Get the thread's and task's hardware counter structures
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		if (thread != nullptr) {
@@ -213,7 +213,7 @@ void HardwareCounters::startTaskMonitoring(Task *task)
 void HardwareCounters::stopTaskMonitoring(Task *task)
 {
 	assert(task != nullptr);
-	if (_enabled && !task->isTaskloop()) {
+	if (_enabled && !task->isTaskfor()) {
 		// Get the thread's and task's hardware counter structures
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		if (thread != nullptr) {
@@ -229,7 +229,7 @@ void HardwareCounters::stopTaskMonitoring(Task *task)
 void HardwareCounters::taskFinished(Task *task)
 {
 	assert(task != nullptr);
-	if (_enabled && !task->isTaskloop()) {
+	if (_enabled && !task->isTaskfor()) {
 		// Get the task's hardware counter structures
 		TaskHardwareCounters *taskCounters = task->getTaskHardwareCounters();
 		TaskHardwareCountersPredictions *taskPredictions = task->getTaskHardwareCountersPredictions();

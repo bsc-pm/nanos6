@@ -25,6 +25,7 @@ SpinLock CPUManager::_idleCPUsLock;
 boost::dynamic_bitset<> CPUManager::_idleCPUs;
 std::vector<boost::dynamic_bitset<>> CPUManager::_NUMANodeMask;
 std::vector<size_t> CPUManager::_systemToVirtualCPUId;
+EnvironmentVariable<size_t> CPUManager::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
 
 
 namespace cpumanager_internals {
@@ -61,6 +62,11 @@ namespace cpumanager_internals {
 	}
 }
 
+size_t CPUManager::getNumCPUsPerTaskforGroup()
+{
+	return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
+}
+
 void CPUManager::preinitialize()
 {
 	_finishedCPUInitialization = false;
@@ -75,6 +81,20 @@ void CPUManager::preinitialize()
 	
 	// Get CPU objects that can run a thread
 	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
+	if (cpus.size() < _taskforGroups) {
+		FatalErrorHandler::warnIf(1, "You requested more groups than CPUs in the system. We are going to use ", cpus.size(), " groups of 1 CPU each.");
+		_taskforGroups.setValue(cpus.size());
+	}
+	if (_taskforGroups == 0 || cpus.size() % _taskforGroups != 0) {
+		size_t closestGroups = getClosestGroupNumber(cpus.size(), _taskforGroups);
+		FatalErrorHandler::warnIf(_taskforGroups == 0, "You requested 0 groups, but 0 is not a valid number of groups. We are going to use ",
+				closestGroups, " of ", cpus.size() / closestGroups, " CPUs each.");
+		FatalErrorHandler::warnIf(_taskforGroups != 0 && cpus.size() % _taskforGroups != 0, "You requested ", _taskforGroups,
+				" groups, but the number of CPUs is not divisible by the number of groups. We are going to use ",
+				closestGroups, " of ", cpus.size() / closestGroups, " CPUs each.");
+		_taskforGroups.setValue(closestGroups);
+	}
+	assert(_taskforGroups <= cpus.size() && cpus.size() % _taskforGroups == 0);
 	
 	size_t maxSystemCPUId = 0;
 	for (size_t i = 0; i < cpus.size(); ++i) {
@@ -99,6 +119,11 @@ void CPUManager::preinitialize()
 		CPU *cpu = (CPU *)cpus[i];
 		
 		if (CPU_ISSET(cpu->getSystemCPUId(), &processCPUMask)) {
+			// We need the hwloc logical_index to compute the groupId. However, that index is overwritten, so this is the last point where we still have
+			// the hwloc logical_index, so we compute the groupId here and set it as member of CPU.
+			size_t groupId = cpu->getIndex() / getNumCPUsPerTaskforGroup();
+			assert(groupId <= cpus.size());
+			cpu->setGroupId(groupId);
 			cpu->setIndex(virtualCPUId);
 			_cpus[virtualCPUId] = cpu;
 			_NUMANodeMask[cpu->getNumaNodeId()][virtualCPUId] = true;

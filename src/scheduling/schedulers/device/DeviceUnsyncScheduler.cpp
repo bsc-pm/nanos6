@@ -15,8 +15,8 @@ Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 		size_t immediateSuccessorId = computePlace->getIndex();
 		if (_immediateSuccessorTasks[immediateSuccessorId] != nullptr) {
 			task = _immediateSuccessorTasks[immediateSuccessorId];
+			assert(!task->isTaskfor());
 			_immediateSuccessorTasks[immediateSuccessorId] = nullptr;
-			assert(!task->isTaskloop());
 			return task;
 		}
 	}
@@ -29,13 +29,14 @@ Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 		for (size_t i = 0; i < _immediateSuccessorTasks.size(); i++) {
 			if (_immediateSuccessorTasks[i] != nullptr) {
 				task = _immediateSuccessorTasks[i];
-				assert(!task->isTaskloop());
+				assert(!task->isTaskfor());
 				_immediateSuccessorTasks[i] = nullptr;
 				break;
 			}
 		}
 	}
-	assert(task == nullptr || !task->isTaskloop());
+	
+	assert(task == nullptr || !task->isTaskfor());
 	
 	return task;
 }

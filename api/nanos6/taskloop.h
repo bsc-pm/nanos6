@@ -28,7 +28,7 @@ typedef struct {
 	size_t step;
 	size_t chunksize;
 } nanos6_taskloop_bounds_t;
-
+typedef nanos6_taskloop_bounds_t nanos6_taskfor_bounds_t;
 
 //! \brief Register the bounds of a taskloop
 //! 

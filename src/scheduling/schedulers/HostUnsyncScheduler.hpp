@@ -7,22 +7,29 @@
 #ifndef HOST_UNSYNC_SCHEDULER_HPP
 #define HOST_UNSYNC_SCHEDULER_HPP
 
+#include "MemoryAllocator.hpp"
 #include "scheduling/schedulers/UnsyncScheduler.hpp"
 
-class Taskloop;
+class Taskfor;
 
 class HostUnsyncScheduler : public UnsyncScheduler {
-	Taskloop *_currentTaskloop;
+	std::vector<Taskfor *> _groupSlots;
 	
 public:
 	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
-		: UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor), _currentTaskloop(nullptr)
-	{}
+		: UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
+	{
+		size_t groups = CPUManager::getNumTaskforGroups();
+		
+		_groupSlots = std::vector<Taskfor *>(groups, nullptr);
+		
+		if (enableImmediateSuccessor) {
+			_immediateSuccessorTaskfors = std::vector<Task *>(groups*2, nullptr);
+		}
+	}
 	
 	virtual ~HostUnsyncScheduler()
-	{
-		assert(_currentTaskloop == nullptr);
-	}
+	{}
 	
 	//! \brief Get a ready task for execution
 	//!
@@ -31,6 +38,5 @@ public:
 	//! \returns a ready task or nullptr
 	Task *getReadyTask(ComputePlace *computePlace);
 };
-
 
 #endif // HOST_UNSYNC_SCHEDULER_HPP

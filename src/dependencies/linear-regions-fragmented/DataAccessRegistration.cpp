@@ -2631,7 +2631,7 @@ namespace DataAccessRegistration {
 		
 		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
 	
-		if(symbolIndex >= 0) symbol_list.set(symbolIndex);
+		if (symbolIndex >= 0) symbol_list.set(symbolIndex);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
@@ -2972,7 +2972,7 @@ namespace DataAccessRegistration {
 		assert(computePlace != nullptr);
 		assert(task->isRunnable());
 		
-		if (task->isTaskloop()) {
+		if (task->isTaskfor()) {
 			// Loop callaborators only
 			TaskDataAccesses &parentAccessStructures = task->getParent()->getDataAccesses();
 			

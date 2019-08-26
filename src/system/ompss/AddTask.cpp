@@ -9,7 +9,11 @@
 #define _XOPEN_SOURCE 600
 #endif
 
+#include <cassert>
+#include <cstdlib>
+
 #include <nanos6.h>
+
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
@@ -20,8 +24,8 @@
 #include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "tasks/Taskloop.hpp"
-#include "tasks/TaskloopInfo.hpp"
+#include "tasks/Taskfor.hpp"
+#include "tasks/TaskforInfo.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <HardwareCounters.hpp>
@@ -29,9 +33,6 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <Monitoring.hpp>
-
-#include <cassert>
-#include <cstdlib>
 
 
 #define DATA_ALIGNMENT_SIZE sizeof(void *)
@@ -63,12 +64,13 @@ void nanos6_create_task(
 	void *&args_block = *args_block_pointer;
 	void *&task = *task_pointer;
 	
-	bool isTaskloop = flags & nanos6_task_flag_t::nanos6_taskloop_task;
+	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskloop_task;
+	//bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
 	bool isStreamExecutor = flags & (1 << Task::stream_executor_flag);
 	size_t originalArgsBlockSize = args_block_size;
 	size_t taskSize;
-	if (isTaskloop) {
-		taskSize = sizeof(Taskloop);
+	if (isTaskfor) {
+		taskSize = sizeof(Taskfor);
 	} else if (isStreamExecutor) {
 		taskSize = sizeof(StreamExecutor);
 	} else {
@@ -92,8 +94,10 @@ void nanos6_create_task(
 		task = (char *)args_block + args_block_size;
 	}
 	
-	if (isTaskloop) {
-		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+	if (isTaskfor) {
+		// Taskfor is always final.
+		flags |= nanos6_task_flag_t::nanos6_final_task;
+		new (task) Taskfor (args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else if (isStreamExecutor) {
 		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else {
@@ -103,6 +107,27 @@ void nanos6_create_task(
 	
 }
 
+void nanos6_create_preallocated_task(
+	nanos6_task_info_t *taskInfo,
+	nanos6_task_invocation_info_t *taskInvocationInfo,
+	size_t args_block_size,
+	void *preallocatedArgsBlock,
+	void *preallocatedTask,
+	size_t flags
+) {
+	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
+	assert(preallocatedArgsBlock != nullptr);
+	assert(preallocatedTask != nullptr);
+	
+	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
+	
+	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskloop_task;
+	//bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
+	FatalErrorHandler::failIf(!isTaskfor, "Only taskfors can be created this way.");
+	
+	Taskfor *taskfor = (Taskfor *) preallocatedTask;
+	taskfor->reinitialize(preallocatedArgsBlock, args_block_size, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+}
 
 void nanos6_submit_task(void *taskHandle)
 {

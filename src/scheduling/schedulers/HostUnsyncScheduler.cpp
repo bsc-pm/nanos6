@@ -9,67 +9,96 @@
 #include "scheduling/ready-queues/ReadyQueueDeque.hpp"
 #include "scheduling/ready-queues/ReadyQueueMap.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/Taskloop.hpp"
-#include "tasks/TaskloopGenerator.hpp"
+#include "tasks/Taskfor.hpp"
+#include "tasks/TaskforGenerator.hpp"
 
 Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 {
-	Task *task = nullptr;
+	assert(computePlace != nullptr);
+	Task *result = nullptr;
+	Taskfor *groupTaskfor = nullptr;
 	
-	// 1. Check if there is an active taskloop.
-	if (_currentTaskloop != nullptr) {
-		Taskloop *taskloop = _currentTaskloop;
-		bool pendingWork = _currentTaskloop->hasPendingIterations();
-		taskloop->notifyCollaboratorHasStarted();
-		if (!pendingWork) {
-			_currentTaskloop = nullptr;
-			__attribute__((unused)) bool finished = taskloop->markAsFinished(computePlace);
-			assert(!finished);
+	long cpuId = ((CPU *)computePlace)->getIndex();
+	long groupId = (computePlace->getType() == nanos6_host_device) ? ((CPU *)computePlace)->getGroupId() : -1;
+	long immediateSuccessorGroupId = groupId*2;
+	
+	// 1. Try to get work from the current group taskfor.
+	if (groupId != -1) {
+		if ((groupTaskfor = _groupSlots[groupId]) != nullptr) {
+			assert(groupTaskfor->hasPendingIterations());
+			
+			groupTaskfor->notifyCollaboratorHasStarted();
+			TaskforInfo::bounds_t bounds;
+			bool clearSlot = groupTaskfor->getChunks(bounds);
+			if (clearSlot) {
+				_groupSlots[groupId] = nullptr;
+			}
+			
+			Taskfor *collaborator = TaskforGenerator::createCollaborator(groupTaskfor, bounds, computePlace);
+			
+			assert(collaborator->isRunnable());
+			return collaborator;
 		}
-		return TaskloopGenerator::createCollaborator(taskloop);
 	}
 	
-	// 2. Check if there is an immediate successor.
-	if (_enableImmediateSuccessor && computePlace != nullptr) {
-		size_t immediateSuccessorId = computePlace->getIndex();
-		if (_immediateSuccessorTasks[immediateSuccessorId] != nullptr) {
-			task = _immediateSuccessorTasks[immediateSuccessorId];
-			_immediateSuccessorTasks[immediateSuccessorId] = nullptr;
-			assert(!task->isTaskloop());
-			return task;
+	if (_enableImmediateSuccessor) {
+		// 2. Try to get work from my immediateSuccessorTaskfors.
+		Task *currentImmediateSuccessor1 = _immediateSuccessorTaskfors[immediateSuccessorGroupId];
+		Task *currentImmediateSuccessor2 = _immediateSuccessorTaskfors[immediateSuccessorGroupId+1];
+		if (currentImmediateSuccessor1 != nullptr) {
+			assert(currentImmediateSuccessor1->isTaskfor());
+			result = currentImmediateSuccessor1;
+			_immediateSuccessorTaskfors[immediateSuccessorGroupId] = nullptr;
+		}
+		else if (currentImmediateSuccessor2 != nullptr) {
+			assert(currentImmediateSuccessor2->isTaskfor());
+			result = currentImmediateSuccessor2;
+			_immediateSuccessorTaskfors[immediateSuccessorGroupId+1] = nullptr;
+		}
+		
+		// 3. Try to get work from my immediateSuccessorTasks.
+		if (result == nullptr && _immediateSuccessorTasks[cpuId] != nullptr) {
+			result = _immediateSuccessorTasks[cpuId];
+			_immediateSuccessorTasks[cpuId] = nullptr;
 		}
 	}
 	
-	// 3. Check if there is work remaining in the ready queue.
-	task = _readyTasks->getReadyTask(computePlace);
+	// 4. Check if there is work remaining in the ready queue.
+	if (result == nullptr) {
+		result = _readyTasks->getReadyTask(computePlace);
+	}
 	
-	 //4. Try to get work from other immediateSuccessorTasks.
-	if (task == nullptr && _enableImmediateSuccessor) {
+	// 5. Try to get work from other immediateSuccessorTasks.
+	if (result == nullptr && _enableImmediateSuccessor) {
 		for (size_t i = 0; i < _immediateSuccessorTasks.size(); i++) {
 			if (_immediateSuccessorTasks[i] != nullptr) {
-				task = _immediateSuccessorTasks[i];
-				assert(!task->isTaskloop());
+				result = _immediateSuccessorTasks[i];
+				assert(!result->isTaskfor());
 				_immediateSuccessorTasks[i] = nullptr;
 				break;
 			}
 		}
 	}
 	
-	if (task != nullptr && task->isTaskloop() && !task->isRunnable()) {
-		// If a taskloop is non-runnable, it means that it is a "source" taskloop that must be executed by collaborators.
-		// Otherwise, it is already a collaborator that has been blocked for some reason, and now it must be executed as a normal task.
-		Taskloop *taskloop = (Taskloop *) task;
-		bool pendingWork = taskloop->hasPendingIterations();
-		taskloop->notifyCollaboratorHasStarted();
-		if (pendingWork) {
-			assert(_currentTaskloop == nullptr);
-			_currentTaskloop = taskloop;
-		} else {
-			__attribute__((unused)) bool finished = taskloop->markAsFinished(computePlace);
-			assert(!finished);
+	// 6. Try to get work from other immediateSuccessorTasksfors.
+	if (result == nullptr) {
+		for (size_t i = 0; i < _immediateSuccessorTaskfors.size(); i++) {
+			if (_immediateSuccessorTaskfors[i] != nullptr) {
+				result = _immediateSuccessorTaskfors[i];
+				_immediateSuccessorTaskfors[i] = nullptr;
+				break;
+			}
 		}
-		return TaskloopGenerator::createCollaborator(taskloop);
 	}
 	
-	return task;
+	if (result == nullptr || !result->isTaskfor()) {
+		assert(result == nullptr || result->isRunnable());
+		return result;
+	}
+	
+	assert(result->isTaskfor());
+	assert(computePlace->getType() == nanos6_device_t::nanos6_host_device);
+	
+	_groupSlots[groupId] = (Taskfor *) result;
+	return getReadyTask(computePlace);
 }

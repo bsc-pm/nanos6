@@ -6,18 +6,18 @@
 
 #include <cassert>
 
-#include <InstrumentDependenciesByAccess.hpp>
-
 #include <nanos6.h>
+
+#include "DataAccessRegistration.hpp"
+#include "ReductionSpecific.hpp"
+#include "../DataAccessType.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#include "../DataAccessType.hpp"
-#include "DataAccessRegistration.hpp"
-#include "ReductionSpecific.hpp"
 
 #include <Dependencies.hpp>
+#include <InstrumentDependenciesByAccess.hpp>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
 void register_access(void *handler, void *start, size_t length, int symbolIndex,
@@ -27,11 +27,11 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	assert(handler != 0);
 	Task *task = (Task *) handler;
 	
-	if (WEAK && task->isTaskloop()) {
+	if (WEAK && task->isTaskfor()) {
 		std::cerr << "Warning: task loop cannot have weak dependencies. Changing them to strong dependencies." << std::endl;
 	}
 	
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), start, length);
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length);
 	
 	if (start == nullptr) {
 		return;
@@ -41,7 +41,7 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	}
 	
 	DataAccessRegion accessRegion(start, length);
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskloop(), accessRegion, symbolIndex, reductionTypeAndOperatorIndex, reductionIndex);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), accessRegion, symbolIndex, reductionTypeAndOperatorIndex, reductionIndex);
 }
 
 
@@ -88,12 +88,12 @@ void nanos6_register_concurrent_depinfo(void *handler, void *start, size_t lengt
 
 void nanos6_register_commutative_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
-    register_access<COMMUTATIVE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
+	register_access<COMMUTATIVE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
 }
 
 void nanos6_register_weak_commutative_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
-    register_access<COMMUTATIVE_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
+	register_access<COMMUTATIVE_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 void nanos6_register_region_reduction_depinfo1(

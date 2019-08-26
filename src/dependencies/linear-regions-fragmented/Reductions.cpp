@@ -7,14 +7,14 @@
 #include <cassert>
 
 #include <nanos6.h>
-#include <tasks/Task.hpp>
-#include <executors/threads/WorkerThread.hpp>
-
-#include <InstrumentReductions.hpp>
 
 #include "DataAccess.hpp"
-#include "TaskDataAccessesImplementation.hpp"
 #include "ReductionInfo.hpp"
+#include "TaskDataAccessesImplementation.hpp"
+#include "executors/threads/WorkerThread.hpp"
+#include "tasks/Task.hpp"
+
+#include <InstrumentReductions.hpp>
 
 void *nanos6_get_reduction_storage1(void *original,
 		long dim1size,
@@ -43,7 +43,7 @@ void *nanos6_get_reduction_storage1(void *original,
 	size_t cpuId = currentCPU->getIndex();
 	
 	TaskDataAccesses &taskAccesses =
-		task->isTaskloop() ? task->getParent()->getDataAccesses() : task->getDataAccesses();
+		task->isTaskfor() ? task->getParent()->getDataAccesses() : task->getDataAccesses();
 	
 	// Need the lock, as access can be fragmented while we access it
 	taskAccesses._lock.lock();

@@ -7,14 +7,17 @@
 #ifndef COMPUTE_PLACE_HPP
 #define COMPUTE_PLACE_HPP
 
-#include <InstrumentComputePlaceId.hpp>
-#include "CPUDependencyData.hpp"
 
 #include <map>
 #include <vector>
 
 #include <nanos6/task-instantiation.h>
 
+#include "CPUDependencyData.hpp"
+
+#include <InstrumentComputePlaceId.hpp>
+
+class Taskfor;
 class MemoryPlace;
 
 //! \brief A class that represents a place where code can be executed either directly, or in a sub-place within
@@ -22,11 +25,15 @@ class ComputePlace {
 private:
 	typedef std::map<int, MemoryPlace *> memory_places_t;
 	memory_places_t _memoryPlaces; // Accessible MemoryPlaces from this ComputePlace
+	//! Preallocated taskfor to be used as taskfor collaborator.
+	Taskfor *_preallocatedTaskfor;
+	//! Preallocated argsBlock to be used for taskfor collaborators.
+	void *_preallocatedArgsBlock;
+	size_t _preallocatedArgsBlockSize;
 	
 protected:
-	//ComputePlace * _parent;
 	size_t _index;
-	nanos6_device_t _type;	
+	nanos6_device_t _type;
 	
 	Instrument::compute_place_id_t _instrumentationId;
 	
@@ -35,12 +42,9 @@ protected:
 public:
 	void *_schedulerData;
 	
-	ComputePlace(int index, nanos6_device_t type)
-		: _index(index), _type(type), _schedulerData(nullptr)
-	{}
+	ComputePlace(int index, nanos6_device_t type);
 	
-	virtual ~ComputePlace()
-	{}
+	virtual ~ComputePlace();
 	
 	size_t getMemoryPlacesCount() const
 	{
@@ -56,6 +60,14 @@ public:
 		return nullptr;
 	}
 	
+	//! \brief returns the preallocated taskfor of this ComputePlace.
+	inline Taskfor *getPreallocatedTaskfor()
+	{
+		return _preallocatedTaskfor;
+	}
+	
+	void *getPreallocatedArgsBlock(size_t requiredSize);
+	
 	inline int getIndex() const
 	{
 		return _index;
@@ -69,13 +81,13 @@ public:
 	inline nanos6_device_t getType()
 	{
 		return _type;
-	}	
+	}
 	
 	void addMemoryPlace(MemoryPlace *mem);
 	
 	std::vector<int> getMemoryPlacesIndexes();
 	
-	std::vector<MemoryPlace*> getMemoryPlaces();
+	std::vector<MemoryPlace *> getMemoryPlaces();
 	
 	void setInstrumentationId(Instrument::compute_place_id_t const &instrumentationId)
 	{
@@ -91,7 +103,6 @@ public:
 	{
 		return _dependencyData;
 	}
-	
 };
 
 #endif //COMPUTE_PLACE_HPP

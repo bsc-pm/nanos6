@@ -63,7 +63,6 @@ void solve(int n, const int col, sol_node_t& sol)
 	}
 }
 
-
 int main() {
 	int n = TOTAL_SIZE;
 	final_depth = FINAL_DEPTH;

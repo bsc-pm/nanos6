@@ -10,17 +10,13 @@
 
 #include <cassert>
 #include <list>
-
 #include <pthread.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
-#include <sys/syscall.h>
-
-#include "CPUActivation.hpp"
-#include "CPUManager.hpp"
 #include "ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include <hardware/HardwareInfo.hpp>
+#include "hardware/HardwareInfo.hpp"
 
 
 std::atomic<bool> ThreadManager::_mustExit(false);

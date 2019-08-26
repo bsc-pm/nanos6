@@ -10,6 +10,7 @@
 
 #include "DeviceComputePlace.hpp"
 #include "executors/threads/TaskFinalization.hpp"
+#include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/device/DeviceInfoImplementation.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -38,7 +39,7 @@ int DeviceComputePlace::pollingFinishTasks(DeviceFunctionsInterface *functions)
 {
 	std::vector<Task *> taskvec;
 	functions->getFinishedTasks(taskvec);
-
+	
 	for (Task *task : taskvec) {
 		CPUDependencyData localHpDependencyData;
 		if (task->markAsFinished(task->getComputePlace())) {

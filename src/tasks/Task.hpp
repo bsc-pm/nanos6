@@ -45,7 +45,7 @@ public:
 		//! Flags added by the Mercurium compiler
 		final_flag=0,
 		if0_flag,
-		taskloop_flag,
+		taskfor_flag,
 		wait_flag,
 		preallocated_args_block_flag,
 		//! Flags added by the Nanos6 runtime. Note that
@@ -149,6 +149,16 @@ public:
 		size_t flags
 	);
 	
+	virtual inline void reinitialize(
+		void *argsBlock,
+		size_t argsBlockSize,
+		nanos6_task_info_t *taskInfo,
+		nanos6_task_invocation_info_t *taskInvokationInfo,
+		Task *parent,
+		Instrument::task_id_t instrumentationTaskId,
+		size_t flags
+	);
+	
 	inline ~Task();
 	
 	//! Set the address of the arguments block
@@ -187,6 +197,7 @@ public:
 		assert(_taskInfo->implementation_count == 1);
 		assert(hasCode());
 		assert(_taskInfo != nullptr);	
+		assert(!isTaskfor());
 		_taskInfo->implementations[0].run(_argsBlock, deviceEnvironment, translationTable);
 	}
 	
@@ -252,9 +263,9 @@ public:
 	//! \brief Decrease an internal counter that prevents the removal of the task
 	//!
 	//! \returns the counter's value after decreasing it
-	inline int decreaseAndGetRemovalBlockingCount()
+	inline int decreaseAndGetRemovalBlockingCount(int amount = 1)
 	{
-		int countdown = (--_countdownToBeWokenUp);
+		int countdown = (_countdownToBeWokenUp -= amount);
 		assert(countdown >= 0);
 		return countdown;
 	}
@@ -402,7 +413,7 @@ public:
 		return (countdown > 0);
 	}
 	
-	//! \brief Enable shceduling again for this task
+	//! \brief Enable scheduling again for this task
 	//!
 	//! \returns true if this task is unblocked
 	inline bool enableScheduling()
@@ -459,15 +470,15 @@ public:
 		return _flags[if0_flag];
 	}
 	
-	//! \brief Set or unset the taskloop flag
-	void setTaskloop(bool taskloopValue)
+	//! \brief Set or unset the taskfor flag
+	void setTaskfor(bool taskforValue)
 	{
-		_flags[taskloop_flag] = taskloopValue;
+		_flags[taskfor_flag] = taskforValue;
 	}
-	//! \brief Check if the task is a taskloop
-	bool isTaskloop() const
+	//! \brief Check if the task is a taskfor
+	bool isTaskfor() const
 	{
-		return _flags[taskloop_flag];
+		return _flags[taskfor_flag];
 	}
 	
 	inline bool isRunnable() const

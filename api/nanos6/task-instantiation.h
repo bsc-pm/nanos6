@@ -168,7 +168,7 @@ typedef struct __attribute__((aligned(64)))
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_instantiation_api
 //! \brief This needs to be incremented on every change to the instantiation API
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 2 };
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 3 };
 
 typedef enum {
 	//! Specifies that the task will be a final task
@@ -192,7 +192,7 @@ typedef enum {
 //! 
 //! \param[in] task_info a pointer to the nanos6_task_info_t structure
 //! \param[in] task_invocation_info a pointer to the nanos6_task_invocation_info_t structure
-//! \param[in] args_block_size size needed to store the paramerters passed to the task call
+//! \param[in] args_block_size size needed to store the parameters passed to the task call
 //! \param[in,out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call. Input if flags contains nanos6_preallocated_args_block, out otherwise
 //! \param[out] task_pointer a pointer to a location to store the task handler
 void nanos6_create_task(
@@ -203,6 +203,25 @@ void nanos6_create_task(
 	/* OUT */ void **task_pointer,
 	size_t flags,
 	size_t num_deps
+);
+
+//! \brief Gets a preallocated task and resets all its values
+//! 
+//! This function gets a preallocated task and reinitializes all its values.
+//! This can only be used as a collaborator of a task for.
+//! 
+//! \param[in] task_info a pointer to the nanos6_task_info_t structure
+//! \param[in] task_invocation_info a pointer to the nanos6_task_invocation_info_t structure
+//! \param[in] args_block_size size needed to store the parameters passed to the task call
+//! \param[in] preallocated_args_block a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call
+//! \param[in] preallocated_task a pointer to the preallocated task to be reset
+void nanos6_create_preallocated_task(
+	nanos6_task_info_t *task_info,
+	nanos6_task_invocation_info_t *task_invocation_info,
+	size_t args_block_size,
+	void *preallocated_args_block,
+	void *preallocated_task,
+	size_t flags
 );
 
 

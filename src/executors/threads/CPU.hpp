@@ -11,19 +11,18 @@
 #define _GNU_SOURCE
 #endif
 
+#include <atomic>
+#include <cassert>
+#include <deque>
+#include <pthread.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 #include "CPUThreadingModelData.hpp"
 #include "hardware/places/CPUPlace.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
-
-#include <atomic>
-#include <cassert>
-#include <deque>
-
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/types.h>
 
 
 class WorkerThread;
@@ -54,6 +53,7 @@ private:
 	
 	size_t _systemCPUId;
 	size_t _NUMANodeId;
+	size_t _groupId;
 	
 	//! \brief the CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;
@@ -127,6 +127,17 @@ public:
 	{
 		return &_pthreadAttr;
 	}
+	
+	void setGroupId(size_t groupId)
+	{
+		_groupId = groupId;
+	}
+	
+	size_t getGroupId() const
+	{
+		return _groupId;
+	}
+	
 };
 
 

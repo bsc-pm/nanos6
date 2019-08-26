@@ -21,6 +21,7 @@
 class UnsyncScheduler {
 protected:
 	std::vector<Task *> _immediateSuccessorTasks;
+	std::vector<Task *> _immediateSuccessorTaskfors;
 	ReadyQueue *_readyTasks;
 	bool _enableImmediateSuccessor;
 	bool _enablePriority;
@@ -38,6 +39,7 @@ public:
 	virtual inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
 		assert(task != nullptr);
+		
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		HardwareCounters::stopTaskMonitoring(task);
 		Monitoring::taskChangedStatus(task, ready_status);
@@ -45,14 +47,32 @@ public:
 		bool unblocked = (hint == UNBLOCKED_TASK_HINT);
 		
 		if (_enableImmediateSuccessor) {
-			if (!task->isTaskloop() && computePlace != nullptr && hint == SIBLING_TASK_HINT) {
+			if (computePlace != nullptr && hint == SIBLING_TASK_HINT) {
 				size_t immediateSuccessorId = computePlace->getIndex();
-				
-				Task *currentIS = _immediateSuccessorTasks[immediateSuccessorId];
-				if (currentIS != nullptr) {
-					_readyTasks->addReadyTask(currentIS, false);
+				if (!task->isTaskfor()) {
+					Task *currentIS = _immediateSuccessorTasks[immediateSuccessorId];
+					if (currentIS != nullptr) {
+						assert(!currentIS->isTaskfor());
+						_readyTasks->addReadyTask(currentIS, false);
+					}
+					_immediateSuccessorTasks[immediateSuccessorId] = task;
 				}
-				_immediateSuccessorTasks[immediateSuccessorId] = task;
+				else {
+					// Multiply by 2 because there are 2 slots per group.
+					immediateSuccessorId = ((CPU *)computePlace)->getGroupId()*2;
+					Task *currentIS1 = _immediateSuccessorTaskfors[immediateSuccessorId];
+					Task *currentIS2 = _immediateSuccessorTaskfors[immediateSuccessorId+1];
+					if (currentIS1 == nullptr) {
+						_immediateSuccessorTaskfors[immediateSuccessorId] = task;
+					}
+					else if (currentIS2 == nullptr) {
+						_immediateSuccessorTaskfors[immediateSuccessorId+1] = task;
+					}
+					else {
+						_readyTasks->addReadyTask(currentIS1, false);
+						_immediateSuccessorTaskfors[immediateSuccessorId] = task;
+					}
+				}
 				return;
 			}
 		}

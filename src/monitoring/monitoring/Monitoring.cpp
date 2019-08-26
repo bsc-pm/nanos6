@@ -135,7 +135,7 @@ bool Monitoring::isEnabled()
 void Monitoring::taskCreated(Task *task)
 {
 	assert(task != nullptr);
-	if (_enabled && !task->isTaskloop()) {
+	if (_enabled && !task->isTaskfor()) {
 		// Retrieve information about the task
 		TaskStatistics  *parentStatistics  = (task->getParent() != nullptr ? task->getParent()->getTaskStatistics() : nullptr);
 		TaskPredictions *parentPredictions = (task->getParent() != nullptr ? task->getParent()->getTaskPredictions() : nullptr);
@@ -156,7 +156,7 @@ void Monitoring::taskCreated(Task *task)
 void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatus)
 {
 	assert(task != nullptr);
-	if (_enabled && !task->isTaskloop()) {
+	if (_enabled && !task->isTaskfor()) {
 		// Start timing for the appropriate stopwatch
 		const monitoring_task_status_t oldStatus = TaskMonitor::startTiming(task->getTaskStatistics(), newStatus);
 		
@@ -171,7 +171,7 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 void Monitoring::taskCompletedUserCode(Task *task)
 {
 	assert(task != nullptr);
-	if (_enabled && !task->isTaskloop()) {
+	if (_enabled && !task->isTaskfor()) {
 		// Account the task's elapsed execution time in predictions
 		WorkloadPredictor::taskCompletedUserCode(task->getTaskStatistics(), task->getTaskPredictions());
 	}
@@ -180,7 +180,7 @@ void Monitoring::taskCompletedUserCode(Task *task)
 void Monitoring::taskFinished(Task *task)
 {
 	assert(task != nullptr);
-	if (_enabled && !task->isTaskloop()) {
+	if (_enabled && !task->isTaskfor()) {
 		// Number of ancestors updated by this task in TaskMonitor
 		int ancestorsUpdated = 0;
 		

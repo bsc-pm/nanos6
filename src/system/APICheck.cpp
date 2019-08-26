@@ -4,9 +4,9 @@
 	Copyright (C) 2018-2019 Barcelona Supercomputing Center (BSC)
 */
 
-#include <nanos6/api-check.h>
-
 #include <string.h>
+
+#include <nanos6/api-check.h>
 
 
 namespace APICheck {

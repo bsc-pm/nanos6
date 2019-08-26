@@ -15,8 +15,8 @@
 
 #include "CPU.hpp"
 #include "hardware/places/ComputePlace.hpp"
-#include "lowlevel/SpinLock.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "lowlevel/SpinLock.hpp"
 
 
 class CPUManager {
@@ -38,7 +38,12 @@ private:
 	
 	static SpinLock _idleCPUsLock;
 	
+	//! \brief Number of different groups that can collaborate to execute a single taskfor
+	static EnvironmentVariable<size_t> _taskforGroups;
+	
 	static void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
+
+	static size_t getClosestGroupNumber(size_t numCPUs, size_t numGroups);
 	
 public:
 	static void preinitialize();
@@ -71,6 +76,12 @@ public:
 	
 	//! \brief mark a CPU as not being idle (if possible)
 	static bool unidleCPU(CPU *cpu);
+	
+	//! \brief Get number of taskfor groups.
+	static size_t getNumTaskforGroups();
+	
+	//! \brief Get number of CPUs that can collaborate to execute a single taskfor. i.e. number of CPUs per taskfor group.
+	static size_t getNumCPUsPerTaskforGroup();
 };
 
 
@@ -99,5 +110,30 @@ inline std::vector<CPU *> const &CPUManager::getCPUListReference()
 	return _cpus;
 }
 
+inline size_t CPUManager::getNumTaskforGroups()
+{
+	return _taskforGroups;
+}
 
+inline size_t CPUManager::getClosestGroupNumber(size_t numCPUs, size_t numGroups)
+{
+	size_t result = 0;
+	size_t greater = numGroups+1;
+	size_t lower = numGroups-1;
+	while (true) {
+		if (lower > 0 && numCPUs % lower == 0) {
+			result = lower;
+			break;
+		}
+		if (greater <= numCPUs && numCPUs % greater == 0) {
+			result = greater;
+			break;
+		}
+		lower--;
+		greater++;
+	}
+	assert(result != 0);
+	assert(result > 0 && result <= numCPUs);
+	return result;
+}
 #endif // CPU_MANAGER_HPP

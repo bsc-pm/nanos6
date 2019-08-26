@@ -61,11 +61,46 @@ inline Task::~Task()
 	}
 }
 
+inline void Task::reinitialize(
+	void *argsBlock,
+	size_t argsBlockSize,
+	nanos6_task_info_t *taskInfo,
+	nanos6_task_invocation_info_t *taskInvokationInfo,
+	Task *parent,
+	Instrument::task_id_t instrumentationTaskId,
+	size_t flags
+)
+{
+	_argsBlock = argsBlock;
+	_argsBlockSize = argsBlockSize;
+	_taskInfo = taskInfo;
+	_taskInvokationInfo = taskInvokationInfo;
+	_countdownToBeWokenUp = 1;
+	_parent = parent;
+	_priority = 0;
+	_thread = nullptr;
+	_flags = flags;
+	_predecessorCount = 0;
+	_instrumentationTaskId = instrumentationTaskId;
+	_schedulerInfo = nullptr;
+	_computePlace = nullptr;
+	_memoryPlace = nullptr;
+	_countdownToRelease = 1;
+	_workflow = nullptr;
+	_executionStep = nullptr;
+	_clusterContext = nullptr;
+	_parentSpawnCallback = nullptr;
+	
+	if (parent != nullptr) {
+		parent->addChild(this);
+	}
+}
+
 inline bool Task::markAsFinished(ComputePlace *computePlace)
 {
 	CPUDependencyData hpDependencyData;
 	
-	// Non-runnable taskloops should avoid these checks
+	// Non-runnable taskfors should avoid these checks
 	if (isRunnable()) {
 		if (getDeviceType() == nanos6_device_t::nanos6_host_device) {
 			// Not true anymore. A task might have been offloaded
