@@ -33,7 +33,7 @@ AC_DEFUN([AC_CHECK_PQOS],
 			)
 		fi
 		
-		if test x"${ac_use_pqos}" = x"" ; then
+		if test x"${ac_use_pqos}" != x"" ; then
 			ac_save_CPPFLAGS="${CPPFLAGS}"
 			ac_save_LIBS="${LIBS}"
 			
