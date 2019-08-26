@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #	
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 AC_DEFUN([AC_CHECK_PAPI],
 	[
@@ -33,7 +33,7 @@ AC_DEFUN([AC_CHECK_PAPI],
 			)
 		fi
 		
-		if test x"${ac_use_papi}" = x"" ; then
+		if test x"${ac_use_papi}" != x"" ; then
 			ac_save_CPPFLAGS="${CPPFLAGS}"
 			ac_save_LIBS="${LIBS}"
 			
