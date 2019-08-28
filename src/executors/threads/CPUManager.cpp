@@ -10,6 +10,7 @@
 #include <sstream>
 
 #include "CPU.hpp"
+#include "CPUActivation.hpp"
 #include "CPUManager.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
@@ -165,6 +166,16 @@ void CPUManager::initialize()
 	_finishedCPUInitialization = true;
 }
 
+void CPUManager::shutdown()
+{
+	// Notify all CPUs that the runtime is shutting down
+	for (size_t virtualCPUId = 0; virtualCPUId < _cpus.size(); ++virtualCPUId) {
+		if (_cpus[virtualCPUId] != nullptr) {
+			CPUActivation::shutdownCPU(_cpus[virtualCPUId]);
+		}
+	}
+}
+
 void CPUManager::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
 {
 	boost::dynamic_bitset<> processCPUMask(numSystemCPUs);
@@ -192,12 +203,25 @@ void CPUManager::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
 	}
 }
 
-void CPUManager::cpuBecomesIdle(CPU *cpu)
+bool CPUManager::cpuBecomesIdle(CPU *cpu)
 {
 	const int index = cpu->getIndex();
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	_idleCPUsLock.lock();
 	_idleCPUs[index] = true;
 	Monitoring::cpuBecomesIdle(index);
+	_idleCPUsLock.unlock();
+	
+	// If the CPU status had changed to shutting down right before idling
+	// it, revert this operation so that this CPU can participate in the
+	// shutdown mechanism (leading to a faster shutdown)
+	if (cpu->getActivationStatus() == CPU::shutting_down_status) {
+		// The unidling should be done correctly
+		__attribute__((unused)) bool unidled = unidleCPU(cpu);
+		assert(unidled);
+		return false;
+	} else {
+		return true;
+	}
 }
 
 CPU *CPUManager::getIdleCPU()

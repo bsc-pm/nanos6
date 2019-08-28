@@ -50,6 +50,9 @@ public:
 	
 	static void initialize();
 	
+	//! \brief Notify all available CPUs that the runtime is shutting down
+	static void shutdown();
+	
 	//! \brief get the CPU object assigned to a given numerical system CPU identifier
 	static inline CPU *getCPU(size_t systemCPUId);
 	
@@ -62,8 +65,9 @@ public:
 	//! \brief get a reference to the list of CPUs
 	static inline std::vector<CPU *> const &getCPUListReference();
 	
-	//! \brief mark a CPU as idle
-	static void cpuBecomesIdle(CPU *cpu);
+	//! \brief Mark a CPU as idle
+	//! \return Whether the operation was successful
+	static bool cpuBecomesIdle(CPU *cpu);
 	
 	//! \brief get an idle CPU
 	static CPU *getIdleCPU();

@@ -65,9 +65,9 @@ void WorkerThread::body()
 	
 	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId);
 	
-	while (!ThreadManager::mustExit()) {
-		CPUActivation::activationCheck(this);
-		
+	// The WorkerThread will iterate until its CPU status signals that there is
+	// an ongoing shutdown and thus the thread must stop executing
+	while (CPUActivation::checkCPUStatusTransitions(this) != CPU::shutting_down_status) {
 		// Update the CPU since the thread may have migrated
 		cpu = getComputePlace();
 		assert(cpu != nullptr);
@@ -107,7 +107,10 @@ void WorkerThread::body()
 			PollingAPI::handleServices();
 		}
 	}
-
+	
+	// The thread should not have any task assigned at this point
+	assert(_task == nullptr);
+	
 	Instrument::threadWillShutdown();
 	
 	Monitoring::shutdownThread();

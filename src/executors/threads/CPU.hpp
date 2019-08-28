@@ -41,7 +41,8 @@ public:
 		enabled_status,
 		enabling_status,
 		disabling_status,
-		disabled_status
+		disabled_status,
+		shutting_down_status
 	} activation_status_t;
 	
 #ifdef __KNC__
