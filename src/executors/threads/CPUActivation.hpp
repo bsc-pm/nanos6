@@ -149,13 +149,9 @@ public:
 					}
 					break;
 				case CPU::disabled_status:
-					if (!currentThread->hasPendingShutdown()) {
-						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-						ThreadManager::addIdler(currentThread);
-						currentThread->switchTo(nullptr);
-					} else {
-						successful = true;
-					}
+					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+					ThreadManager::addIdler(currentThread);
+					currentThread->switchTo(nullptr);
 					break;
 			}
 		}
