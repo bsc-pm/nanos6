@@ -72,8 +72,6 @@ nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 		//TODO: FIXME: IS THIS CORRECT? Just introduced to fix a compilation warning.
 		case CPU::uninitialized_status:
 			return nanos6_disabled_cpu; 
-		case CPU::starting_status:
-			return nanos6_starting_cpu;
 		case CPU::enabling_status:
 			return nanos6_enabling_cpu;
 		case CPU::enabled_status:

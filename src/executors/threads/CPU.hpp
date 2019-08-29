@@ -37,7 +37,6 @@ public:
 	
 	typedef enum {
 		uninitialized_status=0,
-		starting_status,
 		enabled_status,
 		enabling_status,
 		disabling_status,
@@ -82,13 +81,13 @@ public:
 	inline bool initializeIfNeeded()
 	{
 		activation_status_t expectedStatus = uninitialized_status;
-		bool worked = _activationStatus.compare_exchange_strong(expectedStatus, starting_status);
+		bool worked = _activationStatus.compare_exchange_strong(expectedStatus, enabling_status);
 		
 		if (worked) {
 			_threadingModelData.initialize(this);
 			_instrumentationId = Instrument::createdCPU(_index, _NUMANodeId);
 		} else {
-			assert(_activationStatus != starting_status);
+			assert(_activationStatus != enabling_status);
 		}
 		
 		return worked;
