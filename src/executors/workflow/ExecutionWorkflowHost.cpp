@@ -9,6 +9,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
+#include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
 #include <DataAccessRegistration.hpp>
