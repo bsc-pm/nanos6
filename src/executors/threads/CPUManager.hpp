@@ -15,6 +15,7 @@
 
 #include "CPU.hpp"
 #include "CPUManager.hpp"
+#include "CPUManagerPolicyInterface.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
@@ -23,11 +24,6 @@
 
 #include <InstrumentComputePlaceManagement.hpp>
 
-
-enum CPUManagerPolicyHint {
-	IDLE_CANDIDATE,
-	ADDED_TASKS
-};
 
 class CPUManager {
 private:
@@ -54,8 +50,11 @@ private:
 	//! The current number of idle CPUs, kept atomic through idleCPUsLock
 	static size_t _numIdleCPUs;
 	
+	//! The policy used to manage CPUs
+	static CPUManagerPolicyInterface *_cpuManagerPolicy;
+	
 	static void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
-
+	
 	static size_t getClosestGroupNumber(size_t numCPUs, size_t numGroups);
 	
 public:
@@ -64,7 +63,10 @@ public:
 	static void initialize();
 	
 	//! \brief Notify all available CPUs that the runtime is shutting down
-	static void shutdown();
+	static void shutdownPhase1();
+	
+	//! \brief Complete the shutdown of the CPUManager
+	static void shutdownPhase2();
 	
 	//! \brief get the CPU object assigned to a given numerical system CPU identifier
 	static inline CPU *getCPU(size_t systemCPUId);
@@ -109,12 +111,12 @@ public:
 	static size_t getNumCPUsPerTaskforGroup();
 	
 	//! \brief Taking into account the current workload and the amount of
-	//! active or idle CPUs, reconsider idling/waking up CPUs
+	//! active or idle CPUs, consider idling/waking up CPUs
 	//!
 	//! \param[in] cpu The CPU that triggered the call, if any
 	//! \param[in] hint A hint what kind of change triggered this call
-	//! \param[in] numTasks If the change (hint) was related to creating tasks,
-	//! this parameter contains the amount of tasks that were added
+	//! \param[in] numTasks A hint to be used by the policy taking actions,
+	//! which contains information about what triggered a call to the policy
 	static void executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks = 0);
 };
 

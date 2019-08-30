@@ -699,6 +699,8 @@ noinst_HEADERS = \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.hpp \
+	src/executors/threads/CPUManagerPolicyInterface.hpp \
+	src/executors/threads/NaiveCPUManagerPolicy.hpp \
 	src/executors/threads/TaskFinalization.hpp \
 	src/executors/threads/TaskFinalizationImplementation.hpp \
 	src/executors/threads/ThreadManager.hpp \

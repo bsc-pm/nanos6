@@ -6,12 +6,14 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <cassert>
+#include <config.h>
 #include <sched.h>
 #include <sstream>
 
 #include "CPU.hpp"
 #include "CPUActivation.hpp"
 #include "CPUManager.hpp"
+#include "NaiveCPUManagerPolicy.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
@@ -28,6 +30,7 @@ std::vector<boost::dynamic_bitset<>> CPUManager::_NUMANodeMask;
 std::vector<size_t> CPUManager::_systemToVirtualCPUId;
 EnvironmentVariable<size_t> CPUManager::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
 size_t CPUManager::_numIdleCPUs;
+CPUManagerPolicyInterface *CPUManager::_cpuManagerPolicy;
 
 
 namespace cpumanager_internals {
@@ -72,6 +75,9 @@ size_t CPUManager::getNumCPUsPerTaskforGroup()
 void CPUManager::preinitialize()
 {
 	_finishedCPUInitialization = false;
+	
+	assert(_cpuManagerPolicy == nullptr);
+	_cpuManagerPolicy = new NaiveCPUManagerPolicy();
 	
 	cpu_set_t processCPUMask;
 	int rc = sched_getaffinity(0, sizeof(cpu_set_t), &processCPUMask);
@@ -168,7 +174,7 @@ void CPUManager::initialize()
 	_finishedCPUInitialization = true;
 }
 
-void CPUManager::shutdown()
+void CPUManager::shutdownPhase1()
 {
 	// Notify all CPUs that the runtime is shutting down
 	for (size_t virtualCPUId = 0; virtualCPUId < _cpus.size(); ++virtualCPUId) {
@@ -176,6 +182,11 @@ void CPUManager::shutdown()
 			CPUActivation::shutdownCPU(_cpus[virtualCPUId]);
 		}
 	}
+}
+
+void CPUManager::shutdownPhase2()
+{
+	delete _cpuManagerPolicy;
 }
 
 void CPUManager::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
@@ -327,36 +338,6 @@ bool CPUManager::unidleCPU(CPU *cpu)
 
 void CPUManager::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)
 {
-	if (hint == IDLE_CANDIDATE) {
-		assert(cpu != nullptr);
-		
-		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		assert(currentThread != nullptr);
-		
-		// Account this CPU as idle and mark the thread as idle
-		Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-		bool cpuIsIdle = cpuBecomesIdle((CPU *) cpu);
-		if (cpuIsIdle) {
-			ThreadManager::addIdler(currentThread);
-			currentThread->switchTo(nullptr);
-		
-			// The thread may have migrated, update the compute place
-			cpu = currentThread->getComputePlace();
-			assert(cpu != nullptr);
-		}
-		Instrument::resumedComputePlace(cpu->getInstrumentationId());
-	} else { // hint = ADDED_TASKS
-		// At most we will obtain as many idle CPUs as the maximum amount
-		size_t numCPUsToObtain = std::min(_cpus.size(), numTasks);
-		std::vector<CPU *> idleCPUs(numCPUsToObtain, nullptr);
-		
-		// Try to get as many idle CPUs as we need
-		size_t numCPUsObtained = getIdleCPUs(idleCPUs, numCPUsToObtain);
-		
-		// Resume an idle thread for every idle CPU that has awakened
-		for (size_t i = 0; i < numCPUsObtained; ++i) {
-			assert(idleCPUs[i] != nullptr);
-			ThreadManager::resumeIdle(idleCPUs[i]);
-		}
-	}
+	assert(_cpuManagerPolicy != nullptr);
+	_cpuManagerPolicy->executePolicy(cpu, hint, numTasks);
 }
