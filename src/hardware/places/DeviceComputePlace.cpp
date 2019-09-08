@@ -89,8 +89,10 @@ void DeviceComputePlace::runTask(Task *task)
 	task->setMemoryPlace((MemoryPlace *) _memoryPlace);
 	_functions->setDevice(_index);
 	void *extraData = _functions->generateDeviceExtra(task, _deviceHandler);
-	nanos6_address_translation_entry_t translates[0];
-	task->body(extraData, translates);
+	// nanos6_address_translation_entry_t translates[0];
+	// TODO: Do not pass an empty translation table since Mercurium
+	// uses it to translate data addresses if it is not null
+	task->body(extraData);
 	_functions->postBodyDevice(task, extraData);
 }
 
