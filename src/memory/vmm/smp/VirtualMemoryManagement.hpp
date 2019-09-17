@@ -10,6 +10,7 @@
 #include "lowlevel/PaddedSpinLock.hpp"
 #include "memory/vmm/VirtualMemoryAllocation.hpp"
 #include "memory/vmm/VirtualMemoryArea.hpp"
+#include "DataAccessRegion.hpp"
 
 #include <vector>
 #include <stdlib.h>

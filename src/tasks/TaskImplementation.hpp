@@ -14,14 +14,17 @@
 #include "StreamExecutor.hpp"
 #include "Task.hpp"
 
-#ifdef DISCRETE_SIMPLE_DEPS
-#include <TaskDataAccesses.hpp>
-#else
-#include <TaskDataAccessesImplementation.hpp>
-#endif
 
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
+
+#ifdef DISCRETE_SIMPLE_DEPS
+#include <TaskDataAccesses.hpp>
+#define __nondiscrete_unused
+#else
+#include <TaskDataAccessesImplementation.hpp>
+#define __nondiscrete_unused __attribute__((unused))
+#endif
 
 #include <cstring>
 
@@ -33,9 +36,9 @@ inline Task::Task(
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags,
-    void * seqs,
-    void * addresses,
-	size_t num_deps
+    __nondiscrete_unused void * seqs,
+    __nondiscrete_unused void * addresses,
+	__nondiscrete_unused size_t num_deps
 )
 	: _argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
@@ -46,9 +49,9 @@ inline Task::Task(
 	_priority(0),
 	_thread(nullptr),
 #ifdef DISCRETE_SIMPLE_DEPS
-	_dataAccesses(seqs, addresses, taskInfo != nullptr && taskInfo->implementations[0].task_label != nullptr ? strcmp(taskInfo->implementations[0].task_label, "main") == 0 : false, num_deps),
+	_dataAccesses(seqs, addresses, (taskInfo != nullptr && taskInfo->implementations[0].task_label != nullptr ? strcmp(taskInfo->implementations[0].task_label, "main") == 0 : false), num_deps),
 #else
-	_dataAccesses(/*seqs, addresses, taskInfo != nullptr && taskInfo->implementations[0].task_label != nullptr ? strcmp(taskInfo->implementations[0].task_label, "main") == 0 : false*/),
+	_dataAccesses(),
 #endif
 	_flags(flags),
 	_predecessorCount(0),
@@ -57,6 +60,7 @@ inline Task::Task(
 	_computePlace(nullptr),
 	_memoryPlace(nullptr),
 	_countdownToRelease(1),
+	_num_deps(num_deps),
 	_workflow(nullptr),
 	_executionStep(nullptr),
 	_taskStatistics(),

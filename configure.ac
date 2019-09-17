@@ -118,59 +118,6 @@ SELECT_NANOS6_INSTRUMENTATION_VARIANTS
 # Check for gethostid
 AC_CHECK_FUNCS([gethostid])
 
-# Dependency engine to use
-
-# AC_MSG_CHECKING([if linear fragmented dependencies should be included])
-# AC_ARG_ENABLE(
-# 	[linear-fragmented-deps],
-# 	[AS_HELP_STRING([--enable-linear-fragmented-deps], [enable linear fragmented dependencies])],
-# 	[
-# 		case "${enableval}" in
-# 		yes)
-# 			ac_linear_fragmented_deps=yes
-# 			;;
-# 		no)
-# 			ac_linear_fragmented_deps=no
-# 			;;
-# 		*)
-# 			AC_MSG_ERROR([bad value ${enableval} for --enable-linear-fragmented-deps])
-# 			;;
-# 		esac
-# 	],
-# 	[ac_linear_fragmented_deps=yes]
-# )
-
-ac_linear_fragmented_deps=yes
-
-AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test x"${ac_linear_fragmented_deps}" = x"yes"])
-
-AC_MSG_CHECKING([if discrete simple dependencies should be included])
-AC_ARG_ENABLE(
-	[discrete-simple-deps],
-	[AS_HELP_STRING([--enable-discrete-simple-deps], [enable discrete simple dependencies])],
-	[
-		case "${enableval}" in
-		yes)
-			ac_discrete_simple_deps=yes
-			;;
-		no)
-			ac_discrete_simple_deps=no
-			;;
-		*)
-			AC_MSG_ERROR([bad value ${enableval} for --enable-discrete-simple-deps])
-			;;
-		esac
-	],
-	[ac_discrete_simple_deps=yes]
-)
-
-AM_CONDITIONAL([DISCRETE_SIMPLE_DEPENDENCIES], [test x"${ac_discrete_simple_deps}" = x"yes"])
-
-AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [1])
-AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [1])
-AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [1])
-
-
 AC_ARG_ENABLE(
 	[dependency-delayed-operations],
 	[AS_HELP_STRING([--disable-dependency-delayed-operations], [do not delay dependency update operations])],
@@ -338,6 +285,45 @@ AM_CONDITIONAL([USE_EXEC_WORKFLOW], [test x"${ac_use_workflow}" = x"yes"])
 if test x"${ac_use_workflow}" = x"yes" ; then
 	AC_DEFINE([USE_EXEC_WORKFLOW], [1], [Define if Execution Workflow feature is enabled.])
 fi
+
+# Dependency engine to use
+
+# Always include linear-fragmented
+ac_linear_fragmented_deps=yes
+
+AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test x"${ac_linear_fragmented_deps}" = x"yes"])
+
+AC_MSG_CHECKING([if discrete simple dependencies should be included])
+AC_ARG_ENABLE(
+	[discrete-simple-deps],
+	[AS_HELP_STRING([--enable-discrete-simple-deps], [Enable discrete-simple dependency engine. This will be automatically disabled 
+	if cluster support is enabled, as it is incompatible.])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_discrete_simple_deps=yes
+			;;
+		no)
+			ac_discrete_simple_deps=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-discrete-simple-deps])
+			;;
+		esac
+	],
+	[ac_discrete_simple_deps=yes]
+)
+
+if test x"${ac_use_cluster}" = x"yes" ; then
+	ac_discrete_simple_deps=no
+	AC_MSG_WARN([Cluster enabled, disabling discrete-simple dependency engine])
+fi
+
+AM_CONDITIONAL([DISCRETE_SIMPLE_DEPENDENCIES], [test x"${ac_discrete_simple_deps}" = x"yes"])
+
+AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [1])
+AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [1])
+AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [1])
 
 AC_ARG_ENABLE(
 	[monitoring],

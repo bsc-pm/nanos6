@@ -11,23 +11,18 @@
 #include <cassert>
 #include <mutex>
 #include <unordered_map>
+#include <array>
 
-#include "DataAccessSequence.hpp"
-#include "lowlevel/PaddedTicketSpinLock.hpp"
+#include "lowlevel/TicketSpinLock.hpp"
+#include "BottomMapEntry.hpp"
 #include <MemoryAllocator.hpp>
 
 struct DataAccess;
 
-#define TASK_DEPS_VECTOR_CUTOFF 8
-
 struct TaskDataAccesses {
-	typedef PaddedTicketSpinLock<int, 128> spinlock_t;
-	
-	typedef std::unordered_map<void *, DataAccessSequence *> addresses_map_t;
-	typedef std::vector<std::pair<void *, DataAccessSequence *> > addresses_vec_t;
-	//typedef std::deque<void *> address_list_t;
-	typedef std::vector<void *> address_list_t;
-	
+	typedef TicketSpinLock<int> spinlock_t;
+	typedef std::unordered_map<void *, BottomMapEntry> bottom_map_t;
+
 #ifndef NDEBUG
 	enum flag_bits {
 		HAS_BEEN_DELETED_BIT=0,
@@ -35,138 +30,106 @@ struct TaskDataAccesses {
 	};
 	typedef std::bitset<TOTAL_FLAG_BITS> flags_t;
 #endif
-
 	spinlock_t _lock;
-	addresses_map_t *_dataAccessSequencesMap;
-	addresses_vec_t *_dataAccessSequencesVec;
-	address_list_t *_accessAddresses;
-    bool _map;
-    bool _vecToMap;
+	//! This will handle the dependencies of nested tasks.
+	bottom_map_t _accessMap;
+	DataAccess * _accessArray;
+	void ** _addressArray;
+
+	bool _isMain;
+	size_t _num_deps;
+	size_t currentIndex;
+
+	std::atomic<int> _deletableCount;
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
-	size_t _num_deps;
-	
+
+
 	TaskDataAccesses()
 		: _lock(),
-		_dataAccessSequencesMap(nullptr),
-		_dataAccessSequencesVec(nullptr),
-		_accessAddresses(nullptr),
-        _map(false), _vecToMap(false), _num_deps(0)
+		_accessMap(),
+		_accessArray(nullptr),
+		_addressArray(nullptr),
+		_isMain(false),
+		_num_deps(0),
+		currentIndex(0),
+		_deletableCount(0)
 #ifndef NDEBUG
 		, _flags()
 #endif
 	{
 	}
 
-	TaskDataAccesses(void * seqs, void * addresses, bool main, size_t num_deps)
+	TaskDataAccesses(void *accessArray , void *addressArray, bool isMain, size_t num_deps)
 		: _lock(),
-		_dataAccessSequencesMap(nullptr),
-		_dataAccessSequencesVec(nullptr),
-		_accessAddresses((address_list_t *)addresses),
-        _map(false), _vecToMap(false), _num_deps(num_deps)
+		_accessMap(),
+		_accessArray((DataAccess *) accessArray),
+		_addressArray((void **) addressArray),
+		_isMain(isMain),
+		_num_deps(num_deps), currentIndex(0), _deletableCount(0)
 #ifndef NDEBUG
 		, _flags()
 #endif
 	{
-
-        if(_map)
-            _dataAccessSequencesMap = (addresses_map_t *)seqs;
-        else {
-            _dataAccessSequencesVec = (addresses_vec_t *)seqs;
-            if(seqs != nullptr)
-                _dataAccessSequencesVec->clear();
-        }
-        // We use num_deps to prevent further allocations
-        if(addresses != nullptr)
-            _accessAddresses->reserve(_num_deps);
 	}
-	
+
 	~TaskDataAccesses()
 	{
 		// We take the lock since the task may be marked for deletion while the lock is held
 		std::lock_guard<spinlock_t> guard(_lock);
 		assert(!hasBeenDeleted());
-		
-        if(_dataAccessSequencesMap != nullptr)
-            _dataAccessSequencesMap->clear();
-        if(_dataAccessSequencesVec != nullptr)
-            _dataAccessSequencesVec->clear();
-        if(_accessAddresses != nullptr)
-            _accessAddresses->clear();
 
-        destroySequences();
+		_accessMap.clear();
 
 #ifndef NDEBUG
 		hasBeenDeleted() = true;
 #endif
 	}
-	
+
 	TaskDataAccesses(TaskDataAccesses const &other) = delete;
-	
+
 	inline bool hasDataAccesses() const
 	{
-        if(_accessAddresses)
-            return (!_accessAddresses->empty());
-        return false;
+		return (_num_deps > 0);
 	}
-	
+
 #ifndef NDEBUG
 	bool hasBeenDeleted() const
 	{
 		return _flags[HAS_BEEN_DELETED_BIT];
 	}
-	
+
 	flags_t::reference hasBeenDeleted()
 	{
 		return _flags[HAS_BEEN_DELETED_BIT];
 	}
 #endif
 
-    inline void destroySequences() 
-    {
-        if(_dataAccessSequencesMap == nullptr && _dataAccessSequencesVec == nullptr)
-            return;
+	inline bool decreaseDeletableCount() {
+		/* We don't care about ordering, only atomicity, and that only one gets 0 as an answer */
+		int res = (_deletableCount.fetch_sub(1, std::memory_order_relaxed) - 1);
+		assert(res >= 0);
+		return (res == 0);
 
-        if(_dataAccessSequencesMap != nullptr) 
-		    for (addresses_map_t::iterator it = _dataAccessSequencesMap->begin(); it != _dataAccessSequencesMap->end(); ++it) {
-		    	DataAccessSequence *sequence = it->second;
-		    	assert(sequence != nullptr);
-                sequence->_lock.lock();
-                bool destroy = sequence->decrementRemaining() == 0;
-                if(destroy) {
-		    	    assert(sequence->empty());
-		    	    MemoryAllocator::deleteObject<DataAccessSequence>(sequence);
-                }
-		    }
-        else
-		    for (addresses_vec_t::iterator it = _dataAccessSequencesVec->begin(); it != _dataAccessSequencesVec->end(); ++it) {
-		    	DataAccessSequence *sequence = it->second;
-		    	assert(sequence != nullptr);
-                sequence->_lock.lock();
-                bool destroy = sequence->decrementRemaining() == 0;
-                if(destroy) {
-		    	    assert(sequence->empty());
-		    	    
-		    	    MemoryAllocator::deleteObject<DataAccessSequence>(sequence);
-                }
-		    }
+	}
 
-        if(_vecToMap) {
-            assert(_map && _dataAccessSequencesMap != nullptr);
-            MemoryAllocator::deleteObject<addresses_map_t>(_dataAccessSequencesMap);
-        }
+	inline void increaseDeletableCount() {
+		_deletableCount.fetch_add(1, std::memory_order_relaxed);
+	}
 
-    }
+	inline DataAccess * findAccess(void * address) {
+		for(size_t i = 0; i < currentIndex; ++i) {
+			if(_addressArray[i] == address)
+				return &_accessArray[i];
+		}
 
-    inline void vecToMap() 
-    {
-        assert(!_map && _dataAccessSequencesMap == nullptr && _dataAccessSequencesVec != nullptr);
-        _dataAccessSequencesMap = MemoryAllocator::newObject<addresses_map_t>(_dataAccessSequencesVec->begin(), _dataAccessSequencesVec->end()); 
-        _dataAccessSequencesVec = nullptr;
-        _map = true;
-        assert(_map && _dataAccessSequencesMap != nullptr);
-    }
+		return nullptr;
+	}
+
+	inline size_t getRealAccessNumber() {
+		return currentIndex;
+	}
 };
 
 #endif // TASK_DATA_ACCESSES_HPP

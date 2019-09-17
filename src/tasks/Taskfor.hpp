@@ -32,7 +32,7 @@ public:
 		bool precreated = false,
 		bool runnable = false
 	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags),
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
 		_taskforInfo(precreated)
 	{
 		assert(!runnable);

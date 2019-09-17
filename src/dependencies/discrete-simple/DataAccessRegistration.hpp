@@ -7,11 +7,15 @@
 #ifndef DATA_ACCESS_REGISTRATION_HPP
 #define DATA_ACCESS_REGISTRATION_HPP
 
+#include "DataAccess.hpp"
 #include "../DataAccessType.hpp"
 #include "CPUDependencyData.hpp"
+#include "ReductionSpecific.hpp"
+#include <stddef.h>
 
 class ComputePlace;
 class Task;
+struct TaskDataAccesses;
 
 
 namespace DataAccessRegistration {
@@ -19,8 +23,15 @@ namespace DataAccessRegistration {
 	//! 
 	//! \param[in,out] task the task that performs the access
 	//! \param[in] accessType the type of access
+	//! \param[in] weak whether access is weak or strong
 	//! \param[in] address the starting address of the access
-	void registerTaskDataAccess(Task *task, DataAccessType accessType, void *address);
+	//! \param[in] the length of the access 
+	//! \param[in] reductionTypeAndOperatorIndex an index that identifies the type and the operation of the reduction
+	//! \param[in] reductionIndex an index that identifies the reduction within the task
+
+	void registerTaskDataAccess(
+			Task *task, DataAccessType accessType, bool weak, void *address, size_t length, 
+			reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex); 
 	
 	//! \brief Performs the task dependency registration procedure
 	//! 
@@ -29,14 +40,47 @@ namespace DataAccessRegistration {
 	//! \returns true if the task is already ready
 	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData);
 	
-	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData);
+	void unregisterTaskDataAccesses(
+		Task *task,
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData,
+		MemoryPlace *location = nullptr,
+		bool fromBusyThread = false
+	);
 	
 	void handleEnterBlocking(Task *task);
 	void handleExitBlocking(Task *task);
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	void handleExitTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	void handleTaskRemoval(Task *task, ComputePlace *computePlace);
-    void insertAccesses(Task * task);
+	void insertAccesses(Task * task, CPUDependencyData &hpDependencyData);
+	ReductionInfo * allocateReductionInfo(
+			DataAccessType &dataAccessType, reduction_index_t reductionIndex, reduction_type_and_operator_index_t reductionTypeAndOpIndex, 
+			void * address, const size_t length, const Task &task);
+
+	void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
+							   CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators);
+
+	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
+									CPUDependencyData &hpDependencyData);
+
+	void completeCombineAndDeallocateReduction(ReductionInfo *info);
+
+	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
+							 TaskDataAccesses &parentAccessStruct, Task *successor);
+	void
+	decreaseDeletableCountOrDelete(Task *originator,
+								   CPUDependencyData::deletable_originator_list_t &deletableOriginators);
+
+	void combineTaskReductions(Task *task, ComputePlace *computePlace);
+	
+	void releaseTaskwaitFragment(Task *task,
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData
+	);
+
+	template <typename ProcessorType>
+	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
 }
 
 

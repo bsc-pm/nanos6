@@ -11,9 +11,10 @@
 
 #include <mutex>
 #include <vector>
+#include <cassert>
 
 #include "ExternalThread.hpp"
-
+#include "lowlevel/PaddedTicketSpinLock.hpp"
 
 class ExternalThreadGroup {
 private:

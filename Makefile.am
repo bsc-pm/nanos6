@@ -99,14 +99,11 @@ lib_LTLIBRARIES += \
 	libnanos6-optimized-discrete-simple.la \
 	libnanos6-debug-discrete-simple.la \
 	libnanos6-extrae-discrete-simple.la \
-	libnanos6-graph-discrete-simple.la \
-	libnanos6-graph-debug-discrete-simple.la \
 	libnanos6-stats-discrete-simple.la \
 	libnanos6-stats-papi-discrete-simple.la \
 	libnanos6-verbose-discrete-simple.la \
 	libnanos6-verbose-debug-discrete-simple.la
 endif
-
 
 noinst_LIBRARIES = libnanos6-main-wrapper.a libnanos6-library-mode.a
 lib_OBJECTS = nanos6-main-wrapper.o nanos6-library-mode.o
@@ -478,15 +475,18 @@ multidimensional_adaptor_sources = MultidimensionalLintAPI.cpp
 
 discrete_simple_dependency_sources = \
 	src/dependencies/discrete-simple/DataAccessRegistration.cpp \
+	src/dependencies/discrete-simple/ReductionInfo.cpp \
+	src/dependencies/discrete-simple/Reductions.cpp \
 	src/dependencies/discrete-simple/RegisterDependencies.cpp
 
 
 multidimensional_adaptor_sources = MultidimensionalAPIToLinear.cpp
+
 linear_regions_fragmented_dependency_flags = -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
-discrete_simple_dependency_flags = -I$(srcdir)/src/dependencies/discrete-simple -DDISCRETE_SIMPLE_DEPS
+discrete_simple_dependency_flags = -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/discrete-simple -DDISCRETE_SIMPLE_DEPS
 
 default_dependency_sources = $(discrete_simple_dependency_sources)
-default_dependency_flags = $(discrete_simple_dependency_flags)
+common_sources += $(linear_regions_alternative_dependency_sources)
 
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent commutative reduction weak_reduction # + weak_commutative
 
@@ -715,15 +715,13 @@ noinst_HEADERS = \
 	src/dependencies/discrete-simple/BottomMapEntry.hpp \
 	src/dependencies/discrete-simple/CPUDependencyData.hpp \
 	src/dependencies/discrete-simple/DataAccess.hpp \
-	src/dependencies/discrete-simple/DataAccessRegion.hpp \
 	src/dependencies/discrete-simple/DataAccessRegistration.hpp \
-	src/dependencies/discrete-simple/DataAccessSequence.hpp \
-	src/dependencies/discrete-simple/DataAccessSequenceImplementation.hpp \
 	src/dependencies/discrete-simple/Dependencies.hpp \
 	src/dependencies/discrete-simple/DependencyDomain.hpp \
 	src/dependencies/discrete-simple/DependencySystem.hpp \
 	src/dependencies/discrete-simple/MultidimensionalAPI.hpp \
 	src/dependencies/discrete-simple/ReductionInfo.hpp \
+	src/dependencies/discrete-simple/ReductionSpecific.hpp \
 	src/dependencies/discrete-simple/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.hpp \
@@ -1200,8 +1198,8 @@ else
 libnanos6_debug_discrete_simple_la_SOURCES += loader/disabled_variant.c
 endif
 
-libnanos6_graph_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support $(linear_regions_fragmented_dependency_flags)
-libnanos6_graph_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_graph_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
+libnanos6_graph_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
 libnanos6_graph_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags)
 libnanos6_graph_linear_regions_fragmented_la_SOURCES =
 nodist_libnanos6_graph_linear_regions_fragmented_la_SOURCES =
@@ -1215,22 +1213,9 @@ disabled_variants += graph
 libnanos6_graph_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
-libnanos6_graph_discrete_simple_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support $(discrete_simple_dependency_flags)
-libnanos6_graph_discrete_simple_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_graph_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags)
-libnanos6_graph_discrete_simple_la_SOURCES =
-nodist_libnanos6_graph_discrete_simple_la_SOURCES =
-
-if BUILD_GRAPH_INSTRUMENTATION_VARIANT
-libnanos6_graph_discrete_simple_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_simple_dependency_sources)
-nodist_libnanos6_graph_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
-else
-libnanos6_graph_discrete_simple_la_SOURCES += loader/disabled_variant.c
-endif
-
-
 libnanos6_graph_debug_linear_regions_fragmented_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
-libnanos6_graph_debug_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(linear_regions_fragmented_dependency_flags)
+libnanos6_graph_debug_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_graph_debug_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags)
 libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES =
 nodist_libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES =
 
@@ -1246,22 +1231,6 @@ endif
 else
 disabled_variants += graph-debug
 libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
-endif
-
-libnanos6_graph_debug_discrete_simple_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
-libnanos6_graph_debug_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags) $(discrete_simple_dependency_flags)
-libnanos6_graph_debug_discrete_simple_la_SOURCES =
-nodist_libnanos6_graph_debug_discrete_simple_la_SOURCES =
-
-if BUILD_GRAPH_INSTRUMENTATION_VARIANT
-if BUILD_DEBUG_VARIANTS
-libnanos6_graph_debug_discrete_simple_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_debug_sources) $(discrete_simple_dependency_sources)
-nodist_libnanos6_graph_debug_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
-else
-libnanos6_graph_debug_discrete_simple_la_SOURCES += loader/disabled_variant.c
-endif
-else
-libnanos6_graph_debug_discrete_simple_la_SOURCES += loader/disabled_variant.c
 endif
 
 libnanos6_stats_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support

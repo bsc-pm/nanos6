@@ -83,6 +83,22 @@ void nanos6_create_task(
 	} else {
 		taskSize = sizeof(Task);
 	}
+
+#ifdef DISCRETE_SIMPLE_DEPS
+	/*
+	* We use num_deps to create the correctly sized vector for storing the dependencies,
+	* and we can define a cut-off to start using a std::unordered_map instead of a 
+	* vector.
+	*/
+
+    const char * task_label = taskInfo->implementations[0].task_label;
+    bool isMain = task_label != nullptr ? (strcmp(task_label, "main") == 0) : false;
+    size_t seqsSize = sizeof(DataAccess) * num_deps;
+	size_t addrSize = sizeof(void *) * num_deps;
+#else
+    size_t seqsSize = 0;
+	size_t addrSize = 0;
+#endif
 	
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	
@@ -95,41 +111,17 @@ void nanos6_create_task(
 		size_t correction = (DATA_ALIGNMENT_SIZE - missalignment) & (DATA_ALIGNMENT_SIZE - 1);
 		args_block_size += correction;
 
-
-#ifdef DISCRETE_SIMPLE_DEPS
-	/*
-	* We use num_deps to create the correctly sized vector for storing the dependencies,
-	* and we can define a cut-off to start using a std::unordered_map instead of a 
-	* vector.
-	*/
-
-    const char * task_label = taskInfo->implementations[0].task_label;
-    bool usesMap = task_label != nullptr ? (strcmp(task_label, "main") == 0 || (num_deps > TASK_DEPS_VECTOR_CUTOFF)) : false;
-    size_t seqsSize = usesMap ? sizeof(TaskDataAccesses::addresses_map_t) : sizeof(TaskDataAccesses::addresses_vec_t(num_deps));
-    size_t addressesSize = sizeof(TaskDataAccesses::address_list_t);
-#else
-    size_t seqsSize = 0;
-    size_t addressesSize = 0;
-#endif
-		
 		// Allocation and layout
-	*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize + seqsSize + addressesSize);
-		
+		*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize + seqsSize + addrSize);
 		task = (char *)args_block + args_block_size;
 	}
-    void * seqs = (char *)task + taskSize;
-    void * addresses = (char *)seqs + seqsSize; 
-    
-#ifdef DISCRETE_SIMPLE_DEPS
-    if(usesMap)
-        new (seqs) TaskDataAccesses::addresses_map_t();
-    else
-        new (seqs) TaskDataAccesses::addresses_vec_t(num_deps);
-    new (addresses) TaskDataAccesses::address_list_t();
-#endif
 	
+
 	Instrument::createdArgsBlock(taskId, *args_block_pointer, originalArgsBlockSize, args_block_size);
 
+    void * seqs = (char *)task + taskSize;
+	void * addresses = (char *)seqs + seqsSize;
+	
 	if (isTaskfor) {
 		// Taskfor is always final.
 		flags |= nanos6_task_flag_t::nanos6_final_task;
@@ -138,7 +130,7 @@ void nanos6_create_task(
 		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else {
 		// Construct the Task object
-		new (task) Task(args_block, originalArgsBlockSize, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, seqs, addresses, num_deps);
+		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, seqs, addresses, num_deps);
 	}
 	
 }
@@ -220,6 +212,7 @@ void nanos6_submit_task(void *taskHandle)
 		
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}
+    assert(parent != nullptr || ready);
 	
 	bool isIf0 = task->isIf0();
 	

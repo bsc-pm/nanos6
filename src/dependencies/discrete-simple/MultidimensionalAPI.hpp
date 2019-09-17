@@ -134,23 +134,11 @@ static _AI_ void register_data_access(
 	long currentDimSize, long currentDimStart, long currentDimEnd,
 	TS... otherDimensions
 ) {
-	if (currentDimensionIsContinuous(otherDimensions...)) {
-		register_data_access_skip_next<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, baseAddress,
-			currentDimSize * getCurrentDimensionSize(otherDimensions...),
-			currentDimStart * getCurrentDimensionSize(otherDimensions...),
-			currentDimEnd * getCurrentDimensionSize(otherDimensions...),
-			otherDimensions...
-		);
-	} else {
-		size_t stride = getStride<>(otherDimensions...);
-		char *currentBaseAddress = (char *) baseAddress;
-		currentBaseAddress += currentDimStart * stride;
-		
-		for (long index = currentDimStart; index < currentDimEnd; index++) {
-			register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, currentBaseAddress, otherDimensions...);
-			currentBaseAddress += stride;
-		}
-	}
+	size_t stride = getStride<>(otherDimensions...);
+	char *currentBaseAddress = (char *) baseAddress;
+	currentBaseAddress += currentDimStart * stride;
+
+	register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, currentBaseAddress, otherDimensions...);
 }
 
 
@@ -217,25 +205,14 @@ static _AI_ void register_reduction_access(
 	long currentDimSize, long currentDimStart, long currentDimEnd,
 	TS... otherDimensions
 ) {
-	if (currentDimensionIsContinuous(otherDimensions...)) {
-		register_reduction_access_skip_next<WEAK>(
-			reduction_operation, reduction_index,
-			handler, symbolIndex, regionText, baseAddress,
-			currentDimSize * getCurrentDimensionSize(otherDimensions...),
-			currentDimStart * getCurrentDimensionSize(otherDimensions...),
-			currentDimEnd * getCurrentDimensionSize(otherDimensions...),
-			otherDimensions...
-		);
-	} else {
-		size_t stride = getStride<>(otherDimensions...);
-		char *currentBaseAddress = (char *) baseAddress;
-		currentBaseAddress += currentDimStart * stride;
-		
-		for (long index = currentDimStart; index < currentDimEnd; index++) {
-			register_reduction_access<WEAK>(reduction_operation, reduction_index, handler, symbolIndex, regionText, baseAddress, otherDimensions...);
-			currentBaseAddress += stride;
-		}
-	}
+	register_reduction_access_skip_next<WEAK>(
+		reduction_operation, reduction_index,
+		handler, symbolIndex, regionText, baseAddress,
+		currentDimSize * getCurrentDimensionSize(otherDimensions...),
+		currentDimStart * getCurrentDimensionSize(otherDimensions...),
+		currentDimEnd * getCurrentDimensionSize(otherDimensions...),
+		otherDimensions...
+	);
 }
 
 

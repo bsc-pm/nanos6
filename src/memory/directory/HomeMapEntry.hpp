@@ -10,6 +10,7 @@
 
 #include <boost/intrusive/avl_set.hpp>
 #include <boost/intrusive/avl_set_hook.hpp>
+#include <cassert>
 
 #include "DataAccessRegion.hpp"
 

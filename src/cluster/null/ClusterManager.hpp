@@ -12,6 +12,7 @@
 
 #include <ClusterMemoryNode.hpp>
 #include <ClusterNode.hpp>
+#include "DataAccessRegion.hpp"
 
 class Message;
 class DataTransfer;
@@ -77,14 +78,10 @@ public:
 		return nullptr;
 	}
 	
-	static inline void testMessageCompletion(
-		__attribute__((unused)) std::vector<Message *> &messages
-	) {
+	static inline void testMessageCompletion(__attribute__((unused)) std::vector<Message *> &messages) {
 	}
 	
-	static inline void testDataTransferCompletion(
-		__attribute__((unused)) std::vector<Message *> &transfer
-	) {
+	static inline void testDataTransferCompletion(__attribute__((unused)) std::vector<Message *> &transfer) {
 	}
 	
 	static inline DataTransfer *fetchDataRaw(

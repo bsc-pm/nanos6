@@ -114,11 +114,10 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				}
 				
 #ifdef DISCRETE_SIMPLE_DEPS
-            const char * task_label = task->getTaskInfo()->implementations[0].task_label;
-            bool isMainTask = task_label != nullptr ? strcmp(task_label, "main") == 0 : false;
-            size_t taskDataAccessesSize = isMainTask ? sizeof(TaskDataAccesses::addresses_map_t) : sizeof(TaskDataAccesses::addresses_vec_t(4));
-            taskDataAccessesSize += sizeof(TaskDataAccesses::address_list_t);
-            disposableBlockSize += taskDataAccessesSize;
+			size_t seqsSize = sizeof(DataAccess) * task->getNumDependencies();
+			size_t addrSize = sizeof(void *) * task->getNumDependencies();
+
+            disposableBlockSize += addrSize + seqsSize;
 #endif
 				Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 				
