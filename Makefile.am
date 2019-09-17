@@ -79,26 +79,32 @@ include_HEADERS = \
 
 
 lib_LTLIBRARIES = \
-	libnanos6.la \
-	libnanos6-extrae.la \
-	libnanos6-graph.la \
-	libnanos6-graph-debug.la \
-	libnanos6-lint.la \
-	libnanos6-stats.la \
-	libnanos6-stats-papi.la \
-	libnanos6-verbose.la \
-	libnanos6-verbose-debug.la
+	libnanos6.la
 
 if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
 lib_LTLIBRARIES += \
 	libnanos6-optimized-linear-regions-fragmented.la \
-	libnanos6-debug-linear-regions-fragmented.la
+	libnanos6-debug-linear-regions-fragmented.la \
+	libnanos6-extrae-linear-regions-fragmented.la \
+	libnanos6-graph-linear-regions-fragmented.la \
+	libnanos6-graph-debug-linear-regions-fragmented.la \
+	libnanos6-stats-linear-regions-fragmented.la \
+	libnanos6-stats-papi-linear-regions-fragmented.la \
+	libnanos6-verbose-linear-regions-fragmented.la \
+	libnanos6-verbose-debug-linear-regions-fragmented.la
 endif
 
 if DISCRETE_SIMPLE_DEPENDENCIES
 lib_LTLIBRARIES += \
 	libnanos6-optimized-discrete-simple.la \
-	libnanos6-debug-discrete-simple.la
+	libnanos6-debug-discrete-simple.la \
+	libnanos6-extrae-discrete-simple.la \
+	libnanos6-graph-discrete-simple.la \
+	libnanos6-graph-debug-discrete-simple.la \
+	libnanos6-stats-discrete-simple.la \
+	libnanos6-stats-papi-discrete-simple.la \
+	libnanos6-verbose-discrete-simple.la \
+	libnanos6-verbose-debug-discrete-simple.la
 endif
 
 
@@ -477,7 +483,7 @@ discrete_simple_dependency_sources = \
 
 multidimensional_adaptor_sources = MultidimensionalAPIToLinear.cpp
 linear_regions_fragmented_dependency_flags = -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
-discrete_simple_dependency_flags = -I$(srcdir)/src/dependencies/discrete-simple
+discrete_simple_dependency_flags = -I$(srcdir)/src/dependencies/discrete-simple -DDISCRETE_SIMPLE_DEPS
 
 default_dependency_sources = $(discrete_simple_dependency_sources)
 default_dependency_flags = $(discrete_simple_dependency_flags)
@@ -613,10 +619,10 @@ memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_cluster_cpp
 memory_debug_sources = $(memory_default_sources)
 memory_debug_cppflags = $(memory_default_cppflags)
 else
-# memory_default_sources = $(memory_allocator_default_sources) $(vmm_smp_sources)
-# memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_smp_cppflags)
-memory_default_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
-memory_default_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
+ memory_default_sources = $(memory_allocator_default_sources) $(vmm_smp_sources)
+ memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_smp_cppflags)
+#memory_default_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
+#memory_default_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 memory_debug_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
 memory_debug_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 endif
@@ -1158,11 +1164,9 @@ libnanos6_optimized_discrete_simple_la_SOURCES =
 nodist_libnanos6_optimized_discrete_simple_la_SOURCES =
 
 if BUILD_OPTIMIZED_VARIANT
-enabled_variants += optimized
 libnanos6_optimized_discrete_simple_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_simple_dependency_sources)
 nodist_libnanos6_optimized_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
-disabled_variants += optimized
 libnanos6_optimized_discrete_simple_la_SOURCES += loader/disabled_variant.c
 endif
 
@@ -1190,140 +1194,240 @@ libnanos6_debug_discrete_simple_la_SOURCES =
 nodist_libnanos6_debug_discrete_simple_la_SOURCES =
 
 if BUILD_DEBUG_VARIANTS
-enabled_variants += debug
 libnanos6_debug_discrete_simple_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_debug_sources) $(discrete_simple_dependency_sources) src/instrument/null/InstrumentMalloc.cpp
 nodist_libnanos6_debug_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
-disabled_variants += debug
 libnanos6_debug_discrete_simple_la_SOURCES += loader/disabled_variant.c
 endif
 
-libnanos6_graph_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support $(default_dependency_flags)
-libnanos6_graph_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_graph_la_LDFLAGS = $(common_libnanos6_ldflags)
-libnanos6_graph_la_SOURCES =
-nodist_libnanos6_graph_la_SOURCES =
+libnanos6_graph_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support $(linear_regions_fragmented_dependency_flags)
+libnanos6_graph_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_graph_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_graph_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_graph_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_GRAPH_INSTRUMENTATION_VARIANT
 enabled_variants += graph
-libnanos6_graph_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_default_sources) $(default_dependency_sources)
-nodist_libnanos6_graph_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+libnanos6_graph_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_graph_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += graph
-libnanos6_graph_la_SOURCES += loader/disabled_variant.c
+libnanos6_graph_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+
+libnanos6_graph_discrete_simple_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support $(discrete_simple_dependency_flags)
+libnanos6_graph_discrete_simple_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+libnanos6_graph_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_graph_discrete_simple_la_SOURCES =
+nodist_libnanos6_graph_discrete_simple_la_SOURCES =
+
+if BUILD_GRAPH_INSTRUMENTATION_VARIANT
+libnanos6_graph_discrete_simple_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_simple_dependency_sources)
+nodist_libnanos6_graph_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+libnanos6_graph_discrete_simple_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_graph_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
-libnanos6_graph_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(default_dependency_flags)
-libnanos6_graph_debug_la_SOURCES =
-nodist_libnanos6_graph_debug_la_SOURCES =
+libnanos6_graph_debug_linear_regions_fragmented_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
+libnanos6_graph_debug_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(linear_regions_fragmented_dependency_flags)
+libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_GRAPH_INSTRUMENTATION_VARIANT
 if BUILD_DEBUG_VARIANTS
 enabled_variants += graph-debug
-libnanos6_graph_debug_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_debug_sources) $(default_dependency_sources)
-nodist_libnanos6_graph_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_debug_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += graph-debug
-libnanos6_graph_debug_la_SOURCES += loader/disabled_variant.c
+libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 else
 disabled_variants += graph-debug
-libnanos6_graph_debug_la_SOURCES += loader/disabled_variant.c
+libnanos6_graph_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
-libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
-libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(default_dependency_flags)
-libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
-libnanos6_stats_la_SOURCES =
-nodist_libnanos6_stats_la_SOURCES =
+libnanos6_graph_debug_discrete_simple_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/graph -I$(srcdir)/src/instrument/support
+libnanos6_graph_debug_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags) $(discrete_simple_dependency_flags)
+libnanos6_graph_debug_discrete_simple_la_SOURCES =
+nodist_libnanos6_graph_debug_discrete_simple_la_SOURCES =
+
+if BUILD_GRAPH_INSTRUMENTATION_VARIANT
+if BUILD_DEBUG_VARIANTS
+libnanos6_graph_debug_discrete_simple_la_SOURCES += $(common_sources) $(instrument_graph_sources) $(universal_debug_sources) $(memory_debug_sources) $(discrete_simple_dependency_sources)
+nodist_libnanos6_graph_debug_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+libnanos6_graph_debug_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
+else
+libnanos6_graph_debug_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
+
+libnanos6_stats_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
+libnanos6_stats_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(linear_regions_fragmented_dependency_flags)
+libnanos6_stats_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+libnanos6_stats_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_stats_linear_regions_fragmented_la_SOURCES =
+
 if BUILD_STATS_INSTRUMENTATION_VARIANT
 enabled_variants += stats
-libnanos6_stats_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources) $(memory_default_sources) $(default_dependency_sources)
-nodist_libnanos6_stats_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+libnanos6_stats_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_stats_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += stats
-libnanos6_stats_la_SOURCES += loader/disabled_variant.c
+libnanos6_stats_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
+libnanos6_stats_discrete_simple_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
+libnanos6_stats_discrete_simple_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(discrete_simple_dependency_flags)
+libnanos6_stats_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
+libnanos6_stats_discrete_simple_la_SOURCES =
+nodist_libnanos6_stats_discrete_simple_la_SOURCES =
+if BUILD_STATS_INSTRUMENTATION_VARIANT
+libnanos6_stats_discrete_simple_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_simple_dependency_sources)
+nodist_libnanos6_stats_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+libnanos6_stats_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
 
-libnanos6_stats_papi_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support $(papi_CPPFLAGS) -DHAVE_PAPI
-libnanos6_stats_papi_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(default_dependency_flags)
-libnanos6_stats_papi_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
-libnanos6_stats_papi_la_SOURCES =
-nodist_libnanos6_stats_papi_la_SOURCES =
+libnanos6_stats_papi_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support $(papi_CPPFLAGS) -DHAVE_PAPI
+libnanos6_stats_papi_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(linear_regions_fragmented_dependency_flags)
+libnanos6_stats_papi_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
+libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_STATS_INSTRUMENTATION_VARIANT
 if HAVE_PAPI
 enabled_variants += stats-papi
-libnanos6_stats_papi_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources) $(memory_default_sources) $(default_dependency_sources)
-nodist_libnanos6_stats_papi_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += stats-papi
-libnanos6_stats_papi_la_SOURCES += loader/disabled_variant.c
+libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 else
 disabled_variants += stats-papi
-libnanos6_stats_papi_la_SOURCES += loader/disabled_variant.c
+libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
+libnanos6_stats_papi_discrete_simple_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support $(papi_CPPFLAGS) -DHAVE_PAPI
+libnanos6_stats_papi_discrete_simple_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(discrete_simple_dependency_flags)
+libnanos6_stats_papi_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
+libnanos6_stats_papi_discrete_simple_la_SOURCES =
+nodist_libnanos6_stats_papi_discrete_simple_la_SOURCES =
 
-libnanos6_verbose_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
-libnanos6_verbose_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(default_dependency_flags)
-libnanos6_verbose_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
-libnanos6_verbose_la_SOURCES =
-nodist_libnanos6_verbose_la_SOURCES =
+if BUILD_STATS_INSTRUMENTATION_VARIANT
+if HAVE_PAPI
+libnanos6_stats_papi_discrete_simple_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(papi_sources) $(papi_hardware_counters_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_simple_dependency_sources)
+nodist_libnanos6_stats_papi_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+libnanos6_stats_papi_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
+else
+libnanos6_stats_papi_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
+
+libnanos6_verbose_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
+libnanos6_verbose_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_verbose_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_verbose_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_verbose_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
 enabled_variants += verbose
-libnanos6_verbose_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_default_sources) $(default_dependency_sources)
-nodist_libnanos6_verbose_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+libnanos6_verbose_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_verbose_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += verbose
-nodist_libnanos6_verbose_la_SOURCES += loader/disabled_variant.c
+nodist_libnanos6_verbose_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
+libnanos6_verbose_discrete_simple_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
+libnanos6_verbose_discrete_simple_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_simple_dependency_flags)
+libnanos6_verbose_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_verbose_discrete_simple_la_SOURCES =
+nodist_libnanos6_verbose_discrete_simple_la_SOURCES =
 
-libnanos6_verbose_debug_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
-libnanos6_verbose_debug_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(default_dependency_flags)
-libnanos6_verbose_debug_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
-libnanos6_verbose_debug_la_SOURCES =
-nodist_libnanos6_verbose_debug_la_SOURCES =
+if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
+libnanos6_verbose_discrete_simple_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_simple_dependency_sources)
+nodist_libnanos6_verbose_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+nodist_libnanos6_verbose_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
+
+libnanos6_verbose_debug_linear_regions_fragmented_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
+libnanos6_verbose_debug_linear_regions_fragmented_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_verbose_debug_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_verbose_debug_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_verbose_debug_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
 if BUILD_DEBUG_VARIANTS
 enabled_variants += verbose-debug
-libnanos6_verbose_debug_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_debug_sources) $(default_dependency_sources)
-nodist_libnanos6_verbose_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+libnanos6_verbose_debug_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_debug_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_verbose_debug_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += verbose-debug
-libnanos6_verbose_debug_la_SOURCES += loader/disabled_variant.c
+libnanos6_verbose_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 else
 disabled_variants += verbose-debug
-libnanos6_verbose_debug_la_SOURCES += loader/disabled_variant.c
+libnanos6_verbose_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
+libnanos6_verbose_debug_discrete_simple_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/verbose -I$(srcdir)/src/instrument/support
+libnanos6_verbose_debug_discrete_simple_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_simple_dependency_flags)
+libnanos6_verbose_debug_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_verbose_debug_discrete_simple_la_SOURCES =
+nodist_libnanos6_verbose_debug_discrete_simple_la_SOURCES =
 
-libnanos6_extrae_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
-libnanos6_extrae_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-libnanos6_extrae_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
-libnanos6_extrae_la_SOURCES =
-nodist_libnanos6_extrae_la_SOURCES =
+
+if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
+if BUILD_DEBUG_VARIANTS
+libnanos6_verbose_debug_discrete_simple_la_SOURCES += $(common_sources) $(instrument_verbose_sources) $(universal_debug_sources) $(memory_debug_sources) $(discrete_simple_dependency_sources)
+nodist_libnanos6_verbose_debug_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+libnanos6_verbose_debug_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
+else
+libnanos6_verbose_debug_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
+libnanos6_extrae_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
+libnanos6_extrae_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_extrae_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
+libnanos6_extrae_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_extrae_linear_regions_fragmented_la_SOURCES =
 
 if HAVE_EXTRAE
 if BUILD_EXTRAE_INSTRUMENTATION_VARIANT
 enabled_variants += extrae
-libnanos6_extrae_la_SOURCES += $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources) $(memory_default_sources) $(default_dependency_sources)
-nodist_libnanos6_extrae_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+libnanos6_extrae_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_extrae_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += extrae
-libnanos6_extrae_la_SOURCES += loader/disabled_variant.c
+libnanos6_extrae_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 else
 disabled_variants += extrae
-libnanos6_extrae_la_SOURCES += loader/disabled_variant.c
+libnanos6_extrae_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+
+libnanos6_extrae_discrete_simple_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
+libnanos6_extrae_discrete_simple_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_simple_dependency_flags)
+libnanos6_extrae_discrete_simple_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
+libnanos6_extrae_discrete_simple_la_SOURCES =
+nodist_libnanos6_extrae_discrete_simple_la_SOURCES =
+
+if HAVE_EXTRAE
+if BUILD_EXTRAE_INSTRUMENTATION_VARIANT
+libnanos6_extrae_discrete_simple_la_SOURCES += $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_simple_dependency_sources)
+nodist_libnanos6_extrae_discrete_simple_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+libnanos6_extrae_discrete_simple_la_SOURCES += loader/disabled_variant.c
+endif
+else
+libnanos6_extrae_discrete_simple_la_SOURCES += loader/disabled_variant.c
 endif
 
 

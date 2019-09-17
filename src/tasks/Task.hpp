@@ -37,6 +37,8 @@ class WorkerThread;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic error "-Wunused-result"
 
+#define TASK_DEPS_VECTOR_CUTOFF 8
+
 using namespace ExecutionWorkflow;
 
 class Task {
@@ -147,7 +149,10 @@ public:
 		nanos6_task_invocation_info_t *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
-		size_t flags
+		size_t flags,
+        void * seqs,
+        void * addresses,
+		size_t num_deps
 	);
 	
 	virtual inline void reinitialize(

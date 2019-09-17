@@ -113,6 +113,13 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 					disposableBlockSize += sizeof(Task);
 				}
 				
+#ifdef DISCRETE_SIMPLE_DEPS
+            const char * task_label = task->getTaskInfo()->implementations[0].task_label;
+            bool isMainTask = task_label != nullptr ? strcmp(task_label, "main") == 0 : false;
+            size_t taskDataAccessesSize = isMainTask ? sizeof(TaskDataAccesses::addresses_map_t) : sizeof(TaskDataAccesses::addresses_vec_t(4));
+            taskDataAccessesSize += sizeof(TaskDataAccesses::address_list_t);
+            disposableBlockSize += taskDataAccessesSize;
+#endif
 				Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 				
 				// Call the taskinfo destructor if not null

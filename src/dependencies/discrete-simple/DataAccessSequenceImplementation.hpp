@@ -25,7 +25,8 @@ void DataAccessSequence::removeCompleteSuccessors(DataAccessType type)
 		_sequence.erase(_sequence.begin(), it);
 	} else {
 		assert(_sequence.front().isWriter());
-		_sequence.pop_front();
+		//_sequence.pop_front();
+        _sequence.erase(_sequence.begin());
 	}
 	
 	_satisfiedReaders = 0;

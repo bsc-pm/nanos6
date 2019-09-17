@@ -36,6 +36,7 @@ namespace DataAccessRegistration {
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	void handleExitTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	void handleTaskRemoval(Task *task, ComputePlace *computePlace);
+    void insertAccesses(Task * task);
 }
 
 

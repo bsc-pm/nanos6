@@ -11,6 +11,7 @@
 #include <bitset>
 #include <cassert>
 #include <deque>
+#include <vector>
 #include <set>
 
 #include "CPUDependencyData.hpp"
@@ -27,7 +28,8 @@ public:
 	spinlock_t _lock;
 	
 private:
-	typedef std::deque<DataAccess> sequence_t;
+	//typedef std::deque<DataAccess> sequence_t;
+	typedef std::vector<DataAccess> sequence_t;
 	typedef CPUDependencyData::satisfied_originator_list_t satisfied_originator_list_t;
 	
 	//! The sequence of accesses
@@ -41,6 +43,9 @@ private:
 	
 	//! Number of uncompleted satisfied reader tasks at the sequence
 	unsigned int _uncompletedWriters;
+
+    //! The number of tasks that are pointing this sequence.
+    size_t _remaining;
 	
 public:
 	DataAccessSequence()
@@ -48,8 +53,10 @@ public:
 		_sequence(),
 		_satisfiedReaders(0),
 		_uncompletedReaders(0),
-		_uncompletedWriters(0)
+		_uncompletedWriters(0),
+        _remaining(0)
 	{
+        _sequence.reserve(8);
 	}
 	
 	DataAccessSequence(const DataAccessSequence &other) = delete;
@@ -140,6 +147,16 @@ public:
 			satisfyOldestSuccessors(satisfiedOriginators);
 		}
 	}
+
+    inline void incrementRemaining() 
+    {
+        _remaining++;
+    }
+
+    inline size_t decrementRemaining()
+    {
+        return --_remaining;
+    }
 	
 private:
 	inline bool isLastDataAccessSatisfied()

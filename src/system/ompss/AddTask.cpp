@@ -47,7 +47,7 @@ void nanos6_create_task(
 	void **args_block_pointer,
 	void **task_pointer,
 	size_t flags,
-	__attribute__((unused)) size_t num_deps
+	size_t num_deps
 ) {
 	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
 	
@@ -94,12 +94,39 @@ void nanos6_create_task(
 		size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
 		size_t correction = (DATA_ALIGNMENT_SIZE - missalignment) & (DATA_ALIGNMENT_SIZE - 1);
 		args_block_size += correction;
+
+
+#ifdef DISCRETE_SIMPLE_DEPS
+	/*
+	* We use num_deps to create the correctly sized vector for storing the dependencies,
+	* and we can define a cut-off to start using a std::unordered_map instead of a 
+	* vector.
+	*/
+
+    const char * task_label = taskInfo->implementations[0].task_label;
+    bool usesMap = task_label != nullptr ? (strcmp(task_label, "main") == 0 || (num_deps > TASK_DEPS_VECTOR_CUTOFF)) : false;
+    size_t seqsSize = usesMap ? sizeof(TaskDataAccesses::addresses_map_t) : sizeof(TaskDataAccesses::addresses_vec_t(num_deps));
+    size_t addressesSize = sizeof(TaskDataAccesses::address_list_t);
+#else
+    size_t seqsSize = 0;
+    size_t addressesSize = 0;
+#endif
 		
 		// Allocation and layout
-		*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize);
+	*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize + seqsSize + addressesSize);
 		
 		task = (char *)args_block + args_block_size;
 	}
+    void * seqs = (char *)task + taskSize;
+    void * addresses = (char *)seqs + seqsSize; 
+    
+#ifdef DISCRETE_SIMPLE_DEPS
+    if(usesMap)
+        new (seqs) TaskDataAccesses::addresses_map_t();
+    else
+        new (seqs) TaskDataAccesses::addresses_vec_t(num_deps);
+    new (addresses) TaskDataAccesses::address_list_t();
+#endif
 	
 	Instrument::createdArgsBlock(taskId, *args_block_pointer, originalArgsBlockSize, args_block_size);
 
@@ -111,7 +138,7 @@ void nanos6_create_task(
 		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else {
 		// Construct the Task object
-		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
+		new (task) Task(args_block, originalArgsBlockSize, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, seqs, addresses, num_deps);
 	}
 	
 }

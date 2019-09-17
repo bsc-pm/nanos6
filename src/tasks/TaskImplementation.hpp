@@ -4,16 +4,26 @@
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifndef TASK_IMPLEMENTATION_HPP
 #define TASK_IMPLEMENTATION_HPP
 
 #include "StreamExecutor.hpp"
 #include "Task.hpp"
 
+#ifdef DISCRETE_SIMPLE_DEPS
+#include <TaskDataAccesses.hpp>
+#else
+#include <TaskDataAccessesImplementation.hpp>
+#endif
+
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
-#include <TaskDataAccessesImplementation.hpp>
 
+#include <cstring>
 
 inline Task::Task(
 	void *argsBlock,
@@ -22,7 +32,10 @@ inline Task::Task(
 	nanos6_task_invocation_info_t *taskInvokationInfo,
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
-	size_t flags
+	size_t flags,
+    void * seqs,
+    void * addresses,
+	size_t num_deps
 )
 	: _argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
@@ -32,7 +45,11 @@ inline Task::Task(
 	_parent(parent),
 	_priority(0),
 	_thread(nullptr),
-	_dataAccesses(),
+#ifdef DISCRETE_SIMPLE_DEPS
+	_dataAccesses(seqs, addresses, taskInfo != nullptr && taskInfo->implementations[0].task_label != nullptr ? strcmp(taskInfo->implementations[0].task_label, "main") == 0 : false, num_deps),
+#else
+	_dataAccesses(/*seqs, addresses, taskInfo != nullptr && taskInfo->implementations[0].task_label != nullptr ? strcmp(taskInfo->implementations[0].task_label, "main") == 0 : false*/),
+#endif
 	_flags(flags),
 	_predecessorCount(0),
 	_instrumentationTaskId(instrumentationTaskId),
@@ -92,6 +109,7 @@ inline void Task::reinitialize(
 	_parentSpawnCallback = nullptr;
 	
 	if (parent != nullptr) {
+        assert(0);
 		parent->addChild(this);
 	}
 }

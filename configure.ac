@@ -120,25 +120,27 @@ AC_CHECK_FUNCS([gethostid])
 
 # Dependency engine to use
 
-AC_MSG_CHECKING([if linear fragmented dependencies should be included])
-AC_ARG_ENABLE(
-	[linear-fragmented-deps],
-	[AS_HELP_STRING([--enable-linear-fragmented-deps], [enable linear fragmented dependencies])],
-	[
-		case "${enableval}" in
-		yes)
-			ac_linear_fragmented_deps=yes
-			;;
-		no)
-			ac_linear_fragmented_deps=no
-			;;
-		*)
-			AC_MSG_ERROR([bad value ${enableval} for --enable-linear-fragmented-deps])
-			;;
-		esac
-	],
-	[ac_linear_fragmented_deps=yes]
-)
+# AC_MSG_CHECKING([if linear fragmented dependencies should be included])
+# AC_ARG_ENABLE(
+# 	[linear-fragmented-deps],
+# 	[AS_HELP_STRING([--enable-linear-fragmented-deps], [enable linear fragmented dependencies])],
+# 	[
+# 		case "${enableval}" in
+# 		yes)
+# 			ac_linear_fragmented_deps=yes
+# 			;;
+# 		no)
+# 			ac_linear_fragmented_deps=no
+# 			;;
+# 		*)
+# 			AC_MSG_ERROR([bad value ${enableval} for --enable-linear-fragmented-deps])
+# 			;;
+# 		esac
+# 	],
+# 	[ac_linear_fragmented_deps=yes]
+# )
+
+ac_linear_fragmented_deps=yes
 
 AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test x"${ac_linear_fragmented_deps}" = x"yes"])
 

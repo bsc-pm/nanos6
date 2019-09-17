@@ -30,7 +30,8 @@
 #pragma GCC visibility push(hidden)
 
 namespace DataAccessRegistration {
-	typedef TaskDataAccesses::addresses_t addresses_t;
+	typedef TaskDataAccesses::addresses_map_t addresses_map_t;
+	typedef TaskDataAccesses::addresses_vec_t addresses_vec_t;
 	typedef TaskDataAccesses::address_list_t address_list_t;
 	
 	
@@ -51,7 +52,7 @@ namespace DataAccessRegistration {
 				}
 			}
 			
-			ComputePlace *idleComputePlace = Scheduler::addReadyTask(
+			Scheduler::addReadyTask(
 				satisfiedOriginator,
 				computePlaceHint,
 				(fromBusyThread ?
@@ -59,10 +60,6 @@ namespace DataAccessRegistration {
 					: SchedulerInterface::SchedulerInterface::SIBLING_TASK_HINT
 				)
 			);
-			
-			if (idleComputePlace != nullptr) {
-				ThreadManager::resumeIdle((CPU *) idleComputePlace);
-			}
 		}
 		
 		hpDependencyData._satisfiedOriginators.clear();
@@ -72,99 +69,45 @@ namespace DataAccessRegistration {
 		assert(task != nullptr);
 		assert(address != nullptr);
 		
-		TaskDataAccesses &accessStruct = task->getDataAccesses();
-		assert(!accessStruct.hasBeenDeleted());
-		
-		Task *parentTask = task->getParent();
-		assert(parentTask != nullptr);
-		
-		TaskDataAccesses &parentAccessStruct = parentTask->getDataAccesses();
-		assert(!parentAccessStruct.hasBeenDeleted());
-		addresses_t &addresses = parentAccessStruct._dataAccessSequences;
-		
-		DataAccessSequence *sequence = nullptr;
-		{
-			std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccessStruct._lock);
-			
-			addresses_t::iterator it = addresses.find(address);
-			if (it != addresses.end()) {
-				sequence = it->second;
-				assert(sequence != nullptr);
-			} else {
-				sequence = MemoryAllocator::newObject<DataAccessSequence>();
-				assert(sequence != nullptr);
-				
-				std::pair<void *, DataAccessSequence *> entry(address, sequence);
-				addresses.insert(entry);
-			}
-		}
-		
-		
-		address_list_t &reads = accessStruct._readAccessAddresses;
-		address_list_t &writes = accessStruct._writeAccessAddresses;
-		
-		bool upgraded = false;
-		bool registered = false;
-		bool becameUnsatisfied = false;
-		{
-			std::lock_guard<DataAccessSequence::spinlock_t> guard(sequence->_lock);
-			
-			if (sequence->registeredLastDataAccess(task)) {
-				if (accessType != READ_ACCESS_TYPE) {
-					DataAccessType prevAccessType;
-					becameUnsatisfied = sequence->upgradeLastDataAccess(&prevAccessType);
-					upgraded = (prevAccessType == READ_ACCESS_TYPE);
-				}
-			} else {
-				becameUnsatisfied = !sequence->registerDataAccess(accessType, task);
-				registered = true;
-			}
-		}
-		
-		if (upgraded) {
-			bool erased = false;
-			address_list_t::iterator it;
-			for (it = reads.begin(); !erased && it != reads.end(); ++it) {
-				if (*it == address) {
-					reads.erase(it);
-					writes.push_back(address);
-					erased = true;
-				}
-			}
-			assert(erased);
-		}
-		
-		if (registered) {
-			if (accessType == READ_ACCESS_TYPE) {
-				reads.push_back(address);
-			} else {
-				writes.push_back(address);
-			}
-		}
-		
-		if (becameUnsatisfied) {
-			task->increasePredecessors();
-		}
+        TaskDataAccesses &accessStruct = task->getDataAccesses();
+        address_list_t * addresses = accessStruct._accessAddresses;
+
+        // Couple access type with the address. The last bit is 0 if READ, 1 if WRITE.
+        void * address_typed = (void *)((uintptr_t) address | (uintptr_t)(accessType != READ_ACCESS_TYPE));
+
+        address_list_t::iterator it;
+        for(it = addresses->begin(); it != addresses->end(); it++) {
+            // Deactivate last bit of *it just in case the previous access was write and current is read, so the condition is not satisfied falsely.
+            void * read_it = (void *)((uintptr_t) *it & (uintptr_t)~1);
+            if(read_it > address)
+                break;
+            if(*it == address || *it == address_typed) {
+                if(*it < address_typed) 
+                    *it = address_typed;
+                return;
+            }
+        }
+        for(address_list_t::iterator aux = addresses->begin(); aux != addresses->end(); aux++) {
+            assert(*aux != address_typed);
+        }
+        addresses->insert(it, address_typed);
 	}
 	
 	void finalizeDataAccess(Task *task, DataAccessType accessType, void *address, CPUDependencyData &hpDependencyData) {
-		Task *parentTask = task->getParent();
-		assert(parentTask != nullptr);
-		
-		TaskDataAccesses &parentAccessStruct = parentTask->getDataAccesses();
-		assert(!parentAccessStruct.hasBeenDeleted());
-		addresses_t &addresses = parentAccessStruct._dataAccessSequences;
-		
-		DataAccessSequence *sequence = nullptr;
-		{
-			std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccessStruct._lock);
-			
-			const addresses_t::const_iterator it = addresses.find(address);
-			assert(it != addresses.end());
-			
-			sequence = it->second;
-			assert(sequence != nullptr);
-		}
+        TaskDataAccesses &accessStruct = task->getDataAccesses();
+        DataAccessSequence *sequence = nullptr;
+        if(accessStruct._map) {
+            addresses_map_t * addresses = accessStruct._dataAccessSequencesMap;
+            sequence = addresses->at(address);
+        }
+        else {
+            addresses_vec_t * addresses = accessStruct._dataAccessSequencesVec;
+            for(addresses_vec_t::iterator it = addresses->begin(); it != addresses->end(); it++) {
+                if(it->first == address)
+                    sequence = it->second;
+            }
+        }
+        assert(sequence != nullptr);
 		
 		std::lock_guard<DataAccessSequence::spinlock_t> guard(sequence->_lock);
 		sequence->finalizeDataAccess(task, accessType, hpDependencyData._satisfiedOriginators);
@@ -186,6 +129,9 @@ namespace DataAccessRegistration {
 		taskInfo->register_depinfo(task->getArgsBlock(), task);
 		
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
+
+        insertAccesses(task);
+
 		assert(!accessStructures.hasBeenDeleted());
 		if (accessStructures.hasDataAccesses()) {
 			task->increaseRemovalBlockingCount();
@@ -211,14 +157,11 @@ namespace DataAccessRegistration {
 #endif
 		
 		{
-			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStruct._lock);
-			
-			for (void *address : accessStruct._readAccessAddresses) {
-				finalizeDataAccess(task, READ_ACCESS_TYPE, address, hpDependencyData);
-			}
-			
-			for (void *address : accessStruct._writeAccessAddresses) {
-				finalizeDataAccess(task, WRITE_ACCESS_TYPE, address, hpDependencyData);
+			for (void *address_typed : *accessStruct._accessAddresses) {
+                void * address = (void *)((uintptr_t) address_typed & (uintptr_t)~(1));
+                bool write = ((uintptr_t)address_typed & 1);
+                DataAccessType accessType = !write ? READ_ACCESS_TYPE : WRITE_ACCESS_TYPE;
+				finalizeDataAccess(task, accessType, address, hpDependencyData);
 			}
 			
 			task->decreaseRemovalBlockingCount();
@@ -282,6 +225,92 @@ namespace DataAccessRegistration {
 	void handleTaskRemoval(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 	}
+
+    void insertAccesses(Task * task)
+    {
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
+		assert(!accessStruct.hasBeenDeleted());
+		
+		Task *parentTask = task->getParent();
+		assert(parentTask != nullptr);
+		
+		TaskDataAccesses &parentAccessStruct = parentTask->getDataAccesses();
+		assert(!parentAccessStruct.hasBeenDeleted());
+
+        // Get all seqs
+        std::vector<std::pair<void *, DataAccessSequence *> > seqs(accessStruct._accessAddresses->size());
+        size_t seq_index = 0;
+        for (void *address_typed : *accessStruct._accessAddresses) {
+            void * address = (void *)((uintptr_t) address_typed & (uintptr_t)~(1));
+            DataAccessSequence *sequence = nullptr;
+
+            if(!parentAccessStruct._map) { 
+                addresses_vec_t * addresses = parentAccessStruct._dataAccessSequencesVec;
+                for(addresses_vec_t::iterator it = addresses->begin(); it != addresses->end(); it++) {
+                    if(it->first == address)
+                        sequence = it->second;
+                }
+                //! If there is free space in the vector, add it. Otherwise, convert vector in map.
+                if(sequence == nullptr) {
+                    sequence = MemoryAllocator::newObject<DataAccessSequence>();
+                    sequence->incrementRemaining();
+                    if(addresses->size() < addresses->capacity()) {
+                        addresses->push_back({address, sequence});
+                    }
+                    else {
+                        parentAccessStruct.vecToMap();
+                        assert(parentAccessStruct._map && parentAccessStruct._dataAccessSequencesMap != nullptr);
+                        (*parentAccessStruct._dataAccessSequencesMap)[address] = sequence;
+                    }
+                    assert(sequence != nullptr);
+                }
+            }
+            else {
+                addresses_map_t * addresses = parentAccessStruct._dataAccessSequencesMap;
+                addresses_map_t::iterator it = addresses->find(address);
+                if (it != addresses->end()) {
+                    sequence = it->second;
+                } else {
+                    sequence = MemoryAllocator::newObject<DataAccessSequence>();
+                    (*addresses)[address] = sequence;
+                }
+            }
+            assert(sequence != nullptr);
+            seqs[seq_index++] = {address, sequence};
+        }
+        if(accessStruct._map) {
+            accessStruct._dataAccessSequencesMap->reserve(seqs.size());
+            accessStruct._dataAccessSequencesMap->insert(seqs.begin(), seqs.end());
+        }
+        else
+            accessStruct._dataAccessSequencesVec->insert(accessStruct._dataAccessSequencesVec->end(), seqs.begin(), seqs.end());
+        assert(seq_index == accessStruct._accessAddresses->size() && seq_index == seqs.size());
+
+        // Process all seqs
+        seq_index = 0;
+        for (void *address_typed : *accessStruct._accessAddresses) {
+            bool write = ((uintptr_t)address_typed & 1);
+            DataAccessType accessType = !write ? READ_ACCESS_TYPE : WRITE_ACCESS_TYPE;
+            DataAccessSequence *sequence = seqs[seq_index++].second;
+            bool becameUnsatisfied = false;
+            {
+                std::lock_guard<DataAccessSequence::spinlock_t> guardSeq(sequence->_lock);
+
+                if (sequence->registeredLastDataAccess(task)) {
+                    if (accessType != READ_ACCESS_TYPE) {
+                        DataAccessType prevAccessType;
+                        becameUnsatisfied = sequence->upgradeLastDataAccess(&prevAccessType);
+                    }
+                } else {
+                    becameUnsatisfied = !sequence->registerDataAccess(accessType, task);
+                }
+            }
+
+            if (becameUnsatisfied) {
+                task->increasePredecessors();
+            }
+        }
+    }
 };
 
 #pragma GCC visibility pop

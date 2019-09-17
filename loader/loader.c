@@ -151,7 +151,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 
 	char const *dependencies = getenv("NANOS6_DEPENDENCIES");
 	if(dependencies == NULL) {
-		dependencies = "discrete-simple";
+		dependencies = "linear-regions-fragmented";
 	}
 	
 	if(verbose) {
@@ -209,9 +209,9 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 			fprintf(stderr, "Checking if the variant was not correct\n");
 		}
 		
-		_nanos6_loader_try_load(verbose, "optimized", "discrete-simple", getenv("NANOS6_LIBRARY_PATH"));
+		_nanos6_loader_try_load(verbose, "optimized", "linear-regions-fragmented", getenv("NANOS6_LIBRARY_PATH"));
 		if (_nanos6_lib_handle == NULL) {
-			_nanos6_loader_try_load(verbose, "optimized", "discrete-simple", lib_path);
+			_nanos6_loader_try_load(verbose, "optimized", "linear-regions-fragmented", lib_path);
 		}
 		if (_nanos6_lib_handle != NULL) {
 			fprintf(stderr, "Error: the %s variant of the runtime with the dependencies implementation %s is not available in this installation.\n", variant, dependencies);
