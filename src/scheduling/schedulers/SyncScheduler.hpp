@@ -63,6 +63,17 @@ protected:
 		return (_ready[cpuIndex].ticket == myTicket);
 	}
 	
+	virtual inline void setRelatedComputePlace(uint64_t, ComputePlace *)
+	{
+		// Do nothing
+	}
+	
+	virtual inline ComputePlace *getRelatedComputePlace(uint64_t cpuIndex) const
+	{
+		const std::vector<CPU *> &cpus = CPUManager::getCPUListReference();
+		return cpus[cpuIndex];
+	}
+	
 public:
 	
 	SyncScheduler()
@@ -141,7 +152,7 @@ public:
 		}
 	}
 	
-	virtual Task *getTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace, bool device, bool subdevice);
+	Task *getTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace);
 	
 	virtual Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace) = 0;
 	

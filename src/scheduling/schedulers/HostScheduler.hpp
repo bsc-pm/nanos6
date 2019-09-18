@@ -27,7 +27,7 @@ public:
 	
 	Task *getReadyTask(ComputePlace *computePlace, ComputePlace * = nullptr)
 	{
-		Task *result = getTask(computePlace, nullptr, false, false);
+		Task *result = getTask(computePlace, nullptr);
 		assert(result == nullptr || result->getDeviceType() == nanos6_host_device);
 		return result;
 	}

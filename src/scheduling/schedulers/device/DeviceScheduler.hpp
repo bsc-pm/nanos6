@@ -35,13 +35,14 @@ public:
 		return _deviceType;
 	}
 	
-	virtual ComputePlace *getCPUToDevice(uint64_t cpuIndex) = 0;
-	
-	virtual void setCPUToDevice(uint64_t cpuIndex, ComputePlace *deviceComputePlace) = 0;
-	
 	virtual Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace) = 0;
 	
 	virtual std::string getName() const = 0;
+	
+protected:
+	virtual ComputePlace *getRelatedComputePlace(uint64_t cpuIndex) const = 0;
+	
+	virtual void setRelatedComputePlace(uint64_t cpuIndex, ComputePlace *computePlace) = 0;
 };
 
 

@@ -35,23 +35,12 @@ public:
 	virtual ~CUDADeviceScheduler()
 	{}
 	
-	ComputePlace *getCPUToDevice(uint64_t cpuIndex)
-	{
-		return _cpuToDevice[cpuIndex];
-	}
-	
-	void setCPUToDevice(uint64_t cpuIndex, ComputePlace *deviceComputePlace)
-	{
-		assert(deviceComputePlace == nullptr || deviceComputePlace->getType() == _deviceType);
-		_cpuToDevice[cpuIndex] = deviceComputePlace;
-	}
-	
 	Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace)
 	{
 		assert(deviceComputePlace != nullptr);
 		assert(deviceComputePlace->getType() == _deviceType);
 		
-		Task *result = getTask(computePlace, deviceComputePlace, true, false);
+		Task *result = getTask(computePlace, deviceComputePlace);
 		assert(result == nullptr || result->getDeviceType() == _deviceType);
 		return result;
 	}
@@ -59,6 +48,18 @@ public:
 	inline std::string getName() const
 	{
 		return "CUDADeviceScheduler";
+	}
+	
+protected:
+	inline ComputePlace *getRelatedComputePlace(uint64_t cpuIndex) const
+	{
+		return _cpuToDevice[cpuIndex];
+	}
+	
+	inline void setRelatedComputePlace(uint64_t cpuIndex, ComputePlace *computePlace)
+	{
+		assert(computePlace == nullptr || computePlace->getType() == _deviceType);
+		_cpuToDevice[cpuIndex] = computePlace;
 	}
 };
 

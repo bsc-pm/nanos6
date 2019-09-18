@@ -36,28 +36,6 @@ public:
 	virtual ~SubDeviceScheduler()
 	{}
 	
-	ComputePlace *getCPUToDevice(uint64_t)
-	{
-		FatalErrorHandler::failIf(true, "This should never happen.");
-		return nullptr;
-	}
-	
-	void setCPUToDevice(uint64_t, ComputePlace *)
-	{
-		FatalErrorHandler::failIf(true, "This should never happen.");
-	}
-	
-	ComputePlace *getCPUToSubDevice(uint64_t cpuIndex)
-	{
-		return _cpuToSubDevice[cpuIndex];
-	}
-	
-	void setCPUToSubDevice(uint64_t cpuIndex, ComputePlace *deviceComputePlace)
-	{
-		assert(deviceComputePlace == nullptr || ((DeviceComputePlace *)deviceComputePlace)->getSubType() == _deviceSubType);
-		_cpuToSubDevice[cpuIndex] = deviceComputePlace;
-	}
-	
 	inline int getDeviceSubType()
 	{
 		return _deviceSubType;
@@ -68,7 +46,7 @@ public:
 		assert(deviceComputePlace != nullptr);
 		assert(((DeviceComputePlace *)deviceComputePlace)->getSubType() == _deviceSubType);
 		
-		Task *result = getTask(computePlace, deviceComputePlace, false, true);
+		Task *result = getTask(computePlace, deviceComputePlace);
 		assert(result == nullptr || result->getDeviceSubType() == _deviceSubType);
 		return result;
 	}
@@ -76,6 +54,20 @@ public:
 	inline std::string getName() const
 	{
 		return "SubDeviceScheduler" + _deviceSubType;
+	}
+	
+protected:
+	inline ComputePlace *getRelatedComputePlace(uint64_t cpuIndex) const
+	{
+		return _cpuToSubDevice[cpuIndex];
+	}
+	
+	inline void setRelatedComputePlace(uint64_t cpuIndex, ComputePlace *computePlace)
+	{
+		DeviceComputePlace *deviceComputePlace = (DeviceComputePlace *)computePlace;
+		assert(deviceComputePlace == nullptr || deviceComputePlace->getSubType() == _deviceSubType);
+		
+		_cpuToSubDevice[cpuIndex] = deviceComputePlace;
 	}
 };
 

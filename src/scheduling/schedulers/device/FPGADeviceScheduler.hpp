@@ -36,17 +36,6 @@ public:
 		MemoryAllocator::free(_subDeviceSchedulers, _totalSubDevices * sizeof(SubDeviceScheduler));
 	}
 	
-	ComputePlace *getCPUToDevice(uint64_t)
-	{
-		FatalErrorHandler::failIf(true, "This should never happen.");
-		return nullptr;
-	}
-	
-	void setCPUToDevice(uint64_t, ComputePlace *)
-	{
-		FatalErrorHandler::failIf(true, "This should never happen.");
-	}
-	
 	inline int getDeviceSubType(int subType)
 	{
 		return _subDeviceSchedulers[subType].getDeviceSubType();
@@ -67,6 +56,18 @@ public:
 	inline std::string getName() const
 	{
 		return "FPGADeviceScheduler";
+	}
+	
+protected:
+	inline ComputePlace *getRelatedComputePlace(uint64_t) const
+	{
+		FatalErrorHandler::failIf(true, "This function should not be called");
+		return nullptr;
+	}
+	
+	inline void setRelatedComputePlace(uint64_t, ComputePlace *)
+	{
+		FatalErrorHandler::failIf(true, "This function should not be called");
 	}
 };
 

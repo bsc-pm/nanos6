@@ -9,10 +9,8 @@
 #include "scheduling/schedulers/device/DeviceScheduler.hpp"
 #include "scheduling/schedulers/device/SubDeviceScheduler.hpp"
 
-Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace, bool device, bool subdevice)
+Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace)
 {
-	assert(!(device && subdevice));
-	
 	Task *task = nullptr;
 	ComputePlace *deviceComputePlaceOrComputePlace =
 		(deviceComputePlace != nullptr) ? deviceComputePlace : computePlace;
@@ -30,11 +28,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	assert(computePlace->getType() == nanos6_host_device);
 	
 	uint64_t const currentCPUIndex = computePlace->getIndex();
-	if (device) {
-		((DeviceScheduler *)this)->setCPUToDevice(currentCPUIndex, deviceComputePlace);
-	} else if (subdevice) {
-		((SubDeviceScheduler *)this)->setCPUToSubDevice(currentCPUIndex, deviceComputePlace);
-	}
+	setRelatedComputePlace(currentCPUIndex, deviceComputePlace);
 	
 	// Subscribe to the lock.
 	uint64_t const ticket = _lock.subscribeOrLock(currentCPUIndex);
@@ -55,14 +49,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	
 	// Serve all the subscribers, while there is work to give them.
 	while (_lock.popWaitingCPU(i, waitingCPUIndex)) {
-		ComputePlace *resultComputePlace = nullptr;
-		if (device) {
-			resultComputePlace = ((DeviceScheduler *)this)->getCPUToDevice(waitingCPUIndex);
-		} else if (subdevice) {
-			resultComputePlace = ((SubDeviceScheduler *)this)->getCPUToSubDevice(waitingCPUIndex);
-		} else {
-			resultComputePlace = computePlaces[waitingCPUIndex];
-		}
+		ComputePlace *resultComputePlace = getRelatedComputePlace(waitingCPUIndex);
 		assert(resultComputePlace != nullptr);
 		
 		task = _scheduler->getReadyTask(resultComputePlace);
@@ -71,11 +58,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 		
 		assert(task->isRunnable());
 		
-		if (device) {
-			((DeviceScheduler *)this)->setCPUToDevice(waitingCPUIndex, nullptr);
-		} else if (subdevice) {
-			((SubDeviceScheduler *)this)->setCPUToSubDevice(waitingCPUIndex, nullptr);
-		}
+		setRelatedComputePlace(waitingCPUIndex, nullptr);
 		
 		// Put a task into the subscriber slot.
 		assignTask(waitingCPUIndex, i, task);
@@ -89,11 +72,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	task = _scheduler->getReadyTask(deviceComputePlaceOrComputePlace);
 	_lock.unsubscribe();
 	
-	if (device) {
-		((DeviceScheduler *)this)->setCPUToDevice(currentCPUIndex, nullptr);
-	} else if (subdevice) {
-		((SubDeviceScheduler *)this)->setCPUToSubDevice(currentCPUIndex, nullptr);
-	}
+	setRelatedComputePlace(currentCPUIndex, nullptr);
 	
 	assert(task == nullptr || task->isRunnable());
 	return task;
