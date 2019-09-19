@@ -162,7 +162,7 @@ namespace {
 	}
 };
 
-void ReductionInfo::makeOriginalStorageAvailable(const void * address, const size_t length) 
+void ReductionInfo::makeOriginalStorageAvailable(__attribute__((unused)) const void * address, const size_t length) 
 {
 	_originalStorageAvailabilityCounter -= length;
 	

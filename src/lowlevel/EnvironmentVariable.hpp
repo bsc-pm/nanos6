@@ -34,6 +34,8 @@ public:
 		: _value(other._value)
 	{
 	}
+
+	StringifiedBool& operator=(const StringifiedBool& other) = default;
 	
 	operator bool() const
 	{
@@ -61,6 +63,8 @@ public:
 		: _value(other._value)
 	{
 	}
+
+	StringifiedMemorySize& operator=(const StringifiedMemorySize& other) = default;
 	
 	operator size_t() const
 	{

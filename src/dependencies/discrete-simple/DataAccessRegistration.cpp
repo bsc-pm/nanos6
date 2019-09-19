@@ -218,9 +218,7 @@ namespace DataAccessRegistration {
 		} else if (access->getType() == READ_ACCESS_TYPE && access->decreaseTop()) {
 			// We were the top. We have to cascade until we find a non-finished access.
 			cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
-
-			bool remove = task->getDataAccesses().decreaseDeletableCount();
-			assert(!remove);
+			task->getDataAccesses().decreaseDeletableCount();
 		}
 
 		assert(computePlace != nullptr);
@@ -653,8 +651,7 @@ namespace DataAccessRegistration {
 	void completeCombineAndDeallocateReduction(ReductionInfo *info) 
 	{
 		assert(info != nullptr);
-		const void *address = info->getOriginalAddress();
-		assert(info != address);
+		assert(info != info->getOriginalAddress());
 		assert(info->finished());
 
 		// This will combine the reduction

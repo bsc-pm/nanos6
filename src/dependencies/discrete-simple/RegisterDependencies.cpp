@@ -104,7 +104,7 @@ void nanos6_register_region_weak_reduction_depinfo1(
 		__attribute__((unused)) char const *region_text,
 		__attribute__((unused)) void *base_address,
 		__attribute__((unused)) long dim1size,
-		long dim1start,
+		__attribute__((unused)) long dim1start,
 		__attribute__((unused)) long dim1end) 
 {
 	assert(dim1start == 0L);
