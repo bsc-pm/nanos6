@@ -159,6 +159,7 @@ namespace DataAccessRegistration {
 							ComputePlace *computePlace) 
 	{
 		bool last = false;
+		assert(computePlace != nullptr);
 
 		Task *parentTask = task->getParent();
 		assert(parentTask != nullptr);
@@ -195,11 +196,8 @@ namespace DataAccessRegistration {
 		if (access->getType() == REDUCTION_ACCESS_TYPE) {
 			ReductionInfo *reductionInfo = access->getReductionInfo();
 
-			assert(!access->isWeak());
-
-			if (!access->isWeak()) {
-				reductionInfo->releaseSlotsInUse(((CPU *) computePlace)->getIndex());
-			}
+			// Not needed in weak reductions, but we don't support them
+			reductionInfo->releaseSlotsInUse(((CPU *) computePlace)->getIndex());
 
 			if (access->decreaseTop()) {
 				cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
@@ -219,9 +217,7 @@ namespace DataAccessRegistration {
 			// We were the top. We have to cascade until we find a non-finished access.
 			cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
 			task->getDataAccesses().decreaseDeletableCount();
-		}
-
-		assert(computePlace != nullptr);
+		}	
 	}
 
 	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData, 
@@ -491,6 +487,7 @@ namespace DataAccessRegistration {
 
 	void handleTaskRemoval(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace) 
 	{
+		// Only needed for weak accesses (not implemented)
 	}
 
 	void insertAccesses(Task *task, __attribute__((unused)) CPUDependencyData &hpDependencyData) 
@@ -686,10 +683,12 @@ namespace DataAccessRegistration {
 		return newReductionInfo;
 	}
 
+	// Placeholder
 	void combineTaskReductions(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace) 
 	{
 	}
 	
+	// Placeholder
 	void releaseTaskwaitFragment(
 		__attribute__((unused)) Task *task,
 		__attribute__((unused)) ComputePlace *computePlace,
