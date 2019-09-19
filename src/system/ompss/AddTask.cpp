@@ -86,13 +86,11 @@ void nanos6_create_task(
 
 #ifdef DISCRETE_SIMPLE_DEPS
 	/*
-	* We use num_deps to create the correctly sized vector for storing the dependencies,
-	* and we can define a cut-off to start using a std::unordered_map instead of a 
-	* vector.
+	* We use num_deps to create the correctly sized array for storing the dependencies.
+	* Two plain C arrays are used, one for the actual DataAccess structures and another for the
+	* addresses, which is the one used for searching. That way we cause less cache misses searching.
 	*/
 
-    const char * task_label = taskInfo->implementations[0].task_label;
-    bool isMain = task_label != nullptr ? (strcmp(task_label, "main") == 0) : false;
     size_t seqsSize = sizeof(DataAccess) * num_deps;
 	size_t addrSize = sizeof(void *) * num_deps;
 #else

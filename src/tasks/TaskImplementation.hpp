@@ -38,7 +38,7 @@ inline Task::Task(
 	size_t flags,
 	__nondiscrete_unused void * seqs,
 	__nondiscrete_unused void * addresses,
-	__nondiscrete_unused size_t num_deps
+	size_t num_deps
 )
 	: _argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
@@ -49,7 +49,7 @@ inline Task::Task(
 	_priority(0),
 	_thread(nullptr),
 #ifdef DISCRETE_SIMPLE_DEPS
-	_dataAccesses(seqs, addresses, (taskInfo != nullptr && taskInfo->implementations[0].task_label != nullptr ? strcmp(taskInfo->implementations[0].task_label, "main") == 0 : false), num_deps),
+	_dataAccesses(seqs, addresses, num_deps),
 #else
 	_dataAccesses(),
 #endif

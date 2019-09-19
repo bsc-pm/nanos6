@@ -35,8 +35,6 @@ struct TaskDataAccesses {
 	bottom_map_t _accessMap;
 	DataAccess * _accessArray;
 	void ** _addressArray;
-
-	bool _isMain;
 	size_t _num_deps;
 	size_t currentIndex;
 
@@ -51,7 +49,6 @@ struct TaskDataAccesses {
 		_accessMap(),
 		_accessArray(nullptr),
 		_addressArray(nullptr),
-		_isMain(false),
 		_num_deps(0),
 		currentIndex(0),
 		_deletableCount(0)
@@ -61,12 +58,11 @@ struct TaskDataAccesses {
 	{
 	}
 
-	TaskDataAccesses(void *accessArray , void *addressArray, bool isMain, size_t num_deps)
+	TaskDataAccesses(void *accessArray , void *addressArray, size_t num_deps)
 		: _lock(),
 		_accessMap(),
 		_accessArray((DataAccess *) accessArray),
 		_addressArray((void **) addressArray),
-		_isMain(isMain),
 		_num_deps(num_deps), currentIndex(0), _deletableCount(0)
 #ifndef NDEBUG
 		, _flags()
