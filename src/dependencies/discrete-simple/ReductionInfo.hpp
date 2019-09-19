@@ -37,7 +37,8 @@ class ReductionInfo
 		inline static size_t getMaxSlots();
 		
 		ReductionInfo(void * address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
-				std::function<void(void*, void*, size_t)> initializationFunction, std::function<void(void*, void*, size_t)> combinationFunction);
+				std::function<void(void*, void*, size_t)> initializationFunction, 
+				std::function<void(void*, void*, size_t)> combinationFunction);
 		
 		~ReductionInfo();
 		
@@ -67,7 +68,8 @@ class ReductionInfo
 
 		bool finished();
 		
-		const DataAccessRegion& getOriginalRegion() const {
+		const DataAccessRegion& getOriginalRegion() const 
+		{
 			return _region;
 		}
 		

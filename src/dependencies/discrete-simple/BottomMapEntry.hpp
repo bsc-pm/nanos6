@@ -15,7 +15,12 @@ typedef struct BottomMapEntry {
 	bool satisfied;
 	ReductionInfo * reductionInfo;
 
-	BottomMapEntry(DataAccess * accessN, __attribute__((unused)) Task * currentTask) : access(accessN), satisfied(true), reductionInfo(nullptr) { }
+	BottomMapEntry(DataAccess * accessN, __attribute__((unused)) Task * currentTask) : 
+	access(accessN), 
+	satisfied(true), 
+	reductionInfo(nullptr) 
+	{
+	}
 } BottomMapEntry;
 
 

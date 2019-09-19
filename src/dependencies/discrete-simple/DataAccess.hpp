@@ -144,43 +144,52 @@ public:
 		return _weak;
 	}
 
-	void setInstrumentationId(Instrument::data_access_id_t instrumentDataAccessId) {
+	void setInstrumentationId(Instrument::data_access_id_t instrumentDataAccessId) 
+	{
 		_instrumentDataAccessId = instrumentDataAccessId;
 	}
 
-	Instrument::data_access_id_t & getInstrumentationId() {
+	Instrument::data_access_id_t & getInstrumentationId() 
+	{
 		return _instrumentDataAccessId;
 	}
 
-	inline bool decreaseTop() {
+	inline bool decreaseTop() 
+	{
 		int res = _isTop.fetch_sub(1, std::memory_order_relaxed);
 		assert(res >= 0);
 		return (res == 0);
 	}
 
-	inline bool isTop() {
+	inline bool isTop() 
+	{
 		return (_isTop == -1);
 	}
 
-	inline bool decreaseReductor() {
+	inline bool decreaseReductor() 
+	{
 		int res = _isTop.fetch_sub(1, std::memory_order_relaxed);
 		assert(res >= 0);
 		return (res == 0);
 	}
 	
-	size_t getReductionLength() const {
+	size_t getReductionLength() const 
+	{
 		return _reductionLength;
 	}
 
-	void setReductionLength(size_t reductionLength) {
+	void setReductionLength(size_t reductionLength) 
+	{
 		_reductionLength = reductionLength;
 	}
 
-	reduction_type_and_operator_index_t getReductionOperator() const {
+	reduction_type_and_operator_index_t getReductionOperator() const 
+	{
 		return _reductionOperator;
 	}
 
-	void setReductionOperator(reduction_type_and_operator_index_t reductionOperator) {
+	void setReductionOperator(reduction_type_and_operator_index_t reductionOperator) 
+	{
 		_reductionOperator = reductionOperator;
 	}
 };

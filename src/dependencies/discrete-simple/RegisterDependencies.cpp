@@ -88,8 +88,8 @@ void nanos6_register_region_reduction_depinfo1(
 		__attribute__((unused)) void *base_address,
 		long dim1size,
 		__attribute__((unused)) long dim1start,
-		__attribute__((unused)) long dim1end
-) {
+		__attribute__((unused)) long dim1end) 
+{
 	// Currently we only support contiguous regions without offset
 	assert(dim1start == 0L);
 
@@ -105,8 +105,8 @@ void nanos6_register_region_weak_reduction_depinfo1(
 		__attribute__((unused)) void *base_address,
 		__attribute__((unused)) long dim1size,
 		long dim1start,
-		__attribute__((unused)) long dim1end
-) {
+		__attribute__((unused)) long dim1end) 
+{
 	assert(dim1start == 0L);
 	
 	// We don't support weak reductions, but we cannot safely ignore them.

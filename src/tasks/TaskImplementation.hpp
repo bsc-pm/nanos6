@@ -36,8 +36,8 @@ inline Task::Task(
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags,
-    __nondiscrete_unused void * seqs,
-    __nondiscrete_unused void * addresses,
+	__nondiscrete_unused void * seqs,
+	__nondiscrete_unused void * addresses,
 	__nondiscrete_unused size_t num_deps
 )
 	: _argsBlock(argsBlock),
@@ -113,7 +113,6 @@ inline void Task::reinitialize(
 	_parentSpawnCallback = nullptr;
 	
 	if (parent != nullptr) {
-        assert(0);
 		parent->addChild(this);
 	}
 }

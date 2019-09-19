@@ -41,8 +41,8 @@ namespace DataAccessRegistration {
 	static inline void processSatisfiedOriginators(
 			/* INOUT */ CPUDependencyData &hpDependencyData,
 						ComputePlace *computePlace,
-						bool fromBusyThread
-	) {
+						bool fromBusyThread) 
+	{
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
@@ -84,7 +84,8 @@ namespace DataAccessRegistration {
 		hpDependencyData._deletableOriginators.clear();
 	}
 
-	static inline DataAccessType combineTypes(DataAccessType type1, DataAccessType type2) {
+	static inline DataAccessType combineTypes(DataAccessType type1, DataAccessType type2) 
+	{
 		if (type1 == READWRITE_ACCESS_TYPE || type2 == READWRITE_ACCESS_TYPE)
 			return READWRITE_ACCESS_TYPE;
 		else if (type1 == WRITE_ACCESS_TYPE || type2 == WRITE_ACCESS_TYPE) {
@@ -97,7 +98,8 @@ namespace DataAccessRegistration {
 			return WRITE_ACCESS_TYPE; // We don't know, serialize just in case!
 	}
 
-	inline void upgradeAccess(DataAccess * access, DataAccessType newType) {
+	inline void upgradeAccess(DataAccess * access, DataAccessType newType) 
+	{
 		DataAccessType oldType = access->getType();
 		// Duping reductions is incorrect
 		assert(oldType != REDUCTION_ACCESS_TYPE && newType != REDUCTION_ACCESS_TYPE);
@@ -108,7 +110,8 @@ namespace DataAccessRegistration {
 	void registerTaskDataAccess(
 			Task *task, DataAccessType accessType, bool weak, void *address, size_t length,
 			reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
-			__attribute__((unused)) reduction_index_t reductionIndex) {
+			__attribute__((unused)) reduction_index_t reductionIndex) 
+	{
 		/*
 		 * This is called once per access in the task and it's purpose is to initialize our DataAccess structure with the
 		 * arguments of this function. No dependency registration is done here, and this call precedes the "registerTaskDataAccesses"
@@ -149,9 +152,12 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void finalizeDataAccess(Task *task, DataAccess *access, void *address, CPUDependencyData &hpDependencyData,
-							ComputePlace *computePlace) {
-		TaskDataAccesses &accessStruct = task->getDataAccesses();
+	void finalizeDataAccess(Task *task, 
+							DataAccess *access, 
+							void *address, 
+							CPUDependencyData &hpDependencyData,
+							ComputePlace *computePlace) 
+	{
 		bool last = false;
 
 		Task *parentTask = task->getParent();
@@ -220,8 +226,9 @@ namespace DataAccessRegistration {
 		assert(computePlace != nullptr);
 	}
 
-	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
-							 TaskDataAccesses &parentAccessStruct, Task *successor) {
+	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData, 
+							TaskDataAccesses &parentAccessStruct, Task *successor) 
+	{
 		if (successor != nullptr) {
 			DataAccess *next = successor->getDataAccesses().findAccess(address);
 			assert(next != nullptr);
@@ -248,7 +255,8 @@ namespace DataAccessRegistration {
 	}
 
 	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
-									CPUDependencyData &hpDependencyData) {
+									CPUDependencyData &hpDependencyData) 
+	{
 		DataAccessType accessType = pAccess->getType();
 		ReductionInfo *reductionInfo = pAccess->getReductionInfo();
 
@@ -306,7 +314,8 @@ namespace DataAccessRegistration {
 	}
 
 	void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
-							   CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators) {
+							   CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators) 
+	{
 		while (true) {
 			Task *successor = pAccess->getSuccessor();
 			if (successor != nullptr) {
@@ -333,7 +342,8 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData) {
+	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData) 
+	{
 		/*
 		 * This is only called once per task. It is responsible for registering all the dependencies of the accesses
 		 * in the task. It is called after everything has been constructed in the "registerTaskDataAccess" function.
@@ -370,7 +380,9 @@ namespace DataAccessRegistration {
 	}
 
 	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace,
-									CPUDependencyData &hpDependencyData, __attribute__((unused)) MemoryPlace *location, bool fromBusyThread) {
+									CPUDependencyData &hpDependencyData, 
+									__attribute__((unused)) MemoryPlace *location, bool fromBusyThread) 
+	{
 		assert(task != nullptr);
 
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
@@ -413,7 +425,8 @@ namespace DataAccessRegistration {
 #endif
 	}
 
-	void handleEnterBlocking(Task *task) {
+	void handleEnterBlocking(Task *task) 
+	{
 		assert(task != nullptr);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
@@ -423,7 +436,8 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void handleExitBlocking(Task *task) {
+	void handleExitBlocking(Task *task) 
+	{
 		assert(task != nullptr);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
@@ -433,7 +447,8 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData) {
+	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData) 
+	{
 		assert(task != nullptr);
 
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
@@ -465,7 +480,8 @@ namespace DataAccessRegistration {
 
 
 	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace,
-							__attribute__((unused)) CPUDependencyData &dependencyData) {
+							__attribute__((unused)) CPUDependencyData &dependencyData) 
+	{
 		assert(task != nullptr);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
@@ -475,13 +491,12 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void handleTaskRemoval(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace) {
-		/*
-		 * Borrar les weaks dels bottom maps que escaiguin
-		 */
+	void handleTaskRemoval(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace) 
+	{
 	}
 
-	void insertAccesses(Task *task, CPUDependencyData &hpDependencyData) {
+	void insertAccesses(Task *task, __attribute__((unused)) CPUDependencyData &hpDependencyData) 
+	{
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
 
@@ -585,12 +600,8 @@ namespace DataAccessRegistration {
 						assert(!predecessor->closesReduction());
 						becameUnsatisfied = true;
 
-						if(accessType != REDUCTION_ACCESS_TYPE || predecessor->getReductionInfo() != access->getReductionInfo()) {
+						if(accessType != REDUCTION_ACCESS_TYPE || predecessor->getReductionInfo() != access->getReductionInfo())
 							predecessor->setClosesReduction(true);
-//                            assert(predecessor->isTop());
-//                            becameUnsatisfied = false;
-//                            closeReduction = true; // Combine the reduction, but deferred (out of the lock).
-						}
 					} else {
 						becameUnsatisfied = true;
 					}
@@ -628,7 +639,8 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void releaseReductionInfo(ReductionInfo *reductionInfo) {
+	void releaseReductionInfo(ReductionInfo *reductionInfo) 
+	{
 		// Reduction must have finished to be combined and destroyed.
 		assert(reductionInfo->finished());
 
@@ -638,7 +650,8 @@ namespace DataAccessRegistration {
 		assert(wasLastCombination);
 	}
 
-	void completeCombineAndDeallocateReduction(ReductionInfo *info) {
+	void completeCombineAndDeallocateReduction(ReductionInfo *info) 
+	{
 		assert(info != nullptr);
 		const void *address = info->getOriginalAddress();
 		assert(info != address);
@@ -650,7 +663,8 @@ namespace DataAccessRegistration {
 
 	void
 	decreaseDeletableCountOrDelete(Task *originator,
-								   CPUDependencyData::deletable_originator_list_t &deletableOriginators) {
+								   CPUDependencyData::deletable_originator_list_t &deletableOriginators) 
+	{
 		if (originator->getDataAccesses().decreaseDeletableCount() && originator->decreaseRemovalBlockingCount()) {
 			deletableOriginators.push_back(originator); // hint the runtime to delete the task.
 		}
@@ -659,7 +673,8 @@ namespace DataAccessRegistration {
 	ReductionInfo *allocateReductionInfo(
 			__attribute__((unused)) DataAccessType &dataAccessType, reduction_index_t reductionIndex,
 			reduction_type_and_operator_index_t reductionTypeAndOpIndex,
-			void *address, const size_t length, const Task &task) {
+			void *address, const size_t length, const Task &task) 
+	{
 		assert(dataAccessType == REDUCTION_ACCESS_TYPE);
 
 		nanos6_task_info_t *taskInfo = task.getTaskInfo();
@@ -674,13 +689,16 @@ namespace DataAccessRegistration {
 		return newReductionInfo;
 	}
 
-	void combineTaskReductions(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace) { }
+	void combineTaskReductions(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace) 
+	{
+	}
 	
 	void releaseTaskwaitFragment(
 		__attribute__((unused)) Task *task,
 		__attribute__((unused)) ComputePlace *computePlace,
-		__attribute__((unused)) CPUDependencyData &hpDependencyData
-	) {}
+		__attribute__((unused)) CPUDependencyData &hpDependencyData) 
+	{
+	}
 }
 
 #pragma GCC visibility pop

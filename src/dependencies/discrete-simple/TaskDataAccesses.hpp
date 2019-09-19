@@ -24,7 +24,7 @@ struct TaskDataAccesses {
 	typedef std::unordered_map<void *, BottomMapEntry> bottom_map_t;
 
 #ifndef NDEBUG
-	enum flag_bits {
+	enum flag_bits_t {
 		HAS_BEEN_DELETED_BIT=0,
 		TOTAL_FLAG_BITS
 	};
@@ -106,7 +106,8 @@ struct TaskDataAccesses {
 	}
 #endif
 
-	inline bool decreaseDeletableCount() {
+	inline bool decreaseDeletableCount() 
+	{
 		/* We don't care about ordering, only atomicity, and that only one gets 0 as an answer */
 		int res = (_deletableCount.fetch_sub(1, std::memory_order_relaxed) - 1);
 		assert(res >= 0);
@@ -114,11 +115,13 @@ struct TaskDataAccesses {
 
 	}
 
-	inline void increaseDeletableCount() {
+	inline void increaseDeletableCount() 
+	{
 		_deletableCount.fetch_add(1, std::memory_order_relaxed);
 	}
 
-	inline DataAccess * findAccess(void * address) {
+	inline DataAccess * findAccess(void * address) 
+	{
 		for(size_t i = 0; i < currentIndex; ++i) {
 			if(_addressArray[i] == address)
 				return &_accessArray[i];
@@ -127,7 +130,8 @@ struct TaskDataAccesses {
 		return nullptr;
 	}
 
-	inline size_t getRealAccessNumber() {
+	inline size_t getRealAccessNumber() 
+	{
 		return currentIndex;
 	}
 };

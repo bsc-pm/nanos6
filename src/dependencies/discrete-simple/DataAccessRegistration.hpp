@@ -55,7 +55,8 @@ namespace DataAccessRegistration {
 	void handleTaskRemoval(Task *task, ComputePlace *computePlace);
 	void insertAccesses(Task * task, CPUDependencyData &hpDependencyData);
 	ReductionInfo * allocateReductionInfo(
-			DataAccessType &dataAccessType, reduction_index_t reductionIndex, reduction_type_and_operator_index_t reductionTypeAndOpIndex, 
+			DataAccessType &dataAccessType, reduction_index_t reductionIndex, 
+			reduction_type_and_operator_index_t reductionTypeAndOpIndex, 
 			void * address, const size_t length, const Task &task);
 
 	void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
