@@ -36,29 +36,29 @@ unsigned int nanos6_get_current_virtual_cpu(void)
 }
 
 
-void nanos6_enable_cpu(long systemCPUId)
+int nanos6_enable_cpu(long systemCPUId)
 {
-	typedef void nanos6_enable_cpu_t(long systemCPUId);
+	typedef int nanos6_enable_cpu_t(long systemCPUId);
 	
 	static nanos6_enable_cpu_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
 		symbol = (nanos6_enable_cpu_t *) _nanos6_resolve_symbol("nanos6_enable_cpu", "cpu control", NULL);
 	}
 	
-	(*symbol)(systemCPUId);
+	return (*symbol)(systemCPUId);
 }
 
 
-void nanos6_disable_cpu(long systemCPUId)
+int nanos6_disable_cpu(long systemCPUId)
 {
-	typedef void nanos6_disable_cpu_t(long systemCPUId);
+	typedef int nanos6_disable_cpu_t(long systemCPUId);
 	
 	static nanos6_disable_cpu_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
 		symbol = (nanos6_disable_cpu_t *) _nanos6_resolve_symbol("nanos6_disable_cpu", "cpu control", NULL);
 	}
 	
-	(*symbol)(systemCPUId);
+	return (*symbol)(systemCPUId);
 }
 
 

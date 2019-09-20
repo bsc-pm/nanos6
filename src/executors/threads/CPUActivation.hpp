@@ -22,7 +22,7 @@ class CPUActivation {
 public:
 	
 	//! \brief Set a CPU online
-	static inline void enable(size_t systemCPUId)
+	static inline bool enable(size_t systemCPUId)
 	{
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
@@ -35,7 +35,7 @@ public:
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
 					assert(false);
-					break;
+					return false;
 				case CPU::enabled_status:
 					// No change
 					successful = true;
@@ -56,13 +56,15 @@ public:
 					break;
 				case CPU::shutting_down_status:
 					// If the runtime is shutting down, no change and return
-					return;
+					return false;
 			}
 		}
+		
+		return true;
 	}
 	
 	//! \brief Set a CPU offline
-	static inline void disable(size_t systemCPUId)
+	static inline bool disable(size_t systemCPUId)
 	{
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
@@ -73,7 +75,7 @@ public:
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
 					assert(false);
-					break;
+					return false;
 				case CPU::enabled_status:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::disabling_status);
 					break;
@@ -90,9 +92,11 @@ public:
 					break;
 				case CPU::shutting_down_status:
 					// If the runtime is shutting down, no change and return
-					return;
+					return false;
 			}
 		}
+		
+		return true;
 	}
 	
 	//! \brief Check and handle CPU activation transitions

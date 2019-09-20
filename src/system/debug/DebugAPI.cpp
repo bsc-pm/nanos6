@@ -52,14 +52,14 @@ unsigned int nanos6_get_current_virtual_cpu(void)
 	return currentCPU->getIndex();
 }
 
-void nanos6_enable_cpu(long systemCPUId)
+int nanos6_enable_cpu(long systemCPUId)
 {
-	CPUActivation::enable(systemCPUId);
+	return CPUActivation::enable(systemCPUId);
 }
 
-void nanos6_disable_cpu(long systemCPUId)
+int nanos6_disable_cpu(long systemCPUId)
 {
-	CPUActivation::disable(systemCPUId);
+	return CPUActivation::disable(systemCPUId);
 }
 
 
