@@ -65,7 +65,7 @@ namespace DataAccessRegistration {
 	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
 									CPUDependencyData &hpDependencyData);
 
-	void completeCombineAndDeallocateReduction(ReductionInfo *info);
+	void releaseReductionInfo(ReductionInfo *info);
 
 	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
 							 TaskDataAccesses &parentAccessStruct, Task *successor);

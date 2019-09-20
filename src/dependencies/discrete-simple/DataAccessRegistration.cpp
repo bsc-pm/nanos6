@@ -203,7 +203,7 @@ namespace DataAccessRegistration {
 				cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
 
 				if (reductionInfo->incrementUnregisteredAccesses())
-					completeCombineAndDeallocateReduction(reductionInfo);
+					releaseReductionInfo(reductionInfo);
 
 				__attribute__((unused)) bool remove = task->getDataAccesses().decreaseDeletableCount();
 				assert(!remove);
@@ -276,14 +276,14 @@ namespace DataAccessRegistration {
 					}
 				} else {
 					if(accessType == REDUCTION_ACCESS_TYPE && reductionInfo->finished()) {
-						completeCombineAndDeallocateReduction(reductionInfo);
+						releaseReductionInfo(reductionInfo);
 					}
 					// Unlock next access and return
 					satisfyNextAccesses(address, hpDependencyData, accesses, successor);
 					return;
 				}
 			} else {
-				// Could be false positive. We need a lock on the bottomMap.
+				// Lock the bottom map and re-check (in case of races)
 				std::lock_guard<TaskDataAccesses::spinlock_t> guard(accesses._lock);
 				if (pAccess->getSuccessor() == nullptr) {
 					bottom_map_t::iterator itMap = accesses._accessMap.find(address);
@@ -291,7 +291,7 @@ namespace DataAccessRegistration {
 
 					if(accessType == REDUCTION_ACCESS_TYPE) {
 						if (reductionInfo->finished()) {
-							completeCombineAndDeallocateReduction(reductionInfo);
+							releaseReductionInfo(reductionInfo);
 							accesses._accessMap.erase(itMap);
 						} else {
 							itMap->second.access = nullptr;
@@ -457,7 +457,7 @@ namespace DataAccessRegistration {
 			if(reductionInfo != nullptr) {
 				assert(!reductionInfo->finished());
 				if(itMap->second.access == nullptr && reductionInfo->markAsClosed())
-					completeCombineAndDeallocateReduction(reductionInfo);
+					releaseReductionInfo(reductionInfo);
 				else
 					reductionInfo->markAsClosed();
 
@@ -555,15 +555,14 @@ namespace DataAccessRegistration {
 					reductionInfo = currentReductionInfo;
 					reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
 					size_t length = access->getReductionLength();
+
 					if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex ||
 							currentReductionInfo->getOriginalLength() != length) {
 						currentReductionInfo = allocateReductionInfo(accessType, reduction_index++, typeAndOpIndex,
 															  raw_address, length, *task);
-						currentReductionInfo->incrementRegisteredAccesses();
-					} else {
-						currentReductionInfo->incrementRegisteredAccesses();
 					}
 
+					currentReductionInfo->incrementRegisteredAccesses();
 					itMap->second.reductionInfo = currentReductionInfo;
 
 					assert(currentReductionInfo != nullptr);
@@ -572,7 +571,6 @@ namespace DataAccessRegistration {
 					assert(currentReductionInfo->getOriginalAddress() == raw_address);
 
 					access->setReductionInfo(currentReductionInfo);
-
 					accessStruct.increaseDeletableCount();
 				} else {
 					reductionInfo = itMap->second.reductionInfo;
@@ -621,7 +619,7 @@ namespace DataAccessRegistration {
 			} // Lock Release
 
 			if(closeReduction) {
-				completeCombineAndDeallocateReduction(reductionInfo);
+				releaseReductionInfo(reductionInfo);
 			}
 
 			if (!becameUnsatisfied) {
@@ -634,34 +632,24 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void releaseReductionInfo(ReductionInfo *reductionInfo) 
-	{
-		// Reduction must have finished to be combined and destroyed.
-		assert(reductionInfo->finished());
-
-		__attribute__((unused)) bool wasLastCombination = reductionInfo->combine(true);
-		ObjectAllocator<ReductionInfo>::deleteObject(reductionInfo);
-
-		assert(wasLastCombination);
-	}
-
-	void completeCombineAndDeallocateReduction(ReductionInfo *info) 
+	void releaseReductionInfo(ReductionInfo *info) 
 	{
 		assert(info != nullptr);
 		assert(info != info->getOriginalAddress());
 		assert(info->finished());
 
-		// This will combine the reduction
-		releaseReductionInfo(info);
+		__attribute__((unused)) bool wasLastCombination = info->combine(true);
+		ObjectAllocator<ReductionInfo>::deleteObject(info);
+
+		assert(wasLastCombination);
 	}
 
 	void
 	decreaseDeletableCountOrDelete(Task *originator,
 								   CPUDependencyData::deletable_originator_list_t &deletableOriginators) 
 	{
-		if (originator->getDataAccesses().decreaseDeletableCount() && originator->decreaseRemovalBlockingCount()) {
-			deletableOriginators.push_back(originator); // hint the runtime to delete the task.
-		}
+		if (originator->getDataAccesses().decreaseDeletableCount() && originator->decreaseRemovalBlockingCount())
+			deletableOriginators.push_back(originator); // Ensure destructor is called
 	}
 
 	ReductionInfo *allocateReductionInfo(
