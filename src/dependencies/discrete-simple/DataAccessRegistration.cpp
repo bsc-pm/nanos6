@@ -205,7 +205,7 @@ namespace DataAccessRegistration {
 				if (reductionInfo->incrementUnregisteredAccesses())
 					completeCombineAndDeallocateReduction(reductionInfo);
 
-				bool remove = task->getDataAccesses().decreaseDeletableCount();
+				__attribute__((unused)) bool remove = task->getDataAccesses().decreaseDeletableCount();
 				assert(!remove);
 			} else {
 				reductionInfo->incrementUnregisteredAccesses();

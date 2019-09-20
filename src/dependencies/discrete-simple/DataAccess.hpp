@@ -88,16 +88,6 @@ public:
 		return _type;
 	}
 	
-	inline bool isReader() const
-	{
-		return (_type == READ_ACCESS_TYPE || ((_type == REDUCTION_ACCESS_TYPE && !_closesReduction)));
-	}
-	
-	inline bool isWriter() const
-	{
-		return (_type == WRITE_ACCESS_TYPE || ((_type == REDUCTION_ACCESS_TYPE && _closesReduction)));
-	}
-
 	inline Task *getOriginator() const
 	{
 		return _originator;
@@ -164,13 +154,6 @@ public:
 	inline bool isTop() 
 	{
 		return (_isTop == -1);
-	}
-
-	inline bool decreaseReductor() 
-	{
-		int res = _isTop.fetch_sub(1, std::memory_order_relaxed);
-		assert(res >= 0);
-		return (res == 0);
 	}
 	
 	size_t getReductionLength() const 

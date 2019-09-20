@@ -85,7 +85,7 @@ void nanos6_register_region_reduction_depinfo1(
 		void *handler,
 		int symbol_index,
 		__attribute__((unused)) char const *region_text,
-		__attribute__((unused)) void *base_address,
+		void *base_address,
 		long dim1size,
 		__attribute__((unused)) long dim1start,
 		__attribute__((unused)) long dim1end) 

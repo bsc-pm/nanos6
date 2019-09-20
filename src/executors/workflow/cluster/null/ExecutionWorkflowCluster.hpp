@@ -13,7 +13,7 @@
 
 class ComputePlace;
 class MemoryPlace;
-class DataAccess;
+struct DataAccess;
 
 namespace ExecutionWorkflow {
 	class ClusterAllocationAndPinningStep : public Step {

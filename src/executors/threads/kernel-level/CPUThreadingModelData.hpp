@@ -14,7 +14,7 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 
 
-struct CPU;
+class CPU;
 class WorkerThread;
 
 

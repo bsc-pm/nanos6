@@ -22,7 +22,7 @@
 #include <ExecutionStep.hpp>
 
 
-class DataAccess;
+struct DataAccess;
 class Task;
 class ReductionInfo;
 class MemoryPlace;

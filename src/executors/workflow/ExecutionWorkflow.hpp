@@ -14,7 +14,7 @@
 #include "ExecutionStep.hpp"
 
 class ComputePlace;
-class DataAccess;
+struct DataAccess;
 class MemoryPlace;
 class Task;
 

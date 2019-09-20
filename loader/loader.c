@@ -47,12 +47,12 @@ static void _nanos6_loader_set_up_lib_name(char const *variant, char const *depe
 		if(suffix != NULL)
 			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so", path, variant, dependencies);
 		else
-			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so", path, variant, dependencies, suffix);
+			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so.%s", path, variant, dependencies, suffix);
 	} else {
 		if(suffix != NULL)
 			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so", variant, dependencies);
 		else
-			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so", variant, dependencies, suffix);
+			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so.%s", variant, dependencies, suffix);
 	}
 	
 }

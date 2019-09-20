@@ -15,7 +15,7 @@
 class MemoryPool;
 class MemoryPoolGlobal;
 class Task;
-class DataAccess;
+struct DataAccess;
 
 class MemoryAllocator {
 private:
