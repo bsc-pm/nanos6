@@ -41,27 +41,21 @@ char _nanos6_error_text[ERROR_TEXT_SIZE];
 
 static char lib_name[MAX_LIB_PATH+1];
 
-
 static void _nanos6_loader_set_up_lib_name(char const *variant, char const *dependencies, char const *path, char const *suffix)
 {
-	if (path != NULL) {
-		strncpy(lib_name, path, MAX_LIB_PATH);
-		strncat(lib_name, "/libnanos6-", MAX_LIB_PATH);
+	if(path != NULL) {
+		if(suffix != NULL)
+			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so", path, variant, dependencies);
+		else
+			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so", path, variant, dependencies, suffix);
 	} else {
-		strncpy(lib_name, "libnanos6-", MAX_LIB_PATH);
+		if(suffix != NULL)
+			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so", variant, dependencies);
+		else
+			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so", variant, dependencies, suffix);
 	}
 	
-	strncat(lib_name, variant, MAX_LIB_PATH);
-	strncat(lib_name, "-", MAX_LIB_PATH);
-	strncat(lib_name, dependencies, MAX_LIB_PATH);
-	strncat(lib_name, ".so", MAX_LIB_PATH);
-	
-	if (suffix != NULL) {
-		strncat(lib_name, ".", MAX_LIB_PATH);
-		strncat(lib_name, suffix, MAX_LIB_PATH);
-	}
 }
-
 
 static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char const *dependencies, char const *path)
 {
