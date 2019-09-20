@@ -733,6 +733,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistrationImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/DependencyDomain.hpp \
 	src/dependencies/linear-regions-fragmented/DependencySystem.hpp \
+	src/dependencies/linear-regions-fragmented/MultidimensionalAPI.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionInfo.hpp \
 	src/dependencies/linear-regions-fragmented/ReductionSpecific.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessHooks.hpp \
@@ -747,7 +748,6 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions/IntrusiveLinearRegionMapImplementation.hpp \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
-	src/dependencies/linear-regions/MultidimensionalAPI.hpp \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.hpp \
