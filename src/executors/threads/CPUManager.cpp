@@ -256,23 +256,6 @@ CPU *CPUManager::getIdleCPU()
 	}
 }
 
-void CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs)
-{
-	assert(idleCPUs.empty());
-	
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
-	while (idleCPU != boost::dynamic_bitset<>::npos) {
-		_idleCPUs[idleCPU] = false;
-		Monitoring::cpuBecomesActive(idleCPU);
-		idleCPUs.push_back(_cpus[idleCPU]);
-		idleCPU = _idleCPUs.find_next(idleCPU);
-	}
-	
-	// Reset the counter of idle CPUs as none should be idle now
-	_numIdleCPUs = 0;
-}
-
 size_t CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs)
 {
 	assert(idleCPUs.size() >= numCPUs);

@@ -87,9 +87,6 @@ public:
 	//! \brief get an idle CPU
 	static CPU *getIdleCPU();
 	
-	//! \brief get all idle CPUs
-	static void getIdleCPUs(std::vector<CPU *> &idleCPUs);
-	
 	//! \brief Get a specific number of idle CPUs
 	//!
 	//! \param[in,out] idleCPUs A vector of at least size 'numCPUs' where the
