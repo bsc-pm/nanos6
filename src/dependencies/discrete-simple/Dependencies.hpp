@@ -30,6 +30,13 @@ void nanos6_register_write_depinfo(void *handler, void *start, size_t length, in
 //! \param[in] length number of bytes until and including the last byte accessed
 void nanos6_register_readwrite_depinfo(void *handler, void *start, size_t length, int symbol_index);
 
+//! \brief Register a task weak commutative access on linear region of addresses
+//!
+//! \param[in] handler the handler received in register_depinfo
+//! \param[in] start first address accessed
+//! \param[in] length number of bytes until and including the last byte accessed
+void nanos6_register_weak_commutative_depinfo(void *handler, void *start, size_t length, int symbol_index);
+
 //! \brief Register a task commutative access on linear region of addresses
 //!
 //! \param[in] handler the handler received in register_depinfo
