@@ -7,9 +7,6 @@
 #ifndef WORKER_THREAD_HPP
 #define WORKER_THREAD_HPP
 
-
-#include <atomic>
-
 #include "DependencyDomain.hpp"
 #include "WorkerThreadBase.hpp"
 #include "instrument/stats/InstrumentHardwareCountersThreadLocalData.hpp"
@@ -26,9 +23,6 @@ class WorkerThreadRunner;
 
 class WorkerThread : public WorkerThreadBase {
 private:
-	//! Indicates that it is time for this thread to participate in the shutdown process
-	std::atomic<bool> _mustShutDown;
-	
 	//! The Task currently assigned to this thread
 	Task *_task;
 	
@@ -87,13 +81,6 @@ public:
 	
 	//! \brief code that the thread executes
 	virtual void body();
-	
-	
-	//! \brief turn on the flag to start the shutdown process
-	inline void signalShutdown();
-	
-	//! \brief get the thread shutdown flag
-	inline bool hasPendingShutdown();
 	
 	//! \brief returns the WorkerThread that runs the call
 	static inline WorkerThread *getCurrentWorkerThread();

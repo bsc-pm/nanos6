@@ -39,9 +39,6 @@ private:
 		std::deque<WorkerThread *> _threads;
 	};
 	
-	//! \brief indicates if the runtime is shutting down
-	static std::atomic<bool> _mustExit;
-	
 	//! \brief threads blocked due to idleness by NUMA node
 	static IdleThreads *_idleThreads;
 	
@@ -94,9 +91,6 @@ public:
 	
 	static inline void resumeIdle(const std::vector<CPU *> &idleCPUs, bool inInitializationOrShutdown=false, bool doNotCreate=false);
 	
-	//! \brief returns true if the thread must shut down
-	static inline bool mustExit();
-	
 	static void addShutdownThread(WorkerThread *shutdownThread);
 	
 	friend class ThreadManagerDebuggingInterface;
@@ -108,14 +102,14 @@ inline WorkerThread *ThreadManager::createWorkerThread(CPU *cpu)
 {
 	assert(cpu != nullptr);
 	
-	// The shutdown code is not ready to have _totalThreads changing
-	assert(!_mustExit);
+	// The runtime cannot be shutting down when creating a thread
+	assert(cpu->getActivationStatus() != CPU::shutting_down_status);
 	
-	// Otherwise create a new one
+	// Create a new thread
 	_totalThreads++;
 	
-	// The shutdown code is not ready to have _totalThreads changing
-	assert(!_mustExit);
+	// The runtime cannot be shutting down when creating a thread
+	assert(cpu->getActivationStatus() != CPU::shutting_down_status);
 	
 	return new WorkerThread(cpu);
 }
@@ -219,11 +213,6 @@ inline void ThreadManager::resumeIdle(const std::vector<CPU *> &idleCPUs, bool i
 	}
 }
 
-
-inline bool ThreadManager::mustExit()
-{
-	return _mustExit;
-}
 
 inline void ThreadManager::addShutdownThread(WorkerThread *shutdownThread)
 {

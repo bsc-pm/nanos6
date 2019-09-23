@@ -14,12 +14,12 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include "CPUManager.hpp"
 #include "ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 
 
-std::atomic<bool> ThreadManager::_mustExit(false);
 ThreadManager::IdleThreads *ThreadManager::_idleThreads;
 std::atomic<long> ThreadManager::_totalThreads(0);
 ThreadManager::ShutdownThreads *ThreadManager::_shutdownThreads;
@@ -37,7 +37,18 @@ void ThreadManager::shutdownPhase1()
 {
 	assert(_shutdownThreads != nullptr);
 	
-	_mustExit = true;
+	// If all worker threads are idle, we must wake up one of them so it
+	// triggers a chain shutdown for all idle threads
+	WorkerThread *idleThread = getAnyIdleThread();
+	if (idleThread != nullptr) {
+		CPU *idleCPU = CPUManager::getIdleCPU();
+		if (idleCPU != nullptr) {
+			idleThread->resume(idleCPU, true);
+		} else {
+			addIdler(idleThread);
+		}
+	}
+	
 	const int MIN_SPINS = 100;
 	const int MAX_SPINS = 100*1000*1000;
 	

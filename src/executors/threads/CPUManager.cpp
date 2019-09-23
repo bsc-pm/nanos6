@@ -6,11 +6,14 @@
 
 #include <boost/dynamic_bitset.hpp>
 #include <cassert>
+#include <config.h>
 #include <sched.h>
 #include <sstream>
 
 #include "CPU.hpp"
+#include "CPUActivation.hpp"
 #include "CPUManager.hpp"
+#include "NaiveCPUManagerPolicy.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
@@ -26,6 +29,8 @@ boost::dynamic_bitset<> CPUManager::_idleCPUs;
 std::vector<boost::dynamic_bitset<>> CPUManager::_NUMANodeMask;
 std::vector<size_t> CPUManager::_systemToVirtualCPUId;
 EnvironmentVariable<size_t> CPUManager::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
+size_t CPUManager::_numIdleCPUs;
+CPUManagerPolicyInterface *CPUManager::_cpuManagerPolicy;
 
 
 namespace cpumanager_internals {
@@ -70,6 +75,9 @@ size_t CPUManager::getNumCPUsPerTaskforGroup()
 void CPUManager::preinitialize()
 {
 	_finishedCPUInitialization = false;
+	
+	assert(_cpuManagerPolicy == nullptr);
+	_cpuManagerPolicy = new NaiveCPUManagerPolicy();
 	
 	cpu_set_t processCPUMask;
 	int rc = sched_getaffinity(0, sizeof(cpu_set_t), &processCPUMask);
@@ -140,6 +148,7 @@ void CPUManager::preinitialize()
 	// Set all CPUs as not idle
 	_idleCPUs.resize(numAvailableCPUs);
 	_idleCPUs.reset();
+	_numIdleCPUs = 0;
 }
 
 void CPUManager::initialize()
@@ -163,6 +172,21 @@ void CPUManager::initialize()
 	}
 	
 	_finishedCPUInitialization = true;
+}
+
+void CPUManager::shutdownPhase1()
+{
+	// Notify all CPUs that the runtime is shutting down
+	for (size_t virtualCPUId = 0; virtualCPUId < _cpus.size(); ++virtualCPUId) {
+		if (_cpus[virtualCPUId] != nullptr) {
+			CPUActivation::shutdownCPU(_cpus[virtualCPUId]);
+		}
+	}
+}
+
+void CPUManager::shutdownPhase2()
+{
+	delete _cpuManagerPolicy;
 }
 
 void CPUManager::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
@@ -192,12 +216,28 @@ void CPUManager::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
 	}
 }
 
-void CPUManager::cpuBecomesIdle(CPU *cpu)
+bool CPUManager::cpuBecomesIdle(CPU *cpu)
 {
 	const int index = cpu->getIndex();
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	_idleCPUsLock.lock();
 	_idleCPUs[index] = true;
+	++_numIdleCPUs;
+	assert(_numIdleCPUs <= _cpus.size());
+	
 	Monitoring::cpuBecomesIdle(index);
+	_idleCPUsLock.unlock();
+	
+	// If the CPU status had changed to shutting down right before idling
+	// it, revert this operation so that this CPU can participate in the
+	// shutdown mechanism (leading to a faster shutdown)
+	if (cpu->getActivationStatus() == CPU::shutting_down_status) {
+		// The unidling should be done correctly
+		__attribute__((unused)) bool unidled = unidleCPU(cpu);
+		assert(unidled);
+		return false;
+	} else {
+		return true;
+	}
 }
 
 CPU *CPUManager::getIdleCPU()
@@ -206,6 +246,9 @@ CPU *CPUManager::getIdleCPU()
 	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
 	if (idleCPU != boost::dynamic_bitset<>::npos) {
 		_idleCPUs[idleCPU] = false;
+		assert(_numIdleCPUs > 0);
+		
+		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(idleCPU);
 		return _cpus[idleCPU];
 	} else {
@@ -213,18 +256,32 @@ CPU *CPUManager::getIdleCPU()
 	}
 }
 
-void CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs)
+size_t CPUManager::getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs)
 {
-	assert(idleCPUs.empty());
+	assert(idleCPUs.size() >= numCPUs);
+	
+	size_t numObtainedCPUs = 0;
 	
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
-	while (idleCPU != boost::dynamic_bitset<>::npos) {
+	while (numObtainedCPUs < numCPUs && idleCPU != boost::dynamic_bitset<>::npos) {
+		// Signal that the CPU becomes active
 		_idleCPUs[idleCPU] = false;
 		Monitoring::cpuBecomesActive(idleCPU);
-		idleCPUs.push_back(_cpus[idleCPU]);
+		
+		// Place the CPU in the vector
+		idleCPUs[numObtainedCPUs] = _cpus[idleCPU];
+		++numObtainedCPUs;
+		
+		// Iterate to the next idle CPU
 		idleCPU = _idleCPUs.find_next(idleCPU);
 	}
+	
+	// Decrease the counter of idle CPUs by the obtained amount
+	assert(_numIdleCPUs >= numObtainedCPUs);
+	_numIdleCPUs -= numObtainedCPUs;
+	
+	return numObtainedCPUs;
 }
 
 CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
@@ -234,6 +291,9 @@ CPU *CPUManager::getIdleNUMANodeCPU(size_t NUMANodeId)
 	boost::dynamic_bitset<>::size_type idleCPU = tmpIdleCPUs.find_first();
 	if (idleCPU != boost::dynamic_bitset<>::npos) {
 		_idleCPUs[idleCPU] = false;
+		assert(_numIdleCPUs > 0);
+		
+		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(idleCPU);
 		return _cpus[idleCPU];
 	} else {
@@ -249,9 +309,18 @@ bool CPUManager::unidleCPU(CPU *cpu)
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	if (_idleCPUs[index]) {
 		_idleCPUs[index] = false;
+		assert(_numIdleCPUs > 0);
+		
+		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(index);
 		return true;
 	} else {
 		return false;
 	}
+}
+
+void CPUManager::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)
+{
+	assert(_cpuManagerPolicy != nullptr);
+	_cpuManagerPolicy->executePolicy(cpu, hint, numTasks);
 }

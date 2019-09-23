@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_DEBUG_H
@@ -77,7 +77,8 @@ typedef enum {
 	nanos6_enabling_cpu,
 	nanos6_enabled_cpu,
 	nanos6_disabling_cpu,
-	nanos6_disabled_cpu
+	nanos6_disabled_cpu,
+	nanos6_shutting_down_cpu
 } nanos6_cpu_status_t;
 
 //! \brief retrieve the runtime view of a given CPU identified by the identifier given by the operating system

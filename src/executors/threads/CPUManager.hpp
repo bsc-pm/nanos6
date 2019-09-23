@@ -14,9 +14,15 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include "CPU.hpp"
+#include "CPUManager.hpp"
+#include "CPUManagerPolicyInterface.hpp"
+#include "ThreadManager.hpp"
+#include "WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/SpinLock.hpp"
+
+#include <InstrumentComputePlaceManagement.hpp>
 
 
 class CPUManager {
@@ -41,14 +47,26 @@ private:
 	//! \brief Number of different groups that can collaborate to execute a single taskfor
 	static EnvironmentVariable<size_t> _taskforGroups;
 	
+	//! The current number of idle CPUs, kept atomic through idleCPUsLock
+	static size_t _numIdleCPUs;
+	
+	//! The policy used to manage CPUs
+	static CPUManagerPolicyInterface *_cpuManagerPolicy;
+	
 	static void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
-
+	
 	static size_t getClosestGroupNumber(size_t numCPUs, size_t numGroups);
 	
 public:
 	static void preinitialize();
 	
 	static void initialize();
+	
+	//! \brief Notify all available CPUs that the runtime is shutting down
+	static void shutdownPhase1();
+	
+	//! \brief Complete the shutdown of the CPUManager
+	static void shutdownPhase2();
 	
 	//! \brief get the CPU object assigned to a given numerical system CPU identifier
 	static inline CPU *getCPU(size_t systemCPUId);
@@ -62,14 +80,20 @@ public:
 	//! \brief get a reference to the list of CPUs
 	static inline std::vector<CPU *> const &getCPUListReference();
 	
-	//! \brief mark a CPU as idle
-	static void cpuBecomesIdle(CPU *cpu);
+	//! \brief Mark a CPU as idle
+	//! \return Whether the operation was successful
+	static bool cpuBecomesIdle(CPU *cpu);
 	
 	//! \brief get an idle CPU
 	static CPU *getIdleCPU();
 	
-	//! \brief get all idle CPUs
-	static void getIdleCPUs(std::vector<CPU *> &idleCPUs);
+	//! \brief Get a specific number of idle CPUs
+	//!
+	//! \param[in,out] idleCPUs A vector of at least size 'numCPUs' where the
+	//! retreived idle CPUs will be placed
+	//! \param[in] numCPUs The amount of CPUs to retreive
+	//! \return The number of idle CPUs obtained/valid references in the vector
+	static size_t getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs);
 	
 	//! \brief get an idle CPU from a specific NUMA node
 	static CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
@@ -82,6 +106,15 @@ public:
 	
 	//! \brief Get number of CPUs that can collaborate to execute a single taskfor. i.e. number of CPUs per taskfor group.
 	static size_t getNumCPUsPerTaskforGroup();
+	
+	//! \brief Taking into account the current workload and the amount of
+	//! active or idle CPUs, consider idling/waking up CPUs
+	//!
+	//! \param[in] cpu The CPU that triggered the call, if any
+	//! \param[in] hint A hint what kind of change triggered this call
+	//! \param[in] numTasks A hint to be used by the policy taking actions,
+	//! which contains information about what triggered a call to the policy
+	static void executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks = 0);
 };
 
 

@@ -5,6 +5,7 @@
 */
 
 #include "ExecutionWorkflowHost.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
@@ -49,6 +50,9 @@ namespace ExecutionWorkflow {
 				nullptr,
 				BUSY_COMPUTE_PLACE_TASK_HINT
 			);
+			
+			// After adding a task, the CPUManager may want to unidle a CPU
+			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, ADDED_TASKS, 1);
 			
 			return;
 		}

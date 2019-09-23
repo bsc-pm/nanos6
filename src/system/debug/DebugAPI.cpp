@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -81,6 +81,8 @@ nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 			return nanos6_disabling_cpu;
 		case CPU::disabled_status:
 			return nanos6_disabled_cpu;
+		case CPU::shutting_down_status:
+			return nanos6_shutting_down_cpu;
 	}
 	
 	assert("Unknown CPU status" == 0);

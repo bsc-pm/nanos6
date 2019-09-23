@@ -20,7 +20,7 @@
 
 
 inline WorkerThread::WorkerThread(CPU *cpu)
-	: WorkerThreadBase(cpu), _mustShutDown(false), _task(nullptr), _dependencyDomain(),
+	: WorkerThreadBase(cpu), _task(nullptr), _dependencyDomain(),
 	_hardwareCounters(), _instrumentationData(), _threadCounters()
 {
 	_originalNumaNode = cpu->getNumaNodeId();
@@ -86,16 +86,6 @@ inline void WorkerThread::handleTask(CPU *cpu, Task *task)
 	_task = oldTask;
 }
 
-
-inline void WorkerThread::signalShutdown()
-{
-	_mustShutDown = true;
-}
-
-inline bool WorkerThread::hasPendingShutdown()
-{
-	return _mustShutDown;
-}
 
 inline WorkerThread *WorkerThread::getCurrentWorkerThread()
 {

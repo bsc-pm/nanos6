@@ -11,6 +11,7 @@
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 #include "UserMutex.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -136,12 +137,27 @@ void nanos6_user_unlock(void **handlerPointer)
 			WorkerThread *releasedThread = releasedTask->getThread();
 			assert(releasedThread != nullptr);
 			
-			Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
-			
-			currentThread->switchTo(releasedThread);
-			Instrument::ThreadInstrumentationContext::updateComputePlace(currentThread->getComputePlace()->getInstrumentationId());
+			// Try to get an idle CPU and offload the released task's execution in it
+			CPU *idleCPU = (CPU *) CPUManager::getIdleCPU();
+			if (idleCPU != nullptr) {
+				releasedThread->resume(idleCPU, false);
+			} else {
+				// No idle CPUs available, first re-add the current task to the scheduler
+				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
+				
+				// Now switch to the released thread
+				currentThread->switchTo(releasedThread);
+				
+				// Update the CPU since the thread may have migrated
+				cpu = currentThread->getComputePlace();
+				assert(cpu != nullptr);
+				Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
+			}
 		} else {
 			Scheduler::addReadyTask(releasedTask, cpu, UNBLOCKED_TASK_HINT);
+			
+			// After adding a task, the CPUManager may want to unidle a CPU
+			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, ADDED_TASKS, 1);
 		}
 	}
 }
