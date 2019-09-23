@@ -488,7 +488,7 @@ discrete_simple_dependency_flags = -I$(srcdir)/src/dependencies/linear-regions -
 default_dependency_sources = $(discrete_simple_dependency_sources)
 common_sources += $(linear_regions_alternative_dependency_sources)
 
-SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent commutative reduction weak_reduction # + weak_commutative
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent commutative weak_commutative reduction weak_reduction
 
 introspection_sources = \
 	src/instrument/support/introspection/CodeAddressInfoBase.cpp \
