@@ -716,6 +716,7 @@ noinst_HEADERS = \
 	src/dependencies/discrete-simple/CPUDependencyData.hpp \
 	src/dependencies/discrete-simple/DataAccess.hpp \
 	src/dependencies/discrete-simple/DataAccessRegistration.hpp \
+	src/dependencies/discrete-simple/DataAccessRegistrationImplementation.hpp \
 	src/dependencies/discrete-simple/Dependencies.hpp \
 	src/dependencies/discrete-simple/DependencyDomain.hpp \
 	src/dependencies/discrete-simple/DependencySystem.hpp \
