@@ -1,6 +1,19 @@
 # Nanos6 Release Notes
 All notable changes to this project will be documented in this file.
 
+
+## Version 2.2.1, Fri Sep 27, 2019
+The 2.2.1 release corresponds to the OmpSs-2 2019.06b release. It mainly introduces bug fixes and code improvements.
+
+### General
+- Renaming loop directive to task for
+- Tasks can leverage reductions and external events at the same time (over distinct data regions)
+- OmpSs-2@Cluster bugfixes
+- Fixing binding information reported by nanos6-info binary
+- Support for the TAGASPI library
+- Other bugfixes and code improvements
+
+
 ## Version 2.2, Mon Jun 17, 2019
 The 2.2 release corresponds to the OmpSs-2 2019.06 release. It mainly introduces the new support for OmpSs-2@Cluster. It also
 includes some improvements and optimizations for array task reductions and general bugfixes.
@@ -16,6 +29,7 @@ includes some improvements and optimizations for array task reductions and gener
 ### Scheduling
 - Delete obsolete schedulers
 
+
 ## Version 2.1, Fri Nov 9, 2018
 The 2.1 release corresponds to the OmpSs-2 2018.11 release. It provides full support for the [TAMPI](https://github.com/bsc-pm/tampi)
 library. It also includes general bugfixes and performance improvements.
@@ -27,17 +41,20 @@ library. It also includes general bugfixes and performance improvements.
 ### Others
 - Bugfixes in task external events API
 
+
 ## Version 2.0.2, Mon Jun 25, 2018
 The 2.0.2 release corresponds to the OmpSs-2 2018.06c release.
 
 ### General
 - Bugfixes in HWLOC support
 
+
 ## Version 2.0.1, Mon Jun 25, 2018
 The 2.0.1 release corresponds to the OmpSs-2 2018.06b release.
 
 ### General
 - Bugfixes in task reductions
+
 
 ## Version 2.0, Mon Jun 25, 2018
 The 2.0 release corresponds to the OmpSs-2 2018.06 release. It introduces support for OmpSs-2@CUDA in Unified Memory NVIDIA devices.
@@ -60,12 +77,14 @@ It also supports array task reductions in C/C++ and task priorities. Additionall
 - Add task external events API
 - Rename taskloop construct to loop
 
+
 ## Version 1.0.1, Thu Nov 23, 2017
 The 1.0.1 release corresponds to the OmpSs-2 2017.11b release.
 
 ### General
 - Fixes for the building system
 - Fixes for the loading system
+
 
 ## Version 1.0, Mon Nov 13, 2017
 The 1.0 release corresponds to the OmpSs-2 2017.11 release. It is the first release of the Nanos6 runtime system. It implements the basic
