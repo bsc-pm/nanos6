@@ -5,10 +5,10 @@
 */
 
 #include "UnsyncScheduler.hpp"
-
 #include "executors/threads/CPUManager.hpp"
 #include "scheduling/ready-queues/ReadyQueueDeque.hpp"
 #include "scheduling/ready-queues/ReadyQueueMap.hpp"
+
 
 UnsyncScheduler::UnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
 	: _enableImmediateSuccessor(enableImmediateSuccessor), _enablePriority(enablePriority)

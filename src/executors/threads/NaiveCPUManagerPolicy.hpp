@@ -36,18 +36,20 @@ public:
 			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 			assert(currentThread != nullptr);
 			
-			// Account this CPU as idle and mark the thread as idle
-			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 			bool cpuIsIdle = CPUManager::cpuBecomesIdle((CPU *) cpu);
 			if (cpuIsIdle) {
+				// Account this CPU as idle and mark the thread as idle
+				Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+				
 				ThreadManager::addIdler(currentThread);
 				currentThread->switchTo(nullptr);
 				
 				// The thread may have migrated, update the compute place
 				cpu = currentThread->getComputePlace();
 				assert(cpu != nullptr);
+				
+				Instrument::resumedComputePlace(cpu->getInstrumentationId());
 			}
-			Instrument::resumedComputePlace(cpu->getInstrumentationId());
 		} else { // hint = ADDED_TASKS
 			// At most we will obtain as many idle CPUs as the maximum amount
 			size_t numCPUsToObtain = std::min((size_t) CPUManager::getTotalCPUs(), numTasks);

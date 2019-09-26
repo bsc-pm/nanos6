@@ -16,6 +16,7 @@
 
 #include <ClusterManager.hpp>
 
+
 class ClusterScheduler : public SchedulerInterface {
 	SchedulerInterface *_clusterSchedulerImplementation;
 	
@@ -48,6 +49,17 @@ public:
 	inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
 	{
 		return _clusterSchedulerImplementation->getReadyTask(computePlace, deviceComputePlace);
+	}
+	
+	//! \brief Get the amount of ready tasks in the queue
+	//!
+	//! \param[in] computePlace The host compute place
+	//! \param[in] deviceComputePlace The target device compute place if it exists
+	//!
+	//! \returns The current amount of tasks in the ready queue
+	inline size_t getNumReadyTasks(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr) const
+	{
+		return _clusterSchedulerImplementation->getNumReadyTasks(computePlace, deviceComputePlace);
 	}
 	
 	inline std::string getName() const

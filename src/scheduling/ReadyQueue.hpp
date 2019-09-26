@@ -46,6 +46,8 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
+	
+	virtual size_t getNumReadyTasks() const = 0;
 };
 
 

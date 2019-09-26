@@ -219,7 +219,20 @@ void CPUManager::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
 bool CPUManager::cpuBecomesIdle(CPU *cpu)
 {
 	const int index = cpu->getIndex();
+	
 	_idleCPUsLock.lock();
+	
+	// Before idling the CPU, check if there truly aren't any tasks ready
+	// NOTE: This is a workaround to solve the race condition between adding
+	// tasks and idling CPUs; i.e. it may happen that before a CPU is idled,
+	// tasks are added in the scheduler and that CPU may never have the chance
+	// to wake up and execute these newly added tasks
+	if (Scheduler::getNumReadyTasks(cpu)) {
+		// If there are ready tasks, release the lock and do not idle the CPU
+		_idleCPUsLock.unlock();
+		return false;
+	}
+	
 	_idleCPUs[index] = true;
 	++_numIdleCPUs;
 	assert(_numIdleCPUs <= _cpus.size());

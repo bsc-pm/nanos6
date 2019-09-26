@@ -18,6 +18,7 @@
 #include <InstrumentTaskStatus.hpp>
 #include <Monitoring.hpp>
 
+
 class UnsyncScheduler {
 protected:
 	std::vector<Task *> _immediateSuccessorTasks;
@@ -86,6 +87,14 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
+	
+	//! \brief Get the amount of ready tasks in the queue
+	//!
+	//! \returns The current amount of tasks in the ready queue
+	virtual inline size_t getNumReadyTasks() const
+	{
+		return _readyTasks->getNumReadyTasks();
+	}
 	
 	virtual inline bool priorityEnabled()
 	{
