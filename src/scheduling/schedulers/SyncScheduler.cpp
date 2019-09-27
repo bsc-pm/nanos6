@@ -4,7 +4,6 @@
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
-
 #include "SyncScheduler.hpp"
 #include "scheduling/schedulers/device/DeviceScheduler.hpp"
 #include "scheduling/schedulers/device/SubDeviceScheduler.hpp"
@@ -45,7 +44,6 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	
 	uint64_t waitingCPUIndex;
 	uint64_t i = ticket + 1;
-	const std::vector<CPU *> &computePlaces = CPUManager::getCPUListReference();
 	
 	// Serve all the subscribers, while there is work to give them.
 	while (_lock.popWaitingCPU(i, waitingCPUIndex)) {

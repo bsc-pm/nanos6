@@ -65,15 +65,21 @@ long nanos6_get_current_system_cpu(void);
 //! \brief get a CPU identifier assigned to the CPU where the call to this function originated that starts from 0 up to nanos6_get_num_cpus(void)-1
 unsigned int nanos6_get_current_virtual_cpu(void);
 
-//! \brief enable a previously stopped CPU
-void nanos6_enable_cpu(long systemCPUId);
+//! \brief Enable a previously stopped CPU
+//!
+//! \param[in] systemCPUId The id of the CPU to enable
+//! \return Whether the CPU became enabled
+int nanos6_enable_cpu(long systemCPUId);
 
-//! \brief disable an enabled CPU
-void nanos6_disable_cpu(long systemCPUId);
+//! \brief Disable an enabled CPU
+//!
+//! \param[in] systemCPUId The id of the CPU to disable
+//! \return Whether the CPU became disabled
+int nanos6_disable_cpu(long systemCPUId);
 
 typedef enum {
 	nanos6_invalid_cpu_status,
-	nanos6_starting_cpu,
+	nanos6_uninitialized_cpu,
 	nanos6_enabling_cpu,
 	nanos6_enabled_cpu,
 	nanos6_disabling_cpu,

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CLUSTER_SCHEDULER_HPP
@@ -48,6 +48,17 @@ public:
 	inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
 	{
 		return _clusterSchedulerImplementation->getReadyTask(computePlace, deviceComputePlace);
+	}
+	
+	//! \brief Get the amount of ready tasks in the queue
+	//!
+	//! \param[in] computePlace The host compute place
+	//! \param[in] deviceComputePlace The target device compute place if it exists
+	//!
+	//! \returns The current amount of tasks in the ready queue
+	inline size_t getNumReadyTasks(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr) const
+	{
+		return _clusterSchedulerImplementation->getNumReadyTasks(computePlace, deviceComputePlace);
 	}
 	
 	inline std::string getName() const

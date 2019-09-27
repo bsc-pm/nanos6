@@ -1,10 +1,8 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
-
-
 
 #ifndef SYNC_SCHEDULER_HPP
 #define SYNC_SCHEDULER_HPP
@@ -15,8 +13,8 @@
 #include "UnsyncScheduler.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
-#include "lowlevel/TicketArraySpinLock.hpp"
 #include "lowlevel/SubscriptionLock.hpp"
+#include "lowlevel/TicketArraySpinLock.hpp"
 #include "scheduling/SchedulerSupport.hpp"
 
 class SyncScheduler {
@@ -155,6 +153,18 @@ public:
 	Task *getTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace);
 	
 	virtual Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace) = 0;
+	
+	//! \brief Get the amount of ready tasks in the queue
+	//!
+	//! \returns The current amount of tasks in the ready queue
+	inline size_t getNumReadyTasks()
+	{
+		_lock.lock();
+		size_t numReadyTasks = _scheduler->getNumReadyTasks();
+		_lock.unsubscribe();
+		
+		return numReadyTasks;
+	}
 	
 	virtual std::string getName() const = 0;
 };

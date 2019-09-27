@@ -52,28 +52,25 @@ unsigned int nanos6_get_current_virtual_cpu(void)
 	return currentCPU->getIndex();
 }
 
-void nanos6_enable_cpu(long systemCPUId)
+int nanos6_enable_cpu(long systemCPUId)
 {
-	CPUActivation::enable(systemCPUId);
+	return CPUActivation::enable(systemCPUId);
 }
 
-void nanos6_disable_cpu(long systemCPUId)
+int nanos6_disable_cpu(long systemCPUId)
 {
-	CPUActivation::disable(systemCPUId);
+	return CPUActivation::disable(systemCPUId);
 }
 
 
 nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 {
 	CPU *cpu = CPUManager::getCPU(systemCPUId);
+	assert(cpu != nullptr);
 	
-	assert(cpu != 0);
 	switch (cpu->getActivationStatus().load()) {
-		//TODO: FIXME: IS THIS CORRECT? Just introduced to fix a compilation warning.
 		case CPU::uninitialized_status:
-			return nanos6_disabled_cpu; 
-		case CPU::starting_status:
-			return nanos6_starting_cpu;
+			return nanos6_uninitialized_cpu; 
 		case CPU::enabling_status:
 			return nanos6_enabling_cpu;
 		case CPU::enabled_status:

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef UNSYNC_SCHEDULER_HPP
@@ -86,6 +86,14 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
+	
+	//! \brief Get the amount of ready tasks in the queue
+	//!
+	//! \returns The current amount of tasks in the ready queue
+	virtual inline size_t getNumReadyTasks() const
+	{
+		return _readyTasks->getNumReadyTasks();
+	}
 	
 	virtual inline bool priorityEnabled()
 	{

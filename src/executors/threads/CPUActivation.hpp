@@ -22,7 +22,7 @@ class CPUActivation {
 public:
 	
 	//! \brief Set a CPU online
-	static inline void enable(size_t systemCPUId)
+	static inline bool enable(size_t systemCPUId)
 	{
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
@@ -35,10 +35,7 @@ public:
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
 					assert(false);
-					break;
-				case CPU::starting_status:
-					// Keep iterating until the CPU has actually been initialized
-					break;
+					return false;
 				case CPU::enabled_status:
 					// No change
 					successful = true;
@@ -59,13 +56,15 @@ public:
 					break;
 				case CPU::shutting_down_status:
 					// If the runtime is shutting down, no change and return
-					return;
+					return false;
 			}
 		}
+		
+		return true;
 	}
 	
 	//! \brief Set a CPU offline
-	static inline void disable(size_t systemCPUId)
+	static inline bool disable(size_t systemCPUId)
 	{
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
@@ -76,10 +75,7 @@ public:
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
 					assert(false);
-					break;
-				case CPU::starting_status:
-					// Keep iterating until the CPU has actually been initialized
-					break;
+					return false;
 				case CPU::enabled_status:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::disabling_status);
 					break;
@@ -96,9 +92,11 @@ public:
 					break;
 				case CPU::shutting_down_status:
 					// If the runtime is shutting down, no change and return
-					return;
+					return false;
 			}
 		}
+		
+		return true;
 	}
 	
 	//! \brief Check and handle CPU activation transitions
@@ -117,15 +115,6 @@ public:
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
 					assert(false);
-					break;
-				case CPU::starting_status:
-					{
-						// There should be no other thread changing this
-						__attribute__((unused)) bool enabled = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabled_status);
-						assert(enabled);
-						
-						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-					}
 					break;
 				case CPU::enabled_status:
 				case CPU::shutting_down_status:
@@ -174,11 +163,10 @@ public:
 					// The CPU should not be uninitialized
 					assert(false);
 					break;
-				case CPU::starting_status:
 				case CPU::enabled_status:
 				case CPU::disabling_status:
 				case CPU::disabled_status:
-					// If the CPU is starting, enabled, disabling, or disabled
+					// If the CPU is enabled, disabling, or disabled
 					// simply change try to change the status to shut down
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutting_down_status);
 					break;
@@ -204,7 +192,6 @@ public:
 		
 		CPU::activation_status_t currentStatus = cpu->getActivationStatus();
 		switch (currentStatus) {
-			case CPU::starting_status:
 			case CPU::enabled_status:
 			case CPU::enabling_status:
 				return true;
@@ -219,22 +206,6 @@ public:
 		
 		assert("Unhandled CPU activation status" == nullptr);
 		return false;
-	}
-	
-	//! \brief Check if the CPU has actually been started
-	static inline bool hasStarted(CPU *cpu)
-	{
-		assert(cpu != nullptr);
-		
-		return (cpu->getActivationStatus() != CPU::starting_status);
-	}
-	
-	//! \brief Check if the CPU is being initialized
-	static inline bool isBeingInitialized(CPU *cpu)
-	{
-		assert(cpu != nullptr);
-		
-		return (cpu->getActivationStatus() == CPU::starting_status);
 	}
 	
 };
