@@ -79,6 +79,7 @@ int nanos6_disable_cpu(long systemCPUId);
 
 typedef enum {
 	nanos6_invalid_cpu_status,
+	nanos6_uninitialized_cpu,
 	nanos6_enabling_cpu,
 	nanos6_enabled_cpu,
 	nanos6_disabling_cpu,
