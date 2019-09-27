@@ -12,7 +12,6 @@
 #include "scheduling/ReadyQueue.hpp"
 #include "tasks/Task.hpp"
 
-
 // This kind of ready queue supports priorities.
 class ReadyQueueMap : public ReadyQueue {
 	typedef std::deque<Task *> ready_queue_t;

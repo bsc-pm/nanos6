@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SYNC_SCHEDULER_HPP
@@ -16,7 +16,6 @@
 #include "lowlevel/SubscriptionLock.hpp"
 #include "lowlevel/TicketArraySpinLock.hpp"
 #include "scheduling/SchedulerSupport.hpp"
-
 
 class SyncScheduler {
 protected:

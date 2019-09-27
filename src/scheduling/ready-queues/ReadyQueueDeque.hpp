@@ -9,7 +9,6 @@
 
 #include "scheduling/ReadyQueue.hpp"
 
-
 class ReadyQueueDeque : public ReadyQueue {
 	typedef std::deque<Task *> ready_queue_t;
 	

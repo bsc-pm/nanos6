@@ -4,7 +4,6 @@
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
-
 #include "SyncScheduler.hpp"
 #include "scheduling/schedulers/device/DeviceScheduler.hpp"
 #include "scheduling/schedulers/device/SubDeviceScheduler.hpp"

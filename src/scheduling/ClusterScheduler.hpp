@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CLUSTER_SCHEDULER_HPP
@@ -15,7 +15,6 @@
 #include "system/RuntimeInfo.hpp"
 
 #include <ClusterManager.hpp>
-
 
 class ClusterScheduler : public SchedulerInterface {
 	SchedulerInterface *_clusterSchedulerImplementation;
