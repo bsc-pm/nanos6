@@ -17,6 +17,9 @@
 #include "lowlevel/TicketArraySpinLock.hpp"
 #include "scheduling/SchedulerSupport.hpp"
 
+#include <InstrumentTaskStatus.hpp>
+
+
 class SyncScheduler {
 protected:
 	typedef boost::lockfree::spsc_queue<TaskSchedulingInfo *> add_queue_t;

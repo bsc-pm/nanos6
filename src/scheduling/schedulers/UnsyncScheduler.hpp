@@ -14,9 +14,6 @@
 #include "scheduling/ReadyQueue.hpp"
 #include "tasks/Task.hpp"
 
-#include <HardwareCounters.hpp>
-#include <InstrumentTaskStatus.hpp>
-#include <Monitoring.hpp>
 
 class UnsyncScheduler {
 protected:
@@ -40,12 +37,7 @@ public:
 	{
 		assert(task != nullptr);
 		
-		Instrument::taskIsReady(task->getInstrumentationTaskId());
-		HardwareCounters::stopTaskMonitoring(task);
-		Monitoring::taskChangedStatus(task, ready_status);
-		
 		bool unblocked = (hint == UNBLOCKED_TASK_HINT);
-		
 		if (_enableImmediateSuccessor) {
 			if (computePlace != nullptr && hint == SIBLING_TASK_HINT) {
 				size_t immediateSuccessorId = computePlace->getIndex();

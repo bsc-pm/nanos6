@@ -9,6 +9,11 @@
 
 #include "SchedulerInterface.hpp"
 
+#include <HardwareCounters.hpp>
+#include <InstrumentTaskStatus.hpp>
+#include <Monitoring.hpp>
+
+
 class Scheduler {
 	static SchedulerInterface *_instance;
 	
@@ -18,6 +23,11 @@ public:
 	
 	static inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
+		// Mark the task as ready prior to entering the lock
+		Instrument::taskIsReady(task->getInstrumentationTaskId());
+		HardwareCounters::stopTaskMonitoring(task);
+		Monitoring::taskChangedStatus(task, ready_status);
+		
 		_instance->addReadyTask(task, computePlace, hint);
 	}
 	
