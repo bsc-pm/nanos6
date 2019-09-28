@@ -27,7 +27,7 @@ class DeviceComputePlace: public ComputePlace {
 public:
 	
 	DeviceComputePlace(DeviceMemoryPlace *memoryPlace, nanos6_device_t type, int subType,
-			int index, void *deviceHandler);
+			int index, DeviceFunctionsInterface* functions, void *deviceHandler);
 	
 	~DeviceComputePlace();
 	

@@ -8,7 +8,6 @@
 #define DEVICE_INFO_IMPLEMENTATION_HPP
 
 #include "Device.hpp"
-#include "hardware/HardwareInfo.hpp"
 #include "hardware/device/DeviceFunctionsInterface.hpp"
 #include "hardware/hwinfo/DeviceInfo.hpp"
 

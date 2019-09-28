@@ -26,6 +26,8 @@ public:
 	static void initialize();
 	static void shutdown();
 	
+	static bool canDeviceRunTasks(nanos6_device_t type);
+	
 	static inline DeviceFunctionsInterface *getDeviceFunctions(nanos6_device_t type)
 	{
 		if (type >= _functions.size())

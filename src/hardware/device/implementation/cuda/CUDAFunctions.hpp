@@ -29,25 +29,52 @@ class CUDAFunctions: public DeviceFunctionsInterface {
 private:
 	SpinLock _depsLock;
 	const nanos6_device_t device_type = nanos6_cuda_device;
+	bool _correctlyInitialized;
 	
 public:
 	std::vector<std::pair<void *, CUDA_DEVICE_DEP *>> _cudaDeps;
-	
-	
+		
 	CUDAFunctions()
 	{
+		_devices.push_back(new Device(nanos6_cuda_device, 0));
 		
+		int deviceCount;
+		cudaError_t err = cudaGetDeviceCount(&deviceCount);
+		if (err != cudaSuccess) {
+			_correctlyInitialized = false;
+			if (err != cudaErrorNoDevice) {
+				CUDAErrorHandler::warnIf(true, "Nanos6 was compiled with CUDA support but the driver returned: ",
+					cudaGetErrorString(err),"\nRunning CUDA tasks is disabled");
+			}
+			return;
+		}
+		
+		assert(deviceCount > 0);
+		_cudaDeps.resize(deviceCount);
+		
+		for (int i = 0; i < deviceCount; ++i) {
+			cudaSetDevice(i);
+			
+			DeviceComputePlace *cp = new DeviceComputePlace(new DeviceMemoryPlace(i, nanos6_cuda_device),
+					nanos6_device_t::nanos6_cuda_device, 0, i, this, nullptr);
+			_devices[0]->addComputePlace(cp);
+			
+			_cudaDeps[i].first = (void *) cp;
+			_cudaDeps[i].second = new CUDA_DEVICE_DEP();
+		}
+		_correctlyInitialized  = true;
 	}
+
 	~CUDAFunctions()
 	{
-		
 	}
 	
 	void shutdown()
 	{
 		nanos6_unregister_polling_service("taskFinisher",
-				(nanos6_polling_service_t) DeviceComputePlace::pollingFinishTasks, this);
+			(nanos6_polling_service_t) DeviceComputePlace::pollingFinishTasks, this);
 	}
+	
 	CUDA_DEVICE_DEP *getDeps(void *ptr)
 	{
 		for (auto p : _cudaDeps) {
@@ -100,7 +127,7 @@ public:
 		return device_type;
 	}
 	
-	void * generateDeviceExtra(Task *task, void *)
+	void *generateDeviceExtra(Task *task, void *)
 	{
 		nanos6_cuda_device_environment_t *env =
 				(nanos6_cuda_device_environment_t *) ::malloc(
@@ -115,7 +142,6 @@ public:
 	
 	void postBodyDevice(Task *task, void *)
 	{
-		
 		auto taskcp = task->getComputePlace();
 		auto deps = getDeps(taskcp);
 		CUDAEvent *event = deps->_eventPool.getEvent();
@@ -124,7 +150,6 @@ public:
 		event->record();
 		std::lock_guard<SpinLock> guard(_depsLock);
 		getDeps(task->getComputePlace())->_activeEvents.push_back(event);
-		
 	}
 	
 	void bodyDevice(Task *, void *)
@@ -168,24 +193,12 @@ public:
 		
 	}
 	
-#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-	inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true)
-	{
-		if (code != cudaSuccess) {
-			fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file,
-					line);
-			if (abort)
-				exit(code);
-		}
-	}
-	
 	void unifiedAsyncPrefetch(void *pHost, size_t size, int dstDevice)
 	{
 		setDevice(dstDevice);
 		
 		void *dev;
 		cudaHostGetDevicePointer(&dev, pHost, 0);
-		//cudaMemPrefetchAsync ( dev,size, dstDevice);
 		memcpy(pHost, dev, size, HOST_TO_DEVICE);
 		
 	}
@@ -199,8 +212,6 @@ public:
 	
 	void unifiedMemRegister(void *pHost, size_t size)
 	{
-		//cudaHostAllocMapped means we can use cudaHostGetDevicePointer().
-		//cudaHostAllocPortable means pinned memory
 		cudaHostRegister(pHost, size, cudaHostRegisterDefault);
 	}
 	
@@ -209,38 +220,30 @@ public:
 		cudaHostUnregister(pHost);
 	}
 	
-	void initialize()
+	bool initialize()
 	{
-		//no init needed.
+		if (_correctlyInitialized) {
+			nanos6_register_polling_service("taskFinisher",
+				(nanos6_polling_service_t) DeviceComputePlace::pollingFinishTasks, this);
+			
+			for (Device *device : _devices) {
+				for (int i = 0; i < device->getNumDevices(); ++i) {
+					device->getComputePlace(i)->activatePollingService();
+				}
+			}
+		}
+		
+		return _correctlyInitialized;
 	}
 	
-	void getDevices(std::vector<Device *> &_devices)
+	bool getInitStatus()
 	{
-		nanos6_register_polling_service("taskFinisher",
-				(nanos6_polling_service_t) DeviceComputePlace::pollingFinishTasks, this);
-		
-		int deviceCount;
-		cudaGetDeviceCount(&deviceCount);
-		cudaSetDevice(0);
-		
-		if (deviceCount == 0) {
-			return;
-		}
-		
-		_devices.resize(1);
-		_cudaDeps.resize(deviceCount);
-		_devices[0] = new Device(nanos6_cuda_device, 0);
-		for (int i = 0; i < deviceCount; ++i) {
-			cudaSetDevice(i);
-			
-			DeviceComputePlace *cp = new DeviceComputePlace(
-					new DeviceMemoryPlace(i, nanos6_cuda_device),
-					nanos6_device_t::nanos6_cuda_device, 0, i, nullptr);
-			_devices[0]->addComputePlace(cp);
-			
-			_cudaDeps[i].first = (void *) cp;
-			_cudaDeps[i].second = new CUDA_DEVICE_DEP();
-		}
+		return _correctlyInitialized;
+	}
+	
+	void getDevices(std::vector<Device *> &dev)
+	{
+		dev = _devices;
 	}
 	
 };

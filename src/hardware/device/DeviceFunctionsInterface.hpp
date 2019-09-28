@@ -17,6 +17,8 @@ class Device;
 
 class DeviceFunctionsInterface {
 	
+protected:
+	std::vector<Device *> _devices; 
 public:
 	
 	enum deviceMemcpy {
@@ -86,8 +88,12 @@ public:
 	
 	virtual void *unifiedGetDevicePointer(void *pHost) = 0;
 	
-	virtual void initialize() = 0;
-	
+	//returns true if initialization was correct
+	virtual bool initialize() = 0;
+
+	//returns if the initialization was correct
+	virtual bool getInitStatus() = 0;
+
 	/*external device-dependent api calls*/
 	virtual void fpgaAddArg(int, uint64_t, void *, void *, char)
 	{

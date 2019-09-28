@@ -25,7 +25,10 @@ public:
 	
 	void addComputePlace(DeviceComputePlace *computePlace);
 	
-	DeviceComputePlace *getComputePlace();
+	DeviceComputePlace *getComputePlace(int idx)
+	{
+		return _places[idx];
+	}
 	
 	inline int getNumDevices()
 	{

@@ -20,14 +20,12 @@
 #include <ExecutionWorkflow.hpp>
 
 DeviceComputePlace::DeviceComputePlace(DeviceMemoryPlace *memoryPlace,
-		nanos6_device_t type, int subType, int index, void *deviceHandler) :
+		nanos6_device_t type, int subType, int index, DeviceFunctionsInterface* functions,  void *deviceHandler) :
 		ComputePlace(index, type), _type(type), _subType(subType), _deviceHandler(
 				deviceHandler), _maxRunningTasks(deviceMaxRunningTask(type)), _runningTasks(0), _strPollingService(
 				std::string("runner:") + std::to_string(type) + " " + std::to_string(index) + " "
-						+ std::to_string(subType)), _functions(
-				HardwareInfo::getDeviceFunctions(type)), _memoryPlace(memoryPlace)
+						+ std::to_string(subType)), _functions(functions), _memoryPlace(memoryPlace)
 {
-	activatePollingService();
 }
 
 DeviceComputePlace::~DeviceComputePlace()
@@ -82,6 +80,7 @@ int DeviceComputePlace::getMaxRunningTasks()
 {
 	return _maxRunningTasks;
 }
+
 void DeviceComputePlace::runTask(Task *task)
 {
 	_runningTasks++;

@@ -51,3 +51,11 @@ void HardwareInfo::shutdown()
 		}
 	}
 }
+	
+bool HardwareInfo::canDeviceRunTasks(nanos6_device_t type)
+{
+	if (type == nanos6_host_device) {
+		return true;
+	}
+	return _functions[type]->getInitStatus();
+}

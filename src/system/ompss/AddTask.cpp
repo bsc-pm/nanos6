@@ -17,6 +17,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "MemoryAllocator.hpp"
@@ -49,6 +50,11 @@ void nanos6_create_task(
 	__attribute__((unused)) size_t num_deps
 ) {
 	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
+	
+	nanos6_device_t taskDeviceType = (nanos6_device_t) taskInfo->implementations[0].device_type_id;
+	if (!HardwareInfo::canDeviceRunTasks(taskDeviceType)) {
+		FatalErrorHandler::failIf(true, "Task of device type '", taskDeviceType, "' has no active hardware associated");
+	}
 	
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 	

@@ -97,13 +97,20 @@ public:
 		return nullptr;
 	}
 	
-	void initialize()
+	bool initialize()
 	{
+		return false;
+	}
+	
+	bool getInitStatus()
+	{
+		return false;
 	}
 	
 	void bodyDevice(Task *, void *)
 	{
 	}
+	
 	
 };
 
