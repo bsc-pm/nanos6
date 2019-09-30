@@ -51,8 +51,9 @@ namespace ExecutionWorkflow {
 				BUSY_COMPUTE_PLACE_TASK_HINT
 			);
 			
-			// After adding a task, the CPUManager may want to unidle a CPU
-			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, ADDED_TASKS, 1);
+			// After adding a task, the CPUManager may want to unidle CPUs
+			CPUManagerPolicyHint policyHint = (_task->isTaskfor()) ? ADDED_TASKFOR : ADDED_TASKS;
+			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, policyHint, 1);
 			
 			return;
 		}

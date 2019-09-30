@@ -36,15 +36,13 @@ public:
 		return _instance->getReadyTask(computePlace, deviceComputePlace);
 	}
 	
-	//! \brief Get the amount of ready tasks in the queue
+	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
 	//! \param[in] deviceComputePlace The target device compute place if it exists
-	//!
-	//! \returns The current amount of tasks in the ready queue
-	static inline size_t getNumReadyTasks(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
+	static inline bool hasAvailableWork(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
 	{
-		return _instance->getNumReadyTasks(computePlace, deviceComputePlace);
+		return _instance->hasAvailableWork(computePlace, deviceComputePlace);
 	}
 	
 };

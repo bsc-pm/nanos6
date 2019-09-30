@@ -24,6 +24,11 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	Task *getReadyTask(ComputePlace *computePlace);
+	
+	//! \brief Check if the scheduler has available work for the current CPU
+	//!
+	//! \param[in] computePlace The host compute place
+	bool hasAvailableWork(ComputePlace *computePlace);
 };
 
 

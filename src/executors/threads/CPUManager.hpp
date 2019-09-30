@@ -101,6 +101,13 @@ public:
 	//! \brief mark a CPU as not being idle (if possible)
 	static bool unidleCPU(CPU *cpu);
 	
+	//! \brief Get all the idle CPUs that can collaborate in a taskfor
+	//!
+	//! \param[in,out] idleCPUs A vector where the unidled collaborators will
+	//! be stored
+	//! \param[in] cpu The CPU that created the taskfor
+	static void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu);
+	
 	//! \brief Get number of taskfor groups.
 	static size_t getNumTaskforGroups();
 	

@@ -230,7 +230,7 @@ bool CPUManager::cpuBecomesIdle(CPU *cpu)
 	// tasks and idling CPUs; i.e. it may happen that before a CPU is idled,
 	// tasks are added in the scheduler and that CPU may never have the chance
 	// to wake up and execute these newly added tasks
-	if (Scheduler::getNumReadyTasks(cpu)) {
+	if (Scheduler::hasAvailableWork(cpu)) {
 		// If there are ready tasks, release the lock and do not idle the CPU
 		_idleCPUsLock.unlock();
 		return false;
@@ -333,6 +333,34 @@ bool CPUManager::unidleCPU(CPU *cpu)
 	} else {
 		return false;
 	}
+}
+
+void CPUManager::getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu)
+{
+	assert(cpu != nullptr);
+	
+	size_t numObtainedCollaborators = 0;
+	
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	while (idleCPU != boost::dynamic_bitset<>::npos) {
+		if (((CPU *)cpu)->getGroupId() == _cpus[idleCPU]->getGroupId()) {
+			// Signal that the CPU becomes active
+			_idleCPUs[idleCPU] = false;
+			Monitoring::cpuBecomesActive(idleCPU);
+			++numObtainedCollaborators;
+			
+			// Place the CPU in the vector
+			idleCPUs.push_back(_cpus[idleCPU]);
+		}
+		
+		// Iterate to the next idle CPU
+		idleCPU = _idleCPUs.find_next(idleCPU);
+	}
+	
+	// Decrease the counter of idle CPUs by the obtained amount
+	assert(_numIdleCPUs >= numObtainedCollaborators);
+	_numIdleCPUs -= numObtainedCollaborators;
 }
 
 void CPUManager::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)

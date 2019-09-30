@@ -33,10 +33,16 @@ public:
 	
 	//! \brief Get a ready task for execution
 	//!
-	//! \param[in] computePlace the hardware place asking for scheduling orders
+	//! \param[in] computePlace The hardware place asking for scheduling orders
 	//!
-	//! \returns a ready task or nullptr
+	//! \returns A ready task or nullptr
 	Task *getReadyTask(ComputePlace *computePlace);
+	
+	//! \brief Check if the scheduler has available work for the current CPU
+	//!
+	//! \param[in] computePlace The host compute place
+	bool hasAvailableWork(ComputePlace *computePlace);
+	
 };
 
 #endif // HOST_UNSYNC_SCHEDULER_HPP
