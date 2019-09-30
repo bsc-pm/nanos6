@@ -80,7 +80,7 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	}
 	
 	// 6. Try to get work from other immediateSuccessorTasksfors.
-	if (result == nullptr) {
+	if (result == nullptr && _enableImmediateSuccessor) {
 		for (size_t i = 0; i < _immediateSuccessorTaskfors.size(); i++) {
 			if (_immediateSuccessorTaskfors[i] != nullptr) {
 				result = _immediateSuccessorTaskfors[i];
