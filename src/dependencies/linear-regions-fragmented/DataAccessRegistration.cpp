@@ -1244,6 +1244,9 @@ namespace DataAccessRegistration {
 		// The number of satisfied originators that will be added to the scheduler
 		size_t numAddedTasks = hpDependencyData._satisfiedOriginators.size();
 		
+		// Whether there is at least one taskfor in the satisfied originators
+		bool taskforInSatisfiedOriginators = false;
+		
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
@@ -1258,11 +1261,16 @@ namespace DataAccessRegistration {
 			Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint,
 				(fromBusyThread ? BUSY_COMPUTE_PLACE_TASK_HINT : SIBLING_TASK_HINT)
 			);
+			
+			if (!taskforInSatisfiedOriginators && satisfiedOriginator->isTaskfor()) {
+				taskforInSatisfiedOriginators = true;
+			}
 		}
 		
 		if (numAddedTasks) {
 			// After adding tasks, the CPUManager may want to unidle CPU(s)
-			CPUManager::executeCPUManagerPolicy(nullptr, ADDED_TASKS, numAddedTasks);
+			CPUManagerPolicyHint policyHint = (taskforInSatisfiedOriginators) ? ADDED_TASKFOR : ADDED_TASKS;
+			CPUManager::executeCPUManagerPolicy(computePlace, policyHint, numAddedTasks);
 		}
 		
 		hpDependencyData._satisfiedOriginators.clear();

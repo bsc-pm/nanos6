@@ -53,13 +53,11 @@ public:
 		}
 	}
 	
-	//! \brief Get the amount of ready tasks in the queue
+	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
 	//! \param[in] deviceComputePlace The target device compute place if it exists
-	//!
-	//! \returns The current amount of tasks in the ready queue
-	virtual size_t getNumReadyTasks(__attribute__((unused)) ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
+	virtual bool hasAvailableWork(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
 	{
 		assert(computePlace != nullptr);
 		assert(computePlace->getType() == nanos6_host_device);
@@ -67,10 +65,10 @@ public:
 			nanos6_host_device : deviceComputePlace->getType();
 		
 		if (computePlaceType == nanos6_host_device) {
-			return _hostScheduler->getNumReadyTasks();
+			return _hostScheduler->hasAvailableWork(computePlace);
 		} else {
 			assert(deviceComputePlace->getType() != nanos6_cluster_device);
-			return _deviceSchedulers[computePlaceType]->getNumReadyTasks();
+			return _deviceSchedulers[computePlaceType]->hasAvailableWork(deviceComputePlace);
 		}
 	}
 	

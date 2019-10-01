@@ -153,8 +153,9 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			// An ancestor in a taskwait that finishes at this point
 			Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
 			
-			// After adding a task, the CPUManager may want to unidle a CPU
-			CPUManager::executeCPUManagerPolicy(computePlace, ADDED_TASKS, 1);
+			// After adding a task, the CPUManager may want to unidle CPUs
+			CPUManagerPolicyHint policyHint = (task->isTaskfor()) ? ADDED_TASKFOR : ADDED_TASKS;
+			CPUManager::executeCPUManagerPolicy(computePlace, policyHint, 1);
 			
 			readyOrDisposable = false;
 		}

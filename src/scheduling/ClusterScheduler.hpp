@@ -50,15 +50,13 @@ public:
 		return _clusterSchedulerImplementation->getReadyTask(computePlace, deviceComputePlace);
 	}
 	
-	//! \brief Get the amount of ready tasks in the queue
+	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
 	//! \param[in] deviceComputePlace The target device compute place if it exists
-	//!
-	//! \returns The current amount of tasks in the ready queue
-	inline size_t getNumReadyTasks(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr) const
+	inline bool hasAvailableWork(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr) const
 	{
-		return _clusterSchedulerImplementation->getNumReadyTasks(computePlace, deviceComputePlace);
+		return _clusterSchedulerImplementation->hasAvailableWork(computePlace, deviceComputePlace);
 	}
 	
 	inline std::string getName() const

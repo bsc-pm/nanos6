@@ -40,3 +40,21 @@ Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	
 	return task;
 }
+
+bool DeviceUnsyncScheduler::hasAvailableWork(ComputePlace *computePlace)
+{
+	// 1. Check if there is an immediate successor.
+	if (_enableImmediateSuccessor && computePlace != nullptr) {
+		size_t immediateSuccessorId = computePlace->getIndex();
+		if (_immediateSuccessorTasks[immediateSuccessorId] != nullptr) {
+			return true;
+		}
+	}
+	
+	// 2. Check if there is work remaining in the ready queue
+	if (_readyTasks->getNumReadyTasks() != 0) {
+		return true;
+	}
+	
+	return false;
+}

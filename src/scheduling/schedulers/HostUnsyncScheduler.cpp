@@ -80,7 +80,7 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	}
 	
 	// 6. Try to get work from other immediateSuccessorTasksfors.
-	if (result == nullptr) {
+	if (result == nullptr && _enableImmediateSuccessor) {
 		for (size_t i = 0; i < _immediateSuccessorTaskfors.size(); i++) {
 			if (_immediateSuccessorTaskfors[i] != nullptr) {
 				result = _immediateSuccessorTaskfors[i];
@@ -100,4 +100,41 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	
 	_groupSlots[groupId] = (Taskfor *) result;
 	return getReadyTask(computePlace);
+}
+
+
+bool HostUnsyncScheduler::hasAvailableWork(ComputePlace *computePlace)
+{
+	if (computePlace != nullptr) {
+		CPU *cpu = (CPU *) computePlace;
+		long cpuId = cpu->getIndex();
+		long groupId = (computePlace->getType() == nanos6_host_device) ? cpu->getGroupId() : -1;
+		long immediateSuccessorGroupId = groupId * 2;
+		
+		// 1. Check if the CPU can participate in a taskfor
+		if (groupId != -1 && _groupSlots[groupId] != nullptr) {
+			return true;
+		}
+		
+		if (_enableImmediateSuccessor) {
+			// 2. Check for work in the CPU's immediateSuccessorTaskfors
+			Task *currentIS1 = _immediateSuccessorTaskfors[immediateSuccessorGroupId];
+			Task *currentIS2 = _immediateSuccessorTaskfors[immediateSuccessorGroupId + 1];
+			if ((currentIS1 != nullptr) || (currentIS2 != nullptr)) {
+				return true;
+			}
+			
+			// 3. Check for work in the CPU's immediateSuccessorTasks
+			if (_immediateSuccessorTasks[cpuId] != nullptr) {
+				return true;
+			}
+		}
+	}
+	
+	// 4. At this point we still don't find work, check the queue
+	if (_readyTasks->getNumReadyTasks() != 0) {
+		return true;
+	}
+	
+	return false;
 }

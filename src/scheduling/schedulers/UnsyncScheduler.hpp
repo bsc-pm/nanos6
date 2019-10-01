@@ -79,13 +79,10 @@ public:
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
 	
-	//! \brief Get the amount of ready tasks in the queue
+	//! \brief Check if the scheduler has available work for the current CPU
 	//!
-	//! \returns The current amount of tasks in the ready queue
-	virtual inline size_t getNumReadyTasks() const
-	{
-		return _readyTasks->getNumReadyTasks();
-	}
+	//! \param[in] computePlace The host compute place
+	virtual bool hasAvailableWork(ComputePlace *computePlace) = 0;
 	
 	virtual inline bool priorityEnabled()
 	{

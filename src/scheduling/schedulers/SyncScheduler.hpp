@@ -157,16 +157,16 @@ public:
 	
 	virtual Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace) = 0;
 	
-	//! \brief Get the amount of ready tasks in the queue
+	//! \brief Check if the scheduler has available work for the current CPU
 	//!
-	//! \returns The current amount of tasks in the ready queue
-	inline size_t getNumReadyTasks()
+	//! \param[in] computePlace The host compute place
+	inline bool hasAvailableWork(ComputePlace *computePlace)
 	{
 		_lock.lock();
-		size_t numReadyTasks = _scheduler->getNumReadyTasks();
+		bool hasWork = _scheduler->hasAvailableWork(computePlace);
 		_lock.unsubscribe();
 		
-		return numReadyTasks;
+		return hasWork;
 	}
 	
 	virtual std::string getName() const = 0;

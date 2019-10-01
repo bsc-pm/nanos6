@@ -12,7 +12,8 @@
 
 enum CPUManagerPolicyHint {
 	IDLE_CANDIDATE,
-	ADDED_TASKS
+	ADDED_TASKS,
+	ADDED_TASKFOR
 };
 
 
