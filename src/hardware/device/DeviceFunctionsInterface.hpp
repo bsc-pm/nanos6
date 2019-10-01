@@ -11,7 +11,9 @@
 
 #include <api/nanos6.h>
 
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/Task.hpp"
+
 
 class Device;
 

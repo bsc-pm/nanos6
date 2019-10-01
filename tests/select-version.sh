@@ -1,8 +1,8 @@
 #!/bin/sh
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-#
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#	
+#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 # Any test with "discrete" in the name uses the simpler discrete implementation
 if test -z ${NANOS6_DEPENDENCIES} ; then
@@ -17,13 +17,19 @@ if test -z ${NANOS6_SCHEDULING_POLICY} ; then
 	fi
 fi
 
+# If DLB is present, clean shared memory in case a previous program finalized
+# incorrectly
+if hash dlb_shm 2>/dev/null; then
+	dlb_shm -d
+fi
+
 if test -z ${NANOS6} ; then
 	if test "${*}" = "${*/.debug/}" ; then
 		export NANOS6=optimized
 		exec "${@}"
 	else
 		export NANOS6=debug
-
+		
 		# Regular execution
 		"${@}"
 	fi

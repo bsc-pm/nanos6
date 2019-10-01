@@ -349,6 +349,7 @@ nodist_common_sources = \
 common_sources = \
 	src/executors/threads/CPU.cpp \
 	src/executors/threads/CPUManager.cpp \
+	src/executors/threads/CPUManagerInterface.cpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/hardware/HardwareInfo.cpp \
@@ -673,13 +674,21 @@ common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_
 
 
 # DLB + CPUManager
+cpu_manager_sources  =
 cpu_manager_LDFLAGS  =
 cpu_manager_CPPFLAGS =
 if HAVE_DLB
+cpu_manager_sources  += \
+	src/executors/threads/cpu-managers/dlb/CPUActivation.cpp \
+	src/executors/threads/cpu-managers/dlb/CPUManagerImplementation.cpp
 cpu_manager_LDFLAGS  += $(dlb_LIBS)
 cpu_manager_CPPFLAGS += $(dlb_CPPFLAGS)
+cpu_manager_CPPFLAGS += -I$(srcdir)/src/executors/threads/cpu-managers/dlb
+else
+cpu_manager_CPPFLAGS += -I$(srcdir)/src/executors/threads/cpu-managers/default
 endif
 
+common_sources += $(cpu_manager_sources)
 
 
 noinst_HEADERS = \
@@ -752,16 +761,18 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions/LinearRegionMap.hpp \
 	src/dependencies/linear-regions/LinearRegionMapImplementation.hpp \
 	src/executors/threads/CPU.hpp \
-	src/executors/threads/CPUActivation.hpp \
 	src/executors/threads/CPUManager.hpp \
-	src/executors/threads/CPUManagerPolicyInterface.hpp \
-	src/executors/threads/NaiveCPUManagerPolicy.hpp \
+	src/executors/threads/CPUManagerInterface.hpp \
 	src/executors/threads/TaskFinalization.hpp \
 	src/executors/threads/TaskFinalizationImplementation.hpp \
 	src/executors/threads/ThreadManager.hpp \
 	src/executors/threads/ThreadManagerPolicy.hpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/executors/threads/WorkerThreadImplementation.hpp \
+	src/executors/threads/cpu-managers/default/CPUActivation.hpp \
+	src/executors/threads/cpu-managers/default/CPUManagerImplementation.hpp \
+	src/executors/threads/cpu-managers/dlb/CPUActivation.hpp \
+	src/executors/threads/cpu-managers/dlb/CPUManagerImplementation.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/executors/workflow/ExecutionStep.hpp \

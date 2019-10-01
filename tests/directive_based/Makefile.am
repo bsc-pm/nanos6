@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #	
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
@@ -47,8 +47,13 @@ base_tests += \
 	task-for-dep-multiaxpy.test \
 	task-for-nqueens.test
 
+# Ignore CPU Activation test if we have DLB for now
+if HAVE_DLB
+cpu_management_tests +=
+else
 cpu_management_tests += \
 	cpu-activation.test
+endif
 
 user_mutex_tests += \
 	critical.test
@@ -97,8 +102,13 @@ base_tests += \
 	task-for-dep-multiaxpy.debug.test \
 	task-for-nqueens.debug.test
 
+# Ignore CPU Activation test if we have DLB for now
+if HAVE_DLB
+cpu_management_tests +=
+else
 cpu_management_tests += \
 	cpu-activation.debug.test
+endif
 
 user_mutex_tests += \
 	critical.debug.test
@@ -446,7 +456,7 @@ red_stress_test_LDFLAGS = $(test_common_ldflags)
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
 else
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(PERL) $(top_srcdir)/tests/tap-driver.pl 
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(PERL) $(top_srcdir)/tests/tap-driver.pl
 endif
 
 

@@ -37,11 +37,14 @@ public:
 	
 	typedef enum {
 		uninitialized_status=0,
-		enabled_status,
-		enabling_status,
-		disabling_status,
-		disabled_status,
-		shutting_down_status
+		enabled_status,           // The CPU is enabled
+		enabling_status,          // The CPU is being enabled
+		disabled_status,          // The CPU is disabled
+		disabling_status,         // The CPU is being disabled
+		lent_status,              // The CPU is lent to another runtime
+		lending_status,           // The CPU is about to be lent to another runtime
+		shutting_down_status,     // The CPU is being shutdown
+		shutdown_status           // The CPU is shutdown and shouldn't be used
 	} activation_status_t;
 	
 #ifdef __KNC__

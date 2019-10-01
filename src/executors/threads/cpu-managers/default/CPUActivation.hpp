@@ -4,24 +4,55 @@
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef CPU_ACTIVATION_HPP
-#define CPU_ACTIVATION_HPP
-
+#ifndef DEFAULT_CPU_ACTIVATION_HPP
+#define DEFAULT_CPU_ACTIVATION_HPP
 
 #include <cassert>
 
-#include "CPU.hpp"
+#include "executors/threads/CPU.hpp"
+#include "executors/threads/CPUManager.hpp"
+#include "executors/threads/ThreadManager.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "ThreadManager.hpp"
-#include "CPUManager.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
+#include <Monitoring.hpp>
 
 
 class CPUActivation {
 public:
 	
-	//! \brief Set a CPU online
+	//! \brief Check if a CPU is accepting new work
+	static inline bool acceptsWork(CPU *cpu)
+	{
+		assert(cpu != nullptr);
+		
+		CPU::activation_status_t currentStatus = cpu->getActivationStatus();
+		switch (currentStatus) {
+			case CPU::enabled_status:
+			case CPU::enabling_status:
+				return true;
+			case CPU::uninitialized_status:
+			case CPU::disabled_status:
+			case CPU::disabling_status:
+			case CPU::shutdown_status:
+				return false;
+			case CPU::lent_status:
+			case CPU::lending_status:
+			case CPU::shutting_down_status:
+				assert(false);
+				return false;
+		}
+		
+		assert("Unhandled CPU activation status" == nullptr);
+		return false;
+	}
+	
+	//! \brief Enable a CPU
+	//!
+	//! \param[in] systemCPUId The id of the CPU to enable
+	//! Whether the enabling worked
+	//!
+	//! \return Whether the enabling was performed
 	static inline bool enable(size_t systemCPUId)
 	{
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
@@ -34,27 +65,28 @@ public:
 			CPU::activation_status_t currentStatus = cpu->getActivationStatus();
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
+				case CPU::lent_status:
+				case CPU::lending_status:
+				case CPU::shutting_down_status:
+					// The CPU should never be in here in this implementation
 					assert(false);
 					return false;
 				case CPU::enabled_status:
-					// No change
+				case CPU::enabling_status:
+					// Already enabled or enabling, no change
 					successful = true;
 					break;
-				case CPU::enabling_status:
-					// No change
-					successful = true;
+				case CPU::disabled_status:
+					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabling_status);
+					if (successful) {
+						// Wake up a thread to allow the state change to progress
+						ThreadManager::resumeIdle(cpu);
+					}
 					break;
 				case CPU::disabling_status:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabled_status);
 					break;
-				case CPU::disabled_status:
-					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabling_status);
-					// Wake up a thread to allow the state change to progress
-					if (successful) {
-						ThreadManager::resumeIdle(cpu);
-					}
-					break;
-				case CPU::shutting_down_status:
+				case CPU::shutdown_status:
 					// If the runtime is shutting down, no change and return
 					return false;
 			}
@@ -63,7 +95,11 @@ public:
 		return true;
 	}
 	
-	//! \brief Set a CPU offline
+	//! \brief Disable a CPU
+	//!
+	//! \param[in] systemCPUId The id of the CPU to disable
+	//!
+	//! \return Whether the disabling was performed
 	static inline bool disable(size_t systemCPUId)
 	{
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
@@ -74,6 +110,10 @@ public:
 			CPU::activation_status_t currentStatus = cpu->getActivationStatus();
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
+				case CPU::lent_status:
+				case CPU::lending_status:
+				case CPU::shutting_down_status:
+					// The CPU should never be in here in this implementation
 					assert(false);
 					return false;
 				case CPU::enabled_status:
@@ -82,15 +122,11 @@ public:
 				case CPU::enabling_status:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::disabled_status);
 					break;
-				case CPU::disabling_status:
-					// No change
-					successful = true;
-					break;
 				case CPU::disabled_status:
-					// No change
+				case CPU::disabling_status:
 					successful = true;
 					break;
-				case CPU::shutting_down_status:
+				case CPU::shutdown_status:
 					// If the runtime is shutting down, no change and return
 					return false;
 			}
@@ -100,8 +136,12 @@ public:
 	}
 	
 	//! \brief Check and handle CPU activation transitions
-	//!
 	//! NOTE: This code must be run regularly from within WorkerThreads
+	//!
+	//! \param[in,out] currentThread The current thread that is running on the
+	//! cpu to check transitions for
+	//!
+	//! \return The current activation status of the CPU
 	static inline CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *currentThread)
 	{
 		assert(currentThread != nullptr);
@@ -111,21 +151,33 @@ public:
 		while (!successful) {
 			CPU *cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
+			
 			currentStatus = cpu->getActivationStatus();
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
-					assert(false);
-					break;
-				case CPU::enabled_status:
+				case CPU::lent_status:
+				case CPU::lending_status:
 				case CPU::shutting_down_status:
-					// No change and return immediately
+					// The CPU should never be in here in this implementation
+					assert(false);
 					return currentStatus;
+				case CPU::enabled_status:
+					successful = true;
+					break;
 				case CPU::enabling_status:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabled_status);
 					if (successful) {
 						currentStatus = CPU::enabled_status;
 						Instrument::resumedComputePlace(cpu->getInstrumentationId());
+						Monitoring::cpuBecomesActive(cpu->getIndex());
 					}
+					break;
+				case CPU::disabled_status:
+					// The CPU is disabled, the thread will become idle
+					Monitoring::cpuBecomesIdle(cpu->getIndex());
+					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+					ThreadManager::addIdler(currentThread);
+					currentThread->switchTo(nullptr);
 					break;
 				case CPU::disabling_status:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::disabled_status);
@@ -137,12 +189,9 @@ public:
 						currentThread->switchTo(nullptr);
 					}
 					break;
-				case CPU::disabled_status:
-					// The CPU is disabled, the thread will become idle
-					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-					ThreadManager::addIdler(currentThread);
-					currentThread->switchTo(nullptr);
-					break;
+				case CPU::shutdown_status:
+					// No change and return immediately
+					return currentStatus;
 			}
 		}
 		
@@ -150,7 +199,7 @@ public:
 		return currentStatus;
 	}
 	
-	//! \brief Notify a CPU that the runtime is shutting down
+	//! \brief Notify to a CPU that the runtime is shutting down
 	static inline void shutdownCPU(CPU *cpu)
 	{
 		assert(cpu != nullptr);
@@ -160,55 +209,35 @@ public:
 			CPU::activation_status_t currentStatus = cpu->getActivationStatus();
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
-					// The CPU should not be uninitialized
+				case CPU::lent_status:
+				case CPU::lending_status:
+				case CPU::shutting_down_status:
+					// The CPU should never be in here in this implementation
 					assert(false);
-					break;
+					return;
 				case CPU::enabled_status:
 				case CPU::disabling_status:
-				case CPU::disabled_status:
-					// If the CPU is enabled, disabling, or disabled
-					// simply change try to change the status to shut down
-					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutting_down_status);
+					// If the CPU is enabled, change the status to shut down
+					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					break;
 				case CPU::enabling_status:
-					// If the CPU is being enabled, change to shut down and
-					// notify that it has resumed (if the change is possible)
-					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutting_down_status);
+				case CPU::disabled_status:
+					// If the CPU is disabled or being enabled, change to shut
+					// down and notify that it has resumed
+					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					if (successful) {
 						Instrument::resumedComputePlace(cpu->getInstrumentationId());
+						Monitoring::cpuBecomesActive(cpu->getIndex());
 					}
 					break;
-				case CPU::shutting_down_status:
+				case CPU::shutdown_status:
 					// If the runtime is shutting down, no change and return
 					return;
 			}
 		}
 	}
 	
-	//! \brief Check if a CPU is accepting new work
-	static inline bool acceptsWork(CPU *cpu)
-	{
-		assert(cpu != nullptr);
-		
-		CPU::activation_status_t currentStatus = cpu->getActivationStatus();
-		switch (currentStatus) {
-			case CPU::enabled_status:
-			case CPU::enabling_status:
-				return true;
-				break;
-			case CPU::uninitialized_status:
-			case CPU::disabling_status:
-			case CPU::disabled_status:
-			case CPU::shutting_down_status:
-				return false;
-				break;
-		}
-		
-		assert("Unhandled CPU activation status" == nullptr);
-		return false;
-	}
-	
 };
 
 
-#endif // CPU_ACTIVATION_HPP
+#endif // DEFAULT_CPU_ACTIVATION_HPP

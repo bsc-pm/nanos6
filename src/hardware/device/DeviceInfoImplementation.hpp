@@ -10,6 +10,7 @@
 #include "Device.hpp"
 #include "hardware/device/DeviceFunctionsInterface.hpp"
 #include "hardware/hwinfo/DeviceInfo.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 
 class DeviceInfoImplementation : public DeviceInfo {

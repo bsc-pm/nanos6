@@ -80,11 +80,14 @@ int nanos6_disable_cpu(long systemCPUId);
 typedef enum {
 	nanos6_invalid_cpu_status,
 	nanos6_uninitialized_cpu,
-	nanos6_enabling_cpu,
 	nanos6_enabled_cpu,
-	nanos6_disabling_cpu,
+	nanos6_enabling_cpu,
 	nanos6_disabled_cpu,
-	nanos6_shutting_down_cpu
+	nanos6_disabling_cpu,
+	nanos6_lent_cpu,
+	nanos6_lending_cpu,
+	nanos6_shutting_down_cpu,
+	nanos6_shutdown_cpu
 } nanos6_cpu_status_t;
 
 //! \brief retrieve the runtime view of a given CPU identified by the identifier given by the operating system

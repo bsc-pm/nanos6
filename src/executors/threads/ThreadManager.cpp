@@ -48,7 +48,7 @@ void ThreadManager::shutdownPhase1()
 		// in the shutdown process
 		idleThread = getAnyIdleThread();
 		while (idleThread != nullptr) {
-			CPU *idleCPU = CPUManager::getIdleCPU();
+			CPU *idleCPU = CPUManager::getIdleCPU(true);
 			if (idleCPU != nullptr) {
 				idleThread->resume(idleCPU, true);
 			} else {
@@ -59,12 +59,12 @@ void ThreadManager::shutdownPhase1()
 			idleThread = getAnyIdleThread();
 		}
 
-		// Check whether all the threads already added themselves to _shutdownThreads.
+		// Check whether all the threads already added themselves to _shutdownThreads
 		_shutdownThreads->_lock.lock();
 		canJoin = (_shutdownThreads->_threads.size() == (size_t) _totalThreads);
 		_shutdownThreads->_lock.unlock();
 
-		// Spin for a while to let threads add them to _shutdownThreads.
+		// Spin for a while to let threads add them to _shutdownThreads
 		int i = 0;
 		while (i < spins && !canJoin) {
 			i++;

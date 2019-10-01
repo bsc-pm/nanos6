@@ -8,11 +8,12 @@
 
 #include <nanos6/debug.h>
 #include "executors/threads/CPU.hpp"
-#include "executors/threads/CPUActivation.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
+
+#include <CPUActivation.hpp>
 
 
 void nanos6_wait_for_full_initialization(void)
@@ -71,16 +72,22 @@ nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 	switch (cpu->getActivationStatus().load()) {
 		case CPU::uninitialized_status:
 			return nanos6_uninitialized_cpu; 
-		case CPU::enabling_status:
-			return nanos6_enabling_cpu;
 		case CPU::enabled_status:
 			return nanos6_enabled_cpu;
-		case CPU::disabling_status:
-			return nanos6_disabling_cpu;
+		case CPU::enabling_status:
+			return nanos6_enabling_cpu;
 		case CPU::disabled_status:
 			return nanos6_disabled_cpu;
+		case CPU::disabling_status:
+			return nanos6_disabling_cpu;
+		case CPU::lent_status:
+			return nanos6_lent_cpu;
+		case CPU::lending_status:
+			return nanos6_lending_cpu;
 		case CPU::shutting_down_status:
 			return nanos6_shutting_down_cpu;
+		case CPU::shutdown_status:
+			return nanos6_shutdown_cpu;
 	}
 	
 	assert("Unknown CPU status" == 0);
