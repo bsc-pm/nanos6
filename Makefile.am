@@ -672,6 +672,16 @@ endif
 common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_sources)
 
 
+# DLB + CPUManager
+cpu_manager_LDFLAGS  =
+cpu_manager_CPPFLAGS =
+if HAVE_DLB
+cpu_manager_LDFLAGS  += $(dlb_LIBS)
+cpu_manager_CPPFLAGS += $(dlb_CPPFLAGS)
+endif
+
+
+
 noinst_HEADERS = \
 	src/cluster/ClusterManager.hpp \
 	src/cluster/ClusterMemoryManagement.hpp \
@@ -1122,8 +1132,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(hw_monitoring_CPPFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(hw_monitoring_LDFLAGS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(hw_monitoring_CPPFLAGS) $(cpu_manager_CPPFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(hw_monitoring_LDFLAGS) $(cpu_manager_LDFLAGS)
 
 
 # This is needed for debuggable spinlocks
