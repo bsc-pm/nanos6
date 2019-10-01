@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include <fstream>
@@ -9,11 +9,10 @@
 #include "InstrumentHardwareCounters.hpp"
 #include "InstrumentInitAndShutdown.hpp"
 #include "InstrumentStats.hpp"
+#include "executors/threads/CPUManager.hpp"
+#include "executors/threads/ThreadManager.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "system/RuntimeInfo.hpp"
-
-#include <executors/threads/CPUManager.hpp>
-#include <executors/threads/ThreadManager.hpp>
 
 
 namespace Instrument {

@@ -1,23 +1,24 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef REDUCTION_INFO_HPP
 #define REDUCTION_INFO_HPP
 
-#include <vector>
-#include <functional>
 #include <atomic>
-
-#include <executors/threads/CPUManager.hpp>
-#include <DataAccessRegion.hpp>
-#include <lowlevel/PaddedSpinLock.hpp>
+#include <functional>
+#include <vector>
 
 #include <boost/dynamic_bitset.hpp>
 
 #include "ReductionSpecific.hpp"
+#include "executors/threads/CPUManager.hpp"
+#include "lowlevel/PaddedSpinLock.hpp"
+
+#include <DataAccessRegion.hpp>
+
 
 class ReductionInfo
 {

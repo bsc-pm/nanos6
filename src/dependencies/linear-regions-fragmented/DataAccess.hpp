@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DATA_ACCESS_HPP
@@ -11,25 +11,27 @@
 
 #include <atomic>
 #include <bitset>
-#include <boost/dynamic_bitset.hpp>
-#include <boost/intrusive/avl_set.hpp>
-#include <boost/intrusive/avl_set_hook.hpp>
 #include <cassert>
 #include <set>
 
-#include "../DataAccessBase.hpp"
+#include <boost/dynamic_bitset.hpp>
+#include <boost/intrusive/avl_set.hpp>
+#include <boost/intrusive/avl_set_hook.hpp>
+
 #include "DataAccessLink.hpp"
 #include "DataAccessObjectType.hpp"
 #include "DataAccessRegion.hpp"
-#include "ReductionSpecific.hpp"
 #include "ReductionInfo.hpp"
+#include "ReductionSpecific.hpp"
+#include "dependencies/DataAccessBase.hpp"
+#include "executors/threads/CPUManager.hpp"
+#include "lowlevel/SpinLock.hpp"
 
 #include <ExecutionStep.hpp>
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentTaskId.hpp>
-#include <executors/threads/CPUManager.hpp>
-#include <lowlevel/SpinLock.hpp>
+
 
 struct DataAccess;
 class Task;
