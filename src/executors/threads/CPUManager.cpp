@@ -86,9 +86,11 @@ void CPUManager::preinitialize()
 	// Get NUMA nodes
 	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_NUMANodeMask.resize(numNUMANodes);
-	
+
 	// Default value for _taskforGroups is one per NUMA node.
-	_taskforGroups.setValue(numNUMANodes);
+	if (!_taskforGroups.isPresent()) {
+		_taskforGroups.setValue(numNUMANodes);
+	}
 	
 	// Get CPU objects that can run a thread
 	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
