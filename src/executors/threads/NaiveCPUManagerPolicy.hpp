@@ -53,6 +53,8 @@ public:
 				Instrument::resumedComputePlace(cpu->getInstrumentationId());
 			}
 		} else if (hint == ADDED_TASKS) {
+			assert(numTasks > 0);
+			
 			// At most we will obtain as many idle CPUs as the maximum amount
 			size_t numCPUsToObtain = std::min((size_t) CPUManager::getTotalCPUs(), numTasks);
 			std::vector<CPU *> idleCPUs(numCPUsToObtain, nullptr);
@@ -66,6 +68,8 @@ public:
 				ThreadManager::resumeIdle(idleCPUs[i]);
 			}
 		} else { // hint = ADDED_TASKFOR
+			assert(numTasks > 0);
+			
 			// If a taskfor is added, first wake up all idle collaborators
 			if (cpu != nullptr) {
 				std::vector<CPU *> idleCPUs;
@@ -78,19 +82,22 @@ public:
 				}
 			}
 			
-			// After waking up all idle collaborators, unidle as many CPUs as
-			// 'numTasks' - 1 (the taskfor) so that they can execute the rest.
-			// At most we will obtain as many idle CPUs as the maximum amount
-			size_t numCPUsToObtain = std::min((size_t) CPUManager::getTotalCPUs(), numTasks - 1);
-			std::vector<CPU *> idleCPUs(numCPUsToObtain, nullptr);
-			
-			// Try to get as many idle CPUs as we need
-			size_t numCPUsObtained = CPUManager::getIdleCPUs(idleCPUs, numCPUsToObtain);
-			
-			// Resume an idle thread for every idle CPU that has awakened
-			for (size_t i = 0; i < numCPUsObtained; ++i) {
-				assert(idleCPUs[i] != nullptr);
-				ThreadManager::resumeIdle(idleCPUs[i]);
+			// If any other task was added, unidle more CPUs if possible
+			if ((numTasks - 1) > 0) {
+				// After waking up all idle collaborators, unidle as many CPUs as
+				// 'numTasks' - 1 (the taskfor) so that they can execute the rest.
+				// At most we will obtain as many idle CPUs as the maximum amount
+				size_t numCPUsToObtain = std::min((size_t) CPUManager::getTotalCPUs(), numTasks - 1);
+				std::vector<CPU *> idleCPUs(numCPUsToObtain, nullptr);
+				
+				// Try to get as many idle CPUs as we need
+				size_t numCPUsObtained = CPUManager::getIdleCPUs(idleCPUs, numCPUsToObtain);
+				
+				// Resume an idle thread for every idle CPU that has awakened
+				for (size_t i = 0; i < numCPUsObtained; ++i) {
+					assert(idleCPUs[i] != nullptr);
+					ThreadManager::resumeIdle(idleCPUs[i]);
+				}
 			}
 		}
 	}
