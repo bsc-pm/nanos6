@@ -30,6 +30,7 @@ linear_region_tests =
 reductions_tests =
 runtime_handled_reductions_tests =
 discrete_tests =
+dlb_tests =
 
 
 if HAVE_NANOS6_MERCURIUM
@@ -49,7 +50,8 @@ base_tests += \
 
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
-cpu_management_tests +=
+dlb_tests += \
+	dlb-cpu-management.test
 else
 cpu_management_tests += \
 	cpu-activation.test
@@ -104,7 +106,8 @@ base_tests += \
 
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
-cpu_management_tests +=
+dlb_tests += \
+	dlb-cpu-management.debug.test
 else
 cpu_management_tests += \
 	cpu-activation.debug.test
@@ -174,6 +177,11 @@ check_PROGRAMS += $(discrete_tests)
 TESTS += $(discrete_tests)
 endif
 
+if HAVE_DLB
+check_PROGRAMS += $(dlb_tests)
+TESTS += $(dlb_tests)
+endif
+
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 test_common_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 
@@ -236,6 +244,15 @@ dep_er_and_weak_test_SOURCES = dependencies/dep-er-and-weak.cpp
 dep_er_and_weak_test_CPPFLAGS = -DNDEBUG
 dep_er_and_weak_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 dep_er_and_weak_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_management_test_SOURCES = dlb/dlb-cpu-management.cpp
+dlb_cpu_management_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_management_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_management_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_management_debug_test_SOURCES = dlb/dlb-cpu-management.cpp
+dlb_cpu_management_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_management_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 if0_debug_test_SOURCES = dependencies/if0.cpp
 if0_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
