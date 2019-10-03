@@ -22,104 +22,13 @@
 #include "InstrumentInitAndShutdown.hpp"
 #include "InstrumentThreadId.hpp"
 #include "InstrumentThreadLocalData.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include <BacktraceWalker.hpp>
 #include <CodeAddressInfo.hpp>
-#include <instrument/support/sampling/SigProf.hpp>
 
 
 namespace Instrument {
-	
-	extern bool _profilingIsReady;
-	
-	
-	namespace Extrae {
-		bool lightweightDisableSamplingForCurrentThread()
-		{
-			if (BacktraceWalker::involves_libc_malloc) {			
-				return Sampling::SigProf::lightweightDisableThread();
-			} else {
-				ThreadLocalData &threadLocal = getThreadLocalData();
-				return (threadLocal._inMemoryAllocation++ == 0) && (threadLocal._disableCount == 0) && (threadLocal._lightweightDisableCount == 0);
-			}
-		}
-		
-		bool lightweightEnableSamplingForCurrentThread()
-		{
-			if (BacktraceWalker::involves_libc_malloc) {
-				return Sampling::SigProf::lightweightEnableThread();
-			} else {
-				ThreadLocalData &threadLocal = getThreadLocalData();
-				threadLocal._inMemoryAllocation--;
-				
-				if ((threadLocal._disableCount > 0) || (threadLocal._lightweightDisableCount > 0)) {
-					// Temporarily disabled
-					return false;
-				}
-				
-				// Perform operations previously delayed because they involved memory allocations
-				if (threadLocal._inMemoryAllocation == 0) {
-					Sampling::SigProf::lightweightDisableThread();
-					
-					for (void *backlogAddress : threadLocal._backtraceAddressBacklog) {
-						threadLocal._backtraceAddresses.insert(backlogAddress);
-					}
-					threadLocal._backtraceAddressBacklog.clear();
-					
-					Sampling::SigProf::lightweightEnableThread();
-				}
-				
-				return (threadLocal._inMemoryAllocation == 0) && (threadLocal._disableCount == 0) && (threadLocal._lightweightDisableCount == 0);
-			}
-		}
-	}
-	
-	
-	static void signalHandler(Sampling::ThreadLocalData &samplingThreadLocal)
-	{
-		extrae_combined_events_t ce;
-		
-		ce.HardwareCounters = 0;
-		ce.Callers = 0;
-		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 0;
-		ce.nCommunications = 0;
-		
-		ce.Types  = (extrae_type_t *)  alloca (_sampleBacktraceDepth * sizeof (extrae_type_t) );
-		ce.Values = (extrae_value_t *) alloca (_sampleBacktraceDepth * sizeof (extrae_value_t));
-		
-		Instrument::ThreadLocalData &threadLocal = (Instrument::ThreadLocalData &) samplingThreadLocal;
-		
-		BacktraceWalker::walk(
-			_sampleBacktraceDepth,
-			/* Skip */ 3,
-			[&](void *address, int currentFrame) {
-				ce.Types[currentFrame] = (int) EventType::SAMPLING + currentFrame;
-				ce.Values[currentFrame] = (extrae_value_t) address;
-				
-				if (threadLocal._inMemoryAllocation == 0) {
-					threadLocal._backtraceAddresses.insert(address);
-				} else if (threadLocal._backtraceAddressBacklog.size() + 1 < threadLocal._backtraceAddressBacklog.capacity()) {
-					threadLocal._backtraceAddressBacklog.push_back(address);
-				}
-				
-				ce.nEvents = currentFrame + 1;
-			}
-		);
-		
-		if (ce.nEvents == 0) {
-			return;
-		}
-		
-		if (_traceAsThreads) {
-			_extraeThreadCountLock.readLock();
-		}
-		ExtraeAPI::emit_CombinedEvents ( &ce );
-		if (_traceAsThreads) {
-			_extraeThreadCountLock.readUnlock();
-		}
-	}
-	
 	
 	static unsigned int extrae_nanos6_get_thread_id()
 	{
@@ -183,22 +92,6 @@ namespace Instrument {
 				ExtraeAPI::define_event_type((extrae_type_t) EventType::THREAD_NUMA_NODE, "NUMA Node", 0, nullptr, nullptr);
 			} else {
 				ExtraeAPI::define_event_type((extrae_type_t) EventType::THREAD, "Thread", 0, nullptr, nullptr);
-			}
-		}
-		
-		// Register the events for the backtrace
-		if (_sampleBacktraceDepth > 0) {
-			for (int i = 0; i < _sampleBacktraceDepth; i++) {
-				extrae_type_t functionEventType = (extrae_type_t) EventType::SAMPLING + i;
-				extrae_type_t locationEventType = functionEventType + 100;
-				
-				std::ostringstream ossF, ossL;
-				ossF << "Sampled functions (depth " << i << ")";
-				ossL << "Sampled line functions (depth " << i << ")";
-				ExtraeAPI::register_codelocation_type(
-					functionEventType, locationEventType,
-					(char *) ossF.str().c_str(), (char *) ossL.str().c_str()
-				);
 			}
 		}
 		
@@ -291,14 +184,6 @@ namespace Instrument {
 			RuntimeInfo::addEntry("extrae_version", "Extrae Version", oss.str());
 			RuntimeInfo::addEntry("extrae_shared_object", "Extrae Shared Object", ExtraeSymbolResolverBase::getSharedObjectPath());
 		}
-		
-		if (_sampleBacktraceDepth > 0) {
-			Sampling::SigProf::setPeriod(_sampleBacktracePeriod);
-			Sampling::SigProf::setHandler(&signalHandler);
-			Sampling::SigProf::init();
-			
-			_profilingIsReady = true;
-		}
 	}
 	
 	
@@ -342,73 +227,6 @@ namespace Instrument {
 					codeLocation.c_str(), lineNumber
 				);
 			}
-		}
-		
-		if (_sampleBacktraceDepth > 0) {
-			// After this, on the next profiling signal, the corresponding timer gets disarmed
-			Sampling::SigProf::disable();
-			
-			std::atomic_thread_fence(std::memory_order_seq_cst);
-			
-			std::set<void *> _alreadyProcessedAddresses;
-			
-			CodeAddressInfo::init();
-			std::ostringstream functionList;
-			std::ostringstream locationList;
-			
-			_backtraceAddressSetsLock.lock();
-			for (auto addressSetPointer : _backtraceAddressSets) {
-				for (void *address : *addressSetPointer) {
-					if (_alreadyProcessedAddresses.find(address) != _alreadyProcessedAddresses.end()) {
-						continue;
-					}
-					_alreadyProcessedAddresses.insert(address);
-					
-					CodeAddressInfo::Entry const &addressInfo = CodeAddressInfo::resolveAddress(address);
-					functionList.str("");
-					locationList.str("");
-					
-					bool first = true;
-					for (auto const &frame : addressInfo._inlinedFrames) {
-						CodeAddressInfo::FrameNames frameNames = CodeAddressInfo::getFrameNames(frame);
-						
-						if (frameNames._function.empty()) {
-							// Could not retrieve the name of the function
-							continue;
-						}
-						
-						if (functionList.str().length() + 1 + frameNames._mangledFunction.length() > 2047) {
-							break;
-						}
-						
-						if (!first) {
-							functionList << " ";
-							locationList << " ";
-						}
-						
-						functionList << frameNames._mangledFunction;
-						locationList << frameNames._sourceLocation;
-						first = false;
-						
-						// Extrae does not support attempting to push all the inlined functions into one string
-						break;
-					}
-					
-					if (functionList.str().empty()) {
-						// Could not retrieve any function name
-						continue;
-					}
-					
-					ExtraeAPI::register_function_address (
-						address,
-						functionList.str().c_str(),
-						locationList.str().c_str(), 0
-					);
-				}
-				addressSetPointer->clear();
-			}
-			_backtraceAddressSetsLock.unlock();
-			CodeAddressInfo::shutdown();
 		}
 		
 		// Finalize extrae library

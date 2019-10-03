@@ -18,8 +18,6 @@ namespace Instrument {
 	std::map<tracing_point_type_t, enumerated_tracing_point_info_t> _delayedEnumeratedTracingPoints;
 	
 	const EnvironmentVariable<bool> _traceAsThreads("NANOS6_EXTRAE_AS_THREADS", 0);
-	const EnvironmentVariable<int> _sampleBacktraceDepth("NANOS6_EXTRAE_SAMPLE_BACKTRACE_DEPTH", 0);
-	const EnvironmentVariable<long> _sampleBacktracePeriod("NANOS6_EXTRAE_SAMPLE_BACKTRACE_PERIOD", 1000);
 	const EnvironmentVariable<unsigned int> _detailLevel("NANOS6_EXTRAE_DETAIL_LEVEL", 1);
 	
 	SpinLock                  _extraeLock;
