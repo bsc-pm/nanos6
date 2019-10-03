@@ -65,8 +65,6 @@ namespace Instrument {
 	extern std::map<tracing_point_type_t, enumerated_tracing_point_info_t> _delayedEnumeratedTracingPoints;
 	
 	extern const EnvironmentVariable<bool> _traceAsThreads;
-	extern const EnvironmentVariable<int> _sampleBacktraceDepth;
-	extern const EnvironmentVariable<long> _sampleBacktracePeriod;
 	extern const EnvironmentVariable<unsigned int> _detailLevel;
 	
 	enum struct EventType {
@@ -99,9 +97,6 @@ namespace Instrument {
 				
 			// 96XXXXX -- Tracing points
 				TRACING_POINT_BASE = 9600000,
-		
-		// Common to extrae
-			SAMPLING = 30000000,
 	};
 	
 	
@@ -168,14 +163,6 @@ namespace Instrument {
 	
 	unsigned int extrae_nanos6_get_num_threads();
 	unsigned int extrae_nanos6_get_num_cpus_and_external_threads();
-	
-	namespace Extrae {
-		// Returns true if this is the call that actually disables it
-		bool lightweightDisableSamplingForCurrentThread();
-		
-		// Returns true is this is the call that actually reenables it
-		bool lightweightEnableSamplingForCurrentThread();
-	}
 }
 
 #endif
