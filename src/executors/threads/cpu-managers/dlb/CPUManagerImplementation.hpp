@@ -23,21 +23,19 @@ private:
 	//! Default options (same as DLB_ARGS envvar)
 	char _dlbOptions[64];
 
-	//! Whether there are unowned CPUs that could be acquired
-	bool _canAcquireCPUs;
-
 
 //! NOTE: Documentation for methods available in CPUManagerInterface.hpp
 public:
 
-	inline CPUManagerImplementation() :
-		_canAcquireCPUs(false)
+	inline CPUManagerImplementation()
 	{
 		// Lend When Idle API mode
 		strcpy(_dlbOptions, "--lewi --quiet=yes");
 	}
 
 	void preinitialize();
+
+	void initialize();
 
 	void shutdownPhase1();
 

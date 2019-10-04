@@ -102,6 +102,14 @@ public:
 		return _cpuManager->getTotalCPUs();
 	}
 	
+	//! \brief Get the number of CPUs available through the process' mask
+	static inline long getAvailableCPUs()
+	{
+		assert(_cpuManager != nullptr);
+		
+		return _cpuManager->getAvailableCPUs();
+	}
+	
 	//! \brief Get a reference to the list of CPUs
 	static inline std::vector<CPU *> const &getCPUListReference()
 	{

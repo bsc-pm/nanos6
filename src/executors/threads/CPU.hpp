@@ -43,6 +43,9 @@ public:
 		disabling_status,         // The CPU is being disabled
 		lent_status,              // The CPU is lent to another runtime
 		lending_status,           // The CPU is about to be lent to another runtime
+		acquired_status,          // The (external) CPU is acquired but not enabled yet
+		acquired_enabled_status,  // The (external) CPU is acquired and enabled
+		returned_status,          // The (external) CPU is returned to its original owner
 		shutting_down_status,     // The CPU is being shutdown
 		shutdown_status           // The CPU is shutdown and shouldn't be used
 	} activation_status_t;
@@ -70,6 +73,9 @@ private:
 	//! \brief Per-CPU data that is specific to the threading model
 	CPUThreadingModelData _threadingModelData;
 	
+	//! \brief Wehther this cpu is owned by the runtime
+	bool _isOwned;
+	
 public:
 	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
 	
@@ -94,6 +100,16 @@ public:
 		}
 		
 		return worked;
+	}
+	
+	//! \brief Force the initialization of this CPU
+	//! NOTE: This method expects the status to already be initialized
+	inline void initialize()
+	{
+		assert(_activationStatus != uninitialized_status);
+		
+		_threadingModelData.initialize(this);
+		_instrumentationId = Instrument::createdCPU(_index, _NUMANodeId);
 	}
 	
 	CPUThreadingModelData const &getThreadingModelData() const
@@ -139,6 +155,16 @@ public:
 	size_t getGroupId() const
 	{
 		return _groupId;
+	}
+	
+	inline void setOwned(bool owned = true)
+	{
+		_isOwned = owned;
+	}
+	
+	inline bool isOwned() const
+	{
+		return _isOwned;
 	}
 	
 };

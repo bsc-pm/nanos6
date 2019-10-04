@@ -14,7 +14,11 @@
 
 
 CPU::CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId)
-	: CPUPlace(virtualCPUId), _activationStatus(uninitialized_status), _systemCPUId(systemCPUId), _NUMANodeId(NUMANodeId)
+	: CPUPlace(virtualCPUId),
+	_activationStatus(uninitialized_status),
+	_systemCPUId(systemCPUId),
+	_NUMANodeId(NUMANodeId),
+	_isOwned(true)
 {
 	CPU_ZERO(&_cpuMask);
 	CPU_SET(systemCPUId, &_cpuMask);

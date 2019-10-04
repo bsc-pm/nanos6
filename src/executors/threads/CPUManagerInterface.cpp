@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -32,7 +32,7 @@ namespace cpumanager_internals {
 	static inline std::string maskToRegionList(boost::dynamic_bitset<> const &mask, size_t size)
 	{
 		std::ostringstream oss;
-		
+
 		int start = -1;
 		int end = -1;
 		bool first = true;
@@ -57,7 +57,7 @@ namespace cpumanager_internals {
 				end = -1;
 			}
 		}
-		
+
 		return oss.str();
 	}
 }
@@ -68,20 +68,22 @@ namespace cpumanager_internals {
 void CPUManagerInterface::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
 {
 	boost::dynamic_bitset<> processCPUMask(numSystemCPUs);
-	
+
 	std::vector<boost::dynamic_bitset<>> NUMANodeSystemMask(numNUMANodes);
 	for (size_t i = 0; i < numNUMANodes; ++i) {
 		NUMANodeSystemMask[i].resize(numSystemCPUs);
 	}
-	
+
 	for (CPU *cpu : _cpus) {
 		assert(cpu != nullptr);
-		
-		size_t systemCPUId = cpu->getSystemCPUId();
-		processCPUMask[systemCPUId] = true;
-		NUMANodeSystemMask[cpu->getNumaNodeId()][systemCPUId] = true;
+
+		if (cpu->isOwned()) {
+			size_t systemCPUId = cpu->getSystemCPUId();
+			processCPUMask[systemCPUId] = true;
+			NUMANodeSystemMask[cpu->getNumaNodeId()][systemCPUId] = true;
+		}
 	}
-	
+
 	RuntimeInfo::addEntry(
 		"initial_cpu_list",
 		"Initial CPU List",
@@ -89,11 +91,11 @@ void CPUManagerInterface::reportInformation(size_t numSystemCPUs, size_t numNUMA
 	);
 	for (size_t i = 0; i < numNUMANodes; ++i) {
 		std::ostringstream oss, oss2;
-		
+
 		oss << "numa_node_" << i << "_cpu_list";
 		oss2 << "NUMA Node " << i << " CPU List";
 		std::string cpuRegionList = cpumanager_internals::maskToRegionList(NUMANodeSystemMask[i], numSystemCPUs);
-		
+
 		RuntimeInfo::addEntry(oss.str(), oss2.str(), cpuRegionList);
 	}
 }
@@ -101,17 +103,17 @@ void CPUManagerInterface::reportInformation(size_t numSystemCPUs, size_t numNUMA
 void CPUManagerInterface::preinitialize()
 {
 	_finishedCPUInitialization = false;
-	
+
 	int rc = sched_getaffinity(0, sizeof(cpu_set_t), &_cpuMask);
 	FatalErrorHandler::handle(rc, " when retrieving the affinity of the process");
-	
+
 	// Get NUMA nodes
 	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_NUMANodeMask.resize(numNUMANodes);
-	
+
 	// Default value for _taskforGroups is one per NUMA node.
 	_taskforGroups.setValue(numNUMANodes);
-	
+
 	// Get CPU objects that can run a thread
 	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
 	size_t numCPUs = cpus.size();
@@ -123,13 +125,13 @@ void CPUManagerInterface::preinitialize()
 		);
 		_taskforGroups.setValue(numCPUs);
 	}
-	
+
 	// Check if the number of taskfor groups is appropriate
 	if (_taskforGroups == 0 || numCPUs % _taskforGroups != 0) {
 		size_t closestGroups = getClosestGroupNumber(numCPUs, _taskforGroups);
 		size_t cpusPerGroup  = numCPUs / closestGroups;
 		_taskforGroups.setValue(closestGroups);
-		
+
 		FatalErrorHandler::warnIf(
 			_taskforGroups == 0,
 			"0 groups requested, invalid number. ",
@@ -138,36 +140,36 @@ void CPUManagerInterface::preinitialize()
 		FatalErrorHandler::warnIf(
 			_taskforGroups != 0 && numCPUs % _taskforGroups != 0,
 			_taskforGroups, " groups requested. ",
-			"The number of CPUs is not divisiable by the number of groups. "
+			"The number of CPUs is not divisiable by the number of groups. ",
 			"Using ", closestGroups, " of ", cpusPerGroup, " CPUs each instead"
 		);
 	}
 	assert(_taskforGroups <= numCPUs && numCPUs % _taskforGroups == 0);
-	
+
 	size_t maxSystemCPUId = 0;
 	for (size_t i = 0; i < numCPUs; ++i) {
 		const CPU *cpu = (const CPU *) cpus[i];
 		assert(cpu != nullptr);
-		
+
 		if (cpu->getSystemCPUId() > maxSystemCPUId) {
 			maxSystemCPUId = cpu->getSystemCPUId();
 		}
 	}
-	
+
 	const size_t numSystemCPUs = maxSystemCPUId + 1;
 	const size_t numAvailableCPUs = CPU_COUNT(&_cpuMask);
 	_cpus.resize(numAvailableCPUs);
 	_systemToVirtualCPUId.resize(numSystemCPUs);
-	
+
 	for (size_t i = 0; i < numNUMANodes; ++i) {
 		_NUMANodeMask[i].resize(numAvailableCPUs);
 	}
-	
+
 	size_t virtualCPUId = 0;
 	for (size_t i = 0; i < numCPUs; ++i) {
 		CPU *cpu = (CPU *) cpus[i];
 		assert(cpu != nullptr);
-		
+
 		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
 			// We need the hwloc logical_index to compute the groupId. However,
 			// that index is overwritten, so this is the last place where we
@@ -175,7 +177,7 @@ void CPUManagerInterface::preinitialize()
 			// here and set it as member of CPU
 			size_t groupId = cpu->getIndex() / getNumCPUsPerTaskforGroup();
 			assert(groupId <= numCPUs);
-			
+
 			cpu->setGroupId(groupId);
 			cpu->setIndex(virtualCPUId);
 			_cpus[virtualCPUId] = cpu;
@@ -187,9 +189,9 @@ void CPUManagerInterface::preinitialize()
 		_systemToVirtualCPUId[cpu->getSystemCPUId()] = cpu->getIndex();
 	}
 	assert(virtualCPUId == numAvailableCPUs);
-	
+
 	reportInformation(numSystemCPUs, numNUMANodes);
-	
+
 	// Set all CPUs as not idle
 	_idleCPUs.resize(numAvailableCPUs);
 	_idleCPUs.reset();
@@ -202,10 +204,10 @@ void CPUManagerInterface::initialize()
 		if (_cpus[virtualCPUId] != nullptr) {
 			CPU *cpu = _cpus[virtualCPUId];
 			assert(cpu != nullptr);
-			
+
 			// Inform monitoring that the task becomes active by default
 			Monitoring::cpuBecomesActive(cpu->getIndex());
-			
+
 			bool worked = cpu->initializeIfNeeded();
 			if (worked) {
 				WorkerThread *initialThread = ThreadManager::createWorkerThread(cpu);
@@ -215,7 +217,7 @@ void CPUManagerInterface::initialize()
 			}
 		}
 	}
-	
+
 	_finishedCPUInitialization = true;
 }
 
@@ -245,36 +247,36 @@ void CPUManagerInterface::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerP
 	//! - If the hint is ADDED_TASKFOR, we wake up all the idle collaborators
 	if (hint == IDLE_CANDIDATE) {
 		assert(cpu != nullptr);
-		
+
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
-		
+
 		bool cpuIsIdle = cpuBecomesIdle((CPU *) cpu);
 		if (cpuIsIdle) {
 			// Account this CPU as idle and mark the thread as idle
 			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 			Monitoring::cpuBecomesIdle(cpu->getIndex());
-			
+
 			ThreadManager::addIdler(currentThread);
 			currentThread->switchTo(nullptr);
-			
+
 			// The thread may have migrated, update the compute place
 			cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
-			
+
 			Instrument::resumedComputePlace(cpu->getInstrumentationId());
 			Monitoring::cpuBecomesActive(cpu->getIndex());
 		}
 	} else if (hint == ADDED_TASKS) {
 		assert(numTasks > 0);
-		
+
 		// At most we will obtain as many idle CPUs as the maximum amount
 		size_t numCPUsToObtain = std::min(_cpus.size(), numTasks);
 		std::vector<CPU *> idleCPUs(numCPUsToObtain, nullptr);
-		
+
 		// Try to get as many idle CPUs as we need
 		size_t numCPUsObtained = getIdleCPUs(idleCPUs, numCPUsToObtain);
-		
+
 		// Resume an idle thread for every idle CPU that has awakened
 		for (size_t i = 0; i < numCPUsObtained; ++i) {
 			assert(idleCPUs[i] != nullptr);
@@ -282,10 +284,10 @@ void CPUManagerInterface::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerP
 		}
 	} else { // hint = HANDLE_TASKFOR
 		assert(cpu != nullptr);
-		
+
 		std::vector<CPU *> idleCPUs;
 		CPUManager::getIdleCollaborators(idleCPUs, cpu);
-		
+
 		// Resume an idle thread for every unidled collaborator
 		for (size_t i = 0; i < idleCPUs.size(); ++i) {
 			assert(idleCPUs[i] != nullptr);
@@ -300,11 +302,11 @@ void CPUManagerInterface::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerP
 bool CPUManagerInterface::cpuBecomesIdle(CPU *cpu, bool inShutdown)
 {
 	assert(cpu != nullptr);
-	
+
 	const int index = cpu->getIndex();
-	
+
 	_idleCPUsLock.lock();
-	
+
 	if (!inShutdown) {
 		// Before idling the CPU, check if there truly aren't any tasks ready
 		// NOTE: This is a workaround to solve the race condition between adding
@@ -317,14 +319,14 @@ bool CPUManagerInterface::cpuBecomesIdle(CPU *cpu, bool inShutdown)
 			return false;
 		}
 	}
-	
+
 	_idleCPUs[index] = true;
 	++_numIdleCPUs;
 	assert(_numIdleCPUs <= _cpus.size());
-	
+
 	Monitoring::cpuBecomesIdle(index);
 	_idleCPUsLock.unlock();
-	
+
 	return true;
 }
 
@@ -335,7 +337,7 @@ CPU *CPUManagerInterface::getIdleCPU(bool)
 	if (idleCPU != boost::dynamic_bitset<>::npos) {
 		_idleCPUs[idleCPU] = false;
 		assert(_numIdleCPUs > 0);
-		
+
 		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(idleCPU);
 		return _cpus[idleCPU];
@@ -347,28 +349,28 @@ CPU *CPUManagerInterface::getIdleCPU(bool)
 size_t CPUManagerInterface::getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs)
 {
 	assert(idleCPUs.size() >= numCPUs);
-	
+
 	size_t numObtainedCPUs = 0;
-	
+
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
 	while (numObtainedCPUs < numCPUs && idleCPU != boost::dynamic_bitset<>::npos) {
 		// Signal that the CPU becomes active
 		_idleCPUs[idleCPU] = false;
 		Monitoring::cpuBecomesActive(idleCPU);
-		
+
 		// Place the CPU in the vector
 		idleCPUs[numObtainedCPUs] = _cpus[idleCPU];
 		++numObtainedCPUs;
-		
+
 		// Iterate to the next idle CPU
 		idleCPU = _idleCPUs.find_next(idleCPU);
 	}
-	
+
 	// Decrease the counter of idle CPUs by the obtained amount
 	assert(_numIdleCPUs >= numObtainedCPUs);
 	_numIdleCPUs -= numObtainedCPUs;
-	
+
 	return numObtainedCPUs;
 }
 
@@ -380,7 +382,7 @@ CPU *CPUManagerInterface::getIdleNUMANodeCPU(size_t NUMANodeId)
 	if (idleCPU != boost::dynamic_bitset<>::npos) {
 		_idleCPUs[idleCPU] = false;
 		assert(_numIdleCPUs > 0);
-		
+
 		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(idleCPU);
 		return _cpus[idleCPU];
@@ -392,14 +394,14 @@ CPU *CPUManagerInterface::getIdleNUMANodeCPU(size_t NUMANodeId)
 bool CPUManagerInterface::unidleCPU(CPU *cpu)
 {
 	assert(cpu != nullptr);
-	
+
 	const int index = cpu->getIndex();
-	
+
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	if (_idleCPUs[index]) {
 		_idleCPUs[index] = false;
 		assert(_numIdleCPUs > 0);
-		
+
 		--_numIdleCPUs;
 		Monitoring::cpuBecomesActive(index);
 		return true;
@@ -411,28 +413,28 @@ bool CPUManagerInterface::unidleCPU(CPU *cpu)
 void CPUManagerInterface::getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu)
 {
 	assert(cpu != nullptr);
-	
+
 	size_t numObtainedCollaborators = 0;
-	
+
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
 	while (idleCPU != boost::dynamic_bitset<>::npos) {
 		assert(_cpus[idleCPU] != nullptr);
-		
+
 		if (((CPU *) cpu)->getGroupId() == _cpus[idleCPU]->getGroupId()) {
 			// Signal that the CPU becomes active
 			_idleCPUs[idleCPU] = false;
 			Monitoring::cpuBecomesActive(idleCPU);
 			++numObtainedCollaborators;
-			
+
 			// Place the CPU in the vector
 			idleCPUs.push_back(_cpus[idleCPU]);
 		}
-		
+
 		// Iterate to the next idle CPU
 		idleCPU = _idleCPUs.find_next(idleCPU);
 	}
-	
+
 	// Decrease the counter of idle CPUs by the obtained amount
 	assert(_numIdleCPUs >= numObtainedCollaborators);
 	_numIdleCPUs -= numObtainedCollaborators;

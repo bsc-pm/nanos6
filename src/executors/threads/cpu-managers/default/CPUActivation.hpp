@@ -38,6 +38,9 @@ public:
 				return false;
 			case CPU::lent_status:
 			case CPU::lending_status:
+			case CPU::acquired_status:
+			case CPU::acquired_enabled_status:
+			case CPU::returned_status:
 			case CPU::shutting_down_status:
 				assert(false);
 				return false;
@@ -67,6 +70,9 @@ public:
 				case CPU::uninitialized_status:
 				case CPU::lent_status:
 				case CPU::lending_status:
+				case CPU::acquired_status:
+				case CPU::acquired_enabled_status:
+				case CPU::returned_status:
 				case CPU::shutting_down_status:
 					// The CPU should never be in here in this implementation
 					assert(false);
@@ -112,6 +118,9 @@ public:
 				case CPU::uninitialized_status:
 				case CPU::lent_status:
 				case CPU::lending_status:
+				case CPU::acquired_status:
+				case CPU::acquired_enabled_status:
+				case CPU::returned_status:
 				case CPU::shutting_down_status:
 					// The CPU should never be in here in this implementation
 					assert(false);
@@ -157,6 +166,9 @@ public:
 				case CPU::uninitialized_status:
 				case CPU::lent_status:
 				case CPU::lending_status:
+				case CPU::acquired_status:
+				case CPU::acquired_enabled_status:
+				case CPU::returned_status:
 				case CPU::shutting_down_status:
 					// The CPU should never be in here in this implementation
 					assert(false);
@@ -211,6 +223,9 @@ public:
 				case CPU::uninitialized_status:
 				case CPU::lent_status:
 				case CPU::lending_status:
+				case CPU::acquired_status:
+				case CPU::acquired_enabled_status:
+				case CPU::returned_status:
 				case CPU::shutting_down_status:
 					// The CPU should never be in here in this implementation
 					assert(false);

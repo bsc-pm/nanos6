@@ -61,7 +61,7 @@ protected:
 	static EnvironmentVariable<size_t> _taskforGroups;
 	
 	
-private:
+protected:
 	
 	//! \brief Instrument-related private function
 	void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
@@ -156,6 +156,12 @@ public:
 	virtual inline std::vector<CPU *> const &getCPUListReference() const
 	{
 		return _cpus;
+	}
+	
+	//! \brief Get the number of CPUs available through the process' mask
+	virtual inline long getAvailableCPUs() const
+	{
+		return CPU_COUNT(&_cpuMask);
 	}
 	
 	
