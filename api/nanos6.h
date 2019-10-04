@@ -20,6 +20,8 @@
 #include "nanos6/devices.h"
 #include "nanos6/events.h"
 #include "nanos6/final.h"
+#include "nanos6/lint.h"
+#include "nanos6/lint-multidimensional-accesses.h"
 #include "nanos6/polling.h"
 #include "nanos6/major.h"
 #include "nanos6/monitoring.h"

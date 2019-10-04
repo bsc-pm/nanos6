@@ -16,6 +16,7 @@
 #include "cluster.h"
 #include "final.h"
 #include "library-mode.h"
+#include "lint.h"
 #include "major.h"
 #include "monitoring.h"
 #include "polling.h"
@@ -36,7 +37,7 @@ enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 1 };
 
 #pragma GCC visibility push(default)
 
-enum nanos6_api_check_api_t { nanos6_api_check_api = 5 };
+enum nanos6_api_check_api_t { nanos6_api_check_api = 6 };
 
 
 #ifdef __cplusplus
@@ -56,6 +57,7 @@ typedef struct {
 	enum nanos6_final_api_t final_api_version;
 	enum nanos6_instantiation_api_t instantiation_api_version;
 	enum nanos6_library_mode_api_t library_mode_api_version;
+	enum nanos6_lint_api_t lint_api_version;
 	enum nanos6_locking_api_t locking_api_version;
 	enum nanos6_monitoring_api_t monitoring_api_version;
 	enum nanos6_polling_api_t polling_api_version;

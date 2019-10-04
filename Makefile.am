@@ -40,6 +40,9 @@ MAX_REGION_DIMENSIONS = 8
 MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative weak_commutative reduction weak_reduction
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES = 
 
+LINT_MAX_REGION_DIMENSIONS = 8
+LINT_MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite
+
 nanos6includedir = $(includedir)/nanos6
 
 nanos6include_HEADERS = \
@@ -54,6 +57,7 @@ nanos6include_HEADERS = \
 	api/nanos6/events.h \
 	api/nanos6/final.h \
 	api/nanos6/library-mode.h \
+	api/nanos6/lint.h \
 	api/nanos6/major.h \
 	api/nanos6/monitoring.h \
 	api/nanos6/polling.h \
@@ -67,7 +71,8 @@ nanos6include_HEADERS = \
 
 nodist_nanos6include_HEADERS = \
 	nanos6/multidimensional-dependencies.h \
-	nanos6/multidimensional-release.h 
+	nanos6/multidimensional-release.h \
+	nanos6/lint-multidimensional-accesses.h
 
 include_HEADERS = \
 	api/nanos6.h
@@ -163,6 +168,7 @@ symbol_resolution += \
 	loader/symbol-resolver/dependencies.c \
 	loader/symbol-resolver/events.c \
 	loader/symbol-resolver/final.c \
+	loader/symbol-resolver/lint.c \
 	loader/symbol-resolver/monitoring.c \
 	loader/symbol-resolver/polling.c \
 	loader/symbol-resolver/reductions.c \
@@ -175,7 +181,8 @@ symbol_resolution += \
 	loader/symbol-resolver/weak-dependencies.c
 multidimensional_regions += \
 	multidim-region-dependency-resolvers.c \
-	multidim-release-resolvers.c
+	multidim-release-resolvers.c \
+	lint-multidim-region-access-resolvers.c
 endif
 
 
@@ -191,6 +198,7 @@ symbol_resolution += \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
+	loader/indirect-symbols/lint.c \
 	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/polling.c \
 	loader/indirect-symbols/reductions.c \
@@ -204,10 +212,13 @@ symbol_resolution += \
 
 multidimensional_regions += \
 	multidim-region-dependency-indirect-resolvers.c \
-	multidim-release-indirect-resolvers.c
+	multidim-release-indirect-resolvers.c \
+	lint-multidim-region-access-indirect-resolvers.c
 
 dependent_objects = $(symbol_resolution:.c=.lo) $(multidimensional_regions:.c=.lo)
-$(dependent_objects): nanos6/multidimensional-dependencies.h
+$(dependent_objects): \
+	nanos6/multidimensional-dependencies.h \
+	nanos6/lint-multidimensional-accesses.h
 endif
 
 libnanos6_la_SOURCES = \
@@ -223,7 +234,8 @@ libnanos6_la_LDFLAGS = $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_
 
 nanos6_generated_headers = \
 	nanos6/multidimensional-dependencies.h \
-	nanos6/multidimensional-release.h
+	nanos6/multidimensional-release.h \
+	nanos6/lint-multidimensional-accesses.h
 
 nodist_libnanos6_la_SOURCES = \
 	$(nanos6_generated_headers) \
@@ -245,7 +257,12 @@ EXTRA_DIST = \
 	loader/scripts/generate_regions_symbol_resolvers.sh \
 	loader/scripts/generate_release_indirect_symbol_resolvers.sh \
 	loader/scripts/generate_release_prototypes.sh \
-	loader/scripts/generate_release_symbol_resolvers.sh
+	loader/scripts/generate_release_symbol_resolvers.sh \
+	loader/scripts/lint/common.sh \
+	loader/scripts/lint/generate_multidim_functions_for_linear_regions.sh \
+	loader/scripts/lint/generate_regions_indirect_symbol_resolvers.sh \
+	loader/scripts/lint/generate_regions_prototypes.sh \
+	loader/scripts/lint/generate_regions_symbol_resolvers.sh
 
 
 AM_V_GEN = $(am__v_GEN_@AM_V@)
@@ -290,7 +307,18 @@ MultidimensionalAPIToLinear.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_sr
 MultidimensionalAPIToDiscrete.cpp: $(top_srcdir)/loader/scripts/common.sh $(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh Makefile
 	$(AM_V_GEN)$(top_srcdir)/loader/scripts/generate_multidim_functions_for_linear_regions.sh $(MAX_REGION_DIMENSIONS) $(SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
+nanos6/lint-multidimensional-accesses.h: $(top_srcdir)/loader/scripts/lint/common.sh $(top_srcdir)/loader/scripts/lint/generate_regions_prototypes.sh Makefile
+	$(AM_V_GEN)mkdir -p nanos6 ; \
+	$(top_srcdir)/loader/scripts/lint/generate_regions_prototypes.sh $(LINT_MAX_REGION_DIMENSIONS) $(LINT_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
+lint-multidim-region-access-resolvers.c: $(top_srcdir)/loader/scripts/lint/common.sh $(top_srcdir)/loader/scripts/lint/generate_regions_symbol_resolvers.sh Makefile
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/lint/generate_regions_symbol_resolvers.sh $(LINT_MAX_REGION_DIMENSIONS) $(LINT_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+lint-multidim-region-access-indirect-resolvers.c: $(top_srcdir)/loader/scripts/lint/common.sh $(top_srcdir)/loader/scripts/lint/generate_regions_indirect_symbol_resolvers.sh Makefile nanos6/lint-multidimensional-accesses.h
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/lint/generate_regions_indirect_symbol_resolvers.sh $(LINT_MAX_REGION_DIMENSIONS) $(LINT_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
+
+MultidimensionalLintAPI.cpp: $(top_srcdir)/loader/scripts/lint/common.sh $(top_srcdir)/loader/scripts/lint/generate_multidim_functions_for_linear_regions.sh Makefile
+	$(AM_V_GEN)$(top_srcdir)/loader/scripts/lint/generate_multidim_functions_for_linear_regions.sh $(LINT_MAX_REGION_DIMENSIONS) $(LINT_MULTIDIMENSIONAL_REGION_API_TYPES) > $@
 
 
 # Sources for debugging
@@ -345,6 +373,7 @@ common_sources = \
 	src/system/ClusterAPI.cpp \
 	src/system/EventsAPI.cpp \
 	src/system/LeaderThread.cpp \
+	src/system/LintAPI.cpp \
 	src/system/MonitoringAPI.cpp \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
@@ -430,7 +459,7 @@ linear_regions_fragmented_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp
 
-multidimensional_adaptor_sources =
+multidimensional_adaptor_sources = MultidimensionalLintAPI.cpp
 
 if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
 AM_CXXFLAGS += -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
