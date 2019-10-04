@@ -48,6 +48,7 @@ public:
 		taskfor_flag,
 		wait_flag,
 		preallocated_args_block_flag,
+		lint_verified_flag,
 		//! Flags added by the Nanos6 runtime. Note that
 		//! these flags must be always declared after the
 		//! Mercurium flags
