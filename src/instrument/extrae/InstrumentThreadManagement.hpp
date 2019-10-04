@@ -96,14 +96,6 @@ namespace Instrument {
 		
 		threadLocal._currentThreadId = threadId;
 		
-		if (_sampleBacktraceDepth > 0) {
-			Sampling::SigProf::setUpThread(threadLocal);
-			
-			// We call the signal handler once since the first call to backtrace allocates memory.
-			// If the signal is delivered within a memory allocation, the thread can deadlock.
-			Sampling::SigProf::forceHandler();
-		}
-		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.writeLock();
 			ExtraeAPI::change_num_threads(extrae_nanos6_get_num_threads());
@@ -166,14 +158,6 @@ namespace Instrument {
 		ExtraeAPI::emit_CombinedEvents ( &ce );
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
-		}
-		
-		if (_sampleBacktraceDepth > 0) {
-			_backtraceAddressSetsLock.lock();
-			_backtraceAddressSets.push_back(&threadLocal._backtraceAddresses);
-			_backtraceAddressSetsLock.unlock();
-			
-			Sampling::SigProf::enableThread(threadLocal);
 		}
 	}
 	
