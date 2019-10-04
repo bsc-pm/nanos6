@@ -6,7 +6,7 @@
 #	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 AC_PREREQ([2.69])
-AC_INIT([nanos6], [2.2.1], [pm-tools@bsc.es])
+AC_INIT([nanos6], [2.2.2], [pm-tools@bsc.es])
 AC_CONFIG_SRCDIR([src/scheduling/Scheduler.hpp])
 AC_CONFIG_AUX_DIR([config-aux])
 AC_CONFIG_MACRO_DIR([m4])
