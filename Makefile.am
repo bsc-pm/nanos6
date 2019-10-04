@@ -80,6 +80,7 @@ lib_LTLIBRARIES = \
 	libnanos6-extrae.la \
 	libnanos6-graph.la \
 	libnanos6-graph-debug.la \
+	libnanos6-lint.la \
 	libnanos6-stats.la \
 	libnanos6-stats-papi.la \
 	libnanos6-verbose.la \
@@ -223,7 +224,7 @@ libnanos6_la_LDFLAGS = $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_
 nanos6_generated_headers = \
 	nanos6/multidimensional-dependencies.h \
 	nanos6/multidimensional-release.h
-	
+
 nodist_libnanos6_la_SOURCES = \
 	$(nanos6_generated_headers) \
 	$(multidimensional_regions)
@@ -506,6 +507,9 @@ instrument_graph_sources = \
 	src/instrument/graph/SortAccessGroups.cpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
+
+instrument_lint_sources = \
+	src/instrument/lint/Callbacks.cpp
 
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
@@ -814,6 +818,33 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentUserMutex.hpp \
 	src/instrument/graph/PathLength.hpp \
 	src/instrument/graph/SortAccessGroups.hpp \
+	src/instrument/lint/Callbacks.hpp \
+	src/instrument/lint/InstrumentAddTask.hpp \
+	src/instrument/lint/InstrumentBlocking.hpp \
+	src/instrument/lint/InstrumentComputePlaceId.hpp \
+	src/instrument/lint/InstrumentComputePlaceManagement.hpp \
+	src/instrument/lint/InstrumentDataAccessId.hpp \
+	src/instrument/lint/InstrumentDependenciesByAccess.hpp \
+	src/instrument/lint/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/lint/InstrumentDependenciesByGroup.hpp \
+	src/instrument/lint/InstrumentExternalThreadId.hpp \
+	src/instrument/lint/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/lint/InstrumentInitAndShutdown.hpp \
+	src/instrument/lint/InstrumentInstrumentationContext.hpp \
+	src/instrument/lint/InstrumentLeaderThread.hpp \
+	src/instrument/lint/InstrumentLogMessage.hpp \
+	src/instrument/lint/InstrumentReductions.hpp \
+	src/instrument/lint/InstrumentTaskExecution.hpp \
+	src/instrument/lint/InstrumentTaskId.hpp \
+	src/instrument/lint/InstrumentTaskStatus.hpp \
+	src/instrument/lint/InstrumentTaskWait.hpp \
+	src/instrument/lint/InstrumentThreadId.hpp \
+	src/instrument/lint/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/lint/InstrumentThreadLocalData.hpp \
+	src/instrument/lint/InstrumentThreadManagement.hpp \
+	src/instrument/lint/InstrumentTracingPointTypes.hpp \
+	src/instrument/lint/InstrumentTracingPoints.hpp \
+	src/instrument/lint/InstrumentUserMutex.hpp \
 	src/instrument/null/InstrumentAddTask.hpp \
 	src/instrument/null/InstrumentBlocking.hpp \
 	src/instrument/null/InstrumentComputePlaceId.hpp \
@@ -1210,6 +1241,22 @@ endif
 else
 disabled_variants += extrae
 libnanos6_extrae_la_SOURCES += loader/disabled_variant.c
+endif
+
+
+libnanos6_lint_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/lint
+libnanos6_lint_la_CXXFLAGS = $(AM_CXXFLAGS)
+libnanos6_lint_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_lint_la_SOURCES =
+nodist_libnanos6_lint_la_SOURCES =
+
+if BUILD_LINT_INSTRUMENTATION_VARIANT
+enabled_variants += lint
+libnanos6_lint_la_SOURCES += $(common_sources) $(instrument_lint_sources) $(universal_debug_sources) $(memory_default_sources)
+nodist_libnanos6_lint_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+disabled_variants += lint
+libnanos6_lint_la_SOURCES += loader/disabled_variant.c
 endif
 
 

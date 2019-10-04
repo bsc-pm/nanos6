@@ -164,6 +164,27 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		AC_MSG_RESULT([$ac_build_verbose_instrumentation])
 		AM_CONDITIONAL(BUILD_VERBOSE_INSTRUMENTATION_VARIANT, test x"${ac_build_verbose_instrumentation}" = x"yes")
 		
+		AC_MSG_CHECKING([whether to build the lint instrumented variant])
+		AC_ARG_ENABLE(
+			[lint-instrumentation],
+			[AS_HELP_STRING([--enable-lint-instrumentation], [build the lint instrumented variant])],
+			[
+				case "${enableval}" in
+				yes)
+					ac_build_lint_instrumentation=yes
+					;;
+				no)
+					ac_build_lint_instrumentation=no
+					;;
+				*)
+					AC_MSG_ERROR([bad value ${enableval} for --enable-lint-instrumentation])
+					;;
+				esac
+			],
+			[ac_build_lint_instrumentation=no]
+		)
+		AC_MSG_RESULT([$ac_build_lint_instrumentation])
+		AM_CONDITIONAL(BUILD_LINT_INSTRUMENTATION_VARIANT, test x"${ac_build_lint_instrumentation}" = x"yes")
 	]
 )
 
