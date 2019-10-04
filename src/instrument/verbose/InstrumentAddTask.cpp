@@ -48,6 +48,29 @@ namespace Instrument {
 	}
 	
 	
+	void createdArgsBlock(
+		task_id_t taskId,
+		void *argsBlockPointer,
+		size_t originalArgsBlockSize,
+		size_t argsBlockSize,
+		InstrumentationContext const &context
+	) {
+		if (!_verboseAddTask) {
+			return;
+		}
+		
+		LogEntry *logEntry = getLogEntry(context);
+		assert(logEntry != nullptr);
+		
+		logEntry->appendLocation(context);
+		logEntry->_contents << " --- AddTask: created " << taskId << " argsblock:" << argsBlockPointer;
+		logEntry->_contents << " " << originalArgsBlockSize << " bytes (before alignment fixup), ";
+		logEntry->_contents << " " << argsBlockSize << " bytes (after alignment fixup)";
+		
+		addLogEntry(logEntry);
+	}
+	
+	
 	void createdTask(
 		void *taskObject,
 		task_id_t taskId,

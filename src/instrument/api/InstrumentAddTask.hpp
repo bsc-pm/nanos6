@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_ADD_TASK_HPP
@@ -28,6 +28,16 @@ namespace Instrument {
 	//! \param[in] task the Task object
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void createdTask(void *task, task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+
+	//! This function is called after having allocated the args block and before
+	//! the actual Task object is created.
+	//! \param[in] taskId the task identifier returned in the call to enterAddTask
+	//! \param[in] argsBlockPointer a pointer to the args block
+	//! \param[in] originalArgsBlockSize the original size of the args block,
+	//!            before any alignment correction
+	//! \param[in] argsBlockSize the actual size of the args block, if alignment
+	//!            was corrected
+	void createdArgsBlock(task_id_t taskId, void *argsBlockPointer, size_t originalArgsBlockSize, size_t argsBlockSize, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! This function is called right before returning to the user code. The task
 	//! identifier is necessary because the actual task may have already been
