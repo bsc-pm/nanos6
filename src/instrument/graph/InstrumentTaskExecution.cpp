@@ -31,4 +31,21 @@ namespace Instrument {
 		_executionSequence.push_back(exitTaskStep);
 	}
 	
+	void startTaskforCollaborator(__attribute__((unused)) task_id_t taskId, bool first, InstrumentationContext const &context)
+	{
+		if (first) {
+			std::lock_guard<SpinLock> guard(_graphLock);
+			enter_task_step_t *enterTaskStep = new enter_task_step_t(context);
+			_executionSequence.push_back(enterTaskStep);
+		}
+	}
+	
+	void endTaskforCollaborator(__attribute__((unused)) task_id_t taskId, bool last, InstrumentationContext const &context)
+	{
+		if (last) {
+			std::lock_guard<SpinLock> guard(_graphLock);
+			exit_task_step_t *exitTaskStep = new exit_task_step_t(context);
+			_executionSequence.push_back(exitTaskStep);
+		}
+	}
 }

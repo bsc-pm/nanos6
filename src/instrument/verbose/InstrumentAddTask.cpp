@@ -112,5 +112,17 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
+	task_id_t enterAddTaskforCollaborator(
+		nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, __attribute__((unused)) size_t flags,
+		InstrumentationContext const &context
+	) {
+		// Verbose instrumentation does not instrument task fors
+	}
 	
+	void exitAddTaskforCollaborator(
+		task_id_t taskId,
+		InstrumentationContext const &context
+	) {
+		// Verbose instrumentation does not instrument task fors
+	}
 }

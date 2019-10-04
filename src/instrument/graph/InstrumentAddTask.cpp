@@ -123,4 +123,21 @@ namespace Instrument {
 	) {
 	}
 	
+	task_id_t enterAddTaskforCollaborator(
+		__attribute__((unused)) nanos6_task_info_t *taskInfo,
+		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
+		__attribute__((unused)) size_t flags,
+		InstrumentationContext const &context
+	) {
+		// Collaborators do not affect to the graph, as they are just parts of the taskfor which has already
+		// been instrumented as a regular task.
+	}
+	
+	void exitAddTaskforCollaborator(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		// Collaborators do not affect to the graph, as they are just parts of the taskfor which has already
+		// been instrumented as a regular.
+	}
 }

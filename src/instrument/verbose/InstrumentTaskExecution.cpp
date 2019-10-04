@@ -76,4 +76,14 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
+	
+	void startTaskforCollaborator(task_id_t taskId, bool first, InstrumentationContext const &context) {
+		// Verbose instrumentation does not instrument task fors
+	}
+	
+	
+	void endTaskforCollaborator(task_id_t taskId, bool last, InstrumentationContext const &context) {
+		// Verbose instrumentation does not instrument
+	}
+	
 }

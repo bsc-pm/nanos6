@@ -43,6 +43,20 @@ namespace Instrument {
 	) {
 	}
 	
+	inline task_id_t enterAddTaskforCollaborator(
+		__attribute__((unused)) nanos6_task_info_t *taskInfo,
+		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
+		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		return task_id_t();
+	}
+	
+	inline void exitAddTaskforCollaborator(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+	}
 }
 
 

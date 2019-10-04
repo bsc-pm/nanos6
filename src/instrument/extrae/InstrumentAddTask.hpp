@@ -147,6 +147,70 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
+	
+	inline task_id_t enterAddTaskforCollaborator(
+		nanos6_task_info_t *taskInfo,
+		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
+		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		// When creating a regular task, we emmit two events: runtime state and code location.
+		// We emmit runtime state as NANOS_CREATION and code location as the method run by the task.
+		// In this case, when adding a collaborator to taskfor, we are only emmitting one event: code location.
+		// We do not emmit runtime state because adding a collaborator does not actually mean creating a task,
+		// since collaborators are already created at scheduler initialization. We are just setting up some
+		// data structures, and so, it is not fine to emmit NANOS_CREATION.
+		
+		extrae_combined_events_t ce;
+		
+		ce.HardwareCounters = 0;
+		ce.Callers = 0;
+		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
+		ce.nEvents = 1;
+		ce.nCommunications = 0;
+		
+		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
+		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+		
+		ce.Types[0] = (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION;
+		ce.Values[0] = (extrae_value_t) taskInfo->implementations[0].run;
+		
+		if (_traceAsThreads) {
+			_extraeThreadCountLock.readLock();
+		}
+		ExtraeAPI::emit_CombinedEvents ( &ce );
+		if (_traceAsThreads) {
+			_extraeThreadCountLock.readUnlock();
+		}
+	}
+	
+	inline void exitAddTaskforCollaborator(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
+	{
+		// As we did not changed the runtime state in "enterAddTaskforCollaborator", we do not have to restore it here.
+		// Thus, emmit only code location.
+		
+		extrae_combined_events_t ce;
+		
+		ce.HardwareCounters = 0;
+		ce.Callers = 0;
+		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
+		ce.nEvents = 1;
+		ce.nCommunications = 0;
+		
+		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
+		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
+		
+		ce.Types[0] = (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION;
+		ce.Values[0] = (extrae_value_t) nullptr;
+		
+		if (_traceAsThreads) {
+			_extraeThreadCountLock.readLock();
+		}
+		ExtraeAPI::emit_CombinedEvents ( &ce );
+		if (_traceAsThreads) {
+			_extraeThreadCountLock.readUnlock();
+		}
+	}
 }
 
 

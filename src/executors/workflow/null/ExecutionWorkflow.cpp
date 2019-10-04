@@ -10,6 +10,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/Taskfor.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -58,8 +59,16 @@ namespace ExecutionWorkflow {
 				}
 			}
 			
-			Instrument::startTask(taskId);
-			Instrument::taskIsExecuting(taskId);
+			if(task->isTaskfor()) {
+				assert(task->isRunnable());
+				bool first = ((Taskfor *) task)->getTaskforInfo().getBounds().lower_bound == 0;
+				Instrument::startTaskforCollaborator(task->getParent()->getInstrumentationTaskId(), first);
+				Instrument::taskforCollaboratorIsExecuting(taskId);
+			}
+			else {
+				Instrument::startTask(taskId);
+				Instrument::taskIsExecuting(taskId);
+			}
 			
 			HardwareCounters::startTaskMonitoring(task);
 			Monitoring::taskChangedStatus(task, executing_status);
@@ -77,8 +86,16 @@ namespace ExecutionWorkflow {
 			Monitoring::taskCompletedUserCode(task);
 			HardwareCounters::stopTaskMonitoring(task);
 			
-			Instrument::taskIsZombie(taskId);
-			Instrument::endTask(taskId);
+			if(task->isTaskfor()) {
+				assert(task->isRunnable());
+				bool last = ((Taskfor *) task)->getTaskforInfo().getBounds().upper_bound == ((Taskfor *) task->getParent())->getTaskforInfo().getBounds().upper_bound;
+				Instrument::taskforCollaboratorStopped(taskId, task->getParent()->getInstrumentationTaskId());
+				Instrument::endTaskforCollaborator(task->getParent()->getInstrumentationTaskId(), last);
+			}
+			else {
+				Instrument::taskIsZombie(taskId);
+				Instrument::endTask(taskId);
+			}
 		} else {
 			Monitoring::taskChangedStatus(task, runtime_status);
 			Monitoring::taskCompletedUserCode(task);

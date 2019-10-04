@@ -128,6 +128,7 @@ namespace Instrument {
 		
 		struct TaskTypeAndTimes {
 			nanos6_task_info_t const *_type;
+			SpinLock _lock;
 			TaskTimes _times;
 			bool _hasParent;
 			Timer *_currentTimer;

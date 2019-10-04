@@ -137,4 +137,12 @@ namespace Instrument {
 		
 		addLogEntry(logEntry);
 	}
+	
+	void taskforCollaboratorIsExecuting(task_id_t taskId, InstrumentationContext const &context) {
+		// Verbose instrumentation does not instrument task fors
+	}
+	
+	void taskforCollaboratorStopped(task_id_t taskId, task_id_t taskforId, InstrumentationContext const &context) {
+		// Verbose instrumentation does not instrument task fors
+	}
 }

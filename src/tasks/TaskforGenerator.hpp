@@ -62,8 +62,7 @@ public:
 		
 		// Instrument the task creation
 		Instrument::task_id_t taskInstrumentationId = taskfor->getInstrumentationTaskId();
-		Instrument::createdTask(taskfor, taskInstrumentationId);
-		Instrument::exitAddTask(taskInstrumentationId);
+		Instrument::exitAddTaskforCollaborator(taskInstrumentationId);
 		
 		return taskfor;
 	}

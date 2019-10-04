@@ -83,14 +83,13 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			bool isSpawned = task->isSpawned();
 			bool isStreamExecutor = task->isStreamExecutor();
 			
-			Instrument::destroyTask(task->getInstrumentationTaskId());
-			
 			//! We cannot destroy collaborator tasks because they are preallocated tasks that are used during all the program execution.
 			//! However, we must destroy taskfors that are not collaborators. A collaborator must be runnable. Thus, if a taskfor is runnable,
 			//! it is a collaborator, so no destroy. Otherwise, it is not a collaborator, so must be destroyed.
 			bool destroy = !(task->isTaskfor() && task->isRunnable());
 			
 			if (destroy) {
+				Instrument::destroyTask(task->getInstrumentationTaskId());
 				// NOTE: The memory layout is defined in nanos6_create_task
 				void *disposableBlock;
 				size_t disposableBlockSize;
@@ -139,8 +138,6 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 					task->~Task();
 				}
 				MemoryAllocator::free(disposableBlock, disposableBlockSize);
-			} else {
-				Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 			}
 			
 			task = parent;

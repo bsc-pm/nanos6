@@ -17,6 +17,8 @@ namespace Instrument {
 	void createdArgsBlock(task_id_t taskId, void *argsBlockPointer, size_t originalArgsBlockSize, size_t argsBlockSize, InstrumentationContext const &context);
 	void createdTask(void *task, task_id_t taskId, InstrumentationContext const &context);
 	void exitAddTask(task_id_t taskId, InstrumentationContext const &context);
+	task_id_t enterAddTaskforCollaborator(nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, size_t flags, InstrumentationContext const &context);
+	void exitAddTaskforCollaborator(task_id_t taskId, InstrumentationContext const &context);
 }
 
 

@@ -143,7 +143,7 @@ void nanos6_create_preallocated_task(
 	assert(preallocatedArgsBlock != nullptr);
 	assert(preallocatedTask != nullptr);
 	
-	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
+	Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(taskInfo, taskInvocationInfo, flags);
 	
 	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskloop_task;
 	//bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
