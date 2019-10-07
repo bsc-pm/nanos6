@@ -2,6 +2,14 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.2.2, Mon Oct 7, 2019
+The 2.2.2 release corresponds to the OmpSs-2 2019.06c release. It introduces bug fixes.
+
+### General
+- Compiling extrae variant with high optimization flags
+- Removing backtrace sampling from the extrae variant
+
+
 ## Version 2.2.1, Fri Sep 27, 2019
 The 2.2.1 release corresponds to the OmpSs-2 2019.06b release. It mainly introduces bug fixes and code improvements.
 
