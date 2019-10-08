@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 
 
 ## Version 2.2.2, Mon Oct 7, 2019
-The 2.2.2 release corresponds to the OmpSs-2 2019.06c release. It introduces bug fixes.
+The 2.2.2 release corresponds to the OmpSs-2 2019.06.2 release. It introduces bug fixes.
 
 ### General
 - Compiling extrae variant with high optimization flags
@@ -11,7 +11,7 @@ The 2.2.2 release corresponds to the OmpSs-2 2019.06c release. It introduces bug
 
 
 ## Version 2.2.1, Fri Sep 27, 2019
-The 2.2.1 release corresponds to the OmpSs-2 2019.06b release. It mainly introduces bug fixes and code improvements.
+The 2.2.1 release corresponds to the OmpSs-2 2019.06.1 release. It mainly introduces bug fixes and code improvements.
 
 ### General
 - Renaming loop directive to task for
@@ -51,14 +51,14 @@ library. It also includes general bugfixes and performance improvements.
 
 
 ## Version 2.0.2, Mon Jun 25, 2018
-The 2.0.2 release corresponds to the OmpSs-2 2018.06c release.
+The 2.0.2 release corresponds to the OmpSs-2 2018.06.2 release.
 
 ### General
 - Bugfixes in HWLOC support
 
 
 ## Version 2.0.1, Mon Jun 25, 2018
-The 2.0.1 release corresponds to the OmpSs-2 2018.06b release.
+The 2.0.1 release corresponds to the OmpSs-2 2018.06.1 release.
 
 ### General
 - Bugfixes in task reductions
@@ -87,7 +87,7 @@ It also supports array task reductions in C/C++ and task priorities. Additionall
 
 
 ## Version 1.0.1, Thu Nov 23, 2017
-The 1.0.1 release corresponds to the OmpSs-2 2017.11b release.
+The 1.0.1 release corresponds to the OmpSs-2 2017.11.1 release.
 
 ### General
 - Fixes for the building system
