@@ -9,7 +9,6 @@
 
 
 #include <InstrumentInstrumentationContext.hpp>
-#include <instrument/support/sampling/ThreadLocalData.hpp>
 
 #include "InstrumentThreadId.hpp"
 
@@ -18,33 +17,19 @@
 
 
 namespace Instrument {
-	struct ThreadLocalData : public Instrument::Sampling::ThreadLocalData {
+	struct ThreadLocalData {
 		enum {
 			max_backlog = 4096
 		};
 		
 		thread_id_t _currentThreadId;
 		std::vector<int> _nestingLevels;
-		std::set<void *> _backtraceAddresses;
-		
-		int _inMemoryAllocation;
-		std::vector<void *> _backtraceAddressBacklog;
 		
 		InstrumentationContext _context;
 		
 		ThreadLocalData()
-			: _currentThreadId(), _nestingLevels(),
-			_backtraceAddresses(),
-			_inMemoryAllocation(0), _backtraceAddressBacklog()
+			: _currentThreadId(), _nestingLevels()
 		{
-		}
-		
-		// NOTE: this is not in the constructor because the constructor is called on the first access to the TLS
-		// but before the TLS has settled, which whould cause the memory allocation inteception to attempt to
-		// retrieve it, failing, causing a call to the costructor, ... and this an infinite recursion.
-		inline void init()
-		{
-			_backtraceAddressBacklog.reserve(max_backlog);
 		}
 	};
 }

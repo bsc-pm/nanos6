@@ -554,8 +554,7 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentInitAndShutdown.cpp \
 	src/instrument/extrae/InstrumentReductions.cpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
-	src/instrument/support/InstrumentThreadLocalDataSupport.cpp \
-	src/instrument/support/sampling/SigProf.cpp
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
 memory_allocator_default_sources = \
 	src/memory/allocator/pool/MemoryAllocator.cpp \

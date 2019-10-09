@@ -24,9 +24,6 @@
 #include "InstrumentThreadLocalData.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 
-#include <BacktraceWalker.hpp>
-#include <CodeAddressInfo.hpp>
-
 
 namespace Instrument {
 	
@@ -62,8 +59,7 @@ namespace Instrument {
 		
 		// Force the TLS to be initialized do avoid problems with the interception of malloc
 		{
-			ThreadLocalData &threadLocal = getThreadLocalData();
-			threadLocal.init();
+			__attribute__((unused)) ThreadLocalData &threadLocal = getThreadLocalData();
 			__attribute__((unused)) ExternalThreadLocalData &externalThreadLocal = getExternalThreadLocalData();
 		}
 		
