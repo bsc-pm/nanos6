@@ -142,28 +142,6 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		AC_MSG_RESULT([$ac_build_stats_instrumentation])
 		AM_CONDITIONAL(BUILD_STATS_INSTRUMENTATION_VARIANT, test x"${ac_build_stats_instrumentation}" = x"yes")
 		
-		AC_MSG_CHECKING([whether to build the profile instrumented variant])
-		AC_ARG_ENABLE(
-			[profile-instrumentation],
-			[AS_HELP_STRING([--disable-profile-instrumentation], [build the profile instrumented variant])],
-			[
-				case "${enableval}" in
-				yes)
-					ac_build_profile_instrumentation=yes
-					;;
-				no)
-					ac_build_profile_instrumentation=no
-					;;
-				*)
-					AC_MSG_ERROR([bad value ${enableval} for --enable-profile-instrumentation])
-					;;
-				esac
-			],
-			[ac_build_profile_instrumentation=yes]
-		)
-		AC_MSG_RESULT([$ac_build_profile_instrumentation])
-		AM_CONDITIONAL(BUILD_PROFILE_INSTRUMENTATION_VARIANT, test x"${ac_build_profile_instrumentation}" = x"yes")
-		
 		AC_MSG_CHECKING([whether to build the verbose instrumented variant])
 		AC_ARG_ENABLE(
 			[verbose-instrumentation],

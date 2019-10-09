@@ -80,7 +80,6 @@ lib_LTLIBRARIES = \
 	libnanos6-extrae.la \
 	libnanos6-graph.la \
 	libnanos6-graph-debug.la \
-	libnanos6-profile.la \
 	libnanos6-stats.la \
 	libnanos6-stats-papi.la \
 	libnanos6-verbose.la \
@@ -512,13 +511,6 @@ instrument_graph_sources = \
 	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
-instrument_profile_sources = \
-	src/instrument/profile/InstrumentInitAndShutdown.cpp \
-	src/instrument/profile/InstrumentMalloc.cpp \
-	src/instrument/profile/InstrumentProfile.cpp \
-	src/instrument/support/InstrumentThreadLocalDataSupport.cpp \
-	src/instrument/support/sampling/SigProf.cpp
-
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
@@ -852,34 +844,6 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentTracingPointTypes.hpp \
 	src/instrument/null/InstrumentTracingPoints.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp \
-	src/instrument/profile/Address.hpp \
-	src/instrument/profile/InstrumentAddTask.hpp \
-	src/instrument/profile/InstrumentBlocking.hpp \
-	src/instrument/profile/InstrumentComputePlaceId.hpp \
-	src/instrument/profile/InstrumentComputePlaceManagement.hpp \
-	src/instrument/profile/InstrumentDataAccessId.hpp \
-	src/instrument/profile/InstrumentDependenciesByAccess.hpp \
-	src/instrument/profile/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
-	src/instrument/profile/InstrumentExternalThreadId.hpp \
-	src/instrument/profile/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/profile/InstrumentInitAndShutdown.hpp \
-	src/instrument/profile/InstrumentInstrumentationContext.hpp \
-	src/instrument/profile/InstrumentLeaderThread.hpp \
-	src/instrument/profile/InstrumentLogMessage.hpp \
-	src/instrument/profile/InstrumentReductions.hpp \
-	src/instrument/profile/InstrumentProfile.hpp \
-	src/instrument/profile/InstrumentTaskExecution.hpp \
-	src/instrument/profile/InstrumentTaskId.hpp \
-	src/instrument/profile/InstrumentTaskStatus.hpp \
-	src/instrument/profile/InstrumentTaskWait.hpp \
-	src/instrument/profile/InstrumentThreadId.hpp \
-	src/instrument/profile/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/profile/InstrumentThreadLocalData.hpp \
-	src/instrument/profile/InstrumentThreadManagement.hpp \
-	src/instrument/profile/InstrumentTracingPointTypes.hpp \
-	src/instrument/profile/InstrumentTracingPoints.hpp \
-	src/instrument/profile/InstrumentUserMutex.hpp \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentBlocking.hpp \
 	src/instrument/stats/InstrumentComputePlaceId.hpp \
@@ -927,8 +891,6 @@ noinst_HEADERS = \
 	src/instrument/support/introspection/DL/DLCodeAddressInfo.hpp \
 	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
 	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
-	src/instrument/support/sampling/SigProf.hpp \
-	src/instrument/support/sampling/ThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentBlocking.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
@@ -1162,22 +1124,6 @@ libnanos6_graph_debug_la_SOURCES += loader/disabled_variant.c
 endif
 
 
-libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS) $(introspection_cppflags)
-libnanos6_profile_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
-libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
-libnanos6_profile_la_SOURCES =
-nodist_libnanos6_profile_la_SOURCES =
-
-if BUILD_PROFILE_INSTRUMENTATION_VARIANT
-enabled_variants += profile
-libnanos6_profile_la_SOURCES += $(common_sources) $(instrument_profile_sources) $(universal_debug_sources) $(memory_default_sources)
-nodist_libnanos6_profile_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
-else
-disabled_variants += profile
-libnanos6_profile_la_SOURCES += loader/disabled_variant.c
-endif
-
-
 libnanos6_stats_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support
 libnanos6_stats_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2
 libnanos6_stats_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS)
@@ -1296,7 +1242,7 @@ install-exec-local: $(lib_OBJECTS)
 		fi ; \
 	done
 	@echo Removing deprecated runtime implementations
-	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la ; do \
+	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la libnanos6-profile.la ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
@@ -1322,7 +1268,7 @@ uninstall-hook:
 		fi ; \
 	done
 	@echo Removing deprecated runtime implementations
-	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la ; do \
+	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la libnanos6-profile.la ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \

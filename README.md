@@ -163,48 +163,6 @@ By default, the output is emitted to standard error, but it can be sent to a fil
 Also the `NANOS6_VERBOSE_DUMP_ONLY_ON_EXIT` can be set to `1` to delay the output to the end of the program to avoid getting it mixed with the output of the program.
 
 
-### Sample-based profiling
-
-To enable sample-based profiling, run the application with the `NANOS6` envar set to `profile`.
-
-In this mode, the runtime records backtraces of the threads up to a given depth and with a given frequency.
-These parameters can be set through the following envars:
-
-<table><tbody><tr><td> <strong>Name</strong> </td><td> <strong>Default value</strong> </td><td> <strong>Description</strong> 
-</td></tr><tr><td> <em>NANOS6_PROFILE_NS_RESOLUTION</em> </td><td> 1000 </td><td> Sampling interval in nanoseconds 
-</td></tr><tr><td> <em>NANOS6_PROFILE_BACKTRACE_DEPTH</em> </td><td> 4 </td><td> Number of stack frames to collect (excluding inlines) in each sample. 
-</td></tr><tr><td> <em>NANOS6_PROFILE_BUFFER_SIZE</em> </td><td> 1000000000 </td><td> Number of sampling events to preallocate together in a chunk. The default value corresponds to 1 second of samples. 
-</td></tr></tbody></table>
-
-At the end of the execution, the runtime generates four files that contain entries sorted by decreasing frequency.
-Their first column contains the sample count, and the rest, the actual entry values.
-Their contents are the following:
-
-__line-profile-PID.txt__: Source code lines
-
-__function-profile-PID.txt__: Function names
-
-__inline-profile-PID.txt__: Function names and source code lines including inlines
-> Since the sampling is performed over the return addresses in the stack, if the compiler performs inlining, a given address can correspond to several functions. This file shows for the number of samples that have the same associated source code lines.
-
-
-__backtrace-profile-by-line-PID.txt__: Function names and source code lines including inlines of a full backtrace
-> Shows the number of samples that have a full backtrace that corresponds to the same exact source code lines.
-
-
-__backtrace-profile-by-address-PID.txt__: Function names and source code lines including inlines of a full backtrace
-> Shows the number of samples that have a full backtrace with the same exact return addresses.
-
-
-When compiling, Mercurium performs transformations to the original source code.
-At this time, Mercurium cannot preserve the original source code lines and function names.
-Hence, the outputs of the profiler are based on the transformed code.
-However, the transformed source code can be preserved by passing the `-keep` parameter to Mercurium.
-
-Mercurium generates additional functions that wrap the task code.
-These appear in the backtraces and their names begin with `nanos6_ol_` and `nanos6_unpack_` and are followed by a number.
-
-
 ### Obtaining statistics
 
 To enable collecting statistics, run the application with the `NANOS6` envar set to either `stats` or `stats-papi`.
