@@ -48,10 +48,15 @@ base_tests += \
 	task-for-dep-multiaxpy.test \
 	task-for-nqueens.test
 
-# Ignore CPU Activation test if we have DLB for now
+# Ignore CPU Activation test if we have DLB
+# NOTE: The order of this tests should never change, new DLB-related
+#       tests must be added under these
 if HAVE_DLB
 dlb_tests += \
-	dlb-cpu-management.test
+	dlb-cpu-management.test \
+	dlb-cpu-sharing-active-process.test \
+	dlb-cpu-sharing-passive-process.test \
+	dlb-cpu-sharing.test
 else
 cpu_management_tests += \
 	cpu-activation.test
@@ -107,7 +112,10 @@ base_tests += \
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
 dlb_tests += \
-	dlb-cpu-management.debug.test
+	dlb-cpu-management.debug.test \
+	dlb-cpu-sharing-active-process.debug.test \
+	dlb-cpu-sharing-passive-process.debug.test \
+	dlb-cpu-sharing.debug.test
 else
 cpu_management_tests += \
 	cpu-activation.debug.test
@@ -244,15 +252,6 @@ dep_er_and_weak_test_SOURCES = dependencies/dep-er-and-weak.cpp
 dep_er_and_weak_test_CPPFLAGS = -DNDEBUG
 dep_er_and_weak_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 dep_er_and_weak_test_LDFLAGS = $(test_common_ldflags)
-
-dlb_cpu_management_test_SOURCES = dlb/dlb-cpu-management.cpp
-dlb_cpu_management_test_CPPFLAGS = -DNDEBUG
-dlb_cpu_management_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-dlb_cpu_management_test_LDFLAGS = $(test_common_ldflags)
-
-dlb_cpu_management_debug_test_SOURCES = dlb/dlb-cpu-management.cpp
-dlb_cpu_management_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-dlb_cpu_management_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 if0_debug_test_SOURCES = dependencies/if0.cpp
 if0_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
@@ -469,6 +468,42 @@ red_stress_test_SOURCES = reductions/red-stress.cpp
 red_stress_test_CPPFLAGS = -DNDEBUG
 red_stress_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_stress_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_management_test_SOURCES = dlb/dlb-cpu-management.cpp
+dlb_cpu_management_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_management_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_management_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_management_debug_test_SOURCES = dlb/dlb-cpu-management.cpp
+dlb_cpu_management_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_management_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dlb_cpu_sharing_test_SOURCES = dlb/dlb-cpu-sharing.cpp
+dlb_cpu_sharing_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_sharing_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_sharing_debug_test_SOURCES = dlb/dlb-cpu-sharing.cpp
+dlb_cpu_sharing_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dlb_cpu_sharing_active_process_test_SOURCES = dlb/dlb-cpu-sharing-active-process.cpp
+dlb_cpu_sharing_active_process_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_sharing_active_process_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_active_process_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_sharing_active_process_debug_test_SOURCES = dlb/dlb-cpu-sharing-active-process.cpp
+dlb_cpu_sharing_active_process_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_active_process_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dlb_cpu_sharing_passive_process_test_SOURCES = dlb/dlb-cpu-sharing-passive-process.cpp
+dlb_cpu_sharing_passive_process_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_sharing_passive_process_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_passive_process_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_sharing_passive_process_debug_test_SOURCES = dlb/dlb-cpu-sharing-passive-process.cpp
+dlb_cpu_sharing_passive_process_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_passive_process_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
