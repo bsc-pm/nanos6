@@ -57,7 +57,6 @@ namespace Instrument {
 			setenv("EXTRAE_ON", "1", 0);
 		}
 		
-		// Force the TLS to be initialized do avoid problems with the interception of malloc
 		{
 			__attribute__((unused)) ThreadLocalData &threadLocal = getThreadLocalData();
 			__attribute__((unused)) ExternalThreadLocalData &externalThreadLocal = getExternalThreadLocalData();

@@ -117,7 +117,6 @@ libnanos6_main_wrapper_a_SOURCES = \
 	loader/api-versions.h \
 	loader/device_strings.c \
 	loader/error.h \
-	loader/function-interception.h \
 	loader/intercept-main-common.c \
 	loader/intercept-main-common.h \
 	loader/main-wrapper.c \
@@ -154,7 +153,6 @@ multidimensional_regions =
 if RESOLVE_SYMBOLS_USING_IFUNC
 symbol_resolution_header += loader/symbol-resolver/resolve.h
 symbol_resolution += \
-	loader/indirect-symbols/malloc.c \
 	loader/symbol-resolver/api-check.c \
 	loader/symbol-resolver/blocking.c \
 	loader/symbol-resolver/bootstrap.c \
@@ -192,7 +190,6 @@ symbol_resolution += \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
-	loader/indirect-symbols/malloc.c \
 	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/polling.c \
 	loader/indirect-symbols/reductions.c \
@@ -326,7 +323,6 @@ common_sources = \
 	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
-	src/lowlevel/SymbolResolver.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/ExternalThreadGroup.cpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
@@ -931,7 +927,6 @@ noinst_HEADERS = \
 	src/lowlevel/SpinLockOwnerDebug.hpp \
 	src/lowlevel/SpinWait.hpp \
 	src/lowlevel/SubscriptionLock.hpp \
-	src/lowlevel/SymbolResolver.hpp \
 	src/lowlevel/TicketArraySpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
@@ -1079,7 +1074,7 @@ nodist_libnanos6_debug_la_SOURCES =
 
 if BUILD_DEBUG_VARIANTS
 enabled_variants += debug
-libnanos6_debug_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_debug_sources) src/instrument/null/InstrumentMalloc.cpp
+libnanos6_debug_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_debug_sources)
 nodist_libnanos6_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += debug
