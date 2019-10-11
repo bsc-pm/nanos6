@@ -35,9 +35,6 @@ namespace Instrument {
 	SpinLock _userFunctionMapLock;
 	user_fct_map_t            _userFunctionMap;
 	
-	SpinLock _backtraceAddressSetsLock;
-	std::list<std::set<void *> *> _backtraceAddressSets;
-	
 	std::atomic<size_t> _nextTaskId(1);
 	std::atomic<size_t> _readyTasks(0);
 	std::atomic<size_t> _liveTasks(0);

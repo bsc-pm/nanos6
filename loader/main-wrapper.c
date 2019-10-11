@@ -12,7 +12,6 @@
 
 #include "api-versions.h"
 #include "loader.h"
-#include "function-interception.h"
 #include "main-wrapper.h"
 #include "api/nanos6/api-check.h"
 #include "api/nanos6/bootstrap.h"
@@ -120,14 +119,6 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 		return _nanos6_exit_with_error;
 	}
 	
-	nanos6_loader_memory_allocation_interception_init();
-	nanos6_memory_allocation_interception_postinit();
-	
-	if (_nanos6_exit_with_error) {
-		fprintf(stderr, "Error: %s\n", _nanos6_error_text);
-		return _nanos6_exit_with_error;
-	}
-	
 	// First half of the initialization
 	nanos6_preinit();
 	if (_nanos6_exit_with_error) {
@@ -162,8 +153,6 @@ int _nanos6_loader_main(int argc, char **argv, char **envp) {
 	
 	// Terminate
 	nanos6_shutdown();
-	
-	nanos6_memory_allocation_interception_fini();
 	
 	return argsBlock.returnCode;
 }

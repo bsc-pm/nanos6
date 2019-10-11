@@ -80,7 +80,6 @@ lib_LTLIBRARIES = \
 	libnanos6-extrae.la \
 	libnanos6-graph.la \
 	libnanos6-graph-debug.la \
-	libnanos6-profile.la \
 	libnanos6-stats.la \
 	libnanos6-stats-papi.la \
 	libnanos6-verbose.la \
@@ -118,7 +117,6 @@ libnanos6_main_wrapper_a_SOURCES = \
 	loader/api-versions.h \
 	loader/device_strings.c \
 	loader/error.h \
-	loader/function-interception.h \
 	loader/intercept-main-common.c \
 	loader/intercept-main-common.h \
 	loader/main-wrapper.c \
@@ -155,7 +153,6 @@ multidimensional_regions =
 if RESOLVE_SYMBOLS_USING_IFUNC
 symbol_resolution_header += loader/symbol-resolver/resolve.h
 symbol_resolution += \
-	loader/indirect-symbols/malloc.c \
 	loader/symbol-resolver/api-check.c \
 	loader/symbol-resolver/blocking.c \
 	loader/symbol-resolver/bootstrap.c \
@@ -193,7 +190,6 @@ symbol_resolution += \
 	loader/indirect-symbols/dependencies.c \
 	loader/indirect-symbols/events.c \
 	loader/indirect-symbols/final.c \
-	loader/indirect-symbols/malloc.c \
 	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/polling.c \
 	loader/indirect-symbols/reductions.c \
@@ -327,7 +323,6 @@ common_sources = \
 	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
-	src/lowlevel/SymbolResolver.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/ExternalThreadGroup.cpp \
 	src/lowlevel/threads/KernelLevelThread.cpp \
@@ -512,13 +507,6 @@ instrument_graph_sources = \
 	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
-instrument_profile_sources = \
-	src/instrument/profile/InstrumentInitAndShutdown.cpp \
-	src/instrument/profile/InstrumentMalloc.cpp \
-	src/instrument/profile/InstrumentProfile.cpp \
-	src/instrument/support/InstrumentThreadLocalDataSupport.cpp \
-	src/instrument/support/sampling/SigProf.cpp
-
 instrument_stats_sources = \
 	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
@@ -554,8 +542,7 @@ instrument_extrae_sources = \
 	src/instrument/extrae/InstrumentInitAndShutdown.cpp \
 	src/instrument/extrae/InstrumentReductions.cpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
-	src/instrument/support/InstrumentThreadLocalDataSupport.cpp \
-	src/instrument/support/sampling/SigProf.cpp
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
 memory_allocator_default_sources = \
 	src/memory/allocator/pool/MemoryAllocator.cpp \
@@ -853,34 +840,6 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentTracingPointTypes.hpp \
 	src/instrument/null/InstrumentTracingPoints.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp \
-	src/instrument/profile/Address.hpp \
-	src/instrument/profile/InstrumentAddTask.hpp \
-	src/instrument/profile/InstrumentBlocking.hpp \
-	src/instrument/profile/InstrumentComputePlaceId.hpp \
-	src/instrument/profile/InstrumentComputePlaceManagement.hpp \
-	src/instrument/profile/InstrumentDataAccessId.hpp \
-	src/instrument/profile/InstrumentDependenciesByAccess.hpp \
-	src/instrument/profile/InstrumentDependenciesByAccessLinks.hpp \
-	src/instrument/profile/InstrumentDependenciesByGroup.hpp \
-	src/instrument/profile/InstrumentExternalThreadId.hpp \
-	src/instrument/profile/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/profile/InstrumentInitAndShutdown.hpp \
-	src/instrument/profile/InstrumentInstrumentationContext.hpp \
-	src/instrument/profile/InstrumentLeaderThread.hpp \
-	src/instrument/profile/InstrumentLogMessage.hpp \
-	src/instrument/profile/InstrumentReductions.hpp \
-	src/instrument/profile/InstrumentProfile.hpp \
-	src/instrument/profile/InstrumentTaskExecution.hpp \
-	src/instrument/profile/InstrumentTaskId.hpp \
-	src/instrument/profile/InstrumentTaskStatus.hpp \
-	src/instrument/profile/InstrumentTaskWait.hpp \
-	src/instrument/profile/InstrumentThreadId.hpp \
-	src/instrument/profile/InstrumentThreadInstrumentationContext.hpp \
-	src/instrument/profile/InstrumentThreadLocalData.hpp \
-	src/instrument/profile/InstrumentThreadManagement.hpp \
-	src/instrument/profile/InstrumentTracingPointTypes.hpp \
-	src/instrument/profile/InstrumentTracingPoints.hpp \
-	src/instrument/profile/InstrumentUserMutex.hpp \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentBlocking.hpp \
 	src/instrument/stats/InstrumentComputePlaceId.hpp \
@@ -928,8 +887,6 @@ noinst_HEADERS = \
 	src/instrument/support/introspection/DL/DLCodeAddressInfo.hpp \
 	src/instrument/support/introspection/ElfUtils/CodeAddressInfo.hpp \
 	src/instrument/support/introspection/ElfUtils/ElfUtilsCodeAddressInfo.hpp \
-	src/instrument/support/sampling/SigProf.hpp \
-	src/instrument/support/sampling/ThreadLocalData.hpp \
 	src/instrument/verbose/InstrumentAddTask.hpp \
 	src/instrument/verbose/InstrumentBlocking.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
@@ -970,7 +927,6 @@ noinst_HEADERS = \
 	src/lowlevel/SpinLockOwnerDebug.hpp \
 	src/lowlevel/SpinWait.hpp \
 	src/lowlevel/SubscriptionLock.hpp \
-	src/lowlevel/SymbolResolver.hpp \
 	src/lowlevel/TicketArraySpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
@@ -1118,7 +1074,7 @@ nodist_libnanos6_debug_la_SOURCES =
 
 if BUILD_DEBUG_VARIANTS
 enabled_variants += debug
-libnanos6_debug_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_debug_sources) src/instrument/null/InstrumentMalloc.cpp
+libnanos6_debug_la_SOURCES += $(common_sources) $(noinstrument_sources) $(universal_debug_sources) $(memory_debug_sources)
 nodist_libnanos6_debug_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += debug
@@ -1160,22 +1116,6 @@ endif
 else
 disabled_variants += graph-debug
 libnanos6_graph_debug_la_SOURCES += loader/disabled_variant.c
-endif
-
-
-libnanos6_profile_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/profile $(elfutils_CFLAGS) $(introspection_cppflags)
-libnanos6_profile_la_CXXFLAGS = $(PROFILE_CXXFLAGS) $(AM_CXXFLAGS) -g2
-libnanos6_profile_la_LDFLAGS = $(common_libnanos6_ldflags) $(BACKTRACE_LIBS) $(CLOCK_LIBS) $(elfutils_LIBS)
-libnanos6_profile_la_SOURCES =
-nodist_libnanos6_profile_la_SOURCES =
-
-if BUILD_PROFILE_INSTRUMENTATION_VARIANT
-enabled_variants += profile
-libnanos6_profile_la_SOURCES += $(common_sources) $(instrument_profile_sources) $(universal_debug_sources) $(memory_default_sources)
-nodist_libnanos6_profile_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
-else
-disabled_variants += profile
-libnanos6_profile_la_SOURCES += loader/disabled_variant.c
 endif
 
 
@@ -1297,7 +1237,7 @@ install-exec-local: $(lib_OBJECTS)
 		fi ; \
 	done
 	@echo Removing deprecated runtime implementations
-	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la ; do \
+	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la libnanos6-profile.la ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
@@ -1323,7 +1263,7 @@ uninstall-hook:
 		fi ; \
 	done
 	@echo Removing deprecated runtime implementations
-	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la ; do \
+	for l in libnanos6-null.la libnanos6-null-cb.la libnanos6-null-sb.la libnanos6-profile.la ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			$(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \

@@ -119,9 +119,6 @@ namespace Instrument {
 	extern SpinLock _userFunctionMapLock;
 	extern user_fct_map_t                            _userFunctionMap;
 	
-	extern SpinLock _backtraceAddressSetsLock;
-	extern std::list<std::set<void *> *> _backtraceAddressSets;
-	
 	extern std::atomic<size_t> _nextTaskId;
 	extern std::atomic<size_t> _readyTasks;
 	extern std::atomic<size_t> _liveTasks;

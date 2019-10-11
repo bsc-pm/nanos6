@@ -14,8 +14,6 @@
 #include "../generic_ids/GenericIds.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 
-#include <instrument/support/sampling/SigProf.hpp>
-
 
 namespace Instrument {
 	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
@@ -90,7 +88,6 @@ namespace Instrument {
 	inline void createdThread(thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
-		threadLocal.init();
 		
 		threadLocal._nestingLevels.push_back(0);
 		
@@ -167,8 +164,7 @@ namespace Instrument {
 		
 		// Force the sentinel worker TLS to be initialized
 		{
-			ThreadLocalData &sentinelThreadLocal = getThreadLocalData();
-			sentinelThreadLocal.init();
+			__attribute__((unused)) ThreadLocalData &sentinelThreadLocal = getThreadLocalData();
 		}
 		
 		if (_traceAsThreads) {
