@@ -41,9 +41,6 @@ int main(int argc, char **argv) {
 	tap.begin();
 	
 	
-	Timer timer;
-	
-	
 	/***********/
 	/* PHASE 1 */
 	/***********/
@@ -83,6 +80,7 @@ int main(int argc, char **argv) {
 	int numLentCPUs = 0;
 	std::vector<bool> lentCPUs(activeCPUs, false);
 	
+	Timer timer;
 	timer.start();
 	
 	// Loop until almost all active CPUs are lent
@@ -119,11 +117,8 @@ int main(int argc, char **argv) {
 	tap.emitDiagnostic("***  1 test   ***");
 	tap.emitDiagnostic("*****************");
 	
-	timer.start();
-	
-	int numActiveCPUs = 0;
-	
 	// Loop until all active CPUs are busy
+	int numActiveCPUs = 0;
 	while (numActiveCPUs < activeCPUs) {
 		// Reset the counter
 		numActiveCPUs = 0;

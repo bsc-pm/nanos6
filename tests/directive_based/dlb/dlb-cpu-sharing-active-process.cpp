@@ -15,6 +15,7 @@
 #include <nanos6/debug.h>
 
 #include "TestAnyProtocolProducer.hpp"
+#include "Timer.hpp"
 
 #include <Atomic.hpp>
 
@@ -50,22 +51,23 @@ void acquiredCPUComputation(long numCPUs)
 	nanos6_cpu_status_t status = nanos6_get_cpu_status(currentCPUId);
 	if (status == nanos6_enabled_cpu) {
 		tap.success("Check that a task that shouldn't execute in an acquired CPU is not doing so");
-		
-		// If the CPU is owned, halt until acquirable CPUs can execute
-		// tasks (otherwise this CPU would continue executing tasks)
-		while (numAcquiredCPUs.load() < numCPUs) {
-			spin();
-		}
 	} else {
 		++numAcquiredCPUs;
 		tap.evaluate(
 			status == nanos6_acquired_enabled_cpu,
 			"Check that a task that should execute in an acquired CPU is doing so"
 		);
-		
-		// Wait until all the CPUs that had to be acquired are acquired
-		while (numAcquiredCPUs.load() < numCPUs) {
-			spin();
+	}
+	// If the CPU is owned (status == enabled), halt until acquirable CPUs
+	// can execute tasks (otherwise this CPU would continue executing tasks)
+	// If the CPU is unowned, wait until all needed CPUs are acquired
+	// At most we wait 5 seconds, as we cannot assure all CPUs will be acquired
+	Timer timer;
+	timer.start();
+	while (numAcquiredCPUs.load() < numCPUs) {
+		spin();
+		if (timer.lap() > 5000000) {
+			break;
 		}
 	}
 }
@@ -86,8 +88,20 @@ void ownedCPUComputation(long numCPUs)
 	);
 	
 	// Wait until the number of acquired CPUs reaches numCPUs
+	Timer timer;
+	timer.start();
 	while (numAcquiredCPUs.load() < numCPUs) {
 		spin();
+		if (timer.lap() > 5000000) {
+			std::ostringstream oss;
+			oss << "Check that a task executing in owned CPU "
+				<< currentCPUId
+				<< " detects the acquire of an external CPU";
+			
+			 // Phase 1
+			tap.weakFailure(oss.str(), "Cannot assure it happens under a reasonable amount of time");
+			return;
+		}
 	}
 	
 	std::ostringstream oss;
