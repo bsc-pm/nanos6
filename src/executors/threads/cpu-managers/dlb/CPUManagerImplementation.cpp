@@ -15,9 +15,6 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
-#include <InstrumentComputePlaceManagement.hpp>
-#include <Monitoring.hpp>
-
 
 void CPUManagerImplementation::preinitialize()
 {
@@ -172,9 +169,6 @@ void CPUManagerImplementation::initialize()
 
 		// If this CPU is owned by this process, initialize it if needed
 		if (cpu->isOwned()) {
-			// Inform monitoring that the task becomes active by default
-			Monitoring::cpuBecomesActive(cpu->getIndex());
-
 			// This should always work
 			bool worked = cpu->initializeIfNeeded();
 			assert(worked);

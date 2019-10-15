@@ -449,7 +449,7 @@ public:
 						Scheduler::disablingCPU(systemCPUId);
 
 						// The thread becomes idle
-						Monitoring::cpuBecomesIdle(cpu->getIndex());
+						Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 						ThreadManager::addIdler(currentThread);
 						currentThread->switchTo(nullptr);
@@ -530,7 +530,7 @@ public:
 					if (successful) {
 						currentStatus = CPU::enabled_status;
 						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getIndex());
+						Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
 					}
 					break;
 				case CPU::acquired_status:
@@ -538,7 +538,7 @@ public:
 					if (successful) {
 						currentStatus = CPU::acquired_enabled_status;
 						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getIndex());
+						Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
 					}
 					break;
 			}

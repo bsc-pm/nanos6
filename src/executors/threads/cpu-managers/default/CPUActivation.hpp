@@ -185,18 +185,19 @@ public:
 					}
 					break;
 				case CPU::disabled_status:
-					// The CPU is disabled, the thread will become idle
-					Monitoring::cpuBecomesIdle(cpu->getIndex());
-					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+					// The CPU is disabled, the thread should be idle
 					ThreadManager::addIdler(currentThread);
 					currentThread->switchTo(nullptr);
 					break;
 				case CPU::disabling_status:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::disabled_status);
 					if (successful) {
-						successful = false; // Loop again, since things may have changed
+						 // Loop again, since things may have changed
+						successful = false;
 						
-						// There is no available hardware place, so this thread becomes idle
+						// The CPU is disabling, the thread becomes idle
+						Monitoring::cpuBecomesIdle(cpu->getIndex());
+						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 						ThreadManager::addIdler(currentThread);
 						currentThread->switchTo(nullptr);
 					}
@@ -231,14 +232,15 @@ public:
 					assert(false);
 					return;
 				case CPU::enabled_status:
+				case CPU::disabled_status:
 				case CPU::disabling_status:
-					// If the CPU is enabled, change the status to shut down
+					// If the CPU is enabled, disabling or disabled, simply
+					// change the status to shutdown
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					break;
 				case CPU::enabling_status:
-				case CPU::disabled_status:
-					// If the CPU is disabled or being enabled, change to shut
-					// down and notify that it has resumed
+					// If the CPU is being enabled, change to shutdown and
+					// notify that it has resumed for shutdown
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					if (successful) {
 						Instrument::resumedComputePlace(cpu->getInstrumentationId());
