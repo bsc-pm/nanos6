@@ -30,6 +30,10 @@ namespace ExtraeAPI {
 		ExtraeSymbolResolver<void, &Instrument::_Extrae_define_event_type_symbolName, extrae_type_t *, char *, unsigned *, extrae_value_t *, char **>::call(type, type_description, nvalues, values, values_description);
 	}
 	
+	static inline void emit_SimpleEvent (extrae_type_t type, extrae_value_t value)
+	{
+		ExtraeSymbolResolver<void, &Instrument::_Extrae_event_symbolName, extrae_type_t, extrae_value_t>::call(type, value);
+	}
 	
 	static inline void emit_CombinedEvents (struct extrae_CombinedEvents *ce)
 	{

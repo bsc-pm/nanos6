@@ -11,6 +11,7 @@
 namespace Instrument {
 	StringLiteral const _Extrae_change_num_threads_symbolName("Extrae_change_num_threads");
 	StringLiteral const _Extrae_define_event_type_symbolName("Extrae_define_event_type");
+	StringLiteral const _Extrae_event_symbolName("Extrae_event");
 	StringLiteral const _Extrae_emit_CombinedEvents_symbolName("Extrae_emit_CombinedEvents");
 	StringLiteral const _Extrae_fini_symbolName("Extrae_fini");
 	StringLiteral const _Extrae_get_version_symbolName("Extrae_get_version");

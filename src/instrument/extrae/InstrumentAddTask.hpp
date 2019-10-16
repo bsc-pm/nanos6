@@ -161,24 +161,12 @@ namespace Instrument {
 		// since collaborators are already created at scheduler initialization. We are just setting up some
 		// data structures, and so, it is not fine to emmit NANOS_CREATION.
 		
-		extrae_combined_events_t ce;
-		
-		ce.HardwareCounters = 0;
-		ce.Callers = 0;
-		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 1;
-		ce.nCommunications = 0;
-		
-		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
-		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
-		
-		ce.Types[0] = (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION;
-		ce.Values[0] = (extrae_value_t) taskInfo->implementations[0].run;
-		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		ExtraeAPI::emit_CombinedEvents ( &ce );
+		
+		ExtraeAPI::emit_SimpleEvent ((extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION, (extrae_value_t) taskInfo->implementations[0].run);
+		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
@@ -189,24 +177,12 @@ namespace Instrument {
 		// As we did not changed the runtime state in "enterAddTaskforCollaborator", we do not have to restore it here.
 		// Thus, emmit only code location.
 		
-		extrae_combined_events_t ce;
-		
-		ce.HardwareCounters = 0;
-		ce.Callers = 0;
-		ce.UserFunction = EXTRAE_USER_FUNCTION_NONE;
-		ce.nEvents = 1;
-		ce.nCommunications = 0;
-		
-		ce.Types  = (extrae_type_t *)  alloca (ce.nEvents * sizeof (extrae_type_t) );
-		ce.Values = (extrae_value_t *) alloca (ce.nEvents * sizeof (extrae_value_t));
-		
-		ce.Types[0] = (extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION;
-		ce.Values[0] = (extrae_value_t) nullptr;
-		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readLock();
 		}
-		ExtraeAPI::emit_CombinedEvents ( &ce );
+		
+		ExtraeAPI::emit_SimpleEvent ((extrae_type_t) EventType::INSTANTIATING_CODE_LOCATION, (extrae_value_t) nullptr);
+		
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
