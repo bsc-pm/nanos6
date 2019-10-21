@@ -154,6 +154,15 @@ namespace Instrument {
 		__attribute__((unused)) size_t flags,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		ThreadLocalData &threadLocal = getThreadLocalData();
+		Extrae::TaskInfo *_extraeTaskInfo = nullptr;
+		if (threadLocal._nestingLevels.empty()) {
+			// This may be an external thread, therefore assume that it is a spawned task
+			_extraeTaskInfo = new Extrae::TaskInfo(taskInfo, 0, context._taskId._taskInfo);
+		} else {
+			_extraeTaskInfo = new Extrae::TaskInfo(taskInfo, threadLocal._nestingLevels.back()+1, context._taskId._taskInfo);
+		}
+		
 		// When creating a regular task, we emmit two events: runtime state and code location.
 		// We emmit runtime state as NANOS_CREATION and code location as the method run by the task.
 		// In this case, when adding a collaborator to taskfor, we are only emmitting one event: code location.
@@ -170,6 +179,8 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
+		
+		return task_id_t(_extraeTaskInfo);
 	}
 	
 	inline void exitAddTaskforCollaborator(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)

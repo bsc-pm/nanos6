@@ -59,7 +59,7 @@ namespace ExecutionWorkflow {
 				}
 			}
 			
-			if(task->isTaskfor()) {
+			if (task->isTaskfor()) {
 				assert(task->isRunnable());
 				bool first = ((Taskfor *) task)->getTaskforInfo().getBounds().lower_bound == 0;
 				Instrument::startTaskforCollaborator(task->getParent()->getInstrumentationTaskId(), first);
@@ -86,7 +86,7 @@ namespace ExecutionWorkflow {
 			Monitoring::taskCompletedUserCode(task);
 			HardwareCounters::stopTaskMonitoring(task);
 			
-			if(task->isTaskfor()) {
+			if (task->isTaskfor()) {
 				assert(task->isRunnable());
 				bool last = ((Taskfor *) task)->getTaskforInfo().getBounds().upper_bound == ((Taskfor *) task->getParent())->getTaskforInfo().getBounds().upper_bound;
 				Instrument::taskforCollaboratorStopped(taskId, task->getParent()->getInstrumentationTaskId());
