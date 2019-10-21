@@ -15,6 +15,7 @@
 #include <pthread.h>
 
 #include "CPUActivation.hpp"
+#include "CPUManager.hpp"
 #include "TaskFinalization.hpp"
 #include "TaskFinalizationImplementation.hpp"
 #include "ThreadManager.hpp"
@@ -94,6 +95,12 @@ void WorkerThread::body()
 				ThreadManager::addIdler(this);
 				switchTo(assignedThread);
 			} else {
+				// If the task is a taskfor, the CPUManager may want to unidle
+				// collaborators to help execute it
+				if (_task->isTaskfor()) {
+					CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, HANDLE_TASKFOR, 0);
+				}
+				
 				if (_task->isIf0()) {
 					// An if0 task executed outside of the implicit taskwait of its parent (i.e. not inline)
 					Task *if0Task = _task;

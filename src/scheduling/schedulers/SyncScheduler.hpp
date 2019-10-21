@@ -163,7 +163,13 @@ public:
 	inline bool hasAvailableWork(ComputePlace *computePlace)
 	{
 		_lock.lock();
+		
+		// Ensure the add queues are emptied before checking the available work
+		processReadyTasks();
+		
+		// Check if the scheduler has work
 		bool hasWork = _scheduler->hasAvailableWork(computePlace);
+		
 		_lock.unsubscribe();
 		
 		return hasWork;
