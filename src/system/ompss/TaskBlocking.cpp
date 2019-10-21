@@ -8,6 +8,7 @@
 
 #include "TaskBlocking.hpp"
 #include "executors/threads/CPU.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 
 void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, ThreadManagerPolicy::thread_run_inline_policy_t policy)
@@ -64,6 +65,13 @@ void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, Th
 			
 			// The blocking condition may released while this thread is running a task. Avoid that
 			if (currentTask->disableScheduling()) {
+				// If the task is a taskfor, the CPUManager may want to unidle
+				// collaborators to help execute it
+				if (replacementTask->isTaskfor()) {
+					CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, HANDLE_TASKFOR, 0);
+				}
+				
+				// Execute the replacement task
 				currentThread->handleTask(cpu, replacementTask);
 				
 				// The thread can have migrated while running the replacement task

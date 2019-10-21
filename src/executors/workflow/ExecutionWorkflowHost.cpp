@@ -52,8 +52,7 @@ namespace ExecutionWorkflow {
 			);
 			
 			// After adding a task, the CPUManager may want to unidle CPUs
-			CPUManagerPolicyHint policyHint = (_task->isTaskfor()) ? ADDED_TASKFOR : ADDED_TASKS;
-			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, policyHint, 1);
+			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, ADDED_TASKS, 1);
 			
 			return;
 		}
