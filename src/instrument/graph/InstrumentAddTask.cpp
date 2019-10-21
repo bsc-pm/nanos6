@@ -61,6 +61,16 @@ namespace Instrument {
 	}
 	
 	
+	void createdArgsBlock(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) void *argsBlockPointer,
+		__attribute__((unused)) size_t originalArgsBlockSize,
+		__attribute__((unused)) size_t argsBlockSize,
+		__attribute__((unused)) InstrumentationContext const &context)
+	{
+	}
+	
+	
 	void createdTask(
 		void *taskObject,
 		task_id_t taskId,

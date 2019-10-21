@@ -1,28 +1,31 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_STATS_ADD_TASK_HPP
-#define INSTRUMENT_STATS_ADD_TASK_HPP
+#ifndef INSTRUMENT_LINT_ADD_TASK_HPP
+#define INSTRUMENT_LINT_ADD_TASK_HPP
 
+
+#include <Callbacks.hpp>
 
 #include "../api/InstrumentAddTask.hpp"
 
-#include "InstrumentStats.hpp"
 
 
 namespace Instrument {
-	
 	inline task_id_t enterAddTask(
-		nanos6_task_info_t *taskInfo,
+		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		Stats::TaskTypeAndTimes *taskTypeAndTimes = new Stats::TaskTypeAndTimes(taskInfo, (context._taskId != task_id_t()));
-		return taskTypeAndTimes;
+		static std::atomic<task_id_t::inner_type_t> _nextTaskId(0);
+		task_id_t taskId = _nextTaskId++;
+
+		nanos6_lint_on_task_creation(taskId, taskInvokationInfo, flags);
+		return taskId;
 	}
 	
 	inline void createdArgsBlock(
@@ -30,8 +33,9 @@ namespace Instrument {
 		__attribute__((unused)) void *argsBlockPointer,
 		__attribute__((unused)) size_t originalArgsBlockSize,
 		__attribute__((unused)) size_t argsBlockSize,
-		__attribute__((unused)) InstrumentationContext const &context)
-	{
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		nanos6_lint_on_task_argsblock_allocation(taskId, argsBlockPointer, originalArgsBlockSize, argsBlockSize);
 	}
 	
 	inline void createdTask(
@@ -50,4 +54,4 @@ namespace Instrument {
 }
 
 
-#endif // INSTRUMENT_STATS_ADD_TASK_HPP
+#endif // INSTRUMENT_LINT_ADD_TASK_HPP

@@ -168,7 +168,7 @@ typedef struct __attribute__((aligned(64)))
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_instantiation_api
 //! \brief This needs to be incremented on every change to the instantiation API
-enum nanos6_instantiation_api_t { nanos6_instantiation_api = 3 };
+enum nanos6_instantiation_api_t { nanos6_instantiation_api = 4 };
 
 typedef enum {
 	//! Specifies that the task will be a final task
@@ -180,7 +180,9 @@ typedef enum {
 	//! Specifies that the task has the "wait" clause
 	nanos6_waiting_task = (1 << 3),
 	//! Specifies that the args_block is preallocated from user side
-	nanos6_preallocated_args_block = (1 << 4)
+	nanos6_preallocated_args_block = (1 << 4),
+	//! Specifies that the task has been verified by the user, hence it doesn't need runtime linting
+	nanos6_verified_task = (1 << 5)
 } nanos6_task_flag_t;
 
 

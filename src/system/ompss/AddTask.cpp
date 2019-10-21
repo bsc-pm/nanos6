@@ -101,6 +101,8 @@ void nanos6_create_task(
 		task = (char *)args_block + args_block_size;
 	}
 	
+	Instrument::createdArgsBlock(taskId, *args_block_pointer, originalArgsBlockSize, args_block_size);
+
 	if (isTaskfor) {
 		// Taskfor is always final.
 		flags |= nanos6_task_flag_t::nanos6_final_task;
