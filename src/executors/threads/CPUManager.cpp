@@ -221,21 +221,23 @@ void CPUManager::reportInformation(size_t numSystemCPUs, size_t numNUMANodes)
 	}
 }
 
-bool CPUManager::cpuBecomesIdle(CPU *cpu)
+bool CPUManager::cpuBecomesIdle(CPU *cpu, bool inShutdown)
 {
 	const int index = cpu->getIndex();
 	
 	_idleCPUsLock.lock();
 	
-	// Before idling the CPU, check if there truly aren't any tasks ready
-	// NOTE: This is a workaround to solve the race condition between adding
-	// tasks and idling CPUs; i.e. it may happen that before a CPU is idled,
-	// tasks are added in the scheduler and that CPU may never have the chance
-	// to wake up and execute these newly added tasks
-	if (Scheduler::hasAvailableWork(cpu)) {
-		// If there are ready tasks, release the lock and do not idle the CPU
-		_idleCPUsLock.unlock();
-		return false;
+	if (!inShutdown) {
+		// Before idling the CPU, check if there truly aren't any tasks ready
+		// NOTE: This is a workaround to solve the race condition between adding
+		// tasks and idling CPUs; i.e. it may happen that before a CPU is idled,
+		// tasks are added in the scheduler and that CPU may never have the chance
+		// to wake up and execute these newly added tasks
+		if (Scheduler::hasAvailableWork(cpu)) {
+			// If there are ready tasks, release the lock and do not idle the CPU
+			_idleCPUsLock.unlock();
+			return false;
+		}
 	}
 	
 	_idleCPUs[index] = true;
@@ -245,17 +247,7 @@ bool CPUManager::cpuBecomesIdle(CPU *cpu)
 	Monitoring::cpuBecomesIdle(index);
 	_idleCPUsLock.unlock();
 	
-	// If the CPU status had changed to shutting down right before idling
-	// it, revert this operation so that this CPU can participate in the
-	// shutdown mechanism (leading to a faster shutdown)
-	if (cpu->getActivationStatus() == CPU::shutting_down_status) {
-		// The unidling should be done correctly
-		__attribute__((unused)) bool unidled = unidleCPU(cpu);
-		assert(unidled);
-		return false;
-	} else {
-		return true;
-	}
+	return true;
 }
 
 CPU *CPUManager::getIdleCPU()

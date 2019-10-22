@@ -134,11 +134,6 @@ void WorkerThread::body()
 	Monitoring::shutdownThread();
 	HardwareCounters::shutdownThread();
 	
-	WorkerThread *newThread = ThreadManager::getAnyIdleThread();
-	if (newThread != nullptr) {
-		newThread->resume(cpu, true);
-	}
-	
 	ThreadManager::addShutdownThread(this);
 }
 

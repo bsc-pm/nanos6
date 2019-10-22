@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -36,45 +36,48 @@ void ThreadManager::initialize()
 void ThreadManager::shutdownPhase1()
 {
 	assert(_shutdownThreads != nullptr);
-	
-	// If all worker threads are idle, we must wake up one of them so it
-	// triggers a chain shutdown for all idle threads
-	WorkerThread *idleThread = getAnyIdleThread();
-	if (idleThread != nullptr) {
-		CPU *idleCPU = CPUManager::getIdleCPU();
-		if (idleCPU != nullptr) {
-			idleThread->resume(idleCPU, true);
-		} else {
-			addIdler(idleThread);
-		}
-	}
-	
+
+	// Spin until all threads are marked as shutdown
 	const int MIN_SPINS = 100;
 	const int MAX_SPINS = 100*1000*1000;
-	
 	int spins = MIN_SPINS;
-	
 	bool canJoin = false;
+	WorkerThread *idleThread = nullptr;
 	while (!canJoin) {
+		// Wake up as many threads as possible so that they can participate
+		// in the shutdown process
+		idleThread = getAnyIdleThread();
+		while (idleThread != nullptr) {
+			CPU *idleCPU = CPUManager::getIdleCPU();
+			if (idleCPU != nullptr) {
+				idleThread->resume(idleCPU, true);
+			} else {
+				// No CPUs available, readd the thread as idle and break
+				addIdler(idleThread);
+				break;
+			}
+			idleThread = getAnyIdleThread();
+		}
+
 		// Check whether all the threads already added themselves to _shutdownThreads.
 		_shutdownThreads->_lock.lock();
 		canJoin = (_shutdownThreads->_threads.size() == (size_t) _totalThreads);
 		_shutdownThreads->_lock.unlock();
-		
+
 		// Spin for a while to let threads add them to _shutdownThreads.
 		int i = 0;
 		while (i < spins && !canJoin) {
 			i++;
 		}
-		
+
 		// Backoff
 		if (spins < MAX_SPINS) {
 			spins *= 2;
 		}
 	}
-	
+
 	assert(_shutdownThreads->_threads.size() == (size_t) _totalThreads);
-	
+
 	for (WorkerThread *thread : _shutdownThreads->_threads) {
 		thread->join();
 	}
@@ -83,11 +86,28 @@ void ThreadManager::shutdownPhase1()
 void ThreadManager::shutdownPhase2()
 {
 	assert(_shutdownThreads != nullptr);
-	
+
 	for (WorkerThread *thread : _shutdownThreads->_threads) {
 		delete thread;
 	}
 	delete _shutdownThreads;
-	
+
 	delete [] _idleThreads;
 }
+
+void ThreadManager::addShutdownThread(WorkerThread *shutdownThread)
+{
+	assert(shutdownThread != nullptr);
+	assert(_shutdownThreads != nullptr);
+
+	CPU *cpu = shutdownThread->getComputePlace();
+
+	_shutdownThreads->_lock.lock();
+	_shutdownThreads->_threads.push_back(shutdownThread);
+	_shutdownThreads->_lock.unlock();
+
+	// Mark that the CPU is available for anyone else who might need it
+	__attribute__((unused)) bool idle = CPUManager::cpuBecomesIdle(cpu, true);
+	assert(idle);
+}
+

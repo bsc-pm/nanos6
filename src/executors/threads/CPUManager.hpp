@@ -81,8 +81,12 @@ public:
 	static inline std::vector<CPU *> const &getCPUListReference();
 	
 	//! \brief Mark a CPU as idle
+	//!
+	//! \param[in] inShutdown Whether the CPU is put idle so that any thread
+	//! may use it for the shutdown process
+	//!
 	//! \return Whether the operation was successful
-	static bool cpuBecomesIdle(CPU *cpu);
+	static bool cpuBecomesIdle(CPU *cpu, bool inShutdown = false);
 	
 	//! \brief get an idle CPU
 	static CPU *getIdleCPU();

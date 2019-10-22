@@ -214,13 +214,4 @@ inline void ThreadManager::resumeIdle(const std::vector<CPU *> &idleCPUs, bool i
 }
 
 
-inline void ThreadManager::addShutdownThread(WorkerThread *shutdownThread)
-{
-	assert(shutdownThread != nullptr);
-	assert(_shutdownThreads != nullptr);
-	std::lock_guard<SpinLock> guard(_shutdownThreads->_lock);
-	_shutdownThreads->_threads.push_back(shutdownThread);
-}
-
-
 #endif // THREAD_MANAGER_HPP
