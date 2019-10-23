@@ -39,7 +39,7 @@ void ThreadManager::shutdownPhase1()
 
 	// Spin until all threads are marked as shutdown
 	const int MIN_SPINS = 100;
-	const int MAX_SPINS = 100*1000*1000;
+	const int MAX_SPINS = 1000*1000;
 	int spins = MIN_SPINS;
 	bool canJoin = false;
 	WorkerThread *idleThread = nullptr;
