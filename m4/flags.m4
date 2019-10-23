@@ -122,7 +122,7 @@ AC_DEFUN([SSS_FIXUP_COMPILER_FLAGS],
 	[
 		AC_LANG_PUSH(C++)
 		
-		AC_CHECK_COMPILER_FLAGS([-Wall -Wextra -Wdisabled-optimization -fvisibility=hidden])
+		AC_CHECK_COMPILER_FLAGS([-Wall -Wextra -Wdisabled-optimization -Wshadow -fvisibility=hidden])
 		
 		autoconf_calculated_cxxflags="${CXXFLAGS}"
 		

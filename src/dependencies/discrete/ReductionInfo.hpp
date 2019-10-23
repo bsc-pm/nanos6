@@ -96,7 +96,7 @@ class ReductionInfo
 		std::vector<size_t> _freeSlotIndices;
 		// Aggregating slots are private slots used to aggregate combinations
 		// when the original region is not available for combination. By now, they are not being used 
-		// in discrete-simple deps.
+		// in discrete deps.
 		reduction_slot_set_t _isAggregatingSlotIndex;
 		reduction_slot_set_t _privateSlotsUsed;
 		

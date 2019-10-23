@@ -38,8 +38,8 @@ private:
 
 	//! Reduction stuff
 	size_t _reductionLength;
-
 	reduction_type_and_operator_index_t _reductionOperator;
+	reduction_index_t _reductionIndex;
 
 	//! Next task with an access matching this one
 	Task * _successor;
@@ -121,11 +121,13 @@ public:
 		_reductionInfo = reductionInfo;
 	}
 
-	Task *getSuccessor() const {
+	Task *getSuccessor() const 
+	{
 		return _successor;
 	}
 
-	void setSuccessor(Task *successor) {
+	void setSuccessor(Task *successor) 
+	{
 		_successor = successor;
 	}
 
@@ -151,11 +153,6 @@ public:
 		return (res == 0);
 	}
 
-	inline bool isTop() 
-	{
-		return (_isTop == -1);
-	}
-	
 	size_t getReductionLength() const 
 	{
 		return _reductionLength;
@@ -174,6 +171,16 @@ public:
 	void setReductionOperator(reduction_type_and_operator_index_t reductionOperator) 
 	{
 		_reductionOperator = reductionOperator;
+	}
+
+	reduction_index_t getReductionIndex() const 
+	{
+		return _reductionIndex;
+	}
+
+	void setReductionIndex(reduction_index_t reductionIndex) 
+	{
+		_reductionIndex = reductionIndex;
 	}
 };
 

@@ -38,7 +38,6 @@ class WorkerThread;
 #pragma GCC diagnostic error "-Wunused-result"
 
 using namespace ExecutionWorkflow;
-#define TASK_DEPS_VECTOR_CUTOFF 8
 
 class Task {
 public:
@@ -112,10 +111,7 @@ private:
 	
 	//! Number of internal and external events that prevent the release of dependencies
 	std::atomic<int> _countdownToRelease;
-
-	//! Number of dependencies that will be registered to the task.
-	size_t _num_deps;
-	
+		
 	//! Execution workflow to execute this Task
 	Workflow<TaskExecutionWorkflowData> *_workflow;
 	
@@ -154,7 +150,7 @@ public:
 		size_t flags,
 		void * seqs,
 		void * addresses,
-		size_t num_deps
+		size_t numDeps
 	);
 	
 	virtual inline void reinitialize(
@@ -173,11 +169,6 @@ public:
 	inline void setArgsBlock(void *argsBlock)
 	{
 		_argsBlock = argsBlock;
-	}
-
-	inline size_t getNumDependencies()
-	{
-		return _num_deps;
 	}
 
 	//! Get the address of the arguments block

@@ -53,33 +53,8 @@ namespace DataAccessRegistration {
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	void handleExitTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	void handleTaskRemoval(Task *task, ComputePlace *computePlace);
-	void insertAccesses(Task * task, CPUDependencyData &hpDependencyData);
-	ReductionInfo * allocateReductionInfo(
-			DataAccessType &dataAccessType, reduction_index_t reductionIndex, 
-			reduction_type_and_operator_index_t reductionTypeAndOpIndex, 
-			void * address, const size_t length, const Task &task);
-
-	void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
-							   CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators);
-
-	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
-									CPUDependencyData &hpDependencyData);
-
-	void releaseReductionInfo(ReductionInfo *info);
-
-	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
-							 TaskDataAccesses &parentAccessStruct, Task *successor);
-	void
-	decreaseDeletableCountOrDelete(Task *originator,
-								   CPUDependencyData::deletable_originator_list_t &deletableOriginators);
-
 	void combineTaskReductions(Task *task, ComputePlace *computePlace);
 	
-	void releaseTaskwaitFragment(Task *task,
-		ComputePlace *computePlace,
-		CPUDependencyData &hpDependencyData
-	);
-
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
 }

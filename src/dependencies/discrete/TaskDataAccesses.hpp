@@ -32,11 +32,11 @@ struct TaskDataAccesses {
 #endif
 	spinlock_t _lock;
 	//! This will handle the dependencies of nested tasks.
-	bottom_map_t _accessMap;
+	bottom_map_t _subaccessBottomMap;
 	DataAccess * _accessArray;
 	void ** _addressArray;
-	size_t _num_deps;
-	size_t currentIndex;
+	size_t _maxDeps;
+	size_t _currentIndex;
 
 	std::atomic<int> _deletableCount;
 #ifndef NDEBUG
@@ -46,11 +46,11 @@ struct TaskDataAccesses {
 
 	TaskDataAccesses()
 		: _lock(),
-		_accessMap(),
+		_subaccessBottomMap(),
 		_accessArray(nullptr),
 		_addressArray(nullptr),
-		_num_deps(0),
-		currentIndex(0),
+		_maxDeps(0),
+		_currentIndex(0),
 		_deletableCount(0)
 #ifndef NDEBUG
 		, _flags()
@@ -58,12 +58,12 @@ struct TaskDataAccesses {
 	{
 	}
 
-	TaskDataAccesses(void *accessArray , void *addressArray, size_t num_deps)
+	TaskDataAccesses(void *accessArray , void *addressArray, size_t maxDeps)
 		: _lock(),
-		_accessMap(),
+		_subaccessBottomMap(),
 		_accessArray((DataAccess *) accessArray),
 		_addressArray((void **) addressArray),
-		_num_deps(num_deps), currentIndex(0), _deletableCount(0)
+		_maxDeps(maxDeps), _currentIndex(0), _deletableCount(0)
 #ifndef NDEBUG
 		, _flags()
 #endif
@@ -76,7 +76,7 @@ struct TaskDataAccesses {
 		std::lock_guard<spinlock_t> guard(_lock);
 		assert(!hasBeenDeleted());
 
-		_accessMap.clear();
+		_subaccessBottomMap.clear();
 
 #ifndef NDEBUG
 		hasBeenDeleted() = true;
@@ -84,11 +84,6 @@ struct TaskDataAccesses {
 	}
 
 	TaskDataAccesses(TaskDataAccesses const &other) = delete;
-
-	inline bool hasDataAccesses() const
-	{
-		return (_num_deps > 0);
-	}
 
 #ifndef NDEBUG
 	bool hasBeenDeleted() const
@@ -116,9 +111,9 @@ struct TaskDataAccesses {
 		_deletableCount.fetch_add(1, std::memory_order_relaxed);
 	}
 
-	inline DataAccess * findAccess(void * address) 
+	inline DataAccess * findAccess(void * address) const
 	{
-		for(size_t i = 0; i < currentIndex; ++i) {
+		for(size_t i = 0; i < _currentIndex; ++i) {
 			if(_addressArray[i] == address)
 				return &_accessArray[i];
 		}
@@ -126,9 +121,19 @@ struct TaskDataAccesses {
 		return nullptr;
 	}
 
-	inline size_t getRealAccessNumber() 
+	inline size_t getRealAccessNumber() const
 	{
-		return currentIndex;
+		return _currentIndex;
+	}
+
+	inline bool hasDataAccesses() const
+	{
+		return (getRealAccessNumber() > 0);
+	}
+
+	inline size_t getAdditionalMemorySize() const
+	{
+		return (sizeof(DataAccess) + sizeof(void *)) * _maxDeps;
 	}
 };
 

@@ -39,7 +39,7 @@ ReductionInfo::ReductionInfo(void * address, size_t length, reduction_type_and_o
 	_slots.reserve(maxSlots);
 	_freeSlotIndices.reserve(maxSlots);
 	_currentCpuSlotIndices.resize(nCpus, -1);
-	// Not being used in discrete-simple deps.
+	// Not being used in discrete deps.
 	_isAggregatingSlotIndex.resize(maxSlots);
 	_privateSlotsUsed.resize(maxSlots);
 	_privateSlotsUsed.reset();
@@ -191,7 +191,7 @@ bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 	char *originalSubregionAddress = (char*)_address;
 	ptrdiff_t originalSubregionOffset = originalSubregionAddress - originalAddress;
 	
-	// Not being used in discrete-simple deps. That's why there is an assert(0).
+	// Not being used in discrete deps. That's why there is an assert(0).
 	// Select aggregating private slot
 	reduction_slot_set_t::size_type aggregatingSlotIndex = reduction_slot_set_t::npos;
 	if (!canCombineToOriginalStorage) {
@@ -266,7 +266,7 @@ bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 		// other structures would be messed up
 		for (size_t i = 0; i < numSlots; i++) {
 			ReductionSlot &slot = _slots[i];
-			// Not being used in discrete-simple deps. That's why there is an assert(0).
+			// Not being used in discrete deps. That's why there is an assert(0).
 			if (_isAggregatingSlotIndex[i]) {
 				assert(0);
 				// Keep slots containing aggregated contributions

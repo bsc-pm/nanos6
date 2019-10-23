@@ -88,11 +88,6 @@ public:
 		_flags[Task::non_runnable_flag] = !runnableValue;
 	}
 	
-	inline void setDelayedRelease(bool delayedReleaseValue)
-	{
-		_flags[Task::wait_flag] = delayedReleaseValue;
-	}
-	
 	inline bool hasPendingIterations()
 	{
 		assert(!isRunnable());

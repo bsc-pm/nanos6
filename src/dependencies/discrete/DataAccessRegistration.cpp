@@ -37,6 +37,27 @@
 namespace DataAccessRegistration {
 	typedef TaskDataAccesses::bottom_map_t bottom_map_t;
 
+	void insertAccesses(Task * task);
+
+	ReductionInfo * allocateReductionInfo(
+			DataAccessType &dataAccessType, reduction_index_t reductionIndex, 
+			reduction_type_and_operator_index_t reductionTypeAndOpIndex, 
+			void * address, const size_t length, const Task &task);
+
+	void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
+							   CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators);
+
+	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &parentAccesses,
+									CPUDependencyData &hpDependencyData);
+
+	void releaseReductionInfo(ReductionInfo *info);
+
+	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
+							 TaskDataAccesses &parentAccessStruct, Task *successor);
+	void decreaseDeletableCountOrDelete(Task *originator,
+								   CPUDependencyData::deletable_originator_list_t &deletableOriginators);
+
+
 	//! Process all the originators that have become ready
 	static inline void processSatisfiedOriginators(
 			/* INOUT */ CPUDependencyData &hpDependencyData,
@@ -44,6 +65,7 @@ namespace DataAccessRegistration {
 						bool fromBusyThread) 
 	{
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
+		
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 
@@ -61,23 +83,15 @@ namespace DataAccessRegistration {
 			);
 		}
 
-		/*
-		 * As we use tasks as integral part of our Data Structures, specially the accesses in READ/REDUCTION tasks,
-		 * we are responsible for their disposal. Here we destruct and deallocate all the tasks we've determined as
-		 * not needed anymore, only if nothing else in the runtime needs the task anymore.
-		 * As there is no "task garbage collection", the runtime will only destruct the tasks for us if we mark them as
-		 * not needed on the unregisterTaskDataAccesses call, so this takes care on tasks ended anywhere else.
-		 */
+		// As we use tasks as integral part of our Data Structures, specially the accesses in READ/REDUCTION tasks,
+		// we are responsible for their disposal. Here we destruct and deallocate all the tasks we've determined as
+		// not needed anymore, only if nothing else in the runtime needs the task anymore.
+		// As there is no "task garbage collection", the runtime will only destruct the tasks for us if we mark them as
+		// not needed on the unregisterTaskDataAccesses call, so this takes care on tasks ended anywhere else.
+
 		for (Task *deletableOriginator : hpDependencyData._deletableOriginators) {
 			assert(deletableOriginator != nullptr);
-
-			ComputePlace *computePlaceHint = nullptr;
-			if (computePlace != nullptr) {
-				if (computePlace->getType() == deletableOriginator->getDeviceType()) {
-					computePlaceHint = computePlace;
-				}
-			}
-			TaskFinalization::disposeOrUnblockTask(deletableOriginator, computePlaceHint);
+			TaskFinalization::disposeOrUnblockTask(deletableOriginator, computePlace);
 		}
 
 		hpDependencyData._satisfiedOriginators.clear();
@@ -86,17 +100,12 @@ namespace DataAccessRegistration {
 
 	static inline DataAccessType combineTypes(DataAccessType type1, DataAccessType type2) 
 	{
-		if (type1 == READWRITE_ACCESS_TYPE || type2 == READWRITE_ACCESS_TYPE)
-			return READWRITE_ACCESS_TYPE;
-		else if (type1 == WRITE_ACCESS_TYPE || type2 == WRITE_ACCESS_TYPE) {
-			if(type1 == READ_ACCESS_TYPE || type2 == READ_ACCESS_TYPE)
-				return READWRITE_ACCESS_TYPE;
-			return WRITE_ACCESS_TYPE;
-		} else if (type1 == READ_ACCESS_TYPE && type2 == READ_ACCESS_TYPE)
-			return READ_ACCESS_TYPE;
-		else
-			return WRITE_ACCESS_TYPE; // We don't know, serialize just in case!
+		if (type1 == type2) {
+			return type1;
+		}
+		return READWRITE_ACCESS_TYPE;
 	}
+
 
 	inline void upgradeAccess(DataAccess * access, DataAccessType newType) 
 	{
@@ -110,17 +119,16 @@ namespace DataAccessRegistration {
 	void registerTaskDataAccess(
 			Task *task, DataAccessType accessType, bool weak, void *address, size_t length,
 			reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
-			__attribute__((unused)) reduction_index_t reductionIndex) 
+			reduction_index_t reductionIndex) 
 	{
-		/*
-		 * This is called once per access in the task and it's purpose is to initialize our DataAccess structure with the
-		 * arguments of this function. No dependency registration is done here, and this call precedes the "registerTaskDataAccesses"
-		 * one. All the access structs are constructed in-place in the task array, to prevent allocations.
-		 */
+		// This is called once per access in the task and it's purpose is to initialize our DataAccess structure with the
+		// arguments of this function. No dependency registration is done here, and this call precedes the "registerTaskDataAccesses"
+		// one. All the access structs are constructed in-place in the task array, to prevent allocations.
 
 		assert(task != nullptr);
 		assert(address != nullptr);
 		assert(length > 0);
+		assert(!weak);
 
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 
@@ -129,25 +137,23 @@ namespace DataAccessRegistration {
 		DataAccess *alreadyExistingAccess = accessStruct.findAccess(address);
 
 		if (alreadyExistingAccess == nullptr) {
-			size_t index = accessStruct.currentIndex;
+			size_t index = accessStruct._currentIndex;
 
-			assert(accessStruct.currentIndex < task->getNumDependencies());
+			assert(accessStruct._currentIndex < accessStruct._maxDeps);
 
 			addressArray[index] = address;
 			DataAccess *access = &accessArray[index];
 
-			accessStruct.currentIndex++;
+			accessStruct._currentIndex++;
 
 			new(access) DataAccess(accessType, task, weak);
 
 			if (accessType == REDUCTION_ACCESS_TYPE) {
 				access->setReductionOperator(reductionTypeAndOperatorIndex);
 				access->setReductionLength(length);
-			} else {
-				assert(!weak); // We don't allow weak accesses just yet.
+				access->setReductionIndex(reductionIndex);
 			}
 		} else {
-			assert(!weak);
 			upgradeAccess(alreadyExistingAccess, accessType);
 		}
 	}
@@ -175,23 +181,17 @@ namespace DataAccessRegistration {
 			// We must re-check after the lock
 			if (access->getSuccessor() == nullptr) {
 				// Update the bottom map!
-				bottom_map_t *addresses = &parentAccessStruct._accessMap;
-				bottom_map_t::iterator itMap = addresses->find(address);
-				assert(itMap != addresses->end()); // If we exist, there must be an entry with our address.
-
-				addresses->erase(itMap);
-
+				bottom_map_t &addresses = parentAccessStruct._subaccessBottomMap;
+				addresses.erase(address);
 				last = true;
 			}
 		}
 
-		/*
-		 * All the reduction / read clean up parts where we clear and reclaim memory are designed to be called out of a lock,
-		 * and they will take one if they need to touch the bottom map. It is a bit counter intuitive because we don't need,
-		 * for example, to care that two tasks are "cleaning up" at the same time. First, because it won't happen with the
-		 * _isTop atomic, except with the reductions, but the algorithm accounts for that as only a completeCombineAnd-
-		 * DeallocateReduction can actually delete the "bottom" reduction.
-		 */
+		// All the reduction / read clean up parts where we clear and reclaim memory are designed to be called out of a lock,
+		// and they will take one if they need to touch the bottom map. It is a bit counter intuitive because we don't need,
+		// for example, to care that two tasks are "cleaning up" at the same time. First, because it won't happen with the
+		// _isTop atomic, except with the reductions, but the algorithm accounts for that as only a completeCombineAnd-
+		// DeallocateReduction can actually delete the "bottom" reduction.
 
 		if (access->getType() == REDUCTION_ACCESS_TYPE) {
 			ReductionInfo *reductionInfo = access->getReductionInfo();
@@ -241,14 +241,14 @@ namespace DataAccessRegistration {
 				if (next->getSuccessor() == nullptr) {
 					std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccessStruct._lock);
 					if (next->getSuccessor() == nullptr) {
-						parentAccessStruct._accessMap.find(address)->second.satisfied = true;
+						parentAccessStruct._subaccessBottomMap.find(address)->second._satisfied = true;
 					}
 				}
 			}
 		}
 	}
 
-	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
+	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &parentAccesses,
 									CPUDependencyData &hpDependencyData) 
 	{
 		DataAccessType accessType = pAccess->getType();
@@ -279,25 +279,25 @@ namespace DataAccessRegistration {
 						releaseReductionInfo(reductionInfo);
 					}
 					// Unlock next access and return
-					satisfyNextAccesses(address, hpDependencyData, accesses, successor);
+					satisfyNextAccesses(address, hpDependencyData, parentAccesses, successor);
 					return;
 				}
 			} else {
 				// Lock the bottom map and re-check (in case of races)
-				std::lock_guard<TaskDataAccesses::spinlock_t> guard(accesses._lock);
+				std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccesses._lock);
 				if (pAccess->getSuccessor() == nullptr) {
-					bottom_map_t::iterator itMap = accesses._accessMap.find(address);
-					assert(itMap != accesses._accessMap.end());
+					bottom_map_t::iterator itMap = parentAccesses._subaccessBottomMap.find(address);
+					assert(itMap != parentAccesses._subaccessBottomMap.end());
 
 					if(accessType == REDUCTION_ACCESS_TYPE) {
 						if (reductionInfo->finished()) {
 							releaseReductionInfo(reductionInfo);
-							accesses._accessMap.erase(itMap);
+							parentAccesses._subaccessBottomMap.erase(itMap);
 						} else {
-							itMap->second.access = nullptr;
+							itMap->second._access = nullptr;
 						}
 					} else {
-						accesses._accessMap.erase(itMap);
+						parentAccesses._subaccessBottomMap.erase(itMap);
 					}
 
 					return;
@@ -325,9 +325,9 @@ namespace DataAccessRegistration {
 				// Could be false positive. We need a lock on the bottomMap.
 				std::lock_guard<TaskDataAccesses::spinlock_t> guard(accesses._lock);
 				if (pAccess->getSuccessor() == nullptr) {
-					bottom_map_t::iterator itMap = accesses._accessMap.find(address);
-					assert(itMap != accesses._accessMap.end());
-					itMap->second.satisfied = true;
+					bottom_map_t::iterator itMap = accesses._subaccessBottomMap.find(address);
+					assert(itMap != accesses._subaccessBottomMap.end());
+					itMap->second._satisfied = true;
 					return;
 				}
 
@@ -336,14 +336,10 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData) 
+	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, __attribute__((unused)) CPUDependencyData &hpDependencyData) 
 	{
-		/*
-		 * This is only called once per task. It is responsible for registering all the dependencies of the accesses
-		 * in the task. It is called after everything has been constructed in the "registerTaskDataAccess" function.
-		 * In this implementation, we will go through all the accesses in the access array and we will check and
-		 * register the dependencies for each one.
-		 */
+		// This is called once per task, and will create all the dependencies in register_depinfo, to later insert
+		// them into the chain in the insertAccesses call.
 
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
@@ -361,14 +357,12 @@ namespace DataAccessRegistration {
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 
-		insertAccesses(task, hpDependencyData);
+		insertAccesses(task);
 
 		assert(!accessStructures.hasBeenDeleted());
 		if (accessStructures.hasDataAccesses()) {
 			task->increaseRemovalBlockingCount();
 		}
-
-		processSatisfiedOriginators(hpDependencyData, computePlace, true);
 
 		return task->decreasePredecessors(2);
 	}
@@ -396,15 +390,13 @@ namespace DataAccessRegistration {
 			// if task is not final, it may be strong anyway, so we have to check the access itself.
 			assert(accessStruct.hasDataAccesses());
 			for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
-				void *raw_address = accessStruct._addressArray[i];
+				void *address = accessStruct._addressArray[i];
 				DataAccess *access = &accessStruct._accessArray[i];
-				finalizeDataAccess(task, access, raw_address, hpDependencyData, computePlace);
+				finalizeDataAccess(task, access, address, hpDependencyData, computePlace);
 			}
 
-			/*
-			 * All TaskDataAccesses have a deletableCount of 1 for default, so this will return true unless
-			 * some read/reduction accesses have increased this as well because the task cannot be deleted yet.
-			 */
+			// All TaskDataAccesses have a deletableCount of 1 for default, so this will return true unless
+			// some read/reduction accesses have increased this as well because the task cannot be deleted yet.
 			if (accessStruct.decreaseDeletableCount())
 				task->decreaseRemovalBlockingCount();
 		}
@@ -449,19 +441,19 @@ namespace DataAccessRegistration {
 		assert(!accessStruct.hasBeenDeleted());
 
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStruct._lock);
-		bottom_map_t &bottomMap = accessStruct._accessMap;
+		bottom_map_t &bottomMap = accessStruct._subaccessBottomMap;
 
 		for (bottom_map_t::iterator itMap = bottomMap.begin(); itMap != bottomMap.end(); itMap++) {
-			ReductionInfo *reductionInfo = itMap->second.reductionInfo;
+			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 
 			if(reductionInfo != nullptr) {
 				assert(!reductionInfo->finished());
-				if(itMap->second.access == nullptr && reductionInfo->markAsClosed())
+				if(itMap->second._access == nullptr && reductionInfo->markAsClosed())
 					releaseReductionInfo(reductionInfo);
 				else
 					reductionInfo->markAsClosed();
 
-				itMap->second.reductionInfo = nullptr;
+				itMap->second._reductionInfo = nullptr;
 			}
 		}
 
@@ -490,7 +482,7 @@ namespace DataAccessRegistration {
 		// Only needed for weak accesses (not implemented)
 	}
 
-	void insertAccesses(Task *task, __attribute__((unused)) CPUDependencyData &hpDependencyData) 
+	void insertAccesses(Task *task) 
 	{
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
@@ -504,11 +496,9 @@ namespace DataAccessRegistration {
 		// Default deletableCount of 1.
 		accessStruct.increaseDeletableCount();
 
-		size_t reduction_index = 0;
-
 		// Get all seqs
 		for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
-			void *raw_address = accessStruct._addressArray[i];
+			void *address = accessStruct._addressArray[i];
 			DataAccess *access = &accessStruct._accessArray[i];
 			DataAccessType accessType = access->getType();
 			DataAccess *predecessor = nullptr;
@@ -518,7 +508,7 @@ namespace DataAccessRegistration {
 			bottom_map_t::iterator itMap;
 
 			// Instrumentation mock(for now)
-			DataAccessRegion mock;
+			DataAccessRegion mock(address, 1);
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
 					nullptr,
 					accessType, false, mock,
@@ -528,7 +518,7 @@ namespace DataAccessRegistration {
 
 			access->setInstrumentationId(dataAccessInstrumentationId);
 
-			bottom_map_t *addresses = &parentAccessStruct._accessMap;
+			bottom_map_t &addresses = parentAccessStruct._subaccessBottomMap;
 			{
 				std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccessStruct._lock);
 
@@ -536,14 +526,14 @@ namespace DataAccessRegistration {
 				 *  Determine our predecessor safely, and maybe insert ourselves to the map.
 				 */
 
-				itMap = addresses->find(raw_address);
-				if (itMap != addresses->end()) {
-					predecessor = itMap->second.access; // This can still be null!
-					itMap->second.access = access;
+				itMap = addresses.find(address);
+				if (itMap != addresses.end()) {
+					predecessor = itMap->second._access; // This can still be null!
+					itMap->second._access = access;
 				} else {
 					// Insert task to map.
-					itMap = addresses->emplace(std::piecewise_construct, std::forward_as_tuple(raw_address),
-											   std::forward_as_tuple(access, task)).first;
+					itMap = addresses.emplace(std::piecewise_construct, std::forward_as_tuple(address),
+											   std::forward_as_tuple(access)).first;
 				}
 
 				/*
@@ -551,30 +541,30 @@ namespace DataAccessRegistration {
 				 */
 
 				if (accessType == REDUCTION_ACCESS_TYPE) {
-					ReductionInfo * currentReductionInfo = itMap->second.reductionInfo;
+					ReductionInfo * currentReductionInfo = itMap->second._reductionInfo;
 					reductionInfo = currentReductionInfo;
 					reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
 					size_t length = access->getReductionLength();
 
 					if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex ||
-							currentReductionInfo->getOriginalLength() != length) {
-						currentReductionInfo = allocateReductionInfo(accessType, reduction_index++, typeAndOpIndex,
-															  raw_address, length, *task);
+						currentReductionInfo->getOriginalLength() != length) {
+						currentReductionInfo = allocateReductionInfo(accessType, access->getReductionIndex(), typeAndOpIndex,
+															  address, length, *task);
 					}
 
 					currentReductionInfo->incrementRegisteredAccesses();
-					itMap->second.reductionInfo = currentReductionInfo;
+					itMap->second._reductionInfo = currentReductionInfo;
 
 					assert(currentReductionInfo != nullptr);
 					assert(currentReductionInfo->getTypeAndOperatorIndex() == typeAndOpIndex);
 					assert(currentReductionInfo->getOriginalLength() == length);
-					assert(currentReductionInfo->getOriginalAddress() == raw_address);
+					assert(currentReductionInfo->getOriginalAddress() == address);
 
 					access->setReductionInfo(currentReductionInfo);
 					accessStruct.increaseDeletableCount();
 				} else {
-					reductionInfo = itMap->second.reductionInfo;
-					itMap->second.reductionInfo = nullptr;
+					reductionInfo = itMap->second._reductionInfo;
+					itMap->second._reductionInfo = nullptr;
 
 					if(accessType == READ_ACCESS_TYPE)
 						accessStruct.increaseDeletableCount();
@@ -588,7 +578,7 @@ namespace DataAccessRegistration {
 					DataAccessType predecessorType = predecessor->getType();
 
 					if(predecessorType == READ_ACCESS_TYPE) {
-						becameUnsatisfied = !(accessType == READ_ACCESS_TYPE && itMap->second.satisfied);
+						becameUnsatisfied = !(accessType == READ_ACCESS_TYPE && itMap->second._satisfied);
 					} else if(predecessorType == REDUCTION_ACCESS_TYPE) {
 						assert(!predecessor->closesReduction());
 						becameUnsatisfied = true;
@@ -605,7 +595,7 @@ namespace DataAccessRegistration {
 
 					predecessor->setSuccessor(task);
 
-					itMap->second.satisfied = !becameUnsatisfied;
+					itMap->second._satisfied = !becameUnsatisfied;
 					if (becameUnsatisfied) task->increasePredecessors();
 				} else {
 					if (accessType == READ_ACCESS_TYPE || accessType == REDUCTION_ACCESS_TYPE)
@@ -673,14 +663,6 @@ namespace DataAccessRegistration {
 
 	// Placeholder
 	void combineTaskReductions(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace) 
-	{
-	}
-	
-	// Placeholder
-	void releaseTaskwaitFragment(
-		__attribute__((unused)) Task *task,
-		__attribute__((unused)) ComputePlace *computePlace,
-		__attribute__((unused)) CPUDependencyData &hpDependencyData) 
 	{
 	}
 }

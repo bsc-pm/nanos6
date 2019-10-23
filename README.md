@@ -323,4 +323,4 @@ Other implementations can be compiled in with the corresponding `./configure` fl
 The available implementations are:
 
 * \[default\] `NANOS6_DEPENDENCIES=linear-regions-fragmented`  - Supporting all features.
-* `NANOS6_DEPENDENCIES=discrete-simple` - No support for regions (the syntax is allowed, but will behave as a single discrete dependency), or weak dependencies. Scales better than the default implementation thanks to its simpler logic, it is functionally similar to traditional OpenMP dependencies.
+* `NANOS6_DEPENDENCIES=discrete` - No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.

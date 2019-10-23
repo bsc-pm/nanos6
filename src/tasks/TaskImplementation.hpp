@@ -18,7 +18,7 @@
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
 
-#ifdef DISCRETE_SIMPLE_DEPS
+#ifdef DISCRETE_DEPS
 #include <TaskDataAccesses.hpp>
 #define __nondiscrete_unused
 #else
@@ -38,7 +38,7 @@ inline Task::Task(
 	size_t flags,
 	__nondiscrete_unused void * seqs,
 	__nondiscrete_unused void * addresses,
-	size_t num_deps
+	size_t numDeps
 )
 	: _argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
@@ -48,8 +48,8 @@ inline Task::Task(
 	_parent(parent),
 	_priority(0),
 	_thread(nullptr),
-#ifdef DISCRETE_SIMPLE_DEPS
-	_dataAccesses(seqs, addresses, num_deps),
+#ifdef DISCRETE_DEPS
+	_dataAccesses(seqs, addresses, numDeps),
 #else
 	_dataAccesses(),
 #endif
@@ -60,7 +60,6 @@ inline Task::Task(
 	_computePlace(nullptr),
 	_memoryPlace(nullptr),
 	_countdownToRelease(1),
-	_num_deps(num_deps),
 	_workflow(nullptr),
 	_executionStep(nullptr),
 	_taskStatistics(),

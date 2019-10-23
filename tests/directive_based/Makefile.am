@@ -159,7 +159,7 @@ check_PROGRAMS += $(reductions_tests)
 TESTS += $(reductions_tests)
 endif
 
-if DISCRETE_SIMPLE_DEPENDENCIES
+if DISCRETE_DEPENDENCIES
 check_PROGRAMS += $(discrete_tests)
 TESTS += $(discrete_tests)
 endif

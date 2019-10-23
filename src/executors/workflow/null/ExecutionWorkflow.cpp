@@ -115,13 +115,7 @@ namespace ExecutionWorkflow {
 		
 		CPUDependencyData hpDependencyData;
 
-		#if DISCRETE_SIMPLE_DEPS
-		DataAccessRegistration::releaseTaskwaitFragment(
-			task,
-			computePlace,
-			hpDependencyData
-		);
-		#else
+		#if !DISCRETE_DEPS
 		DataAccessRegistration::releaseTaskwaitFragment(
 			task,
 			taskwaitFragment->getAccessRegion(),

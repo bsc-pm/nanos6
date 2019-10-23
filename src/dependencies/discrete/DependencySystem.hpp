@@ -14,7 +14,7 @@ class DependencySystem {
 public:
 	static void initialize()
 	{
-		RuntimeInfo::addEntry("dependency_implementation", "Dependency Implementation", "discrete-simple");
+		RuntimeInfo::addEntry("dependency_implementation", "Dependency Implementation", "discrete");
 	}
 };
 

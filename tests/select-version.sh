@@ -4,12 +4,12 @@
 #	
 #	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 
-# Any test with "discrete" in the name will use the simpler discrete-simple
+# Any test with "discrete" in the name will use the simpler discrete
 # implementation.
 
 if test -z ${NANOS6_DEPENDENCIES} ; then
   if "${*}" = "${*/discrete}" ; then
-    export NANOS6_DEPENDENCIES=discrete-simple
+    export NANOS6_DEPENDENCIES=discrete
   fi
 fi
 
