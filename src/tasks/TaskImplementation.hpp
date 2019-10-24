@@ -38,7 +38,7 @@ inline Task::Task(
 	size_t flags,
 	__nondiscrete_unused void * seqs,
 	__nondiscrete_unused void * addresses,
-	size_t numDeps
+	__nondiscrete_unused size_t numDeps
 )
 	: _argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),

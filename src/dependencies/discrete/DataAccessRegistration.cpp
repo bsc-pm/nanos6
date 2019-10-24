@@ -155,6 +155,10 @@ namespace DataAccessRegistration {
 		}
 	}
 	
+	inline bool hasNoDelayedRemoval(DataAccessType type) {
+		return (type != READ_ACCESS_TYPE && type != REDUCTION_ACCESS_TYPE);
+	}
+	
 	void finalizeDataAccess(Task *task,
 		DataAccess *access,
 		void *address,
@@ -162,6 +166,7 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace)
 	{
 		bool last = false;
+		DataAccessType accessType = access->getType();
 		assert(computePlace != nullptr);
 		
 		Task *parentTask = task->getParent();
@@ -170,8 +175,11 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &parentAccessStruct = parentTask->getDataAccesses();
 		assert(!parentAccessStruct.hasBeenDeleted());
 		
+		if(hasNoDelayedRemoval(accessType))
+			task->getDataAccesses().decreaseDeletableCount();
+		
 		// Are we a bottom task?
-		if (access->getType() != READ_ACCESS_TYPE && access->getType() != REDUCTION_ACCESS_TYPE &&
+		if (accessType != READ_ACCESS_TYPE && accessType != REDUCTION_ACCESS_TYPE &&
 			access->getSuccessor() == nullptr) {
 			std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccessStruct._lock);
 			
@@ -190,7 +198,7 @@ namespace DataAccessRegistration {
 		// _isTop atomic, except with the reductions, but the algorithm accounts for that as only a completeCombineAnd-
 		// DeallocateReduction can actually delete the "bottom" reduction.
 		
-		if (access->getType() == REDUCTION_ACCESS_TYPE) {
+		if (accessType == REDUCTION_ACCESS_TYPE) {
 			ReductionInfo *reductionInfo = access->getReductionInfo();
 			
 			// Not needed in weak reductions, but we don't support them
@@ -207,10 +215,10 @@ namespace DataAccessRegistration {
 			} else {
 				reductionInfo->incrementUnregisteredAccesses();
 			}
-		} else if (!last && access->getType() != READ_ACCESS_TYPE) {
+		} else if (!last && accessType != READ_ACCESS_TYPE) {
 			Task *successor = access->getSuccessor();
 			satisfyNextAccesses(address, hpDependencyData, parentAccessStruct, successor);
-		} else if (access->getType() == READ_ACCESS_TYPE && access->markAsFinished()) {
+		} else if (accessType == READ_ACCESS_TYPE && access->markAsFinished()) {
 			// We were the top. We have to cascade until we find a non-finished access.
 			cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
 			task->getDataAccesses().decreaseDeletableCount();
@@ -513,12 +521,12 @@ namespace DataAccessRegistration {
 					task->getInstrumentationTaskId()
 			);
 			
+			accessStruct.increaseDeletableCount();
 			access->setInstrumentationId(dataAccessInstrumentationId);
 			
 			bottom_map_t &addresses = parentAccessStruct._subaccessBottomMap;
 			{
 				std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccessStruct._lock);
-				
 				
 				//Determine our predecessor safely, and maybe insert ourselves to the map.
 				itMap = addresses.find(address);
@@ -553,13 +561,9 @@ namespace DataAccessRegistration {
 					assert(currentReductionInfo->getOriginalAddress() == address);
 					
 					access->setReductionInfo(currentReductionInfo);
-					accessStruct.increaseDeletableCount();
 				} else {
 					reductionInfo = itMap->second._reductionInfo;
 					itMap->second._reductionInfo = nullptr;
-					
-					if (accessType == READ_ACCESS_TYPE)
-						accessStruct.increaseDeletableCount();
 				}
 				
 				/*
