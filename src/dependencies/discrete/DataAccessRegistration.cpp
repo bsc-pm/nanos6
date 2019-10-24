@@ -196,7 +196,7 @@ namespace DataAccessRegistration {
 			// Not needed in weak reductions, but we don't support them
 			reductionInfo->releaseSlotsInUse(((CPU *) computePlace)->getIndex());
 
-			if (access->decreaseTop()) {
+			if (access->markAsFinished()) {
 				cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
 
 				if (reductionInfo->incrementUnregisteredAccesses())
@@ -210,7 +210,7 @@ namespace DataAccessRegistration {
 		} else if (!last && access->getType() != READ_ACCESS_TYPE) {
 			Task *successor = access->getSuccessor();
 			satisfyNextAccesses(address, hpDependencyData, parentAccessStruct, successor);
-		} else if (access->getType() == READ_ACCESS_TYPE && access->decreaseTop()) {
+		} else if (access->getType() == READ_ACCESS_TYPE && access->markAsFinished()) {
 			// We were the top. We have to cascade until we find a non-finished access.
 			cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
 			task->getDataAccesses().decreaseDeletableCount();
@@ -228,11 +228,11 @@ namespace DataAccessRegistration {
 				hpDependencyData._satisfiedOriginators.push_back(successor);
 			}
 
-			if (next->getType() == REDUCTION_ACCESS_TYPE && next->decreaseTop()) {
+			if (next->getType() == REDUCTION_ACCESS_TYPE && next->markAsTop()) {
 				decreaseDeletableCountOrDelete(successor, hpDependencyData._deletableOriginators);
 				cleanUpTopAccessSuccessors(address, next, parentAccessStruct, hpDependencyData);
 			} else if (next->getType() == READ_ACCESS_TYPE) {
-				next->decreaseTop();
+				next->markAsTop();
 				satisfyReadSuccessors(address, next, parentAccessStruct, hpDependencyData._satisfiedOriginators);
 			} else {
 				if (next->getSuccessor() == nullptr) {
@@ -263,7 +263,7 @@ namespace DataAccessRegistration {
 
 				if (next->getType() == accessType &&
 					(accessType != REDUCTION_ACCESS_TYPE || next->getReductionInfo() == reductionInfo)) {
-					if (next->decreaseTop()) {
+					if (next->markAsTop()) {
 						// Deletable
 						decreaseDeletableCountOrDelete(successor, hpDependencyData._deletableOriginators);
 						pAccess = next;
@@ -305,7 +305,7 @@ namespace DataAccessRegistration {
 	}
 
 	void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
-							   CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators)
+		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators)
 	{
 		while (true) {
 			Task *successor = pAccess->getSuccessor();
@@ -592,7 +592,7 @@ namespace DataAccessRegistration {
 					if (!isSatisfied) task->increasePredecessors();
 				} else {
 					if (accessType == READ_ACCESS_TYPE || accessType == REDUCTION_ACCESS_TYPE)
-						access->decreaseTop();
+						access->markAsTop();
 					
 					if (reductionInfo != nullptr && access->getReductionInfo() != reductionInfo) {
 						closeReduction = reductionInfo->markAsClosed();
