@@ -114,7 +114,7 @@ namespace ExecutionWorkflow {
 		}
 		
 		CPUDependencyData hpDependencyData;
-
+		
 		#if !DISCRETE_DEPS
 		DataAccessRegistration::releaseTaskwaitFragment(
 			task,

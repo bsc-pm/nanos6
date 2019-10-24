@@ -83,12 +83,12 @@ void nanos6_create_task(
 	} else {
 		taskSize = sizeof(Task);
 	}
-
+	
 #ifdef DISCRETE_DEPS
 	// We use num_deps to create the correctly sized array for storing the dependencies.
 	// Two plain C arrays are used, one for the actual DataAccess structures and another for the
 	// addresses, which is the one used for searching. That way we cause less cache misses searching.
-
+	
 	size_t seqsSize = sizeof(DataAccess) * num_deps;
 	size_t addrSize = sizeof(void *) * num_deps;
 #else
@@ -107,7 +107,7 @@ void nanos6_create_task(
 		size_t missalignment = args_block_size & (DATA_ALIGNMENT_SIZE - 1);
 		size_t correction = (DATA_ALIGNMENT_SIZE - missalignment) & (DATA_ALIGNMENT_SIZE - 1);
 		args_block_size += correction;
-
+		
 		// Allocation and layout
 		*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize + seqsSize + addrSize);
 		task = (char *)args_block + args_block_size;

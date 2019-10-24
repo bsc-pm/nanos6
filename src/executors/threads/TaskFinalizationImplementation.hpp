@@ -115,7 +115,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				
 				TaskDataAccesses &dataAccesses = task->getDataAccesses();
 				disposableBlockSize += dataAccesses.getAdditionalMemorySize();
-
+				
 				Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 				
 				// Call the taskinfo destructor if not null

@@ -20,23 +20,23 @@ struct TaskDataAccesses;
 
 namespace DataAccessRegistration {
 	//! \brief creates a task data access taking into account repeated accesses but does not link it to previous accesses nor superaccesses
-	//! 
+	//!
 	//! \param[in,out] task the task that performs the access
 	//! \param[in] accessType the type of access
 	//! \param[in] weak whether access is weak or strong
 	//! \param[in] address the starting address of the access
-	//! \param[in] the length of the access 
+	//! \param[in] the length of the access
 	//! \param[in] reductionTypeAndOperatorIndex an index that identifies the type and the operation of the reduction
 	//! \param[in] reductionIndex an index that identifies the reduction within the task
-
+	
 	void registerTaskDataAccess(
-			Task *task, DataAccessType accessType, bool weak, void *address, size_t length, 
-			reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex); 
+			Task *task, DataAccessType accessType, bool weak, void *address, size_t length,
+			reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex);
 	
 	//! \brief Performs the task dependency registration procedure
-	//! 
+	//!
 	//! \param[in] task the Task whose dependencies need to be calculated
-	//! 
+	//!
 	//! \returns true if the task is already ready
 	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData);
 	

@@ -22,7 +22,7 @@ struct DataAccess;
 struct TaskDataAccesses {
 	typedef TicketSpinLock<int> spinlock_t;
 	typedef std::unordered_map<void *, BottomMapEntry> bottom_map_t;
-
+	
 #ifndef NDEBUG
 	enum flag_bits_t {
 		HAS_BEEN_DELETED_BIT=0,
@@ -37,7 +37,7 @@ struct TaskDataAccesses {
 	void ** _addressArray;
 	size_t _maxDeps;
 	size_t _currentIndex;
-
+	
 	std::atomic<int> _deletableCount;
 #ifndef NDEBUG
 	flags_t _flags;
@@ -57,7 +57,7 @@ struct TaskDataAccesses {
 #endif
 	{
 	}
-
+	
 	TaskDataAccesses(void *accessArray , void *addressArray, size_t maxDeps)
 		: _lock(),
 		_subaccessBottomMap(),
@@ -69,28 +69,28 @@ struct TaskDataAccesses {
 #endif
 	{
 	}
-
+	
 	~TaskDataAccesses()
 	{
 		// We take the lock since the task may be marked for deletion while the lock is held
 		std::lock_guard<spinlock_t> guard(_lock);
 		assert(!hasBeenDeleted());
-
+		
 		_subaccessBottomMap.clear();
-
+		
 #ifndef NDEBUG
 		hasBeenDeleted() = true;
 #endif
 	}
-
+	
 	TaskDataAccesses(TaskDataAccesses const &other) = delete;
-
+	
 #ifndef NDEBUG
 	bool hasBeenDeleted() const
 	{
 		return _flags[HAS_BEEN_DELETED_BIT];
 	}
-
+	
 	flags_t::reference hasBeenDeleted()
 	{
 		return _flags[HAS_BEEN_DELETED_BIT];
@@ -103,34 +103,34 @@ struct TaskDataAccesses {
 		int res = (_deletableCount.fetch_sub(1, std::memory_order_relaxed) - 1);
 		assert(res >= 0);
 		return (res == 0);
-
+		
 	}
-
+	
 	inline void increaseDeletableCount() 
 	{
 		_deletableCount.fetch_add(1, std::memory_order_relaxed);
 	}
-
+	
 	inline DataAccess * findAccess(void * address) const
 	{
 		for(size_t i = 0; i < _currentIndex; ++i) {
 			if(_addressArray[i] == address)
 				return &_accessArray[i];
 		}
-
+		
 		return nullptr;
 	}
-
+	
 	inline size_t getRealAccessNumber() const
 	{
 		return _currentIndex;
 	}
-
+	
 	inline bool hasDataAccesses() const
 	{
 		return (getRealAccessNumber() > 0);
 	}
-
+	
 	inline size_t getAdditionalMemorySize() const
 	{
 		return (sizeof(DataAccess) + sizeof(void *)) * _maxDeps;

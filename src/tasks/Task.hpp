@@ -170,7 +170,7 @@ public:
 	{
 		_argsBlock = argsBlock;
 	}
-
+	
 	//! Get the address of the arguments block
 	inline void *getArgsBlock() const
 	{
