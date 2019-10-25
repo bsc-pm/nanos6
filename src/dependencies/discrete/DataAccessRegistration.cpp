@@ -200,10 +200,6 @@ namespace DataAccessRegistration {
 		
 		if (accessType == REDUCTION_ACCESS_TYPE) {
 			ReductionInfo *reductionInfo = access->getReductionInfo();
-			
-			// Not needed in weak reductions, but we don't support them
-			reductionInfo->releaseSlotsInUse(((CPU *) computePlace)->getIndex());
-			
 			if (access->markAsFinished()) {
 				cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
 				
@@ -658,9 +654,21 @@ namespace DataAccessRegistration {
 		return newReductionInfo;
 	}
 	
-	// Placeholder
-	void combineTaskReductions(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
+	void combineTaskReductions(Task *task, ComputePlace *computePlace)
 	{
+		assert(task != nullptr);
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
+		assert(!accessStruct.hasBeenDeleted());
+		
+		if (!accessStruct.hasDataAccesses()) return;
+		
+		for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
+			DataAccess *access = &accessStruct._accessArray[i];
+			if(access->getType() == REDUCTION_ACCESS_TYPE) {
+				ReductionInfo *reductionInfo = access->getReductionInfo();
+				reductionInfo->releaseSlotsInUse(((CPU *) computePlace)->getIndex());
+			}
+		}
 	}
 }
 
