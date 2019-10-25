@@ -200,16 +200,14 @@ namespace DataAccessRegistration {
 		
 		if (accessType == REDUCTION_ACCESS_TYPE) {
 			ReductionInfo *reductionInfo = access->getReductionInfo();
+			if (reductionInfo->incrementUnregisteredAccesses())
+				releaseReductionInfo(reductionInfo);
+			
 			if (access->markAsFinished()) {
 				cleanUpTopAccessSuccessors(address, access, parentAccessStruct, hpDependencyData);
 				
-				if (reductionInfo->incrementUnregisteredAccesses())
-					releaseReductionInfo(reductionInfo);
-				
 				__attribute__((unused)) bool remove = task->getDataAccesses().decreaseDeletableCount();
 				assert(!remove);
-			} else {
-				reductionInfo->incrementUnregisteredAccesses();
 			}
 		} else if (!last && accessType != READ_ACCESS_TYPE) {
 			Task *successor = access->getSuccessor();
@@ -232,9 +230,16 @@ namespace DataAccessRegistration {
 				hpDependencyData._satisfiedOriginators.push_back(successor);
 			}
 			
-			if (next->getType() == REDUCTION_ACCESS_TYPE && next->markAsTop()) {
-				decreaseDeletableCountOrDelete(successor, hpDependencyData._deletableOriginators);
-				cleanUpTopAccessSuccessors(address, next, parentAccessStruct, hpDependencyData);
+			if (next->getType() == REDUCTION_ACCESS_TYPE) {
+				ReductionInfo * reductionInfo = next->getReductionInfo();
+				
+				if(reductionInfo->incrementUnregisteredAccesses())
+					releaseReductionInfo(reductionInfo);
+				
+				if(next->markAsTop()) {
+					decreaseDeletableCountOrDelete(successor, hpDependencyData._deletableOriginators);
+					cleanUpTopAccessSuccessors(address, next, parentAccessStruct, hpDependencyData);
+				}
 			} else if (next->getType() == READ_ACCESS_TYPE) {
 				next->markAsTop();
 				satisfyReadSuccessors(address, next, parentAccessStruct, hpDependencyData._satisfiedOriginators);
@@ -276,9 +281,6 @@ namespace DataAccessRegistration {
 						return;
 					}
 				} else {
-					if (accessType == REDUCTION_ACCESS_TYPE && reductionInfo->finished()) {
-						releaseReductionInfo(reductionInfo);
-					}
 					// Unlock next access and return
 					satisfyNextAccesses(address, hpDependencyData, parentAccesses, successor);
 					return;
@@ -292,7 +294,6 @@ namespace DataAccessRegistration {
 					
 					if (accessType == REDUCTION_ACCESS_TYPE) {
 						if (reductionInfo->finished()) {
-							releaseReductionInfo(reductionInfo);
 							parentAccesses._subaccessBottomMap.erase(itMap);
 						} else {
 							itMap->second._access = nullptr;
@@ -369,8 +370,8 @@ namespace DataAccessRegistration {
 	}
 	
 	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace,
-									CPUDependencyData &hpDependencyData,
-									__attribute__((unused)) MemoryPlace *location, bool fromBusyThread)
+		CPUDependencyData &hpDependencyData,
+		__attribute__((unused)) MemoryPlace *location, bool fromBusyThread)
 	{
 		assert(task != nullptr);
 		
@@ -465,7 +466,6 @@ namespace DataAccessRegistration {
 		}
 	}
 	
-	
 	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace,
 							__attribute__((unused)) CPUDependencyData &dependencyData)
 	{
@@ -545,7 +545,9 @@ namespace DataAccessRegistration {
 					if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex ||
 						currentReductionInfo->getOriginalLength() != length) {
 						currentReductionInfo = allocateReductionInfo(accessType, access->getReductionIndex(), typeAndOpIndex,
-															  address, length, *task);
+							address, length, *task);
+						if(predecessor == nullptr)
+							currentReductionInfo->incrementUnregisteredAccesses();
 					}
 					
 					currentReductionInfo->incrementRegisteredAccesses();

@@ -29,8 +29,7 @@ ReductionInfo::ReductionInfo(void * address, size_t length, reduction_type_and_o
 	_isOriginalStorageAvailable(false), _originalStorageAvailabilityCounter(length),
 	_initializationFunction(std::bind(initializationFunction, std::placeholders::_1, address, std::placeholders::_2)),
 	_combinationFunction(combinationFunction),
-	_registeredAccesses(1),
-	_unregisteredAccesses(0)
+	_registeredAccesses(2)
 {
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
@@ -47,7 +46,7 @@ ReductionInfo::ReductionInfo(void * address, size_t length, reduction_type_and_o
 
 ReductionInfo::~ReductionInfo()
 {
-	assert(_unregisteredAccesses == _registeredAccesses);
+	assert(_registeredAccesses == 0);
 	assert(_originalStorageCombinationCounter == 0);
 #ifndef NDEBUG
 	for (int slotIndex : _currentCpuSlotIndices)

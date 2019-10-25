@@ -37,8 +37,8 @@ class ReductionInfo
 		inline static size_t getMaxSlots();
 		
 		ReductionInfo(void * address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
-				std::function<void(void*, void*, size_t)> initializationFunction,
-				std::function<void(void*, void*, size_t)> combinationFunction);
+			std::function<void(void*, void*, size_t)> initializationFunction,
+			std::function<void(void*, void*, size_t)> combinationFunction);
 		
 		~ReductionInfo();
 		
@@ -104,8 +104,6 @@ class ReductionInfo
 		std::function<void(void*, void*, size_t)> _combinationFunction;
 		
 		std::atomic<size_t> _registeredAccesses;
-		std::atomic<size_t> _unregisteredAccesses;
-		
 		spinlock_t _lock;
 };
 
@@ -131,13 +129,13 @@ inline void ReductionInfo::incrementRegisteredAccesses()
 
 inline bool ReductionInfo::incrementUnregisteredAccesses()
 {
-	assert(_unregisteredAccesses != _registeredAccesses);
-	return (++_unregisteredAccesses == _registeredAccesses);
+	assert(_registeredAccesses > 0);
+	return (--_registeredAccesses == 0);
 }
 
 inline bool ReductionInfo::finished()
 {
-	bool finished = (_unregisteredAccesses == _registeredAccesses);
+	bool finished = (_registeredAccesses == 0);
 	return finished;
 }
 
