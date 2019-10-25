@@ -101,7 +101,7 @@ private:
 	void *_schedulerInfo;
 	
 	//! Compute Place where the task is running
-	ComputePlace *_computePlace;	
+	ComputePlace *_computePlace;
 	
 	//! MemoryPlace "attached" to the ComputePlace the Task is running on
 	MemoryPlace *_memoryPlace;
@@ -201,7 +201,7 @@ public:
 	{
 		assert(_taskInfo->implementation_count == 1);
 		assert(hasCode());
-		assert(_taskInfo != nullptr);	
+		assert(_taskInfo != nullptr);
 		assert(!isTaskfor());
 		_taskInfo->implementations[0].run(_argsBlock, deviceEnvironment, translationTable);
 	}
@@ -617,7 +617,7 @@ public:
 	}
 	inline void setDeviceData(void *deviceData)
 	{
-		_deviceData = deviceData;	
+		_deviceData = deviceData;
 	}
 	
 	//! \brief Set the Execution Workflow for this Task

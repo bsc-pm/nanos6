@@ -103,9 +103,9 @@ int main(int argc, char **argv)
 		return 0;
 	}
 	
-	tap.registerNewTests(6*2 + 2*2 + 3*2 + 3*2 + 3*2);	
+	tap.registerNewTests(6*2 + 2*2 + 3*2 + 3*2 + 3*2);
 	tap.begin();
-
+	
 	int var;
 	int var2;
 	int var3[10];
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 		
 		#pragma oss taskwait
 	}
-
+	
 	// Test 2
 	{
 		ExperimentStatus<4> status;
@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 		
 		#pragma oss taskwait
 	}
-
+	
 	// Test 3
 	{
 		ExperimentStatus<4> status;
@@ -175,7 +175,7 @@ int main(int argc, char **argv)
 		
 		#pragma oss taskwait
 	}
-
+	
 	// Test 4
 	{
 		ExperimentStatus<4> status;
@@ -196,7 +196,7 @@ int main(int argc, char **argv)
 		
 		#pragma oss taskwait
 	}
-
+	
 	// Test 4
 	{
 		ExperimentStatus<4> status;
@@ -219,7 +219,7 @@ int main(int argc, char **argv)
 	}
 	
 	tap.end();
-
+	
 	return 0;
 }
 

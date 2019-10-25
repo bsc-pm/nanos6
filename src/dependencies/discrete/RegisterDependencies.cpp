@@ -21,7 +21,7 @@
 #include <iostream>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
-void register_access(void *handler, void *start, size_t length, __attribute__((unused)) int symbolIndex, 
+void register_access(void *handler, void *start, size_t length, __attribute__((unused)) int symbolIndex,
 					 reduction_type_and_operator_index_t reductionTypeAndOperatorIndex = no_reduction_type_and_operator,
 					 reduction_index_t reductionIndex = no_reduction_index)
 {
@@ -31,7 +31,7 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 	if (start == nullptr) {
 		return;
 	}
-
+	
 	if(length == 0) {
 		return;
 	}
@@ -93,11 +93,11 @@ void nanos6_register_region_reduction_depinfo1(
 		void *base_address,
 		long dim1size,
 		__attribute__((unused)) long dim1start,
-		__attribute__((unused)) long dim1end) 
+		__attribute__((unused)) long dim1end)
 {
 	// Currently we only support contiguous regions without offset
 	assert(dim1start == 0L);
-
+	
 	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, symbol_index, reduction_operation, reduction_index);
 }
 
@@ -110,13 +110,13 @@ void nanos6_register_region_weak_reduction_depinfo1(
 		__attribute__((unused)) void *base_address,
 		__attribute__((unused)) long dim1size,
 		__attribute__((unused)) long dim1start,
-		__attribute__((unused)) long dim1end) 
+		__attribute__((unused)) long dim1end)
 {
 	assert(dim1start == 0L);
 	
 	// We don't support weak reductions, but we cannot safely ignore them.
 	// So we need to die.
-
+	
 	std::cerr << "The selected dependency implementation has no support for nested-reduction (aka. weakreduction)." << std::endl;
 	exit(1);
 }

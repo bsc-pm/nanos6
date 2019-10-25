@@ -33,7 +33,7 @@ _AI_ void register_data_access_base(
 template<>
 _AI_ void register_data_access_base<READ_ACCESS_TYPE, true>(
 	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
-	_UU_ long currentDimSize, _UU_ long currentDimStart, long currentDimEnd) 
+	_UU_ long currentDimSize, _UU_ long currentDimStart, long currentDimEnd)
 {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
@@ -43,7 +43,7 @@ _AI_ void register_data_access_base<READ_ACCESS_TYPE, true>(
 template<>
 _AI_ void register_data_access_base<READ_ACCESS_TYPE, false>(
 	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
-	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd) 
+	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
@@ -53,7 +53,7 @@ _AI_ void register_data_access_base<READ_ACCESS_TYPE, false>(
 template<>
 _AI_ void register_data_access_base<WRITE_ACCESS_TYPE, true>(
 	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
-	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd) 
+	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
@@ -63,7 +63,7 @@ _AI_ void register_data_access_base<WRITE_ACCESS_TYPE, true>(
 template<>
 _AI_ void register_data_access_base<WRITE_ACCESS_TYPE, false>(
 	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
-	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd) 
+	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
@@ -73,7 +73,7 @@ _AI_ void register_data_access_base<WRITE_ACCESS_TYPE, false>(
 template<>
 _AI_ void register_data_access_base<READWRITE_ACCESS_TYPE, true>(
 	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
-	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd) 
+	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
@@ -83,7 +83,7 @@ _AI_ void register_data_access_base<READWRITE_ACCESS_TYPE, true>(
 template<>
 _AI_ void register_data_access_base<READWRITE_ACCESS_TYPE, false>(
 	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
-	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd) 
+	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
@@ -93,7 +93,7 @@ _AI_ void register_data_access_base<READWRITE_ACCESS_TYPE, false>(
 template<>
 _AI_ void register_data_access_base<CONCURRENT_ACCESS_TYPE, false>(
 	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
-	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd) 
+	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
@@ -113,7 +113,7 @@ _AI_ void register_data_access_base<COMMUTATIVE_ACCESS_TYPE, true>(
 template<>
 _AI_ void register_data_access_base<COMMUTATIVE_ACCESS_TYPE, false>(
 	void *handler, _UU_ int symbolIndex, _UU_ char const *regionText, void *baseAddress,
-	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd) 
+	_UU_ long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	size_t start = (size_t) baseAddress;
 	start += currentDimStart;
@@ -131,7 +131,7 @@ static _AI_ void register_data_access_skip_next(
 template <DataAccessType ACCESS_TYPE, bool WEAK>
 static _AI_ void register_data_access(
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
-	long currentDimSize, long currentDimStart, long currentDimEnd) 
+	long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	register_data_access_base<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, baseAddress, currentDimSize, currentDimStart, currentDimEnd);
 }
@@ -140,7 +140,7 @@ template <DataAccessType ACCESS_TYPE, bool WEAK, typename... TS>
 static _AI_ void register_data_access(
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
 	_UU_ long currentDimSize, long currentDimStart, _UU_ long currentDimEnd,
-	TS... otherDimensions) 
+	TS... otherDimensions)
 {
 	size_t stride = getStride<>(otherDimensions...);
 	char *currentBaseAddress = (char *) baseAddress;
@@ -155,7 +155,7 @@ static _AI_ void register_data_access_skip_next(
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
 	long currentDimSize, long currentDimStart, long currentDimEnd,
 	_UU_ long nextDimSize, _UU_ long nextDimStart, _UU_ long nextDimEnd,
-	TS... otherDimensions) 
+	TS... otherDimensions)
 {
 	register_data_access<ACCESS_TYPE, WEAK>(handler, symbolIndex, regionText, baseAddress, currentDimSize, currentDimStart, currentDimEnd, otherDimensions...);
 }
@@ -182,7 +182,7 @@ template<>
 _AI_ void register_reduction_access<true>(
 	int reduction_operation, int reduction_index,
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
-	long currentDimSize, long currentDimStart, long currentDimEnd) 
+	long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	nanos6_register_region_weak_reduction_depinfo1(
 		reduction_operation, reduction_index,
@@ -195,7 +195,7 @@ template<>
 _AI_ void register_reduction_access<false>(
 	int reduction_operation, int reduction_index,
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
-	long currentDimSize, long currentDimStart, long currentDimEnd) 
+	long currentDimSize, long currentDimStart, long currentDimEnd)
 {
 	nanos6_register_region_reduction_depinfo1(
 		reduction_operation, reduction_index,
@@ -209,7 +209,7 @@ static _AI_ void register_reduction_access(
 	int reduction_operation, int reduction_index,
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
 	long currentDimSize, long currentDimStart, long currentDimEnd,
-	TS... otherDimensions) 
+	TS... otherDimensions)
 {
 	register_reduction_access_skip_next<WEAK>(
 		reduction_operation, reduction_index,
@@ -228,7 +228,7 @@ static _AI_ void register_reduction_access_skip_next(
 	void *handler, int symbolIndex, char const *regionText, void *baseAddress,
 	long currentDimSize, long currentDimStart, long currentDimEnd,
 	_UU_ long nextDimSize, _UU_ long nextDimStart, _UU_ long nextDimEnd,
-	TS... otherDimensions) 
+	TS... otherDimensions)
 {
 	register_reduction_access<WEAK>(reduction_operation, reduction_index, handler, symbolIndex, regionText, baseAddress, currentDimSize, currentDimStart, currentDimEnd, otherDimensions...);
 }

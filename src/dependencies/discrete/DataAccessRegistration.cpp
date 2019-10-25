@@ -627,9 +627,8 @@ namespace DataAccessRegistration {
 		assert(wasLastCombination);
 	}
 	
-	void
-	decreaseDeletableCountOrDelete(Task *originator,
-								   CPUDependencyData::deletable_originator_list_t &deletableOriginators) 
+	void decreaseDeletableCountOrDelete(Task *originator,
+		CPUDependencyData::deletable_originator_list_t &deletableOriginators)
 	{
 		if (originator->getDataAccesses().decreaseDeletableCount() && originator->decreaseRemovalBlockingCount())
 			deletableOriginators.push_back(originator); // Ensure destructor is called

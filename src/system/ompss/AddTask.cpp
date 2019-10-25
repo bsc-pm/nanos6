@@ -113,10 +113,9 @@ void nanos6_create_task(
 		task = (char *)args_block + args_block_size;
 	}
 	
-
 	Instrument::createdArgsBlock(taskId, *args_block_pointer, originalArgsBlockSize, args_block_size);
-
-    void * seqs = (char *)task + taskSize;
+	
+	void * seqs = (char *)task + taskSize;
 	void * addresses = (char *)seqs + seqsSize;
 	
 	if (isTaskfor) {
@@ -209,7 +208,7 @@ void nanos6_submit_task(void *taskHandle)
 		
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}
-    assert(parent != nullptr || ready);
+	assert(parent != nullptr || ready);
 	
 	bool isIf0 = task->isIf0();
 	

@@ -9,7 +9,7 @@
 
 if test -z ${NANOS6_DEPENDENCIES} ; then
   if "${*}" = "${*/discrete}" ; then
-    export NANOS6_DEPENDENCIES=discrete
+	export NANOS6_DEPENDENCIES=discrete
   fi
 fi
 

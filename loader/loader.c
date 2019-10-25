@@ -142,7 +142,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 	if (verbose) {
 		fprintf(stderr, "Nanos6 loader using variant: %s\n", variant);
 	}
-
+	
 	char const *dependencies = getenv("NANOS6_DEPENDENCIES");
 	if(dependencies == NULL) {
 		dependencies = "linear-regions-fragmented";

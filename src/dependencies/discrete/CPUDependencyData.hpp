@@ -20,7 +20,7 @@ class Task;
 struct CPUDependencyData {
 	typedef std::deque<Task *> satisfied_originator_list_t;
 	typedef std::deque<Task *> deletable_originator_list_t;
-
+	
 	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators;
 	deletable_originator_list_t _deletableOriginators;

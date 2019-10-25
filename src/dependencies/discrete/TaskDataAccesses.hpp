@@ -97,7 +97,7 @@ struct TaskDataAccesses {
 	}
 #endif
 
-	inline bool decreaseDeletableCount() 
+	inline bool decreaseDeletableCount()
 	{
 		/* We don't care about ordering, only atomicity, and that only one gets 0 as an answer */
 		int res = (_deletableCount.fetch_sub(1, std::memory_order_relaxed) - 1);
@@ -106,7 +106,7 @@ struct TaskDataAccesses {
 		
 	}
 	
-	inline void increaseDeletableCount() 
+	inline void increaseDeletableCount()
 	{
 		_deletableCount.fetch_add(1, std::memory_order_relaxed);
 	}

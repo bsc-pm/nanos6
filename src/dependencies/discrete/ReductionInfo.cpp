@@ -72,22 +72,22 @@ ReductionInfo::~ReductionInfo()
 	}
 }
 
-reduction_type_and_operator_index_t ReductionInfo::getTypeAndOperatorIndex() const 
+reduction_type_and_operator_index_t ReductionInfo::getTypeAndOperatorIndex() const
 {
 	return _typeAndOperatorIndex;
 }
 
-const void * ReductionInfo::getOriginalAddress() const 
+const void * ReductionInfo::getOriginalAddress() const
 {
 	return _address;
 }
 
-size_t ReductionInfo::getOriginalLength() const 
+size_t ReductionInfo::getOriginalLength() const
 {
 	return _length;
 }
 
-size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId) 
+size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId)
 {
 	__attribute__((unused)) const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
@@ -103,7 +103,7 @@ size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId)
 		// Note: Task scheduling points within reduction are currently not supported,
 		// as tied tasks are not yet implemented. If supported, task counters would be
 		// required to avoid the storage to be released at the end of a task while still in use
-
+		
 		assert(_slots[currentCpuSlotIndex].initialized);
 		return currentCpuSlotIndex;
 	}
@@ -130,7 +130,7 @@ size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId)
 	return freeSlotIndex;
 }
 
-void * ReductionInfo::getFreeSlotStorage(size_t slotIndex) 
+void * ReductionInfo::getFreeSlotStorage(size_t slotIndex)
 {
 #ifndef NDEBUG
 	_lock.lock();
@@ -153,7 +153,7 @@ void * ReductionInfo::getFreeSlotStorage(size_t slotIndex)
 }
 
 namespace {
-	bool isBuiltinReduction(reduction_type_and_operator_index_t typeAndOperatorIndex) 
+	bool isBuiltinReduction(reduction_type_and_operator_index_t typeAndOperatorIndex)
 	{
 		assert((typeAndOperatorIndex != 0) && "Unknown reduction type and operator");
 		return (typeAndOperatorIndex >= RED_TYPE_CHAR)
@@ -162,7 +162,7 @@ namespace {
 	}
 };
 
-void ReductionInfo::makeOriginalStorageAvailable(__attribute__((unused)) const void * address, const size_t length) 
+void ReductionInfo::makeOriginalStorageAvailable(__attribute__((unused)) const void * address, const size_t length)
 {
 	_originalStorageAvailabilityCounter -= length;
 	
@@ -182,7 +182,7 @@ void ReductionInfo::makeOriginalStorageAvailable(__attribute__((unused)) const v
 	}
 }
 
-bool ReductionInfo::combine(bool canCombineToOriginalStorage) 
+bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 {
 	reduction_slot_set_t &accessedSlots = _privateSlotsUsed;
 	assert(accessedSlots.size() > 0);
@@ -196,7 +196,7 @@ bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 	reduction_slot_set_t::size_type aggregatingSlotIndex = reduction_slot_set_t::npos;
 	if (!canCombineToOriginalStorage) {
 		assert(0);
-
+		
 		std::lock_guard<spinlock_t> guard(_lock);
 		// Try to pick one accessed slot that is already an aggregating slot
 		reduction_slot_set_t candidateAggregatingSlots = accessedSlots & _isAggregatingSlotIndex;
@@ -298,7 +298,7 @@ bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 	return _originalStorageCombinationCounter == 0;
 }
 
-void ReductionInfo::releaseSlotsInUse(size_t virtualCpuId) 
+void ReductionInfo::releaseSlotsInUse(size_t virtualCpuId)
 {
 	std::lock_guard<spinlock_t> guard(_lock);
 	

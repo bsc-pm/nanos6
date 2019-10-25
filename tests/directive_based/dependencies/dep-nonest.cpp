@@ -620,7 +620,7 @@ int main(int argc, char **argv)
 		verifiers.push_back(reader);
 		_constraintCalculator.handleReader(reader);
 	}
-
+	
 	// 1 writer
 	TaskVerifier secondWriter(TaskVerifier::WRITE, &var1); verifiers.push_back(&secondWriter); _constraintCalculator.handleWriter(&secondWriter);
 	

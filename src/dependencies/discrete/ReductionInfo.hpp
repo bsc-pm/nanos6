@@ -37,7 +37,7 @@ class ReductionInfo
 		inline static size_t getMaxSlots();
 		
 		ReductionInfo(void * address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
-				std::function<void(void*, void*, size_t)> initializationFunction, 
+				std::function<void(void*, void*, size_t)> initializationFunction,
 				std::function<void(void*, void*, size_t)> combinationFunction);
 		
 		~ReductionInfo();
@@ -45,7 +45,7 @@ class ReductionInfo
 		reduction_type_and_operator_index_t getTypeAndOperatorIndex() const;
 		
 		const void * getOriginalAddress() const;
-
+		
 		size_t getOriginalLength() const;
 		
 		bool combine(bool canCombineToOriginalStorage);
@@ -57,18 +57,18 @@ class ReductionInfo
 		void * getFreeSlotStorage(size_t slotIndex);
 		
 		void makeOriginalStorageAvailable(const void * address, const size_t length);
-
+		
 		bool noSlotsInUse();
-
+		
 		void incrementRegisteredAccesses();
-
+		
 		bool incrementUnregisteredAccesses();
-
+		
 		bool markAsClosed();
-
+		
 		bool finished();
 		
-		const DataAccessRegion& getOriginalRegion() const 
+		const DataAccessRegion& getOriginalRegion() const
 		{
 			return _region;
 		}
@@ -95,14 +95,14 @@ class ReductionInfo
 		std::vector<long int> _currentCpuSlotIndices;
 		std::vector<size_t> _freeSlotIndices;
 		// Aggregating slots are private slots used to aggregate combinations
-		// when the original region is not available for combination. By now, they are not being used 
+		// when the original region is not available for combination. By now, they are not being used
 		// in discrete deps.
 		reduction_slot_set_t _isAggregatingSlotIndex;
 		reduction_slot_set_t _privateSlotsUsed;
 		
 		std::function<void(void*, size_t)> _initializationFunction;
 		std::function<void(void*, void*, size_t)> _combinationFunction;
-
+		
 		std::atomic<size_t> _registeredAccesses;
 		std::atomic<size_t> _unregisteredAccesses;
 		
@@ -117,7 +117,7 @@ inline size_t ReductionInfo::getMaxSlots()
 	return CPUManager::getTotalCPUs() + 1;
 }
 
-inline bool ReductionInfo::noSlotsInUse() 
+inline bool ReductionInfo::noSlotsInUse()
 {
 	_lock.lock();
 	return (_freeSlotIndices.size() == getMaxSlots());
