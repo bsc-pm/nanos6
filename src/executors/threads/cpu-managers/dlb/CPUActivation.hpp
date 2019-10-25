@@ -444,6 +444,10 @@ public:
 						WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 						assert(currentThread != nullptr);
 
+						// Notify the scheduler about the disable in case any
+						// structures related to the CPU must be emptied
+						Scheduler::disablingCPU(systemCPUId);
+
 						// The thread becomes idle
 						Monitoring::cpuBecomesIdle(cpu->getIndex());
 						Instrument::suspendingComputePlace(cpu->getInstrumentationId());

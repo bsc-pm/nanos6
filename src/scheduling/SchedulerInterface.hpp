@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -22,16 +22,16 @@
 class SchedulerInterface {
 	HostScheduler *_hostScheduler;
 	DeviceScheduler *_deviceSchedulers[nanos6_device_type_num];
-	
+
 public:
 	SchedulerInterface();
 	virtual ~SchedulerInterface();
-	
+
 	virtual inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
 		nanos6_device_t taskType = (nanos6_device_t) task->getDeviceType();
 		assert(taskType != nanos6_cluster_device);
-		
+
 		if (taskType == nanos6_host_device) {
 			_hostScheduler->addReadyTask(task, computePlace, hint);
 		} else {
@@ -39,12 +39,12 @@ public:
 			_deviceSchedulers[taskType]->addReadyTask(task, computePlace, hint);
 		}
 	}
-	
+
 	virtual inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
 	{
 		assert(computePlace->getType() == nanos6_host_device);
 		nanos6_device_t computePlaceType = (deviceComputePlace == nullptr) ? nanos6_host_device : deviceComputePlace->getType();
-		
+
 		if (computePlaceType == nanos6_host_device) {
 			return _hostScheduler->getReadyTask(computePlace);
 		} else {
@@ -52,7 +52,7 @@ public:
 			return _deviceSchedulers[computePlaceType]->getReadyTask(computePlace, deviceComputePlace);
 		}
 	}
-	
+
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
@@ -63,7 +63,7 @@ public:
 		assert(computePlace->getType() == nanos6_host_device);
 		nanos6_device_t computePlaceType = (deviceComputePlace == nullptr) ?
 			nanos6_host_device : deviceComputePlace->getType();
-		
+
 		if (computePlaceType == nanos6_host_device) {
 			return _hostScheduler->hasAvailableWork(computePlace);
 		} else {
@@ -71,7 +71,16 @@ public:
 			return _deviceSchedulers[computePlaceType]->hasAvailableWork(deviceComputePlace);
 		}
 	}
-	
+
+	//! \brief Notify the current scheduler that a CPU is about to be disabled
+	//! in case any actions must be taken
+	//!
+	//! \param[in] cpuId The id of the cpu that will be disabled
+	inline void disablingCPU(size_t cpuId)
+	{
+		_hostScheduler->disablingCPU(cpuId);
+	}
+
 	virtual std::string getName() const = 0;
 };
 

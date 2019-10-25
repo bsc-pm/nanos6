@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -22,12 +22,12 @@ protected:
 	ReadyQueue *_readyTasks;
 	bool _enableImmediateSuccessor;
 	bool _enablePriority;
-	
+
 public:
 	UnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor);
-	
+
 	virtual ~UnsyncScheduler();
-	
+
 	//! \brief Add a (ready) task that has been created or freed
 	//!
 	//! \param[in] task the task to be added
@@ -36,7 +36,7 @@ public:
 	virtual inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
 		assert(task != nullptr);
-		
+
 		bool unblocked = (hint == UNBLOCKED_TASK_HINT);
 		if (_enableImmediateSuccessor) {
 			if (computePlace != nullptr && hint == SIBLING_TASK_HINT) {
@@ -68,22 +68,37 @@ public:
 				return;
 			}
 		}
-		
+
 		_readyTasks->addReadyTask(task, unblocked);
 	}
-	
+
 	//! \brief Get a ready task for execution
 	//!
 	//! \param[in] computePlace the hardware place asking for scheduling orders
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
-	
+
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
 	virtual bool hasAvailableWork(ComputePlace *computePlace) = 0;
-	
+
+	//! \brief Notify the current scheduler that a CPU is about to be disabled
+	//! in case any actions must be taken
+	//!
+	//! \param[in] cpuId The id of the cpu that will be disabled
+	inline void disablingCPU(size_t cpuId)
+	{
+		// Upon disabling a CPU, if its immediate successor slot was full, place
+		// the task in the ready queue
+		Task *currentIS = _immediateSuccessorTasks[cpuId];
+		if (currentIS != nullptr) {
+			_immediateSuccessorTasks[cpuId] = nullptr;
+			_readyTasks->addReadyTask(currentIS, false);
+		}
+	}
+
 	virtual inline bool priorityEnabled()
 	{
 		return _enablePriority;

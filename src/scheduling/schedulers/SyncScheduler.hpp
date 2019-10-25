@@ -178,6 +178,22 @@ public:
 		return hasWork;
 	}
 
+	//! \brief Notify the current scheduler that a CPU is about to be disabled
+	//! in case any actions must be taken
+	//!
+	//! \param[in] cpuId The id of the cpu that will be disabled
+	inline void disablingCPU(size_t cpuId)
+	{
+		_lock.lock();
+
+		// Ensure the add queues are emptied
+		processReadyTasks();
+
+		_scheduler->disablingCPU(cpuId);
+
+		_lock.unsubscribe();
+	}
+
 	virtual std::string getName() const = 0;
 };
 

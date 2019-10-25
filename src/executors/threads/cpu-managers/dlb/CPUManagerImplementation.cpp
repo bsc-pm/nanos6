@@ -40,11 +40,12 @@ void CPUManagerImplementation::preinitialize()
 	//    TASKFOR GROUPS    //
 
 	// Default value for _taskforGroups is one per NUMA node
-	if (!_taskforGroups.isPresent()) {
+	bool taskforGroupsSetByUser = _taskforGroups.isPresent();
+	if (!taskforGroupsSetByUser) {
 		_taskforGroups.setValue(numNUMANodes);
 	}
 
-	if (numCPUs < _taskforGroups) {
+	if (numCPUs < _taskforGroups && taskforGroupsSetByUser) {
 		FatalErrorHandler::warnIf(
 			true,
 			"More groups requested than available CPUs. ",
@@ -77,7 +78,7 @@ void CPUManagerImplementation::preinitialize()
 	// taskfor groups for external CPUs
 	size_t defaultTaskforGroups = _taskforGroups;
 	_taskforGroups.setValue(1);
-	if (defaultTaskforGroups != 1) {
+	if (defaultTaskforGroups != 1 && taskforGroupsSetByUser) {
 		FatalErrorHandler::warnIf(
 			true,
 			"DLB enabled, using 1 group of ", numCPUs,
@@ -105,7 +106,11 @@ void CPUManagerImplementation::preinitialize()
 
 		// Set the virtual id (identical to system id) and the taskfor group id
 		cpu->setIndex(i);
-		cpu->setGroupId((i / getNumCPUsPerTaskforGroup()));
+
+		// FIXME-TODO: Since we cannot control when external CPUs are returned,
+		// we set all CPUs to the same group so regardless of the group, there
+		// will be available CPUs to execute any taskfor
+		cpu->setGroupId(0);
 
 		// If the CPU is not owned by this process, mark it as such
 		if (!CPU_ISSET(i, &_cpuMask)) {

@@ -111,13 +111,16 @@ void CPUManagerInterface::preinitialize()
 	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_NUMANodeMask.resize(numNUMANodes);
 
-	// Default value for _taskforGroups is one per NUMA node.
-	_taskforGroups.setValue(numNUMANodes);
+	// Default value for _taskforGroups is one per NUMA node
+	bool taskforGroupsSetByUser = _taskforGroups.isPresent();
+	if (!taskforGroupsSetByUser) {
+		_taskforGroups.setValue(numNUMANodes);
+	}
 
 	// Get CPU objects that can run a thread
 	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
 	size_t numCPUs = cpus.size();
-	if (numCPUs < _taskforGroups) {
+	if (numCPUs < _taskforGroups && taskforGroupsSetByUser) {
 		FatalErrorHandler::warnIf(
 			true,
 			"More groups requested than available CPUs. ",
