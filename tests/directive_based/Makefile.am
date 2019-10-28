@@ -221,8 +221,12 @@ critical_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 critical_test_LDFLAGS = $(test_common_ldflags)
 
 dep_nonest_debug_test_SOURCES = dependencies/dep-nonest.cpp
+dep_nonest_debug_test_CPPFLAGS =
 if HAVE_CONCURRENT_SUPPORT
-dep_nonest_debug_test_CPPFLAGS = -DHAVE_CONCURRENT_SUPPORT
+dep_nonest_debug_test_CPPFLAGS += -DHAVE_CONCURRENT_SUPPORT
+endif
+if HAVE_DLB
+dep_nonest_debug_test_CPPFLAGS += -DHAVE_DLB
 endif
 dep_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dep_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
@@ -231,6 +235,9 @@ dep_nonest_test_SOURCES = dependencies/dep-nonest.cpp
 dep_nonest_test_CPPFLAGS = -DNDEBUG
 if HAVE_CONCURRENT_SUPPORT
 dep_nonest_test_CPPFLAGS += -DHAVE_CONCURRENT_SUPPORT
+endif
+if HAVE_DLB
+dep_nonest_test_CPPFLAGS += -DHAVE_DLB
 endif
 dep_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 dep_nonest_test_LDFLAGS = $(test_common_ldflags)
@@ -371,11 +378,17 @@ red_firstprivate_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_firstprivate_test_LDFLAGS = $(test_common_ldflags)
 
 red_nonest_debug_test_SOURCES = reductions/red-nonest.cpp
+#if HAVE_DLB
+red_nonest_debug_test_CPPFLAGS = -DHAVE_DLB
+#endif
 red_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 red_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 red_nonest_test_SOURCES = reductions/red-nonest.cpp
 red_nonest_test_CPPFLAGS = -DNDEBUG
+#if HAVE_DLB
+red_nonest_test_CPPFLAGS += -DHAVE_DLB
+#endif
 red_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_nonest_test_LDFLAGS = $(test_common_ldflags)
 
@@ -504,6 +517,12 @@ dlb_cpu_sharing_passive_process_test_LDFLAGS = $(test_common_ldflags)
 dlb_cpu_sharing_passive_process_debug_test_SOURCES = dlb/dlb-cpu-sharing-passive-process.cpp
 dlb_cpu_sharing_passive_process_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dlb_cpu_sharing_passive_process_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+# Set the HAVE_DLB shell variable depending on the defined one so that the
+# select-version.sh script knows if it has to deal with DLB's shared memory
+if HAVE_DLB
+export HAVE_DLB="1"
+endif
 
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh

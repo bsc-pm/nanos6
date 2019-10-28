@@ -1,28 +1,28 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <list>
+#include <math.h>
 #include <set>
 #include <sstream>
+#include <string>
+#include <time.h>
+#include <unistd.h>
 #include <vector>
 
-#include <math.h>
-#include <time.h>
-#include <string.h>
-#include <unistd.h>
+#include <nanos6/debug.h>
 
-#include <Atomic.hpp>
-#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
-#include <nanos6/debug.h>
+#include <Atomic.hpp>
+#include <Functors.hpp>
 
 
 #define SUSTAIN_MICROSECONDS 200000L
@@ -150,11 +150,28 @@ public:
 			
 			std::ostringstream oss;
 			oss << "Task " << _id << " can run concurrently with other tasks filling up the number of available CPUs";
+			
+#ifdef HAVE_DLB
+			// If we are running with DLB, this is a weak test
+			Timer innerTimer;
+			innerTimer.start();
+			while (innerTimer.lap() < (SUSTAIN_MICROSECONDS * delayMultiplier)) {
+				if (*_numConcurrentTasks >= nwait) {
+					break;
+				}
+			}
+			
+			tap.evaluateWeak(
+				*_numConcurrentTasks >= nwait,
+				oss.str(), ""
+			);
+#else
 			tap.timedEvaluate(
 				GreaterOrEqual<Atomic<int>, int>(*_numConcurrentTasks, nwait),
 				SUSTAIN_MICROSECONDS * delayMultiplier,
 				oss.str()
 			);
+#endif
 		}
 		
 		struct timespec delay = { 0, 1000000};
@@ -567,9 +584,23 @@ struct VerifierConstraintCalculator {
 				{
 #if FINE_SELF_CHECK
 					std::ostringstream oss;
-					oss << "Self verification: " << verifier->_id << " runs concurrently with " << concurrentVerifier->_id << " implies " <<
-						concurrentVerifier->_id << " runs concurrently with " << verifier->_id;
-					tap.evaluate(concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(), oss.str());
+					oss << "Self verification: " << verifier->_id
+						<< " runs concurrently with " << concurrentVerifier->_id
+						<< " implies " << concurrentVerifier->_id
+						<< " runs concurrently with " << verifier->_id;
+					
+#ifdef HAVE_DLB
+					// If we are running with DLB, this is a weak test
+					tap.evaluateWeak(
+						concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(),
+						oss.str(), ""
+					);
+#else
+					tap.evaluate(
+						concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(),
+						oss.str()
+					);
+#endif
 #else
 					globallyValid = globallyValid && (concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end());
 #endif

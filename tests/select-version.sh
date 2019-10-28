@@ -19,7 +19,7 @@ fi
 
 # If DLB is present, clean shared memory in case a previous program finalized
 # incorrectly
-if hash dlb_shm 2>/dev/null; then
+if [[ ${HAVE_DLB} != "" ]]; then
 	dlb_shm -d
 fi
 
