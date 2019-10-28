@@ -564,10 +564,7 @@ namespace DataAccessRegistration {
 					itMap->second._reductionInfo = nullptr;
 				}
 				
-				/*
-				 * Check if we are satisfied
-				 */
-				
+				// Check if we are satisfied
 				if (predecessor != nullptr) {
 					DataAccessType predecessorType = predecessor->getType();
 					
