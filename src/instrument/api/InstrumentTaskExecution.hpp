@@ -19,8 +19,8 @@ namespace Instrument {
 	void returnToTask(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	void endTask(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	void destroyTask(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	void startTaskforCollaborator(task_id_t taskId, bool first = false, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	void endTaskforCollaborator(task_id_t taskId, bool last = false, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	void startTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, bool first = false, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	void endTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, bool last = false, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 }
 
 

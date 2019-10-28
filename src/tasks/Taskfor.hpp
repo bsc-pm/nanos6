@@ -148,6 +148,16 @@ public:
 		return _taskforInfo.getCompletedIterations();
 	}
 	
+	inline bool hasFirstChunk()
+	{
+		return (_taskforInfo.getBounds().lower_bound == 0);
+	}
+	
+	inline bool hasLastChunk()
+	{
+		return (_taskforInfo.getBounds().upper_bound == ((Taskfor *) getParent())->getTaskforInfo().getBounds().upper_bound);
+	}
+	
 private:
 	void run(Taskfor &source);
 };

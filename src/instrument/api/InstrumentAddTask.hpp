@@ -48,13 +48,16 @@ namespace Instrument {
 	//! This function is called right after entering the runtime and must
 	//! return an instrumentation-specific task identifier.
 	//! The other 2 functions will also be called by the same thread sequentially.
-	task_id_t enterAddTaskforCollaborator(nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, size_t flags, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
+	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
+	task_id_t enterAddTaskforCollaborator(task_id_t taskforId, nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, size_t flags, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! This function is called right before returning to the user code. The task
 	//! identifier is necessary because the actual task may have already been
 	//! destroyed by the time this function is called.
-	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	void exitAddTaskforCollaborator(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
+	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
+	void exitAddTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 }
 
 

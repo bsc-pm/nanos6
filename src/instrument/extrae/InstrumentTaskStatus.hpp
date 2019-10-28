@@ -91,7 +91,8 @@ namespace Instrument {
 	}
 	
 	inline void taskforCollaboratorIsExecuting(
-		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}

@@ -113,15 +113,22 @@ namespace Instrument {
 	}
 	
 	task_id_t enterAddTaskforCollaborator(
-		nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, __attribute__((unused)) size_t flags,
-		InstrumentationContext const &context
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) nanos6_task_info_t *taskInfo,
+		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
+		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		// Verbose instrumentation does not instrument task fors
+		task_id_t taskId = 0;
+		
+		return taskId;
 	}
 	
 	void exitAddTaskforCollaborator(
-		task_id_t taskId,
-		InstrumentationContext const &context
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) task_id_t collaboratorId,
+		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		// Verbose instrumentation does not instrument task fors
 	}

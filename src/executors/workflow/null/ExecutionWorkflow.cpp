@@ -61,11 +61,11 @@ namespace ExecutionWorkflow {
 			
 			if (task->isTaskfor()) {
 				assert(task->isRunnable());
-				bool first = ((Taskfor *) task)->getTaskforInfo().getBounds().lower_bound == 0;
-				Instrument::startTaskforCollaborator(task->getParent()->getInstrumentationTaskId(), first);
-				Instrument::taskforCollaboratorIsExecuting(taskId);
-			}
-			else {
+				bool first = ((Taskfor *) task)->hasFirstChunk();
+				Instrument::task_id_t parentTaskId = task->getParent()->getInstrumentationTaskId();
+				Instrument::startTaskforCollaborator(parentTaskId, taskId, first);
+				Instrument::taskforCollaboratorIsExecuting(parentTaskId, taskId);
+			} else {
 				Instrument::startTask(taskId);
 				Instrument::taskIsExecuting(taskId);
 			}
@@ -88,11 +88,11 @@ namespace ExecutionWorkflow {
 			
 			if (task->isTaskfor()) {
 				assert(task->isRunnable());
-				bool last = ((Taskfor *) task)->getTaskforInfo().getBounds().upper_bound == ((Taskfor *) task->getParent())->getTaskforInfo().getBounds().upper_bound;
-				Instrument::taskforCollaboratorStopped(taskId, task->getParent()->getInstrumentationTaskId());
-				Instrument::endTaskforCollaborator(task->getParent()->getInstrumentationTaskId(), last);
-			}
-			else {
+				bool last = ((Taskfor *) task)->hasLastChunk();
+				Instrument::task_id_t parentTaskId = task->getParent()->getInstrumentationTaskId();
+				Instrument::taskforCollaboratorStopped(parentTaskId, taskId);
+				Instrument::endTaskforCollaborator(parentTaskId, taskId, last);
+			} else {
 				Instrument::taskIsZombie(taskId);
 				Instrument::endTask(taskId);
 			}

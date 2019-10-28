@@ -24,9 +24,9 @@ namespace Instrument {
 	{
 	}
 	
-	void startTaskforCollaborator(task_id_t taskId, bool first, InstrumentationContext const &context);
+	void startTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, bool first, InstrumentationContext const &context);
 	
-	void endTaskforCollaborator(task_id_t taskId, bool last, InstrumentationContext const &context);
+	void endTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, bool last, InstrumentationContext const &context);
 }
 
 

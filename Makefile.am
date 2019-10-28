@@ -1102,6 +1102,7 @@ noinst_HEADERS = \
 	src/system/PollingAPI.hpp \
 	src/system/RuntimeInfo.hpp \
 	src/system/RuntimeInfoEssentials.hpp \
+	src/system/ompss/AddTask.hpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/UserMutex.hpp \

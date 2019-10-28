@@ -82,8 +82,16 @@ namespace ExecutionWorkflow {
 				}
 			}
 			
-			Instrument::startTask(taskId);
-			Instrument::taskIsExecuting(taskId);
+			if (task->isTaskfor()) {
+				assert(task->isRunnable());
+				bool first = ((Taskfor *) task)->hasFirstChunk();
+				Instrument::task_id_t parentTaskId = task->getParent()->getInstrumentationTaskId();
+				Instrument::startTaskforCollaborator(parentTaskId, taskId, first);
+				Instrument::taskforCollaboratorIsExecuting(parentTaskId, taskId);
+			} else {
+				Instrument::startTask(taskId);
+				Instrument::taskIsExecuting(taskId);
+			}
 			
 			HardwareCounters::startTaskMonitoring(_task);
 			Monitoring::taskChangedStatus(_task, executing_status);
@@ -101,8 +109,16 @@ namespace ExecutionWorkflow {
 			Monitoring::taskCompletedUserCode(_task);
 			HardwareCounters::stopTaskMonitoring(_task);
 			
-			Instrument::taskIsZombie(taskId);
-			Instrument::endTask(taskId);
+			if (task->isTaskfor()) {
+				assert(task->isRunnable());
+				bool last = ((Taskfor *) task)->hasLastChunk();
+				Instrument::task_id_t parentTaskId = task->getParent()->getInstrumentationTaskId();
+				Instrument::taskforCollaboratorStopped(parentTaskId, taskId);
+				Instrument::endTaskforCollaborator(parentTaskId, taskId, last);
+			} else {
+				Instrument::taskIsZombie(taskId);
+				Instrument::endTask(taskId);
+			}
 		} else {
 			Monitoring::taskChangedStatus(_task, runtime_status);
 			Monitoring::taskCompletedUserCode(_task);

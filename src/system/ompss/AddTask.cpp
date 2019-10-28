@@ -14,6 +14,7 @@
 
 #include <nanos6.h>
 
+#include "AddTask.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -134,6 +135,7 @@ void nanos6_create_task(
 void nanos6_create_preallocated_task(
 	nanos6_task_info_t *taskInfo,
 	nanos6_task_invocation_info_t *taskInvocationInfo,
+	Instrument::task_id_t parentTaskInstrumentationId,
 	size_t args_block_size,
 	void *preallocatedArgsBlock,
 	void *preallocatedTask,
@@ -143,7 +145,7 @@ void nanos6_create_preallocated_task(
 	assert(preallocatedArgsBlock != nullptr);
 	assert(preallocatedTask != nullptr);
 	
-	Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(taskInfo, taskInvocationInfo, flags);
+	Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(parentTaskInstrumentationId, taskInfo, taskInvocationInfo, flags);
 	
 	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskloop_task;
 	//bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;

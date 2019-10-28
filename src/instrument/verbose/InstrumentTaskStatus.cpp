@@ -138,11 +138,11 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
-	void taskforCollaboratorIsExecuting(task_id_t taskId, InstrumentationContext const &context) {
+	void taskforCollaboratorIsExecuting(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) InstrumentationContext const &context) {
 		// Verbose instrumentation does not instrument task fors
 	}
 	
-	void taskforCollaboratorStopped(task_id_t taskId, task_id_t taskforId, InstrumentationContext const &context) {
+	void taskforCollaboratorStopped(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) InstrumentationContext const &context) {
 		// Verbose instrumentation does not instrument task fors
 	}
 }
