@@ -113,10 +113,10 @@ public:
 	virtual void initialize();
 	
 	//! \brief Notify all available CPUs that the runtime is shutting down
-	virtual void shutdownPhase1();
+	virtual void shutdownPhase1() = 0;
 	
 	//! \brief Destroy any CPU-related structures
-	virtual void shutdownPhase2();
+	virtual void shutdownPhase2() = 0;
 	
 	//! \brief Taking into account the current workload and the amount of
 	//! active or idle CPUs, consider idling/waking up CPUs
@@ -163,6 +163,38 @@ public:
 	{
 		return CPU_COUNT(&_cpuMask);
 	}
+	
+	
+	/*    CPUACTIVATION BRIDGE    */
+	
+	//! \brief Check the status transitions of a CPU onto which a thread is
+	//! running
+	//!
+	//! \param[in,out] thread The thread which executes on the CPU we check for
+	//!
+	//! \return The current status of the CPU
+	virtual CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread) = 0;
+	
+	//! \brief Check whether a CPU accepts work
+	//!
+	//! \param[in,out] cpu The CPU to check for
+	//!
+	//! \return Whether the CPU accepts work
+	virtual bool acceptsWork(CPU *cpu) = 0;
+	
+	//! \brief Try to enable a CPU by its identifier
+	//!
+	//! \param[in,out] systemCPUId The identifier of the CPU to enable
+	//!
+	//! \return Whether the CPU was enabled
+	virtual bool enable(size_t systemCPUId) = 0;
+	
+	//! \brief Try to disable a CPU by its identifier
+	//!
+	//! \param[in,out] systemCPUId The identifier of the CPU to disable
+	//!
+	//! \return Whether the CPU was disabled
+	virtual bool disable(size_t systemCPUId) = 0;
 	
 	
 	/*    IDLE CPUS    */

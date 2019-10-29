@@ -21,7 +21,7 @@
 #include <Monitoring.hpp>
 
 
-class CPUActivation {
+class DLBCPUActivation {
 
 private:
 

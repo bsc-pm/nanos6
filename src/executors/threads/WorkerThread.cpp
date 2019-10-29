@@ -26,7 +26,6 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#include <CPUActivation.hpp>
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
 #include <HardwareCounters.hpp>
@@ -72,7 +71,7 @@ void WorkerThread::body()
 	// The WorkerThread will iterate until its CPU status signals that there is
 	// an ongoing shutdown and thus the thread must stop executing
 	bool mustHandleServices = true;
-	while (CPUActivation::checkCPUStatusTransitions(this) != CPU::shutdown_status) {
+	while (CPUManager::checkCPUStatusTransitions(this) != CPU::shutdown_status) {
 		// Update the CPU since the thread may have migrated
 		cpu = getComputePlace();
 		assert(cpu != nullptr);

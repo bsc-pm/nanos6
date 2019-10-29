@@ -8,12 +8,11 @@
 
 #include <nanos6/debug.h>
 #include "executors/threads/CPU.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-
-#include <CPUActivation.hpp>
 
 
 void nanos6_wait_for_full_initialization(void)
@@ -60,12 +59,12 @@ unsigned int nanos6_get_current_virtual_cpu(void)
 
 int nanos6_enable_cpu(long systemCPUId)
 {
-	return CPUActivation::enable(systemCPUId);
+	return CPUManager::enable(systemCPUId);
 }
 
 int nanos6_disable_cpu(long systemCPUId)
 {
-	return CPUActivation::disable(systemCPUId);
+	return CPUManager::disable(systemCPUId);
 }
 
 

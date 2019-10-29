@@ -7,9 +7,14 @@
 #ifndef CPU_MANAGER_HPP
 #define CPU_MANAGER_HPP
 
-#include "CPUManagerInterface.hpp"
+#include <config.h>
 
-#include <CPUManagerImplementation.hpp>
+#include "CPUManagerInterface.hpp"
+#include "executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.hpp"
+#if HAVE_DLB
+#include "executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.hpp"
+#endif
+#include "lowlevel/EnvironmentVariable.hpp"
 
 
 class CPUManager {
@@ -18,6 +23,9 @@ private:
 	
 	//! The CPU Manager instance
 	static CPUManagerInterface *_cpuManager;
+	
+	//! Whether DLB is enabled
+	static EnvironmentVariable<bool> _dlbEnabled;
 	
 	
 public:
@@ -29,7 +37,15 @@ public:
 	{
 		assert(_cpuManager == nullptr);
 		
-		_cpuManager = new CPUManagerImplementation();
+#if HAVE_DLB
+		if (_dlbEnabled) {
+			_cpuManager = new DLBCPUManagerImplementation();
+		} else {
+			_cpuManager = new DefaultCPUManagerImplementation();
+		}
+#else
+		_cpuManager = new DefaultCPUManagerImplementation();
+#endif
 		assert(_cpuManager != nullptr);
 		
 		_cpuManager->preinitialize();
@@ -116,6 +132,58 @@ public:
 		assert(_cpuManager != nullptr);
 		
 		return _cpuManager->getCPUListReference();
+	}
+	
+	
+	/*    CPUACTIVATION BRIDGE    */
+	
+	//! \brief Check the status transitions of a CPU onto which a thread is
+	//! running
+	//!
+	//! \param[in,out] thread The thread which executes on the CPU we check for
+	//!
+	//! \return The current status of the CPU
+	static inline CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread)
+	{
+		assert(_cpuManager != nullptr);
+		
+		return _cpuManager->checkCPUStatusTransitions(thread);
+	}
+	
+	//! \brief Check whether a CPU accepts work
+	//!
+	//! \param[in,out] cpu The CPU to check for
+	//!
+	//! \return Whether the CPU accepts work
+	static inline bool acceptsWork(CPU *cpu)
+	{
+		assert(_cpuManager != nullptr);
+		
+		return _cpuManager->acceptsWork(cpu);
+	}
+	
+	//! \brief Try to enable a CPU by its identifier
+	//!
+	//! \param[in,out] systemCPUId The identifier of the CPU to enable
+	//!
+	//! \return Whether the CPU was enabled
+	static inline bool enable(size_t systemCPUId)
+	{
+		assert(_cpuManager != nullptr);
+		
+		return _cpuManager->enable(systemCPUId);
+	}
+	
+	//! \brief Try to disable a CPU by its identifier
+	//!
+	//! \param[in,out] systemCPUId The identifier of the CPU to disable
+	//!
+	//! \return Whether the CPU was disabled
+	static inline bool disable(size_t systemCPUId)
+	{
+		assert(_cpuManager != nullptr);
+		
+		return _cpuManager->disable(systemCPUId);
 	}
 	
 	

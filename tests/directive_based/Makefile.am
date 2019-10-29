@@ -378,17 +378,17 @@ red_firstprivate_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_firstprivate_test_LDFLAGS = $(test_common_ldflags)
 
 red_nonest_debug_test_SOURCES = reductions/red-nonest.cpp
-#if HAVE_DLB
+if HAVE_DLB
 red_nonest_debug_test_CPPFLAGS = -DHAVE_DLB
-#endif
+endif
 red_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 red_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 red_nonest_test_SOURCES = reductions/red-nonest.cpp
 red_nonest_test_CPPFLAGS = -DNDEBUG
-#if HAVE_DLB
+if HAVE_DLB
 red_nonest_test_CPPFLAGS += -DHAVE_DLB
-#endif
+endif
 red_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_nonest_test_LDFLAGS = $(test_common_ldflags)
 

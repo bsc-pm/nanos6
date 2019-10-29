@@ -10,6 +10,8 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "scheduling/Scheduler.hpp"
+
 
 void TaskBlocking::taskBlocks(WorkerThread *currentThread, Task *currentTask, ThreadManagerPolicy::thread_run_inline_policy_t policy)
 {

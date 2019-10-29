@@ -10,9 +10,9 @@
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "scheduling/Scheduler.hpp"
 #include "system/RuntimeInfo.hpp"
 
-#include <CPUActivation.hpp>
 #include <InstrumentComputePlaceManagement.hpp>
 #include <Monitoring.hpp>
 
@@ -222,21 +222,6 @@ void CPUManagerInterface::initialize()
 	}
 
 	_finishedCPUInitialization = true;
-}
-
-void CPUManagerInterface::shutdownPhase1()
-{
-	// Notify all CPUs that the runtime is shutting down
-	for (size_t id = 0; id < _cpus.size(); ++id) {
-		if (_cpus[id] != nullptr) {
-			CPUActivation::shutdownCPU(_cpus[id]);
-		}
-	}
-}
-
-void CPUManagerInterface::shutdownPhase2()
-{
-	// No need to destroy any structures in the default implementation
 }
 
 void CPUManagerInterface::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)

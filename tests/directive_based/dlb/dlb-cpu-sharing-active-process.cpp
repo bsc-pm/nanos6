@@ -1,11 +1,12 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <sched.h>
 #include <string>
@@ -46,7 +47,7 @@ void spin()
 void acquiredCPUComputation(long numCPUs)
 {
 	//    PHASE 2    //
-	
+
 	long currentCPUId = nanos6_get_current_system_cpu();
 	nanos6_cpu_status_t status = nanos6_get_cpu_status(currentCPUId);
 	if (status == nanos6_enabled_cpu) {
@@ -80,13 +81,13 @@ void acquiredCPUComputation(long numCPUs)
 void ownedCPUComputation(long numCPUs)
 {
 	//    PHASE 1    //
-	
+
 	long currentCPUId = nanos6_get_current_system_cpu();
 	tap.emitDiagnostic(
 		"Task executing in owned CPU ", currentCPUId,
 		", waiting until an external CPU is acquired"
 	);
-	
+
 	// Wait until the number of acquired CPUs reaches numCPUs
 	Timer timer;
 	timer.start();
@@ -97,13 +98,13 @@ void ownedCPUComputation(long numCPUs)
 			oss << "Check that a task executing in owned CPU "
 				<< currentCPUId
 				<< " detects the acquire of an external CPU";
-			
+
 			 // Phase 1
 			tap.weakFailure(oss.str(), "Cannot assure it happens under a reasonable amount of time");
 			return;
 		}
 	}
-	
+
 	std::ostringstream oss;
 	oss << "Check that a task executing in owned CPU "
 		<< currentCPUId
@@ -130,7 +131,22 @@ int main(int argc, char **argv) {
 		wrongExecution("Skipping; Incorrect execution parameters");
 		return 0;
 	}
-	
+
+	char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
+	if (dlbEnabled == 0) {
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.success("DLB is disabled, skipping this test");
+		tap.end();
+		return 0;
+	} else if (strcmp(dlbEnabled, "1") != 0) {
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.success("DLB is disabled, skipping this test");
+		tap.end();
+		return 0;
+	}
+
 	// Retreive the current amount of CPUs
 	nanos6_wait_for_full_initialization();
 	size_t numCPUs = nanos6_get_num_cpus();
@@ -139,16 +155,16 @@ int main(int argc, char **argv) {
 		wrongExecution("Skipping; This test only works with more than 3 CPUs");
 		return 0;
 	}
-	
+
 	// Make sure both processes have the same amount of CPUs
 	assert((atoi(argv[3]) - atoi(argv[2])) == (numCPUs - 1));
-	
-	
+
+
 	// ************************************************************************
 	// - This test creates (numCPUs - 1) + (numCPUs * 2) tasks, and consists of
 	//
 	// - PHASE 1 -
-	// 
+	//
 	// - The first 'numCPUs - 1' tasks will be executed by CPUs owned by this
 	//   process (so, one task per CPU this process has, minus one)
 	// - These tasks wait until a CPU from another process is acquired
@@ -162,10 +178,10 @@ int main(int argc, char **argv) {
 	//   counter reaches 'numCPUs - 1', so we make sure that almost all CPUs
 	//   are acquired
 	// - At that point, all of these tasks should be executing on acquired CPUs
-	// 
+	//
 	// - This phase checks that:
 	//   - CPUs are acquired if all CPUs are busy and other tasks exist
-	// 
+	//
 	//
 	// - PHASE 2 -
 	//
@@ -180,49 +196,49 @@ int main(int argc, char **argv) {
 	// - This phase checks that:
 	//   - All acquired CPUs are returned when no more work is available
 	// ************************************************************************
-	
+
 	tap.emitDiagnostic("*********************");
 	tap.emitDiagnostic("***    PHASE 1    ***");
 	tap.emitDiagnostic("***               ***");
 	tap.emitDiagnostic("***    ", numCPUs - 1, " tests   ***");
 	tap.emitDiagnostic("*********************");
-	
+
 	// Register the tests for both phases
 	tap.registerNewTests(
 		(numCPUs - 1) + /* Phase 1 */
 		(numCPUs * 2)   /* Phase 2 */
 	);
 	tap.begin();
-	
+
 	// Create the counter of CPU Ids
 	int firstCPUId = atoi(argv[2]);
 	int lastCPUId = atoi(argv[3]);
-	
+
 	// Global atomic counter
 	numAcquiredCPUs = 0;
-	
+
 	for (int id = 0; id < numCPUs - 1; ++id) {
 		#pragma oss task label(ownedCPUTask)
 		ownedCPUComputation(numCPUs - 1);
 	}
-	
+
 	// Halt for a second so that all the owned CPU tasks can be obtained
 	// by owned CPUs
 	usleep(1000000);
-	
+
 	tap.emitDiagnostic("*********************");
 	tap.emitDiagnostic("***    PHASE 2    ***");
 	tap.emitDiagnostic("***               ***");
 	tap.emitDiagnostic("***    ", numCPUs * 2, " tests   ***");
 	tap.emitDiagnostic("*********************");
-	
+
 	for (int id = 0; id < numCPUs * 2; ++id) {
 		#pragma oss task label(acquiredCPUTask)
 		acquiredCPUComputation(numCPUs - 1);
 	}
 	#pragma oss taskwait
-	
+
 	tap.end();
-	
+
 	return 0;
 }

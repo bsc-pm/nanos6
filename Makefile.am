@@ -19,7 +19,7 @@ am__is_gnu_make = { \
 ACLOCAL_AMFLAGS = -I m4
 AM_CFLAGS = -I$(srcdir)/api -I$(srcdir)/loader -I.
 AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
-AM_LDFLAGS = $(AS_NEEDED_FLAGS) 
+AM_LDFLAGS = $(AS_NEEDED_FLAGS)
 AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 
 SUBDIRS = . commands tests/directive_based scripts
@@ -38,7 +38,7 @@ lib_suffix = $(lib_major).$(lib_age).$(lib_revision)
 
 MAX_REGION_DIMENSIONS = 8
 MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite weak_read weak_write weak_readwrite concurrent commutative weak_commutative reduction weak_reduction
-SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES = 
+SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES =
 
 LINT_MAX_REGION_DIMENSIONS = 8
 LINT_MULTIDIMENSIONAL_REGION_API_TYPES = read write readwrite
@@ -106,7 +106,7 @@ lib_OBJECTS = nanos6-main-wrapper.o nanos6-library-mode.o
 AM_V_LD = $(am__v_LD_@AM_V@)
 am__v_LD_ = $(am__v_LD_@AM_DEFAULT_V@)
 am__v_LD_0 = @echo "  LD      " $@;
-am__v_LD_1 = 
+am__v_LD_1 =
 
 
 #
@@ -160,7 +160,7 @@ nanos6-library-mode.o: libnanos6-library-mode.a
 #
 symbol_resolution =
 symbol_resolution_header =
-multidimensional_regions = 
+multidimensional_regions =
 
 if RESOLVE_SYMBOLS_USING_IFUNC
 symbol_resolution_header += loader/symbol-resolver/resolve.h
@@ -352,6 +352,7 @@ common_sources = \
 	src/executors/threads/CPUManagerInterface.cpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/WorkerThread.cpp \
+	src/executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.cpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/device/Device.cpp \
 	src/hardware/hwinfo/HostInfo.cpp \
@@ -529,9 +530,9 @@ papi_hardware_counters_sources = \
 	src/instrument/stats/papi/InstrumentPAPIHardwareCounters.cpp \
 	src/instrument/stats/papi/InstrumentPAPIHardwareCountersThreadLocalData.cpp
 
-no_hardware_counters_sources = 
+no_hardware_counters_sources =
 
-noinstrument_sources = 
+noinstrument_sources =
 
 instrument_generic_ids_sources = \
 	src/instrument/generic_ids/GenericIds.cpp
@@ -676,16 +677,14 @@ common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_
 # DLB + CPUManager
 cpu_manager_sources  =
 cpu_manager_LDFLAGS  =
-cpu_manager_CPPFLAGS =
+cpu_manager_CPPFLAGS = -I$(srcdir)/src/executors/threads/cpu-managers/default
 if HAVE_DLB
 cpu_manager_sources  += \
-	src/executors/threads/cpu-managers/dlb/CPUActivation.cpp \
-	src/executors/threads/cpu-managers/dlb/CPUManagerImplementation.cpp
+	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.cpp \
+	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.cpp
 cpu_manager_LDFLAGS  += $(dlb_LIBS)
-cpu_manager_CPPFLAGS += $(dlb_CPPFLAGS)
+cpu_manager_CPPFLAGS += $(dlb_CPPFLAGS) -DHAVE_DLB
 cpu_manager_CPPFLAGS += -I$(srcdir)/src/executors/threads/cpu-managers/dlb
-else
-cpu_manager_CPPFLAGS += -I$(srcdir)/src/executors/threads/cpu-managers/default
 endif
 
 common_sources += $(cpu_manager_sources)
@@ -769,10 +768,10 @@ noinst_HEADERS = \
 	src/executors/threads/ThreadManagerPolicy.hpp \
 	src/executors/threads/WorkerThread.hpp \
 	src/executors/threads/WorkerThreadImplementation.hpp \
-	src/executors/threads/cpu-managers/default/CPUActivation.hpp \
-	src/executors/threads/cpu-managers/default/CPUManagerImplementation.hpp \
-	src/executors/threads/cpu-managers/dlb/CPUActivation.hpp \
-	src/executors/threads/cpu-managers/dlb/CPUManagerImplementation.hpp \
+	src/executors/threads/cpu-managers/default/DefaultCPUActivation.hpp \
+	src/executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.hpp \
+	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.hpp \
+	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/executors/workflow/ExecutionStep.hpp \
@@ -1149,7 +1148,7 @@ common_libnanos6_ldflags = $(AM_LDFLAGS) $(BOOST_LDFLAGS) -version-info $(lib_cu
 
 # This is needed for debuggable spinlocks
 common_sources += $(introspection_sources)
-AM_CXXFLAGS += $(introspection_cppflags) $(elfutils_CFLAGS) 
+AM_CXXFLAGS += $(introspection_cppflags) $(elfutils_CFLAGS)
 common_libnanos6_ldflags  += $(BACKTRACE_LIBS) $(elfutils_LIBS)
 
 enabled_variants =

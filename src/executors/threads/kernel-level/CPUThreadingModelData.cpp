@@ -11,8 +11,6 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "system/RuntimeInfo.hpp"
 
-#include <CPUActivation.hpp>
-
 
 EnvironmentVariable<StringifiedMemorySize> CPUThreadingModelData::_defaultThreadStackSize("NANOS6_STACK_SIZE", 8 * 1024 * 1024);
 

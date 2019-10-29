@@ -18,7 +18,7 @@
 #include <Monitoring.hpp>
 
 
-class CPUActivation {
+class DefaultCPUActivation {
 public:
 	
 	//! \brief Check if a CPU is accepting new work

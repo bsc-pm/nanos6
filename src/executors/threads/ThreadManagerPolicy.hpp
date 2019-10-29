@@ -9,9 +9,9 @@
 
 #include <cassert>
 
+#include "CPUManager.hpp"
 #include "tasks/Task.hpp"
 
-#include <CPUActivation.hpp>
 
 class ThreadManagerPolicy {
 public:
@@ -38,7 +38,7 @@ public:
 			return false;
 		}
 		
-		if (!CPUActivation::acceptsWork(cpu)) {
+		if (!CPUManager::acceptsWork(cpu)) {
 			return false;
 		}
 		

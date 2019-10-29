@@ -36,4 +36,3 @@ if test -z ${NANOS6} ; then
 else
 	exec "${@}"
 fi
-

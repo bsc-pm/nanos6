@@ -4,8 +4,8 @@
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
-#include "CPUActivation.hpp"
+#include "DLBCPUActivation.hpp"
 
 
 // 0.1 ms
-timespec CPUActivation::_delayCPUEnabling({0, 100000});
+timespec DLBCPUActivation::_delayCPUEnabling({0, 100000});

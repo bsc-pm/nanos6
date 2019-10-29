@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-
+	
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -8,15 +8,15 @@
 #include <ctime>
 #include <dlb.h>
 
-#include "CPUActivation.hpp"
-#include "CPUManagerImplementation.hpp"
+#include "DLBCPUActivation.hpp"
+#include "DLBCPUManagerImplementation.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-void CPUManagerImplementation::preinitialize()
+void DLBCPUManagerImplementation::preinitialize()
 {
 	_finishedCPUInitialization = false;
 
@@ -145,13 +145,13 @@ void CPUManagerImplementation::preinitialize()
 	// Prepare callbacks to enable/disable CPUs from DLB
 	ret = DLB_CallbackSet(
 		dlb_callback_enable_cpu,
-		(dlb_callback_t)CPUActivation::dlbEnableCallback,
+		(dlb_callback_t)DLBCPUActivation::dlbEnableCallback,
 		nullptr
 	);
 	if (ret == DLB_SUCCESS) {
 		ret = DLB_CallbackSet(
 			dlb_callback_disable_cpu,
-			(dlb_callback_t)CPUActivation::dlbDisableCallback,
+			(dlb_callback_t)DLBCPUActivation::dlbDisableCallback,
 			nullptr
 		);
 	}
@@ -161,7 +161,7 @@ void CPUManagerImplementation::preinitialize()
 	);
 }
 
-void CPUManagerImplementation::initialize()
+void DLBCPUManagerImplementation::initialize()
 {
 	for (size_t id = 0; id < _cpus.size(); ++id) {
 		CPU *cpu = _cpus[id];
@@ -185,7 +185,7 @@ void CPUManagerImplementation::initialize()
 	_finishedCPUInitialization = true;
 }
 
-void CPUManagerImplementation::shutdownPhase1()
+void DLBCPUManagerImplementation::shutdownPhase1()
 {
 	CPU *cpu;
 	CPU::activation_status_t status;
@@ -199,7 +199,7 @@ void CPUManagerImplementation::shutdownPhase1()
 		status = cpu->getActivationStatus();
 		assert(status != CPU::shutdown_status && status != CPU::shutting_down_status);
 
-		CPUActivation::shutdownCPU(cpu);
+		DLBCPUActivation::shutdownCPU(cpu);
 	}
 
 	// Phase 1.2 - Wait until all CPUs are shutdown
@@ -217,7 +217,7 @@ void CPUManagerImplementation::shutdownPhase1()
 	// progressively see this and add themselves to the shutdown list
 }
 
-void CPUManagerImplementation::shutdownPhase2()
+void DLBCPUManagerImplementation::shutdownPhase2()
 {
 	// Shutdown DLB
 	// ret != DLB_SUCCESS means it was not initialized (should never occur)
@@ -225,7 +225,7 @@ void CPUManagerImplementation::shutdownPhase2()
 	assert(ret == DLB_SUCCESS);
 }
 
-void CPUManagerImplementation::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)
+void DLBCPUManagerImplementation::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)
 {
 	// NOTE This policy works as follows:
 	// - First, if the CPU is an acquired one, check if we must return it
@@ -241,32 +241,57 @@ void CPUManagerImplementation::executeCPUManagerPolicy(ComputePlace *cpu, CPUMan
 
 		// If we own the CPU lend it; otherwise, check if we must return it
 		if (currentCPU->isOwned()) {
-			CPUActivation::lendCPU(currentCPU);
+			DLBCPUActivation::lendCPU(currentCPU);
 		} else {
-			CPUActivation::checkIfMustReturnCPU(currentCPU);
+			DLBCPUActivation::checkIfMustReturnCPU(currentCPU);
 		}
 	} else if (hint == ADDED_TASKS) {
 		assert(numTasks > 0);
 
 		// Try to obtain as many CPUs as tasks were added
 		size_t numToObtain = std::min(_cpus.size(), numTasks);
-		CPUActivation::acquireCPUs(numToObtain);
+		DLBCPUActivation::acquireCPUs(numToObtain);
 	} else { // hint = HANDLE_TASKFOR
 		assert(currentCPU != nullptr);
 
 		// Try to reclaim any lent collaborator of the taskfor
 		cpu_set_t collaboratorMask = getCollaboratorMask(currentCPU);
 		if (CPU_COUNT(&collaboratorMask) > 0) {
-			CPUActivation::acquireCPUs(collaboratorMask);
+			DLBCPUActivation::acquireCPUs(collaboratorMask);
 		}
 	}
 }
 
 
-// NOTE: The following functions should only be used when the runtime is
-// shutting down, to let all threads have an oportunity to shutdown
+/*    CPUACTIVATION BRIDGE    */
 
-bool CPUManagerImplementation::cpuBecomesIdle(CPU *cpu, bool inShutdown)
+CPU::activation_status_t DLBCPUManagerImplementation::checkCPUStatusTransitions(WorkerThread *thread)
+{
+	return DLBCPUActivation::checkCPUStatusTransitions(thread);
+}
+
+bool DLBCPUManagerImplementation::acceptsWork(CPU *cpu)
+{
+	return DLBCPUActivation::acceptsWork(cpu);
+}
+
+bool DLBCPUManagerImplementation::enable(size_t systemCPUId)
+{
+	return DLBCPUActivation::enable(systemCPUId);
+}
+
+bool DLBCPUManagerImplementation::disable(size_t systemCPUId)
+{
+	return DLBCPUActivation::disable(systemCPUId);
+}
+
+
+/*    IDLE CPUS    */
+
+// NOTE: The following functions should only be used when the runtime is
+// shutting down, to allow all threads to shutdown
+
+bool DLBCPUManagerImplementation::cpuBecomesIdle(CPU *cpu, bool inShutdown)
 {
 	if (inShutdown) {
 		assert(cpu != nullptr);
@@ -284,7 +309,7 @@ bool CPUManagerImplementation::cpuBecomesIdle(CPU *cpu, bool inShutdown)
 	return inShutdown;
 }
 
-CPU *CPUManagerImplementation::getIdleCPU(bool inShutdown)
+CPU *DLBCPUManagerImplementation::getIdleCPU(bool inShutdown)
 {
 	if (inShutdown) {
 		_idleCPUsLock.lock();
