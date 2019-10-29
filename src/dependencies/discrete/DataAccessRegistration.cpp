@@ -33,25 +33,25 @@
 namespace DataAccessRegistration {
 	typedef TaskDataAccesses::bottom_map_t bottom_map_t;
 	
-	void insertAccesses(Task * task);
+	static inline void insertAccesses(Task * task);
 	
-	ReductionInfo * allocateReductionInfo(
+	static inline ReductionInfo * allocateReductionInfo(
 		DataAccessType &dataAccessType, reduction_index_t reductionIndex,
 		reduction_type_and_operator_index_t reductionTypeAndOpIndex,
 		void * address, const size_t length, const Task &task);
 	
-	void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
+	static inline void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
 		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators);
 	
-	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &parentAccesses,
+	static inline void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &parentAccesses,
 		CPUDependencyData &hpDependencyData);
 	
-	void releaseReductionInfo(ReductionInfo *info);
+	static inline void releaseReductionInfo(ReductionInfo *info);
 	
-	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
+	static inline void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
 		TaskDataAccesses &parentAccessStruct, Task *successor);
 	
-	void decreaseDeletableCountOrDelete(Task *originator,
+	static inline void decreaseDeletableCountOrDelete(Task *originator,
 		CPUDependencyData::deletable_originator_list_t &deletableOriginators);
 	
 	
@@ -104,7 +104,7 @@ namespace DataAccessRegistration {
 	}
 	
 	
-	inline void upgradeAccess(DataAccess * access, DataAccessType newType)
+	static inline void upgradeAccess(DataAccess * access, DataAccessType newType)
 	{
 		DataAccessType oldType = access->getType();
 		// Duping reductions is incorrect
@@ -155,7 +155,7 @@ namespace DataAccessRegistration {
 		}
 	}
 	
-	inline bool hasNoDelayedRemoval(DataAccessType type) {
+	static inline bool hasNoDelayedRemoval(DataAccessType type) {
 		return (type != READ_ACCESS_TYPE && type != REDUCTION_ACCESS_TYPE);
 	}
 	
@@ -195,7 +195,7 @@ namespace DataAccessRegistration {
 		// All the reduction / read clean up parts where we clear and reclaim memory are designed to be called out of a lock,
 		// and they will take one if they need to touch the bottom map. It is a bit counter intuitive because we don't need,
 		// for example, to care that two tasks are "cleaning up" at the same time. First, because it won't happen with the
-		// _isTop atomic, except with the reductions, but the algorithm accounts for that as only a completeCombineAnd-
+		// _isDeletable atomic, except with the reductions, but the algorithm accounts for that as only a completeCombineAnd-
 		// DeallocateReduction can actually delete the "bottom" reduction.
 		
 		if (accessType == REDUCTION_ACCESS_TYPE) {
@@ -219,7 +219,7 @@ namespace DataAccessRegistration {
 		}
 	}
 	
-	void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
+	static inline void satisfyNextAccesses(void *address, CPUDependencyData &hpDependencyData,
 							TaskDataAccesses &parentAccessStruct, Task *successor)
 	{
 		if (successor != nullptr) {
@@ -254,7 +254,7 @@ namespace DataAccessRegistration {
 		}
 	}
 	
-	void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &parentAccesses,
+	static inline void cleanUpTopAccessSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &parentAccesses,
 		CPUDependencyData &hpDependencyData)
 	{
 		DataAccessType accessType = pAccess->getType();
@@ -309,7 +309,7 @@ namespace DataAccessRegistration {
 		}
 	}
 	
-	void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
+	static inline void satisfyReadSuccessors(void *address, DataAccess *pAccess, TaskDataAccesses &accesses,
 		CPUDependencyData::satisfied_originator_list_t &satisfiedOriginators)
 	{
 		while (true) {
@@ -483,7 +483,7 @@ namespace DataAccessRegistration {
 		// Only needed for weak accesses (not implemented)
 	}
 	
-	void insertAccesses(Task *task)
+	static inline void insertAccesses(Task *task)
 	{
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
@@ -614,7 +614,7 @@ namespace DataAccessRegistration {
 		}
 	}
 	
-	void releaseReductionInfo(ReductionInfo *info)
+	static inline void releaseReductionInfo(ReductionInfo *info)
 	{
 		assert(info != nullptr);
 		assert(info != info->getOriginalAddress());
@@ -626,14 +626,17 @@ namespace DataAccessRegistration {
 		assert(wasLastCombination);
 	}
 	
-	void decreaseDeletableCountOrDelete(Task *originator,
+	static inline void decreaseDeletableCountOrDelete(Task *originator,
 		CPUDependencyData::deletable_originator_list_t &deletableOriginators)
 	{
-		if (originator->getDataAccesses().decreaseDeletableCount() && originator->decreaseRemovalBlockingCount())
-			deletableOriginators.push_back(originator); // Ensure destructor is called
+		if (originator->getDataAccesses().decreaseDeletableCount()) {
+			if(originator->decreaseRemovalBlockingCount()) {
+				deletableOriginators.push_back(originator); // Ensure destructor is called
+			}
+		}
 	}
 	
-	ReductionInfo *allocateReductionInfo(
+	static inline ReductionInfo *allocateReductionInfo(
 			__attribute__((unused)) DataAccessType &dataAccessType, reduction_index_t reductionIndex,
 			reduction_type_and_operator_index_t reductionTypeAndOpIndex,
 			void *address, const size_t length, const Task &task)
