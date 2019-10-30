@@ -289,14 +289,19 @@ fi
 # Dependency engine to use
 
 # Always include linear-fragmented
+AC_MSG_CHECKING([if linear regions fragmented dependencies should be included])
 ac_linear_fragmented_deps=yes
+AC_MSG_RESULT([$ac_linear_fragmented_deps])
 
 AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test x"${ac_linear_fragmented_deps}" = x"yes"])
 
-AC_MSG_CHECKING([if discrete dependencies should be included])
+AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test x"${ac_linear_fragmented_deps}" = x"yes"])
+AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [test x"${ac_linear_fragmented_deps}" = x"yes"])
+AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [test x"${ac_linear_fragmented_deps}" = x"yes"])
+
 AC_ARG_ENABLE(
 	[discrete-deps],
-	[AS_HELP_STRING([--enable-discrete-deps], [Enable discrete dependency engine. This will be automatically disabled 
+	[AS_HELP_STRING([--disable-discrete-deps], [Disable discrete dependency engine. This will be automatically disabled 
 	if cluster support is enabled, as it is incompatible.])],
 	[
 		case "${enableval}" in
@@ -307,7 +312,7 @@ AC_ARG_ENABLE(
 			ac_discrete_deps=no
 			;;
 		*)
-			AC_MSG_ERROR([bad value ${enableval} for --enable-discrete-deps])
+			AC_MSG_ERROR([bad value ${enableval} for --disable-discrete-deps])
 			;;
 		esac
 	],
@@ -319,11 +324,10 @@ if test x"${ac_use_cluster}" = x"yes" ; then
 	AC_MSG_WARN([Cluster enabled, disabling discrete dependency engine])
 fi
 
-AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test x"${ac_discrete_deps}" = x"yes"])
+AC_MSG_CHECKING([if discrete dependencies should be included])
+AC_MSG_RESULT([$ac_discrete_deps])
 
-AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [1])
-AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [1])
-AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [1])
+AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test x"${ac_discrete_deps}" = x"yes"])
 
 AC_ARG_ENABLE(
 	[monitoring],
