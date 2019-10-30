@@ -90,6 +90,19 @@ namespace Instrument {
 		taskId._taskInfo->_priority = priority;
 	}
 	
+	inline void taskforCollaboratorIsExecuting(
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) task_id_t collaboratorId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+	}
+	
+	inline void taskforCollaboratorStopped(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+	}
 }
 
 

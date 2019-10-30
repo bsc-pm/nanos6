@@ -23,6 +23,10 @@ namespace Instrument {
 	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
+	
+	void startTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, bool first, InstrumentationContext const &context);
+	
+	void endTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, bool last, InstrumentationContext const &context);
 }
 
 

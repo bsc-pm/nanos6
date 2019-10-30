@@ -9,21 +9,29 @@
 
 
 namespace Instrument {
+	enum state_t
+	{
+		INITIAL = 0,
+		STARTED,
+		FINISHED
+	};
+	
 	class task_id_t {
 	public:
 		typedef int inner_type_t;
 		
 	private:
 		inner_type_t _id;
+		state_t _state;
 	
 	public:
 		task_id_t()
-			: _id(-1)
+			: _id(-1), _state(INITIAL)
 		{
 		}
 		
 		task_id_t(inner_type_t id)
-			: _id(id)
+			: _id(id), _state(INITIAL)
 		{
 		}
 		
@@ -45,6 +53,16 @@ namespace Instrument {
 		bool operator<(task_id_t other)
 		{
 			return (_id < other._id);
+		}
+
+		state_t getState()
+		{
+			return _state;
+		}
+		
+		void setState(state_t state)
+		{
+			_state = state;
 		}
 		
 	};

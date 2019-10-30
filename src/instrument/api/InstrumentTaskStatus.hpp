@@ -73,6 +73,16 @@ namespace Instrument {
 	void taskIsBeingDeleted(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	void taskHasNewPriority(task_id_t taskId, long priority, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	
+	//! \brief Indicates that the task is currently being executed as a collaborator of a taskfor
+	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
+	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
+	void taskforCollaboratorIsExecuting(task_id_t taskforId, task_id_t collaboratorId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	
+	//! \brief Indicates that the taskfor collaborator has stopped
+	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
+	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
+	void taskforCollaboratorStopped(task_id_t taskforId, task_id_t collaboratorId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 }
 
 

@@ -31,4 +31,25 @@ namespace Instrument {
 		_executionSequence.push_back(exitTaskStep);
 	}
 	
+	void startTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) bool first, InstrumentationContext const &context)
+	{
+		std::lock_guard<SpinLock> guard(_graphLock);
+		if (taskforId.getState() == INITIAL) {
+			enter_task_step_t *enterTaskStep = new enter_task_step_t(context);
+			_executionSequence.push_back(enterTaskStep);
+			taskforId.setState(STARTED);
+		}
+		assert(taskforId.getState() == STARTED);
+	}
+	
+	void endTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, bool last, InstrumentationContext const &context)
+	{
+		if (last) {
+			std::lock_guard<SpinLock> guard(_graphLock);
+			assert(taskforId.getState() == STARTED);
+			exit_task_step_t *exitTaskStep = new exit_task_step_t(context);
+			_executionSequence.push_back(exitTaskStep);
+			taskforId.setState(FINISHED);
+		}
+	}
 }

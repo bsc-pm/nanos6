@@ -47,6 +47,23 @@ namespace Instrument {
 	) {
 	}
 	
+	inline task_id_t enterAddTaskforCollaborator(
+		__attribute__((unused)) task_id_t taskforId,
+		nanos6_task_info_t *taskInfo,
+		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
+		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		Stats::TaskTypeAndTimes *taskTypeAndTimes = new Stats::TaskTypeAndTimes(taskInfo, (context._taskId != task_id_t()));
+		return taskTypeAndTimes;
+	}
+	
+	inline void exitAddTaskforCollaborator(
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) task_id_t collaboratorId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+	}
 }
 
 

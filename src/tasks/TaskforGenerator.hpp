@@ -7,10 +7,8 @@
 #ifndef TASKFOR_GENERATOR_HPP
 #define TASKFOR_GENERATOR_HPP
 
-
-#include <nanos6.h>
-
 #include "Taskfor.hpp"
+#include "system/ompss/AddTask.hpp"
 
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskId.hpp>
@@ -23,8 +21,9 @@ public:
 	{
 		assert(parent != nullptr);
 		
-		nanos6_task_info_t *taskInfo = parent->getTaskInfo();
-		nanos6_task_invocation_info_t *taskInvocationInfo = parent->getTaskInvokationInfo();
+		nanos6_task_info_t *parentTaskInfo = parent->getTaskInfo();
+		nanos6_task_invocation_info_t *parentTaskInvocationInfo = parent->getTaskInvokationInfo();
+		Instrument::task_id_t parentTaskInstrumentationId = parent->getInstrumentationTaskId();
 		
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();
@@ -34,16 +33,16 @@ public:
 		void *taskfor_ptr = (void *) computePlace->getPreallocatedTaskfor();
 		taskfor = (Taskfor *) taskfor_ptr;
 		void *argsBlock = computePlace->getPreallocatedArgsBlock(originalArgsBlockSize);
-
-		nanos6_create_preallocated_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, (void *) argsBlock, taskfor_ptr, parent->getFlags());
+		
+		nanos6_create_preallocated_task(parentTaskInfo, parentTaskInvocationInfo, parentTaskInstrumentationId, originalArgsBlockSize, (void *) argsBlock, taskfor_ptr, parent->getFlags());
 		assert(argsBlock != nullptr);
 		assert(taskfor_ptr != nullptr);
 		
 		// Copy the args block
 		bool hasPreallocatedArgsBlock = parent->hasPreallocatedArgsBlock();
 		if (!hasPreallocatedArgsBlock) {
-			if (taskInfo->duplicate_args_block != nullptr) {
-				taskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
+			if (parentTaskInfo->duplicate_args_block != nullptr) {
+				parentTaskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
 			} else {
 				assert(!parent->hasPreallocatedArgsBlock());
 				memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
@@ -56,14 +55,13 @@ public:
 		
 		// Set the parent
 		taskfor->setParent(parent);
-
+		
 		// Set the bounds
 		taskfor->getTaskforInfo().setBounds(bounds);
 		
 		// Instrument the task creation
 		Instrument::task_id_t taskInstrumentationId = taskfor->getInstrumentationTaskId();
-		Instrument::createdTask(taskfor, taskInstrumentationId);
-		Instrument::exitAddTask(taskInstrumentationId);
+		Instrument::exitAddTaskforCollaborator(parentTaskInstrumentationId, taskInstrumentationId);
 		
 		return taskfor;
 	}

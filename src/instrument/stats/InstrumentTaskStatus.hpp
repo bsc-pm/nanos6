@@ -82,6 +82,36 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
+	
+	inline void taskforCollaboratorIsExecuting(
+		__attribute__((unused)) task_id_t taskforId,
+		task_id_t collaboratorId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		assert(collaboratorId->_currentTimer != 0);
+		
+		collaboratorId->_currentTimer->continueAt(collaboratorId->_times._executionTime);
+		collaboratorId->_currentTimer = &collaboratorId->_times._executionTime;
+		
+		collaboratorId->_hardwareCounters.start();
+	}
+	
+	inline void taskforCollaboratorStopped(
+		task_id_t taskforId,
+		task_id_t collaboratorId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		collaboratorId->_hardwareCounters.accumulateAndStop();
+		
+		assert(collaboratorId->_currentTimer != 0);
+		collaboratorId->_currentTimer->continueAt(collaboratorId->_times._zombieTime);
+		collaboratorId->_currentTimer = &collaboratorId->_times._zombieTime;
+		
+		// Synchronization required
+		taskforId->_lock.lock();
+		taskforId->_times._executionTime += collaboratorId->_times._executionTime;
+		taskforId->_lock.unlock();
+	}
 }
 
 
