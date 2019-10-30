@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -14,7 +14,7 @@ struct BottomMapEntry {
 	DataAccess * _access;
 	bool _satisfied;
 	ReductionInfo * _reductionInfo;
-	
+
 	BottomMapEntry(DataAccess * access) :
 	_access(access),
 	_satisfied(true),

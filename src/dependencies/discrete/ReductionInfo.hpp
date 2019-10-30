@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -24,73 +24,73 @@
 class ReductionInfo
 {
 	public:
-		
+
 		typedef PaddedSpinLock<> spinlock_t;
-		
+
 		struct ReductionSlot {
 			void *storage = nullptr;
 			bool initialized = false;
 		};
-		
+
 		typedef boost::dynamic_bitset<> reduction_slot_set_t;
-		
+
 		inline static size_t getMaxSlots();
-		
+
 		ReductionInfo(void * address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
 			std::function<void(void*, void*, size_t)> initializationFunction,
 			std::function<void(void*, void*, size_t)> combinationFunction);
-		
+
 		~ReductionInfo();
-		
+
 		reduction_type_and_operator_index_t getTypeAndOperatorIndex() const;
-		
+
 		const void * getOriginalAddress() const;
-		
+
 		size_t getOriginalLength() const;
-		
+
 		bool combine(bool canCombineToOriginalStorage);
-		
+
 		void releaseSlotsInUse(size_t virtualCpuId);
-		
+
 		size_t getFreeSlotIndex(size_t virtualCpuId);
-		
+
 		void * getFreeSlotStorage(size_t slotIndex);
-		
+
 		void makeOriginalStorageAvailable(const void * address, const size_t length);
-		
+
 		bool noSlotsInUse();
-		
+
 		void incrementRegisteredAccesses();
-		
+
 		bool incrementUnregisteredAccesses();
-		
+
 		bool markAsClosed();
-		
+
 		bool finished();
-		
+
 		const DataAccessRegion& getOriginalRegion() const
 		{
 			return _region;
 		}
-		
+
 	private:
 		DataAccessRegion _region;
-		
+
 		void * _address;
-		
+
 		const size_t _length;
-		
+
 		const size_t _paddedLength;
-		
+
 		reduction_type_and_operator_index_t _typeAndOperatorIndex;
-		
+
 		std::atomic_size_t _originalStorageCombinationCounter;
-		
+
 		std::atomic_size_t _privateStorageCombinationCounter;
-		
+
 		bool _isOriginalStorageAvailable;
 		std::atomic_size_t _originalStorageAvailabilityCounter;
-		
+
 		std::vector<ReductionSlot> _slots;
 		std::vector<long int> _currentCpuSlotIndices;
 		std::vector<size_t> _freeSlotIndices;
@@ -99,10 +99,10 @@ class ReductionInfo
 		// in discrete deps.
 		reduction_slot_set_t _isAggregatingSlotIndex;
 		reduction_slot_set_t _privateSlotsUsed;
-		
+
 		std::function<void(void*, size_t)> _initializationFunction;
 		std::function<void(void*, void*, size_t)> _combinationFunction;
-		
+
 		std::atomic<size_t> _registeredAccesses;
 		spinlock_t _lock;
 };

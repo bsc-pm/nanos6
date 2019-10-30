@@ -79,10 +79,7 @@ include_HEADERS = \
 
 
 lib_LTLIBRARIES = \
-	libnanos6.la
-
-if LINEAR_REGION_FRAGMENTED_DEPENDENCIES
-lib_LTLIBRARIES += \
+	libnanos6.la \
 	libnanos6-optimized-linear-regions-fragmented.la \
 	libnanos6-debug-linear-regions-fragmented.la \
 	libnanos6-extrae-linear-regions-fragmented.la \
@@ -93,7 +90,6 @@ lib_LTLIBRARIES += \
 	libnanos6-stats-papi-linear-regions-fragmented.la \
 	libnanos6-verbose-linear-regions-fragmented.la \
 	libnanos6-verbose-debug-linear-regions-fragmented.la
-endif
 
 if DISCRETE_DEPENDENCIES
 lib_LTLIBRARIES += \
@@ -486,7 +482,6 @@ multidimensional_adaptor_sources = MultidimensionalAPIToLinear.cpp
 linear_regions_fragmented_dependency_flags = -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
 discrete_dependency_flags = -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/discrete -DDISCRETE_DEPS
 
-default_dependency_sources = $(discrete_dependency_sources)
 common_sources += $(linear_regions_alternative_dependency_sources)
 
 SUPPORTED_MULTIDIMENSIONAL_REGION_API_TYPES += read write readwrite weak_read weak_write weak_readwrite concurrent commutative weak_commutative reduction weak_reduction
@@ -620,10 +615,10 @@ memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_cluster_cpp
 memory_debug_sources = $(memory_default_sources)
 memory_debug_cppflags = $(memory_default_cppflags)
 else
- memory_default_sources = $(memory_allocator_default_sources) $(vmm_smp_sources)
- memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_smp_cppflags)
-#memory_default_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
-#memory_default_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
+# memory_default_sources = $(memory_allocator_default_sources) $(vmm_smp_sources)
+# memory_default_cppflags = $(memory_allocator_default_cppflags) $(vmm_smp_cppflags)
+memory_default_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
+memory_default_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 memory_debug_sources = $(memory_allocator_debug_sources) $(vmm_smp_sources)
 memory_debug_cppflags = $(memory_allocator_debug_cppflags) $(vmm_smp_cppflags)
 endif
@@ -1364,6 +1359,7 @@ endif
 else
 libnanos6_verbose_debug_discrete_la_SOURCES += loader/disabled_variant.c
 endif
+
 libnanos6_extrae_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
 libnanos6_extrae_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
 libnanos6_extrae_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
@@ -1422,8 +1418,8 @@ nodist_libnanos6_lint_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_LINT_INSTRUMENTATION_VARIANT
 enabled_variants += lint
-libnanos6_lint_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_lint_sources) $(universal_debug_sources) $(memory_default_sources)
-nodist_libnanos6_lint_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources) $(linear_regions_fragmented_dependency_sources)
+libnanos6_lint_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_lint_sources) $(universal_debug_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_lint_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
 disabled_variants += lint
 libnanos6_lint_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c

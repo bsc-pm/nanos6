@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -27,15 +27,15 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 {
 	assert(handler != 0);
 	Task *task = (Task *) handler;
-	
+
 	if (start == nullptr) {
 		return;
 	}
-	
+
 	if(length == 0) {
 		return;
 	}
-	
+
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length, reductionTypeAndOperatorIndex, reductionIndex);
 }
 
@@ -97,7 +97,7 @@ void nanos6_register_region_reduction_depinfo1(
 {
 	// Currently we only support contiguous regions without offset
 	assert(dim1start == 0L);
-	
+
 	register_access<REDUCTION_ACCESS_TYPE, false>(handler, base_address, dim1size, symbol_index, reduction_operation, reduction_index);
 }
 
@@ -113,10 +113,10 @@ void nanos6_register_region_weak_reduction_depinfo1(
 		__attribute__((unused)) long dim1end)
 {
 	assert(dim1start == 0L);
-	
+
 	// We don't support weak reductions, but we cannot safely ignore them.
 	// So we need to die.
-	
+
 	std::cerr << "The selected dependency implementation has no support for nested-reduction (aka. weakreduction)." << std::endl;
 	exit(1);
 }
