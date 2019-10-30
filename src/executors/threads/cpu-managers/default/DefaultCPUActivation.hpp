@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -20,12 +20,12 @@
 
 class DefaultCPUActivation {
 public:
-	
+
 	//! \brief Check if a CPU is accepting new work
 	static inline bool acceptsWork(CPU *cpu)
 	{
 		assert(cpu != nullptr);
-		
+
 		CPU::activation_status_t currentStatus = cpu->getActivationStatus();
 		switch (currentStatus) {
 			case CPU::enabled_status:
@@ -45,11 +45,11 @@ public:
 				assert(false);
 				return false;
 		}
-		
+
 		assert("Unhandled CPU activation status" == nullptr);
 		return false;
 	}
-	
+
 	//! \brief Enable a CPU
 	//!
 	//! \param[in] systemCPUId The id of the CPU to enable
@@ -60,9 +60,9 @@ public:
 	{
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
-		
+
 		cpu->initializeIfNeeded();
-		
+
 		bool successful = false;
 		while (!successful) {
 			CPU::activation_status_t currentStatus = cpu->getActivationStatus();
@@ -97,10 +97,10 @@ public:
 					return false;
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	//! \brief Disable a CPU
 	//!
 	//! \param[in] systemCPUId The id of the CPU to disable
@@ -110,7 +110,7 @@ public:
 	{
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
 		assert(cpu != nullptr);
-		
+
 		bool successful = false;
 		while (!successful) {
 			CPU::activation_status_t currentStatus = cpu->getActivationStatus();
@@ -140,10 +140,10 @@ public:
 					return false;
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	//! \brief Check and handle CPU activation transitions
 	//! NOTE: This code must be run regularly from within WorkerThreads
 	//!
@@ -155,12 +155,12 @@ public:
 	{
 		assert(currentThread != nullptr);
 		CPU::activation_status_t currentStatus;
-		
+
 		bool successful = false;
 		while (!successful) {
 			CPU *cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
-			
+
 			currentStatus = cpu->getActivationStatus();
 			switch (currentStatus) {
 				case CPU::uninitialized_status:
@@ -194,7 +194,7 @@ public:
 					if (successful) {
 						 // Loop again, since things may have changed
 						successful = false;
-						
+
 						// The CPU is disabling, the thread becomes idle
 						Monitoring::cpuBecomesIdle(cpu->getIndex());
 						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
@@ -207,16 +207,16 @@ public:
 					return currentStatus;
 			}
 		}
-		
+
 		// Return the current status, whether there was a change
 		return currentStatus;
 	}
-	
+
 	//! \brief Notify to a CPU that the runtime is shutting down
 	static inline void shutdownCPU(CPU *cpu)
 	{
 		assert(cpu != nullptr);
-		
+
 		bool successful = false;
 		while (!successful) {
 			CPU::activation_status_t currentStatus = cpu->getActivationStatus();
@@ -253,7 +253,7 @@ public:
 			}
 		}
 	}
-	
+
 };
 
 

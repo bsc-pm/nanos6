@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -101,7 +101,7 @@ void DLBCPUManagerImplementation::preinitialize()
 		_cpus[i] = cpu;
 		_NUMANodeMask[cpu->getNumaNodeId()][i] = true;
 
-		// Set the virtual id (identical to system id) and the taskfor group id
+		// Set the virtual id (identical to system id)
 		cpu->setIndex(i);
 
 		// FIXME-TODO: Since we cannot control when external CPUs are returned,

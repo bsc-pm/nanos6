@@ -397,7 +397,7 @@ public:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					if (successful) {
 						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getIndex());
+						Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
 						ThreadManager::resumeIdle(cpu, true, true);
 					}
 					break;

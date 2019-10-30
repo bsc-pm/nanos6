@@ -208,9 +208,6 @@ void CPUManagerInterface::initialize()
 			CPU *cpu = _cpus[virtualCPUId];
 			assert(cpu != nullptr);
 
-			// Inform monitoring that the task becomes active by default
-			Monitoring::cpuBecomesActive(cpu->getIndex());
-
 			bool worked = cpu->initializeIfNeeded();
 			if (worked) {
 				WorkerThread *initialThread = ThreadManager::createWorkerThread(cpu);

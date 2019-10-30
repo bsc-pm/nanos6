@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -73,15 +73,15 @@ inline Instrument::ThreadLocalData &WorkerThread::getInstrumentationData()
 inline void WorkerThread::handleTask(CPU *cpu, Task *task)
 {
 	assert(task != nullptr);
-	
+
 	// Save current task
 	Task *oldTask = _task;
 	assert(task != oldTask);
-	
+
 	// Run the task
 	_task = task;
 	handleTask(cpu);
-	
+
 	// Restore the initial task
 	_task = oldTask;
 }
@@ -90,7 +90,7 @@ inline void WorkerThread::handleTask(CPU *cpu, Task *task)
 inline WorkerThread *WorkerThread::getCurrentWorkerThread()
 {
 	WorkerThreadBase *thread = WorkerThreadBase::getCurrentWorkerThread();
-	
+
 	if (thread == nullptr) {
 		return nullptr;
 	} else if (typeid(*thread) == typeid(WorkerThread)) {
@@ -112,7 +112,7 @@ namespace ompss_debug {
 	__attribute__((weak)) WorkerThread *getCurrentWorkerThread()
 	{
 		WorkerThread *current = WorkerThread::getCurrentWorkerThread();
-		
+
 		if (current == nullptr) {
 			return (WorkerThread *) ~0UL;
 		} else {

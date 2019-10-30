@@ -33,15 +33,15 @@ public:
 		assert(replacementTask != nullptr);
 		assert(currentTask != nullptr);
 		assert(cpu != nullptr);
-		
+
 		if (replacementTask->getThread() != nullptr) {
 			return false;
 		}
-		
+
 		if (!CPUManager::acceptsWork(cpu)) {
 			return false;
 		}
-		
+
 		bool mustRunInline = false;
 		switch (policy) {
 			case POLICY_NO_INLINE:
@@ -54,7 +54,7 @@ public:
 				mustRunInline = true;
 				break;
 		}
-		
+
 		return mustRunInline;
 	}
 	
