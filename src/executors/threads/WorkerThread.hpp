@@ -15,7 +15,7 @@
 #include <ThreadHardwareCounters.hpp>
 
 
-struct CPU;
+class CPU;
 class Task;
 class ThreadManager;
 class WorkerThreadRunner;

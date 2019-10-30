@@ -313,3 +313,14 @@ Currently, Monitoring capabilities lack support for the `task for` construct.
 In order to enable OmpSs-2@Cluster support, you need a working MPI installation in your environment that supports multithreading, i.e. `MPI_THREAD_MULTIPLE`.
 Nanos6 needs to be configured with the `--enable-cluster` flag.
 For more information, on how to write and run cluster applications see [README-CLUSTER.md](docs/cluster/README-CLUSTER.md).
+
+## Choosing a dependency implementation
+
+The Nanos6 runtime has support for different dependency implementations. The `linear-regions-fragmented` dependencies will be always compiled and are the default implementation. This choice is fully spec-compliant, and supports all of the features. It is also the only implementation that supports OmpSs-2@Cluster and execution workflows.
+
+Other implementations can be compiled in with the corresponding `./configure` flag, and selected dynamically through the `NANOS6_DEPENDENCIES` environment variable.
+
+The available implementations are:
+
+* \[default\] `NANOS6_DEPENDENCIES=linear-regions-fragmented`  - Supporting all features.
+* `NANOS6_DEPENDENCIES=discrete` - No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.

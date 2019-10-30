@@ -29,6 +29,7 @@ user_mutex_tests =
 linear_region_tests =
 reductions_tests =
 runtime_handled_reductions_tests =
+discrete_tests =
 
 
 if HAVE_NANOS6_MERCURIUM
@@ -66,6 +67,9 @@ reductions_tests += \
 	red-nest-other.test \
 	red-nqueens.test \
 	red-stress.test
+
+discrete_tests += \
+	discrete-deps.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -114,6 +118,9 @@ reductions_tests += \
 	red-nqueens.debug.test \
 	red-stress.debug.test
 
+discrete_tests += \
+	discrete-deps.debug.test
+
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
 # moment, as the current implementation is based on task privatization and the
@@ -131,7 +138,6 @@ endif
 
 check_PROGRAMS = $(base_tests)
 TESTS = $(base_tests)
-
 
 if HAVE_CPU_MANAGEMENT
 check_PROGRAMS += $(cpu_management_tests)
@@ -151,6 +157,11 @@ endif
 if HAVE_REDUCTIONS_SUPPORT
 check_PROGRAMS += $(reductions_tests)
 TESTS += $(reductions_tests)
+endif
+
+if DISCRETE_DEPENDENCIES
+check_PROGRAMS += $(discrete_tests)
+TESTS += $(discrete_tests)
 endif
 
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
@@ -359,6 +370,15 @@ red_nest_other_test_SOURCES = reductions/red-nest-other.cpp
 red_nest_other_test_CPPFLAGS = -DNDEBUG
 red_nest_other_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_nest_other_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_deps_debug_test_SOURCES = discrete/discrete-deps.cpp
+discrete_deps_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_deps_test_SOURCES = discrete/discrete-deps.cpp
+discrete_deps_test_CPPFLAGS = -DNDEBUG
+discrete_deps_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_test_LDFLAGS = $(test_common_ldflags)
 
 #red_nest_taskwait_debug_test_SOURCES = reductions/red-nest-taskwait.cpp
 #red_nest_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

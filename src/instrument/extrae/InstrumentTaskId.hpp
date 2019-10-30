@@ -44,6 +44,7 @@ namespace Instrument {
 		{
 		}
 		
+		task_id_t& operator=(const task_id_t& other) = default;
 		
 		bool operator==(task_id_t const &other) const
 		{

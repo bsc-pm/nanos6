@@ -13,6 +13,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
+#include "TaskDataAccesses.hpp"
 
 #include <HardwareCounters.hpp>
 #include <InstrumentComputePlaceId.hpp>
@@ -20,7 +21,6 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadId.hpp>
 #include <Monitoring.hpp>
-
 
 void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace, bool fromBusyThread)
 {
@@ -112,6 +112,9 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				} else {
 					disposableBlockSize += sizeof(Task);
 				}
+				
+				TaskDataAccesses &dataAccesses = task->getDataAccesses();
+				disposableBlockSize += dataAccesses.getAdditionalMemorySize();
 				
 				Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 				

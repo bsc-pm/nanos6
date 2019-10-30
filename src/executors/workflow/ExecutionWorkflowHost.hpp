@@ -13,7 +13,7 @@
 class MemoryPlace;
 class ComputePlace;
 class Task;
-class DataAccess;
+struct DataAccess;
 
 namespace ExecutionWorkflow {
 	class HostAllocationAndPinningStep : public Step {

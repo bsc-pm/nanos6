@@ -110,7 +110,7 @@ public:
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags
 	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags),
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
 		_blockingContext(nullptr),
 		_mustShutdown(false),
 		_queue(),

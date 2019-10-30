@@ -50,7 +50,7 @@ struct DataAccessBase {
 		Task *originator,
 		Instrument::data_access_id_t instrumentationId
 	)
-		: _taskDataAccessLinks(), 
+		: _taskDataAccessLinks(),
 		_type(type), _weak(weak), _originator(originator),
 		_instrumentationId(instrumentationId)
 	{

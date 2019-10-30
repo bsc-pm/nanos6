@@ -105,7 +105,7 @@ namespace ExecutionWorkflow {
 	
 	void setupTaskwaitWorkflow(
 		Task *task,
-		DataAccess *taskwaitFragment
+		__attribute__((unused)) DataAccess *taskwaitFragment
 	) {
 		ComputePlace *computePlace = nullptr;
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
@@ -114,11 +114,14 @@ namespace ExecutionWorkflow {
 		}
 		
 		CPUDependencyData hpDependencyData;
+		
+		#if !DISCRETE_DEPS
 		DataAccessRegistration::releaseTaskwaitFragment(
 			task,
 			taskwaitFragment->getAccessRegion(),
 			computePlace,
 			hpDependencyData
 		);
+		#endif
 	}
 }

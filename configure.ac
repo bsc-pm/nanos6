@@ -118,30 +118,6 @@ SELECT_NANOS6_INSTRUMENTATION_VARIANTS
 # Check for gethostid
 AC_CHECK_FUNCS([gethostid])
 
-# Dependency engine to use
-AC_ARG_WITH(
-	[dependencies],
-	[AS_HELP_STRING([--with-dependencies=type], [specify the type of dependencies to handle @<:@default=linear-regions-fragmented@:>@])],
-	[ac_with_dependencies="${withval}"],
-	[ac_with_dependencies="linear-regions-fragmented"]
-)
-AC_MSG_CHECKING([the type of dependencies to handle])
-case x"${ac_with_dependencies}" in
-	x"linear-regions-fragmented")
-		AC_MSG_RESULT([${ac_with_dependencies}])
-		ac_supports_concurrent=yes
-		ac_supports_reductions=yes
-		;;
-	*)
-		AC_MSG_ERROR([unknown dependency type ${ac_with_dependencies}])
-		;;
-esac
-AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test "x${ac_with_dependencies}" = "xlinear-regions-fragmented"])
-AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test "x${ac_with_dependencies}" != "xdiscrete"])
-AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [test x"${ac_supports_concurrent}" = x"yes"])
-AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [test x"${ac_supports_reductions}" = x"yes"])
-
-
 AC_ARG_ENABLE(
 	[dependency-delayed-operations],
 	[AS_HELP_STRING([--disable-dependency-delayed-operations], [do not delay dependency update operations])],
@@ -310,6 +286,45 @@ if test x"${ac_use_workflow}" = x"yes" ; then
 	AC_DEFINE([USE_EXEC_WORKFLOW], [1], [Define if Execution Workflow feature is enabled.])
 fi
 
+# Dependency engine to use
+
+# Always include linear-fragmented
+ac_linear_fragmented_deps=yes
+
+AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test x"${ac_linear_fragmented_deps}" = x"yes"])
+
+AC_MSG_CHECKING([if discrete dependencies should be included])
+AC_ARG_ENABLE(
+	[discrete-deps],
+	[AS_HELP_STRING([--enable-discrete-deps], [Enable discrete dependency engine. This will be automatically disabled 
+	if cluster support is enabled, as it is incompatible.])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_discrete_deps=yes
+			;;
+		no)
+			ac_discrete_deps=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-discrete-deps])
+			;;
+		esac
+	],
+	[ac_discrete_deps=yes]
+)
+
+if test x"${ac_use_cluster}" = x"yes" ; then
+	ac_discrete_deps=no
+	AC_MSG_WARN([Cluster enabled, disabling discrete dependency engine])
+fi
+
+AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test x"${ac_discrete_deps}" = x"yes"])
+
+AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [1])
+AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [1])
+AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [1])
+
 AC_ARG_ENABLE(
 	[monitoring],
 	[AS_HELP_STRING([--enable-monitoring], [enable monitoring and prediction techniques of statistics])],
@@ -409,7 +424,8 @@ _AS_ECHO([   Compiler version... ${CXX_VERSION}])
 _AS_ECHO([   Compiler optimization flags... ${OPT_CXXFLAGS}])
 _AS_ECHO([   Compiler debug flags... ${DEBUG_CXXFLAGS}])
 _AS_ECHO([])
-_AS_ECHO([   Dependency implementation... ${ac_with_dependencies}])
+_AS_ECHO([   Include linear fragmented dependencies... ${ac_linear_fragmented_deps}])
+_AS_ECHO([   Include discrete dependencies... ${ac_discrete_deps}])
 _AS_ECHO([   Symbol resolution method... ${ac_cv_use_symbol_resolution}])
 _AS_ECHO([])
 _AS_ECHO([   Mercurium prefix... ${NANOS6_MCC_PREFIX}])

@@ -14,7 +14,7 @@
 #include <vector>
 #include <DataAccessRegion.hpp>
 
-class DataAccess;
+struct DataAccess;
 class MemoryPlace;
 
 namespace ExecutionWorkflow {

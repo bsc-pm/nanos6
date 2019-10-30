@@ -47,7 +47,7 @@ void nanos6_create_task(
 	void **args_block_pointer,
 	void **task_pointer,
 	size_t flags,
-	__attribute__((unused)) size_t num_deps
+	size_t num_deps
 ) {
 	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
 	
@@ -84,10 +84,23 @@ void nanos6_create_task(
 		taskSize = sizeof(Task);
 	}
 	
+#ifdef DISCRETE_DEPS
+	// We use num_deps to create the correctly sized array for storing the dependencies.
+	// Two plain C arrays are used, one for the actual DataAccess structures and another for the
+	// addresses, which is the one used for searching. That way we cause less cache misses searching.
+	
+	size_t seqsSize = sizeof(DataAccess) * num_deps;
+	size_t addrSize = sizeof(void *) * num_deps;
+#else
+	size_t seqsSize = 0;
+	size_t addrSize = 0;
+#endif
+	
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	
 	if (hasPreallocatedArgsBlock) {
 		assert(args_block != nullptr);
+		assert(seqsSize == 0 && addrSize == 0);
 		task = MemoryAllocator::alloc(taskSize);
 	} else {
 		// Alignment fixup
@@ -96,13 +109,15 @@ void nanos6_create_task(
 		args_block_size += correction;
 		
 		// Allocation and layout
-		*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize);
-		
+		*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize + seqsSize + addrSize);
 		task = (char *)args_block + args_block_size;
 	}
 	
 	Instrument::createdArgsBlock(taskId, *args_block_pointer, originalArgsBlockSize, args_block_size);
-
+	
+	void * seqs = (char *)task + taskSize;
+	void * addresses = (char *)seqs + seqsSize;
+	
 	if (isTaskfor) {
 		// Taskfor is always final.
 		flags |= nanos6_task_flag_t::nanos6_final_task;
@@ -111,7 +126,7 @@ void nanos6_create_task(
 		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else {
 		// Construct the Task object
-		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags);
+		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, seqs, addresses, num_deps);
 	}
 	
 }
@@ -193,6 +208,7 @@ void nanos6_submit_task(void *taskHandle)
 		
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}
+	assert(parent != nullptr || ready);
 	
 	bool isIf0 = task->isIf0();
 	

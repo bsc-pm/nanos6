@@ -10,7 +10,7 @@
 #include <DataAccessRegion.hpp>
 #include "dependencies/DataAccessType.hpp"
 
-class DataAccess;
+struct DataAccess;
 class MemoryPlace;
 
 namespace ExecutionWorkflow {

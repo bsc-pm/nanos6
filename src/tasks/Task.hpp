@@ -101,7 +101,7 @@ private:
 	void *_schedulerInfo;
 	
 	//! Compute Place where the task is running
-	ComputePlace *_computePlace;	
+	ComputePlace *_computePlace;
 	
 	//! MemoryPlace "attached" to the ComputePlace the Task is running on
 	MemoryPlace *_memoryPlace;
@@ -111,7 +111,7 @@ private:
 	
 	//! Number of internal and external events that prevent the release of dependencies
 	std::atomic<int> _countdownToRelease;
-	
+		
 	//! Execution workflow to execute this Task
 	Workflow<TaskExecutionWorkflowData> *_workflow;
 	
@@ -147,7 +147,10 @@ public:
 		nanos6_task_invocation_info_t *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
-		size_t flags
+		size_t flags,
+		void * seqs,
+		void * addresses,
+		size_t numDeps
 	);
 	
 	virtual inline void reinitialize(
@@ -167,6 +170,7 @@ public:
 	{
 		_argsBlock = argsBlock;
 	}
+	
 	//! Get the address of the arguments block
 	inline void *getArgsBlock() const
 	{
@@ -197,7 +201,7 @@ public:
 	{
 		assert(_taskInfo->implementation_count == 1);
 		assert(hasCode());
-		assert(_taskInfo != nullptr);	
+		assert(_taskInfo != nullptr);
 		assert(!isTaskfor());
 		_taskInfo->implementations[0].run(_argsBlock, deviceEnvironment, translationTable);
 	}
@@ -446,7 +450,9 @@ public:
 	//! \returns true if the task becomes ready
 	bool decreasePredecessors(int amount=1)
 	{
-		return ((_predecessorCount -= amount) == 0);
+		int res = (_predecessorCount-= amount);
+		assert(res >= 0);
+		return (res == 0);
 	}
 	
 	//! \brief Set or unset the final flag
@@ -487,6 +493,11 @@ public:
 		return !_flags[Task::non_runnable_flag];
 	}
 	
+	//! \brief Set the wait behavior
+	inline void setDelayedRelease(bool delayedReleaseValue)
+	{
+		_flags[Task::wait_flag] = delayedReleaseValue;
+	}
 	//! \brief Check if the task has the wait clause
 	bool mustDelayRelease() const
 	{
@@ -606,7 +617,7 @@ public:
 	}
 	inline void setDeviceData(void *deviceData)
 	{
-		_deviceData = deviceData;	
+		_deviceData = deviceData;
 	}
 	
 	//! \brief Set the Execution Workflow for this Task

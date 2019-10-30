@@ -4,16 +4,29 @@
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #ifndef TASK_IMPLEMENTATION_HPP
 #define TASK_IMPLEMENTATION_HPP
 
 #include "StreamExecutor.hpp"
 #include "Task.hpp"
 
+
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
-#include <TaskDataAccessesImplementation.hpp>
 
+#ifdef DISCRETE_DEPS
+#include <TaskDataAccesses.hpp>
+#define __nondiscrete_unused
+#else
+#include <TaskDataAccessesImplementation.hpp>
+#define __nondiscrete_unused __attribute__((unused))
+#endif
+
+#include <cstring>
 
 inline Task::Task(
 	void *argsBlock,
@@ -22,7 +35,10 @@ inline Task::Task(
 	nanos6_task_invocation_info_t *taskInvokationInfo,
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
-	size_t flags
+	size_t flags,
+	__nondiscrete_unused void * seqs,
+	__nondiscrete_unused void * addresses,
+	__nondiscrete_unused size_t numDeps
 )
 	: _argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
@@ -32,7 +48,11 @@ inline Task::Task(
 	_parent(parent),
 	_priority(0),
 	_thread(nullptr),
+#ifdef DISCRETE_DEPS
+	_dataAccesses(seqs, addresses, numDeps),
+#else
 	_dataAccesses(),
+#endif
 	_flags(flags),
 	_predecessorCount(0),
 	_instrumentationTaskId(instrumentationTaskId),

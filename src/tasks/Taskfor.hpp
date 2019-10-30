@@ -32,7 +32,7 @@ public:
 		bool precreated = false,
 		bool runnable = false
 	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags),
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
 		_taskforInfo(precreated)
 	{
 		assert(!runnable);
@@ -86,11 +86,6 @@ public:
 	inline void setRunnable(bool runnableValue)
 	{
 		_flags[Task::non_runnable_flag] = !runnableValue;
-	}
-	
-	inline void setDelayedRelease(bool delayedReleaseValue)
-	{
-		_flags[Task::wait_flag] = delayedReleaseValue;
 	}
 	
 	inline bool hasPendingIterations()

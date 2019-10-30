@@ -92,6 +92,11 @@ struct TaskDataAccesses {
 		return _flags[HAS_BEEN_DELETED_BIT];
 	}
 #endif
+
+	inline size_t getAdditionalMemorySize() const
+	{
+		return 0;
+	}
 	
 };
 
