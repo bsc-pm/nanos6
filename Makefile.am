@@ -477,7 +477,7 @@ discrete_dependency_sources = \
 	src/dependencies/discrete/Reductions.cpp \
 	src/dependencies/discrete/RegisterDependencies.cpp
 
-multidimensional_adaptor_sources = MultidimensionalAPIToLinear.cpp
+multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
 
 linear_regions_fragmented_dependency_flags = -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/linear-regions-fragmented
 discrete_dependency_flags = -I$(srcdir)/src/dependencies/linear-regions -I$(srcdir)/src/dependencies/discrete -DDISCRETE_DEPS
