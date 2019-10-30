@@ -12,6 +12,7 @@
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/Taskfor.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <HardwareCounters.hpp>
