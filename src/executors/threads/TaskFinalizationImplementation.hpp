@@ -138,6 +138,16 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 					task->~Task();
 				}
 				MemoryAllocator::free(disposableBlock, disposableBlockSize);
+			} else {
+				// Collaborators with preallocatedArgsBlock must destroy the duplicated
+				// argsBlock although they are not destroyed.
+
+				// Call the taskinfo destructor if not null
+				nanos6_task_info_t *taskInfo = task->getTaskInfo();
+				if (taskInfo->destroy_args_block != nullptr) {
+					assert(task->hasPreallocatedArgsBlock());
+					taskInfo->destroy_args_block(task->getArgsBlock());
+				}
 			}
 			
 			task = parent;
