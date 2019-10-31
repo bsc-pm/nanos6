@@ -1,16 +1,14 @@
 #!/bin/sh
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-#	
+#
 #	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 
-# Any test with "discrete" in the name will use the simpler discrete
-# implementation.
-
+# Any test with "discrete" in the name uses the simpler discrete implementation
 if test -z ${NANOS6_DEPENDENCIES} ; then
-  if "${*}" = "${*/discrete}" ; then
-	export NANOS6_DEPENDENCIES=discrete
-  fi
+	if [[ "${*}" == *"discrete"* ]]; then
+		export NANOS6_DEPENDENCIES=discrete
+	fi
 fi
 
 if test -z ${NANOS6_SCHEDULING_POLICY} ; then
@@ -25,7 +23,7 @@ if test -z ${NANOS6} ; then
 		exec "${@}"
 	else
 		export NANOS6=debug
-		
+
 		# Regular execution
 		"${@}"
 	fi
