@@ -29,15 +29,15 @@ echo ''
 for type in $* ; do
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		name=nanos6_register_region_${type}_depinfo${dimensions}
-		
+
 		generate_regions_full_prototype ${dimensions} ${type}
 		echo " {"
-		
+
 		echo -n "	typedef "
 		generate_regions_api_type ${dimensions} ${name}_t
 		echo ";"
 		echo "	"
-		
+
 		echo "	static ${name}_t *symbol = NULL;"
 		echo "	if (__builtin_expect(symbol == NULL, 0)) {"
 		echo "		symbol = (${name}_t *) _nanos6_resolve_symbol_with_local_fallback("
@@ -45,11 +45,11 @@ for type in $* ; do
 		echo "		);"
 		echo "	}"
 		echo "	"
-		
+
 		echo -n "	(*symbol)("
 		generate_regions_parameter_list ${dimensions} ${type}
 		echo ");"
-		
+
 		echo "}"
 		echo
 	done

@@ -28,7 +28,7 @@ echo ''
 
 
 for type in $* ; do
-	
+
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		# if [ ${dimensions} -eq 1 ] ; then
 		# 	if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
@@ -36,7 +36,7 @@ for type in $* ; do
 		# 		continue
 		# 	fi
 		# fi
-		
+
 		generate_regions_named_prototype ${dimensions} "nanos6_lint_register_region_${type}_${dimensions}"
 		echo " {"
 		echo "	return;"

@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
@@ -39,10 +39,10 @@ int __libc_start_main(
 	void *stack_end
 ) {
 	_nanos6_resolve_next_start_main("__libc_start_main");
-	
+
 	assert(_nanos6_loader_wrapped_main == 0);
 	_nanos6_loader_wrapped_main = main;
-	
+
 	// Continue with the "normal" startup sequence
 	return _nanos6_loader_next_libc_start_main(_nanos6_loader_main, argc, argv, init, fini, rtld_fini, stack_end);
 }
