@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2018-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -12,7 +12,7 @@
 nanos6_api_versions_t const __user_code_expected_nanos6_api_versions = {
 	.api_check_api_version = nanos6_api_check_api,
 	.major_api_version = nanos6_major_api,
-	
+
 	.blocking_api_version = nanos6_blocking_api,
 	.bootstrap_api_version = nanos6_bootstrap_api,
 	.cluster_api_version = nanos6_cluster_api,

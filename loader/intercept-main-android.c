@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
@@ -40,10 +40,10 @@ void __libc_init(
 	structors_array_t const * const structors
 ) {
 	_nanos6_resolve_next_start_main("__libc_init");
-	
+
 	assert(_nanos6_loader_wrapped_main == 0);
 	_nanos6_loader_wrapped_main = slingshot;
-	
+
 	// Continue with the "normal" startup sequence
 	_nanos6_loader_next_libc_start_main(raw_args, onexit, _nanos6_loader_main, structors);
 }

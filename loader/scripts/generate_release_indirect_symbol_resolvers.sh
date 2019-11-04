@@ -29,18 +29,18 @@ for type in $* ; do
 	if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
 		continue
 	fi
-	
+
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		name=nanos6_release_${type}_${dimensions}
-		
+
 		generate_release_full_prototype ${dimensions} ${type}
 		echo " {"
-		
+
 		echo -n "	typedef "
 		generate_release_api_type ${dimensions} ${name}_t
 		echo ";"
 		echo "	"
-		
+
 		echo "	static ${name}_t *symbol = NULL;"
 		echo "	if (__builtin_expect(symbol == NULL, 0)) {"
 		echo "		symbol = (${name}_t *) _nanos6_resolve_symbol_with_local_fallback("
@@ -48,11 +48,11 @@ for type in $* ; do
 		echo "		);"
 		echo "	}"
 		echo "	"
-		
+
 		echo -n "	(*symbol)("
 		generate_release_parameter_list ${dimensions}
 		echo ");"
-		
+
 		echo "}"
 		echo
 	done

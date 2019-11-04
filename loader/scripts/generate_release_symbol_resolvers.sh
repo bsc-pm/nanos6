@@ -29,7 +29,7 @@ for type in $* ; do
 	if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
 		continue
 	fi
-	
+
 	for dimensions in $(seq 1 ${maxdimensions}) ; do
 		echo "RESOLVE_API_FUNCTION_WITH_LOCAL_FALLBACK(nanos6_release_${type}_${dimensions}, \"multidimensional release\", NULL);"
 	done

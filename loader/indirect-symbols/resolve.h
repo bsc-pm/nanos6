@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
@@ -34,7 +34,7 @@ static void *_nanos6_resolve_symbol(char const *fname, char const *area, char co
 			return NULL;
 		}
 	}
-	
+
 	void *symbol = dlsym(_nanos6_lib_handle, fname);
 	dlerror();
 	if ((symbol == NULL) && (fallback != NULL)) {
@@ -49,7 +49,7 @@ static void *_nanos6_resolve_symbol(char const *fname, char const *area, char co
 		handle_error();
 		return NULL;
 	}
-	
+
 	return symbol;
 }
 
@@ -64,7 +64,7 @@ static void *_nanos6_resolve_symbol_with_local_fallback(char const *fname, char 
 			return NULL;
 		}
 	}
-	
+
 	void *symbol = dlsym(_nanos6_lib_handle, fname);
 	dlerror();
 	if (symbol == NULL) {
@@ -73,7 +73,7 @@ static void *_nanos6_resolve_symbol_with_local_fallback(char const *fname, char 
 			fprintf(stderr, "Nanos 6 loader warning: %s runtime function %s is undefined in '%s' falling back to function %s instead\n", area, fname, nanos6_get_runtime_path(), fallback_name);
 		}
 	}
-	
+
 	return symbol;
 }
 
@@ -88,13 +88,13 @@ static void *_nanos6_resolve_symbol_with_silent_local_fallback(char const *fname
 			return NULL;
 		}
 	}
-	
+
 	void *symbol = dlsym(_nanos6_lib_handle, fname);
 	dlerror();
 	if (symbol == NULL) {
 		symbol = fallback;
 	}
-	
+
 	return symbol;
 }
 
@@ -103,15 +103,15 @@ static void *_nanos6_resolve_intercepted_symbol_with_global_fallback(char const 
 {
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) {
 		static void *symbol = NULL;
-		
+
 		if (symbol == NULL) {
 			symbol = dlsym(RTLD_NEXT, fname);
 			dlerror();
 		}
-		
+
 		return symbol;
 	}
-	
+
 	static void *symbol = NULL;
 	if (symbol == NULL) {
 		symbol = dlsym(_nanos6_lib_handle, iname);
@@ -126,7 +126,7 @@ static void *_nanos6_resolve_intercepted_symbol_with_global_fallback(char const 
 			return NULL;
 		}
 	}
-	
+
 	return symbol;
 }
 
