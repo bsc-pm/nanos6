@@ -61,8 +61,10 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace,
 		bool fromBusyThread)
 	{
-		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
+		// The number of satisfied originators that will be added to the scheduler
+		size_t numAddedTasks = hpDependencyData._satisfiedOriginators.size();
 
+		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
 		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
 			assert(satisfiedOriginator != 0);
 
@@ -78,6 +80,11 @@ namespace DataAccessRegistration {
 					computePlaceHint,
 					(fromBusyThread ? BUSY_COMPUTE_PLACE_TASK_HINT : SIBLING_TASK_HINT)
 			);
+		}
+
+		if (numAddedTasks) {
+			// After adding tasks, the CPUManager may want to unidle CPU(s)
+			CPUManager::executeCPUManagerPolicy(computePlace, ADDED_TASKS, numAddedTasks);
 		}
 
 		// As we use tasks as integral part of our Data Structures, specially the accesses in READ/REDUCTION tasks,
