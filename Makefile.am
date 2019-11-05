@@ -1444,11 +1444,9 @@ nodist_libnanos6_lint_discrete_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
 if BUILD_LINT_INSTRUMENTATION_VARIANT
-enabled_variants += lint
 libnanos6_lint_discrete_la_SOURCES += $(common_sources) $(instrument_lint_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_dependency_sources)
 nodist_libnanos6_lint_discrete_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
 else
-disabled_variants += lint
 libnanos6_lint_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif

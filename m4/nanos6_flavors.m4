@@ -167,7 +167,7 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		AC_MSG_CHECKING([whether to build the lint instrumented variant])
 		AC_ARG_ENABLE(
 			[lint-instrumentation],
-			[AS_HELP_STRING([--enable-lint-instrumentation], [build the lint instrumented variant])],
+			[AS_HELP_STRING([--disable-lint-instrumentation], [build the lint instrumented variant])],
 			[
 				case "${enableval}" in
 				yes)
@@ -181,7 +181,7 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 					;;
 				esac
 			],
-			[ac_build_lint_instrumentation=no]
+			[ac_build_lint_instrumentation=yes]
 		)
 		AC_MSG_RESULT([$ac_build_lint_instrumentation])
 		AM_CONDITIONAL(BUILD_LINT_INSTRUMENTATION_VARIANT, test x"${ac_build_lint_instrumentation}" = x"yes")
