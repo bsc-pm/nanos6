@@ -42,6 +42,22 @@ namespace Instrument {
 	{
 		nanos6_lint_on_task_destruction(taskId);
 	}
+
+	inline void startTaskforCollaborator(
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) task_id_t collaboratorId,
+		__attribute__((unused)) bool first,
+		__attribute__((unused)) InstrumentationContext const &context)
+	{
+	}
+
+	inline void endTaskforCollaborator(
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) task_id_t collaboratorId,
+		__attribute((unused)) bool last,
+		__attribute__((unused)) InstrumentationContext const &context)
+	{
+	}
 }
 
 
