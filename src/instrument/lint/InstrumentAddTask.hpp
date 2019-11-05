@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -27,7 +27,7 @@ namespace Instrument {
 		nanos6_lint_on_task_creation(taskId, taskInvokationInfo, flags);
 		return taskId;
 	}
-	
+
 	inline void createdArgsBlock(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) void *argsBlockPointer,
@@ -37,14 +37,14 @@ namespace Instrument {
 	) {
 		nanos6_lint_on_task_argsblock_allocation(taskId, argsBlockPointer, originalArgsBlockSize, argsBlockSize);
 	}
-	
+
 	inline void createdTask(
 		__attribute__((unused)) void *task,
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
-	
+
 	inline void exitAddTask(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
