@@ -36,46 +36,14 @@ void DLBCPUManagerImplementation::preinitialize()
 
 	//    TASKFOR GROUPS    //
 
-	// Default value for _taskforGroups is one per NUMA node
+	// Whether the taskfor group envvar already has a value
 	bool taskforGroupsSetByUser = _taskforGroups.isPresent();
-	if (!taskforGroupsSetByUser) {
-		_taskforGroups.setValue(numNUMANodes);
-	}
-
-	if (numCPUs < _taskforGroups && taskforGroupsSetByUser) {
-		FatalErrorHandler::warnIf(
-			true,
-			"More groups requested than available CPUs. ",
-			"Using ", numCPUs, " groups of 1 CPU each instead"
-		);
-		_taskforGroups.setValue(numCPUs);
-	}
-
-	// Check if the number of taskfor groups is appropriate
-	if (_taskforGroups == 0 || numCPUs % _taskforGroups != 0) {
-		size_t closestGroups = CPUManagerInterface::getClosestGroupNumber(numCPUs, _taskforGroups);
-		size_t cpusPerGroup  = numCPUs / closestGroups;
-		_taskforGroups.setValue(closestGroups);
-
-		FatalErrorHandler::warnIf(
-			_taskforGroups == 0,
-			"0 groups requested, invalid number. ",
-			"Using ", closestGroups, " of ", cpusPerGroup, " CPUs each instead"
-		);
-		FatalErrorHandler::warnIf(
-			_taskforGroups != 0 && numCPUs % _taskforGroups != 0,
-			_taskforGroups, " groups requested. ",
-			"The number of CPUs is not divisiable by the number of groups. ",
-			"Using ", closestGroups, " of ", cpusPerGroup, " CPUs each instead"
-		);
-	}
-	assert(_taskforGroups <= numCPUs && numCPUs % _taskforGroups == 0);
 
 	// FIXME-TODO: Find in the future an appropriate mechanism to control
 	// taskfor groups for external CPUs
 	size_t defaultTaskforGroups = _taskforGroups;
 	_taskforGroups.setValue(1);
-	if (defaultTaskforGroups != 1 && taskforGroupsSetByUser) {
+	if (taskforGroupsSetByUser && defaultTaskforGroups != 1) {
 		FatalErrorHandler::warnIf(
 			true,
 			"DLB enabled, using 1 group of ", numCPUs,

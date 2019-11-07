@@ -9,7 +9,6 @@
 #include "CPUManagerInterface.hpp"
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/RuntimeInfo.hpp"
 
@@ -111,43 +110,11 @@ void CPUManagerInterface::preinitialize()
 	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_NUMANodeMask.resize(numNUMANodes);
 
-	// Default value for _taskforGroups is one per NUMA node
-	bool taskforGroupsSetByUser = _taskforGroups.isPresent();
-	if (!taskforGroupsSetByUser) {
-		_taskforGroups.setValue(numNUMANodes);
-	}
-
-	// Get CPU objects that can run a thread
 	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
 	size_t numCPUs = cpus.size();
-	if (numCPUs < _taskforGroups && taskforGroupsSetByUser) {
-		FatalErrorHandler::warnIf(
-			true,
-			"More groups requested than available CPUs. ",
-			"Using ", numCPUs, " groups of 1 CPU each instead"
-		);
-		_taskforGroups.setValue(numCPUs);
-	}
 
-	// Check if the number of taskfor groups is appropriate
-	if (_taskforGroups == 0 || numCPUs % _taskforGroups != 0) {
-		size_t closestGroups = getClosestGroupNumber(numCPUs, _taskforGroups);
-		size_t cpusPerGroup  = numCPUs / closestGroups;
-		_taskforGroups.setValue(closestGroups);
-
-		FatalErrorHandler::warnIf(
-			_taskforGroups == 0,
-			"0 groups requested, invalid number. ",
-			"Using ", closestGroups, " of ", cpusPerGroup, " CPUs each instead"
-		);
-		FatalErrorHandler::warnIf(
-			_taskforGroups != 0 && numCPUs % _taskforGroups != 0,
-			_taskforGroups, " groups requested. ",
-			"The number of CPUs is not divisiable by the number of groups. ",
-			"Using ", closestGroups, " of ", cpusPerGroup, " CPUs each instead"
-		);
-	}
-	assert(_taskforGroups <= numCPUs && numCPUs % _taskforGroups == 0);
+	// Find the appropriate value for taskfor groups
+	refineTaskforGroups(numCPUs, numNUMANodes);
 
 	size_t maxSystemCPUId = 0;
 	for (size_t i = 0; i < numCPUs; ++i) {

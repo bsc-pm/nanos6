@@ -19,6 +19,7 @@
 #include "CPU.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 
@@ -61,6 +62,60 @@ protected:
 	static EnvironmentVariable<size_t> _taskforGroups;
 
 
+private:
+
+	//! \brief Find the appropriate value for the taskfor groups env var
+	//!
+	//! \param[in] numCPUs The number of CPUs used by the runtime
+	//! \param[in] numNUMANodes The number of NUMA nodes in the system
+	void refineTaskforGroups(size_t numCPUs, size_t numNUMANodes)
+	{
+		// Whether the taskfor group envvar already has a value
+		bool taskforGroupsSetByUser = _taskforGroups.isPresent();
+
+		// Final warning message (only one)
+		bool mustEmitWarning = false;
+		std::ostringstream warningMessage;
+
+		// The default value for _taskforGroups is 1 group per NUMA node or
+		// the closest to it
+		if (!taskforGroupsSetByUser) {
+			size_t closestGroups = getClosestGroupNumber(numCPUs, numNUMANodes);
+			assert(numCPUs % closestGroups == 0);
+
+			_taskforGroups.setValue(closestGroups);
+		} else {
+			if (numCPUs < _taskforGroups) {
+				warningMessage
+					<< "More groups requested than available CPUs. "
+					<< "Using " << numCPUs << " groups of 1 CPU each instead";
+
+				_taskforGroups.setValue(numCPUs);
+				mustEmitWarning = true;
+			} else if (_taskforGroups == 0 || numCPUs % _taskforGroups != 0) {
+				size_t closestGroups = getClosestGroupNumber(numCPUs, _taskforGroups);
+				assert(numCPUs % closestGroups == 0);
+
+				size_t cpusPerGroup = numCPUs / closestGroups;
+				warningMessage
+					<< _taskforGroups << " groups requested. "
+					<< "The number of CPUs is not divisiable by the number of groups. "
+					<< "Using " << closestGroups << " of " << cpusPerGroup
+					<< " CPUs each instead";
+
+				_taskforGroups.setValue(closestGroups);
+				mustEmitWarning = true;
+			}
+		}
+
+		if (mustEmitWarning) {
+			FatalErrorHandler::warnIf(true, warningMessage.str());
+		}
+
+		assert((_taskforGroups <= numCPUs) && (numCPUs % _taskforGroups == 0));
+	}
+
+
 protected:
 
 	//! \brief Instrument-related private function
@@ -72,27 +127,39 @@ protected:
 	//! \param[in] numGroups The number of groups specified by users
 	inline size_t getClosestGroupNumber(size_t numCPUs, size_t numGroups) const
 	{
-		size_t result  = 0;
-		size_t greater = numGroups + 1;
-		size_t lower   = numGroups - 1;
+		size_t result = 0;
 
-		while (true) {
+		// If the chosen value is impossible, get the closest maximum value
+		if (numGroups == 0) {
+			// 1 group of numCPUs CPUs
+			return 1;
+		} else if (numGroups > numCPUs) {
+			// numCPUs groups of 1 CPU
+			return numCPUs;
+		}
+
+		// The chosen value is somewhat decent, get its closest valid number
+		size_t lower = numGroups - 1;
+		size_t upper = numGroups + 1;
+		while (lower > 0 || upper <= numCPUs) {
 			if ((lower > 0) && (numCPUs % lower == 0)) {
 				result = lower;
 				break;
 			}
 
-			if ((greater <= numCPUs) && (numCPUs % greater == 0)) {
-				result = greater;
+			if ((upper <= numCPUs) && (numCPUs % upper == 0)) {
+				result = upper;
 				break;
 			}
 
-			lower--;
-			greater++;
+			// We should never underflow as we are working with size_t
+			if (lower > 0) {
+				lower--;
+			}
+			upper++;
 		}
 
-		assert(result != 0);
-		assert(result > 0 && result <= numCPUs);
+		assert((result > 0) && (result <= numCPUs) && (numCPUs % result == 0));
 
 		return result;
 	}
