@@ -332,16 +332,16 @@ Other implementations can be compiled in with the corresponding `./configure` fl
 
 The available implementations are:
 
-* \[default\] `NANOS6_DEPENDENCIES=linear-regions-fragmented`  - Supporting all features.
-* `NANOS6_DEPENDENCIES=discrete` - No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
-
+* `NANOS6_DEPENDENCIES=linear-regions-fragmented`: Supporting all features. **Default** implementation.
+* `NANOS6_DEPENDENCIES=discrete`: No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
 
 ## DLB Support
 
-* DLB is a library devoted to speed up hybrid parallel applications and maximize the utilization of computational resources. More information about this library can be found [here](https://pm.bsc.es/dlb). To enable DLB support for Nanos6, a working DLB installation must be present in your environment.
-* Configuring Nanos6 with DLB support is done through the `--with-dlb` flag, specifying the root directory of the DLB installation.
-* After configuring DLB support for Nanos6, its enabling can be controlled at run-time through the `NANOS6_ENABLE_DLB` environment variable. To run with Nanos6 with DLB support then, this variable must be set to true (`export NANOS6_ENABLE_DLB=1`), since by default DLB is disabled.
-* Once DLB is enabled for Nanos6, OmpSs-2 applications will benefit from dynamic resource sharing automatically. The following example showcases the executions of two applications that share the available CPUs between them:
+DLB is a library devoted to speed up hybrid parallel applications and maximize the utilization of computational resources. More information about this library can be found [here](https://pm.bsc.es/dlb). To enable DLB support for Nanos6, a working DLB installation must be present in your environment. Configuring Nanos6 with DLB support is done through the `--with-dlb` flag, specifying the root directory of the DLB installation.
+
+After configuring DLB support for Nanos6, its enabling can be controlled at run-time through the `NANOS6_ENABLE_DLB` environment variable. To run with Nanos6 with DLB support then, this variable must be set to true (`export NANOS6_ENABLE_DLB=1`), since by default DLB is disabled.
+
+Once DLB is enabled for Nanos6, OmpSs-2 applications will benefit from dynamic resource sharing automatically. The following example showcases the executions of two applications that share the available CPUs between them:
 
 ```sh
 # Run the first application using 10 CPUs (0, 1, ..., 9)
@@ -353,4 +353,3 @@ taskset -c 10-19 ./cholesky-fact.test &
 # At this point the previous applications should be running while sharing resources
 # ...
 ```
-
