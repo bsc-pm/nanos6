@@ -97,6 +97,14 @@ $ taskset -c 0-2,4 ./app
 
 would run `app` on cores 0, 1, 2 and 4.
 
+### Scheduling options
+
+The scheduling infrastructure provides the following environment variables to modify the behavior of the task scheduler.
+
+* `NANOS6_SCHEDULING_POLICY=fifo|lifo`: Specifies whether ready tasks are added to the ready queue using a LIFO or a FIFO policy. **fifo** is the default.
+* `NANOS6_IMMEDIATE_SUCCESSOR=1|0`: Enables/disables the immediate successor policy. Enabled by default.
+* `NANOS6_PRIORITY=1|0`: Enables/disables support for task priorities in the scheduler. Enabled by default.
+
 
 ## Tracing, debugging and other options
 
