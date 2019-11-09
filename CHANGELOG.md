@@ -6,18 +6,18 @@ All notable changes to this project will be documented in this file.
 The 2.2.2 release corresponds to the OmpSs-2 2019.06.2 release. It introduces bug fixes.
 
 ### General
-- Compiling extrae variant with high optimization flags
-- Removing backtrace sampling from the extrae variant
+- Compile extrae variant with high optimization flags
+- Remove backtrace sampling from the extrae variant
 
 
 ## Version 2.2.1, Fri Sep 27, 2019
 The 2.2.1 release corresponds to the OmpSs-2 2019.06.1 release. It mainly introduces bug fixes and code improvements.
 
 ### General
-- Renaming loop directive to task for
+- Rename loop directive to task for
 - Tasks can leverage reductions and external events at the same time (over distinct data regions)
 - OmpSs-2@Cluster bugfixes
-- Fixing binding information reported by nanos6-info binary
+- Fix binding information reported by nanos6-info binary
 - Support for the TAGASPI library
 - Other bugfixes and code improvements
 
