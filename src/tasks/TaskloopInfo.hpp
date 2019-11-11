@@ -27,10 +27,11 @@ private:
 	
 protected:
 	bounds_t _bounds;
+	bool _sourceTaskloop;
 	
 public:
 	inline TaskloopInfo()
-		: _bounds()
+		: _bounds(), _sourceTaskloop(false)
 	{}
 
 	inline void reinitialize() 
@@ -56,6 +57,7 @@ public:
 		_bounds.lower_bound = lowerBound;
 		_bounds.upper_bound = upperBound;
 		_bounds.grainsize = grainsize;
+		_sourceTaskloop = true;
 		
 		initialize();
 	}
@@ -90,6 +92,11 @@ public:
 	inline size_t getIterationCount()
 	{
 		return (_bounds.upper_bound - _bounds.lower_bound);
+	}
+
+	inline bool isSourceTaskloop()
+	{
+		return _sourceTaskloop;
 	}
 };
 

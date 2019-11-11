@@ -2645,9 +2645,8 @@ namespace DataAccessRegistration {
 	) {
 		assert(task != nullptr);
 
-		bool isChildTaskloop = task->getParent() != nullptr && task->getParent()->isTaskloop();
-		if (task->isTaskloop() && !isChildTaskloop) {
-			weak = true;
+		if (task->isTaskloop()) {
+			weak |= ((Taskloop *)task)->isSourceTaskloop();
 		}
 		
 		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector

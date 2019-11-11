@@ -63,7 +63,7 @@ public:
 	) {
 
 		nanos6_task_info_t *taskInfo = getTaskInfo();
-		bool isChildTaskloop = getParent()->isTaskloop();
+		bool isChildTaskloop = !_taskloopInfo.isSourceTaskloop();
 
 		if (isChildTaskloop) {
 			taskInfo->implementations[0].run(getArgsBlock(), &_taskloopInfo.getBounds(), nullptr);
@@ -96,10 +96,6 @@ public:
 					}
 				}
 
-				// Set the flags
-				taskloop->setRunnable(true);
-				//taskloop->setDelayedRelease(false);
-
 				// Set bounds of grainsize
 				bounds_t &childBounds = taskloop->getTaskloopInfo().getBounds();
 				bounds_t &myBounds = _taskloopInfo.getBounds();
@@ -126,6 +122,11 @@ public:
 	inline bool hasPendingIterations()
 	{
 		return (_taskloopInfo.getIterationCount() > 0);
+	}
+
+	inline bool isSourceTaskloop()
+	{
+		return _taskloopInfo.isSourceTaskloop();
 	}
 };
 
