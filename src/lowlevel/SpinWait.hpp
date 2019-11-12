@@ -1,9 +1,8 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
-
 
 
 #ifndef SPIN_WAIT_HPP
@@ -29,35 +28,28 @@
 #define CACHELINE_SIZE 64
 #endif
 
-#define likely(x)	  __builtin_expect(!!(x), 1)
-#define unlikely(x)	__builtin_expect(!!(x), 0)
-
 #ifdef KNL_ARCH
 #include <xmmintrin.h>
 #endif
 
 #ifdef POWER9_ARCH
 /* Macros for adjusting thread priority (hardware multi-threading) */
-#define HMT_very_low()   asm volatile("or 31,31,31   # very low priority")
-#define HMT_low()	asm volatile("or 1,1,1	  # low priority")
-#define HMT_medium_low() asm volatile("or 6,6,6	  # medium low priority")
-#define HMT_medium()	 asm volatile("or 2,2,2	  # medium priority")
+#define HMT_very_low()    asm volatile("or 31,31,31   # very low priority")
+#define HMT_low()         asm volatile("or 1,1,1	  # low priority")
+#define HMT_medium_low()  asm volatile("or 6,6,6	  # medium low priority")
+#define HMT_medium()      asm volatile("or 2,2,2	  # medium priority")
 #define HMT_medium_high() asm volatile("or 5,5,5	  # medium high priority")
-#define HMT_high()   asm volatile("or 3,3,3	  # high priority")
+#define HMT_high()        asm volatile("or 3,3,3	  # high priority")
+#define HMT_barrier()     asm volatile("" : : : "memory")
 #endif
 
 	
-static inline void barrier()
-{
-	asm volatile("" : : : "memory");
-}
-
-static __always_inline void cpuRelax()
+static inline void spinWait()
 {
 #ifdef KNL_ARCH
 	_mm_pause();
 #elif defined(POWER9_ARCH)
-	do { HMT_low(); HMT_medium(); barrier(); } while (0);
+	do { HMT_low(); HMT_medium(); HMT_barrier(); } while (0);
 #elif defined(MN4_ARCH)
 	asm volatile("pause" ::: "memory");
 #elif defined(ARM_ARCH)
@@ -67,10 +59,6 @@ static __always_inline void cpuRelax()
 #endif
 }
 
-static inline void spinWait() {
-	cpuRelax();
-}
-
 template<class T, size_t Size = CACHELINE_SIZE>
 class Padded : public T {
 	constexpr static size_t roundup(size_t const x, size_t const y) {
@@ -78,4 +66,5 @@ class Padded : public T {
 	}
 	uint8_t padding[roundup(sizeof(T), Size)-sizeof(T)];
 };
+
 #endif // SPIN_WAIT_HPP
