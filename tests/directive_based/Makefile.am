@@ -161,7 +161,12 @@ reductions_tests += \
 	red-stress.debug.test
 
 discrete_tests += \
-	discrete-deps.debug.test
+	discrete-deps.debug.test \
+	discrete-deps-nonest.debug.test \
+	discrete-deps-nonest.debug.test \
+	discrete-deps-early-release.debug.test \
+	discrete-deps-er-and-weak.debug.test \
+	discrete-deps-wait.debug.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the

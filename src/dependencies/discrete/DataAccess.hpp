@@ -19,6 +19,7 @@
 
 struct DataAccess;
 class Task;
+struct BottomMapEntry;
 
 //! Definitions for the access flags
 #define BIT(n) ((unsigned int) (1 << n))
@@ -59,6 +60,9 @@ private:
 	//! Next task with an access matching this one
 	std::atomic<Task *> _successor;
 	std::atomic<Task *> _child;
+
+	//! Entry in the bottom map this is linked to.
+	std::atomic<BottomMapEntry *> _bottomMapEntry;
 
 	//! Atomic flags for Read / Write / Deletable / Finished
 	std::atomic<access_flags_t> _accessFlags;
@@ -216,6 +220,14 @@ public:
 
 	inline access_flags_t unsetFlags(access_flags_t flagsToUnset) {
 		return _accessFlags.fetch_and(~flagsToUnset);
+	}
+
+	inline void setBottomMapEntry(BottomMapEntry * entry) {
+		_bottomMapEntry = entry;
+	}
+
+	inline BottomMapEntry * getBottomMapEntry() const {
+		return _bottomMapEntry;
 	}
 };
 

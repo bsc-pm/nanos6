@@ -167,30 +167,15 @@ namespace DataAccessRegistration {
 			return false;
 	}
 
-	// This represents a bottom map CAS.
-	static inline bool checkBottomMap(Task * task, void * address, bool keepDeleting, bool isReduction) {
-		TaskDataAccesses &taskAccesses = task->getDataAccesses();
-		assert(!taskAccesses.hasBeenDeleted());
-		DataAccess * access = taskAccesses.findAccess(address);
-		Task * parent = task->getParent();
-		TaskDataAccesses &parentAccesses = parent->getDataAccesses();
-		assert(!parentAccesses.hasBeenDeleted());
-		{
-			std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccesses._lock);
-			bottom_map_t &bottomMap = parentAccesses._subaccessBottomMap;
-			bottom_map_t::iterator itMap = bottomMap.find(address);
-			assert(itMap != bottomMap.end());
-			if(itMap->second._access == access) {
-				if(isReduction && keepDeleting)
-					itMap->second._access = nullptr;
-				else if(keepDeleting)
-					bottomMap.erase(itMap);
+	static inline bool checkBottomMap(Task * task, void * address, bool keepDeleting, DataAccess * access, bool isReduction) {
+		assert(!task->getParent()->getDataAccesses().hasBeenDeleted());
+		BottomMapEntry * entry = access->getBottomMapEntry();
+		assert(entry != nullptr);
 
-				return true;
-			}
-		}
-
-		return false;
+		if(keepDeleting)
+			return entry->_access.compare_exchange_strong(access, nullptr);
+		else
+			return (entry->_access == access);
 	}
 
 	void satisfySuccessorFromChain(void * address, CPUDependencyData &hpDependencyData,
@@ -301,17 +286,17 @@ namespace DataAccessRegistration {
 				}
 			} else {
 				// Look at the bottom map.
-				if(checkBottomMap(currentTaskIterator, address, keepDeleting, currentAccessIterator->getType() == REDUCTION_ACCESS_TYPE)) {
+				bool isReduction = currentAccessIterator->getType() == REDUCTION_ACCESS_TYPE;
+				if(checkBottomMap(currentTaskIterator, address, keepDeleting, currentAccessIterator, isReduction)) {
 					keepDeleting = satisfyReads = satisfyWrites = false;
+				} else {
 					successor = currentAccessIterator->getSuccessor();
+
 					// This retry can happen multiple times.
 					while(successor == nullptr) {
 						spinWait();
 						successor = currentAccessIterator->getSuccessor();
 					}
-
-					if (toDelete != nullptr)
-						decreaseDeletableCountOrDelete(toDelete, hpDependencyData._deletableOriginators);
 				}
 			}
 		}
@@ -341,15 +326,16 @@ namespace DataAccessRegistration {
 			DataAccess * lastChild = nullptr;
 			TaskDataAccesses &taskAccesses = task->getDataAccesses();
 			assert(!taskAccesses.hasBeenDeleted());
-			{
-				std::lock_guard<TaskDataAccesses::spinlock_t> guard(taskAccesses._lock);
-				bottom_map_t &bottomMap = taskAccesses._subaccessBottomMap;
-				bottom_map_t::iterator itMap = bottomMap.find(address);
-				assert(itMap != bottomMap.end());
-				lastChild = itMap->second._access;
-				itMap->second._access = access;
-			}
 
+			bottom_map_t &bottomMap = taskAccesses._subaccessBottomMap;
+			bottom_map_t::iterator itMap = bottomMap.find(address);
+			assert(itMap != bottomMap.end());
+			BottomMapEntry &node = itMap->second;
+			lastChild = node._access;
+
+			// Maybe this doesn't need to be CAS and can be an assign.
+			while (!node._access.compare_exchange_weak(lastChild, access));
+			assert(lastChild != nullptr);
 			lastChild->setSuccessor(task);
 		}
 
@@ -502,22 +488,19 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
 
-		{
-			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStruct._lock);
-			bottom_map_t &bottomMap = accessStruct._subaccessBottomMap;
+		bottom_map_t &bottomMap = accessStruct._subaccessBottomMap;
 
-			for (bottom_map_t::iterator itMap = bottomMap.begin(); itMap != bottomMap.end(); itMap++) {
-				ReductionInfo *reductionInfo = itMap->second._reductionInfo;
+		for (bottom_map_t::iterator itMap = bottomMap.begin(); itMap != bottomMap.end(); itMap++) {
+			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 
-				if (reductionInfo != nullptr) {
-					assert(!reductionInfo->finished());
-					if (itMap->second._access == nullptr && reductionInfo->markAsClosed())
-						releaseReductionInfo(reductionInfo);
-					else
-						reductionInfo->markAsClosed();
+			if (reductionInfo != nullptr) {
+				assert(!reductionInfo->finished());
+				if (itMap->second._access == nullptr && reductionInfo->markAsClosed())
+					releaseReductionInfo(reductionInfo);
+				else
+					reductionInfo->markAsClosed();
 
-					itMap->second._reductionInfo = nullptr;
-				}
+				itMap->second._reductionInfo = nullptr;
 			}
 		}
 
@@ -531,7 +514,7 @@ namespace DataAccessRegistration {
 				unlockAccessInTaskwait(task, access, addressArray[i], dependencyData);
 		}
 
-		processSatisfiedOriginators(dependencyData, computePlace, false);
+		processSatisfiedOriginators(dependencyData, computePlace, true);
 	}
 
 	void handleExitTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace,
@@ -634,56 +617,50 @@ namespace DataAccessRegistration {
 			accessStruct.increaseDeletableCount();
 			access->setInstrumentationId(dataAccessInstrumentationId);
 
-			// Entering the critical region. This will be in the future a CAS, but right now it's atomic because we hold
-			// a lock.
-
 			bottom_map_t &addresses = parentAccessStruct._subaccessBottomMap;
-			{
-				std::lock_guard<TaskDataAccesses::spinlock_t> guard(parentAccessStruct._lock);
+			// Determine our predecessor safely, and maybe insert ourselves to the map.
+			std::pair<bottom_map_t::iterator, bool> result = addresses.emplace(std::piecewise_construct,
+				std::forward_as_tuple(address),
+				std::forward_as_tuple(access));
 
-				/*
-				 *  Determine our predecessor safely, and maybe insert ourselves to the map.
-				 */
+			itMap = result.first;
+			access->setBottomMapEntry(&itMap->second);
 
-				itMap = addresses.find(address);
-				if (itMap != addresses.end()) {
-					predecessor = itMap->second._access;
-					itMap->second._access = access;
-				} else {
-					// Insert task to map.
-					itMap = addresses.emplace(std::piecewise_construct, std::forward_as_tuple(address),
-											   std::forward_as_tuple(access)).first;
+			if(!result.second) {
+				// Element already exists.
+				predecessor = itMap->second._access;
+				while(!itMap->second._access.compare_exchange_weak(predecessor, access))
+					spinWait();
+			}
+
+			// Check if we're closing a reduction, or allocate one in case we need it.
+			if (accessType == REDUCTION_ACCESS_TYPE) {
+				ReductionInfo * currentReductionInfo = itMap->second._reductionInfo;
+				reductionInfo = currentReductionInfo;
+				reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
+				size_t length = access->getReductionLength();
+
+				if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex ||
+					currentReductionInfo->getOriginalLength() != length) {
+					currentReductionInfo = allocateReductionInfo(accessType, access->getReductionIndex(), typeAndOpIndex,
+						address, length, *task);
+					if(predecessor == nullptr)
+						currentReductionInfo->incrementUnregisteredAccesses();
 				}
 
-				// Check if we're closing a reduction, or allocate one in case we need it.
-				if (accessType == REDUCTION_ACCESS_TYPE) {
-					ReductionInfo * currentReductionInfo = itMap->second._reductionInfo;
-					reductionInfo = currentReductionInfo;
-					reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
-					size_t length = access->getReductionLength();
+				currentReductionInfo->incrementRegisteredAccesses();
+				itMap->second._reductionInfo = currentReductionInfo;
 
-					if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex ||
-						currentReductionInfo->getOriginalLength() != length) {
-						currentReductionInfo = allocateReductionInfo(accessType, access->getReductionIndex(), typeAndOpIndex,
-							address, length, *task);
-						if(predecessor == nullptr)
-							currentReductionInfo->incrementUnregisteredAccesses();
-					}
+				assert(currentReductionInfo != nullptr);
+				assert(currentReductionInfo->getTypeAndOperatorIndex() == typeAndOpIndex);
+				assert(currentReductionInfo->getOriginalLength() == length);
+				assert(currentReductionInfo->getOriginalAddress() == address);
 
-					currentReductionInfo->incrementRegisteredAccesses();
-					itMap->second._reductionInfo = currentReductionInfo;
-
-					assert(currentReductionInfo != nullptr);
-					assert(currentReductionInfo->getTypeAndOperatorIndex() == typeAndOpIndex);
-					assert(currentReductionInfo->getOriginalLength() == length);
-					assert(currentReductionInfo->getOriginalAddress() == address);
-
-					access->setReductionInfo(currentReductionInfo);
-				} else {
-					reductionInfo = itMap->second._reductionInfo;
-					itMap->second._reductionInfo = nullptr;
-				}
-			} // End of critical region
+				access->setReductionInfo(currentReductionInfo);
+			} else {
+				reductionInfo = itMap->second._reductionInfo;
+				itMap->second._reductionInfo = nullptr;
+			}
 
 			// The "registration" was atomic because of the bottom map. Now we are outside of the lock section, and we
 			// have to satisfy the access if needed in an atomical way.

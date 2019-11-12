@@ -7,11 +7,13 @@
 #ifndef BOTTOM_MAP_ENTRY_HPP
 #define BOTTOM_MAP_ENTRY_HPP
 
+#include <atomic>
+
 #include "DataAccess.hpp"
 #include "ReductionInfo.hpp"
 
 struct BottomMapEntry {
-	DataAccess * _access;
+	std::atomic<DataAccess *> _access;
 	ReductionInfo * _reductionInfo;
 
 	BottomMapEntry(DataAccess * access) :
