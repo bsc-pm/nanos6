@@ -27,6 +27,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [PAPI](https://icl.cs.utk.edu/papi/software/index.html)  to generate statistics that include hardware counters
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
+1. [DLB](https://pm.bsc.es/dlb) to enable dynamic management and sharing of computing resources
 
 
 ## Build procedure
@@ -53,13 +54,14 @@ where `INSTALLATION_PREFIX` is the directory into which to install Nanos6.
 The configure script accepts the following options:
 
 1. `--with-nanos6-mercurium=prefix` to specify the prefix of the Mercurium installation
-1. `--with-boost` to specify the prefix of the Boost installation
+1. `--with-boost=prefix` to specify the prefix of the Boost installation
 1. `--with-libunwind=prefix` to specify the prefix of the libunwind installation
 1. `--with-papi=prefix` to specify the prefix of the PAPI installation
 1. `--with-libnuma=prefix` to specify the prefix of the numactl installation
 1. `--with-extrae=prefix` to specify the prefix of the extrae installation
-1. `--enable-cuda` to enable support for CUDA tasks
 1. `--with-pqos=prefix` to specify the prefix of the PQoS installation
+1. `--with-dlb=prefix` to specify the prefix of the DLB installation
+1. `--enable-cuda` to enable support for CUDA tasks
 1. `--enable-monitoring` to enable monitoring and predictions of task/CPU/thread statistics
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
 1. `--enable-monitoring-hwevents` to enable monitoring of hardware counters (which must be paired with an appropriate library)
@@ -142,17 +144,17 @@ By default it generates a lot of information.
 This is controlled by the `NANOS6_VERBOSE` envar, which can contain a comma separated list of areas.
 The areas are the following:
 
-<table><tbody><tr><td> <strong>Section</strong> </td><td> <strong>Description</strong> 
-</td></tr><tr><td> <em>AddTask</em> </td><td> Task creation 
-</td></tr><tr><td> <em>DependenciesByAccess</em> </td><td> Dependencies by their accesses 
-</td></tr><tr><td> <em>DependenciesByAccessLinks</em> </td><td> Dependencies by the links between the accesses to the same data 
-</td></tr><tr><td> <em>DependenciesByGroup</em> </td><td> Dependencies by groups of tasks that determine common predecessors and common successors 
-</td></tr><tr><td> <em>LeaderThread</em> </td><td> 
-</td></tr><tr><td> <em>TaskExecution</em> </td><td> Task execution 
-</td></tr><tr><td> <em>TaskStatus</em> </td><td> Task status transitions 
-</td></tr><tr><td> <em>TaskWait</em> </td><td> Entering and exiting taskwaits 
-</td></tr><tr><td> <em>ThreadManagement</em> </td><td> Thread creation, activation and suspension 
-</td></tr><tr><td> <em>UserMutex</em> </td><td> User-side mutexes (critical) 
+<table><tbody><tr><td> <strong>Section</strong> </td><td> <strong>Description</strong>
+</td></tr><tr><td> <em>AddTask</em> </td><td> Task creation
+</td></tr><tr><td> <em>DependenciesByAccess</em> </td><td> Dependencies by their accesses
+</td></tr><tr><td> <em>DependenciesByAccessLinks</em> </td><td> Dependencies by the links between the accesses to the same data
+</td></tr><tr><td> <em>DependenciesByGroup</em> </td><td> Dependencies by groups of tasks that determine common predecessors and common successors
+</td></tr><tr><td> <em>LeaderThread</em> </td><td>
+</td></tr><tr><td> <em>TaskExecution</em> </td><td> Task execution
+</td></tr><tr><td> <em>TaskStatus</em> </td><td> Task status transitions
+</td></tr><tr><td> <em>TaskWait</em> </td><td> Entering and exiting taskwaits
+</td></tr><tr><td> <em>ThreadManagement</em> </td><td> Thread creation, activation and suspension
+</td></tr><tr><td> <em>UserMutex</em> </td><td> User-side mutexes (critical)
 </td></tr></tbody></table>
 
 The case is ignored, and the `all` keyword enables all of them.
@@ -324,3 +326,23 @@ The available implementations are:
 
 * \[default\] `NANOS6_DEPENDENCIES=linear-regions-fragmented`  - Supporting all features.
 * `NANOS6_DEPENDENCIES=discrete` - No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
+
+
+## DLB Support
+
+* DLB is a library devoted to speed up hybrid parallel applications and maximize the utilization of computational resources. More information about this library can be found [here](https://pm.bsc.es/dlb). To enable DLB support for Nanos6, a working DLB installation must be present in your environment.
+* Configuring Nanos6 with DLB support is done through the `--with-dlb` flag, specifying the root directory of the DLB installation.
+* After configuring DLB support for Nanos6, its enabling can be controlled at run-time through the `NANOS6_ENABLE_DLB` environment variable. To run with Nanos6 with DLB support then, this variable must be set to true (`export NANOS6_ENABLE_DLB=1`), since by default DLB is disabled.
+* Once DLB is enabled for Nanos6, OmpSs-2 applications will benefit from dynamic resource sharing automatically. The following example showcases the executions of two applications that share the available CPUs between them:
+
+```sh
+# Run the first application using 10 CPUs (0, 1, ..., 9)
+taskset -c 0-9   ./merge-sort.test &
+
+# Run the second application using 10 CPUs (10, 11, ..., 19)
+taskset -c 10-19 ./cholesky-fact.test &
+
+# At this point the previous applications should be running while sharing resources
+# ...
+```
+

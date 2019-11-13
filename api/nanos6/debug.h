@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -56,8 +56,12 @@ char const *nanos6_get_runtime_compiler_flags(void);
 //! This function can be called from within used code, most probably from "main"
 void nanos6_wait_for_full_initialization(void);
 
-//! \brief get the number of CPUs that were enabled when the program started
+//! \brief Get the number of CPUs that were enabled when the program started
 unsigned int nanos6_get_num_cpus(void);
+
+//! \brief Get the total number of CPUs available to the runtime
+//! This function behaves as nanos6_get_num_cpus if DLB is disabled
+unsigned int nanos6_get_total_num_cpus(void);
 
 //! \brief get the operating system assigned identifier of the CPU where the call to this function originated
 long nanos6_get_current_system_cpu(void);
@@ -80,11 +84,17 @@ int nanos6_disable_cpu(long systemCPUId);
 typedef enum {
 	nanos6_invalid_cpu_status,
 	nanos6_uninitialized_cpu,
-	nanos6_enabling_cpu,
 	nanos6_enabled_cpu,
-	nanos6_disabling_cpu,
+	nanos6_enabling_cpu,
 	nanos6_disabled_cpu,
-	nanos6_shutting_down_cpu
+	nanos6_disabling_cpu,
+	nanos6_lent_cpu,
+	nanos6_lending_cpu,
+	nanos6_acquired_cpu,
+	nanos6_acquired_enabled_cpu,
+	nanos6_returned_cpu,
+	nanos6_shutting_down_cpu,
+	nanos6_shutdown_cpu
 } nanos6_cpu_status_t;
 
 //! \brief retrieve the runtime view of a given CPU identified by the identifier given by the operating system

@@ -7,10 +7,11 @@
 #ifndef TASK_FINALIZATION_IMPLEMENTATION_HPP
 #define TASK_FINALIZATION_IMPLEMENTATION_HPP
 
+#include "CPUManager.hpp"
 #include "DataAccessRegistration.hpp"
 #include "MemoryAllocator.hpp"
 #include "TaskFinalization.hpp"
-#include "executors/threads/CPUManager.hpp"
+#include "scheduling/Scheduler.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
 #include "TaskDataAccesses.hpp"

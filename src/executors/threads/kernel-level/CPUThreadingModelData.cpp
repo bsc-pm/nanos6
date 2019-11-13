@@ -4,13 +4,12 @@
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
+#include <cassert>
+
 #include "CPUThreadingModelData.hpp"
-#include "executors/threads/CPUActivation.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "system/RuntimeInfo.hpp"
-
-#include <cassert>
 
 
 EnvironmentVariable<StringifiedMemorySize> CPUThreadingModelData::_defaultThreadStackSize("NANOS6_STACK_SIZE", 8 * 1024 * 1024);

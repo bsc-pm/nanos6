@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef THREAD_MANAGER_POLICY_HPP
@@ -9,8 +9,9 @@
 
 #include <cassert>
 
-#include "CPUActivation.hpp"
+#include "CPUManager.hpp"
 #include "tasks/Task.hpp"
+
 
 class ThreadManagerPolicy {
 public:
@@ -32,15 +33,15 @@ public:
 		assert(replacementTask != nullptr);
 		assert(currentTask != nullptr);
 		assert(cpu != nullptr);
-		
+
 		if (replacementTask->getThread() != nullptr) {
 			return false;
 		}
-		
-		if (!CPUActivation::acceptsWork(cpu)) {
+
+		if (!CPUManager::acceptsWork(cpu)) {
 			return false;
 		}
-		
+
 		bool mustRunInline = false;
 		switch (policy) {
 			case POLICY_NO_INLINE:
@@ -53,7 +54,7 @@ public:
 				mustRunInline = true;
 				break;
 		}
-		
+
 		return mustRunInline;
 	}
 	

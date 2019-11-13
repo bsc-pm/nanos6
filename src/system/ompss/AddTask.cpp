@@ -15,13 +15,13 @@
 #include <nanos6.h>
 
 #include "AddTask.hpp"
+#include "MemoryAllocator.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "MemoryAllocator.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "tasks/StreamExecutor.hpp"

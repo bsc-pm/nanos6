@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-#	
+#
 #	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 AC_PREREQ([2.69])
@@ -82,6 +82,7 @@ AC_CHECK_PAPI
 AC_CHECK_LIBNUMA
 AC_CHECK_MEMKIND
 AC_CHECK_PQOS
+AC_CHECK_DLB
 
 AC_CHECK_FUNCS([reallocarray aligned_alloc])
 AC_CHECK_MADV_FREE
@@ -535,6 +536,16 @@ if test x"${ac_use_pqos}" = x"yes" ; then
 		AC_MSG_WARN([Both PQoS hardware event monitoring and PAPI Instrumentation are enabled.])
 		AC_MSG_WARN([Using both at the same time may cause conflicts when polling events.])
 	fi
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   DLB is enabled... ])
+if test x"${ac_use_dlb}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   DLB CPPFLAGS... ${dlb_CPPFLAGS}])
+	_AS_ECHO([   DLB LIBS... ${dlb_LIBS}])
 else
 	AC_MSG_RESULT([no])
 fi

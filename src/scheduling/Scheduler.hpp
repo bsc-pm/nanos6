@@ -45,6 +45,15 @@ public:
 		return _instance->hasAvailableWork(computePlace, deviceComputePlace);
 	}
 	
+	//! \brief Notify the current scheduler that a CPU is about to be disabled
+	//! in case any actions must be taken
+	//!
+	//! \param[in] cpuId The id of the cpu that will be disabled
+	static inline void disablingCPU(size_t cpuId)
+	{
+		_instance->disablingCPU(cpuId);
+	}
+	
 };
 
 #endif // SCHEDULER_HPP

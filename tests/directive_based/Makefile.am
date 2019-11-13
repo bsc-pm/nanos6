@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #	
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
@@ -30,6 +30,7 @@ linear_region_tests =
 reductions_tests =
 runtime_handled_reductions_tests =
 discrete_tests =
+dlb_tests =
 
 
 if HAVE_NANOS6_MERCURIUM
@@ -47,8 +48,19 @@ base_tests += \
 	task-for-dep-multiaxpy.test \
 	task-for-nqueens.test
 
+# Ignore CPU Activation test if we have DLB
+# NOTE: The order of this tests should never change, new DLB-related
+#       tests must be added under these
+if HAVE_DLB
+dlb_tests += \
+	dlb-cpu-management.test \
+	dlb-cpu-sharing-active-process.test \
+	dlb-cpu-sharing-passive-process.test \
+	dlb-cpu-sharing.test
+else
 cpu_management_tests += \
 	cpu-activation.test
+endif
 
 user_mutex_tests += \
 	critical.test
@@ -97,8 +109,17 @@ base_tests += \
 	task-for-dep-multiaxpy.debug.test \
 	task-for-nqueens.debug.test
 
+# Ignore CPU Activation test if we have DLB for now
+if HAVE_DLB
+dlb_tests += \
+	dlb-cpu-management.debug.test \
+	dlb-cpu-sharing-active-process.debug.test \
+	dlb-cpu-sharing-passive-process.debug.test \
+	dlb-cpu-sharing.debug.test
+else
 cpu_management_tests += \
 	cpu-activation.debug.test
+endif
 
 user_mutex_tests += \
 	critical.debug.test
@@ -164,6 +185,11 @@ check_PROGRAMS += $(discrete_tests)
 TESTS += $(discrete_tests)
 endif
 
+if HAVE_DLB
+check_PROGRAMS += $(dlb_tests)
+TESTS += $(dlb_tests)
+endif
+
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 test_common_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 
@@ -195,8 +221,12 @@ critical_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 critical_test_LDFLAGS = $(test_common_ldflags)
 
 dep_nonest_debug_test_SOURCES = dependencies/dep-nonest.cpp
+dep_nonest_debug_test_CPPFLAGS =
 if HAVE_CONCURRENT_SUPPORT
-dep_nonest_debug_test_CPPFLAGS = -DHAVE_CONCURRENT_SUPPORT
+dep_nonest_debug_test_CPPFLAGS += -DHAVE_CONCURRENT_SUPPORT
+endif
+if HAVE_DLB
+dep_nonest_debug_test_CPPFLAGS += -DHAVE_DLB
 endif
 dep_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dep_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
@@ -205,6 +235,9 @@ dep_nonest_test_SOURCES = dependencies/dep-nonest.cpp
 dep_nonest_test_CPPFLAGS = -DNDEBUG
 if HAVE_CONCURRENT_SUPPORT
 dep_nonest_test_CPPFLAGS += -DHAVE_CONCURRENT_SUPPORT
+endif
+if HAVE_DLB
+dep_nonest_test_CPPFLAGS += -DHAVE_DLB
 endif
 dep_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 dep_nonest_test_LDFLAGS = $(test_common_ldflags)
@@ -345,11 +378,17 @@ red_firstprivate_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_firstprivate_test_LDFLAGS = $(test_common_ldflags)
 
 red_nonest_debug_test_SOURCES = reductions/red-nonest.cpp
+if HAVE_DLB
+red_nonest_debug_test_CPPFLAGS = -DHAVE_DLB
+endif
 red_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 red_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 red_nonest_test_SOURCES = reductions/red-nonest.cpp
 red_nonest_test_CPPFLAGS = -DNDEBUG
+if HAVE_DLB
+red_nonest_test_CPPFLAGS += -DHAVE_DLB
+endif
 red_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_nonest_test_LDFLAGS = $(test_common_ldflags)
 
@@ -443,10 +482,52 @@ red_stress_test_CPPFLAGS = -DNDEBUG
 red_stress_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 red_stress_test_LDFLAGS = $(test_common_ldflags)
 
+dlb_cpu_management_test_SOURCES = dlb/dlb-cpu-management.cpp
+dlb_cpu_management_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_management_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_management_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_management_debug_test_SOURCES = dlb/dlb-cpu-management.cpp
+dlb_cpu_management_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_management_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dlb_cpu_sharing_test_SOURCES = dlb/dlb-cpu-sharing.cpp
+dlb_cpu_sharing_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_sharing_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_sharing_debug_test_SOURCES = dlb/dlb-cpu-sharing.cpp
+dlb_cpu_sharing_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dlb_cpu_sharing_active_process_test_SOURCES = dlb/dlb-cpu-sharing-active-process.cpp
+dlb_cpu_sharing_active_process_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_sharing_active_process_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_active_process_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_sharing_active_process_debug_test_SOURCES = dlb/dlb-cpu-sharing-active-process.cpp
+dlb_cpu_sharing_active_process_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_active_process_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dlb_cpu_sharing_passive_process_test_SOURCES = dlb/dlb-cpu-sharing-passive-process.cpp
+dlb_cpu_sharing_passive_process_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_sharing_passive_process_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_passive_process_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_sharing_passive_process_debug_test_SOURCES = dlb/dlb-cpu-sharing-passive-process.cpp
+dlb_cpu_sharing_passive_process_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_passive_process_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+# Set the HAVE_DLB shell variable depending on the defined one so that the
+# select-version.sh script knows if it has to deal with DLB's shared memory
+if HAVE_DLB
+export HAVE_DLB="1"
+endif
+
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
 else
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(PERL) $(top_srcdir)/tests/tap-driver.pl 
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(PERL) $(top_srcdir)/tests/tap-driver.pl
 endif
 
 

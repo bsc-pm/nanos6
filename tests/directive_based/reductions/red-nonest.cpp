@@ -1,22 +1,24 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <math.h>
 #include <set>
 #include <vector>
 
-#include <math.h>
+#include <nanos6/debug.h>
+
+#include "TestAnyProtocolProducer.hpp"
+#include "Timer.hpp"
 
 #include <Atomic.hpp>
 #include <Functors.hpp>
-#include "TestAnyProtocolProducer.hpp"
-
-#include <nanos6/debug.h>
-
 
 using namespace Functors;
 
@@ -46,13 +48,13 @@ struct TaskVerifier {
 		REDUCTION,
 		REDUCTION_OTHER
 	} type_t;
-	
+
 	typedef enum {
 		NOT_STARTED,
 		STARTED,
 		FINISHED
 	} status_t;
-	
+
 	int _id;
 	std::set<int> _runsAfter;
 	std::set<int> _runsBefore;
@@ -63,10 +65,10 @@ struct TaskVerifier {
 	int *_variable;
 	Atomic<int> *_numConcurrentTasks;
 	Atomic<int> *_numConcurrentReductionTasks;
-	
+
 private:
 	TaskVerifier();
-	
+
 public:
 	TaskVerifier(int &id, type_t type, int *variable, Atomic<int> *numConcurrentTasks = 0, Atomic<int> *numConcurrentReductionTasks = 0)
 		: _id(id++), _runsAfter(), _runsBefore(), _runsConcurrentlyWith(), _runsConcurrentlyWithReduction(),
@@ -74,8 +76,8 @@ public:
 		_numConcurrentTasks(numConcurrentTasks), _numConcurrentReductionTasks(numConcurrentReductionTasks)
 	{
 	}
-	
-	
+
+
 	char const *type2String() const
 	{
 		switch (_type) {
@@ -88,21 +90,31 @@ public:
 			case REDUCTION_OTHER:
 				return "REDUCTION OTHER";
 		}
-		
+
 		return "UNKNOWN";
 	}
-	
+
 	void submit(const std::vector<TaskVerifier *> &verifiers);
-	
+
 	void verify(const std::vector<TaskVerifier *> &verifiers)
 	{
 		assert(_status == NOT_STARTED);
+
+		// Check if we are running with DLB
+		bool runningWithDLB = false;
+#ifdef HAVE_DLB
+		char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
+		bool dlbEnvvarPresent = (dlbEnabled != 0);
+		if (dlbEnvvarPresent) {
+			runningWithDLB = (strcmp(dlbEnabled, "1") == 0);
+		}
+#endif
 		tap.emitDiagnostic("Task ", _id, " (", type2String(), ") starts");
 		_status = STARTED;
-		
+
 		for (std::set<int>::const_iterator it = _runsAfter.begin(); it != _runsAfter.end(); it++) {
 			int predecessor = *it;
-			
+
 			TaskVerifier *predecessorTask = verifiers[predecessor];
 			assert(predecessorTask != 0);
 			assert(this != predecessorTask);
@@ -112,45 +124,76 @@ public:
 				tap.evaluate(predecessorTask->_status == FINISHED, oss.str());
 			}
 		}
-		
+
 		if (!_runsConcurrentlyWithReduction.empty()) {
 			int nwait = _runsConcurrentlyWithReduction.size() + 1;
-			
+
 			assert(_numConcurrentReductionTasks != 0);
 			int var = ++(*_numConcurrentReductionTasks);
-			
+
 			std::ostringstream oss;
 			oss << "Task " << _id << " can run concurrently with all other reduction tasks";
-			
-			tap.timedEvaluate(
-				GreaterOrEqual<Atomic<int>, int>(*_numConcurrentReductionTasks, nwait),
-				SUSTAIN_MICROSECONDS * delayMultiplier,
-				oss.str()
-			);
+
+			// If we are running with DLB, this is a weak test
+			if (runningWithDLB) {
+				Timer innerTimer;
+				innerTimer.start();
+				while (innerTimer.lap() < (SUSTAIN_MICROSECONDS * delayMultiplier)) {
+					if (*_numConcurrentReductionTasks >= nwait) {
+						break;
+					}
+				}
+
+				tap.evaluateWeak(
+					*_numConcurrentReductionTasks >= nwait,
+					oss.str(), ""
+				);
+			} else {
+				tap.timedEvaluate(
+					GreaterOrEqual<Atomic<int>, int>(*_numConcurrentReductionTasks, nwait),
+					SUSTAIN_MICROSECONDS * delayMultiplier,
+					oss.str()
+				);
+			}
 		}
-		
+
 		if (!_runsConcurrentlyWith.empty()) {
 			int nwait = _runsConcurrentlyWith.size() + 1;
-			
+
 			assert(_numConcurrentTasks != 0);
 			int var = ++(*_numConcurrentTasks);
-			
+
 			std::ostringstream oss;
 			oss << "Task " << _id << " can run concurrently with all other compatible tasks";
-			
-			tap.timedEvaluate(
-				GreaterOrEqual<Atomic<int>, int>(*_numConcurrentTasks, nwait),
-				SUSTAIN_MICROSECONDS * delayMultiplier,
-				oss.str()
-			);
+
+			if (runningWithDLB) {
+				Timer innerTimer;
+				innerTimer.start();
+				while (innerTimer.lap() < (SUSTAIN_MICROSECONDS * delayMultiplier)) {
+					if (*_numConcurrentTasks >= nwait) {
+						break;
+					}
+				}
+
+				tap.evaluateWeak(
+					*_numConcurrentTasks >= nwait,
+					oss.str(), ""
+				);
+			} else {
+				tap.timedEvaluate(
+					GreaterOrEqual<Atomic<int>, int>(*_numConcurrentTasks, nwait),
+					SUSTAIN_MICROSECONDS * delayMultiplier,
+					oss.str()
+				);
+			}
 		}
-		
+
 		struct timespec delay = { 0, 1000000};
 		nanosleep(&delay, &delay);
-		
+
 		for (std::set<int>::const_iterator it = _runsBefore.begin(); it != _runsBefore.end(); it++) {
 			int successor = *it;
-			
+
 			TaskVerifier *successorTask = verifiers[successor];
 			assert(successorTask != 0);
 			assert(this != successorTask);
@@ -160,7 +203,7 @@ public:
 				tap.evaluate(successorTask->_status == NOT_STARTED, oss.str());
 			}
 		}
-		
+
 		_status = FINISHED;
 		tap.emitDiagnostic("Task ", _id, " (", type2String(), ") finishes");
 	}
@@ -221,20 +264,20 @@ struct VerifierConstraintCalculator {
 		WRITER,
 		REDUCTION
 	} access_type_t;
-	
+
 	access_type_t _lastAccessType;
-	
+
 	const std::vector<TaskVerifier *> *_verifiers;
-	
+
 	std::set<int> _lastWriters;
 	std::set<int> _lastReaders;
 	std::set<int> _newWriters;
 	std::set<int> _reducers;
-	
+
 	VerifierConstraintCalculator(const std::vector<TaskVerifier *> *verifiers)
 		: _lastAccessType(READERS), _verifiers(verifiers), _lastWriters(), _lastReaders(), _newWriters()
 	{}
-	
+
 	// Fills out the _runsBefore and _runsConcurrentlyWith members of the verifier that is about to exit the current view of the status
 	void flush()
 	{
@@ -242,20 +285,20 @@ struct VerifierConstraintCalculator {
 			// There can only be writers before last access, unless it's the first access
 			for (std::set<int>::const_iterator it = _lastWriters.begin(); it != _lastWriters.end(); it++) {
 				int writer = *it;
-				
+
 				TaskVerifier *writerVerifier = (*_verifiers)[writer];
 				assert(writerVerifier != 0);
-				
+
 				writerVerifier->_runsBefore = _lastReaders;
 				// Increment number of tests, corresponding to tests run by selfcheck and verify
 				numTests += _lastReaders.size();
 #ifdef FINE_SELF_CHECK
 				numTests += _lastReaders.size();
 #endif
-				
+
 				for (std::set<int>::const_iterator it2 = _lastWriters.begin(); it2 != _lastWriters.end(); it2++) {
 					int other = *it2;
-					
+
 					if (other != writer)
 						writerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -268,14 +311,14 @@ struct VerifierConstraintCalculator {
 			_lastWriters.clear();
 		} else {
 			assert(_lastAccessType == WRITER || _lastAccessType == REDUCTION);
-			
+
 			// Readers before last access
 			for (std::set<int>::const_iterator it = _lastReaders.begin(); it != _lastReaders.end(); it++) {
 				int reader = *it;
-				
+
 				TaskVerifier *readerVerifier = (*_verifiers)[reader];
 				assert(readerVerifier != 0);
-				
+
 				if (_lastAccessType != REDUCTION) {
 					readerVerifier->_runsBefore = _newWriters;
 					// Increment number of tests, corresponding to tests run by selfcheck and verify
@@ -291,10 +334,10 @@ struct VerifierConstraintCalculator {
 						(*_verifiers)[*it_red]->_runsConcurrentlyWith.insert(reader);
 					}
 				}
-				
+
 				for (std::set<int>::const_iterator it2 = _lastReaders.begin(); it2 != _lastReaders.end(); it2++) {
 					int other = *it2;
-					
+
 					if (other != reader)
 						readerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -305,15 +348,15 @@ struct VerifierConstraintCalculator {
 				numTests += readerVerifier->_runsConcurrentlyWith.empty() ? 0 : 1;
 			}
 			_lastReaders.clear();
-			
+
 			// Writer(s) before last access (either this or previous set will
 			// be non-empty, but not both unless it's the first access)
 			for (std::set<int>::const_iterator it = _lastWriters.begin(); it != _lastWriters.end(); it++) {
 				int writer = *it;
-				
+
 				TaskVerifier *writerVerifier = (*_verifiers)[writer];
 				assert(writerVerifier != 0);
-				
+
 				if (_lastAccessType != REDUCTION) {
 					writerVerifier->_runsBefore = _newWriters;
 					// Increment number of tests, corresponding to tests run by selfcheck and verify
@@ -329,10 +372,10 @@ struct VerifierConstraintCalculator {
 						(*_verifiers)[*it_red]->_runsConcurrentlyWith.insert(writer);
 					}
 				}
-				
+
 				for (std::set<int>::const_iterator it2 = _lastWriters.begin(); it2 != _lastWriters.end(); it2++) {
 					int other = *it2;
-					
+
 					if (other != writer)
 						writerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -346,7 +389,7 @@ struct VerifierConstraintCalculator {
 			_newWriters.clear();
 		}
 	}
-	
+
 	// Fills out the _runsConcurrentlyWith member of the very last group of accesses
 	// and _runsConcurrentlyWithReduction for all accesses
 	void flushConcurrent()
@@ -354,13 +397,13 @@ struct VerifierConstraintCalculator {
 		if (_lastAccessType == READERS) {
 			for (std::set<int>::const_iterator it = _lastReaders.begin(); it != _lastReaders.end(); it++) {
 				int reader = *it;
-				
+
 				TaskVerifier *readerVerifier = (*_verifiers)[reader];
 				assert(readerVerifier != 0);
-				
+
 				for (std::set<int>::const_iterator it2 = _lastReaders.begin(); it2 != _lastReaders.end(); it2++) {
 					int other = *it2;
-					
+
 					if (other != reader)
 						readerVerifier->_runsConcurrentlyWith.insert(other);
 				}
@@ -372,12 +415,12 @@ struct VerifierConstraintCalculator {
 			}
 		} else {
 			assert(_lastAccessType == WRITER || _lastAccessType == REDUCTION);
-			
+
 			for (std::set<int>::const_iterator it = _lastWriters.begin(); it != _lastWriters.end(); it++) {
 				int writer = *it;
 				TaskVerifier *writerVerifier = (*_verifiers)[writer];
 				assert(writerVerifier != 0);
-				
+
 				for (std::set<int>::const_iterator it2 = _lastWriters.begin(); it2 != _lastWriters.end(); it2++) {
 					int other = *it2;
 					if (other != writer)
@@ -390,13 +433,13 @@ struct VerifierConstraintCalculator {
 				numTests +=  writerVerifier->_runsConcurrentlyWith.empty() ? 0 : 1;
 			}
 		}
-		
+
 		// Fill _runsConcurrentlyWithReduction for all reduction accesses
 		for (std::set<int>::const_iterator it = _reducers.begin(); it != _reducers.end(); ++it) {
 			int reducer = *it;
 			TaskVerifier *reducerVerifier = (*_verifiers)[reducer];
 			assert(reducerVerifier != 0);
-			
+
 			for (std::set<int>::const_iterator it2 = _reducers.begin(); it2 != _reducers.end(); ++it2) {
 				int other = *it2;
 				if (other != reducer && (reducerVerifier->_runsConcurrentlyWith.find(other) == reducerVerifier->_runsConcurrentlyWith.end()))
@@ -409,19 +452,19 @@ struct VerifierConstraintCalculator {
 			numTests +=  reducerVerifier->_runsConcurrentlyWithReduction.empty() ? 0 : 1;
 		}
 	}
-	
+
 	void handleReader()
 	{
 		TaskVerifier *verifier = _verifiers->back();
 		assert(verifier != 0);
 		assert(verifier->_type == TaskVerifier::READ);
-		
+
 		// First reader after writers
 		if (_lastAccessType != READERS) {
 			flush();
 			_lastAccessType = READERS;
 		}
-		
+
 		// There can only be writers before the reader, unless it's the first access
 		if (!_lastWriters.empty()) {
 			verifier->_runsAfter = _lastWriters;
@@ -431,18 +474,18 @@ struct VerifierConstraintCalculator {
 #endif
 			numTests += _lastWriters.size();
 		}
-		
+
 		_lastReaders.insert(verifier->_id);
 	}
-	
+
 	void handleWriter()
 	{
 		TaskVerifier *verifier = _verifiers->back();
 		assert(verifier != 0);
 		assert(verifier->_type == TaskVerifier::WRITE);
-		
+
 		flush();
-		
+
 		// Writers before writer
 		if (!_lastWriters.empty()) {
 			verifier->_runsAfter = _lastWriters;
@@ -461,29 +504,38 @@ struct VerifierConstraintCalculator {
 #endif
 			numTests += _lastReaders.size();
 		}
-		
+
 		_lastAccessType = WRITER;
 		_newWriters.insert(verifier->_id);
 	}
-	
+
 	void handleReducer()
 	{
 		TaskVerifier *verifier = _verifiers->back();
 		assert(verifier != 0);
 		assert((verifier->_type == TaskVerifier::REDUCTION) || (verifier->_type == TaskVerifier::REDUCTION_OTHER));
-		
+
 		// First reduction
 		if (_lastAccessType != REDUCTION) {
 			flush();
 			_lastAccessType = REDUCTION;
 		}
-		
+
 		_newWriters.insert(verifier->_id);
 		_reducers.insert(verifier->_id);
 	}
-	
+
 	void selfcheck() const
 	{
+		// Check if we are running with DLB
+		bool runningWithDLB = false;
+#ifdef HAVE_DLB
+		char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
+		bool dlbEnvvarPresent = (dlbEnabled != 0);
+		if (dlbEnvvarPresent) {
+			runningWithDLB = (strcmp(dlbEnabled, "1") == 0);
+		}
+#endif
 #ifdef FINE_SELF_CHECK
 #else
 		bool globallyValid = true;
@@ -491,14 +543,14 @@ struct VerifierConstraintCalculator {
 		for (std::vector<TaskVerifier *>::const_iterator vit = _verifiers->begin(); vit != _verifiers->end(); vit++) {
 			TaskVerifier *verifier = *vit;
 			assert(verifier != 0);
-			
+
 			for (std::set<int>::const_iterator it = verifier->_runsAfter.begin(); it != verifier->_runsAfter.end(); it++) {
 				int predecessor = *it;
-				
+
 				TaskVerifier *predecessorVerifier = (*_verifiers)[predecessor];
 				assert(predecessorVerifier != 0);
 				assert(predecessorVerifier != verifier);
-				
+
 				{
 #ifdef FINE_SELF_CHECK
 					std::ostringstream oss;
@@ -509,14 +561,14 @@ struct VerifierConstraintCalculator {
 #endif
 				}
 			}
-			
+
 			for (std::set<int>::const_iterator it = verifier->_runsBefore.begin(); it != verifier->_runsBefore.end(); it++) {
 				int successor = *it;
-				
+
 				TaskVerifier *successorVerifier = (*_verifiers)[successor];
 				assert(successorVerifier != 0);
 				assert(successorVerifier != verifier);
-				
+
 				{
 #ifdef FINE_SELF_CHECK
 					std::ostringstream oss;
@@ -527,52 +579,78 @@ struct VerifierConstraintCalculator {
 #endif
 				}
 			}
-			
+
 			for (std::set<int>::const_iterator it = verifier->_runsConcurrentlyWith.begin(); it != verifier->_runsConcurrentlyWith.end(); it++) {
 				int concurrent = *it;
-				
+
 				TaskVerifier *concurrentVerifier = (*_verifiers)[concurrent];
 				assert(concurrentVerifier != 0);
 				assert(concurrentVerifier != verifier);
-				
+
 				{
 #ifdef FINE_SELF_CHECK
 					std::ostringstream oss;
-					oss << "Self verification: " << verifier->_id << " runs concurrently with " << concurrentVerifier->_id << " implies " <<
-						concurrentVerifier->_id << " runs concurrently with " << verifier->_id;
-					tap.evaluate(concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(), oss.str());
+					oss << "Self verification: " << verifier->_id
+						<< " runs concurrently with " << concurrentVerifier->_id
+						<< " implies " << concurrentVerifier->_id
+						<< " runs concurrently with " << verifier->_id;
+
+					if (runningWithDLB) {
+						tap.evaluateWeak(
+							concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(),
+							oss.str(), ""
+						);
+					} else {
+						tap.evaluate(
+							concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(),
+							oss.str()
+						);
+					}
 #else
 					globallyValid = globallyValid && (concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end());
 #endif
 				}
 			}
-			
+
 			for (std::set<int>::const_iterator it = verifier->_runsConcurrentlyWithReduction.begin(); it != verifier->_runsConcurrentlyWithReduction.end(); it++) {
 				int concurrent = *it;
-				
+
 				TaskVerifier *concurrentVerifier = (*_verifiers)[concurrent];
 				assert(concurrentVerifier != 0);
 				assert(concurrentVerifier != verifier);
-				
+
 				{
 #ifdef FINE_SELF_CHECK
 					std::ostringstream oss;
-					oss << "Self verification: " << verifier->_id << " runs concurrently with " << concurrentVerifier->_id << " implies " <<
-						concurrentVerifier->_id << " runs concurrently with " << verifier->_id;
-					tap.evaluate(concurrentVerifier->_runsConcurrentlyWithReduction.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWithReduction.end(), oss.str());
+					oss << "Self verification: " << verifier->_id
+						<< " runs concurrently with " << concurrentVerifier->_id
+						<< " implies " << concurrentVerifier->_id
+						<< " runs concurrently with " << verifier->_id;
+
+					if (runningWithDLB) {
+						tap.evaluateWeak(
+							concurrentVerifier->_runsConcurrentlyWithReduction.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWithReduction.end(),
+							oss.str(), ""
+						);
+					} else {
+						tap.evaluate(
+							concurrentVerifier->_runsConcurrentlyWithReduction.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWithReduction.end(),
+							oss.str()
+						);
+					}
 #else
 					globallyValid = globallyValid && (concurrentVerifier->_runsConcurrentlyWithReduction.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWithReduction.end());
 #endif
 				}
 			}
 		}
-		
+
 #ifdef FINE_SELF_CHECK
 #else
 		tap.evaluate(globallyValid, "Self verification");
 #endif
 	}
-	
+
 	void submit() const
 	{
 		for (std::vector<TaskVerifier *>::const_iterator vit = _verifiers->begin(); vit != _verifiers->end(); vit++) {
@@ -581,20 +659,20 @@ struct VerifierConstraintCalculator {
 			verifier->submit(*_verifiers);
 		}
 	}
-	
+
 };
 
 
 int main(int argc, char **argv)
 {
 	ncpus = nanos6_get_num_cpus();
-	
+
 #if TEST_LESS_THREADS
 	ncpus = std::min(ncpus, 64U);
 #endif
-	
+
 	delayMultiplier = sqrt(ncpus);
-	
+
 	if (ncpus < 2) {
 		// This test bench only works correctly with at least 2 CPUs
 		tap.registerNewTests(1);
@@ -603,145 +681,145 @@ int main(int argc, char **argv)
 		tap.end();
 		return 0;
 	}
-	
+
 	std::vector<std::vector<TaskVerifier *> *> testVerifiers;
 	std::vector<std::pair<VerifierConstraintCalculator, std::string> > testConstraintCalculators;
 	std::vector<Atomic<int> *> testCounters;
-	
+
 	int var1;
-	
+
 	// Test 1: Reduction before write
 	{
 		#ifndef FINE_SELF_CHECK
 		numTests++;
 		#endif
-		
+
 		int taskId = 0;
 		Atomic<int> *numConcurrentTasks = new Atomic<int>(0);
 		Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 		std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 		VerifierConstraintCalculator constraintCalculator(verifiers);
-		
+
 		for (long i = 0; i < ncpus - 1; i++) {
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
 		}
-		
+
 		TaskVerifier *write1 = new TaskVerifier(taskId, TaskVerifier::WRITE, &var1);
 		verifiers->push_back(write1);
 		constraintCalculator.handleWriter();
-		
+
 		// Forced flush
 		constraintCalculator.flush();
 		constraintCalculator.flushConcurrent();
-		
+
 		testVerifiers.push_back(verifiers);
 		testConstraintCalculators.push_back(
 				std::make_pair(constraintCalculator, "Subtest 1: Reduction before write"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
-	
+
 	// Test 2: Reduction after write
 	{
 		#ifndef FINE_SELF_CHECK
 		numTests++;
 		#endif
-		
+
 		int taskId = 0;
 		Atomic<int> *numConcurrentTasks = new Atomic<int>(0);
 		Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 		std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 		VerifierConstraintCalculator constraintCalculator(verifiers);
-		
+
 		TaskVerifier *write1 = new TaskVerifier(taskId, TaskVerifier::WRITE, &var1, numConcurrentTasks);
 		verifiers->push_back(write1);
 		constraintCalculator.handleWriter();
-		
+
 		for (long i = 0; i < ncpus - 1; i++) {
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
 		}
-		
+
 		// Forced flush
 		constraintCalculator.flush();
 		constraintCalculator.flushConcurrent();
-		
+
 		testVerifiers.push_back(verifiers);
 		testConstraintCalculators.push_back(
 				std::make_pair(constraintCalculator, "Subtest 2: Reduction after write"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
-	
+
 	// Test 3: Reduction before read
 	{
 		#ifndef FINE_SELF_CHECK
 		numTests++;
 		#endif
-		
+
 		int taskId = 0;
 		Atomic<int> *numConcurrentTasks = new Atomic<int>(0);
 		Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 		std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 		VerifierConstraintCalculator constraintCalculator(verifiers);
-		
+
 		for (long i = 0; i < ncpus - 1; i++) {
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
 		}
-		
+
 		TaskVerifier *read1 = new TaskVerifier(taskId, TaskVerifier::READ, &var1);
 		verifiers->push_back(read1);
 		constraintCalculator.handleReader();
-		
+
 		// Forced flush
 		constraintCalculator.flush();
 		constraintCalculator.flushConcurrent();
-		
+
 		testVerifiers.push_back(verifiers);
 		testConstraintCalculators.push_back(
 				std::make_pair(constraintCalculator, "Subtest 3: Reduction before read"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
-	
+
 	// Test 4: Reduction after read
 	{
 		#ifndef FINE_SELF_CHECK
 		numTests++;
 		#endif
-		
+
 		int taskId = 0;
 		Atomic<int> *numConcurrentTasks = new Atomic<int>(0);
 		Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 		std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 		VerifierConstraintCalculator constraintCalculator(verifiers);
-		
+
 		TaskVerifier *read1 = new TaskVerifier(taskId, TaskVerifier::READ, &var1, numConcurrentTasks);
 		verifiers->push_back(read1);
 		constraintCalculator.handleReader();
-		
+
 		for (long i = 0; i < ncpus - 1; i++) {
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
 		}
-		
+
 		// Forced flush
 		constraintCalculator.flush();
 		constraintCalculator.flushConcurrent();
-		
+
 		testVerifiers.push_back(verifiers);
 		testConstraintCalculators.push_back(
 				std::make_pair(constraintCalculator, "Subtest 4: Reduction after read"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
-	
+
 	// Test 5: Reduction after read after reduction (single)
 	{
 		// This test only works correctly with at least 3 CPUs
@@ -749,29 +827,29 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, 0, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *read1 = new TaskVerifier(taskId, TaskVerifier::READ, &var1, numConcurrentTasks);
 			verifiers->push_back(read1);
 			constraintCalculator.handleReader();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 5: Reduction after read after reduction (single)"));
@@ -779,7 +857,7 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	// Test 6: Reduction after read after reduction (double)
 	{
 		// This test only works correctly with at least 5 CPUs
@@ -787,38 +865,38 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks1 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentTasks2 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *read1 = new TaskVerifier(taskId, TaskVerifier::READ, &var1, numConcurrentTasks2);
 			verifiers->push_back(read1);
 			constraintCalculator.handleReader();
-			
+
 			TaskVerifier *reducer3 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer3);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer4 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer4);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 6: Reduction after read after reduction (double)"));
@@ -827,7 +905,7 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	// Test 7: Reduction after write after reduction (single)
 	{
 		// This test only works correctly with at least 3 CPUs
@@ -835,30 +913,30 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks1 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentTasks2 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *write1 = new TaskVerifier(taskId, TaskVerifier::WRITE, &var1, numConcurrentTasks2);
 			verifiers->push_back(write1);
 			constraintCalculator.handleWriter();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 7: Reduction after write after reduction (single)"));
@@ -867,7 +945,7 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	// Test 8: Reduction after write after reduction (double)
 	{
 		// This test only works correctly with at least 5 CPUs
@@ -875,38 +953,38 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks1 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentTasks2 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *write1 = new TaskVerifier(taskId, TaskVerifier::WRITE, &var1, numConcurrentTasks2);
 			verifiers->push_back(write1);
 			constraintCalculator.handleWriter();
-			
+
 			TaskVerifier *reducer3 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer3);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer4 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer4);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 8: Reduction after write after reduction (double)"));
@@ -915,40 +993,40 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	// Test 9: Reduction after different reduction (single)
 	{
 		#ifndef FINE_SELF_CHECK
 		numTests++;
 		#endif
-		
+
 		int taskId = 0;
 		Atomic<int> *numConcurrentTasks = new Atomic<int>(0);
 		Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 		std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 		VerifierConstraintCalculator constraintCalculator(verifiers);
-		
+
 		TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 		verifiers->push_back(reducer1);
 		constraintCalculator.handleReducer();
-		
+
 		constraintCalculator.flush();
-		
+
 		TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 		verifiers->push_back(reducer2);
 		constraintCalculator.handleReducer();
-		
+
 		// Forced flush
 		constraintCalculator.flush();
 		constraintCalculator.flushConcurrent();
-		
+
 		testVerifiers.push_back(verifiers);
 		testConstraintCalculators.push_back(
 				std::make_pair(constraintCalculator, "Subtest 9: Reduction after different reduction (single)"));
 		testCounters.push_back(numConcurrentTasks);
 		testCounters.push_back(numConcurrentReductionTasks);
 	}
-	
+
 	// Test 10: Reduction after different reduction (double)
 	{
 		// This test only works correctly with at least 4 CPUs
@@ -956,35 +1034,35 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			constraintCalculator.flush();
-			
+
 			TaskVerifier *reducer3 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer3);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer4 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks, numConcurrentReductionTasks);
 			verifiers->push_back(reducer4);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 10: Reduction after different reduction (double)"));
@@ -992,7 +1070,7 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	// Test 11: Reduction after write after different reduction (single)
 	{
 		// This test only works correctly with at least 3 CPUs
@@ -1000,30 +1078,30 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks1 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentTasks2 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *write1 = new TaskVerifier(taskId, TaskVerifier::WRITE, &var1, numConcurrentTasks2);
 			verifiers->push_back(write1);
 			constraintCalculator.handleWriter();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 11: Reduction after write after different reduction (single)"));
@@ -1032,7 +1110,7 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	// Test 12: Reduction after write after different reduction (double)
 	{
 		// This test only works correctly with at least 5 CPUs
@@ -1040,38 +1118,38 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks1 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentTasks2 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *write_1 = new TaskVerifier(taskId, TaskVerifier::WRITE, &var1, numConcurrentTasks2);
 			verifiers->push_back(write_1);
 			constraintCalculator.handleWriter();
-			
+
 			TaskVerifier *reducer3 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer3);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer4 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer4);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 12: Reduction after write after different reduction (double)"));
@@ -1080,7 +1158,7 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	// Test 13: Reduction after read after different reduction (single)
 	{
 		// This test only works correctly with at least 3 CPUs
@@ -1088,30 +1166,30 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks1 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentTasks2 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *read1 = new TaskVerifier(taskId, TaskVerifier::READ, &var1, numConcurrentTasks2);
 			verifiers->push_back(read1);
 			constraintCalculator.handleReader();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 13: Reduction after read after different reduction (single)"));
@@ -1120,7 +1198,7 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	// Test 14: Reduction after read after different reduction (double)
 	{
 		// This test only works correctly with at least 5 CPUs
@@ -1128,38 +1206,38 @@ int main(int argc, char **argv)
 			#ifndef FINE_SELF_CHECK
 			numTests++;
 			#endif
-			
+
 			int taskId = 0;
 			Atomic<int> *numConcurrentTasks1 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentTasks2 = new Atomic<int>(0);
 			Atomic<int> *numConcurrentReductionTasks = new Atomic<int>(0);
 			std::vector<TaskVerifier *> *verifiers = new std::vector<TaskVerifier *>();
 			VerifierConstraintCalculator constraintCalculator(verifiers);
-			
+
 			TaskVerifier *reducer1 = new TaskVerifier(taskId, TaskVerifier::REDUCTION, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer1);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer2 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks1, numConcurrentReductionTasks);
 			verifiers->push_back(reducer2);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *read1 = new TaskVerifier(taskId, TaskVerifier::READ, &var1, numConcurrentTasks2);
 			verifiers->push_back(read1);
 			constraintCalculator.handleReader();
-			
+
 			TaskVerifier *reducer3 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer3);
 			constraintCalculator.handleReducer();
-			
+
 			TaskVerifier *reducer4 = new TaskVerifier(taskId, TaskVerifier::REDUCTION_OTHER, &var1, numConcurrentTasks2, numConcurrentReductionTasks);
 			verifiers->push_back(reducer4);
 			constraintCalculator.handleReducer();
-			
+
 			// Forced flush
 			constraintCalculator.flush();
 			constraintCalculator.flushConcurrent();
-			
+
 			testVerifiers.push_back(verifiers);
 			testConstraintCalculators.push_back(
 					std::make_pair(constraintCalculator, "Subtest 14: Reduction after read after different reduction (double)"));
@@ -1168,39 +1246,39 @@ int main(int argc, char **argv)
 			testCounters.push_back(numConcurrentReductionTasks);
 		}
 	}
-	
+
 	tap.registerNewTests(numTests);
-	
+
 	tap.begin();
-	
+
 	for (std::vector<std::pair<VerifierConstraintCalculator, std::string> >::const_iterator it = testConstraintCalculators.begin();
 			it != testConstraintCalculators.end();
 			it++)
 	{
 		tap.emitDiagnostic(it->second);
-		
+
 		it->first.selfcheck();
 		it->first.submit();
-		
+
 		#pragma oss taskwait
 	}
-	
+
 	tap.end();
-	
+
 	for (std::vector<Atomic<int> *>::const_iterator it = testCounters.begin();
 			it != testCounters.end();
 			it++)
 	{
 		delete *it;
 	}
-	
+
 	for (std::vector<std::vector<TaskVerifier *> *>::const_iterator it = testVerifiers.begin();
 			it != testVerifiers.end();
 			it++)
 	{
 		std::vector<TaskVerifier *> *verifiers = *it;
 		assert(verifiers != 0);
-		
+
 		for (std::vector<TaskVerifier *>::const_iterator vit = verifiers->begin();
 				vit != verifiers->end();
 				vit++)
@@ -1209,9 +1287,9 @@ int main(int argc, char **argv)
 			assert(verifier != 0);
 			delete verifier;
 		}
-		
+
 		delete verifiers;
 	}
-	
+
 	return 0;
 }
