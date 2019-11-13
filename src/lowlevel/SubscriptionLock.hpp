@@ -16,21 +16,29 @@
 
 #include "MemoryAllocator.hpp"
 #include "SpinWait.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 
 class SubscriptionLock {
+
+private:
 
 	struct Node {
 		std::atomic<uint64_t> _ticket;
 		std::atomic<uint64_t> _cpuId;
 	};
 
+#ifndef NDEBUG
+	//! The amount of threads currently waiting in the lock
+	std::atomic<size_t> _subscribedThreads;
+#endif
+
 protected:
 
 	alignas(CACHELINE_SIZE) Padded<Node> *_waitQueue;
 	alignas(CACHELINE_SIZE) std::atomic<uint64_t> _head;
-	alignas(CACHELINE_SIZE) uint64_t _next;
 	alignas(CACHELINE_SIZE) uint64_t _size;
+	alignas(CACHELINE_SIZE) uint64_t _next;
 
 public:
 
@@ -38,8 +46,13 @@ public:
 	//!
 	//! \param[in] size The number of slots in the subscription lock, i.e., the
 	//! maximum number of threads that can access this lock simultaneously
-	SubscriptionLock(size_t size)
-		: _head(size), _next(size+1), _size(size)
+	SubscriptionLock(size_t size) :
+#ifndef NDEBUG
+		_subscribedThreads(0),
+#endif
+		_head(size),
+		_size(size),
+		_next(size + 1)
 	{
 		_waitQueue = (Padded<Node> *) MemoryAllocator::alloc(size * sizeof(Padded<Node>));
 		for (size_t i = 0; i < size; i++) {
@@ -72,6 +85,15 @@ public:
 	//! \brief Obtain the lock without subscribing
 	inline void lock()
 	{
+#ifndef NDEBUG
+		size_t subscribedThreads = _subscribedThreads.fetch_add(1, std::memory_order_relaxed);
+		if (subscribedThreads >= _size) {
+			FatalErrorHandler::failIf(
+				true,
+				"Exceeded the maximum amount of threads subscribed in the lock"
+			);
+		}
+#endif
 		const uint64_t head = _head.fetch_add(1, std::memory_order_relaxed);
 		const uint64_t id = head % _size;
 
@@ -88,6 +110,15 @@ public:
 	//! \return The ticket obtained for the current subscription
 	inline uint64_t subscribeOrLock(uint64_t const cpuIndex)
 	{
+#ifndef NDEBUG
+		size_t subscribedThreads = _subscribedThreads.fetch_add(1, std::memory_order_relaxed);
+		if (subscribedThreads >= _size) {
+			FatalErrorHandler::failIf(
+				true,
+				"Exceeded the maximum amount of threads subscribed in the lock"
+			);
+		}
+#endif
 		const uint64_t head = _head.fetch_add(1, std::memory_order_relaxed);
 		const uint64_t id = head % _size;
 		_waitQueue[id]._cpuId.store(head+cpuIndex, std::memory_order_relaxed);
@@ -111,18 +142,34 @@ public:
 			return false;
 		}
 
-		return std::atomic_compare_exchange_weak_explicit(
+		bool success = std::atomic_compare_exchange_weak_explicit(
 			&_head,
 			&head,
-			head+1,
+			head + 1,
 			std::memory_order_acquire,
 			std::memory_order_relaxed
 		);
+#ifndef NDEBUG
+		if (success) {
+			size_t subscribedThreads = _subscribedThreads.fetch_add(1, std::memory_order_relaxed);
+			if (subscribedThreads >= _size) {
+				FatalErrorHandler::failIf(
+					true,
+					"Exceeded the maximum amount of threads subscribed in the lock"
+				);
+			}
+		}
+#endif
+		return success;
 	}
 
 	//! \brief Unsubscribe from the lock (advance the ticket)
 	inline void unsubscribe()
 	{
+#ifndef NDEBUG
+		assert(_subscribedThreads > 0);
+		--_subscribedThreads;
+#endif
 		const uint64_t id = _next % _size;
 		_waitQueue[id]._ticket.store(_next++, std::memory_order_release);
 	}
