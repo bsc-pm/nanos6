@@ -2,22 +2,45 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.3, Mon Nov 18, 2019
+The 2.3 release corresponds to the OmpSs-2 2019.11 release. It introduces a new optimized data dependency implementation.
+It improves the usability, performance and code of the scheduling infrastructure and the `task for` feature. It also adds
+support for DLB and OmpSs-2@Linter.
+
+### General
+- Data dependency implementation can be decided at run-time through `NANOS6_DEPENDENCIES` variable
+- Performance and code improvements on the `task for` feature
+- Add support for Dynamic Load Balancing (DLB) tool
+- Add support for [OmpSs-2@Linter](https://github.com/bsc-pm/ompss-2-linter)
+- Bugfixes, performance and code improvements
+
+### Dependency System
+- Add new optimized discrete dependency system implementation; enabled by `NANOS6_DEPENDENCIES=discrete`
+
+### Scheduling
+- Usability, performance and code improvements on the scheduling infrastructure
+
+### Instrumentation
+- Remove profile instrumentation variant
+- Remove interception mechanism of memory allocation functions
+
+
 ## Version 2.2.2, Mon Oct 7, 2019
 The 2.2.2 release corresponds to the OmpSs-2 2019.06.2 release. It introduces bug fixes.
 
 ### General
-- Compiling extrae variant with high optimization flags
-- Removing backtrace sampling from the extrae variant
+- Compile extrae variant with high optimization flags
+- Remove backtrace sampling from the extrae variant
 
 
 ## Version 2.2.1, Fri Sep 27, 2019
 The 2.2.1 release corresponds to the OmpSs-2 2019.06.1 release. It mainly introduces bug fixes and code improvements.
 
 ### General
-- Renaming loop directive to task for
+- Rename loop directive to task for
 - Tasks can leverage reductions and external events at the same time (over distinct data regions)
 - OmpSs-2@Cluster bugfixes
-- Fixing binding information reported by nanos6-info binary
+- Fix binding information reported by nanos6-info binary
 - Support for the TAGASPI library
 - Other bugfixes and code improvements
 
