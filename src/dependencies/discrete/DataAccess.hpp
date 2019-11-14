@@ -58,8 +58,8 @@ private:
 	reduction_index_t _reductionIndex;
 
 	//! Next task with an access matching this one
-	std::atomic<Task *> _successor;
-	std::atomic<Task *> _child;
+	std::atomic<DataAccess *> _successor;
+	std::atomic<DataAccess *> _child;
 
 	//! Entry in the bottom map this is linked to.
 	std::atomic<BottomMapEntry *> _bottomMapEntry;
@@ -142,12 +142,12 @@ public:
 		_reductionInfo = reductionInfo;
 	}
 
-	Task *getSuccessor() const
+	DataAccess *getSuccessor() const
 	{
 		return _successor;
 	}
 
-	void setSuccessor(Task *successor)
+	void setSuccessor(DataAccess *successor)
 	{
 		_successor = successor;
 	}
@@ -202,11 +202,11 @@ public:
 		_reductionIndex = reductionIndex;
 	}
 
-	inline Task * getChild() const {
+	inline DataAccess * getChild() const {
 		return _child;
 	}
 
-	inline void setChild(Task *child) {
+	inline void setChild(DataAccess *child) {
 		_child = child;
 	}
 

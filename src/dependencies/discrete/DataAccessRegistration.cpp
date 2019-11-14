@@ -155,7 +155,7 @@ namespace DataAccessRegistration {
 	}
 
 
-	bool shouldSchedule(Task * task, DataAccess * access, bool readSatisfied, bool writeSatisified, access_flags_t oldFlags) {
+	bool shouldSchedule(DataAccess * access, bool readSatisfied, bool writeSatisified, access_flags_t oldFlags) {
 		// Weak access are already scheduled.
 		if(access->isWeak())
 			return false;
@@ -167,8 +167,8 @@ namespace DataAccessRegistration {
 			return false;
 	}
 
-	static inline bool checkBottomMap(Task * task, void * address, bool keepDeleting, DataAccess * access, bool isReduction) {
-		assert(!task->getParent()->getDataAccesses().hasBeenDeleted());
+	static inline bool checkBottomMap(bool keepDeleting, DataAccess * access) {
+		assert(access != nullptr);
 		BottomMapEntry * entry = access->getBottomMapEntry();
 		assert(entry != nullptr);
 
@@ -178,37 +178,34 @@ namespace DataAccessRegistration {
 			return (entry->_access == access);
 	}
 
-	void satisfySuccessorFromChain(void * address, CPUDependencyData &hpDependencyData,
-		bool keepDeleting, bool satisfyWrites, bool satisfyReads, Task * successor, DataAccess * currentAccessIterator,
+	void satisfySuccessorFromChain(CPUDependencyData &hpDependencyData,
+		bool keepDeleting, bool satisfyWrites, bool satisfyReads, DataAccess * nextAccess, DataAccess * currentAccessIterator,
 		Task * currentTaskIterator, ReductionInfo * originalReductionInfo)
 	{
-		// NANOS6_VERB_OUT("Start: " << currentTaskIterator->getInstrumentationTaskId() << ":" << keepDeleting << satisfyWrites << satisfyReads);
 		DataAccess * holdingOff = nullptr;
 		Task * pendingToDelete = nullptr;
 
 		while(keepDeleting || satisfyWrites || satisfyReads) {
-			if(successor != nullptr) {
-				if(successor == currentTaskIterator->getParent()) {
+			if(nextAccess != nullptr) {
+				Task * nextTask = nextAccess->getOriginator();
+				if(nextTask == currentTaskIterator->getParent()) {
 					// We are the last access in this chain. Travel to the parent (up one level).
-					currentTaskIterator = successor;
-					assert(!successor->getDataAccesses().hasBeenDeleted());
-					currentAccessIterator = successor->getDataAccesses().findAccess(address);
+					currentTaskIterator = nextTask;
+					assert(!nextTask->getDataAccesses().hasBeenDeleted());
+					currentAccessIterator = nextAccess;
 					// This may be wrong and beyond useless.
 					if(satisfyWrites)
 						currentAccessIterator->setFlags(ACCESS_CHILDS_FINISHED);
-					successor = currentAccessIterator->getSuccessor();
+					nextAccess = currentAccessIterator->getSuccessor();
 				} else {
 					if(pendingToDelete != nullptr) {
 						decreaseDeletableCountOrDelete(pendingToDelete, hpDependencyData._deletableOriginators);
 						pendingToDelete = nullptr;
 					}
 
-					// NANOS6_VERB_OUT(successor->getInstrumentationTaskId() << ":" << keepDeleting << satisfyWrites << satisfyReads);
 					// Propagate satisfiability and figure out next step
 					// This is safe because successors don't change and if we're referencing it, it's not deleted.
-					assert(!successor->getDataAccesses().hasBeenDeleted());
-					DataAccess * nextAccess = successor->getDataAccesses().findAccess(address);
-					assert(nextAccess != nullptr);
+					assert(!nextTask->getDataAccesses().hasBeenDeleted());
 					assert((nextAccess->getFlags() & ACCESS_DELETABLE) == ACCESS_NONE);
 
 					access_flags_t flagsToSet = ACCESS_NONE;
@@ -222,8 +219,8 @@ namespace DataAccessRegistration {
 
 					access_flags_t oldFlags = nextAccess->setFlags(flagsToSet);
 
-					if(shouldSchedule(successor, nextAccess, satisfyReads, satisfyWrites, oldFlags) && successor->decreasePredecessors())
-						hpDependencyData._satisfiedOriginators.push_back(successor);
+					if(shouldSchedule(nextAccess, satisfyReads, satisfyWrites, oldFlags) && nextTask->decreasePredecessors())
+						hpDependencyData._satisfiedOriginators.push_back(nextTask);
 
 					if(satisfyWrites) {
 						if(nextAccess->getType() == REDUCTION_ACCESS_TYPE) {
@@ -257,7 +254,7 @@ namespace DataAccessRegistration {
 					if(keepDeleting) {
 						if(oldFlags & ACCESS_UNREGISTERED) {
 							assert(pendingToDelete == nullptr);
-							pendingToDelete = successor;
+							pendingToDelete = nextTask;
 							nextAccess->unsetFlags(ACCESS_HOLDOFF);
 						} else if(oldFlags & ACCESS_IN_TASKWAIT) {
 							assert(nextAccess->getChild() != nullptr);
@@ -274,28 +271,27 @@ namespace DataAccessRegistration {
 						oldFlags = nextAccess->getFlags();
 					}
 
-					currentTaskIterator = successor;
+					currentTaskIterator = nextTask;
 					currentAccessIterator = nextAccess;
 
 					if(nextAccess->getChild() != nullptr) {
 						// Guaranteed because the child will register on the parent before inheriting the satisfied bits.
-						successor = nextAccess->getChild();
+						nextAccess = nextAccess->getChild();
 					} else {
-						successor = nextAccess->getSuccessor();
+						nextAccess = nextAccess->getSuccessor();
 					}
 				}
 			} else {
 				// Look at the bottom map.
-				bool isReduction = currentAccessIterator->getType() == REDUCTION_ACCESS_TYPE;
-				if(checkBottomMap(currentTaskIterator, address, keepDeleting, currentAccessIterator, isReduction)) {
+				if(checkBottomMap(keepDeleting, currentAccessIterator)) {
 					keepDeleting = satisfyReads = satisfyWrites = false;
 				} else {
-					successor = currentAccessIterator->getSuccessor();
+					nextAccess = currentAccessIterator->getSuccessor();
 
 					// This retry can happen multiple times.
-					while(successor == nullptr) {
+					while(nextAccess == nullptr) {
 						spinWait();
-						successor = currentAccessIterator->getSuccessor();
+						nextAccess = currentAccessIterator->getSuccessor();
 					}
 				}
 			}
@@ -312,14 +308,14 @@ namespace DataAccessRegistration {
 			void *address, CPUDependencyData &hpDependencyData) {
 		DataAccess * currentAccessIterator = access;
 		DataAccessType originalAccessType = access->getType();
-		Task * successor = currentAccessIterator->getSuccessor();
+		DataAccess * successor = currentAccessIterator->getSuccessor();
 		// No race, the parent is finished so all childs must be registered by now.
-		Task * childTask = access->getChild();
+		DataAccess * childAccess = access->getChild();
 		ReductionInfo *reductionInfo = nullptr;
 
 		access_flags_t flagsToSet = ACCESS_UNREGISTERED;
 
-		if(childTask == nullptr) {
+		if(childAccess == nullptr) {
 			flagsToSet |= ACCESS_CHILDS_FINISHED;
 		} else {
 			// Place ourselves as successors of the last access.
@@ -336,7 +332,14 @@ namespace DataAccessRegistration {
 			// Maybe this doesn't need to be CAS and can be an assign.
 			while (!node._access.compare_exchange_weak(lastChild, access));
 			assert(lastChild != nullptr);
-			lastChild->setSuccessor(task);
+
+			lastChild->setSuccessor(access);
+
+			if(lastChild->getType() == READ_ACCESS_TYPE &&
+				matchAll(lastChild->getFlags(), ACCESS_READ_SATISFIED)) {
+				// Try to release reads
+				satisfySuccessorFromChain(hpDependencyData, false, false, true, successor, access, task, nullptr);
+			}
 		}
 
 		if(originalAccessType == REDUCTION_ACCESS_TYPE) {
@@ -364,11 +367,11 @@ namespace DataAccessRegistration {
 		if(keepDeleting)
 			decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
 
-		if(childTask != nullptr) {
-			satisfySuccessorFromChain(address, hpDependencyData, keepDeleting, satisfyWrites, satisfyReads, childTask,
+		if(childAccess != nullptr) {
+			satisfySuccessorFromChain(hpDependencyData, keepDeleting, satisfyWrites, satisfyReads, childAccess,
 				access, task, reductionInfo);
 		} else {
-			satisfySuccessorFromChain(address, hpDependencyData, keepDeleting, satisfyWrites, satisfyReads, successor,
+			satisfySuccessorFromChain(hpDependencyData, keepDeleting, satisfyWrites, satisfyReads, successor,
 				access, task, reductionInfo);
 		}
 
@@ -376,7 +379,7 @@ namespace DataAccessRegistration {
 	}
 
 	void finalizeDataAccess(Task *task, DataAccess *access, void *address,
-		CPUDependencyData &hpDependencyData, ComputePlace *computePlace)
+		CPUDependencyData &hpDependencyData, __attribute__((unused)) ComputePlace *computePlace)
 	{
 		assert(computePlace != nullptr);
 
@@ -465,7 +468,7 @@ namespace DataAccessRegistration {
 	{
 	}
 
-	static inline void unlockAccessInTaskwait(Task *task, DataAccess * access, void * address, CPUDependencyData &hpDependencyData) {
+	static inline void unlockAccessInTaskwait(Task *task, DataAccess * access, CPUDependencyData &hpDependencyData) {
 		assert(task != nullptr);
 		assert(access != nullptr);
 
@@ -473,10 +476,9 @@ namespace DataAccessRegistration {
 		assert(!(oldFlags & ACCESS_IN_TASKWAIT));
 
 		if(oldFlags & ACCESS_DELETABLE) {
-			Task * child = access->getChild();
+			DataAccess * child = access->getChild();
 			assert(child != nullptr);
-			satisfySuccessorFromChain(address, hpDependencyData, true, false, false, child,
-				access, task, nullptr);
+			satisfySuccessorFromChain(hpDependencyData, true, false, false, child, access, task, nullptr);
 			access->setChild(nullptr);
 		}
 	}
@@ -495,23 +497,20 @@ namespace DataAccessRegistration {
 
 			if (reductionInfo != nullptr) {
 				assert(!reductionInfo->finished());
-				if (itMap->second._access == nullptr && reductionInfo->markAsClosed())
+				if (reductionInfo->markAsClosed())
 					releaseReductionInfo(reductionInfo);
-				else
-					reductionInfo->markAsClosed();
 
 				itMap->second._reductionInfo = nullptr;
 			}
 		}
 
 		DataAccess * accessArray = accessStruct._accessArray;
-		void ** addressArray = accessStruct._addressArray;
 
 		// We need to "unlock" our child accesses
 		for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
 			DataAccess * access = &accessArray[i];
 			if(access->getChild() != nullptr)
-				unlockAccessInTaskwait(task, access, addressArray[i], dependencyData);
+				unlockAccessInTaskwait(task, access, dependencyData);
 		}
 
 		processSatisfiedOriginators(dependencyData, computePlace, true);
@@ -673,7 +672,7 @@ namespace DataAccessRegistration {
 				// Important ordering: setChild _before_ inherit flags.
 				// We can race against other accesses satisfying the parent.
 				if(parentAccess != nullptr)
-					parentAccess->setChild(task);
+					parentAccess->setChild(access);
 
 				schedule = inheritFromParent(parentAccess, access);
 
@@ -685,7 +684,7 @@ namespace DataAccessRegistration {
 				// Important ordering: inherit _before_ setSuccessor.
 				// The bottom map insertion is the point of syncronization between both accesses.
 				schedule = inheritFromPredecessor(predecessor, access);
-				predecessor->setSuccessor(task);
+				predecessor->setSuccessor(access);
 
 				if(predecessor->getType() == REDUCTION_ACCESS_TYPE &&
 					(accessType != REDUCTION_ACCESS_TYPE || predecessor->getReductionInfo() != access->getReductionInfo())
