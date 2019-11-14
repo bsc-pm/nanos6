@@ -41,6 +41,7 @@ void HostInfo::initialize()
 	//! Get NUMA nodes of the machine.
 	//! NUMA node means: A set of processors around memory which the processors can directly access. (Extracted from hwloc documentation)
 	int memNodesCount = hwloc_get_nbobjs_by_type( topology, HWLOC_NUMA_ALIAS );
+	int validMemNodesCount = 0;
 	
 	//! Check if HWLOC has found any NUMA node.
 	NUMAPlace *node = nullptr;
@@ -52,11 +53,34 @@ void HostInfo::initialize()
 			//! Get the hwloc obj representing the NUMA node.
 			hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_NUMA_ALIAS, i);
 			assert(obj != nullptr);
-			//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
-			node = new NUMAPlace(obj->logical_index, NUMAAddressSpace);
-			//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
-			_memoryPlaces[node->getIndex()] = node;
-			node = nullptr;
+
+			//! Check the NUMA node is from the processor and not from GPUs (as happens in POWER9, for instance).
+#if HWLOC_API_VERSION >= 0x00020000
+			//! HWLOC_OBJ_OSDEV_BLOCK is the value used for CPU NUMA nodes.
+			assert(obj->parent != nullptr);
+			assert(obj->parent->type == HWLOC_OBJ_GROUP || obj->parent->type == HWLOC_OBJ_PACKAGE);
+			bool isValidNUMA = (obj->parent->attr->osdev.type ==  HWLOC_OBJ_OSDEV_BLOCK);
+#else
+			//! GPU NUMA nodes have no children.
+			bool isValidNUMA = (obj->arity > 0);
+#endif
+			if (isValidNUMA) {
+				validMemNodesCount++;
+				//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
+				node = new NUMAPlace(obj->logical_index, NUMAAddressSpace);
+				//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
+				_memoryPlaces[node->getIndex()] = node;
+				node = nullptr;
+			}
+		}
+		if (memNodesCount != validMemNodesCount) {
+#ifndef NDEBUG
+			for (int i = validMemNodesCount; i < memNodesCount; i++) {
+				assert(_memoryPlaces[i] == nullptr);
+			}
+#endif
+			
+			_memoryPlaces.resize(validMemNodesCount);
 		}
 	}
 	else {
