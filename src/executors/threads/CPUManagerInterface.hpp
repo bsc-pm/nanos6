@@ -101,8 +101,8 @@ private:
 				size_t cpusPerGroup = numCPUs / closestGroups;
 				warningMessage
 					<< _taskforGroups << " groups requested. "
-					<< "The number of CPUs is not divisiable by the number of groups. "
-					<< "Using " << closestGroups << " of " << cpusPerGroup
+					<< "The number of CPUs is not divisible by the number of groups. "
+					<< "Using " << closestGroups << " groups of " << cpusPerGroup
 					<< " CPUs each instead";
 
 				_taskforGroups.setValue(closestGroups);
