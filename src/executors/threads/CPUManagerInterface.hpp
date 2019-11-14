@@ -80,9 +80,11 @@ private:
 		// The default value for _taskforGroups is 1 group per NUMA node or
 		// the closest to it
 		if (!taskforGroupsSetByUser) {
-			size_t closestGroups = getClosestGroupNumber(numCPUs, numNUMANodes);
-			assert(numCPUs % closestGroups == 0);
-
+			size_t closestGroups = numNUMANodes;
+			if (numCPUs % numNUMANodes != 0) {
+				closestGroups = getClosestGroupNumber(numCPUs, numNUMANodes);
+				assert(numCPUs % closestGroups == 0);
+			}
 			_taskforGroups.setValue(closestGroups);
 		} else {
 			if (numCPUs < _taskforGroups) {

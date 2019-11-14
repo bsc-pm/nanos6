@@ -135,21 +135,22 @@ void CPUManagerInterface::preinitialize()
 		_NUMANodeMask[i].resize(numAvailableCPUs);
 	}
 
+	size_t numCPUsPerTaskforGroup = getNumCPUsPerTaskforGroup();
+	assert(numCPUsPerTaskforGroup > 0);
+
 	size_t virtualCPUId = 0;
 	for (size_t i = 0; i < numCPUs; ++i) {
 		CPU *cpu = (CPU *) cpus[i];
 		assert(cpu != nullptr);
 
 		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
-			// We need the hwloc logical_index to compute the groupId. However,
-			// that index is overwritten, so this is the last place where we
-			// still have the hwloc logical_index, so we compute the groupId
-			// here and set it as member of CPU
-			size_t groupId = cpu->getIndex() / getNumCPUsPerTaskforGroup();
+			// To compute the groupId we need the CPU's hwloc logical_index. Before
+			// setting the virtual id, use the current index to compute the groupId
+			size_t groupId = cpu->getIndex() / numCPUsPerTaskforGroup;
 			assert(groupId <= numCPUs);
 
-			cpu->setGroupId(groupId);
 			cpu->setIndex(virtualCPUId);
+			cpu->setGroupId(groupId);
 			_cpus[virtualCPUId] = cpu;
 			_NUMANodeMask[cpu->getNumaNodeId()][virtualCPUId] = true;
 			++virtualCPUId;
