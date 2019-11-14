@@ -1,5 +1,5 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-#	
+#
 #	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 AC_DEFUN([AC_CHECK_PAPI],
@@ -10,7 +10,7 @@ AC_DEFUN([AC_CHECK_PAPI],
 			[ ac_cv_use_papi_prefix=$withval ],
 			[ ac_cv_use_papi_prefix="" ]
 		)
-		
+
 		if test x"${ac_cv_use_papi_prefix}" != x"" ; then
 			AC_MSG_CHECKING([the PAPI installation prefix])
 			AC_MSG_RESULT([${ac_cv_use_papi_prefix}])
@@ -32,19 +32,19 @@ AC_DEFUN([AC_CHECK_PAPI],
 				]
 			)
 		fi
-		
+
 		if test x"${ac_use_papi}" != x"" ; then
 			ac_save_CPPFLAGS="${CPPFLAGS}"
 			ac_save_LIBS="${LIBS}"
-			
+
 			CPPFLAGS="${CPPFLAGS} ${papi_CPPFLAGS}"
 			LIBS="${LIBS} ${papi_LIBS}"
-			
+
 			AC_CHECK_HEADERS([papi.h])
 			AC_CHECK_LIB([papi],
 				[PAPI_library_init],
 				[
-					papi_LIBS="${papi_LIBS} -lpapi"
+					papi_LIBS="${papi_LIBS}"
 					ac_use_papi=yes
 				],
 				[
@@ -56,13 +56,13 @@ AC_DEFUN([AC_CHECK_PAPI],
 					ac_use_papi=no
 				]
 			)
-			
+
 			CPPFLAGS="${ac_save_CPPFLAGS}"
 			LIBS="${ac_save_LIBS}"
 		fi
-		
+
 		AM_CONDITIONAL(HAVE_PAPI, test x"${ac_use_papi}" = x"yes")
-		
+
 		AC_SUBST([papi_LIBS])
 		AC_SUBST([papi_CPPFLAGS])
 	]

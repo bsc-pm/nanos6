@@ -44,7 +44,7 @@ AC_DEFUN([AC_CHECK_DLB],
 			AC_CHECK_LIB([dlb],
 				[DLB_Init],
 				[
-					dlb_LIBS="${dlb_LIBS} -ldlb"
+					dlb_LIBS="${dlb_LIBS}"
 					ac_use_dlb=yes
 				],
 				[
