@@ -443,10 +443,20 @@ public:
 					if (successful) {
 						WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 						assert(currentThread != nullptr);
+						assert(currentThread->getComputePlace() == cpu);
+
+						// Unassign the current thread's task (if any)
+						Task *assignedTask = currentThread->unassignTask();
 
 						// Notify the scheduler about the disable in case any
-						// structures related to the CPU must be emptied
-						Scheduler::disablingCPU(systemCPUId);
+						// task assigned to this CPU must be unassigned
+						bool workReassigned = Scheduler::disablingCPU(systemCPUId, assignedTask);
+
+						// If any task was added to the scheduler, reclaim one
+						// CPU in case no other CPUs are available right now
+						if (workReassigned || assignedTask != nullptr) {
+							dlbReclaimCPUs(1);
+						}
 
 						// The thread becomes idle
 						Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());

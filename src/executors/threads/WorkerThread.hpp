@@ -52,13 +52,18 @@ public:
 
 	inline virtual ~WorkerThread();
 
-	//! \brief get the currently assigned task to this thread
+	//! \brief Get the currently assigned task to this thread
 	inline Task *getTask();
 
-	//! \brief set the task that this thread must run when it is resumed
+	//! \brief Set the task that this thread must run when it is resumed
 	//!
 	//! \param[in] task the task that the thread will run when it is resumed
 	inline void setTask(Task *task);
+
+	//! \brief Unattach the current task assigned to the thread
+	//!
+	//! \return A valid task or nullptr
+	inline Task *unassignTask();
 
 	inline size_t getOriginalNumaNode() const
 	{

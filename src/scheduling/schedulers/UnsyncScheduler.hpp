@@ -84,19 +84,29 @@ public:
 	//! \param[in] computePlace The host compute place
 	virtual bool hasAvailableWork(ComputePlace *computePlace) = 0;
 
-	//! \brief Notify the current scheduler that a CPU is about to be disabled
-	//! in case any actions must be taken
+	//! \brief Notify the scheduler that a CPU is about to be disabled
+	//! in case any tasks must be unassigned
 	//!
 	//! \param[in] cpuId The id of the cpu that will be disabled
-	inline void disablingCPU(size_t cpuId)
+	//! \param[in] task A task assigned to the current thread or nullptr
+	//!
+	//! \return Whether work was reassigned upon disabling the CPU
+	inline bool disablingCPU(size_t cpuId, Task *task)
 	{
-		// Upon disabling a CPU, if its immediate successor slot was full, place
-		// the task in the ready queue
+		// If the current thread had a task assigned, readd it to the scheduler
+		if (task != nullptr) {
+			_readyTasks->addReadyTask(task, false);
+		}
+
+		// Upon disabling a CPU, if its immediate successor slot was full
+		// place the task in the ready queue
 		Task *currentIS = _immediateSuccessorTasks[cpuId];
 		if (currentIS != nullptr) {
 			_immediateSuccessorTasks[cpuId] = nullptr;
 			_readyTasks->addReadyTask(currentIS, false);
+			return true;
 		}
+		return false;
 	}
 
 	virtual inline bool priorityEnabled()

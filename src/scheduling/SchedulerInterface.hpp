@@ -72,13 +72,16 @@ public:
 		}
 	}
 
-	//! \brief Notify the current scheduler that a CPU is about to be disabled
-	//! in case any actions must be taken
+	//! \brief Notify the scheduler that a CPU is about to be disabled
+	//! in case any tasks must be unassigned
 	//!
 	//! \param[in] cpuId The id of the cpu that will be disabled
-	inline void disablingCPU(size_t cpuId)
+	//! \param[in] task A task assigned to the current thread or nullptr
+	//!
+	//! \return Whether work was reassigned upon disabling this CPU
+	inline bool disablingCPU(size_t cpuId, Task *task)
 	{
-		_hostScheduler->disablingCPU(cpuId);
+		return _hostScheduler->disablingCPU(cpuId, task);
 	}
 
 	virtual std::string getName() const = 0;

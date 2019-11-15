@@ -169,6 +169,9 @@ inline void ThreadManager::addIdler(WorkerThread *idleThread)
 {
 	assert(idleThread != nullptr);
 
+	// Make sure this thread has no task assigned before idling
+	assert(idleThread->getTask() == nullptr);
+
 	// Return the current thread to the idle list
 	{
 		size_t numaNode = idleThread->getOriginalNumaNode();
