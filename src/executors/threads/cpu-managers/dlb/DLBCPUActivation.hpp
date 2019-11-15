@@ -531,16 +531,16 @@ public:
 					// If the CPU is owned and enabled, DLB may have woken us
 					// even though another process may be using our CPU still
 					// Before completing the enable, check if this is the case
-					while (DLB_CheckCpuAvailability(cpu->getSystemCPUId()) != DLB_SUCCESS) {
+					if (DLB_CheckCpuAvailability(cpu->getSystemCPUId()) != DLB_SUCCESS) {
 						// The CPU is not ready yet, sleep for a bit
 						nanosleep(&_delayCPUEnabling, nullptr);
-					}
-
-					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabled_status);
-					if (successful) {
-						currentStatus = CPU::enabled_status;
-						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
+					} else {
+						successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabled_status);
+						if (successful) {
+							currentStatus = CPU::enabled_status;
+							Instrument::resumedComputePlace(cpu->getInstrumentationId());
+							Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
+						}
 					}
 					break;
 				case CPU::acquired_status:
