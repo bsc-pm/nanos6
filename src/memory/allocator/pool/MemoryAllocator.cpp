@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
@@ -25,19 +25,21 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 	size_t cpuId;
 	size_t numaNodeId;
 	MemoryPool *pool = nullptr;
-	
+
 	// Round to the nearest multiple of the cache line size
 	size_t cacheLineSize = HardwareInfo::getCacheLineSize();
-	size_t roundedSize = (size + cacheLineSize - 1) & ~(cacheLineSize - 1);
-	size_t cacheLines = roundedSize / cacheLineSize;
-	
+	const size_t roundedSize = (size + cacheLineSize - 1) & ~(cacheLineSize - 1);
+	const size_t cacheLines = roundedSize / cacheLineSize;
+
+	assert (roundedSize > 0);
+
 	if (thread != nullptr) {
 		CPU *currentCPU = thread->getComputePlace();
-		
+
 		if (currentCPU != nullptr) {
 			cpuId = currentCPU->getIndex();
 			numaNodeId = currentCPU->getNumaNodeId();
-			
+
 			auto it = _localMemoryPool[cpuId].find(cacheLines);
 			if (it == _localMemoryPool[cpuId].end()) {
 				// No pool of this size locally
@@ -48,7 +50,7 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 			}
 		}
 	}
-	
+
 	if (pool == nullptr) {
 		std::lock_guard<SpinLock> guard(_externalMemoryPoolLock);
 		auto it = _externalMemoryPool.find(cacheLines);
@@ -59,24 +61,24 @@ MemoryPool *MemoryAllocator::getPool(size_t size)
 			pool = it->second;
 		}
 	}
-	
+
 	return pool;
 }
 
 void MemoryAllocator::initialize()
 {
 	VirtualMemoryManagement::initialize();
-	
+
 	size_t numaNodeCount = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
-	size_t cpuCount = HardwareInfo::getComputePlaceCount(nanos6_device_t::nanos6_host_device);	
+	size_t cpuCount = HardwareInfo::getComputePlaceCount(nanos6_device_t::nanos6_host_device);
 	_globalMemoryPool.resize(numaNodeCount);
-	
+
 	for (size_t i = 0; i < numaNodeCount; ++i) {
 		_globalMemoryPool[i] = new MemoryPoolGlobal(i);
 	}
-	
+
 	_localMemoryPool.resize(cpuCount);
-	
+
 	//! Initialize the Object caches
 	ObjectAllocator<DataAccess>::initialize();
 	ObjectAllocator<ReductionInfo>::initialize();
@@ -88,17 +90,17 @@ void MemoryAllocator::shutdown()
 	for (size_t i = 0; i < _globalMemoryPool.size(); ++i) {
 		delete _globalMemoryPool[i];
 	}
-	
+
 	for (size_t i = 0; i < _localMemoryPool.size(); ++i) {
 		for (auto it = _localMemoryPool[i].begin(); it != _localMemoryPool[i].end(); ++it) {
 			delete it->second;
 		}
 	}
-	
+
 	for (auto it = _externalMemoryPool.begin(); it != _externalMemoryPool.end(); ++it) {
 		delete it->second;
 	}
-	
+
 	//! Initialize the Object caches
 	ObjectAllocator<BottomMapEntry>::shutdown();
 	ObjectAllocator<ReductionInfo>::shutdown();
@@ -108,13 +110,13 @@ void MemoryAllocator::shutdown()
 void *MemoryAllocator::alloc(size_t size)
 {
 	MemoryPool *pool = getPool(size);
-	
+
 	return pool->getChunk();
 }
 
 void MemoryAllocator::free(void *chunk, size_t size)
 {
 	MemoryPool *pool = getPool(size);
-	
+
 	pool->returnChunk(chunk);
 }
