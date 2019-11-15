@@ -48,6 +48,15 @@ inline void WorkerThread::setTask(Task *task)
 }
 
 
+inline Task *WorkerThread::unassignTask()
+{
+	Task *currentTask = _task;
+	_task = nullptr;
+
+	return currentTask;
+}
+
+
 inline DependencyDomain const *WorkerThread::getDependencyDomain() const
 {
 	return &_dependencyDomain;
