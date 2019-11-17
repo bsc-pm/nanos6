@@ -12,6 +12,7 @@ support for DLB and OmpSs-2@Linter.
 - Performance and code improvements on the `task for` feature
 - Add support for Dynamic Load Balancing (DLB) tool
 - Add support for [OmpSs-2@Linter](https://github.com/bsc-pm/ompss-2-linter)
+- Important bugfix in memory allocator (used by OmpSs-2@Cluster)
 - Bugfixes, performance and code improvements
 
 ### Dependency System
