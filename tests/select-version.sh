@@ -19,8 +19,10 @@ fi
 
 # If DLB is present, clean shared memory in case a previous program finalized
 # incorrectly
-if [[ ${HAVE_DLB} != "" ]]; then
-	dlb_shm -d
+if [[ ${NANOS6_ENABLE_DLB} == "1" ]]; then
+	if hash dlb_shm 2>/dev/null; then
+		dlb_shm -d
+	fi
 fi
 
 if test -z ${NANOS6} ; then

@@ -320,11 +320,14 @@ public:
 	//! \brief Check if we must return a CPU (and return it if we must)
 	//!
 	//! \param[in] cpu The CPU to return
-	static inline void checkIfMustReturnCPU(CPU *cpu)
+	//!
+	//! \return Whether the CPU was returned
+	static inline bool checkIfMustReturnCPU(CPU *cpu)
 	{
 		assert(cpu != nullptr);
 
-		dlbReturnCPU(cpu->getSystemCPUId());
+		int ret = dlbReturnCPU(cpu->getSystemCPUId());
+		return (ret == DLB_SUCCESS);
 	}
 
 	//! \brief DLB-specific callback called when a CPU is returned to us
@@ -459,8 +462,6 @@ public:
 						}
 
 						// The thread becomes idle
-						Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
-						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 						ThreadManager::addIdler(currentThread);
 						currentThread->switchTo(nullptr);
 					}
@@ -488,10 +489,22 @@ public:
 		assert(currentThread != nullptr);
 
 		CPU *cpu = currentThread->getComputePlace();
-		if (cpu != nullptr) {
-			// If the CPU is not owned check if it must be returned
-			if (!cpu->isOwned() && cpu->getActivationStatus() != CPU::shutdown_status) {
-				checkIfMustReturnCPU(cpu);
+		assert(cpu != nullptr);
+
+		// If the CPU is not owned check if it must be returned
+		if (!cpu->isOwned() && cpu->getActivationStatus() != CPU::shutdown_status) {
+			// At the start of the checkIfMustReturnCPU call, the CPU might
+			// already be returned, so we switch here to idle and switch
+			// back quickly to active if the CPU was not returned
+			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+
+			bool returned = checkIfMustReturnCPU(cpu);
+			if (!returned) {
+				// If the CPU wasn't returned, resume instrumentation, if
+				// it was, the appropriate thread will resume it
+				Instrument::resumedComputePlace(cpu->getInstrumentationId());
+				Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
 			}
 		}
 

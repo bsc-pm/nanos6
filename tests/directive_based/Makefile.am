@@ -1,14 +1,14 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-#	
+#
 #	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
-AM_LDFLAGS = 
+AM_LDFLAGS =
 CXX = $(NANOS6_MCXX) --parallel
 
 if MCC_SUPORTS_EXTERNAL_INSTALL
-AM_CXXFLAGS += --no-default-nanos6-inc --no-default-nanos6-lib -I$(top_srcdir)/api -I$(top_builddir) -include nanos6.h 
+AM_CXXFLAGS += --no-default-nanos6-inc --no-default-nanos6-lib -I$(top_srcdir)/api -I$(top_builddir) -include nanos6.h
 AM_LDFLAGS += -L$(top_builddir)/.libs -rpath $(abs_top_builddir)/.libs
 LDADD = $(top_builddir)/nanos6-main-wrapper.o $(top_builddir)/libnanos6.la -ldl
 endif
@@ -518,11 +518,6 @@ dlb_cpu_sharing_passive_process_debug_test_SOURCES = dlb/dlb-cpu-sharing-passive
 dlb_cpu_sharing_passive_process_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dlb_cpu_sharing_passive_process_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-# Set the HAVE_DLB shell variable depending on the defined one so that the
-# select-version.sh script knows if it has to deal with DLB's shared memory
-if HAVE_DLB
-export HAVE_DLB="1"
-endif
 
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
