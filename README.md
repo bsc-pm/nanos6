@@ -10,7 +10,7 @@ at the [**Barcelona Supercomputing Center**](http://www.bsc.es/).
 
 To install Nanos6 the following tools and libraries must be installed:
 
-1. automake, autoconf, libtool, make and a C and C++ compiler
+1. automake, autoconf, libtool, pkg-config, make and a C and C++ compiler
 1. [boost](http://boost.org) >= 1.59
 1. [hwloc](https://www.open-mpi.org/projects/hwloc/)
 1. [numactl](http://oss.sgi.com/projects/libnuma/)
@@ -66,7 +66,7 @@ The configure script accepts the following options:
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
 1. `--enable-monitoring-hwevents` to enable monitoring of hardware counters (which must be paired with an appropriate library)
 
-The location of elfutils and hwloc is always retrieved through pkg-config.
+The location of elfutils, hwloc and CUDA is always retrieved through pkg-config.
 The location of PAPI can also be retrieved through pkg-config if it is not specified through the `--with-papi` parameter.
 If they are installed in non-standard locations, pkg-config can be told where to find them through the `PKG_CONFIG_PATH` environment variable.
 For instance:
@@ -105,6 +105,25 @@ The scheduling infrastructure provides the following environment variables to mo
 * `NANOS6_IMMEDIATE_SUCCESSOR=1|0`: Enables/disables the immediate successor policy. Enabled by default.
 * `NANOS6_PRIORITY=1|0`: Enables/disables support for task priorities in the scheduler. Enabled by default.
 
+### Task worksharings options
+
+Worksharing tasks are a special type of tasks that can only be applied to for-loops.
+The key point of worksharing tasks is their ability to run concurrently on different threads, similarly to OpenMP parallel fors.
+In contrast, worksharing tasks do not force all the threads to collaborate neither introduce any kind of barrier.
+
+An example is shown below:
+
+```c
+#pragma oss task for chunksize(1024) inout(array[0;N]) in(a)
+for (int i = 0; i < N; ++i) {
+    array[i] += a;
+}
+```
+
+In our implementation, worksharing tasks are run by taskfor groups.
+Each worksharing task can be run by at most as many workers (also known as collaborators) as a taskfor group has.
+Users can set the number of groups (and so, implicitly, the number of collaborators) by setting the `NANOS6_TASKFOR_GROUPS` environment variable.
+By default, there are as many groups as NUMA nodes in the system.
 
 ## Tracing, debugging and other options
 
