@@ -128,29 +128,17 @@ namespace DataAccessRegistration {
 
 		assert(!accessStruct.hasBeenDeleted());
 
-		DataAccess *accessArray = accessStruct._accessArray;
-		void **addressArray = accessStruct._addressArray;
-		DataAccess *alreadyExistingAccess = accessStruct.findAccess(address);
+		bool alreadyExisting;
+		DataAccess *access = accessStruct.allocateAccess(address, accessType, task, weak, alreadyExisting);
 
-		if (alreadyExistingAccess == nullptr) {
-			size_t index = accessStruct._currentIndex;
-
-			assert(accessStruct._currentIndex < accessStruct._maxDeps);
-
-			addressArray[index] = address;
-			DataAccess *access = &accessArray[index];
-
-			accessStruct._currentIndex++;
-
-			new(access) DataAccess(accessType, task, weak);
-
+		if (!alreadyExisting) {
 			if (accessType == REDUCTION_ACCESS_TYPE) {
 				access->setReductionOperator(reductionTypeAndOperatorIndex);
 				access->setReductionLength(length);
 				access->setReductionIndex(reductionIndex);
 			}
 		} else {
-			upgradeAccess(alreadyExistingAccess, accessType, weak);
+			upgradeAccess(access, accessType, weak);
 		}
 	}
 
@@ -435,11 +423,9 @@ namespace DataAccessRegistration {
 			// if task is final, it is always strong. if task is taskloop, it is always strong because taskloop is always final.
 			// if task is not final, it may be strong anyway, so we have to check the access itself.
 			assert(accessStruct.hasDataAccesses());
-			for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
-				void *address = accessStruct._addressArray[i];
-				DataAccess *access = &accessStruct._accessArray[i];
+			accessStruct.forAll([&] (void * address, DataAccess * access) {
 				finalizeDataAccess(task, access, address, hpDependencyData, computePlace);
-			}
+			});
 
 			// All TaskDataAccesses have a deletableCount of 1 for default, so this will return true unless
 			// some read/reduction accesses have increased this as well because the task cannot be deleted yet.
@@ -504,14 +490,11 @@ namespace DataAccessRegistration {
 			}
 		}
 
-		DataAccess * accessArray = accessStruct._accessArray;
-
 		// We need to "unlock" our child accesses
-		for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
-			DataAccess * access = &accessArray[i];
+		accessStruct.forAll([&] (void *, DataAccess * access) {
 			if(access->getChild() != nullptr)
 				unlockAccessInTaskwait(task, access, dependencyData);
-		}
+		});
 
 		processSatisfiedOriginators(dependencyData, computePlace, true);
 	}
@@ -522,14 +505,11 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
 
-		DataAccess * accessArray = accessStruct._accessArray;
-
 		// Remove taskwait flags
-		for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
-			DataAccess * access = &accessArray[i];
+		accessStruct.forAll([&] (void *, DataAccess * access) {
 			if(access->getFlags() & ACCESS_IN_TASKWAIT)
 				access->unsetFlags(ACCESS_IN_TASKWAIT);
-		}
+		});
 	}
 
 	void handleTaskRemoval(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
@@ -594,9 +574,7 @@ namespace DataAccessRegistration {
 		accessStruct.increaseDeletableCount();
 
 		// Get all seqs
-		for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
-			void *address = accessStruct._addressArray[i];
-			DataAccess *access = &accessStruct._accessArray[i];
+		accessStruct.forAll([&] (void * address, DataAccess * access) {
 			DataAccessType accessType = access->getType();
 			bool weak = access->isWeak();
 			bool closeReduction = false;
@@ -710,7 +688,7 @@ namespace DataAccessRegistration {
 						task->getInstrumentationTaskId()
 				);
 			}
-		}
+		});
 	}
 
 	static inline void releaseReductionInfo(ReductionInfo *info)
@@ -762,13 +740,12 @@ namespace DataAccessRegistration {
 
 		if (!accessStruct.hasDataAccesses()) return;
 
-		for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
-			DataAccess *access = &accessStruct._accessArray[i];
+		accessStruct.forAll([&] (void *, DataAccess * access) {
 			if(access->getType() == REDUCTION_ACCESS_TYPE) {
 				ReductionInfo *reductionInfo = access->getReductionInfo();
 				reductionInfo->releaseSlotsInUse(((CPU *) computePlace)->getIndex());
 			}
-		}
+		});
 	}
 }
 

@@ -36,10 +36,10 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <Monitoring.hpp>
+#include <TaskDataAccesses.hpp>
 
 
 #define DATA_ALIGNMENT_SIZE sizeof(void *)
-#define TASK_ALIGNMENT 128
 
 void nanos6_create_task(
 	nanos6_task_info_t *taskInfo,
@@ -92,8 +92,13 @@ void nanos6_create_task(
 	// Two plain C arrays are used, one for the actual DataAccess structures and another for the
 	// addresses, which is the one used for searching. That way we cause less cache misses searching.
 
-	size_t seqsSize = sizeof(DataAccess) * num_deps;
-	size_t addrSize = sizeof(void *) * num_deps;
+	size_t seqsSize = 0;
+	size_t addrSize = 0;
+
+	if(num_deps <= ACCESS_LINEAR_CUTOFF) {
+		seqsSize = sizeof(DataAccess) * num_deps;
+		addrSize = sizeof(void *) * num_deps;
+	}
 #else
 	size_t seqsSize = 0;
 	size_t addrSize = 0;

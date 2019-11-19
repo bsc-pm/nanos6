@@ -17,7 +17,6 @@ class ComputePlace;
 class Task;
 struct TaskDataAccesses;
 
-
 namespace DataAccessRegistration {
 	//! \brief creates a task data access taking into account repeated accesses but does not link it to previous accesses nor superaccesses
 	//!

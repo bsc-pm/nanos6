@@ -9,7 +9,6 @@
 
 #include "system/RuntimeInfo.hpp"
 
-
 class DependencySystem {
 public:
 	static void initialize()

@@ -16,12 +16,16 @@
 #include "lowlevel/TicketSpinLock.hpp"
 #include "BottomMapEntry.hpp"
 #include <MemoryAllocator.hpp>
+#include <DependencySystem.hpp>
+
+#define ACCESS_LINEAR_CUTOFF 256
 
 struct DataAccess;
 
 struct TaskDataAccesses {
 	typedef TicketSpinLock<int> spinlock_t;
 	typedef std::unordered_map<void *, BottomMapEntry> bottom_map_t;
+	typedef std::unordered_map<void *, DataAccess> access_map_t;
 
 #ifndef NDEBUG
 	enum flag_bits_t {
@@ -39,6 +43,7 @@ struct TaskDataAccesses {
 	size_t _currentIndex;
 
 	std::atomic<int> _deletableCount;
+	access_map_t * _accessMap;
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
@@ -51,7 +56,8 @@ struct TaskDataAccesses {
 		_addressArray(nullptr),
 		_maxDeps(0),
 		_currentIndex(0),
-		_deletableCount(0)
+		_deletableCount(0),
+		_accessMap(nullptr)
 #ifndef NDEBUG
 		, _flags()
 #endif
@@ -63,11 +69,15 @@ struct TaskDataAccesses {
 		_subaccessBottomMap(),
 		_accessArray((DataAccess *) accessArray),
 		_addressArray((void **) addressArray),
-		_maxDeps(maxDeps), _currentIndex(0), _deletableCount(0)
+		_maxDeps(maxDeps), _currentIndex(0), _deletableCount(0), _accessMap(nullptr)
 #ifndef NDEBUG
 		, _flags()
 #endif
 	{
+		if(maxDeps > ACCESS_LINEAR_CUTOFF) {
+			_accessMap = MemoryAllocator::newObject<access_map_t>(maxDeps);
+			assert(_accessMap != nullptr);
+		}
 	}
 
 	~TaskDataAccesses()
@@ -76,7 +86,9 @@ struct TaskDataAccesses {
 		std::lock_guard<spinlock_t> guard(_lock);
 		assert(!hasBeenDeleted());
 
-		_subaccessBottomMap.clear();
+		if(_accessMap != nullptr) {
+			MemoryAllocator::deleteObject(_accessMap);
+		}
 
 #ifndef NDEBUG
 		hasBeenDeleted() = true;
@@ -113,9 +125,15 @@ struct TaskDataAccesses {
 
 	inline DataAccess * findAccess(void * address) const
 	{
-		for(size_t i = 0; i < _currentIndex; ++i) {
-			if(_addressArray[i] == address)
-				return &_accessArray[i];
+		if(_accessMap != nullptr) {
+			access_map_t::iterator itAccess = _accessMap->find(address);
+			if(itAccess != _accessMap->end())
+				return &itAccess->second;
+		} else {
+			for(size_t i = 0; i < _currentIndex; ++i) {
+				if(_addressArray[i] == address)
+					return &_accessArray[i];
+			}
 		}
 
 		return nullptr;
@@ -134,6 +152,46 @@ struct TaskDataAccesses {
 	inline size_t getAdditionalMemorySize() const
 	{
 		return (sizeof(DataAccess) + sizeof(void *)) * _maxDeps;
+	}
+
+	inline DataAccess * allocateAccess(void * address, DataAccessType type, Task *originator, bool weak, bool &existing) {
+		if(_accessMap != nullptr) {
+			std::pair<access_map_t::iterator, bool> emplaced = _accessMap->emplace(std::piecewise_construct,
+				std::forward_as_tuple(address),
+				std::forward_as_tuple(type, originator, weak));
+
+			existing = !emplaced.second;
+			if(!existing) _currentIndex++;
+			return &emplaced.first->second;
+		} else {
+			DataAccess * ret = findAccess(address);
+			assert(_currentIndex < _maxDeps);
+
+			if(ret != nullptr) {
+				existing = true;
+				return ret;
+			} else {
+				existing = false;
+				_addressArray[_currentIndex] = address;
+				ret = &_accessArray[_currentIndex++];
+				new (ret) DataAccess(type, originator, weak);
+				return ret;
+			}
+		}
+	}
+
+	inline void forAll(std::function<void(void *, DataAccess *)> callback) {
+		if(_accessMap != nullptr) {
+			access_map_t::iterator itAccess = _accessMap->begin();
+
+			while(itAccess != _accessMap->end()) {
+				callback(itAccess->first, &itAccess->second);
+				itAccess++;
+			}
+		} else {
+			for(size_t i = 0; i < getRealAccessNumber(); ++i)
+				callback(_addressArray[i], &_accessArray[i]);
+		}
 	}
 };
 

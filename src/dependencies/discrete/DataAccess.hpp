@@ -69,10 +69,10 @@ private:
 
 	Instrument::data_access_id_t _instrumentDataAccessId;
 public:
-	DataAccess(DataAccessType type, Task *originator, bool weak = false, ReductionInfo * reductionInfo = nullptr)
+	DataAccess(DataAccessType type, Task *originator, bool weak)
 		: _type(type),
 		_originator(originator),
-		_reductionInfo(reductionInfo),
+		_reductionInfo(nullptr),
 		_weak(weak),
 		_closesReduction(false),
 		_successor(nullptr),
