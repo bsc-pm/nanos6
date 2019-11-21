@@ -80,6 +80,18 @@ public:
 		return _cpus[systemCPUId];
 	}
 
+	inline CPU *getUnusedCPU()
+	{
+		return nullptr;
+	}
+
+
+	/*    SHUTDOWN CPUS    */
+
+	CPU *getShutdownCPU();
+
+	void addShutdownCPU(CPU *cpu);
+
 
 	/*    CPUACTIVATION BRIDGE    */
 
@@ -90,35 +102,6 @@ public:
 	bool enable(size_t systemCPUId);
 
 	bool disable(size_t systemCPUId);
-
-
-	/*    IDLE CPUS    */
-
-	// NOTE: By default, in this implementation we cancel the idle-CPU
-	// mechanism by overriding it. If a CPU is idle we simply lend it using DLB
-
-	bool cpuBecomesIdle(CPU *cpu, bool inShutdown = false);
-
-	CPU *getIdleCPU(bool inShutdown = false);
-
-	inline size_t getIdleCPUs(std::vector<CPU *> &, size_t)
-	{
-		return 0;
-	}
-
-	inline CPU *getIdleNUMANodeCPU(size_t)
-	{
-		return nullptr;
-	}
-
-	inline bool unidleCPU(CPU *)
-	{
-		return false;
-	}
-
-	inline void getIdleCollaborators(std::vector<CPU *> &, ComputePlace *)
-	{
-	}
 
 	inline size_t getNumCPUsPerTaskforGroup() const
 	{

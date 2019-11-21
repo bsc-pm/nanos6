@@ -257,43 +257,33 @@ bool DLBCPUManagerImplementation::disable(size_t systemCPUId)
 }
 
 
-/*    IDLE CPUS    */
+/*    SHUTDOWN CPUS    */
 
-// NOTE: The following functions should only be used when the runtime is
-// shutting down, to allow all threads to shutdown
-
-bool DLBCPUManagerImplementation::cpuBecomesIdle(CPU *cpu, bool inShutdown)
+CPU *DLBCPUManagerImplementation::getShutdownCPU()
 {
-	if (inShutdown) {
-		assert(cpu != nullptr);
-
-		const int index = cpu->getIndex();
-		_idleCPUsLock.lock();
-
-		// The CPU should not be marked as idle
-		assert(!_idleCPUs[index]);
-
-		_idleCPUs[index] = true;
+	_idleCPUsLock.lock();
+	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
+	if (idleCPU != boost::dynamic_bitset<>::npos) {
+		_idleCPUs[idleCPU] = false;
 		_idleCPUsLock.unlock();
+
+		return _cpus[idleCPU];
 	}
-
-	return inShutdown;
-}
-
-CPU *DLBCPUManagerImplementation::getIdleCPU(bool inShutdown)
-{
-	if (inShutdown) {
-		_idleCPUsLock.lock();
-		boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
-		if (idleCPU != boost::dynamic_bitset<>::npos) {
-			_idleCPUs[idleCPU] = false;
-			_idleCPUsLock.unlock();
-
-			return _cpus[idleCPU];
-		}
-		_idleCPUsLock.unlock();
-	}
+	_idleCPUsLock.unlock();
 
 	return nullptr;
 }
 
+void DLBCPUManagerImplementation::addShutdownCPU(CPU *cpu)
+{
+	assert(cpu != nullptr);
+
+	const int index = cpu->getIndex();
+	_idleCPUsLock.lock();
+
+	// The CPU should not be marked as idle
+	assert(!_idleCPUs[index]);
+
+	_idleCPUs[index] = true;
+	_idleCPUsLock.unlock();
+}

@@ -102,6 +102,7 @@ public:
 	//! \brief Get a CPU object given a numerical system CPU identifier
 	//!
 	//! \param[in] systemCPUId The identifier
+	//!
 	//! \return The CPU object
 	static inline CPU *getCPU(size_t systemCPUId)
 	{
@@ -132,6 +133,16 @@ public:
 		assert(_cpuManager != nullptr);
 
 		return _cpuManager->getCPUListReference();
+	}
+
+	//! \brief Try to obtain an unused CPU
+	//!
+	//! \return A CPU or nullptr
+	static inline CPU *getUnusedCPU()
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->getUnusedCPU();
 	}
 
 
@@ -187,72 +198,26 @@ public:
 	}
 
 
-	/*    IDLE CPUS    */
+	/*    SHUTDOWN CPUS    */
 
-	//! \brief Mark a CPU as idle
+	//! \brief Mark that a CPU is able to participate in the shutdown process
 	//!
-	//! \param[in] cpu The CPU object to idle
-	//! \param[in] inShutdown Whether the CPU becomes idle due to the runtime
-	//! shutting down
-	//!
-	//! \return Whether the operation was successful
-	static inline bool cpuBecomesIdle(CPU *cpu, bool inShutdown = false)
+	//! \param[in] cpu The CPU object to offer
+	static inline void addShutdownCPU(CPU *cpu)
 	{
 		assert(_cpuManager != nullptr);
 
-		return _cpuManager->cpuBecomesIdle(cpu, inShutdown);
+		return _cpuManager->addShutdownCPU(cpu);
 	}
 
-	//! \brief Get any idle CPU
+	//! \brief Get an unused CPU to participate in the shutdown process
 	//!
-	//! \param[in] inShutdown Whether the returned CPU is needed because the
-	//! runtime is shutting down
-	static inline CPU *getIdleCPU(bool inShutdown = false)
+	//! \return A CPU or nullptr
+	static inline CPU *getShutdownCPU()
 	{
 		assert(_cpuManager != nullptr);
 
-		return _cpuManager->getIdleCPU(inShutdown);
-	}
-
-	//! \brief Get a specific number of idle CPUs
-	//!
-	//! \param[in,out] idleCPUs A vector of at least size 'numCPUs' where the
-	//! retreived idle CPUs will be placed
-	//! \param[in] numCPUs The amount of CPUs to retreive
-	//! \return The number of idle CPUs obtained/valid references in the vector
-	static inline size_t getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs)
-	{
-		assert(_cpuManager != nullptr);
-
-		return _cpuManager->getIdleCPUs(idleCPUs, numCPUs);
-	}
-
-	//! \brief Get an idle CPU from a specific NUMA node
-	static inline CPU *getIdleNUMANodeCPU(size_t NUMANodeId)
-	{
-		assert(_cpuManager != nullptr);
-
-		return _cpuManager->getIdleNUMANodeCPU(NUMANodeId);
-	}
-
-	//! \brief Mark a CPU as not idle (if possible)
-	static inline bool unidleCPU(CPU *cpu)
-	{
-		assert(_cpuManager != nullptr);
-
-		return _cpuManager->unidleCPU(cpu);
-	}
-
-	//! \brief Get all the idle CPUs that can collaborate in a taskfor
-	//!
-	//! \param[in,out] idleCPUs A vector where the unidled collaborators will
-	//! be stored
-	//! \param[in] cpu The CPU that created the taskfor
-	static inline void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu)
-	{
-		assert(_cpuManager != nullptr);
-
-		_cpuManager->getIdleCollaborators(idleCPUs, cpu);
+		return _cpuManager->getShutdownCPU();
 	}
 
 	static inline void forcefullyResumeCPU(size_t cpuId)

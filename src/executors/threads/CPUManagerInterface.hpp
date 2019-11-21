@@ -120,6 +120,16 @@ private:
 		assert((_taskforGroups <= numCPUs) && (numCPUs % _taskforGroups == 0));
 	}
 
+	//! \brief Get all the idle CPUs that can collaborate in a taskfor
+	//!
+	//! \param[in,out] idleCPUs A vector where the unidled collaborators will
+	//! be stored
+	//! \param[in] cpu The CPU that created the taskfor
+	void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu);
+
+	//! \brief Get any idle CPU
+	CPU *getIdleCPU();
+
 
 protected:
 
@@ -236,6 +246,14 @@ public:
 		return CPU_COUNT(&_cpuMask);
 	}
 
+	//! \brief Try to obtain an unused CPU
+	//!
+	//! \return A CPU or nullptr
+	virtual inline CPU *getUnusedCPU()
+	{
+		return getIdleCPU();
+	}
+
 
 	/*    CPUACTIVATION BRIDGE    */
 
@@ -278,13 +296,7 @@ public:
 	//! shutting down
 	//!
 	//! \return Whether the operation was successful
-	virtual bool cpuBecomesIdle(CPU *cpu, bool inShutdown = false);
-
-	//! \brief Get any idle CPU
-	//!
-	//! \param[in] inShutdown Whether the returned CPU is needed because the
-	//! runtime is shutting down
-	virtual CPU *getIdleCPU(bool = false);
+	bool cpuBecomesIdle(CPU *cpu, bool inShutdown = false);
 
 	//! \brief Get a specific number of idle CPUs
 	//!
@@ -292,23 +304,28 @@ public:
 	//! retreived idle CPUs will be placed
 	//! \param[in] numCPUs The amount of CPUs to retreive
 	//! \return The number of idle CPUs obtained/valid references in the vector
-	virtual size_t getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs);
+	size_t getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs);
 
 	//! \brief Get an idle CPU from a specific NUMA node
-	virtual CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
+	CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
 
 	//! \brief Mark a CPU as not idle (if possible)
-	virtual bool unidleCPU(CPU *cpu);
-
-	//! \brief Get all the idle CPUs that can collaborate in a taskfor
-	//!
-	//! \param[in,out] idleCPUs A vector where the unidled collaborators will
-	//! be stored
-	//! \param[in] cpu The CPU that created the taskfor
-	virtual void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu);
+	bool unidleCPU(CPU *cpu);
 
 	virtual void forcefullyResumeCPU(size_t cpuId);
 
+
+	/*    SHUTDOWN CPUS    */
+
+	//! \brief Get an unused CPU to participate in the shutdown process
+	//!
+	//! \return A CPU or nullptr
+	virtual CPU *getShutdownCPU();
+
+	//! \brief Mark that a CPU is able to participate in the shutdown process
+	//!
+	//! \param[in] cpu The CPU object to offer
+	virtual void addShutdownCPU(CPU *cpu);
 
 	/*    TASKFORS    */
 

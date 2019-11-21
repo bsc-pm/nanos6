@@ -260,7 +260,7 @@ void CPUManagerInterface::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerP
 		assert(cpu != nullptr);
 
 		std::vector<CPU *> idleCPUs;
-		CPUManager::getIdleCollaborators(idleCPUs, cpu);
+		getIdleCollaborators(idleCPUs, cpu);
 
 		// Resume an idle thread for every unidled collaborator
 		for (size_t i = 0; i < idleCPUs.size(); ++i) {
@@ -304,7 +304,7 @@ bool CPUManagerInterface::cpuBecomesIdle(CPU *cpu, bool inShutdown)
 	return true;
 }
 
-CPU *CPUManagerInterface::getIdleCPU(bool)
+CPU *CPUManagerInterface::getIdleCPU()
 {
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 	boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
@@ -458,4 +458,17 @@ void CPUManagerInterface::reportTaskforGroupsInfo(const size_t numTaskforGroups,
 		}
 		assert(group == 0 || cpusPerGroup[group].size() == cpusPerGroup[group - 1].size());
 	}
+}
+
+
+/*    SHUTDOWN CPUS    */
+
+CPU *CPUManagerInterface::getShutdownCPU()
+{
+	return getIdleCPU();
+}
+
+void CPUManagerInterface::addShutdownCPU(CPU *cpu)
+{
+	cpuBecomesIdle(cpu, true);
 }
