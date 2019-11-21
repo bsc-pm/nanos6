@@ -255,7 +255,7 @@ public:
 			// after we've lent the CPU, that action will try to acquire CPUs
 			// through DLB, and the CPU we've just lent should be re-acquired
 			dlbLendCPU(cpu->getSystemCPUId());
-			Monitoring::cpuBecomesIdle(cpu->getIndex());
+			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 			if (Scheduler::hasAvailableWork((ComputePlace *) cpu)) {
 				// Work was just added, change to enabling, call dlbReclaimCPU
