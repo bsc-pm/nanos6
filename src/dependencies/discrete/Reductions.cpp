@@ -57,15 +57,13 @@ void *nanos6_get_reduction_storage1(void *original,
 
 	bool weak = access->isWeak();
 
-	if(reductionInfo == nullptr && !weak) {
+	if(!weak) {
+		assert(reductionInfo == nullptr);
 		assert(slotIndex == -1);
 		reductionInfo = access->getReductionInfo();
-		slotIndex = reductionInfo->getFreeSlotIndex(cpuId);
-		assert(slotIndex >= 0);
 	}
 
 	assert(reductionInfo != nullptr || weak);
-	assert(slotIndex >= 0 || weak);
 
 	void *address = original;
 	if (reductionInfo != nullptr) {
@@ -75,12 +73,11 @@ void *nanos6_get_reduction_storage1(void *original,
 		assert(((char*)original) < (((char*)originalAddress)
 					+ originalLength));
 
-		assert(reductionInfo->getPaddedLength() >= (size_t) dim1size);
-		assert(((size_t) ((char*)original - (char*)originalAddress)) < reductionInfo->getPaddedLength());
-
-		address = ((char*)reductionInfo->getFreeSlotStorage(slotIndex)) +
+		address = ((char*)reductionInfo->getFreeSlot(task, (ComputePlace *) currentCPU)) +
 			((char*)original - (char*)originalAddress);
 	}
+
+	assert(address != nullptr);
 
 	return address;
 }

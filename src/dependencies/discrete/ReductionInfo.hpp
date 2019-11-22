@@ -11,8 +11,7 @@
 #include <functional>
 #include <atomic>
 
-#include <boost/dynamic_bitset.hpp>
-
+#include "ReductionSpecific.hpp"
 #include "DataAccessRegion.hpp"
 #include "ReductionSpecific.hpp"
 #include "executors/threads/CPUManager.hpp"
@@ -20,20 +19,15 @@
 #include "support/Containers.hpp"
 
 
+class DeviceReductionStorage;
+
 class ReductionInfo
 {
 	public:
 
 		typedef PaddedSpinLock<> spinlock_t;
 
-		struct ReductionSlot {
-			void *storage = nullptr;
-			bool initialized = false;
-		};
-
 		typedef boost::dynamic_bitset<> reduction_slot_set_t;
-
-		inline static size_t getMaxSlots();
 
 		ReductionInfo(void * address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
 			std::function<void(void*, void*, size_t)> initializationFunction,
@@ -47,19 +41,11 @@ class ReductionInfo
 
 		size_t getOriginalLength() const;
 
-		size_t getPaddedLength() const;
+		void combine();
 
-		bool combine(bool canCombineToOriginalStorage);
+		void releaseSlotsInUse(Task *task, ComputePlace* computePlace);
 
-		void releaseSlotsInUse(size_t virtualCpuId);
-
-		size_t getFreeSlotIndex(size_t virtualCpuId);
-
-		void * getFreeSlotStorage(size_t slotIndex);
-
-		void makeOriginalStorageAvailable(const void * address, const size_t length);
-
-		bool noSlotsInUse();
+		void * getFreeSlot(Task *task, ComputePlace* computePlace);
 
 		void incrementRegisteredAccesses();
 
@@ -89,43 +75,16 @@ class ReductionInfo
 
 		reduction_type_and_operator_index_t _typeAndOperatorIndex;
 
-		std::atomic_size_t _originalStorageCombinationCounter;
-
-		std::atomic_size_t _privateStorageCombinationCounter;
-
-		bool _isOriginalStorageAvailable;
-		std::atomic_size_t _originalStorageAvailabilityCounter;
-
-		slots_t _slots;
-		current_cpu_slot_indices_t _currentCpuSlotIndices;
-		free_slot_indices_t _freeSlotIndices;
-		// Aggregating slots are private slots used to aggregate combinations
-		// when the original region is not available for combination. By now, they are not being used
-		// in discrete deps.
-		reduction_slot_set_t _isAggregatingSlotIndex;
-		reduction_slot_set_t _privateSlotsUsed;
+		Container::map<nanos6_device_t, DeviceReductionStorage *> _deviceStorages;
 
 		std::function<void(void*, size_t)> _initializationFunction;
 		std::function<void(void*, void*, size_t)> _combinationFunction;
 
 		std::atomic<size_t> _registeredAccesses;
 		spinlock_t _lock;
+
+		DeviceReductionStorage * allocateDeviceStorage(nanos6_device_t deviceType);
 };
-
-inline size_t ReductionInfo::getMaxSlots()
-{
-	// Note: This can't become a const static member because on its definition
-	// it would call 'getTotalCPUs' before the runtime is properly initialized
-	// Note: '+1' when original storage is available
-	return CPUManager::getTotalCPUs() + 1;
-}
-
-inline bool ReductionInfo::noSlotsInUse()
-{
-	_lock.lock();
-	return (_freeSlotIndices.size() == getMaxSlots());
-	_lock.unlock();
-}
 
 inline void ReductionInfo::incrementRegisteredAccesses()
 {

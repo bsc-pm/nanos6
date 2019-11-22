@@ -31,6 +31,8 @@
 #include <InstrumentTaskId.hpp>
 #include <ObjectAllocator.hpp>
 
+#define __unused __attribute__((unused))
+
 #pragma GCC visibility push(hidden)
 
 namespace DataAccessRegistration {
@@ -149,7 +151,7 @@ namespace DataAccessRegistration {
 	void registerTaskDataAccess(
 		Task *task, DataAccessType accessType, bool weak, void *address, size_t length,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
-		reduction_index_t reductionIndex)
+		reduction_index_t reductionIndex, int symbolIndex)
 	{
 		// This is called once per access in the task and it's purpose is to initialize our DataAccess structure with the
 		// arguments of this function. No dependency registration is done here, and this call precedes the "registerTaskDataAccesses"
@@ -175,6 +177,8 @@ namespace DataAccessRegistration {
 		} else {
 			upgradeAccess(access, accessType, weak);
 		}
+
+		access->addToSymbol(symbolIndex);
 	}
 
 	void propagateMessages(
@@ -642,10 +646,8 @@ namespace DataAccessRegistration {
 		assert(info != info->getOriginalAddress());
 		assert(info->finished());
 
-		__attribute__((unused)) bool wasLastCombination = info->combine(true);
+		info->combine();
 		ObjectAllocator<ReductionInfo>::deleteObject(info);
-
-		assert(wasLastCombination);
 	}
 
 	static inline void decreaseDeletableCountOrDelete(Task *originator,
@@ -659,7 +661,7 @@ namespace DataAccessRegistration {
 	}
 
 	static inline ReductionInfo *allocateReductionInfo(
-		__attribute__((unused)) DataAccessType &dataAccessType, reduction_index_t reductionIndex,
+		__unused DataAccessType &dataAccessType, reduction_index_t reductionIndex,
 		reduction_type_and_operator_index_t reductionTypeAndOpIndex,
 		void *address, const size_t length, const Task &task)
 	{
@@ -696,7 +698,44 @@ namespace DataAccessRegistration {
 
 			if (access->getType() == REDUCTION_ACCESS_TYPE && !access->isWeak()) {
 				ReductionInfo *reductionInfo = access->getReductionInfo();
-				reductionInfo->releaseSlotsInUse(((CPU *)computePlace)->getIndex());
+				reductionInfo->releaseSlotsInUse(task, computePlace);
+			}
+
+			return true;
+		});
+	}
+
+	void translateReductionAddresses(Task *task, ComputePlace *computePlace,
+		nanos6_address_translation_entry_t * translationTable,
+		int totalSymbols)
+	{
+		assert(task != nullptr);
+		assert(computePlace != nullptr);
+		assert(translationTable != nullptr);
+
+		// Initialize translationTable
+		for(int i = 0; i < totalSymbols; ++i)
+			translationTable[i] = {0, 0};
+
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
+
+		assert(!accessStruct.hasBeenDeleted());
+
+		DataAccess * accessArray = accessStruct._accessArray;
+		void ** addressArray = accessStruct._addressArray;
+
+		accessStruct.forAll([&](void * address, DataAccess *access) {
+			if(access->getType() == REDUCTION_ACCESS_TYPE) {
+				ReductionInfo * reductionInfo = access->getReductionInfo();
+				assert(reductionInfo != nullptr);
+
+				void * translation = reductionInfo->getFreeSlot(task, computePlace);
+
+				for(int j = 0; j < totalSymbols; ++j) {
+					if(access->isInSymbol(j)) {
+						translationTable[j] = { (size_t) address, (size_t) translation };
+					}
+				}
 			}
 
 			return true; // Continue iteration

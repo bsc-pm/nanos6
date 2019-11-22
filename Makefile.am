@@ -524,10 +524,16 @@ discrete_dependency_sources = \
 	src/dependencies/discrete/CPUDependencyData.cpp \
 	src/dependencies/discrete/DataAccess.cpp \
 	src/dependencies/discrete/DataAccessRegistration.cpp \
+	src/dependencies/discrete/DeviceReductionStorage.cpp \
+	src/dependencies/discrete/devices/HostReductionStorage.cpp \
 	src/dependencies/discrete/ReductionInfo.cpp \
 	src/dependencies/discrete/Reductions.cpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
 	src/dependencies/discrete/ReleaseDirective.cpp
+
+if USE_CUDA
+discrete_dependency_sources += src/dependencies/discrete/devices/CUDAReductionStorage.cpp
+endif
 
 multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
 
@@ -811,11 +817,14 @@ noinst_HEADERS = \
 	src/dependencies/discrete/Dependencies.hpp \
 	src/dependencies/discrete/DependencyDomain.hpp \
 	src/dependencies/discrete/DependencySystem.hpp \
+	src/dependencies/discrete/DeviceReductionStorage.hpp \
 	src/dependencies/discrete/MultidimensionalAPI.hpp \
 	src/dependencies/discrete/ReductionInfo.hpp \
 	src/dependencies/discrete/ReductionSpecific.hpp \
 	src/dependencies/discrete/TaskDataAccesses.hpp \
 	src/dependencies/discrete/TaskDataAccessesInfo.hpp \
+	src/dependencies/discrete/devices/HostReductionStorage.hpp \
+	src/dependencies/discrete/devices/CUDAReductionStorage.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \

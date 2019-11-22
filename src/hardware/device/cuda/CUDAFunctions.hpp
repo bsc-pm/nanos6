@@ -59,6 +59,12 @@ public:
 		return pageSize;
 	}
 
+	static int getActiveDevice()
+	{
+		int device;
+		CUDAErrorHandler::handle(cudaGetDevice(&device), "While getting CUDA device");
+		return device;
+	}
 
 	static void setActiveDevice(int device)
 	{
@@ -85,6 +91,29 @@ public:
 		if (err != cudaSuccess)
 			return nullptr;
 		return ptr;
+	}
+
+	// Allocate special pinned memory that allows sped up transfers between host and GPU.
+	static void *mallocHost(size_t size)
+	{
+		void *ptr;
+		cudaError_t err = cudaMallocHost(&ptr, size);
+		CUDAErrorHandler::handle(err, "Allocating CUDA pinned host memory");
+		if (err != cudaSuccess)
+			return nullptr;
+		return ptr;
+	}
+
+	static void free(void *ptr)
+	{
+		cudaError_t err = cudaFree(ptr);
+		CUDAErrorHandler::handle(err, "Freeing device memory");
+	}
+
+	static void freeHost(void *ptr)
+	{
+		cudaError_t err = cudaFreeHost(ptr);
+		CUDAErrorHandler::handle(err, "Freeing pinned host memory");
 	}
 
 	static void createEvent(cudaEvent_t &event)
@@ -124,6 +153,12 @@ public:
 		// Call a prefetch operation on the same stream that we are going to launch that task on
 		err = cudaMemPrefetchAsync(pHost, size, device, stream);
 		CUDAErrorHandler::handle(err, "Prefetching memory to device");
+	}
+
+	static void memcpy(void *destination, const void *from, size_t count, cudaMemcpyKind kind)
+	{
+		cudaError_t err = cudaMemcpy(destination, from, count, kind);
+		CUDAErrorHandler::handle(err, "Copying memory");
 	}
 };
 

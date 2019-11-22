@@ -21,14 +21,18 @@
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentDependenciesByAccessLinks.hpp>
 
+#define MAX_SYMBOLS 64 // TODO: Temporary solution to use a fixed bitset size
+
 struct DataAccess;
 class Task;
-struct BottomMapEntry;
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
 //! WARNING: When modifying this structure, please mind to pack it as much as possible.
 //! There might me thousands of allocations of this struct, and size will have a noticeable effect on performance.
 struct DataAccess {
+public:
+	typedef std::bitset<MAX_SYMBOLS> symbols_t;
+
 private:
 	//! 16-byte fields
 	//! The region covered by the access
@@ -74,6 +78,9 @@ private:
 	DataAccessMessage concurrentAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	DataAccessMessage commutativeAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	void readDestination(access_flags_t allFlags, DataAccessMessage &message, PropagationDestination &destination);
+
+	//! A bitmap of the "symbols" this access is related to
+	symbols_t _symbols;
 
 public:
 	DataAccess(DataAccessType type, Task *originator, void *address, size_t length, bool weak) :
@@ -234,6 +241,21 @@ public:
 	inline bool isReleased() const
 	{
 		return (_accessFlags.load(std::memory_order_relaxed) & ACCESS_UNREGISTERED);
+	}
+
+	bool isInSymbol(int symbol) const
+	{
+		return _symbols[symbol];
+	}
+
+	void addToSymbol(int symbol)
+	{
+		_symbols.set(symbol);
+	}
+
+	symbols_t getSymbols() const
+	{
+		return _symbols;
 	}
 };
 
