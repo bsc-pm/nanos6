@@ -59,6 +59,16 @@ public:
 		_cpuManager->initialize();
 	}
 
+	//! \brief Check if CPU initialization has finished
+	//!
+	//! \return Whether initialization has finished
+	static inline bool hasFinishedInitialization()
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->hasFinishedInitialization();
+	}
+
 	//! \brief In the first phase of the shutdown, all CPUs are notified about
 	//! the shutdown so that they are all available for the shutdown process
 	static inline void shutdownPhase1()
@@ -75,28 +85,49 @@ public:
 		assert(_cpuManager != nullptr);
 
 		_cpuManager->shutdownPhase2();
+
+		delete _cpuManager;
 	}
 
-	//! \brief Taking into account the current workload and the amount of
-	//! active or idle CPUs, consider idling/waking up CPUs
+	//! \brief This method is executed after the amount of work in the runtime
+	//! changes. Some common scenarios include:
+	//! - Adding tasks in the scheduler (hint = ADDED_TASKS)
+	//! - Execution of a taskfor (hint = HANDLE_TASKFOR)
+	//! - Running out of tasks to execute (hint = IDLE_CANDIDATE)
 	//!
-	//! \param[in] cpu The CPU that triggered the call, if any
+	//! \param[in,out] cpu The CPU that triggered the call, if any
 	//! \param[in] hint A hint about what kind of change triggered this call
-	//! \param[in] numTasks A hint to be used by the policy taking actions,
-	//! which contains information about what triggered a call to the policy
-	static inline void executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks = 0)
-	{
+	//! \param[in] numTasks If hint == ADDED_TASKS, numTasks is the amount
+	//! of tasks added
+	static inline void executeCPUManagerPolicy(
+		ComputePlace *cpu,
+		CPUManagerPolicyHint hint,
+		size_t numTasks = 0
+	) {
 		assert(_cpuManager != nullptr);
 
 		_cpuManager->executeCPUManagerPolicy(cpu, hint, numTasks);
 	}
 
-	//! \brief Check if CPU initialization has finished
-	static inline bool hasFinishedInitialization()
+	//! \brief Get the maximum number of CPUs that will be used by the runtime
+	//!
+	//! \return The maximum number of CPUs that the runtime will ever use in
+	//! the current execution
+	static inline long getTotalCPUs()
 	{
 		assert(_cpuManager != nullptr);
 
-		return _cpuManager->hasFinishedInitialization();
+		return _cpuManager->getTotalCPUs();
+	}
+
+	//! \brief Get the number of CPUs available through the process' mask
+	//!
+	//! \return The number of CPUs owned by the runtime
+	static inline long getAvailableCPUs()
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->getAvailableCPUs();
 	}
 
 	//! \brief Get a CPU object given a numerical system CPU identifier
@@ -111,30 +142,6 @@ public:
 		return _cpuManager->getCPU(systemCPUId);
 	}
 
-	//! \brief Get the maximum number of CPUs that will be used
-	static inline long getTotalCPUs()
-	{
-		assert(_cpuManager != nullptr);
-
-		return _cpuManager->getTotalCPUs();
-	}
-
-	//! \brief Get the number of CPUs available through the process' mask
-	static inline long getAvailableCPUs()
-	{
-		assert(_cpuManager != nullptr);
-
-		return _cpuManager->getAvailableCPUs();
-	}
-
-	//! \brief Get a reference to the list of CPUs
-	static inline std::vector<CPU *> const &getCPUListReference()
-	{
-		assert(_cpuManager != nullptr);
-
-		return _cpuManager->getCPUListReference();
-	}
-
 	//! \brief Try to obtain an unused CPU
 	//!
 	//! \return A CPU or nullptr
@@ -145,11 +152,21 @@ public:
 		return _cpuManager->getUnusedCPU();
 	}
 
+	//! \brief Get a reference to the list of CPUs
+	//!
+	//! \return A vector with all the CPU objects
+	static inline std::vector<CPU *> const &getCPUListReference()
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->getCPUListReference();
+	}
+
 
 	/*    CPUACTIVATION BRIDGE    */
 
-	//! \brief Check the status transitions of a CPU onto which a thread is
-	//! running
+	//! \brief Check and/or complete status transitions of a CPU onto which a
+	//! thread is running
 	//!
 	//! \param[in,out] thread The thread which executes on the CPU we check for
 	//!
@@ -202,15 +219,15 @@ public:
 
 	//! \brief Mark that a CPU is able to participate in the shutdown process
 	//!
-	//! \param[in] cpu The CPU object to offer
+	//! \param[in,out] cpu The CPU object to offer
 	static inline void addShutdownCPU(CPU *cpu)
 	{
 		assert(_cpuManager != nullptr);
 
-		return _cpuManager->addShutdownCPU(cpu);
+		_cpuManager->addShutdownCPU(cpu);
 	}
 
-	//! \brief Get an unused CPU to participate in the shutdown process
+	//! \brief Try to obtain an unused CPU to participate in the shutdown
 	//!
 	//! \return A CPU or nullptr
 	static inline CPU *getShutdownCPU()
@@ -231,6 +248,8 @@ public:
 	/*    TASKFORS    */
 
 	//! \brief Get the number of taskfor groups
+	//!
+	//! \return The number of taskfor groups
 	static inline size_t getNumTaskforGroups()
 	{
 		assert(_cpuManager != nullptr);

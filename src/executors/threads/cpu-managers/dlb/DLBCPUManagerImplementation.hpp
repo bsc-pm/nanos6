@@ -20,9 +20,11 @@ class DLBCPUManagerImplementation : public CPUManagerInterface {
 
 private:
 
-	//! Default options (same as DLB_ARGS envvar)
-	char _dlbOptions[64];
+	//! CPUs available to be used for shutdown purposes
+	static boost::dynamic_bitset<> _shutdownCPUs;
 
+	//! Spinlock to access shutdown CPUs
+	static SpinLock _shutdownCPUsLock;
 
 private:
 
@@ -56,14 +58,7 @@ private:
 	}
 
 
-//! NOTE: Documentation for methods available in CPUManagerInterface.hpp
 public:
-
-	inline DLBCPUManagerImplementation()
-	{
-		// Lend When Idle API mode
-		strcpy(_dlbOptions, "--lewi --quiet=yes");
-	}
 
 	void preinitialize();
 
@@ -73,7 +68,11 @@ public:
 
 	void shutdownPhase2();
 
-	void executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks = 0);
+	void executeCPUManagerPolicy(
+		ComputePlace *cpu,
+		CPUManagerPolicyHint hint,
+		size_t numTasks = 0
+	);
 
 	inline CPU *getCPU(size_t systemCPUId) const
 	{
@@ -82,15 +81,10 @@ public:
 
 	inline CPU *getUnusedCPU()
 	{
+		// NOTE: In the DLB implementation, underlying policies control CPUs,
+		// obtaining unused CPUs should not be needed
 		return nullptr;
 	}
-
-
-	/*    SHUTDOWN CPUS    */
-
-	CPU *getShutdownCPU();
-
-	void addShutdownCPU(CPU *cpu);
 
 
 	/*    CPUACTIVATION BRIDGE    */
@@ -103,9 +97,35 @@ public:
 
 	bool disable(size_t systemCPUId);
 
-	inline size_t getNumCPUsPerTaskforGroup() const
+
+	/*    SHUTDOWN CPUS    */
+
+	//! \brief Get an unused CPU to participate in the shutdown process
+	//!
+	//! \return A CPU or nullptr
+	inline CPU *getShutdownCPU()
 	{
-		return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
+		std::lock_guard<SpinLock> guard(_shutdownCPUsLock);
+
+		boost::dynamic_bitset<>::size_type id = _shutdownCPUs.find_first();
+		if (id != boost::dynamic_bitset<>::npos) {
+			_shutdownCPUs[id] = false;
+			return _cpus[id];
+		} else {
+			return nullptr;
+		}
+	}
+
+	//! \brief Mark that a CPU is able to participate in the shutdown process
+	//!
+	//! \param[in,out] cpu The CPU object to offer
+	inline void addShutdownCPU(CPU *cpu)
+	{
+		const int index = cpu->getIndex();
+
+		_shutdownCPUsLock.lock();
+		_shutdownCPUs[index] = true;
+		_shutdownCPUsLock.unlock();
 	}
 
 };

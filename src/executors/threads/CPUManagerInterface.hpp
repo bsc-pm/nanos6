@@ -11,12 +11,12 @@
 #include <cassert>
 #include <mutex>
 #include <sched.h>
-#include <sstream>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
 
 #include "CPU.hpp"
+#include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -34,8 +34,11 @@ class CPUManagerInterface {
 
 protected:
 
-	//! Indicates if the thread manager has finished initializing the CPUs
-	static std::atomic<bool> _finishedCPUInitialization;
+	//! A vector of available CPUs
+	static std::vector<CPU *> _cpus;
+
+	//! The process' CPU mask
+	static cpu_set_t _cpuMask;
 
 	//! NUMA node CPU mask
 	static std::vector<boost::dynamic_bitset<>> _NUMANodeMask;
@@ -43,22 +46,10 @@ protected:
 	//! Map from system to virtual CPU id
 	static std::vector<size_t> _systemToVirtualCPUId;
 
-	//! Available CPUs indexed by virtual CPU identifier
-	static std::vector<CPU *> _cpus;
+	//! Indicates the initialization of CPUs has finished
+	static std::atomic<bool> _finishedCPUInitialization;
 
-	//! The process CPU mask
-	static cpu_set_t _cpuMask;
-
-	//! Spinlock to access idle CPUs
-	static SpinLock _idleCPUsLock;
-
-	//! The current number of idle CPUs, kept atomic through idleCPUsLock
-	static size_t _numIdleCPUs;
-
-	//! Idle CPUS
-	static boost::dynamic_bitset<> _idleCPUs;
-
-	//! Number of groups that can collaborate executing a single taskfor
+	//! The chosen number of taskfor groups
 	static EnvironmentVariable<size_t> _taskforGroups;
 
 	//! Whether we should emit a report with info about the taskfor groups.
@@ -67,79 +58,12 @@ protected:
 
 private:
 
-	//! \brief Find the appropriate value for the taskfor groups env var
-	//!
-	//! \param[in] numCPUs The number of CPUs used by the runtime
-	//! \param[in] numNUMANodes The number of NUMA nodes in the system
-	void refineTaskforGroups(size_t numCPUs, size_t numNUMANodes)
-	{
-		// Whether the taskfor group envvar already has a value
-		bool taskforGroupsSetByUser = _taskforGroups.isPresent();
-
-		// Final warning message (only one)
-		bool mustEmitWarning = false;
-		std::ostringstream warningMessage;
-
-		// The default value for _taskforGroups is 1 group per NUMA node or
-		// the closest to it
-		if (!taskforGroupsSetByUser) {
-			size_t closestGroups = numNUMANodes;
-			if (numCPUs % numNUMANodes != 0) {
-				closestGroups = getClosestGroupNumber(numCPUs, numNUMANodes);
-				assert(numCPUs % closestGroups == 0);
-			}
-			_taskforGroups.setValue(closestGroups);
-		} else {
-			if (numCPUs < _taskforGroups) {
-				warningMessage
-					<< "More groups requested than available CPUs. "
-					<< "Using " << numCPUs << " groups of 1 CPU each instead";
-
-				_taskforGroups.setValue(numCPUs);
-				mustEmitWarning = true;
-			} else if (_taskforGroups == 0 || numCPUs % _taskforGroups != 0) {
-				size_t closestGroups = getClosestGroupNumber(numCPUs, _taskforGroups);
-				assert(numCPUs % closestGroups == 0);
-
-				size_t cpusPerGroup = numCPUs / closestGroups;
-				warningMessage
-					<< _taskforGroups << " groups requested. "
-					<< "The number of CPUs is not divisible by the number of groups. "
-					<< "Using " << closestGroups << " groups of " << cpusPerGroup
-					<< " CPUs each instead";
-
-				_taskforGroups.setValue(closestGroups);
-				mustEmitWarning = true;
-			}
-		}
-
-		if (mustEmitWarning) {
-			FatalErrorHandler::warnIf(true, warningMessage.str());
-		}
-
-		assert((_taskforGroups <= numCPUs) && (numCPUs % _taskforGroups == 0));
-	}
-
-	//! \brief Get all the idle CPUs that can collaborate in a taskfor
-	//!
-	//! \param[in,out] idleCPUs A vector where the unidled collaborators will
-	//! be stored
-	//! \param[in] cpu The CPU that created the taskfor
-	void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu);
-
-	//! \brief Get any idle CPU
-	CPU *getIdleCPU();
-
-
-protected:
-
-	//! \brief Instrument-related private function
-	void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
-
 	//! \brief Taskfor-related, get the closest number of taskfor groups
 	//!
 	//! \param[in] numCPUs The number of available CPUs
 	//! \param[in] numGroups The number of groups specified by users
+	//!
+	//! \return The closest number of taskfor groups to numGroups
 	inline size_t getClosestGroupNumber(size_t numCPUs, size_t numGroups) const
 	{
 		size_t result = 0;
@@ -179,20 +103,82 @@ protected:
 		return result;
 	}
 
+protected:
+
+	//! \brief Instrument-related private function
+	void reportInformation(size_t numSystemCPUs, size_t numNUMANodes);
+
+	//! \brief Find the appropriate value for the taskfor groups env var
+	//!
+	//! \param[in] numCPUs The number of CPUs used by the runtime
+	//! \param[in] numNUMANodes The number of NUMA nodes in the system
+	inline void refineTaskforGroups(size_t numCPUs, size_t numNUMANodes)
+	{
+		// Whether the taskfor group envvar already has a value
+		bool taskforGroupsSetByUser = _taskforGroups.isPresent();
+
+		// Final warning message (only one)
+		bool mustEmitWarning = false;
+		std::ostringstream warningMessage;
+
+		// The default value is the closest to 1 taskfor group per NUMA node
+		if (!taskforGroupsSetByUser) {
+			size_t closestGroups = numNUMANodes;
+			if (numCPUs % numNUMANodes != 0) {
+				closestGroups = getClosestGroupNumber(numCPUs, numNUMANodes);
+				assert(numCPUs % closestGroups == 0);
+			}
+			_taskforGroups.setValue(closestGroups);
+		} else {
+			if (numCPUs < _taskforGroups) {
+				warningMessage
+					<< "More groups requested than available CPUs. "
+					<< "Using " << numCPUs << " groups of 1 CPU each instead";
+
+				_taskforGroups.setValue(numCPUs);
+				mustEmitWarning = true;
+			} else if (_taskforGroups == 0 || numCPUs % _taskforGroups != 0) {
+				size_t closestGroups = getClosestGroupNumber(numCPUs, _taskforGroups);
+				assert(numCPUs % closestGroups == 0);
+
+				size_t cpusPerGroup = numCPUs / closestGroups;
+				warningMessage
+					<< _taskforGroups << " groups requested. "
+					<< "The number of CPUs is not divisible by the number of groups. "
+					<< "Using " << closestGroups << " groups of " << cpusPerGroup
+					<< " CPUs each instead";
+
+				_taskforGroups.setValue(closestGroups);
+				mustEmitWarning = true;
+			}
+		}
+
+		if (mustEmitWarning) {
+			FatalErrorHandler::warnIf(true, warningMessage.str());
+		}
+
+		assert((_taskforGroups <= numCPUs) && (numCPUs % _taskforGroups == 0));
+	}
 
 public:
 
-	/*    CPU MANAGER    */
-
-	virtual inline ~CPUManagerInterface()
+	virtual ~CPUManagerInterface()
 	{
 	}
 
+	/*    CPU MANAGER    */
+
 	//! \brief Pre-initialize structures for the CPUManager
-	virtual void preinitialize();
+	virtual void preinitialize() = 0;
 
 	//! \brief Initialize all structures for the CPUManager
-	virtual void initialize();
+	virtual void initialize() = 0;
+
+	//! \brief Check if CPU initialization has finished
+	inline bool hasFinishedInitialization() const
+	{
+		return _finishedCPUInitialization;
+	}
 
 	//! \brief Notify all available CPUs that the runtime is shutting down
 	virtual void shutdownPhase1() = 0;
@@ -200,58 +186,53 @@ public:
 	//! \brief Destroy any CPU-related structures
 	virtual void shutdownPhase2() = 0;
 
-	//! \brief Taking into account the current workload and the amount of
-	//! active or idle CPUs, consider idling/waking up CPUs
+	//! \brief This method is executed after the amount of work in the runtime
+	//! changes. Some common scenarios include:
+	//! - Adding tasks in the scheduler (hint = ADDED_TASKS)
+	//! - Execution of a taskfor (hint = HANDLE_TASKFOR)
+	//! - Running out of tasks to execute (hint = IDLE_CANDIDATE)
 	//!
-	//! \param[in] cpu The CPU that triggered the call, if any
+	//! \param[in,out] cpu The CPU that triggered the call, if any
 	//! \param[in] hint A hint about what kind of change triggered this call
-	//! \param[in] numTasks A hint to be used by the policy taking actions,
-	//! which contains information about what triggered a call to the policy
-	virtual void executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks = 0);
+	//! \param[in] numTasks If hint == ADDED_TASKS, numTasks is the amount
+	//! of tasks added
+	virtual void executeCPUManagerPolicy(
+		ComputePlace *cpu,
+		CPUManagerPolicyHint hint,
+		size_t numTasks = 0
+	) = 0;
 
-	//! \brief Check if CPU initialization has finished
-	virtual inline bool hasFinishedInitialization() const
+	//! \brief Get the maximum number of CPUs that will be used by the runtime
+	//!
+	//! \return The maximum number of CPUs that the runtime will ever use in
+	//! the current execution
+	inline long getTotalCPUs() const
 	{
-		return _finishedCPUInitialization;
+		return _cpus.size();
+	}
+
+	//! \brief Get the number of CPUs available through the process' mask
+	inline long getAvailableCPUs() const
+	{
+		return CPU_COUNT(&_cpuMask);
 	}
 
 	//! \brief Get a CPU object given a numerical system CPU identifier
 	//!
 	//! \param[in] systemCPUId The identifier
+	//!
 	//! \return The CPU object
-	virtual inline CPU *getCPU(size_t systemCPUId) const
-	{
-		// _cpus is sorted by virtual ID
-		assert(_systemToVirtualCPUId.size() > systemCPUId);
-
-		size_t virtualCPUId = _systemToVirtualCPUId[systemCPUId];
-		return _cpus[virtualCPUId];
-	}
-
-	//! \brief Get the maximum number of CPUs that will be used
-	virtual inline long getTotalCPUs() const
-	{
-		return _cpus.size();
-	}
-
-	//! \brief Get a reference to the list of CPUs
-	virtual inline std::vector<CPU *> const &getCPUListReference() const
-	{
-		return _cpus;
-	}
-
-	//! \brief Get the number of CPUs available through the process' mask
-	virtual inline long getAvailableCPUs() const
-	{
-		return CPU_COUNT(&_cpuMask);
-	}
+	virtual CPU *getCPU(size_t systemCPUId) const = 0;
 
 	//! \brief Try to obtain an unused CPU
 	//!
 	//! \return A CPU or nullptr
-	virtual inline CPU *getUnusedCPU()
+	virtual CPU *getUnusedCPU() = 0;
+
+	//! \brief Get a reference to the list of CPUs
+	inline std::vector<CPU *> const &getCPUListReference() const
 	{
-		return getIdleCPU();
+		return _cpus;
 	}
 
 
@@ -274,45 +255,22 @@ public:
 
 	//! \brief Try to enable a CPU by its identifier
 	//!
-	//! \param[in,out] systemCPUId The identifier of the CPU to enable
+	//! \param[in] systemCPUId The identifier of the CPU to enable
 	//!
 	//! \return Whether the CPU was enabled
 	virtual bool enable(size_t systemCPUId) = 0;
 
 	//! \brief Try to disable a CPU by its identifier
 	//!
-	//! \param[in,out] systemCPUId The identifier of the CPU to disable
+	//! \param[in] systemCPUId The identifier of the CPU to disable
 	//!
 	//! \return Whether the CPU was disabled
 	virtual bool disable(size_t systemCPUId) = 0;
 
-
-	/*    IDLE CPUS    */
-
-	//! \brief Mark a CPU as idle
+	//! \brief Forcefully resume a CPU if it is idle
 	//!
-	//! \param[in] cpu The CPU object to idle
-	//! \param[in] inShutdown Whether the CPU becomes idle due to the runtime
-	//! shutting down
-	//!
-	//! \return Whether the operation was successful
-	bool cpuBecomesIdle(CPU *cpu, bool inShutdown = false);
-
-	//! \brief Get a specific number of idle CPUs
-	//!
-	//! \param[in,out] idleCPUs A vector of at least size 'numCPUs' where the
-	//! retreived idle CPUs will be placed
-	//! \param[in] numCPUs The amount of CPUs to retreive
-	//! \return The number of idle CPUs obtained/valid references in the vector
-	size_t getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs);
-
-	//! \brief Get an idle CPU from a specific NUMA node
-	CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
-
-	//! \brief Mark a CPU as not idle (if possible)
-	bool unidleCPU(CPU *cpu);
-
-	virtual void forcefullyResumeCPU(size_t cpuId);
+	//! \param[in] systemCPUId The identifier of the CPU to resume
+	virtual void forcefullyResumeCPU(size_t systemCPUId) = 0;
 
 
 	/*    SHUTDOWN CPUS    */
@@ -320,30 +278,34 @@ public:
 	//! \brief Get an unused CPU to participate in the shutdown process
 	//!
 	//! \return A CPU or nullptr
-	virtual CPU *getShutdownCPU();
+	virtual CPU *getShutdownCPU() = 0;
 
 	//! \brief Mark that a CPU is able to participate in the shutdown process
 	//!
-	//! \param[in] cpu The CPU object to offer
-	virtual void addShutdownCPU(CPU *cpu);
+	//! \param[in,out] cpu The CPU object to offer
+	virtual void addShutdownCPU(CPU *cpu) = 0;
+
 
 	/*    TASKFORS    */
 
 	//! \brief Get the number of taskfor groups
-	virtual inline size_t getNumTaskforGroups() const
+	//!
+	//! \return The number of taskfor groups
+	inline size_t getNumTaskforGroups() const
 	{
 		return _taskforGroups;
 	}
 
 	//! \brief Get the number of CPUs that can collaborate to execute a single
 	//! taskfor. I.e. the number of CPUs per taskfor group
-	virtual inline size_t getNumCPUsPerTaskforGroup() const
+	inline size_t getNumCPUsPerTaskforGroup() const
 	{
-		return _cpus.size() / _taskforGroups;
+		return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
 	}
 
-	//! \brief Emits a brief report with information of the taskfor groups.
-	virtual void reportTaskforGroupsInfo(const size_t numTaskforGroups, const size_t numCPUsPerTaskforGroup);
+	//! \brief Emits a brief report with information of the taskfor groups
+	virtual void reportTaskforGroupsInfo(const size_t numTaskforGroups, const size_t numCPUsPerTaskforGroup) = 0;
+
 };
 
 
