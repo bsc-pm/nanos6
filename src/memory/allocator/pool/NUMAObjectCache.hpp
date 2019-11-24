@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
@@ -15,26 +15,26 @@
 template <typename T>
 class NUMAObjectCache {
 	size_t _NUMANodeCount;
-	
+
 	typedef std::deque<T *> pool_t;
 	typedef struct {
 		pool_t _pool;
-		PaddedSpinLock<64> _lock;
+		PaddedSpinLock<> _lock;
 	} NUMApool_t;
-	
+
 	std::deque<NUMApool_t> _NUMAPools;
-	
+
 public:
 	NUMAObjectCache(size_t NUMANodeCount)
 		: _NUMANodeCount(NUMANodeCount)
 	{
 		_NUMAPools.resize(_NUMANodeCount + 1);
 	}
-	
+
 	~NUMAObjectCache()
 	{
 	}
-	
+
 	/** This is called from a CPUNUMAObjectCache to fill up its pool of
 	 *  objects.
 	 *
@@ -44,21 +44,21 @@ public:
 	 */
 	inline int fillCPUPool(size_t numaId, std::deque<T *> &pool, size_t requestedObjects)
 	{
-		std::lock_guard<PaddedSpinLock<64>> lock(_NUMAPools[numaId]._lock);
+		std::lock_guard<PaddedSpinLock<>> lock(_NUMAPools[numaId]._lock);
 		pool_t &numaPool = _NUMAPools[numaId]._pool;
-		
+
 		size_t poolSize = numaPool.size();
 		if (poolSize == 0) {
 			return 0;
 		}
-		
+
 		size_t nrObjects = std::min(requestedObjects, poolSize);
 		std::move(numaPool.begin(), numaPool.begin() + nrObjects, std::front_inserter(pool));
 		numaPool.erase(numaPool.begin(), numaPool.begin() + nrObjects);
-		
+
 		return nrObjects;
 	}
-	
+
 	/** Method to return objects to a NUMA pool from a CPUNUMAObjectCache.
 	 *
 	 * This is typically called from a CPUNUMAObjectCache in order to return
@@ -66,7 +66,7 @@ public:
 	 */
 	void returnObjects(size_t numaId, std::deque<T *> &pool)
 	{
-		std::lock_guard<PaddedSpinLock<64>> lock(_NUMAPools[numaId]._lock);
+		std::lock_guard<PaddedSpinLock<>> lock(_NUMAPools[numaId]._lock);
 		pool_t &numaPool = _NUMAPools[numaId]._pool;
 		std::move(pool.begin(), pool.end(), std::back_inserter(numaPool));
 		pool.erase(pool.begin(), pool.end());

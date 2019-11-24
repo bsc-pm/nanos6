@@ -4,7 +4,6 @@
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
-
 #ifndef SPIN_WAIT_HPP
 #define SPIN_WAIT_HPP
 
@@ -24,10 +23,6 @@
 #define ARM_ARCH
 #endif
 
-#ifndef CACHELINE_SIZE
-#define CACHELINE_SIZE 64
-#endif
-
 #ifdef KNL_ARCH
 #include <xmmintrin.h>
 #endif
@@ -43,7 +38,6 @@
 #define HMT_barrier()     asm volatile("" : : : "memory")
 #endif
 
-	
 static inline void spinWait()
 {
 #ifdef KNL_ARCH
@@ -58,13 +52,5 @@ static inline void spinWait()
 	#pragma message ("No 'pause' instruction/intrisic found for this architecture ")
 #endif
 }
-
-template<class T, size_t Size = CACHELINE_SIZE>
-class Padded : public T {
-	constexpr static size_t roundup(size_t const x, size_t const y) {
-		return ((((x) + ((y) - 1)) / (y)) * (y));
-	}
-	uint8_t padding[roundup(sizeof(T), Size)-sizeof(T)];
-};
 
 #endif // SPIN_WAIT_HPP

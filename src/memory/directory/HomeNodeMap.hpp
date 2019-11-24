@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -23,30 +23,30 @@ class HomeNodeMap : public IntrusiveLinearRegionMap<HomeMapEntry, boost::intrusi
 		HomeMapEntry,
 		boost::intrusive::function_hook<HomeMapEntryLinkingArtifacts>
 	> BaseType;
-	
+
 	//! Lock to protect accesses to the Map
-	typedef PaddedTicketSpinLock<int, 128> spinlock_t;
+	typedef PaddedTicketSpinLock<int> spinlock_t;
 	spinlock_t lock;
 public:
-	
+
 	//! \brief An auxiliary type to return info to callers
 	typedef std::vector<HomeMapEntry *> HomeNodesArray;
-	
+
 	HomeNodeMap() : BaseType()
 	{
 	}
-	
+
 	~HomeNodeMap()
 	{
 	}
-	
+
 	//! \brief Insert a region in the map
 	void insert(DataAccessRegion const &region,
 		MemoryPlace const *homeNode);
-	
+
 	//! \brief Find the home nodes of a region
 	HomeNodesArray *find(DataAccessRegion const &region);
-	
+
 	//! \brief Remove a region from the map
 	void erase(DataAccessRegion const &region);
 };

@@ -18,6 +18,7 @@ AM_INIT_AUTOMAKE([foreign dist-bzip2 no-dist-gzip subdir-objects -Wall tar-pax -
 AM_SILENT_RULES([yes])
 
 AC_CHECK_SPECIAL_HOST_ARCH
+AC_CHECK_CACHE
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -302,7 +303,7 @@ AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [test x"${ac_linear_fragmented_deps}" 
 
 AC_ARG_ENABLE(
 	[discrete-deps],
-	[AS_HELP_STRING([--disable-discrete-deps], [Disable discrete dependency engine. This will be automatically disabled 
+	[AS_HELP_STRING([--disable-discrete-deps], [Disable discrete dependency engine. This will be automatically disabled
 	if cluster support is enabled, as it is incompatible.])],
 	[
 		case "${enableval}" in

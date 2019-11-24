@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
@@ -25,8 +25,8 @@ class Task;
 
 
 struct TaskDataAccesses {
-	typedef PaddedTicketSpinLock<int, 128> spinlock_t;
-	
+	typedef PaddedTicketSpinLock<int> spinlock_t;
+
 	typedef IntrusiveLinearRegionMap<
 		DataAccess,
 		boost::intrusive::function_hook< TaskDataAccessLinkingArtifacts >
@@ -43,7 +43,7 @@ struct TaskDataAccesses {
 		BottomMapEntry,
 		boost::intrusive::function_hook< BottomMapEntryLinkingArtifacts >
 	> subaccess_bottom_map_t;
-	
+
 #ifndef NDEBUG
 	enum flag_bits {
 		HAS_BEEN_DELETED_BIT=0,
@@ -51,21 +51,21 @@ struct TaskDataAccesses {
 	};
 	typedef std::bitset<TOTAL_FLAG_BITS> flags_t;
 #endif
-	
+
 	spinlock_t _lock;
 	accesses_t _accesses;
 	access_fragments_t _accessFragments;
 	taskwait_fragments_t _taskwaitFragments;
 	subaccess_bottom_map_t _subaccessBottomMap;
-	
+
 	int _removalBlockers;
 	int _liveTaskwaitFragmentCount;
 	size_t _totalCommutativeBytes;
-	
+
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
-	
+
 	TaskDataAccesses()
 		: _lock(),
 		_accesses(), _accessFragments(), _taskwaitFragments(),
@@ -77,11 +77,11 @@ struct TaskDataAccesses {
 #endif
 	{
 	}
-	
+
 	~TaskDataAccesses();
-	
+
 	TaskDataAccesses(TaskDataAccesses const &other) = delete;
-	
+
 #ifndef NDEBUG
 	bool hasBeenDeleted() const
 	{
@@ -97,7 +97,7 @@ struct TaskDataAccesses {
 	{
 		return 0;
 	}
-	
+
 };
 
 

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASKFOR_INFO_HPP
@@ -14,24 +14,19 @@
 
 #include "executors/threads/CPUManager.hpp"
 
-#define CACHE_LINE_SIZE 128
-
-#ifndef ALIGNED
-#define ALIGNED __attribute__ ((aligned (CACHE_LINE_SIZE)))
-#endif
 
 struct TaskforInfo {
 	typedef nanos6_taskfor_bounds_t bounds_t;
 private:
-	
+
 	friend class Taskfor;
-	
+
 protected:
 	bounds_t _bounds;
 	size_t _maxCollaborators;
 	std::atomic<size_t> _remainingIterations;
 	size_t _completedIterations;
-	
+
 public:
 	inline TaskforInfo(bool precreated)
 		: _bounds(), _remainingIterations(0), _completedIterations(0)
@@ -47,33 +42,33 @@ public:
 		_remainingIterations = 0;
 		_completedIterations = 0;
 	}
-	
+
 	inline ~TaskforInfo()
 	{
 	}
-	
+
 	inline void initialize()
 	{
 		assert(_maxCollaborators > 0);
 		size_t totalIterations = getIterationCount();
 		_remainingIterations = totalIterations;
-		
+
 		// Set a implementation defined chunksize if needed
 		if (_bounds.chunksize == 0) {
 			_bounds.chunksize = std::max(totalIterations / (_maxCollaborators), (size_t) 1);
 		}
 	}
-	
+
 	inline void initialize(size_t lowerBound, size_t upperBound, size_t step, size_t chunksize)
 	{
 		_bounds.lower_bound = lowerBound;
 		_bounds.upper_bound = upperBound;
 		_bounds.step = step;
 		_bounds.chunksize = chunksize;
-		
+
 		initialize();
 	}
-	
+
 	inline void initialize(const bounds_t &newBounds)
 	{
 		// Set the bounds
@@ -81,15 +76,15 @@ public:
 		_bounds.upper_bound = newBounds.upper_bound;
 		_bounds.chunksize = newBounds.chunksize;
 		_bounds.step = newBounds.step;
-		
+
 		initialize();
 	}
-	
+
 	inline bounds_t &getBounds()
 	{
 		return _bounds;
 	}
-	
+
 	inline bounds_t const &getBounds() const
 	{
 		return _bounds;

@@ -16,6 +16,7 @@
 
 #include "MemoryAllocator.hpp"
 #include "SpinWait.hpp"
+#include "Padding.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 

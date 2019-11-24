@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -12,6 +12,7 @@
 
 #include "hardware/places/NUMAPlace.hpp"
 #include "executors/threads/CPU.hpp"
+#include "lowlevel/Padding.hpp"
 
 //! Workaround to deal with changes in different HWLOC versions.
 #if HWLOC_API_VERSION < 0x00010b00
@@ -19,8 +20,6 @@
 #else
 	#define HWLOC_NUMA_ALIAS HWLOC_OBJ_NUMANODE
 #endif
-
-#define DEFAULT_CACHE_LINE_SIZE 64
 
 void HostInfo::initialize()
 {
@@ -34,15 +33,15 @@ void HostInfo::initialize()
 	hwloc_topology_t topology;
 	hwloc_topology_init(&topology);  // initialization
 	hwloc_topology_load(topology);   // actual detection
-	
+
 	//! Create NUMA addressSpace
 	AddressSpace *NUMAAddressSpace = new AddressSpace();
-	
+
 	//! Get NUMA nodes of the machine.
 	//! NUMA node means: A set of processors around memory which the processors can directly access. (Extracted from hwloc documentation)
 	int memNodesCount = hwloc_get_nbobjs_by_type( topology, HWLOC_NUMA_ALIAS );
 	int validMemNodesCount = 0;
-	
+
 	//! Check if HWLOC has found any NUMA node.
 	NUMAPlace *node = nullptr;
 	if (memNodesCount != 0) {
@@ -79,7 +78,7 @@ void HostInfo::initialize()
 				assert(_memoryPlaces[i] == nullptr);
 			}
 #endif
-			
+
 			_memoryPlaces.resize(validMemNodesCount);
 		}
 	}
@@ -93,7 +92,7 @@ void HostInfo::initialize()
 		//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
 		_memoryPlaces[node->getIndex()] = node;
 	}
-	
+
 	//! Get (logical) cores of the machine
 	int coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 	_computePlaces.resize(coresCount);
@@ -103,7 +102,7 @@ void HostInfo::initialize()
 #if HWLOC_API_VERSION >= 0x00020000
 		hwloc_obj_t ancestor = nullptr;
 		hwloc_obj_t nodeNUMA = nullptr;
-		
+
 		//! NUMA node can be found in different depths of ancestors (ordered from deeper to narrower):
 		//! 1. A L3CACHE object / A GROUP object.
 		//! 2. The most common is a PACKAGE object.
@@ -121,7 +120,7 @@ void HostInfo::initialize()
 		}
 		assert(ancestor != nullptr);
 		assert(ancestor->memory_arity == 1);
-		
+
 		nodeNUMA = ancestor->memory_first_child;
 		assert(nodeNUMA != nullptr);
 		assert(hwloc_obj_type_is_memory(nodeNUMA->type));
@@ -132,32 +131,38 @@ void HostInfo::initialize()
 		CPU *cpu = new CPU( /*systemCPUID*/ obj->os_index, /*virtualCPUID*/ obj->logical_index, NUMANodeId);
 		_computePlaces[obj->logical_index] = cpu;
 	}
-	
+
 	hwloc_obj_t cache = nullptr;
 #if HWLOC_API_VERSION >= 0x00020000
 	cache = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L1CACHE, 0);
 #else
 	int cacheDepth = hwloc_get_cache_type_depth(topology, 1, HWLOC_OBJ_CACHE_DATA);
-	
+
 	if (cacheDepth != HWLOC_TYPE_DEPTH_MULTIPLE && cacheDepth != HWLOC_TYPE_DEPTH_UNKNOWN) {
 		cache = hwloc_get_obj_by_depth(topology, cacheDepth, 0);
 	}
 #endif
-	
+
 	if ((cache != nullptr) && (cache->attr->cache.linesize != 0)) {
 		_cacheLineSize = cache->attr->cache.linesize;
+
+		// Emit a warning if the runtime was configured with a wrong cacheline size for this machine.
+		FatalErrorHandler::warnIf(_cacheLineSize != CACHELINE_SIZE,
+			"Cacheline size of host (", _cacheLineSize, ") does not match ",
+			"the configured size (", CACHELINE_SIZE, "). Performance may be sub-optimal.");
 	} else {
 		// In some machines, such as HCA-Merlin or Dibona,
 		// hwloc cannot obtain cache information or just returns 0
-		_cacheLineSize = DEFAULT_CACHE_LINE_SIZE;
+		// If so, fall back to compile-time detected cacheline size.
+		_cacheLineSize = CACHELINE_SIZE;
 	}
-	
+
 	//! Attributes of system's memory
 	_pageSize = sysconf(_SC_PAGESIZE);
 	//! This is not so portable, but it works for more Unix-like stuff
 	size_t nrPhysicalPages = sysconf(_SC_PHYS_PAGES);
 	_physicalMemorySize = nrPhysicalPages * _pageSize;
-	
+
 	//! Associate CPUs with NUMA nodes
 	for (std::vector<MemoryPlace *>::iterator numaNode = _memoryPlaces.begin(); numaNode != _memoryPlaces.end(); ++numaNode) {
 		for (std::vector<ComputePlace *>::iterator cpu = _computePlaces.begin(); cpu != _computePlaces.end(); ++cpu) {
@@ -165,8 +170,8 @@ void HostInfo::initialize()
 			(*cpu)->addMemoryPlace(*numaNode);
 		}
 	}
-	
-	//other work				
+
+	//other work
 	hwloc_topology_destroy(topology); // release resources
 }
 

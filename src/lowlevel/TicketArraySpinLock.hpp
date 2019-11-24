@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -12,6 +12,7 @@
 
 #include "MemoryAllocator.hpp"
 #include "SpinWait.hpp"
+#include "Padding.hpp"
 
 class TicketArraySpinLock {
 	// These are aligned on a cache line boundary in order to avoid false sharing:
@@ -19,7 +20,7 @@ class TicketArraySpinLock {
 	alignas(CACHELINE_SIZE) std::atomic_size_t _head;
 	alignas(CACHELINE_SIZE) size_t _next;
 	alignas(CACHELINE_SIZE) size_t _size;
-	
+
 public:
 	TicketArraySpinLock(size_t size)
 		: _head(0), _next(0), _size(size)
@@ -29,19 +30,19 @@ public:
 			new (&_buffer[i]) Padded<std::atomic_size_t>();
 		}
 	}
-	
+
 	~TicketArraySpinLock()
 	{
 		MemoryAllocator::free(_buffer, _size * sizeof(Padded<std::atomic_size_t>));
 	}
-	
+
 	inline bool tryLock()
 	{
 		const size_t head = _head.fetch_add(1, std::memory_order_relaxed);
 		const size_t idx = head % _size;
 		return !(_buffer[idx].load(std::memory_order_acquire) != head);
 	}
-	
+
 	inline void lock()
 	{
 		const size_t head = _head.fetch_add(1, std::memory_order_relaxed);
@@ -51,7 +52,7 @@ public:
 		}
 		_next = (head+1);
 	}
-	
+
 	inline void unlock()
 	{
 		const size_t idx = _next % _size;
