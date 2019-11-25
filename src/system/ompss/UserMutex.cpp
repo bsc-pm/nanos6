@@ -155,6 +155,9 @@ void nanos6_user_unlock(void **handlerPointer)
 				// No idle CPUs available, first re-add the current task to the scheduler
 				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 
+				// After adding a task, the CPUManager may want to unidle CPUs
+				CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, ADDED_TASKS, 1);
+
 				// Now switch to the released thread
 				currentThread->switchTo(releasedThread);
 
