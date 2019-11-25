@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -13,14 +13,14 @@
 class TasktypeHardwareCountersPredictions;
 
 struct CounterPrediction {
-	
+
 	// Whether a prediction is available for this counter
 	bool _predictionAvailable;
-	
+
 	// The prediction for the counter
 	double _prediction;
-	
-	
+
+
 	inline CounterPrediction() :
 		_predictionAvailable(false)
 	{
@@ -31,22 +31,22 @@ struct CounterPrediction {
 class TaskHardwareCountersPredictions {
 
 private:
-	
+
 	//! Task-specific PQoS counter predictions
 	CounterPrediction _counterPredictions[HWCounters::num_counters];
-	
+
 	//! Predictions for counter values of the tasktype
 	TasktypeHardwareCountersPredictions *_typePredictions;
-	
-	
+
+
 public:
-	
+
 	inline TaskHardwareCountersPredictions() :
 		_typePredictions(nullptr)
 	{
 	}
-	
-	
+
+
 	//! \brief Set whether a counter has a prediction
 	//! \param[in] counterId The counter's id
 	//! \param[in] available Whether a prediction is available
@@ -54,14 +54,14 @@ public:
 	{
 		_counterPredictions[counterId]._predictionAvailable = available;
 	}
-	
+
 	//! \brief Check whether a counter has a prediction
 	//! \param[in] counterId The counter's id
 	inline bool hasPrediction(HWCounters::counters_t counterId) const
 	{
 		return _counterPredictions[counterId]._predictionAvailable;
 	}
-	
+
 	//! \brief Set the prediction for a counter
 	//! \param[in] counterId The counter's id
 	//! \param[in] value The value for the prediction of the counter
@@ -69,26 +69,26 @@ public:
 	{
 		_counterPredictions[counterId]._prediction = value;
 	}
-	
+
 	//! \brief Get the prediction for a certain counter
 	//! \param[in] counterId The counter's id
 	inline double getCounterPrediction(HWCounters::counters_t counterId) const
 	{
 		return _counterPredictions[counterId]._prediction;
 	}
-	
+
 	//! \brief Set the reference for tasktype predictions
 	inline void setTypePredictions(TasktypeHardwareCountersPredictions *predictions)
 	{
 		_typePredictions = predictions;
 	}
-	
+
 	//! \brief Get the reference for tasktype predictions
 	inline TasktypeHardwareCountersPredictions *getTypePredictions() const
 	{
 		return _typePredictions;
 	}
-	
+
 };
 
 #endif // PQOS_TASK_HARDWARE_COUNTERS_PREDICTIONS_HPP

@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -14,7 +14,7 @@ TaskHardwareCountersMonitor *TaskHardwareCountersMonitor::_monitor;
 void TaskHardwareCountersMonitor::taskCreated(TaskHardwareCounters *taskCounters, const std::string &label, size_t cost)
 {
 	assert(taskCounters != nullptr);
-	
+
 	taskCounters->setLabel(label);
 	taskCounters->setCost(cost);
 }
@@ -23,12 +23,12 @@ void TaskHardwareCountersMonitor::predictTaskCounters(TaskHardwareCountersPredic
 {
 	assert(_monitor != nullptr);
 	assert(taskPredictions != nullptr);
-	
+
 	tasktype_hardware_counters_map_t &tasktypeMap = _monitor->_tasktypeMap;
 	TasktypeHardwareCountersPredictions *predictions = nullptr;
-	
+
 	_monitor->_spinlock.lock();
-	
+
 	// Find (or create if unexistent) the tasktype HW counter predictions
 	tasktype_hardware_counters_map_t::iterator it = tasktypeMap.find(label);
 	if (it == tasktypeMap.end()) {
@@ -37,11 +37,11 @@ void TaskHardwareCountersMonitor::predictTaskCounters(TaskHardwareCountersPredic
 	} else {
 		predictions = it->second;
 	}
-	
+
 	_monitor->_spinlock.unlock();
-	
+
 	assert(predictions != nullptr);
-	
+
 	// Predict the execution time of the newly created task
 	for (unsigned short counterId = 0; counterId < HWCounters::num_counters; ++counterId) {
 		double counterPrediction = predictions->getCounterPrediction((HWCounters::counters_t) counterId, cost);
@@ -50,7 +50,7 @@ void TaskHardwareCountersMonitor::predictTaskCounters(TaskHardwareCountersPredic
 			taskPredictions->setPredictionAvailable((HWCounters::counters_t) counterId, true);
 		}
 	}
-	
+
 	taskPredictions->setTypePredictions(predictions);
 }
 
@@ -58,12 +58,12 @@ void TaskHardwareCountersMonitor::startTaskMonitoring(TaskHardwareCounters *task
 {
 	assert(taskCounters != nullptr);
 	assert(threadData != nullptr);
-	
+
 	if (!taskCounters->isCurrentlyMonitoring()) {
 		// Poll PQoS events from the current thread only
 		int ret = pqos_mon_poll(&threadData, 1);
 		FatalErrorHandler::failIf(ret != PQOS_RETVAL_OK, "Error '", ret, "' when polling PQoS events for a task (start/resume)");
-		
+
 		// If successfull, save counters when the task starts or resumes execution
 		taskCounters->startOrResume(threadData);
 	}
@@ -73,12 +73,12 @@ void TaskHardwareCountersMonitor::stopTaskMonitoring(TaskHardwareCounters *taskC
 {
 	assert(taskCounters != nullptr);
 	assert(threadData != nullptr);
-	
+
 	if (taskCounters->isCurrentlyMonitoring()) {
 		// Poll PQoS events from the current thread only
 		int ret = pqos_mon_poll(&threadData, 1);
 		FatalErrorHandler::failIf(ret != PQOS_RETVAL_OK, "Error '", ret, "' when polling PQoS events for a task (stop/pause)");
-		
+
 		// If successfull, save counters when the task stops or pauses
 		// execution, and accumulate them
 		taskCounters->stopOrPause(threadData);
@@ -90,7 +90,7 @@ void TaskHardwareCountersMonitor::taskFinished(TaskHardwareCounters *taskCounter
 {
 	assert(_monitor != nullptr);
 	assert(taskPredictions != nullptr);
-	
+
 	// Aggregate hardware counters statistics and predictions into tasktype counters
 	taskPredictions->getTypePredictions()->accumulateCounters(taskCounters, taskPredictions);
 }
@@ -101,13 +101,13 @@ void TaskHardwareCountersMonitor::insertCounterValuesPerUnitOfCost(
 		std::vector<double> &counterValues
 ) {
 	assert(_monitor != nullptr);
-	
+
 	tasktype_hardware_counters_map_t &tasktypeMap = _monitor->_tasktypeMap;
 	TasktypeHardwareCountersPredictions *predictions = nullptr;
-	
+
 	// Find (or create if unexistent) the tasktype HW counter predictions
 	_monitor->_spinlock.lock();
-	
+
 	tasktype_hardware_counters_map_t::iterator it = tasktypeMap.find(label);
 	if (it == tasktypeMap.end()) {
 		predictions = new TasktypeHardwareCountersPredictions();
@@ -115,9 +115,9 @@ void TaskHardwareCountersMonitor::insertCounterValuesPerUnitOfCost(
 	} else {
 		predictions = it->second;
 	}
-	
+
 	_monitor->_spinlock.unlock();
-	
+
 	predictions->insertCounterValuesPerUnitOfCost(counterIds, counterValues);
 }
 
@@ -126,16 +126,16 @@ void TaskHardwareCountersMonitor::getAverageCounterValuesPerUnitOfCost(
 	std::vector<std::vector<std::pair<HWCounters::counters_t, double>>> &unitaryValues
 ) {
 	assert(_monitor != nullptr);
-	
+
 	_monitor->_spinlock.lock();
-	
+
 	// Retrieve all the labels and unitary counter ids and values
 	short index = 0;
 	short numCounters = HWCounters::num_counters;
 	for (auto const &it : _monitor->_tasktypeMap) {
 		const std::string &label = it.first;
 		TasktypeHardwareCountersPredictions *predictions = it.second;
-		
+
 		if (predictions != nullptr) {
 			labels.push_back(label);
 			unitaryValues.push_back(std::vector<std::pair<HWCounters::counters_t, double>>(numCounters));
@@ -150,6 +150,6 @@ void TaskHardwareCountersMonitor::getAverageCounterValuesPerUnitOfCost(
 			index++;
 		}
 	}
-	
+
 	_monitor->_spinlock.unlock();
 }

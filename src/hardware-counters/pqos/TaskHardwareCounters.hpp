@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -20,17 +20,17 @@ typedef boost::accumulators::accumulator_set<size_t, boost::accumulators::stats<
 
 
 struct SnapshotCounter {
-	
+
 	//! Temporary value for when a task is stopped/paused
 	size_t _paused;
-	
+
 	//! Temporary value for when a task is started/resumed
 	size_t _resumed;
-	
+
 	//! The accumulated value for snapshot counters
 	counter_accumulator_t _accumulated;
-	
-	
+
+
 	inline SnapshotCounter() :
 		_paused(0),
 		_resumed(0),
@@ -40,17 +40,17 @@ struct SnapshotCounter {
 };
 
 struct AccumulatingCounter {
-	
+
 	//! Temporary value for when a task is stopped/paused
 	size_t _paused;
-	
+
 	//! Temporary value for when a task is started/resumed
 	size_t _resumed;
-	
+
 	//! The accumulated value for accumulating counters
 	size_t _accumulated;
-	
-	
+
+
 	inline AccumulatingCounter() :
 		_paused(0),
 		_resumed(0),
@@ -63,12 +63,12 @@ struct AccumulatingCounter {
 class TaskHardwareCounters {
 
 private:
-	
+
 	enum snapshot_counters_t {
 		llc_usage = 0,
 		num_snapshot_counters
 	};
-	
+
 	enum accumulating_counters_t {
 		mbm_local = 0,
 		mbm_remote,
@@ -77,70 +77,70 @@ private:
 		ipc_unhalted,
 		num_accumulating_counters
 	};
-	
+
 	//! Identifies the tasktype
 	std::string _label;
-	
+
 	//! The computational cost of the task
 	size_t _cost;
-	
+
 	//! Whether the task is currently monitoring hardware counters
 	bool _currentlyMonitoring;
-	
+
 	//! Task-specific PQoS counters
 	SnapshotCounter _snapshotCounters[num_snapshot_counters];
 	AccumulatingCounter _accumulatingCounters[num_accumulating_counters];
-	
-	
+
+
 public:
-	
+
 	inline TaskHardwareCounters() :
 		_cost(DEFAULT_COST),
 		_currentlyMonitoring(false)
 	{
 	}
-	
-	
+
+
 	//    SETTERS & GETTERS    //
-	
+
 	inline void setLabel(const std::string &label)
 	{
 		_label = label;
 	}
-	
+
 	inline const std::string &getLabel() const
 	{
 		return _label;
 	}
-	
+
 	inline void setCost(size_t cost)
 	{
 		if (cost > 0) {
 			_cost = cost;
 		}
 	}
-	
+
 	inline size_t getCost() const
 	{
 		return _cost;
 	}
-	
+
 	inline bool isCurrentlyMonitoring() const
 	{
 		return _currentlyMonitoring;
 	}
-	
-	
+
+
 	//    COUNTER MANIPULATION    //
-	
+
 	//! \brief Gather counters when a task is resumed or started
 	//! \param[in] data The pqos data from which to gather counters
 	inline void startOrResume(const pqos_mon_data *data)
 	{
 		assert(data != nullptr);
-		
+
 		_currentlyMonitoring = true;
-		
+
 		_snapshotCounters[llc_usage]._resumed        = data->values.llc;
 		_accumulatingCounters[mbm_local]._resumed    = data->values.mbm_local_delta;
 		_accumulatingCounters[mbm_remote]._resumed   = data->values.mbm_remote_delta;
@@ -148,15 +148,15 @@ public:
 		_accumulatingCounters[ipc_retired]._resumed  = data->values.ipc_retired_delta;
 		_accumulatingCounters[ipc_unhalted]._resumed = data->values.ipc_unhalted_delta;
 	}
-	
+
 	//! \brief Gather counters when a task is stopped or paused
 	//! \param[in] data The pqos data from which to gather counters
 	inline void stopOrPause(const pqos_mon_data *data)
 	{
 		assert(data != nullptr);
-		
+
 		_currentlyMonitoring = false;
-		
+
 		_snapshotCounters[llc_usage]._paused        = data->values.llc;
 		_accumulatingCounters[mbm_local]._paused    = data->values.mbm_local_delta;
 		_accumulatingCounters[mbm_remote]._paused   = data->values.mbm_remote_delta;
@@ -164,7 +164,7 @@ public:
 		_accumulatingCounters[ipc_retired]._paused  = data->values.ipc_retired_delta;
 		_accumulatingCounters[ipc_unhalted]._paused = data->values.ipc_unhalted_delta;
 	}
-	
+
 	//! \brief Accumulate counters
 	inline void accumulateCounters()
 	{
@@ -180,7 +180,7 @@ public:
 			_snapshotCounters[i]._accumulated(_snapshotCounters[i]._paused);
 			_snapshotCounters[i]._accumulated(_snapshotCounters[i]._resumed);
 		}
-		
+
 		// For accumulated events, when tasks start, resume, stop or pause
 		// execution, the value obtained indicates the delta value from this
 		// exact moment w.r.t. the previous polled valued. These "delta" values
@@ -189,7 +189,7 @@ public:
 			_accumulatingCounters[i]._accumulated += _accumulatingCounters[i]._paused;
 		}
 	}
-	
+
 	//! \brief Get the value of a hardware counter
 	//! \param[in] counterId The id of the counter
 	inline double getCounter(HWCounters::counters_t counterId)
@@ -211,7 +211,7 @@ public:
 		}
 		return HWCounters::invalid_counter;
 	}
-	
+
 };
 
 #endif // PQOS_TASK_HARDWARE_COUNTERS_HPP

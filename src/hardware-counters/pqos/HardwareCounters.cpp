@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -28,7 +28,7 @@ void HardwareCounters::initialize()
 		if (_monitor == nullptr) {
 			_monitor = new HardwareCounters();
 		}
-		
+
 		// Retreive kernel information
 		utsname kernelInfo;
 		if (uname(&kernelInfo) != 0) {
@@ -41,32 +41,32 @@ void HardwareCounters::initialize()
 				}
 			}
 		}
-		
+
 		// Declare PQoS configuration and capabilities structures
 		pqos_config configuration;
 		const pqos_cpuinfo *pqosCPUInfo                   = NULL;
 		const pqos_cap *pqosCapabilities                  = NULL;
 		const pqos_capability *pqosMonitoringCapabilities = NULL;
-		
+
 		// Get the configuration features
 		memset(&configuration, 0, sizeof(configuration));
 		configuration.fd_log    = STDOUT_FILENO;
 		configuration.verbose   = 0;
 		configuration.interface = PQOS_INTER_OS;
-		
+
 		// Check and initialize PQoS CMT capabilities
 		int ret = pqos_init(&configuration);
 		FatalErrorHandler::failIf(ret != PQOS_RETVAL_OK, "Error '", ret, "' when initializing the PQoS library");
-		
+
 		// Get PQoS CMT capabilities and CPU info pointer
 		ret = pqos_cap_get(&pqosCapabilities, &pqosCPUInfo);
 		FatalErrorHandler::failIf(ret != PQOS_RETVAL_OK, "Error '", ret, "' when retrieving PQoS capabilities");
 		ret = pqos_cap_get_type(pqosCapabilities, PQOS_CAP_TYPE_MON, &pqosMonitoringCapabilities);
 		FatalErrorHandler::failIf(ret != PQOS_RETVAL_OK, "Error '", ret, "' when retrieving PQoS capability types");
-		
+
 		assert(pqosCapabilities != nullptr);
 		assert(pqosCPUInfo != nullptr);
-		
+
 		// Choose events to monitor:
 		//  IPC (Instructions retired / cycles)
 		//    - Computed using the number of instructions and cycles executed
@@ -86,27 +86,27 @@ void HardwareCounters::initialize()
 			PQOS_MON_EVENT_RMEM_BW   | // Remote Memory Bandwidth
 			PQOS_MON_EVENT_L3_OCCUP    // LLC Usage
 		);
-		
+
 		assert(pqosMonitoringCapabilities->u.mon != nullptr);
-		
+
 		// Check available events
 		enum pqos_mon_event availableEvents = (pqos_mon_event) 0;
 		for (unsigned int i = 0; i < pqosMonitoringCapabilities->u.mon->num_events; i++) {
 			availableEvents = (pqos_mon_event) (availableEvents | (pqosMonitoringCapabilities->u.mon->events[i].type));
 		}
-		
+
 		// Only choose events we want to monitor that are available
 		_monitoredEvents = (pqos_mon_event) (availableEvents & eventsToMonitor);
-		
+
 		// If none of the events can be monitored, trigger an early shutdown
 		if (_monitoredEvents == ((pqos_mon_event) 0)) {
 			shutdown();
 		}
-		
+
 		// Propagate initialization to thread and task Hardware counter monitors
 		TaskHardwareCountersMonitor::initialize();
 		ThreadHardwareCountersMonitor::initialize();
-		
+
 		if (_wisdomEnabled) {
 			// Try to load data from previous executions
 			_monitor->loadHardwareCounterWisdom();
@@ -121,23 +121,23 @@ void HardwareCounters::shutdown()
 			// Store monitoring data for future executions
 			_monitor->storeHardwareCounterWisdom();
 		}
-		
+
 		// Shutdown PQoS monitoring
 		int ret = pqos_fini();
 		FatalErrorHandler::failIf(ret != PQOS_RETVAL_OK, "Error '", ret, "' when shutting down the PQoS library");
-		
+
 		// Display monitoring statistics
 		displayStatistics();
-		
+
 		// Propagate shutdown to thread and task Hardware counter monitors
 		TaskHardwareCountersMonitor::shutdown();
 		ThreadHardwareCountersMonitor::shutdown();
-		
+
 		// Destroy the monitoring module
 		if (_monitor != nullptr) {
 			delete _monitor;
 		}
-		
+
 		_enabled.setValue(false);
 	}
 }
@@ -154,12 +154,12 @@ void HardwareCounters::displayStatistics()
 			_outputFile.getValue(),
 			". Using standard output."
 		);
-		
+
 		// Retrieve statistics from every module
 		std::stringstream outputStream;
 		TaskHardwareCountersMonitor::displayStatistics(outputStream);
 		ThreadHardwareCountersMonitor::displayStatistics(outputStream);
-		
+
 		if (output.is_open()) {
 			// Output into the file and close it
 			output << outputStream.str();
@@ -187,7 +187,7 @@ void HardwareCounters::taskCreated(Task *task)
 		TaskHardwareCountersPredictions *taskPredictions = task->getTaskHardwareCountersPredictions();
 		const std::string &label = task->getLabel();
 		size_t cost = (task->hasCost() ? task->getCost() : DEFAULT_COST);
-		
+
 		// Create task hardware counter structures and predict counter values
 		TaskHardwareCountersMonitor::taskCreated(taskCounters, label, cost);
 		TaskHardwareCountersMonitor::predictTaskCounters(taskPredictions, label, cost);
@@ -203,7 +203,7 @@ void HardwareCounters::startTaskMonitoring(Task *task)
 		if (thread != nullptr) {
 			pqos_mon_data *threadData = thread->getThreadHardwareCounters()->getData();
 			TaskHardwareCounters *taskCounters = task->getTaskHardwareCounters();
-			
+
 			// Start or resume Hardware counter monitoring for the task
 			TaskHardwareCountersMonitor::startTaskMonitoring(taskCounters, threadData);
 		}
@@ -219,7 +219,7 @@ void HardwareCounters::stopTaskMonitoring(Task *task)
 		if (thread != nullptr) {
 			pqos_mon_data *threadData = thread->getThreadHardwareCounters()->getData();
 			TaskHardwareCounters *taskCounters = task->getTaskHardwareCounters();
-			
+
 			// Stop or pause Hardware counter monitoring for the task
 			TaskHardwareCountersMonitor::stopTaskMonitoring(taskCounters, threadData);
 		}
@@ -233,7 +233,7 @@ void HardwareCounters::taskFinished(Task *task)
 		// Get the task's hardware counter structures
 		TaskHardwareCounters *taskCounters = task->getTaskHardwareCounters();
 		TaskHardwareCountersPredictions *taskPredictions = task->getTaskHardwareCountersPredictions();
-		
+
 		// Finish Hardware counter monitoring for the task
 		TaskHardwareCountersMonitor::taskFinished(taskCounters, taskPredictions);
 	}
@@ -248,9 +248,9 @@ void HardwareCounters::initializeThread()
 		// Get the thread's hardware counter structures
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
-		
+
 		ThreadHardwareCounters *threadCounters = thread->getThreadHardwareCounters();
-		
+
 		// Initialize HW counter monitoring for the thread
 		ThreadHardwareCountersMonitor::initializeThread(threadCounters, _monitoredEvents);
 	}
@@ -262,9 +262,9 @@ void HardwareCounters::shutdownThread()
 		// Get the thread's hardware counter structures
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		assert(thread != nullptr);
-		
+
 		ThreadHardwareCounters *threadCounters = thread->getThreadHardwareCounters();
-		
+
 		// Shutdown hw counter monitoring for the thread
 		ThreadHardwareCountersMonitor::shutdownThread(threadCounters);
 	}
