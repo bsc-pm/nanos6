@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -18,28 +18,28 @@
 class WorkloadPredictor {
 
 private:
-	
+
 	//! Maps a tasktype with its aggregated workload statistics
 	typedef std::map< std::string, WorkloadStatistics * > workloads_map_t;
-	
+
 	//! Array which contains the number of task instances in each workload
 	std::atomic<size_t> _instances[num_workloads];
-	
+
 	//! Indexes accumulated and unitary costs through by tasktype
 	workloads_map_t _workloads;
-	
+
 	//! A spinlock to ensure atomicity within the workloads_map_t
 	SpinLock _spinlock;
-	
+
 	//! Aggregated execution times of tasks that have completed user code
 	std::atomic<size_t> _taskCompletionTimes;
-	
+
 	//! The predictor singleton instance
 	static WorkloadPredictor *_predictor;
-	
-	
+
+
 private:
-	
+
 	inline WorkloadPredictor() :
 		_workloads(),
 		_spinlock(),
@@ -49,8 +49,8 @@ private:
 			_instances[i] = 0;
 		}
 	}
-	
-	
+
+
 	//! \brief Maps task status identifiers to workload identifiers
 	//! \param[in] taskStatus The task status
 	//! \return The workload id related to the task status
@@ -69,28 +69,28 @@ private:
 				return null_workload;
 		}
 	}
-	
+
 	//! \brief Increase the number of instances of a workload
 	//! \param[in] loadId The identifier of the workload
 	inline void increaseInstances(workload_t loadId)
 	{
 		++(_instances[loadId]);
 	}
-	
+
 	//! \brief Decrease the number of instances of a workload
 	//! \param[in] loadId The identifier of the workload
 	inline void decreaseInstances(workload_t loadId)
 	{
 		--(_instances[loadId]);
 	}
-	
+
 	//! \brief Retreive the number of instances of a workload
 	//! \param[in] loadId The identifier of the workload
 	inline size_t getInstances(workload_t loadId) const
 	{
 		return _instances[loadId].load();
 	}
-	
+
 	//! \brief Increase a workload with a task's timing statistics
 	//! \param[in] loadId The id of the load to increase
 	//! \param[in] label The task's label (type identifier)
@@ -98,9 +98,9 @@ private:
 	inline void increaseWorkload(workload_t loadId, const std::string &label, size_t cost)
 	{
 		WorkloadStatistics *statistics = nullptr;
-		
+
 		_spinlock.lock();
-		
+
 		workloads_map_t::iterator it = _workloads.find(label);
 		if (it == _workloads.end()) {
 			statistics = new WorkloadStatistics();
@@ -108,13 +108,13 @@ private:
 		} else {
 			statistics = it->second;
 		}
-		
+
 		_spinlock.unlock();
-		
+
 		assert(statistics != nullptr);
 		statistics->increaseAccumulatedCost(loadId, cost);
 	}
-	
+
 	//! \brief Decrease a workload with a task's timing statistics
 	//! \param[in] loadId The id of the load to decrease
 	//! \param[in] label The task's label (type identifier)
@@ -122,16 +122,16 @@ private:
 	inline void decreaseWorkload(workload_t loadId, const std::string &label, size_t cost)
 	{
 		assert(_workloads.find(label) != _workloads.end());
-		
+
 		_spinlock.lock();
-		
+
 		// The appropriate map entry is created at task instantiation
 		// Substract the computational cost and replace the unitary cost
 		_workloads[label]->decreaseAccumulatedCost(loadId, cost);
-		
+
 		_spinlock.unlock();
 	}
-	
+
 	//! \brief Increase the aggregated execution time of tasks that have
 	//! completed user code
 	//! \param[in] taskCompletionTime The amount of time to increase
@@ -139,7 +139,7 @@ private:
 	{
 		_taskCompletionTimes += taskCompletionTime;
 	}
-	
+
 	//! \brief Decrease the aggregated execution time of tasks that have
 	//! completed user code
 	//! \param[in] taskCompletionTime The amount of time to decrease
@@ -147,17 +147,17 @@ private:
 	{
 		_taskCompletionTimes -= taskCompletionTime;
 	}
-	
-	
+
+
 public:
-	
+
 	// Delete copy and move constructors/assign operators
 	WorkloadPredictor(WorkloadPredictor const&) = delete;            // Copy construct
 	WorkloadPredictor(WorkloadPredictor&&) = delete;                 // Move construct
 	WorkloadPredictor& operator=(WorkloadPredictor const&) = delete; // Copy assign
 	WorkloadPredictor& operator=(WorkloadPredictor &&) = delete;     // Move assign
-	
-	
+
+
 	//! \brief Initialize workload predictions
 	static inline void initialize()
 	{
@@ -167,7 +167,7 @@ public:
 			assert(_predictor != nullptr);
 		}
 	}
-	
+
 	//! \brief Shutdown workload predictions
 	static inline void shutdown()
 	{
@@ -178,12 +178,12 @@ public:
 					delete it.second;
 				}
 			}
-			
+
 			// Destroy the predictor module
 			delete _predictor;
 		}
 	}
-	
+
 	//! \brief Display workload statistics
 	//! \param[in,out] stream The output stream
 	static inline void displayStatistics(std::stringstream &stream)
@@ -193,19 +193,19 @@ public:
 			stream << "+-----------------------------+\n";
 			stream << "|       WORKLOADS (μs)        |\n";
 			stream << "+-----------------------------+\n";
-			
+
 			for (unsigned short loadId = 0; loadId < num_workloads; ++loadId) {
 				size_t inst = _predictor->getInstances((workload_t) loadId);
 				double load = getPredictedWorkload((workload_t) loadId);
 				std::string loadDesc = std::string(workloadDescriptions[loadId]) + " (" + std::to_string(inst) + ")";
-				
+
 				stream << std::setw(40) << loadDesc << load << " μs\n";
 			}
-			
+
 			stream << "+-----------------------------+\n\n";
 		}
 	}
-	
+
 	//! \brief Aggregate a task's statistics into workloads
 	//! \param[in] taskStatistics The task's statistics
 	//! \param[in] taskPredictions The task's predictions
@@ -213,7 +213,7 @@ public:
 		TaskStatistics *taskStatistics,
 		TaskPredictions *taskPredictions
 	);
-	
+
 	//! \brief Move the aggregation of a task's statistics between workloads
 	//! when the task changes its timing status
 	//! \param[in] taskStatistics The task's statistics
@@ -226,7 +226,7 @@ public:
 		monitoring_task_status_t oldStatus,
 		monitoring_task_status_t newStatus
 	);
-	
+
 	//! \brief Account the task's elapsed time for predictions once it
 	//! completes user code
 	//! \param[in] taskStatistics The task's statistics
@@ -235,7 +235,7 @@ public:
 		TaskStatistics *taskStatistics,
 		TaskPredictions *taskPredictions
 	);
-	
+
 	//! \brief Move the aggregation of a task's statistics between workloads
 	//! when the task finishes execution
 	//! \param[in] taskStatistics The task's statistics
@@ -247,24 +247,24 @@ public:
 		monitoring_task_status_t oldStatus,
 		int ancestorsUpdated
 	);
-	
+
 	//! \brief Get a timing prediction of a certain workload
 	//! \param[in] loadId The workload's id
 	static double getPredictedWorkload(workload_t loadId);
-	
+
 	//! \brief Retrieve the aggregated execution time of tasks that have
 	//! completed user code
 	static size_t getTaskCompletionTimes();
-	
+
 	//! \brief Retreive the number of instances of a workload
 	//! \param[in] loadId The identifier of the workload
 	static inline size_t getNumInstances(workload_t loadId)
 	{
 		assert(_predictor != nullptr);
-		
+
 		return _predictor->_instances[loadId].load();
 	}
-	
+
 };
 
 #endif // WORKLOAD_PREDICTOR_HPP
