@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -17,15 +17,15 @@ void ThreadHardwareCountersMonitor::initializeThread(
 	pqos_mon_event monitoredEvents
 ) {
 	assert(threadCounters != nullptr);
-	
+
 	// Allocate PQoS event structures
 	pqos_mon_data *threadData = (pqos_mon_data *) malloc(sizeof(pqos_mon_data));
 	FatalErrorHandler::failIf(threadData == nullptr, "Could not allocate memory for a thread's hardware counter structures");
-	
+
 	// Link the structures to the current thread
 	threadCounters->setData(threadData);
 	threadCounters->setTid(WorkerThread::getCurrentWorkerThread()->getTid());
-	
+
 	// Begin PQoS monitoring for the current thread
 	int ret = pqos_mon_start_pid(
 		threadCounters->getTid(),
@@ -39,7 +39,7 @@ void ThreadHardwareCountersMonitor::initializeThread(
 void ThreadHardwareCountersMonitor::shutdownThread(ThreadHardwareCounters *threadCounters)
 {
 	assert(threadCounters != nullptr);
-	
+
 	// Finish PQoS monitoring for the current thread
 	int ret = pqos_mon_stop(threadCounters->getData());
 	FatalErrorHandler::failIf(ret != PQOS_RETVAL_OK, "Error '", ret, "' when stopping hardware counter monitoring (PQoS) for a thread");

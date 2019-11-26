@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -21,30 +21,30 @@
 class TasktypeHardwareCountersPredictions {
 
 private:
-	
+
 	typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::sum, boost::accumulators::tag::mean, boost::accumulators::tag::variance, boost::accumulators::tag::rolling_mean> > counter_rolling_accumulator_t;
-	
+
 	//! The rolling window's size for accumulators
 	static EnvironmentVariable<int> _rollingWindow;
-	
+
 	//! Accumulators for hardware counters
 	std::vector<counter_rolling_accumulator_t> _counters;
-	
+
 	//! Accumulators for normalized hardware counters
 	std::vector<counter_rolling_accumulator_t> _normalizedCounters;
 
 	//! Accumulators for the accuracy of predictions of hardware counters
 	std::vector<counter_accumulator_t> _accuracies;
-	
+
 	//! Spinlock to ensure atomic access within the accumulators
 	SpinLock _accumulatorLock;
-	
+
 	//! Number of instances of the tasktype taken into account for accumulators
 	size_t _instances;
-	
-	
+
+
 public:
-	
+
 	inline TasktypeHardwareCountersPredictions() :
 		_counters(HWCounters::num_counters, counter_rolling_accumulator_t(boost::accumulators::tag::rolling_window::window_size = _rollingWindow)),
 		_normalizedCounters(HWCounters::num_counters, counter_rolling_accumulator_t(boost::accumulators::tag::rolling_window::window_size = _rollingWindow)),
@@ -53,13 +53,13 @@ public:
 		_instances(0)
 	{
 	}
-	
-	
+
+
 	inline size_t getInstances() const
 	{
 		return _instances;
 	}
-	
+
 	inline double getCounterAverage(HWCounters::counters_t counterId)
 	{
 		_accumulatorLock.lock();
@@ -67,7 +67,7 @@ public:
 		_accumulatorLock.unlock();
 		return mean;
 	}
-	
+
 	inline double getCounterRollingAverage(HWCounters::counters_t counterId)
 	{
 		_accumulatorLock.lock();
@@ -75,7 +75,7 @@ public:
 		_accumulatorLock.unlock();
 		return rollingAverage;
 	}
-	
+
 	inline double getCounterStdev(HWCounters::counters_t counterId)
 	{
 		_accumulatorLock.lock();
@@ -83,7 +83,7 @@ public:
 		_accumulatorLock.unlock();
 		return stdev;
 	}
-	
+
 	inline double getCounterSum(HWCounters::counters_t counterId)
 	{
 		_accumulatorLock.lock();
@@ -91,7 +91,7 @@ public:
 		_accumulatorLock.unlock();
 		return sum;
 	}
-	
+
 	inline double getNormalizedCounterRollingAverage(HWCounters::counters_t counterId)
 	{
 		_accumulatorLock.lock();
@@ -99,7 +99,7 @@ public:
 		_accumulatorLock.unlock();
 		return normalizedRollingAverage;
 	}
-	
+
 	inline double getAverageAccuracy(HWCounters::counters_t counterId)
 	{
 		_accumulatorLock.lock();
@@ -107,10 +107,10 @@ public:
 		_accumulatorLock.unlock();
 		return averageAccuracy;
 	}
-	
-	
+
+
 	//    ACCUMULATOR MANIPULATION    //
-	
+
 	//! \brief Insert unitary (normalized) values for counters. These values
 	//! are counter values per unit of cost. Both parameters are vectors which
 	//! should contain, respectively, the counter identifiers and their values.
@@ -124,17 +124,17 @@ public:
 		std::vector<double> &counterValues
 	) {
 		assert(counterIds.size() == counterValues.size());
-		
+
 		_accumulatorLock.lock();
-		
+
 		for (unsigned short id = 0; id < counterIds.size(); ++id) {
 			_normalizedCounters[counterIds[id]](counterValues[id]);
 		}
 		++_instances;
-		
+
 		_accumulatorLock.unlock();
 	}
-	
+
 	//! \brief Accumulate a task's hardware counters into tasktype predictions
 	//! \param[in] taskCounters The task's hardware counters
 	//! \param[in] taskCountersPredictions The task's hardware counter predictions
@@ -144,17 +144,17 @@ public:
 	) {
 		assert(taskCounters != nullptr);
 		assert(taskPredictions != nullptr);
-		
+
 		double counters[HWCounters::num_counters];
 		double normalizedCounters[HWCounters::num_counters];
 		double accuracies[HWCounters::num_counters];
 		double max, abs;
-		
+
 		// Pre-compute all the needed values before entering the lock
 		for (unsigned short id = 0; id < HWCounters::num_counters; ++id) {
 			counters[id] = taskCounters->getCounter((HWCounters::counters_t) id);
 			normalizedCounters[id] = (counters[id] / taskCounters->getCost());
-			
+
 			if (taskPredictions->hasPrediction((HWCounters::counters_t) id)) {
 				double predicted = taskPredictions->getCounterPrediction((HWCounters::counters_t) id);
 				// Avoid divisions by 0
@@ -167,7 +167,7 @@ public:
 				}
 			}
 		}
-		
+
 		// Aggregate all the information into the accumulators
 		_accumulatorLock.lock();
 		for (unsigned short id = 0; id < HWCounters::num_counters; ++id) {
@@ -177,12 +177,12 @@ public:
 				_accuracies[id](accuracies[id]);
 			}
 		}
-		
+
 		// This task is now accounted in the accumulators
 		++_instances;
 		_accumulatorLock.unlock();
 	}
-	
+
 	//! \brief Get a hardware counter prediction for a task
 	//! \param[in] counterId The hardware counter's id
 	//! \param[in] cost The task's computational costs
@@ -190,7 +190,7 @@ public:
 	{
 		double unitaryValue;
 		bool canPredict = false;
-		
+
 		// Check if a prediction can be inferred
 		_accumulatorLock.lock();
 		if (_instances) {
@@ -198,7 +198,7 @@ public:
 			unitaryValue = boost::accumulators::rolling_mean(_normalizedCounters[counterId]);
 		}
 		_accumulatorLock.unlock();
-		
+
 		if (canPredict) {
 			return ((double) cost * unitaryValue);
 		} else {

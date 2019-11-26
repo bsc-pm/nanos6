@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -18,7 +18,7 @@ namespace HWCounters {
 		num_counters,
 		invalid_counter = -1
 	};
-	
+
 	char const * const counterDescriptions[num_counters] = {
 		"Last Level Cache Usage (KB)",
 		"Instructions Per Cycle",
@@ -26,7 +26,7 @@ namespace HWCounters {
 		"Remote Sockets Memory Bandwidth (KB)",
 		"Last Level Cache Miss Rate"
 	};
-	
+
 }
 
 #endif // SUPPORTED_HARDWARE_COUNTERS_HPP
