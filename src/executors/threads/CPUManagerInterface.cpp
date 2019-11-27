@@ -16,6 +16,8 @@ cpu_set_t CPUManagerInterface::_cpuMask;
 std::atomic<bool> CPUManagerInterface::_finishedCPUInitialization;
 EnvironmentVariable<size_t> CPUManagerInterface::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
 EnvironmentVariable<bool> CPUManagerInterface::_taskforGroupsReportEnabled("NANOS6_TASKFOR_GROUPS_REPORT", 0);
+CPUManagerPolicyInterface *CPUManagerInterface::_cpuManagerPolicy;
+EnvironmentVariable<std::string> CPUManagerInterface::_policyChosen("NANOS6_CPUMANAGER_POLICY", "default");
 
 
 namespace cpumanager_internals {

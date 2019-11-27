@@ -11,6 +11,7 @@
 #include "DLBCPUActivation.hpp"
 #include "DLBCPUManagerImplementation.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "executors/threads/cpu-managers/dlb/policies/LeWIPolicy.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -39,6 +40,17 @@ void DLBCPUManagerImplementation::preinitialize()
 	std::vector<ComputePlace *> const &systemCPUs = hostInfo->getComputePlaces();
 	size_t numCPUs = systemCPUs.size();
 	assert(numCPUs > 0);
+
+	// Create the chosen policy for this CPUManager
+	std::string policyValue = _policyChosen.getValue();
+	if (policyValue == "default" || policyValue == "lewi") {
+		_cpuManagerPolicy = new LeWIPolicy(numCPUs);
+	} else {
+		FatalErrorHandler::failIf(
+			true, "Unexistent '", policyValue, "' CPU Manager Policy"
+		);
+	}
+	assert(_cpuManagerPolicy != nullptr);
 
 
 	//    TASKFOR GROUPS    //
@@ -181,44 +193,10 @@ void DLBCPUManagerImplementation::shutdownPhase2()
 	// ret != DLB_SUCCESS means it was not initialized (should never occur)
 	__attribute__((unused)) int ret = DLB_Finalize();
 	assert(ret == DLB_SUCCESS);
-}
 
-void DLBCPUManagerImplementation::executeCPUManagerPolicy(
-	ComputePlace *cpu,
-	CPUManagerPolicyHint hint,
-	size_t numTasks
-) {
-	// NOTE This policy works as follows:
-	// - If the hint is IDLE_CANDIDATE we try to lend the CPU if possible
-	// - If the hint is ADDED_TASKS, we try to reclaim as many lent CPUs
-	//   as tasks were added, or acquire new ones
-	// - If the hint is HANDLE_TASKFOR, we try to reclaim all CPUs that can
-	//   collaborate in the taskfor
-	CPU *currentCPU = (CPU *) cpu;
-	if (hint == IDLE_CANDIDATE) {
-		assert(currentCPU != nullptr);
+	delete _cpuManagerPolicy;
 
-		// If we own the CPU lend it; otherwise, check if we must return it
-		if (currentCPU->isOwned()) {
-			DLBCPUActivation::lendCPU(currentCPU);
-		} else {
-			DLBCPUActivation::checkIfMustReturnCPU(currentCPU);
-		}
-	} else if (hint == ADDED_TASKS) {
-		assert(numTasks > 0);
-
-		// Try to obtain as many CPUs as tasks were added
-		size_t numToObtain = std::min(_cpus.size(), numTasks);
-		DLBCPUActivation::acquireCPUs(numToObtain);
-	} else { // hint = HANDLE_TASKFOR
-		assert(currentCPU != nullptr);
-
-		// Try to reclaim any lent collaborator of the taskfor
-		cpu_set_t collaboratorMask = getCollaboratorMask(currentCPU);
-		if (CPU_COUNT(&collaboratorMask) > 0) {
-			DLBCPUActivation::acquireCPUs(collaboratorMask);
-		}
-	}
+	_cpuManagerPolicy = nullptr;
 }
 
 

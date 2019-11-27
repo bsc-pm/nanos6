@@ -11,23 +11,18 @@
 #include <cassert>
 #include <mutex>
 #include <sched.h>
+#include <string>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
 
 #include "CPU.hpp"
+#include "CPUManagerPolicyInterface.hpp"
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/SpinLock.hpp"
-
-
-enum CPUManagerPolicyHint {
-	IDLE_CANDIDATE,
-	ADDED_TASKS,
-	HANDLE_TASKFOR
-};
 
 
 class CPUManagerInterface {
@@ -49,6 +44,11 @@ protected:
 	//! Whether we should emit a report with info about the taskfor groups.
 	static EnvironmentVariable<bool> _taskforGroupsReportEnabled;
 
+	//! The decision-taking policy of the CPU Manager
+	static CPUManagerPolicyInterface *_cpuManagerPolicy;
+
+	//! The chosen CPU Manager policy
+	static EnvironmentVariable<std::string> _policyChosen;
 
 private:
 

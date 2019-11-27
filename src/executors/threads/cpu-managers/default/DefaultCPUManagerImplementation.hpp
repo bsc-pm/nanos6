@@ -26,37 +26,6 @@ private:
 	//! Map from system to virtual CPU id
 	static std::vector<size_t> _systemToVirtualCPUId;
 
-private:
-
-	/*    IDLE MECHANISM    */
-
-	//! \brief Mark a CPU as idle
-	//!
-	//! \param[in,out] cpu The CPU object to idle
-	//!
-	//! \return Whether the operation was successful
-	bool cpuBecomesIdle(CPU *cpu);
-
-	//! \brief Try to get any idle CPU
-	//!
-	//! \return A CPU or nullptr
-	CPU *getIdleCPU();
-
-	//! \brief Get a specific number of idle CPUs
-	//!
-	//! \param[out] idleCPUs A vector of at least size 'numCPUs' where the
-	//! retreived idle CPUs will be placed
-	//! \param[in] numCPUs The amount of CPUs to retreive
-	//!
-	//! \return The number of idle CPUs obtained/valid references in the vector
-	size_t getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs);
-
-	//! \brief Get all the idle CPUs that can collaborate in a taskfor
-	//!
-	//! \param[out] idleCPUs A vector where unidled collaborators are stored
-	//! \param[in] cpu The CPU from which to obtain the taskfor group id
-	void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu);
-
 public:
 
 	/*    CPUMANAGER    */
@@ -69,14 +38,20 @@ public:
 
 	inline void shutdownPhase2()
 	{
-		// Currently no structures need to be deleted
+		delete _cpuManagerPolicy;
+
+		_cpuManagerPolicy = nullptr;
 	}
 
-	void executeCPUManagerPolicy(
+	inline void executeCPUManagerPolicy(
 		ComputePlace *cpu,
 		CPUManagerPolicyHint hint,
-		size_t numTasks
-	);
+		size_t numTasks = 0
+	) {
+		assert(_cpuManagerPolicy != nullptr);
+
+		_cpuManagerPolicy->execute(cpu, hint, numTasks);
+	}
 
 	inline CPU *getCPU(size_t systemCPUId) const
 	{
@@ -128,6 +103,36 @@ public:
 		assert(_numIdleCPUs <= _cpus.size());
 		_idleCPUsLock.unlock();
 	}
+
+
+	/*    IDLE MECHANISM    */
+
+	//! \brief Mark a CPU as idle
+	//!
+	//! \param[in,out] cpu The CPU object to idle
+	//!
+	//! \return Whether the operation was successful
+	static bool cpuBecomesIdle(CPU *cpu);
+
+	//! \brief Try to get any idle CPU
+	//!
+	//! \return A CPU or nullptr
+	static CPU *getIdleCPU();
+
+	//! \brief Get a specific number of idle CPUs
+	//!
+	//! \param[in] numCPUs The amount of CPUs to retreive
+	//! \param[out] idleCPUs An array of at least size 'numCPUs' where the
+	//! retreived idle CPUs will be placed
+	//!
+	//! \return The number of idle CPUs obtained/valid references in the vector
+	static size_t getIdleCPUs(size_t numCPUs, CPU *idleCPUs[]);
+
+	//! \brief Get all the idle CPUs that can collaborate in a taskfor
+	//!
+	//! \param[out] idleCPUs A vector where unidled collaborators are stored
+	//! \param[in] cpu The CPU from which to obtain the taskfor group id
+	static void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu);
 
 };
 

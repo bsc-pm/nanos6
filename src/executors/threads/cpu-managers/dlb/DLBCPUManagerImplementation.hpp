@@ -26,38 +26,6 @@ private:
 	//! Spinlock to access shutdown CPUs
 	static SpinLock _shutdownCPUsLock;
 
-private:
-
-	//! \brief Get a CPU set of all possible collaborators that can collaborate
-	//! with a taskfor owned by a certain CPU
-	//!
-	//! \param[in] cpu The CPU that owns the taskfor
-	//!
-	//! \return A CPU set signaling which are its collaborators
-	inline cpu_set_t getCollaboratorMask(CPU *cpu)
-	{
-		assert(cpu != nullptr);
-
-		// The resulting mask of collaborators
-		cpu_set_t resultMask;
-		CPU_ZERO(&resultMask);
-
-		CPU *candidate;
-		size_t groupId = cpu->getGroupId();
-		for (size_t id = 0; id < _cpus.size(); ++id) {
-			candidate = _cpus[id];
-			assert(candidate != nullptr);
-
-			// A candidate is valid if it has the same group id as the cpu
-			if (candidate->getGroupId() == groupId) {
-				CPU_SET(candidate->getSystemCPUId(), &resultMask);
-			}
-		}
-
-		return resultMask;
-	}
-
-
 public:
 
 	void preinitialize();
@@ -68,11 +36,15 @@ public:
 
 	void shutdownPhase2();
 
-	void executeCPUManagerPolicy(
+	inline void executeCPUManagerPolicy(
 		ComputePlace *cpu,
 		CPUManagerPolicyHint hint,
 		size_t numTasks = 0
-	);
+	) {
+		assert(_cpuManagerPolicy != nullptr);
+
+		_cpuManagerPolicy->execute(cpu, hint, numTasks);
+	}
 
 	inline CPU *getCPU(size_t systemCPUId) const
 	{
@@ -126,6 +98,38 @@ public:
 		_shutdownCPUsLock.lock();
 		_shutdownCPUs[index] = true;
 		_shutdownCPUsLock.unlock();
+	}
+
+
+	/*    DLB MECHANISM    */
+
+	//! \brief Get a CPU set of all possible collaborators that can collaborate
+	//! with a taskfor owned by a certain CPU
+	//!
+	//! \param[in,out] cpu The CPU that owns the taskfor
+	//!
+	//! \return A CPU set signaling which are its collaborators
+	static inline cpu_set_t getCollaboratorMask(CPU *cpu)
+	{
+		assert(cpu != nullptr);
+
+		// The resulting mask of collaborators
+		cpu_set_t resultMask;
+		CPU_ZERO(&resultMask);
+
+		CPU *candidate;
+		size_t groupId = cpu->getGroupId();
+		for (size_t id = 0; id < _cpus.size(); ++id) {
+			candidate = _cpus[id];
+			assert(candidate != nullptr);
+
+			// A candidate is valid if it has the same group id as the cpu
+			if (candidate->getGroupId() == groupId) {
+				CPU_SET(candidate->getSystemCPUId(), &resultMask);
+			}
+		}
+
+		return resultMask;
 	}
 
 };
