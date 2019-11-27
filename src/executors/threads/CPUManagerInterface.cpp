@@ -13,8 +13,6 @@
 
 std::vector<CPU *> CPUManagerInterface::_cpus;
 cpu_set_t CPUManagerInterface::_cpuMask;
-std::vector<boost::dynamic_bitset<>> CPUManagerInterface::_NUMANodeMask;
-std::vector<size_t> CPUManagerInterface::_systemToVirtualCPUId;
 std::atomic<bool> CPUManagerInterface::_finishedCPUInitialization;
 EnvironmentVariable<size_t> CPUManagerInterface::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
 EnvironmentVariable<bool> CPUManagerInterface::_taskforGroupsReportEnabled("NANOS6_TASKFOR_GROUPS_REPORT", 0);

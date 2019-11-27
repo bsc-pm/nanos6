@@ -15,6 +15,7 @@
 boost::dynamic_bitset<> DefaultCPUManagerImplementation::_idleCPUs;
 SpinLock DefaultCPUManagerImplementation::_idleCPUsLock;
 size_t DefaultCPUManagerImplementation::_numIdleCPUs;
+std::vector<size_t> DefaultCPUManagerImplementation::_systemToVirtualCPUId;
 
 
 /*    IDLE MECHANISM    */
@@ -108,51 +109,6 @@ size_t DefaultCPUManagerImplementation::getIdleCPUs(
 	return numObtainedCPUs;
 }
 
-CPU *DefaultCPUManagerImplementation::getIdleNUMANodeCPU(size_t NUMANodeId)
-{
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-
-	boost::dynamic_bitset<> idleCPUs = _idleCPUs & _NUMANodeMask[NUMANodeId];
-	boost::dynamic_bitset<>::size_type id = idleCPUs.find_first();
-	if (id != boost::dynamic_bitset<>::npos) {
-		CPU *cpu = _cpus[id];
-		assert(cpu != nullptr);
-
-		Instrument::resumedComputePlace(cpu->getInstrumentationId());
-		Monitoring::cpuBecomesActive(id);
-		_idleCPUs[id] = false;
-		assert(_numIdleCPUs > 0);
-
-		--_numIdleCPUs;
-
-		return cpu;
-	} else {
-		return nullptr;
-	}
-}
-
-bool DefaultCPUManagerImplementation::unidleCPU(CPU *cpu)
-{
-	assert(cpu != nullptr);
-
-	const int id = cpu->getIndex();
-
-	std::lock_guard<SpinLock> guard(_idleCPUsLock);
-
-	if (_idleCPUs[id]) {
-		Instrument::resumedComputePlace(cpu->getInstrumentationId());
-		Monitoring::cpuBecomesActive(id);
-		_idleCPUs[id] = false;
-		assert(_numIdleCPUs > 0);
-
-		--_numIdleCPUs;
-
-		return true;
-	} else {
-		return false;
-	}
-}
-
 void DefaultCPUManagerImplementation::getIdleCollaborators(
 	std::vector<CPU *> &idleCPUs,
 	ComputePlace *cpu
@@ -201,12 +157,9 @@ void DefaultCPUManagerImplementation::preinitialize()
 		rc, " when retrieving the affinity of the process"
 	);
 
-	// Get the number of NUMA nodes
+	// Get the number of NUMA nodes and a list of all available CPUs
 	nanos6_device_t hostDevice = nanos6_device_t::nanos6_host_device;
 	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(hostDevice);
-	_NUMANodeMask.resize(numNUMANodes);
-
-	// Get a list of available CPUs
 	HostInfo *hostInfo = ((HostInfo *) HardwareInfo::getDeviceInfo(hostDevice));
 	assert(hostInfo != nullptr);
 
@@ -232,9 +185,6 @@ void DefaultCPUManagerImplementation::preinitialize()
 	const size_t numAvailableCPUs = CPU_COUNT(&_cpuMask);
 	_cpus.resize(numAvailableCPUs);
 	_systemToVirtualCPUId.resize(numSystemCPUs);
-	for (size_t i = 0; i < numNUMANodes; ++i) {
-		_NUMANodeMask[i].resize(numAvailableCPUs);
-	}
 
 	const size_t numCPUsPerTaskforGroup = getNumCPUsPerTaskforGroup();
 	assert(numCPUsPerTaskforGroup > 0);
@@ -252,7 +202,6 @@ void DefaultCPUManagerImplementation::preinitialize()
 			cpu->setIndex(virtualCPUId);
 			cpu->setGroupId(groupId);
 			_cpus[virtualCPUId] = cpu;
-			_NUMANodeMask[cpu->getNumaNodeId()][virtualCPUId] = true;
 			++virtualCPUId;
 		} else {
 			cpu->setIndex((unsigned int) ~0UL);

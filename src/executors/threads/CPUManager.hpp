@@ -95,7 +95,7 @@ public:
 	//! - Execution of a taskfor (hint = HANDLE_TASKFOR)
 	//! - Running out of tasks to execute (hint = IDLE_CANDIDATE)
 	//!
-	//! \param[in,out] cpu The CPU that triggered the call, if any
+	//! \param[in] cpu The CPU that triggered the call, if any
 	//! \param[in] hint A hint about what kind of change triggered this call
 	//! \param[in] numTasks If hint == ADDED_TASKS, numTasks is the amount
 	//! of tasks added
@@ -219,7 +219,7 @@ public:
 
 	//! \brief Mark that a CPU is able to participate in the shutdown process
 	//!
-	//! \param[in,out] cpu The CPU object to offer
+	//! \param[in] cpu The CPU object to offer
 	static inline void addShutdownCPU(CPU *cpu)
 	{
 		assert(_cpuManager != nullptr);

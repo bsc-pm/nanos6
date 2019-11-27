@@ -40,12 +40,6 @@ protected:
 	//! The process' CPU mask
 	static cpu_set_t _cpuMask;
 
-	//! NUMA node CPU mask
-	static std::vector<boost::dynamic_bitset<>> _NUMANodeMask;
-
-	//! Map from system to virtual CPU id
-	static std::vector<size_t> _systemToVirtualCPUId;
-
 	//! Indicates the initialization of CPUs has finished
 	static std::atomic<bool> _finishedCPUInitialization;
 
@@ -192,7 +186,7 @@ public:
 	//! - Execution of a taskfor (hint = HANDLE_TASKFOR)
 	//! - Running out of tasks to execute (hint = IDLE_CANDIDATE)
 	//!
-	//! \param[in,out] cpu The CPU that triggered the call, if any
+	//! \param[in] cpu The CPU that triggered the call, if any
 	//! \param[in] hint A hint about what kind of change triggered this call
 	//! \param[in] numTasks If hint == ADDED_TASKS, numTasks is the amount
 	//! of tasks added
@@ -282,7 +276,7 @@ public:
 
 	//! \brief Mark that a CPU is able to participate in the shutdown process
 	//!
-	//! \param[in,out] cpu The CPU object to offer
+	//! \param[in] cpu The CPU object to offer
 	virtual void addShutdownCPU(CPU *cpu) = 0;
 
 

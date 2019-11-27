@@ -118,7 +118,7 @@ public:
 
 	//! \brief Mark that a CPU is able to participate in the shutdown process
 	//!
-	//! \param[in,out] cpu The CPU object to offer
+	//! \param[in] cpu The CPU object to offer
 	inline void addShutdownCPU(CPU *cpu)
 	{
 		const int index = cpu->getIndex();

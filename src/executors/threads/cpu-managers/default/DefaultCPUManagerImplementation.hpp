@@ -23,6 +23,9 @@ private:
 	//! The current number of idle CPUs, kept atomic through idleCPUsLock
 	static size_t _numIdleCPUs;
 
+	//! Map from system to virtual CPU id
+	static std::vector<size_t> _systemToVirtualCPUId;
+
 private:
 
 	/*    IDLE MECHANISM    */
@@ -47,20 +50,6 @@ private:
 	//!
 	//! \return The number of idle CPUs obtained/valid references in the vector
 	size_t getIdleCPUs(std::vector<CPU *> &idleCPUs, size_t numCPUs);
-
-	//! \brief Get an idle CPU from a specific NUMA node
-	//!
-	//! \param[in] NUMANodeId The NUMA node identifier
-	//!
-	//! \return A CPU or nullptr
-	CPU *getIdleNUMANodeCPU(size_t NUMANodeId);
-
-	//! \brief Mark a CPU as not idle
-	//!
-	//! \param[in,out] cpu The CPU to unidle
-	//!
-	//! \return Whether the operation was successful
-	bool unidleCPU(CPU *cpu);
 
 	//! \brief Get all the idle CPUs that can collaborate in a taskfor
 	//!
