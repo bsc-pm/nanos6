@@ -8,14 +8,14 @@
 #include "WorkloadPredictor.hpp"
 
 
-CPUUsagePredictor *CPUUsagePredictor::_predictor;
-EnvironmentVariable<size_t> CPUUsagePredictor::_predictionRate("NANOS6_CPU_USAGE_PREDICTION_RATE", 100);
+EnvironmentVariable<size_t> CPUUsagePredictor::_predictionRate("NANOS6_MONITORING_CPUUSAGE_PREDICTION_RATE", 100 /* µs */);
+double CPUUsagePredictor::_prediction;
+bool CPUUsagePredictor::_predictionAvailable;
+CPUUsagePredictor::accumulator_t CPUUsagePredictor::_accuracies;
 
 
-double CPUUsagePredictor::getPredictedCPUUsage(size_t time)
+double CPUUsagePredictor::getCPUUsagePrediction(size_t time)
 {
-	assert(_predictor != nullptr);
-
 	// Retrieve the current ready workload
 	double readyLoad      = WorkloadPredictor::getPredictedWorkload(ready_load);
 	double executingLoad  = WorkloadPredictor::getPredictedWorkload(executing_load);
@@ -23,24 +23,21 @@ double CPUUsagePredictor::getPredictedCPUUsage(size_t time)
 	double executingTasks = (double) WorkloadPredictor::getNumInstances(executing_load);
 	double numberCPUs     = (double) CPUMonitor::getNumCPUs();
 
-	double prediction = _predictor->_prediction;
-
 	// To account accuracy, make sure this isn't the first prediction
-	if (_predictor->_predictionAvailable) {
+	if (!_predictionAvailable) {
+		_predictionAvailable = true;
+	} else {
 		// Compute the accuracy of the last prediction
 		double utilization = CPUMonitor::getTotalActiveness();
-		double error = (std::abs(utilization - prediction)) / numberCPUs;
+		double error = (std::abs(utilization - _prediction)) / numberCPUs;
 		double accuracy = 100.0 - (100.0 * error);
-		_predictor->_accuracies(accuracy);
+		_accuracies(accuracy);
 	}
 
 	// Make sure that the prediction is:
-	// -) at most the amount of tasks or the amount of time available
-	// -) at most 'numberCPUs' at 100% usage
-	// -) at least 1 CPU for runtime-related operations
-	prediction = std::min(executingTasks + readyTasks, (readyLoad + executingLoad) / (double) time);
-	prediction = std::min(prediction, numberCPUs);
-	prediction = std::max(prediction, (double) 1.0);
-
-	return prediction;
+	// - At most the amount of tasks or the amount of time available
+	// - At least 1 CPU for runtime-related operations
+	_prediction = std::min(executingTasks + readyTasks, (readyLoad + executingLoad) / (double) time);
+	_prediction = std::max(_prediction, 1.0);
+	return _prediction;
 }

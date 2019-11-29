@@ -8,7 +8,6 @@
 #define MONITORING_HPP
 
 #include "CPUMonitor.hpp"
-#include "CPUUsagePredictor.hpp"
 #include "TaskMonitor.hpp"
 #include "WorkloadPredictor.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
