@@ -4,8 +4,15 @@
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
-AM_LDFLAGS =
-CXX = $(NANOS6_MCXX) --parallel
+AM_LDFLAGS = 
+
+
+if USE_CUDA
+MCXX_CUDA_FLAGS = --cuda
+endif
+
+CXX = $(NANOS6_MCXX) $(MCXX_CUDA_FLAGS) --parallel
+CC = $(NANOS6_MCC)   $(MCXX_CUDA_FLAGS) --parallel
 
 if MCC_SUPORTS_EXTERNAL_INSTALL
 AM_CXXFLAGS += --no-default-nanos6-inc --no-default-nanos6-lib -I$(top_srcdir)/api -I$(top_builddir) -include nanos6.h
@@ -46,8 +53,12 @@ base_tests += \
 	commutative-stencil.test \
 	task-for-multiaxpy.test \
 	task-for-dep-multiaxpy.test \
-	task-for-nqueens.test
+	task-for-nqueens.test 
 
+
+if USE_CUDA
+base_tests += cuda.test 
+endif
 # Ignore CPU Activation test if we have DLB
 # NOTE: The order of this tests should never change, new DLB-related
 #       tests must be added under these
@@ -96,7 +107,7 @@ discrete_tests += \
 endif
 
 if BUILD_DEBUG_VARIANTS
-base_tests += \
+base_tests +=   \
 	fibonacci.debug.test \
 	dep-nonest.debug.test \
 	dep-early-release.debug.test \
@@ -109,6 +120,9 @@ base_tests += \
 	task-for-dep-multiaxpy.debug.test \
 	task-for-nqueens.debug.test
 
+if USE_CUDA
+base_tests += cuda.debug.test 
+endif
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
 dlb_tests += \
@@ -191,7 +205,23 @@ TESTS += $(dlb_tests)
 endif
 
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
-test_common_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+test_common_ldflags       = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+
+
+.cu.o:
+	$(CXX) -lstdc++ -c -k -o remove.o '$(top_srcdir)/tests/directive_based/cuda/saxpy.cudatest.cpp' 
+	$(CXX)  -c -o cuda/kernel0.o $<
+	ld -relocatable cuda/kernel0.o cuda_saxpy.o -o cuda/kernel.o
+
+
+cuda_debug_test_SOURCES =   cuda/saxpy.cudatest.cpp cuda/kernel.cu
+cuda_debug_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+cuda_debug_test_LDFLAGS = $(test_common_ldflags) 
+
+cuda_test_SOURCES =  cuda/saxpy.cudatest.cpp cuda/kernel.cu
+cuda_test_CPPFLAGS = -DNDEBUG
+cuda_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) 
+cuda_test_LDFLAGS = $(test_common_ldflags) 
 
 fibonacci_debug_test_SOURCES = fibonacci/fibonacci.cpp
 fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
