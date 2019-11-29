@@ -10,8 +10,6 @@
 #include <Chrono.hpp>
 
 
-//! NOTE: Currently thread safety is provided through CPUManager's idle
-//! CPUs' spinlock, however this class is not thread-safe on its own
 class CPUStatistics {
 
 private:
@@ -28,7 +26,6 @@ private:
 
 	//! An array of chronos, one per status
 	Chrono _chronos[num_cpu_status];
-
 
 public:
 

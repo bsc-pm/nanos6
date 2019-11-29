@@ -26,35 +26,35 @@ void CPUMonitor::initialize()
 
 void CPUMonitor::shutdown()
 {
-	if (_monitor != nullptr) {
-		delete[] _monitor->_cpuStatistics;
+	assert(_monitor != nullptr);
 
-		delete _monitor;
-	}
+	delete[] _monitor->_cpuStatistics;
+
+	delete _monitor;
 }
 
 void CPUMonitor::displayStatistics(std::stringstream &stream)
 {
-	if (_monitor != nullptr) {
-		stream << std::left << std::fixed << std::setprecision(2) << "\n";
-		stream << "+-----------------------------+\n";
-		stream << "|       CPU STATISTICS        |\n";
-		stream << "+-----------------------------+\n";
-		stream << "|   CPU(id) - Activeness(%)   |\n";
-		stream << "+-----------------------------+\n";
+	assert(_monitor != nullptr);
 
-		// Iterate through all CPUs and print their ID and activeness
-		for (unsigned short id = 0; id < _monitor->_numCPUs; ++id) {
-			std::string label = "CPU(" + std::to_string(id) + ")";
-			float activeness = getActiveness(id);
-			bool endOfColumn = (id % 2 || id == (_monitor->_numCPUs - 1));
+	stream << std::left << std::fixed << std::setprecision(2) << "\n";
+	stream << "+-----------------------------+\n";
+	stream << "|       CPU STATISTICS        |\n";
+	stream << "+-----------------------------+\n";
+	stream << "|   CPU(id) - Activeness(%)   |\n";
+	stream << "+-----------------------------+\n";
 
-			stream
-				<< std::setw(8) << label << " - " << std::right
-				<< std::setw(6) << (activeness * 100.00) << std::left << "%"
-				<< (endOfColumn ? "\n" : " | ");
-		}
+	// Iterate through all CPUs and print their ID and activeness
+	for (unsigned short id = 0; id < _monitor->_numCPUs; ++id) {
+		std::string label = "CPU(" + std::to_string(id) + ")";
+		float activeness = getActiveness(id);
+		bool endOfColumn = (id % 2 || id == (_monitor->_numCPUs - 1));
 
-		stream << "+-----------------------------+\n\n";
+		stream
+			<< std::setw(8) << label << " - " << std::right
+			<< std::setw(6) << (activeness * 100.00) << std::left << "%"
+			<< (endOfColumn ? "\n" : " | ");
 	}
+
+	stream << "+-----------------------------+\n\n";
 }

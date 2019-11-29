@@ -36,7 +36,6 @@ private:
 	//! Aggregated computational cost of a tasktype
 	std::atomic<size_t> _accumulatedCost[num_workloads];
 
-
 public:
 
 	inline WorkloadStatistics()
@@ -48,6 +47,7 @@ public:
 
 
 	//! \brief Increase the accumulated cost of a workload by a specific value
+	//!
 	//! \param[in] loadId The workload's id
 	//! \param[in] cost The value
 	inline void increaseAccumulatedCost(workload_t loadId, size_t cost)
@@ -56,6 +56,7 @@ public:
 	}
 
 	//! \brief Decrease the accumulated cost of a workload by a specific value
+	//!
 	//! \param[in] loadId The workload's id
 	//! \param[in] cost The value
 	inline void decreaseAccumulatedCost(workload_t loadId, size_t cost)
@@ -64,6 +65,7 @@ public:
 	}
 
 	//! \brief Get the accumulated cost of a workload
+	//!
 	//! \param[in] loadId The workload's id
 	inline size_t getAccumulatedCost(workload_t loadId) const
 	{

@@ -35,7 +35,6 @@ private:
 	//! A pointer to the accumulated predictions of the tasktype
 	TasktypePredictions *_typePredictions;
 
-
 public:
 
 	inline TaskPredictions() :

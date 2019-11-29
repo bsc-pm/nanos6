@@ -43,7 +43,6 @@ private:
 	//! Spinlock to ensure atomic access within the accumulators
 	SpinLock _accumulatorLock;
 
-
 public:
 
 	inline TasktypePredictions() :
@@ -68,6 +67,7 @@ public:
 		_accumulatorLock.lock();
 		double average = boost::accumulators::rolling_mean(_timeAccumulator);
 		_accumulatorLock.unlock();
+
 		return average;
 	}
 
@@ -78,6 +78,7 @@ public:
 		_accumulatorLock.lock();
 		double stdev = sqrt(boost::accumulators::variance(_timeAccumulator));
 		_accumulatorLock.unlock();
+
 		return stdev;
 	}
 
@@ -87,6 +88,7 @@ public:
 		_accumulatorLock.lock();
 		double average = boost::accumulators::mean(_accuracyAccumulator);
 		_accumulatorLock.unlock();
+
 		return average;
 	}
 
@@ -145,6 +147,7 @@ public:
 	}
 
 	//! \brief Get a timing prediction for a task
+	//!
 	//! \param[in] cost The task's computational costs
 	inline double getTimePrediction(size_t cost)
 	{

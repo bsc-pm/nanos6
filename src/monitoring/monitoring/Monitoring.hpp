@@ -38,7 +38,6 @@ private:
 	//! A Json file for monitoring data
 	JsonFile *_wisdom;
 
-
 private:
 
 	inline Monitoring() :
@@ -103,7 +102,6 @@ private:
 		delete _wisdom;
 	}
 
-
 public:
 
 	// Delete copy and move constructors/assign operators
@@ -131,22 +129,26 @@ public:
 	//    TASKS    //
 
 	//! \brief Gather basic information about a task when it is created
-	//! \param[in] task The task to gather information about
+	//!
+	//! \param[in,out] task The task to gather information about
 	static void taskCreated(Task *task);
 
 	//! \brief Propagate monitoring operations after a task has changed its
 	//! execution status
-	//! \param[in] task The task that's changing status
+	//!
+	//! \param[in,out] task The task that's changing status
 	//! \param[in] newStatus The new execution status of the task
 	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus);
 
 	//! \brief Propagate monitoring operations after a task has
 	//! completed user code execution
-	//! \param[in] task The task that has completed the execution
+	//!
+	//! \param[in,out] task The task that has completed the execution
 	static void taskCompletedUserCode(Task *task);
 
 	//! \brief Propagate monitoring operations after a task has finished
-	//! \param[in] task The task that has finished
+	//!
+	//! \param[in,out] task The task that has finished
 	static void taskFinished(Task *task);
 
 
@@ -162,10 +164,12 @@ public:
 	//    CPUS    //
 
 	//! \brief Propagate monitoring operations when a CPU becomes idle
+	//!
 	//! \param[in] cpuId The identifier of the CPU
 	static void cpuBecomesIdle(int cpuId);
 
 	//! \brief Propagate monitoring operations when a CPU becomes active
+	//!
 	//! \param[in] cpuId The identifier of the CPU
 	static void cpuBecomesActive(int cpuId);
 
@@ -173,6 +177,7 @@ public:
 	//    PREDICTORS    //
 
 	//! \brief Poll the expected time until completion of the current execution
+	//!
 	//! \return An estimation of the time to completion in microseconds
 	static double getPredictedElapsedTime();
 

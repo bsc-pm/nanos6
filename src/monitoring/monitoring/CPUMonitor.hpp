@@ -30,13 +30,11 @@ private:
 	//! The singleton instance for the monitor of statistics
 	static CPUMonitor *_monitor;
 
-
 private:
 
 	inline CPUMonitor()
 	{
 	}
-
 
 public:
 
@@ -56,7 +54,8 @@ public:
 	static void shutdown();
 
 	//! \brief Display CPU statistics
-	//! \param[in] stream The output stream
+	//!
+	//! \param[in,out] stream The output stream
 	static void displayStatistics(std::stringstream &stream);
 
 

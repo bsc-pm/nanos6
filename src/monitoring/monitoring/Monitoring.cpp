@@ -191,16 +191,12 @@ void Monitoring::taskFinished(Task *task)
 
 void Monitoring::initializeThread()
 {
-	if (_enabled) {
-		// Empty thread API
-	}
+	// Empty thread API
 }
 
 void Monitoring::shutdownThread()
 {
-	if (_enabled) {
-		// Empty thread API
-	}
+	// Empty thread API
 }
 
 
