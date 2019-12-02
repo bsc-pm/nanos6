@@ -214,11 +214,11 @@ test_common_ldflags       = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREA
 	ld -relocatable cuda/kernel0.o cuda_saxpy.o -o cuda/kernel.o
 
 
-cuda_debug_test_SOURCES =   cuda/saxpy.cudatest.cpp cuda/kernel.cu
+cuda_debug_test_SOURCES =   cuda/saxpy.cudatest.cpp cuda/kernel.cu cuda/kernel.h
 cuda_debug_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 cuda_debug_test_LDFLAGS = $(test_common_ldflags) 
 
-cuda_test_SOURCES =  cuda/saxpy.cudatest.cpp cuda/kernel.cu
+cuda_test_SOURCES =  cuda/saxpy.cudatest.cpp cuda/kernel.cu cuda/kernel.h
 cuda_test_CPPFLAGS = -DNDEBUG
 cuda_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) 
 cuda_test_LDFLAGS = $(test_common_ldflags) 
