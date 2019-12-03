@@ -13,6 +13,8 @@
 
 class LeWIPolicy : public CPUManagerPolicyInterface {
 
+private:
+
 	//! The maximum amount of CPUs in the system
 	size_t _numCPUs;
 

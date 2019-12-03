@@ -192,7 +192,7 @@ public:
 
 	//! \brief Try to enable a CPU by its identifier
 	//!
-	//! \param[in,out] systemCPUId The identifier of the CPU to enable
+	//! \param[in] systemCPUId The identifier of the CPU to enable
 	//!
 	//! \return Whether the CPU was enabled
 	static inline bool enable(size_t systemCPUId)
@@ -204,7 +204,7 @@ public:
 
 	//! \brief Try to disable a CPU by its identifier
 	//!
-	//! \param[in,out] systemCPUId The identifier of the CPU to disable
+	//! \param[in] systemCPUId The identifier of the CPU to disable
 	//!
 	//! \return Whether the CPU was disabled
 	static inline bool disable(size_t systemCPUId)

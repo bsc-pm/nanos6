@@ -6,5 +6,6 @@
 
 #include "CPUManager.hpp"
 
+
 CPUManagerInterface *CPUManager::_cpuManager;
 EnvironmentVariable<bool> CPUManager::_dlbEnabled("NANOS6_ENABLE_DLB", false);

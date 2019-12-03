@@ -28,6 +28,8 @@ private:
 
 public:
 
+	/*    CPUMANAGER    */
+
 	void preinitialize();
 
 	void initialize();
@@ -53,7 +55,7 @@ public:
 
 	inline CPU *getUnusedCPU()
 	{
-		// NOTE: In the DLB implementation, underlying policies control CPUs,
+		// In the DLB implementation, underlying policies control CPUs,
 		// obtaining unused CPUs should not be needed
 		return nullptr;
 	}

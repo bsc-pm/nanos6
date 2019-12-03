@@ -27,10 +27,6 @@ void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t nu
 
 			ThreadManager::addIdler(currentThread);
 			currentThread->switchTo(nullptr);
-
-			// The thread may have migrated, update the compute place
-			cpu = currentThread->getComputePlace();
-			assert(cpu != nullptr);
 		}
 	} else if (hint == ADDED_TASKS) {
 		assert(numTasks > 0);
