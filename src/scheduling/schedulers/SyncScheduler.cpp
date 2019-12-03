@@ -14,9 +14,11 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	ComputePlace *deviceComputePlaceOrComputePlace =
 		(deviceComputePlace != nullptr) ? deviceComputePlace : computePlace;
 
-	// Special case for device polling services that get ready tasks.
+	// Special case for device polling services that get ready tasks
 	if (computePlace == nullptr) {
 		_lock.lock();
+		// Move all tasks from addQueues to the ready queue
+		processReadyTasks();
 		task = _scheduler->getReadyTask(deviceComputePlaceOrComputePlace);
 		_lock.unsubscribe();
 		assert(task == nullptr || task->isRunnable());
@@ -29,23 +31,22 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	uint64_t const currentCPUIndex = computePlace->getIndex();
 	setRelatedComputePlace(currentCPUIndex, deviceComputePlace);
 
-	// Subscribe to the lock.
+	// Subscribe to the lock
 	uint64_t const ticket = _lock.subscribeOrLock(currentCPUIndex);
 
 	if (getAssignedTask(currentCPUIndex, ticket, task)) {
-		// Someone got the lock and gave me work to do.
+		// Someone got the lock and gave me work to do
 		assert(task->isRunnable());
 		return task;
 	}
 
-	// I own the lock!
-	// First of all, get all the tasks in the addQueues into the ready queue.
+	// We acquired the lock and we move all tasks from addQueues to the ready queue
 	processReadyTasks();
 
 	uint64_t waitingCPUIndex;
 	uint64_t i = ticket + 1;
 
-	// Serve all the subscribers, while there is work to give them.
+	// Serve all the subscribers, while there is work to give them
 	while (_lock.popWaitingCPU(i, waitingCPUIndex)) {
 #ifndef NDEBUG
 		size_t numCPUs = CPUManager::getTotalCPUs();
@@ -62,15 +63,15 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 
 		setRelatedComputePlace(waitingCPUIndex, nullptr);
 
-		// Put a task into the subscriber slot.
+		// Put a task into the subscriber slot
 		assignTask(waitingCPUIndex, i, task);
 
-		// Advance the ticket of the subscriber just served.
+		// Advance the ticket of the subscriber just served
 		_lock.unsubscribe();
 		i++;
 	}
 
-	// No more subscribers. Try to get work for myself.
+	// No more subscribers; try to get work for myself
 	task = _scheduler->getReadyTask(deviceComputePlaceOrComputePlace);
 	_lock.unsubscribe();
 

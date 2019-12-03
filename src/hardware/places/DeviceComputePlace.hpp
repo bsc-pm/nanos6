@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -22,44 +22,44 @@ class DeviceComputePlace: public ComputePlace {
 	std::string _strPollingService;
 	DeviceFunctionsInterface *_functions;
 	DeviceMemoryPlace *_memoryPlace;
-	
+
 	static inline int deviceMaxRunningTask(nanos6_device_t dev);
 public:
-	
+
 	DeviceComputePlace(DeviceMemoryPlace *memoryPlace, nanos6_device_t type, int subType,
 			int index, DeviceFunctionsInterface* functions, void *deviceHandler);
-	
+
 	~DeviceComputePlace();
-	
+
 	DeviceMemoryPlace *getMemoryPlace();
-	
+
 	/*! \brief Execute the body of a task */
 	void runTask(Task *task);
-	
+
 	bool isReady();
-	
+
 	int getNumUnFinishedTasks();
-	
+
 	int getMaxRunningTasks();
-	
+
 	int getRunningTasks();
-	
+
 	bool canRunTask();
-	
+
 	void disposeTask();
-	
+
 	static int pollingFinishTasks(DeviceFunctionsInterface *functions);
-	
+
 	static int pollingRun(DeviceComputePlace *computePlace);
-	
+
 	void deactivatePollingService();
-	
+
 	void activatePollingService();
-	
+
 	int getSubType();
-	
+
 	int getType();
-	
+
 };
 
 #endif //DEVICE_COMPUTE_PLACE_HPP

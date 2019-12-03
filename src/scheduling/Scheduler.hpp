@@ -23,6 +23,8 @@ public:
 
 	static inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
+		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
+
 		// Mark the task as ready prior to entering the lock
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		HardwareCounters::stopTaskMonitoring(task);
@@ -33,6 +35,7 @@ public:
 
 	static inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
 	{
+		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
 		return _instance->getReadyTask(computePlace, deviceComputePlace);
 	}
 
@@ -42,6 +45,7 @@ public:
 	//! \param[in] deviceComputePlace The target device compute place if it exists
 	static inline bool hasAvailableWork(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
 	{
+		assert(computePlace->getType() == nanos6_host_device);
 		return _instance->hasAvailableWork(computePlace, deviceComputePlace);
 	}
 

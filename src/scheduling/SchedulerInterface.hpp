@@ -42,7 +42,7 @@ public:
 
 	virtual inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
 	{
-		assert(computePlace->getType() == nanos6_host_device);
+		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
 		nanos6_device_t computePlaceType = (deviceComputePlace == nullptr) ? nanos6_host_device : deviceComputePlace->getType();
 
 		if (computePlaceType == nanos6_host_device) {

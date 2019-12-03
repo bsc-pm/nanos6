@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -35,43 +35,51 @@ DeviceComputePlace::~DeviceComputePlace()
 
 int DeviceComputePlace::pollingFinishTasks(DeviceFunctionsInterface *functions)
 {
-	std::vector<Task *> taskvec;
-	functions->getFinishedTasks(taskvec);
-	
-	for (Task *task : taskvec) {
+	std::vector<Task *> finishedTasks;
+	functions->getFinishedTasks(finishedTasks);
+
+	CPU *cpu = nullptr;
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	if (currentThread != nullptr) {
+		cpu = currentThread->getComputePlace();
+	}
+
+	if (!finishedTasks.empty()) {
 		CPUDependencyData localHpDependencyData;
-		if (task->markAsFinished(task->getComputePlace())) {
-			DataAccessRegistration::unregisterTaskDataAccesses(task,
-			task->getComputePlace(), localHpDependencyData, task->getMemoryPlace(), true);
-			if (task->markAsReleased()) {
-				TaskFinalization::disposeOrUnblockTask(task, task->getComputePlace());
+		for (Task *task : finishedTasks) {
+			if (task->markAsFinished(cpu)) {
+				DataAccessRegistration::unregisterTaskDataAccesses(task, cpu,
+					localHpDependencyData, task->getMemoryPlace(), true);
+				if (task->markAsReleased()) {
+					TaskFinalization::disposeOrUnblockTask(task, cpu);
+				}
 			}
 		}
 	}
-	
+
 	return false;
 }
 
-int DeviceComputePlace::pollingRun(DeviceComputePlace *computePlace)
+int DeviceComputePlace::pollingRun(DeviceComputePlace *deviceComputePlace)
 {
+	CPU *cpu = nullptr;
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	if (currentThread != nullptr) {
+		cpu = currentThread->getComputePlace();
+	}
+
 	int i = 0;
-	while (computePlace->canRunTask()) {
-		if (i++ > computePlace->getMaxRunningTasks())
+	while (deviceComputePlace->canRunTask()) {
+		if (i++ > deviceComputePlace->getMaxRunningTasks())
 			return false;
-		
-		WorkerThread *currentThread =  WorkerThread::getCurrentWorkerThread();
-		if (currentThread == nullptr)
-			break;
-		auto cpu = currentThread->getComputePlace();
-		
-		Task *task = Scheduler::getReadyTask(cpu, computePlace);
-		
+
+		Task *task = Scheduler::getReadyTask(cpu, deviceComputePlace);
+
 		if (task == nullptr)
 			continue;
-		
-		task->setComputePlace(computePlace);
-		computePlace->runTask(task);
-		
+
+		task->setComputePlace(deviceComputePlace);
+		deviceComputePlace->runTask(task);
 	}
 	return false;
 }
@@ -146,7 +154,7 @@ int DeviceComputePlace::deviceMaxRunningTask(nanos6_device_t dev)
 		0, //
 		EnvironmentVariable<int>("NANOS6_FPGA_MAX", 32) //FPGA
 	};
-	
+
 	return nanos6_device_max_running[dev];
 }
 
