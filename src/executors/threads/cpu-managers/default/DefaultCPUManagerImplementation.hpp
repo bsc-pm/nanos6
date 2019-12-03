@@ -69,6 +69,8 @@ public:
 		return getIdleCPU();
 	}
 
+	void forcefullyResumeCPU(size_t systemCPUId);
+
 
 	/*    CPUACTIVATION BRIDGE    */
 

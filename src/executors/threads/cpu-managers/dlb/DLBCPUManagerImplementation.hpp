@@ -60,6 +60,12 @@ public:
 		return nullptr;
 	}
 
+	inline void forcefullyResumeCPU(size_t)
+	{
+		// TODO: Acquire the CPU if it is lent
+		// NOTE: Upcoming fix for extrae
+	}
+
 
 	/*    CPUACTIVATION BRIDGE    */
 

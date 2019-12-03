@@ -132,6 +132,29 @@ void DefaultCPUManagerImplementation::shutdownPhase1()
 	}
 }
 
+void DefaultCPUManagerImplementation::forcefullyResumeCPU(size_t systemCPUId)
+{
+	bool resumed = false;
+
+	_idleCPUsLock.lock();
+
+	if (_idleCPUs[systemCPUId]) {
+		_idleCPUs[systemCPUId] = false;
+		assert(_numIdleCPUs > 0);
+
+		--_numIdleCPUs;
+		Monitoring::cpuBecomesActive(systemCPUId);
+		resumed = true;
+	}
+
+	_idleCPUsLock.unlock();
+
+	if (resumed) {
+		assert(_cpus[systemCPUId] != nullptr);
+		ThreadManager::resumeIdle(_cpus[systemCPUId]);
+	}
+}
+
 
 /*    CPUACTIVATION BRIDGE    */
 
@@ -279,3 +302,5 @@ void DefaultCPUManagerImplementation::getIdleCollaborators(
 	assert(_numIdleCPUs >= numObtainedCollaborators);
 	_numIdleCPUs -= numObtainedCollaborators;
 }
+
+

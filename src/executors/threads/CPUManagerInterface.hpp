@@ -229,6 +229,11 @@ public:
 		return _cpus;
 	}
 
+	//! \brief Forcefully resume a CPU if it is idle
+	//!
+	//! \param[in] systemCPUId The identifier of the CPU to resume
+	virtual void forcefullyResumeCPU(size_t systemCPUId) = 0;
+
 
 	/*    CPUACTIVATION BRIDGE    */
 
@@ -260,11 +265,6 @@ public:
 	//!
 	//! \return Whether the CPU was disabled
 	virtual bool disable(size_t systemCPUId) = 0;
-
-	//! \brief Forcefully resume a CPU if it is idle
-	//!
-	//! \param[in] systemCPUId The identifier of the CPU to resume
-	virtual void forcefullyResumeCPU(size_t systemCPUId) = 0;
 
 
 	/*    SHUTDOWN CPUS    */
