@@ -374,8 +374,12 @@ namespace DataAccessRegistration {
 			_linksBottomMapAccessesToNextAndInhibitsPropagation =
 				access->hasNext() && access->complete() && access->hasSubaccesses();
 		}
+
+		void setEnforcesDependency() {
+			assert (_enforcesDependency == false);
+			_enforcesDependency = true;
+		}
 	};
-	
 
 
 	struct BottomMapUpdateOperation {
@@ -2899,7 +2903,10 @@ namespace DataAccessRegistration {
 		newLocalAccess->setReachable();
 #endif
 		DataAccessStatusEffects updatedStatus(newLocalAccess);
-		
+		//! This is an exception to avoid decreasing predecessor and it
+		//! is not used anywhere else.
+		updatedStatus.setEnforcesDependency();
+
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 
 		accessStructures._accesses.insert(*newLocalAccess);
