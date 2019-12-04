@@ -55,32 +55,39 @@ int main(int argc, char **argv) {
 	}
 
 	// Delete the shared memory so the subprocesses can be executed
-	std::system("dlb_shm -d");
+	if (!std::system("dlb_shm -d > /dev/null 2>&1")) {
+		// Invoke the first command
+		std::stringstream firstCommand;
+		long passiveFirstCPU = 0;
+		long passiveLastCPU  = (activeCPUs / 2) - 1;
+		firstCommand
+			<< "taskset -c "
+			<< passiveFirstCPU << "-" << passiveLastCPU << " "
+			<< passiveProcessString << " nanos6-testing "
+			<< passiveFirstCPU << " " << passiveLastCPU << " &";
 
-	// Invoke the first command
-	std::stringstream firstCommand;
-	long passiveFirstCPU = 0;
-	long passiveLastCPU  = (activeCPUs / 2) - 1;
-	firstCommand
-		<< "taskset -c "
-		<< passiveFirstCPU << "-" << passiveLastCPU << " "
-		<< passiveProcessString << " nanos6-testing "
-		<< passiveFirstCPU << " " << passiveLastCPU << " &";
+		const std::string firstCommandString(firstCommand.str());
+		std::system(firstCommandString.c_str());
 
-	const std::string firstCommandString(firstCommand.str());
-	std::system(firstCommandString.c_str());
+		// Invoke the second command
+		std::stringstream secondCommand;
+		long activeFirstCPU = (activeCPUs / 2);
+		long activeLastCPU  = activeCPUs - 1;
+		secondCommand
+			<< "taskset -c "
+			<< activeFirstCPU << "-" << activeLastCPU << " "
+			<< activeProcessString << " nanos6-testing "
+			<< passiveFirstCPU << " " << passiveLastCPU;
 
-
-	// Invoke the second command
-	std::stringstream secondCommand;
-	long activeFirstCPU = (activeCPUs / 2);
-	long activeLastCPU  = activeCPUs - 1;
-	secondCommand
-		<< "taskset -c "
-		<< activeFirstCPU << "-" << activeLastCPU << " "
-		<< activeProcessString << " nanos6-testing "
-		<< passiveFirstCPU << " " << passiveLastCPU;
-
-	const std::string secondCommandString(secondCommand.str());
-	std::system(secondCommandString.c_str());
+		const std::string secondCommandString(secondCommand.str());
+		std::system(secondCommandString.c_str());
+	} else {
+		// DLB is not found, abort and skip this test
+		TestAnyProtocolProducer tap;
+		tap.registerNewTests(1);
+		tap.begin();
+		tap.success("DLB not found in $PATH, skipping this test");
+		tap.end();
+		return 0;
+	}
 }
