@@ -108,13 +108,14 @@ void CPUManagerInterface::preinitialize()
 
 	// Get NUMA nodes
 	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
+	const size_t numValidNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_NUMANodeMask.resize(numNUMANodes);
 
 	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
 	size_t numCPUs = cpus.size();
 
 	// Find the appropriate value for taskfor groups
-	refineTaskforGroups(numCPUs, numNUMANodes);
+	refineTaskforGroups(numCPUs, numValidNUMANodes);
 
 	size_t maxSystemCPUId = 0;
 	for (size_t i = 0; i < numCPUs; ++i) {

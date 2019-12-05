@@ -44,6 +44,14 @@ public:
 		return _infos[type]->getComputePlace(index);
 	}
 	
+	static inline size_t getValidMemoryPlaceCount(nanos6_device_t type)
+	{
+		if (type == nanos6_host_device) {
+			HostInfo *hostInfo = (HostInfo *)_infos[type];
+			return hostInfo->getValidMemoryPlaceCount();
+		}
+		return _infos[type]->getMemoryPlaceCount();
+	}
 	static inline size_t getMemoryPlaceCount(nanos6_device_t type)
 	{
 		return _infos[type]->getMemoryPlaceCount();

@@ -17,6 +17,7 @@ private:
 	size_t _cacheLineSize;						//!< L1 Cache line size
 	size_t _pageSize;							//!< Page size of the system
 	size_t _physicalMemorySize;					//!< Total amount of physical memory on the system
+	size_t _validMemoryPlaces;
 	
 public:
 	void initialize();
@@ -38,6 +39,10 @@ public:
 	inline size_t getMemoryPlaceCount()
 	{
 		return _memoryPlaces.size();
+	}
+	inline size_t getValidMemoryPlaceCount()
+	{
+		return _validMemoryPlaces;
 	}
 	inline MemoryPlace *getMemoryPlace(int index)
 	{

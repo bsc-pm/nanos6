@@ -39,25 +39,11 @@ void HostInfo::initialize()
 
 	//! Get NUMA nodes of the machine.
 	//! NUMA node means: A set of processors around memory which the processors can directly access. (Extracted from hwloc documentation)
-	int memNodesCount = hwloc_get_nbobjs_by_type( topology, HWLOC_NUMA_ALIAS );
+	size_t memNodesCount = hwloc_get_nbobjs_by_type( topology, HWLOC_NUMA_ALIAS );
 
 	//! Check if HWLOC has found any NUMA node.
-	NUMAPlace *node = nullptr;
 	if (memNodesCount != 0) {
 		_memoryPlaces.resize(memNodesCount);
-		//! NUMA node info is available
-		for (int i = 0; i < memNodesCount; i++) {
-			//! Create a MemoryPlace for each NUMA node.
-			//! Get the hwloc obj representing the NUMA node.
-			hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_NUMA_ALIAS, i);
-			assert(obj != nullptr);
-
-			//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
-			node = new NUMAPlace(obj->logical_index, NUMAAddressSpace);
-			//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
-			_memoryPlaces[node->getIndex()] = node;
-			node = nullptr;
-		}
 	}
 	else {
 		_memoryPlaces.resize(1);
@@ -65,15 +51,16 @@ void HostInfo::initialize()
 		//! Create a MemoryPlace.
 		//! TODO: Index is 0 arbitrarily. Maybe a special index should be set.
 		//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
-		node = new NUMAPlace(/*Index*/0, NUMAAddressSpace);
+		NUMAPlace *node = new NUMAPlace(/*Index*/0, NUMAAddressSpace);
 		//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
 		_memoryPlaces[node->getIndex()] = node;
+		_validMemoryPlaces = 1;
 	}
 
 	//! Get (logical) cores of the machine
-	int coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+	size_t coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 	_computePlaces.resize(coresCount);
-	for (int i = 0; i < coresCount; i++) {
+	for (size_t i = 0; i < coresCount; i++) {
 		hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
 		assert(obj != nullptr);
 #if HWLOC_API_VERSION >= 0x00020000
@@ -104,9 +91,28 @@ void HostInfo::initialize()
 #else
 		hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
 #endif
+		assert(_memoryPlaces.size() >= nodeNUMA->logical_index);
+		if (_memoryPlaces[nodeNUMA->logical_index] == nullptr) {
+			//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
+			NUMAPlace *node = new NUMAPlace(nodeNUMA->logical_index, NUMAAddressSpace);
+			//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
+			_memoryPlaces[node->getIndex()] = node;
+			_validMemoryPlaces++;
+		}
 		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
 		CPU *cpu = new CPU( /*systemCPUID*/ obj->os_index, /*virtualCPUID*/ obj->logical_index, NUMANodeId);
 		_computePlaces[obj->logical_index] = cpu;
+	}
+
+	assert(_validMemoryPlaces <= memNodesCount);
+	if (_validMemoryPlaces < memNodesCount) {
+		//! Create the MemoryPlaces representing the NUMA nodes containing no CPUs.
+		for (size_t i = 0; i < memNodesCount; i++) {
+			if (_memoryPlaces[i] == nullptr) {
+				NUMAPlace *node = new NUMAPlace(i, NUMAAddressSpace);
+				_memoryPlaces[node->getIndex()] = node;
+			}
+		}
 	}
 
 	hwloc_obj_t cache = nullptr;
@@ -141,10 +147,11 @@ void HostInfo::initialize()
 	_physicalMemorySize = nrPhysicalPages * _pageSize;
 
 	//! Associate CPUs with NUMA nodes
-	for (std::vector<MemoryPlace *>::iterator numaNode = _memoryPlaces.begin(); numaNode != _memoryPlaces.end(); ++numaNode) {
-		for (std::vector<ComputePlace *>::iterator cpu = _computePlaces.begin(); cpu != _computePlaces.end(); ++cpu) {
-			((NUMAPlace*)*numaNode)->addComputePlace(*cpu);
-			(*cpu)->addMemoryPlace(*numaNode);
+	for (MemoryPlace *memoryPlace : _memoryPlaces) {
+		for (ComputePlace *computePlace : _computePlaces) {
+			NUMAPlace *numaNode = (NUMAPlace *) memoryPlace;
+			numaNode->addComputePlace(computePlace);
+			computePlace->addMemoryPlace(numaNode);
 		}
 	}
 
