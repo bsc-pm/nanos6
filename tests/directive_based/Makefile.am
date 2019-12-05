@@ -6,13 +6,7 @@
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
 AM_LDFLAGS = 
 
-
-if USE_CUDA
-MCXX_CUDA_FLAGS = --cuda
-endif
-
-CXX = $(NANOS6_MCXX) $(MCXX_CUDA_FLAGS) --parallel
-CC = $(NANOS6_MCC)   $(MCXX_CUDA_FLAGS) --parallel
+CXX = $(NANOS6_MCXX) --parallel
 
 if MCC_SUPORTS_EXTERNAL_INSTALL
 AM_CXXFLAGS += --no-default-nanos6-inc --no-default-nanos6-lib -I$(top_srcdir)/api -I$(top_builddir) -include nanos6.h
@@ -53,11 +47,11 @@ base_tests += \
 	commutative-stencil.test \
 	task-for-multiaxpy.test \
 	task-for-dep-multiaxpy.test \
-	task-for-nqueens.test 
+	task-for-nqueens.test
 
 
 if USE_CUDA
-base_tests += cuda.test 
+base_tests += cuda-saxpy.test
 endif
 # Ignore CPU Activation test if we have DLB
 # NOTE: The order of this tests should never change, new DLB-related
@@ -107,7 +101,7 @@ discrete_tests += \
 endif
 
 if BUILD_DEBUG_VARIANTS
-base_tests +=   \
+base_tests +=  \
 	fibonacci.debug.test \
 	dep-nonest.debug.test \
 	dep-early-release.debug.test \
@@ -121,7 +115,7 @@ base_tests +=   \
 	task-for-nqueens.debug.test
 
 if USE_CUDA
-base_tests += cuda.debug.test 
+base_tests += cuda-saxpy.debug.test
 endif
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
@@ -205,23 +199,28 @@ TESTS += $(dlb_tests)
 endif
 
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
-test_common_ldflags       = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+test_common_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 
+# Inhibit linker optimization flag since it is not supported by Mercurium with CUDA
+test_cuda_flags = --cuda -fno-lto
+
+# Serialize compilation of tests since Mercurium seems to ignore the --parallel flag
+# when compiling CUDA programs
+if USE_CUDA
+.NOTPARALLEL:
+endif
 
 .cu.o:
-	$(CXX) -lstdc++ -c -k -o remove.o '$(top_srcdir)/tests/directive_based/cuda/saxpy.cudatest.cpp' 
-	$(CXX)  -c -o cuda/kernel0.o $<
-	ld -relocatable cuda/kernel0.o cuda_saxpy.o -o cuda/kernel.o
+	$(CXX) -c -o $@ $<
 
+cuda_saxpy_debug_test_SOURCES = cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
+cuda_saxpy_debug_test_LDFLAGS = $(test_common_debug_ldflags) $(test_cuda_flags)
 
-cuda_debug_test_SOURCES =   cuda/saxpy.cudatest.cpp cuda/kernel.cu cuda/kernel.h
-cuda_debug_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-cuda_debug_test_LDFLAGS = $(test_common_ldflags) 
-
-cuda_test_SOURCES =  cuda/saxpy.cudatest.cpp cuda/kernel.cu cuda/kernel.h
-cuda_test_CPPFLAGS = -DNDEBUG
-cuda_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) 
-cuda_test_LDFLAGS = $(test_common_ldflags) 
+cuda_saxpy_test_SOURCES = cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_test_CPPFLAGS = -DNDEBUG
+cuda_saxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
+cuda_saxpy_test_LDFLAGS = $(test_common_ldflags) $(test_cuda_flags)
 
 fibonacci_debug_test_SOURCES = fibonacci/fibonacci.cpp
 fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
