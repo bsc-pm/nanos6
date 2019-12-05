@@ -4,7 +4,8 @@
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
-AM_LDFLAGS =
+AM_LDFLAGS = 
+
 CXX = $(NANOS6_MCXX) --parallel
 
 if MCC_SUPORTS_EXTERNAL_INSTALL
@@ -48,6 +49,10 @@ base_tests += \
 	task-for-dep-multiaxpy.test \
 	task-for-nqueens.test
 
+
+if USE_CUDA
+base_tests += cuda-saxpy.test
+endif
 # Ignore CPU Activation test if we have DLB
 # NOTE: The order of this tests should never change, new DLB-related
 #       tests must be added under these
@@ -96,7 +101,7 @@ discrete_tests += \
 endif
 
 if BUILD_DEBUG_VARIANTS
-base_tests += \
+base_tests +=  \
 	fibonacci.debug.test \
 	dep-nonest.debug.test \
 	dep-early-release.debug.test \
@@ -109,6 +114,9 @@ base_tests += \
 	task-for-dep-multiaxpy.debug.test \
 	task-for-nqueens.debug.test
 
+if USE_CUDA
+base_tests += cuda-saxpy.debug.test
+endif
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
 dlb_tests += \
@@ -192,6 +200,27 @@ endif
 
 test_common_debug_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 test_common_ldflags = -no-install $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
+
+# Inhibit linker optimization flag since it is not supported by Mercurium with CUDA
+test_cuda_flags = --cuda -fno-lto
+
+# Serialize compilation of tests since Mercurium seems to ignore the --parallel flag
+# when compiling CUDA programs
+if USE_CUDA
+.NOTPARALLEL:
+endif
+
+.cu.o:
+	$(CXX) -c -o $@ $<
+
+cuda_saxpy_debug_test_SOURCES = cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
+cuda_saxpy_debug_test_LDFLAGS = $(test_common_debug_ldflags) $(test_cuda_flags)
+
+cuda_saxpy_test_SOURCES = cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_test_CPPFLAGS = -DNDEBUG
+cuda_saxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
+cuda_saxpy_test_LDFLAGS = $(test_common_ldflags) $(test_cuda_flags)
 
 fibonacci_debug_test_SOURCES = fibonacci/fibonacci.cpp
 fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
