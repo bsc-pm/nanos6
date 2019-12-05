@@ -56,31 +56,30 @@ int main(int argc, char **argv) {
 
 	// Delete the shared memory so the subprocesses can be executed
 	if (!std::system("dlb_shm -d > /dev/null 2>&1")) {
-		// Invoke the first command
-		std::stringstream firstCommand;
-		long passiveFirstCPU = 0;
-		long passiveLastCPU  = (activeCPUs / 2) - 1;
-		firstCommand
-			<< "taskset -c "
-			<< passiveFirstCPU << "-" << passiveLastCPU << " "
-			<< passiveProcessString << " nanos6-testing "
-			<< passiveFirstCPU << " " << passiveLastCPU << " &";
-
-		const std::string firstCommandString(firstCommand.str());
-		std::system(firstCommandString.c_str());
-
-		// Invoke the second command
-		std::stringstream secondCommand;
+		// Invoke the active command in the background (&)
+		std::stringstream activeCommand;
 		long activeFirstCPU = (activeCPUs / 2);
 		long activeLastCPU  = activeCPUs - 1;
-		secondCommand
+		activeCommand
 			<< "taskset -c "
 			<< activeFirstCPU << "-" << activeLastCPU << " "
-			<< activeProcessString << " nanos6-testing "
-			<< passiveFirstCPU << " " << passiveLastCPU;
+			<< activeProcessString << " nanos6-testing &";
 
-		const std::string secondCommandString(secondCommand.str());
-		std::system(secondCommandString.c_str());
+		const std::string activeCommandString(activeCommand.str());
+		std::system(activeCommandString.c_str());
+
+		// Invoke the passive command and wait until it finishes
+		std::stringstream passiveCommand;
+		long passiveFirstCPU = 0;
+		long passiveLastCPU  = (activeCPUs / 2) - 1;
+		passiveCommand
+			<< "taskset -c "
+			<< passiveFirstCPU << "-" << passiveLastCPU << " "
+			<< passiveProcessString << " nanos6-testing";
+
+		const std::string passiveCommandString(passiveCommand.str());
+		std::system(passiveCommandString.c_str());
+		return 0;
 	} else {
 		// DLB is not found, abort and skip this test
 		TestAnyProtocolProducer tap;
