@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -110,7 +110,7 @@ inline void Task::reinitialize(
 	_executionStep = nullptr;
 	_clusterContext = nullptr;
 	_parentSpawnCallback = nullptr;
-	
+
 	if (parent != nullptr) {
 		parent->addChild(this);
 	}
@@ -118,8 +118,6 @@ inline void Task::reinitialize(
 
 inline bool Task::markAsFinished(ComputePlace *computePlace)
 {
-	CPUDependencyData hpDependencyData;
-	
 	// Non-runnable taskfors should avoid these checks
 	if (isRunnable()) {
 		if (getDeviceType() == nanos6_device_t::nanos6_host_device) {
@@ -133,27 +131,29 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 			_computePlace = nullptr;
 		}
 	}
-	
+
 	// If the task has a wait clause, the release of dependencies must be
 	// delayed (at least) until the task finishes its execution and all
 	// its children complete and become disposable
 	if (mustDelayRelease()) {
+		CPUDependencyData hpDependencyData;
+
 		//! We need to pass 'nullptr' here as a ComputePlace to notify
 		//! the DataAccessRegistration system that it is creating
 		//! taskwait fragments for a 'wait' task.
 		DataAccessRegistration::handleEnterTaskwait(this, nullptr, hpDependencyData);
-		
+
 		if (!decreaseRemovalBlockingCount()) {
 			return false;
 		}
-		
+
 		// All its children are completed, so the delayed release of
 		// dependencies has successfully completed
 		completeDelayedRelease();
 		DataAccessRegistration::handleExitTaskwait(this, computePlace, hpDependencyData);
 		increaseRemovalBlockingCount();
 	}
-	
+
 	// Return whether all external events have been also fulfilled, so
 	// the dependencies can be released
 	return decreaseReleaseCount();
@@ -163,14 +163,14 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 inline bool Task::markAllChildrenAsFinished(ComputePlace *computePlace)
 {
 	assert(_thread == nullptr);
-	
+
 	CPUDependencyData hpDependencyData;
-	
+
 	// Complete the delayed release of dependencies
 	completeDelayedRelease();
 	DataAccessRegistration::handleExitTaskwait(this, computePlace, hpDependencyData);
 	increaseRemovalBlockingCount();
-	
+
 	// Return whether all external events have been also fulfilled, so
 	// the dependencies can be released
 	return decreaseReleaseCount();
