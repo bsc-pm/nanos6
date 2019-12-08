@@ -17,9 +17,16 @@ if test -z ${NANOS6_SCHEDULING_POLICY} ; then
 	fi
 fi
 
-# If DLB is present, clean shared memory in case a previous program finalized
-# incorrectly
+# Enable DLB for dlb-specific tests
+if [[ "${*}" == *"dlb-"* ]]; then
+	export NANOS6_ENABLE_DLB=1
+else
+	export NANOS6_ENABLE_DLB=0
+fi
+
+# If DLB is enabled clean the shared memory first
 if [[ ${NANOS6_ENABLE_DLB} == "1" ]]; then
+	# Only if the command is found
 	if hash dlb_shm 2>/dev/null; then
 		dlb_shm -d
 	fi
