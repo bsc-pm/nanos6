@@ -243,6 +243,11 @@ public:
 		return (_accessFlags.load(std::memory_order_relaxed) & ACCESS_UNREGISTERED);
 	}
 
+	inline size_t getLength() const
+	{
+		return _region.getSize();
+	}
+
 	bool isInSymbol(int symbol) const
 	{
 		return _symbols[symbol];
