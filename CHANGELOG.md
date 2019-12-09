@@ -2,6 +2,18 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.3.1, Tue Dec 10, 2019
+The 2.3.1 release corresponds to the OmpSs-2 2019.11.1 release. It introduces bug fixes and performance improvements.
+
+### General
+- Fix execution of CUDA tasks
+- Fix `dmalloc` in OmpSs-2@Cluster
+- Add missing calls to CPU Manager
+- Improve taskfor performance
+- Improve general performance by using a reasonable cache line size padding
+- Add tests checking the execution of CUDA tasks
+
+
 ## Version 2.3, Mon Nov 18, 2019
 The 2.3 release corresponds to the OmpSs-2 2019.11 release. It introduces a new optimized data dependency implementation.
 It improves the usability, performance and code of the scheduling infrastructure and the `task for` feature. It also adds
