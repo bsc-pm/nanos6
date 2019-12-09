@@ -145,7 +145,7 @@ namespace DataAccessRegistration {
 		assert(!accessStruct.hasBeenDeleted());
 
 		bool alreadyExisting;
-		DataAccess *access = accessStruct.allocateAccess(address, accessType, task, weak, alreadyExisting);
+		DataAccess *access = accessStruct.allocateAccess(address, accessType, task, length, weak, alreadyExisting);
 
 		if (!alreadyExisting) {
 			if (accessType == REDUCTION_ACCESS_TYPE) {
@@ -456,11 +456,11 @@ namespace DataAccessRegistration {
 			bottom_map_t::iterator itMap;
 			bool weak = access->isWeak();
 
-			// Instrumentation mock(for now)
-			DataAccessRegion mock(address, 1);
+			// Instrumentation needs a region.
+			DataAccessRegion region(address, access->getLength());
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
 				nullptr,
-				accessType, false, mock,
+				accessType, false, region,
 				false, false, false, Instrument::access_object_type_t::regular_access_type,
 				task->getInstrumentationTaskId());
 

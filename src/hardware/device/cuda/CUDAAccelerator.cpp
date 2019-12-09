@@ -7,11 +7,12 @@
 #include <nanos6/polling.h>
 
 #include "CUDAAccelerator.hpp"
-
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
+
+#include <DataAccessRegistration.hpp>
 
 thread_local Task* CUDAAccelerator::_currentTask;
 
@@ -73,6 +74,22 @@ void CUDAAccelerator::postRunTask(Task *task)
 	_activeEvents.push_back({env.event, task});
 }
 
+void CUDAAccelerator::preRunTask(Task *task)
+{
+	// set the thread_local static var to be used by nanos6_get_current_cuda_stream()
+	CUDAAccelerator::_currentTask = task;
+
+	// Prefetch available memory locations to the GPU
+	nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
+
+	DataAccessRegistration::processAllDataAccesses(task,
+		[&](DataAccessRegion region, DataAccessType type,
+			bool isWeak, __attribute__((unused)) MemoryPlace const *location) -> bool {
+				if(type != REDUCTION_ACCESS_TYPE && !isWeak)
+					CUDAFunctions::cudaDevicePrefetch(region.getStartAddress(), region.getSize(), _deviceHandler, env.stream, type == READ_ACCESS_TYPE);
+				return true;
+			});
+}
 // Query the events issued to detect task completion
 void CUDAAccelerator::processCUDAEvents()
 {

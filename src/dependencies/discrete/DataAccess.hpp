@@ -51,6 +51,8 @@ private:
 	//! Instrumentation specific data
 	Instrument::data_access_id_t _instrumentDataAccessId;
 
+	size_t _length;
+
 	DataAccessMessage inAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	void outAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
 	void inoutAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
@@ -60,13 +62,14 @@ private:
 	void readDestination(access_flags_t allFlags, DataAccessMessage &message, PropagationDestination &destination);
 
 public:
-	DataAccess(DataAccessType type, Task *originator, bool weak) :
+	DataAccess(DataAccessType type, Task *originator, size_t length, bool weak) :
 		_type(type),
 		_originator(originator),
 		_reductionInfo(nullptr),
 		_successor(nullptr),
 		_child(nullptr),
-		_accessFlags(0)
+		_accessFlags(0),
+		_length(length)
 	{
 		assert(originator != nullptr);
 
@@ -80,7 +83,8 @@ public:
 		_reductionInfo(other.getReductionInfo()),
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
-		_accessFlags(other.getFlags())
+		_accessFlags(other.getFlags()),
+		_length(other.getLength())
 	{
 	}
 
@@ -197,6 +201,11 @@ public:
 	inline access_flags_t getFlags() const
 	{
 		return _accessFlags;
+	}
+
+	inline size_t getLength() const
+	{
+		return _length;
 	}
 };
 

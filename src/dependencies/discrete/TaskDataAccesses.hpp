@@ -158,12 +158,12 @@ struct TaskDataAccesses {
 		return info.getAllocationSize();
 	}
 
-	inline DataAccess *allocateAccess(void *address, DataAccessType type, Task *originator, bool weak, bool &existing)
+	inline DataAccess *allocateAccess(void *address, DataAccessType type, Task *originator, size_t length, bool weak, bool &existing)
 	{
 		if (_accessMap != nullptr) {
 			std::pair<access_map_t::iterator, bool> emplaced = _accessMap->emplace(std::piecewise_construct,
 				std::forward_as_tuple(address),
-				std::forward_as_tuple(type, originator, weak));
+				std::forward_as_tuple(type, originator, length, weak));
 
 			existing = !emplaced.second;
 			if (!existing)
@@ -177,7 +177,7 @@ struct TaskDataAccesses {
 			if (!existing) {
 				_addressArray[_currentIndex] = address;
 				ret = &_accessArray[_currentIndex++];
-				new (ret) DataAccess(type, originator, weak);
+				new (ret) DataAccess(type, originator, length, weak);
 			}
 
 			return ret;

@@ -108,6 +108,21 @@ public:
 			cudaEventQuery(event), "While querying event");
 	}
 
+	static void cudaDevicePrefetch(void *pHost, size_t size, int device, cudaStream_t &stream, bool readOnly)
+	{
+		if (size == 0)
+			return;
+
+		// Call cudaMemAdvise to register the section as read-only or not
+		if (readOnly)
+			CUDAErrorHandler::handle(cudaMemAdvise(pHost, size, cudaMemAdviseSetReadMostly, device), "Advising read-only memory");
+		else
+			CUDAErrorHandler::handle(cudaMemAdvise(pHost, size, cudaMemAdviseUnsetReadMostly, device), "Advising non read-only memory");
+
+		assert(stream != 0);
+		// Call a prefetch operation on the same stream that we are going to launch that task on.
+		cudaMemPrefetchAsync(pHost, size, device, stream);
+	}
 };
 
 #endif // CUDA_FUNCTIONS_HPP
