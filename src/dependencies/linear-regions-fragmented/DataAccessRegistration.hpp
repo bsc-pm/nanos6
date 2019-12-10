@@ -110,6 +110,15 @@ namespace DataAccessRegistration {
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
 
+	//! \brief Pass all data accesses from the task through a lambda
+	//!
+	//! \param[in] task the owner of the accesses to be processed
+	//! \param[in] processor a lambda that receives a reference to the access
+	//!
+	//! \returns false if the traversal was stopped before finishing
+	template <typename ProcessorType>
+	inline bool iterateAllDataAccesses(Task *task, ProcessorType processor);
+
 	//! \brief Update the location of the DataAccess of a Task
 	//!
 	//! \param[in] task is the owner of the accesses we are updating

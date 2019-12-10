@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DATA_ACCESS_REGISTRATION_IMPLEMENTATION_HPP
@@ -17,7 +17,6 @@
 
 namespace DataAccessRegistration {
 
-	// Placeholder
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor)
 	{
@@ -25,19 +24,21 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
 
-		DataAccess * accessArray = accessStruct._accessArray;
-		void ** addressArray = accessStruct._addressArray;
+		return accessStruct.forAll([&](void *, DataAccess *access) {
+			return processor(access->getAccessRegion(), access->getType(), access->isWeak(), nullptr);
+		});
+	}
 
-		for (size_t i = 0; i < accessStruct.getRealAccessNumber(); ++i) {
-			DataAccess * access = &accessArray[i];
-			void * address = addressArray[i];
+	template <typename ProcessorType>
+	inline bool iterateAllDataAccesses(Task *task, ProcessorType processor)
+	{
+		assert(task != nullptr);
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
+		assert(!accessStruct.hasBeenDeleted());
 
-			DataAccessRegion region(address, access->getLength());
-			if(!processor(region, access->getType(), access->isWeak(), nullptr))
-				return false;
-		}
-
-		return true;
+		return accessStruct.forAll([&](void *, DataAccess *access) {
+			return processor(access);
+		});
 	}
 }
 

@@ -18,7 +18,9 @@
 #include "ReductionInfo.hpp"
 #include "ReductionSpecific.hpp"
 
+#include <DataAccessRegion.hpp>
 #include <InstrumentDataAccessId.hpp>
+#include <InstrumentDependenciesByAccessLinks.hpp>
 
 struct DataAccess;
 class Task;
@@ -51,7 +53,10 @@ private:
 	//! Instrumentation specific data
 	Instrument::data_access_id_t _instrumentDataAccessId;
 
+	void *_address;
 	size_t _length;
+
+	MemoryPlace const *_location;
 
 	DataAccessMessage inAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	void outAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
@@ -62,14 +67,16 @@ private:
 	void readDestination(access_flags_t allFlags, DataAccessMessage &message, PropagationDestination &destination);
 
 public:
-	DataAccess(DataAccessType type, Task *originator, size_t length, bool weak) :
+	DataAccess(DataAccessType type, Task *originator, void *address, size_t length, bool weak) :
 		_type(type),
 		_originator(originator),
 		_reductionInfo(nullptr),
 		_successor(nullptr),
 		_child(nullptr),
 		_accessFlags(0),
-		_length(length)
+		_address(address),
+		_length(length),
+		_location(nullptr)
 	{
 		assert(originator != nullptr);
 
@@ -84,7 +91,9 @@ public:
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
 		_accessFlags(other.getFlags()),
-		_length(other.getLength())
+		_address(other.getAddress()),
+		_length(other.getLength()),
+		_location(other.getLocation())
 	{
 	}
 
@@ -206,6 +215,26 @@ public:
 	inline size_t getLength() const
 	{
 		return _length;
+	}
+
+	inline void *getAddress() const
+	{
+		return _address;
+	}
+
+	inline DataAccessRegion getAccessRegion() const {
+		return DataAccessRegion(getAddress(), getLength());
+	}
+
+	void setLocation(MemoryPlace const *location)
+	{
+		_location = location;
+		Instrument::newDataAccessLocation(_instrumentDataAccessId, location);
+	}
+
+	MemoryPlace const *getLocation() const
+	{
+		return _location;
 	}
 };
 

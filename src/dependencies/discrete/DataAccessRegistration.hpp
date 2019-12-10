@@ -61,7 +61,10 @@ namespace DataAccessRegistration {
 
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
-} // namespace DataAccessRegistration
 
+	template <typename ProcessorType>
+	inline bool iterateAllDataAccesses(Task *task, ProcessorType processor);
+
+} // namespace DataAccessRegistration
 
 #endif // DATA_ACCESS_REGISTRATION_HPP

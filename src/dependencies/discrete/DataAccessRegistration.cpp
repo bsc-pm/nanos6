@@ -341,6 +341,7 @@ namespace DataAccessRegistration {
 			// Release dependencies of all my accesses
 			accessStruct.forAll([&](void *address, DataAccess *access) {
 				finalizeDataAccess(task, access, address, hpDependencyData);
+				return true;
 			});
 		}
 
@@ -598,6 +599,8 @@ namespace DataAccessRegistration {
 					true,
 					task->getInstrumentationTaskId());
 			}
+
+			return true; // Continue iteration
 		});
 	}
 
@@ -659,6 +662,8 @@ namespace DataAccessRegistration {
 				ReductionInfo *reductionInfo = access->getReductionInfo();
 				reductionInfo->releaseSlotsInUse(((CPU *)computePlace)->getIndex());
 			}
+
+			return true; // Continue iteration
 		});
 	}
 

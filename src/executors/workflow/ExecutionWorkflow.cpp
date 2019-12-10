@@ -17,6 +17,7 @@
 #include <ClusterManager.hpp>
 #include <DataAccess.hpp>
 #include <DataAccessRegistration.hpp>
+#include <DataAccessRegistrationImplementation.hpp>
 #include <ExecutionWorkflowHost.hpp>
 #include <ExecutionWorkflowCluster.hpp>
 #include <Monitoring.hpp>
@@ -251,74 +252,66 @@ namespace ExecutionWorkflow {
 			targetComputePlace
 		);
 
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
+		/* TODO: Once we have correct management for the Task symbols here
+			* we should create the corresponding allocation steps. */
 
-		{
-			std::lock_guard<TaskDataAccesses::spinlock_t>
-				guard(accessStructures._lock);
+		DataAccessRegistration::iterateAllDataAccesses(task,
+			[&](DataAccess *dataAccess) -> bool {
+				assert(dataAccess != nullptr);
+				DataAccessRegion region = dataAccess->getAccessRegion();
 
-			/* TODO: Once we have correct management for the Task symbols here
-			 * we should create the corresponding allocation steps. */
+				MemoryPlace const *currLocation = dataAccess->getLocation();
+				Step *step;
+				if (ClusterManager::inClusterMode()
+					&& Directory::isDirectoryMemoryPlace(currLocation)
+					&& targetComputePlace->getType() == nanos6_host_device) {
 
-			accessStructures._accesses.processAll(
-				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
-					DataAccess *dataAccess = &(*position);
-					assert(dataAccess != nullptr);
-					DataAccessRegion region = dataAccess->getAccessRegion();
+					Directory::HomeNodesArray *homeNodes = Directory::find(region);
 
-					MemoryPlace const *currLocation = dataAccess->getLocation();
-					Step *step;
-					if (ClusterManager::inClusterMode()
-					    && Directory::isDirectoryMemoryPlace(currLocation)
-					    && targetComputePlace->getType() == nanos6_host_device) {
+					for (const auto &entry : *homeNodes) {
+						currLocation = entry->getHomeNode();
+						DataAccessRegion subregion = entry->getAccessRegion();
 
-						Directory::HomeNodesArray *homeNodes = Directory::find(region);
+						subregion = region.intersect(subregion);
+						RegionTranslation translation(subregion,
+														subregion.getStartAddress());
 
-						for (const auto &entry : *homeNodes) {
-							currLocation = entry->getHomeNode();
-							DataAccessRegion subregion = entry->getAccessRegion();
-
-							subregion = region.intersect(subregion);
-							RegionTranslation translation(subregion,
-							                              subregion.getStartAddress());
-
-							step = workflow->createDataCopyStep(
-								currLocation,
-								targetMemoryPlace,
-								translation,
-								dataAccess);
-
-							workflow->enforceOrder(step, executionStep);
-							workflow->addRootStep(step);
-						}
-
-						delete homeNodes;
-
-					} else {
-						/* TODO: This will be provided by the corresponding
-						 * AllocationAndPinning step, once we fix this functionality.
-						 * At the moment (and since we support only cluster and SMP
-						 * we can use a dummy RegionTranslation */
-						RegionTranslation translation(region, region.getStartAddress());
 						step = workflow->createDataCopyStep(
-								currLocation,
-								targetMemoryPlace,
-								translation,
-								dataAccess);
+							currLocation,
+							targetMemoryPlace,
+							translation,
+							dataAccess);
 
 						workflow->enforceOrder(step, executionStep);
 						workflow->addRootStep(step);
 					}
 
-					step = workflow->createDataReleaseStep(task,
-							dataAccess);
-					workflow->enforceOrder(executionStep, step);
-					workflow->enforceOrder(step, notificationStep);
+					delete homeNodes;
 
-					return true;
+				} else {
+					/* TODO: This will be provided by the corresponding
+						* AllocationAndPinning step, once we fix this functionality.
+						* At the moment (and since we support only cluster and SMP
+						* we can use a dummy RegionTranslation */
+					RegionTranslation translation(region, region.getStartAddress());
+					step = workflow->createDataCopyStep(
+							currLocation,
+							targetMemoryPlace,
+							translation,
+							dataAccess);
+
+					workflow->enforceOrder(step, executionStep);
+					workflow->addRootStep(step);
 				}
-			);
-		}
+
+				step = workflow->createDataReleaseStep(task,
+						dataAccess);
+				workflow->enforceOrder(executionStep, step);
+				workflow->enforceOrder(step, notificationStep);
+
+				return true;
+			}
+		);
 
 		if (executionStep->ready()) {
 			workflow->enforceOrder(executionStep, notificationStep);
@@ -335,6 +328,7 @@ namespace ExecutionWorkflow {
 		workflow->start();
 	}
 
+#if !DISCRETE_DEPS
 	void setupTaskwaitWorkflow(
 		Task *task,
 		DataAccess *taskwaitFragment
@@ -411,4 +405,5 @@ namespace ExecutionWorkflow {
 		workflow->enforceOrder(copyStep, notificationStep);
 		workflow->start();
 	}
+#endif
 };

@@ -163,7 +163,7 @@ struct TaskDataAccesses {
 		if (_accessMap != nullptr) {
 			std::pair<access_map_t::iterator, bool> emplaced = _accessMap->emplace(std::piecewise_construct,
 				std::forward_as_tuple(address),
-				std::forward_as_tuple(type, originator, length, weak));
+				std::forward_as_tuple(type, originator, address, length, weak));
 
 			existing = !emplaced.second;
 			if (!existing)
@@ -177,26 +177,31 @@ struct TaskDataAccesses {
 			if (!existing) {
 				_addressArray[_currentIndex] = address;
 				ret = &_accessArray[_currentIndex++];
-				new (ret) DataAccess(type, originator, length, weak);
+				new (ret) DataAccess(type, originator, address, length, weak);
 			}
 
 			return ret;
 		}
 	}
 
-	inline void forAll(std::function<void(void *, DataAccess *)> callback)
+	inline bool forAll(std::function<bool(void *, DataAccess *)> callback)
 	{
 		if (_accessMap != nullptr) {
 			access_map_t::iterator itAccess = _accessMap->begin();
 
 			while (itAccess != _accessMap->end()) {
-				callback(itAccess->first, &itAccess->second);
+				if (!callback(itAccess->first, &itAccess->second))
+					return false;
 				itAccess++;
 			}
 		} else {
-			for (size_t i = 0; i < getRealAccessNumber(); ++i)
-				callback(_addressArray[i], &_accessArray[i]);
+			for (size_t i = 0; i < getRealAccessNumber(); ++i) {
+				if (!callback(_addressArray[i], &_accessArray[i]))
+					return false;
+			}
 		}
+
+		return true;
 	}
 };
 

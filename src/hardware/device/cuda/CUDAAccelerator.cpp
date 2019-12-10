@@ -13,6 +13,7 @@
 #include "scheduling/Scheduler.hpp"
 
 #include <DataAccessRegistration.hpp>
+#include <DataAccessRegistrationImplementation.hpp>
 
 thread_local Task* CUDAAccelerator::_currentTask;
 
