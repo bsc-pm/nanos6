@@ -26,6 +26,11 @@ class ComputePlace;
 
 
 namespace If0Task {
+	//! \brief Waits for the child if(0) task to finish.
+	//!
+	//! This function will lock the task by replacing it in the current thread, but as Task::markAsBlocked is
+	//! not called, the only way to unlock this task is to put it directly in the scheduler. The if(0) task
+	//! is in charge of doing this after execution.
 	inline void waitForIf0Task(WorkerThread *currentThread, Task *currentTask, Task *if0Task, ComputePlace *computePlace)
 	{
 		assert(currentThread != nullptr);
