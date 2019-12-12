@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -19,7 +19,7 @@ public:
 private:
 	bounds_t _bounds;
 	bool _sourceTaskloop;
-	
+
 public:
 	inline Taskloop(
 		void *argsBlock, size_t argsBlockSize,
@@ -39,7 +39,7 @@ public:
 		_bounds.upper_bound = upperBound;
 		_bounds.grainsize = grainsize;
 		_sourceTaskloop = true;
-		
+
 		size_t totalIterations = getIterationCount();
 
 		// Set a implementation defined chunksize if needed
@@ -47,12 +47,12 @@ public:
 			_bounds.grainsize = std::max(totalIterations /CPUManager::getTotalCPUs(), (size_t) 1);
 		}
 	}
-	
+
 	inline bounds_t &getBounds()
 	{
 		return _bounds;
 	}
-	
+
 	inline bounds_t const &getBounds() const
 	{
 		return _bounds;
@@ -67,7 +67,7 @@ public:
 	{
 		return _sourceTaskloop;
 	}
-	
+
 	inline bool hasPendingIterations()
 	{
 		return (getIterationCount() > 0);

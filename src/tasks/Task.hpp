@@ -488,7 +488,7 @@ public:
 	{
 		return _flags[taskloop_flag];
 	}
-	
+
 	//! \brief Set or unset the taskfor flag
 	void setTaskfor(bool taskforValue)
 	{

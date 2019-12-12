@@ -2648,7 +2648,7 @@ namespace DataAccessRegistration {
 		if (task->isTaskloop()) {
 			weak |= ((Taskloop *)task)->isSourceTaskloop();
 		}
-		
+
 		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
 
 		if (symbolIndex >= 0) symbol_list.set(symbolIndex);
@@ -2708,7 +2708,7 @@ namespace DataAccessRegistration {
 		} else {
 			taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
 		}
-		
+
 		if (!task->getDataAccesses()._accesses.empty()) {
 			task->increasePredecessors(2);
 

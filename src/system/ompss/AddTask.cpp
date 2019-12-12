@@ -71,7 +71,7 @@ void nanos6_create_task(
 	// Operate directly over references to the user side variables
 	void *&args_block = *args_block_pointer;
 	void *&task = *task_pointer;
-	
+
 	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
 	bool isTaskloop = flags & nanos6_task_flag_t::nanos6_taskloop_task;
 	bool isStreamExecutor = flags & (1 << Task::stream_executor_flag);
@@ -150,7 +150,7 @@ void nanos6_create_preallocated_task(
 	assert(preallocatedTask != nullptr);
 
 	Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(parentTaskInstrumentationId, taskInfo, taskInvocationInfo, flags);
-	
+
 	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
 	FatalErrorHandler::failIf(!isTaskfor, "Only taskfors can be created this way.");
 

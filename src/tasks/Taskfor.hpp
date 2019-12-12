@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -21,7 +21,7 @@ private:
 	size_t _maxCollaborators;
 	std::atomic<size_t> _remainingIterations;
 	size_t _completedIterations;
-	
+
 public:
 	inline Taskfor(
 		void *argsBlock, size_t argsBlockSize,
@@ -50,18 +50,18 @@ public:
 		_bounds.lower_bound = lowerBound;
 		_bounds.upper_bound = upperBound;
 		_bounds.chunksize = chunksize;
-		
+
 		assert(_maxCollaborators > 0);
 		size_t totalIterations = getIterationCount();
 		_remainingIterations = totalIterations;
-		
+
 		// Set a implementation defined chunksize if needed
 		if (_bounds.chunksize == 0) {
 			_bounds.chunksize = std::max(totalIterations / (_maxCollaborators), (size_t) 1);
 		}
 	}
-	
-	
+
+
 	inline void reinitialize(
 		void *argsBlock, size_t argsBlockSize,
 		nanos6_task_info_t *taskInfo,
@@ -78,12 +78,12 @@ public:
 		_completedIterations = 0;
 		setRunnable(runnable);
 	}
-	
+
 	inline bounds_t &getBounds()
 	{
 		return _bounds;
 	}
-	
+
 	inline bounds_t const &getBounds() const
 	{
 		return _bounds;
@@ -110,7 +110,7 @@ public:
 	{
 		return _completedIterations;
 	}
-	
+
 	inline void body(
 		__attribute__((unused)) void *deviceEnvironment,
 		__attribute__((unused)) nanos6_address_translation_entry_t *translationTable = nullptr
@@ -119,45 +119,45 @@ public:
 		assert(isRunnable());
 		assert(_thread != nullptr);
 		assert(deviceEnvironment == nullptr);
-		
+
 		Task *parent = getParent();
 		assert(parent != nullptr);
 		assert(parent->isTaskfor());
 		assert(((Taskfor *)parent)->_remainingIterations.load() > 0);
-		
+
 		run(*((Taskfor *)parent));
 	}
-	
+
 	inline void setRunnable(bool runnableValue)
 	{
 		_flags[Task::non_runnable_flag] = !runnableValue;
 	}
-	
+
 	inline bool hasPendingIterations()
 	{
 		assert(!isRunnable());
-		
+
 		return (_bounds.upper_bound > _bounds.lower_bound);
 	}
-	
+
 	inline void notifyCollaboratorHasStarted()
 	{
 		assert(!isRunnable());
-		
+
 		increaseRemovalBlockingCount();
 	}
-	
+
 	inline bool notifyCollaboratorHasFinished()
 	{
 		assert(!isRunnable());
-		
+
 		return decreaseRemovalBlockingCount();
 	}
-	
+
 	inline bool getChunks(bounds_t &collaboratorBounds)
 	{
 		assert(!isRunnable());
-		
+
 		bounds_t &bounds = _bounds;
 		size_t totalIterations = bounds.upper_bound - bounds.lower_bound;
 		assert(totalIterations > 0);
@@ -170,28 +170,28 @@ public:
 		assert(myChunks > 0);
 		size_t myIterations = std::min(myChunks*bounds.chunksize, bounds.upper_bound - bounds.lower_bound);
 		assert(myIterations > 0);
-		
+
 		collaboratorBounds.lower_bound = bounds.lower_bound;
 		collaboratorBounds.upper_bound = collaboratorBounds.lower_bound + myIterations;
-		
+
 		bounds.lower_bound += myIterations;
-		
+
 		bool lastChunks = (collaboratorBounds.upper_bound == bounds.upper_bound);
 		assert(lastChunks || bounds.lower_bound < bounds.upper_bound);
-		
+
 		return lastChunks;
 	}
-	
+
 	inline bool hasFirstChunk()
 	{
 		return (_bounds.lower_bound == 0);
 	}
-	
+
 	inline bool hasLastChunk()
 	{
 		return (_bounds.upper_bound == ((Taskfor *) getParent())->getBounds().upper_bound);
 	}
-	
+
 private:
 	void run(Taskfor &source);
 };
