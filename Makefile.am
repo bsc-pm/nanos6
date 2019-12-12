@@ -181,7 +181,7 @@ symbol_resolution += \
 	loader/symbol-resolver/runtime-info.c \
 	loader/symbol-resolver/task-info-registration.c \
 	loader/symbol-resolver/task-instantiation.c \
-	loader/symbol-resolver/taskloop.c \
+	loader/symbol-resolver/loop.c \
 	loader/symbol-resolver/taskwait.c \
 	loader/symbol-resolver/user-mutex.c \
 	loader/symbol-resolver/weak-dependencies.c
@@ -211,7 +211,7 @@ symbol_resolution += \
 	loader/indirect-symbols/runtime-info.c \
 	loader/indirect-symbols/task-info-registration.c \
 	loader/indirect-symbols/task-instantiation.c \
-	loader/indirect-symbols/taskloop.c \
+	loader/indirect-symbols/loop.c \
 	loader/indirect-symbols/taskwait.c \
 	loader/indirect-symbols/user-mutex.c \
 	loader/indirect-symbols/weak-dependencies.c

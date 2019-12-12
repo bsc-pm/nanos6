@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2018-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -17,12 +17,12 @@
 #include "final.h"
 #include "library-mode.h"
 #include "lint.h"
+#include "loop.h"
 #include "major.h"
 #include "monitoring.h"
 #include "polling.h"
 #include "task-info-registration.h"
 #include "task-instantiation.h"
-#include "loop.h"
 #include "taskwait.h"
 #include "user-mutex.h"
 
@@ -47,7 +47,7 @@ extern "C" {
 typedef struct {
 	enum nanos6_api_check_api_t api_check_api_version;
 	enum nanos6_major_api_t major_api_version;
-	
+
 	enum nanos6_blocking_api_t blocking_api_version;
 	enum nanos6_bootstrap_api_t bootstrap_api_version;
 	enum nanos6_cluster_api_t cluster_api_version;
@@ -62,7 +62,7 @@ typedef struct {
 	enum nanos6_task_constraints_api_t task_constraints_api_version;
 	enum nanos6_task_execution_api_t task_execution_api_version;
 	enum nanos6_task_info_registration_api_t task_info_registration_api_version;
-	enum nanos6_taskfor_api_t taskfor_api_version;
+	enum nanos6_loop_api_t loop_api_version;
 	enum nanos6_taskwait_api_t taskwait_api_version;
 } nanos6_api_versions_t;
 

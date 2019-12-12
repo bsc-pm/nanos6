@@ -12,7 +12,7 @@
 
 #include <cassert>
 
-void nanos6_register_taskloop_bounds(
+void nanos6_register_loop_bounds(
 	void *taskHandle,
 	size_t lower_bound,
 	size_t upper_bound,
