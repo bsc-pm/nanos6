@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASKLOOP_HPP
@@ -11,17 +11,16 @@
 
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "tasks/TaskloopInfo.hpp"
-
-#define MOD(a, b)  ((a) < 0 ? ((((a) % (b)) + (b)) % (b)) : ((a) % (b)))
 
 class Taskloop : public Task {
-private:
-	TaskloopInfo _taskloopInfo;
-	
 public:
 	typedef nanos6_loop_bounds_t bounds_t;
+
+private:
+	bounds_t _bounds;
+	bool _sourceTaskloop;
 	
+public:
 	inline Taskloop(
 		void *argsBlock, size_t argsBlockSize,
 		nanos6_task_info_t *taskInfo,
@@ -31,103 +30,52 @@ public:
 		size_t flags
 	)
 		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
-		_taskloopInfo()
+		  _bounds(), _sourceTaskloop(false)
 	{}
-	
-	inline void reinitialize(
-		void *argsBlock, size_t argsBlockSize,
-		nanos6_task_info_t *taskInfo,
-		nanos6_task_invocation_info_t *taskInvokationInfo,
-		Task *parent,
-		Instrument::task_id_t instrumentationTaskId,
-		size_t flags
-	)
+
+	inline void initialize(size_t lowerBound, size_t upperBound, size_t grainsize)
 	{
-		((Task *)this)->reinitialize(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags);
-		_taskloopInfo.reinitialize();
-	}
-	
-	inline TaskloopInfo const &getTaskloopInfo() const
-	{
-		return _taskloopInfo;
-	}
-	
-	inline TaskloopInfo &getTaskloopInfo()
-	{
-		return _taskloopInfo;
-	}
-	
-	inline void body(
-		__attribute__((unused)) void *deviceEnvironment,
-		__attribute__((unused)) nanos6_address_translation_entry_t *translationTable = nullptr
-	) {
+		_bounds.lower_bound = lowerBound;
+		_bounds.upper_bound = upperBound;
+		_bounds.grainsize = grainsize;
+		_sourceTaskloop = true;
+		
+		size_t totalIterations = getIterationCount();
 
-		nanos6_task_info_t *taskInfo = getTaskInfo();
-		bool isChildTaskloop = !_taskloopInfo.isSourceTaskloop();
-
-		if (isChildTaskloop) {
-			taskInfo->implementations[0].run(getArgsBlock(), &_taskloopInfo.getBounds(), nullptr);
-		}
-		else {
-			nanos6_task_invocation_info_t *taskInvocationInfo = getTaskInvokationInfo();
-			void *originalArgsBlock = getArgsBlock();
-			size_t originalArgsBlockSize = getArgsBlockSize();
-			size_t flags = getFlags();
-
-			while (hasPendingIterations()) {
-				void *taskloop_ptr;
-				void *argsBlock;
-				Taskloop *taskloop = nullptr;
-
-				nanos6_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, &argsBlock, &taskloop_ptr, flags, 0);
-				assert(argsBlock != nullptr);
-				assert(taskloop_ptr != nullptr);
-
-				taskloop = (Taskloop *) taskloop_ptr;
-
-				// Copy the args block
-				bool preallocatedArgsBlock = hasPreallocatedArgsBlock();
-				if (!preallocatedArgsBlock) {
-					if (taskInfo->duplicate_args_block != nullptr) {
-						taskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
-					} else {
-						assert(!hasPreallocatedArgsBlock());
-						memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
-					}
-				}
-
-				// Set bounds of grainsize
-				bounds_t &childBounds = taskloop->getTaskloopInfo().getBounds();
-				bounds_t &myBounds = _taskloopInfo.getBounds();
-				childBounds.lower_bound = myBounds.lower_bound;
-				myBounds.lower_bound = std::min(myBounds.lower_bound + myBounds.grainsize, myBounds.upper_bound);
-				childBounds.upper_bound = myBounds.lower_bound;
-
-				// Register deps
-				nanos6_submit_task((void *)taskloop);
-
-				// Instrument the task creation
-				//Instrument::task_id_t taskInstrumentationId = taskloop->getInstrumentationTaskId();
-				//Instrument::createdTask(taskloop, taskInstrumentationId);
-				//Instrument::exitAddTask(taskInstrumentationId);
-			}
+		// Set a implementation defined chunksize if needed
+		if (_bounds.grainsize == 0) {
+			_bounds.grainsize = std::max(totalIterations /CPUManager::getTotalCPUs(), (size_t) 1);
 		}
 	}
 	
-	inline void setRunnable(bool runnableValue)
+	inline bounds_t &getBounds()
 	{
-		_flags[Task::non_runnable_flag] = !runnableValue;
+		return _bounds;
+	}
+	
+	inline bounds_t const &getBounds() const
+	{
+		return _bounds;
+	}
+
+	inline size_t getIterationCount() const
+	{
+		return (_bounds.upper_bound - _bounds.lower_bound);
+	}
+
+	inline bool isSourceTaskloop() const
+	{
+		return _sourceTaskloop;
 	}
 	
 	inline bool hasPendingIterations()
 	{
-		return (_taskloopInfo.getIterationCount() > 0);
+		return (getIterationCount() > 0);
 	}
 
-	inline bool isSourceTaskloop()
-	{
-		return _taskloopInfo.isSourceTaskloop();
-	}
+	void body(
+	__attribute__((unused)) void *deviceEnvironment,
+	__attribute__((unused)) nanos6_address_translation_entry_t *translationTable = nullptr);
 };
 
 #endif // TASKLOOP_HPP

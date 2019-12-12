@@ -25,11 +25,11 @@ void nanos6_register_taskloop_bounds(
 	
 	if (task->isTaskfor()) {
 		Taskfor *taskfor = (Taskfor *) task;
-		taskfor->getTaskforInfo().initialize(lower_bound, upper_bound, chunksize);
+		taskfor->initialize(lower_bound, upper_bound, chunksize);
 	}
 	else {
 		Taskloop *taskloop = (Taskloop *) task;
-		taskloop->getTaskloopInfo().initialize(lower_bound, upper_bound, grainsize);
+		taskloop->initialize(lower_bound, upper_bound, grainsize);
 	}
 }
 

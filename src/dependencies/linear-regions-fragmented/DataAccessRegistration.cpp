@@ -2704,9 +2704,8 @@ namespace DataAccessRegistration {
 		// This part creates the DataAccesses and calculates any possible upgrade
 		if (task->isTaskloop()) {
 			Taskloop *taskloop = (Taskloop *) task;
-			taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getTaskloopInfo().getBounds(), task);
-		}
-		else {
+			taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
+		} else {
 			taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
 		}
 		

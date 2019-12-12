@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Taskfor.hpp"
@@ -22,8 +22,8 @@ void Taskfor::run(Taskfor &source)
 	// Get the arguments and the task information
 	const nanos6_task_info_t &taskInfo = *getTaskInfo();
 	void *argsBlock = getArgsBlock();
-	bounds_t &bounds = _taskforInfo.getBounds();
-	size_t myIterations = _taskforInfo.getIterationCount();
+	bounds_t &bounds = getBounds();
+	size_t myIterations = getIterationCount();
 	
 	size_t originalUpperBound = bounds.upper_bound;
 	do {
@@ -34,6 +34,6 @@ void Taskfor::run(Taskfor &source)
 	
 	assert(bounds.upper_bound == originalUpperBound);
 	
-	_taskforInfo._completedIterations = myIterations;
+	_completedIterations = myIterations;
 	source.notifyCollaboratorHasFinished();
 }

@@ -7,9 +7,9 @@
 #include "HostUnsyncScheduler.hpp"
 #include "scheduling/ready-queues/ReadyQueueDeque.hpp"
 #include "scheduling/ready-queues/ReadyQueueMap.hpp"
+#include "tasks/LoopGenerator.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/Taskfor.hpp"
-#include "tasks/TaskforGenerator.hpp"
 
 Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 {
@@ -27,13 +27,13 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 			assert(groupTaskfor->hasPendingIterations());
 
 			groupTaskfor->notifyCollaboratorHasStarted();
-			TaskforInfo::bounds_t bounds;
+			Taskfor::bounds_t bounds;
 			bool clearSlot = groupTaskfor->getChunks(bounds);
 			if (clearSlot) {
 				_groupSlots[groupId] = nullptr;
 			}
 
-			Taskfor *collaborator = TaskforGenerator::createCollaborator(groupTaskfor, bounds, computePlace);
+			Taskfor *collaborator = LoopGenerator::createTaskforCollaborator(groupTaskfor, bounds, computePlace);
 
 			assert(collaborator->isRunnable());
 			return collaborator;

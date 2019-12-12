@@ -11,17 +11,18 @@
 
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "tasks/TaskforInfo.hpp"
-
-#define MOD(a, b)  ((a) < 0 ? ((((a) % (b)) + (b)) % (b)) : ((a) % (b)))
 
 class Taskfor : public Task {
-private:
-	TaskforInfo _taskforInfo;
-	
 public:
 	typedef nanos6_loop_bounds_t bounds_t;
+
+private:
+	bounds_t _bounds;
+	size_t _maxCollaborators;
+	std::atomic<size_t> _remainingIterations;
+	size_t _completedIterations;
 	
+public:
 	inline Taskfor(
 		void *argsBlock, size_t argsBlockSize,
 		nanos6_task_info_t *taskInfo,
@@ -33,13 +34,33 @@ public:
 		bool runnable = false
 	)
 		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
-		_taskforInfo(precreated)
+		  _bounds(), _remainingIterations(0), _completedIterations(0)
 	{
 		assert(!runnable);
 		assert(isFinal());
 		setRunnable(runnable);
 		setDelayedRelease(true);
+		_maxCollaborators = precreated ? 0 : CPUManager::getNumCPUsPerTaskforGroup();
+		assert(precreated || CPUManager::getNumCPUsPerTaskforGroup() > 0);
+		assert(precreated || _maxCollaborators > 0);
 	}
+
+	inline void initialize(size_t lowerBound, size_t upperBound, size_t chunksize)
+	{
+		_bounds.lower_bound = lowerBound;
+		_bounds.upper_bound = upperBound;
+		_bounds.chunksize = chunksize;
+		
+		assert(_maxCollaborators > 0);
+		size_t totalIterations = getIterationCount();
+		_remainingIterations = totalIterations;
+		
+		// Set a implementation defined chunksize if needed
+		if (_bounds.chunksize == 0) {
+			_bounds.chunksize = std::max(totalIterations / (_maxCollaborators), (size_t) 1);
+		}
+	}
+	
 	
 	inline void reinitialize(
 		void *argsBlock, size_t argsBlockSize,
@@ -52,18 +73,42 @@ public:
 	)
 	{
 		Task::reinitialize(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags);
-		_taskforInfo.reinitialize();
+		_bounds = bounds_t();
+		_remainingIterations = 0;
+		_completedIterations = 0;
 		setRunnable(runnable);
 	}
 	
-	inline TaskforInfo const &getTaskforInfo() const
+	inline bounds_t &getBounds()
 	{
-		return _taskforInfo;
+		return _bounds;
 	}
 	
-	inline TaskforInfo &getTaskforInfo()
+	inline bounds_t const &getBounds() const
 	{
-		return _taskforInfo;
+		return _bounds;
+	}
+
+	inline void setBounds(bounds_t &bounds)
+	{
+		_bounds.lower_bound = bounds.lower_bound;
+		_bounds.upper_bound = bounds.upper_bound;
+	}
+
+	inline size_t getIterationCount() const
+	{
+		return (_bounds.upper_bound - _bounds.lower_bound);
+	}
+
+	inline bool decrementRemainingIterations(size_t amount)
+	{
+		size_t remaining = (_remainingIterations -= amount);
+		return (remaining == 0);
+	}
+
+	inline size_t getCompletedIterations() const
+	{
+		return _completedIterations;
 	}
 	
 	inline void body(
@@ -78,7 +123,7 @@ public:
 		Task *parent = getParent();
 		assert(parent != nullptr);
 		assert(parent->isTaskfor());
-		assert(((Taskfor *)parent)->_taskforInfo._remainingIterations.load() > 0);
+		assert(((Taskfor *)parent)->_remainingIterations.load() > 0);
 		
 		run(*((Taskfor *)parent));
 	}
@@ -92,7 +137,7 @@ public:
 	{
 		assert(!isRunnable());
 		
-		return (_taskforInfo._bounds.upper_bound > _taskforInfo._bounds.lower_bound);
+		return (_bounds.upper_bound > _bounds.lower_bound);
 	}
 	
 	inline void notifyCollaboratorHasStarted()
@@ -113,13 +158,13 @@ public:
 	{
 		assert(!isRunnable());
 		
-		bounds_t &bounds = _taskforInfo._bounds;
+		bounds_t &bounds = _bounds;
 		size_t totalIterations = bounds.upper_bound - bounds.lower_bound;
 		assert(totalIterations > 0);
 		size_t totalChunks = std::ceil((double) totalIterations / (double) bounds.chunksize);
 		assert(totalChunks > 0);
-		assert(_taskforInfo._maxCollaborators > 0);
-		size_t maxCollaborators = _taskforInfo._maxCollaborators--;
+		assert(_maxCollaborators > 0);
+		size_t maxCollaborators = _maxCollaborators--;
 		assert(maxCollaborators > 0);
 		size_t myChunks = std::ceil((double) totalChunks/(double) maxCollaborators);
 		assert(myChunks > 0);
@@ -137,25 +182,14 @@ public:
 		return lastChunks;
 	}
 	
-	inline bool decrementRemainingIterations(size_t amount)
-	{
-		return _taskforInfo.decrementRemainingIterations(amount);
-	}
-	
-	inline size_t getCompletedIterations()
-	{
-		assert(getParent()->isTaskfor());
-		return _taskforInfo.getCompletedIterations();
-	}
-	
 	inline bool hasFirstChunk()
 	{
-		return (_taskforInfo.getBounds().lower_bound == 0);
+		return (_bounds.lower_bound == 0);
 	}
 	
 	inline bool hasLastChunk()
 	{
-		return (_taskforInfo.getBounds().upper_bound == ((Taskfor *) getParent())->getTaskforInfo().getBounds().upper_bound);
+		return (_bounds.upper_bound == ((Taskfor *) getParent())->getBounds().upper_bound);
 	}
 	
 private:

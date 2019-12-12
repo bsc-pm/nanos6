@@ -1,13 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef TASKFOR_GENERATOR_HPP
-#define TASKFOR_GENERATOR_HPP
+#ifndef LOOP_GENERATOR_HPP
+#define LOOP_GENERATOR_HPP
 
 #include "Taskfor.hpp"
+#include "Taskloop.hpp"
 #include "system/ompss/AddTask.hpp"
 
 #include <InstrumentAddTask.hpp>
@@ -15,9 +16,9 @@
 #include <InstrumentThreadInstrumentationContext.hpp>
 
 
-class TaskforGenerator {
+class LoopGenerator {
 public:
-	static inline Taskfor *createCollaborator(Taskfor *parent, TaskforInfo::bounds_t &bounds, ComputePlace *computePlace)
+	static inline Taskfor *createTaskforCollaborator(Taskfor *parent, Taskfor::bounds_t &bounds, ComputePlace *computePlace)
 	{
 		assert(parent != nullptr);
 
@@ -59,7 +60,7 @@ public:
 		taskfor->setParent(parent);
 
 		// Set the bounds
-		taskfor->getTaskforInfo().setBounds(bounds);
+		taskfor->setBounds(bounds);
 
 		// Instrument the task creation
 		Instrument::task_id_t taskInstrumentationId = taskfor->getInstrumentationTaskId();
@@ -67,6 +68,40 @@ public:
 
 		return taskfor;
 	}
+
+	static inline void createTaskloopExecutor(nanos6_task_info_t *taskInfo,
+											  nanos6_task_invocation_info_t *taskInvocationInfo,
+											  size_t const &originalArgsBlockSize,
+											  void const *originalArgsBlock,
+											  size_t const &flags,
+											  bool const &preallocatedArgsBlock,
+											  Taskloop::bounds_t &bounds)
+	{
+		void *argsBlock;
+		Taskloop *taskloop = nullptr;
+
+		nanos6_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, &argsBlock, (void **)&taskloop, flags, 0);
+		assert(argsBlock != nullptr);
+		assert(taskloop != nullptr);
+
+		// Copy the args block
+		if (preallocatedArgsBlock) {
+			assert(taskInfo->duplicate_args_block != nullptr);
+			taskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
+		} else {
+			memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
+		}
+
+		// Set bounds of grainsize
+		Taskloop::bounds_t &childBounds = taskloop->getBounds();
+		Taskloop::bounds_t &myBounds = bounds;
+		childBounds.lower_bound = myBounds.lower_bound;
+		myBounds.lower_bound = std::min(myBounds.lower_bound + myBounds.grainsize, myBounds.upper_bound);
+		childBounds.upper_bound = myBounds.lower_bound;
+
+		// Register deps
+		nanos6_submit_task((void *)taskloop);
+	}
 };
 
-#endif // TASKFOR_GENERATOR_HPP
+#endif // LOOP_GENERATOR_HPP
