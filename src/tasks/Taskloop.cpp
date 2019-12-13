@@ -19,14 +19,8 @@ void Taskloop::body(
 		taskInfo->implementations[0].run(getArgsBlock(), &getBounds(), nullptr);
 	}
 	else {
-		nanos6_task_invocation_info_t *taskInvocationInfo = getTaskInvokationInfo();
-		void *originalArgsBlock = getArgsBlock();
-		size_t originalArgsBlockSize = getArgsBlockSize();
-		size_t flags = getFlags();
-		bool preallocatedArgsBlock = hasPreallocatedArgsBlock();
-
 		while (hasPendingIterations()) {
-			LoopGenerator::createTaskloopExecutor(taskInfo, taskInvocationInfo, originalArgsBlockSize, originalArgsBlock, flags, preallocatedArgsBlock, _bounds);
+			LoopGenerator::createTaskloopExecutor(this, _bounds);
 		}
 	}
 }

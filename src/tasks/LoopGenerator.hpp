@@ -69,26 +69,31 @@ public:
 		return taskfor;
 	}
 
-	static inline void createTaskloopExecutor(nanos6_task_info_t *taskInfo,
-											  nanos6_task_invocation_info_t *taskInvocationInfo,
-											  size_t const &originalArgsBlockSize,
-											  void const *originalArgsBlock,
-											  size_t const &flags,
-											  bool const &preallocatedArgsBlock,
-											  Taskloop::bounds_t &bounds)
+	static inline void createTaskloopExecutor(Taskloop *parent, Taskloop::bounds_t &bounds)
 	{
-		void *argsBlock;
-		Taskloop *taskloop = nullptr;
+		assert(parent != nullptr);
 
-		nanos6_create_task(taskInfo, taskInvocationInfo, originalArgsBlockSize, &argsBlock, (void **)&taskloop, flags, 0);
+		nanos6_task_info_t *parentTaskInfo = parent->getTaskInfo();
+		nanos6_task_invocation_info_t *parentTaskInvocationInfo = parent->getTaskInvokationInfo();
+		void *originalArgsBlock = parent->getArgsBlock();
+		size_t originalArgsBlockSize = parent->getArgsBlockSize();
+		size_t flags = parent->getFlags();
+
+		void *argsBlock = nullptr;
+		Taskloop *taskloop = nullptr;
+		bool hasPreallocatedArgsBlock = parent->hasPreallocatedArgsBlock();
+		if (hasPreallocatedArgsBlock) {
+			assert(parentTaskInfo->duplicate_args_block != nullptr);
+			parentTaskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
+		}
+
+		nanos6_create_task(parentTaskInfo, parentTaskInvocationInfo, originalArgsBlockSize, &argsBlock, (void **)&taskloop, flags, 0);
 		assert(argsBlock != nullptr);
 		assert(taskloop != nullptr);
 
-		// Copy the args block
-		if (preallocatedArgsBlock) {
-			assert(taskInfo->duplicate_args_block != nullptr);
-			taskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
-		} else {
+		// Copy the args block if it was not duplicated
+		if (!hasPreallocatedArgsBlock) {
+			assert(!parent->hasPreallocatedArgsBlock());
 			memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
 		}
 
