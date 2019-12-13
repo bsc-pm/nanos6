@@ -244,8 +244,8 @@ namespace DataAccessRegistration {
 					releaseReductionInfo(reductionInfo);
 
 				if(next->markAsTop()) {
-					decreaseDeletableCountOrDelete(successor, hpDependencyData._deletableOriginators);
 					cleanUpTopAccessSuccessors(address, next, parentAccessStruct, hpDependencyData);
+					decreaseDeletableCountOrDelete(successor, hpDependencyData._deletableOriginators);
 				}
 			} else if (next->getType() == READ_ACCESS_TYPE) {
 				next->markAsTop();
@@ -266,6 +266,7 @@ namespace DataAccessRegistration {
 	{
 		DataAccessType accessType = pAccess->getType();
 		ReductionInfo *reductionInfo = pAccess->getReductionInfo();
+		Task *toDelete = nullptr;
 
 		assert(accessType != REDUCTION_ACCESS_TYPE || reductionInfo != nullptr);
 
@@ -274,6 +275,12 @@ namespace DataAccessRegistration {
 			assert(successor != pAccess->getOriginator());
 
 			if (successor != nullptr) {
+				if (toDelete != nullptr) {
+					assert(toDelete != successor);
+					decreaseDeletableCountOrDelete(toDelete, hpDependencyData._deletableOriginators);
+					toDelete = nullptr;
+				}
+
 				DataAccess *next = successor->getDataAccesses().findAccess(address);
 				assert(next != nullptr);
 
@@ -281,8 +288,8 @@ namespace DataAccessRegistration {
 					(accessType != REDUCTION_ACCESS_TYPE || next->getReductionInfo() == reductionInfo)) {
 					if (next->markAsTop()) {
 						// Deletable
-						decreaseDeletableCountOrDelete(successor, hpDependencyData._deletableOriginators);
 						pAccess = next;
+						toDelete = successor;
 					} else {
 						// Next one is top. Stop here.
 						return;
@@ -300,14 +307,13 @@ namespace DataAccessRegistration {
 					assert(itMap != parentAccesses._subaccessBottomMap.end());
 
 					if (accessType == REDUCTION_ACCESS_TYPE) {
-						if (reductionInfo->finished()) {
-							parentAccesses._subaccessBottomMap.erase(itMap);
-						} else {
-							itMap->second._access = nullptr;
-						}
+						itMap->second._access = nullptr;
 					} else {
 						parentAccesses._subaccessBottomMap.erase(itMap);
 					}
+
+					if (toDelete != nullptr)
+						decreaseDeletableCountOrDelete(toDelete, hpDependencyData._deletableOriginators);
 
 					return;
 				}
