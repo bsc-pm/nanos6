@@ -46,6 +46,7 @@ void HostInfo::initialize()
 		_memoryPlaces.resize(memNodesCount);
 	}
 	else {
+		memNodesCount = 1;
 		_memoryPlaces.resize(1);
 		//! There is no NUMA info. We assume we have a single MemoryPlace.
 		//! Create a MemoryPlace.
@@ -91,15 +92,15 @@ void HostInfo::initialize()
 #else
 		hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
 #endif
-		assert(_memoryPlaces.size() >= nodeNUMA->logical_index);
-		if (_memoryPlaces[nodeNUMA->logical_index] == nullptr) {
+		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
+		assert(nodeNUMA == NULL || _memoryPlaces.size() >= nodeNUMA->logical_index);
+		if (_memoryPlaces[NUMANodeId] == nullptr) {
 			//! Create the MemoryPlace representing the NUMA node with its index and AddressSpace.
-			NUMAPlace *node = new NUMAPlace(nodeNUMA->logical_index, NUMAAddressSpace);
+			NUMAPlace *node = new NUMAPlace(NUMANodeId, NUMAAddressSpace);
 			//! Add the MemoryPlace to the list of memory nodes of the HardwareInfo.
 			_memoryPlaces[node->getIndex()] = node;
 			_validMemoryPlaces++;
 		}
-		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
 		CPU *cpu = new CPU( /*systemCPUID*/ obj->os_index, /*virtualCPUID*/ obj->logical_index, NUMANodeId);
 		_computePlaces[obj->logical_index] = cpu;
 	}
