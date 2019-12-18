@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -21,7 +21,7 @@
 
 
 namespace ExecutionWorkflow {
-	
+
 	transfers_map_t _transfersMap {
 			/*  host      cuda     opencl    cluster   */
 	/* host */	{ nullCopy, nullCopy, nullCopy, clusterCopy },
@@ -29,7 +29,7 @@ namespace ExecutionWorkflow {
 	/* opencl */	{ nullCopy, nullCopy, nullCopy, nullCopy },
 	/* cluster */	{ clusterCopy, nullCopy, nullCopy, clusterCopy }
 	};
-	
+
 	Step *WorkflowBase::createAllocationAndPinningStep(
 		RegionTranslation &regionTranslation,
 		MemoryPlace const *memoryPlace
@@ -51,7 +51,7 @@ namespace ExecutionWorkflow {
 				);
 				break;
 		}
-		
+
 		//! Silencing annoying compiler warning
 		return nullptr;
 	}
@@ -71,23 +71,23 @@ namespace ExecutionWorkflow {
 		) {
 			return new Step();
 		}
-		
+
 		assert(targetMemoryPlace != nullptr);
 		//assert(sourceMemoryPlace != nullptr);
-		
+
 		nanos6_device_t sourceType =
 			(sourceMemoryPlace == nullptr)
 				? nanos6_host_device
 				: sourceMemoryPlace->getType();
 		nanos6_device_t targetType = targetMemoryPlace->getType();
-		
+
 		return _transfersMap[sourceType][targetType](
 				sourceMemoryPlace,
 				targetMemoryPlace,
 				targetTranslation,
 				access);
 	}
-	
+
 	Step *WorkflowBase::createExecutionStep(Task *task, ComputePlace *computePlace)
 	{
 		switch(computePlace->getType()) {
@@ -105,11 +105,11 @@ namespace ExecutionWorkflow {
 				);
 				break;
 		}
-		
+
 		//! Silencing annoying compiler warning
 		return nullptr;
 	}
-	
+
 	Step *WorkflowBase::createNotificationStep(
 		std::function<void ()> const &callback,
 		ComputePlace *computePlace
@@ -117,7 +117,7 @@ namespace ExecutionWorkflow {
 		nanos6_device_t type =
 			(computePlace == nullptr) ?
 				nanos6_host_device : computePlace->getType();
-		
+
 		switch (type) {
 			case nanos6_host_device:
 				return new HostNotificationStep(callback);
@@ -133,11 +133,11 @@ namespace ExecutionWorkflow {
 				);
 				break;
 		}
-		
+
 		//! Silencing annoying compiler warning
 		return nullptr;
 	}
-	
+
 	Step *WorkflowBase::createDataReleaseStep(
 		Task const *task,
 		DataAccess *access
@@ -146,10 +146,10 @@ namespace ExecutionWorkflow {
 			return new ClusterDataReleaseStep(
 					task->getClusterContext(), access);
 		}
-		
+
 		return new DataReleaseStep(access);
 	}
-	
+
 	Step *WorkflowBase::createUnpinningStep(MemoryPlace const *targetMemoryPlace,
 			RegionTranslation const &targetTranslation)
 	{
@@ -168,18 +168,18 @@ namespace ExecutionWorkflow {
 				);
 				break;
 		}
-		
+
 		//! Silencing annoying compiler warning
 		return nullptr;
 	}
-	
+
 	void WorkflowBase::start()
 	{
 		for (Step *step : _rootSteps) {
 			step->start();
 		}
 	}
-	
+
 	void executeTask(
 		Task *task,
 		ComputePlace *targetComputePlace,
@@ -192,40 +192,40 @@ namespace ExecutionWorkflow {
 		if (task->getWorkflow() != nullptr) {
 			ExecutionWorkflow::Step *executionStep =
 				task->getExecutionStep();
-			
+
 			assert(executionStep != nullptr);
 			executionStep->start();
-			
+
 			return;
 		}
-		
+
 		//! This is the target MemoryPlace that we will use later on,
 		//! once the Task has completed, to update the location of its
 		//! DataAccess objects. This can be overriden, if we
 		//! release/unregister the accesses passing a different
 		//! MemoryPlace.
 		task->setMemoryPlace(targetMemoryPlace);
-		
+
 		//int numSymbols = task->getSymbolNum();
 		Workflow<TaskExecutionWorkflowData> *workflow =
 			createWorkflow<TaskExecutionWorkflowData>(0 /* numSymbols */);
-		
+
 		Step *executionStep =
 			workflow->createExecutionStep(task, targetComputePlace);
-		
+
 		Step *notificationStep = workflow->createNotificationStep(
 			[=]() {
 				WorkerThread *currThread = WorkerThread::getCurrentWorkerThread();
-				
+
 				CPU *cpu = nullptr;
 				if (currThread != nullptr) {
 					cpu = currThread->getComputePlace();
 				}
-				
+
 				CPUDependencyData localDependencyData;
 				CPUDependencyData &hpDependencyData = (cpu != nullptr) ?
 					cpu->getDependencyData() : localDependencyData;
-				
+
 				if (task->markAsFinished(cpu/* cpu */)) {
 					DataAccessRegistration::unregisterTaskDataAccesses(
 						task,
@@ -233,41 +233,66 @@ namespace ExecutionWorkflow {
 						hpDependencyData,
 						targetMemoryPlace
 					);
-					
+
 					Monitoring::taskFinished(task);
 					HardwareCounters::taskFinished(task);
-					
+
 					task->setComputePlace(nullptr);
-					
+
 					if (task->markAsReleased()) {
 						TaskFinalization::disposeOrUnblockTask(task, cpu);
 					}
 				}
-				
+
 				delete workflow;
 			},
 			targetComputePlace
 		);
-		
+
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		
+
 		{
 			std::lock_guard<TaskDataAccesses::spinlock_t>
 				guard(accessStructures._lock);
-			
+
 			/* TODO: Once we have correct management for the Task symbols here
 			 * we should create the corresponding allocation steps. */
-			
+
 			accessStructures._accesses.processAll(
 				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 					DataAccess *dataAccess = &(*position);
 					assert(dataAccess != nullptr);
 					DataAccessRegion region = dataAccess->getAccessRegion();
-					
+
 					MemoryPlace const *currLocation = dataAccess->getLocation();
 					Step *step;
-					if (!Directory::isDirectoryMemoryPlace(currLocation)
-						|| (targetComputePlace->getType() != nanos6_host_device)) {
+					if (ClusterManager::inClusterMode()
+					    && Directory::isDirectoryMemoryPlace(currLocation)
+					    && targetComputePlace->getType() == nanos6_host_device) {
+
+						Directory::HomeNodesArray *homeNodes = Directory::find(region);
+
+						for (const auto &entry : *homeNodes) {
+							currLocation = entry->getHomeNode();
+							DataAccessRegion subregion = entry->getAccessRegion();
+
+							subregion = region.intersect(subregion);
+							RegionTranslation translation(subregion,
+							                              subregion.getStartAddress());
+
+							step = workflow->createDataCopyStep(
+								currLocation,
+								targetMemoryPlace,
+								translation,
+								dataAccess);
+
+							workflow->enforceOrder(step, executionStep);
+							workflow->addRootStep(step);
+						}
+
+						delete homeNodes;
+
+					} else {
 						/* TODO: This will be provided by the corresponding
 						 * AllocationAndPinning step, once we fix this functionality.
 						 * At the moment (and since we support only cluster and SMP
@@ -281,56 +306,33 @@ namespace ExecutionWorkflow {
 
 						workflow->enforceOrder(step, executionStep);
 						workflow->addRootStep(step);
-					} else {
-						Directory::HomeNodesArray *homeNodes =
-							Directory::find(region);
-						
-						for (const auto &entry : *homeNodes) {
-							currLocation = entry->getHomeNode();
-							DataAccessRegion subregion = entry->getAccessRegion();
-							
-							subregion = region.intersect(subregion);
-							RegionTranslation translation(subregion,
-									subregion.getStartAddress());
-							
-							step = workflow->createDataCopyStep(
-									currLocation,
-									targetMemoryPlace,
-									translation,
-									dataAccess);
-							
-							workflow->enforceOrder(step, executionStep);
-							workflow->addRootStep(step);
-						}
-						
-						delete homeNodes;
 					}
 
 					step = workflow->createDataReleaseStep(task,
 							dataAccess);
 					workflow->enforceOrder(executionStep, step);
 					workflow->enforceOrder(step, notificationStep);
-					
+
 					return true;
 				}
 			);
 		}
-		
+
 		if (executionStep->ready()) {
 			workflow->enforceOrder(executionStep, notificationStep);
 			workflow->addRootStep(executionStep);
 		}
-		
+
 		task->setWorkflow(workflow);
 		task->setComputePlace(targetComputePlace);
-		
+
 		//! Starting the workflow will either execute the task to
 		//! completion (if there are not pending transfers for the
 		//! task), or it will setup all the Execution Step will
 		//! execute when ready.
 		workflow->start();
 	}
-	
+
 	void setupTaskwaitWorkflow(
 		Task *task,
 		DataAccess *taskwaitFragment
@@ -340,16 +342,16 @@ namespace ExecutionWorkflow {
 		if (currentThread != nullptr) {
 			computePlace = currentThread->getComputePlace();
 		}
-		
+
 		ExecutionWorkflow::Workflow<RegionTranslation> *workflow =
 			createWorkflow<RegionTranslation>();
-		
+
 		DataAccessRegion region = taskwaitFragment->getAccessRegion();
-		
+
 		//! This for the time works, but probably for devices with address
 		//! translation we might need to revise it.
 		RegionTranslation translation(region, region.getStartAddress());
-		
+
 		Step *notificationStep =
 			workflow->createNotificationStep(
 				[=]() {
@@ -361,40 +363,40 @@ namespace ExecutionWorkflow {
 					if (releasingThread != nullptr) {
 						releasingComputePlace = releasingThread->getComputePlace();
 					}
-					
+
 					/* Here, we are always using a local CPUDependencyData
 					 * object, to avoid the issue where we end-up calling
 					 * this while the thread is already in the dependency
 					 * system, using the CPUDependencyData of its
 					 * ComputePlace. This is a *TEMPORARY* solution, until
-					 * we fix how we handle taskwaits in a more clean 
+					 * we fix how we handle taskwaits in a more clean
 					 * way. */
 					CPUDependencyData localDependencyData;
-					
+
 					DataAccessRegistration::releaseTaskwaitFragment(
 						task,
 						region,
 						releasingComputePlace,
 						localDependencyData
 					);
-					
+
 					delete workflow;
 				},
 				computePlace
 			);
-		
+
 		MemoryPlace const *currLocation =
 			taskwaitFragment->getLocation();
 		MemoryPlace const *targetLocation =
 			taskwaitFragment->getOutputLocation();
-		
+
 		//! No need to perform any copy for this taskwait fragment
 		if (targetLocation == nullptr) {
 			workflow->addRootStep(notificationStep);
 			workflow->start();
 			return;
 		}
-		
+
 		Step *copyStep =
 			workflow->createDataCopyStep(
 				currLocation,
@@ -402,7 +404,7 @@ namespace ExecutionWorkflow {
 				translation,
 				taskwaitFragment
 			);
-		
+
 		workflow->addRootStep(copyStep);
 		workflow->enforceOrder(copyStep, notificationStep);
 		workflow->start();
