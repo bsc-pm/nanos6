@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
 */
 
@@ -19,7 +19,7 @@ class Task;
 
 namespace DataAccessRegistration {
 	//! \brief creates a task data access taking into account repeated accesses but does not link it to previous accesses nor superaccesses
-	//! 
+	//!
 	//! \param[in,out] task the task that performs the access
 	//! \param[in] accessType the type of access
 	//! \param[in] weak true iff the access is weak
@@ -27,20 +27,26 @@ namespace DataAccessRegistration {
 	//! \param[in] reductionTypeAndOperatorIndex an index that identifies the type and the operation of the reduction
 	//! \param[in] reductionIndex an index that identifies the reduction within the task
 	void registerTaskDataAccess(
-		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, int symbolIndex, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex
+		Task *task,
+		DataAccessType accessType,
+		bool weak,
+		DataAccessRegion region,
+		int symbolIndex,
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
+		reduction_index_t reductionIndex
 	);
-	
+
 	//! \brief Performs the task dependency registration procedure
-	//! 
+	//!
 	//! \param[in] task the Task whose dependencies need to be calculated
-	//! 
+	//!
 	//! \returns true if the task is already ready
 	bool registerTaskDataAccesses(
 		Task *task,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData
 	);
-	
+
 	void releaseAccessRegion(
 		Task *task, DataAccessRegion region,
 		__attribute__((unused)) DataAccessType accessType,
@@ -49,7 +55,7 @@ namespace DataAccessRegistration {
 		CPUDependencyData &dependencyData,
 		MemoryPlace const *location = nullptr
 	);
-	
+
 	void unregisterTaskDataAccesses(
 		Task *task,
 		ComputePlace *computePlace,
@@ -57,13 +63,13 @@ namespace DataAccessRegistration {
 		MemoryPlace *location = nullptr,
 		bool fromBusyThread = false
 	);
-	
+
 	//! \brief Combines the task reductions without releasing the dependencies
-	//! 
+	//!
 	//! \param[in] task the Task whose reductions need to be combined
 	//! \param[in] computePlace the ComputePlace assigned to the current thread and where the task has been executed
 	void combineTaskReductions(Task *task, ComputePlace *computePlace);
-	
+
 	//! \brief propagates satisfiability for an access.
 	//!
 	//! \param[in] task is the Task that includes the access for which we propagate.
@@ -82,7 +88,7 @@ namespace DataAccessRegistration {
 		bool writeSatisfied,
 		MemoryPlace const *location
 	);
-	
+
 	void handleEnterBlocking(Task *task);
 	void handleExitBlocking(Task *task);
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
@@ -91,13 +97,13 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) ComputePlace *computePlace,
 		__attribute__((unused))CPUDependencyData &dependencyData
 	);
-	
+
 	static inline void handleTaskRemoval(
-			__attribute__((unused)) Task *task,
-			__attribute__((unused)) ComputePlace *computePlace
+		__attribute__((unused)) Task *task,
+		__attribute__((unused)) ComputePlace *computePlace
 	) {
 	}
-	
+
 	//! \brief Mark a Taskwait fragment as completed
 	//!
 	//! \param[in] task is the Task that created the taskwait fragment
@@ -110,7 +116,7 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData
 	);
-	
+
 	//! \brief Pass all data accesses from the task through a lambda
 	//!
 	//! \param[in] task the owner of the accesses to be processed
@@ -121,7 +127,7 @@ namespace DataAccessRegistration {
 	//! \returns false if the traversal was stopped before finishing
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
-	
+
 	//! \brief Update the location of the DataAccess of a Task
 	//!
 	//! \param[in] task is the owner of the accesses we are updating
@@ -129,7 +135,7 @@ namespace DataAccessRegistration {
 	//! \param[in] location is the new location of the DataAccess
 	//! \param[in] isTaskwait is true if the update refers to a taskwait object
 	void updateTaskDataAccessLocation(Task *task, DataAccessRegion const &region,
-			MemoryPlace const *location, bool isTaskwait);
+	    MemoryPlace const *location, bool isTaskwait);
 
 	//! \brief Register a region as a NO_ACCESS_TYPE access within the Task
 	//!
@@ -141,7 +147,7 @@ namespace DataAccessRegistration {
 	//! \param[in] task is the Task that registers the access region
 	//! \param[in] region is the DataAccessRegion being registered
 	void registerLocalAccess(Task *task, DataAccessRegion const &region);
-	
+
 	//! \brief Unregister a local region from the accesses of the Task
 	//!
 	//! This is meant to be used for unregistering a DataAccess with
