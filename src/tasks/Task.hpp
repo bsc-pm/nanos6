@@ -165,7 +165,7 @@ public:
 		size_t flags
 	);
 
-	inline ~Task();
+	virtual inline ~Task();
 
 	//! Set the address of the arguments block
 	inline void setArgsBlock(void *argsBlock)

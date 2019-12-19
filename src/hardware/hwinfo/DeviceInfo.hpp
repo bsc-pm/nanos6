@@ -12,6 +12,9 @@
 
 class DeviceInfo {
 public:
+	virtual ~DeviceInfo()
+	{}
+
 	virtual void initialize() = 0;
 	virtual void shutdown() = 0;
 	

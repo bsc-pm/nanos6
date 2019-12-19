@@ -198,6 +198,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 	if (_nanos6_lib_handle != NULL) {
 		// Check if this is a disabled variant
 		_nanos6_check_disabled_variant(variant, dependencies);
+		free(lib_path);
 		return;
 	}
 
@@ -223,6 +224,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 
 		dlclose(_nanos6_lib_handle);
 		_nanos6_lib_handle = NULL;
+		free(lib_path);
 
 		return;
 	}
@@ -244,6 +246,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 
 		dlclose(_nanos6_lib_handle);
 		_nanos6_lib_handle = NULL;
+		free(lib_path);
 
 		return;
 	}
@@ -256,6 +259,7 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 		fprintf(stderr, "Please set or check the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
 	}
 
+	free(lib_path);
 }
 
 

@@ -44,6 +44,17 @@ void HardwareInfo::shutdown()
 	for (int i = 0; i < nanos6_device_t::nanos6_device_type_num; ++i) {
 		if (_infos[i] != nullptr) {
 			_infos[i]->shutdown();
+			if (i == nanos6_host_device) {
+				HostInfo *hostInfo = (HostInfo *) _infos[i];
+				delete hostInfo;
+			}
+			else if (i == nanos6_cuda_device || i == nanos6_fpga_device) {
+				DeviceInfoImplementation *deviceInfo = (DeviceInfoImplementation *) _infos[i];
+				delete deviceInfo;
+			}
+			else {
+				FatalErrorHandler::failIf(1, "Trying to delete an unknown device info.");
+			}
 		}
 		if (_functions[i] != nullptr) {
 			_functions[i]->shutdown();

@@ -135,6 +135,7 @@ void nanos6_shutdown(void) {
 	Monitoring::shutdown();
 	HardwareCounters::shutdown();
 	
+	HardwareInfo::shutdown();
 	Scheduler::shutdown();
 
 	ClusterManager::shutdown();   // TODO: Rename this to shutdownPhase2

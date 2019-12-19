@@ -13,6 +13,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/device/DeviceInfoImplementation.hpp"
+#include "hardware/places/DeviceMemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -35,6 +36,7 @@ DeviceComputePlace::DeviceComputePlace(DeviceMemoryPlace *memoryPlace,
 
 DeviceComputePlace::~DeviceComputePlace()
 {
+	delete _memoryPlace;
 	deactivatePollingService();
 }
 

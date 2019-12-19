@@ -7,6 +7,7 @@
 #ifndef DEVICE_HPP
 #define DEVICE_HPP
 
+#include <cassert>
 #include <vector>
 
 #include <nanos6.h>
@@ -22,12 +23,18 @@ class Device {
 public:
 	
 	Device(nanos6_device_t type, int subType);
-	
+	~Device();
+
 	void addComputePlace(DeviceComputePlace *computePlace);
 	
 	DeviceComputePlace *getComputePlace(int idx)
 	{
 		return _places[idx];
+	}
+
+	std::vector<DeviceComputePlace *> &getComputePlaces()
+	{
+		return _places;
 	}
 	
 	inline int getNumDevices()

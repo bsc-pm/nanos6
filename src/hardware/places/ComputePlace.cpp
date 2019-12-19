@@ -62,7 +62,7 @@ ComputePlace::~ComputePlace()
 {
 	Taskfor *taskfor = (Taskfor *) _preallocatedTaskfor;
 	
-	taskfor->~Taskfor();
+	delete taskfor;
 	// First allocation (1024) is done using malloc.
 	if (_preallocatedArgsBlockSize == 1024) {
 		free(_preallocatedArgsBlock);

@@ -67,6 +67,9 @@ public:
 
 	~CUDAFunctions()
 	{
+		for (size_t i = 0; i < _cudaDeps.size(); i++) {
+			delete _cudaDeps[i].second;
+		}
 	}
 	
 	void shutdown()

@@ -36,6 +36,10 @@ protected:
 	
 	//! This condition variable is used for suspending and resuming the thread
 	ConditionVariable _suspensionConditionVariable;
+
+	//! stack info to appropriate deallocate it
+	size_t _stackSize;
+	void *_stackPtr;
 	
 	//! Thread Local Storage variable to point back to the KernelLevelThread that is running the code
 	static __thread KernelLevelThread *_currentKernelLevelThread;
@@ -56,11 +60,16 @@ protected:
 	
 public:
 	KernelLevelThread()
+		: _stackSize(0), _stackPtr(nullptr)
 	{
 	}
 	
 	virtual ~KernelLevelThread()
 	{
+		if (_stackSize > 0) {
+			assert(_stackPtr != nullptr);
+			MemoryAllocator::free(_stackPtr, _stackSize);
+		}
 	}
 	
 	// WARNING: This should be only called by the thread initialization code
@@ -143,6 +152,8 @@ void KernelLevelThread::start(pthread_attr_t *pthreadAttr)
 		
 		stackptr = MemoryAllocator::alloc(stacksize);
 		FatalErrorHandler::failIf(stackptr == nullptr, " when allocating pthread stack");
+		_stackSize = stacksize;
+		_stackPtr = stackptr;
 		
 		rc = pthread_attr_setstack(pthreadAttr, stackptr, stacksize);
 		FatalErrorHandler::handle(rc, " when setting pthread's stack");
