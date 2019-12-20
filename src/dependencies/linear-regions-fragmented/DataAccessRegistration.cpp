@@ -2873,8 +2873,9 @@ namespace DataAccessRegistration {
 	}
 
 	void updateTaskDataAccessLocation(Task *task,
-			DataAccessRegion const &region, MemoryPlace const *location,
-			bool isTaskwait)
+		DataAccessRegion const &region,
+		MemoryPlace const *location,
+		bool isTaskwait)
 	{
 		assert(task != nullptr);
 

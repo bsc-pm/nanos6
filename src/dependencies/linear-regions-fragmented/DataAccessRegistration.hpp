@@ -33,8 +33,7 @@ namespace DataAccessRegistration {
 		DataAccessRegion region,
 		int symbolIndex,
 		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex,
-		reduction_index_t reductionIndex
-	);
+		reduction_index_t reductionIndex);
 
 	//! \brief Performs the task dependency registration procedure
 	//!
@@ -44,8 +43,7 @@ namespace DataAccessRegistration {
 	bool registerTaskDataAccesses(
 		Task *task,
 		ComputePlace *computePlace,
-		CPUDependencyData &dependencyData
-	);
+		CPUDependencyData &dependencyData);
 
 	void releaseAccessRegion(
 		Task *task, DataAccessRegion region,
@@ -53,16 +51,14 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) bool weak,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData,
-		MemoryPlace const *location = nullptr
-	);
+		MemoryPlace const *location = nullptr);
 
 	void unregisterTaskDataAccesses(
 		Task *task,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData,
 		MemoryPlace *location = nullptr,
-		bool fromBusyThread = false
-	);
+		bool fromBusyThread = false);
 
 	//! \brief Combines the task reductions without releasing the dependencies
 	//!
@@ -86,8 +82,7 @@ namespace DataAccessRegistration {
 		CPUDependencyData &dependencyData,
 		bool readSatisfied,
 		bool writeSatisfied,
-		MemoryPlace const *location
-	);
+		MemoryPlace const *location);
 
 	void handleEnterBlocking(Task *task);
 	void handleExitBlocking(Task *task);
@@ -95,13 +90,12 @@ namespace DataAccessRegistration {
 	void handleExitTaskwait(
 		Task *task,
 		__attribute__((unused)) ComputePlace *computePlace,
-		__attribute__((unused))CPUDependencyData &dependencyData
-	);
+		__attribute__((unused)) CPUDependencyData &dependencyData);
 
 	static inline void handleTaskRemoval(
 		__attribute__((unused)) Task *task,
-		__attribute__((unused)) ComputePlace *computePlace
-	) {
+		__attribute__((unused)) ComputePlace *computePlace)
+	{
 	}
 
 	//! \brief Mark a Taskwait fragment as completed
@@ -114,8 +108,7 @@ namespace DataAccessRegistration {
 		Task *task,
 		DataAccessRegion region,
 		ComputePlace *computePlace,
-		CPUDependencyData &hpDependencyData
-	);
+		CPUDependencyData &hpDependencyData);
 
 	//! \brief Pass all data accesses from the task through a lambda
 	//!
@@ -134,8 +127,10 @@ namespace DataAccessRegistration {
 	//! \param[in] region is the DataAccessRegion of which the location we are updating
 	//! \param[in] location is the new location of the DataAccess
 	//! \param[in] isTaskwait is true if the update refers to a taskwait object
-	void updateTaskDataAccessLocation(Task *task, DataAccessRegion const &region,
-	    MemoryPlace const *location, bool isTaskwait);
+	void updateTaskDataAccessLocation(Task *task,
+		DataAccessRegion const &region,
+		MemoryPlace const *location,
+		bool isTaskwait);
 
 	//! \brief Register a region as a NO_ACCESS_TYPE access within the Task
 	//!
@@ -158,7 +153,7 @@ namespace DataAccessRegistration {
 	//! \param[in] task is the Task that region is registerd to
 	//! \param[in] region is the DataAccessRegion being unregistered
 	void unregisterLocalAccess(Task *task, DataAccessRegion const &region);
-}
+} // namespace DataAccessRegistration
 
 
 #endif // DATA_ACCESS_REGISTRATION_HPP
