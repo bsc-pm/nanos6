@@ -7,6 +7,8 @@
 #ifndef MESSAGE_DATA_SEND_HPP
 #define MESSAGE_DATA_SEND_HPP
 
+#include <sstream>
+
 #include "Message.hpp"
 
 #include <DataAccessRegion.hpp>
@@ -32,10 +34,13 @@ public:
 	
 	bool handleMessage();
 	
-	inline void toString(std::ostream &where) const
+	inline std::string toString() const
 	{
-		where << "DataSend of region:" << _content->_remoteRegion <<
-			" from Node:" << getSenderId();
+		std::stringstream ss;
+		
+		ss << "[region:" << _content->_remoteRegion << "]";
+		
+		return ss.str();
 	}
 };
 

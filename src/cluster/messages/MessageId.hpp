@@ -9,10 +9,12 @@
 
 #include <atomic>
 
+#include "MessageType.hpp"
+
 namespace MessageId {
 	
 	//! \brief Get the next available MessageId
-	uint16_t nextMessageId();
+	uint32_t nextMessageId(MessageType type);
 }
 
 #endif /* MESSAGE_ID_HPP */

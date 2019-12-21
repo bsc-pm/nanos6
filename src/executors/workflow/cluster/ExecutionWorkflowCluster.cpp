@@ -10,7 +10,7 @@
 #include <ClusterManager.hpp>
 #include <ClusterPollingServices.hpp>
 #include <DataAccess.hpp>
-#include <DataAccessRegistrationImplementation.hpp>
+#include <DataAccessRegistration.hpp>
 #include <DataTransfer.hpp>
 #include <Directory.hpp>
 #include <InstrumentLogMessage.hpp>

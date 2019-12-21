@@ -7,6 +7,8 @@
 #ifndef MESSAGE_TASKNEW_HPP
 #define MESSAGE_TASKNEW_HPP
 
+#include <sstream>
+
 #include "Message.hpp"
 
 #include <nanos6/task-instantiation.h>
@@ -177,9 +179,14 @@ public:
 	
 	bool handleMessage();
 	
-	inline void toString(std::ostream &where) const
+	inline std::string toString() const
 	{
-		where << "TaskNew offloaded from Node:" << getSenderId();
+		std::stringstream ss;
+		ss << "[offloadedTaskId:" << _content->_offloadedTaskId
+			<< " numSatInfo:" << _content->_numSatInfo
+			<< "]";
+		
+		return ss.str();
 	}
 };
 

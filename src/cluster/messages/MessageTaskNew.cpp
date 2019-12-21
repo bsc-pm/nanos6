@@ -34,11 +34,11 @@ MessageTaskNew::MessageTaskNew(const ClusterNode *from,
 	memcpy(&_content->_taskInfo, taskInfo, sizeof(nanos6_task_info_t));
 	memcpy(&_content->_taskInvocationInfo, taskInvocationInfo,
 		sizeof(nanos6_task_invocation_info_t));
-	_content->_flags = flags;
-	_content->_argsBlockSize = argsBlockSize;
-	_content->_numImplementations = numImplementations;
-	_content->_numSatInfo = numSatInfo;
-	_content->_offloadedTaskId = offloadedTaskId;
+	memcpy(&_content->_flags, &flags, sizeof(flags));
+	memcpy(&_content->_argsBlockSize, &argsBlockSize, sizeof(argsBlockSize));
+	memcpy(&_content->_numImplementations, &numImplementations, sizeof(numImplementations));
+	memcpy(&_content->_offloadedTaskId, &offloadedTaskId, sizeof(offloadedTaskId));
+	memcpy(&_content->_numSatInfo, &numSatInfo, sizeof(numSatInfo));
 	
 	memcpy(getImplementationsPtr(), taskImplementations,
 		numImplementations * sizeof(nanos6_task_implementation_info_t));

@@ -1,6 +1,6 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
+
 	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
 */
 
@@ -30,13 +30,14 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include <ClusterManager.hpp>
 #include <support/ConcurrentUnorderedList.hpp>
 
 
 namespace Instrument {
 	namespace Verbose {
 		typedef struct timespec timestamp_t;
-		
+
 		extern bool _verboseAddTask;
 		extern bool _verboseBlocking;
 		extern bool _verboseComputePlaceManagement;
@@ -51,36 +52,42 @@ namespace Instrument {
 		extern bool _verboseThreadManagement;
 		extern bool _verboseUserMutex;
 		extern bool _verboseLoggingMessages;
-		
+
 		extern EnvironmentVariable<bool> _useTimestamps;
 		extern EnvironmentVariable<bool> _dumpOnlyOnExit;
-		
+
 		extern std::ofstream *_output;
-		
-		
+
+
 		struct LogEntry {
 			timestamp_t _timestamp;
 			ConcurrentUnorderedListSlotManager::Slot _queueSlot;
 			std::ostringstream _contents;
-			
+
 			LogEntry(timestamp_t timestamp, ConcurrentUnorderedListSlotManager::Slot queueSlot, std::ostringstream const &contents)
 				: _timestamp(timestamp), _queueSlot(queueSlot), _contents()
 			{
 				_contents << contents.str();
 			}
-			
+
 			LogEntry(ConcurrentUnorderedListSlotManager::Slot queueSlot)
 				: _queueSlot(queueSlot)
 			{
 			}
-			
+
 			void appendLocation(InstrumentationContext const &context)
 			{
+				if (ClusterManager::inClusterMode()) {
+					ClusterNode *clusterNode = ClusterManager::getCurrentClusterNode();
+					assert(clusterNode != nullptr);
+					_contents << "Node:" << clusterNode->getIndex() << " ";
+				}
+
 				if (context._externalThreadName != nullptr) {
 					_contents << "ExternalThread:" << *context._externalThreadName;
 				} else {
 					assert(context._threadId != thread_id_t());
-					
+
 					_contents << "Thread:" << context._threadId << " ComputePlace:";
 					if (context._computePlaceId != compute_place_id_t()) {
 						_contents << context._computePlaceId;
@@ -90,13 +97,13 @@ namespace Instrument {
 				}
 			}
 		};
-		
+
 		extern ConcurrentUnorderedListSlotManager _concurrentUnorderedListSlotManager;
 		extern ConcurrentUnorderedList<LogEntry *> _entries;
 		extern ConcurrentUnorderedList<LogEntry *> _freeEntries;
 		extern ConcurrentUnorderedListSlotManager::Slot _concurrentUnorderedListExternSlot;
-		
-		
+
+
 		static inline void stampTime(LogEntry *logEntry)
 		{
 			assert(logEntry != nullptr);
@@ -105,15 +112,15 @@ namespace Instrument {
 				FatalErrorHandler::handle(rc, "Retrieving the monotonic time");
 			}
 		}
-		
-		
+
+
 		inline LogEntry *getLogEntry(InstrumentationContext const &context)
 		{
 			ConcurrentUnorderedListSlotManager::Slot queueSlot = _concurrentUnorderedListExternSlot;
 			if (context._externalThreadName == nullptr) {
 				queueSlot = context._computePlaceId.getConcurrentUnorderedListSlot();
 			}
-			
+
 			LogEntry *currentEntry = nullptr;
 			if (_freeEntries.pop(currentEntry, queueSlot)) {
 				assert(currentEntry != nullptr);
@@ -122,19 +129,19 @@ namespace Instrument {
 			} else {
 				currentEntry = new LogEntry(queueSlot);
 			}
-			
+
 			stampTime(currentEntry);
 			return currentEntry;
 		}
-		
-		
+
+
 		inline void addLogEntry(LogEntry *logEntry)
 		{
 			assert(logEntry != nullptr);
-			
+
 			_entries.push(logEntry, logEntry->_queueSlot);
 		}
-		
+
 	}
 }
 

@@ -7,6 +7,8 @@
 #ifndef MESSAGE_SATISFIABILITY_HPP
 #define MESSAGE_SATISFIABILITY_HPP
 
+#include <sstream>
+
 #include "Message.hpp"
 
 #include <SatisfiabilityInfo.hpp>
@@ -35,9 +37,13 @@ public:
 	
 	bool handleMessage();
 	
-	inline void toString(std::ostream &where) const
+	inline std::string toString() const
 	{
-		where << "SatInfo " << _content->_satInfo;
+		std::stringstream ss;
+		
+		ss << "[SatInfo:" << _content->_satInfo << "]";
+		
+		return ss.str();
 	}
 };
 

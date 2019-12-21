@@ -7,6 +7,8 @@
 #ifndef MESSAGE_TASK_FINISHED_HPP
 #define MESSAGE_TASK_FINISHED_HPP
 
+#include <sstream>
+
 #include "Message.hpp"
 
 class MessageTaskFinished : public Message {
@@ -30,9 +32,12 @@ public:
 	
 	bool handleMessage();
 	
-	inline void toString(std::ostream &where) const
+	inline std::string toString() const
 	{
-		where << "TaskFinished from remote Node:" << getSenderId();
+		std::stringstream ss;
+		ss << "[offloadedTaskId:" << _content->_offloadedTaskId << "]";
+		
+		return ss.str();
 	}
 };
 

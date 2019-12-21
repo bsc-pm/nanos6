@@ -7,6 +7,8 @@
 #ifndef MESSAGE_HPP
 #define MESSAGE_HPP
 
+#include <string>
+
 #include "MessageType.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/threads/KernelLevelThread.hpp"
@@ -71,6 +73,11 @@ public:
 		free(_deliverable);
 	}
 	
+	inline const std::string getName() const
+	{
+		return std::string(_deliverable->header.name);
+	}
+	
 	//! \brief Returns the type of the Message
 	inline MessageType getType() const
 	{
@@ -133,11 +140,11 @@ public:
 	virtual bool handleMessage() = 0;
 	
 	//! \brief prints info about the message
-	virtual void toString(std::ostream& where) const = 0;
+	virtual std::string toString() const = 0;
 	
 	friend std::ostream& operator<<(std::ostream& out, const Message& msg)
 	{
-		msg.toString(out);
+		out << msg.toString();
 		return out;
 	}
 };

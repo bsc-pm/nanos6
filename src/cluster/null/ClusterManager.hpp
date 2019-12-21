@@ -30,6 +30,10 @@ public:
 	{
 	}
 	
+	static inline void notifyShutdown()
+	{
+	}
+	
 	static inline void shutdown()
 	{
 	}

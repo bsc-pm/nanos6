@@ -68,7 +68,7 @@ void ClusterManager::initialize()
 	_clusterSize = 1;
 }
 
-void ClusterManager::shutdown()
+void ClusterManager::notifyShutdown()
 {
 	if (isMasterNode() && inClusterMode()) {
 		for (ClusterNode *slaveNode : _clusterNodes) {
@@ -80,7 +80,10 @@ void ClusterManager::shutdown()
 		
 		_msn->synchronizeAll();
 	}
-	
+}
+
+void ClusterManager::shutdown()
+{
 	for (auto &node : _clusterNodes) {
 		delete node;
 	}
