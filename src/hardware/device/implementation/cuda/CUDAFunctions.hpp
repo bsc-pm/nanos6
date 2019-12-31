@@ -74,8 +74,10 @@ public:
 	
 	void shutdown()
 	{
-		nanos6_unregister_polling_service("taskFinisher",
-			(nanos6_polling_service_t) DeviceComputePlace::pollingFinishTasks, this);
+		if (!_cudaDeps.empty()) {
+			nanos6_unregister_polling_service("taskFinisher",
+					(nanos6_polling_service_t) DeviceComputePlace::pollingFinishTasks, this);
+		}
 	}
 	
 	CUDA_DEVICE_DEP *getDeps(void *ptr)
