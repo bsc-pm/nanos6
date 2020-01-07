@@ -2,6 +2,15 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.3.2, Wed Jan 8, 2020
+The 2.3.2 release corresponds to the OmpSs-2 2019.11.2 release. It mainly introduces bug fixes.
+
+### General
+- Fix important error at the runtime initialization
+- Fix in discrete dependency system
+- Several fixes for OmpSs-2@Cluster
+
+
 ## Version 2.3.1, Tue Dec 10, 2019
 The 2.3.1 release corresponds to the OmpSs-2 2019.11.1 release. It introduces bug fixes and performance improvements.
 
