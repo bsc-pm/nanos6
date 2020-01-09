@@ -24,19 +24,18 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	// 1. Try to get work from the current group taskfor.
 	if (groupId != -1) {
 		if ((groupTaskfor = _groupSlots[groupId]) != nullptr) {
-			assert(groupTaskfor->hasPendingIterations());
 
 			groupTaskfor->notifyCollaboratorHasStarted();
-			Taskfor::bounds_t bounds;
-			bool clearSlot = groupTaskfor->getChunks(bounds);
-			if (clearSlot) {
+			long int myChunk = groupTaskfor->getNextChunk();
+			if (myChunk <= 0) {
 				_groupSlots[groupId] = nullptr;
+				groupTaskfor->removedFromScheduler();
 			}
 
-			Taskfor *collaborator = LoopGenerator::createTaskforCollaborator(groupTaskfor, bounds, computePlace);
-
-			assert(collaborator->isRunnable());
-			return collaborator;
+			void *taskfor_ptr = (void *) computePlace->getPreallocatedTaskfor();
+			Taskfor *taskfor = (Taskfor *) taskfor_ptr;
+			taskfor->setChunk(myChunk);
+			return groupTaskfor;
 		}
 	}
 
@@ -98,7 +97,9 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	assert(result->isTaskfor());
 	assert(computePlace->getType() == nanos6_device_t::nanos6_host_device);
 
-	_groupSlots[groupId] = (Taskfor *) result;
+	Taskfor *taskfor = (Taskfor *) result;
+	_groupSlots[groupId] = taskfor;
+	taskfor->markAsScheduled();
 	return getReadyTask(computePlace);
 }
 

@@ -70,20 +70,20 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 
 			readyOrDisposable = task->unlinkFromParent();
 			if (task->isTaskfor() && task->isRunnable()) {
-				assert(!readyOrDisposable);
 
 				Taskfor *collaborator = (Taskfor *) task;
 				Taskfor *source = (Taskfor *) parent;
 
-				if (source->decrementRemainingIterations(collaborator->getCompletedIterations())) {
-					assert(!source->hasPendingIterations());
+				size_t completedIts = collaborator->getCompletedIterations();
+				if (completedIts > 0) {
+					bool finishedSource = source->decrementRemainingIterations(completedIts);
+					if (finishedSource) {
+						__attribute__((unused)) bool finished = source->markAsFinished(computePlace);
 
-					__attribute__((unused)) bool finished = source->markAsFinished(computePlace);
-					assert(finished);
-
-					assert(computePlace != nullptr);
-					DataAccessRegistration::unregisterTaskDataAccesses(source, computePlace, computePlace->getDependencyData());
-					readyOrDisposable = source->markAsReleased();
+						assert(computePlace != nullptr);
+						DataAccessRegistration::unregisterTaskDataAccesses(source, computePlace, computePlace->getDependencyData());
+						readyOrDisposable = source->markAsReleased();
+					}
 				}
 			}
 

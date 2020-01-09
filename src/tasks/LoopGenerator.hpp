@@ -18,7 +18,7 @@
 
 class LoopGenerator {
 public:
-	static inline Taskfor *createTaskforCollaborator(Taskfor *parent, Taskfor::bounds_t &bounds, ComputePlace *computePlace)
+	static inline Taskfor *createCollaborator(Taskfor *parent, ComputePlace *computePlace)
 	{
 		assert(parent != nullptr);
 
@@ -57,13 +57,9 @@ public:
 
 		// Set the flags
 		taskfor->setRunnable(true);
-		taskfor->setDelayedRelease(false);
 
 		// Set the parent
 		taskfor->setParent(parent);
-
-		// Set the bounds
-		taskfor->setBounds(bounds);
 
 		// Instrument the task creation
 		Instrument::task_id_t taskInstrumentationId = taskfor->getInstrumentationTaskId();

@@ -24,6 +24,7 @@
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/LoopGenerator.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -144,7 +145,25 @@ void WorkerThread::handleTask(CPU *cpu)
 	MemoryPlace *targetMemoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
 	assert(targetMemoryPlace != nullptr);
 
-	ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
+	if (_task->isTaskfor()) {
+		assert(!_task->isRunnable());
+		if (cpu->getPreallocatedTaskfor()->getMyChunk() >= 0) {
+			Taskfor *collaborator = LoopGenerator::createCollaborator((Taskfor *)_task, cpu);
+			assert(collaborator->isRunnable());
+			assert(collaborator->getMyChunk() >= 0);
+			_task = collaborator;
+			ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
+		}
+		else {
+			bool finished = ((Taskfor *)_task)->notifyCollaboratorHasFinished();
+			if (finished) {
+				TaskFinalization::disposeOrUnblockTask(_task, cpu);
+			}
+		}
+	}
+	else {
+		ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
+	}
 
 	_task = nullptr;
 }
