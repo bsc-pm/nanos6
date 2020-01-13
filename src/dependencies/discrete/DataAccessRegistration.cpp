@@ -95,7 +95,7 @@ namespace DataAccessRegistration {
 
 		for (Task *deletableOriginator : hpDependencyData._deletableOriginators) {
 			assert(deletableOriginator != nullptr);
-			TaskFinalization::disposeOrUnblockTask(deletableOriginator, computePlace);
+			TaskFinalization::disposeTask(deletableOriginator, computePlace);
 		}
 
 		hpDependencyData._satisfiedOriginators.clear();
@@ -426,26 +426,12 @@ namespace DataAccessRegistration {
 #endif
 	}
 
-	void handleEnterBlocking(Task *task)
+	void handleEnterBlocking(__attribute__((unused)) Task *task)
 	{
-		assert(task != nullptr);
-
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		if (accessStructures.hasDataAccesses()) {
-			task->decreaseRemovalBlockingCount();
-		}
 	}
 
-	void handleExitBlocking(Task *task)
+	void handleExitBlocking(__attribute__((unused)) Task *task)
 	{
-		assert(task != nullptr);
-
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		if (accessStructures.hasDataAccesses()) {
-			task->increaseRemovalBlockingCount();
-		}
 	}
 
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData)
@@ -473,27 +459,15 @@ namespace DataAccessRegistration {
 		}
 
 		processSatisfiedOriginators(dependencyData, computePlace, false);
-
-		if (accessStruct.hasDataAccesses()) {
-			task->decreaseRemovalBlockingCount();
-		}
 	}
 
-	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace,
-							__attribute__((unused)) CPUDependencyData &dependencyData)
+	void handleExitTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace,
+		__attribute__((unused)) CPUDependencyData &dependencyData)
 	{
-		assert(task != nullptr);
-
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		if (accessStructures.hasDataAccesses()) {
-			task->increaseRemovalBlockingCount();
-		}
 	}
 
 	void handleTaskRemoval(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
-		// Only needed for weak accesses (not implemented)
 	}
 
 	static inline void insertAccesses(Task *task)

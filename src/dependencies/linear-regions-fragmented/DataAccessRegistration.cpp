@@ -2390,7 +2390,7 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace, bool fromBusyThread
 	) {
 		for (Task *removableTask : removableTasks) {
-			TaskFinalization::disposeOrUnblockTask(removableTask, computePlace, fromBusyThread);
+			TaskFinalization::disposeTask(removableTask, computePlace, fromBusyThread);
 		}
 		removableTasks.clear();
 	}
@@ -3174,27 +3174,27 @@ namespace DataAccessRegistration {
 
 	void handleEnterBlocking(Task *task)
 	{
-		assert(task != nullptr);
+		// assert(task != nullptr);
 
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-		if (!accessStructures._accesses.empty()) {
-			task->decreaseRemovalBlockingCount();
-		}
+		// TaskDataAccesses &accessStructures = task->getDataAccesses();
+		// assert(!accessStructures.hasBeenDeleted());
+		// std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+		// if (!accessStructures._accesses.empty()) {
+		// 	task->decreaseRemovalBlockingCount();
+		// }
 	}
 
 
 	void handleExitBlocking(Task *task)
 	{
-		assert(task != nullptr);
+		// assert(task != nullptr);
 
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-		if (!accessStructures._accesses.empty()) {
-			task->increaseRemovalBlockingCount();
-		}
+		// TaskDataAccesses &accessStructures = task->getDataAccesses();
+		// assert(!accessStructures.hasBeenDeleted());
+		// std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
+		// if (!accessStructures._accesses.empty()) {
+		// 	task->increaseRemovalBlockingCount();
+		// }
 	}
 
 
@@ -3213,10 +3213,10 @@ namespace DataAccessRegistration {
 			TaskDataAccesses &accessStructures = task->getDataAccesses();
 			assert(!accessStructures.hasBeenDeleted());
 			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-			if (!accessStructures._accesses.empty()) {
-				assert(accessStructures._removalBlockers > 0);
-				task->decreaseRemovalBlockingCount();
-			}
+			// if (!accessStructures._accesses.empty()) {
+			// 	assert(accessStructures._removalBlockers > 0);
+			// 	task->decreaseRemovalBlockingCount();
+			// }
 
 			createTaskwait(task, accessStructures, computePlace, hpDependencyData);
 
@@ -3243,8 +3243,8 @@ namespace DataAccessRegistration {
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 
 		if (!accessStructures._accesses.empty()) {
-			assert(accessStructures._removalBlockers > 0);
-			task->increaseRemovalBlockingCount();
+			// assert(accessStructures._removalBlockers > 0);
+			// task->increaseRemovalBlockingCount();
 
 			// Mark all accesses as not having subaccesses
 			accessStructures._accesses.processAll(

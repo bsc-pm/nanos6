@@ -45,6 +45,7 @@ inline Task::Task(
 	_taskInfo(taskInfo),
 	_taskInvokationInfo(taskInvokationInfo),
 	_countdownToBeWokenUp(1),
+	_removalCount(1),
 	_parent(parent),
 	_priority(0),
 	_thread(nullptr),
@@ -96,6 +97,7 @@ inline void Task::reinitialize(
 	_taskInfo = taskInfo;
 	_taskInvokationInfo = taskInvokationInfo;
 	_countdownToBeWokenUp = 1;
+	_removalCount = 1;
 	_parent = parent;
 	_priority = 0;
 	_thread = nullptr;
@@ -143,7 +145,7 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 		//! taskwait fragments for a 'wait' task.
 		DataAccessRegistration::handleEnterTaskwait(this, nullptr, hpDependencyData);
 
-		if (!decreaseRemovalBlockingCount()) {
+		if (!markAsBlocked()) {
 			return false;
 		}
 
@@ -151,7 +153,7 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 		// dependencies has successfully completed
 		completeDelayedRelease();
 		DataAccessRegistration::handleExitTaskwait(this, computePlace, hpDependencyData);
-		increaseRemovalBlockingCount();
+		markAsUnblocked();
 	}
 
 	// Return whether all external events have been also fulfilled, so
@@ -169,7 +171,7 @@ inline bool Task::markAllChildrenAsFinished(ComputePlace *computePlace)
 	// Complete the delayed release of dependencies
 	completeDelayedRelease();
 	DataAccessRegistration::handleExitTaskwait(this, computePlace, hpDependencyData);
-	increaseRemovalBlockingCount();
+	markAsUnblocked();
 
 	// Return whether all external events have been also fulfilled, so
 	// the dependencies can be released

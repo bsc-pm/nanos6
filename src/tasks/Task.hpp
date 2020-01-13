@@ -72,8 +72,11 @@ private:
 	nanos6_task_info_t *_taskInfo;
 	nanos6_task_invocation_info_t *_taskInvokationInfo;
 
-	//! Number of children that are still alive (may have live references to data from this task), +1 if not blocked
+	//! Number of children that are still not finished, +1 if not blocked
 	std::atomic<int> _countdownToBeWokenUp;
+
+	//! Number of children that are still alive (may have live references to data from this task), +1 for dependencies
+	std::atomic<int> _removalCount;
 
 	//! Task to which this one is closely nested
 	Task *_parent;
@@ -239,14 +242,25 @@ public:
 	inline void addChild(__attribute__((unused)) Task *child)
 	{
 		++_countdownToBeWokenUp;
+		++_removalCount;
 	}
 
 	//! \brief Remove a nested task (because it has finished)
 	//!
-	//! \returns true iff the change makes this task become ready or disposable
-	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
+	//! \returns true iff the change makes this task become ready
+	inline bool finishChild() __attribute__((warn_unused_result))
 	{
 		int countdown = (--_countdownToBeWokenUp);
+		assert(countdown >= 0);
+		return (countdown == 0);
+	}
+
+	//! \brief Remove a nested task (because it has been deleted)
+	//!
+	//! \returns true iff the change makes this task become disposable
+	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
+	{
+		int countdown = (--_removalCount);
 		assert(countdown >= 0);
 		return (countdown == 0);
 	}
@@ -254,7 +268,7 @@ public:
 	//! \brief Increase an internal counter to prevent the removal of the task
 	inline void increaseRemovalBlockingCount()
 	{
-		++_countdownToBeWokenUp;
+		++_removalCount;
 	}
 
 	//! \brief Decrease an internal counter that prevents the removal of the task
@@ -262,19 +276,9 @@ public:
 	//! \returns true iff the change makes this task become ready or disposable
 	inline bool decreaseRemovalBlockingCount()
 	{
-		int countdown = (--_countdownToBeWokenUp);
+		int countdown = (--_removalCount);
 		assert(countdown >= 0);
 		return (countdown == 0);
-	}
-
-	//! \brief Decrease an internal counter that prevents the removal of the task
-	//!
-	//! \returns the counter's value after decreasing it
-	inline int decreaseAndGetRemovalBlockingCount(int amount = 1)
-	{
-		int countdown = (_countdownToBeWokenUp -= amount);
-		assert(countdown >= 0);
-		return countdown;
 	}
 
 	//! \brief Set the parent
@@ -304,7 +308,7 @@ public:
 		if (_parent != nullptr) {
 			return _parent->removeChild(this);
 		} else {
-			return (_countdownToBeWokenUp == 0);
+			return (_removalCount == 0);
 		}
 	}
 
@@ -364,7 +368,8 @@ public:
 	//! \returns true if the change makes the task become ready
 	inline bool markAsBlocked()
 	{
-		assert(_thread != nullptr);
+		// This may be false for "wait" tasks, which will block without a thread
+		// assert(_thread != nullptr);
 
 		int countdown = (--_countdownToBeWokenUp);
 		assert(countdown >= 0);
@@ -376,7 +381,7 @@ public:
 	//! \returns true if it does not have any children
 	inline bool markAsUnblocked()
 	{
-		assert(_thread != nullptr);
+		// assert(_thread != nullptr);
 		return ((++_countdownToBeWokenUp) == 1);
 	}
 
@@ -394,15 +399,14 @@ public:
 	//! Note: The task must have been marked as blocked
 	inline bool canBeWokenUp()
 	{
-		assert(_thread != nullptr);
+		// assert(_thread != nullptr);
 		return (_countdownToBeWokenUp == 0);
 	}
 
-	//! \brief Indicates if it does not have any children (while unblocked)
-	//! Note: The task must not be blocked
+	//! \brief Indicates if it does not have any children
 	inline bool doesNotNeedToBlockForChildren()
 	{
-		return (_countdownToBeWokenUp == 1);
+		return (_removalCount == 1);
 	}
 
 	//! \brief Prevent this task to be scheduled when it is unblocked

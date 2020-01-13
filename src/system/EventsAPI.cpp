@@ -23,10 +23,10 @@ extern "C" void *nanos6_get_current_event_counter(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
-	
+
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
-	
+
 	return currentTask;
 }
 
@@ -35,14 +35,14 @@ extern "C" void nanos6_increase_current_task_event_counter(__attribute__((unused
 {
 	assert(event_counter != 0);
 	if (increment == 0) return;
-	
+
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
-	
+
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 	assert(event_counter == currentTask);
-	
+
 	currentTask->increaseReleaseCount(increment);
 }
 
@@ -51,9 +51,9 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 {
 	assert(event_counter != 0);
 	if (decrement == 0) return;
-	
+
 	Task *task = static_cast<Task *>(event_counter);
-	
+
 	// Release dependencies if the event counter becomes zero
 	if (task->decreaseReleaseCount(decrement)) {
 		CPU *cpu = nullptr;
@@ -62,7 +62,7 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 			cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
 		}
-		
+
 		// Release the accesses
 		CPUDependencyData dependencyData;
 		DataAccessRegistration::unregisterTaskDataAccesses(
@@ -70,13 +70,14 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 				/* memory place */ nullptr,
 				/* from a busy thread */ true
 		);
-		
+
 		Monitoring::taskFinished(task);
 		HardwareCounters::taskFinished(task);
-		
+		TaskFinalization::taskFinished(task, nullptr);
+
 		// Try to dispose the task
 		if (task->markAsReleased()) {
-			TaskFinalization::disposeOrUnblockTask(task, nullptr);
+			TaskFinalization::disposeTask(task, nullptr);
 		}
 	}
 }

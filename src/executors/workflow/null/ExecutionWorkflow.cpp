@@ -32,20 +32,20 @@ namespace ExecutionWorkflow {
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		CPU *cpu = (CPU *)targetComputePlace;
-		
+
 		task->setThread(currentThread);
 		task->setMemoryPlace(targetMemoryPlace);
-		
+
 		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 		Instrument::ThreadInstrumentationContext instrumentationContext(
 			taskId,
 			cpu->getInstrumentationId(),
 			currentThread->getInstrumentationId()
 		);
-		
+
 		if (task->hasCode()) {
 			nanos6_address_translation_entry_t *translationTable = nullptr;
-			
+
 			nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
 			if (taskInfo->num_symbols >= 0) {
 				translationTable = (nanos6_address_translation_entry_t *)
@@ -53,12 +53,12 @@ namespace ExecutionWorkflow {
 							sizeof(nanos6_address_translation_entry_t)
 							* taskInfo->num_symbols
 						);
-				
+
 				for (int index = 0; index < taskInfo->num_symbols; index++) {
 					translationTable[index] = {0, 0};
 				}
 			}
-			
+
 			if (task->isTaskfor()) {
 				assert(task->isRunnable());
 				bool first = ((Taskfor *) task)->hasFirstChunk();
@@ -69,23 +69,23 @@ namespace ExecutionWorkflow {
 				Instrument::startTask(taskId);
 				Instrument::taskIsExecuting(taskId);
 			}
-			
+
 			HardwareCounters::startTaskMonitoring(task);
 			Monitoring::taskChangedStatus(task, executing_status);
-			
+
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
 			task->body(nullptr, translationTable);
 			std::atomic_thread_fence(std::memory_order_release);
-			
+
 			// Update the CPU since the thread may have migrated
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
-			
+
 			Monitoring::taskChangedStatus(task, runtime_status);
 			Monitoring::taskCompletedUserCode(task);
 			HardwareCounters::stopTaskMonitoring(task);
-			
+
 			if (task->isTaskfor()) {
 				assert(task->isRunnable());
 				bool last = ((Taskfor *) task)->hasLastChunk();
@@ -101,25 +101,26 @@ namespace ExecutionWorkflow {
 			Monitoring::taskCompletedUserCode(task);
 			HardwareCounters::stopTaskMonitoring(task);
 		}
-		
+
 		DataAccessRegistration::combineTaskReductions(task, cpu);
-		
+
 		if (task->markAsFinished(cpu)) {
 			DataAccessRegistration::unregisterTaskDataAccesses(
 				task,
 				cpu,
 				cpu->getDependencyData()
 			);
-			
+
 			Monitoring::taskFinished(task);
 			HardwareCounters::taskFinished(task);
-			
+			TaskFinalization::taskFinished(task, cpu);
+
 			if (task->markAsReleased()) {
-				TaskFinalization::disposeOrUnblockTask(task, cpu);
+				TaskFinalization::disposeTask(task, cpu);
 			}
 		}
 	}
-	
+
 	void setupTaskwaitWorkflow(
 		Task *task,
 		__attribute__((unused)) DataAccess *taskwaitFragment
@@ -129,9 +130,9 @@ namespace ExecutionWorkflow {
 		if (currentThread != nullptr) {
 			computePlace = currentThread->getComputePlace();
 		}
-		
+
 		CPUDependencyData hpDependencyData;
-		
+
 		#if !DISCRETE_DEPS
 		DataAccessRegistration::releaseTaskwaitFragment(
 			task,

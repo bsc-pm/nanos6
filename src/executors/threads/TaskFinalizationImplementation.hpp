@@ -23,46 +23,70 @@
 #include <InstrumentThreadId.hpp>
 #include <Monitoring.hpp>
 
-void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePlace, bool fromBusyThread)
+void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool fromBusyThread)
 {
-	bool readyOrDisposable = true;
+	assert(task != nullptr);
+	bool ready = task->finishChild();
 
 	//! We always use a local CPUDependencyData struct here to avoid issues
 	//! with re-using an already used CPUDependencyData
 	CPUDependencyData *localHpDependencyData = nullptr;
 
-	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
-	while ((task != nullptr) && readyOrDisposable) {
+	while ((task != nullptr) && ready) {
 		Task *parent = task->getParent();
 
 		// Complete the delayed release of dependencies of the task if it has a wait clause
-		if (task->hasFinished() && task->mustDelayRelease()) {
-			readyOrDisposable = false;
-			if (task->markAllChildrenAsFinished(computePlace)) {
-				if (!localHpDependencyData) {
-					localHpDependencyData = new CPUDependencyData();
+		if (task->hasFinished()) {
+			if (task->mustDelayRelease()) {
+				if (task->markAllChildrenAsFinished(computePlace)) {
+					if (!localHpDependencyData) {
+						localHpDependencyData = new CPUDependencyData();
+					}
+
+					DataAccessRegistration::unregisterTaskDataAccesses(
+						task, computePlace,
+						*localHpDependencyData,
+						/* memory place */ nullptr,
+						fromBusyThread);
+
+					task->setComputePlace(nullptr);
+
+					Monitoring::taskFinished(task);
+					HardwareCounters::taskFinished(task);
+					ready = task->finishChild();
+					if (task->markAsReleased())
+						TaskFinalization::disposeTask(task, computePlace, fromBusyThread);
 				}
 
-				DataAccessRegistration::unregisterTaskDataAccesses(
-					task, computePlace,
-					*localHpDependencyData,
-					/* memory place */ nullptr,
-					fromBusyThread
-				);
-
-				Monitoring::taskFinished(task);
-				HardwareCounters::taskFinished(task);
-
-				task->setComputePlace(nullptr);
-
-				if (task->markAsReleased()) {
-					readyOrDisposable = true;
-				}
+				assert(!task->mustDelayRelease());
 			}
-			assert(!task->mustDelayRelease());
-			if (!readyOrDisposable)
-				break;
+		} else {
+			// An ancestor in a taskwait that finishes at this point
+			Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
+
+			// After adding a task, the CPUManager may want to unidle CPUs
+			CPUManager::executeCPUManagerPolicy(computePlace, ADDED_TASKS, 1);
+
+			ready = false;
 		}
+
+		// Using 'task' here is forbidden, as it may have been disposed.
+		ready = ready && (parent != nullptr) && parent->finishChild();
+		task = parent;
+	}
+
+	if (localHpDependencyData) {
+		delete localHpDependencyData;
+	}
+}
+
+void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool fromBusyThread)
+{
+	bool readyOrDisposable = true;
+
+	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
+	while ((task != nullptr) && readyOrDisposable) {
+		Task *parent = task->getParent();
 
 		if (task->hasFinished()) {
 			// NOTE: Handle task removal before unlinking from parent
@@ -71,17 +95,17 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			readyOrDisposable = task->unlinkFromParent();
 			if (task->isTaskfor() && task->isRunnable()) {
 
-				Taskfor *collaborator = (Taskfor *) task;
-				Taskfor *source = (Taskfor *) parent;
+				Taskfor *collaborator = (Taskfor *)task;
+				Taskfor *source = (Taskfor *)parent;
 
 				size_t completedIts = collaborator->getCompletedIterations();
 				if (completedIts > 0) {
 					bool finishedSource = source->decrementRemainingIterations(completedIts);
 					if (finishedSource) {
 						source->markAsFinished(computePlace);
-
 						assert(computePlace != nullptr);
 						DataAccessRegistration::unregisterTaskDataAccesses(source, computePlace, computePlace->getDependencyData());
+						TaskFinalization::taskFinished(source, computePlace, fromBusyThread);
 						readyOrDisposable = source->markAsReleased();
 					}
 				}
@@ -166,6 +190,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			}
 		} else {
 			assert(!task->hasFinished());
+			assert(false);
 
 			// An ancestor in a taskwait that finishes at this point
 			Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
@@ -175,10 +200,6 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 
 			readyOrDisposable = false;
 		}
-	}
-
-	if (localHpDependencyData) {
-		delete localHpDependencyData;
 	}
 }
 
