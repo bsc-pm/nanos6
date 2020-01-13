@@ -3,7 +3,7 @@
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 
 AC_PREREQ([2.69])
 AC_INIT([nanos6], [2.3.2], [pm-tools@bsc.es])
@@ -400,6 +400,29 @@ if test x"${ac_monitoring_hwevents}" = x"yes" ; then
 	AC_DEFINE([MONITORING_HWEVENTS_ENABLED], [1], [Define if Monitoring for Hardware Events is enabled.])
 fi
 
+AC_ARG_ENABLE(
+	[extra-debug],
+	[AS_HELP_STRING([--enable-extra-debug], [enable extra assertions and checks in debug - may cause significant slowdown])],
+	[
+		case "${enableval}" in
+		yes)
+			ac_extra_debug=yes
+			;;
+		no)
+			ac_extra_debug=no
+			;;
+		*)
+			AC_MSG_ERROR([bad value ${enableval} for --enable-extra-debug])
+			;;
+		esac
+	],
+	[ac_extra_debug=no]
+)
+AM_CONDITIONAL([EXTRA_DEBUG_ENABLED], [test x"${ac_extra_debug}" = x"yes"])
+if test x"${ac_extra_debug}" = x"yes" ; then
+	AC_DEFINE([EXTRA_DEBUG_ENABLED], [1], [Define if extra debug checks are enabled. Any checks with big performance impact should be conditional to this.])
+fi
+
 AC_CHECK_MAIN_WRAPPER_TYPE
 AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
@@ -551,3 +574,10 @@ else
 	AC_MSG_RESULT([no])
 fi
 
+_AS_ECHO([])
+_AS_ECHO_N([   Extra debug checks are enabled... ])
+if test x"${ac_extra_debug}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
