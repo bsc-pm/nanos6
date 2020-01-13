@@ -9,9 +9,12 @@
 
 #include "major.h"
 
-
 #if NANOS6_CUDA
 #include "cuda_device.h"
+#endif
+
+#if NANOS6_OPENACC
+#include "openacc_device.h"
 #endif
 
 #if NANOS6_OPENCL

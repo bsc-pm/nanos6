@@ -60,6 +60,7 @@ nanos6include_HEADERS = \
 	api/nanos6/lint.h \
 	api/nanos6/major.h \
 	api/nanos6/monitoring.h \
+	api/nanos6/openacc_device.h \
 	api/nanos6/polling.h \
 	api/nanos6/reductions.h \
 	api/nanos6/runtime-info.h \
