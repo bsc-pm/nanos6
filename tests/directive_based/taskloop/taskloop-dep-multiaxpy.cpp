@@ -11,7 +11,7 @@
 
 #define TOTALSIZE (128*1024*1024)
 #define BLOCKSIZE (1024*1024)
-#define GRAINSIZE (1024*64)
+#define GRAINSIZE (1024*1024)
 #define ITERATIONS (10)
 
 TestAnyProtocolProducer tap;
@@ -28,13 +28,9 @@ static void initialize(double *data, double value, long N, long BS) {
 }
 
 static void axpy(const double *x, double *y, double alpha, long N, long BS, long GS) {
-	for (long i = 0; i < N; i += BS) {
-		long elements = std::min(BS, N - i);
-		
-		#pragma oss taskloop in(x[i]) inout(y[i]) grainsize(GS)
-		for (long j = 0; j < elements; ++j) {
-			y[i + j] += alpha * x[i + j];
-		}
+	#pragma oss taskloop in(x[i]) inout(y[i]) grainsize(GS)
+	for (long i = 0; i < N; i++) {
+		y[i] += alpha * x[i];
 	}
 }
 
