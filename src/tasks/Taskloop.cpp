@@ -13,7 +13,7 @@ void Taskloop::body(
 ) {
 
 	nanos6_task_info_t *taskInfo = getTaskInfo();
-	bool isChildTaskloop = isSourceTaskloop();
+	bool isChildTaskloop = !isSourceTaskloop();
 
 	if (isChildTaskloop) {
 		taskInfo->implementations[0].run(getArgsBlock(), &getBounds(), nullptr);
