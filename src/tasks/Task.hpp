@@ -45,6 +45,7 @@ public:
 		//! Flags added by the Mercurium compiler
 		final_flag=0,
 		if0_flag,
+		taskloop_flag,
 		taskfor_flag,
 		wait_flag,
 		preallocated_args_block_flag,
@@ -475,6 +476,17 @@ public:
 	bool isIf0() const
 	{
 		return _flags[if0_flag];
+	}
+
+	//! \brief Set or unset the taskloop flag
+	void setTaskloop(bool taskloopValue)
+	{
+		_flags[taskloop_flag] = taskloopValue;
+	}
+	//! \brief Check if the task is a taskloop
+	bool isTaskloop() const
+	{
+		return _flags[taskloop_flag];
 	}
 
 	//! \brief Set or unset the taskfor flag

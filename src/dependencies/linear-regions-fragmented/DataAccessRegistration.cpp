@@ -28,6 +28,7 @@
 #include "memory/directory/Directory.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/Taskloop.hpp"
 
 #include <ClusterManager.hpp>
 #include <ExecutionWorkflow.hpp>
@@ -2644,6 +2645,10 @@ namespace DataAccessRegistration {
 	) {
 		assert(task != nullptr);
 
+		if (task->isTaskloop()) {
+			weak |= ((Taskloop *)task)->isSourceTaskloop();
+		}
+
 		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
 
 		if (symbolIndex >= 0) symbol_list.set(symbolIndex);
@@ -2697,7 +2702,12 @@ namespace DataAccessRegistration {
 		assert(taskInfo != 0);
 
 		// This part creates the DataAccesses and calculates any possible upgrade
-		taskInfo->register_depinfo(task->getArgsBlock(), task);
+		if (task->isTaskloop()) {
+			Taskloop *taskloop = (Taskloop *) task;
+			taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
+		} else {
+			taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
+		}
 
 		if (!task->getDataAccesses()._accesses.empty()) {
 			task->increasePredecessors(2);

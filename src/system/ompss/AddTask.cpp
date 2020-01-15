@@ -28,7 +28,7 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskfor.hpp"
-#include "tasks/TaskforInfo.hpp"
+#include "tasks/Taskloop.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <HardwareCounters.hpp>
@@ -72,8 +72,8 @@ void nanos6_create_task(
 	void *&args_block = *args_block_pointer;
 	void *&task = *task_pointer;
 
-	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskloop_task;
-	//bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
+	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
+	bool isTaskloop = flags & nanos6_task_flag_t::nanos6_taskloop_task;
 	bool isStreamExecutor = flags & (1 << Task::stream_executor_flag);
 	size_t originalArgsBlockSize = args_block_size;
 	size_t taskSize;
@@ -81,6 +81,8 @@ void nanos6_create_task(
 		taskSize = sizeof(Taskfor);
 	} else if (isStreamExecutor) {
 		taskSize = sizeof(StreamExecutor);
+	} else if (isTaskloop) {
+		taskSize = sizeof(Taskloop);
 	} else {
 		taskSize = sizeof(Task);
 	}
@@ -125,6 +127,8 @@ void nanos6_create_task(
 		new (task) Taskfor (args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else if (isStreamExecutor) {
 		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+	} else if (isTaskloop) {
+		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 	} else {
 		// Construct the Task object
 		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, seqs, addresses, num_deps);
@@ -147,8 +151,7 @@ void nanos6_create_preallocated_task(
 
 	Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(parentTaskInstrumentationId, taskInfo, taskInvocationInfo, flags);
 
-	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskloop_task;
-	//bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
+	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
 	FatalErrorHandler::failIf(!isTaskfor, "Only taskfors can be created this way.");
 
 	Taskfor *taskfor = (Taskfor *) preallocatedTask;

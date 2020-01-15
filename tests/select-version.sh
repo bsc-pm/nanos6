@@ -12,7 +12,7 @@ if test -z ${NANOS6_DEPENDENCIES} ; then
 fi
 
 if test -z ${NANOS6_SCHEDULING_POLICY} ; then
-	if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"task-for-nqueens"* ]]; then
+	if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"task-for-nqueens"* ]] || [[ "${*}" == *"taskloop-nqueens"* ]]; then
 		export NANOS6_SCHEDULING_POLICY=lifo
 	fi
 fi

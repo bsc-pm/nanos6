@@ -65,7 +65,7 @@ nanos6include_HEADERS = \
 	api/nanos6/runtime-info.h \
 	api/nanos6/task-info-registration.h \
 	api/nanos6/task-instantiation.h \
-	api/nanos6/taskloop.h \
+	api/nanos6/loop.h \
 	api/nanos6/taskwait.h \
 	api/nanos6/user-mutex.h
 
@@ -181,7 +181,7 @@ symbol_resolution += \
 	loader/symbol-resolver/runtime-info.c \
 	loader/symbol-resolver/task-info-registration.c \
 	loader/symbol-resolver/task-instantiation.c \
-	loader/symbol-resolver/taskloop.c \
+	loader/symbol-resolver/loop.c \
 	loader/symbol-resolver/taskwait.c \
 	loader/symbol-resolver/user-mutex.c \
 	loader/symbol-resolver/weak-dependencies.c
@@ -211,7 +211,7 @@ symbol_resolution += \
 	loader/indirect-symbols/runtime-info.c \
 	loader/indirect-symbols/task-info-registration.c \
 	loader/indirect-symbols/task-instantiation.c \
-	loader/indirect-symbols/taskloop.c \
+	loader/indirect-symbols/loop.c \
 	loader/indirect-symbols/taskwait.c \
 	loader/indirect-symbols/user-mutex.c \
 	loader/indirect-symbols/weak-dependencies.c
@@ -387,14 +387,15 @@ common_sources = \
 	src/system/RuntimeInfoEssentials.cpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
+	src/system/ompss/Loop.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskBlocking.cpp \
-	src/system/ompss/TaskFor.cpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
-	src/tasks/Taskfor.cpp
+	src/tasks/Taskfor.cpp \
+	src/tasks/Taskloop.cpp
 
 
 cluster_sources =
@@ -1128,8 +1129,8 @@ noinst_HEADERS = \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/Taskfor.hpp \
-	src/tasks/TaskforGenerator.hpp \
-	src/tasks/TaskforInfo.hpp \
+	src/tasks/Taskloop.hpp \
+	src/tasks/LoopGenerator.hpp \
 	src/tasks/TaskImplementation.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
