@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_DATA_ACCESSES_HPP
@@ -34,7 +34,6 @@ struct TaskDataAccesses {
 	};
 	typedef std::bitset<TOTAL_FLAG_BITS> flags_t;
 #endif
-	spinlock_t _lock;
 	//! This will handle the dependencies of nested tasks.
 	bottom_map_t _subaccessBottomMap;
 	DataAccess * _accessArray;
@@ -50,8 +49,7 @@ struct TaskDataAccesses {
 
 
 	TaskDataAccesses()
-		: _lock(),
-		_subaccessBottomMap(),
+		: _subaccessBottomMap(),
 		_accessArray(nullptr),
 		_addressArray(nullptr),
 		_maxDeps(0),
@@ -65,8 +63,7 @@ struct TaskDataAccesses {
 	}
 
 	TaskDataAccesses(void *accessArray , void *addressArray, size_t maxDeps)
-		: _lock(),
-		_subaccessBottomMap(),
+		: _subaccessBottomMap(),
 		_accessArray((DataAccess *) accessArray),
 		_addressArray((void **) addressArray),
 		_maxDeps(maxDeps), _currentIndex(0), _deletableCount(0), _accessMap(nullptr)
@@ -82,8 +79,6 @@ struct TaskDataAccesses {
 
 	~TaskDataAccesses()
 	{
-		// We take the lock since the task may be marked for deletion while the lock is held
-		std::lock_guard<spinlock_t> guard(_lock);
 		assert(!hasBeenDeleted());
 
 		if(_accessMap != nullptr) {

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -244,9 +244,6 @@ namespace DataAccessRegistration {
 							assert(pendingToDelete == nullptr);
 							pendingToDelete = nextTask;
 							nextAccess->unsetFlags(ACCESS_HOLDOFF);
-						} else if(oldFlags & ACCESS_IN_TASKWAIT) {
-							assert(nextAccess->getChild() != nullptr);
-							nextAccess->unsetFlags(ACCESS_HOLDOFF);
 						} else {
 							assert(holdingOff == nullptr);
 							holdingOff = nextAccess;
@@ -454,22 +451,8 @@ namespace DataAccessRegistration {
 	{
 	}
 
-	static inline void unlockAccessInTaskwait(Task *task, DataAccess * access, CPUDependencyData &hpDependencyData) {
-		assert(task != nullptr);
-		assert(access != nullptr);
-
-		access_flags_t oldFlags = access->setFlags(ACCESS_IN_TASKWAIT);
-		assert(!(oldFlags & ACCESS_IN_TASKWAIT));
-
-		if(oldFlags & ACCESS_DELETABLE) {
-			DataAccess * child = access->getChild();
-			assert(child != nullptr);
-			satisfySuccessorFromChain(hpDependencyData, true, false, false, child, access, task, nullptr);
-			access->setChild(nullptr);
-		}
-	}
-
-	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData)
+	void handleEnterTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace,
+		__attribute__((unused)) CPUDependencyData &dependencyData)
 	{
 		assert(task != nullptr);
 
@@ -489,33 +472,17 @@ namespace DataAccessRegistration {
 				itMap->second._reductionInfo = nullptr;
 			}
 		}
-
-		// We need to "unlock" our child accesses
-		accessStruct.forAll([&] (void *, DataAccess * access) {
-			if(access->getChild() != nullptr)
-				unlockAccessInTaskwait(task, access, dependencyData);
-		});
-
-		processSatisfiedOriginators(dependencyData, computePlace, true);
 	}
 
 	void handleExitTaskwait(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace,
 		__attribute__((unused)) CPUDependencyData &dependencyData)
 	{
-		TaskDataAccesses &accessStruct = task->getDataAccesses();
-		assert(!accessStruct.hasBeenDeleted());
-
-		// Remove taskwait flags
-		accessStruct.forAll([&] (void *, DataAccess * access) {
-			if(access->getFlags() & ACCESS_IN_TASKWAIT)
-				access->unsetFlags(ACCESS_IN_TASKWAIT);
-		});
 	}
 
 	void handleTaskRemoval(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
 	}
-		// Only needed for weak accesses (not implemented)
+
 	static inline bool matchAll(access_flags_t value, access_flags_t mask) {
 		return ((value & mask) == mask);
 	}

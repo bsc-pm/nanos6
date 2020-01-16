@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DATA_ACCESS_HPP
@@ -31,8 +31,7 @@ struct BottomMapEntry;
 #define ACCESS_UNREGISTERED	 		BIT(3) // Indicates flags have been read unregistering
 #define ACCESS_UNREGISTERING_DONE	BIT(4) // Prevents overtaking when racing in the unregister
 #define ACCESS_CHILDS_FINISHED		BIT(5) // Indicates all the childs of the access have finished
-#define ACCESS_IN_TASKWAIT			BIT(6) // Indicates access has blocked in a taskwait
-#define ACCESS_HOLDOFF				BIT(7) // Prevents racing to delete an access
+#define ACCESS_HOLDOFF				BIT(6) // Prevents racing to delete an access
 
 typedef unsigned int access_flags_t;
 
