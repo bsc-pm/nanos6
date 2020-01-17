@@ -188,6 +188,7 @@ The areas are the following:
 
 <table><tbody><tr><td> <strong>Section</strong> </td><td> <strong>Description</strong>
 </td></tr><tr><td> <em>AddTask</em> </td><td> Task creation
+</td></tr><tr><td> <em>DependenciesAutomataMessages</em> </td><td> Show messages between automatas with `NANOS6_DEPENDENCIES=discrete`
 </td></tr><tr><td> <em>DependenciesByAccess</em> </td><td> Dependencies by their accesses
 </td></tr><tr><td> <em>DependenciesByAccessLinks</em> </td><td> Dependencies by the links between the accesses to the same data
 </td></tr><tr><td> <em>DependenciesByGroup</em> </td><td> Dependencies by groups of tasks that determine common predecessors and common successors

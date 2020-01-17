@@ -11,29 +11,18 @@
 #include <bitset>
 #include <cassert>
 #include <iostream>
+#include <stack>
 
 #include "../DataAccessType.hpp"
 #include "ReductionSpecific.hpp"
 #include "ReductionInfo.hpp"
+#include "DataAccessFlags.hpp"
+
 #include <InstrumentDataAccessId.hpp>
 
 struct DataAccess;
 class Task;
 struct BottomMapEntry;
-
-//! Definitions for the access flags
-#define BIT(n) ((unsigned int) (1 << n))
-
-#define ACCESS_NONE					((unsigned int) 0)
-#define ACCESS_READ_SATISFIED 		BIT(0) // Read satisfiability
-#define ACCESS_WRITE_SATISFIED 		BIT(1) // Write satisfiability
-#define ACCESS_DELETABLE	 		BIT(2) // Indicates the access is not needed in the chain
-#define ACCESS_UNREGISTERED	 		BIT(3) // Indicates flags have been read unregistering
-#define ACCESS_UNREGISTERING_DONE	BIT(4) // Prevents overtaking when racing in the unregister
-#define ACCESS_CHILDS_FINISHED		BIT(5) // Indicates all the childs of the access have finished
-#define ACCESS_HOLDOFF				BIT(6) // Prevents racing to delete an access
-
-typedef unsigned int access_flags_t;
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
 struct DataAccess {
@@ -47,10 +36,6 @@ private:
 	//! Reduction-specific information of current access
 	ReductionInfo *_reductionInfo;
 
-	//! Whether the access is weak
-	bool _weak;
-	bool _closesReduction;
-
 	//! Reduction stuff
 	size_t _reductionLength;
 	reduction_type_and_operator_index_t _reductionOperator;
@@ -60,34 +45,37 @@ private:
 	std::atomic<DataAccess *> _successor;
 	std::atomic<DataAccess *> _child;
 
-	//! Entry in the bottom map this is linked to.
-	std::atomic<BottomMapEntry *> _bottomMapEntry;
-
 	//! Atomic flags for Read / Write / Deletable / Finished
 	std::atomic<access_flags_t> _accessFlags;
 
+	//! Instrumentation specific data
 	Instrument::data_access_id_t _instrumentDataAccessId;
+
+	DataAccessMessage inAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
+	void outAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
+	void inoutAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
+	void reductionAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message);
+
 public:
-	DataAccess(DataAccessType type, Task *originator, bool weak)
-		: _type(type),
+	DataAccess(DataAccessType type, Task *originator, bool weak) :
+		_type(type),
 		_originator(originator),
 		_reductionInfo(nullptr),
-		_weak(weak),
-		_closesReduction(false),
 		_successor(nullptr),
 		_child(nullptr),
 		_accessFlags(0)
 	{
 		assert(originator != nullptr);
 		assert(!(weak && type == REDUCTION_ACCESS_TYPE));
+
+		if(weak)
+			_accessFlags.fetch_or(ACCESS_IS_WEAK, std::memory_order_relaxed);
 	}
 
-	DataAccess(const DataAccess &other)
-		: _type(other.getType()),
+	DataAccess(const DataAccess &other) :
+		_type(other.getType()),
 		_originator(other.getOriginator()),
 		_reductionInfo(other.getReductionInfo()),
-		_weak(other.isWeak()),
-		_closesReduction(other.closesReduction()),
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
 		_accessFlags(other.getFlags())
@@ -97,6 +85,12 @@ public:
 	~DataAccess()
 	{
 	}
+
+	DataAccessMessage applySingle(access_flags_t flags, mailbox_t &mailBox);
+
+	bool apply(DataAccessMessage &message, mailbox_t &mailBox);
+
+	bool applyPropagated(DataAccessMessage &message);
 
 	inline void setType(DataAccessType type)
 	{
@@ -113,120 +107,94 @@ public:
 		return _originator;
 	}
 
-	inline bool setClosesReduction(bool value)
-	{
-		assert(_type == REDUCTION_ACCESS_TYPE && _closesReduction == !value);
-		_closesReduction = value;
-
-		if(_closesReduction)
-			return _reductionInfo->markAsClosed();
-
-		return false;
-	}
-
-	inline bool closesReduction() const
-	{
-		return _closesReduction;
-	}
-
-	ReductionInfo *getReductionInfo() const
+	inline ReductionInfo *getReductionInfo() const
 	{
 		return _reductionInfo;
 	}
 
-	void setReductionInfo(ReductionInfo *reductionInfo)
+	inline void setReductionInfo(ReductionInfo *reductionInfo)
 	{
 		assert(_reductionInfo == nullptr);
 		assert(_type == REDUCTION_ACCESS_TYPE);
 		_reductionInfo = reductionInfo;
 	}
 
-	DataAccess *getSuccessor() const
+	inline DataAccess *getSuccessor() const
 	{
 		return _successor;
 	}
 
-	void setSuccessor(DataAccess *successor)
+	inline void setSuccessor(DataAccess *successor)
 	{
 		_successor = successor;
 	}
 
 	inline bool isWeak() const
 	{
-		return _weak;
+		return (_accessFlags.load(std::memory_order_relaxed) & ACCESS_IS_WEAK);
 	}
 
 	inline void setWeak(bool value = true)
 	{
-		_weak = value;
+		if(value)
+			_accessFlags.fetch_or(ACCESS_IS_WEAK, std::memory_order_relaxed);
+		else
+			_accessFlags.fetch_and(~ACCESS_IS_WEAK, std::memory_order_relaxed);
 	}
 
-	void setInstrumentationId(Instrument::data_access_id_t instrumentDataAccessId)
+	inline void setInstrumentationId(Instrument::data_access_id_t instrumentDataAccessId)
 	{
 		_instrumentDataAccessId = instrumentDataAccessId;
 	}
 
-	Instrument::data_access_id_t & getInstrumentationId()
+	inline Instrument::data_access_id_t &getInstrumentationId()
 	{
 		return _instrumentDataAccessId;
 	}
 
-	size_t getReductionLength() const
+	inline size_t getReductionLength() const
 	{
 		return _reductionLength;
 	}
 
-	void setReductionLength(size_t reductionLength)
+	inline void setReductionLength(size_t reductionLength)
 	{
 		_reductionLength = reductionLength;
 	}
 
-	reduction_type_and_operator_index_t getReductionOperator() const
+	inline reduction_type_and_operator_index_t getReductionOperator() const
 	{
 		return _reductionOperator;
 	}
 
-	void setReductionOperator(reduction_type_and_operator_index_t reductionOperator)
+	inline void setReductionOperator(reduction_type_and_operator_index_t reductionOperator)
 	{
 		_reductionOperator = reductionOperator;
 	}
 
-	reduction_index_t getReductionIndex() const
+	inline reduction_index_t getReductionIndex() const
 	{
 		return _reductionIndex;
 	}
 
-	void setReductionIndex(reduction_index_t reductionIndex)
+	inline void setReductionIndex(reduction_index_t reductionIndex)
 	{
 		_reductionIndex = reductionIndex;
 	}
 
-	inline DataAccess * getChild() const {
+	inline DataAccess *getChild() const
+	{
 		return _child;
 	}
 
-	inline void setChild(DataAccess *child) {
+	inline void setChild(DataAccess *child)
+	{
 		_child = child;
 	}
 
-	inline access_flags_t getFlags() const {
+	inline access_flags_t getFlags() const
+	{
 		return _accessFlags;
-	}
-
-	inline access_flags_t setFlags(access_flags_t flagsToSet) {
-		return _accessFlags.fetch_or(flagsToSet);
-	}
-
-	inline access_flags_t unsetFlags(access_flags_t flagsToUnset) {
-		return _accessFlags.fetch_and(~flagsToUnset);
-	}
-
-	inline void setBottomMapEntry(BottomMapEntry * entry) {
-		_bottomMapEntry = entry;
-	}
-
-	inline BottomMapEntry * getBottomMapEntry() const {
-		return _bottomMapEntry;
 	}
 };
 

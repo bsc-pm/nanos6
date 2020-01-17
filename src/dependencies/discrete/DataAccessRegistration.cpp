@@ -34,12 +34,12 @@
 namespace DataAccessRegistration {
 	typedef TaskDataAccesses::bottom_map_t bottom_map_t;
 
-	static inline void insertAccesses(Task * task);
+	static inline void insertAccesses(Task *task, CPUDependencyData &hpDependencyData);
 
-	static inline ReductionInfo * allocateReductionInfo(
+	static inline ReductionInfo *allocateReductionInfo(
 		DataAccessType &dataAccessType, reduction_index_t reductionIndex,
 		reduction_type_and_operator_index_t reductionTypeAndOpIndex,
-		void * address, const size_t length, const Task &task);
+		void *address, const size_t length, const Task &task);
 
 	static inline void releaseReductionInfo(ReductionInfo *info);
 
@@ -69,10 +69,9 @@ namespace DataAccessRegistration {
 			}
 
 			Scheduler::addReadyTask(
-					satisfiedOriginator,
-					computePlaceHint,
-					(fromBusyThread ? BUSY_COMPUTE_PLACE_TASK_HINT : SIBLING_TASK_HINT)
-			);
+				satisfiedOriginator,
+				computePlaceHint,
+				(fromBusyThread ? BUSY_COMPUTE_PLACE_TASK_HINT : SIBLING_TASK_HINT));
 		}
 
 		if (numAddedTasks) {
@@ -100,14 +99,14 @@ namespace DataAccessRegistration {
 		return READWRITE_ACCESS_TYPE;
 	}
 
-	static inline void upgradeAccess(DataAccess * access, DataAccessType newType, bool weak)
+	static inline void upgradeAccess(DataAccess *access, DataAccessType newType, bool weak)
 	{
 		DataAccessType oldType = access->getType();
 		// Duping reductions is incorrect
 		assert(oldType != REDUCTION_ACCESS_TYPE && newType != REDUCTION_ACCESS_TYPE);
 
 		access->setType(combineTypes(oldType, newType));
-		if(access->isWeak() && !weak)
+		if (access->isWeak() && !weak)
 			access->setWeak(false);
 	}
 
@@ -142,169 +141,80 @@ namespace DataAccessRegistration {
 		}
 	}
 
-
-	bool shouldSchedule(DataAccess * access, bool readSatisfied, bool writeSatisified, access_flags_t oldFlags) {
-		// Weak access are already scheduled.
-		if(access->isWeak())
-			return false;
-		else if(access->getType() == READ_ACCESS_TYPE && readSatisfied && !matchAll(oldFlags, ACCESS_READ_SATISFIED))
-			return true;
-		else if((access->getType() == WRITE_ACCESS_TYPE || access->getType() == READWRITE_ACCESS_TYPE) && writeSatisified && !matchAll(oldFlags, ACCESS_WRITE_SATISFIED))
-			return true;
-		else
-			return false;
-	}
-
-	static inline bool checkBottomMap(bool keepDeleting, DataAccess * access) {
-		assert(access != nullptr);
-		BottomMapEntry * entry = access->getBottomMapEntry();
-		assert(entry != nullptr);
-
-		if(keepDeleting)
-			return entry->_access.compare_exchange_strong(access, nullptr);
-		else
-			return (entry->_access == access);
-	}
-
-	void satisfySuccessorFromChain(CPUDependencyData &hpDependencyData,
-		bool keepDeleting, bool satisfyWrites, bool satisfyReads, DataAccess * nextAccess, DataAccess * currentAccessIterator,
-		Task * currentTaskIterator, ReductionInfo * originalReductionInfo)
+	void propagateMessages(CPUDependencyData &hpDependencyData,
+		mailbox_t &mailBox, ReductionInfo *originalReductionInfo)
 	{
-		DataAccess * holdingOff = nullptr;
-		Task * pendingToDelete = nullptr;
+		DataAccessMessage next;
 
-		while(keepDeleting || satisfyWrites || satisfyReads) {
-			if(nextAccess != nullptr) {
-				Task * nextTask = nextAccess->getOriginator();
-				if(nextTask == currentTaskIterator->getParent()) {
-					// We are the last access in this chain. Travel to the parent (up one level).
-					currentTaskIterator = nextTask;
-					assert(!nextTask->getDataAccesses().hasBeenDeleted());
-					currentAccessIterator = nextAccess;
-					// This may be wrong and beyond useless.
-					if(satisfyWrites)
-						currentAccessIterator->setFlags(ACCESS_CHILDS_FINISHED);
-					nextAccess = currentAccessIterator->getSuccessor();
-				} else {
-					if(pendingToDelete != nullptr) {
-						decreaseDeletableCountOrDelete(pendingToDelete, hpDependencyData._deletableOriginators);
-						pendingToDelete = nullptr;
-					}
+		while (!mailBox.empty()) {
+			next = mailBox.top();
+			mailBox.pop();
 
-					// Propagate satisfiability and figure out next step
-					// This is safe because successors don't change and if we're referencing it, it's not deleted.
-					assert(!nextTask->getDataAccesses().hasBeenDeleted());
-					assert((nextAccess->getFlags() & ACCESS_DELETABLE) == ACCESS_NONE);
+			assert(next.from != nullptr);
 
-					access_flags_t flagsToSet = ACCESS_NONE;
-
-					if (keepDeleting)
-						flagsToSet |= (ACCESS_DELETABLE | ACCESS_HOLDOFF);
-					if(satisfyReads)
-						flagsToSet |= ACCESS_READ_SATISFIED;
-					if(satisfyWrites)
-						flagsToSet |= ACCESS_WRITE_SATISFIED;
-
-					access_flags_t oldFlags = nextAccess->setFlags(flagsToSet);
-
-					if(shouldSchedule(nextAccess, satisfyReads, satisfyWrites, oldFlags) && nextTask->decreasePredecessors())
-						hpDependencyData._satisfiedOriginators.push_back(nextTask);
-
-					if(satisfyWrites) {
-						if(nextAccess->getType() == REDUCTION_ACCESS_TYPE) {
-							ReductionInfo * reductionInfo = nextAccess->getReductionInfo();
-							assert(reductionInfo != nullptr);
-
-							if(!(oldFlags & ACCESS_WRITE_SATISFIED) && reductionInfo != originalReductionInfo) {
-								if(reductionInfo->incrementUnregisteredAccesses())
-									releaseReductionInfo(reductionInfo);
-
-								originalReductionInfo = reductionInfo;
-							}
-						}
-
-						satisfyWrites = ((oldFlags & ACCESS_UNREGISTERED)
-								|| (nextAccess->isWeak() && nextAccess->getChild() != nullptr));
-					}
-
-					if (satisfyReads) {
-						// This is not totally fine for read early releases.
-						if(nextAccess->getType() == READ_ACCESS_TYPE && (!(oldFlags & ACCESS_READ_SATISFIED) || (oldFlags & ACCESS_UNREGISTERED)))
-							satisfyReads = true;
-						else if(nextAccess->isWeak() && (nextAccess->getChild() != nullptr || (oldFlags & ACCESS_UNREGISTERED)))
-							satisfyReads = true;
-						else if (oldFlags & ACCESS_UNREGISTERED)
-							satisfyReads = true;
-						else
-							satisfyReads = false;
-					}
-
-					if(keepDeleting) {
-						if(oldFlags & ACCESS_UNREGISTERED) {
-							assert(pendingToDelete == nullptr);
-							pendingToDelete = nextTask;
-							nextAccess->unsetFlags(ACCESS_HOLDOFF);
-						} else {
-							assert(holdingOff == nullptr);
-							holdingOff = nextAccess;
-							keepDeleting = false;
-						}
-					}
-
-					while((oldFlags & ACCESS_UNREGISTERED) && !(oldFlags & ACCESS_UNREGISTERING_DONE)) {
-						spinWait();
-						oldFlags = nextAccess->getFlags();
-					}
-
-					currentTaskIterator = nextTask;
-					currentAccessIterator = nextAccess;
-
-					if(nextAccess->getChild() != nullptr) {
-						// Guaranteed because the child will register on the parent before inheriting the satisfied bits.
-						nextAccess = nextAccess->getChild();
-					} else {
-						nextAccess = nextAccess->getSuccessor();
-					}
-				}
-			} else {
-				// Look at the bottom map.
-				if(checkBottomMap(keepDeleting, currentAccessIterator)) {
-					keepDeleting = satisfyReads = satisfyWrites = false;
-				} else {
-					nextAccess = currentAccessIterator->getSuccessor();
-
-					// This retry can happen multiple times.
-					while(nextAccess == nullptr) {
-						spinWait();
-						nextAccess = currentAccessIterator->getSuccessor();
-					}
+			if (next.to != nullptr && next.flagsForNext) {
+				if (next.to->apply(next, mailBox)) {
+					Task *task = next.to->getOriginator();
+					assert(!task->getDataAccesses().hasBeenDeleted());
+					assert(next.to != next.from);
+					decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
 				}
 			}
+
+			bool dispose = false;
+
+			if (next.schedule) {
+				assert(!next.from->getOriginator()->getDataAccesses().hasBeenDeleted());
+				Task *task = next.from->getOriginator();
+				assert(!task->getDataAccesses().hasBeenDeleted());
+				if (task->decreasePredecessors())
+					hpDependencyData._satisfiedOriginators.push_back(task);
+			}
+
+			if (next.combine) {
+				assert(!next.from->getOriginator()->getDataAccesses().hasBeenDeleted());
+				ReductionInfo *reductionInfo = next.from->getReductionInfo();
+				assert(reductionInfo != nullptr);
+
+				if (reductionInfo != originalReductionInfo) {
+					if (reductionInfo->incrementUnregisteredAccesses())
+						releaseReductionInfo(reductionInfo);
+					originalReductionInfo = reductionInfo;
+				}
+			}
+
+			if (next.flagsAfterPropagation) {
+				assert(!next.from->getOriginator()->getDataAccesses().hasBeenDeleted());
+				dispose = next.from->applyPropagated(next);
+			}
+
+			if (dispose) {
+				Task *task = next.from->getOriginator();
+				assert(!task->getDataAccesses().hasBeenDeleted());
+				decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
+			}
 		}
-
-		if(holdingOff != nullptr)
-			holdingOff->unsetFlags(ACCESS_HOLDOFF);
-
-		if(pendingToDelete != nullptr)
-			decreaseDeletableCountOrDelete(pendingToDelete, hpDependencyData._deletableOriginators);
 	}
 
-	void walkAccessChain(Task *task, DataAccess *access,
-			void *address, CPUDependencyData &hpDependencyData) {
-		DataAccess * currentAccessIterator = access;
+	static inline void walkAccessChain(Task *task, DataAccess *access,
+		void *address, CPUDependencyData &hpDependencyData)
+	{
+		DataAccess *currentAccessIterator = access;
 		DataAccessType originalAccessType = access->getType();
-		DataAccess * successor = currentAccessIterator->getSuccessor();
 		// No race, the parent is finished so all childs must be registered by now.
-		DataAccess * childAccess = access->getChild();
+		DataAccess *childAccess = access->getChild();
 		ReductionInfo *reductionInfo = nullptr;
+
+		mailbox_t &mailBox = hpDependencyData._mailBox;
+		assert(mailBox.empty());
 
 		access_flags_t flagsToSet = ACCESS_UNREGISTERED;
 
-		if(childAccess == nullptr) {
-			flagsToSet |= ACCESS_CHILDS_FINISHED;
+		if (childAccess == nullptr) {
+			flagsToSet |= (ACCESS_CHILDS_FINISHED | ACCESS_EARLY_READ);
 		} else {
 			// Place ourselves as successors of the last access.
-			DataAccess * lastChild = nullptr;
+			DataAccess *lastChild = nullptr;
 			TaskDataAccesses &taskAccesses = task->getDataAccesses();
 			assert(!taskAccesses.hasBeenDeleted());
 
@@ -313,54 +223,37 @@ namespace DataAccessRegistration {
 			assert(itMap != bottomMap.end());
 			BottomMapEntry &node = itMap->second;
 			lastChild = node._access;
-
-			// Maybe this doesn't need to be CAS and can be an assign.
-			while (!node._access.compare_exchange_weak(lastChild, access));
 			assert(lastChild != nullptr);
 
 			lastChild->setSuccessor(access);
-
-			if(lastChild->getType() == READ_ACCESS_TYPE &&
-				matchAll(lastChild->getFlags(), ACCESS_READ_SATISFIED)) {
-				// Try to release reads
-				satisfySuccessorFromChain(hpDependencyData, false, false, true, successor, access, task, nullptr);
-			}
+			DataAccessMessage m = lastChild->applySingle(ACCESS_NEXTISPARENT, mailBox);
+			__attribute__((unused)) DataAccessMessage m_debug = access->applySingle(m.flagsForNext, mailBox);
+			assert(!(m_debug.flagsForNext));
+			lastChild->applyPropagated(m);
 		}
 
-		if(originalAccessType == REDUCTION_ACCESS_TYPE) {
+		if (originalAccessType == REDUCTION_ACCESS_TYPE) {
 			reductionInfo = access->getReductionInfo();
 			assert(reductionInfo != nullptr);
 
-			if(reductionInfo->incrementUnregisteredAccesses()) {
+			if (reductionInfo->incrementUnregisteredAccesses()) {
 				releaseReductionInfo(reductionInfo);
 			}
 		}
 
-		access_flags_t oldFlags = access->setFlags(flagsToSet);
-		bool keepDeleting = (oldFlags & ACCESS_DELETABLE);
-		bool satisfyReads = (oldFlags & ACCESS_READ_SATISFIED);
-		bool satisfyWrites = (oldFlags & ACCESS_WRITE_SATISFIED);
+		// No need to worry here because no other thread can destroy this access, since we have to
+		// finish unregistering all accesses before that can happen.
+		DataAccessMessage message;
+		message.to = message.from = access;
+		message.flagsForNext = flagsToSet;
+		bool dispose = access->apply(message, mailBox);
 
-		while(oldFlags & ACCESS_HOLDOFF) {
-			spinWait();
-			oldFlags = access->getFlags();
-		}
-
-		if(originalAccessType == READ_ACCESS_TYPE)
-			satisfyReads = satisfyWrites;
-
-		if(keepDeleting)
+		if (!mailBox.empty()) {
+			propagateMessages(hpDependencyData, mailBox, reductionInfo);
+			assert(!dispose);
+		} else if (dispose) {
 			decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
-
-		if(childAccess != nullptr) {
-			satisfySuccessorFromChain(hpDependencyData, keepDeleting, satisfyWrites, satisfyReads, childAccess,
-				access, task, reductionInfo);
-		} else {
-			satisfySuccessorFromChain(hpDependencyData, keepDeleting, satisfyWrites, satisfyReads, successor,
-				access, task, reductionInfo);
 		}
-
-		access->setFlags(ACCESS_UNREGISTERING_DONE);
 	}
 
 	void finalizeDataAccess(Task *task, DataAccess *access, void *address,
@@ -371,7 +264,7 @@ namespace DataAccessRegistration {
 		walkAccessChain(task, access, address, hpDependencyData);
 	}
 
-	bool registerTaskDataAccesses(Task *task, __attribute__((unused)) ComputePlace *computePlace, __attribute__((unused)) CPUDependencyData &hpDependencyData)
+	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData)
 	{
 		// This is called once per task, and will create all the dependencies in register_depinfo, to later insert
 		// them into the chain in the insertAccesses call.
@@ -389,12 +282,14 @@ namespace DataAccessRegistration {
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 
-		insertAccesses(task);
+		insertAccesses(task, hpDependencyData);
 
 		assert(!accessStructures.hasBeenDeleted());
 		if (accessStructures.hasDataAccesses()) {
 			task->increaseRemovalBlockingCount();
 		}
+
+		processSatisfiedOriginators(hpDependencyData, computePlace, true);
 
 		return task->decreasePredecessors(2);
 	}
@@ -407,23 +302,32 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
 
-		if (!accessStruct.hasDataAccesses()) return;
+		mailbox_t &mailBox = hpDependencyData._mailBox;
+		assert(mailBox.empty());
 
-#ifndef NDEBUG
-		{
-			bool alreadyTaken = false;
-			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, true));
-		}
-#endif
-		{
+		if (accessStruct.hasDataAccesses()) {
 			// if REDUCTION_ACCESS_TYPE, release slot.
 			// if task is final, it is always strong. if task is taskloop, it is always strong because taskloop is always final.
 			// if task is not final, it may be strong anyway, so we have to check the access itself.
 			assert(accessStruct.hasDataAccesses());
-			accessStruct.forAll([&] (void * address, DataAccess * access) {
+			accessStruct.forAll([&](void *address, DataAccess *access) {
 				finalizeDataAccess(task, access, address, hpDependencyData, computePlace);
 			});
+		}
 
+		bottom_map_t &bottomMap = accessStruct._subaccessBottomMap;
+
+		for (bottom_map_t::iterator itMap = bottomMap.begin(); itMap != bottomMap.end(); itMap++) {
+			DataAccess *access = itMap->second._access;
+			assert(access != nullptr);
+			DataAccessMessage m;
+			m.from = m.to = access;
+			m.flagsAfterPropagation = ACCESS_PARENT_DONE;
+			if (access->applyPropagated(m))
+				decreaseDeletableCountOrDelete(access->getOriginator(), hpDependencyData._deletableOriginators);
+		}
+
+		if (accessStruct.hasDataAccesses()) {
 			// All TaskDataAccesses have a deletableCount of 1 for default, so this will return true unless
 			// some read/reduction accesses have increased this as well because the task cannot be deleted yet.
 			// It also plays an important role in ensuring that a task will not be deleted by another one while
@@ -434,13 +338,6 @@ namespace DataAccessRegistration {
 		}
 
 		processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
-
-#ifndef NDEBUG
-		{
-			bool alreadyTaken = true;
-			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
-		}
-#endif
 	}
 
 	void handleEnterBlocking(__attribute__((unused)) Task *task)
@@ -483,50 +380,12 @@ namespace DataAccessRegistration {
 	{
 	}
 
-	static inline bool matchAll(access_flags_t value, access_flags_t mask) {
+	static inline bool matchAll(access_flags_t value, access_flags_t mask)
+	{
 		return ((value & mask) == mask);
 	}
 
-	static inline bool setFlagsToAccess(DataAccess * current, access_flags_t flagsToSet) {
-		access_flags_t oldFlags = current->setFlags(flagsToSet);
-
-		if(current->getType() == READ_ACCESS_TYPE) {
-			// We schedule if we satisfied the access (if oldFlags was already set, we raced and lost).
-			return (flagsToSet & ACCESS_READ_SATISFIED) && !(oldFlags & ACCESS_READ_SATISFIED);
-		} else {
-			return (flagsToSet & ACCESS_WRITE_SATISFIED) && !(oldFlags & ACCESS_WRITE_SATISFIED);
-		}
-	}
-
-	static inline bool inheritFromParent(DataAccess * parent, DataAccess * current) {
-		if(parent == nullptr) {
-			current->setFlags(ACCESS_WRITE_SATISFIED | ACCESS_READ_SATISFIED | ACCESS_DELETABLE);
-			return true;
-		}
-
-		access_flags_t flagsParent = parent->getFlags();
-		access_flags_t flagsToSet = flagsParent & (ACCESS_WRITE_SATISFIED | ACCESS_READ_SATISFIED);
-
-		assert(!(flagsToSet & ACCESS_DELETABLE));
-
-		return setFlagsToAccess(current, flagsToSet);
-	}
-
-	static inline bool inheritFromPredecessor(DataAccess * predecessor, DataAccess * current) {
-		access_flags_t flagsPredecessor = predecessor->getFlags();
-		access_flags_t flagsToSet = ACCESS_NONE;
-
-		if(matchAll(flagsPredecessor, ACCESS_CHILDS_FINISHED | ACCESS_UNREGISTERED)) {
-			// Predecessor has finished, inherit
-			flagsToSet = flagsPredecessor & (ACCESS_WRITE_SATISFIED | ACCESS_READ_SATISFIED);
-		} else if((flagsPredecessor & (ACCESS_READ_SATISFIED)) && predecessor->getType() == READ_ACCESS_TYPE) {
-			flagsToSet = ACCESS_READ_SATISFIED;
-		}
-
-		return setFlagsToAccess(current, flagsToSet);
-	}
-
-	static inline void insertAccesses(Task *task)
+	static inline void insertAccesses(Task *task, CPUDependencyData &hpDependencyData)
 	{
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
@@ -537,11 +396,14 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &parentAccessStruct = parentTask->getDataAccesses();
 		assert(!parentAccessStruct.hasBeenDeleted());
 
+		mailbox_t &mailBox = hpDependencyData._mailBox;
+		assert(mailBox.empty());
+
 		// Default deletableCount of 1.
 		accessStruct.increaseDeletableCount();
 
 		// Get all seqs
-		accessStruct.forAll([&] (void * address, DataAccess * access) {
+		accessStruct.forAll([&](void *address, DataAccess *access) {
 			DataAccessType accessType = access->getType();
 			bool weak = access->isWeak();
 			bool closeReduction = false;
@@ -552,11 +414,10 @@ namespace DataAccessRegistration {
 			// Instrumentation mock(for now)
 			DataAccessRegion mock(address, 1);
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
-					nullptr,
-					accessType, false, mock,
-					false, false, false, Instrument::access_object_type_t::regular_access_type,
-					task->getInstrumentationTaskId()
-			);
+				nullptr,
+				accessType, false, mock,
+				false, false, false, Instrument::access_object_type_t::regular_access_type,
+				task->getInstrumentationTaskId());
 
 			accessStruct.increaseDeletableCount();
 			access->setInstrumentationId(dataAccessInstrumentationId);
@@ -568,28 +429,23 @@ namespace DataAccessRegistration {
 				std::forward_as_tuple(access));
 
 			itMap = result.first;
-			access->setBottomMapEntry(&itMap->second);
 
-			if(!result.second) {
+			if (!result.second) {
 				// Element already exists.
 				predecessor = itMap->second._access;
-				while(!itMap->second._access.compare_exchange_weak(predecessor, access))
-					spinWait();
+				itMap->second._access = access;
 			}
 
 			// Check if we're closing a reduction, or allocate one in case we need it.
 			if (accessType == REDUCTION_ACCESS_TYPE) {
-				ReductionInfo * currentReductionInfo = itMap->second._reductionInfo;
+				ReductionInfo *currentReductionInfo = itMap->second._reductionInfo;
 				reductionInfo = currentReductionInfo;
 				reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
 				size_t length = access->getReductionLength();
 
-				if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex ||
-					currentReductionInfo->getOriginalLength() != length) {
+				if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex || currentReductionInfo->getOriginalLength() != length) {
 					currentReductionInfo = allocateReductionInfo(accessType, access->getReductionIndex(), typeAndOpIndex,
 						address, length, *task);
-					if(predecessor == nullptr)
-						currentReductionInfo->incrementUnregisteredAccesses();
 				}
 
 				currentReductionInfo->incrementRegisteredAccesses();
@@ -606,54 +462,69 @@ namespace DataAccessRegistration {
 				itMap->second._reductionInfo = nullptr;
 			}
 
-			// The "registration" was atomic because of the bottom map. Now we are outside of the lock section, and we
-			// have to satisfy the access if needed in an atomical way.
-
 			bool schedule = false;
+			DataAccessMessage fromCurrent;
 
-			if(predecessor == nullptr) {
-				DataAccess * parentAccess = parentAccessStruct.findAccess(address);
+			if (predecessor == nullptr) {
+				DataAccess *parentAccess = parentAccessStruct.findAccess(address);
 
-				// Important ordering: setChild _before_ inherit flags.
-				// We can race against other accesses satisfying the parent.
-				if(parentAccess != nullptr)
+				if (parentAccess != nullptr) {
 					parentAccess->setChild(access);
+					DataAccessMessage message = parentAccess->applySingle(ACCESS_HASCHILD, mailBox);
+					fromCurrent = access->applySingle(message.flagsForNext, mailBox);
+					schedule = fromCurrent.schedule;
+					assert(!(fromCurrent.flagsForNext));
 
-				schedule = inheritFromParent(parentAccess, access);
-
-				if(reductionInfo != nullptr && access->getReductionInfo() != reductionInfo) {
-					closeReduction = reductionInfo->markAsClosed();
-					assert(closeReduction);
+					bool dispose = parentAccess->applyPropagated(message);
+					if (dispose)
+						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
+				} else {
+					schedule = true;
+					fromCurrent = access->applySingle(ACCESS_READ_SATISFIED | ACCESS_WRITE_SATISFIED, mailBox);
 				}
 			} else {
-				// Important ordering: inherit _before_ setSuccessor.
-				// The bottom map insertion is the point of syncronization between both accesses.
-				schedule = inheritFromPredecessor(predecessor, access);
 				predecessor->setSuccessor(access);
+				DataAccessMessage message = predecessor->applySingle(ACCESS_HASNEXT, mailBox);
+				fromCurrent = access->applySingle(message.flagsForNext, mailBox);
+				schedule = fromCurrent.schedule;
+				assert(!(fromCurrent.flagsForNext));
 
-				if(predecessor->getType() == REDUCTION_ACCESS_TYPE &&
-					(accessType != REDUCTION_ACCESS_TYPE || predecessor->getReductionInfo() != access->getReductionInfo())
-				) {
-					closeReduction = predecessor->setClosesReduction(true);
+				bool dispose = predecessor->applyPropagated(message);
+				if (dispose)
+					decreaseDeletableCountOrDelete(predecessor->getOriginator(), hpDependencyData._deletableOriginators);
+			}
+
+			if (fromCurrent.combine) {
+				assert(access->getType() == REDUCTION_ACCESS_TYPE);
+				assert(fromCurrent.flagsAfterPropagation == ACCESS_REDUCTION_COMBINED);
+				ReductionInfo *current = access->getReductionInfo();
+				bool dispose;
+				if (current != reductionInfo) {
+					dispose = current->incrementUnregisteredAccesses();
+					assert(!dispose);
 				}
+
+				dispose = access->applyPropagated(fromCurrent);
+				assert(!dispose);
+			}
+
+			if (reductionInfo != nullptr && access->getReductionInfo() != reductionInfo) {
+				if (reductionInfo->markAsClosed())
+					releaseReductionInfo(reductionInfo);
 			}
 
 			// Weaks and reductions always start
-			if(accessType == REDUCTION_ACCESS_TYPE || weak)
+			if (accessType == REDUCTION_ACCESS_TYPE || weak)
 				schedule = true;
 
-			if(!schedule)
+			if (!schedule)
 				task->increasePredecessors();
-
-			if(closeReduction)
-				releaseReductionInfo(reductionInfo);
 
 			if (schedule) {
 				Instrument::dataAccessBecomesSatisfied(
-						dataAccessInstrumentationId,
-						true,
-						task->getInstrumentationTaskId()
-				);
+					dataAccessInstrumentationId,
+					true,
+					task->getInstrumentationTaskId());
 			}
 		});
 	}
@@ -674,16 +545,16 @@ namespace DataAccessRegistration {
 		CPUDependencyData::deletable_originator_list_t &deletableOriginators)
 	{
 		if (originator->getDataAccesses().decreaseDeletableCount()) {
-			if(originator->decreaseRemovalBlockingCount()) {
+			if (originator->decreaseRemovalBlockingCount()) {
 				deletableOriginators.push_back(originator); // Ensure destructor is called
 			}
 		}
 	}
 
 	static inline ReductionInfo *allocateReductionInfo(
-			__attribute__((unused)) DataAccessType &dataAccessType, reduction_index_t reductionIndex,
-			reduction_type_and_operator_index_t reductionTypeAndOpIndex,
-			void *address, const size_t length, const Task &task)
+		__attribute__((unused)) DataAccessType &dataAccessType, reduction_index_t reductionIndex,
+		reduction_type_and_operator_index_t reductionTypeAndOpIndex,
+		void *address, const size_t length, const Task &task)
 	{
 		assert(dataAccessType == REDUCTION_ACCESS_TYPE);
 
@@ -691,10 +562,10 @@ namespace DataAccessRegistration {
 		assert(taskInfo != nullptr);
 
 		ReductionInfo *newReductionInfo = ObjectAllocator<ReductionInfo>::newObject(
-				address, length,
-				reductionTypeAndOpIndex,
-				taskInfo->reduction_initializers[reductionIndex],
-				taskInfo->reduction_combiners[reductionIndex]);
+			address, length,
+			reductionTypeAndOpIndex,
+			taskInfo->reduction_initializers[reductionIndex],
+			taskInfo->reduction_combiners[reductionIndex]);
 
 		return newReductionInfo;
 	}
@@ -705,16 +576,16 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
 
-		if (!accessStruct.hasDataAccesses()) return;
+		if (!accessStruct.hasDataAccesses())
+			return;
 
-		accessStruct.forAll([&] (void *, DataAccess * access) {
-			if(access->getType() == REDUCTION_ACCESS_TYPE) {
+		accessStruct.forAll([&](void *, DataAccess *access) {
+			if (access->getType() == REDUCTION_ACCESS_TYPE) {
 				ReductionInfo *reductionInfo = access->getReductionInfo();
-				reductionInfo->releaseSlotsInUse(((CPU *) computePlace)->getIndex());
+				reductionInfo->releaseSlotsInUse(((CPU *)computePlace)->getIndex());
 			}
 		});
 	}
-}
+} // namespace DataAccessRegistration
 
 #pragma GCC visibility pop
-

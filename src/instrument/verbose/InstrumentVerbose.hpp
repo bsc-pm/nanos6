@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_VERBOSE_HPP
@@ -41,6 +41,7 @@ namespace Instrument {
 		extern bool _verboseAddTask;
 		extern bool _verboseBlocking;
 		extern bool _verboseComputePlaceManagement;
+		extern bool _verboseDependenciesAutomataMessages;
 		extern bool _verboseDependenciesByAccess;
 		extern bool _verboseDependenciesByAccessLinks;
 		extern bool _verboseDependenciesByGroup;
