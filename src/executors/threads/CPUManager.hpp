@@ -48,7 +48,7 @@ public:
 #endif
 		assert(_cpuManager != nullptr);
 
-		_cpuManager->preinitialize();
+		_cpuManager->preinitialize(_dlbEnabled);
 	}
 
 	//! \brief Initialize all structures for the CPUManager

@@ -176,7 +176,7 @@ public:
 	}
 
 	//! \brief Pre-initialize structures for the CPUManager
-	virtual void preinitialize();
+	virtual void preinitialize(bool dlbEnabled);
 
 	//! \brief Initialize all structures for the CPUManager
 	virtual void initialize();
@@ -317,10 +317,7 @@ public:
 
 	//! \brief Get the number of CPUs that can collaborate to execute a single
 	//! taskfor. I.e. the number of CPUs per taskfor group
-	virtual inline size_t getNumCPUsPerTaskforGroup() const
-	{
-		return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
-	}
+	virtual size_t getNumCPUsPerTaskforGroup() const = 0;
 
 };
 

@@ -99,7 +99,7 @@ void CPUManagerInterface::reportInformation(size_t numSystemCPUs, size_t numNUMA
 	}
 }
 
-void CPUManagerInterface::preinitialize()
+void CPUManagerInterface::preinitialize(bool dlbEnabled)
 {
 	_finishedCPUInitialization = false;
 
@@ -113,9 +113,6 @@ void CPUManagerInterface::preinitialize()
 
 	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
 	size_t numCPUs = cpus.size();
-
-	// Find the appropriate value for taskfor groups
-	refineTaskforGroups(numCPUs, numValidNUMANodes);
 
 	size_t maxSystemCPUId = 0;
 	for (size_t i = 0; i < numCPUs; ++i) {
@@ -136,7 +133,21 @@ void CPUManagerInterface::preinitialize()
 		_NUMANodeMask[i].resize(numAvailableCPUs);
 	}
 
-	size_t numCPUsPerTaskforGroup = getNumCPUsPerTaskforGroup();
+	// Find the appropriate value for taskfor groups
+	if (dlbEnabled) {
+		refineTaskforGroups(numCPUs, numValidNUMANodes);
+	} else {
+		refineTaskforGroups(numAvailableCPUs, numValidNUMANodes);
+	}
+
+	size_t numCPUsPerTaskforGroup;
+	size_t groupId;
+	if (dlbEnabled) {
+		numCPUsPerTaskforGroup = numCPUs / getNumTaskforGroups();
+	} else {
+		numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
+		groupId = 0;
+	}
 	assert(numCPUsPerTaskforGroup > 0);
 
 	size_t virtualCPUId = 0;
@@ -145,10 +156,18 @@ void CPUManagerInterface::preinitialize()
 		assert(cpu != nullptr);
 
 		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
-			// To compute the groupId we need the CPU's hwloc logical_index. Before
-			// setting the virtual id, use the current index to compute the groupId
-			size_t groupId = cpu->getIndex() / numCPUsPerTaskforGroup;
-			assert(groupId <= numCPUs);
+			if (dlbEnabled) {
+				// To compute the groupId we need the CPU's hwloc logical_index. Before
+				// setting the virtual id, use the current index to compute the groupId
+				groupId = cpu->getIndex() / numCPUsPerTaskforGroup;
+				assert(groupId <= numCPUs);
+			} else {
+				bool restart = (numCPUsPerTaskforGroup-- == 0);
+				if (restart) {
+					numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
+					groupId++;
+				}
+			}
 
 			cpu->setIndex(virtualCPUId);
 			cpu->setGroupId(groupId);

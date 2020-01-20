@@ -120,6 +120,11 @@ public:
 	{
 	}
 
+	inline size_t getNumCPUsPerTaskforGroup() const
+	{
+		return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
+	}
+
 };
 
 
