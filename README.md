@@ -120,10 +120,14 @@ for (int i = 0; i < N; ++i) {
 }
 ```
 
-In our implementation, worksharing tasks are run by taskfor groups.
-Each worksharing task can be run by at most as many workers (also known as collaborators) as a taskfor group has.
-Users can set the number of groups (and so, implicitly, the number of collaborators) by setting the `NANOS6_TASKFOR_GROUPS` environment variable.
+In our implementation, worksharing tasks are executed by taskfor groups.
+Taskfor groups are composed by a set of available CPUs.
+Each available CPU on the system is assigned to a specific taskfor group.
+Then, a worksharing task is assigned to a particular taskfor group, so it can be run by at most as many CPUs (also known as collaborators) as that taskfor group has.
+Users can set the number of groups (and so, implicitly, the number of collaborators) by setting the ``NANOS6_TASKFOR_GROUPS`` environment variable.
 By default, there are as many groups as NUMA nodes in the system.
+
+Finally, taskfors that do not define any chunksize leverage a chunksize value computed as their total number of iterations divided by the number of collaborators per taskfor group.
 
 ## Tracing, debugging and other options
 
