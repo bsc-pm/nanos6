@@ -18,17 +18,15 @@ public:
 
 private:
 	// Source
-	std::atomic<long int> _currentChunk;
+	Padded<std::atomic<long int>> _currentChunk;
+	// Source
+	Padded<std::atomic<size_t>> _remainingIterations;
 	// Source and collaborator
 	bounds_t _bounds;
 	// Collaborator
 	size_t _completedIterations;
 	// Collaborator
 	long int _myChunk;
-	// Source
-	std::atomic<size_t> _remainingIterations;
-	// Source
-	size_t _maxCollaborators;
 
 public:
 	// Methods for both source and collaborator taskfors
@@ -42,10 +40,12 @@ public:
 		bool runnable = false
 	)
 		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
-		  _currentChunk(0), _bounds(), _completedIterations(0), _myChunk(-1), _remainingIterations(0)
+		  _bounds(), _completedIterations(0), _myChunk(-1)
 	{
 		assert(isFinal());
 		setRunnable(runnable);
+		_currentChunk.store(0);
+		_remainingIterations.store(0);
 	}
 
 	inline void setRunnable(bool runnableValue)
@@ -61,6 +61,8 @@ public:
 	// Methods for source taskfors
 	inline void initialize(size_t lowerBound, size_t upperBound, size_t chunksize)
 	{
+		assert(!isRunnable());
+
 		_bounds.lower_bound = lowerBound;
 		_bounds.upper_bound = upperBound;
 		_bounds.chunksize = chunksize;
@@ -69,7 +71,7 @@ public:
 		assert(maxCollaborators > 0);
 
 		size_t totalIterations = getIterationCount();
-		_remainingIterations = totalIterations;
+		_remainingIterations.store(totalIterations);
 
 		if (_bounds.chunksize == 0) {
 			// Just distribute iterations over collaborators if no hint.
@@ -87,15 +89,12 @@ public:
 		}
 
 		assert(_currentChunk == 0);
-		_currentChunk = std::ceil((double) totalIterations/(double) _bounds.chunksize);
+		_currentChunk.store(std::ceil((double) totalIterations/(double) _bounds.chunksize));
 	}
 
-	inline bounds_t &getBounds()
-	{
-		return _bounds;
-	}
 	inline bounds_t const &getBounds() const
 	{
+		assert(!isRunnable());
 		return _bounds;
 	}
 
@@ -134,6 +133,13 @@ public:
 		return (remaining == 0);
 	}
 
+	inline long int getNextChunk()
+	{
+		assert(!isRunnable());
+		long int myChunk = --_currentChunk;
+		return myChunk;
+	}
+
 	// Methods for collaborator taskfors
 	inline void reinitialize(
 		void *argsBlock, size_t argsBlockSize,
@@ -147,8 +153,10 @@ public:
 	{
 		assert(isRunnable());
 		Task::reinitialize(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags);
-		_bounds = bounds_t();
-		_remainingIterations = 0;
+		_bounds.lower_bound = 0;
+		_bounds.upper_bound = 0;
+		_bounds.grainsize = 0;
+		_bounds.chunksize = 0;
 		_completedIterations = 0;
 		setRunnable(runnable);
 	}
@@ -169,6 +177,12 @@ public:
 		run(*((Taskfor *)parent));
 	}
 
+	inline bounds_t &getBounds()
+	{
+		assert(isRunnable());
+		return _bounds;
+	}
+
 	inline void setChunk(long int chunk)
 	{
 		assert(isRunnable());
@@ -181,21 +195,14 @@ public:
 		return _myChunk;
 	}
 
-	inline long int getNextChunk()
-	{
-		assert(!isRunnable());
-		long int myChunk = --_currentChunk;
-		return myChunk;
-	}
-
 	inline void computeChunkBounds(bounds_t &collaboratorBounds)
 	{
 		assert(isRunnable());
 		long int myChunk = _myChunk;
 		assert(myChunk >= 0);
 
-		Taskfor *source = (Taskfor *) getParent();
-		bounds_t &bounds = source->getBounds();
+		const Taskfor *source = (Taskfor *) getParent();
+		bounds_t const &bounds = source->getBounds();
 		size_t totalIterations = bounds.upper_bound - bounds.lower_bound;
 		size_t totalChunks = std::ceil((double) totalIterations / (double) bounds.chunksize);
 		assert(totalChunks > 0);
@@ -223,7 +230,8 @@ public:
 	inline bool hasLastChunk()
 	{
 		assert(isRunnable());
-		return (_bounds.upper_bound == ((Taskfor *) getParent())->getBounds().upper_bound);
+		const Taskfor *source = (Taskfor *) getParent();
+		return (_bounds.upper_bound == source->getBounds().upper_bound);
 	}
 
 private:
