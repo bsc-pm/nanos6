@@ -648,7 +648,10 @@ namespace DataAccessRegistration {
 	void combineTaskReductions(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
-		TaskDataAccesses &accessStruct = task->getDataAccesses();
+		assert(computePlace != nullptr);
+		assert(task->isRunnable());
+
+		TaskDataAccesses &accessStruct = (task->isTaskfor() ? task->getParent()->getDataAccesses() : task->getDataAccesses());
 		assert(!accessStruct.hasBeenDeleted());
 
 		if (!accessStruct.hasDataAccesses())
