@@ -81,7 +81,7 @@ public:
 			// Distribute iterations over collaborators respecting the "alignment".
 			size_t newChunksize = std::max(totalIterations / maxCollaborators, _bounds.chunksize);
 			size_t alignedChunksize = ((newChunksize-1)|(_bounds.chunksize-1))+1;
-			if (totalIterations / alignedChunksize < maxCollaborators) {
+			if (std::ceil((double)totalIterations / (double)alignedChunksize) < maxCollaborators) {
 				alignedChunksize = std::max(alignedChunksize - _bounds.chunksize, _bounds.chunksize);
 			}
 			assert(alignedChunksize % _bounds.chunksize == 0);
