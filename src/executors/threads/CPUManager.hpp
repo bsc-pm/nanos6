@@ -255,6 +255,13 @@ public:
 		_cpuManager->getIdleCollaborators(idleCPUs, cpu);
 	}
 
+	static inline void forcefullyResumeCPU(size_t cpuId)
+	{
+		assert(_cpuManager != nullptr);
+
+		_cpuManager->forcefullyResumeCPU(cpuId);
+	}
+
 
 	/*    TASKFORS    */
 

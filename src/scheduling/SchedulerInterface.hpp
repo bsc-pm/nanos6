@@ -22,6 +22,10 @@
 class SchedulerInterface {
 	HostScheduler *_hostScheduler;
 	DeviceScheduler *_deviceSchedulers[nanos6_device_type_num];
+#ifdef EXTRAE_ENABLED
+	std::atomic<Task *> _mainTask;
+	bool _mainFirstRunCompleted = false;
+#endif
 
 public:
 	SchedulerInterface();
@@ -29,6 +33,16 @@ public:
 
 	virtual inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
+#ifdef EXTRAE_ENABLED
+		if (task->isMainTask() && !_mainFirstRunCompleted) {
+			Task *expected = nullptr;
+			bool exchanged = _mainTask.compare_exchange_strong(expected, task);
+			FatalErrorHandler::failIf(!exchanged);
+			CPUManager::forcefullyResumeCPU(0);
+			return;
+		}
+#endif
+
 		nanos6_device_t taskType = (nanos6_device_t) task->getDeviceType();
 		assert(taskType != nanos6_cluster_device);
 
@@ -46,6 +60,16 @@ public:
 		nanos6_device_t computePlaceType = (deviceComputePlace == nullptr) ? nanos6_host_device : deviceComputePlace->getType();
 
 		if (computePlaceType == nanos6_host_device) {
+#ifdef EXTRAE_ENABLED
+			Task *result = nullptr;
+			if (computePlace->getIndex() == 0 && _mainTask != nullptr) {
+				result = _mainTask;
+				bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
+				FatalErrorHandler::failIf(!exchanged);
+				_mainFirstRunCompleted = true;
+				return result;
+			}
+#endif
 			return _hostScheduler->getReadyTask(computePlace);
 		} else {
 			assert(deviceComputePlace->getType() != nanos6_cluster_device);
@@ -65,6 +89,15 @@ public:
 			nanos6_host_device : deviceComputePlace->getType();
 
 		if (computePlaceType == nanos6_host_device) {
+#ifdef EXTRAE_ENABLED
+			if (computePlace->getIndex() == 0 && _mainTask != nullptr) {
+				Task *result = _mainTask;
+				bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
+				FatalErrorHandler::failIf(!exchanged);
+				_mainFirstRunCompleted = true;
+				return result;
+			}
+#endif
 			return _hostScheduler->hasAvailableWork(computePlace);
 		} else {
 			assert(deviceComputePlace->getType() != nanos6_cluster_device);

@@ -57,6 +57,7 @@ public:
 		spawned_flag,
 		remote_flag,
 		stream_executor_flag,
+		main_task_flag,
 		total_flags
 	};
 
@@ -753,6 +754,16 @@ public:
 	inline StreamFunctionCallback *getParentSpawnCallback() const
 	{
 		return _parentSpawnCallback;
+	}
+
+	inline void markAsMainTask()
+	{
+		_flags[main_task_flag] = true;
+	}
+
+	inline bool isMainTask() const
+	{
+		return _flags[main_task_flag];
 	}
 };
 

@@ -393,3 +393,23 @@ void CPUManagerInterface::getIdleCollaborators(std::vector<CPU *> &idleCPUs, Com
 	assert(_numIdleCPUs >= numObtainedCollaborators);
 	_numIdleCPUs -= numObtainedCollaborators;
 }
+
+void CPUManagerInterface::forcefullyResumeCPU(size_t cpuId)
+{
+	bool resumed = false;
+	_idleCPUsLock.lock();
+	if (_idleCPUs[cpuId]) {
+		_idleCPUs[cpuId] = false;
+		assert(_numIdleCPUs > 0);
+
+		--_numIdleCPUs;
+		Monitoring::cpuBecomesActive(cpuId);
+		resumed = true;
+	}
+	_idleCPUsLock.unlock();
+
+	if (resumed) {
+		assert(_cpus[cpuId] != nullptr);
+		ThreadManager::resumeIdle(_cpus[cpuId]);
+	}
+}

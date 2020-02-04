@@ -54,6 +54,7 @@ AC_ARG_WITH(extrae,
 				AC_CHECK_HEADERS([extrae_types.h], [], [have_extrae=no])
 				if test "x${have_extrae}" = "xyes"; then
 					extrae_CPPFLAGS=${CPPFLAGS}
+					extrae_CPPFLAGS+=" -DEXTRAE_ENABLED"
 					extrae_LDFLAGS=${LDFLAGS}
 					extrae_LIBS=${LIBS}
 				else

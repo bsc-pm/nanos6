@@ -103,6 +103,11 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 	argsBlock->_completion_args = completion_args;
 	
 	task->setSpawned();
+#ifdef EXTRAE_ENABLED
+	if (label != nullptr && strcmp(label,"main") == 0) {
+		task->markAsMainTask();
+	}
+#endif
 	nanos6_submit_task(task);
 }
 

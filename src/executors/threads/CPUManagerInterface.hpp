@@ -304,6 +304,8 @@ public:
 	//! \param[in] cpu The CPU that created the taskfor
 	virtual void getIdleCollaborators(std::vector<CPU *> &idleCPUs, ComputePlace *cpu);
 
+	virtual void forcefullyResumeCPU(size_t cpuId);
+
 
 	/*    TASKFORS    */
 
