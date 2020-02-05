@@ -1,10 +1,10 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-#	
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#
+#	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 
 
 AM_CXXFLAGS = $(PTHREAD_CFLAGS) -I$(top_srcdir)/api
-AM_LDFLAGS = 
+AM_LDFLAGS = -Wl,-z,lazy
 nanos6_info_LDADD = $(top_builddir)/nanos6-library-mode.o ../libnanos6.la -ldl
 
 bin_PROGRAMS = nanos6-info
