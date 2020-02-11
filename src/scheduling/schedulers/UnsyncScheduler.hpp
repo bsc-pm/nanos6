@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef UNSYNC_SCHEDULER_HPP
@@ -98,14 +98,17 @@ public:
 			_readyTasks->addReadyTask(task, false);
 		}
 
-		// Upon disabling a CPU, if its immediate successor slot was full
-		// place the task in the ready queue
-		Task *currentIS = _immediateSuccessorTasks[cpuId];
-		if (currentIS != nullptr) {
-			_immediateSuccessorTasks[cpuId] = nullptr;
-			_readyTasks->addReadyTask(currentIS, false);
-			return true;
+		if (_enableImmediateSuccessor) {
+			// Upon disabling a CPU, if its immediate successor slot was full
+			// place the task in the ready queue
+			Task *currentIS = _immediateSuccessorTasks[cpuId];
+			if (currentIS != nullptr) {
+				_immediateSuccessorTasks[cpuId] = nullptr;
+				_readyTasks->addReadyTask(currentIS, false);
+				return true;
+			}
 		}
+
 		return false;
 	}
 
