@@ -1,11 +1,11 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef APPLE_SPIN_LOCK_IMPLEMENTATION_HPP
-#define APPLE_SPIN_LOCK_IMPLEMENTATION_HPP
+#ifndef POSIX_SPIN_LOCK_IMPLEMENTATION_HPP
+#define POSIX_SPIN_LOCK_IMPLEMENTATION_HPP
 
 
 #ifndef SPIN_LOCK_HPP
@@ -40,14 +40,14 @@ template <class DEBUG_KIND>
 inline bool CustomizableSpinLock<DEBUG_KIND>::tryLock()
 {
 	DEBUG_KIND::assertNotCurrentOwner();
-	
+
 	bool success = (pthread_spin_trylock(&_lock) == 0);
-	
+
 	if (success) {
 		DEBUG_KIND::assertUnowned();
 		DEBUG_KIND::setOwner();
 	}
-	
+
 	return success;
 }
 
@@ -60,4 +60,4 @@ inline void CustomizableSpinLock<DEBUG_KIND>::unlock(bool ignoreOwner)
 }
 
 
-#endif // APPLE_SPIN_LOCK_IMPLEMENTATION_HPP
+#endif // POSIX_SPIN_LOCK_IMPLEMENTATION_HPP
