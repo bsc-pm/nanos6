@@ -25,6 +25,7 @@ SpinLock CPUManagerInterface::_idleCPUsLock;
 size_t CPUManagerInterface::_numIdleCPUs;
 boost::dynamic_bitset<> CPUManagerInterface::_idleCPUs;
 EnvironmentVariable<size_t> CPUManagerInterface::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
+EnvironmentVariable<bool> CPUManagerInterface::_taskforGroupsReportEnabled("NANOS6_TASKFOR_GROUPS_REPORT", 0);
 
 
 namespace cpumanager_internals {
@@ -108,7 +109,6 @@ void CPUManagerInterface::preinitialize(bool dlbEnabled)
 
 	// Get NUMA nodes
 	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
-	const size_t numValidNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 	_NUMANodeMask.resize(numNUMANodes);
 
 	std::vector<ComputePlace *> const &cpus = ((HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device))->getComputePlaces();
@@ -135,8 +135,24 @@ void CPUManagerInterface::preinitialize(bool dlbEnabled)
 
 	// Find the appropriate value for taskfor groups
 	if (dlbEnabled) {
+		const size_t numValidNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 		refineTaskforGroups(numCPUs, numValidNUMANodes);
 	} else {
+		std::vector<int> availableNUMANodes(numNUMANodes, 0);
+		for (size_t i = 0; i < numCPUs; i++) {
+			CPU *cpu = (CPU *) cpus[i];
+			assert(cpu != nullptr);
+			if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
+				size_t NUMANodeId = cpu->getNumaNodeId();
+				availableNUMANodes[NUMANodeId]++;
+			}
+		}
+		size_t numValidNUMANodes = 0;
+		for(size_t i = 0; i < numNUMANodes; i++) {
+			if (availableNUMANodes[i] > 0) {
+				numValidNUMANodes++;
+			}
+		}
 		refineTaskforGroups(numAvailableCPUs, numValidNUMANodes);
 	}
 
@@ -164,7 +180,7 @@ void CPUManagerInterface::preinitialize(bool dlbEnabled)
 			} else {
 				bool restart = (numCPUsPerTaskforGroup-- == 0);
 				if (restart) {
-					numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
+					numCPUsPerTaskforGroup = (numAvailableCPUs / getNumTaskforGroups())-1;
 					groupId++;
 				}
 			}
@@ -182,6 +198,9 @@ void CPUManagerInterface::preinitialize(bool dlbEnabled)
 	assert(virtualCPUId == numAvailableCPUs);
 
 	reportInformation(numSystemCPUs, numNUMANodes);
+	if (_taskforGroupsReportEnabled) {
+		reportTaskforGroupsInfo(getNumTaskforGroups(), getNumCPUsPerTaskforGroup());
+	}
 
 	// Set all CPUs as not idle
 	_idleCPUs.resize(numAvailableCPUs);
@@ -430,5 +449,31 @@ void CPUManagerInterface::forcefullyResumeCPU(size_t cpuId)
 	if (resumed) {
 		assert(_cpus[cpuId] != nullptr);
 		ThreadManager::resumeIdle(_cpus[cpuId]);
+	}
+}
+
+void CPUManagerInterface::reportTaskforGroupsInfo(const size_t numTaskforGroups, const size_t numCPUsPerTaskforGroup)
+{
+	std::cout << "There are " << numTaskforGroups << " taskfor groups with " << numCPUsPerTaskforGroup << " CPUs each." << std::endl;
+	std::vector<std::vector<size_t>> cpusPerGroup(numTaskforGroups);
+	for (size_t cpu = 0; cpu < _cpus.size(); cpu++) {
+		assert(_cpus[cpu]->getIndex() == (int) cpu);
+		size_t groupId = _cpus[cpu]->getGroupId();
+		cpusPerGroup[groupId].push_back(cpu);
+	}
+	for (size_t group = 0; group < numTaskforGroups; group++) {
+		std::cout << "Group " << group << " contains the following CPUs:" << std::endl;
+		std::cout << "{";
+		for (size_t i = 0; i < cpusPerGroup[group].size(); i++) {
+			__attribute__((unused)) size_t cpuId = cpusPerGroup[group][i];
+			size_t systemCPUId = _cpus[cpusPerGroup[group][i]]->getSystemCPUId();
+			assert(_cpus[cpuId]->getGroupId() == group);
+			if (i == cpusPerGroup[group].size()-1) {
+				std::cout << systemCPUId << "}" << std::endl;
+			} else {
+				std::cout << systemCPUId << ",";
+			}
+		}
+		assert(group == 0 || cpusPerGroup[group].size() == cpusPerGroup[group-1].size());
 	}
 }

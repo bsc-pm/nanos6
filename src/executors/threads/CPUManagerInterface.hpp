@@ -61,6 +61,9 @@ protected:
 	//! Number of groups that can collaborate executing a single taskfor
 	static EnvironmentVariable<size_t> _taskforGroups;
 
+	//! Whether we should emit a report with info about the taskfor groups.
+	static EnvironmentVariable<bool> _taskforGroupsReportEnabled;
+
 
 private:
 
@@ -319,6 +322,8 @@ public:
 	//! taskfor. I.e. the number of CPUs per taskfor group
 	virtual size_t getNumCPUsPerTaskforGroup() const = 0;
 
+	//! \brief Emits a brief report with information of the taskfor groups.
+	virtual void reportTaskforGroupsInfo(const size_t numTaskforGroups, const size_t numCPUsPerTaskforGroup);
 };
 
 
