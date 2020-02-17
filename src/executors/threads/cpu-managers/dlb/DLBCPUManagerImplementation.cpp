@@ -16,7 +16,7 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-void DLBCPUManagerImplementation::preinitialize()
+void DLBCPUManagerImplementation::preinitialize(__attribute__((unused)) bool dlbEnabled)
 {
 	_finishedCPUInitialization = false;
 
