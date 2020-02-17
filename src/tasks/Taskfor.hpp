@@ -44,8 +44,8 @@ public:
 	{
 		assert(isFinal());
 		setRunnable(runnable);
-		_currentChunk.store(0);
-		_remainingIterations.store(0);
+		_currentChunk.store(0, std::memory_order_relaxed);
+		_remainingIterations.store(0, std::memory_order_relaxed);
 	}
 
 	inline void setRunnable(bool runnableValue)
@@ -71,7 +71,7 @@ public:
 		assert(maxCollaborators > 0);
 
 		size_t totalIterations = getIterationCount();
-		_remainingIterations.store(totalIterations);
+		_remainingIterations.store(totalIterations, std::memory_order_relaxed);
 
 		if (_bounds.chunksize == 0) {
 			// Just distribute iterations over collaborators if no hint.
@@ -89,7 +89,7 @@ public:
 		}
 
 		assert(_currentChunk == 0);
-		_currentChunk.store(std::ceil((double) totalIterations/(double) _bounds.chunksize));
+		_currentChunk.store(std::ceil((double) totalIterations/(double) _bounds.chunksize), std::memory_order_relaxed);
 	}
 
 	inline bounds_t const &getBounds() const
@@ -129,14 +129,14 @@ public:
 	inline bool decrementRemainingIterations(size_t amount)
 	{
 		assert(!isRunnable());
-		size_t remaining = (_remainingIterations -= amount);
+		size_t remaining = _remainingIterations.fetch_sub(amount, std::memory_order_relaxed) - amount;
 		return (remaining == 0);
 	}
 
 	inline long int getNextChunk()
 	{
 		assert(!isRunnable());
-		long int myChunk = --_currentChunk;
+		long int myChunk = _currentChunk.fetch_sub(1, std::memory_order_relaxed)-1;
 		return myChunk;
 	}
 
