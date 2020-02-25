@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef LOOP_GENERATOR_HPP
@@ -48,8 +48,11 @@ public:
 
 		// Copy the args block if it was not duplicated
 		if (!hasPreallocatedArgsBlock) {
-			assert(!parent->hasPreallocatedArgsBlock());
-			memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
+			if (parentTaskInfo->duplicate_args_block != nullptr) {
+				parentTaskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
+			} else {
+				memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
+			}
 		}
 
 		// Set the flags

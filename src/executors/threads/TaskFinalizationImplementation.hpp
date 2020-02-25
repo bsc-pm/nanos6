@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_FINALIZATION_IMPLEMENTATION_HPP
@@ -91,12 +91,12 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 			bool isSpawned = task->isSpawned();
 			bool isStreamExecutor = task->isStreamExecutor();
 
-			//! We cannot destroy collaborator tasks because they are preallocated tasks that are used during all the program execution.
-			//! However, we must destroy taskfors that are not collaborators. A collaborator must be runnable. Thus, if a taskfor is runnable,
-			//! it is a collaborator, so no destroy. Otherwise, it is not a collaborator, so must be destroyed.
-			bool destroy = !(task->isTaskfor() && task->isRunnable());
+			// We cannot dispose/free collaborator taskfors because they are preallocated tasks that are used during
+			// all the program execution. Collaborators are runnable taskfors. However, we must dispose all taskfors
+			// that are not collaborators, also known as parent taskfors
+			bool dispose = !(task->isTaskfor() && task->isRunnable());
 
-			if (destroy) {
+			if (dispose) {
 				Instrument::destroyTask(task->getInstrumentationTaskId());
 				// NOTE: The memory layout is defined in nanos6_create_task
 				void *disposableBlock;
@@ -147,13 +147,12 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				}
 				MemoryAllocator::free(disposableBlock, disposableBlockSize);
 			} else {
-				// Collaborators with preallocatedArgsBlock must destroy the duplicated
-				// argsBlock although they are not destroyed.
-
-				// Call the taskinfo destructor if not null
+				// Although collaborators cannot be disposed, they must destroy their
+				// args blocks. The destroy function free the memory of the args block
+				// in case the collaborator has preallocated args block; otherwise the
+				// args block is just destroyed calling the destructors
 				nanos6_task_info_t *taskInfo = task->getTaskInfo();
 				if (taskInfo->destroy_args_block != nullptr) {
-					assert(task->hasPreallocatedArgsBlock());
 					taskInfo->destroy_args_block(task->getArgsBlock());
 				}
 			}
