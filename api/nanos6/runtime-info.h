@@ -30,10 +30,10 @@ typedef enum {
 
 typedef struct {
 	//! \brief name of the entry (single word)
-	char const *name;
+	char *name;
 	
 	//! \brief description of the entry (multiple words)
-	char const *description;
+	char *description;
 	
 	//! \brief type of the value
 	nanos6_runtime_info_entry_type_t type;
@@ -42,11 +42,11 @@ typedef struct {
 	union {
 		long integer;
 		double real;
-		char const *text;
+		char *text;
 	};
 	
 	//! \brief units (if applicable)
-	char const *units;
+	char *units;
 } nanos6_runtime_info_entry_t;
 
 

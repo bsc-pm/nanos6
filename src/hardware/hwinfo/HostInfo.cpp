@@ -162,9 +162,10 @@ void HostInfo::initialize()
 
 void HostInfo::shutdown()
 {
-	AddressSpace *NUMAAddressSpace = nullptr;
+	assert(!_memoryPlaces.empty());
+
+	AddressSpace *NUMAAddressSpace = _memoryPlaces[0]->getAddressSpace();;
 	for (size_t i = 0; i < _memoryPlaces.size(); ++i) {
-		NUMAAddressSpace = _memoryPlaces[i]->getAddressSpace();
 		delete _memoryPlaces[i];
 	}
 

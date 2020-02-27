@@ -66,7 +66,6 @@ private:
 			entry.type = nanos6_text_runtime_info_entry;
 			char *text = strdup( std::string(value).c_str() );
 			entry.text = text;
-			free(text);
 		}
 	};
 	
@@ -86,7 +85,6 @@ private:
 			entry.type = nanos6_text_runtime_info_entry;
 			char *text = strdup(value);
 			entry.text = text;
-			free(text);
 		}
 	};
 	
@@ -115,19 +113,10 @@ public:
 		>::setEntryValue(entry, value);
 		
 		char *units_dup = nullptr;
-		if (!units.empty()) {
-			units_dup = strdup(units.c_str());
-			entry.units = units_dup;
-		} else {
-			entry.units = "";
-		}
+		units_dup = strdup(units.c_str());
+		entry.units = units_dup;
 		
 		_lock.unlock();
-		free(name_dup);
-		free(description_dup);
-		if (units_dup != nullptr) {
-			free(units_dup);
-		}
 	}
 	
 	
@@ -164,6 +153,18 @@ public:
 		_lock.lock();
 		*entry = _contents[index];
 		_lock.unlock();
+	}
+
+	static void shutdown()
+	{
+		for(nanos6_runtime_info_entry_t entry : _contents) {
+			free(entry.name);
+			free(entry.description);
+			if (entry.type == nanos6_text_runtime_info_entry) {
+				free(entry.text);
+			}
+			free(entry.units);
+		}
 	}
 };
 

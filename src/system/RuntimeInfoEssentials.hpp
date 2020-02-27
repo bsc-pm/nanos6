@@ -11,9 +11,7 @@
 class RuntimeInfoEssentials {
 public:
 	static void initialize();
-	static inline void shutdown()
-	{
-	}
+	static void shutdown();
 };
 
 

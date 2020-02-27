@@ -88,3 +88,7 @@ void RuntimeInfoEssentials::initialize()
 #endif
 }
 
+void RuntimeInfoEssentials::shutdown()
+{
+	RuntimeInfo::shutdown();
+}
