@@ -179,7 +179,7 @@ public:
 	}
 
 	//! \brief Pre-initialize structures for the CPUManager
-	virtual void preinitialize(bool dlbEnabled);
+	virtual void preinitialize();
 
 	//! \brief Initialize all structures for the CPUManager
 	virtual void initialize();
@@ -320,7 +320,10 @@ public:
 
 	//! \brief Get the number of CPUs that can collaborate to execute a single
 	//! taskfor. I.e. the number of CPUs per taskfor group
-	virtual size_t getNumCPUsPerTaskforGroup() const = 0;
+	virtual inline size_t getNumCPUsPerTaskforGroup() const
+	{
+		return _cpus.size() / _taskforGroups;
+	}
 
 	//! \brief Emits a brief report with information of the taskfor groups.
 	virtual void reportTaskforGroupsInfo(const size_t numTaskforGroups, const size_t numCPUsPerTaskforGroup);

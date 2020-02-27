@@ -16,7 +16,7 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-void DLBCPUManagerImplementation::preinitialize(__attribute__((unused)) bool dlbEnabled)
+void DLBCPUManagerImplementation::preinitialize()
 {
 	_finishedCPUInitialization = false;
 
@@ -88,6 +88,9 @@ void DLBCPUManagerImplementation::preinitialize(__attribute__((unused)) bool dlb
 	_idleCPUs.reset();
 
 	CPUManagerInterface::reportInformation(numCPUs, numNUMANodes);
+	if (_taskforGroupsReportEnabled) {
+		reportTaskforGroupsInfo(getNumTaskforGroups(), getNumCPUsPerTaskforGroup());
+	}
 
 
 	//    DLB RELATED    //

@@ -18,7 +18,7 @@ public:
 
 private:
 	// Source
-	Padded<std::atomic<long int>> _currentChunk;
+	Padded<std::atomic<int>> _currentChunk;
 	// Source
 	Padded<std::atomic<size_t>> _remainingIterations;
 	// Source and collaborator
@@ -26,7 +26,7 @@ private:
 	// Collaborator
 	size_t _completedIterations;
 	// Collaborator
-	long int _myChunk;
+	int _myChunk;
 
 public:
 	// Methods for both source and collaborator taskfors
@@ -133,10 +133,10 @@ public:
 		return (remaining == 0);
 	}
 
-	inline long int getNextChunk()
+	inline int getNextChunk()
 	{
 		assert(!isRunnable());
-		long int myChunk = _currentChunk.fetch_sub(1, std::memory_order_relaxed)-1;
+		int myChunk = _currentChunk.fetch_sub(1, std::memory_order_relaxed)-1;
 		return myChunk;
 	}
 
@@ -183,13 +183,13 @@ public:
 		return _bounds;
 	}
 
-	inline void setChunk(long int chunk)
+	inline void setChunk(int chunk)
 	{
 		assert(isRunnable());
 		_myChunk = chunk;
 	}
 
-	inline long int getMyChunk()
+	inline int getMyChunk()
 	{
 		assert(isRunnable());
 		return _myChunk;
@@ -198,7 +198,7 @@ public:
 	inline void computeChunkBounds(bounds_t &collaboratorBounds)
 	{
 		assert(isRunnable());
-		long int myChunk = _myChunk;
+		int myChunk = _myChunk;
 		assert(myChunk >= 0);
 
 		const Taskfor *source = (Taskfor *) getParent();

@@ -65,7 +65,7 @@ public:
 		strcpy(_dlbOptions, "--lewi --quiet=yes");
 	}
 
-	void preinitialize(bool dlbEnabled);
+	void preinitialize();
 
 	void initialize();
 

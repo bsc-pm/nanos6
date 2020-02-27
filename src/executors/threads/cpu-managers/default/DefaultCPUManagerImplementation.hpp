@@ -33,11 +33,6 @@ public:
 
 	bool disable(size_t systemCPUId);
 
-	inline size_t getNumCPUsPerTaskforGroup() const
-	{
-		return _cpus.size() / _taskforGroups;
-	}
-
 };
 
 #endif // DEFAULT_CPU_MANAGER_IMPLEMENTATION_HPP

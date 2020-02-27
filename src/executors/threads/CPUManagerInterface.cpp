@@ -100,7 +100,7 @@ void CPUManagerInterface::reportInformation(size_t numSystemCPUs, size_t numNUMA
 	}
 }
 
-void CPUManagerInterface::preinitialize(bool dlbEnabled)
+void CPUManagerInterface::preinitialize()
 {
 	_finishedCPUInitialization = false;
 
@@ -134,36 +134,27 @@ void CPUManagerInterface::preinitialize(bool dlbEnabled)
 	}
 
 	// Find the appropriate value for taskfor groups
-	if (dlbEnabled) {
-		const size_t numValidNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
-		refineTaskforGroups(numCPUs, numValidNUMANodes);
-	} else {
-		std::vector<int> availableNUMANodes(numNUMANodes, 0);
-		for (size_t i = 0; i < numCPUs; i++) {
-			CPU *cpu = (CPU *) cpus[i];
-			assert(cpu != nullptr);
-			if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
-				size_t NUMANodeId = cpu->getNumaNodeId();
-				availableNUMANodes[NUMANodeId]++;
-			}
+	std::vector<int> availableNUMANodes(numNUMANodes, 0);
+	for (size_t i = 0; i < numCPUs; i++) {
+		CPU *cpu = (CPU *) cpus[i];
+		assert(cpu != nullptr);
+		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
+			size_t NUMANodeId = cpu->getNumaNodeId();
+			availableNUMANodes[NUMANodeId]++;
 		}
-		size_t numValidNUMANodes = 0;
-		for(size_t i = 0; i < numNUMANodes; i++) {
-			if (availableNUMANodes[i] > 0) {
-				numValidNUMANodes++;
-			}
-		}
-		refineTaskforGroups(numAvailableCPUs, numValidNUMANodes);
 	}
+	size_t numValidNUMANodes = 0;
+	for(size_t i = 0; i < numNUMANodes; i++) {
+		if (availableNUMANodes[i] > 0) {
+			numValidNUMANodes++;
+		}
+	}
+	refineTaskforGroups(numAvailableCPUs, numValidNUMANodes);
 
 	size_t numCPUsPerTaskforGroup;
 	size_t groupId;
-	if (dlbEnabled) {
-		numCPUsPerTaskforGroup = numCPUs / getNumTaskforGroups();
-	} else {
-		numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
-		groupId = 0;
-	}
+	numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
+	groupId = 0;
 	assert(numCPUsPerTaskforGroup > 0);
 
 	size_t virtualCPUId = 0;
@@ -172,17 +163,10 @@ void CPUManagerInterface::preinitialize(bool dlbEnabled)
 		assert(cpu != nullptr);
 
 		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
-			if (dlbEnabled) {
-				// To compute the groupId we need the CPU's hwloc logical_index. Before
-				// setting the virtual id, use the current index to compute the groupId
-				groupId = cpu->getIndex() / numCPUsPerTaskforGroup;
-				assert(groupId <= numCPUs);
-			} else {
-				bool restart = (numCPUsPerTaskforGroup-- == 0);
-				if (restart) {
-					numCPUsPerTaskforGroup = (numAvailableCPUs / getNumTaskforGroups())-1;
-					groupId++;
-				}
+			bool restart = (numCPUsPerTaskforGroup-- == 0);
+			if (restart) {
+				numCPUsPerTaskforGroup = (numAvailableCPUs / getNumTaskforGroups())-1;
+				groupId++;
 			}
 
 			cpu->setIndex(virtualCPUId);
