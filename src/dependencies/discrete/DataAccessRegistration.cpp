@@ -325,6 +325,15 @@ namespace DataAccessRegistration {
 			m.flagsAfterPropagation = ACCESS_PARENT_DONE;
 			if (access->applyPropagated(m))
 				decreaseDeletableCountOrDelete(access->getOriginator(), hpDependencyData._deletableOriginators);
+
+			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
+			if (reductionInfo != nullptr) {
+				assert(!reductionInfo->finished());
+				if (reductionInfo->markAsClosed())
+					releaseReductionInfo(reductionInfo);
+
+				itMap->second._reductionInfo = nullptr;
+			}
 		}
 
 		if (accessStruct.hasDataAccesses()) {
