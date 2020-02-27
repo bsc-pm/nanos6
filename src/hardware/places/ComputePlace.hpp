@@ -15,6 +15,7 @@
 #include "CPUDependencyData.hpp"
 
 #include <InstrumentComputePlaceId.hpp>
+#include <InstrumentCPULocalData.hpp>
 
 class Taskfor;
 class MemoryPlace;
@@ -48,6 +49,9 @@ protected:
 
 	//! The instrumentation id of the compute place
 	Instrument::compute_place_id_t _instrumentationId;
+
+	//! Per CPU Instrumentation data
+	Instrument::CPULocalData _instrumentationData;
 
 	//! The dependency data for this compute place
 	CPUDependencyData _dependencyData;
@@ -123,6 +127,11 @@ public:
 	inline CPUDependencyData &getDependencyData()
 	{
 		return _dependencyData;
+	}
+
+	Instrument::CPULocalData const &getInstrumentationData() const
+	{
+		return _instrumentationData;
 	}
 };
 

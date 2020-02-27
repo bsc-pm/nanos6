@@ -1,0 +1,1 @@
+../null/InstrumentLogMessage.hpp

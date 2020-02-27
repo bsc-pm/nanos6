@@ -82,6 +82,7 @@ include_HEADERS = \
 lib_LTLIBRARIES = \
 	libnanos6.la \
 	libnanos6-optimized-linear-regions-fragmented.la \
+	libnanos6-ctf-linear-regions-fragmented.la \
 	libnanos6-debug-linear-regions-fragmented.la \
 	libnanos6-turbo-linear-regions-fragmented.la \
 	libnanos6-extrae-linear-regions-fragmented.la \
@@ -93,6 +94,7 @@ lib_LTLIBRARIES = \
 	libnanos6-verbose-linear-regions-fragmented.la \
 	libnanos6-verbose-debug-linear-regions-fragmented.la \
 	libnanos6-optimized-discrete.la \
+	libnanos6-ctf-discrete.la \
 	libnanos6-turbo-discrete.la \
 	libnanos6-debug-discrete.la \
 	libnanos6-extrae-discrete.la \
@@ -569,6 +571,9 @@ CLEANFILES += \
 
 noinstrument_sources =
 
+instrument_ctf_sources = \
+	src/instrument/ctf/CTFAPI.cpp
+
 instrument_generic_ids_sources = \
 	src/instrument/generic_ids/GenericIds.cpp
 
@@ -902,6 +907,7 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentBlocking.hpp \
 	src/instrument/extrae/InstrumentComputePlaceId.hpp \
 	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
+	src/instrument/extrae/InstrumentCPULocalData.hpp \
 	src/instrument/extrae/InstrumentDataAccessId.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
@@ -934,6 +940,7 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentBlocking.hpp \
 	src/instrument/graph/InstrumentComputePlaceId.hpp \
 	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
+	src/instrument/graph/InstrumentCPULocalData.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
@@ -962,6 +969,7 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentBlocking.hpp \
 	src/instrument/lint/InstrumentComputePlaceId.hpp \
 	src/instrument/lint/InstrumentComputePlaceManagement.hpp \
+	src/instrument/lint/InstrumentCPULocalData.hpp \
 	src/instrument/lint/InstrumentDataAccessId.hpp \
 	src/instrument/lint/InstrumentDependenciesByAccess.hpp \
 	src/instrument/lint/InstrumentDependenciesByAccessLinks.hpp \
@@ -988,6 +996,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentBlocking.hpp \
 	src/instrument/null/InstrumentComputePlaceId.hpp \
 	src/instrument/null/InstrumentComputePlaceManagement.hpp \
+	src/instrument/null/InstrumentCPULocalData.hpp \
 	src/instrument/null/InstrumentDataAccessId.hpp \
 	src/instrument/null/InstrumentDependenciesByAccess.hpp \
 	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
@@ -1014,6 +1023,7 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentBlocking.hpp \
 	src/instrument/stats/InstrumentComputePlaceId.hpp \
 	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
+	src/instrument/stats/InstrumentCPULocalData.hpp \
 	src/instrument/stats/InstrumentDataAccessId.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccessLinks.hpp \
@@ -1036,6 +1046,7 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentTracingPoints.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp \
+	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
@@ -1055,6 +1066,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentBlocking.hpp \
 	src/instrument/verbose/InstrumentComputePlaceId.hpp \
 	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
+	src/instrument/verbose/InstrumentCPULocalData.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
@@ -1240,6 +1252,36 @@ nodist_libnanos6_optimized_discrete_la_SOURCES += $(common_sources) $(noinstrume
 nodist_libnanos6_optimized_discrete_la_SOURCES += $(nodist_common_sources)
 else
 nodist_libnanos6_optimized_discrete_la_SOURCES += loader/disabled_variant.c
+endif
+endif
+
+libnanos6_ctf_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
+libnanos6_ctf_linear_regions_fragmented_la_CXXFLAGS = $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_ctf_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_ctf_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES =
+
+if BUILD_CTF_INSTRUMENTATION_VARIANT
+enabled_variants += ctf
+libnanos6_ctf_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_ctf_sources) $(universal_debug_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+disabled_variants += ctf
+libnanos6_ctf_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+
+libnanos6_ctf_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
+libnanos6_ctf_discrete_la_CXXFLAGS = $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_ctf_discrete_la_LDFLAGS = $(common_libnanos6_ldflags)
+libnanos6_ctf_discrete_la_SOURCES =
+nodist_libnanos6_ctf_discrete_la_SOURCES =
+
+if DISCRETE_DEPENDENCIES
+if BUILD_CTF_INSTRUMENTATION_VARIANT
+libnanos6_ctf_discrete_la_SOURCES += $(common_sources) $(instrument_ctf_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_dependency_sources)
+nodist_libnanos6_ctf_discrete_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+libnanos6_ctf_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
@@ -1557,6 +1599,7 @@ endif
 
 if !DISCRETE_DEPENDENCIES
 nodist_libnanos6_optimized_discrete_la_SOURCES += loader/disabled_variant.c
+nodist_libnanos6_ctf_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_debug_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_turbo_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_extrae_discrete_la_SOURCES += loader/disabled_variant.c
