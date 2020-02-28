@@ -129,7 +129,7 @@ public:
 		return _dependencyData;
 	}
 
-	Instrument::CPULocalData const &getInstrumentationData() const
+	Instrument::CPULocalData &getInstrumentationData()
 	{
 		return _instrumentationData;
 	}

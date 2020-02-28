@@ -572,7 +572,8 @@ CLEANFILES += \
 noinstrument_sources =
 
 instrument_ctf_sources = \
-	src/instrument/ctf/CTFAPI.cpp
+	src/instrument/ctf/CTFAPI.cpp \
+	src/instrument/ctf/InstrumentCPULocalData.cpp
 
 instrument_generic_ids_sources = \
 	src/instrument/generic_ids/GenericIds.cpp
