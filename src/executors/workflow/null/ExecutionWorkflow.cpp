@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2018-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2018-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "ExecutionWorkflow.hpp"
@@ -125,6 +125,7 @@ namespace ExecutionWorkflow {
 		Task *task,
 		__attribute__((unused)) DataAccess *taskwaitFragment
 	) {
+		#if !DISCRETE_DEPS
 		ComputePlace *computePlace = nullptr;
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		if (currentThread != nullptr) {
@@ -133,7 +134,6 @@ namespace ExecutionWorkflow {
 
 		CPUDependencyData hpDependencyData;
 
-		#if !DISCRETE_DEPS
 		DataAccessRegistration::releaseTaskwaitFragment(
 			task,
 			taskwaitFragment->getAccessRegion(),

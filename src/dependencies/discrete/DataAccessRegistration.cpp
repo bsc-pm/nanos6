@@ -199,7 +199,6 @@ namespace DataAccessRegistration {
 	static inline void walkAccessChain(Task *task, DataAccess *access,
 		void *address, CPUDependencyData &hpDependencyData)
 	{
-		DataAccess *currentAccessIterator = access;
 		DataAccessType originalAccessType = access->getType();
 		// No race, the parent is finished so all childs must be registered by now.
 		DataAccess *childAccess = access->getChild();
@@ -301,9 +300,7 @@ namespace DataAccessRegistration {
 
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
-
-		mailbox_t &mailBox = hpDependencyData._mailBox;
-		assert(mailBox.empty());
+		assert(hpDependencyData._mailBox.empty());
 
 		if (accessStruct.hasDataAccesses()) {
 			// if REDUCTION_ACCESS_TYPE, release slot.
@@ -414,11 +411,10 @@ namespace DataAccessRegistration {
 		// Get all seqs
 		accessStruct.forAll([&](void *address, DataAccess *access) {
 			DataAccessType accessType = access->getType();
-			bool weak = access->isWeak();
-			bool closeReduction = false;
-			bottom_map_t::iterator itMap;
 			ReductionInfo *reductionInfo = nullptr;
 			DataAccess *predecessor = nullptr;
+			bottom_map_t::iterator itMap;
+			bool weak = access->isWeak();
 
 			// Instrumentation mock(for now)
 			DataAccessRegion mock(address, 1);
@@ -472,6 +468,7 @@ namespace DataAccessRegistration {
 			}
 
 			bool schedule = false;
+			bool dispose = false;
 			DataAccessMessage fromCurrent;
 
 			if (predecessor == nullptr) {
@@ -484,7 +481,7 @@ namespace DataAccessRegistration {
 					schedule = fromCurrent.schedule;
 					assert(!(fromCurrent.flagsForNext));
 
-					bool dispose = parentAccess->applyPropagated(message);
+					dispose = parentAccess->applyPropagated(message);
 					if (dispose)
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
@@ -498,7 +495,7 @@ namespace DataAccessRegistration {
 				schedule = fromCurrent.schedule;
 				assert(!(fromCurrent.flagsForNext));
 
-				bool dispose = predecessor->applyPropagated(message);
+				dispose = predecessor->applyPropagated(message);
 				if (dispose)
 					decreaseDeletableCountOrDelete(predecessor->getOriginator(), hpDependencyData._deletableOriginators);
 			}
@@ -507,7 +504,6 @@ namespace DataAccessRegistration {
 				assert(access->getType() == REDUCTION_ACCESS_TYPE);
 				assert(fromCurrent.flagsAfterPropagation == ACCESS_REDUCTION_COMBINED);
 				ReductionInfo *current = access->getReductionInfo();
-				bool dispose;
 				if (current != reductionInfo) {
 					dispose = current->incrementUnregisteredAccesses();
 					assert(!dispose);

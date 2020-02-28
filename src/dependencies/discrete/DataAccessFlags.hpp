@@ -58,18 +58,6 @@ struct DataAccessMessage {
 		combine(false)
 	{
 	}
-
-	DataAccessMessage(const DataAccessMessage &message) :
-		flagsForNext(message.flagsForNext),
-		flagsAfterPropagation(message.flagsAfterPropagation),
-		from(message.from),
-		to(message.to),
-		schedule(message.schedule),
-		combine(message.combine)
-	{
-	}
-
-	constexpr DataAccessMessage& operator=(const DataAccessMessage &) = default;
 };
 
 typedef std::stack<DataAccessMessage> mailbox_t;
