@@ -138,10 +138,6 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 					executor->decreaseCallbackParticipants(spawnCallback);
 				}
 
-				if (isSpawned) {
-					free(taskInfo->implementations);
-				}
-
 				if (isTaskfor) {
 					((Taskfor *)task)->~Taskfor();
 				} else if (isStreamExecutor) {

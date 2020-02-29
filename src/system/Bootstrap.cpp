@@ -123,6 +123,9 @@ void nanos6_shutdown(void) {
 	ClusterManager::notifyShutdown(); // TODO: Rename this to shutdownPhase1()
 
 	Instrument::shutdown();
+
+	// Delete spawned functions task infos
+	SpawnedFunctions::shutdown();
 	
 	// Delete the worker threads
 	// NOTE: AFTER Instrument::shutdown since it may need thread info!

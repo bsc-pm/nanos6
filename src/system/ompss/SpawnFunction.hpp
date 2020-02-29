@@ -21,6 +21,7 @@ namespace SpawnedFunctions {
 	//! 
 	//! \returns true if it is a spawned task type
 	bool isSpawned(const nanos6_task_info_t *taskInfo);
+	void shutdown();
 }
 
 

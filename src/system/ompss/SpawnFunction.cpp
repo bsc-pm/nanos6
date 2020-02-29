@@ -120,6 +120,16 @@ namespace SpawnedFunctions {
 		assert(taskInfo->implementations != nullptr);
 		return (taskInfo->implementations[0].run == nanos6_spawned_function_wrapper);
 	}
+
+	void shutdown()
+	{
+		for(auto spawned : _spawnedFunctionInfos) {
+			nanos6_task_info_t taskInfo = spawned.second;
+			nanos6_task_implementation_info_t *implementations = taskInfo.implementations;
+			assert(implementations != nullptr);
+			free(implementations);
+		}
+	}
 }
 
 void nanos6_stream_spawn_function(
