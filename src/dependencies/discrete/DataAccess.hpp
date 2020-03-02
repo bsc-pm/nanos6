@@ -55,6 +55,7 @@ private:
 	void outAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
 	void inoutAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
 	void reductionAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message);
+	void readDestination(access_flags_t allFlags, DataAccessMessage &message, PropagationDestination &destination);
 
 public:
 	DataAccess(DataAccessType type, Task *originator, bool weak) :

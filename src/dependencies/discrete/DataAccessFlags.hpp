@@ -15,22 +15,30 @@ struct DataAccess;
 #define ZEROBITS		((unsigned int) 0)
 #define BIT(n) 			((unsigned int) (1 << n))
 
-#define ACCESS_NONE						ZEROBITS
-#define ACCESS_READ_SATISFIED 			BIT( 0) 	// Read satisfiability
-#define ACCESS_WRITE_SATISFIED 			BIT( 1) 	// Write satisfiability
-#define ACCESS_UNREGISTERED	 			BIT( 2) 	// Unregistered
-#define ACCESS_CHILDS_FINISHED			BIT( 3) 	// All the childs and its childs have finished
-#define ACCESS_EARLY_READ				BIT( 4) 	// Read accesses can be released early
-#define ACCESS_HASNEXT					BIT( 5)		// Has a ->_successor access
-#define ACCESS_HASCHILD					BIT( 6)		// Has a ->_child access
-#define ACCESS_NEXT_WRITE_SATISFIED		BIT( 7)		// Write satisfiability propagated to the next
-#define ACCESS_NEXT_READ_SATISFIED		BIT( 8)		// Read satisfiability propagated to next
-#define ACCESS_CHILD_WRITE_SATISFIED	BIT( 9) 	// Write satisfiability propagated to the child
-#define ACCESS_CHILD_READ_SATISFIED		BIT(10) 	// Read satisfiability propagated to the read
-#define ACCESS_PARENT_DONE				BIT(11)		// Parent has finished
-#define ACCESS_NEXTISPARENT				BIT(12)		// Next = parent access
-#define ACCESS_REDUCTION_COMBINED		BIT(13) 	// Combination checked
-#define ACCESS_IS_WEAK					BIT(14) 	// Weak
+#define ACCESS_NONE							ZEROBITS
+#define ACCESS_READ_SATISFIED 				BIT( 0) 	// Read satisfiability
+#define ACCESS_WRITE_SATISFIED 				BIT( 1) 	// Write satisfiability
+#define ACCESS_CONCURRENT_SATISFIED			BIT( 2)		// *FUTURE* Concurrent satisfiability
+#define ACCESS_COMMUTATIVE_SATISFIED		BIT( 3)		// *FUTURE* Commutative satisfiability
+#define ACCESS_UNREGISTERED	 				BIT( 4) 	// Unregistered
+#define ACCESS_CHILD_WRITE_DONE				BIT( 5) 	// The child access has released writes
+#define ACCESS_CHILD_READ_DONE				BIT( 6) 	// The child access has released reads
+#define ACCESS_CHILD_CONCURRENT_DONE		BIT( 7)		// *FUTURE* The child access has released concurrents
+#define ACCESS_CHILD_COMMUTATIVE_DONE		BIT( 8)		// *FUTURE* The child access has released commutatives
+#define ACCESS_HASNEXT						BIT( 9)		// Has a ->_successor access
+#define ACCESS_HASCHILD						BIT(10)		// Has a ->_child access
+#define ACCESS_NEXT_WRITE_SATISFIED			BIT(11)		// Write satisfiability propagated to the next
+#define ACCESS_NEXT_READ_SATISFIED			BIT(12)		// Read satisfiability propagated to next
+#define ACCESS_NEXT_CONCURRENT_SATISFIED	BIT(13)		// *FUTURE* Concurrent satisfiability propagated to the next
+#define ACCESS_NEXT_COMMUTATIVE_SATISFIED	BIT(14)		// *FUTURE* Commutative satisfiability propagated to the next
+#define ACCESS_CHILD_WRITE_SATISFIED		BIT(15) 	// Write satisfiability propagated to the child
+#define ACCESS_CHILD_READ_SATISFIED			BIT(16) 	// Read satisfiability propagated to the child
+#define ACCESS_CHILD_CONCURRENT_SATISFIED	BIT(17)		// *FUTURE* Concurrent satisfiability propagated to the child
+#define ACCESS_CHILD_COMMUTATIVE_SATISFIED	BIT(18)		// *FUTURE* Commutative satisfiability propagated to the child
+#define ACCESS_PARENT_DONE					BIT(19)		// Parent has finished
+#define ACCESS_NEXTISPARENT					BIT(20)		// Next = parent access
+#define ACCESS_REDUCTION_COMBINED			BIT(21) 	// Combination checked
+#define ACCESS_IS_WEAK						BIT(22) 	// Is a weak access (non-atomic, just to save space)
 
 typedef unsigned int access_flags_t;
 

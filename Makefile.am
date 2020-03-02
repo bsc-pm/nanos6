@@ -479,7 +479,8 @@ discrete_dependency_sources = \
 	src/dependencies/discrete/DataAccessRegistration.cpp \
 	src/dependencies/discrete/ReductionInfo.cpp \
 	src/dependencies/discrete/Reductions.cpp \
-	src/dependencies/discrete/RegisterDependencies.cpp
+	src/dependencies/discrete/RegisterDependencies.cpp \
+	src/dependencies/discrete/ReleaseDirective.cpp
 
 multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
 

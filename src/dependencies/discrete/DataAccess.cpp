@@ -12,9 +12,31 @@
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 
+#define PROPAGATE(a) (checkPropagation(flags, allFlags, a))
+
 static inline bool matchAll(access_flags_t value, access_flags_t mask)
 {
 	return ((value & mask) == mask);
+}
+
+static inline bool checkPropagation(access_flags_t flags, access_flags_t allFlags, access_flags_t condition)
+{
+	return ((flags & condition) && matchAll(allFlags, condition));
+}
+
+// This could be a shift when flags are stable
+static inline access_flags_t translateFlags(access_flags_t original)
+{
+	access_flags_t newFlags = ACCESS_NONE;
+
+	if (original & ACCESS_READ_SATISFIED)
+		newFlags |= ACCESS_CHILD_READ_DONE;
+
+	if (original & ACCESS_WRITE_SATISFIED)
+		newFlags |= ACCESS_CHILD_WRITE_DONE;
+
+	assert(newFlags);
+	return newFlags;
 }
 
 static inline access_flags_t calculatePropagationFlags(access_flags_t flagsForNext, PropagationDestination destination)
@@ -22,7 +44,7 @@ static inline access_flags_t calculatePropagationFlags(access_flags_t flagsForNe
 	access_flags_t flagsAfterPropagation = ACCESS_NONE;
 
 	if (flagsForNext) {
-		// Set the flags that we need to be reset
+		// Set the flags that we need to be set after delivering the message
 		if (destination == NEXT) {
 			if (flagsForNext & ACCESS_READ_SATISFIED)
 				flagsAfterPropagation |= ACCESS_NEXT_READ_SATISFIED;
@@ -34,9 +56,9 @@ static inline access_flags_t calculatePropagationFlags(access_flags_t flagsForNe
 			if (flagsForNext & ACCESS_WRITE_SATISFIED)
 				flagsAfterPropagation |= ACCESS_CHILD_WRITE_SATISFIED;
 		} else if (destination == PARENT) {
-			if (flagsForNext & ACCESS_CHILDS_FINISHED)
+			if (flagsForNext & ACCESS_CHILD_WRITE_DONE)
 				flagsAfterPropagation |= ACCESS_NEXT_WRITE_SATISFIED;
-			if (flagsForNext & ACCESS_EARLY_READ)
+			if (flagsForNext & ACCESS_CHILD_READ_DONE)
 				flagsAfterPropagation |= ACCESS_NEXT_READ_SATISFIED;
 		}
 	}
@@ -50,13 +72,13 @@ static inline bool calculateDisposing(access_flags_t flags, access_flags_t oldFl
 	access_flags_t disposeFlags = ACCESS_WRITE_SATISFIED | ACCESS_READ_SATISFIED | ACCESS_UNREGISTERED;
 
 	if (allFlags & ACCESS_HASCHILD) {
-		disposeFlags |= (ACCESS_CHILD_READ_SATISFIED | ACCESS_CHILD_WRITE_SATISFIED | ACCESS_CHILDS_FINISHED | ACCESS_EARLY_READ);
+		disposeFlags |= (ACCESS_CHILD_READ_SATISFIED | ACCESS_CHILD_WRITE_SATISFIED | ACCESS_CHILD_WRITE_DONE | ACCESS_CHILD_READ_DONE);
 	}
 
-	if (allFlags & ACCESS_HASNEXT) {
-		disposeFlags |= (ACCESS_NEXT_READ_SATISFIED | ACCESS_NEXT_WRITE_SATISFIED);
-	} else if (allFlags & ACCESS_NEXTISPARENT) {
+	if (allFlags & ACCESS_NEXTISPARENT) {
 		disposeFlags |= (ACCESS_PARENT_DONE | ACCESS_NEXT_READ_SATISFIED | ACCESS_NEXT_WRITE_SATISFIED);
+	} else if (allFlags & ACCESS_HASNEXT) {
+		disposeFlags |= (ACCESS_NEXT_READ_SATISFIED | ACCESS_NEXT_WRITE_SATISFIED);
 	} else {
 		disposeFlags |= ACCESS_PARENT_DONE;
 	}
@@ -65,6 +87,29 @@ static inline bool calculateDisposing(access_flags_t flags, access_flags_t oldFl
 		disposeFlags |= ACCESS_REDUCTION_COMBINED;
 
 	return matchAll(allFlags, disposeFlags);
+}
+
+void DataAccess::readDestination(
+	access_flags_t allFlags,
+	DataAccessMessage &message,
+	PropagationDestination &destination)
+{
+	if (destination != NONE && message.flagsForNext) {
+		// A message is generated, safe to read the pointers
+		if (destination == NEXT) {
+			message.to = _successor.load(std::memory_order_relaxed);
+
+			if (allFlags & ACCESS_NEXTISPARENT) {
+				message.flagsForNext = translateFlags(message.flagsForNext);
+				destination = PARENT;
+			}
+		} else {
+			assert(destination == CHILD);
+			message.to = _child.load(std::memory_order_relaxed);
+		}
+	} else {
+		assert(!message.flagsForNext);
+	}
 }
 
 DataAccessMessage DataAccess::inAutomata(
@@ -78,98 +123,35 @@ DataAccessMessage DataAccess::inAutomata(
 	PropagationDestination destination = NONE;
 	message.from = this;
 
-	// Read accesses always have to propagate read satisfiability.
-	if (flags & ACCESS_READ_SATISFIED) {
-		message.flagsForNext |= ACCESS_READ_SATISFIED;
+	// This automata is called two times, one for the child message and another one for the next.
+	// We handle this through two different sub-automatas for each destination
 
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_CHILDS_FINISHED | ACCESS_WRITE_SATISFIED))
-			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+	if (flags & ACCESS_READ_SATISFIED)
 		message.schedule = !weak;
-	}
 
-	// We can only propagate write satisfiability if the access is finished or
-	// it is a weak access and has a child (and hence has to propagate to children)
-	if (flags & ACCESS_WRITE_SATISFIED) {
-		if (toNextOnly) {
-			if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_CHILDS_FINISHED | ACCESS_READ_SATISFIED))
-				message.flagsForNext |= ACCESS_WRITE_SATISFIED;
-		} else {
+	if (toNextOnly) {
+		// Only messages that would go to successor or parent
+		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_WRITE_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_WRITE_DONE | ACCESS_HASNEXT))
 			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
-		}
-	}
 
-	if (flags & ACCESS_UNREGISTERED) {
-		if (matchAll(allFlags, ACCESS_CHILDS_FINISHED | ACCESS_READ_SATISFIED)) {
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-		}
-	}
+		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_READ_SATISFIED;
 
-	if (flags & ACCESS_CHILDS_FINISHED) {
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_READ_SATISFIED)) {
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-		}
-	}
+		destination = NEXT;
+	} else {
+		// Only messages that would go to the child
 
-	if (flags & ACCESS_NEXTISPARENT) {
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_CHILDS_FINISHED | ACCESS_WRITE_SATISFIED | ACCESS_READ_SATISFIED))
-			message.flagsForNext |= ACCESS_CHILDS_FINISHED;
+		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_READ_SATISFIED;
 
-		if (allFlags & ACCESS_READ_SATISFIED)
-			message.flagsForNext |= ACCESS_EARLY_READ;
-
-		destination = PARENT;
-	}
-
-	// If we register a child, we must propagate for sure the READ satisifiability,
-	// and even the WRITE if the current access is a weakin
-	if (flags & ACCESS_HASCHILD) {
-		message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-		message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
+		if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
 
 		destination = CHILD;
 	}
 
-	// If we register a successor, we must propagate the READ, and the WRITE if we have finished and have no childs
-	if (flags & ACCESS_HASNEXT) {
-		message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_CHILDS_FINISHED | ACCESS_READ_SATISFIED))
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-
-		destination = NEXT;
-	}
-
-	if (destination == NONE && message.flagsForNext) {
-		if (allFlags & ACCESS_HASCHILD && !(allFlags & ACCESS_CHILDS_FINISHED) && !toNextOnly) {
-			message.to = _child.load(std::memory_order_relaxed);
-			destination = CHILD;
-		} else if ((allFlags & ACCESS_HASNEXT) && toNextOnly) {
-			message.to = _successor.load(std::memory_order_relaxed);
-			destination = NEXT;
-		} else if ((allFlags & ACCESS_NEXTISPARENT) && toNextOnly) {
-			// We have to "translate" the flags for the parent
-			access_flags_t forParent = ACCESS_NONE;
-
-			if (message.flagsForNext & ACCESS_WRITE_SATISFIED)
-				forParent |= ACCESS_CHILDS_FINISHED;
-			if (message.flagsForNext & ACCESS_READ_SATISFIED)
-				forParent |= ACCESS_EARLY_READ;
-
-			message.flagsForNext = forParent;
-
-			message.to = _successor.load(std::memory_order_relaxed);
-			destination = PARENT;
-		} else {
-			message.flagsForNext = ACCESS_NONE;
-		}
-	} else if (message.flagsForNext) {
-		if (destination == CHILD && !toNextOnly)
-			message.to = _child.load(std::memory_order_relaxed);
-		else if ((destination == PARENT || destination == NEXT) && toNextOnly)
-			message.to = _successor.load(std::memory_order_relaxed);
-	}
-
-	message.flagsAfterPropagation = calculatePropagationFlags(message.flagsForNext, destination);
-
+	readDestination(allFlags, message, destination);
+	message.flagsAfterPropagation |= calculatePropagationFlags(message.flagsForNext, destination);
 	return message;
 }
 
@@ -183,106 +165,35 @@ void DataAccess::outAutomata(
 	message.from = this;
 	PropagationDestination destination = NONE;
 
-	if (flags & ACCESS_READ_SATISFIED) {
-		if (allFlags & ACCESS_WRITE_SATISFIED)
-			message.schedule = !weak;
+	if (flags & ACCESS_WRITE_SATISFIED)
+		message.schedule = !weak;
 
-		if ((allFlags & ACCESS_UNREGISTERED) || (allFlags & ACCESS_HASCHILD))
-			message.flagsForNext |= ACCESS_READ_SATISFIED;
-	}
-
-	if (flags & ACCESS_WRITE_SATISFIED) {
-		if (allFlags & ACCESS_READ_SATISFIED)
-			message.schedule = !weak;
-
-		if ((allFlags & ACCESS_UNREGISTERED) || (allFlags & ACCESS_HASCHILD))
-			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
-	}
-
-	if (flags & ACCESS_UNREGISTERED) {
-		if (allFlags & ACCESS_CHILDS_FINISHED) {
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-			message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-		} else {
-			if (matchAll(allFlags, ACCESS_EARLY_READ | ACCESS_HASNEXT)) {
-				message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-				destination = NEXT;
-			}
-		}
-	}
-
-	if (flags & ACCESS_CHILDS_FINISHED) {
-		if (allFlags & ACCESS_UNREGISTERED) {
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-
-			if (!(oldFlags & ACCESS_EARLY_READ))
-				message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-		}
-	}
-
-	if (flags & ACCESS_EARLY_READ) {
-		// We cannot have ACCESS_CHILDS_FINISHED, that means we lost a race.
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_HASNEXT) && !(oldFlags & ACCESS_CHILDS_FINISHED)) {
-			message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-
-			destination = NEXT;
-		}
-	}
-
-	if (flags & ACCESS_NEXTISPARENT) {
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_CHILDS_FINISHED | ACCESS_WRITE_SATISFIED))
-			message.flagsForNext |= (ACCESS_CHILDS_FINISHED | ACCESS_EARLY_READ);
-
-		destination = PARENT;
-	}
-
-	if (flags & ACCESS_HASCHILD) {
-		// Registering a child access
-		message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-		message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-
+	if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_READ_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
 		destination = CHILD;
 	}
 
-	if (flags & ACCESS_HASNEXT) {
-		// What if I have children!
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_CHILDS_FINISHED)) {
-			message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-		} else if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_EARLY_READ)) {
-			message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-		}
-
+	if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_READ_DONE)) {
+		message.flagsForNext |= ACCESS_READ_SATISFIED;
+		assert(destination == NONE || destination == NEXT);
 		destination = NEXT;
 	}
 
-	if (destination != NONE && message.flagsForNext) {
-		if (destination == NEXT || destination == PARENT)
-			message.to = _successor.load(std::memory_order_relaxed);
-		else
-			message.to = _child.load(std::memory_order_relaxed);
+	if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
 	}
 
-	if (message.to == nullptr && destination == NONE && message.flagsForNext) {
-		if (allFlags & ACCESS_HASCHILD && !(allFlags & ACCESS_CHILDS_FINISHED)) {
-			message.to = _child.load(std::memory_order_relaxed);
-			destination = CHILD;
-		} else if (allFlags & ACCESS_HASNEXT) {
-			message.to = _successor.load(std::memory_order_relaxed);
-			destination = NEXT;
-		} else if (allFlags & ACCESS_NEXTISPARENT) {
-			if (message.flagsForNext & ACCESS_WRITE_SATISFIED) {
-				message.flagsForNext = (ACCESS_CHILDS_FINISHED | ACCESS_EARLY_READ);
-			} else
-				message.flagsForNext = ACCESS_NONE;
-
-			destination = PARENT;
-			message.to = _successor.load(std::memory_order_relaxed);
-		} else
-			message.flagsForNext = ACCESS_NONE;
+	if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_WRITE_DONE)) {
+		message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+		assert(destination == NONE || destination == NEXT);
+		destination = NEXT;
 	}
 
-	message.flagsAfterPropagation = calculatePropagationFlags(message.flagsForNext, destination);
+	readDestination(allFlags, message, destination);
+	message.flagsAfterPropagation |= calculatePropagationFlags(message.flagsForNext, destination);
 }
 
 void DataAccess::inoutAutomata(
@@ -306,73 +217,24 @@ void DataAccess::reductionAutomata(
 	// No nested reductions, period.
 	assert(!(allFlags & ACCESS_HASCHILD));
 
-	if (flags & ACCESS_READ_SATISFIED) {
-		if (allFlags & ACCESS_UNREGISTERED)
-			message.flagsForNext |= ACCESS_READ_SATISFIED;
-	}
-
 	if (flags & ACCESS_WRITE_SATISFIED) {
 		message.combine = true;
 		message.flagsAfterPropagation |= ACCESS_REDUCTION_COMBINED;
-
-		if (allFlags & ACCESS_UNREGISTERED)
-			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
 	}
 
-	if (flags & ACCESS_UNREGISTERED) {
-		if (allFlags & ACCESS_CHILDS_FINISHED) {
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-			message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-		}
-	}
-
-	if (flags & ACCESS_CHILDS_FINISHED) {
-		if (allFlags & ACCESS_UNREGISTERED) {
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-			message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-		}
-	}
-
-	if (flags & ACCESS_NEXTISPARENT) {
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_CHILDS_FINISHED | ACCESS_WRITE_SATISFIED))
-			message.flagsForNext |= (ACCESS_CHILDS_FINISHED | ACCESS_EARLY_READ);
-
-		destination = PARENT;
-	}
-
-	if (flags & ACCESS_HASNEXT) {
-		// What if I have children!
-		if (matchAll(allFlags, ACCESS_UNREGISTERED | ACCESS_CHILDS_FINISHED)) {
-			message.flagsForNext |= (allFlags & (ACCESS_READ_SATISFIED));
-			message.flagsForNext |= (allFlags & (ACCESS_WRITE_SATISFIED));
-		}
-
+	if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_READ_DONE)) {
+		message.flagsForNext |= ACCESS_READ_SATISFIED;
+		assert(destination == NONE || destination == NEXT);
 		destination = NEXT;
 	}
 
-	if (destination != NONE && message.flagsForNext) {
-		if (destination == NEXT || destination == PARENT)
-			message.to = _successor.load(std::memory_order_relaxed);
-		else
-			message.to = _child.load(std::memory_order_relaxed);
+	if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_WRITE_DONE)) {
+		message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+		assert(destination == NONE || destination == NEXT);
+		destination = NEXT;
 	}
 
-	if (message.to == nullptr && message.flagsForNext) {
-		if (allFlags & ACCESS_HASNEXT) {
-			message.to = _successor.load(std::memory_order_relaxed);
-			destination = NEXT;
-		} else if (allFlags & ACCESS_NEXTISPARENT) {
-			if (message.flagsForNext & ACCESS_WRITE_SATISFIED) {
-				message.flagsForNext = (ACCESS_CHILDS_FINISHED | ACCESS_EARLY_READ);
-			} else
-				message.flagsForNext = ACCESS_NONE;
-
-			destination = PARENT;
-			message.to = _successor.load(std::memory_order_relaxed);
-		} else
-			message.flagsForNext = ACCESS_NONE;
-	}
-
+	readDestination(allFlags, message, destination);
 	message.flagsAfterPropagation |= calculatePropagationFlags(message.flagsForNext, destination);
 }
 
@@ -382,13 +244,14 @@ bool DataAccess::applyPropagated(DataAccessMessage &message)
 		return false;
 
 	bool isReduction = (getType() == REDUCTION_ACCESS_TYPE);
-	access_flags_t oldFlags = _accessFlags.fetch_or(message.flagsAfterPropagation, std::memory_order_acquire);
-	assert((oldFlags & message.flagsAfterPropagation) == ACCESS_NONE);
-	assert(message.from == this);
-
 	DataAccess *origin = (message.to == nullptr ? message.from : message.to);
 
+	access_flags_t oldFlags = _accessFlags.fetch_or(message.flagsAfterPropagation, std::memory_order_acquire);
 	Instrument::automataMessage(origin->getInstrumentationId(), message.from->getInstrumentationId(), message.flagsAfterPropagation, oldFlags);
+	// No references to the access from here, as it could be deleted by another thread.
+	// Any access without knowing for sure that a message will be generated is a use-after-free.
+	assert((oldFlags & message.flagsAfterPropagation) == ACCESS_NONE);
+	assert(message.from == this);
 
 	bool dispose = calculateDisposing(message.flagsAfterPropagation, oldFlags, isReduction);
 
@@ -405,6 +268,8 @@ bool DataAccess::apply(DataAccessMessage &message, mailbox_t &mailBox)
 
 	access_flags_t oldFlags = _accessFlags.fetch_or(message.flagsForNext);
 	Instrument::automataMessage(message.from->getInstrumentationId(), message.to->getInstrumentationId(), message.flagsForNext, oldFlags);
+	// No references to the access from here, as it could be deleted by another thread.
+	// Any access without knowing for sure that a message will be generated is a use-after-free.
 	bool weak = (oldFlags & ACCESS_IS_WEAK);
 
 	assert((oldFlags & message.flagsForNext) == ACCESS_NONE);

@@ -493,7 +493,7 @@ namespace Instrument {
 
 		logEntry->appendLocation(context);
 		logEntry->_contents << " <-> AutomataMessage From:" << dataAccessIdFrom << " To:" <<
-			dataAccessIdTo << " Flags:" << std::bitset<16>(flags) << " Was:" << std::bitset<16>(oldFlags);
+			dataAccessIdTo << " Flags:" << std::bitset<25>(flags) << " Was:" << std::bitset<25>(oldFlags);
 
 		addLogEntry(logEntry);
 	}

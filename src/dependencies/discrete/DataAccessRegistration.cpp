@@ -210,7 +210,7 @@ namespace DataAccessRegistration {
 		access_flags_t flagsToSet = ACCESS_UNREGISTERED;
 
 		if (childAccess == nullptr) {
-			flagsToSet |= (ACCESS_CHILDS_FINISHED | ACCESS_EARLY_READ);
+			flagsToSet |= (ACCESS_CHILD_WRITE_DONE | ACCESS_CHILD_READ_DONE);
 		} else {
 			// Place ourselves as successors of the last access.
 			DataAccess *lastChild = nullptr;
@@ -225,7 +225,7 @@ namespace DataAccessRegistration {
 			assert(lastChild != nullptr);
 
 			lastChild->setSuccessor(access);
-			DataAccessMessage m = lastChild->applySingle(ACCESS_NEXTISPARENT, mailBox);
+			DataAccessMessage m = lastChild->applySingle(ACCESS_HASNEXT | ACCESS_NEXTISPARENT, mailBox);
 			__attribute__((unused)) DataAccessMessage m_debug = access->applySingle(m.flagsForNext, mailBox);
 			assert(!(m_debug.flagsForNext));
 			lastChild->applyPropagated(m);
@@ -482,6 +482,7 @@ namespace DataAccessRegistration {
 					assert(!(fromCurrent.flagsForNext));
 
 					dispose = parentAccess->applyPropagated(message);
+					assert(!dispose);
 					if (dispose)
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
