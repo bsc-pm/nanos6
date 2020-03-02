@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DATA_ACCESS_REGISTRATION_HPP
@@ -29,8 +29,8 @@ namespace DataAccessRegistration {
 	//! \param[in] reductionIndex an index that identifies the reduction within the task
 
 	void registerTaskDataAccess(
-			Task *task, DataAccessType accessType, bool weak, void *address, size_t length,
-			reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex);
+		Task *task, DataAccessType accessType, bool weak, void *address, size_t length,
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex);
 
 	//! \brief Performs the task dependency registration procedure
 	//!
@@ -44,8 +44,15 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData,
 		MemoryPlace *location = nullptr,
-		bool fromBusyThread = false
-	);
+		bool fromBusyThread = false);
+
+	void releaseAccessRegion(
+		Task *task, void * address,
+		__attribute__((unused)) DataAccessType accessType,
+		__attribute__((unused)) bool weak,
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData,
+		MemoryPlace const *location = nullptr);
 
 	void handleEnterBlocking(Task *task);
 	void handleExitBlocking(Task *task);
@@ -56,7 +63,7 @@ namespace DataAccessRegistration {
 
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
-}
+} // namespace DataAccessRegistration
 
 
 #endif // DATA_ACCESS_REGISTRATION_HPP

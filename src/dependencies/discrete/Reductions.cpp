@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -77,11 +77,11 @@ void *nanos6_get_reduction_storage1(void *original,
 					+ originalLength));
 
 		assert(reductionInfo->getPaddedLength() >= (size_t) dim1size);
-		assert(((char*)original - (char*)originalAddress) < reductionInfo->getPaddedLength());
+		assert(((size_t) ((char*)original - (char*)originalAddress)) < reductionInfo->getPaddedLength());
 
 		address = ((char*)reductionInfo->getFreeSlotStorage(slotIndex)) +
 			((char*)original - (char*)originalAddress);
 	}
-	
+
 	return address;
 }

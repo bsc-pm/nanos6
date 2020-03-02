@@ -591,6 +591,18 @@ namespace DataAccessRegistration {
 			}
 		});
 	}
+
+	void releaseAccessRegion(
+		__attribute__((unused)) Task *task,
+		__attribute__((unused)) void *address,
+		__attribute__((unused)) DataAccessType accessType,
+		__attribute__((unused)) bool weak,
+		__attribute__((unused)) ComputePlace *computePlace,
+		__attribute__((unused)) CPUDependencyData &hpDependencyData,
+		__attribute__((unused)) MemoryPlace const *location)
+	{
+
+	}
 } // namespace DataAccessRegistration
 
 #pragma GCC visibility pop

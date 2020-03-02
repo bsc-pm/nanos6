@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -3172,29 +3172,13 @@ namespace DataAccessRegistration {
 #endif
 	}
 
-	void handleEnterBlocking(Task *task)
+	void handleEnterBlocking(__attribute__((unused)) Task *task)
 	{
-		// assert(task != nullptr);
-
-		// TaskDataAccesses &accessStructures = task->getDataAccesses();
-		// assert(!accessStructures.hasBeenDeleted());
-		// std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-		// if (!accessStructures._accesses.empty()) {
-		// 	task->decreaseRemovalBlockingCount();
-		// }
 	}
 
 
-	void handleExitBlocking(Task *task)
+	void handleExitBlocking(__attribute__((unused)) Task *task)
 	{
-		// assert(task != nullptr);
-
-		// TaskDataAccesses &accessStructures = task->getDataAccesses();
-		// assert(!accessStructures.hasBeenDeleted());
-		// std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-		// if (!accessStructures._accesses.empty()) {
-		// 	task->increaseRemovalBlockingCount();
-		// }
 	}
 
 
@@ -3213,10 +3197,6 @@ namespace DataAccessRegistration {
 			TaskDataAccesses &accessStructures = task->getDataAccesses();
 			assert(!accessStructures.hasBeenDeleted());
 			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-			// if (!accessStructures._accesses.empty()) {
-			// 	assert(accessStructures._removalBlockers > 0);
-			// 	task->decreaseRemovalBlockingCount();
-			// }
 
 			createTaskwait(task, accessStructures, computePlace, hpDependencyData);
 
@@ -3243,9 +3223,6 @@ namespace DataAccessRegistration {
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 
 		if (!accessStructures._accesses.empty()) {
-			// assert(accessStructures._removalBlockers > 0);
-			// task->increaseRemovalBlockingCount();
-
 			// Mark all accesses as not having subaccesses
 			accessStructures._accesses.processAll(
 				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {

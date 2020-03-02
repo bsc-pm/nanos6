@@ -122,7 +122,7 @@ namespace ExecutionWorkflow {
 	}
 
 	void setupTaskwaitWorkflow(
-		Task *task,
+		__attribute__((unused)) Task *task,
 		__attribute__((unused)) DataAccess *taskwaitFragment
 	) {
 		#if !DISCRETE_DEPS
