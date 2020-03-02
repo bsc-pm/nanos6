@@ -241,8 +241,8 @@ public:
 	//! \brief Add a nested task
 	inline void addChild(__attribute__((unused)) Task *child)
 	{
-		++_countdownToBeWokenUp;
-		++_removalCount;
+		_countdownToBeWokenUp.fetch_add(1, std::memory_order_relaxed);
+		_removalCount.fetch_add(1, std::memory_order_relaxed);
 	}
 
 	//! \brief Remove a nested task (because it has finished)
@@ -250,7 +250,7 @@ public:
 	//! \returns true iff the change makes this task become ready
 	inline bool finishChild() __attribute__((warn_unused_result))
 	{
-		int countdown = (--_countdownToBeWokenUp);
+		int countdown = (_countdownToBeWokenUp.fetch_sub(1, std::memory_order_relaxed) - 1);
 		assert(countdown >= 0);
 		return (countdown == 0);
 	}
@@ -260,7 +260,7 @@ public:
 	//! \returns true iff the change makes this task become disposable
 	inline bool removeChild(__attribute__((unused)) Task *child) __attribute__((warn_unused_result))
 	{
-		int countdown = (--_removalCount);
+		int countdown = (_removalCount.fetch_sub(1, std::memory_order_relaxed) - 1);
 		assert(countdown >= 0);
 		return (countdown == 0);
 	}
@@ -268,7 +268,7 @@ public:
 	//! \brief Increase an internal counter to prevent the removal of the task
 	inline void increaseRemovalBlockingCount()
 	{
-		++_removalCount;
+		_removalCount.fetch_add(1, std::memory_order_relaxed);
 	}
 
 	//! \brief Decrease an internal counter that prevents the removal of the task
@@ -276,7 +276,7 @@ public:
 	//! \returns true iff the change makes this task become ready or disposable
 	inline bool decreaseRemovalBlockingCount()
 	{
-		int countdown = (--_removalCount);
+		int countdown = (_removalCount.fetch_sub(1, std::memory_order_relaxed) - 1);
 		assert(countdown >= 0);
 		return (countdown == 0);
 	}
@@ -311,7 +311,6 @@ public:
 			return (_removalCount == 0);
 		}
 	}
-
 
 	inline priority_t getPriority() const
 	{
@@ -368,10 +367,7 @@ public:
 	//! \returns true if the change makes the task become ready
 	inline bool markAsBlocked()
 	{
-		// This may be false for "wait" tasks, which will block without a thread
-		// assert(_thread != nullptr);
-
-		int countdown = (--_countdownToBeWokenUp);
+		int countdown = (_countdownToBeWokenUp.fetch_sub(1, std::memory_order_relaxed) - 1);
 		assert(countdown >= 0);
 		return (countdown == 0);
 	}
@@ -381,8 +377,7 @@ public:
 	//! \returns true if it does not have any children
 	inline bool markAsUnblocked()
 	{
-		// assert(_thread != nullptr);
-		return ((++_countdownToBeWokenUp) == 1);
+		return (_countdownToBeWokenUp.fetch_add(1, std::memory_order_relaxed) == 0);
 	}
 
 	//! \brief Indicates whether it has finished
@@ -429,7 +424,7 @@ public:
 	//! \returns true if this task is unblocked
 	inline bool enableScheduling()
 	{
-		int countdown = (--_countdownToBeWokenUp);
+		int countdown = (_countdownToBeWokenUp.fetch_sub(1, std::memory_order_relaxed) - 1);
 		assert(countdown >= 0);
 		return (countdown == 0);
 	}

@@ -23,7 +23,6 @@
 struct DataAccess;
 
 struct TaskDataAccesses {
-	typedef TicketSpinLock<int> spinlock_t;
 	typedef std::unordered_map<void *, BottomMapEntry> bottom_map_t;
 	typedef std::unordered_map<void *, DataAccess> access_map_t;
 
@@ -115,7 +114,6 @@ struct TaskDataAccesses {
 	{
 		__attribute__((unused)) int res = _deletableCount.fetch_add(1, std::memory_order_relaxed);
 		assert(res >= 0);
-		// return (res == 0);
 	}
 
 	inline DataAccess * findAccess(void * address) const
