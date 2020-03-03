@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 
 # A workaround for http://debbugs.gnu.org/cgi/bugreport.cgi?bug=18744
 am__is_gnu_make = { \
@@ -83,6 +83,7 @@ lib_LTLIBRARIES = \
 	libnanos6-optimized-linear-regions-fragmented.la \
 	libnanos6-debug-linear-regions-fragmented.la \
 	libnanos6-extrae-linear-regions-fragmented.la \
+	libnanos6-extrae-debug-linear-regions-fragmented.la \
 	libnanos6-graph-linear-regions-fragmented.la \
 	libnanos6-graph-debug-linear-regions-fragmented.la \
 	libnanos6-lint-linear-regions-fragmented.la \
@@ -93,6 +94,7 @@ lib_LTLIBRARIES = \
 	libnanos6-optimized-discrete.la \
 	libnanos6-debug-discrete.la \
 	libnanos6-extrae-discrete.la \
+	libnanos6-extrae-debug-discrete.la \
 	libnanos6-lint-discrete.la \
 	libnanos6-stats-discrete.la \
 	libnanos6-stats-papi-discrete.la \
@@ -1411,6 +1413,31 @@ disabled_variants += extrae
 libnanos6_extrae_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
+libnanos6_extrae_debug_linear_regions_fragmented_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
+libnanos6_extrae_debug_linear_regions_fragmented_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_extrae_debug_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES =
+nodist_libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES =
+
+if HAVE_EXTRAE
+if BUILD_EXTRAE_INSTRUMENTATION_VARIANT
+if BUILD_DEBUG_VARIANTS
+enabled_variants += extrae-debug
+libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources) $(memory_debug_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+disabled_variants += extrae-debug
+libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+else
+disabled_variants += extrae-debug
+libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+else
+disabled_variants += extrae-debug
+libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+
 libnanos6_extrae_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
 libnanos6_extrae_discrete_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_extrae_discrete_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
@@ -1430,10 +1457,34 @@ libnanos6_extrae_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
+libnanos6_extrae_debug_discrete_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
+libnanos6_extrae_debug_discrete_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_extrae_debug_discrete_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+libnanos6_extrae_debug_discrete_la_SOURCES =
+nodist_libnanos6_extrae_debug_discrete_la_SOURCES =
+
+if DISCRETE_DEPENDENCIES
+if HAVE_EXTRAE
+if BUILD_EXTRAE_INSTRUMENTATION_VARIANT
+if BUILD_DEBUG_VARIANTS
+libnanos6_extrae_debug_discrete_la_SOURCES += $(common_sources) $(instrument_extrae_sources) $(universal_debug_sources) $(memory_debug_sources) $(discrete_dependency_sources)
+nodist_libnanos6_extrae_debug_discrete_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+else
+libnanos6_extrae_debug_discrete_la_SOURCES += loader/disabled_variant.c
+endif
+else
+libnanos6_extrae_debug_discrete_la_SOURCES += loader/disabled_variant.c
+endif
+else
+libnanos6_extrae_debug_discrete_la_SOURCES += loader/disabled_variant.c
+endif
+endif
+
 deprecated_libs = \
 	libnanos6-optimized.la \
 	libnanos6-debug.la \
 	libnanos6-extrae.la \
+	libnanos6-extrae-debug.la \
 	libnanos6-profile.la \
 	libnanos6-stats.la \
 	libnanos6-stats-papi.la \
@@ -1477,6 +1528,7 @@ if !DISCRETE_DEPENDENCIES
 libnanos6_optimized_discrete_la_SOURCES += loader/disabled_variant.c
 libnanos6_debug_discrete_la_SOURCES += loader/disabled_variant.c
 libnanos6_extrae_discrete_la_SOURCES += loader/disabled_variant.c
+libnanos6_extrae_debug_discrete_la_SOURCES += loader/disabled_variant.c
 libnanos6_lint_discrete_la_SOURCES += loader/disabled_variant.c
 libnanos6_stats_discrete_la_SOURCES += loader/disabled_variant.c
 libnanos6_stats_papi_discrete_la_SOURCES += loader/disabled_variant.c
