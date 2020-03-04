@@ -8,28 +8,86 @@
 #define INSTRUMENT_NULL_INIT_AND_SHUTDOWN_HPP
 
 
-#include "CTFAPI.hpp"
 #include <executors/threads/CPUManager.hpp>
 #include "../api/InstrumentInitAndShutdown.hpp"
+#include "CTFAPI.hpp"
+#include <string.h>
+#include <errno.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 
 namespace Instrument {
+
+	static void createTraceDirectories(std::string root, std::string &userPath, std::string &kernelPath)
+	{
+		int ret;
+
+		userPath   = root;
+		kernelPath = root;
+
+		ret = mkdir(root.c_str(), 0766);
+		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
+
+		kernelPath += "/kernel";
+		ret = mkdir(kernelPath.c_str(), 0766);
+		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
+
+		userPath += "/ust";
+		ret = mkdir(userPath.c_str(), 0766);
+		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
+		userPath += "/uid";
+		ret = mkdir(userPath.c_str(), 0766);
+		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
+		userPath += "/1042";
+		ret = mkdir(userPath.c_str(), 0766);
+		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
+		userPath += "/64-bit";
+		ret = mkdir(userPath.c_str(), 0766);
+		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
+	}
+
 	void initialize()
 	{
+		bool ret;
 		uint64_t i;
 		uint64_t totalCPUs;
+		uint32_t cpuId;
 		size_t const defaultSize = 4096;
+		std::string tracePath, userPath, kernelPath, streamPath;
 
 		CTFAPI::tracepoint();
+
+		// TODO add timestamp?
+		// TODO get folder name & path form env var?
+		// TODO 1042 is the user id, get the real one
+		// TODO allocate memory on each CPU (madvise or specific
+		// instrument function?)
+		tracePath = "./trace-ctf-nanos6";
+		createTraceDirectories(tracePath, userPath, kernelPath);
+
+		CTFAPI::writeUserMetadata(userPath);
+		//CTFAPI::writeKernelMetadata(kernelPath);
 
 		totalCPUs = (uint64_t) CPUManager::getTotalCPUs();
 
 		for (i = 0; i < totalCPUs; i++) {
 			CPU *CPU = CPUManager::getCPU(i);
-			if (CPU) {
-				CPULocalData &data = CPU->getInstrumentationData();
-				data.initialize(defaultSize);
-			}
+
+			if (!CPU)
+				continue;
+
+			cpuId = CPU->getSystemCPUId();
+			CTFStream &userStream = CPU->getInstrumentationData().userStream;
+
+			userStream.initialize(defaultSize);
+			CTFAPI::addStreamHeader(userStream, cpuId);
+			streamPath = userPath + "/channel_" + std::to_string(cpuId);
+			userStream.fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
+			if (userStream.fdOutput == -1)
+				FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
 		}
 	}
 
@@ -44,10 +102,14 @@ namespace Instrument {
 
 		for (i = 0; i < totalCPUs; i++) {
 			CPU *CPU = CPUManager::getCPU(i);
-			if (CPU) {
-				CPULocalData &data = CPU->getInstrumentationData();
-				data.shutdown();
-			}
+
+			if (!CPU)
+				continue;
+
+			CTFStream &userStream = CPU->getInstrumentationData().userStream;
+			userStream.flushData();
+			userStream.shutdown();
+			close(userStream.fdOutput);
 		}
 	}
 }

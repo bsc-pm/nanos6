@@ -7,14 +7,18 @@
 #ifndef CTFAPI_HPP
 #define CTFAPI_HPP
 
-namespace CTFAPI {
+#include <stdint.h>
+#include <inttypes.h>
+#include <InstrumentCPULocalData.hpp>
 
-	//static inline void emit_SimpleEvent (extrae_type_t type, extrae_value_t value)
-	//{
-	//	ExtraeSymbolResolver<void, &Instrument::_Extrae_event_symbolName, extrae_type_t, extrae_value_t>::call(type, value);
-	//}
-	
+namespace CTFAPI {
 	void tracepoint(void);
+	void tp_task_start(uint64_t addr, uint64_t id, int32_t priority, int32_t nesting);
+
+	void writeMetadata(void);
+	void addStreamHeader(Instrument::CTFStream &stream, uint32_t cpuId);
+	void writeUserMetadata(std::string directory);
+	void writeKernelMetadata(std::string directory);
 }
 
 #endif // CTFAPI_HPP

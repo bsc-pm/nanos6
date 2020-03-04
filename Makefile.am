@@ -573,7 +573,9 @@ noinstrument_sources =
 
 instrument_ctf_sources = \
 	src/instrument/ctf/CTFAPI.cpp \
-	src/instrument/ctf/InstrumentCPULocalData.cpp
+	src/instrument/ctf/InstrumentTaskId.cpp \
+	src/instrument/ctf/InstrumentCPULocalData.cpp \
+	src/instrument/support/InstrumentCPULocalDataSupport.cpp
 
 instrument_generic_ids_sources = \
 	src/instrument/generic_ids/GenericIds.cpp
