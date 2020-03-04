@@ -55,6 +55,8 @@ private:
 	void outAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
 	void inoutAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
 	void reductionAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message);
+	DataAccessMessage concurrentAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
+	DataAccessMessage commutativeAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	void readDestination(access_flags_t allFlags, DataAccessMessage &message, PropagationDestination &destination);
 
 public:

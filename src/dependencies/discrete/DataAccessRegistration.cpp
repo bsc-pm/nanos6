@@ -208,7 +208,7 @@ namespace DataAccessRegistration {
 		access_flags_t flagsToSet = ACCESS_UNREGISTERED;
 
 		if (childAccess == nullptr) {
-			flagsToSet |= (ACCESS_CHILD_WRITE_DONE | ACCESS_CHILD_READ_DONE);
+			flagsToSet |= (ACCESS_CHILD_WRITE_DONE | ACCESS_CHILD_READ_DONE | ACCESS_CHILD_CONCURRENT_DONE | ACCESS_CHILD_COMMUTATIVE_DONE);
 		} else {
 			// Place ourselves as successors of the last access.
 			DataAccess *lastChild = nullptr;
@@ -483,7 +483,9 @@ namespace DataAccessRegistration {
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
 					schedule = true;
-					fromCurrent = access->applySingle(ACCESS_READ_SATISFIED | ACCESS_WRITE_SATISFIED, mailBox);
+					fromCurrent = access->applySingle(
+						ACCESS_READ_SATISFIED | ACCESS_WRITE_SATISFIED | ACCESS_CONCURRENT_SATISFIED | ACCESS_COMMUTATIVE_SATISFIED,
+						mailBox);
 				}
 			} else {
 				predecessor->setSuccessor(access);
@@ -598,7 +600,6 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) CPUDependencyData &hpDependencyData,
 		__attribute__((unused)) MemoryPlace const *location)
 	{
-
 	}
 } // namespace DataAccessRegistration
 
