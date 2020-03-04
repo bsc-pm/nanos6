@@ -64,8 +64,7 @@ private:
 		static void setEntryValue(nanos6_runtime_info_entry_t &entry, T const &value)
 		{
 			entry.type = nanos6_text_runtime_info_entry;
-			char *text = strdup( std::string(value).c_str() );
-			entry.text = text;
+			entry.text = strdup(std::string(value).c_str());
 		}
 	};
 	
@@ -83,8 +82,7 @@ private:
 		static void setEntryValue(nanos6_runtime_info_entry_t &entry, T const &value)
 		{
 			entry.type = nanos6_text_runtime_info_entry;
-			char *text = strdup(value);
-			entry.text = text;
+			entry.text = strdup(value);
 		}
 	};
 	
@@ -98,10 +96,8 @@ public:
 		_contents.emplace_back();
 		nanos6_runtime_info_entry_t &entry = _contents.back();
 		
-		char *name_dup = strdup(name.c_str());
-		char *description_dup = strdup(description.c_str());
-		entry.name = name_dup;
-		entry.description = description_dup;
+		entry.name = strdup(name.c_str());
+		entry.description = strdup(description.c_str());
 		
 		EntryValueSetter<T,
 			std::is_convertible<typename std::remove_reference<T>::type, long>::value,
@@ -112,9 +108,7 @@ public:
 			std::is_same< typename std::remove_cv< typename std::remove_reference<T>::type >::type, char *>::value
 		>::setEntryValue(entry, value);
 		
-		char *units_dup = nullptr;
-		units_dup = strdup(units.c_str());
-		entry.units = units_dup;
+		entry.units = strdup(units.c_str());
 		
 		_lock.unlock();
 	}
@@ -157,7 +151,7 @@ public:
 
 	static void shutdown()
 	{
-		for(nanos6_runtime_info_entry_t entry : _contents) {
+		for (nanos6_runtime_info_entry_t entry : _contents) {
 			free(entry.name);
 			free(entry.description);
 			if (entry.type == nanos6_text_runtime_info_entry) {

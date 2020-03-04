@@ -123,7 +123,7 @@ namespace SpawnedFunctions {
 
 	void shutdown()
 	{
-		for(auto spawned : _spawnedFunctionInfos) {
+		for (auto spawned : _spawnedFunctionInfos) {
 			nanos6_task_info_t taskInfo = spawned.second;
 			nanos6_task_implementation_info_t *implementations = taskInfo.implementations;
 			assert(implementations != nullptr);

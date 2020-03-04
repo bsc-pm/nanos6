@@ -19,7 +19,8 @@ Device::Device(nanos6_device_t type, int subType) :
 {
 }
 
-Device::~Device() {
+Device::~Device()
+{
 	for (DeviceComputePlace *dcp : _places) {
 		assert(dcp != nullptr);
 		delete dcp;
