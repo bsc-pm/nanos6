@@ -33,7 +33,7 @@ typedef struct {
 	char const *name;
 	
 	//! \brief description of the entry (multiple words)
-	char *description;
+	char const *description;
 	
 	//! \brief type of the value
 	nanos6_runtime_info_entry_type_t type;
@@ -42,11 +42,11 @@ typedef struct {
 	union {
 		long integer;
 		double real;
-		char *text;
+		char const *text;
 	};
 	
 	//! \brief units (if applicable)
-	char *units;
+	char const *units;
 } nanos6_runtime_info_entry_t;
 
 

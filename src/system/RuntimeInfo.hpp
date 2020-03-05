@@ -153,11 +153,11 @@ public:
 	{
 		for (nanos6_runtime_info_entry_t entry : _contents) {
 			free((void *) entry.name);
-			free(entry.description);
+			free((void *) entry.description);
 			if (entry.type == nanos6_text_runtime_info_entry) {
-				free(entry.text);
+				free((void *) entry.text);
 			}
-			free(entry.units);
+			free((void *) entry.units);
 		}
 	}
 };
