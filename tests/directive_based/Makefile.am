@@ -1,10 +1,10 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 
 
 AM_CXXFLAGS = -I$(top_srcdir)/tests $(PTHREAD_CFLAGS)
-AM_LDFLAGS = 
+AM_LDFLAGS =
 
 CXX = $(NANOS6_MCXX) --parallel
 
@@ -95,7 +95,9 @@ discrete_tests += \
 	discrete-deps-nonest.test \
 	discrete-deps-early-release.test \
 	discrete-deps-er-and-weak.test \
-	discrete-deps-wait.test
+	discrete-deps-wait.test \
+	discrete-simple-commutative.test \
+	discrete-red-stress.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -166,7 +168,9 @@ discrete_tests += \
 	discrete-deps-nonest.debug.test \
 	discrete-deps-early-release.debug.test \
 	discrete-deps-er-and-weak.debug.test \
-	discrete-deps-wait.debug.test
+	discrete-deps-wait.debug.test \
+	discrete-simple-commutative.debug.test \
+	discrete-red-stress.debug.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -543,6 +547,24 @@ discrete_deps_wait_test_SOURCES = discrete/discrete-deps-wait.cpp
 discrete_deps_wait_test_CPPFLAGS = -DNDEBUG
 discrete_deps_wait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_deps_wait_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_simple_commutative_debug_test_SOURCES = discrete/discrete-simple-commutative.cpp
+discrete_simple_commutative_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_simple_commutative_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_simple_commutative_test_SOURCES = discrete/discrete-simple-commutative.cpp
+discrete_simple_commutative_test_CPPFLAGS = -DNDEBUG
+discrete_simple_commutative_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_simple_commutative_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_red_stress_debug_test_SOURCES = discrete/discrete-red-stress.cpp
+discrete_red_stress_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_red_stress_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_red_stress_test_SOURCES = discrete/discrete-red-stress.cpp
+discrete_red_stress_test_CPPFLAGS = -DNDEBUG
+discrete_red_stress_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_red_stress_test_LDFLAGS = $(test_common_ldflags)
 
 #red_nest_taskwait_debug_test_SOURCES = reductions/red-nest-taskwait.cpp
 #red_nest_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

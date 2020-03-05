@@ -13,6 +13,7 @@
 #include <mutex>
 
 #include "BottomMapEntry.hpp"
+#include "CommutativeSemaphore.hpp"
 #include "CPUDependencyData.hpp"
 #include "DataAccessRegistration.hpp"
 #include "executors/threads/TaskFinalization.hpp"
@@ -88,6 +89,22 @@ namespace DataAccessRegistration {
 		hpDependencyData._satisfiedOriginators.clear();
 		hpDependencyData._deletableOriginators.clear();
 	}
+
+	static inline void processCommutativeOriginators(CPUDependencyData &hpDependencyData)
+	{
+		CPUDependencyData::satisfied_originator_list_t::iterator it = hpDependencyData._satisfiedOriginators.begin();
+
+		while (it != hpDependencyData._satisfiedOriginators.end()) {
+			Task *task = *it;
+			TaskDataAccesses &accessStruct = task->getDataAccesses();
+
+			if (accessStruct._commutativeMask && !CommutativeSemaphore::registerTask(task))
+				it = hpDependencyData._satisfiedOriginators.erase(it);
+			else
+				++it;
+		}
+	}
+
 
 	static inline DataAccessType combineTypes(DataAccessType type1, DataAccessType type2)
 	{
@@ -285,6 +302,8 @@ namespace DataAccessRegistration {
 			task->increaseRemovalBlockingCount();
 		}
 
+		// From those satisfied originators, some might need to be processed through the commutative region.
+		processCommutativeOriginators(hpDependencyData);
 		processSatisfiedOriginators(hpDependencyData, computePlace, true);
 
 #ifndef NDEBUG
@@ -294,7 +313,13 @@ namespace DataAccessRegistration {
 		}
 #endif
 
-		return task->decreasePredecessors(2);
+		bool ready = task->decreasePredecessors(2);
+
+		// Commutative accesses have to acquire the commutative region
+		if (ready && accessStructures._commutativeMask)
+			ready = CommutativeSemaphore::registerTask(task);
+
+		return ready;
 	}
 
 	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData,
@@ -340,6 +365,13 @@ namespace DataAccessRegistration {
 				itMap->second._reductionInfo = nullptr;
 			}
 		}
+
+		// Commutative released accesses have to be registered
+		processCommutativeOriginators(hpDependencyData);
+
+		// Release commutative mask. The order is important, as this will add satisfied originators
+		if (accessStruct._commutativeMask)
+			CommutativeSemaphore::releaseTask(task, hpDependencyData);
 
 		if (accessStruct.hasDataAccesses()) {
 			// All TaskDataAccesses have a deletableCount of 1 for default, so this will return true unless
@@ -435,6 +467,11 @@ namespace DataAccessRegistration {
 				// Element already exists.
 				predecessor = itMap->second._access;
 				itMap->second._access = access;
+			}
+
+			if (accessType == COMMUTATIVE_ACCESS_TYPE && !weak) {
+				// Calculate commutative mask
+				accessStruct._commutativeMask |= CommutativeSemaphore::getMaskForAddress(address);
 			}
 
 			// Check if we're closing a reduction, or allocate one in case we need it.
