@@ -30,7 +30,7 @@ typedef enum {
 
 typedef struct {
 	//! \brief name of the entry (single word)
-	char *name;
+	char const *name;
 	
 	//! \brief description of the entry (multiple words)
 	char *description;

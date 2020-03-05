@@ -36,7 +36,6 @@ DeviceComputePlace::DeviceComputePlace(DeviceMemoryPlace *memoryPlace,
 
 DeviceComputePlace::~DeviceComputePlace()
 {
-	delete _memoryPlace;
 	deactivatePollingService();
 }
 

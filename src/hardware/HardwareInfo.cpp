@@ -42,13 +42,13 @@ void HardwareInfo::initialize()
 void HardwareInfo::shutdown()
 {
 	for (int i = 0; i < nanos6_device_t::nanos6_device_type_num; ++i) {
-		if (_infos[i] != nullptr) {
-			_infos[i]->shutdown();
-			delete _infos[i];
-		}
 		if (_functions[i] != nullptr) {
 			_functions[i]->shutdown();
 			delete _functions[i];
+		}
+		if (_infos[i] != nullptr) {
+			_infos[i]->shutdown();
+			delete _infos[i];
 		}
 	}
 }

@@ -152,7 +152,7 @@ public:
 	static void shutdown()
 	{
 		for (nanos6_runtime_info_entry_t entry : _contents) {
-			free(entry.name);
+			free((void *) entry.name);
 			free(entry.description);
 			if (entry.type == nanos6_text_runtime_info_entry) {
 				free(entry.text);

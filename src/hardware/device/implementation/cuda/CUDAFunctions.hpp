@@ -68,13 +68,16 @@ public:
 	~CUDAFunctions()
 	{
 		for (size_t i = 0; i < _cudaDeps.size(); i++) {
+			DeviceComputePlace *dcp = (DeviceComputePlace *) _cudaDeps[i].first;
+			DeviceMemoryPlace *dmp = dcp->getMemoryPlace();
+			delete dmp;
 			delete _cudaDeps[i].second;
 		}
 	}
 	
 	void shutdown()
 	{
-		if (!_cudaDeps.empty()) {
+		if (_correctlyInitialized) {
 			nanos6_unregister_polling_service("taskFinisher",
 					(nanos6_polling_service_t) DeviceComputePlace::pollingFinishTasks, this);
 		}
