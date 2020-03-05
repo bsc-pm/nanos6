@@ -13,10 +13,11 @@
 
 namespace CTFAPI {
 	void tracepoint(void);
-	void tp_task_start(uint64_t addr, uint64_t id, int32_t priority, int32_t nesting);
+	void tp_task_start(uint64_t addr, uint64_t taskId);
+	void tp_task_stop(uint64_t taskId);
 
 	void writeMetadata(void);
-	void addStreamHeader(Instrument::CTFStream &stream, uint32_t cpuId);
+	void addStreamHeader(Instrument::CTFStream &stream);
 	void writeUserMetadata(std::string directory);
 	void writeKernelMetadata(std::string directory);
 }

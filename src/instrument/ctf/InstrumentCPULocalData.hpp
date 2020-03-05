@@ -21,11 +21,12 @@ namespace Instrument {
 		uint64_t mask;
 		uint64_t lost;
 		uint64_t threshold;
+		uint32_t cpuId;
 
 		int fdOutput;
 		off_t fileOffset;
 
-		void initialize(size_t size);
+		void initialize(size_t size, uint32_t cpuId);
 		void shutdown(void);
 		bool checkFreeSpace(size_t size);
 		void flushData();

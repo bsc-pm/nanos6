@@ -17,18 +17,19 @@
 
 
 
-void Instrument::CTFStream::initialize(size_t size)
+void Instrument::CTFStream::initialize(size_t size, uint32_t cpuId)
 {
 	int fd;
 	size_t nPages;
 	void *mrbPart;
 	size_t sizeAligned;
+	const size_t thresholdDefault = 1024;
 
 	nPages = (size + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
 	sizeAligned = nPages * PAGE_SIZE;
 	mrbSize = sizeAligned * 2;
 
-	// allocate backing memory for the event buffer
+	// allocate backing physical memory for the event buffer
 	fd = open("/tmp", O_TMPFILE | O_RDWR | O_EXCL, 0600);
 	if (fd == -1) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: open: ") + strerror(errno));
@@ -36,18 +37,20 @@ void Instrument::CTFStream::initialize(size_t size)
 	if (ftruncate(fd, sizeAligned)) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: ftruncate: ") + strerror(errno));
 	}
+
+	// allocate virtual addresses for the ring buffer (2x requestes buffer size)
 	mrb = mmap(NULL, mrbSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (mrb == MAP_FAILED) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: mmap base: ") + strerror(errno));
 	}
 
-	// mmap magic ring buffer
-	mrbPart = mmap(mrb, sizeAligned, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd, 0);
-	if (mrbPart == MAP_FAILED) {
+	// mmap physical pages to virtual addresses
+	mrbPart = mmap(mrb, sizeAligned, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
+	if (mrbPart != mrb) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: mmap part 1: ") + strerror(errno));
 	}
-	mrbPart = mmap((char *) mrb + sizeAligned, sizeAligned, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd, sizeAligned);
-	if (mrbPart == MAP_FAILED) {
+	mrbPart = mmap(((char *) mrb) + sizeAligned, sizeAligned, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, fd, 0);
+	if (mrbPart != ((char *) mrb) + sizeAligned) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: mmap part 2: ") + strerror(errno));
 	}
 
@@ -57,12 +60,15 @@ void Instrument::CTFStream::initialize(size_t size)
 	lost = 0;
 	head = 0;
 	tail = 0;
-	threshold = 256*1024*1024; // TODO read this from env var
+	// TODO read threshold from env
+	threshold = (thresholdDefault > sizeAligned)? sizeAligned : thresholdDefault;
 	tailCommited = 0;
 	mask = sizeAligned - 1;
 	buffer = (char *) mrb;
 	bufferSize = sizeAligned;
 	fileOffset = 0;
+	this->cpuId = cpuId;
+
 }
 
 void Instrument::CTFStream::shutdown(void)
@@ -70,7 +76,6 @@ void Instrument::CTFStream::shutdown(void)
 	if (!bufferSize)
 		return;
 
-	// TODO flush remainig buffer here ?
 	munmap(mrb, mrbSize);
 	head = 0;
 	tail = 0;
@@ -106,8 +111,8 @@ void Instrument::CTFStream::doWrite(int fd, const char *buf, size_t size)
 		}
 
 		offset     += ret;
-		fileOffset += ret;
 		rem        -= ret;
+		fileOffset += ret;
 	} while (rem > 0);
 }
 
@@ -117,9 +122,9 @@ void Instrument::CTFStream::flushData()
 
 	size_t size;
 
-	size = head - tail;
+	size = head - tailCommited;
 
-	doWrite(fdOutput, buffer, size);
+	doWrite(fdOutput, buffer + (tailCommited & mask), size);
 
 	tail = head;
 	tailCommited = head;

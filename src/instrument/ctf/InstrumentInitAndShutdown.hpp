@@ -82,8 +82,8 @@ namespace Instrument {
 			cpuId = CPU->getSystemCPUId();
 			CTFStream &userStream = CPU->getInstrumentationData().userStream;
 
-			userStream.initialize(defaultSize);
-			CTFAPI::addStreamHeader(userStream, cpuId);
+			userStream.initialize(defaultSize, cpuId);
+			CTFAPI::addStreamHeader(userStream);
 			streamPath = userPath + "/channel_" + std::to_string(cpuId);
 			userStream.fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
 			if (userStream.fdOutput == -1)
@@ -108,6 +108,10 @@ namespace Instrument {
 
 			CTFStream &userStream = CPU->getInstrumentationData().userStream;
 			userStream.flushData();
+
+			if (userStream.lost)
+				std::cerr << "WARNING: CTF Instrument: " << userStream.lost << " events on core " << i << std::endl;
+
 			userStream.shutdown();
 			close(userStream.fdOutput);
 		}

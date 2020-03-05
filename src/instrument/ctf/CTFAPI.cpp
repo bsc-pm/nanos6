@@ -16,6 +16,7 @@
 #include "CTFAPI.hpp"
 
 #define TP_NANOS6_TASK_START 10000
+#define TP_NANOS6_TASK_STOP  10001
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -244,10 +245,17 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"	id = " xstr(TP_NANOS6_TASK_START) ";\n"
 	"	stream_id = 0;\n"
 	"	fields := struct {\n"
-	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _addr;\n"
+	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 16; } _addr;\n"
 	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
-	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _priority;\n"
-	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _nesting;\n"
+	"	};\n"
+	"};\n"
+	"\n"
+	"event {\n"
+	"	name = \"nanos6:task_stop\";\n"
+	"	id = " xstr(TP_NANOS6_TASK_STOP) ";\n"
+	"	stream_id = 0;\n"
+	"	fields := struct {\n"
+	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	"	};\n"
 	"};\n"
 	"\n";
@@ -330,21 +338,35 @@ void CTFAPI::tracepoint(void)
 
 
 
-void CTFAPI::tp_task_start(uint64_t addr, uint64_t id, int32_t priority, int32_t nesting)
+void CTFAPI::tp_task_start(uint64_t addr, uint64_t taskId)
 {
-	const uint32_t tpId = TP_NANOS6_TASK_START;
+	const uint32_t tracepointId = TP_NANOS6_TASK_START;
 	Instrument::CTFStream &stream = Instrument::getCPULocalData().userStream;
-	const size_t size = sizeof(struct event_header) + sizeof(addr) + sizeof(id) + sizeof(priority) + sizeof(nesting);
+	const size_t size = sizeof(struct event_header) + sizeof(addr) + sizeof(taskId);
 
 	if (!stream.checkFreeSpace(size))
 		return;
 
 	char *buf = stream.buffer + (stream.head & stream.mask);
-	mk_event_header(&buf, tpId);
+	mk_event_header(&buf, tracepointId);
 	TP_WRITE_LITERAL(buf, addr);
-	TP_WRITE_LITERAL(buf, id);
-	TP_WRITE_LITERAL(buf, priority);
-	TP_WRITE_LITERAL(buf, nesting);
+	TP_WRITE_LITERAL(buf, taskId);
+
+	stream.head += size;
+}
+
+void CTFAPI::tp_task_stop(uint64_t taskId)
+{
+	const uint32_t tracepointId = TP_NANOS6_TASK_STOP;
+	Instrument::CTFStream &stream = Instrument::getCPULocalData().userStream;
+	const size_t size = sizeof(struct event_header) + sizeof(taskId);
+
+	if (!stream.checkFreeSpace(size))
+		return;
+
+	char *buf = stream.buffer + (stream.head & stream.mask);
+	mk_event_header(&buf, tracepointId);
+	TP_WRITE_LITERAL(buf, taskId);
 
 	stream.head += size;
 }
@@ -363,10 +385,10 @@ void CTFAPI::writeKernelMetadata(std::string directory)
 	out.close();
 }
 
-void CTFAPI::addStreamHeader(Instrument::CTFStream &stream, uint32_t cpuId)
+void CTFAPI::addStreamHeader(Instrument::CTFStream &stream)
 {
 	// we don't need to mask the head because the buffer is at least 1 page
 	// long and at this point it's empty
 	mk_packet_header (stream.buffer, &stream.head);
-	mk_packet_context(stream.buffer, &stream.head, (uint32_t) cpuId);
+	mk_packet_context(stream.buffer, &stream.head, stream.cpuId);
 }
