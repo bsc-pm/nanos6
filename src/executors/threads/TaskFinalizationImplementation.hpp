@@ -78,7 +78,7 @@ void TaskFinalization::disposeOrUnblockTask(Task *task, ComputePlace *computePla
 				if (completedIts > 0) {
 					bool finishedSource = source->decrementRemainingIterations(completedIts);
 					if (finishedSource) {
-						__attribute__((unused)) bool finished = source->markAsFinished(computePlace);
+						source->markAsFinished(computePlace);
 
 						assert(computePlace != nullptr);
 						DataAccessRegistration::unregisterTaskDataAccesses(source, computePlace, computePlace->getDependencyData());

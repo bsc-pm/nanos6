@@ -80,7 +80,7 @@ public:
 		else {
 			// Distribute iterations over collaborators respecting the "alignment".
 			size_t newChunksize = std::max(totalIterations / maxCollaborators, _bounds.chunksize);
-			size_t alignedChunksize = ((newChunksize-1)|(_bounds.chunksize-1))+1;
+			size_t alignedChunksize = ((newChunksize - 1)|(_bounds.chunksize - 1)) + 1;
 			if (std::ceil((double)totalIterations / (double)alignedChunksize) < maxCollaborators) {
 				alignedChunksize = std::max(alignedChunksize - _bounds.chunksize, _bounds.chunksize);
 			}
@@ -136,7 +136,7 @@ public:
 	inline int getNextChunk()
 	{
 		assert(!isRunnable());
-		int myChunk = _currentChunk.fetch_sub(1, std::memory_order_relaxed)-1;
+		int myChunk = _currentChunk.fetch_sub(1, std::memory_order_relaxed) - 1;
 		return myChunk;
 	}
 
@@ -195,23 +195,23 @@ public:
 		return _myChunk;
 	}
 
-	inline void computeChunkBounds(bounds_t &collaboratorBounds)
+	inline size_t computeChunkBounds()
 	{
 		assert(isRunnable());
-		int myChunk = _myChunk;
-		assert(myChunk >= 0);
-
+		bounds_t &collaboratorBounds = _bounds;
 		const Taskfor *source = (Taskfor *) getParent();
-		bounds_t const &bounds = source->getBounds();
-		size_t totalIterations = bounds.upper_bound - bounds.lower_bound;
-		size_t totalChunks = std::ceil((double) totalIterations / (double) bounds.chunksize);
+		bounds_t const &sourceBounds = source->getBounds();
+		size_t totalIterations = sourceBounds.upper_bound - sourceBounds.lower_bound;
+		size_t totalChunks = std::ceil((double) totalIterations / (double) sourceBounds.chunksize);
 		assert(totalChunks > 0);
-		myChunk = totalChunks - (myChunk+1);
+		_myChunk = totalChunks - (_myChunk + 1);
 
-		collaboratorBounds.lower_bound = bounds.lower_bound+(myChunk*bounds.chunksize);
-		size_t myIterations = std::min(bounds.chunksize, bounds.upper_bound - collaboratorBounds.lower_bound);
-		assert(myIterations > 0 && myIterations <= bounds.chunksize);
+		collaboratorBounds.lower_bound = sourceBounds.lower_bound + (_myChunk * sourceBounds.chunksize);
+		size_t myIterations = std::min(sourceBounds.chunksize, sourceBounds.upper_bound - collaboratorBounds.lower_bound);
+		assert(myIterations > 0 && myIterations <= sourceBounds.chunksize);
 		collaboratorBounds.upper_bound = collaboratorBounds.lower_bound + myIterations;
+
+		return getIterationCount();
 	}
 
 	inline size_t getCompletedIterations()

@@ -32,8 +32,8 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 				groupTaskfor->removedFromScheduler();
 			}
 
-			void *taskfor_ptr = (void *) computePlace->getPreallocatedTaskfor();
-			Taskfor *taskfor = (Taskfor *) taskfor_ptr;
+			Taskfor *taskfor = computePlace->getPreallocatedTaskfor();
+			// We are setting the chunk that the collaborator will execute in the preallocatedTaskfor.
 			taskfor->setChunk(myChunk);
 			return groupTaskfor;
 		}

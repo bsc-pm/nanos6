@@ -147,21 +147,20 @@ void WorkerThread::handleTask(CPU *cpu)
 
 	if (_task->isTaskfor()) {
 		assert(!_task->isRunnable());
+		// We have already set the chunk of the preallocatedTaskfor in the scheduler.
 		if (cpu->getPreallocatedTaskfor()->getMyChunk() >= 0) {
 			Taskfor *collaborator = LoopGenerator::createCollaborator((Taskfor *)_task, cpu);
 			assert(collaborator->isRunnable());
 			assert(collaborator->getMyChunk() >= 0);
 			_task = collaborator;
 			ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
-		}
-		else {
+		} else {
 			bool finished = ((Taskfor *)_task)->notifyCollaboratorHasFinished();
 			if (finished) {
 				TaskFinalization::disposeOrUnblockTask(_task, cpu);
 			}
 		}
-	}
-	else {
+	} else {
 		ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
 	}
 

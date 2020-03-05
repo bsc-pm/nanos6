@@ -24,21 +24,18 @@ void Taskfor::run(Taskfor &source)
 	const nanos6_task_info_t &taskInfo = *getTaskInfo();
 	void *argsBlock = getArgsBlock();
 	bounds_t &bounds = getBounds();
-	computeChunkBounds(bounds);
-	size_t myIterations = getIterationCount();
+	size_t myIterations = computeChunkBounds();
 	assert(myIterations > 0);
 	size_t completedIterations = 0;
 
 	do {
 		taskInfo.implementations[0].run(argsBlock, &bounds, nullptr);
-		bounds.lower_bound = bounds.upper_bound;
 
 		completedIterations += myIterations;
 
 		_myChunk = source.getNextChunk();
 		if (_myChunk >= 0) {
-			computeChunkBounds(bounds);
-			myIterations = getIterationCount();
+			myIterations = computeChunkBounds();
 		} else {
 			myIterations = 0;
 		}

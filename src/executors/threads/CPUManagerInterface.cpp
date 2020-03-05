@@ -151,10 +151,8 @@ void CPUManagerInterface::preinitialize()
 	}
 	refineTaskforGroups(numAvailableCPUs, numValidNUMANodes);
 
-	size_t numCPUsPerTaskforGroup;
-	size_t groupId;
-	numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
-	groupId = 0;
+	size_t numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
+	size_t groupId = 0;
 	assert(numCPUsPerTaskforGroup > 0);
 
 	size_t virtualCPUId = 0;
@@ -165,7 +163,7 @@ void CPUManagerInterface::preinitialize()
 		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
 			bool restart = (numCPUsPerTaskforGroup-- == 0);
 			if (restart) {
-				numCPUsPerTaskforGroup = (numAvailableCPUs / getNumTaskforGroups())-1;
+				numCPUsPerTaskforGroup = (numAvailableCPUs / getNumTaskforGroups()) - 1;
 				groupId++;
 			}
 
@@ -452,12 +450,12 @@ void CPUManagerInterface::reportTaskforGroupsInfo(const size_t numTaskforGroups,
 			__attribute__((unused)) size_t cpuId = cpusPerGroup[group][i];
 			size_t systemCPUId = _cpus[cpusPerGroup[group][i]]->getSystemCPUId();
 			assert(_cpus[cpuId]->getGroupId() == group);
-			if (i == cpusPerGroup[group].size()-1) {
+			if (i == cpusPerGroup[group].size() - 1) {
 				std::cout << systemCPUId << "}" << std::endl;
 			} else {
 				std::cout << systemCPUId << ",";
 			}
 		}
-		assert(group == 0 || cpusPerGroup[group].size() == cpusPerGroup[group-1].size());
+		assert(group == 0 || cpusPerGroup[group].size() == cpusPerGroup[group - 1].size());
 	}
 }
