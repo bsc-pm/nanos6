@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -62,13 +62,13 @@ void nanos6_preinit(void) {
 		if (_nanos6_exit_with_error_ptr != nullptr) {
 			*_nanos6_exit_with_error_ptr = 1;
 		}
-		
+
 		FatalErrorHandler::failIf(
 			!nanos6_api_has_been_checked_successfully(),
 			"this executable was compiled for a different Nanos6 version. Please recompile and link it."
 		);
 	}
-	
+
 	RuntimeInfoEssentials::initialize();
 	HardwareInfo::initialize();
 	ClusterManager::initialize();
@@ -76,32 +76,32 @@ void nanos6_preinit(void) {
 	MemoryAllocator::initialize();
 	Scheduler::initialize();
 	ExternalThreadGroup::initialize();
-	
+
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
 	Instrument::initialize();
-	
+
 	HardwareCounters::initialize();
 	Monitoring::initialize();
-	
+
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
-	
+
 	// Register mainThread so that it will be automatically deleted
 	// when shutting down Nanos6
 	ExternalThreadGroup::registerExternalThread(mainThread);
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
-	
+
 	ThreadManager::initialize();
 	DependencySystem::initialize();
 	LeaderThread::initialize();
-	
+
 	CPUManager::initialize();
 }
 
 
 void nanos6_init(void) {
 	Instrument::threadWillSuspend(mainThread->getInstrumentationId());
-	
+
 	StreamManager::initialize();
 }
 
@@ -109,11 +109,11 @@ void nanos6_init(void) {
 void nanos6_shutdown(void) {
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
 	Instrument::threadWillShutdown();
-	
+
 	while (SpawnedFunctions::_pendingSpawnedFunctions > 0) {
 		// Wait for spawned functions to fully end
 	}
-	
+
 	StreamManager::shutdown();
 	LeaderThread::shutdown();
 
@@ -126,18 +126,18 @@ void nanos6_shutdown(void) {
 
 	// Delete spawned functions task infos
 	SpawnedFunctions::shutdown();
-	
+
 	// Delete the worker threads
 	// NOTE: AFTER Instrument::shutdown since it may need thread info!
 	ThreadManager::shutdownPhase2();
 	CPUManager::shutdownPhase2();
-	
+
 	// Delete all registered external threads, including mainThread
 	ExternalThreadGroup::shutdown();
-	
+
 	Monitoring::shutdown();
 	HardwareCounters::shutdown();
-	
+
 	HardwareInfo::shutdown();
 	Scheduler::shutdown();
 
