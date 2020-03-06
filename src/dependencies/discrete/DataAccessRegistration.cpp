@@ -98,7 +98,7 @@ namespace DataAccessRegistration {
 			Task *task = *it;
 			TaskDataAccesses &accessStruct = task->getDataAccesses();
 
-			if (accessStruct._commutativeMask && !CommutativeSemaphore::registerTask(task))
+			if (accessStruct._commutativeMask.any() && !CommutativeSemaphore::registerTask(task))
 				it = hpDependencyData._satisfiedOriginators.erase(it);
 			else
 				++it;
@@ -117,10 +117,12 @@ namespace DataAccessRegistration {
 	static inline void upgradeAccess(DataAccess *access, DataAccessType newType, bool weak)
 	{
 		DataAccessType oldType = access->getType();
-		// Duping reductions is incorrect
+		// Let's not allow combining reductions with other types as it causes problems.
 		assert(oldType != REDUCTION_ACCESS_TYPE && newType != REDUCTION_ACCESS_TYPE);
 
 		access->setType(combineTypes(oldType, newType));
+
+		// ! weak + weak = !weak :)
 		if (access->isWeak() && !weak)
 			access->setWeak(false);
 	}
@@ -316,7 +318,7 @@ namespace DataAccessRegistration {
 		bool ready = task->decreasePredecessors(2);
 
 		// Commutative accesses have to acquire the commutative region
-		if (ready && accessStructures._commutativeMask)
+		if (ready && accessStructures._commutativeMask.any())
 			ready = CommutativeSemaphore::registerTask(task);
 
 		return ready;
@@ -358,11 +360,18 @@ namespace DataAccessRegistration {
 
 			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 			if (reductionInfo != nullptr) {
-				assert(!reductionInfo->finished());
-				if (reductionInfo->markAsClosed())
-					releaseReductionInfo(reductionInfo);
+				// We cannot close this in case we had a weak reduction
+				DataAccess *parentAccess = accessStruct.findAccess(const_cast<void *>(reductionInfo->getOriginalAddress()));
 
-				itMap->second._reductionInfo = nullptr;
+				if (parentAccess == nullptr || parentAccess->getType() != REDUCTION_ACCESS_TYPE) {
+					assert(!reductionInfo->finished());
+					if (reductionInfo->markAsClosed())
+						releaseReductionInfo(reductionInfo);
+
+					itMap->second._reductionInfo = nullptr;
+				} else {
+					assert(parentAccess->isWeak());
+				}
 			}
 		}
 
@@ -370,7 +379,7 @@ namespace DataAccessRegistration {
 		processCommutativeOriginators(hpDependencyData);
 
 		// Release commutative mask. The order is important, as this will add satisfied originators
-		if (accessStruct._commutativeMask)
+		if (accessStruct._commutativeMask.any())
 			CommutativeSemaphore::releaseTask(task, hpDependencyData);
 
 		if (accessStruct.hasDataAccesses()) {
@@ -406,11 +415,17 @@ namespace DataAccessRegistration {
 			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 
 			if (reductionInfo != nullptr) {
-				assert(!reductionInfo->finished());
-				if (reductionInfo->markAsClosed())
-					releaseReductionInfo(reductionInfo);
+				DataAccess *parentAccess = accessStruct.findAccess(const_cast<void *>(reductionInfo->getOriginalAddress()));
 
-				itMap->second._reductionInfo = nullptr;
+				if (parentAccess == nullptr || parentAccess->getType() != REDUCTION_ACCESS_TYPE) {
+					assert(!reductionInfo->finished());
+					if (reductionInfo->markAsClosed())
+						releaseReductionInfo(reductionInfo);
+
+					itMap->second._reductionInfo = nullptr;
+				} else {
+					assert(parentAccess->isWeak());
+				}
 			}
 		}
 	}
@@ -474,10 +489,35 @@ namespace DataAccessRegistration {
 				accessStruct._commutativeMask |= CommutativeSemaphore::getMaskForAddress(address);
 			}
 
+			bool schedule = false;
+			bool dispose = false;
+			DataAccessMessage fromCurrent;
+			DataAccess *parentAccess;
+
+			if (predecessor == nullptr) {
+				parentAccess = parentAccessStruct.findAccess(address);
+
+				if (parentAccess != nullptr) {
+					// In case we need to inherit reduction
+					reductionInfo = parentAccess->getReductionInfo();
+					// Check that if we got something the parent is weakreduction
+					assert(reductionInfo == nullptr || parentAccess->isWeak());
+				}
+			}
+
 			// Check if we're closing a reduction, or allocate one in case we need it.
 			if (accessType == REDUCTION_ACCESS_TYPE) {
+				// Get the reduction info from the bottom map. If there is none, check
+				// if our parent has one (for weak reductions)
 				ReductionInfo *currentReductionInfo = itMap->second._reductionInfo;
-				reductionInfo = currentReductionInfo;
+				if (currentReductionInfo == nullptr) {
+					currentReductionInfo = reductionInfo;
+					// Inherited reductions must be equal
+					assert(reductionInfo == nullptr || (reductionInfo->getTypeAndOperatorIndex() == access->getReductionOperator() && reductionInfo->getOriginalLength() == access->getReductionLength()));
+				} else {
+					reductionInfo = currentReductionInfo;
+				}
+
 				reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
 				size_t length = access->getReductionLength();
 
@@ -500,13 +540,7 @@ namespace DataAccessRegistration {
 				itMap->second._reductionInfo = nullptr;
 			}
 
-			bool schedule = false;
-			bool dispose = false;
-			DataAccessMessage fromCurrent;
-
 			if (predecessor == nullptr) {
-				DataAccess *parentAccess = parentAccessStruct.findAccess(address);
-
 				if (parentAccess != nullptr) {
 					parentAccess->setChild(access);
 					DataAccessMessage message = parentAccess->applySingle(ACCESS_HASCHILD, mailBox);

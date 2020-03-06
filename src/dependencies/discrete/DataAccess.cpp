@@ -286,12 +286,15 @@ void DataAccess::reductionAutomata(
 	message.from = this;
 	PropagationDestination destination = NONE;
 
-	// No nested reductions, period.
-	assert(!(allFlags & ACCESS_HASCHILD));
-
 	if (flags & ACCESS_WRITE_SATISFIED) {
 		message.combine = true;
 		message.flagsAfterPropagation |= ACCESS_REDUCTION_COMBINED;
+	}
+
+	if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_READ_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
 	}
 
 	if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_READ_DONE)) {
@@ -300,16 +303,34 @@ void DataAccess::reductionAutomata(
 		destination = NEXT;
 	}
 
+	if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
+	}
+
 	if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_WRITE_DONE)) {
 		message.flagsForNext |= ACCESS_WRITE_SATISFIED;
 		assert(destination == NONE || destination == NEXT);
 		destination = NEXT;
 	}
 
+	if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
+	}
+
 	if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_CONCURRENT_DONE)) {
 		message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
 		assert(destination == NONE || destination == NEXT);
 		destination = NEXT;
+	}
+
+	if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
 	}
 
 	if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_COMMUTATIVE_DONE)) {

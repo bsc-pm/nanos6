@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef COMMUTATIVE_SEMAPHORE_HPP
@@ -9,14 +9,19 @@
 
 #include <cstdint>
 #include <list>
+#include <bitset>
 
 #include "lowlevel/PaddedTicketSpinLock.hpp"
+
+#include <config.h>
 
 class Task;
 struct CPUDependencyData;
 
+constexpr int commutative_mask_bits = CACHELINE_SIZE * 8;
+
 struct CommutativeSemaphore {
-	typedef uint64_t commutative_mask_t;
+	typedef std::bitset<commutative_mask_bits> commutative_mask_t;
 	typedef PaddedTicketSpinLock<> lock_t;
 	typedef std::list<Task *> queue_t;
 
@@ -48,7 +53,7 @@ private:
 		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 48) & 0xFF);
 		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 56) & 0xFF);
 
-		return (hash % 64);
+		return (hash % commutative_mask_bits);
 	}
 };
 

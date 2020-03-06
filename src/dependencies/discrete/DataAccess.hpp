@@ -69,7 +69,6 @@ public:
 		_accessFlags(0)
 	{
 		assert(originator != nullptr);
-		assert(!(weak && type == REDUCTION_ACCESS_TYPE));
 
 		if (weak)
 			_accessFlags.fetch_or(ACCESS_IS_WEAK, std::memory_order_relaxed);

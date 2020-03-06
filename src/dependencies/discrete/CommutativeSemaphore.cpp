@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "CommutativeSemaphore.hpp"
@@ -34,7 +34,7 @@ bool CommutativeSemaphore::registerTask(Task *task)
 {
 	TaskDataAccesses &accessStruct = task->getDataAccesses();
 	CommutativeSemaphore::commutative_mask_t &mask = accessStruct._commutativeMask;
-	assert(mask);
+	assert(mask.any());
 
 	std::lock_guard<CommutativeSemaphore::lock_t> guard(CommutativeSemaphore::_lock);
 	if (mask_compatible(mask)) {
@@ -50,7 +50,7 @@ void CommutativeSemaphore::releaseTask(Task *task, CPUDependencyData &hpDependen
 {
 	TaskDataAccesses &accessStruct = task->getDataAccesses();
 	CommutativeSemaphore::commutative_mask_t &mask = accessStruct._commutativeMask;
-	assert(mask);
+	assert(mask.any());
 	CommutativeSemaphore::commutative_mask_t released = mask;
 
 	std::lock_guard<CommutativeSemaphore::lock_t> guard(CommutativeSemaphore::_lock);
