@@ -40,12 +40,10 @@ public:
 		bool runnable = false
 	)
 		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
-		  _bounds(), _completedIterations(0), _myChunk(-1)
+		  _currentChunk(0), _remainingIterations(0), _bounds(), _completedIterations(0), _myChunk(-1)
 	{
 		assert(isFinal());
 		setRunnable(runnable);
-		_currentChunk.store(0, std::memory_order_relaxed);
-		_remainingIterations.store(0, std::memory_order_relaxed);
 	}
 
 	inline void setRunnable(bool runnableValue)
