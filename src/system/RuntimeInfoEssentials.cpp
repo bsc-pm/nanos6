@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "RuntimeInfoEssentials.hpp"
@@ -17,7 +17,7 @@
 static inline void addResourceLimitReportEntry(int resource, std::string const &name, std::string const &description, std::string const &units = "")
 {
 	struct rlimit rlim;
-	
+
 	int rc = getrlimit(resource, &rlim);
 	if (rc == -1) {
 		char *error = strerror(errno);
@@ -36,7 +36,7 @@ void RuntimeInfoEssentials::initialize()
 	RuntimeInfo::addEntry("branch", "Runtime Branch", nanos6_branch);
 	RuntimeInfo::addEntry("compiler_version", "Runtime Compiler Version", nanos6_compiler_version);
 	RuntimeInfo::addEntry("compiler_flags", "Runtime Compiler Flags", nanos6_compiler_flags);
-	
+
 	// The following entries are generated from src/system/emit-rlimit-code.sh
 #ifdef RLIMIT_CPU
 	addResourceLimitReportEntry(RLIMIT_CPU, "rlimit_cpu", "Per-process CPU limit, in seconds", "seconds");
@@ -88,3 +88,7 @@ void RuntimeInfoEssentials::initialize()
 #endif
 }
 
+void RuntimeInfoEssentials::shutdown()
+{
+	RuntimeInfo::shutdown();
+}

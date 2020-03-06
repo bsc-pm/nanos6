@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_HPP
@@ -165,7 +165,7 @@ public:
 		size_t flags
 	);
 
-	inline ~Task();
+	virtual inline ~Task();
 
 	//! Set the address of the arguments block
 	inline void setArgsBlock(void *argsBlock)

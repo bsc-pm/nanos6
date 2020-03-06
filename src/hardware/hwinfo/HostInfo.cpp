@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "HostInfo.hpp"
@@ -162,9 +162,17 @@ void HostInfo::initialize()
 
 void HostInfo::shutdown()
 {
+	assert(!_memoryPlaces.empty());
+
+	AddressSpace *NUMAAddressSpace = _memoryPlaces[0]->getAddressSpace();;
 	for (size_t i = 0; i < _memoryPlaces.size(); ++i) {
 		delete _memoryPlaces[i];
 	}
+
+	//! There is a single AddressSpace
+	assert(NUMAAddressSpace != nullptr);
+	delete NUMAAddressSpace;
+
 	for (size_t i = 0; i < _computePlaces.size(); ++i) {
 		delete _computePlaces[i];
 	}
