@@ -1424,7 +1424,7 @@ nodist_libnanos6_verbose_debug_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
-libnanos6_extrae_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
+libnanos6_extrae_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ -DEXTRAE_ENABLED
 libnanos6_extrae_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
 libnanos6_extrae_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
 nodist_libnanos6_extrae_linear_regions_fragmented_la_SOURCES =
@@ -1443,7 +1443,7 @@ disabled_variants += extrae
 nodist_libnanos6_extrae_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
-libnanos6_extrae_debug_linear_regions_fragmented_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
+libnanos6_extrae_debug_linear_regions_fragmented_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ -DEXTRAE_ENABLED
 libnanos6_extrae_debug_linear_regions_fragmented_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
 libnanos6_extrae_debug_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 nodist_libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES =
@@ -1467,7 +1467,7 @@ disabled_variants += extrae-debug
 nodist_libnanos6_extrae_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
-libnanos6_extrae_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
+libnanos6_extrae_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ -DEXTRAE_ENABLED
 libnanos6_extrae_discrete_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_extrae_discrete_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS)
 nodist_libnanos6_extrae_discrete_la_SOURCES =
@@ -1485,7 +1485,7 @@ nodist_libnanos6_extrae_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
-libnanos6_extrae_debug_discrete_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@
+libnanos6_extrae_debug_discrete_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_debug_cppflags) -I$(srcdir)/src/instrument/extrae -I$(srcdir)/src/instrument/support @extrae_CPPFLAGS@ -DEXTRAE_ENABLED
 libnanos6_extrae_debug_discrete_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_extrae_debug_discrete_la_LDFLAGS = $(common_libnanos6_ldflags) @extrae_LDFLAGS@ $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 nodist_libnanos6_extrae_debug_discrete_la_SOURCES =

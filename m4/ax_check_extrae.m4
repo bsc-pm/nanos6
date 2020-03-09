@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-#	
-#	Copyright (C) 2010-2019 Barcelona Supercomputing Center (BSC)
+#
+#	Copyright (C) 2010-2020 Barcelona Supercomputing Center (BSC)
 
 AC_DEFUN([AX_CHECK_EXTRAE],[
 
@@ -8,14 +8,14 @@ AC_ARG_WITH(extrae,
 	[AS_HELP_STRING([--with-extrae,--with-extrae=PATH], [search/specify home directory for the extrae package.])],
 	[with_extrae=${withval}],
 	[with_extrae=check])
-	
+
 	extrae_CPPFLAGS=
 	extrae_LDFLAGS=
 	extrae_LIBS=
-	
+
 	saved_LIBS=${LIBS}
 	LIBS=
-	
+
 	have_extrae=no
 	case "x${with_extrae}" in
 		xno)
@@ -43,18 +43,17 @@ AC_ARG_WITH(extrae,
 			;;
 		*)
 			AC_MSG_NOTICE([checking Extrae at ${with_extrae}/lib])
-			
+
 			saved_LDFLAGS=${LDFLAGS}
 			LDFLAGS=-L${with_extrae}/lib
 			AC_SEARCH_LIBS([Extrae_init], [nanostrace], [have_extrae=yes], [have_extrae=no])
-			
+
 			if test "x${have_extrae}" = "xyes"; then
 				saved_CPPFLAGS=${CPPFLAGS}
 				CPPFLAGS=-I${with_extrae}/include
 				AC_CHECK_HEADERS([extrae_types.h], [], [have_extrae=no])
 				if test "x${have_extrae}" = "xyes"; then
 					extrae_CPPFLAGS=${CPPFLAGS}
-					extrae_CPPFLAGS+=" -DEXTRAE_ENABLED"
 					extrae_LDFLAGS=${LDFLAGS}
 					extrae_LIBS=${LIBS}
 				else
@@ -64,23 +63,23 @@ AC_ARG_WITH(extrae,
 			else
 				AC_MSG_ERROR([Extrae cannot be found])
 			fi
-			
+
 			LDFLAGS=${saved_LDFLAGS}
 			;;
 	esac
-	
+
 	LIBS=${saved_LIBS}
-	
+
 	if test "x${have_extrae}" = xyes; then
 		AC_MSG_NOTICE([Extrae module preprocessors flags: ${extrae_CPPFLAGS}])
 		AC_MSG_NOTICE([Extrae module linker flags: ${extrae_LDFLAGS} ${extrae_LIBS}])
 		AC_DEFINE(HAVE_EXTRAE,,[define if the Extrae library is available])
 	fi
-	
+
 	AC_SUBST(extrae_CPPFLAGS)
 	AC_SUBST(extrae_LDFLAGS)
 	AC_SUBST(extrae_LIBS)
-	
+
 	AM_CONDITIONAL([HAVE_EXTRAE], [test "x${have_extrae}" = xyes])
-	
+
 ]) dnl AC_DEFUN
