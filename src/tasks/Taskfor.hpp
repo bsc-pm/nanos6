@@ -40,10 +40,13 @@ public:
 		bool runnable = false
 	)
 		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
-		  _currentChunk(0), _remainingIterations(0), _bounds(), _completedIterations(0), _myChunk(-1)
+		  _currentChunk(), _remainingIterations(), _bounds(), _completedIterations(0), _myChunk(-1)
 	{
 		assert(isFinal());
 		setRunnable(runnable);
+
+		std::atomic_init(_currentChunk.ptr_to_basetype(), (int) 0);
+		std::atomic_init(_remainingIterations.ptr_to_basetype(), (size_t) 0);
 	}
 
 	inline void setRunnable(bool runnableValue)
@@ -209,7 +212,7 @@ public:
 		assert(myIterations > 0 && myIterations <= sourceBounds.chunksize);
 		collaboratorBounds.upper_bound = collaboratorBounds.lower_bound + myIterations;
 
-		return getIterationCount();
+		return myIterations;
 	}
 
 	inline size_t getCompletedIterations()
