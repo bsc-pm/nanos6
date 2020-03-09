@@ -27,6 +27,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
 1. [DLB](https://pm.bsc.es/dlb) to enable dynamic management and sharing of computing resources
+1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation
 
 
 ## Build procedure
@@ -59,6 +60,7 @@ The configure script accepts the following options:
 1. `--with-extrae=prefix` to specify the prefix of the extrae installation
 1. `--with-pqos=prefix` to specify the prefix of the PQoS installation
 1. `--with-dlb=prefix` to specify the prefix of the DLB installation
+1. `--with-jemalloc=prefix` to specify the prefix of the jemalloc installation
 1. `--enable-cuda` to enable support for CUDA tasks
 1. `--enable-monitoring` to enable monitoring and predictions of task/CPU/thread statistics
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure

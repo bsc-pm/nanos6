@@ -152,7 +152,8 @@ struct TaskDataAccesses {
 
 	inline size_t getAdditionalMemorySize() const
 	{
-		return (sizeof(DataAccess) + sizeof(void *)) * _maxDeps;
+		TaskDataAccessesInfo info(_maxDeps);
+		return info.getAllocationSize();
 	}
 
 	inline DataAccess *allocateAccess(void *address, DataAccessType type, Task *originator, bool weak, bool &existing)
