@@ -16,13 +16,8 @@
 
 
 namespace Instrument {
-	inline void startTask(task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
+	inline void startTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
-		CTFTaskInfo *ctfTaskInfo = taskId._ctfTaskInfo;
-		assert(CTFTaskInfo != nullptr);
-		nanos6_task_info_t *nanos6TaskInfo = ctfTaskInfo->_nanos6TaskInfo;
-		assert(nanos6TaskInfo != nullptr);
-		CTFAPI::tp_task_start((uint64_t) nanos6TaskInfo->implementations[0].run, ctfTaskInfo->_taskId);
 	}
 
 	inline void returnToTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
@@ -33,7 +28,7 @@ namespace Instrument {
 	{
 		CTFTaskInfo *ctfTaskInfo = taskId._ctfTaskInfo;
 		assert(CTFTaskInfo != nullptr);
-		CTFAPI::tp_task_stop(ctfTaskInfo->_taskId);
+		CTFAPI::tracepoint(TP_NANOS6_TASK_END, static_cast<uint64_t>(ctfTaskInfo->_taskId));
 	}
 
 	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
@@ -50,4 +45,4 @@ namespace Instrument {
 }
 
 
-#endif // INSTRUMENT_NULL_TASK_EXECUTION_HPP
+#endif // INSTRUMENT_CTF_TASK_EXECUTION_HPP

@@ -4,8 +4,8 @@
 	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_NULL_ADD_TASK_HPP
-#define INSTRUMENT_NULL_ADD_TASK_HPP
+#ifndef INSTRUMENT_CTF_ADD_TASK_HPP
+#define INSTRUMENT_CTF_ADD_TASK_HPP
 
 
 #include "../api/InstrumentAddTask.hpp"
@@ -63,4 +63,4 @@ namespace Instrument {
 }
 
 
-#endif // INSTRUMENT_NULL_ADD_TASK_HPP
+#endif // INSTRUMENT_CTF_ADD_TASK_HPP

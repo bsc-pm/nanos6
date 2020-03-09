@@ -4,8 +4,8 @@
 	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_NULL_INIT_AND_SHUTDOWN_HPP
-#define INSTRUMENT_NULL_INIT_AND_SHUTDOWN_HPP
+#ifndef INSTRUMENT_CTF_INIT_AND_SHUTDOWN_HPP
+#define INSTRUMENT_CTF_INIT_AND_SHUTDOWN_HPP
 
 
 #include <executors/threads/CPUManager.hpp>
@@ -58,7 +58,7 @@ namespace Instrument {
 		size_t const defaultSize = 4096;
 		std::string tracePath, userPath, kernelPath, streamPath;
 
-		CTFAPI::tracepoint();
+		CTFAPI::greetings();
 
 		// TODO add timestamp?
 		// TODO get folder name & path form env var?
@@ -96,7 +96,7 @@ namespace Instrument {
 		uint64_t i;
 		uint64_t totalCPUs;
 
-		CTFAPI::tracepoint();
+		CTFAPI::greetings();
 
 		totalCPUs = (uint64_t) CPUManager::getTotalCPUs();
 
@@ -119,4 +119,4 @@ namespace Instrument {
 }
 
 
-#endif // INSTRUMENT_NULL_INIT_AND_SHUTDOWN_HPP
+#endif // INSTRUMENT_CTF_INIT_AND_SHUTDOWN_HPP

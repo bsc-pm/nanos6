@@ -11,12 +11,8 @@
 #include <errno.h>
 
 #include <lowlevel/FatalErrorHandler.hpp>
-#include <instrument/support/InstrumentCPULocalDataSupport.hpp>
 
 #include "CTFAPI.hpp"
-
-#define TP_NANOS6_TASK_START 10000
-#define TP_NANOS6_TASK_STOP  10001
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -241,8 +237,8 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"};\n"
 	"\n"
 	"event {\n"
-	"	name = \"nanos6:task_start\";\n"
-	"	id = " xstr(TP_NANOS6_TASK_START) ";\n"
+	"	name = \"nanos6:task_execute\";\n"
+	"	id = " xstr(TP_NANOS6_TASK_EXECUTE) ";\n"
 	"	stream_id = 0;\n"
 	"	fields := struct {\n"
 	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 16; } _addr;\n"
@@ -251,19 +247,23 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"};\n"
 	"\n"
 	"event {\n"
-	"	name = \"nanos6:task_stop\";\n"
-	"	id = " xstr(TP_NANOS6_TASK_STOP) ";\n"
+	"	name = \"nanos6:task_end\";\n"
+	"	id = " xstr(TP_NANOS6_TASK_END) ";\n"
+	"	stream_id = 0;\n"
+	"	fields := struct {\n"
+	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
+	"	};\n"
+	"};\n"
+	"\n"
+	"event {\n"
+	"	name = \"nanos6:task_block\";\n"
+	"	id = " xstr(TP_NANOS6_TASK_BLOCK) ";\n"
 	"	stream_id = 0;\n"
 	"	fields := struct {\n"
 	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	"	};\n"
 	"};\n"
 	"\n";
-
-struct __attribute__((__packed__)) event_header {
-	uint32_t id;
-	uint64_t timestamp;
-};
 
 static int mk_packet_header(char *buf, uint64_t *head)
 {
@@ -305,70 +305,9 @@ static int mk_packet_context(char *buf, size_t *head, uint32_t cpu_id)
 	return 0;
 }
 
-static int mk_event_header(char **buf, uint32_t id)
-{
-	struct timespec tp;
-	uint64_t timestamp;
-	struct event_header *pk;
-	const uint64_t ns = 1000000000ULL;
-
-	pk = (struct event_header *) *buf;
-
-	 //TODO use relative instead of absolute timestamp
-	if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
-		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: clock_gettime syscall: ") + strerror(errno));
-	}
-	timestamp = tp.tv_sec * ns + tp.tv_nsec;
-
-	*pk = (struct event_header) {
-		.id = id,
-		.timestamp = timestamp
-	};
-
-	*buf += sizeof(struct event_header);
-
-	return 0;
-}
-
-
-void CTFAPI::tracepoint(void)
+void CTFAPI::greetings(void)
 {
 	std::cout << "!!!!!!!!!!!!!!!!CTF API UP & Running!!!!!!!!!!!!!!!!" << std::endl;
-}
-
-
-
-void CTFAPI::tp_task_start(uint64_t addr, uint64_t taskId)
-{
-	const uint32_t tracepointId = TP_NANOS6_TASK_START;
-	Instrument::CTFStream &stream = Instrument::getCPULocalData().userStream;
-	const size_t size = sizeof(struct event_header) + sizeof(addr) + sizeof(taskId);
-
-	if (!stream.checkFreeSpace(size))
-		return;
-
-	char *buf = stream.buffer + (stream.head & stream.mask);
-	mk_event_header(&buf, tracepointId);
-	TP_WRITE_LITERAL(buf, addr);
-	TP_WRITE_LITERAL(buf, taskId);
-
-	stream.head += size;
-}
-
-void CTFAPI::tp_task_stop(uint64_t taskId)
-{
-	const uint32_t tracepointId = TP_NANOS6_TASK_STOP;
-	Instrument::CTFStream &stream = Instrument::getCPULocalData().userStream;
-	const size_t size = sizeof(struct event_header) + sizeof(taskId);
-
-	if (!stream.checkFreeSpace(size))
-		return;
-
-	char *buf = stream.buffer + (stream.head & stream.mask);
-	mk_event_header(&buf, tracepointId);
-	TP_WRITE_LITERAL(buf, taskId);
-
-	stream.head += size;
 }
 
 void CTFAPI::writeUserMetadata(std::string directory)

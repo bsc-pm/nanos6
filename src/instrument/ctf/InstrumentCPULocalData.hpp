@@ -4,8 +4,8 @@
 	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_CPU_LOCAL_DATA_HPP
-#define INSTRUMENT_CPU_LOCAL_DATA_HPP
+#ifndef INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP
+#define INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP
 
 #include <string>
 #include <stdint.h>
@@ -48,4 +48,4 @@ namespace Instrument {
 
 }
 
-#endif //INSTRUMENT_CPU_LOCAL_DATA_HPP
+#endif //INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP
