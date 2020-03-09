@@ -1,13 +1,13 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-#	
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#
+#	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 
 AC_DEFUN([CONFIGURE_NANOS6_FEATURES],
 	[
 		ac_nanos6_suports_cpu_management=yes
 		ac_nanos6_supports_user_mutex=yes
 		NANOS6_VARIANT=optimized
-		
+
 		_CONFIGURE_NANOS6_FEATURES
 	]
 )
@@ -17,7 +17,7 @@ AC_DEFUN([CONFIGURE_NANOS6_ARGOBOTS_FEATURES],
 		ac_nanos6_suports_cpu_management=no
 		ac_nanos6_supports_user_mutex=no
 		NANOS6_VARIANT=argobots
-		
+
 		_CONFIGURE_NANOS6_FEATURES
 	]
 )
@@ -53,7 +53,7 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		)
 		AC_MSG_RESULT([$ac_build_optimized_variant])
 		AM_CONDITIONAL(BUILD_OPTIMIZED_VARIANT, test x"${ac_build_optimized_variant}" = x"yes")
-		
+
 		AC_MSG_CHECKING([whether to build the debug variants])
 		AC_ARG_ENABLE(
 			[debug-variants],
@@ -75,7 +75,29 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		)
 		AC_MSG_RESULT([$ac_build_debug_variants])
 		AM_CONDITIONAL(BUILD_DEBUG_VARIANTS, test x"${ac_build_debug_variants}" = x"yes")
-		
+
+		AC_MSG_CHECKING([whether to build the turbo variant])
+		AC_ARG_ENABLE(
+			[turbo-variant],
+			[AS_HELP_STRING([--disable-turbo-variant], [build the turbo variant])],
+			[
+				case "${enableval}" in
+				yes)
+					ac_build_turbo_variant=yes
+					;;
+				no)
+					ac_build_turbo_variant=no
+					;;
+				*)
+					AC_MSG_ERROR([bad value ${enableval} for --enable-turbo-variant])
+					;;
+				esac
+			],
+			[ac_build_turbo_variant=yes]
+		)
+		AC_MSG_RESULT([$ac_build_turbo_variant])
+		AM_CONDITIONAL(BUILD_TURBO_VARIANT, test x"${ac_build_turbo_variant}" = x"yes")
+
 		AC_MSG_CHECKING([whether to build the extrae instrumented variant])
 		AC_ARG_ENABLE(
 			[extrae-instrumentation],
@@ -97,7 +119,7 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		)
 		AC_MSG_RESULT([$ac_build_extrae_instrumentation])
 		AM_CONDITIONAL(BUILD_EXTRAE_INSTRUMENTATION_VARIANT, test x"${ac_build_extrae_instrumentation}" = x"yes")
-		
+
 		AC_MSG_CHECKING([whether to build the graph instrumented variant])
 		AC_ARG_ENABLE(
 			[graph-instrumentation],
@@ -119,7 +141,7 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		)
 		AC_MSG_RESULT([$ac_build_graph_instrumentation])
 		AM_CONDITIONAL(BUILD_GRAPH_INSTRUMENTATION_VARIANT, test x"${ac_build_graph_instrumentation}" = x"yes")
-		
+
 		AC_MSG_CHECKING([whether to build the stats instrumented variant])
 		AC_ARG_ENABLE(
 			[stats-instrumentation],
@@ -141,7 +163,7 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		)
 		AC_MSG_RESULT([$ac_build_stats_instrumentation])
 		AM_CONDITIONAL(BUILD_STATS_INSTRUMENTATION_VARIANT, test x"${ac_build_stats_instrumentation}" = x"yes")
-		
+
 		AC_MSG_CHECKING([whether to build the verbose instrumented variant])
 		AC_ARG_ENABLE(
 			[verbose-instrumentation],
@@ -163,7 +185,7 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		)
 		AC_MSG_RESULT([$ac_build_verbose_instrumentation])
 		AM_CONDITIONAL(BUILD_VERBOSE_INSTRUMENTATION_VARIANT, test x"${ac_build_verbose_instrumentation}" = x"yes")
-		
+
 		AC_MSG_CHECKING([whether to build the lint instrumented variant])
 		AC_ARG_ENABLE(
 			[lint-instrumentation],

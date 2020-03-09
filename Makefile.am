@@ -82,6 +82,7 @@ lib_LTLIBRARIES = \
 	libnanos6.la \
 	libnanos6-optimized-linear-regions-fragmented.la \
 	libnanos6-debug-linear-regions-fragmented.la \
+	libnanos6-turbo-linear-regions-fragmented.la \
 	libnanos6-extrae-linear-regions-fragmented.la \
 	libnanos6-extrae-debug-linear-regions-fragmented.la \
 	libnanos6-graph-linear-regions-fragmented.la \
@@ -92,6 +93,7 @@ lib_LTLIBRARIES = \
 	libnanos6-verbose-linear-regions-fragmented.la \
 	libnanos6-verbose-debug-linear-regions-fragmented.la \
 	libnanos6-optimized-discrete.la \
+	libnanos6-turbo-discrete.la \
 	libnanos6-debug-discrete.la \
 	libnanos6-extrae-discrete.la \
 	libnanos6-extrae-debug-discrete.la \
@@ -1054,6 +1056,7 @@ noinst_HEADERS = \
 	src/lowlevel/TicketArraySpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
+	src/lowlevel/TurboSettings.hpp \
 	src/lowlevel/apple/SpinLockImplementation.hpp \
 	src/lowlevel/cuda/CUDAErrorHandler.hpp \
 	src/lowlevel/cxx/SpinLockImplementation.hpp \
@@ -1227,6 +1230,34 @@ nodist_libnanos6_debug_discrete_la_SOURCES += $(common_sources) $(noinstrument_s
 nodist_libnanos6_debug_discrete_la_SOURCES += $(nodist_common_sources)
 else
 nodist_libnanos6_debug_discrete_la_SOURCES += loader/disabled_variant.c
+endif
+endif
+
+libnanos6_turbo_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/null -DTURBO_ENABLED
+libnanos6_turbo_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_turbo_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags)
+nodist_libnanos6_turbo_linear_regions_fragmented_la_SOURCES =
+
+if BUILD_TURBO_VARIANT
+enabled_variants += turbo
+nodist_libnanos6_turbo_linear_regions_fragmented_la_SOURCES += $(common_sources) $(noinstrument_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_turbo_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources)
+else
+disabled_variants += turbo
+nodist_libnanos6_turbo_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+
+libnanos6_turbo_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/null -DTURBO_ENABLED
+libnanos6_turbo_discrete_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_turbo_discrete_la_LDFLAGS = $(common_libnanos6_ldflags)
+nodist_libnanos6_turbo_discrete_la_SOURCES =
+
+if DISCRETE_DEPENDENCIES
+if BUILD_TURBO_VARIANT
+nodist_libnanos6_turbo_discrete_la_SOURCES += $(common_sources) $(noinstrument_sources) $(memory_default_sources) $(discrete_dependency_sources)
+nodist_libnanos6_turbo_discrete_la_SOURCES += $(nodist_common_sources)
+else
+nodist_libnanos6_turbo_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
@@ -1479,6 +1510,7 @@ endif
 deprecated_libs = \
 	libnanos6-optimized.la \
 	libnanos6-debug.la \
+	libnanos6-turbo.la \
 	libnanos6-extrae.la \
 	libnanos6-extrae-debug.la \
 	libnanos6-profile.la \
@@ -1521,6 +1553,7 @@ endif
 if !DISCRETE_DEPENDENCIES
 nodist_libnanos6_optimized_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_debug_discrete_la_SOURCES += loader/disabled_variant.c
+nodist_libnanos6_turbo_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_extrae_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_extrae_debug_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_lint_discrete_la_SOURCES += loader/disabled_variant.c
