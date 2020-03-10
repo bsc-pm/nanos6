@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "Taskfor.hpp"
@@ -10,6 +10,7 @@
 void Taskfor::run(Taskfor &source)
 {
 	assert(getParent()->isTaskfor() && getParent() == &source);
+	assert(getMyChunk() >= 0);
 
 	// Temporary hack in order to solve the problem of updating
 	// the location of the DataAccess objects of the Taskfor,
@@ -23,17 +24,25 @@ void Taskfor::run(Taskfor &source)
 	const nanos6_task_info_t &taskInfo = *getTaskInfo();
 	void *argsBlock = getArgsBlock();
 	bounds_t &bounds = getBounds();
-	size_t myIterations = getIterationCount();
+	size_t myIterations = computeChunkBounds();
+	assert(myIterations > 0);
+	size_t completedIterations = 0;
 
-	size_t originalUpperBound = bounds.upper_bound;
 	do {
-		bounds.upper_bound = std::max(bounds.lower_bound + bounds.chunksize, originalUpperBound);
 		taskInfo.implementations[0].run(argsBlock, &bounds, nullptr);
-		bounds.lower_bound = bounds.upper_bound;
-	} while (bounds.upper_bound < originalUpperBound);
 
-	assert(bounds.upper_bound == originalUpperBound);
+		completedIterations += myIterations;
 
-	_completedIterations = myIterations;
+		_myChunk = source.getNextChunk();
+		if (_myChunk >= 0) {
+			myIterations = computeChunkBounds();
+		} else {
+			myIterations = 0;
+		}
+	} while (myIterations != 0);
+
+	assert(completedIterations > 0);
+	_completedIterations = completedIterations;
+
 	source.notifyCollaboratorHasFinished();
 }

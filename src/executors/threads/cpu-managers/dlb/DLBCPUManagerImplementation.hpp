@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DLB_CPU_MANAGER_IMPLEMENTATION_HPP
@@ -118,6 +118,11 @@ public:
 
 	inline void getIdleCollaborators(std::vector<CPU *> &, ComputePlace *)
 	{
+	}
+
+	inline size_t getNumCPUsPerTaskforGroup() const
+	{
+		return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
 	}
 
 };

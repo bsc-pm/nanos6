@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "HostUnsyncScheduler.hpp"
@@ -24,19 +24,18 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	// 1. Try to get work from the current group taskfor.
 	if (groupId != -1) {
 		if ((groupTaskfor = _groupSlots[groupId]) != nullptr) {
-			assert(groupTaskfor->hasPendingIterations());
 
 			groupTaskfor->notifyCollaboratorHasStarted();
-			Taskfor::bounds_t bounds;
-			bool clearSlot = groupTaskfor->getChunks(bounds);
-			if (clearSlot) {
+			int myChunk = groupTaskfor->getNextChunk();
+			if (myChunk <= 0) {
 				_groupSlots[groupId] = nullptr;
+				groupTaskfor->removedFromScheduler();
 			}
 
-			Taskfor *collaborator = LoopGenerator::createTaskforCollaborator(groupTaskfor, bounds, computePlace);
-
-			assert(collaborator->isRunnable());
-			return collaborator;
+			Taskfor *taskfor = computePlace->getPreallocatedTaskfor();
+			// We are setting the chunk that the collaborator will execute in the preallocatedTaskfor.
+			taskfor->setChunk(myChunk);
+			return groupTaskfor;
 		}
 	}
 
@@ -98,7 +97,9 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	assert(result->isTaskfor());
 	assert(computePlace->getType() == nanos6_device_t::nanos6_host_device);
 
-	_groupSlots[groupId] = (Taskfor *) result;
+	Taskfor *taskfor = (Taskfor *) result;
+	_groupSlots[groupId] = taskfor;
+	taskfor->markAsScheduled();
 	return getReadyTask(computePlace);
 }
 

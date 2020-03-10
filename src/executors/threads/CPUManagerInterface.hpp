@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MANAGER_INTERFACE_HPP
@@ -60,6 +60,9 @@ protected:
 
 	//! Number of groups that can collaborate executing a single taskfor
 	static EnvironmentVariable<size_t> _taskforGroups;
+
+	//! Whether we should emit a report with info about the taskfor groups.
+	static EnvironmentVariable<bool> _taskforGroupsReportEnabled;
 
 
 private:
@@ -319,9 +322,11 @@ public:
 	//! taskfor. I.e. the number of CPUs per taskfor group
 	virtual inline size_t getNumCPUsPerTaskforGroup() const
 	{
-		return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
+		return _cpus.size() / _taskforGroups;
 	}
 
+	//! \brief Emits a brief report with information of the taskfor groups.
+	virtual void reportTaskforGroupsInfo(const size_t numTaskforGroups, const size_t numCPUsPerTaskforGroup);
 };
 
 

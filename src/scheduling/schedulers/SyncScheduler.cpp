@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "SyncScheduler.hpp"
@@ -36,7 +36,6 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 
 	if (getAssignedTask(currentCPUIndex, ticket, task)) {
 		// Someone got the lock and gave me work to do
-		assert(task->isRunnable());
 		return task;
 	}
 
@@ -59,8 +58,6 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 		if (task == nullptr)
 			break;
 
-		assert(task->isRunnable());
-
 		setRelatedComputePlace(waitingCPUIndex, nullptr);
 
 		// Put a task into the subscriber slot
@@ -77,6 +74,5 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 
 	setRelatedComputePlace(currentCPUIndex, nullptr);
 
-	assert(task == nullptr || task->isRunnable());
 	return task;
 }

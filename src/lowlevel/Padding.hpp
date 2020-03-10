@@ -22,6 +22,12 @@ class Padded : public T {
 		return ((((x) + ((y) - 1)) / (y)) * (y));
 	}
 	uint8_t padding[roundup(sizeof(T), Size)-sizeof(T)];
+
+public:
+	T *ptr_to_basetype()
+	{
+		return (T *) this;
+	}
 };
 
 #endif // PADDING_HPP
