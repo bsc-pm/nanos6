@@ -160,7 +160,13 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 
 	char const *dependencies = getenv("NANOS6_DEPENDENCIES");
 	if (dependencies == NULL) {
-		dependencies = "linear-regions-fragmented";
+		// Enable discrete dependencies by default when running turbo variant; otherwise,
+		// enable linear-regions-fragmented
+		if (strcmp(variant, "turbo") == 0) {
+			dependencies = "discrete";
+		} else {
+			dependencies = "linear-regions-fragmented";
+		}
 	}
 
 	if (verbose) {

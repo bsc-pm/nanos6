@@ -22,6 +22,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "lowlevel/TurboSettings.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
 #include "lowlevel/threads/ExternalThreadGroup.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -68,6 +69,9 @@ void nanos6_preinit(void) {
 			"this executable was compiled for a different Nanos6 version. Please recompile and link it."
 		);
 	}
+
+	// Enable special flags for turbo mode
+	TurboSettings::initialize();
 
 	RuntimeInfoEssentials::initialize();
 	HardwareInfo::initialize();
@@ -145,4 +149,6 @@ void nanos6_shutdown(void) {
 
 	MemoryAllocator::shutdown();
 	RuntimeInfoEssentials::shutdown();
+
+	TurboSettings::shutdown();
 }
