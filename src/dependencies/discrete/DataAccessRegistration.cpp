@@ -303,10 +303,7 @@ namespace DataAccessRegistration {
 		assert(hpDependencyData._mailBox.empty());
 
 		if (accessStruct.hasDataAccesses()) {
-			// if REDUCTION_ACCESS_TYPE, release slot.
-			// if task is final, it is always strong. if task is taskloop, it is always strong because taskloop is always final.
-			// if task is not final, it may be strong anyway, so we have to check the access itself.
-			assert(accessStruct.hasDataAccesses());
+			// Release dependencies of all my accesses
 			accessStruct.forAll([&](void *address, DataAccess *access) {
 				finalizeDataAccess(task, access, address, hpDependencyData, computePlace);
 			});
