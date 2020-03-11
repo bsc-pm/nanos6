@@ -14,7 +14,7 @@ class DependencySystem {
 public:
 	static void initialize()
 	{
-		RuntimeInfo::addEntry("dependency_implementation", "Dependency Implementation", "linear-regions-fragmented");
+		RuntimeInfo::addEntry("dependency_implementation", "Dependency Implementation", "regions (linear-regions-fragmented)");
 	}
 };
 
