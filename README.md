@@ -129,11 +129,25 @@ By default, there are as many groups as NUMA nodes in the system.
 
 Finally, taskfors that do not define any chunksize leverage a chunksize value computed as their total number of iterations divided by the number of collaborators per taskfor group.
 
-## Tracing, debugging and other options
+## Turbo, tracing, debugging and other options
 
+There are several Nanos6 variants, each one focusing on different aspects of parallel executions: performance, debugging, instrumentation, etc.
 Nanos6 applications, unlike Nanos++ applications do not require recompiling their code to generate extrae traces or to generate additional information.
 This is instead controlled through environment variables, _envar_ from now on, at run time.
+User can select a Nanos6 variant when running an application through the `NANOS6` envar.
+The next subsections explain the different variants of Nanos6 and how to enable them.
 
+### Benchmarking
+
+The default variant, if `NANOS6` envar is not set, is the `optimized` variant.
+It is compiled with high optimization flags, it does not perform validity checks and it does not provide debug information.
+That is the variant that should be used when performing benchmarking of parallel applications.
+
+Additionally, Nanos6 offers an extra performant variant named `turbo`, which is the same as `optimized` but adding further optimizations.
+Firstly, it enables by default the `discrete` dependency implementation, although users can still change it through the `NANOS6_DEPENDENCIES` envar.
+Secondly, it enables two floating-point (FP) unit optimizations in all tasks: flush-to-zero (FZ) and denormals are zero (DAZ).
+Please note these FP optimizations could alter the precision of floating-point computations.
+In conclusion, enabling all those features can significantly improve the user application's performance out of the box.
 
 ### Generating extrae traces
 
@@ -262,7 +276,7 @@ Runtime Compiler Flags -DNDEBUG -Wall -Wextra -Wdisabled-optimization -Wshadow -
 Initial CPU List 0-3
 NUMA Node 0 CPU List 0-3
 Scheduler priority
-Dependency Implementation linear-regions-fragmented
+Dependency Implementation regions (linear-regions-fragmented)
 Threading Model pthreads
 ```
 
@@ -280,7 +294,7 @@ Some application output ...
 #	string	initial_cpu_list	0-3		Initial CPU List
 #	string	numa_node_0_cpu_list	0-3		NUMA Node 0 CPU List
 #	string	scheduler	priority		Scheduler
-#	string	dependency_implementation	linear-regions-fragmented		Dependency Implementation
+#	string	dependency_implementation	regions (linear-regions-fragmented)		Dependency Implementation
 #	string	threading_model	pthreads		Threading Model
 ```
 
@@ -349,13 +363,13 @@ For more information, on how to write and run cluster applications see [README-C
 
 ## Choosing a dependency implementation
 
-The Nanos6 runtime has support for different dependency implementations. The `linear-regions-fragmented` dependencies will be always compiled and are the default implementation. This choice is fully spec-compliant, and supports all of the features. It is also the only implementation that supports OmpSs-2@Cluster and execution workflows.
+The Nanos6 runtime has support for different dependency implementations. The `regions` (or `linear-regions-fragmented`) dependencies are always compiled and are the default implementation. This choice is fully spec-compliant, and supports all of the features. It is also the only implementation that supports OmpSs-2@Cluster and execution workflows.
 
 Other implementations can be compiled in with the corresponding `./configure` flag, and selected dynamically through the `NANOS6_DEPENDENCIES` environment variable.
 
 The available implementations are:
 
-* `NANOS6_DEPENDENCIES=linear-regions-fragmented`: Supporting all features. **Default** implementation.
+* `NANOS6_DEPENDENCIES=regions`: Supporting all features. **Default** implementation in all Nanos6 variants except for `turbo`.
 * `NANOS6_DEPENDENCIES=discrete`: No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
 
 ## DLB Support
