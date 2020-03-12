@@ -129,18 +129,18 @@ By default, there are as many groups as NUMA nodes in the system.
 
 Finally, taskfors that do not define any chunksize leverage a chunksize value computed as their total number of iterations divided by the number of collaborators per taskfor group.
 
-## Turbo, tracing, debugging and other options
+## Benchmarking, tracing, debugging and other options
 
 There are several Nanos6 variants, each one focusing on different aspects of parallel executions: performance, debugging, instrumentation, etc.
 Nanos6 applications, unlike Nanos++ applications do not require recompiling their code to generate extrae traces or to generate additional information.
 This is instead controlled through environment variables, _envar_ from now on, at run time.
-User can select a Nanos6 variant when running an application through the `NANOS6` envar.
+Users can select a Nanos6 variant when running an application through the `NANOS6` envar.
 The next subsections explain the different variants of Nanos6 and how to enable them.
 
 ### Benchmarking
 
-The default variant, if `NANOS6` envar is not set, is the `optimized` variant.
-It is compiled with high optimization flags, it does not perform validity checks and it does not provide debug information.
+If `NANOS6` envar is not set, the default variant is `optimized`.
+This is compiled with high optimization flags, it does not perform validity checks and it does not provide debug information.
 That is the variant that should be used when performing benchmarking of parallel applications.
 
 Additionally, Nanos6 offers an extra performant variant named `turbo`, which is the same as `optimized` but adding further optimizations.
