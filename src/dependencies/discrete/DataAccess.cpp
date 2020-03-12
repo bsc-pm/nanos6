@@ -4,8 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include <iostream>
 #include <bitset>
+#include <iostream>
 #include <ostream>
 
 #include "DataAccess.hpp"

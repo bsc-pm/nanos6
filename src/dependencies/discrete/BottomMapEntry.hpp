@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef BOTTOM_MAP_ENTRY_HPP
@@ -13,12 +13,12 @@
 #include "ReductionInfo.hpp"
 
 struct BottomMapEntry {
-	std::atomic<DataAccess *> _access;
-	ReductionInfo * _reductionInfo;
+	DataAccess * _access;
+	ReductionInfo *_reductionInfo;
 
-	BottomMapEntry(DataAccess * access) :
-	_access(access),
-	_reductionInfo(nullptr)
+	BottomMapEntry(DataAccess *access) :
+		_access(access),
+		_reductionInfo(nullptr)
 	{
 	}
 };

@@ -13,10 +13,10 @@
 #include <iostream>
 #include <stack>
 
-#include "../DataAccessType.hpp"
-#include "ReductionSpecific.hpp"
-#include "ReductionInfo.hpp"
 #include "DataAccessFlags.hpp"
+#include "../DataAccessType.hpp"
+#include "ReductionInfo.hpp"
+#include "ReductionSpecific.hpp"
 
 #include <InstrumentDataAccessId.hpp>
 
@@ -69,7 +69,7 @@ public:
 		assert(originator != nullptr);
 		assert(!(weak && type == REDUCTION_ACCESS_TYPE));
 
-		if(weak)
+		if (weak)
 			_accessFlags.fetch_or(ACCESS_IS_WEAK, std::memory_order_relaxed);
 	}
 
@@ -137,7 +137,7 @@ public:
 
 	inline void setWeak(bool value = true)
 	{
-		if(value)
+		if (value)
 			_accessFlags.fetch_or(ACCESS_IS_WEAK, std::memory_order_relaxed);
 		else
 			_accessFlags.fetch_and(~ACCESS_IS_WEAK, std::memory_order_relaxed);

@@ -28,10 +28,17 @@ struct CPUDependencyData {
 	deletable_originator_list_t _deletableOriginators;
 	mailbox_t _mailBox;
 
+#ifndef NDEBUG
+	std::atomic<bool> _inUse;
+#endif
+
 	CPUDependencyData()
 		: _satisfiedOriginators(),
 		_deletableOriginators(),
 		_mailBox()
+#ifndef NDEBUG
+		,_inUse()
+#endif
 	{
 	}
 

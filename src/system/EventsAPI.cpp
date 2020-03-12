@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -34,7 +34,8 @@ extern "C" void *nanos6_get_current_event_counter(void)
 extern "C" void nanos6_increase_current_task_event_counter(__attribute__((unused)) void *event_counter, unsigned int increment)
 {
 	assert(event_counter != 0);
-	if (increment == 0) return;
+	if (increment == 0)
+		return;
 
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentThread != nullptr);
@@ -50,7 +51,8 @@ extern "C" void nanos6_increase_current_task_event_counter(__attribute__((unused
 extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned int decrement)
 {
 	assert(event_counter != 0);
-	if (decrement == 0) return;
+	if (decrement == 0)
+		return;
 
 	Task *task = static_cast<Task *>(event_counter);
 
@@ -66,10 +68,9 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 		// Release the accesses
 		CPUDependencyData dependencyData;
 		DataAccessRegistration::unregisterTaskDataAccesses(
-				task, cpu, dependencyData,
-				/* memory place */ nullptr,
-				/* from a busy thread */ true
-		);
+			task, cpu, dependencyData,
+			/* memory place */ nullptr,
+			/* from a busy thread */ true);
 
 		Monitoring::taskFinished(task);
 		HardwareCounters::taskFinished(task);
@@ -81,4 +82,3 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 		}
 	}
 }
-

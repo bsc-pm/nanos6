@@ -1,24 +1,22 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
+#include <stdlib.h>
 
 #include <nanos6.h>
 #include "executors/threads/WorkerThread.hpp"
-#include "tasks/Task.hpp"
-#include "tasks/TaskImplementation.hpp"
 #include "../DataAccessType.hpp"
 #include "DataAccessRegistration.hpp"
+#include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "ReductionSpecific.hpp"
 
 #include <Dependencies.hpp>
 #include <InstrumentDependenciesByAccess.hpp>
-
-#include <stdlib.h>
-#include <iostream>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
 void register_access(void *handler, void *start, size_t length, __attribute__((unused)) int symbolIndex,
@@ -117,8 +115,5 @@ void nanos6_register_region_weak_reduction_depinfo1(
 	assert(dim1start == 0L);
 
 	// We don't support weak reductions, but we cannot safely ignore them.
-	// So we need to die.
-
-	std::cerr << "The selected dependency implementation has no support for nested-reduction (aka. weakreduction)." << std::endl;
-	exit(1);
+	FatalErrorHandler::failIf(true, "The selected dependency implementation has no support for nested-reduction (aka. weakreduction)");
 }

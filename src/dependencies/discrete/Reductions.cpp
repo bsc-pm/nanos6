@@ -5,7 +5,6 @@
 */
 
 #include <cassert>
-#include <iostream>
 
 #include <nanos6.h>
 #include <tasks/Task.hpp>

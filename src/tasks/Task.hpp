@@ -25,7 +25,7 @@
 #include <TaskHardwareCountersPredictions.hpp>
 #include <TaskPredictions.hpp>
 #include <TaskStatistics.hpp>
-
+#include <TaskDataAccessesInfo.hpp>
 
 struct DataAccess;
 struct DataAccessBase;
@@ -153,9 +153,7 @@ public:
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
-		void * seqs,
-		void * addresses,
-		size_t numDeps
+		TaskDataAccessesInfo taskAccessInfo
 	);
 
 	virtual inline void reinitialize(

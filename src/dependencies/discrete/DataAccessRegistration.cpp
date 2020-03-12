@@ -19,10 +19,10 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "lowlevel/SpinWait.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "TaskDataAccesses.hpp"
 #include "tasks/Task.hpp"
-#include "lowlevel/SpinWait.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentTaskId.hpp>
@@ -45,8 +45,6 @@ namespace DataAccessRegistration {
 
 	static inline void decreaseDeletableCountOrDelete(Task *originator,
 		CPUDependencyData::deletable_originator_list_t &deletableOriginators);
-
-	static inline bool matchAll(access_flags_t value, access_flags_t mask);
 
 	//! Process all the originators that have become ready
 	static inline void processSatisfiedOriginators(
@@ -196,8 +194,8 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	static inline void walkAccessChain(Task *task, DataAccess *access,
-		void *address, CPUDependencyData &hpDependencyData)
+	void finalizeDataAccess(Task *task, DataAccess *access, void *address,
+		CPUDependencyData &hpDependencyData)
 	{
 		DataAccessType originalAccessType = access->getType();
 		// No race, the parent is finished so all childs must be registered by now.
@@ -255,14 +253,6 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void finalizeDataAccess(Task *task, DataAccess *access, void *address,
-		CPUDependencyData &hpDependencyData, __attribute__((unused)) ComputePlace *computePlace)
-	{
-		assert(computePlace != nullptr);
-
-		walkAccessChain(task, access, address, hpDependencyData);
-	}
-
 	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData)
 	{
 		// This is called once per task, and will create all the dependencies in register_depinfo, to later insert
@@ -270,6 +260,13 @@ namespace DataAccessRegistration {
 
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
+
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = false;
+			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, true));
+		}
+#endif
 
 		nanos6_task_info_t *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
@@ -290,6 +287,13 @@ namespace DataAccessRegistration {
 
 		processSatisfiedOriginators(hpDependencyData, computePlace, true);
 
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = true;
+			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
+		}
+#endif
+
 		return task->decreasePredecessors(2);
 	}
 
@@ -302,10 +306,17 @@ namespace DataAccessRegistration {
 		assert(!accessStruct.hasBeenDeleted());
 		assert(hpDependencyData._mailBox.empty());
 
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = false;
+			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, true));
+		}
+#endif
+
 		if (accessStruct.hasDataAccesses()) {
 			// Release dependencies of all my accesses
 			accessStruct.forAll([&](void *address, DataAccess *access) {
-				finalizeDataAccess(task, access, address, hpDependencyData, computePlace);
+				finalizeDataAccess(task, access, address, hpDependencyData);
 			});
 		}
 
@@ -341,6 +352,13 @@ namespace DataAccessRegistration {
 		}
 
 		processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
+
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = true;
+			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
+		}
+#endif
 	}
 
 	void handleEnterBlocking(__attribute__((unused)) Task *task)
@@ -381,11 +399,6 @@ namespace DataAccessRegistration {
 
 	void handleTaskRemoval(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace)
 	{
-	}
-
-	static inline bool matchAll(access_flags_t value, access_flags_t mask)
-	{
-		return ((value & mask) == mask);
 	}
 
 	static inline void insertAccesses(Task *task, CPUDependencyData &hpDependencyData)

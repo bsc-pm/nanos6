@@ -13,12 +13,12 @@
 #include <unordered_map>
 #include <array>
 
-#include "lowlevel/TicketSpinLock.hpp"
 #include "BottomMapEntry.hpp"
-#include <MemoryAllocator.hpp>
-#include <DependencySystem.hpp>
+#include "TaskDataAccessesInfo.hpp"
+#include "lowlevel/TicketSpinLock.hpp"
 
-#define ACCESS_LINEAR_CUTOFF 256
+#include <DependencySystem.hpp>
+#include <MemoryAllocator.hpp>
 
 struct DataAccess;
 
@@ -28,27 +28,27 @@ struct TaskDataAccesses {
 
 #ifndef NDEBUG
 	enum flag_bits_t {
-		HAS_BEEN_DELETED_BIT=0,
+		HAS_BEEN_DELETED_BIT = 0,
 		TOTAL_FLAG_BITS
 	};
 	typedef std::bitset<TOTAL_FLAG_BITS> flags_t;
 #endif
 	//! This will handle the dependencies of nested tasks.
 	bottom_map_t _subaccessBottomMap;
-	DataAccess * _accessArray;
-	void ** _addressArray;
+	DataAccess *_accessArray;
+	void **_addressArray;
 	size_t _maxDeps;
 	size_t _currentIndex;
 
 	std::atomic<int> _deletableCount;
-	access_map_t * _accessMap;
+	access_map_t *_accessMap;
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
 
 
-	TaskDataAccesses()
-		: _subaccessBottomMap(),
+	TaskDataAccesses() :
+		_subaccessBottomMap(),
 		_accessArray(nullptr),
 		_addressArray(nullptr),
 		_maxDeps(0),
@@ -56,22 +56,27 @@ struct TaskDataAccesses {
 		_deletableCount(0),
 		_accessMap(nullptr)
 #ifndef NDEBUG
-		, _flags()
+		,
+		_flags()
 #endif
 	{
 	}
 
-	TaskDataAccesses(void *accessArray , void *addressArray, size_t maxDeps)
-		: _subaccessBottomMap(),
-		_accessArray((DataAccess *) accessArray),
-		_addressArray((void **) addressArray),
-		_maxDeps(maxDeps), _currentIndex(0), _deletableCount(0), _accessMap(nullptr)
+	TaskDataAccesses(TaskDataAccessesInfo taskAccessInfo) :
+		_subaccessBottomMap(),
+		_accessArray(taskAccessInfo.getAccessArrayLocation()),
+		_addressArray(taskAccessInfo.getAddressArrayLocation()),
+		_maxDeps(taskAccessInfo.getNumDeps()),
+		_currentIndex(0),
+		_deletableCount(0),
+		_accessMap(nullptr)
 #ifndef NDEBUG
-		, _flags()
+		,
+		_flags()
 #endif
 	{
-		if(maxDeps > ACCESS_LINEAR_CUTOFF) {
-			_accessMap = MemoryAllocator::newObject<access_map_t>(maxDeps);
+		if (_maxDeps > ACCESS_LINEAR_CUTOFF) {
+			_accessMap = MemoryAllocator::newObject<access_map_t>(_maxDeps);
 			assert(_accessMap != nullptr);
 		}
 	}
@@ -80,7 +85,7 @@ struct TaskDataAccesses {
 	{
 		assert(!hasBeenDeleted());
 
-		if(_accessMap != nullptr) {
+		if (_accessMap != nullptr) {
 			MemoryAllocator::deleteObject(_accessMap);
 		}
 
@@ -116,15 +121,15 @@ struct TaskDataAccesses {
 		assert(res >= 0);
 	}
 
-	inline DataAccess * findAccess(void * address) const
+	inline DataAccess *findAccess(void *address) const
 	{
-		if(_accessMap != nullptr) {
+		if (_accessMap != nullptr) {
 			access_map_t::iterator itAccess = _accessMap->find(address);
-			if(itAccess != _accessMap->end())
+			if (itAccess != _accessMap->end())
 				return &itAccess->second;
 		} else {
-			for(size_t i = 0; i < _currentIndex; ++i) {
-				if(_addressArray[i] == address)
+			for (size_t i = 0; i < _currentIndex; ++i) {
+				if (_addressArray[i] == address)
 					return &_accessArray[i];
 			}
 		}
@@ -147,42 +152,43 @@ struct TaskDataAccesses {
 		return (sizeof(DataAccess) + sizeof(void *)) * _maxDeps;
 	}
 
-	inline DataAccess * allocateAccess(void * address, DataAccessType type, Task *originator, bool weak, bool &existing) {
-		if(_accessMap != nullptr) {
+	inline DataAccess *allocateAccess(void *address, DataAccessType type, Task *originator, bool weak, bool &existing)
+	{
+		if (_accessMap != nullptr) {
 			std::pair<access_map_t::iterator, bool> emplaced = _accessMap->emplace(std::piecewise_construct,
 				std::forward_as_tuple(address),
 				std::forward_as_tuple(type, originator, weak));
 
 			existing = !emplaced.second;
-			if(!existing) _currentIndex++;
+			if (!existing)
+				_currentIndex++;
 			return &emplaced.first->second;
 		} else {
-			DataAccess * ret = findAccess(address);
+			DataAccess *ret = findAccess(address);
+			existing = (ret != nullptr);
 			assert(_currentIndex < _maxDeps);
 
-			if(ret != nullptr) {
-				existing = true;
-				return ret;
-			} else {
-				existing = false;
+			if (!existing) {
 				_addressArray[_currentIndex] = address;
 				ret = &_accessArray[_currentIndex++];
 				new (ret) DataAccess(type, originator, weak);
-				return ret;
 			}
+
+			return ret;
 		}
 	}
 
-	inline void forAll(std::function<void(void *, DataAccess *)> callback) {
-		if(_accessMap != nullptr) {
+	inline void forAll(std::function<void(void *, DataAccess *)> callback)
+	{
+		if (_accessMap != nullptr) {
 			access_map_t::iterator itAccess = _accessMap->begin();
 
-			while(itAccess != _accessMap->end()) {
+			while (itAccess != _accessMap->end()) {
 				callback(itAccess->first, &itAccess->second);
 				itAccess++;
 			}
 		} else {
-			for(size_t i = 0; i < getRealAccessNumber(); ++i)
+			for (size_t i = 0; i < getRealAccessNumber(); ++i)
 				callback(_addressArray[i], &_accessArray[i]);
 		}
 	}

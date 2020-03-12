@@ -742,6 +742,7 @@ noinst_HEADERS = \
 	src/dependencies/discrete/ReductionInfo.hpp \
 	src/dependencies/discrete/ReductionSpecific.hpp \
 	src/dependencies/discrete/TaskDataAccesses.hpp \
+	src/dependencies/discrete/TaskDataAccessesInfo.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
@@ -760,6 +761,7 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccessesInfo.hpp \
 	src/dependencies/linear-regions/DataAccessRegion.hpp \
 	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \
 	src/dependencies/linear-regions/Dependencies.hpp \

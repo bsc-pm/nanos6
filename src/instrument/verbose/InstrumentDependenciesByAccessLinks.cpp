@@ -5,8 +5,10 @@
 */
 
 #include <atomic>
-#include <cassert>
 #include <bitset>
+#include <cassert>
+#include <cstdint>
+#include <iomanip>
 
 #include "InstrumentDependenciesByAccessLinks.hpp"
 #include "InstrumentVerbose.hpp"
@@ -357,8 +359,8 @@ namespace Instrument {
 		logEntry->_contents << " from Task:" << sinkTaskId;
 
 		logEntry->_contents << " [" << region << "]"
-							<< (direct ? " direct" : "indirect")
-							<< " triggererTask:" << context._taskId;
+			<< (direct ? " direct" : "indirect")
+			<< " triggererTask:" << context._taskId;
 
 		addLogEntry(logEntry);
 	}
@@ -396,7 +398,7 @@ namespace Instrument {
 		logEntry->_contents << " from Task:" << sinkTaskId;
 
 		logEntry->_contents << (direct ? " direct" : "indirect")
-							<< " triggererTask:" << context._taskId;
+			<< " triggererTask:" << context._taskId;
 
 		addLogEntry(logEntry);
 	}
@@ -477,11 +479,18 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 
+	static inline std::string hexFlags(uint32_t flags)
+	{
+		std::ostringstream oss;
+		oss << "0x" << std::setfill('0') << std::setw(8) << std::hex << flags;
+		return oss.str();
+	}
+
 	void automataMessage(
 		data_access_id_t &dataAccessIdFrom,
 		data_access_id_t &dataAccessIdTo,
-		unsigned int flags,
-		unsigned int oldFlags,
+		uint32_t flags,
+		uint32_t oldFlags,
 		InstrumentationContext const &context)
 	{
 		if (!_verboseDependenciesAutomataMessages) {
@@ -492,8 +501,8 @@ namespace Instrument {
 		assert(logEntry != nullptr);
 
 		logEntry->appendLocation(context);
-		logEntry->_contents << " <-> AutomataMessage From:" << dataAccessIdFrom << " To:" <<
-			dataAccessIdTo << " Flags:" << std::bitset<25>(flags) << " Was:" << std::bitset<25>(oldFlags);
+		logEntry->_contents << " <-> AutomataMessage From:" << dataAccessIdFrom << " To:"
+			<< dataAccessIdTo << " Flags:" << hexFlags(flags) << " Was:" << hexFlags(oldFlags);
 
 		addLogEntry(logEntry);
 	}

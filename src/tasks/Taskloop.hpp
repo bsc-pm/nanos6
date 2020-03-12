@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASKLOOP_HPP
@@ -11,6 +11,7 @@
 
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
+
 
 class Taskloop : public Task {
 public:
@@ -27,9 +28,10 @@ public:
 		nanos6_task_invocation_info_t *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
-		size_t flags
+		size_t flags,
+		TaskDataAccessesInfo taskAccessInfo
 	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo),
 		  _bounds(), _sourceTaskloop(false)
 	{}
 

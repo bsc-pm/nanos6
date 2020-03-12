@@ -28,6 +28,7 @@ void release_access(void *base_address, __attribute__((unused)) long dim1size, l
 	assert(task != nullptr);
 
 	ComputePlace *computePlace = currentWorkerThread->getComputePlace();
+	assert(computePlace != nullptr);
 
 	void *effectiveAddress = static_cast<char *>(base_address) + dim1start;
 
