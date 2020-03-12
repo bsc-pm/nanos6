@@ -167,6 +167,12 @@ __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 		} else {
 			dependencies = "linear-regions-fragmented";
 		}
+	} else if (strcmp(dependencies, "regions") == 0) {
+		// We accept "regions" as a valid alias of "linear-regions-fragmented"
+		dependencies = "linear-regions-fragmented";
+		if (verbose) {
+			fprintf(stderr, "Dependency implementation 'regions' is an alias of 'linear-regions-fragmented'\n");
+		}
 	}
 
 	if (verbose) {
