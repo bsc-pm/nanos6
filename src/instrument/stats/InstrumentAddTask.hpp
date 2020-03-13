@@ -14,7 +14,7 @@
 
 
 namespace Instrument {
-	
+
 	inline task_id_t enterAddTask(
 		nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
@@ -24,7 +24,7 @@ namespace Instrument {
 		Stats::TaskTypeAndTimes *taskTypeAndTimes = new Stats::TaskTypeAndTimes(taskInfo, (context._taskId != task_id_t()));
 		return taskTypeAndTimes;
 	}
-	
+
 	inline void createdArgsBlock(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) void *argsBlockPointer,
@@ -33,20 +33,20 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
-	
+
 	inline void createdTask(
 		__attribute__((unused)) void *task,
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
-	
+
 	inline void exitAddTask(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
-	
+
 	inline task_id_t enterAddTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		nanos6_task_info_t *taskInfo,
@@ -57,7 +57,7 @@ namespace Instrument {
 		Stats::TaskTypeAndTimes *taskTypeAndTimes = new Stats::TaskTypeAndTimes(taskInfo, (context._taskId != task_id_t()));
 		return taskTypeAndTimes;
 	}
-	
+
 	inline void exitAddTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) task_id_t collaboratorId,

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef WORKER_THREAD_IMPLEMENTATION_HPP
@@ -14,14 +14,13 @@
 #include "DependencyDomain.hpp"
 #include "WorkerThread.hpp"
 #include "WorkerThreadBase.hpp"
-#include "instrument/stats/InstrumentHardwareCountersThreadLocalData.hpp"
 
 #include <InstrumentThreadManagement.hpp>
 
 
 inline WorkerThread::WorkerThread(CPU *cpu)
 	: WorkerThreadBase(cpu), _task(nullptr), _dependencyDomain(),
-	_hardwareCounters(), _instrumentationData(), _threadCounters()
+	_instrumentationData(), _threadCounters()
 {
 	_originalNumaNode = cpu->getNumaNodeId();
 	Instrument::enterThreadCreation(/* OUT */ _instrumentationId, cpu->getInstrumentationId());
@@ -29,24 +28,21 @@ inline WorkerThread::WorkerThread(CPU *cpu)
 	Instrument::exitThreadCreation(_instrumentationId);
 }
 
-
 inline WorkerThread::~WorkerThread()
 {
 }
-
 
 inline Task *WorkerThread::getTask()
 {
 	return _task;
 }
 
-
 inline void WorkerThread::setTask(Task *task)
 {
 	assert(_task == nullptr);
+
 	_task = task;
 }
-
 
 inline Task *WorkerThread::unassignTask()
 {
@@ -55,7 +51,6 @@ inline Task *WorkerThread::unassignTask()
 
 	return currentTask;
 }
-
 
 inline DependencyDomain const *WorkerThread::getDependencyDomain() const
 {
@@ -67,17 +62,10 @@ inline DependencyDomain *WorkerThread::getDependencyDomain()
 	return &_dependencyDomain;
 }
 
-
-inline HardwareCountersThreadLocalData &WorkerThread::getHardwareCounters()
-{
-	return _hardwareCounters;
-}
-
 inline Instrument::ThreadLocalData &WorkerThread::getInstrumentationData()
 {
 	return _instrumentationData;
 }
-
 
 inline void WorkerThread::handleTask(CPU *cpu, Task *task)
 {
@@ -94,7 +82,6 @@ inline void WorkerThread::handleTask(CPU *cpu, Task *task)
 	// Restore the initial task
 	_task = oldTask;
 }
-
 
 inline WorkerThread *WorkerThread::getCurrentWorkerThread()
 {
@@ -113,8 +100,6 @@ inline ThreadHardwareCounters *WorkerThread::getThreadHardwareCounters()
 {
 	return &(_threadCounters);
 }
-
-
 
 #ifndef NDEBUG
 namespace ompss_debug {

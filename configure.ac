@@ -79,7 +79,6 @@ fi
 # Checks for library functions.
 AC_CHECK_DLOPEN
 AC_CHECK_BACKTRACE
-AC_CHECK_PAPI
 AC_CHECK_LIBNUMA
 AC_CHECK_MEMKIND
 AC_CHECK_PQOS
@@ -483,16 +482,6 @@ else
 fi
 
 _AS_ECHO([])
-_AS_ECHO_N([   PAPI is enabled... ])
-if test x"${ac_use_papi}" = x"yes" ; then
-	AC_MSG_RESULT([yes])
-	_AS_ECHO([   PAPI CPPFLAGS... ${papi_CPPFLAGS}])
-	_AS_ECHO([   PAPI LIBS... ${papi_LIBS}])
-else
-	AC_MSG_RESULT([no])
-fi
-
-_AS_ECHO([])
 _AS_ECHO([   elfutils CPPFLAGS... ${elfutils_CFLAGS}])
 _AS_ECHO([   elfutils LIBS... ${elfutils_LIBS}])
 
@@ -556,10 +545,6 @@ if test x"${ac_use_pqos}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	_AS_ECHO([   PQOS CPPFLAGS... ${pqos_CPPFLAGS}])
 	_AS_ECHO([   PQOS LIBS... ${pqos_LIBS}])
-	if test x"${ac_use_papi}" = x"yes" ; then
-		AC_MSG_WARN([Both PQoS hardware event monitoring and PAPI Instrumentation are enabled.])
-		AC_MSG_WARN([Using both at the same time may cause conflicts when polling events.])
-	fi
 else
 	AC_MSG_RESULT([no])
 fi
