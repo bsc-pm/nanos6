@@ -17,23 +17,18 @@
 
 
 namespace Instrument {
-	inline void enterTaskWait(
-		__attribute__((unused)) task_id_t taskId,
-		__attribute__((unused)) char const *invocationSource,
-		__attribute__((unused)) task_id_t if0TaskId,
-		__attribute__((unused)) InstrumentationContext const &context)
+	inline void enterTaskWait(task_id_t, char const *, task_id_t, InstrumentationContext const &)
 	{
 	}
 
-	inline void exitTaskWait(
-		task_id_t taskId,
-		__attribute__((unused)) InstrumentationContext const &context)
+	inline void exitTaskWait(task_id_t taskId, InstrumentationContext const &context)
 	{
 		// If a spawned function, count the taskwait as a frontier between phases
 		if (!taskId->_hasParent) {
 			Instrument::Stats::_phasesSpinLock.writeLock();
 
 			assert(Instrument::Stats::_currentPhase == (Instrument::Stats::_phaseTimes.size() - 1));
+
 			Instrument::Stats::_phaseTimes.back().stop();
 			Instrument::Stats::_phaseTimes.emplace_back(true);
 

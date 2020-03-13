@@ -15,16 +15,16 @@
 
 
 namespace Instrument {
-	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
+	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, compute_place_id_t const &)
 	{
 		threadId = thread_id_t();
 	}
 
-	inline void exitThreadCreation(__attribute__((unused)) thread_id_t threadId)
+	inline void exitThreadCreation(thread_id_t)
 	{
 	}
 
-	inline void createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
+	inline void createdThread(thread_id_t, compute_place_id_t const &)
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 
@@ -40,11 +40,11 @@ namespace Instrument {
 	}
 
 	template<typename... TS>
-	void createdExternalThread(__attribute__((unused)) external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	void createdExternalThread(external_thread_id_t &, TS...)
 	{
 	}
 
-	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceId)
+	inline void threadWillSuspend(thread_id_t, compute_place_id_t)
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 
@@ -52,7 +52,7 @@ namespace Instrument {
 		currentPhase._runningTime.continueAt(currentPhase._blockedTime);
 	}
 
-	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceId)
+	inline void threadHasResumed(thread_id_t, compute_place_id_t)
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 
@@ -60,11 +60,11 @@ namespace Instrument {
 		currentPhase._blockedTime.continueAt(currentPhase._runningTime);
 	}
 
-	inline void threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
+	inline void threadWillSuspend(external_thread_id_t)
 	{
 	}
 
-	inline void threadHasResumed(__attribute__((unused)) external_thread_id_t threadId)
+	inline void threadHasResumed(external_thread_id_t)
 	{
 	}
 
@@ -72,7 +72,7 @@ namespace Instrument {
 	{
 	}
 
-	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)
+	inline void threadEnterBusyWait(busy_wait_reason_t)
 	{
 	}
 

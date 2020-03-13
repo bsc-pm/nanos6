@@ -1,14 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2017-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_STATS_EXTERNAL_THREAD_LOCAL_DATA_HPP
 #define INSTRUMENT_STATS_EXTERNAL_THREAD_LOCAL_DATA_HPP
 
-
-#include "../support/InstrumentStandardExternalThreadLocalData.hpp"
+#include "instrument/support/InstrumentStandardExternalThreadLocalData.hpp"
 
 
 namespace Instrument {
