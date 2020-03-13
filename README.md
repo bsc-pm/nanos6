@@ -24,7 +24,6 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [elfutils](https://sourceware.org/elfutils/) and [libunwind](http://www.nongnu.org/libunwind) to generate sample-based profiling
 1. [graphviz](http://www.graphviz.org/) and pdfjam or pdfjoin from [TeX](http://www.tug.org/texlive/) to generate graphical representations of the dependency graph
 1. [parallel](https://www.gnu.org/software/parallel/) to generate the graph representation in parallel
-1. [PAPI](https://icl.cs.utk.edu/papi/software/index.html)  to generate statistics that include hardware counters
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
 1. [DLB](https://pm.bsc.es/dlb) to enable dynamic management and sharing of computing resources
@@ -56,7 +55,6 @@ The configure script accepts the following options:
 1. `--with-nanos6-mercurium=prefix` to specify the prefix of the Mercurium installation
 1. `--with-boost=prefix` to specify the prefix of the Boost installation
 1. `--with-libunwind=prefix` to specify the prefix of the libunwind installation
-1. `--with-papi=prefix` to specify the prefix of the PAPI installation
 1. `--with-libnuma=prefix` to specify the prefix of the numactl installation
 1. `--with-extrae=prefix` to specify the prefix of the extrae installation
 1. `--with-pqos=prefix` to specify the prefix of the PQoS installation
@@ -67,7 +65,6 @@ The configure script accepts the following options:
 1. `--enable-monitoring-hwevents` to enable monitoring of hardware counters (which must be paired with an appropriate library)
 
 The location of elfutils, hwloc and CUDA is always retrieved through pkg-config.
-The location of PAPI can also be retrieved through pkg-config if it is not specified through the `--with-papi` parameter.
 If they are installed in non-standard locations, pkg-config can be told where to find them through the `PKG_CONFIG_PATH` environment variable.
 For instance:
 
@@ -212,13 +209,12 @@ Also the `NANOS6_VERBOSE_DUMP_ONLY_ON_EXIT` can be set to `1` to delay the outpu
 
 ### Obtaining statistics
 
-To enable collecting statistics, run the application with the `NANOS6` envar set to either `stats` or `stats-papi`.
-The first collects timing statistics and the second also records hardware counters.
+To enable collecting timing statistics, run the application with the `NANOS6` envar set to `stats`.
 
 By default, the statistics are emitted standard error when the program ends.
 The output can be sent to a file through the `NANOS6_STATS_FILE` envar.
 
-The contents of the output contains the average for each task type and the total task average of the following metrics:
+The contents of the output contain the average for each task type and the total task average of the following metrics:
 
 * Number of instances
 * Mean instantiation time
@@ -334,7 +330,7 @@ Currently, Monitoring capabilities lack support for the `task for` construct.
 
 ## Hardware Counters
 
-As well as the Monitoring Infrastructure and the `stats-papi` version of the runtime, Nanos6 offers a real-time API for Hardware Counter statistics.
+As well as the Monitoring Infrastructure, Nanos6 offers a real-time API for Hardware Counter statistics.
 This API allows to obtain and predict hardware counters for tasks, similarly to Monitoring.
 
 By default, the NULL option is used, which records no hardware counters.
