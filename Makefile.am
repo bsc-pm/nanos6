@@ -89,7 +89,6 @@ lib_LTLIBRARIES = \
 	libnanos6-graph-debug-linear-regions-fragmented.la \
 	libnanos6-lint-linear-regions-fragmented.la \
 	libnanos6-stats-linear-regions-fragmented.la \
-	libnanos6-stats-papi-linear-regions-fragmented.la \
 	libnanos6-verbose-linear-regions-fragmented.la \
 	libnanos6-verbose-debug-linear-regions-fragmented.la \
 	libnanos6-optimized-discrete.la \
@@ -99,7 +98,6 @@ lib_LTLIBRARIES = \
 	libnanos6-extrae-debug-discrete.la \
 	libnanos6-lint-discrete.la \
 	libnanos6-stats-discrete.la \
-	libnanos6-stats-papi-discrete.la \
 	libnanos6-verbose-discrete.la \
 	libnanos6-verbose-debug-discrete.la
 
@@ -530,15 +528,6 @@ CLEANFILES += \
 	$(multidimensional_adaptor_sources)
 
 
-hardware_counters_sources = \
-	src/instrument/stats/InstrumentHardwareCounters.cpp
-
-papi_hardware_counters_sources = \
-	src/instrument/stats/papi/InstrumentPAPIHardwareCounters.cpp \
-	src/instrument/stats/papi/InstrumentPAPIHardwareCountersThreadLocalData.cpp
-
-no_hardware_counters_sources =
-
 noinstrument_sources =
 
 instrument_generic_ids_sources = \
@@ -564,7 +553,6 @@ instrument_lint_sources = \
 	src/instrument/lint/Callbacks.cpp
 
 instrument_stats_sources = \
-	$(hardware_counters_sources) \
 	src/instrument/stats/InstrumentInitAndShutdown.cpp \
 	src/instrument/stats/InstrumentStats.cpp \
 	src/instrument/support/InstrumentThreadInstrumentationContext.cpp \
@@ -606,9 +594,7 @@ dist_instrument_sources = \
 	$(instrument_lint_sources) \
 	$(instrument_stats_sources) \
 	$(instrument_verbose_sources) \
-	$(noinstrument_sources) \
-	$(no_hardware_counters_sources) \
-	$(papi_hardware_counters_sources)
+	$(noinstrument_sources)
 
 
 memory_allocator_default_sources = \
@@ -975,8 +961,6 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
 	src/instrument/stats/InstrumentExternalThreadId.hpp \
 	src/instrument/stats/InstrumentExternalThreadLocalData.hpp \
-	src/instrument/stats/InstrumentHardwareCounters.hpp \
-	src/instrument/stats/InstrumentHardwareCountersThreadLocalData.hpp \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
@@ -993,10 +977,6 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentTracingPoints.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
 	src/instrument/stats/Timer.hpp \
-	src/instrument/stats/null/InstrumentNullHardwareCounters.hpp \
-	src/instrument/stats/null/InstrumentNullHardwareCountersThreadLocalData.hpp \
-	src/instrument/stats/papi/InstrumentPAPIHardwareCounters.hpp \
-	src/instrument/stats/papi/InstrumentPAPIHardwareCountersThreadLocalData.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
 	src/instrument/support/InstrumentInstrumentationContext.hpp \
 	src/instrument/support/InstrumentStandardExternalThreadLocalData.hpp \
@@ -1301,7 +1281,7 @@ nodist_libnanos6_stats_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_STATS_INSTRUMENTATION_VARIANT
 enabled_variants += stats
-nodist_libnanos6_stats_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_stats_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
 nodist_libnanos6_stats_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources)
 else
 disabled_variants += stats
@@ -1315,47 +1295,10 @@ nodist_libnanos6_stats_discrete_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
 if BUILD_STATS_INSTRUMENTATION_VARIANT
-nodist_libnanos6_stats_discrete_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(no_hardware_counters_sources) $(memory_default_sources) $(discrete_dependency_sources)
+nodist_libnanos6_stats_discrete_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(memory_default_sources) $(discrete_dependency_sources)
 nodist_libnanos6_stats_discrete_la_SOURCES += $(nodist_common_sources)
 else
 nodist_libnanos6_stats_discrete_la_SOURCES += loader/disabled_variant.c
-endif
-endif
-
-libnanos6_stats_papi_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support $(papi_CPPFLAGS) -DHAVE_PAPI
-libnanos6_stats_papi_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(linear_regions_fragmented_dependency_flags)
-libnanos6_stats_papi_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
-nodist_libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES =
-
-if BUILD_STATS_INSTRUMENTATION_VARIANT
-if HAVE_PAPI
-enabled_variants += stats-papi
-nodist_libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(papi_hardware_counters_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
-nodist_libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources)
-else
-disabled_variants += stats-papi
-nodist_libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
-endif
-else
-disabled_variants += stats-papi
-nodist_libnanos6_stats_papi_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
-endif
-
-libnanos6_stats_papi_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/stats -I$(srcdir)/src/instrument/support $(papi_CPPFLAGS) -DHAVE_PAPI
-libnanos6_stats_papi_discrete_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) -g2 $(discrete_dependency_flags)
-libnanos6_stats_papi_discrete_la_LDFLAGS = $(common_libnanos6_ldflags) $(papi_LIBS) $(CLOCK_LIBS)
-nodist_libnanos6_stats_papi_discrete_la_SOURCES =
-
-if DISCRETE_DEPENDENCIES
-if BUILD_STATS_INSTRUMENTATION_VARIANT
-if HAVE_PAPI
-nodist_libnanos6_stats_papi_discrete_la_SOURCES += $(common_sources) $(instrument_stats_sources) $(papi_hardware_counters_sources) $(memory_default_sources) $(discrete_dependency_sources)
-nodist_libnanos6_stats_papi_discrete_la_SOURCES += $(nodist_common_sources)
-else
-nodist_libnanos6_stats_papi_discrete_la_SOURCES += loader/disabled_variant.c
-endif
-else
-nodist_libnanos6_stats_papi_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
@@ -1516,6 +1459,8 @@ deprecated_libs = \
 	libnanos6-profile.la \
 	libnanos6-stats.la \
 	libnanos6-stats-papi.la \
+	libnanos6-stats-papi-discrete.la \
+	libnanos6-stats-papi-linear-regions-fragmented.la \
 	libnanos6-verbose.la \
 	libnanos6-verbose-debug.la \
 	libnanos6-null.la \
@@ -1558,7 +1503,6 @@ nodist_libnanos6_extrae_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_extrae_debug_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_lint_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_stats_discrete_la_SOURCES += loader/disabled_variant.c
-nodist_libnanos6_stats_papi_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_verbose_discrete_la_SOURCES += loader/disabled_variant.c
 nodist_libnanos6_verbose_debug_discrete_la_SOURCES += loader/disabled_variant.c
 endif
