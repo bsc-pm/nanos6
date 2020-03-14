@@ -9,16 +9,17 @@
 
 #include <nanos6.h>
 #include <atomic>
+#include <stdint.h>
 
 namespace Instrument {
 	//! This is the default task identifier for the instrumentation.
 	//! It should be redefined in an identically named file within each instrumentation implementation.
 
-	extern std::atomic<size_t> _nextTaskId;
+	extern std::atomic<uint32_t> _nextTaskId;
 
 	struct CTFTaskInfo {
 		nanos6_task_info_t *_nanos6TaskInfo;
-		size_t _taskId;
+		uint32_t _taskId;
 		long _priority;
 
 		CTFTaskInfo(nanos6_task_info_t *nanos6TaskInfo)

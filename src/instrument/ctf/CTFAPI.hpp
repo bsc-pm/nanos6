@@ -16,12 +16,12 @@
 
 namespace CTFAPI {
 
-	#define TP_NANOS6_TASK_EXECUTE 10000U
-	#define TP_NANOS6_TASK_END     10001U
-	#define TP_NANOS6_TASK_BLOCK   10002U
+	#define TP_NANOS6_TASK_EXECUTE 0
+	#define TP_NANOS6_TASK_END     1
+	#define TP_NANOS6_TASK_BLOCK   2
 
 	struct __attribute__((__packed__)) event_header {
-		uint32_t id;
+		uint8_t  id;
 		uint64_t timestamp;
 	};
 
@@ -33,7 +33,7 @@ namespace CTFAPI {
 
 
 
-	static int mk_event_header(char **buf, uint32_t id)
+	static int mk_event_header(char **buf, uint8_t id)
 	{
 		struct timespec tp;
 		uint64_t timestamp;
@@ -97,7 +97,7 @@ namespace CTFAPI {
 	// number of bytes might be written.
 
 	template<typename... ARGS>
-	static void tracepoint(const uint32_t tracepointId, ARGS... args)
+	static void tracepoint(const uint8_t tracepointId, ARGS... args)
 	{
 		Instrument::CTFStream &stream = Instrument::getCPULocalData().userStream;
 		const size_t size = sizeof(struct event_header) + sizeOfVariadic<ARGS...>::value;

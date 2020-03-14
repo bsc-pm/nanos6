@@ -17,13 +17,6 @@
 #define xstr(s) str(s)
 #define str(s) #s
 
-#define TP_WRITE_LITERAL(b, v)           \
-	do {                             \
-		*((typeof(v) *) b) = v;  \
-		b += sizeof(v);          \
-	} while(0)
-
-
 static const char *kernelMetadata = "/* CTF 1.8 */\n"
 	"\n"
 	"typealias integer { size = 8; align = 8; signed = false; }  := uint8_t;\n"
@@ -231,7 +224,7 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"		uint32_t cpu_id;\n"
 	"	};\n"
 	"	event.header := struct {\n"
-	"		uint32_t id;\n"
+	"		uint8_t id;\n"
 	"		uint64_clock_monotonic_t timestamp;\n"
 	"	};\n"
 	"};\n"
@@ -242,7 +235,7 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"	stream_id = 0;\n"
 	"	fields := struct {\n"
 	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 16; } _addr;\n"
-	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
+	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	"	};\n"
 	"};\n"
 	"\n"
@@ -251,7 +244,7 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"	id = " xstr(TP_NANOS6_TASK_END) ";\n"
 	"	stream_id = 0;\n"
 	"	fields := struct {\n"
-	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
+	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	"	};\n"
 	"};\n"
 	"\n"
@@ -260,7 +253,7 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"	id = " xstr(TP_NANOS6_TASK_BLOCK) ";\n"
 	"	stream_id = 0;\n"
 	"	fields := struct {\n"
-	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
+	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	"	};\n"
 	"};\n"
 	"\n";

@@ -28,7 +28,7 @@ namespace Instrument {
 	{
 		CTFTaskInfo *ctfTaskInfo = taskId._ctfTaskInfo;
 		assert(CTFTaskInfo != nullptr);
-		CTFAPI::tracepoint(TP_NANOS6_TASK_END, static_cast<uint64_t>(ctfTaskInfo->_taskId));
+		CTFAPI::tracepoint(TP_NANOS6_TASK_END, static_cast<uint32_t>(ctfTaskInfo->_taskId));
 	}
 
 	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
