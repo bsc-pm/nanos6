@@ -377,29 +377,6 @@ if test x"${ac_chrono_arch}" = x"yes" ; then
 fi
 
 AC_ARG_ENABLE(
-	[monitoring-hwevents],
-	[AS_HELP_STRING([--enable-monitoring-hwevents], [enable monitoring and prediction techniques for hardware events])],
-	[
-		case "${enableval}" in
-		yes)
-			ac_monitoring_hwevents=yes
-			;;
-		no)
-			ac_monitoring_hwevents=no
-			;;
-		*)
-			AC_MSG_ERROR([bad value ${enableval} for --enable-monitoring-hwevents])
-			;;
-		esac
-	],
-	[ac_monitoring_hwevents=no]
-)
-AM_CONDITIONAL([MONITORING_HWEVENTS_ENABLED], [test x"${ac_monitoring_hwevents}" = x"yes"])
-if test x"${ac_monitoring_hwevents}" = x"yes" ; then
-	AC_DEFINE([MONITORING_HWEVENTS_ENABLED], [1], [Define if Monitoring for Hardware Events is enabled.])
-fi
-
-AC_ARG_ENABLE(
 	[extra-debug],
 	[AS_HELP_STRING([--enable-extra-debug], [enable extra assertions and checks in debug - may cause significant slowdown])],
 	[
