@@ -74,6 +74,14 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX_11], [dnl
         [m4_fatal([invalid second argument `$2' to AX_CXX_COMPILE_STDCXX_11])])
   AC_LANG_PUSH([C++])dnl
   ac_success=no
+  AC_CACHE_CHECK(whether $CXX supports C++11 features by default,
+  ax_cv_cxx_compile_cxx11,
+  [AC_COMPILE_IFELSE([AC_LANG_SOURCE([_AX_CXX_COMPILE_STDCXX_11_testbody])],
+    [ax_cv_cxx_compile_cxx11=yes],
+    [ax_cv_cxx_compile_cxx11=no])])
+  if test x$ax_cv_cxx_compile_cxx11 = xyes; then
+    ac_success=yes
+  fi
 
   m4_if([$1], [noext], [], [dnl
   if test x$ac_success = xno; then
@@ -115,16 +123,20 @@ AC_DEFUN([AX_CXX_COMPILE_STDCXX_11], [dnl
     done
   fi])
   AC_LANG_POP([C++])
-  if test x$ac_success = xno; then
-    if test x$ax_cxx_compile_cxx11_required = xtrue; then
+  if test x$ax_cxx_compile_cxx11_required = xtrue; then
+    if test x$ac_success = xno; then
       AC_MSG_ERROR([*** A compiler with support for C++11 language features is required.])
-    else
-      AC_MSG_NOTICE([No compiler with C++11 support was found])
     fi
-    HAVE_CXX11=0
   else
-    HAVE_CXX11=1
-    AC_DEFINE(HAVE_CXX11, 1, [define if the compiler supports basic C++11 syntax])
+    if test x$ac_success = xno; then
+      HAVE_CXX11=0
+      AC_MSG_NOTICE([No compiler with C++11 support was found])
+    else
+      HAVE_CXX11=1
+      AC_DEFINE(HAVE_CXX11,1,
+                [define if the compiler supports basic C++11 syntax])
+    fi
+
+    AC_SUBST(HAVE_CXX11)
   fi
-  AC_SUBST(HAVE_CXX11)
 ])
