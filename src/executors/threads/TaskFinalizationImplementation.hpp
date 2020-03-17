@@ -10,12 +10,12 @@
 #include "CPUManager.hpp"
 #include "DataAccessRegistration.hpp"
 #include "MemoryAllocator.hpp"
+#include "TaskDataAccesses.hpp"
 #include "TaskFinalization.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
-#include "TaskDataAccesses.hpp"
 
 #include <HardwareCounters.hpp>
 #include <InstrumentComputePlaceId.hpp>
