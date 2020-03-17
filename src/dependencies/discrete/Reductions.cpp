@@ -21,6 +21,8 @@ void *nanos6_get_reduction_storage1(void *original,
 		__attribute__((unused)) long dim1start,
 		__attribute__((unused)) long dim1end)
 {
+	FatalErrorHandler::failIf(true, "This version requires symbol translation, calling nanos6_get_reduction_storage1 is incorrect");
+
 	assert(dim1start == 0L);
 
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();

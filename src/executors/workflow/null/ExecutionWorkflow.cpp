@@ -24,6 +24,20 @@
 
 
 namespace ExecutionWorkflow {
+	static inline nanos6_address_translation_entry_t *generateTranslationTable(Task *task, ComputePlace *computePlace, /*output*/ __attribute__((unused)) size_t &tableSize)
+	{
+		nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
+		int numSymbols = taskInfo->num_symbols;
+		if (numSymbols == 0)
+			return nullptr;
+
+		tableSize = numSymbols * sizeof(nanos6_address_translation_entry_t);
+		nanos6_address_translation_entry_t *table = (nanos6_address_translation_entry_t *)MemoryAllocator::alloc(tableSize);
+		DataAccessRegistration::translateReductionAddresses(task, computePlace, table, numSymbols);
+
+		return table;
+	}
+
 	void executeTask(
 		Task *task,
 		ComputePlace *targetComputePlace,
@@ -44,20 +58,8 @@ namespace ExecutionWorkflow {
 		);
 
 		if (task->hasCode()) {
-			nanos6_address_translation_entry_t *translationTable = nullptr;
-
-			nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
-			if (taskInfo->num_symbols >= 0) {
-				translationTable = (nanos6_address_translation_entry_t *)
-						alloca(
-							sizeof(nanos6_address_translation_entry_t)
-							* taskInfo->num_symbols
-						);
-
-				for (int index = 0; index < taskInfo->num_symbols; index++) {
-					translationTable[index] = {0, 0};
-				}
-			}
+			size_t tableSize = 0;
+			nanos6_address_translation_entry_t *translationTable = generateTranslationTable(task, targetComputePlace, tableSize);
 
 			HardwareCounters::updateRuntimeCounters();
 
@@ -78,6 +80,10 @@ namespace ExecutionWorkflow {
 			std::atomic_thread_fence(std::memory_order_acquire);
 			task->body(translationTable);
 			std::atomic_thread_fence(std::memory_order_release);
+
+			// Free up all symbol translation
+			if (translationTable != nullptr)
+				MemoryAllocator::free(translationTable, tableSize);
 
 			// Update the CPU since the thread may have migrated
 			cpu = currentThread->getComputePlace();

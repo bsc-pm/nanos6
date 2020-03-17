@@ -721,9 +721,6 @@ namespace DataAccessRegistration {
 
 		assert(!accessStruct.hasBeenDeleted());
 
-		DataAccess * accessArray = accessStruct._accessArray;
-		void ** addressArray = accessStruct._addressArray;
-
 		accessStruct.forAll([&](void * address, DataAccess *access) {
 			if(access->getType() == REDUCTION_ACCESS_TYPE) {
 				ReductionInfo * reductionInfo = access->getReductionInfo();

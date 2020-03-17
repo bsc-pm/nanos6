@@ -3267,6 +3267,18 @@ namespace DataAccessRegistration {
 		assert(accessStructures._subaccessBottomMap.empty());
 	}
 
+	void translateReductionAddresses(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace,
+		nanos6_address_translation_entry_t * translationTable,
+		int totalSymbols)
+	{
+		assert(task != nullptr);
+		assert(computePlace != nullptr);
+		assert(translationTable != nullptr);
+
+		// Initialize translationTable
+		for(int i = 0; i < totalSymbols; ++i)
+			translationTable[i] = {0, 0};
+	}
 };
 
 #pragma GCC visibility pop

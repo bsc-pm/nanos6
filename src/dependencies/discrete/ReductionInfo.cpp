@@ -78,7 +78,6 @@ void ReductionInfo::releaseSlotsInUse(Task* task, ComputePlace* computePlace) {
 	if(storage == nullptr)
 		return;
 
-	int computePlaceId = computePlace->getIndex();
 	storage->releaseSlotsInUse(task, computePlace);
 }
 
