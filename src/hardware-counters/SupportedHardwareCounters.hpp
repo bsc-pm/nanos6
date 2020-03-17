@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SUPPORTED_HARDWARE_COUNTERS_HPP
@@ -14,7 +14,7 @@ namespace HWCounters {
 		local_mem_bandwidth,
 		remote_mem_bandwidth,
 		llc_miss_rate,
-		// Add more counters in here if needed
+		// Add more counters above this line when needed
 		num_counters,
 		invalid_counter = -1
 	};

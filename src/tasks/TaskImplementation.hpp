@@ -57,8 +57,7 @@ inline Task::Task(
 	_executionStep(nullptr),
 	_taskStatistics(),
 	_taskPredictions(),
-	_taskCounters(),
-	_taskCountersPredictions(),
+	_hwCounters(nullptr),
 	_clusterContext(nullptr),
 	_parentSpawnCallback(nullptr)
 {
@@ -102,6 +101,7 @@ inline void Task::reinitialize(
 	_countdownToRelease = 1;
 	_workflow = nullptr;
 	_executionStep = nullptr;
+	_hwCounters = nullptr;
 	_clusterContext = nullptr;
 	_parentSpawnCallback = nullptr;
 

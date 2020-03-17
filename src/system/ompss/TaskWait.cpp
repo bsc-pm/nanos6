@@ -12,11 +12,11 @@
 #include "TaskBlocking.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#include <HardwareCounters.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
 #include <Monitoring.hpp>
@@ -66,7 +66,7 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 
 	if (!done) {
 		Monitoring::taskChangedStatus(currentTask, blocked_status);
-		HardwareCounters::stopTaskMonitoring(currentTask);
+		HardwareCounters::taskStopped(currentTask);
 
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask);
@@ -91,7 +91,7 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 		// The instrumentation was notified that the task had been blocked
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 
-		HardwareCounters::startTaskMonitoring(currentTask);
+		HardwareCounters::taskStarted(currentTask);
 		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 }

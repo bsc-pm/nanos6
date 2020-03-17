@@ -8,8 +8,8 @@
 #define SCHEDULER_HPP
 
 #include "SchedulerInterface.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 
-#include <HardwareCounters.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <Monitoring.hpp>
 
@@ -27,7 +27,7 @@ public:
 
 		// Mark the task as ready prior to entering the lock
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
-		HardwareCounters::stopTaskMonitoring(task);
+		HardwareCounters::taskStopped(task);
 		Monitoring::taskChangedStatus(task, ready_status);
 
 		_instance->addReadyTask(task, computePlace, hint);

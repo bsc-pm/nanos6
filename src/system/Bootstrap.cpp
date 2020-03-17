@@ -21,6 +21,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/TurboSettings.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
@@ -33,7 +34,6 @@
 
 #include <ClusterManager.hpp>
 #include <DependencySystem.hpp>
-#include <HardwareCounters.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>

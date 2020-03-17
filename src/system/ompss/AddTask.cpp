@@ -21,6 +21,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
@@ -31,7 +32,6 @@
 #include "tasks/Taskloop.hpp"
 
 #include <DataAccessRegistration.hpp>
-#include <HardwareCounters.hpp>
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
@@ -65,7 +65,7 @@ void nanos6_create_task(
 		Task *parent = currentWorkerThread->getTask();
 		if (parent != nullptr) {
 			Monitoring::taskChangedStatus(parent, runtime_status);
-			HardwareCounters::stopTaskMonitoring(parent);
+			HardwareCounters::taskStopped(parent);
 		}
 	}
 
@@ -222,7 +222,7 @@ void nanos6_submit_task(void *taskHandle)
 	}
 
 	if (parent != nullptr) {
-		HardwareCounters::startTaskMonitoring(parent);
+		HardwareCounters::taskStarted(parent);
 		Monitoring::taskChangedStatus(parent, executing_status);
 	}
 

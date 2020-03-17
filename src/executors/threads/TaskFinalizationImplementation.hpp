@@ -12,12 +12,12 @@
 #include "MemoryAllocator.hpp"
 #include "TaskDataAccesses.hpp"
 #include "TaskFinalization.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
 
-#include <HardwareCounters.hpp>
 #include <InstrumentComputePlaceId.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>

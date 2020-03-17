@@ -9,6 +9,7 @@
 #include "ExecutionWorkflow.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/TaskFinalization.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "memory/directory/Directory.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -18,7 +19,6 @@
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflowHost.hpp>
 #include <ExecutionWorkflowCluster.hpp>
-#include <HardwareCounters.hpp>
 #include <Monitoring.hpp>
 
 

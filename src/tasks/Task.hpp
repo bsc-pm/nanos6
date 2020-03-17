@@ -15,14 +15,13 @@
 
 #include <nanos6.h>
 
+#include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <ClusterTaskContext.hpp>
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
-#include <TaskHardwareCounters.hpp>
-#include <TaskHardwareCountersPredictions.hpp>
 #include <TaskPredictions.hpp>
 #include <TaskStatistics.hpp>
 #include <TaskDataAccessesInfo.hpp>
@@ -132,10 +131,7 @@ private:
 	TaskPredictions _taskPredictions;
 
 	//! Hardware counter structures of the task
-	TaskHardwareCounters _taskCounters;
-
-	//! Hardware counter prediction structures of the task
-	TaskHardwareCountersPredictions _taskCountersPredictions;
+	TaskHardwareCounters *_hwCounters;
 
 	//! Cluster-related data for remote tasks
 	TaskOffloading::ClusterTaskContext *_clusterContext;
@@ -717,16 +713,16 @@ public:
 		return &_taskPredictions;
 	}
 
-	//! \brief Get the task's hardware counter structures
-	inline TaskHardwareCounters *getTaskHardwareCounters()
+	//! \brief Setter for the task's hardware counter structures
+	inline void setHardwareCounters(TaskHardwareCounters *hwCounters)
 	{
-		return &_taskCounters;
+		_hwCounters = hwCounters;
 	}
 
-	//! \brief Get the task's hardware counter predictions structures
-	inline TaskHardwareCountersPredictions *getTaskHardwareCountersPredictions()
+	//! \brief Get the task's hardware counter structures
+	inline TaskHardwareCounters *getHardwareCounters()
 	{
-		return &_taskCountersPredictions;
+		return _hwCounters;
 	}
 
 	inline void markAsRemote()

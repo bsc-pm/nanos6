@@ -12,10 +12,10 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#include <HardwareCounters.hpp>
 #include <Monitoring.hpp>
 
 
