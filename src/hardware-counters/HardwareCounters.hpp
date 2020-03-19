@@ -111,11 +111,11 @@ public:
 		_hwCountersInterface->threadShutdown();
 	}
 
-	static inline void taskCreated(Task *task)
+	static inline void taskCreated(Task *task, bool enabled = true)
 	{
 		assert(_hwCountersInterface != nullptr);
 
-		_hwCountersInterface->taskCreated(task);
+		_hwCountersInterface->taskCreated(task, enabled);
 	}
 
 	static inline void taskStarted(Task *task)

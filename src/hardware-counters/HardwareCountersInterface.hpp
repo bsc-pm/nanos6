@@ -32,7 +32,7 @@ public:
 
 	virtual void threadShutdown() = 0;
 
-	virtual void taskCreated(Task *task) = 0;
+	virtual void taskCreated(Task *task, bool enabled) = 0;
 
 	virtual void taskStarted(Task *task) = 0;
 

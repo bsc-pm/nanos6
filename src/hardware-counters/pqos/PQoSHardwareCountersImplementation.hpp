@@ -150,7 +150,7 @@ public:
 
 	void threadShutdown();
 
-	void taskCreated(Task *task);
+	void taskCreated(Task *task, bool enabled);
 
 	void taskStarted(Task *task);
 

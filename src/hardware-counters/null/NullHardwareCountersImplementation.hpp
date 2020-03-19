@@ -38,7 +38,7 @@ public:
 	{
 	}
 
-	inline void taskCreated(Task *)
+	inline void taskCreated(Task *, bool)
 	{
 	}
 

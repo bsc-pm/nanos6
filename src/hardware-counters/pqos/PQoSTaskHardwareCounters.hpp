@@ -40,6 +40,9 @@ private:
 	//! Whether reading of HW counters for the task is active
 	bool _active;
 
+	//! Whether monitoring of counters for this task is enabled
+	bool _enabled;
+
 	//! Arrays of regular HW counter deltas and accumulations
 	size_t _regularCountersDelta[num_regular_counters];
 	size_t _regularCountersAccumulated[num_regular_counters];
@@ -50,12 +53,23 @@ private:
 public:
 
 	inline PQoSTaskHardwareCounters() :
-		_active(false)
+		_active(false),
+		_enabled(false)
 	{
 		for (size_t id = 0; id < num_regular_counters; ++id) {
 			_regularCountersDelta[id] = 0;
 			_regularCountersAccumulated[id] = 0;
 		}
+	}
+
+	inline void setEnabled(bool enabled = true)
+	{
+		_enabled = enabled;
+	}
+
+	inline bool isEnabled() const
+	{
+		return _enabled;
 	}
 
 	//! \brief Check whether HW counters are being read for the task
