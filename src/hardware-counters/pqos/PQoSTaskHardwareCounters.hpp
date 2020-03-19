@@ -116,7 +116,7 @@ public:
 	{
 		switch (counterType) {
 			case HWCounters::llc_usage:
-				return boost::accumulators::mean(_accumulatingCounters[llc_usage]);
+				return (double) boost::accumulators::mean(_accumulatingCounters[llc_usage]);
 			case HWCounters::ipc:
 				return (double) _regularCountersDelta[ipc_retired] / (double) _regularCountersDelta[ipc_unhalted];
 			case HWCounters::local_mem_bandwidth:
@@ -137,7 +137,7 @@ public:
 	{
 		switch (counterType) {
 			case HWCounters::llc_usage:
-				return boost::accumulators::mean(_accumulatingCounters[llc_usage]);
+				return (double) boost::accumulators::mean(_accumulatingCounters[llc_usage]);
 			case HWCounters::ipc:
 				return (double) _regularCountersAccumulated[ipc_retired] / (double) _regularCountersAccumulated[ipc_unhalted];
 			case HWCounters::local_mem_bandwidth:

@@ -8,6 +8,7 @@
 #include "MemoryAllocator.hpp"
 #include "MemoryPlace.hpp"
 #include "tasks/Taskfor.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -59,11 +60,18 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type)
 	// MemoryAllocator is still not available, so use malloc.
 	_preallocatedArgsBlock = malloc(_preallocatedArgsBlockSize);
 	FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr, "Insufficient memory for preallocatedArgsBlock.");
+
+	//TODO Make it so that it is obtained on the malloc?
+	HardwareCounters::taskCreated(_preallocatedTaskfor);
 }
 
 ComputePlace::~ComputePlace()
 {
 	Taskfor *taskfor = (Taskfor *) _preallocatedTaskfor;
+	assert(taskfor != nullptr);
+
+	//TODO Make it so that it is deleted automatically through the argsblocks?
+	HardwareCounters::taskFinished(_preallocatedTaskfor);
 
 	delete taskfor;
 	// First allocation (1024) is done using malloc.

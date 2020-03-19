@@ -205,6 +205,8 @@ void PQoSHardwareCountersImplementation::taskStarted(Task *task)
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
 		if (thread != nullptr) {
 			PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
+			assert(taskCounters != nullptr);
+
 			if (!taskCounters->isActive()) {
 				PQoSThreadHardwareCounters *threadCounters = (PQoSThreadHardwareCounters *) thread->getHardwareCounters();
 				assert(threadCounters != nullptr);
