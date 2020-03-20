@@ -112,12 +112,9 @@ namespace ExecutionWorkflow {
 			);
 
 			Monitoring::taskFinished(task);
-			// If it's a taskfor, recycle counter structures
-			if (!task->isTaskfor()) {
-				HardwareCounters::taskFinished(task);
-			}
-			TaskFinalization::taskFinished(task, cpu);
+			HardwareCounters::taskFinished(task);
 
+			TaskFinalization::taskFinished(task, cpu);
 			if (task->markAsReleased()) {
 				TaskFinalization::disposeTask(task, cpu);
 			}

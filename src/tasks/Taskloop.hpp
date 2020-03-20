@@ -29,9 +29,10 @@ public:
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
-		TaskDataAccessesInfo taskAccessInfo
+		TaskDataAccessesInfo taskAccessInfo,
+		void *taskCounters
 	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo),
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo, taskCounters),
 		  _bounds(), _sourceTaskloop(false)
 	{}
 

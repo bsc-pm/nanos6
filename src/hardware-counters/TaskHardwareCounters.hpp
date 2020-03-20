@@ -18,6 +18,9 @@ public:
 	{
 	}
 
+	//! \brief Empty hardware counter structures
+	virtual void clear() = 0;
+
 	//! \brief Get the delta value of a HW counter
 	//! \param[in] counterType The type of counter to get the delta from
 	virtual double getDelta(HWCounters::counters_t counterType) = 0;

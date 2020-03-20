@@ -52,13 +52,27 @@ private:
 
 public:
 
-	inline PQoSTaskHardwareCounters() :
+	inline PQoSTaskHardwareCounters(bool enabled = false) :
 		_active(false),
-		_enabled(false)
+		_enabled(enabled)
 	{
 		for (size_t id = 0; id < num_regular_counters; ++id) {
 			_regularCountersDelta[id] = 0;
 			_regularCountersAccumulated[id] = 0;
+		}
+	}
+
+	inline void clear()
+	{
+		_active = false;
+
+		for (size_t id = 0; id < num_regular_counters; ++id) {
+			_regularCountersDelta[id] = 0;
+			_regularCountersAccumulated[id] = 0;
+		}
+
+		for (size_t id = 0; id < num_accumulating_counters; ++id) {
+			_accumulatingCounters[id] = {};
 		}
 	}
 

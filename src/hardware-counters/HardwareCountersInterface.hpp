@@ -34,11 +34,15 @@ public:
 
 	virtual void taskCreated(Task *task, bool enabled) = 0;
 
+	virtual void taskReinitialized(Task *task) = 0;
+
 	virtual void taskStarted(Task *task) = 0;
 
 	virtual void taskStopped(Task *task) = 0;
 
 	virtual void taskFinished(Task *task) = 0;
+
+	virtual size_t getTaskHardwareCountersSize() const = 0;
 
 };
 

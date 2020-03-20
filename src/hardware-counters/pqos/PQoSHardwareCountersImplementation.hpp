@@ -73,40 +73,42 @@ private:
 		// Iterate through all tasktypes
 		for (auto &it : _statistics) {
 			size_t instances = Boost::count(it.second[0]);
-			std::string typeLabel = it.first + " (" + std::to_string(instances) + ")";
-
-			outputStream <<
-				std::setw(7)  << "STATS"                 << " " <<
-				std::setw(6)  << "PQOS"                  << " " <<
-				std::setw(39) << "TASK-TYPE (INSTANCES)" << " " <<
-				std::setw(30) << typeLabel               << "\n";
-
-			// Iterate through all counter types
-			for (unsigned short id = 0; id < num_pqos_counters; ++id) {
-				double counterAvg   = Boost::mean(it.second[id]);
-				double counterStdev = sqrt(Boost::variance(it.second[id]));
-				double counterSum   = Boost::sum(it.second[id]);
-
-				// In KB
-				if (id == HWCounters::llc_usage ||
-					id == HWCounters::local_mem_bandwidth ||
-					id == HWCounters::remote_mem_bandwidth
-				) {
-					counterAvg   /= 1024.0;
-					counterStdev /= 1024.0;
-					counterSum   /= 1024.0;
-				}
+			if (instances > 0) {
+				std::string typeLabel = it.first + " (" + std::to_string(instances) + ")";
 
 				outputStream <<
-					std::setw(7)  << "STATS"                             << " "   <<
-					std::setw(6)  << "PQOS"                              << " "   <<
-					std::setw(39) << HWCounters::counterDescriptions[id] << " "   <<
-					std::setw(30) << "SUM / AVG / STDEV"                 << " "   <<
-					std::setw(15) << counterSum                          << " / " <<
-					std::setw(15) << counterAvg                          << " / " <<
-					std::setw(15) << counterStdev                        << "\n";
+					std::setw(7)  << "STATS"                 << " " <<
+					std::setw(6)  << "PQOS"                  << " " <<
+					std::setw(39) << "TASK-TYPE (INSTANCES)" << " " <<
+					std::setw(30) << typeLabel               << "\n";
+
+				// Iterate through all counter types
+				for (unsigned short id = 0; id < num_pqos_counters; ++id) {
+					double counterAvg   = Boost::mean(it.second[id]);
+					double counterStdev = sqrt(Boost::variance(it.second[id]));
+					double counterSum   = Boost::sum(it.second[id]);
+
+					// In KB
+					if (id == HWCounters::llc_usage ||
+						id == HWCounters::local_mem_bandwidth ||
+						id == HWCounters::remote_mem_bandwidth
+					) {
+						counterAvg   /= 1024.0;
+						counterStdev /= 1024.0;
+						counterSum   /= 1024.0;
+					}
+
+					outputStream <<
+						std::setw(7)  << "STATS"                             << " "   <<
+						std::setw(6)  << "PQOS"                              << " "   <<
+						std::setw(39) << HWCounters::counterDescriptions[id] << " "   <<
+						std::setw(30) << "SUM / AVG / STDEV"                 << " "   <<
+						std::setw(15) << counterSum                          << " / " <<
+						std::setw(15) << counterAvg                          << " / " <<
+						std::setw(15) << counterStdev                        << "\n";
+				}
+				outputStream << "-------------------------------\n";
 			}
-			outputStream << "-------------------------------\n";
 		}
 
 		if (output.is_open()) {
@@ -152,11 +154,15 @@ public:
 
 	void taskCreated(Task *task, bool enabled);
 
+	void taskReinitialized(Task *task);
+
 	void taskStarted(Task *task);
 
 	void taskStopped(Task *task);
 
 	void taskFinished(Task *task);
+
+	size_t getTaskHardwareCountersSize() const;
 
 };
 

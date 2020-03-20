@@ -42,6 +42,10 @@ public:
 	{
 	}
 
+	inline void taskReinitialized(Task *)
+	{
+	}
+
 	inline void taskStarted(Task *)
 	{
 	}
@@ -52,6 +56,11 @@ public:
 
 	inline void taskFinished(Task *)
 	{
+	}
+
+	inline size_t getTaskHardwareCountersSize() const
+	{
+		return 0.0;
 	}
 
 };

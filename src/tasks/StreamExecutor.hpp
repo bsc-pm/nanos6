@@ -38,7 +38,8 @@ struct StreamFunction {
 		void *args,
 		void (*callback)(void *),
 		void *callbackArgs,
-		char const *label) :
+		char const *label
+	) :
 		_function(function),
 		_args(args),
 		_callback(callback),
@@ -56,7 +57,8 @@ struct StreamFunctionCallback {
 	StreamFunctionCallback(
 		void (*callback)(void *),
 		void *callbackArgs,
-		size_t callbackParticipants) :
+		size_t callbackParticipants
+	) :
 		_callback(callback),
 		_callbackArgs(callbackArgs),
 		_callbackParticipants(callbackParticipants)
@@ -75,7 +77,9 @@ struct StreamExecutorArgsBlock {
 
 
 class StreamExecutor : public Task {
+
 private:
+
 	//! The identifier of the stream this executor is in charge of
 	size_t _streamId;
 
@@ -94,8 +98,8 @@ private:
 	//! Holds the callback of the function currently being executed
 	StreamFunctionCallback *_currentCallback;
 
-
 public:
+
 	inline StreamExecutor(
 		void *argsBlock,
 		size_t argsBlockSize,
@@ -104,8 +108,10 @@ public:
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
-		TaskDataAccessesInfo taskAccessInfo) :
-		Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo),
+		TaskDataAccessesInfo taskAccessInfo,
+		void *taskCounters
+	)
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo, taskCounters),
 		_blockingContext(nullptr),
 		_mustShutdown(false),
 		_queue(),
@@ -225,7 +231,8 @@ public:
 					StreamFunctionCallback *callbackObject = new StreamFunctionCallback(
 						function->_callback,
 						function->_callbackArgs,
-						/* callbackParticipants = */ 1);
+						/* callbackParticipants = */ 1
+					);
 
 					_currentCallback = callbackObject;
 				}
@@ -266,9 +273,9 @@ public:
 	//! to the StreamExecutor to access its methods (the main body)
 	static void bodyWrapper(void *args, void *, nanos6_address_translation_entry_t *)
 	{
-		StreamExecutorArgsBlock *argsBlock = (StreamExecutorArgsBlock *)args;
+		StreamExecutorArgsBlock *argsBlock = (StreamExecutorArgsBlock *) args;
 		assert(argsBlock != nullptr);
-		StreamExecutor *executor = (StreamExecutor *)argsBlock->_executor;
+		StreamExecutor *executor = (StreamExecutor *) argsBlock->_executor;
 		assert(executor != nullptr);
 
 		executor->body();
@@ -280,12 +287,13 @@ public:
 	{
 		nanos6_taskwait("");
 
-		ConditionVariable *condVar = (ConditionVariable *)args;
+		ConditionVariable *condVar = (ConditionVariable *) args;
 		assert(condVar != nullptr);
 
 		// Signal that the taskwait has been completed
 		condVar->signal();
 	}
+
 };
 
 #endif // STREAM_EXECUTOR_HPP

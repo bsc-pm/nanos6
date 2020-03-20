@@ -118,6 +118,13 @@ public:
 		_hwCountersInterface->taskCreated(task, enabled);
 	}
 
+	static inline void taskReinitialized(Task *task)
+	{
+		assert(_hwCountersInterface != nullptr);
+
+		_hwCountersInterface->taskReinitialized(task);
+	}
+
 	static inline void taskStarted(Task *task)
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -137,6 +144,13 @@ public:
 		assert(_hwCountersInterface != nullptr);
 
 		_hwCountersInterface->taskFinished(task);
+	}
+
+	static inline size_t getTaskHardwareCountersSize()
+	{
+		assert(_hwCountersInterface != nullptr);
+
+		return _hwCountersInterface->getTaskHardwareCountersSize();
 	}
 
 };

@@ -175,13 +175,10 @@ void PQoSHardwareCountersImplementation::taskCreated(Task *task, bool enabled)
 	if (_enabled) {
 		assert(task != nullptr);
 
-		// TODO/FIXME: At task instantiation time!
-		PQoSTaskHardwareCounters *taskCounters = new PQoSTaskHardwareCounters();
-		task->setHardwareCounters(taskCounters);
+		PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
 		assert(taskCounters != nullptr);
 
-		taskCounters->setEnabled(enabled);
-
+		new (taskCounters) PQoSTaskHardwareCounters(enabled);
 		if (enabled) {
 			if (_verbose) {
 				std::string tasktype = task->getLabel();
@@ -198,6 +195,18 @@ void PQoSHardwareCountersImplementation::taskCreated(Task *task, bool enabled)
 				_statsLock.unlock();
 			}
 		}
+	}
+}
+
+void PQoSHardwareCountersImplementation::taskReinitialized(Task *task)
+{
+	if (_enabled) {
+		assert(task != nullptr);
+
+		PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
+		assert(taskCounters != nullptr);
+
+		taskCounters->clear();
 	}
 }
 
@@ -268,7 +277,6 @@ void PQoSHardwareCountersImplementation::taskFinished(Task *task)
 	if (_enabled) {
 		assert(task != nullptr);
 
-		// TODO/FIXME: At task instantiation time, no need to destroy, do it at task destructor!
 		PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
 		assert(taskCounters != nullptr);
 
@@ -288,7 +296,10 @@ void PQoSHardwareCountersImplementation::taskFinished(Task *task)
 				_statsLock.unlock();
 			}
 		}
-
-		delete taskCounters;
 	}
+}
+
+size_t PQoSHardwareCountersImplementation::getTaskHardwareCountersSize() const
+{
+	return sizeof(PQoSTaskHardwareCounters);
 }
