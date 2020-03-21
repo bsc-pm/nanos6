@@ -39,6 +39,18 @@ public:
 	virtual ~DeviceFunctionsInterface()
 	{
 	}
+
+	virtual size_t getComputePlaceCount()
+	{
+		FatalErrorHandler::failIf(true, "This method can't be called for a DeviceInfo");
+		return 0;
+	}
+
+	virtual ComputePlace *getComputePlace(int index)
+	{
+		FatalErrorHandler::failIf(true, "This method can't be called for a DeviceInfo");
+		return 0;
+	}
 	
 	//returns the type associated to the function object
 	virtual nanos6_device_t getType() = 0;

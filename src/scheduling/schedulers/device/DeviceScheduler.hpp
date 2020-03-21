@@ -11,36 +11,17 @@
 #include "scheduling/schedulers/device/DeviceUnsyncScheduler.hpp"
 
 class DeviceScheduler : public SyncScheduler {
-protected:
-	/* Members */
-	nanos6_device_t _deviceType;
-	
 public:
-	DeviceScheduler(SchedulingPolicy policy, bool enablePriority, __attribute__((unused)) bool enableImmediateSuccessor, nanos6_device_t deviceType)
-		: _deviceType(deviceType)
+	DeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, __attribute__((unused)) bool enableImmediateSuccessor, nanos6_device_t deviceType)
+		: SyncScheduler(totalComputePlaces, deviceType)
 	{
 		// Immediate successor support for devices is not available yet.
 		_scheduler = new DeviceUnsyncScheduler(policy, enablePriority, false);
 	}
 	
-	virtual ~DeviceScheduler()
-	{
-		delete _scheduler;
-	}
-	
-	virtual nanos6_device_t getDeviceType()
-	{
-		return _deviceType;
-	}
-	
-	virtual Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace) = 0;
+	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
 	
 	virtual std::string getName() const = 0;
-	
-protected:
-	virtual ComputePlace *getRelatedComputePlace(uint64_t cpuIndex) const = 0;
-	
-	virtual void setRelatedComputePlace(uint64_t cpuIndex, ComputePlace *computePlace) = 0;
 };
 
 

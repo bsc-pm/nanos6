@@ -73,14 +73,12 @@ public:
 	
 	size_t getComputePlaceCount()
 	{
-		FatalErrorHandler::failIf(true, "This method can't be called for a DeviceInfo");
-		return 0;
+		return _functions->getComputePlaceCount();
 	}
 	
-	ComputePlace *getComputePlace(int)
+	ComputePlace *getComputePlace(int index)
 	{
-		FatalErrorHandler::failIf(true, "This method can't be called for a DeviceInfo");
-		return nullptr;
+		return _functions->getComputePlace(index);
 	}
 	
 	size_t getMemoryPlaceCount()

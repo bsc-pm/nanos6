@@ -16,9 +16,9 @@ class CUDADeviceScheduler : public DeviceScheduler {
 	std::vector<ComputePlace *> _cpuToDevice;
 	
 public:
-	CUDADeviceScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType) :
-		DeviceScheduler(policy, enablePriority, enableImmediateSuccessor, deviceType),
-		_cpuToDevice(_totalCPUs, nullptr)
+	CUDADeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType) :
+		DeviceScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, deviceType),
+		_cpuToDevice(_totalComputePlaces, nullptr)
 	{
 		DeviceInfoImplementation *deviceInfo = static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(deviceType));
 		assert(deviceInfo != nullptr);
@@ -33,12 +33,12 @@ public:
 	virtual ~CUDADeviceScheduler()
 	{}
 	
-	Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace)
+	Task *getReadyTask(ComputePlace *computePlace)
 	{
-		assert(deviceComputePlace != nullptr);
-		assert(deviceComputePlace->getType() == _deviceType);
+		assert(computePlace != nullptr);
+		assert(computePlace->getType() == _deviceType);
 		
-		Task *result = getTask(computePlace, deviceComputePlace);
+		Task *result = getTask(computePlace);
 		assert(result == nullptr || result->getDeviceType() == _deviceType);
 		return result;
 	}
@@ -46,18 +46,6 @@ public:
 	inline std::string getName() const
 	{
 		return "CUDADeviceScheduler";
-	}
-	
-protected:
-	inline ComputePlace *getRelatedComputePlace(uint64_t cpuIndex) const
-	{
-		return _cpuToDevice[cpuIndex];
-	}
-	
-	inline void setRelatedComputePlace(uint64_t cpuIndex, ComputePlace *computePlace)
-	{
-		assert(computePlace == nullptr || computePlace->getType() == _deviceType);
-		_cpuToDevice[cpuIndex] = computePlace;
 	}
 };
 

@@ -24,7 +24,9 @@ class SyncScheduler {
 protected:
 	typedef boost::lockfree::spsc_queue<TaskSchedulingInfo *> add_queue_t;
 
-	uint64_t _totalCPUs;
+	/* Members */
+	nanos6_device_t _deviceType;
+	uint64_t _totalComputePlaces;
 	size_t _totalAddQueues;
 	size_t _totalNUMANodes;
 
@@ -64,15 +66,9 @@ protected:
 		return (_ready[cpuIndex].ticket == myTicket);
 	}
 
-	virtual inline void setRelatedComputePlace(uint64_t, ComputePlace *)
+	virtual inline ComputePlace *getComputePlace(nanos6_device_t deviceType, uint64_t computePlaceIndex) const
 	{
-		// Do nothing
-	}
-
-	virtual inline ComputePlace *getRelatedComputePlace(uint64_t cpuIndex) const
-	{
-		const std::vector<CPU *> &cpus = CPUManager::getCPUListReference();
-		return cpus[cpuIndex];
+		return HardwareInfo::getComputePlace(deviceType, computePlaceIndex);
 	}
 
 public:
@@ -80,15 +76,14 @@ public:
 	//! NOTE We initialize the SubscriptionLock with 2 * numCPUs since some
 	//! threads may oversubscribe and thus we may need more than "numCPUs"
 	//! slots in the lock's waiting queue
-	SyncScheduler()
-		: _lock(CPUManager::getTotalCPUs() * 2)
+	SyncScheduler(size_t totalComputePlaces, nanos6_device_t deviceType = nanos6_host_device)
+		: _deviceType(deviceType), _totalComputePlaces(totalComputePlaces), _lock((uint64_t) totalComputePlaces * 2)
 	{
-		_totalCPUs = (uint64_t) CPUManager::getTotalCPUs();
-		uint64_t totalCPUsPow2 = roundToNextPowOf2(_totalCPUs);
+		uint64_t totalCPUsPow2 = roundToNextPowOf2(_totalComputePlaces);
 		assert(isPowOf2(totalCPUsPow2));
 
-		_ready = (Padded<CPUNode> *) MemoryAllocator::alloc(_totalCPUs * sizeof(Padded<CPUNode>));
-		for (size_t i = 0; i < _totalCPUs; i++) {
+		_ready = (Padded<CPUNode> *) MemoryAllocator::alloc(_totalComputePlaces * sizeof(Padded<CPUNode>));
+		for (size_t i = 0; i < _totalComputePlaces; i++) {
 			new (&_ready[i]) Padded<CPUNode>();
 		}
 
@@ -101,11 +96,11 @@ public:
 		_addQueuesLocks = (TicketArraySpinLock *) MemoryAllocator::alloc(_totalAddQueues * sizeof(TicketArraySpinLock));
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			new (&_addQueues[i]) add_queue_t(totalCPUsPow2*4);
-			new (&_addQueuesLocks[i]) TicketArraySpinLock(_totalCPUs);
+			new (&_addQueuesLocks[i]) TicketArraySpinLock(_totalComputePlaces);
 		}
 	}
 
-	~SyncScheduler()
+	virtual ~SyncScheduler()
 	{
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			_addQueues[i].~add_queue_t();
@@ -113,7 +108,14 @@ public:
 		}
 		MemoryAllocator::free(_addQueues, _totalAddQueues * sizeof(add_queue_t));
 		MemoryAllocator::free(_addQueuesLocks, _totalAddQueues * sizeof(TicketArraySpinLock));
-		MemoryAllocator::free(_ready, _totalCPUs * sizeof(Padded<CPUNode>));
+		MemoryAllocator::free(_ready, _totalComputePlaces * sizeof(Padded<CPUNode>));
+
+		delete _scheduler;
+	}
+
+	virtual nanos6_device_t getDeviceType()
+	{
+		return _deviceType;
 	}
 
 	void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
@@ -156,9 +158,9 @@ public:
 		}
 	}
 
-	Task *getTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace);
+	Task *getTask(ComputePlace *computePlace);
 
-	virtual Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace) = 0;
+	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
 
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!

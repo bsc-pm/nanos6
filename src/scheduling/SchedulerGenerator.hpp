@@ -16,8 +16,8 @@ class HostScheduler;
 
 class SchedulerGenerator {
 public:
-	static HostScheduler *createHostScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor);
-	static DeviceScheduler *createDeviceScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType);
+	static HostScheduler *createHostScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor);
+	static DeviceScheduler *createDeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType);
 };
 
 

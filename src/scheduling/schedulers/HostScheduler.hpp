@@ -13,19 +13,15 @@
 class HostScheduler : public SyncScheduler {
 public:
 	
-	HostScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
+	HostScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
+		: SyncScheduler(totalComputePlaces)
 	{
 		_scheduler = new HostUnsyncScheduler(policy, enablePriority, enableImmediateSuccessor);
 	}
 	
-	virtual ~HostScheduler()
+	Task *getReadyTask(ComputePlace *computePlace)
 	{
-		delete _scheduler;
-	}
-	
-	Task *getReadyTask(ComputePlace *computePlace, ComputePlace * = nullptr)
-	{
-		Task *result = getTask(computePlace, nullptr);
+		Task *result = getTask(computePlace);
 		assert(result == nullptr || result->getDeviceType() == nanos6_host_device);
 		return result;
 	}

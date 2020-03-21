@@ -99,7 +99,7 @@ int DeviceComputePlace::pollingRun(DeviceComputePlace *deviceComputePlace)
 		if (i++ > deviceComputePlace->getMaxRunningTasks())
 			return false;
 
-		Task *task = Scheduler::getReadyTask(cpu, deviceComputePlace);
+		Task *task = Scheduler::getReadyTask(deviceComputePlace);
 
 		if (task == nullptr)
 			continue;

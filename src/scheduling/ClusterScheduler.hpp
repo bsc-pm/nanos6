@@ -45,18 +45,17 @@ public:
 		_clusterSchedulerImplementation->addReadyTask(task, computePlace, hint);
 	}
 	
-	inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
+	inline Task *getReadyTask(ComputePlace *computePlace)
 	{
-		return _clusterSchedulerImplementation->getReadyTask(computePlace, deviceComputePlace);
+		return _clusterSchedulerImplementation->getReadyTask(computePlace);
 	}
 	
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
-	//! \param[in] deviceComputePlace The target device compute place if it exists
-	inline bool hasAvailableWork(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr) const
+	inline bool hasAvailableWork(ComputePlace *computePlace) const
 	{
-		return _clusterSchedulerImplementation->hasAvailableWork(computePlace, deviceComputePlace);
+		return _clusterSchedulerImplementation->hasAvailableWork(computePlace);
 	}
 	
 	inline std::string getName() const

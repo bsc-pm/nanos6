@@ -8,33 +8,29 @@
 #include "scheduling/schedulers/device/DeviceScheduler.hpp"
 #include "scheduling/schedulers/device/SubDeviceScheduler.hpp"
 
-Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace)
+Task *SyncScheduler::getTask(ComputePlace *computePlace)
 {
 	Task *task = nullptr;
-	ComputePlace *deviceComputePlaceOrComputePlace =
-		(deviceComputePlace != nullptr) ? deviceComputePlace : computePlace;
 
 	// Special case for device polling services that get ready tasks
 	if (computePlace == nullptr) {
 		_lock.lock();
 		// Move all tasks from addQueues to the ready queue
 		processReadyTasks();
-		task = _scheduler->getReadyTask(deviceComputePlaceOrComputePlace);
+		task = _scheduler->getReadyTask(computePlace);
 		_lock.unsubscribe();
 		assert(task == nullptr || task->isRunnable());
 		return task;
 	}
 
 	assert(computePlace != nullptr);
-	assert(computePlace->getType() == nanos6_host_device);
 
-	uint64_t const currentCPUIndex = computePlace->getIndex();
-	setRelatedComputePlace(currentCPUIndex, deviceComputePlace);
+	uint64_t const currentComputePlaceIndex = computePlace->getIndex();
 
 	// Subscribe to the lock
-	uint64_t const ticket = _lock.subscribeOrLock(currentCPUIndex);
+	uint64_t const ticket = _lock.subscribeOrLock(currentComputePlaceIndex);
 
-	if (getAssignedTask(currentCPUIndex, ticket, task)) {
+	if (getAssignedTask(currentComputePlaceIndex, ticket, task)) {
 		// Someone got the lock and gave me work to do
 		return task;
 	}
@@ -42,26 +38,24 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	// We acquired the lock and we move all tasks from addQueues to the ready queue
 	processReadyTasks();
 
-	uint64_t waitingCPUIndex;
+	uint64_t waitingComputePlaceIndex;
 	uint64_t i = ticket + 1;
 
 	// Serve all the subscribers, while there is work to give them
-	while (_lock.popWaitingCPU(i, waitingCPUIndex)) {
+	while (_lock.popWaitingCPU(i, waitingComputePlaceIndex)) {
 #ifndef NDEBUG
 		size_t numCPUs = CPUManager::getTotalCPUs();
-		assert(waitingCPUIndex < numCPUs);
+		assert(waitingComputePlaceIndex < numCPUs);
 #endif
-		ComputePlace *resultComputePlace = getRelatedComputePlace(waitingCPUIndex);
+		ComputePlace *resultComputePlace = getComputePlace(_deviceType, waitingComputePlaceIndex);
 		assert(resultComputePlace != nullptr);
 
 		task = _scheduler->getReadyTask(resultComputePlace);
 		if (task == nullptr)
 			break;
 
-		setRelatedComputePlace(waitingCPUIndex, nullptr);
-
 		// Put a task into the subscriber slot
-		assignTask(waitingCPUIndex, i, task);
+		assignTask(waitingComputePlaceIndex, i, task);
 
 		// Advance the ticket of the subscriber just served
 		_lock.unsubscribe();
@@ -69,10 +63,8 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace, ComputePlace *deviceCom
 	}
 
 	// No more subscribers; try to get work for myself
-	task = _scheduler->getReadyTask(deviceComputePlaceOrComputePlace);
+	task = _scheduler->getReadyTask(computePlace);
 	_lock.unsubscribe();
-
-	setRelatedComputePlace(currentCPUIndex, nullptr);
 
 	return task;
 }

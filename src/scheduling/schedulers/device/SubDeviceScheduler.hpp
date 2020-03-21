@@ -19,10 +19,10 @@ class SubDeviceScheduler : public DeviceScheduler {
 	std::vector<ComputePlace *> _cpuToSubDevice;
 
 public:
-	SubDeviceScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType, int deviceSubType) :
-		DeviceScheduler(policy, enablePriority, enableImmediateSuccessor, deviceType),
+	SubDeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType, int deviceSubType) :
+		DeviceScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, deviceType),
 		_deviceSubType(deviceSubType),
-		_cpuToSubDevice(_totalCPUs, nullptr)
+		_cpuToSubDevice(_totalComputePlaces, nullptr)
 	{
 		DeviceInfoImplementation *deviceInfo = static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(deviceType));
 		assert(deviceInfo != nullptr);
@@ -41,12 +41,12 @@ public:
 		return _deviceSubType;
 	}
 
-	Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace)
+	Task *getReadyTask(ComputePlace *computePlace)
 	{
-		assert(deviceComputePlace != nullptr);
-		assert(((DeviceComputePlace *)deviceComputePlace)->getSubType() == _deviceSubType);
+		assert(computePlace != nullptr);
+		assert(((DeviceComputePlace *)computePlace)->getSubType() == _deviceSubType);
 
-		Task *result = getTask(computePlace, deviceComputePlace);
+		Task *result = getTask(computePlace);
 		assert(result == nullptr || result->getDeviceSubType() == _deviceSubType);
 		return result;
 	}
@@ -54,20 +54,6 @@ public:
 	inline std::string getName() const
 	{
 		return "SubDeviceScheduler(" + std::to_string(_deviceSubType) + ")";
-	}
-
-protected:
-	inline ComputePlace *getRelatedComputePlace(uint64_t cpuIndex) const
-	{
-		return _cpuToSubDevice[cpuIndex];
-	}
-
-	inline void setRelatedComputePlace(uint64_t cpuIndex, ComputePlace *computePlace)
-	{
-		DeviceComputePlace *deviceComputePlace = (DeviceComputePlace *)computePlace;
-		assert(deviceComputePlace == nullptr || deviceComputePlace->getSubType() == _deviceSubType);
-
-		_cpuToSubDevice[cpuIndex] = deviceComputePlace;
 	}
 };
 
