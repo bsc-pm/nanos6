@@ -48,17 +48,15 @@ namespace DataAccessRegistration {
 
 	void releaseAccessRegion(
 		Task *task, void * address,
-		__attribute__((unused)) DataAccessType accessType,
-		__attribute__((unused)) bool weak,
+		DataAccessType accessType,
+		bool weak,
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData,
 		MemoryPlace const *location = nullptr);
 
-	void handleEnterBlocking(Task *task);
-	void handleExitBlocking(Task *task);
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 	void handleExitTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
-	void handleTaskRemoval(Task *task, ComputePlace *computePlace);
+
 	void combineTaskReductions(Task *task, ComputePlace *computePlace);
 
 	template <typename ProcessorType>

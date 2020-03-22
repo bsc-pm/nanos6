@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DATA_ACCESS_REGISTRATION_HPP
@@ -47,8 +47,8 @@ namespace DataAccessRegistration {
 
 	void releaseAccessRegion(
 		Task *task, DataAccessRegion region,
-		__attribute__((unused)) DataAccessType accessType,
-		__attribute__((unused)) bool weak,
+		DataAccessType accessType,
+		bool weak,
 		ComputePlace *computePlace,
 		CPUDependencyData &dependencyData,
 		MemoryPlace const *location = nullptr);
@@ -84,19 +84,8 @@ namespace DataAccessRegistration {
 		bool writeSatisfied,
 		MemoryPlace const *location);
 
-	void handleEnterBlocking(Task *task);
-	void handleExitBlocking(Task *task);
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
-	void handleExitTaskwait(
-		Task *task,
-		__attribute__((unused)) ComputePlace *computePlace,
-		__attribute__((unused)) CPUDependencyData &dependencyData);
-
-	static inline void handleTaskRemoval(
-		__attribute__((unused)) Task *task,
-		__attribute__((unused)) ComputePlace *computePlace)
-	{
-	}
+	void handleExitTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 
 	//! \brief Mark a Taskwait fragment as completed
 	//!

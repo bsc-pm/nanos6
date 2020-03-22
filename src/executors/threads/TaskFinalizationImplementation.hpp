@@ -100,8 +100,6 @@ void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool 
 		Task *parent = task->getParent();
 
 		assert(task->hasFinished());
-		// NOTE: Handle task removal before unlinking from parent
-		DataAccessRegistration::handleTaskRemoval(task, computePlace);
 
 		readyOrDisposable = task->unlinkFromParent();
 		if (task->isTaskfor() && task->isRunnable()) {

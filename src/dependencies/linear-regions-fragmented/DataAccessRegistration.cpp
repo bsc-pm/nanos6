@@ -3172,16 +3172,6 @@ namespace DataAccessRegistration {
 #endif
 	}
 
-	void handleEnterBlocking(__attribute__((unused)) Task *task)
-	{
-	}
-
-
-	void handleExitBlocking(__attribute__((unused)) Task *task)
-	{
-	}
-
-
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData)
 	{
 		assert(task != nullptr);
@@ -3213,8 +3203,7 @@ namespace DataAccessRegistration {
 	}
 
 
-	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace,
-			__attribute__((unused)) CPUDependencyData &hpDependencyData)
+	void handleExitTaskwait(Task *task, ComputePlace *, CPUDependencyData &)
 	{
 		assert(task != nullptr);
 
