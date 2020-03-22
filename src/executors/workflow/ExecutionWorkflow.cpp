@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -10,8 +10,10 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "memory/directory/Directory.hpp"
 #include "tasks/TaskImplementation.hpp"
 
+#include <ClusterManager.hpp>
 #include <DataAccess.hpp>
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflowHost.hpp>
