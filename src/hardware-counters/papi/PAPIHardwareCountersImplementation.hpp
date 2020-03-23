@@ -17,7 +17,7 @@ class PAPIHardwareCountersImplementation : public HardwareCountersInterface {
 
 public:
 
-	inline void initialize(bool verbose, std::string verboseFile)
+	inline void initialize(bool, std::string)
 	{
 		// TODO: Implement the PAPI backend
 		FatalErrorHandler::failIf(true, "PAPI backend not supported yet");
@@ -40,7 +40,7 @@ public:
 	{
 	}
 
-	inline void taskCreated(Task *)
+	inline void taskCreated(Task *, bool)
 	{
 	}
 
@@ -60,7 +60,7 @@ public:
 	{
 	}
 
-	inline size_t getTaskHardwareCountersSize()
+	inline size_t getTaskHardwareCountersSize() const
 	{
 		return 0.0;
 	}

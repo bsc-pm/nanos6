@@ -691,6 +691,15 @@ hardware_counters_sources += \
 	src/hardware-counters/pqos/PQoSHardwareCountersImplementation.cpp
 endif
 
+# TODO: Implement PAPI backend
+#if HAVE_PAPI
+#hardware_counters_LDFLAGS  += $(papi_LIBS)
+#hardware_counters_CPPFLAGS += $(papi_CPPFLAGS) -DHAVE_PAPI
+#hardware_counters_CPPFLAGS += -I$(srcdir)/src/hardware-counters/papi
+#hardware_counters_sources += \
+#	src/hardware-counters/papi/PAPIHardwareCountersImplementation.cpp
+#endif
+
 common_sources += $(hardware_counters_sources)
 
 
@@ -821,6 +830,7 @@ noinst_HEADERS = \
 	src/hardware-counters/TaskHardwareCounters.hpp \
 	src/hardware-counters/ThreadHardwareCounters.hpp \
 	src/hardware-counters/null/NullHardwareCountersImplementation.hpp \
+	src/hardware-counters/papi/PAPIHardwareCountersImplementation.hpp \
 	src/hardware-counters/pqos/PQoSHardwareCountersImplementation.hpp \
 	src/hardware-counters/pqos/PQoSTaskHardwareCounters.hpp \
 	src/hardware-counters/pqos/PQoSThreadHardwareCounters.hpp \

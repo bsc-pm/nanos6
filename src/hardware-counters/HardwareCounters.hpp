@@ -9,8 +9,9 @@
 
 #include "HardwareCountersInterface.hpp"
 #include "SupportedHardwareCounters.hpp"
-//TODO: Uncomment when ready
-//#include "hardware-counters/papi/PAPIHardwareCountersImplementation.hpp"
+#if HAVE_PAPI
+	#include "hardware-counters/papi/PAPIHardwareCountersImplementation.hpp"
+#endif
 #if HAVE_PQOS
 	#include "hardware-counters/pqos/PQoSHardwareCountersImplementation.hpp"
 #endif
@@ -44,7 +45,6 @@ public:
 	{
 		assert(_hwCountersInterface == nullptr);
 
-/* TODO: Uncomment when ready
 		if (_chosenBackend.getValue() == "papi") {
 #if HAVE_PAPI
 			_hwCountersInterface = new PAPIHardwareCountersImplementation();
@@ -53,8 +53,6 @@ public:
 			FatalErrorHandler::warnIf(true, "PAPI library not found, disabling hardware counters.");
 #endif
 		} else if (_chosenBackend.getValue() == "pqos") {
-*/
-		if (_chosenBackend.getValue() == "pqos") {
 #if HAVE_PQOS
 			_hwCountersInterface = new PQoSHardwareCountersImplementation();
 #else

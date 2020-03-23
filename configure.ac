@@ -81,6 +81,7 @@ AC_CHECK_DLOPEN
 AC_CHECK_BACKTRACE
 AC_CHECK_LIBNUMA
 AC_CHECK_MEMKIND
+AC_CHECK_PAPI
 AC_CHECK_PQOS
 AC_CHECK_DLB
 
@@ -511,6 +512,16 @@ _AS_ECHO([])
 _AS_ECHO_N([   Chrono Arch is enabled... ])
 if test x"${ac_chrono_arch}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   PAPI is enabled... ])
+if test x"${ac_use_papi}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   PAPI CPPFLAGS... ${papi_CPPFLAGS}])
+	_AS_ECHO([   PAPI LIBS... ${papi_LIBS}])
 else
 	AC_MSG_RESULT([no])
 fi
