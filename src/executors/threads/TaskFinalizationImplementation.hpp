@@ -14,6 +14,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
+#include "tasks/Taskloop.hpp"
 #include "TaskDataAccesses.hpp"
 
 #include <HardwareCounters.hpp>
@@ -120,6 +121,7 @@ void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool 
 		}
 
 		bool isTaskfor = task->isTaskfor();
+		bool isTaskloop = task->isTaskloop();
 		bool isSpawned = task->isSpawned();
 		bool isStreamExecutor = task->isStreamExecutor();
 
@@ -146,6 +148,8 @@ void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool 
 
 			if (isTaskfor) {
 				disposableBlockSize += sizeof(Taskfor);
+			} else if (isTaskloop) {
+				disposableBlockSize += sizeof(Taskloop);
 			} else if (isStreamExecutor) {
 				disposableBlockSize += sizeof(StreamExecutor);
 			} else {
@@ -172,6 +176,8 @@ void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool 
 
 			if (isTaskfor) {
 				((Taskfor *)task)->~Taskfor();
+			} else if (isTaskloop) {
+				((Taskloop *)task)->~Taskloop();
 			} else if (isStreamExecutor) {
 				((StreamExecutor *)task)->~StreamExecutor();
 			} else {
