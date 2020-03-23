@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_DEPENDENCY_DATA_HPP
@@ -11,11 +11,13 @@
 #include <atomic>
 #include <cassert>
 #include <deque>
+#include <queue>
 
 #include <limits.h>
 
-class Task;
+#include "DataAccessFlags.hpp"
 
+class Task;
 
 struct CPUDependencyData {
 	typedef std::deque<Task *> satisfied_originator_list_t;
@@ -24,6 +26,7 @@ struct CPUDependencyData {
 	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators;
 	deletable_originator_list_t _deletableOriginators;
+	mailbox_t _mailBox;
 
 #ifndef NDEBUG
 	std::atomic<bool> _inUse;
@@ -31,9 +34,10 @@ struct CPUDependencyData {
 
 	CPUDependencyData()
 		: _satisfiedOriginators(),
-		_deletableOriginators()
+		_deletableOriginators(),
+		_mailBox()
 #ifndef NDEBUG
-		, _inUse(false)
+		,_inUse()
 #endif
 	{
 	}
@@ -45,7 +49,7 @@ struct CPUDependencyData {
 
 	inline bool empty() const
 	{
-		return _satisfiedOriginators.empty() && _deletableOriginators.empty();
+		return _satisfiedOriginators.empty() && _deletableOriginators.empty() && _mailBox.empty();
 	}
 };
 

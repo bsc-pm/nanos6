@@ -157,7 +157,7 @@ void WorkerThread::handleTask(CPU *cpu)
 		} else {
 			bool finished = ((Taskfor *)_task)->notifyCollaboratorHasFinished();
 			if (finished) {
-				TaskFinalization::disposeOrUnblockTask(_task, cpu);
+				TaskFinalization::disposeTask(_task, cpu);
 			}
 		}
 	} else {

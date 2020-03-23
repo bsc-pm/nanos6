@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -97,15 +97,12 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 		Instrument::blockedOnUserMutex(&userMutex);
 
-		DataAccessRegistration::handleEnterBlocking(currentTask);
 		TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_NO_INLINE);
 
 		// Update the CPU since the thread may have migrated
 		computePlace = currentThread->getComputePlace();
 		assert(computePlace != nullptr);
 		Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
-
-		DataAccessRegistration::handleExitBlocking(currentTask);
 
 		// This in combination with a release from other threads makes their changes visible to this one
 		std::atomic_thread_fence(std::memory_order_acquire);

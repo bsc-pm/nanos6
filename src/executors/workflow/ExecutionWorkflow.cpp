@@ -238,11 +238,11 @@ namespace ExecutionWorkflow {
 
 					Monitoring::taskFinished(task);
 					HardwareCounters::taskFinished(task);
-
 					task->setComputePlace(nullptr);
+					TaskFinalization::taskFinished(task, cpu);
 
 					if (task->markAsReleased()) {
-						TaskFinalization::disposeOrUnblockTask(task, cpu);
+						TaskFinalization::disposeTask(task, cpu);
 					}
 				}
 

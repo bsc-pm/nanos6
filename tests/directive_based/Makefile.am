@@ -90,7 +90,12 @@ reductions_tests += \
 	red-stress.test
 
 discrete_tests += \
-	discrete-deps.test
+	discrete-deps.test \
+	discrete-deps-nonest.test \
+	discrete-deps-nonest.test \
+	discrete-deps-early-release.test \
+	discrete-deps-er-and-weak.test \
+	discrete-deps-wait.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -156,7 +161,12 @@ reductions_tests += \
 	red-stress.debug.test
 
 discrete_tests += \
-	discrete-deps.debug.test
+	discrete-deps.debug.test \
+	discrete-deps-nonest.debug.test \
+	discrete-deps-nonest.debug.test \
+	discrete-deps-early-release.debug.test \
+	discrete-deps-er-and-weak.debug.test \
+	discrete-deps-wait.debug.test
 
 # The following tests are designed for testing reductions implementations where
 # the combination is handled by the runtime. They are not enabled at the
@@ -491,6 +501,48 @@ discrete_deps_test_SOURCES = discrete/discrete-deps.cpp
 discrete_deps_test_CPPFLAGS = -DNDEBUG
 discrete_deps_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_deps_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_deps_nonest_debug_test_SOURCES = discrete/discrete-deps-nonest.cpp
+if HAVE_CONCURRENT_SUPPORT
+discrete_deps_nonest_debug_test_CPPFLAGS = -DHAVE_CONCURRENT_SUPPORT
+endif
+discrete_deps_nonest_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_nonest_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_deps_nonest_test_SOURCES = discrete/discrete-deps-nonest.cpp
+discrete_deps_nonest_test_CPPFLAGS = -DNDEBUG
+if HAVE_CONCURRENT_SUPPORT
+discrete_deps_nonest_test_CPPFLAGS += -DHAVE_CONCURRENT_SUPPORT
+endif
+discrete_deps_nonest_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_nonest_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_deps_early_release_debug_test_SOURCES = discrete/discrete-deps-early-release.cpp
+discrete_deps_early_release_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_early_release_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_deps_early_release_test_SOURCES = discrete/discrete-deps-early-release.cpp
+discrete_deps_early_release_test_CPPFLAGS = -DNDEBUG
+discrete_deps_early_release_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_early_release_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_deps_er_and_weak_debug_test_SOURCES = discrete/discrete-deps-er-and-weak.cpp
+discrete_deps_er_and_weak_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_er_and_weak_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_deps_er_and_weak_test_SOURCES = discrete/discrete-deps-er-and-weak.cpp
+discrete_deps_er_and_weak_test_CPPFLAGS = -DNDEBUG
+discrete_deps_er_and_weak_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_er_and_weak_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_deps_wait_debug_test_SOURCES = discrete/discrete-deps-wait.cpp
+discrete_deps_wait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_wait_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_deps_wait_test_SOURCES = discrete/discrete-deps-wait.cpp
+discrete_deps_wait_test_CPPFLAGS = -DNDEBUG
+discrete_deps_wait_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_deps_wait_test_LDFLAGS = $(test_common_ldflags)
 
 #red_nest_taskwait_debug_test_SOURCES = reductions/red-nest-taskwait.cpp
 #red_nest_taskwait_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

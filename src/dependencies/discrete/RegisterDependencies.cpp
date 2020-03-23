@@ -1,24 +1,22 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
+#include <stdlib.h>
 
 #include <nanos6.h>
 #include "executors/threads/WorkerThread.hpp"
-#include "tasks/Task.hpp"
-#include "tasks/TaskImplementation.hpp"
-
 #include "../DataAccessType.hpp"
 #include "DataAccessRegistration.hpp"
+#include "tasks/Task.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "ReductionSpecific.hpp"
 
 #include <Dependencies.hpp>
-
-#include <stdlib.h>
-#include <iostream>
+#include <InstrumentDependenciesByAccess.hpp>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
 void register_access(void *handler, void *start, size_t length, __attribute__((unused)) int symbolIndex,
@@ -35,6 +33,8 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 	if(length == 0) {
 		return;
 	}
+
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length);
 
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length, reductionTypeAndOperatorIndex, reductionIndex);
 }
@@ -56,17 +56,17 @@ void nanos6_register_readwrite_depinfo(void *handler, void *start, size_t length
 
 void nanos6_register_weak_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
-	register_access<READ_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
+	register_access<READ_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 void nanos6_register_weak_write_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
-	register_access<WRITE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
+	register_access<WRITE_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 void nanos6_register_weak_readwrite_depinfo(void *handler, void *start, size_t length, int symbolIndex)
 {
-	register_access<READWRITE_ACCESS_TYPE, false>(handler, start, length, symbolIndex);
+	register_access<READWRITE_ACCESS_TYPE, true>(handler, start, length, symbolIndex);
 }
 
 void nanos6_register_concurrent_depinfo(void *handler, void *start, size_t length, int symbolIndex)
@@ -115,8 +115,5 @@ void nanos6_register_region_weak_reduction_depinfo1(
 	assert(dim1start == 0L);
 
 	// We don't support weak reductions, but we cannot safely ignore them.
-	// So we need to die.
-
-	std::cerr << "The selected dependency implementation has no support for nested-reduction (aka. weakreduction)." << std::endl;
-	exit(1);
+	FatalErrorHandler::failIf(true, "The selected dependency implementation has no support for nested-reduction (aka. weakreduction)");
 }

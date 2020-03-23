@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_DATA_ACCESSES_HPP
@@ -17,6 +17,7 @@
 #include "IntrusiveLinearRegionMapImplementation.hpp"
 #include "TaskDataAccessLinkingArtifacts.hpp"
 #include "TaskDataAccessLinkingArtifactsImplementation.hpp"
+#include "TaskDataAccessesInfo.hpp"
 #include "lowlevel/PaddedTicketSpinLock.hpp"
 
 
@@ -66,7 +67,7 @@ struct TaskDataAccesses {
 	flags_t _flags;
 #endif
 
-	TaskDataAccesses()
+	TaskDataAccesses(__attribute__((unused)) TaskDataAccessesInfo taskAccessInfo)
 		: _lock(),
 		_accesses(), _accessFragments(), _taskwaitFragments(),
 		_subaccessBottomMap(),

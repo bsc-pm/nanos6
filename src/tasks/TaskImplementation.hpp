@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -14,16 +14,14 @@
 #include "StreamExecutor.hpp"
 #include "Task.hpp"
 
-
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
+#include <TaskDataAccesses.hpp>
 
 #ifdef DISCRETE_DEPS
 #include <TaskDataAccesses.hpp>
-#define __nondiscrete_unused
 #else
 #include <TaskDataAccessesImplementation.hpp>
-#define __nondiscrete_unused __attribute__((unused))
 #endif
 
 #include <cstring>
@@ -36,23 +34,18 @@ inline Task::Task(
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags,
-	__nondiscrete_unused void * seqs,
-	__nondiscrete_unused void * addresses,
-	__nondiscrete_unused size_t numDeps
+	TaskDataAccessesInfo taskAccessInfo
 )
 	: _argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
 	_taskInfo(taskInfo),
 	_taskInvokationInfo(taskInvokationInfo),
 	_countdownToBeWokenUp(1),
+	_removalCount(1),
 	_parent(parent),
 	_priority(0),
 	_thread(nullptr),
-#ifdef DISCRETE_DEPS
-	_dataAccesses(seqs, addresses, numDeps),
-#else
-	_dataAccesses(),
-#endif
+	_dataAccesses(taskAccessInfo),
 	_flags(flags),
 	_predecessorCount(0),
 	_instrumentationTaskId(instrumentationTaskId),
@@ -96,6 +89,7 @@ inline void Task::reinitialize(
 	_taskInfo = taskInfo;
 	_taskInvokationInfo = taskInvokationInfo;
 	_countdownToBeWokenUp = 1;
+	_removalCount = 1;
 	_parent = parent;
 	_priority = 0;
 	_thread = nullptr;
@@ -143,7 +137,7 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 		//! taskwait fragments for a 'wait' task.
 		DataAccessRegistration::handleEnterTaskwait(this, nullptr, hpDependencyData);
 
-		if (!decreaseRemovalBlockingCount()) {
+		if (!markAsBlocked()) {
 			return false;
 		}
 
@@ -151,7 +145,7 @@ inline bool Task::markAsFinished(ComputePlace *computePlace)
 		// dependencies has successfully completed
 		completeDelayedRelease();
 		DataAccessRegistration::handleExitTaskwait(this, computePlace, hpDependencyData);
-		increaseRemovalBlockingCount();
+		markAsUnblocked();
 	}
 
 	// Return whether all external events have been also fulfilled, so
@@ -169,7 +163,7 @@ inline bool Task::markAllChildrenAsFinished(ComputePlace *computePlace)
 	// Complete the delayed release of dependencies
 	completeDelayedRelease();
 	DataAccessRegistration::handleExitTaskwait(this, computePlace, hpDependencyData);
-	increaseRemovalBlockingCount();
+	markAsUnblocked();
 
 	// Return whether all external events have been also fulfilled, so
 	// the dependencies can be released

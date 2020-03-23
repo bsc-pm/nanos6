@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "ReductionInfo.hpp"
@@ -18,22 +18,23 @@
 
 #include <executors/threads/WorkerThread.hpp>
 
-ReductionInfo::ReductionInfo(void * address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
-		std::function<void(void*, void*, size_t)> initializationFunction, std::function<void(void*, void*, size_t)> combinationFunction) :
+ReductionInfo::ReductionInfo(void *address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
+	std::function<void(void *, void *, size_t)> initializationFunction, std::function<void(void *, void *, size_t)> combinationFunction) :
 	_address(address),
 	_length(length),
-	_paddedLength(((length + HardwareInfo::getCacheLineSize() - 1)/HardwareInfo::getCacheLineSize())*HardwareInfo::getCacheLineSize()),
+	_paddedLength(((length + HardwareInfo::getCacheLineSize() - 1) / HardwareInfo::getCacheLineSize()) * HardwareInfo::getCacheLineSize()),
 	_typeAndOperatorIndex(typeAndOperatorIndex),
 	_originalStorageCombinationCounter(length),
 	_privateStorageCombinationCounter(length),
-	_isOriginalStorageAvailable(false), _originalStorageAvailabilityCounter(length),
+	_isOriginalStorageAvailable(false),
+	_originalStorageAvailabilityCounter(length),
 	_initializationFunction(std::bind(initializationFunction, std::placeholders::_1, address, std::placeholders::_2)),
 	_combinationFunction(combinationFunction),
 	_registeredAccesses(2)
 {
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
-
+	assert(_paddedLength >= _length);
 	const size_t maxSlots = getMaxSlots();
 	_slots.reserve(maxSlots);
 	_freeSlotIndices.reserve(maxSlots);
@@ -55,7 +56,7 @@ ReductionInfo::~ReductionInfo()
 
 	void *originalStorage = _address;
 	for (size_t i = 0; i < _slots.size(); ++i) {
-		ReductionSlot& slot = _slots[i];
+		ReductionSlot &slot = _slots[i];
 		if (slot.storage != originalStorage) {
 			assert(!_isAggregatingSlotIndex[i] || slot.storage != nullptr);
 
@@ -76,7 +77,7 @@ reduction_type_and_operator_index_t ReductionInfo::getTypeAndOperatorIndex() con
 	return _typeAndOperatorIndex;
 }
 
-const void * ReductionInfo::getOriginalAddress() const
+const void *ReductionInfo::getOriginalAddress() const
 {
 	return _address;
 }
@@ -114,10 +115,9 @@ size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId)
 		// Reuse free slot in pool
 		freeSlotIndex = _freeSlotIndices.back();
 		_freeSlotIndices.pop_back();
-	}
-	else {
+	} else {
 		FatalErrorHandler::failIf(_slots.size() > getMaxSlots() + (_isOriginalStorageAvailable ? 0 : -1),
-				"Maximum number of private storage slots reached");
+			"Maximum number of private storage slots reached");
 		freeSlotIndex = _slots.size();
 		_slots.emplace_back();
 		_privateSlotsUsed.set(freeSlotIndex);
@@ -129,7 +129,7 @@ size_t ReductionInfo::getFreeSlotIndex(size_t virtualCpuId)
 	return freeSlotIndex;
 }
 
-void * ReductionInfo::getFreeSlotStorage(size_t slotIndex)
+void *ReductionInfo::getFreeSlotStorage(size_t slotIndex)
 {
 #ifndef NDEBUG
 	_lock.lock();
@@ -137,7 +137,7 @@ void * ReductionInfo::getFreeSlotStorage(size_t slotIndex)
 	_lock.unlock();
 #endif
 
-	ReductionSlot& slot = _slots[slotIndex];
+	ReductionSlot &slot = _slots[slotIndex];
 	assert(slot.initialized || slot.storage == nullptr);
 
 	if (!slot.initialized) {
@@ -156,23 +156,23 @@ namespace {
 	{
 		assert((typeAndOperatorIndex != 0) && "Unknown reduction type and operator");
 		return (typeAndOperatorIndex >= RED_TYPE_CHAR)
-			&& (typeAndOperatorIndex < NUM_RED_TYPES)
-			&& (typeAndOperatorIndex%1000 < NUM_RED_OPS);
+			   && (typeAndOperatorIndex < NUM_RED_TYPES)
+			   && (typeAndOperatorIndex % 1000 < NUM_RED_OPS);
 	}
-};
+}; // namespace
 
-void ReductionInfo::makeOriginalStorageAvailable(__attribute__((unused)) const void * address, const size_t length)
+void ReductionInfo::makeOriginalStorageAvailable(__attribute__((unused)) const void *address, const size_t length)
 {
 	_originalStorageAvailabilityCounter -= length;
 
 	if ((_originalStorageAvailabilityCounter == 0)
-			&& isBuiltinReduction(_typeAndOperatorIndex)) {
+		&& isBuiltinReduction(_typeAndOperatorIndex)) {
 		std::lock_guard<spinlock_t> guard(_lock);
 		// Add original region to reduction slot pool
 		// Note: Disabled for UDRs, as might be initialized with 'oss_orig'
 		size_t freeSlotIndex = _slots.size();
 		_slots.emplace_back();
-		ReductionSlot& slot = _slots.back();
+		ReductionSlot &slot = _slots.back();
 		assert(_address != nullptr);
 		slot.storage = _address;
 		slot.initialized = true;
@@ -186,8 +186,8 @@ bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 	reduction_slot_set_t &accessedSlots = _privateSlotsUsed;
 	assert(accessedSlots.size() > 0);
 
-	char *originalAddress = (char*)_address;
-	char *originalSubregionAddress = (char*)_address;
+	char *originalAddress = (char *)_address;
+	char *originalSubregionAddress = (char *)_address;
 	ptrdiff_t originalSubregionOffset = originalSubregionAddress - originalAddress;
 
 	// Not being used in discrete deps. That's why there is an assert(0).
@@ -213,19 +213,18 @@ bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 	}
 
 	assert(canCombineToOriginalStorage || (aggregatingSlotIndex != reduction_slot_set_t::npos));
-	char *targetRegionAddress = canCombineToOriginalStorage?
-		originalAddress : (char*)_slots[aggregatingSlotIndex].storage;
+	char *targetRegionAddress = canCombineToOriginalStorage ? originalAddress : (char *)_slots[aggregatingSlotIndex].storage;
 	assert(targetRegionAddress != nullptr);
 	char *targetStorage = targetRegionAddress + originalSubregionOffset;
 
 	reduction_slot_set_t::size_type accessedSlotIndex = accessedSlots.find_first();
 	while (accessedSlotIndex < reduction_slot_set_t::npos) {
-		ReductionSlot& slot = _slots[accessedSlotIndex];
+		ReductionSlot &slot = _slots[accessedSlotIndex];
 		assert(accessedSlots[accessedSlotIndex]);
 		if (slot.storage != targetRegionAddress) {
-			char *privateStorage = ((char*)slot.storage) + originalSubregionOffset;
+			char *privateStorage = ((char *)slot.storage) + originalSubregionOffset;
 
-			if(privateStorage != nullptr)
+			if (privateStorage != nullptr)
 				_combinationFunction(targetStorage, privateStorage, _length);
 		}
 
@@ -270,8 +269,7 @@ bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 				assert(0);
 				// Keep slots containing aggregated contributions
 				assert(slot.storage != originalAddress);
-			}
-			else if (slot.storage != originalAddress) {
+			} else if (slot.storage != originalAddress) {
 				// Non-aggregating private slots can be deallocated and disabled
 				assert(slot.storage != nullptr);
 				MemoryAllocator::free(slot.storage, _paddedLength);
@@ -279,8 +277,7 @@ bool ReductionInfo::combine(bool canCombineToOriginalStorage)
 				// Clear slot content so that we can later detect deallocation has been done
 				slot.storage = nullptr;
 				slot.initialized = false;
-			}
-			else {
+			} else {
 				// Original storage shouldn't be used anymore either
 #ifndef NDEBUG
 				slot.storage = nullptr;
@@ -305,8 +302,7 @@ void ReductionInfo::releaseSlotsInUse(size_t virtualCpuId)
 	// Note: If access is weak and final (promoted), but had no reduction subtasks, this
 	// member can be called when _currentCpuSlotIndices[virtualCpuId] is invalid (hasn't been used)
 	//assert(currentCpuSlotIndex != -1);
-	if (currentCpuSlotIndex != -1)
-	{
+	if (currentCpuSlotIndex != -1) {
 		assert(_slots[currentCpuSlotIndex].storage != nullptr);
 		assert(_slots[currentCpuSlotIndex].initialized);
 		_freeSlotIndices.push_back(currentCpuSlotIndex);
@@ -314,3 +310,7 @@ void ReductionInfo::releaseSlotsInUse(size_t virtualCpuId)
 	}
 }
 
+size_t ReductionInfo::getPaddedLength() const
+{
+	return _paddedLength;
+}

@@ -11,6 +11,7 @@
 
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
+#include <TaskDataAccessesInfo.hpp>
 
 void ComputePlace::addMemoryPlace(MemoryPlace *mem) {
 	_memoryPlaces[mem->getIndex()] = mem;
@@ -49,8 +50,10 @@ std::vector<MemoryPlace *> ComputePlace::getMemoryPlaces() {
 ComputePlace::ComputePlace(int index, nanos6_device_t type)
 	: _index(index), _type(type), _schedulerData(nullptr)
 {
+	TaskDataAccessesInfo taskAccessInfo(0);
+
 	// Allocate preallocated taskfor.
-	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr, Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task, true);
+	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr, Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task, taskAccessInfo, true);
 	_preallocatedArgsBlockSize = 1024;
 
 	// MemoryAllocator is still not available, so use malloc.

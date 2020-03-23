@@ -19,7 +19,7 @@
 
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
-void release_access(void *base_address, __attribute__((unused)) long dim1size, long dim1start, long dim1end)
+void release_access(void *base_address, __attribute__((unused)) long dim1size, long dim1start, __attribute__((unused)) long dim1end)
 {
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	assert(currentWorkerThread != nullptr);
@@ -30,17 +30,10 @@ void release_access(void *base_address, __attribute__((unused)) long dim1size, l
 	ComputePlace *computePlace = currentWorkerThread->getComputePlace();
 	assert(computePlace != nullptr);
 
-	union {
-		void *_asVoidPointer;
-		char *_asCharPointer;
-	} address;
-	address._asVoidPointer = base_address;
-	address._asCharPointer += dim1start;
+	void *effectiveAddress = static_cast<char *>(base_address) + dim1start;
 
-	DataAccessRegion accessRegion(address._asVoidPointer, dim1end - dim1start);
-	DataAccessRegistration::releaseAccessRegion(task, accessRegion, ACCESS_TYPE, WEAK, computePlace, computePlace->getDependencyData());
+	DataAccessRegistration::releaseAccessRegion(task, effectiveAddress, ACCESS_TYPE, WEAK, computePlace, computePlace->getDependencyData());
 }
-
 
 void nanos6_release_read_1(void *base_address, long dim1size, long dim1start, long dim1end)
 {

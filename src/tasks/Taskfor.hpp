@@ -12,6 +12,7 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
+
 class Taskfor : public Task {
 public:
 	typedef nanos6_loop_bounds_t bounds_t;
@@ -37,9 +38,10 @@ public:
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
+		TaskDataAccessesInfo taskAccessInfo,
 		bool runnable = false
 	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, nullptr, nullptr, 0),
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo),
 		  _currentChunk(), _remainingIterations(), _bounds(), _completedIterations(0), _myChunk(-1)
 	{
 		assert(isFinal());

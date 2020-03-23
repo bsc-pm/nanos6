@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -26,30 +26,30 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 {
 	Task *currentTask = nullptr;
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	
+
 	assert(currentThread != nullptr);
-	
+
 	currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 	assert(currentTask->getThread() == currentThread);
-	
+
 	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource, Instrument::task_id_t());
-	
+
 	// Fast check
 	if (currentTask->doesNotNeedToBlockForChildren()) {
 		// This in combination with a release from the children makes their changes visible to this thread
 		std::atomic_thread_fence(std::memory_order_acquire);
-		
+
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
-		
+
 		return;
 	}
-	
+
 	ComputePlace *cpu = currentThread->getComputePlace();
 	assert(cpu != nullptr);
 	DataAccessRegistration::handleEnterTaskwait(currentTask, cpu, cpu->getDependencyData());
 	bool done = currentTask->markAsBlocked();
-	
+
 	// done == true:
 	// 	1. The condition of the taskwait has been fulfilled
 	// 	2. The task will not be queued at all
@@ -63,34 +63,34 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 	// 		ThreadManager::switchThreads (that is inside TaskBlocking::taskBlocks)
 	// 		to resume immediately (and to wake the replacement thread, if any,
 	// 		on the "old" CPU)
-	
+
 	if (!done) {
 		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		HardwareCounters::stopTaskMonitoring(currentTask);
-		
+
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_CHILDREN_INLINE);
-		
+
 		// Update the CPU since the thread may have migrated
 		cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 	}
-	
+
 	// This in combination with a release from the children makes their changes visible to this thread
 	std::atomic_thread_fence(std::memory_order_acquire);
-	
+
 	Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
-	
+
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();
-	
+
 	DataAccessRegistration::handleExitTaskwait(currentTask, cpu, cpu->getDependencyData());
-	
+
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
-		
+
 		HardwareCounters::startTaskMonitoring(currentTask);
 		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}

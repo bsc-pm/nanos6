@@ -55,7 +55,7 @@ int DeviceComputePlace::pollingFinishTasks(DeviceFunctionsInterface *functions)
 		for (Task *task : finishedTasks) {
 			// If 0 tasks must put their parent in the scheduler, because it is
 			// blocked on If0Task::waitForIf0Task until this task ends.
-			// Note that TaskFinalization::disposeOrUnblockTask will not unlock the
+			// Note that TaskFinalization::disposeTask will not unlock the
 			// parent in this case.
 			if (task->isIf0()) {
 				Task *parent = task->getParent();
@@ -71,8 +71,13 @@ int DeviceComputePlace::pollingFinishTasks(DeviceFunctionsInterface *functions)
 			if (task->markAsFinished(cpu)) {
 				DataAccessRegistration::unregisterTaskDataAccesses(task, cpu,
 					localHpDependencyData, task->getMemoryPlace(), true);
+
+				Monitoring::taskFinished(task);
+				HardwareCounters::taskFinished(task);
+				TaskFinalization::taskFinished(task, cpu);
+
 				if (task->markAsReleased()) {
-					TaskFinalization::disposeOrUnblockTask(task, cpu);
+					TaskFinalization::disposeTask(task, cpu);
 				}
 			}
 		}

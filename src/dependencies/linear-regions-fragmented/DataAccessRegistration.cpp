@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -2390,7 +2390,7 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace, bool fromBusyThread
 	) {
 		for (Task *removableTask : removableTasks) {
-			TaskFinalization::disposeOrUnblockTask(removableTask, computePlace, fromBusyThread);
+			TaskFinalization::disposeTask(removableTask, computePlace, fromBusyThread);
 		}
 		removableTasks.clear();
 	}
@@ -3172,32 +3172,6 @@ namespace DataAccessRegistration {
 #endif
 	}
 
-	void handleEnterBlocking(Task *task)
-	{
-		assert(task != nullptr);
-
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-		if (!accessStructures._accesses.empty()) {
-			task->decreaseRemovalBlockingCount();
-		}
-	}
-
-
-	void handleExitBlocking(Task *task)
-	{
-		assert(task != nullptr);
-
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-		if (!accessStructures._accesses.empty()) {
-			task->increaseRemovalBlockingCount();
-		}
-	}
-
-
 	void handleEnterTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData)
 	{
 		assert(task != nullptr);
@@ -3213,10 +3187,6 @@ namespace DataAccessRegistration {
 			TaskDataAccesses &accessStructures = task->getDataAccesses();
 			assert(!accessStructures.hasBeenDeleted());
 			std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-			if (!accessStructures._accesses.empty()) {
-				assert(accessStructures._removalBlockers > 0);
-				task->decreaseRemovalBlockingCount();
-			}
 
 			createTaskwait(task, accessStructures, computePlace, hpDependencyData);
 
@@ -3233,8 +3203,7 @@ namespace DataAccessRegistration {
 	}
 
 
-	void handleExitTaskwait(Task *task, __attribute__((unused)) ComputePlace *computePlace,
-			__attribute__((unused)) CPUDependencyData &hpDependencyData)
+	void handleExitTaskwait(Task *task, ComputePlace *, CPUDependencyData &)
 	{
 		assert(task != nullptr);
 
@@ -3243,9 +3212,6 @@ namespace DataAccessRegistration {
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 
 		if (!accessStructures._accesses.empty()) {
-			assert(accessStructures._removalBlockers > 0);
-			task->increaseRemovalBlockingCount();
-
 			// Mark all accesses as not having subaccesses
 			accessStructures._accesses.processAll(
 				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {

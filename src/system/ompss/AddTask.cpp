@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 // This is for posix_memalign
@@ -36,10 +36,11 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <Monitoring.hpp>
+#include <TaskDataAccesses.hpp>
+#include <TaskDataAccessesInfo.hpp>
 
 
 #define DATA_ALIGNMENT_SIZE sizeof(void *)
-#define TASK_ALIGNMENT 128
 
 void nanos6_create_task(
 	nanos6_task_info_t *taskInfo,
@@ -48,11 +49,11 @@ void nanos6_create_task(
 	void **args_block_pointer,
 	void **task_pointer,
 	size_t flags,
-	size_t num_deps
-) {
+	size_t num_deps)
+{
 	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
 
-	nanos6_device_t taskDeviceType = (nanos6_device_t) taskInfo->implementations[0].device_type_id;
+	nanos6_device_t taskDeviceType = (nanos6_device_t)taskInfo->implementations[0].device_type_id;
 	if (!HardwareInfo::canDeviceRunTasks(taskDeviceType)) {
 		FatalErrorHandler::failIf(true, "Task of device type '", taskDeviceType, "' has no active hardware associated");
 	}
@@ -87,23 +88,11 @@ void nanos6_create_task(
 		taskSize = sizeof(Task);
 	}
 
-#ifdef DISCRETE_DEPS
-	// We use num_deps to create the correctly sized array for storing the dependencies.
-	// Two plain C arrays are used, one for the actual DataAccess structures and another for the
-	// addresses, which is the one used for searching. That way we cause less cache misses searching.
-
-	size_t seqsSize = sizeof(DataAccess) * num_deps;
-	size_t addrSize = sizeof(void *) * num_deps;
-#else
-	size_t seqsSize = 0;
-	size_t addrSize = 0;
-#endif
-
+	TaskDataAccessesInfo taskAccessInfo(num_deps);
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 
 	if (hasPreallocatedArgsBlock) {
 		assert(args_block != nullptr);
-		assert(seqsSize == 0 && addrSize == 0);
 		task = MemoryAllocator::alloc(taskSize);
 	} else {
 		// Alignment fixup
@@ -112,28 +101,26 @@ void nanos6_create_task(
 		args_block_size += correction;
 
 		// Allocation and layout
-		*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize + seqsSize + addrSize);
+		*args_block_pointer = MemoryAllocator::alloc(args_block_size + taskSize + taskAccessInfo.getAllocationSize());
 		task = (char *)args_block + args_block_size;
 	}
 
 	Instrument::createdArgsBlock(taskId, *args_block_pointer, originalArgsBlockSize, args_block_size);
 
-	void * seqs = (char *)task + taskSize;
-	void * addresses = (char *)seqs + seqsSize;
+	taskAccessInfo.setAllocationAddress((char *)task + taskSize);
 
 	if (isTaskfor) {
 		// Taskfor is always final.
 		flags |= nanos6_task_flag_t::nanos6_final_task;
-		new (task) Taskfor (args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+		new (task) Taskfor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags, taskAccessInfo);
 	} else if (isStreamExecutor) {
-		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags, taskAccessInfo);
 	} else if (isTaskloop) {
-		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
+		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags, taskAccessInfo);
 	} else {
 		// Construct the Task object
-		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, seqs, addresses, num_deps);
+		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, taskAccessInfo);
 	}
-
 }
 
 void nanos6_create_preallocated_task(
@@ -143,8 +130,8 @@ void nanos6_create_preallocated_task(
 	size_t args_block_size,
 	void *preallocatedArgsBlock,
 	void *preallocatedTask,
-	size_t flags
-) {
+	size_t flags)
+{
 	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
 	assert(preallocatedArgsBlock != nullptr);
 	assert(preallocatedTask != nullptr);
@@ -154,13 +141,13 @@ void nanos6_create_preallocated_task(
 	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
 	FatalErrorHandler::failIf(!isTaskfor, "Only taskfors can be created this way.");
 
-	Taskfor *taskfor = (Taskfor *) preallocatedTask;
+	Taskfor *taskfor = (Taskfor *)preallocatedTask;
 	taskfor->reinitialize(preallocatedArgsBlock, args_block_size, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 }
 
 void nanos6_submit_task(void *taskHandle)
 {
-	Task *task = (Task *) taskHandle;
+	Task *task = (Task *)taskHandle;
 	assert(task != nullptr);
 
 	Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
@@ -185,7 +172,7 @@ void nanos6_submit_task(void *taskHandle)
 		if (parent->isStreamExecutor()) {
 			// Check if we need to save the spawned function's id for a future
 			// trigger of a callback (spawned stream functions)
-			StreamExecutor *executor = (StreamExecutor *) parent;
+			StreamExecutor *executor = (StreamExecutor *)parent;
 			StreamFunctionCallback *callback = executor->getCurrentFunctionCallback();
 
 			if (callback != nullptr) {
