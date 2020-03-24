@@ -27,7 +27,6 @@ private:
 	//! Whether DLB is enabled
 	static EnvironmentVariable<bool> _dlbEnabled;
 
-
 public:
 
 	/*    CPU MANAGER    */
@@ -214,6 +213,16 @@ public:
 		return _cpuManager->disable(systemCPUId);
 	}
 
+	//! \brief Forcefully resume a CPU if it is paused
+	//!
+	//! \param[in] cpuId The id of the CPU to resume
+	static inline void forcefullyResumeCPU(size_t cpuId)
+	{
+		assert(_cpuManager != nullptr);
+
+		_cpuManager->forcefullyResumeCPU(cpuId);
+	}
+
 
 	/*    SHUTDOWN CPUS    */
 
@@ -235,13 +244,6 @@ public:
 		assert(_cpuManager != nullptr);
 
 		return _cpuManager->getShutdownCPU();
-	}
-
-	static inline void forcefullyResumeCPU(size_t cpuId)
-	{
-		assert(_cpuManager != nullptr);
-
-		_cpuManager->forcefullyResumeCPU(cpuId);
 	}
 
 

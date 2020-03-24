@@ -106,53 +106,10 @@ protected:
 	//!
 	//! \param[in] numCPUs The number of CPUs used by the runtime
 	//! \param[in] numNUMANodes The number of NUMA nodes in the system
-	inline void refineTaskforGroups(size_t numCPUs, size_t numNUMANodes)
-	{
-		// Whether the taskfor group envvar already has a value
-		bool taskforGroupsSetByUser = _taskforGroups.isPresent();
+	void refineTaskforGroups(size_t numCPUs, size_t numNUMANodes);
 
-		// Final warning message (only one)
-		bool mustEmitWarning = false;
-		std::ostringstream warningMessage;
-
-		// The default value is the closest to 1 taskfor group per NUMA node
-		if (!taskforGroupsSetByUser) {
-			size_t closestGroups = numNUMANodes;
-			if (numCPUs % numNUMANodes != 0) {
-				closestGroups = getClosestGroupNumber(numCPUs, numNUMANodes);
-				assert(numCPUs % closestGroups == 0);
-			}
-			_taskforGroups.setValue(closestGroups);
-		} else {
-			if (numCPUs < _taskforGroups) {
-				warningMessage
-					<< "More groups requested than available CPUs. "
-					<< "Using " << numCPUs << " groups of 1 CPU each instead";
-
-				_taskforGroups.setValue(numCPUs);
-				mustEmitWarning = true;
-			} else if (_taskforGroups == 0 || numCPUs % _taskforGroups != 0) {
-				size_t closestGroups = getClosestGroupNumber(numCPUs, _taskforGroups);
-				assert(numCPUs % closestGroups == 0);
-
-				size_t cpusPerGroup = numCPUs / closestGroups;
-				warningMessage
-					<< _taskforGroups << " groups requested. "
-					<< "The number of CPUs is not divisible by the number of groups. "
-					<< "Using " << closestGroups << " groups of " << cpusPerGroup
-					<< " CPUs each instead";
-
-				_taskforGroups.setValue(closestGroups);
-				mustEmitWarning = true;
-			}
-		}
-
-		if (mustEmitWarning) {
-			FatalErrorHandler::warnIf(true, warningMessage.str());
-		}
-
-		assert((_taskforGroups <= numCPUs) && (numCPUs % _taskforGroups == 0));
-	}
+	//! \brief Emits a brief report with information of the taskfor groups
+	void reportTaskforGroupsInfo();
 
 public:
 
@@ -294,11 +251,8 @@ public:
 	//! taskfor. I.e. the number of CPUs per taskfor group
 	inline size_t getNumCPUsPerTaskforGroup() const
 	{
-		return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
+		return _cpus.size() / _taskforGroups;
 	}
-
-	//! \brief Emits a brief report with information of the taskfor groups
-	virtual void reportTaskforGroupsInfo(const size_t numTaskforGroups, const size_t numCPUsPerTaskforGroup) = 0;
 
 };
 

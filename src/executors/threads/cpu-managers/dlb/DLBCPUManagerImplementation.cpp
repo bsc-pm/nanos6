@@ -31,14 +31,14 @@ void DLBCPUManagerImplementation::preinitialize()
 		rc, " when retrieving the affinity of the process"
 	);
 
-	// Get a list of available CPUs
+	// Get the number of NUMA nodes and a list of all available CPUs
 	nanos6_device_t hostDevice = nanos6_device_t::nanos6_host_device;
 	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(hostDevice);
 	HostInfo *hostInfo = ((HostInfo *) HardwareInfo::getDeviceInfo(hostDevice));
 	assert(hostInfo != nullptr);
 
-	std::vector<ComputePlace *> const &systemCPUs = hostInfo->getComputePlaces();
-	size_t numCPUs = systemCPUs.size();
+	std::vector<ComputePlace *> const &cpus = hostInfo->getComputePlaces();
+	size_t numCPUs = cpus.size();
 	assert(numCPUs > 0);
 
 	// Create the chosen policy for this CPUManager
@@ -67,7 +67,7 @@ void DLBCPUManagerImplementation::preinitialize()
 	// Initialize each CPU's fields
 	for (size_t i = 0; i < numCPUs; ++i) {
 		// Place the CPU in the vectors
-		CPU *cpu = (CPU *) systemCPUs[i];
+		CPU *cpu = (CPU *) cpus[i];
 		assert(cpu != nullptr);
 
 		_cpus[i] = cpu;
@@ -88,7 +88,7 @@ void DLBCPUManagerImplementation::preinitialize()
 
 	CPUManagerInterface::reportInformation(numCPUs, numNUMANodes);
 	if (_taskforGroupsReportEnabled) {
-		reportTaskforGroupsInfo(getNumTaskforGroups(), getNumCPUsPerTaskforGroup());
+		CPUManagerInterface::reportTaskforGroupsInfo();
 	}
 
 	// All CPUs are unavailable for the shutdown process at the start

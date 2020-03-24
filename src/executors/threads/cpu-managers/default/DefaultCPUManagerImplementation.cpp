@@ -40,6 +40,7 @@ void DefaultCPUManagerImplementation::preinitialize()
 
 	std::vector<ComputePlace *> const &cpus = hostInfo->getComputePlaces();
 	size_t numCPUs = cpus.size();
+	assert(numCPUs > 0);
 
 	// Create the chosen policy for this CPUManager
 	std::string policyValue = _policyChosen.getValue();
@@ -53,9 +54,6 @@ void DefaultCPUManagerImplementation::preinitialize()
 		);
 	}
 	assert(_cpuManagerPolicy != nullptr);
-
-	// Find the appropriate value for taskfor groups
-	refineTaskforGroups(numCPUs, numNUMANodes);
 
 	// Find the maximum system CPU id
 	size_t maxSystemCPUId = 0;
@@ -74,18 +72,42 @@ void DefaultCPUManagerImplementation::preinitialize()
 	_cpus.resize(numAvailableCPUs);
 	_systemToVirtualCPUId.resize(numSystemCPUs);
 
-	const size_t numCPUsPerTaskforGroup = getNumCPUsPerTaskforGroup();
-	assert(numCPUsPerTaskforGroup > 0);
+	// Find the appropriate value for taskfor groups
+	std::vector<int> availableNUMANodes(numNUMANodes, 0);
+	for (size_t i = 0; i < numCPUs; i++) {
+		CPU *cpu = (CPU *) cpus[i];
+		assert(cpu != nullptr);
+
+		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
+			size_t NUMANodeId = cpu->getNumaNodeId();
+			availableNUMANodes[NUMANodeId]++;
+		}
+	}
+
+	size_t numValidNUMANodes = 0;
+	for (size_t i = 0; i < numNUMANodes; i++) {
+		if (availableNUMANodes[i] > 0) {
+			numValidNUMANodes++;
+		}
+	}
+	refineTaskforGroups(numAvailableCPUs, numValidNUMANodes);
 
 	// Initialize each CPU's fields
+	size_t groupId = 0;
 	size_t virtualCPUId = 0;
+	size_t numCPUsPerTaskforGroup = numAvailableCPUs / getNumTaskforGroups();
+	assert(numCPUsPerTaskforGroup > 0);
+
 	for (size_t i = 0; i < numCPUs; ++i) {
 		CPU *cpu = (CPU *) cpus[i];
 		if (CPU_ISSET(cpu->getSystemCPUId(), &_cpuMask)) {
-			// To compute the groupId we need the CPU's hwloc logical_index
-			// Before setting the virtualID, use the current id for the groupId
-			size_t groupId = cpu->getIndex() / numCPUsPerTaskforGroup;
-			assert(groupId <= numCPUs);
+			// Check if this CPU goes into another group
+			if (numCPUsPerTaskforGroup == 0) {
+				numCPUsPerTaskforGroup = (numAvailableCPUs / getNumTaskforGroups()) - 1;
+				++groupId;
+			} else {
+				--numCPUsPerTaskforGroup;
+			}
 
 			cpu->setIndex(virtualCPUId);
 			cpu->setGroupId(groupId);
@@ -98,7 +120,10 @@ void DefaultCPUManagerImplementation::preinitialize()
 	}
 	assert(virtualCPUId == numAvailableCPUs);
 
-	reportInformation(numSystemCPUs, numNUMANodes);
+	CPUManagerInterface::reportInformation(numSystemCPUs, numNUMANodes);
+	if (_taskforGroupsReportEnabled) {
+		CPUManagerInterface::reportTaskforGroupsInfo();
+	}
 
 	// Initialize idle CPU structures
 	_idleCPUs.resize(numAvailableCPUs);
