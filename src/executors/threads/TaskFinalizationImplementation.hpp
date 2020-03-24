@@ -68,6 +68,25 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 				}
 
 				assert(!task->mustDelayRelease());
+			} else if (task->isTaskfor() && task->isRunnable()) {
+				Taskfor *collaborator = (Taskfor *)task;
+				Taskfor *source = (Taskfor *)parent;
+
+				size_t completedIts = collaborator->getCompletedIterations();
+				if (completedIts > 0) {
+					bool finishedSource = source->decrementRemainingIterations(completedIts);
+					if (finishedSource) {
+						source->markAsFinished(computePlace);
+						assert(computePlace != nullptr);
+						DataAccessRegistration::unregisterTaskDataAccesses(source, computePlace, computePlace->getDependencyData());
+						// There is one count for the finished source, but we need ready = true to decrement it later again.
+						ready = source->finishChild();
+						assert(!ready);
+						ready = true;
+						if (source->markAsReleased())
+							TaskFinalization::disposeTask(source, computePlace, fromBusyThread);
+					}
+				}
 			}
 		} else {
 			// An ancestor in a taskwait that finishes at this point
@@ -103,23 +122,6 @@ void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool 
 		assert(task->hasFinished());
 
 		readyOrDisposable = task->unlinkFromParent();
-		if (task->isTaskfor() && task->isRunnable()) {
-			Taskfor *collaborator = (Taskfor *)task;
-			Taskfor *source = (Taskfor *)parent;
-
-			size_t completedIts = collaborator->getCompletedIterations();
-			if (completedIts > 0) {
-				bool finishedSource = source->decrementRemainingIterations(completedIts);
-				if (finishedSource) {
-					source->markAsFinished(computePlace);
-					assert(computePlace != nullptr);
-					DataAccessRegistration::unregisterTaskDataAccesses(source, computePlace, computePlace->getDependencyData());
-					TaskFinalization::taskFinished(source, computePlace, fromBusyThread);
-					readyOrDisposable = source->markAsReleased();
-				}
-			}
-		}
-
 		bool isTaskfor = task->isTaskfor();
 		bool isTaskloop = task->isTaskloop();
 		bool isSpawned = task->isSpawned();
@@ -128,7 +130,7 @@ void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool 
 		// We cannot dispose/free collaborator taskfors because they are preallocated tasks that are used during
 		// all the program execution. Collaborators are runnable taskfors. However, we must dispose all taskfors
 		// that are not collaborators, also known as parent taskfors
-		bool dispose = !(task->isTaskfor() && task->isRunnable());
+		bool dispose = !(isTaskfor && task->isRunnable());
 
 		if (dispose) {
 			Instrument::destroyTask(task->getInstrumentationTaskId());
