@@ -128,20 +128,17 @@ public:
 
 	inline bool isSupported(HWCounters::counters_t counterType)
 	{
-		if (counterType == HWCounters::llc_usage) {
-			// pqos_llc_usage is HWCounters::llc_usage
-			return true;
-		} else if (counterType == HWCounters::ipc) {
-			// pqos_ipc is HWCounters::ipc
-			return true;
-		} else if (counterType == HWCounters::local_mem_bandwidth) {
-			// pqos_local_mem_bandwidth is HWCounters::local_mem_bandwidth
-			return true;
-		} else if (counterType == HWCounters::remote_mem_bandwidth) {
-			// pqos_remote_mem_bandwidth is HWCounters::remote_mem_bandwidth
-			return true;
-		} else if (counterType == HWCounters::llc_miss_rate) {
-			// pqos_llc_miss_rate is HWCounters::llc_miss_rate
+		if (counterType == HWCounters::llc_usage ||
+			counterType == HWCounters::ipc ||
+			counterType == HWCounters::local_mem_bandwidth ||
+			counterType == HWCounters::remote_mem_bandwidth ||
+			counterType == HWCounters::llc_miss_rate
+		) {
+			// pqos_llc_usage == HWCounters::llc_usage
+			// pqos_ipc == HWCounters::ipc
+			// pqos_local_mem_bandwidth == HWCounters::local_mem_bandwidth
+			// pqos_remote_mem_bandwidth == HWCounters::remote_mem_bandwidth
+			// pqos_llc_miss_rate == HWCounters::llc_miss_rate
 			return true;
 		} else {
 			return false;

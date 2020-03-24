@@ -62,6 +62,7 @@ public:
 		}
 	}
 
+	//! \brief Reset all structures to their default value
 	inline void clear()
 	{
 		_active = false;
@@ -76,23 +77,25 @@ public:
 		}
 	}
 
+	//! \brief Enable or disable hardware counter monitoring for this task
 	inline void setEnabled(bool enabled = true)
 	{
 		_enabled = enabled;
 	}
 
+	//! \brief Check whether hardware counter monitoring is enabled for this task
 	inline bool isEnabled() const
 	{
 		return _enabled;
 	}
 
-	//! \brief Check whether HW counters are being read for the task
+	//! \brief Check whether hardware counters are being read for the task
 	inline bool isActive() const
 	{
 		return _active;
 	}
 
-	//! \brief Start reading HW counters for the current task
+	//! \brief Start reading hardware counters for the current task
 	//! \param[in] data The pqos data from which to gather counters
 	inline void startReading(const pqos_mon_data *data)
 	{
@@ -112,7 +115,7 @@ public:
 		_accumulatingCounters[llc_usage](data->values.llc);
 	}
 
-	//! \brief Stop reading HW counters for the current task
+	//! \brief Stop reading hardware counters for the current task
 	//! \param[in] data The pqos data from which to gather counters
 	inline void stopReading(const pqos_mon_data *data)
 	{
@@ -138,7 +141,7 @@ public:
 		_accumulatingCounters[llc_usage](data->values.llc);
 	}
 
-	//! \brief Get the delta value of a HW counter
+	//! \brief Get the delta value of a hardware counter
 	//! \param[in] counterType The type of counter to get the delta from
 	inline double getDelta(HWCounters::counters_t counterType)
 	{
@@ -159,7 +162,7 @@ public:
 		}
 	}
 
-	//! \brief Get the accumulated value of a HW counter
+	//! \brief Get the accumulated value of a hardware counter
 	//! \param[in] counterType The type of counter to get the accumulation from
 	inline double getAccumulated(HWCounters::counters_t counterType)
 	{

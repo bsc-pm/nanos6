@@ -41,6 +41,7 @@ private:
 
 public:
 
+	//! \brief Initialize the hardware counters API with the correct backend
 	static inline void initialize()
 	{
 		assert(_hwCountersInterface == nullptr);
@@ -74,6 +75,7 @@ public:
 		_hwCountersInterface->initialize(_verbose.getValue(), _verboseFile.getValue());
 	}
 
+	//! \brief Shutdown the hardware counters API
 	static inline void shutdown()
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -83,11 +85,15 @@ public:
 		delete _hwCountersInterface;
 	}
 
+	//! \brief Retrieve the chosen hardware counters backend
+	//! \return A string with the chosen backend
 	static inline std::string getChosenBackend()
 	{
 		return _chosenBackend.getValue();
 	}
 
+	//! \brief Check whether a type of counter is supported
+	//! \param[in] counterType The type of hardware counter
 	static inline bool isSupported(HWCounters::counters_t counterType)
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -95,6 +101,7 @@ public:
 		return _hwCountersInterface->isSupported(counterType);
 	}
 
+	//! \brief Initialize hardware counter structures for a new thread
 	static inline void threadInitialized()
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -102,6 +109,7 @@ public:
 		_hwCountersInterface->threadInitialized();
 	}
 
+	//! \brief Destroy the hardware counter structures of a thread
 	static inline void threadShutdown()
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -109,6 +117,9 @@ public:
 		_hwCountersInterface->threadShutdown();
 	}
 
+	//! \brief Initialize hardware counter structures for a task
+	//! \param[in,out] task The task to create structures for
+	//! \param[in] enabled Whether to create structures and monitor this task
 	static inline void taskCreated(Task *task, bool enabled = true)
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -116,6 +127,8 @@ public:
 		_hwCountersInterface->taskCreated(task, enabled);
 	}
 
+	//! \brief Reinitialize all hardware counter structures for a task
+	//! \param[in,out] task The task to reinitialize structures for
 	static inline void taskReinitialized(Task *task)
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -123,6 +136,8 @@ public:
 		_hwCountersInterface->taskReinitialized(task);
 	}
 
+	//! \brief Start reading hardware counters for a task
+	//! \param[in,out] task The task to start hardware counter monitoring for
 	static inline void taskStarted(Task *task)
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -130,6 +145,8 @@ public:
 		_hwCountersInterface->taskStarted(task);
 	}
 
+	//! \brief Stop reading hardware counters for a task
+	//! \param[in,out] task The task to stop hardware counters monitoring for
 	static inline void taskStopped(Task *task)
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -137,6 +154,8 @@ public:
 		_hwCountersInterface->taskStopped(task);
 	}
 
+	//! \brief Finish monitoring a task's hardware counters and accumulate them
+	//! \param[in,out] task The task to finish hardware counters monitoring for
 	static inline void taskFinished(Task *task)
 	{
 		assert(_hwCountersInterface != nullptr);
@@ -144,6 +163,8 @@ public:
 		_hwCountersInterface->taskFinished(task);
 	}
 
+	//! \brief Get the size of task hardware counter structures for the chosen
+	//! backend
 	static inline size_t getTaskHardwareCountersSize()
 	{
 		assert(_hwCountersInterface != nullptr);
