@@ -144,10 +144,10 @@ void nanos6_user_unlock(void **handlerPointer)
 			WorkerThread *releasedThread = releasedTask->getThread();
 			assert(releasedThread != nullptr);
 
-			// Try to get an idle CPU and offload the released task's execution in it
-			CPU *idleCPU = (CPU *) CPUManager::getIdleCPU();
-			if (idleCPU != nullptr) {
-				releasedThread->resume(idleCPU, false);
+			// Try to get an unused CPU and offload the released task's execution in it
+			CPU *obtainedCPU = (CPU *) CPUManager::getUnusedCPU();
+			if (obtainedCPU != nullptr) {
+				releasedThread->resume(obtainedCPU, false);
 			} else {
 				// No idle CPUs available, first re-add the current task to the scheduler
 				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_MONITOR_HPP
@@ -32,7 +32,6 @@ private:
 	//! Spinlock that ensures atomic access within the tasktype map
 	SpinLock _spinlock;
 
-
 private:
 
 	inline TaskMonitor() :
@@ -40,7 +39,6 @@ private:
 		_spinlock()
 	{
 	}
-
 
 public:
 
@@ -64,71 +62,72 @@ public:
 	//! \brief Shutdown task monitoring
 	static inline void shutdown()
 	{
-		if (_monitor != nullptr) {
-			// Destroy all the task type statistics
-			for (auto &it : _monitor->_tasktypeMap) {
-				if (it.second != nullptr) {
-					delete it.second;
-				}
-			}
+		assert(_monitor != nullptr);
 
-			delete _monitor;
+		// Destroy all the task type statistics
+		for (auto &it : _monitor->_tasktypeMap) {
+			if (it.second != nullptr) {
+				delete it.second;
+			}
 		}
+
+		delete _monitor;
 	}
 
 	//! \brief Display task statistics
 	//! \param[in,out] stream The output stream
 	static inline void displayStatistics(std::stringstream &stream)
 	{
-		if (_monitor != nullptr) {
-			stream << std::left << std::fixed << std::setprecision(5) << "\n";
-			stream << "+-----------------------------+\n";
-			stream << "|       TASK STATISTICS       |\n";
-			stream << "+-----------------------------+\n";
+		assert(_monitor != nullptr);
 
-			for (auto const &it : _monitor->_tasktypeMap) {
-				int instances = it.second->getInstances();
-				if (instances) {
-					double avgCost        = it.second->getAverageTimePerUnitOfCost();
-					double stdevCost      = it.second->getStdevTimePerUnitOfCost();
-					double accuracy       = it.second->getPredictionAccuracy();
-					std::string typeLabel = it.first + " (" + std::to_string(instances) + ")";
-					std::string accur = "NA";
+		stream << std::left << std::fixed << std::setprecision(5) << "\n";
+		stream << "+-----------------------------+\n";
+		stream << "|       TASK STATISTICS       |\n";
+		stream << "+-----------------------------+\n";
 
-					// Make sure there was at least one prediction to report accuracy
-					if (!std::isnan(accuracy)) {
-						std::stringstream accuracyStream;
-						accuracyStream << std::setprecision(2) << std::fixed << accuracy << "%";
-						accur = accuracyStream.str();
-					}
-					stream <<
-						std::setw(7)  << "STATS"                    << " " <<
-						std::setw(12) << "MONITORING"               << " " <<
-						std::setw(26) << "TASK-TYPE (INSTANCES)"    << " " <<
-						std::setw(20) << typeLabel                  << "\n";
-					stream <<
-						std::setw(7)  << "STATS"                    << " "   <<
-						std::setw(12) << "MONITORING"               << " "   <<
-						std::setw(26) << "UNITARY COST AVG / STDEV" << " "   <<
-						std::setw(10) << avgCost                    << " / " <<
-						std::setw(10) << stdevCost                  << "\n";
-					stream <<
-						std::setw(7)  << "STATS"                    << " " <<
-						std::setw(12) << "MONITORING"               << " " <<
-						std::setw(26) << "PREDICTION ACCURACY (%)"  << " " <<
-						std::setw(10) << accur                      << "\n";
-					stream << "+-----------------------------+\n";
+		for (auto const &it : _monitor->_tasktypeMap) {
+			int instances = it.second->getInstances();
+			if (instances) {
+				double avgCost        = it.second->getAverageTimePerUnitOfCost();
+				double stdevCost      = it.second->getStdevTimePerUnitOfCost();
+				double accuracy       = it.second->getPredictionAccuracy();
+				std::string typeLabel = it.first + " (" + std::to_string(instances) + ")";
+				std::string accur = "NA";
+
+				// Make sure there was at least one prediction to report accuracy
+				if (!std::isnan(accuracy)) {
+					std::stringstream accuracyStream;
+					accuracyStream << std::setprecision(2) << std::fixed << accuracy << "%";
+					accur = accuracyStream.str();
 				}
+				stream <<
+					std::setw(7)  << "STATS"                    << " " <<
+					std::setw(12) << "MONITORING"               << " " <<
+					std::setw(26) << "TASK-TYPE (INSTANCES)"    << " " <<
+					std::setw(20) << typeLabel                  << "\n";
+				stream <<
+					std::setw(7)  << "STATS"                    << " "   <<
+					std::setw(12) << "MONITORING"               << " "   <<
+					std::setw(26) << "UNITARY COST AVG / STDEV" << " "   <<
+					std::setw(10) << avgCost                    << " / " <<
+					std::setw(10) << stdevCost                  << "\n";
+				stream <<
+					std::setw(7)  << "STATS"                    << " " <<
+					std::setw(12) << "MONITORING"               << " " <<
+					std::setw(26) << "PREDICTION ACCURACY (%)"  << " " <<
+					std::setw(10) << accur                      << "\n";
+				stream << "+-----------------------------+\n";
 			}
-			stream << "\n";
 		}
+		stream << "\n";
 	}
 
 	//! \brief Initialize a task's monitoring statistics
-	//! \param[in] parentStatistics The parent task's statistics
-	//! \param[in] taskStatistics The task's statistics
-	//! \param[in] parentPredictions The parent task's predictions
-	//! \param[in] taskPredictions The task's predictions
+	//!
+	//! \param[in,out] parentStatistics The parent task's statistics
+	//! \param[in,out] taskStatistics The task's statistics
+	//! \param[in,out] parentPredictions The parent task's predictions
+	//! \param[in,out] taskPredictions The task's predictions
 	//! \param[in] label The tasktype
 	//! \param[in] cost The task's computational cost
 	static void taskCreated(
@@ -141,37 +140,45 @@ public:
 	);
 
 	//! \brief Predict the execution time of a task
-	//! \param[in] taskPredictions The predictions of the task
+	//!
+	//! \param[in,out] taskPredictions The predictions of the task
 	//! \param[in] label The tasktype
 	//! \param[in] cost The task's computational task
 	static void predictTime(TaskPredictions *taskPredictions, const std::string &label, size_t cost);
 
 	//! \brief Start time monitoring for a task
-	//! \param[in] taskStatistics The task's statistics
+	//!
+	//! \param[in,out] taskStatistics The task's statistics
 	//! \param[in] execStatus The timing status to start
+	//!
 	//! \return The status before the change
 	static monitoring_task_status_t startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus);
 
 	//! \brief Stop time monitoring for a task
-	//! \param[in] taskStatistics The task's statistics
-	//! \param[in] taskPredictions The predictions of the task
+	//!
+	//! \param[in,out] taskStatistics The task's statistics
+	//! \param[in,out] taskPredictions The predictions of the task
 	//! \param[out] ancestorsUpdated The number of ancestors that this task has
 	//! updated during shutdown of timing monitoring
+	//!
 	//! \return The status before the change
 	static monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions, int &ancestorsUpdated);
 
 	//! \brief Get the average unitary time value of a tasktype (normalized using cost)
+	//!
 	//! \param[in] label The tasktype
 	static double getAverageTimePerUnitOfCost(const std::string &label);
 
 	//! \brief Insert an unitary time value (normalized using cost) into the
 	//! appropriate TasktypePredictions structure
+	//!
 	//! \param[in] label The tasktype
 	//! \param[in] unitaryTime The time per unit of cost to insert
 	static void insertTimePerUnitOfCost(const std::string &label, double unitaryTime);
 
 	//! \brief Get the average unitary time values of all the tasktypes
 	//! being monitored
+	//!
 	//! \param[out] labels The reference of a vector in which all the available
 	//! tasktypes will be inserted
 	//! \param[out] unitaryTimes The reference of a vector in which the

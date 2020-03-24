@@ -4,10 +4,10 @@
 	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
 */
 
+#include <config.h>
 #include <fstream>
 
-#include <config.h>
-
+#include "CPUUsagePredictor.hpp"
 #include "Monitoring.hpp"
 
 
@@ -38,9 +38,6 @@ void Monitoring::initialize()
 
 		// Initialize the CPU monitoring module
 		CPUMonitor::initialize();
-
-		// Initialize the CPU usage predictor
-		CPUUsagePredictor::initialize();
 
 		// Initialize the workload predictor
 		WorkloadPredictor::initialize();
@@ -78,9 +75,6 @@ void Monitoring::shutdown()
 
 		// Propagate shutdown to the CPU monitoring module
 		CPUMonitor::shutdown();
-
-		// Propagate shutdown to the CPU usage predictor
-		CPUUsagePredictor::shutdown();
 
 		// Propagate shutdown to the task monitoring module
 		TaskMonitor::shutdown();
@@ -197,16 +191,12 @@ void Monitoring::taskFinished(Task *task)
 
 void Monitoring::initializeThread()
 {
-	if (_enabled) {
-		// Empty thread API
-	}
+	// Empty thread API
 }
 
 void Monitoring::shutdownThread()
 {
-	if (_enabled) {
-		// Empty thread API
-	}
+	// Empty thread API
 }
 
 

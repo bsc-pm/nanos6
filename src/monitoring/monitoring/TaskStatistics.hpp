@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef TASK_STATISTICS_HPP
@@ -63,7 +63,6 @@ private:
 	//! Elapsed execution ticks of children tasks (not converted to time)
 	std::atomic<size_t> _childrenTimes[num_status];
 
-
 public:
 
 	inline TaskStatistics() :
@@ -105,14 +104,20 @@ public:
 	}
 
 	//! \brief Get a representation of the elapsed ticks of a timer
+	//!
 	//! \param[in] id The timer's timing status id
+	//!
+	//! \return The elapsed ticks of the timer
 	inline size_t getChronoTicks(monitoring_task_status_t id) const
 	{
 		return _chronos[id].getAccumulated();
 	}
 
 	//! \brief Get the elapsed execution time of a timer (in microseconds)
+	//!
 	//! \param[in] id The timer's timing status id
+	//!
+	//! \return The elapsed execution time of the timer in microseconds
 	inline double getElapsedTiming(monitoring_task_status_t id) const
 	{
 		return ((double) _chronos[id]);
@@ -149,6 +154,7 @@ public:
 	}
 
 	//! \brief Decrease the number of alive children
+	//!
 	//! \return Whether the decreased child was the last child
 	inline bool decreaseAliveChildren()
 	{
@@ -164,7 +170,8 @@ public:
 	}
 
 	//! \brief Mark this task as finished, decreasing the extra unit of alive
-	//! children, which is the current task.
+	//! children, which is the current task
+	//!
 	//! \return Whether there are no more children alive
 	inline bool markAsFinished()
 	{
@@ -178,7 +185,9 @@ public:
 	//    TIMING-RELATED    //
 
 	//! \brief Start/resume a chrono. If resumed, the active chrono must pause
+	//!
 	//! \param[in] id the timing status of the stopwatch to start/resume
+	//!
 	//! \return The previous timing status of the task
 	inline monitoring_task_status_t startTiming(monitoring_task_status_t id)
 	{
@@ -197,7 +206,9 @@ public:
 	}
 
 	//! \brief Stop/pause a chrono
+	//!
 	//! \param[in] id the timing status of the stopwatch to stop/pause
+	//!
 	//! \return The previous timing status of the task
 	inline monitoring_task_status_t stopTiming()
 	{
@@ -226,6 +237,7 @@ public:
 	}
 
 	//! \brief Accumulate children tasks timing
+	//!
 	//! \param[in] childChronos An array of stopwatches that contain timing
 	//! data of the execution of a children task
 	//! \param[in] childTimes Accumulated elapsed ticks (one per timing status)

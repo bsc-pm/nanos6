@@ -355,6 +355,7 @@ common_sources = \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/WorkerThread.cpp \
 	src/executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.cpp \
+	src/executors/threads/cpu-managers/default/policies/IdlePolicy.cpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/device/Device.cpp \
 	src/hardware/hwinfo/HostInfo.cpp \
@@ -688,7 +689,8 @@ cpu_manager_CPPFLAGS = -I$(srcdir)/src/executors/threads/cpu-managers/default
 if HAVE_DLB
 cpu_manager_sources  += \
 	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.cpp \
-	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.cpp
+	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.cpp \
+	src/executors/threads/cpu-managers/dlb/policies/LeWIPolicy.cpp
 cpu_manager_LDFLAGS  += $(dlb_LIBS)
 cpu_manager_CPPFLAGS += $(dlb_CPPFLAGS) -DHAVE_DLB
 cpu_manager_CPPFLAGS += -I$(srcdir)/src/executors/threads/cpu-managers/dlb
@@ -772,6 +774,7 @@ noinst_HEADERS = \
 	src/executors/threads/CPU.hpp \
 	src/executors/threads/CPUManager.hpp \
 	src/executors/threads/CPUManagerInterface.hpp \
+	src/executors/threads/CPUManagerPolicyInterface.hpp \
 	src/executors/threads/TaskFinalization.hpp \
 	src/executors/threads/TaskFinalizationImplementation.hpp \
 	src/executors/threads/ThreadManager.hpp \
@@ -780,8 +783,11 @@ noinst_HEADERS = \
 	src/executors/threads/WorkerThreadImplementation.hpp \
 	src/executors/threads/cpu-managers/default/DefaultCPUActivation.hpp \
 	src/executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.hpp \
+	src/executors/threads/cpu-managers/default/policies/BusyPolicy.hpp \
+	src/executors/threads/cpu-managers/default/policies/IdlePolicy.hpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.hpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.hpp \
+	src/executors/threads/cpu-managers/dlb/policies/LeWIPolicy.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \
 	src/executors/workflow/ExecutionStep.hpp \

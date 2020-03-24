@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_MONITOR_HPP
@@ -30,13 +30,11 @@ private:
 	//! The singleton instance for the monitor of statistics
 	static CPUMonitor *_monitor;
 
-
 private:
 
 	inline CPUMonitor()
 	{
 	}
-
 
 public:
 
@@ -56,7 +54,8 @@ public:
 	static void shutdown();
 
 	//! \brief Display CPU statistics
-	//! \param[in] stream The output stream
+	//!
+	//! \param[in,out] stream The output stream
 	static void displayStatistics(std::stringstream &stream);
 
 

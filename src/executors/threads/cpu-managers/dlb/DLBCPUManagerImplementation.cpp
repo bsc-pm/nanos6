@@ -11,63 +11,66 @@
 #include "DLBCPUActivation.hpp"
 #include "DLBCPUManagerImplementation.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "executors/threads/cpu-managers/dlb/policies/LeWIPolicy.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+
+
+boost::dynamic_bitset<> DLBCPUManagerImplementation::_shutdownCPUs;
+SpinLock DLBCPUManagerImplementation::_shutdownCPUsLock;
 
 
 void DLBCPUManagerImplementation::preinitialize()
 {
 	_finishedCPUInitialization = false;
 
-	// Set the mask of the process
+	// Retreive the CPU mask of this process
 	int rc = sched_getaffinity(0, sizeof(cpu_set_t), &_cpuMask);
-	FatalErrorHandler::handle(rc, " when retrieving the affinity of the process");
+	FatalErrorHandler::handle(
+		rc, " when retrieving the affinity of the process"
+	);
 
-	// Get the number of NUMA nodes
-	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
-	_NUMANodeMask.resize(numNUMANodes);
+	// Get the number of NUMA nodes and a list of all available CPUs
+	nanos6_device_t hostDevice = nanos6_device_t::nanos6_host_device;
+	const size_t numNUMANodes = HardwareInfo::getMemoryPlaceCount(hostDevice);
+	HostInfo *hostInfo = ((HostInfo *) HardwareInfo::getDeviceInfo(hostDevice));
+	assert(hostInfo != nullptr);
 
-	// Get information about the available CPUs in the system
-	HostInfo *hostInfo = (HostInfo *) HardwareInfo::getDeviceInfo(nanos6_device_t::nanos6_host_device);
-	std::vector<ComputePlace *> const &systemCPUs = hostInfo->getComputePlaces();
-	size_t numCPUs = systemCPUs.size();
+	std::vector<ComputePlace *> const &cpus = hostInfo->getComputePlaces();
+	size_t numCPUs = cpus.size();
+	assert(numCPUs > 0);
+
+	// Create the chosen policy for this CPUManager
+	std::string policyValue = _policyChosen.getValue();
+	if (policyValue == "default" || policyValue == "lewi") {
+		_cpuManagerPolicy = new LeWIPolicy(numCPUs);
+	} else {
+		FatalErrorHandler::failIf(
+			true, "Unexistent '", policyValue, "' CPU Manager Policy"
+		);
+	}
+	assert(_cpuManagerPolicy != nullptr);
 
 
 	//    TASKFOR GROUPS    //
 
-	// Whether the taskfor group envvar already has a value
-	bool taskforGroupsSetByUser = _taskforGroups.isPresent();
-
-	// FIXME-TODO: Find in the future an appropriate mechanism to control
-	// taskfor groups for external CPUs
-	size_t defaultTaskforGroups = _taskforGroups;
+	// FIXME-TODO: Find an appropriate mechanism to set the env var
 	_taskforGroups.setValue(1);
-	if (taskforGroupsSetByUser && defaultTaskforGroups != 1) {
-		FatalErrorHandler::warnIf(
-			true,
-			"DLB enabled, using 1 group of ", numCPUs,
-			" CPUs instead of the set value"
-		);
-	}
 
 
 	//    CPU MANAGER STRUCTURES    //
 
-	// Initialize the vectors of CPUs and mappings
+	// Initialize the vector of CPUs
 	_cpus.resize(numCPUs);
-	for (size_t i = 0; i < numNUMANodes; ++i) {
-		_NUMANodeMask[i].resize(numCPUs);
-	}
 
-	// Set attributes for all CPUs
+	// Initialize each CPU's fields
 	for (size_t i = 0; i < numCPUs; ++i) {
 		// Place the CPU in the vectors
-		CPU *cpu = (CPU *) systemCPUs[i];
+		CPU *cpu = (CPU *) cpus[i];
 		assert(cpu != nullptr);
 
 		_cpus[i] = cpu;
-		_NUMANodeMask[cpu->getNumaNodeId()][i] = true;
 
 		// Set the virtual id (identical to system id)
 		cpu->setIndex(i);
@@ -83,14 +86,14 @@ void DLBCPUManagerImplementation::preinitialize()
 		}
 	}
 
-	// Set all CPUs as not idle. This is used in the shutdown process
-	_idleCPUs.resize(numCPUs);
-	_idleCPUs.reset();
-
 	CPUManagerInterface::reportInformation(numCPUs, numNUMANodes);
 	if (_taskforGroupsReportEnabled) {
-		reportTaskforGroupsInfo(getNumTaskforGroups(), getNumCPUsPerTaskforGroup());
+		CPUManagerInterface::reportTaskforGroupsInfo();
 	}
+
+	// All CPUs are unavailable for the shutdown process at the start
+	_shutdownCPUs.resize(numCPUs);
+	_shutdownCPUs.reset();
 
 
 	//    DLB RELATED    //
@@ -98,8 +101,7 @@ void DLBCPUManagerImplementation::preinitialize()
 	// NOTE: We use the sync (or polling) version of the library. This means
 	// that when a call to DLB returns, all the required actions have been
 	// taken (i.e. all the callbacks have been triggered before returning)
-	assert(_cpus.size() > 0);
-	int ret = DLB_Init(_cpus.size(), &_cpuMask, _dlbOptions);
+	int ret = DLB_Init(numCPUs, &_cpuMask, "--lewi --quiet=yes");
 	if (ret == DLB_ERR_PERM) {
 		FatalErrorHandler::failIf(
 			true,
@@ -140,16 +142,13 @@ void DLBCPUManagerImplementation::initialize()
 
 		// If this CPU is owned by this process, initialize it if needed
 		if (cpu->isOwned()) {
-			// This should always work
-			bool worked = cpu->initializeIfNeeded();
+			__attribute__((unused)) bool worked = cpu->initializeIfNeeded();
 			assert(worked);
 
-			if (worked) {
-				WorkerThread *initialThread = ThreadManager::createWorkerThread(cpu);
-				assert(initialThread != nullptr);
+			WorkerThread *initialThread = ThreadManager::createWorkerThread(cpu);
+			assert(initialThread != nullptr);
 
-				initialThread->resume(cpu, true);
-			}
+			initialThread->resume(cpu, true);
 		}
 	}
 
@@ -194,43 +193,10 @@ void DLBCPUManagerImplementation::shutdownPhase2()
 	// ret != DLB_SUCCESS means it was not initialized (should never occur)
 	__attribute__((unused)) int ret = DLB_Finalize();
 	assert(ret == DLB_SUCCESS);
-}
 
-void DLBCPUManagerImplementation::executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)
-{
-	// NOTE This policy works as follows:
-	// - First, if the CPU is an acquired one, check if we must return it
-	// - Then if the hint is IDLE_CANDIDATE we try to lend the CPU if
-	//   possible
-	// - If the hint is ADDED_TASKS, we try to reclaim as many lent CPUs
-	//   as tasks were added or acquire new ones
-	// - If the hint is HANDLE_TASKFOR, we try to reclaim all CPUs that can
-	//   collaborate in the taskfor
-	CPU *currentCPU = (CPU *) cpu;
-	if (hint == IDLE_CANDIDATE) {
-		assert(currentCPU != nullptr);
+	delete _cpuManagerPolicy;
 
-		// If we own the CPU lend it; otherwise, check if we must return it
-		if (currentCPU->isOwned()) {
-			DLBCPUActivation::lendCPU(currentCPU);
-		} else {
-			DLBCPUActivation::checkIfMustReturnCPU(currentCPU);
-		}
-	} else if (hint == ADDED_TASKS) {
-		assert(numTasks > 0);
-
-		// Try to obtain as many CPUs as tasks were added
-		size_t numToObtain = std::min(_cpus.size(), numTasks);
-		DLBCPUActivation::acquireCPUs(numToObtain);
-	} else { // hint = HANDLE_TASKFOR
-		assert(currentCPU != nullptr);
-
-		// Try to reclaim any lent collaborator of the taskfor
-		cpu_set_t collaboratorMask = getCollaboratorMask(currentCPU);
-		if (CPU_COUNT(&collaboratorMask) > 0) {
-			DLBCPUActivation::acquireCPUs(collaboratorMask);
-		}
-	}
+	_cpuManagerPolicy = nullptr;
 }
 
 
@@ -255,45 +221,3 @@ bool DLBCPUManagerImplementation::disable(size_t systemCPUId)
 {
 	return DLBCPUActivation::disable(systemCPUId);
 }
-
-
-/*    IDLE CPUS    */
-
-// NOTE: The following functions should only be used when the runtime is
-// shutting down, to allow all threads to shutdown
-
-bool DLBCPUManagerImplementation::cpuBecomesIdle(CPU *cpu, bool inShutdown)
-{
-	if (inShutdown) {
-		assert(cpu != nullptr);
-
-		const int index = cpu->getIndex();
-		_idleCPUsLock.lock();
-
-		// The CPU should not be marked as idle
-		assert(!_idleCPUs[index]);
-
-		_idleCPUs[index] = true;
-		_idleCPUsLock.unlock();
-	}
-
-	return inShutdown;
-}
-
-CPU *DLBCPUManagerImplementation::getIdleCPU(bool inShutdown)
-{
-	if (inShutdown) {
-		_idleCPUsLock.lock();
-		boost::dynamic_bitset<>::size_type idleCPU = _idleCPUs.find_first();
-		if (idleCPU != boost::dynamic_bitset<>::npos) {
-			_idleCPUs[idleCPU] = false;
-			_idleCPUsLock.unlock();
-
-			return _cpus[idleCPU];
-		}
-		_idleCPUsLock.unlock();
-	}
-
-	return nullptr;
-}
-

@@ -48,9 +48,9 @@ void ThreadManager::shutdownPhase1()
 		// in the shutdown process
 		idleThread = getAnyIdleThread();
 		while (idleThread != nullptr) {
-			CPU *idleCPU = CPUManager::getIdleCPU(true);
-			if (idleCPU != nullptr) {
-				idleThread->resume(idleCPU, true);
+			CPU *cpu = CPUManager::getShutdownCPU();
+			if (cpu != nullptr) {
+				idleThread->resume(cpu, true);
 			} else {
 				// No CPUs available, readd the thread as idle and break
 				addIdler(idleThread);
@@ -107,7 +107,6 @@ void ThreadManager::addShutdownThread(WorkerThread *shutdownThread)
 	_shutdownThreads->_lock.unlock();
 
 	// Mark that the CPU is available for anyone else who might need it
-	__attribute__((unused)) bool idle = CPUManager::cpuBecomesIdle(cpu, true);
-	assert(idle);
+	CPUManager::addShutdownCPU(cpu);
 }
 

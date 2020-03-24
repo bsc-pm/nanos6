@@ -20,19 +20,104 @@ class DLBCPUManagerImplementation : public CPUManagerInterface {
 
 private:
 
-	//! Default options (same as DLB_ARGS envvar)
-	char _dlbOptions[64];
+	//! CPUs available to be used for shutdown purposes
+	static boost::dynamic_bitset<> _shutdownCPUs;
+
+	//! Spinlock to access shutdown CPUs
+	static SpinLock _shutdownCPUsLock;
+
+public:
+
+	/*    CPUMANAGER    */
+
+	void preinitialize();
+
+	void initialize();
+
+	void shutdownPhase1();
+
+	void shutdownPhase2();
+
+	inline void executeCPUManagerPolicy(
+		ComputePlace *cpu,
+		CPUManagerPolicyHint hint,
+		size_t numTasks = 0
+	) {
+		assert(_cpuManagerPolicy != nullptr);
+
+		_cpuManagerPolicy->execute(cpu, hint, numTasks);
+	}
+
+	inline CPU *getCPU(size_t systemCPUId) const
+	{
+		return _cpus[systemCPUId];
+	}
+
+	inline CPU *getUnusedCPU()
+	{
+		// In the DLB implementation, underlying policies control CPUs,
+		// obtaining unused CPUs should not be needed
+		return nullptr;
+	}
+
+	inline void forcefullyResumeCPU(size_t)
+	{
+		// TODO: Acquire the CPU if it is lent
+		// NOTE: Upcoming fix for extrae
+	}
 
 
-private:
+	/*    CPUACTIVATION BRIDGE    */
+
+	CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread);
+
+	bool acceptsWork(CPU *cpu);
+
+	bool enable(size_t systemCPUId);
+
+	bool disable(size_t systemCPUId);
+
+
+	/*    SHUTDOWN CPUS    */
+
+	//! \brief Get an unused CPU to participate in the shutdown process
+	//!
+	//! \return A CPU or nullptr
+	inline CPU *getShutdownCPU()
+	{
+		std::lock_guard<SpinLock> guard(_shutdownCPUsLock);
+
+		boost::dynamic_bitset<>::size_type id = _shutdownCPUs.find_first();
+		if (id != boost::dynamic_bitset<>::npos) {
+			_shutdownCPUs[id] = false;
+			return _cpus[id];
+		} else {
+			return nullptr;
+		}
+	}
+
+	//! \brief Mark that a CPU is able to participate in the shutdown process
+	//!
+	//! \param[in] cpu The CPU object to offer
+	inline void addShutdownCPU(CPU *cpu)
+	{
+		const int index = cpu->getIndex();
+
+		_shutdownCPUsLock.lock();
+		_shutdownCPUs[index] = true;
+		_shutdownCPUsLock.unlock();
+	}
+
+
+	/*    DLB MECHANISM    */
 
 	//! \brief Get a CPU set of all possible collaborators that can collaborate
 	//! with a taskfor owned by a certain CPU
 	//!
-	//! \param[in] cpu The CPU that owns the taskfor
+	//! \param[in,out] cpu The CPU that owns the taskfor
 	//!
 	//! \return A CPU set signaling which are its collaborators
-	inline cpu_set_t getCollaboratorMask(CPU *cpu)
+	static inline cpu_set_t getCollaboratorMask(CPU *cpu)
 	{
 		assert(cpu != nullptr);
 
@@ -53,76 +138,6 @@ private:
 		}
 
 		return resultMask;
-	}
-
-
-//! NOTE: Documentation for methods available in CPUManagerInterface.hpp
-public:
-
-	inline DLBCPUManagerImplementation()
-	{
-		// Lend When Idle API mode
-		strcpy(_dlbOptions, "--lewi --quiet=yes");
-	}
-
-	void preinitialize();
-
-	void initialize();
-
-	void shutdownPhase1();
-
-	void shutdownPhase2();
-
-	void executeCPUManagerPolicy(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks = 0);
-
-	inline CPU *getCPU(size_t systemCPUId) const
-	{
-		return _cpus[systemCPUId];
-	}
-
-
-	/*    CPUACTIVATION BRIDGE    */
-
-	CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread);
-
-	bool acceptsWork(CPU *cpu);
-
-	bool enable(size_t systemCPUId);
-
-	bool disable(size_t systemCPUId);
-
-
-	/*    IDLE CPUS    */
-
-	// NOTE: By default, in this implementation we cancel the idle-CPU
-	// mechanism by overriding it. If a CPU is idle we simply lend it using DLB
-
-	bool cpuBecomesIdle(CPU *cpu, bool inShutdown = false);
-
-	CPU *getIdleCPU(bool inShutdown = false);
-
-	inline size_t getIdleCPUs(std::vector<CPU *> &, size_t)
-	{
-		return 0;
-	}
-
-	inline CPU *getIdleNUMANodeCPU(size_t)
-	{
-		return nullptr;
-	}
-
-	inline bool unidleCPU(CPU *)
-	{
-		return false;
-	}
-
-	inline void getIdleCollaborators(std::vector<CPU *> &, ComputePlace *)
-	{
-	}
-
-	inline size_t getNumCPUsPerTaskforGroup() const
-	{
-		return HardwareInfo::getComputePlaceCount(nanos6_host_device) / _taskforGroups;
 	}
 
 };
