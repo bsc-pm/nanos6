@@ -10,6 +10,7 @@
 
 #include <alloca.h>
 #include <atomic>
+#include <cassert>
 #include <cstring>
 #include <pthread.h>
 
@@ -77,12 +78,10 @@ void WorkerThread::body()
 		assert(cpu != nullptr);
 		instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 
-		if (_task == nullptr) {
-			_task = Scheduler::getReadyTask(cpu);
-		} else {
-			// The thread has been preassigned a task before being resumed
-		}
+		// There should not be any pre-assigned task
+		assert(_task == nullptr);
 
+		_task = Scheduler::getReadyTask(cpu);
 		if (_task != nullptr) {
 			mustHandleServices = true;
 			WorkerThread *assignedThread = _task->getThread();
@@ -140,17 +139,18 @@ void WorkerThread::body()
 void WorkerThread::handleTask(CPU *cpu)
 {
 	size_t NUMAId = cpu->getNumaNodeId();
-	//MemoryPlace *targetPlace = cpu->getMemoryPlace(NUMAId);
 	MemoryPlace *targetMemoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
 	assert(targetMemoryPlace != nullptr);
 
 	if (_task->isTaskfor()) {
 		assert(!_task->isRunnable());
+
 		// We have already set the chunk of the preallocatedTaskfor in the scheduler.
 		if (cpu->getPreallocatedTaskfor()->getMyChunk() >= 0) {
 			Taskfor *collaborator = LoopGenerator::createCollaborator((Taskfor *)_task, cpu);
 			assert(collaborator->isRunnable());
 			assert(collaborator->getMyChunk() >= 0);
+
 			_task = collaborator;
 			ExecutionWorkflow::executeTask(_task, cpu, targetMemoryPlace);
 		} else {

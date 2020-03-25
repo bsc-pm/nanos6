@@ -393,7 +393,6 @@ common_sources = \
 	src/system/ompss/Loop.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
-	src/system/ompss/TaskBlocking.cpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
