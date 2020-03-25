@@ -102,13 +102,13 @@ void nanos6_register_region_reduction_depinfo1(
 }
 
 void nanos6_register_region_weak_reduction_depinfo1(
-	__attribute__((unused)) int reduction_operation,
-	__attribute__((unused)) int reduction_index,
-	__attribute__((unused)) void *handler,
-	__attribute__((unused)) int symbol_index,
+	int reduction_operation,
+	int reduction_index,
+	void *handler,
+	int symbol_index,
 	__attribute__((unused)) char const *region_text,
-	__attribute__((unused)) void *base_address,
-	__attribute__((unused)) long dim1size,
+	void *base_address,
+	long dim1size,
 	__attribute__((unused)) long dim1start,
 	__attribute__((unused)) long dim1end)
 {

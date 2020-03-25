@@ -7,53 +7,64 @@
 #ifndef COMMUTATIVE_SEMAPHORE_HPP
 #define COMMUTATIVE_SEMAPHORE_HPP
 
-#include <cstdint>
-#include <list>
 #include <bitset>
+#include <cstdint>
+#include <deque>
 
 #include "lowlevel/PaddedTicketSpinLock.hpp"
-
-#include <config.h>
 
 class Task;
 struct CPUDependencyData;
 
-constexpr int commutative_mask_bits = CACHELINE_SIZE * 8;
+class CommutativeSemaphore {
+	static constexpr int commutative_mask_bits = CACHELINE_SIZE * 8;
 
-struct CommutativeSemaphore {
+public:
 	typedef std::bitset<commutative_mask_bits> commutative_mask_t;
-	typedef PaddedTicketSpinLock<> lock_t;
-	typedef std::list<Task *> queue_t;
-
-	static lock_t _lock;
-	static commutative_mask_t _mask;
-	static queue_t _queue;
 
 	static bool registerTask(Task *task);
 	static void releaseTask(Task *task, CPUDependencyData &hpDependencyData);
 
-	static inline commutative_mask_t getMaskForAddress(void *address)
+	static inline void combineMaskAndAddress(commutative_mask_t &mask, void *address)
 	{
-		commutative_mask_t mask = 1;
-		return (mask << addressHash(address));
+		mask.set(addressHash(address) % commutative_mask_bits);
+	}
+	
+private:
+	typedef PaddedTicketSpinLock<> lock_t;
+	typedef std::deque<Task *> waiting_tasks_t;
+
+	static lock_t _lock;
+	static commutative_mask_t _mask;
+	static waiting_tasks_t _waitingTasks;
+
+	static inline bool maskIsCompatible(const commutative_mask_t candidate)
+	{
+		return ((_mask & candidate) == 0);
 	}
 
-private:
-	static inline int addressHash(void *address)
+	static inline void maskRegister(const commutative_mask_t mask)
 	{
-		unsigned long long hash = 5381;
-		unsigned long long uintAddress = (unsigned long long)address;
+		_mask |= mask;
+	}
 
-		hash = ((hash << 5) + hash) + ((char)uintAddress & 0xFF);
-		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 8) & 0xFF);
-		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 16) & 0xFF);
-		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 24) & 0xFF);
-		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 32) & 0xFF);
-		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 40) & 0xFF);
-		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 48) & 0xFF);
-		hash = ((hash << 5) + hash) + ((char)(uintAddress >> 56) & 0xFF);
+	static inline void maskRelease(const commutative_mask_t mask)
+	{
+		_mask &= ~mask;
+	}
 
-		return (hash % commutative_mask_bits);
+	//! Single-qword round of MurmurHash3
+	static inline unsigned long long addressHash(void *address)
+	{
+		unsigned long long k = (unsigned long long)address;
+
+		k ^= k >> 33;
+		k *= 0xff51afd7ed558ccdLLU;
+		k ^= k >> 33;
+		k *= 0xc4ceb9fe1a85ec53LLU;
+		k ^= k >> 33;
+
+		return k;
 	}
 };
 

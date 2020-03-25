@@ -486,13 +486,13 @@ namespace DataAccessRegistration {
 
 			if (accessType == COMMUTATIVE_ACCESS_TYPE && !weak) {
 				// Calculate commutative mask
-				accessStruct._commutativeMask |= CommutativeSemaphore::getMaskForAddress(address);
+				CommutativeSemaphore::combineMaskAndAddress(accessStruct._commutativeMask, address);
 			}
 
-			bool schedule = false;
 			bool dispose = false;
+			bool schedule = false;
 			DataAccessMessage fromCurrent;
-			DataAccess *parentAccess;
+			DataAccess *parentAccess = nullptr;
 
 			if (predecessor == nullptr) {
 				parentAccess = parentAccessStruct.findAccess(address);

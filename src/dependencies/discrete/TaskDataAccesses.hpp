@@ -15,8 +15,8 @@
 
 #include "BottomMapEntry.hpp"
 #include "CommutativeSemaphore.hpp"
-#include "lowlevel/TicketSpinLock.hpp"
 #include "TaskDataAccessesInfo.hpp"
+#include "lowlevel/TicketSpinLock.hpp"
 
 #include <DependencySystem.hpp>
 #include <MemoryAllocator.hpp>

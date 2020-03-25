@@ -113,15 +113,15 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 
 void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool fromBusyThread)
 {
-	bool readyOrDisposable = true;
+	bool disposable = true;
 
 	// Follow up the chain of ancestors and dispose them as needed and wake up any in a taskwait that finishes in this moment
-	while ((task != nullptr) && readyOrDisposable) {
+	while ((task != nullptr) && disposable) {
 		Task *parent = task->getParent();
 
 		assert(task->hasFinished());
 
-		readyOrDisposable = task->unlinkFromParent();
+		disposable = task->unlinkFromParent();
 		bool isTaskfor = task->isTaskfor();
 		bool isTaskloop = task->isTaskloop();
 		bool isSpawned = task->isSpawned();
