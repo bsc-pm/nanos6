@@ -342,13 +342,21 @@ public:
 		Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
 		// Change the status to returned and return it
-		CPU::activation_status_t expectedStatus = cpu->getActivationStatus();
+		CPU::activation_status_t expectedStatus = CPU::acquired_enabled_status;
 		bool successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::returned_status);
-		assert(successful);
+		if (successful) {
+			// Since we do not want to keep the CPU, we use lend instead of return
+			__attribute__((unused)) int ret = dlbLendCPU(cpu->getSystemCPUId());
+			assert(ret == DLB_SUCCESS);
 
-		// Since we do not want to keep the CPU, we use lend instead of return
-		__attribute__((unused)) int ret = dlbLendCPU(cpu->getSystemCPUId());
-		assert(ret == DLB_SUCCESS);
+			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+			assert(currentThread != nullptr);
+
+			ThreadManager::addIdler(currentThread);
+			currentThread->switchTo(nullptr);
+		} else {
+			assert(cpu->getActivationStatus() == CPU::shutdown_status);
+		}
 	}
 
 	//! \brief DLB-specific callback called when a CPU is returned to us
