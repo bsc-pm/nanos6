@@ -8,7 +8,6 @@
 #include <config.h>
 #endif
 
-#include <atomic>
 #include <alloca.h>
 #include <atomic>
 #include <cstring>
