@@ -330,6 +330,27 @@ public:
 		return (ret == DLB_SUCCESS);
 	}
 
+	//! \brief Return an external CPU
+	//!
+	//! \param[in,out] cpu The CPU to return
+	static inline void returnCPU(CPU *cpu)
+	{
+		assert(cpu != nullptr);
+		assert(!cpu->isOwned());
+
+		Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+		Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+
+		// Change the status to returned and return it
+		CPU::activation_status_t expectedStatus = cpu->getActivationStatus();
+		bool successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::returned_status);
+		assert(successful);
+
+		// Since we do not want to keep the CPU, we use lend instead of return
+		__attribute__((unused)) int ret = dlbLendCPU(cpu->getSystemCPUId());
+		assert(ret == DLB_SUCCESS);
+	}
+
 	//! \brief DLB-specific callback called when a CPU is returned to us
 	//!
 	//! \param[in] systemCPUId The id of the CPU that can be used once again

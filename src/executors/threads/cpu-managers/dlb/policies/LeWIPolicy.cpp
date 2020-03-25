@@ -21,11 +21,10 @@ void LeWIPolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t nu
 	if (hint == IDLE_CANDIDATE) {
 		assert(currentCPU != nullptr);
 
-		// If we own the CPU lend it; otherwise, check if we must return it
 		if (currentCPU->isOwned()) {
 			DLBCPUActivation::lendCPU(currentCPU);
 		} else {
-			DLBCPUActivation::checkIfMustReturnCPU(currentCPU);
+			DLBCPUActivation::returnCPU(currentCPU);
 		}
 	} else if (hint == ADDED_TASKS) {
 		assert(numTasks > 0);
