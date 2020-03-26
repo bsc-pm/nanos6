@@ -57,17 +57,20 @@ private:
 	//! \brief Reclaim a previously lent CPU
 	//!
 	//! \param[in] systemCPUId The id of the CPU to be reclaimed
+	//! \param[in] ignoreError Whether to disregard an error in the operation
 	//!
 	//! \return The DLB error code returned by the call
-	static inline int dlbReclaimCPU(size_t systemCPUId)
+	static inline int dlbReclaimCPU(size_t systemCPUId, bool ignoreError = false)
 	{
 		int ret = DLB_ReclaimCpu(systemCPUId);
-		if (ret != DLB_NOUPDT && ret != DLB_NOTED && ret != DLB_SUCCESS) {
-			FatalErrorHandler::failIf(
-				true,
-				"DLB Error ", ret, " when trying to reclaim a CPU(",
-				systemCPUId, ")"
-			);
+		if (!ignoreError) {
+			if (ret != DLB_NOUPDT && ret != DLB_NOTED && ret != DLB_SUCCESS) {
+				FatalErrorHandler::failIf(
+					true,
+					"DLB Error ", ret, " when trying to reclaim a CPU(",
+					systemCPUId, ")"
+				);
+			}
 		}
 
 		return ret;
@@ -306,6 +309,45 @@ public:
 					assert(cpu->getActivationStatus() == CPU::shutdown_status);
 					return;
 				}
+			}
+		}
+	}
+
+	//! \brief Try to reclaim a CPU
+	//!
+	//! \param[in] systemCPUId The CPU's id
+	static inline void reclaimCPU(size_t systemCPUId)
+	{
+		CPU *cpu = CPUManager::getCPU(systemCPUId);
+		assert(cpu != nullptr);
+		assert(cpu->isOwned());
+
+		bool successful = false;
+		while (!successful) {
+			CPU::activation_status_t currentStatus = cpu->getActivationStatus();
+			switch (currentStatus) {
+				case CPU::lent_status:
+					// Try to reclaim a CPU disregarding an error. We disregard any error
+					// since the CPU may be reclaimed by the time we issue the request
+					dlbReclaimCPU(systemCPUId, true);
+					return;
+				case CPU::disabled_status:
+				case CPU::disabling_status:
+				case CPU::uninitialized_status:
+				case CPU::acquired_status:
+				case CPU::acquired_enabled_status:
+				case CPU::returned_status:
+					assert(false);
+					return;
+				case CPU::lending_status:
+					// In this case we iterate until the lending is complete
+					break;
+				case CPU::enabled_status:
+				case CPU::enabling_status:
+				case CPU::shutdown_status:
+				case CPU::shutting_down_status:
+					// The CPU should already be ours, abort the reclaim
+					return;
 			}
 		}
 	}

@@ -199,6 +199,26 @@ void DLBCPUManagerImplementation::shutdownPhase2()
 	_cpuManagerPolicy = nullptr;
 }
 
+void DLBCPUManagerImplementation::forcefullyResumeCPU(size_t)
+{
+	// NOTE: We ignore the parameter as this is a workaround for EXTRAE.
+	// We simply try to reclaim the first CPU in our mask, which will
+	// execute the main task
+
+	size_t firstCPU = 0;
+	for (size_t id = 0; id < _cpus.size(); ++id) {
+		if (_cpus[id]->isOwned()) {
+			firstCPU = id;
+			break;
+		}
+	}
+
+	assert(_cpus[firstCPU]->isOwned());
+
+	// Try to reclaim the CPU (it only happens if it is lent)
+	DLBCPUActivation::reclaimCPU(firstCPU);
+}
+
 
 /*    CPUACTIVATION BRIDGE    */
 
