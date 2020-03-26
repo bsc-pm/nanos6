@@ -7,6 +7,7 @@
 #ifndef DLB_CPU_ACTIVATION_HPP
 #define DLB_CPU_ACTIVATION_HPP
 
+#include <atomic>
 #include <cassert>
 #include <ctime>
 #include <dlb.h>
@@ -29,6 +30,8 @@ private:
 	//! being used by another process
 	static timespec _delayCPUEnabling;
 
+	//! The current number of OWNED active CPUs
+	static std::atomic<size_t> _numActiveOwnedCPUs;
 
 private:
 
@@ -243,57 +246,67 @@ public:
 	{
 		assert(cpu != nullptr);
 
-		// NOTE: The CPU should only be lent when no work is available from the
-		// CPUManager's policy. Thus, we take for granted that the status of
-		// the CPU is 'enabled_status' (unless it is shutting down)
-		CPU::activation_status_t expectedStatus = CPU::enabled_status;
-		bool successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::lending_status);
-		if (successful) {
-			// NOTE: First we lend the CPU and then we check if work was added
-			// while lending it. This is to avoid the race condition between
-			// adding tasks and idling CPUs. In this case, if a task is added
-			// after we've lent the CPU, that action will try to acquire CPUs
-			// through DLB, and the CPU we've just lent should be re-acquired
-			dlbLendCPU(cpu->getSystemCPUId());
-			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
-			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-			if (Scheduler::hasAvailableWork((ComputePlace *) cpu)) {
-				// Work was just added, change to enabling, call dlbReclaimCPU
-				// to let DLB know that we want to use this CPU again and
-				// continue executing with the current thread.
-				// If we are the first to reclaim the CPU, the reclaim will set
-				// the CPU as ours within DLB and the thread will keep
-				// executing until checkCPUStatusTransitions.
-				// However, if another thread tries to acquire this CPU while
-				// we're reclaiming, that acquire call will trigger an enable
-				// callback, but as the status is lending, that callback will
-				// loop until the new status is enabling and then do nothing,
-				// thus it is safe to keep executing with the current thread
-				expectedStatus = CPU::lending_status;
-				successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::enabling_status);
-				assert(successful);
+		size_t currentActiveCPUs = _numActiveOwnedCPUs.load();
+		bool successful = false;
 
-				dlbReclaimCPU(cpu->getSystemCPUId());
-			} else {
-				WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-				assert(currentThread != nullptr);
+		// Always avoid lending the last owned CPU
+		while (!successful && currentActiveCPUs > 1) {
+			successful = _numActiveOwnedCPUs.compare_exchange_strong(currentActiveCPUs, currentActiveCPUs - 1);
+			if (successful) {
+				// NOTE: The CPU should only be lent when no work is available
+				// Thus, we take for granted that the status of the CPU is
+				// 'enabled_status' (unless it is shutting down)
+				CPU::activation_status_t expectedStatus = CPU::enabled_status;
+				bool successfulStatus = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::lending_status);
+				if (successfulStatus) {
+					// NOTE: Lend the CPU and check if work was added while
+					// lending it. This is to avoid a race condition between
+					// adding tasks and idling CPUs. If a task is added after
+					// we lend the CPU, try to acquire CPUs through DLB, and
+					// the CPU we've just lent should be re-acquired
+					dlbLendCPU(cpu->getSystemCPUId());
+					Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+					if (Scheduler::hasAvailableWork((ComputePlace *) cpu)) {
+						// Work was just added, change to enabling, call dlbReclaimCPU
+						// to let DLB know that we want to use this CPU again and
+						// continue executing with the current thread.
+						// If we are the first to reclaim the CPU, the reclaim will set
+						// the CPU as ours within DLB and the thread will keep
+						// executing until checkCPUStatusTransitions.
+						// However, if another thread tries to acquire this CPU while
+						// we're reclaiming, that acquire call will trigger an enable
+						// callback, but as the status is lending, that callback will
+						// loop until the new status is enabling and then do nothing,
+						// thus it is safe to keep executing with the current thread
+						expectedStatus = CPU::lending_status;
+						successfulStatus = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::enabling_status);
+						assert(successfulStatus);
 
-				// Change the status since the lending was successful
-				expectedStatus = CPU::lending_status;
-				successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::lent_status);
-				assert(successful);
+						dlbReclaimCPU(cpu->getSystemCPUId());
+					} else {
+						WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+						assert(currentThread != nullptr);
 
-				// This thread becomes idle
-				ThreadManager::addIdler(currentThread);
-				currentThread->switchTo(nullptr);
+						// Change the status since the lending was successful
+						expectedStatus = CPU::lending_status;
+						successfulStatus = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::lent_status);
+						assert(successfulStatus);
+
+						// This thread becomes idle
+						ThreadManager::addIdler(currentThread);
+						currentThread->switchTo(nullptr);
+					}
+
+					// NOTE: When a thread is resumed in the CPU we've just lent, the
+					// CPU may not be available yet. We check this through DLB in
+					// 'checkCPUStatusTransitions'
+				} else {
+					// The status change should always work, as noted previously
+					assert(cpu->getActivationStatus() == CPU::shutdown_status);
+					return;
+				}
 			}
-
-			// NOTE: When a thread is resumed in the CPU we've just lent, the
-			// CPU may not be available yet. We check this through DLB in
-			// 'checkCPUStatusTransitions'
-		} else {
-			// The status change should always work, as noted previously
-			assert(cpu->getActivationStatus() == CPU::shutdown_status);
 		}
 	}
 
@@ -579,6 +592,9 @@ public:
 					} else {
 						successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabled_status);
 						if (successful) {
+							// This owned CPU becomes active now
+							++_numActiveOwnedCPUs;
+
 							currentStatus = CPU::enabled_status;
 							Instrument::resumedComputePlace(cpu->getInstrumentationId());
 							Monitoring::cpuBecomesActive(cpu->getSystemCPUId());

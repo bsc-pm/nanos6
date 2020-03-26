@@ -10,8 +10,8 @@
 
 #include "DLBCPUActivation.hpp"
 #include "DLBCPUManagerImplementation.hpp"
+#include "policies/LeWIPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "executors/threads/cpu-managers/dlb/policies/LeWIPolicy.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
