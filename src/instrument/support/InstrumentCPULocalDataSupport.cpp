@@ -5,26 +5,40 @@
 */
 
 #include <cassert>
+
 #include <executors/threads/WorkerThread.hpp>
+#include <lowlevel/threads/ExternalThread.hpp>
+#include <lowlevel/threads/ExternalThreadGroup.hpp>
 #include "InstrumentCPULocalDataSupport.hpp"
 
-Instrument::CPULocalData &Instrument::getCPULocalData()
+Instrument::CPULocalData *Instrument::getCPULocalData()
 {
+	CPULocalData *cpuLocalData;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	CPU *CPU;
 
 	// TODO leader thread special case?
 	// TODO what about external threads?
-	//if (currentWorkerThread != nullptr) {
-	//	CPU = currentWorkerThread->getComputePlace();
-	//	//TODO what is currentCPU is null?
-	//} else {
-	//	// TODO no idea what to do here
-	//}
+	if (currentWorkerThread) {
+		CPU *CPU = currentWorkerThread->getComputePlace();
+		assert(CPU != nullptr);
+		cpuLocalData = &CPU->getInstrumentationData();
+	} else {
+		//ExternalThread *currentExternalThread = ExternalThread::getCurrentExternalThread();
+		//if (currentExternalThread == nullptr) {
+		//	//currentExternalThread = new ExternalThread("external");
+		//	//assert(currentThread != nullptr);
 
-	assert(correntWorkerThread != nullptr);
-	CPU = currentWorkerThread->getComputePlace();
-	assert(CPU != nullptr);
+		//	//currentExternalThread->initializeExternalThread();
 
-	return CPU->getInstrumentationData();
+		//	//// Register it in the group so that it will be deleted
+		//	//// when shutting down Nanos6
+		//	//ExternalThreadGroup::registerExternalThread(currentThread);
+		//}
+
+		// TODO use virtual CPU mechanism here
+		cpuLocalData = virtualCPULocalData;
+	}
+
+	assert(cpuLocalData != nullptr);
+	return cpuLocalData;
 }

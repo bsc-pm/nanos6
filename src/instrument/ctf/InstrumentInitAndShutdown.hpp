@@ -7,16 +7,16 @@
 #ifndef INSTRUMENT_CTF_INIT_AND_SHUTDOWN_HPP
 #define INSTRUMENT_CTF_INIT_AND_SHUTDOWN_HPP
 
-
-#include <executors/threads/CPUManager.hpp>
-#include "../api/InstrumentInitAndShutdown.hpp"
-#include "CTFAPI.hpp"
 #include <string.h>
 #include <errno.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#include <InstrumentCPULocalData.hpp>
+#include <executors/threads/CPUManager.hpp>
+#include "../api/InstrumentInitAndShutdown.hpp"
+#include "CTFAPI.hpp"
 
 
 namespace Instrument {
@@ -75,20 +75,34 @@ namespace Instrument {
 
 		for (i = 0; i < totalCPUs; i++) {
 			CPU *CPU = CPUManager::getCPU(i);
-
-			if (!CPU)
-				continue;
-
+			assert(CPU != nullptr);
 			cpuId = CPU->getSystemCPUId();
-			CTFStream &userStream = CPU->getInstrumentationData().userStream;
+			CPULocalData &cpuLocalData = CPU->getInstrumentationData();
 
-			userStream.initialize(defaultSize, cpuId);
+			//TODO init kernel stream
+
+			CTFStream *userStream = new CTFStream;
+			userStream->initialize(defaultSize, cpuId);
 			CTFAPI::addStreamHeader(userStream);
 			streamPath = userPath + "/channel_" + std::to_string(cpuId);
-			userStream.fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
-			if (userStream.fdOutput == -1)
+			userStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
+			if (userStream->fdOutput == -1)
 				FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
+
+			cpuLocalData.userStream = userStream;
 		}
+
+		// TODO use true virtual cpu mechanism here
+		cpuId = totalCPUs;
+		virtualCPULocalData = new CPULocalData();
+		ExclusiveCTFStream *exclusiveUserStream = new ExclusiveCTFStream;
+		exclusiveUserStream->initialize(defaultSize, cpuId);
+		CTFAPI::addStreamHeader(exclusiveUserStream);
+		streamPath = userPath + "/channel_" + std::to_string(cpuId);
+		exclusiveUserStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
+		if (exclusiveUserStream->fdOutput == -1)
+			FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
+		virtualCPULocalData->userStream = exclusiveUserStream;
 	}
 
 	void shutdown()
@@ -102,19 +116,28 @@ namespace Instrument {
 
 		for (i = 0; i < totalCPUs; i++) {
 			CPU *CPU = CPUManager::getCPU(i);
+			assert(CPU != nullptr);
 
-			if (!CPU)
-				continue;
+			CTFStream *userStream = CPU->getInstrumentationData().userStream;
+			userStream->flushData();
 
-			CTFStream &userStream = CPU->getInstrumentationData().userStream;
-			userStream.flushData();
+			if (userStream->lost)
+				std::cerr << "WARNING: CTF Instrument: " << userStream->lost << " events on core " << i << std::endl;
 
-			if (userStream.lost)
-				std::cerr << "WARNING: CTF Instrument: " << userStream.lost << " events on core " << i << std::endl;
-
-			userStream.shutdown();
-			close(userStream.fdOutput);
+			userStream->shutdown();
+			close(userStream->fdOutput);
+			delete userStream;
 		}
+
+		// TODO use true virtual cpu mechanism here
+		CTFStream *userStream = virtualCPULocalData->userStream;
+		userStream->flushData();
+		if (userStream->lost)
+			std::cerr << "WARNING: CTF Instrument: " << userStream->lost << " events on core " << i << std::endl;
+		userStream->shutdown();
+		close(userStream->fdOutput);
+		delete userStream;
+		delete virtualCPULocalData;
 	}
 }
 

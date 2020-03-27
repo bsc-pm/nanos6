@@ -10,7 +10,7 @@
 #include <InstrumentCPULocalData.hpp>
 
 namespace Instrument {
-	CPULocalData &getCPULocalData();
+	CPULocalData *getCPULocalData();
 }
 
 #endif //INSTRUMENT_CPU_LOCAL_DATA_SUPPORT_HPP

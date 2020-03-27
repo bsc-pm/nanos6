@@ -230,11 +230,30 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"};\n"
 	"\n"
 	"event {\n"
+	"	name = \"nanos6:task_label\";\n"
+	"	id = " xstr(TP_NANOS6_TASK_LABEL) ";\n"
+	"	stream_id = 0;\n"
+	"	fields := struct {\n"
+	"		integer { size =  8; align = 8; signed = 0; encoding = UTF8; base = 10; } _label["xstr(ARG_STRING_SIZE)"];\n"
+	"		integer { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
+	"	};\n"
+	"};\n"
+	"\n"
+	"event {\n"
+	"	name = \"nanos6:task_add\";\n"
+	"	id = " xstr(TP_NANOS6_TASK_ADD) ";\n"
+	"	stream_id = 0;\n"
+	"	fields := struct {\n"
+	"		integer { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
+	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
+	"	};\n"
+	"};\n"
+	"\n"
+	"event {\n"
 	"	name = \"nanos6:task_execute\";\n"
 	"	id = " xstr(TP_NANOS6_TASK_EXECUTE) ";\n"
 	"	stream_id = 0;\n"
 	"	fields := struct {\n"
-	"		integer { size = 64; align = 8; signed = 0; encoding = none; base = 16; } _addr;\n"
 	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	"	};\n"
 	"};\n"
@@ -317,10 +336,10 @@ void CTFAPI::writeKernelMetadata(std::string directory)
 	out.close();
 }
 
-void CTFAPI::addStreamHeader(Instrument::CTFStream &stream)
+void CTFAPI::addStreamHeader(Instrument::CTFStream *stream)
 {
 	// we don't need to mask the head because the buffer is at least 1 page
 	// long and at this point it's empty
-	mk_packet_header (stream.buffer, &stream.head);
-	mk_packet_context(stream.buffer, &stream.head, stream.cpuId);
+	mk_packet_header (stream->buffer, &stream->head);
+	mk_packet_context(stream->buffer, &stream->head, stream->cpuId);
 }

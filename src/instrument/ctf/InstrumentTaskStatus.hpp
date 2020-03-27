@@ -28,11 +28,7 @@ namespace Instrument {
 		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		CTFTaskInfo *ctfTaskInfo = taskId._ctfTaskInfo;
-		assert(CTFTaskInfo != nullptr);
-		nanos6_task_info_t *nanos6TaskInfo = ctfTaskInfo->_nanos6TaskInfo;
-		assert(nanos6TaskInfo != nullptr);
-		CTFAPI::tracepoint(TP_NANOS6_TASK_EXECUTE, reinterpret_cast<uint64_t>(nanos6TaskInfo->implementations[0].run), static_cast<uint32_t>(ctfTaskInfo->_taskId));
+		CTFAPI::tp_task_execute(static_cast<uint32_t>(taskId._taskId));
 	}
 	
 	inline void taskIsBlocked(
@@ -40,9 +36,7 @@ namespace Instrument {
 		__attribute__((unused)) task_blocking_reason_t reason,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		CTFTaskInfo *ctfTaskInfo = taskId._ctfTaskInfo;
-		assert(CTFTaskInfo != nullptr);
-		CTFAPI::tracepoint(TP_NANOS6_TASK_BLOCK, static_cast<uint32_t>(ctfTaskInfo->_taskId));
+		CTFAPI::tp_task_block(static_cast<uint32_t>(taskId._taskId));
 	}
 	
 	inline void taskIsZombie(

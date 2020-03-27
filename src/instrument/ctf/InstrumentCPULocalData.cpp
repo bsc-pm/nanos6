@@ -15,6 +15,7 @@
 #define PAGE_SHIFT (12)
 #define PAGE_SIZE (1 << PAGE_SHIFT)
 
+Instrument::CPULocalData *Instrument::virtualCPULocalData;
 
 
 void Instrument::CTFStream::initialize(size_t size, uint32_t cpuId)

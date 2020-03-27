@@ -26,9 +26,7 @@ namespace Instrument {
 
 	inline void endTask(task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
-		CTFTaskInfo *ctfTaskInfo = taskId._ctfTaskInfo;
-		assert(CTFTaskInfo != nullptr);
-		CTFAPI::tracepoint(TP_NANOS6_TASK_END, static_cast<uint32_t>(ctfTaskInfo->_taskId));
+		CTFAPI::tp_task_end(taskId._taskId);
 	}
 
 	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)

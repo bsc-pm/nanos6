@@ -9,10 +9,15 @@
 
 #include <string>
 #include <stdint.h>
+#include <string>
+#include <map>
+
+#include <lowlevel/SpinLock.hpp>
 
 namespace Instrument {
 	// TODO CPUlocalData or CPULocalData_t ?
-	struct CTFStream {
+	class CTFStream {
+	public:
 		char *buffer;
 		size_t bufferSize;
 		uint64_t head;
@@ -32,6 +37,8 @@ namespace Instrument {
 		void flushData();
 
 		CTFStream() : bufferSize(0) {}
+		void lock() {};
+		void unlock() {};
 
 	private:
 		void *mrb;
@@ -40,11 +47,28 @@ namespace Instrument {
 		void doWrite(int fd, const char *buf, size_t size);
 	};
 
+	class ExclusiveCTFStream : public CTFStream {
+		SpinLock spinlock;
+
+		void lock()
+		{
+			spinlock.lock();
+		}
+
+		void unlock()
+		{
+			spinlock.unlock();
+		}
+	};
+
 	struct CPULocalData {
 		CPULocalData() {}
-		CTFStream userStream;
-		CTFStream kernelStream;
+		CTFStream *userStream;
+		CTFStream *kernelStream;
+		//taskLabelMap_t localTaskLabelMap;
 	};
+
+	extern CPULocalData *virtualCPULocalData;
 
 }
 
