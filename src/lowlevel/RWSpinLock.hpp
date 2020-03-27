@@ -8,7 +8,6 @@
 #define RW_SPIN_LOCK_HPP
 
 
-
 #include <atomic>
 #include <cassert>
 
@@ -17,8 +16,8 @@ private:
 	std::atomic<int> _lock;
 
 public:
-	RWSpinLock()
-		: _lock(0)
+	RWSpinLock() :
+		_lock(0)
 	{
 	}
 
@@ -37,7 +36,7 @@ public:
 
 	inline void readUnlock()
 	{
-		int value = _lock.fetch_sub(1, std::memory_order_release);
+		__attribute__((unused)) int value = _lock.fetch_sub(1, std::memory_order_release);
 		assert(value > 0);
 	}
 
@@ -57,16 +56,13 @@ public:
 	inline void writeUnlock()
 	{
 #ifndef NDEBUG
-		__attribute__((unused)) bool successful;
 		int expected = -1;
-		successful = _lock.compare_exchange_strong(expected, 0,
-				std::memory_order_release);
+		bool successful = _lock.compare_exchange_strong(expected, 0, std::memory_order_release);
 		assert(successful);
 #else
 		_lock.store(0, std::memory_order_release);
 #endif
 	}
-
 };
 
 
