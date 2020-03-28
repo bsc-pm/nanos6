@@ -196,11 +196,14 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"};\n"
 	"\n"
 	"env {\n"
+	"	/* Trace Compass variables */\n"
 	"	domain = \"ust\";\n"
 	"	tracer_name = \"lttng-ust\";\n"
 	"	tracer_major = 2;\n"
 	"	tracer_minor = 11;\n"
 	"	tracer_patchlevel = 0;\n"
+	"	/* ctf2prv converter variables */\n"
+	"	ncpus = %"PRIu64";\n"
 	"};\n"
 	"\n"
 	"clock {\n"
@@ -208,7 +211,7 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"	description = \"Monotonic Clock\";\n"
 	"	freq = 1000000000; /* Frequency, in Hz */\n"
 	"	/* clock value offset from Epoch is: offset * (1/freq) */\n"
-	"	offset = 1578378831114078890;\n"
+	"	offset = %"PRIu64";\n"
 	"};\n"
 	"\n"
 	"typealias integer {\n"
@@ -277,6 +280,9 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"};\n"
 	"\n";
 
+uint64_t CTFAPI::core::absoluteStartTime;
+uint64_t CTFAPI::core::totalCPUs;
+
 static int mk_packet_header(char *buf, uint64_t *head)
 {
 	struct __attribute__((__packed__)) packet_header {
@@ -324,9 +330,13 @@ void CTFAPI::greetings(void)
 
 void CTFAPI::writeUserMetadata(std::string directory)
 {
-	std::ofstream out(directory + "/metadata");
-	out << std::string(userMetadata);
-	out.close();
+	std::string path = directory + "/metadata";
+	FILE *f = fopen(path.c_str(), "w");
+	if (f == NULL)
+		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: writting metadata file: ") + strerror(errno));
+	fprintf(f, userMetadata, core::totalCPUs, core::absoluteStartTime);
+	if (fclose(f))
+		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: closing metadata file: ") + strerror(errno));
 }
 
 void CTFAPI::writeKernelMetadata(std::string directory)

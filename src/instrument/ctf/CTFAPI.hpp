@@ -38,6 +38,9 @@ namespace CTFAPI {
 	namespace core {
 		#define ARG_STRING_SIZE 8
 
+		extern uint64_t absoluteStartTime;
+		extern uint64_t totalCPUs;
+
 		static int mk_event_header(char **buf, uint8_t id)
 		{
 			struct timespec tp;
@@ -47,11 +50,11 @@ namespace CTFAPI {
 
 			pk = (struct event_header *) *buf;
 
-			 //TODO use relative instead of absolute timestamp
 			if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
 				FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: clock_gettime syscall: ") + strerror(errno));
 			}
 			timestamp = tp.tv_sec * ns + tp.tv_nsec;
+			timestamp -= absoluteStartTime;
 
 			*pk = (struct event_header) {
 				.id = id,

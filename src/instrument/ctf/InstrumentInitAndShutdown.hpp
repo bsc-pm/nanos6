@@ -55,10 +55,17 @@ namespace Instrument {
 		uint64_t i;
 		uint64_t totalCPUs;
 		uint32_t cpuId;
-		size_t const defaultSize = 4096;
+		struct timespec tp;
+		const size_t defaultSize = 4096;
+		const uint64_t ns = 1000000000ULL;
 		std::string tracePath, userPath, kernelPath, streamPath;
 
 		CTFAPI::greetings();
+
+		if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
+			FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: initialize: clock_gettime syscall: ") + strerror(errno));
+		}
+		CTFAPI::core::absoluteStartTime = tp.tv_sec * ns + tp.tv_nsec;
 
 		// TODO add timestamp?
 		// TODO get folder name & path form env var?
@@ -68,10 +75,11 @@ namespace Instrument {
 		tracePath = "./trace-ctf-nanos6";
 		createTraceDirectories(tracePath, userPath, kernelPath);
 
+		totalCPUs = (uint64_t) CPUManager::getTotalCPUs();
+		CTFAPI::core::totalCPUs = totalCPUs;
+
 		CTFAPI::writeUserMetadata(userPath);
 		//CTFAPI::writeKernelMetadata(kernelPath);
-
-		totalCPUs = (uint64_t) CPUManager::getTotalCPUs();
 
 		for (i = 0; i < totalCPUs; i++) {
 			CPU *CPU = CPUManager::getCPU(i);
