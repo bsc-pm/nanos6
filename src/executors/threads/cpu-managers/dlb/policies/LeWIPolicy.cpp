@@ -37,8 +37,8 @@ void LeWIPolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t nu
 
 		// Try to reclaim any lent collaborator of the taskfor
 		cpu_set_t cpuMask = DLBCPUManager::getCollaboratorMask(currentCPU);
-		if (CPU_COUNT(&cpuMask) > 0) {
-			DLBCPUActivation::acquireCPUs(cpuMask);
-		}
+		assert(CPU_COUNT(&cpuMask) > 0);
+
+		DLBCPUActivation::acquireCPUs(cpuMask);
 	}
 }
