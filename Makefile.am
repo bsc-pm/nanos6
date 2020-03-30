@@ -689,6 +689,7 @@ if HAVE_DLB
 cpu_manager_sources  += \
 	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.cpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.cpp \
+	src/executors/threads/cpu-managers/dlb/policies/GreedyPolicy.cpp \
 	src/executors/threads/cpu-managers/dlb/policies/LeWIPolicy.cpp
 cpu_manager_LDFLAGS  += $(dlb_LIBS)
 cpu_manager_CPPFLAGS += $(dlb_CPPFLAGS) -DHAVE_DLB
@@ -786,6 +787,7 @@ noinst_HEADERS = \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.hpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.hpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.hpp \
+	src/executors/threads/cpu-managers/dlb/policies/GreedyPolicy.hpp \
 	src/executors/threads/cpu-managers/dlb/policies/LeWIPolicy.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \
 	src/executors/threads/kernel-level/WorkerThreadBase.hpp \

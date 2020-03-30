@@ -10,6 +10,7 @@
 
 #include "DLBCPUActivation.hpp"
 #include "DLBCPUManagerImplementation.hpp"
+#include "policies/GreedyPolicy.hpp"
 #include "policies/LeWIPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
@@ -45,6 +46,8 @@ void DLBCPUManagerImplementation::preinitialize()
 	std::string policyValue = _policyChosen.getValue();
 	if (policyValue == "default" || policyValue == "lewi") {
 		_cpuManagerPolicy = new LeWIPolicy(numCPUs);
+	} else if (policyValue == "greedy") {
+		_cpuManagerPolicy = new GreedyPolicy(numCPUs);
 	} else {
 		FatalErrorHandler::failIf(
 			true, "Unexistent '", policyValue, "' CPU Manager Policy"
