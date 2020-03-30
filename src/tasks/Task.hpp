@@ -378,6 +378,22 @@ public:
 		return (_countdownToBeWokenUp.fetch_add(1, std::memory_order_relaxed) == 0);
 	}
 
+	//! \brief Decrease the remaining count for unblocking the task
+	//!
+	//! \returns true if the change makes the task become ready
+	inline bool decreaseBlockingCount()
+	{
+		int countdown = (_countdownToBeWokenUp.fetch_sub(1, std::memory_order_relaxed) - 1);
+		assert(countdown >= 0);
+		return (countdown == 0);
+	}
+
+	//! \brief Increase the remaining count for unblocking the task
+	inline void increaseBlockingCount()
+	{
+		_countdownToBeWokenUp.fetch_add(1, std::memory_order_relaxed);
+	}
+
 	//! \brief Indicates whether it has finished
 	inline bool hasFinished()
 	{

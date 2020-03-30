@@ -828,9 +828,8 @@ namespace DataAccessRegistration {
 				accessStructures._liveTaskwaitFragmentCount--;
 
 				if (accessStructures._liveTaskwaitFragmentCount == 0) {
-					if (task->decreaseRemovalBlockingCount()) {
-						hpDependencyData._removableTasks.push_back(task);
-					}
+					if (task->decreaseBlockingCount())
+						hpDependencyData._satisfiedOriginators.push_back(task);
 				}
 			}
 
@@ -859,9 +858,8 @@ namespace DataAccessRegistration {
 			}
 
 			if (accessStructures._removalBlockers == 0) {
-				if (task->decreaseRemovalBlockingCount()) {
+				if (task->decreaseRemovalBlockingCount())
 					hpDependencyData._removableTasks.push_back(task);
-				}
 			}
 		}
 	}
@@ -2418,9 +2416,9 @@ namespace DataAccessRegistration {
 			return;
 		}
 
-		// The last taskwait fragment will decreate the removal blocking count.
+		// The last taskwait fragment will decrease the blocking count.
 		// This is necessary to force the task to wait until all taskwait fragments have finished.
-		task->increaseRemovalBlockingCount();
+		task->increaseBlockingCount();
 
 		// For each bottom map entry
 		assert(accessStructures._taskwaitFragments.empty());
