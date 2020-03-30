@@ -347,11 +347,6 @@ The Hardware Counters API is controlled further with the following environment v
 * `NANOS6_HARDWARE_COUNTERS_VERBOSE_FILE`: To specify an output file name to report hardware counter statistics.
 * `NANOS6_WISDOM_ENABLE`: To enable/disable the wisdom mechanism. Disabled by default.
 
-### Known Limitations
-
-Currently, Monitoring capabilities lack support for the `task for` construct.
-
-
 ## Cluster support
 
 In order to enable OmpSs-2@Cluster support, you need a working MPI installation in your environment that supports multithreading, i.e. `MPI_THREAD_MULTIPLE`.
