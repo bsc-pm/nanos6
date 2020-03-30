@@ -9,6 +9,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
+#include "system/LeaderThread.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
 #include <Monitoring.hpp>
@@ -132,6 +133,13 @@ void DefaultCPUManager::preinitialize()
 	_idleCPUs.resize(numAvailableCPUs);
 	_idleCPUs.reset();
 	_numIdleCPUs = 0;
+
+	// Initialize the virtual CPU for the LeaderThread, for Instrumentation
+	// purposes
+	CPU *leaderThreadCPU = new CPU(numCPUs);
+	assert(leaderThreadCPU != nullptr);
+
+	LeaderThread::setCPU(leaderThreadCPU);
 }
 
 void DefaultCPUManager::initialize()

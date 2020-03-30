@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef EXECUTORS_THREADS_CPU_HPP
@@ -84,6 +84,11 @@ public:
 	CPU operator=(CPU const &) = delete;
 
 	~CPU()
+	{
+	}
+
+	inline CPU(size_t virtualCPUId) :
+		CPUPlace(virtualCPUId)
 	{
 	}
 
