@@ -4,8 +4,8 @@
 	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef EXECUTORS_THREADS_CPU_HPP
-#define EXECUTORS_THREADS_CPU_HPP
+#ifndef CPU_HPP
+#define CPU_HPP
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -28,7 +28,9 @@
 class WorkerThread;
 
 class CPU: public CPUPlace {
+
 public:
+
 #ifdef __KNC__
 	// For some reason ICPC from composer_xe_2015.2.164 with KNC is unable to handle the activation_status_t as is correctly
 	typedef unsigned int activation_status_t;
@@ -55,42 +57,44 @@ public:
 #endif
 
 private:
+
 	std::atomic<activation_status_t> _activationStatus;
 
 	size_t _systemCPUId;
 	size_t _NUMANodeId;
 	size_t _groupId;
 
-	//! \brief the CPU mask so that we can later on migrate threads to this CPU
+	//! The CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;
 
-	//! \brief the pthread attr that is used for all the threads of this CPU
+	//! The pthread attr that is used for all the threads of this CPU
 	//!
 	//! Making changes in this attribute is *NOT* thread-safe. We assume that only
 	//! one thread is touching this at a time.
 	pthread_attr_t _pthreadAttr;
 
-	//! \brief Per-CPU data that is specific to the threading model
+	//! Per-CPU data that is specific to the threading model
 	CPUThreadingModelData _threadingModelData;
 
-	//! \brief Wehther this cpu is owned by the runtime
+	//! Whether this cpu is owned by the runtime
 	bool _isOwned;
 
 public:
+
 	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
-
-	// Not copyable
-	CPU(CPU const &) = delete;
-	CPU operator=(CPU const &) = delete;
-
-	~CPU()
-	{
-	}
 
 	inline CPU(size_t virtualCPUId) :
 		CPUPlace(virtualCPUId)
 	{
 	}
+
+	inline ~CPU()
+	{
+	}
+
+	// Not copyable
+	CPU(CPU const &) = delete;
+	CPU operator=(CPU const &) = delete;
 
 	inline bool initializeIfNeeded()
 	{
@@ -175,5 +179,5 @@ public:
 };
 
 
-#endif // EXECUTORS_THREADS_CPU_HPP
+#endif // CPU_HPP
 

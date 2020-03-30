@@ -134,8 +134,7 @@ void DefaultCPUManager::preinitialize()
 	_idleCPUs.reset();
 	_numIdleCPUs = 0;
 
-	// Initialize the virtual CPU for the LeaderThread, for Instrumentation
-	// purposes
+	// Initialize the virtual CPU for the LeaderThread
 	CPU *leaderThreadCPU = new CPU(numCPUs);
 	assert(leaderThreadCPU != nullptr);
 

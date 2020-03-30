@@ -125,8 +125,7 @@ void DLBCPUManager::preinitialize()
 	_shutdownCPUs.resize(numCPUs);
 	_shutdownCPUs.reset();
 
-	// Initialize the virtual CPU for the LeaderThread, for Instrumentation
-	// purposes
+	// Initialize the virtual CPU for the LeaderThread
 	CPU *leaderThreadCPU = new CPU(numCPUs);
 	assert(leaderThreadCPU != nullptr);
 
