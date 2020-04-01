@@ -361,7 +361,7 @@ namespace DataAccessRegistration {
 			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 			if (reductionInfo != nullptr) {
 				// We cannot close this in case we had a weak reduction
-				DataAccess *parentAccess = accessStruct.findAccess(const_cast<void *>(reductionInfo->getOriginalAddress()));
+				DataAccess *parentAccess = accessStruct.findAccess(itMap->first);
 
 				if (parentAccess == nullptr || parentAccess->getType() != REDUCTION_ACCESS_TYPE) {
 					assert(!reductionInfo->finished());
@@ -415,7 +415,7 @@ namespace DataAccessRegistration {
 			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 
 			if (reductionInfo != nullptr) {
-				DataAccess *parentAccess = accessStruct.findAccess(const_cast<void *>(reductionInfo->getOriginalAddress()));
+				DataAccess *parentAccess = accessStruct.findAccess(itMap->first);
 
 				if (parentAccess == nullptr || parentAccess->getType() != REDUCTION_ACCESS_TYPE) {
 					assert(!reductionInfo->finished());
