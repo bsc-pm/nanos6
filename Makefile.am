@@ -389,11 +389,13 @@ common_sources = \
 	src/system/MonitoringAPI.cpp \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
+	src/system/TaskInfoAPI.cpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Loop.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
+	src/system/ompss/TaskInfo.cpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
@@ -1131,6 +1133,7 @@ noinst_HEADERS = \
 	src/system/ompss/AddTask.hpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
+	src/system/ompss/TaskInfo.hpp \
 	src/system/ompss/UserMutex.hpp \
 	src/tasks/LoopGenerator.hpp \
 	src/tasks/StreamExecutor.hpp \
@@ -1140,6 +1143,7 @@ noinst_HEADERS = \
 	src/tasks/TaskImplementation.hpp \
 	src/tasks/Taskfor.hpp \
 	src/tasks/Taskloop.hpp \
+	src/tasks/TaskTypeData.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \
