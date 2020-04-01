@@ -13,6 +13,7 @@
 #include <mutex>
 
 #include "BottomMapEntry.hpp"
+#include "CommutativeSemaphore.hpp"
 #include "CPUDependencyData.hpp"
 #include "DataAccessRegistration.hpp"
 #include "executors/threads/TaskFinalization.hpp"
@@ -89,6 +90,22 @@ namespace DataAccessRegistration {
 		hpDependencyData._deletableOriginators.clear();
 	}
 
+	static inline void processCommutativeOriginators(CPUDependencyData &hpDependencyData)
+	{
+		CPUDependencyData::satisfied_originator_list_t::iterator it = hpDependencyData._satisfiedOriginators.begin();
+
+		while (it != hpDependencyData._satisfiedOriginators.end()) {
+			Task *task = *it;
+			TaskDataAccesses &accessStruct = task->getDataAccesses();
+
+			if (accessStruct._commutativeMask.any() && !CommutativeSemaphore::registerTask(task))
+				it = hpDependencyData._satisfiedOriginators.erase(it);
+			else
+				++it;
+		}
+	}
+
+
 	static inline DataAccessType combineTypes(DataAccessType type1, DataAccessType type2)
 	{
 		if (type1 == type2) {
@@ -100,10 +117,12 @@ namespace DataAccessRegistration {
 	static inline void upgradeAccess(DataAccess *access, DataAccessType newType, bool weak)
 	{
 		DataAccessType oldType = access->getType();
-		// Duping reductions is incorrect
+		// Let's not allow combining reductions with other types as it causes problems.
 		assert(oldType != REDUCTION_ACCESS_TYPE && newType != REDUCTION_ACCESS_TYPE);
 
 		access->setType(combineTypes(oldType, newType));
+
+		// ! weak + weak = !weak :)
 		if (access->isWeak() && !weak)
 			access->setWeak(false);
 	}
@@ -208,7 +227,7 @@ namespace DataAccessRegistration {
 		access_flags_t flagsToSet = ACCESS_UNREGISTERED;
 
 		if (childAccess == nullptr) {
-			flagsToSet |= (ACCESS_CHILD_WRITE_DONE | ACCESS_CHILD_READ_DONE);
+			flagsToSet |= (ACCESS_CHILD_WRITE_DONE | ACCESS_CHILD_READ_DONE | ACCESS_CHILD_CONCURRENT_DONE | ACCESS_CHILD_COMMUTATIVE_DONE);
 		} else {
 			// Place ourselves as successors of the last access.
 			DataAccess *lastChild = nullptr;
@@ -285,6 +304,8 @@ namespace DataAccessRegistration {
 			task->increaseRemovalBlockingCount();
 		}
 
+		// From those satisfied originators, some might need to be processed through the commutative region.
+		processCommutativeOriginators(hpDependencyData);
 		processSatisfiedOriginators(hpDependencyData, computePlace, true);
 
 #ifndef NDEBUG
@@ -294,7 +315,13 @@ namespace DataAccessRegistration {
 		}
 #endif
 
-		return task->decreasePredecessors(2);
+		bool ready = task->decreasePredecessors(2);
+
+		// Commutative accesses have to acquire the commutative region
+		if (ready && accessStructures._commutativeMask.any())
+			ready = CommutativeSemaphore::registerTask(task);
+
+		return ready;
 	}
 
 	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData,
@@ -333,13 +360,27 @@ namespace DataAccessRegistration {
 
 			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 			if (reductionInfo != nullptr) {
-				assert(!reductionInfo->finished());
-				if (reductionInfo->markAsClosed())
-					releaseReductionInfo(reductionInfo);
+				// We cannot close this in case we had a weak reduction
+				DataAccess *parentAccess = accessStruct.findAccess(itMap->first);
 
-				itMap->second._reductionInfo = nullptr;
+				if (parentAccess == nullptr || parentAccess->getType() != REDUCTION_ACCESS_TYPE) {
+					assert(!reductionInfo->finished());
+					if (reductionInfo->markAsClosed())
+						releaseReductionInfo(reductionInfo);
+
+					itMap->second._reductionInfo = nullptr;
+				} else {
+					assert(parentAccess->isWeak());
+				}
 			}
 		}
+
+		// Commutative released accesses have to be registered
+		processCommutativeOriginators(hpDependencyData);
+
+		// Release commutative mask. The order is important, as this will add satisfied originators
+		if (accessStruct._commutativeMask.any())
+			CommutativeSemaphore::releaseTask(task, hpDependencyData);
 
 		if (accessStruct.hasDataAccesses()) {
 			// All TaskDataAccesses have a deletableCount of 1 for default, so this will return true unless
@@ -374,11 +415,17 @@ namespace DataAccessRegistration {
 			ReductionInfo *reductionInfo = itMap->second._reductionInfo;
 
 			if (reductionInfo != nullptr) {
-				assert(!reductionInfo->finished());
-				if (reductionInfo->markAsClosed())
-					releaseReductionInfo(reductionInfo);
+				DataAccess *parentAccess = accessStruct.findAccess(itMap->first);
 
-				itMap->second._reductionInfo = nullptr;
+				if (parentAccess == nullptr || parentAccess->getType() != REDUCTION_ACCESS_TYPE) {
+					assert(!reductionInfo->finished());
+					if (reductionInfo->markAsClosed())
+						releaseReductionInfo(reductionInfo);
+
+					itMap->second._reductionInfo = nullptr;
+				} else {
+					assert(parentAccess->isWeak());
+				}
 			}
 		}
 	}
@@ -437,10 +484,40 @@ namespace DataAccessRegistration {
 				itMap->second._access = access;
 			}
 
+			if (accessType == COMMUTATIVE_ACCESS_TYPE && !weak) {
+				// Calculate commutative mask
+				CommutativeSemaphore::combineMaskAndAddress(accessStruct._commutativeMask, address);
+			}
+
+			bool dispose = false;
+			bool schedule = false;
+			DataAccessMessage fromCurrent;
+			DataAccess *parentAccess = nullptr;
+
+			if (predecessor == nullptr) {
+				parentAccess = parentAccessStruct.findAccess(address);
+
+				if (parentAccess != nullptr) {
+					// In case we need to inherit reduction
+					reductionInfo = parentAccess->getReductionInfo();
+					// Check that if we got something the parent is weakreduction
+					assert(reductionInfo == nullptr || parentAccess->isWeak());
+				}
+			}
+
 			// Check if we're closing a reduction, or allocate one in case we need it.
 			if (accessType == REDUCTION_ACCESS_TYPE) {
+				// Get the reduction info from the bottom map. If there is none, check
+				// if our parent has one (for weak reductions)
 				ReductionInfo *currentReductionInfo = itMap->second._reductionInfo;
-				reductionInfo = currentReductionInfo;
+				if (currentReductionInfo == nullptr) {
+					currentReductionInfo = reductionInfo;
+					// Inherited reductions must be equal
+					assert(reductionInfo == nullptr || (reductionInfo->getTypeAndOperatorIndex() == access->getReductionOperator() && reductionInfo->getOriginalLength() == access->getReductionLength()));
+				} else {
+					reductionInfo = currentReductionInfo;
+				}
+
 				reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
 				size_t length = access->getReductionLength();
 
@@ -463,13 +540,7 @@ namespace DataAccessRegistration {
 				itMap->second._reductionInfo = nullptr;
 			}
 
-			bool schedule = false;
-			bool dispose = false;
-			DataAccessMessage fromCurrent;
-
 			if (predecessor == nullptr) {
-				DataAccess *parentAccess = parentAccessStruct.findAccess(address);
-
 				if (parentAccess != nullptr) {
 					parentAccess->setChild(access);
 					DataAccessMessage message = parentAccess->applySingle(ACCESS_HASCHILD, mailBox);
@@ -483,7 +554,9 @@ namespace DataAccessRegistration {
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
 					schedule = true;
-					fromCurrent = access->applySingle(ACCESS_READ_SATISFIED | ACCESS_WRITE_SATISFIED, mailBox);
+					fromCurrent = access->applySingle(
+						ACCESS_READ_SATISFIED | ACCESS_WRITE_SATISFIED | ACCESS_CONCURRENT_SATISFIED | ACCESS_COMMUTATIVE_SATISFIED,
+						mailBox);
 				}
 			} else {
 				predecessor->setSuccessor(access);
@@ -575,7 +648,10 @@ namespace DataAccessRegistration {
 	void combineTaskReductions(Task *task, ComputePlace *computePlace)
 	{
 		assert(task != nullptr);
-		TaskDataAccesses &accessStruct = task->getDataAccesses();
+		assert(computePlace != nullptr);
+		assert(task->isRunnable());
+
+		TaskDataAccesses &accessStruct = (task->isTaskfor() ? task->getParent()->getDataAccesses() : task->getDataAccesses());
 		assert(!accessStruct.hasBeenDeleted());
 
 		if (!accessStruct.hasDataAccesses())
@@ -598,7 +674,6 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) CPUDependencyData &hpDependencyData,
 		__attribute__((unused)) MemoryPlace const *location)
 	{
-
 	}
 } // namespace DataAccessRegistration
 

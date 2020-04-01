@@ -14,6 +14,7 @@
 #include <array>
 
 #include "BottomMapEntry.hpp"
+#include "CommutativeSemaphore.hpp"
 #include "TaskDataAccessesInfo.hpp"
 #include "lowlevel/TicketSpinLock.hpp"
 
@@ -39,6 +40,7 @@ struct TaskDataAccesses {
 	void **_addressArray;
 	size_t _maxDeps;
 	size_t _currentIndex;
+	CommutativeSemaphore::commutative_mask_t _commutativeMask;
 
 	std::atomic<int> _deletableCount;
 	access_map_t *_accessMap;
@@ -53,6 +55,7 @@ struct TaskDataAccesses {
 		_addressArray(nullptr),
 		_maxDeps(0),
 		_currentIndex(0),
+		_commutativeMask(0),
 		_deletableCount(0),
 		_accessMap(nullptr)
 #ifndef NDEBUG

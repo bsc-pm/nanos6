@@ -475,6 +475,7 @@ linear_regions_fragmented_dependency_sources = \
 multidimensional_adaptor_sources = MultidimensionalLintAPI.cpp
 
 discrete_dependency_sources = \
+	src/dependencies/discrete/CommutativeSemaphore.cpp \
 	src/dependencies/discrete/DataAccess.cpp \
 	src/dependencies/discrete/DataAccessRegistration.cpp \
 	src/dependencies/discrete/ReductionInfo.cpp \
@@ -732,6 +733,7 @@ noinst_HEADERS = \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
 	src/dependencies/discrete/BottomMapEntry.hpp \
+	src/dependencies/discrete/CommutativeSemaphore.hpp \
 	src/dependencies/discrete/CPUDependencyData.hpp \
 	src/dependencies/discrete/DataAccess.hpp \
 	src/dependencies/discrete/DataAccessFlags.hpp \

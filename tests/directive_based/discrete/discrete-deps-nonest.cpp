@@ -7,22 +7,24 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <list>
+#include <math.h>
 #include <set>
 #include <sstream>
+#include <string>
+#include <time.h>
+#include <unistd.h>
 #include <vector>
 
-#include <math.h>
-#include <time.h>
-#include <string.h>
-#include <unistd.h>
+#include <nanos6/debug.h>
 
-#include <Atomic.hpp>
-#include <Functors.hpp>
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
-#include <nanos6/debug.h>
+#include <Atomic.hpp>
+#include <Functors.hpp>
 
 
 #define SUSTAIN_MICROSECONDS 200000L
@@ -125,6 +127,16 @@ public:
 	void verify()
 	{
 		assert(_status == NOT_STARTED);
+
+		// Check if we are running with DLB
+		bool runningWithDLB = false;
+#ifdef HAVE_DLB
+		char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
+		bool dlbEnvvarPresent = (dlbEnabled != 0);
+		if (dlbEnvvarPresent) {
+			runningWithDLB = (strcmp(dlbEnabled, "1") == 0);
+		}
+#endif
 		tap.emitDiagnostic("Task ", _id, " (", type2String(), ") starts");
 		_status = STARTED;
 
@@ -150,11 +162,28 @@ public:
 
 			std::ostringstream oss;
 			oss << "Task " << _id << " can run concurrently with other tasks filling up the number of available CPUs";
-			tap.timedEvaluate(
-				GreaterOrEqual<Atomic<int>, int>(*_numConcurrentTasks, nwait),
-				SUSTAIN_MICROSECONDS * delayMultiplier,
-				oss.str()
-			);
+
+			// If we are running with DLB, this is a weak test
+			if (runningWithDLB) {
+				Timer innerTimer;
+				innerTimer.start();
+				while (innerTimer.lap() < (SUSTAIN_MICROSECONDS * delayMultiplier)) {
+					if (*_numConcurrentTasks >= nwait) {
+						break;
+					}
+				}
+
+				tap.evaluateWeak(
+					*_numConcurrentTasks >= nwait,
+					oss.str(), ""
+				);
+			} else {
+				tap.timedEvaluate(
+					GreaterOrEqual<Atomic<int>, int>(*_numConcurrentTasks, nwait),
+					SUSTAIN_MICROSECONDS * delayMultiplier,
+					oss.str()
+				);
+			}
 		}
 
 		struct timespec delay = { 0, 1000000};
@@ -485,7 +514,11 @@ struct VerifierConstraintCalculator {
 	{
 		assert(verifier != 0);
 
-		flush();
+		// First concurrent
+		if (_lastAccessType != CONCURRENT) {
+			flush();
+			_lastAccessType = CONCURRENT;
+		}
 
 		// Writer(s) before writers
 		if (!_lastWriters.empty()) {
@@ -508,7 +541,6 @@ struct VerifierConstraintCalculator {
 		}
 
 		_newWriters.insert(verifier->_id);
-		_lastAccessType = CONCURRENT;
 	}
 
 	static void selfcheck()
@@ -564,9 +596,23 @@ struct VerifierConstraintCalculator {
 				{
 #if FINE_SELF_CHECK
 					std::ostringstream oss;
-					oss << "Self verification: " << verifier->_id << " runs concurrently with " << concurrentVerifier->_id << " implies " <<
-						concurrentVerifier->_id << " runs concurrently with " << verifier->_id;
-					tap.evaluate(concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(), oss.str());
+					oss << "Self verification: " << verifier->_id
+						<< " runs concurrently with " << concurrentVerifier->_id
+						<< " implies " << concurrentVerifier->_id
+						<< " runs concurrently with " << verifier->_id;
+
+					// If we are running with DLB, this is a weak test
+					if (runningWithDLB) {
+						tap.evaluateWeak(
+							concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(),
+							oss.str(), ""
+						);
+					} else {
+						tap.evaluate(
+							concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end(),
+							oss.str()
+						);
+					}
 #else
 					globallyValid = globallyValid && (concurrentVerifier->_runsConcurrentlyWith.find(verifier->_id) != concurrentVerifier->_runsConcurrentlyWith.end());
 #endif

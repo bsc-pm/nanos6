@@ -35,6 +35,12 @@ static inline access_flags_t translateFlags(access_flags_t original)
 	if (original & ACCESS_WRITE_SATISFIED)
 		newFlags |= ACCESS_CHILD_WRITE_DONE;
 
+	if (original & ACCESS_CONCURRENT_SATISFIED)
+		newFlags |= ACCESS_CHILD_CONCURRENT_DONE;
+
+	if (original & ACCESS_COMMUTATIVE_SATISFIED)
+		newFlags |= ACCESS_CHILD_COMMUTATIVE_DONE;
+
 	assert(newFlags);
 	return newFlags;
 }
@@ -50,16 +56,28 @@ static inline access_flags_t calculatePropagationFlags(access_flags_t flagsForNe
 				flagsAfterPropagation |= ACCESS_NEXT_READ_SATISFIED;
 			if (flagsForNext & ACCESS_WRITE_SATISFIED)
 				flagsAfterPropagation |= ACCESS_NEXT_WRITE_SATISFIED;
+			if (flagsForNext & ACCESS_CONCURRENT_SATISFIED)
+				flagsAfterPropagation |= ACCESS_NEXT_CONCURRENT_SATISFIED;
+			if (flagsForNext & ACCESS_COMMUTATIVE_SATISFIED)
+				flagsAfterPropagation |= ACCESS_NEXT_COMMUTATIVE_SATISFIED;
 		} else if (destination == CHILD) {
 			if (flagsForNext & ACCESS_READ_SATISFIED)
 				flagsAfterPropagation |= ACCESS_CHILD_READ_SATISFIED;
 			if (flagsForNext & ACCESS_WRITE_SATISFIED)
 				flagsAfterPropagation |= ACCESS_CHILD_WRITE_SATISFIED;
+			if (flagsForNext & ACCESS_CONCURRENT_SATISFIED)
+				flagsAfterPropagation |= ACCESS_CHILD_CONCURRENT_SATISFIED;
+			if (flagsForNext & ACCESS_COMMUTATIVE_SATISFIED)
+				flagsAfterPropagation |= ACCESS_CHILD_COMMUTATIVE_SATISFIED;
 		} else if (destination == PARENT) {
 			if (flagsForNext & ACCESS_CHILD_WRITE_DONE)
 				flagsAfterPropagation |= ACCESS_NEXT_WRITE_SATISFIED;
 			if (flagsForNext & ACCESS_CHILD_READ_DONE)
 				flagsAfterPropagation |= ACCESS_NEXT_READ_SATISFIED;
+			if (flagsForNext & ACCESS_CHILD_CONCURRENT_DONE)
+				flagsAfterPropagation |= ACCESS_NEXT_CONCURRENT_SATISFIED;
+			if (flagsForNext & ACCESS_CHILD_COMMUTATIVE_DONE)
+				flagsAfterPropagation |= ACCESS_NEXT_COMMUTATIVE_SATISFIED;
 		}
 	}
 
@@ -69,16 +87,34 @@ static inline access_flags_t calculatePropagationFlags(access_flags_t flagsForNe
 static inline bool calculateDisposing(access_flags_t flags, access_flags_t oldFlags, bool reduction = false)
 {
 	access_flags_t allFlags = (flags | oldFlags);
-	access_flags_t disposeFlags = ACCESS_WRITE_SATISFIED | ACCESS_READ_SATISFIED | ACCESS_UNREGISTERED;
+	access_flags_t disposeFlags = (ACCESS_WRITE_SATISFIED
+		| ACCESS_READ_SATISFIED
+		| ACCESS_CONCURRENT_SATISFIED
+		| ACCESS_COMMUTATIVE_SATISFIED
+		| ACCESS_UNREGISTERED);
 
 	if (allFlags & ACCESS_HASCHILD) {
-		disposeFlags |= (ACCESS_CHILD_READ_SATISFIED | ACCESS_CHILD_WRITE_SATISFIED | ACCESS_CHILD_WRITE_DONE | ACCESS_CHILD_READ_DONE);
+		disposeFlags |= (ACCESS_CHILD_READ_SATISFIED
+			| ACCESS_CHILD_WRITE_SATISFIED
+			| ACCESS_CHILD_CONCURRENT_SATISFIED
+			| ACCESS_CHILD_COMMUTATIVE_SATISFIED
+			| ACCESS_CHILD_WRITE_DONE
+			| ACCESS_CHILD_READ_DONE
+			| ACCESS_CHILD_CONCURRENT_DONE
+			| ACCESS_CHILD_COMMUTATIVE_DONE);
 	}
 
 	if (allFlags & ACCESS_NEXTISPARENT) {
-		disposeFlags |= (ACCESS_PARENT_DONE | ACCESS_NEXT_READ_SATISFIED | ACCESS_NEXT_WRITE_SATISFIED);
+		disposeFlags |= (ACCESS_PARENT_DONE
+			| ACCESS_NEXT_READ_SATISFIED
+			| ACCESS_NEXT_WRITE_SATISFIED
+			| ACCESS_NEXT_CONCURRENT_SATISFIED
+			| ACCESS_NEXT_COMMUTATIVE_SATISFIED);
 	} else if (allFlags & ACCESS_HASNEXT) {
-		disposeFlags |= (ACCESS_NEXT_READ_SATISFIED | ACCESS_NEXT_WRITE_SATISFIED);
+		disposeFlags |= (ACCESS_NEXT_READ_SATISFIED
+			| ACCESS_NEXT_WRITE_SATISFIED
+			| ACCESS_NEXT_CONCURRENT_SATISFIED
+			| ACCESS_NEXT_COMMUTATIVE_SATISFIED);
 	} else {
 		disposeFlags |= ACCESS_PARENT_DONE;
 	}
@@ -134,6 +170,12 @@ DataAccessMessage DataAccess::inAutomata(
 		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_WRITE_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_WRITE_DONE | ACCESS_HASNEXT))
 			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
 
+		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_CONCURRENT_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_CONCURRENT_DONE | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+
+		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_COMMUTATIVE_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_COMMUTATIVE_DONE | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+
 		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASNEXT))
 			message.flagsForNext |= ACCESS_READ_SATISFIED;
 
@@ -146,6 +188,12 @@ DataAccessMessage DataAccess::inAutomata(
 
 		if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASCHILD))
 			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+
+		if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+
+		if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
 
 		destination = CHILD;
 	}
@@ -192,6 +240,30 @@ void DataAccess::outAutomata(
 		destination = NEXT;
 	}
 
+	if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
+	}
+
+	if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_CONCURRENT_DONE)) {
+		message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+		assert(destination == NONE || destination == NEXT);
+		destination = NEXT;
+	}
+
+	if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
+	}
+
+	if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_COMMUTATIVE_DONE)) {
+		message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+		assert(destination == NONE || destination == NEXT);
+		destination = NEXT;
+	}
+
 	readDestination(allFlags, message, destination);
 	message.flagsAfterPropagation |= calculatePropagationFlags(message.flagsForNext, destination);
 }
@@ -214,12 +286,15 @@ void DataAccess::reductionAutomata(
 	message.from = this;
 	PropagationDestination destination = NONE;
 
-	// No nested reductions, period.
-	assert(!(allFlags & ACCESS_HASCHILD));
-
 	if (flags & ACCESS_WRITE_SATISFIED) {
 		message.combine = true;
 		message.flagsAfterPropagation |= ACCESS_REDUCTION_COMBINED;
+	}
+
+	if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_READ_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
 	}
 
 	if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_READ_DONE)) {
@@ -228,14 +303,154 @@ void DataAccess::reductionAutomata(
 		destination = NEXT;
 	}
 
+	if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
+	}
+
 	if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_WRITE_DONE)) {
 		message.flagsForNext |= ACCESS_WRITE_SATISFIED;
 		assert(destination == NONE || destination == NEXT);
 		destination = NEXT;
 	}
 
+	if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
+	}
+
+	if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_CONCURRENT_DONE)) {
+		message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+		assert(destination == NONE || destination == NEXT);
+		destination = NEXT;
+	}
+
+	if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASCHILD)) {
+		message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+		assert(destination == NONE || destination == CHILD);
+		destination = CHILD;
+	}
+
+	if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASNEXT | ACCESS_UNREGISTERED | ACCESS_CHILD_COMMUTATIVE_DONE)) {
+		message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+		assert(destination == NONE || destination == NEXT);
+		destination = NEXT;
+	}
+
 	readDestination(allFlags, message, destination);
 	message.flagsAfterPropagation |= calculatePropagationFlags(message.flagsForNext, destination);
+}
+
+DataAccessMessage DataAccess::concurrentAutomata(
+	access_flags_t flags,
+	access_flags_t oldFlags,
+	bool toNextOnly,
+	bool weak)
+{
+	access_flags_t allFlags = flags | oldFlags;
+	DataAccessMessage message;
+	PropagationDestination destination = NONE;
+	message.from = this;
+
+	// This automata is called two times, one for the child message and another one for the next.
+	// We handle this through two different sub-automatas for each destination
+
+	if (flags & ACCESS_CONCURRENT_SATISFIED)
+		message.schedule = !weak;
+
+	if (toNextOnly) {
+		// Only messages that would go to successor or parent
+		if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_WRITE_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_WRITE_DONE | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+
+		if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_READ_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_READ_DONE | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_READ_SATISFIED;
+
+		if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_COMMUTATIVE_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_COMMUTATIVE_DONE | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+
+		if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+
+		destination = NEXT;
+	} else {
+		// Only messages that would go to the child
+
+		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_READ_SATISFIED;
+
+		if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+
+		if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+
+		if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+
+		destination = CHILD;
+	}
+
+	readDestination(allFlags, message, destination);
+	message.flagsAfterPropagation |= calculatePropagationFlags(message.flagsForNext, destination);
+	return message;
+}
+
+DataAccessMessage DataAccess::commutativeAutomata(
+	access_flags_t flags,
+	access_flags_t oldFlags,
+	bool toNextOnly,
+	bool weak)
+{
+	access_flags_t allFlags = flags | oldFlags;
+	DataAccessMessage message;
+	PropagationDestination destination = NONE;
+	message.from = this;
+
+	// This automata is called two times, one for the child message and another one for the next.
+	// We handle this through two different sub-automatas for each destination
+
+	if (flags & ACCESS_COMMUTATIVE_SATISFIED)
+		message.schedule = !weak;
+
+	if (toNextOnly) {
+		// Only messages that would go to successor or parent
+		if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_WRITE_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_WRITE_DONE | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+
+		if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_CONCURRENT_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_CONCURRENT_DONE | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+
+		if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_READ_SATISFIED | ACCESS_UNREGISTERED | ACCESS_CHILD_READ_DONE | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_READ_SATISFIED;
+
+		if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASNEXT))
+			message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+
+		destination = NEXT;
+	} else {
+		// Only messages that would go to the child
+
+		if (PROPAGATE(ACCESS_READ_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_READ_SATISFIED;
+
+		if (PROPAGATE(ACCESS_WRITE_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_WRITE_SATISFIED;
+
+		if (PROPAGATE(ACCESS_CONCURRENT_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_CONCURRENT_SATISFIED;
+
+		if (PROPAGATE(ACCESS_COMMUTATIVE_SATISFIED | ACCESS_HASCHILD))
+			message.flagsForNext |= ACCESS_COMMUTATIVE_SATISFIED;
+
+		destination = CHILD;
+	}
+
+	readDestination(allFlags, message, destination);
+	message.flagsAfterPropagation |= calculatePropagationFlags(message.flagsForNext, destination);
+	return message;
 }
 
 bool DataAccess::applyPropagated(DataAccessMessage &message)
@@ -278,6 +493,32 @@ bool DataAccess::apply(DataAccessMessage &message, mailbox_t &mailBox)
 	if (type == READ_ACCESS_TYPE) {
 		DataAccessMessage toChild = inAutomata(message.flagsForNext, oldFlags, false, weak);
 		DataAccessMessage toNext = inAutomata(message.flagsForNext, oldFlags, true, weak);
+
+		if (toChild.to != nullptr && toChild.flagsForNext) {
+			// Only one message can contain a dispose and schedule
+			toNext.schedule = false;
+			mailBox.push(toChild);
+		}
+
+		if ((toNext.to != nullptr && toNext.flagsForNext) || toNext.schedule) {
+			mailBox.push(toNext);
+		}
+	} else if (type == CONCURRENT_ACCESS_TYPE) {
+		DataAccessMessage toChild = concurrentAutomata(message.flagsForNext, oldFlags, false, weak);
+		DataAccessMessage toNext = concurrentAutomata(message.flagsForNext, oldFlags, true, weak);
+
+		if (toChild.to != nullptr && toChild.flagsForNext) {
+			// Only one message can contain a dispose and schedule
+			toNext.schedule = false;
+			mailBox.push(toChild);
+		}
+
+		if ((toNext.to != nullptr && toNext.flagsForNext) || toNext.schedule) {
+			mailBox.push(toNext);
+		}
+	} else if (type == COMMUTATIVE_ACCESS_TYPE) {
+		DataAccessMessage toChild = commutativeAutomata(message.flagsForNext, oldFlags, false, weak);
+		DataAccessMessage toNext = commutativeAutomata(message.flagsForNext, oldFlags, true, weak);
 
 		if (toChild.to != nullptr && toChild.flagsForNext) {
 			// Only one message can contain a dispose and schedule
