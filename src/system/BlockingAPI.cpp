@@ -11,7 +11,6 @@
 #include "DataAccessRegistration.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
-#include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -49,7 +48,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
 	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
 
-	TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_NO_INLINE);
+	TaskBlocking::taskBlocks(currentThread, currentTask);
 
 	ComputePlace *computePlace = currentThread->getComputePlace();
 	assert(computePlace != nullptr);

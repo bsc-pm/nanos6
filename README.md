@@ -347,11 +347,6 @@ The Hardware Counters API is controlled further with the following environment v
 * `NANOS6_HARDWARE_COUNTERS_VERBOSE_FILE`: To specify an output file name to report hardware counter statistics.
 * `NANOS6_WISDOM_ENABLE`: To enable/disable the wisdom mechanism. Disabled by default.
 
-### Known Limitations
-
-Currently, Monitoring capabilities lack support for the `task for` construct.
-
-
 ## Cluster support
 
 In order to enable OmpSs-2@Cluster support, you need a working MPI installation in your environment that supports multithreading, i.e. `MPI_THREAD_MULTIPLE`.
@@ -395,3 +390,11 @@ The approximate minimum frequency in time in which the polling services are goin
 This variable can take an integer value that represents the polling frequency in microseconds.
 By default, the runtime system executes the polling services at least every 1000 microseconds.
 
+## CPU Managing Policies
+
+Currently, Nanos6 offers different policies when handlind CPUs through the `NANOS6_CPUMANAGER_POLICY` environment variable:
+* `NANOS6_CPUMANAGER_POLICY=idle`: To choose the `idle` policy, in which idle threads halt on a blocking condition, while not consuming CPU cycles.
+* `NANOS6_CPUMANAGER_POLICY=busy`: In the `busy` policy, idle threads continue spinning and never halt, consuming CPU cycles.
+* `NANOS6_CPUMANAGER_POLICY=lewi`: If DLB is enabled, this policy is the counterpart of the `idle` one, but for the DLB mode. In this policy, idle threads lend their CPU to other runtimes or processes.
+* `NANOS6_CPUMANAGER_POLICY=greedy`: If DLB is enabled, the `greedy` policy disables lending CPUs from the process' mask, but allows acquiring and lending external CPUs.
+* `NANOS6_CPUMANAGER_POLICY=default`: Fallback to the default implementation. If DLB is disabled, this policy falls back to the `idle` policy, while if DLB is enabled it falls back to the `lewi` policy.

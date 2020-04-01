@@ -69,7 +69,7 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 		HardwareCounters::stopTaskMonitoring(currentTask);
 
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
-		TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_CHILDREN_INLINE);
+		TaskBlocking::taskBlocks(currentThread, currentTask);
 
 		// Update the CPU since the thread may have migrated
 		cpu = currentThread->getComputePlace();

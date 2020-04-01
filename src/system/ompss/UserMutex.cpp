@@ -97,7 +97,7 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 		Instrument::blockedOnUserMutex(&userMutex);
 
-		TaskBlocking::taskBlocks(currentThread, currentTask, ThreadManagerPolicy::POLICY_NO_INLINE);
+		TaskBlocking::taskBlocks(currentThread, currentTask);
 
 		// Update the CPU since the thread may have migrated
 		computePlace = currentThread->getComputePlace();

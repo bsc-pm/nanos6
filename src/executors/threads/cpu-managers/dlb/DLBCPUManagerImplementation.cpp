@@ -10,8 +10,9 @@
 
 #include "DLBCPUActivation.hpp"
 #include "DLBCPUManagerImplementation.hpp"
+#include "policies/GreedyPolicy.hpp"
+#include "policies/LeWIPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "executors/threads/cpu-managers/dlb/policies/LeWIPolicy.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -45,6 +46,8 @@ void DLBCPUManagerImplementation::preinitialize()
 	std::string policyValue = _policyChosen.getValue();
 	if (policyValue == "default" || policyValue == "lewi") {
 		_cpuManagerPolicy = new LeWIPolicy(numCPUs);
+	} else if (policyValue == "greedy") {
+		_cpuManagerPolicy = new GreedyPolicy(numCPUs);
 	} else {
 		FatalErrorHandler::failIf(
 			true, "Unexistent '", policyValue, "' CPU Manager Policy"
@@ -197,6 +200,26 @@ void DLBCPUManagerImplementation::shutdownPhase2()
 	delete _cpuManagerPolicy;
 
 	_cpuManagerPolicy = nullptr;
+}
+
+void DLBCPUManagerImplementation::forcefullyResumeCPU(size_t)
+{
+	// NOTE: We ignore the parameter as this is a workaround for EXTRAE.
+	// We simply try to reclaim the first CPU in our mask, which will
+	// execute the main task
+
+	size_t firstCPU = 0;
+	for (size_t id = 0; id < _cpus.size(); ++id) {
+		if (_cpus[id]->isOwned()) {
+			firstCPU = id;
+			break;
+		}
+	}
+
+	assert(_cpus[firstCPU]->isOwned());
+
+	// Try to reclaim the CPU (it only happens if it is lent)
+	DLBCPUActivation::reclaimCPU(firstCPU);
 }
 
 

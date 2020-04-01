@@ -9,3 +9,4 @@
 
 // 0.1 ms
 timespec DLBCPUActivation::_delayCPUEnabling({0, 100000});
+std::atomic<size_t> DLBCPUActivation::_numActiveOwnedCPUs(0);
