@@ -50,6 +50,9 @@ protected:
 	//! The chosen CPU Manager policy
 	static EnvironmentVariable<std::string> _policyChosen;
 
+	//! The system id of the first owned CPU of this process
+	static size_t _firstCPUId;
+
 private:
 
 	//! \brief Taskfor-related, get the closest number of taskfor groups
@@ -186,10 +189,16 @@ public:
 		return _cpus;
 	}
 
-	//! \brief Forcefully resume a CPU if it is idle
+	//! \brief Forcefully resume the first CPU if it is idle
+	virtual void forcefullyResumeFirstCPU() = 0;
+
+	//! \brief Check whether a CPU is the first CPU of this process' mask
 	//!
-	//! \param[in] systemCPUId The identifier of the CPU to resume
-	virtual void forcefullyResumeCPU(size_t systemCPUId) = 0;
+	//! \param[in] systemCPUId The id of the CPU to check for
+	inline bool isFirstCPU(size_t systemCPUId)
+	{
+		return (systemCPUId == _firstCPUId);
+	}
 
 
 	/*    CPUACTIVATION BRIDGE    */

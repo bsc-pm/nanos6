@@ -213,14 +213,22 @@ public:
 		return _cpuManager->disable(systemCPUId);
 	}
 
-	//! \brief Forcefully resume a CPU if it is paused
-	//!
-	//! \param[in] cpuId The id of the CPU to resume
-	static inline void forcefullyResumeCPU(size_t cpuId)
+	//! \brief Forcefully resume the first CPU if it is paused
+	static inline void forcefullyResumeFirstCPU()
 	{
 		assert(_cpuManager != nullptr);
 
-		_cpuManager->forcefullyResumeCPU(cpuId);
+		_cpuManager->forcefullyResumeFirstCPU();
+	}
+
+	//! \brief Check whether a CPU is the first CPU of this process' mask
+	//!
+	//! \param[in] systemCPUId The id of the CPU to check for
+	static inline bool isFirstCPU(size_t systemCPUId)
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->isFirstCPU(systemCPUId);
 	}
 
 

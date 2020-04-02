@@ -60,7 +60,7 @@ public:
 		return nullptr;
 	}
 
-	void forcefullyResumeCPU(size_t);
+	void forcefullyResumeFirstCPU();
 
 
 	/*    CPUACTIVATION BRIDGE    */

@@ -1,12 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SCHEDULER_INTERFACE_HPP
 #define SCHEDULER_INTERFACE_HPP
 
+#include "executors/threads/CPUManager.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "scheduling/schedulers/HostScheduler.hpp"
 #include "scheduling/schedulers/device/CUDADeviceScheduler.hpp"
@@ -38,7 +39,7 @@ public:
 			Task *expected = nullptr;
 			bool exchanged = _mainTask.compare_exchange_strong(expected, task);
 			FatalErrorHandler::failIf(!exchanged);
-			CPUManager::forcefullyResumeCPU(0);
+			CPUManager::forcefullyResumeFirstCPU();
 			return;
 		}
 #endif
@@ -62,12 +63,14 @@ public:
 		if (computePlaceType == nanos6_host_device) {
 #ifdef EXTRAE_ENABLED
 			Task *result = nullptr;
-			if (computePlace->getIndex() == 0 && _mainTask != nullptr) {
-				result = _mainTask;
-				bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
-				FatalErrorHandler::failIf(!exchanged);
-				_mainFirstRunCompleted = true;
-				return result;
+			if (CPUManager::isFirstCPU(((CPU *) computePlace)->getSystemCPUId())) {
+				if (_mainTask != nullptr) {
+					result = _mainTask;
+					bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
+					FatalErrorHandler::failIf(!exchanged);
+					_mainFirstRunCompleted = true;
+					return result;
+				}
 			}
 #endif
 			return _hostScheduler->getReadyTask(computePlace);
@@ -90,12 +93,14 @@ public:
 
 		if (computePlaceType == nanos6_host_device) {
 #ifdef EXTRAE_ENABLED
-			if (computePlace->getIndex() == 0 && _mainTask != nullptr) {
-				Task *result = _mainTask;
-				bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
-				FatalErrorHandler::failIf(!exchanged);
-				_mainFirstRunCompleted = true;
-				return result;
+			if (CPUManager::isFirstCPU(((CPU *) computePlace)->getSystemCPUId())) {
+				if (_mainTask != nullptr) {
+					Task *result = _mainTask;
+					bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
+					FatalErrorHandler::failIf(!exchanged);
+					_mainFirstRunCompleted = true;
+					return result;
+				}
 			}
 #endif
 			return _hostScheduler->hasAvailableWork(computePlace);

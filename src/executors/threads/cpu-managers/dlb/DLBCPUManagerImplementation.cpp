@@ -68,6 +68,7 @@ void DLBCPUManagerImplementation::preinitialize()
 	_cpus.resize(numCPUs);
 
 	// Initialize each CPU's fields
+	bool firstCPUFound = false;
 	for (size_t i = 0; i < numCPUs; ++i) {
 		// Place the CPU in the vectors
 		CPU *cpu = (CPU *) cpus[i];
@@ -86,8 +87,12 @@ void DLBCPUManagerImplementation::preinitialize()
 		// If the CPU is not owned by this process, mark it as such
 		if (!CPU_ISSET(i, &_cpuMask)) {
 			cpu->setOwned(false);
+		} else if (!firstCPUFound) {
+			_firstCPUId = i;
+			firstCPUFound = true;
 		}
 	}
+	assert(firstCPUFound);
 
 	CPUManagerInterface::reportInformation(numCPUs, numNUMANodes);
 	if (_taskforGroupsReportEnabled) {
@@ -202,24 +207,10 @@ void DLBCPUManagerImplementation::shutdownPhase2()
 	_cpuManagerPolicy = nullptr;
 }
 
-void DLBCPUManagerImplementation::forcefullyResumeCPU(size_t)
+void DLBCPUManagerImplementation::forcefullyResumeFirstCPU()
 {
-	// NOTE: We ignore the parameter as this is a workaround for EXTRAE.
-	// We simply try to reclaim the first CPU in our mask, which will
-	// execute the main task
-
-	size_t firstCPU = 0;
-	for (size_t id = 0; id < _cpus.size(); ++id) {
-		if (_cpus[id]->isOwned()) {
-			firstCPU = id;
-			break;
-		}
-	}
-
-	assert(_cpus[firstCPU]->isOwned());
-
 	// Try to reclaim the CPU (it only happens if it is lent)
-	DLBCPUActivation::reclaimCPU(firstCPU);
+	DLBCPUActivation::reclaimCPU(_firstCPUId);
 }
 
 

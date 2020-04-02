@@ -120,6 +120,9 @@ void DefaultCPUManagerImplementation::preinitialize()
 	}
 	assert(virtualCPUId == numAvailableCPUs);
 
+	// The first CPU is always 0 (virtual identifier)
+	_firstCPUId = 0;
+
 	CPUManagerInterface::reportInformation(numSystemCPUs, numNUMANodes);
 	if (_taskforGroupsReportEnabled) {
 		CPUManagerInterface::reportTaskforGroupsInfo();
@@ -157,26 +160,28 @@ void DefaultCPUManagerImplementation::shutdownPhase1()
 	}
 }
 
-void DefaultCPUManagerImplementation::forcefullyResumeCPU(size_t systemCPUId)
+void DefaultCPUManagerImplementation::forcefullyResumeFirstCPU()
 {
 	bool resumed = false;
 
 	_idleCPUsLock.lock();
 
-	if (_idleCPUs[systemCPUId]) {
-		_idleCPUs[systemCPUId] = false;
+	if (_idleCPUs[_firstCPUId]) {
+		_idleCPUs[_firstCPUId] = false;
 		assert(_numIdleCPUs > 0);
 
 		--_numIdleCPUs;
-		Monitoring::cpuBecomesActive(systemCPUId);
+
+		// Since monitoring works with system ids, translate the ID
+		Monitoring::cpuBecomesActive(_cpus[_firstCPUId]->getSystemCPUId());
 		resumed = true;
 	}
 
 	_idleCPUsLock.unlock();
 
 	if (resumed) {
-		assert(_cpus[systemCPUId] != nullptr);
-		ThreadManager::resumeIdle(_cpus[systemCPUId]);
+		assert(_cpus[_firstCPUId] != nullptr);
+		ThreadManager::resumeIdle(_cpus[_firstCPUId]);
 	}
 }
 
