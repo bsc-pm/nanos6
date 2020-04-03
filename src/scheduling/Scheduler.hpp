@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SCHEDULER_HPP
@@ -44,7 +44,7 @@ public:
 	//! \param[in] computePlace The host compute place
 	static inline bool hasAvailableWork(ComputePlace *computePlace)
 	{
-		assert(computePlace->getType() == nanos6_host_device);
+		assert(computePlace != nullptr);
 		return _instance->hasAvailableWork(computePlace);
 	}
 

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SYNC_SCHEDULER_HPP
@@ -28,7 +28,6 @@ protected:
 	nanos6_device_t _deviceType;
 	uint64_t _totalComputePlaces;
 	size_t _totalAddQueues;
-	size_t _totalNUMANodes;
 
 	// Unsynchronized scheduler
 	UnsyncScheduler *_scheduler;
@@ -66,9 +65,14 @@ protected:
 		return (_ready[cpuIndex].ticket == myTicket);
 	}
 
-	virtual inline ComputePlace *getComputePlace(nanos6_device_t deviceType, uint64_t computePlaceIndex) const
+	static inline ComputePlace *getComputePlace(nanos6_device_t deviceType, uint64_t computePlaceIndex)
 	{
-		return HardwareInfo::getComputePlace(deviceType, computePlaceIndex);
+		if (deviceType == nanos6_host_device) {
+			const std::vector<CPU *> &cpus = CPUManager::getCPUListReference();
+			return cpus[computePlaceIndex];
+		} else {
+			return HardwareInfo::getComputePlace(deviceType, computePlaceIndex);
+		}
 	}
 
 public:
@@ -87,10 +91,10 @@ public:
 			new (&_ready[i]) Padded<CPUNode>();
 		}
 
-		_totalNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
+		size_t totalNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
 
 		// Using one queue per NUMA node, and a special queue for cases where there is no computePlace.
-		_totalAddQueues = _totalNUMANodes + 1;
+		_totalAddQueues = totalNUMANodes + 1;
 
 		_addQueues = (add_queue_t *) MemoryAllocator::alloc(_totalAddQueues * sizeof(add_queue_t));
 		_addQueuesLocks = (TicketArraySpinLock *) MemoryAllocator::alloc(_totalAddQueues * sizeof(TicketArraySpinLock));

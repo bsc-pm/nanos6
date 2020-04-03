@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef FPGA_DEVICE_SCHEDULER_HPP
@@ -25,7 +25,7 @@ public:
 				SubDeviceScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, _deviceType, deviceInfo->getDeviceSubType(i));
 		}
 	}
-	
+
 	virtual ~FPGADeviceScheduler()
 	{
 		for (size_t i = 0; i < _totalSubDevices; i++) {
@@ -33,24 +33,24 @@ public:
 		}
 		MemoryAllocator::free(_subDeviceSchedulers, _totalSubDevices * sizeof(SubDeviceScheduler));
 	}
-	
+
 	inline int getDeviceSubType(int subType)
 	{
 		return _subDeviceSchedulers[subType].getDeviceSubType();
 	}
-	
+
 	inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
 	{
 		int subType = task->getDeviceSubType();
 		_subDeviceSchedulers[subType].addReadyTask(task, computePlace, hint);
 	}
-	
+
 	Task *getReadyTask(ComputePlace *computePlace)
 	{
 		int subType = ((DeviceComputePlace *)computePlace)->getSubType();
 		return _subDeviceSchedulers[subType].getReadyTask(computePlace);
 	}
-	
+
 	inline std::string getName() const
 	{
 		return "FPGADeviceScheduler";

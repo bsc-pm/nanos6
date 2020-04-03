@@ -16,13 +16,11 @@
 class SubDeviceScheduler : public DeviceScheduler {
 	size_t _totalSubDevices;
 	int _deviceSubType;
-	std::vector<ComputePlace *> _cpuToSubDevice;
 
 public:
 	SubDeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType, int deviceSubType) :
 		DeviceScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, deviceType),
-		_deviceSubType(deviceSubType),
-		_cpuToSubDevice(_totalComputePlaces, nullptr)
+		_deviceSubType(deviceSubType)
 	{
 		DeviceInfoImplementation *deviceInfo = static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(deviceType));
 		assert(deviceInfo != nullptr);

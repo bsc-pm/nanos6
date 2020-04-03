@@ -75,7 +75,7 @@ public:
 #endif
 			return _hostScheduler->getReadyTask(computePlace);
 		} else {
-			assert(computePlace->getType() != nanos6_cluster_device);
+			assert(computePlaceType != nanos6_cluster_device);
 			return _deviceSchedulers[computePlaceType]->getReadyTask(computePlace);
 		}
 	}
@@ -86,7 +86,6 @@ public:
 	virtual bool hasAvailableWork(ComputePlace *computePlace)
 	{
 		assert(computePlace != nullptr);
-		assert(computePlace->getType() == nanos6_host_device);
 		nanos6_device_t computePlaceType = computePlace->getType();
 
 		if (computePlaceType == nanos6_host_device) {
@@ -103,7 +102,7 @@ public:
 #endif
 			return _hostScheduler->hasAvailableWork(computePlace);
 		} else {
-			assert(computePlace->getType() != nanos6_cluster_device);
+			assert(computePlaceType != nanos6_cluster_device);
 			return _deviceSchedulers[computePlaceType]->hasAvailableWork(computePlace);
 		}
 	}

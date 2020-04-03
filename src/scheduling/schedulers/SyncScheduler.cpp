@@ -10,20 +10,9 @@
 
 Task *SyncScheduler::getTask(ComputePlace *computePlace)
 {
-	Task *task = nullptr;
-
-	// Special case for device polling services that get ready tasks
-	if (computePlace == nullptr) {
-		_lock.lock();
-		// Move all tasks from addQueues to the ready queue
-		processReadyTasks();
-		task = _scheduler->getReadyTask(computePlace);
-		_lock.unsubscribe();
-		assert(task == nullptr || task->isRunnable());
-		return task;
-	}
-
 	assert(computePlace != nullptr);
+
+	Task *task = nullptr;
 
 	uint64_t const currentComputePlaceIndex = computePlace->getIndex();
 
@@ -43,10 +32,8 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// Serve all the subscribers, while there is work to give them
 	while (_lock.popWaitingCPU(i, waitingComputePlaceIndex)) {
-#ifndef NDEBUG
-		size_t numCPUs = CPUManager::getTotalCPUs();
-		assert(waitingComputePlaceIndex < numCPUs);
-#endif
+		assert(waitingComputePlaceIndex < _totalComputePlaces);
+
 		ComputePlace *resultComputePlace = getComputePlace(_deviceType, waitingComputePlaceIndex);
 		assert(resultComputePlace != nullptr);
 

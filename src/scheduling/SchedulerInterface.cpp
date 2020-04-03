@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifdef HAVE_CONFIG_H
@@ -19,22 +19,22 @@ SchedulerInterface::SchedulerInterface()
 	const EnvironmentVariable<std::string> schedulingPolicy("NANOS6_SCHEDULING_POLICY", "fifo");
 	RuntimeInfo::addEntry("schedulingPolicy", "SchedulingPolicy", schedulingPolicy.getValue());
 	SchedulingPolicy policy = (schedulingPolicy.getValue() == "LIFO" || schedulingPolicy.getValue() == "lifo") ? LIFO_POLICY : FIFO_POLICY;
-	
+
 	const EnvironmentVariable<bool> enableImmediateSuccessor("NANOS6_IMMEDIATE_SUCCESSOR", "1");
 	const EnvironmentVariable<bool> enablePriority("NANOS6_PRIORITY", "1");
-	
-	size_t totalCPUs = CPUManager::getTotalCPUs();
-	_hostScheduler = SchedulerGenerator::createHostScheduler(totalCPUs, policy, enablePriority, enableImmediateSuccessor);
-	
+
+	size_t computePlaceCount;
+	computePlaceCount = CPUManager::getTotalCPUs();
+	_hostScheduler = SchedulerGenerator::createHostScheduler(computePlaceCount, policy, enablePriority, enableImmediateSuccessor);
+
 	size_t totalDevices = (nanos6_device_t::nanos6_device_type_num);
-	
+
 	assert(_deviceSchedulers != nullptr);
-	
+
 	for (size_t i = 0; i < totalDevices; i++) {
 		_deviceSchedulers[i] = nullptr;
 	}
-	
-	__attribute__((unused)) size_t computePlaceCount;
+
 #if USE_CUDA
 	computePlaceCount = HardwareInfo::getComputePlaceCount(nanos6_cuda_device);
 	_deviceSchedulers[nanos6_cuda_device] = SchedulerGenerator::createDeviceScheduler(computePlaceCount, policy, enablePriority, enableImmediateSuccessor, nanos6_cuda_device);

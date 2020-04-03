@@ -90,6 +90,7 @@ public:
 
 	ComputePlace *getComputePlace(int index)
 	{
+		assert(index < _cudaDeps.size());
 		return (ComputePlace *) _cudaDeps[index].first;
 	}
 

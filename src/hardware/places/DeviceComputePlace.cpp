@@ -88,12 +88,6 @@ int DeviceComputePlace::pollingFinishTasks(DeviceFunctionsInterface *functions)
 
 int DeviceComputePlace::pollingRun(DeviceComputePlace *deviceComputePlace)
 {
-	CPU *cpu = nullptr;
-	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	if (currentThread != nullptr) {
-		cpu = currentThread->getComputePlace();
-	}
-
 	int i = 0;
 	while (deviceComputePlace->canRunTask()) {
 		if (i++ > deviceComputePlace->getMaxRunningTasks())
