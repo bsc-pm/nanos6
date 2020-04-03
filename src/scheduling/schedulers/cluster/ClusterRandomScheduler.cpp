@@ -24,7 +24,7 @@ void ClusterRandomScheduler::addReadyTask(Task *task, ComputePlace *computePlace
 		SchedulerInterface::addReadyTask(task, computePlace, hint);
 		return;
 	}
-	
+
 	bool canBeOffloaded = true;
 	DataAccessRegistration::processAllDataAccesses(task,
 		[&](DataAccessRegion region, DataAccessType, bool,
@@ -33,32 +33,32 @@ void ClusterRandomScheduler::addReadyTask(Task *task, ComputePlace *computePlace
 				canBeOffloaded = false;
 				return false;
 			}
-			
+
 			return true;
 		}
 	);
-	
+
 	if (!canBeOffloaded) {
 		SchedulerInterface::addReadyTask(task, computePlace, hint);
 		return;
 	}
-	
+
 	std::random_device rd;
 	std::mt19937 eng(rd());
 	std::uniform_int_distribution<> distr(0, _clusterSize - 1);
-	
+
 	ClusterNode *targetNode = ClusterManager::getClusterNode(distr(eng));
 	assert(targetNode != nullptr);
-	
+
 	if (targetNode == _thisNode) {
 		//! Execute task locally
 		SchedulerInterface::addReadyTask(task, computePlace, hint);
 		return;
 	}
-	
+
 	ClusterMemoryNode *memoryNode = targetNode->getMemoryNode();
 	assert(memoryNode != nullptr);
-	
+
 	//! Offload task
 	ExecutionWorkflow::executeTask(task, targetNode, memoryNode);
 }

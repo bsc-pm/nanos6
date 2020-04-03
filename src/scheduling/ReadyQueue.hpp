@@ -27,26 +27,26 @@ enum ReadyTaskHint {
 class ReadyQueue {
 protected:
 	SchedulingPolicy _policy;
-	
+
 public:
 	ReadyQueue(SchedulingPolicy policy)
 		: _policy(policy)
 	{}
-	
+
 	virtual ~ReadyQueue()
 	{}
-	
+
 	//! \brief Add a (ready) task that has been created or freed
 	//!
 	//! \param[in] task the task to be added
 	//! \param[in] unblocked whether it is an unblocked task or not
 	virtual void addReadyTask(Task *task, bool unblocked) = 0;
-	
+
 	//! \brief Get a ready task for execution
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
-	
+
 	virtual size_t getNumReadyTasks() const = 0;
 };
 

@@ -18,7 +18,7 @@ struct TaskSchedulingInfo {
 	Task *_task;
 	ComputePlace *_computePlace;
 	ReadyTaskHint _hint;
-	
+
 	TaskSchedulingInfo(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
 		:  _task(task), _computePlace(computePlace), _hint(hint)
 	{

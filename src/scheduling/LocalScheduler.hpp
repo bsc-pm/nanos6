@@ -13,7 +13,7 @@ class LocalScheduler : public SchedulerInterface {
 public:
 	~LocalScheduler()
 	{}
-	
+
 	inline std::string getName() const
 	{
 		return "LocalScheduler";

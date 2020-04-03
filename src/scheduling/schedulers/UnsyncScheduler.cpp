@@ -17,7 +17,7 @@ UnsyncScheduler::UnsyncScheduler(SchedulingPolicy policy, bool enablePriority, b
 	} else {
 		_readyTasks = new ReadyQueueDeque(policy);
 	}
-	
+
 	if (enableImmediateSuccessor) {
 		_immediateSuccessorTasks = std::vector<Task *>(CPUManager::getTotalCPUs(), nullptr);
 	}
