@@ -83,7 +83,7 @@ public:
 		else {
 			// Distribute iterations over collaborators respecting the "alignment".
 			size_t newChunksize = std::max(totalIterations / maxCollaborators, _bounds.chunksize);
-			size_t alignedChunksize = ((newChunksize - 1)|(_bounds.chunksize - 1)) + 1;
+			size_t alignedChunksize = closestMultiple(newChunksize, _bounds.chunksize);
 			if (std::ceil((double)totalIterations / (double)alignedChunksize) < maxCollaborators) {
 				alignedChunksize = std::max(alignedChunksize - _bounds.chunksize, _bounds.chunksize);
 			}
@@ -239,6 +239,11 @@ public:
 
 private:
 	void run(Taskfor &source);
+
+	static inline size_t closestMultiple(size_t n, size_t multipleOf)
+	{
+		return ((n + multipleOf - 1) / multipleOf) * multipleOf;
+	}
 };
 
 #endif // TASKFOR_HPP
