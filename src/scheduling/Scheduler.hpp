@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SCHEDULER_HPP
@@ -33,20 +33,19 @@ public:
 		_instance->addReadyTask(task, computePlace, hint);
 	}
 
-	static inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
+	static inline Task *getReadyTask(ComputePlace *computePlace)
 	{
-		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
-		return _instance->getReadyTask(computePlace, deviceComputePlace);
+		assert(computePlace != nullptr);
+		return _instance->getReadyTask(computePlace);
 	}
 
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
-	//! \param[in] deviceComputePlace The target device compute place if it exists
-	static inline bool hasAvailableWork(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
+	static inline bool hasAvailableWork(ComputePlace *computePlace)
 	{
-		assert(computePlace->getType() == nanos6_host_device);
-		return _instance->hasAvailableWork(computePlace, deviceComputePlace);
+		assert(computePlace != nullptr);
+		return _instance->hasAvailableWork(computePlace);
 	}
 
 	//! \brief Notify the scheduler that a CPU is about to be disabled

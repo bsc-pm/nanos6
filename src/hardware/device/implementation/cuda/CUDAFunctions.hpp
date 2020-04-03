@@ -83,6 +83,17 @@ public:
 		}
 	}
 
+	size_t getComputePlaceCount()
+	{
+		return _cudaDeps.size();
+	}
+
+	ComputePlace *getComputePlace(int index)
+	{
+		assert(index < _cudaDeps.size());
+		return (ComputePlace *) _cudaDeps[index].first;
+	}
+
 	CUDA_DEVICE_DEP *getDeps(void *ptr)
 	{
 		for (auto p : _cudaDeps) {

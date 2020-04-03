@@ -20,7 +20,7 @@ void Scheduler::initialize()
 	} else {
 		_instance = new LocalScheduler();
 	}
-	
+
 	assert(_instance != nullptr);
 	RuntimeInfo::addEntry("scheduler", "Scheduler", _instance->getName());
 }

@@ -15,10 +15,10 @@
 class ClusterLocalityScheduler : public SchedulerInterface {
 	//! Current cluster node
 	ClusterNode *_thisNode;
-	
+
 	//! Number of cluster nodes
 	int _clusterSize;
-	
+
 public:
 	ClusterLocalityScheduler()
 	{
@@ -26,14 +26,14 @@ public:
 		_thisNode = ClusterManager::getCurrentClusterNode();
 		_clusterSize = ClusterManager::clusterSize();
 	}
-	
+
 	~ClusterLocalityScheduler()
 	{
 	}
-	
+
 	void addReadyTask(Task *task, ComputePlace *computePlace,
 			ReadyTaskHint hint = NO_HINT);
-	
+
 	inline std::string getName() const
 	{
 		return "ClusterLocalityScheduler";

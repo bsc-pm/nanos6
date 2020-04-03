@@ -27,7 +27,7 @@ void ClusterLocalityScheduler::addReadyTask(Task *task, ComputePlace *computePla
 		SchedulerInterface::addReadyTask(task, computePlace, hint);
 		return;
 	}
-	
+
 	std::vector<size_t> bytes(_clusterSize, 0);
 	bool canBeOffloaded = true;
 	DataAccessRegistration::processAllDataAccesses(task,
@@ -37,31 +37,31 @@ void ClusterLocalityScheduler::addReadyTask(Task *task, ComputePlace *computePla
 				assert(isWeak);
 				location = Directory::getDirectoryMemoryPlace();
 			}
-			
+
 			if (!VirtualMemoryManagement::isClusterMemory(region)) {
 				canBeOffloaded = false;
 				return false;
 			}
-			
+
 			if (Directory::isDirectoryMemoryPlace(location)) {
 				Directory::HomeNodesArray *homeNodes =
 					Directory::find(region);
-				
+
 				for (const auto &entry : *homeNodes) {
 					location = entry->getHomeNode();
-					
+
 					size_t nodeId;
 					if (location->getType() == nanos6_host_device) {
 						nodeId = _thisNode->getIndex();
 					} else {
 						nodeId = location->getIndex();
 					}
-					
+
 					DataAccessRegion subregion =
 						region.intersect(entry->getAccessRegion());
 					bytes[nodeId] += subregion.getSize();
 				}
-				
+
 				delete homeNodes;
 			} else {
 				size_t nodeId;
@@ -70,30 +70,30 @@ void ClusterLocalityScheduler::addReadyTask(Task *task, ComputePlace *computePla
 				} else {
 					nodeId = location->getIndex();
 				}
-				
+
 				bytes[nodeId] += region.getSize();
 			}
-			
+
 			return true;
 		}
 	);
-	
+
 	if (!canBeOffloaded) {
 		SchedulerInterface::addReadyTask(task, computePlace, hint);
 		return;
 	}
-	
+
 	assert(!bytes.empty());
 	std::vector<size_t>::iterator it = bytes.begin();
 	size_t nodeId = std::distance(it, std::max_element(it, it + _clusterSize));
-	
+
 	ClusterNode *targetNode = ClusterManager::getClusterNode(nodeId);
 	assert(targetNode != nullptr);
 	if (targetNode == _thisNode) {
 		SchedulerInterface::addReadyTask(task, computePlace, hint);
 		return;
 	}
-	
+
 	ClusterMemoryNode *memoryNode = targetNode->getMemoryNode();
 	assert(memoryNode != nullptr);
 	ExecutionWorkflow::executeTask(task, targetNode, memoryNode);

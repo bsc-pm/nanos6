@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CLUSTER_SCHEDULER_HPP
@@ -18,12 +18,12 @@
 
 class ClusterScheduler : public SchedulerInterface {
 	SchedulerInterface *_clusterSchedulerImplementation;
-	
+
 public:
 	ClusterScheduler()
 	{
 		EnvironmentVariable<std::string> clusterSchedulerName("NANOS6_CLUSTER_SCHEDULING_POLICY", "locality");
-		
+
 		if (clusterSchedulerName.getValue() == "random") {
 			_clusterSchedulerImplementation = new ClusterRandomScheduler();
 		} else if (clusterSchedulerName.getValue() == "locality") {
@@ -33,32 +33,31 @@ public:
 			_clusterSchedulerImplementation = new ClusterLocalityScheduler();
 		}
 	}
-	
+
 	~ClusterScheduler()
 	{
 		delete _clusterSchedulerImplementation;
 	}
-	
+
 	inline void addReadyTask(Task *task, ComputePlace *computePlace,
 			ReadyTaskHint hint = NO_HINT)
 	{
 		_clusterSchedulerImplementation->addReadyTask(task, computePlace, hint);
 	}
-	
-	inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
+
+	inline Task *getReadyTask(ComputePlace *computePlace)
 	{
-		return _clusterSchedulerImplementation->getReadyTask(computePlace, deviceComputePlace);
+		return _clusterSchedulerImplementation->getReadyTask(computePlace);
 	}
-	
+
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
-	//! \param[in] deviceComputePlace The target device compute place if it exists
-	inline bool hasAvailableWork(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr) const
+	inline bool hasAvailableWork(ComputePlace *computePlace) const
 	{
-		return _clusterSchedulerImplementation->hasAvailableWork(computePlace, deviceComputePlace);
+		return _clusterSchedulerImplementation->hasAvailableWork(computePlace);
 	}
-	
+
 	inline std::string getName() const
 	{
 		return _clusterSchedulerImplementation->getName();

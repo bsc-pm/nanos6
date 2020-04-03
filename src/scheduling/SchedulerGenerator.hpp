@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SCHEDULER_GENERATOR_HPP
@@ -16,8 +16,8 @@ class HostScheduler;
 
 class SchedulerGenerator {
 public:
-	static HostScheduler *createHostScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor);
-	static DeviceScheduler *createDeviceScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType);
+	static HostScheduler *createHostScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor);
+	static DeviceScheduler *createDeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType);
 };
 
 

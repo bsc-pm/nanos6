@@ -55,10 +55,10 @@ public:
 		}
 	}
 
-	virtual inline Task *getReadyTask(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
+	virtual inline Task *getReadyTask(ComputePlace *computePlace)
 	{
-		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
-		nanos6_device_t computePlaceType = (deviceComputePlace == nullptr) ? nanos6_host_device : deviceComputePlace->getType();
+		assert(computePlace != nullptr);
+		nanos6_device_t computePlaceType = computePlace->getType();
 
 		if (computePlaceType == nanos6_host_device) {
 #ifdef EXTRAE_ENABLED
@@ -75,21 +75,18 @@ public:
 #endif
 			return _hostScheduler->getReadyTask(computePlace);
 		} else {
-			assert(deviceComputePlace->getType() != nanos6_cluster_device);
-			return _deviceSchedulers[computePlaceType]->getReadyTask(computePlace, deviceComputePlace);
+			assert(computePlaceType != nanos6_cluster_device);
+			return _deviceSchedulers[computePlaceType]->getReadyTask(computePlace);
 		}
 	}
 
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
-	//! \param[in] deviceComputePlace The target device compute place if it exists
-	virtual bool hasAvailableWork(ComputePlace *computePlace, ComputePlace *deviceComputePlace = nullptr)
+	virtual bool hasAvailableWork(ComputePlace *computePlace)
 	{
 		assert(computePlace != nullptr);
-		assert(computePlace->getType() == nanos6_host_device);
-		nanos6_device_t computePlaceType = (deviceComputePlace == nullptr) ?
-			nanos6_host_device : deviceComputePlace->getType();
+		nanos6_device_t computePlaceType = computePlace->getType();
 
 		if (computePlaceType == nanos6_host_device) {
 #ifdef EXTRAE_ENABLED
@@ -105,8 +102,8 @@ public:
 #endif
 			return _hostScheduler->hasAvailableWork(computePlace);
 		} else {
-			assert(deviceComputePlace->getType() != nanos6_cluster_device);
-			return _deviceSchedulers[computePlaceType]->hasAvailableWork(deviceComputePlace);
+			assert(computePlaceType != nanos6_cluster_device);
+			return _deviceSchedulers[computePlaceType]->hasAvailableWork(computePlace);
 		}
 	}
 

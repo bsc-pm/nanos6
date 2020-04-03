@@ -15,10 +15,10 @@
 class ClusterRandomScheduler : public SchedulerInterface {
 	//! Current cluster node
 	ClusterNode *_thisNode;
-	
+
 	//! Number of cluster nodes
 	int _clusterSize;
-	
+
 public:
 	ClusterRandomScheduler()
 	{
@@ -26,14 +26,14 @@ public:
 		_thisNode = ClusterManager::getCurrentClusterNode();
 		_clusterSize = ClusterManager::clusterSize();
 	}
-	
+
 	~ClusterRandomScheduler()
 	{
 	}
-	
+
 	void addReadyTask(Task *task, ComputePlace *computePlace,
 			ReadyTaskHint hint = NO_HINT);
-	
+
 	inline std::string getName() const
 	{
 		return "ClusterRandomScheduler";

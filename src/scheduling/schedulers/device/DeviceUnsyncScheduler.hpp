@@ -14,17 +14,17 @@ public:
 	DeviceUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
 		: UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
 	{}
-	
+
 	virtual ~DeviceUnsyncScheduler()
 	{}
-	
+
 	//! \brief Get a ready task for execution
 	//!
 	//! \param[in] computePlace the hardware place asking for scheduling orders
 	//!
 	//! \returns a ready task or nullptr
 	Task *getReadyTask(ComputePlace *computePlace);
-	
+
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
