@@ -40,7 +40,7 @@ namespace Instrument {
 		}
 	};
 
-	static uint16_t getNewTaskTypeId() {
+	static inline uint16_t getNewTaskTypeId() {
 		return _nextTaskTypeId++;
 	}
 }

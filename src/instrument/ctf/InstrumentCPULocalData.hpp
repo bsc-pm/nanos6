@@ -26,7 +26,7 @@ namespace Instrument {
 		uint64_t mask;
 		uint64_t lost;
 		uint64_t threshold;
-		uint32_t cpuId;
+		uint16_t cpuId;
 
 		int fdOutput;
 		off_t fileOffset;

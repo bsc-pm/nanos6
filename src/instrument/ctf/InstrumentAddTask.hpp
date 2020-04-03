@@ -16,18 +16,8 @@
 
 namespace Instrument {
 
-	inline task_id_t enterAddTask(
-		nanos6_task_info_t *taskInfo,
-		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
-		__attribute__((unused)) size_t flags,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-		uint32_t taskId;
-		uint16_t taskTypeId;
-
-		nanos6_task_info_t *key = taskInfo;
-		task_id_t task_id(true);
-		taskId = task_id._taskId;
+	inline ctf_task_type_id_t getTaskTypeID(nanos6_task_info_t *key) {
+		ctf_task_type_id_t taskTypeId;
 
 		globalTaskLabelLock.lock();
 
@@ -42,11 +32,30 @@ namespace Instrument {
 			// if not exist, request a new taskTypeId and install it
 			taskTypeId = getNewTaskTypeId();
 			globalIter->second = taskTypeId;
-			const char *taskLabel = key->implementations[0].task_label;
+			char *taskLabel = (char *) key->implementations[0].task_label;
+			if (taskLabel == nullptr)
+				taskLabel = "unknown";
 			CTFAPI::tp_task_label(taskLabel, taskTypeId);
 		}
 
 		globalTaskLabelLock.unlock();
+
+		return taskTypeId;
+	}
+
+	inline task_id_t enterAddTask(
+		nanos6_task_info_t *taskInfo,
+		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
+		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		ctf_task_id_t taskId;
+		ctf_task_type_id_t taskTypeId;
+
+		nanos6_task_info_t *key = taskInfo;
+		task_id_t task_id(true);
+		taskId = task_id._taskId;
+		taskTypeId = getTaskTypeID(key);
 
 		CTFAPI::tp_task_add(taskTypeId, taskId);
 
@@ -116,8 +125,6 @@ namespace Instrument {
 		//}
 		//CTFAPI::tp_task_add(typeTypeId, taskId);
 
-		// TODO destroy CTF::TaskInfo somewhere
-		// TODO actually, do I really need an "new" object here?
 		return task_id;
 	}
 
@@ -144,13 +151,22 @@ namespace Instrument {
 	}
 
 	inline task_id_t enterAddTaskforCollaborator(
-		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) nanos6_task_info_t *taskInfo,
+		task_id_t taskforId,
+		nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		return task_id_t();
+		ctf_task_id_t taskId;
+		ctf_task_type_id_t taskTypeId;
+
+		nanos6_task_info_t *key = taskInfo;
+		task_id_t task_id(true);
+		taskId = task_id._taskId;
+		taskTypeId = getTaskTypeID(key);
+		CTFAPI::tp_task_add(taskTypeId, taskId);
+
+		return task_id;
 	}
 
 	inline void exitAddTaskforCollaborator(

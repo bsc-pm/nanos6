@@ -52,9 +52,9 @@ namespace Instrument {
 	void initialize()
 	{
 		bool ret;
-		uint64_t i;
-		uint64_t totalCPUs;
-		uint32_t cpuId;
+		uint16_t i;
+		uint16_t totalCPUs;
+		uint16_t cpuId;
 		struct timespec tp;
 		const size_t defaultSize = 4096;
 		const uint64_t ns = 1000000000ULL;
@@ -75,7 +75,7 @@ namespace Instrument {
 		tracePath = "./trace-ctf-nanos6";
 		createTraceDirectories(tracePath, userPath, kernelPath);
 
-		totalCPUs = (uint64_t) CPUManager::getTotalCPUs();
+		totalCPUs = (uint16_t) CPUManager::getTotalCPUs();
 		CTFAPI::core::totalCPUs = totalCPUs;
 
 		CTFAPI::writeUserMetadata(userPath);
@@ -115,12 +115,12 @@ namespace Instrument {
 
 	void shutdown()
 	{
-		uint64_t i;
-		uint64_t totalCPUs;
+		uint16_t i;
+		uint16_t totalCPUs;
 
 		CTFAPI::greetings();
 
-		totalCPUs = (uint64_t) CPUManager::getTotalCPUs();
+		totalCPUs = (uint16_t) CPUManager::getTotalCPUs();
 
 		for (i = 0; i < totalCPUs; i++) {
 			CPU *CPU = CPUManager::getCPU(i);

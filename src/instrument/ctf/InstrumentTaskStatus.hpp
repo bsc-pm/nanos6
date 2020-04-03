@@ -28,7 +28,7 @@ namespace Instrument {
 		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		CTFAPI::tp_task_execute(static_cast<uint32_t>(taskId._taskId));
+		CTFAPI::tp_task_execute(static_cast<ctf_task_id_t>(taskId._taskId));
 	}
 	
 	inline void taskIsBlocked(
@@ -36,7 +36,7 @@ namespace Instrument {
 		__attribute__((unused)) task_blocking_reason_t reason,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		CTFAPI::tp_task_block(static_cast<uint32_t>(taskId._taskId));
+		CTFAPI::tp_task_block(static_cast<ctf_task_id_t>(taskId._taskId));
 	}
 	
 	inline void taskIsZombie(
@@ -60,9 +60,10 @@ namespace Instrument {
 	
 	inline void taskforCollaboratorIsExecuting(
 		__attribute__((unused)) task_id_t taskforId,
-		__attribute__((unused)) task_id_t collaboratorId,
+		task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		CTFAPI::tp_task_execute(static_cast<ctf_task_id_t>(collaboratorId._taskId));
 	}
 	
 	inline void taskforCollaboratorStopped(

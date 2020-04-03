@@ -575,6 +575,7 @@ instrument_ctf_sources = \
 	src/instrument/ctf/CTFAPI.cpp \
 	src/instrument/ctf/InstrumentTaskId.cpp \
 	src/instrument/ctf/InstrumentCPULocalData.cpp \
+	src/instrument/ctf/InstrumentComputePlaceManagement.cpp \
 	src/instrument/support/InstrumentCPULocalDataSupport.cpp
 
 instrument_generic_ids_sources = \
@@ -636,6 +637,7 @@ instrument_extrae_sources = \
 	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
 dist_instrument_sources = \
+	$(instrument_ctf_sources) \
 	$(instrument_extrae_sources) \
 	$(instrument_graph_sources) \
 	$(instrument_lint_sources) \
@@ -904,6 +906,34 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentTracingPoints.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
+	src/instrument/ctf/CTFAPI.hpp \
+	src/instrument/ctf/InstrumentAddTask.hpp \
+	src/instrument/ctf/InstrumentBlocking.hpp \
+	src/instrument/ctf/InstrumentComputePlaceId.hpp \
+	src/instrument/ctf/InstrumentComputePlaceManagement.hpp \
+	src/instrument/ctf/InstrumentCPULocalData.hpp \
+	src/instrument/ctf/InstrumentDataAccessId.hpp \
+	src/instrument/ctf/InstrumentDependenciesByAccess.hpp \
+	src/instrument/ctf/InstrumentDependenciesByAccessLinks.hpp \
+	src/instrument/ctf/InstrumentDependenciesByGroup.hpp \
+	src/instrument/ctf/InstrumentExternalThreadId.hpp \
+	src/instrument/ctf/InstrumentExternalThreadLocalData.hpp \
+	src/instrument/ctf/InstrumentInitAndShutdown.hpp \
+	src/instrument/ctf/InstrumentInstrumentationContext.hpp \
+	src/instrument/ctf/InstrumentLeaderThread.hpp \
+	src/instrument/ctf/InstrumentLogMessage.hpp \
+	src/instrument/ctf/InstrumentReductions.hpp \
+	src/instrument/ctf/InstrumentTaskExecution.hpp \
+	src/instrument/ctf/InstrumentTaskId.hpp \
+	src/instrument/ctf/InstrumentTaskStatus.hpp \
+	src/instrument/ctf/InstrumentTaskWait.hpp \
+	src/instrument/ctf/InstrumentThreadId.hpp \
+	src/instrument/ctf/InstrumentThreadInstrumentationContext.hpp \
+	src/instrument/ctf/InstrumentThreadLocalData.hpp \
+	src/instrument/ctf/InstrumentThreadManagement.hpp \
+	src/instrument/ctf/InstrumentTracingPointTypes.hpp\
+	src/instrument/ctf/InstrumentTracingPoints.hpp \
+	src/instrument/ctf/InstrumentUserMutex.hpp \
 	src/instrument/extrae/ExtraeSymbolLiterals.hpp \
 	src/instrument/extrae/ExtraeSymbolResolver.hpp \
 	src/instrument/extrae/InstrumentAddTask.hpp \
@@ -1258,33 +1288,32 @@ nodist_libnanos6_optimized_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
+
 libnanos6_ctf_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
 libnanos6_ctf_linear_regions_fragmented_la_CXXFLAGS = $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
 libnanos6_ctf_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags)
-libnanos6_ctf_linear_regions_fragmented_la_SOURCES =
 nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_CTF_INSTRUMENTATION_VARIANT
 enabled_variants += ctf
-libnanos6_ctf_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_ctf_sources) $(universal_debug_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
-nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_ctf_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources)
 else
 disabled_variants += ctf
-libnanos6_ctf_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
 libnanos6_ctf_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
 libnanos6_ctf_discrete_la_CXXFLAGS = $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_ctf_discrete_la_LDFLAGS = $(common_libnanos6_ldflags)
-libnanos6_ctf_discrete_la_SOURCES =
 nodist_libnanos6_ctf_discrete_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
 if BUILD_CTF_INSTRUMENTATION_VARIANT
-libnanos6_ctf_discrete_la_SOURCES += $(common_sources) $(instrument_ctf_sources) $(universal_debug_sources) $(memory_default_sources) $(discrete_dependency_sources)
-nodist_libnanos6_ctf_discrete_la_SOURCES += $(nodist_common_sources) $(nodist_universal_debug_sources)
+nodist_libnanos6_ctf_discrete_la_SOURCES += $(common_sources) $(instrument_ctf_sources) $(memory_default_sources) $(discrete_dependency_sources)
+nodist_libnanos6_ctf_discrete_la_SOURCES += $(nodist_common_sources)
 else
-libnanos6_ctf_discrete_la_SOURCES += loader/disabled_variant.c
+nodist_libnanos6_ctf_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 

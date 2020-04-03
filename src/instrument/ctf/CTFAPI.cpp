@@ -224,7 +224,7 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"stream {\n"
 	"	id = 0;\n"
 	"	packet.context := struct {\n"
-	"		uint32_t cpu_id;\n"
+	"		uint16_t cpu_id;\n"
 	"	};\n"
 	"	event.header := struct {\n"
 	"		uint8_t id;\n"
@@ -278,6 +278,24 @@ static const char *userMetadata = "/* CTF 1.8 */\n"
 	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	"	};\n"
 	"};\n"
+	"\n"
+	"event {\n"
+	"	name = \"nanos6:cpu_idle\";\n"
+	"	id = " xstr(TP_NANOS6_CPU_IDLE) ";\n"
+	"	stream_id = 0;\n"
+	"	fields := struct {\n"
+	"		integer { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
+	"	};\n"
+	"};\n"
+	"\n"
+	"event {\n"
+	"	name = \"nanos6:cpu_resume\";\n"
+	"	id = " xstr(TP_NANOS6_CPU_RESUME) ";\n"
+	"	stream_id = 0;\n"
+	"	fields := struct {\n"
+	"		integer { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
+	"	};\n"
+	"};\n"
 	"\n";
 
 uint64_t CTFAPI::core::absoluteStartTime;
@@ -304,10 +322,10 @@ static int mk_packet_header(char *buf, uint64_t *head)
 	return 0;
 }
 
-static int mk_packet_context(char *buf, size_t *head, uint32_t cpu_id)
+static int mk_packet_context(char *buf, size_t *head, uint16_t cpu_id)
 {
 	struct __attribute__((__packed__)) packet_context {
-		uint32_t cpu_id;
+		uint16_t cpu_id;
 	};
 
 	const int pks = sizeof(struct packet_context);

@@ -37,8 +37,9 @@ namespace Instrument {
 	{
 	}
 
-	inline void endTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute((unused)) bool last, __attribute__((unused)) InstrumentationContext const &context)
+	inline void endTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, task_id_t collaboratorId, __attribute((unused)) bool last, __attribute__((unused)) InstrumentationContext const &context)
 	{
+		CTFAPI::tp_task_end(collaboratorId._taskId);
 	}
 }
 
