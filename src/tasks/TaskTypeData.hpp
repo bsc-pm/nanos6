@@ -12,10 +12,26 @@
 //! instrumentation parameters, etc.)
 class TaskTypeData {
 
+private:
+
+	//! This task type's identifier
+	short _id;
+
 public:
 
-	inline TaskTypeData()
+	inline TaskTypeData(short id) :
+		_id(id)
 	{
+	}
+
+	inline void setId(short id)
+	{
+		_id = id;
+	}
+
+	inline short getId() const
+	{
+		return _id;
 	}
 
 };

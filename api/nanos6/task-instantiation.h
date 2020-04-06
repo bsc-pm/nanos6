@@ -152,9 +152,6 @@ typedef struct __attribute__((aligned(64)))
 	//! \param[in] size the size (in Bytes) of the data to be combined
 	void (**reduction_combiners)(void *oss_out, void *oss_in, size_t size);
 
-	//! \brief A number that identifies this type of task
-	short task_type_id;
-
 	//! \brief A pointer to data structures related to this type of task
 	void *task_type_data;
 } nanos6_task_info_t;

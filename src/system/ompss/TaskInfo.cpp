@@ -30,14 +30,14 @@ void TaskInfo::registerTaskInfo(nanos6_task_info_t *taskInfo)
 	if (duplicated) {
 		assert(duplicateTaskInfo != nullptr);
 
-		// If it's a duplicate, copy the identifier and data pointer
-		taskInfo->task_type_id = duplicateTaskInfo->task_type_id;
+		// If it's a duplicate, copy the data pointer
 		taskInfo->task_type_data = duplicateTaskInfo->task_type_data;
 	} else {
 		// This is a new type of task, get a new id and create strucutres
-		taskInfo->task_type_id = currentId;
-		taskInfo->task_type_data = new TaskTypeData();
-		assert(taskInfo->task_type_data != nullptr);
+		TaskTypeData *taskTypeData = new TaskTypeData(currentId);
+		assert(taskTypeData != nullptr);
+
+		taskInfo->task_type_data = taskTypeData;
 	}
 }
 
