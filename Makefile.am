@@ -1132,14 +1132,14 @@ noinst_HEADERS = \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/UserMutex.hpp \
+	src/tasks/LoopGenerator.hpp \
 	src/tasks/StreamExecutor.hpp \
 	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
+	src/tasks/TaskImplementation.hpp \
 	src/tasks/Taskfor.hpp \
 	src/tasks/Taskloop.hpp \
-	src/tasks/LoopGenerator.hpp \
-	src/tasks/TaskImplementation.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \
