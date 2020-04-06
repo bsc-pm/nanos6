@@ -8,6 +8,7 @@
 #define TASK_INFO_HPP
 
 #include <atomic>
+#include <cstring>
 #include <vector>
 
 #include <nanos6/task-info-registration.h>
@@ -34,9 +35,30 @@ private:
 	//! in this parameter
 	static inline bool isDuplicated(
 		nanos6_task_info_t *taskInfo,
-		nanos6_task_info_t *duplicateTaskInfo
+		nanos6_task_info_t *&duplicateTaskInfo
 	) {
-		// No duplicates for now
+		assert(taskInfo != nullptr);
+		assert(taskInfo->implementations != nullptr);
+
+		for (short i = 0; i < _nextId.load(); ++i) {
+			assert(_taskInfos[i] != nullptr);
+			assert(_taskInfos[i]->implementations != nullptr);
+
+			// If the declaration sources are the same, this is a duplicated taskinfo
+			char const *declarationSource = _taskInfos[i]->implementations->declaration_source;
+			if (strcmp(declarationSource, taskInfo->implementations->declaration_source) == 0) {
+				duplicateTaskInfo = _taskInfos[i];
+				return true;
+			}
+
+			// If users specify identical task labels, we consider they are the same tasktype
+			char const *label = _taskInfos[i]->implementations->task_label;
+			if (strcmp(label, taskInfo->implementations->task_label) == 0) {
+				duplicateTaskInfo = _taskInfos[i];
+				return true;
+			}
+		}
+
 		return false;
 	}
 
