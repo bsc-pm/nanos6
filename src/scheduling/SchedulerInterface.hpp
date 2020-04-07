@@ -63,7 +63,7 @@ public:
 		if (computePlaceType == nanos6_host_device) {
 #ifdef EXTRAE_ENABLED
 			Task *result = nullptr;
-			if (CPUManager::isFirstCPU(((CPU *) computePlace)->getSystemCPUId())) {
+			if (CPUManager::isFirstCPU(computePlace->getIndex())) {
 				if (_mainTask != nullptr) {
 					result = _mainTask;
 					bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
@@ -90,7 +90,7 @@ public:
 
 		if (computePlaceType == nanos6_host_device) {
 #ifdef EXTRAE_ENABLED
-			if (CPUManager::isFirstCPU(((CPU *) computePlace)->getSystemCPUId())) {
+			if (CPUManager::isFirstCPU(computePlace->getIndex())) {
 				if (_mainTask != nullptr) {
 					Task *result = _mainTask;
 					bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);

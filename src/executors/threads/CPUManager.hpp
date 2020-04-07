@@ -223,12 +223,12 @@ public:
 
 	//! \brief Check whether a CPU is the first CPU of this process' mask
 	//!
-	//! \param[in] systemCPUId The id of the CPU to check for
-	static inline bool isFirstCPU(size_t systemCPUId)
+	//! \param[in] index The (virtual) index of the compute place
+	static inline bool isFirstCPU(size_t index)
 	{
 		assert(_cpuManager != nullptr);
 
-		return _cpuManager->isFirstCPU(systemCPUId);
+		return _cpuManager->isFirstCPU(index);
 	}
 
 

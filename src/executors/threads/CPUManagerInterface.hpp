@@ -50,7 +50,7 @@ protected:
 	//! The chosen CPU Manager policy
 	static EnvironmentVariable<std::string> _policyChosen;
 
-	//! The system id of the first owned CPU of this process
+	//! The virtual id of the first owned CPU of this process
 	static size_t _firstCPUId;
 
 private:
@@ -194,10 +194,10 @@ public:
 
 	//! \brief Check whether a CPU is the first CPU of this process' mask
 	//!
-	//! \param[in] systemCPUId The id of the CPU to check for
-	inline bool isFirstCPU(size_t systemCPUId)
+	//! \param[in] index The (virtual) index of the compute place
+	inline bool isFirstCPU(size_t index)
 	{
-		return (systemCPUId == _firstCPUId);
+		return (index == _firstCPUId);
 	}
 
 
