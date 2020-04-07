@@ -123,7 +123,6 @@ namespace ExecutionWorkflow {
 		} else {
 			Monitoring::taskChangedStatus(_task, runtime_status);
 			Monitoring::taskCompletedUserCode(_task);
-			HardwareCounters::taskStopped(_task);
 		}
 
 		DataAccessRegistration::combineTaskReductions(_task, cpu);
