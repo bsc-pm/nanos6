@@ -331,21 +331,16 @@ Currently, Monitoring capabilities lack support for the `task for` construct.
 
 ## Hardware Counters
 
-As well as the Monitoring Infrastructure, Nanos6 offers a real-time API for Hardware Counter statistics.
-This API allows to obtain and predict hardware counters for tasks, similarly to Monitoring.
+Nanos6 offers a real-time API to obtain hardware counter statistics of tasks with various backends.
+The usage of this API is controlled through the following environment variables:
+* `NANOS6_HWCOUNTERS`: Specifies the backend to use to monitor hardware counters.
+* `NANOS6_HWCOUNTERS_VERBOSE`: Enables/disables a verbose mode for the chosen backend. In some backends, this mode ends up generating a report similar to the `stats` variant, with information about hardware counters for all the task types.
 
-By default, the NULL option is used, which records no hardware counters.
-At configure time, however, several options may be used to enable hardware counter monitoring using third party libraries.
-Enabling this API is as easy as configuring the runtime with the `enable-monitoring-hwevents` option.
+Next is a list of the backends available for this API:
+* `null`: Disable hardware counter monitoring (default option).
+* `pqos`: Use intel-cmt-cat PQoS library for hardware counter monitoring.
+* `papi`: Use the PAPI library for hardware counter monitoring (not available yet).
 
-At this moment, Nanos6 offers intel-cmt-cat or PQoS to both obtain and generate metrics and predictions.
-This library is enabled like so: `--with-pqos=prefix` where `prefix` specifies the installation path of PQoS.
-
-The Hardware Counters API is controlled further with the following environment variables:
-* `NANOS6_HARDWARE_COUNTERS_ENABLE`: To enable/disable hardware counter monitoring.
-* `NANOS6_HARDWARE_COUNTERS_VERBOSE`: To enable/disable the verbose mode for hardware counter monitoring.
-* `NANOS6_HARDWARE_COUNTERS_VERBOSE_FILE`: To specify an output file name to report hardware counter statistics.
-* `NANOS6_WISDOM_ENABLE`: To enable/disable the wisdom mechanism. Disabled by default.
 
 ## Cluster support
 
