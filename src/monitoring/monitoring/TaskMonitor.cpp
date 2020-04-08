@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "TaskMonitor.hpp"
@@ -11,36 +11,29 @@ TaskMonitor *TaskMonitor::_monitor;
 
 
 void TaskMonitor::taskCreated(
-	TaskStatistics  *parentStatistics,
-	TaskStatistics  *taskStatistics,
-	TaskPredictions *parentPredictions,
-	TaskPredictions *taskPredictions,
+	TaskStatistics *parentStatistics,
+	TaskStatistics *taskStatistics,
 	const std::string &label,
 	size_t cost
 ) {
 	assert(taskStatistics != nullptr);
-	assert(taskPredictions != nullptr);
 
 	taskStatistics->setParentStatistics(parentStatistics);
 	taskStatistics->setLabel(label);
 	taskStatistics->setCost(cost);
 	if (parentStatistics != nullptr) {
 		parentStatistics->increaseAliveChildren();
-	}
-
-	taskPredictions->setParentPredictions(parentPredictions);
-	if (parentPredictions != nullptr) {
-		taskPredictions->setAncestorHasPrediction(
-			parentPredictions->hasPrediction() ||
-			parentPredictions->ancestorHasPrediction()
+		taskStatistics->setAncestorHasPrediction(
+			parentStatistics->hasPrediction() ||
+			parentStatistics->ancestorHasPrediction()
 		);
 	}
 }
 
-void TaskMonitor::predictTime(TaskPredictions *taskPredictions, const std::string &label, size_t cost)
+void TaskMonitor::predictTime(TaskStatistics *taskStatistics, const std::string &label, size_t cost)
 {
 	assert(_monitor != nullptr);
-	assert(taskPredictions != nullptr);
+	assert(taskStatistics != nullptr);
 
 	TasktypePredictions *predictions = nullptr;
 
@@ -62,12 +55,12 @@ void TaskMonitor::predictTime(TaskPredictions *taskPredictions, const std::strin
 	// Predict the execution time of the newly created task
 	double timePrediction = predictions->getTimePrediction(cost);
 	if (timePrediction != PREDICTION_UNAVAILABLE) {
-		taskPredictions->setTimePrediction(timePrediction);
-		taskPredictions->setHasPrediction(true);
+		taskStatistics->setTimePrediction(timePrediction);
+		taskStatistics->setHasPrediction(true);
 	}
 
 	// Set the task's tasktype prediction reference
-	taskPredictions->setTypePredictions(predictions);
+	taskStatistics->setTypePredictions(predictions);
 }
 
 monitoring_task_status_t TaskMonitor::startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus)
@@ -77,14 +70,12 @@ monitoring_task_status_t TaskMonitor::startTiming(TaskStatistics *taskStatistics
 	return taskStatistics->startTiming(execStatus);
 }
 
-monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions, int &ancestorsUpdated)
+monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated)
 {
 	assert(_monitor != nullptr);
 	assert(taskStatistics != nullptr);
-	assert(taskPredictions != nullptr);
 
 	TaskStatistics      *parentStatistics;
-	TaskPredictions     *parentPredictions;
 	TasktypePredictions *typePredictions;
 
 	// Stop timing for the task
@@ -98,14 +89,13 @@ monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics,
 		++ancestorsUpdated;
 
 		// Update tasktype predictions with this task's statistics
-		typePredictions = taskPredictions->getTypePredictions();
-		typePredictions->accumulatePredictions(taskStatistics, taskPredictions);
+		typePredictions = taskStatistics->getTypePredictions();
+		typePredictions->accumulatePredictions(taskStatistics);
 
 		// Retrieve parent statistics and predictions
 		parentStatistics  = taskStatistics->getParentStatistics();
-		parentPredictions = taskPredictions->getParentPredictions();
-		if (parentPredictions != nullptr) {
-			typePredictions = parentPredictions->getTypePredictions();
+		if (parentStatistics != nullptr) {
+			typePredictions = parentStatistics->getTypePredictions();
 		}
 
 		// Backpropagate the update of parent tasks
@@ -121,18 +111,16 @@ monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics,
 				);
 
 				// Update the tasktype predictions with the parent task's statistics
-				typePredictions->accumulatePredictions(parentStatistics, parentPredictions);
+				typePredictions->accumulatePredictions(parentStatistics);
 
 				// Point to the parent's parent task statistics and predictions
 				taskStatistics   = parentStatistics;
-				taskPredictions  = parentPredictions;
 				parentStatistics = taskStatistics->getParentStatistics();
 				if (parentStatistics == nullptr) {
 					break;
 				}
-				parentPredictions = taskPredictions->getParentPredictions();
-				assert(parentPredictions != nullptr);
-				typePredictions = parentPredictions->getTypePredictions();
+
+				typePredictions = parentStatistics->getTypePredictions();
 			}
 		}
 	}

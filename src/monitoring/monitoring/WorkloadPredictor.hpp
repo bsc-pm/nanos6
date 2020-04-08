@@ -215,22 +215,16 @@ public:
 	//! \brief Aggregate a task's statistics into workloads
 	//!
 	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[in,out] taskPredictions The task's predictions
-	static void taskCreated(
-		TaskStatistics *taskStatistics,
-		TaskPredictions *taskPredictions
-	);
+	static void taskCreated(TaskStatistics *taskStatistics);
 
 	//! \brief Move the aggregation of a task's statistics between workloads
 	//! when the task changes its timing status
 	//!
 	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[in,out] taskPredictions The task's predictions
 	//! \param[in] oldStatus The old timing status
 	//! \param[in] newStatus The new timing status
 	static void taskChangedStatus(
 		TaskStatistics *taskStatistics,
-		TaskPredictions *taskPredictions,
 		monitoring_task_status_t oldStatus,
 		monitoring_task_status_t newStatus
 	);
@@ -239,21 +233,15 @@ public:
 	//! completes user code
 	//!
 	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[in,out] taskPredictions The task's predictions
-	static void taskCompletedUserCode(
-		TaskStatistics *taskStatistics,
-		TaskPredictions *taskPredictions
-	);
+	static void taskCompletedUserCode(TaskStatistics *taskStatistics);
 
 	//! \brief Move the aggregation of a task's statistics between workloads
 	//! when the task finishes execution
 	//!
 	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[in,out] taskPredictions The task's predictions
 	//! \param[in] oldStatus The old timing status
 	static void taskFinished(
 		TaskStatistics *taskStatistics,
-		TaskPredictions *taskPredictions,
 		monitoring_task_status_t oldStatus,
 		int ancestorsUpdated
 	);

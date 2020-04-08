@@ -11,7 +11,6 @@
 #include <boost/accumulators/statistics.hpp>
 #include <boost/accumulators/statistics/rolling_mean.hpp>
 
-#include "TaskPredictions.hpp"
 #include "TaskStatistics.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "support/config/ConfigVariable.hpp"
@@ -108,13 +107,8 @@ public:
 	//! tasktype prediction statistics
 	//!
 	//! \param[in] taskStatistics The task's statistics
-	//! \param[in] taskPredictions The task's predictions
-	inline void accumulatePredictions(
-		const TaskStatistics *taskStatistics,
-		const TaskPredictions *taskPredictions
-	) {
+	inline void accumulatePredictions(const TaskStatistics *taskStatistics) {
 		assert(taskStatistics != nullptr);
-		assert(taskPredictions != nullptr);
 
 		// Normalize the execution time using the task's computational cost
 		const double cost        = (double) taskStatistics->getCost();
@@ -127,9 +121,9 @@ public:
 
 		// Elapsed time should always be different than 0
 		// Otherwise the accuracy is undefined per MSE definition
-		bool predictionIsCorrect = (taskPredictions->hasPrediction() && (elapsed > 0));
+		bool predictionIsCorrect = (taskStatistics->hasPrediction() && (elapsed > 0));
 		if (predictionIsCorrect) {
-			predicted = taskPredictions->getTimePrediction();
+			predicted = taskStatistics->getTimePrediction();
 			error     = 100.0 * (std::abs(predicted - elapsed) / std::max(elapsed, predicted));
 			accuracy  = 100.0 - error;
 		}

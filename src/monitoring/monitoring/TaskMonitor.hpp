@@ -126,25 +126,21 @@ public:
 	//!
 	//! \param[in,out] parentStatistics The parent task's statistics
 	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[in,out] parentPredictions The parent task's predictions
-	//! \param[in,out] taskPredictions The task's predictions
 	//! \param[in] label The tasktype
 	//! \param[in] cost The task's computational cost
 	static void taskCreated(
 		TaskStatistics  *parentStatistics,
 		TaskStatistics  *taskStatistics,
-		TaskPredictions *parentPredictions,
-		TaskPredictions *taskPredictions,
 		const std::string &label,
 		size_t cost
 	);
 
 	//! \brief Predict the execution time of a task
 	//!
-	//! \param[in,out] taskPredictions The predictions of the task
+	//! \param[in,out] taskStatistics The statistics of the task
 	//! \param[in] label The tasktype
 	//! \param[in] cost The task's computational task
-	static void predictTime(TaskPredictions *taskPredictions, const std::string &label, size_t cost);
+	static void predictTime(TaskStatistics *taskStatistics, const std::string &label, size_t cost);
 
 	//! \brief Start time monitoring for a task
 	//!
@@ -157,12 +153,11 @@ public:
 	//! \brief Stop time monitoring for a task
 	//!
 	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[in,out] taskPredictions The predictions of the task
 	//! \param[out] ancestorsUpdated The number of ancestors that this task has
 	//! updated during shutdown of timing monitoring
 	//!
 	//! \return The status before the change
-	static monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, TaskPredictions *taskPredictions, int &ancestorsUpdated);
+	static monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated);
 
 	//! \brief Get the average unitary time value of a tasktype (normalized using cost)
 	//!

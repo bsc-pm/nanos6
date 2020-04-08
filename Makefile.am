@@ -1264,14 +1264,12 @@ noinst_HEADERS = \
 	src/monitoring/monitoring/CPUUsagePredictor.hpp \
 	src/monitoring/monitoring/Monitoring.hpp \
 	src/monitoring/monitoring/TaskMonitor.hpp \
-	src/monitoring/monitoring/TaskPredictions.hpp \
 	src/monitoring/monitoring/TaskStatistics.hpp \
 	src/monitoring/monitoring/TasktypePredictions.hpp \
 	src/monitoring/monitoring/WorkloadPredictor.hpp \
 	src/monitoring/monitoring/WorkloadStatistics.hpp \
 	src/monitoring/null/Monitoring.hpp \
 	src/monitoring/null/TaskMonitor.hpp \
-	src/monitoring/null/TaskPredictions.hpp \
 	src/monitoring/null/TaskStatistics.hpp \
 	src/scheduling/ClusterScheduler.hpp \
 	src/scheduling/LocalScheduler.hpp \

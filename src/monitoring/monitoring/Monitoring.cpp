@@ -132,18 +132,16 @@ void Monitoring::taskCreated(Task *task)
 	if (_enabled && !task->isTaskfor()) {
 		// Retrieve information about the task
 		TaskStatistics  *parentStatistics  = (task->getParent() != nullptr ? task->getParent()->getTaskStatistics() : nullptr);
-		TaskPredictions *parentPredictions = (task->getParent() != nullptr ? task->getParent()->getTaskPredictions() : nullptr);
 		TaskStatistics  *taskStatistics    = task->getTaskStatistics();
-		TaskPredictions *taskPredictions   = task->getTaskPredictions();
 		const std::string &label = task->getLabel();
 		size_t cost = (task->hasCost() ? task->getCost() : DEFAULT_COST);
 
 		// Create task statistic structures and predict its execution time
-		TaskMonitor::taskCreated(parentStatistics, taskStatistics, parentPredictions, taskPredictions, label, cost);
-		TaskMonitor::predictTime(taskPredictions, label, cost);
+		TaskMonitor::taskCreated(parentStatistics, taskStatistics, label, cost);
+		TaskMonitor::predictTime(taskStatistics, label, cost);
 
 		// Account this task in workloads
-		WorkloadPredictor::taskCreated(taskStatistics, taskPredictions);
+		WorkloadPredictor::taskCreated(taskStatistics);
 	}
 }
 
@@ -157,7 +155,7 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 		// Update workload statistics only after a change of status
 		if (oldStatus != newStatus) {
 			// Account this task in the appropriate workload
-			WorkloadPredictor::taskChangedStatus(task->getTaskStatistics(), task->getTaskPredictions(), oldStatus, newStatus);
+			WorkloadPredictor::taskChangedStatus(task->getTaskStatistics(), oldStatus, newStatus);
 		}
 	}
 }
@@ -167,7 +165,7 @@ void Monitoring::taskCompletedUserCode(Task *task)
 	assert(task != nullptr);
 	if (_enabled && !task->isTaskfor()) {
 		// Account the task's elapsed execution time in predictions
-		WorkloadPredictor::taskCompletedUserCode(task->getTaskStatistics(), task->getTaskPredictions());
+		WorkloadPredictor::taskCompletedUserCode(task->getTaskStatistics());
 	}
 }
 
@@ -179,10 +177,10 @@ void Monitoring::taskFinished(Task *task)
 		int ancestorsUpdated = 0;
 
 		// Mark task as completely executed
-		const monitoring_task_status_t oldStatus = TaskMonitor::stopTiming(task->getTaskStatistics(), task->getTaskPredictions(), ancestorsUpdated);
+		const monitoring_task_status_t oldStatus = TaskMonitor::stopTiming(task->getTaskStatistics(), ancestorsUpdated);
 
 		// Account this task in workloads
-		WorkloadPredictor::taskFinished(task->getTaskStatistics(), task->getTaskPredictions(), oldStatus, ancestorsUpdated);
+		WorkloadPredictor::taskFinished(task->getTaskStatistics(), oldStatus, ancestorsUpdated);
 	}
 }
 
