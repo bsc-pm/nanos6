@@ -14,24 +14,10 @@ class TaskTypeData {
 
 private:
 
-	//! This task type's identifier
-	short _id;
-
 public:
 
-	inline TaskTypeData(short id) :
-		_id(id)
+	inline TaskTypeData()
 	{
-	}
-
-	inline void setId(short id)
-	{
-		_id = id;
-	}
-
-	inline short getId() const
-	{
-		return _id;
 	}
 
 };

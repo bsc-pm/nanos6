@@ -74,7 +74,7 @@ typedef struct
 	//! \brief Function to retrieve constraint information about the task (cost, memory requirements, ...)
 	//!
 	//! \param[in] args_block A pointer to a block of data for the parameters
-	//! \param[in,out] constraints An
+	//! \param[in,out] constraints A pointer to the struct where constraints are written
 	void (*get_constraints)(void *args_block, nanos6_task_constraints_t *constraints);
 
 	//! \brief A string that identifies the type of task
@@ -83,7 +83,7 @@ typedef struct
 	//! \brief A string that identifies the source location of the definition of the task
 	char const *declaration_source;
 
-	//! Similar to run but initially set to null and initialized by the runtime if needed
+	//! \brief Similar to run but initially set to null and initialized by the runtime if needed
 	void (*run_wrapper)(void *args_block, void *device_env, nanos6_address_translation_entry_t *address_translation_table);
 } nanos6_task_implementation_info_t;
 

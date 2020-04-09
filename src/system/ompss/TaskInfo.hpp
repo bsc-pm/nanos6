@@ -8,59 +8,76 @@
 #define TASK_INFO_HPP
 
 #include <atomic>
-#include <cstring>
-#include <vector>
+#include <map>
 
 #include <nanos6/task-info-registration.h>
 
 #include "lowlevel/SpinLock.hpp"
+#include "tasks/TaskTypeData.hpp"
 
 
 class TaskInfo {
 
 private:
 
-	//! A vector to register all the taskinfos
-	static std::vector<nanos6_task_info_t *> _taskInfos;
+	struct TaskTypeId {
+		std::string _taskLabel;
+		std::string _taskDeclarationSource;
 
-	//! The next taskinfo identifier
-	static std::atomic<short> _nextId;
-
-private:
-
-	//! \brief Check whether a duplicate of a TaskInfo exists
-	//!
-	//! \param[in] taskInfo The TaskInfo to check for
-	//! \param[out] duplicateTaskInfo If there was a duplicate, it is copied
-	//! in this parameter
-	static inline bool isDuplicated(
-		nanos6_task_info_t *taskInfo,
-		nanos6_task_info_t *&duplicateTaskInfo
-	) {
-		assert(taskInfo != nullptr);
-		assert(taskInfo->implementations != nullptr);
-
-		for (short i = 0; i < _nextId.load(); ++i) {
-			assert(_taskInfos[i] != nullptr);
-			assert(_taskInfos[i]->implementations != nullptr);
-
-			// If the declaration sources are the same, this is a duplicated taskinfo
-			char const *declarationSource = _taskInfos[i]->implementations->declaration_source;
-			if (strcmp(declarationSource, taskInfo->implementations->declaration_source) == 0) {
-				duplicateTaskInfo = _taskInfos[i];
-				return true;
-			}
-
-			// If users specify identical task labels, we consider they are the same tasktype
-			char const *label = _taskInfos[i]->implementations->task_label;
-			if (strcmp(label, taskInfo->implementations->task_label) == 0) {
-				duplicateTaskInfo = _taskInfos[i];
-				return true;
-			}
+		inline TaskTypeId(
+			const std::string &taskLabel,
+			const std::string &taskDeclarationSource
+		) :
+			_taskLabel(taskLabel),
+			_taskDeclarationSource(taskDeclarationSource)
+		{
 		}
 
-		return false;
-	}
+		//! \brief Overloaded lesser-operator for task_type_map_t
+		//! Duplicated TaskInfos have the same label or the same declaration
+		//! source, thus we must overload the operator to act this way
+		bool operator<(const TaskTypeId &other) const
+		{
+			assert(_taskLabel != "");
+			assert(_taskDeclarationSource != "");
+			assert(other._taskLabel != "");
+			assert(other._taskDeclarationSource != "");
+
+			// NOTE:
+			// If either the label or the declaration source are the same,
+			// both taskinfos are of the same tasktype, thus the comparison
+			// must result in false. The map will compare both keys, and if the
+			// following condition is met, the keys are treated as identical:
+			// !(K1 < K2) && !(K2 < K1)
+			//
+			// -------------------------------------------
+			// | Expected Comparison Results             |
+			// -------------------------------------------
+			// | Labels    | DeclarationSources | Result |
+			// |-----------+--------------------+---------
+			// | Equal     | Equal              | False  |
+			// | Equal     | Different          | False  |
+			// | Different | Equal              | False  |
+			// | Different | Different          | True   |
+			// -------------------------------------------
+			if (_taskLabel == other._taskLabel || _taskDeclarationSource == other._taskDeclarationSource) {
+				return false;
+			}
+
+			return (_taskLabel < other._taskLabel || _taskDeclarationSource < other._taskDeclarationSource);
+		}
+	};
+
+	typedef std::map<TaskTypeId, TaskTypeData> task_type_map_t;
+
+	//! A map with task type data
+	static task_type_map_t _taskTypes;
+
+	//! SpinLock to register taskinfos
+	static SpinLock _lock;
+
+	//! Keep track of the number of unlabeled tasktypes
+	static std::atomic<size_t> _numUnlabeledTaskTypes;
 
 public:
 

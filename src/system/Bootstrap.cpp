@@ -30,7 +30,6 @@
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
 #include "system/ompss/SpawnFunction.hpp"
-#include "system/ompss/TaskInfo.hpp"
 #include "tasks/StreamManager.hpp"
 
 #include <ClusterManager.hpp>
