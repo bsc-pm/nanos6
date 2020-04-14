@@ -176,7 +176,7 @@ void DefaultCPUManager::forcefullyResumeFirstCPU()
 		--_numIdleCPUs;
 
 		// Since monitoring works with system ids, translate the ID
-		Monitoring::cpuBecomesActive(_cpus[_firstCPUId]->getSystemCPUId());
+		Monitoring::cpuBecomesActive(_cpus[_firstCPUId]->getIndex());
 		resumed = true;
 	}
 
