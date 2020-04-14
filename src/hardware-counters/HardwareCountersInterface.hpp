@@ -22,11 +22,7 @@ public:
 	{
 	}
 
-	virtual void initialize(bool verbose, std::string verboseFile) = 0;
-
-	virtual void shutdown() = 0;
-
-	virtual bool isSupported(HWCounters::counters_t counterType) = 0;
+	virtual bool isSupported(HWCounters::counters_t counterType) const = 0;
 
 	virtual void threadInitialized() = 0;
 

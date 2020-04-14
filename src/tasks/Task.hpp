@@ -667,25 +667,22 @@ public:
 	//! \brief Get a label that identifies the tasktype
 	inline const std::string getLabel() const
 	{
-		if (_taskInfo == nullptr) {
-			if (_parent != nullptr) {
-				return _parent->getLabel();
-			} else {
-				return "Unlabeled";
-			}
-		} else {
+		if (_taskInfo != nullptr) {
 			if (_taskInfo->implementations != nullptr) {
 				if (_taskInfo->implementations->task_label != nullptr) {
 					return std::string(_taskInfo->implementations->task_label);
-				}
-				else if (_taskInfo->implementations->declaration_source != nullptr) {
+				} else if (_taskInfo->implementations->declaration_source != nullptr) {
 					return std::string(_taskInfo->implementations->declaration_source);
 				}
 			}
 
 			// If the label is empty, use the invocation source
 			return std::string(_taskInvokationInfo->invocation_source);
+		} else if (_parent != nullptr) {
+			return _parent->getLabel();
 		}
+
+		return "Unlabeled";
 	}
 
 	//! \brief Check whether cost is available for the task

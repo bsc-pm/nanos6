@@ -16,12 +16,11 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-typedef boost::accumulators::accumulator_set<size_t, boost::accumulators::stats<boost::accumulators::tag::mean> > counter_accumulator_t;
-
-
 class PQoSTaskHardwareCounters : public TaskHardwareCounters {
 
 private:
+
+	typedef boost::accumulators::accumulator_set<size_t, boost::accumulators::stats<boost::accumulators::tag::mean> > counter_accumulator_t;
 
 	enum accumulating_counter_t {
 		llc_usage = 0,

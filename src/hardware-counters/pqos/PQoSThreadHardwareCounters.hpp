@@ -34,9 +34,9 @@ public:
 		return _tid;
 	}
 
-	inline void setData(pqos_mon_data *data)
+	inline void setData(pqos_mon_data *threadData)
 	{
-		_data = data;
+		_data = threadData;
 	}
 
 	inline pqos_mon_data *getData() const

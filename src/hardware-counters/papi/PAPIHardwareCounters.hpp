@@ -4,8 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef PAPI_HARDWARE_COUNTERS_IMPLEMENTATION_HPP
-#define PAPI_HARDWARE_COUNTERS_IMPLEMENTATION_HPP
+#ifndef PAPI_HARDWARE_COUNTERS_HPP
+#define PAPI_HARDWARE_COUNTERS_HPP
 
 #include "hardware-counters/HardwareCountersInterface.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -13,21 +13,20 @@
 
 class Task;
 
-class PAPIHardwareCountersImplementation : public HardwareCountersInterface {
+class PAPIHardwareCounters : public HardwareCountersInterface {
 
 public:
 
-	inline void initialize(bool, std::string)
+	inline PAPIHardwareCounters(bool, const std::string &)
 	{
-		// TODO: Implement the PAPI backend
 		FatalErrorHandler::failIf(true, "PAPI backend not supported yet");
 	}
 
-	inline void shutdown()
+	inline ~PAPIHardwareCounters()
 	{
 	}
 
-	inline bool isSupported(counters_t)
+	inline bool isSupported(counters_t) const
 	{
 		return false;
 	}
@@ -62,9 +61,9 @@ public:
 
 	inline size_t getTaskHardwareCountersSize() const
 	{
-		return 0.0;
+		return 0;
 	}
 
 };
 
-#endif // PAPI_HARDWARE_COUNTERS_IMPLEMENTATION_HPP
+#endif // PAPI_HARDWARE_COUNTERS_HPP

@@ -67,7 +67,7 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type)
 	TaskHardwareCounters *taskCounters = (TaskHardwareCounters *) malloc(taskCountersSize);
 	_preallocatedTaskfor->setHardwareCounters(taskCounters);
 
-	HardwareCounters::taskCreated(_preallocatedTaskfor, true);
+	HardwareCounters::taskCreated(_preallocatedTaskfor);
 }
 
 ComputePlace::~ComputePlace()

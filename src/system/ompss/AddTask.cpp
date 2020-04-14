@@ -111,7 +111,11 @@ void nanos6_create_task(
 	Instrument::createdArgsBlock(taskId, *args_block_pointer, originalArgsBlockSize, args_block_size);
 
 	taskAccessInfo.setAllocationAddress((char *)task + taskSize);
-	void *taskCounters = (char *)task + taskSize + taskAccessInfo.getAllocationSize();
+
+	void *taskCounters = nullptr;
+	if (taskCountersSize > 0) {
+		taskCounters = (char *)task + taskSize + taskAccessInfo.getAllocationSize();
+	}
 
 	if (isTaskfor) {
 		// Taskfor is always final.
