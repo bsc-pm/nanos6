@@ -82,7 +82,7 @@ namespace ExecutionWorkflow {
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 
 			HardwareCounters::updateTaskCounters(task);
-			Monitoring::taskChangedStatus(task, runtime_status);
+			Monitoring::taskChangedStatus(task, paused_status);
 			Monitoring::taskCompletedUserCode(task);
 
 			if (isTaskforCollaborator) {
@@ -95,7 +95,7 @@ namespace ExecutionWorkflow {
 				Instrument::endTask(taskId);
 			}
 		} else {
-			Monitoring::taskChangedStatus(task, runtime_status);
+			Monitoring::taskChangedStatus(task, paused_status);
 			Monitoring::taskCompletedUserCode(task);
 		}
 

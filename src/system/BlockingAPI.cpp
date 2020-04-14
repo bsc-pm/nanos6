@@ -31,7 +31,7 @@ void BlockingAPI::blockCurrentTask(bool fromUserCode)
 
 	if (fromUserCode) {
 		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
+		Monitoring::taskChangedStatus(currentTask, paused_status);
 	}
 	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
 	Instrument::enterBlockCurrentTask(taskId, fromUserCode);
@@ -70,7 +70,7 @@ void BlockingAPI::unblockTask(Task *task, bool fromUserCode)
 	bool taskRuntimeTransition = fromUserCode && (currentTask != nullptr);
 	if (taskRuntimeTransition) {
 		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, runtime_status);
+		Monitoring::taskChangedStatus(currentTask, paused_status);
 	}
 	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 	Instrument::enterUnblockTask(taskId, taskRuntimeTransition);

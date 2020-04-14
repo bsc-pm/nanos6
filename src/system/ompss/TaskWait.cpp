@@ -41,7 +41,7 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 
 	if (fromUserCode) {
 		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
+		Monitoring::taskChangedStatus(currentTask, paused_status);
 	}
 	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
 	Instrument::enterTaskWait(taskId, invocationSource, Instrument::task_id_t(), fromUserCode);

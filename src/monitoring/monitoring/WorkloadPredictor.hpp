@@ -62,6 +62,7 @@ private:
 				return ready_load;
 			case pending_status:
 			case blocked_status:
+			case paused_status:
 				return blocked_load;
 			case runtime_status:
 			case executing_status:

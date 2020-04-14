@@ -62,7 +62,7 @@ Task *AddTask::createTask(
 	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
 	if (taskRuntimeTransition) {
 		HardwareCounters::updateTaskCounters(creator);
-		Monitoring::taskChangedStatus(creator, runtime_status);
+		Monitoring::taskChangedStatus(creator, paused_status);
 	}
 	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags, taskRuntimeTransition);
 
@@ -212,9 +212,6 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 		// Begin as pending status, become ready later, through the scheduler
 		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);
 		Instrument::taskIsPending(taskInstrumentationId);
-
-		Monitoring::taskChangedStatus(task, pending_status);
-		// No need to stop hardware counters, as the task was created just now
 
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}

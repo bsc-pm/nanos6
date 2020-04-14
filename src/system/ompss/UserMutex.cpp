@@ -43,7 +43,7 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	assert(currentTask != nullptr);
 
 	HardwareCounters::updateTaskCounters(currentTask);
-	Monitoring::taskChangedStatus(currentTask, blocked_status);
+	Monitoring::taskChangedStatus(currentTask, paused_status);
 	Instrument::enterUserMutexLock();
 
 	ComputePlace *computePlace = currentThread->getComputePlace();
