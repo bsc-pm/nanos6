@@ -7,22 +7,24 @@
 #include "WorkloadPredictor.hpp"
 
 
-WorkloadPredictor *WorkloadPredictor::_predictor;
+std::atomic<size_t> WorkloadPredictor::_instances[num_workloads];
+WorkloadPredictor::workloads_map_t WorkloadPredictor::_workloads;
+SpinLock WorkloadPredictor::_spinlock;
+std::atomic<size_t> WorkloadPredictor::_taskCompletionTimes(0);
 
 
 void WorkloadPredictor::taskCreated(TaskStatistics *taskStatistics) {
-	assert(_predictor != nullptr);
 	assert(taskStatistics != nullptr);
 
 	// Account the new task as instantiated workload
-	_predictor->increaseInstances(instantiated_load);
+	increaseInstances(instantiated_load);
 
 	// Since the cost of a task includes children tasks, if an ancestor had
 	// a prediction, do not take this task into account for workloads
 	if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
 		const std::string &label = taskStatistics->getLabel();
 		size_t cost              = taskStatistics->getCost();
-		_predictor->increaseWorkload(instantiated_load, label, cost);
+		increaseWorkload(instantiated_load, label, cost);
 	}
 }
 
@@ -31,7 +33,6 @@ void WorkloadPredictor::taskChangedStatus(
 	monitoring_task_status_t oldStatus,
 	monitoring_task_status_t newStatus
 ) {
-	assert(_predictor != nullptr);
 	assert(taskStatistics != nullptr);
 
 	const std::string &label = taskStatistics->getLabel();
@@ -40,22 +41,21 @@ void WorkloadPredictor::taskChangedStatus(
 	workload_t increaseLoad  = WorkloadPredictor::getLoadId(newStatus);
 
 	if (decreaseLoad != null_workload) {
-		_predictor->decreaseInstances(decreaseLoad);
+		decreaseInstances(decreaseLoad);
 		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-			_predictor->decreaseWorkload(decreaseLoad, label, cost);
+			decreaseWorkload(decreaseLoad, label, cost);
 		}
 	}
 
 	if (increaseLoad != null_workload) {
-		_predictor->increaseInstances(increaseLoad);
+		increaseInstances(increaseLoad);
 		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-			_predictor->increaseWorkload(increaseLoad, label, cost);
+			increaseWorkload(increaseLoad, label, cost);
 		}
 	}
 }
 
 void WorkloadPredictor::taskCompletedUserCode(TaskStatistics *taskStatistics) {
-	assert(_predictor != nullptr);
 	assert(taskStatistics != nullptr);
 
 	// If the task's time is taken into account by an ancestor task (an ancestor has a
@@ -77,7 +77,7 @@ void WorkloadPredictor::taskCompletedUserCode(TaskStatistics *taskStatistics) {
 		ancestorStatistics->increaseChildCompletionTimes(elapsed);
 
 		// Aggregate the time in workloads also, to obtain better predictions
-		_predictor->increaseTaskCompletionTimes(elapsed);
+		increaseTaskCompletionTimes(elapsed);
 	}
 }
 
@@ -86,7 +86,6 @@ void WorkloadPredictor::taskFinished(
 	monitoring_task_status_t oldStatus,
 	int ancestorsUpdated
 ) {
-	assert(_predictor != nullptr);
 	assert(taskStatistics != nullptr);
 	assert(ancestorsUpdated >= 0);
 
@@ -100,20 +99,20 @@ void WorkloadPredictor::taskFinished(
 
 		// Decrease workloads by task's statistics
 		if (decreaseLoad != null_workload) {
-			_predictor->decreaseInstances(decreaseLoad);
+			decreaseInstances(decreaseLoad);
 			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-				_predictor->decreaseWorkload(decreaseLoad, label, cost);
+				decreaseWorkload(decreaseLoad, label, cost);
 			}
 		}
 
 		// Increase workloads by task's statistics
-		_predictor->increaseInstances(finished_load);
+		increaseInstances(finished_load);
 		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-			_predictor->increaseWorkload(finished_load, label, cost);
+			increaseWorkload(finished_load, label, cost);
 		}
 
 		// Decrease the task completion times, as the task has finished
-		_predictor->decreaseTaskCompletionTimes(childTimes);
+		decreaseTaskCompletionTimes(childTimes);
 
 		// Follow the chain of ancestors
 		taskStatistics  = taskStatistics->getParentStatistics();
@@ -129,10 +128,8 @@ void WorkloadPredictor::taskFinished(
 
 double WorkloadPredictor::getPredictedWorkload(workload_t loadId)
 {
-	assert(_predictor != nullptr);
-
 	double totalTime = 0.0;
-	for (auto const &it : _predictor->_workloads) {
+	for (auto const &it : _workloads) {
 		assert(it.second != nullptr);
 
 		totalTime += (
@@ -146,7 +143,5 @@ double WorkloadPredictor::getPredictedWorkload(workload_t loadId)
 
 size_t WorkloadPredictor::getTaskCompletionTimes()
 {
-	assert(_predictor != nullptr);
-
-	return _predictor->_taskCompletionTimes.load();
+	return _taskCompletionTimes.load();
 }

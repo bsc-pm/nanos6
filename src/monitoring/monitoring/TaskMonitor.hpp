@@ -23,69 +23,40 @@ private:
 
 	typedef std::map< std::string, TasktypePredictions *> tasktype_map_t;
 
-	// The monitor singleton instance
-	static TaskMonitor *_monitor;
-
 	//! Maps TasktypePredictions by task labels
-	tasktype_map_t _tasktypeMap;
+	static tasktype_map_t _tasktypeMap;
 
 	//! Spinlock that ensures atomic access within the tasktype map
-	SpinLock _spinlock;
-
-private:
-
-	inline TaskMonitor() :
-		_tasktypeMap(),
-		_spinlock()
-	{
-	}
+	static SpinLock _spinlock;
 
 public:
-
-	// Delete copy and move constructors/assign operators
-	TaskMonitor(TaskMonitor const&) = delete;            // Copy construct
-	TaskMonitor(TaskMonitor&&) = delete;                 // Move construct
-	TaskMonitor& operator=(TaskMonitor const&) = delete; // Copy assign
-	TaskMonitor& operator=(TaskMonitor &&) = delete;     // Move assign
-
 
 	//! \brief Initialize task monitoring
 	static inline void initialize()
 	{
-		// Create the monitoring module
-		if (_monitor == nullptr) {
-			_monitor = new TaskMonitor();
-			assert(_monitor != nullptr);
-		}
 	}
 
 	//! \brief Shutdown task monitoring
 	static inline void shutdown()
 	{
-		assert(_monitor != nullptr);
-
 		// Destroy all the task type statistics
-		for (auto &it : _monitor->_tasktypeMap) {
+		for (auto &it : _tasktypeMap) {
 			if (it.second != nullptr) {
 				delete it.second;
 			}
 		}
-
-		delete _monitor;
 	}
 
 	//! \brief Display task statistics
-	//! \param[in,out] stream The output stream
+	//! \param[out] stream The output stream
 	static inline void displayStatistics(std::stringstream &stream)
 	{
-		assert(_monitor != nullptr);
-
 		stream << std::left << std::fixed << std::setprecision(5) << "\n";
 		stream << "+-----------------------------+\n";
 		stream << "|       TASK STATISTICS       |\n";
 		stream << "+-----------------------------+\n";
 
-		for (auto const &it : _monitor->_tasktypeMap) {
+		for (auto const &it : _tasktypeMap) {
 			int instances = it.second->getInstances();
 			if (instances) {
 				double avgCost        = it.second->getAverageTimePerUnitOfCost();

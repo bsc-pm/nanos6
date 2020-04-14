@@ -7,7 +7,8 @@
 #include "TaskMonitor.hpp"
 
 
-TaskMonitor *TaskMonitor::_monitor;
+TaskMonitor::tasktype_map_t TaskMonitor::_tasktypeMap;
+SpinLock TaskMonitor::_spinlock;
 
 
 void TaskMonitor::taskCreated(
@@ -32,23 +33,22 @@ void TaskMonitor::taskCreated(
 
 void TaskMonitor::predictTime(TaskStatistics *taskStatistics, const std::string &label, size_t cost)
 {
-	assert(_monitor != nullptr);
 	assert(taskStatistics != nullptr);
 
 	TasktypePredictions *predictions = nullptr;
 
-	_monitor->_spinlock.lock();
+	_spinlock.lock();
 
 	// Find (or create if unexistent) the tasktype predictions
-	tasktype_map_t::iterator it = _monitor->_tasktypeMap.find(label);
-	if (it == _monitor->_tasktypeMap.end()) {
+	tasktype_map_t::iterator it = _tasktypeMap.find(label);
+	if (it == _tasktypeMap.end()) {
 		predictions = new TasktypePredictions();
-		_monitor->_tasktypeMap.emplace(label, predictions);
+		_tasktypeMap.emplace(label, predictions);
 	} else {
 		predictions = it->second;
 	}
 
-	_monitor->_spinlock.unlock();
+	_spinlock.unlock();
 
 	assert(predictions != nullptr);
 
@@ -72,7 +72,6 @@ monitoring_task_status_t TaskMonitor::startTiming(TaskStatistics *taskStatistics
 
 monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated)
 {
-	assert(_monitor != nullptr);
 	assert(taskStatistics != nullptr);
 
 	TaskStatistics      *parentStatistics;
@@ -130,31 +129,29 @@ monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics,
 
 double TaskMonitor::getAverageTimePerUnitOfCost(const std::string &label)
 {
-	_monitor->_spinlock.lock();
-	double unitaryTime = _monitor->_tasktypeMap[label]->getAverageTimePerUnitOfCost();
-	_monitor->_spinlock.unlock();
+	_spinlock.lock();
+	double unitaryTime = _tasktypeMap[label]->getAverageTimePerUnitOfCost();
+	_spinlock.unlock();
 
 	return unitaryTime;
 }
 
 void TaskMonitor::insertTimePerUnitOfCost(const std::string &label, double unitaryTime)
 {
-	assert(_monitor != nullptr);
-
 	TasktypePredictions *predictions = nullptr;
 
-	_monitor->_spinlock.lock();
+	_spinlock.lock();
 
 	// Find (or create if unexistent) the tasktype predictions
-	tasktype_map_t::iterator it = _monitor->_tasktypeMap.find(label);
-	if (it == _monitor->_tasktypeMap.end()) {
+	tasktype_map_t::iterator it = _tasktypeMap.find(label);
+	if (it == _tasktypeMap.end()) {
 		predictions = new TasktypePredictions();
-		_monitor->_tasktypeMap.emplace(label, predictions);
+		_tasktypeMap.emplace(label, predictions);
 	} else {
 		predictions = it->second;
 	}
 
-	_monitor->_spinlock.unlock();
+	_spinlock.unlock();
 
 	assert(predictions != nullptr);
 
@@ -166,17 +163,15 @@ void TaskMonitor::getAverageTimesPerUnitOfCost(
 	std::vector<std::string> &labels,
 	std::vector<double> &unitaryTimes
 ) {
-	assert(_monitor != nullptr);
-
-	_monitor->_spinlock.lock();
+	_spinlock.lock();
 
 	// Retrieve all the labels and unitary times
-	for (auto const &it : _monitor->_tasktypeMap) {
+	for (auto const &it : _tasktypeMap) {
 		if (it.second != nullptr) {
 			labels.push_back(it.first);
 			unitaryTimes.push_back(it.second->getAverageTimePerUnitOfCost());
 		}
 	}
 
-	_monitor->_spinlock.unlock();
+	_spinlock.unlock();
 }

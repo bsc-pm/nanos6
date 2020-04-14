@@ -15,7 +15,7 @@ ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled", true);
 ConfigVariable<bool> Monitoring::_verbose("monitoring.verbose", true);
 ConfigVariable<bool> Monitoring::_wisdomEnabled("monitoring.wisdom", false);
 ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "output-monitoring.txt");
-Monitoring *Monitoring::_monitor;
+JsonFile *Monitoring::_wisdom(nullptr);
 
 
 //    MONITORING    //
@@ -27,11 +27,6 @@ void Monitoring::initialize()
 			// Start measuring time to compute the tick conversion rate
 			TickConversionUpdater::initialize();
 		#endif
-
-		// Create the monitoring module
-		if (_monitor == nullptr) {
-			_monitor = new Monitoring();
-		}
 
 		// Initialize the task monitoring module
 		TaskMonitor::initialize();
@@ -49,7 +44,7 @@ void Monitoring::initialize()
 
 		if (_wisdomEnabled) {
 			// Try to load data from previous executions
-			_monitor->loadMonitoringWisdom();
+			loadMonitoringWisdom();
 		}
 	}
 }
@@ -59,7 +54,7 @@ void Monitoring::shutdown()
 	if (_enabled) {
 		if (_wisdomEnabled) {
 			// Store monitoring data for future executions
-			_monitor->storeMonitoringWisdom();
+			storeMonitoringWisdom();
 		}
 
 		#if CHRONO_ARCH
@@ -78,11 +73,6 @@ void Monitoring::shutdown()
 
 		// Propagate shutdown to the task monitoring module
 		TaskMonitor::shutdown();
-
-		// Destroy the monitoring module
-		if (_monitor != nullptr) {
-			delete _monitor;
-		}
 
 		_enabled.setValue(false);
 	}

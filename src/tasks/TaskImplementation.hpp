@@ -53,7 +53,6 @@ inline Task::Task(
 	_workflow(nullptr),
 	_executionStep(nullptr),
 	_taskStatistics(),
-	_taskPredictions(),
 	_hwCounters(taskCountersAddress),
 	_clusterContext(nullptr),
 	_parentSpawnCallback(nullptr),

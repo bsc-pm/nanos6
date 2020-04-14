@@ -23,32 +23,18 @@ private:
 	typedef std::map< std::string, WorkloadStatistics * > workloads_map_t;
 
 	//! Array which contains the number of task instances in each workload
-	std::atomic<size_t> _instances[num_workloads];
+	static std::atomic<size_t> _instances[num_workloads];
 
 	//! Indexes accumulated and unitary costs through by tasktype
-	workloads_map_t _workloads;
+	static workloads_map_t _workloads;
 
 	//! A spinlock to ensure atomicity within the workloads_map_t
-	SpinLock _spinlock;
+	static SpinLock _spinlock;
 
 	//! Aggregated execution times of tasks that have completed user code
-	std::atomic<size_t> _taskCompletionTimes;
-
-	//! The predictor singleton instance
-	static WorkloadPredictor *_predictor;
+	static std::atomic<size_t> _taskCompletionTimes;
 
 private:
-
-	inline WorkloadPredictor() :
-		_workloads(),
-		_spinlock(),
-		_taskCompletionTimes(0)
-	{
-		for (unsigned short i = 0; i < num_workloads; ++i) {
-			_instances[i] = 0;
-		}
-	}
-
 
 	//! \brief Maps task status identifiers to workload identifiers
 	//!
@@ -75,7 +61,7 @@ private:
 	//! \brief Increase the number of instances of a workload
 	//!
 	//! \param[in] loadId The identifier of the workload
-	inline void increaseInstances(workload_t loadId)
+	static inline void increaseInstances(workload_t loadId)
 	{
 		++(_instances[loadId]);
 	}
@@ -83,7 +69,7 @@ private:
 	//! \brief Decrease the number of instances of a workload
 	//!
 	//! \param[in] loadId The identifier of the workload
-	inline void decreaseInstances(workload_t loadId)
+	static inline void decreaseInstances(workload_t loadId)
 	{
 		--(_instances[loadId]);
 	}
@@ -91,7 +77,7 @@ private:
 	//! \brief Retreive the number of instances of a workload
 	//!
 	//! \param[in] loadId The identifier of the workload
-	inline size_t getInstances(workload_t loadId) const
+	static inline size_t getInstances(workload_t loadId)
 	{
 		return _instances[loadId].load();
 	}
@@ -101,7 +87,7 @@ private:
 	//! \param[in] loadId The id of the load to increase
 	//! \param[in] label The task's label (type identifier)
 	//! \param[in] cost The task's computational cost
-	inline void increaseWorkload(workload_t loadId, const std::string &label, size_t cost)
+	static inline void increaseWorkload(workload_t loadId, const std::string &label, size_t cost)
 	{
 		WorkloadStatistics *statistics = nullptr;
 
@@ -126,7 +112,7 @@ private:
 	//! \param[in] loadId The id of the load to decrease
 	//! \param[in] label The task's label (type identifier)
 	//! \param[in] cost The task's computational cost
-	inline void decreaseWorkload(workload_t loadId, const std::string &label, size_t cost)
+	static inline void decreaseWorkload(workload_t loadId, const std::string &label, size_t cost)
 	{
 		assert(_workloads.find(label) != _workloads.end());
 
@@ -143,7 +129,7 @@ private:
 	//! completed user code
 	//!
 	//! \param[in] taskCompletionTime The amount of time to increase
-	inline void increaseTaskCompletionTimes(size_t taskCompletionTime)
+	static inline void increaseTaskCompletionTimes(size_t taskCompletionTime)
 	{
 		_taskCompletionTimes += taskCompletionTime;
 	}
@@ -152,58 +138,43 @@ private:
 	//! completed user code
 	//!
 	//! \param[in] taskCompletionTime The amount of time to decrease
-	inline void decreaseTaskCompletionTimes(size_t taskCompletionTime)
+	static inline void decreaseTaskCompletionTimes(size_t taskCompletionTime)
 	{
 		_taskCompletionTimes -= taskCompletionTime;
 	}
 
 public:
 
-	// Delete copy and move constructors/assign operators
-	WorkloadPredictor(WorkloadPredictor const&) = delete;            // Copy construct
-	WorkloadPredictor(WorkloadPredictor&&) = delete;                 // Move construct
-	WorkloadPredictor& operator=(WorkloadPredictor const&) = delete; // Copy assign
-	WorkloadPredictor& operator=(WorkloadPredictor &&) = delete;     // Move assign
-
-
 	//! \brief Initialize workload predictions
 	static inline void initialize()
 	{
-		// Create the predictor singleton
-		if (_predictor == nullptr) {
-			_predictor = new WorkloadPredictor();
-			assert(_predictor != nullptr);
+		for (unsigned short i = 0; i < num_workloads; ++i) {
+			_instances[i] = 0;
 		}
 	}
 
 	//! \brief Shutdown workload predictions
 	static inline void shutdown()
 	{
-		assert(_predictor != nullptr);
 		// Destroy all the Workload statistics
-		for (auto const &it : _predictor->_workloads) {
+		for (auto const &it : _workloads) {
 			if (it.second != nullptr) {
 				delete it.second;
 			}
 		}
-
-		// Destroy the predictor module
-		delete _predictor;
 	}
 
 	//! \brief Display workload statistics
 	//! \param[in,out] stream The output stream
 	static inline void displayStatistics(std::stringstream &stream)
 	{
-		assert (_predictor != nullptr);
-
 		stream << std::left << std::fixed << std::setprecision(2) << "\n";
 		stream << "+-----------------------------+\n";
 		stream << "|       WORKLOADS (μs)        |\n";
 		stream << "+-----------------------------+\n";
 
 		for (unsigned short loadId = 0; loadId < num_workloads; ++loadId) {
-			size_t inst = _predictor->getInstances((workload_t) loadId);
+			size_t inst = getInstances((workload_t) loadId);
 			double load = getPredictedWorkload((workload_t) loadId);
 			std::string loadDesc = std::string(workloadDescriptions[loadId]) + " (" + std::to_string(inst) + ")";
 
@@ -261,9 +232,7 @@ public:
 	//! \param[in] loadId The identifier of the workload
 	static inline size_t getNumInstances(workload_t loadId)
 	{
-		assert(_predictor != nullptr);
-
-		return _predictor->_instances[loadId].load();
+		return _instances[loadId].load();
 	}
 
 };

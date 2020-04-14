@@ -22,28 +22,12 @@ class CPUMonitor {
 private:
 
 	//! The vector of CPU statistics, one per compute place
-	CPUStatistics *_cpuStatistics;
+	static CPUStatistics *_cpuStatistics;
 
 	//! The amount of CPUs of the system
-	size_t _numCPUs;
-
-	//! The singleton instance for the monitor of statistics
-	static CPUMonitor *_monitor;
-
-private:
-
-	inline CPUMonitor()
-	{
-	}
+	static size_t _numCPUs;
 
 public:
-
-	// Delete copy and move constructors/assign operators
-	CPUMonitor(CPUMonitor const&) = delete;            // Copy construct
-	CPUMonitor(CPUMonitor&&) = delete;                 // Move construct
-	CPUMonitor& operator=(CPUMonitor const&) = delete; // Copy assign
-	CPUMonitor& operator=(CPUMonitor &&) = delete;     // Move assign
-
 
 	//    MONITOR    //
 
@@ -66,9 +50,7 @@ public:
 	//! \param[in] virtualCPUId The identifier of the CPU
 	static inline void cpuBecomesActive(int virtualCPUId)
 	{
-		assert(_monitor != nullptr);
-
-		_monitor->_cpuStatistics[virtualCPUId].cpuBecomesActive();
+		_cpuStatistics[virtualCPUId].cpuBecomesActive();
 	}
 
 	//! \brief Signal that a CPU just became idle
@@ -76,9 +58,7 @@ public:
 	//! \param[in] virtualCPUId The identifier of the CPU
 	static inline void cpuBecomesIdle(int virtualCPUId)
 	{
-		assert(_monitor != nullptr);
-
-		_monitor->_cpuStatistics[virtualCPUId].cpuBecomesIdle();
+		_cpuStatistics[virtualCPUId].cpuBecomesIdle();
 	}
 
 	//! \brief Retreive the activeness of a CPU
@@ -86,27 +66,21 @@ public:
 	//! \param[in] virtualCPUId The identifier of the CPU
 	static inline float getActiveness(int virtualCPUId)
 	{
-		assert(_monitor != nullptr);
-
-		return _monitor->_cpuStatistics[virtualCPUId].getActiveness();
+		return _cpuStatistics[virtualCPUId].getActiveness();
 	}
 
 	//! \brief Return the number of CPUs in the system
 	static inline size_t getNumCPUs()
 	{
-		assert(_monitor != nullptr);
-
-		return _monitor->_numCPUs;
+		return _numCPUs;
 	}
 
 	//! \brief Get the total amount of activeness of all CPUs
 	static inline float getTotalActiveness()
 	{
-		assert(_monitor != nullptr);
-
 		float totalActiveness = 0.0;
-		for (unsigned short id = 0; id < _monitor->_numCPUs; ++id) {
-			totalActiveness += _monitor->_cpuStatistics[id].getActiveness();
+		for (unsigned short id = 0; id < _numCPUs; ++id) {
+			totalActiveness += _cpuStatistics[id].getActiveness();
 		}
 
 		return totalActiveness;

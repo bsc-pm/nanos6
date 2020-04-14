@@ -32,21 +32,13 @@ private:
 	//! The file where output must be saved when verbose mode is enabled
 	static ConfigVariable<std::string> _outputFile;
 
-	//! The "monitor", singleton instance
-	static Monitoring *_monitor;
-
 	//! A Json file for monitoring data
-	JsonFile *_wisdom;
+	static JsonFile *_wisdom;
 
 private:
 
-	inline Monitoring() :
-		_wisdom(nullptr)
-	{
-	}
-
 	//! \brief Try to load previous monitoring data into accumulators
-	inline void loadMonitoringWisdom()
+	static inline void loadMonitoringWisdom()
 	{
 		// Create a representation of the system file as a JsonFile
 		_wisdom = new JsonFile("./.nanos6_monitoring_wisdom.json");
@@ -72,7 +64,7 @@ private:
 	}
 
 	//! \brief Store monitoring data for future executions as warmup data
-	inline void storeMonitoringWisdom()
+	static inline void storeMonitoringWisdom()
 	{
 		// Gather monitoring data for all tasktypes
 		std::vector<std::string> labels;
@@ -103,13 +95,6 @@ private:
 	}
 
 public:
-
-	// Delete copy and move constructors/assign operators
-	Monitoring(Monitoring const&) = delete;            // Copy construct
-	Monitoring(Monitoring&&) = delete;                 // Move construct
-	Monitoring& operator=(Monitoring const&) = delete; // Copy assign
-	Monitoring& operator=(Monitoring &&) = delete;     // Move assign
-
 
 	//    MONITORING    //
 

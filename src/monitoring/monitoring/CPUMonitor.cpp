@@ -7,36 +7,25 @@
 #include "CPUMonitor.hpp"
 
 
-CPUMonitor *CPUMonitor::_monitor;
+CPUStatistics *CPUMonitor::_cpuStatistics;
+size_t CPUMonitor::_numCPUs;
 
 
 void CPUMonitor::initialize()
 {
-	// Create the monitoring singleton
-	if (_monitor == nullptr) {
-		_monitor = new CPUMonitor();
-		assert(_monitor != nullptr);
-	}
-
 	// Initialize the array of CPUStatistics
 	std::vector<CPU *> const &cpus = CPUManager::getCPUListReference();
-	_monitor->_numCPUs = cpus.size();
-	_monitor->_cpuStatistics = new CPUStatistics[_monitor->_numCPUs];
+	_numCPUs = cpus.size();
+	_cpuStatistics = new CPUStatistics[_numCPUs];
 }
 
 void CPUMonitor::shutdown()
 {
-	assert(_monitor != nullptr);
-
-	delete[] _monitor->_cpuStatistics;
-
-	delete _monitor;
+	delete[] _cpuStatistics;
 }
 
 void CPUMonitor::displayStatistics(std::stringstream &stream)
 {
-	assert(_monitor != nullptr);
-
 	stream << std::left << std::fixed << std::setprecision(2) << "\n";
 	stream << "+-----------------------------+\n";
 	stream << "|       CPU STATISTICS        |\n";
@@ -45,10 +34,10 @@ void CPUMonitor::displayStatistics(std::stringstream &stream)
 	stream << "+-----------------------------+\n";
 
 	// Iterate through all CPUs and print their ID and activeness
-	for (unsigned short id = 0; id < _monitor->_numCPUs; ++id) {
+	for (unsigned short id = 0; id < _numCPUs; ++id) {
 		std::string label = "CPU(" + std::to_string(id) + ")";
 		float activeness = getActiveness(id);
-		bool endOfColumn = (id % 2 || id == (_monitor->_numCPUs - 1));
+		bool endOfColumn = (id % 2 || id == (_numCPUs - 1));
 
 		stream
 			<< std::setw(8) << label << " - " << std::right
