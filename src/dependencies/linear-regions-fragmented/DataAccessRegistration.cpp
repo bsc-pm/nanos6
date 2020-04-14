@@ -2388,7 +2388,7 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace, bool fromBusyThread
 	) {
 		for (Task *removableTask : removableTasks) {
-			TaskFinalization::disposeTask(removableTask, computePlace, fromBusyThread);
+			TaskFinalization::disposeTask(removableTask);
 		}
 		removableTasks.clear();
 	}

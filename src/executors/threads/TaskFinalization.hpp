@@ -12,8 +12,8 @@ class Task;
 
 class TaskFinalization {
 public:
-	static void disposeTask(Task *task, ComputePlace *computePlace, bool fromBusyThread = false);
 	static void taskFinished(Task *task, ComputePlace *computePlace, bool fromBusyThread = false);
+	static void disposeTask(Task *task);
 };
 
 

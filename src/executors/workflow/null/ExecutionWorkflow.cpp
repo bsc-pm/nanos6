@@ -115,7 +115,7 @@ namespace ExecutionWorkflow {
 
 			TaskFinalization::taskFinished(task, cpu);
 			if (task->markAsReleased()) {
-				TaskFinalization::disposeTask(task, cpu);
+				TaskFinalization::disposeTask(task);
 			}
 		}
 	}

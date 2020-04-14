@@ -64,7 +64,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 					ready = task->finishChild();
 					assert(ready);
 					if (task->markAsReleased())
-						TaskFinalization::disposeTask(task, computePlace, fromBusyThread);
+						TaskFinalization::disposeTask(task);
 				}
 
 				assert(!task->mustDelayRelease());
@@ -84,7 +84,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 						assert(!ready);
 						ready = true;
 						if (source->markAsReleased())
-							TaskFinalization::disposeTask(source, computePlace, fromBusyThread);
+							TaskFinalization::disposeTask(source);
 					}
 				}
 			}
@@ -111,7 +111,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 	}
 }
 
-void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool fromBusyThread)
+void TaskFinalization::disposeTask(Task *task)
 {
 	bool disposable = true;
 

@@ -83,7 +83,7 @@ namespace DataAccessRegistration {
 
 		for (Task *deletableOriginator : hpDependencyData._deletableOriginators) {
 			assert(deletableOriginator != nullptr);
-			TaskFinalization::disposeTask(deletableOriginator, computePlace);
+			TaskFinalization::disposeTask(deletableOriginator);
 		}
 
 		hpDependencyData._satisfiedOriginators.clear();

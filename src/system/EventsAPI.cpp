@@ -78,7 +78,7 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 
 		// Try to dispose the task
 		if (task->markAsReleased()) {
-			TaskFinalization::disposeTask(task, nullptr);
+			TaskFinalization::disposeTask(task);
 		}
 	}
 }
