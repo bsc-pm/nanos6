@@ -231,6 +231,14 @@ public:
 		return _cpuManager->isFirstCPU(index);
 	}
 
+	//! \brief Get the virtual CPU of the leader thread
+	static inline CPU *getLeaderThreadCPU()
+	{
+		assert(_cpuManager != nullptr);
+
+		return _cpuManager->getLeaderThreadCPU();
+	}
+
 
 	/*    SHUTDOWN CPUS    */
 

@@ -16,7 +16,6 @@
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "system/LeaderThread.hpp"
 
 
 boost::dynamic_bitset<> DLBCPUManager::_shutdownCPUs;
@@ -125,11 +124,9 @@ void DLBCPUManager::preinitialize()
 	_shutdownCPUs.resize(numCPUs);
 	_shutdownCPUs.reset();
 
-	// Initialize the virtual CPU for the LeaderThread
-	CPU *leaderThreadCPU = new CPU(numCPUs);
-	assert(leaderThreadCPU != nullptr);
-
-	LeaderThread::setCPU(leaderThreadCPU);
+	// Initialize the virtual CPU for the leader thread
+	_leaderThreadCPU = new CPU(numCPUs);
+	assert(_leaderThreadCPU != nullptr);
 
 
 	//    DLB RELATED    //
@@ -225,6 +222,8 @@ void DLBCPUManager::shutdownPhase1()
 
 void DLBCPUManager::shutdownPhase2()
 {
+	delete _leaderThreadCPU;
+
 	// Shutdown DLB
 	// ret != DLB_SUCCESS means it was not initialized (should never occur)
 	__attribute__((unused)) int ret = DLB_Finalize();

@@ -81,10 +81,27 @@ private:
 
 public:
 
+	//! \brief Constructor for regular CPUs
+	//!
+	//! \param[in] systemCPUId The system id of the CPU
+	//! \param[in] virtualCPUId The virtual id or index of the CPU
+	//! \param[in] NUMANodeId The NUMA node id of the CPU
 	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
 
+	//! \brief Constructor for virtual CPUs
+	//!
+	//! This function should only be used to construct virtual CPUs,
+	//! like the CPU assigned to the leader thread. The system id is
+	//! set to a completely invalid number, while the NUMA node id
+	//! is set to the first valid NUMA node
+	//!
+	//! \param[in] virtualCPUId The virtual id or index of the CPU
 	inline CPU(size_t virtualCPUId) :
-		CPUPlace(virtualCPUId)
+		CPUPlace(virtualCPUId),
+		_activationStatus(uninitialized_status),
+		_systemCPUId(-1),
+		_NUMANodeId(0),
+		_isOwned(false)
 	{
 	}
 

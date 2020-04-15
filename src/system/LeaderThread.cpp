@@ -18,12 +18,13 @@
 
 
 LeaderThread *LeaderThread::_singleton;
-CPU *LeaderThread::_leaderThreadCPU;
 
 
-void LeaderThread::initialize()
+void LeaderThread::initialize(CPU *leaderThreadCPU)
 {
-	_singleton = new LeaderThread();
+	assert(leaderThreadCPU != nullptr);
+
+	_singleton = new LeaderThread(leaderThreadCPU);
 	_singleton->start(nullptr);
 }
 
@@ -39,11 +40,6 @@ void LeaderThread::shutdown()
 
 	delete _singleton;
 	_singleton = nullptr;
-
-	// Delete the LeaderThread's CPU
-	assert(_leaderThreadCPU != nullptr);
-
-	delete _leaderThreadCPU;
 }
 
 void LeaderThread::body()

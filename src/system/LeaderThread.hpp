@@ -25,14 +25,15 @@ private:
 	//! Whether the LeaderThread must stop executing
 	std::atomic<bool> _mustExit;
 
-	//! The LeaderThread's virtual CPU (for instrumentation purposes)
-	static CPU *_leaderThreadCPU;
+	//! The LeaderThread's virtual CPU
+	CPU *_leaderThreadCPU;
 
 public:
 
-	inline LeaderThread() :
+	inline LeaderThread(CPU *leaderThreadCPU) :
 		HelperThread("leader-thread"),
-		_mustExit(false)
+		_mustExit(false),
+		_leaderThreadCPU(leaderThreadCPU)
 	{
 	}
 
@@ -40,13 +41,20 @@ public:
 	{
 	}
 
-	static void initialize();
+	//! \brief Initialize the structures of the leader thread
+	//!
+	//! \param[in] leaderThreadCPU The leader thread's virtual CPU
+	static void initialize(CPU *leaderThreadCPU);
 
+	//! \brief Finalize the structures of the leader thread
 	static void shutdown();
 
 	//! \brief A loop that takes care of maintenance duties
 	void body();
 
+	//! \brief Check whether the leader thread is exiting
+	//!
+	//! \return true if leader thread is exiting
 	static inline bool isExiting()
 	{
 		if (_singleton == nullptr) {
@@ -56,14 +64,24 @@ public:
 		return _singleton->_mustExit.load();
 	}
 
-	static inline void setCPU(CPU *cpu)
+	//! \brief Check whether the current thread is the leader thread
+	//!
+	//! \return true if the current thread is the leader
+	static inline bool isLeaderThread()
 	{
-		_leaderThreadCPU = cpu;
+		KernelLevelThread *thread = static_cast<KernelLevelThread *> (getCurrentKernelLevelThread());
+		if (thread == nullptr) {
+			return false;
+		}
+		return (typeid(*thread) == typeid(LeaderThread));
 	}
 
-	static inline CPU *getCPU()
+	//! \brief Get the virtual compute place of the leader thread
+	//!
+	//! \return The virtual compute place
+	static inline CPU *getComputePlace()
 	{
-		return _leaderThreadCPU;
+		return _singleton->_leaderThreadCPU;
 	}
 };
 

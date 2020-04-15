@@ -19,6 +19,7 @@ EnvironmentVariable<bool> CPUManagerInterface::_taskforGroupsReportEnabled("NANO
 CPUManagerPolicyInterface *CPUManagerInterface::_cpuManagerPolicy;
 EnvironmentVariable<std::string> CPUManagerInterface::_policyChosen("NANOS6_CPUMANAGER_POLICY", "default");
 size_t CPUManagerInterface::_firstCPUId;
+CPU *CPUManagerInterface::_leaderThreadCPU;
 
 
 namespace cpumanager_internals {
