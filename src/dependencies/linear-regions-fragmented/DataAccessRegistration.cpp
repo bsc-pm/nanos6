@@ -445,8 +445,7 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStructures, bool removeIntersection = false
 	);
 	static void handleRemovableTasks(
-		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks,
-		ComputePlace *computePlace, bool fromBusyThread
+		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks
 	);
 	static void handleCompletedTaskwaits(
 		CPUDependencyData::satisfied_taskwait_accesses_t &completedTaskwaits,
@@ -1461,7 +1460,7 @@ namespace DataAccessRegistration {
 		processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
 		assert(hpDependencyData._satisfiedOriginators.empty());
 
-		handleRemovableTasks(hpDependencyData._removableTasks, computePlace, fromBusyThread);
+		handleRemovableTasks(hpDependencyData._removableTasks);
 	}
 
 
@@ -2384,8 +2383,7 @@ namespace DataAccessRegistration {
 
 
 	static void handleRemovableTasks(
-		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks,
-		ComputePlace *computePlace, bool fromBusyThread
+		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks
 	) {
 		for (Task *removableTask : removableTasks) {
 			TaskFinalization::disposeTask(removableTask);
