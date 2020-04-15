@@ -155,8 +155,13 @@ void nanos6_user_unlock(void **handlerPointer)
 				// After adding a task, the CPUManager may want to unidle CPUs
 				CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, ADDED_TASKS, 1);
 
+				HardwareCounters::taskStopped(currentTask);
+
 				// Now switch to the released thread
 				currentThread->switchTo(releasedThread);
+
+				HardwareCounters::taskStarted(currentTask);
+				Monitoring::taskChangedStatus(currentTask, executing_status);
 
 				// Update the CPU since the thread may have migrated
 				cpu = currentThread->getComputePlace();
