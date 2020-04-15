@@ -9,12 +9,12 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/Taskfor.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
-#include <HardwareCounters.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -70,7 +70,7 @@ namespace ExecutionWorkflow {
 				Instrument::taskIsExecuting(taskId);
 			}
 
-			HardwareCounters::startTaskMonitoring(task);
+			HardwareCounters::taskStarted(task);
 			Monitoring::taskChangedStatus(task, executing_status);
 
 			// Run the task
@@ -84,7 +84,7 @@ namespace ExecutionWorkflow {
 
 			Monitoring::taskChangedStatus(task, runtime_status);
 			Monitoring::taskCompletedUserCode(task);
-			HardwareCounters::stopTaskMonitoring(task);
+			HardwareCounters::taskStopped(task);
 
 			if (task->isTaskfor()) {
 				assert(task->isRunnable());
@@ -99,7 +99,6 @@ namespace ExecutionWorkflow {
 		} else {
 			Monitoring::taskChangedStatus(task, runtime_status);
 			Monitoring::taskCompletedUserCode(task);
-			HardwareCounters::stopTaskMonitoring(task);
 		}
 
 		DataAccessRegistration::combineTaskReductions(task, cpu);
@@ -113,8 +112,8 @@ namespace ExecutionWorkflow {
 
 			Monitoring::taskFinished(task);
 			HardwareCounters::taskFinished(task);
-			TaskFinalization::taskFinished(task, cpu);
 
+			TaskFinalization::taskFinished(task, cpu);
 			if (task->markAsReleased()) {
 				TaskFinalization::disposeTask(task, cpu);
 			}

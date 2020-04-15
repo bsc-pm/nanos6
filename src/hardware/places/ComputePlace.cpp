@@ -8,6 +8,7 @@
 #include "MemoryAllocator.hpp"
 #include "MemoryPlace.hpp"
 #include "tasks/Taskfor.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -53,19 +54,34 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type)
 	TaskDataAccessesInfo taskAccessInfo(0);
 
 	// Allocate preallocated taskfor.
-	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr, Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task, taskAccessInfo, true);
+	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr, Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task, taskAccessInfo, nullptr, true);
 	_preallocatedArgsBlockSize = 1024;
 
 	// MemoryAllocator is still not available, so use malloc.
 	_preallocatedArgsBlock = malloc(_preallocatedArgsBlockSize);
 	FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr, "Insufficient memory for preallocatedArgsBlock.");
+
+	// Allocate counters in a different call to avoid the free called by
+	// getPreallocatedArgsBlock()
+	size_t taskCountersSize = HardwareCounters::getTaskHardwareCountersSize();
+	TaskHardwareCounters *taskCounters = (TaskHardwareCounters *) malloc(taskCountersSize);
+	_preallocatedTaskfor->setHardwareCounters(taskCounters);
+
+	HardwareCounters::taskCreated(_preallocatedTaskfor);
 }
 
 ComputePlace::~ComputePlace()
 {
 	Taskfor *taskfor = (Taskfor *) _preallocatedTaskfor;
+	assert(taskfor != nullptr);
+
+	TaskHardwareCounters *taskCounters = taskfor->getHardwareCounters();
+	assert(taskCounters != nullptr);
+
+	free(taskCounters);
 
 	delete taskfor;
+
 	// First allocation (1024) is done using malloc.
 	if (_preallocatedArgsBlockSize == 1024) {
 		free(_preallocatedArgsBlock);

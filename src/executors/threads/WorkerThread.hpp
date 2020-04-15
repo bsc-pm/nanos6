@@ -9,9 +9,9 @@
 
 #include "DependencyDomain.hpp"
 #include "WorkerThreadBase.hpp"
+#include "hardware-counters/ThreadHardwareCounters.hpp"
 
 #include <InstrumentThreadLocalData.hpp>
-#include <ThreadHardwareCounters.hpp>
 
 
 class CPU;
@@ -33,7 +33,7 @@ private:
 
 	Instrument::ThreadLocalData _instrumentationData;
 
-	ThreadHardwareCounters _threadCounters;
+	ThreadHardwareCounters *_hwCounters;
 
 	void initialize();
 	void handleTask(CPU *cpu);
@@ -85,8 +85,11 @@ public:
 	//! \brief returns the WorkerThread that runs the call
 	static inline WorkerThread *getCurrentWorkerThread();
 
+	//! \brief Setter for the thread's hardware counter structures
+	inline void setHardwareCounters(ThreadHardwareCounters *hwCounters);
+
 	//! \brief Returns the thread's hardware counter structures
-	inline ThreadHardwareCounters *getThreadHardwareCounters();
+	inline ThreadHardwareCounters *getHardwareCounters();
 
 };
 

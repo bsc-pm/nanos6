@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef IF0_TASK_HPP
@@ -13,10 +13,10 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
-#include <HardwareCounters.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
 #include <Monitoring.hpp>
@@ -45,7 +45,7 @@ namespace If0Task {
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 
 		Monitoring::taskChangedStatus(currentTask, blocked_status);
-		HardwareCounters::stopTaskMonitoring(currentTask);
+		HardwareCounters::taskStopped(currentTask);
 
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		currentThread->switchTo(replacementThread);
@@ -59,7 +59,7 @@ namespace If0Task {
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 
 		assert(currentTask->getThread() != nullptr);
-		HardwareCounters::startTaskMonitoring(currentTask);
+		HardwareCounters::taskStarted(currentTask);
 		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 
@@ -79,7 +79,7 @@ namespace If0Task {
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		if (hasCode) {
 			Monitoring::taskChangedStatus(currentTask, blocked_status);
-			HardwareCounters::stopTaskMonitoring(currentTask);
+			HardwareCounters::taskStopped(currentTask);
 
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}
@@ -92,7 +92,7 @@ namespace If0Task {
 			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 
 			assert(currentTask->getThread() != nullptr);
-			HardwareCounters::startTaskMonitoring(currentTask);
+			HardwareCounters::taskStarted(currentTask);
 			Monitoring::taskChangedStatus(currentTask, executing_status);
 		}
 	}

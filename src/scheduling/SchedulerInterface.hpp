@@ -16,9 +16,7 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#include <HardwareCounters.hpp>
 #include <InstrumentTaskStatus.hpp>
-#include <Monitoring.hpp>
 
 class SchedulerInterface {
 	HostScheduler *_hostScheduler;

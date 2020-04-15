@@ -6,9 +6,9 @@
 
 #include "DefaultCPUActivation.hpp"
 #include "DefaultCPUManagerImplementation.hpp"
-#include "policies/BusyPolicy.hpp"
-#include "policies/IdlePolicy.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
+#include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
 #include <Monitoring.hpp>

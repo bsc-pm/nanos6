@@ -13,6 +13,7 @@
 
 #include "StreamExecutor.hpp"
 #include "Task.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
@@ -34,7 +35,8 @@ inline Task::Task(
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags,
-	TaskDataAccessesInfo taskAccessInfo
+	TaskDataAccessesInfo taskAccessInfo,
+	void *taskCounters
 )
 	: _argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
@@ -57,8 +59,7 @@ inline Task::Task(
 	_executionStep(nullptr),
 	_taskStatistics(),
 	_taskPredictions(),
-	_taskCounters(),
-	_taskCountersPredictions(),
+	_hwCounters((TaskHardwareCounters *) taskCounters),
 	_clusterContext(nullptr),
 	_parentSpawnCallback(nullptr)
 {
@@ -108,6 +109,9 @@ inline void Task::reinitialize(
 	if (parent != nullptr) {
 		parent->addChild(this);
 	}
+
+	// Re-use hardware counters
+	HardwareCounters::taskReinitialized(this);
 }
 
 inline bool Task::markAsFinished(ComputePlace *computePlace)

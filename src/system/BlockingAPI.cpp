@@ -12,10 +12,10 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
 
-#include <HardwareCounters.hpp>
 #include <InstrumentBlocking.hpp>
 #include <Monitoring.hpp>
 
@@ -43,7 +43,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	assert(blocking_context == currentTask);
 
 	Monitoring::taskChangedStatus(currentTask, blocked_status);
-	HardwareCounters::stopTaskMonitoring(currentTask);
+	HardwareCounters::taskStopped(currentTask);
 
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
 	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
@@ -57,7 +57,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 
-	HardwareCounters::startTaskMonitoring(currentTask);
+	HardwareCounters::taskStarted(currentTask);
 	Monitoring::taskChangedStatus(currentTask, executing_status);
 }
 

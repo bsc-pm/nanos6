@@ -362,6 +362,7 @@ common_sources = \
 	src/hardware/places/ComputePlace.cpp \
 	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
+	src/hardware-counters/HardwareCounters.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/ExternalThreadGroup.cpp \
@@ -656,30 +657,8 @@ else
 monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/null
 endif
 
-# Monitoring hardware events
-hw_monitoring_sources =
-hw_monitoring_CPPFLAGS =
-hw_monitoring_LDFLAGS =
-if MONITORING_HWEVENTS_ENABLED
-if HAVE_PQOS
-hw_monitoring_LDFLAGS  += $(pqos_LIBS)
-hw_monitoring_CPPFLAGS += $(pqos_CPPFLAGS)
-hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/pqos
-hw_monitoring_sources += \
-	src/hardware-counters/pqos/HardwareCounters.cpp \
-	src/hardware-counters/pqos/TaskHardwareCountersMonitor.cpp \
-	src/hardware-counters/pqos/TasktypeHardwareCountersPredictions.cpp \
-	src/hardware-counters/pqos/ThreadHardwareCountersMonitor.cpp
-else
-hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/null
-endif
-else
-hw_monitoring_CPPFLAGS += -I$(srcdir)/src/hardware-counters/null
-endif
-
-
 # Add monitoring-related sources to common sources
-common_sources += $(monitoring_sources) $(chronometers_sources) $(hw_monitoring_sources)
+common_sources += $(monitoring_sources) $(chronometers_sources)
 
 
 # DLB + CPUManager
@@ -698,6 +677,26 @@ cpu_manager_CPPFLAGS += -I$(srcdir)/src/executors/threads/cpu-managers/dlb
 endif
 
 common_sources += $(cpu_manager_sources)
+
+
+# Hardware Counters
+hardware_counters_sources  =
+hardware_counters_LDFLAGS  =
+hardware_counters_CPPFLAGS =
+if HAVE_PQOS
+hardware_counters_LDFLAGS  += $(pqos_LIBS)
+hardware_counters_CPPFLAGS += $(pqos_CPPFLAGS) -DHAVE_PQOS
+hardware_counters_sources  += src/hardware-counters/pqos/PQoSHardwareCounters.cpp
+endif
+
+# TODO: Implement PAPI backend
+#if HAVE_PAPI
+#hardware_counters_LDFLAGS  += $(papi_LIBS)
+#hardware_counters_CPPFLAGS += $(papi_CPPFLAGS) -DHAVE_PAPI
+#hardware_counters_sources  += src/hardware-counters/papi/PAPIHardwareCounters.cpp
+#endif
+
+common_sources += $(hardware_counters_sources)
 
 
 noinst_HEADERS = \
@@ -821,19 +820,15 @@ noinst_HEADERS = \
 	src/hardware/places/NUMAPlace.hpp \
 	src/hardware/places/DeviceComputePlace.hpp \
 	src/hardware/places/DeviceMemoryPlace.hpp \
+	src/hardware-counters/HardwareCounters.hpp \
+	src/hardware-counters/HardwareCountersInterface.hpp \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
-	src/hardware-counters/null/HardwareCounters.hpp \
-	src/hardware-counters/null/TaskHardwareCounters.hpp \
-	src/hardware-counters/null/TaskHardwareCountersMonitor.hpp \
-	src/hardware-counters/null/TaskHardwareCountersPredictions.hpp \
-	src/hardware-counters/null/ThreadHardwareCounters.hpp \
-	src/hardware-counters/pqos/HardwareCounters.hpp \
-	src/hardware-counters/pqos/TaskHardwareCounters.hpp \
-	src/hardware-counters/pqos/TaskHardwareCountersMonitor.hpp \
-	src/hardware-counters/pqos/TaskHardwareCountersPredictions.hpp \
-	src/hardware-counters/pqos/TasktypeHardwareCountersPredictions.hpp \
-	src/hardware-counters/pqos/ThreadHardwareCounters.hpp \
-	src/hardware-counters/pqos/ThreadHardwareCountersMonitor.hpp \
+	src/hardware-counters/TaskHardwareCounters.hpp \
+	src/hardware-counters/ThreadHardwareCounters.hpp \
+	src/hardware-counters/papi/PAPIHardwareCounters.hpp \
+	src/hardware-counters/pqos/PQoSHardwareCounters.hpp \
+	src/hardware-counters/pqos/PQoSTaskHardwareCounters.hpp \
+	src/hardware-counters/pqos/PQoSThreadHardwareCounters.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
 	src/instrument/api/InstrumentBlocking.hpp \
 	src/instrument/api/InstrumentComputePlaceManagement.hpp \
@@ -1157,9 +1152,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(hw_monitoring_CPPFLAGS) $(cpu_manager_CPPFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(hw_monitoring_LDFLAGS) $(cpu_manager_LDFLAGS)
-
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(cpu_manager_CPPFLAGS) $(hardware_counters_CPPFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_LDFLAGS) $(hardware_counters_LDFLAGS)
 
 # This is needed for debuggable spinlocks
 common_sources += $(introspection_sources)

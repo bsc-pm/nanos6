@@ -15,14 +15,13 @@
 
 #include <nanos6.h>
 
+#include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <ClusterTaskContext.hpp>
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
-#include <TaskHardwareCounters.hpp>
-#include <TaskHardwareCountersPredictions.hpp>
 #include <TaskPredictions.hpp>
 #include <TaskStatistics.hpp>
 #include <TaskDataAccessesInfo.hpp>
@@ -132,10 +131,7 @@ private:
 	TaskPredictions _taskPredictions;
 
 	//! Hardware counter structures of the task
-	TaskHardwareCounters _taskCounters;
-
-	//! Hardware counter prediction structures of the task
-	TaskHardwareCountersPredictions _taskCountersPredictions;
+	TaskHardwareCounters *_hwCounters;
 
 	//! Cluster-related data for remote tasks
 	TaskOffloading::ClusterTaskContext *_clusterContext;
@@ -153,7 +149,8 @@ public:
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
-		TaskDataAccessesInfo taskAccessInfo
+		TaskDataAccessesInfo taskAccessInfo,
+		void *taskCounters
 	);
 
 	virtual inline void reinitialize(
@@ -670,17 +667,22 @@ public:
 	//! \brief Get a label that identifies the tasktype
 	inline const std::string getLabel() const
 	{
-		if (_taskInfo->implementations != nullptr) {
-			if (_taskInfo->implementations->task_label != nullptr) {
-				return std::string(_taskInfo->implementations->task_label);
+		if (_taskInfo != nullptr) {
+			if (_taskInfo->implementations != nullptr) {
+				if (_taskInfo->implementations->task_label != nullptr) {
+					return std::string(_taskInfo->implementations->task_label);
+				} else if (_taskInfo->implementations->declaration_source != nullptr) {
+					return std::string(_taskInfo->implementations->declaration_source);
+				}
 			}
-			else if (_taskInfo->implementations->declaration_source != nullptr) {
-				return std::string(_taskInfo->implementations->declaration_source);
-			}
+
+			// If the label is empty, use the invocation source
+			return std::string(_taskInvokationInfo->invocation_source);
+		} else if (_parent != nullptr) {
+			return _parent->getLabel();
 		}
 
-		// If the label is empty, use the invocation source
-		return std::string(_taskInvokationInfo->invocation_source);
+		return "Unlabeled";
 	}
 
 	//! \brief Check whether cost is available for the task
@@ -717,16 +719,16 @@ public:
 		return &_taskPredictions;
 	}
 
-	//! \brief Get the task's hardware counter structures
-	inline TaskHardwareCounters *getTaskHardwareCounters()
+	//! \brief Setter for the task's hardware counter structures
+	inline void setHardwareCounters(TaskHardwareCounters *hwCounters)
 	{
-		return &_taskCounters;
+		_hwCounters = hwCounters;
 	}
 
-	//! \brief Get the task's hardware counter predictions structures
-	inline TaskHardwareCountersPredictions *getTaskHardwareCountersPredictions()
+	//! \brief Get the task's hardware counter structures
+	inline TaskHardwareCounters *getHardwareCounters()
 	{
-		return &_taskCountersPredictions;
+		return _hwCounters;
 	}
 
 	inline void markAsRemote()

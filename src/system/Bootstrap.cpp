@@ -21,6 +21,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/TurboSettings.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
@@ -33,7 +34,6 @@
 
 #include <ClusterManager.hpp>
 #include <DependencySystem.hpp>
-#include <HardwareCounters.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>
@@ -73,7 +73,10 @@ void nanos6_preinit(void) {
 	// Enable special flags for turbo mode
 	TurboSettings::initialize();
 
+
 	RuntimeInfoEssentials::initialize();
+	// Initialize Hardware Counters before hardware
+	HardwareCounters::initialize();
 	HardwareInfo::initialize();
 	ClusterManager::initialize();
 	CPUManager::preinitialize();
@@ -85,7 +88,6 @@ void nanos6_preinit(void) {
 	mainThread->preinitializeExternalThread();
 	Instrument::initialize();
 
-	HardwareCounters::initialize();
 	Monitoring::initialize();
 
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
@@ -140,7 +142,6 @@ void nanos6_shutdown(void) {
 	ExternalThreadGroup::shutdown();
 
 	Monitoring::shutdown();
-	HardwareCounters::shutdown();
 
 	HardwareInfo::shutdown();
 	Scheduler::shutdown();
@@ -149,6 +150,6 @@ void nanos6_shutdown(void) {
 
 	MemoryAllocator::shutdown();
 	RuntimeInfoEssentials::shutdown();
-
+	HardwareCounters::shutdown();
 	TurboSettings::shutdown();
 }

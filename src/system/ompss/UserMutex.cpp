@@ -15,13 +15,13 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "lowlevel/SpinWait.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#include <HardwareCounters.hpp>
 #include <InstrumentUserMutex.hpp>
 #include <Monitoring.hpp>
 
@@ -92,7 +92,7 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 		}
 
 		Monitoring::taskChangedStatus(currentTask, blocked_status);
-		HardwareCounters::stopTaskMonitoring(currentTask);
+		HardwareCounters::taskStopped(currentTask);
 
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 		Instrument::blockedOnUserMutex(&userMutex);
@@ -111,7 +111,7 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 
 		assert(currentTask->getThread() != nullptr);
-		HardwareCounters::startTaskMonitoring(currentTask);
+		HardwareCounters::taskStarted(currentTask);
 		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 }
@@ -155,8 +155,13 @@ void nanos6_user_unlock(void **handlerPointer)
 				// After adding a task, the CPUManager may want to unidle CPUs
 				CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, ADDED_TASKS, 1);
 
+				HardwareCounters::taskStopped(currentTask);
+
 				// Now switch to the released thread
 				currentThread->switchTo(releasedThread);
+
+				HardwareCounters::taskStarted(currentTask);
+				Monitoring::taskChangedStatus(currentTask, executing_status);
 
 				// Update the CPU since the thread may have migrated
 				cpu = currentThread->getComputePlace();

@@ -10,14 +10,14 @@
 #include "CPUManager.hpp"
 #include "DataAccessRegistration.hpp"
 #include "MemoryAllocator.hpp"
+#include "TaskDataAccesses.hpp"
 #include "TaskFinalization.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
-#include "TaskDataAccesses.hpp"
 
-#include <HardwareCounters.hpp>
 #include <InstrumentComputePlaceId.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -160,6 +160,8 @@ void TaskFinalization::disposeTask(Task *task, ComputePlace *computePlace, bool 
 
 			TaskDataAccesses &dataAccesses = task->getDataAccesses();
 			disposableBlockSize += dataAccesses.getAdditionalMemorySize();
+
+			disposableBlockSize += HardwareCounters::getTaskHardwareCountersSize();
 
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 

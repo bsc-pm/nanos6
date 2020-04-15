@@ -20,6 +20,7 @@
 #include "ThreadManager.hpp"
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
@@ -29,7 +30,6 @@
 
 #include <DataAccessRegistration.hpp>
 #include <ExecutionWorkflow.hpp>
-#include <HardwareCounters.hpp>
 #include <InstrumentComputePlaceManagement.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 #include <InstrumentTaskExecution.hpp>
@@ -53,7 +53,7 @@ void WorkerThread::initialize()
 
 	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
 
-	HardwareCounters::initializeThread();
+	HardwareCounters::threadInitialized();
 	Monitoring::initializeThread();
 }
 
@@ -130,7 +130,7 @@ void WorkerThread::body()
 	Instrument::threadWillShutdown();
 
 	Monitoring::shutdownThread();
-	HardwareCounters::shutdownThread();
+	HardwareCounters::threadShutdown();
 
 	ThreadManager::addShutdownThread(this);
 }

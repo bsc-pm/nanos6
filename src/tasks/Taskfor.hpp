@@ -39,9 +39,10 @@ public:
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
 		TaskDataAccessesInfo taskAccessInfo,
+		void *taskCounters,
 		bool runnable = false
 	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo),
+		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo, taskCounters),
 		  _currentChunk(), _remainingIterations(), _bounds(), _completedIterations(0), _myChunk(-1)
 	{
 		assert(isFinal());
