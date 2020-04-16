@@ -6,9 +6,9 @@
 
 #include <cassert>
 
-#include "DataAccessRegistration.hpp"
 #include "CPUDependencyData.hpp"
-
+#include "DataAccessRegistration.hpp"
+#include "LeaderThread.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -63,18 +63,20 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 		if (currentThread != nullptr) {
 			cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
+		} else if (LeaderThread::isLeaderThread()) {
+			cpu = LeaderThread::getComputePlace();
+			assert(cpu != nullptr);
 		}
 
 		// Release the accesses
-		CPUDependencyData dependencyData;
 		DataAccessRegistration::unregisterTaskDataAccesses(
-			task, cpu, dependencyData,
+			task, cpu, cpu->getDependencyData(),
 			/* memory place */ nullptr,
 			/* from a busy thread */ true);
 
 		Monitoring::taskFinished(task);
 		HardwareCounters::taskFinished(task);
-		TaskFinalization::taskFinished(task, nullptr);
+		TaskFinalization::taskFinished(task, cpu, true);
 
 		// Try to dispose the task
 		if (task->markAsReleased()) {
