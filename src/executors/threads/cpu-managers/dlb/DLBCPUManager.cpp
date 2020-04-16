@@ -9,7 +9,7 @@
 #include <dlb.h>
 
 #include "DLBCPUActivation.hpp"
-#include "DLBCPUManagerImplementation.hpp"
+#include "DLBCPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/cpu-managers/dlb/policies/GreedyPolicy.hpp"
 #include "executors/threads/cpu-managers/dlb/policies/LeWIPolicy.hpp"
@@ -18,11 +18,11 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-boost::dynamic_bitset<> DLBCPUManagerImplementation::_shutdownCPUs;
-SpinLock DLBCPUManagerImplementation::_shutdownCPUsLock;
+boost::dynamic_bitset<> DLBCPUManager::_shutdownCPUs;
+SpinLock DLBCPUManager::_shutdownCPUsLock;
 
 
-void DLBCPUManagerImplementation::preinitialize()
+void DLBCPUManager::preinitialize()
 {
 	_finishedCPUInitialization = false;
 
@@ -142,7 +142,7 @@ void DLBCPUManagerImplementation::preinitialize()
 	);
 }
 
-void DLBCPUManagerImplementation::initialize()
+void DLBCPUManager::initialize()
 {
 	for (size_t id = 0; id < _cpus.size(); ++id) {
 		CPU *cpu = _cpus[id];
@@ -163,7 +163,7 @@ void DLBCPUManagerImplementation::initialize()
 	_finishedCPUInitialization = true;
 }
 
-void DLBCPUManagerImplementation::shutdownPhase1()
+void DLBCPUManager::shutdownPhase1()
 {
 	CPU *cpu;
 	CPU::activation_status_t status;
@@ -195,7 +195,7 @@ void DLBCPUManagerImplementation::shutdownPhase1()
 	// progressively see this and add themselves to the shutdown list
 }
 
-void DLBCPUManagerImplementation::shutdownPhase2()
+void DLBCPUManager::shutdownPhase2()
 {
 	// Shutdown DLB
 	// ret != DLB_SUCCESS means it was not initialized (should never occur)
@@ -207,7 +207,7 @@ void DLBCPUManagerImplementation::shutdownPhase2()
 	_cpuManagerPolicy = nullptr;
 }
 
-void DLBCPUManagerImplementation::forcefullyResumeFirstCPU()
+void DLBCPUManager::forcefullyResumeFirstCPU()
 {
 	// Try to reclaim the CPU (it only happens if it is lent)
 	DLBCPUActivation::reclaimCPU(_firstCPUId);
@@ -216,22 +216,22 @@ void DLBCPUManagerImplementation::forcefullyResumeFirstCPU()
 
 /*    CPUACTIVATION BRIDGE    */
 
-CPU::activation_status_t DLBCPUManagerImplementation::checkCPUStatusTransitions(WorkerThread *thread)
+CPU::activation_status_t DLBCPUManager::checkCPUStatusTransitions(WorkerThread *thread)
 {
 	return DLBCPUActivation::checkCPUStatusTransitions(thread);
 }
 
-bool DLBCPUManagerImplementation::acceptsWork(CPU *cpu)
+bool DLBCPUManager::acceptsWork(CPU *cpu)
 {
 	return DLBCPUActivation::acceptsWork(cpu);
 }
 
-bool DLBCPUManagerImplementation::enable(size_t systemCPUId)
+bool DLBCPUManager::enable(size_t systemCPUId)
 {
 	return DLBCPUActivation::enable(systemCPUId);
 }
 
-bool DLBCPUManagerImplementation::disable(size_t systemCPUId)
+bool DLBCPUManager::disable(size_t systemCPUId)
 {
 	return DLBCPUActivation::disable(systemCPUId);
 }

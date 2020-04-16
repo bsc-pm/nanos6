@@ -6,7 +6,7 @@
 
 #include "GreedyPolicy.hpp"
 #include "executors/threads/cpu-managers/dlb/DLBCPUActivation.hpp"
-#include "executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.hpp"
+#include "executors/threads/cpu-managers/dlb/DLBCPUManager.hpp"
 
 
 void GreedyPolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)
@@ -35,7 +35,7 @@ void GreedyPolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t 
 		assert(currentCPU != nullptr);
 
 		// Try to reclaim any lent collaborator of the taskfor
-		cpu_set_t cpuMask = DLBCPUManagerImplementation::getCollaboratorMask(currentCPU);
+		cpu_set_t cpuMask = DLBCPUManager::getCollaboratorMask(currentCPU);
 		if (CPU_COUNT(&cpuMask) > 0) {
 			DLBCPUActivation::acquireCPUs(cpuMask);
 		}

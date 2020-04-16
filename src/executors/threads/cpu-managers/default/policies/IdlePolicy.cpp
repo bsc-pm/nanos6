@@ -6,7 +6,7 @@
 
 #include "IdlePolicy.hpp"
 #include "executors/threads/ThreadManager.hpp"
-#include "executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.hpp"
+#include "executors/threads/cpu-managers/default/DefaultCPUManager.hpp"
 
 
 void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks)
@@ -20,7 +20,7 @@ void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t nu
 	if (hint == IDLE_CANDIDATE) {
 		assert(cpu != nullptr);
 
-		bool cpuIsIdle = DefaultCPUManagerImplementation::cpuBecomesIdle((CPU *) cpu);
+		bool cpuIsIdle = DefaultCPUManager::cpuBecomesIdle((CPU *) cpu);
 		if (cpuIsIdle) {
 			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 			assert(currentThread != nullptr);
@@ -36,7 +36,7 @@ void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t nu
 		CPU *idleCPUs[numCPUsToObtain];
 
 		// Try to get as many idle CPUs as we need
-		size_t numCPUsObtained = DefaultCPUManagerImplementation::getIdleCPUs(
+		size_t numCPUsObtained = DefaultCPUManager::getIdleCPUs(
 			numCPUsToObtain,
 			idleCPUs
 		);
@@ -50,7 +50,7 @@ void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t nu
 		assert(cpu != nullptr);
 
 		std::vector<CPU *> idleCPUs;
-		DefaultCPUManagerImplementation::getIdleCollaborators(idleCPUs, cpu);
+		DefaultCPUManager::getIdleCollaborators(idleCPUs, cpu);
 
 		// Resume an idle thread for every unidled collaborator
 		for (size_t i = 0; i < idleCPUs.size(); ++i) {

@@ -5,7 +5,7 @@
 */
 
 #include "DefaultCPUActivation.hpp"
-#include "DefaultCPUManagerImplementation.hpp"
+#include "DefaultCPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
@@ -14,15 +14,15 @@
 #include <Monitoring.hpp>
 
 
-boost::dynamic_bitset<> DefaultCPUManagerImplementation::_idleCPUs;
-SpinLock DefaultCPUManagerImplementation::_idleCPUsLock;
-size_t DefaultCPUManagerImplementation::_numIdleCPUs;
-std::vector<size_t> DefaultCPUManagerImplementation::_systemToVirtualCPUId;
+boost::dynamic_bitset<> DefaultCPUManager::_idleCPUs;
+SpinLock DefaultCPUManager::_idleCPUsLock;
+size_t DefaultCPUManager::_numIdleCPUs;
+std::vector<size_t> DefaultCPUManager::_systemToVirtualCPUId;
 
 
 /*    CPUMANAGER    */
 
-void DefaultCPUManagerImplementation::preinitialize()
+void DefaultCPUManager::preinitialize()
 {
 	_finishedCPUInitialization = false;
 
@@ -134,7 +134,7 @@ void DefaultCPUManagerImplementation::preinitialize()
 	_numIdleCPUs = 0;
 }
 
-void DefaultCPUManagerImplementation::initialize()
+void DefaultCPUManager::initialize()
 {
 	for (size_t id = 0; id < _cpus.size(); ++id) {
 		CPU *cpu = _cpus[id];
@@ -152,7 +152,7 @@ void DefaultCPUManagerImplementation::initialize()
 	_finishedCPUInitialization = true;
 }
 
-void DefaultCPUManagerImplementation::shutdownPhase1()
+void DefaultCPUManager::shutdownPhase1()
 {
 	// Notify all CPUs that the runtime is shutting down
 	for (size_t id = 0; id < _cpus.size(); ++id) {
@@ -160,7 +160,7 @@ void DefaultCPUManagerImplementation::shutdownPhase1()
 	}
 }
 
-void DefaultCPUManagerImplementation::forcefullyResumeFirstCPU()
+void DefaultCPUManager::forcefullyResumeFirstCPU()
 {
 	bool resumed = false;
 
@@ -188,22 +188,22 @@ void DefaultCPUManagerImplementation::forcefullyResumeFirstCPU()
 
 /*    CPUACTIVATION BRIDGE    */
 
-CPU::activation_status_t DefaultCPUManagerImplementation::checkCPUStatusTransitions(WorkerThread *thread)
+CPU::activation_status_t DefaultCPUManager::checkCPUStatusTransitions(WorkerThread *thread)
 {
 	return DefaultCPUActivation::checkCPUStatusTransitions(thread);
 }
 
-bool DefaultCPUManagerImplementation::acceptsWork(CPU *cpu)
+bool DefaultCPUManager::acceptsWork(CPU *cpu)
 {
 	return DefaultCPUActivation::acceptsWork(cpu);
 }
 
-bool DefaultCPUManagerImplementation::enable(size_t systemCPUId)
+bool DefaultCPUManager::enable(size_t systemCPUId)
 {
 	return DefaultCPUActivation::enable(systemCPUId);
 }
 
-bool DefaultCPUManagerImplementation::disable(size_t systemCPUId)
+bool DefaultCPUManager::disable(size_t systemCPUId)
 {
 	return DefaultCPUActivation::disable(systemCPUId);
 }
@@ -211,7 +211,7 @@ bool DefaultCPUManagerImplementation::disable(size_t systemCPUId)
 
 /*    IDLE MECHANISM    */
 
-bool DefaultCPUManagerImplementation::cpuBecomesIdle(CPU *cpu)
+bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 {
 	assert(cpu != nullptr);
 
@@ -243,7 +243,7 @@ bool DefaultCPUManagerImplementation::cpuBecomesIdle(CPU *cpu)
 	return true;
 }
 
-CPU *DefaultCPUManagerImplementation::getIdleCPU()
+CPU *DefaultCPUManager::getIdleCPU()
 {
 	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 
@@ -265,7 +265,7 @@ CPU *DefaultCPUManagerImplementation::getIdleCPU()
 	}
 }
 
-size_t DefaultCPUManagerImplementation::getIdleCPUs(
+size_t DefaultCPUManager::getIdleCPUs(
 	size_t numCPUs,
 	CPU *idleCPUs[]
 ) {
@@ -298,7 +298,7 @@ size_t DefaultCPUManagerImplementation::getIdleCPUs(
 	return numObtainedCPUs;
 }
 
-void DefaultCPUManagerImplementation::getIdleCollaborators(
+void DefaultCPUManager::getIdleCollaborators(
 	std::vector<CPU *> &idleCPUs,
 	ComputePlace *cpu
 ) {

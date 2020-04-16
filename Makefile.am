@@ -354,7 +354,7 @@ common_sources = \
 	src/executors/threads/CPUManagerInterface.cpp \
 	src/executors/threads/ThreadManager.cpp \
 	src/executors/threads/WorkerThread.cpp \
-	src/executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.cpp \
+	src/executors/threads/cpu-managers/default/DefaultCPUManager.cpp \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.cpp \
 	src/hardware/HardwareInfo.cpp \
 	src/hardware/device/Device.cpp \
@@ -668,7 +668,7 @@ cpu_manager_CPPFLAGS = -I$(srcdir)/src/executors/threads/cpu-managers/default
 if HAVE_DLB
 cpu_manager_sources  += \
 	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.cpp \
-	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.cpp \
+	src/executors/threads/cpu-managers/dlb/DLBCPUManager.cpp \
 	src/executors/threads/cpu-managers/dlb/policies/GreedyPolicy.cpp \
 	src/executors/threads/cpu-managers/dlb/policies/LeWIPolicy.cpp
 cpu_manager_LDFLAGS  += $(dlb_LIBS)
@@ -783,11 +783,11 @@ noinst_HEADERS = \
 	src/executors/threads/WorkerThread.hpp \
 	src/executors/threads/WorkerThreadImplementation.hpp \
 	src/executors/threads/cpu-managers/default/DefaultCPUActivation.hpp \
-	src/executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.hpp \
+	src/executors/threads/cpu-managers/default/DefaultCPUManager.hpp \
 	src/executors/threads/cpu-managers/default/policies/BusyPolicy.hpp \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.hpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.hpp \
-	src/executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.hpp \
+	src/executors/threads/cpu-managers/dlb/DLBCPUManager.hpp \
 	src/executors/threads/cpu-managers/dlb/policies/GreedyPolicy.hpp \
 	src/executors/threads/cpu-managers/dlb/policies/LeWIPolicy.hpp \
 	src/executors/threads/kernel-level/CPUThreadingModelData.hpp \

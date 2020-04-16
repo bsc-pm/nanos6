@@ -4,13 +4,13 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef DEFAULT_CPU_MANAGER_IMPLEMENTATION_HPP
-#define DEFAULT_CPU_MANAGER_IMPLEMENTATION_HPP
+#ifndef DEFAULT_CPU_MANAGER_HPP
+#define DEFAULT_CPU_MANAGER_HPP
 
 #include "executors/threads/CPUManagerInterface.hpp"
 
 
-class DefaultCPUManagerImplementation : public CPUManagerInterface {
+class DefaultCPUManager : public CPUManagerInterface {
 
 private:
 
@@ -139,4 +139,4 @@ public:
 
 };
 
-#endif // DEFAULT_CPU_MANAGER_IMPLEMENTATION_HPP
+#endif // DEFAULT_CPU_MANAGER_HPP

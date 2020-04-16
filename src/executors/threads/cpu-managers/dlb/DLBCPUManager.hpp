@@ -4,8 +4,8 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef DLB_CPU_MANAGER_IMPLEMENTATION_HPP
-#define DLB_CPU_MANAGER_IMPLEMENTATION_HPP
+#ifndef DLB_CPU_MANAGER_HPP
+#define DLB_CPU_MANAGER_HPP
 
 #include <cstring>
 #include <sched.h>
@@ -16,7 +16,7 @@
 #include "hardware/places/ComputePlace.hpp"
 
 
-class DLBCPUManagerImplementation : public CPUManagerInterface {
+class DLBCPUManager : public CPUManagerInterface {
 
 private:
 
@@ -139,4 +139,4 @@ public:
 };
 
 
-#endif // DLB_CPU_MANAGER_IMPLEMENTATION_HPP
+#endif // DLB_CPU_MANAGER_HPP

@@ -10,9 +10,9 @@
 #include <config.h>
 
 #include "CPUManagerInterface.hpp"
-#include "executors/threads/cpu-managers/default/DefaultCPUManagerImplementation.hpp"
+#include "executors/threads/cpu-managers/default/DefaultCPUManager.hpp"
 #if HAVE_DLB
-#include "executors/threads/cpu-managers/dlb/DLBCPUManagerImplementation.hpp"
+#include "executors/threads/cpu-managers/dlb/DLBCPUManager.hpp"
 #endif
 #include "lowlevel/EnvironmentVariable.hpp"
 
@@ -38,12 +38,12 @@ public:
 
 #if HAVE_DLB
 		if (_dlbEnabled) {
-			_cpuManager = new DLBCPUManagerImplementation();
+			_cpuManager = new DLBCPUManager();
 		} else {
-			_cpuManager = new DefaultCPUManagerImplementation();
+			_cpuManager = new DefaultCPUManager();
 		}
 #else
-		_cpuManager = new DefaultCPUManagerImplementation();
+		_cpuManager = new DefaultCPUManager();
 #endif
 		assert(_cpuManager != nullptr);
 
