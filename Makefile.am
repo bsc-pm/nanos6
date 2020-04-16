@@ -395,11 +395,11 @@ common_sources = \
 	src/system/ompss/Loop.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
-	src/system/ompss/TaskInfo.cpp \
 	src/system/ompss/TaskWait.cpp \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Taskfor.cpp \
+	src/tasks/TaskInfo.cpp \
 	src/tasks/Taskloop.cpp
 
 common_sources += $(universal_debug_sources)
@@ -1133,15 +1133,15 @@ noinst_HEADERS = \
 	src/system/ompss/AddTask.hpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
-	src/system/ompss/TaskInfo.hpp \
 	src/system/ompss/UserMutex.hpp \
 	src/tasks/LoopGenerator.hpp \
 	src/tasks/StreamExecutor.hpp \
 	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
-	src/tasks/TaskImplementation.hpp \
 	src/tasks/Taskfor.hpp \
+	src/tasks/TaskImplementation.hpp \
+	src/tasks/TaskInfo.hpp \
 	src/tasks/Taskloop.hpp \
 	src/tasks/TaskTypeData.hpp \
 	src/version/VersionInfo.hpp \
