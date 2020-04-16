@@ -89,12 +89,8 @@ public:
 		if (computePlaceType == nanos6_host_device) {
 #ifdef EXTRAE_ENABLED
 			if (CPUManager::isFirstCPU(computePlace->getIndex())) {
-				if (_mainTask != nullptr) {
-					Task *result = _mainTask;
-					bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
-					FatalErrorHandler::failIf(!exchanged);
-					_mainFirstRunCompleted = true;
-					return result;
+				if (_mainTask.load() != nullptr) {
+					return true;
 				}
 			}
 #endif
