@@ -136,6 +136,18 @@ public:
 	//! \param[in,out] task The task that has finished
 	static void taskFinished(Task *task);
 
+	//! \brief Get the size needed to create a TaskStatistics object
+	//!
+	//! \return TaskStatistics size or 0 if Monitoring is disabled
+	static inline size_t getTaskStatisticsSize()
+	{
+		if (_enabled) {
+			return sizeof(TaskStatistics);
+		}
+
+		return 0;
+	}
+
 
 	//    CPUS    //
 

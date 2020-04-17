@@ -8,6 +8,7 @@
 #include "MemoryAllocator.hpp"
 #include "MemoryPlace.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/Taskfor.hpp"
 
 #include <InstrumentTaskExecution.hpp>
@@ -61,10 +62,15 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 		assert(taskCountersAddress != nullptr);
 	}
 
+	// Allocate task monitoring statistics
+	size_t taskStatisticsSize = Monitoring::getTaskStatisticsSize();
+	TaskStatistics *taskStatistics = (TaskStatistics *) malloc(taskStatisticsSize);
+	_preallocatedTaskfor->setTaskStatistics(taskStatistics);
+
 	// Allocate preallocated taskfor
 	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr,
 		Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task,
-		taskAccessInfo, taskCountersAddress, true);
+		taskAccessInfo, taskCountersAddress, nullptr, true);
 	_preallocatedArgsBlockSize = 1024;
 
 	// MemoryAllocator is still not available, so use malloc
@@ -73,6 +79,7 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 		"Insufficient memory for preallocatedArgsBlock");
 
 	HardwareCounters::taskCreated(_preallocatedTaskfor);
+	Monitoring::taskCreated(_preallocatedTaskfor);
 }
 
 ComputePlace::~ComputePlace()
@@ -83,6 +90,12 @@ ComputePlace::~ComputePlace()
 	// Retreive the allocation address
 	const TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
 	void *allocationAddress = taskCounters.getAllocationAddress();
+
+	// Free task statistics
+	TaskStatistics *taskStatistics = taskfor->getTaskStatistics();
+	assert(taskStatistics != nullptr);
+
+	free(taskStatistics);
 
 	delete taskfor;
 

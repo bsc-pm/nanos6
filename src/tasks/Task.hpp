@@ -137,7 +137,7 @@ private:
 	Step *_executionStep;
 
 	//! Monitoring-related statistics about the task
-	TaskStatistics _taskStatistics;
+	TaskStatistics *_taskStatistics;
 
 	//! Hardware counter structures of the task
 	TaskHardwareCounters _hwCounters;
@@ -162,7 +162,8 @@ public:
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
 		const TaskDataAccessesInfo &taskAccessInfo,
-		void *taskCountersAddress
+		void *taskCountersAddress,
+		void *taskStatistics
 	);
 
 	virtual inline void reinitialize(
@@ -770,10 +771,16 @@ public:
 		return constraints.cost;
 	}
 
-	//! \brief Get the task's statistics
+	//! \brief Setter for the task's monitoring statistics structures
+	inline void setTaskStatistics(TaskStatistics *taskStatistics)
+	{
+		_taskStatistics = taskStatistics;
+	}
+
+	//! \brief Get the task's monitoring statistics
 	inline TaskStatistics *getTaskStatistics()
 	{
-		return &_taskStatistics;
+		return _taskStatistics;
 	}
 
 	//! \brief Setter for the task's hardware counter structures

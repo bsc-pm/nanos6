@@ -22,6 +22,7 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadId.hpp>
 
+
 void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool fromBusyThread)
 {
 	assert(task != nullptr);

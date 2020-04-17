@@ -30,7 +30,8 @@ inline Task::Task(
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags,
 	const TaskDataAccessesInfo &taskAccessInfo,
-	void *taskCountersAddress
+	void *taskCountersAddress,
+	void *taskStatistics
 ) :
 	_argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
@@ -52,7 +53,7 @@ inline Task::Task(
 	_countdownToRelease(1),
 	_workflow(nullptr),
 	_executionStep(nullptr),
-	_taskStatistics(),
+	_taskStatistics((TaskStatistics *) taskStatistics),
 	_hwCounters(taskCountersAddress),
 	_clusterContext(nullptr),
 	_parentSpawnCallback(nullptr),

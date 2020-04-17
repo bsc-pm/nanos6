@@ -119,6 +119,14 @@ bool Monitoring::isEnabled()
 void Monitoring::taskCreated(Task *task)
 {
 	assert(task != nullptr);
+	if (_enabled) {
+		TaskStatistics *taskStatistics = task->getTaskStatistics();
+		assert(taskStatistics != nullptr);
+
+		// Construct the object with the reserved space
+		new (taskStatistics) TaskStatistics();
+	}
+
 	if (_enabled && !task->isTaskfor()) {
 		// Retrieve information about the task
 		TaskStatistics  *parentStatistics  = (task->getParent() != nullptr ? task->getParent()->getTaskStatistics() : nullptr);

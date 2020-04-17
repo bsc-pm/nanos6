@@ -95,13 +95,15 @@ Task *AddTask::createTask(
 
 	TaskDataAccessesInfo taskAccesses(numDependencies);
 	size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
+	size_t taskStatisticsSize = Monitoring::getTaskStatisticsSize();
 
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	if (hasPreallocatedArgsBlock) {
 		assert(argsBlock != nullptr);
 		task = (Task *) MemoryAllocator::alloc(taskSize
 			+ taskAccesses.getAllocationSize()
-			+ taskCountersSize);
+			+ taskCountersSize
+			+ taskStatisticsSize);
 	} else {
 		// Alignment fixup
 		size_t missalignment = argsBlockSize & (DATA_ALIGNMENT_SIZE - 1);
@@ -111,7 +113,8 @@ Task *AddTask::createTask(
 		// Allocation and layout
 		argsBlock = MemoryAllocator::alloc(argsBlockSize + taskSize
 			+ taskAccesses.getAllocationSize()
-			+ taskCountersSize);
+			+ taskCountersSize
+			+ taskStatisticsSize);
 		task = (Task *) ((char *) argsBlock + argsBlockSize);
 	}
 
@@ -124,25 +127,30 @@ Task *AddTask::createTask(
 		taskCountersAddress = (char *) task + taskSize + taskAccesses.getAllocationSize();
 	}
 
+	void *taskStatistics = nullptr;
+	if (taskStatisticsSize > 0) {
+		taskStatistics = (char *) task + taskSize + taskAccessInfo.getAllocationSize() + taskCountersSize;
+	}
+
 	if (isTaskloop || isTaskloopFor) {
 		new (task) Taskloop(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCountersAddress);
+			flags, taskAccesses, taskCountersAddress, taskStatistics);
 	} else if (isTaskfor) {
 		// Taskfors are always final
 		flags |= nanos6_final_task;
 
 		new (task) Taskfor(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCountersAddress);
+			flags, taskAccesses, taskCountersAddress, taskStatistics);
 	} else if (isStreamExecutor) {
 		new (task) StreamExecutor(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId, flags,
-			taskAccesses, taskCountersAddress);
+			taskAccesses, taskCountersAddress, taskStatistics);
 	} else {
 		new (task) Task(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCountersAddress);
+			flags, taskAccesses, taskCountersAddress, taskStatistics);
 	}
 
 	Instrument::exitCreateTask(taskRuntimeTransition);
