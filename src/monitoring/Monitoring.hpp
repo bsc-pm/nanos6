@@ -137,15 +137,6 @@ public:
 	static void taskFinished(Task *task);
 
 
-	//    THREADS    //
-
-	//! \brief Propagate monitoring operations when a thread is initialized
-	static void initializeThread();
-
-	//! \brief Propagate monitoring operations when a thread is shutdown
-	static void shutdownThread();
-
-
 	//    CPUS    //
 
 	//! \brief Propagate monitoring operations when a CPU becomes idle

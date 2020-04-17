@@ -175,19 +175,6 @@ void Monitoring::taskFinished(Task *task)
 }
 
 
-//    THREADS    //
-
-void Monitoring::initializeThread()
-{
-	// Empty thread API
-}
-
-void Monitoring::shutdownThread()
-{
-	// Empty thread API
-}
-
-
 //    CPUS    //
 
 void Monitoring::cpuBecomesIdle(int cpuId)

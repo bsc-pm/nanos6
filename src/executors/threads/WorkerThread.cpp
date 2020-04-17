@@ -21,7 +21,6 @@
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
@@ -51,7 +50,6 @@ void WorkerThread::initialize()
 	markAsCurrentWorkerThread();
 
 	HardwareCounters::threadInitialized();
-	Monitoring::initializeThread();
 
 	// This is needed for kernel-level threads to stop them after initialization
 	synchronizeInitialization();
@@ -131,7 +129,6 @@ void WorkerThread::body()
 	HardwareCounters::updateRuntimeCounters();
 	Instrument::threadWillShutdown();
 	HardwareCounters::threadShutdown();
-	Monitoring::shutdownThread();
 
 	ThreadManager::addShutdownThread(this);
 }
