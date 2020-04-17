@@ -13,10 +13,10 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
-#include <Monitoring.hpp>
 
 
 class DefaultCPUActivation {

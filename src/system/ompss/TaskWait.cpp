@@ -14,13 +14,13 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
-#include <Monitoring.hpp>
 
 
 void nanos6_taskwait(char const *invocationSource)

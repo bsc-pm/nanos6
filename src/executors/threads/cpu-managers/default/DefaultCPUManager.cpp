@@ -10,10 +10,10 @@
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
-#include <Monitoring.hpp>
 
 
 boost::dynamic_bitset<> DefaultCPUManager::_idleCPUs;

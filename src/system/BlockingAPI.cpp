@@ -13,12 +13,12 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "support/chronometers/std/Chrono.hpp"
 
 #include <InstrumentBlockingAPI.hpp>
-#include <Monitoring.hpp>
 
 
 void BlockingAPI::blockCurrentTask(bool fromUserCode)

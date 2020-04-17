@@ -12,10 +12,9 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-
-#include <Monitoring.hpp>
 
 
 extern "C" void *nanos6_get_current_event_counter(void)

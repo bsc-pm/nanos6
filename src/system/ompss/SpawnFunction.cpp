@@ -18,12 +18,12 @@
 #include "SpawnFunction.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskInfo.hpp"
 
 #include <InstrumentAddTask.hpp>
-#include <Monitoring.hpp>
 
 
 //! Static members

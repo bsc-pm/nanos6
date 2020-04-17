@@ -18,6 +18,7 @@
 #include "hardware/device/DeviceEnvironment.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "monitoring/TaskStatistics.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "tasks/TasktypeData.hpp"
 
@@ -25,7 +26,6 @@
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
-#include <TaskStatistics.hpp>
 #include <TaskDataAccessesInfo.hpp>
 
 struct DataAccess;

@@ -11,6 +11,7 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "memory/directory/Directory.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <ClusterManager.hpp>
@@ -19,7 +20,6 @@
 #include <DataAccessRegistrationImplementation.hpp>
 #include <ExecutionWorkflowHost.hpp>
 #include <ExecutionWorkflowCluster.hpp>
-#include <Monitoring.hpp>
 
 
 namespace ExecutionWorkflow {

@@ -17,13 +17,13 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <InstrumentThreadManagement.hpp>
 #include <InstrumentUserMutex.hpp>
-#include <Monitoring.hpp>
 
 
 typedef std::atomic<UserMutex *> mutex_t;

@@ -21,6 +21,7 @@
 #include "WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
@@ -37,7 +38,6 @@
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <InstrumentWorkerThread.hpp>
-#include <Monitoring.hpp>
 
 void WorkerThread::initialize()
 {

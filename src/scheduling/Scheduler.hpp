@@ -8,10 +8,10 @@
 #define SCHEDULER_HPP
 
 #include "SchedulerInterface.hpp"
+#include "monitoring/Monitoring.hpp"
 
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentScheduler.hpp>
-#include <Monitoring.hpp>
 
 
 class Scheduler {

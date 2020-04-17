@@ -289,29 +289,6 @@ AC_MSG_RESULT([$ac_discrete_deps])
 AM_CONDITIONAL([DISCRETE_DEPENDENCIES], [test x"${ac_discrete_deps}" = x"yes"])
 
 AC_ARG_ENABLE(
-	[monitoring],
-	[AS_HELP_STRING([--enable-monitoring], [enable monitoring and prediction techniques of statistics])],
-	[
-		case "${enableval}" in
-		yes)
-			ac_monitoring=no
-			;;
-		no)
-			ac_monitoring=no
-			;;
-		*)
-			AC_MSG_ERROR([bad value ${enableval} for --enable-monitoring])
-			;;
-		esac
-	],
-	[ac_monitoring=no]
-)
-AM_CONDITIONAL([MONITORING_ENABLED], [test x"${ac_monitoring}" = x"yes"])
-if test x"${ac_monitoring}" = x"yes" ; then
-	AC_DEFINE([MONITORING_ENABLED], [1], [Define if Monitoring is enabled.])
-fi
-
-AC_ARG_ENABLE(
 	[chrono-arch],
 	[AS_HELP_STRING([--enable-chrono-arch], [use an architecture-dependent chrono for timing instead of the default one (std)])],
 	[
@@ -476,14 +453,6 @@ if test x"${ac_use_memkind}" = x"yes" ; then
 else
 	AC_MSG_RESULT([no])
 fi
-
-_AS_ECHO([])
-_AS_ECHO_N([   Monitoring is disabled (currently unavailable) ])
-#if test x"${ac_monitoring}" = x"yes" ; then
-#	AC_MSG_RESULT([yes])
-#else
-#	AC_MSG_RESULT([no])
-#fi
 
 _AS_ECHO([])
 _AS_ECHO_N([   Chrono Arch is enabled... ])
