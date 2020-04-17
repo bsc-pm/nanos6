@@ -78,7 +78,11 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 					if (finishedSource) {
 						source->markAsFinished(computePlace);
 						assert(computePlace != nullptr);
-						DataAccessRegistration::unregisterTaskDataAccesses(source, computePlace, computePlace->getDependencyData());
+
+						DataAccessRegistration::unregisterTaskDataAccesses(
+							source, computePlace,
+							computePlace->getDependencyData());
+
 						// There is one count for the finished source, but we need ready = true to decrement it later again.
 						ready = source->finishChild();
 						assert(!ready);

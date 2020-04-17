@@ -38,6 +38,8 @@ public:
 
 	inline void shutdownPhase2()
 	{
+		delete _leaderThreadCPU;
+
 		delete _cpuManagerPolicy;
 
 		// Make sure the policy is nullptr to trip asserts if something's wrong

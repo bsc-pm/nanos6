@@ -20,6 +20,7 @@
 
 boost::dynamic_bitset<> DLBCPUManager::_shutdownCPUs;
 SpinLock DLBCPUManager::_shutdownCPUsLock;
+std::vector<cpu_set_t> DLBCPUManager::_collaboratorMasks;
 
 
 void DLBCPUManager::preinitialize()
@@ -64,8 +65,9 @@ void DLBCPUManager::preinitialize()
 
 	//    CPU MANAGER STRUCTURES    //
 
-	// Initialize the vector of CPUs
+	// Initialize the vector of CPUs and the vector of collaborator masks
 	_cpus.resize(numCPUs);
+	_collaboratorMasks.resize(numCPUs);
 
 	// Initialize each CPU's fields
 	bool firstCPUFound = false;
@@ -94,6 +96,25 @@ void DLBCPUManager::preinitialize()
 	}
 	assert(firstCPUFound);
 
+	// After initializing CPU fields, initialize each collaborator mask
+	for (size_t i = 0; i < numCPUs; ++i) {
+		CPU *cpu = (CPU *) cpus[i];
+		assert(cpu != nullptr);
+
+		size_t groupId = cpu->getGroupId();
+		CPU_ZERO(&_collaboratorMasks[i]);
+
+		for (size_t j = 0; j < numCPUs; ++j) {
+			CPU *collaborator = (CPU *) cpus[j];
+			assert(collaborator != nullptr);
+
+			if (collaborator->getGroupId() == groupId) {
+				// Mark that CPU 'j' is a collaborator of CPU 'i'
+				CPU_SET(j, &_collaboratorMasks[i]);
+			}
+		}
+	}
+
 	CPUManagerInterface::reportInformation(numCPUs, numNUMANodes);
 	if (_taskforGroupsReportEnabled) {
 		CPUManagerInterface::reportTaskforGroupsInfo();
@@ -102,6 +123,10 @@ void DLBCPUManager::preinitialize()
 	// All CPUs are unavailable for the shutdown process at the start
 	_shutdownCPUs.resize(numCPUs);
 	_shutdownCPUs.reset();
+
+	// Initialize the virtual CPU for the leader thread
+	_leaderThreadCPU = new CPU(numCPUs);
+	assert(_leaderThreadCPU != nullptr);
 
 
 	//    DLB RELATED    //
@@ -197,6 +222,8 @@ void DLBCPUManager::shutdownPhase1()
 
 void DLBCPUManager::shutdownPhase2()
 {
+	delete _leaderThreadCPU;
+
 	// Shutdown DLB
 	// ret != DLB_SUCCESS means it was not initialized (should never occur)
 	__attribute__((unused)) int ret = DLB_Finalize();

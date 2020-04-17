@@ -1,11 +1,11 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef EXECUTORS_THREADS_CPU_HPP
-#define EXECUTORS_THREADS_CPU_HPP
+#ifndef CPU_HPP
+#define CPU_HPP
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -28,7 +28,9 @@
 class WorkerThread;
 
 class CPU: public CPUPlace {
+
 public:
+
 #ifdef __KNC__
 	// For some reason ICPC from composer_xe_2015.2.164 with KNC is unable to handle the activation_status_t as is correctly
 	typedef unsigned int activation_status_t;
@@ -55,37 +57,61 @@ public:
 #endif
 
 private:
+
 	std::atomic<activation_status_t> _activationStatus;
 
 	size_t _systemCPUId;
 	size_t _NUMANodeId;
 	size_t _groupId;
 
-	//! \brief the CPU mask so that we can later on migrate threads to this CPU
+	//! The CPU mask so that we can later on migrate threads to this CPU
 	cpu_set_t _cpuMask;
 
-	//! \brief the pthread attr that is used for all the threads of this CPU
+	//! The pthread attr that is used for all the threads of this CPU
 	//!
 	//! Making changes in this attribute is *NOT* thread-safe. We assume that only
 	//! one thread is touching this at a time.
 	pthread_attr_t _pthreadAttr;
 
-	//! \brief Per-CPU data that is specific to the threading model
+	//! Per-CPU data that is specific to the threading model
 	CPUThreadingModelData _threadingModelData;
 
-	//! \brief Wehther this cpu is owned by the runtime
+	//! Whether this cpu is owned by the runtime
 	bool _isOwned;
 
 public:
+
+	//! \brief Constructor for regular CPUs
+	//!
+	//! \param[in] systemCPUId The system id of the CPU
+	//! \param[in] virtualCPUId The virtual id or index of the CPU
+	//! \param[in] NUMANodeId The NUMA node id of the CPU
 	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
+
+	//! \brief Constructor for virtual CPUs
+	//!
+	//! This function should only be used to construct virtual CPUs,
+	//! like the CPU assigned to the leader thread. The system id is
+	//! set to a completely invalid number, while the NUMA node id
+	//! is set to the first valid NUMA node
+	//!
+	//! \param[in] virtualCPUId The virtual id or index of the CPU
+	inline CPU(size_t virtualCPUId) :
+		CPUPlace(virtualCPUId),
+		_activationStatus(uninitialized_status),
+		_systemCPUId(-1),
+		_NUMANodeId(0),
+		_isOwned(false)
+	{
+	}
+
+	inline ~CPU()
+	{
+	}
 
 	// Not copyable
 	CPU(CPU const &) = delete;
 	CPU operator=(CPU const &) = delete;
-
-	~CPU()
-	{
-	}
 
 	inline bool initializeIfNeeded()
 	{
@@ -170,5 +196,5 @@ public:
 };
 
 
-#endif // EXECUTORS_THREADS_CPU_HPP
+#endif // CPU_HPP
 

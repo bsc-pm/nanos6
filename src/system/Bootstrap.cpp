@@ -99,7 +99,12 @@ void nanos6_preinit(void) {
 
 	ThreadManager::initialize();
 	DependencySystem::initialize();
-	LeaderThread::initialize();
+
+	// Retrieve the virtual CPU for the leader thread
+	CPU *leaderThreadCPU = CPUManager::getLeaderThreadCPU();
+	assert(leaderThreadCPU != nullptr);
+
+	LeaderThread::initialize(leaderThreadCPU);
 
 	CPUManager::initialize();
 }

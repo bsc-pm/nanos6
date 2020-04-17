@@ -132,6 +132,10 @@ void DefaultCPUManager::preinitialize()
 	_idleCPUs.resize(numAvailableCPUs);
 	_idleCPUs.reset();
 	_numIdleCPUs = 0;
+
+	// Initialize the virtual CPU for the leader thread
+	_leaderThreadCPU = new CPU(numCPUs);
+	assert(_leaderThreadCPU != nullptr);
 }
 
 void DefaultCPUManager::initialize()

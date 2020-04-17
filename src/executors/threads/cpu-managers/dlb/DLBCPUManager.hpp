@@ -26,6 +26,9 @@ private:
 	//! Spinlock to access shutdown CPUs
 	static SpinLock _shutdownCPUsLock;
 
+	//! A set of collaborator masks per CPU
+	static std::vector<cpu_set_t> _collaboratorMasks;
+
 public:
 
 	/*    CPUMANAGER    */
@@ -117,23 +120,8 @@ public:
 	{
 		assert(cpu != nullptr);
 
-		// The resulting mask of collaborators
-		cpu_set_t resultMask;
-		CPU_ZERO(&resultMask);
-
-		CPU *candidate;
-		size_t groupId = cpu->getGroupId();
-		for (size_t id = 0; id < _cpus.size(); ++id) {
-			candidate = _cpus[id];
-			assert(candidate != nullptr);
-
-			// A candidate is valid if it has the same group id as the cpu
-			if (candidate->getGroupId() == groupId) {
-				CPU_SET(candidate->getSystemCPUId(), &resultMask);
-			}
-		}
-
-		return resultMask;
+		// Return the mask of CPUs that can collaborate with 'cpu' in taskfors
+		return _collaboratorMasks[cpu->getIndex()];
 	}
 
 };

@@ -53,6 +53,9 @@ protected:
 	//! The virtual id of the first owned CPU of this process
 	static size_t _firstCPUId;
 
+	//! The virtual CPU of the leader thread
+	static CPU *_leaderThreadCPU;
+
 private:
 
 	//! \brief Taskfor-related, get the closest number of taskfor groups
@@ -195,9 +198,15 @@ public:
 	//! \brief Check whether a CPU is the first CPU of this process' mask
 	//!
 	//! \param[in] index The (virtual) index of the compute place
-	inline bool isFirstCPU(size_t index)
+	inline bool isFirstCPU(size_t index) const
 	{
 		return (index == _firstCPUId);
+	}
+
+	//! \brief Get the virtual CPU of the leader thread
+	inline CPU *getLeaderThreadCPU() const
+	{
+		return _leaderThreadCPU;
 	}
 
 

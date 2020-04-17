@@ -7,8 +7,8 @@
 #include "ComputePlace.hpp"
 #include "MemoryAllocator.hpp"
 #include "MemoryPlace.hpp"
-#include "tasks/Taskfor.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "tasks/Taskfor.hpp"
 
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -18,48 +18,47 @@ void ComputePlace::addMemoryPlace(MemoryPlace *mem) {
 	_memoryPlaces[mem->getIndex()] = mem;
 }
 
-std::vector<int> ComputePlace::getMemoryPlacesIndexes() {
+std::vector<int> ComputePlace::getMemoryPlacesIndexes()
+{
 	std::vector<int> indexes(_memoryPlaces.size());
 
 	int i = 0;
-	for (memory_places_t::iterator it = _memoryPlaces.begin();
-		it != _memoryPlaces.end();
-		++it, ++i)
-	{
-		//indexes.push_back(it->first);
+	memory_places_t::iterator it;
+	for (it = _memoryPlaces.begin(); it != _memoryPlaces.end(); ++it, ++i) {
 		indexes[i] = it->first;
 	}
 
 	return indexes;
 }
 
-std::vector<MemoryPlace *> ComputePlace::getMemoryPlaces() {
+std::vector<MemoryPlace *> ComputePlace::getMemoryPlaces()
+{
 	std::vector<MemoryPlace *> mems(_memoryPlaces.size());
 
 	int i = 0;
-	for (memory_places_t::iterator it = _memoryPlaces.begin();
-		it != _memoryPlaces.end();
-		++it, ++i)
-	{
-		//mems.push_back(it->second);
+	memory_places_t::iterator it;
+	for (it = _memoryPlaces.begin(); it != _memoryPlaces.end(); ++it, ++i) {
 		mems[i] = it->second;
 	}
 
 	return mems;
 }
 
-ComputePlace::ComputePlace(int index, nanos6_device_t type)
-	: _index(index), _type(type), _schedulerData(nullptr)
+ComputePlace::ComputePlace(int index, nanos6_device_t type) :
+	_index(index), _type(type), _schedulerData(nullptr)
 {
 	TaskDataAccessesInfo taskAccessInfo(0);
 
 	// Allocate preallocated taskfor.
-	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr, Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task, taskAccessInfo, nullptr, true);
+	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr,
+		Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task,
+		taskAccessInfo, nullptr, true);
 	_preallocatedArgsBlockSize = 1024;
 
 	// MemoryAllocator is still not available, so use malloc.
 	_preallocatedArgsBlock = malloc(_preallocatedArgsBlockSize);
-	FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr, "Insufficient memory for preallocatedArgsBlock.");
+	FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr,
+		"Insufficient memory for preallocatedArgsBlock.");
 
 	// Allocate counters in a different call to avoid the free called by
 	// getPreallocatedArgsBlock()
@@ -85,8 +84,7 @@ ComputePlace::~ComputePlace()
 	// First allocation (1024) is done using malloc.
 	if (_preallocatedArgsBlockSize == 1024) {
 		free(_preallocatedArgsBlock);
-	}
-	else {
+	} else {
 		MemoryAllocator::free(_preallocatedArgsBlock, _preallocatedArgsBlockSize);
 	}
 }
@@ -97,14 +95,14 @@ void *ComputePlace::getPreallocatedArgsBlock(size_t requiredSize)
 		// First allocation (1024) is done using malloc.
 		if (_preallocatedArgsBlockSize == 1024) {
 			free(_preallocatedArgsBlock);
-		}
-		else {
+		} else {
 			MemoryAllocator::free(_preallocatedArgsBlock, _preallocatedArgsBlockSize);
 		}
 
 		_preallocatedArgsBlockSize = requiredSize;
 		_preallocatedArgsBlock = MemoryAllocator::alloc(_preallocatedArgsBlockSize);
-		FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr, "Insufficient memory for preallocatedArgsBlock.");
+		FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr,
+			"Insufficient memory for preallocatedArgsBlock.");
 	}
 	return _preallocatedArgsBlock;
 }
