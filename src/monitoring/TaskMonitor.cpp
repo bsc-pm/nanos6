@@ -24,6 +24,7 @@ void TaskMonitor::taskCreated(
 	taskStatistics->setCost(cost);
 	if (parentStatistics != nullptr) {
 		parentStatistics->increaseAliveChildren();
+		parentStatistics->increaseNumChildren();
 		taskStatistics->setAncestorHasPrediction(
 			parentStatistics->hasPrediction() ||
 			parentStatistics->ancestorHasPrediction()

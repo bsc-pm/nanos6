@@ -88,6 +88,9 @@ private:
 	//! A pointer to the accumulated predictions of the tasktype
 	TasktypePredictions *_typePredictions;
 
+	//! The number of tasks created by this one
+	size_t _numChildrenTasks;
+
 public:
 
 	inline TaskStatistics() :
@@ -97,7 +100,8 @@ public:
 		_taskHasPrediction(false),
 		_ancestorHasPrediction(false),
 		_childCompletionTimes(0),
-		_typePredictions(nullptr)
+		_typePredictions(nullptr),
+		_numChildrenTasks(0)
 	{
 		for (short i = 0; i < num_status; ++i) {
 			_childrenTimes[i] = 0;
@@ -208,6 +212,18 @@ public:
 
 		int aliveChildren = (--_aliveChildren);
 		return (aliveChildren == 0);
+	}
+
+	//! \brief Increase the number of tasks created by this one
+	inline void increaseNumChildren(size_t numChildrenTasks)
+	{
+		++_numChildrenTasks;
+	}
+
+	//! \brief Get the number of children tasks created by this one
+	inline size_t getNumChildrenTasks() const
+	{
+		return _numChildrenTasks;
 	}
 
 
