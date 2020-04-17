@@ -189,11 +189,13 @@ public:
 	{
 		return _argsBlock;
 	}
+
 	//! Get the arguments block size
 	inline size_t getArgsBlockSize() const
 	{
 		return _argsBlockSize;
 	}
+
 	inline void setArgsBlockSize(size_t argsBlockSize)
 	{
 		_argsBlockSize = argsBlockSize;
@@ -244,7 +246,6 @@ public:
 	{
 		return _thread;
 	}
-
 
 	//! \brief Add a nested task
 	inline void addChild(__attribute__((unused)) Task *child)
@@ -752,12 +753,13 @@ public:
 	//! \brief Check whether cost is available for the task
 	inline bool hasCost() const
 	{
-		if (_taskInfo->implementations != nullptr) {
-			return (_taskInfo->implementations->get_constraints != nullptr);
+		if (_taskInfo != nullptr) {
+			if (_taskInfo->implementations != nullptr) {
+				return (_taskInfo->implementations->get_constraints != nullptr);
+			}
 		}
-		else {
-			return false;
-		}
+
+		return false;
 	}
 
 	//! \brief Get the task's cost
