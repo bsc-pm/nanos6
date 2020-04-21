@@ -9,9 +9,9 @@
 
 
 #include <cassert>
-#include <CTFAPI.hpp>
 #include <InstrumentInstrumentationContext.hpp>
 
+#include "Nanos6CTFEvents.hpp"
 #include "../api/InstrumentTaskExecution.hpp"
 
 
@@ -26,7 +26,7 @@ namespace Instrument {
 
 	inline void endTask(task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
-		CTFAPI::tp_task_end(taskId._taskId);
+		tp_task_end(taskId._taskId);
 	}
 
 	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
@@ -39,7 +39,7 @@ namespace Instrument {
 
 	inline void endTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, task_id_t collaboratorId, __attribute((unused)) bool last, __attribute__((unused)) InstrumentationContext const &context)
 	{
-		CTFAPI::tp_task_end(collaboratorId._taskId);
+		tp_task_end(collaboratorId._taskId);
 	}
 }
 

@@ -7,7 +7,7 @@
 #ifndef INSTRUMENT_CTF_COMPUTE_PLACE_ID_HPP
 #define INSTRUMENT_CTF_COMPUTE_PLACE_ID_HPP
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace Instrument {
 	class compute_place_id_t {

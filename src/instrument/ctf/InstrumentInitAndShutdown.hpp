@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
-	
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_CTF_INIT_AND_SHUTDOWN_HPP
@@ -9,77 +9,53 @@
 
 #include <string.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 
-#include <InstrumentCPULocalData.hpp>
-#include <executors/threads/CPUManager.hpp>
+#include "executors/threads/CPUManager.hpp"
 #include "../api/InstrumentInitAndShutdown.hpp"
-#include "CTFAPI.hpp"
+
+#include "ctfapi/CTFAPI.hpp"
+#include "ctfapi/CTFTrace.hpp"
+#include "ctfapi/CTFMetadata.hpp"
+#include "ctfapi/CTFStream.hpp"
+#include "Nanos6CTFEvents.hpp"
 
 
 namespace Instrument {
 
-	static void createTraceDirectories(std::string root, std::string &userPath, std::string &kernelPath)
+	static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFMetadata &metadata)
 	{
-		int ret;
-
-		userPath   = root;
-		kernelPath = root;
-
-		ret = mkdir(root.c_str(), 0766);
-		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
-
-		kernelPath += "/kernel";
-		ret = mkdir(kernelPath.c_str(), 0766);
-		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
-
-		userPath += "/ust";
-		ret = mkdir(userPath.c_str(), 0766);
-		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
-		userPath += "/uid";
-		ret = mkdir(userPath.c_str(), 0766);
-		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
-		userPath += "/1042";
-		ret = mkdir(userPath.c_str(), 0766);
-		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
-		userPath += "/64-bit";
-		ret = mkdir(userPath.c_str(), 0766);
-		FatalErrorHandler::failIf(ret, "Instrument: ctf: failed to create trace directories");
+		// TODO perform refinement based on the upcoming Nanos6 JSON
+		// TODO add custom user-defined events based JSON
 	}
 
-	void initialize()
+	static void initializeCTFEvents(CTFAPI::CTFMetadata &userMetadata)
 	{
-		bool ret;
-		uint16_t i;
-		uint16_t totalCPUs;
-		uint16_t cpuId;
-		struct timespec tp;
-		const size_t defaultSize = 4096;
-		const uint64_t ns = 1000000000ULL;
-		std::string tracePath, userPath, kernelPath, streamPath;
+		// create event Contexes
+		// TODO delete contexes somewhere, somehow
+		CTFAPI::CTFContext *ctfContextHWC = new CTFAPI::CTFContextHardwareCounters();
 
-		CTFAPI::greetings();
-
-		if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
-			FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: initialize: clock_gettime syscall: ") + strerror(errno));
+		std::set<CTFAPI::CTFEvent *> &events = userMetadata.getEvents();
+		for (auto it = events.begin(); it != events.end(); ++it) {
+			CTFAPI::CTFEvent *event = (*it);
+			uint8_t enabledContexes = event->getEnabledContexes();
+			if (enabledContexes & CTFAPI::CTFContextHWC)
+				event->addContext(ctfContextHWC);
 		}
-		CTFAPI::core::absoluteStartTime = tp.tv_sec * ns + tp.tv_nsec;
+	}
 
-		// TODO add timestamp?
-		// TODO get folder name & path form env var?
-		// TODO 1042 is the user id, get the real one
+	static void initializeCTFBuffers(std::string userPath)
+	{
+		uint16_t i;
+		uint16_t cpuId;
+		std::string streamPath;
+		const size_t defaultSize = 4096;
+		uint16_t totalCPUs = (uint16_t) CPUManager::getTotalCPUs();
+
 		// TODO allocate memory on each CPU (madvise or specific
 		// instrument function?)
-		tracePath = "./trace-ctf-nanos6";
-		createTraceDirectories(tracePath, userPath, kernelPath);
-
-		totalCPUs = (uint16_t) CPUManager::getTotalCPUs();
-		CTFAPI::core::totalCPUs = totalCPUs;
-
-		CTFAPI::writeUserMetadata(userPath);
-		//CTFAPI::writeKernelMetadata(kernelPath);
 
 		for (i = 0; i < totalCPUs; i++) {
 			CPU *CPU = CPUManager::getCPU(i);
@@ -89,7 +65,7 @@ namespace Instrument {
 
 			//TODO init kernel stream
 
-			CTFStream *userStream = new CTFStream;
+			CTFAPI::CTFStream *userStream = new CTFAPI::CTFStream;
 			userStream->initialize(defaultSize, cpuId);
 			CTFAPI::addStreamHeader(userStream);
 			streamPath = userPath + "/channel_" + std::to_string(cpuId);
@@ -103,7 +79,7 @@ namespace Instrument {
 		// TODO use true virtual cpu mechanism here
 		cpuId = totalCPUs;
 		virtualCPULocalData = new CPULocalData();
-		ExclusiveCTFStream *exclusiveUserStream = new ExclusiveCTFStream;
+		CTFAPI::ExclusiveCTFStream *exclusiveUserStream = new CTFAPI::ExclusiveCTFStream;
 		exclusiveUserStream->initialize(defaultSize, cpuId);
 		CTFAPI::addStreamHeader(exclusiveUserStream);
 		streamPath = userPath + "/channel_" + std::to_string(cpuId);
@@ -111,6 +87,25 @@ namespace Instrument {
 		if (exclusiveUserStream->fdOutput == -1)
 			FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
 		virtualCPULocalData->userStream = exclusiveUserStream;
+	}
+
+	void initialize()
+	{
+		std::string userPath, kernelPath;
+
+		CTFAPI::greetings();
+		CTFAPI::CTFMetadata userMetadata(CPUManager::getTotalCPUs());
+		CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
+
+		trace.setTracePath("./trace-ctf-nanos6");
+		trace.initializeTraceTimer();
+		trace.createTraceDirectories(userPath, kernelPath);
+		initializeCTFBuffers(userPath);
+
+		preinitializeCTFEvents(userMetadata);
+		refineCTFEvents(userMetadata);
+		initializeCTFEvents(userMetadata);
+		userMetadata.writeMetadataFile(userPath);
 	}
 
 	void shutdown()
@@ -126,11 +121,11 @@ namespace Instrument {
 			CPU *CPU = CPUManager::getCPU(i);
 			assert(CPU != nullptr);
 
-			CTFStream *userStream = CPU->getInstrumentationData().userStream;
+			CTFAPI::CTFStream *userStream = CPU->getInstrumentationData().userStream;
 			userStream->flushData();
 
 			if (userStream->lost)
-				std::cerr << "WARNING: CTF Instrument: " << userStream->lost << " events on core " << i << std::endl;
+				std::cerr << "WARNING: CTF Instrument: " << userStream->lost << " events lost in core " << i << std::endl;
 
 			userStream->shutdown();
 			close(userStream->fdOutput);
@@ -138,10 +133,10 @@ namespace Instrument {
 		}
 
 		// TODO use true virtual cpu mechanism here
-		CTFStream *userStream = virtualCPULocalData->userStream;
+		CTFAPI::CTFStream *userStream = virtualCPULocalData->userStream;
 		userStream->flushData();
 		if (userStream->lost)
-			std::cerr << "WARNING: CTF Instrument: " << userStream->lost << " events on core " << i << std::endl;
+			std::cerr << "WARNING: CTF Instrument: " << userStream->lost << " events lost in core " << i << std::endl;
 		userStream->shutdown();
 		close(userStream->fdOutput);
 		delete userStream;

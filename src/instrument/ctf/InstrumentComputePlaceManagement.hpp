@@ -10,7 +10,7 @@
 
 #include "InstrumentComputePlaceId.hpp"
 #include "../api/InstrumentComputePlaceManagement.hpp"
-#include <CTFAPI.hpp>
+#include "Nanos6CTFEvents.hpp"
 
 
 namespace Instrument {
@@ -22,7 +22,7 @@ namespace Instrument {
 
 	inline void suspendingComputePlace(compute_place_id_t const &computePlace)
 	{
-		CTFAPI::tp_cpu_idle(computePlace._id);
+		tp_cpu_idle(computePlace._id);
 	}
 
 	inline void resumedComputePlace(compute_place_id_t const &computePlace)
@@ -30,7 +30,7 @@ namespace Instrument {
 		// TODO this should be triggered when the CPU's workers wakes
 		// up. Not when we ask it to wake up. We need another kind of
 		// instrumentation point here.
-		CTFAPI::tp_cpu_resume(computePlace._id);
+		tp_cpu_resume(computePlace._id);
 	}
 
 	inline void shuttingDownComputePlace(__attribute__((unused)) compute_place_id_t const &computePlace)
