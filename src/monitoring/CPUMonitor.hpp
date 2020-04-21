@@ -7,13 +7,13 @@
 #ifndef CPU_MONITOR_HPP
 #define CPU_MONITOR_HPP
 
+#include <cassert>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
 
 #include "CPUStatistics.hpp"
-#include "executors/threads/CPU.hpp"
 #include "executors/threads/CPUManager.hpp"
 
 
@@ -21,34 +21,31 @@ class CPUMonitor {
 
 private:
 
-	//! The vector of CPU statistics, one per compute place
-	static CPUStatistics *_cpuStatistics;
+	//! An array of CPU statistics, one per CPU
+	CPUStatistics *_cpuStatistics;
 
 	//! The amount of CPUs of the system
-	static size_t _numCPUs;
+	size_t _numCPUs;
 
 public:
 
-	//    MONITOR    //
+	inline CPUMonitor()
+	{
+		_numCPUs = CPUManager::getTotalCPUs();
+		_cpuStatistics = new CPUStatistics[_numCPUs];
+		assert(_cpuStatistics != nullptr);
+	}
 
-	//! \brief Initialize CPU monitoring
-	static void initialize();
-
-	//! \brief Shutdown CPU monitoring
-	static void shutdown();
-
-	//! \brief Display CPU statistics
-	//!
-	//! \param[in,out] stream The output stream
-	static void displayStatistics(std::stringstream &stream);
-
-
-	//    CPU STATUS HANDLING    //
+	inline ~CPUMonitor()
+	{
+		delete[] _cpuStatistics;
+		_cpuStatistics = nullptr;
+	}
 
 	//! \brief Signal that a CPU just became active
 	//!
 	//! \param[in] virtualCPUId The identifier of the CPU
-	static inline void cpuBecomesActive(int virtualCPUId)
+	inline void cpuBecomesActive(int virtualCPUId)
 	{
 		_cpuStatistics[virtualCPUId].cpuBecomesActive();
 	}
@@ -56,7 +53,7 @@ public:
 	//! \brief Signal that a CPU just became idle
 	//!
 	//! \param[in] virtualCPUId The identifier of the CPU
-	static inline void cpuBecomesIdle(int virtualCPUId)
+	inline void cpuBecomesIdle(int virtualCPUId)
 	{
 		_cpuStatistics[virtualCPUId].cpuBecomesIdle();
 	}
@@ -64,19 +61,13 @@ public:
 	//! \brief Retreive the activeness of a CPU
 	//!
 	//! \param[in] virtualCPUId The identifier of the CPU
-	static inline float getActiveness(int virtualCPUId)
+	inline float getActiveness(int virtualCPUId)
 	{
 		return _cpuStatistics[virtualCPUId].getActiveness();
 	}
 
-	//! \brief Return the number of CPUs in the system
-	static inline size_t getNumCPUs()
-	{
-		return _numCPUs;
-	}
-
 	//! \brief Get the total amount of activeness of all CPUs
-	static inline float getTotalActiveness()
+	inline float getTotalActiveness()
 	{
 		float totalActiveness = 0.0;
 		for (unsigned short id = 0; id < _numCPUs; ++id) {
@@ -84,6 +75,39 @@ public:
 		}
 
 		return totalActiveness;
+	}
+
+	//! \brief Return the number of CPUs in the system
+	inline size_t getNumCPUs() const
+	{
+		return _numCPUs;
+	}
+
+	//! \brief Display CPU statistics
+	//!
+	//! \param[out] stream The output stream
+	inline void displayStatistics(std::stringstream &stream)
+	{
+		stream << std::left << std::fixed << std::setprecision(2) << "\n";
+		stream << "+-----------------------------+\n";
+		stream << "|       CPU STATISTICS        |\n";
+		stream << "+-----------------------------+\n";
+		stream << "|   CPU(id) - Activeness(%)   |\n";
+		stream << "+-----------------------------+\n";
+
+		// Iterate through all CPUs and print their ID and activeness
+		for (size_t id = 0; id < _numCPUs; ++id) {
+			std::string label = "CPU(" + std::to_string(id) + ")";
+			float activeness = getActiveness(id);
+			bool endOfColumn = (id % 2 || id == (_numCPUs - 1));
+
+			stream
+				<< std::setw(8) << label << " - " << std::right
+				<< std::setw(6) << (activeness * 100.00) << std::left << "%"
+				<< (endOfColumn ? "\n" : " | ");
+		}
+
+		stream << "+-----------------------------+\n\n";
 	}
 
 };

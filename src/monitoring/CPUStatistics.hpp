@@ -14,8 +14,7 @@ class CPUStatistics {
 
 private:
 
-	enum cpu_status_t
-	{
+	enum cpu_status_t {
 		idle_status = 0,
 		active_status,
 		num_cpu_status
@@ -36,7 +35,6 @@ public:
 		_chronos[_currentStatus].start();
 	}
 
-
 	inline float getActiveness()
 	{
 		// Start & stop the current chrono to update the accumulated values
@@ -46,7 +44,7 @@ public:
 		double idle   = ((double) _chronos[idle_status]);
 		double active = ((double) _chronos[active_status]);
 
-		return ( active / (active + idle) );
+		return (active / (active + idle));
 	}
 
 	inline void cpuBecomesActive()

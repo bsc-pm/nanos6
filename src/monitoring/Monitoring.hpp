@@ -8,6 +8,7 @@
 #define MONITORING_HPP
 
 #include "CPUMonitor.hpp"
+#include "CPUUsagePredictor.hpp"
 #include "TaskMonitor.hpp"
 #include "WorkloadPredictor.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -35,64 +36,28 @@ private:
 	//! A Json file for monitoring data
 	static JsonFile *_wisdom;
 
+	//! A monitor that handles task statistics
+	static TaskMonitor *_taskMonitor;
+
+	//! A monitor that handles CPU statistics
+	static CPUMonitor *_cpuMonitor;
+
+	//! A predictor that deals with computing cpu utilization estimates
+	static CPUUsagePredictor *_cpuUsagePredictor;
+
+	//! A predictor that deals with runtime workload predictions
+	static WorkloadPredictor *_workloadPredictor;
+
 private:
 
+	//! \brief Display monitoring statistics
+	static void displayStatistics();
+
 	//! \brief Try to load previous monitoring data into accumulators
-	static inline void loadMonitoringWisdom()
-	{
-		// Create a representation of the system file as a JsonFile
-		_wisdom = new JsonFile("./.nanos6_monitoring_wisdom.json");
-		assert(_wisdom != nullptr);
-
-		// Try to populate the JsonFile with the system file's data
-		_wisdom->loadData();
-
-		// Navigate through the file and extract the unitary time of each tasktype
-		_wisdom->getRootNode()->traverseChildrenNodes(
-			[&](const std::string &label, const JsonNode<> &metricsNode) {
-				// For each tasktype, check if the unitary time is available
-				if (metricsNode.dataExists("unitary_time")) {
-					// Insert the metric data for this tasktype into accumulators
-					bool converted = false;
-					double metricValue = metricsNode.getData("unitary_time", converted);
-					if (converted) {
-						TaskMonitor::insertTimePerUnitOfCost(label, metricValue);
-					}
-				}
-			}
-		);
-	}
+	static void loadMonitoringWisdom();
 
 	//! \brief Store monitoring data for future executions as warmup data
-	static inline void storeMonitoringWisdom()
-	{
-		// Gather monitoring data for all tasktypes
-		std::vector<std::string> labels;
-		std::vector<double> unitaryTimes;
-		TaskMonitor::getAverageTimesPerUnitOfCost(labels, unitaryTimes);
-
-		assert(_wisdom != nullptr);
-
-		// The file's root node
-		JsonNode<> *rootNode = _wisdom->getRootNode();
-		for (size_t i = 0; i < labels.size(); ++i) {
-			// Avoid storing information about the main task
-			if (labels[i] != "main") {
-				// A node for metrics (currently only unitary time)
-				JsonNode<double> taskTypeValuesNode;
-				taskTypeValuesNode.addData("unitary_time", unitaryTimes[i]);
-
-				// Add the metrics to the root node of the file
-				rootNode->addChildNode(labels[i], taskTypeValuesNode);
-			}
-		}
-
-		// Store the data from the JsonFile in the system file
-		_wisdom->storeData();
-
-		// Delete the file as it is no longer needed
-		delete _wisdom;
-	}
+	static void storeMonitoringWisdom();
 
 public:
 
@@ -104,12 +69,11 @@ public:
 	//! \brief Shutdown monitoring
 	static void shutdown();
 
-	//! \brief Display monitoring statistics
-	static void displayStatistics();
-
-	//! \brief Whether monitoring is enabled
-	static bool isEnabled();
-
+	//! \brief Check whether monitoring is enabled
+	static inline bool isEnabled()
+	{
+		return _enabled;
+	}
 
 	//    TASKS    //
 
@@ -148,7 +112,6 @@ public:
 		return 0;
 	}
 
-
 	//    CPUS    //
 
 	//! \brief Propagate monitoring operations when a CPU becomes idle
@@ -160,7 +123,6 @@ public:
 	//!
 	//! \param[in] cpuId The identifier of the CPU
 	static void cpuBecomesActive(int cpuId);
-
 
 	//    PREDICTORS    //
 

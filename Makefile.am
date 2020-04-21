@@ -388,7 +388,6 @@ common_sources = \
 	src/lowlevel/threads/KernelLevelThread.cpp \
 	src/memory/directory/Directory.cpp \
 	src/memory/directory/HomeNodeMap.cpp \
-	src/monitoring/CPUMonitor.cpp \
 	src/monitoring/CPUUsagePredictor.cpp \
 	src/monitoring/Monitoring.cpp \
 	src/monitoring/TaskMonitor.cpp \

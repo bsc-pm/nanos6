@@ -7,17 +7,12 @@
 #include "WorkloadPredictor.hpp"
 
 
-std::atomic<size_t> WorkloadPredictor::_instances[num_workloads];
-WorkloadPredictor::workloads_map_t WorkloadPredictor::_workloads;
-SpinLock WorkloadPredictor::_spinlock;
-std::atomic<size_t> WorkloadPredictor::_taskCompletionTimes(0);
-
-
-void WorkloadPredictor::taskCreated(TaskStatistics *taskStatistics) {
+void WorkloadPredictor::taskCreated(TaskStatistics *taskStatistics)
+{
 	assert(taskStatistics != nullptr);
 
 	// Account the new task as instantiated workload
-	increaseInstances(instantiated_load);
+	++(_instances[instantiated_load]);
 
 	// Since the cost of a task includes children tasks, if an ancestor had
 	// a prediction, do not take this task into account for workloads
@@ -41,21 +36,22 @@ void WorkloadPredictor::taskChangedStatus(
 	workload_t increaseLoad  = WorkloadPredictor::getLoadId(newStatus);
 
 	if (decreaseLoad != null_workload) {
-		decreaseInstances(decreaseLoad);
+		--(_instances[decreaseLoad]);
 		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
 			decreaseWorkload(decreaseLoad, label, cost);
 		}
 	}
 
 	if (increaseLoad != null_workload) {
-		increaseInstances(increaseLoad);
+		++(_instances[increaseLoad]);
 		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
 			increaseWorkload(increaseLoad, label, cost);
 		}
 	}
 }
 
-void WorkloadPredictor::taskCompletedUserCode(TaskStatistics *taskStatistics) {
+void WorkloadPredictor::taskCompletedUserCode(TaskStatistics *taskStatistics)
+{
 	assert(taskStatistics != nullptr);
 
 	// If the task's time is taken into account by an ancestor task (an ancestor has a
@@ -77,7 +73,7 @@ void WorkloadPredictor::taskCompletedUserCode(TaskStatistics *taskStatistics) {
 		ancestorStatistics->increaseChildCompletionTimes(elapsed);
 
 		// Aggregate the time in workloads also, to obtain better predictions
-		increaseTaskCompletionTimes(elapsed);
+		_taskCompletionTimes += elapsed;
 	}
 }
 
@@ -99,20 +95,20 @@ void WorkloadPredictor::taskFinished(
 
 		// Decrease workloads by task's statistics
 		if (decreaseLoad != null_workload) {
-			decreaseInstances(decreaseLoad);
+			--(_instances[decreaseLoad]);
 			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
 				decreaseWorkload(decreaseLoad, label, cost);
 			}
 		}
 
 		// Increase workloads by task's statistics
-		increaseInstances(finished_load);
+		++(_instances[finished_load]);
 		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
 			increaseWorkload(finished_load, label, cost);
 		}
 
 		// Decrease the task completion times, as the task has finished
-		decreaseTaskCompletionTimes(childTimes);
+		_taskCompletionTimes -= childTimes;
 
 		// Follow the chain of ancestors
 		taskStatistics  = taskStatistics->getParentStatistics();
@@ -128,6 +124,7 @@ void WorkloadPredictor::taskFinished(
 
 double WorkloadPredictor::getPredictedWorkload(workload_t loadId)
 {
+	/* FIXME
 	double totalTime = 0.0;
 	for (auto const &it : _workloads) {
 		assert(it.second != nullptr);
@@ -139,9 +136,24 @@ double WorkloadPredictor::getPredictedWorkload(workload_t loadId)
 	}
 
 	return totalTime;
+	*/
+	return 0.0;
 }
 
-size_t WorkloadPredictor::getTaskCompletionTimes()
+void WorkloadPredictor::displayStatistics(std::stringstream &stream)
 {
-	return _taskCompletionTimes.load();
+	stream << std::left << std::fixed << std::setprecision(2) << "\n";
+	stream << "+-----------------------------+\n";
+	stream << "|       WORKLOADS (μs)        |\n";
+	stream << "+-----------------------------+\n";
+
+	for (unsigned short loadId = 0; loadId < num_workloads; ++loadId) {
+		size_t inst = _instances[((workload_t) loadId)].load();
+		double load = getPredictedWorkload((workload_t) loadId);
+		std::string loadDesc = std::string(workloadDescriptions[loadId]) + " (" + std::to_string(inst) + ")";
+
+		stream << std::setw(40) << loadDesc << load << " μs\n";
+	}
+
+	stream << "+-----------------------------+\n\n";
 }

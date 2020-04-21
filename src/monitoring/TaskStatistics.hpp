@@ -8,6 +8,7 @@
 #define TASK_STATISTICS_HPP
 
 #include <atomic>
+#include <cassert>
 #include <string>
 
 #include <Chrono.hpp>
@@ -215,7 +216,7 @@ public:
 	}
 
 	//! \brief Increase the number of tasks created by this one
-	inline void increaseNumChildren(size_t numChildrenTasks)
+	inline void increaseNumChildren()
 	{
 		++_numChildrenTasks;
 	}

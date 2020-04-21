@@ -26,20 +26,29 @@ private:
 	static ConfigVariable<size_t> _predictionRate;
 
 	//! The current prediction
-	static double _prediction;
+	double _prediction;
 
 	//! Tells whether the first prediciton has been done
-	static bool _predictionAvailable;
+	bool _predictionAvailable;
 
 	//! Accumulator of prediction accuracies
-	static accumulator_t _accuracies;
+	accumulator_t _accuracies;
 
 public:
+
+	inline CPUUsagePredictor() :
+		_predictionRate("monitoring.cpuusage_prediction_rate", 100 /* µs */)
+	{
+	}
+
+	inline ~CPUUsagePredictor()
+	{
+	}
 
 	//! \brief Retreive CPU usage prediction statistics
 	//!
 	//! \param[in,out] stream The output stream
-	static inline void displayStatistics(std::stringstream &stream)
+	inline void displayStatistics(std::stringstream &stream)
 	{
 		stream << std::left << std::fixed << std::setprecision(2) << "\n";
 		stream << "+-----------------------------+\n";
@@ -59,7 +68,7 @@ public:
 	//! (i.e. in the next 'time' microseconds, the amount of CPUs to be used)
 	//!
 	//! \return The expected CPU Usage for the next 'time' microseconds
-	static double getCPUUsagePrediction(size_t time);
+	double getCPUUsagePrediction(size_t time);
 
 };
 

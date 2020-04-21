@@ -5,17 +5,11 @@
 */
 
 #include "CPUUsagePredictor.hpp"
-#include "WorkloadPredictor.hpp"
-
-
-ConfigVariable<size_t> CPUUsagePredictor::_predictionRate("monitoring.cpuusage_prediction_rate", 100 /* µs */);
-double CPUUsagePredictor::_prediction;
-bool CPUUsagePredictor::_predictionAvailable;
-CPUUsagePredictor::accumulator_t CPUUsagePredictor::_accuracies;
 
 
 double CPUUsagePredictor::getCPUUsagePrediction(size_t time)
 {
+	/* FIXME
 	// Retrieve the current ready workload
 	double readyLoad      = WorkloadPredictor::getPredictedWorkload(ready_load);
 	double executingLoad  = WorkloadPredictor::getPredictedWorkload(executing_load);
@@ -40,4 +34,6 @@ double CPUUsagePredictor::getCPUUsagePrediction(size_t time)
 	_prediction = std::min(executingTasks + readyTasks, (readyLoad + executingLoad) / (double) time);
 	_prediction = std::max(_prediction, 1.0);
 	return _prediction;
+	*/
+	return 0.0;
 }
