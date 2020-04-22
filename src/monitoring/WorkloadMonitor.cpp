@@ -4,10 +4,10 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include "WorkloadPredictor.hpp"
+#include "WorkloadMonitor.hpp"
 
 
-void WorkloadPredictor::taskCreated(TaskStatistics *taskStatistics)
+void WorkloadMonitor::taskCreated(TaskStatistics *taskStatistics)
 {
 	assert(taskStatistics != nullptr);
 
@@ -23,7 +23,7 @@ void WorkloadPredictor::taskCreated(TaskStatistics *taskStatistics)
 	}
 }
 
-void WorkloadPredictor::taskChangedStatus(
+void WorkloadMonitor::taskChangedStatus(
 	TaskStatistics *taskStatistics,
 	monitoring_task_status_t oldStatus,
 	monitoring_task_status_t newStatus
@@ -32,8 +32,8 @@ void WorkloadPredictor::taskChangedStatus(
 
 	const std::string &label = taskStatistics->getLabel();
 	size_t cost              = taskStatistics->getCost();
-	workload_t decreaseLoad  = WorkloadPredictor::getLoadId(oldStatus);
-	workload_t increaseLoad  = WorkloadPredictor::getLoadId(newStatus);
+	workload_t decreaseLoad  = WorkloadMonitor::getLoadId(oldStatus);
+	workload_t increaseLoad  = WorkloadMonitor::getLoadId(newStatus);
 
 	if (decreaseLoad != null_workload) {
 		--(_instances[decreaseLoad]);
@@ -50,7 +50,7 @@ void WorkloadPredictor::taskChangedStatus(
 	}
 }
 
-void WorkloadPredictor::taskCompletedUserCode(TaskStatistics *taskStatistics)
+void WorkloadMonitor::taskCompletedUserCode(TaskStatistics *taskStatistics)
 {
 	assert(taskStatistics != nullptr);
 
@@ -77,7 +77,7 @@ void WorkloadPredictor::taskCompletedUserCode(TaskStatistics *taskStatistics)
 	}
 }
 
-void WorkloadPredictor::taskFinished(
+void WorkloadMonitor::taskFinished(
 	TaskStatistics *taskStatistics,
 	monitoring_task_status_t oldStatus,
 	int ancestorsUpdated
@@ -91,7 +91,7 @@ void WorkloadPredictor::taskFinished(
 		const std::string &label = taskStatistics->getLabel();
 		size_t cost              = taskStatistics->getCost();
 		size_t childTimes        = taskStatistics->getChildCompletionTimes();
-		workload_t decreaseLoad  = WorkloadPredictor::getLoadId(oldStatus);
+		workload_t decreaseLoad  = WorkloadMonitor::getLoadId(oldStatus);
 
 		// Decrease workloads by task's statistics
 		if (decreaseLoad != null_workload) {
@@ -120,40 +120,4 @@ void WorkloadPredictor::taskFinished(
 			break;
 		}
 	}
-}
-
-double WorkloadPredictor::getPredictedWorkload(workload_t loadId)
-{
-	/* FIXME
-	double totalTime = 0.0;
-	for (auto const &it : _workloads) {
-		assert(it.second != nullptr);
-
-		totalTime += (
-			it.second->getAccumulatedCost(loadId) *
-			TaskMonitor::getAverageTimePerUnitOfCost(it.first)
-		);
-	}
-
-	return totalTime;
-	*/
-	return 0.0;
-}
-
-void WorkloadPredictor::displayStatistics(std::stringstream &stream)
-{
-	stream << std::left << std::fixed << std::setprecision(2) << "\n";
-	stream << "+-----------------------------+\n";
-	stream << "|       WORKLOADS (μs)        |\n";
-	stream << "+-----------------------------+\n";
-
-	for (unsigned short loadId = 0; loadId < num_workloads; ++loadId) {
-		size_t inst = _instances[((workload_t) loadId)].load();
-		double load = getPredictedWorkload((workload_t) loadId);
-		std::string loadDesc = std::string(workloadDescriptions[loadId]) + " (" + std::to_string(inst) + ")";
-
-		stream << std::setw(40) << loadDesc << load << " μs\n";
-	}
-
-	stream << "+-----------------------------+\n\n";
 }

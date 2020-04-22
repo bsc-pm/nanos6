@@ -15,10 +15,12 @@ ConfigVariable<bool> Monitoring::_verbose("monitoring.verbose", true);
 ConfigVariable<bool> Monitoring::_wisdomEnabled("monitoring.wisdom", false);
 ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "output-monitoring.txt");
 JsonFile *Monitoring::_wisdom(nullptr);
-TaskMonitor *Monitoring::_taskMonitor(nullptr);
 CPUMonitor *Monitoring::_cpuMonitor(nullptr);
-CPUUsagePredictor *Monitoring::_cpuUsagePredictor(nullptr);
-WorkloadPredictor *Monitoring::_workloadPredictor(nullptr);
+TaskMonitor *Monitoring::_taskMonitor(nullptr);
+WorkloadMonitor *Monitoring::_workloadMonitor(nullptr);
+Monitoring::accumulator_t Monitoring::_cpuUsageAccuracyAccum;
+double Monitoring::_cpuUsagePrediction;
+bool Monitoring::_cpuUsageAvailable(false);
 
 
 //    MONITORING    //
@@ -31,14 +33,12 @@ void Monitoring::initialize()
 		TickConversionUpdater::initialize();
 #endif
 		// Create all the monitors and predictors
-		_taskMonitor = new TaskMonitor();
 		_cpuMonitor = new CPUMonitor();
-		_cpuUsagePredictor = new CPUUsagePredictor();
-		_workloadPredictor = new WorkloadPredictor();
-		assert(_taskMonitor != nullptr);
+		_taskMonitor = new TaskMonitor();
+		_workloadMonitor = new WorkloadMonitor();
 		assert(_cpuMonitor != nullptr);
-		assert(_cpuUsagePredictor != nullptr);
-		assert(_workloadPredictor != nullptr);
+		assert(_taskMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
 
 #if CHRONO_ARCH
 		// Stop measuring time and compute the tick conversion rate
@@ -70,14 +70,17 @@ void Monitoring::shutdown()
 #endif
 
 		// Delete all predictors and monitors
-		delete _workloadPredictor;
+		assert(_cpuMonitor != nullptr);
+		assert(_taskMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
+
 		delete _cpuMonitor;
-		delete _cpuUsagePredictor;
 		delete _taskMonitor;
-		_workloadPredictor = nullptr;
+		delete _workloadMonitor;
+
 		_cpuMonitor = nullptr;
-		_cpuUsagePredictor = nullptr;
 		_taskMonitor = nullptr;
+		_workloadMonitor = nullptr;
 
 		_enabled.setValue(false);
 	}
@@ -99,6 +102,9 @@ void Monitoring::taskCreated(Task *task)
 	}
 
 	if (_enabled && !task->isTaskfor()) {
+		assert(_taskMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
+
 		// Retrieve information about the task
 		TaskStatistics *parentStatistics = (task->getParent() != nullptr ? task->getParent()->getTaskStatistics() : nullptr);
 		TaskStatistics *taskStatistics = task->getTaskStatistics();
@@ -110,7 +116,7 @@ void Monitoring::taskCreated(Task *task)
 		_taskMonitor->predictTime(taskStatistics, label, cost);
 
 		// Account this task in workloads
-		_workloadPredictor->taskCreated(taskStatistics);
+		_workloadMonitor->taskCreated(taskStatistics);
 	}
 }
 
@@ -119,13 +125,16 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 	assert(task != nullptr);
 
 	if (_enabled && !task->isTaskfor()) {
+		assert(_taskMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
+
 		// Start timing for the appropriate stopwatch
 		const monitoring_task_status_t oldStatus = _taskMonitor->startTiming(task->getTaskStatistics(), newStatus);
 
 		// Update workload statistics only after a change of status
 		if (oldStatus != newStatus) {
 			// Account this task in the appropriate workload
-			_workloadPredictor->taskChangedStatus(task->getTaskStatistics(), oldStatus, newStatus);
+			_workloadMonitor->taskChangedStatus(task->getTaskStatistics(), oldStatus, newStatus);
 		}
 	}
 }
@@ -135,8 +144,10 @@ void Monitoring::taskCompletedUserCode(Task *task)
 	assert(task != nullptr);
 
 	if (_enabled && !task->isTaskfor()) {
+		assert(_workloadMonitor != nullptr);
+
 		// Account the task's elapsed execution time in predictions
-		_workloadPredictor->taskCompletedUserCode(task->getTaskStatistics());
+		_workloadMonitor->taskCompletedUserCode(task->getTaskStatistics());
 	}
 }
 
@@ -145,6 +156,9 @@ void Monitoring::taskFinished(Task *task)
 	assert(task != nullptr);
 
 	if (_enabled && !task->isTaskfor()) {
+		assert(_taskMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
+
 		// Number of ancestors updated by this task in TaskMonitor
 		int ancestorsUpdated = 0;
 
@@ -152,7 +166,7 @@ void Monitoring::taskFinished(Task *task)
 		const monitoring_task_status_t oldStatus = _taskMonitor->stopTiming(task->getTaskStatistics(), ancestorsUpdated);
 
 		// Account this task in workloads
-		_workloadPredictor->taskFinished(task->getTaskStatistics(), oldStatus, ancestorsUpdated);
+		_workloadMonitor->taskFinished(task->getTaskStatistics(), oldStatus, ancestorsUpdated);
 	}
 }
 
@@ -162,6 +176,8 @@ void Monitoring::taskFinished(Task *task)
 void Monitoring::cpuBecomesIdle(int cpuId)
 {
 	if (_enabled) {
+		assert(_cpuMonitor != nullptr);
+
 		_cpuMonitor->cpuBecomesIdle(cpuId);
 	}
 }
@@ -169,23 +185,88 @@ void Monitoring::cpuBecomesIdle(int cpuId)
 void Monitoring::cpuBecomesActive(int cpuId)
 {
 	if (_enabled) {
+		assert(_cpuMonitor != nullptr);
+
 		_cpuMonitor->cpuBecomesActive(cpuId);
 	}
 }
 
-
 //    PREDICTORS    //
+
+double Monitoring::getPredictedWorkload(workload_t loadId)
+{
+	if (_enabled) {
+		assert(_taskMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
+
+		workloads_map_t workloadsMap = _workloadMonitor->getWorkloadsMapReference();
+
+		double totalTime = 0.0;
+		for (auto const &it : workloadsMap) {
+			assert(it.second != nullptr);
+
+			totalTime += (
+				it.second->getAccumulatedCost(loadId) *
+				_taskMonitor->getAverageTimePerUnitOfCost(it.first)
+			);
+		}
+
+		return totalTime;
+	}
+
+	return 0.0;
+}
+
+double Monitoring::getCPUUsagePrediction(size_t time)
+{
+	if (_enabled) {
+		assert(_cpuMonitor != nullptr);
+		assert(_taskMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
+
+		// Retrieve the current ready workload
+		double readyLoad      = getPredictedWorkload(ready_load);
+		double executingLoad  = getPredictedWorkload(executing_load);
+		double readyTasks     = (double) _workloadMonitor->getNumInstances(ready_load);
+		double executingTasks = (double) _workloadMonitor->getNumInstances(executing_load);
+		double numberCPUs     = (double) _cpuMonitor->getNumCPUs();
+
+		// To account accuracy, make sure this isn't the first prediction
+		if (!_cpuUsageAvailable) {
+			_cpuUsageAvailable = true;
+		} else {
+			// Compute the accuracy of the last prediction
+			double utilization = _cpuMonitor->getTotalActiveness();
+			double error = (std::abs(utilization - _cpuUsagePrediction)) / numberCPUs;
+			double accuracy = 100.0 - (100.0 * error);
+			_cpuUsageAccuracyAccum(accuracy);
+		}
+
+		// Make sure that the prediction is:
+		// - At most the amount of tasks or the amount of time available
+		// - At least 1 CPU for runtime-related operations
+		_cpuUsagePrediction = std::min(executingTasks + readyTasks, (readyLoad + executingLoad) / (double) time);
+		_cpuUsagePrediction = std::max(_cpuUsagePrediction, 1.0);
+
+		return _cpuUsagePrediction;
+	}
+
+	return 0.0;
+}
 
 double Monitoring::getPredictedElapsedTime()
 {
 	if (_enabled) {
+		assert(_cpuMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
+
 		const double cpuUtilization = _cpuMonitor->getTotalActiveness();
-		const double instantiated = _workloadPredictor->getPredictedWorkload(instantiated_load);
-		const double finished = _workloadPredictor->getPredictedWorkload(finished_load);
+		const double instantiated = getPredictedWorkload(instantiated_load);
+		const double finished = getPredictedWorkload(finished_load);
 
 		// Convert completion times -- current elapsed execution time of tasks
 		// that have not finished execution yet -- from ticks to microseconds
-		Chrono completionTime(_workloadPredictor->getTaskCompletionTimes());
+		Chrono completionTime(_workloadMonitor->getTaskCompletionTimes());
 		const double completion = ((double) completionTime);
 
 		double timeLeft = ((instantiated - finished - completion) / cpuUtilization);
@@ -209,12 +290,23 @@ void Monitoring::displayStatistics()
 		"Could not create or open the verbose file: ", _outputFile.getValue(), ". Using standard output."
 	);
 
-	// Retrieve statistics from every monitor and predictor
+	// Retrieve statistics from every monitor
 	std::stringstream outputStream;
 	_taskMonitor->displayStatistics(outputStream);
 	_cpuMonitor->displayStatistics(outputStream);
-	_cpuUsagePredictor->displayStatistics(outputStream);
-	_workloadPredictor->displayStatistics(outputStream);
+	_workloadMonitor->displayStatistics(outputStream);
+
+	// Print the statistics of every prediction heuristic
+	outputStream << std::left << std::fixed << std::setprecision(2) << "\n";
+	outputStream << "+-----------------------------+\n";
+	outputStream << "|    CPU Usage Predictions    |\n";
+	outputStream << "+-----------------------------+\n";
+	if (_cpuUsageAvailable) {
+		outputStream << "  MEAN ACCURACY: " << BoostAcc::mean(_cpuUsageAccuracyAccum) << "%\n";
+	} else {
+		outputStream << "  MEAN ACCURACY: NA\n";
+	}
+	outputStream << "+-----------------------------+\n\n";
 
 	if (output.is_open()) {
 		output << outputStream.str();
@@ -226,6 +318,8 @@ void Monitoring::displayStatistics()
 
 void Monitoring::loadMonitoringWisdom()
 {
+	assert(_taskMonitor != nullptr);
+
 	// Create a representation of the system file as a JsonFile
 	_wisdom = new JsonFile("./.nanos6_monitoring_wisdom.json");
 	assert(_wisdom != nullptr);
@@ -251,6 +345,8 @@ void Monitoring::loadMonitoringWisdom()
 
 void Monitoring::storeMonitoringWisdom()
 {
+	assert(_taskMonitor != nullptr);
+
 	// Gather monitoring data for all tasktypes
 	std::vector<std::string> labels;
 	std::vector<double> unitaryTimes;

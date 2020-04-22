@@ -388,11 +388,10 @@ common_sources = \
 	src/lowlevel/threads/KernelLevelThread.cpp \
 	src/memory/directory/Directory.cpp \
 	src/memory/directory/HomeNodeMap.cpp \
-	src/monitoring/CPUUsagePredictor.cpp \
 	src/monitoring/Monitoring.cpp \
 	src/monitoring/TaskMonitor.cpp \
 	src/monitoring/TasktypePredictions.cpp \
-	src/monitoring/WorkloadPredictor.cpp \
+	src/monitoring/WorkloadMonitor.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
@@ -1250,12 +1249,11 @@ noinst_HEADERS = \
 	src/memory/vmm/smp/VirtualMemoryManagement.hpp \
 	src/monitoring/CPUMonitor.hpp \
 	src/monitoring/CPUStatistics.hpp \
-	src/monitoring/CPUUsagePredictor.hpp \
 	src/monitoring/Monitoring.hpp \
 	src/monitoring/TaskMonitor.hpp \
 	src/monitoring/TaskStatistics.hpp \
 	src/monitoring/TasktypePredictions.hpp \
-	src/monitoring/WorkloadPredictor.hpp \
+	src/monitoring/WorkloadMonitor.hpp \
 	src/monitoring/WorkloadStatistics.hpp \
 	src/scheduling/ClusterScheduler.hpp \
 	src/scheduling/LocalScheduler.hpp \

@@ -4,8 +4,8 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef WORKLOAD_PREDICTOR_HPP
-#define WORKLOAD_PREDICTOR_HPP
+#ifndef WORKLOAD_MONITOR_HPP
+#define WORKLOAD_MONITOR_HPP
 
 #include <iomanip>
 #include <iostream>
@@ -17,18 +17,17 @@
 #include "lowlevel/SpinLock.hpp"
 
 
-class WorkloadPredictor {
+typedef std::map< std::string, WorkloadStatistics * > workloads_map_t;
+
+class WorkloadMonitor {
 
 private:
 
 	//! Maps a tasktype with its aggregated workload statistics
-	typedef std::map< std::string, WorkloadStatistics * > workloads_map_t;
+	workloads_map_t _workloads;
 
 	//! Array which contains the number of task instances in each workload
 	std::atomic<size_t> _instances[num_workloads];
-
-	//! Indexes accumulated and unitary costs through by tasktype
-	workloads_map_t _workloads;
 
 	//! A spinlock to ensure atomicity within the workloads_map_t
 	SpinLock _spinlock;
@@ -105,7 +104,7 @@ private:
 
 public:
 
-	inline WorkloadPredictor() :
+	inline WorkloadMonitor() :
 		_taskCompletionTimes(0)
 	{
 		for (unsigned short i = 0; i < num_workloads; ++i) {
@@ -113,7 +112,7 @@ public:
 		}
 	}
 
-	inline ~WorkloadPredictor()
+	inline ~WorkloadMonitor()
 	{
 		// Destroy all the Workload statistics
 		for (auto const &it : _workloads) {
@@ -157,11 +156,6 @@ public:
 		int ancestorsUpdated
 	);
 
-	//! \brief Get a timing prediction of a certain workload
-	//!
-	//! \param[in] loadId The workload's id
-	double getPredictedWorkload(workload_t loadId);
-
 	//! \brief Retrieve the aggregated execution time of tasks that have
 	//! completed user code
 	inline size_t getTaskCompletionTimes()
@@ -177,11 +171,20 @@ public:
 		return _instances[loadId].load();
 	}
 
+	//! \brief Retreive a reference to the workloads map
+	inline workloads_map_t &getWorkloadsMapReference()
+	{
+		return _workloads;
+	}
+
 	//! \brief Display workload statistics
 	//!
 	//! \param[out] stream The output stream
-	void displayStatistics(std::stringstream &stream);
+	inline void displayStatistics(std::stringstream &)
+	{
+		// Nothing to display
+	}
 
 };
 
-#endif // WORKLOAD_PREDICTOR_HPP
+#endif // WORKLOAD_MONITOR_HPP
