@@ -24,37 +24,37 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata &userMetadata)
 {
 	// create Events
 	eventTaskLabel = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		 "task_label",
-	"		integer { size =  8; align = 8; signed = 0; encoding = UTF8; base = 10; } _label["xstr(ARG_STRING_SIZE)"];\n"
-	"		integer { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
+		"task_label",
+		"\t\tinteger { size =  8; align = 8; signed = 0; encoding = UTF8; base = 10; } _label["xstr(ARG_STRING_SIZE)"];\n"
+		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
 	));
 	eventTaskExecute = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		 "task_execute",
-	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
-		 CTFAPI::CTFContextHWC
+		"task_execute",
+		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
+		CTFAPI::CTFContextHWC
 	));
 	eventTaskAdd = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		 "task_add",
-	"		integer { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
-	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
+		"task_add",
+		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
+		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	));
 	eventTaskBlock = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		 "task_block",
-	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
-		 CTFAPI::CTFContextHWC
+		"task_block",
+		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
+		CTFAPI::CTFContextHWC
 	));
 	eventTaskEnd = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		 "task_end",
-	"		integer { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
-		 CTFAPI::CTFContextHWC
+		"task_end",
+		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
+		CTFAPI::CTFContextHWC
 	));
 	eventCPUResume = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		 "task_cpu_resume",
-	"		integer { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
+		"task_cpu_resume",
+		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
 	));
 	eventCPUIdle = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		 "task_cpu_idle",
-	"		integer { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
+		"task_cpu_idle",
+		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
 	));
 }
 

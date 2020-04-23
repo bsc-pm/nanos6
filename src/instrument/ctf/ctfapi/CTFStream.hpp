@@ -36,8 +36,8 @@ namespace CTFAPI {
 		void flushData();
 
 		CTFStream() : bufferSize(0) {}
-		void lock() {};
-		void unlock() {};
+		virtual void lock() {};
+		virtual void unlock() {};
 
 	private:
 		void *mrb;

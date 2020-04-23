@@ -139,34 +139,6 @@ namespace CTFAPI {
 
 		stream->unlock();
 	}
-
-	// TODO deleteme
-	template<typename... ARGS>
-	static void tracepoint(const int tracepointId, ARGS... args)
-	{
-		CTFStream *stream = Instrument::getCPULocalData()->userStream;
-		const size_t size = sizeof(struct event_header) + sizeOfVariadic<ARGS...>::value;
-		void *buf;
-
-		stream->lock();
-
-		// TODO checkFreeSpace should not perform flushing, move
-		// it here.
-		// TODO add flushing tracepoints if possible
-		if (!stream->checkFreeSpace(size)) {
-			stream->unlock();
-			return;
-		}
-
-		buf = stream->buffer + (stream->head & stream->mask);
-
-		mk_event_header((char **) &buf, tracepointId);
-		tp_write_args(&buf, args...);
-
-		stream->head += size;
-
-		stream->unlock();
-	}
 }
 
 #endif // CTFAPI_HPP

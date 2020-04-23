@@ -28,7 +28,7 @@ namespace CTFAPI {
 	public:
 		CTFContext() : size(0) {}
 
-		void writeContext(__attribute__((unused)) void **buf) {}
+		virtual void writeContext(__attribute__((unused)) void **buf) {}
 
 		size_t getSize()
 		{
@@ -52,19 +52,19 @@ namespace CTFAPI {
 			// amount of requested hardware counters
 			// TODO calculate size based on amount of requested HWC
 
-		//	size += sizeof(uint64_t);
-		//	hwc_ids.push_back(33);
+			size += sizeof(uint64_t);
+			hwc_ids.push_back(33);
 
 			int i = 0;
-			for (auto it = hwc_ids.begin(); it < hwc_ids.end(); ++it) {
-				metadata.append("		integer { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _val" + std::to_string(i) + ";\n");
+			for (auto it = hwc_ids.begin(); it != hwc_ids.end(); ++it) {
+				metadata.append("\t\tinteger { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _val" + std::to_string(i) + ";\n");
 				i++;
 			}
 		}
 
 		void writeContext(void **buf)
 		{
-			for (auto it = hwc_ids.begin(); it < hwc_ids.end(); ++it) {
+			for (auto it = hwc_ids.begin(); it != hwc_ids.end(); ++it) {
 				//val = HawdwareCounters::getValue(*it);
 				uint64_t val = 666;
 				tp_write_args(buf, val);

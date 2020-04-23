@@ -110,14 +110,14 @@ void CTFAPI::CTFMetadata::writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *e
 	if (contexes.empty())
 		return;
 
-	fprintf(f, "	context := {\n");
+	fprintf(f, "	context := struct {\n");
 
 	for (auto it = contexes.begin(); it != contexes.end(); ++it) {
 		CTFAPI::CTFContext *context = (*it);
 		fputs(context->getMetadata(), f);
 	}
 
-	fprintf(f, "	}\n");
+	fprintf(f, "	};\n");
 
 }
 

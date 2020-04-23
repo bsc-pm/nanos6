@@ -29,15 +29,15 @@ namespace CTFAPI {
 
 	public:
 
-		CTFEvent(const char *name, const char *metadataFields, bool enabled = true, uint8_t contexes = 0)
-			: _id(idCounter++), _name(name), _metadataFields(metadataFields), _enabled(enabled),
+		CTFEvent(const char *name, const char *metadataFields, uint8_t contexes = 0)
+			: _id(idCounter++), _name(name), _metadataFields(metadataFields), _enabled(true),
 			_enabledContexes(contexes), contextSize(0)
 		{
 		}
 
 		void writeContext(void **buf)
 		{
-			for (auto it = eventContext.begin(); it < eventContext.end(); ++it)
+			for (auto it = eventContext.begin(); it != eventContext.end(); it++)
 				(*it)->writeContext(buf);
 		}
 
