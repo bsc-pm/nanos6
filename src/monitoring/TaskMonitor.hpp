@@ -59,18 +59,16 @@ public:
 	//! \param[in] label The tasktype
 	//! \param[in] cost The task's computational cost
 	void taskCreated(
-		TaskStatistics  *parentStatistics,
-		TaskStatistics  *taskStatistics,
+		TaskStatistics *parentStatistics,
+		TaskStatistics *taskStatistics,
 		const std::string &label,
 		size_t cost
 	);
 
-	//! \brief Predict the execution time of a task
+	//! \brief Re-initialize a task's monitoring statistics
 	//!
-	//! \param[in,out] taskStatistics The statistics of the task
-	//! \param[in] label The tasktype
-	//! \param[in] cost The task's computational task
-	void predictTime(TaskStatistics *taskStatistics, const std::string &label, size_t cost);
+	//! \param[out] taskStatistics The task's monitoring structures
+	void taskReinitialized(TaskStatistics *taskStatistics) const;
 
 	//! \brief Start time monitoring for a task
 	//!
@@ -78,7 +76,7 @@ public:
 	//! \param[in] execStatus The timing status to start
 	//!
 	//! \return The status before the change
-	monitoring_task_status_t startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus);
+	monitoring_task_status_t startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus) const;
 
 	//! \brief Stop time monitoring for a task
 	//!
@@ -87,7 +85,13 @@ public:
 	//! updated during shutdown of timing monitoring
 	//!
 	//! \return The status before the change
-	monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated);
+	monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated) const;
+
+	//! \brief Aggregate a collaborator's statistics into the parent Taskfor
+	//!
+	//! \param[in,out] collaboratorStatistics The collaborator's statistics
+	//! \param[in,out] taskforStatistics The parent Taskfor's statistics
+	void taskforCollaboratorEnded(TaskStatistics *collaboratorStatistics, TaskStatistics *taskforStatistics) const;
 
 	//! \brief Get the average unitary time value of a tasktype (normalized using cost)
 	//!

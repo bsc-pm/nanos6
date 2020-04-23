@@ -80,6 +80,11 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 							source, computePlace,
 							computePlace->getDependencyData());
 
+						// The source has finished and all collaborators should
+						// already have aggregated their stats in the source.
+						// Now simply mark that the source has finished
+						Monitoring::taskFinished(source);
+
 						// There is one count for the finished source, but we need ready = true to decrement it later again.
 						ready = source->finishChild();
 						assert(!ready);

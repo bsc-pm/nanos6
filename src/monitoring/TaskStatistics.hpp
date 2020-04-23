@@ -97,14 +97,36 @@ public:
 	inline TaskStatistics() :
 		_cost(DEFAULT_COST),
 		_currentId(null_status),
+		_parentStatistics(nullptr),
 		_aliveChildren(1),
 		_taskHasPrediction(false),
+		_timePrediction(0.0),
 		_ancestorHasPrediction(false),
 		_childCompletionTimes(0),
 		_typePredictions(nullptr),
 		_numChildrenTasks(0)
 	{
 		for (short i = 0; i < num_status; ++i) {
+			_childrenTimes[i] = 0;
+		}
+	}
+
+	inline void reinitialize()
+	{
+		_label = "";
+		_cost = DEFAULT_COST;
+		_currentId = null_status;
+		_parentStatistics = nullptr;
+		_aliveChildren = 1;
+		_taskHasPrediction = false;
+		_timePrediction = 0.0;
+		_ancestorHasPrediction = false;
+		_childCompletionTimes = 0;
+		_typePredictions = nullptr;
+		_numChildrenTasks = 0;
+
+		for (short i = 0; i < num_status; ++i) {
+			_chronos[i].restart();
 			_childrenTimes[i] = 0;
 		}
 	}

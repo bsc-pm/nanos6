@@ -94,27 +94,35 @@ public:
 		return _enabled;
 	}
 
+
 	//    TASKS    //
 
 	//! \brief Gather basic information about a task when it is created
+	//! set statistic structure for the task and predict some metrics
 	//!
-	//! \param[in,out] task The task to gather information about
+	//! \param[in,out] task The task
 	static void taskCreated(Task *task);
 
-	//! \brief Propagate monitoring operations after a task has changed its
-	//! execution status
+	//! \brief Reset monitoring statistics for a task that will be re-used
+	//! NOTE: This function should only be called by Taskfor collaborators,
+	//! never normal tasks nor source Taskfors
 	//!
-	//! \param[in,out] task The task that's changing status
+	//! \param[in,out] task The task to reset statistics for
+	static void taskReinitialized(Task *task);
+
+	//! \brief Change a task statistics after it changes its execution status
+	//!
+	//! \param[out] task The task changing its status
 	//! \param[in] newStatus The new execution status of the task
 	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus);
 
-	//! \brief Propagate monitoring operations after a task has
-	//! completed user code execution
+	//! \brief Subtract a task's statistics from predicted workloads after it
+	//! completes user code execution
 	//!
 	//! \param[in,out] task The task that has completed the execution
 	static void taskCompletedUserCode(Task *task);
 
-	//! \brief Propagate monitoring operations after a task has finished
+	//! \brief Aggregate statistics after a task has finished
 	//!
 	//! \param[in,out] task The task that has finished
 	static void taskFinished(Task *task);
@@ -131,6 +139,7 @@ public:
 		return 0;
 	}
 
+
 	//    CPUS    //
 
 	//! \brief Propagate monitoring operations when a CPU becomes idle
@@ -142,6 +151,7 @@ public:
 	//!
 	//! \param[in] cpuId The identifier of the CPU
 	static void cpuBecomesActive(int cpuId);
+
 
 	//    PREDICTORS    //
 

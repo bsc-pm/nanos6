@@ -177,14 +177,6 @@ public:
 		return _workloads;
 	}
 
-	//! \brief Display workload statistics
-	//!
-	//! \param[out] stream The output stream
-	inline void displayStatistics(std::stringstream &)
-	{
-		// Nothing to display
-	}
-
 };
 
 #endif // WORKLOAD_MONITOR_HPP

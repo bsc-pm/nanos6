@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "Monitoring.hpp"
+#include "tasks/Taskfor.hpp"
 
 
 ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled", true);
@@ -93,37 +94,52 @@ void Monitoring::shutdown()
 	}
 }
 
+
 //    TASKS    //
 
 void Monitoring::taskCreated(Task *task)
 {
 	assert(task != nullptr);
 
-	// Create task statistics
 	if (_enabled) {
+		assert(_taskMonitor != nullptr);
+		assert(_workloadMonitor != nullptr);
+
 		TaskStatistics *taskStatistics = task->getTaskStatistics();
 		assert(taskStatistics != nullptr);
 
 		// Construct the object with the reserved space
 		new (taskStatistics) TaskStatistics();
+
+		// Only take the task into account for predictions if it is a basic
+		// task or an original Taskfor, never a collaborator
+		if (!task->isTaskfor() || (task->isTaskfor() && !task->isRunnable())) {
+			// Retrieve information about the task
+			Task *parent = task->getParent();
+			TaskStatistics *parentStatistics = (parent != nullptr ? parent->getTaskStatistics() : nullptr);
+			const std::string &label = task->getLabel();
+			size_t cost = (task->hasCost() ? task->getCost() : DEFAULT_COST);
+
+			// Populate task statistic structures and predict metrics
+			_taskMonitor->taskCreated(parentStatistics, taskStatistics, label, cost);
+
+			// Account this task in workloads
+			_workloadMonitor->taskCreated(taskStatistics);
+		}
 	}
+}
 
-	if (_enabled && !task->isTaskfor()) {
+void Monitoring::taskReinitialized(Task *task)
+{
+	assert(task != nullptr);
+
+	if (_enabled) {
+		// Make sure this is a Taskfor
+		assert(task->isTaskfor());
 		assert(_taskMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
 
-		// Retrieve information about the task
-		TaskStatistics *parentStatistics = (task->getParent() != nullptr ? task->getParent()->getTaskStatistics() : nullptr);
-		TaskStatistics *taskStatistics = task->getTaskStatistics();
-		const std::string &label = task->getLabel();
-		size_t cost = (task->hasCost() ? task->getCost() : DEFAULT_COST);
-
-		// Populate task statistic structures and predict metrics
-		_taskMonitor->taskCreated(parentStatistics, taskStatistics, label, cost);
-		_taskMonitor->predictTime(taskStatistics, label, cost);
-
-		// Account this task in workloads
-		_workloadMonitor->taskCreated(taskStatistics);
+		// Reset task statistics
+		_taskMonitor->taskReinitialized(task->getTaskStatistics());
 	}
 }
 
@@ -131,7 +147,7 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 {
 	assert(task != nullptr);
 
-	if (_enabled && !task->isTaskfor()) {
+	if (_enabled) {
 		assert(_taskMonitor != nullptr);
 		assert(_workloadMonitor != nullptr);
 
@@ -150,7 +166,7 @@ void Monitoring::taskCompletedUserCode(Task *task)
 {
 	assert(task != nullptr);
 
-	if (_enabled && !task->isTaskfor()) {
+	if (_enabled) {
 		assert(_workloadMonitor != nullptr);
 
 		// Account the task's elapsed execution time in predictions
@@ -162,18 +178,28 @@ void Monitoring::taskFinished(Task *task)
 {
 	assert(task != nullptr);
 
-	if (_enabled && !task->isTaskfor()) {
+	if (_enabled) {
 		assert(_taskMonitor != nullptr);
 		assert(_workloadMonitor != nullptr);
 
-		// Number of ancestors updated by this task in TaskMonitor
-		int ancestorsUpdated = 0;
+		// If the task is a taskfor collaborator, aggregate statistics in the
+		// parent (source taskfor). Otherwise normal task behavior
+		if (task->isTaskfor() && task->isRunnable()) {
+			Taskfor *source = (Taskfor *) task->getParent();
+			assert(source != nullptr);
+			assert(source->isTaskfor());
 
-		// Mark task as completely executed
-		const monitoring_task_status_t oldStatus = _taskMonitor->stopTiming(task->getTaskStatistics(), ancestorsUpdated);
+			_taskMonitor->taskforCollaboratorEnded(task->getTaskStatistics(), source->getTaskStatistics());
+		} else {
+			// Number of ancestors updated by this task in TaskMonitor
+			int ancestorsUpdated = 0;
 
-		// Account this task in workloads
-		_workloadMonitor->taskFinished(task->getTaskStatistics(), oldStatus, ancestorsUpdated);
+			// Mark task as completely executed
+			const monitoring_task_status_t oldStatus = _taskMonitor->stopTiming(task->getTaskStatistics(), ancestorsUpdated);
+
+			// Account this task in workloads
+			_workloadMonitor->taskFinished(task->getTaskStatistics(), oldStatus, ancestorsUpdated);
+		}
 	}
 }
 
@@ -197,6 +223,7 @@ void Monitoring::cpuBecomesActive(int cpuId)
 		_cpuMonitor->cpuBecomesActive(cpuId);
 	}
 }
+
 
 //    PREDICTORS    //
 
@@ -285,6 +312,7 @@ double Monitoring::getPredictedElapsedTime()
 	return 0.0;
 }
 
+
 //    PRIVATE METHODS    //
 
 void Monitoring::displayStatistics()
@@ -301,7 +329,6 @@ void Monitoring::displayStatistics()
 	std::stringstream outputStream;
 	_taskMonitor->displayStatistics(outputStream);
 	_cpuMonitor->displayStatistics(outputStream);
-	_workloadMonitor->displayStatistics(outputStream);
 
 	// Print the statistics of every prediction heuristic
 	outputStream << std::left << std::fixed << std::setprecision(2) << "\n";

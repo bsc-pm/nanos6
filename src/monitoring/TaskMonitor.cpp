@@ -15,6 +15,7 @@ void TaskMonitor::taskCreated(
 ) {
 	assert(taskStatistics != nullptr);
 
+	// Initialize attributes of the new task
 	taskStatistics->setParentStatistics(parentStatistics);
 	taskStatistics->setLabel(label);
 	taskStatistics->setCost(cost);
@@ -26,12 +27,8 @@ void TaskMonitor::taskCreated(
 			parentStatistics->ancestorHasPrediction()
 		);
 	}
-}
 
-void TaskMonitor::predictTime(TaskStatistics *taskStatistics, const std::string &label, size_t cost)
-{
-	assert(taskStatistics != nullptr);
-
+	// Predict metrics using past data
 	TasktypePredictions *predictions = nullptr;
 
 	_spinlock.lock();
@@ -60,14 +57,21 @@ void TaskMonitor::predictTime(TaskStatistics *taskStatistics, const std::string 
 	taskStatistics->setTypePredictions(predictions);
 }
 
-monitoring_task_status_t TaskMonitor::startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus)
+void TaskMonitor::taskReinitialized(TaskStatistics *taskStatistics) const
+{
+	assert(taskStatistics != nullptr);
+
+	taskStatistics->reinitialize();
+}
+
+monitoring_task_status_t TaskMonitor::startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus) const
 {
 	assert(taskStatistics != nullptr);
 
 	return taskStatistics->startTiming(execStatus);
 }
 
-monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated)
+monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated) const
 {
 	assert(taskStatistics != nullptr);
 
@@ -122,6 +126,18 @@ monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics,
 	}
 
 	return oldStatus;
+}
+
+void TaskMonitor::taskforCollaboratorEnded(TaskStatistics *collaboratorStatistics, TaskStatistics *taskforStatistics) const
+{
+	assert(taskforStatistics != nullptr);
+	assert(collaboratorStatistics != nullptr);
+
+	// Accumulate the collaborator's statistics into the parent Taskfor
+	taskforStatistics->accumulateChildTiming(
+		collaboratorStatistics->getChronos(),
+		collaboratorStatistics->getChildTimes()
+	);
 }
 
 double TaskMonitor::getAverageTimePerUnitOfCost(const std::string &label)

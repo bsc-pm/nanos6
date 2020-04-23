@@ -14,6 +14,7 @@
 #include "StreamExecutor.hpp"
 #include "Task.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
@@ -112,8 +113,9 @@ inline void Task::reinitialize(
 		_nestingLevel = parent->getNestingLevel() + 1;
 	}
 
-	// Re-use hardware counters
+	// Re-use hardware counters and monitoring statistics
 	HardwareCounters::taskReinitialized(this);
+	Monitoring::taskReinitialized(this);
 }
 
 inline bool Task::markAsFinished(ComputePlace *computePlace)
