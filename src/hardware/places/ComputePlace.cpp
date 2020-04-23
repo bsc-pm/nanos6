@@ -79,6 +79,7 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 		"Insufficient memory for preallocatedArgsBlock");
 
 	HardwareCounters::taskCreated(_preallocatedTaskfor);
+	Monitoring::taskCreated(_preallocatedTaskfor);
 }
 
 ComputePlace::~ComputePlace()

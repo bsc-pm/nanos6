@@ -75,14 +75,16 @@ void nanos6_preinit(void) {
 
 	RuntimeInfoEssentials::initialize();
 
-	// Pre-initialize Hardware Counters before hardware
+	// Pre-initialize Hardware Counters and Monitoring before hardware
 	HardwareCounters::preinitialize();
+	Monitoring::preinitialize();
 	HardwareInfo::initialize();
 	ClusterManager::initialize();
 	CPUManager::preinitialize();
 
-	// Finish Hardware counters initialization after CPUManager
+	// Finish Hardware counters and Monitoring initialization after CPUManager
 	HardwareCounters::initialize();
+	Monitoring::initialize();
 	MemoryAllocator::initialize();
 	Throttle::initialize();
 	Scheduler::initialize();
@@ -91,8 +93,6 @@ void nanos6_preinit(void) {
 	Instrument::initialize();
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
-
-	Monitoring::initialize();
 
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
 

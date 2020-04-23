@@ -25,7 +25,7 @@ bool Monitoring::_cpuUsageAvailable(false);
 
 //    MONITORING    //
 
-void Monitoring::initialize()
+void Monitoring::preinitialize()
 {
 	if (_enabled) {
 #if CHRONO_ARCH
@@ -33,10 +33,8 @@ void Monitoring::initialize()
 		TickConversionUpdater::initialize();
 #endif
 		// Create all the monitors and predictors
-		_cpuMonitor = new CPUMonitor();
 		_taskMonitor = new TaskMonitor();
 		_workloadMonitor = new WorkloadMonitor();
-		assert(_cpuMonitor != nullptr);
 		assert(_taskMonitor != nullptr);
 		assert(_workloadMonitor != nullptr);
 
@@ -49,6 +47,15 @@ void Monitoring::initialize()
 			// Try to load data from previous executions
 			loadMonitoringWisdom();
 		}
+	}
+}
+
+void Monitoring::initialize()
+{
+	if (_enabled) {
+		// Create all the monitors and predictors
+		_cpuMonitor = new CPUMonitor();
+		assert(_cpuMonitor != nullptr);
 	}
 }
 

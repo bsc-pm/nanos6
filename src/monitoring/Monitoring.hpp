@@ -77,7 +77,12 @@ public:
 
 	//    MONITORING    //
 
-	//! \brief Initialize monitoring
+	//! \brief Pre-initialize monitoring structures before CPU structures are
+	//! initialized (see Bootstrap.cpp)
+	static void preinitialize();
+
+	//! \brief Initialize monitoring structures after CPU structures are
+	//! initialized (see Bootstrap.cpp)
 	static void initialize();
 
 	//! \brief Shutdown monitoring

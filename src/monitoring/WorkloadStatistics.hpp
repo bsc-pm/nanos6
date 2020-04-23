@@ -45,7 +45,6 @@ public:
 		}
 	}
 
-
 	//! \brief Increase the accumulated cost of a workload by a specific value
 	//!
 	//! \param[in] loadId The workload's id
