@@ -32,13 +32,15 @@ namespace CTFAPI {
 		uint16_t totalCPUs;
 
 		std::set<CTFEvent *> events;
+		std::set<CTFContext *> contexes;
 
 		void writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *event);
 		void writeEventMetadata(FILE *f, CTFAPI::CTFEvent *event, int streamId);
 
 	public:
 
-		CTFMetadata(uint16_t ncpus) : totalCPUs(ncpus) {}
+		CTFMetadata() {};
+		~CTFMetadata();
 
 		CTFEvent *addEvent(CTFEvent *event)
 		{
@@ -46,6 +48,14 @@ namespace CTFAPI {
 			FatalErrorHandler::failIf(!ret.second, "Attempt to register a duplicate CTF Event with name ", event->getName());
 
 			return event;
+		}
+
+		CTFContext *addContext(CTFContext *context)
+		{
+			auto ret = contexes.emplace(context);
+			FatalErrorHandler::failIf(!ret.second, "Attempt to register a duplicate CTF Context");
+
+			return context;
 		}
 
 		std::set<CTFEvent *> &getEvents()

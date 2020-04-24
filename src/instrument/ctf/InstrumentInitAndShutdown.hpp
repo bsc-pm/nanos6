@@ -16,6 +16,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "../api/InstrumentInitAndShutdown.hpp"
 
+#include "ctfapi/CTFTypes.hpp"
 #include "ctfapi/CTFAPI.hpp"
 #include "ctfapi/CTFTrace.hpp"
 #include "ctfapi/CTFMetadata.hpp"
@@ -25,19 +26,18 @@
 
 namespace Instrument {
 
-	static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFMetadata &metadata)
+	static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFMetadata *metadata)
 	{
 		// TODO perform refinement based on the upcoming Nanos6 JSON
 		// TODO add custom user-defined events based JSON
 	}
 
-	static void initializeCTFEvents(CTFAPI::CTFMetadata &userMetadata)
+	static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	{
 		// create event Contexes
-		// TODO delete contexes somewhere, somehow
-		CTFAPI::CTFContext *ctfContextHWC = new CTFAPI::CTFContextHardwareCounters();
+		CTFAPI::CTFContext *ctfContextHWC = userMetadata->addContext(new CTFAPI::CTFContextHardwareCounters());
 
-		std::set<CTFAPI::CTFEvent *> &events = userMetadata.getEvents();
+		std::set<CTFAPI::CTFEvent *> &events = userMetadata->getEvents();
 		for (auto it = events.begin(); it != events.end(); ++it) {
 			CTFAPI::CTFEvent *event = (*it);
 			uint8_t enabledContexes = event->getEnabledContexes();
@@ -48,11 +48,11 @@ namespace Instrument {
 
 	static void initializeCTFBuffers(std::string userPath)
 	{
-		uint16_t i;
-		uint16_t cpuId;
+		ctf_cpu_id_t i;
+		ctf_cpu_id_t cpuId;
 		std::string streamPath;
 		const size_t defaultSize = 4096;
-		uint16_t totalCPUs = (uint16_t) CPUManager::getTotalCPUs();
+		ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 
 		// TODO allocate memory on each CPU (madvise or specific
 		// instrument function?)
@@ -94,9 +94,11 @@ namespace Instrument {
 		std::string userPath, kernelPath;
 
 		CTFAPI::greetings();
-		CTFAPI::CTFMetadata userMetadata(CPUManager::getTotalCPUs());
 		CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
+		CTFAPI::CTFMetadata *userMetadata = new CTFAPI::CTFMetadata();
 
+		trace.setMetadata(userMetadata);
+		trace.setTotalCPUs(CPUManager::getTotalCPUs());
 		trace.setTracePath("./trace-ctf-nanos6");
 		trace.initializeTraceTimer();
 		trace.createTraceDirectories(userPath, kernelPath);
@@ -105,17 +107,18 @@ namespace Instrument {
 		preinitializeCTFEvents(userMetadata);
 		refineCTFEvents(userMetadata);
 		initializeCTFEvents(userMetadata);
-		userMetadata.writeMetadataFile(userPath);
+		userMetadata->writeMetadataFile(userPath);
 	}
 
 	void shutdown()
 	{
-		uint16_t i;
-		uint16_t totalCPUs;
+		ctf_cpu_id_t i;
+		ctf_cpu_id_t totalCPUs;
+		CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 
 		CTFAPI::greetings();
 
-		totalCPUs = (uint16_t) CPUManager::getTotalCPUs();
+		totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 
 		for (i = 0; i < totalCPUs; i++) {
 			CPU *CPU = CPUManager::getCPU(i);
@@ -141,6 +144,8 @@ namespace Instrument {
 		close(userStream->fdOutput);
 		delete userStream;
 		delete virtualCPULocalData;
+
+		trace.clean();
 	}
 }
 

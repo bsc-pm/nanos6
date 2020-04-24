@@ -12,7 +12,9 @@
 #include <string>
 #include <map>
 
-#include <lowlevel/SpinLock.hpp>
+#include "lowlevel/SpinLock.hpp"
+
+#include "CTFTypes.hpp"
 
 namespace CTFAPI {
 	class CTFStream {
@@ -25,19 +27,21 @@ namespace CTFAPI {
 		uint64_t mask;
 		uint64_t lost;
 		uint64_t threshold;
-		uint16_t cpuId;
+		ctf_cpu_id_t cpuId;
 
 		int fdOutput;
 		off_t fileOffset;
 
-		void initialize(size_t size, uint32_t cpuId);
+		CTFStream() : bufferSize(0) {}
+		virtual ~CTFStream() {}
+
+		void initialize(size_t size, ctf_cpu_id_t cpuId);
 		void shutdown(void);
 		bool checkFreeSpace(size_t size);
 		void flushData();
 
-		CTFStream() : bufferSize(0) {}
-		virtual void lock() {};
-		virtual void unlock() {};
+		virtual void lock() {}
+		virtual void unlock() {}
 
 	private:
 		void *mrb;
@@ -48,6 +52,8 @@ namespace CTFAPI {
 
 	class ExclusiveCTFStream : public CTFStream {
 		SpinLock spinlock;
+
+		~ExclusiveCTFStream() {}
 
 		void lock()
 		{

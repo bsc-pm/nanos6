@@ -8,9 +8,10 @@
 #include <cstdint>
 #include <cinttypes>
 
-#include "CTFTrace.hpp"
 #include "CTFMetadata.hpp"
 #include "CTFContext.hpp"
+#include "CTFTrace.hpp"
+
 
 const char *CTFAPI::CTFMetadata::meta_header = "/* CTF 1.8 */\n";
 
@@ -103,22 +104,29 @@ const char *CTFAPI::CTFMetadata::meta_eventMetadataFields =
 	"	};\n"
 	"};\n\n";
 
+
+CTFAPI::CTFMetadata::~CTFMetadata()
+{
+	for (auto p : events)
+		delete p;
+	for (auto p : contexes)
+		delete p;
+	events.clear();
+	contexes.clear();
+}
+
 void CTFAPI::CTFMetadata::writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *event)
 {
 	std::vector<CTFAPI::CTFContext *> &contexes = event->getContexes();
-
 	if (contexes.empty())
 		return;
 
-	fprintf(f, "	context := struct {\n");
-
+	fprintf(f, "\tcontext := struct {\n");
 	for (auto it = contexes.begin(); it != contexes.end(); ++it) {
 		CTFAPI::CTFContext *context = (*it);
-		fputs(context->getMetadata(), f);
+		fputs(context->getEventMetadata(), f);
 	}
-
-	fprintf(f, "	};\n");
-
+	fprintf(f, "\t};\n");
 }
 
 void CTFAPI::CTFMetadata::writeEventMetadata(FILE *f, CTFAPI::CTFEvent *event, int streamId)
@@ -144,10 +152,16 @@ void CTFAPI::CTFMetadata::writeMetadataFile(std::string userPath)
 	fputs(meta_header, f);
 	fputs(meta_typedefs, f);
 	fputs(meta_trace, f);
-	fprintf(f, meta_env, totalCPUs);
+	fprintf(f, meta_env, trace.getTotalCPUs());
 	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
 	fputs(meta_streamBounded, f);
 	fputs(meta_streamUnbounded, f);
+
+	// print context additional structures
+	for (auto it = contexes.begin(); it != contexes.end(); ++it) {
+		CTFAPI::CTFContext *context = (*it);
+		fputs(context->getDataStructuresMetadata(), f);
+	}
 
 	// print events bound to first stream
 	for (auto it = events.begin(); it != events.end(); ++it) {

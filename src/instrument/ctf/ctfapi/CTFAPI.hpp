@@ -16,12 +16,9 @@
 #include "instrument/support/InstrumentCPULocalDataSupport.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include "CTFTypes.hpp"
 #include "CTFEvent.hpp"
 #include "CTFStream.hpp"
-
-typedef uint16_t ctf_task_type_id_t;
-typedef uint32_t ctf_task_id_t;
-typedef uint16_t ctf_cpu_id_t; //TODO use this typedef for all cpu ids variables
 
 namespace CTFAPI {
 

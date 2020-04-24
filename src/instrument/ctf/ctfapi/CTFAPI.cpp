@@ -65,10 +65,10 @@ static int mk_packet_header(char *buf, uint64_t *head)
 	return 0;
 }
 
-static int mk_packet_context(char *buf, size_t *head, uint16_t cpu_id)
+static int mk_packet_context(char *buf, size_t *head, ctf_cpu_id_t cpu_id)
 {
 	struct __attribute__((__packed__)) packet_context {
-		uint16_t cpu_id;
+		ctf_cpu_id_t cpu_id;
 	};
 
 	const int pks = sizeof(struct packet_context);

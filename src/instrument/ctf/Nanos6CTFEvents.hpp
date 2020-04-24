@@ -14,7 +14,7 @@
 
 namespace Instrument {
 
-	void preinitializeCTFEvents(CTFAPI::CTFMetadata &userMetadata);
+	void preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata);
 
 	void tp_task_label(char *taskLabel, ctf_task_type_id_t taskTypeId);
 	void tp_task_execute(ctf_task_id_t taskId);

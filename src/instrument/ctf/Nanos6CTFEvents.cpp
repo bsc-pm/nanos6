@@ -20,40 +20,40 @@ static CTFAPI::CTFEvent *eventTaskEnd;
 static CTFAPI::CTFEvent *eventCPUResume;
 static CTFAPI::CTFEvent *eventCPUIdle;
 
-void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata &userMetadata)
+void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
 	// create Events
-	eventTaskLabel = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		"task_label",
+	eventTaskLabel = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_label",
 		"\t\tinteger { size =  8; align = 8; signed = 0; encoding = UTF8; base = 10; } _label["xstr(ARG_STRING_SIZE)"];\n"
 		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
 	));
-	eventTaskExecute = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		"task_execute",
+	eventTaskExecute = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_execute",
 		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
 		CTFAPI::CTFContextHWC
 	));
-	eventTaskAdd = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		"task_add",
+	eventTaskAdd = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_add",
 		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
 		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
 	));
-	eventTaskBlock = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		"task_block",
+	eventTaskBlock = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_block",
 		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
 		CTFAPI::CTFContextHWC
 	));
-	eventTaskEnd = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		"task_end",
+	eventTaskEnd = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_end",
 		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
 		CTFAPI::CTFContextHWC
 	));
-	eventCPUResume = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		"task_cpu_resume",
+	eventCPUResume = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:cpu_resume",
 		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
 	));
-	eventCPUIdle = userMetadata.addEvent(new CTFAPI::CTFEvent(
-		"task_cpu_idle",
+	eventCPUIdle = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:cpu_idle",
 		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
 	));
 }

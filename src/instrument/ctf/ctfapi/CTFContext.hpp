@@ -23,10 +23,12 @@ namespace CTFAPI {
 	class CTFContext {
 	protected:
 		size_t size;
-		std::string metadata;
+		std::string eventMetadata;
+		std::string dataStructuresMetadata;
 
 	public:
 		CTFContext() : size(0) {}
+		virtual ~CTFContext() {}
 
 		virtual void writeContext(__attribute__((unused)) void **buf) {}
 
@@ -35,15 +37,20 @@ namespace CTFAPI {
 			return size;
 		}
 
-		const char *getMetadata() const
+		const char *getEventMetadata() const
 		{
-			return metadata.c_str();
+			return eventMetadata.c_str();
+		}
+
+		const char *getDataStructuresMetadata() const
+		{
+			return dataStructuresMetadata.c_str();
 		}
 	};
 
 	class CTFContextHardwareCounters : public CTFContext {
 	private:
-		std::vector<int> hwc_ids;
+		std::vector<const char *> hwc_ids;
 
 	public:
 		CTFContextHardwareCounters() : CTFContext()
@@ -52,22 +59,29 @@ namespace CTFAPI {
 			// amount of requested hardware counters
 			// TODO calculate size based on amount of requested HWC
 
+			hwc_ids.push_back("_PAPI_TOT_INS");
 			size += sizeof(uint64_t);
-			hwc_ids.push_back(33);
+			hwc_ids.push_back("_PAPI_TOT_CYC");
+			size += sizeof(uint64_t);
 
-			int i = 0;
+			eventMetadata.append("\t\tstruct hwc hwc;\n");
+
+			dataStructuresMetadata.append("struct hwc {\n");
 			for (auto it = hwc_ids.begin(); it != hwc_ids.end(); ++it) {
-				metadata.append("\t\tinteger { size = 64; align = 8; signed = 0; encoding = none; base = 10; } _val" + std::to_string(i) + ";\n");
-				i++;
+				dataStructuresMetadata.append("\tinteger { size = 64; align = 8; signed = 0; encoding = none; base = 10; } " + std::string((*it)) + ";\n");
 			}
+			dataStructuresMetadata.append("};\n\n");
 		}
+
+		~CTFContextHardwareCounters() {}
 
 		void writeContext(void **buf)
 		{
+			uint64_t val = 666;
 			for (auto it = hwc_ids.begin(); it != hwc_ids.end(); ++it) {
 				//val = HawdwareCounters::getValue(*it);
-				uint64_t val = 666;
 				tp_write_args(buf, val);
+				val++;
 			}
 		}
 	};

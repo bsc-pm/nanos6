@@ -12,9 +12,6 @@
 
 #include "CTFTrace.hpp"
 
-
-CTFAPI::CTFTrace *trace = nullptr;
-
 void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string &kernelPath)
 {
 	int ret;
@@ -51,7 +48,7 @@ void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string
 }
 
 
-void CTFAPI::CTFTrace::initializeTraceTimer()
+void CTFAPI::CTFTrace::initializeTraceTimer(void)
 {
 	struct timespec tp;
 	const uint64_t ns = 1000000000ULL;
@@ -59,6 +56,12 @@ void CTFAPI::CTFTrace::initializeTraceTimer()
 	if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: initialize: clock_gettime syscall: ") + strerror(errno));
 	}
-	absoluteStartTime = tp.tv_sec * ns + tp.tv_nsec;
+	_absoluteStartTime = tp.tv_sec * ns + tp.tv_nsec;
 }
+
+void CTFAPI::CTFTrace::clean(void)
+{
+	delete _metadata;
+}
+
 

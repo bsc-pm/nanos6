@@ -24,7 +24,7 @@
 
 
 
-void CTFAPI::CTFStream::initialize(size_t size, uint32_t cpuId)
+void CTFAPI::CTFStream::initialize(size_t size, ctf_cpu_id_t cpu)
 {
 	int fd;
 	size_t nPages;
@@ -74,7 +74,7 @@ void CTFAPI::CTFStream::initialize(size_t size, uint32_t cpuId)
 	buffer = (char *) mrb;
 	bufferSize = sizeAligned;
 	fileOffset = 0;
-	this->cpuId = cpuId;
+	cpuId = cpu;
 
 }
 
