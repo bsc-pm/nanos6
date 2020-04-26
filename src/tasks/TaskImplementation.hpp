@@ -46,12 +46,12 @@ inline Task::Task(
 	_removalCount(1),
 	_parent(parent),
 	_priority(0),
+	_schedulingHint(NO_HINT),
 	_thread(nullptr),
 	_dataAccesses(taskAccessInfo),
 	_flags(flags),
 	_predecessorCount(0),
 	_instrumentationTaskId(instrumentationTaskId),
-	_schedulerInfo(nullptr),
 	_computePlace(nullptr),
 	_memoryPlace(nullptr),
 	_countdownToRelease(1),
@@ -93,11 +93,11 @@ inline void Task::reinitialize(
 	_removalCount = 1;
 	_parent = parent;
 	_priority = 0;
+	_schedulingHint = NO_HINT;
 	_thread = nullptr;
 	_flags = flags;
 	_predecessorCount = 0;
 	_instrumentationTaskId = instrumentationTaskId;
-	_schedulerInfo = nullptr;
 	_computePlace = nullptr;
 	_memoryPlace = nullptr;
 	_countdownToRelease = 1;

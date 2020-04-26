@@ -48,9 +48,8 @@ public:
 						_readyTasks->addReadyTask(currentIS, false);
 					}
 					_immediateSuccessorTasks[immediateSuccessorId] = task;
-				}
-				else {
-					// Multiply by 2 because there are 2 slots per group.
+				} else {
+					// Multiply by 2 because there are 2 slots per group
 					immediateSuccessorId = ((CPU *)computePlace)->getGroupId()*2;
 					Task *currentIS1 = _immediateSuccessorTaskfors[immediateSuccessorId];
 					Task *currentIS2 = _immediateSuccessorTaskfors[immediateSuccessorId+1];
@@ -110,11 +109,6 @@ public:
 		}
 
 		return false;
-	}
-
-	virtual inline bool priorityEnabled()
-	{
-		return _enablePriority;
 	}
 };
 

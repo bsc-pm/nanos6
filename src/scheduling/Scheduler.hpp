@@ -39,7 +39,7 @@ public:
 
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
-	//! \param[in] computePlace The host compute place
+	//! \param[in] computePlace The current compute place
 	static inline bool hasAvailableWork(ComputePlace *computePlace)
 	{
 		assert(computePlace != nullptr);
@@ -58,6 +58,11 @@ public:
 		return _instance->disablingCPU(cpuId, task);
 	}
 
+	//! \brief Check whether task priority is considered
+	static inline bool isPriorityEnabled()
+	{
+		return SchedulerInterface::isPriorityEnabled();
+	}
 };
 
 #endif // SCHEDULER_HPP

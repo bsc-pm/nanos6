@@ -53,7 +53,7 @@ public:
 	//! \brief Check if the scheduler has available work for the current CPU
 	//!
 	//! \param[in] computePlace The host compute place
-	inline bool hasAvailableWork(ComputePlace *computePlace) const
+	inline bool hasAvailableWork(ComputePlace *computePlace)
 	{
 		return _clusterSchedulerImplementation->hasAvailableWork(computePlace);
 	}

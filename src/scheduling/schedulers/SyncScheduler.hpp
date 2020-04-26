@@ -17,12 +17,11 @@
 #include "lowlevel/TicketArraySpinLock.hpp"
 #include "scheduling/SchedulerSupport.hpp"
 
-#include <InstrumentTaskStatus.hpp>
-
 
 class SyncScheduler {
 protected:
-	typedef boost::lockfree::spsc_queue<TaskSchedulingInfo *> add_queue_t;
+	typedef boost::lockfree::spsc_queue<Task *> add_queue_t;
+	typedef Padded<SchedulerSupport::CPUNode> PaddedCPUNode;
 
 	/* Members */
 	nanos6_device_t _deviceType;
@@ -34,19 +33,26 @@ protected:
 	SubscriptionLock _lock;
 	TicketArraySpinLock *_addQueuesLocks;
 	add_queue_t *_addQueues;
-	Padded<CPUNode> *_ready; // indexed by cpu_idx
+	PaddedCPUNode *_ready; // indexed by CPU index
 
+	//! \brief Transfer ready tasks from lock-free queues to the scheduler
+	//!
+	//! This function moves all ready tasks that have been added to
+	//! the lock-free queues (one per NUMA) to the definitive ready
+	//! task queue. Note this function must be called with the lock
+	//! of the scheduler acquired
 	inline void processReadyTasks()
 	{
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			if (!_addQueues[i].empty()) {
 				_addQueues[i].consume_all(
-					[&](TaskSchedulingInfo *const taskSchedulingInfo) {
-						_scheduler->addReadyTask(
-							taskSchedulingInfo->_task,
-							taskSchedulingInfo->_computePlace,
-							taskSchedulingInfo->_hint);
-						delete taskSchedulingInfo;
+					[&](Task *task) {
+						// Add the task to the unsync scheduler
+						_scheduler->addReadyTask(task,
+							task->getComputePlace(),
+							task->getSchedulingHint());
+						// Reset compute place for security
+						task->setComputePlace(nullptr);
 					}
 				);
 			}
@@ -80,24 +86,31 @@ public:
 	//! NOTE We initialize the SubscriptionLock with 2 * numCPUs since some
 	//! threads may oversubscribe and thus we may need more than "numCPUs"
 	//! slots in the lock's waiting queue
-	SyncScheduler(size_t totalComputePlaces, nanos6_device_t deviceType = nanos6_host_device)
-		: _deviceType(deviceType), _totalComputePlaces(totalComputePlaces), _lock((uint64_t) totalComputePlaces * 2)
+	SyncScheduler(size_t totalComputePlaces, nanos6_device_t deviceType = nanos6_host_device) :
+		_deviceType(deviceType),
+		_totalComputePlaces(totalComputePlaces),
+		_lock((uint64_t) totalComputePlaces * 2)
 	{
-		uint64_t totalCPUsPow2 = roundToNextPowOf2(_totalComputePlaces);
-		assert(isPowOf2(totalCPUsPow2));
+		uint64_t totalCPUsPow2 = SchedulerSupport::roundToNextPowOf2(_totalComputePlaces);
+		assert(SchedulerSupport::isPowOf2(totalCPUsPow2));
 
-		_ready = (Padded<CPUNode> *) MemoryAllocator::alloc(_totalComputePlaces * sizeof(Padded<CPUNode>));
+		_ready = (PaddedCPUNode *) MemoryAllocator::alloc(_totalComputePlaces * sizeof(PaddedCPUNode));
+
 		for (size_t i = 0; i < _totalComputePlaces; i++) {
-			new (&_ready[i]) Padded<CPUNode>();
+			new (&_ready[i]) PaddedCPUNode();
 		}
 
-		size_t totalNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_device_t::nanos6_host_device);
+		size_t totalNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
 
-		// Using one queue per NUMA node, and a special queue for cases where there is no computePlace.
+		// Use a queue per NUMA node and a special queue
+		// for cases where there is no compute place
 		_totalAddQueues = totalNUMANodes + 1;
 
-		_addQueues = (add_queue_t *) MemoryAllocator::alloc(_totalAddQueues * sizeof(add_queue_t));
-		_addQueuesLocks = (TicketArraySpinLock *) MemoryAllocator::alloc(_totalAddQueues * sizeof(TicketArraySpinLock));
+		_addQueues = (add_queue_t *)
+			MemoryAllocator::alloc(_totalAddQueues * sizeof(add_queue_t));
+		_addQueuesLocks = (TicketArraySpinLock *)
+			MemoryAllocator::alloc(_totalAddQueues * sizeof(TicketArraySpinLock));
+
 		for (size_t i = 0; i < _totalAddQueues; i++) {
 			new (&_addQueues[i]) add_queue_t(totalCPUsPow2*4);
 			new (&_addQueuesLocks[i]) TicketArraySpinLock(_totalComputePlaces);
@@ -112,7 +125,7 @@ public:
 		}
 		MemoryAllocator::free(_addQueues, _totalAddQueues * sizeof(add_queue_t));
 		MemoryAllocator::free(_addQueuesLocks, _totalAddQueues * sizeof(TicketArraySpinLock));
-		MemoryAllocator::free(_ready, _totalComputePlaces * sizeof(Padded<CPUNode>));
+		MemoryAllocator::free(_ready, _totalComputePlaces * sizeof(PaddedCPUNode));
 
 		delete _scheduler;
 	}
@@ -124,38 +137,32 @@ public:
 
 	void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
 	{
-		TaskSchedulingInfo *taskSchedulingInfo = new TaskSchedulingInfo(task, computePlace, hint);
-		addTasks(computePlace, &taskSchedulingInfo, 1);
+		// TODO: Allow adding multiple tasks in the future
+		addTasks(&task, 1, computePlace, hint);
 	}
 
-	void addTasks(ComputePlace *computePlace, TaskSchedulingInfo *tasks[], uint64_t const size)
+	void addTasks(Task *tasks[], const size_t numTasks, ComputePlace *computePlace, ReadyTaskHint hint)
 	{
-		// If there is no CPU, use a special queue at the end that does not belong to any NUMA node.
-		uint64_t const queueIndex = computePlace != nullptr ? ((CPU *)computePlace)->getNumaNodeId() : _totalAddQueues-1;
+		// Use a special queue not belonging to any NUMA node if no compute place
+		const size_t queueIndex = (computePlace != nullptr) ? ((CPU *)computePlace)->getNumaNodeId() : _totalAddQueues-1;
 		assert(queueIndex < _totalAddQueues);
 
-		if (_scheduler->priorityEnabled()) {
-			for (size_t i = 0; i < size; i++) {
-				// Extract task priority from taskInfo and set it as priority.
-				Task *task = tasks[i]->_task;
-				Task::priority_t priority = 0;
-				if ((task->getTaskInfo() != nullptr) && (task->getTaskInfo()->get_priority != nullptr)) {
-					task->getTaskInfo()->get_priority(task->getArgsBlock(), &priority);
-					task->setPriority(priority);
-					Instrument::taskHasNewPriority(task->getInstrumentationTaskId(), priority);
-				}
-			}
+		for (size_t t = 0; t < numTasks; t++) {
+			assert(tasks[t] != nullptr);
+			// Set temporary info that is used when processing ready tasks
+			tasks[t]->setComputePlace(computePlace);
+			tasks[t]->setSchedulingHint(hint);
 		}
 
-		uint64_t count = 0;
-		while (size > count) {
-			// We need lock because several cpus from the same NUMA may be enqueueing at the same time.
+		size_t count = 0;
+		while (numTasks > count) {
+			// Acquire lock since other cpus from the same NUMA may be enqueueing
 			_addQueuesLocks[queueIndex].lock();
-			count += _addQueues[queueIndex].push(tasks+count, size-count);
+			count += _addQueues[queueIndex].push(tasks+count, numTasks-count);
 			_addQueuesLocks[queueIndex].unlock();
 
-			if ((size > count) && _lock.tryLock()) {
-				// addQueue is full, so we need to process it before pushing new tasks to it.
+			if ((numTasks > count) && _lock.tryLock()) {
+				// Process queues before pushing new tasks
 				processReadyTasks();
 				_lock.unsubscribe();
 			}

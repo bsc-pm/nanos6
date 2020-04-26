@@ -10,13 +10,13 @@
 #include <atomic>
 #include <bitset>
 #include <cassert>
-#include <set>
 #include <string>
 
 #include <nanos6.h>
 
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "scheduling/ReadyQueue.hpp"
 
 #include <ClusterTaskContext.hpp>
 #include <ExecutionWorkflow.hpp>
@@ -80,7 +80,11 @@ private:
 	//! Task to which this one is closely nested
 	Task *_parent;
 
+	//! Task priority
 	priority_t _priority;
+
+	//! Scheduling hint used by the scheduler
+	ReadyTaskHint _schedulingHint;
 
 protected:
 	//! The thread assigned to this task, nullptr if the task has finished (but possibly waiting its children)
@@ -92,6 +96,7 @@ protected:
 	// Need to get back to the task from TaskDataAccesses for instrumentation purposes
 	friend struct TaskDataAccesses;
 
+	//! Task flags
 	flags_t _flags;
 
 private:
@@ -100,9 +105,6 @@ private:
 
 	//! An identifier for the task for the instrumentation
 	Instrument::task_id_t _instrumentationTaskId;
-
-	//! Opaque data that is scheduler-dependent
-	void *_schedulerInfo;
 
 	//! Compute Place where the task is running
 	ComputePlace *_computePlace;
@@ -140,6 +142,7 @@ private:
 	//! task, used to trigger a callback from the appropriate stream function
 	//! if the parent of this task is a StreamExecutor
 	StreamFunctionCallback *_parentSpawnCallback;
+
 public:
 	inline Task(
 		void *argsBlock,
@@ -307,14 +310,44 @@ public:
 		}
 	}
 
+	//! \brief Get the task priority
+	//!
+	//! \returns the priority
 	inline priority_t getPriority() const
 	{
 		return _priority;
 	}
 
-	inline void setPriority(priority_t priority)
+	//! \brief Compute the task priority defined by the user
+	//!
+	//! \returns whether the task has a user-defined priority
+	inline bool computePriority()
 	{
-		_priority = priority;
+		assert(_taskInfo != nullptr);
+		assert(_argsBlock != nullptr);
+
+		if (_taskInfo->get_priority != nullptr) {
+			_taskInfo->get_priority(_argsBlock, &_priority);
+			return true;
+		}
+		// Leave the default priority
+		return false;
+	}
+
+	//! \brief Get the task scheduling hint
+	//!
+	//! \returns the scheduling hint
+	inline ReadyTaskHint getSchedulingHint() const
+	{
+		return _schedulingHint;
+	}
+
+	//! \brief Set the task scheduling hint
+	//!
+	//! \param hint the new scheduling hint
+	inline void setSchedulingHint(ReadyTaskHint hint)
+	{
+		_schedulingHint = hint;
 	}
 
 	//! \brief Mark that the task has finished its execution
@@ -560,18 +593,6 @@ public:
 	inline Instrument::task_id_t getInstrumentationTaskId() const
 	{
 		return _instrumentationTaskId;
-	}
-
-	//! \brief Retrieve scheduler-dependent data
-	inline void *getSchedulerInfo()
-	{
-		return _schedulerInfo;
-	}
-
-	//! \brief Set scheduler-dependent data
-	inline void setSchedulerInfo(void *schedulerInfo)
-	{
-		_schedulerInfo = schedulerInfo;
 	}
 
 	//! \brief Increase the counter of events

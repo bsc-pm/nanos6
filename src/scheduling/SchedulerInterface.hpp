@@ -21,6 +21,11 @@
 class SchedulerInterface {
 	HostScheduler *_hostScheduler;
 	DeviceScheduler *_deviceSchedulers[nanos6_device_type_num];
+
+	static EnvironmentVariable<std::string> _schedulingPolicy;
+	static EnvironmentVariable<bool> _enableImmediateSuccessor;
+	static EnvironmentVariable<bool> _enablePriority;
+
 #ifdef EXTRAE_ENABLED
 	std::atomic<Task *> _mainTask;
 	bool _mainFirstRunCompleted = false;
@@ -114,6 +119,12 @@ public:
 	}
 
 	virtual std::string getName() const = 0;
+
+	//! \brief Check whether task priority is considered
+	static inline bool isPriorityEnabled()
+	{
+		return _enablePriority;
+	}
 };
 
 #endif // SCHEDULER_INTERFACE_HPP

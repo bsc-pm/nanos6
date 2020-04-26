@@ -195,6 +195,16 @@ void nanos6_submit_task(void *taskHandle)
 	HardwareCounters::taskCreated(task);
 	Monitoring::taskCreated(task);
 
+	// Compute the task priority only when the scheduler is
+	// considering the task priorities
+	if (Scheduler::isPriorityEnabled()) {
+		if (task->computePriority()) {
+			Instrument::taskHasNewPriority(
+				task->getInstrumentationTaskId(),
+				task->getPriority());
+		}
+	}
+
 	bool ready = true;
 	nanos6_task_info_t *taskInfo = task->getTaskInfo();
 	assert(taskInfo != 0);

@@ -17,8 +17,8 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	Task *result = nullptr;
 	Taskfor *groupTaskfor = nullptr;
 
-	long cpuId = ((CPU *)computePlace)->getIndex();
-	long groupId = (computePlace->getType() == nanos6_host_device) ? ((CPU *)computePlace)->getGroupId() : -1;
+	long cpuId = computePlace->getIndex();
+	long groupId = ((CPU *)computePlace)->getGroupId();
 	long immediateSuccessorGroupId = groupId*2;
 
 	// 1. Try to get work from the current group taskfor.
@@ -95,7 +95,7 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	}
 
 	assert(result->isTaskfor());
-	assert(computePlace->getType() == nanos6_device_t::nanos6_host_device);
+	assert(computePlace->getType() == nanos6_host_device);
 
 	Taskfor *taskfor = (Taskfor *) result;
 	_groupSlots[groupId] = taskfor;
