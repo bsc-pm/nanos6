@@ -10,7 +10,6 @@
 #include <cassert>
 
 #include "executors/threads/CPU.hpp"
-#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
@@ -111,9 +110,6 @@ namespace If0Task {
 		computePlace = currentThread->getComputePlace();
 
 		Scheduler::addReadyTask(parent, computePlace, UNBLOCKED_TASK_HINT);
-
-		// After adding a task, the CPUManager may want to unidle CPUs
-		CPUManager::executeCPUManagerPolicy(computePlace, ADDED_TASKS, 1);
 	}
 
 }

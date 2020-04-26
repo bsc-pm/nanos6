@@ -9,7 +9,6 @@
 #include <nanos6/blocking.h>
 
 #include "DataAccessRegistration.hpp"
-#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
@@ -65,7 +64,6 @@ extern "C" void nanos6_unblock_task(void *blocking_context)
 	Task *task = static_cast<Task *>(blocking_context);
 
 	Instrument::unblockTask(task->getInstrumentationTaskId());
-	Scheduler::addReadyTask(task, nullptr, UNBLOCKED_TASK_HINT);
 
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 	ComputePlace *computePlace = nullptr;
@@ -73,7 +71,6 @@ extern "C" void nanos6_unblock_task(void *blocking_context)
 		computePlace = currentThread->getComputePlace();
 	}
 
-	// After adding a task, the CPUManager may want to unidle CPUs
-	CPUManager::executeCPUManagerPolicy(computePlace, ADDED_TASKS, 1);
+	Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
 }
 

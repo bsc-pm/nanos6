@@ -47,9 +47,6 @@ void Accelerator::finishTask(Task *task)
 
 		// Unlock parent that was waiting for this if0
 		Scheduler::addReadyTask(parent, cpu, UNBLOCKED_TASK_HINT);
-
-		// After adding a task, the CPUManager may want to un-idle CPUs
-		CPUManager::executeCPUManagerPolicy(cpu, ADDED_TASKS, 1);
 	}
 
 	if (task->markAsFinished(cpu)) {

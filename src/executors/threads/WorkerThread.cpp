@@ -93,7 +93,7 @@ void WorkerThread::body()
 				// If the task is a taskfor, the CPUManager may want to unidle
 				// collaborators to help execute it
 				if (_task->isTaskfor()) {
-					CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, HANDLE_TASKFOR, 0);
+					CPUManager::executeCPUManagerPolicy(cpu, HANDLE_TASKFOR, 0);
 				}
 
 				if (_task->isIf0()) {
@@ -115,7 +115,7 @@ void WorkerThread::body()
 			PollingAPI::handleServices();
 
 			// If no task is available, the CPUManager may want to idle this CPU
-			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, IDLE_CANDIDATE);
+			CPUManager::executeCPUManagerPolicy(cpu, IDLE_CANDIDATE);
 		}
 	}
 
