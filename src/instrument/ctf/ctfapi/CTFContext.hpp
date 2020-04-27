@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdlib> // TODO remove me once we are done with rand
 
 namespace CTFAPI {
 
@@ -77,7 +78,7 @@ namespace CTFAPI {
 
 		void writeContext(void **buf)
 		{
-			uint64_t val = 666;
+			uint64_t val = 1000 + rand()%1000;
 			for (auto it = hwc_ids.begin(); it != hwc_ids.end(); ++it) {
 				//val = HawdwareCounters::getValue(*it);
 				tp_write_args(buf, val);

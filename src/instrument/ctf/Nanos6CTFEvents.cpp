@@ -54,7 +54,8 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	));
 	eventCPUIdle = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:cpu_idle",
-		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
+		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n",
+		CTFAPI::CTFContextHWC
 	));
 }
 
