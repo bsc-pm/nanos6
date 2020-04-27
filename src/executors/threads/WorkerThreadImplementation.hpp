@@ -20,7 +20,7 @@
 
 inline WorkerThread::WorkerThread(CPU *cpu)
 	: WorkerThreadBase(cpu), _task(nullptr), _dependencyDomain(),
-	_instrumentationData(), _hwCounters(nullptr)
+	_instrumentationData(), _hwCounters()
 {
 	_originalNumaNode = cpu->getNumaNodeId();
 	Instrument::enterThreadCreation(/* OUT */ _instrumentationId, cpu->getInstrumentationId());
@@ -96,14 +96,9 @@ inline WorkerThread *WorkerThread::getCurrentWorkerThread()
 	}
 }
 
-inline void WorkerThread::setHardwareCounters(ThreadHardwareCounters *hwCounters)
-{
-	_hwCounters = hwCounters;
-}
-
 inline ThreadHardwareCounters *WorkerThread::getHardwareCounters()
 {
-	return _hwCounters;
+	return &(_hwCounters);
 }
 
 #ifndef NDEBUG

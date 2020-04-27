@@ -9,10 +9,10 @@
 
 #include <pqos.h>
 
-#include "hardware-counters/ThreadHardwareCounters.hpp"
+#include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 
 
-class PQoSThreadHardwareCounters : public ThreadHardwareCounters {
+class PQoSThreadHardwareCounters : public ThreadHardwareCountersInterface {
 
 private:
 

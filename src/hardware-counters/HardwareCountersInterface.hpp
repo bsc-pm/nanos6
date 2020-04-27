@@ -7,10 +7,6 @@
 #ifndef HARDWARE_COUNTERS_INTERFACE_HPP
 #define HARDWARE_COUNTERS_INTERFACE_HPP
 
-#include <string>
-
-#include "SupportedHardwareCounters.hpp"
-
 
 class Task;
 
@@ -21,8 +17,6 @@ public:
 	virtual ~HardwareCountersInterface()
 	{
 	}
-
-	virtual bool isSupported(HWCounters::counters_t counterType) const = 0;
 
 	virtual void threadInitialized() = 0;
 
@@ -37,8 +31,6 @@ public:
 	virtual void taskStopped(Task *task) = 0;
 
 	virtual void taskFinished(Task *task) = 0;
-
-	virtual size_t getTaskHardwareCountersSize() const = 0;
 
 };
 

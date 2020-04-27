@@ -19,16 +19,11 @@ public:
 
 	inline PAPIHardwareCounters(bool, const std::string &)
 	{
-		FatalErrorHandler::failIf(true, "PAPI backend not supported yet");
+		FatalErrorHandler::fail("PAPI backend not supported yet");
 	}
 
 	inline ~PAPIHardwareCounters()
 	{
-	}
-
-	inline bool isSupported(counters_t) const
-	{
-		return false;
 	}
 
 	inline void threadInitialized()
@@ -57,11 +52,6 @@ public:
 
 	inline void taskFinished(Task *)
 	{
-	}
-
-	inline size_t getTaskHardwareCountersSize() const
-	{
-		return 0;
 	}
 
 };

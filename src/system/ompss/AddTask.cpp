@@ -90,7 +90,8 @@ void nanos6_create_task(
 
 	TaskDataAccessesInfo taskAccessInfo(num_deps);
 
-	size_t taskCountersSize = HardwareCounters::getTaskHardwareCountersSize();
+	// Get the size needed for this task's hardware counters
+	size_t taskCountersSize = TaskHardwareCounters::getTaskHardwareCountersSize();
 
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 
@@ -112,10 +113,10 @@ void nanos6_create_task(
 
 	taskAccessInfo.setAllocationAddress((char *)task + taskSize);
 
-	void *taskCounters = nullptr;
-	if (taskCountersSize > 0) {
-		taskCounters = (char *)task + taskSize + taskAccessInfo.getAllocationSize();
-	}
+	// Prepare the allocation address for the task's hardware counters
+	void *countersAddress = (taskCountersSize > 0) ? (char *)task + taskSize + taskAccessInfo.getAllocationSize() : nullptr;
+	TaskHardwareCounters taskCounters;
+	taskCounters.setAllocationAddress(countersAddress);
 
 	if (isTaskfor) {
 		// Taskfor is always final.

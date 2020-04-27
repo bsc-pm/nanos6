@@ -164,8 +164,7 @@ void TaskFinalization::disposeTask(Task *task)
 
 			TaskDataAccesses &dataAccesses = task->getDataAccesses();
 			disposableBlockSize += dataAccesses.getAdditionalMemorySize();
-
-			disposableBlockSize += HardwareCounters::getTaskHardwareCountersSize();
+			disposableBlockSize += TaskHardwareCounters::getTaskHardwareCountersSize();
 
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 

@@ -19,21 +19,9 @@
 #include "tasks/Task.hpp"
 
 
-namespace BoostAcc = boost::accumulators;
-namespace BoostAccTag = boost::accumulators::tag;
-
 class PQoSHardwareCounters : public HardwareCountersInterface {
 
 private:
-
-	enum supported_counters_t {
-		pqos_llc_usage = 0,
-		pqos_ipc,
-		pqos_local_mem_bandwidth,
-		pqos_remote_mem_bandwidth,
-		pqos_llc_miss_rate,
-		num_pqos_counters
-	};
 
 	typedef BoostAcc::accumulator_set<double, BoostAcc::stats<BoostAccTag::sum, BoostAccTag::mean, BoostAccTag::variance, BoostAccTag::count> > statistics_accumulator_t;
 	typedef std::map<std::string, std::vector<statistics_accumulator_t> > statistics_map_t;
@@ -66,25 +54,6 @@ public:
 
 	~PQoSHardwareCounters();
 
-	inline bool isSupported(HWCounters::counters_t counterType) const
-	{
-		if (counterType == HWCounters::llc_usage ||
-			counterType == HWCounters::ipc ||
-			counterType == HWCounters::local_mem_bandwidth ||
-			counterType == HWCounters::remote_mem_bandwidth ||
-			counterType == HWCounters::llc_miss_rate
-		) {
-			// pqos_llc_usage == HWCounters::llc_usage
-			// pqos_ipc == HWCounters::ipc
-			// pqos_local_mem_bandwidth == HWCounters::local_mem_bandwidth
-			// pqos_remote_mem_bandwidth == HWCounters::remote_mem_bandwidth
-			// pqos_llc_miss_rate == HWCounters::llc_miss_rate
-			return true;
-		} else {
-			return false;
-		}
-	}
-
 	void threadInitialized();
 
 	void threadShutdown();
@@ -98,11 +67,6 @@ public:
 	void taskStopped(Task *task);
 
 	void taskFinished(Task *task);
-
-	inline size_t getTaskHardwareCountersSize() const
-	{
-		return sizeof(PQoSTaskHardwareCounters);
-	}
 
 };
 
