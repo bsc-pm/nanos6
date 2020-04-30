@@ -23,15 +23,15 @@ namespace CTFAPI {
 			// CTFMetadata for simplicity. We probably will never
 			// have more than two types of streams.
 
-			dataStructuresMetadata = "struct unbounded {\n\tuint16_t cpu_id;\n};\n\n";
-			size = sizeof(ctf_cpu_id_t);
+			dataStructuresMetadata = "struct unbounded {\n\tuint16_t thread_id;\n};\n\n";
+			size = sizeof(ctf_thread_id_t);
 		}
 
 		~CTFContextUnbounded() {}
 
-		void writeContext(void **buf, ctf_cpu_id_t cpuId)
+		void writeContext(void **buf, ctf_thread_id_t threadId)
 		{
-			tp_write_args(buf, cpuId);
+			tp_write_args(buf, threadId);
 		}
 	};
 }

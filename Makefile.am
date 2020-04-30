@@ -579,6 +579,7 @@ instrument_ctf_sources = \
 	src/instrument/ctf/ctfapi/CTFMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFTrace.cpp \
 	src/instrument/ctf/InstrumentTaskId.cpp \
+	src/instrument/ctf/InstrumentThreadManagement.cpp \
 	src/instrument/ctf/InstrumentCPULocalData.cpp \
 	src/instrument/ctf/InstrumentComputePlaceManagement.cpp \
 	src/instrument/ctf/Nanos6CTFEvents.cpp \
