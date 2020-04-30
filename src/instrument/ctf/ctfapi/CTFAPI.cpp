@@ -13,6 +13,7 @@
 
 #include "CTFAPI.hpp"
 #include "CTFTrace.hpp"
+#include "CTFTypes.hpp"
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -44,11 +45,11 @@ int CTFAPI::mk_event_header(char **buf, uint8_t id)
 	return 0;
 }
 
-static int mk_packet_header(char *buf, uint64_t *head)
+static int mk_packet_header(char *buf, uint64_t *head, ctf_stream_id_t streamId)
 {
 	struct __attribute__((__packed__)) packet_header {
 		uint32_t magic;
-		uint32_t stream_id;
+		ctf_stream_id_t stream_id;
 	};
 
 	const int pks = sizeof(struct packet_header);
@@ -57,7 +58,7 @@ static int mk_packet_header(char *buf, uint64_t *head)
 	pk = (struct packet_header *) &buf[*head];
 	*pk = (struct packet_header) {
 		.magic = 0xc1fc1fc1,
-		.stream_id = 0
+		.stream_id = streamId
 	};
 
 	*head += pks;
@@ -93,6 +94,6 @@ void CTFAPI::addStreamHeader(CTFAPI::CTFStream *stream)
 {
 	// we don't need to mask the head because the buffer is at least 1 page
 	// long and at this point it's empty
-	mk_packet_header (stream->buffer, &stream->head);
+	mk_packet_header (stream->buffer, &stream->head, stream->streamId);
 	mk_packet_context(stream->buffer, &stream->head, stream->cpuId);
 }

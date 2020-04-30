@@ -18,7 +18,7 @@
 
 #include "CTFTypes.hpp"
 #include "CTFEvent.hpp"
-#include "CTFStream.hpp"
+#include "stream/CTFStream.hpp"
 
 namespace CTFAPI {
 
@@ -112,7 +112,7 @@ namespace CTFAPI {
 	static void tracepoint(CTFEvent *event, ARGS... args)
 	{
 		CTFStream *stream = Instrument::getCPULocalData()->userStream;
-		const size_t size = sizeof(struct event_header) + sizeOfVariadic<ARGS...>::value + event->getContextSize();
+		const size_t size = sizeof(struct event_header) + sizeOfVariadic<ARGS...>::value + event->getContextSize() + stream->getContextSize();
 		const uint8_t tracepointId = event->getEventId();
 		void *buf;
 
@@ -129,6 +129,7 @@ namespace CTFAPI {
 		buf = stream->buffer + (stream->head & stream->mask);
 
 		mk_event_header((char **) &buf, tracepointId);
+		stream->writeContext(&buf);
 		event->writeContext(&buf);
 		tp_write_args(&buf, args...);
 

@@ -7,7 +7,7 @@
 #ifndef INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP
 #define INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP
 
-#include "ctfapi/CTFStream.hpp"
+#include "ctfapi/stream/CTFStream.hpp"
 
 namespace Instrument {
 	struct CPULocalData {
@@ -17,6 +17,7 @@ namespace Instrument {
 	};
 
 	extern CPULocalData *virtualCPULocalData;
+	extern CPULocalData *leaderThreadCPULocalData;
 }
 
 #endif //INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP

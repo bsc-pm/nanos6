@@ -20,7 +20,11 @@
 #include "ctfapi/CTFAPI.hpp"
 #include "ctfapi/CTFTrace.hpp"
 #include "ctfapi/CTFMetadata.hpp"
-#include "ctfapi/CTFStream.hpp"
+#include "ctfapi/stream/CTFStream.hpp"
+#include "ctfapi/stream/CTFStreamUnboundedPrivate.hpp"
+#include "ctfapi/stream/CTFStreamUnboundedShared.hpp"
+#include "ctfapi/context/CTFContextHardwareCounters.hpp"
+#include "ctfapi/context/CTFContextUnbounded.hpp"
 #include "Nanos6CTFEvents.hpp"
 
 
@@ -46,7 +50,7 @@ namespace Instrument {
 		}
 	}
 
-	static void initializeCTFBuffers(std::string userPath)
+	static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string userPath)
 	{
 		ctf_cpu_id_t i;
 		ctf_cpu_id_t cpuId;
@@ -54,6 +58,9 @@ namespace Instrument {
 		const size_t defaultSize = 4096;
 		ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 
+		// TODO can we place this initialization code somewhere else?
+		// maybe under CTFAPI or CTFTrace?
+		//
 		// TODO allocate memory on each CPU (madvise or specific
 		// instrument function?)
 
@@ -76,17 +83,33 @@ namespace Instrument {
 			cpuLocalData.userStream = userStream;
 		}
 
+		CTFAPI::CTFContextUnbounded *context = new CTFAPI::CTFContextUnbounded();
+		userMetadata->addContext(context);
+
 		// TODO use true virtual cpu mechanism here
 		cpuId = totalCPUs;
-		virtualCPULocalData = new CPULocalData();
-		CTFAPI::ExclusiveCTFStream *exclusiveUserStream = new CTFAPI::ExclusiveCTFStream;
-		exclusiveUserStream->initialize(defaultSize, cpuId);
-		CTFAPI::addStreamHeader(exclusiveUserStream);
+		leaderThreadCPULocalData = new CPULocalData();
+		CTFAPI::CTFStreamUnboundedPrivate *unboundedPrivateStream = new CTFAPI::CTFStreamUnboundedPrivate();
+		unboundedPrivateStream->setContext(context);
+		unboundedPrivateStream->initialize(defaultSize, cpuId);
+		CTFAPI::addStreamHeader(unboundedPrivateStream);
 		streamPath = userPath + "/channel_" + std::to_string(cpuId);
-		exclusiveUserStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
-		if (exclusiveUserStream->fdOutput == -1)
+		unboundedPrivateStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
+		if (unboundedPrivateStream->fdOutput == -1)
 			FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
-		virtualCPULocalData->userStream = exclusiveUserStream;
+		leaderThreadCPULocalData->userStream = unboundedPrivateStream;
+
+		cpuId = totalCPUs + 1;
+		virtualCPULocalData = new CPULocalData();
+		CTFAPI::CTFStreamUnboundedShared *unboundedSharedStream = new CTFAPI::CTFStreamUnboundedShared();
+		unboundedSharedStream->setContext(context);
+		unboundedSharedStream->initialize(defaultSize, cpuId);
+		CTFAPI::addStreamHeader(unboundedSharedStream);
+		streamPath = userPath + "/channel_" + std::to_string(cpuId);
+		unboundedSharedStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
+		if (unboundedSharedStream->fdOutput == -1)
+			FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
+		virtualCPULocalData->userStream = unboundedSharedStream;
 	}
 
 	void initialize()
@@ -102,7 +125,7 @@ namespace Instrument {
 		trace.setTracePath("./trace-ctf-nanos6");
 		trace.initializeTraceTimer();
 		trace.createTraceDirectories(userPath, kernelPath);
-		initializeCTFBuffers(userPath);
+		initializeCTFBuffers(userMetadata, userPath);
 
 		preinitializeCTFEvents(userMetadata);
 		refineCTFEvents(userMetadata);
@@ -136,13 +159,22 @@ namespace Instrument {
 		}
 
 		// TODO use true virtual cpu mechanism here
-		CTFAPI::CTFStream *userStream = virtualCPULocalData->userStream;
-		userStream->flushData();
-		if (userStream->lost)
-			std::cerr << "WARNING: CTF Instrument: " << userStream->lost << " events lost in core " << i << std::endl;
-		userStream->shutdown();
-		close(userStream->fdOutput);
-		delete userStream;
+		CTFAPI::CTFStream *leaderThreadStream = leaderThreadCPULocalData->userStream;
+		leaderThreadStream->flushData();
+		if (leaderThreadStream->lost)
+			std::cerr << "WARNING: CTF Instrument: " << leaderThreadStream->lost << " events lost in core " << i << std::endl;
+		leaderThreadStream->shutdown();
+		close(leaderThreadStream->fdOutput);
+		delete leaderThreadStream;
+		delete leaderThreadCPULocalData;
+
+		CTFAPI::CTFStream *externalThreadStream = virtualCPULocalData->userStream;
+		externalThreadStream->flushData();
+		if (externalThreadStream->lost)
+			std::cerr << "WARNING: CTF Instrument: " << externalThreadStream->lost << " events lost in core " << i << std::endl;
+		externalThreadStream->shutdown();
+		close(externalThreadStream->fdOutput);
+		delete externalThreadStream;
 		delete virtualCPULocalData;
 
 		trace.clean();

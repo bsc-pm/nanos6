@@ -9,8 +9,9 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
-#include "CTFContext.hpp"
+#include "context/CTFContext.hpp"
 
 namespace CTFAPI {
 	class CTFEvent {

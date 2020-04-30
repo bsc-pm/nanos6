@@ -64,6 +64,14 @@ public:
 		return _singleton->_mustExit.load();
 	}
 
+	// TODO do I need this after the addition of isLeaderThread?
+	static inline LeaderThread *getLeaderThread()
+	{
+		assert(_singleton != nullptr);
+
+		return _singleton;
+	}
+
 	//! \brief Check whether the current thread is the leader thread
 	//!
 	//! \return true if the current thread is the leader

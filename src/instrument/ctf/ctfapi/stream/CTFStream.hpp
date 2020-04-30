@@ -4,21 +4,21 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef CPUSTREAM_H
-#define CPUSTREAM_H
+#ifndef CPUSTREAM_HPP
+#define CPUSTREAM_HPP
 
 #include <string>
 #include <cstdint>
 #include <string>
 #include <map>
 
-#include "lowlevel/SpinLock.hpp"
-
-#include "CTFTypes.hpp"
+#include "../CTFTypes.hpp"
+#include "../context/CTFContext.hpp"
 
 namespace CTFAPI {
 	class CTFStream {
 	public:
+		ctf_stream_id_t streamId;
 		char *buffer;
 		size_t bufferSize;
 		uint64_t head;
@@ -27,12 +27,13 @@ namespace CTFAPI {
 		uint64_t mask;
 		uint64_t lost;
 		uint64_t threshold;
-		ctf_cpu_id_t cpuId;
 
+		ctf_cpu_id_t cpuId;
 		int fdOutput;
 		off_t fileOffset;
+		CTFContext *context;
 
-		CTFStream() : bufferSize(0) {}
+		CTFStream() : streamId(0), bufferSize(0), context(nullptr) {}
 		virtual ~CTFStream() {}
 
 		void initialize(size_t size, ctf_cpu_id_t cpuId);
@@ -42,6 +43,17 @@ namespace CTFAPI {
 
 		virtual void lock() {}
 		virtual void unlock() {}
+		virtual void writeContext(__attribute__((unused)) void **buf) {}
+
+		virtual size_t getContextSize(void) const
+		{
+			return 0;
+		}
+
+		void setContext(CTFContext *ctfcontext)
+		{
+			context = ctfcontext;
+		}
 
 	private:
 		void *mrb;
@@ -49,22 +61,6 @@ namespace CTFAPI {
 
 		void doWrite(int fd, const char *buf, size_t size);
 	};
-
-	class ExclusiveCTFStream : public CTFStream {
-		SpinLock spinlock;
-
-		~ExclusiveCTFStream() {}
-
-		void lock()
-		{
-			spinlock.lock();
-		}
-
-		void unlock()
-		{
-			spinlock.unlock();
-		}
-	};
 }
 
-#endif //CPUSTREAM_H
+#endif //CPUSTREAM_HPP

@@ -7,9 +7,10 @@
 #include <fstream>
 #include <cstdint>
 #include <cinttypes>
+#include <vector>
 
 #include "CTFMetadata.hpp"
-#include "CTFContext.hpp"
+#include "context/CTFContext.hpp"
 #include "CTFTrace.hpp"
 
 
@@ -86,7 +87,7 @@ const char *CTFAPI::CTFMetadata::meta_streamUnbounded =
 	"		uint64_clock_monotonic_t timestamp;\n"
 	"	};\n"
 	"	event.context := struct {\n"
-	"		uint16_t event_cpu_id;\n"
+	"		struct unbounded unbounded;\n"
 	"	};\n"
 	"};\n\n";
 
@@ -154,8 +155,6 @@ void CTFAPI::CTFMetadata::writeMetadataFile(std::string userPath)
 	fputs(meta_trace, f);
 	fprintf(f, meta_env, trace.getTotalCPUs());
 	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
-	fputs(meta_streamBounded, f);
-	fputs(meta_streamUnbounded, f);
 
 	// print context additional structures
 	for (auto it = contexes.begin(); it != contexes.end(); ++it) {
@@ -163,17 +162,23 @@ void CTFAPI::CTFMetadata::writeMetadataFile(std::string userPath)
 		fputs(context->getDataStructuresMetadata(), f);
 	}
 
+	fputs(meta_streamBounded, f);
+	fputs(meta_streamUnbounded, f);
+
 	// print events bound to first stream
 	for (auto it = events.begin(); it != events.end(); ++it) {
 		CTFAPI::CTFEvent *event = (*it);
 		writeEventMetadata(f, event, 0);
 	}
 
-	//// TODO print events bound to second stream
-	//for (auto it = events.begin(); it != events.end(); ++it) {
-	//	CTFAPI::CTFEvent *event = (*it);
-	//	writeEventMetadata(f, event, 1);
-	//}
+	// Print event bound to the second stream. Due to a CTF language
+	// limitation were each event definition can only belong to a single ctf
+	// stream, we must copy each event definition twice, one for each ctf
+	// stream
+	for (auto it = events.begin(); it != events.end(); ++it) {
+		CTFAPI::CTFEvent *event = (*it);
+		writeEventMetadata(f, event, 1);
+	}
 
 	ret = fclose(f);
 	FatalErrorHandler::failIf(ret, std::string("Instrumentation: ctf: closing metadata file: ") + strerror(errno));

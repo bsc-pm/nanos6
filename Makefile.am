@@ -572,10 +572,11 @@ CLEANFILES += \
 noinstrument_sources =
 
 instrument_ctf_sources = \
+	src/instrument/ctf/ctfapi/stream/CTFStream.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.cpp \
 	src/instrument/ctf/ctfapi/CTFAPI.cpp \
 	src/instrument/ctf/ctfapi/CTFEvent.cpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.cpp \
-	src/instrument/ctf/ctfapi/CTFStream.cpp \
 	src/instrument/ctf/ctfapi/CTFTrace.cpp \
 	src/instrument/ctf/InstrumentTaskId.cpp \
 	src/instrument/ctf/InstrumentCPULocalData.cpp \
@@ -911,12 +912,17 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentTracingPoints.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
+	src/instrument/ctf/ctfapi/context/CTFContext.hpp \
+	src/instrument/ctf/ctfapi/context/CTFContextUnbounded.hpp \
+	src/instrument/ctf/ctfapi/context/CTFContextHardwareCounters.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFStream.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedShared.hpp \
 	src/instrument/ctf/ctfapi/CTFAPI.hpp \
-	src/instrument/ctf/ctfapi/CTFContext.hpp \
 	src/instrument/ctf/ctfapi/CTFEvent.hpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
-	src/instrument/ctf/ctfapi/CTFStream.hpp \
 	src/instrument/ctf/ctfapi/CTFTrace.hpp \
+	src/instrument/ctf/ctfapi/CTFTypes.hpp \
 	src/instrument/ctf/Nanos6CTFEvents.hpp \
 	src/instrument/ctf/InstrumentAddTask.hpp \
 	src/instrument/ctf/InstrumentBlocking.hpp \

@@ -8,8 +8,9 @@
 #define NANOS6CTFEVENTS_HPP
 
 #include "ctfapi/CTFAPI.hpp"
+#include "ctfapi/CTFTypes.hpp"
 #include "ctfapi/CTFEvent.hpp"
-#include "ctfapi/CTFContext.hpp"
+#include "ctfapi/context/CTFContext.hpp"
 #include "ctfapi/CTFMetadata.hpp"
 
 namespace Instrument {
