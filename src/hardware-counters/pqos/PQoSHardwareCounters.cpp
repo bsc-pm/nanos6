@@ -8,10 +8,9 @@
 #include <sys/utsname.h>
 
 #include "PQoSHardwareCounters.hpp"
+#include "PQoSTaskHardwareCounters.hpp"
 #include "PQoSThreadHardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware-counters/TaskHardwareCounters.hpp"
-#include "hardware-counters/ThreadHardwareCounters.hpp"
 
 
 PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verboseFile)
@@ -101,17 +100,10 @@ PQoSHardwareCounters::~PQoSHardwareCounters()
 	}
 }
 
-void PQoSHardwareCounters::threadInitialized()
+void PQoSHardwareCounters::threadInitialized(ThreadHardwareCountersInterface *threadCounters)
 {
 	if (_enabled) {
-		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
-
-		ThreadHardwareCounters *threadCounters = thread->getHardwareCounters();
-		assert(threadCounters != nullptr);
-
-		PQoSThreadHardwareCounters *pqosCounters =
-			(PQoSThreadHardwareCounters *) threadCounters->getPQoSCounters();
+		PQoSThreadHardwareCounters *pqosCounters = (PQoSThreadHardwareCounters *) threadCounters;
 		assert(pqosCounters != nullptr);
 
 		// Allocate PQoS event structures
@@ -121,9 +113,12 @@ void PQoSHardwareCounters::threadInitialized()
 			"Could not allocate memory for thread hardware counters"
 		);
 
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+
 		// Link the structures to the current thread
 		pqosCounters->setData(threadData);
-		pqosCounters->setTid(thread->getTid());
+		pqosCounters->setTid(currentThread->getTid());
 
 		// Begin reading hardware counters for the thread
 		int ret = pqos_mon_start_pid(
@@ -139,17 +134,10 @@ void PQoSHardwareCounters::threadInitialized()
 	}
 }
 
-void PQoSHardwareCounters::threadShutdown()
+void PQoSHardwareCounters::threadShutdown(ThreadHardwareCountersInterface *threadCounters)
 {
 	if (_enabled) {
-		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
-
-		ThreadHardwareCounters *threadCounters = thread->getHardwareCounters();
-		assert(threadCounters != nullptr);
-
-		PQoSThreadHardwareCounters *pqosCounters =
-			(PQoSThreadHardwareCounters *) threadCounters->getPQoSCounters();
+		PQoSThreadHardwareCounters *pqosCounters = (PQoSThreadHardwareCounters *) threadCounters;
 		assert(pqosCounters != nullptr);
 
 		// Finish PQoS monitoring for the current thread
@@ -187,45 +175,28 @@ void PQoSHardwareCounters::taskCreated(Task *task, bool enabled)
 	}
 }
 
-void PQoSHardwareCounters::taskReinitialized(Task *task)
+void PQoSHardwareCounters::taskReinitialized(TaskHardwareCountersInterface *taskCounters)
 {
 	if (_enabled) {
-		assert(task != nullptr);
-
-		TaskHardwareCounters *taskCounters = task->getHardwareCounters();
-		assert(taskCounters != nullptr);
-
-		PQoSTaskHardwareCounters *pqosCounters =
-			(PQoSTaskHardwareCounters *) taskCounters->getPQoSCounters();
+		PQoSTaskHardwareCounters *pqosCounters = (PQoSTaskHardwareCounters *) taskCounters;
 		assert(pqosCounters != nullptr);
 
 		pqosCounters->clear();
 	}
 }
 
-void PQoSHardwareCounters::taskStarted(Task *task)
-{
+void PQoSHardwareCounters::taskStarted(
+	ThreadHardwareCountersInterface *threadCounters,
+	TaskHardwareCountersInterface *taskCounters
+) {
 	if (_enabled) {
-		assert(task != nullptr);
-
-		TaskHardwareCounters *taskCounters = task->getHardwareCounters();
-		assert(taskCounters != nullptr);
-
-		PQoSTaskHardwareCounters *pqosTaskCounters =
-			(PQoSTaskHardwareCounters *) taskCounters->getPQoSCounters();
+		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
 		assert(pqosTaskCounters != nullptr);
 
 		if (pqosTaskCounters->isEnabled()) {
 			if (!pqosTaskCounters->isActive()) {
-				WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-				assert(thread != nullptr);
-
-				ThreadHardwareCounters *threadCounters = thread->getHardwareCounters();
+				PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
 				assert(threadCounters != nullptr);
-
-				PQoSThreadHardwareCounters *pqosThreadCounters =
-					(PQoSThreadHardwareCounters *) threadCounters->getPQoSCounters();
-				assert(pqosThreadCounters != nullptr);
 
 				// Poll PQoS events from the current thread only
 				pqos_mon_data *threadData = pqosThreadCounters->getData();
@@ -242,29 +213,18 @@ void PQoSHardwareCounters::taskStarted(Task *task)
 	}
 }
 
-void PQoSHardwareCounters::taskStopped(Task *task)
-{
+void PQoSHardwareCounters::taskStopped(
+	ThreadHardwareCountersInterface *threadCounters,
+	TaskHardwareCountersInterface *taskCounters
+) {
 	if (_enabled) {
-		assert(task != nullptr);
-
-		TaskHardwareCounters *taskCounters = task->getHardwareCounters();
-		assert(taskCounters != nullptr);
-
-		PQoSTaskHardwareCounters *pqosTaskCounters =
-			(PQoSTaskHardwareCounters *) taskCounters->getPQoSCounters();
+		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
 		assert(pqosTaskCounters != nullptr);
 
 		if (pqosTaskCounters->isEnabled()) {
 			if (pqosTaskCounters->isActive()) {
-				WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-				assert(thread != nullptr);
-
-				ThreadHardwareCounters *threadCounters = thread->getHardwareCounters();
+				PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
 				assert(threadCounters != nullptr);
-
-				PQoSThreadHardwareCounters *pqosThreadCounters =
-					(PQoSThreadHardwareCounters *) threadCounters->getPQoSCounters();
-				assert(pqosThreadCounters != nullptr);
 
 				pqos_mon_data *threadData = pqosThreadCounters->getData();
 
@@ -281,16 +241,12 @@ void PQoSHardwareCounters::taskStopped(Task *task)
 	}
 }
 
-void PQoSHardwareCounters::taskFinished(Task *task)
+void PQoSHardwareCounters::taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters)
 {
 	if (_enabled) {
 		assert(task != nullptr);
 
-		TaskHardwareCounters *taskCounters = task->getHardwareCounters();
-		assert(taskCounters != nullptr);
-
-		PQoSTaskHardwareCounters *pqosTaskCounters =
-			(PQoSTaskHardwareCounters *) taskCounters->getPQoSCounters();
+		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
 		assert(pqosTaskCounters != nullptr);
 
 		if (pqosTaskCounters->isEnabled()) {

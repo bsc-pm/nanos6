@@ -13,8 +13,9 @@
 #include <iomanip>
 #include <iostream>
 
-#include "PQoSTaskHardwareCounters.hpp"
 #include "hardware-counters/HardwareCountersInterface.hpp"
+#include "hardware-counters/TaskHardwareCountersInterface.hpp"
+#include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "tasks/Task.hpp"
 
@@ -54,19 +55,25 @@ public:
 
 	~PQoSHardwareCounters();
 
-	void threadInitialized();
+	void threadInitialized(ThreadHardwareCountersInterface *threadCounters);
 
-	void threadShutdown();
+	void threadShutdown(ThreadHardwareCountersInterface *threadCounters);
 
 	void taskCreated(Task *task, bool enabled);
 
-	void taskReinitialized(Task *task);
+	void taskReinitialized(TaskHardwareCountersInterface *taskCounters);
 
-	void taskStarted(Task *task);
+	void taskStarted(
+		ThreadHardwareCountersInterface *threadCounters,
+		TaskHardwareCountersInterface *taskCounters
+	);
 
-	void taskStopped(Task *task);
+	void taskStopped(
+		ThreadHardwareCountersInterface *threadCounters,
+		TaskHardwareCountersInterface *taskCounters
+	);
 
-	void taskFinished(Task *task);
+	void taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters);
 
 };
 

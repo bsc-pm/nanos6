@@ -51,7 +51,7 @@ public:
 	inline ThreadHardwareCountersInterface *getPAPICounters() const
 	{
 #if HAVE_PAPI
-		return _papiCounters;
+		return (ThreadHardwareCountersInterface *) _papiCounters;
 #else
 		return nullptr;
 #endif
@@ -61,7 +61,7 @@ public:
 	inline ThreadHardwareCountersInterface *getPQoSCounters() const
 	{
 #if HAVE_PQOS
-		return _pqosCounters;
+		return (ThreadHardwareCountersInterface *) _pqosCounters;
 #else
 		return nullptr;
 #endif
