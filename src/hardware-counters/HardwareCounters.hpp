@@ -32,32 +32,37 @@ private:
 	//! An env var that shows the chosen backends (defaults to null)
 	static EnvironmentVariable<std::string> _chosenBackend;
 
-	//! The underlying backends
-	static std::vector<HardwareCountersInterface *> _backends;
-
-	//! Whether each backend is enabled
-	static std::vector<bool> _enabled;
-
 	//! Whether the verbose mode is enabled
 	static EnvironmentVariable<bool> _verbose;
 
 	//! The file where output must be saved when verbose mode is enabled
 	static EnvironmentVariable<std::string> _verboseFile;
 
+	//! The underlying PQoS backend
+	static HardwareCountersInterface *_pqosBackend;
+
+	//! The underlying PAPI backend
+	static HardwareCountersInterface *_papiBackend;
+
+	//! Whether each backend is enabled
+	static std::vector<bool> _enabled;
+
 public:
 
 	//! \brief Initialize the hardware counters API with the correct backend
 	static inline void initialize()
 	{
+		// First set all backends to nullptr
+		_pqosBackend = nullptr;
+		_papiBackend = nullptr;
 		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			_backends[i] = nullptr;
 			_enabled[i] = false;
 		}
 
 		// Check which backends must be initialized
 		if (_chosenBackend.getValue() == "papi") {
 #if HAVE_PAPI
-			_backends[HWCounters::PAPI_BACKEND] = new PAPIHardwareCounters(_verbose.getValue(), _verboseFile.getValue());
+			_papiBackend = (HardwareCountersInterface *) new PAPIHardwareCounters(_verbose.getValue(), _verboseFile.getValue());
 			_enabled[HWCounters::PAPI_BACKEND] = true;
 #else
 			FatalErrorHandler::warn("PAPI library not found, disabling hardware counters.");
@@ -66,7 +71,7 @@ public:
 
 		if (_chosenBackend.getValue() == "pqos") {
 #if HAVE_PQOS
-			_backends[HWCounters::PQOS_BACKEND] = new PQoSHardwareCounters(_verbose.getValue(), _verboseFile.getValue());
+			_pqosBackend = (HardwareCountersInterface *) new PQoSHardwareCounters(_verbose.getValue(), _verboseFile.getValue());
 			_enabled[HWCounters::PQOS_BACKEND] = true;
 #else
 			FatalErrorHandler::warn("PQoS library not found, disabling hardware counters.");
@@ -87,14 +92,20 @@ public:
 	//! \brief Shutdown the hardware counters API
 	static inline void shutdown()
 	{
-		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			if (_enabled[i]) {
-				assert(_backends[i] != nullptr);
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-				delete _backends[i];
-				_backends[i] = nullptr;
-				_enabled[i] = false;
-			}
+			delete _pqosBackend;
+			_pqosBackend = nullptr;
+			_enabled[HWCounters::PQOS_BACKEND] = false;
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			delete _papiBackend;
+			_papiBackend = nullptr;
+			_enabled[HWCounters::PAPI_BACKEND] = false;
 		}
 	}
 
@@ -118,28 +129,37 @@ public:
 		// After the thread is created, initialize (construct) hardware counters
 		hardwareCounters->initialize();
 
-		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			if (_enabled[i]) {
-				assert(_backends[i] != nullptr);
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-				_backends[i]->threadInitialized();
-			}
+			_pqosBackend->threadInitialized();
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			_papiBackend->threadInitialized();
 		}
 	}
 
 	//! \brief Destroy the hardware counter structures of a thread
 	static inline void threadShutdown()
 	{
-		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			if (_enabled[i]) {
-				assert(_backends[i] != nullptr);
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-				_backends[i]->threadShutdown();
-			}
+			_pqosBackend->threadShutdown();
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			_papiBackend->threadShutdown();
 		}
 	}
 
 	//! \brief Initialize hardware counter structures for a task
+	//!
 	//! \param[out] task The task to create structures for
 	//! \param[in] enabled Whether to create structures and monitor this task
 	static inline void taskCreated(Task *task, bool enabled = true)
@@ -152,64 +172,88 @@ public:
 		// After the task is created, initialize (construct) hardware counters
 		hardwareCounters->initialize();
 
-		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			if (_enabled[i]) {
-				assert(_backends[i] != nullptr);
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-				_backends[i]->taskCreated(task, enabled);
-			}
+			_pqosBackend->taskCreated(task, enabled);
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			_papiBackend->taskCreated(task, enabled);
 		}
 	}
 
 	//! \brief Reinitialize all hardware counter structures for a task
+	//!
 	//! \param[out] task The task to reinitialize structures for
 	static inline void taskReinitialized(Task *task)
 	{
-		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			if (_enabled[i]) {
-				assert(_backends[i] != nullptr);
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-				_backends[i]->taskReinitialized(task);
-			}
+			_pqosBackend->taskReinitialized(task);
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			_papiBackend->taskReinitialized(task);
 		}
 	}
 
 	//! \brief Start reading hardware counters for a task
+	//!
 	//! \param[out] task The task to start hardware counter monitoring for
 	static inline void taskStarted(Task *task)
 	{
-		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			if (_enabled[i]) {
-				assert(_backends[i] != nullptr);
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-				_backends[i]->taskStarted(task);
-			}
+			_pqosBackend->taskStarted(task);
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			_papiBackend->taskStarted(task);
 		}
 	}
 
 	//! \brief Stop reading hardware counters for a task
+	//!
 	//! \param[out] task The task to stop hardware counters monitoring for
 	static inline void taskStopped(Task *task)
 	{
-		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			if (_enabled[i]) {
-				assert(_backends[i] != nullptr);
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-				_backends[i]->taskStopped(task);
-			}
+			_pqosBackend->taskStopped(task);
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			_papiBackend->taskStopped(task);
 		}
 	}
 
 	//! \brief Finish monitoring a task's hardware counters and accumulate them
+	//!
 	//! \param[out] task The task to finish hardware counters monitoring for
 	static inline void taskFinished(Task *task)
 	{
-		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-			if (_enabled[i]) {
-				assert(_backends[i] != nullptr);
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-				_backends[i]->taskFinished(task);
-			}
+			_pqosBackend->taskFinished(task);
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			_papiBackend->taskFinished(task);
 		}
 	}
 
