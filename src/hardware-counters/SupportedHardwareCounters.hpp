@@ -37,13 +37,13 @@ namespace HWCounters {
 
 	char const * const counterDescriptions[TOTAL_NUM_EVENTS] = {
 		//    PQOS EVENTS    //
-		"Last Level Cache Usage (KB)",
-		"Instructions Per Cycle",
-		"Local Socket Memory Bandwidth (KB)",
-		"Remote Sockets Memory Bandwidth (KB)",
-		"Last Level Cache Miss Rate",
+		"PQOS_MON_EVENT_L3_OCCUP",
+		"PQOS_PERF_EVENT_IPC",
+		"PQOS_MON_EVENT_LMEM_BW",
+		"PQOS_MON_EVENT_RMEM_BW",
+		"PQOS_PERF_EVENT_LLC_MISS",
 		//    PAPI EVENTS    //
-		"PAPI Placeholder Event"
+		"PAPI_PLACEHOLDER"
 	};
 
 }
