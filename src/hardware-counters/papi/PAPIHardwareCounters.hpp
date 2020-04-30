@@ -17,7 +17,7 @@ class PAPIHardwareCounters : public HardwareCountersInterface {
 
 public:
 
-	inline PAPIHardwareCounters(bool, const std::string &)
+	inline PAPIHardwareCounters(bool, const std::string &, const std::vector<bool> &)
 	{
 		FatalErrorHandler::fail("PAPI backend not supported yet");
 	}

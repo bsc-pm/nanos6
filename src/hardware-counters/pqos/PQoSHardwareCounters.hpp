@@ -45,13 +45,15 @@ private:
 	//! An enumeration containing the events that we monitor
 	enum pqos_mon_event _monitoredEvents;
 
+	bool _enabledEvents[HWCounters::PQOS_MIN_EVENT + HWCounters::PQOS_NUM_EVENTS];
+
 private:
 
 	void displayStatistics();
 
 public:
 
-	PQoSHardwareCounters(bool verbose, const std::string &verboseFile);
+	PQoSHardwareCounters(bool verbose, const std::string &verboseFile, const std::vector<bool> &enabledEvents);
 
 	~PQoSHardwareCounters();
 

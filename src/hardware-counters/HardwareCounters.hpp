@@ -17,6 +17,7 @@
 #include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "support/JsonFile.hpp"
 
 #if HAVE_PAPI
 #include "hardware-counters/papi/PAPIHardwareCounters.hpp"
@@ -33,9 +34,6 @@ class HardwareCounters {
 
 private:
 
-	//! An env var that shows the chosen backends (defaults to null)
-	static EnvironmentVariable<std::string> _chosenBackend;
-
 	//! Whether the verbose mode is enabled
 	static EnvironmentVariable<bool> _verbose;
 
@@ -51,45 +49,99 @@ private:
 	//! Whether each backend is enabled
 	static std::vector<bool> _enabled;
 
+	//! Enabled events by the user (id, description)
+	static std::vector<bool> _enabledEvents;
+
+private:
+
+	static inline void loadConfigurationFile()
+	{
+		JsonFile configFile = JsonFile("./nanos6_hwcounters.json");
+		if (configFile.fileExists()) {
+			configFile.loadData();
+
+			// Navigate through the file and extract the enabled backens and counters
+			configFile.getRootNode()->traverseChildrenNodes(
+				[&](const std::string &category, const JsonNode<> &categoryNode) {
+					if (category == "backends") {
+						if (categoryNode.dataExists("papi")) {
+							bool converted = false;
+							bool enabled = categoryNode.getData("papi", converted);
+							assert(converted);
+
+							_enabled[HWCounters::PAPI_BACKEND] = enabled;
+						}
+
+						if (categoryNode.dataExists("pqos")) {
+							bool converted = false;
+							bool enabled = categoryNode.getData("pqos", converted);
+							assert(converted);
+
+							_enabled[HWCounters::PQOS_BACKEND] = enabled;
+						}
+					} else if (category == "counters") {
+						// Check which events are enabled by the user out of all of them
+						for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
+							std::string eventDescription(HWCounters::counterDescriptions[i]);
+							if (categoryNode.dataExists(eventDescription)) {
+								bool converted = false;
+								_enabledEvents[i] = categoryNode.getData(eventDescription, converted);
+								assert(converted);
+							}
+						}
+					} else {
+						FatalErrorHandler::fail(
+							"Unexpected '", category, "' label found while processing the ",
+							"hardware counters configuration file."
+						);
+					}
+				}
+			);
+		}
+	}
+
 public:
 
 	//! \brief Initialize the hardware counters API with the correct backend
 	static inline void initialize()
 	{
-		// First set all backends to nullptr
+		// First set all backends to nullptr and all events disabled
 		_pqosBackend = nullptr;
 		_papiBackend = nullptr;
 		for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
 			_enabled[i] = false;
 		}
 
+		for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
+			_enabledEvents[i] = false;
+		}
+
+		// Load the configuration file to check which backends and events are enabled
+		loadConfigurationFile();
+
 		// Check which backends must be initialized
-		if (_chosenBackend.getValue() == "papi") {
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
 #if HAVE_PAPI
-			_papiBackend = (HardwareCountersInterface *) new PAPIHardwareCounters(_verbose.getValue(), _verboseFile.getValue());
-			_enabled[HWCounters::PAPI_BACKEND] = true;
+			_papiBackend = (HardwareCountersInterface *) new PAPIHardwareCounters(
+				_verbose.getValue(),
+				_verboseFile.getValue(),
+				_enabledEvents
+			);
 #else
 			FatalErrorHandler::warn("PAPI library not found, disabling hardware counters.");
 #endif
 		}
 
-		if (_chosenBackend.getValue() == "pqos") {
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
 #if HAVE_PQOS
-			_pqosBackend = (HardwareCountersInterface *) new PQoSHardwareCounters(_verbose.getValue(), _verboseFile.getValue());
-			_enabled[HWCounters::PQOS_BACKEND] = true;
+			_pqosBackend = (HardwareCountersInterface *) new PQoSHardwareCounters(
+				_verbose.getValue(),
+				_verboseFile.getValue(),
+				_enabledEvents
+			);
 #else
 			FatalErrorHandler::warn("PQoS library not found, disabling hardware counters.");
 #endif
-		}
-
-		if (_chosenBackend.getValue() != "null" &&
-			_chosenBackend.getValue() != "papi" &&
-			_chosenBackend.getValue() != "pqos"
-		) {
-			FatalErrorHandler::fail(
-				"Unexistent backend for hardware counters instrumentation: ",
-				_chosenBackend.getValue()
-			);
 		}
 	}
 
