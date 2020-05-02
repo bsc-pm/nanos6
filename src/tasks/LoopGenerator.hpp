@@ -58,6 +58,10 @@ public:
 		// Set the flags
 		taskfor->setRunnable(true);
 
+		// In case this has been created by a taskloop for, and we received the taskloop flag, remove it.
+		// Otherwise, we may end up disposing a preallocated taskfor.
+		taskfor->setTaskloop(false);
+
 		// Set the parent
 		taskfor->setParent(parent);
 
@@ -68,7 +72,7 @@ public:
 		return taskfor;
 	}
 
-	static inline void createTaskloopExecutor(Taskloop *parent, Taskloop::bounds_t &bounds)
+	static inline void createTaskloopExecutor(Taskloop *parent, Taskloop::bounds_t &parentBounds)
 	{
 		assert(parent != nullptr);
 
@@ -77,18 +81,25 @@ public:
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();
 		size_t flags = parent->getFlags();
+		size_t parentNumDeps = parent->getDataAccesses().getRealAccessNumber();
 
 		void *argsBlock = nullptr;
-		Taskloop *taskloop = nullptr;
+		Task *task = nullptr;
 		bool hasPreallocatedArgsBlock = parent->hasPreallocatedArgsBlock();
 		if (hasPreallocatedArgsBlock) {
 			assert(parentTaskInfo->duplicate_args_block != nullptr);
 			parentTaskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
 		}
 
-		nanos6_create_task(parentTaskInfo, parentTaskInvocationInfo, originalArgsBlockSize, &argsBlock, (void **)&taskloop, flags, 0);
+		// We are dealing with a taskloop for. That means instead of regular tasks, we must create taskfors.
+		// For that purpose, we must remove the taskloop flag, otherwise regular tasks will be created.
+		if (parent->isTaskfor()) {
+			flags &= ~nanos6_task_flag_t::nanos6_taskloop_task;
+		}
+
+		nanos6_create_task(parentTaskInfo, parentTaskInvocationInfo, originalArgsBlockSize, &argsBlock, (void **)&task, flags, parentNumDeps);
 		assert(argsBlock != nullptr);
-		assert(taskloop != nullptr);
+		assert(task != nullptr);
 
 		// Copy the args block if it was not duplicated
 		if (!hasPreallocatedArgsBlock) {
@@ -100,14 +111,36 @@ public:
 		}
 
 		// Set bounds of grainsize
-		Taskloop::bounds_t &childBounds = taskloop->getBounds();
-		Taskloop::bounds_t &myBounds = bounds;
-		childBounds.lower_bound = myBounds.lower_bound;
-		myBounds.lower_bound = std::min(myBounds.lower_bound + myBounds.grainsize, myBounds.upper_bound);
-		childBounds.upper_bound = myBounds.lower_bound;
+		size_t lowerBound = parentBounds.lower_bound;
+		parentBounds.lower_bound = std::min(parentBounds.lower_bound + parentBounds.grainsize, parentBounds.upper_bound);
+		size_t upperBound = parentBounds.lower_bound;
+		// Both taskfor and taskloop bounds share the same data structure.
+		if (parent->isTaskfor()) {
+			Taskfor *taskfor = (Taskfor *) task;
+			taskfor->initialize(lowerBound, upperBound, parentBounds.chunksize);
+		} else {
+			Taskloop *taskloop = (Taskloop *) task;
+			Taskloop::bounds_t &childBounds = taskloop->getBounds();
+			childBounds.lower_bound = lowerBound;
+			childBounds.upper_bound = upperBound;
+		}
+
+		// The dependence registration of the taskloops is special. They register dependences
+		// using the bounds. To let the dependency system they must call register_depinfo using
+		// bounds, we must set again the taskloop flag.
+		if (parent->isTaskfor()) {
+			task->setTaskloop(true);
+		}
 
 		// Register deps
-		nanos6_submit_task((void *)taskloop);
+		nanos6_submit_task((void *)task);
+
+		// Finally, we must disable the taskloop flag to let the scheduler and execution workflow
+		// know they are dealing with a taskfor.
+		if (parent->isTaskfor()) {
+			task->setTaskloop(false);
+			assert(task->isTaskfor() && !task->isTaskloop() && !task->isRunnable());
+		}
 	}
 };
 

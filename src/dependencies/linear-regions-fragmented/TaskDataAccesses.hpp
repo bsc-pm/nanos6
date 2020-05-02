@@ -99,6 +99,11 @@ struct TaskDataAccesses {
 		return 0;
 	}
 
+	inline size_t getRealAccessNumber() const
+	{
+		return 0;
+	}
+
 };
 
 

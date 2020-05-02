@@ -23,13 +23,13 @@ void nanos6_register_loop_bounds(
 	assert(task != nullptr);
 	assert(task->isTaskfor() || task->isTaskloop());
 
-	if (task->isTaskfor()) {
-		Taskfor *taskfor = (Taskfor *) task;
-		taskfor->initialize(lower_bound, upper_bound, chunksize);
-	}
-	else {
+	if (task->isTaskloop()) {
 		Taskloop *taskloop = (Taskloop *) task;
 		taskloop->initialize(lower_bound, upper_bound, grainsize);
+	}
+	else {
+		Taskfor *taskfor = (Taskfor *) task;
+		taskfor->initialize(lower_bound, upper_bound, chunksize);
 	}
 }
 

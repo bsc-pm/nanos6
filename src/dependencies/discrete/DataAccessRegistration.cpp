@@ -24,6 +24,8 @@
 #include "scheduling/Scheduler.hpp"
 #include "TaskDataAccesses.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/Taskfor.hpp"
+#include "tasks/Taskloop.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentTaskId.hpp>
@@ -293,7 +295,24 @@ namespace DataAccessRegistration {
 		task->increasePredecessors(2);
 
 		// This part creates the DataAccesses and inserts it to dependency system
-		taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
+		if (task->isTaskloop() && task->isTaskfor()) {
+			// It may be either source taskloop that will create taskfors or a
+			// taskfor created by a taskloop. We can know that by checking the
+			// runnable flag. Source taskloops are runnable, taskfors created
+			// by a taskloop are not.
+			if (task->isRunnable()) {
+				Taskloop *taskloop = (Taskloop *) task;
+				taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
+			} else {
+				Taskfor *taskfor = (Taskfor *) task;
+				taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskfor->getBounds(), task);
+			}
+		} else if (task->isTaskloop()) {
+			Taskloop *taskloop = (Taskloop *) task;
+			taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
+		} else {
+			taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
+		}
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 

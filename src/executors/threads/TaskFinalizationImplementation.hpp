@@ -68,7 +68,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 				}
 
 				assert(!task->mustDelayRelease());
-			} else if (task->isTaskfor() && task->isRunnable()) {
+			} else if (task->isTaskfor() && task->isRunnable() && !task->isTaskloop()) {
 				Taskfor *collaborator = (Taskfor *)task;
 				Taskfor *source = (Taskfor *)parent;
 
@@ -134,7 +134,11 @@ void TaskFinalization::disposeTask(Task *task)
 		// We cannot dispose/free collaborator taskfors because they are preallocated tasks that are used during
 		// all the program execution. Collaborators are runnable taskfors. However, we must dispose all taskfors
 		// that are not collaborators, also known as parent taskfors
-		bool dispose = !(isTaskfor && task->isRunnable());
+		// Now we also have taskloop fors. Those are tasks with both taskloop and taskfor flag enabled. As well,
+		// they are also runnable. So we must distinguish between runnable taskfors that may be either collaborators
+		// or taskloop fors because we must dispose taskloop fors but we must not dispose collaborators.
+		bool isCollaborator = (isTaskfor && task->isRunnable() && !isTaskloop);
+		bool dispose = !isCollaborator;
 
 		if (dispose) {
 			Instrument::destroyTask(task->getInstrumentationTaskId());
@@ -152,10 +156,10 @@ void TaskFinalization::disposeTask(Task *task)
 				disposableBlockSize = (char *)task - (char *)disposableBlock;
 			}
 
-			if (isTaskfor) {
-				disposableBlockSize += sizeof(Taskfor);
-			} else if (isTaskloop) {
+			if (isTaskloop) {
 				disposableBlockSize += sizeof(Taskloop);
+			} else if (isTaskfor) {
+				disposableBlockSize += sizeof(Taskfor);
 			} else if (isStreamExecutor) {
 				disposableBlockSize += sizeof(StreamExecutor);
 			} else {
@@ -181,10 +185,10 @@ void TaskFinalization::disposeTask(Task *task)
 				executor->decreaseCallbackParticipants(spawnCallback);
 			}
 
-			if (isTaskfor) {
-				((Taskfor *)task)->~Taskfor();
-			} else if (isTaskloop) {
+			if (isTaskloop) {
 				((Taskloop *)task)->~Taskloop();
+			} else if (isTaskfor) {
+				((Taskfor *)task)->~Taskfor();
 			} else if (isStreamExecutor) {
 				((StreamExecutor *)task)->~StreamExecutor();
 			} else {

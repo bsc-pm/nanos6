@@ -181,7 +181,8 @@ public:
 
 	inline bounds_t &getBounds()
 	{
-		assert(isRunnable());
+		// We may need to call this from a source taskfor in taskloop for case.
+		assert(isRunnable() || isTaskloop());
 		return _bounds;
 	}
 
@@ -234,6 +235,12 @@ public:
 		assert(isRunnable());
 		const Taskfor *source = (Taskfor *) getParent();
 		return (_bounds.upper_bound == source->getBounds().upper_bound);
+	}
+
+	// Required for the case of taskloop for
+	inline bool isSourceTaskloop() const
+	{
+		return false;
 	}
 
 private:
