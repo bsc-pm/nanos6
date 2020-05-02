@@ -12,31 +12,45 @@
 // TODO can we manage the declaration and calling of a event/tracepoint with a
 // macro?
 
+static CTFAPI::CTFEvent *eventThreadCreate;
+static CTFAPI::CTFEvent *eventThreadResume;
+static CTFAPI::CTFEvent *eventThreadSuspend;
 static CTFAPI::CTFEvent *eventTaskLabel;
 static CTFAPI::CTFEvent *eventTaskExecute;
 static CTFAPI::CTFEvent *eventTaskAdd;
 static CTFAPI::CTFEvent *eventTaskBlock;
 static CTFAPI::CTFEvent *eventTaskEnd;
-static CTFAPI::CTFEvent *eventCPUResume;
-static CTFAPI::CTFEvent *eventCPUIdle;
 
 void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
 	// create Events
+	eventThreadCreate = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:thread_create",
+		"\t\tuint16_t _tid;\n"
+	));
+	eventThreadResume = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:thread_resume",
+		"\t\tuint16_t _tid;\n"
+	));
+	eventThreadSuspend = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:thread_suspend",
+		"\t\tuint16_t _tid;\n",
+		CTFAPI::CTFContextHWC
+	));
 	eventTaskLabel = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_label",
 		"\t\tinteger { size =  8; align = 8; signed = 0; encoding = UTF8; base = 10; } _label["xstr(ARG_STRING_SIZE)"];\n"
 		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
 	));
-	eventTaskExecute = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:task_execute",
-		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
-		CTFAPI::CTFContextHWC
-	));
 	eventTaskAdd = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_add",
 		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
 		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
+	));
+	eventTaskExecute = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_execute",
+		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
+		CTFAPI::CTFContextHWC
 	));
 	eventTaskBlock = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_block",
@@ -48,15 +62,30 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
 		CTFAPI::CTFContextHWC
 	));
-	eventCPUResume = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:cpu_resume",
-		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n"
-	));
-	eventCPUIdle = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:cpu_idle",
-		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _target;\n",
-		CTFAPI::CTFContextHWC
-	));
+}
+
+void Instrument::tp_thread_create(ctf_thread_id_t tid)
+{
+	if (!eventThreadCreate->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventThreadCreate, tid);
+}
+
+void Instrument::tp_thread_resume(ctf_thread_id_t tid)
+{
+	if (!eventThreadResume->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventThreadResume, tid);
+}
+
+void Instrument::tp_thread_suspend(ctf_thread_id_t tid)
+{
+	if (!eventThreadSuspend->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventThreadSuspend, tid);
 }
 
 void Instrument::tp_task_label(char *taskLabel, ctf_task_type_id_t taskTypeId)
@@ -97,20 +126,4 @@ void Instrument::tp_task_end(ctf_task_id_t taskId)
 		return;
 
 	CTFAPI::tracepoint(eventTaskEnd, taskId);
-}
-
-void Instrument::tp_cpu_idle(uint16_t target)
-{
-	if (!eventCPUIdle->isEnabled())
-		return;
-
-	CTFAPI::tracepoint(eventCPUIdle, target);
-}
-
-void Instrument::tp_cpu_resume(uint16_t target)
-{
-	if (!eventCPUResume->isEnabled())
-		return;
-
-	CTFAPI::tracepoint(eventCPUResume, target);
 }

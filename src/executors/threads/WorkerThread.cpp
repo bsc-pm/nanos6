@@ -44,6 +44,7 @@ void WorkerThread::initialize()
 
 	assert(getComputePlace() != nullptr);
 
+	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
 	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), getComputePlace()->getInstrumentationId(), _instrumentationId);
 
 	markAsCurrentWorkerThread();

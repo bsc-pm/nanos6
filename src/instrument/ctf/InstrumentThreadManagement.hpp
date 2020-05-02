@@ -28,9 +28,7 @@ namespace Instrument {
 	{
 	}
 
-	inline void createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
-	{
-	}
+	void createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId);
 
 	inline void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)
 	{
@@ -44,13 +42,8 @@ namespace Instrument {
 	{
 	}
 
-	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-	{
-	}
-
-	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-	{
-	}
+	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
+	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
 
 	inline void threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
 	{

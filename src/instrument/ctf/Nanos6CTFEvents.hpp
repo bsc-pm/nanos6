@@ -17,14 +17,14 @@ namespace Instrument {
 
 	void preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata);
 
+	void tp_thread_create(ctf_thread_id_t tid);
+	void tp_thread_suspend(ctf_thread_id_t tid);
+	void tp_thread_resume(ctf_thread_id_t tid);
 	void tp_task_label(char *taskLabel, ctf_task_type_id_t taskTypeId);
 	void tp_task_execute(ctf_task_id_t taskId);
 	void tp_task_add(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId);
 	void tp_task_block(ctf_task_id_t taskId);
 	void tp_task_end(ctf_task_id_t taskId);
-	void tp_cpu_idle(uint16_t target);
-	void tp_cpu_resume(uint16_t target);
-
 }
 
 #endif //NANOS6CTFEVENTS_HPP

@@ -23,7 +23,7 @@ namespace CTFAPI {
 			// CTFMetadata for simplicity. We probably will never
 			// have more than two types of streams.
 
-			dataStructuresMetadata = "struct unbounded {\n\tuint16_t thread_id;\n};\n\n";
+			dataStructuresMetadata = "struct unbounded {\n\tuint16_t tid;\n};\n\n";
 			size = sizeof(ctf_thread_id_t);
 		}
 
