@@ -11,21 +11,9 @@
 
 #include "HardwareCountersInterface.hpp"
 #include "SupportedHardwareCounters.hpp"
-#include "hardware-counters/TaskHardwareCounters.hpp"
-#include "hardware-counters/TaskHardwareCountersInterface.hpp"
-#include "hardware-counters/ThreadHardwareCounters.hpp"
-#include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "support/JsonFile.hpp"
-
-#if HAVE_PAPI
-#include "hardware-counters/papi/PAPIHardwareCounters.hpp"
-#endif
-
-#if HAVE_PQOS
-#include "hardware-counters/pqos/PQoSHardwareCounters.hpp"
-#endif
 
 
 class Task;

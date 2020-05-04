@@ -15,7 +15,7 @@ void TaskHardwareCounters::initialize()
 	assert(_allocationAddress != nullptr);
 
 	// Use a copy since we may need the original allocation address
-	void *currentAddress = _allocationAddress;
+	__attribute__((unused)) void *currentAddress = _allocationAddress;
 	if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
 #if HAVE_PAPI
 		_papiCounters = new (currentAddress) PAPITaskHardwareCounters();

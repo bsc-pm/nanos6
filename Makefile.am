@@ -1782,6 +1782,10 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/tasks/task_number.cfg \
 	paraver-cfg/nanos6/tasks/task_priority.cfg
 
+hwcountersdir = ${docdir}
+nobase_dist_hwcounters_DATA = \
+	scripts/nanos6_hwcounters.json
+
 
 ## --------------------------------- ##
 ## Format-independent Doxygen rules. ##

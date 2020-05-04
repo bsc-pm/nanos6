@@ -5,6 +5,20 @@
 */
 
 #include "HardwareCounters.hpp"
+#include "executors/threads/WorkerThread.hpp"
+#include "hardware-counters/TaskHardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCountersInterface.hpp"
+#include "hardware-counters/ThreadHardwareCounters.hpp"
+#include "hardware-counters/ThreadHardwareCountersInterface.hpp"
+#include "tasks/Task.hpp"
+
+#if HAVE_PAPI
+#include "hardware-counters/papi/PAPIHardwareCounters.hpp"
+#endif
+
+#if HAVE_PQOS
+#include "hardware-counters/pqos/PQoSHardwareCounters.hpp"
+#endif
 
 
 EnvironmentVariable<bool> HardwareCounters::_verbose("NANOS6_HWCOUNTERS_VERBOSE", false);

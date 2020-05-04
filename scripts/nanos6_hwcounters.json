@@ -1,0 +1,15 @@
+{
+    "backends": {
+        "papi": "0",
+        "pqos": "0"
+    },
+    "counters": {
+        "PQOS_MON_EVENT_L3_OCCUP": "0",
+        "PQOS_PERF_EVENT_IPC": "0",
+        "PQOS_MON_EVENT_LMEM_BW": "0",
+        "PQOS_MON_EVENT_RMEM_BW": "0",
+        "PQOS_PERF_EVENT_LLC_MISS": "0",
+        "PAPI_PLACEHOLDER": "0"
+    }
+}
+
