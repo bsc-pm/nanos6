@@ -389,6 +389,7 @@ common_sources = \
 	src/system/MonitoringAPI.cpp \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
+	src/system/TaskInfoAPI.cpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Loop.cpp \
@@ -398,6 +399,7 @@ common_sources = \
 	src/system/ompss/UserMutex.cpp \
 	src/tasks/StreamManager.cpp \
 	src/tasks/Taskfor.cpp \
+	src/tasks/TaskInfo.cpp \
 	src/tasks/Taskloop.cpp
 
 common_sources += $(universal_debug_sources)
@@ -1132,14 +1134,16 @@ noinst_HEADERS = \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/UserMutex.hpp \
+	src/tasks/LoopGenerator.hpp \
 	src/tasks/StreamExecutor.hpp \
 	src/tasks/StreamManager.hpp \
 	src/tasks/Task.hpp \
 	src/tasks/TaskDebuggingInterface.hpp \
 	src/tasks/Taskfor.hpp \
-	src/tasks/Taskloop.hpp \
-	src/tasks/LoopGenerator.hpp \
 	src/tasks/TaskImplementation.hpp \
+	src/tasks/TaskInfo.hpp \
+	src/tasks/Taskloop.hpp \
+	src/tasks/TaskTypeData.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \
