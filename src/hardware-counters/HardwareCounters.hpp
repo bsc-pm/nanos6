@@ -168,9 +168,16 @@ public:
 	//! \brief Check whether a backend is enabled
 	//!
 	//! \param[in] backend The backend's id
-	static inline bool isEnabled(HWCounters::backends_t backend)
+	static inline bool isBackendEnabled(HWCounters::backends_t backend)
 	{
 		return _enabled[backend];
+	}
+
+	//! \brief Get a vector of enabled events, where the index is an event type
+	//! (HWCounters::counters_t) and the boolean tells wether it is enabled
+	static inline const std::vector<bool> &getEnabledCounters()
+	{
+		return _enabledEvents;
 	}
 
 	//! \brief Initialize hardware counter structures for a new thread

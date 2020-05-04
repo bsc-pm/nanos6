@@ -15,13 +15,13 @@ void ThreadHardwareCounters::initialize()
 	// each by their backend, respectively (see PQoSHardwareCounters.cpp::threadShutdown)
 
 #if HAVE_PAPI
-	if (HardwareCounters::isEnabled(HWCounters::PAPI_BACKEND)) {
+	if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
 		_papiCounters = new PAPIThreadHardwareCounters();
 	}
 #endif
 
 #if HAVE_PQOS
-	if (HardwareCounters::isEnabled(HWCounters::PQOS_BACKEND)) {
+	if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
 		_pqosCounters = new PQoSThreadHardwareCounters();
 	}
 #endif

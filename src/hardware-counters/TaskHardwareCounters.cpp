@@ -16,14 +16,14 @@ void TaskHardwareCounters::initialize()
 
 	// Use a copy since we may need the original allocation address
 	void *currentAddress = _allocationAddress;
-	if (HardwareCounters::isEnabled(HWCounters::PAPI_BACKEND)) {
+	if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
 #if HAVE_PAPI
 		_papiCounters = new (currentAddress) PAPITaskHardwareCounters();
 		currentAddress = (char *) currentAddress + sizeof(PAPITaskHardwareCounters);
 #endif
 	}
 
-	if (HardwareCounters::isEnabled(HWCounters::PQOS_BACKEND)) {
+	if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
 #if HAVE_PQOS
 		_pqosCounters = new (currentAddress) PQoSTaskHardwareCounters();
 		currentAddress = (char *) currentAddress + sizeof(PQoSTaskHardwareCounters);
@@ -35,13 +35,13 @@ size_t TaskHardwareCounters::getTaskHardwareCountersSize()
 {
 	size_t totalSize = 0;
 
-	if (HardwareCounters::isEnabled(HWCounters::PAPI_BACKEND)) {
+	if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
 #if HAVE_PAPI
 		totalSize += sizeof(PAPITaskHardwareCounters);
 #endif
 	}
 
-	if (HardwareCounters::isEnabled(HWCounters::PQOS_BACKEND)) {
+	if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
 #if HAVE_PQOS
 		totalSize += sizeof(PQoSTaskHardwareCounters);
 #endif
