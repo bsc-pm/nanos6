@@ -64,7 +64,6 @@ The configure script accepts the following options:
 1. `--enable-cuda` to enable support for CUDA tasks
 1. `--enable-monitoring` to enable monitoring and predictions of task/CPU/thread statistics
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
-1. `--enable-monitoring-hwevents` to enable monitoring of hardware counters (which must be paired with an appropriate library)
 
 The location of elfutils, hwloc and CUDA is always retrieved through pkg-config.
 If they are installed in non-standard locations, pkg-config can be told where to find them through the `PKG_CONFIG_PATH` environment variable.
@@ -333,16 +332,24 @@ Currently, Monitoring capabilities lack support for the `task for` construct.
 
 ## Hardware Counters
 
-Nanos6 offers a real-time API to obtain hardware counter statistics of tasks with various backends.
-The usage of this API is controlled through the following environment variables:
-* `NANOS6_HWCOUNTERS`: Specifies the backend to use to monitor hardware counters.
-* `NANOS6_HWCOUNTERS_VERBOSE`: Enables/disables a verbose mode for the chosen backend. In some backends, this mode ends up generating a report similar to the `stats` variant, with information about hardware counters for all the task types.
+Nanos6 offers a real-time API to obtain hardware counter statistics of tasks with various backends. The usage of this API is controlled through the `nanos6_hwcounters.json` configuration file, where backends and counters to be monitored are specified. Currently, nanos6 supports two backends - `papi` and `pqos` - and a subset of their available counters. All the available backends and counters are listed in the default configuration file, found in the scripts folder. To enable any of these, simply modify the `0` in the field and replace it with a `1`.
 
-Next is a list of the backends available for this API:
-* `null`: Disable hardware counter monitoring (default option).
-* `pqos`: Use intel-cmt-cat PQoS library for hardware counter monitoring.
-* `papi`: Use the PAPI library for hardware counter monitoring (not available yet).
-
+Next we showcase a simplified version of the configuration file, where the PQoS backend is enabled with a counter that reports the IPC of tasks:
+```json
+{
+	"backends": {
+		"pqos": "1",
+		"papi": "0"
+	},
+	"counters": {
+		"PQOS_MON_EVENT_L3_OCCUP": "0",
+		"PQOS_PERF_EVENT_IPC": "1",
+		"PQOS_MON_EVENT_LMEM_BW": "0",
+		"PQOS_MON_EVENT_RMEM_BW": "0",
+		"PQOS_PERF_EVENT_LLC_MISS": "0"
+	}
+}
+```
 
 ## Cluster support
 
