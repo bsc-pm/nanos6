@@ -12,7 +12,6 @@ void TaskHardwareCounters::initialize()
 {
 	// NOTE: Objects are constructed in this function, but they are freed when
 	// the task is freed (see TaskFinalizationImplementation.hpp)
-	assert(_allocationAddress != nullptr);
 
 	// Use a copy since we may need the original allocation address
 	__attribute__((unused)) void *currentAddress = _allocationAddress;
@@ -25,6 +24,8 @@ void TaskHardwareCounters::initialize()
 
 	if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
 #if HAVE_PQOS
+		assert(_allocationAddress != nullptr);
+
 		_pqosCounters = new (currentAddress) PQoSTaskHardwareCounters();
 		currentAddress = (char *) currentAddress + sizeof(PQoSTaskHardwareCounters);
 #endif
