@@ -58,6 +58,7 @@ void HardwareCounters::initialize()
 		);
 #else
 		FatalErrorHandler::warn("PAPI library not found, disabling hardware counters.");
+		_enabled[HWCounters::PAPI_BACKEND] = false;
 #endif
 	}
 
@@ -70,6 +71,7 @@ void HardwareCounters::initialize()
 		);
 #else
 		FatalErrorHandler::warn("PQoS library not found, disabling hardware counters.");
+		_enabled[HWCounters::PQOS_BACKEND] = false;
 #endif
 	}
 }
@@ -108,7 +110,6 @@ void HardwareCounters::threadInitialized()
 		assert(_pqosBackend != nullptr);
 
 		ThreadHardwareCountersInterface *pqosCounters = threadCounters->getPQoSCounters();
-
 		_pqosBackend->threadInitialized(pqosCounters);
 	}
 
@@ -116,7 +117,6 @@ void HardwareCounters::threadInitialized()
 		assert(_papiBackend != nullptr);
 
 		ThreadHardwareCountersInterface *papiCounters = threadCounters->getPAPICounters();
-
 		_papiBackend->threadInitialized(papiCounters);
 	}
 }
@@ -133,7 +133,6 @@ void HardwareCounters::threadShutdown()
 		assert(threadCounters != nullptr);
 
 		ThreadHardwareCountersInterface *pqosCounters = threadCounters->getPQoSCounters();
-
 		_pqosBackend->threadShutdown(pqosCounters);
 	}
 
@@ -147,7 +146,6 @@ void HardwareCounters::threadShutdown()
 		assert(threadCounters != nullptr);
 
 		ThreadHardwareCountersInterface *papiCounters = threadCounters->getPAPICounters();
-
 		_papiBackend->threadShutdown(papiCounters);
 	}
 }
@@ -186,7 +184,6 @@ void HardwareCounters::taskReinitialized(Task *task)
 		assert(taskCounters != nullptr);
 
 		TaskHardwareCountersInterface *pqosTaskCounters = taskCounters->getPQoSCounters();
-
 		_pqosBackend->taskReinitialized(pqosTaskCounters);
 	}
 
@@ -197,7 +194,6 @@ void HardwareCounters::taskReinitialized(Task *task)
 		assert(taskCounters != nullptr);
 
 		TaskHardwareCountersInterface *papiTaskCounters = taskCounters->getPAPICounters();
-
 		_papiBackend->taskReinitialized(papiTaskCounters);
 	}
 }
@@ -213,14 +209,12 @@ void HardwareCounters::taskStarted(Task *task)
 		assert(thread != nullptr);
 
 		ThreadHardwareCounters *threadCounters = thread->getHardwareCounters();
-		assert(threadCounters != nullptr);
-
 		TaskHardwareCounters *taskCounters = task->getHardwareCounters();
+		assert(threadCounters != nullptr);
 		assert(taskCounters != nullptr);
 
 		ThreadHardwareCountersInterface *pqosThreadCounters = threadCounters->getPQoSCounters();
 		TaskHardwareCountersInterface *pqosTaskCounters = taskCounters->getPQoSCounters();
-
 		_pqosBackend->taskStarted(pqosThreadCounters, pqosTaskCounters);
 	}
 
@@ -231,14 +225,12 @@ void HardwareCounters::taskStarted(Task *task)
 		assert(thread != nullptr);
 
 		ThreadHardwareCounters *threadCounters = thread->getHardwareCounters();
-		assert(threadCounters != nullptr);
-
 		TaskHardwareCounters *taskCounters = task->getHardwareCounters();
+		assert(threadCounters != nullptr);
 		assert(taskCounters != nullptr);
 
 		ThreadHardwareCountersInterface *papiThreadCounters = threadCounters->getPAPICounters();
 		TaskHardwareCountersInterface *papiTaskCounters = taskCounters->getPAPICounters();
-
 		_papiBackend->taskStarted(papiThreadCounters, papiTaskCounters);
 	}
 }
@@ -254,14 +246,12 @@ void HardwareCounters::taskStopped(Task *task)
 		assert(thread != nullptr);
 
 		ThreadHardwareCounters *threadCounters = thread->getHardwareCounters();
-		assert(threadCounters != nullptr);
-
 		TaskHardwareCounters *taskCounters = task->getHardwareCounters();
+		assert(threadCounters != nullptr);
 		assert(taskCounters != nullptr);
 
 		ThreadHardwareCountersInterface *pqosThreadCounters = threadCounters->getPQoSCounters();
 		TaskHardwareCountersInterface *pqosTaskCounters = taskCounters->getPQoSCounters();
-
 		_pqosBackend->taskStopped(pqosThreadCounters, pqosTaskCounters);
 	}
 
@@ -272,14 +262,12 @@ void HardwareCounters::taskStopped(Task *task)
 		assert(thread != nullptr);
 
 		ThreadHardwareCounters *threadCounters = thread->getHardwareCounters();
-		assert(threadCounters != nullptr);
-
 		TaskHardwareCounters *taskCounters = task->getHardwareCounters();
+		assert(threadCounters != nullptr);
 		assert(taskCounters != nullptr);
 
 		ThreadHardwareCountersInterface *papiThreadCounters = threadCounters->getPAPICounters();
 		TaskHardwareCountersInterface *papiTaskCounters = taskCounters->getPAPICounters();
-
 		_papiBackend->taskStopped(papiThreadCounters, papiTaskCounters);
 	}
 }
@@ -295,7 +283,6 @@ void HardwareCounters::taskFinished(Task *task)
 		assert(taskCounters != nullptr);
 
 		TaskHardwareCountersInterface *pqosTaskCounters = taskCounters->getPQoSCounters();
-
 		_pqosBackend->taskFinished(task, pqosTaskCounters);
 	}
 
@@ -306,7 +293,6 @@ void HardwareCounters::taskFinished(Task *task)
 		assert(taskCounters != nullptr);
 
 		TaskHardwareCountersInterface *papiTaskCounters = taskCounters->getPAPICounters();
-
 		_papiBackend->taskFinished(task, papiTaskCounters);
 	}
 }
