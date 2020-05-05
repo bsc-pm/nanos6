@@ -337,12 +337,12 @@ Nanos6 offers a real-time API to obtain hardware counter statistics of tasks wit
 Next we showcase a simplified version of the configuration file, where the PQoS backend is enabled with a counter that reports the IPC of tasks:
 ```json
 {
-	"backends": {
-		"pqos": "1",
-		"papi": "0"
+	"PAPI": {
+		"ENABLED": "0"
 	},
-	"counters": {
-		"PQOS_MON_EVENT_L3_OCCUP": "0",
+	"PQOS": {
+		"ENABLED": "1",
+		"PQOS_MON_EVENT_L3_OCCUP": "0,
 		"PQOS_PERF_EVENT_IPC": "1",
 		"PQOS_MON_EVENT_LMEM_BW": "0",
 		"PQOS_MON_EVENT_RMEM_BW": "0",

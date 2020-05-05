@@ -50,36 +50,46 @@ private:
 
 			// Navigate through the file and extract the enabled backens and counters
 			configFile.getRootNode()->traverseChildrenNodes(
-				[&](const std::string &category, const JsonNode<> &categoryNode) {
-					if (category == "backends") {
-						if (categoryNode.dataExists("papi")) {
+				[&](const std::string &backend, const JsonNode<> &backendNode) {
+					if (backend == "PAPI") {
+						if (backendNode.dataExists("ENABLED")) {
 							bool converted = false;
-							bool enabled = categoryNode.getData("papi", converted);
+							bool enabled = backendNode.getData("ENABLED", converted);
 							assert(converted);
 
 							_enabled[HWCounters::PAPI_BACKEND] = enabled;
+							if (enabled) {
+								for (short i = HWCounters::PAPI_MIN_EVENT; i <= HWCounters::PAPI_MAX_EVENT; ++i) {
+									std::string eventDescription(HWCounters::counterDescriptions[i]);
+									if (backendNode.dataExists(eventDescription)) {
+										converted = false;
+										_enabledEvents[i] = backendNode.getData(eventDescription, converted);
+										assert(converted);
+									}
+								}
+							}
 						}
-
-						if (categoryNode.dataExists("pqos")) {
+					} else if (backend == "PQOS") {
+						if (backendNode.dataExists("ENABLED")) {
 							bool converted = false;
-							bool enabled = categoryNode.getData("pqos", converted);
+							bool enabled = backendNode.getData("ENABLED", converted);
 							assert(converted);
 
 							_enabled[HWCounters::PQOS_BACKEND] = enabled;
-						}
-					} else if (category == "counters") {
-						// Check which events are enabled by the user out of all of them
-						for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
-							std::string eventDescription(HWCounters::counterDescriptions[i]);
-							if (categoryNode.dataExists(eventDescription)) {
-								bool converted = false;
-								_enabledEvents[i] = categoryNode.getData(eventDescription, converted);
-								assert(converted);
+							if (enabled) {
+								for (short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
+									std::string eventDescription(HWCounters::counterDescriptions[i]);
+									if (backendNode.dataExists(eventDescription)) {
+										converted = false;
+										_enabledEvents[i] = backendNode.getData(eventDescription, converted);
+										assert(converted);
+									}
+								}
 							}
 						}
 					} else {
 						FatalErrorHandler::fail(
-							"Unexpected '", category, "' label found while processing the ",
+							"Unexpected '", backend, "' backend name found while processing the ",
 							"hardware counters configuration file."
 						);
 					}

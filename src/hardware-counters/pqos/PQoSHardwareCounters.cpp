@@ -325,43 +325,45 @@ void PQoSHardwareCounters::displayStatistics()
 
 	// Iterate through all tasktypes
 	for (auto &it : _statistics) {
-		outputStream <<
-			std::setw(7)  << "STATS"                 << " " <<
-			std::setw(6)  << "PQOS"                  << " " <<
-			std::setw(30) << "TASK-TYPE"             << " " <<
-			std::setw(20) << it.first                << "\n";
+		if (it.first != "Unlabeled") {
+			outputStream <<
+				std::setw(7)  << "STATS"                 << " " <<
+				std::setw(6)  << "PQOS"                  << " " <<
+				std::setw(30) << "TASK-TYPE"             << " " <<
+				std::setw(20) << it.first                << "\n";
 
-		// Iterate through all counter types
-		for (unsigned short id = HWCounters::PQOS_MIN_EVENT; id <= HWCounters::PQOS_MAX_EVENT; ++id) {
-			if (_enabledEvents[id]) {
-				double counterAvg   = BoostAcc::mean(it.second[id]);
-				double counterStdev = sqrt(BoostAcc::variance(it.second[id]));
-				double counterSum   = BoostAcc::sum(it.second[id]);
-				size_t instances    = BoostAcc::count(it.second[id]);
+			// Iterate through all counter types
+			for (unsigned short id = HWCounters::PQOS_MIN_EVENT; id <= HWCounters::PQOS_MAX_EVENT; ++id) {
+				if (_enabledEvents[id]) {
+					double counterAvg   = BoostAcc::mean(it.second[id]);
+					double counterStdev = sqrt(BoostAcc::variance(it.second[id]));
+					double counterSum   = BoostAcc::sum(it.second[id]);
+					size_t instances    = BoostAcc::count(it.second[id]);
 
-				// In KB
-				if (id == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
-					id == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
-					id == HWCounters::PQOS_MON_EVENT_RMEM_BW
-				) {
-					counterAvg   /= 1024.0;
-					counterStdev /= 1024.0;
-					counterSum   /= 1024.0;
+					// In KB
+					if (id == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
+						id == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
+						id == HWCounters::PQOS_MON_EVENT_RMEM_BW
+					) {
+						counterAvg   /= 1024.0;
+						counterStdev /= 1024.0;
+						counterSum   /= 1024.0;
+					}
+
+					outputStream <<
+						std::setw(7)  << "STATS"                                   << " "   <<
+						std::setw(6)  << "PQOS"                                    << " "   <<
+						std::setw(30) << HWCounters::counterDescriptions[id]       << " "   <<
+						std::setw(20) << "INSTANCES: " + std::to_string(instances) << " " <<
+						std::setw(30) << "SUM / AVG / STDEV"                       << " "   <<
+						std::setw(15) << counterSum                                << " / " <<
+						std::setw(15) << counterAvg                                << " / " <<
+						std::setw(15) << counterStdev                              << "\n";
 				}
-
-				outputStream <<
-					std::setw(7)  << "STATS"                                   << " "   <<
-					std::setw(6)  << "PQOS"                                    << " "   <<
-					std::setw(30) << HWCounters::counterDescriptions[id]       << " "   <<
-					std::setw(20) << "INSTANCES: " + std::to_string(instances) << " " <<
-					std::setw(30) << "SUM / AVG / STDEV"                       << " "   <<
-					std::setw(15) << counterSum                                << " / " <<
-					std::setw(15) << counterAvg                                << " / " <<
-					std::setw(15) << counterStdev                              << "\n";
 			}
-		}
 
-		outputStream << "-------------------------------\n";
+			outputStream << "-------------------------------\n";
+		}
 	}
 
 	if (output.is_open()) {
