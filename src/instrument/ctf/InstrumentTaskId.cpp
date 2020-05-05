@@ -1,7 +1,8 @@
 #include "InstrumentTaskId.hpp"
 
 namespace Instrument {
-	std::atomic<uint32_t> _nextTaskId(1);
+	// task Id = 1 is reserved for "Runtime mode" in Paraver Views
+	std::atomic<uint32_t> _nextTaskId(2);
 
 	SpinLock globalTaskLabelLock;
 	// taskTypeId 0 reserved for extrae "End"

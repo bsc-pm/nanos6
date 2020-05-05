@@ -46,7 +46,9 @@ protected:
 		bind(_cpu);
 		
 		// The thread suspends itself after initialization, since the "activator" is the one that will unblock it when needed
+		Instrument::threadWillSuspend(_instrumentationId, _cpu->getInstrumentationId());
 		suspend();
+		Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
 	}
 	
 	inline void start()
@@ -121,7 +123,6 @@ WorkerThreadBase::WorkerThreadBase(CPU *cpu)
 
 void WorkerThreadBase::suspend()
 {
-	Instrument::threadWillSuspend(_instrumentationId, _cpu->getInstrumentationId());
 	KernelLevelThread::suspend();
 	
 	// Update the CPU since the thread may have migrated while blocked (or during pre-signaling)
@@ -131,8 +132,6 @@ void WorkerThreadBase::suspend()
 #ifndef NDEBUG
 	_cpuToBeResumedOn = nullptr;
 #endif
-	
-	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
 }
 
 
@@ -182,6 +181,7 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 	CPU *cpu = _cpu;
 	assert(cpu != nullptr);
 	
+	Instrument::threadWillSuspend(_instrumentationId, _cpu->getInstrumentationId());
 	if (replacement != nullptr) {
 		// Replace a thread by another
 		replacement->resume(cpu, false);
@@ -193,6 +193,8 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 	
 	suspend();
 	// After resuming (if ever blocked), the thread continues here
+	
+	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
 }
 
 

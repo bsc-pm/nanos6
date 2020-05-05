@@ -90,9 +90,9 @@ void nanos6_preinit(void) {
 	Scheduler::initialize();
 	ExternalThreadGroup::initialize();
 
+	Instrument::initialize();
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
-	Instrument::initialize();
 
 	Monitoring::initialize();
 

@@ -13,6 +13,7 @@
 // macro?
 
 static CTFAPI::CTFEvent *eventThreadCreate;
+static CTFAPI::CTFEvent *eventExternalThreadCreate;
 static CTFAPI::CTFEvent *eventThreadResume;
 static CTFAPI::CTFEvent *eventThreadSuspend;
 static CTFAPI::CTFEvent *eventTaskLabel;
@@ -26,6 +27,10 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	// create Events
 	eventThreadCreate = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:thread_create",
+		"\t\tuint16_t _tid;\n"
+	));
+	eventExternalThreadCreate = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:external_thread_create",
 		"\t\tuint16_t _tid;\n"
 	));
 	eventThreadResume = userMetadata->addEvent(new CTFAPI::CTFEvent(
@@ -70,6 +75,14 @@ void Instrument::tp_thread_create(ctf_thread_id_t tid)
 		return;
 
 	CTFAPI::tracepoint(eventThreadCreate, tid);
+}
+
+void Instrument::tp_external_thread_create(ctf_thread_id_t tid)
+{
+	if (!eventExternalThreadCreate->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventExternalThreadCreate, tid);
 }
 
 void Instrument::tp_thread_resume(ctf_thread_id_t tid)

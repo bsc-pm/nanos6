@@ -45,7 +45,7 @@ void LeaderThread::shutdown()
 void LeaderThread::body()
 {
 	initializeHelperThread();
-
+	Instrument::threadHasResumed(getInstrumentationId());
 	// Minimum polling interval in microseconds
 	EnvironmentVariable<int> pollingFrequency("NANOS6_POLLING_FREQUENCY", 1000);
 

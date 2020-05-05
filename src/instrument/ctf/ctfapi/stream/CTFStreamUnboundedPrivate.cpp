@@ -12,6 +12,6 @@ void CTFAPI::CTFStreamUnboundedPrivate::writeContext(void **buf)
 	CTFContextUnbounded *contextUnbounded = (CTFContextUnbounded *) context;
 	ExternalThread *currentExternalThread = ExternalThread::getCurrentExternalThread();
 	assert(currentExternalThread != nullptr);
-	ctf_thread_id_t threadId = currentExternalThread->getInstrumentationId().threadId;
-	contextUnbounded->writeContext(buf, threadId);
+	ctf_thread_id_t tid = currentExternalThread->getInstrumentationId().tid;
+	contextUnbounded->writeContext(buf, tid);
 }

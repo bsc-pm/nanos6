@@ -16,9 +16,6 @@
 
 
 namespace Instrument {
-
-	ctf_thread_id_t gettid(void);
-
 	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
 		threadId = thread_id_t();
@@ -29,29 +26,17 @@ namespace Instrument {
 	}
 
 	void createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId);
-
-	inline void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)
-	{
-		ctf_thread_id_t tid = gettid();
-
-		threadId = external_thread_id_t(tid);
-	}
+	void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId);
 
 	template<typename... TS>
-	void createdExternalThread(__attribute__((unused))  external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
+	void createdExternalThread(__attribute__((unused)) external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
 	{
 	}
 
 	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
 	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
-
-	inline void threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
-	{
-	}
-
-	inline void threadHasResumed(__attribute__((unused)) external_thread_id_t threadId)
-	{
-	}
+	void threadWillSuspend(external_thread_id_t threadId);
+	void threadHasResumed(external_thread_id_t threadId);
 
 	inline void threadWillShutdown()
 	{

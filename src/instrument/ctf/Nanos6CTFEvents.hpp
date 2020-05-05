@@ -18,6 +18,7 @@ namespace Instrument {
 	void preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata);
 
 	void tp_thread_create(ctf_thread_id_t tid);
+	void tp_external_thread_create(ctf_thread_id_t tid);
 	void tp_thread_suspend(ctf_thread_id_t tid);
 	void tp_thread_resume(ctf_thread_id_t tid);
 	void tp_task_label(char *taskLabel, ctf_task_type_id_t taskTypeId);
