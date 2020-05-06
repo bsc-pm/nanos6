@@ -78,12 +78,12 @@ void nanos6_create_task(
 	bool isStreamExecutor = flags & (1 << Task::stream_executor_flag);
 	size_t originalArgsBlockSize = args_block_size;
 	size_t taskSize;
-	if (isTaskfor) {
-		taskSize = sizeof(Taskfor);
+	if (isTaskloop) {
+		taskSize = sizeof(Taskloop);
 	} else if (isStreamExecutor) {
 		taskSize = sizeof(StreamExecutor);
-	} else if (isTaskloop) {
-		taskSize = sizeof(Taskloop);
+	} else if (isTaskfor) {
+		taskSize = sizeof(Taskfor);
 	} else {
 		taskSize = sizeof(Task);
 	}
