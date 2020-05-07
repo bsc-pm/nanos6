@@ -17,8 +17,11 @@
 class HardwareInfo {
 private:
 	static std::vector<DeviceInfo *> _infos;
+
 public:
+
 	static void initialize();
+
 	static void shutdown();
 
 	static inline bool canDeviceRunTasks(nanos6_device_t type)

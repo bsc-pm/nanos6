@@ -7,8 +7,8 @@
 #ifndef DEVICE_INFO_HPP
 #define DEVICE_INFO_HPP
 
-#include "hardware/places/MemoryPlace.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "hardware/places/MemoryPlace.hpp"
 
 class DeviceInfo {
 protected:
