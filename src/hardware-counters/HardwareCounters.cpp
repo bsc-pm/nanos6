@@ -9,6 +9,7 @@
 #include "TaskHardwareCountersInterface.hpp"
 #include "ThreadHardwareCounters.hpp"
 #include "ThreadHardwareCountersInterface.hpp"
+#include "rapl/RAPLHardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "support/JsonFile.hpp"
 #include "tasks/Task.hpp"
@@ -26,6 +27,7 @@ EnvironmentVariable<bool> HardwareCounters::_verbose("NANOS6_HWCOUNTERS_VERBOSE"
 EnvironmentVariable<std::string> HardwareCounters::_verboseFile("NANOS6_HWCOUNTERS_VERBOSE_FILE", "nanos6-output-hwcounters.txt");
 HardwareCountersInterface *HardwareCounters::_papiBackend;
 HardwareCountersInterface *HardwareCounters::_pqosBackend;
+HardwareCountersInterface *HardwareCounters::_raplBackend;
 bool HardwareCounters::_anyBackendEnabled(false);
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
 std::vector<bool> HardwareCounters::_enabledEvents(HWCounters::TOTAL_NUM_EVENTS);
@@ -76,6 +78,14 @@ void HardwareCounters::loadConfigurationFile()
 							}
 						}
 					}
+				} else if (backend == "RAPL") {
+					if (backendNode.dataExists("ENABLED")) {
+						bool converted = false;
+						bool enabled = backendNode.getData("ENABLED", converted);
+						assert(converted);
+
+						_enabled[HWCounters::RAPL_BACKEND] = enabled;
+					}
 				} else {
 					FatalErrorHandler::fail(
 						"Unexpected '", backend, "' backend name found while processing the ",
@@ -87,11 +97,12 @@ void HardwareCounters::loadConfigurationFile()
 	}
 }
 
-void HardwareCounters::initialize()
+void HardwareCounters::preinitialize()
 {
 	// First set all backends to nullptr and all events disabled
 	_pqosBackend = nullptr;
 	_papiBackend = nullptr;
+	_raplBackend = nullptr;
 	for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
 		_enabled[i] = false;
 	}
@@ -106,8 +117,8 @@ void HardwareCounters::initialize()
 	// Check if there's an incompatibility between backends
 	checkIncompatibleBackends();
 
-	for (unsigned short i = 0; i < _enabledEvents.size(); ++i) {
-		if (_enabledEvents[i]) {
+	for (unsigned short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
+		if (_enabled[i]) {
 			_anyBackendEnabled = true;
 			break;
 		}
@@ -139,6 +150,20 @@ void HardwareCounters::initialize()
 		_enabled[HWCounters::PAPI_BACKEND] = false;
 #endif
 	}
+
+	// NOTE: Since the RAPL backend needs to be initialized after hardware is
+	// detected, we do that in the initialize function
+}
+
+void HardwareCounters::initialize()
+{
+	if (_enabled[HWCounters::RAPL_BACKEND]) {
+		_raplBackend = new RAPLHardwareCounters(
+			_verbose.getValue(),
+			_verboseFile.getValue(),
+			_enabledEvents
+		);
+	}
 }
 
 void HardwareCounters::shutdown()
@@ -157,6 +182,14 @@ void HardwareCounters::shutdown()
 		delete _papiBackend;
 		_papiBackend = nullptr;
 		_enabled[HWCounters::PAPI_BACKEND] = false;
+	}
+
+	if (_enabled[HWCounters::RAPL_BACKEND]) {
+		assert(_raplBackend != nullptr);
+
+		delete _raplBackend;
+		_raplBackend = nullptr;
+		_enabled[HWCounters::RAPL_BACKEND] = false;
 	}
 
 	_anyBackendEnabled = false;
@@ -181,6 +214,8 @@ void HardwareCounters::threadInitialized()
 
 		_papiBackend->threadInitialized(threadCounters.getPAPICounters());
 	}
+
+	// NOTE: RAPL doesn't need to be called for task-thread procedures
 }
 
 void HardwareCounters::threadShutdown()
@@ -202,6 +237,8 @@ void HardwareCounters::threadShutdown()
 	}
 
 	threadCounters.shutdown();
+
+	// NOTE: RAPL doesn't need to be called for task-thread procedures
 }
 
 void HardwareCounters::taskCreated(Task *task, bool enabled)
@@ -223,6 +260,8 @@ void HardwareCounters::taskCreated(Task *task, bool enabled)
 
 			_papiBackend->taskCreated(task, enabled);
 		}
+
+		// NOTE: RAPL doesn't need to be called for task-thread procedures
 	}
 }
 
@@ -244,6 +283,8 @@ void HardwareCounters::taskReinitialized(Task *task)
 			_papiBackend->taskReinitialized(taskCounters.getPAPICounters());
 		}
 	}
+
+	// NOTE: RAPL doesn't need to be called for task-thread procedures
 }
 
 void HardwareCounters::taskStarted(Task *task)
@@ -266,6 +307,8 @@ void HardwareCounters::taskStarted(Task *task)
 
 			_papiBackend->taskStarted(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
 		}
+
+		// NOTE: RAPL doesn't need to be called for task-thread procedures
 	}
 }
 
@@ -289,6 +332,8 @@ void HardwareCounters::taskStopped(Task *task)
 
 			_papiBackend->taskStopped(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
 		}
+
+		// NOTE: RAPL doesn't need to be called for task-thread procedures
 	}
 }
 
@@ -316,5 +361,7 @@ void HardwareCounters::taskFinished(Task *task)
 		if (!isTaskforCollaborator) {
 			taskCounters.shutdown();
 		}
+
+		// NOTE: RAPL doesn't need to be called for task-thread procedures
 	}
 }
