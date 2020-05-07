@@ -45,6 +45,7 @@ public:
 			HostInfo *hostInfo = (HostInfo *)_infos[type];
 			return hostInfo->getValidMemoryPlaceCount();
 		}
+
 		return _infos[type]->getMemoryPlaceCount();
 	}
 
@@ -76,6 +77,11 @@ public:
 	static inline size_t getPhysicalMemorySize()
 	{
 		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getPhysicalMemorySize();
+	}
+
+	static inline size_t getNumPhysicalPackages()
+	{
+		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getNumPhysicalPackages();
 	}
 
 };

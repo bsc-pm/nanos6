@@ -4,22 +4,27 @@
 	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include "HostInfo.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
+#include <cassert>
 #include <hwloc.h>
-#include <assert.h>
 #include <unistd.h>
 
-#include "hardware/places/NUMAPlace.hpp"
+#include "HostInfo.hpp"
 #include "executors/threads/CPU.hpp"
+#include "hardware/places/NUMAPlace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/Padding.hpp"
 
-//! Workaround to deal with changes in different HWLOC versions.
+// Workaround to deal with changes in different HWLOC versions
 #if HWLOC_API_VERSION < 0x00010b00
-	#define HWLOC_NUMA_ALIAS HWLOC_OBJ_NODE
+#define HWLOC_NUMA_ALIAS HWLOC_OBJ_NODE
 #else
-	#define HWLOC_NUMA_ALIAS HWLOC_OBJ_NUMANODE
+#define HWLOC_NUMA_ALIAS HWLOC_OBJ_NUMANODE
 #endif
+
+#ifndef HWLOC_OBJ_PACKAGE
+#define HWLOC_OBJ_PACKAGE HWLOC_OBJ_SOCKET
+#endif
+
 
 HostInfo::HostInfo() :
 	_validMemoryPlaces(0)
@@ -37,6 +42,14 @@ HostInfo::HostInfo() :
 
 	//! Create NUMA addressSpace
 	AddressSpace *NUMAAddressSpace = new AddressSpace();
+
+	//! Get the number of physical packages in the machine
+	int depthPhysicalPackages = hwloc_get_type_depth(topology, HWLOC_OBJ_PACKAGE);
+	if (depthPhysicalPackages != HWLOC_TYPE_DEPTH_UNKNOWN) {
+		_numPhysicalPackages = hwloc_get_nbobjs_by_depth(topology, depthPhysicalPackages);
+	} else {
+		_numPhysicalPackages = 0;
+	}
 
 	//! Get NUMA nodes of the machine.
 	//! NUMA node means: A set of processors around memory which the processors can directly access. (Extracted from hwloc documentation)

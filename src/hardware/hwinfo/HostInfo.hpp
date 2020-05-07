@@ -19,6 +19,9 @@ private:
 	size_t _physicalMemorySize;					//!< Total amount of physical memory on the system
 	size_t _validMemoryPlaces;
 
+	//! Total amount of physical packages in the system
+	size_t _numPhysicalPackages;
+
 public:
 	HostInfo();
 	~HostInfo();
@@ -71,6 +74,10 @@ public:
 	inline size_t getPhysicalMemorySize()
 	{
 		return _physicalMemorySize;
+	}
+	inline size_t getNumPhysicalPackages() const override
+	{
+		return _numPhysicalPackages;
 	}
 };
 
