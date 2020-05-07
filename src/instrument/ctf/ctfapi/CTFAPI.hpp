@@ -22,8 +22,6 @@
 
 namespace CTFAPI {
 
-	#define ARG_STRING_SIZE 64
-
 	struct __attribute__((__packed__)) event_header {
 		uint8_t  id;
 		uint64_t timestamp;
@@ -34,23 +32,29 @@ namespace CTFAPI {
 	int mk_event_header(char **buf, uint8_t id);
 
 
-	template<typename First, typename... Rest>
-	struct sizeOfVariadic
-	{
-	    static constexpr size_t value = sizeOfVariadic<First>::value + sizeOfVariadic<Rest...>::value;
-	};
-
 	template <typename T>
-	struct sizeOfVariadic<T>
+	static inline auto sizeOfVariadic(T arg)
 	{
-	    static constexpr size_t value = sizeof(T);
-	};
+		size_t value = sizeof(arg);
+		return value;
+	}
 
 	template <>
-	struct sizeOfVariadic<char *>
+	inline auto sizeOfVariadic(char *arg)
 	{
-	    static constexpr size_t value = ARG_STRING_SIZE;
-	};
+		size_t i = 0;
+		for (; arg[i]; ++i)
+			;
+		size_t value = i * sizeof(char);
+		return value + 1; // adding 1 to count for the null character
+	}
+
+	template<typename First, typename... Rest>
+	static inline size_t sizeOfVariadic(First arg, Rest... rest)
+	{
+		size_t total = sizeOfVariadic(arg) + sizeOfVariadic(rest...);
+		return total;
+	}
 
 	template<typename... ARGS>
 	inline void tp_write_args(void **buf, ARGS... args)
@@ -68,24 +72,17 @@ namespace CTFAPI {
 	template<>
 	inline void tp_write_args(void **buf, char *arg)
 	{
-		const int MAX = ARG_STRING_SIZE;
-		int cnt = 0;
-		int padding;
 		char **pbuf = reinterpret_cast<char**>(buf);
 		char *parg = arg;
 
-		// copy string until the null character is found or we
-		// reach the MAX limit
-		while ((*parg != '\0') && (cnt < (MAX-1))) {
+		while (*parg != '\0') {
 			**pbuf = *parg;
 			parg++;
 			(*pbuf)++;
-			cnt++;
 		}
-		// add padding until we reach ARG_STRING_SIZE
-		padding = MAX - cnt; // includes final null character
-		memset(*pbuf, '\0', padding);
-		*pbuf += padding;
+
+		**pbuf = '\0';
+		(*pbuf)++;
 	}
 
 	template<typename T, typename... ARGS>
@@ -112,7 +109,7 @@ namespace CTFAPI {
 	static void tracepoint(CTFEvent *event, ARGS... args)
 	{
 		CTFStream *stream = Instrument::getCPULocalData()->userStream;
-		const size_t size = sizeof(struct event_header) + sizeOfVariadic<ARGS...>::value + event->getContextSize() + stream->getContextSize();
+		const size_t size = sizeof(struct event_header) + sizeOfVariadic(args...) + event->getContextSize() + stream->getContextSize();
 		const uint8_t tracepointId = event->getEventId();
 		void *buf;
 

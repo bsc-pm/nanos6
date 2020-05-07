@@ -44,7 +44,7 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	));
 	eventTaskLabel = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_label",
-		"\t\tinteger { size =  8; align = 8; signed = 0; encoding = UTF8; base = 10; } _label["xstr(ARG_STRING_SIZE)"];\n"
+		"\t\tstring _label;\n"
 		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
 	));
 	eventTaskAdd = userMetadata->addEvent(new CTFAPI::CTFEvent(

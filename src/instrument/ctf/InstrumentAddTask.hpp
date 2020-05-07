@@ -34,7 +34,7 @@ namespace Instrument {
 			globalIter->second = taskTypeId;
 			char *taskLabel = (char *) key->implementations[0].task_label;
 			if (taskLabel == nullptr)
-				taskLabel = "unknown";
+				taskLabel = (char *) key->implementations[0].declaration_source;
 			tp_task_label(taskLabel, taskTypeId);
 		}
 
