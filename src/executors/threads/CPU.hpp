@@ -20,6 +20,7 @@
 
 #include "CPUThreadingModelData.hpp"
 #include "hardware/places/CPUPlace.hpp"
+#include "hardware-counters/CPUHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
@@ -79,6 +80,9 @@ private:
 	//! Whether this cpu is owned by the runtime
 	bool _isOwned;
 
+	//! The hardware counter structures of this CPU
+	CPUHardwareCounters _hardwareCounters;
+
 public:
 
 	//! \brief Constructor for regular CPUs
@@ -101,7 +105,8 @@ public:
 		_activationStatus(uninitialized_status),
 		_systemCPUId(-1),
 		_NUMANodeId(0),
-		_isOwned(false)
+		_isOwned(false),
+		_hardwareCounters()
 	{
 	}
 
@@ -191,6 +196,11 @@ public:
 	inline bool isOwned() const
 	{
 		return _isOwned;
+	}
+
+	inline CPUHardwareCounters *getHardwareCounters()
+	{
+		return &(_hardwareCounters);
 	}
 
 };

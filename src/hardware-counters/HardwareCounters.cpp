@@ -5,6 +5,8 @@
 */
 
 #include "HardwareCounters.hpp"
+#include "CPUHardwareCounters.hpp"
+#include "CPUHardwareCountersInterface.hpp"
 #include "TaskHardwareCounters.hpp"
 #include "TaskHardwareCountersInterface.hpp"
 #include "ThreadHardwareCounters.hpp"
@@ -195,6 +197,39 @@ void HardwareCounters::shutdown()
 	_anyBackendEnabled = false;
 }
 
+void HardwareCounters::cpuBecomesIdle()
+{
+	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
+	assert(thread != nullptr);
+
+	CPU *cpu = thread->getComputePlace();
+	assert(cpu != nullptr);
+
+	CPUHardwareCounters *cpuCounters = cpu->getHardwareCounters();
+	ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
+	assert(cpuCounters != nullptr);
+
+	if (_enabled[HWCounters::PQOS_BACKEND]) {
+		CPUHardwareCountersInterface *pqosCPUCounters = cpuCounters->getPQoSCounters();
+		ThreadHardwareCountersInterface *pqosThreadCounters = threadCounters.getPQoSCounters();
+		assert(pqosCPUCounters != nullptr);
+		assert(_pqosBackend != nullptr);
+
+		_pqosBackend->cpuBecomesIdle(pqosCPUCounters, pqosThreadCounters);
+	}
+
+	if (_enabled[HWCounters::PAPI_BACKEND]) {
+		CPUHardwareCountersInterface *papiCPUCounters = cpuCounters->getPAPICounters();
+		ThreadHardwareCountersInterface *papiThreadCounters = threadCounters.getPAPICounters();
+		assert(papiCPUCounters != nullptr);
+		assert(_pqosBackend != nullptr);
+
+		_papiBackend->cpuBecomesIdle(papiCPUCounters, papiThreadCounters);
+	}
+
+	// NOTE: RAPL doesn't need to be called for CPU procedures
+}
+
 void HardwareCounters::threadInitialized()
 {
 	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
@@ -294,18 +329,22 @@ void HardwareCounters::taskStarted(Task *task)
 		assert(thread != nullptr);
 		assert(task != nullptr);
 
+		CPU *cpu = thread->getComputePlace();
+		assert(cpu != nullptr);
+
 		ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+		CPUHardwareCounters *cpuCounters = cpu->getHardwareCounters();
 		if (_enabled[HWCounters::PQOS_BACKEND]) {
 			assert(_pqosBackend != nullptr);
 
-			_pqosBackend->taskStarted(threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
+			_pqosBackend->taskStarted(cpuCounters->getPQoSCounters(), threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
 		}
 
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
-			_papiBackend->taskStarted(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
+			_papiBackend->taskStarted(cpuCounters->getPQoSCounters(), threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
 		}
 
 		// NOTE: RAPL doesn't need to be called for task-thread procedures
@@ -316,21 +355,24 @@ void HardwareCounters::taskStopped(Task *task)
 {
 	if (_anyBackendEnabled) {
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
+		CPU *cpu = thread->getComputePlace();
 		assert(thread != nullptr);
 		assert(task != nullptr);
+		assert(cpu != nullptr);
 
 		ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+		CPUHardwareCounters *cpuCounters = cpu->getHardwareCounters();
 		if (_enabled[HWCounters::PQOS_BACKEND]) {
 			assert(_pqosBackend != nullptr);
 
-			_pqosBackend->taskStopped(threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
+			_pqosBackend->taskStopped(cpuCounters->getPQoSCounters(), threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
 		}
 
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
-			_papiBackend->taskStopped(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
+			_papiBackend->taskStopped(cpuCounters->getPAPICounters(), threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
 		}
 
 		// NOTE: RAPL doesn't need to be called for task-thread procedures

@@ -116,6 +116,30 @@ PQoSHardwareCounters::~PQoSHardwareCounters()
 	}
 }
 
+void PQoSHardwareCounters::cpuBecomesIdle(
+	CPUHardwareCountersInterface *cpuCounters,
+	ThreadHardwareCountersInterface *threadCounters
+) {
+	if (_enabled) {
+		// First read counters
+		PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
+		PQoSCPUHardwareCounters *pqosCPUCounters = (PQoSCPUHardwareCounters *) cpuCounters;
+		assert(pqosThreadCounters != nullptr);
+		assert(pqosCPUCounters != nullptr);
+
+		// Poll PQoS events from the current thread only
+		pqos_mon_data *threadData = pqosThreadCounters->getData();
+		int ret = pqos_mon_poll(&threadData, 1);
+		FatalErrorHandler::failIf(
+			ret != PQOS_RETVAL_OK,
+			ret, " when polling PQoS events for a task (start)"
+		);
+
+		// Copy read values for CPU counters
+		pqosCPUCounters->readCounters(threadData);
+	}
+}
+
 void PQoSHardwareCounters::threadInitialized(ThreadHardwareCountersInterface *threadCounters)
 {
 	if (_enabled) {
@@ -200,27 +224,33 @@ void PQoSHardwareCounters::taskReinitialized(TaskHardwareCountersInterface *task
 }
 
 void PQoSHardwareCounters::taskStarted(
+	CPUHardwareCountersInterface *cpuCounters,
 	ThreadHardwareCountersInterface *threadCounters,
 	TaskHardwareCountersInterface *taskCounters
 ) {
 	if (_enabled) {
+		// First read counters
+		PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
 		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
+		PQoSCPUHardwareCounters *pqosCPUCounters = (PQoSCPUHardwareCounters *) cpuCounters;
+		assert(pqosThreadCounters != nullptr);
 		assert(pqosTaskCounters != nullptr);
+		assert(pqosCPUCounters != nullptr);
 
+		// Poll PQoS events from the current thread only
+		pqos_mon_data *threadData = pqosThreadCounters->getData();
+		int ret = pqos_mon_poll(&threadData, 1);
+		FatalErrorHandler::failIf(
+			ret != PQOS_RETVAL_OK,
+			ret, " when polling PQoS events for a task (start)"
+		);
+
+		// Copy read values for CPU counters
+		pqosCPUCounters->readCounters(threadData);
+
+		// Copy read values for Task counters
 		if (pqosTaskCounters->isEnabled()) {
 			if (!pqosTaskCounters->isActive()) {
-				PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
-				assert(threadCounters != nullptr);
-
-				// Poll PQoS events from the current thread only
-				pqos_mon_data *threadData = pqosThreadCounters->getData();
-				int ret = pqos_mon_poll(&threadData, 1);
-				FatalErrorHandler::failIf(
-					ret != PQOS_RETVAL_OK,
-					ret, " when polling PQoS events for a task (start)"
-				);
-
-				// If successfull, save counters when the task starts or resumes execution
 				pqosTaskCounters->startReading(threadData);
 			}
 		}
@@ -228,27 +258,34 @@ void PQoSHardwareCounters::taskStarted(
 }
 
 void PQoSHardwareCounters::taskStopped(
+	CPUHardwareCountersInterface *cpuCounters,
 	ThreadHardwareCountersInterface *threadCounters,
 	TaskHardwareCountersInterface *taskCounters
 ) {
 	if (_enabled) {
+		// First read counters
+		PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
 		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
+		PQoSCPUHardwareCounters *pqosCPUCounters = (PQoSCPUHardwareCounters *) cpuCounters;
+		assert(pqosThreadCounters != nullptr);
 		assert(pqosTaskCounters != nullptr);
+		assert(pqosCPUCounters != nullptr);
 
+		pqos_mon_data *threadData = pqosThreadCounters->getData();
+
+		// Poll PQoS events from the current thread only
+		int ret = pqos_mon_poll(&threadData, 1);
+		FatalErrorHandler::failIf(
+			ret != PQOS_RETVAL_OK,
+			ret, " when polling PQoS events for a task (stop)"
+		);
+
+		// Copy read values for CPU counters
+		pqosCPUCounters->readCounters(threadData);
+
+		// Copy read values for Task counters
 		if (pqosTaskCounters->isEnabled()) {
 			if (pqosTaskCounters->isActive()) {
-				PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
-				assert(threadCounters != nullptr);
-
-				pqos_mon_data *threadData = pqosThreadCounters->getData();
-
-				// Poll PQoS events from the current thread only
-				int ret = pqos_mon_poll(&threadData, 1);
-				FatalErrorHandler::failIf(
-					ret != PQOS_RETVAL_OK,
-					ret, " when polling PQoS events for a task (stop)"
-				);
-
 				pqosTaskCounters->stopReading(threadData);
 			}
 		}

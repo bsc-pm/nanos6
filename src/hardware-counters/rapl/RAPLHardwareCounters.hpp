@@ -16,6 +16,7 @@
 #define RAPL_BUFFER_SIZE 256
 
 
+class CPUHardwareCountersInterface;
 class Task;
 class TaskHardwareCountersInterface;
 class ThreadHardwareCountersInterface;
@@ -79,6 +80,10 @@ public:
 
 	~RAPLHardwareCounters();
 
+	inline void cpuBecomesIdle(CPUHardwareCountersInterface *, ThreadHardwareCountersInterface *)
+	{
+	}
+
 	inline void threadInitialized(ThreadHardwareCountersInterface *)
 	{
 	}
@@ -95,12 +100,18 @@ public:
 	{
 	}
 
-	inline void taskStarted(ThreadHardwareCountersInterface *, TaskHardwareCountersInterface *)
-	{
+	inline void taskStarted(
+		CPUHardwareCountersInterface *,
+		ThreadHardwareCountersInterface *,
+		TaskHardwareCountersInterface *
+	) {
 	}
 
-	inline void taskStopped(ThreadHardwareCountersInterface *, TaskHardwareCountersInterface *)
-	{
+	inline void taskStopped(
+		CPUHardwareCountersInterface *,
+		ThreadHardwareCountersInterface *,
+		TaskHardwareCountersInterface *
+	) {
 	}
 
 	inline void taskFinished(Task *, TaskHardwareCountersInterface *)

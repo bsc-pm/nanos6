@@ -26,6 +26,10 @@ public:
 	{
 	}
 
+	inline void cpuBecomesIdle(CPUHardwareCountersInterface *, ThreadHardwareCountersInterface *)
+	{
+	}
+
 	inline void threadInitialized(ThreadHardwareCountersInterface *)
 	{
 	}
@@ -46,8 +50,11 @@ public:
 	{
 	}
 
-	inline void taskStopped(ThreadHardwareCountersInterface *, TaskHardwareCountersInterface *)
-	{
+	inline void taskStopped(
+		CPUHardwareCountersInterface *,
+		ThreadHardwareCountersInterface *,
+		TaskHardwareCountersInterface *
+	) {
 	}
 
 	inline void taskFinished(Task *, TaskHardwareCountersInterface *)

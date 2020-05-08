@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <pthread.h>
@@ -18,7 +18,8 @@ CPU::CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId)
 	_activationStatus(uninitialized_status),
 	_systemCPUId(systemCPUId),
 	_NUMANodeId(NUMANodeId),
-	_isOwned(true)
+	_isOwned(true),
+	_hardwareCounters()
 {
 	CPU_ZERO(&_cpuMask);
 	CPU_SET(systemCPUId, &_cpuMask);

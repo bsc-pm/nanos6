@@ -8,6 +8,7 @@
 #define HARDWARE_COUNTERS_INTERFACE_HPP
 
 
+class CPUHardwareCountersInterface;
 class Task;
 class TaskHardwareCountersInterface;
 class ThreadHardwareCountersInterface;
@@ -19,6 +20,15 @@ public:
 	virtual ~HardwareCountersInterface()
 	{
 	}
+
+	//! \brief Accumulate hardware counters for a CPU
+	//!
+	//! \param[out] cpuCounters The hardware counter structures of the CPU
+	//! \param[out] threadCounters The hardware counter structures of the thread
+	virtual void cpuBecomesIdle(
+		CPUHardwareCountersInterface *cpuCounters,
+		ThreadHardwareCountersInterface *threadCounters
+	) = 0;
 
 	//! \brief Initialize hardware counter structures for a new thread
 	//!
@@ -43,18 +53,22 @@ public:
 
 	//! \brief Start reading hardware counters for a task
 	//!
+	//! \param[out] cpuCounters The hardware counter structures of the CPU executing the task
 	//! \param[out] threadCounters The hardware counter structures of the thread executing the task
 	//! \param[out] taskCounters The hardware counter structure of the task to start
 	virtual void taskStarted(
+		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	) = 0;
 
 	//! \brief Stop reading hardware counters for a task
 	//!
+	//! \param[out] cpuCounters The hardware counter structures of the CPU executing the task
 	//! \param[out] threadCounters The hardware counter structures of the thread executing the task
 	//! \param[out] taskCounters The hardware counter structure of the task to stop
 	virtual void taskStopped(
+		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	) = 0;

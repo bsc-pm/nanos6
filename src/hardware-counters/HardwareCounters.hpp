@@ -85,6 +85,9 @@ public:
 		return _enabledEvents;
 	}
 
+	//! \brief Accumulate hardware counters for a CPU when it becomes idle
+	static void cpuBecomesIdle();
+
 	//! \brief Initialize hardware counter structures for a new thread
 	static void threadInitialized();
 

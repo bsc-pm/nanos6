@@ -56,6 +56,11 @@ public:
 
 	~PQoSHardwareCounters();
 
+	void cpuBecomesIdle(
+		CPUHardwareCountersInterface *cpuCounters,
+		ThreadHardwareCountersInterface *threadCounters
+	);
+
 	void threadInitialized(ThreadHardwareCountersInterface *threadCounters);
 
 	void threadShutdown(ThreadHardwareCountersInterface *threadCounters);
@@ -65,11 +70,13 @@ public:
 	void taskReinitialized(TaskHardwareCountersInterface *taskCounters);
 
 	void taskStarted(
+		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	);
 
 	void taskStopped(
+		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	);
