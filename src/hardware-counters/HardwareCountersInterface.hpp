@@ -40,12 +40,6 @@ public:
 	//! \param[out] threadCounters The hardware counter structures to initialize
 	virtual void threadShutdown(ThreadHardwareCountersInterface *threadCounters) = 0;
 
-	//! \brief Initialize hardware counter structures for a task
-	//!
-	//! \param[out] task The newly created task
-	//! \param[in] enabled Whether to create structures and monitor this task
-	virtual void taskCreated(Task *task, bool enabled) = 0;
-
 	//! \brief Reinitialize all hardware counter structures for a task
 	//!
 	//! \param[out] taskCounters The hardware counter structure to reinitialize

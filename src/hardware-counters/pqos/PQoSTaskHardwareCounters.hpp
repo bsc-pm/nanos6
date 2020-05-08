@@ -16,7 +16,6 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-// Public so PQoSCPUHardwareCounters can benefit from it
 namespace BoostAcc = boost::accumulators;
 namespace BoostAccTag = boost::accumulators::tag;
 

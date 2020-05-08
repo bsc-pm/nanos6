@@ -38,10 +38,6 @@ public:
 	{
 	}
 
-	inline void taskCreated(Task *, bool)
-	{
-	}
-
 	inline void taskReinitialized(TaskHardwareCountersInterface *)
 	{
 	}

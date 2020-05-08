@@ -11,6 +11,8 @@
 #include "PQoSTaskHardwareCounters.hpp"
 #include "PQoSThreadHardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "tasks/TaskInfo.hpp"
+#include "tasks/TaskTypeData.hpp"
 
 
 PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verboseFile, const std::vector<bool> &enabledEvents)
@@ -189,30 +191,6 @@ void PQoSHardwareCounters::threadShutdown(ThreadHardwareCountersInterface *threa
 	}
 }
 
-void PQoSHardwareCounters::taskCreated(Task *task, bool enabled)
-{
-	if (_enabled) {
-		assert(task != nullptr);
-
-		if (enabled) {
-			if (_verbose) {
-				std::string tasktype = task->getLabel();
-
-				_statsLock.lock();
-				statistics_map_t::iterator it = _statistics.find(tasktype);
-				if (it == _statistics.end()) {
-					_statistics.emplace(
-						std::piecewise_construct,
-						std::forward_as_tuple(tasktype),
-						std::forward_as_tuple(HWCounters::PQOS_NUM_EVENTS)
-					);
-				}
-				_statsLock.unlock();
-			}
-		}
-	}
-}
-
 void PQoSHardwareCounters::taskReinitialized(TaskHardwareCountersInterface *taskCounters)
 {
 	if (_enabled) {
@@ -302,39 +280,40 @@ void PQoSHardwareCounters::taskFinished(Task *task, TaskHardwareCountersInterfac
 
 		if (pqosTaskCounters->isEnabled()) {
 			if (_verbose) {
-				std::string tasktype = task->getLabel();
-
-				_statsLock.lock();
-				statistics_map_t::iterator it = _statistics.find(tasktype);
-				assert(it != _statistics.end());
-
-				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT]) {
-					it->second[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT](
-						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_L3_OCCUP)
-					);
+				// The main task does not have this kind of data
+				TaskTypeData *taskTypeData = task->getTaskTypeData();
+				if (taskTypeData != nullptr) {
+					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT]) {
+						taskTypeData->addCounter(
+							HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT,
+							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_L3_OCCUP)
+						);
+					}
+					if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT]) {
+						taskTypeData->addCounter(
+							HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT,
+							pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_IPC)
+						);
+					}
+					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
+						taskTypeData->addCounter(
+							HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT,
+							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_LMEM_BW)
+						);
+					}
+					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
+						taskTypeData->addCounter(
+							HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT,
+							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_RMEM_BW)
+						);
+					}
+					if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT]) {
+						taskTypeData->addCounter(
+							HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT,
+							pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_LLC_MISS)
+						);
+					}
 				}
-				if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT]) {
-					it->second[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT](
-						pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_IPC)
-					);
-				}
-				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
-					it->second[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT](
-						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_LMEM_BW)
-					);
-				}
-				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
-					it->second[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT](
-						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_RMEM_BW)
-					);
-				}
-				if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT]) {
-					it->second[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT](
-						pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_LLC_MISS)
-					);
-				}
-
-				_statsLock.unlock();
 			}
 		}
 	}
@@ -357,21 +336,22 @@ void PQoSHardwareCounters::displayStatistics()
 	outputStream << "-------------------------------\n";
 
 	// Iterate through all tasktypes
-	for (auto &it : _statistics) {
-		if (it.first != "Unlabeled") {
+	task_type_map_t &taskTypeMap = TaskInfo::getTaskTypeMapReference();
+	for (task_type_map_t::iterator it = taskTypeMap.begin(); it != taskTypeMap.end(); ++it) {
+		if (it->first._taskLabel != "Unlabeled") {
 			outputStream <<
-				std::setw(7)  << "STATS"                 << " " <<
-				std::setw(6)  << "PQOS"                  << " " <<
-				std::setw(30) << "TASK-TYPE"             << " " <<
-				std::setw(20) << it.first                << "\n";
+				std::setw(7)  << "STATS"             << " " <<
+				std::setw(6)  << "PQOS"              << " " <<
+				std::setw(30) << "TASK-TYPE"         << " " <<
+				std::setw(20) << it->first._taskLabel << "\n";
 
 			// Iterate through all counter types
 			for (unsigned short id = 0; id < HWCounters::PQOS_NUM_EVENTS; ++id) {
 				if (_enabledEvents[id]) {
-					double counterAvg   = BoostAcc::mean(it.second[id]);
-					double counterStdev = sqrt(BoostAcc::variance(it.second[id]));
-					double counterSum   = BoostAcc::sum(it.second[id]);
-					size_t instances    = BoostAcc::count(it.second[id]);
+					double counterAvg   = it->second.getCounterAvg((HWCounters::counters_t) id);
+					double counterStdev = it->second.getCounterStddev((HWCounters::counters_t) id);
+					double counterSum   = it->second.getCounterSum((HWCounters::counters_t) id);
+					size_t instances    = it->second.getCounterCount((HWCounters::counters_t) id);
 
 					// In KB
 					unsigned short pqosId = id + HWCounters::PQOS_MIN_EVENT;
@@ -388,7 +368,7 @@ void PQoSHardwareCounters::displayStatistics()
 						std::setw(7)  << "STATS"                                   << " "   <<
 						std::setw(6)  << "PQOS"                                    << " "   <<
 						std::setw(30) << HWCounters::counterDescriptions[pqosId]   << " "   <<
-						std::setw(20) << "INSTANCES: " + std::to_string(instances) << " " <<
+						std::setw(20) << "INSTANCES: " + std::to_string(instances) << " "   <<
 						std::setw(30) << "SUM / AVG / STDEV"                       << " "   <<
 						std::setw(15) << counterSum                                << " / " <<
 						std::setw(15) << counterAvg                                << " / " <<
