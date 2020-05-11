@@ -97,7 +97,7 @@ public:
 			flags &= ~nanos6_task_flag_t::nanos6_taskloop_task;
 		}
 
-		nanos6_create_task(parentTaskInfo, parentTaskInvocationInfo, originalArgsBlockSize, &argsBlock, (void **)&task, flags, parentNumDeps);
+		nanos6_create_task(parentTaskInfo, parentTaskInvocationInfo, originalArgsBlockSize, &argsBlock, (void **)&task, flags, -1);
 		assert(argsBlock != nullptr);
 		assert(task != nullptr);
 

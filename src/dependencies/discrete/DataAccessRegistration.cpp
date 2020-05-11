@@ -142,6 +142,10 @@ namespace DataAccessRegistration {
 		assert(address != nullptr);
 		assert(length > 0);
 
+		if (task->isTaskloop()) {
+			weak |= ((Taskloop *)task)->isSourceTaskloop();
+		}
+
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 
 		assert(!accessStruct.hasBeenDeleted());
@@ -302,14 +306,38 @@ namespace DataAccessRegistration {
 			// by a taskloop are not.
 			if (task->isRunnable()) {
 				Taskloop *taskloop = (Taskloop *) task;
-				taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
+				if (taskloop->isSourceTaskloop()) {
+					Taskloop::bounds_t &bounds = taskloop->getBounds();
+					size_t tasks = std::ceil((double) (bounds.upper_bound - bounds.lower_bound) / (double) bounds.grainsize);
+					Taskloop::bounds_t tmpBounds;
+					for (size_t t = 0; t < tasks; t++) {
+						tmpBounds.lower_bound = bounds.lower_bound+t*bounds.grainsize;
+						tmpBounds.upper_bound = std::min(tmpBounds.lower_bound + bounds.grainsize, bounds.upper_bound);
+						taskInfo->register_depinfo(task->getArgsBlock(), (void *) &tmpBounds, task);
+					}
+					assert(tmpBounds.upper_bound == bounds.upper_bound);
+				} else {
+					taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
+				}
 			} else {
 				Taskfor *taskfor = (Taskfor *) task;
 				taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskfor->getBounds(), task);
 			}
 		} else if (task->isTaskloop()) {
 			Taskloop *taskloop = (Taskloop *) task;
-			taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
+			if (taskloop->isSourceTaskloop()) {
+				Taskloop::bounds_t &bounds = taskloop->getBounds();
+				size_t tasks = std::ceil((double) (bounds.upper_bound - bounds.lower_bound) / (double) bounds.grainsize);
+				Taskloop::bounds_t tmpBounds;
+				for (size_t t = 0; t < tasks; t++) {
+					tmpBounds.lower_bound = bounds.lower_bound+t*bounds.grainsize;
+					tmpBounds.upper_bound = std::min(tmpBounds.lower_bound + bounds.grainsize, bounds.upper_bound);
+					taskInfo->register_depinfo(task->getArgsBlock(), (void *) &tmpBounds, task);
+				}
+				assert(tmpBounds.upper_bound == bounds.upper_bound);
+			} else {
+				taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
+			}
 		} else {
 			taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
 		}
