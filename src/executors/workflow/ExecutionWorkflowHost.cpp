@@ -106,9 +106,9 @@ namespace ExecutionWorkflow {
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 
+			HardwareCounters::taskStopped(_task);
 			Monitoring::taskChangedStatus(_task, runtime_status);
 			Monitoring::taskCompletedUserCode(_task);
-			HardwareCounters::taskStopped(_task);
 
 			if (_task->isTaskfor()) {
 				assert(_task->isRunnable());

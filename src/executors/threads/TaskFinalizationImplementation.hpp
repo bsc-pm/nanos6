@@ -56,8 +56,8 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 
 					task->setComputePlace(nullptr);
 
-					Monitoring::taskFinished(task);
 					HardwareCounters::taskFinished(task);
+					Monitoring::taskFinished(task);
 					// This is just to emulate a recursive call to TaskFinalization::taskFinished() again.
 					// It should not return false because at this point delayed release has happenned which means that
 					// the task has gone through a taskwait (no more children should be unfinished)

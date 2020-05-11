@@ -146,6 +146,7 @@ void nanos6_shutdown(void) {
 	// Delete all registered external threads, including mainThread
 	ExternalThreadGroup::shutdown();
 
+	HardwareCounters::shutdown();
 	Monitoring::shutdown();
 
 	HardwareInfo::shutdown();
@@ -155,6 +156,5 @@ void nanos6_shutdown(void) {
 
 	MemoryAllocator::shutdown();
 	RuntimeInfoEssentials::shutdown();
-	HardwareCounters::shutdown();
 	TurboSettings::shutdown();
 }

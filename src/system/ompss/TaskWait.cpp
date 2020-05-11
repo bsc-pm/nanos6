@@ -65,10 +65,10 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 	// 		on the "old" CPU)
 
 	if (!done) {
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		HardwareCounters::taskStopped(currentTask);
-
+		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
+
 		TaskBlocking::taskBlocks(currentThread, currentTask);
 
 		// Update the CPU since the thread may have migrated
@@ -89,9 +89,8 @@ void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
 
 	if (!done && (currentThread != nullptr)) {
 		// The instrumentation was notified that the task had been blocked
-		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
-
 		HardwareCounters::taskStarted(currentTask);
+		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 }

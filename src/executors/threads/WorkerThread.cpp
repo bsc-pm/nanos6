@@ -51,9 +51,8 @@ void WorkerThread::initialize()
 	// This is needed for kernel-level threads to stop them after initialization
 	synchronizeInitialization();
 
-	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
-
 	HardwareCounters::threadInitialized();
+	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
 	Monitoring::initializeThread();
 }
 
@@ -127,10 +126,9 @@ void WorkerThread::body()
 	// The thread should not have any task assigned at this point
 	assert(_task == nullptr);
 
-	Instrument::threadWillShutdown();
-
-	Monitoring::shutdownThread();
 	HardwareCounters::threadShutdown();
+	Instrument::threadWillShutdown();
+	Monitoring::shutdownThread();
 
 	ThreadManager::addShutdownThread(this);
 }

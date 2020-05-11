@@ -72,8 +72,8 @@ int DeviceComputePlace::pollingFinishTasks(DeviceFunctionsInterface *functions)
 				DataAccessRegistration::unregisterTaskDataAccesses(task, cpu,
 					localHpDependencyData, task->getMemoryPlace(), true);
 
-				Monitoring::taskFinished(task);
 				HardwareCounters::taskFinished(task);
+				Monitoring::taskFinished(task);
 				TaskFinalization::taskFinished(task, cpu);
 
 				if (task->markAsReleased()) {

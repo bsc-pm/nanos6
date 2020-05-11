@@ -64,8 +64,8 @@ void nanos6_create_task(
 	if (currentWorkerThread != nullptr) {
 		Task *parent = currentWorkerThread->getTask();
 		if (parent != nullptr) {
-			Monitoring::taskChangedStatus(parent, runtime_status);
 			HardwareCounters::taskStopped(parent);
+			Monitoring::taskChangedStatus(parent, runtime_status);
 		}
 	}
 
@@ -191,9 +191,8 @@ void nanos6_submit_task(void *taskHandle)
 		}
 	}
 
-	Instrument::createdTask(task, taskInstrumentationId);
-
 	HardwareCounters::taskCreated(task);
+	Instrument::createdTask(task, taskInstrumentationId);
 	Monitoring::taskCreated(task);
 
 	// Compute the task priority only when the scheduler is

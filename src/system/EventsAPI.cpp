@@ -74,8 +74,9 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 			/* memory place */ nullptr,
 			/* from a busy thread */ true);
 
-		Monitoring::taskFinished(task);
 		HardwareCounters::taskFinished(task);
+		Monitoring::taskFinished(task);
+
 		TaskFinalization::taskFinished(task, cpu, true);
 
 		// Try to dispose the task
