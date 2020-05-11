@@ -16,6 +16,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
@@ -44,11 +45,7 @@ private:
 	{
 		int ret = DLB_LendCpu(systemCPUId);
 		if (ret != DLB_SUCCESS) {
-			FatalErrorHandler::failIf(
-				true,
-				"DLB Error ", ret, " when trying to lend a CPU(",
-				systemCPUId, ")"
-			);
+			FatalErrorHandler::fail("DLB Error ", ret, " when trying to lend a CPU(", systemCPUId, ")");
 		}
 
 		return ret;
@@ -65,11 +62,7 @@ private:
 		int ret = DLB_ReclaimCpu(systemCPUId);
 		if (!ignoreError) {
 			if (ret != DLB_NOUPDT && ret != DLB_NOTED && ret != DLB_SUCCESS) {
-				FatalErrorHandler::failIf(
-					true,
-					"DLB Error ", ret, " when trying to reclaim a CPU(",
-					systemCPUId, ")"
-				);
+				FatalErrorHandler::fail("DLB Error ", ret, " when trying to reclaim a CPU(", systemCPUId, ")");
 			}
 		}
 
@@ -85,10 +78,7 @@ private:
 	{
 		int ret = DLB_ReclaimCpus(numCPUs);
 		if (ret != DLB_NOUPDT && ret != DLB_NOTED && ret != DLB_SUCCESS) {
-			FatalErrorHandler::failIf(
-				true,
-				"DLB Error ", ret, " when trying to reclaim ", numCPUs, " CPUs"
-			);
+			FatalErrorHandler::fail("DLB Error ", ret, " when trying to reclaim ", numCPUs, " CPUs");
 		}
 
 		return ret;
@@ -103,10 +93,7 @@ private:
 	{
 		int ret = DLB_ReclaimCpuMask(&(maskCPUs));
 		if (ret != DLB_NOUPDT && ret != DLB_NOTED && ret != DLB_SUCCESS) {
-			FatalErrorHandler::failIf(
-				true,
-				"DLB Error ", ret, " when reclaiming CPUs through a mask"
-			);
+			FatalErrorHandler::fail("DLB Error ", ret, " when reclaiming CPUs through a mask");
 		}
 
 		return ret;
@@ -121,10 +108,7 @@ private:
 	{
 		int ret = DLB_AcquireCpus(numCPUs);
 		if (ret != DLB_NOUPDT && ret != DLB_NOTED && ret != DLB_SUCCESS) {
-			FatalErrorHandler::failIf(
-				true,
-				"DLB Error ", ret, " when trying to acquire ", numCPUs, " CPUs"
-			);
+			FatalErrorHandler::fail("DLB Error ", ret, " when trying to acquire ", numCPUs, " CPUs");
 		}
 
 		return ret;
@@ -144,10 +128,7 @@ private:
 			ret != DLB_SUCCESS &&
 			ret != DLB_ERR_PERM
 		) {
-			FatalErrorHandler::failIf(
-				true,
-				"DLB Error ", ret, " when trying to acquire CPUs through a mask"
-			);
+			FatalErrorHandler::fail("DLB Error ", ret, " when trying to acquire CPUs through a mask");
 		}
 
 		return ret;
@@ -167,11 +148,7 @@ private:
 			if ((ret != DLB_ERR_PERM) ||
 				(ret == DLB_ERR_PERM && cpu->getActivationStatus() != CPU::shutdown_status)
 			) {
-				FatalErrorHandler::failIf(
-					true,
-					"DLB Error ", ret, " when trying to return a CPU(",
-					systemCPUId, ")"
-				);
+				FatalErrorHandler::fail("DLB Error ", ret, " when trying to return a CPU(", systemCPUId, ")");
 			}
 		}
 
@@ -217,8 +194,7 @@ public:
 	//! \return False in this implementation
 	static inline bool enable(size_t)
 	{
-		FatalErrorHandler::warnIf(
-			true,
+		FatalErrorHandler::warn(
 			"The enable/disable API is deactivated when using DLB. ",
 			"No action will be performed"
 		);
@@ -233,8 +209,7 @@ public:
 	//! \return False in this implementation
 	static inline bool disable(size_t)
 	{
-		FatalErrorHandler::warnIf(
-			true,
+		FatalErrorHandler::warn(
 			"The enable/disable API is deactivated when using DLB. ",
 			"No action will be performed"
 		);
@@ -268,6 +243,8 @@ public:
 					// we lend the CPU, try to acquire CPUs through DLB, and
 					// the CPU we've just lent should be re-acquired
 					dlbLendCPU(cpu->getSystemCPUId());
+
+					HardwareCounters::cpuBecomesIdle();
 					Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 					if (Scheduler::hasAvailableWork((ComputePlace *) cpu)) {
@@ -393,6 +370,7 @@ public:
 		assert(cpu != nullptr);
 		assert(!cpu->isOwned());
 
+		HardwareCounters::cpuBecomesIdle();
 		Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 		Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
@@ -580,6 +558,7 @@ public:
 			// At the start of the checkIfMustReturnCPU call, the CPU might
 			// already be returned, so we switch here to idle and switch
 			// back quickly to active if the CPU was not returned
+			HardwareCounters::cpuBecomesIdle();
 			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
