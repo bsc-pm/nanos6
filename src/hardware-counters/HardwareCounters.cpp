@@ -10,6 +10,7 @@
 #include "hardware-counters/TaskHardwareCountersInterface.hpp"
 #include "hardware-counters/ThreadHardwareCounters.hpp"
 #include "hardware-counters/ThreadHardwareCountersInterface.hpp"
+#include "support/JsonFile.hpp"
 #include "tasks/Task.hpp"
 
 #if HAVE_PAPI
@@ -28,6 +29,62 @@ HardwareCountersInterface *HardwareCounters::_pqosBackend;
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
 std::vector<bool> HardwareCounters::_enabledEvents(HWCounters::TOTAL_NUM_EVENTS);
 
+
+void HardwareCounters::loadConfigurationFile()
+{
+	JsonFile configFile = JsonFile("./nanos6_hwcounters.json");
+	if (configFile.fileExists()) {
+		configFile.loadData();
+
+		// Navigate through the file and extract the enabled backens and counters
+		configFile.getRootNode()->traverseChildrenNodes(
+			[&](const std::string &backend, const JsonNode<> &backendNode) {
+				if (backend == "PAPI") {
+					if (backendNode.dataExists("ENABLED")) {
+						bool converted = false;
+						bool enabled = backendNode.getData("ENABLED", converted);
+						assert(converted);
+
+						_enabled[HWCounters::PAPI_BACKEND] = enabled;
+						if (enabled) {
+							for (short i = HWCounters::PAPI_MIN_EVENT; i <= HWCounters::PAPI_MAX_EVENT; ++i) {
+								std::string eventDescription(HWCounters::counterDescriptions[i]);
+								if (backendNode.dataExists(eventDescription)) {
+									converted = false;
+									_enabledEvents[i] = backendNode.getData(eventDescription, converted);
+									assert(converted);
+								}
+							}
+						}
+					}
+				} else if (backend == "PQOS") {
+					if (backendNode.dataExists("ENABLED")) {
+						bool converted = false;
+						bool enabled = backendNode.getData("ENABLED", converted);
+						assert(converted);
+
+						_enabled[HWCounters::PQOS_BACKEND] = enabled;
+						if (enabled) {
+							for (short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
+								std::string eventDescription(HWCounters::counterDescriptions[i]);
+								if (backendNode.dataExists(eventDescription)) {
+									converted = false;
+									_enabledEvents[i] = backendNode.getData(eventDescription, converted);
+									assert(converted);
+								}
+							}
+						}
+					}
+				} else {
+					FatalErrorHandler::fail(
+						"Unexpected '", backend, "' backend name found while processing the ",
+						"hardware counters configuration file."
+					);
+				}
+			}
+		);
+	}
+}
 
 void HardwareCounters::initialize()
 {

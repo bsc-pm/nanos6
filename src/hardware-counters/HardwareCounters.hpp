@@ -13,7 +13,6 @@
 #include "SupportedHardwareCounters.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "support/JsonFile.hpp"
 
 
 class Task;
@@ -42,62 +41,11 @@ private:
 
 private:
 
-	static inline void loadConfigurationFile()
-	{
-		JsonFile configFile = JsonFile("./nanos6_hwcounters.json");
-		if (configFile.fileExists()) {
-			configFile.loadData();
+	//! \brief Load backend and counter enabling configuration from the default
+	//! configuration file
+	static void loadConfigurationFile();
 
-			// Navigate through the file and extract the enabled backens and counters
-			configFile.getRootNode()->traverseChildrenNodes(
-				[&](const std::string &backend, const JsonNode<> &backendNode) {
-					if (backend == "PAPI") {
-						if (backendNode.dataExists("ENABLED")) {
-							bool converted = false;
-							bool enabled = backendNode.getData("ENABLED", converted);
-							assert(converted);
-
-							_enabled[HWCounters::PAPI_BACKEND] = enabled;
-							if (enabled) {
-								for (short i = HWCounters::PAPI_MIN_EVENT; i <= HWCounters::PAPI_MAX_EVENT; ++i) {
-									std::string eventDescription(HWCounters::counterDescriptions[i]);
-									if (backendNode.dataExists(eventDescription)) {
-										converted = false;
-										_enabledEvents[i] = backendNode.getData(eventDescription, converted);
-										assert(converted);
-									}
-								}
-							}
-						}
-					} else if (backend == "PQOS") {
-						if (backendNode.dataExists("ENABLED")) {
-							bool converted = false;
-							bool enabled = backendNode.getData("ENABLED", converted);
-							assert(converted);
-
-							_enabled[HWCounters::PQOS_BACKEND] = enabled;
-							if (enabled) {
-								for (short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
-									std::string eventDescription(HWCounters::counterDescriptions[i]);
-									if (backendNode.dataExists(eventDescription)) {
-										converted = false;
-										_enabledEvents[i] = backendNode.getData(eventDescription, converted);
-										assert(converted);
-									}
-								}
-							}
-						}
-					} else {
-						FatalErrorHandler::fail(
-							"Unexpected '", backend, "' backend name found while processing the ",
-							"hardware counters configuration file."
-						);
-					}
-				}
-			);
-		}
-	}
-
+	//! \brief Check if two or more backends are enabled and incompatible
 	static inline void checkIncompatibleBackends()
 	{
 		if (_enabled[HWCounters::PAPI_BACKEND] && _enabled[HWCounters::PQOS_BACKEND]) {
