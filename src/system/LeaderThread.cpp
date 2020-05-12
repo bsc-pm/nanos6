@@ -64,7 +64,7 @@ void LeaderThread::body()
 		Instrument::leaderThreadSpin();
 	}
 
-	Instrument::threadWillShutdown();
+	Instrument::threadWillShutdown(getInstrumentationId());
 
 	return;
 }

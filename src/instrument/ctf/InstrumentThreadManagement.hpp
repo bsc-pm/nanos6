@@ -11,6 +11,7 @@
 #include "InstrumentExternalThreadId.hpp"
 #include "InstrumentThreadId.hpp"
 #include "../api/InstrumentThreadManagement.hpp"
+#include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include "ctfapi/CTFTypes.hpp"
 
@@ -19,6 +20,8 @@ namespace Instrument {
 	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
 		threadId = thread_id_t();
+		ThreadLocalData &tld = getThreadLocalData();
+		tld.isBusyWaiting = false;
 	}
 
 	inline void exitThreadCreation(__attribute__((unused)) thread_id_t threadId)
@@ -37,10 +40,8 @@ namespace Instrument {
 	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
 	void threadWillSuspend(external_thread_id_t threadId);
 	void threadHasResumed(external_thread_id_t threadId);
-
-	inline void threadWillShutdown()
-	{
-	}
+	void threadWillShutdown();
+	void threadWillShutdown(external_thread_id_t threadId);
 
 	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)
 	{

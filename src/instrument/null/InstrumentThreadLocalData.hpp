@@ -15,6 +15,7 @@ namespace Instrument {
 	
 	struct ThreadLocalData {
 		InstrumentationContext _context;
+		bool isBusyWaiting;
 	};
 }
 

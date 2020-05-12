@@ -582,7 +582,8 @@ instrument_ctf_sources = \
 	src/instrument/ctf/InstrumentTaskId.cpp \
 	src/instrument/ctf/InstrumentThreadManagement.cpp \
 	src/instrument/ctf/Nanos6CTFEvents.cpp \
-	src/instrument/support/InstrumentCPULocalDataSupport.cpp
+	src/instrument/support/InstrumentCPULocalDataSupport.cpp \
+	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
 instrument_generic_ids_sources = \
 	src/instrument/generic_ids/GenericIds.cpp
@@ -912,6 +913,7 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentThreadManagement.hpp \
 	src/instrument/api/InstrumentTracingPoints.hpp \
 	src/instrument/api/InstrumentUserMutex.hpp \
+	src/instrument/api/InstrumentWorkerThread.hpp \
 	src/instrument/ctf/ctfapi/context/CTFContext.hpp \
 	src/instrument/ctf/ctfapi/context/CTFContextUnbounded.hpp \
 	src/instrument/ctf/ctfapi/context/CTFContextHardwareCounters.hpp \
@@ -951,6 +953,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentTracingPointTypes.hpp\
 	src/instrument/ctf/InstrumentTracingPoints.hpp \
 	src/instrument/ctf/InstrumentUserMutex.hpp \
+	src/instrument/ctf/InstrumentWorkerThread.hpp \
 	src/instrument/extrae/ExtraeSymbolLiterals.hpp \
 	src/instrument/extrae/ExtraeSymbolResolver.hpp \
 	src/instrument/extrae/InstrumentAddTask.hpp \
@@ -979,6 +982,7 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentTracingPointTypes.hpp\
 	src/instrument/extrae/InstrumentTracingPoints.hpp \
 	src/instrument/extrae/InstrumentUserMutex.hpp \
+	src/instrument/extrae/InstrumentWorkerThread.hpp \
 	src/instrument/extrae/PreloadedExtraeBouncer.hpp \
 	src/instrument/generic_ids/GenericIds.hpp \
 	src/instrument/generic_ids/InstrumentExternalThreadId.hpp \
@@ -1012,6 +1016,7 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentTracingPointTypes.hpp \
 	src/instrument/graph/InstrumentTracingPoints.hpp \
 	src/instrument/graph/InstrumentUserMutex.hpp \
+	src/instrument/graph/InstrumentWorkerThread.hpp \
 	src/instrument/graph/PathLength.hpp \
 	src/instrument/graph/SortAccessGroups.hpp \
 	src/instrument/lint/Callbacks.hpp \
@@ -1042,6 +1047,7 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentTracingPointTypes.hpp \
 	src/instrument/lint/InstrumentTracingPoints.hpp \
 	src/instrument/lint/InstrumentUserMutex.hpp \
+	src/instrument/lint/InstrumentWorkerThread.hpp \
 	src/instrument/null/InstrumentAddTask.hpp \
 	src/instrument/null/InstrumentBlocking.hpp \
 	src/instrument/null/InstrumentComputePlaceId.hpp \
@@ -1069,6 +1075,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentTracingPointTypes.hpp \
 	src/instrument/null/InstrumentTracingPoints.hpp \
 	src/instrument/null/InstrumentUserMutex.hpp \
+	src/instrument/null/InstrumentWorkerThread.hpp \
 	src/instrument/stats/InstrumentAddTask.hpp \
 	src/instrument/stats/InstrumentBlocking.hpp \
 	src/instrument/stats/InstrumentComputePlaceId.hpp \
@@ -1095,6 +1102,7 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentTracingPointTypes.hpp \
 	src/instrument/stats/InstrumentTracingPoints.hpp \
 	src/instrument/stats/InstrumentUserMutex.hpp \
+	src/instrument/stats/InstrumentWorkerThread.hpp \
 	src/instrument/stats/Timer.hpp \
 	src/instrument/support/InstrumentCPULocalDataSupport.hpp \
 	src/instrument/support/InstrumentHardwarePlaceManagement.hpp \
@@ -1138,6 +1146,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentTracingPoints.hpp \
 	src/instrument/verbose/InstrumentUserMutex.hpp \
 	src/instrument/verbose/InstrumentVerbose.hpp \
+	src/instrument/verbose/InstrumentWorkerThread.hpp \
 	src/lowlevel/BacktraceRecording.hpp \
 	src/lowlevel/ConditionVariable.hpp \
 	src/lowlevel/EnvironmentVariable.hpp \

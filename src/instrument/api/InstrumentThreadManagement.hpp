@@ -35,6 +35,7 @@ namespace Instrument {
 	void threadWillSuspend(thread_id_t threadId, compute_place_id_t cpu);
 	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu);
 	void threadWillShutdown();
+	void threadWillShutdown(external_thread_id_t threadId);
 	
 	void threadWillSuspend(external_thread_id_t threadId);
 	void threadHasResumed(external_thread_id_t threadId);

@@ -60,6 +60,10 @@ namespace Instrument {
 	inline void threadWillShutdown()
 	{
 	}
+
+	inline void threadWillShutdown(__attribute__((unused)) external_thread_id_t threadId)
+	{
+	}
 	
 	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)
 	{

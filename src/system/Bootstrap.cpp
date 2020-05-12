@@ -125,7 +125,7 @@ void nanos6_init(void) {
 
 void nanos6_shutdown(void) {
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
-	Instrument::threadWillShutdown();
+	Instrument::threadWillShutdown(mainThread->getInstrumentationId());
 
 	while (SpawnedFunctions::_pendingSpawnedFunctions > 0) {
 		// Wait for spawned functions to fully end

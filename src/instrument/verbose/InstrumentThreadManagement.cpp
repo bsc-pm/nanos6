@@ -175,7 +175,7 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
-	void threadWillShutdown() {
+	static void verboseThreadWillShutdown() {
 		if (!_verboseThreadManagement) {
 			return;
 		}
@@ -189,6 +189,16 @@ namespace Instrument {
 		logEntry->_contents << " <-> ShutdownThread ";
 		
 		addLogEntry(logEntry);
+	}
+
+	void threadWillShutdown(__attribute__((unused)) external_thread_id_t threadId)
+	{
+		verboseThreadWillShutdown();
+	}
+
+	void threadWillShutdown()
+	{
+		verboseThreadWillShutdown();
 	}
 	
 	void threadEnterBusyWait(busy_wait_reason_t reason)

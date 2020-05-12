@@ -36,6 +36,7 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include <InstrumentWorkerThread.hpp>
 #include <Monitoring.hpp>
 
 void WorkerThread::initialize()
@@ -83,6 +84,7 @@ void WorkerThread::body()
 		_task = Scheduler::getReadyTask(cpu);
 		if (_task != nullptr) {
 			WorkerThread *assignedThread = _task->getThread();
+			Instrument::WorkerGetsTask();
 
 			// A task already assigned to another thread
 			if (assignedThread != nullptr) {

@@ -1,12 +1,14 @@
 #include "InstrumentTaskId.hpp"
 
 namespace Instrument {
-	// task Id = 1 is reserved for "Runtime mode" in Paraver Views
-	std::atomic<uint32_t> _nextTaskId(2);
+	// Reserved ctf2prv task and task type Ids:
+	//   0 : Idle
+	//   1 : Runtime
+	//   2 : Busy Wait
+
+	std::atomic<uint32_t> _nextTaskId(3);
 
 	SpinLock globalTaskLabelLock;
-	// taskTypeId 0 reserved for extrae "End"
-	// taskTypeId 1 reserved for extrae "cpu idle"
-	uint32_t _nextTaskTypeId = 2; //protected with globalTaskTypeIdsLock
+	uint32_t _nextTaskTypeId = 3; //protected with globalTaskTypeIdsLock
 	taskLabelMap_t globalTaskLabelMap; // protected with globalTaskTypeIdsLock
 }

@@ -344,7 +344,7 @@ namespace Instrument {
 		}
 	}
 	
-	inline void threadWillShutdown()
+	static inline void extraeThreadWillShutdown()
 	{
 		if (_traceAsThreads) {
 			extrae_combined_events_t ce;
@@ -383,6 +383,16 @@ namespace Instrument {
 			
 			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}
+	}
+
+	inline void threadWillShutdown(__attribute__((unused)) external_thread_id_t threadId)
+	{
+		extraeThreadWillShutdown();
+	}
+
+	inline void threadWillShutdown()
+	{
+		extraeThreadWillShutdown();
 	}
 	
 	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)

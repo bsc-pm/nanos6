@@ -45,7 +45,20 @@ void Instrument::threadWillSuspend(external_thread_id_t threadId)
 {
 	Instrument::tp_thread_suspend(threadId.tid);
 }
+
 void Instrument::threadHasResumed(external_thread_id_t threadId)
 {
 	Instrument::tp_thread_resume(threadId.tid);
+}
+
+void Instrument::threadWillShutdown()
+{
+	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentWorkerThread != nullptr);
+	Instrument::tp_thread_shutdown(currentWorkerThread->getTid());
+}
+
+void Instrument::threadWillShutdown(external_thread_id_t threadId)
+{
+	Instrument::tp_thread_shutdown(threadId.tid);
 }

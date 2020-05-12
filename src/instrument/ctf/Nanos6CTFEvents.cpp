@@ -16,6 +16,9 @@ static CTFAPI::CTFEvent *eventThreadCreate;
 static CTFAPI::CTFEvent *eventExternalThreadCreate;
 static CTFAPI::CTFEvent *eventThreadResume;
 static CTFAPI::CTFEvent *eventThreadSuspend;
+static CTFAPI::CTFEvent *eventThreadShutdown;
+static CTFAPI::CTFEvent *eventWorkerEnterBusyWait;
+static CTFAPI::CTFEvent *eventWorkerExitBusyWait;
 static CTFAPI::CTFEvent *eventTaskLabel;
 static CTFAPI::CTFEvent *eventTaskExecute;
 static CTFAPI::CTFEvent *eventTaskAdd;
@@ -41,6 +44,18 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"nanos6:thread_suspend",
 		"\t\tuint16_t _tid;\n",
 		CTFAPI::CTFContextHWC
+	));
+	eventThreadShutdown = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:thread_shutdown",
+		"\t\tuint16_t _tid;\n"
+	));
+	eventWorkerEnterBusyWait = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:worker_enter_busy_wait",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventWorkerExitBusyWait = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:worker_exit_busy_wait",
+		"\t\tuint8_t _dummy;\n"
 	));
 	eventTaskLabel = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_label",
@@ -99,6 +114,32 @@ void Instrument::tp_thread_suspend(ctf_thread_id_t tid)
 		return;
 
 	CTFAPI::tracepoint(eventThreadSuspend, tid);
+}
+
+void Instrument::tp_thread_shutdown(ctf_thread_id_t tid)
+{
+	if (!eventThreadShutdown->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventThreadShutdown, tid);
+}
+
+void Instrument::tp_worker_enter_busy_wait()
+{
+	if (!eventWorkerEnterBusyWait->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventWorkerEnterBusyWait, dummy);
+}
+
+void Instrument::tp_worker_exit_busy_wait()
+{
+	if (!eventWorkerExitBusyWait->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventWorkerExitBusyWait, dummy);
 }
 
 void Instrument::tp_task_label(char *taskLabel, ctf_task_type_id_t taskTypeId)

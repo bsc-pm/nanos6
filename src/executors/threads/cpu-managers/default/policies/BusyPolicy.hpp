@@ -9,6 +9,8 @@
 
 #include "executors/threads/CPUManagerPolicyInterface.hpp"
 
+#include "InstrumentWorkerThread.hpp"
+
 class ComputePlace;
 
 
@@ -16,12 +18,15 @@ class BusyPolicy : public CPUManagerPolicyInterface {
 
 public:
 
-	inline void execute(ComputePlace *, CPUManagerPolicyHint, size_t = 0)
+	inline void execute(ComputePlace *, CPUManagerPolicyHint hint, size_t = 0)
 	{
 		// NOTE: This policy works as follows:
 		// - If the hint is IDLE_CANDIDATE, the CPU remains active (no change)
 		// - If the hint is REQUEST_CPUS or HANDLE_TASKFOR, no CPUs are woken up as
 		//   all of them should be awake
+
+		if (hint == IDLE_CANDIDATE)
+			Instrument::WorkerBusyWaits();
 	}
 
 };
