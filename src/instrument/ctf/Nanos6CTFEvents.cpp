@@ -47,7 +47,8 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	));
 	eventThreadShutdown = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:thread_shutdown",
-		"\t\tuint16_t _tid;\n"
+		"\t\tuint16_t _tid;\n",
+		CTFAPI::CTFContextHWC
 	));
 	eventWorkerEnterBusyWait = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:worker_enter_busy_wait",
