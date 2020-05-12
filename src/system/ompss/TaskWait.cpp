@@ -22,7 +22,7 @@
 #include <Monitoring.hpp>
 
 
-void nanos6_taskwait(__attribute__((unused)) char const *invocationSource)
+void nanos6_taskwait(char const *invocationSource)
 {
 	Task *currentTask = nullptr;
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();

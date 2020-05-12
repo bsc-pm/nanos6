@@ -414,3 +414,7 @@ Currently, Nanos6 offers different policies when handlind CPUs through the `NANO
 * `NANOS6_CPUMANAGER_POLICY=lewi`: If DLB is enabled, this policy is the counterpart of the `idle` one, but for the DLB mode. In this policy, idle threads lend their CPU to other runtimes or processes.
 * `NANOS6_CPUMANAGER_POLICY=greedy`: If DLB is enabled, the `greedy` policy disables lending CPUs from the process' mask, but allows acquiring and lending external CPUs.
 * `NANOS6_CPUMANAGER_POLICY=default`: Fallback to the default implementation. If DLB is disabled, this policy falls back to the `idle` policy, while if DLB is enabled it falls back to the `lewi` policy.
+
+## Throttle
+
+The Nanos6 runtime has a Throttle mechanism suited for long-running programs that generate lots of tasks without using `taskwait`s. To read more, please refer to the [throttle](docs/system/Throttle.md) documentation.

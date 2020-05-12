@@ -40,7 +40,7 @@ private:
 
 	friend class ThreadManager;
 	friend class WorkerThreadRunner;
-
+	friend class Throttle;
 
 public:
 	WorkerThread() = delete;

@@ -55,10 +55,12 @@ inline Task::Task(
 	_taskPredictions(),
 	_hwCounters(taskCounters),
 	_clusterContext(nullptr),
-	_parentSpawnCallback(nullptr)
+	_parentSpawnCallback(nullptr),
+	_nestingLevel(0)
 {
 	if (parent != nullptr) {
 		parent->addChild(this);
+		_nestingLevel = parent->getNestingLevel() + 1;
 	}
 }
 
@@ -102,9 +104,11 @@ inline void Task::reinitialize(
 	_executionStep = nullptr;
 	_clusterContext = nullptr;
 	_parentSpawnCallback = nullptr;
+	_nestingLevel = 0;
 
 	if (parent != nullptr) {
 		parent->addChild(this);
+		_nestingLevel = parent->getNestingLevel() + 1;
 	}
 
 	// Re-use hardware counters

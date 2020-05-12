@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef MEMORY_ALLOCATOR_HPP
@@ -20,22 +20,32 @@ struct DataAccess;
 class MemoryAllocator {
 private:
 	typedef std::map<size_t, MemoryPool *> size_to_pool_t;
-	
+
 	static std::vector<MemoryPoolGlobal *> _globalMemoryPool;
 	static std::vector<size_to_pool_t> _localMemoryPool;
-	
+
 	static size_to_pool_t _externalMemoryPool;
 	static SpinLock _externalMemoryPoolLock;
-	
+
 	static MemoryPool *getPool(size_t size);
-	
+
 public:
 	static void initialize();
 	static void shutdown();
-	
+
 	static void *alloc(size_t size);
 	static void free(void *chunk, size_t size);
-	
+
+	static constexpr bool hasUsageStatistics()
+	{
+		return false;
+	}
+
+	static size_t getMemoryUsage()
+	{
+		return 0;
+	}
+
 	/* Simplifications for using "new" and "delete" with the allocator */
 	template <typename T, typename... Args>
 	static T *newObject(Args &&... args)
@@ -44,7 +54,7 @@ public:
 		new (ptr) T(std::forward<Args>(args)...);
 		return (T*)ptr;
 	}
-	
+
 	template <typename T>
 	static void deleteObject(T *ptr)
 	{

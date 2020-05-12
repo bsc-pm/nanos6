@@ -29,6 +29,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
+#include "system/Throttle.hpp"
 #include "system/ompss/SpawnFunction.hpp"
 #include "tasks/StreamManager.hpp"
 
@@ -85,6 +86,7 @@ void nanos6_preinit(void) {
 	// Finish Hardware counters initialization after CPUManager
 	HardwareCounters::initialize();
 	MemoryAllocator::initialize();
+	Throttle::initialize();
 	Scheduler::initialize();
 	ExternalThreadGroup::initialize();
 

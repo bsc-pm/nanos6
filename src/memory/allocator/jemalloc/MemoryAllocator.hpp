@@ -9,6 +9,8 @@
 
 #include <jemalloc/jemalloc.h>
 
+#include <cstdint>
+
 #include "lowlevel/FatalErrorHandler.hpp"
 
 class MemoryAllocator {
@@ -22,6 +24,27 @@ public:
 
 	static void shutdown()
 	{
+	}
+
+	static constexpr bool hasUsageStatistics()
+	{
+		return true;
+	}
+
+	static size_t getMemoryUsage()
+	{
+		size_t allocated, size, epsize;
+		size = sizeof(allocated);
+		uint64_t epoch = 1;
+		epsize = sizeof(epoch);
+
+		// Expensive: force a flush of the tcache and an epoch change to refresh the statistics.
+		nanos6_je_mallctl("thread.tcache.flush", nullptr, nullptr, nullptr, 0);
+		nanos6_je_mallctl("epoch", &epoch, &epsize, &epoch, epsize);
+
+		nanos6_je_mallctl("stats.active", &allocated, &size, nullptr, 0);
+
+		return allocated;
 	}
 
 	static inline void *alloc(size_t size)
