@@ -211,6 +211,14 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
+
+	inline void threadWillSuspendBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
+	{
+	}
+
+	inline void threadHasResumedBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
+	{
+	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{

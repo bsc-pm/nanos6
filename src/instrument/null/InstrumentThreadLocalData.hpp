@@ -12,10 +12,9 @@
 
 namespace Instrument {
 	struct InstrumentationContext;
-	
+
 	struct ThreadLocalData {
 		InstrumentationContext _context;
-		bool isBusyWaiting;
 	};
 }
 

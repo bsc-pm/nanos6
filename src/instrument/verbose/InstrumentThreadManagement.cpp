@@ -95,39 +95,59 @@ namespace Instrument {
 		
 		addLogEntry(logEntry);
 	}
-	
-	
-	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceID) {
+
+	static void verboseThreadWillSuspend()
+	{
 		if (!_verboseThreadManagement) {
 			return;
 		}
-		
+
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
-		
+
 		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
-		
+
 		logEntry->appendLocation(context);
 		logEntry->_contents << " --> SuspendThread ";
-		
+
 		addLogEntry(logEntry);
 	}
-	
-	
-	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceID) {
+
+	static void verboseThreadHasResumed()
+	{
 		if (!_verboseThreadManagement) {
 			return;
 		}
-		
+
 		InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent();
-		
+
 		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
-		
+
 		logEntry->appendLocation(context);
 		logEntry->_contents << " <-- SuspendThread ";
-		
+
 		addLogEntry(logEntry);
+	}
+
+	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceID)
+	{
+		verboseThreadWillSuspend();
+	}
+
+	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t computePlaceID)
+	{
+		verboseThreadHasResumed();
+	}
+
+	void threadWillSuspendBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
+	{
+		verboseThreadWillSuspend();
+	}
+
+	void threadHasResumedBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
+	{
+		verboseThreadHasResumed();
 	}
 	
 	void threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId) {

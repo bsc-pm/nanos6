@@ -44,7 +44,7 @@ namespace Instrument {
 	{
 	}
 
-	inline void threadWillSuspend(thread_id_t, compute_place_id_t)
+	inline void statsThreadWillSuspend()
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 
@@ -52,12 +52,32 @@ namespace Instrument {
 		currentPhase._runningTime.continueAt(currentPhase._blockedTime);
 	}
 
-	inline void threadHasResumed(thread_id_t, compute_place_id_t)
+	inline void statsThreadHasResumed()
 	{
 		ThreadLocalData &threadLocal = getThreadLocalData();
 
 		Instrument::Stats::PhaseInfo &currentPhase = threadLocal._threadInfo.getCurrentPhaseRef();
 		currentPhase._blockedTime.continueAt(currentPhase._runningTime);
+	}
+
+	inline void threadWillSuspendBeforeSync(thread_id_t, compute_place_id_t)
+	{
+		statsThreadWillSuspend();
+	}
+
+	inline void threadHasResumedBeforeSync(thread_id_t, compute_place_id_t)
+	{
+		statsThreadHasResumed();
+	}
+
+	inline void threadWillSuspend(thread_id_t, compute_place_id_t)
+	{
+		statsThreadWillSuspend();
+	}
+
+	inline void threadHasResumed(thread_id_t, compute_place_id_t)
+	{
+		statsThreadHasResumed();
 	}
 
 	inline void threadWillSuspend(external_thread_id_t)

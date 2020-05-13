@@ -46,7 +46,7 @@ protected:
 		bind(_cpu);
 		
 		// The thread suspends itself after initialization, since the "activator" is the one that will unblock it when needed
-		Instrument::threadWillSuspend(_instrumentationId, _cpu->getInstrumentationId());
+		Instrument::threadWillSuspendBeforeSync(_instrumentationId, _cpu->getInstrumentationId());
 		suspend();
 		Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
 	}
