@@ -7,115 +7,76 @@
 #ifndef TASK_MONITOR_HPP
 #define TASK_MONITOR_HPP
 
-#include <iomanip>
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <string>
-
-#include "TasktypePredictions.hpp"
-#include "lowlevel/SpinLock.hpp"
+#include "TaskStatistics.hpp"
+#include "TasktypeStatistics.hpp"
+#include "tasks/Task.hpp"
 
 
 class TaskMonitor {
 
 private:
 
-	typedef std::map<std::string, TasktypePredictions *> tasktype_map_t;
-
-	//! Maps TasktypePredictions by task labels
-	tasktype_map_t _tasktypeMap;
-
-	//! Spinlock that ensures atomic access within the tasktype map
-	SpinLock _spinlock;
-
-public:
-
-	inline TaskMonitor() :
-		_tasktypeMap(),
-		_spinlock()
+	//! \brief Maps task status identifiers to workload identifiers
+	//!
+	//! \param[in] taskStatus The task status
+	//!
+	//! \return The workload id related to the task status
+	inline MonitoringWorkloads::workload_t getLoadId(monitoring_task_status_t taskStatus) const
 	{
-	}
-
-	inline ~TaskMonitor()
-	{
-		// Destroy all the task type statistics
-		for (auto &it : _tasktypeMap) {
-			if (it.second != nullptr) {
-				delete it.second;
-			}
+		switch (taskStatus) {
+			case executing_status:
+				return MonitoringWorkloads::executing_load;
+			case ready_status:
+				return MonitoringWorkloads::ready_load;
+			case pending_status:
+			case blocked_status:
+			case runtime_status:
+				return MonitoringWorkloads::null_workload;
+			default:
+				return MonitoringWorkloads::null_workload;
 		}
 	}
+
+
+public:
 
 	//! \brief Display task statistics
 	//!
 	//! \param[out] stream The output stream
-	void displayStatistics(std::stringstream &stream);
+	void displayStatistics(std::stringstream &stream) const;
 
 	//! \brief Initialize a task's monitoring statistics
 	//!
-	//! \param[in,out] parentStatistics The parent task's statistics
-	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[in] label The tasktype
-	//! \param[in] cost The task's computational cost
-	void taskCreated(
-		TaskStatistics *parentStatistics,
-		TaskStatistics *taskStatistics,
-		const std::string &label,
-		size_t cost
-	);
+	//! \param[in,out] task The task
+	//! \param[in,out] parent The task's parent
+	void taskCreated(Task *task, Task *parent) const;
 
 	//! \brief Re-initialize a task's monitoring statistics
 	//!
-	//! \param[out] taskStatistics The task's monitoring structures
-	void taskReinitialized(TaskStatistics *taskStatistics) const;
+	//! \param[out] taks The task
+	void taskReinitialized(Task *task) const;
 
 	//! \brief Start time monitoring for a task
 	//!
-	//! \param[in,out] taskStatistics The task's statistics
+	//! \param[in,out] task The task
 	//! \param[in] execStatus The timing status to start
+	void startTiming(Task *task, monitoring_task_status_t execStatus) const;
+
+	//! \brief Accumulate statistics when the task completes user code
 	//!
-	//! \return The status before the change
-	monitoring_task_status_t startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus) const;
+	//! \param[in,out] task The task
+	void taskCompletedUserCode(Task *task) const;
 
 	//! \brief Stop time monitoring for a task
 	//!
-	//! \param[in,out] taskStatistics The task's statistics
-	//! \param[out] ancestorsUpdated The number of ancestors that this task has
-	//! updated during shutdown of timing monitoring
-	//!
-	//! \return The status before the change
-	monitoring_task_status_t stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated) const;
+	//! \param[in,out] task The task
+	void stopTiming(Task *task) const;
 
 	//! \brief Aggregate a collaborator's statistics into the parent Taskfor
 	//!
-	//! \param[in,out] collaboratorStatistics The collaborator's statistics
-	//! \param[in,out] taskforStatistics The parent Taskfor's statistics
-	void taskforCollaboratorEnded(TaskStatistics *collaboratorStatistics, TaskStatistics *taskforStatistics) const;
-
-	//! \brief Get the average unitary time value of a tasktype (normalized using cost)
-	//!
-	//! \param[in] label The tasktype
-	double getAverageTimePerUnitOfCost(const std::string &label);
-
-	//! \brief Insert an unitary time value (normalized using cost) into the
-	//! appropriate TasktypePredictions structure
-	//!
-	//! \param[in] label The tasktype
-	//! \param[in] unitaryTime The time per unit of cost to insert
-	void insertTimePerUnitOfCost(const std::string &label, double unitaryTime);
-
-	//! \brief Get the average unitary time values of all the tasktypes
-	//! being monitored
-	//!
-	//! \param[out] labels The reference of a vector in which all the available
-	//! tasktypes will be inserted
-	//! \param[out] unitaryTimes The reference of a vector in which the
-	//! times per unit of cost will be inserted
-	void getAverageTimesPerUnitOfCost(
-		std::vector<std::string> &labels,
-		std::vector<double> &unitaryTimes
-	);
+	//! \param[in,out] task The collaborator
+	//! \param[in,out] source The parent Taskfor
+	void taskforCollaboratorFinished(Task *task, Task *source) const;
 
 };
 

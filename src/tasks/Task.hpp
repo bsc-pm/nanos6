@@ -765,12 +765,18 @@ public:
 	//! \brief Get the task's cost
 	inline size_t getCost() const
 	{
-		assert(_taskInfo->implementations != nullptr);
+		size_t cost = 1;
+		if (_taskInfo != nullptr) {
+			if (_taskInfo->implementations != nullptr) {
+				if (_taskInfo->implementations->get_constraints != nullptr) {
+					nanos6_task_constraints_t constraints;
+					_taskInfo->implementations->get_constraints(_argsBlock, &constraints);
+					cost = constraints.cost;
+				}
+			}
+		}
 
-		nanos6_task_constraints_t constraints;
-		_taskInfo->implementations->get_constraints(_argsBlock, &constraints);
-
-		return constraints.cost;
+		return cost;
 	}
 
 	//! \brief Setter for the task's monitoring statistics structures
@@ -849,11 +855,13 @@ public:
 		return _flags[main_task_flag];
 	}
 
-	inline TasktypeData *getTasktypeData()
+	inline TasktypeData *getTasktypeData() const
 	{
-		assert(_taskInfo != nullptr);
+		if (_taskInfo != nullptr) {
+			return (TasktypeData *) _taskInfo->task_type_data;
+		}
 
-		return (TasktypeData *) _taskInfo->task_type_data;
+		return nullptr;
 	}
 
 	virtual inline void registerDependencies(bool = false)

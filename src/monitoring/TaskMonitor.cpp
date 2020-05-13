@@ -4,231 +4,267 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+
 #include "TaskMonitor.hpp"
+#include "tasks/TaskInfo.hpp"
 
 
-void TaskMonitor::taskCreated(
-	TaskStatistics *parentStatistics,
-	TaskStatistics *taskStatistics,
-	const std::string &label,
-	size_t cost
-) {
+void TaskMonitor::taskCreated(Task *task, Task *parent) const
+{
+	assert(task != nullptr);
+
+	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
 
+	TaskStatistics *parentStatistics = nullptr;
+	if (parent != nullptr) {
+		parentStatistics = parent->getTaskStatistics();
+	}
+
 	// Initialize attributes of the new task
+	size_t cost = task->getCost();
 	taskStatistics->setParentStatistics(parentStatistics);
-	taskStatistics->setLabel(label);
 	taskStatistics->setCost(cost);
-	if (parentStatistics != nullptr) {
-		parentStatistics->increaseAliveChildren();
-		parentStatistics->increaseNumChildren();
-		taskStatistics->setAncestorHasPrediction(
-			parentStatistics->hasPrediction() ||
-			parentStatistics->ancestorHasPrediction()
-		);
+
+	if (parent != nullptr) {
+		if (parentStatistics != nullptr) {
+			parentStatistics->increaseAliveChildren();
+			parentStatistics->increaseNumChildren();
+			taskStatistics->setAncestorHasPrediction(
+				parentStatistics->hasPrediction() ||
+				parentStatistics->ancestorHasPrediction()
+			);
+		}
 	}
 
 	// Predict metrics using past data
-	TasktypePredictions *predictions = nullptr;
+	TasktypeData *tasktypeData = task->getTasktypeData();
+	if (tasktypeData != nullptr) {
+		TasktypeStatistics &tasktypeStatistics = tasktypeData->getTasktypeStatistics();
+		double timePrediction = tasktypeStatistics.getTimePrediction(cost);
+		if (timePrediction != PREDICTION_UNAVAILABLE) {
+			taskStatistics->setTimePrediction(timePrediction);
+			taskStatistics->setHasPrediction(true);
+		}
 
-	_spinlock.lock();
+		// Set the task's tasktype statistics for future references
+		taskStatistics->setTasktypeStatistics(&(tasktypeStatistics));
 
-	// Find (or create if unexistent) the tasktype predictions
-	tasktype_map_t::iterator it = _tasktypeMap.find(label);
-	if (it == _tasktypeMap.end()) {
-		predictions = new TasktypePredictions();
-		_tasktypeMap.emplace(label, predictions);
-	} else {
-		predictions = it->second;
+		// Since the cost of a task includes children tasks, if an ancestor had
+		// a prediction, do not take this task into account for workloads
+		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
+			tasktypeStatistics.increaseAccumulatedCost(MonitoringWorkloads::instantiated_load, cost);
+		}
+	} else if (task->getLabel() == "main") {
+		// Create mockup statistics for the main task
+		TaskInfo::registerTaskInfo(task->getTaskInfo());
+
+		tasktypeData = task->getTasktypeData();
+		assert(tasktypeData != nullptr);
+
+		TasktypeStatistics &tasktypeStatistics = tasktypeData->getTasktypeStatistics();
+		taskStatistics->setTasktypeStatistics(&(tasktypeStatistics));
 	}
-
-	_spinlock.unlock();
-
-	assert(predictions != nullptr);
-
-	// Predict the execution time of the newly created task
-	double timePrediction = predictions->getTimePrediction(cost);
-	if (timePrediction != PREDICTION_UNAVAILABLE) {
-		taskStatistics->setTimePrediction(timePrediction);
-		taskStatistics->setHasPrediction(true);
-	}
-
-	// Set the task's tasktype prediction reference
-	taskStatistics->setTypePredictions(predictions);
 }
 
-void TaskMonitor::taskReinitialized(TaskStatistics *taskStatistics) const
+void TaskMonitor::taskReinitialized(Task *task) const
 {
+	assert(task != nullptr);
+
+	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
 
 	taskStatistics->reinitialize();
 }
 
-monitoring_task_status_t TaskMonitor::startTiming(TaskStatistics *taskStatistics, monitoring_task_status_t execStatus) const
+void TaskMonitor::startTiming(Task *task, monitoring_task_status_t execStatus) const
 {
+	assert(task != nullptr);
+
+	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
 
-	return taskStatistics->startTiming(execStatus);
+	// Start recording time for the new execution status
+	monitoring_task_status_t oldStatus = taskStatistics->startTiming(execStatus);
+
+	// Increase and/or decrease the appropriate workload statistics
+	MonitoringWorkloads::workload_t decreaseLoad = getLoadId(oldStatus);
+	MonitoringWorkloads::workload_t increaseLoad = getLoadId(execStatus);
+	size_t cost = taskStatistics->getCost();
+	TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
+	assert(tasktypeStatistics != nullptr);
+
+	if (decreaseLoad != MonitoringWorkloads::null_workload) {
+		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
+			tasktypeStatistics->decreaseAccumulatedCost(decreaseLoad, cost);
+		}
+	}
+
+	if (increaseLoad != MonitoringWorkloads::null_workload) {
+		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
+			tasktypeStatistics->increaseAccumulatedCost(increaseLoad, cost);
+		}
+	}
 }
 
-monitoring_task_status_t TaskMonitor::stopTiming(TaskStatistics *taskStatistics, int &ancestorsUpdated) const
+void TaskMonitor::taskCompletedUserCode(Task *task) const
 {
+	assert(task != nullptr);
+
+	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
 
-	TaskStatistics      *parentStatistics;
-	TasktypePredictions *typePredictions;
+	// If the task's time is taken into account by an ancestor task (an ancestor has a
+	// prediction), when this task finishes we subtract the elapsed time from workloads
+	if (taskStatistics->ancestorHasPrediction()) {
+		// Find the ancestor who had accounted this task's cost
+		TaskStatistics *ancestorStatistics = taskStatistics->getParentStatistics();
+		assert(ancestorStatistics != nullptr);
 
-	// Stop timing for the task
-	const monitoring_task_status_t oldStatus = taskStatistics->stopTiming();
-
-	// Follow the chain of ancestors and keep updating finished tasks
-	bool canAccumulate = taskStatistics->markAsFinished();
-	if (canAccumulate) {
-		// Increase the number of ancestors that have been updated
-		// This is the own task having finished
-		++ancestorsUpdated;
-
-		// Update tasktype predictions with this task's statistics
-		typePredictions = taskStatistics->getTypePredictions();
-		typePredictions->accumulatePredictions(taskStatistics);
-
-		// Retrieve parent statistics and predictions
-		parentStatistics  = taskStatistics->getParentStatistics();
-		if (parentStatistics != nullptr) {
-			typePredictions = parentStatistics->getTypePredictions();
+		while (!ancestorStatistics->hasPrediction()) {
+			ancestorStatistics = ancestorStatistics->getParentStatistics();
+			assert(ancestorStatistics != nullptr);
 		}
 
-		// Backpropagate the update of parent tasks
-		if (parentStatistics != nullptr) {
-			while (parentStatistics->decreaseAliveChildren()) {
-				// Increase the number of ancestors that have been updated
-				++ancestorsUpdated;
+		// Aggregate the elapsed ticks of the task in the ancestor. When the
+		// ancestor has finished, the aggregation will be subtracted from workloads
+		size_t elapsed =
+			taskStatistics->getChronoTicks(executing_status) +
+			taskStatistics->getChronoTicks(runtime_status);
+		ancestorStatistics->increaseChildCompletionTimes(elapsed);
+	}
+}
 
-				// Accumulate the task's statistics into the parent task
-				parentStatistics->accumulateChildTiming(
-					taskStatistics->getChronos(),
-					taskStatistics->getChildTimes()
-				);
+void TaskMonitor::stopTiming(Task *task) const
+{
+	assert(task != nullptr);
+
+	TaskStatistics *taskStatistics = task->getTaskStatistics();
+	assert(taskStatistics != nullptr);
+
+	TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
+	assert(tasktypeStatistics != nullptr);
+
+	// Stop timing for the task
+	monitoring_task_status_t oldStatus = taskStatistics->stopTiming();
+
+	// Update workloads with the task's statistics
+	size_t cost = taskStatistics->getCost();
+	MonitoringWorkloads::workload_t decreaseLoad = getLoadId(oldStatus);
+	if (decreaseLoad != MonitoringWorkloads::null_workload) {
+		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
+			tasktypeStatistics->decreaseAccumulatedCost(decreaseLoad, cost);
+		}
+	}
+
+	// Follow the chain of ancestors and accumulate statistics from finished tasks
+	bool canAccumulate = taskStatistics->markAsFinished();
+	if (canAccumulate) {
+		// Update tasktype statistics with this task's statistics
+		tasktypeStatistics->accumulateStatistics(taskStatistics);
+
+		TaskStatistics *parentStatistics = taskStatistics->getParentStatistics();
+		if (parentStatistics != nullptr) {
+			// Accumulate the tasks statistics into the parent task
+			parentStatistics->accumulateChildTiming(
+				taskStatistics->getChronos(),
+				taskStatistics->getChildTimes()
+			);
+
+			// Backpropagate the update of parent tasks
+			while (parentStatistics->decreaseAliveChildren()) {
+				// If we enter this condition, we are the last child of the
+				// parent task, so its statistics can be accumulated
+				assert(!parentStatistics->getAliveChildren());
 
 				// Update the tasktype predictions with the parent task's statistics
-				typePredictions->accumulatePredictions(parentStatistics);
+				tasktypeStatistics = parentStatistics->getTasktypeStatistics();
+				tasktypeStatistics->accumulateStatistics(parentStatistics);
 
-				// Point to the parent's parent task statistics and predictions
-				taskStatistics   = parentStatistics;
+				// Point to the parent's parent task statistics
+				taskStatistics = parentStatistics;
 				parentStatistics = taskStatistics->getParentStatistics();
-				if (parentStatistics == nullptr) {
+				if (parentStatistics != nullptr) {
+					parentStatistics->accumulateChildTiming(
+						taskStatistics->getChronos(),
+						taskStatistics->getChildTimes()
+					);
+				} else {
 					break;
 				}
-
-				typePredictions = parentStatistics->getTypePredictions();
 			}
 		}
 	}
-
-	return oldStatus;
 }
 
-void TaskMonitor::taskforCollaboratorEnded(TaskStatistics *collaboratorStatistics, TaskStatistics *taskforStatistics) const
+void TaskMonitor::taskforCollaboratorFinished(Task *task, Task *source) const
 {
+	assert(task != nullptr);
+	assert(source != nullptr);
+	assert(source->isTaskfor());
+
+	TaskStatistics *taskforStatistics = task->getTaskStatistics();
+	TaskStatistics *sourceStatistics = source->getTaskStatistics();
 	assert(taskforStatistics != nullptr);
-	assert(collaboratorStatistics != nullptr);
+	assert(sourceStatistics != nullptr);
 
 	// Accumulate the collaborator's statistics into the parent Taskfor
-	taskforStatistics->accumulateChildTiming(
-		collaboratorStatistics->getChronos(),
-		collaboratorStatistics->getChildTimes()
+	sourceStatistics->accumulateChildTiming(
+		taskforStatistics->getChronos(),
+		taskforStatistics->getChildTimes()
 	);
 }
 
-double TaskMonitor::getAverageTimePerUnitOfCost(const std::string &label)
-{
-	_spinlock.lock();
-	double unitaryTime = _tasktypeMap[label]->getAverageTimePerUnitOfCost();
-	_spinlock.unlock();
-
-	return unitaryTime;
-}
-
-void TaskMonitor::insertTimePerUnitOfCost(const std::string &label, double unitaryTime)
-{
-	TasktypePredictions *predictions = nullptr;
-
-	_spinlock.lock();
-
-	// Find (or create if unexistent) the tasktype predictions
-	tasktype_map_t::iterator it = _tasktypeMap.find(label);
-	if (it == _tasktypeMap.end()) {
-		predictions = new TasktypePredictions();
-		_tasktypeMap.emplace(label, predictions);
-	} else {
-		predictions = it->second;
-	}
-
-	_spinlock.unlock();
-
-	assert(predictions != nullptr);
-
-	// Predict the execution time of the newly created task
-	predictions->insertTimePerUnitOfCost(unitaryTime);
-}
-
-void TaskMonitor::getAverageTimesPerUnitOfCost(
-	std::vector<std::string> &labels,
-	std::vector<double> &unitaryTimes
-) {
-	_spinlock.lock();
-
-	// Retrieve all the labels and unitary times
-	for (auto const &it : _tasktypeMap) {
-		if (it.second != nullptr) {
-			labels.push_back(it.first);
-			unitaryTimes.push_back(it.second->getAverageTimePerUnitOfCost());
-		}
-	}
-
-	_spinlock.unlock();
-}
-
-void TaskMonitor::displayStatistics(std::stringstream &stream)
+void TaskMonitor::displayStatistics(std::stringstream &stream) const
 {
 	stream << std::left << std::fixed << std::setprecision(5) << "\n";
 	stream << "+-----------------------------+\n";
 	stream << "|       TASK STATISTICS       |\n";
 	stream << "+-----------------------------+\n";
 
-	for (auto const &it : _tasktypeMap) {
-		int instances = it.second->getInstances();
-		if (instances) {
-			double avgCost        = it.second->getAverageTimePerUnitOfCost();
-			double stdevCost      = it.second->getStdevTimePerUnitOfCost();
-			double accuracy       = it.second->getPredictionAccuracy();
-			std::string typeLabel = it.first + " (" + std::to_string(instances) + ")";
-			std::string accur = "NA";
+	TaskInfo::processAllTasktypes(
+		[&](const std::string &taskLabel, TasktypeData &tasktypeData) {
+			TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
+			size_t instances = tasktypeStatistics.getNumInstances();
+			if (instances) {
+				double averageNormalizedCost = tasktypeStatistics.getAverageNormalizedCost();
+				double stddevNormalizedCost = tasktypeStatistics.getStddevNormalizedCost();
+				double predictionAccuracy = tasktypeStatistics.getPredictionAccuracy();
 
-			// Make sure there was at least one prediction to report accuracy
-			if (!std::isnan(accuracy)) {
-				std::stringstream accuracyStream;
-				accuracyStream << std::setprecision(2) << std::fixed << accuracy << "%";
-				accur = accuracyStream.str();
+				std::string typeLabel = taskLabel + " (" + std::to_string(instances) + ")";
+				std::string accur = "NA";
+
+				// Make sure there was at least one prediction to report accuracy
+				if (!std::isnan(predictionAccuracy)) {
+					std::stringstream accuracyStream;
+					accuracyStream << std::setprecision(2) << std::fixed << predictionAccuracy << "%";
+					accur = accuracyStream.str();
+				}
+
+				stream <<
+					std::setw(7)  << "STATS"                    << " " <<
+					std::setw(12) << "MONITORING"               << " " <<
+					std::setw(26) << "TASK-TYPE (INSTANCES)"    << " " <<
+					std::setw(20) << typeLabel                  << "\n";
+				stream <<
+					std::setw(7)  << "STATS"                    << " "   <<
+					std::setw(12) << "MONITORING"               << " "   <<
+					std::setw(26) << "UNITARY COST AVG / STDEV" << " "   <<
+					std::setw(10) << averageNormalizedCost      << " / " <<
+					std::setw(10) << stddevNormalizedCost       << "\n";
+				stream <<
+					std::setw(7)  << "STATS"                    << " " <<
+					std::setw(12) << "MONITORING"               << " " <<
+					std::setw(26) << "PREDICTION ACCURACY (%)"  << " " <<
+					std::setw(10) << accur                      << "\n";
+				stream << "+-----------------------------+\n";
 			}
-			stream <<
-				std::setw(7)  << "STATS"                    << " " <<
-				std::setw(12) << "MONITORING"               << " " <<
-				std::setw(26) << "TASK-TYPE (INSTANCES)"    << " " <<
-				std::setw(20) << typeLabel                  << "\n";
-			stream <<
-				std::setw(7)  << "STATS"                    << " "   <<
-				std::setw(12) << "MONITORING"               << " "   <<
-				std::setw(26) << "UNITARY COST AVG / STDEV" << " "   <<
-				std::setw(10) << avgCost                    << " / " <<
-				std::setw(10) << stdevCost                  << "\n";
-			stream <<
-				std::setw(7)  << "STATS"                    << " " <<
-				std::setw(12) << "MONITORING"               << " " <<
-				std::setw(26) << "PREDICTION ACCURACY (%)"  << " " <<
-				std::setw(10) << accur                      << "\n";
-			stream << "+-----------------------------+\n";
 		}
-	}
+	);
+
 	stream << "\n";
 }

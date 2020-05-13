@@ -390,8 +390,7 @@ common_sources = \
 	src/memory/directory/HomeNodeMap.cpp \
 	src/monitoring/Monitoring.cpp \
 	src/monitoring/TaskMonitor.cpp \
-	src/monitoring/TasktypePredictions.cpp \
-	src/monitoring/WorkloadMonitor.cpp \
+	src/monitoring/TasktypeStatistics.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
@@ -1252,9 +1251,7 @@ noinst_HEADERS = \
 	src/monitoring/Monitoring.hpp \
 	src/monitoring/TaskMonitor.hpp \
 	src/monitoring/TaskStatistics.hpp \
-	src/monitoring/TasktypePredictions.hpp \
-	src/monitoring/WorkloadMonitor.hpp \
-	src/monitoring/WorkloadStatistics.hpp \
+	src/monitoring/TasktypeStatistics.hpp \
 	src/scheduling/ClusterScheduler.hpp \
 	src/scheduling/LocalScheduler.hpp \
 	src/scheduling/ReadyQueue.hpp \

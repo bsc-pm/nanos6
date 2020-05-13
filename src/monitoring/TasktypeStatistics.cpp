@@ -4,6 +4,6 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include "TasktypePredictions.hpp"
+#include "TasktypeStatistics.hpp"
 
-ConfigVariable<int> TasktypePredictions::_rollingWindow("monitoring.rolling_window", 20);
+EnvironmentVariable<size_t> TasktypeStatistics::_rollingWindow("NANOS6_MONITORING_ROLLING_WINDOW", 20);

@@ -9,7 +9,6 @@
 
 #include "CPUMonitor.hpp"
 #include "TaskMonitor.hpp"
-#include "WorkloadPredictor.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "support/JsonFile.hpp"
 #include "support/config/ConfigVariable.hpp"
@@ -23,7 +22,7 @@ class Monitoring {
 
 private:
 
-	//! Whether monitoring has to be performed or not
+	//! Whether monitoring is enabled
 	static ConfigVariable<bool> _enabled;
 
 	//! Whether verbose mode is enabled
@@ -45,9 +44,6 @@ private:
 
 	//! A monitor that handles task statistics
 	static TaskMonitor *_taskMonitor;
-
-	//! A monitor that aggregates task statistics into runtime workload stats
-	static WorkloadMonitor *_workloadMonitor;
 
 	//    CPU USAGE PREDICTION VARIABLES    //
 
@@ -116,7 +112,7 @@ public:
 	//! \param[in] newStatus The new execution status of the task
 	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus);
 
-	//! \brief Subtract a task's statistics from predicted workloads after it
+	//! \brief Subtract a task's statistics from predictions after it
 	//! completes user code execution
 	//!
 	//! \param[in,out] task The task that has completed the execution
@@ -158,7 +154,7 @@ public:
 	//! \brief Get a timing prediction of a certain workload
 	//!
 	//! \param[in] loadId The workload's id
-	static double getPredictedWorkload(workload_t loadId);
+	static double getPredictedWorkload(MonitoringWorkloads::workload_t loadId);
 
 	//! \brief Get a CPU Usage prediction over an amount of time
 	//!

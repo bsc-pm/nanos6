@@ -8,7 +8,6 @@
 #include <fstream>
 
 #include "Monitoring.hpp"
-#include "tasks/Taskfor.hpp"
 
 
 ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled", true);
@@ -18,7 +17,6 @@ ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "
 JsonFile *Monitoring::_wisdom(nullptr);
 CPUMonitor *Monitoring::_cpuMonitor(nullptr);
 TaskMonitor *Monitoring::_taskMonitor(nullptr);
-WorkloadMonitor *Monitoring::_workloadMonitor(nullptr);
 Monitoring::accumulator_t Monitoring::_cpuUsageAccuracyAccum;
 double Monitoring::_cpuUsagePrediction;
 bool Monitoring::_cpuUsageAvailable(false);
@@ -35,9 +33,7 @@ void Monitoring::preinitialize()
 #endif
 		// Create all the monitors and predictors
 		_taskMonitor = new TaskMonitor();
-		_workloadMonitor = new WorkloadMonitor();
 		assert(_taskMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
 
 #if CHRONO_ARCH
 		// Stop measuring time and compute the tick conversion rate
@@ -80,16 +76,11 @@ void Monitoring::shutdown()
 		// Delete all predictors and monitors
 		assert(_cpuMonitor != nullptr);
 		assert(_taskMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
 
 		delete _cpuMonitor;
 		delete _taskMonitor;
-		delete _workloadMonitor;
-
 		_cpuMonitor = nullptr;
 		_taskMonitor = nullptr;
-		_workloadMonitor = nullptr;
-
 		_enabled.setValue(false);
 	}
 }
@@ -99,11 +90,9 @@ void Monitoring::shutdown()
 
 void Monitoring::taskCreated(Task *task)
 {
-	assert(task != nullptr);
-
 	if (_enabled) {
+		assert(task != nullptr);
 		assert(_taskMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
 
 		TaskStatistics *taskStatistics = task->getTaskStatistics();
 		assert(taskStatistics != nullptr);
@@ -114,91 +103,63 @@ void Monitoring::taskCreated(Task *task)
 		// Only take the task into account for predictions if it is a basic
 		// task or an original Taskfor, never a collaborator
 		if (!task->isTaskfor() || (task->isTaskfor() && !task->isRunnable())) {
-			// Retrieve information about the task
-			Task *parent = task->getParent();
-			TaskStatistics *parentStatistics = (parent != nullptr ? parent->getTaskStatistics() : nullptr);
-			const std::string &label = task->getLabel();
-			size_t cost = (task->hasCost() ? task->getCost() : DEFAULT_COST);
-
 			// Populate task statistic structures and predict metrics
-			_taskMonitor->taskCreated(parentStatistics, taskStatistics, label, cost);
-
-			// Account this task in workloads
-			_workloadMonitor->taskCreated(taskStatistics);
+			Task *parent = task->getParent();
+			_taskMonitor->taskCreated(task, parent);
 		}
 	}
 }
 
 void Monitoring::taskReinitialized(Task *task)
 {
-	assert(task != nullptr);
-
 	if (_enabled) {
 		// Make sure this is a Taskfor
+		assert(task != nullptr);
 		assert(task->isTaskfor());
 		assert(_taskMonitor != nullptr);
 
 		// Reset task statistics
-		_taskMonitor->taskReinitialized(task->getTaskStatistics());
+		_taskMonitor->taskReinitialized(task);
 	}
 }
 
 void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatus)
 {
-	assert(task != nullptr);
-
 	if (_enabled) {
 		assert(_taskMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
 
 		// Start timing for the appropriate stopwatch
-		const monitoring_task_status_t oldStatus = _taskMonitor->startTiming(task->getTaskStatistics(), newStatus);
-
-		// Update workload statistics only after a change of status
-		if (oldStatus != newStatus) {
-			// Account this task in the appropriate workload
-			_workloadMonitor->taskChangedStatus(task->getTaskStatistics(), oldStatus, newStatus);
-		}
+		_taskMonitor->startTiming(task, newStatus);
 	}
 }
 
 void Monitoring::taskCompletedUserCode(Task *task)
 {
-	assert(task != nullptr);
-
 	if (_enabled) {
-		assert(_workloadMonitor != nullptr);
+		assert(_taskMonitor != nullptr);
 
-		// Account the task's elapsed execution time in predictions
-		_workloadMonitor->taskCompletedUserCode(task->getTaskStatistics());
+		// Account the task's elapsed execution for predictions
+		_taskMonitor->taskCompletedUserCode(task);
 	}
 }
 
 void Monitoring::taskFinished(Task *task)
 {
-	assert(task != nullptr);
-
 	if (_enabled) {
+		assert(task != nullptr);
 		assert(_taskMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
 
 		// If the task is a taskfor collaborator, aggregate statistics in the
 		// parent (source taskfor). Otherwise normal task behavior
 		if (task->isTaskfor() && task->isRunnable()) {
-			Taskfor *source = (Taskfor *) task->getParent();
+			Task *source = task->getParent();
 			assert(source != nullptr);
 			assert(source->isTaskfor());
 
-			_taskMonitor->taskforCollaboratorEnded(task->getTaskStatistics(), source->getTaskStatistics());
+			_taskMonitor->taskforCollaboratorFinished(task, source);
 		} else {
-			// Number of ancestors updated by this task in TaskMonitor
-			int ancestorsUpdated = 0;
-
 			// Mark task as completely executed
-			const monitoring_task_status_t oldStatus = _taskMonitor->stopTiming(task->getTaskStatistics(), ancestorsUpdated);
-
-			// Account this task in workloads
-			_workloadMonitor->taskFinished(task->getTaskStatistics(), oldStatus, ancestorsUpdated);
+			_taskMonitor->stopTiming(task);
 		}
 	}
 }
@@ -227,8 +188,10 @@ void Monitoring::cpuBecomesActive(int cpuId)
 
 //    PREDICTORS    //
 
-double Monitoring::getPredictedWorkload(workload_t loadId)
+double Monitoring::getPredictedWorkload(MonitoringWorkloads::workload_t loadId)
 {
+	// FIXME TODO
+	/*
 	if (_enabled) {
 		assert(_taskMonitor != nullptr);
 		assert(_workloadMonitor != nullptr);
@@ -249,10 +212,13 @@ double Monitoring::getPredictedWorkload(workload_t loadId)
 	}
 
 	return 0.0;
+	*/
 }
 
 double Monitoring::getCPUUsagePrediction(size_t time)
 {
+	// FIXME TODO
+	/*
 	if (_enabled) {
 		assert(_cpuMonitor != nullptr);
 		assert(_taskMonitor != nullptr);
@@ -284,12 +250,13 @@ double Monitoring::getCPUUsagePrediction(size_t time)
 
 		return _cpuUsagePrediction;
 	}
-
+	*/
 	return 0.0;
 }
 
 double Monitoring::getPredictedElapsedTime()
 {
+	/*
 	if (_enabled) {
 		assert(_cpuMonitor != nullptr);
 		assert(_workloadMonitor != nullptr);
@@ -308,7 +275,7 @@ double Monitoring::getPredictedElapsedTime()
 		// Check if the elapsed time substracted from the predictions underflows
 		return (timeLeft < 0.0 ? 0.0 : timeLeft);
 	}
-
+	*/
 	return 0.0;
 }
 
@@ -352,6 +319,8 @@ void Monitoring::displayStatistics()
 
 void Monitoring::loadMonitoringWisdom()
 {
+	// FIXME TODO
+	/*
 	assert(_taskMonitor != nullptr);
 
 	// Create a representation of the system file as a JsonFile
@@ -375,10 +344,13 @@ void Monitoring::loadMonitoringWisdom()
 			}
 		}
 	);
+	*/
 }
 
 void Monitoring::storeMonitoringWisdom()
 {
+	// FIXME TODO
+	/*
 	assert(_taskMonitor != nullptr);
 
 	// Gather monitoring data for all tasktypes
@@ -407,4 +379,5 @@ void Monitoring::storeMonitoringWisdom()
 
 	// Delete the file as it is no longer needed
 	delete _wisdom;
+	*/
 }

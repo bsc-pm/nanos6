@@ -42,14 +42,11 @@ char const * const statusDescriptions[num_status] = {
 	"Paused Status"
 };
 
-class TasktypePredictions;
+class TasktypeStatistics;
 
 class TaskStatistics {
 
 private:
-
-	//! A string that identifies the tasktype
-	std::string _label;
 
 	//! The computational cost of the task
 	size_t _cost;
@@ -86,8 +83,8 @@ private:
 	//! (not converted to time, simply internal chronometer ticks)
 	std::atomic<size_t> _childCompletionTimes;
 
-	//! A pointer to the accumulated predictions of the tasktype
-	TasktypePredictions *_typePredictions;
+	//! A pointer to the accumulated statistics of the tasktype
+	TasktypeStatistics *_tasktypeStatistics;
 
 	//! The number of tasks created by this one
 	size_t _numChildrenTasks;
@@ -103,7 +100,7 @@ public:
 		_timePrediction(0.0),
 		_ancestorHasPrediction(false),
 		_childCompletionTimes(0),
-		_typePredictions(nullptr),
+		_tasktypeStatistics(nullptr),
 		_numChildrenTasks(0)
 	{
 		for (short i = 0; i < num_status; ++i) {
@@ -113,7 +110,6 @@ public:
 
 	inline void reinitialize()
 	{
-		_label = "";
 		_cost = DEFAULT_COST;
 		_currentId = null_status;
 		_parentStatistics = nullptr;
@@ -122,7 +118,7 @@ public:
 		_timePrediction = 0.0;
 		_ancestorHasPrediction = false;
 		_childCompletionTimes = 0;
-		_typePredictions = nullptr;
+		_tasktypeStatistics = nullptr;
 		_numChildrenTasks = 0;
 
 		for (short i = 0; i < num_status; ++i) {
@@ -133,16 +129,6 @@ public:
 
 
 	//    SETTERS & GETTERS    //
-
-	inline void setLabel(const std::string &label)
-	{
-		_label = label;
-	}
-
-	inline const std::string &getLabel() const
-	{
-		return _label;
-	}
 
 	inline void setCost(size_t cost)
 	{
@@ -364,14 +350,14 @@ public:
 		_childCompletionTimes += elapsed;
 	}
 
-	inline void setTypePredictions(TasktypePredictions *predictions)
+	inline void setTasktypeStatistics(TasktypeStatistics *tasktypeStatistics)
 	{
-		_typePredictions = predictions;
+		_tasktypeStatistics = tasktypeStatistics;
 	}
 
-	inline TasktypePredictions *getTypePredictions() const
+	inline TasktypeStatistics *getTasktypeStatistics() const
 	{
-		return _typePredictions;
+		return _tasktypeStatistics;
 	}
 
 };
