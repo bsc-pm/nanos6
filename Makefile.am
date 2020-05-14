@@ -236,8 +236,8 @@ libnanos6_la_SOURCES = \
 	loader/loader.c \
 	loader/loader.h
 
-libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
-libnanos6_la_LDFLAGS = $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
+libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" $(jemalloc_CFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
+libnanos6_la_LDFLAGS = $(jemalloc_LIBS) $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
 nanos6_generated_headers = \
@@ -608,8 +608,15 @@ memory_allocator_default_sources = \
 	src/memory/allocator/pool/ObjectAllocator.cpp
 memory_allocator_default_cppflags = -I$(srcdir)/src/memory/allocator/pool
 
+
+if HAVE_JEMALLOC
+memory_allocator_debug_sources = 
+memory_allocator_debug_cppflags = -I$(srcdir)/src/memory/allocator/jemalloc
+else
 memory_allocator_debug_sources =
 memory_allocator_debug_cppflags = -I$(srcdir)/src/memory/allocator/malloc
+endif
+
 
 vmm_smp_sources = src/memory/vmm/smp/VirtualMemoryManagement.cpp
 vmm_smp_cppflags = -I$(srcdir)/src/memory/vmm/smp
@@ -1059,6 +1066,8 @@ noinst_HEADERS = \
 	src/lowlevel/threads/KernelLevelThread.hpp \
 	src/lowlevel/threads/posix/KernelLevelThread.hpp \
 	src/memory/AddressSpace.hpp \
+	src/memory/allocator/jemalloc/MemoryAllocator.hpp \
+	src/memory/allocator/jemalloc/ObjectAllocator.hpp \
 	src/memory/allocator/malloc/MemoryAllocator.hpp \
 	src/memory/allocator/malloc/ObjectAllocator.hpp \
 	src/memory/allocator/pool/CPUObjectCache.hpp \
@@ -1156,8 +1165,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(cpu_manager_CPPFLAGS) $(hardware_counters_CPPFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_LDFLAGS) $(hardware_counters_LDFLAGS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(cpu_manager_CPPFLAGS) $(hardware_counters_CPPFLAGS) $(jemalloc_CPPFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_LDFLAGS) $(hardware_counters_LDFLAGS)
 
 # This is needed for debuggable spinlocks
 common_sources += $(introspection_sources)

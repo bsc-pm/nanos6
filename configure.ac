@@ -84,6 +84,7 @@ AC_CHECK_MEMKIND
 AC_CHECK_PAPI
 AC_CHECK_PQOS
 AC_CHECK_DLB
+AC_CHECK_JEMALLOC
 
 AC_CHECK_FUNCS([reallocarray aligned_alloc])
 AC_CHECK_MADV_FREE
@@ -542,6 +543,16 @@ if test x"${ac_use_dlb}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
 	_AS_ECHO([   DLB CPPFLAGS... ${dlb_CPPFLAGS}])
 	_AS_ECHO([   DLB LIBS... ${dlb_LIBS}])
+else
+	AC_MSG_RESULT([no])
+fi
+
+_AS_ECHO([])
+_AS_ECHO_N([   jemalloc is enabled... ])
+if test x"${ac_use_jemalloc}" = x"yes" ; then
+	AC_MSG_RESULT([yes])
+	_AS_ECHO([   jemalloc CPPFLAGS... ${jemalloc_CPPFLAGS}])
+	_AS_ECHO([   jemalloc LIBS... ${jemalloc_LIBS}])
 else
 	AC_MSG_RESULT([no])
 fi
