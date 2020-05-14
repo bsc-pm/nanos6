@@ -52,7 +52,7 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	ctf_cpu_id_t i;
 	ctf_cpu_id_t cpuId;
 	std::string streamPath;
-	const size_t defaultSize = 4096;
+	const size_t defaultSize = 2*1024*1024;
 	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 
 	// TODO can we place this initialization code somewhere else?
