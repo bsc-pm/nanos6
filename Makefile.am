@@ -1066,6 +1066,8 @@ noinst_HEADERS = \
 	src/lowlevel/threads/KernelLevelThread.hpp \
 	src/lowlevel/threads/posix/KernelLevelThread.hpp \
 	src/memory/AddressSpace.hpp \
+	src/memory/allocator/jemalloc/MemoryAllocator.hpp \
+	src/memory/allocator/jemalloc/ObjectAllocator.hpp \
 	src/memory/allocator/malloc/MemoryAllocator.hpp \
 	src/memory/allocator/malloc/ObjectAllocator.hpp \
 	src/memory/allocator/pool/CPUObjectCache.hpp \

@@ -8,11 +8,13 @@
 #define MEMORY_ALLOCATOR_HPP
 
 #include <jemalloc/jemalloc.h>
+
 #include "lowlevel/FatalErrorHandler.hpp"
 
-#define MALLOCX_NONE ((int) 0)
-
 class MemoryAllocator {
+private:
+	static const int MALLOCX_NONE = ((int) 0);
+
 public:
 	static void initialize()
 	{
@@ -24,6 +26,7 @@ public:
 
 	static inline void *alloc(size_t size)
 	{
+		assert(size > 0);
 		void *ptr = nanos6_je_mallocx(size, MALLOCX_NONE);
 		FatalErrorHandler::failIf(ptr == nullptr, " when trying to allocate memory");
 		return ptr;
@@ -31,16 +34,13 @@ public:
 
 	static inline void free(void *chunk, size_t size)
 	{
-		if (size > 0) {
-			// Failing this assert means the size passed to free does not correspond to the allocated size.
-			assert(nanos6_je_sallocx(chunk, MALLOCX_NONE) == nanos6_je_nallocx(size, MALLOCX_NONE));
-			nanos6_je_sdallocx(chunk, size, MALLOCX_NONE);
-		} else {
-			nanos6_je_dallocx(chunk, MALLOCX_NONE);
-		}
+		assert(size > 0);
+		// Failing this assert means the size passed to free does not correspond to the allocated size
+		assert(nanos6_je_sallocx(chunk, MALLOCX_NONE) == nanos6_je_nallocx(size, MALLOCX_NONE));
+		nanos6_je_sdallocx(chunk, size, MALLOCX_NONE);
 	}
 
-	/* Simplifications for using "new" and "delete" with the allocator */
+	// Simplifications for using "new" and "delete" with the allocator
 	template <typename T, typename... Args>
 	static T *newObject(Args &&... args)
 	{

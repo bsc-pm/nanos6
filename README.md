@@ -27,7 +27,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
 1. [DLB](https://pm.bsc.es/dlb) to enable dynamic management and sharing of computing resources
-1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation
+1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation. It must be compiled with `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` to link with the runtime.
 
 
 ## Build procedure
