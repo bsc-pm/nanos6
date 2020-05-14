@@ -11,13 +11,15 @@
 #include <atomic>
 #include <cstdint>
 
+#include "ctfapi/CTFTypes.hpp"
+
 namespace Instrument {
 
 	struct task_id_t {
 	private:
-		static std::atomic<uint32_t> _nextTaskId;
+		static std::atomic<ctf_task_id_t> _nextTaskId;
 	public:
-		uint32_t _taskId; // TODO use the ctf typedef for task id
+		ctf_task_id_t _taskId; // TODO use the ctf typedef for task id
 		task_id_t() {}
 
 		// task_id_t are created in other parts of the runtime apart

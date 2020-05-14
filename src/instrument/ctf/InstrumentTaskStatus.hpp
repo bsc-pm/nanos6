@@ -29,8 +29,7 @@ namespace Instrument {
 		task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		// TODO remove castings when typedefs are in use
-		tp_task_execute(static_cast<ctf_task_id_t>(taskId._taskId));
+		tp_task_execute(taskId._taskId);
 	}
 	
 	inline void taskIsBlocked(
@@ -38,7 +37,7 @@ namespace Instrument {
 		__attribute__((unused)) task_blocking_reason_t reason,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		tp_task_block(static_cast<ctf_task_id_t>(taskId._taskId));
+		tp_task_block(taskId._taskId);
 	}
 	
 	inline void taskIsZombie(
@@ -65,7 +64,7 @@ namespace Instrument {
 		task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		tp_task_execute(static_cast<ctf_task_id_t>(collaboratorId._taskId));
+		tp_task_execute(collaboratorId._taskId);
 	}
 	
 	inline void taskforCollaboratorStopped(
