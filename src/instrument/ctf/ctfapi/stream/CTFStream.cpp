@@ -30,11 +30,13 @@ void CTFAPI::CTFStream::initialize(size_t size, ctf_cpu_id_t cpu)
 	size_t nPages;
 	void *mrbPart;
 	size_t sizeAligned;
-	const size_t thresholdDefault = 1024;
+	size_t thresholdDefault;
 
 	nPages = (size + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
 	sizeAligned = nPages * PAGE_SIZE;
 	mrbSize = sizeAligned * 2;
+	// TODO decide which is the best default threshold
+	thresholdDefault = sizeAligned;
 
 	// allocate backing physical memory for the event buffer
 	fd = open("/tmp", O_TMPFILE | O_RDWR | O_EXCL, 0600);
@@ -67,7 +69,6 @@ void CTFAPI::CTFStream::initialize(size_t size, ctf_cpu_id_t cpu)
 	lost = 0;
 	head = 0;
 	tail = 0;
-	// TODO read threshold from env
 	threshold = (thresholdDefault > sizeAligned)? sizeAligned : thresholdDefault;
 	tailCommited = 0;
 	mask = sizeAligned - 1;

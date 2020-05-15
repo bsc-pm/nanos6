@@ -118,12 +118,12 @@ CTFAPI::CTFMetadata::~CTFMetadata()
 
 void CTFAPI::CTFMetadata::writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *event)
 {
-	std::vector<CTFAPI::CTFContext *> &contexes = event->getContexes();
-	if (contexes.empty())
+	std::vector<CTFAPI::CTFContext *> &eventContexes = event->getContexes();
+	if (eventContexes.empty())
 		return;
 
 	fprintf(f, "\tcontext := struct {\n");
-	for (auto it = contexes.begin(); it != contexes.end(); ++it) {
+	for (auto it = eventContexes.begin(); it != eventContexes.end(); ++it) {
 		CTFAPI::CTFContext *context = (*it);
 		fputs(context->getEventMetadata(), f);
 	}
