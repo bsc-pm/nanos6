@@ -60,11 +60,17 @@ private:
 			// | Different | Equal              | False  |
 			// | Different | Different          | True   |
 			// -------------------------------------------
-			if (_taskLabel == other._taskLabel || _taskDeclarationSource == other._taskDeclarationSource) {
-				return false;
-			}
 
-			return (_taskLabel < other._taskLabel || _taskDeclarationSource < other._taskDeclarationSource);
+			bool sameLabel = (_taskLabel == other._taskLabel);
+			bool sameSource = (_taskDeclarationSource == other._taskDeclarationSource);
+
+			if (sameLabel || sameSource) {
+				return false;
+			} else if (!sameLabel) {
+				return (_taskLabel < other._taskLabel);
+			} else {
+				return (_taskDeclarationSource < other._taskDeclarationSource);
+			}
 		}
 	};
 
