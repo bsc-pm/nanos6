@@ -129,17 +129,7 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 		assert(_taskMonitor != nullptr);
 
 		// Start timing for the appropriate stopwatch
-		_taskMonitor->startTiming(task, newStatus);
-	}
-}
-
-void Monitoring::taskCompletedUserCode(Task *task)
-{
-	if (_enabled) {
-		assert(_taskMonitor != nullptr);
-
-		// Account the task's elapsed execution for predictions
-		_taskMonitor->taskCompletedUserCode(task);
+		_taskMonitor->taskStarted(task, newStatus);
 	}
 }
 
@@ -156,10 +146,10 @@ void Monitoring::taskFinished(Task *task)
 			assert(source != nullptr);
 			assert(source->isTaskfor());
 
-			_taskMonitor->taskforCollaboratorFinished(task, source);
+			_taskMonitor->taskforFinished(task, source);
 		} else {
 			// Mark task as completely executed
-			_taskMonitor->stopTiming(task);
+			_taskMonitor->taskFinished(task);
 		}
 	}
 }
@@ -188,7 +178,7 @@ void Monitoring::cpuBecomesActive(int cpuId)
 
 //    PREDICTORS    //
 
-double Monitoring::getPredictedWorkload(MonitoringWorkloads::workload_t loadId)
+double Monitoring::getPredictedWorkload(workload_t loadId)
 {
 	// FIXME TODO
 	/*

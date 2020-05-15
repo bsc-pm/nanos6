@@ -20,28 +20,27 @@
 
 #define PREDICTION_UNAVAILABLE -1.0
 
-namespace MonitoringWorkloads {
-	enum workload_t {
-		instantiated_load = 0,
-		ready_load,
-		executing_load,
-		num_workloads,
-		null_workload = -1
-	};
-};
-
 namespace BoostAcc = boost::accumulators;
 namespace BoostAccTag = boost::accumulators::tag;
+
+enum workload_t {
+	instantiated_load = 0,
+	ready_load,
+	executing_load,
+	num_workloads,
+	null_workload = -1
+};
+
 
 class TasktypeStatistics {
 
 private:
 
 	//! Aggregated computational cost of a tasktype per each workload type
-	std::atomic<size_t> _accumulatedCost[MonitoringWorkloads::num_workloads];
+	std::atomic<size_t> _accumulatedCost[num_workloads];
 
 	//! Array which contains the number of task instances in each workload
-	std::atomic<size_t> _instances[MonitoringWorkloads::num_workloads];
+	std::atomic<size_t> _instances[num_workloads];
 
 	typedef BoostAcc::accumulator_set<double, BoostAcc::stats<BoostAccTag::rolling_mean, BoostAccTag::variance, BoostAccTag::count> > time_accumulator_t;
 	typedef BoostAcc::accumulator_set<double, BoostAcc::stats<BoostAccTag::sum, BoostAccTag::mean> > accumulator_t;
@@ -65,7 +64,7 @@ public:
 		_accuracyAccumulator(),
 		_accumulatorLock()
 	{
-		for (size_t loadId = 0; loadId < MonitoringWorkloads::num_workloads; ++loadId) {
+		for (size_t loadId = 0; loadId < num_workloads; ++loadId) {
 			_accumulatedCost[loadId] = 0;
 			_instances[loadId] = 0;
 		}
@@ -75,7 +74,7 @@ public:
 	//!
 	//! \param[in] loadId The workload's id
 	//! \param[in] cost The value
-	inline void increaseAccumulatedCost(MonitoringWorkloads::workload_t loadId, size_t cost)
+	inline void increaseAccumulatedCost(workload_t loadId, size_t cost)
 	{
 		_accumulatedCost[loadId] += cost;
 	}
@@ -84,7 +83,7 @@ public:
 	//!
 	//! \param[in] loadId The workload's id
 	//! \param[in] cost The value
-	inline void decreaseAccumulatedCost(MonitoringWorkloads::workload_t loadId, size_t cost)
+	inline void decreaseAccumulatedCost(workload_t loadId, size_t cost)
 	{
 		_accumulatedCost[loadId] -= cost;
 	}
@@ -92,7 +91,7 @@ public:
 	//! \brief Get the accumulated cost of a workload
 	//!
 	//! \param[in] loadId The workload's id
-	inline size_t getAccumulatedCost(MonitoringWorkloads::workload_t loadId) const
+	inline size_t getAccumulatedCost(workload_t loadId) const
 	{
 		return _accumulatedCost[loadId].load();
 	}

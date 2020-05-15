@@ -112,12 +112,6 @@ public:
 	//! \param[in] newStatus The new execution status of the task
 	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus);
 
-	//! \brief Subtract a task's statistics from predictions after it
-	//! completes user code execution
-	//!
-	//! \param[in,out] task The task that has completed the execution
-	static void taskCompletedUserCode(Task *task);
-
 	//! \brief Aggregate statistics after a task has finished
 	//!
 	//! \param[in,out] task The task that has finished
@@ -154,7 +148,7 @@ public:
 	//! \brief Get a timing prediction of a certain workload
 	//!
 	//! \param[in] loadId The workload's id
-	static double getPredictedWorkload(MonitoringWorkloads::workload_t loadId);
+	static double getPredictedWorkload(workload_t loadId);
 
 	//! \brief Get a CPU Usage prediction over an amount of time
 	//!

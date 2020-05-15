@@ -93,7 +93,6 @@ namespace ExecutionWorkflow {
 
 			HardwareCounters::updateTaskCounters(_task);
 			Monitoring::taskChangedStatus(_task, runtime_status);
-			Monitoring::taskCompletedUserCode(_task);
 
 			if (isTaskforCollaborator) {
 				bool last = ((Taskfor *)_task)->hasLastChunk();
@@ -106,7 +105,6 @@ namespace ExecutionWorkflow {
 			}
 		} else {
 			Monitoring::taskChangedStatus(_task, runtime_status);
-			Monitoring::taskCompletedUserCode(_task);
 		}
 
 		DataAccessRegistration::combineTaskReductions(_task, cpu);

@@ -20,12 +20,11 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
 
+	// Initialize attributes of the new task
 	TaskStatistics *parentStatistics = nullptr;
 	if (parent != nullptr) {
 		parentStatistics = parent->getTaskStatistics();
 	}
-
-	// Initialize attributes of the new task
 	size_t cost = task->getCost();
 	taskStatistics->setParentStatistics(parentStatistics);
 	taskStatistics->setCost(cost);
@@ -57,7 +56,7 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		// Since the cost of a task includes children tasks, if an ancestor had
 		// a prediction, do not take this task into account for workloads
 		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-			tasktypeStatistics.increaseAccumulatedCost(MonitoringWorkloads::instantiated_load, cost);
+			tasktypeStatistics.increaseAccumulatedCost(instantiated_load, cost);
 		}
 	} else if (task->getLabel() == "main") {
 		// Create mockup statistics for the main task
@@ -81,7 +80,7 @@ void TaskMonitor::taskReinitialized(Task *task) const
 	taskStatistics->reinitialize();
 }
 
-void TaskMonitor::startTiming(Task *task, monitoring_task_status_t execStatus) const
+void TaskMonitor::taskStarted(Task *task, monitoring_task_status_t execStatus) const
 {
 	assert(task != nullptr);
 
@@ -91,55 +90,30 @@ void TaskMonitor::startTiming(Task *task, monitoring_task_status_t execStatus) c
 	// Start recording time for the new execution status
 	monitoring_task_status_t oldStatus = taskStatistics->startTiming(execStatus);
 
-	// Increase and/or decrease the appropriate workload statistics
-	MonitoringWorkloads::workload_t decreaseLoad = getLoadId(oldStatus);
-	MonitoringWorkloads::workload_t increaseLoad = getLoadId(execStatus);
-	size_t cost = taskStatistics->getCost();
-	TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
-	assert(tasktypeStatistics != nullptr);
+	// If the task is not a taskfor, increase/decrease the appropriate
+	// cost accumulations used to infer predictions
+	if (!task->isTaskfor()) {
+		workload_t decreaseLoad = getLoadId(oldStatus);
+		workload_t increaseLoad = getLoadId(execStatus);
+		size_t cost = taskStatistics->getCost();
+		TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
+		assert(tasktypeStatistics != nullptr);
 
-	if (decreaseLoad != MonitoringWorkloads::null_workload) {
-		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-			tasktypeStatistics->decreaseAccumulatedCost(decreaseLoad, cost);
+		if (decreaseLoad != null_workload) {
+			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
+				tasktypeStatistics->decreaseAccumulatedCost(decreaseLoad, cost);
+			}
 		}
-	}
 
-	if (increaseLoad != MonitoringWorkloads::null_workload) {
-		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-			tasktypeStatistics->increaseAccumulatedCost(increaseLoad, cost);
+		if (increaseLoad != null_workload) {
+			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
+				tasktypeStatistics->increaseAccumulatedCost(increaseLoad, cost);
+			}
 		}
 	}
 }
 
-void TaskMonitor::taskCompletedUserCode(Task *task) const
-{
-	assert(task != nullptr);
-
-	TaskStatistics *taskStatistics = task->getTaskStatistics();
-	assert(taskStatistics != nullptr);
-
-	// If the task's time is taken into account by an ancestor task (an ancestor has a
-	// prediction), when this task finishes we subtract the elapsed time from workloads
-	if (taskStatistics->ancestorHasPrediction()) {
-		// Find the ancestor who had accounted this task's cost
-		TaskStatistics *ancestorStatistics = taskStatistics->getParentStatistics();
-		assert(ancestorStatistics != nullptr);
-
-		while (!ancestorStatistics->hasPrediction()) {
-			ancestorStatistics = ancestorStatistics->getParentStatistics();
-			assert(ancestorStatistics != nullptr);
-		}
-
-		// Aggregate the elapsed ticks of the task in the ancestor. When the
-		// ancestor has finished, the aggregation will be subtracted from workloads
-		size_t elapsed =
-			taskStatistics->getChronoTicks(executing_status) +
-			taskStatistics->getChronoTicks(runtime_status);
-		ancestorStatistics->increaseChildCompletionTimes(elapsed);
-	}
-}
-
-void TaskMonitor::stopTiming(Task *task) const
+void TaskMonitor::taskFinished(Task *task) const
 {
 	assert(task != nullptr);
 
@@ -152,12 +126,15 @@ void TaskMonitor::stopTiming(Task *task) const
 	// Stop timing for the task
 	monitoring_task_status_t oldStatus = taskStatistics->stopTiming();
 
-	// Update workloads with the task's statistics
-	size_t cost = taskStatistics->getCost();
-	MonitoringWorkloads::workload_t decreaseLoad = getLoadId(oldStatus);
-	if (decreaseLoad != MonitoringWorkloads::null_workload) {
-		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-			tasktypeStatistics->decreaseAccumulatedCost(decreaseLoad, cost);
+	// If the task is not a taskfor, decrease the appropriate cost
+	// accumulations used to infer predictions
+	if (!task->isTaskfor()) {
+		size_t cost = taskStatistics->getCost();
+		workload_t decreaseLoad = getLoadId(oldStatus);
+		if (decreaseLoad != null_workload) {
+			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
+				tasktypeStatistics->decreaseAccumulatedCost(decreaseLoad, cost);
+			}
 		}
 	}
 
@@ -201,7 +178,7 @@ void TaskMonitor::stopTiming(Task *task) const
 	}
 }
 
-void TaskMonitor::taskforCollaboratorFinished(Task *task, Task *source) const
+void TaskMonitor::taskforFinished(Task *task, Task *source) const
 {
 	assert(task != nullptr);
 	assert(source != nullptr);
@@ -211,6 +188,9 @@ void TaskMonitor::taskforCollaboratorFinished(Task *task, Task *source) const
 	TaskStatistics *sourceStatistics = source->getTaskStatistics();
 	assert(taskforStatistics != nullptr);
 	assert(sourceStatistics != nullptr);
+
+	// Stop timing for the taskfor
+	taskforStatistics->stopTiming();
 
 	// Accumulate the collaborator's statistics into the parent Taskfor
 	sourceStatistics->accumulateChildTiming(
