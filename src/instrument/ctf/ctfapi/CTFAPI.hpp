@@ -33,14 +33,14 @@ namespace CTFAPI {
 
 
 	template <typename T>
-	static inline auto sizeOfVariadic(T arg)
+	static inline size_t sizeOfVariadic(T arg)
 	{
 		size_t value = sizeof(arg);
 		return value;
 	}
 
 	template <>
-	inline auto sizeOfVariadic(const char *arg)
+	inline size_t sizeOfVariadic(const char *arg)
 	{
 		size_t i = 0;
 		for (; arg[i]; ++i)
