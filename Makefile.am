@@ -1323,9 +1323,8 @@ nodist_libnanos6_optimized_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
-
 libnanos6_ctf_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
-libnanos6_ctf_linear_regions_fragmented_la_CXXFLAGS = $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_ctf_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
 libnanos6_ctf_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags)
 nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES =
 
@@ -1339,7 +1338,7 @@ nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES += loader/disabled_var
 endif
 
 libnanos6_ctf_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
-libnanos6_ctf_discrete_la_CXXFLAGS = $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_ctf_discrete_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
 libnanos6_ctf_discrete_la_LDFLAGS = $(common_libnanos6_ldflags)
 nodist_libnanos6_ctf_discrete_la_SOURCES =
 

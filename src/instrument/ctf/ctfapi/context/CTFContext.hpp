@@ -11,10 +11,6 @@
 
 namespace CTFAPI {
 
-	// forward declaration to break circular dependency with CTFAPI.hpp
-	template<typename T>
-	void tp_write_args(void **buf, T arg);
-
 	enum ctf_contexes {
 		CTFContextHWC = 1
 	};

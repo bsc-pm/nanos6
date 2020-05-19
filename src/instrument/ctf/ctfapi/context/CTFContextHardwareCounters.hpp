@@ -11,8 +11,10 @@
 #include <vector>
 
 #include "CTFContext.hpp"
+#include "../CTFAPI.hpp"
 
 namespace CTFAPI {
+
 	class CTFContextHardwareCounters : public CTFContext {
 	private:
 		std::vector<const char *> hwc_ids;

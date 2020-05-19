@@ -8,6 +8,7 @@
 #define CTFCONTEXTUNBOUNDED_HPP
 
 #include "CTFContext.hpp"
+#include "../CTFAPI.hpp"
 #include "../CTFTypes.hpp"
 
 namespace CTFAPI {
@@ -31,7 +32,7 @@ namespace CTFAPI {
 
 		void writeContext(void **buf, ctf_thread_id_t threadId)
 		{
-			tp_write_args(buf, threadId);
+			CTFAPI::tp_write_args<>(buf, threadId);
 		}
 	};
 }
