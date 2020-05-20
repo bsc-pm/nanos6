@@ -133,24 +133,24 @@ void Monitoring::taskChangedStatus(Task *task, monitoring_task_status_t newStatu
 	}
 }
 
+void Monitoring::taskCompletedUserCode(Task *task)
+{
+	if (_enabled) {
+		assert(_taskMonitor != nullptr);
+
+		// Account the task's elapsed execution for predictions
+		_taskMonitor->taskCompletedUserCode(task);
+	}
+}
+
 void Monitoring::taskFinished(Task *task)
 {
 	if (_enabled) {
 		assert(task != nullptr);
 		assert(_taskMonitor != nullptr);
 
-		// If the task is a taskfor collaborator, aggregate statistics in the
-		// parent (source taskfor). Otherwise normal task behavior
-		if (task->isTaskfor() && task->isRunnable()) {
-			Task *source = task->getParent();
-			assert(source != nullptr);
-			assert(source->isTaskfor());
-
-			_taskMonitor->taskforFinished(task, source);
-		} else {
-			// Mark task as completely executed
-			_taskMonitor->taskFinished(task);
-		}
+		// Mark task as completely executed
+		_taskMonitor->taskFinished(task);
 	}
 }
 
@@ -178,7 +178,7 @@ void Monitoring::cpuBecomesActive(int cpuId)
 
 //    PREDICTORS    //
 
-double Monitoring::getPredictedWorkload(workload_t loadId)
+double Monitoring::getPredictedWorkload()
 {
 	// FIXME TODO
 	/*

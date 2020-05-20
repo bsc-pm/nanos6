@@ -340,12 +340,12 @@ public:
 		return _ancestorHasPrediction;
 	}
 
-	inline size_t getChildCompletionTimes() const
+	inline size_t getCompletedTime()
 	{
 		return _childCompletionTimes.load();
 	}
 
-	inline void increaseChildCompletionTimes(size_t elapsed)
+	inline void increaseCompletedTime(size_t elapsed)
 	{
 		_childCompletionTimes += elapsed;
 	}

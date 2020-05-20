@@ -14,30 +14,6 @@
 
 class TaskMonitor {
 
-private:
-
-	//! \brief Maps task status identifiers to workload identifiers
-	//!
-	//! \param[in] taskStatus The task status
-	//!
-	//! \return The workload id related to the task status
-	inline workload_t getLoadId(monitoring_task_status_t taskStatus) const
-	{
-		switch (taskStatus) {
-			case executing_status:
-				return executing_load;
-			case ready_status:
-				return ready_load;
-			case pending_status:
-			case blocked_status:
-			case runtime_status:
-				return null_workload;
-			default:
-				return null_workload;
-		}
-	}
-
-
 public:
 
 	//! \brief Initialize a task's monitoring statistics
@@ -57,16 +33,15 @@ public:
 	//! \param[in] execStatus The timing status to start
 	void taskStarted(Task *task, monitoring_task_status_t execStatus) const;
 
+	//! \brief Accumulate statistics when the task completes user code
+	//!
+	//! \param[in,out] task The task
+	void taskCompletedUserCode(Task *task) const;
+
 	//! \brief Stop time monitoring for a task
 	//!
 	//! \param[in,out] task The task
 	void taskFinished(Task *task) const;
-
-	//! \brief Aggregate a collaborator's statistics into the parent Taskfor
-	//!
-	//! \param[in,out] task The collaborator
-	//! \param[in,out] source The parent Taskfor
-	void taskforFinished(Task *task, Task *source) const;
 
 	//! \brief Display task statistics
 	//!
