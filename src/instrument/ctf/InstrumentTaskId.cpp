@@ -11,5 +11,6 @@
 //   0 : Idle
 //   1 : Runtime
 //   2 : Busy Wait
+//   3 : Task
 
-std::atomic<ctf_task_id_t> Instrument::task_id_t::_nextTaskId(3);
+std::atomic<ctf_task_id_t> Instrument::task_id_t::_nextTaskId(4);
