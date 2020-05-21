@@ -24,6 +24,10 @@ static CTFAPI::CTFEvent *eventTaskExecute;
 static CTFAPI::CTFEvent *eventTaskAdd;
 static CTFAPI::CTFEvent *eventTaskBlock;
 static CTFAPI::CTFEvent *eventTaskEnd;
+static CTFAPI::CTFEvent *eventDependencyRegisterEnter;
+static CTFAPI::CTFEvent *eventDependencyRegisterExit;
+static CTFAPI::CTFEvent *eventDependencyUnregisterEnter;
+static CTFAPI::CTFEvent *eventDependencyUnregisterExit;
 
 void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
@@ -83,6 +87,22 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"nanos6:task_end",
 		"\t\tuint32_t _id;\n",
 		CTFAPI::CTFContextHWC
+	));
+	eventDependencyRegisterEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:dependency_register_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventDependencyRegisterExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:dependency_register_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventDependencyUnregisterEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:dependency_unregister_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventDependencyUnregisterExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:dependency_unregister_exit",
+		"\t\tuint8_t _dummy;\n"
 	));
 }
 
@@ -182,4 +202,40 @@ void Instrument::tp_task_end(ctf_task_id_t taskId)
 		return;
 
 	CTFAPI::tracepoint(eventTaskEnd, taskId);
+}
+
+void Instrument::tp_dependency_register_enter()
+{
+	if (!eventDependencyRegisterEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventDependencyRegisterEnter, dummy);
+}
+
+void Instrument::tp_dependency_register_exit()
+{
+	if (!eventDependencyRegisterExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventDependencyRegisterExit, dummy);
+}
+
+void Instrument::tp_dependency_unregister_enter()
+{
+	if (!eventDependencyUnregisterEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventDependencyUnregisterEnter, dummy);
+}
+
+void Instrument::tp_dependency_unregister_exit()
+{
+	if (!eventDependencyUnregisterExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventDependencyUnregisterExit, dummy);
 }

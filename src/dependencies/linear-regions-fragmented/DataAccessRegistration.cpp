@@ -36,6 +36,7 @@
 #include <InstrumentLogMessage.hpp>
 #include <InstrumentReductions.hpp>
 #include <InstrumentTaskId.hpp>
+#include <InstrumentDependencySubsystemEntryPoints.hpp>
 #include <ObjectAllocator.hpp>
 
 #pragma GCC visibility push(hidden)
@@ -2680,8 +2681,12 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData
 	) {
+		bool ready;
+
 		assert(task != 0);
 		assert(computePlace != nullptr);
+
+		Instrument::enterRegisterTaskDataAcesses();
 
 		// This part creates the DataAccesses and calculates any possible upgrade
 		task->registerDependencies();
@@ -2708,7 +2713,7 @@ namespace DataAccessRegistration {
 			}
 #endif
 
-			bool ready = task->decreasePredecessors(2);
+			ready = task->decreasePredecessors(2);
 
 			// Special handling for tasks with commutative accesses
 			if (ready && (task->getDataAccesses()._totalCommutativeBytes > 0UL)) {
@@ -2726,10 +2731,12 @@ namespace DataAccessRegistration {
 					ready = false;
 				}
 			}
-			return ready;
 		} else {
-			return true;
+			ready = true;
 		}
+
+		Instrument::exitRegisterTaskDataAcesses();
+		return ready;
 	}
 
 
@@ -3056,6 +3063,8 @@ namespace DataAccessRegistration {
 	{
 		assert(task != nullptr);
 
+		Instrument::enterUnregisterTaskDataAcesses();
+
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 
 		assert(!accessStructures.hasBeenDeleted());
@@ -3101,6 +3110,7 @@ namespace DataAccessRegistration {
 			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
 		}
 #endif
+		Instrument::exitUnregisterTaskDataAcesses();
 	}
 
 	void propagateSatisfiability(Task *task, DataAccessRegion const &region,

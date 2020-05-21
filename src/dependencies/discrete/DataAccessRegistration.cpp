@@ -27,6 +27,7 @@
 #include "tasks/Task.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
+#include <InstrumentDependencySubsystemEntryPoints.hpp>
 #include <InstrumentTaskId.hpp>
 #include <MemoryAllocator.hpp>
 #include <ObjectAllocator.hpp>
@@ -307,6 +308,8 @@ namespace DataAccessRegistration {
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
 
+		Instrument::enterRegisterTaskDataAcesses();
+
 #ifndef NDEBUG
 		{
 			bool alreadyTaken = false;
@@ -344,6 +347,8 @@ namespace DataAccessRegistration {
 		if (ready && accessStructures._commutativeMask.any())
 			ready = CommutativeSemaphore::registerTask(task);
 
+		Instrument::exitRegisterTaskDataAcesses();
+
 		return ready;
 	}
 
@@ -351,6 +356,8 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) MemoryPlace *location, bool fromBusyThread)
 	{
 		assert(task != nullptr);
+
+		Instrument::enterUnregisterTaskDataAcesses();
 
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
@@ -422,6 +429,8 @@ namespace DataAccessRegistration {
 			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
 		}
 #endif
+
+		Instrument::exitUnregisterTaskDataAcesses();
 	}
 
 	void handleEnterTaskwait(Task *task, ComputePlace *, CPUDependencyData &)
