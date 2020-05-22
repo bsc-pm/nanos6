@@ -27,6 +27,7 @@ extern "C" {
 
 typedef struct {
 	cudaStream_t stream;
+	cudaEvent_t  event;
 } nanos6_cuda_device_environment_t;
 
 
