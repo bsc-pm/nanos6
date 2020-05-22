@@ -910,6 +910,7 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
 	src/instrument/api/InstrumentReductions.hpp \
+	src/instrument/api/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/api/InstrumentTaskExecution.hpp \
 	src/instrument/api/InstrumentTaskStatus.hpp \
 	src/instrument/api/InstrumentTaskWait.hpp \
@@ -946,6 +947,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentLeaderThread.hpp \
 	src/instrument/ctf/InstrumentLogMessage.hpp \
 	src/instrument/ctf/InstrumentReductions.hpp \
+	src/instrument/ctf/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/ctf/InstrumentTaskExecution.hpp \
 	src/instrument/ctf/InstrumentTaskId.hpp \
 	src/instrument/ctf/InstrumentTaskStatus.hpp \
@@ -978,6 +980,7 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
 	src/instrument/extrae/InstrumentReductions.hpp \
+	src/instrument/extrae/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/extrae/InstrumentTaskExecution.hpp \
 	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
@@ -1014,6 +1017,7 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
 	src/instrument/graph/InstrumentLogMessage.hpp \
 	src/instrument/graph/InstrumentReductions.hpp \
+	src/instrument/graph/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
 	src/instrument/graph/InstrumentTaskId.hpp \
 	src/instrument/graph/InstrumentTaskStatus.hpp \
@@ -1046,6 +1050,7 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentLeaderThread.hpp \
 	src/instrument/lint/InstrumentLogMessage.hpp \
 	src/instrument/lint/InstrumentReductions.hpp \
+	src/instrument/lint/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/lint/InstrumentTaskExecution.hpp \
 	src/instrument/lint/InstrumentTaskId.hpp \
 	src/instrument/lint/InstrumentTaskStatus.hpp \
@@ -1076,6 +1081,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
 	src/instrument/null/InstrumentReductions.hpp \
+	src/instrument/null/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
 	src/instrument/null/InstrumentTaskStatus.hpp \
@@ -1105,6 +1111,7 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
 	src/instrument/stats/InstrumentReductions.hpp \
+	src/instrument/stats/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/stats/InstrumentStats.hpp \
 	src/instrument/stats/InstrumentTaskExecution.hpp \
 	src/instrument/stats/InstrumentTaskId.hpp \
@@ -1151,6 +1158,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentLeaderThread.hpp \
 	src/instrument/verbose/InstrumentLogMessage.hpp \
 	src/instrument/verbose/InstrumentReductions.hpp \
+	src/instrument/verbose/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \
 	src/instrument/verbose/InstrumentTaskId.hpp \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \

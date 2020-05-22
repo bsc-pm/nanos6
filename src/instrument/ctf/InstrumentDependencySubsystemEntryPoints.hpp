@@ -8,6 +8,8 @@
 #define INSTRUMENT_CTF_DEPENDENCY_SUBSYTEM_ENTRY_POINTS_HPP
 
 #include "Nanos6CTFEvents.hpp"
+#include "../api/InstrumentDependencySubsystemEntryPoints.hpp"
+
 
 namespace Instrument {
 

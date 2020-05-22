@@ -28,6 +28,10 @@ static CTFAPI::CTFEvent *eventDependencyRegisterEnter;
 static CTFAPI::CTFEvent *eventDependencyRegisterExit;
 static CTFAPI::CTFEvent *eventDependencyUnregisterEnter;
 static CTFAPI::CTFEvent *eventDependencyUnregisterExit;
+static CTFAPI::CTFEvent *eventSchedulerAddTaskEnter;
+static CTFAPI::CTFEvent *eventSchedulerAddTaskExit;
+static CTFAPI::CTFEvent *eventSchedulerGetTaskEnter;
+static CTFAPI::CTFEvent *eventSchedulerGetTaskExit;
 
 void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
@@ -102,6 +106,22 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	));
 	eventDependencyUnregisterExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:dependency_unregister_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventSchedulerAddTaskEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:scheduler_add_task_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventSchedulerAddTaskExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:scheduler_add_task_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventSchedulerGetTaskEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:scheduler_get_task_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventSchedulerGetTaskExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:scheduler_get_task_exit",
 		"\t\tuint8_t _dummy;\n"
 	));
 }
@@ -238,4 +258,40 @@ void Instrument::tp_dependency_unregister_exit()
 
 	char dummy = 0;
 	CTFAPI::tracepoint(eventDependencyUnregisterExit, dummy);
+}
+
+void Instrument::tp_scheduler_add_task_enter()
+{
+	if (!eventSchedulerAddTaskEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSchedulerAddTaskEnter, dummy);
+}
+
+void Instrument::tp_scheduler_add_task_exit()
+{
+	if (!eventSchedulerAddTaskExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSchedulerAddTaskExit, dummy);
+}
+
+void Instrument::tp_scheduler_get_task_enter()
+{
+	if (!eventSchedulerGetTaskEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSchedulerGetTaskEnter, dummy);
+}
+
+void Instrument::tp_scheduler_get_task_exit()
+{
+	if (!eventSchedulerGetTaskExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSchedulerGetTaskExit, dummy);
 }

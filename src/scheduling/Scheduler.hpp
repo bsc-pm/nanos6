@@ -10,6 +10,7 @@
 #include "SchedulerInterface.hpp"
 
 #include <InstrumentTaskStatus.hpp>
+#include <InstrumentSchedulerSubsystemEntryPoints.hpp>
 #include <Monitoring.hpp>
 
 
@@ -42,18 +43,23 @@ public:
 	static inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
 		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
+		Instrument::enterAddReadyTask();
 
 		// Mark the task as ready prior to entering the lock
 		Instrument::taskIsReady(task->getInstrumentationTaskId());
 		Monitoring::taskChangedStatus(task, ready_status);
 
 		_instance->addReadyTask(task, computePlace, hint);
+		Instrument::exitAddReadyTask();
 	}
 
 	static inline Task *getReadyTask(ComputePlace *computePlace)
 	{
 		assert(computePlace != nullptr);
-		return _instance->getReadyTask(computePlace);
+		Instrument::enterGetReadyTask();
+		Task *task = _instance->getReadyTask(computePlace);
+		Instrument::exitGetReadyTask();
+		return task;
 	}
 
 	//! \brief Check whether a compute place is serving tasks

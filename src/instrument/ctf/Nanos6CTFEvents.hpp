@@ -36,6 +36,11 @@ namespace Instrument {
 	void tp_dependency_register_exit();
 	void tp_dependency_unregister_enter();
 	void tp_dependency_unregister_exit();
+
+	void tp_scheduler_add_task_enter();
+	void tp_scheduler_add_task_exit();
+	void tp_scheduler_get_task_enter();
+	void tp_scheduler_get_task_exit();
 }
 
 #endif //NANOS6CTFEVENTS_HPP
