@@ -57,6 +57,8 @@ void CUDAAccelerator::postRunTask(Task *task)
 	nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
 	CUDAFunctions::recordEvent(env.event, env.stream);
 	_active_events.push_back({env.event, task});
+	// set the thread_local static var to be used by nanos6_get_current_cuda_stream()
+	HardwareInfo::threadTask = task;
 }
 
 // Query the events issued to detect task completion

@@ -30,6 +30,7 @@ typedef struct {
 	cudaEvent_t  event;
 } nanos6_cuda_device_environment_t;
 
+cudaStream_t nanos6_get_current_cuda_stream(void);
 
 #ifdef __cplusplus
 }

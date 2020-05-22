@@ -20,7 +20,7 @@ private:
 public:
 	thread_local static Task* threadTask;	// To be used in order to obtain the current task
 											// when inside the task code, for instance by CUDA
-											// in nanos6_cuda_stream() call
+											// in nanos6_get_current_cuda_stream() call
 
 	static void initialize();
 	static void shutdown();

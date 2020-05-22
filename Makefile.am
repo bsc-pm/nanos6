@@ -187,6 +187,11 @@ symbol_resolution += \
 	loader/symbol-resolver/taskwait.c \
 	loader/symbol-resolver/user-mutex.c \
 	loader/symbol-resolver/weak-dependencies.c
+
+if USE_CUDA
+symbol_resolution += loader/symbol-resolver/cuda-device-api.c
+endif
+
 multidimensional_regions += \
 	multidim-region-dependency-resolvers.c \
 	multidim-release-resolvers.c \
@@ -217,6 +222,10 @@ symbol_resolution += \
 	loader/indirect-symbols/taskwait.c \
 	loader/indirect-symbols/user-mutex.c \
 	loader/indirect-symbols/weak-dependencies.c
+
+if USE_CUDA
+symbol_resolution += loader/indirect-symbols/cuda-device-api.c
+endif
 
 multidimensional_regions += \
 	multidim-region-dependency-indirect-resolvers.c \
@@ -410,6 +419,7 @@ cuda_sources =
 if USE_CUDA
 cuda_sources += \
 	src/hardware/device/cuda/CUDAAccelerator.cpp \
+	src/system/CUDADeviceAPI.cpp
 endif
 
 common_sources += $(cuda_sources)
