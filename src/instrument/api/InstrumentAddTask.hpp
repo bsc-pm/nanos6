@@ -21,8 +21,12 @@ namespace Instrument {
 	//! This function is called right after entering the runtime and must
 	//! return an instrumentation-specific task identifier.
 	//! The other 2 functions will also be called by the same thread sequentially.
-	task_id_t enterAddTask(nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, size_t flags, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+	task_id_t enterCreateTask(nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, size_t flags, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+
+	//! This function is called just before exiting the nanos6_create-task
+	//!  function
+	void exitCreateTask();
+
 	//! This function is called after having created the Task object and before the
 	//! task can be executed.
 	//! \param[in] task the Task object
@@ -38,26 +42,30 @@ namespace Instrument {
 	//! \param[in] argsBlockSize the actual size of the args block, if alignment
 	//!            was corrected
 	void createdArgsBlock(task_id_t taskId, void *argsBlockPointer, size_t originalArgsBlockSize, size_t argsBlockSize, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+
+	//! This function is called when entering the nanos6_submit_task api
+	//! call
+	void enterSubmitTask();
+
 	//! This function is called right before returning to the user code. The task
 	//! identifier is necessary because the actual task may have already been
 	//! destroyed by the time this function is called.
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	void exitAddTask(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+	void exitSubmitTask(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+
 	//! This function is called right after entering the runtime and must
 	//! return an instrumentation-specific task identifier.
 	//! The other 2 functions will also be called by the same thread sequentially.
 	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
 	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
-	task_id_t enterAddTaskforCollaborator(task_id_t taskforId, nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, size_t flags, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	task_id_t enterInitTaskforCollaborator(task_id_t taskforId, nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, size_t flags, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! This function is called right before returning to the user code. The task
 	//! identifier is necessary because the actual task may have already been
 	//! destroyed by the time this function is called.
 	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
 	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
-	void exitAddTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+	void exitInitTaskforCollaborator(task_id_t taskforId, task_id_t collaboratorId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 
 	//! This function is called within Nanos6 core, just after registering a
 	//! a new spawned task type but before creating the task.

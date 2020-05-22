@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 
@@ -21,7 +21,7 @@ namespace Instrument {
 	using namespace Graph;
 	
 	
-	task_id_t enterAddTask(
+	task_id_t enterCreateTask(
 		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
@@ -116,14 +116,8 @@ namespace Instrument {
 			taskGroup->_children.insert(taskId);
 		}
 	}
-	
-	void exitAddTask(
-		__attribute__((unused)) task_id_t taskId,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-	}
-	
-	task_id_t enterAddTaskforCollaborator(
+
+	task_id_t enterInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
@@ -137,7 +131,7 @@ namespace Instrument {
 		return taskId;
 	}
 	
-	void exitAddTaskforCollaborator(
+	void exitInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context

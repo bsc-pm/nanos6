@@ -57,7 +57,7 @@ void nanos6_create_task(
 		FatalErrorHandler::failIf(true, "Task of device type '", taskDeviceType, "' has no active hardware associated");
 	}
 
-	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
+	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags);
 
 	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
@@ -148,6 +148,8 @@ void nanos6_create_task(
 		// Construct the Task object
 		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, taskAccessInfo, taskCounters);
 	}
+
+	Instrument::exitCreateTask();
 }
 
 void nanos6_submit_task(void *taskHandle)
@@ -156,6 +158,7 @@ void nanos6_submit_task(void *taskHandle)
 	assert(task != nullptr);
 
 	Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
+	Instrument::enterSubmitTask();
 
 	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
@@ -237,7 +240,7 @@ void nanos6_submit_task(void *taskHandle)
 		Monitoring::taskChangedStatus(parent, executing_status);
 	}
 
-	Instrument::exitAddTask(taskInstrumentationId);
+	Instrument::exitSubmitTask(taskInstrumentationId);
 
 	// Special handling for if0 tasks
 	if (isIf0) {

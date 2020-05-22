@@ -20,8 +20,13 @@ static CTFAPI::CTFEvent *eventThreadShutdown;
 static CTFAPI::CTFEvent *eventWorkerEnterBusyWait;
 static CTFAPI::CTFEvent *eventWorkerExitBusyWait;
 static CTFAPI::CTFEvent *eventTaskLabel;
+static CTFAPI::CTFEvent *eventTaskCreateEnter;
+static CTFAPI::CTFEvent *eventTaskCreateExit;
+static CTFAPI::CTFEvent *eventTaskforInitEnter;
+static CTFAPI::CTFEvent *eventTaskforInitExit;
+static CTFAPI::CTFEvent *eventTaskSubmitEnter;
+static CTFAPI::CTFEvent *eventTaskSubmitExit;
 static CTFAPI::CTFEvent *eventTaskExecute;
-static CTFAPI::CTFEvent *eventTaskAdd;
 static CTFAPI::CTFEvent *eventTaskBlock;
 static CTFAPI::CTFEvent *eventTaskEnd;
 static CTFAPI::CTFEvent *eventDependencyRegisterEnter;
@@ -72,10 +77,31 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"\t\tstring _source;\n"
 		"\t\tuint16_t _type;\n"
 	));
-	eventTaskAdd = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:task_add",
+	eventTaskCreateEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_create_enter",
 		"\t\tuint16_t _type;\n"
 		"\t\tuint32_t _id;\n"
+	));
+	eventTaskCreateExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_create_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskforInitEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:taskfor_init_enter",
+		"\t\tuint16_t _type;\n"
+		"\t\tuint32_t _id;\n"
+	));
+	eventTaskforInitExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:taskfor_init_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskSubmitEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_submit_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskSubmitExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_submit_exit",
+		"\t\tuint8_t _dummy;\n"
 	));
 	eventTaskExecute = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_execute",
@@ -192,20 +218,64 @@ void Instrument::tp_task_label(const char *taskLabel, const char *taskSource, ct
 	CTFAPI::tracepoint(eventTaskLabel, taskLabel, taskSource, taskTypeId);
 }
 
+void Instrument::tp_task_create_enter(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId)
+{
+	if (!eventTaskCreateEnter->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventTaskCreateEnter, taskTypeId, taskId);
+}
+
+void Instrument::tp_task_create_exit()
+{
+	if (!eventTaskCreateExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskCreateExit, dummy);
+}
+
+void Instrument::tp_taskfor_init_enter(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId)
+{
+	if (!eventTaskforInitEnter->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventTaskforInitEnter, taskTypeId, taskId);
+}
+
+void Instrument::tp_taskfor_init_exit()
+{
+	if (!eventTaskforInitExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskforInitExit, dummy);
+}
+
+void Instrument::tp_task_submit_enter()
+{
+	if (!eventTaskSubmitEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskSubmitEnter, dummy);
+}
+
+void Instrument::tp_task_submit_exit()
+{
+	if (!eventTaskSubmitExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskSubmitExit, dummy);
+}
+
 void Instrument::tp_task_execute(ctf_task_id_t taskId)
 {
 	if (!eventTaskExecute->isEnabled())
 		return;
 
 	CTFAPI::tracepoint(eventTaskExecute, taskId);
-}
-
-void Instrument::tp_task_add(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId)
-{
-	if (!eventTaskAdd->isEnabled())
-		return;
-
-	CTFAPI::tracepoint(eventTaskAdd, taskTypeId, taskId);
 }
 
 void Instrument::tp_task_block(ctf_task_id_t taskId)

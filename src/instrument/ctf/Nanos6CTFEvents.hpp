@@ -28,7 +28,12 @@ namespace Instrument {
 
 	void tp_task_label(const char *taskLabel, const char *taskSource, ctf_task_type_id_t taskTypeId);
 	void tp_task_execute(ctf_task_id_t taskId);
-	void tp_task_add(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId);
+	void tp_task_create_enter(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId);
+	void tp_task_create_exit();
+	void tp_taskfor_init_enter(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId);
+	void tp_taskfor_init_exit();
+	void tp_task_submit_enter();
+	void tp_task_submit_exit();
 	void tp_task_block(ctf_task_id_t taskId);
 	void tp_task_end(ctf_task_id_t taskId);
 

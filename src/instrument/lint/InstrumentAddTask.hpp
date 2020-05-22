@@ -15,7 +15,7 @@
 
 
 namespace Instrument {
-	inline task_id_t enterAddTask(
+	inline task_id_t enterCreateTask(
 		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
@@ -26,6 +26,10 @@ namespace Instrument {
 
 		nanos6_lint_on_task_creation(taskId, taskInvokationInfo, flags);
 		return taskId;
+	}
+
+	inline void exitCreateTask()
+	{
 	}
 
 	inline void createdArgsBlock(
@@ -45,13 +49,17 @@ namespace Instrument {
 	) {
 	}
 
-	inline void exitAddTask(
+	inline void enterSubmitTask()
+	{
+	}
+
+	inline void exitSubmitTask(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
 
-	inline task_id_t enterAddTaskforCollaborator(
+	inline task_id_t enterInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
@@ -61,7 +69,7 @@ namespace Instrument {
 		return task_id_t();
 	}
 
-	inline void exitAddTaskforCollaborator(
+	inline void exitInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context

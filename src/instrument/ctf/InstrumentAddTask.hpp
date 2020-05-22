@@ -33,7 +33,7 @@ namespace Instrument {
 		return instrumentId.autoAssingId();
 	}
 
-	inline task_id_t enterAddTask(
+	inline task_id_t enterCreateTask(
 		nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
@@ -46,9 +46,14 @@ namespace Instrument {
 		taskId = task_id._taskId;
 		taskTypeId = ctfGetTaskTypeId(taskInfo);
 
-		tp_task_add(taskTypeId, taskId);
+		tp_task_create_enter(taskTypeId, taskId);
 
 		return task_id;
+	}
+
+	inline void exitCreateTask()
+	{
+		tp_task_create_exit();
 	}
 
 	inline void createdArgsBlock(
@@ -67,13 +72,19 @@ namespace Instrument {
 	) {
 	}
 
-	inline void exitAddTask(
+	inline void enterSubmitTask()
+	{
+		tp_task_submit_enter();
+	}
+
+	inline void exitSubmitTask(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		tp_task_submit_exit();
 	}
 
-	inline task_id_t enterAddTaskforCollaborator(
+	inline task_id_t enterInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
@@ -86,16 +97,17 @@ namespace Instrument {
 		task_id_t task_id(true);
 		taskId = task_id._taskId;
 		taskTypeId = ctfGetTaskTypeId(taskInfo);
-		tp_task_add(taskTypeId, taskId);
+		tp_taskfor_init_enter(taskTypeId, taskId);
 
 		return task_id;
 	}
 
-	inline void exitAddTaskforCollaborator(
+	inline void exitInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+		tp_taskfor_init_exit();
 	}
 
 	inline void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo)

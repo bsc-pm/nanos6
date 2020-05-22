@@ -19,7 +19,7 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	task_id_t enterAddTask(
+	task_id_t enterCreateTask(
 		nanos6_task_info_t *taskInfo, nanos6_task_invocation_info_t *taskInvokationInfo, __attribute__((unused)) size_t flags,
 		InstrumentationContext const &context
 	) {
@@ -46,8 +46,11 @@ namespace Instrument {
 		
 		return taskId;
 	}
-	
-	
+
+	void exitCreateTask()
+	{
+	}
+
 	void createdArgsBlock(
 		task_id_t taskId,
 		void *argsBlockPointer,
@@ -93,9 +96,12 @@ namespace Instrument {
 		
 		addLogEntry(logEntry);
 	}
-	
-	
-	void exitAddTask(
+
+	void enterSubmitTask()
+	{
+	}
+
+	void exitSubmitTask(
 		task_id_t taskId,
 		InstrumentationContext const &context
 	) {
@@ -112,7 +118,7 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 	
-	task_id_t enterAddTaskforCollaborator(
+	task_id_t enterInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
@@ -125,7 +131,7 @@ namespace Instrument {
 		return taskId;
 	}
 	
-	void exitAddTaskforCollaborator(
+	void exitInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context
