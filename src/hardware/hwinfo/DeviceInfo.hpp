@@ -34,11 +34,11 @@ public:
 
 	virtual size_t getComputePlaceCount() const = 0;
 
-	virtual ComputePlace *getComputePlace(int index) = 0;
+	virtual ComputePlace *getComputePlace(int handler) = 0;
 
 	virtual size_t getMemoryPlaceCount() const = 0;
 
-	virtual MemoryPlace *getMemoryPlace(int index) = 0;
+	virtual MemoryPlace *getMemoryPlace(int handler) = 0;
 };
 
 #endif // DEVICE_INFO_HPP

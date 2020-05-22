@@ -357,10 +357,9 @@ common_sources = \
 	src/executors/threads/cpu-managers/default/DefaultCPUManager.cpp \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.cpp \
 	src/hardware/HardwareInfo.cpp \
-	src/hardware/device/Device.cpp \
+	src/hardware/device/Accelerator.cpp \
 	src/hardware/hwinfo/HostInfo.cpp \
 	src/hardware/places/ComputePlace.cpp \
-	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/hardware-counters/HardwareCounters.cpp \
 	src/hardware-counters/ThreadHardwareCounters.cpp \
@@ -814,13 +813,7 @@ noinst_HEADERS = \
 	src/hardware/cluster/memory/ClusterMemoryNode.hpp \
 	src/hardware/cluster/memory/null/ClusterMemoryNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
-	src/hardware/device/Device.hpp \
-	src/hardware/device/DeviceFunctionsInterface.hpp \
-	src/hardware/device/DeviceInfoImplementation.hpp \
-	src/hardware/device/implementation/CUDA.hpp \
-	src/hardware/device/implementation/FPGA.hpp \
-	src/hardware/device/implementation/NULLDevice.hpp \
-	src/hardware/device/implementation/cuda/CUDAContext.hpp \
+	src/hardware/device/Accelerator.hpp \
 	src/hardware/device/implementation/cuda/CUDAFunctions.hpp \
 	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
@@ -828,8 +821,6 @@ noinst_HEADERS = \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
-	src/hardware/places/DeviceComputePlace.hpp \
-	src/hardware/places/DeviceMemoryPlace.hpp \
 	src/hardware-counters/HardwareCounters.hpp \
 	src/hardware-counters/HardwareCountersInterface.hpp \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
