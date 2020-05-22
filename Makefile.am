@@ -814,7 +814,9 @@ noinst_HEADERS = \
 	src/hardware/cluster/memory/null/ClusterMemoryNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
 	src/hardware/device/Accelerator.hpp \
-	src/hardware/device/implementation/cuda/CUDAFunctions.hpp \
+	src/hardware/device/cuda/CUDADeviceInfo.hpp \
+	src/hardware/device/cuda/CUDAFunctions.hpp \
+	src/hardware/device/cuda/CUDAStreamPool.hpp \
 	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
