@@ -21,7 +21,8 @@
 	#define HWLOC_NUMA_ALIAS HWLOC_OBJ_NUMANODE
 #endif
 
-void HostInfo::initialize()
+HostInfo::HostInfo() :
+	_validMemoryPlaces(0)
 {
 //! Check that hwloc headers match with runtime.
 #if HWLOC_API_VERSION >= 0x00020000
@@ -158,9 +159,11 @@ void HostInfo::initialize()
 
 	//other work
 	hwloc_topology_destroy(topology); // release resources
+
+	_deviceInitialized = true;
 }
 
-void HostInfo::shutdown()
+HostInfo::~HostInfo()
 {
 	assert(!_memoryPlaces.empty());
 

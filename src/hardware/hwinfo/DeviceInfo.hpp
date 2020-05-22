@@ -11,18 +11,34 @@
 #include "hardware/places/ComputePlace.hpp"
 
 class DeviceInfo {
+protected:
+	// Number of devices of the given device type
+	size_t _deviceCount;
+	// Underlying mechanism initialization status, where applicable (e.g CUDA Runtime)
+	bool _deviceInitialized;
+
 public:
+
 	virtual ~DeviceInfo()
 	{}
 
-	virtual void initialize() = 0;
-	virtual void shutdown() = 0;
+	inline size_t getDeviceCount()
+	{
+		return _deviceCount;
+	}
 
-	virtual size_t getComputePlaceCount() = 0;
+	inline bool isDeviceInitialized()
+	{
+		return _deviceInitialized;
+	}
+
+	virtual size_t getComputePlaceCount() const = 0;
+
 	virtual ComputePlace *getComputePlace(int index) = 0;
 
-	virtual size_t getMemoryPlaceCount() = 0;
+	virtual size_t getMemoryPlaceCount() const = 0;
+
 	virtual MemoryPlace *getMemoryPlace(int index) = 0;
 };
 
-#endif //DEVICE_INFO_HPP
+#endif // DEVICE_INFO_HPP
