@@ -10,6 +10,7 @@
 #include <string>
 
 #include "TaskMonitor.hpp"
+#include "TasktypeStatistics.hpp"
 #include "tasks/TaskInfo.hpp"
 
 
@@ -31,7 +32,7 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 
 	if (parent != nullptr) {
 		if (parentStatistics != nullptr) {
-			parentStatistics->increaseAliveChildren();
+			parentStatistics->increaseNumChildrenAlive();
 			parentStatistics->increaseNumChildren();
 			taskStatistics->setAncestorHasPrediction(
 				parentStatistics->hasPrediction() ||
@@ -165,7 +166,7 @@ void TaskMonitor::taskFinished(Task *task) const
 	//    into the parent task if it exists
 	// NOTE: If the task is a taskfor collaborator, only perform step 3)
 	while (taskStatistics->markAsFinished()) {
-		assert(!taskStatistics->getAliveChildren());
+		assert(!taskStatistics->getNumChildrenAlive());
 
 		// Make sure this is not a taskfor collaborator for these steps
 		if (!task->isTaskfor() || (task->isTaskfor() && !task->isRunnable())) {
@@ -185,11 +186,7 @@ void TaskMonitor::taskFinished(Task *task) const
 		// 3)
 		TaskStatistics *parentStatistics = taskStatistics->getParentStatistics();
 		if (parentStatistics != nullptr) {
-			parentStatistics->accumulateChildTiming(
-				taskStatistics->getChronos(),
-				taskStatistics->getChildTimes()
-			);
-
+			parentStatistics->accumulateChildrenStatistics(taskStatistics);
 			taskStatistics = parentStatistics;
 			task = task->getParent();
 			assert(task != nullptr);

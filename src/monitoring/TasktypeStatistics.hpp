@@ -74,6 +74,8 @@ public:
 
 	inline void decreaseAccumulatedCost(size_t cost)
 	{
+		assert(_accumulatedCost.load() >= cost);
+
 		_accumulatedCost -= cost;
 	}
 
@@ -89,6 +91,8 @@ public:
 
 	inline void decreaseCompletedTime(size_t time)
 	{
+		assert(_completedTime.load() >= time);
+
 		_completedTime -= time;
 	}
 
@@ -179,7 +183,7 @@ public:
 
 		// Normalize the execution time using the task's computational cost
 		double cost = (double) taskStatistics->getCost();
-		double elapsed = taskStatistics->getElapsedTime();
+		double elapsed = taskStatistics->getElapsedExecutionTime();
 		double normalizedTime = elapsed / cost;
 
 		// Compute the accuracy of the prediction if the task had one

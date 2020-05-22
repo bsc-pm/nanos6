@@ -33,14 +33,6 @@ enum monitoring_task_status_t {
 	null_status = -1
 };
 
-char const * const statusDescriptions[num_status] = {
-	"Pending Status",
-	"Ready Status",
-	"Executing Status",
-	"Blocked Status",
-	"Runtime Status",
-	"Paused Status"
-};
 
 class TasktypeStatistics;
 
@@ -48,60 +40,70 @@ class TaskStatistics {
 
 private:
 
-	//! The computational cost of the task
-	size_t _cost;
-
-	//! Array of stopwatches to monitor timing for the task
-	Chrono _chronos[num_status];
-
-	//! Id of the currently active stopwatch (status)
-	monitoring_task_status_t _currentId;
+	//! A pointer to the accumulated statistics of this task's tasktype
+	TasktypeStatistics *_tasktypeStatistics;
 
 	//! A pointer to the TaskStatistics of the parent task
 	TaskStatistics *_parentStatistics;
+
+	//! The computational cost of the task
+	size_t _cost;
 
 	//! Number of alive children of the task + 1 (+1 due to this task also
 	//! being accounted)
 	//! When this counter reaches 0, it means timing data can be accumulated
 	//! by whoever decreased it to 0 (hence why +1 is needed for the task
 	//! itself to avoid early accumulations)
-	std::atomic<size_t> _aliveChildren;
+	std::atomic<size_t> _numChildrenAlive;
 
-	//! Elapsed execution ticks of children tasks (not converted to time)
-	std::atomic<size_t> _childrenTimes[num_status];
-
-	//! Whether a timing prediction is available for the task
-	bool _taskHasPrediction;
-
-	//! Predicted elapsed execution time of the task
-	double _timePrediction;
-
-	//! Whether a task in the chain of ancestors of this task had predictions
-	bool _ancestorHasPrediction;
-
-	//! Ticks of children tasks, used to obtain more accurate predictions
-	//! (not converted to time, simply internal chronometer ticks)
-	std::atomic<size_t> _childCompletionTimes;
-
-	//! A pointer to the accumulated statistics of the tasktype
-	TasktypeStatistics *_tasktypeStatistics;
+	/*    GENERAL METRICS    */
 
 	//! The number of tasks created by this one
-	size_t _numChildrenTasks;
+	size_t _numChildren;
+
+	/*    TIMING METRICS    */
+
+	//! Array of stopwatches to monitor timing for the task in teach status
+	Chrono _chronometers[num_status];
+
+	//! Id of the currently active stopwatch (status)
+	monitoring_task_status_t _currentChronometer;
+
+	//! Elapsed execution ticks of children tasks (ticks, not time)
+	std::atomic<size_t> _childrenTimes[num_status];
+
+	//! Whether the task has a predicted elapsed execution time
+	bool _hasPrediction;
+
+	//! Whether a task in the chain of ancestors of this task had a prediction
+	bool _ancestorHasPrediction;
+
+	//! The predicted elapsed execution time of the task
+	double _timePrediction;
+
+	//! An approximation the time that has been completed by this task already,
+	//! only accounting the elapsed time of children tasks when they complete
+	//! the execution of their user code.
+	//! NOTE: Ticks of children tasks, not converted to time for faster accumulation.
+	//! These are used later on to obtain preciser predictions by subtracting this
+	//! time from accumulations of cost at the Tasktype level. When the current task
+	//! finishes its execution completely, this time has to be decreased from
+	//! TasktypeStatistics, hence why we save it here
+	std::atomic<size_t> _completedTime;
 
 public:
 
 	inline TaskStatistics() :
-		_cost(DEFAULT_COST),
-		_currentId(null_status),
-		_parentStatistics(nullptr),
-		_aliveChildren(1),
-		_taskHasPrediction(false),
-		_timePrediction(0.0),
-		_ancestorHasPrediction(false),
-		_childCompletionTimes(0),
 		_tasktypeStatistics(nullptr),
-		_numChildrenTasks(0)
+		_parentStatistics(nullptr),
+		_cost(DEFAULT_COST),
+		_numChildrenAlive(1),
+		_numChildren(0),
+		_currentChronometer(null_status),
+		_hasPrediction(false),
+		_ancestorHasPrediction(false),
+		_timePrediction(0.0),
+		_completedTime(0)
 	{
 		for (short i = 0; i < num_status; ++i) {
 			_childrenTimes[i] = 0;
@@ -110,64 +112,33 @@ public:
 
 	inline void reinitialize()
 	{
-		_cost = DEFAULT_COST;
-		_currentId = null_status;
-		_parentStatistics = nullptr;
-		_aliveChildren = 1;
-		_taskHasPrediction = false;
-		_timePrediction = 0.0;
-		_ancestorHasPrediction = false;
-		_childCompletionTimes = 0;
 		_tasktypeStatistics = nullptr;
-		_numChildrenTasks = 0;
+		_parentStatistics = nullptr;
+		_cost = DEFAULT_COST;
+		_numChildrenAlive = 1;
+		_numChildren = 0;
+		_currentChronometer = null_status;
+		_hasPrediction = false;
+		_ancestorHasPrediction = false;
+		_timePrediction = 0.0;
+		_completedTime = 0;
 
 		for (short i = 0; i < num_status; ++i) {
-			_chronos[i].restart();
+			_chronometers[i].restart();
 			_childrenTimes[i] = 0;
 		}
 	}
 
+	/*    SETTERS & GETTERS    */
 
-	//    SETTERS & GETTERS    //
-
-	inline void setCost(size_t cost)
+	inline void setTasktypeStatistics(TasktypeStatistics *tasktypeStatistics)
 	{
-		_cost = cost;
+		_tasktypeStatistics = tasktypeStatistics;
 	}
 
-	inline size_t getCost() const
+	inline TasktypeStatistics *getTasktypeStatistics() const
 	{
-		return _cost;
-	}
-
-	inline const Chrono *getChronos() const
-	{
-		return _chronos;
-	}
-
-	//! \brief Get a representation of the elapsed ticks of a timer
-	//!
-	//! \param[in] id The timer's timing status id
-	//!
-	//! \return The elapsed ticks of the timer
-	inline size_t getChronoTicks(monitoring_task_status_t id) const
-	{
-		return _chronos[id].getAccumulated();
-	}
-
-	//! \brief Get the elapsed execution time of a timer (in microseconds)
-	//!
-	//! \param[in] id The timer's timing status id
-	//!
-	//! \return The elapsed execution time of the timer in microseconds
-	inline double getElapsedTiming(monitoring_task_status_t id) const
-	{
-		return ((double) _chronos[id]);
-	}
-
-	inline monitoring_task_status_t getCurrentTimingStatus() const
-	{
-		return _currentId;
+		return _tasktypeStatistics;
 	}
 
 	inline void setParentStatistics(TaskStatistics *parentStatistics)
@@ -180,154 +151,79 @@ public:
 		return _parentStatistics;
 	}
 
-	inline const std::atomic<size_t> *getChildTimes() const
+	inline void setCost(size_t cost)
 	{
-		return _childrenTimes;
+		_cost = cost;
 	}
 
-	inline size_t getChildTiming(monitoring_task_status_t statusId) const
+	inline size_t getCost() const
 	{
-		return _childrenTimes[statusId].load();
+		return _cost;
 	}
 
-	inline void increaseAliveChildren()
+	inline void increaseNumChildrenAlive()
 	{
-		++_aliveChildren;
+		++_numChildrenAlive;
 	}
 
-	//! \brief Decrease the number of alive children
-	//!
-	//! \return Whether the decreased child was the last child
-	inline bool decreaseAliveChildren()
-	{
-		assert(_aliveChildren.load() > 0);
+	// NOTE: Unused, use markAsFinished instead
+	// inline bool decreaseNumChildrenAlive();
 
-		int aliveChildren = (--_aliveChildren);
-		return (aliveChildren == 0);
-	}
-
-	inline size_t getAliveChildren() const
-	{
-		return _aliveChildren.load();
-	}
-
-	//! \brief Mark this task as finished, decreasing the extra unit of alive
-	//! children, which is the current task
+	//! \brief Mark this task as finished, decreasing the number of children alive
 	//!
 	//! \return Whether there are no more children alive
 	inline bool markAsFinished()
 	{
-		assert(_aliveChildren.load() > 0);
+		assert(_numChildrenAlive.load() > 0);
 
-		int aliveChildren = (--_aliveChildren);
+		int aliveChildren = (--_numChildrenAlive);
 		return (aliveChildren == 0);
+	}
+
+	inline size_t getNumChildrenAlive() const
+	{
+		return _numChildrenAlive.load();
 	}
 
 	//! \brief Increase the number of tasks created by this one
 	inline void increaseNumChildren()
 	{
-		++_numChildrenTasks;
+		++_numChildren;
 	}
 
 	//! \brief Get the number of children tasks created by this one
 	inline size_t getNumChildrenTasks() const
 	{
-		return _numChildrenTasks;
+		return _numChildren;
 	}
 
-
-	//    TIMING-RELATED    //
-
-	//! \brief Start/resume a chrono. If resumed, the active chrono must pause
+	//! \brief Get a representation of the elapsed ticks of a timer
 	//!
-	//! \param[in] id the timing status of the stopwatch to start/resume
+	//! \param[in] id The timer's timing status id
 	//!
-	//! \return The previous timing status of the task
-	inline monitoring_task_status_t startTiming(monitoring_task_status_t id)
+	//! \return The elapsed ticks of the timer
+	inline size_t getChronoTicks(monitoring_task_status_t id) const
 	{
-		// Change the current timing status
-		const monitoring_task_status_t oldId = _currentId;
-		_currentId = id;
+		assert(id < num_status);
 
-		// Resume the next chrono
-		if (oldId == null_status) {
-			_chronos[_currentId].start();
-		} else {
-			_chronos[oldId].continueAt(_chronos[_currentId]);
-		}
-
-		return oldId;
+		return _chronometers[id].getAccumulated();
 	}
 
-	//! \brief Stop/pause a chrono
-	//!
-	//! \param[in] id the timing status of the stopwatch to stop/pause
-	//!
-	//! \return The previous timing status of the task
-	inline monitoring_task_status_t stopTiming()
+	inline size_t getChildrenTimes(monitoring_task_status_t id)
 	{
-		const monitoring_task_status_t oldId = _currentId;
+		assert(id < num_status);
 
-		if (_currentId != null_status) {
-			_chronos[_currentId].stop();
-		}
-		_currentId = null_status;
-
-		return oldId;
-	}
-
-	//! \brief Get the elapsed execution time of the task
-	inline double getElapsedTime() const
-	{
-		// First convert children ticks into Chronos to obtain elapsed time
-		Chrono executionTimer(getChildTiming(executing_status));
-		Chrono runtimeTimer(getChildTiming(runtime_status));
-
-		// Return the aggregation of timing of the task plus its child tasks
-		return getElapsedTiming(executing_status) +
-			getElapsedTiming(runtime_status)      +
-			(double) executionTimer               +
-			(double) runtimeTimer;
-	}
-
-	//! \brief Accumulate children tasks timing
-	//!
-	//! \param[in] childChronos An array of stopwatches that contain timing
-	//! data of the execution of a children task
-	//! \param[in] childTimes Accumulated elapsed ticks (one per timing status)
-	//! of children tasks created by a child task of the current one
-	inline void accumulateChildTiming(
-		const Chrono *childChronos,
-		const std::atomic<size_t> *childTimes
-	) {
-		assert(childChronos != nullptr);
-		assert(childTimes != nullptr);
-
-		for (short i = 0; i < num_status; ++i) {
-			_childrenTimes[i] +=
-				childChronos[i].getAccumulated() +
-				childTimes[i].load();
-		}
+		return _childrenTimes[id].load();
 	}
 
 	inline void setHasPrediction(bool hasPrediction)
 	{
-		_taskHasPrediction = hasPrediction;
+		_hasPrediction = hasPrediction;
 	}
 
 	inline bool hasPrediction() const
 	{
-		return _taskHasPrediction;
-	}
-
-	inline void setTimePrediction(double prediction)
-	{
-		_timePrediction = prediction;
-	}
-
-	inline double getTimePrediction() const
-	{
-		return _timePrediction;
+		return _hasPrediction;
 	}
 
 	inline void setAncestorHasPrediction(bool ancestorHasPrediction)
@@ -340,24 +236,93 @@ public:
 		return _ancestorHasPrediction;
 	}
 
-	inline size_t getCompletedTime()
+	inline void setTimePrediction(double prediction)
 	{
-		return _childCompletionTimes.load();
+		_timePrediction = prediction;
+	}
+
+	inline double getTimePrediction() const
+	{
+		return _timePrediction;
 	}
 
 	inline void increaseCompletedTime(size_t elapsed)
 	{
-		_childCompletionTimes += elapsed;
+		_completedTime += elapsed;
 	}
 
-	inline void setTasktypeStatistics(TasktypeStatistics *tasktypeStatistics)
+	inline size_t getCompletedTime()
 	{
-		_tasktypeStatistics = tasktypeStatistics;
+		return _completedTime.load();
 	}
 
-	inline TasktypeStatistics *getTasktypeStatistics() const
+	/*    TIMING-RELATED METHODS    */
+
+	//! \brief Start/resume a chrono. If resumed, the active chrono must pause
+	//!
+	//! \param[in] id the timing status of the stopwatch to start/resume
+	//!
+	//! \return The previous timing status of the task
+	inline monitoring_task_status_t startTiming(monitoring_task_status_t id)
 	{
-		return _tasktypeStatistics;
+		assert(id < num_status);
+
+		// Change the current timing status
+		const monitoring_task_status_t oldId = _currentChronometer;
+		_currentChronometer = id;
+
+		// Resume the next chrono
+		if (oldId == null_status) {
+			_chronometers[_currentChronometer].start();
+		} else {
+			_chronometers[oldId].continueAt(_chronometers[_currentChronometer]);
+		}
+
+		return oldId;
+	}
+
+	//! \brief Stop/pause a chrono
+	//!
+	//! \param[in] id the timing status of the stopwatch to stop/pause
+	//!
+	//! \return The previous timing status of the task
+	inline monitoring_task_status_t stopTiming()
+	{
+		const monitoring_task_status_t oldId = _currentChronometer;
+
+		if (_currentChronometer != null_status) {
+			_chronometers[_currentChronometer].stop();
+		}
+		_currentChronometer = null_status;
+
+		return oldId;
+	}
+
+	//! \brief Get the elapsed execution time of the task
+	inline double getElapsedExecutionTime() const
+	{
+		// First convert children ticks into Chronos to obtain elapsed time
+		Chrono executionTimer(_childrenTimes[executing_status].load());
+
+		// Return the aggregation of timing of the task plus its child tasks
+		return ((double) _chronometers[executing_status]) + (double) executionTimer;
+	}
+
+	//! \brief Accumulate children statistics into the current task
+	//!
+	//! \param[in] childChronos An array of stopwatches that contain timing
+	//! data of the execution of a children task
+	//! \param[in] childTimes Accumulated elapsed ticks (one per timing status)
+	//! of children tasks created by a child task of the current one
+	inline void accumulateChildrenStatistics(TaskStatistics *childStatistics)
+	{
+		assert(childStatistics != nullptr);
+
+		for (short i = 0; i < num_status; ++i) {
+			_childrenTimes[i] +=
+				childStatistics->getChronoTicks((monitoring_task_status_t) i) +
+				childStatistics->getChildrenTimes((monitoring_task_status_t) i);
+		}
 	}
 
 };
