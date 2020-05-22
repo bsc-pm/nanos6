@@ -1127,7 +1127,6 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/device/DeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
 	src/scheduling/schedulers/device/FPGADeviceScheduler.hpp \
-	src/scheduling/schedulers/device/SubDeviceScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GenericFactory.hpp \

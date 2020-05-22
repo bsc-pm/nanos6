@@ -8,11 +8,9 @@
 #define FPGA_DEVICE_SCHEDULER_HPP
 
 #include "DeviceScheduler.hpp"
-#include "SubDeviceScheduler.hpp"
 
 class FPGADeviceScheduler : public DeviceScheduler {
-	size_t _totalSubDevices;
-	SubDeviceScheduler *_subDeviceSchedulers;
+	size_t _totalDevices;
 public:
 	FPGADeviceScheduler(
 		size_t totalComputePlaces,
@@ -25,40 +23,21 @@ public:
 			enablePriority,	enableImmediateSuccessor,
 			deviceType)
 	{
-		DeviceInfoImplementation *deviceInfo =
-			static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(_deviceType));
-		_totalSubDevices = deviceInfo->getNumDevices();
-		_subDeviceSchedulers =
-			(SubDeviceScheduler *) MemoryAllocator::alloc(_totalSubDevices * sizeof(SubDeviceScheduler));
-		for (size_t i = 0; i < _totalSubDevices; i++) {
-			new (&_subDeviceSchedulers[deviceInfo->getDeviceSubType(i)])
-				SubDeviceScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, _deviceType, deviceInfo->getDeviceSubType(i));
-		}
+		_totalDevices = HardwareInfo::getComputePlaceCount(deviceType);
 	}
 
 	virtual ~FPGADeviceScheduler()
 	{
-		for (size_t i = 0; i < _totalSubDevices; i++) {
-			_subDeviceSchedulers[i].~SubDeviceScheduler();
-		}
-		MemoryAllocator::free(_subDeviceSchedulers, _totalSubDevices * sizeof(SubDeviceScheduler));
-	}
-
-	inline int getDeviceSubType(int subType)
-	{
-		return _subDeviceSchedulers[subType].getDeviceSubType();
-	}
-
-	inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
-	{
-		int subType = task->getDeviceSubType();
-		_subDeviceSchedulers[subType].addReadyTask(task, computePlace, hint);
 	}
 
 	Task *getReadyTask(ComputePlace *computePlace)
 	{
-		int subType = ((DeviceComputePlace *)computePlace)->getSubType();
-		return _subDeviceSchedulers[subType].getReadyTask(computePlace);
+		assert(computePlace != nullptr);
+		assert(computePlace->getType() == _deviceType);
+
+		Task *result = getTask(computePlace);
+		assert(result == nullptr || result->getDeviceType() == _deviceType);
+		return result;
 	}
 
 	inline std::string getName() const

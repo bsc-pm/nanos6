@@ -8,8 +8,6 @@
 #define CUDA_DEVICE_SCHEDULER_HPP
 
 #include "DeviceScheduler.hpp"
-#include "hardware/places/DeviceComputePlace.hpp"
-#include "hardware/device/DeviceInfoImplementation.hpp"
 
 class CUDADeviceScheduler : public DeviceScheduler {
 	size_t _totalDevices;
@@ -26,15 +24,7 @@ public:
 			enablePriority,	enableImmediateSuccessor,
 			deviceType)
 	{
-		DeviceInfoImplementation *deviceInfo =
-			static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(deviceType));
-		assert(deviceInfo != nullptr);
-
-		// CUDA has a single subtype.
-		Device *subDeviceType = deviceInfo->getDevice(0);
-		assert(subDeviceType != nullptr);
-
-		_totalDevices = subDeviceType->getNumDevices();
+		_totalDevices = HardwareInfo::getComputePlaceCount(deviceType);
 	}
 
 	virtual ~CUDADeviceScheduler()
