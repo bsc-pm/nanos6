@@ -405,6 +405,15 @@ common_sources = \
 common_sources += $(universal_debug_sources)
 nodist_common_sources += $(nodist_universal_debug_sources)
 
+cuda_sources =
+
+if USE_CUDA
+cuda_sources += \
+	src/hardware/device/cuda/CUDAAccelerator.cpp \
+endif
+
+common_sources += $(cuda_sources)
+
 cluster_sources =
 if USE_CLUSTER
 cluster_sources += \
@@ -814,6 +823,7 @@ noinst_HEADERS = \
 	src/hardware/cluster/memory/null/ClusterMemoryNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
 	src/hardware/device/Accelerator.hpp \
+	src/hardware/device/cuda/CUDAAccelerator.hpp \
 	src/hardware/device/cuda/CUDADeviceInfo.hpp \
 	src/hardware/device/cuda/CUDAFunctions.hpp \
 	src/hardware/device/cuda/CUDAStreamPool.hpp \
