@@ -14,12 +14,22 @@ class FPGADeviceScheduler : public DeviceScheduler {
 	size_t _totalSubDevices;
 	SubDeviceScheduler *_subDeviceSchedulers;
 public:
-	FPGADeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType)
-		: DeviceScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, deviceType)
+	FPGADeviceScheduler(
+		size_t totalComputePlaces,
+		SchedulingPolicy policy,
+		bool enablePriority,
+		bool enableImmediateSuccessor,
+		nanos6_device_t deviceType
+	) :
+		DeviceScheduler(totalComputePlaces, policy,
+			enablePriority,	enableImmediateSuccessor,
+			deviceType)
 	{
-		DeviceInfoImplementation *deviceInfo = static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(_deviceType));
+		DeviceInfoImplementation *deviceInfo =
+			static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(_deviceType));
 		_totalSubDevices = deviceInfo->getNumDevices();
-		_subDeviceSchedulers = (SubDeviceScheduler *) MemoryAllocator::alloc(_totalSubDevices * sizeof(SubDeviceScheduler));
+		_subDeviceSchedulers =
+			(SubDeviceScheduler *) MemoryAllocator::alloc(_totalSubDevices * sizeof(SubDeviceScheduler));
 		for (size_t i = 0; i < _totalSubDevices; i++) {
 			new (&_subDeviceSchedulers[deviceInfo->getDeviceSubType(i)])
 				SubDeviceScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, _deviceType, deviceInfo->getDeviceSubType(i));

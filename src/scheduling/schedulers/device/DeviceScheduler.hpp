@@ -12,8 +12,14 @@
 
 class DeviceScheduler : public SyncScheduler {
 public:
-	DeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, __attribute__((unused)) bool enableImmediateSuccessor, nanos6_device_t deviceType)
-		: SyncScheduler(totalComputePlaces, deviceType)
+	DeviceScheduler(
+		size_t totalComputePlaces,
+		SchedulingPolicy policy,
+		bool enablePriority,
+		__attribute__((unused)) bool enableImmediateSuccessor,
+		nanos6_device_t deviceType
+	) :
+		SyncScheduler(totalComputePlaces, deviceType)
 	{
 		// Immediate successor support for devices is not available yet.
 		_scheduler = new DeviceUnsyncScheduler(policy, enablePriority, false);

@@ -5,8 +5,6 @@
 */
 
 #include "SyncScheduler.hpp"
-#include "scheduling/schedulers/device/DeviceScheduler.hpp"
-#include "scheduling/schedulers/device/SubDeviceScheduler.hpp"
 
 Task *SyncScheduler::getTask(ComputePlace *computePlace)
 {

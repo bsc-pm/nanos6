@@ -15,10 +15,19 @@ class CUDADeviceScheduler : public DeviceScheduler {
 	size_t _totalDevices;
 
 public:
-	CUDADeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, nanos6_device_t deviceType) :
-		DeviceScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor, deviceType)
+	CUDADeviceScheduler(
+		size_t totalComputePlaces,
+		SchedulingPolicy policy,
+		bool enablePriority,
+		bool enableImmediateSuccessor,
+		nanos6_device_t deviceType
+	) :
+		DeviceScheduler(totalComputePlaces, policy,
+			enablePriority,	enableImmediateSuccessor,
+			deviceType)
 	{
-		DeviceInfoImplementation *deviceInfo = static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(deviceType));
+		DeviceInfoImplementation *deviceInfo =
+			static_cast<DeviceInfoImplementation*>(HardwareInfo::getDeviceInfo(deviceType));
 		assert(deviceInfo != nullptr);
 
 		// CUDA has a single subtype.

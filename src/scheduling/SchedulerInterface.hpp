@@ -10,9 +10,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "scheduling/schedulers/HostScheduler.hpp"
-#include "scheduling/schedulers/device/CUDADeviceScheduler.hpp"
 #include "scheduling/schedulers/device/DeviceScheduler.hpp"
-#include "scheduling/schedulers/device/FPGADeviceScheduler.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
