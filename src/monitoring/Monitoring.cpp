@@ -8,6 +8,8 @@
 #include <fstream>
 
 #include "Monitoring.hpp"
+#include "TasktypeStatistics.hpp"
+#include "tasks/TaskInfo.hpp"
 
 
 ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled", true);
@@ -246,26 +248,31 @@ double Monitoring::getCPUUsagePrediction(size_t time)
 
 double Monitoring::getPredictedElapsedTime()
 {
-	/*
 	if (_enabled) {
 		assert(_cpuMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
 
-		const double cpuUtilization = _cpuMonitor->getTotalActiveness();
-		const double instantiated = getPredictedWorkload(instantiated_load);
-		const double finished = getPredictedWorkload(finished_load);
+		double currentWorkload = 0.0;
+		TaskInfo::processAllTasktypes(
+			[&](const std::string &, TasktypeData &tasktypeData) {
+				TasktypeStatistics &statistics = tasktypeData.getTasktypeStatistics();
+				Chrono completedChrono(statistics.getCompletedTime());
+				double completedTime = ((double) completedChrono);
+				size_t accumulatedCost = statistics.getAccumulatedCost();
+				double accumulatedTime = statistics.getTimePrediction(accumulatedCost);
 
-		// Convert completion times -- current elapsed execution time of tasks
-		// that have not finished execution yet -- from ticks to microseconds
-		Chrono completionTime(_workloadMonitor->getTaskCompletionTimes());
-		const double completion = ((double) completionTime);
+				if (accumulatedTime > completedTime) {
+					currentWorkload += (accumulatedTime - completedTime);
+				}
+			}
+		);
 
-		double timeLeft = ((instantiated - finished - completion) / cpuUtilization);
+		// Check how active CPUs currently are
+		double currentCPUActiveness = _cpuMonitor->getTotalActiveness();
 
 		// Check if the elapsed time substracted from the predictions underflows
-		return (timeLeft < 0.0 ? 0.0 : timeLeft);
+		return (currentWorkload < 0.0 ? 0.0 : (currentWorkload / currentCPUActiveness));
 	}
-	*/
+
 	return 0.0;
 }
 
