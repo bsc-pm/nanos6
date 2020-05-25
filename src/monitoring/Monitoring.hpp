@@ -15,9 +15,6 @@
 #include "tasks/Task.hpp"
 
 
-namespace BoostAcc = boost::accumulators;
-namespace BoostAccTag = boost::accumulators::tag;
-
 class Monitoring {
 
 private:
@@ -47,16 +44,11 @@ private:
 
 	//    CPU USAGE PREDICTION VARIABLES    //
 
-	typedef BoostAcc::accumulator_set<double, BoostAcc::stats<BoostAccTag::sum, BoostAccTag::mean> > accumulator_t;
-
-	//! Accumulator to keep track of the accuracy in predictions
-	static accumulator_t _cpuUsageAccuracyAccum;
-
 	//! The most recent past CPU usage prediction
-	static double _cpuUsagePrediction;
+	static double _predictedCPUUsage;
 
 	//! Whether a prediciton has been done
-	static bool _cpuUsageAvailable;
+	static bool _predictedCPUUsageAvailable;
 
 private:
 
@@ -151,16 +143,10 @@ public:
 
 	//    PREDICTORS    //
 
-	//! \brief Get a timing prediction of a certain workload
-	static double getPredictedWorkload();
-
-	//! \brief Get a CPU Usage prediction over an amount of time
+	//! \brief Get the predicted CPU usage for the next 'time' microseconds
 	//!
 	//! \param[in] time The amount of time in microseconds to predict usage for
-	//! (i.e. in the next 'time' microseconds, the amount of CPUs to be used)
-	//!
-	//! \return The expected CPU Usage for the next 'time' microseconds
-	static double getCPUUsagePrediction(size_t time);
+	static double getPredictedCPUUsage(size_t time);
 
 	//! \brief Poll the expected time until completion of the current execution
 	//!

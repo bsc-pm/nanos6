@@ -87,17 +87,19 @@ void TaskMonitor::taskStarted(Task *task, monitoring_task_status_t execStatus) c
 
 	// If the task is not a taskfor collaborator, and this is the first time it
 	// becomes ready, increase the cost accumulations used to infer predictions.
-	// Only if  this task doesn't have an ancestor that is already taken into account
-	if (!task->isTaskfor() || (task->isTaskfor() && !task->isRunnable())) {
-		if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
-			if (oldStatus == null_status || oldStatus == pending_status) {
-				if (execStatus == ready_status) {
-					TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
-					assert(tasktypeStatistics != nullptr);
+	// Only if this task doesn't have an ancestor that is already taken into account
+	bool isCollaborator = (task->isTaskfor() && task->isRunnable());
+	if (!isCollaborator && !taskStatistics->ancestorHasPrediction()) {
+		if ((oldStatus == null_status || oldStatus == pending_status) && execStatus == ready_status) {
+			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
+			assert(tasktypeStatistics != nullptr);
 
-					size_t cost = taskStatistics->getCost();
-					tasktypeStatistics->increaseAccumulatedCost(cost);
-				}
+			if (taskStatistics->hasPrediction()) {
+				size_t cost = taskStatistics->getCost();
+				tasktypeStatistics->increaseAccumulatedCost(cost);
+				tasktypeStatistics->increaseNumAccumulatedInstances();
+			} else {
+				tasktypeStatistics->increaseNumPredictionlessInstances();
 			}
 		}
 	}
@@ -120,27 +122,37 @@ void TaskMonitor::taskCompletedUserCode(Task *task) const
 	//    - So that when the ancestor finishes its execution, this time can be
 	//      decreased from the saved time in 1), since the accumulation of cost
 	//      will be decreased and we won't need it anymore
-	if (taskStatistics->ancestorHasPrediction()) {
-		TaskStatistics *ancestorStatistics = taskStatistics->getParentStatistics();
-		while (ancestorStatistics != nullptr) {
-			if (!ancestorStatistics->ancestorHasPrediction()) {
-				// If this ancestor doesn't have an ancestor with predictions, it
-				// is the ancestor we're looking for, the one with the prediction
-				assert(ancestorStatistics->hasPrediction());
+	bool isCollaborator = (task->isTaskfor() && task->isRunnable());
+	if (!isCollaborator) {
+		if (taskStatistics->ancestorHasPrediction()) {
+			TaskStatistics *ancestorStatistics = taskStatistics->getParentStatistics();
+			while (ancestorStatistics != nullptr) {
+				if (!ancestorStatistics->ancestorHasPrediction()) {
+					// If this ancestor doesn't have an ancestor with predictions, it
+					// is the ancestor we're looking for, the one with the prediction
+					assert(ancestorStatistics->hasPrediction());
 
-				TasktypeStatistics *ancestorTasktypeStatistics = ancestorStatistics->getTasktypeStatistics();
-				assert(ancestorTasktypeStatistics != nullptr);
+					TasktypeStatistics *ancestorTasktypeStatistics = ancestorStatistics->getTasktypeStatistics();
+					assert(ancestorTasktypeStatistics != nullptr);
 
-				// Add the elapsed execution time of the task in the ancestor
-				// and its tasktype statistics
-				size_t elapsed = taskStatistics->getChronoTicks(executing_status);
-				ancestorStatistics->increaseCompletedTime(elapsed);
-				ancestorTasktypeStatistics->increaseCompletedTime(elapsed);
+					// Add the elapsed execution time of the task in the ancestor
+					// and its tasktype statistics
+					size_t elapsed = taskStatistics->getChronoTicks(executing_status);
+					ancestorStatistics->increaseCompletedTime(elapsed);
+					ancestorTasktypeStatistics->increaseCompletedTime(elapsed);
 
-				break;
-			} else {
-				ancestorStatistics = ancestorStatistics->getParentStatistics();
+					break;
+				} else {
+					ancestorStatistics = ancestorStatistics->getParentStatistics();
+				}
 			}
+		} else if (!taskStatistics->hasPrediction()) {
+			// If this task has no ancestor with a prediction and it has no prediction,
+			// decrease the number of predictionless instances from its tasktype
+			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
+			assert(tasktypeStatistics != nullptr);
+
+			tasktypeStatistics->decreaseNumPredictionlessInstances();
 		}
 	}
 }
@@ -151,6 +163,13 @@ void TaskMonitor::taskFinished(Task *task) const
 
 	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
+
+	// NOTE: Special case. For taskfor sources, when the task is finished
+	// it also completes user code execution, thus we treat it here
+	bool isSourceTaskfor = (task->isTaskfor() && !task->isRunnable());
+	if (isSourceTaskfor) {
+		taskCompletedUserCode(task);
+	}
 
 	// Stop timing for the task
 	__attribute__((unused)) monitoring_task_status_t oldStatus = taskStatistics->stopTiming();
@@ -180,6 +199,7 @@ void TaskMonitor::taskFinished(Task *task) const
 			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
 				tasktypeStatistics->decreaseCompletedTime(taskStatistics->getCompletedTime());
 				tasktypeStatistics->decreaseAccumulatedCost(taskStatistics->getCost());
+				tasktypeStatistics->decreaseNumAccumulatedInstances();
 			}
 		}
 

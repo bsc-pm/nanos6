@@ -31,6 +31,12 @@ private:
 	//! Contains the aggregated computational cost ready to be executed of a tasktype
 	std::atomic<size_t> _accumulatedCost;
 
+	//! The number of instances contributing to the accumulated cost
+	std::atomic<size_t> _numAccumulatedInstances;
+
+	//! The number of currently active task instances of this type that do not have a prediction
+	std::atomic<size_t> _numPredictionlessInstances;
+
 	//! Out of the accumulated cost, this variable contains the amount of time already
 	//! completed by children tasks of tasks that have not finished executing yet
 	std::atomic<size_t> _completedTime;
@@ -54,6 +60,8 @@ public:
 
 	inline TasktypeStatistics() :
 		_accumulatedCost(0),
+		_numAccumulatedInstances(0),
+		_numPredictionlessInstances(0),
 		_completedTime(0),
 		_timeAccumulator(BoostAccTag::rolling_window::window_size = _rollingWindow),
 		_accuracyAccumulator(),
@@ -64,6 +72,8 @@ public:
 	inline ~TasktypeStatistics()
 	{
 		assert(_accumulatedCost.load() == 0);
+		assert(_numAccumulatedInstances.load() == 0);
+		assert(_numPredictionlessInstances.load() == 0);
 		assert(_completedTime.load() == 0);
 	}
 
@@ -82,6 +92,40 @@ public:
 	inline size_t getAccumulatedCost()
 	{
 		return _accumulatedCost.load();
+	}
+
+	inline void increaseNumAccumulatedInstances()
+	{
+		++_numAccumulatedInstances;
+	}
+
+	inline void decreaseNumAccumulatedInstances()
+	{
+		assert(_numAccumulatedInstances.load() > 0);
+
+		--_numAccumulatedInstances;
+	}
+
+	inline size_t getNumAccumulatedInstances()
+	{
+		return _numAccumulatedInstances.load();
+	}
+
+	inline void increaseNumPredictionlessInstances()
+	{
+		++_numPredictionlessInstances;
+	}
+
+	inline void decreaseNumPredictionlessInstances()
+	{
+		assert(_numPredictionlessInstances.load() > 0);
+
+		--_numPredictionlessInstances;
+	}
+
+	inline size_t getNumPredictionlessInstances()
+	{
+		return _numPredictionlessInstances.load();
 	}
 
 	inline void increaseCompletedTime(size_t time)

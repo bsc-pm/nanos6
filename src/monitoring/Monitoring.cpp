@@ -19,9 +19,8 @@ ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "
 JsonFile *Monitoring::_wisdom(nullptr);
 CPUMonitor *Monitoring::_cpuMonitor(nullptr);
 TaskMonitor *Monitoring::_taskMonitor(nullptr);
-Monitoring::accumulator_t Monitoring::_cpuUsageAccuracyAccum;
-double Monitoring::_cpuUsagePrediction;
-bool Monitoring::_cpuUsageAvailable(false);
+double Monitoring::_predictedCPUUsage;
+bool Monitoring::_predictedCPUUsageAvailable(false);
 
 
 //    MONITORING    //
@@ -180,69 +179,53 @@ void Monitoring::cpuBecomesActive(int cpuId)
 
 //    PREDICTORS    //
 
-double Monitoring::getPredictedWorkload()
+double Monitoring::getPredictedCPUUsage(size_t time)
 {
-	// FIXME TODO
-	/*
-	if (_enabled) {
-		assert(_taskMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
-
-		workloads_map_t workloadsMap = _workloadMonitor->getWorkloadsMapReference();
-
-		double totalTime = 0.0;
-		for (auto const &it : workloadsMap) {
-			assert(it.second != nullptr);
-
-			totalTime += (
-				it.second->getAccumulatedCost(loadId) *
-				_taskMonitor->getAverageTimePerUnitOfCost(it.first)
-			);
-		}
-
-		return totalTime;
-	}
-
-	return 0.0;
-	*/
-}
-
-double Monitoring::getCPUUsagePrediction(size_t time)
-{
-	// FIXME TODO
-	/*
 	if (_enabled) {
 		assert(_cpuMonitor != nullptr);
-		assert(_taskMonitor != nullptr);
-		assert(_workloadMonitor != nullptr);
 
-		// Retrieve the current ready workload
-		double readyLoad      = getPredictedWorkload(ready_load);
-		double executingLoad  = getPredictedWorkload(executing_load);
-		double readyTasks     = (double) _workloadMonitor->getNumInstances(ready_load);
-		double executingTasks = (double) _workloadMonitor->getNumInstances(executing_load);
-		double numberCPUs     = (double) _cpuMonitor->getNumCPUs();
-
-		// To account accuracy, make sure this isn't the first prediction
-		if (!_cpuUsageAvailable) {
-			_cpuUsageAvailable = true;
-		} else {
-			// Compute the accuracy of the last prediction
-			double utilization = _cpuMonitor->getTotalActiveness();
-			double error = (std::abs(utilization - _cpuUsagePrediction)) / numberCPUs;
-			double accuracy = 100.0 - (100.0 * error);
-			_cpuUsageAccuracyAccum(accuracy);
+		if (!_predictedCPUUsageAvailable) {
+			_predictedCPUUsageAvailable = true;
 		}
 
-		// Make sure that the prediction is:
-		// - At most the amount of tasks or the amount of time available
-		// - At least 1 CPU for runtime-related operations
-		_cpuUsagePrediction = std::min(executingTasks + readyTasks, (readyLoad + executingLoad) / (double) time);
-		_cpuUsagePrediction = std::max(_cpuUsagePrediction, 1.0);
+		double currentWorkload = 0.0;
+		size_t currentActiveInstances = 0;
+		size_t currentPredictionlessInstances = 0;
+		TaskInfo::processAllTasktypes(
+			[&](const std::string &, TasktypeData &tasktypeData) {
+				TasktypeStatistics &statistics = tasktypeData.getTasktypeStatistics();
+				Chrono completedChrono(statistics.getCompletedTime());
+				double completedTime = ((double) completedChrono);
+				size_t accumulatedCost = statistics.getAccumulatedCost();
+				double accumulatedTime = statistics.getTimePrediction(accumulatedCost);
 
-		return _cpuUsagePrediction;
+				if (accumulatedTime > completedTime) {
+					currentWorkload += (accumulatedTime - completedTime);
+					currentActiveInstances += statistics.getNumInstances();
+					currentPredictionlessInstances += statistics.getNumPredictionlessInstances();
+				}
+			}
+		);
+
+		// At least one CPU
+		double predictedUsage = 1.0;
+
+		// If there are any, at least the number of predictionless instances
+		if (currentPredictionlessInstances > 0) {
+			predictedUsage = currentPredictionlessInstances;
+		}
+
+		// Add the minimum between the number of tasks with prediction, and
+		// the current workload in time divided by the required time
+		predictedUsage += std::min(
+			(double) currentActiveInstances,
+			(currentWorkload / (double) time)
+		);
+		_predictedCPUUsage = predictedUsage;
+
+		return predictedUsage;
 	}
-	*/
+
 	return 0.0;
 }
 
@@ -293,18 +276,6 @@ void Monitoring::displayStatistics()
 	std::stringstream outputStream;
 	_taskMonitor->displayStatistics(outputStream);
 	_cpuMonitor->displayStatistics(outputStream);
-
-	// Print the statistics of every prediction heuristic
-	outputStream << std::left << std::fixed << std::setprecision(2) << "\n";
-	outputStream << "+-----------------------------+\n";
-	outputStream << "|    CPU Usage Predictions    |\n";
-	outputStream << "+-----------------------------+\n";
-	if (_cpuUsageAvailable) {
-		outputStream << "  MEAN ACCURACY: " << BoostAcc::mean(_cpuUsageAccuracyAccum) << "%\n";
-	} else {
-		outputStream << "  MEAN ACCURACY: NA\n";
-	}
-	outputStream << "+-----------------------------+\n\n";
 
 	if (output.is_open()) {
 		output << outputStream.str();
