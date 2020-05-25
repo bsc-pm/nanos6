@@ -46,6 +46,10 @@ namespace Instrument {
 	void tp_scheduler_add_task_exit();
 	void tp_scheduler_get_task_enter();
 	void tp_scheduler_get_task_exit();
+
+	void tp_polling_service_register(const char *name, ctf_polling_service_id_t id);
+	void tp_polling_service_enter(ctf_polling_service_id_t id);
+	void tp_polling_service_exit();
 }
 
 #endif //NANOS6CTFEVENTS_HPP

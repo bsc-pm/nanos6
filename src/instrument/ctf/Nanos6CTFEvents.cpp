@@ -37,6 +37,9 @@ static CTFAPI::CTFEvent *eventSchedulerAddTaskEnter;
 static CTFAPI::CTFEvent *eventSchedulerAddTaskExit;
 static CTFAPI::CTFEvent *eventSchedulerGetTaskEnter;
 static CTFAPI::CTFEvent *eventSchedulerGetTaskExit;
+static CTFAPI::CTFEvent *eventPollingServiceRegister;
+static CTFAPI::CTFEvent *eventPollingServiceEnter;
+static CTFAPI::CTFEvent *eventPollingServiceExit;
 
 void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
@@ -148,6 +151,19 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	));
 	eventSchedulerGetTaskExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:scheduler_get_task_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventPollingServiceRegister = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:polling_service_register",
+		"\t\tstring name;\n"
+		"\t\tuint8_t _id;\n"
+	));
+	eventPollingServiceEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:polling_service_enter",
+		"\t\tuint8_t _id;\n"
+	));
+	eventPollingServiceExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:polling_service_exit",
 		"\t\tuint8_t _dummy;\n"
 	));
 }
@@ -364,4 +380,29 @@ void Instrument::tp_scheduler_get_task_exit()
 
 	char dummy = 0;
 	CTFAPI::tracepoint(eventSchedulerGetTaskExit, dummy);
+}
+
+void Instrument::tp_polling_service_register(const char *name, ctf_polling_service_id_t id)
+{
+	if (!eventPollingServiceRegister->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventPollingServiceRegister, name, id);
+}
+
+void Instrument::tp_polling_service_enter(ctf_polling_service_id_t id)
+{
+	if (!eventPollingServiceEnter->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventPollingServiceEnter, id);
+}
+
+void Instrument::tp_polling_service_exit()
+{
+	if (!eventPollingServiceExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventPollingServiceExit, dummy);
 }
