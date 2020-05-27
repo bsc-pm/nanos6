@@ -218,6 +218,13 @@ void TaskMonitor::taskFinished(Task *task) const
 
 void TaskMonitor::displayStatistics(std::stringstream &stream) const
 {
+	timeval finalTimestamp;
+	gettimeofday(&finalTimestamp, nullptr);
+
+	// Elapsed time in milliseconds
+	double elapsedTime = ((finalTimestamp.tv_sec - _initialTimestamp.tv_sec) * 1000.0);
+	elapsedTime += ((finalTimestamp.tv_usec - _initialTimestamp.tv_usec) / 1000.0);
+
 	stream << std::left << std::fixed << std::setprecision(5) << "\n";
 	stream << "+-----------------------------+\n";
 	stream << "|       TASK STATISTICS       |\n";
@@ -231,6 +238,7 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 				double averageNormalizedCost = tasktypeStatistics.getAverageNormalizedCost();
 				double stddevNormalizedCost = tasktypeStatistics.getStddevNormalizedCost();
 				double predictionAccuracy = tasktypeStatistics.getPredictionAccuracy();
+				double effectiveParallelism = tasktypeStatistics.getAccumulatedTime() / elapsedTime;
 
 				std::string typeLabel = taskLabel + " (" + std::to_string(instances) + ")";
 				std::string accur = "NA";
@@ -258,6 +266,11 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 					std::setw(12) << "MONITORING"               << " " <<
 					std::setw(26) << "PREDICTION ACCURACY (%)"  << " " <<
 					std::setw(10) << accur                      << "\n";
+				stream <<
+					std::setw(7)  << "STATS"                    << " " <<
+					std::setw(12) << "MONITORING"               << " " <<
+					std::setw(26) << "EFFECTIVE PARALLELISM"    << " " <<
+					std::setw(10) << effectiveParallelism       << "\n";
 				stream << "+-----------------------------+\n";
 			}
 		}

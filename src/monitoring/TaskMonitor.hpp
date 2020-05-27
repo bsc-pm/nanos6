@@ -7,13 +7,25 @@
 #ifndef TASK_MONITOR_HPP
 #define TASK_MONITOR_HPP
 
+#include <sys/time.h>
+
 #include "TaskStatistics.hpp"
 #include "tasks/Task.hpp"
 
 
 class TaskMonitor {
 
+private:
+
+	//! Timestamp of the beginning of the execution
+	timeval _initialTimestamp;
+
 public:
+
+	inline TaskMonitor()
+	{
+		gettimeofday(&_initialTimestamp, nullptr);
+	}
 
 	//! \brief Initialize a task's monitoring statistics
 	//!

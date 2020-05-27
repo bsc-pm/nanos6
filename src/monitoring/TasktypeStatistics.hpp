@@ -50,6 +50,9 @@ private:
 	//! An accumulator which holds accuracy data of timing predictions
 	accumulator_t _accuracyAccumulator;
 
+	//! An accumulator which holds the accumulation of all the elapsed time of tasks (in milliseconds)
+	accumulator_t _accumulatedTimeAccumulator;
+
 	//! Spinlock to ensure atomic access within the previous accumulators
 	SpinLock _accumulatorLock;
 
@@ -65,6 +68,7 @@ public:
 		_completedTime(0),
 		_timeAccumulator(BoostAccTag::rolling_window::window_size = _rollingWindow),
 		_accuracyAccumulator(),
+		_accumulatedTimeAccumulator(),
 		_accumulatorLock()
 	{
 	}
@@ -143,6 +147,15 @@ public:
 	inline size_t getCompletedTime()
 	{
 		return _completedTime.load();
+	}
+
+	inline double getAccumulatedTime()
+	{
+		_accumulatorLock.lock();
+		double time = BoostAcc::sum(_accumulatedTimeAccumulator);
+		_accumulatorLock.unlock();
+
+		return time;
 	}
 
 	//    TIME PREDICTIONS    //
@@ -239,9 +252,11 @@ public:
 			accuracy = 100.0 - error;
 		}
 
-		// Accumulate the unitary time and the accuracy obtained
+		// Accumulate the unitary time, the elapsed time to compute effective
+		// parallelism metrics, and the accuracy obtained of a previous prediction
 		_accumulatorLock.lock();
 		_timeAccumulator(normalizedTime);
+		_accumulatedTimeAccumulator(elapsed / 1000.0);
 		if (predictionAvailable) {
 			_accuracyAccumulator(accuracy);
 		}
