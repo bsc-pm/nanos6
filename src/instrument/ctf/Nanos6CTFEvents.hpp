@@ -18,10 +18,13 @@ namespace Instrument {
 	void preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata);
 
 	void tp_thread_create(ctf_thread_id_t tid);
-	void tp_external_thread_create(ctf_thread_id_t tid);
 	void tp_thread_suspend(ctf_thread_id_t tid);
 	void tp_thread_resume(ctf_thread_id_t tid);
 	void tp_thread_shutdown(ctf_thread_id_t tid);
+	void tp_external_thread_create(ctf_thread_id_t tid);
+	void tp_external_thread_suspend(ctf_thread_id_t tid);
+	void tp_external_thread_resume(ctf_thread_id_t tid);
+	void tp_external_thread_shutdown(ctf_thread_id_t tid);
 
 	void tp_worker_enter_busy_wait();
 	void tp_worker_exit_busy_wait();
@@ -45,7 +48,7 @@ namespace Instrument {
 	void tp_scheduler_add_task_enter();
 	void tp_scheduler_add_task_exit();
 	void tp_scheduler_get_task_enter();
-	void tp_scheduler_get_task_exit();
+	void tp_scheduler_get_task_exit(bool acquired);
 
 	void tp_polling_service_register(const char *name, ctf_polling_service_id_t id);
 	void tp_polling_service_enter(ctf_polling_service_id_t id);

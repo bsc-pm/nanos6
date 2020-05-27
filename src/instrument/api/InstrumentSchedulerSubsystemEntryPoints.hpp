@@ -7,6 +7,7 @@
 #ifndef INSTRUMENT_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
 #define INSTRUMENT_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
 
+#include "tasks/Task.hpp"
 
 namespace Instrument {
 
@@ -20,7 +21,7 @@ namespace Instrument {
 	void enterGetReadyTask();
 
 	//! \brief Exits the scheduler addReadyTask method
-	void exitGetReadyTask();
+	void exitGetReadyTask(Task *task);
 
 }
 

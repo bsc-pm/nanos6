@@ -31,9 +31,9 @@ namespace Instrument {
 	}
 
 	//! \brief Exits the scheduler addReadyTask method
-	inline void exitGetReadyTask()
+	inline void exitGetReadyTask(Task *task)
 	{
-		tp_scheduler_get_task_exit();
+		tp_scheduler_get_task_exit(task != nullptr);
 	}
 
 }

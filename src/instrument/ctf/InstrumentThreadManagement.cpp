@@ -46,12 +46,12 @@ void Instrument::threadHasResumed(__attribute__((unused)) thread_id_t threadId, 
 
 void Instrument::threadWillSuspend(external_thread_id_t threadId)
 {
-	Instrument::tp_thread_suspend(threadId.tid);
+	Instrument::tp_external_thread_suspend(threadId.tid);
 }
 
 void Instrument::threadHasResumed(external_thread_id_t threadId)
 {
-	Instrument::tp_thread_resume(threadId.tid);
+	Instrument::tp_external_thread_resume(threadId.tid);
 }
 
 void Instrument::threadWillShutdown()
@@ -63,5 +63,5 @@ void Instrument::threadWillShutdown()
 
 void Instrument::threadWillShutdown(external_thread_id_t threadId)
 {
-	Instrument::tp_thread_shutdown(threadId.tid);
+	Instrument::tp_external_thread_shutdown(threadId.tid);
 }

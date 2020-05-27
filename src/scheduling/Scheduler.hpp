@@ -58,7 +58,7 @@ public:
 		assert(computePlace != nullptr);
 		Instrument::enterGetReadyTask();
 		Task *task = _instance->getReadyTask(computePlace);
-		Instrument::exitGetReadyTask();
+		Instrument::exitGetReadyTask(task);
 		return task;
 	}
 

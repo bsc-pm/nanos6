@@ -13,10 +13,13 @@
 // macro?
 
 static CTFAPI::CTFEvent *eventThreadCreate;
-static CTFAPI::CTFEvent *eventExternalThreadCreate;
 static CTFAPI::CTFEvent *eventThreadResume;
 static CTFAPI::CTFEvent *eventThreadSuspend;
 static CTFAPI::CTFEvent *eventThreadShutdown;
+static CTFAPI::CTFEvent *eventExternalThreadCreate;
+static CTFAPI::CTFEvent *eventExternalThreadResume;
+static CTFAPI::CTFEvent *eventExternalThreadSuspend;
+static CTFAPI::CTFEvent *eventExternalThreadShutdown;
 static CTFAPI::CTFEvent *eventWorkerEnterBusyWait;
 static CTFAPI::CTFEvent *eventWorkerExitBusyWait;
 static CTFAPI::CTFEvent *eventTaskLabel;
@@ -48,10 +51,6 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"nanos6:thread_create",
 		"\t\tuint16_t _tid;\n"
 	));
-	eventExternalThreadCreate = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:external_thread_create",
-		"\t\tuint16_t _tid;\n"
-	));
 	eventThreadResume = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:thread_resume",
 		"\t\tuint16_t _tid;\n"
@@ -65,6 +64,22 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"nanos6:thread_shutdown",
 		"\t\tuint16_t _tid;\n",
 		CTFAPI::CTFContextHWC
+	));
+	eventExternalThreadCreate = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:external_thread_create",
+		"\t\tuint16_t _tid;\n"
+	));
+	eventExternalThreadResume = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:external_thread_resume",
+		"\t\tuint16_t _tid;\n"
+	));
+	eventExternalThreadSuspend = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:external_thread_suspend",
+		"\t\tuint16_t _tid;\n"
+	));
+	eventExternalThreadShutdown = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:external_thread_shutdown",
+		"\t\tuint16_t _tid;\n"
 	));
 	eventWorkerEnterBusyWait = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:worker_enter_busy_wait",
@@ -151,7 +166,7 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	));
 	eventSchedulerGetTaskExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:scheduler_get_task_exit",
-		"\t\tuint8_t _dummy;\n"
+		"\t\tuint8_t _acquired;\n"
 	));
 	eventPollingServiceRegister = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:polling_service_register",
@@ -176,14 +191,6 @@ void Instrument::tp_thread_create(ctf_thread_id_t tid)
 	CTFAPI::tracepoint(eventThreadCreate, tid);
 }
 
-void Instrument::tp_external_thread_create(ctf_thread_id_t tid)
-{
-	if (!eventExternalThreadCreate->isEnabled())
-		return;
-
-	CTFAPI::tracepoint(eventExternalThreadCreate, tid);
-}
-
 void Instrument::tp_thread_resume(ctf_thread_id_t tid)
 {
 	if (!eventThreadResume->isEnabled())
@@ -206,6 +213,38 @@ void Instrument::tp_thread_shutdown(ctf_thread_id_t tid)
 		return;
 
 	CTFAPI::tracepoint(eventThreadShutdown, tid);
+}
+
+void Instrument::tp_external_thread_create(ctf_thread_id_t tid)
+{
+	if (!eventExternalThreadCreate->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventExternalThreadCreate, tid);
+}
+
+void Instrument::tp_external_thread_resume(ctf_thread_id_t tid)
+{
+	if (!eventExternalThreadResume->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventExternalThreadResume, tid);
+}
+
+void Instrument::tp_external_thread_suspend(ctf_thread_id_t tid)
+{
+	if (!eventExternalThreadSuspend->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventExternalThreadSuspend, tid);
+}
+
+void Instrument::tp_external_thread_shutdown(ctf_thread_id_t tid)
+{
+	if (!eventExternalThreadShutdown->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventExternalThreadShutdown, tid);
 }
 
 void Instrument::tp_worker_enter_busy_wait()
@@ -373,13 +412,12 @@ void Instrument::tp_scheduler_get_task_enter()
 	CTFAPI::tracepoint(eventSchedulerGetTaskEnter, dummy);
 }
 
-void Instrument::tp_scheduler_get_task_exit()
+void Instrument::tp_scheduler_get_task_exit(bool acquired)
 {
 	if (!eventSchedulerGetTaskExit->isEnabled())
 		return;
 
-	char dummy = 0;
-	CTFAPI::tracepoint(eventSchedulerGetTaskExit, dummy);
+	CTFAPI::tracepoint(eventSchedulerGetTaskExit, (char) acquired);
 }
 
 void Instrument::tp_polling_service_register(const char *name, ctf_polling_service_id_t id)
