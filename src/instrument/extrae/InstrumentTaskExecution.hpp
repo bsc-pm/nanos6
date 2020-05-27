@@ -221,7 +221,6 @@ namespace Instrument {
 		bool first,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		taskforId._taskInfo->_lock.lock();
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -238,7 +237,9 @@ namespace Instrument {
 			
 			// Generate graph information
 			if (_detailLevel >= 1) {
+				taskforId._taskInfo->_lock.lock();
 				ce.nCommunications += taskforId._taskInfo->_predecessors.size();
+				taskforId._taskInfo->_lock.unlock();
 			}
 			
 			if (ce.nCommunications > 0) {
@@ -281,6 +282,7 @@ namespace Instrument {
 			// Generate graph information
 			if (_detailLevel >= 1) {
 				int index = 0;
+				taskforId._taskInfo->_lock.lock();
 				for (auto const &taskAndTag : taskforId._taskInfo->_predecessors) {
 					ce.Communications[index].type = EXTRAE_USER_RECV;
 					ce.Communications[index].tag = (extrae_comm_tag_t) taskAndTag.second;
@@ -290,6 +292,7 @@ namespace Instrument {
 					index++;
 				}
 				taskforId._taskInfo->_predecessors.clear();
+				taskforId._taskInfo->_lock.unlock();
 			}
 			
 			size_t readyTasks = --_readyTasks;
@@ -320,7 +323,6 @@ namespace Instrument {
 		if (ce.nCommunications >= 100) {
 			free(ce.Communications);
 		}
-		taskforId._taskInfo->_lock.unlock();
 	}
 	
 	
@@ -330,7 +332,6 @@ namespace Instrument {
 		bool last,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		taskforId._taskInfo->_parent->_lock.lock();
 		extrae_combined_events_t ce;
 		
 		ce.HardwareCounters = 1;
@@ -349,12 +350,14 @@ namespace Instrument {
 			// Generate control dependency information
 			if (_detailLevel >= 8) {
 				if ((taskforId._taskInfo->_parent != nullptr) && taskforId._taskInfo->_parent->_inTaskwait) {
+					taskforId._taskInfo->_parent->_lock.lock();
 					if (taskforId._taskInfo->_parent->_inTaskwait) {
 						parentInTaskwait = taskforId._taskInfo->_parent->_taskId;
 						ce.nCommunications++;
 						
 						taskforId._taskInfo->_parent->_predecessors.emplace(taskforId._taskInfo->_taskId, control_dependency_tag);
 					}
+					taskforId._taskInfo->_parent->_lock.unlock();
 				}
 			}
 			
@@ -416,7 +419,6 @@ namespace Instrument {
 		ThreadLocalData &threadLocal = getThreadLocalData();
 		assert(!threadLocal._nestingLevels.empty());
 		threadLocal._nestingLevels.pop_back();
-		taskforId._taskInfo->_parent->_lock.unlock();
 	}
 }
 
