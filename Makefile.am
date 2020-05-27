@@ -610,7 +610,7 @@ memory_allocator_default_cppflags = -I$(srcdir)/src/memory/allocator/pool
 
 
 if HAVE_JEMALLOC
-memory_allocator_debug_sources = 
+memory_allocator_debug_sources =
 memory_allocator_debug_cppflags = -I$(srcdir)/src/memory/allocator/jemalloc
 else
 memory_allocator_debug_sources =
@@ -642,17 +642,17 @@ dist_memory_sources = $(memory_default_sources) $(memory_debug_sources)
 
 # Chronometers
 chronometers_sources =
-chronometers_CPPFLAGS =
+chronometers_cppflags =
 if CHRONO_ARCH
 chronometers_sources  += src/support/chronometers/arch/Chrono.cpp
-chronometers_CPPFLAGS += -I$(srcdir)/src/support/chronometers/arch
+chronometers_cppflags += -I$(srcdir)/src/support/chronometers/arch
 else
-chronometers_CPPFLAGS += -I$(srcdir)/src/support/chronometers/std
+chronometers_cppflags += -I$(srcdir)/src/support/chronometers/std
 endif
 
 # Monitoring
 monitoring_sources =
-monitoring_CPPFLAGS =
+monitoring_cppflags =
 if MONITORING_ENABLED
 monitoring_sources += \
 	src/monitoring/monitoring/CPUMonitor.cpp \
@@ -661,9 +661,9 @@ monitoring_sources += \
 	src/monitoring/monitoring/TaskMonitor.cpp \
 	src/monitoring/monitoring/TasktypePredictions.cpp \
 	src/monitoring/monitoring/WorkloadPredictor.cpp
-monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/monitoring
+monitoring_cppflags += -I$(srcdir)/src/monitoring/monitoring
 else
-monitoring_CPPFLAGS += -I$(srcdir)/src/monitoring/null
+monitoring_cppflags += -I$(srcdir)/src/monitoring/null
 endif
 
 # Add monitoring-related sources to common sources
@@ -672,17 +672,17 @@ common_sources += $(monitoring_sources) $(chronometers_sources)
 
 # DLB + CPUManager
 cpu_manager_sources  =
-cpu_manager_LDFLAGS  =
-cpu_manager_CPPFLAGS = -I$(srcdir)/src/executors/threads/cpu-managers/default
+cpu_manager_ldflags  =
+cpu_manager_cppflags = -I$(srcdir)/src/executors/threads/cpu-managers/default
 if HAVE_DLB
 cpu_manager_sources  += \
 	src/executors/threads/cpu-managers/dlb/DLBCPUActivation.cpp \
 	src/executors/threads/cpu-managers/dlb/DLBCPUManager.cpp \
 	src/executors/threads/cpu-managers/dlb/policies/GreedyPolicy.cpp \
 	src/executors/threads/cpu-managers/dlb/policies/LeWIPolicy.cpp
-cpu_manager_LDFLAGS  += $(dlb_LIBS)
-cpu_manager_CPPFLAGS += $(dlb_CPPFLAGS) -DHAVE_DLB
-cpu_manager_CPPFLAGS += -I$(srcdir)/src/executors/threads/cpu-managers/dlb
+cpu_manager_ldflags  += $(dlb_LIBS)
+cpu_manager_cppflags += $(dlb_CPPFLAGS) -DHAVE_DLB
+cpu_manager_cppflags += -I$(srcdir)/src/executors/threads/cpu-managers/dlb
 endif
 
 common_sources += $(cpu_manager_sources)
@@ -690,18 +690,18 @@ common_sources += $(cpu_manager_sources)
 
 # Hardware Counters
 hardware_counters_sources  =
-hardware_counters_LDFLAGS  =
-hardware_counters_CPPFLAGS =
+hardware_counters_ldflags  =
+hardware_counters_cppflags =
 if HAVE_PQOS
-hardware_counters_LDFLAGS  += $(pqos_LIBS)
-hardware_counters_CPPFLAGS += $(pqos_CPPFLAGS) -DHAVE_PQOS
+hardware_counters_ldflags  += $(pqos_LIBS)
+hardware_counters_cppflags += $(pqos_CPPFLAGS) -DHAVE_PQOS
 hardware_counters_sources  += src/hardware-counters/pqos/PQoSHardwareCounters.cpp
 endif
 
 # TODO: Implement PAPI backend
 #if HAVE_PAPI
-#hardware_counters_LDFLAGS  += $(papi_LIBS)
-#hardware_counters_CPPFLAGS += $(papi_CPPFLAGS) -DHAVE_PAPI
+#hardware_counters_ldflags  += $(papi_LIBS)
+#hardware_counters_cppflags += $(papi_CPPFLAGS) -DHAVE_PAPI
 #hardware_counters_sources  += src/hardware-counters/papi/PAPIHardwareCounters.cpp
 #endif
 
@@ -1165,8 +1165,8 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_CPPFLAGS) $(monitoring_CPPFLAGS) $(cpu_manager_CPPFLAGS) $(hardware_counters_CPPFLAGS) $(jemalloc_CPPFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_LDFLAGS) $(hardware_counters_LDFLAGS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_cppflags) $(monitoring_cppflags) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
+common_libnanos6_ldflags = $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
 
 # This is needed for debuggable spinlocks
 common_sources += $(introspection_sources)
