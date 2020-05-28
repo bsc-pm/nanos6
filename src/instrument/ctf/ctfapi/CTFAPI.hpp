@@ -23,14 +23,21 @@
 namespace CTFAPI {
 
 	struct __attribute__((__packed__)) event_header {
-		uint8_t  id;
+		ctf_event_id_t id;
 		uint64_t timestamp;
 	};
 
 	void greetings(void);
 	void addStreamHeader(CTFStream *stream);
-	int mk_event_header(char **buf, uint8_t id);
+	void flushCurrentVirtualCPUBufferIfNeeded();
 
+	// TODO isolate these into CTFAPI::core namespace
+	uint64_t getTimestamp();
+	uint64_t getRelativeTimestamp();
+	void mk_event_header(char **buf, uint64_t timestamp, uint8_t id);
+	void flushBuffer(CTFStream *stream, uint64_t *before, uint64_t *after);
+	void writeFlushingTracepoint(CTFStream *stream,
+				      uint64_t tsBefore, uint64_t tsAfter);
 
 	template <typename T>
 	static inline size_t sizeOfVariadic(T arg)
@@ -54,6 +61,19 @@ namespace CTFAPI {
 	{
 		size_t total = sizeOfVariadic(arg) + sizeOfVariadic(rest...);
 		return total;
+	}
+
+	template<typename... ARGS>
+	static size_t eventSize(CTFStream *stream, CTFEvent *event, ARGS... args)
+	{
+		size_t size;
+
+		size = sizeof(struct event_header) +
+			stream->getContextSize() +
+			event->getContextSize() +
+			sizeOfVariadic(args...);
+
+		return size;
 	}
 
 	template<typename... ARGS>
@@ -92,47 +112,76 @@ namespace CTFAPI {
 		tp_write_args(buf, args...);
 	}
 
-	// TODO update instructions
-	//
-	// To add a new user-space tracepoint into Nanos6:
-	//   1) add a new TP_NANOS6_* macro with your tracepoint id.
-	//   2) add the corresponding metadata entry under CTFAPI.cpp with the
-	//      previous ID. Define arguments as needed.
-	//   3) call this function with the tracepoint ID as first argument and
-	//      the correspnding arguments as defined in the metadata file,
-	//      in the same order.
-	// When calling this function, allways cast each variadic argument to
-	// the type specified in the metadata file. Otherwhise an incorrect
-	// number of bytes might be written.
-
 	template<typename... ARGS>
-	static void tracepoint(CTFEvent *event, ARGS... args)
+	static void __tp_lock_write(CTFStream *stream,
+				    CTFEvent *event,
+				    uint64_t timestamp,
+				    size_t size,
+				    ARGS... args)
 	{
-		CTFStream *stream = Instrument::getCPULocalData()->userStream;
-		const size_t size = sizeof(struct event_header) + sizeOfVariadic(args...) + event->getContextSize() + stream->getContextSize();
 		const uint8_t tracepointId = event->getEventId();
-		void *buf;
+		void *buf = stream->buffer + (stream->head & stream->mask);
 
-		stream->lock();
-
-		// TODO checkFreeSpace should not perform flushing, move
-		// it here.
-		// TODO add flushing tracepoints if possible
-		if (!stream->checkFreeSpace(size)) {
-			stream->unlock();
-			return;
-		}
-
-		buf = stream->buffer + (stream->head & stream->mask);
-
-		mk_event_header((char **) &buf, tracepointId);
+		mk_event_header((char **) &buf, timestamp, tracepointId);
 		stream->writeContext(&buf);
 		event->writeContext(&buf);
 		tp_write_args(&buf, args...);
-
 		stream->head += size;
+	}
 
+	template<typename... ARGS>
+	static void __tp_lock(CTFStream *stream,
+			      CTFEvent *event,
+			      uint64_t timestamp,
+			      ARGS... args)
+	{
+		size_t size;
+		bool needsFlush;
+		uint64_t tsBefore, tsAfter;
+
+		// calculate the total size of this tracepoint
+		size = eventSize(stream, event, args...);
+
+		// check if there is enough free space to write this tracepoint
+		needsFlush = !stream->checkFreeSpace(size);
+
+		// if not, flush buffers first and record when the flushing
+		// started and finished
+		if (needsFlush)
+			flushBuffer(stream, &tsBefore, &tsAfter);
+
+		// write the tracepoint (notice that we took this tracepoint
+		// timestamp before any flushing was possibly made)
+		__tp_lock_write(stream, event, timestamp, size, args...);
+
+		// if we flused, write the start and end flushing tracepoints as
+		// they originally ocurred. Writing the flushing tracepoints
+		// will call this function recursively. As long as the buffer
+		// can hold two flush tracepoints, this function will be called
+		// at most two extra times.
+		if (needsFlush)
+			writeFlushingTracepoint(stream, tsBefore, tsAfter);
+	}
+
+	// TODO add nanos6 developer instructions for adding tracepoints
+	template<typename... ARGS>
+	static void tracepoint_async(CTFEvent *event, uint64_t timestamp,
+				     ARGS... args)
+	{
+		CTFStream *stream = Instrument::getCPULocalData()->userStream;
+
+		// locking only implemented for external threads
+		stream->lock();
+		__tp_lock(stream, event, timestamp, args...);
 		stream->unlock();
+	}
+
+	// TODO add nanos6 developer instructions for adding tracepoints
+	template<typename... ARGS>
+	static void tracepoint(CTFEvent *event, ARGS... args)
+	{
+		uint64_t timestamp = getRelativeTimestamp();
+		tracepoint_async(event, timestamp, args...);
 	}
 }
 

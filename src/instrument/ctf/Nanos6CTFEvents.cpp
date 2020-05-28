@@ -12,6 +12,8 @@
 // TODO can we manage the declaration and calling of a event/tracepoint with a
 // macro?
 
+CTFAPI::CTFEvent *__eventCTFFlush;
+
 static CTFAPI::CTFEvent *eventThreadCreate;
 static CTFAPI::CTFEvent *eventThreadResume;
 static CTFAPI::CTFEvent *eventThreadSuspend;
@@ -47,6 +49,11 @@ static CTFAPI::CTFEvent *eventPollingServiceExit;
 void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
 	// create Events
+	__eventCTFFlush = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:ctf_flush",
+		"\t\tuint64_t _start;\n"
+		"\t\tuint64_t _end;\n"
+	));
 	eventThreadCreate = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:thread_create",
 		"\t\tuint16_t _tid;\n"

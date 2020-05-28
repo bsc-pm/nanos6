@@ -20,13 +20,12 @@ namespace CTFAPI {
 	public:
 		ctf_stream_id_t streamId;
 		char *buffer;
-		size_t bufferSize;
+		uint64_t bufferSize;
+		uint64_t subBufferSize;
 		uint64_t head;
 		uint64_t tail;
-		uint64_t tailCommited;
 		uint64_t mask;
-		uint64_t lost;
-		uint64_t threshold;
+		uint64_t subBufferMask;
 
 		ctf_cpu_id_t cpuId;
 		int fdOutput;
@@ -36,10 +35,13 @@ namespace CTFAPI {
 		CTFStream() : streamId(0), bufferSize(0), context(nullptr) {}
 		virtual ~CTFStream() {}
 
-		void initialize(size_t size, ctf_cpu_id_t cpuId);
+		void initialize(size_t size, ctf_cpu_id_t cpu);
 		void shutdown(void);
+
+		void flushAll();
+		void flushFilledSubBuffers();
+		bool checkIfNeedsFlush();
 		bool checkFreeSpace(size_t size);
-		void flushData();
 
 		virtual void lock() {}
 		virtual void unlock() {}

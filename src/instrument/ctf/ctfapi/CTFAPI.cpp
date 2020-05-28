@@ -14,35 +14,47 @@
 #include "CTFAPI.hpp"
 #include "CTFTrace.hpp"
 #include "CTFTypes.hpp"
+#include "CTFEvent.hpp"
 
-#define xstr(s) str(s)
-#define str(s) #s
+extern CTFAPI::CTFEvent *__eventCTFFlush;
 
 
-int CTFAPI::mk_event_header(char **buf, uint8_t id)
+uint64_t CTFAPI::getTimestamp()
 {
-	struct timespec tp;
 	uint64_t timestamp;
-	struct event_header *pk;
+	struct timespec tp;
 	const uint64_t ns = 1000000000ULL;
-	CTFTrace &trace = CTFTrace::getInstance();
-
-	pk = (struct event_header *) *buf;
 
 	if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: clock_gettime syscall: ") + strerror(errno));
 	}
 	timestamp = tp.tv_sec * ns + tp.tv_nsec;
+
+	return timestamp;
+}
+
+uint64_t CTFAPI::getRelativeTimestamp()
+{
+	uint64_t timestamp;
+	CTFTrace &trace = CTFTrace::getInstance();
+
+	timestamp = getTimestamp();
 	timestamp -= trace.getAbsoluteStartTimestamp();
 
+	return timestamp;
+}
+
+void CTFAPI::mk_event_header(char **buf, uint64_t timestamp, uint8_t id)
+{
+	struct event_header *pk;
+
+	pk = (struct event_header *) *buf;
 	*pk = (struct event_header) {
 		.id = id,
 		.timestamp = timestamp
 	};
 
 	*buf += sizeof(struct event_header);
-
-	return 0;
 }
 
 static int mk_packet_header(char *buf, uint64_t *head, ctf_stream_id_t streamId)
@@ -96,4 +108,33 @@ void CTFAPI::addStreamHeader(CTFAPI::CTFStream *stream)
 	// long and at this point it's empty
 	mk_packet_header (stream->buffer, &stream->head, stream->streamId);
 	mk_packet_context(stream->buffer, &stream->head, stream->cpuId);
+}
+
+void CTFAPI::writeFlushingTracepoint(CTFStream *stream,
+				      uint64_t tsBefore, uint64_t tsAfter)
+{
+	uint64_t timestamp = getRelativeTimestamp();
+
+	__tp_lock(stream, __eventCTFFlush, timestamp, tsBefore, tsAfter);
+}
+
+void CTFAPI::flushBuffer(CTFStream *stream,
+			 uint64_t *tsBefore, uint64_t *tsAfter)
+{
+	*tsBefore = getRelativeTimestamp();
+	stream->flushFilledSubBuffers();
+	*tsAfter = getRelativeTimestamp();
+}
+
+void CTFAPI::flushCurrentVirtualCPUBufferIfNeeded()
+{
+	uint64_t tsBefore, tsAfter;
+	CTFStream *stream = Instrument::getCPULocalData()->userStream;
+
+	stream->lock();
+	if (stream->checkIfNeedsFlush()) {
+		flushBuffer(stream, &tsBefore, &tsAfter);
+		writeFlushingTracepoint(stream, tsBefore, tsAfter);
+	}
+	stream->unlock();
 }

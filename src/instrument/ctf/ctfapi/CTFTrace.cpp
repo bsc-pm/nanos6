@@ -11,6 +11,7 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include "CTFTrace.hpp"
+#include "CTFAPI.hpp"
 
 void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string &kernelPath)
 {
@@ -47,21 +48,13 @@ void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string
 	kernelPath = _kernelPath;
 }
 
-
 void CTFAPI::CTFTrace::initializeTraceTimer(void)
 {
-	struct timespec tp;
-	const uint64_t ns = 1000000000ULL;
-
-	if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
-		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: initialize: clock_gettime syscall: ") + strerror(errno));
-	}
-	_absoluteStartTime = tp.tv_sec * ns + tp.tv_nsec;
+	_absoluteStartTime = CTFAPI::getTimestamp();
 }
 
 void CTFAPI::CTFTrace::clean(void)
 {
 	delete _metadata;
 }
-
 

@@ -52,8 +52,12 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	ctf_cpu_id_t i;
 	ctf_cpu_id_t cpuId;
 	std::string streamPath;
-	const size_t defaultSize = 2*1024*1024;
+	const size_t defaultBufferSize = 2*1024*1024;
+	//const size_t defaultBufferSize = 4096;
+	//std::cout << "WARNING: buffer size set to " << defaultBufferSize << std::endl;
 	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
+
+	assert(defaultBufferSize % 2 == 0);
 
 	// TODO can we place this initialization code somewhere else?
 	// maybe under CTFAPI or CTFTrace?
@@ -70,7 +74,7 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 		//TODO init kernel stream
 
 		CTFAPI::CTFStream *userStream = new CTFAPI::CTFStream;
-		userStream->initialize(defaultSize, cpuId);
+		userStream->initialize(defaultBufferSize, cpuId);
 		CTFAPI::addStreamHeader(userStream);
 		streamPath = userPath + "/channel_" + std::to_string(cpuId);
 		userStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
@@ -88,7 +92,7 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	Instrument::leaderThreadCPULocalData = new Instrument::CPULocalData();
 	CTFAPI::CTFStreamUnboundedPrivate *unboundedPrivateStream = new CTFAPI::CTFStreamUnboundedPrivate();
 	unboundedPrivateStream->setContext(context);
-	unboundedPrivateStream->initialize(defaultSize, cpuId);
+	unboundedPrivateStream->initialize(defaultBufferSize, cpuId);
 	CTFAPI::addStreamHeader(unboundedPrivateStream);
 	streamPath = userPath + "/channel_" + std::to_string(cpuId);
 	unboundedPrivateStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
@@ -100,7 +104,7 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	Instrument::virtualCPULocalData = new Instrument::CPULocalData();
 	CTFAPI::CTFStreamUnboundedShared *unboundedSharedStream = new CTFAPI::CTFStreamUnboundedShared();
 	unboundedSharedStream->setContext(context);
-	unboundedSharedStream->initialize(defaultSize, cpuId);
+	unboundedSharedStream->initialize(defaultBufferSize, cpuId);
 	CTFAPI::addStreamHeader(unboundedSharedStream);
 	streamPath = userPath + "/channel_" + std::to_string(cpuId);
 	unboundedSharedStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
@@ -145,10 +149,7 @@ void Instrument::shutdown()
 		assert(CPU != nullptr);
 
 		CTFAPI::CTFStream *userStream = CPU->getInstrumentationData().userStream;
-		userStream->flushData();
-
-		if (userStream->lost)
-			std::cerr << "WARNING: CTF Instrument: " << userStream->lost << " events lost in core " << i << std::endl;
+		userStream->flushAll();
 
 		userStream->shutdown();
 		close(userStream->fdOutput);
@@ -157,18 +158,14 @@ void Instrument::shutdown()
 
 	// TODO use true virtual cpu mechanism here
 	CTFAPI::CTFStream *leaderThreadStream = Instrument::leaderThreadCPULocalData->userStream;
-	leaderThreadStream->flushData();
-	if (leaderThreadStream->lost)
-		std::cerr << "WARNING: CTF Instrument: " << leaderThreadStream->lost << " events lost in core " << i << std::endl;
+	leaderThreadStream->flushAll();
 	leaderThreadStream->shutdown();
 	close(leaderThreadStream->fdOutput);
 	delete leaderThreadStream;
 	delete Instrument::leaderThreadCPULocalData;
 
 	CTFAPI::CTFStream *externalThreadStream = Instrument::virtualCPULocalData->userStream;
-	externalThreadStream->flushData();
-	if (externalThreadStream->lost)
-		std::cerr << "WARNING: CTF Instrument: " << externalThreadStream->lost << " events lost in core " << i << std::endl;
+	externalThreadStream->flushAll();
 	externalThreadStream->shutdown();
 	close(externalThreadStream->fdOutput);
 	delete externalThreadStream;

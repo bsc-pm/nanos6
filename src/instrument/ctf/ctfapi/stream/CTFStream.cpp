@@ -22,21 +22,34 @@
 #define PAGE_SHIFT (12)
 #define PAGE_SIZE (1 << PAGE_SHIFT)
 
+#define NSUBBUF_SHIFT (2)
+#define NSUBBUF (1 << NSUBBUF_SHIFT)
+#define ALIGN_SHIFT (PAGE_SHIFT + NSUBBUF_SHIFT)
+#define ALIGN_SIZE (1 << ALIGN_SHIFT)
+
 
 
 void CTFAPI::CTFStream::initialize(size_t size, ctf_cpu_id_t cpu)
 {
 	int fd;
-	size_t nPages;
 	void *mrbPart;
 	size_t sizeAligned;
-	size_t thresholdDefault;
 
-	nPages = (size + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
-	sizeAligned = nPages * PAGE_SIZE;
+	//size_t nPages = (size + (PAGE_SIZE - 1)) >> PAGE_SHIFT;
+	//sizeAligned = nPages * PAGE_SIZE;
+
+	if (size < ALIGN_SIZE) {
+		std::cerr << "WARNING: supplied CTF buffer size is smaller than minimum. Using default of " << ALIGN_SIZE/1024 << " KiB" << std::endl;
+		size = ALIGN_SIZE;
+	}
+
+	// we want the buffer to be multiple of both the PAGE_SIZE and the
+	// number of subbuffers. This is because we will divide the buffer into
+	// a number of subbufers and each subbufer should be multiple of the
+	// page size for performance of calculating modulus
+	size_t nAlign = (size + (ALIGN_SIZE - 1)) >> ALIGN_SHIFT;
+	sizeAligned = nAlign * ALIGN_SIZE;
 	mrbSize = sizeAligned * 2;
-	// TODO decide which is the best default threshold
-	thresholdDefault = sizeAligned;
 
 	// allocate backing physical memory for the event buffer
 	fd = open("/tmp", O_TMPFILE | O_RDWR | O_EXCL, 0600);
@@ -66,17 +79,15 @@ void CTFAPI::CTFStream::initialize(size_t size, ctf_cpu_id_t cpu)
 	close(fd);
 
 	// set initial values
-	lost = 0;
 	head = 0;
 	tail = 0;
-	threshold = (thresholdDefault > sizeAligned)? sizeAligned : thresholdDefault;
-	tailCommited = 0;
 	mask = sizeAligned - 1;
 	buffer = (char *) mrb;
 	bufferSize = sizeAligned;
+	subBufferSize = sizeAligned/NSUBBUF;
+	subBufferMask = subBufferSize - 1;
 	fileOffset = 0;
 	cpuId = cpu;
-
 }
 
 void CTFAPI::CTFStream::shutdown(void)
@@ -87,23 +98,7 @@ void CTFAPI::CTFStream::shutdown(void)
 	munmap(mrb, mrbSize);
 	head = 0;
 	tail = 0;
-	tailCommited = 0;
 	bufferSize = 0;
-}
-
-bool CTFAPI::CTFStream::checkFreeSpace(size_t size)
-{
-	assert(bufferSize != 0);
-
-	if ((head + size - tailCommited) >= threshold)
-		flushData();
-
-	if ((head + size - tail) >= bufferSize) {
-		lost++;
-		return false;
-	}
-
-	return true;
 }
 
 void CTFAPI::CTFStream::doWrite(int fd, const char *buf, size_t size)
@@ -111,6 +106,8 @@ void CTFAPI::CTFStream::doWrite(int fd, const char *buf, size_t size)
 	off_t offset = 0;
 	size_t rem = size;
 	ssize_t ret;
+
+	assert(bufferSize != 0);
 
 	do {
 		ret = pwrite(fd, (const char *)buf + offset, rem, fileOffset);
@@ -124,16 +121,38 @@ void CTFAPI::CTFStream::doWrite(int fd, const char *buf, size_t size)
 	} while (rem > 0);
 }
 
-void CTFAPI::CTFStream::flushData()
+void CTFAPI::CTFStream::flushAll()
 {
-	//TODO go async
-
 	size_t size;
 
-	size = head - tailCommited;
+	assert(bufferSize != 0);
 
-	doWrite(fdOutput, buffer + (tailCommited & mask), size);
-
+	size = head - tail;
+	doWrite(fdOutput, buffer + (tail & mask), size);
 	tail = head;
-	tailCommited = head;
+}
+
+void CTFAPI::CTFStream::flushFilledSubBuffers()
+{
+	size_t size;
+
+	assert(bufferSize != 0);
+
+	size = head - tail;
+	size &= ~subBufferMask;
+	assert(size > 0);
+	doWrite(fdOutput, buffer + (tail & mask), size);
+	tail += size;
+}
+
+bool CTFAPI::CTFStream::checkIfNeedsFlush()
+{
+	return (head - tail >= subBufferSize);
+}
+
+bool CTFAPI::CTFStream::checkFreeSpace(size_t size)
+{
+	assert(bufferSize != 0);
+
+	return ((head + size - tail) <= bufferSize);
 }
