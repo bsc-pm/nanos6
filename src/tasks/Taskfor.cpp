@@ -33,7 +33,8 @@ void Taskfor::run(Taskfor &source)
 
 		completedIterations += myIterations;
 
-		_myChunk = source.getNextChunk();
+		__attribute__ ((unused)) bool placeHolder;
+		_myChunk = source.getNextChunk(getThread()->getComputePlace()->getIndex(), placeHolder);
 		if (_myChunk >= 0) {
 			myIterations = computeChunkBounds();
 		} else {
@@ -42,6 +43,7 @@ void Taskfor::run(Taskfor &source)
 	} while (myIterations != 0);
 
 	assert(completedIterations > 0);
+	assert(completedIterations <= source._bounds.upper_bound);
 	_completedIterations = completedIterations;
 
 	source.notifyCollaboratorHasFinished();

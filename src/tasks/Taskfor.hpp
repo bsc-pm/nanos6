@@ -19,7 +19,7 @@ public:
 
 private:
 	// Source
-	Padded<std::atomic<int>> _currentChunk;
+	Padded<std::atomic<size_t>> _pendingChunks;
 	// Source
 	Padded<std::atomic<size_t>> _remainingIterations;
 	// Source and collaborator
@@ -46,14 +46,14 @@ public:
 			taskInvokationInfo, parent,
 			instrumentationTaskId, flags,
 			taskAccessInfo, taskCounters),
-		  _currentChunk(), _remainingIterations(),
+		  _pendingChunks(), _remainingIterations(),
 		  _bounds(), _completedIterations(0),
 		  _myChunk(-1)
 	{
 		assert(isFinal());
 		setRunnable(runnable);
 
-		std::atomic_init(_currentChunk.ptr_to_basetype(), (int) 0);
+		std::atomic_init(_pendingChunks.ptr_to_basetype(), (size_t) 0);
 		std::atomic_init(_remainingIterations.ptr_to_basetype(), (size_t) 0);
 	}
 
@@ -84,9 +84,8 @@ public:
 
 		if (_bounds.chunksize == 0) {
 			// Just distribute iterations over collaborators if no hint.
-			_bounds.chunksize = std::max(totalIterations / maxCollaborators, (size_t) 1);
-		}
-		else {
+			_bounds.chunksize = std::max((size_t) std::ceil((double) totalIterations / (double) maxCollaborators), (size_t) 1);
+		} else {
 			// Distribute iterations over collaborators respecting the "alignment".
 			size_t newChunksize = std::max(totalIterations / maxCollaborators, _bounds.chunksize);
 			size_t alignedChunksize = closestMultiple(newChunksize, _bounds.chunksize);
@@ -97,8 +96,10 @@ public:
 			_bounds.chunksize = alignedChunksize;
 		}
 
-		assert(_currentChunk == 0);
-		_currentChunk.store(std::ceil((double) totalIterations/(double) _bounds.chunksize), std::memory_order_relaxed);
+		size_t chunks = std::ceil((double) totalIterations / _bounds.chunksize);
+		// Each bit of the _pendingChunks var represents a chunk. 1 is pending, 0 is already executed.
+		assert(chunks < sizeof(size_t));
+		_pendingChunks.store((size_t)((size_t) 2 << (chunks-1)) - (size_t) 1, std::memory_order_relaxed);
 	}
 
 	inline bounds_t const &getBounds() const
@@ -134,15 +135,41 @@ public:
 	inline bool decrementRemainingIterations(size_t amount)
 	{
 		assert(!isRunnable());
-		size_t remaining = _remainingIterations.fetch_sub(amount, std::memory_order_relaxed) - amount;
+		long remaining = (long)_remainingIterations.fetch_sub(amount, std::memory_order_relaxed) - (long)amount;
+		assert(remaining >= 0);
 		return (remaining == 0);
 	}
 
-	inline int getNextChunk()
+	inline int getNextChunk(long cpuId, bool &remove)
 	{
 		assert(!isRunnable());
-		int myChunk = _currentChunk.fetch_sub(1, std::memory_order_relaxed) - 1;
-		return myChunk;
+
+		size_t totalIterations = _bounds.upper_bound - _bounds.lower_bound;
+		__attribute__((unused)) size_t totalChunks = std::ceil((double) totalIterations / (double) _bounds.chunksize);
+		int chunkId = -1;
+		size_t fetched = 0;
+
+		if (_pendingChunks.load(std::memory_order_relaxed) == 0) {
+			remove = true;
+			return chunkId;
+		} else {
+			for (size_t i = 0; i < totalChunks; i++) {
+				chunkId = (i+cpuId) % totalChunks;
+				// Try to disable chunkId bit
+				fetched = _pendingChunks.fetch_and(~((size_t) 1 << chunkId), std::memory_order_relaxed);
+
+				if (fetched == 0) {
+					break;
+				}
+
+				// If disable was successful, it means that chunk was not run and we must run it
+				if (fetched != (fetched & ~((size_t) 1 << chunkId))) {
+					remove = ((fetched & ~((size_t) 1 << chunkId)) == 0) || (chunkId == -1);
+					return chunkId;
+				}
+			}
+			return -1;
+		}
 	}
 
 	// Methods for collaborator taskfors
@@ -207,6 +234,8 @@ public:
 		assert(totalChunks > 0);
 		_myChunk = totalChunks - (_myChunk + 1);
 
+		assert(_myChunk <= (int) totalChunks);
+		assert(_myChunk >= 0);
 		collaboratorBounds.lower_bound = sourceBounds.lower_bound + (_myChunk * sourceBounds.chunksize);
 		size_t myIterations = std::min(sourceBounds.chunksize, sourceBounds.upper_bound - collaboratorBounds.lower_bound);
 		assert(myIterations > 0 && myIterations <= sourceBounds.chunksize);
