@@ -30,6 +30,9 @@ private:
 	cudaDeviceProp _deviceProperties;
 	CUDAStreamPool _streamPool;
 
+	// To be used in order to obtain the current task in nanos6_get_current_cuda_stream() call
+	thread_local static Task* _currentTask;
+
 	inline void generateDeviceEvironment(Task *task) override
 	{
 		nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
@@ -60,6 +63,7 @@ private:
 
 	inline void preRunTask(Task *task) override
 	{
+		// set the thread_local static var to be used by nanos6_get_current_cuda_stream()
 		CUDAAccelerator::_currentTask = task;
 	}
 
@@ -90,6 +94,11 @@ public:
 	inline void releaseAsyncHandle(void *stream) override
 	{
 		_streamPool.releaseCUDAStream((cudaStream_t)stream);
+	}
+
+	static inline Task *getCurrentTask()
+	{
+		return _currentTask;
 	}
 
 };

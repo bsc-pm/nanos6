@@ -13,6 +13,8 @@
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"
 
+thread_local Task* CUDAAccelerator::_currentTask;
+
 CUDAAccelerator::CUDAAccelerator(int cudaDeviceIndex) :
 	Accelerator(cudaDeviceIndex, nanos6_cuda_device),
 	_streamPool(cudaDeviceIndex)
@@ -57,8 +59,6 @@ void CUDAAccelerator::postRunTask(Task *task)
 	nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
 	CUDAFunctions::recordEvent(env.event, env.stream);
 	_active_events.push_back({env.event, task});
-	// set the thread_local static var to be used by nanos6_get_current_cuda_stream()
-	HardwareInfo::threadTask = task;
 }
 
 // Query the events issued to detect task completion

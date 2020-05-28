@@ -15,7 +15,6 @@
 #endif
 
 std::vector<DeviceInfo *> HardwareInfo::_infos;
-thread_local Task* HardwareInfo::threadTask;
 
 void HardwareInfo::initialize()
 {
