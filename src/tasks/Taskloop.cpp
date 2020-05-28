@@ -8,7 +8,6 @@
 #include "tasks/LoopGenerator.hpp"
 
 void Taskloop::body(
-	__attribute__((unused)) void *deviceEnvironment,
 	__attribute__((unused)) nanos6_address_translation_entry_t *translationTable
 ) {
 

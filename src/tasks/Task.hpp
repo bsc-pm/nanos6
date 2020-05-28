@@ -204,7 +204,7 @@ public:
 	}
 
 	//! Actual code of the task
-	virtual inline void body(void *, nanos6_address_translation_entry_t *translationTable = nullptr)
+	virtual inline void body(nanos6_address_translation_entry_t *translationTable = nullptr)
 	{
 		assert(_taskInfo->implementation_count == 1);
 		assert(hasCode());

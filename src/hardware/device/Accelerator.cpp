@@ -23,7 +23,7 @@ void Accelerator::runTask(Task *task)
 
 	preRunTask(task);
 	setActiveDevice();
-	task->body(nullptr, nullptr);
+	task->body(nullptr);
 
 	postRunTask(task);
 }
