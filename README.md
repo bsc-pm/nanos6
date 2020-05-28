@@ -86,7 +86,6 @@ $ mcxx -c --ompss-2 a_part_in_c_plus_plus.cxx
 $ mcxx --ompss-2 a_part_in_c.o a_part_in_c_plus_plus.o -o app
 ```
 
-
 ## Execution
 
 Nanos6 applications can be executed as is.
@@ -130,6 +129,10 @@ Users can set the number of groups (and so, implicitly, the number of collaborat
 By default, there are as many groups as NUMA nodes in the system.
 
 Finally, taskfors that do not define any chunksize leverage a chunksize value computed as their total number of iterations divided by the number of collaborators per taskfor group.
+
+## Using Device tasks
+
+For information about using device tasks, refer to the [devices](docs/devices/Devices.md) documentation.
 
 ## Benchmarking, tracing, debugging and other options
 
