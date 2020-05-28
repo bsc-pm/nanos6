@@ -32,7 +32,6 @@
 
 
 __attribute__ ((visibility ("hidden"))) void *_nanos6_lib_handle = NULL;
-
 __attribute__ ((visibility ("hidden"))) int _nanos6_has_started = 0;
 int _nanos6_exit_with_error = 0;
 char _nanos6_error_text[ERROR_TEXT_SIZE];
@@ -44,17 +43,18 @@ static char lib_name[MAX_LIB_PATH+1];
 static void _nanos6_loader_set_up_lib_name(char const *variant, char const *dependencies, char const *path, char const *suffix)
 {
 	if (path != NULL) {
-		if (suffix != NULL)
+		if (suffix == NULL) {
 			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so", path, variant, dependencies);
-		else
+		} else {
 			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so.%s", path, variant, dependencies, suffix);
+		}
 	} else {
-		if (suffix != NULL)
+		if (suffix == NULL) {
 			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so", variant, dependencies);
-		else
+		} else {
 			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so.%s", variant, dependencies, suffix);
+		}
 	}
-
 }
 
 static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char const *dependencies, char const *path)
