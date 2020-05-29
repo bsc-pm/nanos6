@@ -150,6 +150,11 @@ void TaskFinalization::disposeTask(Task *task)
 				disposableBlockSize = (char *)task - (char *)disposableBlock;
 			}
 
+			// taskloop and taskfor flags can both be enabled for the same task.
+			// If this is the case, it means we are dealing with taskloop for,
+			// which is a taskloop that generates taskfors. Thus, we must treat
+			// the task as a taskloop. It is important to check taskloop condition
+			// before taskfor one, to dispose a taskloop in the case of taskloop for.
 			if (isTaskloop) {
 				disposableBlockSize += sizeof(Taskloop);
 			} else if (isTaskfor) {
@@ -179,6 +184,11 @@ void TaskFinalization::disposeTask(Task *task)
 				executor->decreaseCallbackParticipants(spawnCallback);
 			}
 
+			// taskloop and taskfor flags can both be enabled for the same task.
+			// If this is the case, it means we are dealing with taskloop for,
+			// which is a taskloop that generates taskfors. Thus, we must treat
+			// the task as a taskloop. It is important to check taskloop condition
+			// before taskfor one, to dispose a taskloop in the case of taskloop for.
 			if (isTaskloop) {
 				((Taskloop *)task)->~Taskloop();
 			} else if (isTaskfor) {

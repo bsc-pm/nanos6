@@ -25,6 +25,7 @@ public:
 		nanos6_task_info_t *parentTaskInfo = parent->getTaskInfo();
 		nanos6_task_invocation_info_t *parentTaskInvocationInfo = parent->getTaskInvokationInfo();
 		Instrument::task_id_t parentTaskInstrumentationId = parent->getInstrumentationTaskId();
+		size_t flags = parent->getFlags();
 
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();
@@ -42,7 +43,17 @@ public:
 			argsBlock = computePlace->getPreallocatedArgsBlock(originalArgsBlockSize);
 		}
 
-		nanos6_create_preallocated_task(parentTaskInfo, parentTaskInvocationInfo, parentTaskInstrumentationId, originalArgsBlockSize, (void *) argsBlock, taskfor_ptr, parent->getFlags());
+		assert(parentTaskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
+		assert(argsBlock != nullptr);
+		assert(taskfor_ptr != nullptr);
+
+		Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(parentTaskInstrumentationId, parentTaskInfo, parentTaskInvocationInfo, flags);
+
+		bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
+		FatalErrorHandler::failIf(!isTaskfor, "Only taskfors can be created this way.");
+
+		taskfor->reinitialize(argsBlock, originalArgsBlockSize, parentTaskInfo, parentTaskInvocationInfo, nullptr, taskId, flags);
+
 		assert(argsBlock != nullptr);
 		assert(taskfor_ptr != nullptr);
 
