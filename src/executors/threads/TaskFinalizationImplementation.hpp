@@ -38,6 +38,8 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 	while ((task != nullptr) && ready) {
 		Task *parent = task->getParent();
 
+		bool isTaskloopFor = (task->isTaskloop() && task->isTaskfor());
+		bool isTaskforCollaborator = (task->isTaskfor() && task->isRunnable() && !isTaskloopFor);
 		// If this is the first iteration of the loop, the task will test true to hasFinished and false to mustDelayRelease, doing
 		// nothing inside the conditionals.
 		if (task->hasFinished()) {
@@ -68,7 +70,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 				}
 
 				assert(!task->mustDelayRelease());
-			} else if (task->isTaskfor() && task->isRunnable() && !task->isTaskloop()) {
+			} else if (isTaskforCollaborator) {
 				Taskfor *collaborator = (Taskfor *)task;
 				Taskfor *source = (Taskfor *)parent;
 
@@ -126,19 +128,11 @@ void TaskFinalization::disposeTask(Task *task)
 		assert(task->hasFinished());
 
 		disposable = task->unlinkFromParent();
+		bool dispose = task->isDisposable();
 		bool isTaskfor = task->isTaskfor();
 		bool isTaskloop = task->isTaskloop();
 		bool isSpawned = task->isSpawned();
 		bool isStreamExecutor = task->isStreamExecutor();
-
-		// We cannot dispose/free collaborator taskfors because they are preallocated tasks that are used during
-		// all the program execution. Collaborators are runnable taskfors. However, we must dispose all taskfors
-		// that are not collaborators, also known as parent taskfors
-		// Now we also have taskloop fors. Those are tasks with both taskloop and taskfor flag enabled. As well,
-		// they are also runnable. So we must distinguish between runnable taskfors that may be either collaborators
-		// or taskloop fors because we must dispose taskloop fors but we must not dispose collaborators.
-		bool isCollaborator = (isTaskfor && task->isRunnable() && !isTaskloop);
-		bool dispose = !isCollaborator;
 
 		if (dispose) {
 			Instrument::destroyTask(task->getInstrumentationTaskId());

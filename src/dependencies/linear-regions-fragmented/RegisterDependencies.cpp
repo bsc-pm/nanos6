@@ -14,6 +14,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
+#include "tasks/Taskloop.hpp"
 
 
 #include <Dependencies.hpp>
@@ -41,7 +42,9 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	}
 	
 	DataAccessRegion accessRegion(start, length);
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), accessRegion, symbolIndex, reductionTypeAndOperatorIndex, reductionIndex);
+	bool isSourceTaskloop = task->isTaskloop() ? ((Taskloop *)task)->isSourceTaskloop() : false;
+	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || isSourceTaskloop;
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, accessRegion, symbolIndex, reductionTypeAndOperatorIndex, reductionIndex);
 }
 
 

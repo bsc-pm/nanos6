@@ -13,6 +13,7 @@
 #include "DataAccessRegistration.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
+#include "tasks/Taskloop.hpp"
 #include "ReductionSpecific.hpp"
 
 #include <Dependencies.hpp>
@@ -36,7 +37,9 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 
 	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length);
 
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length, reductionTypeAndOperatorIndex, reductionIndex);
+	bool isSourceTaskloop = task->isTaskloop() ? ((Taskloop *)task)->isSourceTaskloop() : false;
+	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || isSourceTaskloop;
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, start, length, reductionTypeAndOperatorIndex, reductionIndex);
 }
 
 void nanos6_register_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)

@@ -2642,10 +2642,6 @@ namespace DataAccessRegistration {
 	) {
 		assert(task != nullptr);
 
-		if (task->isTaskloop()) {
-			weak |= ((Taskloop *)task)->isSourceTaskloop();
-		}
-
 		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
 
 		if (symbolIndex >= 0) symbol_list.set(symbolIndex);
@@ -2699,24 +2695,7 @@ namespace DataAccessRegistration {
 		assert(taskInfo != 0);
 
 		// This part creates the DataAccesses and calculates any possible upgrade
-		if (task->isTaskloop() && task->isTaskfor()) {
-			// It may be either source taskloop that will create taskfors or a
-			// taskfor created by a taskloop. We can know that by checking the
-			// runnable flag. Source taskloops are runnable, taskfors created
-			// by a taskloop are not.
-			if (task->isRunnable()) {
-				Taskloop *taskloop = (Taskloop *) task;
-				taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
-			} else {
-				Taskfor *taskfor = (Taskfor *) task;
-				taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskfor->getBounds(), task);
-			}
-		} else if (task->isTaskloop()) {
-			Taskloop *taskloop = (Taskloop *) task;
-			taskInfo->register_depinfo(task->getArgsBlock(), (void *) &taskloop->getBounds(), task);
-		} else {
-			taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
-		}
+		task->registerDeps(false);
 
 		if (!task->getDataAccesses()._accesses.empty()) {
 			task->increasePredecessors(2);

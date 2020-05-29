@@ -81,7 +81,6 @@ public:
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();
 		size_t flags = parent->getFlags();
-		size_t parentNumDeps = parent->getDataAccesses().getRealAccessNumber();
 
 		void *argsBlock = nullptr;
 		Task *task = nullptr;
@@ -125,22 +124,8 @@ public:
 			childBounds.upper_bound = upperBound;
 		}
 
-		// The dependence registration of the taskloops is special. They register dependences
-		// using the bounds. To let the dependency system they must call register_depinfo using
-		// bounds, we must set again the taskloop flag.
-		if (parent->isTaskfor()) {
-			task->setTaskloop(true);
-		}
-
 		// Register deps
 		nanos6_submit_task((void *)task);
-
-		// Finally, we must disable the taskloop flag to let the scheduler and execution workflow
-		// know they are dealing with a taskfor.
-		if (parent->isTaskfor()) {
-			task->setTaskloop(false);
-			assert(task->isTaskfor() && !task->isTaskloop() && !task->isRunnable());
-		}
 	}
 };
 

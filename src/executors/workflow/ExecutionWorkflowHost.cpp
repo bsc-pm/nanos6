@@ -85,7 +85,8 @@ namespace ExecutionWorkflow {
 
 			HardwareCounters::taskStarted(_task);
 
-			if (_task->isTaskfor()) {
+			bool isTaskforCollaborator = (_task->isTaskfor() && !_task->isTaskloop());
+			if (isTaskforCollaborator) {
 				assert(_task->isRunnable());
 				bool first = ((Taskfor *) _task)->hasFirstChunk();
 				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
@@ -111,10 +112,10 @@ namespace ExecutionWorkflow {
 			Monitoring::taskChangedStatus(_task, runtime_status);
 			Monitoring::taskCompletedUserCode(_task);
 
-			if (_task->isTaskfor()) {
-				assert(_task->isRunnable());
-				bool last = ((Taskfor *) _task)->hasLastChunk();
-				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
+			if (isTaskforCollaborator) {
+				assert(task->isRunnable());
+				bool last = ((Taskfor *) task)->hasLastChunk();
+				Instrument::task_id_t parentTaskId = task->getParent()->getInstrumentationTaskId();
 				Instrument::taskforCollaboratorStopped(parentTaskId, taskId);
 				Instrument::endTaskforCollaborator(parentTaskId, taskId, last);
 			} else {

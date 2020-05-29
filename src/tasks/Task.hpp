@@ -820,6 +820,16 @@ public:
 
 		return (TasktypeData *) _taskInfo->task_type_data;
 	}
+
+	virtual inline void registerDeps(bool = false)
+	{
+		_taskInfo->register_depinfo(getArgsBlock(), nullptr, this);
+	}
+
+	virtual inline bool isDisposable()
+	{
+		return true;
+	}
 };
 
 

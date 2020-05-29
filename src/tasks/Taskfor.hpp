@@ -243,6 +243,22 @@ public:
 		return false;
 	}
 
+	virtual inline void registerDeps(bool = false)
+	{
+		assert(getParent() != nullptr);
+
+		if (getParent()->isTaskloop()) {
+			getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &getBounds(), this);
+		} else {
+			getTaskInfo()->register_depinfo(getArgsBlock(), nullptr, this);
+		}
+	}
+
+	virtual inline bool isDisposable()
+	{
+		return !isRunnable();
+	}
+
 private:
 	void run(Taskfor &source);
 
