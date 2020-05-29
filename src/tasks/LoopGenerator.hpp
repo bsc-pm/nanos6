@@ -92,8 +92,11 @@ public:
 
 		// Copy the args block if it was not duplicated
 		if (!hasPreallocatedArgsBlock) {
-			assert(!parent->hasPreallocatedArgsBlock());
-			memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
+			if (parentTaskInfo->duplicate_args_block != nullptr) {
+				parentTaskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
+			} else {
+				memcpy(argsBlock, originalArgsBlock, originalArgsBlockSize);
+			}
 		}
 
 		// Set bounds of grainsize
