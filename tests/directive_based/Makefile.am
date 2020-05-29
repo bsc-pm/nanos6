@@ -47,10 +47,12 @@ base_tests += \
 	commutative-stencil.test \
 	task-for-multiaxpy.test \
 	task-for-dep-multiaxpy.test \
+	task-for-nonpod.test \
 	task-for-nqueens.test \
 	taskloop-multiaxpy.test \
 	taskloop-dep-multiaxpy.test \
 	taskloop-nested-dep-multiaxpy.test \
+	taskloop-nonpod.test \
 	taskloop-nqueens.test
 
 
@@ -123,10 +125,12 @@ base_tests +=  \
 	commutative-stencil.debug.test \
 	task-for-multiaxpy.debug.test \
 	task-for-dep-multiaxpy.debug.test \
+	task-for-nonpod.debug.test \
 	task-for-nqueens.debug.test \
 	taskloop-multiaxpy.debug.test \
 	taskloop-dep-multiaxpy.debug.test \
 	taskloop-nested-dep-multiaxpy.debug.test \
+	taskloop-nonpod.debug.test \
 	taskloop-nqueens.debug.test
 
 if USE_CUDA
@@ -365,6 +369,15 @@ task_for_dep_multiaxpy_test_CPPFLAGS = -DNDEBUG
 task_for_dep_multiaxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 task_for_dep_multiaxpy_test_LDFLAGS = $(test_common_ldflags)
 
+task_for_nonpod_debug_test_SOURCES = task-for/task-for-nonpod.cpp
+task_for_nonpod_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_nonpod_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+task_for_nonpod_test_SOURCES = task-for/task-for-nonpod.cpp
+task_for_nonpod_test_CPPFLAGS = -DNDEBUG
+task_for_nonpod_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_nonpod_test_LDFLAGS = $(test_common_ldflags)
+
 task_for_nqueens_debug_test_SOURCES = task-for/task-for-nqueens.cpp
 task_for_nqueens_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 task_for_nqueens_debug_test_LDFLAGS = $(test_common_debug_ldflags)
@@ -400,6 +413,15 @@ taskloop_nested_dep_multiaxpy_test_SOURCES = taskloop/taskloop-nested-dep-multia
 taskloop_nested_dep_multiaxpy_test_CPPFLAGS = -DNDEBUG
 taskloop_nested_dep_multiaxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 taskloop_nested_dep_multiaxpy_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_nonpod_debug_test_SOURCES = taskloop/taskloop-nonpod.cpp
+taskloop_nonpod_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_nonpod_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_nonpod_test_SOURCES = taskloop/taskloop-nonpod.cpp
+taskloop_nonpod_test_CPPFLAGS = -DNDEBUG
+taskloop_nonpod_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_nonpod_test_LDFLAGS = $(test_common_ldflags)
 
 taskloop_nqueens_debug_test_SOURCES = taskloop/taskloop-nqueens.cpp
 taskloop_nqueens_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
