@@ -27,12 +27,26 @@ namespace Instrument {
 	//! \brief Enters the scheduler addReadyTask method
 	inline void enterGetReadyTask()
 	{
+		// while busy waiting, the worker is continuously requesting
+		// tasks. This will quicly fill the ctf buffer, so we disable
+		// both the enter and exit while busywaing.
+
+		ThreadLocalData &tld = getThreadLocalData();
+		if (tld.isBusyWaiting)
+			return;
+
 		tp_scheduler_get_task_enter();
 	}
 
 	//! \brief Exits the scheduler addReadyTask method
 	inline void exitGetReadyTask(Task *task)
 	{
+		// see enterGetReadyTask comments above
+
+		ThreadLocalData &tld = getThreadLocalData();
+		if (tld.isBusyWaiting)
+			return;
+
 		tp_scheduler_get_task_exit(task != nullptr);
 	}
 

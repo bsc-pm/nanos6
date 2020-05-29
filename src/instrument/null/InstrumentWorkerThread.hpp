@@ -12,6 +12,7 @@
 
 namespace Instrument {
 
+	inline void WorkerSpins() {}
 	inline void WorkerGetsTask() {}
 	inline void WorkerBusyWaits() {}
 }

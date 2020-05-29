@@ -11,8 +11,15 @@
 #include "../api/InstrumentWorkerThread.hpp"
 
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
+#include "ctfapi/CTFAPI.hpp"
+#include "Nanos6CTFEvents.hpp"
 
 namespace Instrument {
+
+	inline void WorkerSpins()
+	{
+		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded();
+	}
 
 	inline void WorkerGetsTask()
 	{

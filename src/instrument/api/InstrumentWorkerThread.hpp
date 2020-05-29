@@ -8,6 +8,7 @@
 #define INSTRUMENT_WORKERTHREAD_HPP
 
 namespace Instrument {
+	void WorkerSpins();
 	void WorkerGetsTasks();
 	void WorkerBusyWaits();
 }
