@@ -53,11 +53,7 @@ SchedulerInterface::SchedulerInterface()
 	FatalErrorHandler::failIf(true, "OpenCL is not supported yet.");
 #endif
 #if USE_FPGA
-	computePlaceCount = HardwareInfo::getComputePlaceCount(nanos6_fpga_device);
-	_deviceScheduler[nanos6_fpga_device] =
-		SchedulerGenerator::createDeviceScheduler(
-			computePlaceCount, policy, _enablePriority,
-			_enableImmediateSuccessor, nanos6_fpga_device);
+	FatalErrorHandler::failIf(true, "FPGA is not supported yet.");
 #endif
 }
 
@@ -71,6 +67,6 @@ SchedulerInterface::~SchedulerInterface()
 	FatalErrorHandler::failIf(true, "OpenCL is not supported yet.");
 #endif
 #if USE_FPGA
-	delete _deviceSchedulers[nanos6_fpga_device];
+	FatalErrorHandler::failIf(true, "FPGA is not supported yet.");
 #endif
 }

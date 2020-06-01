@@ -1133,10 +1133,8 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/UnsyncScheduler.hpp \
 	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.hpp \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.hpp \
-	src/scheduling/schedulers/device/CUDADeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
-	src/scheduling/schedulers/device/FPGADeviceScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GenericFactory.hpp \
