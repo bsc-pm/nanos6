@@ -26,7 +26,7 @@ private:
 		Task *task;
 	};
 
-	std::list<CUDAEvent> _active_events, _preallocated_events;
+	std::list<CUDAEvent> _activeEvents, _preallocatedEvents;
 	cudaDeviceProp _deviceProperties;
 	CUDAStreamPool _streamPool;
 
@@ -49,15 +49,13 @@ private:
 
 	inline void registerPolling() override
 	{
-		nanos6_register_polling_service("CUDA polling service", polling, (void *)this);
+		nanos6_register_polling_service("CUDA polling service", pollingService, (void *)this);
 	}
 
 	inline void unregisterPolling() override
 	{
-		nanos6_unregister_polling_service("CUDA polling service", polling, (void *)this);
+		nanos6_unregister_polling_service("CUDA polling service", pollingService, (void *)this);
 	}
-
-	bool acceleratorServiceLoop() override;
 
 	void processCUDAEvents();
 
@@ -77,7 +75,7 @@ public:
 		unregisterPolling();
 	}
 
-	static int polling(void *data);
+	static int pollingService(void *data);
 
 	// Set current device as the active in the runtime
 	inline void setActiveDevice() override

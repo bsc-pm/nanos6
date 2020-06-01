@@ -25,24 +25,31 @@ CUDAAccelerator::CUDAAccelerator(int cudaDeviceIndex) :
 
 // Now the private functions
 
-bool CUDAAccelerator::acceleratorServiceLoop()
+int CUDAAccelerator::pollingService(void *data)
 {
-	if (_streamPool.streamAvailable()) {
-		Task *task = Scheduler::getReadyTask(_computePlace);
-		if (task != nullptr)
-			runTask(task);
-	}
-	processCUDAEvents();
-	return _active_events.size() != 0;
-}
+	// Check if the thread running the service is a WorkerThread. nullptr means LeaderThread.
+	bool worker = (WorkerThread::getCurrentWorkerThread() != nullptr);
 
-int CUDAAccelerator::polling(void *data)
-{
+	Task *task = nullptr;
 	CUDAAccelerator *accel = (CUDAAccelerator *)data;
 	assert(accel != nullptr);
-	accel->setActiveDevice();
 
-	while (accel->acceleratorServiceLoop());
+	// For CUDA we need the setDevice operation here, for the stream & event context-to-thread association
+	accel->setActiveDevice();
+	do {
+		if (accel->_streamPool.streamAvailable()) {
+			task = Scheduler::getReadyTask(accel->_computePlace);
+			if (task != nullptr) {
+				accel->runTask(task);
+			}
+		}
+		accel->processCUDAEvents();
+	} while (accel->_activeEvents.size() != 0 && worker);
+
+	// If process was run by LeaderThread, request a WorkerThread to continue.
+	if (!worker && task != nullptr) {
+		CPUManager::executeCPUManagerPolicy(nullptr, ADDED_TASKS, 1);
+	}
 
 	return 0;
 }
@@ -58,20 +65,20 @@ void CUDAAccelerator::postRunTask(Task *task)
 {
 	nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
 	CUDAFunctions::recordEvent(env.event, env.stream);
-	_active_events.push_back({env.event, task});
+	_activeEvents.push_back({env.event, task});
 }
 
 // Query the events issued to detect task completion
 void CUDAAccelerator::processCUDAEvents()
 {
-	_preallocated_events.clear();
-	std::swap(_preallocated_events, _active_events);
+	_preallocatedEvents.clear();
+	std::swap(_preallocatedEvents, _activeEvents);
 
-	for (CUDAEvent &ev : _preallocated_events)
+	for (CUDAEvent &ev : _preallocatedEvents)
 		if (CUDAFunctions::cudaEventFinished(ev.event)) {
 			finishTask(ev.task);
 		}
 		else
-			_active_events.push_back(ev);
+			_activeEvents.push_back(ev);
 }
 
