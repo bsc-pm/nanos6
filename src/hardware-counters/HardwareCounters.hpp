@@ -33,6 +33,9 @@ private:
 	//! The underlying PAPI backend
 	static HardwareCountersInterface *_papiBackend;
 
+	//! Whether there is at least one enabled backend
+	static bool _anyBackendEnabled;
+
 	//! Whether each backend is enabled
 	static std::vector<bool> _enabled;
 

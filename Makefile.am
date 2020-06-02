@@ -363,7 +363,6 @@ common_sources = \
 	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/hardware-counters/HardwareCounters.cpp \
-	src/hardware-counters/TaskHardwareCounters.cpp \
 	src/hardware-counters/ThreadHardwareCounters.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \

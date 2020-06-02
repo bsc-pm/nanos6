@@ -74,9 +74,14 @@ ComputePlace::~ComputePlace()
 	Taskfor *taskfor = (Taskfor *) _preallocatedTaskfor;
 	assert(taskfor != nullptr);
 
-	// Free task hardware counters if existent
-	TaskHardwareCounters taskCounters = taskfor->getHardwareCounters();
+	// Retreive the allocation address
+	TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
 	void *allocationAddress = taskCounters.getAllocationAddress();
+
+	// Call the destructor of task hardware counters
+	taskCounters.shutdown();
+
+	// Free task hardware counters if existent
 	if (allocationAddress != nullptr) {
 		free(allocationAddress);
 	}

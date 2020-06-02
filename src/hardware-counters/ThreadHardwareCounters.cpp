@@ -8,6 +8,14 @@
 #include "SupportedHardwareCounters.hpp"
 #include "ThreadHardwareCounters.hpp"
 
+#if HAVE_PAPI
+#include "hardware-counters/papi/PAPIThreadHardwareCounters.hpp"
+#endif
+
+#if HAVE_PQOS
+#include "hardware-counters/pqos/PQoSThreadHardwareCounters.hpp"
+#endif
+
 
 void ThreadHardwareCounters::initialize()
 {

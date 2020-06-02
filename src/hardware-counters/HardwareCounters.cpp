@@ -26,6 +26,7 @@ EnvironmentVariable<bool> HardwareCounters::_verbose("NANOS6_HWCOUNTERS_VERBOSE"
 EnvironmentVariable<std::string> HardwareCounters::_verboseFile("NANOS6_HWCOUNTERS_VERBOSE_FILE", "nanos6-output-hwcounters.txt");
 HardwareCountersInterface *HardwareCounters::_papiBackend;
 HardwareCountersInterface *HardwareCounters::_pqosBackend;
+bool HardwareCounters::_anyBackendEnabled(false);
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
 std::vector<bool> HardwareCounters::_enabledEvents(HWCounters::TOTAL_NUM_EVENTS);
 
@@ -105,6 +106,13 @@ void HardwareCounters::initialize()
 	// Check if there's an incompatibility between backends
 	checkIncompatibleBackends();
 
+	for (unsigned short i = 0; i < _enabledEvents.size(); ++i) {
+		if (_enabledEvents[i]) {
+			_anyBackendEnabled = true;
+			break;
+		}
+	}
+
 	// Check which backends must be initialized
 	if (_enabled[HWCounters::PQOS_BACKEND]) {
 #if HAVE_PQOS
@@ -150,6 +158,8 @@ void HardwareCounters::shutdown()
 		_papiBackend = nullptr;
 		_enabled[HWCounters::PAPI_BACKEND] = false;
 	}
+
+	_anyBackendEnabled = false;
 }
 
 void HardwareCounters::threadInitialized()
@@ -196,100 +206,115 @@ void HardwareCounters::threadShutdown()
 
 void HardwareCounters::taskCreated(Task *task, bool enabled)
 {
-	assert(task != nullptr);
+	if (_anyBackendEnabled) {
+		assert(task != nullptr);
 
-	// After the task is created, initialize (construct) hardware counters
-	TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-	taskCounters.initialize();
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
+		// After the task is created, initialize (construct) hardware counters
+		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+		taskCounters.initialize();
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-		_pqosBackend->taskCreated(task, enabled);
-	}
+			_pqosBackend->taskCreated(task, enabled);
+		}
 
-	if (_enabled[HWCounters::PAPI_BACKEND]) {
-		assert(_papiBackend != nullptr);
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
 
-		_papiBackend->taskCreated(task, enabled);
+			_papiBackend->taskCreated(task, enabled);
+		}
 	}
 }
 
 void HardwareCounters::taskReinitialized(Task *task)
 {
-	assert(task != nullptr);
+	if (_anyBackendEnabled) {
+		assert(task != nullptr);
 
-	TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
+		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-		_pqosBackend->taskReinitialized(taskCounters.getPQoSCounters());
-	}
+			_pqosBackend->taskReinitialized(taskCounters.getPQoSCounters());
+		}
 
-	if (_enabled[HWCounters::PAPI_BACKEND]) {
-		assert(_papiBackend != nullptr);
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
 
-		_papiBackend->taskReinitialized(taskCounters.getPAPICounters());
+			_papiBackend->taskReinitialized(taskCounters.getPAPICounters());
+		}
 	}
 }
 
 void HardwareCounters::taskStarted(Task *task)
 {
-	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-	assert(thread != nullptr);
-	assert(task != nullptr);
+	if (_anyBackendEnabled) {
+		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
+		assert(thread != nullptr);
+		assert(task != nullptr);
 
-	ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
-	TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
+		ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
+		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-		_pqosBackend->taskStarted(threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
-	}
+			_pqosBackend->taskStarted(threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
+		}
 
-	if (_enabled[HWCounters::PAPI_BACKEND]) {
-		assert(_papiBackend != nullptr);
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
 
-		_papiBackend->taskStarted(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
+			_papiBackend->taskStarted(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
+		}
 	}
 }
 
 void HardwareCounters::taskStopped(Task *task)
 {
-	assert(task != nullptr);
-	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-	assert(thread != nullptr);
+	if (_anyBackendEnabled) {
+		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
+		assert(thread != nullptr);
+		assert(task != nullptr);
 
-	ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
-	TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
+		ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
+		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-		_pqosBackend->taskStopped(threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
-	}
+			_pqosBackend->taskStopped(threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
+		}
 
-	if (_enabled[HWCounters::PAPI_BACKEND]) {
-		assert(_papiBackend != nullptr);
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
 
-		_papiBackend->taskStopped(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
+			_papiBackend->taskStopped(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
+		}
 	}
 }
 
 void HardwareCounters::taskFinished(Task *task)
 {
-	assert(task != nullptr);
+	if (_anyBackendEnabled) {
+		assert(task != nullptr);
 
-	TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
+		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
 
-		_pqosBackend->taskFinished(task, taskCounters.getPQoSCounters());
+			_pqosBackend->taskFinished(task, taskCounters.getPQoSCounters());
+		}
+
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			assert(_papiBackend != nullptr);
+
+			_papiBackend->taskFinished(task, taskCounters.getPAPICounters());
+		}
+
+		// If it's not a taskfor collaborator, destroy objects. Taskfor
+		// colaborators reuse them (reinitialize)
+		bool isTaskforCollaborator = (task->isTaskfor() && task->isRunnable());
+		if (!isTaskforCollaborator) {
+			taskCounters.shutdown();
+		}
 	}
-
-	if (_enabled[HWCounters::PAPI_BACKEND]) {
-		assert(_papiBackend != nullptr);
-
-		_papiBackend->taskFinished(task, taskCounters.getPAPICounters());
-	}
-
-	taskCounters.shutdown();
 }

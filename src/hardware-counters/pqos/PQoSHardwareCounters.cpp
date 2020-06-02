@@ -66,20 +66,19 @@ PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verb
 
 	// Choose events to monitor: only those enabled
 	int eventsToMonitor = 0;
-	for (unsigned short i = 0; i < enabledEvents.size(); ++i) {
+	for (unsigned short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
 		if (enabledEvents[i]) {
-			_enabledEvents[i] = true;
+			_enabledEvents[i - HWCounters::PQOS_MIN_EVENT] = true;
 
-			unsigned short id = i + HWCounters::PQOS_MIN_EVENT;
-			if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_PERF_EVENT_IPC") {
+			if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_PERF_EVENT_IPC") {
 				eventsToMonitor |= PQOS_PERF_EVENT_IPC;
-			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_PERF_EVENT_LLC_MISS") {
+			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_PERF_EVENT_LLC_MISS") {
 				eventsToMonitor |= PQOS_PERF_EVENT_LLC_MISS;
-			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_LMEM_BW") {
+			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_LMEM_BW") {
 				eventsToMonitor |= PQOS_MON_EVENT_LMEM_BW;
-			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_RMEM_BW") {
+			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_RMEM_BW") {
 				eventsToMonitor |= PQOS_MON_EVENT_RMEM_BW;
-			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_L3_OCCUP") {
+			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_L3_OCCUP") {
 				eventsToMonitor |= PQOS_MON_EVENT_L3_OCCUP;
 			} else {
 				assert(false);
