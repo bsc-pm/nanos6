@@ -147,6 +147,7 @@ void nanos6_shutdown(void) {
 	ExternalThreadGroup::shutdown();
 
 	Monitoring::shutdown();
+	HardwareCounters::shutdown();
 
 	HardwareInfo::shutdown();
 	Scheduler::shutdown();
@@ -155,6 +156,5 @@ void nanos6_shutdown(void) {
 
 	MemoryAllocator::shutdown();
 	RuntimeInfoEssentials::shutdown();
-	HardwareCounters::shutdown();
 	TurboSettings::shutdown();
 }

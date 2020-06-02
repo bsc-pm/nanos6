@@ -363,6 +363,7 @@ common_sources = \
 	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/hardware-counters/HardwareCounters.cpp \
+	src/hardware-counters/ThreadHardwareCounters.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/ExternalThreadGroup.cpp \
@@ -833,8 +834,12 @@ noinst_HEADERS = \
 	src/hardware-counters/HardwareCountersInterface.hpp \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
 	src/hardware-counters/TaskHardwareCounters.hpp \
+	src/hardware-counters/TaskHardwareCountersInterface.hpp \
 	src/hardware-counters/ThreadHardwareCounters.hpp \
+	src/hardware-counters/ThreadHardwareCountersInterface.hpp \
 	src/hardware-counters/papi/PAPIHardwareCounters.hpp \
+	src/hardware-counters/papi/PAPITaskHardwareCounters.hpp \
+	src/hardware-counters/papi/PAPIThreadHardwareCounters.hpp \
 	src/hardware-counters/pqos/PQoSHardwareCounters.hpp \
 	src/hardware-counters/pqos/PQoSTaskHardwareCounters.hpp \
 	src/hardware-counters/pqos/PQoSThreadHardwareCounters.hpp \
@@ -1775,6 +1780,10 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/tasks/task_and_deps.cfg \
 	paraver-cfg/nanos6/tasks/task_number.cfg \
 	paraver-cfg/nanos6/tasks/task_priority.cfg
+
+hwcountersdir = ${docdir}
+nobase_dist_hwcounters_DATA = \
+	scripts/nanos6_hwcounters.json
 
 
 ## --------------------------------- ##

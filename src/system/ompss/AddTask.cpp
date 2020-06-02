@@ -64,8 +64,8 @@ void nanos6_create_task(
 	if (currentWorkerThread != nullptr) {
 		Task *parent = currentWorkerThread->getTask();
 		if (parent != nullptr) {
-			Monitoring::taskChangedStatus(parent, runtime_status);
 			HardwareCounters::taskStopped(parent);
+			Monitoring::taskChangedStatus(parent, runtime_status);
 		}
 	}
 
@@ -90,7 +90,8 @@ void nanos6_create_task(
 
 	TaskDataAccessesInfo taskAccessInfo(num_deps);
 
-	size_t taskCountersSize = HardwareCounters::getTaskHardwareCountersSize();
+	// Get the size needed for this task's hardware counters
+	size_t taskCountersSize = TaskHardwareCounters::getTaskHardwareCountersSize();
 
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 
@@ -112,10 +113,9 @@ void nanos6_create_task(
 
 	taskAccessInfo.setAllocationAddress((char *)task + taskSize);
 
-	void *taskCounters = nullptr;
-	if (taskCountersSize > 0) {
-		taskCounters = (char *)task + taskSize + taskAccessInfo.getAllocationSize();
-	}
+	// Prepare the allocation address for the task's hardware counters
+	void *countersAddress = (taskCountersSize > 0) ? (char *)task + taskSize + taskAccessInfo.getAllocationSize() : nullptr;
+	TaskHardwareCounters taskCounters(countersAddress);
 
 	if (isTaskfor) {
 		// Taskfor is always final.
@@ -190,9 +190,8 @@ void nanos6_submit_task(void *taskHandle)
 		}
 	}
 
-	Instrument::createdTask(task, taskInstrumentationId);
-
 	HardwareCounters::taskCreated(task);
+	Instrument::createdTask(task, taskInstrumentationId);
 	Monitoring::taskCreated(task);
 
 	// Compute the task priority only when the scheduler is

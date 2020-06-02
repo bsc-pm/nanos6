@@ -236,8 +236,8 @@ namespace ExecutionWorkflow {
 						targetMemoryPlace
 					);
 
-					Monitoring::taskFinished(task);
 					HardwareCounters::taskFinished(task);
+					Monitoring::taskFinished(task);
 					task->setComputePlace(nullptr);
 					TaskFinalization::taskFinished(task, cpu);
 

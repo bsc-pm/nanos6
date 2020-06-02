@@ -11,16 +11,19 @@
 #include <boost/accumulators/statistics.hpp>
 #include <pqos.h>
 
-#include "hardware-counters/TaskHardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCountersInterface.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
-class PQoSTaskHardwareCounters : public TaskHardwareCounters {
+namespace BoostAcc = boost::accumulators;
+namespace BoostAccTag = boost::accumulators::tag;
+
+class PQoSTaskHardwareCounters : public TaskHardwareCountersInterface {
 
 private:
 
-	typedef boost::accumulators::accumulator_set<size_t, boost::accumulators::stats<boost::accumulators::tag::mean> > counter_accumulator_t;
+	typedef BoostAcc::accumulator_set<size_t, BoostAcc::stats<BoostAccTag::mean> > counter_accumulator_t;
 
 	enum accumulating_counter_t {
 		llc_usage = 0,
@@ -51,7 +54,7 @@ private:
 
 public:
 
-	inline PQoSTaskHardwareCounters(bool enabled = false) :
+	inline PQoSTaskHardwareCounters(bool enabled = true) :
 		_active(false),
 		_enabled(enabled)
 	{
@@ -141,43 +144,43 @@ public:
 	}
 
 	//! \brief Get the delta value of a hardware counter
-	//! \param[in] counterType The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t counterType)
+	//! \param[in] counterId The type of counter to get the delta from
+	inline double getDelta(HWCounters::counters_t counterId)
 	{
-		switch (counterType) {
-			case HWCounters::llc_usage:
-				return (double) boost::accumulators::mean(_accumulatingCounters[llc_usage]);
-			case HWCounters::ipc:
+		switch (counterId) {
+			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
+				return (double) BoostAcc::mean(_accumulatingCounters[llc_usage]);
+			case HWCounters::PQOS_PERF_EVENT_IPC:
 				return (double) _regularCountersDelta[ipc_retired] / (double) _regularCountersDelta[ipc_unhalted];
-			case HWCounters::local_mem_bandwidth:
+			case HWCounters::PQOS_MON_EVENT_LMEM_BW:
 				return (double) _regularCountersDelta[mbm_local];
-			case HWCounters::remote_mem_bandwidth:
+			case HWCounters::PQOS_MON_EVENT_RMEM_BW:
 				return (double) _regularCountersDelta[mbm_remote];
-			case HWCounters::llc_miss_rate:
+			case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
 				return (double) _regularCountersDelta[llc_misses] / (double) _regularCountersDelta[ipc_retired];
 			default:
-				FatalErrorHandler::failIf(true, "Event with id '", counterType, "' not supported (PQoS)");
+				FatalErrorHandler::fail("Event with id '", counterId, "' not supported (PQoS)");
 				return 0.0;
 		}
 	}
 
 	//! \brief Get the accumulated value of a hardware counter
-	//! \param[in] counterType The type of counter to get the accumulation from
-	inline double getAccumulated(HWCounters::counters_t counterType)
+	//! \param[in] counterId The type of counter to get the accumulation from
+	inline double getAccumulated(HWCounters::counters_t counterId)
 	{
-		switch (counterType) {
-			case HWCounters::llc_usage:
-				return (double) boost::accumulators::mean(_accumulatingCounters[llc_usage]);
-			case HWCounters::ipc:
+		switch (counterId) {
+			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
+				return (double) BoostAcc::mean(_accumulatingCounters[llc_usage]);
+			case HWCounters::PQOS_PERF_EVENT_IPC:
 				return (double) _regularCountersAccumulated[ipc_retired] / (double) _regularCountersAccumulated[ipc_unhalted];
-			case HWCounters::local_mem_bandwidth:
+			case HWCounters::PQOS_MON_EVENT_LMEM_BW:
 				return (double) _regularCountersAccumulated[mbm_local];
-			case HWCounters::remote_mem_bandwidth:
+			case HWCounters::PQOS_MON_EVENT_RMEM_BW:
 				return (double) _regularCountersAccumulated[mbm_remote];
-			case HWCounters::llc_miss_rate:
+			case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
 				return (double) _regularCountersAccumulated[llc_misses] / (double) _regularCountersAccumulated[ipc_retired];
 			default:
-				FatalErrorHandler::failIf(true, "Event with id '", counterType, "' not supported (PQoS)");
+				FatalErrorHandler::fail("Event with id '", counterId, "' not supported (PQoS)");
 				return 0.0;
 		}
 	}

@@ -133,7 +133,7 @@ private:
 	TaskPredictions _taskPredictions;
 
 	//! Hardware counter structures of the task
-	TaskHardwareCounters *_hwCounters;
+	TaskHardwareCounters _hwCounters;
 
 	//! Cluster-related data for remote tasks
 	TaskOffloading::ClusterTaskContext *_clusterContext;
@@ -153,7 +153,7 @@ public:
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
 		TaskDataAccessesInfo taskAccessInfo,
-		void *taskCounters
+		const TaskHardwareCounters &taskCounters
 	);
 
 	virtual inline void reinitialize(
@@ -741,13 +741,15 @@ public:
 	}
 
 	//! \brief Setter for the task's hardware counter structures
-	inline void setHardwareCounters(TaskHardwareCounters *hwCounters)
+	//!
+	//! \param[in] hwCounters The task's hardware counters
+	inline void setHardwareCounters(const TaskHardwareCounters &hwCounters)
 	{
 		_hwCounters = hwCounters;
 	}
 
 	//! \brief Get the task's hardware counter structures
-	inline TaskHardwareCounters *getHardwareCounters()
+	inline TaskHardwareCounters &getHardwareCounters()
 	{
 		return _hwCounters;
 	}

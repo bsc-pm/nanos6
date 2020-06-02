@@ -42,12 +42,11 @@ namespace If0Task {
 
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 
-		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
-
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		HardwareCounters::taskStopped(currentTask);
-
+		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
+
+		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		currentThread->switchTo(replacementThread);
 
 		//Update the CPU since the thread may have migrated
@@ -55,11 +54,9 @@ namespace If0Task {
 		assert(cpu != nullptr);
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
+		HardwareCounters::taskStarted(currentTask);
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
-
-		assert(currentTask->getThread() != nullptr);
-		HardwareCounters::taskStarted(currentTask);
 		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 
@@ -78,9 +75,8 @@ namespace If0Task {
 
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		if (hasCode) {
-			Monitoring::taskChangedStatus(currentTask, blocked_status);
 			HardwareCounters::taskStopped(currentTask);
-
+			Monitoring::taskChangedStatus(currentTask, blocked_status);
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}
 
@@ -89,10 +85,8 @@ namespace If0Task {
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 
 		if (hasCode) {
-			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
-
-			assert(currentTask->getThread() != nullptr);
 			HardwareCounters::taskStarted(currentTask);
+			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 			Monitoring::taskChangedStatus(currentTask, executing_status);
 		}
 	}

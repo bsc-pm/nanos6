@@ -33,7 +33,7 @@ private:
 
 	Instrument::ThreadLocalData _instrumentationData;
 
-	ThreadHardwareCounters *_hwCounters;
+	ThreadHardwareCounters _hwCounters;
 
 	void initialize();
 	void handleTask(CPU *cpu);
@@ -85,11 +85,8 @@ public:
 	//! \brief returns the WorkerThread that runs the call
 	static inline WorkerThread *getCurrentWorkerThread();
 
-	//! \brief Setter for the thread's hardware counter structures
-	inline void setHardwareCounters(ThreadHardwareCounters *hwCounters);
-
 	//! \brief Returns the thread's hardware counter structures
-	inline ThreadHardwareCounters *getHardwareCounters();
+	inline ThreadHardwareCounters &getHardwareCounters();
 
 };
 

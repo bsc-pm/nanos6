@@ -8,14 +8,18 @@
 #include <sys/utsname.h>
 
 #include "PQoSHardwareCounters.hpp"
+#include "PQoSTaskHardwareCounters.hpp"
 #include "PQoSThreadHardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
 
-PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verboseFile)
+PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verboseFile, const std::vector<bool> &enabledEvents)
 {
 	_verbose = verbose;
 	_verboseFile = verboseFile;
+	for (unsigned short i = 0; i < HWCounters::PQOS_NUM_EVENTS; ++i) {
+		_enabledEvents[i] = false;
+	}
 
 	// Check if the PQoS version may give problems
 	utsname kernelInfo;
@@ -60,22 +64,35 @@ PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verb
 	assert(pqosCapabilities != nullptr);
 	assert(pqosCapabilities->u.mon != nullptr);
 
-	// Choose events to monitor
-	const enum pqos_mon_event eventsToMonitor = (pqos_mon_event)
-	(
-		PQOS_PERF_EVENT_IPC      | // IPC
-		PQOS_PERF_EVENT_LLC_MISS | // LLC Misses
-		PQOS_MON_EVENT_LMEM_BW   | // Local Memory Bandwidth
-		PQOS_MON_EVENT_RMEM_BW   | // Remote Memory Bandwidth
-		PQOS_MON_EVENT_L3_OCCUP    // LLC Usage
-	);
+	// Choose events to monitor: only those enabled
+	int eventsToMonitor = 0;
+	for (unsigned short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
+		if (enabledEvents[i]) {
+			_enabledEvents[i - HWCounters::PQOS_MIN_EVENT] = true;
 
+			if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_PERF_EVENT_IPC") {
+				eventsToMonitor |= PQOS_PERF_EVENT_IPC;
+			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_PERF_EVENT_LLC_MISS") {
+				eventsToMonitor |= PQOS_PERF_EVENT_LLC_MISS;
+			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_LMEM_BW") {
+				eventsToMonitor |= PQOS_MON_EVENT_LMEM_BW;
+			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_RMEM_BW") {
+				eventsToMonitor |= PQOS_MON_EVENT_RMEM_BW;
+			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_L3_OCCUP") {
+				eventsToMonitor |= PQOS_MON_EVENT_L3_OCCUP;
+			} else {
+				assert(false);
+			}
+		}
+	}
+
+	// Check which events are available in the system
 	enum pqos_mon_event availableEvents = (pqos_mon_event) 0;
 	for (size_t i = 0; i < pqosCapabilities->u.mon->num_events; ++i) {
 		availableEvents = (pqos_mon_event) (availableEvents | (pqosCapabilities->u.mon->events[i].type));
 	}
 
-	// Only choose events we want to monitor that are available
+	// Only choose events that are enabled AND available
 	_monitoredEvents = (pqos_mon_event) (availableEvents & eventsToMonitor);
 
 	// If none of the events can be monitored, trigger an early shutdown
@@ -99,15 +116,11 @@ PQoSHardwareCounters::~PQoSHardwareCounters()
 	}
 }
 
-void PQoSHardwareCounters::threadInitialized()
+void PQoSHardwareCounters::threadInitialized(ThreadHardwareCountersInterface *threadCounters)
 {
 	if (_enabled) {
-		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
-
-		PQoSThreadHardwareCounters *threadCounters = new PQoSThreadHardwareCounters();
-		thread->setHardwareCounters(threadCounters);
-		assert(threadCounters != nullptr);
+		PQoSThreadHardwareCounters *pqosCounters = (PQoSThreadHardwareCounters *) threadCounters;
+		assert(pqosCounters != nullptr);
 
 		// Allocate PQoS event structures
 		pqos_mon_data *threadData = (pqos_mon_data *) malloc(sizeof(pqos_mon_data));
@@ -116,16 +129,19 @@ void PQoSHardwareCounters::threadInitialized()
 			"Could not allocate memory for thread hardware counters"
 		);
 
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+
 		// Link the structures to the current thread
-		threadCounters->setData(threadData);
-		threadCounters->setTid(thread->getTid());
+		pqosCounters->setData(threadData);
+		pqosCounters->setTid(currentThread->getTid());
 
 		// Begin reading hardware counters for the thread
 		int ret = pqos_mon_start_pid(
-			threadCounters->getTid(),
+			pqosCounters->getTid(),
 			_monitoredEvents,
 			nullptr,
-			threadCounters->getData()
+			pqosCounters->getData()
 		);
 		FatalErrorHandler::failIf(
 			ret != PQOS_RETVAL_OK,
@@ -134,23 +150,18 @@ void PQoSHardwareCounters::threadInitialized()
 	}
 }
 
-void PQoSHardwareCounters::threadShutdown()
+void PQoSHardwareCounters::threadShutdown(ThreadHardwareCountersInterface *threadCounters)
 {
 	if (_enabled) {
-		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
-
-		PQoSThreadHardwareCounters *threadCounters = (PQoSThreadHardwareCounters *) thread->getHardwareCounters();
-		assert(threadCounters != nullptr);
+		PQoSThreadHardwareCounters *pqosCounters = (PQoSThreadHardwareCounters *) threadCounters;
+		assert(pqosCounters != nullptr);
 
 		// Finish PQoS monitoring for the current thread
-		int ret = pqos_mon_stop(threadCounters->getData());
+		int ret = pqos_mon_stop(pqosCounters->getData());
 		FatalErrorHandler::failIf(
 			ret != PQOS_RETVAL_OK,
 			ret, " when stopping hardware counters for a thread"
 		);
-
-		delete threadCounters;
 	}
 }
 
@@ -159,10 +170,6 @@ void PQoSHardwareCounters::taskCreated(Task *task, bool enabled)
 	if (_enabled) {
 		assert(task != nullptr);
 
-		PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
-		assert(taskCounters != nullptr);
-
-		new (taskCounters) PQoSTaskHardwareCounters(enabled);
 		if (enabled) {
 			if (_verbose) {
 				std::string tasktype = task->getLabel();
@@ -173,7 +180,7 @@ void PQoSHardwareCounters::taskCreated(Task *task, bool enabled)
 					_statistics.emplace(
 						std::piecewise_construct,
 						std::forward_as_tuple(tasktype),
-						std::forward_as_tuple(num_pqos_counters)
+						std::forward_as_tuple(HWCounters::PQOS_NUM_EVENTS)
 					);
 				}
 				_statsLock.unlock();
@@ -182,36 +189,31 @@ void PQoSHardwareCounters::taskCreated(Task *task, bool enabled)
 	}
 }
 
-void PQoSHardwareCounters::taskReinitialized(Task *task)
+void PQoSHardwareCounters::taskReinitialized(TaskHardwareCountersInterface *taskCounters)
 {
 	if (_enabled) {
-		assert(task != nullptr);
+		PQoSTaskHardwareCounters *pqosCounters = (PQoSTaskHardwareCounters *) taskCounters;
+		assert(pqosCounters != nullptr);
 
-		PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
-		assert(taskCounters != nullptr);
-
-		taskCounters->clear();
+		pqosCounters->clear();
 	}
 }
 
-void PQoSHardwareCounters::taskStarted(Task *task)
-{
+void PQoSHardwareCounters::taskStarted(
+	ThreadHardwareCountersInterface *threadCounters,
+	TaskHardwareCountersInterface *taskCounters
+) {
 	if (_enabled) {
-		assert(task != nullptr);
+		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
+		assert(pqosTaskCounters != nullptr);
 
-		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
-
-		PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
-		assert(taskCounters != nullptr);
-
-		if (taskCounters->isEnabled()) {
-			if (!taskCounters->isActive()) {
-				PQoSThreadHardwareCounters *threadCounters = (PQoSThreadHardwareCounters *) thread->getHardwareCounters();
+		if (pqosTaskCounters->isEnabled()) {
+			if (!pqosTaskCounters->isActive()) {
+				PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
 				assert(threadCounters != nullptr);
 
 				// Poll PQoS events from the current thread only
-				pqos_mon_data *threadData = threadCounters->getData();
+				pqos_mon_data *threadData = pqosThreadCounters->getData();
 				int ret = pqos_mon_poll(&threadData, 1);
 				FatalErrorHandler::failIf(
 					ret != PQOS_RETVAL_OK,
@@ -219,29 +221,26 @@ void PQoSHardwareCounters::taskStarted(Task *task)
 				);
 
 				// If successfull, save counters when the task starts or resumes execution
-				taskCounters->startReading(threadData);
+				pqosTaskCounters->startReading(threadData);
 			}
 		}
 	}
 }
 
-void PQoSHardwareCounters::taskStopped(Task *task)
-{
+void PQoSHardwareCounters::taskStopped(
+	ThreadHardwareCountersInterface *threadCounters,
+	TaskHardwareCountersInterface *taskCounters
+) {
 	if (_enabled) {
-		assert(task != nullptr);
+		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
+		assert(pqosTaskCounters != nullptr);
 
-		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
-		assert(thread != nullptr);
-
-		PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
-		assert(taskCounters != nullptr);
-
-		if (taskCounters->isEnabled()) {
-			if (taskCounters->isActive()) {
-				PQoSThreadHardwareCounters *threadCounters = (PQoSThreadHardwareCounters *) thread->getHardwareCounters();
+		if (pqosTaskCounters->isEnabled()) {
+			if (pqosTaskCounters->isActive()) {
+				PQoSThreadHardwareCounters *pqosThreadCounters = (PQoSThreadHardwareCounters *) threadCounters;
 				assert(threadCounters != nullptr);
 
-				pqos_mon_data *threadData = threadCounters->getData();
+				pqos_mon_data *threadData = pqosThreadCounters->getData();
 
 				// Poll PQoS events from the current thread only
 				int ret = pqos_mon_poll(&threadData, 1);
@@ -250,21 +249,21 @@ void PQoSHardwareCounters::taskStopped(Task *task)
 					ret, " when polling PQoS events for a task (stop)"
 				);
 
-				taskCounters->stopReading(threadData);
+				pqosTaskCounters->stopReading(threadData);
 			}
 		}
 	}
 }
 
-void PQoSHardwareCounters::taskFinished(Task *task)
+void PQoSHardwareCounters::taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters)
 {
 	if (_enabled) {
 		assert(task != nullptr);
 
-		PQoSTaskHardwareCounters *taskCounters = (PQoSTaskHardwareCounters *) task->getHardwareCounters();
-		assert(taskCounters != nullptr);
+		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
+		assert(pqosTaskCounters != nullptr);
 
-		if (taskCounters->isEnabled()) {
+		if (pqosTaskCounters->isEnabled()) {
 			if (_verbose) {
 				std::string tasktype = task->getLabel();
 
@@ -272,11 +271,32 @@ void PQoSHardwareCounters::taskFinished(Task *task)
 				statistics_map_t::iterator it = _statistics.find(tasktype);
 				assert(it != _statistics.end());
 
-				it->second[pqos_llc_usage           ](taskCounters->getAccumulated(HWCounters::llc_usage));
-				it->second[pqos_ipc                 ](taskCounters->getAccumulated(HWCounters::ipc));
-				it->second[pqos_local_mem_bandwidth ](taskCounters->getAccumulated(HWCounters::local_mem_bandwidth));
-				it->second[pqos_remote_mem_bandwidth](taskCounters->getAccumulated(HWCounters::remote_mem_bandwidth));
-				it->second[pqos_llc_miss_rate       ](taskCounters->getAccumulated(HWCounters::llc_miss_rate));
+				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT](
+						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_L3_OCCUP)
+					);
+				}
+				if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT](
+						pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_IPC)
+					);
+				}
+				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT](
+						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_LMEM_BW)
+					);
+				}
+				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT](
+						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_RMEM_BW)
+					);
+				}
+				if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT](
+						pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_LLC_MISS)
+					);
+				}
+
 				_statsLock.unlock();
 			}
 		}
@@ -301,41 +321,44 @@ void PQoSHardwareCounters::displayStatistics()
 
 	// Iterate through all tasktypes
 	for (auto &it : _statistics) {
-		size_t instances = BoostAcc::count(it.second[0]);
-		if (instances > 0) {
-			std::string typeLabel = it.first + " (" + std::to_string(instances) + ")";
-
+		if (it.first != "Unlabeled") {
 			outputStream <<
 				std::setw(7)  << "STATS"                 << " " <<
 				std::setw(6)  << "PQOS"                  << " " <<
-				std::setw(39) << "TASK-TYPE (INSTANCES)" << " " <<
-				std::setw(30) << typeLabel               << "\n";
+				std::setw(30) << "TASK-TYPE"             << " " <<
+				std::setw(20) << it.first                << "\n";
 
 			// Iterate through all counter types
-			for (unsigned short id = 0; id < num_pqos_counters; ++id) {
-				double counterAvg   = BoostAcc::mean(it.second[id]);
-				double counterStdev = sqrt(BoostAcc::variance(it.second[id]));
-				double counterSum   = BoostAcc::sum(it.second[id]);
+			for (unsigned short id = 0; id < HWCounters::PQOS_NUM_EVENTS; ++id) {
+				if (_enabledEvents[id]) {
+					double counterAvg   = BoostAcc::mean(it.second[id]);
+					double counterStdev = sqrt(BoostAcc::variance(it.second[id]));
+					double counterSum   = BoostAcc::sum(it.second[id]);
+					size_t instances    = BoostAcc::count(it.second[id]);
 
-				// In KB
-				if (id == HWCounters::llc_usage ||
-					id == HWCounters::local_mem_bandwidth ||
-					id == HWCounters::remote_mem_bandwidth
-				) {
-					counterAvg   /= 1024.0;
-					counterStdev /= 1024.0;
-					counterSum   /= 1024.0;
+					// In KB
+					unsigned short pqosId = id + HWCounters::PQOS_MIN_EVENT;
+					if (pqosId == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
+						pqosId == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
+						pqosId == HWCounters::PQOS_MON_EVENT_RMEM_BW
+					) {
+						counterAvg   /= 1024.0;
+						counterStdev /= 1024.0;
+						counterSum   /= 1024.0;
+					}
+
+					outputStream <<
+						std::setw(7)  << "STATS"                                   << " "   <<
+						std::setw(6)  << "PQOS"                                    << " "   <<
+						std::setw(30) << HWCounters::counterDescriptions[pqosId]   << " "   <<
+						std::setw(20) << "INSTANCES: " + std::to_string(instances) << " " <<
+						std::setw(30) << "SUM / AVG / STDEV"                       << " "   <<
+						std::setw(15) << counterSum                                << " / " <<
+						std::setw(15) << counterAvg                                << " / " <<
+						std::setw(15) << counterStdev                              << "\n";
 				}
-
-				outputStream <<
-					std::setw(7)  << "STATS"                             << " "   <<
-					std::setw(6)  << "PQOS"                              << " "   <<
-					std::setw(39) << HWCounters::counterDescriptions[id] << " "   <<
-					std::setw(30) << "SUM / AVG / STDEV"                 << " "   <<
-					std::setw(15) << counterSum                          << " / " <<
-					std::setw(15) << counterAvg                          << " / " <<
-					std::setw(15) << counterStdev                        << "\n";
 			}
+
 			outputStream << "-------------------------------\n";
 		}
 	}

@@ -59,6 +59,8 @@ namespace ExecutionWorkflow {
 				}
 			}
 
+			HardwareCounters::taskStarted(task);
+
 			if (task->isTaskfor()) {
 				assert(task->isRunnable());
 				bool first = ((Taskfor *) task)->hasFirstChunk();
@@ -70,7 +72,6 @@ namespace ExecutionWorkflow {
 				Instrument::taskIsExecuting(taskId);
 			}
 
-			HardwareCounters::taskStarted(task);
 			Monitoring::taskChangedStatus(task, executing_status);
 
 			// Run the task
@@ -82,9 +83,9 @@ namespace ExecutionWorkflow {
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 
+			HardwareCounters::taskStopped(task);
 			Monitoring::taskChangedStatus(task, runtime_status);
 			Monitoring::taskCompletedUserCode(task);
-			HardwareCounters::taskStopped(task);
 
 			if (task->isTaskfor()) {
 				assert(task->isRunnable());
@@ -110,8 +111,8 @@ namespace ExecutionWorkflow {
 				cpu->getDependencyData()
 			);
 
-			Monitoring::taskFinished(task);
 			HardwareCounters::taskFinished(task);
+			Monitoring::taskFinished(task);
 
 			TaskFinalization::taskFinished(task, cpu);
 			if (task->markAsReleased()) {
