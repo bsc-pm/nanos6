@@ -21,7 +21,7 @@ private:
 
 		switch (err) {
 			case cudaErrorIllegalAddress:
-				oss << errName << ": Illegal Address accessed by CUDA, managed memory allocation is needed when using unified memory mode"; 
+				oss << errName << ": Illegal Address accessed by CUDA, managed memory allocation is needed when using unified memory mode";
 				break;
 			default:
 				oss << errName << ": " << errReason;
@@ -83,6 +83,26 @@ public:
 #else
 		exit(1);
 #endif
+	}
+
+	template<typename... TS>
+	static inline void warn(cudaError_t err, TS... reasonParts)
+	{
+		if (__builtin_expect(err == cudaSuccess, 1)) {
+			return;
+		}
+
+		std::ostringstream oss;
+
+		oss << "Warning: ";
+		printCUDAError(err, oss);
+		emitReasonParts(oss, reasonParts...);
+		oss << std::endl;
+
+		{
+			std::lock_guard<SpinLock> guard(_lock);
+			std::cerr << oss.str();
+		}
 	}
 };
 

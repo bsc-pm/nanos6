@@ -23,7 +23,11 @@ public:
 		// if even 1 GPU is present setting to 0 should always
 		// be succesful.
 		cudaError_t err = cudaSetDevice(0);
-		CUDAErrorHandler::handle(err, "During CUDA initialization");
+		if (err != cudaErrorNoDevice) {
+			CUDAErrorHandler::warn(err, " received during CUDA initialization. ",
+				"Nanos6 was compiled with CUDA support but the driver returned error.",
+				"\nRunning CUDA tasks is disabled");
+		}
 		return err == cudaSuccess;
 	}
 
@@ -32,15 +36,21 @@ public:
 	{
 		int deviceCount = 0;
 		cudaError_t err = cudaGetDeviceCount(&deviceCount);
-		CUDAErrorHandler::handle(err, "When counting devices");
-		if (err != cudaSuccess)
+		if (err != cudaSuccess) {
+			if (err != cudaErrorNoDevice) {
+				CUDAErrorHandler::warn(err, " received during CUDA device detection. ",
+					"Nanos6 was compiled with CUDA support but the driver returned error.",
+					"\nRunning CUDA tasks is disabled");
+			}
 			return 0;
+		}
 		return (size_t)deviceCount;
 	}
 
 	static void getDeviceProperties(cudaDeviceProp &deviceProp, int device)
 	{
-		CUDAErrorHandler::handle(cudaGetDeviceProperties(&deviceProp, device), "While getting CUDA device properties");
+		CUDAErrorHandler::handle(cudaGetDeviceProperties(&deviceProp, device),
+			"While getting CUDA device properties");
 	}
 
 	static size_t getPageSize()
@@ -64,7 +74,7 @@ public:
 
 	static void destroyStream(cudaStream_t &stream)
 	{
-		CUDAErrorHandler::handle(cudaStreamDestroy(stream), "While destroying CUDA stream");
+		CUDAErrorHandler::warn(cudaStreamDestroy(stream), "While destroying CUDA stream");
 	}
 
 	static void *malloc(size_t size)
@@ -84,7 +94,7 @@ public:
 
 	static void destroyEvent(cudaEvent_t &event)
 	{
-		CUDAErrorHandler::handle(cudaEventDestroy(event), "While destroying CUDA event");
+		CUDAErrorHandler::warn(cudaEventDestroy(event), "While destroying CUDA event");
 	}
 
 	static void recordEvent(cudaEvent_t &event, cudaStream_t &stream)
@@ -94,7 +104,8 @@ public:
 
 	static bool cudaEventFinished(cudaEvent_t &event)
 	{
-		return (cudaEventQuery(event) == cudaSuccess);
+		return CUDAErrorHandler::handleEvent(
+			cudaEventQuery(event), "While querying event");
 	}
 
 };
