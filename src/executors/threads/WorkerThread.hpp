@@ -86,7 +86,7 @@ public:
 	static inline WorkerThread *getCurrentWorkerThread();
 
 	//! \brief Returns the thread's hardware counter structures
-	inline ThreadHardwareCounters *getHardwareCounters();
+	inline ThreadHardwareCounters &getHardwareCounters();
 
 };
 

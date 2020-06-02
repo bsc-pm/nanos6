@@ -16,6 +16,22 @@ namespace HWCounters {
 		NUM_BACKENDS
 	};
 
+	// NOTE: To add new events, do as follows:
+	// - If the event added is from an existing backend (e.g. PQOS):
+	// -- 1) Increase the number of events of the backend (PQOS_NUM_EVENTS)
+	// -- 2) Add the new event before the current maximum event (PQOS_MAX_EVENT)
+	// -- 3) The identifier of the new event should be the previous maximum event + 1
+	// -- 4) Increase all the identifiers of variables after the current event
+	// --    (PAPI_MIN_EVENT, PAPI_..., PAPI_MAX_EVENT)
+	// -- 5) Increase the total number of events (TOTAL_NUM_EVENTS)
+	//
+	// - If the event added is from a new backend:
+	// -- 1) Add the new backend to the previous enum (backends_t)
+	// -- 2) Add "MIN", "MAX", and "NUM" variables for the backend, following
+	// --    the observed pattern
+	// -- 3) Increase the total number of events (TOTAL_NUM_EVENTS)
+	//
+	// In all cases: Add a description of the event below (counterDescriptions)
 	enum counters_t {
 		//    PQOS EVENTS    //
 		PQOS_MIN_EVENT = 0,           // PQOS: Minimum event id

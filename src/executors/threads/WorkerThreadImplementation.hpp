@@ -96,9 +96,9 @@ inline WorkerThread *WorkerThread::getCurrentWorkerThread()
 	}
 }
 
-inline ThreadHardwareCounters *WorkerThread::getHardwareCounters()
+inline ThreadHardwareCounters &WorkerThread::getHardwareCounters()
 {
-	return &(_hwCounters);
+	return _hwCounters;
 }
 
 #ifndef NDEBUG

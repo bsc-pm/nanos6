@@ -76,10 +76,8 @@ ComputePlace::~ComputePlace()
 	assert(taskfor != nullptr);
 
 	// Free task hardware counters if existent
-	TaskHardwareCounters *taskCounters = taskfor->getHardwareCounters();
-	assert(taskCounters != nullptr);
-
-	void *allocationAddress = taskCounters->getAllocationAddress();
+	TaskHardwareCounters taskCounters = taskfor->getHardwareCounters();
+	void *allocationAddress = taskCounters.getAllocationAddress();
 	if (allocationAddress != nullptr) {
 		free(allocationAddress);
 	}

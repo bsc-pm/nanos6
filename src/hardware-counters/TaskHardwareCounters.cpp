@@ -17,6 +17,8 @@ void TaskHardwareCounters::initialize()
 	__attribute__((unused)) void *currentAddress = _allocationAddress;
 	if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
 #if HAVE_PAPI
+		assert(currentAddress != nullptr);
+
 		_papiCounters = new (currentAddress) PAPITaskHardwareCounters();
 		currentAddress = (char *) currentAddress + sizeof(PAPITaskHardwareCounters);
 #endif
@@ -24,7 +26,7 @@ void TaskHardwareCounters::initialize()
 
 	if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
 #if HAVE_PQOS
-		assert(_allocationAddress != nullptr);
+		assert(currentAddress != nullptr);
 
 		_pqosCounters = new (currentAddress) PQoSTaskHardwareCounters();
 		currentAddress = (char *) currentAddress + sizeof(PQoSTaskHardwareCounters);

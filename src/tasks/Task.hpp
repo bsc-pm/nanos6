@@ -749,9 +749,9 @@ public:
 	}
 
 	//! \brief Get the task's hardware counter structures
-	inline TaskHardwareCounters *getHardwareCounters()
+	inline TaskHardwareCounters &getHardwareCounters()
 	{
-		return &(_hwCounters);
+		return _hwCounters;
 	}
 
 	inline void markAsRemote()

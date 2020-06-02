@@ -17,7 +17,7 @@ PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verb
 {
 	_verbose = verbose;
 	_verboseFile = verboseFile;
-	for (unsigned short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
+	for (unsigned short i = 0; i < HWCounters::PQOS_NUM_EVENTS; ++i) {
 		_enabledEvents[i] = false;
 	}
 
@@ -67,20 +67,19 @@ PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verb
 	// Choose events to monitor: only those enabled
 	int eventsToMonitor = 0;
 	for (unsigned short i = 0; i < enabledEvents.size(); ++i) {
-		// NOTE: i >= HWCounters::PQOS_MIN_EVENT should be in this condition for
-		// code correctness, but it triggers a warning since PQOS_MIN_EVENT = 0
-		if (enabledEvents[i] && i <= HWCounters::PQOS_MAX_EVENT) {
+		if (enabledEvents[i]) {
 			_enabledEvents[i] = true;
 
-			if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_PERF_EVENT_IPC") {
+			unsigned short id = i + HWCounters::PQOS_MIN_EVENT;
+			if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_PERF_EVENT_IPC") {
 				eventsToMonitor |= PQOS_PERF_EVENT_IPC;
-			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_PERF_EVENT_LLC_MISS") {
+			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_PERF_EVENT_LLC_MISS") {
 				eventsToMonitor |= PQOS_PERF_EVENT_LLC_MISS;
-			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_LMEM_BW") {
+			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_LMEM_BW") {
 				eventsToMonitor |= PQOS_MON_EVENT_LMEM_BW;
-			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_RMEM_BW") {
+			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_RMEM_BW") {
 				eventsToMonitor |= PQOS_MON_EVENT_RMEM_BW;
-			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_L3_OCCUP") {
+			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_L3_OCCUP") {
 				eventsToMonitor |= PQOS_MON_EVENT_L3_OCCUP;
 			} else {
 				assert(false);
@@ -184,7 +183,7 @@ void PQoSHardwareCounters::taskCreated(Task *task, bool enabled)
 					_statistics.emplace(
 						std::piecewise_construct,
 						std::forward_as_tuple(tasktype),
-						std::forward_as_tuple(HWCounters::PQOS_MAX_EVENT + 1)
+						std::forward_as_tuple(HWCounters::PQOS_NUM_EVENTS)
 					);
 				}
 				_statsLock.unlock();
@@ -275,28 +274,28 @@ void PQoSHardwareCounters::taskFinished(Task *task, TaskHardwareCountersInterfac
 				statistics_map_t::iterator it = _statistics.find(tasktype);
 				assert(it != _statistics.end());
 
-				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_L3_OCCUP]) {
-					it->second[HWCounters::PQOS_MON_EVENT_L3_OCCUP](
+				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT](
 						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_L3_OCCUP)
 					);
 				}
-				if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_IPC]) {
-					it->second[HWCounters::PQOS_PERF_EVENT_IPC](
+				if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT](
 						pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_IPC)
 					);
 				}
-				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_LMEM_BW]) {
-					it->second[HWCounters::PQOS_MON_EVENT_LMEM_BW](
+				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT](
 						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_LMEM_BW)
 					);
 				}
-				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_RMEM_BW]) {
-					it->second[HWCounters::PQOS_MON_EVENT_RMEM_BW](
+				if (_enabledEvents[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT](
 						pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_RMEM_BW)
 					);
 				}
-				if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_LLC_MISS]) {
-					it->second[HWCounters::PQOS_PERF_EVENT_LLC_MISS](
+				if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT]) {
+					it->second[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT](
 						pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_LLC_MISS)
 					);
 				}
@@ -333,7 +332,7 @@ void PQoSHardwareCounters::displayStatistics()
 				std::setw(20) << it.first                << "\n";
 
 			// Iterate through all counter types
-			for (unsigned short id = HWCounters::PQOS_MIN_EVENT; id <= HWCounters::PQOS_MAX_EVENT; ++id) {
+			for (unsigned short id = 0; id < HWCounters::PQOS_NUM_EVENTS; ++id) {
 				if (_enabledEvents[id]) {
 					double counterAvg   = BoostAcc::mean(it.second[id]);
 					double counterStdev = sqrt(BoostAcc::variance(it.second[id]));
@@ -341,9 +340,10 @@ void PQoSHardwareCounters::displayStatistics()
 					size_t instances    = BoostAcc::count(it.second[id]);
 
 					// In KB
-					if (id == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
-						id == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
-						id == HWCounters::PQOS_MON_EVENT_RMEM_BW
+					unsigned short pqosId = id + HWCounters::PQOS_MIN_EVENT;
+					if (pqosId == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
+						pqosId == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
+						pqosId == HWCounters::PQOS_MON_EVENT_RMEM_BW
 					) {
 						counterAvg   /= 1024.0;
 						counterStdev /= 1024.0;
@@ -353,7 +353,7 @@ void PQoSHardwareCounters::displayStatistics()
 					outputStream <<
 						std::setw(7)  << "STATS"                                   << " "   <<
 						std::setw(6)  << "PQOS"                                    << " "   <<
-						std::setw(30) << HWCounters::counterDescriptions[id]       << " "   <<
+						std::setw(30) << HWCounters::counterDescriptions[pqosId]   << " "   <<
 						std::setw(20) << "INSTANCES: " + std::to_string(instances) << " " <<
 						std::setw(30) << "SUM / AVG / STDEV"                       << " "   <<
 						std::setw(15) << counterSum                                << " / " <<

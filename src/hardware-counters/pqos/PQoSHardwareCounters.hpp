@@ -16,7 +16,6 @@
 #include "hardware-counters/HardwareCountersInterface.hpp"
 #include "hardware-counters/TaskHardwareCountersInterface.hpp"
 #include "hardware-counters/ThreadHardwareCountersInterface.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -45,7 +44,7 @@ private:
 	//! An enumeration containing the events that we monitor
 	enum pqos_mon_event _monitoredEvents;
 
-	bool _enabledEvents[HWCounters::PQOS_MIN_EVENT + HWCounters::PQOS_NUM_EVENTS];
+	bool _enabledEvents[HWCounters::PQOS_NUM_EVENTS];
 
 private:
 
