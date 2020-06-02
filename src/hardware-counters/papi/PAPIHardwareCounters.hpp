@@ -26,11 +26,11 @@ public:
 	{
 	}
 
-	inline void threadInitialized()
+	inline void threadInitialized(ThreadHardwareCountersInterface *)
 	{
 	}
 
-	inline void threadShutdown()
+	inline void threadShutdown(ThreadHardwareCountersInterface *)
 	{
 	}
 
@@ -38,19 +38,19 @@ public:
 	{
 	}
 
-	inline void taskReinitialized(Task *)
+	inline void taskReinitialized(TaskHardwareCountersInterface *)
 	{
 	}
 
-	inline void taskStarted(Task *)
+	inline void taskStarted(ThreadHardwareCountersInterface *, TaskHardwareCountersInterface *)
 	{
 	}
 
-	inline void taskStopped(Task *)
+	inline void taskStopped(ThreadHardwareCountersInterface *, TaskHardwareCountersInterface *)
 	{
 	}
 
-	inline void taskFinished(Task *)
+	inline void taskFinished(Task *, TaskHardwareCountersInterface *)
 	{
 	}
 

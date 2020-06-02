@@ -34,6 +34,21 @@ void TaskHardwareCounters::initialize()
 	}
 }
 
+void TaskHardwareCounters::shutdown()
+{
+	if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
+#if HAVE_PAPI
+		_papiCounters->~PAPITaskHardwareCounters();
+#endif
+	}
+
+	if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
+#if HAVE_PQOS
+		_pqosCounters->~PQoSTaskHardwareCounters();
+#endif
+	}
+}
+
 size_t TaskHardwareCounters::getTaskHardwareCountersSize()
 {
 	size_t totalSize = 0;

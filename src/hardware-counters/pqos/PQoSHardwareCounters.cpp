@@ -163,8 +163,6 @@ void PQoSHardwareCounters::threadShutdown(ThreadHardwareCountersInterface *threa
 			ret != PQOS_RETVAL_OK,
 			ret, " when stopping hardware counters for a thread"
 		);
-
-		delete pqosCounters;
 	}
 }
 

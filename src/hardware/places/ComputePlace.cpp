@@ -53,8 +53,7 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type) :
 	// the free by getPreallocatedArgsBlock()
 	size_t taskCountersSize = TaskHardwareCounters::getTaskHardwareCountersSize();
 	void *allocationAddress = (taskCountersSize > 0) ? malloc(taskCountersSize) : nullptr;
-	TaskHardwareCounters taskCounters;
-	taskCounters.setAllocationAddress(allocationAddress);
+	TaskHardwareCounters taskCounters(allocationAddress);
 
 	// Allocate preallocated taskfor
 	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr,

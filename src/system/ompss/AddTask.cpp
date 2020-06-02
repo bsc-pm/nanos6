@@ -115,8 +115,7 @@ void nanos6_create_task(
 
 	// Prepare the allocation address for the task's hardware counters
 	void *countersAddress = (taskCountersSize > 0) ? (char *)task + taskSize + taskAccessInfo.getAllocationSize() : nullptr;
-	TaskHardwareCounters taskCounters;
-	taskCounters.setAllocationAddress(countersAddress);
+	TaskHardwareCounters taskCounters(countersAddress);
 
 	if (isTaskfor) {
 		// Taskfor is always final.

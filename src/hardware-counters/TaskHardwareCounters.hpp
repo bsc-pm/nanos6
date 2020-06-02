@@ -38,25 +38,22 @@ private:
 
 public:
 
-	inline TaskHardwareCounters() :
+	inline TaskHardwareCounters(void *allocationAddress) :
 #if HAVE_PAPI
 		_papiCounters(nullptr),
 #endif
 #if HAVE_PQOS
 		_pqosCounters(nullptr),
 #endif
-		_allocationAddress(nullptr)
+		_allocationAddress(allocationAddress)
 	{
 	}
 
 	//! \brief Initialize and construct all backend objects with the previously allocated space
 	void initialize();
 
-	//! \brief Set the allocation address for all the backend objects
-	inline void setAllocationAddress(void *address)
-	{
-		_allocationAddress = address;
-	}
+	//! \brief Destroy all backend objects
+	void shutdown();
 
 	//! \brief Retreive the allocation address for all the backend objects
 	inline void *getAllocationAddress() const

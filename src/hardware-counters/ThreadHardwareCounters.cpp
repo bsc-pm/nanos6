@@ -11,9 +11,6 @@
 
 void ThreadHardwareCounters::initialize()
 {
-	// NOTE: Objects are constructed in this function, but they are freed
-	// each by their backend, respectively (see PQoSHardwareCounters.cpp::threadShutdown)
-
 #if HAVE_PAPI
 	if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
 		_papiCounters = new PAPIThreadHardwareCounters();
@@ -23,6 +20,21 @@ void ThreadHardwareCounters::initialize()
 #if HAVE_PQOS
 	if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
 		_pqosCounters = new PQoSThreadHardwareCounters();
+	}
+#endif
+}
+
+void ThreadHardwareCounters::shutdown()
+{
+#if HAVE_PAPI
+	if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
+		delete _papiCounters;
+	}
+#endif
+
+#if HAVE_PQOS
+	if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
+		delete _pqosCounters;;
 	}
 #endif
 }

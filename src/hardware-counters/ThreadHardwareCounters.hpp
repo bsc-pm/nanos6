@@ -47,11 +47,14 @@ public:
 	//! \brief Initialize and construct all backend objects
 	void initialize();
 
+	//! \brief Destroy all backend objects
+	void shutdown();
+
 	//! \brief Return the PAPI counters of the thread (if it is enabled) or nullptr
 	inline ThreadHardwareCountersInterface *getPAPICounters() const
 	{
 #if HAVE_PAPI
-		return (ThreadHardwareCountersInterface *) _papiCounters;
+		return _papiCounters;
 #else
 		return nullptr;
 #endif
@@ -61,7 +64,7 @@ public:
 	inline ThreadHardwareCountersInterface *getPQoSCounters() const
 	{
 #if HAVE_PQOS
-		return (ThreadHardwareCountersInterface *) _pqosCounters;
+		return _pqosCounters;
 #else
 		return nullptr;
 #endif

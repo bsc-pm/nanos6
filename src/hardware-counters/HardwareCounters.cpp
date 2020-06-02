@@ -108,7 +108,7 @@ void HardwareCounters::initialize()
 	// Check which backends must be initialized
 	if (_enabled[HWCounters::PQOS_BACKEND]) {
 #if HAVE_PQOS
-		_pqosBackend = (HardwareCountersInterface *) new PQoSHardwareCounters(
+		_pqosBackend = new PQoSHardwareCounters(
 			_verbose.getValue(),
 			_verboseFile.getValue(),
 			_enabledEvents
@@ -121,7 +121,7 @@ void HardwareCounters::initialize()
 
 	if (_enabled[HWCounters::PAPI_BACKEND]) {
 #if HAVE_PAPI
-		_papiBackend = (HardwareCountersInterface *) new PAPIHardwareCounters(
+		_papiBackend = new PAPIHardwareCounters(
 			_verbose.getValue(),
 			_verboseFile.getValue(),
 			_enabledEvents
@@ -190,6 +190,8 @@ void HardwareCounters::threadShutdown()
 
 		_papiBackend->threadShutdown(threadCounters.getPAPICounters());
 	}
+
+	threadCounters.shutdown();
 }
 
 void HardwareCounters::taskCreated(Task *task, bool enabled)
@@ -288,4 +290,6 @@ void HardwareCounters::taskFinished(Task *task)
 
 		_papiBackend->taskFinished(task, taskCounters.getPAPICounters());
 	}
+
+	taskCounters.shutdown();
 }
