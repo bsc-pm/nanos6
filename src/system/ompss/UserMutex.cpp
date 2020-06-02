@@ -91,9 +91,8 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 			return;
 		}
 
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		HardwareCounters::taskStopped(currentTask);
-
+		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_mutex_blocking_reason);
 		Instrument::blockedOnUserMutex(&userMutex);
 
@@ -107,11 +106,9 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 		// This in combination with a release from other threads makes their changes visible to this one
 		std::atomic_thread_fence(std::memory_order_acquire);
 
+		HardwareCounters::taskStarted(currentTask);
 		Instrument::acquiredUserMutex(&userMutex);
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
-
-		assert(currentTask->getThread() != nullptr);
-		HardwareCounters::taskStarted(currentTask);
 		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 }
@@ -149,13 +146,13 @@ void nanos6_user_unlock(void **handlerPointer)
 			if (obtainedCPU != nullptr) {
 				releasedThread->resume(obtainedCPU, false);
 			} else {
+				HardwareCounters::taskStopped(currentTask);
+
 				// No idle CPUs available, first re-add the current task to the scheduler
 				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 
 				// After adding a task, the CPUManager may want to unidle CPUs
 				CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, ADDED_TASKS, 1);
-
-				HardwareCounters::taskStopped(currentTask);
 
 				// Now switch to the released thread
 				currentThread->switchTo(releasedThread);

@@ -83,6 +83,8 @@ namespace ExecutionWorkflow {
 				}
 			}
 
+			HardwareCounters::taskStarted(_task);
+
 			if (_task->isTaskfor()) {
 				assert(_task->isRunnable());
 				bool first = ((Taskfor *) _task)->hasFirstChunk();
@@ -94,7 +96,6 @@ namespace ExecutionWorkflow {
 				Instrument::taskIsExecuting(taskId);
 			}
 
-			HardwareCounters::taskStarted(_task);
 			Monitoring::taskChangedStatus(_task, executing_status);
 
 			// Run the task

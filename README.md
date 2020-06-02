@@ -332,21 +332,21 @@ Currently, Monitoring capabilities lack support for the `task for` construct.
 
 ## Hardware Counters
 
-Nanos6 offers a real-time API to obtain hardware counter statistics of tasks with various backends. The usage of this API is controlled through the `nanos6_hwcounters.json` configuration file, where backends and counters to be monitored are specified. Currently, nanos6 supports two backends - `papi` and `pqos` - and a subset of their available counters. All the available backends and counters are listed in the default configuration file, found in the scripts folder. To enable any of these, simply modify the `0` in the field and replace it with a `1`.
+Nanos6 offers a real-time API to obtain hardware counter statistics of tasks with various backends. The usage of this API is controlled through the `nanos6_hwcounters.json` configuration file, where backends and counters to be monitored are specified. Currently, Nanos6 supports two backends - `papi` and `pqos` - and a subset of their available counters. All the available backends and counters are listed in the default configuration file, found in the scripts folder. To enable any of these, simply modify the `0` in the field and replace it with a `1`.
 
 Next we showcase a simplified version of the configuration file, where the PQoS backend is enabled with a counter that reports the IPC of tasks:
 ```json
 {
 	"PAPI": {
-		"ENABLED": "0"
+		"ENABLED": 0
 	},
 	"PQOS": {
-		"ENABLED": "1",
-		"PQOS_MON_EVENT_L3_OCCUP": "0,
-		"PQOS_PERF_EVENT_IPC": "1",
-		"PQOS_MON_EVENT_LMEM_BW": "0",
-		"PQOS_MON_EVENT_RMEM_BW": "0",
-		"PQOS_PERF_EVENT_LLC_MISS": "0"
+		"ENABLED": 1,
+		"PQOS_MON_EVENT_L3_OCCUP": 0,
+		"PQOS_PERF_EVENT_IPC": 1,
+		"PQOS_MON_EVENT_LMEM_BW": 0,
+		"PQOS_MON_EVENT_RMEM_BW": 0,
+		"PQOS_PERF_EVENT_LLC_MISS": 0
 	}
 }
 ```

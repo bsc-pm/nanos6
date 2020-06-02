@@ -146,8 +146,8 @@ void nanos6_shutdown(void) {
 	// Delete all registered external threads, including mainThread
 	ExternalThreadGroup::shutdown();
 
-	HardwareCounters::shutdown();
 	Monitoring::shutdown();
+	HardwareCounters::shutdown();
 
 	HardwareInfo::shutdown();
 	Scheduler::shutdown();
