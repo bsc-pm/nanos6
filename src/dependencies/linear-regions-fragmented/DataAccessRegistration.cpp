@@ -3267,17 +3267,56 @@ namespace DataAccessRegistration {
 		assert(accessStructures._subaccessBottomMap.empty());
 	}
 
-	void translateReductionAddresses(__attribute__((unused)) Task *task, __attribute__((unused)) ComputePlace *computePlace,
+	void translateReductionAddresses(Task *task, ComputePlace *computePlace,
 		nanos6_address_translation_entry_t * translationTable,
 		int totalSymbols)
 	{
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
+		// Linear-regions does not support CUDA reductions
+		assert(computePlace->getType() == nanos6_host_device);
 		assert(translationTable != nullptr);
 
 		// Initialize translationTable
 		for(int i = 0; i < totalSymbols; ++i)
 			translationTable[i] = {0, 0};
+
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
+
+		assert(!accessStruct.hasBeenDeleted());
+		accessStruct._lock.lock();
+
+		accessStruct._accesses.processAll(
+			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+				DataAccess *dataAccess = &(*position);
+				assert(dataAccess != nullptr);
+
+				if (dataAccess->getType() == REDUCTION_ACCESS_TYPE) {
+					ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
+					size_t slotIndex = reductionInfo->getFreeSlotIndex(computePlace->getIndex());
+					// Register assigned slot in the data access
+					dataAccess->setReductionAccessedSlot(slotIndex);
+
+					assert(slotIndex >= 0);
+
+					void *address = dataAccess->getAccessRegion().getStartAddress();
+					void *translation = nullptr;
+					const DataAccessRegion& originalFullRegion = reductionInfo->getOriginalRegion();
+					translation = ((char*)reductionInfo->getFreeSlotStorage(slotIndex).getStartAddress()) +
+						((char*)address - (char*)originalFullRegion.getStartAddress());
+
+					for(int j = 0; j < totalSymbols; ++j) {
+						if(dataAccess->isInSymbol(j)) {
+							translationTable[j] = { (size_t) address, (size_t) translation };
+						}
+					}
+				}
+
+				return true;
+			}
+		);
+
+		accessStruct._lock.unlock();
 	}
 };
 
