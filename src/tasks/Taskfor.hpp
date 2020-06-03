@@ -98,7 +98,7 @@ public:
 
 		size_t chunks = std::ceil((double) totalIterations / _bounds.chunksize);
 		// Each bit of the _pendingChunks var represents a chunk. 1 is pending, 0 is already executed.
-		assert(chunks < sizeof(size_t));
+		assert(chunks < 8*sizeof(size_t));
 		_pendingChunks.store((size_t)((size_t) 2 << (chunks-1)) - (size_t) 1, std::memory_order_relaxed);
 	}
 
