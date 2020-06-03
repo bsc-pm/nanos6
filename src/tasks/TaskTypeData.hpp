@@ -7,6 +7,13 @@
 #ifndef TASK_TYPE_DATA_HPP
 #define TASK_TYPE_DATA_HPP
 
+// NOTE: "array_wrapper" must be included before any other boost modules
+// Workaround for a missing include in boost 1.64
+#include <boost/version.hpp>
+#if BOOST_VERSION == 106400
+#include <boost/serialization/array_wrapper.hpp>
+#endif
+
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
 
