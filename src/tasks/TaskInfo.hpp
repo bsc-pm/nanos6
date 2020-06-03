@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <map>
+#include <string>
 
 #include <nanos6/task-info-registration.h>
 
