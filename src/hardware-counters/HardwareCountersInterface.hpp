@@ -73,6 +73,9 @@ public:
 	//! \param[out] taskCounters The hardware counter structure of the task
 	virtual void taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters) = 0;
 
+	//!
+	virtual void displayStatistics() const = 0;
+
 };
 
 #endif // HARDWARE_COUNTERS_INTERFACE_HPP

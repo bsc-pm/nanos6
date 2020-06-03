@@ -78,7 +78,10 @@ void RAPLHardwareCounters::raplDetectPackages()
 {
 	_numCPUs = CPUManager::getTotalCPUs();
 	_numPackages = HardwareInfo::getNumPhysicalPackages();
-	assert(_numPackages > 0);
+	FatalErrorHandler::failIf(
+		_numPackages <= 0 || _numPackages > RAPL_MAX_PACKAGES,
+		"Current RAPL Power library package topology not supported"
+	);
 }
 
 void RAPLHardwareCounters::raplInitialize()
@@ -93,7 +96,7 @@ void RAPLHardwareCounters::raplInitialize()
 		j = 0;
 
 		// Save the base name of the current package
-		__attribute__((unused)) int ret = snprintf(baseNames[i], RAPL_BUFFER_SIZE,  "/sys/class/powercap/intel-rapl/intel-rapl:%zu", i);
+		__attribute__((unused)) int ret = snprintf(baseNames[i], RAPL_BUFFER_SIZE, "/sys/class/powercap/intel-rapl/intel-rapl:%zu", i);
 		assert(ret >= 0);
 
 		// Use a temporary string for the complete file name

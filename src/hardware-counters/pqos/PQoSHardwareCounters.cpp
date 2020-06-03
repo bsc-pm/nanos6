@@ -321,7 +321,7 @@ void PQoSHardwareCounters::taskFinished(Task *task, TaskHardwareCountersInterfac
 	}
 }
 
-void PQoSHardwareCounters::displayStatistics()
+void PQoSHardwareCounters::displayStatistics() const
 {
 	// Try opening the output file
 	std::ios_base::openmode openMode = std::ios::out;

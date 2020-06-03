@@ -36,10 +36,6 @@ private:
 
 	bool _enabledEvents[HWCounters::PQOS_NUM_EVENTS];
 
-private:
-
-	void displayStatistics();
-
 public:
 
 	PQoSHardwareCounters(bool verbose, const std::string &verboseFile, const std::vector<bool> &enabledEvents);
@@ -70,6 +66,8 @@ public:
 	) override;
 
 	void taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters) override;
+
+	void displayStatistics() const override;
 
 };
 

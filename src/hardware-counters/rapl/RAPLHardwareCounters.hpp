@@ -11,9 +11,7 @@
 
 #include "hardware-counters/HardwareCountersInterface.hpp"
 
-#define RAPL_NUM_DOMAINS 5
-#define RAPL_MAX_PACKAGES 16
-#define RAPL_BUFFER_SIZE 256
+
 
 
 class CPUHardwareCountersInterface;
@@ -24,6 +22,11 @@ class ThreadHardwareCountersInterface;
 class RAPLHardwareCounters : public HardwareCountersInterface {
 
 private:
+
+	//! RAPL-related constants
+	static const short RAPL_NUM_DOMAINS = 5;
+	static const short RAPL_MAX_PACKAGES = 16;
+	static const short RAPL_BUFFER_SIZE = 256;
 
 	//! Whether the verbose mode is activated
 	bool _verbose;
@@ -71,9 +74,6 @@ private:
 	//! \brief Shutdown the power library
 	void raplShutdown();
 
-	//! \brief Print power usage information
-	void displayStatistics() const;
-
 public:
 
 	RAPLHardwareCounters(bool verbose, const std::string &verboseFile);
@@ -114,6 +114,8 @@ public:
 	{
 	}
 
+	//! \brief Print power usage information
+	void displayStatistics() const override;
 };
 
 #endif // RAPL_HARDWARE_COUNTERS_HPP
