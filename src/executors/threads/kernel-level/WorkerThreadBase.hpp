@@ -193,7 +193,7 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 	
 	suspend();
 	// After resuming (if ever blocked), the thread continues here
-	
+
 	Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
 }
 
