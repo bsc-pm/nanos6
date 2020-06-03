@@ -11,17 +11,41 @@
 #include "scheduling/schedulers/device/DeviceUnsyncScheduler.hpp"
 
 class DeviceScheduler : public SyncScheduler {
+private:
+	size_t _totalDevices;	// FIXME: currently unused
+	std::string _name;
+
 public:
-	DeviceScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, __attribute__((unused)) bool enableImmediateSuccessor, nanos6_device_t deviceType)
-		: SyncScheduler(totalComputePlaces, deviceType)
+	DeviceScheduler(
+		size_t totalComputePlaces,
+		SchedulingPolicy policy,
+		bool enablePriority,
+		__attribute__((unused)) bool enableImmediateSuccessor,
+		nanos6_device_t deviceType,
+		std::string name
+	) :
+		SyncScheduler(totalComputePlaces, deviceType),
+		_name(name)
 	{
+		_totalDevices = HardwareInfo::getComputePlaceCount(deviceType); 	// FIXME: currently unused
 		// Immediate successor support for devices is not available yet.
 		_scheduler = new DeviceUnsyncScheduler(policy, enablePriority, false);
 	}
 
-	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
+	virtual Task *getReadyTask(ComputePlace *computePlace)
+	{
+		assert(computePlace != nullptr);
+		assert(computePlace->getType() == _deviceType);
 
-	virtual std::string getName() const = 0;
+		Task *result = getTask(computePlace);
+		assert(result == nullptr || result->getDeviceType() == _deviceType);
+		return result;
+	}
+
+	inline std::string getName() const
+	{
+		return _name;
+	}
 };
 
 

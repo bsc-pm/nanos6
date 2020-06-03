@@ -187,6 +187,11 @@ symbol_resolution += \
 	loader/symbol-resolver/taskwait.c \
 	loader/symbol-resolver/user-mutex.c \
 	loader/symbol-resolver/weak-dependencies.c
+
+if USE_CUDA
+symbol_resolution += loader/symbol-resolver/cuda-device-api.c
+endif
+
 multidimensional_regions += \
 	multidim-region-dependency-resolvers.c \
 	multidim-release-resolvers.c \
@@ -217,6 +222,10 @@ symbol_resolution += \
 	loader/indirect-symbols/taskwait.c \
 	loader/indirect-symbols/user-mutex.c \
 	loader/indirect-symbols/weak-dependencies.c
+
+if USE_CUDA
+symbol_resolution += loader/indirect-symbols/cuda-device-api.c
+endif
 
 multidimensional_regions += \
 	multidim-region-dependency-indirect-resolvers.c \
@@ -357,10 +366,9 @@ common_sources = \
 	src/executors/threads/cpu-managers/default/DefaultCPUManager.cpp \
 	src/executors/threads/cpu-managers/default/policies/IdlePolicy.cpp \
 	src/hardware/HardwareInfo.cpp \
-	src/hardware/device/Device.cpp \
+	src/hardware/device/Accelerator.cpp \
 	src/hardware/hwinfo/HostInfo.cpp \
 	src/hardware/places/ComputePlace.cpp \
-	src/hardware/places/DeviceComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/hardware-counters/HardwareCounters.cpp \
 	src/hardware-counters/ThreadHardwareCounters.cpp \
@@ -405,6 +413,16 @@ common_sources = \
 
 common_sources += $(universal_debug_sources)
 nodist_common_sources += $(nodist_universal_debug_sources)
+
+cuda_sources =
+
+if USE_CUDA
+cuda_sources += \
+	src/hardware/device/cuda/CUDAAccelerator.cpp \
+	src/system/CUDADeviceAPI.cpp
+endif
+
+common_sources += $(cuda_sources)
 
 cluster_sources =
 if USE_CLUSTER
@@ -814,22 +832,18 @@ noinst_HEADERS = \
 	src/hardware/cluster/memory/ClusterMemoryNode.hpp \
 	src/hardware/cluster/memory/null/ClusterMemoryNode.hpp \
 	src/hardware/cluster/null/ClusterNode.hpp \
-	src/hardware/device/Device.hpp \
-	src/hardware/device/DeviceFunctionsInterface.hpp \
-	src/hardware/device/DeviceInfoImplementation.hpp \
-	src/hardware/device/implementation/CUDA.hpp \
-	src/hardware/device/implementation/FPGA.hpp \
-	src/hardware/device/implementation/NULLDevice.hpp \
-	src/hardware/device/implementation/cuda/CUDAContext.hpp \
-	src/hardware/device/implementation/cuda/CUDAFunctions.hpp \
+	src/hardware/device/Accelerator.hpp \
+	src/hardware/device/DeviceEnvironment.hpp \
+	src/hardware/device/cuda/CUDAAccelerator.hpp \
+	src/hardware/device/cuda/CUDADeviceInfo.hpp \
+	src/hardware/device/cuda/CUDAFunctions.hpp \
+	src/hardware/device/cuda/CUDAStreamPool.hpp \
 	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
-	src/hardware/places/DeviceComputePlace.hpp \
-	src/hardware/places/DeviceMemoryPlace.hpp \
 	src/hardware-counters/HardwareCounters.hpp \
 	src/hardware-counters/HardwareCountersInterface.hpp \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
@@ -1120,11 +1134,8 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/UnsyncScheduler.hpp \
 	src/scheduling/schedulers/cluster/ClusterLocalityScheduler.hpp \
 	src/scheduling/schedulers/cluster/ClusterRandomScheduler.hpp \
-	src/scheduling/schedulers/device/CUDADeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
-	src/scheduling/schedulers/device/FPGADeviceScheduler.hpp \
-	src/scheduling/schedulers/device/SubDeviceScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
 	src/support/ConstPropagator.hpp \
 	src/support/GenericFactory.hpp \

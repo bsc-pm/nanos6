@@ -195,55 +195,8 @@ AC_ARG_ENABLE(
 )
 AM_CONDITIONAL([LESS_TEST_THREADS], [test x"${ac_less_test_threads}" = x"yes"])
 
-AC_ARG_ENABLE([cuda], [AS_HELP_STRING([--enable-cuda], [Enable CUDA task support])])
-
-
-if test x"${enable_cuda}" = x"yes" ; then
-	PKG_CHECK_MODULES(
-		[CUDA],
-		[cudart-9.2],
-		[
-			ac_use_cuda=yes
-		],
-		[
-			PKG_CHECK_MODULES(
-				[CUDA],
-				[cudart-9.1],
-				[
-					ac_use_cuda=yes
-				],
-				[
-					PKG_CHECK_MODULES(
-						[CUDA],
-						[cudart-9.0],
-						[
-							ac_use_cuda=yes
-						],
-						[
-							PKG_CHECK_MODULES(
-								[CUDA],
-								[cudart-8.0],
-								[
-									ac_use_cuda=yes
-								],
-								[
-									ac_use_cuda=no
-								]
-							)
-						]
-					)
-				]
-			)
-		]
-	)
-else
-	ac_use_cuda=no
-fi
-AM_CONDITIONAL([USE_CUDA], [test x${ac_use_cuda} = x"yes"])
-
-if test x"${ac_use_cuda}" = x"yes" ; then
-	AC_DEFINE([USE_CUDA], [1], [Define if CUDA is enabled.])
-fi
+# Check support for CUDA
+AC_CHECK_CUDA
 
 # Check support for Cluster
 AC_ARG_ENABLE([cluster],

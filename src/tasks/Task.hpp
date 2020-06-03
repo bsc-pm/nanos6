@@ -14,6 +14,7 @@
 
 #include <nanos6.h>
 
+#include "hardware/device/DeviceEnvironment.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "scheduling/ReadyQueue.hpp"
@@ -115,6 +116,9 @@ private:
 	//! Device Specific data
 	void *_deviceData;
 
+	//! Device Environment
+	DeviceEnvironment _deviceEnvironment;
+
 	//! Number of internal and external events that prevent the release of dependencies
 	std::atomic<int> _countdownToRelease;
 
@@ -200,13 +204,13 @@ public:
 	}
 
 	//! Actual code of the task
-	virtual inline void body(void *deviceEnvironment, nanos6_address_translation_entry_t *translationTable = nullptr)
+	virtual inline void body(nanos6_address_translation_entry_t *translationTable = nullptr)
 	{
 		assert(_taskInfo->implementation_count == 1);
 		assert(hasCode());
 		assert(_taskInfo != nullptr);
 		assert(!isTaskfor());
-		_taskInfo->implementations[0].run(_argsBlock, deviceEnvironment, translationTable);
+		_taskInfo->implementations[0].run(_argsBlock, (void *)&_deviceEnvironment, translationTable);
 	}
 
 	//! Check if the task has an actual body
@@ -662,6 +666,11 @@ public:
 	inline void setDeviceData(void *deviceData)
 	{
 		_deviceData = deviceData;
+	}
+
+	inline DeviceEnvironment &getDeviceEnvironment()
+	{
+		return _deviceEnvironment;
 	}
 
 	//! \brief Set the Execution Workflow for this Task

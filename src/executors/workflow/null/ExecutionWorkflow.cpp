@@ -76,7 +76,7 @@ namespace ExecutionWorkflow {
 
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
-			task->body(nullptr, translationTable);
+			task->body(translationTable);
 			std::atomic_thread_fence(std::memory_order_release);
 
 			// Update the CPU since the thread may have migrated
