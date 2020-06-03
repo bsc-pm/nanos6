@@ -21,7 +21,7 @@ namespace Instrument {
 	inline void enterGetReadyTask() {}
 
 	//! \brief Exits the scheduler addReadyTask method
-	inline void exitGetReadyTask(__attribute__((unused)) Task *task) {}
+	inline void exitGetReadyTask() {}
 
 }
 

@@ -39,7 +39,7 @@ namespace Instrument {
 	}
 
 	//! \brief Exits the scheduler addReadyTask method
-	inline void exitGetReadyTask(Task *task)
+	inline void exitGetReadyTask()
 	{
 		// see enterGetReadyTask comments above
 
@@ -47,7 +47,7 @@ namespace Instrument {
 		if (tld.isBusyWaiting)
 			return;
 
-		tp_scheduler_get_task_exit(task != nullptr);
+		tp_scheduler_get_task_exit();
 	}
 
 }
