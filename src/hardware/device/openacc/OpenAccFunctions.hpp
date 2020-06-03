@@ -7,7 +7,12 @@
 #ifndef OPENACC_FUNCTIONS_HPP
 #define OPENACC_FUNCTIONS_HPP
 
-#include <openacc.h>
+#include <config.h>
+
+// This is used to include the autotools-detected openacc.h provided
+// in a PGI installation. It is needed because providing the pgi/include
+// directory with -I will also include PGI's math.h etc that will break everything.
+#include NANOS6_OPENACC_PGI_HEADER
 
 #include "lowlevel/EnvironmentVariable.hpp"
 
