@@ -285,31 +285,31 @@ void PQoSHardwareCounters::taskFinished(Task *task, TaskHardwareCountersInterfac
 				if (taskTypeData != nullptr) {
 					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT]) {
 						taskTypeData->addCounter(
-							HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT,
+							HWCounters::PQOS_MON_EVENT_L3_OCCUP,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_L3_OCCUP)
 						);
 					}
 					if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT]) {
 						taskTypeData->addCounter(
-							HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT,
+							HWCounters::PQOS_PERF_EVENT_IPC,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_IPC)
 						);
 					}
 					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
 						taskTypeData->addCounter(
-							HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT,
+							HWCounters::PQOS_MON_EVENT_LMEM_BW,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_LMEM_BW)
 						);
 					}
 					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
 						taskTypeData->addCounter(
-							HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT,
+							HWCounters::PQOS_MON_EVENT_RMEM_BW,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_RMEM_BW)
 						);
 					}
 					if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT]) {
 						taskTypeData->addCounter(
-							HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT,
+							HWCounters::PQOS_PERF_EVENT_LLC_MISS,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_LLC_MISS)
 						);
 					}

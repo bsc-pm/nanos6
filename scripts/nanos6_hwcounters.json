@@ -10,5 +10,8 @@
 		"PQOS_MON_EVENT_LMEM_BW": 1,
 		"PQOS_MON_EVENT_RMEM_BW": 1,
 		"PQOS_PERF_EVENT_LLC_MISS": 1
+	},
+	"RAPL": {
+		"ENABLED": 0
 	}
 }

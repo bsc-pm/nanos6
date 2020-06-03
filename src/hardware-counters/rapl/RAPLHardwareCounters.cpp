@@ -150,7 +150,7 @@ void RAPLHardwareCounters::raplShutdown()
 
 void RAPLHardwareCounters::displayStatistics() const
 {
-		// Try opening the output file
+	// Try opening the output file
 	std::ios_base::openmode openMode = std::ios::out;
 	std::ofstream output(_verboseFile, openMode);
 	FatalErrorHandler::warnIf(

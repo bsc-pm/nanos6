@@ -370,7 +370,6 @@ common_sources = \
 	src/hardware/hwinfo/HostInfo.cpp \
 	src/hardware/places/ComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
-	src/hardware-counters/CPUHardwareCounters.cpp \
 	src/hardware-counters/HardwareCounters.cpp \
 	src/hardware-counters/ThreadHardwareCounters.cpp \
 	src/hardware-counters/rapl/RAPLHardwareCounters.cpp \

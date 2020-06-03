@@ -8,6 +8,7 @@
 #define CPU_HARDWARE_COUNTERS_HPP
 
 #include "CPUHardwareCountersInterface.hpp"
+#include "HardwareCounters.hpp"
 #include "SupportedHardwareCounters.hpp"
 
 #if HAVE_PAPI
@@ -23,53 +24,53 @@ class CPUHardwareCounters {
 
 private:
 
-#if HAVE_PAPI
 	//! CPU-related hardware counters for the PAPI backend
-	PAPICPUHardwareCounters *_papiCounters;
-#endif
+	CPUHardwareCountersInterface *_papiCounters;
 
-#if HAVE_PQOS
 	//! CPU-related hardware counters for the PQoS backend
-	PQoSCPUHardwareCounters *_pqosCounters;
-#endif
+	CPUHardwareCountersInterface *_pqosCounters;
 
 public:
 
-	CPUHardwareCounters();
-
-	inline ~CPUHardwareCounters()
+	inline CPUHardwareCounters() :
+		_papiCounters(nullptr),
+		_pqosCounters(nullptr)
 	{
 #if HAVE_PAPI
-		if (_papiCounters != nullptr) {
-			delete _papiCounters;
+		if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
+			_papiCounters = new PAPICPUHardwareCounters();
 		}
 #endif
 
 #if HAVE_PQOS
+		if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
+			_pqosCounters = new PQoSCPUHardwareCounters();
+		}
+#endif
+	}
+
+
+	inline ~CPUHardwareCounters()
+	{
+		if (_papiCounters != nullptr) {
+			delete _papiCounters;
+		}
+
 		if (_pqosCounters != nullptr) {
 			delete _pqosCounters;
 		}
-#endif
 	}
 
 	//! \brief Return the PAPI counters of the CPU (if it is enabled) or nullptr
 	inline CPUHardwareCountersInterface *getPAPICounters() const
 	{
-#if HAVE_PAPI
-		return (CPUHardwareCountersInterface *) _papiCounters;
-#else
-		return nullptr;
-#endif
+		return _papiCounters;
 	}
 
 	//! \brief Return the PQOS counters of the cpu (if it is enabled) or nullptr
 	inline CPUHardwareCountersInterface *getPQoSCounters() const
 	{
-#if HAVE_PQOS
-		return (CPUHardwareCountersInterface *) _pqosCounters;
-#else
-		return nullptr;
-#endif
+		return _pqosCounters;
 	}
 
 	//! \brief Get the delta value of a HW counter
@@ -77,25 +78,15 @@ public:
 	//! \param[in] counterId The type of counter to get the delta from
 	inline double getDelta(HWCounters::counters_t counterId)
 	{
+		CPUHardwareCountersInterface *cpuCounters = nullptr;
 		if (counterId >= HWCounters::PQOS_MIN_EVENT && counterId <= HWCounters::PQOS_MAX_EVENT) {
-#if HAVE_PQOS
-			assert(_pqosCounters != nullptr);
-			return _pqosCounters->getDelta(counterId);
-#else
-			assert(false);
-#endif
+			cpuCounters = getPQoSCounters();
 		} else if (counterId >= HWCounters::PAPI_MIN_EVENT && counterId <= HWCounters::PAPI_MAX_EVENT) {
-#if HAVE_PAPI
-			assert(_papiCounters != nullptr);
-			return _papiCounters->getDelta(counterId);
-#else
-			assert(false);
-#endif
-		} else {
-			assert(false);
+			cpuCounters = getPAPICounters();
 		}
+		assert(cpuCounters != nullptr);
 
-		return 0.0;
+		return cpuCounters->getDelta(counterId);
 	}
 
 };

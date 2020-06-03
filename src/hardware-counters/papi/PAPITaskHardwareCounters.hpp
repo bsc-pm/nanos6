@@ -14,6 +14,10 @@ class PAPITaskHardwareCounters : public TaskHardwareCountersInterface {
 
 public:
 
+	PAPITaskHardwareCounters(bool = true)
+	{
+	}
+
 	//! \brief Empty hardware counter structures
 	inline void clear()
 	{

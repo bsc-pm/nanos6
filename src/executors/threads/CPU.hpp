@@ -198,9 +198,9 @@ public:
 		return _isOwned;
 	}
 
-	inline CPUHardwareCounters *getHardwareCounters()
+	inline CPUHardwareCounters &getHardwareCounters()
 	{
-		return &(_hardwareCounters);
+		return _hardwareCounters;
 	}
 
 };
