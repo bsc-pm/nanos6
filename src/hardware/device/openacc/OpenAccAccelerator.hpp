@@ -53,7 +53,6 @@ private:
 	{
 		OpenAccQueue *queue = (OpenAccQueue *)task->getDeviceData();
 		assert(queue != nullptr);
-		queue->setLaunched(true);
 		_activeQueues.push_back(queue);
 	}
 

@@ -12,13 +12,11 @@
 class OpenAccQueue {
 private:
 	int _queueId;
-	bool _launched;
 	Task *_task;
 
 public:
 	OpenAccQueue(int id) :
-		_queueId(id),
-		_launched(false)
+		_queueId(id)
 	{
 	}
 
@@ -31,23 +29,9 @@ public:
 		return _queueId;
 	}
 
-	inline bool getLanuched()
-	{
-		return _launched;
-	}
-
-	inline void setLaunched(bool set)
-	{
-		_launched = set;
-	}
-
 	inline bool isFinished()
 	{
-		if (_launched) {
-			return OpenAccFunctions::asyncFinished(_queueId);
-		} else {
-			return false;
-		}
+		return OpenAccFunctions::asyncFinished(_queueId);
 	}
 
 	inline Task *getTask()
@@ -95,7 +79,6 @@ public:
 
 	inline void releaseAsyncQueue(OpenAccQueue *queue)
 	{
-		queue->setLaunched(false);
 		_queuePool.push_back(queue);
 	}
 
