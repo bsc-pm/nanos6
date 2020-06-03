@@ -44,6 +44,7 @@ namespace ExecutionWorkflow {
 				return new ClusterAllocationAndPinningStep(
 						regionTranslation, memoryPlace);
 			case nanos6_cuda_device:
+			case nanos6_openacc_device:
 			case nanos6_opencl_device:
 			default:
 				FatalErrorHandler::failIf(
@@ -98,6 +99,7 @@ namespace ExecutionWorkflow {
 			case nanos6_cluster_device:
 				return new ClusterExecutionStep(task, computePlace);
 			case nanos6_cuda_device:
+			case nanos6_openacc_device:
 			case nanos6_opencl_device:
 			default:
 				FatalErrorHandler::failIf(
@@ -126,6 +128,7 @@ namespace ExecutionWorkflow {
 			case nanos6_cluster_device:
 				return new ClusterNotificationStep(callback);
 			case nanos6_cuda_device:
+			case nanos6_openacc_device:
 			case nanos6_opencl_device:
 			default:
 				FatalErrorHandler::failIf(
@@ -161,6 +164,7 @@ namespace ExecutionWorkflow {
 			case nanos6_cluster_device:
 				return new ClusterUnpinningStep(targetMemoryPlace, targetTranslation);
 			case nanos6_cuda_device:
+			case nanos6_openacc_device:
 			case nanos6_opencl_device:
 			default:
 				FatalErrorHandler::failIf(

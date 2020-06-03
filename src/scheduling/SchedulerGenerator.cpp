@@ -34,6 +34,14 @@ DeviceScheduler *SchedulerGenerator::createDeviceScheduler(
 				enableImmediateSuccessor,
 				deviceType,
 				"CUDADeviceScheduler");
+		case nanos6_openacc_device:
+			return new DeviceScheduler(
+				totalComputePlaces,
+				policy,
+				enablePriority,
+				enableImmediateSuccessor,
+				deviceType,
+				"OpenAccDeviceScheduler");
 		case nanos6_opencl_device:
 			FatalErrorHandler::failIf(1, "OpenCL is not supported yet.");
 			break;
