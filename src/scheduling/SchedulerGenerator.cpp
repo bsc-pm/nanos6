@@ -10,10 +10,10 @@
 #include "scheduling/schedulers/device/DeviceScheduler.hpp"
 
 HostScheduler *SchedulerGenerator::createHostScheduler(
-		size_t totalComputePlaces,
-		SchedulingPolicy policy,
-		bool enablePriority,
-		bool enableImmediateSuccessor)
+	size_t totalComputePlaces,
+	SchedulingPolicy policy,
+	bool enablePriority,
+	bool enableImmediateSuccessor)
 {
 	return new HostScheduler(totalComputePlaces, policy, enablePriority, enableImmediateSuccessor);
 }

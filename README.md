@@ -130,10 +130,6 @@ By default, there are as many groups as NUMA nodes in the system.
 
 Finally, taskfors that do not define any chunksize leverage a chunksize value computed as their total number of iterations divided by the number of collaborators per taskfor group.
 
-## Using Device tasks
-
-For information about using device tasks, refer to the [devices](docs/devices/Devices.md) documentation.
-
 ## Benchmarking, tracing, debugging and other options
 
 There are several Nanos6 variants, each one focusing on different aspects of parallel executions: performance, debugging, instrumentation, etc.
@@ -357,6 +353,10 @@ Next we showcase a simplified version of the configuration file, where the PQoS 
 	}
 }
 ```
+
+## Device tasks
+
+For information about using device tasks (e.g., CUDA tasks), refer to the [devices](docs/devices/Devices.md) documentation.
 
 ## Cluster support
 

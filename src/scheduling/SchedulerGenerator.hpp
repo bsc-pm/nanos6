@@ -17,17 +17,17 @@ class HostScheduler;
 class SchedulerGenerator {
 public:
 	static HostScheduler *createHostScheduler(
-			size_t totalComputePlaces,
-			SchedulingPolicy policy,
-			bool enablePriority,
-			bool enableImmediateSuccessor);
+		size_t totalComputePlaces,
+		SchedulingPolicy policy,
+		bool enablePriority,
+		bool enableImmediateSuccessor);
 
 	static DeviceScheduler *createDeviceScheduler(
-			size_t totalComputePlaces,
-			SchedulingPolicy policy,
-			bool enablePriority,
-			bool enableImmediateSuccessor,
-			nanos6_device_t deviceType);
+		size_t totalComputePlaces,
+		SchedulingPolicy policy,
+		bool enablePriority,
+		bool enableImmediateSuccessor,
+		nanos6_device_t deviceType);
 };
 
 

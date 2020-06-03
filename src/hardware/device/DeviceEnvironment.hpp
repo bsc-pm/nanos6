@@ -21,7 +21,7 @@ union DeviceEnvironment {
 #if USE_CUDA
 		nanos6_cuda_device_environment_t cuda;
 #endif
-	};
+};
 
 #endif // DEVICE_ENVIRONMENT_HPP
 
