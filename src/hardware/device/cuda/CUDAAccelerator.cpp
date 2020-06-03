@@ -51,10 +51,10 @@ void CUDAAccelerator::acceleratorServiceLoop()
 			}
 		}
 		processCUDAEvents();
-	} while (_activeEvents.size() != 0 && worker);
+	} while (!_activeEvents.empty() && worker);
 
 	// If process was run by LeaderThread, request a WorkerThread to continue.
-	if (!worker && task != nullptr) {
+	if (!worker && (task != nullptr || !_activeEvents.empty())) {
 		CPUManager::executeCPUManagerPolicy(nullptr, ADDED_TASKS, 1);
 	}
 }
