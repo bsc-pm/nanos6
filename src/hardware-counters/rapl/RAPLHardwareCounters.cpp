@@ -49,7 +49,9 @@ void RAPLHardwareCounters::raplDetectCPU()
 	while (line != nullptr) {
 		// Line == vendor_id
 		if (!strncmp(line, "vendor_id", 9)) {
-			sscanf(line, "%*s%*s%s", vendor);
+			__attribute__((unused)) int ret = sscanf(line, "%*s%*s%s", vendor);
+			assert(ret != EOF);
+
 			if (strncmp(vendor, "GenuineIntel", 12)) {
 				// Not an Intel chip, can't read power counters from this arch
 				FatalErrorHandler::fail("Current architecture not supported by the RAPL Power library");
@@ -58,7 +60,9 @@ void RAPLHardwareCounters::raplDetectCPU()
 
 		// Line == cpu family
 		if (!strncmp(line, "cpu family", 10)) {
-			sscanf(line, "%*s%*s%*s%d", &family);
+			__attribute__((unused)) int ret = sscanf(line, "%*s%*s%*s%d", &family);
+			assert(ret != EOF);
+
 			if (family != 6) {
 				// Can't read power counters if CPU family != 6
 				FatalErrorHandler::fail("Current architecture not supported by the RAPL Power library");
@@ -89,32 +93,42 @@ void RAPLHardwareCounters::raplInitialize()
 		j = 0;
 
 		// Save the base name of the current package
-		snprintf(baseNames[i], RAPL_BUFFER_SIZE,  "/sys/class/powercap/intel-rapl/intel-rapl:%zu", i);
+		__attribute__((unused)) int ret = snprintf(baseNames[i], RAPL_BUFFER_SIZE,  "/sys/class/powercap/intel-rapl/intel-rapl:%zu", i);
+		assert(ret >= 0);
 
 		// Use a temporary string for the complete file name
-		snprintf(tempFileName, RAPL_BUFFER_SIZE, "%s/name", baseNames[i]);
+		ret = snprintf(tempFileName, RAPL_BUFFER_SIZE, "%s/name", baseNames[i]);
+		assert(ret >= 0);
 
 		// Obtain all the available counter (event) names for this package
 		file = fopen(tempFileName, "r");
 		FatalErrorHandler::failIf(file == nullptr, "Could not open the needed files for the RAPL Power library");
-		fscanf(file, "%s", _eventNames[i][j]);
+		ret = fscanf(file, "%s", _eventNames[i][j]);
+		assert(ret != EOF);
+
 		_validEvents[i][j] = true;
 		fclose(file);
 
 		// Save the interested file name for later usage
-		snprintf(_fileNames[i][j], RAPL_BUFFER_SIZE, "%s/energy_uj", baseNames[i]);
+		ret = snprintf(_fileNames[i][j], RAPL_BUFFER_SIZE, "%s/energy_uj", baseNames[i]);
+		assert(ret >= 0);
 
 		// Iterate each subdomain
 		for (j = 1; j < RAPL_NUM_DOMAINS; ++j) {
-			snprintf(tempFileName, RAPL_BUFFER_SIZE, "%s/intel-rapl:%zu:%zu/name", baseNames[i], i, j - 1);
+			ret = snprintf(tempFileName, RAPL_BUFFER_SIZE, "%s/intel-rapl:%zu:%zu/name", baseNames[i], i, j - 1);
+			assert(ret >= 0);
+
 			file = fopen(tempFileName, "r");
 			if (file == nullptr) {
 				_validEvents[i][j] = false;
 			} else {
 				_validEvents[i][j] = true;
-				fscanf(file, "%s", _eventNames[i][j]);
+				ret = fscanf(file, "%s", _eventNames[i][j]);
+				assert(ret != EOF);
+
 				fclose(file);
-				snprintf(_fileNames[i][j], RAPL_BUFFER_SIZE, "%s/intel-rapl:%zu:%zu/energy_uj", baseNames[i], i, j - 1);
+				ret = snprintf(_fileNames[i][j], RAPL_BUFFER_SIZE, "%s/intel-rapl:%zu:%zu/energy_uj", baseNames[i], i, j - 1);
+				assert(ret >= 0);
 			}
 		}
 	}
@@ -131,7 +145,9 @@ void RAPLHardwareCounters::raplReadCounters(size_t values[RAPL_MAX_PACKAGES][RAP
 			if (_validEvents[i][j]) {
 				file = fopen(_fileNames[i][j], "r");
 				FatalErrorHandler::failIf(file == nullptr, "Could not read power counters with RAPL");
-				fscanf(file, "%zu", &(values[i][j]));
+				__attribute__((unused)) int ret = fscanf(file, "%zu", &(values[i][j]));
+				assert(ret != EOF);
+
 				fclose(file);
 			}
 		}
@@ -150,7 +166,7 @@ void RAPLHardwareCounters::raplShutdown()
 
 void RAPLHardwareCounters::displayStatistics() const
 {
-	// Try opening the output file
+	// 	Try opening the output file
 	std::ios_base::openmode openMode = std::ios::out;
 	std::ofstream output(_verboseFile, openMode);
 	FatalErrorHandler::warnIf(
