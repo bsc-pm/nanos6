@@ -18,7 +18,7 @@
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "scheduling/ReadyQueue.hpp"
-#include "tasks/TaskTypeData.hpp"
+#include "tasks/TasktypeData.hpp"
 
 #include <ClusterTaskContext.hpp>
 #include <ExecutionWorkflow.hpp>
@@ -814,11 +814,11 @@ public:
 		return _flags[main_task_flag];
 	}
 
-	inline TaskTypeData *getTaskTypeData()
+	inline TasktypeData *getTasktypeData()
 	{
 		assert(_taskInfo != nullptr);
 
-		return (TaskTypeData *) _taskInfo->task_type_data;
+		return (TasktypeData *) _taskInfo->task_type_data;
 	}
 };
 

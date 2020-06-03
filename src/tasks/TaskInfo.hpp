@@ -14,14 +14,14 @@
 #include <nanos6/task-info-registration.h>
 
 #include "lowlevel/SpinLock.hpp"
-#include "tasks/TaskTypeData.hpp"
+#include "tasks/TasktypeData.hpp"
 
 
-struct TaskTypeId {
+struct TasktypeId {
 	std::string _taskLabel;
 	std::string _taskDeclarationSource;
 
-	inline TaskTypeId(
+	inline TasktypeId(
 		const std::string &taskLabel,
 		const std::string &taskDeclarationSource
 	) :
@@ -33,7 +33,7 @@ struct TaskTypeId {
 	//! \brief Overloaded lesser-operator for task_type_map_t
 	//! Duplicated TaskInfos have the same label or the same declaration
 	//! source, thus we must overload the operator to act this way
-	bool operator<(const TaskTypeId &other) const
+	bool operator<(const TasktypeId &other) const
 	{
 		assert(_taskLabel != "");
 		assert(_taskDeclarationSource != "");
@@ -71,20 +71,20 @@ struct TaskTypeId {
 	}
 };
 
-typedef std::map<TaskTypeId, TaskTypeData> task_type_map_t;
+typedef std::map<TasktypeId, TasktypeData> task_type_map_t;
 
 class TaskInfo {
 
 private:
 
 	//! A map with task type data
-	static task_type_map_t _taskTypes;
+	static task_type_map_t _tasktypes;
 
 	//! SpinLock to register taskinfos
 	static SpinLock _lock;
 
 	//! Keep track of the number of unlabeled tasktypes
-	static std::atomic<size_t> _numUnlabeledTaskTypes;
+	static std::atomic<size_t> _numUnlabeledTasktypes;
 
 public:
 
@@ -93,9 +93,9 @@ public:
 	//! \param[in,out] taskInfo A pointer to the taskinfo
 	static void registerTaskInfo(nanos6_task_info_t *taskInfo);
 
-	static inline task_type_map_t &getTaskTypeMapReference()
+	static inline task_type_map_t &getTasktypeMapReference()
 	{
-		return _taskTypes;
+		return _tasktypes;
 	}
 
 };

@@ -4,8 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef TASK_TYPE_DATA_HPP
-#define TASK_TYPE_DATA_HPP
+#ifndef TASKTYPE_HARDWARE_COUNTERS_HPP
+#define TASKTYPE_HARDWARE_COUNTERS_HPP
 
 // NOTE: "array_wrapper" must be included before any other boost modules
 // Workaround for a missing include in boost 1.64
@@ -17,20 +17,17 @@
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
 
-#include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "SupportedHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 
 namespace BoostAcc = boost::accumulators;
 namespace BoostAccTag = boost::accumulators::tag;
 
 
-//! \brief Use to hold data on a per-tasktype basis (i.e. Monitoring data,
-//! instrumentation parameters, etc.)
-class TaskTypeData {
+//! \brief Use to hold hardware counters on a per-tasktype basis
+class TasktypeHardwareCounters {
 
 private:
-
-	/*    HARDWARE COUNTERS    */
 
 	typedef BoostAcc::accumulator_set<double, BoostAcc::stats<BoostAccTag::sum, BoostAccTag::mean, BoostAccTag::variance, BoostAccTag::count> > statistics_accumulator_t;
 	typedef std::vector<statistics_accumulator_t> counter_statistics_t;
@@ -41,18 +38,12 @@ private:
 	//! A spinlock to access hardware counter structures
 	SpinLock _counterLock;
 
-	/*    INSTRUMENTATION    */
-
-	/*    MONITORING    */
-
 public:
 
-	inline TaskTypeData() :
+	inline TasktypeHardwareCounters() :
 		_counterStatistics(HWCounters::TOTAL_NUM_EVENTS)
 	{
 	}
-
-	/*    HARDWARE COUNTERS    */
 
 	//! \brief Accumulate the counters of a task for statistics purposes
 	//!
@@ -107,10 +98,6 @@ public:
 		return BoostAcc::count(_counterStatistics[counterType]);
 	}
 
-	/*    INSTRUMENTATION    */
-
-	/*    MONITORING    */
-
 };
 
-#endif // TASK_TYPE_DATA_HPP
+#endif // TASKTYPE_HARDWARE_COUNTERS_HPP

@@ -852,6 +852,7 @@ noinst_HEADERS = \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
 	src/hardware-counters/TaskHardwareCounters.hpp \
 	src/hardware-counters/TaskHardwareCountersInterface.hpp \
+	src/hardware-counters/TasktypeHardwareCounters.hpp \
 	src/hardware-counters/ThreadHardwareCounters.hpp \
 	src/hardware-counters/ThreadHardwareCountersInterface.hpp \
 	src/hardware-counters/papi/PAPICPUHardwareCounters.hpp \
@@ -1174,7 +1175,7 @@ noinst_HEADERS = \
 	src/tasks/TaskImplementation.hpp \
 	src/tasks/TaskInfo.hpp \
 	src/tasks/Taskloop.hpp \
-	src/tasks/TaskTypeData.hpp \
+	src/tasks/TasktypeData.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \
