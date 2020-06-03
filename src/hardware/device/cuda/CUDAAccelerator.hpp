@@ -57,6 +57,8 @@ private:
 		nanos6_unregister_polling_service("CUDA polling service", pollingService, (void *)this);
 	}
 
+	void acceleratorServiceLoop() override;
+
 	void processCUDAEvents();
 
 	inline void preRunTask(Task *task) override

@@ -23,35 +23,40 @@ CUDAAccelerator::CUDAAccelerator(int cudaDeviceIndex) :
 	registerPolling();
 }
 
-// Now the private functions
-
 int CUDAAccelerator::pollingService(void *data)
 {
-	// Check if the thread running the service is a WorkerThread. nullptr means LeaderThread.
-	bool worker = (WorkerThread::getCurrentWorkerThread() != nullptr);
-
-	Task *task = nullptr;
 	CUDAAccelerator *accel = (CUDAAccelerator *)data;
 	assert(accel != nullptr);
 
+	accel->acceleratorServiceLoop();
+	return 0;
+}
+
+// Now the private functions
+
+void CUDAAccelerator::acceleratorServiceLoop()
+{
+	// Check if the thread running the service is a WorkerThread. nullptr means LeaderThread
+	bool worker = (WorkerThread::getCurrentWorkerThread() != nullptr);
+
+	Task *task = nullptr;
+
 	// For CUDA we need the setDevice operation here, for the stream & event context-to-thread association
-	accel->setActiveDevice();
+	setActiveDevice();
 	do {
-		if (accel->_streamPool.streamAvailable()) {
-			task = Scheduler::getReadyTask(accel->_computePlace);
+		if (_streamPool.streamAvailable()) {
+			task = Scheduler::getReadyTask(_computePlace);
 			if (task != nullptr) {
-				accel->runTask(task);
+				runTask(task);
 			}
 		}
-		accel->processCUDAEvents();
-	} while (accel->_activeEvents.size() != 0 && worker);
+		processCUDAEvents();
+	} while (_activeEvents.size() != 0 && worker);
 
 	// If process was run by LeaderThread, request a WorkerThread to continue.
 	if (!worker && task != nullptr) {
 		CPUManager::executeCPUManagerPolicy(nullptr, ADDED_TASKS, 1);
 	}
-
-	return 0;
 }
 
 // For each CUDA device task a CUDA stream is required for the asynchronous
@@ -74,11 +79,12 @@ void CUDAAccelerator::processCUDAEvents()
 	_preallocatedEvents.clear();
 	std::swap(_preallocatedEvents, _activeEvents);
 
-	for (CUDAEvent &ev : _preallocatedEvents)
+	for (CUDAEvent &ev : _preallocatedEvents) {
 		if (CUDAFunctions::cudaEventFinished(ev.event)) {
 			finishTask(ev.task);
-		}
-		else
+		} else {
 			_activeEvents.push_back(ev);
+		}
+	}
 }
 
