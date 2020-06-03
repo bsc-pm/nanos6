@@ -16,10 +16,17 @@
 #include <nanos6/cuda_device.h>
 #endif
 
+#if USE_OPENACC
+#include <nanos6/openacc_device.h>
+#endif
+
 //! Contains the device environment based on configured device types to determine max size
 union DeviceEnvironment {
 #if USE_CUDA
 		nanos6_cuda_device_environment_t cuda;
+#endif
+#if USE_OPENACC
+		nanos6_openacc_device_environment_t openacc;
 #endif
 };
 
