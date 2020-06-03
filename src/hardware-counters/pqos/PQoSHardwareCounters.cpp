@@ -338,50 +338,51 @@ void PQoSHardwareCounters::displayStatistics()
 	outputStream << "-------------------------------\n";
 
 	// Iterate through all tasktypes
-	task_type_map_t &tasktypeMap = TaskInfo::getTasktypeMapReference();
-	for (auto &tasktype : tasktypeMap) {
-		if (tasktype.first._taskLabel != "Unlabeled") {
-			outputStream <<
-				std::setw(7)  << "STATS"             << " " <<
-				std::setw(6)  << "PQOS"              << " " <<
-				std::setw(30) << "TASK-TYPE"         << " " <<
-				std::setw(20) << tasktype.first._taskLabel << "\n";
+	TaskInfo::processAllTasktypes(
+		[&](const std::string &tasktypeLabel, TasktypeData &tasktypeData) {
+			TasktypeHardwareCounters &tasktypeCounters = tasktypeData.getHardwareCounters();
+			if (tasktypeLabel != "Unlabeled") {
+				outputStream <<
+					std::setw(7)  << "STATS"       << " " <<
+					std::setw(6)  << "PQOS"        << " " <<
+					std::setw(30) << "TASK-TYPE"   << " " <<
+					std::setw(20) << tasktypeLabel << "\n";
 
-			// Iterate through all counter types
-			TasktypeHardwareCounters &tasktypeCounters = tasktype.second.getHardwareCounters();
-			for (unsigned short id = 0; id < HWCounters::PQOS_NUM_EVENTS; ++id) {
-				if (_enabledEvents[id]) {
-					double counterAvg   = tasktypeCounters.getCounterAvg((HWCounters::counters_t) id);
-					double counterStdev = tasktypeCounters.getCounterStddev((HWCounters::counters_t) id);
-					double counterSum   = tasktypeCounters.getCounterSum((HWCounters::counters_t) id);
-					size_t instances    = tasktypeCounters.getCounterCount((HWCounters::counters_t) id);
+				// Iterate through all counter types
+				for (unsigned short id = 0; id < HWCounters::PQOS_NUM_EVENTS; ++id) {
+					if (_enabledEvents[id]) {
+						double counterAvg   = tasktypeCounters.getCounterAvg((HWCounters::counters_t) id);
+						double counterStdev = tasktypeCounters.getCounterStddev((HWCounters::counters_t) id);
+						double counterSum   = tasktypeCounters.getCounterSum((HWCounters::counters_t) id);
+						size_t instances    = tasktypeCounters.getCounterCount((HWCounters::counters_t) id);
 
-					// In KB
-					unsigned short pqosId = id + HWCounters::PQOS_MIN_EVENT;
-					if (pqosId == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
-						pqosId == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
-						pqosId == HWCounters::PQOS_MON_EVENT_RMEM_BW
-					) {
-						counterAvg   /= 1024.0;
-						counterStdev /= 1024.0;
-						counterSum   /= 1024.0;
+						// In KB
+						unsigned short pqosId = id + HWCounters::PQOS_MIN_EVENT;
+						if (pqosId == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
+							pqosId == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
+							pqosId == HWCounters::PQOS_MON_EVENT_RMEM_BW
+						) {
+							counterAvg   /= 1024.0;
+							counterStdev /= 1024.0;
+							counterSum   /= 1024.0;
+						}
+
+						outputStream <<
+							std::setw(7)  << "STATS"                                   << " "   <<
+							std::setw(6)  << "PQOS"                                    << " "   <<
+							std::setw(30) << HWCounters::counterDescriptions[pqosId]   << " "   <<
+							std::setw(20) << "INSTANCES: " + std::to_string(instances) << " "   <<
+							std::setw(30) << "SUM / AVG / STDEV"                       << " "   <<
+							std::setw(15) << counterSum                                << " / " <<
+							std::setw(15) << counterAvg                                << " / " <<
+							std::setw(15) << counterStdev                              << "\n";
 					}
-
-					outputStream <<
-						std::setw(7)  << "STATS"                                   << " "   <<
-						std::setw(6)  << "PQOS"                                    << " "   <<
-						std::setw(30) << HWCounters::counterDescriptions[pqosId]   << " "   <<
-						std::setw(20) << "INSTANCES: " + std::to_string(instances) << " "   <<
-						std::setw(30) << "SUM / AVG / STDEV"                       << " "   <<
-						std::setw(15) << counterSum                                << " / " <<
-						std::setw(15) << counterAvg                                << " / " <<
-						std::setw(15) << counterStdev                              << "\n";
 				}
-			}
 
-			outputStream << "-------------------------------\n";
+				outputStream << "-------------------------------\n";
+			}
 		}
-	}
+	);
 
 	if (output.is_open()) {
 		// Output into the file and close it

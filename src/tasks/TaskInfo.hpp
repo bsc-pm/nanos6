@@ -93,9 +93,22 @@ public:
 	//! \param[in,out] taskInfo A pointer to the taskinfo
 	static void registerTaskInfo(nanos6_task_info_t *taskInfo);
 
-	static inline task_type_map_t &getTasktypeMapReference()
+	//! \brief Traverse all tasktypes and apply a certain function for each of them
+	//!
+	//! \param[in] functionToApply The function to apply to each child node
+	template <typename F>
+	static inline void processAllTasktypes(F functionToApply)
 	{
-		return _tasktypes;
+		_lock.lock();
+
+		for (auto &tasktype : _tasktypes) {
+			const std::string &label = tasktype.first._taskLabel;
+			TasktypeData &tasktypeData = tasktype.second;
+
+			functionToApply(label, tasktypeData);
+		}
+
+		_lock.unlock();
 	}
 
 };
