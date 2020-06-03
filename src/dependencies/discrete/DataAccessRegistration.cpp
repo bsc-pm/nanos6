@@ -289,7 +289,7 @@ namespace DataAccessRegistration {
 		}
 #endif
 
-		nanos6_task_info_t *taskInfo = task->getTaskInfo();
+		__attribute__((unused)) nanos6_task_info_t *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
 
 		task->increasePredecessors(2);

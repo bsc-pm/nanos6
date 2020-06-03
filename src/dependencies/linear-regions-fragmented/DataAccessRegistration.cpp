@@ -2691,7 +2691,7 @@ namespace DataAccessRegistration {
 		assert(task != 0);
 		assert(computePlace != nullptr);
 
-		nanos6_task_info_t *taskInfo = task->getTaskInfo();
+		__attribute__((unused)) nanos6_task_info_t *taskInfo = task->getTaskInfo();
 		assert(taskInfo != 0);
 
 		// This part creates the DataAccesses and calculates any possible upgrade

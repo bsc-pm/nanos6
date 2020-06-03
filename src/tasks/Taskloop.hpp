@@ -66,11 +66,6 @@ public:
 		return (_bounds.upper_bound - _bounds.lower_bound);
 	}
 
-	inline bool isSourceTaskloop() const
-	{
-		return _sourceTaskloop;
-	}
-
 	inline bool hasPendingIterations()
 	{
 		return (getIterationCount() > 0);
@@ -103,6 +98,16 @@ public:
 	virtual inline bool isDisposable()
 	{
 		return true;
+	}
+
+	virtual inline bool isSourceTaskloop()
+	{
+		return _sourceTaskloop;
+	}
+
+	virtual inline bool isTaskloopFor()
+	{
+		return isTaskfor();
 	}
 };
 

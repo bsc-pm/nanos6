@@ -830,6 +830,26 @@ public:
 	{
 		return true;
 	}
+
+	virtual inline bool isSourceTaskloop()
+	{
+		return false;
+	}
+
+	virtual inline bool isTaskloopFor()
+	{
+		return false;
+	}
+
+	virtual inline bool isTaskforCollaborator()
+	{
+		return false;
+	}
+
+	virtual inline bool isSourceTaskfor()
+	{
+		return false;
+	}
 };
 
 

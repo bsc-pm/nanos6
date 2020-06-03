@@ -85,7 +85,7 @@ namespace ExecutionWorkflow {
 
 			HardwareCounters::taskStarted(_task);
 
-			bool isTaskforCollaborator = (_task->isTaskfor() && !_task->isTaskloop());
+			bool isTaskforCollaborator = _task->isTaskforCollaborator();
 			if (isTaskforCollaborator) {
 				assert(_task->isRunnable());
 				bool first = ((Taskfor *) _task)->hasFirstChunk();

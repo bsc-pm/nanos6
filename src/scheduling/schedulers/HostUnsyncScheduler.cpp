@@ -89,8 +89,7 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 		}
 	}
 
-	bool isTaskloopFor = (result != nullptr && result->isTaskfor() && result->isTaskloop() && result->isRunnable());
-	if (result == nullptr || !result->isTaskfor() || isTaskloopFor) {
+	if (result == nullptr || !result->isTaskfor() || result->isTaskloopFor()) {
 		assert(result == nullptr || result->isRunnable());
 		return result;
 	}

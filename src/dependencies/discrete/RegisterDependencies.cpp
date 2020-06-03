@@ -37,7 +37,7 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 
 	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length);
 
-	bool isSourceTaskloop = task->isTaskloop() ? ((Taskloop *)task)->isSourceTaskloop() : false;
+	bool isSourceTaskloop = task->isSourceTaskloop();
 	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || isSourceTaskloop;
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, start, length, reductionTypeAndOperatorIndex, reductionIndex);
 }

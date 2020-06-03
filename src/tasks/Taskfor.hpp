@@ -181,8 +181,6 @@ public:
 
 	inline bounds_t &getBounds()
 	{
-		// We may need to call this from a source taskfor in taskloop for case.
-		assert(isRunnable() || isTaskloop());
 		return _bounds;
 	}
 
@@ -237,12 +235,6 @@ public:
 		return (_bounds.upper_bound == source->getBounds().upper_bound);
 	}
 
-	// Required for the case of taskloop for
-	inline bool isSourceTaskloop() const
-	{
-		return false;
-	}
-
 	virtual inline void registerDeps(bool = false)
 	{
 		assert(getParent() != nullptr);
@@ -255,6 +247,16 @@ public:
 	}
 
 	virtual inline bool isDisposable()
+	{
+		return !isRunnable();
+	}
+
+	virtual inline bool isTaskforCollaborator()
+	{
+		return isRunnable();
+	}
+
+	virtual inline bool isSourceTaskfor()
 	{
 		return !isRunnable();
 	}

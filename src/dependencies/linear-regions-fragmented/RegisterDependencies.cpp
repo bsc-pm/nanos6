@@ -42,7 +42,7 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	}
 	
 	DataAccessRegion accessRegion(start, length);
-	bool isSourceTaskloop = task->isTaskloop() ? ((Taskloop *)task)->isSourceTaskloop() : false;
+	bool isSourceTaskloop = task->isSourceTaskloop();
 	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || isSourceTaskloop;
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, accessRegion, symbolIndex, reductionTypeAndOperatorIndex, reductionIndex);
 }

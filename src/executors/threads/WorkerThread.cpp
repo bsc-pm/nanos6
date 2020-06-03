@@ -141,7 +141,7 @@ void WorkerThread::handleTask(CPU *cpu)
 	assert(targetMemoryPlace != nullptr);
 
 	// This if is only for source taskfors.
-	bool isSourceTaskfor = (_task->isTaskfor() && !_task->isRunnable());
+	bool isSourceTaskfor = _task->isSourceTaskfor();
 	if (isSourceTaskfor) {
 		assert(!_task->isRunnable());
 

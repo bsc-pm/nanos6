@@ -38,8 +38,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 	while ((task != nullptr) && ready) {
 		Task *parent = task->getParent();
 
-		bool isTaskloopFor = (task->isTaskloop() && task->isTaskfor());
-		bool isTaskforCollaborator = (task->isTaskfor() && task->isRunnable() && !isTaskloopFor);
+		bool isTaskforCollaborator = task->isTaskforCollaborator();
 		// If this is the first iteration of the loop, the task will test true to hasFinished and false to mustDelayRelease, doing
 		// nothing inside the conditionals.
 		if (task->hasFinished()) {
