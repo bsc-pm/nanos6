@@ -14,20 +14,15 @@ import operator
 
 bt2.register_plugin(
 	module_name=__name__,
-	name="ctf2prv",
-	description="CTF trace to Paraver trace converter",
+	name="nanos6",
+	description="Nanos6 CTF instrumentation backend utilities",
 	author="Aleix Roca Nonell",
 	license="GPL",
 	version=(1, 0, 0),
 )
 
-#nanos6:task_label    --- <entry in .pcf>
-#nanos6:task_execute  --- 9200011:<task_type_id> 
-#nanos6:task_end      --- 9200011:0
-#nanos6:task_block    --- 9200011:0
-
 @bt2.plugin_component_class
-class converter(bt2._UserSinkComponent):
+class ctf2prv(bt2._UserSinkComponent):
 	def __init__(self, config, params, obj):
 		print("holi")
 		self.__port = self._add_input_port("in")

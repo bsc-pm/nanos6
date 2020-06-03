@@ -24,4 +24,4 @@ export PYTHONPATH=$PYTHONPATH:$DIR
 babeltrace2 --plugin-path=$DIR         \
 	-c source.ctf.fs               \
 	--params="inputs=[\"$TRACE\"]" \
-	-c sink.ctf2prv.converter
+	-c sink.nanos6.ctf2prv
