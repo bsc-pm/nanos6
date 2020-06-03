@@ -30,8 +30,6 @@ class TaskTypeData {
 
 private:
 
-	//! A spinlock so that tasktype structures can be accessed atomically
-
 	/*    HARDWARE COUNTERS    */
 
 	typedef BoostAcc::accumulator_set<double, BoostAcc::stats<BoostAccTag::sum, BoostAccTag::mean, BoostAccTag::variance, BoostAccTag::count> > statistics_accumulator_t;

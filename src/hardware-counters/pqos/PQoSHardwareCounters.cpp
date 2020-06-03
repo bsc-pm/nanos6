@@ -337,21 +337,21 @@ void PQoSHardwareCounters::displayStatistics()
 
 	// Iterate through all tasktypes
 	task_type_map_t &taskTypeMap = TaskInfo::getTaskTypeMapReference();
-	for (task_type_map_t::iterator it = taskTypeMap.begin(); it != taskTypeMap.end(); ++it) {
-		if (it->first._taskLabel != "Unlabeled") {
+	for (auto &taskType : taskTypeMap) {
+		if (taskType.first._taskLabel != "Unlabeled") {
 			outputStream <<
 				std::setw(7)  << "STATS"             << " " <<
 				std::setw(6)  << "PQOS"              << " " <<
 				std::setw(30) << "TASK-TYPE"         << " " <<
-				std::setw(20) << it->first._taskLabel << "\n";
+				std::setw(20) << taskType.first._taskLabel << "\n";
 
 			// Iterate through all counter types
 			for (unsigned short id = 0; id < HWCounters::PQOS_NUM_EVENTS; ++id) {
 				if (_enabledEvents[id]) {
-					double counterAvg   = it->second.getCounterAvg((HWCounters::counters_t) id);
-					double counterStdev = it->second.getCounterStddev((HWCounters::counters_t) id);
-					double counterSum   = it->second.getCounterSum((HWCounters::counters_t) id);
-					size_t instances    = it->second.getCounterCount((HWCounters::counters_t) id);
+					double counterAvg   = taskType.second.getCounterAvg((HWCounters::counters_t) id);
+					double counterStdev = taskType.second.getCounterStddev((HWCounters::counters_t) id);
+					double counterSum   = taskType.second.getCounterSum((HWCounters::counters_t) id);
+					size_t instances    = taskType.second.getCounterCount((HWCounters::counters_t) id);
 
 					// In KB
 					unsigned short pqosId = id + HWCounters::PQOS_MIN_EVENT;

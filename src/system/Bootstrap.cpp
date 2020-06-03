@@ -82,7 +82,7 @@ void nanos6_preinit(void) {
 	ClusterManager::initialize();
 	CPUManager::preinitialize();
 
-	// Finish Hardware counters initializatio after CPUManager
+	// Finish Hardware counters initialization after CPUManager
 	HardwareCounters::initialize();
 	MemoryAllocator::initialize();
 	Scheduler::initialize();

@@ -19,12 +19,6 @@ class PQoSCPUHardwareCounters : public CPUHardwareCountersInterface {
 
 private:
 
-	//! Whether reading of HW counters for the task is active
-	bool _active;
-
-	//! Whether monitoring of counters for this task is enabled
-	bool _enabled;
-
 	//! An array of regular HW counter deltas
 	size_t _regularCounters[SupportPQoS::num_regular_counters];
 
@@ -43,7 +37,7 @@ public:
 	//! \brief Get the delta value of a hardware counter
 	//!
 	//! \param[in] counterId The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t counterId)
+	inline double getDelta(HWCounters::counters_t counterId) override
 	{
 		switch (counterId) {
 			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:

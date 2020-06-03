@@ -49,27 +49,27 @@ public:
 	void cpuBecomesIdle(
 		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters
-	);
+	) override;
 
-	void threadInitialized(ThreadHardwareCountersInterface *threadCounters);
+	void threadInitialized(ThreadHardwareCountersInterface *threadCounters) override;
 
-	void threadShutdown(ThreadHardwareCountersInterface *threadCounters);
+	void threadShutdown(ThreadHardwareCountersInterface *threadCounters) override;
 
-	void taskReinitialized(TaskHardwareCountersInterface *taskCounters);
+	void taskReinitialized(TaskHardwareCountersInterface *taskCounters) override;
 
 	void taskStarted(
 		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
-	);
+	) override;
 
 	void taskStopped(
 		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
-	);
+	) override;
 
-	void taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters);
+	void taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters) override;
 
 };
 

@@ -19,14 +19,14 @@ public:
 	}
 
 	//! \brief Empty hardware counter structures
-	inline void clear()
+	inline void clear() override
 	{
 	}
 
 	//! \brief Get the delta value of a HW counter
 	//!
 	//! \param[in] counterId The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t)
+	inline double getDelta(HWCounters::counters_t) override
 	{
 		return 0.0;
 	}
@@ -34,7 +34,7 @@ public:
 	//! \brief Get the accumulated value of a HW counter
 	//!
 	//! \param[in] counterId The type of counter to get the accumulation from
-	inline double getAccumulated(HWCounters::counters_t)
+	inline double getAccumulated(HWCounters::counters_t) override
 	{
 		return 0.0;
 	}

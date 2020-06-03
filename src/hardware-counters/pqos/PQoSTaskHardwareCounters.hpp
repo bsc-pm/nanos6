@@ -67,7 +67,7 @@ public:
 	}
 
 	//! \brief Reset all structures to their default value
-	inline void clear()
+	inline void clear() override
 	{
 		_active = false;
 
@@ -147,7 +147,7 @@ public:
 
 	//! \brief Get the delta value of a hardware counter
 	//! \param[in] counterId The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t counterId)
+	inline double getDelta(HWCounters::counters_t counterId) override
 	{
 		switch (counterId) {
 			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
@@ -170,7 +170,7 @@ public:
 
 	//! \brief Get the accumulated value of a hardware counter
 	//! \param[in] counterId The type of counter to get the accumulation from
-	inline double getAccumulated(HWCounters::counters_t counterId)
+	inline double getAccumulated(HWCounters::counters_t counterId) override
 	{
 		switch (counterId) {
 			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:

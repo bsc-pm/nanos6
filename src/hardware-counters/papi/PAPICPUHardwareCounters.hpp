@@ -18,7 +18,7 @@ public:
 	{
 	}
 
-	inline double getDelta(HWCounters::counters_t)
+	inline double getDelta(HWCounters::counters_t) override
 	{
 		return 0.0;
 	}
