@@ -430,10 +430,7 @@ openacc_sources =
 
 if USE_OPENACC
 openacc_sources += \
-	src/hardware/device/openacc/OpenAccAccelerator.cpp \
-	src/hardware/device/openacc/OpenAccQueuePool.cpp
-
-openacc_LDFLAGS = $(openacc_LIBS)
+	src/hardware/device/openacc/OpenAccAccelerator.cpp
 endif
 
 common_sources += $(openacc_sources)
