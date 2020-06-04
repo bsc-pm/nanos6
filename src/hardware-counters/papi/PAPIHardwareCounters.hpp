@@ -26,31 +26,41 @@ public:
 	{
 	}
 
-	inline void threadInitialized(ThreadHardwareCountersInterface *)
+	inline void cpuBecomesIdle(CPUHardwareCountersInterface *, ThreadHardwareCountersInterface *) override
 	{
 	}
 
-	inline void threadShutdown(ThreadHardwareCountersInterface *)
+	inline void threadInitialized(ThreadHardwareCountersInterface *) override
 	{
 	}
 
-	inline void taskCreated(Task *, bool)
+	inline void threadShutdown(ThreadHardwareCountersInterface *) override
 	{
 	}
 
-	inline void taskReinitialized(TaskHardwareCountersInterface *)
+	inline void taskReinitialized(TaskHardwareCountersInterface *) override
 	{
 	}
 
-	inline void taskStarted(ThreadHardwareCountersInterface *, TaskHardwareCountersInterface *)
+	inline void taskStarted(
+		CPUHardwareCountersInterface *,
+		ThreadHardwareCountersInterface *,
+		TaskHardwareCountersInterface *
+	) override {
+	}
+
+	inline void taskStopped(
+		CPUHardwareCountersInterface *,
+		ThreadHardwareCountersInterface *,
+		TaskHardwareCountersInterface *
+	) override {
+	}
+
+	inline void taskFinished(Task *, TaskHardwareCountersInterface *) override
 	{
 	}
 
-	inline void taskStopped(ThreadHardwareCountersInterface *, TaskHardwareCountersInterface *)
-	{
-	}
-
-	inline void taskFinished(Task *, TaskHardwareCountersInterface *)
+	inline void displayStatistics() const override
 	{
 	}
 

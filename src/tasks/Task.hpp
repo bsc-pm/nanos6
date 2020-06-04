@@ -18,6 +18,7 @@
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "scheduling/ReadyQueue.hpp"
+#include "tasks/TasktypeData.hpp"
 
 #include <ClusterTaskContext.hpp>
 #include <ExecutionWorkflow.hpp>
@@ -811,6 +812,13 @@ public:
 	inline bool isMainTask() const
 	{
 		return _flags[main_task_flag];
+	}
+
+	inline TasktypeData *getTasktypeData()
+	{
+		assert(_taskInfo != nullptr);
+
+		return (TasktypeData *) _taskInfo->task_type_data;
 	}
 };
 

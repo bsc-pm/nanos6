@@ -7,13 +7,14 @@
 #ifndef DEVICE_INFO_HPP
 #define DEVICE_INFO_HPP
 
-#include "hardware/places/MemoryPlace.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "hardware/places/MemoryPlace.hpp"
 
 class DeviceInfo {
 protected:
 	// Number of devices of the given device type
 	size_t _deviceCount;
+
 	// Underlying mechanism initialization status, where applicable (e.g CUDA Runtime)
 	bool _deviceInitialized;
 
@@ -39,6 +40,12 @@ public:
 	virtual size_t getMemoryPlaceCount() const = 0;
 
 	virtual MemoryPlace *getMemoryPlace(int handler) = 0;
+
+	virtual size_t getNumPhysicalPackages() const
+	{
+		return 0;
+	}
+
 };
 
 #endif // DEVICE_INFO_HPP

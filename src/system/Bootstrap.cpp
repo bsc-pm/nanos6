@@ -75,11 +75,15 @@ void nanos6_preinit(void) {
 
 
 	RuntimeInfoEssentials::initialize();
-	// Initialize Hardware Counters before hardware
-	HardwareCounters::initialize();
+
+	// Pre-initialize Hardware Counters before hardware
+	HardwareCounters::preinitialize();
 	HardwareInfo::initialize();
 	ClusterManager::initialize();
 	CPUManager::preinitialize();
+
+	// Finish Hardware counters initialization after CPUManager
+	HardwareCounters::initialize();
 	MemoryAllocator::initialize();
 	Scheduler::initialize();
 	ExternalThreadGroup::initialize();

@@ -19,10 +19,7 @@
 namespace BoostAcc = boost::accumulators;
 namespace BoostAccTag = boost::accumulators::tag;
 
-class PQoSTaskHardwareCounters : public TaskHardwareCountersInterface {
-
-private:
-
+namespace SupportPQoS {
 	typedef BoostAcc::accumulator_set<size_t, BoostAcc::stats<BoostAccTag::mean> > counter_accumulator_t;
 
 	enum accumulating_counter_t {
@@ -38,6 +35,11 @@ private:
 		ipc_unhalted,
 		num_regular_counters
 	};
+}
+
+class PQoSTaskHardwareCounters : public TaskHardwareCountersInterface {
+
+private:
 
 	//! Whether reading of HW counters for the task is active
 	bool _active;
@@ -46,11 +48,11 @@ private:
 	bool _enabled;
 
 	//! Arrays of regular HW counter deltas and accumulations
-	size_t _regularCountersDelta[num_regular_counters];
-	size_t _regularCountersAccumulated[num_regular_counters];
+	size_t _regularCountersDelta[SupportPQoS::num_regular_counters];
+	size_t _regularCountersAccumulated[SupportPQoS::num_regular_counters];
 
 	//! An array of accumulators of accumulating HW counters
-	counter_accumulator_t _accumulatingCounters[num_accumulating_counters];
+	SupportPQoS::counter_accumulator_t _accumulatingCounters[SupportPQoS::num_accumulating_counters];
 
 public:
 
@@ -58,23 +60,23 @@ public:
 		_active(false),
 		_enabled(enabled)
 	{
-		for (size_t id = 0; id < num_regular_counters; ++id) {
+		for (size_t id = 0; id < SupportPQoS::num_regular_counters; ++id) {
 			_regularCountersDelta[id] = 0;
 			_regularCountersAccumulated[id] = 0;
 		}
 	}
 
 	//! \brief Reset all structures to their default value
-	inline void clear()
+	inline void clear() override
 	{
 		_active = false;
 
-		for (size_t id = 0; id < num_regular_counters; ++id) {
+		for (size_t id = 0; id < SupportPQoS::num_regular_counters; ++id) {
 			_regularCountersDelta[id] = 0;
 			_regularCountersAccumulated[id] = 0;
 		}
 
-		for (size_t id = 0; id < num_accumulating_counters; ++id) {
+		for (size_t id = 0; id < SupportPQoS::num_accumulating_counters; ++id) {
 			_accumulatingCounters[id] = {};
 		}
 	}
@@ -107,14 +109,14 @@ public:
 
 		// For regular counters, the delta values in 'data' are reset from the
 		// thread and we only care about accumulating them when we stop reading
-		_regularCountersDelta[mbm_local] = data->values.mbm_local_delta;
-		_regularCountersDelta[mbm_remote] = data->values.mbm_remote_delta;
-		_regularCountersDelta[llc_misses] = data->values.llc_misses_delta;
-		_regularCountersDelta[ipc_retired] = data->values.ipc_retired_delta;
-		_regularCountersDelta[ipc_unhalted] = data->values.ipc_unhalted_delta;
+		_regularCountersDelta[SupportPQoS::mbm_local] = data->values.mbm_local_delta;
+		_regularCountersDelta[SupportPQoS::mbm_remote] = data->values.mbm_remote_delta;
+		_regularCountersDelta[SupportPQoS::llc_misses] = data->values.llc_misses_delta;
+		_regularCountersDelta[SupportPQoS::ipc_retired] = data->values.ipc_retired_delta;
+		_regularCountersDelta[SupportPQoS::ipc_unhalted] = data->values.ipc_unhalted_delta;
 
 		// For accumulating counters, we must accumulate at start and stop
-		_accumulatingCounters[llc_usage](data->values.llc);
+		_accumulatingCounters[SupportPQoS::llc_usage](data->values.llc);
 	}
 
 	//! \brief Stop reading hardware counters for the current task
@@ -127,37 +129,39 @@ public:
 
 		// For regular counters, the delta values in 'data' hold the counters
 		// from start to stop, and those are the ones we want to read
-		_regularCountersDelta[mbm_local] = data->values.mbm_local_delta;
-		_regularCountersDelta[mbm_remote] = data->values.mbm_remote_delta;
-		_regularCountersDelta[llc_misses] = data->values.llc_misses_delta;
-		_regularCountersDelta[ipc_retired] = data->values.ipc_retired_delta;
-		_regularCountersDelta[ipc_unhalted] = data->values.ipc_unhalted_delta;
+		_regularCountersDelta[SupportPQoS::mbm_local] = data->values.mbm_local_delta;
+		_regularCountersDelta[SupportPQoS::mbm_remote] = data->values.mbm_remote_delta;
+		_regularCountersDelta[SupportPQoS::llc_misses] = data->values.llc_misses_delta;
+		_regularCountersDelta[SupportPQoS::ipc_retired] = data->values.ipc_retired_delta;
+		_regularCountersDelta[SupportPQoS::ipc_unhalted] = data->values.ipc_unhalted_delta;
 
-		_regularCountersAccumulated[mbm_local] += _regularCountersDelta[mbm_local];
-		_regularCountersAccumulated[mbm_remote] += _regularCountersDelta[mbm_remote];
-		_regularCountersAccumulated[llc_misses] += _regularCountersDelta[llc_misses];
-		_regularCountersAccumulated[ipc_retired] += _regularCountersDelta[ipc_retired];
-		_regularCountersAccumulated[ipc_unhalted] += _regularCountersDelta[ipc_unhalted];
+		_regularCountersAccumulated[SupportPQoS::mbm_local] += _regularCountersDelta[SupportPQoS::mbm_local];
+		_regularCountersAccumulated[SupportPQoS::mbm_remote] += _regularCountersDelta[SupportPQoS::mbm_remote];
+		_regularCountersAccumulated[SupportPQoS::llc_misses] += _regularCountersDelta[SupportPQoS::llc_misses];
+		_regularCountersAccumulated[SupportPQoS::ipc_retired] += _regularCountersDelta[SupportPQoS::ipc_retired];
+		_regularCountersAccumulated[SupportPQoS::ipc_unhalted] += _regularCountersDelta[SupportPQoS::ipc_unhalted];
 
 		// For accumulating counters, we must accumulate at start and stop
-		_accumulatingCounters[llc_usage](data->values.llc);
+		_accumulatingCounters[SupportPQoS::llc_usage](data->values.llc);
 	}
 
 	//! \brief Get the delta value of a hardware counter
 	//! \param[in] counterId The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t counterId)
+	inline double getDelta(HWCounters::counters_t counterId) override
 	{
 		switch (counterId) {
 			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
-				return (double) BoostAcc::mean(_accumulatingCounters[llc_usage]);
+				return (double) BoostAcc::mean(_accumulatingCounters[SupportPQoS::llc_usage]);
 			case HWCounters::PQOS_PERF_EVENT_IPC:
-				return (double) _regularCountersDelta[ipc_retired] / (double) _regularCountersDelta[ipc_unhalted];
+				return (double) _regularCountersDelta[SupportPQoS::ipc_retired] /
+					(double) _regularCountersDelta[SupportPQoS::ipc_unhalted];
 			case HWCounters::PQOS_MON_EVENT_LMEM_BW:
-				return (double) _regularCountersDelta[mbm_local];
+				return (double) _regularCountersDelta[SupportPQoS::mbm_local];
 			case HWCounters::PQOS_MON_EVENT_RMEM_BW:
-				return (double) _regularCountersDelta[mbm_remote];
+				return (double) _regularCountersDelta[SupportPQoS::mbm_remote];
 			case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
-				return (double) _regularCountersDelta[llc_misses] / (double) _regularCountersDelta[ipc_retired];
+				return (double) _regularCountersDelta[SupportPQoS::llc_misses] /
+					(double) _regularCountersDelta[SupportPQoS::ipc_retired];
 			default:
 				FatalErrorHandler::fail("Event with id '", counterId, "' not supported (PQoS)");
 				return 0.0;
@@ -166,19 +170,21 @@ public:
 
 	//! \brief Get the accumulated value of a hardware counter
 	//! \param[in] counterId The type of counter to get the accumulation from
-	inline double getAccumulated(HWCounters::counters_t counterId)
+	inline double getAccumulated(HWCounters::counters_t counterId) override
 	{
 		switch (counterId) {
 			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
-				return (double) BoostAcc::mean(_accumulatingCounters[llc_usage]);
+				return (double) BoostAcc::mean(_accumulatingCounters[SupportPQoS::llc_usage]);
 			case HWCounters::PQOS_PERF_EVENT_IPC:
-				return (double) _regularCountersAccumulated[ipc_retired] / (double) _regularCountersAccumulated[ipc_unhalted];
+				return (double) _regularCountersAccumulated[SupportPQoS::ipc_retired] /
+					(double) _regularCountersAccumulated[SupportPQoS::ipc_unhalted];
 			case HWCounters::PQOS_MON_EVENT_LMEM_BW:
-				return (double) _regularCountersAccumulated[mbm_local];
+				return (double) _regularCountersAccumulated[SupportPQoS::mbm_local];
 			case HWCounters::PQOS_MON_EVENT_RMEM_BW:
-				return (double) _regularCountersAccumulated[mbm_remote];
+				return (double) _regularCountersAccumulated[SupportPQoS::mbm_remote];
 			case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
-				return (double) _regularCountersAccumulated[llc_misses] / (double) _regularCountersAccumulated[ipc_retired];
+				return (double) _regularCountersAccumulated[SupportPQoS::llc_misses] /
+					(double) _regularCountersAccumulated[SupportPQoS::ipc_retired];
 			default:
 				FatalErrorHandler::fail("Event with id '", counterId, "' not supported (PQoS)");
 				return 0.0;

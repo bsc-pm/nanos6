@@ -12,6 +12,7 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
@@ -195,9 +196,11 @@ public:
 						 // Loop again, since things may have changed
 						successful = false;
 
-						// The CPU is disabling, the thread becomes idle
+						HardwareCounters::cpuBecomesIdle();
 						Monitoring::cpuBecomesIdle(cpu->getIndex());
 						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+
+						// The CPU is disabling, the thread becomes idle
 						ThreadManager::addIdler(currentThread);
 						currentThread->switchTo(nullptr);
 					}

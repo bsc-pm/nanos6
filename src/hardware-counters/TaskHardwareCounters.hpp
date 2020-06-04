@@ -53,7 +53,9 @@ public:
 	}
 
 	//! \brief Initialize and construct all backend objects with the previously allocated space
-	inline void initialize()
+	//!
+	//! \param[in] enabled Whether hardware counters are enabled for the task
+	inline void initialize(__attribute__((unused)) bool enabled)
 	{
 		// NOTE: Objects are constructed in this function, but they are freed when
 		// the task is freed (see TaskFinalizationImplementation.hpp)
@@ -64,7 +66,7 @@ public:
 		if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
 			assert(currentAddress != nullptr);
 
-			new (currentAddress) PAPITaskHardwareCounters();
+			new (currentAddress) PAPITaskHardwareCounters(enabled);
 			currentAddress = (char *) currentAddress + sizeof(PAPITaskHardwareCounters);
 		}
 #endif
@@ -73,7 +75,7 @@ public:
 		if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
 			assert(currentAddress != nullptr);
 
-			new (currentAddress) PQoSTaskHardwareCounters();
+			new (currentAddress) PQoSTaskHardwareCounters(enabled);
 			currentAddress = (char *) currentAddress + sizeof(PQoSTaskHardwareCounters);
 		}
 #endif

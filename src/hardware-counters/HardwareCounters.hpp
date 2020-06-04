@@ -33,6 +33,9 @@ private:
 	//! The underlying PAPI backend
 	static HardwareCountersInterface *_papiBackend;
 
+	//! The underlying RAPL backend
+	static HardwareCountersInterface *_raplBackend;
+
 	//! Whether there is at least one enabled backend
 	static bool _anyBackendEnabled;
 
@@ -58,7 +61,10 @@ private:
 
 public:
 
-	//! \brief Initialize the hardware counters API with the correct backend
+	//! \brief Pre-initialize the hardware counters API before hardware and CPUs are detected
+	static void preinitialize();
+
+	//! \brief Finish initializing the hardware counters API
 	static void initialize();
 
 	//! \brief Shutdown the hardware counters API
@@ -78,6 +84,9 @@ public:
 	{
 		return _enabledEvents;
 	}
+
+	//! \brief Accumulate hardware counters for a CPU when it becomes idle
+	static void cpuBecomesIdle();
 
 	//! \brief Initialize hardware counter structures for a new thread
 	static void threadInitialized();

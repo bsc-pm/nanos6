@@ -13,6 +13,7 @@ namespace HWCounters {
 	enum backends_t {
 		PAPI_BACKEND = 0,
 		PQOS_BACKEND,
+		RAPL_BACKEND,
 		NUM_BACKENDS
 	};
 

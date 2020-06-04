@@ -5,11 +5,14 @@
 */
 
 #include "HardwareCounters.hpp"
+#include "CPUHardwareCounters.hpp"
+#include "CPUHardwareCountersInterface.hpp"
 #include "TaskHardwareCounters.hpp"
 #include "TaskHardwareCountersInterface.hpp"
 #include "ThreadHardwareCounters.hpp"
 #include "ThreadHardwareCountersInterface.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "hardware-counters/rapl/RAPLHardwareCounters.hpp"
 #include "support/JsonFile.hpp"
 #include "tasks/Task.hpp"
 
@@ -26,6 +29,7 @@ EnvironmentVariable<bool> HardwareCounters::_verbose("NANOS6_HWCOUNTERS_VERBOSE"
 EnvironmentVariable<std::string> HardwareCounters::_verboseFile("NANOS6_HWCOUNTERS_VERBOSE_FILE", "nanos6-output-hwcounters.txt");
 HardwareCountersInterface *HardwareCounters::_papiBackend;
 HardwareCountersInterface *HardwareCounters::_pqosBackend;
+HardwareCountersInterface *HardwareCounters::_raplBackend;
 bool HardwareCounters::_anyBackendEnabled(false);
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
 std::vector<bool> HardwareCounters::_enabledEvents(HWCounters::TOTAL_NUM_EVENTS);
@@ -76,6 +80,14 @@ void HardwareCounters::loadConfigurationFile()
 							}
 						}
 					}
+				} else if (backend == "RAPL") {
+					if (backendNode.dataExists("ENABLED")) {
+						bool converted = false;
+						bool enabled = backendNode.getData("ENABLED", converted);
+						assert(converted);
+
+						_enabled[HWCounters::RAPL_BACKEND] = enabled;
+					}
 				} else {
 					FatalErrorHandler::fail(
 						"Unexpected '", backend, "' backend name found while processing the ",
@@ -87,11 +99,12 @@ void HardwareCounters::loadConfigurationFile()
 	}
 }
 
-void HardwareCounters::initialize()
+void HardwareCounters::preinitialize()
 {
 	// First set all backends to nullptr and all events disabled
 	_pqosBackend = nullptr;
 	_papiBackend = nullptr;
+	_raplBackend = nullptr;
 	for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
 		_enabled[i] = false;
 	}
@@ -106,8 +119,8 @@ void HardwareCounters::initialize()
 	// Check if there's an incompatibility between backends
 	checkIncompatibleBackends();
 
-	for (unsigned short i = 0; i < _enabledEvents.size(); ++i) {
-		if (_enabledEvents[i]) {
+	for (unsigned short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
+		if (_enabled[i]) {
 			_anyBackendEnabled = true;
 			break;
 		}
@@ -139,6 +152,19 @@ void HardwareCounters::initialize()
 		_enabled[HWCounters::PAPI_BACKEND] = false;
 #endif
 	}
+
+	// NOTE: Since the RAPL backend needs to be initialized after hardware is
+	// detected, we do that in the initialize function
+}
+
+void HardwareCounters::initialize()
+{
+	if (_enabled[HWCounters::RAPL_BACKEND]) {
+		_raplBackend = new RAPLHardwareCounters(
+			_verbose.getValue(),
+			_verboseFile.getValue()
+		);
+	}
 }
 
 void HardwareCounters::shutdown()
@@ -159,7 +185,38 @@ void HardwareCounters::shutdown()
 		_enabled[HWCounters::PAPI_BACKEND] = false;
 	}
 
+	if (_enabled[HWCounters::RAPL_BACKEND]) {
+		assert(_raplBackend != nullptr);
+
+		delete _raplBackend;
+		_raplBackend = nullptr;
+		_enabled[HWCounters::RAPL_BACKEND] = false;
+	}
+
 	_anyBackendEnabled = false;
+}
+
+void HardwareCounters::cpuBecomesIdle()
+{
+	WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
+	assert(thread != nullptr);
+
+	CPU *cpu = thread->getComputePlace();
+	assert(cpu != nullptr);
+
+	CPUHardwareCounters &cpuCounters = cpu->getHardwareCounters();
+	ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
+	if (_enabled[HWCounters::PQOS_BACKEND]) {
+		assert(_pqosBackend != nullptr);
+
+		_pqosBackend->cpuBecomesIdle(cpuCounters.getPQoSCounters(), threadCounters.getPQoSCounters());
+	}
+
+	if (_enabled[HWCounters::PAPI_BACKEND]) {
+		assert(_pqosBackend != nullptr);
+
+		_papiBackend->cpuBecomesIdle(cpuCounters.getPAPICounters(), threadCounters.getPAPICounters());
+	}
 }
 
 void HardwareCounters::threadInitialized()
@@ -211,18 +268,7 @@ void HardwareCounters::taskCreated(Task *task, bool enabled)
 
 		// After the task is created, initialize (construct) hardware counters
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-		taskCounters.initialize();
-		if (_enabled[HWCounters::PQOS_BACKEND]) {
-			assert(_pqosBackend != nullptr);
-
-			_pqosBackend->taskCreated(task, enabled);
-		}
-
-		if (_enabled[HWCounters::PAPI_BACKEND]) {
-			assert(_papiBackend != nullptr);
-
-			_papiBackend->taskCreated(task, enabled);
-		}
+		taskCounters.initialize(enabled);
 	}
 }
 
@@ -253,18 +299,30 @@ void HardwareCounters::taskStarted(Task *task)
 		assert(thread != nullptr);
 		assert(task != nullptr);
 
+		CPU *cpu = thread->getComputePlace();
+		assert(cpu != nullptr);
+
+		CPUHardwareCounters &cpuCounters = cpu->getHardwareCounters();
 		ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
 		if (_enabled[HWCounters::PQOS_BACKEND]) {
 			assert(_pqosBackend != nullptr);
 
-			_pqosBackend->taskStarted(threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
+			_pqosBackend->taskStarted(
+				cpuCounters.getPQoSCounters(),
+				threadCounters.getPQoSCounters(),
+				taskCounters.getPQoSCounters()
+			);
 		}
 
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
-			_papiBackend->taskStarted(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
+			_papiBackend->taskStarted(
+				cpuCounters.getPQoSCounters(),
+				threadCounters.getPAPICounters(),
+				taskCounters.getPAPICounters()
+			);
 		}
 	}
 }
@@ -276,18 +334,30 @@ void HardwareCounters::taskStopped(Task *task)
 		assert(thread != nullptr);
 		assert(task != nullptr);
 
+		CPU *cpu = thread->getComputePlace();
+		assert(cpu != nullptr);
+
+		CPUHardwareCounters &cpuCounters = cpu->getHardwareCounters();
 		ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
 		if (_enabled[HWCounters::PQOS_BACKEND]) {
 			assert(_pqosBackend != nullptr);
 
-			_pqosBackend->taskStopped(threadCounters.getPQoSCounters(), taskCounters.getPQoSCounters());
+			_pqosBackend->taskStopped(
+				cpuCounters.getPQoSCounters(),
+				threadCounters.getPQoSCounters(),
+				taskCounters.getPQoSCounters()
+			);
 		}
 
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
-			_papiBackend->taskStopped(threadCounters.getPAPICounters(), taskCounters.getPAPICounters());
+			_papiBackend->taskStopped(
+				cpuCounters.getPAPICounters(),
+				threadCounters.getPAPICounters(),
+				taskCounters.getPAPICounters()
+			);
 		}
 	}
 }

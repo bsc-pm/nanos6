@@ -9,6 +9,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
 #include <Monitoring.hpp>
@@ -38,7 +39,7 @@ void DefaultCPUManager::preinitialize()
 	HostInfo *hostInfo = ((HostInfo *) HardwareInfo::getDeviceInfo(hostDevice));
 	assert(hostInfo != nullptr);
 
-	std::vector<ComputePlace *> const &cpus = hostInfo->getComputePlaces();
+	const std::vector<ComputePlace *> &cpus = hostInfo->getComputePlaces();
 	size_t numCPUs = cpus.size();
 	assert(numCPUs > 0);
 
@@ -49,9 +50,7 @@ void DefaultCPUManager::preinitialize()
 	} else if (policyValue == "busy") {
 		_cpuManagerPolicy = new BusyPolicy();
 	} else {
-		FatalErrorHandler::failIf(
-			true, "Unexistent '", policyValue, "' CPU Manager Policy"
-		);
+		FatalErrorHandler::fail("Unexistent '", policyValue, "' CPU Manager Policy");
 	}
 	assert(_cpuManagerPolicy != nullptr);
 
@@ -235,9 +234,11 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 		return false;
 	}
 
-	// Mark the CPU as idle
+	HardwareCounters::cpuBecomesIdle();
 	Monitoring::cpuBecomesIdle(index);
 	Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+
+	// Mark the CPU as idle
 	_idleCPUs[index] = true;
 	++_numIdleCPUs;
 	assert(_numIdleCPUs <= _cpus.size());

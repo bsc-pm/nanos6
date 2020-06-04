@@ -372,6 +372,7 @@ common_sources = \
 	src/hardware/places/NUMAPlace.cpp \
 	src/hardware-counters/HardwareCounters.cpp \
 	src/hardware-counters/ThreadHardwareCounters.cpp \
+	src/hardware-counters/rapl/RAPLHardwareCounters.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
 	src/lowlevel/threads/ExternalThread.cpp \
 	src/lowlevel/threads/ExternalThreadGroup.cpp \
@@ -844,19 +845,25 @@ noinst_HEADERS = \
 	src/hardware/places/ComputePlace.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
+	src/hardware-counters/CPUHardwareCounters.hpp \
+	src/hardware-counters/CPUHardwareCountersInterface.hpp \
 	src/hardware-counters/HardwareCounters.hpp \
 	src/hardware-counters/HardwareCountersInterface.hpp \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
 	src/hardware-counters/TaskHardwareCounters.hpp \
 	src/hardware-counters/TaskHardwareCountersInterface.hpp \
+	src/hardware-counters/TasktypeHardwareCounters.hpp \
 	src/hardware-counters/ThreadHardwareCounters.hpp \
 	src/hardware-counters/ThreadHardwareCountersInterface.hpp \
+	src/hardware-counters/papi/PAPICPUHardwareCounters.hpp \
 	src/hardware-counters/papi/PAPIHardwareCounters.hpp \
 	src/hardware-counters/papi/PAPITaskHardwareCounters.hpp \
 	src/hardware-counters/papi/PAPIThreadHardwareCounters.hpp \
+	src/hardware-counters/pqos/PQoSCPUHardwareCounters.hpp \
 	src/hardware-counters/pqos/PQoSHardwareCounters.hpp \
 	src/hardware-counters/pqos/PQoSTaskHardwareCounters.hpp \
 	src/hardware-counters/pqos/PQoSThreadHardwareCounters.hpp \
+	src/hardware-counters/rapl/RAPLHardwareCounters.hpp \
 	src/instrument/api/InstrumentAddTask.hpp \
 	src/instrument/api/InstrumentBlocking.hpp \
 	src/instrument/api/InstrumentComputePlaceManagement.hpp \
@@ -1168,7 +1175,7 @@ noinst_HEADERS = \
 	src/tasks/TaskImplementation.hpp \
 	src/tasks/TaskInfo.hpp \
 	src/tasks/Taskloop.hpp \
-	src/tasks/TaskTypeData.hpp \
+	src/tasks/TasktypeData.hpp \
 	src/version/VersionInfo.hpp \
 	tests/Atomic.hpp \
 	tests/Functors.hpp \

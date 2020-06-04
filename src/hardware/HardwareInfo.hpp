@@ -17,8 +17,11 @@
 class HardwareInfo {
 private:
 	static std::vector<DeviceInfo *> _infos;
+
 public:
+
 	static void initialize();
+
 	static void shutdown();
 
 	static inline bool canDeviceRunTasks(nanos6_device_t type)
@@ -45,6 +48,7 @@ public:
 			HostInfo *hostInfo = (HostInfo *)_infos[type];
 			return hostInfo->getValidMemoryPlaceCount();
 		}
+
 		return _infos[type]->getMemoryPlaceCount();
 	}
 
@@ -76,6 +80,11 @@ public:
 	static inline size_t getPhysicalMemorySize()
 	{
 		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getPhysicalMemorySize();
+	}
+
+	static inline size_t getNumPhysicalPackages()
+	{
+		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getNumPhysicalPackages();
 	}
 
 };

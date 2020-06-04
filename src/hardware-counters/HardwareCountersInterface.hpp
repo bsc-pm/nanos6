@@ -8,6 +8,7 @@
 #define HARDWARE_COUNTERS_INTERFACE_HPP
 
 
+class CPUHardwareCountersInterface;
 class Task;
 class TaskHardwareCountersInterface;
 class ThreadHardwareCountersInterface;
@@ -20,6 +21,15 @@ public:
 	{
 	}
 
+	//! \brief Accumulate hardware counters for a CPU
+	//!
+	//! \param[out] cpuCounters The hardware counter structures of the CPU
+	//! \param[out] threadCounters The hardware counter structures of the thread
+	virtual void cpuBecomesIdle(
+		CPUHardwareCountersInterface *cpuCounters,
+		ThreadHardwareCountersInterface *threadCounters
+	) = 0;
+
 	//! \brief Initialize hardware counter structures for a new thread
 	//!
 	//! \param[out] threadCounters The hardware counter structures to initialize
@@ -30,12 +40,6 @@ public:
 	//! \param[out] threadCounters The hardware counter structures to initialize
 	virtual void threadShutdown(ThreadHardwareCountersInterface *threadCounters) = 0;
 
-	//! \brief Initialize hardware counter structures for a task
-	//!
-	//! \param[out] task The newly created task
-	//! \param[in] enabled Whether to create structures and monitor this task
-	virtual void taskCreated(Task *task, bool enabled) = 0;
-
 	//! \brief Reinitialize all hardware counter structures for a task
 	//!
 	//! \param[out] taskCounters The hardware counter structure to reinitialize
@@ -43,18 +47,22 @@ public:
 
 	//! \brief Start reading hardware counters for a task
 	//!
+	//! \param[out] cpuCounters The hardware counter structures of the CPU executing the task
 	//! \param[out] threadCounters The hardware counter structures of the thread executing the task
 	//! \param[out] taskCounters The hardware counter structure of the task to start
 	virtual void taskStarted(
+		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	) = 0;
 
 	//! \brief Stop reading hardware counters for a task
 	//!
+	//! \param[out] cpuCounters The hardware counter structures of the CPU executing the task
 	//! \param[out] threadCounters The hardware counter structures of the thread executing the task
 	//! \param[out] taskCounters The hardware counter structure of the task to stop
 	virtual void taskStopped(
+		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	) = 0;
@@ -64,6 +72,9 @@ public:
 	//! \param[out] task The task to finish hardware counters monitoring for
 	//! \param[out] taskCounters The hardware counter structure of the task
 	virtual void taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters) = 0;
+
+	//!
+	virtual void displayStatistics() const = 0;
 
 };
 
