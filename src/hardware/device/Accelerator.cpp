@@ -10,10 +10,10 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
-#include <Monitoring.hpp>
 
 void Accelerator::runTask(Task *task)
 {

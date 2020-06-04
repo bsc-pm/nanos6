@@ -779,12 +779,6 @@ public:
 		return cost;
 	}
 
-	//! \brief Setter for the task's monitoring statistics structures
-	inline void setTaskStatistics(TaskStatistics *taskStatistics)
-	{
-		_taskStatistics = taskStatistics;
-	}
-
 	//! \brief Get the task's monitoring statistics
 	inline TaskStatistics *getTaskStatistics()
 	{
