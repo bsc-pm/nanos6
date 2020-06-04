@@ -1967,12 +1967,26 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/tasks/3dh_ipc_task.cfg \
 	paraver-cfg/nanos6/tasks/task_and_deps.cfg \
 	paraver-cfg/nanos6/tasks/task_number.cfg \
-	paraver-cfg/nanos6/tasks/task_priority.cfg
+	paraver-cfg/nanos6/tasks/task_priority.cfg \
+	paraver-cfg/nanos6/ctf2prv/ctf_buffers_flush_to_disk.cfg \
+	paraver-cfg/nanos6/ctf2prv/hardware_counters.cfg \
+	paraver-cfg/nanos6/ctf2prv/number_of_blocked_tasks.cfg \
+	paraver-cfg/nanos6/ctf2prv/number_of_blocked_workers.cfg \
+	paraver-cfg/nanos6/ctf2prv/number_of_created_tasks.cfg \
+	paraver-cfg/nanos6/ctf2prv/number_of_created_workers.cfg \
+	paraver-cfg/nanos6/ctf2prv/number_of_running_tasks.cfg \
+	paraver-cfg/nanos6/ctf2prv/number_of_running_workers.cfg \
+	paraver-cfg/nanos6/ctf2prv/runtime_status_simple.cfg \
+	paraver-cfg/nanos6/ctf2prv/runtime_subsystems.cfg \
+	paraver-cfg/nanos6/ctf2prv/task_ids.cfg \
+	paraver-cfg/nanos6/ctf2prv/tasks.cfg \
+	paraver-cfg/nanos6/ctf2prv/task_source.cfg \
+	paraver-cfg/nanos6/ctf2prv/thread_id.cfg
+
 
 hwcountersdir = ${docdir}
 nobase_dist_hwcounters_DATA = \
 	scripts/nanos6_hwcounters.json
-
 
 ## --------------------------------- ##
 ## Format-independent Doxygen rules. ##
