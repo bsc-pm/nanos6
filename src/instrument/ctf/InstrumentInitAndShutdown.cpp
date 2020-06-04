@@ -49,6 +49,7 @@ static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 
 static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string userPath)
 {
+	CPU *CPU;
 	ctf_cpu_id_t i;
 	ctf_cpu_id_t cpuId;
 	std::string streamPath;
@@ -66,8 +67,7 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	// instrument function?)
 
 	for (i = 0; i < totalCPUs; i++) {
-		CPU *CPU = CPUManager::getCPU(i);
-		assert(CPU != nullptr);
+		CPU = CPUManager::getCPU(i);
 		cpuId = CPU->getSystemCPUId();
 		Instrument::CPULocalData &cpuLocalData = CPU->getInstrumentationData();
 
@@ -87,9 +87,9 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	CTFAPI::CTFContextUnbounded *context = new CTFAPI::CTFContextUnbounded();
 	userMetadata->addContext(context);
 
-	// TODO use true virtual cpu mechanism here
 	cpuId = totalCPUs;
-	Instrument::leaderThreadCPULocalData = new Instrument::CPULocalData();
+	CPU = CPUManager::getLeaderThreadCPU();
+	Instrument::CPULocalData &leaderThreadCPULocalData = CPU->getInstrumentationData();
 	CTFAPI::CTFStreamUnboundedPrivate *unboundedPrivateStream = new CTFAPI::CTFStreamUnboundedPrivate();
 	unboundedPrivateStream->setContext(context);
 	unboundedPrivateStream->initialize(defaultBufferSize, cpuId);
@@ -98,7 +98,7 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	unboundedPrivateStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
 	if (unboundedPrivateStream->fdOutput == -1)
 		FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
-	Instrument::leaderThreadCPULocalData->userStream = unboundedPrivateStream;
+	leaderThreadCPULocalData.userStream = unboundedPrivateStream;
 
 	cpuId = totalCPUs + 1;
 	Instrument::virtualCPULocalData = new Instrument::CPULocalData();
@@ -136,6 +136,7 @@ void Instrument::initialize()
 
 void Instrument::shutdown()
 {
+	CPU *CPU;
 	ctf_cpu_id_t i;
 	ctf_cpu_id_t totalCPUs;
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
@@ -145,8 +146,7 @@ void Instrument::shutdown()
 	totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 
 	for (i = 0; i < totalCPUs; i++) {
-		CPU *CPU = CPUManager::getCPU(i);
-		assert(CPU != nullptr);
+		CPU = CPUManager::getCPU(i);
 
 		CTFAPI::CTFStream *userStream = CPU->getInstrumentationData().userStream;
 		userStream->flushAll();
@@ -156,13 +156,13 @@ void Instrument::shutdown()
 		delete userStream;
 	}
 
-	// TODO use true virtual cpu mechanism here
-	CTFAPI::CTFStream *leaderThreadStream = Instrument::leaderThreadCPULocalData->userStream;
+	CPU = CPUManager::getLeaderThreadCPU();
+	Instrument::CPULocalData &leaderThreadCPULocalData = CPU->getInstrumentationData();
+	CTFAPI::CTFStream *leaderThreadStream = leaderThreadCPULocalData.userStream;
 	leaderThreadStream->flushAll();
 	leaderThreadStream->shutdown();
 	close(leaderThreadStream->fdOutput);
 	delete leaderThreadStream;
-	delete Instrument::leaderThreadCPULocalData;
 
 	CTFAPI::CTFStream *externalThreadStream = Instrument::virtualCPULocalData->userStream;
 	externalThreadStream->flushAll();

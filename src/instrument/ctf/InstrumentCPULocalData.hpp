@@ -17,7 +17,6 @@ namespace Instrument {
 	};
 
 	extern CPULocalData *virtualCPULocalData;
-	extern CPULocalData *leaderThreadCPULocalData;
 }
 
 #endif //INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP
