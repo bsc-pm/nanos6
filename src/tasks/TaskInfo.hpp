@@ -71,13 +71,12 @@ struct TasktypeId {
 	}
 };
 
-typedef std::map<TasktypeId, TasktypeData> task_type_map_t;
-
 class TaskInfo {
 
 private:
 
 	//! A map with task type data
+	typedef std::map<TasktypeId, TasktypeData> task_type_map_t;
 	static task_type_map_t _tasktypes;
 
 	//! SpinLock to register taskinfos

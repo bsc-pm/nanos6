@@ -47,14 +47,14 @@ public:
 
 	//! \brief Accumulate the counters of a task for statistics purposes
 	//!
-	//! \param[in] counterType The type of counter
-	//! \param[in] counterValue The accumulated value of the counter for a task
-	inline void addCounter(HWCounters::counters_t counterType, double counterValue)
+	//! \param[in] countersToAdd A vector of counter identifiers and values
+	inline void addCounters(const std::vector<std::pair<HWCounters::counters_t, double>> &countersToAdd)
 	{
-		assert(counterType < _counterStatistics.size());
-
 		_counterLock.lock();
-		_counterStatistics[counterType](counterValue);
+		for (size_t i = 0; i < countersToAdd.size(); ++i) {
+			assert(countersToAdd[i].first < _counterStatistics.size());
+			_counterStatistics[countersToAdd[i].first](countersToAdd[i].second);
+		}
 		_counterLock.unlock();
 	}
 

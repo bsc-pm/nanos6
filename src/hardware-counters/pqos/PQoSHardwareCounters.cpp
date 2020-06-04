@@ -284,37 +284,42 @@ void PQoSHardwareCounters::taskFinished(Task *task, TaskHardwareCountersInterfac
 				// The main task does not have this kind of data
 				TasktypeData *tasktypeData = task->getTasktypeData();
 				if (tasktypeData != nullptr) {
-					TasktypeHardwareCounters &tasktypeCounters = tasktypeData->getHardwareCounters();
+					// Retreive all the counters
+					std::vector<std::pair<HWCounters::counters_t, double>> countersToAdd;
 					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT]) {
-						tasktypeCounters.addCounter(
+						countersToAdd.push_back(std::make_pair(
 							HWCounters::PQOS_MON_EVENT_L3_OCCUP,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_L3_OCCUP)
-						);
+						));
 					}
 					if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT]) {
-						tasktypeCounters.addCounter(
+						countersToAdd.push_back(std::make_pair(
 							HWCounters::PQOS_PERF_EVENT_IPC,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_IPC)
-						);
+						));
 					}
 					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
-						tasktypeCounters.addCounter(
+						countersToAdd.push_back(std::make_pair(
 							HWCounters::PQOS_MON_EVENT_LMEM_BW,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_LMEM_BW)
-						);
+						));
 					}
 					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
-						tasktypeCounters.addCounter(
+						countersToAdd.push_back(std::make_pair(
 							HWCounters::PQOS_MON_EVENT_RMEM_BW,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_RMEM_BW)
-						);
+						));
 					}
 					if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT]) {
-						tasktypeCounters.addCounter(
+						countersToAdd.push_back(std::make_pair(
 							HWCounters::PQOS_PERF_EVENT_LLC_MISS,
 							pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_LLC_MISS)
-						);
+						));
 					}
+
+					// Aggregate all the counters in the tasktype
+					TasktypeHardwareCounters &tasktypeCounters = tasktypeData->getHardwareCounters();
+					tasktypeCounters.addCounters(countersToAdd);
 				}
 			}
 		}

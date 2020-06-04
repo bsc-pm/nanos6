@@ -9,7 +9,7 @@
 #include "TaskInfo.hpp"
 
 
-task_type_map_t TaskInfo::_tasktypes;
+TaskInfo::task_type_map_t TaskInfo::_tasktypes;
 SpinLock TaskInfo::_lock;
 std::atomic<size_t> TaskInfo::_numUnlabeledTasktypes(0);
 
