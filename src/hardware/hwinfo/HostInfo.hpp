@@ -49,7 +49,7 @@ public:
 		return _computePlaces[index];
 	}
 
-	inline std::vector<ComputePlace *> getComputePlaces() const
+	inline const std::vector<ComputePlace *> &getComputePlaces() const
 	{
 		return _computePlaces;
 	}
@@ -69,7 +69,7 @@ public:
 		return _memoryPlaces[index];
 	}
 
-	inline std::vector<MemoryPlace *> getMemoryPlaces() const
+	inline const std::vector<MemoryPlace *> &getMemoryPlaces() const
 	{
 		return _memoryPlaces;
 	}

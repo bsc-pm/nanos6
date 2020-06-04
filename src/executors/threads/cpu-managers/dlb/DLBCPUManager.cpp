@@ -39,7 +39,7 @@ void DLBCPUManager::preinitialize()
 	HostInfo *hostInfo = ((HostInfo *) HardwareInfo::getDeviceInfo(hostDevice));
 	assert(hostInfo != nullptr);
 
-	std::vector<ComputePlace *> const &cpus = hostInfo->getComputePlaces();
+	const std::vector<ComputePlace *> &cpus = hostInfo->getComputePlaces();
 	size_t numCPUs = cpus.size();
 	assert(numCPUs > 0);
 
