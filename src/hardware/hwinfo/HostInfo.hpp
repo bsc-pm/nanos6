@@ -44,7 +44,7 @@ public:
 		return _computePlaces.size();
 	}
 
-	inline ComputePlace *getComputePlace(int index)
+	inline ComputePlace *getComputePlace(int index) const
 	{
 		return _computePlaces[index];
 	}
@@ -64,7 +64,7 @@ public:
 		return _validMemoryPlaces;
 	}
 
-	inline MemoryPlace *getMemoryPlace(int index)
+	inline MemoryPlace *getMemoryPlace(int index) const
 	{
 		return _memoryPlaces[index];
 	}

@@ -55,7 +55,7 @@ public:
 		return _deviceCount;
 	}
 
-	ComputePlace *getComputePlace(int handler)
+	inline ComputePlace *getComputePlace(int handler) const
 	{
 		return _accelerators[handler]->getComputePlace();
 	}
@@ -65,7 +65,7 @@ public:
 		return _deviceCount;
 	}
 
-	MemoryPlace *getMemoryPlace(int handler)
+	inline MemoryPlace *getMemoryPlace(int handler) const
 	{
 		return _accelerators[handler]->getMemoryPlace();
 	}

@@ -23,23 +23,23 @@ public:
 	virtual ~DeviceInfo()
 	{}
 
-	inline size_t getDeviceCount()
+	inline size_t getDeviceCount() const
 	{
 		return _deviceCount;
 	}
 
-	inline bool isDeviceInitialized()
+	inline bool isDeviceInitialized() const
 	{
 		return _deviceInitialized;
 	}
 
 	virtual size_t getComputePlaceCount() const = 0;
 
-	virtual ComputePlace *getComputePlace(int handler) = 0;
+	virtual ComputePlace *getComputePlace(int handler) const = 0;
 
 	virtual size_t getMemoryPlaceCount() const = 0;
 
-	virtual MemoryPlace *getMemoryPlace(int handler) = 0;
+	virtual MemoryPlace *getMemoryPlace(int handler) const = 0;
 
 	virtual size_t getNumPhysicalPackages() const
 	{
