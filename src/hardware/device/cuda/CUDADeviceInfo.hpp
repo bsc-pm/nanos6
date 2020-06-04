@@ -7,12 +7,12 @@
 #ifndef CUDA_DEVICE_INFO_HPP
 #define CUDA_DEVICE_INFO_HPP
 
-#include <hardware/hwinfo/DeviceInfo.hpp>
-#include <hardware/places/ComputePlace.hpp>
-#include <hardware/places/MemoryPlace.hpp>
-
 #include "CUDAAccelerator.hpp"
 #include "CUDAFunctions.hpp"
+
+#include "hardware/hwinfo/DeviceInfo.hpp"
+#include "hardware/places/ComputePlace.hpp"
+#include "hardware/places/MemoryPlace.hpp"
 
 // This class provides the interface to be used by the runtime's Hardware Info;
 // Not to be confused with the device properties (see CUDAFunctions class)

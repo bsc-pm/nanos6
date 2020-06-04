@@ -7,7 +7,6 @@
 #include <nanos6/polling.h>
 
 #include "CUDAAccelerator.hpp"
-#include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "scheduling/Scheduler.hpp"

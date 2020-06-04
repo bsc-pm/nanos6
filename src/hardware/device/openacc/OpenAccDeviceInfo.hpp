@@ -7,12 +7,12 @@
 #ifndef OPENACC_DEVICE_INFO_HPP
 #define OPENACC_DEVICE_INFO_HPP
 
-#include <hardware/hwinfo/DeviceInfo.hpp>
-#include <hardware/places/ComputePlace.hpp>
-#include <hardware/places/MemoryPlace.hpp>
-
 #include "OpenAccAccelerator.hpp"
 #include "OpenAccFunctions.hpp"
+
+#include "hardware/hwinfo/DeviceInfo.hpp"
+#include "hardware/places/ComputePlace.hpp"
+#include "hardware/places/MemoryPlace.hpp"
 
 class OpenAccDeviceInfo : public DeviceInfo {
 	std::vector<OpenAccAccelerator *> _accelerators;

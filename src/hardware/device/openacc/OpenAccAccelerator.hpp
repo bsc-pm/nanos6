@@ -9,12 +9,11 @@
 
 #include <deque>
 
-#include "OpenAccFunctions.hpp"
-#include "OpenAccQueuePool.hpp"
-
 #include <nanos6/openacc_device.h>
 
-#include <hardware/device/Accelerator.hpp>
+#include "OpenAccFunctions.hpp"
+#include "OpenAccQueuePool.hpp"
+#include "hardware/device/Accelerator.hpp"
 
 class OpenAccAccelerator : public Accelerator {
 private:
