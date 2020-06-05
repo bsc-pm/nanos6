@@ -72,7 +72,7 @@ public:
 	inline void clearFile()
 	{
 		if (_rootNode != nullptr) {
-			*_rootNode = JsonNode<>();
+			_rootNode->clear();
 		}
 	}
 
@@ -84,7 +84,7 @@ public:
 			Json::ptree rootNode;
 			try {
 				Json::read_json(_path, rootNode);
-			} catch (Json::json_parser::json_parser_error readError) {
+			} catch (const Json::json_parser::json_parser_error &readError) {
 				FatalErrorHandler::warn("JSON error when trying to load data from '", _path, "'");
 				return;
 			}

@@ -36,6 +36,11 @@ public:
 	{
 	}
 
+	inline JsonNode(Json::ptree &node) :
+		_node(node)
+	{
+	}
+
 	inline JsonNode(const JsonNode &node) :
 		_node(node.getInnerNode())
 	{
@@ -86,7 +91,7 @@ public:
 
 		try {
 			data = _node.get<T>(label);
-		} catch (Json::ptree_error conversionError) {
+		} catch (const Json::ptree_error &conversionError) {
 			FatalErrorHandler::warn("Could not convert JSON data with label: ", label);
 			converted = false;
 		}
@@ -96,6 +101,12 @@ public:
 
 
 	//    NODE TREE INTERFACE    //
+
+	//! \brief Delete everything in the tree
+	inline void clear()
+	{
+		_node.clear();
+	}
 
 	//! \brief Check if a certain node exists
 	//!
