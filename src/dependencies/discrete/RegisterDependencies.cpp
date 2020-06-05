@@ -13,7 +13,6 @@
 #include "DataAccessRegistration.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "tasks/Taskloop.hpp"
 #include "ReductionSpecific.hpp"
 
 #include <Dependencies.hpp>
@@ -35,10 +34,9 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 		return;
 	}
 
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length);
+	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || task->isSourceTaskloop();
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, weak, start, length);
 
-	bool isSourceTaskloop = task->isSourceTaskloop();
-	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || isSourceTaskloop;
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, start, length, reductionTypeAndOperatorIndex, reductionIndex);
 }
 

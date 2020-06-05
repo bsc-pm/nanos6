@@ -28,8 +28,6 @@
 #include "memory/directory/Directory.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/Taskfor.hpp"
-#include "tasks/Taskloop.hpp"
 
 #include <ClusterManager.hpp>
 #include <ExecutionWorkflow.hpp>
@@ -2691,11 +2689,8 @@ namespace DataAccessRegistration {
 		assert(task != 0);
 		assert(computePlace != nullptr);
 
-		__attribute__((unused)) nanos6_task_info_t *taskInfo = task->getTaskInfo();
-		assert(taskInfo != 0);
-
 		// This part creates the DataAccesses and calculates any possible upgrade
-		task->registerDeps(false);
+		task->registerDependencies();
 
 		if (!task->getDataAccesses()._accesses.empty()) {
 			task->increasePredecessors(2);

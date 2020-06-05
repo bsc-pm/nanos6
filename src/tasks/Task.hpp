@@ -821,32 +821,32 @@ public:
 		return (TasktypeData *) _taskInfo->task_type_data;
 	}
 
-	virtual inline void registerDeps(bool = false)
+	virtual inline void registerDependencies(bool = false)
 	{
-		_taskInfo->register_depinfo(getArgsBlock(), nullptr, this);
+		_taskInfo->register_depinfo(_argsBlock, nullptr, this);
 	}
 
-	virtual inline bool isDisposable()
+	virtual inline bool isDisposable() const
 	{
 		return true;
 	}
 
-	virtual inline bool isSourceTaskloop()
+	virtual inline bool isSourceTaskloop() const
 	{
 		return false;
 	}
 
-	virtual inline bool isTaskloopFor()
+	virtual inline bool isTaskloopFor() const
 	{
 		return false;
 	}
 
-	virtual inline bool isTaskforCollaborator()
+	virtual inline bool isTaskforCollaborator() const
 	{
 		return false;
 	}
 
-	virtual inline bool isSourceTaskfor()
+	virtual inline bool isSourceTaskfor() const
 	{
 		return false;
 	}

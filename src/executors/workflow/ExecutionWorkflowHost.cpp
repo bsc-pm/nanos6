@@ -113,9 +113,9 @@ namespace ExecutionWorkflow {
 			Monitoring::taskCompletedUserCode(_task);
 
 			if (isTaskforCollaborator) {
-				assert(task->isRunnable());
-				bool last = ((Taskfor *) task)->hasLastChunk();
-				Instrument::task_id_t parentTaskId = task->getParent()->getInstrumentationTaskId();
+				assert(_task->isRunnable());
+				bool last = ((Taskfor *) _task)->hasLastChunk();
+				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
 				Instrument::taskforCollaboratorStopped(parentTaskId, taskId);
 				Instrument::endTaskforCollaborator(parentTaskId, taskId, last);
 			} else {

@@ -235,7 +235,7 @@ public:
 		return (_bounds.upper_bound == source->getBounds().upper_bound);
 	}
 
-	virtual inline void registerDeps(bool = false)
+	virtual inline void registerDependencies(bool = false)
 	{
 		assert(getParent() != nullptr);
 
@@ -246,17 +246,17 @@ public:
 		}
 	}
 
-	virtual inline bool isDisposable()
+	virtual inline bool isDisposable() const
 	{
 		return !isRunnable();
 	}
 
-	virtual inline bool isTaskforCollaborator()
+	virtual inline bool isTaskforCollaborator() const
 	{
 		return isRunnable();
 	}
 
-	virtual inline bool isSourceTaskfor()
+	virtual inline bool isSourceTaskfor() const
 	{
 		return !isRunnable();
 	}

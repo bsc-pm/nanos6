@@ -9,7 +9,6 @@
 
 #include "Taskfor.hpp"
 #include "Taskloop.hpp"
-#include "system/ompss/AddTask.hpp"
 
 #include <InstrumentAddTask.hpp>
 #include <InstrumentTaskId.hpp>
@@ -30,10 +29,9 @@ public:
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();
 
-		Taskfor *taskfor = nullptr;
+		Taskfor *taskfor = computePlace->getPreallocatedTaskfor();
+		assert(taskfor != nullptr);
 
-		void *taskfor_ptr = (void *) computePlace->getPreallocatedTaskfor();
-		taskfor = (Taskfor *) taskfor_ptr;
 		void *argsBlock = nullptr;
 		bool hasPreallocatedArgsBlock = parent->hasPreallocatedArgsBlock();
 		if (hasPreallocatedArgsBlock) {
@@ -42,20 +40,11 @@ public:
 		} else {
 			argsBlock = computePlace->getPreallocatedArgsBlock(originalArgsBlockSize);
 		}
-
-		assert(parentTaskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
 		assert(argsBlock != nullptr);
-		assert(taskfor_ptr != nullptr);
 
 		Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(parentTaskInstrumentationId, parentTaskInfo, parentTaskInvocationInfo, flags);
 
-		bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
-		FatalErrorHandler::failIf(!isTaskfor, "Only taskfors can be created this way.");
-
 		taskfor->reinitialize(argsBlock, originalArgsBlockSize, parentTaskInfo, parentTaskInvocationInfo, nullptr, taskId, flags);
-
-		assert(argsBlock != nullptr);
-		assert(taskfor_ptr != nullptr);
 
 		// Copy the args block if it was not duplicated
 		if (!hasPreallocatedArgsBlock) {

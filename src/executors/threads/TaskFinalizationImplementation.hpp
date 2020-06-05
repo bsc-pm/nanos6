@@ -38,7 +38,6 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 	while ((task != nullptr) && ready) {
 		Task *parent = task->getParent();
 
-		bool isTaskforCollaborator = task->isTaskforCollaborator();
 		// If this is the first iteration of the loop, the task will test true to hasFinished and false to mustDelayRelease, doing
 		// nothing inside the conditionals.
 		if (task->hasFinished()) {
@@ -69,7 +68,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 				}
 
 				assert(!task->mustDelayRelease());
-			} else if (isTaskforCollaborator) {
+			} else if (task->isTaskforCollaborator()) {
 				Taskfor *collaborator = (Taskfor *)task;
 				Taskfor *source = (Taskfor *)parent;
 
@@ -127,13 +126,12 @@ void TaskFinalization::disposeTask(Task *task)
 		assert(task->hasFinished());
 
 		disposable = task->unlinkFromParent();
-		bool dispose = task->isDisposable();
 		bool isTaskfor = task->isTaskfor();
 		bool isTaskloop = task->isTaskloop();
 		bool isSpawned = task->isSpawned();
 		bool isStreamExecutor = task->isStreamExecutor();
 
-		if (dispose) {
+		if (task->isDisposable()) {
 			Instrument::destroyTask(task->getInstrumentationTaskId());
 			// NOTE: The memory layout is defined in nanos6_create_task
 			void *disposableBlock;

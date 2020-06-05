@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -14,7 +14,6 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "tasks/Taskloop.hpp"
 
 
 #include <Dependencies.hpp>
@@ -32,7 +31,8 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 		std::cerr << "Warning: task loop cannot have weak dependencies. Changing them to strong dependencies." << std::endl;
 	}
 	
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length);
+	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || task->isSourceTaskloop();
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, weak, start, length);
 	
 	if (start == nullptr) {
 		return;
@@ -42,8 +42,6 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	}
 	
 	DataAccessRegion accessRegion(start, length);
-	bool isSourceTaskloop = task->isSourceTaskloop();
-	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || isSourceTaskloop;
 	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, accessRegion, symbolIndex, reductionTypeAndOperatorIndex, reductionIndex);
 }
 

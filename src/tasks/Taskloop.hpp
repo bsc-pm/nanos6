@@ -36,11 +36,12 @@ public:
 		  _bounds(), _sourceTaskloop(false)
 	{}
 
-	inline void initialize(size_t lowerBound, size_t upperBound, size_t grainsize)
+	inline void initialize(size_t lowerBound, size_t upperBound, size_t grainsize, size_t chunksize)
 	{
 		_bounds.lower_bound = lowerBound;
 		_bounds.upper_bound = upperBound;
 		_bounds.grainsize = grainsize;
+		_bounds.chunksize = chunksize;
 		_sourceTaskloop = true;
 
 		size_t totalIterations = getIterationCount();
@@ -74,38 +75,28 @@ public:
 	void body(
 	__attribute__((unused)) nanos6_address_translation_entry_t *translationTable = nullptr);
 
-	virtual inline void registerDeps(bool discrete = false)
+	virtual inline void registerDependencies(bool discrete = false)
 	{
-		if (discrete) {
-			if (isSourceTaskloop()) {
-				bounds_t &bounds = getBounds();
-				size_t tasks = std::ceil((double) (bounds.upper_bound - bounds.lower_bound) / (double) bounds.grainsize);
-				bounds_t tmpBounds;
-				for (size_t t = 0; t < tasks; t++) {
-					tmpBounds.lower_bound = bounds.lower_bound+t*bounds.grainsize;
-					tmpBounds.upper_bound = std::min(tmpBounds.lower_bound + bounds.grainsize, bounds.upper_bound);
-					getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &tmpBounds, this);
-				}
-				assert(tmpBounds.upper_bound == bounds.upper_bound);
-			} else {
-				getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &getBounds(), this);
+		if (discrete && isSourceTaskloop()) {
+			size_t tasks = std::ceil((double) (_bounds.upper_bound - _bounds.lower_bound) / (double) _bounds.grainsize);
+			bounds_t tmpBounds;
+			for (size_t t = 0; t < tasks; t++) {
+				tmpBounds.lower_bound = _bounds.lower_bound + t * _bounds.grainsize;
+				tmpBounds.upper_bound = std::min(tmpBounds.lower_bound + _bounds.grainsize, _bounds.upper_bound);
+				getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &tmpBounds, this);
 			}
+			assert(tmpBounds.upper_bound == _bounds.upper_bound);
 		} else {
-			getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &getBounds(), this);
+			getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &_bounds, this);
 		}
 	}
 
-	virtual inline bool isDisposable()
-	{
-		return true;
-	}
-
-	virtual inline bool isSourceTaskloop()
+	virtual inline bool isSourceTaskloop() const
 	{
 		return _sourceTaskloop;
 	}
 
-	virtual inline bool isTaskloopFor()
+	virtual inline bool isTaskloopFor() const
 	{
 		return isTaskfor();
 	}

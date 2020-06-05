@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -28,7 +28,7 @@ static void initialize(double *data, double value, long N, long BS) {
 }
 
 static void axpy(const double *x, double *y, double alpha, long N, long BS, long GS) {
-	#pragma oss taskloop for grainsize(GS)
+	#pragma oss taskloop for in(x[i]) inout(y[i]) grainsize(GS)
 	for (long i = 0; i < N; i++) {
 		y[i] += alpha * x[i];
 	}
@@ -68,13 +68,13 @@ int main() {
 	
 	initialize(x, 1.0, n, bs);
 	initialize(y, 0.0, n, bs);
-	#pragma oss taskwait
 	
 	// Main algorithm
+	#pragma oss taskloop grainsize(1) weakin(x[0;n]) weakinout(y[0;n]) label(iteration)
 	for (int iteration = 0; iteration < its; iteration++) {
 		axpy(x, y, 1.0, n, bs, gs);
-		#pragma oss taskwait
 	}
+	#pragma oss taskwait
 	
 	// Validation
 	bool validates = validate(y, n, bs, its);

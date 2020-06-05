@@ -14,7 +14,6 @@
 
 #include <nanos6.h>
 
-#include "AddTask.hpp"
 #include "MemoryAllocator.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"

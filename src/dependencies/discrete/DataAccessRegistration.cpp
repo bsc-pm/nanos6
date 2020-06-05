@@ -24,8 +24,6 @@
 #include "scheduling/Scheduler.hpp"
 #include "TaskDataAccesses.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/Taskfor.hpp"
-#include "tasks/Taskloop.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentTaskId.hpp>
@@ -289,13 +287,10 @@ namespace DataAccessRegistration {
 		}
 #endif
 
-		__attribute__((unused)) nanos6_task_info_t *taskInfo = task->getTaskInfo();
-		assert(taskInfo != 0);
-
 		task->increasePredecessors(2);
 
 		// This part creates the DataAccesses and inserts it to dependency system
-		task->registerDeps(true);
+		task->registerDependencies(/* discrete */ true);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 
