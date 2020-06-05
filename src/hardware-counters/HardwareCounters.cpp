@@ -32,7 +32,7 @@ HardwareCountersInterface *HardwareCounters::_pqosBackend;
 HardwareCountersInterface *HardwareCounters::_raplBackend;
 bool HardwareCounters::_anyBackendEnabled(false);
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
-std::vector<bool> HardwareCounters::_enabledEvents(HWCounters::TOTAL_NUM_EVENTS);
+std::vector<HWCounters::counters_t> HardwareCounters::_enabledEvents;
 
 
 void HardwareCounters::loadConfigurationFile()
@@ -56,7 +56,9 @@ void HardwareCounters::loadConfigurationFile()
 								std::string eventDescription(HWCounters::counterDescriptions[i]);
 								if (backendNode.dataExists(eventDescription)) {
 									converted = false;
-									_enabledEvents[i] = backendNode.getData(eventDescription, converted);
+									if (backendNode.getData(eventDescription, converted) == 1) {
+										_enabledEvents.push_back((HWCounters::counters_t) i);
+									}
 									assert(converted);
 								}
 							}
@@ -74,7 +76,9 @@ void HardwareCounters::loadConfigurationFile()
 								std::string eventDescription(HWCounters::counterDescriptions[i]);
 								if (backendNode.dataExists(eventDescription)) {
 									converted = false;
-									_enabledEvents[i] = backendNode.getData(eventDescription, converted);
+									if (backendNode.getData(eventDescription, converted) == 1) {
+										_enabledEvents.push_back((HWCounters::counters_t) i);
+									}
 									assert(converted);
 								}
 							}
@@ -107,10 +111,6 @@ void HardwareCounters::preinitialize()
 	_raplBackend = nullptr;
 	for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
 		_enabled[i] = false;
-	}
-
-	for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
-		_enabledEvents[i] = false;
 	}
 
 	// Load the configuration file to check which backends and events are enabled

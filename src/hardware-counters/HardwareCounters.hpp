@@ -42,8 +42,8 @@ private:
 	//! Whether each backend is enabled
 	static std::vector<bool> _enabled;
 
-	//! Enabled events by the user (id, description)
-	static std::vector<bool> _enabledEvents;
+	//! Enabled events by the user
+	static std::vector<HWCounters::counters_t> _enabledEvents;
 
 private:
 
@@ -78,9 +78,8 @@ public:
 		return _enabled[backend];
 	}
 
-	//! \brief Get a vector of enabled events, where the index is an event type
-	//! (HWCounters::counters_t) and the boolean tells wether it is enabled
-	static inline const std::vector<bool> &getEnabledCounters()
+	//! \brief Out of all the supported events, get the currently enabled ones
+	static inline const std::vector<HWCounters::counters_t> &getEnabledCounters()
 	{
 		return _enabledEvents;
 	}

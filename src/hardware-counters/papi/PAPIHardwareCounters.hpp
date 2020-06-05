@@ -8,6 +8,7 @@
 #define PAPI_HARDWARE_COUNTERS_HPP
 
 #include "hardware-counters/HardwareCountersInterface.hpp"
+#include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
@@ -17,7 +18,7 @@ class PAPIHardwareCounters : public HardwareCountersInterface {
 
 public:
 
-	inline PAPIHardwareCounters(bool, const std::string &, const std::vector<bool> &)
+	inline PAPIHardwareCounters(bool, const std::string &, const std::vector<HWCounters::counters_t> &)
 	{
 		FatalErrorHandler::fail("PAPI backend not supported yet");
 	}

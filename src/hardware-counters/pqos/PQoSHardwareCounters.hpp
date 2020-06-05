@@ -38,7 +38,11 @@ private:
 
 public:
 
-	PQoSHardwareCounters(bool verbose, const std::string &verboseFile, const std::vector<bool> &enabledEvents);
+	PQoSHardwareCounters(
+		bool verbose,
+		const std::string &verboseFile,
+		const std::vector<HWCounters::counters_t> &enabledEvents
+	);
 
 	~PQoSHardwareCounters();
 

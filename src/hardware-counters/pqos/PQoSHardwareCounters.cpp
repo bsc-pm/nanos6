@@ -16,8 +16,11 @@
 #include "tasks/TasktypeData.hpp"
 
 
-PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verboseFile, const std::vector<bool> &enabledEvents)
-{
+PQoSHardwareCounters::PQoSHardwareCounters(
+	bool verbose,
+	const std::string &verboseFile,
+	const std::vector<HWCounters::counters_t> &enabledEvents
+) {
 	_verbose = verbose;
 	_verboseFile = verboseFile;
 	for (unsigned short i = 0; i < HWCounters::PQOS_NUM_EVENTS; ++i) {
@@ -69,19 +72,20 @@ PQoSHardwareCounters::PQoSHardwareCounters(bool verbose, const std::string &verb
 
 	// Choose events to monitor: only those enabled
 	int eventsToMonitor = 0;
-	for (unsigned short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
-		if (enabledEvents[i]) {
-			_enabledEvents[i - HWCounters::PQOS_MIN_EVENT] = true;
+	for (unsigned short i = 0; i < enabledEvents.size(); ++i) {
+		short id = enabledEvents[i];
+		if (id >= HWCounters::PQOS_MIN_EVENT && id <= HWCounters::PQOS_MAX_EVENT) {
+			_enabledEvents[id - HWCounters::PQOS_MIN_EVENT] = true;
 
-			if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_PERF_EVENT_IPC") {
+			if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_PERF_EVENT_IPC") {
 				eventsToMonitor |= PQOS_PERF_EVENT_IPC;
-			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_PERF_EVENT_LLC_MISS") {
+			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_PERF_EVENT_LLC_MISS") {
 				eventsToMonitor |= PQOS_PERF_EVENT_LLC_MISS;
-			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_LMEM_BW") {
+			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_LMEM_BW") {
 				eventsToMonitor |= PQOS_MON_EVENT_LMEM_BW;
-			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_RMEM_BW") {
+			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_RMEM_BW") {
 				eventsToMonitor |= PQOS_MON_EVENT_RMEM_BW;
-			} else if (std::string(HWCounters::counterDescriptions[i]) == "PQOS_MON_EVENT_L3_OCCUP") {
+			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_L3_OCCUP") {
 				eventsToMonitor |= PQOS_MON_EVENT_L3_OCCUP;
 			} else {
 				assert(false);
