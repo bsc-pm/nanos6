@@ -54,7 +54,6 @@ void WorkerThread::initialize()
 	synchronizeInitialization();
 
 	HardwareCounters::threadInitialized();
-	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
 	Monitoring::initializeThread();
 }
 
