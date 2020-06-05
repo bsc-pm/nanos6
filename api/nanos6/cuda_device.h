@@ -15,7 +15,7 @@
 
 // NOTE: The full version depends also on nanos6_major_api
 //       That is:   nanos6_major_api . nanos6_cuda_device_api
-enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 1 };
+enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 2 };
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
