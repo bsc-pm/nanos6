@@ -46,6 +46,10 @@ public:
 	{
 	}
 
+	//! \brief Explicitely declare a default copy assignment to avoid
+	//! warnings (gcc9+)
+	JsonNode &operator=(const JsonNode &node) = default;
+
 	inline const Json::ptree &getInnerNode() const
 	{
 		return _node;
