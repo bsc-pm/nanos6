@@ -179,8 +179,8 @@ void Instrument::nanos6_preinit_finished()
 	// emit an event per each registered task type with its label and source
 	TaskInfo::processAllTasktypes(
 		[&](const std::string &tasktypeLabel, const std::string &tasktypeSource, TasktypeData &tasktypeData) {
-			task_type_id_t &instrumentId = tasktypeData.getInstrumentationId();
-			ctf_task_type_id_t tasktypeId = instrumentId.autoAssingId();
+			TasktypeInstrument &instrumentId = tasktypeData.getInstrumentationId();
+			ctf_tasktype_id_t tasktypeId = instrumentId.autoAssingId();
 			tp_task_label(tasktypeLabel.c_str(), tasktypeSource.c_str(), tasktypeId);
 		}
 	);

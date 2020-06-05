@@ -17,19 +17,19 @@
 
 namespace Instrument {
 
-	inline ctf_task_type_id_t ctfGetTaskTypeId(nanos6_task_info_t *taskInfo)
+	inline ctf_tasktype_id_t ctfGetTaskTypeId(nanos6_task_info_t *taskInfo)
 	{
 		assert(taskInfo->task_type_data);
 		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
-		task_type_id_t &instrumentId = tasktypeData->getInstrumentationId();
+		TasktypeInstrument &instrumentId = tasktypeData->getInstrumentationId();
 		return instrumentId.id;
 	}
 
-	inline ctf_task_type_id_t ctfAutoSetTaskTypeId(nanos6_task_info_t *taskInfo)
+	inline ctf_tasktype_id_t ctfAutoSetTaskTypeId(nanos6_task_info_t *taskInfo)
 	{
 		assert(taskInfo->task_type_data);
 		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
-		task_type_id_t &instrumentId = tasktypeData->getInstrumentationId();
+		TasktypeInstrument &instrumentId = tasktypeData->getInstrumentationId();
 		return instrumentId.autoAssingId();
 	}
 
@@ -40,7 +40,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		ctf_task_id_t taskId;
-		ctf_task_type_id_t taskTypeId;
+		ctf_tasktype_id_t taskTypeId;
 
 		task_id_t task_id(true);
 		taskId = task_id._taskId;
@@ -92,7 +92,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		ctf_task_id_t taskId;
-		ctf_task_type_id_t taskTypeId;
+		ctf_tasktype_id_t taskTypeId;
 
 		task_id_t task_id(true);
 		taskId = task_id._taskId;
@@ -114,7 +114,7 @@ namespace Instrument {
 	{
 		const char *label = taskInfo->implementations[0].task_label;
 		const char *source = taskInfo->implementations[0].declaration_source;
-		ctf_task_type_id_t taskTypeId = ctfAutoSetTaskTypeId(taskInfo);
+		ctf_tasktype_id_t taskTypeId = ctfAutoSetTaskTypeId(taskInfo);
 		tp_task_label(label, source, taskTypeId);
 	}
 }

@@ -7,7 +7,7 @@
 #ifndef TASKTYPE_DATA_HPP
 #define TASKTYPE_DATA_HPP
 
-#include "InstrumentTaskTypeId.hpp"
+#include "InstrumentTasktypeData.hpp"
 
 //! \brief Use to hold data on a per-tasktype basis (i.e. Monitoring data,
 //! instrumentation parameters, etc.)
@@ -16,7 +16,7 @@ class TasktypeData {
 private:
 
 	//! Instrumentation identifier for this Tasktype
-	Instrument::task_type_id_t _instrumentId;
+	Instrument::TasktypeInstrument _instrumentId;
 
 public:
 
@@ -25,7 +25,7 @@ public:
 	{
 	}
 
-	inline Instrument::task_type_id_t &getInstrumentationId()
+	inline Instrument::TasktypeInstrument &getInstrumentationId()
 	{
 		return _instrumentId;
 	}

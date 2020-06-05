@@ -272,7 +272,7 @@ void Instrument::tp_worker_exit_busy_wait()
 	CTFAPI::tracepoint(eventWorkerExitBusyWait, dummy);
 }
 
-void Instrument::tp_task_label(const char *taskLabel, const char *taskSource, ctf_task_type_id_t taskTypeId)
+void Instrument::tp_task_label(const char *taskLabel, const char *taskSource, ctf_tasktype_id_t taskTypeId)
 {
 	if (!eventTaskLabel->isEnabled())
 		return;
@@ -280,7 +280,7 @@ void Instrument::tp_task_label(const char *taskLabel, const char *taskSource, ct
 	CTFAPI::tracepoint(eventTaskLabel, taskLabel, taskSource, taskTypeId);
 }
 
-void Instrument::tp_task_create_enter(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId)
+void Instrument::tp_task_create_enter(ctf_tasktype_id_t taskTypeId, ctf_task_id_t taskId)
 {
 	if (!eventTaskCreateEnter->isEnabled())
 		return;
@@ -297,7 +297,7 @@ void Instrument::tp_task_create_exit()
 	CTFAPI::tracepoint(eventTaskCreateExit, dummy);
 }
 
-void Instrument::tp_taskfor_init_enter(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId)
+void Instrument::tp_taskfor_init_enter(ctf_tasktype_id_t taskTypeId, ctf_task_id_t taskId)
 {
 	if (!eventTaskforInitEnter->isEnabled())
 		return;

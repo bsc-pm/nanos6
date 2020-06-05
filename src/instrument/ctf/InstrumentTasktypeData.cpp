@@ -5,7 +5,7 @@
 */
 
 #include "ctfapi/CTFTypes.hpp"
-#include "InstrumentTaskTypeId.hpp"
+#include "InstrumentTasktypeData.hpp"
 
 // Reserved ctf2prv task and task type Ids:
 //   0 : Idle
@@ -13,4 +13,4 @@
 //   2 : Busy Wait
 //   3 : Task
 
-std::atomic<ctf_task_type_id_t> Instrument::task_type_id_t::_nextTaskTypeId(4);
+std::atomic<ctf_tasktype_id_t> Instrument::TasktypeInstrument::_nextTaskTypeId(4);

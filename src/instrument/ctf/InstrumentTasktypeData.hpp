@@ -4,8 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_CTF_TASK_TYPE_ID_HPP
-#define INSTRUMENT_CTF_TASK_TYPE_ID_HPP
+#ifndef INSTRUMENT_CTF_TASKTYPE_DATA_HPP
+#define INSTRUMENT_CTF_TASKTYPE_DATA_HPP
 
 #include <atomic>
 
@@ -13,24 +13,24 @@
 
 namespace Instrument {
 
-	struct task_type_id_t {
+	struct TasktypeInstrument {
 	private:
-		static std::atomic<ctf_task_type_id_t> _nextTaskTypeId;
+		static std::atomic<ctf_tasktype_id_t> _nextTaskTypeId;
 	public:
-		ctf_task_type_id_t id;
+		ctf_tasktype_id_t id;
 
-		task_type_id_t()
+		TasktypeInstrument()
 		{
 			id = 0;
 		}
 
-		ctf_task_type_id_t autoAssingId()
+		ctf_tasktype_id_t autoAssingId()
 		{
 			id = _nextTaskTypeId++;
 			return id;
 		}
 
-		bool operator==(task_type_id_t const &other) const
+		bool operator==(TasktypeInstrument const &other) const
 		{
 			return id == other.id;
 		}
@@ -38,5 +38,5 @@ namespace Instrument {
 }
 
 
-#endif // INSTRUMENT_CTF_TASK_TYPE_ID_HPP
+#endif // INSTRUMENT_CTF_TASKTYPE_DATA_HPP
 
