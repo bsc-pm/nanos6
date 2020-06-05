@@ -4,7 +4,7 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 
 #define xstr(s) str(s)
 #define str(s) #s

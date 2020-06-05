@@ -12,7 +12,7 @@
 
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 #include "ctfapi/CTFAPI.hpp"
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 
 namespace Instrument {
 

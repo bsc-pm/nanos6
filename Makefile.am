@@ -583,7 +583,7 @@ instrument_ctf_sources = \
 	src/instrument/ctf/InstrumentTaskId.cpp \
 	src/instrument/ctf/InstrumentTasktypeData.cpp \
 	src/instrument/ctf/InstrumentThreadManagement.cpp \
-	src/instrument/ctf/Nanos6CTFEvents.cpp \
+	src/instrument/ctf/tracepoints.cpp \
 	src/instrument/support/InstrumentCPULocalDataSupport.cpp \
 	src/instrument/support/InstrumentThreadLocalDataSupport.cpp
 
@@ -930,7 +930,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFTrace.hpp \
 	src/instrument/ctf/ctfapi/CTFTypes.hpp \
-	src/instrument/ctf/Nanos6CTFEvents.hpp \
+	src/instrument/ctf/tracepoints.hpp \
 	src/instrument/ctf/InstrumentAddTask.hpp \
 	src/instrument/ctf/InstrumentBlocking.hpp \
 	src/instrument/ctf/InstrumentComputePlaceId.hpp \

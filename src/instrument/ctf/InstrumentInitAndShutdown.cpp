@@ -19,7 +19,7 @@
 #include "ctfapi/stream/CTFStreamUnboundedShared.hpp"
 #include "ctfapi/context/CTFContextHardwareCounters.hpp"
 #include "ctfapi/context/CTFContextUnbounded.hpp"
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 #include "tasks/TaskInfo.hpp"
 #include "tasks/TasktypeData.hpp"
 #include "executors/threads/CPUManager.hpp"

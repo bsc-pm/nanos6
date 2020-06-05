@@ -9,7 +9,7 @@
 
 #include <cassert>
 
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 #include "InstrumentTaskId.hpp"
 #include "tasks/TasktypeData.hpp"
 

@@ -8,7 +8,7 @@
 #include "executors/threads/WorkerThread.hpp"
 
 #include "ctfapi/CTFTypes.hpp"
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 #include "InstrumentThreadManagement.hpp"
 
 static ctf_thread_id_t gettid(void)

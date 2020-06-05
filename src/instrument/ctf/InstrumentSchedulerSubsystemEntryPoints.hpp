@@ -7,7 +7,7 @@
 #ifndef INSTRUMENT_CTF_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
 #define INSTRUMENT_CTF_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
 
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 #include "../api/InstrumentSchedulerSubsystemEntryPoints.hpp"
 
 namespace Instrument {

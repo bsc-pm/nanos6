@@ -7,7 +7,7 @@
 #ifndef INSTRUMENT_CTF_TASK_STATUS_HPP
 #define INSTRUMENT_CTF_TASK_STATUS_HPP
 
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 
 #include "../api/InstrumentTaskStatus.hpp"
 

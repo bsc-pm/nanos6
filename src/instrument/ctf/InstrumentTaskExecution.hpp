@@ -11,7 +11,7 @@
 #include <cassert>
 #include <InstrumentInstrumentationContext.hpp>
 
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 #include "../api/InstrumentTaskExecution.hpp"
 
 

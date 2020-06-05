@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-#include "Nanos6CTFEvents.hpp"
+#include "tracepoints.hpp"
 #include "../api/InstrumentPollingServices.hpp"
 
 
