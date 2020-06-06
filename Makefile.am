@@ -493,7 +493,8 @@ linear_regions_fragmented_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/ReductionInfo.cpp \
 	src/dependencies/linear-regions-fragmented/Reductions.cpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
-	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp
+	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp \
+	src/dependencies/linear-regions-fragmented/TaskDataAccesses.cpp
 
 multidimensional_adaptor_sources = MultidimensionalLintAPI.cpp
 
@@ -792,7 +793,6 @@ noinst_HEADERS = \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifacts.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessLinkingArtifactsImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.hpp \
-	src/dependencies/linear-regions-fragmented/TaskDataAccessesImplementation.hpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccessesInfo.hpp \
 	src/dependencies/linear-regions/DataAccessRegion.hpp \
 	src/dependencies/linear-regions/DataAccessRegionIndexer.hpp \

@@ -328,7 +328,6 @@ namespace ExecutionWorkflow {
 		workflow->start();
 	}
 
-#if !DISCRETE_DEPS
 	void setupTaskwaitWorkflow(
 		Task *task,
 		DataAccess *taskwaitFragment
@@ -405,5 +404,4 @@ namespace ExecutionWorkflow {
 		workflow->enforceOrder(copyStep, notificationStep);
 		workflow->start();
 	}
-#endif
 };

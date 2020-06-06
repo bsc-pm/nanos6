@@ -19,12 +19,6 @@
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
 
-#ifdef DISCRETE_DEPS
-#include <TaskDataAccesses.hpp>
-#else
-#include <TaskDataAccessesImplementation.hpp>
-#endif
-
 #include <cstring>
 
 inline Task::Task(

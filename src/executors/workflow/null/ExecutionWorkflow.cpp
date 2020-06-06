@@ -121,10 +121,9 @@ namespace ExecutionWorkflow {
 	}
 
 	void setupTaskwaitWorkflow(
-		__attribute__((unused)) Task *task,
-		__attribute__((unused)) DataAccess *taskwaitFragment
+		Task *task,
+		DataAccess *taskwaitFragment
 	) {
-		#if !DISCRETE_DEPS
 		ComputePlace *computePlace = nullptr;
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		if (currentThread != nullptr) {
@@ -139,6 +138,5 @@ namespace ExecutionWorkflow {
 			computePlace,
 			hpDependencyData
 		);
-		#endif
 	}
 }

@@ -14,11 +14,10 @@
 #include <stack>
 
 #include "DataAccessFlags.hpp"
-#include "../DataAccessType.hpp"
 #include "ReductionInfo.hpp"
 #include "ReductionSpecific.hpp"
+#include "dependencies/DataAccessType.hpp"
 
-#include <DataAccessRegion.hpp>
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentDependenciesByAccessLinks.hpp>
 
@@ -31,6 +30,9 @@ struct DataAccess {
 private:
 	//! The type of the access
 	DataAccessType _type;
+
+	//! The region covered by the access
+	DataAccessRegion _region;
 
 	//! The originator of the access
 	Task *_originator;
@@ -53,9 +55,7 @@ private:
 	//! Instrumentation specific data
 	Instrument::data_access_id_t _instrumentDataAccessId;
 
-	void *_address;
-	size_t _length;
-
+	//! Location of the access
 	MemoryPlace const *_location;
 
 	DataAccessMessage inAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
@@ -74,8 +74,7 @@ public:
 		_successor(nullptr),
 		_child(nullptr),
 		_accessFlags(0),
-		_address(address),
-		_length(length),
+		_region(address, length),
 		_location(nullptr)
 	{
 		assert(originator != nullptr);
@@ -91,8 +90,7 @@ public:
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
 		_accessFlags(other.getFlags()),
-		_address(other.getAddress()),
-		_length(other.getLength()),
+		_region(other.getAccessRegion()),
 		_location(other.getLocation())
 	{
 	}
@@ -115,6 +113,11 @@ public:
 	inline DataAccessType getType() const
 	{
 		return _type;
+	}
+
+	DataAccessRegion const &getAccessRegion() const
+	{
+		return _region;
 	}
 
 	inline Task *getOriginator() const
@@ -212,20 +215,6 @@ public:
 		return _accessFlags;
 	}
 
-	inline size_t getLength() const
-	{
-		return _length;
-	}
-
-	inline void *getAddress() const
-	{
-		return _address;
-	}
-
-	inline DataAccessRegion getAccessRegion() const {
-		return DataAccessRegion(getAddress(), getLength());
-	}
-
 	void setLocation(MemoryPlace const *location)
 	{
 		_location = location;
@@ -235,6 +224,11 @@ public:
 	MemoryPlace const *getLocation() const
 	{
 		return _location;
+	}
+
+	MemoryPlace const *getOutputLocation() const
+	{
+		return nullptr;
 	}
 };
 

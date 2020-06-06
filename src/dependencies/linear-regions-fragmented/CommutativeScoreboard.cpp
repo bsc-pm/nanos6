@@ -1,13 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2018-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "tasks/Task.hpp"
 
 #include "CommutativeScoreboard.hpp"
-#include "TaskDataAccessesImplementation.hpp"
+#include "TaskDataAccesses.hpp"
 
 #include <LinearRegionMapImplementation.hpp>
 

@@ -458,11 +458,9 @@ namespace DataAccessRegistration {
 			bool weak = access->isWeak();
 
 			// Instrumentation needs a region.
-			DataAccessRegion region(address, access->getLength());
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
-				nullptr,
-				accessType, false, region,
-				false, false, false, Instrument::access_object_type_t::regular_access_type,
+				nullptr, accessType, false, access->getAccessRegion(), false, false,
+				false, Instrument::access_object_type_t::regular_access_type,
 				task->getInstrumentationTaskId());
 
 			accessStruct.increaseDeletableCount();
@@ -676,6 +674,15 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) CPUDependencyData &hpDependencyData,
 		__attribute__((unused)) MemoryPlace const *location)
 	{
+	}
+
+	void releaseTaskwaitFragment(
+		__attribute__((unused)) Task *task,
+		__attribute__((unused)) DataAccessRegion region,
+		__attribute__((unused)) ComputePlace *computePlace,
+		__attribute__((unused)) CPUDependencyData &hpDependencyData)
+	{
+		assert(false);
 	}
 } // namespace DataAccessRegistration
 
