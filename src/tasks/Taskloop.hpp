@@ -19,7 +19,7 @@ public:
 
 private:
 	bounds_t _bounds;
-	bool _sourceTaskloop;
+	bool _source;
 
 public:
 	inline Taskloop(
@@ -31,9 +31,12 @@ public:
 		size_t flags,
 		TaskDataAccessesInfo taskAccessInfo,
 		const TaskHardwareCounters &taskCounters
-	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo, taskCounters),
-		  _bounds(), _sourceTaskloop(false)
+	) :
+		Task(argsBlock, argsBlockSize, taskInfo,
+			taskInvokationInfo, parent,
+			instrumentationTaskId, flags,
+			taskAccessInfo, taskCounters),
+		  _bounds(), _source(false)
 	{}
 
 	inline void initialize(size_t lowerBound, size_t upperBound, size_t grainsize, size_t chunksize)
@@ -42,7 +45,7 @@ public:
 		_bounds.upper_bound = upperBound;
 		_bounds.grainsize = grainsize;
 		_bounds.chunksize = chunksize;
-		_sourceTaskloop = true;
+		_source = true;
 
 		size_t totalIterations = getIterationCount();
 
@@ -67,17 +70,11 @@ public:
 		return (_bounds.upper_bound - _bounds.lower_bound);
 	}
 
-	inline bool hasPendingIterations()
-	{
-		return (getIterationCount() > 0);
-	}
-
-	void body(
-	__attribute__((unused)) nanos6_address_translation_entry_t *translationTable = nullptr);
+	void body(nanos6_address_translation_entry_t * = nullptr);
 
 	virtual inline void registerDependencies(bool discrete = false)
 	{
-		if (discrete && isSourceTaskloop()) {
+		if (discrete && isTaskloopSource()) {
 			size_t tasks = std::ceil((double) (_bounds.upper_bound - _bounds.lower_bound) / (double) _bounds.grainsize);
 			bounds_t tmpBounds;
 			for (size_t t = 0; t < tasks; t++) {
@@ -91,9 +88,9 @@ public:
 		}
 	}
 
-	virtual inline bool isSourceTaskloop() const
+	virtual inline bool isTaskloopSource() const
 	{
-		return _sourceTaskloop;
+		return _source;
 	}
 
 	virtual inline bool isTaskloopFor() const

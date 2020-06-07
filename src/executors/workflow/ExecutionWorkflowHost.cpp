@@ -87,7 +87,6 @@ namespace ExecutionWorkflow {
 
 			bool isTaskforCollaborator = _task->isTaskforCollaborator();
 			if (isTaskforCollaborator) {
-				assert(_task->isRunnable());
 				bool first = ((Taskfor *) _task)->hasFirstChunk();
 				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
 				Instrument::startTaskforCollaborator(parentTaskId, taskId, first);
@@ -113,7 +112,6 @@ namespace ExecutionWorkflow {
 			Monitoring::taskCompletedUserCode(_task);
 
 			if (isTaskforCollaborator) {
-				assert(_task->isRunnable());
 				bool last = ((Taskfor *) _task)->hasLastChunk();
 				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
 				Instrument::taskforCollaboratorStopped(parentTaskId, taskId);

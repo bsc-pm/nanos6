@@ -831,7 +831,7 @@ public:
 		return true;
 	}
 
-	virtual inline bool isSourceTaskloop() const
+	virtual inline bool isTaskloopSource() const
 	{
 		return false;
 	}
@@ -846,7 +846,7 @@ public:
 		return false;
 	}
 
-	virtual inline bool isSourceTaskfor() const
+	virtual inline bool isTaskforSource() const
 	{
 		return false;
 	}

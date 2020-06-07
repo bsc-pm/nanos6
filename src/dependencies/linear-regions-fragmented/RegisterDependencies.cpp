@@ -31,7 +31,7 @@ void register_access(void *handler, void *start, size_t length, int symbolIndex,
 		std::cerr << "Warning: task loop cannot have weak dependencies. Changing them to strong dependencies." << std::endl;
 	}
 	
-	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || task->isSourceTaskloop();
+	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || task->isTaskloopSource();
 	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, weak, start, length);
 	
 	if (start == nullptr) {
