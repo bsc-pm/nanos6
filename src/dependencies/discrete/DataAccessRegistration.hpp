@@ -63,9 +63,6 @@ namespace DataAccessRegistration {
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
 
-	template <typename ProcessorType>
-	inline bool iterateAllDataAccesses(Task *task, ProcessorType processor);
-
 	//! \brief Mark a Taskwait fragment as completed
 	//!
 	//! \param[in] task is the Task that created the taskwait fragment

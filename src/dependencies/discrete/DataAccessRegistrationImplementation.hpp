@@ -24,21 +24,11 @@ namespace DataAccessRegistration {
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 		assert(!accessStruct.hasBeenDeleted());
 
-		return accessStruct.forAll([&](void *, DataAccess *access) {
-			return processor(access->getAccessRegion(), access->getType(), access->isWeak(), nullptr);
-		});
-	}
-
-	template <typename ProcessorType>
-	inline bool iterateAllDataAccesses(Task *task, ProcessorType processor)
-	{
-		assert(task != nullptr);
-		TaskDataAccesses &accessStruct = task->getDataAccesses();
-		assert(!accessStruct.hasBeenDeleted());
-
-		return accessStruct.forAll([&](void *, DataAccess *access) {
-			return processor(access);
-		});
+		return accessStruct.forAll(
+			[&](void *, DataAccess *access) -> bool {
+				return processor(access);
+			}
+		);
 	}
 }
 

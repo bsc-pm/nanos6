@@ -31,25 +31,7 @@ namespace DataAccessRegistration {
 		return accessStructures._accesses.processAll(
 			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 				DataAccess &access = *position;
-				return processor(access.getAccessRegion(), access.getType(), access.isWeak(), access.getLocation());
-			}
-		);
-	}
-
-	template <typename ProcessorType>
-	inline bool iterateAllDataAccesses(Task *task, ProcessorType processor)
-	{
-		assert(task != nullptr);
-
-		TaskDataAccesses &accessStructures = task->getDataAccesses();
-		assert(!accessStructures.hasBeenDeleted());
-
-		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
-
-		return accessStructures._accesses.processAll(
-			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
-				DataAccess *access = &(*position);
-				return processor(access);
+				return processor(&access);
 			}
 		);
 	}

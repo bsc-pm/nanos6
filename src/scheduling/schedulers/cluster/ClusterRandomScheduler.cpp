@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <random>
@@ -27,13 +27,12 @@ void ClusterRandomScheduler::addReadyTask(Task *task, ComputePlace *computePlace
 
 	bool canBeOffloaded = true;
 	DataAccessRegistration::processAllDataAccesses(task,
-		[&](DataAccessRegion region, DataAccessType, bool,
-						MemoryPlace const *) -> bool {
+		[&](const DataAccess *access) -> bool {
+			DataAccessRegion region = access->getAccessRegion();
 			if (!VirtualMemoryManagement::isClusterMemory(region)) {
 				canBeOffloaded = false;
 				return false;
 			}
-
 			return true;
 		}
 	);

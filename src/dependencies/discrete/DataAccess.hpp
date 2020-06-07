@@ -69,12 +69,12 @@ private:
 public:
 	DataAccess(DataAccessType type, Task *originator, void *address, size_t length, bool weak) :
 		_type(type),
+		_region(address, length),
 		_originator(originator),
 		_reductionInfo(nullptr),
 		_successor(nullptr),
 		_child(nullptr),
 		_accessFlags(0),
-		_region(address, length),
 		_location(nullptr)
 	{
 		assert(originator != nullptr);
@@ -85,12 +85,12 @@ public:
 
 	DataAccess(const DataAccess &other) :
 		_type(other.getType()),
+		_region(other.getAccessRegion()),
 		_originator(other.getOriginator()),
 		_reductionInfo(other.getReductionInfo()),
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
 		_accessFlags(other.getFlags()),
-		_region(other.getAccessRegion()),
 		_location(other.getLocation())
 	{
 	}

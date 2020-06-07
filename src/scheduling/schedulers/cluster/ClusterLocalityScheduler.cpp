@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <vector>
@@ -31,13 +31,14 @@ void ClusterLocalityScheduler::addReadyTask(Task *task, ComputePlace *computePla
 	std::vector<size_t> bytes(_clusterSize, 0);
 	bool canBeOffloaded = true;
 	DataAccessRegistration::processAllDataAccesses(task,
-		[&](DataAccessRegion region, __attribute__((unused))DataAccessType type,
-			__attribute__((unused))bool isWeak, MemoryPlace const *location) -> bool {
+		[&](const DataAccess *access) -> bool {
+			const MemoryPlace *location = access->getLocation();
 			if (location == nullptr) {
-				assert(isWeak);
+				assert(access->isWeak());
 				location = Directory::getDirectoryMemoryPlace();
 			}
 
+			DataAccessRegion region = access->getAccessRegion();
 			if (!VirtualMemoryManagement::isClusterMemory(region)) {
 				canBeOffloaded = false;
 				return false;

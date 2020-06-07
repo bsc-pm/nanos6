@@ -255,7 +255,7 @@ namespace ExecutionWorkflow {
 		/* TODO: Once we have correct management for the Task symbols here
 			* we should create the corresponding allocation steps. */
 
-		DataAccessRegistration::iterateAllDataAccesses(task,
+		DataAccessRegistration::processAllDataAccesses(task,
 			[&](DataAccess *dataAccess) -> bool {
 				assert(dataAccess != nullptr);
 				DataAccessRegion region = dataAccess->getAccessRegion();

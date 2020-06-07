@@ -84,13 +84,19 @@ void CUDAAccelerator::preRunTask(Task *task)
 	nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
 
 	DataAccessRegistration::processAllDataAccesses(task,
-		[&](DataAccessRegion region, DataAccessType type,
-			bool isWeak, __attribute__((unused)) MemoryPlace const *location) -> bool {
-				if(type != REDUCTION_ACCESS_TYPE && !isWeak)
-					CUDAFunctions::cudaDevicePrefetch(region.getStartAddress(), region.getSize(), _deviceHandler, env.stream, type == READ_ACCESS_TYPE);
-				return true;
-			});
+		[&](const DataAccess *access) -> bool {
+			if (access->getType() != REDUCTION_ACCESS_TYPE && !access->isWeak()) {
+				CUDAFunctions::cudaDevicePrefetch(
+					access->getAccessRegion().getStartAddress(),
+					access->getAccessRegion().getSize(),
+					_deviceHandler, env.stream,
+					access->getType() == READ_ACCESS_TYPE);
+			}
+			return true;
+		}
+	);
 }
+
 // Query the events issued to detect task completion
 void CUDAAccelerator::processCUDAEvents()
 {
