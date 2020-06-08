@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cstdlib>       /* getenv */
@@ -53,7 +53,8 @@ void cpuComputation(long numCPUs)
 	timer.start();
 
 	// Wait until the number of acquired CPUs reaches numCPUs - 2
-	// (minus 2 since main tasks have to be executed too)
+	// (minus 2 since the passive process should keep one for the
+	// main task plus another for the scheduling loop)
 	while (numBusyCPUs.load() < (numCPUs - 2)) {
 		spin();
 		// Wait for 2 seconds max
