@@ -70,7 +70,6 @@ void WorkerThread::body()
 	// it may become idle
 	// The WorkerThread will iterate until its CPU status signals that there is
 	// an ongoing shutdown and thus the thread must stop executing
-	bool mustHandleServices = true;
 	while (CPUManager::checkCPUStatusTransitions(this) != CPU::shutdown_status) {
 		// Update the CPU since the thread may have migrated
 		cpu = getComputePlace();
@@ -82,7 +81,6 @@ void WorkerThread::body()
 
 		_task = Scheduler::getReadyTask(cpu);
 		if (_task != nullptr) {
-			mustHandleServices = true;
 			WorkerThread *assignedThread = _task->getThread();
 
 			// A task already assigned to another thread
@@ -112,11 +110,9 @@ void WorkerThread::body()
 
 				_task = nullptr;
 			}
-		} else if (mustHandleServices) {
-			mustHandleServices = false;
-			PollingAPI::handleServices();
 		} else {
-			mustHandleServices = true;
+			// Execute polling services
+			PollingAPI::handleServices();
 
 			// If no task is available, the CPUManager may want to idle this CPU
 			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, IDLE_CANDIDATE);

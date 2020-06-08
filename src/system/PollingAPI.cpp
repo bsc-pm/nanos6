@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -13,6 +13,8 @@
 #include <nanos6/polling.h>
 
 #include "PollingAPI.hpp"
+#include "lowlevel/EnvironmentVariable.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/PaddedSpinLock.hpp"
 #include "system/RuntimeInfo.hpp"
 
@@ -64,6 +66,9 @@ namespace PollingAPI {
 	//! \brief Services in the system
 	services_t _services;
 
+	//! \brief Environment variable to enable/disable polling services
+	EnvironmentVariable<bool> _enabled("NANOS6_POLLING", true);
+
 
 	inline bool operator<(ServiceKey const &a, ServiceKey const &b)
 	{
@@ -97,6 +102,8 @@ using namespace PollingAPI;
 
 extern "C" void nanos6_register_polling_service(char const *service_name, nanos6_polling_service_t service_function, void *service_data)
 {
+	FatalErrorHandler::failIf(!_enabled, "Polling services API is disabled");
+
 	std::lock_guard<PollingAPI::lock_t> guard(PollingAPI::_lock);
 
 	static std::map<nanos6_polling_service_t, std::string> uniqueRegisteredServices;
@@ -131,6 +138,8 @@ extern "C" void nanos6_register_polling_service(char const *service_name, nanos6
 
 extern "C" void nanos6_unregister_polling_service(char const *service_name, nanos6_polling_service_t service_function, void *service_data)
 {
+	FatalErrorHandler::failIf(!_enabled, "Polling service API is disabled");
+
 	std::atomic<bool> unregistered(false);
 
 	ServiceKey key(service_name, service_function, service_data);
@@ -158,10 +167,12 @@ extern "C" void nanos6_unregister_polling_service(char const *service_name, nano
 
 void PollingAPI::handleServices()
 {
-	bool locked = PollingAPI::_lock.tryLock();
-	if (!locked) {
+	if (!_enabled)
 		return;
-	}
+
+	bool locked = PollingAPI::_lock.tryLock();
+	if (!locked)
+		return;
 
 	auto it = _services.begin();
 	while (it != _services.end()) {
