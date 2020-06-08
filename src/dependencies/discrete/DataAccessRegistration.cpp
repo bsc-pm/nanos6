@@ -339,7 +339,7 @@ namespace DataAccessRegistration {
 
 		if (accessStruct.hasDataAccesses()) {
 			// Release dependencies of all my accesses
-			accessStruct.forAll([&](void *address, DataAccess *access) {
+			accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
 				finalizeDataAccess(task, access, address, hpDependencyData);
 				return true;
 			});
@@ -450,7 +450,7 @@ namespace DataAccessRegistration {
 		accessStruct.increaseDeletableCount();
 
 		// Get all seqs
-		accessStruct.forAll([&](void *address, DataAccess *access) {
+		accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
 			DataAccessType accessType = access->getType();
 			ReductionInfo *reductionInfo = nullptr;
 			DataAccess *predecessor = nullptr;
@@ -655,7 +655,7 @@ namespace DataAccessRegistration {
 		if (!accessStruct.hasDataAccesses())
 			return;
 
-		accessStruct.forAll([&](void *, DataAccess *access) {
+		accessStruct.forAll([&](void *, DataAccess *access) -> bool {
 			if (access->getType() == REDUCTION_ACCESS_TYPE) {
 				ReductionInfo *reductionInfo = access->getReductionInfo();
 				reductionInfo->releaseSlotsInUse(((CPU *)computePlace)->getIndex());

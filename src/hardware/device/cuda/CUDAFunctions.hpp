@@ -113,15 +113,17 @@ public:
 		if (size == 0)
 			return;
 
-		// Call cudaMemAdvise to register the section as read-only or not
-		if (readOnly)
-			CUDAErrorHandler::handle(cudaMemAdvise(pHost, size, cudaMemAdviseSetReadMostly, device), "Advising read-only memory");
-		else
-			CUDAErrorHandler::handle(cudaMemAdvise(pHost, size, cudaMemAdviseUnsetReadMostly, device), "Advising non read-only memory");
+		// Depending on the access we're prefetching, we will advise the driver to do a shared copy
+		cudaMemoryAdvise advice = (readOnly ? cudaMemAdviseSetReadMostly : cudaMemAdviseUnsetReadMostly);
+		cudaError_t err = cudaMemAdvise(pHost, size, advice, device);
+		CUDAErrorHandler::handle(err, "Advising memory region");
 
+		// Ensure that we have a stream assigned. Stream 0 is special in CUDA and tasks are never launched on it.
 		assert(stream != 0);
-		// Call a prefetch operation on the same stream that we are going to launch that task on.
-		cudaMemPrefetchAsync(pHost, size, device, stream);
+
+		// Call a prefetch operation on the same stream that we are going to launch that task on
+		err = cudaMemPrefetchAsync(pHost, size, device, stream);
+		CUDAErrorHandler::handle(err, "Prefetching memory to device");
 	}
 };
 
