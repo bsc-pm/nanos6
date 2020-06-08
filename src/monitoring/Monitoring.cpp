@@ -9,6 +9,9 @@
 
 #include "Monitoring.hpp"
 #include "TasktypeStatistics.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
+#include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "hardware-counters/TasktypeHardwareCounters.hpp"
 #include "tasks/TaskInfo.hpp"
 
 
@@ -287,8 +290,6 @@ void Monitoring::displayStatistics()
 
 void Monitoring::loadMonitoringWisdom()
 {
-	// FIXME TODO
-	/*
 	assert(_taskMonitor != nullptr);
 
 	// Create a representation of the system file as a JsonFile
@@ -301,51 +302,82 @@ void Monitoring::loadMonitoringWisdom()
 	// Navigate through the file and extract the unitary time of each tasktype
 	_wisdom->getRootNode()->traverseChildrenNodes(
 		[&](const std::string &label, const JsonNode<> &metricsNode) {
-			// For each tasktype, check if the unitary time is available
-			if (metricsNode.dataExists("unitary_time")) {
-				// Insert the metric data for this tasktype into accumulators
-				bool converted = false;
-				double metricValue = metricsNode.getData("unitary_time", converted);
-				if (converted) {
-					_taskMonitor->insertTimePerUnitOfCost(label, metricValue);
+			// For each tasktype in the file, process all current registered
+			// tasktypes to check if we must copy the wisdom data into them
+			TaskInfo::processAllTasktypes(
+				[&](const std::string &taskLabel, TasktypeData &tasktypeData) {
+					if (taskLabel == label) {
+						// Labels coincide, first copy Monitoring data
+						if (metricsNode.dataExists("UNITARY_TIME")) {
+							bool converted = false;
+							double metricValue = metricsNode.getData("UNITARY_TIME", converted);
+							if (converted) {
+								TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
+								tasktypeStatistics.insertNormalizedTime(metricValue);
+							}
+						}
+
+						// Next, copy Hardware Counters data if existent
+						const std::vector<HWCounters::counters_t> &enabledCounters =
+							HardwareCounters::getEnabledCounters();
+
+						TasktypeHardwareCounters &tasktypeCounters = tasktypeData.getHardwareCounters();
+						for (size_t i = 0; i < enabledCounters.size(); ++i) {
+							std::string metricLabel(HWCounters::counterDescriptions[i]);
+							if (metricsNode.dataExists(metricLabel)) {
+								bool converted = false;
+								double metricValue = metricsNode.getData(metricLabel, converted);
+								if (converted) {
+									tasktypeCounters.insertNormalizedCounter((HWCounters::counters_t) i, metricValue);
+								}
+							}
+						}
+					}
 				}
-			}
+			);
 		}
 	);
-	*/
 }
 
 void Monitoring::storeMonitoringWisdom()
 {
-	// FIXME TODO
-	/*
-	assert(_taskMonitor != nullptr);
-
-	// Gather monitoring data for all tasktypes
-	std::vector<std::string> labels;
-	std::vector<double> unitaryTimes;
-	_taskMonitor->getAverageTimesPerUnitOfCost(labels, unitaryTimes);
-
 	assert(_wisdom != nullptr);
 
-	// The file's root node
 	JsonNode<> *rootNode = _wisdom->getRootNode();
-	for (size_t i = 0; i < labels.size(); ++i) {
-		// Avoid storing information about the main task
-		if (labels[i] != "main") {
-			// A node for metrics (currently only unitary time)
-			JsonNode<double> taskTypeValuesNode;
-			taskTypeValuesNode.addData("unitary_time", unitaryTimes[i]);
+	assert(rootNode != nullptr);
 
-			// Add the metrics to the root node of the file
-			rootNode->addChildNode(labels[i], taskTypeValuesNode);
+	// Process all the tasktypes and gather Monitoring and Hardware Counters metrics
+	TaskInfo::processAllTasktypes(
+		[&](const std::string &taskLabel, TasktypeData &tasktypeData) {
+			JsonNode<double> tasktypeNode;
+
+			// Retreive monitoring statistics
+			TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
+			double value = tasktypeStatistics.getAverageNormalizedCost();
+			tasktypeNode.addData("NORMALIZED_COST", value);
+
+			// Retreive hardware counter metrics
+			const std::vector<HWCounters::counters_t> &enabledCounters =
+				HardwareCounters::getEnabledCounters();
+			TasktypeHardwareCounters &tasktypeCounters = tasktypeData.getHardwareCounters();
+			for (size_t i = 0; i < enabledCounters.size(); ++i) {
+				double counter = tasktypeCounters.getCounterAvg((HWCounters::counters_t) enabledCounters[i]);
+				if (counter >= 0.0) {
+					tasktypeNode.addData(
+						std::string(HWCounters::counterDescriptions[enabledCounters[i]]),
+						counter
+					);
+				}
+			}
+
+			// Add all the metrics as a new node into the root node
+			rootNode->addChildNode(taskLabel, tasktypeNode);
 		}
-	}
+	);
 
 	// Store the data from the JsonFile in the system file
 	_wisdom->storeData();
 
 	// Delete the file as it is no longer needed
 	delete _wisdom;
-	*/
 }
