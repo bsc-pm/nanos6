@@ -379,11 +379,5 @@ void HardwareCounters::taskFinished(Task *task)
 
 			_papiBackend->taskFinished(task, taskCounters.getPAPICounters());
 		}
-
-		// Destroy objects for tasks that are not taskfor collaborators; taskfor
-		// collaborators reinitialize their structures
-		if (!task->isTaskforCollaborator()) {
-			taskCounters.shutdown();
-		}
 	}
 }
