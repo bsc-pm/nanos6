@@ -67,6 +67,9 @@ inline Task::~Task()
 	if (_clusterContext != nullptr) {
 		delete _clusterContext;
 	}
+
+	// Destroy hardware counters
+	_hwCounters.shutdown();
 }
 
 inline void Task::reinitialize(

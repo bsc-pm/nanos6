@@ -78,15 +78,12 @@ ComputePlace::~ComputePlace()
 	TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
 	void *allocationAddress = taskCounters.getAllocationAddress();
 
-	// Call the destructor of task hardware counters
-	taskCounters.shutdown();
+	delete taskfor;
 
-	// Free task hardware counters if existent
+	// After hw counters are deleted (Task destructor), free task hardware counters if existent
 	if (allocationAddress != nullptr) {
 		free(allocationAddress);
 	}
-
-	delete taskfor;
 
 	// First allocation (1024) is done using malloc.
 	if (_preallocatedArgsBlockSize == 1024) {

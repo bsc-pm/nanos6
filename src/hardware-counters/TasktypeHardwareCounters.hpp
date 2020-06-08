@@ -65,17 +65,25 @@ public:
 	//! \return A double with the sum of accumulated values
 	inline double getCounterSum(HWCounters::counters_t counterType)
 	{
-		return BoostAcc::sum(_counterStatistics[counterType]);
+		_counterLock.lock();
+		double sum = BoostAcc::sum(_counterStatistics[counterType]);
+		_counterLock.unlock();
+
+		return sum;
 	}
 
 	//! \brief Retreive, for a certain type of counter, the average of all
 	//! accumulated values of this task type
 	//!
 	//! \param[in] counterType The type of counter
-	//! \return A double with the avaerage accumulated value
+	//! \return A double with the average accumulated value
 	inline double getCounterAvg(HWCounters::counters_t counterType)
 	{
-		return BoostAcc::mean(_counterStatistics[counterType]);
+		_counterLock.lock();
+		double avg = BoostAcc::mean(_counterStatistics[counterType]);
+		_counterLock.unlock();
+
+		return avg;
 	}
 
 	//! \brief Retreive, for a certain type of counter, the standard deviation
@@ -85,7 +93,11 @@ public:
 	//! \return A double with the standard deviation of the counter
 	inline double getCounterStddev(HWCounters::counters_t counterType)
 	{
-		return sqrt(BoostAcc::variance(_counterStatistics[counterType]));
+		_counterLock.lock();
+		double stddev = sqrt(BoostAcc::variance(_counterStatistics[counterType]));
+		_counterLock.unlock();
+
+		return stddev;
 	}
 
 	//! \brief Retreive, for a certain type of counter, the amount of values
@@ -95,7 +107,11 @@ public:
 	//! \return A size_t with the number of accumulated values
 	inline size_t getCounterCount(HWCounters::counters_t counterType)
 	{
-		return BoostAcc::count(_counterStatistics[counterType]);
+		_counterLock.lock();
+		size_t count = BoostAcc::count(_counterStatistics[counterType]);
+		_counterLock.unlock();
+
+		return count;
 	}
 
 };
