@@ -41,9 +41,14 @@ public:
 		TaskDataAccessesInfo taskAccessInfo,
 		const TaskHardwareCounters &taskCounters,
 		bool runnable = false
-	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo, taskCounters),
-		  _currentChunk(), _remainingIterations(), _bounds(), _completedIterations(0), _myChunk(-1)
+	) :
+		Task(argsBlock, argsBlockSize, taskInfo,
+			taskInvokationInfo, parent,
+			instrumentationTaskId, flags,
+			taskAccessInfo, taskCounters),
+		  _currentChunk(), _remainingIterations(),
+		  _bounds(), _completedIterations(0),
+		  _myChunk(-1)
 	{
 		assert(isFinal());
 		setRunnable(runnable);
@@ -57,7 +62,7 @@ public:
 		_flags[Task::non_runnable_flag] = !runnableValue;
 	}
 
-	inline size_t getIterationCount()
+	inline size_t getIterationCount() const
 	{
 		return (_bounds.upper_bound - _bounds.lower_bound);
 	}
@@ -105,28 +110,24 @@ public:
 	inline void notifyCollaboratorHasStarted()
 	{
 		assert(!isRunnable());
-
 		increaseRemovalBlockingCount();
 	}
 
 	inline bool notifyCollaboratorHasFinished()
 	{
 		assert(!isRunnable());
-
 		return decreaseRemovalBlockingCount();
 	}
 
 	inline void markAsScheduled()
 	{
 		assert(!isRunnable());
-
 		increaseRemovalBlockingCount();
 	}
 
 	inline bool removedFromScheduler()
 	{
 		assert(!isRunnable());
-
 		return decreaseRemovalBlockingCount();
 	}
 
@@ -165,9 +166,8 @@ public:
 		setRunnable(runnable);
 	}
 
-	inline void body(
-		__attribute__((unused)) nanos6_address_translation_entry_t *translationTable = nullptr
-	) {
+	inline void body(nanos6_address_translation_entry_t * = nullptr)
+	{
 		assert(hasCode());
 		assert(isRunnable());
 		assert(_thread != nullptr);
@@ -181,7 +181,6 @@ public:
 
 	inline bounds_t &getBounds()
 	{
-		assert(isRunnable());
 		return _bounds;
 	}
 
@@ -191,7 +190,7 @@ public:
 		_myChunk = chunk;
 	}
 
-	inline int getMyChunk()
+	inline int getMyChunk() const
 	{
 		assert(isRunnable());
 		return _myChunk;
@@ -216,24 +215,50 @@ public:
 		return myIterations;
 	}
 
-	inline size_t getCompletedIterations()
+	inline size_t getCompletedIterations() const
 	{
 		assert(isRunnable());
 		assert(getParent()->isTaskfor());
 		return _completedIterations;
 	}
 
-	inline bool hasFirstChunk()
+	inline bool hasFirstChunk() const
 	{
 		assert(isRunnable());
 		return (_bounds.lower_bound == 0);
 	}
 
-	inline bool hasLastChunk()
+	inline bool hasLastChunk() const
 	{
 		assert(isRunnable());
 		const Taskfor *source = (Taskfor *) getParent();
 		return (_bounds.upper_bound == source->getBounds().upper_bound);
+	}
+
+	virtual inline void registerDependencies(bool = false)
+	{
+		assert(getParent() != nullptr);
+
+		if (getParent()->isTaskloop()) {
+			getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &getBounds(), this);
+		} else {
+			getTaskInfo()->register_depinfo(getArgsBlock(), nullptr, this);
+		}
+	}
+
+	virtual inline bool isDisposable() const
+	{
+		return !isRunnable();
+	}
+
+	virtual inline bool isTaskforCollaborator() const
+	{
+		return isRunnable();
+	}
+
+	virtual inline bool isTaskforSource() const
+	{
+		return !isRunnable();
 	}
 
 private:

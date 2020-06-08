@@ -68,7 +68,7 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 				}
 
 				assert(!task->mustDelayRelease());
-			} else if (task->isTaskfor() && task->isRunnable()) {
+			} else if (task->isTaskforCollaborator()) {
 				Taskfor *collaborator = (Taskfor *)task;
 				Taskfor *source = (Taskfor *)parent;
 
@@ -131,12 +131,7 @@ void TaskFinalization::disposeTask(Task *task)
 		bool isSpawned = task->isSpawned();
 		bool isStreamExecutor = task->isStreamExecutor();
 
-		// We cannot dispose/free collaborator taskfors because they are preallocated tasks that are used during
-		// all the program execution. Collaborators are runnable taskfors. However, we must dispose all taskfors
-		// that are not collaborators, also known as parent taskfors
-		bool dispose = !(isTaskfor && task->isRunnable());
-
-		if (dispose) {
+		if (task->isDisposable()) {
 			Instrument::destroyTask(task->getInstrumentationTaskId());
 			// NOTE: The memory layout is defined in nanos6_create_task
 			void *disposableBlock;
@@ -152,10 +147,15 @@ void TaskFinalization::disposeTask(Task *task)
 				disposableBlockSize = (char *)task - (char *)disposableBlock;
 			}
 
-			if (isTaskfor) {
-				disposableBlockSize += sizeof(Taskfor);
-			} else if (isTaskloop) {
+			// taskloop and taskfor flags can both be enabled for the same task.
+			// If this is the case, it means we are dealing with taskloop for,
+			// which is a taskloop that generates taskfors. Thus, we must treat
+			// the task as a taskloop. It is important to check taskloop condition
+			// before taskfor one, to dispose a taskloop in the case of taskloop for.
+			if (isTaskloop) {
 				disposableBlockSize += sizeof(Taskloop);
+			} else if (isTaskfor) {
+				disposableBlockSize += sizeof(Taskfor);
 			} else if (isStreamExecutor) {
 				disposableBlockSize += sizeof(StreamExecutor);
 			} else {
@@ -181,10 +181,15 @@ void TaskFinalization::disposeTask(Task *task)
 				executor->decreaseCallbackParticipants(spawnCallback);
 			}
 
-			if (isTaskfor) {
-				((Taskfor *)task)->~Taskfor();
-			} else if (isTaskloop) {
+			// taskloop and taskfor flags can both be enabled for the same task.
+			// If this is the case, it means we are dealing with taskloop for,
+			// which is a taskloop that generates taskfors. Thus, we must treat
+			// the task as a taskloop. It is important to check taskloop condition
+			// before taskfor one, to dispose a taskloop in the case of taskloop for.
+			if (isTaskloop) {
 				((Taskloop *)task)->~Taskloop();
+			} else if (isTaskfor) {
+				((Taskfor *)task)->~Taskfor();
 			} else if (isStreamExecutor) {
 				((StreamExecutor *)task)->~StreamExecutor();
 			} else {

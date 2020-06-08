@@ -79,8 +79,10 @@ struct TaskDataAccesses {
 #endif
 	{
 		if (_maxDeps > ACCESS_LINEAR_CUTOFF) {
-			_accessMap = MemoryAllocator::newObject<access_map_t>(_maxDeps);
+			_accessMap = MemoryAllocator::newObject<access_map_t>();
 			assert(_accessMap != nullptr);
+
+			_accessMap->reserve((_maxDeps != (size_t) -1) ? _maxDeps : ACCESS_LINEAR_CUTOFF);
 		}
 	}
 

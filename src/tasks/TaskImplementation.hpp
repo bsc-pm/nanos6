@@ -117,17 +117,10 @@ inline void Task::reinitialize(
 inline bool Task::markAsFinished(ComputePlace *computePlace)
 {
 	// Non-runnable taskfors should avoid these checks
-	if (isRunnable()) {
-		if (getDeviceType() == nanos6_device_t::nanos6_host_device) {
-			// Not true anymore. A task might have been offloaded
-			// to a remote device, in which case it wouldn't have
-			// a thread assigned to it.
-			//assert(_thread != nullptr);
-			_thread = nullptr;
-		} else {
-			assert(_computePlace != nullptr);
-			_computePlace = nullptr;
-		}
+	if (getDeviceType() == nanos6_device_t::nanos6_host_device) {
+		_thread = nullptr;
+	} else {
+		_computePlace = nullptr;
 	}
 
 	// If the task has a wait clause, the release of dependencies must be

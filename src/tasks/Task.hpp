@@ -820,6 +820,36 @@ public:
 
 		return (TasktypeData *) _taskInfo->task_type_data;
 	}
+
+	virtual inline void registerDependencies(bool = false)
+	{
+		_taskInfo->register_depinfo(_argsBlock, nullptr, this);
+	}
+
+	virtual inline bool isDisposable() const
+	{
+		return true;
+	}
+
+	virtual inline bool isTaskloopSource() const
+	{
+		return false;
+	}
+
+	virtual inline bool isTaskloopFor() const
+	{
+		return false;
+	}
+
+	virtual inline bool isTaskforCollaborator() const
+	{
+		return false;
+	}
+
+	virtual inline bool isTaskforSource() const
+	{
+		return false;
+	}
 };
 
 

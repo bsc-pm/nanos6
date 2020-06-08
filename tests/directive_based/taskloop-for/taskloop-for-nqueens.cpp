@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ void solve(int n, const int col, sol_node_t& sol)
 	if (col == n) {
 		__sync_fetch_and_add(&count, 1);
 	} else {
-		#pragma oss taskloop grainsize(grainsize) final(final_depth < col)
+		#pragma oss taskloop for grainsize(grainsize)
 		for (int row = 0; row < n; row++) {
 			if (!check_attack(col, row, &sol)) {
 				sol_node_t new_sol;

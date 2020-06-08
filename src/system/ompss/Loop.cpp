@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6.h>
@@ -23,13 +23,12 @@ void nanos6_register_loop_bounds(
 	assert(task != nullptr);
 	assert(task->isTaskfor() || task->isTaskloop());
 
-	if (task->isTaskfor()) {
+	if (task->isTaskloop()) {
+		Taskloop *taskloop = (Taskloop *) task;
+		taskloop->initialize(lower_bound, upper_bound, grainsize, chunksize);
+	} else {
 		Taskfor *taskfor = (Taskfor *) task;
 		taskfor->initialize(lower_bound, upper_bound, chunksize);
-	}
-	else {
-		Taskloop *taskloop = (Taskloop *) task;
-		taskloop->initialize(lower_bound, upper_bound, grainsize);
 	}
 }
 

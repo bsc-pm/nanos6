@@ -140,7 +140,8 @@ void WorkerThread::handleTask(CPU *cpu)
 	MemoryPlace *targetMemoryPlace = HardwareInfo::getMemoryPlace(nanos6_host_device, NUMAId);
 	assert(targetMemoryPlace != nullptr);
 
-	if (_task->isTaskfor()) {
+	// This if is only for source taskfors.
+	if (_task->isTaskforSource()) {
 		assert(!_task->isRunnable());
 
 		// We have already set the chunk of the preallocatedTaskfor in the scheduler.

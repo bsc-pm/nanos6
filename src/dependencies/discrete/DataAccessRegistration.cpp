@@ -287,13 +287,10 @@ namespace DataAccessRegistration {
 		}
 #endif
 
-		nanos6_task_info_t *taskInfo = task->getTaskInfo();
-		assert(taskInfo != 0);
-
 		task->increasePredecessors(2);
 
 		// This part creates the DataAccesses and inserts it to dependency system
-		taskInfo->register_depinfo(task->getArgsBlock(), nullptr, task);
+		task->registerDependencies(/* discrete */ true);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 

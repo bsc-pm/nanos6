@@ -34,9 +34,10 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 		return;
 	}
 
-	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length);
+	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || task->isTaskloopSource();
+	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, weak, start, length);
 
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, WEAK && !task->isFinal() && !task->isTaskfor(), start, length, reductionTypeAndOperatorIndex, reductionIndex);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, start, length, reductionTypeAndOperatorIndex, reductionIndex);
 }
 
 void nanos6_register_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)

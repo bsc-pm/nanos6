@@ -14,7 +14,6 @@
 
 #include <nanos6.h>
 
-#include "AddTask.hpp"
 #include "MemoryAllocator.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
@@ -78,12 +77,18 @@ void nanos6_create_task(
 	bool isStreamExecutor = flags & (1 << Task::stream_executor_flag);
 	size_t originalArgsBlockSize = args_block_size;
 	size_t taskSize;
-	if (isTaskfor) {
-		taskSize = sizeof(Taskfor);
+
+	// taskloop and taskfor flags can both be enabled for the same task.
+	// If this is the case, it means we are dealing with taskloop for,
+	// which is a taskloop that generates taskfors. Thus, we must create
+	// a taskloop. It is important to check taskloop condition before
+	// taskfor one, to create a taskloop in the case of taskloop for.
+	if (isTaskloop) {
+		taskSize = sizeof(Taskloop);
 	} else if (isStreamExecutor) {
 		taskSize = sizeof(StreamExecutor);
-	} else if (isTaskloop) {
-		taskSize = sizeof(Taskloop);
+	} else if (isTaskfor) {
+		taskSize = sizeof(Taskfor);
 	} else {
 		taskSize = sizeof(Task);
 	}
@@ -117,40 +122,23 @@ void nanos6_create_task(
 	void *countersAddress = (taskCountersSize > 0) ? (char *)task + taskSize + taskAccessInfo.getAllocationSize() : nullptr;
 	TaskHardwareCounters taskCounters(countersAddress);
 
-	if (isTaskfor) {
+	// taskloop and taskfor flags can both be enabled for the same task.
+	// If this is the case, it means we are dealing with taskloop for,
+	// which is a taskloop that generates taskfors. Thus, we must create
+	// a taskloop. It is important to check taskloop condition before
+	// taskfor one, to create a taskloop in the case of taskloop for.
+	if (isTaskloop) {
+		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags, taskAccessInfo, taskCounters);
+	} else if (isStreamExecutor) {
+		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags, taskAccessInfo, taskCounters);
+	} else if (isTaskfor) {
 		// Taskfor is always final.
 		flags |= nanos6_task_flag_t::nanos6_final_task;
 		new (task) Taskfor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags, taskAccessInfo, taskCounters);
-	} else if (isStreamExecutor) {
-		new (task) StreamExecutor(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags, taskAccessInfo, taskCounters);
-	} else if (isTaskloop) {
-		new (task) Taskloop(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, nullptr, taskId, flags, taskAccessInfo, taskCounters);
 	} else {
 		// Construct the Task object
 		new (task) Task(args_block, originalArgsBlockSize, taskInfo, taskInvocationInfo, /* Delayed to the submit call */ nullptr, taskId, flags, taskAccessInfo, taskCounters);
 	}
-}
-
-void nanos6_create_preallocated_task(
-	nanos6_task_info_t *taskInfo,
-	nanos6_task_invocation_info_t *taskInvocationInfo,
-	Instrument::task_id_t parentTaskInstrumentationId,
-	size_t args_block_size,
-	void *preallocatedArgsBlock,
-	void *preallocatedTask,
-	size_t flags
-) {
-	assert(taskInfo->implementation_count == 1); //TODO: Temporary check until multiple implementations are supported
-	assert(preallocatedArgsBlock != nullptr);
-	assert(preallocatedTask != nullptr);
-
-	Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(parentTaskInstrumentationId, taskInfo, taskInvocationInfo, flags);
-
-	bool isTaskfor = flags & nanos6_task_flag_t::nanos6_taskfor_task;
-	FatalErrorHandler::failIf(!isTaskfor, "Only taskfors can be created this way.");
-
-	Taskfor *taskfor = (Taskfor *) preallocatedTask;
-	taskfor->reinitialize(preallocatedArgsBlock, args_block_size, taskInfo, taskInvocationInfo, nullptr, taskId, flags);
 }
 
 void nanos6_submit_task(void *taskHandle)
