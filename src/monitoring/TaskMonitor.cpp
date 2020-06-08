@@ -90,7 +90,7 @@ void TaskMonitor::taskStarted(Task *task, monitoring_task_status_t execStatus) c
 	// Only if this task doesn't have an ancestor that is already taken into account
 	bool isCollaborator = (task->isTaskfor() && task->isRunnable());
 	if (!isCollaborator && !taskStatistics->ancestorHasPrediction()) {
-		if ((oldStatus == null_status || oldStatus == pending_status) && execStatus == ready_status) {
+		if (oldStatus == null_status && execStatus == ready_status) {
 			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
 			assert(tasktypeStatistics != nullptr);
 

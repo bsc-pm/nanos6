@@ -17,16 +17,10 @@
 #define DEFAULT_COST 1
 
 enum monitoring_task_status_t {
-	/* The task has dependencies pending to be resolved */
-	pending_status = 0,
 	/* The task is ready to be executed */
-	ready_status,
+	ready_status = 0,
 	/* The task is being executed */
 	executing_status,
-	/* The task is blocked (taskwait...) */
-	blocked_status,
-	/* The task is paused and executing runtime code (creating another task...) */
-	runtime_status,
 	/* An aggregation of runtime + pending + blocked */
 	paused_status,
 	num_status,

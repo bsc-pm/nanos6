@@ -85,7 +85,7 @@ void SpawnFunction::spawnFunction(
 	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
 	if (taskRuntimeTransition) {
 		HardwareCounters::updateTaskCounters(creator);
-		Monitoring::taskChangedStatus(creator, runtime_status);
+		Monitoring::taskChangedStatus(creator, paused_status);
 	}
 	Instrument::enterSpawnFunction(taskRuntimeTransition);
 
