@@ -4,22 +4,28 @@ usage() {
 	echo "usage: ctfstats <ctf_trace_directory>"
 }
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export PYTHONPATH=$PYTHONPATH:$DIR
 
 if [ $# -ne 1 ]; then
 	usage
 	exit 1
 fi
 
-TRACE=`readlink -f $1/ust/uid/*/64-bit`
+TRACEOP1=`readlink -f $1/ctf/ust/uid/*/64-bit`
+TRACEOP2=`readlink -f $1/ust/uid/*/64-bit`
+TRACEOP3=`readlink -f $1`
 
-if [ ! -f $TRACE/metadata ]; then
+if [ -f $TRACEOP1/metadata ]; then
+	TRACE=$TRACEOP1
+elif [ -f $TRACEOP2/metadata ]; then
+	TRACE=$TRACEOP2
+elif [ -f $TRACEOP3/metadata ]; then
+	TRACE=$TRACEOP3
+else
 	>&2 echo "Error: The supplied input does not appear to be a CTF trace"
 	exit 1
 fi
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-
-export PYTHONPATH=$PYTHONPATH:$DIR
 
 babeltrace2 --plugin-path=$DIR         \
 	-c source.ctf.fs               \

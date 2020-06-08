@@ -46,6 +46,8 @@ const char *CTFAPI::CTFMetadata::meta_env =
 	"	tracer_patchlevel = 0;\n"
 	"	/* ctf2prv converter variables */\n"
 	"	ncpus = %" PRIu16 ";\n"
+	"	binary_name = \"%s\";\n"
+	"	pid = %" PRIu64 ";\n"
 	"};\n\n";
 
 const char *CTFAPI::CTFMetadata::meta_clock =
@@ -153,7 +155,8 @@ void CTFAPI::CTFMetadata::writeMetadataFile(std::string userPath)
 	fputs(meta_header, f);
 	fputs(meta_typedefs, f);
 	fputs(meta_trace, f);
-	fprintf(f, meta_env, trace.getTotalCPUs());
+	fprintf(f, meta_env, trace.getTotalCPUs(),
+		trace.getBinaryName(), trace.getPid());
 	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
 
 	// print context additional structures

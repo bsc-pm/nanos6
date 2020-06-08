@@ -18,7 +18,6 @@
 
 extern CTFAPI::CTFEvent *__eventCTFFlush;
 
-
 uint64_t CTFAPI::getTimestamp()
 {
 	uint64_t timestamp;

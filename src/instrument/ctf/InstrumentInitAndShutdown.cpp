@@ -122,9 +122,9 @@ void Instrument::initialize()
 	CTFAPI::CTFMetadata *userMetadata = new CTFAPI::CTFMetadata();
 
 	trace.setMetadata(userMetadata);
-	trace.setTotalCPUs(CPUManager::getTotalCPUs());
-	trace.setTracePath("./trace-ctf-nanos6");
+	trace.setTracePath(".");
 	trace.initializeTraceTimer();
+	trace.setTotalCPUs(CPUManager::getTotalCPUs());
 	trace.createTraceDirectories(userPath, kernelPath);
 	initializeCTFBuffers(userMetadata, userPath);
 
@@ -171,6 +171,7 @@ void Instrument::shutdown()
 	delete externalThreadStream;
 	delete Instrument::virtualCPULocalData;
 
+	trace.moveTemporalTraceToFinalDirectory();
 	trace.clean();
 }
 

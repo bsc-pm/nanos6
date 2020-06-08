@@ -79,10 +79,14 @@ class ctf2prv(bt2._UserSinkComponent):
 			clk = msg.default_clock_snapshot
 			absoluteStartTime = clk.clock_class.offset.seconds
 			ts = clk.value - 1 # see comments below
-			ncpus = msg.event.stream.trace.environment["ncpus"]
 			assert(ts >= 0)
+			ncpus = msg.event.stream.trace.environment["ncpus"]
+			binaryName = msg.event.stream.trace.environment["binary_name"]
+			pid = msg.event.stream.trace.environment["pid"]
+			traceName = "trace_" + str(binaryName) + "_" + str(pid)
 
 			# initialize paraver trace
+			ParaverTrace.addTraceName(traceName)
 			ParaverTrace.addAbsoluteStartTime(absoluteStartTime)
 			ParaverTrace.addStartTime(ts)
 			ParaverTrace.addNumberOfCPUs(ncpus)

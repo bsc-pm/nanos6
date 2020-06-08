@@ -10,10 +10,9 @@
 #include <string>
 #include <cstdint>
 
+#include "CTFMetadata.hpp"
+
 namespace CTFAPI {
-	// forward declaration to break circular dependency between CTFTrace and
-	// CTFMetadata
-	class CTFMetadata;
 
 	class CTFTrace {
 	public:
@@ -24,23 +23,27 @@ namespace CTFAPI {
 		}
 
 	private:
-		std::string _tracePath;
+		std::string _finalTraceBasePath;
+		std::string _tmpTracePath;
 		std::string _userPath;
 		std::string _kernelPath;
+		std::string _binaryName;
+		uint64_t _pid;
 		CTFMetadata *_metadata;
 
 		uint64_t _absoluteStartTime;
 		uint16_t _totalCPUs;
 
-		CTFTrace() {}
+		CTFTrace();
 	public:
 		CTFTrace(CTFTrace const&)       = delete;
 		void operator=(CTFTrace const&) = delete;
 
-		void setTracePath(const char* tracePath)
-		{
-			_tracePath = std::string(tracePath);
-		}
+		void setTracePath(const char* tracePath);
+		void createTraceDirectories(std::string &userPath, std::string &kernelPath);
+		void initializeTraceTimer();
+		void moveTemporalTraceToFinalDirectory();
+		void clean();
 
 		void setMetadata(CTFMetadata *metadata)
 		{
@@ -52,18 +55,24 @@ namespace CTFAPI {
 			_totalCPUs = totalCPUs;
 		}
 
-		uint16_t getTotalCPUs(void) const
+		uint16_t getTotalCPUs() const
 		{
 			return _totalCPUs;
 		}
 
-		inline uint64_t getAbsoluteStartTimestamp(void) {
-			return _absoluteStartTime;
+		uint64_t getPid() const
+		{
+			return _pid;
 		}
 
-		void createTraceDirectories(std::string &userPath, std::string &kernelPath);
-		void initializeTraceTimer(void);
-		void clean(void);
+		const char *getBinaryName() const
+		{
+			return _binaryName.c_str();
+		}
+
+		inline uint64_t getAbsoluteStartTimestamp() const {
+			return _absoluteStartTime;
+		}
 	};
 }
 

@@ -5,23 +5,27 @@ usage() {
 }
 
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export PYTHONPATH=$PYTHONPATH:$DIR
+
 if [ $# -ne 1 ]; then
 	usage
 	exit 1
 fi
 
-TRACE=`readlink -f $1/ust/uid/*/64-bit`
+CTFTRACE=`readlink -f $1/ctf/ust/uid/*/64-bit`
 
-if [ ! -f $TRACE/metadata ]; then
+if [ ! -f $CTFTRACE/metadata ]; then
 	>&2 echo "Error: The supplied input does not appear to be a CTF trace"
 	exit 1
 fi
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PRVTRACE="$1/extrae"
+rm -rf $PRVTRACE
+mkdir $PRVTRACE
+cd $PRVTRACE
 
-export PYTHONPATH=$PYTHONPATH:$DIR
-
-babeltrace2 --plugin-path=$DIR         \
-	-c source.ctf.fs               \
-	--params="inputs=[\"$TRACE\"]" \
+babeltrace2 --plugin-path=$DIR            \
+	-c source.ctf.fs                  \
+	--params="inputs=[\"$CTFTRACE\"]" \
 	-c sink.nanos6.ctf2prv

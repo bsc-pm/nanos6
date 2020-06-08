@@ -155,7 +155,25 @@ Secondly, it enables two floating-point (FP) unit optimizations in all tasks: fl
 Please note these FP optimizations could alter the precision of floating-point computations.
 In conclusion, enabling all those features can significantly improve the user application's performance out of the box.
 
-### Generating extrae traces
+### [EXPERIMENTAL] Tracing a Nanos6 application with CTF
+
+To generate a CTF trace, run the application with the `NANOS6` envar set to `ctf`.
+
+A directory named "trace_<binary_name>_<pid>" will be created at the current
+working directory at the end of the execution. To visualize this trace, it
+needs to be converted to Paraver format first. You can use the provided
+converter to do so:
+
+```bash
+  ctf2prv <trace>
+```
+
+Which will generate the directory <trace>/extrae with the Paraver trace.
+
+The ctf2prv tool requires python3 and babeltrace2 python modules. Nanos6 does
+not require any package to generate CTF traces.
+
+### Tracing a Nanos6 application with Extrae
 
 To generate an extrae trace, run the application with the `NANOS6` envar set to `extrae`.
 
