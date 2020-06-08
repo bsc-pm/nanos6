@@ -1,10 +1,12 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "resolve.h"
+
+#include <stdint.h>
 
 
 #pragma GCC visibility push(default)
@@ -47,5 +49,16 @@ void nanos6_unblock_task(void *blocking_context)
 	(*symbol)(blocking_context);
 }
 
+uint64_t nanos6_wait_for(uint64_t time_us)
+{
+	typedef uint64_t nanos6_wait_for_t(uint64_t);
+
+	static nanos6_wait_for_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_wait_for_t *) _nanos6_resolve_symbol("nanos6_wait_for", "task blocking", NULL);
+	}
+
+	return (*symbol)(time_us);
+}
 
 #pragma GCC visibility pop
