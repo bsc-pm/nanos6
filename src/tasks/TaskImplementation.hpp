@@ -31,8 +31,8 @@ inline Task::Task(
 	size_t flags,
 	TaskDataAccessesInfo taskAccessInfo,
 	const TaskHardwareCounters &taskCounters
-)
-	: _argsBlock(argsBlock),
+) :
+	_argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
 	_taskInfo(taskInfo),
 	_taskInvokationInfo(taskInvokationInfo),
@@ -40,6 +40,7 @@ inline Task::Task(
 	_removalCount(1),
 	_parent(parent),
 	_priority(0),
+	_deadline(0),
 	_schedulingHint(NO_HINT),
 	_thread(nullptr),
 	_dataAccesses(taskAccessInfo),
@@ -82,8 +83,7 @@ inline void Task::reinitialize(
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags
-)
-{
+) {
 	_argsBlock = argsBlock;
 	_argsBlockSize = argsBlockSize;
 	_taskInfo = taskInfo;
@@ -92,6 +92,7 @@ inline void Task::reinitialize(
 	_removalCount = 1;
 	_parent = parent;
 	_priority = 0;
+	_deadline = 0;
 	_schedulingHint = NO_HINT;
 	_thread = nullptr;
 	_flags = flags;
