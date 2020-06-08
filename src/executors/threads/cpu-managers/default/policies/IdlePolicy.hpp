@@ -25,7 +25,7 @@ public:
 	{
 	}
 
-	void execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numTasks = 0);
+	void execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t numRequested = 0);
 
 };
 

@@ -37,25 +37,18 @@ public:
 		return _instance->getReadyTask(computePlace);
 	}
 
-	//! \brief Check if the scheduler has available work for the current CPU
+	//! \brief Check whether a compute place is serving tasks
 	//!
-	//! \param[in] computePlace The current compute place
-	static inline bool hasAvailableWork(ComputePlace *computePlace)
+	//! This function is called to check whether there is any
+	//! compute place serving tasks. Notice that we require to
+	//! have a compute place serving tasks except when there is
+	//! work for all compute places. This information is considered
+	//! when a compute place is about to be marked as idle. It
+	//! should abort the idle process when detecting that there are
+	//! no compute places serving tasks
+	static inline bool isServingTasks()
 	{
-		assert(computePlace != nullptr);
-		return _instance->hasAvailableWork(computePlace);
-	}
-
-	//! \brief Notify the scheduler that a CPU is about to be disabled
-	//! in case any tasks must be unassigned
-	//!
-	//! \param[in] cpuId The id of the cpu that will be disabled
-	//! \param[in] task A task assigned to the current thread or nullptr
-	//!
-	//! \return Whether work was reassigned upon disabling this CPU
-	static inline bool disablingCPU(size_t cpuId, Task *task)
-	{
-		return _instance->disablingCPU(cpuId, task);
+		return _instance->isServingTasks();
 	}
 
 	//! \brief Check whether task priority is considered

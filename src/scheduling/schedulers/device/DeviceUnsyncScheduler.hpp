@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef DEVICE_UNSYNC_SCHEDULER_HPP
@@ -24,11 +24,6 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	Task *getReadyTask(ComputePlace *computePlace);
-
-	//! \brief Check if the scheduler has available work for the current CPU
-	//!
-	//! \param[in] computePlace The host compute place
-	bool hasAvailableWork(ComputePlace *computePlace);
 };
 
 

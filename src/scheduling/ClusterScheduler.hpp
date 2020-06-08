@@ -50,12 +50,9 @@ public:
 		return _clusterSchedulerImplementation->getReadyTask(computePlace);
 	}
 
-	//! \brief Check if the scheduler has available work for the current CPU
-	//!
-	//! \param[in] computePlace The host compute place
-	inline bool hasAvailableWork(ComputePlace *computePlace)
+	inline bool isServingTasks() const
 	{
-		return _clusterSchedulerImplementation->hasAvailableWork(computePlace);
+		return _clusterSchedulerImplementation->isServingTasks();
 	}
 
 	inline std::string getName() const

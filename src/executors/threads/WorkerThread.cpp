@@ -63,11 +63,11 @@ void WorkerThread::body()
 
 	CPU *cpu = getComputePlace();
 
-	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId);
+	Instrument::ThreadInstrumentationContext instrumentationContext(
+		Instrument::task_id_t(),
+		cpu->getInstrumentationId(),
+		_instrumentationId);
 
-	// NOTE: If no tasks are available, the first time this happens the CPU
-	// will be dedicated to executing services. The second time it happens,
-	// it may become idle
 	// The WorkerThread will iterate until its CPU status signals that there is
 	// an ongoing shutdown and thus the thread must stop executing
 	while (CPUManager::checkCPUStatusTransitions(this) != CPU::shutdown_status) {
@@ -110,6 +110,7 @@ void WorkerThread::body()
 
 				_task = nullptr;
 			}
+			CPUManager::checkIfMustReturnCPU(this);
 		} else {
 			// Execute polling services
 			PollingAPI::handleServices();

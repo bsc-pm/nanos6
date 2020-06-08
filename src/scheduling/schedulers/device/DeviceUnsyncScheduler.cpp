@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "DeviceUnsyncScheduler.hpp"
@@ -39,22 +39,4 @@ Task *DeviceUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	assert(task == nullptr || !task->isTaskfor());
 
 	return task;
-}
-
-bool DeviceUnsyncScheduler::hasAvailableWork(ComputePlace *computePlace)
-{
-	// 1. Check if there is an immediate successor.
-	if (_enableImmediateSuccessor && computePlace != nullptr) {
-		size_t immediateSuccessorId = computePlace->getIndex();
-		if (_immediateSuccessorTasks[immediateSuccessorId] != nullptr) {
-			return true;
-		}
-	}
-
-	// 2. Check if there is work remaining in the ready queue
-	if (_readyTasks->getNumReadyTasks() != 0) {
-		return true;
-	}
-
-	return false;
 }

@@ -20,7 +20,7 @@ public:
 	{
 		// NOTE: This policy works as follows:
 		// - If the hint is IDLE_CANDIDATE, the CPU remains active (no change)
-		// - If the hint is ADDED_TASKS or HANDLE_TASKFOR, no CPUs are woken up as
+		// - If the hint is REQUEST_CPUS or HANDLE_TASKFOR, no CPUs are woken up as
 		//   all of them should be awake
 	}
 

@@ -7,6 +7,8 @@
 #ifndef SYNC_SCHEDULER_HPP
 #define SYNC_SCHEDULER_HPP
 
+#include <atomic>
+
 #include <boost/lockfree/spsc_queue.hpp>
 
 #include "MemoryAllocator.hpp"
@@ -20,76 +22,50 @@
 
 class SyncScheduler {
 protected:
+	//! Scheduler's device type
+	nanos6_device_t _deviceType;
+
+	//! Underlying unsynchronized scheduler
+	UnsyncScheduler *_scheduler;
+
+private:
 	typedef boost::lockfree::spsc_queue<Task *> add_queue_t;
 	typedef Padded<SchedulerSupport::CPUNode> PaddedCPUNode;
 
-	/* Members */
-	nanos6_device_t _deviceType;
+	//! Total number of computePlaces
 	uint64_t _totalComputePlaces;
+
+	//! Total number of add queues
 	size_t _totalAddQueues;
 
-	// Unsynchronized scheduler
-	UnsyncScheduler *_scheduler;
+	//! Subcription lock protecting the access
+	//! to the unsychronized scheduler
 	SubscriptionLock _lock;
+
+	//! Locks for adding tasks to the add queues
 	TicketArraySpinLock *_addQueuesLocks;
+
+	//! Add queues of ready tasks
 	add_queue_t *_addQueues;
-	PaddedCPUNode *_ready; // indexed by CPU index
 
-	//! \brief Transfer ready tasks from lock-free queues to the scheduler
-	//!
-	//! This function moves all ready tasks that have been added to
-	//! the lock-free queues (one per NUMA) to the definitive ready
-	//! task queue. Note this function must be called with the lock
-	//! of the scheduler acquired
-	inline void processReadyTasks()
-	{
-		for (size_t i = 0; i < _totalAddQueues; i++) {
-			if (!_addQueues[i].empty()) {
-				_addQueues[i].consume_all(
-					[&](Task *task) {
-						// Add the task to the unsync scheduler
-						_scheduler->addReadyTask(task,
-							task->getComputePlace(),
-							task->getSchedulingHint());
-						// Reset compute place for security
-						task->setComputePlace(nullptr);
-					}
-				);
-			}
-		}
-	}
+	//! Internal structure to manage the subscription mechanism
+	//! Indexed by the CPU index (virtual id)
+	PaddedCPUNode *_ready;
 
-	inline void assignTask(uint64_t const cpuIndex, uint64_t const ticket, Task *const task)
-	{
-		_ready[cpuIndex].task = task;
-		_ready[cpuIndex].ticket = ticket;
-	}
-
-	inline bool getAssignedTask(uint64_t const cpuIndex, uint64_t const myTicket, Task *&task)
-	{
-		task = _ready[cpuIndex].task;
-		return (_ready[cpuIndex].ticket == myTicket);
-	}
-
-	static inline ComputePlace *getComputePlace(nanos6_device_t deviceType, uint64_t computePlaceIndex)
-	{
-		if (deviceType == nanos6_host_device) {
-			const std::vector<CPU *> &cpus = CPUManager::getCPUListReference();
-			return cpus[computePlaceIndex];
-		} else {
-			return HardwareInfo::getComputePlace(deviceType, computePlaceIndex);
-		}
-	}
+	//! Indicates whether there is any compute place
+	//! serving tasks inside the scheduling loop
+	std::atomic<bool> _servingTasks;
 
 public:
-
 	//! NOTE We initialize the SubscriptionLock with 2 * numCPUs since some
 	//! threads may oversubscribe and thus we may need more than "numCPUs"
 	//! slots in the lock's waiting queue
 	SyncScheduler(size_t totalComputePlaces, nanos6_device_t deviceType = nanos6_host_device) :
 		_deviceType(deviceType),
+		_scheduler(nullptr),
 		_totalComputePlaces(totalComputePlaces),
-		_lock((uint64_t) totalComputePlaces * 2)
+		_lock((uint64_t) totalComputePlaces * 2),
+		_servingTasks(false)
 	{
 		uint64_t totalCPUsPow2 = SchedulerSupport::roundToNextPowOf2(_totalComputePlaces);
 		assert(SchedulerSupport::isPowOf2(totalCPUsPow2));
@@ -130,18 +106,24 @@ public:
 		delete _scheduler;
 	}
 
-	virtual nanos6_device_t getDeviceType()
+	virtual inline nanos6_device_t getDeviceType()
 	{
 		return _deviceType;
 	}
 
-	void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
+	//! \brief Check whether a compute place is serving tasks
+	inline bool isServingTasks()
+	{
+		return _servingTasks.load(std::memory_order_relaxed);
+	}
+
+	inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
 	{
 		// TODO: Allow adding multiple tasks in the future
 		addTasks(&task, 1, computePlace, hint);
 	}
 
-	void addTasks(Task *tasks[], const size_t numTasks, ComputePlace *computePlace, ReadyTaskHint hint)
+	inline void addTasks(Task *tasks[], const size_t numTasks, ComputePlace *computePlace, ReadyTaskHint hint)
 	{
 		// Use a special queue not belonging to any NUMA node if no compute place
 		const size_t queueIndex = (computePlace != nullptr) ? ((CPU *)computePlace)->getNumaNodeId() : _totalAddQueues-1;
@@ -173,45 +155,84 @@ public:
 
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
 
-	//! \brief Check if the scheduler has available work for the current CPU
-	//!
-	//! \param[in] computePlace The host compute place
-	inline bool hasAvailableWork(ComputePlace *computePlace)
-	{
-		_lock.lock();
-
-		// Ensure the add queues are emptied before checking the available work
-		processReadyTasks();
-
-		// Check if the scheduler has work
-		bool hasWork = _scheduler->hasAvailableWork(computePlace);
-
-		_lock.unsubscribe();
-
-		return hasWork;
-	}
-
-	//! \brief Notify the scheduler that a CPU is about to be disabled
-	//! in case any tasks must be unassigned
-	//!
-	//! \param[in] cpuId The id of the cpu that will be disabled
-	//! \param[in] task A task assigned to the current thread or nullptr
-	//!
-	//! \return Whether work was reassigned upon disabling this CPU
-	inline bool disablingCPU(size_t cpuId, Task * task)
-	{
-		_lock.lock();
-
-		// Ensure the add queues are emptied
-		processReadyTasks();
-		bool tasksReassigned = _scheduler->disablingCPU(cpuId, task);
-
-		_lock.unsubscribe();
-
-		return tasksReassigned;
-	}
-
 	virtual std::string getName() const = 0;
+
+private:
+	//! \brief Transfer ready tasks from lock-free queues to the scheduler
+	//!
+	//! This function moves all ready tasks that have been added to
+	//! the lock-free queues (one per NUMA) to the definitive ready
+	//! task queue. Note this function must be called with the lock
+	//! of the scheduler acquired
+	inline void processReadyTasks()
+	{
+		for (size_t i = 0; i < _totalAddQueues; i++) {
+			if (!_addQueues[i].empty()) {
+				_addQueues[i].consume_all(
+					[&](Task *task) {
+						// Add the task to the unsync scheduler
+						_scheduler->addReadyTask(task,
+							task->getComputePlace(),
+							task->getSchedulingHint());
+						// Reset compute place for security
+						task->setComputePlace(nullptr);
+					}
+				);
+			}
+		}
+	}
+
+	inline void assignTask(uint64_t const cpuIndex, uint64_t const ticket, Task *const task)
+	{
+		_ready[cpuIndex].task = task;
+		_ready[cpuIndex].ticket = ticket;
+	}
+
+	inline bool getAssignedTask(uint64_t const cpuIndex, uint64_t const myTicket, Task *&task)
+	{
+		task = _ready[cpuIndex].task;
+		return (_ready[cpuIndex].ticket == myTicket);
+	}
+
+	//! \brief Set serving tasks condition
+	//!
+	//! This function should be called only after acquiring the scheduler
+	//! lock and before releasing it, which is the moment when the compute
+	//! place is responsible for serving tasks
+	//!
+	//! \param[in] servingTasks The value to be set
+	inline void setServingTasks(bool servingTasks)
+	{
+		_servingTasks.store(servingTasks, std::memory_order_relaxed);
+	}
+
+	//! \brief Get the compute place by its index
+	//!
+	//! \param[in] computePlaceIndex The index of the compute place
+	//!
+	//! \return The corresponding compute place
+	virtual ComputePlace *getComputePlace(uint64_t computePlaceIndex) const = 0;
+
+	//! \brief Check whether a compute place should stop serving tasks
+	//!
+	//! This function should be called from the compute place that is
+	//! serving tasks, which is the one that acquired the subscription
+	//! lock and is serving ready tasks to the rest of compute places
+	//!
+	//! \param[in] computePlace The compute place that is serving tasks
+	//!
+	//! \return Whether the compute place should stop
+	virtual bool mustStopServingTasks(ComputePlace *computePlace) const = 0;
+
+	//! \brief Perform the required actions after serving tasks
+	//!
+	//! This function is called when a compute place has stopped
+	//! serving tasks, which is the one that served ready tasks
+	//! to the rest of compute places
+	//!
+	//! \param[in] computePlace The compute place that was serving tasks
+	//! \param[in] assignedTask The task that has served to itself (if any)
+	virtual void postServingTasks(ComputePlace *computePlace, Task *assignedTask) = 0;
 };
 
 #endif // SYNC_SCHEDULER_HPP

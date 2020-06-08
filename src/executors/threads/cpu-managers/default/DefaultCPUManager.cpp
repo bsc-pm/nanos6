@@ -10,6 +10,7 @@
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "scheduling/Scheduler.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
 #include <Monitoring.hpp>
@@ -220,17 +221,14 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 
 	const int index = cpu->getIndex();
 
-	_idleCPUsLock.lock();
+	std::lock_guard<SpinLock> guard(_idleCPUsLock);
 
-	// Before idling the CPU, check if there truly aren't any tasks ready
-	// NOTE: This is a workaround to solve the race condition between adding
-	// tasks and idling CPUs; i.e. it may happen that before a CPU is idled,
-	// tasks are added in the scheduler and that CPU may never have the chance
-	// to wake up and execute these newly added tasks
-	if (Scheduler::hasAvailableWork(cpu)) {
-		// If there are ready tasks, release the lock and do not idle the CPU
-		_idleCPUsLock.unlock();
-
+	// If there is no CPU serving tasks in the scheduler,
+	// abort the idle process of this CPU and go back
+	// to the scheduling part. Notice that this check
+	// must be inside the exclusive section covered
+	// by the idle mutex
+	if (!Scheduler::isServingTasks()) {
 		return false;
 	}
 
@@ -242,8 +240,6 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 	_idleCPUs[index] = true;
 	++_numIdleCPUs;
 	assert(_numIdleCPUs <= _cpus.size());
-
-	_idleCPUsLock.unlock();
 
 	return true;
 }
