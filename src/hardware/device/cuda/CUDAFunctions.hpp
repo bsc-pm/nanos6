@@ -108,6 +108,23 @@ public:
 			cudaEventQuery(event), "While querying event");
 	}
 
+	static void cudaDevicePrefetch(void *pHost, size_t size, int device, cudaStream_t &stream, bool readOnly)
+	{
+		if (size == 0)
+			return;
+
+		// Depending on the access we're prefetching, we will advise the driver to do a shared copy
+		cudaMemoryAdvise advice = (readOnly ? cudaMemAdviseSetReadMostly : cudaMemAdviseUnsetReadMostly);
+		cudaError_t err = cudaMemAdvise(pHost, size, advice, device);
+		CUDAErrorHandler::handle(err, "Advising memory region");
+
+		// Ensure that we have a stream assigned. Stream 0 is special in CUDA and tasks are never launched on it.
+		assert(stream != 0);
+
+		// Call a prefetch operation on the same stream that we are going to launch that task on
+		err = cudaMemPrefetchAsync(pHost, size, device, stream);
+		CUDAErrorHandler::handle(err, "Prefetching memory to device");
+	}
 };
 
 #endif // CUDA_FUNCTIONS_HPP

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef MULTIDIMENSIONAL_API_HPP
@@ -11,9 +11,8 @@
 #include <nanos6/multidimensional-dependencies.h>
 
 #include "Dependencies.hpp"
-
-#include "../DataAccessType.hpp"
-#include "../MultidimensionalAPITraversal.hpp"
+#include "dependencies/DataAccessType.hpp"
+#include "dependencies/MultidimensionalAPITraversal.hpp"
 
 
 #ifdef NDEBUG

@@ -19,7 +19,7 @@
 #include "DataAccess.hpp"
 #include "DataAccessRegistration.hpp"
 #include "ReductionInfo.hpp"
-#include "TaskDataAccessesImplementation.hpp"
+#include "TaskDataAccesses.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"

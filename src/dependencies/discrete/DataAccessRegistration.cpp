@@ -145,7 +145,7 @@ namespace DataAccessRegistration {
 		assert(!accessStruct.hasBeenDeleted());
 
 		bool alreadyExisting;
-		DataAccess *access = accessStruct.allocateAccess(address, accessType, task, weak, alreadyExisting);
+		DataAccess *access = accessStruct.allocateAccess(address, accessType, task, length, weak, alreadyExisting);
 
 		if (!alreadyExisting) {
 			if (accessType == REDUCTION_ACCESS_TYPE) {
@@ -339,8 +339,9 @@ namespace DataAccessRegistration {
 
 		if (accessStruct.hasDataAccesses()) {
 			// Release dependencies of all my accesses
-			accessStruct.forAll([&](void *address, DataAccess *access) {
+			accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
 				finalizeDataAccess(task, access, address, hpDependencyData);
+				return true;
 			});
 		}
 
@@ -449,19 +450,17 @@ namespace DataAccessRegistration {
 		accessStruct.increaseDeletableCount();
 
 		// Get all seqs
-		accessStruct.forAll([&](void *address, DataAccess *access) {
+		accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
 			DataAccessType accessType = access->getType();
 			ReductionInfo *reductionInfo = nullptr;
 			DataAccess *predecessor = nullptr;
 			bottom_map_t::iterator itMap;
 			bool weak = access->isWeak();
 
-			// Instrumentation mock(for now)
-			DataAccessRegion mock(address, 1);
+			// Instrumentation needs a region.
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
-				nullptr,
-				accessType, false, mock,
-				false, false, false, Instrument::access_object_type_t::regular_access_type,
+				nullptr, accessType, false, access->getAccessRegion(), false, false,
+				false, Instrument::access_object_type_t::regular_access_type,
 				task->getInstrumentationTaskId());
 
 			accessStruct.increaseDeletableCount();
@@ -598,6 +597,8 @@ namespace DataAccessRegistration {
 					true,
 					task->getInstrumentationTaskId());
 			}
+
+			return true; // Continue iteration
 		});
 	}
 
@@ -654,11 +655,13 @@ namespace DataAccessRegistration {
 		if (!accessStruct.hasDataAccesses())
 			return;
 
-		accessStruct.forAll([&](void *, DataAccess *access) {
+		accessStruct.forAll([&](void *, DataAccess *access) -> bool {
 			if (access->getType() == REDUCTION_ACCESS_TYPE) {
 				ReductionInfo *reductionInfo = access->getReductionInfo();
 				reductionInfo->releaseSlotsInUse(((CPU *)computePlace)->getIndex());
 			}
+
+			return true; // Continue iteration
 		});
 	}
 
@@ -671,6 +674,15 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) CPUDependencyData &hpDependencyData,
 		__attribute__((unused)) MemoryPlace const *location)
 	{
+	}
+
+	void releaseTaskwaitFragment(
+		__attribute__((unused)) Task *task,
+		__attribute__((unused)) DataAccessRegion region,
+		__attribute__((unused)) ComputePlace *computePlace,
+		__attribute__((unused)) CPUDependencyData &hpDependencyData)
+	{
+		assert(false);
 	}
 } // namespace DataAccessRegistration
 

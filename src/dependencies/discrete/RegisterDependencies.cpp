@@ -8,14 +8,15 @@
 #include <stdlib.h>
 
 #include <nanos6.h>
-#include "executors/threads/WorkerThread.hpp"
-#include "../DataAccessType.hpp"
+
 #include "DataAccessRegistration.hpp"
+#include "Dependencies.hpp"
+#include "ReductionSpecific.hpp"
+#include "dependencies/DataAccessType.hpp"
+#include "executors/threads/WorkerThread.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-#include "ReductionSpecific.hpp"
 
-#include <Dependencies.hpp>
 #include <InstrumentDependenciesByAccess.hpp>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>

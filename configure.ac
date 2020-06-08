@@ -275,9 +275,9 @@ AC_ARG_ENABLE(
 	[ac_discrete_deps=yes]
 )
 
-if test x"${ac_use_cluster}" = x"yes" -o x"${ac_use_workflow}" = x"yes" ; then
+if test x"${ac_use_cluster}" = x"yes" ; then
 	ac_discrete_deps=no
-	AC_MSG_WARN([Cluster or execution workflow enabled, disabling discrete dependency engine])
+	AC_MSG_WARN([Cluster enabled, disabling discrete dependency engine])
 fi
 
 AC_MSG_CHECKING([if discrete dependencies should be included])

@@ -7,11 +7,12 @@
 #ifndef DATA_ACCESS_REGISTRATION_HPP
 #define DATA_ACCESS_REGISTRATION_HPP
 
+#include <stddef.h>
+
 #include "DataAccess.hpp"
-#include "../DataAccessType.hpp"
 #include "CPUDependencyData.hpp"
 #include "ReductionSpecific.hpp"
-#include <stddef.h>
+#include "dependencies/DataAccessType.hpp"
 
 class ComputePlace;
 class Task;
@@ -61,7 +62,18 @@ namespace DataAccessRegistration {
 
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);
-} // namespace DataAccessRegistration
 
+	//! \brief Mark a Taskwait fragment as completed
+	//!
+	//! \param[in] task is the Task that created the taskwait fragment
+	//! \param[in] region is the taskwait region that has been completed
+	//! \param[in] computePlace is the current ComputePlace of the caller
+	//! \param[in] hpDependencyData is the CPUDependencyData used for delayed operations
+	void releaseTaskwaitFragment(
+		Task *task,
+		DataAccessRegion region,
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData);
+} // namespace DataAccessRegistration
 
 #endif // DATA_ACCESS_REGISTRATION_HPP

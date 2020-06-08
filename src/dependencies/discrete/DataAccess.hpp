@@ -14,11 +14,12 @@
 #include <stack>
 
 #include "DataAccessFlags.hpp"
-#include "../DataAccessType.hpp"
 #include "ReductionInfo.hpp"
 #include "ReductionSpecific.hpp"
+#include "dependencies/DataAccessType.hpp"
 
 #include <InstrumentDataAccessId.hpp>
+#include <InstrumentDependenciesByAccessLinks.hpp>
 
 struct DataAccess;
 class Task;
@@ -29,6 +30,9 @@ struct DataAccess {
 private:
 	//! The type of the access
 	DataAccessType _type;
+
+	//! The region covered by the access
+	DataAccessRegion _region;
 
 	//! The originator of the access
 	Task *_originator;
@@ -51,6 +55,9 @@ private:
 	//! Instrumentation specific data
 	Instrument::data_access_id_t _instrumentDataAccessId;
 
+	//! Location of the access
+	MemoryPlace const *_location;
+
 	DataAccessMessage inAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	void outAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
 	void inoutAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
@@ -60,13 +67,15 @@ private:
 	void readDestination(access_flags_t allFlags, DataAccessMessage &message, PropagationDestination &destination);
 
 public:
-	DataAccess(DataAccessType type, Task *originator, bool weak) :
+	DataAccess(DataAccessType type, Task *originator, void *address, size_t length, bool weak) :
 		_type(type),
+		_region(address, length),
 		_originator(originator),
 		_reductionInfo(nullptr),
 		_successor(nullptr),
 		_child(nullptr),
-		_accessFlags(0)
+		_accessFlags(0),
+		_location(nullptr)
 	{
 		assert(originator != nullptr);
 
@@ -76,11 +85,13 @@ public:
 
 	DataAccess(const DataAccess &other) :
 		_type(other.getType()),
+		_region(other.getAccessRegion()),
 		_originator(other.getOriginator()),
 		_reductionInfo(other.getReductionInfo()),
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
-		_accessFlags(other.getFlags())
+		_accessFlags(other.getFlags()),
+		_location(other.getLocation())
 	{
 	}
 
@@ -102,6 +113,11 @@ public:
 	inline DataAccessType getType() const
 	{
 		return _type;
+	}
+
+	DataAccessRegion const &getAccessRegion() const
+	{
+		return _region;
 	}
 
 	inline Task *getOriginator() const
@@ -197,6 +213,22 @@ public:
 	inline access_flags_t getFlags() const
 	{
 		return _accessFlags;
+	}
+
+	void setLocation(MemoryPlace const *location)
+	{
+		_location = location;
+		Instrument::newDataAccessLocation(_instrumentDataAccessId, location);
+	}
+
+	MemoryPlace const *getLocation() const
+	{
+		return _location;
+	}
+
+	MemoryPlace const *getOutputLocation() const
+	{
+		return nullptr;
 	}
 };
 

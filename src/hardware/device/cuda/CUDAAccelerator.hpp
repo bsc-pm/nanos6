@@ -61,11 +61,7 @@ private:
 
 	void processCUDAEvents();
 
-	inline void preRunTask(Task *task) override
-	{
-		// set the thread_local static var to be used by nanos6_get_current_cuda_stream()
-		CUDAAccelerator::_currentTask = task;
-	}
+	void preRunTask(Task *task) override;
 
 	void postRunTask(Task *task) override;
 

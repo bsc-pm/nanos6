@@ -1,11 +1,8 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
-
-#ifndef TASK_DATA_ACCESSES_IMPLEMENTATION_HPP
-#define TASK_DATA_ACCESSES_IMPLEMENTATION_HPP
 
 #include <boost/intrusive/parent_from_member.hpp>
 
@@ -16,8 +13,7 @@
 #include "TaskDataAccessLinkingArtifacts.hpp"
 #include "tasks/Task.hpp"
 
-
-inline TaskDataAccesses::~TaskDataAccesses()
+TaskDataAccesses::~TaskDataAccesses()
 {
 	assert(!hasBeenDeleted());
 	assert(_removalBlockers == 0);
@@ -57,11 +53,4 @@ inline TaskDataAccesses::~TaskDataAccesses()
 #ifndef NDEBUG
 	hasBeenDeleted() = true;
 #endif
-	
 }
-
-
-#include "TaskDataAccessLinkingArtifactsImplementation.hpp"
-
-
-#endif // TASK_DATA_ACCESSES_IMPLEMENTATION_HPP
