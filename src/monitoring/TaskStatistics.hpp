@@ -11,6 +11,9 @@
 #include <cassert>
 #include <string>
 
+#include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "hardware-counters/TasktypeHardwareCounters.hpp"
+
 #include <Chrono.hpp>
 
 
@@ -36,6 +39,9 @@ private:
 
 	//! A pointer to the accumulated statistics of this task's tasktype
 	TasktypeStatistics *_tasktypeStatistics;
+
+	//! A pointer to the accumulated hardware counter metrics of this task's tasktype
+	TasktypeHardwareCounters *_tasktypeCounters;
 
 	//! A pointer to the TaskStatistics of the parent task
 	TaskStatistics *_parentStatistics;
@@ -85,10 +91,19 @@ private:
 	//! TasktypeStatistics, hence why we save it here
 	std::atomic<size_t> _completedTime;
 
+	/*    HW COUNTER METRICS    */
+
+	//! Whether the taks has predictions for each hardware counter
+	bool _hasCounterPrediction[HWCounters::TOTAL_NUM_EVENTS];
+
+	//! Predictions for each hardware counter of the task
+	double _counterPredictions[HWCounters::TOTAL_NUM_EVENTS];
+
 public:
 
 	inline TaskStatistics() :
 		_tasktypeStatistics(nullptr),
+		_tasktypeCounters(nullptr),
 		_parentStatistics(nullptr),
 		_cost(DEFAULT_COST),
 		_numChildrenAlive(1),
@@ -102,11 +117,17 @@ public:
 		for (short i = 0; i < num_status; ++i) {
 			_childrenTimes[i] = 0;
 		}
+
+		for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
+			_hasCounterPrediction[i] = false;
+			_counterPredictions[i] = 0.0;
+		}
 	}
 
 	inline void reinitialize()
 	{
 		_tasktypeStatistics = nullptr;
+		_tasktypeCounters = nullptr;
 		_parentStatistics = nullptr;
 		_cost = DEFAULT_COST;
 		_numChildrenAlive = 1;
@@ -121,6 +142,11 @@ public:
 			_chronometers[i].restart();
 			_childrenTimes[i] = 0;
 		}
+
+		for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
+			_hasCounterPrediction[i] = false;
+			_counterPredictions[i] = 0.0;
+		}
 	}
 
 	/*    SETTERS & GETTERS    */
@@ -133,6 +159,16 @@ public:
 	inline TasktypeStatistics *getTasktypeStatistics() const
 	{
 		return _tasktypeStatistics;
+	}
+
+	inline void setTasktypeHardwareCounters(TasktypeHardwareCounters *tasktypeCounters)
+	{
+		_tasktypeCounters = tasktypeCounters;
+	}
+
+	inline TasktypeHardwareCounters *getTasktypeHardwareCounters() const
+	{
+		return _tasktypeCounters;
 	}
 
 	inline void setParentStatistics(TaskStatistics *parentStatistics)
@@ -248,6 +284,26 @@ public:
 	inline size_t getCompletedTime()
 	{
 		return _completedTime.load();
+	}
+
+	inline void setHasCounterPrediction(HWCounters::counters_t counterId, bool hasPrediction)
+	{
+		_hasCounterPrediction[counterId] = hasPrediction;
+	}
+
+	inline bool hasCounterPrediction(HWCounters::counters_t counterId) const
+	{
+		return _hasCounterPrediction[counterId];
+	}
+
+	inline void setCounterPrediction(HWCounters::counters_t counterId, double value)
+	{
+		_counterPredictions[counterId] = value;
+	}
+
+	inline double getCounterPrediction(HWCounters::counters_t counterId) const
+	{
+		return _counterPredictions[counterId];
 	}
 
 	/*    TIMING-RELATED METHODS    */

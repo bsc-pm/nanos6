@@ -91,9 +91,6 @@ ComputePlace::~ComputePlace()
 	const TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
 	void *allocationAddress = taskCounters.getAllocationAddress();
 
-	// Call the destructor of task hardware counters
-	taskCounters.shutdown();
-
 	// Free task statistics if needed
 	TaskStatistics *taskStatistics = taskfor->getTaskStatistics();
 	if (taskStatistics != nullptr) {

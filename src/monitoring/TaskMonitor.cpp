@@ -12,6 +12,9 @@
 #include "TaskMonitor.hpp"
 #include "TasktypeStatistics.hpp"
 #include "tasks/TaskInfo.hpp"
+#include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCounters.hpp"
+#include "hardware-counters/TasktypeHardwareCounters.hpp"
 
 
 void TaskMonitor::taskCreated(Task *task, Task *parent) const
@@ -44,6 +47,7 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 	// Predict metrics using past data
 	TasktypeData *tasktypeData = task->getTasktypeData();
 	if (tasktypeData != nullptr) {
+		// Predict timing metrics
 		TasktypeStatistics &tasktypeStatistics = tasktypeData->getTasktypeStatistics();
 		double timePrediction = tasktypeStatistics.getTimePrediction(cost);
 		if (timePrediction != PREDICTION_UNAVAILABLE) {
@@ -51,8 +55,20 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 			taskStatistics->setHasPrediction(true);
 		}
 
-		// Set the task's tasktype statistics for future references
+		// Predict hardware counter metrics
+		TasktypeHardwareCounters &tasktypeCounters = tasktypeData->getHardwareCounters();
+		for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
+			HWCounters::counters_t counterId = (HWCounters::counters_t) i;
+			double counterPrediction = tasktypeCounters.getCounterPrediction(counterId, cost);
+			if (counterPrediction != PREDICTION_UNAVAILABLE) {
+				taskStatistics->setHasCounterPrediction(counterId, true);
+				taskStatistics->setCounterPrediction(counterId, counterPrediction);
+			}
+		}
+
+		// Set the task's tasktype statistics and hardware counters for future references
 		taskStatistics->setTasktypeStatistics(&(tasktypeStatistics));
+		taskStatistics->setTasktypeHardwareCounters(&(tasktypeCounters));
 	} else if (task->getLabel() == "main") {
 		// Create mockup statistics for the main task
 		TaskInfo::registerTaskInfo(task->getTaskInfo());
@@ -61,7 +77,9 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		assert(tasktypeData != nullptr);
 
 		TasktypeStatistics &tasktypeStatistics = tasktypeData->getTasktypeStatistics();
+		TasktypeHardwareCounters &tasktypeCounters = tasktypeData->getHardwareCounters();
 		taskStatistics->setTasktypeStatistics(&(tasktypeStatistics));
+		taskStatistics->setTasktypeHardwareCounters(&(tasktypeCounters));
 	}
 }
 
@@ -177,11 +195,12 @@ void TaskMonitor::taskFinished(Task *task) const
 	// Backpropagate the following actions for the current task and any ancestor
 	// that finishes its execution following the finishing of the current task:
 	// 1) Accumulate its statistics into its tasktype statistics
-	// 2) If there is no ancestor with prediction but the task itself has a
+	// 2) Accumulate hardware counter predictions into its tasktype counters
+	// 3) If there is no ancestor with prediction but the task itself has a
 	//    prediction, subtract the time saved @ taskCompletedUserCode (1) of
 	//    children tasks of this task from the time saved (2) of this task's
 	//    tasktype statistics
-	// 3) Accumulate this task's elapsed time and its children elapsed time
+	// 4) Accumulate this task's elapsed time and its children elapsed time
 	//    into the parent task if it exists
 	// NOTE: If the task is a taskfor collaborator, only perform step 3)
 	while (taskStatistics->markAsFinished()) {
@@ -190,12 +209,18 @@ void TaskMonitor::taskFinished(Task *task) const
 		// Make sure this is not a taskfor collaborator for these steps
 		if (!task->isTaskfor() || (task->isTaskfor() && !task->isRunnable())) {
 			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
+			TasktypeHardwareCounters *tasktypeCounters = taskStatistics->getTasktypeHardwareCounters();
 			assert(tasktypeStatistics != nullptr);
+			assert(tasktypeCounters != nullptr);
 
 			// 1)
 			tasktypeStatistics->accumulateStatistics(taskStatistics);
 
 			// 2)
+			TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+			tasktypeCounters->accumulateCounters(taskCounters, taskStatistics->getCost());
+
+			// 3)
 			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
 				tasktypeStatistics->decreaseCompletedTime(taskStatistics->getCompletedTime());
 				tasktypeStatistics->decreaseAccumulatedCost(taskStatistics->getCost());
@@ -203,7 +228,7 @@ void TaskMonitor::taskFinished(Task *task) const
 			}
 		}
 
-		// 3)
+		// 4)
 		TaskStatistics *parentStatistics = taskStatistics->getParentStatistics();
 		if (parentStatistics != nullptr) {
 			parentStatistics->accumulateChildrenStatistics(taskStatistics);
