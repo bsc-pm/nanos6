@@ -13,6 +13,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/ReadyQueue.hpp"
+#include "scheduling/ready-queues/DeadlineQueue.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -21,6 +22,7 @@ protected:
 	std::vector<Task *> _immediateSuccessorTasks;
 	std::vector<Task *> _immediateSuccessorTaskfors;
 	ReadyQueue *_readyTasks;
+	DeadlineQueue *_deadlineTasks;
 	bool _enableImmediateSuccessor;
 	bool _enablePriority;
 
@@ -38,7 +40,14 @@ public:
 	{
 		assert(task != nullptr);
 
-		bool unblocked = (hint == UNBLOCKED_TASK_HINT);
+		if (hint == DEADLINE_TASK_HINT) {
+			assert(task->hasDeadline());
+			assert(_deadlineTasks != nullptr);
+
+			_deadlineTasks->addReadyTask(task, true);
+			return;
+		}
+
 		if (_enableImmediateSuccessor) {
 			if (computePlace != nullptr && hint == SIBLING_TASK_HINT) {
 				size_t immediateSuccessorId = computePlace->getIndex();
@@ -67,7 +76,7 @@ public:
 			}
 		}
 
-		_readyTasks->addReadyTask(task, unblocked);
+		_readyTasks->addReadyTask(task, hint == UNBLOCKED_TASK_HINT);
 	}
 
 	//! \brief Get a ready task for execution

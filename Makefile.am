@@ -1147,6 +1147,7 @@ noinst_HEADERS = \
 	src/scheduling/SchedulerGenerator.hpp \
 	src/scheduling/SchedulerInterface.hpp \
 	src/scheduling/SchedulerSupport.hpp \
+	src/scheduling/ready-queues/DeadlineQueue.hpp \
 	src/scheduling/ready-queues/ReadyQueueDeque.hpp \
 	src/scheduling/ready-queues/ReadyQueueMap.hpp \
 	src/scheduling/schedulers/HostScheduler.hpp \

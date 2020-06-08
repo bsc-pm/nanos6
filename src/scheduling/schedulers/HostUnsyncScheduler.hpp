@@ -8,6 +8,7 @@
 #define HOST_UNSYNC_SCHEDULER_HPP
 
 #include "UnsyncScheduler.hpp"
+#include "scheduling/ready-queues/DeadlineQueue.hpp"
 
 class Taskfor;
 
@@ -25,10 +26,16 @@ public:
 		if (enableImmediateSuccessor) {
 			_immediateSuccessorTaskfors = std::vector<Task *>(groups*2, nullptr);
 		}
+
+		_deadlineTasks = new DeadlineQueue(policy);
+		assert(_deadlineTasks != nullptr);
 	}
 
 	virtual ~HostUnsyncScheduler()
-	{}
+	{
+		assert(_deadlineTasks != nullptr);
+		delete _deadlineTasks;
+	}
 
 	//! \brief Get a ready task for execution
 	//!

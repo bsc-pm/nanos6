@@ -5,6 +5,7 @@
 */
 
 #include "HostUnsyncScheduler.hpp"
+#include "scheduling/ready-queues/DeadlineQueue.hpp"
 #include "scheduling/ready-queues/ReadyQueueDeque.hpp"
 #include "scheduling/ready-queues/ReadyQueueMap.hpp"
 #include "tasks/LoopGenerator.hpp"
@@ -14,6 +15,9 @@
 Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 {
 	assert(computePlace != nullptr);
+	assert(_deadlineTasks != nullptr);
+	assert(_readyTasks != nullptr);
+
 	Task *result = nullptr;
 	Taskfor *groupTaskfor = nullptr;
 
@@ -21,7 +25,13 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 	long groupId = ((CPU *)computePlace)->getGroupId();
 	long immediateSuccessorGroupId = groupId*2;
 
-	// 1. Try to get work from the current group taskfor.
+	// 1. Try to get a task with a satisfied deadline
+	result = _deadlineTasks->getReadyTask(computePlace);
+	if (result != nullptr) {
+		return result;
+	}
+
+	// 2. Try to get work from the current group taskfor
 	if (groupId != -1) {
 		if ((groupTaskfor = _groupSlots[groupId]) != nullptr) {
 
@@ -34,14 +44,14 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 			}
 
 			Taskfor *taskfor = computePlace->getPreallocatedTaskfor();
-			// We are setting the chunk that the collaborator will execute in the preallocatedTaskfor.
+			// We are setting the chunk that the collaborator will execute in the preallocatedTaskfor
 			taskfor->setChunk(myChunk);
 			return groupTaskfor;
 		}
 	}
 
 	if (_enableImmediateSuccessor) {
-		// 2. Try to get work from my immediateSuccessorTaskfors.
+		// 3. Try to get work from my immediateSuccessorTaskfors
 		Task *currentImmediateSuccessor1 = _immediateSuccessorTaskfors[immediateSuccessorGroupId];
 		Task *currentImmediateSuccessor2 = _immediateSuccessorTaskfors[immediateSuccessorGroupId+1];
 		if (currentImmediateSuccessor1 != nullptr) {
@@ -55,19 +65,19 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 			_immediateSuccessorTaskfors[immediateSuccessorGroupId+1] = nullptr;
 		}
 
-		// 3. Try to get work from my immediateSuccessorTasks.
+		// 4. Try to get work from my immediateSuccessorTasks
 		if (result == nullptr && _immediateSuccessorTasks[cpuId] != nullptr) {
 			result = _immediateSuccessorTasks[cpuId];
 			_immediateSuccessorTasks[cpuId] = nullptr;
 		}
 	}
 
-	// 4. Check if there is work remaining in the ready queue.
+	// 5. Check if there is work remaining in the ready queue
 	if (result == nullptr) {
 		result = _readyTasks->getReadyTask(computePlace);
 	}
 
-	// 5. Try to get work from other immediateSuccessorTasks.
+	// 6. Try to get work from other immediateSuccessorTasks
 	if (result == nullptr && _enableImmediateSuccessor) {
 		for (size_t i = 0; i < _immediateSuccessorTasks.size(); i++) {
 			if (_immediateSuccessorTasks[i] != nullptr) {
@@ -79,7 +89,7 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 		}
 	}
 
-	// 6. Try to get work from other immediateSuccessorTasksfors.
+	// 7. Try to get work from other immediateSuccessorTasksfors
 	if (result == nullptr && _enableImmediateSuccessor) {
 		for (size_t i = 0; i < _immediateSuccessorTaskfors.size(); i++) {
 			if (_immediateSuccessorTaskfors[i] != nullptr) {

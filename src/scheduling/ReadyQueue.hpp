@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef READY_QUEUE_HPP
@@ -20,7 +20,8 @@ enum ReadyTaskHint {
 	CHILD_TASK_HINT,
 	SIBLING_TASK_HINT,
 	BUSY_COMPUTE_PLACE_TASK_HINT,
-	UNBLOCKED_TASK_HINT
+	UNBLOCKED_TASK_HINT,
+	DEADLINE_TASK_HINT
 };
 
 //! \brief Interface that ready queues must implement
