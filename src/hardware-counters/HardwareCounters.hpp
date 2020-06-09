@@ -114,11 +114,6 @@ public:
 	//! \param[out] task The task to stop hardware counters monitoring for
 	static void taskStopped(Task *task);
 
-	//! \brief Finish monitoring a task's hardware counters and accumulate them
-	//!
-	//! \param[out] task The task to finish hardware counters monitoring for
-	static void taskFinished(Task *task);
-
 };
 
 #endif // HARDWARE_COUNTERS_HPP

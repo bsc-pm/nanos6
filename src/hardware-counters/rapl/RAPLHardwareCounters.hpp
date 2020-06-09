@@ -12,8 +12,6 @@
 #include "hardware-counters/HardwareCountersInterface.hpp"
 
 
-
-
 class CPUHardwareCountersInterface;
 class Task;
 class TaskHardwareCountersInterface;
@@ -108,10 +106,6 @@ public:
 		ThreadHardwareCountersInterface *,
 		TaskHardwareCountersInterface *
 	) override {
-	}
-
-	inline void taskFinished(Task *, TaskHardwareCountersInterface *) override
-	{
 	}
 
 	//! \brief Print power usage information

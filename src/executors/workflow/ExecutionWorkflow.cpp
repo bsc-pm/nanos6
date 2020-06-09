@@ -9,7 +9,6 @@
 #include "ExecutionWorkflow.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "executors/threads/TaskFinalization.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "memory/directory/Directory.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -237,7 +236,6 @@ namespace ExecutionWorkflow {
 						targetMemoryPlace
 					);
 
-					HardwareCounters::taskFinished(task);
 					Monitoring::taskFinished(task);
 					task->setComputePlace(nullptr);
 					TaskFinalization::taskFinished(task, cpu);

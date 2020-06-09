@@ -852,7 +852,6 @@ noinst_HEADERS = \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
 	src/hardware-counters/TaskHardwareCounters.hpp \
 	src/hardware-counters/TaskHardwareCountersInterface.hpp \
-	src/hardware-counters/TasktypeHardwareCounters.hpp \
 	src/hardware-counters/ThreadHardwareCounters.hpp \
 	src/hardware-counters/ThreadHardwareCountersInterface.hpp \
 	src/hardware-counters/papi/PAPICPUHardwareCounters.hpp \

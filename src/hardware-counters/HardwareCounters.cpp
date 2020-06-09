@@ -361,23 +361,3 @@ void HardwareCounters::taskStopped(Task *task)
 		}
 	}
 }
-
-void HardwareCounters::taskFinished(Task *task)
-{
-	if (_anyBackendEnabled) {
-		assert(task != nullptr);
-
-		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-		if (_enabled[HWCounters::PQOS_BACKEND]) {
-			assert(_pqosBackend != nullptr);
-
-			_pqosBackend->taskFinished(task, taskCounters.getPQoSCounters());
-		}
-
-		if (_enabled[HWCounters::PAPI_BACKEND]) {
-			assert(_papiBackend != nullptr);
-
-			_papiBackend->taskFinished(task, taskCounters.getPAPICounters());
-		}
-	}
-}

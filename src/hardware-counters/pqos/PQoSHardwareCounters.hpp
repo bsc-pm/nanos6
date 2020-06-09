@@ -7,10 +7,6 @@
 #ifndef PQOS_HARDWARE_COUNTERS_HPP
 #define PQOS_HARDWARE_COUNTERS_HPP
 
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-
 #include "hardware-counters/CPUHardwareCountersInterface.hpp"
 #include "hardware-counters/HardwareCountersInterface.hpp"
 #include "hardware-counters/TaskHardwareCountersInterface.hpp"
@@ -25,24 +21,15 @@ private:
 	//! Whether PQoS HW Counter instrumentation is enabled
 	bool _enabled;
 
-	//! Whether the verbose mode is activated
-	bool _verbose;
-
-	//! The file name on which to output statistics when verbose is enabled
-	std::string _verboseFile;
-
 	//! An enumeration containing the events that we monitor
 	enum pqos_mon_event _monitoredEvents;
 
+	//! The enabled events
 	bool _enabledEvents[HWCounters::PQOS_NUM_EVENTS];
 
 public:
 
-	PQoSHardwareCounters(
-		bool verbose,
-		const std::string &verboseFile,
-		const std::vector<HWCounters::counters_t> &enabledEvents
-	);
+	PQoSHardwareCounters(bool, const std::string &, const std::vector<HWCounters::counters_t> &enabledEvents);
 
 	~PQoSHardwareCounters();
 
@@ -68,10 +55,6 @@ public:
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	) override;
-
-	void taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters) override;
-
-	void displayStatistics() const override;
 
 };
 

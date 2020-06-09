@@ -67,14 +67,10 @@ public:
 		TaskHardwareCountersInterface *taskCounters
 	) = 0;
 
-	//! \brief Finish monitoring a task's hardware counters and accumulate them
-	//!
-	//! \param[out] task The task to finish hardware counters monitoring for
-	//! \param[out] taskCounters The hardware counter structure of the task
-	virtual void taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters) = 0;
-
-	//!
-	virtual void displayStatistics() const = 0;
+	//! \brief An optional function that displays statistics of the backend
+	virtual void displayStatistics() const
+	{
+	}
 
 };
 

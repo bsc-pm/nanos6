@@ -7,7 +7,6 @@
 #ifndef TASKTYPE_DATA_HPP
 #define TASKTYPE_DATA_HPP
 
-#include "hardware-counters/TasktypeHardwareCounters.hpp"
 
 //! \brief Use to hold data on a per-tasktype basis (i.e. Monitoring data,
 //! instrumentation parameters, etc.)
@@ -15,20 +14,12 @@ class TasktypeData {
 
 private:
 
-	//! Statistics of hardware counters of this tasktype
-	TasktypeHardwareCounters _hwCounters;
-
 public:
 
-	inline TasktypeData() :
-		_hwCounters()
+	inline TasktypeData()
 	{
 	}
 
-	inline TasktypeHardwareCounters &getHardwareCounters()
-	{
-		return _hwCounters;
-	}
 };
 
 #endif // TASKTYPE_DATA_HPP

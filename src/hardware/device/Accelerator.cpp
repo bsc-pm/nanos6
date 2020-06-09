@@ -8,7 +8,6 @@
 
 #include "executors/threads/TaskFinalization.hpp"
 #include "hardware/HardwareInfo.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -47,7 +46,6 @@ void Accelerator::finishTask(Task *task)
 			task->getMemoryPlace(),
 			/* from busy thread */ true);
 
-		HardwareCounters::taskFinished(task);
 		Monitoring::taskFinished(task);
 		task->setComputePlace(nullptr);
 		TaskFinalization::taskFinished(task, cpu, /* busy thread */ true);

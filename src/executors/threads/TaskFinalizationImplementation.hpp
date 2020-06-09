@@ -12,7 +12,7 @@
 #include "MemoryAllocator.hpp"
 #include "TaskDataAccesses.hpp"
 #include "TaskFinalization.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
@@ -56,7 +56,6 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 
 					task->setComputePlace(nullptr);
 
-					HardwareCounters::taskFinished(task);
 					Monitoring::taskFinished(task);
 					// This is just to emulate a recursive call to TaskFinalization::taskFinished() again.
 					// It should not return false because at this point delayed release has happenned which means that

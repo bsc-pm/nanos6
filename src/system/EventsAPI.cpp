@@ -12,7 +12,6 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -74,7 +73,6 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 			/* memory place */ nullptr,
 			/* from a busy thread */ true);
 
-		HardwareCounters::taskFinished(task);
 		Monitoring::taskFinished(task);
 
 		TaskFinalization::taskFinished(task, cpu, true);

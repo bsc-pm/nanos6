@@ -10,19 +10,14 @@
 #include "PQoSHardwareCounters.hpp"
 #include "PQoSTaskHardwareCounters.hpp"
 #include "PQoSThreadHardwareCounters.hpp"
-#include "hardware-counters/TasktypeHardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "tasks/TaskInfo.hpp"
-#include "tasks/TasktypeData.hpp"
 
 
 PQoSHardwareCounters::PQoSHardwareCounters(
-	bool verbose,
-	const std::string &verboseFile,
+	bool,
+	const std::string &,
 	const std::vector<HWCounters::counters_t> &enabledEvents
 ) {
-	_verbose = verbose;
-	_verboseFile = verboseFile;
 	for (unsigned short i = 0; i < HWCounters::PQOS_NUM_EVENTS; ++i) {
 		_enabledEvents[i] = false;
 	}
@@ -116,11 +111,6 @@ PQoSHardwareCounters::~PQoSHardwareCounters()
 		ret != PQOS_RETVAL_OK,
 		ret, " when shutting down the PQoS library"
 	);
-
-	// Display statistics
-	if (_verbose) {
-		displayStatistics();
-	}
 }
 
 void PQoSHardwareCounters::cpuBecomesIdle(
@@ -275,129 +265,3 @@ void PQoSHardwareCounters::taskStopped(
 	}
 }
 
-void PQoSHardwareCounters::taskFinished(Task *task, TaskHardwareCountersInterface *taskCounters)
-{
-	if (_enabled) {
-		assert(task != nullptr);
-
-		PQoSTaskHardwareCounters *pqosTaskCounters = (PQoSTaskHardwareCounters *) taskCounters;
-		assert(pqosTaskCounters != nullptr);
-
-		if (pqosTaskCounters->isEnabled()) {
-			if (_verbose) {
-				// The main task does not have this kind of data
-				TasktypeData *tasktypeData = task->getTasktypeData();
-				if (tasktypeData != nullptr) {
-					// Retreive all the counters
-					std::vector<std::pair<HWCounters::counters_t, double>> countersToAdd;
-					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_L3_OCCUP - HWCounters::PQOS_MIN_EVENT]) {
-						countersToAdd.push_back(std::make_pair(
-							HWCounters::PQOS_MON_EVENT_L3_OCCUP,
-							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_L3_OCCUP)
-						));
-					}
-					if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_IPC - HWCounters::PQOS_MIN_EVENT]) {
-						countersToAdd.push_back(std::make_pair(
-							HWCounters::PQOS_PERF_EVENT_IPC,
-							pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_IPC)
-						));
-					}
-					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_LMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
-						countersToAdd.push_back(std::make_pair(
-							HWCounters::PQOS_MON_EVENT_LMEM_BW,
-							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_LMEM_BW)
-						));
-					}
-					if (_enabledEvents[HWCounters::PQOS_MON_EVENT_RMEM_BW - HWCounters::PQOS_MIN_EVENT]) {
-						countersToAdd.push_back(std::make_pair(
-							HWCounters::PQOS_MON_EVENT_RMEM_BW,
-							pqosTaskCounters->getAccumulated(HWCounters::PQOS_MON_EVENT_RMEM_BW)
-						));
-					}
-					if (_enabledEvents[HWCounters::PQOS_PERF_EVENT_LLC_MISS - HWCounters::PQOS_MIN_EVENT]) {
-						countersToAdd.push_back(std::make_pair(
-							HWCounters::PQOS_PERF_EVENT_LLC_MISS,
-							pqosTaskCounters->getAccumulated(HWCounters::PQOS_PERF_EVENT_LLC_MISS)
-						));
-					}
-
-					// Aggregate all the counters in the tasktype
-					TasktypeHardwareCounters &tasktypeCounters = tasktypeData->getHardwareCounters();
-					tasktypeCounters.addCounters(countersToAdd);
-				}
-			}
-		}
-	}
-}
-
-void PQoSHardwareCounters::displayStatistics() const
-{
-	// Try opening the output file
-	std::ios_base::openmode openMode = std::ios::out;
-	std::ofstream output(_verboseFile, openMode);
-	FatalErrorHandler::warnIf(
-		!output.is_open(),
-		"Could not create or open the verbose file: ", _verboseFile, ". ",
-		"Using standard output."
-	);
-
-	// Retrieve statistics
-	std::stringstream outputStream;
-	outputStream << std::left << std::fixed << std::setprecision(5);
-	outputStream << "-------------------------------\n";
-
-	// Iterate through all tasktypes
-	TaskInfo::processAllTasktypes(
-		[&](const std::string &tasktypeLabel, TasktypeData &tasktypeData) {
-			TasktypeHardwareCounters &tasktypeCounters = tasktypeData.getHardwareCounters();
-			if (tasktypeLabel != "Unlabeled") {
-				outputStream <<
-					std::setw(7)  << "STATS"       << " " <<
-					std::setw(6)  << "PQOS"        << " " <<
-					std::setw(30) << "TASK-TYPE"   << " " <<
-					std::setw(20) << tasktypeLabel << "\n";
-
-				// Iterate through all counter types
-				for (unsigned short id = 0; id < HWCounters::PQOS_NUM_EVENTS; ++id) {
-					if (_enabledEvents[id]) {
-						double counterAvg   = tasktypeCounters.getCounterAvg((HWCounters::counters_t) id);
-						double counterStdev = tasktypeCounters.getCounterStddev((HWCounters::counters_t) id);
-						double counterSum   = tasktypeCounters.getCounterSum((HWCounters::counters_t) id);
-						size_t instances    = tasktypeCounters.getCounterCount((HWCounters::counters_t) id);
-
-						// In KB
-						unsigned short pqosId = id + HWCounters::PQOS_MIN_EVENT;
-						if (pqosId == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
-							pqosId == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
-							pqosId == HWCounters::PQOS_MON_EVENT_RMEM_BW
-						) {
-							counterAvg   /= 1024.0;
-							counterStdev /= 1024.0;
-							counterSum   /= 1024.0;
-						}
-
-						outputStream <<
-							std::setw(7)  << "STATS"                                   << " "   <<
-							std::setw(6)  << "PQOS"                                    << " "   <<
-							std::setw(30) << HWCounters::counterDescriptions[pqosId]   << " "   <<
-							std::setw(20) << "INSTANCES: " + std::to_string(instances) << " "   <<
-							std::setw(30) << "SUM / AVG / STDEV"                       << " "   <<
-							std::setw(15) << counterSum                                << " / " <<
-							std::setw(15) << counterAvg                                << " / " <<
-							std::setw(15) << counterStdev                              << "\n";
-					}
-				}
-
-				outputStream << "-------------------------------\n";
-			}
-		}
-	);
-
-	if (output.is_open()) {
-		// Output into the file and close it
-		output << outputStream.str();
-		output.close();
-	} else {
-		std::cout << outputStream.str();
-	}
-}

@@ -57,14 +57,6 @@ public:
 	) override {
 	}
 
-	inline void taskFinished(Task *, TaskHardwareCountersInterface *) override
-	{
-	}
-
-	inline void displayStatistics() const override
-	{
-	}
-
 };
 
 #endif // PAPI_HARDWARE_COUNTERS_HPP
