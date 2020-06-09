@@ -44,6 +44,9 @@ namespace CTFAPI {
 
 		void addContext(CTFContext *context)
 		{
+			if (!context)
+				return;
+
 			eventContext.push_back(context);
 			contextSize += context->getSize();
 		}

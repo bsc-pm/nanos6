@@ -65,12 +65,12 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	eventThreadSuspend = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:thread_suspend",
 		"\t\tuint16_t _tid;\n",
-		CTFAPI::CTFContextHWC
+		CTFAPI::CTFContextCPUHWC
 	));
 	eventThreadShutdown = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:thread_shutdown",
 		"\t\tuint16_t _tid;\n",
-		CTFAPI::CTFContextHWC
+		CTFAPI::CTFContextCPUHWC
 	));
 	eventExternalThreadCreate = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:external_thread_create",
@@ -131,17 +131,17 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	eventTaskExecute = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_execute",
 		"\t\tuint32_t _id;\n",
-		CTFAPI::CTFContextHWC
+		CTFAPI::CTFContextCPUHWC
 	));
 	eventTaskBlock = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_block",
 		"\t\tuint32_t _id;\n",
-		CTFAPI::CTFContextHWC
+		CTFAPI::CTFContextTaskHWC
 	));
 	eventTaskEnd = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_end",
 		"\t\tuint32_t _id;\n",
-		CTFAPI::CTFContextHWC
+		CTFAPI::CTFContextTaskHWC
 	));
 	eventDependencyRegisterEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:dependency_register_enter",

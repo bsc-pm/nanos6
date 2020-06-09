@@ -10,6 +10,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "hardware-counters/HardwareCounters.hpp"
+
 #include "ctfapi/CTFTypes.hpp"
 #include "ctfapi/CTFAPI.hpp"
 #include "ctfapi/CTFTrace.hpp"
@@ -17,7 +19,8 @@
 #include "ctfapi/stream/CTFStream.hpp"
 #include "ctfapi/stream/CTFStreamUnboundedPrivate.hpp"
 #include "ctfapi/stream/CTFStreamUnboundedShared.hpp"
-#include "ctfapi/context/CTFContextHardwareCounters.hpp"
+#include "ctfapi/context/CTFContextTaskHardwareCounters.hpp"
+#include "ctfapi/context/CTFContextCPUHardwareCounters.hpp"
 #include "ctfapi/context/CTFContextUnbounded.hpp"
 #include "tracepoints.hpp"
 #include "tasks/TaskInfo.hpp"
@@ -35,15 +38,25 @@ static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFMetadata *metadat
 
 static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
-	// create event Contexes
-	CTFAPI::CTFContext *ctfContextHWC = userMetadata->addContext(new CTFAPI::CTFContextHardwareCounters());
+	CTFAPI::CTFContext *ctfContextTaskHWC = nullptr;
+	CTFAPI::CTFContext *ctfContextCPUHWC = nullptr;
 
+	// Initialize Contexes
+	if (HardwareCounters::hardwareCountersEnabled()) {
+		ctfContextTaskHWC = userMetadata->addContext(new CTFAPI::CTFContextTaskHardwareCounters());
+		ctfContextCPUHWC  = userMetadata->addContext(new CTFAPI::CTFContextCPUHardwareCounters());
+	}
+
+	// Add Contexes to evens that support them
 	std::set<CTFAPI::CTFEvent *> &events = userMetadata->getEvents();
 	for (auto it = events.begin(); it != events.end(); ++it) {
 		CTFAPI::CTFEvent *event = (*it);
 		uint8_t enabledContexes = event->getEnabledContexes();
-		if (enabledContexes & CTFAPI::CTFContextHWC)
-			event->addContext(ctfContextHWC);
+		if (enabledContexes & CTFAPI::CTFContextTaskHWC) {
+			event->addContext(ctfContextTaskHWC);
+		} else if (enabledContexes & CTFAPI::CTFContextCPUHWC) {
+			event->addContext(ctfContextCPUHWC);
+		}
 	}
 }
 

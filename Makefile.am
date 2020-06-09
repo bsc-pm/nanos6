@@ -572,6 +572,8 @@ CLEANFILES += \
 noinstrument_sources =
 
 instrument_ctf_sources = \
+	src/instrument/ctf/ctfapi/context/CTFContextCPUHardwareCounters.cpp \
+	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.cpp \
 	src/instrument/ctf/ctfapi/stream/CTFStream.cpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.cpp \
 	src/instrument/ctf/ctfapi/CTFAPI.cpp \
@@ -921,7 +923,8 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentWorkerThread.hpp \
 	src/instrument/ctf/ctfapi/context/CTFContext.hpp \
 	src/instrument/ctf/ctfapi/context/CTFContextUnbounded.hpp \
-	src/instrument/ctf/ctfapi/context/CTFContextHardwareCounters.hpp \
+	src/instrument/ctf/ctfapi/context/CTFContextCPUHardwareCounters.hpp \
+	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStream.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedShared.hpp \

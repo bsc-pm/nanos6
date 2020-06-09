@@ -70,6 +70,12 @@ public:
 	//! \brief Shutdown the hardware counters API
 	static void shutdown();
 
+	//! \brief Check whether any backend is enabled
+	static inline bool hardwareCountersEnabled()
+	{
+		return _anyBackendEnabled;
+	}
+
 	//! \brief Check whether a backend is enabled
 	//!
 	//! \param[in] backend The backend's id

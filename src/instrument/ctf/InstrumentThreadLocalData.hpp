@@ -11,6 +11,7 @@
 #include <InstrumentInstrumentationContext.hpp>
 
 namespace Instrument {
+	// TODO can I remove this context?
 	struct InstrumentationContext;
 
 	struct ThreadLocalData {

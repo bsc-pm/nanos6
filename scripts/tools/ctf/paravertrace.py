@@ -60,7 +60,7 @@ class ExtraeEventCollection:
 		for (name, extraeId, desc) in events:
 			self.__events.update({name : ExtraeEvent(extraeId, desc, self.__mid, used = False)})
 
-	def addUnknownEvent(self, events):
+	def addUnknownEvent(self, name):
 		tmpId = self._getTemporalId()
 		self.__events.update({name : ExtraeEvent(tmpId, name + " [Unknown]")})
 		return tmpId

@@ -155,17 +155,17 @@ class ParaverViewHardwareCounters(ParaverView):
 		ParaverTrace.addEventCollection(self._eventsHardwareCounters)
 
 	def getHardwareCountersId(self, name):
-		# babeltrace does not allow to check for a field like this
-		# if not "hwc" in event:
-		# 	return
 		try:
 			extraeId = self._eventsHardwareCounters.getExtraeId(name)
 		except:
-			extraeId = self._eventsHardwareCounters.addUnknownEvent([name])
+			extraeId = self._eventsHardwareCounters.addUnknownEvent(name)
 			print("Warning: Missing Hardware Counter Id for " + name + " assigning the temporal id " + str(extraeId))
 		return extraeId
 
 	def hook_getHardwareCounters(self, event, payload):
+		# babeltrace does not allow to check for a field like this
+		# if not "hwc" in event:
+		# 	return
 		try:
 			hwc = event["hwc"]
 		except:

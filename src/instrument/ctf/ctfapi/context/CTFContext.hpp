@@ -12,7 +12,8 @@
 namespace CTFAPI {
 
 	enum ctf_contexes {
-		CTFContextHWC = 1
+		CTFContextTaskHWC = 1,
+		CTFContextCPUHWC
 	};
 
 	class CTFContext {
