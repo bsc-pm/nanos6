@@ -39,8 +39,7 @@ void Taskfor::run(Taskfor &source)
 
 		completedIterations += myIterations;
 
-		__attribute__ ((unused)) bool placeHolder;
-		_myChunk = source.getNextChunk(cpuId, placeHolder);
+		_myChunk = source.getNextChunk(cpuId);
 		if (_myChunk >= 0) {
 			myIterations = computeChunkBounds(totalChunks, sourceBounds);
 		} else {

@@ -12,22 +12,21 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
-#define PENDING_CHUNKS_SIZE 7
-#define NUM_SIZET_BITS	  64
-
 
 class Taskfor : public Task {
 public:
 	typedef nanos6_loop_bounds_t bounds_t;
 
 private:
+	static const int PENDING_CHUNKS_SIZE=7;
+	static const int NUM_UINT64_BITS=64;
 	// Global counter of remaining chunks
-	std::atomic<long int> _remainingChunks;
+	std::atomic<int64_t> _remainingChunks;
 	// Array of size_t to complete a cache line, where each bit of each size_t represents a chunk
 	// _remainingChunks+_pendingChunks must occupy a single cache line in the most conservative
 	// cache line size we found that is 64. So, we have _remainingChunks + 7 size_t in _pendingChunks.
 	// That enables us to represent up to 448 chunks.
-	std::atomic<size_t> _pendingChunks[PENDING_CHUNKS_SIZE];
+	std::atomic<uint64_t> _pendingChunks[PENDING_CHUNKS_SIZE];
 	// Source
 	Padded<std::atomic<size_t>> _remainingIterations;
 	// Source and collaborator
@@ -61,10 +60,10 @@ public:
 		assert(isFinal());
 		setRunnable(runnable);
 
-		std::atomic_init(&_remainingChunks, (long int) 0);
+		std::atomic_init(&_remainingChunks, (int64_t) 0);
 		std::atomic_init(_remainingIterations.ptr_to_basetype(), (size_t) 0);
 		for (int i = 0; i < PENDING_CHUNKS_SIZE; i++) {
-			std::atomic_init(&_pendingChunks[i], (size_t) 0);
+			std::atomic_init(&_pendingChunks[i], (uint64_t) 0);
 		}
 	}
 
@@ -95,7 +94,7 @@ public:
 
 		if (_bounds.chunksize == 0) {
 			// Just distribute iterations over collaborators if no hint.
-			_bounds.chunksize = std::max((size_t) ceil(totalIterations, maxCollaborators), (size_t) 1);
+			_bounds.chunksize = std::max(ceil(totalIterations, maxCollaborators), (size_t) 1);
 		} else {
 			// Distribute iterations over collaborators respecting the "alignment".
 			size_t newChunksize = std::max(totalIterations / maxCollaborators, _bounds.chunksize);
@@ -109,12 +108,12 @@ public:
 
 		size_t totalChunks = ceil(totalIterations, _bounds.chunksize);
 		// Each bit of the _pendingChunks var represents a chunk. 1 is pending, 0 is already executed.
-		FatalErrorHandler::failIf(totalChunks > PENDING_CHUNKS_SIZE * NUM_SIZET_BITS, "Too many chunks required.");
+		FatalErrorHandler::failIf(totalChunks > PENDING_CHUNKS_SIZE * NUM_UINT64_BITS, "Too many chunks required.");
 		_remainingChunks.store(totalChunks, std::memory_order_relaxed);
 		while (totalChunks > 0 ) {
-			int index = (totalChunks-1)/NUM_SIZET_BITS;
-			int localChunks = totalChunks - (index * NUM_SIZET_BITS);
-			_pendingChunks[index].store((size_t)((size_t) 2 << (localChunks-1)) - (size_t) 1, std::memory_order_relaxed);
+			int index = (totalChunks-1)/NUM_UINT64_BITS;
+			int localChunks = totalChunks - (index * NUM_UINT64_BITS);
+			_pendingChunks[index].store((uint64_t)((uint64_t) 2 << (localChunks-1)) - (uint64_t) 1, std::memory_order_relaxed);
 			totalChunks -= localChunks;
 		}
 	}
@@ -152,67 +151,67 @@ public:
 	inline bool decrementRemainingIterations(size_t amount)
 	{
 		assert(!isRunnable());
-		long remaining = (long)_remainingIterations.fetch_sub(amount, std::memory_order_relaxed) - (long)amount;
-		assert(remaining >= 0);
+		size_t remaining = _remainingIterations.fetch_sub(amount, std::memory_order_relaxed) - amount;
 		return (remaining == 0);
 	}
 
-	inline int getNextChunk(long cpuId, bool &remove)
+	inline int getNextChunk(long cpuId, bool *remove = nullptr)
 	{
 		assert(!isRunnable());
 
 		size_t totalIterations = _bounds.upper_bound - _bounds.lower_bound;
-		__attribute__((unused)) size_t totalChunks = ceil(totalIterations, _bounds.chunksize);
+		size_t totalChunks = ceil(totalIterations, _bounds.chunksize);
 		int chunkId = -1;
 		size_t fetched = 0;
 
-		long int remaining = _remainingChunks.fetch_sub(1, std::memory_order_relaxed) - 1;
+		int64_t remaining = _remainingChunks.fetch_sub(1, std::memory_order_relaxed) - 1;
 
 		if (remaining < 0) {
-			remove = true;
+			if (remove != nullptr)
+				*remove = true;
+
 			return chunkId;
-		} else {
-			// Get the variable where we should start from based on cpuId.
-			for (int c = 0; c < PENDING_CHUNKS_SIZE; c++) {
-				do {
-					int index = ((cpuId/NUM_SIZET_BITS) + c) % PENDING_CHUNKS_SIZE;
-					std::atomic<size_t> &pendingChunks = _pendingChunks[index];
-
-					// We use a right rotation to get the first enabled bit starting from cpuId.
-					size_t aux = rotateRight(pendingChunks, (cpuId % totalChunks));
-					// Find first set, -1 means no enabled bits at all.
-					int ffs = indexFirstEnabledBit(aux);
-					if (ffs == -1) {
-						break;
-					}
-
-					// Adjust the id based on the rotation done
-					chunkId = (ffs + (cpuId % totalChunks)) % NUM_SIZET_BITS;
-					assert(chunkId < (int) NUM_SIZET_BITS);
-
-					// Try to disable chunkId bit
-					fetched = pendingChunks.fetch_and(~((size_t) 1 << chunkId), std::memory_order_relaxed);
-
-					// If fetched is 0, there are no more bits enabled.
-					if (fetched == 0) {
-						break;
-					}
-
-					// If disable was successful, it means that chunk was not run and we must run it
-					if (fetched & ((size_t) 1 << chunkId)) {
-						remove = (remaining == 0);
-						chunkId += (NUM_SIZET_BITS * index);
-						assert(chunkId < (int) totalChunks);
-						return chunkId;
-					}
-				} while (1);
-			}
-
-			assert(0 && "There must be a chunk because remainingChunks assigned us a chunk.");
-
-			remove = true;
-			return -1;
+		} else if (remove != nullptr) {
+			*remove = (remaining == 0);
 		}
+
+		// Get the variable where we should start from based on cpuId.
+		for (int c = 0; c < PENDING_CHUNKS_SIZE; c++) {
+			do {
+				int index = ((cpuId/NUM_UINT64_BITS) + c) % PENDING_CHUNKS_SIZE;
+				std::atomic<uint64_t> &pendingChunks = _pendingChunks[index];
+
+				// We use a right rotation to get the first enabled bit starting from cpuId.
+				uint64_t aux = rotateRight(pendingChunks, (cpuId % totalChunks));
+				// Find first set, -1 means no enabled bits at all.
+				int ffs = indexFirstEnabledBit(aux);
+				if (ffs == -1) {
+					break;
+				}
+
+				// Adjust the id based on the rotation done
+				chunkId = (ffs + (cpuId % totalChunks)) % NUM_UINT64_BITS;
+				assert(chunkId < (int) NUM_UINT64_BITS);
+
+				// Try to disable chunkId bit
+				fetched = pendingChunks.fetch_and(~((uint64_t) 1 << chunkId), std::memory_order_relaxed);
+
+				// If fetched is 0, there are no more bits enabled.
+				if (fetched == 0) {
+					break;
+				}
+
+				// If disable was successful, it means that chunk was not run and we must run it
+				if (fetched & ((uint64_t) 1 << chunkId)) {
+					chunkId += (NUM_UINT64_BITS * index);
+					assert(chunkId < (int) totalChunks);
+					return chunkId;
+				}
+			} while (1);
+		}
+
+		FatalErrorHandler::failIf(1, "There must be a chunk because remainingChunks assigned us a chunk.");
+		return -1;
 	}
 
 	// Methods for collaborator taskfors
@@ -343,16 +342,17 @@ private:
 		return (x+(y-1))/y;
 	}
 
-	/*Function to right rotate x by y bits*/
-	static inline size_t rotateRight(size_t x, int y)
+	// Function to right rotate x by y bits
+	static inline uint64_t rotateRight(uint64_t x, int y)
 	{
 		y &= 63;
 		return (x >> y) | (x << (-y & 63));
 	}
 
-	/* ffs returns the least signficant enabled bit, starting from 1.
-	   0 means x has no enabled bits. */
-	int indexFirstEnabledBit(size_t x){
+	// ffs returns the least signficant enabled bit, starting from 1
+	// 0 means x has no enabled bits
+	static inline int indexFirstEnabledBit(uint64_t x)
+	{
 		return __builtin_ffsll(x) - 1;
 	}
 };
