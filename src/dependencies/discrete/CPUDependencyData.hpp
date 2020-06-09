@@ -15,16 +15,53 @@
 
 #include <limits.h>
 
+#include <nanos6/task-instantiation.h>
+
 #include "DataAccessFlags.hpp"
+
+#define SCHEDULER_CHUNK_SIZE 128
 
 class Task;
 
+class SatisfiedOriginatorList {
+	Task *_array[SCHEDULER_CHUNK_SIZE];
+	size_t _count;
+
+public:
+	inline SatisfiedOriginatorList() :
+		_count(0)
+	{
+	}
+
+	inline size_t size() const
+	{
+		return _count;
+	}
+
+	inline void clear()
+	{
+		_count = 0;
+	}
+
+	inline void add(Task *task)
+	{
+		_array[_count++] = task;
+	}
+
+	inline Task **getArray()
+	{
+		return &_array[0];
+	}
+};
+
 struct CPUDependencyData {
-	typedef std::deque<Task *> satisfied_originator_list_t;
+	typedef SatisfiedOriginatorList satisfied_originator_list_t;
 	typedef std::deque<Task *> deletable_originator_list_t;
 
 	//! Tasks whose accesses have been satisfied after ending a task
-	satisfied_originator_list_t _satisfiedOriginators;
+	satisfied_originator_list_t _satisfiedOriginators[nanos6_device_t::nanos6_device_type_num];
+	size_t _satisfiedOriginatorCount;
+
 	deletable_originator_list_t _deletableOriginators;
 	mailbox_t _mailBox;
 
@@ -34,6 +71,7 @@ struct CPUDependencyData {
 
 	CPUDependencyData()
 		: _satisfiedOriginators(),
+		_satisfiedOriginatorCount(0),
 		_deletableOriginators(),
 		_mailBox()
 #ifndef NDEBUG
@@ -49,7 +87,23 @@ struct CPUDependencyData {
 
 	inline bool empty() const
 	{
-		return _satisfiedOriginators.empty() && _deletableOriginators.empty() && _mailBox.empty();
+		for (satisfied_originator_list_t list : _satisfiedOriginators)
+			if (!list.size() == 0)
+				return false;
+
+		return _deletableOriginators.empty() && _mailBox.empty();
+	}
+
+	inline void addSatisfiedOriginator(Task *task, int deviceType)
+	{
+		assert(task != nullptr);
+		_satisfiedOriginatorCount++;
+		_satisfiedOriginators[deviceType].add(task);
+	}
+
+	inline void clearSatisfiedCount()
+	{
+		_satisfiedOriginatorCount = 0;
 	}
 };
 

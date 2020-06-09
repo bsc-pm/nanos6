@@ -50,7 +50,7 @@ void CommutativeSemaphore::releaseTask(Task *task, CPUDependencyData &hpDependen
 
 		if (maskIsCompatible(candidateMask)) {
 			maskRegister(candidateMask);
-			hpDependencyData._satisfiedOriginators.push_back(candidate);
+			hpDependencyData.addSatisfiedOriginator(candidate, candidate->getDeviceType());
 			it = _waitingTasks.erase(it);
 
 			// Keep track and cut off if we won't be releasing anything else.

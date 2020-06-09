@@ -20,6 +20,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
+#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinWait.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "TaskDataAccesses.hpp"
@@ -53,25 +54,35 @@ namespace DataAccessRegistration {
 		ComputePlace *computePlace,
 		bool fromBusyThread)
 	{
-		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
-		for (Task *satisfiedOriginator : hpDependencyData._satisfiedOriginators) {
-			assert(satisfiedOriginator != 0);
-
+		for (int i = 0; i < nanos6_device_t::nanos6_device_type_num; ++i) {
 			ComputePlace *computePlaceHint = nullptr;
-			if (computePlace != nullptr) {
-				if (computePlace->getType() == satisfiedOriginator->getDeviceType()) {
-					computePlaceHint = computePlace;
-				}
-			}
+			if (computePlace != nullptr && computePlace->getType() == i)
+				computePlaceHint = computePlace;
 
 			ReadyTaskHint schedulingHint = SIBLING_TASK_HINT;
 			if (fromBusyThread || !computePlaceHint || !computePlaceHint->isOwned()) {
 				schedulingHint = BUSY_COMPUTE_PLACE_TASK_HINT;
 			}
 
-			Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint, schedulingHint);
+			SatisfiedOriginatorList &list = hpDependencyData._satisfiedOriginators[i];
+			if (list.size() > 0) {
+				Scheduler::addReadyTasks(
+					(nanos6_device_t) i,
+					list.getArray(),
+					list.size(),
+					computePlaceHint,
+					schedulingHint
+					);
+			}
+
+			list.clear();
 		}
 
+		hpDependencyData.clearSatisfiedCount();
+	}
+
+	static inline void processDeletableOriginators(CPUDependencyData &hpDependencyData)
+	{
 		// As there is no "task garbage collection", the runtime will only destruct the tasks for us if we mark them as
 		// not needed on the unregisterTaskDataAccesses call, so this takes care on tasks ended anywhere else.
 
@@ -80,25 +91,24 @@ namespace DataAccessRegistration {
 			TaskFinalization::disposeTask(deletableOriginator);
 		}
 
-		hpDependencyData._satisfiedOriginators.clear();
 		hpDependencyData._deletableOriginators.clear();
 	}
 
-	static inline void processCommutativeOriginators(CPUDependencyData &hpDependencyData)
+	static inline void satisfyTask(Task *task, CPUDependencyData &hpDependencyData, ComputePlace *computePlace)
 	{
-		CPUDependencyData::satisfied_originator_list_t::iterator it = hpDependencyData._satisfiedOriginators.begin();
-
-		while (it != hpDependencyData._satisfiedOriginators.end()) {
-			Task *task = *it;
+		if (task->decreasePredecessors()) {
 			TaskDataAccesses &accessStruct = task->getDataAccesses();
 
 			if (accessStruct._commutativeMask.any() && !CommutativeSemaphore::registerTask(task))
-				it = hpDependencyData._satisfiedOriginators.erase(it);
-			else
-				++it;
+				return;
+
+			hpDependencyData.addSatisfiedOriginator(task, task->getDeviceType());
+
+			assert(hpDependencyData._satisfiedOriginatorCount <= SCHEDULER_CHUNK_SIZE);
+			if (hpDependencyData._satisfiedOriginatorCount == SCHEDULER_CHUNK_SIZE)
+				processSatisfiedOriginators(hpDependencyData, computePlace, true);
 		}
 	}
-
 
 	static inline DataAccessType combineTypes(DataAccessType type1, DataAccessType type2)
 	{
@@ -153,7 +163,7 @@ namespace DataAccessRegistration {
 	}
 
 	void propagateMessages(CPUDependencyData &hpDependencyData,
-		mailbox_t &mailBox, ReductionInfo *originalReductionInfo)
+		mailbox_t &mailBox, ReductionInfo *originalReductionInfo, ComputePlace *computePlace)
 	{
 		DataAccessMessage next;
 
@@ -178,8 +188,7 @@ namespace DataAccessRegistration {
 				assert(!next.from->getOriginator()->getDataAccesses().hasBeenDeleted());
 				Task *task = next.from->getOriginator();
 				assert(!task->getDataAccesses().hasBeenDeleted());
-				if (task->decreasePredecessors())
-					hpDependencyData._satisfiedOriginators.push_back(task);
+				satisfyTask(task, hpDependencyData, computePlace);
 			}
 
 			if (next.combine) {
@@ -208,7 +217,7 @@ namespace DataAccessRegistration {
 	}
 
 	void finalizeDataAccess(Task *task, DataAccess *access, void *address,
-		CPUDependencyData &hpDependencyData)
+		CPUDependencyData &hpDependencyData, ComputePlace *computePlace)
 	{
 		DataAccessType originalAccessType = access->getType();
 		// No race, the parent is finished so all childs must be registered by now.
@@ -259,7 +268,7 @@ namespace DataAccessRegistration {
 		bool dispose = access->apply(message, mailBox);
 
 		if (!mailBox.empty()) {
-			propagateMessages(hpDependencyData, mailBox, reductionInfo);
+			propagateMessages(hpDependencyData, mailBox, reductionInfo, computePlace);
 			assert(!dispose);
 		} else if (dispose) {
 			decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
@@ -295,9 +304,8 @@ namespace DataAccessRegistration {
 			task->increaseRemovalBlockingCount();
 		}
 
-		// From those satisfied originators, some might need to be processed through the commutative region.
-		processCommutativeOriginators(hpDependencyData);
 		processSatisfiedOriginators(hpDependencyData, computePlace, true);
+		processDeletableOriginators(hpDependencyData);
 
 #ifndef NDEBUG
 		{
@@ -334,7 +342,7 @@ namespace DataAccessRegistration {
 		if (accessStruct.hasDataAccesses()) {
 			// Release dependencies of all my accesses
 			accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
-				finalizeDataAccess(task, access, address, hpDependencyData);
+				finalizeDataAccess(task, access, address, hpDependencyData, computePlace);
 				return true;
 			});
 		}
@@ -367,9 +375,6 @@ namespace DataAccessRegistration {
 			}
 		}
 
-		// Commutative released accesses have to be registered
-		processCommutativeOriginators(hpDependencyData);
-
 		// Release commutative mask. The order is important, as this will add satisfied originators
 		if (accessStruct._commutativeMask.any())
 			CommutativeSemaphore::releaseTask(task, hpDependencyData);
@@ -385,6 +390,7 @@ namespace DataAccessRegistration {
 		}
 
 		processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
+		processDeletableOriginators(hpDependencyData);
 
 #ifndef NDEBUG
 		{
