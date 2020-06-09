@@ -67,7 +67,6 @@ The configure script accepts the following options:
 1. `--with-cuda[=prefix]` to enable support for CUDA tasks; optionally specify the prefix of the CUDA installation, if needed
 1. `--enable-openacc` to enable support for OpenACC tasks; requires PGI compilers
 1. `--with-pgi=prefix` to specify the prefix of the PGI compilers installation, in case they are not in `$PATH`
-1. `--enable-monitoring` to enable monitoring and predictions of task/CPU/thread statistics
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
 
 The location of elfutils and hwloc is always retrieved through pkg-config.
@@ -358,35 +357,14 @@ Some application output ...
 
 ## Monitoring
 
-Gathering metrics and generating predictions for these metrics is possible and enabled through the Monitoring infrastructure.
-Monitoring is an infrastructure composed of several modules.
-Each of these modules controls the monitoring and prediction generation of specific elements of the runtime core.
-At this moment, Monitoring includes the following modules/predictors:
+Monitoring is an infrastructure composed of several modules that gather metrics of specific elements of the runtime core and generate predictions usable by other modules. Checkpointing of predictions is enabled through the Wisdom mechanism, which allows saving predictions for future executions.
 
-1. A module to monitor and predict metrics for Tasks
-1. A module to monitor and predict metrics for Threads
-1. A module to monitor and predict metrics for CPUs
-1. A predictor that generates predictions of the elapsed time until completion of the application
-1. A predictor that generates real-time workload estimations
-1. A predictor that inferrs the CPU usage for a specific time range
+Monitoring is enabled at run-time through various environment variables:
 
-All of these metrics and predictions can be obtained at real-time within the runtime.
-The infrastructure also includes an external API to poll some of the predictions from user code.
-This external API can be used including `nanos6/monitoring.h` in applications.
-
-In addition, checkpointing of predictions is enabled through the Wisdom mechanism.
-This mechanism allows saving predictions for later usage, to enable earlier predictions in future executions.
-
-The Monitoring infrastructure is enabled at configure time, however, both the infrastructure and the Wisdom mechanism are controlled through additional configuration variables:
-
-* `monitoring.enabled`: To enable/disable monitoring and predictions of task, CPU, and thread statistics. Enabled by default if the runtime is configured with Monitoring.
-* `monitoring.verbose`: To enable/disable the verbose mode for monitoring. Enabled by default if the runtime is configured with Monitoring.
+* `monitoring.enabled`: To enable/disable monitoring, disabled by default.
+* `monitoring.verbose`: To enable/disable the verbose mode for monitoring. Enabled by default if monitoring is enabled.
 * `monitoring.rolling_window`: To specify the number of metrics used for accumulators (moving average's window). By default, the latest 20 metrics.
 * `monitoring.wisdom`: To enable/disable the wisdom mechanism. Disabled by default.
-
-### Known Limitations
-
-Currently, Monitoring capabilities lack support for the `task for` construct.
 
 
 ## Hardware Counters
