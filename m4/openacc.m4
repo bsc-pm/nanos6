@@ -4,6 +4,18 @@
 
 AC_DEFUN([AC_CHECK_PGI],
 	[
+		case $host in
+			x86*)
+				ac_manual_pgi_acc_libs="-laccapi -lpgc -laccn -laccns -laccg -laccg2"
+				;;
+			powerpc64*)
+				ac_manual_pgi_acc_libs="-laccapi -lpgc -laccn -laccns -laccg -laccg2 -lcudapgi -lpgkomp -lpgatm -lomp"
+				;;
+			*)
+				ac_manual_pgi_acc_libs="-laccapi -lpgc -laccn -laccns -laccg -laccg2"
+				;;
+		esac
+
 		AC_ARG_WITH(
 			[pgi],
 			[AS_HELP_STRING([--with-pgi=prefix], [specify the installation prefix of PGI])],
@@ -16,7 +28,7 @@ AC_DEFUN([AC_CHECK_PGI],
 			AC_MSG_RESULT([${ac_cv_use_pgi_prefix}])
 			# hacky way to obtain the quoted string for rpath; $(ECHO) seems to not be provided
 			pgi_lib_path_q=`echo \"${ac_cv_use_pgi_prefix}/lib\"`
-			openacc_LIBS="-L${ac_cv_use_pgi_prefix}/lib -laccapi -lpgc -laccn -laccns -laccg -laccg2"
+			openacc_LIBS="-L${ac_cv_use_pgi_prefix}/lib ${ac_manual_pgi_acc_libs}"
 			openacc_LIBS="${openacc_LIBS} -Wl,-rpath,${pgi_lib_path_q}"
 			openacc_h_pgi=`find ${ac_cv_use_pgi_prefix}/include -name 'openacc.h'`
 			if test x"${openacc_h_pgi}" != x"" ; then
@@ -40,7 +52,7 @@ AC_DEFUN([AC_CHECK_PGI],
 				PGI_INC_PATH=`echo $PGICXX | sed s@bin/pgc++@include@g`
 				AC_MSG_RESULT([found PGI installed libraries ${PGI_LIB_PATH}])
 				PGI_LIB_PATH_Q=`echo \"${PGI_LIB_PATH}\"`
-				openacc_LIBS="-L${PGI_LIB_PATH} -laccapi -lpgc -laccn -laccns -laccg -laccg2"
+				openacc_LIBS="-L${PGI_LIB_PATH} ${ac_manual_pgi_acc_libs}"
 			    openacc_LIBS="${openacc_LIBS} -Wl,-rpath,${PGI_LIB_PATH_Q}"
 				openacc_h_pgi=`find ${PGI_INC_PATH} -name 'openacc.h'`
 				if test x"${openacc_h_pgi}" != x"" ; then
