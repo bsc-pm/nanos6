@@ -12,7 +12,6 @@
 #include <string>
 
 #include "hardware-counters/SupportedHardwareCounters.hpp"
-#include "hardware-counters/TasktypeHardwareCounters.hpp"
 
 #include <Chrono.hpp>
 
@@ -39,9 +38,6 @@ private:
 
 	//! A pointer to the accumulated statistics of this task's tasktype
 	TasktypeStatistics *_tasktypeStatistics;
-
-	//! A pointer to the accumulated hardware counter metrics of this task's tasktype
-	TasktypeHardwareCounters *_tasktypeCounters;
 
 	//! A pointer to the TaskStatistics of the parent task
 	TaskStatistics *_parentStatistics;
@@ -103,7 +99,6 @@ public:
 
 	inline TaskStatistics() :
 		_tasktypeStatistics(nullptr),
-		_tasktypeCounters(nullptr),
 		_parentStatistics(nullptr),
 		_cost(DEFAULT_COST),
 		_numChildrenAlive(1),
@@ -127,7 +122,6 @@ public:
 	inline void reinitialize()
 	{
 		_tasktypeStatistics = nullptr;
-		_tasktypeCounters = nullptr;
 		_parentStatistics = nullptr;
 		_cost = DEFAULT_COST;
 		_numChildrenAlive = 1;
@@ -159,16 +153,6 @@ public:
 	inline TasktypeStatistics *getTasktypeStatistics() const
 	{
 		return _tasktypeStatistics;
-	}
-
-	inline void setTasktypeHardwareCounters(TasktypeHardwareCounters *tasktypeCounters)
-	{
-		_tasktypeCounters = tasktypeCounters;
-	}
-
-	inline TasktypeHardwareCounters *getTasktypeHardwareCounters() const
-	{
-		return _tasktypeCounters;
 	}
 
 	inline void setParentStatistics(TaskStatistics *parentStatistics)

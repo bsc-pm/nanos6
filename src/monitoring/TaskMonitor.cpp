@@ -14,7 +14,6 @@
 #include "tasks/TaskInfo.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
-#include "hardware-counters/TasktypeHardwareCounters.hpp"
 
 
 void TaskMonitor::taskCreated(Task *task, Task *parent) const
@@ -49,26 +48,24 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 	if (tasktypeData != nullptr) {
 		// Predict timing metrics
 		TasktypeStatistics &tasktypeStatistics = tasktypeData->getTasktypeStatistics();
-		double timePrediction = tasktypeStatistics.getTimePrediction(cost);
+		double timePrediction = tasktypeStatistics.getTimingPrediction(cost);
 		if (timePrediction != PREDICTION_UNAVAILABLE) {
 			taskStatistics->setTimePrediction(timePrediction);
 			taskStatistics->setHasPrediction(true);
 		}
 
 		// Predict hardware counter metrics
-		TasktypeHardwareCounters &tasktypeCounters = tasktypeData->getHardwareCounters();
 		for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
 			HWCounters::counters_t counterId = (HWCounters::counters_t) i;
-			double counterPrediction = tasktypeCounters.getCounterPrediction(counterId, cost);
+			double counterPrediction = tasktypeStatistics.getCounterPrediction(counterId, cost);
 			if (counterPrediction != PREDICTION_UNAVAILABLE) {
 				taskStatistics->setHasCounterPrediction(counterId, true);
 				taskStatistics->setCounterPrediction(counterId, counterPrediction);
 			}
 		}
 
-		// Set the task's tasktype statistics and hardware counters for future references
+		// Set the task's tasktype statistics for future references
 		taskStatistics->setTasktypeStatistics(&(tasktypeStatistics));
-		taskStatistics->setTasktypeHardwareCounters(&(tasktypeCounters));
 	} else if (task->getLabel() == "main") {
 		// Create mockup statistics for the main task
 		TaskInfo::registerTaskInfo(task->getTaskInfo());
@@ -77,9 +74,7 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		assert(tasktypeData != nullptr);
 
 		TasktypeStatistics &tasktypeStatistics = tasktypeData->getTasktypeStatistics();
-		TasktypeHardwareCounters &tasktypeCounters = tasktypeData->getHardwareCounters();
 		taskStatistics->setTasktypeStatistics(&(tasktypeStatistics));
-		taskStatistics->setTasktypeHardwareCounters(&(tasktypeCounters));
 	}
 }
 
@@ -195,12 +190,11 @@ void TaskMonitor::taskFinished(Task *task) const
 	// Backpropagate the following actions for the current task and any ancestor
 	// that finishes its execution following the finishing of the current task:
 	// 1) Accumulate its statistics into its tasktype statistics
-	// 2) Accumulate hardware counter predictions into its tasktype counters
-	// 3) If there is no ancestor with prediction but the task itself has a
+	// 2) If there is no ancestor with prediction but the task itself has a
 	//    prediction, subtract the time saved @ taskCompletedUserCode (1) of
 	//    children tasks of this task from the time saved (2) of this task's
 	//    tasktype statistics
-	// 4) Accumulate this task's elapsed time and its children elapsed time
+	// 3) Accumulate this task's elapsed time and its children elapsed time
 	//    into the parent task if it exists
 	// NOTE: If the task is a taskfor collaborator, only perform step 3)
 	while (taskStatistics->markAsFinished()) {
@@ -209,18 +203,13 @@ void TaskMonitor::taskFinished(Task *task) const
 		// Make sure this is not a taskfor collaborator for these steps
 		if (!task->isTaskfor() || (task->isTaskfor() && !task->isRunnable())) {
 			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
-			TasktypeHardwareCounters *tasktypeCounters = taskStatistics->getTasktypeHardwareCounters();
+			TaskHardwareCounters &taskCounters = task->getHardwareCounters();
 			assert(tasktypeStatistics != nullptr);
-			assert(tasktypeCounters != nullptr);
 
 			// 1)
-			tasktypeStatistics->accumulateStatistics(taskStatistics);
+			tasktypeStatistics->accumulateStatisticsAndCounters(taskStatistics, taskCounters);
 
 			// 2)
-			TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-			tasktypeCounters->accumulateCounters(taskCounters, taskStatistics->getCost());
-
-			// 3)
 			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
 				tasktypeStatistics->decreaseCompletedTime(taskStatistics->getCompletedTime());
 				tasktypeStatistics->decreaseAccumulatedCost(taskStatistics->getCost());
@@ -228,7 +217,7 @@ void TaskMonitor::taskFinished(Task *task) const
 			}
 		}
 
-		// 4)
+		// 3)
 		TaskStatistics *parentStatistics = taskStatistics->getParentStatistics();
 		if (parentStatistics != nullptr) {
 			parentStatistics->accumulateChildrenStatistics(taskStatistics);
@@ -258,14 +247,16 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 	TaskInfo::processAllTasktypes(
 		[&](const std::string &taskLabel, TasktypeData &tasktypeData) {
 			TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
-			size_t instances = tasktypeStatistics.getNumInstances();
-			if (instances) {
-				double averageNormalizedCost = tasktypeStatistics.getAverageNormalizedCost();
-				double stddevNormalizedCost = tasktypeStatistics.getStddevNormalizedCost();
-				double predictionAccuracy = tasktypeStatistics.getPredictionAccuracy();
+
+			// Display monitoring-related statistics
+			size_t numInstances = tasktypeStatistics.getTimingNumInstances();
+			if (numInstances) {
+				double averageNormalizedCost = tasktypeStatistics.getTimingRollingAverage();
+				double stddevNormalizedCost = tasktypeStatistics.getTimingStddev();
+				double predictionAccuracy = tasktypeStatistics.getTimingAccuracy();
 				double effectiveParallelism = tasktypeStatistics.getAccumulatedTime() / elapsedTime;
 
-				std::string typeLabel = taskLabel + " (" + std::to_string(instances) + ")";
+				std::string typeLabel = taskLabel + " (" + std::to_string(numInstances) + ")";
 				std::string accur = "NA";
 
 				// Make sure there was at least one prediction to report accuracy
@@ -279,27 +270,64 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 					std::setw(7)  << "STATS"                    << " " <<
 					std::setw(12) << "MONITORING"               << " " <<
 					std::setw(26) << "TASK-TYPE (INSTANCES)"    << " " <<
-					std::setw(20) << typeLabel                  << "\n";
+					std::setw(25) << typeLabel                  << "\n";
 				stream <<
 					std::setw(7)  << "STATS"                    << " "   <<
 					std::setw(12) << "MONITORING"               << " "   <<
-					std::setw(26) << "UNITARY COST AVG / STDEV" << " "   <<
+					std::setw(26) << "NORMALIZED COST"          << " "   <<
+					std::setw(25) << "AVG / STDEV"              << " "   <<
 					std::setw(10) << averageNormalizedCost      << " / " <<
 					std::setw(10) << stddevNormalizedCost       << "\n";
 				stream <<
 					std::setw(7)  << "STATS"                    << " " <<
 					std::setw(12) << "MONITORING"               << " " <<
-					std::setw(26) << "PREDICTION ACCURACY (%)"  << " " <<
+					std::setw(26) << "NORMALIZED COST"          << " " <<
+					std::setw(25) << "PREDICTION ACCURACY (%)"  << " " <<
 					std::setw(10) << accur                      << "\n";
 				stream <<
 					std::setw(7)  << "STATS"                    << " " <<
 					std::setw(12) << "MONITORING"               << " " <<
 					std::setw(26) << "EFFECTIVE PARALLELISM"    << " " <<
+					std::setw(25) << "RAW DATA"                 << " " <<
 					std::setw(10) << effectiveParallelism       << "\n";
-				stream << "+-----------------------------+\n";
 			}
+
+			// Display hardware counters related statistics
+			const std::vector<HWCounters::counters_t> &enabledCounters = HardwareCounters::getEnabledCounters();
+			if (enabledCounters.size()) {
+				for (size_t id = 0; id < enabledCounters.size(); ++id) {
+					HWCounters::counters_t eventType = (HWCounters::counters_t) enabledCounters[id];
+					numInstances = tasktypeStatistics.getCounterNumInstances(eventType);
+					if (numInstances) {
+						// Get statistics
+						double counterAvg = tasktypeStatistics.getCounterAverage(eventType);
+						double counterStddev = tasktypeStatistics.getCounterStddev(eventType);
+						double counterSum = tasktypeStatistics.getCounterSum(eventType);
+
+						// Process events that must be in KB
+						if (eventType == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
+							eventType == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
+							eventType == HWCounters::PQOS_MON_EVENT_RMEM_BW
+						) {
+							counterAvg /= 1024.0;
+							counterStddev /= 1024.0;
+							counterSum /= 1024.0;
+						}
+
+						stream <<
+							std::setw(7)  << "STATS"                                    << " "   <<
+							std::setw(12) << "HWCOUNTERS"                               << " "   <<
+							std::setw(26) << HWCounters::counterDescriptions[eventType] << " "   <<
+							std::setw(25) << "SUM / AVG / STDEV"                        << " "   <<
+							std::setw(15) << counterSum                                 << " / " <<
+							std::setw(15) << counterAvg                                 << " / " <<
+							std::setw(15) << counterStddev                              << "\n";
+					}
+				}
+			}
+
+			// Break after each tasktype
+			stream << "+-----------------------------+\n";
 		}
 	);
-
-	stream << "\n";
 }

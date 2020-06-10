@@ -108,7 +108,6 @@ namespace ExecutionWorkflow {
 				cpu->getDependencyData()
 			);
 
-			HardwareCounters::taskFinished(task);
 			Monitoring::taskFinished(task);
 
 			TaskFinalization::taskFinished(task, cpu);

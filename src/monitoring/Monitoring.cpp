@@ -11,7 +11,6 @@
 #include "TasktypeStatistics.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
-#include "hardware-counters/TasktypeHardwareCounters.hpp"
 #include "tasks/TaskInfo.hpp"
 
 
@@ -200,11 +199,11 @@ double Monitoring::getPredictedCPUUsage(size_t time)
 				Chrono completedChrono(statistics.getCompletedTime());
 				double completedTime = ((double) completedChrono);
 				size_t accumulatedCost = statistics.getAccumulatedCost();
-				double accumulatedTime = statistics.getTimePrediction(accumulatedCost);
+				double accumulatedTime = statistics.getTimingPrediction(accumulatedCost);
 
 				if (accumulatedTime > completedTime) {
 					currentWorkload += (accumulatedTime - completedTime);
-					currentActiveInstances += statistics.getNumInstances();
+					currentActiveInstances += statistics.getTimingNumInstances();
 					currentPredictionlessInstances += statistics.getNumPredictionlessInstances();
 				}
 			}
@@ -244,7 +243,7 @@ double Monitoring::getPredictedElapsedTime()
 				Chrono completedChrono(statistics.getCompletedTime());
 				double completedTime = ((double) completedChrono);
 				size_t accumulatedCost = statistics.getAccumulatedCost();
-				double accumulatedTime = statistics.getTimePrediction(accumulatedCost);
+				double accumulatedTime = statistics.getTimingPrediction(accumulatedCost);
 
 				if (accumulatedTime > completedTime) {
 					currentWorkload += (accumulatedTime - completedTime);
@@ -320,15 +319,14 @@ void Monitoring::loadMonitoringWisdom()
 						// Next, copy Hardware Counters data if existent
 						const std::vector<HWCounters::counters_t> &enabledCounters =
 							HardwareCounters::getEnabledCounters();
-
-						TasktypeHardwareCounters &tasktypeCounters = tasktypeData.getHardwareCounters();
 						for (size_t i = 0; i < enabledCounters.size(); ++i) {
 							std::string metricLabel(HWCounters::counterDescriptions[i]);
 							if (metricsNode.dataExists(metricLabel)) {
 								bool converted = false;
 								double metricValue = metricsNode.getData(metricLabel, converted);
 								if (converted) {
-									tasktypeCounters.insertNormalizedCounter((HWCounters::counters_t) i, metricValue);
+									TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
+									tasktypeStatistics.insertNormalizedCounter((HWCounters::counters_t) i, metricValue);
 								}
 							}
 						}
@@ -353,15 +351,14 @@ void Monitoring::storeMonitoringWisdom()
 
 			// Retreive monitoring statistics
 			TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
-			double value = tasktypeStatistics.getAverageNormalizedCost();
+			double value = tasktypeStatistics.getTimingRollingAverage();
 			tasktypeNode.addData("NORMALIZED_COST", value);
 
 			// Retreive hardware counter metrics
 			const std::vector<HWCounters::counters_t> &enabledCounters =
 				HardwareCounters::getEnabledCounters();
-			TasktypeHardwareCounters &tasktypeCounters = tasktypeData.getHardwareCounters();
 			for (size_t i = 0; i < enabledCounters.size(); ++i) {
-				double counter = tasktypeCounters.getCounterAvg((HWCounters::counters_t) enabledCounters[i]);
+				double counter = tasktypeStatistics.getCounterAverage((HWCounters::counters_t) enabledCounters[i]);
 				if (counter >= 0.0) {
 					tasktypeNode.addData(
 						std::string(HWCounters::counterDescriptions[enabledCounters[i]]),
