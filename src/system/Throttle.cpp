@@ -140,13 +140,15 @@ bool Throttle::engage(Task *task, WorkerThread *workerThread)
 	if (allowedChildTasks != 1)
 		replacement = Scheduler::getReadyTask(currentCPU);
 
-	if (replacement != nullptr) {
+	if (replacement != nullptr && workerThread->taskReplaceable()) {
+		workerThread->markReplaced();
 		workerThread->unassignTask();
 		workerThread->setTask(replacement);
 		workerThread->handleTask(currentCPU);
 
 		// Restore
 		workerThread->setTask(task);
+		workerThread->markRestored();
 		return true;
 	} else {
 		// There is nothing else to do. Let's run a taskwait then.

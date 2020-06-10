@@ -20,7 +20,7 @@
 
 inline WorkerThread::WorkerThread(CPU *cpu)
 	: WorkerThreadBase(cpu), _task(nullptr), _dependencyDomain(),
-	_instrumentationData(), _hwCounters()
+	_instrumentationData(), _hwCounters(), _replacementCount(0)
 {
 	_originalNumaNode = cpu->getNumaNodeId();
 	Instrument::enterThreadCreation(/* OUT */ _instrumentationId, cpu->getInstrumentationId());
@@ -115,6 +115,22 @@ namespace ompss_debug {
 	}
 }
 #endif
+
+
+inline bool WorkerThread::taskReplaceable() const
+{
+	return (_replacementCount < _maxReplaceCount);
+}
+
+inline void WorkerThread::markReplaced()
+{
+	_replacementCount++;
+}
+
+inline void WorkerThread::markRestored()
+{
+	_replacementCount--;
+}
 
 
 #endif // WORKER_THREAD_IMPLEMENTATION_HPP

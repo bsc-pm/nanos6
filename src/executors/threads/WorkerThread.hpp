@@ -35,6 +35,10 @@ private:
 
 	ThreadHardwareCounters _hwCounters;
 
+	//! Count for the number of tasks replaced in this thread
+	size_t _replacementCount;
+	static constexpr size_t _maxReplaceCount = 16;
+
 	void initialize();
 	void handleTask(CPU *cpu);
 
@@ -88,8 +92,15 @@ public:
 	//! \brief Returns the thread's hardware counter structures
 	inline ThreadHardwareCounters &getHardwareCounters();
 
-};
+	//! \brief Returns if the task on the thread can currently be replaced
+	inline bool taskReplaceable() const;
 
+	//! \brief Marks the task inside the thread as replaced
+	inline void markReplaced();
+
+	//! \brief Marks the task inside the thread as restored
+	inline void markRestored();
+};
 
 
 #ifndef NDEBUG
