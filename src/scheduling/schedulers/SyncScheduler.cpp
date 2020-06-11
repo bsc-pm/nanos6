@@ -32,11 +32,13 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	// already implement their progress engine using polling services. Also, external
 	// or compute places being disabled should not serve tasks for a long time
 	do {
+		size_t servedTasks = 0;
+
 		// Move ready tasks from add queues to the unsynchronized scheduler
 		processReadyTasks();
 
 		// Serve the subscribers that are waiting
-		while (_lock.popWaitingCPU(ticket, computePlaceIndex)) {
+		while (servedTasks < _maxServedTasks && _lock.popWaitingCPU(ticket, computePlaceIndex)) {
 			assert(computePlaceIndex < _totalComputePlaces);
 
 			ComputePlace *waitingComputePlace = getComputePlace(computePlaceIndex);
@@ -50,6 +52,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			// we want to avoid changing the responsible constantly (as happened
 			// in the original implementation)
 			assignTask(computePlaceIndex, ticket, task);
+			servedTasks++;
 
 			// Advance the ticket of the subscriber just served
 			_lock.unsubscribe();

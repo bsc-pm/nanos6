@@ -56,6 +56,12 @@ private:
 	//! serving tasks inside the scheduling loop
 	std::atomic<bool> _servingTasks;
 
+	//! The limit of tasks that a compute place can serve within a
+	//! single burst in the scheduling loop. This avoids that an
+	//! external compute place gets stuck solely serving tasks for
+	//! too much time
+	size_t _maxServedTasks;
+
 public:
 	//! NOTE We initialize the SubscriptionLock with 2 * numCPUs since some
 	//! threads may oversubscribe and thus we may need more than "numCPUs"
@@ -65,7 +71,8 @@ public:
 		_scheduler(nullptr),
 		_totalComputePlaces(totalComputePlaces),
 		_lock((uint64_t) totalComputePlaces * 2),
-		_servingTasks(false)
+		_servingTasks(false),
+		_maxServedTasks(totalComputePlaces * 20)
 	{
 		uint64_t totalCPUsPow2 = SchedulerSupport::roundToNextPowOf2(_totalComputePlaces);
 		assert(SchedulerSupport::isPowOf2(totalCPUsPow2));
