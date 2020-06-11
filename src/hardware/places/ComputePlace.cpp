@@ -44,8 +44,10 @@ std::vector<MemoryPlace *> ComputePlace::getMemoryPlaces()
 	return mems;
 }
 
-ComputePlace::ComputePlace(int index, nanos6_device_t type) :
-	_index(index), _type(type), _schedulerData(nullptr)
+ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
+	_owned(owned),
+	_index(index),
+	_type(type)
 {
 	TaskDataAccessesInfo taskAccessInfo(0);
 

@@ -18,7 +18,6 @@ CPU::CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId)
 	_activationStatus(uninitialized_status),
 	_systemCPUId(systemCPUId),
 	_NUMANodeId(NUMANodeId),
-	_isOwned(true),
 	_hardwareCounters()
 {
 	CPU_ZERO(&_cpuMask);

@@ -1254,9 +1254,12 @@ namespace DataAccessRegistration {
 				}
 			}
 
-			Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint,
-				(fromBusyThread ? BUSY_COMPUTE_PLACE_TASK_HINT : SIBLING_TASK_HINT)
-			);
+			ReadyTaskHint schedulingHint = SIBLING_TASK_HINT;
+			if (fromBusyThread || !computePlaceHint || !computePlaceHint->isOwned()) {
+				schedulingHint = BUSY_COMPUTE_PLACE_TASK_HINT;
+			}
+
+			Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint, schedulingHint);
 		}
 
 		hpDependencyData._satisfiedOriginators.clear();

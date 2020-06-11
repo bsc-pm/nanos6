@@ -64,10 +64,12 @@ namespace DataAccessRegistration {
 				}
 			}
 
-			Scheduler::addReadyTask(
-				satisfiedOriginator,
-				computePlaceHint,
-				(fromBusyThread ? BUSY_COMPUTE_PLACE_TASK_HINT : SIBLING_TASK_HINT));
+			ReadyTaskHint schedulingHint = SIBLING_TASK_HINT;
+			if (fromBusyThread || !computePlaceHint || !computePlaceHint->isOwned()) {
+				schedulingHint = BUSY_COMPUTE_PLACE_TASK_HINT;
+			}
+
+			Scheduler::addReadyTask(satisfiedOriginator, computePlaceHint, schedulingHint);
 		}
 
 		// As there is no "task garbage collection", the runtime will only destruct the tasks for us if we mark them as

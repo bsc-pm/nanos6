@@ -28,7 +28,7 @@
 
 class WorkerThread;
 
-class CPU: public CPUPlace {
+class CPU : public CPUPlace {
 
 public:
 
@@ -77,9 +77,6 @@ private:
 	//! Per-CPU data that is specific to the threading model
 	CPUThreadingModelData _threadingModelData;
 
-	//! Whether this cpu is owned by the runtime
-	bool _isOwned;
-
 	//! The hardware counter structures of this CPU
 	CPUHardwareCounters _hardwareCounters;
 
@@ -101,11 +98,10 @@ public:
 	//!
 	//! \param[in] virtualCPUId The virtual id or index of the CPU
 	inline CPU(size_t virtualCPUId) :
-		CPUPlace(virtualCPUId),
+		CPUPlace(virtualCPUId, false),
 		_activationStatus(uninitialized_status),
 		_systemCPUId(-1),
 		_NUMANodeId(0),
-		_isOwned(false),
 		_hardwareCounters()
 	{
 	}
@@ -186,16 +182,6 @@ public:
 	size_t getGroupId() const
 	{
 		return _groupId;
-	}
-
-	inline void setOwned(bool owned = true)
-	{
-		_isOwned = owned;
-	}
-
-	inline bool isOwned() const
-	{
-		return _isOwned;
 	}
 
 	inline CPUHardwareCounters &getHardwareCounters()
