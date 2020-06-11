@@ -17,31 +17,38 @@ void Taskfor::run(Taskfor &source)
 	// when we unregister them, until we solve this properly,
 	// by supporting the Taskfor construct through the execution
 	// workflow
-	MemoryPlace *memoryPlace = getThread()->getComputePlace()->getMemoryPlace(0);
+	ComputePlace *computePlace = getThread()->getComputePlace();
+	int cpuId = computePlace->getIndex();
+	MemoryPlace *memoryPlace = computePlace->getMemoryPlace(0);
 	source.setMemoryPlace(memoryPlace);
+
+	// Compute source taskfor total chunks
+	bounds_t const &sourceBounds = source.getBounds();
+	const size_t totalIterations = sourceBounds.upper_bound - sourceBounds.lower_bound;
+	const size_t totalChunks = ceil(totalIterations, sourceBounds.chunksize);
 
 	// Get the arguments and the task information
 	const nanos6_task_info_t &taskInfo = *getTaskInfo();
 	void *argsBlock = getArgsBlock();
-	bounds_t &bounds = getBounds();
-	size_t myIterations = computeChunkBounds();
+	size_t myIterations = computeChunkBounds(totalChunks, sourceBounds);
 	assert(myIterations > 0);
 	size_t completedIterations = 0;
 
 	do {
-		taskInfo.implementations[0].run(argsBlock, &bounds, nullptr);
+		taskInfo.implementations[0].run(argsBlock, &_bounds, nullptr);
 
 		completedIterations += myIterations;
 
-		_myChunk = source.getNextChunk();
+		_myChunk = source.getNextChunk(cpuId);
 		if (_myChunk >= 0) {
-			myIterations = computeChunkBounds();
+			myIterations = computeChunkBounds(totalChunks, sourceBounds);
 		} else {
 			myIterations = 0;
 		}
 	} while (myIterations != 0);
 
 	assert(completedIterations > 0);
+	assert(completedIterations <= source._bounds.upper_bound);
 	_completedIterations = completedIterations;
 
 	source.notifyCollaboratorHasFinished();

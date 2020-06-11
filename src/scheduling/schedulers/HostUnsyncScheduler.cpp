@@ -26,8 +26,9 @@ Task *HostUnsyncScheduler::getReadyTask(ComputePlace *computePlace)
 		if ((groupTaskfor = _groupSlots[groupId]) != nullptr) {
 
 			groupTaskfor->notifyCollaboratorHasStarted();
-			int myChunk = groupTaskfor->getNextChunk();
-			if (myChunk <= 0) {
+			bool remove = false;
+			int myChunk = groupTaskfor->getNextChunk(cpuId, &remove);
+			if (remove) {
 				_groupSlots[groupId] = nullptr;
 				groupTaskfor->removedFromScheduler();
 			}

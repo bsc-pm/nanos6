@@ -18,8 +18,15 @@ public:
 	typedef nanos6_loop_bounds_t bounds_t;
 
 private:
-	// Source
-	Padded<std::atomic<int>> _currentChunk;
+	static const int PENDING_CHUNKS_SIZE=7;
+	static const int NUM_UINT64_BITS=64;
+	// Global counter of remaining chunks
+	std::atomic<int64_t> _remainingChunks;
+	// Array of size_t to complete a cache line, where each bit of each size_t represents a chunk
+	// _remainingChunks+_pendingChunks must occupy a single cache line in the most conservative
+	// cache line size we found that is 64. So, we have _remainingChunks + 7 size_t in _pendingChunks.
+	// That enables us to represent up to 448 chunks.
+	std::atomic<uint64_t> _pendingChunks[PENDING_CHUNKS_SIZE];
 	// Source
 	Padded<std::atomic<size_t>> _remainingIterations;
 	// Source and collaborator
@@ -46,15 +53,18 @@ public:
 			taskInvokationInfo, parent,
 			instrumentationTaskId, flags,
 			taskAccessInfo, taskCounters),
-		  _currentChunk(), _remainingIterations(),
+		  _remainingChunks(), _remainingIterations(),
 		  _bounds(), _completedIterations(0),
 		  _myChunk(-1)
 	{
 		assert(isFinal());
 		setRunnable(runnable);
 
-		std::atomic_init(_currentChunk.ptr_to_basetype(), (int) 0);
+		std::atomic_init(&_remainingChunks, (int64_t) 0);
 		std::atomic_init(_remainingIterations.ptr_to_basetype(), (size_t) 0);
+		for (int i = 0; i < PENDING_CHUNKS_SIZE; i++) {
+			std::atomic_init(&_pendingChunks[i], (uint64_t) 0);
+		}
 	}
 
 	inline void setRunnable(bool runnableValue)
@@ -84,21 +94,28 @@ public:
 
 		if (_bounds.chunksize == 0) {
 			// Just distribute iterations over collaborators if no hint.
-			_bounds.chunksize = std::max(totalIterations / maxCollaborators, (size_t) 1);
-		}
-		else {
+			_bounds.chunksize = std::max(ceil(totalIterations, maxCollaborators), (size_t) 1);
+		} else {
 			// Distribute iterations over collaborators respecting the "alignment".
 			size_t newChunksize = std::max(totalIterations / maxCollaborators, _bounds.chunksize);
 			size_t alignedChunksize = closestMultiple(newChunksize, _bounds.chunksize);
-			if (std::ceil((double)totalIterations / (double)alignedChunksize) < maxCollaborators) {
+			if (ceil(totalIterations, alignedChunksize) < maxCollaborators) {
 				alignedChunksize = std::max(alignedChunksize - _bounds.chunksize, _bounds.chunksize);
 			}
 			assert(alignedChunksize % _bounds.chunksize == 0);
 			_bounds.chunksize = alignedChunksize;
 		}
 
-		assert(_currentChunk == 0);
-		_currentChunk.store(std::ceil((double) totalIterations/(double) _bounds.chunksize), std::memory_order_relaxed);
+		size_t totalChunks = ceil(totalIterations, _bounds.chunksize);
+		// Each bit of the _pendingChunks var represents a chunk. 1 is pending, 0 is already executed.
+		FatalErrorHandler::failIf(totalChunks > PENDING_CHUNKS_SIZE * NUM_UINT64_BITS, "Too many chunks required.");
+		_remainingChunks.store(totalChunks, std::memory_order_relaxed);
+		while (totalChunks > 0 ) {
+			int index = (totalChunks-1)/NUM_UINT64_BITS;
+			int localChunks = totalChunks - (index * NUM_UINT64_BITS);
+			_pendingChunks[index].store((uint64_t)((uint64_t) 2 << (localChunks-1)) - (uint64_t) 1, std::memory_order_relaxed);
+			totalChunks -= localChunks;
+		}
 	}
 
 	inline bounds_t const &getBounds() const
@@ -138,11 +155,63 @@ public:
 		return (remaining == 0);
 	}
 
-	inline int getNextChunk()
+	inline int getNextChunk(long cpuId, bool *remove = nullptr)
 	{
 		assert(!isRunnable());
-		int myChunk = _currentChunk.fetch_sub(1, std::memory_order_relaxed) - 1;
-		return myChunk;
+
+		size_t totalIterations = _bounds.upper_bound - _bounds.lower_bound;
+		size_t totalChunks = ceil(totalIterations, _bounds.chunksize);
+		int chunkId = -1;
+		size_t fetched = 0;
+
+		int64_t remaining = _remainingChunks.fetch_sub(1, std::memory_order_relaxed) - 1;
+
+		if (remaining < 0) {
+			if (remove != nullptr)
+				*remove = true;
+
+			return chunkId;
+		} else if (remove != nullptr) {
+			*remove = (remaining == 0);
+		}
+
+		// Get the variable where we should start from based on cpuId.
+		for (int c = 0; c < PENDING_CHUNKS_SIZE; c++) {
+			do {
+				int index = ((cpuId/NUM_UINT64_BITS) + c) % PENDING_CHUNKS_SIZE;
+				std::atomic<uint64_t> &pendingChunks = _pendingChunks[index];
+
+				// We use a right rotation to get the first enabled bit starting from cpuId.
+				uint64_t aux = rotateRight(pendingChunks, (cpuId % totalChunks));
+				// Find first set, -1 means no enabled bits at all.
+				int ffs = indexFirstEnabledBit(aux);
+				if (ffs == -1) {
+					break;
+				}
+
+				// Adjust the id based on the rotation done
+				chunkId = (ffs + (cpuId % totalChunks)) % NUM_UINT64_BITS;
+				assert(chunkId < (int) NUM_UINT64_BITS);
+
+				// Try to disable chunkId bit
+				fetched = pendingChunks.fetch_and(~((uint64_t) 1 << chunkId), std::memory_order_relaxed);
+
+				// If fetched is 0, there are no more bits enabled.
+				if (fetched == 0) {
+					break;
+				}
+
+				// If disable was successful, it means that chunk was not run and we must run it
+				if (fetched & ((uint64_t) 1 << chunkId)) {
+					chunkId += (NUM_UINT64_BITS * index);
+					assert(chunkId < (int) totalChunks);
+					return chunkId;
+				}
+			} while (1);
+		}
+
+		FatalErrorHandler::failIf(1, "There must be a chunk because remainingChunks assigned us a chunk.");
+		return -1;
 	}
 
 	// Methods for collaborator taskfors
@@ -196,21 +265,20 @@ public:
 		return _myChunk;
 	}
 
-	inline size_t computeChunkBounds()
+	inline size_t computeChunkBounds(size_t totalChunks, bounds_t const &sourceBounds)
 	{
 		assert(isRunnable());
-		bounds_t &collaboratorBounds = _bounds;
-		const Taskfor *source = (Taskfor *) getParent();
-		bounds_t const &sourceBounds = source->getBounds();
-		size_t totalIterations = sourceBounds.upper_bound - sourceBounds.lower_bound;
-		size_t totalChunks = std::ceil((double) totalIterations / (double) sourceBounds.chunksize);
 		assert(totalChunks > 0);
-		_myChunk = totalChunks - (_myChunk + 1);
 
-		collaboratorBounds.lower_bound = sourceBounds.lower_bound + (_myChunk * sourceBounds.chunksize);
-		size_t myIterations = std::min(sourceBounds.chunksize, sourceBounds.upper_bound - collaboratorBounds.lower_bound);
+		// Invert to start from the beginning.
+		_myChunk = totalChunks - (_myChunk + 1);
+		assert(_myChunk <= (int) totalChunks);
+		assert(_myChunk >= 0);
+
+		_bounds.lower_bound = sourceBounds.lower_bound + (_myChunk * sourceBounds.chunksize);
+		size_t myIterations = std::min(sourceBounds.chunksize, sourceBounds.upper_bound - _bounds.lower_bound);
 		assert(myIterations > 0 && myIterations <= sourceBounds.chunksize);
-		collaboratorBounds.upper_bound = collaboratorBounds.lower_bound + myIterations;
+		_bounds.upper_bound = _bounds.lower_bound + myIterations;
 
 		return myIterations;
 	}
@@ -267,6 +335,25 @@ private:
 	static inline size_t closestMultiple(size_t n, size_t multipleOf)
 	{
 		return ((n + multipleOf - 1) / multipleOf) * multipleOf;
+	}
+
+	static inline size_t ceil(size_t x, size_t y)
+	{
+		return (x+(y-1))/y;
+	}
+
+	// Function to right rotate x by y bits
+	static inline uint64_t rotateRight(uint64_t x, int y)
+	{
+		y &= 63;
+		return (x >> y) | (x << (-y & 63));
+	}
+
+	// ffs returns the least signficant enabled bit, starting from 1
+	// 0 means x has no enabled bits
+	static inline int indexFirstEnabledBit(uint64_t x)
+	{
+		return __builtin_ffsll(x) - 1;
 	}
 };
 
