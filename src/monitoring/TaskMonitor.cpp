@@ -27,23 +27,25 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 	assert(taskStatistics != nullptr);
 
 	// Initialize attributes of the new task
-	TaskStatistics *parentStatistics = nullptr;
-	if (parent != nullptr) {
-		parentStatistics = parent->getTaskStatistics();
-	}
 	size_t cost = task->getCost();
-	taskStatistics->setParentStatistics(parentStatistics);
 	taskStatistics->setCost(cost);
 
 	if (parent != nullptr) {
-		if (parentStatistics != nullptr) {
-			parentStatistics->increaseNumChildrenAlive();
-			parentStatistics->increaseNumChildren();
-			taskStatistics->setAncestorHasPrediction(
-				parentStatistics->hasPrediction() ||
-				parentStatistics->ancestorHasPrediction()
-			);
-		}
+		TaskStatistics *parentStatistics = parent->getTaskStatistics();
+		assert(parentStatistics != nullptr);
+
+		parentStatistics->increaseNumChildrenAlive();
+		parentStatistics->increaseNumChildren();
+
+		taskStatistics->setAncestorHasPrediction(
+			parentStatistics->hasPrediction() ||
+			parentStatistics->ancestorHasPrediction()
+		);
+	}
+
+	// If the task is a taskfor collaborator, no need to predict anything
+	if (task->isTaskforCollaborator()) {
+		return;
 	}
 
 	// Predict metrics using past data
@@ -89,6 +91,21 @@ void TaskMonitor::taskReinitialized(Task *task) const
 	assert(taskStatistics != nullptr);
 
 	taskStatistics->reinitialize();
+
+	Task *parent = task->getParent();
+	if (parent != nullptr) {
+		// NOTE: In the future this assert might need to disappear. For now,
+		// this function is only used to reinitialize taskfor collaborators,
+		// and when doing that, we need to increase the counter of child tasks
+		// so that we can 'markAsFinished' the source @ taskFinished
+		assert(parent->isTaskforSource());
+
+		TaskStatistics *parentStatistics = parent->getTaskStatistics();
+		assert(parentStatistics != nullptr);
+
+		parentStatistics->increaseNumChildrenAlive();
+		parentStatistics->increaseNumChildren();
+	}
 }
 
 void TaskMonitor::taskStarted(Task *task, monitoring_task_status_t execStatus) const
@@ -104,8 +121,7 @@ void TaskMonitor::taskStarted(Task *task, monitoring_task_status_t execStatus) c
 	// If the task is not a taskfor collaborator, and this is the first time it
 	// becomes ready, increase the cost accumulations used to infer predictions.
 	// Only if this task doesn't have an ancestor that is already taken into account
-	bool isCollaborator = (task->isTaskfor() && task->isRunnable());
-	if (!isCollaborator && !taskStatistics->ancestorHasPrediction()) {
+	if (!task->isTaskforCollaborator() && !taskStatistics->ancestorHasPrediction()) {
 		if (oldStatus == null_status && execStatus == ready_status) {
 			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
 			assert(tasktypeStatistics != nullptr);
@@ -138,11 +154,11 @@ void TaskMonitor::taskCompletedUserCode(Task *task) const
 	//    - So that when the ancestor finishes its execution, this time can be
 	//      decreased from the saved time in 1), since the accumulation of cost
 	//      will be decreased and we won't need it anymore
-	bool isCollaborator = (task->isTaskfor() && task->isRunnable());
-	if (!isCollaborator) {
+	if (!task->isTaskforCollaborator()) {
 		if (taskStatistics->ancestorHasPrediction()) {
-			TaskStatistics *ancestorStatistics = taskStatistics->getParentStatistics();
-			while (ancestorStatistics != nullptr) {
+			Task *ancestor = task->getParent();
+			while (ancestor != nullptr) {
+				TaskStatistics *ancestorStatistics = ancestor->getTaskStatistics();
 				if (!ancestorStatistics->ancestorHasPrediction()) {
 					// If this ancestor doesn't have an ancestor with predictions, it
 					// is the ancestor we're looking for, the one with the prediction
@@ -159,7 +175,7 @@ void TaskMonitor::taskCompletedUserCode(Task *task) const
 
 					break;
 				} else {
-					ancestorStatistics = ancestorStatistics->getParentStatistics();
+					ancestor = ancestor->getParent();
 				}
 			}
 		} else if (!taskStatistics->hasPrediction()) {
@@ -214,8 +230,9 @@ void TaskMonitor::taskFinished(Task *task) const
 	while (taskStatistics->markAsFinished()) {
 		assert(!taskStatistics->getNumChildrenAlive());
 
-		// Make sure this is not a taskfor collaborator for these steps
-		if (!task->isTaskfor() || (task->isTaskfor() && !task->isRunnable())) {
+		// If the task is a taskfor source or a normal task, aggregate
+		// timing statistics and counters into its tasktype
+		if (!task->isTaskforCollaborator()) {
 			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
 			TaskHardwareCounters &taskCounters = task->getHardwareCounters();
 			assert(tasktypeStatistics != nullptr);
@@ -232,12 +249,15 @@ void TaskMonitor::taskFinished(Task *task) const
 		}
 
 		// 3)
-		TaskStatistics *parentStatistics = taskStatistics->getParentStatistics();
-		if (parentStatistics != nullptr) {
+		Task *parent = task->getParent();
+		if (parent != nullptr) {
+			TaskStatistics *parentStatistics = parent->getTaskStatistics();
+			assert(parentStatistics != nullptr);
+
+			// Accumulate statistics into the parent and follow chain of ancestors
 			parentStatistics->accumulateChildrenStatistics(taskStatistics);
 			taskStatistics = parentStatistics;
-			task = task->getParent();
-			assert(task != nullptr);
+			task = parent;
 		} else {
 			break;
 		}

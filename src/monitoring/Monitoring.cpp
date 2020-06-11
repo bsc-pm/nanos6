@@ -103,13 +103,9 @@ void Monitoring::taskCreated(Task *task)
 		// Construct the object with the reserved space
 		new (taskStatistics) TaskStatistics();
 
-		// Only take the task into account for predictions if it is a basic
-		// task or an original Taskfor, never a collaborator
-		if (!task->isTaskfor() || (task->isTaskfor() && !task->isRunnable())) {
-			// Populate task statistic structures and predict metrics
-			Task *parent = task->getParent();
-			_taskMonitor->taskCreated(task, parent);
-		}
+		// Populate task statistic structures and predict metrics
+		Task *parent = task->getParent();
+		_taskMonitor->taskCreated(task, parent);
 	}
 }
 

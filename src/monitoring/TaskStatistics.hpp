@@ -39,9 +39,6 @@ private:
 	//! A pointer to the accumulated statistics of this task's tasktype
 	TasktypeStatistics *_tasktypeStatistics;
 
-	//! A pointer to the TaskStatistics of the parent task
-	TaskStatistics *_parentStatistics;
-
 	//! The computational cost of the task
 	size_t _cost;
 
@@ -99,7 +96,6 @@ public:
 
 	inline TaskStatistics() :
 		_tasktypeStatistics(nullptr),
-		_parentStatistics(nullptr),
 		_cost(DEFAULT_COST),
 		_numChildrenAlive(1),
 		_numChildren(0),
@@ -122,7 +118,6 @@ public:
 	inline void reinitialize()
 	{
 		_tasktypeStatistics = nullptr;
-		_parentStatistics = nullptr;
 		_cost = DEFAULT_COST;
 		_numChildrenAlive = 1;
 		_numChildren = 0;
@@ -153,16 +148,6 @@ public:
 	inline TasktypeStatistics *getTasktypeStatistics() const
 	{
 		return _tasktypeStatistics;
-	}
-
-	inline void setParentStatistics(TaskStatistics *parentStatistics)
-	{
-		_parentStatistics = parentStatistics;
-	}
-
-	inline TaskStatistics *getParentStatistics() const
-	{
-		return _parentStatistics;
 	}
 
 	inline void setCost(size_t cost)
