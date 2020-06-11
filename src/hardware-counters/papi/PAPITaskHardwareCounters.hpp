@@ -70,6 +70,14 @@ public:
 		return numCounters * sizeof(long long);
 	}
 
+	//! \brief Combine the counters of two tasks
+	//!
+	//! \param[in] combineeCounters The counters of a task, which will be combined into
+	//! the current counters
+	inline void combineCounters(TaskHardwareCountersInterface *) override
+	{
+	}
+
 };
 
 #endif // PAPI_TASK_HARDWARE_COUNTERS_HPP

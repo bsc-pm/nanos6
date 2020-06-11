@@ -11,9 +11,12 @@
 
 #include "TaskMonitor.hpp"
 #include "TasktypeStatistics.hpp"
-#include "tasks/TaskInfo.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
+#include "tasks/Task.hpp"
+#include "tasks/Taskfor.hpp"
+#include "tasks/TaskInfo.hpp"
 
 
 void TaskMonitor::taskCreated(Task *task, Task *parent) const
@@ -177,15 +180,26 @@ void TaskMonitor::taskFinished(Task *task) const
 	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
 
-	// NOTE: Special case. For taskfor sources, when the task is finished
-	// it also completes user code execution, thus we treat it here
-	bool isSourceTaskfor = (task->isTaskfor() && !task->isRunnable());
-	if (isSourceTaskfor) {
-		taskCompletedUserCode(task);
-	}
-
 	// Stop timing for the task
 	__attribute__((unused)) monitoring_task_status_t oldStatus = taskStatistics->stopTiming();
+
+	// NOTE: Special cases:
+	// 1) For taskfor sources, when the task is finished it also completes user
+	//    code execution, thus we treat it here
+	// 2) For taskfor collaborators, we must aggregate their counter statistics
+	//    to the source taskfor
+	if (task->isTaskforSource()) {
+		taskCompletedUserCode(task);
+	} else if (task->isTaskforCollaborator()) {
+		Taskfor *source = (Taskfor *) task->getParent();
+		assert(source != nullptr);
+		assert(source->isTaskfor());
+		assert(source->isTaskforSource());
+
+		// Combine the hardware counters of the taskfor collaborator (task)
+		// into the taskfor source (source)
+		HardwareCounters::taskCombineCounters(source, task);
+	}
 
 	// Backpropagate the following actions for the current task and any ancestor
 	// that finishes its execution following the finishing of the current task:
