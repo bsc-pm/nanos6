@@ -22,7 +22,7 @@ CTFAPI::CTFContextTaskHardwareCounters::CTFContextTaskHardwareCounters() : CTFCo
 	dataStructuresMetadata.append("struct hwc {\n");
 	for (auto it = enabledCounters.begin(); it != enabledCounters.end(); ++it) {
 		dataStructuresMetadata.append(
-			std::string("\tuint64_t ") +
+			std::string("\tdouble ") +
 			HWCounters::counterDescriptions[*it] +
 			";\n"
 		);
@@ -39,7 +39,7 @@ void CTFAPI::CTFContextTaskHardwareCounters::writeContext(void **buf)
 	TaskHardwareCounters &taskCounters = task->getHardwareCounters();
 
 	for (auto it = enabledCounters.begin(); it != enabledCounters.end(); ++it) {
-		uint64_t val = (uint64_t) taskCounters.getDelta(*it);
+		double val = taskCounters.getDelta(*it);
 		tp_write_args(buf, val);
 	}
 }

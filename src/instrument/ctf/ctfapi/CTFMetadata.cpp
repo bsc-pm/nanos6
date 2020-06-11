@@ -21,9 +21,9 @@ const char *CTFAPI::CTFMetadata::meta_typedefs =
 	"typealias integer { size = 16; align = 8; signed = false; } := uint16_t;\n"
 	"typealias integer { size = 32; align = 8; signed = false; } := uint32_t;\n"
 	"typealias integer { size = 64; align = 8; signed = false; } := uint64_t;\n"
-	"typealias integer { size = 64; align = 8; signed = false; } := unsigned long;\n"
-	"typealias integer { size = 5; align = 1; signed = false; }  := uint5_t;\n"
-	"typealias integer { size = 27; align = 1; signed = false; } := uint27_t;\n\n";
+	"typealias floating_point { exp_dig =  8; mant_dig = 24; byte_order = native; align = 8; } := float;\n"
+	"typealias floating_point { exp_dig = 11; mant_dig = 53; byte_order = native; align = 8; } := double;\n"
+	"\n";
 
 const char *CTFAPI::CTFMetadata::meta_trace =
 	"trace {\n"
