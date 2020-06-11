@@ -18,13 +18,10 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/PaddedSpinLock.hpp"
 #include "system/RuntimeInfo.hpp"
-#include "InstrumentPollingServices.hpp"
 
 
 namespace PollingAPI {
 	typedef PaddedSpinLock<> lock_t;
-
-	std::atomic<uint8_t> pollingServicesIdIndex(0);
 
 	//! \brief the parameters of the nanos6_register_polling_service function
 	struct ServiceKey {
@@ -48,7 +45,6 @@ namespace PollingAPI {
 	struct ServiceData {
 		//! \brief Indicates whether the service is being processed at that moment
 		bool _processing;
-		uint8_t _id;
 
 		//! \brief A pointer to an area that is set when the service has been marked for removal and that will be set to true once the service has been unregistered
 		std::atomic<bool> *_discard;
@@ -56,11 +52,6 @@ namespace PollingAPI {
 		ServiceData()
 			: _processing(false), _discard(nullptr)
 		{
-		}
-
-		void setId()
-		{
-			_id = pollingServicesIdIndex++;
 		}
 	};
 
@@ -131,9 +122,6 @@ extern "C" void nanos6_register_polling_service(char const *service_name, nanos6
 		// Remove the mark
 		serviceData._discard = nullptr;
 	} else {
-		ServiceData &serviceData = result.first->second;
-		serviceData.setId();
-		Instrument::pollingServiceRegister(service_name, serviceData._id);
 		auto it = uniqueRegisteredServices.find(service_function);
 		if (it == uniqueRegisteredServices.end()) {
 			uniqueRegisteredServices[service_function] = service_name;
@@ -210,9 +198,7 @@ void PollingAPI::handleServices()
 
 		// Execute the callback without locking
 		PollingAPI::_lock.unlock();
-		Instrument::pollingServiceEnter(serviceData._id);
 		bool unregister = serviceKey._function(serviceKey._functionData);
-		Instrument::pollingServiceExit();
 		PollingAPI::_lock.lock();
 
 		// Unset the processing flag

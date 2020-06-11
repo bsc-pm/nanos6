@@ -42,9 +42,9 @@ static CTFAPI::CTFEvent *eventSchedulerAddTaskEnter;
 static CTFAPI::CTFEvent *eventSchedulerAddTaskExit;
 static CTFAPI::CTFEvent *eventSchedulerGetTaskEnter;
 static CTFAPI::CTFEvent *eventSchedulerGetTaskExit;
-static CTFAPI::CTFEvent *eventPollingServiceRegister;
-static CTFAPI::CTFEvent *eventPollingServiceEnter;
-static CTFAPI::CTFEvent *eventPollingServiceExit;
+static CTFAPI::CTFEvent *eventDebugRegister;
+static CTFAPI::CTFEvent *eventDebugEnter;
+static CTFAPI::CTFEvent *eventDebugExit;
 
 void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
@@ -175,17 +175,17 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"nanos6:scheduler_get_task_exit",
 		"\t\tuint8_t _dummy;\n"
 	));
-	eventPollingServiceRegister = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:polling_service_register",
+	eventDebugRegister = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:debug_register",
 		"\t\tstring name;\n"
 		"\t\tuint8_t _id;\n"
 	));
-	eventPollingServiceEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:polling_service_enter",
+	eventDebugEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:debug_enter",
 		"\t\tuint8_t _id;\n"
 	));
-	eventPollingServiceExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:polling_service_exit",
+	eventDebugExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:debug_exit",
 		"\t\tuint8_t _dummy;\n"
 	));
 }
@@ -428,27 +428,27 @@ void Instrument::tp_scheduler_get_task_exit()
 	CTFAPI::tracepoint(eventSchedulerGetTaskExit, dummy);
 }
 
-void Instrument::tp_polling_service_register(const char *name, ctf_polling_service_id_t id)
+void Instrument::tp_debug_register(const char *name, ctf_debug_id_t id)
 {
-	if (!eventPollingServiceRegister->isEnabled())
+	if (!eventDebugRegister->isEnabled())
 		return;
 
-	CTFAPI::tracepoint(eventPollingServiceRegister, name, id);
+	CTFAPI::tracepoint(eventDebugRegister, name, id);
 }
 
-void Instrument::tp_polling_service_enter(ctf_polling_service_id_t id)
+void Instrument::tp_debug_enter(ctf_debug_id_t id)
 {
-	if (!eventPollingServiceEnter->isEnabled())
+	if (!eventDebugEnter->isEnabled())
 		return;
 
-	CTFAPI::tracepoint(eventPollingServiceEnter, id);
+	CTFAPI::tracepoint(eventDebugEnter, id);
 }
 
-void Instrument::tp_polling_service_exit()
+void Instrument::tp_debug_exit()
 {
-	if (!eventPollingServiceExit->isEnabled())
+	if (!eventDebugExit->isEnabled())
 		return;
 
 	char dummy = 0;
-	CTFAPI::tracepoint(eventPollingServiceExit, dummy);
+	CTFAPI::tracepoint(eventDebugExit, dummy);
 }

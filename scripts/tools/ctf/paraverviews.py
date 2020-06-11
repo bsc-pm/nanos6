@@ -241,7 +241,7 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		TaskArgsInit         = 9
 		TaskSubmit           = 10
 		TaskforInit          = 11
-		PollingService       = 100
+		Debug                = 100
 
 	def stackEvent(func):
 		def wrapper(self, event, payload):
@@ -290,9 +290,9 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 			("nanos6:task_submit_exit",            self.hook_unstack),
 			("nanos6:taskfor_init_enter",          self.hook_taskforInit),
 			("nanos6:taskfor_init_exit",           self.hook_unstack),
-			("nanos6:polling_service_register",    self.hook_pollingServiceRegister),
-			("nanos6:polling_service_enter",       self.hook_pollingService),
-			("nanos6:polling_service_exit",        self.hook_unstack),
+			("nanos6:debug_register",              self.hook_debugRegister),
+			("nanos6:debug_enter",                 self.hook_debug),
+			("nanos6:debug_exit",                  self.hook_unstack),
 		]
 		status = {
 			self.Status.Idle:                 "Idle",
@@ -368,16 +368,16 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		return self.Status.TaskforInit
 
 	@stackEvent
-	def hook_pollingService(self, event):
-		pollingServiceId = event["id"]
-		return self.Status.PollingService + pollingServiceId
+	def hook_debug(self, event):
+		debugId = event["id"]
+		return self.Status.Debug + debugId
 
-	def hook_pollingServiceRegister(self, event, payload):
-		name             = event["name"]
-		pollingServiceId = event["id"]
+	def hook_debugRegister(self, event, payload):
+		name    = event["name"]
+		debugId = event["id"]
 
-		extraeId   = self.Status.PollingService + pollingServiceId
-		extraeName = "Polling Service: " + str(name)
+		extraeId   = self.Status.Debug + debugId
+		extraeName = "Debug: " + str(name)
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_SUBSYSTEMS, {extraeId : extraeName})
 
 	def getEventStack(self, event):

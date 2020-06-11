@@ -902,6 +902,7 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentBlocking.hpp \
 	src/instrument/api/InstrumentComputePlaceManagement.hpp \
 	src/instrument/api/InstrumentDataAccessTypes.hpp \
+	src/instrument/api/InstrumentDebug.hpp \
 	src/instrument/api/InstrumentDependenciesByAccess.hpp \
 	src/instrument/api/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/api/InstrumentDependenciesByGroup.hpp \
@@ -909,7 +910,6 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentInitAndShutdown.hpp \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
-	src/instrument/api/InstrumentPollingServices.hpp \
 	src/instrument/api/InstrumentReductions.hpp \
 	src/instrument/api/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/api/InstrumentTaskExecution.hpp \
@@ -937,6 +937,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentComputePlaceManagement.hpp \
 	src/instrument/ctf/InstrumentCPULocalData.hpp \
 	src/instrument/ctf/InstrumentDataAccessId.hpp \
+	src/instrument/ctf/InstrumentDebug.hpp \
 	src/instrument/ctf/InstrumentDependenciesByAccess.hpp \
 	src/instrument/ctf/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/ctf/InstrumentDependenciesByGroup.hpp \
@@ -947,7 +948,6 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentInstrumentationContext.hpp \
 	src/instrument/ctf/InstrumentLeaderThread.hpp \
 	src/instrument/ctf/InstrumentLogMessage.hpp \
-	src/instrument/ctf/InstrumentPollingServices.hpp \
 	src/instrument/ctf/InstrumentReductions.hpp \
 	src/instrument/ctf/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/ctf/InstrumentTaskExecution.hpp \
@@ -971,6 +971,7 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentComputePlaceManagement.hpp \
 	src/instrument/extrae/InstrumentCPULocalData.hpp \
 	src/instrument/extrae/InstrumentDataAccessId.hpp \
+	src/instrument/extrae/InstrumentDebug.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccess.hpp \
 	src/instrument/extrae/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/extrae/InstrumentDependenciesByGroup.hpp \
@@ -981,7 +982,6 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentInitAndShutdown.hpp \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
-	src/instrument/extrae/InstrumentPollingServices.hpp \
 	src/instrument/extrae/InstrumentReductions.hpp \
 	src/instrument/extrae/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/extrae/InstrumentTaskExecution.hpp \
@@ -1009,6 +1009,7 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentComputePlaceManagement.hpp \
 	src/instrument/graph/InstrumentCPULocalData.hpp \
 	src/instrument/graph/InstrumentDataAccessId.hpp \
+	src/instrument/graph/InstrumentDebug.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccess.hpp \
 	src/instrument/graph/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/graph/InstrumentDependenciesByGroup.hpp \
@@ -1019,7 +1020,6 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentInitAndShutdown.hpp \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
 	src/instrument/graph/InstrumentLogMessage.hpp \
-	src/instrument/graph/InstrumentPollingServices.hpp \
 	src/instrument/graph/InstrumentReductions.hpp \
 	src/instrument/graph/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
@@ -1043,6 +1043,7 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentComputePlaceManagement.hpp \
 	src/instrument/lint/InstrumentCPULocalData.hpp \
 	src/instrument/lint/InstrumentDataAccessId.hpp \
+	src/instrument/lint/InstrumentDebug.hpp \
 	src/instrument/lint/InstrumentDependenciesByAccess.hpp \
 	src/instrument/lint/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/lint/InstrumentDependenciesByGroup.hpp \
@@ -1053,7 +1054,6 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentInstrumentationContext.hpp \
 	src/instrument/lint/InstrumentLeaderThread.hpp \
 	src/instrument/lint/InstrumentLogMessage.hpp \
-	src/instrument/lint/InstrumentPollingServices.hpp \
 	src/instrument/lint/InstrumentReductions.hpp \
 	src/instrument/lint/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/lint/InstrumentTaskExecution.hpp \
@@ -1075,6 +1075,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentComputePlaceManagement.hpp \
 	src/instrument/null/InstrumentCPULocalData.hpp \
 	src/instrument/null/InstrumentDataAccessId.hpp \
+	src/instrument/null/InstrumentDebug.hpp \
 	src/instrument/null/InstrumentDependenciesByAccess.hpp \
 	src/instrument/null/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/null/InstrumentDependenciesByGroup.hpp \
@@ -1085,7 +1086,6 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentInstrumentationContext.hpp \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
-	src/instrument/null/InstrumentPollingServices.hpp \
 	src/instrument/null/InstrumentReductions.hpp \
 	src/instrument/null/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
@@ -1107,6 +1107,7 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentComputePlaceManagement.hpp \
 	src/instrument/stats/InstrumentCPULocalData.hpp \
 	src/instrument/stats/InstrumentDataAccessId.hpp \
+	src/instrument/stats/InstrumentDebug.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccess.hpp \
 	src/instrument/stats/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/stats/InstrumentDependenciesByGroup.hpp \
@@ -1116,7 +1117,6 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentInitAndShutdown.hpp \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
-	src/instrument/stats/InstrumentPollingServices.hpp \
 	src/instrument/stats/InstrumentReductions.hpp \
 	src/instrument/stats/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/stats/InstrumentStats.hpp \
@@ -1155,6 +1155,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentComputePlaceManagement.hpp \
 	src/instrument/verbose/InstrumentCPULocalData.hpp \
 	src/instrument/verbose/InstrumentDataAccessId.hpp \
+	src/instrument/verbose/InstrumentDebug.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccess.hpp \
 	src/instrument/verbose/InstrumentDependenciesByAccessLinks.hpp \
 	src/instrument/verbose/InstrumentDependenciesByGroup.hpp \
@@ -1164,7 +1165,6 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentInitAndShutdown.hpp \
 	src/instrument/verbose/InstrumentLeaderThread.hpp \
 	src/instrument/verbose/InstrumentLogMessage.hpp \
-	src/instrument/verbose/InstrumentPollingServices.hpp \
 	src/instrument/verbose/InstrumentReductions.hpp \
 	src/instrument/verbose/InstrumentSchedulerSubsystemEntryPoints.hpp \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \

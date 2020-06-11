@@ -4,23 +4,23 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_NULL_POLLING_SERVICES_HPP
-#define INSTRUMENT_NULL_POLLING_SERVICES_HPP
+#ifndef INSTRUMENT_NULL_DEBUG_HPP
+#define INSTRUMENT_NULL_DEBUG_HPP
 
 #include <cstdint>
 
-#include "../api/InstrumentPollingServices.hpp"
+#include "../api/InstrumentDebug.hpp"
 
 namespace Instrument {
 
-	inline void pollingServiceEnter(
+	inline void debugEnter(
 		__attribute__((unused)) uint8_t id
 	) {
 	}
 
-	inline void pollingServiceExit() {}
+	inline void debugExit() {}
 
-	inline void pollingServiceRegister(
+	inline void debugRegister(
 		__attribute__((unused)) const char *name,
 		__attribute__((unused)) uint8_t id
 	) {
@@ -28,5 +28,5 @@ namespace Instrument {
 
 }
 
-#endif //INSTRUMENT_NULL_POLLING_SERVICES_HPP
+#endif //INSTRUMENT_NULL_DEBUG_HPP
 
