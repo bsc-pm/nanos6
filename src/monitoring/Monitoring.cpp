@@ -112,9 +112,6 @@ void Monitoring::taskCreated(Task *task)
 void Monitoring::taskReinitialized(Task *task)
 {
 	if (_enabled) {
-		// Make sure this is a Taskfor
-		assert(task != nullptr);
-		assert(task->isTaskfor());
 		assert(_taskMonitor != nullptr);
 
 		// Reset task statistics

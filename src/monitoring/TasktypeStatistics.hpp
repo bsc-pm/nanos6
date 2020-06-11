@@ -92,13 +92,16 @@ private:
 	//    HARDWARE COUNTER METRICS    //
 
 	//! A vector of hardware counter accumulators
-	std::vector<metric_accumulator_t> _counterAccumulator;
+	std::vector<metric_accumulator_t> _counterAccumulators;
 
 	//! A vector of hardware counter accumulators with normalized metrics
-	std::vector<metric_rolling_accumulator_t> _normalizedCounterAccumulator;
+	std::vector<metric_rolling_accumulator_t> _normalizedCounterAccumulators;
+
+	//! A vector of hardware counter accumulators for the accuracy of predictions
+	std::vector<accumulator_t> _counterAccuracyAccumulators;
 
 	//! Spinlock to ensure atomic access within the previous accumulators
-	SpinLock _counterAccumulatorLock;
+	SpinLock _counterAccumulatorsLock;
 
 public:
 
@@ -111,12 +114,13 @@ public:
 		_timingAccuracyAccumulator(),
 		_accumulatedTimeAccumulator(),
 		_timingAccumulatorLock(),
-		_counterAccumulator(HWCounters::TOTAL_NUM_EVENTS),
-		_normalizedCounterAccumulator(
+		_counterAccumulators(HWCounters::TOTAL_NUM_EVENTS),
+		_normalizedCounterAccumulators(
 			HWCounters::TOTAL_NUM_EVENTS,
 			metric_rolling_accumulator_t(BoostAccTag::rolling_window::window_size = _rollingWindow)
 		),
-		_counterAccumulatorLock()
+		_counterAccuracyAccumulators(HWCounters::TOTAL_NUM_EVENTS),
+		_counterAccumulatorsLock()
 	{
 	}
 
@@ -281,9 +285,9 @@ public:
 	//! \param[in] value The value of the metric
 	inline void insertNormalizedCounter(HWCounters::counters_t counterType, double value)
 	{
-		_counterAccumulatorLock.lock();
-		_normalizedCounterAccumulator[counterType](value);
-		_counterAccumulatorLock.unlock();
+		_counterAccumulatorsLock.lock();
+		_normalizedCounterAccumulators[counterType](value);
+		_counterAccumulatorsLock.unlock();
 	}
 
 	//! \brief Retreive, for a certain type of counter, the sum of accumulated
@@ -293,9 +297,9 @@ public:
 	//! \return A double with the sum of accumulated values
 	inline double getCounterSum(HWCounters::counters_t counterType)
 	{
-		_counterAccumulatorLock.lock();
-		double sum = BoostAcc::sum(_counterAccumulator[counterType]);
-		_counterAccumulatorLock.unlock();
+		_counterAccumulatorsLock.lock();
+		double sum = BoostAcc::sum(_counterAccumulators[counterType]);
+		_counterAccumulatorsLock.unlock();
 
 		return sum;
 	}
@@ -307,9 +311,9 @@ public:
 	//! \return A double with the average accumulated value
 	inline double getCounterAverage(HWCounters::counters_t counterType)
 	{
-		_counterAccumulatorLock.lock();
-		double avg = BoostAcc::mean(_counterAccumulator[counterType]);
-		_counterAccumulatorLock.unlock();
+		_counterAccumulatorsLock.lock();
+		double avg = BoostAcc::mean(_counterAccumulators[counterType]);
+		_counterAccumulatorsLock.unlock();
 
 		return avg;
 	}
@@ -321,9 +325,9 @@ public:
 	//! \return A double with the standard deviation of the counter
 	inline double getCounterStddev(HWCounters::counters_t counterType)
 	{
-		_counterAccumulatorLock.lock();
-		double stddev = sqrt(BoostAcc::variance(_counterAccumulator[counterType]));
-		_counterAccumulatorLock.unlock();
+		_counterAccumulatorsLock.lock();
+		double stddev = sqrt(BoostAcc::variance(_counterAccumulators[counterType]));
+		_counterAccumulatorsLock.unlock();
 
 		return stddev;
 	}
@@ -335,9 +339,9 @@ public:
 	//! \return A size_t with the number of accumulated values
 	inline size_t getCounterNumInstances(HWCounters::counters_t counterType)
 	{
-		_counterAccumulatorLock.lock();
-		size_t count = BoostAcc::count(_counterAccumulator[counterType]);
-		_counterAccumulatorLock.unlock();
+		_counterAccumulatorsLock.lock();
+		size_t count = BoostAcc::count(_counterAccumulators[counterType]);
+		_counterAccumulatorsLock.unlock();
 
 		return count;
 	}
@@ -349,9 +353,23 @@ public:
 	//! \return A double with the average accumulated value
 	inline double getCounterRollingAverage(HWCounters::counters_t counterType)
 	{
-		_counterAccumulatorLock.lock();
-		double avg = BoostAcc::rolling_mean(_normalizedCounterAccumulator[counterType]);
-		_counterAccumulatorLock.unlock();
+		_counterAccumulatorsLock.lock();
+		double avg = BoostAcc::rolling_mean(_normalizedCounterAccumulators[counterType]);
+		_counterAccumulatorsLock.unlock();
+
+		return avg;
+	}
+
+	//! \brief Retreive, for a certain type of counter, the average accuracy
+	//! of counter predictions of this tasktype
+	//!
+	//! \param[in] counterType The type of counter
+	//! \return A double with the average accuracy
+	inline double getCounterAccuracy(HWCounters::counters_t counterType)
+	{
+		_counterAccumulatorsLock.lock();
+		double avg = BoostAcc::mean(_counterAccuracyAccumulators[counterType]);
+		_counterAccumulatorsLock.unlock();
 
 		return avg;
 	}
@@ -363,12 +381,12 @@ public:
 	inline double getCounterPrediction(HWCounters::counters_t counterType, size_t cost)
 	{
 		// Check if a prediction can be inferred
-		_counterAccumulatorLock.lock();
+		_counterAccumulatorsLock.lock();
 		double normalizedValue = PREDICTION_UNAVAILABLE;
-		if (BoostAcc::count(_normalizedCounterAccumulator[counterType])) {
-			normalizedValue = ((double) cost) * BoostAcc::rolling_mean(_normalizedCounterAccumulator[counterType]);
+		if (BoostAcc::count(_normalizedCounterAccumulators[counterType])) {
+			normalizedValue = ((double) cost) * BoostAcc::rolling_mean(_normalizedCounterAccumulators[counterType]);
 		}
-		_counterAccumulatorLock.unlock();
+		_counterAccumulatorsLock.unlock();
 
 		return normalizedValue;
 	}
@@ -400,7 +418,7 @@ public:
 
 		// Compute the accuracy of the prediction if the task had one
 		double accuracy = 0.0;
-		bool predictionAvailable = (taskStatistics->hasPrediction() && (elapsed > 0));
+		bool predictionAvailable = (taskStatistics->hasPrediction() && (elapsed > 0.0));
 		if (predictionAvailable) {
 			double predicted = taskStatistics->getTimePrediction();
 			double error = 100.0 * (std::abs(predicted - elapsed) / std::max(elapsed, predicted));
@@ -425,18 +443,32 @@ public:
 		// Pre-compute all the needed values before entering the lock
 		double counters[numEnabledCounters];
 		double normalizedCounters[numEnabledCounters];
+		bool counterPredictionsAvailable[numEnabledCounters];
+		double counterAccuracies[numEnabledCounters];
 		for (size_t id = 0; id < numEnabledCounters; ++id) {
 			counters[id] = taskCounters.getAccumulated(enabledCounters[id]);
 			normalizedCounters[id] = (counters[id] / (double) cost);
+
+			counterPredictionsAvailable[id] =
+				(taskStatistics->hasCounterPrediction(enabledCounters[id]) && counters[id] > 0.0);
+			if (counterPredictionsAvailable[id]) {
+				double predicted = taskStatistics->getCounterPrediction(enabledCounters[id]);
+				double error = 100.0 * (std::abs(predicted - counters[id]) / std::max(counters[id], predicted));
+				counterAccuracies[id] = 100.0 - error;
+			}
 		}
 
 		// Aggregate all the information into the accumulators
-		_counterAccumulatorLock.lock();
+		_counterAccumulatorsLock.lock();
 		for (size_t id = 0; id < numEnabledCounters; ++id) {
-			_counterAccumulator[enabledCounters[id]](counters[id]);
-			_normalizedCounterAccumulator[enabledCounters[id]](normalizedCounters[id]);
+			_counterAccumulators[enabledCounters[id]](counters[id]);
+			_normalizedCounterAccumulators[enabledCounters[id]](normalizedCounters[id]);
+
+			if (counterPredictionsAvailable[id]) {
+				_counterAccuracyAccumulators[enabledCounters[id]](counterAccuracies[id]);
+			}
 		}
-		_counterAccumulatorLock.unlock();
+		_counterAccumulatorsLock.unlock();
 	}
 
 };

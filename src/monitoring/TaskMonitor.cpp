@@ -86,6 +86,7 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 void TaskMonitor::taskReinitialized(Task *task) const
 {
 	assert(task != nullptr);
+	assert(task->isTaskfor());
 
 	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
@@ -104,7 +105,6 @@ void TaskMonitor::taskReinitialized(Task *task) const
 		assert(parentStatistics != nullptr);
 
 		parentStatistics->increaseNumChildrenAlive();
-		parentStatistics->increaseNumChildren();
 	}
 }
 
@@ -337,6 +337,15 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 						double counterAvg = tasktypeStatistics.getCounterAverage(eventType);
 						double counterStddev = tasktypeStatistics.getCounterStddev(eventType);
 						double counterSum = tasktypeStatistics.getCounterSum(eventType);
+						double counterAccuracy = tasktypeStatistics.getCounterAccuracy(eventType);
+
+						// Make sure there was at least one prediction to report accuracy
+						std::string accur = "NA";
+						if (!std::isnan(counterAccuracy)) {
+							std::stringstream accuracyStream;
+							accuracyStream << std::setprecision(2) << std::fixed << counterAccuracy << "%";
+							accur = accuracyStream.str();
+						}
 
 						// Process events that must be in KB
 						if (eventType == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
@@ -356,6 +365,12 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 							std::setw(15) << counterSum                                 << " / " <<
 							std::setw(15) << counterAvg                                 << " / " <<
 							std::setw(15) << counterStddev                              << "\n";
+						stream <<
+							std::setw(7)  << "STATS"                                    << " "   <<
+							std::setw(12) << "HWCOUNTERS"                               << " "   <<
+							std::setw(26) << HWCounters::counterDescriptions[eventType] << " "   <<
+							std::setw(25) << "ACCURACY"                                 << " "   <<
+							std::setw(10) << accur                                      << "\n";
 					}
 				}
 			}
