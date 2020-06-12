@@ -137,8 +137,7 @@ inline bool ReductionInfo::incrementUnregisteredAccesses()
 
 inline bool ReductionInfo::finished()
 {
-	bool finished = (_registeredAccesses == 0);
-	return finished;
+	return (_registeredAccesses == 0);
 }
 
 inline bool ReductionInfo::markAsClosed()
