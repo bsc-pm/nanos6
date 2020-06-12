@@ -38,34 +38,39 @@ namespace HWCounters {
 	// In all cases: Add a description of the event below (counterDescriptions)
 	enum counters_t {
 		//    PQOS EVENTS    //
-		PQOS_MIN_EVENT = 100,                       // PQOS: Minimum event id
-		PQOS_MON_EVENT_L3_OCCUP = 100,              // PQOS: LLC Usage
-		PQOS_MON_EVENT_LMEM_BW = 101,               // PQOS: Local Memory Bandwidth
-		PQOS_MON_EVENT_RMEM_BW = 102,               // PQOS: Remote Memory Bandwidth
-		PQOS_PERF_EVENT_LLC_MISS = 103,             // PQOS: LLC Misses
-		PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS = 104, // PQOS: Retired Instructions
-		PQOS_PERF_EVENT_UNHALTED_CYCLES = 105,      // PQOS: Unhalted cycles
-		PQOS_MAX_EVENT = 105,                       // PQOS: Maximum event id
-		PQOS_NUM_EVENTS = PQOS_MAX_EVENT - PQOS_MIN_EVENT + 1,
+		HWC_PQOS_MIN_EVENT = 100,                       // PQOS: Minimum event id
+		HWC_PQOS_MON_EVENT_L3_OCCUP = 100,              // PQOS: LLC Usage
+		HWC_PQOS_MON_EVENT_LMEM_BW = 101,               // PQOS: Local Memory Bandwidth
+		HWC_PQOS_MON_EVENT_RMEM_BW = 102,               // PQOS: Remote Memory Bandwidth
+		HWC_PQOS_PERF_EVENT_LLC_MISS = 103,             // PQOS: LLC Misses
+		HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS = 104, // PQOS: Retired Instructions
+		HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES = 105,      // PQOS: Unhalted cycles
+		HWC_PQOS_MAX_EVENT = 105,                       // PQOS: Maximum event id
+		HWC_PQOS_NUM_EVENTS = HWC_PQOS_MAX_EVENT - HWC_PQOS_MIN_EVENT + 1,
 		//    PAPI EVENTS    //
-		PAPI_MIN_EVENT = 200,                       // PAPI: Minimum event id
-		PAPI_PLACEHOLDER = 200,                     // PAPI: TODO Remove when PAPI is integrated
-		PAPI_MAX_EVENT = 200,                       // PAPI: Maximum event id
-		PAPI_NUM_EVENTS = PAPI_MAX_EVENT - PAPI_MIN_EVENT + 1,
+		HWC_PAPI_MIN_EVENT = 200,                       // PAPI: Minimum event id
+		HWC_PAPI_TOT_INS = 200,                         // PAPI: Instructions completed
+		HWC_PAPI_TOT_CYC = 201,                         // PAPI: Total Cycles
+		HWC_PAPI_L1_LDM  = 202,                         // PAPI: Level 1 load misses
+		HWC_PAPI_L1_STM  = 203,                         // PAPI: Level 1 store misses
+		HWC_PAPI_MAX_EVENT = 203,
+		HWC_PAPI_NUM_EVENTS = HWC_PAPI_MAX_EVENT - HWC_PAPI_MIN_EVENT + 1,
 		//    GENERAL    //
-		TOTAL_NUM_EVENTS = PQOS_NUM_EVENTS + PAPI_NUM_EVENTS
+		HWC_TOTAL_NUM_EVENTS = HWC_PQOS_NUM_EVENTS + HWC_PAPI_NUM_EVENTS
 	};
 
 	static std::map<uint64_t, const char* const> counterDescriptions = {
-		{PQOS_MON_EVENT_L3_OCCUP,              "PQOS_MON_EVENT_L3_OCCUP"},
-		{PQOS_MON_EVENT_LMEM_BW,               "PQOS_MON_EVENT_LMEM_BW"},
-		{PQOS_MON_EVENT_RMEM_BW,               "PQOS_MON_EVENT_RMEM_BW"},
-		{PQOS_PERF_EVENT_LLC_MISS,             "PQOS_PERF_EVENT_LLC_MISS"},
-		{PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS, "PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS"},
-		{PQOS_PERF_EVENT_UNHALTED_CYCLES,      "PQOS_PERF_EVENT_UNHALTED_CYCLES"},
-		{PAPI_PLACEHOLDER,                     "PAPI_PLACEHOLDER"}
+		{HWC_PQOS_MON_EVENT_L3_OCCUP,              "PQOS_MON_EVENT_L3_OCCUP"},
+		{HWC_PQOS_MON_EVENT_LMEM_BW,               "PQOS_MON_EVENT_LMEM_BW"},
+		{HWC_PQOS_MON_EVENT_RMEM_BW,               "PQOS_MON_EVENT_RMEM_BW"},
+		{HWC_PQOS_PERF_EVENT_LLC_MISS,             "PQOS_PERF_EVENT_LLC_MISS"},
+		{HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS, "PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS"},
+		{HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES,      "PQOS_PERF_EVENT_UNHALTED_CYCLES"},
+		{HWC_PAPI_TOT_INS,                         "PAPI_TOT_INS"},
+		{HWC_PAPI_TOT_CYC,                         "PAPI_TOT_CYC"},
+		{HWC_PAPI_L1_LDM,                          "PAPI_L1_LDM"},
+		{HWC_PAPI_L1_STM,                          "PAPI_L1_STM"}
 	};
-
 }
 
 #endif // SUPPORTED_HARDWARE_COUNTERS_HPP

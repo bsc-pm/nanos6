@@ -65,13 +65,13 @@ public:
 	{
 		assert(data != nullptr);
 
-		for (size_t id = HWCounters::PQOS_MIN_EVENT; id <= HWCounters::PQOS_MAX_EVENT; ++id) {
+		for (size_t id = HWCounters::HWC_PQOS_MIN_EVENT; id <= HWCounters::HWC_PQOS_MAX_EVENT; ++id) {
 			if (PQoSHardwareCounters::isCounterEnabled((HWCounters::counters_t) id)) {
 				int innerId = PQoSHardwareCounters::getInnerIdentifier((HWCounters::counters_t) id);
 				assert(innerId >= 0);
 
 				switch (id) {
-					case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
+					case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
 						if (!_numSamples) {
 							++_numSamples;
 							_counterDelta[innerId] = data->values.llc;
@@ -82,23 +82,23 @@ public:
 						}
 						_counterAccumulated[innerId] = _counterDelta[innerId];
 						break;
-					case HWCounters::PQOS_MON_EVENT_LMEM_BW:
+					case HWCounters::HWC_PQOS_MON_EVENT_LMEM_BW:
 						_counterDelta[innerId] = data->values.mbm_local_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
-					case HWCounters::PQOS_MON_EVENT_RMEM_BW:
+					case HWCounters::HWC_PQOS_MON_EVENT_RMEM_BW:
 						_counterDelta[innerId] = data->values.mbm_remote_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
-					case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
+					case HWCounters::HWC_PQOS_PERF_EVENT_LLC_MISS:
 						_counterDelta[innerId] = data->values.llc_misses_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
-					case HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
+					case HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
 						_counterDelta[innerId] = data->values.ipc_retired_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
-					case HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES:
+					case HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES:
 						_counterDelta[innerId] = data->values.ipc_unhalted_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;

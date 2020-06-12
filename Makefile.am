@@ -752,12 +752,11 @@ hardware_counters_cppflags += $(pqos_CPPFLAGS) -DHAVE_PQOS
 hardware_counters_sources  += src/hardware-counters/pqos/PQoSHardwareCounters.cpp
 endif
 
-# TODO: Implement PAPI backend
-#if HAVE_PAPI
-#hardware_counters_ldflags  += $(papi_LIBS)
-#hardware_counters_cppflags += $(papi_CPPFLAGS) -DHAVE_PAPI
-#hardware_counters_sources  += src/hardware-counters/papi/PAPIHardwareCounters.cpp
-#endif
+if HAVE_PAPI
+hardware_counters_ldflags  += $(papi_LIBS)
+hardware_counters_cppflags += $(papi_CPPFLAGS) -DHAVE_PAPI
+hardware_counters_sources  += src/hardware-counters/papi/PAPIHardwareCounters.cpp
+endif
 
 common_sources += $(hardware_counters_sources)
 

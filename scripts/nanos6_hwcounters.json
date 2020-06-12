@@ -1,7 +1,10 @@
 {
 	"PAPI": {
 		"ENABLED": 0,
-		"PAPI_PLACEHOLDER": 1
+		"PAPI_TOT_INS": 1,
+		"PAPI_TOT_CYC": 1,
+		"PAPI_L1_LDM": 1,
+		"PAPI_L1_STM": 1
 	},
 	"PQOS": {
 		"ENABLED": 0,

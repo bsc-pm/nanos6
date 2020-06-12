@@ -162,9 +162,9 @@ public:
 	{
 		if (_enabled) {
 			TaskHardwareCountersInterface *taskCounters = nullptr;
-			if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
+			if (counterType >= HWCounters::HWC_PAPI_MIN_EVENT && counterType <= HWCounters::HWC_PAPI_MAX_EVENT) {
 				taskCounters = getPAPICounters();
-			} else if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
+			} else if (counterType >= HWCounters::HWC_PQOS_MIN_EVENT && counterType <= HWCounters::HWC_PQOS_MAX_EVENT) {
 				taskCounters = getPQoSCounters();
 			}
 			assert(taskCounters != nullptr);
@@ -182,9 +182,9 @@ public:
 	{
 		if (_enabled) {
 			TaskHardwareCountersInterface *taskCounters = nullptr;
-			if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
+			if (counterType >= HWCounters::HWC_PAPI_MIN_EVENT && counterType <= HWCounters::HWC_PAPI_MAX_EVENT) {
 				taskCounters = getPAPICounters();
-			} else if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
+			} else if (counterType >= HWCounters::HWC_PQOS_MIN_EVENT && counterType <= HWCounters::HWC_PQOS_MAX_EVENT) {
 				taskCounters = getPQoSCounters();
 			}
 			assert(taskCounters != nullptr);

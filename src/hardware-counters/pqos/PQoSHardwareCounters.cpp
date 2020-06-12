@@ -71,18 +71,18 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 	int eventsToMonitor = 0;
 	for (size_t i = 0; i < enabledEvents.size(); ++i) {
 		size_t id = enabledEvents[i];
-		if (id >= HWCounters::PQOS_MIN_EVENT && id <= HWCounters::PQOS_MAX_EVENT) {
-			if (id == HWCounters::PQOS_MON_EVENT_L3_OCCUP) {
+		if (id >= HWCounters::HWC_PQOS_MIN_EVENT && id <= HWCounters::HWC_PQOS_MAX_EVENT) {
+			if (id == HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP) {
 				eventsToMonitor |= PQOS_MON_EVENT_L3_OCCUP;
-			} else if (id == HWCounters::PQOS_MON_EVENT_LMEM_BW) {
+			} else if (id == HWCounters::HWC_PQOS_MON_EVENT_LMEM_BW) {
 				eventsToMonitor |= PQOS_MON_EVENT_LMEM_BW;
-			} else if (id == HWCounters::PQOS_MON_EVENT_RMEM_BW) {
+			} else if (id == HWCounters::HWC_PQOS_MON_EVENT_RMEM_BW) {
 				eventsToMonitor |= PQOS_MON_EVENT_RMEM_BW;
-			} else if (id == HWCounters::PQOS_PERF_EVENT_LLC_MISS) {
+			} else if (id == HWCounters::HWC_PQOS_PERF_EVENT_LLC_MISS) {
 				eventsToMonitor |= PQOS_PERF_EVENT_LLC_MISS;
 			} else if (
-				id == HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS ||
-				id == HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES
+				id == HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS ||
+				id == HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES
 			) {
 				// Special case, in PQoS there is no way to monitor simply
 				// instructions or cycles, we must signal that we want to
@@ -108,31 +108,31 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 	// unavailableEvents = (availableEvents AND (NOT eventsToMonitor))
 	const enum pqos_mon_event unavailableEvents = (pqos_mon_event) ((~availableEvents) & eventsToMonitor);
 	if (unavailableEvents & PQOS_MON_EVENT_L3_OCCUP) {
-		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_L3_OCCUP);
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
 	}
 	if (unavailableEvents & PQOS_MON_EVENT_LMEM_BW) {
-		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_LMEM_BW);
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_MON_EVENT_LMEM_BW);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
 	}
 	if (unavailableEvents & PQOS_MON_EVENT_RMEM_BW) {
-		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_RMEM_BW);
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_MON_EVENT_RMEM_BW);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
 	}
 	if (unavailableEvents & PQOS_PERF_EVENT_LLC_MISS) {
-		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_LLC_MISS);
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_PERF_EVENT_LLC_MISS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
 	}
 	if (unavailableEvents & PQOS_PERF_EVENT_IPC) {
-		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS);
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
 
-		it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES);
+		it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
 	}
@@ -140,16 +140,16 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 	// Construct a vector capable of translating generic counters (HWCounters::counters_t)
 	// to inner identifiers used on arrays that have enough space only for enabled events
 	// (see PQoSTaskHardwareCounters)
-	_idMap.resize(HWCounters::PQOS_NUM_EVENTS);
+	_idMap.resize(HWCounters::HWC_PQOS_NUM_EVENTS);
 	for (size_t i = 0; i < _idMap.size(); ++i) {
 		_idMap[i] = DISABLED_PQOS_COUNTER;
 	}
 
 	size_t innerId = 0;
 	for (size_t i = 0; i < enabledEvents.size(); ++i) {
-		if (enabledEvents[i] >= HWCounters::PQOS_MIN_EVENT && enabledEvents[i] <= HWCounters::PQOS_MAX_EVENT) {
+		if (enabledEvents[i] >= HWCounters::HWC_PQOS_MIN_EVENT && enabledEvents[i] <= HWCounters::HWC_PQOS_MAX_EVENT) {
 			++_numEnabledCounters;
-			_idMap[enabledEvents[i] - HWCounters::PQOS_MIN_EVENT] = innerId;
+			_idMap[enabledEvents[i] - HWCounters::HWC_PQOS_MIN_EVENT] = innerId;
 			++innerId;
 		}
 	}

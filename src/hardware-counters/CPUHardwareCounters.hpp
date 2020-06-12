@@ -79,9 +79,9 @@ public:
 	inline uint64_t getDelta(HWCounters::counters_t counterType)
 	{
 		CPUHardwareCountersInterface *cpuCounters = nullptr;
-		if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
+		if (counterType >= HWCounters::HWC_PQOS_MIN_EVENT && counterType <= HWCounters::HWC_PQOS_MAX_EVENT) {
 			cpuCounters = getPQoSCounters();
-		} else if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
+		} else if (counterType >= HWCounters::HWC_PAPI_MIN_EVENT && counterType <= HWCounters::HWC_PAPI_MAX_EVENT) {
 			cpuCounters = getPAPICounters();
 		}
 		assert(cpuCounters != nullptr);
