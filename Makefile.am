@@ -401,6 +401,7 @@ common_sources = \
 	src/system/PollingAPI.cpp \
 	src/system/RuntimeInfoEssentials.cpp \
 	src/system/TaskInfoAPI.cpp \
+	src/system/Throttle.cpp \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Loop.cpp \
@@ -1175,6 +1176,7 @@ noinst_HEADERS = \
 	src/system/PollingAPI.hpp \
 	src/system/RuntimeInfo.hpp \
 	src/system/RuntimeInfoEssentials.hpp \
+	src/system/Throttle.hpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/UserMutex.hpp \

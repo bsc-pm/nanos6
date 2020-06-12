@@ -7,6 +7,7 @@
 #ifndef MEMORY_ALLOCATOR_HPP
 #define MEMORY_ALLOCATOR_HPP
 
+#include <malloc.h>
 #include <stdlib.h>
 
 #include "hardware/HardwareInfo.hpp"
@@ -20,6 +21,16 @@ public:
 
 	static inline void shutdown()
 	{
+	}
+
+	static constexpr bool hasUsageStatistics()
+	{
+		return false;
+	}
+
+	static inline size_t getMemoryUsage()
+	{
+		return 0;
 	}
 
 	static inline void *alloc(size_t size)

@@ -148,6 +148,8 @@ private:
 	//! if the parent of this task is a StreamExecutor
 	StreamFunctionCallback *_parentSpawnCallback;
 
+	//! Nesting level of the task
+	int _nestingLevel;
 public:
 	inline Task(
 		void *argsBlock,
@@ -293,6 +295,7 @@ public:
 		assert(parent != nullptr);
 		_parent = parent;
 		_parent->addChild(this);
+		_nestingLevel = _parent->getNestingLevel() + 1;
 	}
 
 	//! \brief Get the parent into which this task is nested
@@ -476,6 +479,11 @@ public:
 		int countdown = (_countdownToBeWokenUp.fetch_sub(1, std::memory_order_relaxed) - 1);
 		assert(countdown >= 0);
 		return (countdown == 0);
+	}
+
+	inline int getPendingChildTasks() const
+	{
+		return _countdownToBeWokenUp.load(std::memory_order_relaxed) - 1;
 	}
 
 	//! \brief Retrieve the list of data accesses
@@ -849,6 +857,11 @@ public:
 	virtual inline bool isTaskforSource() const
 	{
 		return false;
+	}
+
+	inline int getNestingLevel() const
+	{
+		return _nestingLevel;
 	}
 };
 

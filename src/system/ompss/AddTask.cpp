@@ -24,6 +24,7 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
+#include "system/Throttle.hpp"
 #include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -59,13 +60,22 @@ void nanos6_create_task(
 
 	Instrument::task_id_t taskId = Instrument::enterAddTask(taskInfo, taskInvocationInfo, flags);
 
+	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	if (currentWorkerThread != nullptr) {
-		Task *parent = currentWorkerThread->getTask();
+		parent = currentWorkerThread->getTask();
 		if (parent != nullptr) {
 			HardwareCounters::taskStopped(parent);
 			Monitoring::taskChangedStatus(parent, runtime_status);
 		}
+	}
+
+	//! Throttle. If active, act as a taskwait
+	if (Throttle::isActive() && parent != nullptr) {
+		assert(currentWorkerThread != nullptr);
+		// We will try to execute something else instead of creating more memory pressure
+		// on the system
+		while (Throttle::engage(parent, currentWorkerThread));
 	}
 
 	// Operate directly over references to the user side variables
