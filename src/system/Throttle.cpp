@@ -6,8 +6,8 @@
 
 #include "DataAccessRegistration.hpp"
 #include "Throttle.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/TaskBlocking.hpp"
 #include "tasks/Task.hpp"
@@ -19,11 +19,11 @@
 #include <MemoryAllocator.hpp>
 #include <Monitoring.hpp>
 
-#include <random>
 #include <iostream>
+#include <random>
 
 int Throttle::_pressure;
-EnvironmentVariable<bool> Throttle::_enabled("NANOS6_THROTTLE_ENABLE", false);
+EnvironmentVariable<bool> Throttle::_enabled("NANOS6_THROTTLE", false);
 EnvironmentVariable<int> Throttle::_throttleTasks("NANOS6_THROTTLE_TASKS", 5000000);
 EnvironmentVariable<int> Throttle::_throttlePressure("NANOS6_THROTTLE_PRESSURE", 70);
 EnvironmentVariable<StringifiedMemorySize> Throttle::_throttleMem("NANOS6_THROTTLE_MAX_MEMORY", ((size_t) 0));
@@ -34,7 +34,10 @@ void Throttle::initialize()
 	if (!MemoryAllocator::hasUsageStatistics())
 		_enabled.setValue(false);
 
-	// The default max memory is half of the hosts physical memory.
+	if (!_enabled)
+		return;
+
+	// The default max memory is half of the hosts physical memory
 	if (_throttleMem.getValue() == 0)
 		_throttleMem.setValue(HardwareInfo::getPhysicalMemorySize() / 2);
 
@@ -44,13 +47,11 @@ void Throttle::initialize()
 	FatalErrorHandler::failIf((_throttleTasks < 0), "Throttle tasks must be > 0");
 	FatalErrorHandler::failIf((_throttlePressure > 100 || _throttlePressure < 0), "Throttle pressure trigger has to be between 0 and 100%");
 
-	if (_enabled.getValue()) {
-		nanos6_register_polling_service(
-			"Throttle Evaluation",
-			evaluate,
-			nullptr
-		);
-	}
+	nanos6_register_polling_service(
+		"Throttle Evaluation",
+		evaluate,
+		nullptr
+	);
 }
 
 void Throttle::shutdown()
@@ -66,16 +67,10 @@ void Throttle::shutdown()
 
 int Throttle::evaluate(void *)
 {
-	// As this is a constexpr, it should be optimized away at compile-time
-	// if the runtime was configured without jemalloc.
-	if (MemoryAllocator::hasUsageStatistics()) {
-		if (_throttleMem.getValue() == 0) {
-			_pressure = 0;
-		} else {
-			size_t memoryUsage = MemoryAllocator::getMemoryUsage();
-			_pressure = std::min((memoryUsage * 100) / _throttleMem.getValue(), (size_t)100);
-		}
-	}
+	assert(_throttleMem.getValue() != 0);
+
+	size_t memoryUsage = MemoryAllocator::getMemoryUsage();
+	_pressure = std::min((memoryUsage * 100) / _throttleMem.getValue(), (size_t)100);
 
 	return 0;
 }
@@ -128,30 +123,27 @@ bool Throttle::engage(Task *task, WorkerThread *workerThread)
 	int allowedChildTasks = getAllowedTasks(nestingLevel);
 
 	// No need to activate if very few child tasks exist
-	if (task->pendingChildTasks() <= allowedChildTasks)
+	if (task->getPendingChildTasks() <= allowedChildTasks)
 		return false;
 
 	CPU *currentCPU = workerThread->getComputePlace();
 	assert(currentCPU != nullptr);
 
-	// Let's try and give the worker thread a different task to execute while we wait.
+	// Let's try and give the worker thread a different task to execute while we wait
 	Task *replacement = nullptr;
 
 	if (allowedChildTasks != 1)
 		replacement = Scheduler::getReadyTask(currentCPU);
 
-	if (replacement != nullptr && workerThread->taskReplaceable()) {
-		workerThread->markReplaced();
-		workerThread->unassignTask();
-		workerThread->setTask(replacement);
+	if (replacement != nullptr && workerThread->isTaskReplaceable()) {
+		workerThread->replaceTask(replacement);
 		workerThread->handleTask(currentCPU);
 
 		// Restore
-		workerThread->setTask(task);
-		workerThread->markRestored();
+		workerThread->restoreTask(task);
 		return true;
 	} else {
-		// There is nothing else to do. Let's run a taskwait then.
+		// There is nothing else to do. Let's run a taskwait then
 		nanos6_taskwait("Throttle");
 		return false;
 	}

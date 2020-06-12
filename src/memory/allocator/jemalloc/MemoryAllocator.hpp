@@ -31,7 +31,7 @@ public:
 		return true;
 	}
 
-	static size_t getMemoryUsage()
+	static inline size_t getMemoryUsage()
 	{
 		size_t allocated, size, epsize;
 		size = sizeof(allocated);

@@ -24,7 +24,6 @@
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
-#include "system/Throttle.hpp"
 #include "tasks/LoopGenerator.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"

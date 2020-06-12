@@ -13,8 +13,10 @@ The throttle mechanism will only be included in the runtime if it is configured 
 This feature is controlled through the following environment variables
 
 <table><tbody><tr><td> <strong>Environment Variable</strong> </td><td><strong>Description</strong></td><td> <strong>Default Value</strong>
-</td></tr><tr><td> <em>NANOS6_THROTTLE_ENABLE</em> </td><td> Boolean variable that enables the throttle mechanism </td><td><em>false</em>
+</td></tr><tr><td> <em>NANOS6_THROTTLE</em> </td><td> Boolean variable that enables the throttle mechanism </td><td><em>false</em>
 </td></tr><tr><td> <em>NANOS6_THROTTLE_TASKS</em> </td><td> Maximum absolute number of alive childs that any task can have. It is divided by 10 at each nesting level </td><td><em>5000000</em>
 </td></tr><tr><td> <em>NANOS6_THROTTLE_PRESSURE</em> </td><td> Percentage of memory budget used at which point the number of tasks allowed to exist will be decreased linearly until reaching 1 at 100% memory pressure </td><td><em>70</em>
-</td></tr><tr><td> <em>NANOS6_THROTTLE_MAX_MEMORY</em> </td><td> Maximum used memory (memory budget)  </td><td><em> Available Physical Memory / 2</em>
+</td></tr><tr><td> <em>NANOS6_THROTTLE_MAX_MEMORY</em> </td><td> Maximum used memory (memory budget) </td><td><em> Available Physical Memory / 2</em>
 </td></tr></tbody></table>
+
+Note that `NANOS6_THROTTLE_MAX_MEMORY` can be set in terms of bytes or in memory units. For example: `export NANOS6_THROTTLE_MAX_MEMORY=50GB`.

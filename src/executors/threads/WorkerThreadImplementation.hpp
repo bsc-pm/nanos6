@@ -117,19 +117,24 @@ namespace ompss_debug {
 #endif
 
 
-inline bool WorkerThread::taskReplaceable() const
+inline bool WorkerThread::isTaskReplaceable() const
 {
 	return (_replacementCount < _maxReplaceCount);
 }
 
-inline void WorkerThread::markReplaced()
+inline void WorkerThread::replaceTask(Task *task)
 {
-	_replacementCount++;
+	++_replacementCount;
+	assert(_replacementCount <= _maxReplaceCount);
+
+	_task = task;
 }
 
-inline void WorkerThread::markRestored()
+inline void WorkerThread::restoreTask(Task *task)
 {
-	_replacementCount--;
+	--_replacementCount;
+
+	_task = task;
 }
 
 

@@ -41,7 +41,7 @@ public:
 		return false;
 	}
 
-	static size_t getMemoryUsage()
+	static inline size_t getMemoryUsage()
 	{
 		return 0;
 	}

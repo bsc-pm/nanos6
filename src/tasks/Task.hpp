@@ -295,7 +295,7 @@ public:
 		assert(parent != nullptr);
 		_parent = parent;
 		_parent->addChild(this);
-		_nestingLevel = _parent->getNestingLevel();
+		_nestingLevel = _parent->getNestingLevel() + 1;
 	}
 
 	//! \brief Get the parent into which this task is nested
@@ -481,7 +481,7 @@ public:
 		return (countdown == 0);
 	}
 
-	inline int pendingChildTasks() const
+	inline int getPendingChildTasks() const
 	{
 		return _countdownToBeWokenUp.load(std::memory_order_relaxed) - 1;
 	}

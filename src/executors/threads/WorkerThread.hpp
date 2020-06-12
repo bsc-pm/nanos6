@@ -93,13 +93,13 @@ public:
 	inline ThreadHardwareCounters &getHardwareCounters();
 
 	//! \brief Returns if the task on the thread can currently be replaced
-	inline bool taskReplaceable() const;
+	inline bool isTaskReplaceable() const;
 
-	//! \brief Marks the task inside the thread as replaced
-	inline void markReplaced();
+	//! \brief Replaces the current task inside the thread
+	inline void replaceTask(Task *task);
 
-	//! \brief Marks the task inside the thread as restored
-	inline void markRestored();
+	//! \brief Restores a task that was previously assigned to this thread
+	inline void restoreTask(Task *task);
 };
 
 

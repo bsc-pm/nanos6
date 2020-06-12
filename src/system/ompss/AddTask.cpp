@@ -71,12 +71,11 @@ void nanos6_create_task(
 	}
 
 	//! Throttle. If active, act as a taskwait
-	if (Throttle::active() && parent != nullptr) {
+	if (Throttle::isActive() && parent != nullptr) {
 		assert(currentWorkerThread != nullptr);
 		// We will try to execute something else instead of creating more memory pressure
 		// on the system
-		while (Throttle::active() && Throttle::engage(parent, currentWorkerThread))
-			;
+		while (Throttle::engage(parent, currentWorkerThread));
 	}
 
 	// Operate directly over references to the user side variables

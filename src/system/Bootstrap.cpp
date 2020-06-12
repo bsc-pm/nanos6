@@ -154,6 +154,7 @@ void nanos6_shutdown(void) {
 
 	Monitoring::shutdown();
 	HardwareCounters::shutdown();
+	Throttle::shutdown();
 
 	HardwareInfo::shutdown();
 	Scheduler::shutdown();
