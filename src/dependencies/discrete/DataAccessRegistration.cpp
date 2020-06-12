@@ -49,7 +49,7 @@ namespace DataAccessRegistration {
 		CPUDependencyData::deletable_originator_list_t &deletableOriginators);
 
 	//! Process all the originators that have become ready
-	static inline void processSatisfiedOriginators(
+	void processSatisfiedOriginators(
 		CPUDependencyData &hpDependencyData,
 		ComputePlace *computePlace,
 		bool fromBusyThread)
@@ -377,7 +377,7 @@ namespace DataAccessRegistration {
 
 		// Release commutative mask. The order is important, as this will add satisfied originators
 		if (accessStruct._commutativeMask.any())
-			CommutativeSemaphore::releaseTask(task, hpDependencyData);
+			CommutativeSemaphore::releaseTask(task, hpDependencyData, computePlace);
 
 		if (accessStruct.hasDataAccesses()) {
 			// All TaskDataAccesses have a deletableCount of 1 for default, so this will return true unless
