@@ -25,6 +25,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [graphviz](http://www.graphviz.org/) and pdfjam or pdfjoin from [TeX](http://www.tug.org/texlive/) to generate graphical representations of the dependency graph
 1. [parallel](https://www.gnu.org/software/parallel/) to generate the graph representation in parallel
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
+1. [PGI](https://pgroup.com) to enable OpenACC tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
 1. [DLB](https://pm.bsc.es/dlb) to enable dynamic management and sharing of computing resources
 1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation. It must be compiled with `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` to link with the runtime.
@@ -62,6 +63,8 @@ The configure script accepts the following options:
 1. `--with-dlb=prefix` to specify the prefix of the DLB installation
 1. `--with-jemalloc=prefix` to specify the prefix of the jemalloc installation
 1. `--with-cuda[=prefix]` to enable support for CUDA tasks; optionally specify the prefix of the CUDA installation, if needed
+1. `--enable-openacc` to enable support for OpenACC tasks. Requires PGI compilers
+1. `--with-pgi=prefix` to specify the prefix of the PGI compilers installation, in case they are not in current PATH variable
 1. `--enable-monitoring` to enable monitoring and predictions of task/CPU/thread statistics
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
 
@@ -76,6 +79,8 @@ $ export PKG_CONFIG_PATH=$HOME/installations-mn4/elfutils-0.169/lib/pkgconfig:/a
 To enable CUDA. `--with-cuda` flag is needed.
 The location of CUDA can be retrieved automatically, if it is in standard system locations (/usr/lib, /usr/include etc.),
 or through pkg-config. Alternatively, for non-standard installation paths, it can be specified using the optional `=prefix` of the parameter.
+
+The location of PGI compilers can be retrieved from the PATH variable, if it is not specified through the `--with-pgi` parameter.
 
 After Nanos6 has been installed, it can be used by compiling your C, C++ and Fortran codes with Mercurium using the `--ompss-2` flag.
 Example:

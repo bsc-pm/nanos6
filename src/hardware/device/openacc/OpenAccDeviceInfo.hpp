@@ -4,36 +4,29 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef CUDA_DEVICE_INFO_HPP
-#define CUDA_DEVICE_INFO_HPP
+#ifndef OPENACC_DEVICE_INFO_HPP
+#define OPENACC_DEVICE_INFO_HPP
 
-#include "CUDAAccelerator.hpp"
-#include "CUDAFunctions.hpp"
+#include "OpenAccAccelerator.hpp"
+#include "OpenAccFunctions.hpp"
 
 #include "hardware/hwinfo/DeviceInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 
-// This class provides the interface to be used by the runtime's Hardware Info;
-// Not to be confused with the device properties (see CUDAFunctions class)
-
-class CUDADeviceInfo : public DeviceInfo {
-	std::vector<CUDAAccelerator *> _accelerators;
+class OpenAccDeviceInfo : public DeviceInfo {
+	std::vector<OpenAccAccelerator *> _accelerators;
 
 public:
-	CUDADeviceInfo()
+	OpenAccDeviceInfo()
 	{
-		_deviceCount = 0;
-		if (!CUDAFunctions::initialize())
-			return;
-
-		_deviceCount = CUDAFunctions::getDeviceCount();
+		_deviceCount = OpenAccFunctions::getDeviceCount();
 		_accelerators.reserve(_deviceCount);
 
 		if (_deviceCount > 0) {
 			// Create an Accelerator instance for each physical device
 			for (size_t i = 0; i < _deviceCount; ++i) {
-				CUDAAccelerator *accelerator = new CUDAAccelerator(i);
+				OpenAccAccelerator *accelerator = new OpenAccAccelerator(i);
 				assert(accelerator != nullptr);
 				_accelerators.push_back(accelerator);
 			}
@@ -42,9 +35,9 @@ public:
 		}
 	}
 
-	~CUDADeviceInfo()
+	~OpenAccDeviceInfo()
 	{
-		for (CUDAAccelerator *accelerator : _accelerators) {
+		for (OpenAccAccelerator *accelerator : _accelerators) {
 			assert(accelerator != nullptr);
 			delete accelerator;
 		}
@@ -71,4 +64,5 @@ public:
 	}
 };
 
-#endif // CUDA_DEVICE_INFO_HPP
+#endif // OPENACC_DEVICE_INFO_HPP
+

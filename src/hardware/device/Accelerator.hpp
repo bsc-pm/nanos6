@@ -7,9 +7,9 @@
 #ifndef ACCELERATOR_HPP
 #define ACCELERATOR_HPP
 
-#include <hardware/places/ComputePlace.hpp>
-#include <hardware/places/MemoryPlace.hpp>
-#include <tasks/Task.hpp>
+#include "hardware/places/ComputePlace.hpp"
+#include "hardware/places/MemoryPlace.hpp"
+#include "tasks/Task.hpp"
 
 
 // The Accelerator class should be used *per physical device*,

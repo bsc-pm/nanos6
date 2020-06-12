@@ -464,6 +464,9 @@ namespace Instrument {
 			case nanos6_cuda_device:
 				logEntry->_contents << "cuda";
 				break;
+			case nanos6_openacc_device:
+				logEntry->_contents << "openacc";
+				break;
 			case nanos6_opencl_device:
 				logEntry->_contents << "opencl";
 				break;

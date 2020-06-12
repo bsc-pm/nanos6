@@ -37,6 +37,7 @@ create and launch a new task.
 Currently supported devices in Nanos6:
 
 1. [CUDA](CUDA.md)
+1. [OpenACC](OpenACC.md)
 
 To use device tasks in Nanos6, the user must explicitly enable the specific devices they intend
 to use, during configuration as described in [README](README.md)

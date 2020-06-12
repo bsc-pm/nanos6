@@ -9,14 +9,12 @@
 
 #include <list>
 
-#include "CUDAFunctions.hpp"
-#include "CUDAStreamPool.hpp"
-
 #include <nanos6/cuda_device.h>
 
-#include <tasks/Task.hpp>
-
-#include <hardware/device/Accelerator.hpp>
+#include "CUDAFunctions.hpp"
+#include "CUDAStreamPool.hpp"
+#include "hardware/device/Accelerator.hpp"
+#include "tasks/Task.hpp"
 
 class CUDAAccelerator : public Accelerator {
 private:

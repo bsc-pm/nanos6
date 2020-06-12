@@ -33,9 +33,15 @@
 enum nanos6_cuda_device_api_t { nanos6_cuda_device_api = 1 };
 #endif
 
+#if USE_OPENACC
+#include "openacc_device.h"
+#else
+enum nanos6_openacc_device_api_t { nanos6_openacc_device_api = 1 };
+#endif
+
 #pragma GCC visibility push(default)
 
-enum nanos6_api_check_api_t { nanos6_api_check_api = 6 };
+enum nanos6_api_check_api_t { nanos6_api_check_api = 7 };
 
 
 #ifdef __cplusplus
@@ -52,6 +58,7 @@ typedef struct {
 	enum nanos6_bootstrap_api_t bootstrap_api_version;
 	enum nanos6_cluster_api_t cluster_api_version;
 	enum nanos6_cuda_device_api_t cuda_device_api_version;
+	enum nanos6_openacc_device_api_t openacc_device_api_version;
 	enum nanos6_final_api_t final_api_version;
 	enum nanos6_instantiation_api_t instantiation_api_version;
 	enum nanos6_library_mode_api_t library_mode_api_version;
@@ -68,7 +75,7 @@ typedef struct {
 
 
 //! \brief checks if the runtime API is the one that is expected
-//! 
+//!
 //! \returns 1 if the API matches, otherwise 0
 int nanos6_check_api_versions(nanos6_api_versions_t const *api_versions);
 

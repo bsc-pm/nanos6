@@ -14,6 +14,10 @@
 #include "hardware/device/cuda/CUDADeviceInfo.hpp"
 #endif
 
+#ifdef USE_OPENACC
+#include "hardware/device/openacc/OpenAccDeviceInfo.hpp"
+#endif
+
 std::vector<DeviceInfo *> HardwareInfo::_infos;
 
 void HardwareInfo::initialize()
@@ -21,6 +25,11 @@ void HardwareInfo::initialize()
 	_infos.resize(nanos6_device_t::nanos6_device_type_num);
 
 	_infos[nanos6_device_t::nanos6_host_device] = new HostInfo();
+	// Prioritizing OpenACC over CUDA, as CUDA calls appear to break PGI contexts.
+	// The opposite fortunately does not appear to happen.
+#ifdef USE_OPENACC
+	_infos[nanos6_device_t::nanos6_openacc_device] = new OpenAccDeviceInfo();
+#endif
 #ifdef USE_CUDA
 	_infos[nanos6_device_t::nanos6_cuda_device] = new CUDADeviceInfo();
 #endif

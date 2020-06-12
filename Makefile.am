@@ -60,6 +60,7 @@ nanos6include_HEADERS = \
 	api/nanos6/lint.h \
 	api/nanos6/major.h \
 	api/nanos6/monitoring.h \
+	api/nanos6/openacc_device.h \
 	api/nanos6/polling.h \
 	api/nanos6/reductions.h \
 	api/nanos6/runtime-info.h \
@@ -424,6 +425,15 @@ cuda_sources += \
 endif
 
 common_sources += $(cuda_sources)
+
+openacc_sources =
+
+if USE_OPENACC
+openacc_sources += \
+	src/hardware/device/openacc/OpenAccAccelerator.cpp
+endif
+
+common_sources += $(openacc_sources)
 
 cluster_sources =
 if USE_CLUSTER
@@ -839,6 +849,10 @@ noinst_HEADERS = \
 	src/hardware/device/cuda/CUDADeviceInfo.hpp \
 	src/hardware/device/cuda/CUDAFunctions.hpp \
 	src/hardware/device/cuda/CUDAStreamPool.hpp \
+	src/hardware/device/openacc/OpenAccAccelerator.hpp \
+	src/hardware/device/openacc/OpenAccDeviceInfo.hpp \
+	src/hardware/device/openacc/OpenAccFunctions.hpp \
+	src/hardware/device/openacc/OpenAccQueuePool.hpp \
 	src/hardware/hwinfo/DeviceInfo.hpp \
 	src/hardware/hwinfo/HostInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
@@ -1187,7 +1201,7 @@ EXTRA_DIST += \
 	tests/tap-driver.sh
 
 common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_cppflags) $(monitoring_cppflags) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
-common_libnanos6_ldflags = $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
+common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
 
 # This is needed for debuggable spinlocks
 common_sources += $(introspection_sources)
