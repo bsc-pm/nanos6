@@ -37,7 +37,7 @@ void CTFAPI::CTFContextCPUHardwareCounters::writeContext(void **buf)
 	CPUHardwareCounters &CPUCounters = CPU->getHardwareCounters();
 
 	for (auto it = enabledCounters.begin(); it != enabledCounters.end(); ++it) {
-		double val = CPUCounters.getDelta(*it);
+		uint64_t val = (uint64_t) CPUCounters.getDelta(*it);
 		tp_write_args(buf, val);
 	}
 }
