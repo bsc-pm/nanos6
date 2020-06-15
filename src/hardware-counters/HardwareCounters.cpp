@@ -234,8 +234,6 @@ void HardwareCounters::threadShutdown()
 
 		_pqosBackend->threadShutdown(threadCounters.getPQoSCounters());
 	}
-
-	threadCounters.shutdown();
 }
 
 void HardwareCounters::taskCreated(Task *task, bool enabled)

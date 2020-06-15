@@ -30,6 +30,7 @@ inline WorkerThread::WorkerThread(CPU *cpu)
 
 inline WorkerThread::~WorkerThread()
 {
+	_hwCounters.shutdown();
 }
 
 inline Task *WorkerThread::getTask()
