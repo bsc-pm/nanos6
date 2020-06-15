@@ -33,27 +33,20 @@ public:
 
 	~PQoSHardwareCounters();
 
-	void cpuBecomesIdle(
-		CPUHardwareCountersInterface *cpuCounters,
-		ThreadHardwareCountersInterface *threadCounters
-	) override;
-
 	void threadInitialized(ThreadHardwareCountersInterface *threadCounters) override;
 
 	void threadShutdown(ThreadHardwareCountersInterface *threadCounters) override;
 
 	void taskReinitialized(TaskHardwareCountersInterface *taskCounters) override;
 
-	void taskStarted(
-		CPUHardwareCountersInterface *cpuCounters,
+	void readTaskCounters(
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	) override;
 
-	void taskStopped(
+	void readCPUCounters(
 		CPUHardwareCountersInterface *cpuCounters,
-		ThreadHardwareCountersInterface *threadCounters,
-		TaskHardwareCountersInterface *taskCounters
+		ThreadHardwareCountersInterface *threadCounters
 	) override;
 
 };

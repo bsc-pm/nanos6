@@ -84,9 +84,6 @@ public:
 		return _enabledEvents;
 	}
 
-	//! \brief Accumulate hardware counters for a CPU when it becomes idle
-	static void cpuBecomesIdle();
-
 	//! \brief Initialize hardware counter structures for a new thread
 	static void threadInitialized();
 
@@ -104,15 +101,13 @@ public:
 	//! \param[out] task The task to reinitialize structures for
 	static void taskReinitialized(Task *task);
 
-	//! \brief Start reading hardware counters for a task
+	//! \brief Read hardware counters for a task
 	//!
-	//! \param[out] task The task to start hardware counter monitoring for
-	static void taskStarted(Task *task);
+	//! \param[out] task The task to read hardware counters for
+	static void readTaskCounters(Task *task);
 
-	//! \brief Stop reading hardware counters for a task
-	//!
-	//! \param[out] task The task to stop hardware counters monitoring for
-	static void taskStopped(Task *task);
+	//! \brief Read hardware counters for the current CPU
+	static void readCPUCounters();
 
 };
 

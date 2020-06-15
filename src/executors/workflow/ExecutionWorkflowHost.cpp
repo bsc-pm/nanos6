@@ -78,7 +78,8 @@ namespace ExecutionWorkflow {
 				}
 			}
 
-			HardwareCounters::taskStarted(_task);
+			// Before executing a task, read runtime-related counters
+			HardwareCounters::readCPUCounters();
 
 			bool isTaskforCollaborator = _task->isTaskforCollaborator();
 			if (isTaskforCollaborator) {
@@ -102,7 +103,7 @@ namespace ExecutionWorkflow {
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 
-			HardwareCounters::taskStopped(_task);
+			HardwareCounters::readTaskCounters(_task);
 			Monitoring::taskChangedStatus(_task, runtime_status);
 			Monitoring::taskCompletedUserCode(_task);
 

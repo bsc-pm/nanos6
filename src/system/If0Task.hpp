@@ -41,7 +41,7 @@ namespace If0Task {
 
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 
-		HardwareCounters::taskStopped(currentTask);
+		HardwareCounters::readTaskCounters(currentTask);
 		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 
@@ -53,7 +53,7 @@ namespace If0Task {
 		assert(cpu != nullptr);
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
-		HardwareCounters::taskStarted(currentTask);
+		HardwareCounters::readCPUCounters();
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 		Monitoring::taskChangedStatus(currentTask, executing_status);
@@ -74,7 +74,7 @@ namespace If0Task {
 
 		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
 		if (hasCode) {
-			HardwareCounters::taskStopped(currentTask);
+			HardwareCounters::readTaskCounters(currentTask);
 			Monitoring::taskChangedStatus(currentTask, blocked_status);
 			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 		}
@@ -84,7 +84,7 @@ namespace If0Task {
 		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
 
 		if (hasCode) {
-			HardwareCounters::taskStarted(currentTask);
+			HardwareCounters::readCPUCounters();
 			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 			Monitoring::taskChangedStatus(currentTask, executing_status);
 		}

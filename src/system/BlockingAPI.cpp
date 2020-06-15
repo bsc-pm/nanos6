@@ -43,7 +43,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 
 	assert(blocking_context == currentTask);
 
-	HardwareCounters::taskStopped(currentTask);
+	HardwareCounters::readTaskCounters(currentTask);
 	Monitoring::taskChangedStatus(currentTask, blocked_status);
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
 	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
@@ -54,7 +54,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	assert(computePlace != nullptr);
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 
-	HardwareCounters::taskStarted(currentTask);
+	HardwareCounters::readCPUCounters();
 	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 	Monitoring::taskChangedStatus(currentTask, executing_status);

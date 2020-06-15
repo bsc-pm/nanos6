@@ -41,9 +41,6 @@ class PQoSTaskHardwareCounters : public TaskHardwareCountersInterface {
 
 private:
 
-	//! Whether reading of HW counters for the task is active
-	bool _active;
-
 	//! Whether monitoring of counters for this task is enabled
 	bool _enabled;
 
@@ -57,7 +54,6 @@ private:
 public:
 
 	inline PQoSTaskHardwareCounters(bool enabled = true) :
-		_active(false),
 		_enabled(enabled)
 	{
 		for (size_t id = 0; id < SupportPQoS::num_regular_counters; ++id) {
@@ -69,8 +65,6 @@ public:
 	//! \brief Reset all structures to their default value
 	inline void clear() override
 	{
-		_active = false;
-
 		for (size_t id = 0; id < SupportPQoS::num_regular_counters; ++id) {
 			_regularCountersDelta[id] = 0;
 			_regularCountersAccumulated[id] = 0;
@@ -93,39 +87,12 @@ public:
 		return _enabled;
 	}
 
-	//! \brief Check whether hardware counters are being read for the task
-	inline bool isActive() const
-	{
-		return _active;
-	}
-
-	//! \brief Start reading hardware counters for the current task
+	//! \brief Read hardware counters for the current task
+	//!
 	//! \param[in] data The pqos data from which to gather counters
-	inline void startReading(const pqos_mon_data *data)
+	inline void readCounters(const pqos_mon_data *data)
 	{
 		assert(data != nullptr);
-
-		_active = true;
-
-		// For accumulating counters, we must accumulate at start and stop
-		_accumulatingCounters[SupportPQoS::llc_usage](data->values.llc);
-
-		// For regular counters, the delta values in 'data' are reset from the
-		// thread and we only care about accumulating them when we stop reading
-		_regularCountersDelta[SupportPQoS::mbm_local] = data->values.mbm_local_delta;
-		_regularCountersDelta[SupportPQoS::mbm_remote] = data->values.mbm_remote_delta;
-		_regularCountersDelta[SupportPQoS::llc_misses] = data->values.llc_misses_delta;
-		_regularCountersDelta[SupportPQoS::ipc_retired] = data->values.ipc_retired_delta;
-		_regularCountersDelta[SupportPQoS::ipc_unhalted] = data->values.ipc_unhalted_delta;
-	}
-
-	//! \brief Stop reading hardware counters for the current task
-	//! \param[in] data The pqos data from which to gather counters
-	inline void stopReading(const pqos_mon_data *data)
-	{
-		assert(data != nullptr);
-
-		_active = false;
 
 		// For accumulating counters, we must accumulate at start and stop
 		_accumulatingCounters[SupportPQoS::llc_usage](data->values.llc);

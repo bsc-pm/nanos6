@@ -78,10 +78,6 @@ public:
 
 	~RAPLHardwareCounters();
 
-	inline void cpuBecomesIdle(CPUHardwareCountersInterface *, ThreadHardwareCountersInterface *) override
-	{
-	}
-
 	inline void threadInitialized(ThreadHardwareCountersInterface *) override
 	{
 	}
@@ -94,17 +90,15 @@ public:
 	{
 	}
 
-	inline void taskStarted(
-		CPUHardwareCountersInterface *,
+	inline void readTaskCounters(
 		ThreadHardwareCountersInterface *,
 		TaskHardwareCountersInterface *
 	) override {
 	}
 
-	inline void taskStopped(
+	inline void readCPUCounters(
 		CPUHardwareCountersInterface *,
-		ThreadHardwareCountersInterface *,
-		TaskHardwareCountersInterface *
+		ThreadHardwareCountersInterface *
 	) override {
 	}
 
