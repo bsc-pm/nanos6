@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/bootstrap.h>
@@ -38,12 +38,12 @@ struct OptionHelper {
 	std::string _header;
 	retriever_t _retriever;
 	bool _enabledByDefault;
-	
+
 	OptionHelper()
 		: _retriever(OptionHelper::no_retriever), _enabledByDefault(false)
 	{
 	}
-	
+
 	OptionHelper(
 		std::string &parameter, std::string &helpMessage,
 		std::string &header, retriever_t retriever, bool enabledByDefault = false
@@ -53,7 +53,7 @@ struct OptionHelper {
 		_enabledByDefault(enabledByDefault)
 	{
 	}
-	
+
 	OptionHelper(
 		char const *parameter, char const *helpMessage,
 		char const *header, retriever_t retriever, bool enabledByDefault = false
@@ -63,12 +63,12 @@ struct OptionHelper {
 		_enabledByDefault(enabledByDefault)
 	{
 	}
-	
+
 	bool empty() const
 	{
 		return (_retriever == OptionHelper::no_retriever);
 	}
-	
+
 	void emit() const
 	{
 		if (!empty()) {
@@ -79,7 +79,7 @@ struct OptionHelper {
 			}
 		}
 	}
-	
+
 	static char const *retrieve(retriever_t retriever);
 };
 
@@ -102,7 +102,7 @@ static char const *emitHelp()
 		}
 	}
 	std::cout << std::endl;
-	
+
 	return "";
 }
 
@@ -111,17 +111,19 @@ static char const *showFullVersion()
 {
 	char const *branch = nanos6_get_runtime_branch();
 	std::cout << "Nanos6 version " << nanos6_get_runtime_version();
-	if ((branch != 0) && (std::string(branch) != "master")) {
-		std::cout << " " << branch << " branch";
+	if (branch != 0) {
+		if ((std::string(branch) != "master") && (std::string(branch) != "none")) {
+			std::cout << " " << branch << " branch";
+		}
 	}
-	
+
 	char const *patches = nanos6_get_runtime_patches();
 	if ((patches != 0) && (std::string() != patches)) {
 		std::cout << " +changes";
 	}
-	
+
 	std::cout << std::endl;
-	
+
 	return "";
 }
 
@@ -129,20 +131,20 @@ static char const *showFullVersion()
 static char const *dumpPatches()
 {
 	char const *patches = nanos6_get_runtime_patches();
-	
+
 	if (patches == 0) {
 		std::cerr << "Error: this is either a runtime compiled from a distributed tarball or it has been compiled with code change reporting disabled." << std::endl;
 		std::cerr << "To enable code change reporting, please configure the runtime with the --enable-embed-code-changes parameter." << std::endl;
-		
+
 		exit(1);
 	}
-	
+
 	if (std::string() != patches) {
 		std::cout << patches;
 	} else {
 		std::cout << "This runtime does not contain any changes over the reported version." << std::endl;
 	}
-	
+
 	return "";
 }
 
@@ -150,11 +152,11 @@ static char const *dumpPatches()
 static char const *dumpRuntimeDetailedInfo()
 {
 	std::cout << "Runtime path " << nanos6_get_runtime_path() << std::endl;
-	
+
 	for (void *it = nanos6_runtime_info_begin(); it != nanos6_runtime_info_end(); it = nanos6_runtime_info_advance(it)) {
 		nanos6_runtime_info_entry_t entry;
 		nanos6_runtime_info_get(it, &entry);
-		
+
 		std::cout << entry.description << " ";
 		switch (entry.type) {
 			case nanos6_integer_runtime_info_entry:
@@ -167,19 +169,19 @@ static char const *dumpRuntimeDetailedInfo()
 				std::cout << entry.text;
 				break;
 		}
-		
+
 		if (std::string() != entry.units) {
 			std::cout << " " << entry.units;
 		}
-		
+
 		std::cout << std::endl;
 	}
-	
+
 	char const *patches = nanos6_get_runtime_patches();
 	if ((patches != 0) && (std::string() != patches)) {
 		std::cout << "This runtime contains patches" << std::endl;
 	}
-	
+
 	return "";
 }
 
@@ -224,9 +226,9 @@ int main(int argc, char **argv)
 		std::cerr << "Error initializing Nanos6 runtime system: " << error << std::endl;
 		return 1;
 	}
-	
+
 	commandName = argv[0];
-	
+
 	optionHelpers.push_back(OptionHelper("--help", "display this help message", "", OptionHelper::command_help));
 	optionHelpers.push_back(OptionHelper());
 	optionHelpers.push_back(OptionHelper("--full-version", "display the full runtime version", "", OptionHelper::runtime_full_version, true));
@@ -244,7 +246,7 @@ int main(int argc, char **argv)
 	optionHelpers.push_back(OptionHelper());
 	optionHelpers.push_back(OptionHelper("--runtime-details", "display detailed runtime and execution environment information", "", OptionHelper::runtime_detailed_info));
 	optionHelpers.push_back(OptionHelper("--dump-patches", "display code changes over the reported version", "", OptionHelper::runtime_patches));
-	
+
 	if (argc > 1) {
 		for (int i = 1; i < argc; i++) {
 			std::list<OptionHelper>::const_iterator it = optionHelpers.begin();
@@ -270,10 +272,10 @@ int main(int argc, char **argv)
 			}
 		}
 	}
-	
+
 	// Runtime shutdown
 	nanos6_shutdown();
-	
+
 	return 0;
 }
 

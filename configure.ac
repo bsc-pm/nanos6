@@ -5,8 +5,13 @@
 #
 #	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 
+# Nanos6 version and copyright
+m4_define([nanos6_version], [2.3.2])
+m4_define([nanos6_license], ["GPL3"])
+m4_define([nanos6_copyright], ["2015-2020 Barcelona Supercomputing Center (BSC)"])
+
 AC_PREREQ([2.69])
-AC_INIT([nanos6], [2.3.2], [pm-tools@bsc.es])
+AC_INIT([nanos6], [nanos6_version], [pm-tools@bsc.es])
 AC_CONFIG_SRCDIR([src/scheduling/Scheduler.hpp])
 AC_CONFIG_AUX_DIR([config-aux])
 AC_CONFIG_MACRO_DIR([m4])
@@ -374,6 +379,10 @@ AC_CHECK_SYMBOL_RESOLUTION_STRATEGY
 
 AX_CHECK_EXTRAE
 PKG_CHECK_MODULES([hwloc], [hwloc])
+
+AC_SUBST([NANOS6_VERSION], [nanos6_version])
+AC_SUBST([NANOS6_LICENSE], [nanos6_license])
+AC_SUBST([NANOS6_COPYRIGHT], [nanos6_copyright])
 
 AM_EXTRA_RECURSIVE_TARGETS([build-tests])
 

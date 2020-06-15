@@ -1662,7 +1662,7 @@ src/version/CodeVersionInfo.cpp: $(srcdir)/.git COPYING
 	echo >> src/version/CodeVersionInfo.cpp ; \
 	echo >> src/version/CodeVersionInfo.cpp ; \
 	\
-	echo -n 'char const * nanos6_version = "' >> src/version/CodeVersionInfo.cpp ; \
+	echo -n 'char const * nanos6_version = "$(NANOS6_VERSION) ' >> src/version/CodeVersionInfo.cpp ; \
 	ver=`$(GIT) --git-dir="$(srcdir)/.git" show --pretty=format:'%ci %h' -s HEAD` ; echo -n $$ver >> src/version/CodeVersionInfo.cpp ; \
 	echo '";' >> src/version/CodeVersionInfo.cpp ; \
 	\
@@ -1686,10 +1686,10 @@ else
 endif
 	$(AM_V_GEN3)echo >> src/version/CodeVersionInfo.cpp ; \
 	\
-	echo 'char const * nanos6_copyright = "2015-2018 Barcelona Supercomputing Center (BSC)";' >> src/version/CodeVersionInfo.cpp ; \
+	echo 'char const * nanos6_copyright = "$(NANOS6_COPYRIGHT)";' >> src/version/CodeVersionInfo.cpp ; \
 	echo >> src/version/CodeVersionInfo.cpp ; \
 	\
-	echo 'char const * nanos6_license = "GPL3";' >> src/version/CodeVersionInfo.cpp ; \
+	echo 'char const * nanos6_license = "$(NANOS6_LICENSE)";' >> src/version/CodeVersionInfo.cpp ; \
 	echo >> src/version/CodeVersionInfo.cpp ; \
 	\
 	echo -n 'char const * nanos6_full_license = "' >> src/version/CodeVersionInfo.cpp ; \
@@ -1697,9 +1697,30 @@ endif
 	echo '";' >> src/version/CodeVersionInfo.cpp ; \
 	echo >> src/version/CodeVersionInfo.cpp
 else
-src/version/CodeVersionInfo.cpp:
-	@echo Error: this Nanos6 distribution does not come neither from a git repository nor a "make dist" tarball.
-	@exit 1
+src/version/CodeVersionInfo.cpp: COPYING
+	$(AM_V_GEN)mkdir -p src/version/ ; \
+	echo '#include "src/version/VersionInfo.hpp"' > src/version/CodeVersionInfo.cpp ; \
+	echo >> src/version/CodeVersionInfo.cpp ; \
+	echo >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo 'char const * nanos6_version = "$(NANOS6_VERSION)";' >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo 'char const * nanos6_branch = "none";' >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo >> src/version/CodeVersionInfo.cpp ; \
+	echo 'char const * nanos6_patches = nullptr;' >> src/version/CodeVersionInfo.cpp ; \
+	echo >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo 'char const * nanos6_copyright = "$(NANOS6_COPYRIGHT)";' >> src/version/CodeVersionInfo.cpp ; \
+	echo >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo 'char const * nanos6_license = "$(NANOS6_LICENSE)";' >> src/version/CodeVersionInfo.cpp ; \
+	echo >> src/version/CodeVersionInfo.cpp ; \
+	\
+	echo -n 'char const * nanos6_full_license = "' >> src/version/CodeVersionInfo.cpp ; \
+	cat $(top_srcdir)/COPYING | sed 's@\\@\\\\@g;s@"@\\"@g' | awk 'BEGIN {ORS="\\n";} {print $$0;}' >> src/version/CodeVersionInfo.cpp ; \
+	echo '";' >> src/version/CodeVersionInfo.cpp ; \
+	echo >> src/version/CodeVersionInfo.cpp
 endif
 
 
