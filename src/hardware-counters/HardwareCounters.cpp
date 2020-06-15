@@ -126,6 +126,11 @@ void HardwareCounters::preinitialize()
 		}
 	}
 
+	// If verbose is enabled and no backends are available, warn the user
+	if (!_anyBackendEnabled && _verbose.getValue()) {
+		FatalErrorHandler::warn("Hardware Counters verbose mode enabled but no backends available!");
+	}
+
 	if (_enabled[HWCounters::PAPI_BACKEND]) {
 #if HAVE_PAPI
 		_papiBackend = new PAPIHardwareCounters(
