@@ -40,12 +40,6 @@ namespace DataAccessRegistration {
 	//! \returns true if the task is already ready
 	bool registerTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData);
 
-	//! Process all the originators that have become ready
-	void processSatisfiedOriginators(
-		CPUDependencyData &hpDependencyData,
-		ComputePlace *computePlace,
-		bool fromBusyThread);
-
 	void unregisterTaskDataAccesses(
 		Task *task,
 		ComputePlace *computePlace,

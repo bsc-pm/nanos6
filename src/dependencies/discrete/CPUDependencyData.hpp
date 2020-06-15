@@ -19,12 +19,14 @@
 
 #include "DataAccessFlags.hpp"
 
-#define SCHEDULER_CHUNK_SIZE 128
-
 class Task;
 
 class SatisfiedOriginatorList {
-	Task *_array[SCHEDULER_CHUNK_SIZE];
+public:
+	static const int _schedulerChunkSize = 128;
+
+private:
+	Task *_array[_schedulerChunkSize];
 	size_t _count;
 
 public:
@@ -45,6 +47,7 @@ public:
 
 	inline void add(Task *task)
 	{
+		assert(_count < _schedulerChunkSize);
 		_array[_count++] = task;
 	}
 
@@ -56,6 +59,7 @@ public:
 
 struct CPUDependencyData {
 	typedef SatisfiedOriginatorList satisfied_originator_list_t;
+	typedef std::deque<Task *> commutative_satisfied_list_t;
 	typedef std::deque<Task *> deletable_originator_list_t;
 
 	//! Tasks whose accesses have been satisfied after ending a task
@@ -63,6 +67,7 @@ struct CPUDependencyData {
 	size_t _satisfiedOriginatorCount;
 
 	deletable_originator_list_t _deletableOriginators;
+	commutative_satisfied_list_t _satisfiedCommutativeOriginators;
 	mailbox_t _mailBox;
 
 #ifndef NDEBUG
@@ -73,6 +78,7 @@ struct CPUDependencyData {
 		: _satisfiedOriginators(),
 		_satisfiedOriginatorCount(0),
 		_deletableOriginators(),
+		_satisfiedCommutativeOriginators(),
 		_mailBox()
 #ifndef NDEBUG
 		,_inUse()
@@ -87,22 +93,36 @@ struct CPUDependencyData {
 
 	inline bool empty() const
 	{
-		for (satisfied_originator_list_t list : _satisfiedOriginators)
-			if (!list.size() == 0)
+		for (const satisfied_originator_list_t &list : _satisfiedOriginators)
+			if (list.size() > 0)
 				return false;
 
-		return _deletableOriginators.empty() && _mailBox.empty();
+		return _deletableOriginators.empty() && _mailBox.empty() && _satisfiedCommutativeOriginators.empty();
 	}
 
 	inline void addSatisfiedOriginator(Task *task, int deviceType)
 	{
 		assert(task != nullptr);
+		assert(_satisfiedOriginatorCount < satisfied_originator_list_t::_schedulerChunkSize);
 		_satisfiedOriginatorCount++;
 		_satisfiedOriginators[deviceType].add(task);
 	}
 
-	inline void clearSatisfiedCount()
+	inline bool full() const
 	{
+		return (_satisfiedOriginatorCount == satisfied_originator_list_t::_schedulerChunkSize);
+	}
+
+	inline satisfied_originator_list_t &getSatisfiedOriginators(int device)
+	{
+		return _satisfiedOriginators[device];
+	}
+
+	inline void clearSatisfiedOriginators()
+	{
+		for (satisfied_originator_list_t &list : _satisfiedOriginators)
+			list.clear();
+
 		_satisfiedOriginatorCount = 0;
 	}
 };

@@ -24,7 +24,7 @@ public:
 	typedef std::bitset<commutative_mask_bits> commutative_mask_t;
 
 	static bool registerTask(Task *task);
-	static void releaseTask(Task *task, CPUDependencyData &hpDependencyData, ComputePlace *computePlace);
+	static void releaseTask(Task *task, CPUDependencyData &hpDependencyData);
 
 	static inline void combineMaskAndAddress(commutative_mask_t &mask, void *address)
 	{

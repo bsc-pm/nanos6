@@ -56,17 +56,21 @@ public:
 		}
 	}
 
-	virtual inline void addReadyTasks(nanos6_device_t taskType, Task *tasks[], const size_t numTasks, ComputePlace *computePlace, ReadyTaskHint hint)
+	virtual inline void addReadyTasks(
+		nanos6_device_t taskType,
+		Task *tasks[],
+		const size_t numTasks,
+		ComputePlace *computePlace,
+		ReadyTaskHint hint)
 	{
 		assert(taskType != nanos6_cluster_device);
 
 		if (taskType == nanos6_host_device) {
-			_hostScheduler->addTasks(tasks, numTasks, computePlace, hint);
+			_hostScheduler->addReadyTasks(tasks, numTasks, computePlace, hint);
 		} else {
 			assert(taskType == _deviceSchedulers[taskType]->getDeviceType());
-			_deviceSchedulers[taskType]->addTasks(tasks, numTasks, computePlace, hint);
+			_deviceSchedulers[taskType]->addReadyTasks(tasks, numTasks, computePlace, hint);
 		}
-
 	}
 
 	virtual inline Task *getReadyTask(ComputePlace *computePlace)

@@ -32,7 +32,7 @@ bool CommutativeSemaphore::registerTask(Task *task)
 	return false;
 }
 
-void CommutativeSemaphore::releaseTask(Task *task, CPUDependencyData &hpDependencyData, ComputePlace *computePlace)
+void CommutativeSemaphore::releaseTask(Task *task, CPUDependencyData &hpDependencyData)
 {
 	TaskDataAccesses &accessStruct = task->getDataAccesses();
 	const commutative_mask_t &mask = accessStruct._commutativeMask;
@@ -51,15 +51,7 @@ void CommutativeSemaphore::releaseTask(Task *task, CPUDependencyData &hpDependen
 
 		if (maskIsCompatible(candidateMask)) {
 			maskRegister(candidateMask);
-			hpDependencyData.addSatisfiedOriginator(candidate, candidate->getDeviceType());
-			assert(hpDependencyData._satisfiedOriginatorCount <= SCHEDULER_CHUNK_SIZE);
-
-			// Ideally this should not happen here, as we are holding a lock, but it is not safe
-			// to release it and grab it again without restarting the loop.
-			if (hpDependencyData._satisfiedOriginatorCount == SCHEDULER_CHUNK_SIZE) {
-				DataAccessRegistration::processSatisfiedOriginators(hpDependencyData, computePlace, true);
-			}
-
+			hpDependencyData._satisfiedCommutativeOriginators.push_back(candidate);
 			it = _waitingTasks.erase(it);
 
 			// Keep track and cut off if we won't be releasing anything else.

@@ -49,7 +49,7 @@ namespace DataAccessRegistration {
 		CPUDependencyData::deletable_originator_list_t &deletableOriginators);
 
 	//! Process all the originators that have become ready
-	void processSatisfiedOriginators(
+	static inline void processSatisfiedOriginators(
 		CPUDependencyData &hpDependencyData,
 		ComputePlace *computePlace,
 		bool fromBusyThread)
@@ -64,21 +64,33 @@ namespace DataAccessRegistration {
 				schedulingHint = BUSY_COMPUTE_PLACE_TASK_HINT;
 			}
 
-			SatisfiedOriginatorList &list = hpDependencyData._satisfiedOriginators[i];
+			CPUDependencyData::satisfied_originator_list_t &list = hpDependencyData.getSatisfiedOriginators(i);
 			if (list.size() > 0) {
 				Scheduler::addReadyTasks(
-					(nanos6_device_t) i,
+					(nanos6_device_t)i,
 					list.getArray(),
 					list.size(),
 					computePlaceHint,
-					schedulingHint
-					);
+					schedulingHint);
 			}
-
-			list.clear();
 		}
 
-		hpDependencyData.clearSatisfiedCount();
+		hpDependencyData.clearSatisfiedOriginators();
+
+		for (Task *originator : hpDependencyData._satisfiedCommutativeOriginators) {
+			ComputePlace *computePlaceHint = nullptr;
+			if (computePlace != nullptr && originator->getDeviceType() == computePlace->getType())
+				computePlaceHint = computePlace;
+
+			ReadyTaskHint schedulingHint = SIBLING_TASK_HINT;
+			if (fromBusyThread || !computePlaceHint || !computePlaceHint->isOwned()) {
+				schedulingHint = BUSY_COMPUTE_PLACE_TASK_HINT;
+			}
+
+			Scheduler::addReadyTask(originator, computePlaceHint, schedulingHint);
+		}
+
+		hpDependencyData._satisfiedCommutativeOriginators.clear();
 	}
 
 	static inline void processDeletableOriginators(CPUDependencyData &hpDependencyData)
@@ -94,7 +106,11 @@ namespace DataAccessRegistration {
 		hpDependencyData._deletableOriginators.clear();
 	}
 
-	static inline void satisfyTask(Task *task, CPUDependencyData &hpDependencyData, ComputePlace *computePlace)
+	static inline void satisfyTask(
+		Task *task,
+		CPUDependencyData &hpDependencyData,
+		ComputePlace *computePlace,
+		bool fromBusyThread)
 	{
 		if (task->decreasePredecessors()) {
 			TaskDataAccesses &accessStruct = task->getDataAccesses();
@@ -104,9 +120,8 @@ namespace DataAccessRegistration {
 
 			hpDependencyData.addSatisfiedOriginator(task, task->getDeviceType());
 
-			assert(hpDependencyData._satisfiedOriginatorCount <= SCHEDULER_CHUNK_SIZE);
-			if (hpDependencyData._satisfiedOriginatorCount == SCHEDULER_CHUNK_SIZE)
-				processSatisfiedOriginators(hpDependencyData, computePlace, true);
+			if (hpDependencyData.full())
+				processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
 		}
 	}
 
@@ -162,8 +177,12 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void propagateMessages(CPUDependencyData &hpDependencyData,
-		mailbox_t &mailBox, ReductionInfo *originalReductionInfo, ComputePlace *computePlace)
+	void propagateMessages(
+		CPUDependencyData &hpDependencyData,
+		mailbox_t &mailBox,
+		ReductionInfo *originalReductionInfo,
+		ComputePlace *computePlace,
+		bool fromBusyThread)
 	{
 		DataAccessMessage next;
 
@@ -188,7 +207,7 @@ namespace DataAccessRegistration {
 				assert(!next.from->getOriginator()->getDataAccesses().hasBeenDeleted());
 				Task *task = next.from->getOriginator();
 				assert(!task->getDataAccesses().hasBeenDeleted());
-				satisfyTask(task, hpDependencyData, computePlace);
+				satisfyTask(task, hpDependencyData, computePlace, fromBusyThread);
 			}
 
 			if (next.combine) {
@@ -216,8 +235,13 @@ namespace DataAccessRegistration {
 		}
 	}
 
-	void finalizeDataAccess(Task *task, DataAccess *access, void *address,
-		CPUDependencyData &hpDependencyData, ComputePlace *computePlace)
+	void finalizeDataAccess(
+		Task *task,
+		DataAccess *access,
+		void *address,
+		CPUDependencyData &hpDependencyData,
+		ComputePlace *computePlace,
+		bool fromBusyThread)
 	{
 		DataAccessType originalAccessType = access->getType();
 		// No race, the parent is finished so all childs must be registered by now.
@@ -268,7 +292,7 @@ namespace DataAccessRegistration {
 		bool dispose = access->apply(message, mailBox);
 
 		if (!mailBox.empty()) {
-			propagateMessages(hpDependencyData, mailBox, reductionInfo, computePlace);
+			propagateMessages(hpDependencyData, mailBox, reductionInfo, computePlace, fromBusyThread);
 			assert(!dispose);
 		} else if (dispose) {
 			decreaseDeletableCountOrDelete(task, hpDependencyData._deletableOriginators);
@@ -342,7 +366,7 @@ namespace DataAccessRegistration {
 		if (accessStruct.hasDataAccesses()) {
 			// Release dependencies of all my accesses
 			accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
-				finalizeDataAccess(task, access, address, hpDependencyData, computePlace);
+				finalizeDataAccess(task, access, address, hpDependencyData, computePlace, fromBusyThread);
 				return true;
 			});
 		}
@@ -377,7 +401,7 @@ namespace DataAccessRegistration {
 
 		// Release commutative mask. The order is important, as this will add satisfied originators
 		if (accessStruct._commutativeMask.any())
-			CommutativeSemaphore::releaseTask(task, hpDependencyData, computePlace);
+			CommutativeSemaphore::releaseTask(task, hpDependencyData);
 
 		if (accessStruct.hasDataAccesses()) {
 			// All TaskDataAccesses have a deletableCount of 1 for default, so this will return true unless

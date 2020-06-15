@@ -20,7 +20,12 @@ public:
 	static void initialize();
 	static void shutdown();
 
-	static inline void addReadyTasks(nanos6_device_t taskType, Task *tasks[], const size_t numTasks, ComputePlace *computePlace, ReadyTaskHint hint)
+	static inline void addReadyTasks(
+		nanos6_device_t taskType,
+		Task *tasks[],
+		const size_t numTasks,
+		ComputePlace *computePlace,
+		ReadyTaskHint hint)
 	{
 		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
 
