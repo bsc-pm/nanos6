@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SUBSCRIPTION_LOCK_HPP
@@ -80,7 +80,7 @@ public:
 	{
 		uint64_t const innerCPUId = _waitQueue[myTicket % _size]._cpuId.load(std::memory_order_relaxed);
 		cpuId = innerCPUId - myTicket;
-		return innerCPUId > myTicket;
+		return innerCPUId >= myTicket;
 	}
 
 	//! \brief Obtain the lock without subscribing
