@@ -29,7 +29,7 @@ private:
 
 public:
 
-	PQoSHardwareCounters(bool, const std::string &, const std::vector<HWCounters::counters_t> &enabledEvents);
+	PQoSHardwareCounters(bool, const std::string &, std::vector<HWCounters::counters_t> &enabledEvents);
 
 	~PQoSHardwareCounters();
 

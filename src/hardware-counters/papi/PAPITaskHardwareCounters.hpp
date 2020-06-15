@@ -7,6 +7,7 @@
 #ifndef PAPI_TASK_HARDWARE_COUNTERS_HPP
 #define PAPI_TASK_HARDWARE_COUNTERS_HPP
 
+#include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "hardware-counters/TaskHardwareCountersInterface.hpp"
 
 
@@ -25,18 +26,18 @@ public:
 
 	//! \brief Get the delta value of a HW counter
 	//!
-	//! \param[in] counterId The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t) override
+	//! \param[in] counterType The type of counter to get the delta from
+	inline uint64_t getDelta(HWCounters::counters_t) override
 	{
-		return 0.0;
+		return 0;
 	}
 
 	//! \brief Get the accumulated value of a HW counter
 	//!
-	//! \param[in] counterId The type of counter to get the accumulation from
-	inline double getAccumulated(HWCounters::counters_t) override
+	//! \param[in] counterType The type of counter to get the accumulation from
+	inline uint64_t getAccumulated(HWCounters::counters_t) override
 	{
-		return 0.0;
+		return 0;
 	}
 
 };

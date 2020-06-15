@@ -148,34 +148,34 @@ public:
 
 	//! \brief Get the delta value of a HW counter
 	//!
-	//! \param[in] counterId The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t counterId)
+	//! \param[in] counterType The type of counter to get the delta from
+	inline uint64_t getDelta(HWCounters::counters_t counterType)
 	{
 		TaskHardwareCountersInterface *taskCounters = nullptr;
-		if (counterId >= HWCounters::PQOS_MIN_EVENT && counterId <= HWCounters::PQOS_MAX_EVENT) {
-			taskCounters = getPQoSCounters();
-		} else if (counterId >= HWCounters::PAPI_MIN_EVENT && counterId <= HWCounters::PAPI_MAX_EVENT) {
+		if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
 			taskCounters = getPAPICounters();
+		} else if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
+			taskCounters = getPQoSCounters();
 		}
 		assert(taskCounters != nullptr);
 
-		return taskCounters->getDelta(counterId);
+		return taskCounters->getDelta(counterType);
 	}
 
 	//! \brief Get the accumulated value of a HW counter
 	//!
-	//! \param[in] counterId The type of counter to get the accumulation from
-	inline double getAccumulated(HWCounters::counters_t counterId)
+	//! \param[in] counterType The type of counter to get the accumulation from
+	inline uint64_t getAccumulated(HWCounters::counters_t counterType)
 	{
 		TaskHardwareCountersInterface *taskCounters = nullptr;
-		if (counterId >= HWCounters::PQOS_MIN_EVENT && counterId <= HWCounters::PQOS_MAX_EVENT) {
-			taskCounters = getPQoSCounters();
-		} else if (counterId >= HWCounters::PAPI_MIN_EVENT && counterId <= HWCounters::PAPI_MAX_EVENT) {
+		if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
 			taskCounters = getPAPICounters();
+		} else if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
+			taskCounters = getPQoSCounters();
 		}
 		assert(taskCounters != nullptr);
 
-		return taskCounters->getAccumulated(counterId);
+		return taskCounters->getAccumulated(counterType);
 	}
 
 };

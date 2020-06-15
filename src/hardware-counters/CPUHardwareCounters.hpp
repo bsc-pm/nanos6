@@ -75,18 +75,18 @@ public:
 
 	//! \brief Get the delta value of a HW counter
 	//!
-	//! \param[in] counterId The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t counterId)
+	//! \param[in] counterType The type of counter to get the delta from
+	inline uint64_t getDelta(HWCounters::counters_t counterType)
 	{
 		CPUHardwareCountersInterface *cpuCounters = nullptr;
-		if (counterId >= HWCounters::PQOS_MIN_EVENT && counterId <= HWCounters::PQOS_MAX_EVENT) {
+		if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
 			cpuCounters = getPQoSCounters();
-		} else if (counterId >= HWCounters::PAPI_MIN_EVENT && counterId <= HWCounters::PAPI_MAX_EVENT) {
+		} else if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
 			cpuCounters = getPAPICounters();
 		}
 		assert(cpuCounters != nullptr);
 
-		return cpuCounters->getDelta(counterId);
+		return cpuCounters->getDelta(counterType);
 	}
 
 };

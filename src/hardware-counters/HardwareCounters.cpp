@@ -4,9 +4,9 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include "HardwareCounters.hpp"
 #include "CPUHardwareCounters.hpp"
 #include "CPUHardwareCountersInterface.hpp"
+#include "HardwareCounters.hpp"
 #include "TaskHardwareCounters.hpp"
 #include "TaskHardwareCountersInterface.hpp"
 #include "ThreadHardwareCounters.hpp"
@@ -106,8 +106,8 @@ void HardwareCounters::loadConfigurationFile()
 void HardwareCounters::preinitialize()
 {
 	// First set all backends to nullptr and all events disabled
-	_pqosBackend = nullptr;
 	_papiBackend = nullptr;
+	_pqosBackend = nullptr;
 	_raplBackend = nullptr;
 	for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
 		_enabled[i] = false;
@@ -119,11 +119,24 @@ void HardwareCounters::preinitialize()
 	// Check if there's an incompatibility between backends
 	checkIncompatibleBackends();
 
-	for (unsigned short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
+	for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
 		if (_enabled[i]) {
 			_anyBackendEnabled = true;
 			break;
 		}
+	}
+
+	if (_enabled[HWCounters::PAPI_BACKEND]) {
+#if HAVE_PAPI
+		_papiBackend = new PAPIHardwareCounters(
+			_verbose.getValue(),
+			_verboseFile.getValue(),
+			_enabledEvents
+		);
+#else
+		FatalErrorHandler::warn("PAPI library not found, disabling hardware counters.");
+		_enabled[HWCounters::PAPI_BACKEND] = false;
+#endif
 	}
 
 	// Check which backends must be initialized
@@ -137,19 +150,6 @@ void HardwareCounters::preinitialize()
 #else
 		FatalErrorHandler::warn("PQoS library not found, disabling hardware counters.");
 		_enabled[HWCounters::PQOS_BACKEND] = false;
-#endif
-	}
-
-	if (_enabled[HWCounters::PAPI_BACKEND]) {
-#if HAVE_PAPI
-		_papiBackend = new PAPIHardwareCounters(
-			_verbose.getValue(),
-			_verboseFile.getValue(),
-			_enabledEvents
-		);
-#else
-		FatalErrorHandler::warn("PAPI library not found, disabling hardware counters.");
-		_enabled[HWCounters::PAPI_BACKEND] = false;
 #endif
 	}
 
@@ -169,20 +169,20 @@ void HardwareCounters::initialize()
 
 void HardwareCounters::shutdown()
 {
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
-
-		delete _pqosBackend;
-		_pqosBackend = nullptr;
-		_enabled[HWCounters::PQOS_BACKEND] = false;
-	}
-
 	if (_enabled[HWCounters::PAPI_BACKEND]) {
 		assert(_papiBackend != nullptr);
 
 		delete _papiBackend;
 		_papiBackend = nullptr;
 		_enabled[HWCounters::PAPI_BACKEND] = false;
+	}
+
+	if (_enabled[HWCounters::PQOS_BACKEND]) {
+		assert(_pqosBackend != nullptr);
+
+		delete _pqosBackend;
+		_pqosBackend = nullptr;
+		_enabled[HWCounters::PQOS_BACKEND] = false;
 	}
 
 	if (_enabled[HWCounters::RAPL_BACKEND]) {
@@ -206,16 +206,16 @@ void HardwareCounters::cpuBecomesIdle()
 
 	CPUHardwareCounters &cpuCounters = cpu->getHardwareCounters();
 	ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
-
-		_pqosBackend->cpuBecomesIdle(cpuCounters.getPQoSCounters(), threadCounters.getPQoSCounters());
-	}
-
 	if (_enabled[HWCounters::PAPI_BACKEND]) {
 		assert(_pqosBackend != nullptr);
 
 		_papiBackend->cpuBecomesIdle(cpuCounters.getPAPICounters(), threadCounters.getPAPICounters());
+	}
+
+	if (_enabled[HWCounters::PQOS_BACKEND]) {
+		assert(_pqosBackend != nullptr);
+
+		_pqosBackend->cpuBecomesIdle(cpuCounters.getPQoSCounters(), threadCounters.getPQoSCounters());
 	}
 }
 
@@ -227,16 +227,16 @@ void HardwareCounters::threadInitialized()
 	// After the thread is created, initialize (construct) hardware counters
 	ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
 	threadCounters.initialize();
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
-
-		_pqosBackend->threadInitialized(threadCounters.getPQoSCounters());
-	}
-
 	if (_enabled[HWCounters::PAPI_BACKEND]) {
 		assert(_papiBackend != nullptr);
 
 		_papiBackend->threadInitialized(threadCounters.getPAPICounters());
+	}
+
+	if (_enabled[HWCounters::PQOS_BACKEND]) {
+		assert(_pqosBackend != nullptr);
+
+		_pqosBackend->threadInitialized(threadCounters.getPQoSCounters());
 	}
 }
 
@@ -246,16 +246,16 @@ void HardwareCounters::threadShutdown()
 	assert(thread != nullptr);
 
 	ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
-	if (_enabled[HWCounters::PQOS_BACKEND]) {
-		assert(_pqosBackend != nullptr);
-
-		_pqosBackend->threadShutdown(threadCounters.getPQoSCounters());
-	}
-
 	if (_enabled[HWCounters::PAPI_BACKEND]) {
 		assert(_papiBackend != nullptr);
 
 		_papiBackend->threadShutdown(threadCounters.getPAPICounters());
+	}
+
+	if (_enabled[HWCounters::PQOS_BACKEND]) {
+		assert(_pqosBackend != nullptr);
+
+		_pqosBackend->threadShutdown(threadCounters.getPQoSCounters());
 	}
 
 	threadCounters.shutdown();
@@ -278,16 +278,16 @@ void HardwareCounters::taskReinitialized(Task *task)
 		assert(task != nullptr);
 
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-		if (_enabled[HWCounters::PQOS_BACKEND]) {
-			assert(_pqosBackend != nullptr);
-
-			_pqosBackend->taskReinitialized(taskCounters.getPQoSCounters());
-		}
-
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
 			_papiBackend->taskReinitialized(taskCounters.getPAPICounters());
+		}
+
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
+
+			_pqosBackend->taskReinitialized(taskCounters.getPQoSCounters());
 		}
 	}
 }
@@ -305,16 +305,6 @@ void HardwareCounters::taskStarted(Task *task)
 		CPUHardwareCounters &cpuCounters = cpu->getHardwareCounters();
 		ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-		if (_enabled[HWCounters::PQOS_BACKEND]) {
-			assert(_pqosBackend != nullptr);
-
-			_pqosBackend->taskStarted(
-				cpuCounters.getPQoSCounters(),
-				threadCounters.getPQoSCounters(),
-				taskCounters.getPQoSCounters()
-			);
-		}
-
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
@@ -322,6 +312,16 @@ void HardwareCounters::taskStarted(Task *task)
 				cpuCounters.getPQoSCounters(),
 				threadCounters.getPAPICounters(),
 				taskCounters.getPAPICounters()
+			);
+		}
+
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
+
+			_pqosBackend->taskStarted(
+				cpuCounters.getPQoSCounters(),
+				threadCounters.getPQoSCounters(),
+				taskCounters.getPQoSCounters()
 			);
 		}
 	}
@@ -340,16 +340,6 @@ void HardwareCounters::taskStopped(Task *task)
 		CPUHardwareCounters &cpuCounters = cpu->getHardwareCounters();
 		ThreadHardwareCounters &threadCounters = thread->getHardwareCounters();
 		TaskHardwareCounters &taskCounters = task->getHardwareCounters();
-		if (_enabled[HWCounters::PQOS_BACKEND]) {
-			assert(_pqosBackend != nullptr);
-
-			_pqosBackend->taskStopped(
-				cpuCounters.getPQoSCounters(),
-				threadCounters.getPQoSCounters(),
-				taskCounters.getPQoSCounters()
-			);
-		}
-
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
@@ -357,6 +347,16 @@ void HardwareCounters::taskStopped(Task *task)
 				cpuCounters.getPAPICounters(),
 				threadCounters.getPAPICounters(),
 				taskCounters.getPAPICounters()
+			);
+		}
+
+		if (_enabled[HWCounters::PQOS_BACKEND]) {
+			assert(_pqosBackend != nullptr);
+
+			_pqosBackend->taskStopped(
+				cpuCounters.getPQoSCounters(),
+				threadCounters.getPQoSCounters(),
+				taskCounters.getPQoSCounters()
 			);
 		}
 	}

@@ -16,7 +16,7 @@
 PQoSHardwareCounters::PQoSHardwareCounters(
 	bool,
 	const std::string &,
-	const std::vector<HWCounters::counters_t> &enabledEvents
+	std::vector<HWCounters::counters_t> &enabledEvents
 ) {
 	for (unsigned short i = 0; i < HWCounters::PQOS_NUM_EVENTS; ++i) {
 		_enabledEvents[i] = false;
@@ -65,23 +65,29 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 	assert(pqosCapabilities != nullptr);
 	assert(pqosCapabilities->u.mon != nullptr);
 
-	// Choose events to monitor: only those enabled
+	// Choose events to monitor: only those enabled by the user
+	// In here we translate our enum-defined event types (preceeded by the
+	// HWCounters namespace) to the real to the real events
 	int eventsToMonitor = 0;
-	for (unsigned short i = 0; i < enabledEvents.size(); ++i) {
-		short id = enabledEvents[i];
+	for (size_t i = 0; i < enabledEvents.size(); ++i) {
+		size_t id = enabledEvents[i];
 		if (id >= HWCounters::PQOS_MIN_EVENT && id <= HWCounters::PQOS_MAX_EVENT) {
-			_enabledEvents[id - HWCounters::PQOS_MIN_EVENT] = true;
-
-			if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_PERF_EVENT_IPC") {
-				eventsToMonitor |= PQOS_PERF_EVENT_IPC;
-			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_PERF_EVENT_LLC_MISS") {
-				eventsToMonitor |= PQOS_PERF_EVENT_LLC_MISS;
-			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_LMEM_BW") {
-				eventsToMonitor |= PQOS_MON_EVENT_LMEM_BW;
-			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_RMEM_BW") {
-				eventsToMonitor |= PQOS_MON_EVENT_RMEM_BW;
-			} else if (std::string(HWCounters::counterDescriptions[id]) == "PQOS_MON_EVENT_L3_OCCUP") {
+			if (id == HWCounters::PQOS_MON_EVENT_L3_OCCUP) {
 				eventsToMonitor |= PQOS_MON_EVENT_L3_OCCUP;
+			} else if (id == HWCounters::PQOS_MON_EVENT_LMEM_BW) {
+				eventsToMonitor |= PQOS_MON_EVENT_LMEM_BW;
+			} else if (id == HWCounters::PQOS_MON_EVENT_RMEM_BW) {
+				eventsToMonitor |= PQOS_MON_EVENT_RMEM_BW;
+			} else if (id == HWCounters::PQOS_PERF_EVENT_LLC_MISS) {
+				eventsToMonitor |= PQOS_PERF_EVENT_LLC_MISS;
+			} else if (
+				id == HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS ||
+				id == HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES
+			) {
+				// Special case, in PQoS there is no way to monitor simply
+				// instructions or cycles, we must signal that we want to
+				// monitor "IPC" so both counters are read
+				eventsToMonitor |= PQOS_PERF_EVENT_IPC;
 			} else {
 				assert(false);
 			}
@@ -94,8 +100,38 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 		availableEvents = (pqos_mon_event) (availableEvents | (pqosCapabilities->u.mon->events[i].type));
 	}
 
-	// Only choose events that are enabled AND available
+	// Only choose events that are enabled by the user AND available
 	_monitoredEvents = (pqos_mon_event) (availableEvents & eventsToMonitor);
+
+	// Filter out, from the global vector of enabled events, those that are
+	// enabled by the user but not available in the system
+	// unavailableEvents = (availableEvents AND (NOT eventsToMonitor))
+	const enum pqos_mon_event unavailableEvents = (pqos_mon_event) (availableEvents & (~eventsToMonitor));
+	if (unavailableEvents & PQOS_MON_EVENT_L3_OCCUP) {
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_L3_OCCUP);
+		assert(it != enabledEvents.end());
+		enabledEvents.erase(it);
+	} else if (unavailableEvents & PQOS_MON_EVENT_LMEM_BW) {
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_LMEM_BW);
+		assert(it != enabledEvents.end());
+		enabledEvents.erase(it);
+	} else if (unavailableEvents & PQOS_MON_EVENT_RMEM_BW) {
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_RMEM_BW);
+		assert(it != enabledEvents.end());
+		enabledEvents.erase(it);
+	} else if (unavailableEvents & PQOS_PERF_EVENT_LLC_MISS) {
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_LLC_MISS);
+		assert(it != enabledEvents.end());
+		enabledEvents.erase(it);
+	} else if (unavailableEvents & PQOS_PERF_EVENT_IPC) {
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS);
+		assert(it != enabledEvents.end());
+		enabledEvents.erase(it);
+
+		it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES);
+		assert(it != enabledEvents.end());
+		enabledEvents.erase(it);
+	}
 
 	// If none of the events can be monitored, trigger an early shutdown
 	_enabled = (_monitoredEvents != ((pqos_mon_event) 0));

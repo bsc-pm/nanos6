@@ -34,30 +34,6 @@ public:
 		}
 	}
 
-	//! \brief Get the delta value of a hardware counter
-	//!
-	//! \param[in] counterId The type of counter to get the delta from
-	inline double getDelta(HWCounters::counters_t counterId) override
-	{
-		switch (counterId) {
-			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
-				return (double) BoostAcc::mean(_accumulatingCounters[SupportPQoS::llc_usage]);
-			case HWCounters::PQOS_PERF_EVENT_IPC:
-				return (double) _regularCounters[SupportPQoS::ipc_retired] /
-					(double) _regularCounters[SupportPQoS::ipc_unhalted];
-			case HWCounters::PQOS_MON_EVENT_LMEM_BW:
-				return (double) _regularCounters[SupportPQoS::mbm_local];
-			case HWCounters::PQOS_MON_EVENT_RMEM_BW:
-				return (double) _regularCounters[SupportPQoS::mbm_remote];
-			case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
-				return (double) _regularCounters[SupportPQoS::llc_misses] /
-					(double) _regularCounters[SupportPQoS::ipc_retired];
-			default:
-				FatalErrorHandler::fail("Event with id '", counterId, "' not supported (PQoS)");
-				return 0.0;
-		}
-	}
-
 	//! \brief Read delta counters for the current CPU
 	//!
 	//! \param[in] data The pqos data from which to gather counters
@@ -73,6 +49,30 @@ public:
 
 		// For accumulating counters, we must accumulate at start and stop
 		_accumulatingCounters[SupportPQoS::llc_usage](data->values.llc);
+	}
+
+	//! \brief Get the delta value of a hardware counter
+	//!
+	//! \param[in] counterType The type of counter to get the delta from
+	inline size_t getDelta(HWCounters::counters_t counterType) override
+	{
+		switch (counterType) {
+			case HWCounters::PQOS_MON_EVENT_LMEM_BW:
+				return _regularCounters[SupportPQoS::mbm_local];
+			case HWCounters::PQOS_MON_EVENT_RMEM_BW:
+				return _regularCounters[SupportPQoS::mbm_remote];
+			case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
+				return _regularCounters[SupportPQoS::llc_misses];
+			case HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
+				return _regularCounters[SupportPQoS::ipc_retired];
+			case HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES:
+				return _regularCounters[SupportPQoS::ipc_unhalted];
+			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
+				return (size_t) BoostAcc::mean(_accumulatingCounters[SupportPQoS::llc_usage]);
+			default:
+				FatalErrorHandler::fail("Event with id '", counterType, "' not supported (PQoS)");
+				return 0.0;
+		}
 	}
 
 };

@@ -27,11 +27,11 @@ private:
 	//! The file where output must be saved when verbose mode is enabled
 	static EnvironmentVariable<std::string> _verboseFile;
 
-	//! The underlying PQoS backend
-	static HardwareCountersInterface *_pqosBackend;
-
 	//! The underlying PAPI backend
 	static HardwareCountersInterface *_papiBackend;
+
+	//! The underlying PQoS backend
+	static HardwareCountersInterface *_pqosBackend;
 
 	//! The underlying RAPL backend
 	static HardwareCountersInterface *_raplBackend;
