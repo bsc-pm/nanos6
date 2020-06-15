@@ -3291,7 +3291,7 @@ namespace DataAccessRegistration {
 				DataAccess *dataAccess = &(*position);
 				assert(dataAccess != nullptr);
 
-				if (dataAccess->getType() == REDUCTION_ACCESS_TYPE) {
+				if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && !dataAccess->isWeak()) {
 					ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
 					size_t slotIndex = reductionInfo->getFreeSlotIndex(computePlace->getIndex());
 					// Register assigned slot in the data access

@@ -722,7 +722,7 @@ namespace DataAccessRegistration {
 		assert(!accessStruct.hasBeenDeleted());
 
 		accessStruct.forAll([&](void * address, DataAccess *access) {
-			if(access->getType() == REDUCTION_ACCESS_TYPE) {
+			if(access->getType() == REDUCTION_ACCESS_TYPE && !access->isWeak()) {
 				ReductionInfo * reductionInfo = access->getReductionInfo();
 				assert(reductionInfo != nullptr);
 
