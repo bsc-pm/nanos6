@@ -24,9 +24,6 @@ private:
 	//! An enumeration containing the events that we monitor
 	enum pqos_mon_event _monitoredEvents;
 
-	//! The enabled events
-	bool _enabledEvents[HWCounters::PQOS_NUM_EVENTS];
-
 public:
 
 	PQoSHardwareCounters(bool, const std::string &, std::vector<HWCounters::counters_t> &enabledEvents);

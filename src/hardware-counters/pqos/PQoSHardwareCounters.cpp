@@ -18,10 +18,6 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 	const std::string &,
 	std::vector<HWCounters::counters_t> &enabledEvents
 ) {
-	for (unsigned short i = 0; i < HWCounters::PQOS_NUM_EVENTS; ++i) {
-		_enabledEvents[i] = false;
-	}
-
 	// Check if the PQoS version may give problems
 	utsname kernelInfo;
 	if (uname(&kernelInfo) == 0) {
