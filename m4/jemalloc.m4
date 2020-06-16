@@ -14,23 +14,9 @@ AC_DEFUN([AC_CHECK_JEMALLOC],
 		if test x"${ac_cv_use_jemalloc_prefix}" != x"" ; then
 			AC_MSG_CHECKING([the jemalloc installation prefix])
 			AC_MSG_RESULT([${ac_cv_use_jemalloc_prefix}])
-			jemalloc_LIBS="-L${ac_cv_use_jemalloc_prefix}/lib -ljemalloc"
+			jemalloc_LIBS="-L${ac_cv_use_jemalloc_prefix}/lib -Wl,-rpath,${ac_cv_use_jemalloc_prefix}/lib -ljemalloc"
 			jemalloc_CPPFLAGS="-I$ac_cv_use_jemalloc_prefix/include"
 			ac_use_jemalloc=yes
-		else
-			PKG_CHECK_MODULES(
-				[jemalloc],
-				[jemalloc],
-				[
-					AC_MSG_CHECKING([the jemalloc installation prefix])
-					AC_MSG_RESULT([retrieved from pkg-config])
-					jemalloc_CPPFLAGS="${jemalloc_CFLAGS}"
-					ac_use_jemalloc=yes
-				], [
-					AC_MSG_CHECKING([the jemalloc installation prefix])
-					AC_MSG_RESULT([not available])
-				]
-			)
 		fi
 
 		if test x"${ac_use_jemalloc}" != x"" ; then
