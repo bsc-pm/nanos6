@@ -46,7 +46,7 @@ void LeaderThread::body()
 {
 	initializeHelperThread();
 
-	// Minimum polling frequency in microseconds
+	// Minimum polling interval in microseconds
 	EnvironmentVariable<int> pollingFrequency("NANOS6_POLLING_FREQUENCY", 1000);
 
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {

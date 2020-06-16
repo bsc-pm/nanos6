@@ -38,7 +38,7 @@ void OpenAccAccelerator::acceleratorServiceLoop()
 
 	// If process was run by LeaderThread, request a WorkerThread to continue
 	if (!worker && (task != nullptr || !_activeQueues.empty())) {
-		CPUManager::executeCPUManagerPolicy(nullptr, ADDED_TASKS, 1);
+		CPUManager::executeCPUManagerPolicy(nullptr, REQUEST_CPUS, 1);
 	}
 }
 

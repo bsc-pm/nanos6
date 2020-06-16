@@ -90,22 +90,22 @@ public:
 
 	//! \brief This method is executed after the amount of work in the runtime
 	//! changes. Some common scenarios include:
-	//! - Adding tasks in the scheduler (hint = ADDED_TASKS)
+	//! - Requesting the resume of idle CPUs (hint = REQUEST_CPUS)
 	//! - Execution of a taskfor (hint = HANDLE_TASKFOR)
 	//! - Running out of tasks to execute (hint = IDLE_CANDIDATE)
 	//!
 	//! \param[in] cpu The CPU that triggered the call, if any
 	//! \param[in] hint A hint about what kind of change triggered this call
-	//! \param[in] numTasks If hint == ADDED_TASKS, numTasks is the amount
-	//! of tasks added
+	//! \param[in] numRequested If hint == REQUEST_CPUS, numRequested is the amount
+	//! of idle CPUs to resume
 	static inline void executeCPUManagerPolicy(
 		ComputePlace *cpu,
 		CPUManagerPolicyHint hint,
-		size_t numTasks = 0
+		size_t numRequested = 0
 	) {
 		assert(_cpuManager != nullptr);
 
-		_cpuManager->executeCPUManagerPolicy(cpu, hint, numTasks);
+		_cpuManager->executeCPUManagerPolicy(cpu, hint, numRequested);
 	}
 
 	//! \brief Get the maximum number of CPUs that will be used by the runtime
@@ -175,6 +175,20 @@ public:
 		assert(_cpuManager != nullptr);
 
 		return _cpuManager->checkCPUStatusTransitions(thread);
+	}
+
+	//! \brief Check whether the CPU has to be returned
+	//! NOTE: This function must be run after executing a task and
+	//! before checking the status transitions of the CPU. This
+	//! function targets the returning of external CPUs, which can
+	//! only occur in DLB mode
+	//!
+	//! \param[in] thread The thread which executes on the CPU we check for
+	static inline void checkIfMustReturnCPU(WorkerThread *thread)
+	{
+		assert(_cpuManager != nullptr);
+
+		_cpuManager->checkIfMustReturnCPU(thread);
 	}
 
 	//! \brief Check whether a CPU accepts work

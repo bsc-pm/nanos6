@@ -44,11 +44,11 @@ public:
 	inline void executeCPUManagerPolicy(
 		ComputePlace *cpu,
 		CPUManagerPolicyHint hint,
-		size_t numTasks = 0
+		size_t numRequested = 0
 	) {
 		assert(_cpuManagerPolicy != nullptr);
 
-		_cpuManagerPolicy->execute(cpu, hint, numTasks);
+		_cpuManagerPolicy->execute(cpu, hint, numRequested);
 	}
 
 	inline CPU *getCPU(size_t systemCPUId) const
@@ -69,6 +69,8 @@ public:
 	/*    CPUACTIVATION BRIDGE    */
 
 	CPU::activation_status_t checkCPUStatusTransitions(WorkerThread *thread);
+
+	void checkIfMustReturnCPU(WorkerThread *thread);
 
 	bool acceptsWork(CPU *cpu);
 

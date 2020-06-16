@@ -7,7 +7,6 @@
 #ifndef TASK_FINALIZATION_IMPLEMENTATION_HPP
 #define TASK_FINALIZATION_IMPLEMENTATION_HPP
 
-#include "CPUManager.hpp"
 #include "DataAccessRegistration.hpp"
 #include "MemoryAllocator.hpp"
 #include "TaskDataAccesses.hpp"
@@ -94,9 +93,6 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 		} else {
 			// An ancestor in a taskwait that finishes at this point
 			Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
-
-			// After adding a task, the CPUManager may want to unidle CPUs
-			CPUManager::executeCPUManagerPolicy(computePlace, ADDED_TASKS, 1);
 
 			ready = false;
 		}

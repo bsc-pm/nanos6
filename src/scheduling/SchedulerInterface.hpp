@@ -81,39 +81,9 @@ public:
 		}
 	}
 
-	//! \brief Check if the scheduler has available work for the current CPU
-	//!
-	//! \param[in] computePlace The host compute place
-	virtual bool hasAvailableWork(ComputePlace *computePlace)
+	virtual inline bool isServingTasks() const
 	{
-		assert(computePlace != nullptr);
-		nanos6_device_t computePlaceType = computePlace->getType();
-
-		if (computePlaceType == nanos6_host_device) {
-#ifdef EXTRAE_ENABLED
-			if (CPUManager::isFirstCPU(computePlace->getIndex())) {
-				if (_mainTask.load() != nullptr) {
-					return true;
-				}
-			}
-#endif
-			return _hostScheduler->hasAvailableWork(computePlace);
-		} else {
-			assert(computePlaceType != nanos6_cluster_device);
-			return _deviceSchedulers[computePlaceType]->hasAvailableWork(computePlace);
-		}
-	}
-
-	//! \brief Notify the scheduler that a CPU is about to be disabled
-	//! in case any tasks must be unassigned
-	//!
-	//! \param[in] cpuId The id of the cpu that will be disabled
-	//! \param[in] task A task assigned to the current thread or nullptr
-	//!
-	//! \return Whether work was reassigned upon disabling this CPU
-	inline bool disablingCPU(size_t cpuId, Task *task)
-	{
-		return _hostScheduler->disablingCPU(cpuId, task);
+		return _hostScheduler->isServingTasks();
 	}
 
 	virtual std::string getName() const = 0;

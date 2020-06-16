@@ -248,6 +248,11 @@ CPU::activation_status_t DLBCPUManager::checkCPUStatusTransitions(WorkerThread *
 	return DLBCPUActivation::checkCPUStatusTransitions(thread);
 }
 
+void DLBCPUManager::checkIfMustReturnCPU(WorkerThread *thread)
+{
+	DLBCPUActivation::checkIfMustReturnCPU(thread);
+}
+
 bool DLBCPUManager::acceptsWork(CPU *cpu)
 {
 	return DLBCPUActivation::acceptsWork(cpu);

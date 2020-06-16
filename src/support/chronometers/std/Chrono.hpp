@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CHRONO_STD_HPP
@@ -10,12 +10,12 @@
 #include <chrono>
 
 
-typedef std::chrono::steady_clock::time_point time_point_t;
 
 
 class Chrono {
 
 private:
+	typedef std::chrono::steady_clock::time_point time_point_t;
 
 	time_point_t _chrono;
 
@@ -75,6 +75,14 @@ public:
 		return _accumulated;
 	}
 
+	//! \brief Returns the current monotonic time
+	template<typename T, class TimeUnit = std::micro>
+	static inline T now()
+	{
+		typedef std::chrono::duration<T, TimeUnit> duration;
+		const auto now = std::chrono::steady_clock::now();
+		return std::chrono::duration_cast<duration>(now.time_since_epoch()).count();
+	}
 };
 
 #endif // CHRONO_STD_HPP

@@ -63,14 +63,13 @@ void WorkerThread::body()
 
 	CPU *cpu = getComputePlace();
 
-	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpu->getInstrumentationId(), _instrumentationId);
+	Instrument::ThreadInstrumentationContext instrumentationContext(
+		Instrument::task_id_t(),
+		cpu->getInstrumentationId(),
+		_instrumentationId);
 
-	// NOTE: If no tasks are available, the first time this happens the CPU
-	// will be dedicated to executing services. The second time it happens,
-	// it may become idle
 	// The WorkerThread will iterate until its CPU status signals that there is
 	// an ongoing shutdown and thus the thread must stop executing
-	bool mustHandleServices = true;
 	while (CPUManager::checkCPUStatusTransitions(this) != CPU::shutdown_status) {
 		// Update the CPU since the thread may have migrated
 		cpu = getComputePlace();
@@ -82,7 +81,6 @@ void WorkerThread::body()
 
 		_task = Scheduler::getReadyTask(cpu);
 		if (_task != nullptr) {
-			mustHandleServices = true;
 			WorkerThread *assignedThread = _task->getThread();
 
 			// A task already assigned to another thread
@@ -95,7 +93,7 @@ void WorkerThread::body()
 				// If the task is a taskfor, the CPUManager may want to unidle
 				// collaborators to help execute it
 				if (_task->isTaskfor()) {
-					CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, HANDLE_TASKFOR, 0);
+					CPUManager::executeCPUManagerPolicy(cpu, HANDLE_TASKFOR, 0);
 				}
 
 				if (_task->isIf0()) {
@@ -112,14 +110,13 @@ void WorkerThread::body()
 
 				_task = nullptr;
 			}
-		} else if (mustHandleServices) {
-			mustHandleServices = false;
-			PollingAPI::handleServices();
+			CPUManager::checkIfMustReturnCPU(this);
 		} else {
-			mustHandleServices = true;
+			// Execute polling services
+			PollingAPI::handleServices();
 
 			// If no task is available, the CPUManager may want to idle this CPU
-			CPUManager::executeCPUManagerPolicy((ComputePlace *) cpu, IDLE_CANDIDATE);
+			CPUManager::executeCPUManagerPolicy(cpu, IDLE_CANDIDATE);
 		}
 	}
 

@@ -1,12 +1,11 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef COMPUTE_PLACE_HPP
 #define COMPUTE_PLACE_HPP
-
 
 #include <map>
 #include <vector>
@@ -24,34 +23,46 @@ class MemoryPlace;
 class ComputePlace {
 private:
 	typedef std::map<int, MemoryPlace *> memory_places_t;
-	memory_places_t _memoryPlaces; // Accessible MemoryPlaces from this ComputePlace
-	//! Preallocated taskfor to be used as taskfor collaborator.
+
+	//! Accessible from this compute place
+	memory_places_t _memoryPlaces;
+
+	//! Preallocated taskfor to be used as taskfor collaborator
 	Taskfor *_preallocatedTaskfor;
-	//! Preallocated argsBlock to be used for taskfor collaborators.
+
+	//! Preallocated argsBlock for the taskfor collaborator
 	void *_preallocatedArgsBlock;
+
+	//! The size of the preallocated argsBlock
 	size_t _preallocatedArgsBlockSize;
-	
+
+	//! Whether this cpu is owned by the runtime
+	bool _owned;
+
 protected:
+	//! The index of the compute place
 	size_t _index;
+
+	//! The device type of the compute place
 	nanos6_device_t _type;
-	
+
+	//! The instrumentation id of the compute place
 	Instrument::compute_place_id_t _instrumentationId;
-	
+
+	//! The dependency data for this compute place
 	CPUDependencyData _dependencyData;
-	
+
 public:
-	void *_schedulerData;
-	
-	ComputePlace(int index, nanos6_device_t type);
-	
+	ComputePlace(int index, nanos6_device_t type, bool owned = true);
+
 	virtual ~ComputePlace();
-	
-	size_t getMemoryPlacesCount() const
+
+	inline size_t getMemoryPlacesCount() const
 	{
 		return _memoryPlaces.size();
 	}
-	
-	MemoryPlace *getMemoryPlace(int index)
+
+	inline MemoryPlace *getMemoryPlace(int index)
 	{
 		memory_places_t::iterator it = _memoryPlaces.find(index);
 		if (it != _memoryPlaces.end()) {
@@ -59,47 +70,57 @@ public:
 		}
 		return nullptr;
 	}
-	
+
 	//! \brief returns the preallocated taskfor of this ComputePlace.
 	inline Taskfor *getPreallocatedTaskfor()
 	{
 		return _preallocatedTaskfor;
 	}
-	
+
 	void *getPreallocatedArgsBlock(size_t requiredSize);
-	
+
 	inline int getIndex() const
 	{
 		return _index;
 	}
-	
+
 	inline void setIndex(int index)
 	{
 		_index = index;
 	}
-	
-	inline nanos6_device_t getType()
+
+	inline nanos6_device_t getType() const
 	{
 		return _type;
 	}
-	
+
+	inline bool isOwned() const
+	{
+		return _owned;
+	}
+
+	inline void setOwned(bool owned = true)
+	{
+		_owned = owned;
+	}
+
 	void addMemoryPlace(MemoryPlace *mem);
-	
+
 	std::vector<int> getMemoryPlacesIndexes();
-	
+
 	std::vector<MemoryPlace *> getMemoryPlaces();
-	
-	void setInstrumentationId(Instrument::compute_place_id_t const &instrumentationId)
+
+	inline void setInstrumentationId(Instrument::compute_place_id_t const &instrumentationId)
 	{
 		_instrumentationId = instrumentationId;
 	}
-	
-	Instrument::compute_place_id_t const &getInstrumentationId() const
+
+	inline Instrument::compute_place_id_t const &getInstrumentationId() const
 	{
 		return _instrumentationId;
 	}
-	
-	CPUDependencyData &getDependencyData()
+
+	inline CPUDependencyData &getDependencyData()
 	{
 		return _dependencyData;
 	}

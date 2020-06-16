@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 
 	nanos6_wait_for_full_initialization();
 
-	long activeCPUs = nanos6_get_num_cpus();
+	const long activeCPUs = nanos6_get_num_cpus();
 	tap.emitDiagnostic("Detected ", activeCPUs, " CPUs");
 
 	if (activeCPUs == 1) {
@@ -92,21 +92,19 @@ int main(int argc, char **argv) {
 	tap.emitDiagnostic("***  1 test   ***");
 	tap.emitDiagnostic("*****************");
 
-	long currentSystemCPU = nanos6_get_current_system_cpu();
-	int numLentCPUs = 0;
-	std::vector<bool> lentCPUs(activeCPUs, false);
-
 	Timer timer;
 	timer.start();
 
-	// Loop until almost all active CPUs are lent
-	while (numLentCPUs < (activeCPUs - 1)) {
+	// Loop until almost all active CPUs are lent. We take into
+	// account that the current CPU cannot be lent because we
+	// are running on it, but also the CPU that should be inside
+	// the scheduler serving tasks
+	int numLentCPUs;
+	do {
+		numLentCPUs = 0;
 		for (int i = 0; i < activeCPUs; ++i) {
-			if (i != currentSystemCPU && !lentCPUs[i]) {
-				if (nanos6_get_cpu_status(i) == nanos6_lent_cpu) {
-					lentCPUs[i] = true;
-					++numLentCPUs;
-				}
+			if (nanos6_get_cpu_status(i) == nanos6_lent_cpu) {
+				++numLentCPUs;
 			}
 		}
 
@@ -114,10 +112,10 @@ int main(int argc, char **argv) {
 		if (timer.lap() > 5000000) {
 			break;
 		}
-	}
+	} while (numLentCPUs < (activeCPUs - 2));
 
 	tap.evaluate(
-		numLentCPUs == (activeCPUs - 1),
+		numLentCPUs >= (activeCPUs - 2),
 		"Check that all unused CPUs are lent after a reasonable amount of time"
 	); // 3
 	tap.bailOutAndExitIfAnyFailed();
@@ -149,6 +147,7 @@ int main(int argc, char **argv) {
 			}
 		}
 	}
+	#pragma oss taskwait
 
 	tap.evaluate(
 		numActiveCPUs == activeCPUs,

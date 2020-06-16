@@ -11,45 +11,71 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	assert(computePlace != nullptr);
 
 	Task *task = nullptr;
-
-	uint64_t const currentComputePlaceIndex = computePlace->getIndex();
+	uint64_t computePlaceIndex = computePlace->getIndex();
 
 	// Subscribe to the lock
-	uint64_t const ticket = _lock.subscribeOrLock(currentComputePlaceIndex);
-
-	if (getAssignedTask(currentComputePlaceIndex, ticket, task)) {
-		// Someone got the lock and gave me work to do
+	uint64_t ticket = _lock.subscribeOrLock(computePlaceIndex);
+	if (getAssignedTask(computePlaceIndex, ticket, task)) {
+		// Someone got the lock and assigned work to do
 		return task;
 	}
 
-	// We acquired the lock and we move all tasks from addQueues to the ready queue
-	processReadyTasks();
+	// We acquired the lock so we have to serve tasks
+	setServingTasks(true);
+	ticket++;
 
-	uint64_t waitingComputePlaceIndex;
-	uint64_t i = ticket + 1;
+	// The idea is to always keep a compute place inside the following scheduling loop
+	// serving tasks to the rest of active compute places, except when there is work for
+	// all compute places. A compute place should stay inside the scheduler to check for
+	// deadline tasks but also for progressively resuming idle compute places when there
+	// is available work. However, device scheduler do not work like that because they
+	// already implement their progress engine using polling services. Also, external
+	// or compute places being disabled should not serve tasks for a long time
+	do {
+		size_t servedTasks = 0;
 
-	// Serve all the subscribers, while there is work to give them
-	while (_lock.popWaitingCPU(i, waitingComputePlaceIndex)) {
-		assert(waitingComputePlaceIndex < _totalComputePlaces);
+		// Move ready tasks from add queues to the unsynchronized scheduler
+		processReadyTasks();
 
-		ComputePlace *resultComputePlace = getComputePlace(_deviceType, waitingComputePlaceIndex);
-		assert(resultComputePlace != nullptr);
+		// Serve the subscribers that are waiting
+		while (servedTasks < _maxServedTasks && _lock.popWaitingCPU(ticket, computePlaceIndex)) {
+			assert(computePlaceIndex < _totalComputePlaces);
 
-		task = _scheduler->getReadyTask(resultComputePlace);
-		if (task == nullptr)
-			break;
+			ComputePlace *waitingComputePlace = getComputePlace(computePlaceIndex);
+			assert(waitingComputePlace != nullptr);
 
-		// Put a task into the subscriber slot
-		assignTask(waitingComputePlaceIndex, i, task);
+			// Try to get a ready task from the scheduler
+			task = _scheduler->getReadyTask(waitingComputePlace);
 
-		// Advance the ticket of the subscriber just served
-		_lock.unsubscribe();
-		i++;
-	}
+			// Assign the task to the subscriber slot even if it nullptr. The
+			// responsible for serving tasks is the current compute place, and
+			// we want to avoid changing the responsible constantly (as happened
+			// in the original implementation)
+			assignTask(computePlaceIndex, ticket, task);
+			servedTasks++;
 
-	// No more subscribers; try to get work for myself
-	task = _scheduler->getReadyTask(computePlace);
+			// Advance the ticket of the subscriber just served
+			_lock.unsubscribe();
+			ticket++;
+
+			if (task == nullptr)
+				break;
+		}
+
+		// No more subscribers; try to get work for myself
+		task = _scheduler->getReadyTask(computePlace);
+
+		// Keep serving while there is no work for the current compute
+		// place or it is external/disabling
+	} while (task == nullptr && !mustStopServingTasks(computePlace));
+
+	setServingTasks(false);
 	_lock.unsubscribe();
+
+	// Perform the required actions after stop serving tasks. In the case
+	// of the host scheduler it should resume idle compute places to guarantee
+	// that there is always a compute place serving tasks
+	postServingTasks(computePlace, task);
 
 	return task;
 }

@@ -11,7 +11,9 @@
 #include <vector>
 
 #include "hardware/places/ComputePlace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/ReadyQueue.hpp"
+#include "scheduling/ready-queues/DeadlineQueue.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -20,6 +22,7 @@ protected:
 	std::vector<Task *> _immediateSuccessorTasks;
 	std::vector<Task *> _immediateSuccessorTaskfors;
 	ReadyQueue *_readyTasks;
+	DeadlineQueue *_deadlineTasks;
 	bool _enableImmediateSuccessor;
 	bool _enablePriority;
 
@@ -37,7 +40,14 @@ public:
 	{
 		assert(task != nullptr);
 
-		bool unblocked = (hint == UNBLOCKED_TASK_HINT);
+		if (hint == DEADLINE_TASK_HINT) {
+			assert(task->hasDeadline());
+			assert(_deadlineTasks != nullptr);
+
+			_deadlineTasks->addReadyTask(task, true);
+			return;
+		}
+
 		if (_enableImmediateSuccessor) {
 			if (computePlace != nullptr && hint == SIBLING_TASK_HINT) {
 				size_t immediateSuccessorId = computePlace->getIndex();
@@ -55,11 +65,9 @@ public:
 					Task *currentIS2 = _immediateSuccessorTaskfors[immediateSuccessorId+1];
 					if (currentIS1 == nullptr) {
 						_immediateSuccessorTaskfors[immediateSuccessorId] = task;
-					}
-					else if (currentIS2 == nullptr) {
+					} else if (currentIS2 == nullptr) {
 						_immediateSuccessorTaskfors[immediateSuccessorId+1] = task;
-					}
-					else {
+					} else {
 						_readyTasks->addReadyTask(currentIS1, false);
 						_immediateSuccessorTaskfors[immediateSuccessorId] = task;
 					}
@@ -68,7 +76,7 @@ public:
 			}
 		}
 
-		_readyTasks->addReadyTask(task, unblocked);
+		_readyTasks->addReadyTask(task, hint == UNBLOCKED_TASK_HINT);
 	}
 
 	//! \brief Get a ready task for execution
@@ -77,39 +85,6 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
-
-	//! \brief Check if the scheduler has available work for the current CPU
-	//!
-	//! \param[in] computePlace The host compute place
-	virtual bool hasAvailableWork(ComputePlace *computePlace) = 0;
-
-	//! \brief Notify the scheduler that a CPU is about to be disabled
-	//! in case any tasks must be unassigned
-	//!
-	//! \param[in] cpuId The id of the cpu that will be disabled
-	//! \param[in] task A task assigned to the current thread or nullptr
-	//!
-	//! \return Whether work was reassigned upon disabling the CPU
-	inline bool disablingCPU(size_t cpuId, Task *task)
-	{
-		// If the current thread had a task assigned, readd it to the scheduler
-		if (task != nullptr) {
-			_readyTasks->addReadyTask(task, false);
-		}
-
-		if (_enableImmediateSuccessor) {
-			// Upon disabling a CPU, if its immediate successor slot was full
-			// place the task in the ready queue
-			Task *currentIS = _immediateSuccessorTasks[cpuId];
-			if (currentIS != nullptr) {
-				_immediateSuccessorTasks[cpuId] = nullptr;
-				_readyTasks->addReadyTask(currentIS, false);
-				return true;
-			}
-		}
-
-		return false;
-	}
 };
 
 

@@ -37,6 +37,7 @@ dlb_tests =
 if HAVE_NANOS6_MERCURIUM
 if BUILD_OPTIMIZED_VARIANT
 base_tests += \
+	scheduling-wait-for.test \
 	fibonacci.test \
 	dep-nonest.test \
 	dep-early-release.test \
@@ -130,6 +131,7 @@ endif
 
 if BUILD_DEBUG_VARIANTS
 base_tests +=  \
+	scheduling-wait-for.debug.test \
 	fibonacci.debug.test \
 	dep-nonest.debug.test \
 	dep-early-release.debug.test \
@@ -277,6 +279,15 @@ cuda_saxpy_test_SOURCES = cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxp
 cuda_saxpy_test_CPPFLAGS = -DNDEBUG
 cuda_saxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
 cuda_saxpy_test_LDFLAGS = $(test_common_ldflags) $(test_cuda_flags)
+
+scheduling_wait_for_debug_test_SOURCES = scheduling/scheduling-wait-for.cpp
+scheduling_wait_for_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+scheduling_wait_for_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+scheduling_wait_for_test_SOURCES = scheduling/scheduling-wait-for.cpp
+scheduling_wait_for_test_CPPFLAGS = -DNDEBUG
+scheduling_wait_for_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+scheduling_wait_for_test_LDFLAGS = $(test_common_debug_ldflags)
 
 fibonacci_debug_test_SOURCES = fibonacci/fibonacci.cpp
 fibonacci_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)

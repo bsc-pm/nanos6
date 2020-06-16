@@ -247,10 +247,11 @@ public:
 					HardwareCounters::cpuBecomesIdle();
 					Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-					if (Scheduler::hasAvailableWork((ComputePlace *) cpu)) {
-						// Work was just added, change to enabling, call dlbReclaimCPU
-						// to let DLB know that we want to use this CPU again and
-						// continue executing with the current thread.
+
+					if (!Scheduler::isServingTasks()) {
+						// No CPU is serving tasks in the scheduler, change to enabling,
+						// call dlbReclaimCPU to let DLB know that we want to use this
+						// CPU again and continue executing with the current thread.
 						// If we are the first to reclaim the CPU, the reclaim will set
 						// the CPU as ours within DLB and the thread will keep
 						// executing until checkCPUStatusTransitions.
@@ -347,19 +348,6 @@ public:
 		assert(CPU_COUNT(&maskCPUs) > 0);
 
 		dlbAcquireCPUs(maskCPUs);
-	}
-
-	//! \brief Check if we must return a CPU (and return it if we must)
-	//!
-	//! \param[in] cpu The CPU to return
-	//!
-	//! \return Whether the CPU was returned
-	static inline bool checkIfMustReturnCPU(CPU *cpu)
-	{
-		assert(cpu != nullptr);
-
-		int ret = dlbReturnCPU(cpu->getSystemCPUId());
-		return (ret == DLB_SUCCESS);
 	}
 
 	//! \brief Return an external CPU
@@ -509,19 +497,7 @@ public:
 						WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 						assert(currentThread != nullptr);
 						assert(currentThread->getComputePlace() == cpu);
-
-						// Unassign the current thread's task (if any)
-						Task *assignedTask = currentThread->unassignTask();
-
-						// Notify the scheduler about the disable in case any
-						// task assigned to this CPU must be unassigned
-						bool workReassigned = Scheduler::disablingCPU(systemCPUId, assignedTask);
-
-						// If any task was added to the scheduler, reclaim one
-						// CPU in case no other CPUs are available right now
-						if (workReassigned || assignedTask != nullptr) {
-							dlbReclaimCPUs(1);
-						}
+						assert(currentThread->getTask() == nullptr);
 
 						// The thread becomes idle
 						ThreadManager::addIdler(currentThread);
@@ -550,31 +526,10 @@ public:
 	{
 		assert(currentThread != nullptr);
 
-		CPU *cpu = currentThread->getComputePlace();
-		assert(cpu != nullptr);
-
-		// If the CPU is not owned check if it must be returned
-		if (!cpu->isOwned() && cpu->getActivationStatus() != CPU::shutdown_status) {
-			// At the start of the checkIfMustReturnCPU call, the CPU might
-			// already be returned, so we switch here to idle and switch
-			// back quickly to active if the CPU was not returned
-			HardwareCounters::cpuBecomesIdle();
-			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
-			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-
-			bool returned = checkIfMustReturnCPU(cpu);
-			if (!returned) {
-				// If the CPU wasn't returned, resume instrumentation, if
-				// it was, the appropriate thread will resume it
-				Instrument::resumedComputePlace(cpu->getInstrumentationId());
-				Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
-			}
-		}
-
 		CPU::activation_status_t currentStatus;
 		bool successful = false;
 		while (!successful) {
-			cpu = currentThread->getComputePlace();
+			CPU *cpu = currentThread->getComputePlace();
 			assert(cpu != nullptr);
 
 			currentStatus = cpu->getActivationStatus();
@@ -635,6 +590,36 @@ public:
 
 		// Return the current status, whether there was a change
 		return currentStatus;
+	}
+
+	//! \brief Check whether the CPU has to be returned
+	//! NOTE: This function must be run after executing a task and
+	//! before checking the status transitions of the CPU
+	//!
+	//! \param[in] thread The WorkerThread is currently checking
+	//! whether has to return the CPU it is running on
+	static inline void checkIfMustReturnCPU(WorkerThread *thread)
+	{
+		CPU *cpu = thread->getComputePlace();
+		assert(cpu != nullptr);
+
+		// If the CPU is not owned check if it must be returned
+		if (!cpu->isOwned() && cpu->getActivationStatus() != CPU::shutdown_status) {
+			// At the start of the checkIfMustReturnCPU call, the CPU might
+			// already be returned, so we switch here to idle and switch
+			// back quickly to active if the CPU was not returned
+			HardwareCounters::cpuBecomesIdle();
+			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+
+			int ret = dlbReturnCPU(cpu->getSystemCPUId());
+			if (ret != DLB_SUCCESS) {
+				// The CPU wasn't returned, so resume instrumentation. In case
+				// it was returned, the appropriate thread will resume it
+				Instrument::resumedComputePlace(cpu->getInstrumentationId());
+				Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
+			}
+		}
 	}
 
 	//! \brief Notify to a CPU that the runtime is shutting down

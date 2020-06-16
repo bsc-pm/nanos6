@@ -10,6 +10,7 @@
 #include <atomic>
 #include <bitset>
 #include <cassert>
+#include <cstdint>
 #include <string>
 
 #include <nanos6.h>
@@ -64,6 +65,8 @@ public:
 
 	typedef long priority_t;
 
+	typedef uint64_t deadline_t;
+
 private:
 	typedef std::bitset<total_flags> flags_t;
 
@@ -84,6 +87,9 @@ private:
 
 	//! Task priority
 	priority_t _priority;
+
+	//! Task deadline to start/resume in microseconds (zero by default)
+	deadline_t _deadline;
 
 	//! Scheduling hint used by the scheduler
 	ReadyTaskHint _schedulingHint;
@@ -340,6 +346,30 @@ public:
 		}
 		// Leave the default priority
 		return false;
+	}
+
+	//! \brief Indicates whether the task has deadline
+	//!
+	//! \returns whether the task has deadline
+	inline bool hasDeadline() const
+	{
+		return (_deadline > 0);
+	}
+
+	//! \brief Get the task deadline (us) to start/resume
+	//!
+	//! \returns the task deadline in us
+	inline deadline_t getDeadline() const
+	{
+		return _deadline;
+	}
+
+	//! \brief Set the task deadline (us) to start/resume
+	//!
+	//! \param deadline the new task deadline in us
+	inline void setDeadline(deadline_t deadline)
+	{
+		_deadline = deadline;
 	}
 
 	//! \brief Get the task scheduling hint
