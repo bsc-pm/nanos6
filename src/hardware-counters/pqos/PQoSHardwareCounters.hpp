@@ -26,6 +26,9 @@ private:
 	//! An enumeration containing the events that we monitor
 	enum pqos_mon_event _monitoredEvents;
 
+	//! The number of enabled counters (enabled by the user and available)
+	size_t _numEnabledCounters;
+
 public:
 
 	//! \brief Initializ the PQoS backend
@@ -45,6 +48,11 @@ public:
 	);
 
 	~PQoSHardwareCounters();
+
+	inline size_t getNumEnabledCounters() const override
+	{
+		return _numEnabledCounters;
+	}
 
 	void threadInitialized(ThreadHardwareCountersInterface *threadCounters) override;
 

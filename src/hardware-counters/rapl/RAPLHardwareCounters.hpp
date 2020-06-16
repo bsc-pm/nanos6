@@ -78,6 +78,11 @@ public:
 
 	~RAPLHardwareCounters();
 
+	inline size_t getNumEnabledCounters() const override
+	{
+		return 0;
+	}
+
 	inline void threadInitialized(ThreadHardwareCountersInterface *) override
 	{
 	}

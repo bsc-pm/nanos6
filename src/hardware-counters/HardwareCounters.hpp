@@ -48,9 +48,6 @@ private:
 	//! Whether each event is enabled
 	static std::map<HWCounters::counters_t, bool> _eventMap;
 
-	//! Number of enabled events per backend
-	static size_t _numEnabledEvents[HWCounters::NUM_BACKENDS];
-
 private:
 
 	//! \brief Load backend and counter enabling configuration from the default
@@ -96,11 +93,6 @@ public:
 	static inline const std::vector<HWCounters::counters_t> &getEnabledCounters()
 	{
 		return _enabledCounters;
-	}
-
-	static inline size_t getNumEnabledEvents(HWCounters::backends_t backend)
-	{
-		return _numEnabledEvents[backend];
 	}
 
 	//! \brief Initialize hardware counter structures for a new thread

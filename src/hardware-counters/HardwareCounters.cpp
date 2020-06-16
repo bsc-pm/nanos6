@@ -31,7 +31,6 @@ bool HardwareCounters::_anyBackendEnabled(false);
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
 std::vector<HWCounters::counters_t> HardwareCounters::_enabledCounters;
 std::map<HWCounters::counters_t, bool> HardwareCounters::_eventMap;
-size_t HardwareCounters::_numEnabledEvents[HWCounters::NUM_BACKENDS];
 
 
 void HardwareCounters::loadConfigurationFile()
@@ -61,7 +60,6 @@ void HardwareCounters::loadConfigurationFile()
 
 										_enabledCounters.push_back((HWCounters::counters_t) i);
 										_eventMap[(HWCounters::counters_t) i] = true;
-										_numEnabledEvents[HWCounters::PAPI_BACKEND]++;
 									}
 									assert(converted);
 								}
@@ -86,7 +84,6 @@ void HardwareCounters::loadConfigurationFile()
 
 										_enabledCounters.push_back((HWCounters::counters_t) i);
 										_eventMap[(HWCounters::counters_t) i] = true;
-										_numEnabledEvents[HWCounters::PQOS_BACKEND]++;
 									}
 									assert(converted);
 								}

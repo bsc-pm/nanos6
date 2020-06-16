@@ -137,6 +137,13 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 		eventMap[HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES] = false;
 	}
 
+	// Keep count of the final number of enabed (and available) events
+	for (size_t i = 0; i < enabledEvents.size(); ++i) {
+		if (enabledEvents[i] >= HWCounters::PQOS_MIN_EVENT && enabledEvents[i] <= HWCounters::PQOS_MAX_EVENT) {
+			++_numEnabledCounters;
+		}
+	}
+
 	// If none of the events can be monitored, trigger an early shutdown
 	_enabled = (_monitoredEvents != ((pqos_mon_event) 0));
 }

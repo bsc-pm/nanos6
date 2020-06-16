@@ -10,6 +10,7 @@
 #include <pqos.h>
 #include <vector>
 
+#include "PQoSHardwareCounters.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "hardware-counters/TaskHardwareCountersInterface.hpp"
@@ -154,7 +155,7 @@ public:
 	static inline size_t getTaskHardwareCountersSize()
 	{
 		// We need 2 times the number of events for the delta and accumulated values
-		const size_t numEvents = HardwareCounters::getNumEnabledEvents(HWCounters::PQOS_BACKEND);
+		const size_t numEvents = PQoSHardwareCounters::getNumEnabledEvents();
 		return (numEvents * 2 * sizeof(uint64_t));
 	}
 
