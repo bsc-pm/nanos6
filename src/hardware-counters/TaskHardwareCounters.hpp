@@ -27,12 +27,15 @@ private:
 	//! The base allocation address used to construct all the previous objects
 	void *_allocationAddress;
 
+	//! Whether monitoring of counters for this task is enabled
+	bool _enabled;
+
 private:
 
 	static inline size_t getPAPITaskHardwareCountersSize()
 	{
 #if HAVE_PAPI
-		return sizeof(PAPITaskHardwareCounters);
+		return sizeof(PAPITaskHardwareCounters) + PAPITaskHardwareCounters::getTaskHardwareCountersSize();
 #endif
 		return 0;
 	}
@@ -40,7 +43,7 @@ private:
 	static inline size_t getPQoSTaskHardwareCountersSize()
 	{
 #if HAVE_PQOS
-		return sizeof(PQoSTaskHardwareCounters);
+		return sizeof(PQoSTaskHardwareCounters) + PQoSTaskHardwareCounters::getTaskHardwareCountersSize();
 #endif
 		return 0;
 	}
@@ -48,54 +51,66 @@ private:
 public:
 
 	inline TaskHardwareCounters(void *allocationAddress) :
-		_allocationAddress(allocationAddress)
+		_allocationAddress(allocationAddress),
+		_enabled(false)
 	{
 	}
 
 	//! \brief Initialize and construct all backend objects with the previously allocated space
 	//!
 	//! \param[in] enabled Whether hardware counters are enabled for the task
-	inline void initialize(__attribute__((unused)) bool enabled)
+	inline void initialize(bool enabled)
 	{
-		// NOTE: Objects are constructed in this function, but they are freed when
-		// the task is freed (see TaskFinalizationImplementation.hpp)
+		_enabled = enabled;
+		if (_enabled) {
+			// NOTE: Objects are constructed in this function, but they are freed when
+			// the task is freed (see TaskFinalizationImplementation.hpp)
 
-		// Use a copy since we may need the original allocation address
-		__attribute__((unused)) void *currentAddress = _allocationAddress;
+			// Use a copy since we may need the original allocation address
+			__attribute__((unused)) void *currentAddress = _allocationAddress;
 #if HAVE_PAPI
-		if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
-			assert(currentAddress != nullptr);
+			if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
+				assert(currentAddress != nullptr);
 
-			new (currentAddress) PAPITaskHardwareCounters(enabled);
-			currentAddress = (char *) currentAddress + sizeof(PAPITaskHardwareCounters);
-		}
+				// Skip sizeof(PAPITaskHardwareCounters) for the inner address
+				void *innerAddress = (char *) currentAddress + sizeof(PAPITaskHardwareCounters);
+
+				new (currentAddress) PAPITaskHardwareCounters(innerAddress);
+				currentAddress = (char *) currentAddress + getPAPITaskHardwareCountersSize();
+			}
 #endif
 
 #if HAVE_PQOS
-		if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
-			assert(currentAddress != nullptr);
+			if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
+				assert(currentAddress != nullptr);
 
-			new (currentAddress) PQoSTaskHardwareCounters(enabled);
-			currentAddress = (char *) currentAddress + sizeof(PQoSTaskHardwareCounters);
-		}
+				// Skip sizeof(PQoStaskHardwareCounters) for the inner address
+				void *innerAddress = (char *) currentAddress + sizeof(PQoSTaskHardwareCounters);
+
+				new (currentAddress) PQoSTaskHardwareCounters(innerAddress);
+				currentAddress = (char *) currentAddress + getPQoSTaskHardwareCountersSize();
+			}
 #endif
+		}
 	}
 
 	//! \brief Destroy all backend objects
 	inline void shutdown()
 	{
-		TaskHardwareCountersInterface *papiCounters = getPAPICounters();
-		if (papiCounters != nullptr) {
+		if (_enabled) {
+			TaskHardwareCountersInterface *papiCounters = getPAPICounters();
+			if (papiCounters != nullptr) {
 #if HAVE_PAPI
-			((PAPITaskHardwareCounters *) papiCounters)->~PAPITaskHardwareCounters();
+				((PAPITaskHardwareCounters *) papiCounters)->~PAPITaskHardwareCounters();
 #endif
-		}
+			}
 
-		TaskHardwareCountersInterface *pqosCounters = getPQoSCounters();
-		if (pqosCounters != nullptr) {
+			TaskHardwareCountersInterface *pqosCounters = getPQoSCounters();
+			if (pqosCounters != nullptr) {
 #if HAVE_PQOS
-			((PQoSTaskHardwareCounters *) pqosCounters)->~PQoSTaskHardwareCounters();
+				((PQoSTaskHardwareCounters *) pqosCounters)->~PQoSTaskHardwareCounters();
 #endif
+			}
 		}
 	}
 
@@ -105,12 +120,20 @@ public:
 		return _allocationAddress;
 	}
 
+	//! \brief Check whether hardware counter monitoring is enabled for this task
+	inline bool isEnabled() const
+	{
+		return _enabled;
+	}
+
 	//! \brief Return the PAPI counters of the task (if it is enabled) or nullptr
 	inline TaskHardwareCountersInterface *getPAPICounters() const
 	{
 #if HAVE_PAPI
-		if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
-			return (TaskHardwareCountersInterface *) _allocationAddress;
+		if (_enabled) {
+			if (HardwareCounters::isBackendEnabled(HWCounters::PAPI_BACKEND)) {
+				return (TaskHardwareCountersInterface *) _allocationAddress;
+			}
 		}
 #endif
 		return nullptr;
@@ -120,14 +143,56 @@ public:
 	inline TaskHardwareCountersInterface *getPQoSCounters() const
 	{
 #if HAVE_PQOS
-		if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
-			void *papiCounters = getPAPICounters();
-			return (papiCounters == nullptr) ?
-				(TaskHardwareCountersInterface *) _allocationAddress :
-				(TaskHardwareCountersInterface *) ((char *) papiCounters + getPAPITaskHardwareCountersSize());
+		if (_enabled) {
+			if (HardwareCounters::isBackendEnabled(HWCounters::PQOS_BACKEND)) {
+				void *papiCounters = getPAPICounters();
+				return (papiCounters == nullptr) ?
+					(TaskHardwareCountersInterface *) _allocationAddress :
+					(TaskHardwareCountersInterface *) ((char *) papiCounters + getPAPITaskHardwareCountersSize());
+			}
 		}
 #endif
 		return nullptr;
+	}
+
+	//! \brief Get the delta value of a HW counter
+	//!
+	//! \param[in] counterType The type of counter to get the delta from
+	inline uint64_t getDelta(HWCounters::counters_t counterType)
+	{
+		if (_enabled) {
+			TaskHardwareCountersInterface *taskCounters = nullptr;
+			if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
+				taskCounters = getPAPICounters();
+			} else if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
+				taskCounters = getPQoSCounters();
+			}
+			assert(taskCounters != nullptr);
+
+			return taskCounters->getDelta(counterType);
+		}
+
+		return 0;
+	}
+
+	//! \brief Get the accumulated value of a HW counter
+	//!
+	//! \param[in] counterType The type of counter to get the accumulation from
+	inline uint64_t getAccumulated(HWCounters::counters_t counterType)
+	{
+		if (_enabled) {
+			TaskHardwareCountersInterface *taskCounters = nullptr;
+			if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
+				taskCounters = getPAPICounters();
+			} else if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
+				taskCounters = getPQoSCounters();
+			}
+			assert(taskCounters != nullptr);
+
+			return taskCounters->getAccumulated(counterType);
+		}
+
+		return 0;
 	}
 
 	//! \brief Get the size needed to construct all the structures for all backends
@@ -144,38 +209,6 @@ public:
 		}
 
 		return totalSize;
-	}
-
-	//! \brief Get the delta value of a HW counter
-	//!
-	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType)
-	{
-		TaskHardwareCountersInterface *taskCounters = nullptr;
-		if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
-			taskCounters = getPAPICounters();
-		} else if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
-			taskCounters = getPQoSCounters();
-		}
-		assert(taskCounters != nullptr);
-
-		return taskCounters->getDelta(counterType);
-	}
-
-	//! \brief Get the accumulated value of a HW counter
-	//!
-	//! \param[in] counterType The type of counter to get the accumulation from
-	inline uint64_t getAccumulated(HWCounters::counters_t counterType)
-	{
-		TaskHardwareCountersInterface *taskCounters = nullptr;
-		if (counterType >= HWCounters::PAPI_MIN_EVENT && counterType <= HWCounters::PAPI_MAX_EVENT) {
-			taskCounters = getPAPICounters();
-		} else if (counterType >= HWCounters::PQOS_MIN_EVENT && counterType <= HWCounters::PQOS_MAX_EVENT) {
-			taskCounters = getPQoSCounters();
-		}
-		assert(taskCounters != nullptr);
-
-		return taskCounters->getAccumulated(counterType);
 	}
 
 };

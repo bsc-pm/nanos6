@@ -4,6 +4,7 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
+#include <algorithm>
 #include <cassert>
 #include <sys/utsname.h>
 
@@ -16,7 +17,8 @@
 PQoSHardwareCounters::PQoSHardwareCounters(
 	bool,
 	const std::string &,
-	std::vector<HWCounters::counters_t> &enabledEvents
+	std::vector<HWCounters::counters_t> &enabledEvents,
+	std::map<HWCounters::counters_t, bool> &eventMap
 ) {
 	// Check if the PQoS version may give problems
 	utsname kernelInfo;
@@ -99,34 +101,40 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 	// Only choose events that are enabled by the user AND available
 	_monitoredEvents = (pqos_mon_event) (availableEvents & eventsToMonitor);
 
-	// Filter out, from the global vector of enabled events, those that are
-	// enabled by the user but not available in the system
+	// Filter out, from the global vector of enabled events and the event map
+	// those that are enabled by the user but not available in the system
 	// unavailableEvents = (availableEvents AND (NOT eventsToMonitor))
-	const enum pqos_mon_event unavailableEvents = (pqos_mon_event) (availableEvents & (~eventsToMonitor));
+	const enum pqos_mon_event unavailableEvents = (pqos_mon_event) ((~availableEvents) & eventsToMonitor);
 	if (unavailableEvents & PQOS_MON_EVENT_L3_OCCUP) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_L3_OCCUP);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
+		eventMap[HWCounters::PQOS_MON_EVENT_L3_OCCUP] = false;
 	} else if (unavailableEvents & PQOS_MON_EVENT_LMEM_BW) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_LMEM_BW);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
+		eventMap[HWCounters::PQOS_MON_EVENT_LMEM_BW] = false;
 	} else if (unavailableEvents & PQOS_MON_EVENT_RMEM_BW) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_RMEM_BW);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
+		eventMap[HWCounters::PQOS_MON_EVENT_RMEM_BW] = false;
 	} else if (unavailableEvents & PQOS_PERF_EVENT_LLC_MISS) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_LLC_MISS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
+		eventMap[HWCounters::PQOS_PERF_EVENT_LLC_MISS] = false;
 	} else if (unavailableEvents & PQOS_PERF_EVENT_IPC) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
+		eventMap[HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS] = false;
 
 		it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
+		eventMap[HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES] = false;
 	}
 
 	// If none of the events can be monitored, trigger an early shutdown
@@ -224,9 +232,7 @@ void PQoSHardwareCounters::readTaskCounters(
 		);
 
 		// Copy read values for Task counters
-		if (pqosTaskCounters->isEnabled()) {
-			pqosTaskCounters->readCounters(threadData);
-		}
+		pqosTaskCounters->readCounters(threadData);
 	}
 }
 

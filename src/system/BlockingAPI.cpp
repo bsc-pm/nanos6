@@ -105,14 +105,14 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	Task::deadline_t start = Chrono::now<Task::deadline_t>();
 	currentTask->setDeadline(start + timeout);
 
-	HardwareCounters::taskStopped(currentTask);
+	HardwareCounters::readTaskCounters(currentTask);
 
 	// Re-add the current task to the scheduler with a deadline
 	Scheduler::addReadyTask(currentTask, cpu, DEADLINE_TASK_HINT);
 
 	TaskBlocking::taskBlocks(currentThread, currentTask);
 
-	HardwareCounters::taskStarted(currentTask);
+	HardwareCounters::readCPUCounters();
 	Monitoring::taskChangedStatus(currentTask, executing_status);
 
 	// Update the CPU since the thread may have migrated

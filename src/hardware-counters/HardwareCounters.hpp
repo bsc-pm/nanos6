@@ -42,8 +42,14 @@ private:
 	//! Whether each backend is enabled
 	static std::vector<bool> _enabled;
 
-	//! Enabled events by the user
-	static std::vector<HWCounters::counters_t> _enabledEvents;
+	//! Enabled counters by the user
+	static std::vector<HWCounters::counters_t> _enabledCounters;
+
+	//! Whether each event is enabled
+	static std::map<HWCounters::counters_t, bool> _eventMap;
+
+	//! Number of enabled events per backend
+	static size_t _numEnabledEvents[HWCounters::NUM_BACKENDS];
 
 private:
 
@@ -78,10 +84,23 @@ public:
 		return _enabled[backend];
 	}
 
+	//! \brief Check whether an counter is enabled
+	//!
+	//! \param[in] counterType The counter's type
+	static inline bool isCounterEnabled(HWCounters::counters_t counterType)
+	{
+		return _eventMap[counterType];
+	}
+
 	//! \brief Out of all the supported events, get the currently enabled ones
 	static inline const std::vector<HWCounters::counters_t> &getEnabledCounters()
 	{
-		return _enabledEvents;
+		return _enabledCounters;
+	}
+
+	static inline size_t getNumEnabledEvents(HWCounters::backends_t backend)
+	{
+		return _numEnabledEvents[backend];
 	}
 
 	//! \brief Initialize hardware counter structures for a new thread

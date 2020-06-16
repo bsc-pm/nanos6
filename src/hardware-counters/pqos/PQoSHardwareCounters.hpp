@@ -7,11 +7,13 @@
 #ifndef PQOS_HARDWARE_COUNTERS_HPP
 #define PQOS_HARDWARE_COUNTERS_HPP
 
+#include <pqos.h>
+#include <vector>
+
 #include "hardware-counters/CPUHardwareCountersInterface.hpp"
 #include "hardware-counters/HardwareCountersInterface.hpp"
 #include "hardware-counters/TaskHardwareCountersInterface.hpp"
 #include "hardware-counters/ThreadHardwareCountersInterface.hpp"
-#include "tasks/Task.hpp"
 
 
 class PQoSHardwareCounters : public HardwareCountersInterface {
@@ -26,7 +28,21 @@ private:
 
 public:
 
-	PQoSHardwareCounters(bool, const std::string &, std::vector<HWCounters::counters_t> &enabledEvents);
+	//! \brief Initializ the PQoS backend
+	//!
+	//! \param[in] verbose Whether verbose mode is enabled
+	//! \param[in] verboseFile The file onto which to write verbose messages
+	//! \param[in,out] enabledEvents A vector with all the events enabled by the user,
+	//! which will be modified to disable those that are unavailable
+	//! \param[in,out] eventMap A map with every possible event and a bool indicating
+	//! whether it is enabled or not. Those that are enabled but not available will
+	//! be turned into false
+	PQoSHardwareCounters(
+		bool,
+		const std::string &,
+		std::vector<HWCounters::counters_t> &enabledEvents,
+		std::map<HWCounters::counters_t, bool> &eventMap
+	);
 
 	~PQoSHardwareCounters();
 

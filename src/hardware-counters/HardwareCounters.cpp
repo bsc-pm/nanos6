@@ -5,12 +5,9 @@
 */
 
 #include "CPUHardwareCounters.hpp"
-#include "CPUHardwareCountersInterface.hpp"
 #include "HardwareCounters.hpp"
 #include "TaskHardwareCounters.hpp"
-#include "TaskHardwareCountersInterface.hpp"
 #include "ThreadHardwareCounters.hpp"
-#include "ThreadHardwareCountersInterface.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/rapl/RAPLHardwareCounters.hpp"
 #include "support/JsonFile.hpp"
@@ -32,7 +29,9 @@ HardwareCountersInterface *HardwareCounters::_pqosBackend;
 HardwareCountersInterface *HardwareCounters::_raplBackend;
 bool HardwareCounters::_anyBackendEnabled(false);
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
-std::vector<HWCounters::counters_t> HardwareCounters::_enabledEvents;
+std::vector<HWCounters::counters_t> HardwareCounters::_enabledCounters;
+std::map<HWCounters::counters_t, bool> HardwareCounters::_eventMap;
+size_t HardwareCounters::_numEnabledEvents[HWCounters::NUM_BACKENDS];
 
 
 void HardwareCounters::loadConfigurationFile()
@@ -52,12 +51,17 @@ void HardwareCounters::loadConfigurationFile()
 
 						_enabled[HWCounters::PAPI_BACKEND] = enabled;
 						if (enabled) {
+							_anyBackendEnabled = true;
 							for (short i = HWCounters::PAPI_MIN_EVENT; i <= HWCounters::PAPI_MAX_EVENT; ++i) {
 								std::string eventDescription(HWCounters::counterDescriptions[i]);
 								if (backendNode.dataExists(eventDescription)) {
 									converted = false;
 									if (backendNode.getData(eventDescription, converted) == 1) {
-										_enabledEvents.push_back((HWCounters::counters_t) i);
+										assert(_eventMap[(HWCounters::counters_t) i] == false);
+
+										_enabledCounters.push_back((HWCounters::counters_t) i);
+										_eventMap[(HWCounters::counters_t) i] = true;
+										_numEnabledEvents[HWCounters::PAPI_BACKEND]++;
 									}
 									assert(converted);
 								}
@@ -72,12 +76,17 @@ void HardwareCounters::loadConfigurationFile()
 
 						_enabled[HWCounters::PQOS_BACKEND] = enabled;
 						if (enabled) {
+							_anyBackendEnabled = true;
 							for (short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
 								std::string eventDescription(HWCounters::counterDescriptions[i]);
 								if (backendNode.dataExists(eventDescription)) {
 									converted = false;
 									if (backendNode.getData(eventDescription, converted) == 1) {
-										_enabledEvents.push_back((HWCounters::counters_t) i);
+										assert(_eventMap[(HWCounters::counters_t) i] == false);
+
+										_enabledCounters.push_back((HWCounters::counters_t) i);
+										_eventMap[(HWCounters::counters_t) i] = true;
+										_numEnabledEvents[HWCounters::PQOS_BACKEND]++;
 									}
 									assert(converted);
 								}
@@ -91,6 +100,9 @@ void HardwareCounters::loadConfigurationFile()
 						assert(converted);
 
 						_enabled[HWCounters::RAPL_BACKEND] = enabled;
+						if (enabled) {
+							_anyBackendEnabled = true;
+						}
 					}
 				} else {
 					FatalErrorHandler::fail(
@@ -119,13 +131,6 @@ void HardwareCounters::preinitialize()
 	// Check if there's an incompatibility between backends
 	checkIncompatibleBackends();
 
-	for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-		if (_enabled[i]) {
-			_anyBackendEnabled = true;
-			break;
-		}
-	}
-
 	// If verbose is enabled and no backends are available, warn the user
 	if (!_anyBackendEnabled && _verbose.getValue()) {
 		FatalErrorHandler::warn("Hardware Counters verbose mode enabled but no backends available!");
@@ -136,7 +141,8 @@ void HardwareCounters::preinitialize()
 		_papiBackend = new PAPIHardwareCounters(
 			_verbose.getValue(),
 			_verboseFile.getValue(),
-			_enabledEvents
+			_enabledCounters,
+			_eventMap
 		);
 #else
 		FatalErrorHandler::warn("PAPI library not found, disabling hardware counters.");
@@ -150,7 +156,8 @@ void HardwareCounters::preinitialize()
 		_pqosBackend = new PQoSHardwareCounters(
 			_verbose.getValue(),
 			_verboseFile.getValue(),
-			_enabledEvents
+			_enabledCounters,
+			_eventMap
 		);
 #else
 		FatalErrorHandler::warn("PQoS library not found, disabling hardware counters.");

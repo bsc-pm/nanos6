@@ -15,7 +15,7 @@ class PAPITaskHardwareCounters : public TaskHardwareCountersInterface {
 
 public:
 
-	PAPITaskHardwareCounters(bool = true)
+	inline PAPITaskHardwareCounters(void *)
 	{
 	}
 
@@ -36,6 +36,12 @@ public:
 	//!
 	//! \param[in] counterType The type of counter to get the accumulation from
 	inline uint64_t getAccumulated(HWCounters::counters_t) override
+	{
+		return 0;
+	}
+
+	//! \brief Retreive the size needed for hardware counters
+	static inline size_t getTaskHardwareCountersSize()
 	{
 		return 0;
 	}

@@ -9,28 +9,28 @@
 
 #include <pqos.h>
 
-#include "PQoSTaskHardwareCounters.hpp"
 #include "hardware-counters/CPUHardwareCountersInterface.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 
 
 class PQoSCPUHardwareCounters : public CPUHardwareCountersInterface {
 
 private:
 
-	//! An array of regular HW counter deltas
-	size_t _regularCounters[SupportPQoS::num_regular_counters];
+	//! The array of hardware counter deltas
+	uint64_t _counters[HWCounters::PQOS_MAX_EVENT - HWCounters::PQOS_MIN_EVENT];
 
-	//! An array of accumulators of accumulating HW counters
-	SupportPQoS::counter_accumulator_t _accumulatingCounters[SupportPQoS::num_accumulating_counters];
+	//! Number of samples taken into account for the average of L3 occupancy
+	size_t _numSamples;
 
 public:
 
-	inline PQoSCPUHardwareCounters()
+	inline PQoSCPUHardwareCounters() :
+		_numSamples(0)
 	{
-		for (size_t id = 0; id < SupportPQoS::num_regular_counters; ++id) {
-			_regularCounters[id] = 0;
+		for (size_t id = 0; id < HWCounters::PQOS_MAX_EVENT - HWCounters::PQOS_MIN_EVENT; ++id) {
+			_counters[id] = 0;
 		}
 	}
 
@@ -39,40 +39,55 @@ public:
 	//! \param[in] data The pqos data from which to gather counters
 	inline void readCounters(const pqos_mon_data *data)
 	{
-		// For regular counters, the delta values in 'data' are reset from the
-		// thread and we only care about accumulating them when we stop reading
-		_regularCounters[SupportPQoS::mbm_local] = data->values.mbm_local_delta;
-		_regularCounters[SupportPQoS::mbm_remote] = data->values.mbm_remote_delta;
-		_regularCounters[SupportPQoS::llc_misses] = data->values.llc_misses_delta;
-		_regularCounters[SupportPQoS::ipc_retired] = data->values.ipc_retired_delta;
-		_regularCounters[SupportPQoS::ipc_unhalted] = data->values.ipc_unhalted_delta;
-
-		// For accumulating counters, we must accumulate at start and stop
-		_accumulatingCounters[SupportPQoS::llc_usage](data->values.llc);
+		// For regular counters, the delta values in 'data' are reset when
+		// needed, so we simply copy the new deltas. In the case of L3
+		// occupancy, we compute an average in-place
+		for (size_t id = HWCounters::PQOS_MIN_EVENT; id < HWCounters::PQOS_MAX_EVENT; ++id) {
+			if (HardwareCounters::isCounterEnabled((HWCounters::counters_t) id)) {
+				size_t innerId = id - HWCounters::PQOS_MIN_EVENT;
+				switch (id) {
+					case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
+						if (!_numSamples) {
+							++_numSamples;
+							_counters[innerId] = data->values.llc;
+						} else {
+							++_numSamples;
+							_counters[innerId] =
+								((double) _counters[innerId] * (_numSamples - 1) + data->values.llc) / _numSamples;
+						}
+						break;
+					case HWCounters::PQOS_MON_EVENT_LMEM_BW:
+						_counters[innerId] = data->values.mbm_local_delta;
+						break;
+					case HWCounters::PQOS_MON_EVENT_RMEM_BW:
+						_counters[innerId] = data->values.mbm_remote_delta;
+						break;
+					case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
+						_counters[innerId] = data->values.llc_misses_delta;
+						break;
+					case HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
+						_counters[innerId] = data->values.ipc_retired_delta;
+						break;
+					case HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES:
+						_counters[innerId] = data->values.ipc_unhalted_delta;
+						break;
+					default:
+						assert(false);
+				}
+			}
+		}
 	}
 
 	//! \brief Get the delta value of a hardware counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	inline size_t getDelta(HWCounters::counters_t counterType) override
+	inline uint64_t getDelta(HWCounters::counters_t counterType) override
 	{
-		switch (counterType) {
-			case HWCounters::PQOS_MON_EVENT_LMEM_BW:
-				return _regularCounters[SupportPQoS::mbm_local];
-			case HWCounters::PQOS_MON_EVENT_RMEM_BW:
-				return _regularCounters[SupportPQoS::mbm_remote];
-			case HWCounters::PQOS_PERF_EVENT_LLC_MISS:
-				return _regularCounters[SupportPQoS::llc_misses];
-			case HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
-				return _regularCounters[SupportPQoS::ipc_retired];
-			case HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES:
-				return _regularCounters[SupportPQoS::ipc_unhalted];
-			case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
-				return (size_t) BoostAcc::mean(_accumulatingCounters[SupportPQoS::llc_usage]);
-			default:
-				FatalErrorHandler::fail("Event with id '", counterType, "' not supported (PQoS)");
-				return 0.0;
-		}
+		assert(counterType >= HWCounters::PQOS_MIN_EVENT);
+		assert(counterType <= HWCounters::PQOS_MAX_EVENT);
+		assert(HardwareCounters::isCounterEnabled(counterType));
+
+		return _counters[counterType - HWCounters::PQOS_MIN_EVENT];
 	}
 
 };
