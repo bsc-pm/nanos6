@@ -63,66 +63,45 @@ static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string userPath)
 {
 	CPU *CPU;
-	ctf_cpu_id_t i;
 	ctf_cpu_id_t cpuId;
-	std::string streamPath;
+	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 	const size_t defaultBufferSize = 2*1024*1024;
 	//const size_t defaultBufferSize = 4096;
 	//std::cout << "WARNING: buffer size set to " << defaultBufferSize << std::endl;
-	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 
-	assert(defaultBufferSize % 2 == 0);
+	//TODO init kernel stream
 
-	// TODO can we place this initialization code somewhere else?
-	// maybe under CTFAPI or CTFTrace?
-	//
-	// TODO allocate memory on each CPU (madvise or specific
-	// instrument function?)
-
-	for (i = 0; i < totalCPUs; i++) {
-		CPU = CPUManager::getCPU(i);
-		cpuId = CPU->getSystemCPUId();
-		Instrument::CPULocalData &cpuLocalData = CPU->getInstrumentationData();
-
-		//TODO init kernel stream
-
-		CTFAPI::CTFStream *userStream = new CTFAPI::CTFStream;
-		userStream->initialize(defaultBufferSize, cpuId);
-		CTFAPI::addStreamHeader(userStream);
-		streamPath = userPath + "/channel_" + std::to_string(cpuId);
-		userStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
-		if (userStream->fdOutput == -1)
-			FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
-
-		cpuLocalData.userStream = userStream;
-	}
-
+	// create and register contexes for streams
 	CTFAPI::CTFContextUnbounded *context = new CTFAPI::CTFContextUnbounded();
 	userMetadata->addContext(context);
 
+	// Initialize Worker thread streams
+	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
+		CPU = CPUManager::getCPU(i);
+		cpuId = CPU->getSystemCPUId();
+		Instrument::CPULocalData &cpuLocalData = CPU->getInstrumentationData();
+		cpuLocalData.userStream = new CTFAPI::CTFStream(
+			defaultBufferSize, cpuId, userPath.c_str()
+		);
+	}
+
+	// Initialize Leader Thread Stream
 	cpuId = totalCPUs;
 	CPU = CPUManager::getLeaderThreadCPU();
 	Instrument::CPULocalData &leaderThreadCPULocalData = CPU->getInstrumentationData();
-	CTFAPI::CTFStreamUnboundedPrivate *unboundedPrivateStream = new CTFAPI::CTFStreamUnboundedPrivate();
+	CTFAPI::CTFStreamUnboundedPrivate *unboundedPrivateStream = new CTFAPI::CTFStreamUnboundedPrivate(
+		defaultBufferSize, cpuId, userPath.c_str()
+	);
 	unboundedPrivateStream->setContext(context);
-	unboundedPrivateStream->initialize(defaultBufferSize, cpuId);
-	CTFAPI::addStreamHeader(unboundedPrivateStream);
-	streamPath = userPath + "/channel_" + std::to_string(cpuId);
-	unboundedPrivateStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
-	if (unboundedPrivateStream->fdOutput == -1)
-		FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
 	leaderThreadCPULocalData.userStream = unboundedPrivateStream;
 
+	// Initialize External Threads Stream
 	cpuId = totalCPUs + 1;
 	Instrument::virtualCPULocalData = new Instrument::CPULocalData();
-	CTFAPI::CTFStreamUnboundedShared *unboundedSharedStream = new CTFAPI::CTFStreamUnboundedShared();
+	CTFAPI::CTFStreamUnboundedShared *unboundedSharedStream = new CTFAPI::CTFStreamUnboundedShared(
+		defaultBufferSize, cpuId, userPath.c_str()
+	);
 	unboundedSharedStream->setContext(context);
-	unboundedSharedStream->initialize(defaultBufferSize, cpuId);
-	CTFAPI::addStreamHeader(unboundedSharedStream);
-	streamPath = userPath + "/channel_" + std::to_string(cpuId);
-	unboundedSharedStream->fdOutput = open(streamPath.c_str(), O_WRONLY | O_TRUNC | O_CREAT, 0666);
-	if (unboundedSharedStream->fdOutput == -1)
-		FatalErrorHandler::failIf(true, std::string("Instrument: ctf: failed to open stream file: ") + strerror(errno));
 	Instrument::virtualCPULocalData->userStream = unboundedSharedStream;
 }
 
@@ -150,40 +129,33 @@ void Instrument::initialize()
 void Instrument::shutdown()
 {
 	CPU *CPU;
-	ctf_cpu_id_t i;
-	ctf_cpu_id_t totalCPUs;
+	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 
 	CTFAPI::greetings();
 
-	totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
-
-	for (i = 0; i < totalCPUs; i++) {
+	// Shutdown Worker thread streams
+	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		CPU = CPUManager::getCPU(i);
-
 		CTFAPI::CTFStream *userStream = CPU->getInstrumentationData().userStream;
-		userStream->flushAll();
-
 		userStream->shutdown();
-		close(userStream->fdOutput);
 		delete userStream;
 	}
 
+	// Shutdown Leader thread stream
 	CPU = CPUManager::getLeaderThreadCPU();
 	Instrument::CPULocalData &leaderThreadCPULocalData = CPU->getInstrumentationData();
 	CTFAPI::CTFStream *leaderThreadStream = leaderThreadCPULocalData.userStream;
-	leaderThreadStream->flushAll();
 	leaderThreadStream->shutdown();
-	close(leaderThreadStream->fdOutput);
 	delete leaderThreadStream;
 
+	// Shutdown External thread stream
 	CTFAPI::CTFStream *externalThreadStream = Instrument::virtualCPULocalData->userStream;
-	externalThreadStream->flushAll();
 	externalThreadStream->shutdown();
-	close(externalThreadStream->fdOutput);
 	delete externalThreadStream;
 	delete Instrument::virtualCPULocalData;
 
+	// move tracing files to final directory
 	trace.moveTemporalTraceToFinalDirectory();
 	trace.clean();
 }

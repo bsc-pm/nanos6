@@ -9,59 +9,80 @@
 
 #include <string>
 #include <cstdint>
-#include <string>
-#include <map>
 
+#include "CircularBuffer.hpp"
 #include "../CTFTypes.hpp"
 #include "../context/CTFContext.hpp"
 
 namespace CTFAPI {
 	class CTFStream {
-	public:
-		ctf_stream_id_t streamId;
-		char *buffer;
-		uint64_t bufferSize;
-		uint64_t subBufferSize;
-		uint64_t head;
-		uint64_t tail;
-		uint64_t mask;
-		uint64_t subBufferMask;
 
-		ctf_cpu_id_t cpuId;
-		int fdOutput;
-		off_t fileOffset;
+	private:
+		ctf_cpu_id_t    _cpuId;
+		ctf_stream_id_t _streamId;
+		CircularBuffer circularBuffer;
+
+		void addStreamHeader();
+
+	protected:
+		CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path,
+			  ctf_stream_id_t streamId);
+
+	public:
 		CTFContext *context;
 
-		CTFStream() : streamId(0), bufferSize(0), context(nullptr) {}
+		CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path)
+			: CTFStream(size, cpu, path, 0) {}
+
 		virtual ~CTFStream() {}
 
-		void initialize(size_t size, ctf_cpu_id_t cpu);
-		void shutdown(void);
-
-		void flushAll();
-		void flushFilledSubBuffers();
-		bool checkIfNeedsFlush();
-		bool checkFreeSpace(size_t size);
+		inline void shutdown()
+		{
+			circularBuffer.shutdown();
+		}
 
 		virtual void lock() {}
 		virtual void unlock() {}
 		virtual void writeContext(__attribute__((unused)) void **buf) {}
 
-		virtual size_t getContextSize(void) const
+		virtual size_t getContextSize() const
 		{
 			return 0;
 		}
 
-		void setContext(CTFContext *ctfcontext)
+		inline void setContext(CTFContext *ctfcontext)
 		{
 			context = ctfcontext;
 		}
 
-	private:
-		void *mrb;
-		size_t mrbSize;
+		inline bool alloc(uint64_t size)
+		{
+			return circularBuffer.alloc(size);
+		}
 
-		void doWrite(int fd, const char *buf, size_t size);
+		inline void *getBuffer()
+		{
+			return circularBuffer.getBuffer();
+		}
+
+		inline void submit(uint64_t size)
+		{
+			circularBuffer.submit(size);
+		}
+
+		inline bool checkIfNeedsFlush() {
+			return circularBuffer.checkIfNeedsFlush();
+		}
+
+		inline void flushFilledSubBuffers()
+		{
+			circularBuffer.flushFilledSubBuffers();
+		}
+
+		inline void flushAll()
+		{
+			circularBuffer.flushAll();
+		}
 	};
 }
 

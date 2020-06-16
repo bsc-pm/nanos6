@@ -17,7 +17,12 @@ namespace CTFAPI {
 		SpinLock spinlock;
 
 	public:
-		CTFStreamUnboundedShared() : CTFStreamUnboundedPrivate() {}
+		CTFStreamUnboundedShared(size_t size,
+					  ctf_cpu_id_t cpu,
+					  std::string path)
+			: CTFStreamUnboundedPrivate(size, cpu, path)
+		{}
+
 		~CTFStreamUnboundedShared() {}
 
 		void lock()

@@ -56,57 +56,9 @@ void CTFAPI::mk_event_header(char **buf, uint64_t timestamp, uint8_t id)
 	*buf += sizeof(struct event_header);
 }
 
-static int mk_packet_header(char *buf, uint64_t *head, ctf_stream_id_t streamId)
-{
-	struct __attribute__((__packed__)) packet_header {
-		uint32_t magic;
-		ctf_stream_id_t stream_id;
-	};
-
-	const int pks = sizeof(struct packet_header);
-	struct packet_header *pk;
-
-	pk = (struct packet_header *) &buf[*head];
-	*pk = (struct packet_header) {
-		.magic = 0xc1fc1fc1,
-		.stream_id = streamId
-	};
-
-	*head += pks;
-
-	return 0;
-}
-
-static int mk_packet_context(char *buf, size_t *head, ctf_cpu_id_t cpu_id)
-{
-	struct __attribute__((__packed__)) packet_context {
-		ctf_cpu_id_t cpu_id;
-	};
-
-	const int pks = sizeof(struct packet_context);
-	struct packet_context *pk;
-
-	pk = (struct packet_context *) &buf[*head];
-	*pk = (struct packet_context) {
-		.cpu_id = cpu_id,
-	};
-
-	*head += pks;
-
-	return 0;
-}
-
 void CTFAPI::greetings(void)
 {
 	std::cout << "!!!!!!!!!!!!!!!!CTF API UP & Running!!!!!!!!!!!!!!!!" << std::endl;
-}
-
-void CTFAPI::addStreamHeader(CTFAPI::CTFStream *stream)
-{
-	// we don't need to mask the head because the buffer is at least 1 page
-	// long and at this point it's empty
-	mk_packet_header (stream->buffer, &stream->head, stream->streamId);
-	mk_packet_context(stream->buffer, &stream->head, stream->cpuId);
 }
 
 void CTFAPI::writeFlushingTracepoint(CTFStream *stream,
@@ -117,7 +69,15 @@ void CTFAPI::writeFlushingTracepoint(CTFStream *stream,
 	__tp_lock(stream, __eventCTFFlush, timestamp, tsBefore, tsAfter);
 }
 
-void CTFAPI::flushBuffer(CTFStream *stream,
+void CTFAPI::flushAll(CTFStream *stream,
+			 uint64_t *tsBefore, uint64_t *tsAfter)
+{
+	*tsBefore = getRelativeTimestamp();
+	stream->flushAll();
+	*tsAfter = getRelativeTimestamp();
+}
+
+void CTFAPI::flushSubBuffers(CTFStream *stream,
 			 uint64_t *tsBefore, uint64_t *tsAfter)
 {
 	*tsBefore = getRelativeTimestamp();
@@ -132,7 +92,7 @@ void CTFAPI::flushCurrentVirtualCPUBufferIfNeeded()
 
 	stream->lock();
 	if (stream->checkIfNeedsFlush()) {
-		flushBuffer(stream, &tsBefore, &tsAfter);
+		flushSubBuffers(stream, &tsBefore, &tsAfter);
 		writeFlushingTracepoint(stream, tsBefore, tsAfter);
 	}
 	stream->unlock();

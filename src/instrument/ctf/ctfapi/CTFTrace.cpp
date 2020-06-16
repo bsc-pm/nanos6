@@ -98,7 +98,8 @@ static int remove_cb(const char *fpath,
 		     __attribute__((unused)) struct FTW *ftwbuf
 ) {
 	int rv;
-	if (rv = remove(fpath))
+	rv = remove(fpath);
+	if (rv)
 		std::cerr << "Warning: ctf: Failed to remove " << fpath << std::endl;
 	return rv;
 }

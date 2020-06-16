@@ -28,14 +28,14 @@ namespace CTFAPI {
 	};
 
 	void greetings(void);
-	void addStreamHeader(CTFStream *stream);
 	void flushCurrentVirtualCPUBufferIfNeeded();
 
 	// TODO isolate these into CTFAPI::core namespace
 	uint64_t getTimestamp();
 	uint64_t getRelativeTimestamp();
 	void mk_event_header(char **buf, uint64_t timestamp, uint8_t id);
-	void flushBuffer(CTFStream *stream, uint64_t *before, uint64_t *after);
+	void flushAll(CTFStream *stream, uint64_t *before, uint64_t *after);
+	void flushSubBuffers(CTFStream *stream, uint64_t *before, uint64_t *after);
 	void writeFlushingTracepoint(CTFStream *stream,
 				      uint64_t tsBefore, uint64_t tsAfter);
 
@@ -120,13 +120,13 @@ namespace CTFAPI {
 				    ARGS... args)
 	{
 		const uint8_t tracepointId = event->getEventId();
-		void *buf = stream->buffer + (stream->head & stream->mask);
+		void *buf = stream->getBuffer();
 
 		mk_event_header((char **) &buf, timestamp, tracepointId);
 		stream->writeContext(&buf);
 		event->writeContext(&buf);
 		tp_write_args(&buf, args...);
-		stream->head += size;
+		stream->submit(size);
 	}
 
 	template<typename... ARGS>
@@ -137,18 +137,19 @@ namespace CTFAPI {
 	{
 		size_t size;
 		bool needsFlush;
-		uint64_t tsBefore, tsAfter;
+		uint64_t tsBefore = 0;
+		uint64_t tsAfter  = 0;
 
 		// calculate the total size of this tracepoint
 		size = eventSize(stream, event, args...);
 
 		// check if there is enough free space to write this tracepoint
-		needsFlush = !stream->checkFreeSpace(size);
+		needsFlush = !stream->alloc(size);
 
 		// if not, flush buffers first and record when the flushing
 		// started and finished
 		if (needsFlush)
-			flushBuffer(stream, &tsBefore, &tsAfter);
+			flushAll(stream, &tsBefore, &tsAfter);
 
 		// write the tracepoint (notice that we took this tracepoint
 		// timestamp before any flushing was possibly made)

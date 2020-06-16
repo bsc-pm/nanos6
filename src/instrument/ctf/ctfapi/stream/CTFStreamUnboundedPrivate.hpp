@@ -15,9 +15,11 @@
 namespace CTFAPI {
 	class CTFStreamUnboundedPrivate : public CTFStream {
 	public:
-		CTFStreamUnboundedPrivate() : CTFStream()
+		CTFStreamUnboundedPrivate(size_t size,
+					  ctf_cpu_id_t cpu,
+					  std::string path)
+			: CTFStream(size, cpu, path, 1)
 		{
-			streamId = 1;
 		}
 
 		~CTFStreamUnboundedPrivate() {}
