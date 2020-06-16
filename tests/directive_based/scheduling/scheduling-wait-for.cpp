@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 	for (int t = 0; t < numRegularTasks; ++t) {
 		#pragma oss task
 		{
-			usleep(1000);
+			usleep(200);
 		}
 	}
 	#pragma oss taskwait
