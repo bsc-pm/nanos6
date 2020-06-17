@@ -111,19 +111,23 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_L3_OCCUP);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-	} else if (unavailableEvents & PQOS_MON_EVENT_LMEM_BW) {
+	}
+	if (unavailableEvents & PQOS_MON_EVENT_LMEM_BW) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_LMEM_BW);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-	} else if (unavailableEvents & PQOS_MON_EVENT_RMEM_BW) {
+	}
+	if (unavailableEvents & PQOS_MON_EVENT_RMEM_BW) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_RMEM_BW);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-	} else if (unavailableEvents & PQOS_PERF_EVENT_LLC_MISS) {
+	}
+	if (unavailableEvents & PQOS_PERF_EVENT_LLC_MISS) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_LLC_MISS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-	} else if (unavailableEvents & PQOS_PERF_EVENT_IPC) {
+	}
+	if (unavailableEvents & PQOS_PERF_EVENT_IPC) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
