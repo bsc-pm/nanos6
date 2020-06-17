@@ -64,7 +64,7 @@ void nanos6_create_task(
 	if (currentWorkerThread != nullptr) {
 		parent = currentWorkerThread->getTask();
 		if (parent != nullptr) {
-			HardwareCounters::readTaskCounters(parent);
+			HardwareCounters::updateTaskCounters(parent);
 			Monitoring::taskChangedStatus(parent, runtime_status);
 		}
 	}
@@ -233,7 +233,7 @@ void nanos6_submit_task(void *taskHandle)
 	}
 
 	if (parent != nullptr) {
-		HardwareCounters::readCPUCounters();
+		HardwareCounters::updateRuntimeCounters();
 		Monitoring::taskChangedStatus(parent, executing_status);
 	}
 

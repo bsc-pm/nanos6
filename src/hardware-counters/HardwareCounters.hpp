@@ -101,13 +101,13 @@ public:
 	//! \param[out] task The task to reinitialize structures for
 	static void taskReinitialized(Task *task);
 
-	//! \brief Read hardware counters for a task
+	//! \brief Read and update hardware counters for a task
 	//!
 	//! \param[out] task The task to read hardware counters for
-	static void readTaskCounters(Task *task);
+	static void updateTaskCounters(Task *task);
 
-	//! \brief Read hardware counters for the current CPU
-	static void readCPUCounters();
+	//! \brief Read and update hardware counters for the runtime (current CPU)
+	static void updateRuntimeCounters();
 
 };
 

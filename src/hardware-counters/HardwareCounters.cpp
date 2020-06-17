@@ -267,7 +267,7 @@ void HardwareCounters::taskReinitialized(Task *task)
 	}
 }
 
-void HardwareCounters::readTaskCounters(Task *task)
+void HardwareCounters::updateTaskCounters(Task *task)
 {
 	if (_anyBackendEnabled) {
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
@@ -279,7 +279,7 @@ void HardwareCounters::readTaskCounters(Task *task)
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
-			_papiBackend->readTaskCounters(
+			_papiBackend->updateTaskCounters(
 				threadCounters.getPAPICounters(),
 				taskCounters.getPAPICounters()
 			);
@@ -288,7 +288,7 @@ void HardwareCounters::readTaskCounters(Task *task)
 		if (_enabled[HWCounters::PQOS_BACKEND]) {
 			assert(_pqosBackend != nullptr);
 
-			_pqosBackend->readTaskCounters(
+			_pqosBackend->updateTaskCounters(
 				threadCounters.getPQoSCounters(),
 				taskCounters.getPQoSCounters()
 			);
@@ -296,7 +296,7 @@ void HardwareCounters::readTaskCounters(Task *task)
 	}
 }
 
-void HardwareCounters::readCPUCounters()
+void HardwareCounters::updateRuntimeCounters()
 {
 	if (_anyBackendEnabled) {
 		WorkerThread *thread = WorkerThread::getCurrentWorkerThread();
@@ -310,7 +310,7 @@ void HardwareCounters::readCPUCounters()
 		if (_enabled[HWCounters::PAPI_BACKEND]) {
 			assert(_papiBackend != nullptr);
 
-			_papiBackend->readCPUCounters(
+			_papiBackend->updateRuntimeCounters(
 				cpuCounters.getPAPICounters(),
 				threadCounters.getPAPICounters()
 			);
@@ -319,7 +319,7 @@ void HardwareCounters::readCPUCounters()
 		if (_enabled[HWCounters::PQOS_BACKEND]) {
 			assert(_pqosBackend != nullptr);
 
-			_pqosBackend->readCPUCounters(
+			_pqosBackend->updateRuntimeCounters(
 				cpuCounters.getPQoSCounters(),
 				threadCounters.getPQoSCounters()
 			);

@@ -36,20 +36,20 @@ public:
 	//! \param[out] taskCounters The hardware counter structure to reinitialize
 	virtual void taskReinitialized(TaskHardwareCountersInterface *taskCounters) = 0;
 
-	//! \brief Read hardware counters for a task
+	//! \brief Update and read hardware counters for a task
 	//!
 	//! \param[out] threadCounters The hardware counter structures of the thread executing the task
 	//! \param[out] taskCounters The hardware counter structure of the task to start
-	virtual void readTaskCounters(
+	virtual void updateTaskCounters(
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	) = 0;
 
-	//! \brief Accumulate hardware counters for a CPU
+	//! \brief Update and read hardware counters for the runtime (current CPU)
 	//!
 	//! \param[out] cpuCounters The hardware counter structures of the CPU
 	//! \param[out] threadCounters The hardware counter structures of the thread
-	virtual void readCPUCounters(
+	virtual void updateRuntimeCounters(
 		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters
 	) = 0;

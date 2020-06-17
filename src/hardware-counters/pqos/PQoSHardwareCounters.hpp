@@ -98,12 +98,12 @@ public:
 
 	void taskReinitialized(TaskHardwareCountersInterface *taskCounters) override;
 
-	void readTaskCounters(
+	void updateTaskCounters(
 		ThreadHardwareCountersInterface *threadCounters,
 		TaskHardwareCountersInterface *taskCounters
 	) override;
 
-	void readCPUCounters(
+	void updateRuntimeCounters(
 		CPUHardwareCountersInterface *cpuCounters,
 		ThreadHardwareCountersInterface *threadCounters
 	) override;

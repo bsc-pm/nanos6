@@ -232,7 +232,7 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 		return false;
 	}
 
-	HardwareCounters::readCPUCounters();
+	HardwareCounters::updateRuntimeCounters();
 	Monitoring::cpuBecomesIdle(index);
 	Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 

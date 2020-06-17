@@ -90,13 +90,13 @@ public:
 	{
 	}
 
-	inline void readTaskCounters(
+	inline void updateTaskCounters(
 		ThreadHardwareCountersInterface *,
 		TaskHardwareCountersInterface *
 	) override {
 	}
 
-	inline void readCPUCounters(
+	inline void updateRuntimeCounters(
 		CPUHardwareCountersInterface *,
 		ThreadHardwareCountersInterface *
 	) override {

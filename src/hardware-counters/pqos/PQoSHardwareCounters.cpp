@@ -222,7 +222,7 @@ void PQoSHardwareCounters::taskReinitialized(TaskHardwareCountersInterface *task
 	}
 }
 
-void PQoSHardwareCounters::readTaskCounters(
+void PQoSHardwareCounters::updateTaskCounters(
 	ThreadHardwareCountersInterface *threadCounters,
 	TaskHardwareCountersInterface *taskCounters
 ) {
@@ -246,7 +246,7 @@ void PQoSHardwareCounters::readTaskCounters(
 	}
 }
 
-void PQoSHardwareCounters::readCPUCounters(
+void PQoSHardwareCounters::updateRuntimeCounters(
 	CPUHardwareCountersInterface *cpuCounters,
 	ThreadHardwareCountersInterface *threadCounters
 ) {

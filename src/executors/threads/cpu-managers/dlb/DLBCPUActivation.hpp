@@ -244,7 +244,7 @@ public:
 					// the CPU we've just lent should be re-acquired
 					dlbLendCPU(cpu->getSystemCPUId());
 
-					HardwareCounters::readCPUCounters();
+					HardwareCounters::updateRuntimeCounters();
 					Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
@@ -358,7 +358,7 @@ public:
 		assert(cpu != nullptr);
 		assert(!cpu->isOwned());
 
-		HardwareCounters::readCPUCounters();
+		HardwareCounters::updateRuntimeCounters();
 		Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 		Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
@@ -608,7 +608,7 @@ public:
 			// At the start of the checkIfMustReturnCPU call, the CPU might
 			// already be returned, so we switch here to idle and switch
 			// back quickly to active if the CPU was not returned
-			HardwareCounters::readCPUCounters();
+			HardwareCounters::updateRuntimeCounters();
 			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
 			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
