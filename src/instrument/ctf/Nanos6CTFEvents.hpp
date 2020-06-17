@@ -24,7 +24,7 @@ namespace Instrument {
 	void tp_thread_shutdown(ctf_thread_id_t tid);
 	void tp_worker_enter_busy_wait();
 	void tp_worker_exit_busy_wait();
-	void tp_task_label(char *taskLabel, ctf_task_type_id_t taskTypeId);
+	void tp_task_label(const char *taskLabel, const char *taskSource, ctf_task_type_id_t taskTypeId);
 	void tp_task_execute(ctf_task_id_t taskId);
 	void tp_task_add(ctf_task_type_id_t taskTypeId, ctf_task_id_t taskId);
 	void tp_task_block(ctf_task_id_t taskId);

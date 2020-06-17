@@ -11,6 +11,8 @@
 #include "lowlevel/SpinLock.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/TaskInfo.hpp"
+#include "InstrumentAddTask.hpp"
 
 #include <cassert>
 #include <map>
@@ -88,6 +90,10 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 			taskInfo->implementations[0].get_constraints = nullptr;
 		}
 	}
+
+	bool newTaskType = TaskInfo::registerTaskInfo(taskInfo);
+	if (newTaskType)
+		Instrument::registeredNewSpawnedTaskType(taskInfo);
 
 	SpawnedFunctionArgsBlock *argsBlock = nullptr;
 	Task *task = nullptr;

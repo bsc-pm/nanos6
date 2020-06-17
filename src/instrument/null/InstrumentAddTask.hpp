@@ -59,6 +59,11 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
+
+	inline void registeredNewSpawnedTaskType(
+		__attribute__((unused)) nanos6_task_info_t *taskInfo
+	) {
+	}
 }
 
 

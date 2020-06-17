@@ -61,26 +61,27 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	eventTaskLabel = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_label",
 		"\t\tstring _label;\n"
-		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
+		"\t\tstring _source;\n"
+		"\t\tuint16_t _type;\n"
 	));
 	eventTaskAdd = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_add",
-		"\t\tinteger { size = 16; align = 8; signed = 0; encoding = none; base = 10; } _type;\n"
-		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n"
+		"\t\tuint16_t _type;\n"
+		"\t\tuint32_t _id;\n"
 	));
 	eventTaskExecute = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_execute",
-		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
+		"\t\tuint32_t _id;\n",
 		CTFAPI::CTFContextHWC
 	));
 	eventTaskBlock = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_block",
-		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
+		"\t\tuint32_t _id;\n",
 		CTFAPI::CTFContextHWC
 	));
 	eventTaskEnd = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_end",
-		"\t\tinteger { size = 32; align = 8; signed = 0; encoding = none; base = 10; } _id;\n",
+		"\t\tuint32_t _id;\n",
 		CTFAPI::CTFContextHWC
 	));
 }
@@ -143,12 +144,12 @@ void Instrument::tp_worker_exit_busy_wait()
 	CTFAPI::tracepoint(eventWorkerExitBusyWait, dummy);
 }
 
-void Instrument::tp_task_label(char *taskLabel, ctf_task_type_id_t taskTypeId)
+void Instrument::tp_task_label(const char *taskLabel, const char *taskSource, ctf_task_type_id_t taskTypeId)
 {
 	if (!eventTaskLabel->isEnabled())
 		return;
 
-	CTFAPI::tracepoint(eventTaskLabel, taskLabel, taskTypeId);
+	CTFAPI::tracepoint(eventTaskLabel, taskLabel, taskSource, taskTypeId);
 }
 
 void Instrument::tp_task_execute(ctf_task_id_t taskId)

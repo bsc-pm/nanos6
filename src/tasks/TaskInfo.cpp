@@ -14,7 +14,7 @@ SpinLock TaskInfo::_lock;
 std::atomic<size_t> TaskInfo::_numUnlabeledTasktypes(0);
 
 
-void TaskInfo::registerTaskInfo(nanos6_task_info_t *taskInfo)
+bool TaskInfo::registerTaskInfo(nanos6_task_info_t *taskInfo)
 {
 	assert(taskInfo != nullptr);
 	assert(taskInfo->implementations != nullptr);
@@ -51,4 +51,7 @@ void TaskInfo::registerTaskInfo(nanos6_task_info_t *taskInfo)
 	// Save a reference of this task type in the task info
 	task_type_map_t::iterator it = emplacedElement.first;
 	taskInfo->task_type_data = &(it->second);
+
+	// true if new element, false if already existed
+	return emplacedElement.second;
 }

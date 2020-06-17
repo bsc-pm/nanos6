@@ -51,6 +51,11 @@ namespace Instrument {
 	inline void exitAddTaskforCollaborator(task_id_t, task_id_t, InstrumentationContext const &)
 	{
 	}
+
+	inline void registeredNewSpawnedTaskType(
+		__attribute__((unused)) nanos6_task_info_t *taskInfo
+	) {
+	}
 }
 
 

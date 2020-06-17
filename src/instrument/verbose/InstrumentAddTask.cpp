@@ -132,4 +132,9 @@ namespace Instrument {
 	) {
 		// Verbose instrumentation does not instrument task fors
 	}
+
+	void registeredNewSpawnedTaskType(
+		__attribute__((unused)) nanos6_task_info_t *taskInfo
+	) {
+	}
 }

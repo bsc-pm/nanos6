@@ -10,23 +10,13 @@
 #include <nanos6.h>
 #include <atomic>
 #include <cstdint>
-#include <map>
-
-#include <lowlevel/SpinLock.hpp>
 
 namespace Instrument {
-	//! This is the default task identifier for the instrumentation.
-	//! It should be redefined in an identically named file within each instrumentation implementation.
-	// TODO remove me when the new task registration API is in use
-	typedef std::map <nanos6_task_info_t *, uint16_t>  taskLabelMap_t;
-	typedef std::pair<taskLabelMap_t::iterator, bool>  taskLabelMapEntry_t;
-
-	extern std::atomic<uint32_t> _nextTaskId;
-	extern uint32_t _nextTaskTypeId;
-	extern taskLabelMap_t globalTaskLabelMap;
-	extern SpinLock globalTaskLabelLock;
 
 	struct task_id_t {
+	private:
+		static std::atomic<uint32_t> _nextTaskId;
+	public:
 		uint32_t _taskId; // TODO use the ctf typedef for task id
 		task_id_t() {}
 
@@ -40,10 +30,6 @@ namespace Instrument {
 			_taskId = _nextTaskId++;
 		}
 	};
-
-	static inline uint16_t getNewTaskTypeId() {
-		return _nextTaskTypeId++;
-	}
 }
 
 #endif // INSTRUMENT_CTF_TASK_ID_HPP

@@ -38,6 +38,8 @@ public:
 	//! \param[in] hint a hint about the relation of the task to the current task
 	virtual inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
+		// TODO increment ready task count for instrumentation here
+		// decrement in getReadyTask
 		assert(task != nullptr);
 
 		if (hint == DEADLINE_TASK_HINT) {

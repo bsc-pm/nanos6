@@ -579,7 +579,9 @@ instrument_ctf_sources = \
 	src/instrument/ctf/ctfapi/CTFMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFTrace.cpp \
 	src/instrument/ctf/InstrumentCPULocalData.cpp \
+	src/instrument/ctf/InstrumentInitAndShutdown.cpp \
 	src/instrument/ctf/InstrumentTaskId.cpp \
+	src/instrument/ctf/InstrumentTaskTypeId.cpp \
 	src/instrument/ctf/InstrumentThreadManagement.cpp \
 	src/instrument/ctf/Nanos6CTFEvents.cpp \
 	src/instrument/support/InstrumentCPULocalDataSupport.cpp \
@@ -945,6 +947,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentTaskExecution.hpp \
 	src/instrument/ctf/InstrumentTaskId.hpp \
 	src/instrument/ctf/InstrumentTaskStatus.hpp \
+	src/instrument/ctf/InstrumentTaskTypeId.hpp \
 	src/instrument/ctf/InstrumentTaskWait.hpp \
 	src/instrument/ctf/InstrumentThreadId.hpp \
 	src/instrument/ctf/InstrumentThreadInstrumentationContext.hpp \
@@ -975,6 +978,7 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentTaskExecution.hpp \
 	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
+	src/instrument/extrae/InstrumentTaskTypeId.hpp \
 	src/instrument/extrae/InstrumentTaskWait.hpp \
 	src/instrument/extrae/InstrumentThreadId.hpp \
 	src/instrument/extrae/InstrumentThreadLocalData.hpp \
@@ -1009,6 +1013,7 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
 	src/instrument/graph/InstrumentTaskId.hpp \
 	src/instrument/graph/InstrumentTaskStatus.hpp \
+	src/instrument/graph/InstrumentTaskTypeId.hpp \
 	src/instrument/graph/InstrumentTaskWait.hpp \
 	src/instrument/graph/InstrumentThreadId.hpp \
 	src/instrument/graph/InstrumentThreadLocalData.hpp \
@@ -1039,6 +1044,7 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentTaskExecution.hpp \
 	src/instrument/lint/InstrumentTaskId.hpp \
 	src/instrument/lint/InstrumentTaskStatus.hpp \
+	src/instrument/lint/InstrumentTaskTypeId.hpp \
 	src/instrument/lint/InstrumentTaskWait.hpp \
 	src/instrument/lint/InstrumentThreadId.hpp \
 	src/instrument/lint/InstrumentThreadInstrumentationContext.hpp \
@@ -1067,6 +1073,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
 	src/instrument/null/InstrumentTaskStatus.hpp \
+	src/instrument/null/InstrumentTaskTypeId.hpp \
 	src/instrument/null/InstrumentTaskWait.hpp \
 	src/instrument/null/InstrumentThreadId.hpp \
 	src/instrument/null/InstrumentThreadInstrumentationContext.hpp \
@@ -1095,6 +1102,7 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentTaskExecution.hpp \
 	src/instrument/stats/InstrumentTaskId.hpp \
 	src/instrument/stats/InstrumentTaskStatus.hpp \
+	src/instrument/stats/InstrumentTaskTypeId.hpp \
 	src/instrument/stats/InstrumentTaskWait.hpp \
 	src/instrument/stats/InstrumentThreadId.hpp \
 	src/instrument/stats/InstrumentThreadLocalData.hpp \
@@ -1138,6 +1146,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \
 	src/instrument/verbose/InstrumentTaskId.hpp \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \
+	src/instrument/verbose/InstrumentTaskTypeId.hpp \
 	src/instrument/verbose/InstrumentTaskWait.hpp \
 	src/instrument/verbose/InstrumentThreadId.hpp \
 	src/instrument/verbose/InstrumentThreadLocalData.hpp \

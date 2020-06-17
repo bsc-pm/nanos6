@@ -7,40 +7,30 @@
 #ifndef INSTRUMENT_CTF_ADD_TASK_HPP
 #define INSTRUMENT_CTF_ADD_TASK_HPP
 
-#include <map>
+#include <cassert>
 
 #include "Nanos6CTFEvents.hpp"
 #include "InstrumentTaskId.hpp"
+#include "tasks/TasktypeData.hpp"
 
 #include "../api/InstrumentAddTask.hpp"
 
 namespace Instrument {
 
-	inline ctf_task_type_id_t getTaskTypeID(nanos6_task_info_t *key) {
-		ctf_task_type_id_t taskTypeId;
+	inline ctf_task_type_id_t ctfGetTaskTypeId(nanos6_task_info_t *taskInfo)
+	{
+		assert(taskInfo->task_type_data);
+		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
+		task_type_id_t &instrumentId = tasktypeData->getInstrumentationId();
+		return instrumentId.id;
+	}
 
-		globalTaskLabelLock.lock();
-
-		taskLabelMapEntry_t globalTaskLabelEntry = globalTaskLabelMap.emplace(key, 0);
-		taskLabelMap_t::iterator globalIter = globalTaskLabelEntry.first;
-		bool globalFound = !globalTaskLabelEntry.second;
-
-		if (globalFound) {
-			// if exist, retrieve it.
-			taskTypeId = globalIter->second;
-		} else {
-			// if not exist, request a new taskTypeId and install it
-			taskTypeId = getNewTaskTypeId();
-			globalIter->second = taskTypeId;
-			char *taskLabel = (char *) key->implementations[0].task_label;
-			if (taskLabel == nullptr)
-				taskLabel = (char *) key->implementations[0].declaration_source;
-			tp_task_label(taskLabel, taskTypeId);
-		}
-
-		globalTaskLabelLock.unlock();
-
-		return taskTypeId;
+	inline ctf_task_type_id_t ctfAutoSetTaskTypeId(nanos6_task_info_t *taskInfo)
+	{
+		assert(taskInfo->task_type_data);
+		TasktypeData *tasktypeData = (TasktypeData *) taskInfo->task_type_data;
+		task_type_id_t &instrumentId = tasktypeData->getInstrumentationId();
+		return instrumentId.autoAssingId();
 	}
 
 	inline task_id_t enterAddTask(
@@ -52,10 +42,9 @@ namespace Instrument {
 		ctf_task_id_t taskId;
 		ctf_task_type_id_t taskTypeId;
 
-		nanos6_task_info_t *key = taskInfo;
 		task_id_t task_id(true);
 		taskId = task_id._taskId;
-		taskTypeId = getTaskTypeID(key);
+		taskTypeId = ctfGetTaskTypeId(taskInfo);
 
 		tp_task_add(taskTypeId, taskId);
 
@@ -94,10 +83,9 @@ namespace Instrument {
 		ctf_task_id_t taskId;
 		ctf_task_type_id_t taskTypeId;
 
-		nanos6_task_info_t *key = taskInfo;
 		task_id_t task_id(true);
 		taskId = task_id._taskId;
-		taskTypeId = getTaskTypeID(key);
+		taskTypeId = ctfGetTaskTypeId(taskInfo);
 		tp_task_add(taskTypeId, taskId);
 
 		return task_id;
@@ -108,6 +96,14 @@ namespace Instrument {
 		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
+	}
+
+	inline void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo)
+	{
+		const char *label = taskInfo->implementations[0].task_label;
+		const char *source = taskInfo->implementations[0].declaration_source;
+		ctf_task_type_id_t taskTypeId = ctfAutoSetTaskTypeId(taskInfo);
+		tp_task_label(label, source, taskTypeId);
 	}
 }
 

@@ -40,7 +40,7 @@ namespace CTFAPI {
 	}
 
 	template <>
-	inline auto sizeOfVariadic(char *arg)
+	inline auto sizeOfVariadic(const char *arg)
 	{
 		size_t i = 0;
 		for (; arg[i]; ++i)
@@ -70,10 +70,10 @@ namespace CTFAPI {
 	}
 
 	template<>
-	inline void tp_write_args(void **buf, char *arg)
+	inline void tp_write_args(void **buf, const char *arg)
 	{
 		char **pbuf = reinterpret_cast<char**>(buf);
-		char *parg = arg;
+		char *parg = (char *) arg;
 
 		while (*parg != '\0') {
 			**pbuf = *parg;

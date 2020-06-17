@@ -90,7 +90,7 @@ public:
 	//! \brief Register the taskinfo of a type of task
 	//!
 	//! \param[in,out] taskInfo A pointer to the taskinfo
-	static void registerTaskInfo(nanos6_task_info_t *taskInfo);
+	static bool registerTaskInfo(nanos6_task_info_t *taskInfo);
 
 	//! \brief Traverse all tasktypes and apply a certain function for each of them
 	//!
@@ -102,9 +102,10 @@ public:
 
 		for (auto &tasktype : _tasktypes) {
 			const std::string &label = tasktype.first._taskLabel;
+			const std::string &source = tasktype.first._taskDeclarationSource;
 			TasktypeData &tasktypeData = tasktype.second;
 
-			functionToApply(label, tasktypeData);
+			functionToApply(label, source, tasktypeData);
 		}
 
 		_lock.unlock();
