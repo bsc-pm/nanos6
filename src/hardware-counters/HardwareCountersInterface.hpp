@@ -21,9 +21,6 @@ public:
 	{
 	}
 
-	//! \brief Get the number of enabled and available counters of the backend
-	virtual size_t getNumEnabledCounters() const = 0;
-
 	//! \brief Initialize hardware counter structures for a new thread
 	//!
 	//! \param[out] threadCounters The hardware counter structures to initialize

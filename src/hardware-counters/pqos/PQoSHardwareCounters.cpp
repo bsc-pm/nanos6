@@ -14,11 +14,13 @@
 #include "executors/threads/WorkerThread.hpp"
 
 
+size_t PQoSHardwareCounters::_numEnabledCounters(0);
+std::vector<int> PQoSHardwareCounters::_idMap;
+
 PQoSHardwareCounters::PQoSHardwareCounters(
 	bool,
 	const std::string &,
-	std::vector<HWCounters::counters_t> &enabledEvents,
-	std::map<HWCounters::counters_t, bool> &eventMap
+	std::vector<HWCounters::counters_t> &enabledEvents
 ) {
 	// Check if the PQoS version may give problems
 	utsname kernelInfo;
@@ -109,38 +111,39 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_L3_OCCUP);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-		eventMap[HWCounters::PQOS_MON_EVENT_L3_OCCUP] = false;
 	} else if (unavailableEvents & PQOS_MON_EVENT_LMEM_BW) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_LMEM_BW);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-		eventMap[HWCounters::PQOS_MON_EVENT_LMEM_BW] = false;
 	} else if (unavailableEvents & PQOS_MON_EVENT_RMEM_BW) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_MON_EVENT_RMEM_BW);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-		eventMap[HWCounters::PQOS_MON_EVENT_RMEM_BW] = false;
 	} else if (unavailableEvents & PQOS_PERF_EVENT_LLC_MISS) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_LLC_MISS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-		eventMap[HWCounters::PQOS_PERF_EVENT_LLC_MISS] = false;
 	} else if (unavailableEvents & PQOS_PERF_EVENT_IPC) {
 		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-		eventMap[HWCounters::PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS] = false;
 
 		it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
-		eventMap[HWCounters::PQOS_PERF_EVENT_UNHALTED_CYCLES] = false;
 	}
 
-	// Keep count of the final number of enabed (and available) events
+
+	_idMap.resize(HWCounters::PQOS_NUM_EVENTS);
+	for (size_t i = 0; i < _idMap.size(); ++i) {
+		_idMap[i] = /* -1 */ DISABLED_PQOS_COUNTER;
+	}
+	size_t innerId = 0;
 	for (size_t i = 0; i < enabledEvents.size(); ++i) {
 		if (enabledEvents[i] >= HWCounters::PQOS_MIN_EVENT && enabledEvents[i] <= HWCounters::PQOS_MAX_EVENT) {
 			++_numEnabledCounters;
+			_idMap[enabledEvents[i] - HWCounters::PQOS_MIN_EVENT] = innerId;
+			++innerId;
 		}
 	}
 

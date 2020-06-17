@@ -9,6 +9,7 @@
 
 #include <pqos.h>
 
+#include "PQoSHardwareCounters.hpp"
 #include "hardware-counters/CPUHardwareCountersInterface.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
@@ -43,7 +44,8 @@ public:
 		// needed, so we simply copy the new deltas. In the case of L3
 		// occupancy, we compute an average in-place
 		for (size_t id = HWCounters::PQOS_MIN_EVENT; id < HWCounters::PQOS_MAX_EVENT; ++id) {
-			if (HardwareCounters::isCounterEnabled((HWCounters::counters_t) id)) {
+			// Make sure the event is enabled
+			if (PQoSHardwareCounters::isCounterEnabled((HWCounters::counters_t) id)) {
 				size_t innerId = id - HWCounters::PQOS_MIN_EVENT;
 				switch (id) {
 					case HWCounters::PQOS_MON_EVENT_L3_OCCUP:
@@ -85,7 +87,7 @@ public:
 	{
 		assert(counterType >= HWCounters::PQOS_MIN_EVENT);
 		assert(counterType <= HWCounters::PQOS_MAX_EVENT);
-		assert(HardwareCounters::isCounterEnabled(counterType));
+		assert(PQoSHardwareCounters::isCounterEnabled(counterType));
 
 		return _counters[counterType - HWCounters::PQOS_MIN_EVENT];
 	}

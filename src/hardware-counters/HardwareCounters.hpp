@@ -45,9 +45,6 @@ private:
 	//! Enabled counters by the user
 	static std::vector<HWCounters::counters_t> _enabledCounters;
 
-	//! Whether each event is enabled
-	static std::map<HWCounters::counters_t, bool> _eventMap;
-
 private:
 
 	//! \brief Load backend and counter enabling configuration from the default
@@ -79,14 +76,6 @@ public:
 	static inline bool isBackendEnabled(HWCounters::backends_t backend)
 	{
 		return _enabled[backend];
-	}
-
-	//! \brief Check whether an counter is enabled
-	//!
-	//! \param[in] counterType The counter's type
-	static inline bool isCounterEnabled(HWCounters::counters_t counterType)
-	{
-		return _eventMap[counterType];
 	}
 
 	//! \brief Out of all the supported events, get the currently enabled ones

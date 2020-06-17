@@ -30,7 +30,6 @@ HardwareCountersInterface *HardwareCounters::_raplBackend;
 bool HardwareCounters::_anyBackendEnabled(false);
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
 std::vector<HWCounters::counters_t> HardwareCounters::_enabledCounters;
-std::map<HWCounters::counters_t, bool> HardwareCounters::_eventMap;
 
 
 void HardwareCounters::loadConfigurationFile()
@@ -56,10 +55,7 @@ void HardwareCounters::loadConfigurationFile()
 								if (backendNode.dataExists(eventDescription)) {
 									converted = false;
 									if (backendNode.getData(eventDescription, converted) == 1) {
-										assert(_eventMap[(HWCounters::counters_t) i] == false);
-
 										_enabledCounters.push_back((HWCounters::counters_t) i);
-										_eventMap[(HWCounters::counters_t) i] = true;
 									}
 									assert(converted);
 								}
@@ -80,10 +76,7 @@ void HardwareCounters::loadConfigurationFile()
 								if (backendNode.dataExists(eventDescription)) {
 									converted = false;
 									if (backendNode.getData(eventDescription, converted) == 1) {
-										assert(_eventMap[(HWCounters::counters_t) i] == false);
-
 										_enabledCounters.push_back((HWCounters::counters_t) i);
-										_eventMap[(HWCounters::counters_t) i] = true;
 									}
 									assert(converted);
 								}
@@ -138,8 +131,7 @@ void HardwareCounters::preinitialize()
 		_papiBackend = new PAPIHardwareCounters(
 			_verbose.getValue(),
 			_verboseFile.getValue(),
-			_enabledCounters,
-			_eventMap
+			_enabledCounters
 		);
 #else
 		FatalErrorHandler::warn("PAPI library not found, disabling hardware counters.");
@@ -153,8 +145,7 @@ void HardwareCounters::preinitialize()
 		_pqosBackend = new PQoSHardwareCounters(
 			_verbose.getValue(),
 			_verboseFile.getValue(),
-			_enabledCounters,
-			_eventMap
+			_enabledCounters
 		);
 #else
 		FatalErrorHandler::warn("PQoS library not found, disabling hardware counters.");

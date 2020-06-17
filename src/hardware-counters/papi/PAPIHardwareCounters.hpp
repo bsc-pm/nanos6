@@ -22,8 +22,7 @@ public:
 	inline PAPIHardwareCounters(
 		bool,
 		const std::string &,
-		std::vector<HWCounters::counters_t> &,
-		std::map<HWCounters::counters_t, bool> &
+		std::vector<HWCounters::counters_t> &
 	) {
 		FatalErrorHandler::fail("PAPI backend not supported yet");
 	}
@@ -32,7 +31,7 @@ public:
 	{
 	}
 
-	inline size_t getNumEnabledCounters() const override
+	static inline size_t getNumEnabledCounters() const
 	{
 		return 0;
 	}
