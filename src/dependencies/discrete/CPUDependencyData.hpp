@@ -23,9 +23,10 @@ class Task;
 
 class SatisfiedOriginatorList {
 public:
-	static const int _schedulerChunkSize = 128;
+	static size_t _actualChunkSize;
 
 private:
+	static const size_t _schedulerChunkSize = 256;
 	Task *_array[_schedulerChunkSize];
 	size_t _count;
 
@@ -47,13 +48,18 @@ public:
 
 	inline void add(Task *task)
 	{
-		assert(_count < _schedulerChunkSize);
+		assert(_count < _actualChunkSize);
 		_array[_count++] = task;
 	}
 
 	inline Task **getArray()
 	{
 		return &_array[0];
+	}
+
+	static inline size_t getMaxChunkSize()
+	{
+		return _schedulerChunkSize;
 	}
 };
 
@@ -103,14 +109,15 @@ struct CPUDependencyData {
 	inline void addSatisfiedOriginator(Task *task, int deviceType)
 	{
 		assert(task != nullptr);
-		assert(_satisfiedOriginatorCount < satisfied_originator_list_t::_schedulerChunkSize);
+		assert(_satisfiedOriginatorCount < (size_t) satisfied_originator_list_t::_actualChunkSize);
 		_satisfiedOriginatorCount++;
 		_satisfiedOriginators[deviceType].add(task);
 	}
 
 	inline bool full() const
 	{
-		return (_satisfiedOriginatorCount == satisfied_originator_list_t::_schedulerChunkSize);
+		assert(satisfied_originator_list_t::_actualChunkSize != 0);
+		return (_satisfiedOriginatorCount == satisfied_originator_list_t::_actualChunkSize);
 	}
 
 	inline satisfied_originator_list_t &getSatisfiedOriginators(int device)

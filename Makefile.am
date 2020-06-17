@@ -511,6 +511,7 @@ multidimensional_adaptor_sources = MultidimensionalLintAPI.cpp
 
 discrete_dependency_sources = \
 	src/dependencies/discrete/CommutativeSemaphore.cpp \
+	src/dependencies/discrete/CPUDependencyData.cpp \
 	src/dependencies/discrete/DataAccess.cpp \
 	src/dependencies/discrete/DataAccessRegistration.cpp \
 	src/dependencies/discrete/ReductionInfo.cpp \
