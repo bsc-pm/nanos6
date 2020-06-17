@@ -133,11 +133,14 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 		enabledEvents.erase(it);
 	}
 
-
+	// Construct a vector capable of translating generic counters (HWCounters::counters_t)
+	// to inner identifiers used on arrays that have enough space only for enabled events
+	// (see PQoSTaskHardwareCounters)
 	_idMap.resize(HWCounters::PQOS_NUM_EVENTS);
 	for (size_t i = 0; i < _idMap.size(); ++i) {
-		_idMap[i] = /* -1 */ DISABLED_PQOS_COUNTER;
+		_idMap[i] = DISABLED_PQOS_COUNTER;
 	}
+
 	size_t innerId = 0;
 	for (size_t i = 0; i < enabledEvents.size(); ++i) {
 		if (enabledEvents[i] >= HWCounters::PQOS_MIN_EVENT && enabledEvents[i] <= HWCounters::PQOS_MAX_EVENT) {

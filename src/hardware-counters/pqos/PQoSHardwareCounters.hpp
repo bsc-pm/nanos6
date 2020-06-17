@@ -16,8 +16,6 @@
 #include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 
 
-#define DISABLED_PQOS_COUNTER -1
-
 class PQoSHardwareCounters : public HardwareCountersInterface {
 
 private:
@@ -44,6 +42,8 @@ private:
 	//! _idMap.size = PQOS_NUM_EVENTS
 	//! _idMap[PQOS_MON_EVENT_LMEM_BW(101) - PQOS_MIN_EVENT(100)] = 0
 	static std::vector<int> _idMap;
+
+	static const int DISABLED_PQOS_COUNTER = -1;
 
 public:
 

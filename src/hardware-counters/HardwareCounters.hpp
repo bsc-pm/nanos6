@@ -103,10 +103,20 @@ public:
 
 	//! \brief Read and update hardware counters for a task
 	//!
+	//! This function should be called right before a task stops/ends executing
+	//! its user code, in all the runtime points where it does, so that counters
+	//! can be read and accumulated and from that point on the counters belong
+	//! to runtime-related operations (see updateRuntimeCounters)
+	//!
 	//! \param[out] task The task to read hardware counters for
 	static void updateTaskCounters(Task *task);
 
 	//! \brief Read and update hardware counters for the runtime (current CPU)
+	//!
+	//! This function should be called right before starting the execution of a
+	//! task, so that the counters up to that point are assigned to the CPU
+	//! executing runtime code and they are not accumulated into the task to be
+	//! executed
 	static void updateRuntimeCounters();
 
 };
