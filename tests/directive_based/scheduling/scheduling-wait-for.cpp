@@ -56,7 +56,7 @@ bool checkTimeouts(uint64_t theoric, uint64_t *timeouts, int numTimeouts, bool c
 
 	if (checkOutliers && numOutliers > numTimeouts * 0.1) {
 		return false;
-	} else if (mean < theoric * 0.8 || mean > theoric * 1.2) {
+	} else if (mean < theoric * 0.8 || mean > theoric * 1.4) {
 		return false;
 	}
 	return true;
@@ -152,9 +152,10 @@ int main(int argc, char **argv)
 	timeouts = allTimeouts;
 	for (int t = 0; t < numTasks; ++t) {
 		bool correct = checkTimeouts(timeout, timeouts, numWaits, false);
-		tap.evaluate(
+		tap.evaluateWeak(
 			correct,
-			"Check that the task accomplished almost all deadlines with other regular tasks"
+			"Check that the task accomplished almost all deadlines with other regular tasks",
+			"Cannot guarantee that this test works in all machines"
 		);
 		timeouts += numWaits;
 	}
