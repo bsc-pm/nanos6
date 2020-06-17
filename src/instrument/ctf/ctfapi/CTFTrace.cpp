@@ -16,16 +16,20 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <libgen.h>
-
+#include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
 #include <ftw.h>
 
+#include <MemoryAllocator.hpp>
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "CTFTrace.hpp"
 #include "CTFAPI.hpp"
 
+
+EnvironmentVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("TMPDIR", "/tmp");
 
 static bool copyFile(std::string &src, std::string &dst)
 {
@@ -158,14 +162,26 @@ CTFAPI::CTFTrace::CTFTrace()
 void CTFAPI::CTFTrace::setTracePath(const char* tracePath)
 {
 	void *ret;
-	char templateName[] = "/tmp/nanos6_trace_XXXXXX";
+	char templateName[] = "/nanos6_trace_XXXXXX";
+	char *defaultTemporalPath;
+	const size_t len = _defaultTemporalPath.getValue().size() +
+			   sizeof(templateName) + 1;
 
-	// create a temporal directory under /tmp to store the trace at runtime
-	ret = mkdtemp(templateName);
-	FatalErrorHandler::failIf(ret == NULL, "ctf: failed to create temporal trace directory");
+	// create a temporal directory under $TMPDIR or /tmp if not set
+	defaultTemporalPath = (char *) MemoryAllocator::alloc(len);
+	defaultTemporalPath[0] = 0;
+	strcat(defaultTemporalPath, _defaultTemporalPath.getValue().c_str());
+	strcat(defaultTemporalPath, templateName);
+	ret = mkdtemp(defaultTemporalPath);
+	FatalErrorHandler::failIf(
+		ret == NULL,
+		"ctf: failed to create temporal trace directory: ",
+		strerror(errno)
+	);
 
-	_tmpTracePath       = std::string(templateName);
+	_tmpTracePath = std::string(defaultTemporalPath);
 	_finalTraceBasePath = std::string(tracePath);
+	MemoryAllocator::free(defaultTemporalPath, len);
 }
 
 void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string &kernelPath)
@@ -203,6 +219,9 @@ void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string
 
 void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 {
+	// TODO do not copy the trace if it's located in the same filesystem,
+	// just rename it
+
 	// create final trace name
 	std::string finalTracePath = mkTraceDirectoryName(_finalTraceBasePath,
 							  _binaryName, _pid);

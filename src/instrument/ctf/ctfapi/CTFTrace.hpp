@@ -10,7 +10,10 @@
 #include <string>
 #include <cstdint>
 
+#include "lowlevel/EnvironmentVariable.hpp"
+
 #include "CTFMetadata.hpp"
+
 
 namespace CTFAPI {
 
@@ -23,6 +26,8 @@ namespace CTFAPI {
 		}
 
 	private:
+		static EnvironmentVariable<std::string> _defaultTemporalPath;
+
 		std::string _finalTraceBasePath;
 		std::string _tmpTracePath;
 		std::string _userPath;
