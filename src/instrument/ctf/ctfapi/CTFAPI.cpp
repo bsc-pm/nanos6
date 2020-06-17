@@ -24,6 +24,11 @@ uint64_t CTFAPI::getTimestamp()
 	struct timespec tp;
 	const uint64_t ns = 1000000000ULL;
 
+	// TODO using clock_gettime requires to add -lrt for old glibcs. We
+	// might get rid of this by using the chrono c++ library, but I'm not
+	// confident on which syscall and clock this translates. Should we move
+	// to c++ here? If so, remove the -lrt
+
 	if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: clock_gettime syscall: ") + strerror(errno));
 	}
