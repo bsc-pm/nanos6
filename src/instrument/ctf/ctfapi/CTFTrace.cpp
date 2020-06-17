@@ -136,27 +136,50 @@ static std::string mkTraceDirectoryName(std::string finalTracePath,
 	return tmp;
 }
 
+static std::string getFullBinaryName()
+{
+	const char defaultName[] = "nanos6";
+	std::string name;
+	struct stat sb;
+	int ret;
+	size_t pathSize = 512;
+	std::vector<char> fullPath(pathSize);
+	bool found = false;
+
+	// it is not possible to know the path length of a file pointed by a
+	// proc symlink, (see man lstat). Hence, we can only try incrementally.
+
+	do {
+		ret = readlink("/proc/self/exe", fullPath.data(), pathSize);
+
+		if (ret == -1)
+			break;
+
+		if (fullPath.size() == ret) {
+			pathSize += 512;
+			fullPath.resize(pathSize);
+		} else {
+			found = true;
+			fullPath[ret] = 0;
+		}
+	} while (!found);
+
+	if (found) {
+		name = std::string(basename(fullPath.data()));
+	} else {
+		std::cerr << "Warning: ctf: Cannot get binary name, using default" << std::endl;
+		name = std::string(defaultName);
+	}
+
+	return name;
+}
+
 CTFAPI::CTFTrace::CTFTrace()
 {
-	const char defaultName[] = "trace";
-	char fullPath[256];
-	char *binaryName;
-	int ret;
-
 	// get process PID
 	_pid = (uint64_t) getpid();
-
 	// get process full binary name
-	//std::ifstream("/proc/self/comm") >> _binaryName;
-	ret = readlink("/proc/self/exe", fullPath, sizeof(fullPath) - 1);
-	if (ret == -1) {
-		std::cerr << "Warning: ctf: Cannot get binary name, using default" << std::endl;
-		_binaryName = std::string(defaultName);
-		return;
-	}
-	fullPath[ret] = 0;
-	binaryName = basename(fullPath);
-	_binaryName = std::string(binaryName);
+	_binaryName = getFullBinaryName();
 }
 
 void CTFAPI::CTFTrace::setTracePath(const char* tracePath)
