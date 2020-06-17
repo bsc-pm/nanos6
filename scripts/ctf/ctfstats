@@ -5,7 +5,9 @@ usage() {
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export PYTHONPATH=$PYTHONPATH:$DIR
+CTFPLUGINS=$DIR/../share/doc/scripts/ctf/plugins
+CTFPLUGINS=$CTFPLUGINS:$DIR/plugins
+export PYTHONPATH=$PYTHONPATH:$CTFPLUGINS
 
 if [ $# -ne 1 ]; then
 	usage
@@ -27,7 +29,7 @@ else
 	exit 1
 fi
 
-babeltrace2 --plugin-path=$DIR         \
-	-c source.ctf.fs               \
-	--params="inputs=[\"$TRACE\"]" \
+babeltrace2 --plugin-path="$CTFPLUGINS" \
+	-c source.ctf.fs                \
+	--params="inputs=[\"$TRACE\"]"  \
 	-c sink.nanos6.stats

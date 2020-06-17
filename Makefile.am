@@ -1992,6 +1992,20 @@ hwcountersdir = ${docdir}
 nobase_dist_hwcounters_DATA = \
 	scripts/nanos6_hwcounters.json
 
+ctfdir = ${docdir}
+nobase_dist_ctf_DATA = \
+	scripts/ctf/plugins/bt_plugin_nanos6.py \
+	scripts/ctf/plugins/runtime.py \
+	scripts/ctf/plugins/paravertrace.py \
+	scripts/ctf/plugins/paraverviews.py \
+	scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
+	scripts/ctf/wrappers/ctf2prv_nord3.sh \
+	scripts/ctf/wrappers/ctf2prv_cte-power.sh
+
+dist_bin_SCRIPTS = \
+	scripts/ctf/ctf2prv \
+	scripts/ctf/ctfstats
+
 ## --------------------------------- ##
 ## Format-independent Doxygen rules. ##
 ## --------------------------------- ##
