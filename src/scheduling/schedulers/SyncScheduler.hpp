@@ -127,10 +127,10 @@ public:
 	inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint)
 	{
 		// TODO: Allow adding multiple tasks in the future
-		addTasks(&task, 1, computePlace, hint);
+		addReadyTasks(&task, 1, computePlace, hint);
 	}
 
-	inline void addTasks(Task *tasks[], const size_t numTasks, ComputePlace *computePlace, ReadyTaskHint hint)
+	inline void addReadyTasks(Task *tasks[], const size_t numTasks, ComputePlace *computePlace, ReadyTaskHint hint)
 	{
 		// Use a special queue not belonging to any NUMA node if no compute place
 		const size_t queueIndex = (computePlace != nullptr) ? ((CPU *)computePlace)->getNumaNodeId() : _totalAddQueues-1;

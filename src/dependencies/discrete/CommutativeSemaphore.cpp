@@ -6,6 +6,7 @@
 
 #include "CommutativeSemaphore.hpp"
 #include "CPUDependencyData.hpp"
+#include "DataAccessRegistration.hpp"
 #include "TaskDataAccesses.hpp"
 #include "tasks/Task.hpp"
 
@@ -50,7 +51,7 @@ void CommutativeSemaphore::releaseTask(Task *task, CPUDependencyData &hpDependen
 
 		if (maskIsCompatible(candidateMask)) {
 			maskRegister(candidateMask);
-			hpDependencyData._satisfiedOriginators.push_back(candidate);
+			hpDependencyData._satisfiedCommutativeOriginators.push_back(candidate);
 			it = _waitingTasks.erase(it);
 
 			// Keep track and cut off if we won't be releasing anything else.

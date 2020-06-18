@@ -45,6 +45,16 @@ public:
 		_clusterSchedulerImplementation->addReadyTask(task, computePlace, hint);
 	}
 
+	inline void addReadyTasks(
+		nanos6_device_t taskType,
+		Task *tasks[],
+		const size_t numTasks,
+		ComputePlace *computePlace,
+		ReadyTaskHint hint)
+	{
+		_clusterSchedulerImplementation->addReadyTasks(taskType, tasks, numTasks, computePlace, hint);
+	}
+
 	inline Task *getReadyTask(ComputePlace *computePlace)
 	{
 		return _clusterSchedulerImplementation->getReadyTask(computePlace);

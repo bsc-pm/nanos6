@@ -14,6 +14,7 @@
 #include "lowlevel/PaddedTicketSpinLock.hpp"
 
 class Task;
+class ComputePlace;
 struct CPUDependencyData;
 
 class CommutativeSemaphore {
@@ -29,7 +30,7 @@ public:
 	{
 		mask.set(addressHash(address) % commutative_mask_bits);
 	}
-	
+
 private:
 	typedef PaddedTicketSpinLock<> lock_t;
 	typedef std::deque<Task *> waiting_tasks_t;

@@ -20,6 +20,25 @@ public:
 	static void initialize();
 	static void shutdown();
 
+	static inline void addReadyTasks(
+		nanos6_device_t taskType,
+		Task *tasks[],
+		const size_t numTasks,
+		ComputePlace *computePlace,
+		ReadyTaskHint hint)
+	{
+		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
+
+		// Mark the task as ready prior to entering the lock
+		for (size_t i = 0; i < numTasks; ++i) {
+			Task *task = tasks[i];
+			Instrument::taskIsReady(task->getInstrumentationTaskId());
+			Monitoring::taskChangedStatus(task, ready_status);
+		}
+
+		_instance->addReadyTasks(taskType, tasks, numTasks, computePlace, hint);
+	}
+
 	static inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
 		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
