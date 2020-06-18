@@ -27,6 +27,8 @@ namespace CTFAPI {
 
 	private:
 		static EnvironmentVariable<std::string> _defaultTemporalPath;
+		static EnvironmentVariable<std::string> _ctf2prvWrapper;
+		static EnvironmentVariable<bool>        _ctf2prvEnabled;
 
 		std::string _finalTraceBasePath;
 		std::string _tmpTracePath;
@@ -47,6 +49,7 @@ namespace CTFAPI {
 		void setTracePath(const char* tracePath);
 		void createTraceDirectories(std::string &userPath, std::string &kernelPath);
 		void initializeTraceTimer();
+		void convertToParaver();
 		void moveTemporalTraceToFinalDirectory();
 		void clean();
 

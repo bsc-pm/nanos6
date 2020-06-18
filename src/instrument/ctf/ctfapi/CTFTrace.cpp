@@ -30,6 +30,8 @@
 
 
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("TMPDIR", "/tmp");
+EnvironmentVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("NANOS6_CTF2PRV_BIN");
+EnvironmentVariable<bool>        CTFAPI::CTFTrace::_ctf2prvEnabled("NANOS6_CTF2PRV", true);
 
 static bool copyFile(std::string &src, std::string &dst)
 {
@@ -260,6 +262,34 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 			_tmpTracePath << "could not be removed. Please, remove it manually"
 			<< std::endl;
 	}
+}
+
+void CTFAPI::CTFTrace::convertToParaver()
+{
+	int ret;
+	const char defaultConverter[] = "ctf2prv";
+	std::string converter;
+	std::string command;
+
+	// is conversion enabled?
+	if (!_ctf2prvEnabled.getValue())
+		return;
+
+	// should we use a machine-specific wrapper?
+	if (_ctf2prvWrapper.isPresent()) {
+		converter = _ctf2prvWrapper.getValue();
+	} else {
+		converter = std::string(defaultConverter);
+	}
+
+	// perform the conversion!
+	command = converter + " " + _tmpTracePath;
+	ret = system(command.c_str());
+	FatalErrorHandler::warnIf(
+		ret == -1,
+		"ctf: automatic ctf to prv conversion failed: ",
+		strerror(errno)
+	);
 }
 
 void CTFAPI::CTFTrace::initializeTraceTimer()

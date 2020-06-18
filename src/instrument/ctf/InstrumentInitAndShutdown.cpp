@@ -154,6 +154,7 @@ void Instrument::shutdown()
 	delete Instrument::virtualCPULocalData;
 
 	// move tracing files to final directory
+	trace.convertToParaver();
 	trace.moveTemporalTraceToFinalDirectory();
 	trace.clean();
 }

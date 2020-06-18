@@ -1766,6 +1766,10 @@ uninstall-hook:
 		fi ; \
 	done
 
+install-data-hook:
+	chmod +x $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
+	         $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_nord3.sh \
+	         $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_cte-power.sh
 
 #
 # Tests
