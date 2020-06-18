@@ -196,7 +196,7 @@ public:
 						 // Loop again, since things may have changed
 						successful = false;
 
-						HardwareCounters::cpuBecomesIdle();
+						HardwareCounters::updateRuntimeCounters();
 						Monitoring::cpuBecomesIdle(cpu->getIndex());
 						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 

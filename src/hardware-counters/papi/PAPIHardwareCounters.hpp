@@ -7,19 +7,23 @@
 #ifndef PAPI_HARDWARE_COUNTERS_HPP
 #define PAPI_HARDWARE_COUNTERS_HPP
 
+#include "hardware-counters/CPUHardwareCountersInterface.hpp"
 #include "hardware-counters/HardwareCountersInterface.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCountersInterface.hpp"
+#include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
-
-class Task;
 
 class PAPIHardwareCounters : public HardwareCountersInterface {
 
 public:
 
-	inline PAPIHardwareCounters(bool, const std::string &, const std::vector<HWCounters::counters_t> &)
-	{
+	inline PAPIHardwareCounters(
+		bool,
+		const std::string &,
+		std::vector<HWCounters::counters_t> &
+	) {
 		FatalErrorHandler::fail("PAPI backend not supported yet");
 	}
 
@@ -27,8 +31,9 @@ public:
 	{
 	}
 
-	inline void cpuBecomesIdle(CPUHardwareCountersInterface *, ThreadHardwareCountersInterface *) override
+	static inline size_t getNumEnabledCounters() const
 	{
+		return 0;
 	}
 
 	inline void threadInitialized(ThreadHardwareCountersInterface *) override
@@ -43,17 +48,15 @@ public:
 	{
 	}
 
-	inline void taskStarted(
-		CPUHardwareCountersInterface *,
+	inline void updateTaskCounters(
 		ThreadHardwareCountersInterface *,
 		TaskHardwareCountersInterface *
 	) override {
 	}
 
-	inline void taskStopped(
+	inline void updateRuntimeCounters(
 		CPUHardwareCountersInterface *,
-		ThreadHardwareCountersInterface *,
-		TaskHardwareCountersInterface *
+		ThreadHardwareCountersInterface *
 	) override {
 	}
 

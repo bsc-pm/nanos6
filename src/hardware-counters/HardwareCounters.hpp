@@ -27,11 +27,11 @@ private:
 	//! The file where output must be saved when verbose mode is enabled
 	static EnvironmentVariable<std::string> _verboseFile;
 
-	//! The underlying PQoS backend
-	static HardwareCountersInterface *_pqosBackend;
-
 	//! The underlying PAPI backend
 	static HardwareCountersInterface *_papiBackend;
+
+	//! The underlying PQoS backend
+	static HardwareCountersInterface *_pqosBackend;
 
 	//! The underlying RAPL backend
 	static HardwareCountersInterface *_raplBackend;
@@ -42,8 +42,8 @@ private:
 	//! Whether each backend is enabled
 	static std::vector<bool> _enabled;
 
-	//! Enabled events by the user
-	static std::vector<HWCounters::counters_t> _enabledEvents;
+	//! Enabled counters by the user
+	static std::vector<HWCounters::counters_t> _enabledCounters;
 
 private:
 
@@ -81,11 +81,8 @@ public:
 	//! \brief Out of all the supported events, get the currently enabled ones
 	static inline const std::vector<HWCounters::counters_t> &getEnabledCounters()
 	{
-		return _enabledEvents;
+		return _enabledCounters;
 	}
-
-	//! \brief Accumulate hardware counters for a CPU when it becomes idle
-	static void cpuBecomesIdle();
 
 	//! \brief Initialize hardware counter structures for a new thread
 	static void threadInitialized();
@@ -104,15 +101,23 @@ public:
 	//! \param[out] task The task to reinitialize structures for
 	static void taskReinitialized(Task *task);
 
-	//! \brief Start reading hardware counters for a task
+	//! \brief Read and update hardware counters for a task
 	//!
-	//! \param[out] task The task to start hardware counter monitoring for
-	static void taskStarted(Task *task);
+	//! This function should be called right before a task stops/ends executing
+	//! its user code, in all the runtime points where it does, so that counters
+	//! can be read and accumulated and from that point on the counters belong
+	//! to runtime-related operations (see updateRuntimeCounters)
+	//!
+	//! \param[out] task The task to read hardware counters for
+	static void updateTaskCounters(Task *task);
 
-	//! \brief Stop reading hardware counters for a task
+	//! \brief Read and update hardware counters for the runtime (current CPU)
 	//!
-	//! \param[out] task The task to stop hardware counters monitoring for
-	static void taskStopped(Task *task);
+	//! This function should be called right before starting the execution of a
+	//! task, so that the counters up to that point are assigned to the CPU
+	//! executing runtime code and they are not accumulated into the task to be
+	//! executed
+	static void updateRuntimeCounters();
 
 };
 

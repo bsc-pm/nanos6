@@ -23,13 +23,13 @@ public:
 
 	//! \brief Get the delta value of a HW counter
 	//!
-	//! \param[in] counterId The type of counter to get the delta from
-	virtual double getDelta(HWCounters::counters_t counterId) = 0;
+	//! \param[in] counterType The type of counter to get the delta from
+	virtual uint64_t getDelta(HWCounters::counters_t counterType) = 0;
 
 	//! \brief Get the accumulated value of a HW counter
 	//!
-	//! \param[in] counterId The type of counter to get the accumulation from
-	virtual double getAccumulated(HWCounters::counters_t counterId) = 0;
+	//! \param[in] counterType The type of counter to get the accumulation from
+	virtual uint64_t getAccumulated(HWCounters::counters_t counterType) = 0;
 
 };
 

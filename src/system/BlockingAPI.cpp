@@ -43,7 +43,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 
 	assert(blocking_context == currentTask);
 
-	HardwareCounters::taskStopped(currentTask);
+	HardwareCounters::updateTaskCounters(currentTask);
 	Monitoring::taskChangedStatus(currentTask, blocked_status);
 	Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::user_requested_blocking_reason);
 	Instrument::enterBlocking(currentTask->getInstrumentationTaskId());
@@ -54,7 +54,7 @@ extern "C" void nanos6_block_current_task(__attribute__((unused)) void *blocking
 	assert(computePlace != nullptr);
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 
-	HardwareCounters::taskStarted(currentTask);
+	HardwareCounters::updateRuntimeCounters();
 	Instrument::exitBlocking(currentTask->getInstrumentationTaskId());
 	Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
 	Monitoring::taskChangedStatus(currentTask, executing_status);
@@ -105,14 +105,14 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	Task::deadline_t start = Chrono::now<Task::deadline_t>();
 	currentTask->setDeadline(start + timeout);
 
-	HardwareCounters::taskStopped(currentTask);
+	HardwareCounters::updateTaskCounters(currentTask);
 
 	// Re-add the current task to the scheduler with a deadline
 	Scheduler::addReadyTask(currentTask, cpu, DEADLINE_TASK_HINT);
 
 	TaskBlocking::taskBlocks(currentThread, currentTask);
 
-	HardwareCounters::taskStarted(currentTask);
+	HardwareCounters::updateRuntimeCounters();
 	Monitoring::taskChangedStatus(currentTask, executing_status);
 
 	// Update the CPU since the thread may have migrated
