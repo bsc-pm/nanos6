@@ -65,6 +65,7 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	CPU *CPU;
 	ctf_cpu_id_t cpuId;
 	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
+
 	const size_t defaultBufferSize = 2*1024*1024;
 	//const size_t defaultBufferSize = 4096;
 	//std::cout << "WARNING: buffer size set to " << defaultBufferSize << std::endl;

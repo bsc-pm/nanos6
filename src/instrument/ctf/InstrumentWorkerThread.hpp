@@ -16,12 +16,12 @@
 
 namespace Instrument {
 
-	inline void WorkerSpins()
+	inline void workerThreadSpins()
 	{
 		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded();
 	}
 
-	inline void WorkerGetsTask()
+	inline void workerThreadObtainedTask()
 	{
 		ThreadLocalData &tld = getThreadLocalData();
 		if (tld.isBusyWaiting) {
@@ -30,7 +30,7 @@ namespace Instrument {
 		}
 	}
 
-	inline void WorkerBusyWaits()
+	inline void workerThreadBusyWaits()
 	{
 		ThreadLocalData &tld = getThreadLocalData();
 		if (!tld.isBusyWaiting) {

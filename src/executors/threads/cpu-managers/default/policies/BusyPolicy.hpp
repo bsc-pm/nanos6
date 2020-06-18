@@ -26,7 +26,7 @@ public:
 		//   all of them should be awake
 
 		if (hint == IDLE_CANDIDATE)
-			Instrument::WorkerBusyWaits();
+			Instrument::workerThreadBusyWaits();
 	}
 
 };

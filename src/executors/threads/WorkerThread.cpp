@@ -83,7 +83,6 @@ void WorkerThread::body()
 		_task = Scheduler::getReadyTask(cpu);
 		if (_task != nullptr) {
 			WorkerThread *assignedThread = _task->getThread();
-			Instrument::WorkerGetsTask();
 
 			// A task already assigned to another thread
 			if (assignedThread != nullptr) {
@@ -92,6 +91,7 @@ void WorkerThread::body()
 				ThreadManager::addIdler(this);
 				switchTo(assignedThread);
 			} else {
+				Instrument::workerThreadObtainedTask();
 				// If the task is a taskfor, the CPUManager may want to unidle
 				// collaborators to help execute it
 				if (_task->isTaskfor()) {
@@ -120,6 +120,7 @@ void WorkerThread::body()
 			// If no task is available, the CPUManager may want to idle this CPU
 			CPUManager::executeCPUManagerPolicy(cpu, IDLE_CANDIDATE);
 		}
+		Instrument::workerThreadSpins();
 	}
 
 	// The thread should not have any task assigned at this point

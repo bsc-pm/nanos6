@@ -12,9 +12,9 @@
 
 namespace Instrument {
 
-	inline void WorkerSpins() {}
-	inline void WorkerGetsTask() {}
-	inline void WorkerBusyWaits() {}
+	inline void workerThreadSpins() {}
+	inline void workerThreadObtainedTask() {}
+	inline void workerThreadBusyWaits() {}
 }
 
 #endif // INSTRUMENT_NULL_WORKERTHREAD_HPP
