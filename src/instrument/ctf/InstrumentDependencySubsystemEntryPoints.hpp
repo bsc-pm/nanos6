@@ -7,7 +7,7 @@
 #ifndef INSTRUMENT_CTF_DEPENDENCY_SUBSYTEM_ENTRY_POINTS_HPP
 #define INSTRUMENT_CTF_DEPENDENCY_SUBSYTEM_ENTRY_POINTS_HPP
 
-#include "tracepoints.hpp"
+#include "CTFTracepoints.hpp"
 #include "../api/InstrumentDependencySubsystemEntryPoints.hpp"
 
 

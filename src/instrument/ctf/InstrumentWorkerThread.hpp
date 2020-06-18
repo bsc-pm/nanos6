@@ -12,7 +12,7 @@
 
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 #include "ctfapi/CTFAPI.hpp"
-#include "tracepoints.hpp"
+#include "CTFTracepoints.hpp"
 
 namespace Instrument {
 

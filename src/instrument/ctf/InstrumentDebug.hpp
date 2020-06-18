@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-#include "tracepoints.hpp"
+#include "CTFTracepoints.hpp"
 #include "../api/InstrumentDebug.hpp"
 
 

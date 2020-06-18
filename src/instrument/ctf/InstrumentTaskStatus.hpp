@@ -7,7 +7,7 @@
 #ifndef INSTRUMENT_CTF_TASK_STATUS_HPP
 #define INSTRUMENT_CTF_TASK_STATUS_HPP
 
-#include "tracepoints.hpp"
+#include "CTFTracepoints.hpp"
 
 #include "../api/InstrumentTaskStatus.hpp"
 

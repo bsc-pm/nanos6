@@ -140,8 +140,7 @@ static std::string getFullBinaryName()
 {
 	const char defaultName[] = "nanos6";
 	std::string name;
-	struct stat sb;
-	int ret;
+	ssize_t ret;
 	size_t pathSize = 512;
 	std::vector<char> fullPath(pathSize);
 	bool found = false;
@@ -155,7 +154,7 @@ static std::string getFullBinaryName()
 		if (ret == -1)
 			break;
 
-		if (fullPath.size() == ret) {
+		if (fullPath.size() == (size_t) ret) {
 			pathSize += 512;
 			fullPath.resize(pathSize);
 		} else {

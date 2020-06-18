@@ -4,8 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef NANOS6CTFEVENTS_HPP
-#define NANOS6CTFEVENTS_HPP
+#ifndef CTFTRACEPOINTS_HPP
+#define CTFTRACEPOINTS_HPP
 
 #include "ctfapi/CTFAPI.hpp"
 #include "ctfapi/CTFTypes.hpp"
@@ -55,4 +55,4 @@ namespace Instrument {
 	void tp_debug_exit();
 }
 
-#endif //NANOS6CTFEVENTS_HPP
+#endif //CTFTRACEPOINTS_HPP

@@ -1,3 +1,9 @@
+/*
+	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+
+	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+*/
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -8,7 +14,7 @@
 #include "executors/threads/WorkerThread.hpp"
 
 #include "ctfapi/CTFTypes.hpp"
-#include "tracepoints.hpp"
+#include "CTFTracepoints.hpp"
 #include "InstrumentThreadManagement.hpp"
 
 static ctf_thread_id_t gettid(void)

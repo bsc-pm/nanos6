@@ -22,7 +22,7 @@
 #include "ctfapi/context/CTFContextTaskHardwareCounters.hpp"
 #include "ctfapi/context/CTFContextCPUHardwareCounters.hpp"
 #include "ctfapi/context/CTFContextUnbounded.hpp"
-#include "tracepoints.hpp"
+#include "CTFTracepoints.hpp"
 #include "tasks/TaskInfo.hpp"
 #include "tasks/TasktypeData.hpp"
 #include "executors/threads/CPUManager.hpp"
