@@ -27,6 +27,8 @@ tracer. It also improves the support for CUDA and provides support for OpenACC t
 - Refactor the hardware counters infrastructure and support both PAPI and PQoS counters
 - Add `ctf` variant to extract execution traces in CTF format using a lightweight internal tracer
 - Provide the `ctf2prv` tool to convert CTF traces to Paraver traces
+- Avoid Extrae trace desynchronizations in hybrid MPI+OmpSs-2 executions
+- Remove the `stats-papi` instrumentation variant
 
 ### Devices
 - Refactor of the devices' infrastructure
