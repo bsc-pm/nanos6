@@ -110,7 +110,6 @@ void Instrument::initialize()
 {
 	std::string userPath, kernelPath;
 
-	CTFAPI::greetings();
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 	CTFAPI::CTFMetadata *userMetadata = new CTFAPI::CTFMetadata();
 
@@ -132,8 +131,6 @@ void Instrument::shutdown()
 	CPU *CPU;
 	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
-
-	CTFAPI::greetings();
 
 	// Shutdown Worker thread streams
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {

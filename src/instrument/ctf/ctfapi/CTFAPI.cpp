@@ -61,11 +61,6 @@ void CTFAPI::mk_event_header(char **buf, uint64_t timestamp, uint8_t id)
 	*buf += sizeof(struct event_header);
 }
 
-void CTFAPI::greetings(void)
-{
-	std::cout << "!!!!!!!!!!!!!!!!CTF API UP & Running!!!!!!!!!!!!!!!!" << std::endl;
-}
-
 void CTFAPI::writeFlushingTracepoint(CTFStream *stream,
 				      uint64_t tsBefore, uint64_t tsAfter)
 {

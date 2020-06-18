@@ -27,7 +27,6 @@ namespace CTFAPI {
 		uint64_t timestamp;
 	};
 
-	void greetings(void);
 	void flushCurrentVirtualCPUBufferIfNeeded();
 
 	// TODO isolate these into CTFAPI::core namespace
