@@ -82,12 +82,14 @@ public:
 #ifdef EXTRAE_ENABLED
 			Task *result = nullptr;
 			if (CPUManager::isFirstCPU(computePlace->getIndex())) {
-				if (_mainTask != nullptr) {
-					result = _mainTask;
-					bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
-					FatalErrorHandler::failIf(!exchanged);
-					_mainFirstRunCompleted = true;
-					return result;
+				 while (!_mainFirstRunCompleted) {
+					if (_mainTask != nullptr) {
+						result = _mainTask;
+						bool exchanged = _mainTask.compare_exchange_strong(result, nullptr);
+						FatalErrorHandler::failIf(!exchanged);
+						_mainFirstRunCompleted = true;
+						return result;
+					}
 				}
 			}
 #endif
