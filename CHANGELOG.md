@@ -2,6 +2,39 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.4, Mon Jun 22, 2020
+The 2.4 release corresponds to the OmpSs-2 2020.06 release. It introduces several features that improve the general
+performance of OmpSs-2 applications. It adds a new variant to extract execution traces with a lightweight internal
+tracer. It also improves the support for CUDA and provides support for OpenACC tasks.
+
+### General
+- Use jemalloc as a scalable multi-threading memory allocator
+- Add `turbo` variant enabling floating-point optimizations and the discrete dependency system
+- Refactor of CPU Manager and DLB support improvements
+- Bugfixes, performance and code improvements
+
+### Scheduling
+- Improve taskfor distribution policy
+- Improve scheduling performance and code
+- Add the `nanos6_wait_for` function to efficiently pause a task for a given time
+
+### Dependency System
+- Implement the discrete dependency system with lock-free techniques
+- Add support for weak dependencies in discrete
+- Add support for commutative and concurrent dependencies in discrete
+
+### Instrumentation
+- Refactor the hardware counters infrastructure and support both PAPI and PQoS counters
+- Add `ctf` variant to extract execution traces in CTF format using a lightweight internal tracer
+- Provide the `ctf2prv` tool to convert CTF traces to Paraver traces
+
+### Devices
+- Refactor of the devices' infrastructure
+- Perform transparent CUDA Unified Memory prefetching
+- Add support for cuBLAS and similar CUDA APIs
+- Add support for OpenACC tasks
+
+
 ## Version 2.3.2, Wed Jan 8, 2020
 The 2.3.2 release corresponds to the OmpSs-2 2019.11.2 release. It mainly introduces bug fixes.
 
