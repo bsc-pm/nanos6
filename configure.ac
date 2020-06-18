@@ -444,8 +444,8 @@ _AS_ECHO([])
 _AS_ECHO_N([   CUDA is enabled... ])
 if test x"${ac_use_cuda}" = x"yes" ; then
 	AC_MSG_RESULT([yes])
-	_AS_ECHO([	CUDA CFLAGS... ${CUDA_CFLAGS}])
-	_AS_ECHO([	CUDA LIBS... ${CUDA_LIBS}])
+	_AS_ECHO([   CUDA CFLAGS... ${CUDA_CFLAGS}])
+	_AS_ECHO([   CUDA LIBS... ${CUDA_LIBS}])
 else
 	AC_MSG_RESULT([no])
 fi
