@@ -27,12 +27,19 @@ To generate a CTF trace:
 NANOS6=ctf ./app
 ```
 
-TODO add hwc example
+This will create a trace-<app_name>-<app_pid> folder in the current directory,
+hereinafter refered to as `$TRACE` for convinience.  The subdirectory
+`$TRACE/ctf` contains the ctf trace as recorded by Nanos6.
 
-This will create a trace-<app_name>-<app_pid> folder in the current directory. To convert it to paraver:
+By default, Nanos6 will convert the trace automatically at the end of the
+execution unless the user explicitly sets the environment variable
+`NANOS6_CTF2PRV=0`. The converted paraver trace will be stored under the `$TRACE/prv` subdirectory. Please note that the conversion tool requires python3 and
+the babeltrace2 package.
+
+It is also possible to conver it manually using the rovided converter:
 
 ```bash
-$NANOS6_SOURCE/tools/ctf/ctf2prv ./trace-<app_name>-<app_pid>
+  ctf2prv $TRACE
 ```
 
 Paraver Views

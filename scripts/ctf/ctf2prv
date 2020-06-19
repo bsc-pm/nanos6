@@ -27,7 +27,7 @@ if [ ! -f $CTFTRACE/metadata ]; then
 	exit 1
 fi
 
-PRVTRACE="$1/extrae"
+PRVTRACE="$1/prv"
 rm -rf $PRVTRACE
 mkdir $PRVTRACE
 cd $PRVTRACE

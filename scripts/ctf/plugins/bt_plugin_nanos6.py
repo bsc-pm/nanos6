@@ -30,7 +30,6 @@ bt2.register_plugin(
 @bt2.plugin_component_class
 class ctf2prv(bt2._UserSinkComponent):
 	def __init__(self, config, params, obj):
-		print("holi")
 		self.__port = self._add_input_port("in")
 		self.__process_message = self._process_first_message
 		self.__last = None
@@ -62,7 +61,6 @@ class ctf2prv(bt2._UserSinkComponent):
 		ts = self.__last.default_clock_snapshot.value
 		ParaverTrace.addEndTime(ts)
 		ParaverTrace.finalizeTraceFiles()
-		print("adieu")
 
 	def _user_graph_is_configured(self):
 		self._it = self._create_message_iterator(self.__port)
@@ -130,19 +128,19 @@ class ctf2prv(bt2._UserSinkComponent):
 	def _consume_message(self, msg):
 		if type(msg) is bt2._EventMessageConst:
 			ts = msg.default_clock_snapshot.value
-			name = msg.event.name
-			cpu_id = msg.event["cpu_id"]
-			print("event {}, cpu_id {}, timestamp {}".format(name, cpu_id, ts))
+			#name = msg.event.name
+			#cpu_id = msg.event["cpu_id"]
+			#print("event {}, cpu_id {}, timestamp {}".format(name, cpu_id, ts))
 			self._process_event(ts, msg.event)
 			self.__last = msg
 		elif type(msg) is bt2._StreamBeginningMessageConst:
-			print("Stream beginning")
+			pass 
 		elif type(msg) is bt2._StreamEndMessageConst:
-			print("Stream end")
+			pass
 		elif type(msg) is bt2._PacketBeginningMessageConst:
-			print("Packet beginning")
+			pass
 		elif type(msg) is bt2._PacketEndMessageConst:
-			print("Packet end")
+			pass
 		else:
 			raise RuntimeError("Unhandled message type", type(msg))
 		#input("")
