@@ -32,22 +32,12 @@ void wrongExecution(const char *error)
 	tap.end();
 }
 
-void spin()
-{
-	int spins = 0;
-	while (spins != MAX_SPINS) {
-		++spins;
-	}
-}
-
-
 //! \brief Increases the global counter and waits untill all the CPUs in the
 //! system are busy
 //!
 //! \param[in] numCPUs The number of CPUs used by this process (and to acquire)
 void cpuComputation(long numCPUs)
 {
-
 	++numBusyCPUs;
 	Timer timer;
 	timer.start();
@@ -56,7 +46,12 @@ void cpuComputation(long numCPUs)
 	// (minus 2 since the passive process should keep one for the
 	// main task plus another for the scheduling loop)
 	while (numBusyCPUs.load() < (numCPUs - 2)) {
-		spin();
+		// Spin for a bit
+		int spins = 0;
+		while (spins != MAX_SPINS) {
+			++spins;
+		}
+
 		// Wait for 2 seconds max
 		if (timer.lap() > 2000000) {
 			return;

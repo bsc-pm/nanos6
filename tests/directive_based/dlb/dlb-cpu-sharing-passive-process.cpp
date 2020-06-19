@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cstdlib>  /* getenv */
@@ -14,10 +14,7 @@
 #include "TestAnyProtocolProducer.hpp"
 
 
-#define MAX_SPINS 20000
-
 TestAnyProtocolProducer tap;
-
 
 void wrongExecution(const char *error)
 {
@@ -26,15 +23,6 @@ void wrongExecution(const char *error)
 	tap.success(error);
 	tap.end();
 }
-
-void spin()
-{
-	int spins = 0;
-	while (spins != MAX_SPINS) {
-		++spins;
-	}
-}
-
 
 int main(int argc, char **argv) {
 	// NOTE: This test should only be ran from the dlb-cpu-sharing test
@@ -55,7 +43,9 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	// Wait for 5 seconds
+	// Simply wait for 5 seconds, while almost all the CPUs are lent to other
+	// processes, and then quit. This program is just a dummy process that
+	// serves its CPUs to other running processes
 	usleep(5000000);
 
 	return 0;
