@@ -4,7 +4,7 @@
 
 
 AM_CXXFLAGS = $(PTHREAD_CFLAGS) -I$(top_srcdir)/api
-AM_LDFLAGS = -Wl,-z,lazy
+AM_LDFLAGS = -Wl,-z,lazy $(jemalloc_LIBS)
 nanos6_info_LDADD = $(top_builddir)/nanos6-library-mode.o ../libnanos6.la -ldl
 
 bin_PROGRAMS = nanos6-info
