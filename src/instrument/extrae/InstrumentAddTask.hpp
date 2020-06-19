@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_ADD_TASK_HPP
@@ -21,7 +21,7 @@ class Task;
 
 
 namespace Instrument {
-	inline task_id_t enterAddTask(
+	inline task_id_t enterCreateTask(
 		nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
@@ -108,8 +108,11 @@ namespace Instrument {
 		
 		return task_id_t(_extraeTaskInfo);
 	}
-	
-	
+
+	inline void exitCreateTask()
+	{
+	}
+
 	inline void createdArgsBlock(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) void *argsBlockPointer, __attribute__((unused)) size_t originalArgsBlockSize, __attribute__((unused)) size_t argsBlockSize, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
@@ -118,9 +121,12 @@ namespace Instrument {
 	inline void createdTask(__attribute__((unused)) void *task, __attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
-	
-	
-	inline void exitAddTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
+
+	inline void enterSubmitTask()
+	{
+	}
+
+	inline void exitSubmitTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
 	{
 		extrae_combined_events_t ce;
 		
@@ -148,7 +154,7 @@ namespace Instrument {
 		}
 	}
 	
-	inline task_id_t enterAddTaskforCollaborator(
+	inline task_id_t enterInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
@@ -184,9 +190,9 @@ namespace Instrument {
 		return task_id_t(_extraeTaskInfo);
 	}
 	
-	inline void exitAddTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) InstrumentationContext const &context)
+	inline void exitInitTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) InstrumentationContext const &context)
 	{
-		// As we did not changed the runtime state in "enterAddTaskforCollaborator", we do not have to restore it here.
+		// As we did not changed the runtime state in "enterInitTaskforCollaborator", we do not have to restore it here.
 		// Thus, emmit only code location.
 		
 		if (_traceAsThreads) {
@@ -198,6 +204,11 @@ namespace Instrument {
 		if (_traceAsThreads) {
 			_extraeThreadCountLock.readUnlock();
 		}
+	}
+
+	inline void registeredNewSpawnedTaskType(
+		__attribute__((unused)) nanos6_task_info_t *taskInfo
+	) {
 	}
 }
 

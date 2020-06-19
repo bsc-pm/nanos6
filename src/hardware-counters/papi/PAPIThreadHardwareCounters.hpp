@@ -7,15 +7,39 @@
 #ifndef PAPI_THREAD_HARDWARE_COUNTERS_HPP
 #define PAPI_THREAD_HARDWARE_COUNTERS_HPP
 
+#include <papi.h>
+
+#include <MemoryAllocator.hpp>
+
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 
 
 class PAPIThreadHardwareCounters : public ThreadHardwareCountersInterface {
 
+private:
+
+	int _eventSet;
+
 public:
 
-	inline PAPIThreadHardwareCounters()
+	PAPIThreadHardwareCounters()
 	{
+		_eventSet = PAPI_NULL;
+	}
+
+	~PAPIThreadHardwareCounters()
+	{
+	}
+
+	int getEventSet() const
+	{
+		return _eventSet;
+	}
+
+	void setEventSet(int eventSet)
+	{
+		_eventSet = eventSet;
 	}
 
 };

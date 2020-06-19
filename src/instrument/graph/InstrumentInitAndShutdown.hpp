@@ -14,6 +14,10 @@
 namespace Instrument {
 	void initialize();
 	void shutdown();
+
+	inline void nanos6_preinit_finished()
+	{
+	}
 }
 
 

@@ -32,9 +32,12 @@ namespace Instrument {
 	template<typename... TS>
 	void createdExternalThread(external_thread_id_t &threadId, TS... nameComponents);
 	
+	void threadWillSuspendBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
+	void threadHasResumedBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
 	void threadWillSuspend(thread_id_t threadId, compute_place_id_t cpu);
 	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu);
 	void threadWillShutdown();
+	void threadWillShutdown(external_thread_id_t threadId);
 	
 	void threadWillSuspend(external_thread_id_t threadId);
 	void threadHasResumed(external_thread_id_t threadId);

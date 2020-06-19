@@ -54,6 +54,28 @@ AC_DEFUN([SELECT_NANOS6_INSTRUMENTATION_VARIANTS],
 		AC_MSG_RESULT([$ac_build_optimized_variant])
 		AM_CONDITIONAL(BUILD_OPTIMIZED_VARIANT, test x"${ac_build_optimized_variant}" = x"yes")
 
+		AC_MSG_CHECKING([whether to build the ctf instrumented variant])
+		AC_ARG_ENABLE(
+			[ctf-instrumentation],
+			[AS_HELP_STRING([--disable-ctf-instrumentation], [build the ctf instrumented variant])],
+			[
+				case "${enableval}" in
+				yes)
+					ac_build_ctf_instrumentation=yes
+					;;
+				no)
+					ac_build_ctf_instrumentation=no
+					;;
+				*)
+					AC_MSG_ERROR([bad value ${enableval} for --enable-ctf-instrumentation])
+					;;
+				esac
+			],
+			[ac_build_ctf_instrumentation=yes]
+		)
+		AC_MSG_RESULT([$ac_build_ctf_instrumentation])
+		AM_CONDITIONAL(BUILD_CTF_INSTRUMENTATION_VARIANT, test x"${ac_build_ctf_instrumentation}" = x"yes")
+
 		AC_MSG_CHECKING([whether to build the debug variants])
 		AC_ARG_ENABLE(
 			[debug-variants],

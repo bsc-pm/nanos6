@@ -50,7 +50,7 @@ void HardwareCounters::loadConfigurationFile()
 						_enabled[HWCounters::PAPI_BACKEND] = enabled;
 						if (enabled) {
 							_anyBackendEnabled = true;
-							for (short i = HWCounters::PAPI_MIN_EVENT; i <= HWCounters::PAPI_MAX_EVENT; ++i) {
+							for (short i = HWCounters::HWC_PAPI_MIN_EVENT; i <= HWCounters::HWC_PAPI_MAX_EVENT; ++i) {
 								std::string eventDescription(HWCounters::counterDescriptions[i]);
 								if (backendNode.dataExists(eventDescription)) {
 									converted = false;
@@ -71,7 +71,7 @@ void HardwareCounters::loadConfigurationFile()
 						_enabled[HWCounters::PQOS_BACKEND] = enabled;
 						if (enabled) {
 							_anyBackendEnabled = true;
-							for (short i = HWCounters::PQOS_MIN_EVENT; i <= HWCounters::PQOS_MAX_EVENT; ++i) {
+							for (short i = HWCounters::HWC_PQOS_MIN_EVENT; i <= HWCounters::HWC_PQOS_MAX_EVENT; ++i) {
 								std::string eventDescription(HWCounters::counterDescriptions[i]);
 								if (backendNode.dataExists(eventDescription)) {
 									converted = false;

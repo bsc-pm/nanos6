@@ -14,7 +14,7 @@ AC_DEFUN([AC_CHECK_PQOS],
 		if test x"${ac_cv_use_pqos_prefix}" != x"" ; then
 			AC_MSG_CHECKING([the PQOS installation prefix])
 			AC_MSG_RESULT([${ac_cv_use_pqos_prefix}])
-			pqos_LIBS="-L${ac_cv_use_pqos_prefix}/lib -lpqos"
+			pqos_LIBS="-L${ac_cv_use_pqos_prefix}/lib -lpqos -Wl,-rpath,${ac_cv_use_pqos_prefix}/lib"
 			pqos_CPPFLAGS="-I$ac_cv_use_pqos_prefix/include"
 			ac_use_pqos=yes
 		else

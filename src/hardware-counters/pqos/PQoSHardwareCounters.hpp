@@ -70,9 +70,9 @@ public:
 	static inline int getInnerIdentifier(HWCounters::counters_t counterType)
 	{
 		assert(_idMap.size() > 0);
-		assert((counterType - HWCounters::PQOS_MIN_EVENT) < (int) _idMap.size());
+		assert((counterType - HWCounters::HWC_PQOS_MIN_EVENT) < (int) _idMap.size());
 
-		return _idMap[counterType - HWCounters::PQOS_MIN_EVENT];
+		return _idMap[counterType - HWCounters::HWC_PQOS_MIN_EVENT];
 	}
 
 	//! \brief Check whether a counter is enabled
@@ -81,9 +81,9 @@ public:
 	static inline bool isCounterEnabled(HWCounters::counters_t counterType)
 	{
 		assert(_idMap.size() > 0);
-		assert((counterType - HWCounters::PQOS_MIN_EVENT) < (int) _idMap.size());
+		assert((counterType - HWCounters::HWC_PQOS_MIN_EVENT) < (int) _idMap.size());
 
-		return (_idMap[counterType - HWCounters::PQOS_MIN_EVENT] != DISABLED_PQOS_COUNTER);
+		return (_idMap[counterType - HWCounters::HWC_PQOS_MIN_EVENT] != DISABLED_PQOS_COUNTER);
 	}
 
 	//! \brief Get the number of enabled counters in the PQoS backend

@@ -36,6 +36,7 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadManagement.hpp>
+#include <InstrumentWorkerThread.hpp>
 #include <Monitoring.hpp>
 
 void WorkerThread::initialize()
@@ -45,15 +46,15 @@ void WorkerThread::initialize()
 	assert(getComputePlace() != nullptr);
 
 	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), getComputePlace()->getInstrumentationId(), _instrumentationId);
+	Instrument::threadHasResumedBeforeSync(_instrumentationId, getComputePlace()->getInstrumentationId());
 
 	markAsCurrentWorkerThread();
 
+	HardwareCounters::threadInitialized();
+	Monitoring::initializeThread();
+
 	// This is needed for kernel-level threads to stop them after initialization
 	synchronizeInitialization();
-
-	HardwareCounters::threadInitialized();
-	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId());
-	Monitoring::initializeThread();
 }
 
 
@@ -90,6 +91,7 @@ void WorkerThread::body()
 				ThreadManager::addIdler(this);
 				switchTo(assignedThread);
 			} else {
+				Instrument::workerThreadObtainedTask();
 				// If the task is a taskfor, the CPUManager may want to unidle
 				// collaborators to help execute it
 				if (_task->isTaskfor()) {
@@ -118,6 +120,7 @@ void WorkerThread::body()
 			// If no task is available, the CPUManager may want to idle this CPU
 			CPUManager::executeCPUManagerPolicy(cpu, IDLE_CANDIDATE);
 		}
+		Instrument::workerThreadSpins();
 	}
 
 	// The thread should not have any task assigned at this point

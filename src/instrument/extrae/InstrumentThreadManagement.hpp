@@ -211,6 +211,14 @@ namespace Instrument {
 			_extraeThreadCountLock.readUnlock();
 		}
 	}
+
+	inline void threadWillSuspendBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
+	{
+	}
+
+	inline void threadHasResumedBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
+	{
+	}
 	
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{
@@ -344,7 +352,7 @@ namespace Instrument {
 		}
 	}
 	
-	inline void threadWillShutdown()
+	static inline void extraeThreadWillShutdown()
 	{
 		if (_traceAsThreads) {
 			extrae_combined_events_t ce;
@@ -383,6 +391,16 @@ namespace Instrument {
 			
 			ExtraeAPI::emit_CombinedEvents ( &ce );
 		}
+	}
+
+	inline void threadWillShutdown(__attribute__((unused)) external_thread_id_t threadId)
+	{
+		extraeThreadWillShutdown();
+	}
+
+	inline void threadWillShutdown()
+	{
+		extraeThreadWillShutdown();
 	}
 	
 	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)

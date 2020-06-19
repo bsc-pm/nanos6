@@ -25,9 +25,10 @@ public:
 		nanos6_task_invocation_info_t *parentTaskInvocationInfo = parent->getTaskInvokationInfo();
 		Instrument::task_id_t parentTaskInstrumentationId = parent->getInstrumentationTaskId();
 		size_t flags = parent->getFlags();
-
 		void *originalArgsBlock = parent->getArgsBlock();
 		size_t originalArgsBlockSize = parent->getArgsBlockSize();
+
+		Instrument::task_id_t taskId = Instrument::enterInitTaskforCollaborator(parentTaskInstrumentationId, parentTaskInfo, parentTaskInvocationInfo, flags);
 
 		Taskfor *taskfor = computePlace->getPreallocatedTaskfor();
 		assert(taskfor != nullptr);
@@ -41,8 +42,6 @@ public:
 			argsBlock = computePlace->getPreallocatedArgsBlock(originalArgsBlockSize);
 		}
 		assert(argsBlock != nullptr);
-
-		Instrument::task_id_t taskId = Instrument::enterAddTaskforCollaborator(parentTaskInstrumentationId, parentTaskInfo, parentTaskInvocationInfo, flags);
 
 		taskfor->reinitialize(argsBlock, originalArgsBlockSize, parentTaskInfo, parentTaskInvocationInfo, nullptr, taskId, flags);
 
@@ -67,7 +66,7 @@ public:
 
 		// Instrument the task creation
 		Instrument::task_id_t taskInstrumentationId = taskfor->getInstrumentationTaskId();
-		Instrument::exitAddTaskforCollaborator(parentTaskInstrumentationId, taskInstrumentationId);
+		Instrument::exitInitTaskforCollaborator(parentTaskInstrumentationId, taskInstrumentationId);
 
 		return taskfor;
 	}

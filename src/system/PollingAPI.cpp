@@ -9,6 +9,7 @@
 #include <mutex>
 #include <sstream>
 #include <string>
+#include <atomic>
 
 #include <nanos6/polling.h>
 
@@ -21,7 +22,6 @@
 
 namespace PollingAPI {
 	typedef PaddedSpinLock<> lock_t;
-
 
 	//! \brief the parameters of the nanos6_register_polling_service function
 	struct ServiceKey {
@@ -98,7 +98,6 @@ namespace PollingAPI {
 
 
 using namespace PollingAPI;
-
 
 extern "C" void nanos6_register_polling_service(char const *service_name, nanos6_polling_service_t service_function, void *service_data)
 {

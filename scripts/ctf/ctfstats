@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+#	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+#
+#	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+#
+
+usage() {
+	echo "usage: ctfstats <ctf_trace_directory>"
+}
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+CTFPLUGINS=$DIR/../share/doc/scripts/ctf/plugins
+CTFPLUGINS=$CTFPLUGINS:$DIR/plugins
+export PYTHONPATH=$PYTHONPATH:$CTFPLUGINS
+
+if [ $# -ne 1 ]; then
+	usage
+	exit 1
+fi
+
+TRACEOP1=`readlink -f $1/ctf/ust/uid/*/64-bit`
+TRACEOP2=`readlink -f $1/ust/uid/*/64-bit`
+TRACEOP3=`readlink -f $1`
+
+if [ -f $TRACEOP1/metadata ]; then
+	TRACE=$TRACEOP1
+elif [ -f $TRACEOP2/metadata ]; then
+	TRACE=$TRACEOP2
+elif [ -f $TRACEOP3/metadata ]; then
+	TRACE=$TRACEOP3
+else
+	>&2 echo "Error: The supplied input does not appear to be a CTF trace"
+	exit 1
+fi
+
+babeltrace2 --plugin-path="$CTFPLUGINS" \
+	-c source.ctf.fs                \
+	--params="inputs=[\"$TRACE\"]"  \
+	-c sink.nanos6.stats

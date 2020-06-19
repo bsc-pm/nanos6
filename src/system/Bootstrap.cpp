@@ -90,9 +90,9 @@ void nanos6_preinit(void) {
 	Scheduler::initialize();
 	ExternalThreadGroup::initialize();
 
+	Instrument::initialize();
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
-	Instrument::initialize();
 
 	Monitoring::initialize();
 
@@ -113,6 +113,7 @@ void nanos6_preinit(void) {
 	LeaderThread::initialize(leaderThreadCPU);
 
 	CPUManager::initialize();
+	Instrument::nanos6_preinit_finished();
 }
 
 
@@ -125,7 +126,7 @@ void nanos6_init(void) {
 
 void nanos6_shutdown(void) {
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
-	Instrument::threadWillShutdown();
+	Instrument::threadWillShutdown(mainThread->getInstrumentationId());
 
 	while (SpawnedFunctions::_pendingSpawnedFunctions > 0) {
 		// Wait for spawned functions to fully end
