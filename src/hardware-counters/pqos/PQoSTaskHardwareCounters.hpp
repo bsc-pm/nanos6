@@ -65,7 +65,7 @@ public:
 	{
 		assert(data != nullptr);
 
-		for (size_t id = HWCounters::PQOS_MIN_EVENT; id < HWCounters::PQOS_MAX_EVENT; ++id) {
+		for (size_t id = HWCounters::PQOS_MIN_EVENT; id <= HWCounters::PQOS_MAX_EVENT; ++id) {
 			if (PQoSHardwareCounters::isCounterEnabled((HWCounters::counters_t) id)) {
 				int innerId = PQoSHardwareCounters::getInnerIdentifier((HWCounters::counters_t) id);
 				assert(innerId >= 0);

@@ -20,7 +20,7 @@ class PQoSCPUHardwareCounters : public CPUHardwareCountersInterface {
 private:
 
 	//! The array of hardware counter deltas
-	uint64_t _counters[HWCounters::PQOS_MAX_EVENT - HWCounters::PQOS_MIN_EVENT];
+	uint64_t _counters[HWCounters::PQOS_NUM_EVENTS];
 
 	//! Number of samples taken into account for the average of L3 occupancy
 	size_t _numSamples;
@@ -30,7 +30,7 @@ public:
 	inline PQoSCPUHardwareCounters() :
 		_numSamples(0)
 	{
-		for (size_t id = 0; id < HWCounters::PQOS_MAX_EVENT - HWCounters::PQOS_MIN_EVENT; ++id) {
+		for (size_t id = 0; id < HWCounters::PQOS_NUM_EVENTS; ++id) {
 			_counters[id] = 0;
 		}
 	}
@@ -43,7 +43,7 @@ public:
 		// For regular counters, the delta values in 'data' are reset when
 		// needed, so we simply copy the new deltas. In the case of L3
 		// occupancy, we compute an average in-place
-		for (size_t id = HWCounters::PQOS_MIN_EVENT; id < HWCounters::PQOS_MAX_EVENT; ++id) {
+		for (size_t id = HWCounters::PQOS_MIN_EVENT; id <= HWCounters::PQOS_MAX_EVENT; ++id) {
 			// Make sure the event is enabled
 			if (PQoSHardwareCounters::isCounterEnabled((HWCounters::counters_t) id)) {
 				size_t innerId = id - HWCounters::PQOS_MIN_EVENT;
