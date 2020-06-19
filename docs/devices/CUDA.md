@@ -93,16 +93,24 @@ call to enable the code obtaining the cudaStream the task will run on:
 cudaStream_t nanos6_get_current_cuda_stream()
 ```
 
-This maybe used inside an outlined function, marked with `device(cuda)` in the respective header,
-as shown in the example:
+This maybe used inside an outlined or inlined task marked with `device(cuda)`, but without
+specifying a `ndrange` clause:
 
 ```c
-void cublasTaskFunction(<args N, x, y etc.>)
+#pragma oss task device(cuda)
+void cublasTaskFunction(cublasHandle_t handle, <args N, x, y etc.>)
 {
-	cublasSetStream(cublasHandle, nanos6_get_current_cuda_stream());
-	cublasDdot(h, N, x, 1, y, 1, result);
+	cublasSetStream(handle, nanos6_get_current_cuda_stream());
+	cublasDdot(handle, N, x, 1, y, 1, result);
 }
 ```
+
+Please note that a single cuBLAS context cannot be reused for multiple devices.
+This means that the above example will not be enough when running in a system with multiple GPUs,
+because Nanos6 can schedule tasks in any CUDA device.
+A possible way to tackle this problem is to create one cuBLAS context for each GPU and then
+select inside the task the appropiate handle using the `cudaGetDevice` call to get the GPU the task
+will be running on.
 
 ## Compiling OmpSs-2 + CUDA applications
 
