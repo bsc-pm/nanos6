@@ -7,6 +7,7 @@
 from abc import ABC
 from runtime import RuntimeModel
 from paravertrace import ParaverTrace, ExtraeEventTypes, ExtraeEventCollection
+from hwcdefs import hardwareCountersDefinitions
 
 class RuntimeActivity:
 	Runtime     = 1
@@ -146,16 +147,8 @@ class ParaverViewHardwareCounters(ParaverView):
 			("nanos6:task_end",        self.hook_getHardwareCounters)
 		]
 
-		self._eventsHardwareCounters = ExtraeEventCollection(42010000, 7)
-		self._eventsHardwareCounters.addEvents([
-			("PAPI_TOT_INS", 42000050, "PAPI_TOT_INS [Instr completed]"),
-			("PAPI_TOT_CYC", 42000059, "PAPI_TOT_CYC [Total cycles]"),
-			("PAPI_L1_DCM",  42000000, "PAPI_L1_DCM  [L1D cache misses]"),
-			("PAPI_L2_DCM",  42000002, "PAPI_L2_DCM  [L2D cache misses]"),
-			("PAPI_L3_TCM",  42000008, "PAPI_L3_TCM  [L3 cache misses]"),
-			("PAPI_BR_INS",  42000055, "PAPI_BR_INS  [Branches]"),
-			("PAPI_BR_MSP",  42000046, "PAPI_BR_MSP  [Cond br mspredictd]")
-		])
+		self._eventsHardwareCounters = ExtraeEventCollection(3900000, 7)
+		self._eventsHardwareCounters.addEvents(hardwareCountersDefinitions)
 		ParaverTrace.addEventCollection(self._eventsHardwareCounters)
 
 	def getHardwareCountersId(self, name):

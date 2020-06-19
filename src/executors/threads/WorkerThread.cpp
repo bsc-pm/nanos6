@@ -50,11 +50,11 @@ void WorkerThread::initialize()
 
 	markAsCurrentWorkerThread();
 
-	// This is needed for kernel-level threads to stop them after initialization
-	synchronizeInitialization();
-
 	HardwareCounters::threadInitialized();
 	Monitoring::initializeThread();
+
+	// This is needed for kernel-level threads to stop them after initialization
+	synchronizeInitialization();
 }
 
 

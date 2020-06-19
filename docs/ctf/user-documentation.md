@@ -5,9 +5,9 @@ The CTF instrumentation backend is a performance evaluation and debugging tool a
 
 Nanos6 stores traces in the Common Trace Format (CTF). CTF traces can be directly visualized with tools such as babeltrace1 or babeltrace2 (raw command line inspector). But it is recommended first to convert them to Paraver traces using the provided ctf2prv application. Although Nanos6 requires no special packages to write CTF traces, the ctf2prv converter needs python3 and the babeltrace2 python bindings.
 
-Hardware counters information will be collected into the CTF trace if enabled through the Nanos6 configuration file. See the Nanos6 README for more information.
+The Nanos6 CTF backend will transparently collect hardware counters information if the Nanos6 Hardware counters infrastructure has been enabled. See the Nanos6 README for more information on how to enable Hardware Counters.
 
-This backend objective is not to replace Extrae, but to provide a minimum set of features for easy Nanos6 introspection. More sophisticated analysis (such as task dependency graphs) will have to be performed with Extrae as usual. 
+This backend objective is not to replace Extrae, but to provide a minimum set of features for easy Nanos6 introspection. More sophisticated analysis (such as task dependency graphs) will have to be performed with Extrae as usual.
 
 Implementation details
 ----------------------

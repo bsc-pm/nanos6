@@ -22,6 +22,7 @@ class PAPIHardwareCounters : public HardwareCountersInterface {
 private:
 
 	bool _enabled;
+	bool _verbose;
 	std::vector<int> _enabledPAPIEventCodes;
 
 	//! Maps HWCounters::counters_t identifiers with the "inner PAPI id" (0..N)
@@ -39,6 +40,8 @@ private:
 	static int _idMap[HWCounters::HWC_PAPI_NUM_EVENTS];
 	static int _numEnabledCounters;
 	static const int DISABLED_PAPI_COUNTER = -1;
+
+	void testMaximumNumberOfEvents();
 
 public:
 

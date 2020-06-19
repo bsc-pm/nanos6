@@ -1999,6 +1999,7 @@ nobase_dist_hwcounters_DATA = \
 ctfdir = ${docdir}
 nobase_dist_ctf_DATA = \
 	scripts/ctf/plugins/bt_plugin_nanos6.py \
+	scripts/ctf/plugins/hwcdefs.py \
 	scripts/ctf/plugins/runtime.py \
 	scripts/ctf/plugins/paravertrace.py \
 	scripts/ctf/plugins/paraverviews.py \
