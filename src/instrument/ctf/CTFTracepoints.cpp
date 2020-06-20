@@ -65,12 +65,12 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	eventThreadSuspend = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:thread_suspend",
 		"\t\tuint16_t _tid;\n",
-		CTFAPI::CTFContextCPUHWC
+		CTFAPI::CTFContextRuntimeHWC
 	));
 	eventThreadShutdown = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:thread_shutdown",
 		"\t\tuint16_t _tid;\n",
-		CTFAPI::CTFContextCPUHWC
+		CTFAPI::CTFContextRuntimeHWC
 	));
 	eventExternalThreadCreate = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:external_thread_create",
@@ -105,7 +105,8 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	eventTaskCreateEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_create_enter",
 		"\t\tuint16_t _type;\n"
-		"\t\tuint32_t _id;\n"
+		"\t\tuint32_t _id;\n",
+		CTFAPI::CTFContextTaskHWC
 	));
 	eventTaskCreateExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_create_exit",
@@ -126,12 +127,13 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	));
 	eventTaskSubmitExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_submit_exit",
-		"\t\tuint8_t _dummy;\n"
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
 	));
 	eventTaskExecute = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_execute",
 		"\t\tuint32_t _id;\n",
-		CTFAPI::CTFContextCPUHWC
+		CTFAPI::CTFContextRuntimeHWC
 	));
 	eventTaskBlock = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_block",

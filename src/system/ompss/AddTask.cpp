@@ -57,8 +57,6 @@ void nanos6_create_task(
 		FatalErrorHandler::failIf(true, "Task of device type '", taskDeviceType, "' has no active hardware associated");
 	}
 
-	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags);
-
 	Task *parent = nullptr;
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
 	if (currentWorkerThread != nullptr) {
@@ -68,6 +66,8 @@ void nanos6_create_task(
 			Monitoring::taskChangedStatus(parent, runtime_status);
 		}
 	}
+
+	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags);
 
 	//! Throttle. If active, act as a taskwait
 	if (Throttle::isActive() && parent != nullptr) {

@@ -17,6 +17,7 @@
 
 
 #include "executors/threads/CPU.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/threads/KernelLevelThread.hpp"
 #include "support/InstrumentedThread.hpp"
@@ -181,6 +182,7 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 	CPU *cpu = _cpu;
 	assert(cpu != nullptr);
 	
+	HardwareCounters::updateRuntimeCounters();
 	Instrument::threadWillSuspend(_instrumentationId, _cpu->getInstrumentationId());
 	if (replacement != nullptr) {
 		// Replace a thread by another

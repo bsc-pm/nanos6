@@ -140,11 +140,13 @@ class ParaverViewHardwareCounters(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:thread_suspend",  self.hook_getHardwareCounters),
-			("nanos6:thread_shutdown", self.hook_getHardwareCounters),
-			("nanos6:task_execute",    self.hook_getHardwareCounters),
-			("nanos6:task_block",      self.hook_getHardwareCounters),
-			("nanos6:task_end",        self.hook_getHardwareCounters)
+			("nanos6:thread_suspend",    self.hook_getHardwareCounters),
+			("nanos6:thread_shutdown",   self.hook_getHardwareCounters),
+			("nanos6:task_execute",      self.hook_getHardwareCounters),
+			("nanos6:task_block",        self.hook_getHardwareCounters),
+			("nanos6:task_end",          self.hook_getHardwareCounters),
+			("nanos6:task_create_enter", self.hook_getHardwareCounters),
+			("nanos6:task_submit_exit",  self.hook_getHardwareCounters),
 		]
 
 		self._eventsHardwareCounters = ExtraeEventCollection(3900000, 7)

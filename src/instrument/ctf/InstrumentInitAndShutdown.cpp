@@ -58,7 +58,7 @@ static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		uint8_t enabledContexes = event->getEnabledContexes();
 		if (enabledContexes & CTFAPI::CTFContextTaskHWC) {
 			event->addContext(ctfContextTaskHWC);
-		} else if (enabledContexes & CTFAPI::CTFContextCPUHWC) {
+		} else if (enabledContexes & CTFAPI::CTFContextRuntimeHWC) {
 			event->addContext(ctfContextCPUHWC);
 		}
 	}
