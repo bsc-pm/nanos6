@@ -7,14 +7,17 @@
 #ifndef CTFCONTEXTUNBOUNDED_HPP
 #define CTFCONTEXTUNBOUNDED_HPP
 
+#include "lowlevel/threads/ExternalThread.hpp"
+
 #include "CTFContext.hpp"
 #include "../CTFAPI.hpp"
 #include "../CTFTypes.hpp"
 
+
 namespace CTFAPI {
-	class CTFContextUnbounded : public CTFContext {
+	class CTFStreamContextUnbounded : public CTFContext {
 	public:
-		CTFContextUnbounded()
+		CTFStreamContextUnbounded() : CTFContext()
 		{
 			// dataStrucutresMetadata content will be copied into:
 			//    "struct unbounded unbounded;"
@@ -28,11 +31,19 @@ namespace CTFAPI {
 			size = sizeof(ctf_thread_id_t);
 		}
 
-		~CTFContextUnbounded() {}
+		~CTFStreamContextUnbounded() {}
 
-		void writeContext(void **buf, ctf_thread_id_t threadId)
+		inline size_t getSize() const
 		{
-			CTFAPI::tp_write_args<>(buf, threadId);
+			return size;
+		}
+
+		inline void writeContext(void **buf)
+		{
+			ExternalThread *currentExternalThread = ExternalThread::getCurrentExternalThread();
+			assert(currentExternalThread != nullptr);
+			ctf_thread_id_t tid = currentExternalThread->getInstrumentationId().tid;
+			CTFAPI::tp_write_args<>(buf, tid);
 		}
 	};
 }

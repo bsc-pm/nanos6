@@ -15,12 +15,18 @@
 #include "../context/CTFContext.hpp"
 
 namespace CTFAPI {
+
+	enum ctf_streams {
+		CTFStreamBoundedId   = 1,
+		CTFStreamUnboundedId = 2
+	};
+
 	class CTFStream {
 
 	private:
 		ctf_cpu_id_t    _cpuId;
 		ctf_stream_id_t _streamId;
-		CircularBuffer circularBuffer;
+		CircularBuffer _circularBuffer;
 
 		void addStreamHeader();
 
@@ -29,59 +35,59 @@ namespace CTFAPI {
 			  ctf_stream_id_t streamId);
 
 	public:
-		CTFContext *context;
-
 		CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path)
-			: CTFStream(size, cpu, path, 0) {}
+			: CTFStream(size, cpu, path, CTFStreamBoundedId) {}
 
 		virtual ~CTFStream() {}
 
 		inline void shutdown()
 		{
-			circularBuffer.shutdown();
+			_circularBuffer.shutdown();
 		}
 
 		virtual void lock() {}
+
 		virtual void unlock() {}
-		virtual void writeContext(__attribute__((unused)) void **buf) {}
+
+		virtual void writeContext(void **) {}
 
 		virtual size_t getContextSize() const
 		{
 			return 0;
 		}
 
-		inline void setContext(CTFContext *ctfcontext)
+		inline ctf_stream_id_t getId() const
 		{
-			context = ctfcontext;
+			return _streamId;
 		}
 
 		inline bool alloc(uint64_t size)
 		{
-			return circularBuffer.alloc(size);
+			return _circularBuffer.alloc(size);
 		}
 
 		inline void *getBuffer()
 		{
-			return circularBuffer.getBuffer();
+			return _circularBuffer.getBuffer();
 		}
 
 		inline void submit(uint64_t size)
 		{
-			circularBuffer.submit(size);
+			_circularBuffer.submit(size);
 		}
 
 		inline bool checkIfNeedsFlush() {
-			return circularBuffer.checkIfNeedsFlush();
+			return _circularBuffer.checkIfNeedsFlush();
 		}
 
 		inline void flushFilledSubBuffers()
 		{
-			circularBuffer.flushFilledSubBuffers();
+			_circularBuffer.flushFilledSubBuffers();
 		}
 
 		inline void flushAll()
 		{
-			circularBuffer.flushAll();
+			_circularBuffer.flushAll();
 		}
 	};
 }

@@ -9,8 +9,9 @@
 #include <cinttypes>
 #include <vector>
 
+#include "stream/CTFStream.hpp"
 #include "CTFMetadata.hpp"
-#include "context/CTFContext.hpp"
+#include "context/CTFEventContext.hpp"
 #include "CTFTrace.hpp"
 
 
@@ -68,7 +69,7 @@ const char *CTFAPI::CTFMetadata::meta_clock =
 
 const char *CTFAPI::CTFMetadata::meta_streamBounded =
 	"stream {\n"
-	"	id = 0;\n"
+	"	id = %d;\n"
 	"	packet.context := struct {\n"
 	"		uint16_t cpu_id;\n"
 	"	};\n"
@@ -80,7 +81,7 @@ const char *CTFAPI::CTFMetadata::meta_streamBounded =
 
 const char *CTFAPI::CTFMetadata::meta_streamUnbounded =
 	"stream {\n"
-	"	id = 1;\n"
+	"	id = %d;\n"
 	"	packet.context := struct {\n"
 	"		uint16_t cpu_id;\n"
 	"	};\n"
@@ -118,25 +119,26 @@ CTFAPI::CTFMetadata::~CTFMetadata()
 	contexes.clear();
 }
 
-void CTFAPI::CTFMetadata::writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *event)
+void CTFAPI::CTFMetadata::writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *event, ctf_stream_id_t streamId)
 {
-	std::vector<CTFAPI::CTFContext *> &eventContexes = event->getContexes();
+	std::vector<CTFAPI::CTFEventContext *> &eventContexes = event->getContexes();
 	if (eventContexes.empty())
 		return;
 
 	fprintf(f, "\tcontext := struct {\n");
 	for (auto it = eventContexes.begin(); it != eventContexes.end(); ++it) {
-		CTFAPI::CTFContext *context = (*it);
-		fputs(context->getEventMetadata(), f);
+		CTFAPI::CTFEventContext *context = (*it);
+		if (context->getStreamMask() & streamId)
+			fputs(context->getEventMetadata(), f);
 	}
 	fprintf(f, "\t};\n");
 }
 
-void CTFAPI::CTFMetadata::writeEventMetadata(FILE *f, CTFAPI::CTFEvent *event, int streamId)
+void CTFAPI::CTFMetadata::writeEventMetadata(FILE *f, CTFAPI::CTFEvent *event, ctf_stream_id_t streamId)
 {
 	fprintf(f, meta_eventMetadataId, event->getName(), event->getEventId());
 	fprintf(f, meta_eventMetadataStreamId, streamId);
-	writeEventContextMetadata(f, event);
+	writeEventContextMetadata(f, event, streamId);
 	fprintf(f, meta_eventMetadataFields, event->getMetadataFields());
 }
 
@@ -165,22 +167,23 @@ void CTFAPI::CTFMetadata::writeMetadataFile(std::string userPath)
 		fputs(context->getDataStructuresMetadata(), f);
 	}
 
-	fputs(meta_streamBounded, f);
-	fputs(meta_streamUnbounded, f);
+	fprintf(f, meta_streamBounded,   CTFStreamBoundedId);
+	fprintf(f, meta_streamUnbounded, CTFStreamUnboundedId);
 
 	// print events bound to first stream
 	for (auto it = events.begin(); it != events.end(); ++it) {
 		CTFAPI::CTFEvent *event = (*it);
-		writeEventMetadata(f, event, 0);
+		writeEventMetadata(f, event, CTFStreamBoundedId);
 	}
 
-	// Print event bound to the second stream. Due to a CTF language
-	// limitation were each event definition can only belong to a single ctf
-	// stream, we must copy each event definition twice, one for each ctf
-	// stream
+	// Print event bound to the second stream.
+	//
+	// Due to a CTF language limitation where each event definition can only
+	// belong to a single ctf stream, we must copy each event definition
+	// twice, one for each ctf stream
 	for (auto it = events.begin(); it != events.end(); ++it) {
 		CTFAPI::CTFEvent *event = (*it);
-		writeEventMetadata(f, event, 1);
+		writeEventMetadata(f, event, CTFStreamUnboundedId);
 	}
 
 	ret = fclose(f);

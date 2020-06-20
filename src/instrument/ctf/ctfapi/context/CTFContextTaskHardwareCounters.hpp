@@ -7,16 +7,16 @@
 #ifndef CTFCONTEXTTASKHARDWARECOUNTERS_HPP
 #define CTFCONTEXTTASKHARDWARECOUNTERS_HPP
 
-#include "CTFContext.hpp"
+#include "CTFEventContext.hpp"
 
 namespace CTFAPI {
 
-	class CTFContextTaskHardwareCounters : public CTFContext {
+	class CTFContextTaskHardwareCounters : public CTFEventContext {
 	public:
-		CTFContextTaskHardwareCounters();
+		CTFContextTaskHardwareCounters(ctf_stream_id_t streamMask);
 		~CTFContextTaskHardwareCounters() {}
 
-		void writeContext(void **buf);
+		void writeContext(void **buf, ctf_stream_id_t streamId) override;
 	};
 }
 

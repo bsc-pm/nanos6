@@ -13,6 +13,7 @@
 
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "ctfapi/CTFEvent.hpp"
+#include "CTFTypes.hpp"
 
 namespace CTFAPI {
 	class CTFMetadata {
@@ -34,8 +35,8 @@ namespace CTFAPI {
 		std::set<CTFEvent *> events;
 		std::set<CTFContext *> contexes;
 
-		void writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *event);
-		void writeEventMetadata(FILE *f, CTFAPI::CTFEvent *event, int streamId);
+		void writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *event, ctf_stream_id_t streamId);
+		void writeEventMetadata(FILE *f, CTFAPI::CTFEvent *event, ctf_stream_id_t streamId);
 
 	public:
 
@@ -50,9 +51,10 @@ namespace CTFAPI {
 			return event;
 		}
 
-		CTFContext *addContext(CTFContext *context)
+		template <typename T>
+		T *addContext(T *context)
 		{
-			auto ret = contexes.emplace(context);
+			auto ret = contexes.emplace( (CTFContext *) context);
 			FatalErrorHandler::failIf(!ret.second, "Attempt to register a duplicate CTF Context");
 
 			return context;

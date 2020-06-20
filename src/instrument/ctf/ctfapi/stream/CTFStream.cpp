@@ -12,7 +12,7 @@ CTFAPI::CTFStream::CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path,
 	_cpuId = cpu;
 	_streamId = streamId;
 	std::string streamFilePath = path + "/channel_" + std::to_string(_cpuId);
-	circularBuffer.initialize(size, streamFilePath.c_str());
+	_circularBuffer.initialize(size, streamFilePath.c_str());
 	addStreamHeader();
 }
 
@@ -57,6 +57,6 @@ static void mk_packet_context(CircularBuffer *circularBuffer, ctf_cpu_id_t cpu_i
 
 void CTFAPI::CTFStream::addStreamHeader()
 {
-	mk_packet_header (&circularBuffer, _streamId);
-	mk_packet_context(&circularBuffer, _cpuId);
+	mk_packet_header (&_circularBuffer, _streamId);
+	mk_packet_context(&_circularBuffer, _cpuId);
 }

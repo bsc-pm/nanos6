@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "context/CTFContext.hpp"
+#include "context/CTFEventContext.hpp"
 
 namespace CTFAPI {
 	class CTFEvent {
@@ -22,8 +22,7 @@ namespace CTFAPI {
 		bool _enabled;
 		uint8_t _enabledContexes;
 
-		std::vector<CTFContext *> eventContext;
-		size_t contextSize; // written ctf entry size
+		std::vector<CTFEventContext *> eventContext;
 
 		// TODO use CTF typedef to set the types
 		static uint8_t idCounter;
@@ -32,27 +31,29 @@ namespace CTFAPI {
 
 		CTFEvent(const char *name, const char *metadataFields, uint8_t contexes = 0)
 			: _id(idCounter++), _name(name), _metadataFields(metadataFields), _enabled(true),
-			_enabledContexes(contexes), contextSize(0)
+			_enabledContexes(contexes)
 		{
 		}
 
-		void writeContext(void **buf)
+		void writeContext(void **buf, ctf_stream_id_t streamId)
 		{
 			for (auto it = eventContext.begin(); it != eventContext.end(); it++)
-				(*it)->writeContext(buf);
+				(*it)->writeContext(buf, streamId);
 		}
 
-		void addContext(CTFContext *context)
+		void addContext(CTFEventContext *context)
 		{
 			if (!context)
 				return;
 
 			eventContext.push_back(context);
-			contextSize += context->getSize();
 		}
 
-		size_t getContextSize() const
+		size_t getContextSize(ctf_stream_id_t streamId) const
 		{
+			size_t contextSize = 0;
+			for (auto it = eventContext.begin(); it != eventContext.end(); it++)
+				contextSize += (*it)->getSize(streamId);
 			return contextSize;
 		}
 
@@ -81,7 +82,7 @@ namespace CTFAPI {
 			return _metadataFields;
 		}
 
-		std::vector<CTFContext *>& getContexes()
+		std::vector<CTFEventContext *>& getContexes()
 		{
 			return eventContext;
 		}
