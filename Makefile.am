@@ -1894,7 +1894,12 @@ noinst_HEADERS += \
 EXTRA_DIST += \
 	CHANGELOG.md \
 	COPYING \
-	README.md
+	README.md \
+	docs/cluster/Cluster.md \
+	docs/ctf/CTF.md \
+	docs/devices/CUDA.md \
+	docs/devices/Devices.md \
+	docs/devices/OpenACC.md
 
 CLEANFILES += LICENSE.txt
 

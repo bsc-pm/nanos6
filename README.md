@@ -107,9 +107,9 @@ would run `app` on cores 0, 1, 2 and 4.
 
 The scheduling infrastructure provides the following environment variables to modify the behavior of the task scheduler.
 
-* `NANOS6_SCHEDULING_POLICY=fifo|lifo`: Specifies whether ready tasks are added to the ready queue using a LIFO or a FIFO policy. **fifo** is the default.
-* `NANOS6_IMMEDIATE_SUCCESSOR=1|0`: Enables/disables the immediate successor policy. Enabled by default.
-* `NANOS6_PRIORITY=1|0`: Enables/disables support for task priorities in the scheduler. Enabled by default.
+* `NANOS6_SCHEDULING_POLICY`: Specifies whether ready tasks are added to the ready queue using a FIFO (`fifo`) or a LIFO (`lifo`) policy. The **fifo** is the default.
+* `NANOS6_IMMEDIATE_SUCCESSOR`: Boolean indicating whether the immediate successor policy is enabled. If enabled, once a CPU finishes a task, the same CPU starts executing its successor task (computed through the data dependencies) such that it can reuse the data on the cache. **Enabled** by default.
+* `NANOS6_PRIORITY`: Boolean indicating whether the scheduler should consider task priorities. **Enabled** by default.
 
 ### Task worksharings options
 
@@ -155,27 +155,27 @@ Secondly, it enables two floating-point (FP) unit optimizations in all tasks: fl
 Please note these FP optimizations could alter the precision of floating-point computations.
 In conclusion, enabling all those features can significantly improve the user application's performance out of the box.
 
-### [EXPERIMENTAL] Tracing a Nanos6 application with CTF
+
+### Tracing a Nanos6 application with CTF (Experimental)
 
 To generate a CTF trace, run the application with the `NANOS6` envar set to `ctf`.
 
-A directory named "trace_<binary_name>_<pid>" will be created at the current
-working directory at the end of the execution. To visualize this trace, it
-needs to be converted to Paraver format first. By default, Nanos6 will convert
-the trace automatically at the end of the execution unless the user explicitly
-sets the environment variable `NANOS6_CTF2PRV=0`. Please note that the
-conversion tool requires python3 and the babeltrace2 package.
+A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
+To visualize this trace, it needs to be converted to Paraver format first.
+By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
+Please note that the conversion tool requires python3 and the babeltrace2 packages.
 
-It is also possible to conver it manually using the provided converter:
+Additionally, there is a command to manually convert a trace:
 
 ```bash
   ctf2prv <trace>
 ```
 
-Which will generate the directory <trace>/prv with the Paraver trace.
+which will generate the directory `<trace>/prv` with the Paraver trace.
 
-The ctf2prv tool requires python3 and babeltrace2 python modules. Nanos6 does
-not require any package to generate CTF traces.
+Although the `ctf2prv` tool requires python3 and babeltrace2 python modules, Nanos6 does not require any package to generate CTF traces.
+For more information on how the CTF instrumentation variant works see [CTF.md](docs/ctf/CTF.md).
+
 
 ### Tracing a Nanos6 application with Extrae
 
@@ -387,7 +387,7 @@ For information about using device tasks (e.g., CUDA tasks), refer to the [devic
 
 In order to enable OmpSs-2@Cluster support, you need a working MPI installation in your environment that supports multithreading, i.e. `MPI_THREAD_MULTIPLE`.
 Nanos6 needs to be configured with the `--enable-cluster` flag.
-For more information, on how to write and run cluster applications see [README-CLUSTER.md](docs/cluster/README-CLUSTER.md).
+For more information on how to write and run cluster applications see [Cluster.md](docs/cluster/Cluster.md).
 
 ## Choosing a dependency implementation
 
@@ -437,4 +437,20 @@ Currently, Nanos6 offers different policies when handlind CPUs through the `NANO
 
 ## Throttle
 
-The Nanos6 runtime has a Throttle mechanism suited for long-running programs that generate lots of tasks without using `taskwait`s. To read more, please refer to the [throttle](docs/system/Throttle.md) documentation.
+There are some cases where user programs are designed to run for a very long time, instantiating in the order of tens of millions of tasks or more.
+These programs can demand a huge amount of memory in small intervals when they rely only on data dependencies to achieve task synchronization.
+In these cases, the runtime system could run out of memory when allocating internal structures for task-related information if the number of instantiated tasks is not kept under control.
+
+To prevent this issue, the runtime system offers a `throttle` mechanism that monitors memory usage and stops task creators while there is high memory pressure.
+This mechanism does not incur too much overhead because the stopped threads execute other ready tasks (already instantiated) until the memory pressure decreases.
+The main idea of this mechanism is to prevent the runtime system from exceeding the memory budget during execution.
+Furthermore, the execution time when enabling this feature should be similar to the time in a system with infinite memory.
+
+The throttle mechanism requires a valid installation of Jemalloc, which is a scalable multi-threading memory allocator.
+Hence, the runtime system must be configured with the ``--with-jemalloc`` option.
+Although the throttle feature is disabled by default, it can be enabled and tunned at runtime through the following environment variables:
+
+* `NANOS6_THROTTLE`: Boolean variable that enables the throttle mechanism. **Disabled** by default.
+* `NANOS6_THROTTLE_TASKS`: Maximum absolute number of alive childs that any task can have. It is divided by 10 at each nesting level. By default is 5.000.000.
+* `NANOS6_THROTTLE_PRESSURE`: Percentage of memory budget used at which point the number of tasks allowed to exist will be decreased linearly until reaching 1 at 100% memory pressure. By default is 70.
+* `NANOS6_THROTTLE_MAX_MEMORY`: Maximum used memory or memory budget. Note that this variable can be set in terms of bytes or in memory units. For example: ``NANOS6_THROTTLE_MAX_MEMORY=50GB``. The default is the half of the available physical memory.
