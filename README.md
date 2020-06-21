@@ -437,4 +437,20 @@ Currently, Nanos6 offers different policies when handlind CPUs through the `NANO
 
 ## Throttle
 
-The Nanos6 runtime has a Throttle mechanism suited for long-running programs that generate lots of tasks without using `taskwait`s. To read more, please refer to the [throttle](docs/system/Throttle.md) documentation.
+There are some cases where user programs are designed to run for a very long time, instantiating in the order of tens of millions of tasks or more.
+These programs can demand a huge amount of memory in small intervals when they rely only on data dependencies to achieve task synchronization.
+In these cases, the runtime system could run out of memory when allocating internal structures for task-related information if the number of instantiated tasks is not kept under control.
+
+To prevent this issue, the runtime system offers a `throttle` mechanism that monitors memory usage and stops task creators while there is high memory pressure.
+This mechanism does not incur too much overhead because the stopped threads execute other ready tasks (already instantiated) until the memory pressure decreases.
+The main idea of this mechanism is to prevent the runtime system from exceeding the memory budget during execution.
+Furthermore, the execution time when enabling this feature should be similar to the time in a system with infinite memory.
+
+The throttle mechanism requires a valid installation of Jemalloc, which is a scalable multi-threading memory allocator.
+Hence, the runtime system must be configured with the ``--with-jemalloc`` option.
+Although the throttle feature is disabled by default, it can be enabled and tunned at runtime through the following environment variables:
+
+* `NANOS6_THROTTLE`: Boolean variable that enables the throttle mechanism. **Disabled** by default.
+* `NANOS6_THROTTLE_TASKS`: Maximum absolute number of alive childs that any task can have. It is divided by 10 at each nesting level. By default is 5.000.000.
+* `NANOS6_THROTTLE_PRESSURE`: Percentage of memory budget used at which point the number of tasks allowed to exist will be decreased linearly until reaching 1 at 100% memory pressure. By default is 70.
+* `NANOS6_THROTTLE_MAX_MEMORY`: Maximum used memory or memory budget. Note that this variable can be set in terms of bytes or in memory units. For example: ``NANOS6_THROTTLE_MAX_MEMORY=50GB``. The default is the half of the available physical memory.
