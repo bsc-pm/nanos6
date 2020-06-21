@@ -47,14 +47,14 @@ class ctf2prv(bt2._UserSinkComponent):
 			pv.ParaverViewThreadId(),
 			pv.ParaverViewTaskId(),
 			pv.ParaverViewRuntimeSubsystems(),
-			#pv.ParaverViewReadyTasks(),
-			pv.ParaverViewCreatedTasks(),
-			pv.ParaverViewBlockedTasks(),
-			pv.ParaverViewRunningTasks(),
-			pv.ParaverViewCreatedThreads(),
-			pv.ParaverViewRunningThreads(),
-			pv.ParaverViewBlockedThreads(),
 			pv.ParaverViewCTFFlush(),
+			#pv.ParaverViewNumberOfReadyTasks(),
+			pv.ParaverViewNumberOfCreatedTasks(),
+			pv.ParaverViewNumberOfBlockedTasks(),
+			pv.ParaverViewNumberOfRunningTasks(),
+			pv.ParaverViewNumberOfCreatedThreads(),
+			pv.ParaverViewNumberOfRunningThreads(),
+			pv.ParaverViewNumberOfBlockedThreads(),
 		]
 
 	def _finalize(self):

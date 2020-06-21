@@ -10,6 +10,7 @@ from paravertrace import ParaverTrace, ExtraeEventTypes, ExtraeEventCollection
 from hwcdefs import hardwareCountersDefinitions
 
 class RuntimeActivity:
+	End         = 0
 	Runtime     = 1
 	BusyWaiting = 2
 	Task        = 3
@@ -36,13 +37,17 @@ class ParaverViewRuntimeCode(ParaverView):
 			("nanos6:thread_shutdown",          self.hook_threadStop),
 			("nanos6:external_thread_shutdown", self.hook_threadStop),
 		]
-		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_CODE, {RuntimeActivity.Runtime: "Runtime"}, "Runtime: Runtime Code")
+		values = {
+			RuntimeActivity.End     : "End",
+			RuntimeActivity.Runtime : "Runtime"
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_CODE, values, "Runtime: Runtime Code")
 
 	def hook_threadResume(self, _, payload):
 		payload.append((ExtraeEventTypes.RUNTIME_CODE, RuntimeActivity.Runtime))
 
 	def hook_threadStop(self, _, payload):
-		payload.append((ExtraeEventTypes.RUNTIME_CODE, 0))
+		payload.append((ExtraeEventTypes.RUNTIME_CODE, RuntimeActivity.End))
 
 class ParaverViewRuntimeBusyWaiting(ParaverView):
 	def __init__(self):
@@ -52,20 +57,24 @@ class ParaverViewRuntimeBusyWaiting(ParaverView):
 			("nanos6:worker_enter_busy_wait", self.hook_enterBusyWait),
 			("nanos6:worker_exit_busy_wait",  self.hook_exitBusyWait)
 		]
-		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_BUSYWAITING, {RuntimeActivity.BusyWaiting: "BusyWait"}, "Runtime: Busy Waiting")
+		values = {
+			RuntimeActivity.End         : "End",
+			RuntimeActivity.BusyWaiting : "BusyWait",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_BUSYWAITING, values, "Runtime: Busy Waiting")
 
 	def hook_threadShutdown(self, _, payload):
 		# In case we were busy waiting, we emit another "0" event to unstack
 		# it. We might emit the event event if the thread was not busy waiting,
 		# but its cheaper to always do it rather than keeping track of it's
 		# status. Paraver just ignores extra "unstack" events.
-		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, 0))
+		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.End))
 
 	def hook_enterBusyWait(self, _, payload):
 		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.BusyWaiting))
 
 	def hook_exitBusyWait(self, _, payload):
-		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, 0))
+		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.End))
 
 class ParaverViewRuntimeTasks(ParaverView):
 	def __init__(self):
@@ -75,13 +84,17 @@ class ParaverViewRuntimeTasks(ParaverView):
 			("nanos6:task_block",   self.hook_taskStop),
 			("nanos6:task_end",     self.hook_taskStop)
 		]
-		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_TASKS, {RuntimeActivity.Task: "Task"}, "Runtime: Task Code")
+		values = {
+			RuntimeActivity.End  : "End",
+			RuntimeActivity.Task : "Task",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_TASKS, values, "Runtime: Task Code")
 
 	def hook_taskExecute(self, _, payload):
 		payload.append((ExtraeEventTypes.RUNTIME_TASKS, RuntimeActivity.Task))
 
 	def hook_taskStop(self, _, payload):
-		payload.append((ExtraeEventTypes.RUNTIME_TASKS, 0))
+		payload.append((ExtraeEventTypes.RUNTIME_TASKS, RuntimeActivity.End))
 
 class ParaverViewTaskLabel(ParaverView):
 	def __init__(self):
@@ -92,7 +105,10 @@ class ParaverViewTaskLabel(ParaverView):
 			("nanos6:task_block",   self.hook_taskStop),
 			("nanos6:task_end",     self.hook_taskStop)
 		]
-		ParaverTrace.addEventType(ExtraeEventTypes.RUNNING_TASK_LABEL, "Running Task Label")
+		values = {
+			RuntimeActivity.End : "End",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNNING_TASK_LABEL, values, "Running Task Label")
 
 	def hook_taskLabel(self, event, _):
 		label      = event["label"]
@@ -107,7 +123,7 @@ class ParaverViewTaskLabel(ParaverView):
 	def hook_taskStop(self, event, payload):
 		taskId = event["id"]
 		taskTypeId = RuntimeModel.getTaskTypeId(taskId)
-		payload.append((ExtraeEventTypes.RUNNING_TASK_LABEL, 0))
+		payload.append((ExtraeEventTypes.RUNNING_TASK_LABEL, RuntimeActivity.End))
 
 class ParaverViewTaskSource(ParaverView):
 	def __init__(self):
@@ -118,7 +134,10 @@ class ParaverViewTaskSource(ParaverView):
 			("nanos6:task_block",   self.hook_taskStop),
 			("nanos6:task_end",     self.hook_taskStop)
 		]
-		ParaverTrace.addEventType(ExtraeEventTypes.RUNNING_TASK_SOURCE, "Running Task Source")
+		values = {
+			RuntimeActivity.End : "End",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNNING_TASK_SOURCE, values, "Running Task Source")
 
 	def hook_taskLabel(self, event, _):
 		source     = event["source"]
@@ -133,7 +152,7 @@ class ParaverViewTaskSource(ParaverView):
 	def hook_taskStop(self, event, payload):
 		taskId = event["id"]
 		taskTypeId = RuntimeModel.getTaskTypeId(taskId)
-		payload.append((ExtraeEventTypes.RUNNING_TASK_SOURCE, 0))
+		payload.append((ExtraeEventTypes.RUNNING_TASK_SOURCE, RuntimeActivity.End))
 
 
 class ParaverViewHardwareCounters(ParaverView):
@@ -189,7 +208,10 @@ class ParaverViewThreadId(ParaverView):
 		]
 		self._colorMap = {}
 		self._colorMap_indx = 1
-		ParaverTrace.addEventType(ExtraeEventTypes.RUNNING_THREAD_TID, "Worker Thread Id (TID)")
+		values = {
+			RuntimeActivity.End : "End",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNNING_THREAD_TID, values, "Worker Thread Id (TID)")
 
 	def hook_threadCreate(self, event, payload):
 		tid = event["tid"]
@@ -205,7 +227,7 @@ class ParaverViewThreadId(ParaverView):
 		payload.append((ExtraeEventTypes.RUNNING_THREAD_TID, color))
 
 	def hook_threadSuspend(self, event, payload):
-		payload.append((ExtraeEventTypes.RUNNING_THREAD_TID, 0))
+		payload.append((ExtraeEventTypes.RUNNING_THREAD_TID, RuntimeActivity.End))
 
 class ParaverViewTaskId(ParaverView):
 	def __init__(self):
@@ -215,16 +237,17 @@ class ParaverViewTaskId(ParaverView):
 			("nanos6:task_block",     self.hook_taskStop),
 			("nanos6:task_end",       self.hook_taskStop)
 		]
-		ParaverTrace.addEventType(ExtraeEventTypes.RUNNING_TASK_ID, "Task ID")
+		values = {
+			RuntimeActivity.End : "End",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNNING_TASK_ID, values, "Task ID")
 
 	def hook_taskExecute(self, event, payload):
 		taskId = event["id"]
 		payload.append((ExtraeEventTypes.RUNNING_TASK_ID, taskId))
 
 	def hook_taskStop(self, event, payload):
-		payload.append((ExtraeEventTypes.RUNNING_TASK_ID, 0))
-
-
+		payload.append((ExtraeEventTypes.RUNNING_TASK_ID, RuntimeActivity.End))
 
 class ParaverViewRuntimeSubsystems(ParaverView):
 	class Status:
@@ -392,7 +415,36 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 	def emitVal(self, val, payload):
 		payload.append((ExtraeEventTypes.RUNTIME_SUBSYSTEMS, val))
 
-#class ParaverViewReadyTasks(ParaverView):
+class ParaverViewCTFFlush(ParaverView):
+	def __init__(self):
+		super().__init__()
+		self._hooks = [
+			("nanos6:ctf_flush",   self.hook_flush),
+		]
+		values = {
+			0 : "End",
+			1 : "flush",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.CTF_FLUSH, values, "Nanos6 CTF buffers writes to disk")
+		self.blockedThreads = set()
+
+	def hook_flush(self, event, _):
+		start = event["start"]
+		end   = event["end"]
+
+		# In this view we are not emiting events trough the "payload" variable,
+		# but we are emitting events directly. That's because we don't want to
+		# use the current event timestamp as the extare timestamp but we want
+		# to use the event's fields as timestamps. It is safe to do so becaue
+		# on flushing, we know that no events could be emitted between the last
+		# processed event and now, basically because nanos6 was flushing the
+		# buffer :-)
+
+		cpuId = RuntimeModel.getVirtualCPUId(event)
+		ParaverTrace.emitEvent(start, cpuId, [(ExtraeEventTypes.CTF_FLUSH, 1)])
+		ParaverTrace.emitEvent(end, cpuId, [(ExtraeEventTypes.CTF_FLUSH, 0)])
+
+#class ParaverViewNumberOfReadyTasks(ParaverView):
 #	def __init__(self):
 #		super().__init__()
 #		self._hooks = [
@@ -420,7 +472,7 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 #		#assert(self.readyTasksCount >= 0)
 #		payload.append((ExtraeEventTypes.NUMBER_OF_READY_TASKS, self.readyTasksCount))
 
-class ParaverViewCreatedTasks(ParaverView):
+class ParaverViewNumberOfCreatedTasks(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
@@ -436,7 +488,7 @@ class ParaverViewCreatedTasks(ParaverView):
 		self.createdTasksCount += 1
 		payload.append((ExtraeEventTypes.NUMBER_OF_CREATED_TASKS, self.createdTasksCount))
 
-class ParaverViewBlockedTasks(ParaverView):
+class ParaverViewNumberOfBlockedTasks(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
@@ -469,7 +521,7 @@ class ParaverViewBlockedTasks(ParaverView):
 		self.blockedTasksCount -= 1
 		payload.append((ExtraeEventTypes.NUMBER_OF_BLOCKED_TASKS, self.blockedTasksCount))
 
-class ParaverViewRunningTasks(ParaverView):
+class ParaverViewNumberOfRunningTasks(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
@@ -491,7 +543,7 @@ class ParaverViewRunningTasks(ParaverView):
 		self.runningTasksCount -= 1
 		payload.append((ExtraeEventTypes.NUMBER_OF_RUNNING_TASKS, self.runningTasksCount))
 
-class ParaverViewCreatedThreads(ParaverView):
+class ParaverViewNumberOfCreatedThreads(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
@@ -513,7 +565,7 @@ class ParaverViewCreatedThreads(ParaverView):
 		assert(self.createdThreadsCount >= 0)
 		payload.append((ExtraeEventTypes.NUMBER_OF_CREATED_THREADS, self.createdThreadsCount))
 
-class ParaverViewRunningThreads(ParaverView):
+class ParaverViewNumberOfRunningThreads(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
@@ -536,7 +588,7 @@ class ParaverViewRunningThreads(ParaverView):
 		assert(self.runningThreadsCount >= 0)
 		payload.append((ExtraeEventTypes.NUMBER_OF_RUNNING_THREADS, self.runningThreadsCount))
 
-class ParaverViewBlockedThreads(ParaverView):
+class ParaverViewNumberOfBlockedThreads(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
@@ -563,28 +615,3 @@ class ParaverViewBlockedThreads(ParaverView):
 			raise Exception("Error: attempt to suspend the same thread twice")
 		self.blockedThreads.add(tid)
 		payload.append((ExtraeEventTypes.NUMBER_OF_BLOCKED_THREADS, len(self.blockedThreads)))
-
-class ParaverViewCTFFlush(ParaverView):
-	def __init__(self):
-		super().__init__()
-		self._hooks = [
-			("nanos6:ctf_flush",   self.hook_flush),
-		]
-		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.CTF_FLUSH, {1 : "flush"}, "Nanos6 CTF buffers writes to disk")
-		self.blockedThreads = set()
-
-	def hook_flush(self, event, _):
-		start = event["start"]
-		end   = event["end"]
-
-		# In this view we are not emiting events trough the "payload" variable,
-		# but we are emitting events directly. That's because we don't want to
-		# use the current event timestamp as the extare timestamp but we want
-		# to use the event's fields as timestamps. It is safe to do so becaue
-		# on flushing, we know that no events could be emitted between the last
-		# processed event and now, basically because nanos6 was flushing the
-		# buffer :-)
-
-		cpuId = RuntimeModel.getVirtualCPUId(event)
-		ParaverTrace.emitEvent(start, cpuId, [(ExtraeEventTypes.CTF_FLUSH, 1)])
-		ParaverTrace.emitEvent(end, cpuId, [(ExtraeEventTypes.CTF_FLUSH, 0)])
