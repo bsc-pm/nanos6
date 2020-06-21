@@ -155,27 +155,27 @@ Secondly, it enables two floating-point (FP) unit optimizations in all tasks: fl
 Please note these FP optimizations could alter the precision of floating-point computations.
 In conclusion, enabling all those features can significantly improve the user application's performance out of the box.
 
-### [EXPERIMENTAL] Tracing a Nanos6 application with CTF
+
+### Tracing a Nanos6 application with CTF (Experimental)
 
 To generate a CTF trace, run the application with the `NANOS6` envar set to `ctf`.
 
-A directory named "trace_<binary_name>_<pid>" will be created at the current
-working directory at the end of the execution. To visualize this trace, it
-needs to be converted to Paraver format first. By default, Nanos6 will convert
-the trace automatically at the end of the execution unless the user explicitly
-sets the environment variable `NANOS6_CTF2PRV=0`. Please note that the
-conversion tool requires python3 and the babeltrace2 package.
+A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
+To visualize this trace, it needs to be converted to Paraver format first.
+By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
+Please note that the conversion tool requires python3 and the babeltrace2 packages.
 
-It is also possible to conver it manually using the provided converter:
+Additionally, there is a command to manually convert a trace:
 
 ```bash
   ctf2prv <trace>
 ```
 
-Which will generate the directory <trace>/prv with the Paraver trace.
+which will generate the directory `<trace>/prv` with the Paraver trace.
 
-The ctf2prv tool requires python3 and babeltrace2 python modules. Nanos6 does
-not require any package to generate CTF traces.
+Although the `ctf2prv` tool requires python3 and babeltrace2 python modules, Nanos6 does not require any package to generate CTF traces.
+For more information on how the CTF instrumentation variant works see [CTF.md](docs/ctf/CTF.md).
+
 
 ### Tracing a Nanos6 application with Extrae
 
