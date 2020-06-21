@@ -146,6 +146,75 @@ class ParaverTrace:
 		cls.__print_row()
 
 	@classmethod
+	def __buildStateColors(cls):
+
+		# color definitions
+		deepblue  = (  0,   0, 255)
+		lightgrey = (217, 217, 217)
+		red       = (230,  25,  75)
+		green     = (60,  180,  75)
+		yellow    = (255, 225,  25)
+		orange    = (245, 130,  48)
+		purple    = (145,  30, 180)
+		cyan      = ( 70, 240, 240)
+		magenta   = (240, 50,  230)
+		lime      = (210, 245,  60)
+		pink      = (250, 190, 212)
+		teal      = (  0, 128, 128)
+		lavender  = (220, 190, 255)
+		brown     = (170, 110,  40)
+		beige     = (255, 250, 200)
+		maroon    = (128,   0,   0)
+		mint      = (170, 255, 195)
+		olive     = (128, 128,   0)
+		apricot   = (255, 215, 180)
+		navy      = (  0,   0, 128)
+		blue      = (0,   130, 200)
+		grey      = (128, 128, 128)
+		black     = (  0,   0,   0)
+		#white     = (255, 255, 255)
+		#ompss2_1  = (107, 165, 217)
+		#ompss2_2  = ( 43,  83, 160)
+
+		# used colors
+		colors = [
+			black     , # (never shown anyways)
+			deepblue  , # runtime
+			lightgrey , # busy wait
+			red       , # task
+			green     ,
+			yellow    ,
+			orange    ,
+			purple    ,
+			cyan      ,
+			magenta   ,
+			lime      ,
+			pink      ,
+			teal      ,
+			grey      ,
+			lavender  ,
+			brown     ,
+			beige     ,
+			maroon    ,
+			mint      ,
+			olive     ,
+			apricot   ,
+			navy      ,
+			blue
+		]
+
+		cnt = 0
+		strColors = "STATES_COLOR\n"
+		for (r,g,b) in colors:
+			strColors += "{:<3} {{{:>3}, {:>3}, {:>3}}}\n".format(cnt, r, g, b)
+			cnt += 1
+
+		strColors += "\n\n"
+
+		return strColors
+
+
+	@classmethod
 	def __print_pcf(cls):
 		pcfStr =                             \
 		"DEFAULT_OPTIONS\n"                  \
@@ -163,12 +232,9 @@ class ParaverTrace:
 		"\n"                                 \
 		"THREAD_FUNC          State As Is\n" \
 		"\n"                                 \
-		"\n"                                 \
-		"STATES_COLOR\n"                     \
-		"0    {117,195,255}\n"               \
-		"1    {0,0,255}\n"                   \
-		"\n"                                 \
 		"\n"
+
+		pcfStr += cls.__buildStateColors()
 
 		for event in cls.__events.values():
 			pcfStr += str(event) + "\n\n"
