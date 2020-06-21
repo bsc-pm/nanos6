@@ -66,9 +66,10 @@ static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 
 static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string userPath)
 {
-	CPU *CPU;
+	CPU *cpu;
 	ctf_cpu_id_t cpuId;
-	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
+	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
+	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) cpus.size();
 
 	const size_t defaultBufferSize = 2*1024*1024;
 	//const size_t defaultBufferSize = 4096;
@@ -83,9 +84,9 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 
 	// Initialize Worker thread streams
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
-		CPU = CPUManager::getCPU(i);
-		cpuId = CPU->getSystemCPUId();
-		Instrument::CPULocalData &cpuLocalData = CPU->getInstrumentationData();
+		cpuId = i;
+		cpu = cpus[i];
+		Instrument::CPULocalData &cpuLocalData = cpu->getInstrumentationData();
 		cpuLocalData.userStream = new CTFAPI::CTFStream(
 			defaultBufferSize, cpuId, userPath.c_str()
 		);
@@ -93,8 +94,8 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 
 	// Initialize Leader Thread Stream
 	cpuId = totalCPUs;
-	CPU = CPUManager::getLeaderThreadCPU();
-	Instrument::CPULocalData &leaderThreadCPULocalData = CPU->getInstrumentationData();
+	cpu = CPUManager::getLeaderThreadCPU();
+	Instrument::CPULocalData &leaderThreadCPULocalData = cpu->getInstrumentationData();
 	CTFAPI::CTFStreamUnboundedPrivate *unboundedPrivateStream = new CTFAPI::CTFStreamUnboundedPrivate(
 		defaultBufferSize, cpuId, userPath.c_str()
 	);
@@ -133,21 +134,22 @@ void Instrument::initialize()
 
 void Instrument::shutdown()
 {
-	CPU *CPU;
-	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
+	CPU *cpu;
+	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
+	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) cpus.size();
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 
 	// Shutdown Worker thread streams
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
-		CPU = CPUManager::getCPU(i);
-		CTFAPI::CTFStream *userStream = CPU->getInstrumentationData().userStream;
+		cpu = cpus[i];
+		CTFAPI::CTFStream *userStream = cpu->getInstrumentationData().userStream;
 		userStream->shutdown();
 		delete userStream;
 	}
 
 	// Shutdown Leader thread stream
-	CPU = CPUManager::getLeaderThreadCPU();
-	Instrument::CPULocalData &leaderThreadCPULocalData = CPU->getInstrumentationData();
+	cpu = CPUManager::getLeaderThreadCPU();
+	Instrument::CPULocalData &leaderThreadCPULocalData = cpu->getInstrumentationData();
 	CTFAPI::CTFStream *leaderThreadStream = leaderThreadCPULocalData.userStream;
 	leaderThreadStream->shutdown();
 	delete leaderThreadStream;
