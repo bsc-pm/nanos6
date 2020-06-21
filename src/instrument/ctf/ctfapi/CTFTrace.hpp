@@ -28,6 +28,7 @@ namespace CTFAPI {
 	private:
 		static EnvironmentVariable<std::string> _defaultTemporalPath;
 		static EnvironmentVariable<std::string> _ctf2prvWrapper;
+		static EnvironmentVariable<std::string> _systemPATH;
 		static EnvironmentVariable<bool>        _ctf2prvEnabled;
 
 		std::string _finalTraceBasePath;

@@ -7,6 +7,14 @@
 
 set -e
 
+CTF2PRV=$(type -P "ctf2prv")
+FOUND=$?
+
+if [[ ! $FOUND ]]; then
+	>&2 echo "The ctf2prv converter is not in the system path. ctf to prv conversion was not possible.";
+	exit 1;
+fi
+
 module load swig python/3.6.5 babeltrace2
 
-ctf2prv $@
+$CTF2PRV $@

@@ -31,6 +31,7 @@
 
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("TMPDIR", "/tmp");
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("NANOS6_CTF2PRV_BIN");
+EnvironmentVariable<std::string> CTFAPI::CTFTrace::_systemPATH("PATH");
 EnvironmentVariable<bool>        CTFAPI::CTFTrace::_ctf2prvEnabled("NANOS6_CTF2PRV", true);
 
 static bool copyFile(std::string &src, std::string &dst)
@@ -264,6 +265,61 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 	}
 }
 
+static bool isExecutable(const char *file)
+{
+	struct stat sb;
+
+	if ((stat(file, &sb) == 0)) {
+		if (sb.st_mode & S_IXUSR ||
+		    sb.st_mode & S_IXGRP ||
+		    sb.st_mode & S_IXOTH) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool findInDir(const char *targetCommand, const char *dirPath)
+{
+	DIR *dir;
+
+	if (!(dir = opendir(dirPath)))
+		return false;
+
+	dirent *dirEntry;
+	while ((dirEntry = readdir(dir))) {
+		if (strcmp(targetCommand, dirEntry->d_name) == 0) {
+			std::string file = std::string(dirPath) + "/" + dirEntry->d_name;
+			if (isExecutable(file.c_str()))
+				return true;
+		}
+	}
+
+	return false;
+}
+
+static bool findCommand(const char *targetCommand, std::string path)
+{
+	size_t start = 0;
+	size_t end;
+
+	while ((end = path.find(":", start)) != std::string::npos) {
+		std::string currentPath = path.substr(start, end - start);
+
+		if (findInDir(targetCommand, currentPath.c_str()))
+			return true;
+
+		start = end + 1;
+	}
+
+	std::string currentPath = path.substr(start, path.size() - end);
+	if (findInDir(targetCommand, currentPath.c_str()))
+		return true;
+
+	return false;
+}
+
 void CTFAPI::CTFTrace::convertToParaver()
 {
 	int ret;
@@ -279,6 +335,11 @@ void CTFAPI::CTFTrace::convertToParaver()
 	if (_ctf2prvWrapper.isPresent()) {
 		converter = _ctf2prvWrapper.getValue();
 	} else {
+		// if not, is the default converter in the system path?
+		if (!findCommand(defaultConverter, _systemPATH.getValue())) {
+			FatalErrorHandler::warn("The ", defaultConverter, " tool is not in the system PATH. Automatic ctf to prv conversion is not possible.");
+			return;
+		}
 		converter = std::string(defaultConverter);
 	}
 
