@@ -387,7 +387,7 @@ For information about using device tasks (e.g., CUDA tasks), refer to the [devic
 
 In order to enable OmpSs-2@Cluster support, you need a working MPI installation in your environment that supports multithreading, i.e. `MPI_THREAD_MULTIPLE`.
 Nanos6 needs to be configured with the `--enable-cluster` flag.
-For more information on how to write and run cluster applications see [README-CLUSTER.md](docs/cluster/README-CLUSTER.md).
+For more information on how to write and run cluster applications see [Cluster.md](docs/cluster/Cluster.md).
 
 ## Choosing a dependency implementation
 
