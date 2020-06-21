@@ -107,9 +107,9 @@ would run `app` on cores 0, 1, 2 and 4.
 
 The scheduling infrastructure provides the following environment variables to modify the behavior of the task scheduler.
 
-* `NANOS6_SCHEDULING_POLICY=fifo|lifo`: Specifies whether ready tasks are added to the ready queue using a LIFO or a FIFO policy. **fifo** is the default.
-* `NANOS6_IMMEDIATE_SUCCESSOR=1|0`: Enables/disables the immediate successor policy. Enabled by default.
-* `NANOS6_PRIORITY=1|0`: Enables/disables support for task priorities in the scheduler. Enabled by default.
+* `NANOS6_SCHEDULING_POLICY`: Specifies whether ready tasks are added to the ready queue using a FIFO (`fifo`) or a LIFO (`lifo`) policy. The **fifo** is the default.
+* `NANOS6_IMMEDIATE_SUCCESSOR`: Boolean indicating whether the immediate successor policy is enabled. If enabled, once a CPU finishes a task, the same CPU starts executing its successor task (computed through the data dependencies) such that it can reuse the data on the cache. **Enabled** by default.
+* `NANOS6_PRIORITY`: Boolean indicating whether the scheduler should consider task priorities. **Enabled** by default.
 
 ### Task worksharings options
 
@@ -387,7 +387,7 @@ For information about using device tasks (e.g., CUDA tasks), refer to the [devic
 
 In order to enable OmpSs-2@Cluster support, you need a working MPI installation in your environment that supports multithreading, i.e. `MPI_THREAD_MULTIPLE`.
 Nanos6 needs to be configured with the `--enable-cluster` flag.
-For more information, on how to write and run cluster applications see [README-CLUSTER.md](docs/cluster/README-CLUSTER.md).
+For more information on how to write and run cluster applications see [README-CLUSTER.md](docs/cluster/README-CLUSTER.md).
 
 ## Choosing a dependency implementation
 
