@@ -311,7 +311,7 @@ AC_ARG_ENABLE(
 	[
 		case "${enableval}" in
 		yes)
-			ac_monitoring=yes
+			ac_monitoring=no
 			;;
 		no)
 			ac_monitoring=no
@@ -489,12 +489,12 @@ else
 fi
 
 _AS_ECHO([])
-_AS_ECHO_N([   Monitoring is enabled... ])
-if test x"${ac_monitoring}" = x"yes" ; then
-	AC_MSG_RESULT([yes])
-else
-	AC_MSG_RESULT([no])
-fi
+_AS_ECHO_N([   Monitoring is disabled (currently unavailable) ])
+#if test x"${ac_monitoring}" = x"yes" ; then
+#	AC_MSG_RESULT([yes])
+#else
+#	AC_MSG_RESULT([no])
+#fi
 
 _AS_ECHO([])
 _AS_ECHO_N([   Chrono Arch is enabled... ])
