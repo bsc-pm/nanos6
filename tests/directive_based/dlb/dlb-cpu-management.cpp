@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include "Atomic.hpp"
 #include "TestAnyProtocolProducer.hpp"
 #include "Timer.hpp"
 
@@ -131,26 +132,43 @@ int main(int argc, char **argv) {
 	tap.emitDiagnostic("***  1 test   ***");
 	tap.emitDiagnostic("*****************");
 
-	// Loop until all active CPUs are busy
-	int numActiveCPUs = 0;
-	while (numActiveCPUs < activeCPUs) {
-		// Reset the counter
-		numActiveCPUs = 0;
+	Atomic<bool> exitCondition(false);
 
+	// Create work for all CPUs
+	for (int i = 0; i < activeCPUs; ++i) {
+		// Block CPUs until the test finishes
+		#pragma oss task shared(exitCondition) label(wait)
+		while (!exitCondition.load());
+	}
+
+	timer.start();
+
+	// Loop untill all CPUs are currently running tasks. Note
+	// that the tasks are forced to busy wait until the test
+	// has finished
+	int runningCPUs;
+	do {
+		runningCPUs = 0;
+
+		// Count how many CPUs are running
 		for (int i = 0; i < activeCPUs; ++i) {
-			// Keep creating work untill all CPUs are active
-			#pragma oss task label(sleep)
-			usleep(1000000);
-
 			if (nanos6_get_cpu_status(i) != nanos6_lent_cpu) {
-				++numActiveCPUs;
+				++runningCPUs;
 			}
 		}
-	}
+
+		// Wait at most 5 seconds
+		if (timer.lap() > 5000000) {
+			break;
+		}
+	} while (runningCPUs < activeCPUs);
+
+	exitCondition.store(true);
+
 	#pragma oss taskwait
 
 	tap.evaluate(
-		numActiveCPUs == activeCPUs,
+		runningCPUs == activeCPUs,
 		"Check that when enough work is available, no CPUs are lent"
 	); // 4
 	tap.bailOutAndExitIfAnyFailed();
