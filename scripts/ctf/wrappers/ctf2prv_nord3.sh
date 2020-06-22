@@ -15,7 +15,7 @@ if [[ ! $FOUND ]]; then
 	exit 1;
 fi
 
-module purge
-module load gcc/7.2.0 mkl python/3.7.4 swig/3.0.12 babeltrace2/2.0.3
+module purge  2>/dev/null
+module load gcc/7.2.0 mkl python/3.7.4 swig/3.0.12 babeltrace2/2.0.3  2>/dev/null
 
 $CTF2PRV $@

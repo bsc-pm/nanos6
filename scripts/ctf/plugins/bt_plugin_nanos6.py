@@ -6,17 +6,16 @@
 
 import bt2
 import atexit
-
+import os
 import readline
 import code
 from pprint import pprint
-
 from collections import defaultdict
+import operator
+
 from runtime import RuntimeModel
 from paravertrace import ParaverTrace, ExtraeEventTypes
 import paraverviews as pv
-
-import operator
 
 bt2.register_plugin(
 	module_name=__name__,
@@ -35,6 +34,7 @@ class ctf2prv(bt2._UserSinkComponent):
 		self.__last = None
 		atexit.register(self._finalize)
 		self.__payload = []
+		self.__verbose = False
 
 		self.__hooks = defaultdict(list)
 		self.__paraverViews = [
@@ -56,6 +56,16 @@ class ctf2prv(bt2._UserSinkComponent):
 			pv.ParaverViewNumberOfRunningThreads(),
 			pv.ParaverViewNumberOfBlockedThreads(),
 		]
+
+		verbose = os.environ.get('CTF2PRV_VERBOSE', "0")
+		if verbose == "0" or verbose == 0:
+			self.__verbose = False
+		elif verbose == "1" or verbose == 1:
+			self.__verbose = True
+		else:
+			raise RuntimeError("Error: Unknown CTF2PRV_VERBOSE value. Expected 0 or 1")
+
+		print("Starting CTF to PRV conversion. Set environemnt variable CTF2PRV_VERBOSE=1 to see the progress", flush=True)
 
 	def _finalize(self):
 		ts = self.__last.default_clock_snapshot.value
@@ -128,9 +138,12 @@ class ctf2prv(bt2._UserSinkComponent):
 	def _consume_message(self, msg):
 		if type(msg) is bt2._EventMessageConst:
 			ts = msg.default_clock_snapshot.value
-			#name = msg.event.name
-			#cpu_id = msg.event["cpu_id"]
-			#print("event {}, cpu_id {}, timestamp {}".format(name, cpu_id, ts))
+
+			if (self.__verbose):
+				name = msg.event.name
+				cpu_id = msg.event["cpu_id"]
+				print("event {}, cpu_id {}, timestamp {}".format(name, cpu_id, ts))
+
 			self._process_event(ts, msg.event)
 			self.__last = msg
 		elif type(msg) is bt2._StreamBeginningMessageConst:
