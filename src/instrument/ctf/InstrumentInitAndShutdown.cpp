@@ -21,7 +21,7 @@
 #include "ctfapi/stream/CTFStreamUnboundedShared.hpp"
 #include "ctfapi/context/CTFContextTaskHardwareCounters.hpp"
 #include "ctfapi/context/CTFContextCPUHardwareCounters.hpp"
-#include "ctfapi/context/CTFContextUnbounded.hpp"
+#include "ctfapi/context/CTFStreamContextUnbounded.hpp"
 #include "CTFTracepoints.hpp"
 #include "tasks/TaskInfo.hpp"
 #include "tasks/TasktypeData.hpp"
@@ -38,13 +38,17 @@ static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFMetadata *metadat
 
 static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 {
-	CTFAPI::CTFContext *ctfContextTaskHWC = nullptr;
-	CTFAPI::CTFContext *ctfContextCPUHWC = nullptr;
+	CTFAPI::CTFEventContext *ctfContextTaskHWC = nullptr;
+	CTFAPI::CTFEventContext *ctfContextCPUHWC = nullptr;
 
 	// Initialize Contexes
 	if (HardwareCounters::hardwareCountersEnabled()) {
-		ctfContextTaskHWC = userMetadata->addContext(new CTFAPI::CTFContextTaskHardwareCounters());
-		ctfContextCPUHWC  = userMetadata->addContext(new CTFAPI::CTFContextCPUHardwareCounters());
+		ctfContextTaskHWC = userMetadata->addContext(
+			new CTFAPI::CTFContextTaskHardwareCounters(CTFAPI::CTFStreamBoundedId)
+		);
+		ctfContextCPUHWC  = userMetadata->addContext(
+			new CTFAPI::CTFContextCPUHardwareCounters(CTFAPI::CTFStreamBoundedId)
+		);
 	}
 
 	// Add Contexes to evens that support them
@@ -54,7 +58,7 @@ static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		uint8_t enabledContexes = event->getEnabledContexes();
 		if (enabledContexes & CTFAPI::CTFContextTaskHWC) {
 			event->addContext(ctfContextTaskHWC);
-		} else if (enabledContexes & CTFAPI::CTFContextCPUHWC) {
+		} else if (enabledContexes & CTFAPI::CTFContextRuntimeHWC) {
 			event->addContext(ctfContextCPUHWC);
 		}
 	}
@@ -62,9 +66,10 @@ static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 
 static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string userPath)
 {
-	CPU *CPU;
+	CPU *cpu;
 	ctf_cpu_id_t cpuId;
-	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
+	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
+	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) cpus.size();
 
 	const size_t defaultBufferSize = 2*1024*1024;
 	//const size_t defaultBufferSize = 4096;
@@ -73,14 +78,15 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	//TODO init kernel stream
 
 	// create and register contexes for streams
-	CTFAPI::CTFContextUnbounded *context = new CTFAPI::CTFContextUnbounded();
-	userMetadata->addContext(context);
+	CTFAPI::CTFStreamContextUnbounded *context = userMetadata->addContext(
+		new CTFAPI::CTFStreamContextUnbounded()
+	);
 
 	// Initialize Worker thread streams
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
-		CPU = CPUManager::getCPU(i);
-		cpuId = CPU->getSystemCPUId();
-		Instrument::CPULocalData &cpuLocalData = CPU->getInstrumentationData();
+		cpuId = i;
+		cpu = cpus[i];
+		Instrument::CPULocalData &cpuLocalData = cpu->getInstrumentationData();
 		cpuLocalData.userStream = new CTFAPI::CTFStream(
 			defaultBufferSize, cpuId, userPath.c_str()
 		);
@@ -88,12 +94,12 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 
 	// Initialize Leader Thread Stream
 	cpuId = totalCPUs;
-	CPU = CPUManager::getLeaderThreadCPU();
-	Instrument::CPULocalData &leaderThreadCPULocalData = CPU->getInstrumentationData();
+	cpu = CPUManager::getLeaderThreadCPU();
+	Instrument::CPULocalData &leaderThreadCPULocalData = cpu->getInstrumentationData();
 	CTFAPI::CTFStreamUnboundedPrivate *unboundedPrivateStream = new CTFAPI::CTFStreamUnboundedPrivate(
 		defaultBufferSize, cpuId, userPath.c_str()
 	);
-	unboundedPrivateStream->setContext(context);
+	unboundedPrivateStream->addContext(context);
 	leaderThreadCPULocalData.userStream = unboundedPrivateStream;
 
 	// Initialize External Threads Stream
@@ -102,7 +108,7 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 	CTFAPI::CTFStreamUnboundedShared *unboundedSharedStream = new CTFAPI::CTFStreamUnboundedShared(
 		defaultBufferSize, cpuId, userPath.c_str()
 	);
-	unboundedSharedStream->setContext(context);
+	unboundedSharedStream->addContext(context);
 	Instrument::virtualCPULocalData->userStream = unboundedSharedStream;
 }
 
@@ -128,21 +134,22 @@ void Instrument::initialize()
 
 void Instrument::shutdown()
 {
-	CPU *CPU;
-	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) CPUManager::getTotalCPUs();
+	CPU *cpu;
+	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
+	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) cpus.size();
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 
 	// Shutdown Worker thread streams
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
-		CPU = CPUManager::getCPU(i);
-		CTFAPI::CTFStream *userStream = CPU->getInstrumentationData().userStream;
+		cpu = cpus[i];
+		CTFAPI::CTFStream *userStream = cpu->getInstrumentationData().userStream;
 		userStream->shutdown();
 		delete userStream;
 	}
 
 	// Shutdown Leader thread stream
-	CPU = CPUManager::getLeaderThreadCPU();
-	Instrument::CPULocalData &leaderThreadCPULocalData = CPU->getInstrumentationData();
+	cpu = CPUManager::getLeaderThreadCPU();
+	Instrument::CPULocalData &leaderThreadCPULocalData = cpu->getInstrumentationData();
 	CTFAPI::CTFStream *leaderThreadStream = leaderThreadCPULocalData.userStream;
 	leaderThreadStream->shutdown();
 	delete leaderThreadStream;

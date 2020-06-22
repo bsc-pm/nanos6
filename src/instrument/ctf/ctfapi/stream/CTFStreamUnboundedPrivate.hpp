@@ -10,27 +10,38 @@
 #include <cassert>
 
 #include "CTFStream.hpp"
-#include "../context/CTFContextUnbounded.hpp"
+#include "../context/CTFStreamContextUnbounded.hpp"
 
 namespace CTFAPI {
 	class CTFStreamUnboundedPrivate : public CTFStream {
+	protected:
+		CTFStreamContextUnbounded *_context;
 	public:
 		CTFStreamUnboundedPrivate(size_t size,
 					  ctf_cpu_id_t cpu,
 					  std::string path)
-			: CTFStream(size, cpu, path, 1)
+			: CTFStream(size, cpu, path, CTFStreamUnboundedId)
 		{
 		}
 
 		~CTFStreamUnboundedPrivate() {}
 
-		virtual size_t getContextSize(void) const
+		inline void addContext(CTFStreamContextUnbounded *context)
 		{
-			assert(context != nullptr);
-			return context->getSize();
+			_context = context;
 		}
 
-		void writeContext(void **buf);
+		size_t getContextSize() const override
+		{
+			assert(_context != nullptr);
+			return _context->getSize();
+		}
+
+		inline void writeContext(void **buf) override
+		{
+			assert(_context != nullptr);
+			_context->writeContext(buf);
+		}
 	};
 }
 

@@ -13,7 +13,7 @@
 #include "../CTFAPI.hpp"
 #include "CTFContextCPUHardwareCounters.hpp"
 
-CTFAPI::CTFContextCPUHardwareCounters::CTFContextCPUHardwareCounters() : CTFContext()
+CTFAPI::CTFContextCPUHardwareCounters::CTFContextCPUHardwareCounters(ctf_stream_id_t streamMask) : CTFEventContext(streamMask)
 {
 	const std::vector<HWCounters::counters_t> &enabledCounters = HardwareCounters::getEnabledCounters();
 
@@ -29,12 +29,19 @@ CTFAPI::CTFContextCPUHardwareCounters::CTFContextCPUHardwareCounters() : CTFCont
 }
 
 
-void CTFAPI::CTFContextCPUHardwareCounters::writeContext(void **buf)
+void CTFAPI::CTFContextCPUHardwareCounters::writeContext(void **buf, ctf_stream_id_t streamId)
 {
+	if (!(streamId & _streamMask))
+		return;
+
 	const std::vector<HWCounters::counters_t> &enabledCounters = HardwareCounters::getEnabledCounters();
 	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	CPU *CPU = currentWorkerThread->getComputePlace();
-	CPUHardwareCounters &CPUCounters = CPU->getHardwareCounters();
+
+	// HardwareCounters are only written by worker threads
+	assert(currentWorkerThread != nullptr);
+
+	CPU *cpu = currentWorkerThread->getComputePlace();
+	CPUHardwareCounters &CPUCounters = cpu->getHardwareCounters();
 
 	for (auto it = enabledCounters.begin(); it != enabledCounters.end(); ++it) {
 		uint64_t val = (uint64_t) CPUCounters.getDelta(*it);

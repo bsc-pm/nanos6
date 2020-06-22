@@ -69,7 +69,7 @@ namespace CTFAPI {
 
 		size = sizeof(struct event_header) +
 			stream->getContextSize() +
-			event->getContextSize() +
+			event->getContextSize(stream->getId()) +
 			sizeOfVariadic(args...);
 
 		return size;
@@ -123,7 +123,7 @@ namespace CTFAPI {
 
 		mk_event_header((char **) &buf, timestamp, tracepointId);
 		stream->writeContext(&buf);
-		event->writeContext(&buf);
+		event->writeContext(&buf, stream->getId());
 		tp_write_args(&buf, args...);
 		stream->submit(size);
 	}

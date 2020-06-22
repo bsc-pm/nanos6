@@ -10,7 +10,7 @@ usage() {
 }
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-CTFPLUGINS=$DIR/../share/doc/scripts/ctf/plugins
+CTFPLUGINS=$DIR/../share/doc/nanos6/scripts/ctf/plugins
 CTFPLUGINS=$CTFPLUGINS:$DIR/plugins
 export PYTHONPATH=$PYTHONPATH:$CTFPLUGINS
 

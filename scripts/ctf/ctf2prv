@@ -11,7 +11,7 @@ usage() {
 
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-CTFPLUGINS=$DIR/../share/doc/scripts/ctf/plugins
+CTFPLUGINS=$DIR/../share/doc/nanos6/scripts/ctf/plugins
 CTFPLUGINS=$CTFPLUGINS:$DIR/plugins
 export PYTHONPATH=$PYTHONPATH:$CTFPLUGINS
 
@@ -25,6 +25,11 @@ CTFTRACE=`readlink -f $1/ctf/ust/uid/*/64-bit`
 if [ ! -f $CTFTRACE/metadata ]; then
 	>&2 echo "Error: The supplied input does not appear to be a CTF trace"
 	exit 1
+fi
+
+if [[ ! $(type -P "babeltrace2") ]]; then
+	>&2 echo "The babeltrace2 tool is not in the system path. ctf to prv conversion was not possible.";
+	exit 1;
 fi
 
 PRVTRACE="$1/prv"

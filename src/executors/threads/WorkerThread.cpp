@@ -126,8 +126,9 @@ void WorkerThread::body()
 	// The thread should not have any task assigned at this point
 	assert(_task == nullptr);
 
-	HardwareCounters::threadShutdown();
+	HardwareCounters::updateRuntimeCounters();
 	Instrument::threadWillShutdown();
+	HardwareCounters::threadShutdown();
 	Monitoring::shutdownThread();
 
 	ThreadManager::addShutdownThread(this);
