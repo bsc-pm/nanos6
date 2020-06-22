@@ -139,7 +139,7 @@ Finally, taskfors that do not define any chunksize leverage a chunksize value co
 ## Benchmarking, tracing, debugging and other options
 
 There are several Nanos6 variants, each one focusing on different aspects of parallel executions: performance, debugging, instrumentation, etc.
-Nanos6 applications, unlike Nanos++ applications do not require recompiling their code to generate extrae traces or to generate additional information.
+Nanos6 applications, unlike Nanos++ applications do not require recompiling their code to generate Extrae traces or to generate additional information.
 This is instead controlled through environment variables, _envar_ from now on, at run time.
 Users can select a Nanos6 variant when running an application through the `NANOS6` envar.
 The next subsections explain the different variants of Nanos6 and how to enable them.
@@ -181,6 +181,14 @@ A directory named `trace_<binary_name>_<pid>` will be created at the current wor
 To visualize this trace, it needs to be converted to Paraver format first.
 By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
 Please note that the conversion tool requires python3 and the babeltrace2 packages.
+
+The Paraver configuration files can be found under:
+
+```sh
+$INSTALLATION_PREFIX/share/doc/nanos6/paraver-cfg/nanos6/ctf2prv/
+```
+
+Please, note that these views are not compatible with Extrae traces and vice-versa.
 
 Additionally, there is a command to manually convert a trace:
 
