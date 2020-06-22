@@ -15,6 +15,7 @@ if [[ ! $FOUND ]]; then
 	exit 1;
 fi
 
-module load swig python/3.6.5 babeltrace2
+module purge
+module load gcc/6.4.0 swig python/3.6.5 babeltrace2
 
 $CTF2PRV $@
