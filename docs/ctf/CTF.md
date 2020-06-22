@@ -36,8 +36,8 @@ Usage
 
 To generate a CTF trace:
 
-```bash
-NANOS6=ctf ./app
+```sh
+$ NANOS6=ctf ./app
 ```
 
 This will create a `trace-<app_name>-<app_pid>` folder in the current directory, hereinafter refered to as `$TRACE` for convinience.
@@ -49,17 +49,19 @@ Please note that the conversion tool requires python3 and the babeltrace2 packag
 
 Additionally, there is command to manually convert a trace:
 
-```bash
-  ctf2prv $TRACE
+```sh
+$ ctf2prv $TRACE
 ```
+
+which will generate the directory `$TRACE/prv` with the Paraver trace.
 
 Paraver Views
 =============
 
 A number of Paraver views are provided with each Nanos6 distribution under the directory:
 
-```bash
- $NANOS6_INSTALL/share/doc/nanos6/paraver-cfg/ctf2prv
+```sh
+$NANOS6_INSTALL/share/doc/nanos6/paraver-cfg/ctf2prv
 ```
 
 Do not use the Extrae cfg's views as some event identifiers are not compatible.
@@ -87,7 +89,7 @@ See Nanos6 documentation for more details.
 The HWC information is collected per each task burst (a task executing without interruption such as blocking) and per also inside Nanos6 core code.
 By default, it displays `PAPI_TOT_INS`.
 Each HWC is displayed as a different Extrae Event.
-If you want to inspect another counter, please, modify the "Value to display" subview of the "Hardware Counters" view to display the appropriate Extrae Event (HWC event) under Paraver's "Filter->Events->Event Type->Types" menu.
+If you want to inspect another counter, please, modify the "Value to display" subview of the "Hardware Counters" view to display the appropriate Extrae Event (HWC event) under Paraver's "Filter -> Events -> Event Type -> Types" menu.
 
 Task Id
 -------
@@ -139,7 +141,6 @@ Number of Created Tasks
 
 Shows a graph with the count of total created tasks.
 A task is created when its Nanos6 data structures are allocated and registered within the Nanos6 core.
-
 
 Number of Created Workers
 -------------------------

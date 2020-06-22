@@ -28,7 +28,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [PGI](https://pgroup.com) to enable OpenACC tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
 1. [DLB](https://pm.bsc.es/dlb) to enable dynamic management and sharing of computing resources
-1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation. It must be compiled with `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` to link with the runtime.
+1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation. Jemalloc must be compiled with `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` to link with the runtime
 
 
 ## Build procedure
@@ -59,12 +59,13 @@ The configure script accepts the following options:
 1. `--with-libunwind=prefix` to specify the prefix of the libunwind installation
 1. `--with-libnuma=prefix` to specify the prefix of the numactl installation
 1. `--with-extrae=prefix` to specify the prefix of the extrae installation
-1. `--with-pqos=prefix` to specify the prefix of the PQoS installation
 1. `--with-dlb=prefix` to specify the prefix of the DLB installation
 1. `--with-jemalloc=prefix` to specify the prefix of the jemalloc installation
+1. `--with-papi=prefix` to specify the prefix of the PAPI installation
+1. `--with-pqos=prefix` to specify the prefix of the PQoS installation
 1. `--with-cuda[=prefix]` to enable support for CUDA tasks; optionally specify the prefix of the CUDA installation, if needed
-1. `--enable-openacc` to enable support for OpenACC tasks. Requires PGI compilers
-1. `--with-pgi=prefix` to specify the prefix of the PGI compilers installation, in case they are not in current PATH variable
+1. `--enable-openacc` to enable support for OpenACC tasks; requires PGI compilers
+1. `--with-pgi=prefix` to specify the prefix of the PGI compilers installation, in case they are not in `$PATH`
 1. `--enable-monitoring` to enable monitoring and predictions of task/CPU/thread statistics
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
 
@@ -76,11 +77,11 @@ For instance:
 $ export PKG_CONFIG_PATH=$HOME/installations-mn4/elfutils-0.169/lib/pkgconfig:/apps/HWLOC/2.0.0/INTEL/lib/pkgconfig:$PKG_CONFIG_PATH
 ```
 
-To enable CUDA. `--with-cuda` flag is needed.
-The location of CUDA can be retrieved automatically, if it is in standard system locations (/usr/lib, /usr/include etc.),
-or through pkg-config. Alternatively, for non-standard installation paths, it can be specified using the optional `=prefix` of the parameter.
+To enable CUDA the `--with-cuda` flag is needed.
+The location of CUDA can be retrieved automatically, if it is in standard system locations (`/usr/lib`, `/usr/include`, etc), or through pkg-config.
+Alternatively, for non-standard installation paths, it can be specified using the optional `=prefix` of the parameter.
 
-The location of PGI compilers can be retrieved from the PATH variable, if it is not specified through the `--with-pgi` parameter.
+The location of PGI compilers can be retrieved from the `$PATH` variable, if it is not specified through the `--with-pgi` parameter.
 
 After Nanos6 has been installed, it can be used by compiling your C, C++ and Fortran codes with Mercurium using the `--ompss-2` flag.
 Example:
@@ -151,30 +152,10 @@ That is the variant that should be used when performing benchmarking of parallel
 
 Additionally, Nanos6 offers an extra performant variant named `turbo`, which is the same as `optimized` but adding further optimizations.
 Firstly, it enables by default the `discrete` dependency implementation, although users can still change it through the `NANOS6_DEPENDENCIES` envar.
-Secondly, it enables two floating-point (FP) unit optimizations in all tasks: flush-to-zero (FZ) and denormals are zero (DAZ).
+Secondly, it enables two Intel® floating-point (FP) unit optimizations in all tasks: flush-to-zero (FZ) and denormals are zero (DAZ).
 Please note these FP optimizations could alter the precision of floating-point computations.
-In conclusion, enabling all those features can significantly improve the user application's performance out of the box.
 
-
-### Tracing a Nanos6 application with CTF (Experimental)
-
-To generate a CTF trace, run the application with the `NANOS6` envar set to `ctf`.
-
-A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
-To visualize this trace, it needs to be converted to Paraver format first.
-By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
-Please note that the conversion tool requires python3 and the babeltrace2 packages.
-
-Additionally, there is a command to manually convert a trace:
-
-```bash
-  ctf2prv <trace>
-```
-
-which will generate the directory `<trace>/prv` with the Paraver trace.
-
-Although the `ctf2prv` tool requires python3 and babeltrace2 python modules, Nanos6 does not require any package to generate CTF traces.
-For more information on how the CTF instrumentation variant works see [CTF.md](docs/ctf/CTF.md).
+Moreover, these variants can be combined with the jemalloc memory allocator (``--with-jemalloc``) to obtain the best performance.
 
 
 ### Tracing a Nanos6 application with Extrae
@@ -190,6 +171,27 @@ $ export NANOS6_EXTRAE_AS_THREADS=1
 
 The resulting trace will show the activity of the actual threads instead of the activity at each CPU.
 In the future, this problem will be fixed.
+
+
+### Tracing a Nanos6 application with CTF (Experimental)
+
+To generate a CTF trace, run the application with the `NANOS6` envar set to `ctf`.
+
+A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
+To visualize this trace, it needs to be converted to Paraver format first.
+By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
+Please note that the conversion tool requires python3 and the babeltrace2 packages.
+
+Additionally, there is a command to manually convert a trace:
+
+```sh
+$ ctf2prv $TRACE
+```
+
+which will generate the directory `$TRACE/prv` with the Paraver trace.
+
+Although the `ctf2prv` tool requires python3 and babeltrace2 python modules, Nanos6 does not require any package to generate CTF traces.
+For more information on how the CTF instrumentation variant works see [CTF.md](docs/ctf/CTF.md).
 
 
 ### Generating a graphical representation of the dependency graph
