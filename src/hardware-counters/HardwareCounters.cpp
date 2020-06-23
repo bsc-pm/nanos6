@@ -226,6 +226,17 @@ void HardwareCounters::taskReinitialized(Task *task)
 	}
 }
 
+void HardwareCounters::taskCombineCounters(Task *parent, Task *child)
+{
+	if (_anyBackendEnabled) {
+		assert(parent != nullptr);
+		assert(child != nullptr);
+
+		TaskHardwareCounters &parentCounters = parent->getHardwareCounters();
+		parentCounters.combineCounters(child->getHardwareCounters());
+	}
+}
+
 void HardwareCounters::updateTaskCounters(Task *task)
 {
 	if (_anyBackendEnabled) {

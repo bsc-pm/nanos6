@@ -72,14 +72,10 @@ public:
 
 				switch (id) {
 					case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
-						if (!_numSamples) {
-							++_numSamples;
-							_counterDelta[innerId] = data->values.llc;
-						} else {
-							++_numSamples;
-							_counterDelta[innerId] =
-								((double) _counterDelta[innerId] * (_numSamples - 1) + data->values.llc) / _numSamples;
-						}
+						++_numSamples;
+						_counterDelta[innerId] =
+							((double) _counterDelta[innerId] * (_numSamples - 1) + data->values.llc) / _numSamples;
+
 						_counterAccumulated[innerId] = _counterDelta[innerId];
 						break;
 					case HWCounters::HWC_PQOS_MON_EVENT_LMEM_BW:
@@ -133,6 +129,39 @@ public:
 		assert(innerId >= 0 && (size_t) innerId < PQoSHardwareCounters::getNumEnabledCounters());
 
 		return _counterAccumulated[innerId];
+	}
+
+	//! \brief Combine the counters of two tasks
+	//!
+	//! \param[in] combineeCounters The counters of a task, which will be combined into
+	//! the current counters
+	inline void combineCounters(TaskHardwareCountersInterface *combineeCounters) override
+	{
+		PQoSTaskHardwareCounters *childCounters = (PQoSTaskHardwareCounters *) combineeCounters;
+		assert(childCounters != nullptr);
+
+		// Get the raw data of each regular counter and combine it
+		assert(_counterDelta != nullptr);
+		assert(_counterAccumulated != nullptr);
+
+		for (size_t id = HWCounters::HWC_PQOS_MIN_EVENT; id <= HWCounters::HWC_PQOS_MAX_EVENT; ++id) {
+			if (PQoSHardwareCounters::isCounterEnabled((HWCounters::counters_t) id)) {
+				int innerId = PQoSHardwareCounters::getInnerIdentifier((HWCounters::counters_t) id);
+				assert(innerId >= 0);
+
+				case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
+					++_numSamples;
+					_counterDelta[innerId] =
+						((double) _counterDelta[innerId] * (_numSamples - 1) + childCounters->getDelta(id)) / _numSamples;
+
+					_counterAccumulated[innerId] = _counterDelta[innerId];
+					break;
+				default:
+					_counterDelta[innerId] = childCounters->getDelta(id);
+					_counterAccumulated[innerId] += childCounters->getAccumulated(id);
+					break;
+			}
+		}
 	}
 
 	//! \brief Retreive the size needed for hardware counters

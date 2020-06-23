@@ -114,6 +114,12 @@ public:
 	//! \param[out] task The task to reinitialize structures for
 	static void taskReinitialized(Task *task);
 
+	//! \brief Combine the events of two tasks
+	//!
+	//! \param[in,out] parent The task to combine the events into
+	//! \param[in] child The task to gather events from
+	static void taskCombineCounters(Task *parent, Task *child);
+
 	//! \brief Read and update hardware counters for a task
 	//!
 	//! This function should be called right before a task stops/ends executing
