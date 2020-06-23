@@ -186,7 +186,10 @@ public:
 					}
 					break;
 				case CPU::disabled_status:
-					// The CPU is disabled, the thread should be idle
+					// The CPU is disabled, the thread should be idle.
+					// It is not needed to call Instrument/Monitoring here,
+					// since this is an extreme case that should barely
+					// happen and the thread directly becomes idle again
 					ThreadManager::addIdler(currentThread);
 					currentThread->switchTo(nullptr);
 					break;
@@ -198,6 +201,7 @@ public:
 
 						HardwareCounters::updateRuntimeCounters();
 						Monitoring::cpuBecomesIdle(cpu->getIndex());
+						Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
 						// The CPU is disabling, the thread becomes idle

@@ -178,21 +178,26 @@ void WorkerThreadBase::switchTo(WorkerThreadBase *replacement)
 {
 	assert(KernelLevelThread::getCurrentKernelLevelThread() == this);
 	assert(replacement != this);
-	
+
 	CPU *cpu = _cpu;
 	assert(cpu != nullptr);
-	
-	HardwareCounters::updateRuntimeCounters();
-	Instrument::threadWillSuspend(_instrumentationId, _cpu->getInstrumentationId());
+
 	if (replacement != nullptr) {
 		// Replace a thread by another
 		replacement->resume(cpu, false);
 	} else {
 		// No replacement thread
-		
-		// NOTE: In this case the CPUActivation class can end up resuming a CPU before its running thread has had a chance to get blocked
+
+		// NOTE1: In this case the CPUActivation class can end up resuming
+		// a CPU before its running thread has had a chance to get blocked
+
+		// NOTE2: The threadWillSuspend() instrumentation call cannot be
+		// placed in this method when switching to nullptr because at
+		// this point the thread's Nanos6 CPU object might no longer
+		// belong to the thread. Therefore, it must be called before
+		// this thread's CPU has been released.
 	}
-	
+
 	suspend();
 	// After resuming (if ever blocked), the thread continues here
 

@@ -89,6 +89,8 @@ void WorkerThread::body()
 				_task = nullptr;
 
 				ThreadManager::addIdler(this);
+				HardwareCounters::updateRuntimeCounters();
+				Instrument::threadWillSuspend(_instrumentationId, cpu->getInstrumentationId());
 				switchTo(assignedThread);
 			} else {
 				Instrument::workerThreadObtainedTask();

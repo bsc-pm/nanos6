@@ -244,10 +244,6 @@ public:
 					// the CPU we've just lent should be re-acquired
 					dlbLendCPU(cpu->getSystemCPUId());
 
-					HardwareCounters::updateRuntimeCounters();
-					Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
-					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-
 					if (!Scheduler::isServingTasks()) {
 						// No CPU is serving tasks in the scheduler, change to enabling,
 						// call dlbReclaimCPU to let DLB know that we want to use this
@@ -268,6 +264,15 @@ public:
 					} else {
 						WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 						assert(currentThread != nullptr);
+
+						// The status change is only notified once we know that the CPU
+						// has been lent sucessfully. Additionally, the instrumentation
+						// must be called prior the status change to prevent overlapping
+						// instrumentation calls with threads resuming on the lending CPU
+						HardwareCounters::updateRuntimeCounters();
+						Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+						Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
+						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
 						// Change the status since the lending was successful
 						expectedStatus = CPU::lending_status;
@@ -358,8 +363,12 @@ public:
 		assert(cpu != nullptr);
 		assert(!cpu->isOwned());
 
+		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentThread != nullptr);
+
 		HardwareCounters::updateRuntimeCounters();
 		Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+		Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 		Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
 		// Change the status to returned and return it
@@ -369,9 +378,6 @@ public:
 			// Since we do not want to keep the CPU, we use lend instead of return
 			__attribute__((unused)) int ret = dlbLendCPU(cpu->getSystemCPUId());
 			assert(ret == DLB_SUCCESS);
-
-			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-			assert(currentThread != nullptr);
 
 			ThreadManager::addIdler(currentThread);
 			currentThread->switchTo(nullptr);
@@ -466,6 +472,7 @@ public:
 	{
 		// Only unowned CPUs should execute the following callback
 		CPU *cpu = CPUManager::getCPU(systemCPUId);
+		WorkerThread *currentThread;
 		assert(cpu != nullptr);
 		assert(!cpu->isOwned());
 
@@ -492,17 +499,27 @@ public:
 					// If the callback is called at this point, it means the
 					// CPU is checking if it should be returned, thus we can
 					// assure no task is being executed and we can return it
-					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::returned_status);
-					if (successful) {
-						WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-						assert(currentThread != nullptr);
-						assert(currentThread->getComputePlace() == cpu);
-						assert(currentThread->getTask() == nullptr);
 
-						// The thread becomes idle
-						ThreadManager::addIdler(currentThread);
-						currentThread->switchTo(nullptr);
-					}
+					// We always check at each iteration of threads (see WorkerThread.cpp) if the
+					// CPU they are running on must be returned. If they are to be returned, this
+					// callback is called, and before changing the status of the CPU we call
+					// Instrumentation and others to avoid race conditions
+					currentThread = WorkerThread::getCurrentWorkerThread();
+					assert(currentThread != nullptr);
+					HardwareCounters::updateRuntimeCounters();
+					Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+					Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
+					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+
+					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::returned_status);
+					assert(successful);
+
+					assert(currentThread->getComputePlace() == cpu);
+					assert(currentThread->getTask() == nullptr);
+
+					// The thread becomes idle
+					ThreadManager::addIdler(currentThread);
+					currentThread->switchTo(nullptr);
 					break;
 				case CPU::shutdown_status:
 					// If the callback is called at this point, the runtime is
@@ -552,7 +569,10 @@ public:
 				case CPU::returned_status:
 				case CPU::shutting_down_status:
 					// If a thread is woken up in this CPU but it is not
-					// supposed to be running, readd the thread as idle
+					// supposed to be running, re-add the thread as idle.
+					// It is not needed to call Instrument/Monitoring here,
+					// since this is an extreme case that should barely
+					// happen and the thread directly becomes idle again
 					ThreadManager::addIdler(currentThread);
 					currentThread->switchTo(nullptr);
 					break;
@@ -605,20 +625,7 @@ public:
 
 		// If the CPU is not owned check if it must be returned
 		if (!cpu->isOwned() && cpu->getActivationStatus() != CPU::shutdown_status) {
-			// At the start of the checkIfMustReturnCPU call, the CPU might
-			// already be returned, so we switch here to idle and switch
-			// back quickly to active if the CPU was not returned
-			HardwareCounters::updateRuntimeCounters();
-			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
-			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-
-			int ret = dlbReturnCPU(cpu->getSystemCPUId());
-			if (ret != DLB_SUCCESS) {
-				// The CPU wasn't returned, so resume instrumentation. In case
-				// it was returned, the appropriate thread will resume it
-				Instrument::resumedComputePlace(cpu->getInstrumentationId());
-				Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
-			}
+			dlbReturnCPU(cpu->getSystemCPUId());
 		}
 	}
 

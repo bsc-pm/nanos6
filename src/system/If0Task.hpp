@@ -18,6 +18,7 @@
 
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
+#include <InstrumentThreadManagement.hpp>
 #include <Monitoring.hpp>
 
 
@@ -46,6 +47,8 @@ namespace If0Task {
 		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
 
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
+		HardwareCounters::updateRuntimeCounters();
+		Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 		currentThread->switchTo(replacementThread);
 
 		//Update the CPU since the thread may have migrated

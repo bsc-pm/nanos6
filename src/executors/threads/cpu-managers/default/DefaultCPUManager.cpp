@@ -232,8 +232,12 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 		return false;
 	}
 
+	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	assert(currentThread != nullptr);
+
 	HardwareCounters::updateRuntimeCounters();
 	Monitoring::cpuBecomesIdle(index);
+	Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 	Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
 	// Mark the CPU as idle

@@ -11,6 +11,8 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
+#include <InstrumentThreadManagement.hpp>
+
 
 class TaskBlocking {
 
@@ -34,6 +36,8 @@ public:
 		// When a task blocks, switch to another idle thread to avoid:
 		// 1) Getting the current thread stuck in the CPU while doing nothing
 		// 2) Assigning replacement tasks to threads
+		HardwareCounters::updateRuntimeCounters();
+		Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 		currentThread->switchTo(replacementThread);
 	}
 

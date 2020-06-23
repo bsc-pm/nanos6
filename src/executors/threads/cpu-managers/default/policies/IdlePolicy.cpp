@@ -25,6 +25,9 @@ void IdlePolicy::execute(ComputePlace *cpu, CPUManagerPolicyHint hint, size_t nu
 			WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 			assert(currentThread != nullptr);
 
+			// Calls from the Instrument and Monitoring modules can be found within
+			// the "cpuBecomesIdle" function, before releasing the CPU lock
+
 			ThreadManager::addIdler(currentThread);
 			currentThread->switchTo(nullptr);
 		}

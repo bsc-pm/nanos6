@@ -22,6 +22,7 @@
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
+#include <InstrumentThreadManagement.hpp>
 #include <InstrumentUserMutex.hpp>
 #include <Monitoring.hpp>
 
@@ -152,6 +153,8 @@ void nanos6_user_unlock(void **handlerPointer)
 				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 
 				// Now switch to the released thread
+				HardwareCounters::updateRuntimeCounters();
+				Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 				currentThread->switchTo(releasedThread);
 
 				HardwareCounters::updateRuntimeCounters();
