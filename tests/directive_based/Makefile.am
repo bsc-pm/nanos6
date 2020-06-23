@@ -70,10 +70,7 @@ endif
 #       tests must be added under these
 if HAVE_DLB
 dlb_tests += \
-	dlb-cpu-management.test \
-	dlb-cpu-sharing-active-process.test \
-	dlb-cpu-sharing-passive-process.test \
-	dlb-cpu-sharing.test
+	dlb-cpu-management.test
 else
 cpu_management_tests += \
 	cpu-activation.test
@@ -161,10 +158,7 @@ endif
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
 dlb_tests += \
-	dlb-cpu-management.debug.test \
-	dlb-cpu-sharing-active-process.debug.test \
-	dlb-cpu-sharing-passive-process.debug.test \
-	dlb-cpu-sharing.debug.test
+	dlb-cpu-management.debug.test
 else
 cpu_management_tests += \
 	cpu-activation.debug.test
@@ -835,33 +829,6 @@ dlb_cpu_management_test_LDFLAGS = $(test_common_ldflags)
 dlb_cpu_management_debug_test_SOURCES = dlb/dlb-cpu-management.cpp
 dlb_cpu_management_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dlb_cpu_management_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-dlb_cpu_sharing_test_SOURCES = dlb/dlb-cpu-sharing.cpp
-dlb_cpu_sharing_test_CPPFLAGS = -DNDEBUG
-dlb_cpu_sharing_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-dlb_cpu_sharing_test_LDFLAGS = $(test_common_ldflags)
-
-dlb_cpu_sharing_debug_test_SOURCES = dlb/dlb-cpu-sharing.cpp
-dlb_cpu_sharing_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-dlb_cpu_sharing_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-dlb_cpu_sharing_active_process_test_SOURCES = dlb/dlb-cpu-sharing-active-process.cpp
-dlb_cpu_sharing_active_process_test_CPPFLAGS = -DNDEBUG
-dlb_cpu_sharing_active_process_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-dlb_cpu_sharing_active_process_test_LDFLAGS = $(test_common_ldflags)
-
-dlb_cpu_sharing_active_process_debug_test_SOURCES = dlb/dlb-cpu-sharing-active-process.cpp
-dlb_cpu_sharing_active_process_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-dlb_cpu_sharing_active_process_debug_test_LDFLAGS = $(test_common_debug_ldflags)
-
-dlb_cpu_sharing_passive_process_test_SOURCES = dlb/dlb-cpu-sharing-passive-process.cpp
-dlb_cpu_sharing_passive_process_test_CPPFLAGS = -DNDEBUG
-dlb_cpu_sharing_passive_process_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
-dlb_cpu_sharing_passive_process_test_LDFLAGS = $(test_common_ldflags)
-
-dlb_cpu_sharing_passive_process_debug_test_SOURCES = dlb/dlb-cpu-sharing-passive-process.cpp
-dlb_cpu_sharing_passive_process_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
-dlb_cpu_sharing_passive_process_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 
 if AWK_IS_SANE
