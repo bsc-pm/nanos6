@@ -41,7 +41,7 @@ void Accelerator::finishTask(Task *task)
 	CPUDependencyData localDependencyData;
 	CPUDependencyData &hpDependencyData = (cpu != nullptr) ? cpu->getDependencyData() : localDependencyData;
 
-	if(task->isIf0()) {
+	if (task->isIf0()) {
 		Task *parent = task->getParent();
 		assert(parent != nullptr);
 
