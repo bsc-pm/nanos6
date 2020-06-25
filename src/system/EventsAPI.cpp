@@ -67,11 +67,23 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 			assert(cpu != nullptr);
 		}
 
-		// Release the accesses
-		DataAccessRegistration::unregisterTaskDataAccesses(
-			task, cpu, cpu->getDependencyData(),
-			/* memory place */ nullptr,
-			/* from a busy thread */ true);
+		// Release the data accesses of the task. Do not merge these
+		// two conditions; the creation of a local CPU dependency data
+		// structure may introduce unnecessary overhead
+		if (cpu != nullptr) {
+			DataAccessRegistration::unregisterTaskDataAccesses(
+				task, cpu, cpu->getDependencyData(),
+				/* memory place */ nullptr,
+				/* from a busy thread */ true
+			);
+		} else {
+			CPUDependencyData localDependencyData;
+			DataAccessRegistration::unregisterTaskDataAccesses(
+				task, nullptr, localDependencyData,
+				/* memory place */ nullptr,
+				/* from a busy thread */ true
+			);
+		}
 
 		Monitoring::taskFinished(task);
 
