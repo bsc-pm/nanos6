@@ -241,7 +241,6 @@ namespace ExecutionWorkflow {
 					);
 
 					Monitoring::taskFinished(task);
-					task->setComputePlace(nullptr);
 					TaskFinalization::taskFinished(task, cpu);
 
 					if (task->markAsReleased()) {

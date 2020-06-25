@@ -118,12 +118,8 @@ inline void Task::reinitialize(
 
 inline bool Task::markAsFinished(ComputePlace *computePlace)
 {
-	// Non-runnable taskfors should avoid these checks
-	if (getDeviceType() == nanos6_device_t::nanos6_host_device) {
-		_thread = nullptr;
-	} else {
-		_computePlace = nullptr;
-	}
+	_thread = nullptr;
+	_computePlace = nullptr;
 
 	// If the task has a wait clause, the release of dependencies must be
 	// delayed (at least) until the task finishes its execution and all

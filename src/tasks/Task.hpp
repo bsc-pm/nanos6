@@ -668,10 +668,6 @@ public:
 	{
 		_computePlace = computePlace;
 	}
-	inline bool hasComputePlace() const
-	{
-		return _computePlace != nullptr;
-	}
 
 	inline MemoryPlace *getMemoryPlace() const
 	{
