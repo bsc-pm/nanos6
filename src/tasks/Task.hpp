@@ -465,7 +465,7 @@ public:
 	//! \brief Indicates whether it has finished
 	inline bool hasFinished()
 	{
-		if (_taskInfo->implementations[0].device_type_id) {
+		if (_taskInfo->implementations[0].device_type_id != nanos6_host_device) {
 			return (_computePlace == nullptr);
 		} else {
 			return (_thread == nullptr);
