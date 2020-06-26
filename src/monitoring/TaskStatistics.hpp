@@ -11,6 +11,7 @@
 #include <cassert>
 #include <string>
 
+#include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 
 #include <Chrono.hpp>
@@ -87,14 +88,20 @@ private:
 	/*    HW COUNTER METRICS    */
 
 	//! Whether the taks has predictions for each hardware counter
-	bool _hasCounterPrediction[HWCounters::TOTAL_NUM_EVENTS];
+	bool *_hasCounterPrediction;
 
 	//! Predictions for each hardware counter of the task
-	double _counterPredictions[HWCounters::TOTAL_NUM_EVENTS];
+	//! NOTE: Predictions of HWCounters must be doubles due to being computed
+	//! using normalized values and products
+	double *_counterPredictions;
 
 public:
 
-	inline TaskStatistics() :
+	//! \brief Constructor
+	//!
+	//! \param[in] allocationAddress The allocation address for dynamically
+	//! allocated parameters
+	inline TaskStatistics(void *allocationAddress) :
 		_tasktypeStatistics(nullptr),
 		_cost(DEFAULT_COST),
 		_numChildrenAlive(1),
@@ -103,13 +110,22 @@ public:
 		_hasPrediction(false),
 		_ancestorHasPrediction(false),
 		_timePrediction(0.0),
-		_completedTime(0)
+		_completedTime(0),
+		_hasCounterPrediction(nullptr),
+		_counterPredictions(nullptr)
 	{
-		for (short i = 0; i < num_status; ++i) {
+		for (size_t i = 0; i < num_status; ++i) {
 			_childrenTimes[i] = 0;
 		}
 
-		for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
+		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
+		if (numEvents != 0) {
+			assert(allocationAddress != nullptr);
+		}
+
+		_hasCounterPrediction = (bool *) allocationAddress;
+		_counterPredictions = (double *) ((char *) allocationAddress + (numEvents * sizeof(bool)));
+		for (size_t i = 0; i < numEvents; ++i) {
 			_hasCounterPrediction[i] = false;
 			_counterPredictions[i] = 0.0;
 		}
@@ -127,12 +143,13 @@ public:
 		_timePrediction = 0.0;
 		_completedTime = 0;
 
-		for (short i = 0; i < num_status; ++i) {
+		for (size_t i = 0; i < num_status; ++i) {
 			_chronometers[i].restart();
 			_childrenTimes[i] = 0;
 		}
 
-		for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
+		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
+		for (size_t i = 0; i < numEvents; ++i) {
 			_hasCounterPrediction[i] = false;
 			_counterPredictions[i] = 0.0;
 		}
@@ -255,22 +272,22 @@ public:
 		return _completedTime.load();
 	}
 
-	inline void setHasCounterPrediction(HWCounters::counters_t counterId, bool hasPrediction)
+	inline void setHasCounterPrediction(size_t counterId, bool hasPrediction)
 	{
 		_hasCounterPrediction[counterId] = hasPrediction;
 	}
 
-	inline bool hasCounterPrediction(HWCounters::counters_t counterId) const
+	inline bool hasCounterPrediction(size_t counterId) const
 	{
 		return _hasCounterPrediction[counterId];
 	}
 
-	inline void setCounterPrediction(HWCounters::counters_t counterId, double value)
+	inline void setCounterPrediction(size_t counterId, double value)
 	{
 		_counterPredictions[counterId] = value;
 	}
 
-	inline double getCounterPrediction(HWCounters::counters_t counterId) const
+	inline double getCounterPrediction(size_t counterId) const
 	{
 		return _counterPredictions[counterId];
 	}
@@ -342,6 +359,13 @@ public:
 				childStatistics->getChronoTicks((monitoring_task_status_t) i) +
 				childStatistics->getChildrenTimes((monitoring_task_status_t) i);
 		}
+	}
+
+	//! \brief Get the size of dynamically allocated parameters
+	static inline size_t getTaskStatisticsSize()
+	{
+		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
+		return (numEvents * (sizeof(double) + sizeof(bool)));
 	}
 
 };

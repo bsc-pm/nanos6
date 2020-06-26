@@ -34,8 +34,8 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		TaskStatistics *parentStatistics = parent->getTaskStatistics();
 		assert(parentStatistics != nullptr);
 
-		parentStatistics->increaseNumChildrenAlive();
 		parentStatistics->increaseNumChildren();
+		parentStatistics->increaseNumChildrenAlive();
 
 		taskStatistics->setAncestorHasPrediction(
 			parentStatistics->hasPrediction() ||
@@ -60,12 +60,12 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		}
 
 		// Predict hardware counter metrics
-		for (short i = 0; i < HWCounters::TOTAL_NUM_EVENTS; ++i) {
-			HWCounters::counters_t counterId = (HWCounters::counters_t) i;
-			double counterPrediction = tasktypeStatistics.getCounterPrediction(counterId, cost);
+		const std::vector<HWCounters::counters_t> &enabledCounters = HardwareCounters::getEnabledCounters();
+		for (size_t i = 0; i < enabledCounters.size(); ++i) {
+			double counterPrediction = tasktypeStatistics.getCounterPrediction(enabledCounters[i], cost);
 			if (counterPrediction != PREDICTION_UNAVAILABLE) {
-				taskStatistics->setHasCounterPrediction(counterId, true);
-				taskStatistics->setCounterPrediction(counterId, counterPrediction);
+				taskStatistics->setHasCounterPrediction(i, true);
+				taskStatistics->setCounterPrediction(i, counterPrediction);
 			}
 		}
 
@@ -197,7 +197,7 @@ void TaskMonitor::taskFinished(Task *task) const
 	assert(taskStatistics != nullptr);
 
 	// Stop timing for the task
-	__attribute__((unused)) monitoring_task_status_t oldStatus = taskStatistics->stopTiming();
+	taskStatistics->stopTiming();
 
 	// NOTE: Special cases:
 	// 1) For taskfor sources, when the task is finished it also completes user
@@ -279,7 +279,7 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 	stream << "+-----------------------------+\n";
 
 	TaskInfo::processAllTasktypes(
-		[&](const std::string &taskLabel, TasktypeData &tasktypeData) {
+		[&](const std::string &taskLabel, const std::string &, TasktypeData &tasktypeData) {
 			TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
 
 			// Display monitoring-related statistics
@@ -330,13 +330,13 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 			const std::vector<HWCounters::counters_t> &enabledCounters = HardwareCounters::getEnabledCounters();
 			if (enabledCounters.size()) {
 				for (size_t id = 0; id < enabledCounters.size(); ++id) {
-					HWCounters::counters_t eventType = (HWCounters::counters_t) enabledCounters[id];
+					HWCounters::counters_t eventType = enabledCounters[id];
 					numInstances = tasktypeStatistics.getCounterNumInstances(eventType);
 					if (numInstances) {
 						// Get statistics
+						double counterSum = tasktypeStatistics.getCounterSum(eventType);
 						double counterAvg = tasktypeStatistics.getCounterAverage(eventType);
 						double counterStddev = tasktypeStatistics.getCounterStddev(eventType);
-						double counterSum = tasktypeStatistics.getCounterSum(eventType);
 						double counterAccuracy = tasktypeStatistics.getCounterAccuracy(eventType);
 
 						// Make sure there was at least one prediction to report accuracy
@@ -348,9 +348,9 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 						}
 
 						// Process events that must be in KB
-						if (eventType == HWCounters::PQOS_MON_EVENT_L3_OCCUP ||
-							eventType == HWCounters::PQOS_MON_EVENT_LMEM_BW  ||
-							eventType == HWCounters::PQOS_MON_EVENT_RMEM_BW
+						if (eventType == HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP ||
+							eventType == HWCounters::HWC_PQOS_MON_EVENT_LMEM_BW  ||
+							eventType == HWCounters::HWC_PQOS_MON_EVENT_RMEM_BW
 						) {
 							counterAvg /= 1024.0;
 							counterStddev /= 1024.0;

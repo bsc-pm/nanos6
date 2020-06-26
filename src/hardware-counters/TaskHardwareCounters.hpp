@@ -43,6 +43,11 @@ public:
 	{
 	}
 
+	inline TaskHardwareCounters(const TaskHardwareCounters &counters) :
+		_allocationAddress(counters._allocationAddress)
+	{
+	}
+
 	//! \brief Initialize and construct all backend objects with the previously allocated space
 	//!
 	//! \param[in] enabled Whether hardware counters are enabled for the task

@@ -105,6 +105,13 @@ private:
 
 public:
 
+	//! \brief Constructor
+	//!
+	//! NOTE: We use 'HWC_TOTAL_NUM_EVENTS' as the number of events instead of
+	//! doing it dynamically because there shouldn't be too many objects of this
+	//! type, and they're created at runtime-initialization, so we cannot know
+	//! at that time how many counters we will really use. Nonetheless, we will
+	//! only use as many accumulators as enabled counters (numEnabledCounters)
 	inline TasktypeStatistics() :
 		_accumulatedCost(0),
 		_numAccumulatedInstances(0),
@@ -114,12 +121,12 @@ public:
 		_timingAccuracyAccumulator(),
 		_accumulatedTimeAccumulator(),
 		_timingAccumulatorLock(),
-		_counterAccumulators(HWCounters::TOTAL_NUM_EVENTS),
+		_counterAccumulators(HWCounters::HWC_TOTAL_NUM_EVENTS),
 		_normalizedCounterAccumulators(
-			HWCounters::TOTAL_NUM_EVENTS,
+			HWCounters::HWC_TOTAL_NUM_EVENTS,
 			metric_rolling_accumulator_t(BoostAccTag::rolling_window::window_size = _rollingWindow)
 		),
-		_counterAccuracyAccumulators(HWCounters::TOTAL_NUM_EVENTS),
+		_counterAccuracyAccumulators(HWCounters::HWC_TOTAL_NUM_EVENTS),
 		_counterAccumulatorsLock()
 	{
 	}
@@ -450,9 +457,9 @@ public:
 			normalizedCounters[id] = (counters[id] / (double) cost);
 
 			counterPredictionsAvailable[id] =
-				(taskStatistics->hasCounterPrediction(enabledCounters[id]) && counters[id] > 0.0);
+				(taskStatistics->hasCounterPrediction(id) && counters[id] > 0.0);
 			if (counterPredictionsAvailable[id]) {
-				double predicted = taskStatistics->getCounterPrediction(enabledCounters[id]);
+				double predicted = taskStatistics->getCounterPrediction(id);
 				double error = 100.0 * (std::abs(predicted - counters[id]) / std::max(counters[id], predicted));
 				counterAccuracies[id] = 100.0 - error;
 			}

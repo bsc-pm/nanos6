@@ -29,6 +29,7 @@ HardwareCountersInterface *HardwareCounters::_raplBackend(nullptr);
 bool HardwareCounters::_anyBackendEnabled(false);
 std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS, false);
 std::vector<HWCounters::counters_t> HardwareCounters::_enabledCounters;
+size_t HardwareCounters::_numEnabledCounters;
 
 
 void HardwareCounters::loadConfiguration()
@@ -111,6 +112,9 @@ void HardwareCounters::preinitialize()
 		_enabled[HWCounters::PQOS_BACKEND] = false;
 #endif
 	}
+
+	// After initializing all benchmarks, check how many counters are enabled
+	_numEnabledCounters = _enabledCounters.size();
 
 	// NOTE: Since the RAPL backend needs to be initialized after hardware is
 	// detected, we do that in the initialize function

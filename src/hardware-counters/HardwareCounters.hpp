@@ -45,6 +45,9 @@ private:
 	//! Enabled counters by the user
 	static std::vector<HWCounters::counters_t> _enabledCounters;
 
+	//! The number of enabled counters (the previous vector's size)
+	static size_t _numEnabledCounters;
+
 private:
 
 	//! \brief Load backends and counter configuration from the configuration file
@@ -95,6 +98,11 @@ public:
 	static inline const std::vector<HWCounters::counters_t> &getEnabledCounters()
 	{
 		return _enabledCounters;
+	}
+
+	static inline size_t getNumEnabledCounters()
+	{
+		return _numEnabledCounters;
 	}
 
 	//! \brief Initialize hardware counter structures for a new thread

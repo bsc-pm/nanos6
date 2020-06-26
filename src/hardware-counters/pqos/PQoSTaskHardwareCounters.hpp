@@ -145,21 +145,24 @@ public:
 		assert(_counterAccumulated != nullptr);
 
 		for (size_t id = HWCounters::HWC_PQOS_MIN_EVENT; id <= HWCounters::HWC_PQOS_MAX_EVENT; ++id) {
-			if (PQoSHardwareCounters::isCounterEnabled((HWCounters::counters_t) id)) {
-				int innerId = PQoSHardwareCounters::getInnerIdentifier((HWCounters::counters_t) id);
+			HWCounters::counters_t counterType = (HWCounters::counters_t) id;
+			if (PQoSHardwareCounters::isCounterEnabled(counterType)) {
+				int innerId = PQoSHardwareCounters::getInnerIdentifier(counterType);
 				assert(innerId >= 0);
 
-				case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
-					++_numSamples;
-					_counterDelta[innerId] =
-						((double) _counterDelta[innerId] * (_numSamples - 1) + childCounters->getDelta(id)) / _numSamples;
+				switch (counterType) {
+					case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
+						++_numSamples;
+						_counterDelta[innerId] =
+							((double) _counterDelta[innerId] * (_numSamples - 1) + childCounters->getDelta(counterType)) / _numSamples;
 
-					_counterAccumulated[innerId] = _counterDelta[innerId];
-					break;
-				default:
-					_counterDelta[innerId] = childCounters->getDelta(id);
-					_counterAccumulated[innerId] += childCounters->getAccumulated(id);
-					break;
+						_counterAccumulated[innerId] = _counterDelta[innerId];
+						break;
+					default:
+						_counterDelta[innerId] = childCounters->getDelta(counterType);
+						_counterAccumulated[innerId] += childCounters->getAccumulated(counterType);
+						break;
+				}
 			}
 		}
 	}

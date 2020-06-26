@@ -121,7 +121,7 @@ public:
 	static inline size_t getTaskStatisticsSize()
 	{
 		if (_enabled) {
-			return sizeof(TaskStatistics);
+			return sizeof(TaskStatistics) + TaskStatistics::getTaskStatisticsSize();
 		}
 
 		return 0;

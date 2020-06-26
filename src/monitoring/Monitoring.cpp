@@ -101,7 +101,8 @@ void Monitoring::taskCreated(Task *task)
 		assert(taskStatistics != nullptr);
 
 		// Construct the object with the reserved space
-		new (taskStatistics) TaskStatistics();
+		void *innerAllocationAddress = (char *) taskStatistics + sizeof(TaskStatistics);
+		new (taskStatistics) TaskStatistics(innerAllocationAddress);
 
 		// Populate task statistic structures and predict metrics
 		Task *parent = task->getParent();
@@ -187,7 +188,7 @@ double Monitoring::getPredictedCPUUsage(size_t time)
 		size_t currentActiveInstances = 0;
 		size_t currentPredictionlessInstances = 0;
 		TaskInfo::processAllTasktypes(
-			[&](const std::string &, TasktypeData &tasktypeData) {
+			[&](const std::string &, const std::string &, TasktypeData &tasktypeData) {
 				TasktypeStatistics &statistics = tasktypeData.getTasktypeStatistics();
 				Chrono completedChrono(statistics.getCompletedTime());
 				double completedTime = ((double) completedChrono);
@@ -231,7 +232,7 @@ double Monitoring::getPredictedElapsedTime()
 
 		double currentWorkload = 0.0;
 		TaskInfo::processAllTasktypes(
-			[&](const std::string &, TasktypeData &tasktypeData) {
+			[&](const std::string &, const std::string &, TasktypeData &tasktypeData) {
 				TasktypeStatistics &statistics = tasktypeData.getTasktypeStatistics();
 				Chrono completedChrono(statistics.getCompletedTime());
 				double completedTime = ((double) completedChrono);
@@ -297,7 +298,7 @@ void Monitoring::loadMonitoringWisdom()
 			// For each tasktype in the file, process all current registered
 			// tasktypes to check if we must copy the wisdom data into them
 			TaskInfo::processAllTasktypes(
-				[&](const std::string &taskLabel, TasktypeData &tasktypeData) {
+				[&](const std::string &taskLabel, const std::string &, TasktypeData &tasktypeData) {
 					if (taskLabel == label) {
 						// Labels coincide, first copy Monitoring data
 						if (metricsNode.dataExists("UNITARY_TIME")) {
@@ -313,13 +314,14 @@ void Monitoring::loadMonitoringWisdom()
 						const std::vector<HWCounters::counters_t> &enabledCounters =
 							HardwareCounters::getEnabledCounters();
 						for (size_t i = 0; i < enabledCounters.size(); ++i) {
-							std::string metricLabel(HWCounters::counterDescriptions[i]);
+							HWCounters::counters_t counterType = enabledCounters[i];
+							std::string metricLabel(HWCounters::counterDescriptions[counterType]);
 							if (metricsNode.dataExists(metricLabel)) {
 								bool converted = false;
 								double metricValue = metricsNode.getData(metricLabel, converted);
 								if (converted) {
 									TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
-									tasktypeStatistics.insertNormalizedCounter((HWCounters::counters_t) i, metricValue);
+									tasktypeStatistics.insertNormalizedCounter(counterType, metricValue);
 								}
 							}
 						}
@@ -339,7 +341,7 @@ void Monitoring::storeMonitoringWisdom()
 
 	// Process all the tasktypes and gather Monitoring and Hardware Counters metrics
 	TaskInfo::processAllTasktypes(
-		[&](const std::string &taskLabel, TasktypeData &tasktypeData) {
+		[&](const std::string &taskLabel, const std::string &, TasktypeData &tasktypeData) {
 			JsonNode<double> tasktypeNode;
 
 			// Retreive monitoring statistics
@@ -351,7 +353,7 @@ void Monitoring::storeMonitoringWisdom()
 			const std::vector<HWCounters::counters_t> &enabledCounters =
 				HardwareCounters::getEnabledCounters();
 			for (size_t i = 0; i < enabledCounters.size(); ++i) {
-				double counter = tasktypeStatistics.getCounterAverage((HWCounters::counters_t) enabledCounters[i]);
+				double counter = tasktypeStatistics.getCounterAverage(enabledCounters[i]);
 				if (counter >= 0.0) {
 					tasktypeNode.addData(
 						std::string(HWCounters::counterDescriptions[enabledCounters[i]]),

@@ -17,7 +17,6 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
 #include <MemoryAllocator.hpp>
-#include <Monitoring.hpp>
 
 
 int Throttle::_pressure;

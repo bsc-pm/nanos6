@@ -785,14 +785,6 @@ public:
 		return _taskStatistics;
 	}
 
-	//! \brief Setter for the task's hardware counter structures
-	//!
-	//! \param[in] hwCounters The task's hardware counters
-	inline void setHardwareCounters(const TaskHardwareCounters &hwCounters)
-	{
-		_hwCounters = hwCounters;
-	}
-
 	//! \brief Get the task's hardware counter structures
 	inline TaskHardwareCounters &getHardwareCounters()
 	{
