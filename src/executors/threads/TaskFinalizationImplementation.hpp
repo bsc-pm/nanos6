@@ -51,9 +51,8 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 						task, computePlace,
 						*localHpDependencyData,
 						/* memory place */ nullptr,
-						fromBusyThread);
-
-					task->setComputePlace(nullptr);
+						fromBusyThread
+					);
 
 					Monitoring::taskFinished(task);
 					// This is just to emulate a recursive call to TaskFinalization::taskFinished() again.

@@ -56,7 +56,6 @@ void Accelerator::finishTask(Task *task)
 			/* from busy thread */ true);
 
 		Monitoring::taskFinished(task);
-		task->setComputePlace(nullptr);
 		TaskFinalization::taskFinished(task, cpu, /* busy thread */ true);
 
 		if (task->markAsReleased()) {
