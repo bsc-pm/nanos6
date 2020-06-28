@@ -37,6 +37,7 @@ dlb_tests =
 if HAVE_NANOS6_MERCURIUM
 if BUILD_OPTIMIZED_VARIANT
 base_tests += \
+	blocking.test \
 	events.test \
 	events-dep.test \
 	scheduling-wait-for.test \
@@ -132,6 +133,7 @@ endif
 
 if BUILD_DEBUG_VARIANTS
 base_tests +=  \
+	blocking.debug.test \
 	events.debug.test \
 	events-dep.debug.test \
 	scheduling-wait-for.debug.test \
@@ -281,6 +283,15 @@ cuda_saxpy_test_SOURCES = cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxp
 cuda_saxpy_test_CPPFLAGS = -DNDEBUG
 cuda_saxpy_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
 cuda_saxpy_test_LDFLAGS = $(test_common_ldflags) $(test_cuda_flags)
+
+blocking_debug_test_SOURCES = blocking/blocking.cpp
+blocking_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+blocking_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+blocking_test_SOURCES = blocking/blocking.cpp
+blocking_test_CPPFLAGS = -DNDEBUG
+blocking_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+blocking_test_LDFLAGS = $(test_common_debug_ldflags)
 
 events_debug_test_SOURCES = events/events.cpp
 events_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
