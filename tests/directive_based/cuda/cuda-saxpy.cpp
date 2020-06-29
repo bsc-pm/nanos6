@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -36,9 +36,9 @@ void initialize(long int N, long int BS, double *x, double *y) {
 	}
 }
 
-void saxpy(long int N, long int BS, double a, double *x, double *y) {
+void saxpy(long int N, long int BS, double a, double *x, double *y, bool if0) {
 	for (long int i = 0; i < N; i += BS) {
-		saxpyCUDAKernel(BS, a, &x[i], &y[i]);
+		saxpyCUDAKernel(BS, a, &x[i], &y[i], if0);
 	}
 }
 
@@ -74,7 +74,8 @@ int main() {
 	initialize(N, BS, x, y);
 
 	for (int i = 0; i < ITS; ++i) {
-		saxpy(N, BS, a, x, y);
+		bool if0 = (i == ITS / 2);
+		saxpy(N, BS, a, x, y, if0);
 	}
 	#pragma oss taskwait
 
