@@ -113,11 +113,11 @@ void HardwareCounters::preinitialize()
 #endif
 	}
 
-	// After initializing all benchmarks, check how many counters are enabled
-	_numEnabledCounters = _enabledCounters.size();
-
 	// NOTE: Since the RAPL backend needs to be initialized after hardware is
 	// detected, we do that in the initialize function
+
+	// After initializing all backends, check how many counters are enabled
+	_numEnabledCounters = _enabledCounters.size();
 }
 
 void HardwareCounters::initialize()

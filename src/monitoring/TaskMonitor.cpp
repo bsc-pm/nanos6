@@ -60,9 +60,9 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		}
 
 		// Predict hardware counter metrics
-		const std::vector<HWCounters::counters_t> &enabledCounters = HardwareCounters::getEnabledCounters();
-		for (size_t i = 0; i < enabledCounters.size(); ++i) {
-			double counterPrediction = tasktypeStatistics.getCounterPrediction(enabledCounters[i], cost);
+		size_t numEnabledCounters = HardwareCounters::getNumEnabledCounters();
+		for (size_t i = 0; i < numEnabledCounters; ++i) {
+			double counterPrediction = tasktypeStatistics.getCounterPrediction(i, cost);
 			if (counterPrediction != PREDICTION_UNAVAILABLE) {
 				taskStatistics->setHasCounterPrediction(i, true);
 				taskStatistics->setCounterPrediction(i, counterPrediction);
@@ -328,50 +328,48 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 
 			// Display hardware counters related statistics
 			const std::vector<HWCounters::counters_t> &enabledCounters = HardwareCounters::getEnabledCounters();
-			if (enabledCounters.size()) {
-				for (size_t id = 0; id < enabledCounters.size(); ++id) {
-					HWCounters::counters_t eventType = enabledCounters[id];
-					numInstances = tasktypeStatistics.getCounterNumInstances(eventType);
-					if (numInstances) {
-						// Get statistics
-						double counterSum = tasktypeStatistics.getCounterSum(eventType);
-						double counterAvg = tasktypeStatistics.getCounterAverage(eventType);
-						double counterStddev = tasktypeStatistics.getCounterStddev(eventType);
-						double counterAccuracy = tasktypeStatistics.getCounterAccuracy(eventType);
+			for (size_t id = 0; id < enabledCounters.size(); ++id) {
+				HWCounters::counters_t eventType = enabledCounters[id];
+				numInstances = tasktypeStatistics.getCounterNumInstances(id);
+				if (numInstances) {
+					// Get statistics
+					double counterSum = tasktypeStatistics.getCounterSum(id);
+					double counterAvg = tasktypeStatistics.getCounterAverage(id);
+					double counterStddev = tasktypeStatistics.getCounterStddev(id);
+					double counterAccuracy = tasktypeStatistics.getCounterAccuracy(id);
 
-						// Make sure there was at least one prediction to report accuracy
-						std::string accur = "NA";
-						if (!std::isnan(counterAccuracy)) {
-							std::stringstream accuracyStream;
-							accuracyStream << std::setprecision(2) << std::fixed << counterAccuracy << "%";
-							accur = accuracyStream.str();
-						}
-
-						// Process events that must be in KB
-						if (eventType == HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP ||
-							eventType == HWCounters::HWC_PQOS_MON_EVENT_LMEM_BW  ||
-							eventType == HWCounters::HWC_PQOS_MON_EVENT_RMEM_BW
-						) {
-							counterAvg /= 1024.0;
-							counterStddev /= 1024.0;
-							counterSum /= 1024.0;
-						}
-
-						stream <<
-							std::setw(7)  << "STATS"                                    << " "   <<
-							std::setw(12) << "HWCOUNTERS"                               << " "   <<
-							std::setw(30) << HWCounters::counterDescriptions[eventType] << " "   <<
-							std::setw(25) << "SUM / AVG / STDEV"                        << " "   <<
-							std::setw(15) << counterSum                                 << " / " <<
-							std::setw(15) << counterAvg                                 << " / " <<
-							std::setw(15) << counterStddev                              << "\n";
-						stream <<
-							std::setw(7)  << "STATS"                                    << " "   <<
-							std::setw(12) << "HWCOUNTERS"                               << " "   <<
-							std::setw(30) << HWCounters::counterDescriptions[eventType] << " "   <<
-							std::setw(25) << "PREDICTION ACCURACY"                      << " "   <<
-							std::setw(10) << accur                                      << "\n";
+					// Make sure there was at least one prediction to report accuracy
+					std::string accur = "NA";
+					if (!std::isnan(counterAccuracy)) {
+						std::stringstream accuracyStream;
+						accuracyStream << std::setprecision(2) << std::fixed << counterAccuracy << "%";
+						accur = accuracyStream.str();
 					}
+
+					// Process events that must be in KB
+					if (eventType == HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP ||
+						eventType == HWCounters::HWC_PQOS_MON_EVENT_LMEM_BW  ||
+						eventType == HWCounters::HWC_PQOS_MON_EVENT_RMEM_BW
+					) {
+						counterAvg /= 1024.0;
+						counterStddev /= 1024.0;
+						counterSum /= 1024.0;
+					}
+
+					stream <<
+						std::setw(7)  << "STATS"                                    << " "   <<
+						std::setw(12) << "HWCOUNTERS"                               << " "   <<
+						std::setw(30) << HWCounters::counterDescriptions[eventType] << " "   <<
+						std::setw(25) << "SUM / AVG / STDEV"                        << " "   <<
+						std::setw(15) << counterSum                                 << " / " <<
+						std::setw(15) << counterAvg                                 << " / " <<
+						std::setw(15) << counterStddev                              << "\n";
+					stream <<
+						std::setw(7)  << "STATS"                                    << " "   <<
+						std::setw(12) << "HWCOUNTERS"                               << " "   <<
+						std::setw(30) << HWCounters::counterDescriptions[eventType] << " "   <<
+						std::setw(25) << "PREDICTION ACCURACY"                      << " "   <<
+						std::setw(10) << accur                                      << "\n";
 				}
 			}
 

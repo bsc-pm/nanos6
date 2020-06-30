@@ -288,24 +288,24 @@ public:
 
 	//! \brief Insert a metric into the corresponding accumulator
 	//!
-	//! \param[in] counterType The type of counter
+	//! \param[in] counterId An identifier relative to the number of enabled events
 	//! \param[in] value The value of the metric
-	inline void insertNormalizedCounter(HWCounters::counters_t counterType, double value)
+	inline void insertNormalizedCounter(size_t counterId, double value)
 	{
 		_counterAccumulatorsLock.lock();
-		_normalizedCounterAccumulators[counterType](value);
+		_normalizedCounterAccumulators[counterId](value);
 		_counterAccumulatorsLock.unlock();
 	}
 
 	//! \brief Retreive, for a certain type of counter, the sum of accumulated
 	//! values of all tasks from this type
 	//!
-	//! \param[in] counterType The type of counter
+	//! \param[in] counterId An identifier relative to the number of enabled events
 	//! \return A double with the sum of accumulated values
-	inline double getCounterSum(HWCounters::counters_t counterType)
+	inline double getCounterSum(size_t counterId)
 	{
 		_counterAccumulatorsLock.lock();
-		double sum = BoostAcc::sum(_counterAccumulators[counterType]);
+		double sum = BoostAcc::sum(_counterAccumulators[counterId]);
 		_counterAccumulatorsLock.unlock();
 
 		return sum;
@@ -314,12 +314,12 @@ public:
 	//! \brief Retreive, for a certain type of counter, the average of all
 	//! accumulated values of this task type
 	//!
-	//! \param[in] counterType The type of counter
+	//! \param[in] counterId An identifier relative to the number of enabled events
 	//! \return A double with the average accumulated value
-	inline double getCounterAverage(HWCounters::counters_t counterType)
+	inline double getCounterAverage(size_t counterId)
 	{
 		_counterAccumulatorsLock.lock();
-		double avg = BoostAcc::mean(_counterAccumulators[counterType]);
+		double avg = BoostAcc::mean(_counterAccumulators[counterId]);
 		_counterAccumulatorsLock.unlock();
 
 		return avg;
@@ -328,12 +328,12 @@ public:
 	//! \brief Retreive, for a certain type of counter, the standard deviation
 	//! taking into account all the values in the accumulator of this task type
 	//!
-	//! \param[in] counterType The type of counter
+	//! \param[in] counterId An identifier relative to the number of enabled events
 	//! \return A double with the standard deviation of the counter
-	inline double getCounterStddev(HWCounters::counters_t counterType)
+	inline double getCounterStddev(size_t counterId)
 	{
 		_counterAccumulatorsLock.lock();
-		double stddev = sqrt(BoostAcc::variance(_counterAccumulators[counterType]));
+		double stddev = sqrt(BoostAcc::variance(_counterAccumulators[counterId]));
 		_counterAccumulatorsLock.unlock();
 
 		return stddev;
@@ -342,12 +342,12 @@ public:
 	//! \brief Retreive, for a certain type of counter, the amount of values
 	//! in the accumulator (i.e., the number of tasks)
 	//!
-	//! \param[in] counterType The type of counter
+	//! \param[in] counterId An identifier relative to the number of enabled events
 	//! \return A size_t with the number of accumulated values
-	inline size_t getCounterNumInstances(HWCounters::counters_t counterType)
+	inline size_t getCounterNumInstances(size_t counterId)
 	{
 		_counterAccumulatorsLock.lock();
-		size_t count = BoostAcc::count(_counterAccumulators[counterType]);
+		size_t count = BoostAcc::count(_counterAccumulators[counterId]);
 		_counterAccumulatorsLock.unlock();
 
 		return count;
@@ -356,12 +356,12 @@ public:
 	//! \brief Retreive, for a certain type of counter, the average of all
 	//! accumulated normalized values of this task type
 	//!
-	//! \param[in] counterType The type of counter
+	//! \param[in] counterId An identifier relative to the number of enabled events
 	//! \return A double with the average accumulated value
-	inline double getCounterRollingAverage(HWCounters::counters_t counterType)
+	inline double getCounterRollingAverage(size_t counterId)
 	{
 		_counterAccumulatorsLock.lock();
-		double avg = BoostAcc::rolling_mean(_normalizedCounterAccumulators[counterType]);
+		double avg = BoostAcc::rolling_mean(_normalizedCounterAccumulators[counterId]);
 		_counterAccumulatorsLock.unlock();
 
 		return avg;
@@ -370,12 +370,12 @@ public:
 	//! \brief Retreive, for a certain type of counter, the average accuracy
 	//! of counter predictions of this tasktype
 	//!
-	//! \param[in] counterType The type of counter
+	//! \param[in] counterId An identifier relative to the number of enabled events
 	//! \return A double with the average accuracy
-	inline double getCounterAccuracy(HWCounters::counters_t counterType)
+	inline double getCounterAccuracy(size_t counterId)
 	{
 		_counterAccumulatorsLock.lock();
-		double avg = BoostAcc::mean(_counterAccuracyAccumulators[counterType]);
+		double avg = BoostAcc::mean(_counterAccuracyAccumulators[counterId]);
 		_counterAccumulatorsLock.unlock();
 
 		return avg;
@@ -383,15 +383,15 @@ public:
 
 	//! \brief Get a hardware counter prediction for a task
 	//!
-	//! \param[in] counterType The hardware counter's id
+	//! \param[in] counterId The hardware counter's id
 	//! \param[in] cost The task's computational cost
-	inline double getCounterPrediction(HWCounters::counters_t counterType, size_t cost)
+	inline double getCounterPrediction(size_t counterId, size_t cost)
 	{
 		// Check if a prediction can be inferred
 		_counterAccumulatorsLock.lock();
 		double normalizedValue = PREDICTION_UNAVAILABLE;
-		if (BoostAcc::count(_normalizedCounterAccumulators[counterType])) {
-			normalizedValue = ((double) cost) * BoostAcc::rolling_mean(_normalizedCounterAccumulators[counterType]);
+		if (BoostAcc::count(_normalizedCounterAccumulators[counterId])) {
+			normalizedValue = ((double) cost) * BoostAcc::rolling_mean(_normalizedCounterAccumulators[counterId]);
 		}
 		_counterAccumulatorsLock.unlock();
 
@@ -468,11 +468,11 @@ public:
 		// Aggregate all the information into the accumulators
 		_counterAccumulatorsLock.lock();
 		for (size_t id = 0; id < numEnabledCounters; ++id) {
-			_counterAccumulators[enabledCounters[id]](counters[id]);
-			_normalizedCounterAccumulators[enabledCounters[id]](normalizedCounters[id]);
+			_counterAccumulators[id](counters[id]);
+			_normalizedCounterAccumulators[id](normalizedCounters[id]);
 
 			if (counterPredictionsAvailable[id]) {
-				_counterAccuracyAccumulators[enabledCounters[id]](counterAccuracies[id]);
+				_counterAccuracyAccumulators[id](counterAccuracies[id]);
 			}
 		}
 		_counterAccumulatorsLock.unlock();

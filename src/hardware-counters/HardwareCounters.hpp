@@ -100,6 +100,7 @@ public:
 		return _enabledCounters;
 	}
 
+	//! \brief Get the number of supported and enabled counters
 	static inline size_t getNumEnabledCounters()
 	{
 		return _numEnabledCounters;

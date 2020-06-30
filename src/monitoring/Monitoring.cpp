@@ -321,7 +321,7 @@ void Monitoring::loadMonitoringWisdom()
 								double metricValue = metricsNode.getData(metricLabel, converted);
 								if (converted) {
 									TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
-									tasktypeStatistics.insertNormalizedCounter(counterType, metricValue);
+									tasktypeStatistics.insertNormalizedCounter(i, metricValue);
 								}
 							}
 						}
@@ -353,7 +353,7 @@ void Monitoring::storeMonitoringWisdom()
 			const std::vector<HWCounters::counters_t> &enabledCounters =
 				HardwareCounters::getEnabledCounters();
 			for (size_t i = 0; i < enabledCounters.size(); ++i) {
-				double counter = tasktypeStatistics.getCounterAverage(enabledCounters[i]);
+				double counter = tasktypeStatistics.getCounterAverage(i);
 				if (counter >= 0.0) {
 					tasktypeNode.addData(
 						std::string(HWCounters::counterDescriptions[enabledCounters[i]]),
