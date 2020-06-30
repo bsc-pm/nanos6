@@ -7,8 +7,8 @@
 #ifndef SUPPORTED_HARDWARE_COUNTERS_HPP
 #define SUPPORTED_HARDWARE_COUNTERS_HPP
 
+#include <cstdint>
 #include <map>
-
 
 namespace HWCounters {
 

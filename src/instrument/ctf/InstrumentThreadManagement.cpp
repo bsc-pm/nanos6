@@ -17,10 +17,12 @@
 #include "CTFTracepoints.hpp"
 #include "InstrumentThreadManagement.hpp"
 
+#if defined(__GLIBC__) && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 30))
 static ctf_thread_id_t gettid(void)
 {
 	return syscall(SYS_gettid);
 }
+#endif
 
 void Instrument::createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 {
