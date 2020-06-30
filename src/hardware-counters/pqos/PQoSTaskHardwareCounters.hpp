@@ -90,11 +90,11 @@ public:
 						_counterDelta[innerId] = data->values.llc_misses_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
-					case HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
+					case HWCounters::HWC_PQOS_PERF_EVENT_INSTRUCTIONS:
 						_counterDelta[innerId] = data->values.ipc_retired_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
-					case HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES:
+					case HWCounters::HWC_PQOS_PERF_EVENT_CYCLES:
 						_counterDelta[innerId] = data->values.ipc_unhalted_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;

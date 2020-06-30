@@ -303,25 +303,25 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 				stream <<
 					std::setw(7)  << "STATS"                    << " " <<
 					std::setw(12) << "MONITORING"               << " " <<
-					std::setw(26) << "TASK-TYPE (INSTANCES)"    << " " <<
+					std::setw(30) << "TASK-TYPE (INSTANCES)"    << " " <<
 					std::setw(25) << typeLabel                  << "\n";
 				stream <<
 					std::setw(7)  << "STATS"                    << " "   <<
 					std::setw(12) << "MONITORING"               << " "   <<
-					std::setw(26) << "NORMALIZED COST"          << " "   <<
+					std::setw(30) << "NORMALIZED COST"          << " "   <<
 					std::setw(25) << "AVG / STDEV"              << " "   <<
 					std::setw(10) << averageNormalizedCost      << " / " <<
 					std::setw(10) << stddevNormalizedCost       << "\n";
 				stream <<
 					std::setw(7)  << "STATS"                    << " " <<
 					std::setw(12) << "MONITORING"               << " " <<
-					std::setw(26) << "NORMALIZED COST"          << " " <<
-					std::setw(25) << "PREDICTION ACCURACY (%)"  << " " <<
+					std::setw(30) << "NORMALIZED COST"          << " " <<
+					std::setw(25) << "PREDICTION ACCURACY"      << " " <<
 					std::setw(10) << accur                      << "\n";
 				stream <<
 					std::setw(7)  << "STATS"                    << " " <<
 					std::setw(12) << "MONITORING"               << " " <<
-					std::setw(26) << "EFFECTIVE PARALLELISM"    << " " <<
+					std::setw(30) << "EFFECTIVE PARALLELISM"    << " " <<
 					std::setw(25) << "RAW DATA"                 << " " <<
 					std::setw(10) << effectiveParallelism       << "\n";
 			}
@@ -360,7 +360,7 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 						stream <<
 							std::setw(7)  << "STATS"                                    << " "   <<
 							std::setw(12) << "HWCOUNTERS"                               << " "   <<
-							std::setw(26) << HWCounters::counterDescriptions[eventType] << " "   <<
+							std::setw(30) << HWCounters::counterDescriptions[eventType] << " "   <<
 							std::setw(25) << "SUM / AVG / STDEV"                        << " "   <<
 							std::setw(15) << counterSum                                 << " / " <<
 							std::setw(15) << counterAvg                                 << " / " <<
@@ -368,8 +368,8 @@ void TaskMonitor::displayStatistics(std::stringstream &stream) const
 						stream <<
 							std::setw(7)  << "STATS"                                    << " "   <<
 							std::setw(12) << "HWCOUNTERS"                               << " "   <<
-							std::setw(26) << HWCounters::counterDescriptions[eventType] << " "   <<
-							std::setw(25) << "ACCURACY"                                 << " "   <<
+							std::setw(30) << HWCounters::counterDescriptions[eventType] << " "   <<
+							std::setw(25) << "PREDICTION ACCURACY"                      << " "   <<
 							std::setw(10) << accur                                      << "\n";
 					}
 				}

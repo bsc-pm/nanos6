@@ -81,8 +81,8 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 			} else if (id == HWCounters::HWC_PQOS_PERF_EVENT_LLC_MISS) {
 				eventsToMonitor |= PQOS_PERF_EVENT_LLC_MISS;
 			} else if (
-				id == HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS ||
-				id == HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES
+				id == HWCounters::HWC_PQOS_PERF_EVENT_INSTRUCTIONS ||
+				id == HWCounters::HWC_PQOS_PERF_EVENT_CYCLES
 			) {
 				// Special case, in PQoS there is no way to monitor simply
 				// instructions or cycles, we must signal that we want to
@@ -128,11 +128,11 @@ PQoSHardwareCounters::PQoSHardwareCounters(
 		enabledEvents.erase(it);
 	}
 	if (unavailableEvents & PQOS_PERF_EVENT_IPC) {
-		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS);
+		auto it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_PERF_EVENT_INSTRUCTIONS);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
 
-		it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES);
+		it = std::find(enabledEvents.begin(), enabledEvents.end(), HWCounters::HWC_PQOS_PERF_EVENT_CYCLES);
 		assert(it != enabledEvents.end());
 		enabledEvents.erase(it);
 	}

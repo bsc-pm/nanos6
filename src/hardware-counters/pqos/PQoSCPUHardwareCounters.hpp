@@ -67,10 +67,10 @@ public:
 					case HWCounters::HWC_PQOS_PERF_EVENT_LLC_MISS:
 						_counters[innerId] = data->values.llc_misses_delta;
 						break;
-					case HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
+					case HWCounters::HWC_PQOS_PERF_EVENT_INSTRUCTIONS:
 						_counters[innerId] = data->values.ipc_retired_delta;
 						break;
-					case HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES:
+					case HWCounters::HWC_PQOS_PERF_EVENT_CYCLES:
 						_counters[innerId] = data->values.ipc_unhalted_delta;
 						break;
 					default:
