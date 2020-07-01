@@ -359,11 +359,14 @@ Some application output ...
 
 Monitoring is an infrastructure composed of several modules that gather metrics of specific elements of the runtime core and generate predictions usable by other modules. Checkpointing of predictions is enabled through the Wisdom mechanism, which allows saving predictions for future executions.
 
-Monitoring is enabled at run-time through various environment variables:
+Monitoring is enabled at run-time through various configuration variables:
 
 * `monitoring.enabled`: To enable/disable monitoring, disabled by default.
 * `monitoring.verbose`: To enable/disable the verbose mode for monitoring. Enabled by default if monitoring is enabled.
 * `monitoring.rolling_window`: To specify the number of metrics used for accumulators (moving average's window). By default, the latest 20 metrics.
+
+Additionally, checkpointing of predictions is enabled through the `Wisdom` mechanism, which allows saving normalized metrics for future executions. It is controlled by the following configuration variable:
+
 * `monitoring.wisdom`: To enable/disable the wisdom mechanism. Disabled by default.
 
 
