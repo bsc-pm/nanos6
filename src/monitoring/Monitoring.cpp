@@ -286,7 +286,7 @@ void Monitoring::loadMonitoringWisdom()
 	assert(_taskMonitor != nullptr);
 
 	// Create a representation of the system file as a JsonFile
-	_wisdom = new JsonFile("./.nanos6_monitoring_wisdom.json");
+	_wisdom = new JsonFile("./.nanos6-monitoring-wisdom.json");
 	assert(_wisdom != nullptr);
 
 	// Try to populate the JsonFile with the system file's data
@@ -301,9 +301,9 @@ void Monitoring::loadMonitoringWisdom()
 				[&](const std::string &taskLabel, const std::string &, TasktypeData &tasktypeData) {
 					if (taskLabel == label) {
 						// Labels coincide, first copy Monitoring data
-						if (metricsNode.dataExists("UNITARY_TIME")) {
+						if (metricsNode.dataExists("NORMALIZED_COST")) {
 							bool converted = false;
-							double metricValue = metricsNode.getData("UNITARY_TIME", converted);
+							double metricValue = metricsNode.getData("NORMALIZED_COST", converted);
 							if (converted) {
 								TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
 								tasktypeStatistics.insertNormalizedTime(metricValue);
@@ -339,33 +339,58 @@ void Monitoring::storeMonitoringWisdom()
 	JsonNode<> *rootNode = _wisdom->getRootNode();
 	assert(rootNode != nullptr);
 
+	// A vector of nodes to save
+	std::vector<std::pair<std::string, JsonNode<double>>> nodesToSave;
+
 	// Process all the tasktypes and gather Monitoring and Hardware Counters metrics
 	TaskInfo::processAllTasktypes(
 		[&](const std::string &taskLabel, const std::string &, TasktypeData &tasktypeData) {
+			// If the file already contains this tasktype as a node, retreive
+			// its inner node instead of creating a new one
 			JsonNode<double> tasktypeNode;
+			if (rootNode->childNodeExists(taskLabel)) {
+				tasktypeNode = rootNode->getChildNode(taskLabel);
+			}
 
 			// Retreive monitoring statistics
 			TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
 			double value = tasktypeStatistics.getTimingRollingAverage();
-			tasktypeNode.addData("NORMALIZED_COST", value);
+			if (tasktypeNode.dataExists("NORMALIZED_COST")) {
+				tasktypeNode.replaceData("NORMALIZED_COST", value);
+			} else {
+				tasktypeNode.addData("NORMALIZED_COST", value);
+			}
 
 			// Retreive hardware counter metrics
 			const std::vector<HWCounters::counters_t> &enabledCounters =
 				HardwareCounters::getEnabledCounters();
 			for (size_t i = 0; i < enabledCounters.size(); ++i) {
-				double counter = tasktypeStatistics.getCounterAverage(i);
-				if (counter >= 0.0) {
-					tasktypeNode.addData(
-						std::string(HWCounters::counterDescriptions[enabledCounters[i]]),
-						counter
-					);
+				double counterValue = tasktypeStatistics.getCounterRollingAverage(i);
+				if (counterValue >= 0.0) {
+					std::string counterLabel(HWCounters::counterDescriptions[enabledCounters[i]]);
+					if (tasktypeNode.dataExists(counterLabel)) {
+						tasktypeNode.replaceData(counterLabel, counterValue);
+					} else {
+						tasktypeNode.addData(counterLabel, counterValue);
+					}
 				}
 			}
 
-			// Add all the metrics as a new node into the root node
-			rootNode->addChildNode(taskLabel, tasktypeNode);
+			// Finally, add the new or updated tasktype node
+			nodesToSave.push_back(std::make_pair(taskLabel, tasktypeNode));
 		}
 	);
+
+	// Clear the wisdom file
+	_wisdom->clearFile();
+
+	// Save all the new/updated nodes in the file
+	for (size_t i = 0; i < nodesToSave.size(); ++i) {
+		rootNode->addChildNode(
+			nodesToSave[i].first,
+			nodesToSave[i].second
+		);
+	}
 
 	// Store the data from the JsonFile in the system file
 	_wisdom->storeData();
