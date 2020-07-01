@@ -11,18 +11,11 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 
-#include "executors/threads/WorkerThread.hpp"
-
-#include "ctfapi/CTFTypes.hpp"
 #include "CTFTracepoints.hpp"
 #include "InstrumentThreadManagement.hpp"
+#include "ctfapi/CTFTypes.hpp"
+#include "executors/threads/WorkerThread.hpp"
 
-#if defined(__GLIBC__) && (__GLIBC__ < 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ < 30))
-static ctf_thread_id_t gettid(void)
-{
-	return syscall(SYS_gettid);
-}
-#endif
 
 void Instrument::createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 {
@@ -33,7 +26,8 @@ void Instrument::createdThread(__attribute__((unused)) thread_id_t threadId, __a
 
 void Instrument::precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)
 {
-	ctf_thread_id_t tid = gettid();
+	// TODO: We should retrieve the thread id in a cleaner way
+	ctf_thread_id_t tid = syscall(SYS_gettid);
 	threadId = external_thread_id_t(tid);
 	Instrument::tp_external_thread_create(tid);
 }
