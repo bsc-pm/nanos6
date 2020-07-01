@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "ExecutionSteps.hpp"
@@ -18,8 +18,13 @@ namespace Instrument {
 	using namespace Graph;
 	
 	
-	void enterTaskWait(task_id_t taskId, char const *invocationSource, task_id_t if0TaskId, InstrumentationContext const &context)
-	{
+	void enterTaskWait(
+		task_id_t taskId,
+		char const *invocationSource,
+		task_id_t if0TaskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
+		InstrumentationContext const &context
+	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
 		
@@ -41,8 +46,11 @@ namespace Instrument {
 	}
 	
 	
-	void exitTaskWait(task_id_t taskId, InstrumentationContext const &context)
-	{
+	void exitTaskWait(
+		task_id_t taskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
+		InstrumentationContext const &context
+	) {
 		std::lock_guard<SpinLock> guard(_graphLock);
 		task_info_t &taskInfo = _taskToInfoMap[taskId];
 		

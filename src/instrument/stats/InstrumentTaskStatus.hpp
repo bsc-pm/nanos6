@@ -30,7 +30,7 @@ namespace Instrument {
 		taskId->_currentTimer = &taskId->_times._readyTime;
 	}
 
-	inline void taskIsExecuting(task_id_t taskId, InstrumentationContext const &)
+	inline void taskIsExecuting(task_id_t taskId, bool, InstrumentationContext const &)
 	{
 		assert(taskId->_currentTimer != nullptr);
 

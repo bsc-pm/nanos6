@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -44,9 +44,13 @@ namespace Instrument {
 		
 		addLogEntry(logEntry);
 	}
-	
-	
-	void taskIsExecuting(task_id_t taskId, InstrumentationContext const &context) {
+
+
+	void taskIsExecuting(
+		task_id_t taskId,
+		__attribute__((unused)) bool wasBlocked,
+		InstrumentationContext const &context
+	) {
 		if (!_verboseTaskStatus) {
 			return;
 		}
@@ -86,8 +90,7 @@ namespace Instrument {
 		
 		addLogEntry(logEntry);
 	}
-	
-	
+
 	void taskIsZombie(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskStatus) {
 			return;

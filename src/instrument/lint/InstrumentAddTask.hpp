@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_LINT_ADD_TASK_HPP
@@ -19,6 +19,7 @@ namespace Instrument {
 		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		static std::atomic<task_id_t::inner_type_t> _nextTaskId(0);
@@ -28,8 +29,9 @@ namespace Instrument {
 		return taskId;
 	}
 
-	inline void exitCreateTask()
-	{
+	inline void exitCreateTask(
+		__attribute__((unused)) bool taskRuntimeTransition
+	) {
 	}
 
 	inline void createdArgsBlock(
@@ -49,12 +51,14 @@ namespace Instrument {
 	) {
 	}
 
-	inline void enterSubmitTask()
-	{
+	inline void enterSubmitTask(
+		__attribute__((unused)) bool taskRuntimeTransition
+	) {
 	}
 
 	inline void exitSubmitTask(
 		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
@@ -78,6 +82,16 @@ namespace Instrument {
 
 	inline void registeredNewSpawnedTaskType(
 		__attribute__((unused)) nanos6_task_info_t *taskInfo
+	) {
+	}
+
+	inline void enterSpawnFunction(
+		__attribute__((unused)) bool taskRuntimeTransition
+	) {
+	}
+
+	inline void exitSpawnFunction(
+		__attribute__((unused)) bool taskRuntimeTransition
 	) {
 	}
 }

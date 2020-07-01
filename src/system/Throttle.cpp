@@ -10,6 +10,7 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/TaskBlocking.hpp"
+#include "system/ompss/TaskWait.hpp"
 #include "tasks/Task.hpp"
 
 #include <nanos6.h>
@@ -144,7 +145,7 @@ bool Throttle::engage(Task *creator, WorkerThread *workerThread)
 		return true;
 	} else {
 		// There is nothing else to do. Let's run a taskwait then
-		nanos6_taskwait("Throttle");
+		TaskWait::taskWait("Throttle");
 		return false;
 	}
 }

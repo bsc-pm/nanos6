@@ -13,7 +13,9 @@
 #include <nanos6.h>
 
 #include "lowlevel/ConditionVariable.hpp"
+#include "system/BlockingAPI.hpp"
 #include "system/ompss/SpawnFunction.hpp"
+#include "system/ompss/TaskWait.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -151,14 +153,14 @@ public:
 		_spinlock.lock();
 
 		_mustShutdown = true;
-		void *blockingContext = _blockingContext;
+		Task *task = static_cast<Task *>(_blockingContext);
 		_blockingContext = nullptr;
 
 		_spinlock.unlock();
 
 		// Unblock the executor if it was blocked
-		if (blockingContext != nullptr) {
-			nanos6_unblock_task(blockingContext);
+		if (task != nullptr) {
+			BlockingAPI::unblockTask(task);
 		}
 	}
 
@@ -169,14 +171,14 @@ public:
 		_spinlock.lock();
 
 		_queue.push_back(function);
-		void *blockingContext = _blockingContext;
+		Task *task = static_cast<Task *>(_blockingContext);
 		_blockingContext = nullptr;
 
 		_spinlock.unlock();
 
 		// Unblock the executor if it was blocked
-		if (blockingContext != nullptr) {
-			nanos6_unblock_task(blockingContext);
+		if (task != nullptr) {
+			BlockingAPI::unblockTask(task);
 		}
 	}
 
@@ -260,11 +262,10 @@ public:
 				// Release the lock and block the task
 				assert(_blockingContext == nullptr);
 				_blockingContext = nanos6_get_current_blocking_context();
-				void *blockingContext = _blockingContext;
 
 				_spinlock.unlock();
 
-				nanos6_block_current_task(blockingContext);
+				BlockingAPI::blockCurrentTask();
 			}
 		}
 	}
@@ -289,7 +290,7 @@ public:
 	//! \param args A pointer to the condition variable of the taskwait
 	static void taskwaitBody(void *args)
 	{
-		nanos6_taskwait("");
+		TaskWait::taskWait("");
 
 		ConditionVariable *condVar = (ConditionVariable *) args;
 		assert(condVar != nullptr);

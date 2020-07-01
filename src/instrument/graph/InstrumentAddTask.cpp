@@ -25,6 +25,7 @@ namespace Instrument {
 		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		InstrumentationContext const &context
 	) {
 		std::lock_guard<SpinLock> guard(_graphLock);

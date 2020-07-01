@@ -25,14 +25,19 @@ static CTFAPI::CTFEvent *eventExternalThreadShutdown;
 static CTFAPI::CTFEvent *eventWorkerEnterBusyWait;
 static CTFAPI::CTFEvent *eventWorkerExitBusyWait;
 static CTFAPI::CTFEvent *eventTaskLabel;
-static CTFAPI::CTFEvent *eventTaskCreateEnter;
-static CTFAPI::CTFEvent *eventTaskCreateExit;
+static CTFAPI::CTFEvent *eventTaskCreateTaskContextEnter;
+static CTFAPI::CTFEvent *eventTaskCreateTaskContextExit;
+static CTFAPI::CTFEvent *eventTaskCreateOtherContextEnter;
+static CTFAPI::CTFEvent *eventTaskCreateOtherContextExit;
+static CTFAPI::CTFEvent *eventTaskSubmitTaskContextEnter;
+static CTFAPI::CTFEvent *eventTaskSubmitTaskContextExit;
+static CTFAPI::CTFEvent *eventTaskSubmitOtherContextEnter;
+static CTFAPI::CTFEvent *eventTaskSubmitOtherContextExit;
 static CTFAPI::CTFEvent *eventTaskforInitEnter;
 static CTFAPI::CTFEvent *eventTaskforInitExit;
-static CTFAPI::CTFEvent *eventTaskSubmitEnter;
-static CTFAPI::CTFEvent *eventTaskSubmitExit;
-static CTFAPI::CTFEvent *eventTaskExecute;
+static CTFAPI::CTFEvent *eventTaskStart;
 static CTFAPI::CTFEvent *eventTaskBlock;
+static CTFAPI::CTFEvent *eventTaskUnblock;
 static CTFAPI::CTFEvent *eventTaskEnd;
 static CTFAPI::CTFEvent *eventDependencyRegisterEnter;
 static CTFAPI::CTFEvent *eventDependencyRegisterExit;
@@ -42,6 +47,24 @@ static CTFAPI::CTFEvent *eventSchedulerAddTaskEnter;
 static CTFAPI::CTFEvent *eventSchedulerAddTaskExit;
 static CTFAPI::CTFEvent *eventSchedulerGetTaskEnter;
 static CTFAPI::CTFEvent *eventSchedulerGetTaskExit;
+static CTFAPI::CTFEvent *eventTaskwaitTaskContextEnter;
+static CTFAPI::CTFEvent *eventTaskwaitTaskContextExit;
+static CTFAPI::CTFEvent *eventWaitForTaskContextEnter;
+static CTFAPI::CTFEvent *eventWaitForTaskContextExit;
+static CTFAPI::CTFEvent *eventBlockingAPIBlockTaskContextEnter;
+static CTFAPI::CTFEvent *eventBlockingAPIBlockTaskContextExit;
+static CTFAPI::CTFEvent *eventBlockingAPIUnblockTaskContextEnter;
+static CTFAPI::CTFEvent *eventBlockingAPIUnblockTaskContextExit;
+static CTFAPI::CTFEvent *eventBlockingAPIUnblockOtherContextEnter;
+static CTFAPI::CTFEvent *eventBlockingAPIUnblockOtherContextExit;
+static CTFAPI::CTFEvent *eventSpawnFunctionTaskContextEnter;
+static CTFAPI::CTFEvent *eventSpawnFunctionTaskContextExit;
+static CTFAPI::CTFEvent *eventSpawnFunctionOtherContextEnter;
+static CTFAPI::CTFEvent *eventSpawnFunctionOtherContextExit;
+static CTFAPI::CTFEvent *eventMutexLockTaskContextEnter;
+static CTFAPI::CTFEvent *eventMutexLockTaskContextExit;
+static CTFAPI::CTFEvent *eventMutexUnlockTaskContextEnter;
+static CTFAPI::CTFEvent *eventMutexUnlockTaskContextExit;
 static CTFAPI::CTFEvent *eventDebugRegister;
 static CTFAPI::CTFEvent *eventDebugEnter;
 static CTFAPI::CTFEvent *eventDebugExit;
@@ -102,15 +125,46 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"\t\tstring _source;\n"
 		"\t\tuint16_t _type;\n"
 	));
-	eventTaskCreateEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:task_create_enter",
+	eventTaskCreateTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:task_create_enter",
 		"\t\tuint16_t _type;\n"
 		"\t\tuint32_t _id;\n",
 		CTFAPI::CTFContextTaskHWC
 	));
-	eventTaskCreateExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:task_create_exit",
+	eventTaskCreateTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:task_create_exit",
 		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskCreateOtherContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:oc:task_create_enter",
+		"\t\tuint16_t _type;\n"
+		"\t\tuint32_t _id;\n"
+	));
+	eventTaskCreateOtherContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:oc:task_create_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskSubmitTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:task_submit_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskSubmitTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:task_submit_exit",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
+	));
+	eventTaskSubmitOtherContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:oc:task_submit_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskSubmitOtherContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:oc:task_submit_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskStart = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_start",
+		"\t\tuint32_t _id;\n",
+		CTFAPI::CTFContextRuntimeHWC
 	));
 	eventTaskforInitEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:taskfor_init_enter",
@@ -121,28 +175,17 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"nanos6:taskfor_init_exit",
 		"\t\tuint8_t _dummy;\n"
 	));
-	eventTaskSubmitEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:task_submit_enter",
-		"\t\tuint8_t _dummy;\n"
-	));
-	eventTaskSubmitExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:task_submit_exit",
-		"\t\tuint8_t _dummy;\n",
-		CTFAPI::CTFContextRuntimeHWC
-	));
-	eventTaskExecute = userMetadata->addEvent(new CTFAPI::CTFEvent(
-		"nanos6:task_execute",
-		"\t\tuint32_t _id;\n",
-		CTFAPI::CTFContextRuntimeHWC
-	));
 	eventTaskBlock = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_block",
-		"\t\tuint32_t _id;\n",
-		CTFAPI::CTFContextTaskHWC
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskUnblock = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:task_unblock",
+		"\t\tuint8_t _dummy;\n"
 	));
 	eventTaskEnd = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:task_end",
-		"\t\tuint32_t _id;\n",
+		"\t\tuint8_t _dummy;\n",
 		CTFAPI::CTFContextTaskHWC
 	));
 	eventDependencyRegisterEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
@@ -176,6 +219,92 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 	eventSchedulerGetTaskExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:scheduler_get_task_exit",
 		"\t\tuint8_t _dummy;\n"
+	));
+	eventTaskwaitTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:taskwait_enter",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextTaskHWC
+	));
+	eventTaskwaitTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:taskwait_exit",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
+	));
+	eventWaitForTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:waitfor_enter",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextTaskHWC
+	));
+	eventWaitForTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:waitfor_exit",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
+	));
+	eventBlockingAPIBlockTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:blocking_api_block_enter",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextTaskHWC
+	));
+	eventBlockingAPIBlockTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:blocking_api_block_exit",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
+	));
+	eventBlockingAPIUnblockTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:blocking_api_unblock_enter",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextTaskHWC
+	));
+	eventBlockingAPIUnblockTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:blocking_api_unblock_exit",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
+	));
+	eventBlockingAPIUnblockOtherContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:oc:blocking_api_unblock_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventBlockingAPIUnblockOtherContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:oc:blocking_api_unblock_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventSpawnFunctionTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:spawn_function_enter",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextTaskHWC
+	));
+	eventSpawnFunctionTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:spawn_function_exit",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
+	));
+	eventSpawnFunctionOtherContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:oc:spawn_function_enter",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventSpawnFunctionOtherContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:oc:spawn_function_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventMutexLockTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:mutex_lock_enter",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextTaskHWC
+	));
+	eventMutexLockTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:mutex_lock_exit",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
+	));
+	eventMutexUnlockTaskContextEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:mutex_unlock_enter",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextTaskHWC
+	));
+	eventMutexUnlockTaskContextExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:tc:mutex_unlock_exit",
+		"\t\tuint8_t _dummy;\n",
+		CTFAPI::CTFContextRuntimeHWC
 	));
 	eventDebugRegister = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:debug_register",
@@ -282,21 +411,38 @@ void Instrument::tp_task_label(const char *taskLabel, const char *taskSource, ct
 	CTFAPI::tracepoint(eventTaskLabel, taskLabel, taskSource, taskTypeId);
 }
 
-void Instrument::tp_task_create_enter(ctf_tasktype_id_t taskTypeId, ctf_task_id_t taskId)
+void Instrument::tp_task_create_tc_enter(ctf_tasktype_id_t taskTypeId, ctf_task_id_t taskId)
 {
-	if (!eventTaskCreateEnter->isEnabled())
+	if (!eventTaskCreateTaskContextEnter->isEnabled())
 		return;
 
-	CTFAPI::tracepoint(eventTaskCreateEnter, taskTypeId, taskId);
+	CTFAPI::tracepoint(eventTaskCreateTaskContextEnter, taskTypeId, taskId);
 }
 
-void Instrument::tp_task_create_exit()
+void Instrument::tp_task_create_tc_exit()
 {
-	if (!eventTaskCreateExit->isEnabled())
+	if (!eventTaskCreateTaskContextExit->isEnabled())
 		return;
 
 	char dummy = 0;
-	CTFAPI::tracepoint(eventTaskCreateExit, dummy);
+	CTFAPI::tracepoint(eventTaskCreateTaskContextExit, dummy);
+}
+
+void Instrument::tp_task_create_oc_enter(ctf_tasktype_id_t taskTypeId, ctf_task_id_t taskId)
+{
+	if (!eventTaskCreateOtherContextEnter->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventTaskCreateOtherContextEnter, taskTypeId, taskId);
+}
+
+void Instrument::tp_task_create_oc_exit()
+{
+	if (!eventTaskCreateOtherContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskCreateOtherContextExit, dummy);
 }
 
 void Instrument::tp_taskfor_init_enter(ctf_tasktype_id_t taskTypeId, ctf_task_id_t taskId)
@@ -316,46 +462,75 @@ void Instrument::tp_taskfor_init_exit()
 	CTFAPI::tracepoint(eventTaskforInitExit, dummy);
 }
 
-void Instrument::tp_task_submit_enter()
+void Instrument::tp_task_submit_tc_enter()
 {
-	if (!eventTaskSubmitEnter->isEnabled())
+	if (!eventTaskSubmitTaskContextEnter->isEnabled())
 		return;
 
 	char dummy = 0;
-	CTFAPI::tracepoint(eventTaskSubmitEnter, dummy);
+	CTFAPI::tracepoint(eventTaskSubmitTaskContextEnter, dummy);
 }
 
-void Instrument::tp_task_submit_exit()
+void Instrument::tp_task_submit_tc_exit()
 {
-	if (!eventTaskSubmitExit->isEnabled())
+	if (!eventTaskSubmitTaskContextExit->isEnabled())
 		return;
 
 	char dummy = 0;
-	CTFAPI::tracepoint(eventTaskSubmitExit, dummy);
+	CTFAPI::tracepoint(eventTaskSubmitTaskContextExit, dummy);
 }
 
-void Instrument::tp_task_execute(ctf_task_id_t taskId)
+void Instrument::tp_task_submit_oc_enter()
 {
-	if (!eventTaskExecute->isEnabled())
+	if (!eventTaskSubmitOtherContextEnter->isEnabled())
 		return;
 
-	CTFAPI::tracepoint(eventTaskExecute, taskId);
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskSubmitOtherContextEnter, dummy);
 }
 
-void Instrument::tp_task_block(ctf_task_id_t taskId)
+void Instrument::tp_task_submit_oc_exit()
+{
+	if (!eventTaskSubmitOtherContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskSubmitOtherContextExit, dummy);
+}
+
+void Instrument::tp_task_start(ctf_task_id_t taskId)
+{
+	if (!eventTaskStart->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventTaskStart, taskId);
+}
+
+void Instrument::tp_task_block()
 {
 	if (!eventTaskBlock->isEnabled())
 		return;
 
-	CTFAPI::tracepoint(eventTaskBlock, taskId);
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskBlock, dummy);
 }
 
-void Instrument::tp_task_end(ctf_task_id_t taskId)
+void Instrument::tp_task_unblock()
+{
+	if (!eventTaskUnblock->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskUnblock, dummy);
+}
+
+void Instrument::tp_task_end()
 {
 	if (!eventTaskEnd->isEnabled())
 		return;
 
-	CTFAPI::tracepoint(eventTaskEnd, taskId);
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskEnd, dummy);
 }
 
 void Instrument::tp_dependency_register_enter()
@@ -428,6 +603,168 @@ void Instrument::tp_scheduler_get_task_exit()
 
 	char dummy = 0;
 	CTFAPI::tracepoint(eventSchedulerGetTaskExit, dummy);
+}
+
+void Instrument::tp_taskwait_tc_enter()
+{
+	if (!eventTaskwaitTaskContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskwaitTaskContextEnter, dummy);
+}
+
+void Instrument::tp_taskwait_tc_exit()
+{
+	if (!eventTaskwaitTaskContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventTaskwaitTaskContextExit, dummy);
+}
+
+void Instrument::tp_waitfor_tc_enter()
+{
+	if (!eventWaitForTaskContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventWaitForTaskContextEnter, dummy);
+}
+
+void Instrument::tp_waitfor_tc_exit()
+{
+	if (!eventWaitForTaskContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventWaitForTaskContextExit, dummy);
+}
+
+void Instrument::tp_blocking_api_block_tc_enter()
+{
+	if (!eventBlockingAPIBlockTaskContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventBlockingAPIBlockTaskContextEnter, dummy);
+}
+
+void Instrument::tp_blocking_api_block_tc_exit()
+{
+	if (!eventBlockingAPIBlockTaskContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventBlockingAPIBlockTaskContextExit, dummy);
+}
+
+void Instrument::tp_blocking_api_unblock_tc_enter()
+{
+	if (!eventBlockingAPIUnblockTaskContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventBlockingAPIUnblockTaskContextEnter, dummy);
+}
+
+void Instrument::tp_blocking_api_unblock_tc_exit()
+{
+	if (!eventBlockingAPIUnblockTaskContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventBlockingAPIUnblockTaskContextExit, dummy);
+}
+
+void Instrument::tp_blocking_api_unblock_oc_enter()
+{
+	if (!eventBlockingAPIUnblockOtherContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventBlockingAPIUnblockOtherContextEnter, dummy);
+}
+
+void Instrument::tp_blocking_api_unblock_oc_exit()
+{
+	if (!eventBlockingAPIUnblockOtherContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventBlockingAPIUnblockOtherContextExit, dummy);
+}
+
+void Instrument::tp_spawn_function_tc_enter()
+{
+	if (!eventSpawnFunctionTaskContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSpawnFunctionTaskContextEnter, dummy);
+}
+
+void Instrument::tp_spawn_function_tc_exit()
+{
+	if (!eventSpawnFunctionTaskContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSpawnFunctionTaskContextExit, dummy);
+}
+
+void Instrument::tp_spawn_function_oc_enter()
+{
+	if (!eventSpawnFunctionOtherContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSpawnFunctionOtherContextEnter, dummy);
+}
+
+void Instrument::tp_spawn_function_oc_exit()
+{
+	if (!eventSpawnFunctionOtherContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSpawnFunctionOtherContextExit, dummy);
+}
+
+void Instrument::tp_mutex_lock_tc_enter()
+{
+	if (!eventMutexLockTaskContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventMutexLockTaskContextEnter, dummy);
+}
+
+void Instrument::tp_mutex_lock_tc_exit()
+{
+	if (!eventMutexLockTaskContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventMutexLockTaskContextExit, dummy);
+}
+
+void Instrument::tp_mutex_unlock_tc_enter()
+{
+	if (!eventMutexUnlockTaskContextEnter->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventMutexUnlockTaskContextEnter, dummy);
+}
+
+void Instrument::tp_mutex_unlock_tc_exit()
+{
+	if (!eventMutexUnlockTaskContextExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventMutexUnlockTaskContextExit, dummy);
 }
 
 void Instrument::tp_debug_register(const char *name, ctf_debug_id_t id)

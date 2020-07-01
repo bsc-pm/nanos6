@@ -1,18 +1,18 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_TASK_WAIT_HPP
 #define INSTRUMENT_EXTRAE_TASK_WAIT_HPP
 
 
-#include "../api/InstrumentTaskWait.hpp"
-#include "../support/InstrumentThreadLocalDataSupport.hpp"
-#include <InstrumentTaskExecution.hpp>
-
+#include "InstrumentCommon.hpp"
 #include "InstrumentExtrae.hpp"
+#include "InstrumentTaskExecution.hpp"
+#include "instrument/api/InstrumentTaskWait.hpp"
+#include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
 
 
 namespace Instrument {
@@ -20,6 +20,7 @@ namespace Instrument {
 		task_id_t taskId,
 		__attribute__((unused)) char const *invocationSource,
 		__attribute__((unused)) task_id_t if0TaskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context)
 	{
 		taskId._taskInfo->_inTaskwait = true;
@@ -84,6 +85,7 @@ namespace Instrument {
 	
 	inline void exitTaskWait(
 		task_id_t taskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		InstrumentationContext const &context)
 	{
 		taskId._taskInfo->_inTaskwait = false;

@@ -40,14 +40,13 @@ namespace If0Task {
 
 		CPU *cpu = static_cast<CPU *>(computePlace);
 
-		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
-
-		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
-		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
+		Instrument::task_id_t currentTaskId = currentTask->getInstrumentationTaskId();
+		Instrument::enterTaskWait(currentTaskId, if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId(), false);
+		Instrument::taskIsBlocked(currentTaskId, Instrument::in_taskwait_blocking_reason);
 
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		HardwareCounters::updateRuntimeCounters();
+		Monitoring::taskChangedStatus(currentTask, blocked_status);
 		Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 		currentThread->switchTo(replacementThread);
 
@@ -56,9 +55,8 @@ namespace If0Task {
 		assert(cpu != nullptr);
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
-		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+		Instrument::taskIsExecuting(currentTaskId, true);
+		Instrument::exitTaskWait(currentTaskId, false);
 		Monitoring::taskChangedStatus(currentTask, executing_status);
 	}
 
@@ -75,22 +73,26 @@ namespace If0Task {
 
 		bool hasCode = if0Task->hasCode();
 
-		Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId());
+		Instrument::task_id_t currentTaskId = currentTask->getInstrumentationTaskId();
+		Instrument::enterTaskWait(currentTaskId, if0Task->getTaskInvokationInfo()->invocation_source, if0Task->getInstrumentationTaskId(), false);
+
 		if (hasCode) {
-			HardwareCounters::updateTaskCounters(currentTask);
+			// Since hardware counters for the creator task (currentTask) are
+			// updated when creating the if0Task, we need not update them here
 			Monitoring::taskChangedStatus(currentTask, blocked_status);
-			Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
+			Instrument::taskIsBlocked(currentTaskId, Instrument::in_taskwait_blocking_reason);
 		}
 
 		currentThread->handleTask((CPU *) computePlace, if0Task);
 
-		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
-
 		if (hasCode) {
-			HardwareCounters::updateRuntimeCounters();
-			Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+			// Since hardware counters for the creator task (currentTask) are
+			// updated when creating the if0Task, we need not update them here
+			Instrument::taskIsExecuting(currentTaskId, true);
 			Monitoring::taskChangedStatus(currentTask, executing_status);
 		}
+
+		Instrument::exitTaskWait(currentTaskId, false);
 	}
 
 

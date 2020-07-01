@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_TASK_STATUS_HPP
@@ -54,16 +54,18 @@ namespace Instrument {
 	
 	//! \brief Indicates that the task is currently being executed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
-	void taskIsExecuting(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+	//! \param[in] wasBlocked whether the task is running for the first time
+	//! (true) or it is being resumed after being blocked/paused (false)
+	void taskIsExecuting(task_id_t taskId, bool wasBlocked = false, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
+
 	//! \brief Indicates that the task is currently blocked
-	//! 
+	//!
 	//! The task may exit this state by becoming ready (sent back to the scheduler), or executing
-	//! 
+	//!
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	//! \param[in] reason the reason why the task gets blocked
 	void taskIsBlocked(task_id_t taskId, task_blocking_reason_t reason, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+
 	//! \brief Indicates that the task has finished and at some point will be destroyed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void taskIsZombie(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
@@ -71,7 +73,10 @@ namespace Instrument {
 	//! \brief Indicates that the task is about to be destroyed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void taskIsBeingDeleted(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+
+	//! \brief Indicates that the task has a new priority
+	//! \param[in] taskId the task identifier returned in the call to enterAddTask
+	//! \param[in] priority the new priority
 	void taskHasNewPriority(task_id_t taskId, long priority, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 	
 	//! \brief Indicates that the task is currently being executed as a collaborator of a taskfor

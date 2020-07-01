@@ -37,6 +37,7 @@ namespace Instrument {
 		nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
+		bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		ctf_task_id_t taskId;
@@ -46,14 +47,22 @@ namespace Instrument {
 		taskId = task_id._taskId;
 		taskTypeId = ctfGetTaskTypeId(taskInfo);
 
-		tp_task_create_enter(taskTypeId, taskId);
+		if (taskRuntimeTransition) {
+			tp_task_create_tc_enter(taskTypeId, taskId);
+		} else {
+			tp_task_create_oc_enter(taskTypeId, taskId);
+		}
 
 		return task_id;
 	}
 
-	inline void exitCreateTask()
+	inline void exitCreateTask(bool taskRuntimeTransition)
 	{
-		tp_task_create_exit();
+		if (taskRuntimeTransition) {
+			tp_task_create_tc_exit();
+		} else {
+			tp_task_create_oc_exit();
+		}
 	}
 
 	inline void createdArgsBlock(
@@ -61,8 +70,8 @@ namespace Instrument {
 		__attribute__((unused)) void *argsBlockPointer,
 		__attribute__((unused)) size_t originalArgsBlockSize,
 		__attribute__((unused)) size_t argsBlockSize,
-		__attribute__((unused)) InstrumentationContext const &context)
-	{
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 
 	inline void createdTask(
@@ -72,16 +81,25 @@ namespace Instrument {
 	) {
 	}
 
-	inline void enterSubmitTask()
+	inline void enterSubmitTask(bool taskRuntimeTransition)
 	{
-		tp_task_submit_enter();
+		if (taskRuntimeTransition) {
+			tp_task_submit_tc_enter();
+		} else {
+			tp_task_submit_oc_enter();
+		}
 	}
 
 	inline void exitSubmitTask(
 		__attribute__((unused)) task_id_t taskId,
+		bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		tp_task_submit_exit();
+		if (taskRuntimeTransition) {
+			tp_task_submit_tc_exit();
+		} else {
+			tp_task_submit_oc_exit();
+		}
 	}
 
 	inline task_id_t enterInitTaskforCollaborator(
@@ -116,6 +134,24 @@ namespace Instrument {
 		const char *source = taskInfo->implementations[0].declaration_source;
 		ctf_tasktype_id_t taskTypeId = ctfAutoSetTaskTypeId(taskInfo);
 		tp_task_label(label, source, taskTypeId);
+	}
+
+	inline void enterSpawnFunction(bool taskRuntimeTransition)
+	{
+		if (taskRuntimeTransition) {
+			tp_spawn_function_tc_enter();
+		} else {
+			tp_spawn_function_oc_enter();
+		}
+	}
+
+	inline void exitSpawnFunction(bool taskRuntimeTransition)
+	{
+		if (taskRuntimeTransition) {
+			tp_spawn_function_tc_exit();
+		} else {
+			tp_spawn_function_oc_exit();
+		}
 	}
 }
 

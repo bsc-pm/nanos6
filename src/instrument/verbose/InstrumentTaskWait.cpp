@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -16,34 +16,44 @@ using namespace Instrument::Verbose;
 
 
 namespace Instrument {
-	void enterTaskWait(task_id_t taskId, char const *invocationSource, __attribute__((unused)) task_id_t if0TaskId, InstrumentationContext const &context) {
+	void enterTaskWait(
+		task_id_t taskId,
+		char const *invocationSource,
+		__attribute__((unused)) task_id_t if0TaskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
+		InstrumentationContext const &context
+	) {
 		if (!_verboseTaskWait) {
 			return;
 		}
-		
+
 		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
-		
+
 		logEntry->appendLocation(context);
 		logEntry->_contents << " --> TaskWait " << (invocationSource ? invocationSource : "") << " task:" << taskId;
-		
+
 		addLogEntry(logEntry);
 	}
-	
-	
-	void exitTaskWait(task_id_t taskId, InstrumentationContext const &context) {
+
+
+	void exitTaskWait(
+		task_id_t taskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
+		InstrumentationContext const &context
+	) {
 		if (!_verboseTaskWait) {
 			return;
 		}
-		
+
 		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
-		
+
 		logEntry->appendLocation(context);
 		logEntry->_contents << " <-- TaskWait task:" << taskId;
-		
+
 		addLogEntry(logEntry);
 	}
-	
-	
+
+
 }

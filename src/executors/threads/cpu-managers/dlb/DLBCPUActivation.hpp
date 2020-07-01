@@ -366,15 +366,15 @@ public:
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 
-		HardwareCounters::updateRuntimeCounters();
-		Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
-		Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
-		Instrument::suspendingComputePlace(cpu->getInstrumentationId());
-
 		// Change the status to returned and return it
 		CPU::activation_status_t expectedStatus = CPU::acquired_enabled_status;
 		bool successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::returned_status);
 		if (successful) {
+			HardwareCounters::updateRuntimeCounters();
+			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+			Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
+			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+
 			// Since we do not want to keep the CPU, we use lend instead of return
 			__attribute__((unused)) int ret = dlbLendCPU(cpu->getSystemCPUId());
 			assert(ret == DLB_SUCCESS);
