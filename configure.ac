@@ -56,6 +56,8 @@ SSS_PUSH_NANOS6_MERCURIUM
 SSS_CHECK_MERCURIUM_ACCEPTS_EXTERNAL_INSTALLATION
 SSS_POP_NANOS6_MERCURIUM
 
+SSS_CHECK_NANOS6_CLANG
+
 DX_DOT_FEATURE(ON)
 DX_INIT_DOXYGEN([nanos6_rt], [docs/Doxyfile], [docs/doxygen])
 full_top_srcdir=$(readlink -f ${srcdir})
@@ -390,7 +392,8 @@ AC_CONFIG_FILES([
 	Makefile
 	docs/Doxyfile
 	commands/Makefile
-	tests/directive_based/Makefile
+	tests/directive_based/mercurium/Makefile
+	tests/directive_based/clang/Makefile
 	scripts/Makefile
 ])
 AC_OUTPUT
@@ -400,6 +403,9 @@ if test x"${ac_have_nanos6_mercurium}" = x"no" ; then
 	AC_MSG_WARN([the directive based tests will not be checked since there is no Mercurium compiler available])
 fi
 
+if test x"${ac_have_nanos6_clang}" = x"no" ; then
+	AC_MSG_WARN([the directive based tests will not be checked since there is no Clang compiler available])
+fi
 
 _AS_ECHO([])
 _AS_ECHO([])
@@ -413,6 +419,8 @@ _AS_ECHO([   Include discrete dependencies... ${ac_discrete_deps}])
 _AS_ECHO([   Symbol resolution method... ${ac_cv_use_symbol_resolution}])
 _AS_ECHO([])
 _AS_ECHO([   Mercurium prefix... ${NANOS6_MCC_PREFIX}])
+_AS_ECHO([])
+_AS_ECHO([   Clang prefix... ${NANOS6_CLANG_PREFIX}])
 _AS_ECHO([])
 _AS_ECHO([   Code model flags... ${MCMODEL_FLAGS}])
 _AS_ECHO([])
