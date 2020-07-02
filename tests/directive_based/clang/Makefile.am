@@ -273,11 +273,11 @@ endif
 .cu.o:
 	$(CXX) -c -o $@ $<
 
-# cuda_saxpy_clang_debug_test_SOURCES = ../cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxpy-kernel.cu
+# cuda_saxpy_clang_debug_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
 # cuda_saxpy_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
 # cuda_saxpy_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags) $(test_cuda_flags)
 
-# cuda_saxpy_clang_test_SOURCES = ../cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxpy-kernel.cu
+# cuda_saxpy_clang_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
 # cuda_saxpy_clang_test_CPPFLAGS = -DNDEBUG
 # cuda_saxpy_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
 # cuda_saxpy_clang_test_LDFLAGS = $(test_common_ldflags) $(test_cuda_flags)
@@ -327,11 +327,11 @@ fibonacci_clang_test_CPPFLAGS = -DNDEBUG
 fibonacci_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_clang_test_LDFLAGS = $(test_common_debug_ldflags)
 
-cpu_activation_clang_debug_test_SOURCES = ../cpu-activation/cpu-activation.cpp cpu-activation/ConditionVariable.hpp
+cpu_activation_clang_debug_test_SOURCES = ../cpu-activation/cpu-activation.cpp ../cpu-activation/ConditionVariable.hpp
 cpu_activation_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 cpu_activation_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-cpu_activation_clang_test_SOURCES = ../cpu-activation/cpu-activation.cpp cpu-activation/ConditionVariable.hpp
+cpu_activation_clang_test_SOURCES = ../cpu-activation/cpu-activation.cpp ../cpu-activation/ConditionVariable.hpp
 cpu_activation_clang_test_CPPFLAGS = -DNDEBUG
 cpu_activation_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 cpu_activation_clang_test_LDFLAGS = $(test_common_ldflags)

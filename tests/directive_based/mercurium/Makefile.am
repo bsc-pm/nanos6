@@ -275,11 +275,11 @@ endif
 .cu.o:
 	$(CXX) -c -o $@ $<
 
-cuda_saxpy_mercurium_debug_test_SOURCES = ../cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_mercurium_debug_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
 cuda_saxpy_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
 cuda_saxpy_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags) $(test_cuda_flags)
 
-cuda_saxpy_mercurium_test_SOURCES = ../cuda/cuda-saxpy.cpp cuda/cuda-saxpy.hpp cuda/cuda-saxpy-kernel.cu
+cuda_saxpy_mercurium_test_SOURCES = ../cuda/cuda-saxpy.cpp ../cuda/cuda-saxpy.hpp ../cuda/cuda-saxpy-kernel.cu
 cuda_saxpy_mercurium_test_CPPFLAGS = -DNDEBUG
 cuda_saxpy_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(test_cuda_flags)
 cuda_saxpy_mercurium_test_LDFLAGS = $(test_common_ldflags) $(test_cuda_flags)
@@ -329,11 +329,11 @@ fibonacci_mercurium_test_CPPFLAGS = -DNDEBUG
 fibonacci_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 fibonacci_mercurium_test_LDFLAGS = $(test_common_debug_ldflags)
 
-cpu_activation_mercurium_debug_test_SOURCES = ../cpu-activation/cpu-activation.cpp cpu-activation/ConditionVariable.hpp
+cpu_activation_mercurium_debug_test_SOURCES = ../cpu-activation/cpu-activation.cpp ../cpu-activation/ConditionVariable.hpp
 cpu_activation_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 cpu_activation_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
-cpu_activation_mercurium_test_SOURCES = ../cpu-activation/cpu-activation.cpp cpu-activation/ConditionVariable.hpp
+cpu_activation_mercurium_test_SOURCES = ../cpu-activation/cpu-activation.cpp ../cpu-activation/ConditionVariable.hpp
 cpu_activation_mercurium_test_CPPFLAGS = -DNDEBUG
 cpu_activation_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 cpu_activation_mercurium_test_LDFLAGS = $(test_common_ldflags)
