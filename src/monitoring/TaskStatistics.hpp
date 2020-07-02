@@ -9,7 +9,6 @@
 
 #include <atomic>
 #include <cassert>
-#include <string>
 
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
@@ -182,7 +181,7 @@ public:
 		++_numChildrenAlive;
 	}
 
-	// NOTE: Unused, use markAsFinished instead
+	// NOTE: Unnecessary, use markAsFinished instead
 	// inline bool decreaseNumChildrenAlive();
 
 	//! \brief Mark this task as finished, decreasing the number of children alive

@@ -148,7 +148,6 @@ void Monitoring::taskCompletedUserCode(Task *task)
 void Monitoring::taskFinished(Task *task)
 {
 	if (_enabled) {
-		assert(task != nullptr);
 		assert(_taskMonitor != nullptr);
 
 		// Mark task as completely executed
@@ -183,8 +182,6 @@ void Monitoring::cpuBecomesActive(int cpuId)
 double Monitoring::getPredictedCPUUsage(size_t time)
 {
 	if (_enabled) {
-		assert(_cpuMonitor != nullptr);
-
 		if (!_predictedCPUUsageAvailable) {
 			_predictedCPUUsageAvailable = true;
 		}
@@ -208,13 +205,8 @@ double Monitoring::getPredictedCPUUsage(size_t time)
 			}
 		);
 
-		// At least one CPU
-		double predictedUsage = 1.0;
-
-		// If there are any, at least the number of predictionless instances
-		if (currentPredictionlessInstances > 0) {
-			predictedUsage = currentPredictionlessInstances;
-		}
+		// At least one CPU, or if there are any predictionless instances, that number
+		double predictedUsage = (currentPredictionlessInstances) ? currentPredictionlessInstances : 1.0;
 
 		// Add the minimum between the number of tasks with prediction, and
 		// the current workload in time divided by the required time
@@ -265,6 +257,9 @@ double Monitoring::getPredictedElapsedTime()
 
 void Monitoring::displayStatistics()
 {
+	assert(_cpuMonitor != nullptr);
+	assert(_taskMonitor != nullptr);
+
 	// Try opening the output file
 	std::ios_base::openmode openMode = std::ios::out;
 	std::ofstream output(_outputFile.getValue(), openMode);
@@ -288,8 +283,6 @@ void Monitoring::displayStatistics()
 
 void Monitoring::loadMonitoringWisdom()
 {
-	assert(_taskMonitor != nullptr);
-
 	// Create a representation of the system file as a JsonFile
 	_wisdom = new JsonFile("./.nanos6-monitoring-wisdom.json");
 	assert(_wisdom != nullptr);
@@ -297,7 +290,7 @@ void Monitoring::loadMonitoringWisdom()
 	// Try to populate the JsonFile with the system file's data
 	_wisdom->loadData();
 
-	// Navigate through the file and extract the unitary time of each tasktype
+	// Navigate through the file and extract metrics of each tasktype
 	_wisdom->getRootNode()->traverseChildrenNodes(
 		[&](const std::string &label, const JsonNode<> &metricsNode) {
 			// For each tasktype in the file, process all current registered

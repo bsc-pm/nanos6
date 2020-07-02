@@ -11,6 +11,7 @@
 
 #include "TaskMonitor.hpp"
 #include "TasktypeStatistics.hpp"
+#include "TaskStatistics.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
