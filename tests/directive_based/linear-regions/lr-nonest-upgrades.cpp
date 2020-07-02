@@ -198,16 +198,16 @@ int main(int argc, char **argv)
 		ExpectedOutcome<4> expected;
 		expected._taskAWaitsTaskB[2][0] = true;
 		
-		#pragma oss task in(var[0;8]) out(var[2;4]) label(I0 I0 I0 I0 I0 I0 I0 I0 + __ __ O0 O0 O0 O0 __ __)  shared(status, expected)
+		#pragma oss task in(var[0;8]) out(var[2;4]) label("I0 I0 I0 I0 I0 I0 I0 I0 + __ __ O0 O0 O0 O0 __ __")  shared(status, expected)
 		taskCode(0, status, expected);
 		
-		#pragma oss task  in(var[0;2]) label(I1 I1 __ __ __ __ __ __)  shared(status, expected)
+		#pragma oss task  in(var[0;2]) label("I1 I1 __ __ __ __ __ __")  shared(status, expected)
 		taskCode(1, status, expected);
 		
-		#pragma oss task  in(var[2;4]) label(__ __ I2 I2 I2 I2 __ __)  shared(status, expected)
+		#pragma oss task  in(var[2;4]) label("__ __ I2 I2 I2 I2 __ __")  shared(status, expected)
 		taskCode(2, status, expected);
 		
-		#pragma oss task  in(var[6;2]) label(__ __ __ __ __ __ I3 I3)  shared(status, expected)
+		#pragma oss task  in(var[6;2]) label("__ __ __ __ __ __ I3 I3")  shared(status, expected)
 		taskCode(3, status, expected);
 		
 		#pragma oss taskwait
@@ -225,16 +225,16 @@ int main(int argc, char **argv)
 		expected._taskAWaitsTaskB[1][0] = true;
 		expected._taskAWaitsTaskB[2][0] = true;
 		
-		#pragma oss task in(var[2;6]) out(var[0;4]) label(__ __ I0 I0 I0 I0 I0 I0 + O0 O0 O0 O0 __ __ __ __)  shared(status, expected)
+		#pragma oss task in(var[2;6]) out(var[0;4]) label("__ __ I0 I0 I0 I0 I0 I0 + O0 O0 O0 O0 __ __ __ __")  shared(status, expected)
 		taskCode(0, status, expected);
 		
-		#pragma oss task  in(var[0;2]) label(I1 I1 __ __ __ __ __ __)  shared(status, expected)
+		#pragma oss task  in(var[0;2]) label("I1 I1 __ __ __ __ __ __")  shared(status, expected)
 		taskCode(1, status, expected);
 		
-		#pragma oss task  in(var[2;2]) label(__ __ I2 I2 __ __ __ __)  shared(status, expected)
+		#pragma oss task  in(var[2;2]) label("__ __ I2 I2 __ __ __ __")  shared(status, expected)
 		taskCode(2, status, expected);
 		
-		#pragma oss task  in(var[4;4]) label(__ __ __ __ I3 I3 I3 I3)  shared(status, expected)
+		#pragma oss task  in(var[4;4]) label("__ __ __ __ I3 I3 I3 I3")  shared(status, expected)
 		taskCode(3, status, expected);
 		
 		#pragma oss taskwait
@@ -251,13 +251,13 @@ int main(int argc, char **argv)
 		ExpectedOutcome<3> expected;
 		expected._taskAWaitsTaskB[2][0] = true;
 		
-		#pragma oss task in(var[0;8]) out(var[6;2]) label(I0 I0 I0 I0 I0 I0 I0 I0 + __ __ __ __ __ __ O0 O0)  shared(status, expected)
+		#pragma oss task in(var[0;8]) out(var[6;2]) label("I0 I0 I0 I0 I0 I0 I0 I0 + __ __ __ __ __ __ O0 O0")  shared(status, expected)
 		taskCode(0, status, expected);
 		
-		#pragma oss task  in(var[0;4]) label(I1 I1 I1 I1 __ __ __ __)  shared(status, expected)
+		#pragma oss task  in(var[0;4]) label("I1 I1 I1 I1 __ __ __ __")  shared(status, expected)
 		taskCode(1, status, expected);
 		
-		#pragma oss task  in(var[4;4]) label(__ __ __ __ I2 I2 I2 I2)  shared(status, expected)
+		#pragma oss task  in(var[4;4]) label("__ __ __ __ I2 I2 I2 I2")  shared(status, expected)
 		taskCode(2, status, expected);
 		
 		#pragma oss taskwait
@@ -274,13 +274,13 @@ int main(int argc, char **argv)
 		ExpectedOutcome<3> expected;
 		expected._taskAWaitsTaskB[1][0] = true;
 		
-		#pragma oss task in(var[0;6]) out(var[4;2]) label(I0 I0 I0 I0 I0 I0 __ __ + __ __ __ __ O0 O0 __ __)  shared(status, expected)
+		#pragma oss task in(var[0;6]) out(var[4;2]) label("I0 I0 I0 I0 I0 I0 __ __ + __ __ __ __ O0 O0 __ __")  shared(status, expected)
 		taskCode(0, status, expected);
 		
-		#pragma oss task  in(var[2;6]) label(__ __ I1 I1 I1 I1 I1 I1)  shared(status, expected)
+		#pragma oss task  in(var[2;6]) label("__ __ I1 I1 I1 I1 I1 I1")  shared(status, expected)
 		taskCode(1, status, expected);
 		
-		#pragma oss task  in(var[0;2]) label(I2 I2 __ __ __ __ __ __)  shared(status, expected)
+		#pragma oss task  in(var[0;2]) label("I2 I2 __ __ __ __ __ __")  shared(status, expected)
 		taskCode(2, status, expected);
 		
 		#pragma oss taskwait
@@ -300,16 +300,16 @@ int main(int argc, char **argv)
 		expected._taskAWaitsTaskB[1][0] = true;
 		expected._taskAWaitsTaskB[3][1] = true;
 		
-		#pragma oss task  in(var[0;6]) label(I0 I0 I0 I0 I0 I0 __ __)  shared(status, expected)
+		#pragma oss task  in(var[0;6]) label("I0 I0 I0 I0 I0 I0 __ __")  shared(status, expected)
 		taskCode(0, status, expected);
 		
-		#pragma oss task in(var[4;4]) out(var[4;4]) label(__ __ __ __ I1 I1 I1 I1+ __ __ __ __ O1 O1 O1 O1)  shared(status, expected)
+		#pragma oss task in(var[4;4]) out(var[4;4]) label("__ __ __ __ I1 I1 I1 I1+ __ __ __ __ O1 O1 O1 O1")  shared(status, expected)
 		taskCode(1, status, expected);
 		
-		#pragma oss task  in(var[0;4]) label(I2 I2 I2 I2 __ __ __ __)  shared(status, expected)
+		#pragma oss task  in(var[0;4]) label("I2 I2 I2 I2 __ __ __ __")  shared(status, expected)
 		taskCode(2, status, expected);
 		
-		#pragma oss task  in(var[2;4]) label(__ __ I3 I3 I3 I3 __ __)  shared(status, expected)
+		#pragma oss task  in(var[2;4]) label("__ __ I3 I3 I3 I3 __ __")  shared(status, expected)
 		taskCode(3, status, expected);
 		
 		#pragma oss taskwait
@@ -328,19 +328,19 @@ int main(int argc, char **argv)
 		expected._taskAWaitsTaskB[1][0] = true;
 		expected._taskAWaitsTaskB[2][0] = true;
 		
-		#pragma oss task in(var[0;8]) out(var[3;2]) label(I0 I0 I0 I0 I0 I0 I0 I0 + __ __ __ O0 O0 __ __ __)  shared(status, expected)
+		#pragma oss task in(var[0;8]) out(var[3;2]) label("I0 I0 I0 I0 I0 I0 I0 I0 + __ __ __ O0 O0 __ __ __")  shared(status, expected)
 		taskCode(0, status, expected);
 		
-		#pragma oss task  in(var[2;4]) label(__ __ I1 I1 I1 I1 __ __)  shared(status, expected)
+		#pragma oss task  in(var[2;4]) label("__ __ I1 I1 I1 I1 __ __")  shared(status, expected)
 		taskCode(1, status, expected);
 		
-		#pragma oss task  in(var[1;6]) label(__ I2 I2 I2 I2 I2 I2 __)  shared(status, expected)
+		#pragma oss task  in(var[1;6]) label("__ I2 I2 I2 I2 I2 I2 __")  shared(status, expected)
 		taskCode(2, status, expected);
 		
-		#pragma oss task  in(var[0;1]) label(I3 __ __ __ __ __ __ __)  shared(status, expected)
+		#pragma oss task  in(var[0;1]) label("I3 __ __ __ __ __ __ __")  shared(status, expected)
 		taskCode(3, status, expected);
 		
-		#pragma oss task  in(var[7;1]) label(__ __ __ __ __ __ __ I4)  shared(status, expected)
+		#pragma oss task  in(var[7;1]) label("__ __ __ __ __ __ __ I4")  shared(status, expected)
 		taskCode(4, status, expected);
 		
 		#pragma oss taskwait

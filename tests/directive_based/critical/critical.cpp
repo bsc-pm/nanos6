@@ -22,7 +22,7 @@ static long *data;
 static long numCPUs;
 
 
-#pragma oss task label(initialize)
+#pragma oss task label("initialize")
 static void initialize(long participant)
 {
 	long chunkSize = ARRAY_SIZE / numCPUs;
@@ -43,7 +43,7 @@ static void *critical_handle = 0;
 volatile long sum_result = 0;
 
 
-#pragma oss task label(sum)
+#pragma oss task label("sum")
 static void sum(long participant)
 {
 	long chunkSize = ARRAY_SIZE / numCPUs;

@@ -207,7 +207,7 @@ public:
 };
 
 
-#pragma oss task in(*variable) label(R)
+#pragma oss task in(*variable) label("R")
 void verifyRead(int *variable, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -215,7 +215,7 @@ void verifyRead(int *variable, TaskVerifier *verifier)
 }
 
 
-#pragma oss task out(*variable) label(W)
+#pragma oss task out(*variable) label("W")
 void verifyWrite(int *variable, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -223,7 +223,7 @@ void verifyWrite(int *variable, TaskVerifier *verifier)
 }
 
 
-#pragma oss task in(*variable1, *variable2) label(RR)
+#pragma oss task in(*variable1, *variable2) label("RR")
 void verifyRepeatedRead(int *variable1, int *variable2, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -231,7 +231,7 @@ void verifyRepeatedRead(int *variable1, int *variable2, TaskVerifier *verifier)
 }
 
 
-#pragma oss task out(*variable1, *variable2) label(WW)
+#pragma oss task out(*variable1, *variable2) label("WW")
 void verifyRepeatedWrite(int *variable1, int *variable2, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -239,7 +239,7 @@ void verifyRepeatedWrite(int *variable1, int *variable2, TaskVerifier *verifier)
 }
 
 
-#pragma oss task out(*variable2) in(*variable1) label(RW)
+#pragma oss task out(*variable2) in(*variable1) label("RW")
 void verifyUpgradedAccess1(int *variable1, int *variable2, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -247,7 +247,7 @@ void verifyUpgradedAccess1(int *variable1, int *variable2, TaskVerifier *verifie
 }
 
 
-#pragma oss task out(*variable1) in(*variable2) label(WR)
+#pragma oss task out(*variable1) in(*variable2) label("WR")
 void verifyUpgradedAccess2(int *variable1, int *variable2, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -255,7 +255,7 @@ void verifyUpgradedAccess2(int *variable1, int *variable2, TaskVerifier *verifie
 }
 
 
-#pragma oss task out(*variable2, *variable4) in(*variable1, *variable3) label(RWRW)
+#pragma oss task out(*variable2, *variable4) in(*variable1, *variable3) label("RWRW")
 void verifyUpgradedAccess3(int *variable1, int *variable2, int *variable3, int *variable4, TaskVerifier *verifier)
 {
 	assert(verifier != 0);
@@ -263,7 +263,7 @@ void verifyUpgradedAccess3(int *variable1, int *variable2, int *variable3, int *
 }
 
 
-#pragma oss task concurrent(*variable1) label(C)
+#pragma oss task concurrent(*variable1) label("C")
 void verifyConcurrent(int *variable1, TaskVerifier *verifier)
 {
 	assert(verifier != 0);

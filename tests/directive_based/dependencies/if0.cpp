@@ -195,7 +195,7 @@ int main(int argc, char **argv)
 		ExpectedOutcome<2> expected;
 		expected._taskAWaitsTaskB[0][1] = true;
 		
-		#pragma oss task shared(status, expected) if(0) label(T1: if 0 task)
+		#pragma oss task shared(status, expected) if(0) label("T1: if 0 task")
 		{
 			taskCode(1, status, expected);
 		}
@@ -214,12 +214,12 @@ int main(int argc, char **argv)
 		expected._taskAWaitsTaskB[0][2] = true;
 		int a;
 		
-		#pragma oss task inout(a) shared(status, expected) label(T1: if 0 predecessor)
+		#pragma oss task inout(a) shared(status, expected) label("T1: if 0 predecessor")
 		{
 			taskCode(1, status, expected);
 		}
 		
-		#pragma oss task inout(a) shared(status, expected) if(0) label(T2: if 0 task)
+		#pragma oss task inout(a) shared(status, expected) if(0) label("T2: if 0 task")
 		{
 			taskCode(2, status, expected);
 		}
@@ -238,9 +238,9 @@ int main(int argc, char **argv)
 		expected._taskARunsConcurrentlyToTaskB[2][0] = true;
 		int a;
 		
-		#pragma oss task shared(status, expected) label(T1: if 0 task)
+		#pragma oss task shared(status, expected) label("T1: if 0 task")
 		{
-			#pragma oss task shared(status, expected) label(T1.1: child of if 0 task)
+			#pragma oss task shared(status, expected) label("T1.1: child of if 0 task")
 			{
 				taskCode(2, status, expected);
 			}

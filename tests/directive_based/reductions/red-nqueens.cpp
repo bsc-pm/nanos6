@@ -78,7 +78,7 @@ void solve(int n, const int col, sol_node_t& sol, int& result)
 				new_sol.prev = &sol;
 				new_sol.row = row;
 				
-				#pragma oss task final(final_depth <= col) weakreduction(+: result) label(rec_solve)
+				#pragma oss task final(final_depth <= col) weakreduction(+: result) label("rec_solve")
 				{
 					solve(n, col + 1, new_sol, result);
 				}
@@ -103,12 +103,12 @@ int main()
 	struct timeval start;
 	
 	gettimeofday(&start, NULL);
-	#pragma oss task weakreduction(+:count_main) label(solve)
+	#pragma oss task weakreduction(+:count_main) label("solve")
 	{
 		solve(n, 0, initial_node, count_main);
 	}
 	
-	#pragma oss task in(count_main) label(print)
+	#pragma oss task in(count_main) label("print")
 	{
 		struct timeval stop;
 		gettimeofday(&stop, NULL);

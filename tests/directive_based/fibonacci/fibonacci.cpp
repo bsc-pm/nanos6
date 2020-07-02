@@ -47,10 +47,10 @@ void fibonacci(INTEGER index, INTEGER *resultPointer) {
 	
 	INTEGER result1, result2;
 	
-	#pragma oss task shared(result1) label(fibonacci)
+	#pragma oss task shared(result1) label("fibonacci")
 	fibonacci(index-1, &result1);
 	
-	#pragma oss task shared(result2) label(fibonacci)
+	#pragma oss task shared(result2) label("fibonacci")
 	fibonacci(index-2, &result2);
 	
 	#pragma oss taskwait
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 	
 	Timer timer;
 	
-	#pragma oss task shared(result) label(fibonacci)
+	#pragma oss task shared(result) label("fibonacci")
 	fibonacci(N, &result);
 	
 	#pragma oss taskwait

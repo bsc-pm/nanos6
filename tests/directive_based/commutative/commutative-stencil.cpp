@@ -38,7 +38,7 @@ static void init(bool initExpectedValues)
 				expectedBlockValues[i][j] = 0;
 			}
 			
-			#pragma oss task out(matrix[i][j]) label(init)
+			#pragma oss task out(matrix[i][j]) label("init")
 			for (int ii = 0; ii < BLOCK_SIZE; ii++) {
 				for (int jj = 0; jj < BLOCK_SIZE; jj++) {
 					matrix[i][j][ii][jj] = 0;
@@ -61,7 +61,7 @@ static void blockUpdate(int i, int j)
 
 static void cross_iteration(bool updateExpectedValues)
 {
-	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label(cross iteration)
+	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label("cross iteration")
 	for (int i = 1; i < NUM_BLOCKS-1; i++) {
 		for (int j = 1; j < NUM_BLOCKS-1; j++) {
 			if (updateExpectedValues) {
@@ -78,7 +78,7 @@ static void cross_iteration(bool updateExpectedValues)
 				commutative(matrix[i+1][j]) \
 				commutative(matrix[i][j-1]) \
 				commutative(matrix[i][j+1]) \
-				label(update cross)
+				label("update cross")
 			{
 				blockUpdate(i, j);
 				blockUpdate(i-1, j);
@@ -93,7 +93,7 @@ static void cross_iteration(bool updateExpectedValues)
 
 static void circumflex_iteration(bool updateExpectedValues)
 {
-	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label(circumflex iteration)
+	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label("circumflex iteration")
 	for (int i = 1; i < NUM_BLOCKS-1; i++) {
 		for (int j = 1; j < NUM_BLOCKS-1; j++) {
 			if (updateExpectedValues) {
@@ -106,7 +106,7 @@ static void circumflex_iteration(bool updateExpectedValues)
 				commutative(matrix[i][j]) \
 				commutative(matrix[i][j-1]) \
 				commutative(matrix[i][j+1]) \
-				label(update circumflex)
+				label("update circumflex")
 			{
 				blockUpdate(i, j);
 				blockUpdate(i, j-1);
@@ -119,7 +119,7 @@ static void circumflex_iteration(bool updateExpectedValues)
 
 static void spread_iteration(bool updateExpectedValues)
 {
-	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label(spread iteration)
+	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label("spread iteration")
 	for (int i = 1; i < NUM_BLOCKS-1; i++) {
 		for (int j = 1; j < NUM_BLOCKS-1; j++) {
 			if (updateExpectedValues) {
@@ -130,7 +130,7 @@ static void spread_iteration(bool updateExpectedValues)
 			#pragma oss task \
 				commutative(matrix[i-1][j-1]) \
 				commutative(matrix[i+1][j+1]) \
-				label(update spread)
+				label("update spread")
 			{
 				blockUpdate(i-1, j-1);
 				blockUpdate(i+1, j+1);
@@ -142,7 +142,7 @@ static void spread_iteration(bool updateExpectedValues)
 
 static void edges_iteration(bool updateExpectedValues)
 {
-	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label(edges iteration)
+	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label("edges iteration")
 	for (int i = 1; i < NUM_BLOCKS-1; i++) {
 		for (int j = 1; j < NUM_BLOCKS-1; j++) {
 			if (updateExpectedValues) {
@@ -157,7 +157,7 @@ static void edges_iteration(bool updateExpectedValues)
 				commutative(matrix[i+1][j+1]) \
 				commutative(matrix[i+1][j-1]) \
 				commutative(matrix[i-1][j+1]) \
-				label(update edges)
+				label("update edges")
 			{
 				blockUpdate(i-1, j-1);
 				blockUpdate(i+1, j+1);
@@ -171,7 +171,7 @@ static void edges_iteration(bool updateExpectedValues)
 
 static void empty_cross_iteration(bool updateExpectedValues)
 {
-	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label(empty cross iteration)
+	#pragma oss task weakcommutative(([NUM_BLOCKS] matrix)) label("empty cross iteration")
 	for (int i = 1; i < NUM_BLOCKS-1; i++) {
 		for (int j = 1; j < NUM_BLOCKS-1; j++) {
 			if (updateExpectedValues) {
@@ -186,7 +186,7 @@ static void empty_cross_iteration(bool updateExpectedValues)
 				commutative(matrix[i+1][j]) \
 				commutative(matrix[i][j-1]) \
 				commutative(matrix[i][j+1]) \
-				label(update empty cross)
+				label("update empty cross")
 			{
 				blockUpdate(i-1, j);
 				blockUpdate(i+1, j);
@@ -222,7 +222,7 @@ static void verify()
 {
 	for (int i = 0; i < NUM_BLOCKS; i++) {
 		for (int j = 0; j < NUM_BLOCKS; j++) {
-			#pragma oss task in(matrix[i][j]) label(verify block)
+			#pragma oss task in(matrix[i][j]) label("verify block")
 			verifyBlock(i, j);
 		}
 	}

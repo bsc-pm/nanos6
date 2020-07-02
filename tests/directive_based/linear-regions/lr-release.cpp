@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 	
 	ExperimentStatus<NSEGMENTS+1> status;
 	
-	#pragma oss task out(var[0;NSEGMENTS]) shared(status) label(releaser)
+	#pragma oss task out(var[0;NSEGMENTS]) shared(status) label("releaser")
 	{
 		tap.evaluate(status._taskHasStarted[0]++ == 0, "T0 starts only once");
 		
@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 	}
 	
 	for (int i = 0; i < NSEGMENTS; i++) {
-		#pragma oss task in(var[i]) shared(status) label(released)
+		#pragma oss task in(var[i]) shared(status) label("released")
 		{
 			{
 				std::ostringstream oss;
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 	
 	#pragma oss taskwait
 	
-	#pragma oss task out(var[0;NSEGMENTS]) label(releaser only)
+	#pragma oss task out(var[0;NSEGMENTS]) label("releaser only")
 	{
 		for (int segment = 0; segment < NSEGMENTS; segment++){
 			tap.emitDiagnostic("Releasing segment ", segment);
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 	
 	Atomic<bool> secondHasFinished(false);
 	
-	#pragma oss task weakout(var[0;NSEGMENTS]) shared(secondHasFinished) label(weak waiter)
+	#pragma oss task weakout(var[0;NSEGMENTS]) shared(secondHasFinished) label("weak waiter")
 	{
 		tap.emitDiagnostic("T0 waitig fror T1 to finish");
 		while (!secondHasFinished.load()) {
@@ -199,7 +199,7 @@ int main(int argc, char **argv)
 		tap.emitDiagnostic("T0 can proceed");
 	}
 	
-	#pragma oss task weakout(var[0;NSEGMENTS]) shared(secondHasFinished) label(weak releaser)
+	#pragma oss task weakout(var[0;NSEGMENTS]) shared(secondHasFinished) label("weak releaser")
 	{
 		tap.emitDiagnostic("T1 starts");
 		for (int segment = 0; segment < NSEGMENTS; segment++){

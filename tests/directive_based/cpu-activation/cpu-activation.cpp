@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 	_blockerCPU = -1;
 	Blocker *blocker = new Blocker();
 	
-	#pragma oss task label(blocker)
+	#pragma oss task label("blocker")
 	blocker->body();
 	
 	// Wait to get the blocker CPU
@@ -228,7 +228,7 @@ int main(int argc, char **argv) {
 	for (int i=0; i < activeCPUs*VALIDATION_STEPS_PER_CPU; i++) {
 		PlacementEvaluator *placementEvaluator = new PlacementEvaluator(currentSystemCPU, tasksPerVirtualCPU);
 		
-		#pragma oss task label(placement_evaluator)
+		#pragma oss task label("placement_evaluator")
 		placementEvaluator->body();
 	}
 	

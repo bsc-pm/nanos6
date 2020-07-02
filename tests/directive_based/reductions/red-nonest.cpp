@@ -210,7 +210,7 @@ public:
 };
 
 
-#pragma oss task in(*variable) label(R)
+#pragma oss task in(*variable) label("R")
 void verifyRead(int *variable, TaskVerifier *verifier, const std::vector<TaskVerifier *> &verifiers)
 {
 	assert(verifier != 0);
@@ -218,7 +218,7 @@ void verifyRead(int *variable, TaskVerifier *verifier, const std::vector<TaskVer
 }
 
 
-#pragma oss task out(*variable) label(W)
+#pragma oss task out(*variable) label("W")
 void verifyWrite(int *variable, TaskVerifier *verifier, const std::vector<TaskVerifier *> &verifiers)
 {
 	assert(verifier != 0);
@@ -244,13 +244,13 @@ void TaskVerifier::submit(const std::vector<TaskVerifier *> &verifiers)
 			break;
 		case REDUCTION: {
 			int& red_variable = *_variable;
-			#pragma oss task reduction(+: red_variable) label(RED)
+			#pragma oss task reduction(+: red_variable) label("RED")
 			verifyReduction(_variable, this, verifiers);
 			break;
 		}
 		case REDUCTION_OTHER: {
 			int& red_variable = *_variable;
-			#pragma oss task reduction(*: red_variable) label(RED_OTHER)
+			#pragma oss task reduction(*: red_variable) label("RED_OTHER")
 			verifyReduction(_variable, this, verifiers);
 			break;
 		}

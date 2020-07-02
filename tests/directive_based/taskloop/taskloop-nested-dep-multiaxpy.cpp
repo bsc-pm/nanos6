@@ -70,7 +70,7 @@ int main() {
 	initialize(y, 0.0, n, bs);
 	
 	// Main algorithm
-	#pragma oss taskloop grainsize(1) weakin(x[0;n]) weakinout(y[0;n]) label(iteration)
+	#pragma oss taskloop grainsize(1) weakin(x[0;n]) weakinout(y[0;n]) label("iteration")
 	for (int iteration = 0; iteration < its; iteration++) {
 		axpy(x, y, 1.0, n, bs, gs);
 	}

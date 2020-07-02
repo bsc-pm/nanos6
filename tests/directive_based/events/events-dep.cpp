@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 	std::vector<int> expecteds(ntasks, 0);
 
 	// Task responsible for fulfilling all events
-	#pragma oss task label(fulfill) shared(counters, processed)
+	#pragma oss task label("fulfill") shared(counters, processed)
 	fulfill(counters, processed);
 
 	// Initialize rand seed
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
 		for (int task = 0; task < ntasks; ++task) {
 			const int expected = expecteds[task];
 			if (rand() % 2 == 0) {
-				#pragma oss task label(reader) shared(counters, processed) in(data[task])
+				#pragma oss task label("reader") shared(counters, processed) in(data[task])
 				{
 					// Compute the task position in counters/processed
 					const int current = step * ntasks + task;
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
 					counters[current] = counter;
 				}
 			} else {
-				#pragma oss task label(writer) shared(counters, processed) inout(data[task])
+				#pragma oss task label("writer") shared(counters, processed) inout(data[task])
 				{
 					const int original = data[task];
 					data[task]++;
