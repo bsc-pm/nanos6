@@ -9,7 +9,7 @@
 
 #include "CPUMonitor.hpp"
 #include "TaskMonitor.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
+#include "TaskStatistics.hpp"
 #include "support/JsonFile.hpp"
 #include "support/config/ConfigVariable.hpp"
 #include "tasks/Task.hpp"
@@ -22,13 +22,13 @@ private:
 	//! Whether monitoring is enabled
 	static ConfigVariable<bool> _enabled;
 
-	//! Whether verbose mode is enabled
+	//! Whether verbosity for monitoring enabled
 	static ConfigVariable<bool> _verbose;
 
 	//! Whether the wisdom mechanism is enabled
 	static ConfigVariable<bool> _wisdomEnabled;
 
-	//! The file where output must be saved when verbose mode is enabled
+	//! The file where output is saved in, if verbose mode is enabled
 	static ConfigVariable<std::string> _outputFile;
 
 	//! A Json file for monitoring data

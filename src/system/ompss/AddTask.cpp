@@ -20,15 +20,15 @@
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/Throttle.hpp"
 #include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskfor.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskloop.hpp"
 
 #include <DataAccessRegistration.hpp>

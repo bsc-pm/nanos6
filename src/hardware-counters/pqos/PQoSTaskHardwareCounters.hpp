@@ -139,11 +139,10 @@ public:
 	{
 		PQoSTaskHardwareCounters *childCounters = (PQoSTaskHardwareCounters *) combineeCounters;
 		assert(childCounters != nullptr);
-
-		// Get the raw data of each regular counter and combine it
 		assert(_counterDelta != nullptr);
 		assert(_counterAccumulated != nullptr);
 
+		// Get the raw data of each regular counter and combine it
 		for (size_t id = HWCounters::HWC_PQOS_MIN_EVENT; id <= HWCounters::HWC_PQOS_MAX_EVENT; ++id) {
 			HWCounters::counters_t counterType = (HWCounters::counters_t) id;
 			if (PQoSHardwareCounters::isCounterEnabled(counterType)) {

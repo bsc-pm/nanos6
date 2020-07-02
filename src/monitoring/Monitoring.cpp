@@ -11,6 +11,7 @@
 #include "TasktypeStatistics.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "tasks/TaskInfo.hpp"
 
 

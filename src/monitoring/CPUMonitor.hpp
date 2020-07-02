@@ -38,6 +38,8 @@ public:
 
 	inline ~CPUMonitor()
 	{
+		assert(_cpuStatistics != nullptr);
+
 		delete[] _cpuStatistics;
 		_cpuStatistics = nullptr;
 	}
@@ -70,7 +72,7 @@ public:
 	inline float getTotalActiveness()
 	{
 		float totalActiveness = 0.0;
-		for (unsigned short id = 0; id < _numCPUs; ++id) {
+		for (size_t id = 0; id < _numCPUs; ++id) {
 			totalActiveness += _cpuStatistics[id].getActiveness();
 		}
 
