@@ -9,6 +9,7 @@
 
 #include "Monitoring.hpp"
 #include "TasktypeStatistics.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -22,7 +23,7 @@ ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "
 JsonFile *Monitoring::_wisdom(nullptr);
 CPUMonitor *Monitoring::_cpuMonitor(nullptr);
 TaskMonitor *Monitoring::_taskMonitor(nullptr);
-double Monitoring::_predictedCPUUsage;
+double Monitoring::_predictedCPUUsage(0.0);
 bool Monitoring::_predictedCPUUsageAvailable(false);
 
 
@@ -54,6 +55,9 @@ void Monitoring::preinitialize()
 void Monitoring::initialize()
 {
 	if (_enabled) {
+		// Make sure the CPUManager is already preinitialized before this
+		assert(CPUManager::isPreinitialized());
+
 		// Create all the monitors and predictors
 		_cpuMonitor = new CPUMonitor();
 		assert(_cpuMonitor != nullptr);

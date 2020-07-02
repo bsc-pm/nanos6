@@ -8,6 +8,7 @@
 #include "HardwareCounters.hpp"
 #include "TaskHardwareCounters.hpp"
 #include "ThreadHardwareCounters.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/rapl/RAPLHardwareCounters.hpp"
 #include "tasks/Task.hpp"
@@ -123,6 +124,9 @@ void HardwareCounters::preinitialize()
 void HardwareCounters::initialize()
 {
 	if (_enabled[HWCounters::RAPL_BACKEND]) {
+		// Make sure the CPUManager is already preinitialized before this
+		assert(CPUManager::isPreinitialized());
+
 		_raplBackend = new RAPLHardwareCounters(
 			_verbose.getValue(),
 			_verboseFile.getValue()

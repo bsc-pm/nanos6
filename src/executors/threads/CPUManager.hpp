@@ -27,6 +27,12 @@ private:
 	//! Whether DLB is enabled
 	static ConfigVariable<bool> _dlbEnabled;
 
+	//! Whether the CPUManager has already been preinitialized
+	//! NOTE: Some runtime modules have structures that depend on the number
+	//! of available CPUs (e.g. Monitoring, Hardware Counters, ...). Due to
+	//! this, we must ensure the CPUManager is preinitialized in those modules
+	static bool _preinitialized;
+
 public:
 
 	/*    CPU MANAGER    */
@@ -48,6 +54,9 @@ public:
 		assert(_cpuManager != nullptr);
 
 		_cpuManager->preinitialize();
+
+		// Mark that the CPU Manager has finished preinitialization
+		_preinitialized = true;
 	}
 
 	//! \brief Check whether DLB is enabled
@@ -62,6 +71,12 @@ public:
 		assert(_cpuManager != nullptr);
 
 		_cpuManager->initialize();
+	}
+
+	//! \brief Check whether the CPUManager is preinitialized
+	static inline bool isPreinitialized()
+	{
+		return _preinitialized;
 	}
 
 	//! \brief Check if CPU initialization has finished

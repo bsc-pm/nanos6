@@ -31,6 +31,9 @@ public:
 
 	inline CPUMonitor()
 	{
+		// Make sure the CPUManager is already preinitialized before this
+		assert(CPUManager::isPreinitialized());
+
 		_numCPUs = CPUManager::getTotalCPUs();
 		_cpuStatistics = new CPUStatistics[_numCPUs];
 		assert(_cpuStatistics != nullptr);
