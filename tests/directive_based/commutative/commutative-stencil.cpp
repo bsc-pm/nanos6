@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2018-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -37,7 +37,7 @@ static void init(bool initExpectedValues)
 			if (initExpectedValues) {
 				expectedBlockValues[i][j] = 0;
 			}
-			
+
 			#pragma oss task out(matrix[i][j]) label("init")
 			for (int ii = 0; ii < BLOCK_SIZE; ii++) {
 				for (int jj = 0; jj < BLOCK_SIZE; jj++) {
@@ -71,7 +71,7 @@ static void cross_iteration(bool updateExpectedValues)
 				expectedBlockValues[i][j-1]++;
 				expectedBlockValues[i][j+1]++;
 			}
-			
+
 			#pragma oss task \
 				commutative(matrix[i][j]) \
 				commutative(matrix[i-1][j]) \
@@ -101,7 +101,7 @@ static void circumflex_iteration(bool updateExpectedValues)
 				expectedBlockValues[i][j-1]++;
 				expectedBlockValues[i][j+1]++;
 			}
-			
+
 			#pragma oss task \
 				commutative(matrix[i][j]) \
 				commutative(matrix[i][j-1]) \
@@ -126,7 +126,7 @@ static void spread_iteration(bool updateExpectedValues)
 				expectedBlockValues[i-1][j-1]++;
 				expectedBlockValues[i+1][j+1]++;
 			}
-			
+
 			#pragma oss task \
 				commutative(matrix[i-1][j-1]) \
 				commutative(matrix[i+1][j+1]) \
@@ -151,7 +151,7 @@ static void edges_iteration(bool updateExpectedValues)
 				expectedBlockValues[i+1][j-1]++;
 				expectedBlockValues[i-1][j+1]++;
 			}
-			
+
 			#pragma oss task \
 				commutative(matrix[i-1][j-1]) \
 				commutative(matrix[i+1][j+1]) \
@@ -180,7 +180,7 @@ static void empty_cross_iteration(bool updateExpectedValues)
 				expectedBlockValues[i][j-1]++;
 				expectedBlockValues[i][j+1]++;
 			}
-			
+
 			#pragma oss task \
 				commutative(matrix[i-1][j]) \
 				commutative(matrix[i+1][j]) \
@@ -202,7 +202,7 @@ static void empty_cross_iteration(bool updateExpectedValues)
 static void verifyBlock(int i, int j)
 {
 	bool good = true;
-	
+
 	for (int ii = 0; ii < BLOCK_SIZE; ii++) {
 		for (int jj = 0; jj < BLOCK_SIZE; jj++) {
 			if (matrix[i][j][ii][jj] != expectedBlockValues[i][j]) {
@@ -211,7 +211,7 @@ static void verifyBlock(int i, int j)
 			}
 		}
 	}
-	
+
 	std::ostringstream oss;
 	oss << "Block [" <<  i << ", " << j << "] has the expected value";
 	tap.evaluate(good, oss.str());
@@ -232,7 +232,7 @@ static void verify()
 int main(int argc, char **argv)
 {
 	nanos6_wait_for_full_initialization();
-	
+
 	long activeCPUs = nanos6_get_num_cpus();
 	if (activeCPUs < 2) {
 		// This test only works correctly with at least 2 CPUs
@@ -242,11 +242,11 @@ int main(int argc, char **argv)
 		tap.end();
 		return 0;
 	}
-	
+
 	tap.registerNewTests(NUM_BLOCKS * NUM_BLOCKS * NUM_ROUNDS * 5);
-	
+
 	tap.begin();
-	
+
 	tap.emitDiagnostic("Test1: _ X _ ");
 	tap.emitDiagnostic("Test1: X X X ");
 	tap.emitDiagnostic("Test1: _ X _ ");
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
 		verify();
 	}
 	#pragma oss taskwait
-	
+
 	tap.emitDiagnostic("Test2: _ X _ ");
 	tap.emitDiagnostic("Test2: X _ X ");
 	tap.emitDiagnostic("Test2: _ _ _ ");
@@ -270,7 +270,7 @@ int main(int argc, char **argv)
 		verify();
 	}
 	#pragma oss taskwait
-	
+
 	tap.emitDiagnostic("Test3: _ _ X ");
 	tap.emitDiagnostic("Test3: _ _ _ ");
 	tap.emitDiagnostic("Test3: X _ _ ");
@@ -282,7 +282,7 @@ int main(int argc, char **argv)
 		verify();
 	}
 	#pragma oss taskwait
-	
+
 	tap.emitDiagnostic("Test4: _ X _  |  X _ X");
 	tap.emitDiagnostic("Test4: X X X  |  _ _ _");
 	tap.emitDiagnostic("Test4: _ X _  |  X _ X");
@@ -298,7 +298,7 @@ int main(int argc, char **argv)
 		verify();
 	}
 	#pragma oss taskwait
-	
+
 	tap.emitDiagnostic("Test5: _ X _ ");
 	tap.emitDiagnostic("Test5: X _ X ");
 	tap.emitDiagnostic("Test5: _ X _ ");
@@ -310,9 +310,9 @@ int main(int argc, char **argv)
 		verify();
 	}
 	#pragma oss taskwait
-	
+
 	tap.end();
-	
+
 	return 0;
 }
 

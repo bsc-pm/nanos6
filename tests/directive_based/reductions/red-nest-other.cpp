@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 /*
@@ -19,15 +19,15 @@ TestAnyProtocolProducer tap;
 int main() {
 	tap.registerNewTests(1);
 	tap.begin();
-	
+
 	int x;
-	
+
 	#pragma oss task out(x)
 	{
 		#pragma oss task out(x)
 		{
 			x = 0;
-			
+
 			#pragma oss task weakreduction(+: x)
 			{
 				for (size_t i = 0; i < N; ++i)
@@ -40,15 +40,15 @@ int main() {
 			}
 		}
 	}
-	
+
 	#pragma oss task in(x)
 	{
 		std::ostringstream oss;
 		oss << "Nested reduction within task with 'out' or 'inout' clauses properly computed";
 		tap.evaluate(x == N, oss.str());
 	}
-	
+
 	#pragma oss taskwait
-	
+
 	tap.end();
 }

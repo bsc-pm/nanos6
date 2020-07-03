@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 /*
@@ -39,20 +39,20 @@ int main()
 {
 	long activeCPUs = nanos6_get_num_cpus();
 	double delayMultiplier = sqrt(activeCPUs);
-	
+
 	int x = 0;
 	int sync = 0;
-	
+
 	tap.registerNewTests(activeCPUs*4 + 1);
 	tap.begin();
-	
+
 	for (int i = 0; i < activeCPUs*4; ++i) {
 		#pragma oss task reduction(+: x) in(sync)
 		{
 			int id = ++numTasks;
 			tap.emitDiagnostic("Task ", id, "/", activeCPUs*4,
 				" (REDUCTION) enters synchronization");
-			
+
 			std::ostringstream oss;
 			oss << "Task " << id << "/" << activeCPUs*4 <<
 				" (REDUCTION) is executed after all tasks have been submitted";
@@ -63,24 +63,24 @@ int main()
 				/* weak */ true
 			);
 			usleep(SUSTAIN_MICROSECONDS*delayMultiplier);
-			
+
 			x++;
 		}
 	}
-	
+
 	// Wake up reduction tasks
 	// WARNING: This would _ideally_ be done inside the taskwait, so we add an
 	// extra wait in the reduction tasks
 	tap.emitDiagnostic("All tasks submitted, unblocking held tasks");
 	ready = true;
-	
+
 	// Taskwait combines the reduction
 	#pragma oss taskwait
-	
+
 	std::ostringstream oss;
 	oss << "Expected reduction computation when taskwait is reached";
 	tap.evaluateWeak(x == activeCPUs*4, oss.str(),
 		/* weakDetail */ "Can only be tested using sleeps, and therefore not deterministic");
-	
+
 	tap.end();
 }

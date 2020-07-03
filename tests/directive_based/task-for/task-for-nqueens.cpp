@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <stdio.h>
@@ -55,7 +55,7 @@ void solve(int n, const int col, sol_node_t& sol)
 				sol_node_t new_sol;
 				new_sol.prev = &sol;
 				new_sol.row = row;
-				
+
 				solve(n, col + 1, new_sol);
 			}
 		}
@@ -68,20 +68,20 @@ int main() {
 	final_depth = FINAL_DEPTH;
 	chunksize = CHUNKSIZE;
 	count = 0;
-	
+
 	assert(n > 0);
 	sol_node_t initial_node = {-1, 0};
-	
+
 	tap.registerNewTests(1);
 	tap.begin();
-	
+
 	#pragma oss task
 	solve(n, 0, initial_node);
 	#pragma oss taskwait
-	
+
 	tap.evaluate(count == CORRECT_VALUE, "The result of the multiaxpy program is correct");
-	
+
 	tap.end();
-	
+
 	return 0;
 }

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -31,7 +31,7 @@ static void initialize(long participant)
 	if (participant == numCPUs-1) {
 		end = ARRAY_SIZE;
 	}
-	
+
 	for (long i=start; i < end; i++) {
 		data[i] = 1;
 	}
@@ -52,7 +52,7 @@ static void sum(long participant)
 	if (participant == numCPUs-1) {
 		end = ARRAY_SIZE;
 	}
-	
+
 	#pragma oss critical
 	{
 		concurrent_tasks++;
@@ -68,32 +68,32 @@ static void sum(long participant)
 
 int main(int argc, char **argv) {
 	nanos6_wait_for_full_initialization();
-	
+
 	numCPUs = nanos6_get_num_cpus();
-	
+
 	tap.registerNewTests(numCPUs * 2L + 1);
-	
+
 	// Initialize in parallel
 	data = new long[ARRAY_SIZE];
 	for (int i=0; i < numCPUs ; i++) {
 		initialize(i);
 	}
 	#pragma oss taskwait
-	
+
 	tap.begin();
-	
+
 	// Sum in tasks but with a critical inside
 	concurrent_tasks = 0;
 	for (int i=0; i < numCPUs ; i++) {
 		sum(i);
 	}
 	#pragma oss taskwait
-	
+
 	tap.evaluate(sum_result == ARRAY_SIZE, "Check that the result is correct");
 	tap.emitDiagnostic<>("Expected result: ", ARRAY_SIZE);
 	tap.emitDiagnostic<>("Actual result: ", sum_result);
 	tap.end();
-	
+
 	return 0;
 }
 

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 /*
@@ -52,7 +52,7 @@ static inline int check_attack(const int col, const int row, sol_t sol)
 		const int tmp = abs(sol->row - row);
 		if (tmp == 0 || tmp == j + 1)
 			return 1;
-		
+
 		sol = sol->prev;
 	}
 	return  0;
@@ -77,7 +77,7 @@ void solve(int n, const int col, sol_node_t& sol, int& result)
 				sol_node_t new_sol;
 				new_sol.prev = &sol;
 				new_sol.row = row;
-				
+
 				#pragma oss task final(final_depth <= col) weakreduction(+: result) label("rec_solve")
 				{
 					solve(n, col + 1, new_sol, result);
@@ -88,44 +88,44 @@ void solve(int n, const int col, sol_node_t& sol, int& result)
 }
 
 TestAnyProtocolProducer tap;
-	
+
 int main()
 {
 	int n = N;
-	
+
 	assert(n > 0);
-	
+
 	tap.registerNewTests(1);
 	tap.begin();
-	
+
 	sol_node_t initial_node = {-1, 0};
 	int count_main = 0;
 	struct timeval start;
-	
+
 	gettimeofday(&start, NULL);
 	#pragma oss task weakreduction(+:count_main) label("solve")
 	{
 		solve(n, 0, initial_node, count_main);
 	}
-	
+
 	#pragma oss task in(count_main) label("print")
 	{
 		struct timeval stop;
 		gettimeofday(&stop, NULL);
 		unsigned long elapsed = 1000000*(stop.tv_sec - start.tv_sec);
 		elapsed += stop.tv_usec - start.tv_usec;
-		
+
 		std::ostringstream oss;
 		oss << "Expected result: size = " << n << ", final_depth = " <<
 			final_depth << ", time (ms) = " << elapsed/1000 << ", result = " <<
 			count_main;
-			
+
 		tap.evaluate(count_main == EXPECTED_RESULT, oss.str());
 	}
-	
+
 	#pragma oss taskwait
-	
+
 	tap.end();
-	
+
 	return 0;
 }

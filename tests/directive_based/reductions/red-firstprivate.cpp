@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <iostream>
@@ -17,12 +17,12 @@ TestAnyProtocolProducer tap;
 int main()
 {
 	int n = N;
-	
+
 	assert(n > 0);
-	
+
 	tap.registerNewTests(1);
 	tap.begin();
-	
+
 	int x = 0;
 	#pragma oss task firstprivate(x)
 	{
@@ -33,7 +33,7 @@ int main()
 				x++;
 			}
 		}
-		
+
 		#pragma oss task in(x)
 		{
 			std::ostringstream oss;
@@ -42,8 +42,8 @@ int main()
 		}
 	}
 	#pragma oss taskwait
-	
+
 	tap.end();
-	
+
 	return 0;
 }
