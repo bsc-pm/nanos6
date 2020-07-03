@@ -108,8 +108,6 @@ namespace ExecutionWorkflow {
 				cpu->getDependencyData()
 			);
 
-			Monitoring::taskFinished(task);
-
 			TaskFinalization::taskFinished(task, cpu);
 			if (task->markAsReleased()) {
 				TaskFinalization::disposeTask(task);

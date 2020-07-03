@@ -11,6 +11,7 @@
 #include "MemoryAllocator.hpp"
 #include "TaskDataAccesses.hpp"
 #include "TaskFinalization.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/StreamManager.hpp"
@@ -40,6 +41,22 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 		// If this is the first iteration of the loop, the task will test true to hasFinished and false to mustDelayRelease, doing
 		// nothing inside the conditionals.
 		if (task->hasFinished()) {
+			// If this is a taskfor collaborator, we must accumulate
+			// its counters into the taskfor source
+			if (task->isTaskforCollaborator()) {
+				Taskfor *source = (Taskfor *) parent;
+				assert(source != nullptr);
+				assert(source->isTaskfor());
+				assert(source->isTaskforSource());
+
+				// Combine the hardware counters of the taskfor collaborator (task)
+				// into the taskfor source (source)
+				HardwareCounters::taskCombineCounters(source, task);
+			}
+
+			// Propagate monitoring actions for this task since it has finished
+			Monitoring::taskFinished(task);
+
 			// Complete the delayed release of dependencies of the task if it has a wait clause
 			if (task->mustDelayRelease()) {
 				if (task->markAllChildrenAsFinished(computePlace)) {
@@ -54,7 +71,6 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 						fromBusyThread
 					);
 
-					Monitoring::taskFinished(task);
 					// This is just to emulate a recursive call to TaskFinalization::taskFinished() again.
 					// It should not return false because at this point delayed release has happenned which means that
 					// the task has gone through a taskwait (no more children should be unfinished)
@@ -79,11 +95,6 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 						DataAccessRegistration::unregisterTaskDataAccesses(
 							source, computePlace,
 							computePlace->getDependencyData());
-
-						// The source has finished and all collaborators should
-						// already have aggregated their stats in the source.
-						// Now simply mark that the source has finished
-						Monitoring::taskFinished(source);
 
 						// There is one count for the finished source, but we need ready = true to decrement it later again.
 						ready = source->finishChild();

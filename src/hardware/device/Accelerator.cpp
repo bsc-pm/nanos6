@@ -68,7 +68,6 @@ void Accelerator::finishTask(Task *task)
 			task->getMemoryPlace(),
 			/* from busy thread */ true);
 
-		Monitoring::taskFinished(task);
 		TaskFinalization::taskFinished(task, cpu, /* busy thread */ true);
 
 		if (task->markAsReleased()) {

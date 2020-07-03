@@ -200,22 +200,10 @@ void TaskMonitor::taskFinished(Task *task) const
 	// Stop timing for the task
 	taskStatistics->stopTiming();
 
-	// NOTE: Special cases:
-	// 1) For taskfor sources, when the task is finished it also completes user
-	//    code execution, thus we treat it here
-	// 2) For taskfor collaborators, we must aggregate their counter statistics
-	//    to the source taskfor
+	// NOTE: Special case, for taskfor sources, when the task is finished it
+	// also completes user code execution, thus we treat it here
 	if (task->isTaskforSource()) {
 		taskCompletedUserCode(task);
-	} else if (task->isTaskforCollaborator()) {
-		Taskfor *source = (Taskfor *) task->getParent();
-		assert(source != nullptr);
-		assert(source->isTaskfor());
-		assert(source->isTaskforSource());
-
-		// Combine the hardware counters of the taskfor collaborator (task)
-		// into the taskfor source (source)
-		HardwareCounters::taskCombineCounters(source, task);
 	}
 
 	// Backpropagate the following actions for the current task and any ancestor

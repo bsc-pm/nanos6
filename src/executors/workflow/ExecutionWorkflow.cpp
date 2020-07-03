@@ -240,7 +240,6 @@ namespace ExecutionWorkflow {
 						targetMemoryPlace
 					);
 
-					Monitoring::taskFinished(task);
 					TaskFinalization::taskFinished(task, cpu);
 
 					if (task->markAsReleased()) {
