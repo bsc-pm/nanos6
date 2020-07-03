@@ -61,8 +61,8 @@ int main(int argc, char ** argv) {
 			
 			if test x"${OMPSS2_FLAG}" != x"none" ; then
 				AC_MSG_RESULT([${OMPSS2_FLAG}])
-				NANOS6_CLANG="${NANOS6_CLANG} ${OMPSS2_FLAG}"
-				NANOS6_CLANGXX="${NANOS6_CLANGXX} ${OMPSS2_FLAG}"
+				NANOS6_CLANG="${NANOS6_CLANG} ${OMPSS2_FLAG} --gcc-toolchain=\$(subst bin/gcc,,\$(shell which gcc))"
+				NANOS6_CLANGXX="${NANOS6_CLANGXX} ${OMPSS2_FLAG} --gcc-toolchain=\$(subst bin/g++,,\$(shell which g++))"
 			else
 				AC_MSG_RESULT([none])
 				AC_MSG_WARN([will not use ${NANOS6_CLANG} since it does not support Nanos6])
