@@ -38,15 +38,7 @@ class TasktypeStatistics {
 
 private:
 
-	typedef BoostAcc::accumulator_set<
-		double,
-		BoostAcc::stats<
-			BoostAccTag::count,
-			BoostAccTag::mean,
-			BoostAccTag::rolling_mean,
-			BoostAccTag::sum,
-			BoostAccTag::variance
-	> > metric_rolling_accumulator_t;
+	typedef BoostAcc::accumulator_set<double, BoostAcc::stats<BoostAccTag::mean> > accumulator_t;
 
 	typedef BoostAcc::accumulator_set<
 		double,
@@ -57,7 +49,15 @@ private:
 			BoostAccTag::variance
 	> > metric_accumulator_t;
 
-	typedef BoostAcc::accumulator_set<double, BoostAcc::stats<BoostAccTag::sum, BoostAccTag::mean> > accumulator_t;
+	typedef BoostAcc::accumulator_set<
+		double,
+		BoostAcc::stats<
+			BoostAccTag::count,
+			BoostAccTag::mean,
+			BoostAccTag::rolling_mean,
+			BoostAccTag::variance
+	> > metric_rolling_accumulator_t;
+
 
 	//! The rolling-window size for accumulators (elements taken into account)
 	static EnvironmentVariable<size_t> _rollingWindow;
