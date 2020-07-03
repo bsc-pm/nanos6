@@ -108,9 +108,10 @@ class ctf2prv(bt2._UserSinkComponent):
 
 			# install event processing hooks
 			RuntimeModel.initialize(ncpus)
-			self.installHooks(RuntimeModel.hooks())
+			self.installHooks(RuntimeModel.preHooks())
 			for view in self.__paraverViews:
 				self.installHooks(view.hooks())
+			self.installHooks(RuntimeModel.postHooks())
 
 			# redirect message processing
 			self.__process_message = self._process_other_message

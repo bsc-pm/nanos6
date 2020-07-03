@@ -53,7 +53,9 @@ class ParaverViewRuntimeBusyWaiting(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:thread_shutdown",        self.hook_threadShutdown),
+			("nanos6:thread_shutdown",        self.hook_threadStop),
+			("nanos6:thread_suspend",         self.hook_threadStop),
+			("nanos6:thread_resume",          self.hook_threadResume),
 			("nanos6:worker_enter_busy_wait", self.hook_enterBusyWait),
 			("nanos6:worker_exit_busy_wait",  self.hook_exitBusyWait)
 		]
@@ -63,17 +65,24 @@ class ParaverViewRuntimeBusyWaiting(ParaverView):
 		}
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_BUSYWAITING, values, "Runtime: Busy Waiting")
 
-	def hook_threadShutdown(self, _, payload):
-		# In case we were busy waiting, we emit another "0" event to unstack
-		# it. We might emit the event event if the thread was not busy waiting,
-		# but its cheaper to always do it rather than keeping track of it's
-		# status. Paraver just ignores extra "unstack" events.
-		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.End))
+	def hook_threadResume(self, event, payload):
+		thread = RuntimeModel.getCurrentThread(event)
+		if thread.isBusyWaiting:
+			payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.BusyWaiting))
 
-	def hook_enterBusyWait(self, _, payload):
+	def hook_threadStop(self, event, payload):
+		thread = RuntimeModel.getCurrentThread(event)
+		if thread.isBusyWaiting:
+			payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.End))
+
+	def hook_enterBusyWait(self, event, payload):
+		thread = RuntimeModel.getCurrentThread(event)
+		thread.isBusyWaiting = 1
 		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.BusyWaiting))
 
-	def hook_exitBusyWait(self, _, payload):
+	def hook_exitBusyWait(self, event, payload):
+		thread = RuntimeModel.getCurrentThread(event)
+		thread.isBusyWaiting = 0
 		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.End))
 
 class ParaverViewRuntimeTasks(ParaverView):

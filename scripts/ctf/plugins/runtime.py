@@ -56,6 +56,7 @@ class Thread:
 	def __init__(self, tid = 0):
 		self._id = tid
 		self._vcpu = None
+		self._isBusyWaiting = 0
 
 	@property
 	def tid(self):
@@ -68,6 +69,14 @@ class Thread:
 	@vcpu.setter
 	def vcpu(self, value):
 		self._vcpu = value
+
+	@property
+	def isBusyWaiting(self):
+		return self._isBusyWaiting
+
+	@isBusyWaiting.setter
+	def isBusyWaiting(self, value):
+		self._isBusyWaiting = value
 
 class TaskIDsDB:
 	def __init__(self):
@@ -95,13 +104,15 @@ class RuntimeModel:
 		cls._ncpus = ncpus
 		cls._cpus = [CPU() for i in range(ncpus)]
 		cls._cpus.append(VCPU()) # Leader Thread CPU
-		cls._hooks = [
-			("nanos6:task_create_enter",       cls.hook_taskAdd),
-			("nanos6:taskfor_init_enter",      cls.hook_taskAdd),
-			("nanos6:external_thread_create",  cls.hook_externalThreadCreate),
-			("nanos6:thread_create",           cls.hook_threadCreate),
-			("nanos6:thread_resume",           cls.hook_threadResume),
-			("nanos6:thread_suspend",          cls.hook_threadSuspend)
+		cls._preHooks = [
+			("nanos6:task_create_enter",         cls.hook_taskAdd),
+			("nanos6:taskfor_init_enter",        cls.hook_taskAdd),
+			("nanos6:external_thread_create",    cls.hook_externalThreadCreate),
+			("nanos6:thread_create",             cls.hook_threadCreate),
+			("nanos6:thread_resume",             cls.hook_threadResume),
+		]
+		cls._postHooks = [
+			("nanos6:thread_suspend",            cls.hook_threadSuspend),
 		]
 
 	@classmethod
@@ -172,8 +183,12 @@ class RuntimeModel:
 		return thread
 
 	@classmethod
-	def hooks(cls):
-		return cls._hooks
+	def preHooks(cls):
+		return cls._preHooks
+
+	@classmethod
+	def postHooks(cls):
+		return cls._postHooks
 
 	@classmethod
 	def hook_externalThreadCreate(cls, event, _):
