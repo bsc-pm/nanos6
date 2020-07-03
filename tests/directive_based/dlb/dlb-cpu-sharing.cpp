@@ -54,21 +54,24 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	// Check if this is the debug version of the program
-	std::string testName(argv[0]);
-	std::string activeProcessString;
-	if (testName.find("debug") != std::string::npos) {
-		activeProcessString  = "./dlb-cpu-sharing-active-process.debug.test";
-	} else {
-		activeProcessString  = "./dlb-cpu-sharing-active-process.test";
+	const std::string parentTestName("dlb-cpu-sharing");
+	const std::string activeTestName("dlb-cpu-sharing-active-process");
+	std::string command(argv[0]);
+
+	// Construct the launch command of the active process test
+	const int index = command.rfind(parentTestName);
+	if (index == std::string::npos) {
+		wrongExecution("This test seems that was renamed and does not match with the expected name");
+		return 0;
 	}
+	command.replace(index, parentTestName.size(), activeTestName);
 
 	// Delete the shared memory so the subprocesses can be executed
 	if (!std::system("dlb_shm -d > /dev/null 2>&1")) {
 		long firstCPU = (activeCPUs / 2);
 		long lastCPU = activeCPUs - 1;
 		std::stringstream activeCPUs;
-		activeCPUs << "taskset -c " << firstCPU << "-" << lastCPU << " " << activeProcessString << " nanos6-testing";
+		activeCPUs << "taskset -c " << firstCPU << "-" << lastCPU << " " << command << " nanos6-testing";
 		std::system(activeCPUs.str().c_str());
 
 		return 0;
