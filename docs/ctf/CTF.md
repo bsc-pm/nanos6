@@ -64,7 +64,7 @@ A number of Paraver views are provided with each Nanos6 distribution under the d
 $NANOS6_INSTALL/share/doc/nanos6/paraver-cfg/ctf2prv
 ```
 
-Do not use the Extrae cfg's views as some event identifiers are not compatible.
+Do not use the Extrae cfg's views as event identifiers are not compatible.
 
 
 Tasks
@@ -131,10 +131,14 @@ Shows a graph of tasks in the blocked state.
 Blocked tasks are tasks that started running at some point and then stopped running before completing.
 This might block, for instance, due to a taskwait directive.
 
+You might want to change paraver's "Drawmode" option to "Maximum" or "Minimum" if searching for maximum or minimum peaks. By default, it is set to "Maximum", which means that minimum peaks might be hidden if the view is too much zoomed out.
+
 Number of Running Tasks
 -----------------------
 
 Shows a graph of tasks being executed by some worker thread.
+
+See "Number of Blocked Tasks" for other Paraver visualization details.
 
 Number of Created Tasks
 -----------------------
@@ -142,11 +146,15 @@ Number of Created Tasks
 Shows a graph with the count of total created tasks.
 A task is created when its Nanos6 data structures are allocated and registered within the Nanos6 core.
 
+See "Number of Blocked Tasks" for other Paraver visualization details.
+
 Number of Created Workers
 -------------------------
 
 Shows a graph of created worker threads by Nanos6.
 Once a worker thread is created, it is not destroyed until the end of the application's execution.
+
+See "Number of Blocked Tasks" for other Paraver visualization details.
 
 Number of Running Workers
 -------------------------
@@ -155,12 +163,16 @@ Shows a graph of Nanos6 worker threads that are allowed to run on a core.
 Please note that even if Nanos6 allows a worker to run, another system thread might have temporarily preempted that worker.
 System preemptions are not displayed in this view.
 
+See "Number of Blocked Tasks" for other Paraver visualization details.
+
 Number of Blocked Workers
 -------------------------
 
 Shows a graph of worker threads that are blocked (no longer running), either because they are idle or because they are waiting for some event.
 This view only counts workers that blocked due to Nanos6 will.
 If a worker that is running a task blocks because of a blocking operation performed by the task code (hence, outside the scope of Nanos6) it will not be shown in this view.
+
+See "Number of Blocked Tasks" for other Paraver visualization details.
 
 CTF Flush Buffers to Disk
 -------------------------
