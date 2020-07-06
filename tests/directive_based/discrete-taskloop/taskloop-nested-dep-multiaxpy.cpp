@@ -71,7 +71,7 @@ int main() {
 
 	// Main algorithm
 	int blocks = std::ceil((double) n / (double) bs);
-	#pragma oss taskloop grainsize(1) weakin({x[b*bs], b=0;blocks}) weakinout({y[b*bs], b=0;blocks}) label(iteration)
+	#pragma oss taskloop grainsize(1) weakin({x[b*bs], b=0;blocks}) weakinout({y[b*bs], b=0;blocks}) label("iteration")
 	for (int iteration = 0; iteration < its; iteration++) {
 		axpy(x, y, 1.0, n, bs, gs);
 	}

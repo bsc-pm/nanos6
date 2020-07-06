@@ -178,10 +178,10 @@ int main(int argc, char **argv)
 
 		int var1;
 
-		#pragma oss task shared(var1, taskInformation) weakin(var1) label(T1 WIN)
+		#pragma oss task shared(var1, taskInformation) weakin(var1) label("T1 WIN")
 		{
 			taskInformation[T1]._hasStarted = true;
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T1_1 IN)
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T1_1 IN")
 			{
 				taskInformation[T1_1]._hasStarted = true;
 				verifyRelaxedOrder(r11_2, taskInformation, true); // 1
@@ -193,13 +193,13 @@ int main(int argc, char **argv)
 			taskInformation[T1]._hasFinished = true;
 		}
 
-		#pragma oss task shared(var1, taskInformation) weakout(var1) label(T2 WOUT)
+		#pragma oss task shared(var1, taskInformation) weakout(var1) label("T2 WOUT")
 		{
 			verifyRelaxedOrder(r1_2, taskInformation, false); // 4
 			verifyRelaxedOrder(r11_2, taskInformation, false); // 5
 			taskInformation[T2]._hasStarted = true;
 
-			#pragma oss task shared(var1, taskInformation) out(var1) label(T2_1 OUT)
+			#pragma oss task shared(var1, taskInformation) out(var1) label("T2_1 OUT")
 			{
 				taskInformation[T2_1]._hasStarted = true;
 				verifyStrictOrder(s11_22, taskInformation, false); // 6
@@ -232,10 +232,10 @@ int main(int argc, char **argv)
 
 		int var1;
 
-		#pragma oss task shared(var1, taskInformation) weakinout(var1) label(T1 WINOUT)
+		#pragma oss task shared(var1, taskInformation) weakinout(var1) label("T1 WINOUT")
 		{
 			taskInformation[T1]._hasStarted = true;
-			#pragma oss task shared(var1, taskInformation) inout(var1) label(T1_1 INOUT)
+			#pragma oss task shared(var1, taskInformation) inout(var1) label("T1_1 INOUT")
 			{
 				taskInformation[T1_1]._hasStarted = true;
 				verifyRelaxedOrder(r11_2, taskInformation, true); // 7
@@ -244,7 +244,7 @@ int main(int argc, char **argv)
 				taskInformation[T1_1]._hasFinished = true;
 			}
 
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T1_2 IN)
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T1_2 IN")
 			{
 				taskInformation[T1_2]._hasStarted = true;
 				verifyStrictOrder(s11_12, taskInformation, false); // 10
@@ -257,14 +257,14 @@ int main(int argc, char **argv)
 			taskInformation[T1]._hasFinished = true;
 		}
 
-		#pragma oss task shared(var1, taskInformation) weakin(var1) label(T2 WIN)
+		#pragma oss task shared(var1, taskInformation) weakin(var1) label("T2 WIN")
 		{
 			verifyRelaxedOrder(r1_2, taskInformation, false); // 14
 			verifyRelaxedOrder(r11_2, taskInformation, false); // 15
 			verifyRelaxedOrder(r12_2, taskInformation, false); // 16
 			taskInformation[T2]._hasStarted = true;
 
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T2_1 IN)
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T2_1 IN")
 			{
 				taskInformation[T2_1]._hasStarted = true;
 				tap.emitDiagnostic("Before 17");
@@ -306,10 +306,10 @@ int main(int argc, char **argv)
 
 		int var1;
 
-		#pragma oss task shared(var1, taskInformation) weakin(var1) label(T1 WIN)
+		#pragma oss task shared(var1, taskInformation) weakin(var1) label("T1 WIN")
 		{
 			taskInformation[T1]._hasStarted = true;
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T1_1 IN)
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T1_1 IN")
 			{
 				taskInformation[T1_1]._hasStarted = true;
 				verifyStrictOrder(s11_22, taskInformation, true);
@@ -321,17 +321,17 @@ int main(int argc, char **argv)
 			taskInformation[T1]._hasFinished = true;
 		}
 
-		#pragma oss task shared(var1, taskInformation) weakinout(var1) label(T2 WINOUT)
+		#pragma oss task shared(var1, taskInformation) weakinout(var1) label("T2 WINOUT")
 		{
 			verifyRelaxedOrder(r1_2, taskInformation, false);
 			taskInformation[T2]._hasStarted = true;
 
-			#pragma oss task shared(var1, taskInformation) weakin(var1) label(T2_1 WIN)
+			#pragma oss task shared(var1, taskInformation) weakin(var1) label("T2_1 WIN")
 			{
 				verifyRelaxedOrder(r1_21, taskInformation, false);
 				taskInformation[T2_1]._hasStarted = true;
 
-				#pragma oss task shared(var1, taskInformation) in(var1) label(T2_1_1 IN)
+				#pragma oss task shared(var1, taskInformation) in(var1) label("T2_1_1 IN")
 				{
 					taskInformation[T2_1_1]._hasStarted = true;
 					verifyStrictOrder(s211_22, taskInformation, true);
@@ -341,7 +341,7 @@ int main(int argc, char **argv)
 				taskInformation[T2_1]._hasFinished = true;
 			}
 
-			#pragma oss task shared(var1, taskInformation) out(var1) label(T2_2 OUT)
+			#pragma oss task shared(var1, taskInformation) out(var1) label("T2_2 OUT")
 			{
 				taskInformation[T2_2]._hasStarted = true;
 				verifyStrictOrder(s11_22, taskInformation, false);
@@ -351,7 +351,7 @@ int main(int argc, char **argv)
 				taskInformation[T2_2]._hasFinished = true;
 			}
 
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T2_3 IN)
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T2_3 IN")
 			{
 				taskInformation[T2_3]._hasStarted = true;
 				verifyStrictOrder(s22_23, taskInformation, false);
@@ -363,7 +363,7 @@ int main(int argc, char **argv)
 			taskInformation[T2]._hasFinished = true;
 		}
 
-		#pragma oss task shared(var1, taskInformation) in(var1) label(T3 IN)
+		#pragma oss task shared(var1, taskInformation) in(var1) label("T3 IN")
 		{
 			taskInformation[T3]._hasStarted = true;
 			verifyStrictOrder(s2_3, taskInformation, false);

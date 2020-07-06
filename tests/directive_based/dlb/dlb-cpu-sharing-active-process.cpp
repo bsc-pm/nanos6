@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
 	numBusyCPUs = 0;
 	numCheckedCPUs = 0;
 	for (int id = 0; id < numCPUs; ++id) {
-		#pragma oss task label(ownedCPUTask)
+		#pragma oss task label("ownedCPUTask")
 		cpuComputation(numCPUs);
 	}
 	#pragma oss taskwait

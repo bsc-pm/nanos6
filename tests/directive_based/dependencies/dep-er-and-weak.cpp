@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <nanos6/debug.h>
@@ -34,7 +34,7 @@ struct TaskInformation {
 	std::string _label;
 	Atomic<bool> _hasStarted;
 	Atomic<bool> _hasFinished;
-	
+
 	TaskInformation()
 		: _hasStarted(false), _hasFinished(false)
 	{
@@ -61,12 +61,12 @@ static void verifyStrictOrder(StrictOrder const &constraint, TaskInformation *ta
 {
 	if (isSource) {
 		std::ostringstream oss;
-		
+
 		oss
 			<< "Evaluating that " << taskInformation[constraint._startsAfter]._label
 			<< " does not start before "  << taskInformation[constraint._finishesBefore]._label
 			<< " finishes";
-		
+
 		tap.sustainedEvaluate(
 			False< Atomic<bool> >(taskInformation[constraint._startsAfter]._hasStarted),
 			SUSTAIN_MICROSECONDS,
@@ -74,12 +74,12 @@ static void verifyStrictOrder(StrictOrder const &constraint, TaskInformation *ta
 		);
 	} else {
 		std::ostringstream oss;
-		
+
 		oss
 		<< "Evaluating that " << taskInformation[constraint._startsAfter]._label
 		<< " starts after "  << taskInformation[constraint._finishesBefore]._label
 		<< " has finished";
-		
+
 		tap.evaluate(taskInformation[constraint._finishesBefore]._hasFinished.load(), oss.str());
 	}
 }
@@ -90,12 +90,12 @@ static void verifyRelaxedOrder(RelaxedOrder const &constraint, TaskInformation *
 {
 	if (isSource) {
 		std::ostringstream oss;
-		
+
 		oss
 		<< "Evaluating that when " << taskInformation[constraint._canEndAfterStarting]._label
 		<< " finishes, "  << taskInformation[constraint._canStartBeforeEnding]._label
 		<< " has started";
-		
+
 		tap.timedEvaluate(
 			True< Atomic<bool> >(taskInformation[constraint._canStartBeforeEnding]._hasStarted),
 			2 * SUSTAIN_MICROSECONDS,
@@ -103,14 +103,14 @@ static void verifyRelaxedOrder(RelaxedOrder const &constraint, TaskInformation *
 		);
 	} else {
 		assert(!taskInformation[constraint._canStartBeforeEnding]._hasStarted.load());
-		
+
 		std::ostringstream oss;
-		
+
 		oss
 		<< "Evaluating that when " << taskInformation[constraint._canStartBeforeEnding]._label
 		<< " starts, "  << taskInformation[constraint._canEndAfterStarting]._label
 		<< " has not finished";
-		
+
 		tap.evaluate(
 			!taskInformation[constraint._canEndAfterStarting]._hasFinished.load(),
 			oss.str()
@@ -139,7 +139,7 @@ enum Tasks {
 int main(int argc, char **argv)
 {
 	nanos6_wait_for_full_initialization();
-	
+
 	long activeCPUs = nanos6_get_num_cpus();
 	if (activeCPUs <= 2) {
 		// This test only works correctly with more than 2 CPUs
@@ -149,11 +149,11 @@ int main(int argc, char **argv)
 		tap.end();
 		return 0;
 	}
-	
+
 	tap.registerNewTests(3*2 + 6*2 + 7*2);
 	tap.begin();
-	
-	
+
+
 	// Test 1
 	// WIN {IN} -- WOUT {OUT}
 	{
@@ -165,41 +165,41 @@ int main(int argc, char **argv)
 // 			T2_1,
 // 			NUM_TASKS
 // 		};
-		
+
 		TaskInformation taskInformation[NUM_TASKS];
 		taskInformation[T1]._label = "T1";
 		taskInformation[T1_1]._label = "T1_1";
 		taskInformation[T2]._label = "T2";
 		taskInformation[T2_1]._label = "T2_1";
-		
+
 		RelaxedOrder r1_2 = {T1, T2};
 		RelaxedOrder r11_2 = {T1_1, T2};
 		StrictOrder s11_22 = {T1_1, T2_1};
-		
+
 		int var1;
-		
-		#pragma oss task shared(var1, taskInformation) weakin(var1) label(T1 WIN)
+
+		#pragma oss task shared(var1, taskInformation) weakin(var1) label("T1 WIN")
 		{
 			taskInformation[T1]._hasStarted = true;
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T1_1 IN)
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T1_1 IN")
 			{
 				taskInformation[T1_1]._hasStarted = true;
 				verifyRelaxedOrder(r11_2, taskInformation, true);
 				verifyStrictOrder(s11_22, taskInformation, true);
 				taskInformation[T1_1]._hasFinished = true;
 			}
-			
+
 			verifyRelaxedOrder(r1_2, taskInformation, true);
 			taskInformation[T1]._hasFinished = true;
 		}
-		
-		#pragma oss task shared(var1, taskInformation) weakout(var1) label(T2 WOUT)
+
+		#pragma oss task shared(var1, taskInformation) weakout(var1) label("T2 WOUT")
 		{
 			verifyRelaxedOrder(r1_2, taskInformation, false);
 			verifyRelaxedOrder(r11_2, taskInformation, false);
 			taskInformation[T2]._hasStarted = true;
-			
-			#pragma oss task shared(var1, taskInformation) out(var1) label(T2_1 OUT)
+
+			#pragma oss task shared(var1, taskInformation) out(var1) label("T2_1 OUT")
 			{
 				taskInformation[T2_1]._hasStarted = true;
 				verifyStrictOrder(s11_22, taskInformation, false);
@@ -207,11 +207,11 @@ int main(int argc, char **argv)
 			}
 			taskInformation[T2]._hasFinished = true;
 		}
-		
+
 		#pragma oss taskwait
 	}
-	
-	
+
+
 	// Test 2
 	// WINOUT {INOUT -- IN} -- WIN {IN}
 	{
@@ -222,20 +222,20 @@ int main(int argc, char **argv)
 		taskInformation[T1_2]._label = "T1_2";
 		taskInformation[T2]._label = "T2";
 		taskInformation[T2_1]._label = "T2_1";
-		
+
 		RelaxedOrder r1_2 = {T1, T2};
 		RelaxedOrder r11_2 = {T1_1, T2};
 		RelaxedOrder r12_2 = {T1_2, T2};
 		StrictOrder s11_12 = {T1_1, T1_2};
 		StrictOrder s1_21 = {T1, T2_1};
 		StrictOrder s11_21 = {T1_1, T2_1};
-		
+
 		int var1;
-		
-		#pragma oss task shared(var1, taskInformation) weakinout(var1) label(T1 WINOUT)
+
+		#pragma oss task shared(var1, taskInformation) weakinout(var1) label("T1 WINOUT")
 		{
 			taskInformation[T1]._hasStarted = true;
-			#pragma oss task shared(var1, taskInformation) inout(var1) label(T1_1 INOUT)
+			#pragma oss task shared(var1, taskInformation) inout(var1) label("T1_1 INOUT")
 			{
 				taskInformation[T1_1]._hasStarted = true;
 				verifyRelaxedOrder(r11_2, taskInformation, true);
@@ -243,28 +243,28 @@ int main(int argc, char **argv)
 				verifyStrictOrder(s11_21, taskInformation, true);
 				taskInformation[T1_1]._hasFinished = true;
 			}
-			
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T1_2 IN)
+
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T1_2 IN")
 			{
 				taskInformation[T1_2]._hasStarted = true;
 				verifyStrictOrder(s11_12, taskInformation, false);
 				verifyRelaxedOrder(r12_2, taskInformation, true);
 				taskInformation[T1_2]._hasFinished = true;
 			}
-			
+
 			verifyRelaxedOrder(r1_2, taskInformation, true);
 			verifyStrictOrder(s1_21, taskInformation, true);
 			taskInformation[T1]._hasFinished = true;
 		}
-		
-		#pragma oss task shared(var1, taskInformation) weakin(var1) label(T2 WIN)
+
+		#pragma oss task shared(var1, taskInformation) weakin(var1) label("T2 WIN")
 		{
 			verifyRelaxedOrder(r1_2, taskInformation, false);
 			verifyRelaxedOrder(r11_2, taskInformation, false);
 			verifyRelaxedOrder(r12_2, taskInformation, false);
 			taskInformation[T2]._hasStarted = true;
-			
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T2_1 IN)
+
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T2_1 IN")
 			{
 				taskInformation[T2_1]._hasStarted = true;
 				verifyStrictOrder(s1_21, taskInformation, false);
@@ -273,16 +273,16 @@ int main(int argc, char **argv)
 			}
 			taskInformation[T2]._hasFinished = true;
 		}
-		
+
 		#pragma oss taskwait
 	}
-	
-	
+
+
 	// Test 3
 	// WIN {IN} -- WINOUT {WIN {IN} -- OUT -- IN} -- IN
 	{
 		tap.emitDiagnostic("Test 3:   WIN {IN} -- WINOUT {WIN {IN} -- OUT -- IN} -- IN");
-		
+
 		TaskInformation taskInformation[NUM_TASKS];
 		taskInformation[T1]._label = "T1";
 		taskInformation[T1_1]._label = "T1_1";
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 		taskInformation[T2_2]._label = "T2_2";
 		taskInformation[T2_3]._label = "T2_3";
 		taskInformation[T3]._label = "T3";
-		
+
 		RelaxedOrder r1_2 = {T1, T2};
 		RelaxedOrder r1_21 = {T1, T2_1};
 		StrictOrder s2_3 = {T2, T3};
@@ -300,45 +300,45 @@ int main(int argc, char **argv)
 		StrictOrder s11_22 = {T1_1, T2_2};
 		StrictOrder s211_22 = {T2_1_1, T2_2};
 		StrictOrder s22_23 = {T2_2, T2_3};
-		
+
 		int var1;
-		
-		#pragma oss task shared(var1, taskInformation) weakin(var1) label(T1 WIN)
+
+		#pragma oss task shared(var1, taskInformation) weakin(var1) label("T1 WIN")
 		{
 			taskInformation[T1]._hasStarted = true;
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T1_1 IN)
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T1_1 IN")
 			{
 				taskInformation[T1_1]._hasStarted = true;
 				verifyStrictOrder(s11_22, taskInformation, true);
 				taskInformation[T1_1]._hasFinished = true;
 			}
-			
+
 			verifyRelaxedOrder(r1_2, taskInformation, true);
 			verifyRelaxedOrder(r1_21, taskInformation, true);
 			taskInformation[T1]._hasFinished = true;
 		}
-		
-		#pragma oss task shared(var1, taskInformation) weakinout(var1) label(T2 WINOUT)
+
+		#pragma oss task shared(var1, taskInformation) weakinout(var1) label("T2 WINOUT")
 		{
 			verifyRelaxedOrder(r1_2, taskInformation, false);
 			taskInformation[T2]._hasStarted = true;
-			
-			#pragma oss task shared(var1, taskInformation) weakin(var1) label(T2_1 WIN)
+
+			#pragma oss task shared(var1, taskInformation) weakin(var1) label("T2_1 WIN")
 			{
 				verifyRelaxedOrder(r1_21, taskInformation, false);
 				taskInformation[T2_1]._hasStarted = true;
-				
-				#pragma oss task shared(var1, taskInformation) in(var1) label(T2_1_1 IN)
+
+				#pragma oss task shared(var1, taskInformation) in(var1) label("T2_1_1 IN")
 				{
 					taskInformation[T2_1_1]._hasStarted = true;
 					verifyStrictOrder(s211_22, taskInformation, true);
 					taskInformation[T2_1_1]._hasFinished = true;
 				}
-				
+
 				taskInformation[T2_1]._hasFinished = true;
 			}
-			
-			#pragma oss task shared(var1, taskInformation) out(var1) label(T2_2 OUT)
+
+			#pragma oss task shared(var1, taskInformation) out(var1) label("T2_2 OUT")
 			{
 				taskInformation[T2_2]._hasStarted = true;
 				verifyStrictOrder(s11_22, taskInformation, false);
@@ -347,32 +347,32 @@ int main(int argc, char **argv)
 				verifyStrictOrder(s22_3, taskInformation, true);
 				taskInformation[T2_2]._hasFinished = true;
 			}
-			
-			#pragma oss task shared(var1, taskInformation) in(var1) label(T2_3 IN)
+
+			#pragma oss task shared(var1, taskInformation) in(var1) label("T2_3 IN")
 			{
 				taskInformation[T2_3]._hasStarted = true;
 				verifyStrictOrder(s22_23, taskInformation, false);
 				taskInformation[T2_3]._hasFinished = true;
 			}
-			
+
 			verifyStrictOrder(s2_3, taskInformation, true);
-			
+
 			taskInformation[T2]._hasFinished = true;
 		}
-		
-		#pragma oss task shared(var1, taskInformation) in(var1) label(T3 IN)
+
+		#pragma oss task shared(var1, taskInformation) in(var1) label("T3 IN")
 		{
 			taskInformation[T3]._hasStarted = true;
 			verifyStrictOrder(s2_3, taskInformation, false);
 			verifyStrictOrder(s22_3, taskInformation, false);
 			taskInformation[T3]._hasFinished = true;
 		}
-		
+
 		#pragma oss taskwait
 	}
-	
+
 	tap.end();
-	
+
 	return 0;
 }
 

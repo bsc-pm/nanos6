@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 /*
@@ -38,23 +38,23 @@ int main()
 {
 	long activeCPUs = nanos6_get_num_cpus();
 	double delayMultiplier = sqrt(activeCPUs);
-	
+
 	int x = 0;
-	
+
 	tap.registerNewTests(activeCPUs*4 + 1);
 	tap.begin();
-	
+
 	for (int i = 0; i < activeCPUs*4; ++i) {
 		#pragma oss task reduction(+: x)
 		{
 			x++;
-			
+
 			// Hold reduction tasks until a posterior (non-reduction) task is enqueued
-			
+
 			int id = ++numTasks;
 			tap.emitDiagnostic("Task ", id, "/", activeCPUs*4,
 				" (REDUCTION) enters synchronization");
-			
+
 			std::ostringstream oss;
 			oss << "Task " << id << "/" << activeCPUs*4 <<
 				" (REDUCTION) is executed after all tasks have been submitted";
@@ -66,7 +66,7 @@ int main()
 			);
 		}
 	}
-	
+
 	#pragma oss task in(x)
 	{
 		std::ostringstream oss;
@@ -74,12 +74,12 @@ int main()
 			" (READ) is executed";
 		tap.evaluate(x == activeCPUs*4, oss.str());
 	}
-	
+
 	// Wake up reduction task now that the in task is submitted
 	tap.emitDiagnostic("All tasks submitted, unblocking held tasks");
 	ready = true;
-	
+
 	#pragma oss taskwait
-	
+
 	tap.end();
 }

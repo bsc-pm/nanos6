@@ -114,10 +114,10 @@ int main(int argc, char **argv)
 		ExperimentStatus status;
 		ExpectedOutcome expected = {true, false};
 
-		#pragma oss task shared(var1, var2, status, expected) in(var1) out(var2) label (T1 R1 W2)
+		#pragma oss task shared(var1, var2, status, expected) in(var1) out(var2) label ("T1 R1 W2")
 		{
 			status._t1_HasStarted.store(true);
-			#pragma oss task shared(var1, var2, status, expected) out(var2) label (T1_1 W2)
+			#pragma oss task shared(var1, var2, status, expected) out(var2) label ("T1_1 W2")
 			{
 				status._t1_1_HasStarted.store(true);
 				t1_1_verification(status, expected); // 1
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
 			t1_verification(status, expected); // 2
 			status._t1_HasFinished.store(true);
 		}
-		#pragma oss task shared(var1, var2, status, expected) out(var1) label (T2 W1)
+		#pragma oss task shared(var1, var2, status, expected) out(var1) label ("T2 W1")
 		{
 			status._t2_HasStarted.store(true);
 			t2_verification(status, expected); // 3, 4
@@ -143,10 +143,10 @@ int main(int argc, char **argv)
 		ExperimentStatus status;
 		ExpectedOutcome expected = {true, false};
 
-		#pragma oss task shared(var1, var2, status, expected) inout(var1) label(T1 RW1)
+		#pragma oss task shared(var1, var2, status, expected) inout(var1) label("T1 RW1")
 		{
 			status._t1_HasStarted.store(true);
-			#pragma oss task shared(var1, var2, status, expected) in(var1) label(T1_1 R1)
+			#pragma oss task shared(var1, var2, status, expected) in(var1) label("T1_1 R1")
 			{
 				status._t1_1_HasStarted.store(true);
 				t1_1_verification(status, expected);  // 5
@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 			t1_verification(status, expected); // 6
 			status._t1_HasFinished.store(true);
 		}
-		#pragma oss task shared(var1, var2, status, expected) in(var1) label(T2 R1)
+		#pragma oss task shared(var1, var2, status, expected) in(var1) label("T2 R1")
 		{
 			status._t2_HasStarted.store(true);
 			t2_verification(status, expected); // 7,8
@@ -172,10 +172,10 @@ int main(int argc, char **argv)
 		ExperimentStatus status;
 		ExpectedOutcome expected = {true, false};
 
-		#pragma oss task shared(var1, var2, status, expected) out(var1, var2) label(T1 W1 W2)
+		#pragma oss task shared(var1, var2, status, expected) out(var1, var2) label("T1 W1 W2")
 		{
 			status._t1_HasStarted.store(true);
-			#pragma oss task shared(var1, var2, status, expected) out(var2) label(T1_1 W2)
+			#pragma oss task shared(var1, var2, status, expected) out(var2) label("T1_1 W2")
 			{
 				status._t1_1_HasStarted.store(true);
 				t1_1_verification(status, expected); // 9
@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 			t1_verification(status, expected); // 10
 			status._t1_HasFinished.store(true);
 		}
-		#pragma oss task shared(var1, var2, status, expected) in(var1) label(T2 R1)
+		#pragma oss task shared(var1, var2, status, expected) in(var1) label("T2 R1")
 		{
 			status._t2_HasStarted.store(true);
 			t2_verification(status, expected); // 11,12
@@ -201,10 +201,10 @@ int main(int argc, char **argv)
 		ExperimentStatus status;
 		ExpectedOutcome expected = {true, false};
 
-		#pragma oss task shared(var1, var2, status, expected) in(var2) out(var1) label(T1 W1 R2)
+		#pragma oss task shared(var1, var2, status, expected) in(var2) out(var1) label("T1 W1 R2")
 		{
 			status._t1_HasStarted.store(true);
-			#pragma oss task shared(var1, var2, status, expected) in(var2) label(T1_1 W2)
+			#pragma oss task shared(var1, var2, status, expected) in(var2) label("T1_1 W2")
 			{
 				status._t1_1_HasStarted.store(true);
 				t1_1_verification(status, expected); // 13
@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 			t1_verification(status, expected); // 14
 			status._t1_HasFinished.store(true);
 		}
-		#pragma oss task shared(var1, var2, status, expected) in(var1, var2) label(T2 R1 R2)
+		#pragma oss task shared(var1, var2, status, expected) in(var1, var2) label("T2 R1 R2")
 		{
 			status._t2_HasStarted.store(true);
 			t2_verification(status, expected); // 15, 16
@@ -230,10 +230,10 @@ int main(int argc, char **argv)
 		ExperimentStatus status;
 		ExpectedOutcome expected = {true, true};
 
-		#pragma oss task shared(var1, var2, status, expected) out(var1) label(T1 W1)
+		#pragma oss task shared(var1, var2, status, expected) out(var1) label("T1 W1")
 		{
 			status._t1_HasStarted.store(true);
-			#pragma oss task shared(var1, var2, status, expected) out(var1) label(T1_1 W1)
+			#pragma oss task shared(var1, var2, status, expected) out(var1) label("T1_1 W1")
 			{
 				status._t1_1_HasStarted.store(true);
 				t1_1_verification(status, expected); // 17
@@ -242,7 +242,7 @@ int main(int argc, char **argv)
 			t1_verification(status, expected); // 18
 			status._t1_HasFinished.store(true);
 		}
-		#pragma oss task shared(var1, var2, status, expected) out(var1) label(T2 W1)
+		#pragma oss task shared(var1, var2, status, expected) out(var1) label("T2 W1")
 		{
 			status._t2_HasStarted.store(true);
 			t2_verification(status, expected); // 19,20
@@ -259,10 +259,10 @@ int main(int argc, char **argv)
 		ExperimentStatus status;
 		ExpectedOutcome expected = {false, false};
 
-		#pragma oss task shared(var1, var2, status, expected) in(var1,var2) label(T1 R1 R2)
+		#pragma oss task shared(var1, var2, status, expected) in(var1,var2) label("T1 R1 R2")
 		{
 			status._t1_HasStarted.store(true);
-			#pragma oss task shared(var1, var2, status, expected) in(var2) label(T1_1 W2)
+			#pragma oss task shared(var1, var2, status, expected) in(var2) label("T1_1 W2")
 			{
 				status._t1_1_HasStarted.store(true);
 				t1_1_verification(status, expected);
@@ -271,7 +271,7 @@ int main(int argc, char **argv)
 			t1_verification(status, expected);
 			status._t1_HasFinished.store(true);
 		}
-		#pragma oss task shared(var1, var2, status, expected) in(var1) label(T2 R1)
+		#pragma oss task shared(var1, var2, status, expected) in(var1) label("T2 R1")
 		{
 			status._t2_HasStarted.store(true);
 			t2_verification(status, expected);
@@ -288,10 +288,10 @@ int main(int argc, char **argv)
 		ExperimentStatus status;
 		ExpectedOutcome expected = {false, false};
 
-		#pragma oss task shared(var1, var2, status, expected) in(var1,var2) label(T1 R1 R2)
+		#pragma oss task shared(var1, var2, status, expected) in(var1,var2) label("T1 R1 R2")
 		{
 			status._t1_HasStarted.store(true);
-			#pragma oss task shared(var1, var2, status, expected) in(var2) label(T1_1 R2)
+			#pragma oss task shared(var1, var2, status, expected) in(var2) label("T1_1 R2")
 			{
 				status._t1_1_HasStarted.store(true);
 				t1_1_verification(status, expected);
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
 			t1_verification(status, expected);
 			status._t1_HasFinished.store(true);
 		}
-		#pragma oss task shared(var1, var2, status, expected) in(var2) label(T2 R2)
+		#pragma oss task shared(var1, var2, status, expected) in(var2) label("T2 R2")
 		{
 			status._t2_HasStarted.store(true);
 			t2_verification(status, expected);
@@ -317,10 +317,10 @@ int main(int argc, char **argv)
 		ExperimentStatus status;
 		ExpectedOutcome expected = {true, true};
 
-		#pragma oss task shared(var1, var2, status, expected) out(var1, var2) label(T1 W1 W2)
+		#pragma oss task shared(var1, var2, status, expected) out(var1, var2) label("T1 W1 W2")
 		{
 			status._t1_HasStarted.store(true);
-			#pragma oss task shared(var1, var2, status, expected) out(var2) label(T1_1 W2)
+			#pragma oss task shared(var1, var2, status, expected) out(var2) label("T1_1 W2")
 			{
 				status._t1_1_HasStarted.store(true);
 				t1_1_verification(status, expected);
@@ -329,7 +329,7 @@ int main(int argc, char **argv)
 			t1_verification(status, expected);
 			status._t1_HasFinished.store(true);
 		}
-		#pragma oss task shared(var1, var2, status, expected) in(var2) label(T2 R2)
+		#pragma oss task shared(var1, var2, status, expected) in(var2) label("T2 R2")
 		{
 			status._t2_HasStarted.store(true);
 			t2_verification(status, expected);

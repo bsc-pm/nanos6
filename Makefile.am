@@ -22,7 +22,7 @@ AM_CXXFLAGS = -I$(srcdir)/src -I$(builddir)/src -I$(srcdir)/api -I.
 AM_LDFLAGS = $(AS_NEEDED_FLAGS)
 AM_CXXFLAGS += $(FALIGNED_NEW_FLAG)
 
-SUBDIRS = . commands tests/directive_based scripts
+SUBDIRS = . commands tests/directive_based/clang tests/directive_based/mercurium scripts
 
 
 # See info page of libtool "Updating version info"

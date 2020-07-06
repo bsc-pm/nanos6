@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <algorithm>
@@ -19,7 +19,7 @@ TestAnyProtocolProducer tap;
 static void initialize(double *data, double value, long N, long BS) {
 	for (long i = 0; i < N; i += BS) {
 		long elements = std::min(BS, N - i);
-		
+
 		#pragma oss task out(data[i;elements])
 		for (long j = 0; j < elements; ++j) {
 			data[i + j] = value;
@@ -30,7 +30,7 @@ static void initialize(double *data, double value, long N, long BS) {
 static void axpy(const double *x, double *y, double alpha, long N, long BS, long CS) {
 	for (long i = 0; i < N; i += BS) {
 		long elements = std::min(BS, N - i);
-		
+
 		#pragma oss task for chunksize(CS)
 		for (long j = 0; j < elements; ++j) {
 			y[i + j] += alpha * x[i + j];
@@ -40,10 +40,10 @@ static void axpy(const double *x, double *y, double alpha, long N, long BS, long
 
 static bool validate(double *y, long N, long BS, double expectedValue) {
 	int errors = 0;
-	
+
 	for (long i = 0; i < N; i += BS) {
 		long elements = std::min(BS, N - i);
-		
+
 		#pragma oss task in(y[i;elements]) reduction(+:errors)
 		for (long j = 0; j < elements; ++j) {
 			if (y[i + j] != expectedValue) {
@@ -53,7 +53,7 @@ static bool validate(double *y, long N, long BS, double expectedValue) {
 		}
 	}
 	#pragma oss taskwait
-	
+
 	return (errors == 0);
 }
 
@@ -62,30 +62,30 @@ int main() {
 	long bs = BLOCKSIZE;
 	long cs = CHUNKSIZE;
 	long its = ITERATIONS;
-	
+
 	// Initialization
 	double *x = new double[n];
 	double *y = new double[n];
-	
+
 	tap.registerNewTests(1);
 	tap.begin();
-	
+
 	initialize(x, 1.0, n, bs);
 	initialize(y, 0.0, n, bs);
 	#pragma oss taskwait
-	
+
 	// Main algorithm
 	for (int iteration = 0; iteration < its; iteration++) {
 		axpy(x, y, 1.0, n, bs, cs);
 		#pragma oss taskwait
 	}
-	
+
 	// Validation
 	bool validates = validate(y, n, bs, its);
-	
+
 	tap.evaluate(validates, "The result of the multiaxpy program is correct");
 	tap.end();
-	
+
 	delete[] x;
 	delete[] y;
 	return 0;

@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
 	// Create work for all CPUs
 	for (int i = 0; i < activeCPUs; ++i) {
 		// Block CPUs until the test finishes
-		#pragma oss task shared(exitCondition) label(wait)
+		#pragma oss task shared(exitCondition) label("wait")
 		while (!exitCondition.load());
 	}
 
