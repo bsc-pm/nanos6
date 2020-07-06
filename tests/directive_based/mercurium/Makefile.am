@@ -75,6 +75,7 @@ if HAVE_DLB
 dlb_tests += \
 	dlb-cpu-management.mercurium.test \
 	dlb-cpu-sharing-active-process.mercurium.test \
+	dlb-cpu-sharing-passive-process.mercurium.test \
 	dlb-cpu-sharing.mercurium.test
 else
 cpu_management_tests += \
@@ -168,6 +169,7 @@ if HAVE_DLB
 dlb_tests += \
 	dlb-cpu-management.mercurium.debug.test \
 	dlb-cpu-sharing-active-process.mercurium.debug.test \
+	dlb-cpu-sharing-passive-process.mercurium.debug.test \
 	dlb-cpu-sharing.mercurium.debug.test
 else
 cpu_management_tests += \
@@ -884,6 +886,15 @@ dlb_cpu_sharing_active_process_mercurium_test_LDFLAGS = $(test_common_ldflags)
 dlb_cpu_sharing_active_process_mercurium_debug_test_SOURCES = ../dlb/dlb-cpu-sharing-active-process.cpp
 dlb_cpu_sharing_active_process_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dlb_cpu_sharing_active_process_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dlb_cpu_sharing_passive_process_mercurium_test_SOURCES = ../dlb/dlb-cpu-sharing-passive-process.cpp
+dlb_cpu_sharing_passive_process_mercurium_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_sharing_passive_process_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_passive_process_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_sharing_passive_process_mercurium_debug_test_SOURCES = ../dlb/dlb-cpu-sharing-passive-process.cpp
+dlb_cpu_sharing_passive_process_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_passive_process_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh

@@ -11,6 +11,8 @@
 #include <iostream>
 #include <sstream>       /* stringstream */
 #include <sys/sysinfo.h> /* get_nprocs */
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "TestAnyProtocolProducer.hpp"
 
@@ -56,23 +58,43 @@ int main(int argc, char **argv) {
 
 	const std::string parentTestName("dlb-cpu-sharing");
 	const std::string activeTestName("dlb-cpu-sharing-active-process");
-	std::string command(argv[0]);
+	const std::string passiveTestName("dlb-cpu-sharing-passive-process");
+	std::string activeCommand(argv[0]);
+	std::string passiveCommand(argv[0]);
 
 	// Construct the launch command of the active process test
-	const int index = command.rfind(parentTestName);
+	const int index = activeCommand.rfind(parentTestName);
 	if (index == std::string::npos) {
-		wrongExecution("This test seems that was renamed and does not match with the expected name");
+		wrongExecution("This test is renamed and does not match with the expected name");
 		return 0;
 	}
-	command.replace(index, parentTestName.size(), activeTestName);
+	activeCommand.replace(index, parentTestName.size(), activeTestName);
+	passiveCommand.replace(index, parentTestName.size(), passiveTestName);
 
 	// Delete the shared memory so the subprocesses can be executed
 	if (!std::system("dlb_shm -d > /dev/null 2>&1")) {
 		long firstCPU = (activeCPUs / 2);
 		long lastCPU = activeCPUs - 1;
-		std::stringstream activeCPUs;
-		activeCPUs << "taskset -c " << firstCPU << "-" << lastCPU << " " << command << " nanos6-testing";
-		std::system(activeCPUs.str().c_str());
+
+		// Create a passive process with the first half of CPUs so that it can lend them
+		pid_t pid;
+		if ((pid = fork()) == 0) {
+			cpu_set_t cpuAffinity;
+			CPU_ZERO(&cpuAffinity);
+			for (long id = 0; id < firstCPU; ++id) {
+				CPU_SET(id, &cpuAffinity);
+			}
+
+			sched_setaffinity(pid, sizeof(cpuAffinity), &cpuAffinity);
+
+			std::stringstream passiveCPUs;
+			passiveCPUs << passiveCommand << " nanos6-testing";
+			std::system(passiveCommand.str().c_str());
+		} else {
+			std::stringstream activeCPUs;
+			activeCPUs << "taskset -c " << firstCPU << "-" << lastCPU << " " << activeCommand << " nanos6-testing " << pid;
+			std::system(activeCPUs.str().c_str());
+		}
 
 		return 0;
 	} else {

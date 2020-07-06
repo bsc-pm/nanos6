@@ -6,6 +6,8 @@
 
 #include <cstdlib>       /* getenv */
 #include <cstring>       /* strcmp */
+#include <signal.h>
+#include <sys/types.h>
 
 #include <nanos6/debug.h>
 
@@ -67,7 +69,7 @@ int main(int argc, char **argv) {
 		// by autotools' make check. Skip this test without any warning
 		wrongExecution("Ignoring test as it is part of a bigger one");
 		return 0;
-	} else if ((argc != 2) || (argc == 2 && std::string(argv[1]) != "nanos6-testing")) {
+	} else if ((argc != 3) || (argc == 3 && std::string(argv[1]) != "nanos6-testing")) {
 		wrongExecution("Skipping; Incorrect execution parameters");
 		return 0;
 	}
@@ -80,6 +82,9 @@ int main(int argc, char **argv) {
 		wrongExecution("DLB is disabled, skipping this test");
 		return 0;
 	}
+
+	// Get the PID of the passive process
+	int pid = atoi(argv[2]);
 
 	// Retreive the current amount of CPUs
 	nanos6_wait_for_full_initialization();
@@ -125,15 +130,11 @@ int main(int argc, char **argv) {
 	}
 	#pragma oss taskwait
 
-	// If all CPUs are acquired, success -- otherwise, do not fail the test
-	// but point it out in the message
-	if (numCheckedCPUs.load() == numCPUs) {
-		tap.success("Check that all CPUs in the system are acquired");
-	} else {
-		tap.success("Check that all CPUs in the system are acquired -- weak fail as we cannot ensure it");
-	}
-
+	tap.evaluate(numCheckedCPUs.load() == numCPUs, "Check that all CPUs in the system are acquired");
 	tap.end();
+
+	// Terminate the passive process
+	kill(pid, SIGKILL);
 
 	return 0;
 }
