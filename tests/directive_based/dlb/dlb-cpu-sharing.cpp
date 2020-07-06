@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
 			std::stringstream passiveCPUs;
 			passiveCPUs << passiveCommand << " nanos6-testing";
-			std::system(passiveCommand.str().c_str());
+			std::system(passiveCPUs.str().c_str());
 		} else {
 			std::stringstream activeCPUs;
 			activeCPUs << "taskset -c " << firstCPU << "-" << lastCPU << " " << activeCommand << " nanos6-testing " << pid;
