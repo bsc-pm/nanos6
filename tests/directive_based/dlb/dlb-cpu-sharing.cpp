@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
 			sched_setaffinity(pid, sizeof(cpuAffinity), &cpuAffinity);
 
 			std::stringstream passiveCPUs;
-			passiveCPUs << passiveCommand << " nanos6-testing";
+			passiveCPUs << passiveCommand << " nanos6-testing > /dev/null 2>&1";
 			std::system(passiveCPUs.str().c_str());
 		} else {
 			std::stringstream activeCPUs;
