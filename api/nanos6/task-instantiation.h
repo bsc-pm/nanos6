@@ -200,6 +200,8 @@ typedef enum {
 //! \param[in] args_block_size size needed to store the parameters passed to the task call
 //! \param[in,out] args_block_pointer a pointer to a location to store the pointer to the block of data that will contain the parameters of the task call. Input if flags contains nanos6_preallocated_args_block, out otherwise
 //! \param[out] task_pointer a pointer to a location to store the task handler
+//! \param[in] flags the flags of the task
+//! \param[in] num_deps the expected number of dependencies of this task or -1 if undefined
 void nanos6_create_task(
 	nanos6_task_info_t *task_info,
 	nanos6_task_invocation_info_t *task_invocation_info,
