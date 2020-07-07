@@ -156,9 +156,10 @@ void TaskFinalization::disposeTask(Task *task)
 				disposableBlockSize += sizeof(Task);
 			}
 
-			TaskDataAccesses &dataAccesses = task->getDataAccesses();
-			disposableBlockSize += dataAccesses.getAdditionalMemorySize();
-			disposableBlockSize += TaskHardwareCounters::getTaskHardwareCountersSize();
+			const TaskDataAccesses &taskAccesses = task->getDataAccesses();
+			const TaskHardwareCounters &taskCounters = task->getHardwareCounters();
+			disposableBlockSize += taskAccesses.getAdditionalMemorySize();
+			disposableBlockSize += taskCounters.getAdditionalMemorySize();
 
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 

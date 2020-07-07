@@ -7,7 +7,7 @@
 #include "ComputePlace.hpp"
 #include "MemoryAllocator.hpp"
 #include "MemoryPlace.hpp"
-#include "hardware-counters/TaskHardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCountersInfo.hpp"
 #include "tasks/Taskfor.hpp"
 
 #include <InstrumentTaskExecution.hpp>
@@ -53,9 +53,13 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 
 	// Allocate hardware counters in a different call to avoid
 	// the free by getPreallocatedArgsBlock()
-	size_t taskCountersSize = TaskHardwareCounters::getTaskHardwareCountersSize();
-	void *allocationAddress = (taskCountersSize > 0) ? malloc(taskCountersSize) : nullptr;
-	TaskHardwareCounters taskCounters(allocationAddress);
+	TaskHardwareCountersInfo taskCounters;
+	if (taskCounters.getAllocationSize() > 0) {
+		void *allocationAddress = malloc(taskCounters.getAllocationSize());
+		assert(allocationAddress != nullptr);
+
+		taskCounters.setAllocationAddress(allocationAddress);
+	}
 
 	// Allocate preallocated taskfor
 	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr,
@@ -66,7 +70,7 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 	// MemoryAllocator is still not available, so use malloc
 	_preallocatedArgsBlock = malloc(_preallocatedArgsBlockSize);
 	FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr,
-		"Insufficient memory for preallocatedArgsBlock.");
+		"Insufficient memory for preallocatedArgsBlock");
 
 	HardwareCounters::taskCreated(_preallocatedTaskfor);
 }
@@ -77,17 +81,18 @@ ComputePlace::~ComputePlace()
 	assert(taskfor != nullptr);
 
 	// Retreive the allocation address
-	TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
+	const TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
 	void *allocationAddress = taskCounters.getAllocationAddress();
 
 	delete taskfor;
 
-	// After hw counters are deleted (Task destructor), free task hardware counters if existent
+	// After hardware counters are deleted (task destructor), free the
+	// task hardware counters structure if existent
 	if (allocationAddress != nullptr) {
 		free(allocationAddress);
 	}
 
-	// First allocation (1024) is done using malloc.
+	// First allocation (1024) is done using malloc
 	if (_preallocatedArgsBlockSize == 1024) {
 		free(_preallocatedArgsBlock);
 	} else {
@@ -98,7 +103,7 @@ ComputePlace::~ComputePlace()
 void *ComputePlace::getPreallocatedArgsBlock(size_t requiredSize)
 {
 	if (requiredSize > _preallocatedArgsBlockSize) {
-		// First allocation (1024) is done using malloc.
+		// First allocation (1024) was done using malloc
 		if (_preallocatedArgsBlockSize == 1024) {
 			free(_preallocatedArgsBlock);
 		} else {
@@ -108,7 +113,7 @@ void *ComputePlace::getPreallocatedArgsBlock(size_t requiredSize)
 		_preallocatedArgsBlockSize = requiredSize;
 		_preallocatedArgsBlock = MemoryAllocator::alloc(_preallocatedArgsBlockSize);
 		FatalErrorHandler::failIf(_preallocatedArgsBlock == nullptr,
-			"Insufficient memory for preallocatedArgsBlock.");
+			"Insufficient memory for preallocatedArgsBlock");
 	}
 	return _preallocatedArgsBlock;
 }

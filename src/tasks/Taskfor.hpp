@@ -45,8 +45,8 @@ public:
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
-		TaskDataAccessesInfo taskAccessInfo,
-		const TaskHardwareCounters &taskCounters,
+		const TaskDataAccessesInfo &taskAccessInfo,
+		const TaskHardwareCountersInfo &taskCounters,
 		bool runnable = false
 	) :
 		Task(argsBlock, argsBlockSize, taskInfo,

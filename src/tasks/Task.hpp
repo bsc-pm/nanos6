@@ -17,6 +17,7 @@
 
 #include "hardware/device/DeviceEnvironment.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCountersInfo.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "tasks/TasktypeData.hpp"
@@ -165,8 +166,8 @@ public:
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
-		TaskDataAccessesInfo taskAccessInfo,
-		const TaskHardwareCounters &taskCounters
+		const TaskDataAccessesInfo &taskAccessInfo,
+		const TaskHardwareCountersInfo &taskCounters
 	);
 
 	virtual inline void reinitialize(

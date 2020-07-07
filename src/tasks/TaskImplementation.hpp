@@ -29,8 +29,8 @@ inline Task::Task(
 	Task *parent,
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags,
-	TaskDataAccessesInfo taskAccessInfo,
-	const TaskHardwareCounters &taskCounters
+	const TaskDataAccessesInfo &taskAccessInfo,
+	const TaskHardwareCountersInfo &taskCounters
 ) :
 	_argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),

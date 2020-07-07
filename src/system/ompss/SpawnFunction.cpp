@@ -7,6 +7,7 @@
 #include <nanos6.h>
 #include <nanos6/library-mode.h>
 
+#include "AddTask.hpp"
 #include "SpawnFunction.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "tasks/StreamManager.hpp"
@@ -95,13 +96,16 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 	if (newTaskType)
 		Instrument::registeredNewSpawnedTaskType(taskInfo);
 
-	SpawnedFunctionArgsBlock *argsBlock = nullptr;
-	Task *task = nullptr;
-
-	nanos6_create_task(taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, nanos6_waiting_task, 0);
-
-	assert(argsBlock != nullptr);
+	Task *task = AddTask::createTask(
+		taskInfo, &_spawnedFunctionInvocationInfo,
+		nullptr, sizeof(SpawnedFunctionArgsBlock),
+		nanos6_waiting_task
+	);
 	assert(task != nullptr);
+
+	SpawnedFunctionArgsBlock *argsBlock =
+		(SpawnedFunctionArgsBlock *) task->getArgsBlock();
+	assert(argsBlock != nullptr);
 
 	argsBlock->_function = function;
 	argsBlock->_args = args;
@@ -110,11 +114,13 @@ void nanos6_spawn_function(void (*function)(void *), void *args, void (*completi
 
 	task->setSpawned();
 #ifdef EXTRAE_ENABLED
-	if (label != nullptr && strcmp(label,"main") == 0) {
+	if (label != nullptr && strcmp(label, "main") == 0) {
 		task->markAsMainTask();
 	}
 #endif
-	nanos6_submit_task(task);
+
+	// Submit task without parent
+	AddTask::submitTask(task, nullptr);
 }
 
 namespace SpawnedFunctions {
