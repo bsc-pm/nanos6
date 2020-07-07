@@ -6,8 +6,6 @@
 
 #include <cstdlib>       /* getenv */
 #include <cstring>       /* strcmp */
-#include <signal.h>
-#include <sys/types.h>
 
 #include <nanos6/debug.h>
 
@@ -52,8 +50,8 @@ void cpuComputation(long numCPUs)
 			++spins;
 		}
 
-		// Wait for 2 seconds max
-		if (timer.lap() > 2000000) {
+		// Wait for 1 seconds max
+		if (timer.lap() > 1000000) {
 			return;
 		}
 	}
@@ -69,7 +67,7 @@ int main(int argc, char **argv) {
 		// by autotools' make check. Skip this test without any warning
 		wrongExecution("Ignoring test as it is part of a bigger one");
 		return 0;
-	} else if ((argc != 3) || (argc == 3 && std::string(argv[1]) != "nanos6-testing")) {
+	} else if ((argc != 2) || (argc == 2 && std::string(argv[1]) != "nanos6-testing")) {
 		wrongExecution("Skipping; Incorrect execution parameters");
 		return 0;
 	}
@@ -82,9 +80,6 @@ int main(int argc, char **argv) {
 		wrongExecution("DLB is disabled, skipping this test");
 		return 0;
 	}
-
-	// Get the PID of the passive process
-	int pid = atoi(argv[2]);
 
 	// Retreive the current amount of CPUs
 	nanos6_wait_for_full_initialization();
@@ -124,17 +119,23 @@ int main(int argc, char **argv) {
 	// Global atomic counters
 	numBusyCPUs = 0;
 	numCheckedCPUs = 0;
-	for (int id = 0; id < numCPUs; ++id) {
-		#pragma oss task label("ownedCPUTask")
-		cpuComputation(numCPUs);
+
+	// Try for a number of iterations to have all CPUs working. This may fail
+	// if the passive process delays its execution
+	int iteration = 0;
+	while (iteration < 5 && numCheckedCPUs.load() != numCPUs) {
+		numBusyCPUs = 0;
+		numCheckedCPUs = 0;
+
+		for (int id = 0; id < numCPUs; ++id) {
+			#pragma oss task label("ownedCPUTask")
+			cpuComputation(numCPUs);
+		}
+
+		#pragma oss taskwait
+		++iteration;
 	}
-	#pragma oss taskwait
 
 	tap.evaluate(numCheckedCPUs.load() == numCPUs, "Check that all CPUs in the system are acquired");
 	tap.end();
-
-	// Terminate the passive process
-	kill(pid, SIGKILL);
-
-	return 0;
 }

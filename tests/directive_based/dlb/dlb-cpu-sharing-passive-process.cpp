@@ -31,15 +31,13 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	// This process will be killed by the active one, simply
-	// wait and lend all CPUs. Ultimately, end the process
-	// after 10 seconds if it still has not finished
+	// This process simply waits and lends all its CPUs. Ultimately, the process
+	// will end after 6
 
 	Timer timer;
 	timer.start();
 	while (1) {
-		// Wait for 10 seconds max
-		if (timer.lap() > 10000000) {
+		if (timer.lap() > 6000000) {
 			return 0;
 		}
 	}
