@@ -46,10 +46,13 @@ public:
 	//! No other throttle functions can be called after shutdown()
 	static void shutdown();
 
-	//! \brief Engage if the conditions of the task require it the throttle mechanism
+	//! \brief Engage if the conditions of the creator task require the throttle mechanism
 	//!
-	//! \returns true if the throttle should be engaged again, false if the task can continue
-	static bool engage(Task *task, WorkerThread *workerThread);
+	//! \param creator The task that is creating a child task
+	//! \param workerThread The worker thread executing the creator task
+	//!
+	//! \returns true if the throttle should be engaged again, false if the creator can continue
+	static bool engage(Task *creator, WorkerThread *workerThread);
 };
 
 #endif // THROTTLE_HPP
