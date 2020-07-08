@@ -374,7 +374,6 @@ common_sources = \
 	src/hardware/places/ComputePlace.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/hardware-counters/HardwareCounters.cpp \
-	src/hardware-counters/TaskHardwareCounters.cpp \
 	src/hardware-counters/ThreadHardwareCounters.cpp \
 	src/hardware-counters/rapl/RAPLHardwareCounters.cpp \
 	src/lowlevel/BoostAssertionFailureHandler.cpp \
@@ -888,7 +887,6 @@ noinst_HEADERS = \
 	src/hardware-counters/HardwareCountersInterface.hpp \
 	src/hardware-counters/SupportedHardwareCounters.hpp \
 	src/hardware-counters/TaskHardwareCounters.hpp \
-	src/hardware-counters/TaskHardwareCountersInfo.hpp \
 	src/hardware-counters/TaskHardwareCountersInterface.hpp \
 	src/hardware-counters/ThreadHardwareCounters.hpp \
 	src/hardware-counters/ThreadHardwareCountersInterface.hpp \

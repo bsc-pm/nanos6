@@ -23,21 +23,25 @@ private:
 
 public:
 	inline Taskloop(
-		void *argsBlock, size_t argsBlockSize,
+		void *argsBlock,
+		size_t argsBlockSize,
 		nanos6_task_info_t *taskInfo,
 		nanos6_task_invocation_info_t *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
 		const TaskDataAccessesInfo &taskAccessInfo,
-		const TaskHardwareCountersInfo &taskCounters
+		void *taskCountersAddress
 	) :
-		Task(argsBlock, argsBlockSize, taskInfo,
-			taskInvokationInfo, parent,
-			instrumentationTaskId, flags,
-			taskAccessInfo, taskCounters),
-		  _bounds(), _source(false)
-	{}
+		Task(argsBlock, argsBlockSize,
+			taskInfo, taskInvokationInfo,
+			parent, instrumentationTaskId,
+			flags, taskAccessInfo,
+			taskCountersAddress),
+		_bounds(),
+		_source(false)
+	{
+	}
 
 	inline void initialize(size_t lowerBound, size_t upperBound, size_t grainsize, size_t chunksize)
 	{

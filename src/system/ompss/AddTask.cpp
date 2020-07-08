@@ -19,7 +19,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/places/ComputePlace.hpp"
-#include "hardware-counters/TaskHardwareCountersInfo.hpp"
+#include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
@@ -93,14 +93,14 @@ Task *AddTask::createTask(
 	}
 
 	TaskDataAccessesInfo taskAccesses(numDependencies);
-	TaskHardwareCountersInfo taskCounters;
+	size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
 
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	if (hasPreallocatedArgsBlock) {
 		assert(argsBlock != nullptr);
 		task = (Task *) MemoryAllocator::alloc(taskSize
 			+ taskAccesses.getAllocationSize()
-			+ taskCounters.getAllocationSize());
+			+ taskCountersSize);
 	} else {
 		// Alignment fixup
 		size_t missalignment = argsBlockSize & (DATA_ALIGNMENT_SIZE - 1);
@@ -110,34 +110,38 @@ Task *AddTask::createTask(
 		// Allocation and layout
 		argsBlock = MemoryAllocator::alloc(argsBlockSize + taskSize
 			+ taskAccesses.getAllocationSize()
-			+ taskCounters.getAllocationSize());
+			+ taskCountersSize);
 		task = (Task *) ((char *) argsBlock + argsBlockSize);
 	}
 
 	Instrument::createdArgsBlock(taskId, argsBlock, originalArgsBlockSize, argsBlockSize);
 
 	taskAccesses.setAllocationAddress((char *) task + taskSize);
-	taskCounters.setAllocationAddress((char *) task + taskSize + taskAccesses.getAllocationSize());
+
+	void *taskCountersAddress = nullptr;
+	if (taskCountersSize > 0) {
+		taskCountersAddress = (char *) task + taskSize + taskAccesses.getAllocationSize();
+	}
 
 	if (isTaskloop || isTaskloopFor) {
 		new (task) Taskloop(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCounters);
+			flags, taskAccesses, taskCountersAddress);
 	} else if (isTaskfor) {
 		// Taskfors are always final
 		flags |= nanos6_final_task;
 
 		new (task) Taskfor(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCounters);
+			flags, taskAccesses, taskCountersAddress);
 	} else if (isStreamExecutor) {
 		new (task) StreamExecutor(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId, flags,
-			taskAccesses, taskCounters);
+			taskAccesses, taskCountersAddress);
 	} else {
 		new (task) Task(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCounters);
+			flags, taskAccesses, taskCountersAddress);
 	}
 
 	Instrument::exitCreateTask();

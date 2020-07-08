@@ -109,9 +109,13 @@ public:
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
 		const TaskDataAccessesInfo &taskAccessInfo,
-		const TaskHardwareCountersInfo &taskCounters
-	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo, taskCounters),
+		void *taskCountersAddress
+	) :
+		Task(argsBlock, argsBlockSize,
+			taskInfo, taskInvokationInfo,
+			parent, instrumentationTaskId,
+			flags, taskAccessInfo,
+			taskCountersAddress),
 		_blockingContext(nullptr),
 		_mustShutdown(false),
 		_queue(),

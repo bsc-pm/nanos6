@@ -19,9 +19,6 @@
 #include "hardware-counters/pqos/PQoSTaskHardwareCounters.hpp"
 #endif
 
-// Forward declaration
-class TaskHardwareCountersInfo;
-
 
 class TaskHardwareCounters {
 
@@ -33,11 +30,13 @@ private:
 	//! Whether monitoring of counters for this task is enabled
 	bool _enabled;
 
-	friend class TaskHardwareCountersInfo;
-
 public:
 
-	TaskHardwareCounters(const TaskHardwareCountersInfo &info);
+	inline TaskHardwareCounters(void *allocationAddress) :
+		_allocationAddress(allocationAddress),
+		_enabled(false)
+	{
+	}
 
 	//! \brief Initialize and construct all backend objects with the previously allocated space
 	//!
@@ -179,14 +178,7 @@ public:
 	}
 
 	//! \brief Get the size needed to construct all the structures for all backends
-	inline size_t getAdditionalMemorySize() const
-	{
-		return getTaskHardwareCountersSize();
-	}
-
-private:
-	//! \brief Get the size needed to construct all the structures for all backends
-	static inline size_t getTaskHardwareCountersSize()
+	static inline size_t getAllocationSize()
 	{
 		size_t totalSize = 0;
 
@@ -201,6 +193,7 @@ private:
 		return totalSize;
 	}
 
+private:
 	//! \brief Get the size needed to construct all the structures for PAPI
 	static inline size_t getPAPITaskHardwareCountersSize()
 	{

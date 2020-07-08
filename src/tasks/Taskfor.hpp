@@ -39,23 +39,27 @@ private:
 public:
 	// Methods for both source and collaborator taskfors
 	inline Taskfor(
-		void *argsBlock, size_t argsBlockSize,
+		void *argsBlock,
+		size_t argsBlockSize,
 		nanos6_task_info_t *taskInfo,
 		nanos6_task_invocation_info_t *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
 		const TaskDataAccessesInfo &taskAccessInfo,
-		const TaskHardwareCountersInfo &taskCounters,
+		void *taskCountersAddress,
 		bool runnable = false
 	) :
-		Task(argsBlock, argsBlockSize, taskInfo,
-			taskInvokationInfo, parent,
-			instrumentationTaskId, flags,
-			taskAccessInfo, taskCounters),
-		  _remainingChunks(), _remainingIterations(),
-		  _bounds(), _completedIterations(0),
-		  _myChunk(-1)
+		Task(argsBlock, argsBlockSize,
+			taskInfo, taskInvokationInfo,
+			parent, instrumentationTaskId,
+			flags, taskAccessInfo,
+			taskCountersAddress),
+		_remainingChunks(),
+		_remainingIterations(),
+		_bounds(),
+		_completedIterations(0),
+		_myChunk(-1)
 	{
 		assert(isFinal());
 		setRunnable(runnable);

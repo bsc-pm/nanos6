@@ -7,7 +7,7 @@
 #include "ComputePlace.hpp"
 #include "MemoryAllocator.hpp"
 #include "MemoryPlace.hpp"
-#include "hardware-counters/TaskHardwareCountersInfo.hpp"
+#include "hardware-counters/TaskHardwareCounters.hpp"
 #include "tasks/Taskfor.hpp"
 
 #include <InstrumentTaskExecution.hpp>
@@ -51,20 +51,20 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 {
 	TaskDataAccessesInfo taskAccessInfo(0);
 
+	void *taskCountersAddress = nullptr;
+	size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
+
 	// Allocate hardware counters in a different call to avoid
 	// the free by getPreallocatedArgsBlock()
-	TaskHardwareCountersInfo taskCounters;
-	if (taskCounters.getAllocationSize() > 0) {
-		void *allocationAddress = malloc(taskCounters.getAllocationSize());
-		assert(allocationAddress != nullptr);
-
-		taskCounters.setAllocationAddress(allocationAddress);
+	if (taskCountersSize > 0) {
+		taskCountersAddress = malloc(taskCountersSize);
+		assert(taskCountersAddress != nullptr);
 	}
 
 	// Allocate preallocated taskfor
 	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr,
 		Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task,
-		taskAccessInfo, taskCounters, true);
+		taskAccessInfo, taskCountersAddress, true);
 	_preallocatedArgsBlockSize = 1024;
 
 	// MemoryAllocator is still not available, so use malloc
