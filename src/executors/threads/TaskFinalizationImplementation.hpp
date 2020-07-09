@@ -204,7 +204,7 @@ void TaskFinalization::disposeTask(Task *task)
 		task = parent;
 
 		if (isSpawned) {
-			SpawnedFunctions::_pendingSpawnedFunctions--;
+			SpawnFunction::_pendingSpawnedFunctions--;
 		} else if (isStreamExecutor) {
 			StreamManager::_activeStreamExecutors--;
 		}
