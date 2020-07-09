@@ -376,11 +376,11 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		super().__init__()
 		self._hooks = [
 			("nanos6:thread_create",                 self.hook_initStack),
-			("nanos6:external_thread_create",        self.hook_initStack),
+			("nanos6:external_thread_create",        self.hook_initExternalThreadStack),
 			("nanos6:thread_resume",                 self.hook_eventContinue),
-			("nanos6:external_thread_resume",        self.hook_eventContinue),
+			("nanos6:external_thread_resume",        self.hook_runtime),
 			("nanos6:thread_suspend",                self.hook_eventStop),
-			("nanos6:external_thread_suspend",       self.hook_eventStop),
+			("nanos6:external_thread_suspend",       self.hook_unstack),
 			("nanos6:thread_shutdown",               self.hook_eventStop),
 			("nanos6:external_thread_shutdown",      self.hook_eventStop),
 			("nanos6:task_start",                    self.hook_task),
@@ -455,6 +455,11 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		thread = RuntimeModel.getThread(tid)
 		thread.eventStack = [self.Status.Runtime]
 
+	def hook_initExternalThreadStack(self, event, payload):
+		tid = event["tid"]
+		thread = RuntimeModel.getThread(tid)
+		thread.eventStack = [self.Status.Idle]
+
 	def hook_unstack(self, event, payload):
 		stack = self.getEventStack(event)
 		stack.pop()
@@ -466,6 +471,10 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 
 	def hook_eventStop(self, _, payload):
 		self.emitVal(self.Status.Idle, payload)
+
+	@stackEvent
+	def hook_runtime(self, _):
+		return self.Status.Runtime
 
 	@stackEvent
 	def hook_task(self, _):
