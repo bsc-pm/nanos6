@@ -168,20 +168,39 @@ namespace CTFAPI {
 	static void tracepoint_async(CTFEvent *event, uint64_t timestamp,
 				     ARGS... args)
 	{
-		CTFStream *stream = Instrument::getCPULocalData()->userStream;
+		// When issuing async tracepoints, we cannot rely on locks
+		// because the timestamp should be aquired within a locked
+		// region. Otherwise we could be writing unordered events and
+		// corrupting the trace. However, here the user is providing us
+		// with a timestamp obtained in the past.  Hence, the
+		// tracepoint_async user must guarantee that events are written
+		// sequentially.
 
-		// locking only implemented for external threads
-		stream->lock();
+		CTFStream *stream = Instrument::getCPULocalData()->userStream;
 		__tp_lock(stream, event, timestamp, args...);
-		stream->unlock();
 	}
 
 	// TODO add nanos6 developer instructions for adding tracepoints
 	template<typename... ARGS>
 	static void tracepoint(CTFEvent *event, ARGS... args)
 	{
-		uint64_t timestamp = getRelativeTimestamp();
-		tracepoint_async(event, timestamp, args...);
+		CTFStream *stream;
+		uint64_t timestamp;
+
+		// Obtaining the per-cpu local object might trigger a
+		// tracepoint. This will happen if the current thread is an
+		// external thread that has not been initialized yet. In that
+		// case a nanos6:external_thread_create event will be emited
+		// before the current one.
+		stream = Instrument::getCPULocalData()->userStream;
+
+		// locking only implemented for external threads
+		stream->lock();
+
+		timestamp = getRelativeTimestamp();
+		__tp_lock(stream, event, timestamp, args...);
+
+		stream->unlock();
 	}
 }
 

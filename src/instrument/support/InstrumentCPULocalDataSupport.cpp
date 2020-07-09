@@ -6,8 +6,10 @@
 
 #include <cassert>
 
-#include <executors/threads/WorkerThread.hpp>
 #include <system/LeaderThread.hpp>
+#include <executors/threads/WorkerThread.hpp>
+#include <lowlevel/threads/ExternalThread.hpp>
+#include <lowlevel/threads/ExternalThreadGroup.hpp>
 
 #include "InstrumentCPULocalDataSupport.hpp"
 
@@ -27,6 +29,21 @@ Instrument::CPULocalData *Instrument::getCPULocalData()
 			CPU = LeaderThread::getComputePlace();
 			cpuLocalData = &CPU->getInstrumentationData();
 		} else {
+			// Ensure that the external thread object has been created
+			ExternalThread *currentExternalThread = ExternalThread::getCurrentExternalThread();
+			if (currentExternalThread == nullptr) {
+				// Create a new ExternalThread structure for this
+				// unknown external thread
+				currentExternalThread = new ExternalThread("external");
+				assert(currentExternalThread != nullptr);
+
+				currentExternalThread->initializeExternalThread();
+
+				// Register it in the group so that it will be deleted
+				// when shutting down Nanos6
+				ExternalThreadGroup::registerExternalThread(currentExternalThread);
+			}
+			assert(currentExternalThread != nullptr);
 			cpuLocalData = virtualCPULocalData;
 		}
 	}
