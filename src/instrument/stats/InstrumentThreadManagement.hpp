@@ -70,6 +70,10 @@ namespace Instrument {
 		statsThreadHasResumed();
 	}
 
+	inline void threadSynchronizationCompleted(thread_id_t)
+	{
+	}
+
 	inline void threadWillSuspend(thread_id_t, compute_place_id_t)
 	{
 		statsThreadWillSuspend();

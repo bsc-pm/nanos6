@@ -96,6 +96,10 @@ namespace Instrument {
 		addLogEntry(logEntry);
 	}
 
+	void threadSynchronizationCompleted(__attribute((unused)) thread_id_t threadId)
+	{
+	}
+
 	static void verboseThreadWillSuspend()
 	{
 		if (!_verboseThreadManagement) {

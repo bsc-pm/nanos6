@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_THREAD_MANAGEMENT_HPP
@@ -219,7 +219,11 @@ namespace Instrument {
 	inline void threadHasResumedBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{
 	}
-	
+
+	inline void threadSynchronizationCompleted(__attribute((unused)) thread_id_t threadId)
+	{
+	}
+
 	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
 	{
 		if (_traceAsThreads) {

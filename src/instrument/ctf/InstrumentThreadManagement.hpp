@@ -19,9 +19,6 @@
 namespace Instrument {
 	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
-		threadId = thread_id_t();
-		ThreadLocalData &tld = getThreadLocalData();
-		tld.isBusyWaiting = false;
 	}
 
 	inline void exitThreadCreation(__attribute__((unused)) thread_id_t threadId)
@@ -44,6 +41,7 @@ namespace Instrument {
 	{
 	}
 
+	void threadSynchronizationCompleted(thread_id_t threadId);
 	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
 	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
 	void threadWillSuspend(external_thread_id_t threadId);

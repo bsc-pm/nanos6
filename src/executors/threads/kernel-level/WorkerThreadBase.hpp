@@ -40,18 +40,19 @@ protected:
 	{
 		KernelLevelThread::setCurrentKernelLevelThread();
 	}
-	
+
 	inline void synchronizeInitialization()
 	{
 		assert(_cpu != nullptr);
 		bind(_cpu);
-		
+
 		// The thread suspends itself after initialization, since the "activator" is the one that will unblock it when needed
 		Instrument::threadWillSuspendBeforeSync(_instrumentationId, _cpu->getInstrumentationId());
 		suspend();
+		Instrument::threadSynchronizationCompleted(_instrumentationId);
 		Instrument::threadHasResumed(_instrumentationId, _cpu->getInstrumentationId());
 	}
-	
+
 	inline void start()
 	{
 		KernelLevelThread::start(_cpu->getPthreadAttr());
