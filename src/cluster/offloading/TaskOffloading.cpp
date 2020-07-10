@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <utility>
@@ -120,8 +120,8 @@ namespace TaskOffloading {
 			return;
 		}
 
-		//! The access is in the Directory. Retrieve the home nodes and
-		//! propagate satisfiability per region
+		// The access is in the Directory. Retrieve the home nodes and
+		// propagate satisfiability per region
 		Directory::HomeNodesArray *array =
 			Directory::find(satInfo._region);
 		assert(!array->empty());
@@ -224,14 +224,14 @@ namespace TaskOffloading {
 
 		taskInfo._lock.lock();
 		if (taskInfo._localTask == nullptr) {
-			//! The remote task has not been created yet, so we
-			//! just add the info to the temporary vector
+			// The remote task has not been created yet, so we
+			// just add the info to the temporary vector
 			taskInfo._satInfo.push_back(satInfo);
 			taskInfo._lock.unlock();
 		} else {
-			//! We *HAVE* to leave the lock now, because propagating
-			//! satisfiability might lead to unregistering the remote
-			//! task
+			// We *HAVE* to leave the lock now, because propagating
+			// satisfiability might lead to unregistering the remote
+			// task
 			taskInfo._lock.unlock();
 			propagateSatisfiability(taskInfo._localTask, satInfo);
 		}
@@ -244,8 +244,8 @@ namespace TaskOffloading {
 	{
 		assert(location != nullptr);
 
-		/* If location is a host device on this node it is a cluster
-		 * device from the point of view of the remote node */
+		// If location is a host device on this node it is a cluster
+		// device from the point of view of the remote node
 		if (location->getType() == nanos6_host_device) {
 			location = ClusterManager::getCurrentMemoryNode();
 		}
@@ -300,13 +300,16 @@ namespace TaskOffloading {
 		size_t argsBlockSize;
 		void *argsBlock = msg->getArgsBlock(argsBlockSize);
 
-		size_t flags = msg->getFlags();
+		// Create the task with no dependencies. Treat this call
+		// as user code since we are inside a spawned task context
+		Task *task = AddTask::createTask(
+			taskInfo, taskInvocationInfo,
+			nullptr, argsBlockSize,
+			msg->getFlags(), 0, true
+		);
+		assert(task != nullptr);
 
-		Task *task;
-		void *newArgsBlock;
-		nanos6_create_task(taskInfo, taskInvocationInfo, argsBlockSize,
-				&newArgsBlock, (void **)&task, flags, 0);
-
+		void *newArgsBlock = task->getArgsBlock();
 		if (argsBlockSize != 0) {
 			memcpy(newArgsBlock, argsBlock, argsBlockSize);
 		}
@@ -318,8 +321,8 @@ namespace TaskOffloading {
 
 		task->setClusterContext(clusterContext);
 
-		//! Register remote Task with TaskOffloading mechanism before
-		//! submitting it to the dependency system.
+		// Register remote Task with TaskOffloading mechanism before
+		// submitting it to the dependency system
 		RemoteTaskInfo &remoteTaskInfo =
 			_remoteTasks.getTaskInfo(offloadedTaskId,
 					offloader->getIndex());
@@ -328,9 +331,16 @@ namespace TaskOffloading {
 		assert(remoteTaskInfo._localTask == nullptr);
 		remoteTaskInfo._localTask = task;
 
-		nanos6_submit_task(task);
+		WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
+		assert(workerThread != nullptr);
 
-		//! propagate satisfiability embedded in the Message
+		Task *parent = workerThread->getTask();
+		assert(parent != nullptr);
+
+		// Submit the task
+		AddTask::submitTask(task, parent, true);
+
+		// Propagate satisfiability embedded in the Message
 		size_t numSatInfo;
 		TaskOffloading::SatisfiabilityInfo *satInfo =
 			msg->getSatisfiabilityInfo(numSatInfo);
@@ -338,7 +348,7 @@ namespace TaskOffloading {
 			propagateSatisfiability(task, satInfo[i]);
 		}
 
-		//! propagate, also any satisfiability that has already arrived
+		// Propagate also any satisfiability that has already arrived
 		if (!remoteTaskInfo._satInfo.empty()) {
 			propagateSatisfiability(task, remoteTaskInfo._satInfo);
 			remoteTaskInfo._satInfo.clear();
@@ -355,12 +365,12 @@ namespace TaskOffloading {
 
 		sendRemoteTaskFinished(offloadedTaskId, offloader);
 
-		//! For the moment, we do not delete the Message since it includes the
-		//! buffers that hold the nanos6_task_info_t and the
-		//! nanos6_task_implementation_info_t which we might need later on,
-		//! e.g. Extrae is using these during shutdown. This will change once
-		//! mercurium gives us access to the respective fields within the
-		//! binary.
-		//! delete msg;
+		// For the moment, we do not delete the Message since it includes the
+		// buffers that hold the nanos6_task_info_t and the
+		// nanos6_task_implementation_info_t which we might need later on,
+		// e.g. Extrae is using these during shutdown. This will change once
+		// mercurium gives us access to the respective fields within the
+		// binary.
+		// delete msg;
 	}
 }

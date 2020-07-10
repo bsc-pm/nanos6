@@ -4,15 +4,6 @@
 	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include <nanos6.h>
-#include <nanos6/library-mode.h>
-
-#include "SpawnFunction.hpp"
-#include "lowlevel/SpinLock.hpp"
-#include "tasks/StreamManager.hpp"
-#include "tasks/Task.hpp"
-#include "tasks/TaskInfo.hpp"
-#include "InstrumentAddTask.hpp"
 
 #include <cassert>
 #include <map>
@@ -20,124 +11,152 @@
 #include <string>
 #include <utility>
 
+#include <nanos6.h>
+#include <nanos6/library-mode.h>
 
-typedef std::pair<void (*)(void *), std::string> task_info_key_t;
+#include "AddTask.hpp"
+#include "SpawnFunction.hpp"
+#include "lowlevel/SpinLock.hpp"
+#include "tasks/StreamManager.hpp"
+#include "tasks/Task.hpp"
+#include "tasks/TaskInfo.hpp"
 
-static SpinLock _spawnedFunctionInfosLock;
-static std::map<task_info_key_t, nanos6_task_info_t> _spawnedFunctionInfos;
-
-static nanos6_task_invocation_info_t _spawnedFunctionInvocationInfo = { "Spawned from external code" };
+#include <InstrumentAddTask.hpp>
 
 
+//! Static members
+std::atomic<unsigned int> SpawnFunction::_pendingSpawnedFunctions(0);
+std::map<SpawnFunction::task_info_key_t, nanos6_task_info_t> SpawnFunction::_spawnedFunctionInfos;
+SpinLock SpawnFunction::_spawnedFunctionInfosLock;
+nanos6_task_invocation_info_t SpawnFunction::_spawnedFunctionInvocationInfo = { "Spawned from external code" };
+
+
+//! Args block of spawned functions
 struct SpawnedFunctionArgsBlock {
-	void (*_function)(void *);
+	SpawnFunction::function_t _function;
 	void *_args;
-	void (*_completion_callback)(void *);
-	void *_completion_args;
+	SpawnFunction::function_t _completionCallback;
+	void *_completionArgs;
 
-	SpawnedFunctionArgsBlock()
-	: _function(nullptr), _args(nullptr), _completion_callback(nullptr), _completion_args(nullptr)
+	SpawnedFunctionArgsBlock() :
+		_function(nullptr),
+		_args(nullptr),
+		_completionCallback(nullptr),
+		_completionArgs(nullptr)
 	{
 	}
 };
 
 
-static void nanos6_spawned_function_wrapper(void *args, __attribute__((unused)) void *device_env, __attribute__((unused)) nanos6_address_translation_entry_t *translations)
-{
-	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
-	assert(argsBlock != nullptr);
-
-	argsBlock->_function(argsBlock->_args);
-}
-
-
-static void nanos6_spawned_function_destructor(void *args)
-{
-	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
-	assert(argsBlock != nullptr);
-
-	if (argsBlock->_completion_callback != nullptr) {
-		argsBlock->_completion_callback(argsBlock->_completion_args);
-	}
-}
-
-
-void nanos6_spawn_function(void (*function)(void *), void *args, void (*completion_callback)(void *), void *completion_args, char const *label)
-{
-	SpawnedFunctions::_pendingSpawnedFunctions++;
+void SpawnFunction::spawnFunction(
+	function_t function,
+	void *args,
+	function_t completionCallback,
+	void *completionArgs,
+	char const *label,
+	bool
+) {
+	// Increase the number of spawned functions
+	_pendingSpawnedFunctions++;
 
 	nanos6_task_info_t *taskInfo = nullptr;
 	{
 		task_info_key_t taskInfoKey(function, (label != nullptr ? label : ""));
 
 		std::lock_guard<SpinLock> guard(_spawnedFunctionInfosLock);
-		auto itAndBool = _spawnedFunctionInfos.emplace( std::make_pair(taskInfoKey, nanos6_task_info_t()) );
+		auto itAndBool = _spawnedFunctionInfos.emplace(
+			std::make_pair(taskInfoKey, nanos6_task_info_t())
+		);
 		auto it = itAndBool.first;
 		taskInfo = &(it->second);
 
 		if (itAndBool.second) {
 			// New task info
-			taskInfo->implementations = (nanos6_task_implementation_info_t *) malloc(sizeof(nanos6_task_implementation_info_t) * 1);
+			taskInfo->implementations = (nanos6_task_implementation_info_t *)
+				malloc(sizeof(nanos6_task_implementation_info_t));
+			assert(taskInfo->implementations != nullptr);
+
 			taskInfo->implementation_count = 1;
-			taskInfo->implementations[0].run = nanos6_spawned_function_wrapper;
+			taskInfo->implementations[0].run = SpawnFunction::spawnedFunctionWrapper;
 			taskInfo->implementations[0].device_type_id = nanos6_device_t::nanos6_host_device;
 			taskInfo->register_depinfo = nullptr;
-			taskInfo->destroy_args_block = nanos6_spawned_function_destructor;
 
-			// We use the stored copy since we do not know the actual lifetime of "label"
+			// The completion callback will be called when the task is destroyed
+			taskInfo->destroy_args_block = SpawnFunction::spawnedFunctionDestructor;
+
+			// Use a copy since we do not know the actual lifetime of label
 			taskInfo->implementations[0].task_label = it->first.second.c_str();
 			taskInfo->implementations[0].declaration_source = "Spawned Task";
 			taskInfo->implementations[0].get_constraints = nullptr;
 		}
 	}
 
+	// Register the new task info
 	bool newTaskType = TaskInfo::registerTaskInfo(taskInfo);
 	if (newTaskType)
 		Instrument::registeredNewSpawnedTaskType(taskInfo);
 
-	SpawnedFunctionArgsBlock *argsBlock = nullptr;
-	Task *task = nullptr;
-
-	nanos6_create_task(taskInfo, &_spawnedFunctionInvocationInfo, sizeof(SpawnedFunctionArgsBlock), (void **) &argsBlock, (void **) &task, nanos6_waiting_task, 0);
-
-	assert(argsBlock != nullptr);
+	// Create the task representing the spawned function
+	Task *task = AddTask::createTask(
+		taskInfo, &_spawnedFunctionInvocationInfo,
+		nullptr, sizeof(SpawnedFunctionArgsBlock),
+		nanos6_waiting_task
+	);
 	assert(task != nullptr);
+
+	SpawnedFunctionArgsBlock *argsBlock =
+		(SpawnedFunctionArgsBlock *) task->getArgsBlock();
+	assert(argsBlock != nullptr);
 
 	argsBlock->_function = function;
 	argsBlock->_args = args;
-	argsBlock->_completion_callback = completion_callback;
-	argsBlock->_completion_args = completion_args;
+	argsBlock->_completionCallback = completionCallback;
+	argsBlock->_completionArgs = completionArgs;
 
 	task->setSpawned();
 #ifdef EXTRAE_ENABLED
-	if (label != nullptr && strcmp(label,"main") == 0) {
+	if (label != nullptr && strcmp(label, "main") == 0) {
 		task->markAsMainTask();
 	}
 #endif
-	nanos6_submit_task(task);
+
+	// Submit the task without parent
+	AddTask::submitTask(task, nullptr);
 }
 
-namespace SpawnedFunctions {
-	std::atomic<unsigned int> _pendingSpawnedFunctions(0);
+void SpawnFunction::spawnedFunctionWrapper(void *args, void *, nanos6_address_translation_entry_t *)
+{
+	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
+	assert(argsBlock != nullptr);
 
-	bool isSpawned(const nanos6_task_info_t *taskInfo)
-	{
-		assert(taskInfo != nullptr);
-		assert(taskInfo->implementations != nullptr);
-		return (taskInfo->implementations[0].run == nanos6_spawned_function_wrapper);
-	}
+	// Call the user spawned function
+	argsBlock->_function(argsBlock->_args);
+}
 
-	void shutdown()
-	{
-		for (auto spawned : _spawnedFunctionInfos) {
-			nanos6_task_info_t taskInfo = spawned.second;
-			nanos6_task_implementation_info_t *implementations = taskInfo.implementations;
-			assert(implementations != nullptr);
-			free(implementations);
-		}
+void SpawnFunction::spawnedFunctionDestructor(void *args)
+{
+	SpawnedFunctionArgsBlock *argsBlock = (SpawnedFunctionArgsBlock *) args;
+	assert(argsBlock != nullptr);
+
+	// Call the user completion callback if present
+	if (argsBlock->_completionCallback != nullptr) {
+		argsBlock->_completionCallback(argsBlock->_completionArgs);
 	}
 }
 
+
+//! Public API function to spawn functions
+void nanos6_spawn_function(
+	void (*function)(void *),
+	void *args,
+	void (*completion_callback)(void *),
+	void *completion_args,
+	char const *label
+) {
+	SpawnFunction::spawnFunction(function, args, completion_callback, completion_args, label, true);
+}
+
+//! Public API function to spawn functions in streams
 void nanos6_stream_spawn_function(
 	void (*function)(void *),
 	void *args,
@@ -148,4 +167,3 @@ void nanos6_stream_spawn_function(
 ) {
 	StreamManager::createFunction(function, args, callback, callback_args, label, stream_id);
 }
-

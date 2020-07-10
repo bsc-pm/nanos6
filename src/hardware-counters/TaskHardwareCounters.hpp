@@ -30,24 +30,6 @@ private:
 	//! Whether monitoring of counters for this task is enabled
 	bool _enabled;
 
-private:
-
-	static inline size_t getPAPITaskHardwareCountersSize()
-	{
-#if HAVE_PAPI
-		return sizeof(PAPITaskHardwareCounters) + PAPITaskHardwareCounters::getTaskHardwareCountersSize();
-#endif
-		return 0;
-	}
-
-	static inline size_t getPQoSTaskHardwareCountersSize()
-	{
-#if HAVE_PQOS
-		return sizeof(PQoSTaskHardwareCounters) + PQoSTaskHardwareCounters::getTaskHardwareCountersSize();
-#endif
-		return 0;
-	}
-
 public:
 
 	inline TaskHardwareCounters(void *allocationAddress) :
@@ -112,12 +94,6 @@ public:
 #endif
 			}
 		}
-	}
-
-	//! \brief Retreive the allocation address for all the backend objects
-	inline void *getAllocationAddress() const
-	{
-		return _allocationAddress;
 	}
 
 	//! \brief Check whether hardware counter monitoring is enabled for this task
@@ -195,8 +171,14 @@ public:
 		return 0;
 	}
 
+	//! \brief Retreive the allocation address for all the backend objects
+	inline void *getAllocationAddress() const
+	{
+		return _allocationAddress;
+	}
+
 	//! \brief Get the size needed to construct all the structures for all backends
-	static inline size_t getTaskHardwareCountersSize()
+	static inline size_t getAllocationSize()
 	{
 		size_t totalSize = 0;
 
@@ -211,6 +193,24 @@ public:
 		return totalSize;
 	}
 
+private:
+	//! \brief Get the size needed to construct all the structures for PAPI
+	static inline size_t getPAPITaskHardwareCountersSize()
+	{
+#if HAVE_PAPI
+		return sizeof(PAPITaskHardwareCounters) + PAPITaskHardwareCounters::getTaskHardwareCountersSize();
+#endif
+		return 0;
+	}
+
+	//! \brief Get the size needed to construct all the structures for PQoS
+	static inline size_t getPQoSTaskHardwareCountersSize()
+	{
+#if HAVE_PQOS
+		return sizeof(PQoSTaskHardwareCounters) + PQoSTaskHardwareCounters::getTaskHardwareCountersSize();
+#endif
+		return 0;
+	}
 };
 
 #endif // TASK_HARDWARE_COUNTERS_HPP

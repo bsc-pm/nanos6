@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_TASK_EXECUTION_HPP
@@ -61,7 +61,7 @@ namespace Instrument {
 		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
 		
 		// Use the unique taskInfo address in case it is a spawned task
-		if (SpawnedFunctions::isSpawned(taskInfo)) {
+		if (SpawnFunction::isSpawned(taskInfo)) {
 			ce.Values[1] = (extrae_value_t) taskInfo;
 		}
 		
@@ -163,7 +163,7 @@ namespace Instrument {
 		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
 		
 		// Use the unique taskInfo address in case it is a spawned task
-		if (SpawnedFunctions::isSpawned(taskInfo)) {
+		if (SpawnFunction::isSpawned(taskInfo)) {
 			ce.Values[1] = (extrae_value_t) taskInfo;
 		}
 		
@@ -363,7 +363,7 @@ namespace Instrument {
 		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
 		
 		// Use the unique taskInfo address in case it is a spawned task
-		if (SpawnedFunctions::isSpawned(taskInfo)) {
+		if (SpawnFunction::isSpawned(taskInfo)) {
 			ce.Values[1] = (extrae_value_t) taskInfo;
 		}
 		

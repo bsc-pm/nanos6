@@ -1287,6 +1287,7 @@ noinst_HEADERS = \
 	src/system/RuntimeInfo.hpp \
 	src/system/RuntimeInfoEssentials.hpp \
 	src/system/Throttle.hpp \
+	src/system/ompss/AddTask.hpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/UserMutex.hpp \

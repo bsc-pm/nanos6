@@ -128,7 +128,7 @@ void nanos6_shutdown(void) {
 	Instrument::threadHasResumed(mainThread->getInstrumentationId());
 	Instrument::threadWillShutdown(mainThread->getInstrumentationId());
 
-	while (SpawnedFunctions::_pendingSpawnedFunctions > 0) {
+	while (SpawnFunction::_pendingSpawnedFunctions > 0) {
 		// Wait for spawned functions to fully end
 	}
 
@@ -143,7 +143,7 @@ void nanos6_shutdown(void) {
 	Instrument::shutdown();
 
 	// Delete spawned functions task infos
-	SpawnedFunctions::shutdown();
+	SpawnFunction::shutdown();
 
 	// Delete the worker threads
 	// NOTE: AFTER Instrument::shutdown since it may need thread info!

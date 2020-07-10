@@ -107,23 +107,23 @@ int Throttle::getAllowedTasks(int nestingLevel)
 	}
 }
 
-bool Throttle::engage(Task *task, WorkerThread *workerThread)
+bool Throttle::engage(Task *creator, WorkerThread *workerThread)
 {
-	assert(task != nullptr);
+	assert(creator != nullptr);
 	assert(workerThread != nullptr);
-	assert(workerThread->getTask() == task);
+	assert(workerThread->getTask() == creator);
 
 	// We cannot safely throttle taskloops because we cannot prevent
 	// a taskloop from creating child tasks.
-	if (task->isTaskloop())
+	if (creator->isTaskloop())
 		return false;
 
-	// How many child tasks is this task allowed?
-	int nestingLevel = task->getNestingLevel();
+	// How many child tasks is this creator allowed?
+	int nestingLevel = creator->getNestingLevel();
 	int allowedChildTasks = getAllowedTasks(nestingLevel);
 
 	// No need to activate if very few child tasks exist
-	if (task->getPendingChildTasks() <= allowedChildTasks)
+	if (creator->getPendingChildTasks() <= allowedChildTasks)
 		return false;
 
 	CPU *currentCPU = workerThread->getComputePlace();
@@ -140,7 +140,7 @@ bool Throttle::engage(Task *task, WorkerThread *workerThread)
 		workerThread->handleTask(currentCPU);
 
 		// Restore
-		workerThread->restoreTask(task);
+		workerThread->restoreTask(creator);
 		return true;
 	} else {
 		// There is nothing else to do. Let's run a taskwait then

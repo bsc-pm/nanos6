@@ -156,9 +156,9 @@ void TaskFinalization::disposeTask(Task *task)
 				disposableBlockSize += sizeof(Task);
 			}
 
-			TaskDataAccesses &dataAccesses = task->getDataAccesses();
-			disposableBlockSize += dataAccesses.getAdditionalMemorySize();
-			disposableBlockSize += TaskHardwareCounters::getTaskHardwareCountersSize();
+			const TaskDataAccesses &taskAccesses = task->getDataAccesses();
+			disposableBlockSize += taskAccesses.getAdditionalMemorySize();
+			disposableBlockSize += TaskHardwareCounters::getAllocationSize();
 
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 
@@ -204,7 +204,7 @@ void TaskFinalization::disposeTask(Task *task)
 		task = parent;
 
 		if (isSpawned) {
-			SpawnedFunctions::_pendingSpawnedFunctions--;
+			SpawnFunction::_pendingSpawnedFunctions--;
 		} else if (isStreamExecutor) {
 			StreamManager::_activeStreamExecutors--;
 		}

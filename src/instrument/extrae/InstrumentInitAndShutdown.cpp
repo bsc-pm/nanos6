@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -213,7 +213,7 @@ namespace Instrument {
 				void *runFunction = (void *) taskInfo->implementations[0].run;
 
 				// Use the unique taskInfo address in case it is a spawned task
-				if (SpawnedFunctions::isSpawned(taskInfo)) {
+				if (SpawnFunction::isSpawned(taskInfo)) {
 					runFunction = taskInfo;
 				}
 

@@ -13,8 +13,8 @@
 #include <nanos6.h>
 
 #include "lowlevel/ConditionVariable.hpp"
-#include "tasks/Task.hpp"
 #include "system/ompss/SpawnFunction.hpp"
+#include "tasks/Task.hpp"
 
 
 struct StreamFunction {
@@ -108,10 +108,14 @@ public:
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
-		TaskDataAccessesInfo taskAccessInfo,
-		const TaskHardwareCounters &taskCounters
-	)
-		: Task(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags, taskAccessInfo, taskCounters),
+		const TaskDataAccessesInfo &taskAccessInfo,
+		void *taskCountersAddress
+	) :
+		Task(argsBlock, argsBlockSize,
+			taskInfo, taskInvokationInfo,
+			parent, instrumentationTaskId,
+			flags, taskAccessInfo,
+			taskCountersAddress),
 		_blockingContext(nullptr),
 		_mustShutdown(false),
 		_queue(),

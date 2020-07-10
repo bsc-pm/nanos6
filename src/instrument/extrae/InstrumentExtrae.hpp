@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_EXTRAE_HPP
@@ -152,8 +152,8 @@ namespace Instrument {
 			return (sourceA < sourceB);
 		}
 		
-		void *runA = SpawnedFunctions::isSpawned(a) ? (void *) a : (void *) a->implementations[0].run;
-		void *runB = SpawnedFunctions::isSpawned(b) ? (void *) b : (void *) b->implementations[0].run;
+		void *runA = SpawnFunction::isSpawned(a) ? (void *) a : (void *) a->implementations[0].run;
+		void *runB = SpawnFunction::isSpawned(b) ? (void *) b : (void *) b->implementations[0].run;
 		
 		return (runA < runB);
 	}

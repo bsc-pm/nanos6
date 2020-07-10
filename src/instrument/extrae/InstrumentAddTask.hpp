@@ -66,7 +66,7 @@ namespace Instrument {
 		ce.Values[1] = (extrae_value_t) taskInfo->implementations[0].run;
 		
 		// Use the unique taskInfo address in case it is a spawned task
-		if (SpawnedFunctions::isSpawned(taskInfo)) {
+		if (SpawnFunction::isSpawned(taskInfo)) {
 			ce.Values[1] = (extrae_value_t) taskInfo;
 		}
 		
