@@ -31,7 +31,7 @@ generate_regions_full_prototype() {
 
 		echo "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
-	printf ')'
+	printf '%s' ')'
 }
 
 
@@ -66,7 +66,7 @@ generate_regions_named_prototype() {
 
 		echo "${indentation}	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
-	printf "${indentation})"
+	printf '%s' "${indentation})"
 }
 
 
@@ -89,7 +89,7 @@ generate_release_full_prototype() {
 
 		echo "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
-	printf ')'
+	printf '%s' ')'
 }
 
 
@@ -116,7 +116,7 @@ generate_release_named_prototype() {
 
 		echo "${indentation}	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
-	printf "${indentation})"
+	printf '%s' "${indentation})"
 }
 
 
@@ -126,29 +126,29 @@ generate_regions_api_type() {
 	local dimensions=$1
 	local name=$2
 
-	printf "void ${name}("
+	printf '%s' "void ${name}("
 
 	if [ x$(echo "${name}" | sed 's/reduction//g') != x${name} ] ; then
-		printf "int, int, "
+		printf '%s' "int, int, "
 	fi
 
-	printf "void *, int, char const*, void *"
+	printf '%s' "void *, int, char const*, void *"
 	for currentdimension in $(seq 1 ${dimensions}) ; do
-		printf ", long, long, long"
+		printf '%s' ", long, long, long"
 	done
-	printf ")"
+	printf '%s' ")"
 }
 
 generate_release_api_type() {
 	local dimensions=$1
 	local name=$2
 
-	printf "void ${name}("
-	printf "void *"
+	printf '%s' "void ${name}("
+	printf '%s' "void *"
 	for currentdimension in $(seq 1 ${dimensions}) ; do
-		printf ", long, long, long"
+		printf '%s' ", long, long, long"
 	done
-	printf ")"
+	printf '%s' ")"
 }
 
 
@@ -157,12 +157,12 @@ generate_regions_parameter_list() {
 	local name=$2
 
 	if [ x$(echo "${name}" | sed 's/reduction//g') != x"${name}" ] ; then
-		printf "reduction_operation, reduction_index, "
+		printf '%s' "reduction_operation, reduction_index, "
 	fi
 
 	printf 'handler, symbol_index, region_text, base_address'
 	for currentdimension in $(seq 1 ${dimensions}) ; do
-		printf ", dim${currentdimension}size, dim${currentdimension}start, dim${currentdimension}end"
+		printf '%s' ", dim${currentdimension}size, dim${currentdimension}start, dim${currentdimension}end"
 	done
 }
 
@@ -172,7 +172,7 @@ generate_release_parameter_list() {
 
 	printf 'base_address'
 	for currentdimension in $(seq 1 ${dimensions}) ; do
-		printf ", dim${currentdimension}size, dim${currentdimension}start, dim${currentdimension}end"
+		printf '%s' ", dim${currentdimension}size, dim${currentdimension}start, dim${currentdimension}end"
 	done
 }
 

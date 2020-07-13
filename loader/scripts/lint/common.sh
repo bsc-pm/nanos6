@@ -23,7 +23,7 @@ generate_regions_full_prototype() {
 
 		echo "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
-	printf ')'
+	printf '%s' ')'
 }
 
 generate_regions_named_prototype() {
@@ -50,27 +50,27 @@ generate_regions_named_prototype() {
 
 		echo "${indentation}	__attribute__((unused)) long dim${currentdimension}size, __attribute__((unused)) long dim${currentdimension}start, __attribute__((unused)) long dim${currentdimension}end${commaatend}"
 	done
-	printf "${indentation})"
+	printf '%s' "${indentation})"
 }
 
 generate_regions_api_type() {
 	local dimensions=$1
 	local name=$2
 
-	printf "void ${name}(void *"
+	printf '%s' "void ${name}(void *"
 	for currentdimension in $(seq 1 ${dimensions}) ; do
-		printf ", long, long, long"
+		printf '%s' ", long, long, long"
 	done
-	printf ")"
+	printf '%s' ")"
 }
 
 generate_regions_parameter_list() {
 	local dimensions=$1
 	local name=$2
 
-	printf 'base_address'
+	printf '%s' 'base_address'
 	for currentdimension in $(seq 1 ${dimensions}) ; do
-		printf ", dim${currentdimension}size, dim${currentdimension}start, dim${currentdimension}end"
+		printf '%s' ", dim${currentdimension}size, dim${currentdimension}start, dim${currentdimension}end"
 	done
 }
 
