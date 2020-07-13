@@ -178,7 +178,7 @@ generate_release_parameter_list() {
 
 
 emit_tabs() {
-	printf "%*s" $1 "" | sed 's/ /\t/g'
+	printf "%*s" "$1" "" | sed 's/ /\t/g'
 }
 
 
