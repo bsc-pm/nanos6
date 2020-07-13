@@ -8,7 +8,7 @@ generate_regions_full_prototype() {
 	local type=$2
 	local commaatend
 
-	printf '/** \\brief Simulate a task '${type}' access on a '${dimensions}'-dimensional region of addresses */\n'
+	printf '%s\n' '/** \brief Simulate a task '${type}' access on a '${dimensions}'-dimensional region of addresses */'
 	echo 'void nanos6_lint_register_region_'${type}'_'${dimensions}'('
 
 	echo '	void *base_address,'
