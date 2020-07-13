@@ -9,11 +9,11 @@ generate_regions_full_prototype() {
 	local commaatend
 
 	printf '%s\n' '/** \brief Simulate a task '${type}' access on a '${dimensions}'-dimensional region of addresses */'
-	echo 'void nanos6_lint_register_region_'${type}'_'${dimensions}'('
+	printf '%s\n' 'void nanos6_lint_register_region_'${type}'_'${dimensions}'('
 
-	echo '	void *base_address,'
-	echo '	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */'
-	echo '	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */'
+	printf '%s\n' '	void *base_address,'
+	printf '%s\n' '	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */'
+	printf '%s\n' '	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */'
 	for currentdimension in $(seq 1 ${dimensions}) ; do
 		if [ ${currentdimension} -eq ${dimensions} ] ; then
 			commaatend=""
@@ -21,7 +21,7 @@ generate_regions_full_prototype() {
 			commaatend=","
 		fi
 
-		echo "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
+		printf '%s\n' "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
 	printf '%s' ')'
 }
@@ -36,11 +36,11 @@ generate_regions_named_prototype() {
 		indentation=$(emit_tabs ${indentation})
 	fi
 
-	echo "void ${name}("
+	printf '%s\n' "void ${name}("
 
-	echo "${indentation}	__attribute__((unused)) void *base_address,"
-	echo "${indentation}	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */"
-	echo "${indentation}	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */"
+	printf '%s\n' "${indentation}	__attribute__((unused)) void *base_address,"
+	printf '%s\n' "${indentation}	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */"
+	printf '%s\n' "${indentation}	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */"
 	for currentdimension in $(seq 1 ${dimensions}) ; do
 		if [ ${currentdimension} -eq ${dimensions} ] ; then
 			commaatend=""
@@ -48,7 +48,7 @@ generate_regions_named_prototype() {
 			commaatend=","
 		fi
 
-		echo "${indentation}	__attribute__((unused)) long dim${currentdimension}size, __attribute__((unused)) long dim${currentdimension}start, __attribute__((unused)) long dim${currentdimension}end${commaatend}"
+		printf '%s\n' "${indentation}	__attribute__((unused)) long dim${currentdimension}size, __attribute__((unused)) long dim${currentdimension}start, __attribute__((unused)) long dim${currentdimension}end${commaatend}"
 	done
 	printf '%s' "${indentation})"
 }

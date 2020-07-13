@@ -10,18 +10,18 @@ generate_regions_full_prototype() {
 	local commaatend
 
 	printf '%s\n' '/** \brief Register a task '${type}' access on a '${dimensions}'-dimensional region of addresses */'
-	echo 'void nanos6_register_region_'${type}'_depinfo'${dimensions}'('
+	printf '%s\n' 'void nanos6_register_region_'${type}'_depinfo'${dimensions}'('
 
 	if [ "${type}" = "reduction" ] || [ "${type}" = "weak_reduction" ] ; then
-		echo "${indentation}	int reduction_operation, int reduction_index,"
+		printf '%s\n' "${indentation}	int reduction_operation, int reduction_index,"
 	fi
 
-	echo '	void *handler /** Task handler */,'
-	echo '	int symbol_index /** Argument identifier */,'
-	echo '	char const *region_text /** Stringified contents of the dependency clause */,'
-	echo '	void *base_address,'
-	echo '	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */'
-	echo '	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */'
+	printf '%s\n' '	void *handler /** Task handler */,'
+	printf '%s\n' '	int symbol_index /** Argument identifier */,'
+	printf '%s\n' '	char const *region_text /** Stringified contents of the dependency clause */,'
+	printf '%s\n' '	void *base_address,'
+	printf '%s\n' '	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */'
+	printf '%s\n' '	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */'
 	for currentdimension in $(seq 1 ${dimensions}) ; do
 		if [ ${currentdimension} -eq ${dimensions} ] ; then
 			commaatend=""
@@ -29,7 +29,7 @@ generate_regions_full_prototype() {
 			commaatend=","
 		fi
 
-		echo "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
+		printf '%s\n' "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
 	printf '%s' ')'
 }
@@ -45,18 +45,18 @@ generate_regions_named_prototype() {
 		indentation=$(emit_tabs ${indentation})
 	fi
 
-	echo "void ${name}("
+	printf '%s\n' "void ${name}("
 
-	if [ $(echo ${name} | sed 's/reduction//g') != ${name} ] ; then
-		echo "${indentation}	int reduction_operation, int reduction_index,"
+	if [ $(printf '%s\n' ${name} | sed 's/reduction//g') != ${name} ] ; then
+		printf '%s\n' "${indentation}	int reduction_operation, int reduction_index,"
 	fi
 
-	echo "${indentation}	void *handler /** Task handler */,"
-	echo "${indentation}	int symbol_index /** Argument identifier */,"
-	echo "${indentation}	char const *region_text /** Stringified contents of the dependency clause */,"
-	echo "${indentation}	void *base_address,"
-	echo "${indentation}	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */"
-	echo "${indentation}	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */"
+	printf '%s\n' "${indentation}	void *handler /** Task handler */,"
+	printf '%s\n' "${indentation}	int symbol_index /** Argument identifier */,"
+	printf '%s\n' "${indentation}	char const *region_text /** Stringified contents of the dependency clause */,"
+	printf '%s\n' "${indentation}	void *base_address,"
+	printf '%s\n' "${indentation}	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */"
+	printf '%s\n' "${indentation}	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */"
 	for currentdimension in $(seq 1 ${dimensions}) ; do
 		if [ ${currentdimension} -eq ${dimensions} ] ; then
 			commaatend=""
@@ -64,7 +64,7 @@ generate_regions_named_prototype() {
 			commaatend=","
 		fi
 
-		echo "${indentation}	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
+		printf '%s\n' "${indentation}	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
 	printf '%s' "${indentation})"
 }
@@ -76,10 +76,10 @@ generate_release_full_prototype() {
 	local commaatend
 
 	printf '%s\n' '/** \brief Inform that the rest of the task code will no longer perform any '${type}' operation over a '${dimensions}'-dimensional region of addresses */'
-	echo 'void nanos6_release_'${type}'_'${dimensions}'('
-	echo '	void *base_address,'
-	echo '	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */'
-	echo '	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */'
+	printf '%s\n' 'void nanos6_release_'${type}'_'${dimensions}'('
+	printf '%s\n' '	void *base_address,'
+	printf '%s\n' '	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */'
+	printf '%s\n' '	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */'
 	for currentdimension in $(seq 1 ${dimensions}) ; do
 		if [ ${currentdimension} -eq ${dimensions} ] ; then
 			commaatend=""
@@ -87,7 +87,7 @@ generate_release_full_prototype() {
 			commaatend=","
 		fi
 
-		echo "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
+		printf '%s\n' "	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
 	printf '%s' ')'
 }
@@ -103,10 +103,10 @@ generate_release_named_prototype() {
 		indentation=$(emit_tabs ${indentation})
 	fi
 
-	echo "void ${name}("
-	echo "${indentation}	void *base_address,"
-	echo "${indentation}	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */"
-	echo "${indentation}	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */"
+	printf '%s\n' "void ${name}("
+	printf '%s\n' "${indentation}	void *base_address,"
+	printf '%s\n' "${indentation}	/* First is the continuous dimension in bytes, the rest are based on the previous dimension */"
+	printf '%s\n' "${indentation}	/* dimXstart is the first index/byte and dimXend is the next byte/index outside of the region */"
 	for currentdimension in $(seq 1 ${dimensions}) ; do
 		if [ ${currentdimension} -eq ${dimensions} ] ; then
 			commaatend=""
@@ -114,7 +114,7 @@ generate_release_named_prototype() {
 			commaatend=","
 		fi
 
-		echo "${indentation}	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
+		printf '%s\n' "${indentation}	long dim${currentdimension}size, long dim${currentdimension}start, long dim${currentdimension}end${commaatend}"
 	done
 	printf '%s' "${indentation})"
 }
@@ -128,7 +128,7 @@ generate_regions_api_type() {
 
 	printf '%s' "void ${name}("
 
-	if [ x$(echo "${name}" | sed 's/reduction//g') != x${name} ] ; then
+	if [ x$(printf '%s\n' "${name}" | sed 's/reduction//g') != x${name} ] ; then
 		printf '%s' "int, int, "
 	fi
 
@@ -156,7 +156,7 @@ generate_regions_parameter_list() {
 	local dimensions=$1
 	local name=$2
 
-	if [ x$(echo "${name}" | sed 's/reduction//g') != x"${name}" ] ; then
+	if [ x$(printf '%s\n' "${name}" | sed 's/reduction//g') != x"${name}" ] ; then
 		printf '%s' "reduction_operation, reduction_index, "
 	fi
 
