@@ -50,8 +50,8 @@ void cpuComputation(long numCPUs)
 			++spins;
 		}
 
-		// Wait for 2 seconds max
-		if (timer.lap() > 2000000) {
+		// Wait for 1 seconds max
+		if (timer.lap() > 1000000) {
 			return;
 		}
 	}
@@ -119,21 +119,23 @@ int main(int argc, char **argv) {
 	// Global atomic counters
 	numBusyCPUs = 0;
 	numCheckedCPUs = 0;
-	for (int id = 0; id < numCPUs; ++id) {
-		#pragma oss task label("ownedCPUTask")
-		cpuComputation(numCPUs);
-	}
-	#pragma oss taskwait
 
-	// If all CPUs are acquired, success -- otherwise, do not fail the test
-	// but point it out in the message
-	if (numCheckedCPUs.load() == numCPUs) {
-		tap.success("Check that all CPUs in the system are acquired");
-	} else {
-		tap.success("Check that all CPUs in the system are acquired -- weak fail as we cannot ensure it");
+	// Try for a number of iterations to have all CPUs working. This may fail
+	// if the passive process delays its execution
+	int iteration = 0;
+	while (iteration < 5 && numCheckedCPUs.load() != numCPUs) {
+		numBusyCPUs = 0;
+		numCheckedCPUs = 0;
+
+		for (int id = 0; id < numCPUs; ++id) {
+			#pragma oss task label("ownedCPUTask")
+			cpuComputation(numCPUs);
+		}
+
+		#pragma oss taskwait
+		++iteration;
 	}
 
+	tap.evaluate(numCheckedCPUs.load() == numCPUs, "Check that all CPUs in the system are acquired");
 	tap.end();
-
-	return 0;
 }

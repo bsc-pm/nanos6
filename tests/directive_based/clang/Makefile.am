@@ -56,6 +56,7 @@ if HAVE_DLB
 dlb_tests += \
 	dlb-cpu-management.clang.test \
 	dlb-cpu-sharing-active-process.clang.test \
+	dlb-cpu-sharing-passive-process.clang.test \
 	dlb-cpu-sharing.clang.test
 else
 cpu_management_tests += \
@@ -97,6 +98,7 @@ if HAVE_DLB
 dlb_tests += \
 	dlb-cpu-management.clang.debug.test \
 	dlb-cpu-sharing-active-process.clang.debug.test \
+	dlb-cpu-sharing-passive-process.clang.debug.test \
 	dlb-cpu-sharing.clang.debug.test
 else
 cpu_management_tests += \
@@ -403,6 +405,15 @@ dlb_cpu_sharing_active_process_clang_test_LDFLAGS = $(test_common_ldflags)
 dlb_cpu_sharing_active_process_clang_debug_test_SOURCES = ../dlb/dlb-cpu-sharing-active-process.cpp
 dlb_cpu_sharing_active_process_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
 dlb_cpu_sharing_active_process_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+dlb_cpu_sharing_passive_process_clang_test_SOURCES = ../dlb/dlb-cpu-sharing-passive-process.cpp
+dlb_cpu_sharing_passive_process_clang_test_CPPFLAGS = -DNDEBUG
+dlb_cpu_sharing_passive_process_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_passive_process_clang_test_LDFLAGS = $(test_common_ldflags)
+
+dlb_cpu_sharing_passive_process_clang_debug_test_SOURCES = ../dlb/dlb-cpu-sharing-passive-process.cpp
+dlb_cpu_sharing_passive_process_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+dlb_cpu_sharing_passive_process_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 if AWK_IS_SANE
 TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
