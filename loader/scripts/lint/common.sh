@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
 #	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
