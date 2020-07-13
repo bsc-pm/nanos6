@@ -34,6 +34,8 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 			[ac_use_git_prefix="${withval}"],
 			[ac_use_git_prefix=""]
 		)
+		AC_ARG_VAR(NANOS6_GIT_VERSION, Manually specify the git version. Can only be used when the .git directory is not available)
+		AC_ARG_VAR(NANOS6_GIT_BRANCH, Manually specify the git branch. Can only be used when the .git directory is not available)
 		
 		if test x"${ac_use_git_prefix}" != x"" ; then
 			AC_PATH_PROG([GIT], [git], [], [${ac_use_git_prefix}/bin])
@@ -44,6 +46,12 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 		if test -d "${srcdir}/$3/.git" -o -f "${srcdir}/$3/.git" ; then
 			if test x"${GIT}" = x"" ; then
 				AC_MSG_ERROR([need git to retrieve the source version information. Check the --with-git parameter.])
+			fi
+			if test -n "$NANOS6_GIT_VERSION"; then
+				AC_MSG_ERROR([variable NANOS6_GIT_VERSION defined but the .git directory was found])
+			fi
+			if test -n "$NANOS6_GIT_BRANCH"; then
+				AC_MSG_ERROR([variable NANOS6_GIT_BRANCH defined but the .git directory was found])
 			fi
 			SOURCE_VERSION=$($GIT --git-dir="${srcdir}/$3/.git" show --pretty=format:'%ci %h' -s HEAD)
 			SOURCE_BRANCH=$($GIT --git-dir="${srcdir}/$3/.git" symbolic-ref HEAD | sed 's@refs/heads/@@')

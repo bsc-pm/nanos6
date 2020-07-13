@@ -1847,9 +1847,19 @@ src/version/CodeVersionInfo.cpp: COPYING
 	echo >> src/version/CodeVersionInfo.cpp ; \
 	echo >> src/version/CodeVersionInfo.cpp ; \
 	\
-	echo 'char const * nanos6_version = "$(NANOS6_VERSION)";' >> src/version/CodeVersionInfo.cpp ; \
+	if [ -n "$(NANOS6_GIT_VERSION)" ]; then \
+		version="$(NANOS6_VERSION) $(NANOS6_GIT_VERSION)"; \
+	else \
+		version="$(NANOS6_VERSION)"; \
+	fi ; \
+	if [ -n "$(NANOS6_GIT_BRANCH)" ]; then \
+		branch="$(NANOS6_GIT_BRANCH)"; \
+	else \
+		branch="none"; \
+	fi ; \
+	echo "char const * nanos6_version = \"$$version\";" >> src/version/CodeVersionInfo.cpp ; \
 	\
-	echo 'char const * nanos6_branch = "none";' >> src/version/CodeVersionInfo.cpp ; \
+	echo "char const * nanos6_branch = \"$$branch\";" >> src/version/CodeVersionInfo.cpp ; \
 	\
 	echo >> src/version/CodeVersionInfo.cpp ; \
 	echo 'char const * nanos6_patches = nullptr;' >> src/version/CodeVersionInfo.cpp ; \
