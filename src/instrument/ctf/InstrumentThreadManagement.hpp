@@ -17,7 +17,7 @@
 
 
 namespace Instrument {
-	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
+	inline void enterThreadCreation(__attribute__((unused)) /* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
 	}
 
