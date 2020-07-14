@@ -1888,6 +1888,7 @@ EXTRA_DIST += \
 	README.md \
 	docs/cluster/Cluster.md \
 	docs/ctf/CTF.md \
+	docs/ctf/Developer.md \
 	docs/devices/CUDA.md \
 	docs/devices/Devices.md \
 	docs/devices/OpenACC.md

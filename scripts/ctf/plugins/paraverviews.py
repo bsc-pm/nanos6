@@ -61,7 +61,7 @@ class ParaverViewRuntimeBusyWaiting(ParaverView):
 		]
 		values = {
 			RuntimeActivity.End         : "End",
-			RuntimeActivity.BusyWaiting : "BusyWait",
+			RuntimeActivity.BusyWaiting : "Busy Waiting",
 		}
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_BUSYWAITING, values, "Runtime: Busy Waiting")
 
