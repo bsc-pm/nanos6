@@ -1,6 +1,6 @@
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 
 AC_DEFUN([SSS_CHECK_CC_VERSION],
 	[
@@ -34,7 +34,9 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 			[ac_use_git_prefix="${withval}"],
 			[ac_use_git_prefix=""]
 		)
-		
+		AC_ARG_VAR(NANOS6_GIT_VERSION, Manually specify the git version for informative purposes only. Do not set it when building from a git repository)
+		AC_ARG_VAR(NANOS6_GIT_BRANCH, Manually specify the git branch for informative purposes only. Do not set it when building from a git repository)
+
 		if test x"${ac_use_git_prefix}" != x"" ; then
 			AC_PATH_PROG([GIT], [git], [], [${ac_use_git_prefix}/bin])
 		else
@@ -44,6 +46,12 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 		if test -d "${srcdir}/$3/.git" -o -f "${srcdir}/$3/.git" ; then
 			if test x"${GIT}" = x"" ; then
 				AC_MSG_ERROR([need git to retrieve the source version information. Check the --with-git parameter.])
+			fi
+			if test -n "$NANOS6_GIT_VERSION"; then
+				AC_MSG_ERROR([variable NANOS6_GIT_VERSION defined but the .git directory was found])
+			fi
+			if test -n "$NANOS6_GIT_BRANCH"; then
+				AC_MSG_ERROR([variable NANOS6_GIT_BRANCH defined but the .git directory was found])
 			fi
 			SOURCE_VERSION=$($GIT --git-dir="${srcdir}/$3/.git" show --pretty=format:'%ci %h' -s HEAD)
 			SOURCE_BRANCH=$($GIT --git-dir="${srcdir}/$3/.git" symbolic-ref HEAD | sed 's@refs/heads/@@')
@@ -61,9 +69,9 @@ AC_DEFUN([SSS_CHECK_SOURCE_VERSION],
 		AC_MSG_RESULT([$SOURCE_BRANCH $SOURCE_VERSION])
 		AC_SUBST([SOURCE_VERSION])
 		AC_SUBST([SOURCE_BRANCH])
-		
+
 		AM_CONDITIONAL([FROM_GIT_REPOSITORY], [test x"${ac_source_in_git}" = x"true"])
-		
+
 		RELEASE_DATE=$(date +%Y%m%d)
 		AC_CHECK_PROG([DEB_RELEASE], [lsb_release], [$(lsb_release -sc)], [])
 		AC_SUBST([RELEASE_DATE])
