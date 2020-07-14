@@ -4,16 +4,18 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include <utility>
 #include <map>
-#include <nanos6/task-instantiation.h>
+#include <utility>
 #include <vector>
+
+#include <nanos6/task-instantiation.h>
 
 #include "ClusterTaskContext.hpp"
 #include "TaskOffloading.hpp"
-#include "src/executors/threads/WorkerThread.hpp"
-#include "src/lowlevel/PaddedSpinLock.hpp"
-#include "src/tasks/Task.hpp"
+#include "executors/threads/WorkerThread.hpp"
+#include "lowlevel/PaddedSpinLock.hpp"
+#include "system/ompss/AddTask.hpp"
+#include "tasks/Task.hpp"
 
 #include <ClusterManager.hpp>
 #include <DataAccessRegistration.hpp>
@@ -22,6 +24,7 @@
 #include <MessageSatisfiability.hpp>
 #include <MessageTaskFinished.hpp>
 #include <MessageTaskNew.hpp>
+
 
 namespace TaskOffloading {
 
