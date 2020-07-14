@@ -361,7 +361,7 @@ public:
 	}
 
 	//! \brief Get the size of dynamically allocated parameters
-	static inline size_t getTaskStatisticsSize()
+	static inline size_t getAllocationSize()
 	{
 		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
 		return (numEvents * (sizeof(double) + sizeof(bool)));

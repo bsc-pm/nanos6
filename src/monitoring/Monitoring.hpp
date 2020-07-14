@@ -118,10 +118,10 @@ public:
 	//! \brief Get the size needed to create a TaskStatistics object
 	//!
 	//! \return TaskStatistics size or 0 if Monitoring is disabled
-	static inline size_t getTaskStatisticsSize()
+	static inline size_t getAllocationSize()
 	{
 		if (_enabled) {
-			return sizeof(TaskStatistics) + TaskStatistics::getTaskStatisticsSize();
+			return sizeof(TaskStatistics) + TaskStatistics::getAllocationSize();
 		}
 
 		return 0;
