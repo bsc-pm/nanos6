@@ -137,7 +137,7 @@ void nanos6_user_unlock(void **handlerPointer)
 		Task *currentTask = currentThread->getTask();
 		assert(currentTask != nullptr);
 
-		if (!currentTask->isTaskfor() && ThreadManagerPolicy::checkIfUnblockedMustPreemtUnblocker(currentTask, releasedTask, cpu)) {
+		if (!currentTask->isTaskfor() && ThreadManagerPolicy::checkIfUnblockedMustPreemptUnblocker(currentTask, releasedTask, cpu)) {
 			WorkerThread *releasedThread = releasedTask->getThread();
 			assert(releasedThread != nullptr);
 

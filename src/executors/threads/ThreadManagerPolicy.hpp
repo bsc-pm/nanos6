@@ -23,7 +23,7 @@ public:
 	//! \param[in] cpu The CPU where unblockerTask is running
 	//!
 	//! \returns True if unblockedTask must preempt unblockerTask
-	static inline bool checkIfUnblockedMustPreemtUnblocker(
+	static inline bool checkIfUnblockedMustPreemptUnblocker(
 		__attribute__((unused)) Task *unblockerTask,
 		__attribute__((unused)) Task *unblockedTask,
 		__attribute__((unused)) CPU *cpu
@@ -32,7 +32,12 @@ public:
 		assert(unblockedTask != nullptr);
 		assert(cpu != nullptr);
 
-		return true;
+		// Do not preempt the unblocker task. Preempting the unblockers
+		// tends to worsen the execution time in general. TODO: We should
+		// decide whether it is better to dynamically enable/disable the
+		// preemption depending on the current conditions or just avoid
+		// preemption in all cases
+		return false;
 	}
 
 };
