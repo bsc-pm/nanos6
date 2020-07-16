@@ -525,36 +525,25 @@ namespace DataAccessRegistration {
 		// Default deletableCount of 1.
 		accessStruct.increaseDeletableCount();
 
-		// Stuff to get the home node of the data accesses
 		// move_pages is a system call. Do it only in case any access has no homeNode.
 		bool performMovePages = true;
-		// PID 0 is current process
-		int pid = 0;
-		unsigned long count = accessStruct.getRealAccessNumber();
-		void **pages = accessStruct.getAddressArray();
-		bool isUsingMap = false;
-		// It is using map instead of array
-		if (pages ==  nullptr) {
-			pages = (void **) alloca(count * sizeof(void *));
-			isUsingMap = true;
-		}
-		// This is important. nullptr here means we want to know where the pages reside, instead of moving them.
-		const int *nodes = nullptr;
-		int *status = (int *) alloca(count * sizeof(int));
-		// This is ignored in the case of not moving pages (our case).
-		int flags = 0;
-		unsigned long index = 0;
+		std::vector<void *> vPages;
 
 		// Get all seqs
 		accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
-			if (isUsingMap) {
-				pages[index++] = address;
-			}
 			DataAccessType accessType = access->getType();
 			ReductionInfo *reductionInfo = nullptr;
 			DataAccess *predecessor = nullptr;
 			bottom_map_t::iterator itMap;
 			bool weak = access->isWeak();
+
+			if (!weak) {
+				size_t length = access->getAccessRegion().getSize();
+				size_t pagesize = HardwareInfo::getPageSize();
+				for (size_t i = 0; i < length; i += pagesize) {
+					vPages.push_back((void *) address+i);
+				}
+			}
 
 			// Instrumentation needs a region.
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
@@ -722,14 +711,39 @@ namespace DataAccessRegistration {
 		});
 
 		if (performMovePages) {
+			// Stuff to get the home node of the data accesses
+			// PID 0 is current process
+			int pid = 0;
+			int count = vPages.size();
+			void **pages = (void **) &vPages[0];
+			// This is important. nullptr here means we want to know where the pages reside, instead of moving them.
+			const int *nodes = nullptr;
+			int *status = (int *) alloca(count * sizeof(int));
+			// This is ignored in the case of not moving pages (our case).
+			int flags = 0;
+
 			__attribute__((unused)) long ret = move_pages(pid, count, pages, nodes, status, flags);
 			assert(ret == 0);
 
-			index = 0;
+			int index = 0;
+			size_t numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
+			size_t *pagesPerNUMA = (size_t *) alloca(numNUMANodes * sizeof(size_t));
+			std::memset(pagesPerNUMA, 0, numNUMANodes * sizeof(size_t));
+			uint8_t idCurrentMax = (uint8_t) -1;
 			accessStruct.forAll([&](void *, DataAccess *access) -> bool {
-				if (status[index] >= 0) {
-					access->setHomeNode(status[index++]);
+				std::memset(pagesPerNUMA, 0, numNUMANodes * sizeof(size_t));
+				size_t length = access->getAccessRegion().getSize();
+				size_t pagesize = HardwareInfo::getPageSize();
+				for (size_t i = 0; i < length; i += pagesize) {
+					int homenode = status[index++];
+					if (homenode >= 0) {
+						size_t res = ++pagesPerNUMA[homenode];
+						if ((idCurrentMax == (uint8_t) -1) || (homenode != idCurrentMax && res > pagesPerNUMA[idCurrentMax])) {
+							idCurrentMax = homenode;
+						}
+					}
 				}
+				access->setHomeNode(idCurrentMax);
 				return true; // Continue iteration
 			});
 		}

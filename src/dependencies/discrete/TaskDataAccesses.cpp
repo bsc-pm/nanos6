@@ -80,10 +80,10 @@ void TaskDataAccesses::computeTaskAffinity(unsigned int &chosenL2id, unsigned in
 
 		// Reorder accesses depending on the location
 		int numAccesses = getRealAccessNumber();
-		int numSlots = std::min(numL2Cache, numAccesses);
+		int numNUMANodes = std::min(numL2Cache, numAccesses);
 		std::vector<DataAccess **> accessesPerCache;
-		accessesPerCache.reserve(numSlots);
-		std::vector<int> numAccessesPerCache(numSlots, 0);
+		accessesPerCache.reserve(numNUMANodes);
+		std::vector<int> numAccessesPerCache(numNUMANodes, 0);
 		int cachesWithAccesses = 0;
 		int remainingAccesses = numAccesses;
 
@@ -371,18 +371,16 @@ bool TaskDataAccesses::checkExpiration(unsigned int &chosenL2id, unsigned int &c
 
 void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
 {
-	int numNUMAnodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
-	int numAccesses = getRealAccessNumber();
-	int numSlots = std::min(numNUMAnodes, numAccesses);
-	size_t *bytesInNUMA = (size_t *) alloca(numSlots * sizeof(size_t));
-    std::memset(bytesInNUMA, 0, numSlots * sizeof(size_t));
+	int numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
+	size_t *bytesInNUMA = (size_t *) alloca(numNUMANodes * sizeof(size_t));
+	std::memset(bytesInNUMA, 0, numNUMANodes * sizeof(size_t));
 
 	forAll([&](void *, DataAccess *dataAccess) -> bool {
 		//! If the dataAccess is weak it is not really read/written, so no action required.
 		if (!dataAccess->isWeak()) {
 			uint8_t NUMAid = dataAccess->getHomeNode();
 			if (NUMAid != (uint8_t) -1) {
-				assert(NUMAid < numNUMAnodes);
+				assert(NUMAid < numNUMANodes);
 				bytesInNUMA[NUMAid] += dataAccess->getAccessRegion().getSize();
 			}
 			return true;
@@ -392,7 +390,7 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
 
 	size_t max = 0;
 	uint8_t chosen = (uint8_t) -1;
-	for (int i = 0; i < numSlots; i++) {
+	for (int i = 0; i < numNUMANodes; i++) {
 		if (bytesInNUMA[i] > max) {
 			max = bytesInNUMA[i];
 			chosen = i;
