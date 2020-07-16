@@ -1268,10 +1268,8 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/device/DeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
-	src/support/ConstPropagator.hpp \
 	src/support/GenericFactory.hpp \
 	src/support/GlobalLock.hpp \
-	src/support/InlineDoublyLinkedList.hpp \
 	src/support/InstrumentedThread.hpp \
 	src/support/JsonFile.hpp \
 	src/support/JsonNode.hpp \
@@ -1771,27 +1769,6 @@ install-data-hook:
 	chmod +x $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
 	         $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_nord3.sh \
 	         $(DESTDIR)$(docdir)/scripts/ctf/wrappers/ctf2prv_cte-power.sh
-
-#
-# Tests
-#
-
-unit_tests = inline-double-linked-list.debug.test inline-double-linked-list.test
-
-unit_test_common_cxxflags = -I$(top_srcdir)/tests
-
-inline_double_linked_list_debug_test_SOURCES = tests/unit/support/TestInlineDoublyLinkedList.cpp
-inline_double_linked_list_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
-
-inline_double_linked_list_test_SOURCES = tests/unit/support/TestInlineDoublyLinkedList.cpp
-inline_double_linked_list_test_CPPFLAGS = -DNDEBUG
-inline_double_linked_list_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(unit_test_common_cxxflags)
-
-check_PROGRAMS = $(unit_tests)
-TESTS = $(unit_tests)
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) $(top_srcdir)/tests/tap-driver.sh
-
-
 
 
 
