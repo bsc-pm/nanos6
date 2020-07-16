@@ -30,8 +30,6 @@ namespace CTFAPI {
 		static const char *meta_eventMetadataStreamId;
 		static const char *meta_eventMetadataFields;
 
-		uint16_t totalCPUs;
-
 		std::set<CTFEvent *> events;
 		std::set<CTFContext *> contexes;
 

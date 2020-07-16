@@ -66,9 +66,6 @@ public:
 			}
 		}
 
-		// Set the flags
-		taskfor->setRunnable(true);
-
 		// In case this has been created by a taskloop for, and we received
 		// the taskloop flag, remove it. Otherwise, we may end up disposing
 		// a preallocated taskfor

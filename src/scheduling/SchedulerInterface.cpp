@@ -36,8 +36,6 @@ SchedulerInterface::SchedulerInterface()
 
 	size_t totalDevices = (nanos6_device_t::nanos6_device_type_num);
 
-	assert(_deviceSchedulers != nullptr);
-
 	for (size_t i = 0; i < totalDevices; i++) {
 		_deviceSchedulers[i] = nullptr;
 	}
