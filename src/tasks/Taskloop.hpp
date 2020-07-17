@@ -74,9 +74,9 @@ public:
 		return (_bounds.upper_bound - _bounds.lower_bound);
 	}
 
-	void body(nanos6_address_translation_entry_t * = nullptr);
+	void body(nanos6_address_translation_entry_t * = nullptr) override;
 
-	virtual inline void registerDependencies(bool discrete = false)
+	inline void registerDependencies(bool discrete = false) override
 	{
 		if (discrete && isTaskloopSource()) {
 			size_t tasks = std::ceil((double) (_bounds.upper_bound - _bounds.lower_bound) / (double) _bounds.grainsize);
@@ -92,12 +92,12 @@ public:
 		}
 	}
 
-	virtual inline bool isTaskloopSource() const
+	inline bool isTaskloopSource() const override
 	{
 		return _source;
 	}
 
-	virtual inline bool isTaskloopFor() const
+	inline bool isTaskloopFor() const override
 	{
 		return isTaskfor();
 	}

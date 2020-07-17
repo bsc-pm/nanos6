@@ -10,18 +10,20 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 
+
 class DeviceInfo {
 protected:
-	// Number of devices of the given device type
+	//! Number of devices of the given device type
 	size_t _deviceCount;
 
-	// Underlying mechanism initialization status, where applicable (e.g CUDA Runtime)
+	//! Underlying mechanism initialization status, where applicable (e.g CUDA Runtime)
 	bool _deviceInitialized;
 
 public:
 
 	virtual ~DeviceInfo()
-	{}
+	{
+	}
 
 	inline size_t getDeviceCount() const
 	{
@@ -45,7 +47,6 @@ public:
 	{
 		return 0;
 	}
-
 };
 
 #endif // DEVICE_INFO_HPP

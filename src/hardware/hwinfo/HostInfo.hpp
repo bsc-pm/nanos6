@@ -39,12 +39,12 @@ public:
 
 	~HostInfo();
 
-	inline size_t getComputePlaceCount() const
+	inline size_t getComputePlaceCount() const override
 	{
 		return _computePlaces.size();
 	}
 
-	inline ComputePlace *getComputePlace(int index) const
+	inline ComputePlace *getComputePlace(int index) const override
 	{
 		return _computePlaces[index];
 	}
@@ -54,7 +54,7 @@ public:
 		return _computePlaces;
 	}
 
-	inline size_t getMemoryPlaceCount() const
+	inline size_t getMemoryPlaceCount() const override
 	{
 		return _memoryPlaces.size();
 	}
@@ -64,7 +64,7 @@ public:
 		return _validMemoryPlaces;
 	}
 
-	inline MemoryPlace *getMemoryPlace(int index) const
+	inline MemoryPlace *getMemoryPlace(int index) const override
 	{
 		return _memoryPlaces[index];
 	}

@@ -76,7 +76,7 @@ namespace CTFAPI {
 	}
 
 	template<typename... ARGS>
-	inline void tp_write_args(void **buf, ARGS... args)
+	inline void tp_write_args(void **, ARGS...)
 	{
 	}
 

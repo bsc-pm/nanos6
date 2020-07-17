@@ -225,9 +225,8 @@ public:
 		nanos6_task_invocation_info_t *taskInvokationInfo,
 		Task *parent,
 		Instrument::task_id_t instrumentationTaskId,
-		size_t flags,
-		bool runnable = false
-	)
+		size_t flags
+	) override
 	{
 		assert(isRunnable());
 		Task::reinitialize(argsBlock, argsBlockSize, taskInfo, taskInvokationInfo, parent, instrumentationTaskId, flags);
@@ -236,10 +235,12 @@ public:
 		_bounds.grainsize = 0;
 		_bounds.chunksize = 0;
 		_completedIterations = 0;
-		setRunnable(runnable);
+
+		// This function is only executed by collaborators
+		setRunnable(true);
 	}
 
-	inline void body(nanos6_address_translation_entry_t * = nullptr)
+	inline void body(nanos6_address_translation_entry_t * = nullptr) override
 	{
 		assert(hasCode());
 		assert(isRunnable());
@@ -307,7 +308,7 @@ public:
 		return (_bounds.upper_bound == source->getBounds().upper_bound);
 	}
 
-	virtual inline void registerDependencies(bool = false)
+	inline void registerDependencies(bool = false) override
 	{
 		assert(getParent() != nullptr);
 
@@ -318,17 +319,17 @@ public:
 		}
 	}
 
-	virtual inline bool isDisposable() const
+	inline bool isDisposable() const override
 	{
 		return !isRunnable();
 	}
 
-	virtual inline bool isTaskforCollaborator() const
+	inline bool isTaskforCollaborator() const override
 	{
 		return isRunnable();
 	}
 
-	virtual inline bool isTaskforSource() const
+	inline bool isTaskforSource() const override
 	{
 		return !isRunnable();
 	}
