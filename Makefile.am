@@ -62,6 +62,7 @@ nanos6include_HEADERS = \
 	api/nanos6/major.h \
 	api/nanos6/monitoring.h \
 	api/nanos6/openacc_device.h \
+	api/nanos6/numa.h \
 	api/nanos6/polling.h \
 	api/nanos6/reductions.h \
 	api/nanos6/runtime-info.h \
@@ -187,6 +188,7 @@ symbol_resolution += \
 	loader/symbol-resolver/final.c \
 	loader/symbol-resolver/lint.c \
 	loader/symbol-resolver/monitoring.c \
+	loader/symbol-resolver/numa.c \
 	loader/symbol-resolver/polling.c \
 	loader/symbol-resolver/runtime-info.c \
 	loader/symbol-resolver/task-info-registration.c \
@@ -222,6 +224,7 @@ symbol_resolution += \
 	loader/indirect-symbols/final.c \
 	loader/indirect-symbols/lint.c \
 	loader/indirect-symbols/monitoring.c \
+	loader/indirect-symbols/numa.c \
 	loader/indirect-symbols/polling.c \
 	loader/indirect-symbols/runtime-info.c \
 	loader/indirect-symbols/task-info-registration.c \
@@ -393,6 +396,7 @@ common_sources = \
 	src/lowlevel/threads/KernelLevelThread.cpp \
 	src/memory/directory/Directory.cpp \
 	src/memory/directory/HomeNodeMap.cpp \
+	src/memory/manager-numa/ManagerNUMA.cpp \
 	src/monitoring/Monitoring.cpp \
 	src/monitoring/TaskMonitor.cpp \
 	src/monitoring/TasktypeStatistics.cpp \
@@ -426,6 +430,7 @@ common_sources = \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Loop.cpp \
+	src/system/ompss/Numa.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskWait.cpp \
@@ -1258,6 +1263,7 @@ noinst_HEADERS = \
 	src/memory/directory/HomeMapEntry.hpp \
 	src/memory/directory/HomeNodeMap.hpp \
 	src/memory/directory/cluster/DistributionPolicy.hpp \
+	src/memory/manager-numa/ManagerNUMA.hpp \
 	src/memory/vmm/VirtualMemoryAllocation.hpp \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \

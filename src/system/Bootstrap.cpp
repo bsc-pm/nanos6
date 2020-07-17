@@ -25,6 +25,7 @@
 #include "lowlevel/TurboSettings.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
 #include "lowlevel/threads/ExternalThreadGroup.hpp"
+#include "memory/manager-numa/ManagerNUMA.hpp"
 #include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "support/config/ConfigCentral.hpp"
@@ -119,6 +120,7 @@ void nanos6_preinit(void)
 	LeaderThread::initialize(leaderThreadCPU);
 
 	CPUManager::initialize();
+	ManagerNUMA::initialize();
 	Instrument::nanos6_preinit_finished();
 
 	// Assert config conditions if any
@@ -143,6 +145,7 @@ void nanos6_shutdown(void)
 		// Wait for spawned functions to fully end
 	}
 
+	ManagerNUMA::shutdown();
 	StreamManager::shutdown();
 	LeaderThread::shutdown();
 
