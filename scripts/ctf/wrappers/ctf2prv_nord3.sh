@@ -7,6 +7,12 @@
 
 set -e
 
+if [[ "$CTF2PRV_VERBOSE" == "1" ]]; then
+	exec 3>&2
+else
+	exec 3>/dev/null
+fi
+
 CTF2PRV=$(type -P "ctf2prv")
 FOUND=$?
 
@@ -15,7 +21,9 @@ if [[ ! $FOUND ]]; then
 	exit 1;
 fi
 
-module purge  2>/dev/null
-module load gcc/7.2.0 mkl python/3.7.4 swig/3.0.12 babeltrace2/2.0.3  2>/dev/null
+1>&3      echo "Loading Nord3 modules for ctf2prv"
+1>&3 2>&3 module purge
+1>&3 2>&3 module load gcc/7.2.0 mkl python/3.7.4 swig/3.0.12 babeltrace2/2.0.3
+1>&3      echo "Loading modules done"
 
 $CTF2PRV $@
