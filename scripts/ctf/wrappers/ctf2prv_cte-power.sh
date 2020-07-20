@@ -5,8 +5,6 @@
 #	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 #
 
-set -e
-
 if [[ "$CTF2PRV_VERBOSE" == "1" ]]; then
 	exec 3>&2
 else
@@ -14,9 +12,9 @@ else
 fi
 
 CTF2PRV=$(type -P "ctf2prv")
-FOUND=$?
+NOTFOUND=$?
 
-if [[ ! $FOUND ]]; then
+if [[ "$NOTFOUND" == "1" ]]; then
 	>&2 echo "The ctf2prv converter is not in the system path. ctf to prv conversion was not possible.";
 	exit 1;
 fi

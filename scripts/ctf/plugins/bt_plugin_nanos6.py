@@ -60,12 +60,13 @@ class ctf2prv(bt2._UserSinkComponent):
 		verbose = os.environ.get('CTF2PRV_VERBOSE', "0")
 		if verbose == "0" or verbose == 0:
 			self.__verbose = False
+			print("Starting CTF to PRV conversion. Set environemnt variable CTF2PRV_VERBOSE=1 to show progress", flush=True)
 		elif verbose == "1" or verbose == 1:
 			self.__verbose = True
+			print("Starting CTF to PRV conversion", flush=True)
 		else:
 			raise RuntimeError("Error: Unknown CTF2PRV_VERBOSE value. Expected 0 or 1")
 
-		print("Starting CTF to PRV conversion. Set environemnt variable CTF2PRV_VERBOSE=1 to see the progress", flush=True)
 
 	def _finalize(self):
 		ts = self.__last.default_clock_snapshot.value
