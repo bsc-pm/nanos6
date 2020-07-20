@@ -46,7 +46,13 @@ base_tests += \
 	if0.clang.test \
 	dep-wait.clang.test \
 	simple-commutative.clang.test \
-	commutative-stencil.clang.test
+	commutative-stencil.clang.test \
+	task-for-nonpod.clang.test \
+	task-for-nqueens.clang.test \
+	taskloop-nonpod.clang.test \
+	taskloop-nqueens.clang.test \
+	taskloop-for-nonpod.clang.test \
+	taskloop-for-nqueens.clang.test
 
 
 # Ignore CPU Activation test if we have DLB
@@ -75,7 +81,11 @@ discrete_tests += \
 	discrete-deps-early-release.clang.test \
 	discrete-deps-er-and-weak.clang.test \
 	discrete-deps-wait.clang.test \
-	discrete-simple-commutative.clang.test
+	discrete-simple-commutative.clang.test \
+	discrete-taskloop-nonpod.clang.test \
+	discrete-taskloop-nqueens.clang.test \
+	discrete-taskloop-for-nonpod.clang.test \
+	discrete-taskloop-for-nqueens.clang.test
 endif
 
 if BUILD_DEBUG_VARIANTS
@@ -91,7 +101,13 @@ base_tests +=  \
 	if0.clang.debug.test \
 	dep-wait.clang.debug.test \
 	simple-commutative.clang.debug.test \
-	commutative-stencil.clang.debug.test
+	commutative-stencil.clang.debug.test \
+	task-for-nonpod.clang.debug.test \
+	task-for-nqueens.clang.debug.test \
+	taskloop-nonpod.clang.debug.test \
+	taskloop-nqueens.clang.debug.test \
+	taskloop-for-nonpod.clang.debug.test \
+	taskloop-for-nqueens.clang.debug.test
 
 # Ignore CPU Activation test if we have DLB for now
 if HAVE_DLB
@@ -117,7 +133,11 @@ discrete_tests += \
 	discrete-deps-early-release.clang.debug.test \
 	discrete-deps-er-and-weak.clang.debug.test \
 	discrete-deps-wait.clang.debug.test \
-	discrete-simple-commutative.clang.debug.test
+	discrete-simple-commutative.clang.debug.test \
+	discrete-taskloop-nonpod.clang.debug.test \
+	discrete-taskloop-nqueens.clang.debug.test \
+	discrete-taskloop-for-nonpod.clang.debug.test \
+	discrete-taskloop-for-nqueens.clang.debug.test
 endif
 
 endif
@@ -291,6 +311,96 @@ commutative_stencil_clang_test_SOURCES = ../commutative/commutative-stencil.cpp
 commutative_stencil_clang_test_CPPFLAGS = -DNDEBUG
 commutative_stencil_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 commutative_stencil_clang_test_LDFLAGS = $(test_common_ldflags)
+
+task_for_nonpod_clang_debug_test_SOURCES = ../task-for/task-for-nonpod.cpp
+task_for_nonpod_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_nonpod_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+task_for_nonpod_clang_test_SOURCES = ../task-for/task-for-nonpod.cpp
+task_for_nonpod_clang_test_CPPFLAGS = -DNDEBUG
+task_for_nonpod_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_nonpod_clang_test_LDFLAGS = $(test_common_ldflags)
+
+task_for_nqueens_clang_debug_test_SOURCES = ../task-for/task-for-nqueens.cpp
+task_for_nqueens_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_nqueens_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+task_for_nqueens_clang_test_SOURCES = ../task-for/task-for-nqueens.cpp
+task_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
+task_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+task_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_nonpod_clang_debug_test_SOURCES = ../taskloop/taskloop-nonpod.cpp
+taskloop_nonpod_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_nonpod_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_nonpod_clang_test_SOURCES = ../taskloop/taskloop-nonpod.cpp
+taskloop_nonpod_clang_test_CPPFLAGS = -DNDEBUG
+taskloop_nonpod_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_nonpod_clang_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_nqueens_clang_debug_test_SOURCES = ../taskloop/taskloop-nqueens.cpp
+taskloop_nqueens_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_nqueens_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_nqueens_clang_test_SOURCES = ../taskloop/taskloop-nqueens.cpp
+taskloop_nqueens_clang_test_CPPFLAGS = -DNDEBUG
+taskloop_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_taskloop_nonpod_clang_debug_test_SOURCES = ../discrete-taskloop/taskloop-nonpod.cpp
+discrete_taskloop_nonpod_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_nonpod_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_taskloop_nonpod_clang_test_SOURCES = ../discrete-taskloop/taskloop-nonpod.cpp
+discrete_taskloop_nonpod_clang_test_CPPFLAGS = -DNDEBUG
+discrete_taskloop_nonpod_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_nonpod_clang_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_taskloop_nqueens_clang_debug_test_SOURCES = ../discrete-taskloop/taskloop-nqueens.cpp
+discrete_taskloop_nqueens_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_nqueens_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_taskloop_nqueens_clang_test_SOURCES = ../discrete-taskloop/taskloop-nqueens.cpp
+discrete_taskloop_nqueens_clang_test_CPPFLAGS = -DNDEBUG
+discrete_taskloop_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_for_nonpod_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-nonpod.cpp
+taskloop_for_nonpod_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_nonpod_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_for_nonpod_clang_test_SOURCES = ../taskloop-for/taskloop-for-nonpod.cpp
+taskloop_for_nonpod_clang_test_CPPFLAGS = -DNDEBUG
+taskloop_for_nonpod_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_nonpod_clang_test_LDFLAGS = $(test_common_ldflags)
+
+taskloop_for_nqueens_clang_debug_test_SOURCES = ../taskloop-for/taskloop-for-nqueens.cpp
+taskloop_for_nqueens_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_nqueens_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+taskloop_for_nqueens_clang_test_SOURCES = ../taskloop-for/taskloop-for-nqueens.cpp
+taskloop_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
+taskloop_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+taskloop_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_taskloop_for_nonpod_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nonpod.cpp
+discrete_taskloop_for_nonpod_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_nonpod_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_taskloop_for_nonpod_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nonpod.cpp
+discrete_taskloop_for_nonpod_clang_test_CPPFLAGS = -DNDEBUG
+discrete_taskloop_for_nonpod_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_nonpod_clang_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_taskloop_for_nqueens_clang_debug_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nqueens.cpp
+discrete_taskloop_for_nqueens_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_nqueens_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_taskloop_for_nqueens_clang_test_SOURCES = ../discrete-taskloop-for/taskloop-for-nqueens.cpp
+discrete_taskloop_for_nqueens_clang_test_CPPFLAGS = -DNDEBUG
+discrete_taskloop_for_nqueens_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_taskloop_for_nqueens_clang_test_LDFLAGS = $(test_common_ldflags)
 
 lr_nonest_clang_debug_test_SOURCES = ../linear-regions/lr-nonest.cpp
 lr_nonest_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
