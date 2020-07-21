@@ -23,6 +23,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinWait.hpp"
+#include "memory/manager-numa/ManagerNUMA.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "TaskDataAccesses.hpp"
 #include "tasks/Task.hpp"
@@ -525,9 +526,7 @@ namespace DataAccessRegistration {
 		// Default deletableCount of 1.
 		accessStruct.increaseDeletableCount();
 
-		// move_pages is a system call. Do it only in case any access has no homeNode.
-		bool performMovePages = true;
-		std::vector<void *> vPages;
+		bool setHomeNode = true;
 
 		// Get all seqs
 		accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
@@ -536,14 +535,6 @@ namespace DataAccessRegistration {
 			DataAccess *predecessor = nullptr;
 			bottom_map_t::iterator itMap;
 			bool weak = access->isWeak();
-
-			if (!weak) {
-				size_t length = access->getAccessRegion().getSize();
-				size_t pagesize = HardwareInfo::getPageSize();
-				for (size_t i = 0; i < length; i += pagesize) {
-					vPages.push_back((void *) address+i);
-				}
-			}
 
 			// Instrumentation needs a region.
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
@@ -644,7 +635,7 @@ namespace DataAccessRegistration {
 					}
 
 					access->setHomeNode(parentAccess->getHomeNode());
-					performMovePages = false;
+					setHomeNode = false;
 					if (dispose)
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
@@ -668,11 +659,37 @@ namespace DataAccessRegistration {
 					access->updateTrackingInfo(location, timeL2, timeL3);
 				}
 				access->setHomeNode(predecessor->getHomeNode());
-				performMovePages = false;
+				setHomeNode = false;
 
 				dispose = predecessor->applyPropagated(message);
 				if (dispose)
 					decreaseDeletableCountOrDelete(predecessor->getOriginator(), hpDependencyData._deletableOriginators);
+			}
+
+			// The homenode couldn't be propagated, check it in the directory
+			if (!weak && setHomeNode) {
+				size_t length = access->getAccessRegion().getSize();
+				size_t pagesize = HardwareInfo::getPageSize();
+				int numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
+				size_t *bytesInNUMA = (size_t *) alloca(numNUMANodes * sizeof(size_t));
+				std::memset(bytesInNUMA, 0, numNUMANodes * sizeof(size_t));
+				size_t max = 0;
+				uint8_t idMax = (uint8_t) -1;
+
+				for (size_t i = 0; i < length; i += pagesize) {
+					uint8_t homenode = ManagerNUMA::getHomeNode(address+i);
+					bytesInNUMA[homenode] += std::min(pagesize, length-i);
+					if (bytesInNUMA[homenode] > max) {
+						max = bytesInNUMA[homenode];
+						idMax = homenode;
+						if (max >= length/2) {
+							// No other NUMA can get more bytes than this one, so cutoff
+							break;
+						}
+					}
+				}
+				// We set the NUMA node with a highest number of bytes as the homenode.
+				access->setHomeNode(idMax);
 			}
 
 			if (fromCurrent.combine) {
@@ -709,44 +726,6 @@ namespace DataAccessRegistration {
 
 			return true; // Continue iteration
 		});
-
-		if (performMovePages) {
-			// Stuff to get the home node of the data accesses
-			// PID 0 is current process
-			int pid = 0;
-			int count = vPages.size();
-			void **pages = (void **) &vPages[0];
-			// This is important. nullptr here means we want to know where the pages reside, instead of moving them.
-			const int *nodes = nullptr;
-			int *status = (int *) alloca(count * sizeof(int));
-			// This is ignored in the case of not moving pages (our case).
-			int flags = 0;
-
-			__attribute__((unused)) long ret = move_pages(pid, count, pages, nodes, status, flags);
-			assert(ret == 0);
-
-			int index = 0;
-			size_t numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
-			size_t *pagesPerNUMA = (size_t *) alloca(numNUMANodes * sizeof(size_t));
-			std::memset(pagesPerNUMA, 0, numNUMANodes * sizeof(size_t));
-			uint8_t idCurrentMax = (uint8_t) -1;
-			accessStruct.forAll([&](void *, DataAccess *access) -> bool {
-				std::memset(pagesPerNUMA, 0, numNUMANodes * sizeof(size_t));
-				size_t length = access->getAccessRegion().getSize();
-				size_t pagesize = HardwareInfo::getPageSize();
-				for (size_t i = 0; i < length; i += pagesize) {
-					int homenode = status[index++];
-					if (homenode >= 0) {
-						size_t res = ++pagesPerNUMA[homenode];
-						if ((idCurrentMax == (uint8_t) -1) || (homenode != idCurrentMax && res > pagesPerNUMA[idCurrentMax])) {
-							idCurrentMax = homenode;
-						}
-					}
-				}
-				access->setHomeNode(idCurrentMax);
-				return true; // Continue iteration
-			});
-		}
 	}
 
 	static inline void releaseReductionInfo(ReductionInfo *info)
