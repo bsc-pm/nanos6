@@ -9,13 +9,16 @@
 
 
 #include "instrument/api/InstrumentLeaderThread.hpp"
+#include "instrument/ctf/InstrumentThreadLocalData.hpp"
 #include "ctfapi/CTFAPI.hpp"
 
 namespace Instrument {
 
 	inline void leaderThreadSpin()
 	{
-		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded();
+		CPULocalData *cpuLocalData = getCTFCPULocalData();
+		CTFAPI::CTFStream *userStream = cpuLocalData->userStream;
+		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(userStream, userStream);
 	}
 
 }

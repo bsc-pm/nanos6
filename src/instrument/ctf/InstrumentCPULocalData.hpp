@@ -8,12 +8,17 @@
 #define INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP
 
 #include "ctfapi/stream/CTFStream.hpp"
+#include "ctfapi/stream/CTFStreamKernel.hpp"
 
 namespace Instrument {
 	struct CPULocalData {
-		CPULocalData() {}
 		CTFAPI::CTFStream *userStream;
-		CTFAPI::CTFStream *kernelStream;
+		CTFAPI::CTFStreamKernel *kernelStream;
+
+		CPULocalData()
+			: userStream(nullptr), kernelStream(nullptr)
+		{
+		}
 	};
 
 	CPULocalData *getCTFCPULocalData();

@@ -14,6 +14,7 @@
 #include "support/config/ConfigVariable.hpp"
 
 #include "CTFMetadata.hpp"
+#include "CTFKernelMetadata.hpp"
 
 
 namespace CTFAPI {
@@ -38,7 +39,8 @@ namespace CTFAPI {
 		std::string _kernelPath;
 		std::string _binaryName;
 		uint64_t _pid;
-		CTFMetadata *_metadata;
+		CTFMetadata *_userMetadata;
+		CTFKernelMetadata *_kernelMetadata;
 
 		uint64_t _absoluteStartTime;
 		uint16_t _totalCPUs;
@@ -57,7 +59,12 @@ namespace CTFAPI {
 
 		void setMetadata(CTFMetadata *metadata)
 		{
-			_metadata = metadata;
+			_userMetadata = metadata;
+		}
+
+		void setKernelMetadata(CTFKernelMetadata *metadata)
+		{
+			_kernelMetadata = metadata;
 		}
 
 		void setTotalCPUs(uint16_t totalCPUs)

@@ -585,8 +585,11 @@ instrument_ctf_sources = \
 	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.cpp \
 	src/instrument/ctf/ctfapi/stream/CircularBuffer.cpp \
 	src/instrument/ctf/ctfapi/stream/CTFStream.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFStreamKernel.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.cpp \
 	src/instrument/ctf/ctfapi/CTFAPI.cpp \
 	src/instrument/ctf/ctfapi/CTFEvent.cpp \
+	src/instrument/ctf/ctfapi/CTFKernelMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFTrace.cpp \
 	src/instrument/ctf/InstrumentCPULocalData.cpp \
@@ -939,11 +942,14 @@ noinst_HEADERS = \
 	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.hpp \
 	src/instrument/ctf/ctfapi/context/CTFEventContext.hpp \
 	src/instrument/ctf/ctfapi/stream/CircularBuffer.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStream.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFStreamKernel.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedShared.hpp \
 	src/instrument/ctf/ctfapi/CTFAPI.hpp \
 	src/instrument/ctf/ctfapi/CTFEvent.hpp \
+	src/instrument/ctf/ctfapi/CTFKernelMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFTrace.hpp \
 	src/instrument/ctf/ctfapi/CTFTypes.hpp \
@@ -2124,6 +2130,8 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/tasks/task_and_deps.cfg \
 	paraver-cfg/nanos6/tasks/task_number.cfg \
 	paraver-cfg/nanos6/tasks/task_priority.cfg \
+	paraver-cfg/nanos6/ctf2prv/kernel/kernel_process_name.cfg \
+	paraver-cfg/nanos6/ctf2prv/kernel/kernel_thread_id.cfg \
 	paraver-cfg/nanos6/ctf2prv/ctf_buffers_flush_to_disk.cfg \
 	paraver-cfg/nanos6/ctf2prv/hardware_counters.cfg \
 	paraver-cfg/nanos6/ctf2prv/number_of_blocked_tasks.cfg \
@@ -2157,6 +2165,7 @@ nobase_dist_ctf_DATA = \
 
 dist_bin_SCRIPTS = \
 	scripts/ctf/ctf2prv \
+	scripts/ctf/ctfkerneldefs \
 	scripts/ctf/ctfstats
 
 ## --------------------------------- ##

@@ -760,3 +760,73 @@ class ParaverViewNumberOfBlockedThreads(ParaverView):
 			raise Exception("Error: attempt to suspend the same thread twice")
 		self.blockedThreads.add(tid)
 		payload.append((ExtraeEventTypes.NUMBER_OF_BLOCKED_THREADS, len(self.blockedThreads)))
+
+class ParaverViewKernelThreadID(ParaverView):
+	def __init__(self):
+		super().__init__()
+		self._hooks = [
+			("sched_switch", self.hook_schedSwitch),
+		]
+		ParaverTrace.addEventType(ExtraeEventTypes.KERNEL_THREAD_ID, "Kernel Thread ID (TID)")
+
+	def hook_schedSwitch(self, event, payload):
+		tid = event["next_pid"]
+		# Idle threads have Id 0, which correspond to the "End" state in
+		# Paraver. Therfore, no special treament need to be done for the idle
+		# threads.
+		payload.append((ExtraeEventTypes.KERNEL_THREAD_ID, tid))
+
+class ParaverViewKernelProcessName(ParaverView):
+
+	class ProcessNameDB():
+
+		def __init__(self, keys):
+			self._dic = {}
+			self._cnt = 1
+			for k in keys:
+				val = self._cnt
+				self._dic[k] = val
+				self._cnt += 1
+				ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PROCESS_NAME, {val : k})
+
+		def __getitem__(self, key):
+			val = None
+			if key in self._dic:
+				val = self._dic[key]
+			elif key[:8] == 'swapper/':
+				# To detect Idle threads we could also check for tid == 0, but
+				# It's probably less expensive to check the string rather than
+				# access the event's dictionary
+				self._dic[key] = 0
+				val = 0
+			else:
+				val = self._cnt
+				self._dic[key] = val
+				self._cnt += 1
+				ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PROCESS_NAME, {val : key})
+			return val
+
+	def __init__(self):
+		super().__init__()
+		self._hooks = [
+			("sched_switch", self.hook_schedSwitch),
+		]
+
+		# Only the idle thread need to be registered manually, all the others
+		# processes will be registered in ProcessNameDB
+		values = {
+			0  : "Idle"
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PROCESS_NAME, values, "Kernel Process Name")
+
+		# Initialize process name to id mapping
+		# Add first the traced application's name to ensure that it always gets the same id
+		binaryName = ParaverTrace.getBinaryName()
+		shortBinaryName = binaryName[:15]
+		self._processNameMap = self.ProcessNameDB([shortBinaryName])
+
+	def hook_schedSwitch(self, event, payload):
+		name = event["next_comm"]
+		extraeId = self._processNameMap[name]
+		payload.append((ExtraeEventTypes.KERNEL_PROCESS_NAME, extraeId))
+

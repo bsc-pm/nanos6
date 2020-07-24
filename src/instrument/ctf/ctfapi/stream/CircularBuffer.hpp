@@ -43,6 +43,7 @@ public:
 	void shutdown();
 	bool checkIfNeedsFlush();
 	bool alloc(uint64_t size);
+	uint64_t allocAtLeast(uint64_t minSize);
 
 	inline void *getBuffer()
 	{

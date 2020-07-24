@@ -88,13 +88,14 @@ public:
 	//!
 	//! \param[in] label The label of the data
 	//! \param[out] converted Whether the data extraction was successful
-	inline T getData(const std::string &label, bool &converted) const
+	template <typename X = T>
+	inline X getData(const std::string &label, bool &converted) const
 	{
-		T data;
+		X data;
 		converted = true;
 
 		try {
-			data = _node.get<T>(label);
+			data = _node.get<X>(label);
 		} catch (const Json::ptree_error &conversionError) {
 			FatalErrorHandler::warn("Could not convert JSON data with label: ", label);
 			converted = false;

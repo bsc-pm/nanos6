@@ -380,5 +380,6 @@ void CTFAPI::CTFTrace::initializeTraceTimer()
 
 void CTFAPI::CTFTrace::clean()
 {
-	delete _metadata;
+	delete _userMetadata;
+	delete _kernelMetadata;
 }

@@ -17,6 +17,7 @@
 namespace CTFAPI {
 
 	enum ctf_streams {
+		CTFStreamKernelId    = 0,
 		CTFStreamBoundedId   = 1,
 		CTFStreamUnboundedId = 2
 	};
@@ -24,13 +25,30 @@ namespace CTFAPI {
 	class CTFStream {
 
 	private:
-		ctf_cpu_id_t    _cpuId;
+
 		ctf_stream_id_t _streamId;
-		CircularBuffer _circularBuffer;
+		size_t _size;
 
 		void addStreamHeader();
+		void makePacketContext(CircularBuffer *circularBuffer, ctf_cpu_id_t cpu_id);
+		void makePacketHeader(CircularBuffer *circularBuffer, ctf_stream_id_t streamId);
 
 	protected:
+
+		struct __attribute__((__packed__)) PacketHeader {
+			uint32_t magic;
+			ctf_stream_id_t stream_id;
+		};
+
+		// TODO possibly add index data here to speed up lookups
+		struct __attribute__((__packed__)) PacketContext {
+			ctf_cpu_id_t cpu_id;
+		};
+
+		ctf_cpu_id_t   _cpuId;
+		std::string    _path;
+		CircularBuffer _circularBuffer;
+
 		CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path,
 			  ctf_stream_id_t streamId);
 
@@ -40,7 +58,9 @@ namespace CTFAPI {
 
 		virtual ~CTFStream() {}
 
-		inline void shutdown()
+		void initialize();
+
+		virtual inline void shutdown()
 		{
 			_circularBuffer.shutdown();
 		}
@@ -59,6 +79,11 @@ namespace CTFAPI {
 		inline ctf_stream_id_t getId() const
 		{
 			return _streamId;
+		}
+
+		inline ctf_cpu_id_t getCPUId() const
+		{
+			return _cpuId;
 		}
 
 		inline bool alloc(uint64_t size)

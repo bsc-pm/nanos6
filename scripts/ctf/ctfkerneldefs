@@ -1,0 +1,339 @@
+#!/usr/bin/env python3
+
+#
+#	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
+#
+#	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+#
+
+
+import subprocess
+import os
+import sys
+import traceback
+import re
+import ctypes
+import logging
+import getopt
+
+def searchDebugFs():
+	""" Search for a debugfs mount point """
+	output = subprocess.check_output(['mount'])
+	for line in output.decode().split('\n'):
+		fields = line.split(" ")
+		if fields[0] == "debugfs":
+
+			# Is the mount point a debufs?
+			fsType = fields[4]
+			if fsType != "debugfs":
+				continue
+
+			# Do the mount point has read premissions?
+			found = False
+			perms = fields[5][1:-1].split(',')
+			for p in perms:
+				if p == "r" or p == "rw":
+					found = True
+					break
+			if not found:
+				continue
+
+			# Paranoid check, is it really a mount point?
+			mount = fields[2]
+			if os.path.ismount(mount):
+				return mount
+
+	return None
+
+def formatArgumentLine(raw, globalOffset):
+
+	def macroRemoval(x):
+		if x[0] == '_':
+			return x in ["__u8", "__u16", "__u32", "__u64", "__s8", "__s16", "__s32", "__s64"]
+		else:
+			return True
+
+	def getTypeSize(fieldType):
+		if (fieldType == "char" or fieldType == "unsigned char"):
+			size = ctypes.sizeof(ctypes.c_char)
+		elif (fieldType == "short" or fieldType == "unsigned short"):
+			size = ctypes.sizeof(ctypes.c_short)
+		elif (fieldType == "int" or fieldType == "unsigned int"):
+			size = ctypes.sizeof(ctypes.c_int)
+		elif (fieldType == "long" or fieldType == "unsigned long"):
+			size = ctypes.sizeof(ctypes.c_short)
+		elif (fieldType == "long long" or fieldType == "unsigned long long"):
+			size = ctypes.sizeof(ctypes.c_longlong)
+		elif (fieldType in ["u8", "__u8", "s8", "__s8"]):
+			size = 1
+		elif (fieldType in ["u16", "__u16", "s16", "__s16"]):
+			size = 2
+		elif (fieldType in ["u32", "__u32", "s32", "__s32"]):
+			size = 4
+		elif (fieldType in ["u64", "__u64", "s64", "__s64"]):
+			size = 8
+		else:
+			raise Exception("Data type " + fieldType + " byte representation not found")
+
+		return size
+
+	arg = []
+	config = raw.split(';')
+
+	field     = config[0][6:]      # skip "field:"
+	offset    = int(config[1][8:]) # skip "offset:"
+	fieldSize = int(config[2][6:]) # skip "size:"
+	signed    = config[3][8:]      # skip "signed:"
+	totalSize = fieldSize
+
+	# Remove anything between []
+	# The kernel might not specify the size in a integer form, it might be
+	# preset as a "sizeof" or an arithmetic operation. Hence, we clean the
+	# reported kernel size, we calculate it manually based on the total size
+	# and the per-element size, and fill it between the []
+	field = re.sub('\[.*\]', '[]', field)
+
+	# Split name and type
+	fields = field.split(" ")
+	name = fields[-1]
+	field = fields[:-1]
+
+	# There might be padding between arguments. If there is, add a new char
+	# array with the needed padding
+	padding = offset - globalOffset[0]
+	if padding != 0:
+		padName = re.sub('\[.*\]', '', name)
+		padName = "_pad_" + padName + "[" + str(padding) + "]"
+		padField = "integer { size = 8; align = 8; signed = 0; encoding = none; base = 10; } " + padName
+		arg.append(padField)
+		totalSize += padding
+	globalOffset[0] += totalSize
+
+	# Detect special cases I
+	isDataLoc = 1 if '__data_loc' in field else 0
+	isArray   = 1 if '[' in name else 0
+
+	# Remove macros
+	fieldNoMacro = filter(macroRemoval, field)
+	fieldType = " ".join(fieldNoMacro)
+
+	# Detect special cases II
+	isPointer = 1 if '*' in fieldType else 0
+
+	logging.debug(raw)
+	#(fieldType)
+	#(name)
+
+	argType = ""
+	if isDataLoc:
+		# Any arg with the __data_loc macro, is an 32 bit int despite its reported type
+		# A fields containing the __data_loc macro describe dynamic arrays. The field
+		# itself is a 32 bit integer  that encodes the size of the dynamic array in
+		# the higher 16 bits and the offset is in lower 16 bits.
+		assert(fieldSize == 4)
+		assert(not isArray)
+		assert(not isPointer)
+
+		# __data_loc fields may have duplicate names, so we prepend "data_loc_"
+		# to avoid collistions just as it is done in bpftrace
+		name = "data_loc_" + name
+		argType = "integer { size = 32; align = 8; signed = " + signed + "; encoding = none; base = 10; }"
+	elif isArray:
+		# All arrays fall here. We have stripped the contents between []. Now we need to calculate it and fill it again.
+		typeSize = getTypeSize(fieldType)
+		nelem = int(fieldSize/typeSize)
+
+		#print("size % typeSize: " + str(size) + " % " + str(typeSize) + " = " + str(size % typeSize) + "; nelem = " + str(nelem))
+		if fieldSize % typeSize != 0 or nelem == 0:
+			raise Exception("fieldSize % typeSize: " + str(fieldSize) + " % " + str(typeSize) + " = " + str(fieldSize % typeSize))
+
+		# Set the array size
+		name = re.sub('\[.*\]', '[' + str(nelem) + ']', name)
+
+		#If signed or unsigned char array, it's encoding is set to UTF8
+		encoding = "none"
+		if typeSize == 1:
+			encoding = "UTF8"
+
+		argType = "integer { size = " + str(8 * typeSize) + "; align = 8; signed = " + signed + "; encoding = " + encoding + "; base = 16; }"
+	elif isPointer:
+		# All pointers fall here. They must be either 4 or 8 bytes long
+		assert(fieldSize == 8 or fieldSize == 4)
+		assert(signed == "0")
+		argType = "integer { size = " + str(8 * fieldSize) + "; align = 8; signed = 0; encoding = none; base = 16; }"
+	elif fieldSize <= 8:
+		# The basic types char, integer, short, long, long long and unsigned variants fall here
+		argType = "integer { size = " + str(8 * fieldSize) + "; align = 8; signed = " + signed + "; encoding = none; base = 10; }"
+	else:
+		# Custom kernel type, probably an entire struct. We don't know how to read it, so let's just serialize it
+		argType = "integer { size = 8; align = 8; signed = 0; encoding = none; base = 10; }"
+		name += "[" + str(fieldSize) + "]"
+
+	arg.append(argType + " " + "_" + name)
+
+
+	return arg, totalSize
+
+
+def readTracepointFormat(path):
+	formatFile = path + "/format"
+	formatSection = False
+	totalSize = 0
+	size = 0
+	formattedArg = []
+	offset = [8]
+	with open(formatFile) as f:
+		for line in f:
+			if not formatSection:
+				if line != "\n":
+					continue
+				else:
+					formatSection = True
+					continue
+			else:
+				if line == "\n":
+					break
+				else:
+					arg, size = formatArgumentLine(line.strip(), offset)
+					totalSize += size
+					formattedArg.extend(arg)
+	return formattedArg, totalSize
+
+def readTracepointId(path):
+	idFile = path + "/id"
+	with open(idFile) as f:
+		val = f.read().strip()
+	return int(val)
+
+def buildJSONEntry(name, tracepointId, tracepointSize, tracepointFormat):
+	entry  = "\t\"" + name + "\": {\n"
+	entry += "\t\t\"id\": " + str(tracepointId)   + ",\n"
+	entry += "\t\t\"size\": " + str(tracepointSize) + ",\n"
+
+	## build array
+	#entry += "\t\t\"format\": [\n"
+	#for arg in tracepointFormat[:-1]:
+	#	entry += "\t\t\t\"" + arg + "\",\n"
+	#entry += "\t\t\t\"" + tracepointFormat[-1] + "\"\n"
+	#entry += "\t\t]\n"
+
+	## build single string (uglier but easier to parse in Nanos6)
+	entry += "\t\t\"format\": \""
+	for arg in tracepointFormat:
+		entry += "\\t\\t" + arg + ";\\n"
+	entry += "\"\n"
+
+	entry += "\t}"
+
+	return entry
+
+def checkForDuplicateNames(tracepointName, tracepointFormat):
+	names = set()
+	for arg in tracepointFormat:
+		name = arg.split(" ")[-1]
+		name = re.sub('\[.*\]', '', name)
+		if name in names:
+			print("duplicated name \"", name, "\" for tracepoint: ", tracepointName)
+			print(tracepointFormat)
+			sys.exit(1)
+		names.add(name)
+
+def processTracepointEntry(name, path, maxid):
+	logging.debug("path: " + path)
+	tracepointId = readTracepointId(path)
+
+	logging.debug("id: " + str(tracepointId))
+	tracepointFormat, tracepointSize = readTracepointFormat(path)
+
+	checkForDuplicateNames(name, tracepointFormat)
+	maxid[0] = tracepointId if tracepointId > maxid[0] else maxid[0]
+
+	return buildJSONEntry(name, tracepointId, tracepointSize, tracepointFormat)
+
+def scanTracepointsSafe(debugfs):
+	eventsHome = debugfs + "/tracing/events"
+	subsysDirectoryList = os.listdir(eventsHome)
+	subsysDirectoryList = list(filter(lambda x: x != "ftrace", subsysDirectoryList))
+	entries = []
+	maxid = [0]
+	for subsys in subsysDirectoryList:
+		subsysHome = eventsHome + "/" + subsys
+		if not os.path.isdir(subsysHome):
+			continue
+		for tracepoint in os.listdir(subsysHome):
+			tracepointHome = subsysHome + "/" + tracepoint
+			if not os.path.isdir(tracepointHome):
+				continue
+
+			try:
+				entry = processTracepointEntry(tracepoint, tracepointHome, maxid)
+				entries.append(entry)
+			except FileNotFoundError:
+				# Not a tracepoint directory, skip
+				pass
+	return entries, maxid[0]
+
+def scanTracepoints(debugfs):
+	try:
+		return scanTracepointsSafe(debugfs)
+	except Exception as e:
+		print(traceback.format_exc())
+		print("Error: Cannot read tracepoint definition: " + str(e))
+		sys.exit()
+
+def printToFile(f, meta, desc):
+	print("{", file = f)
+	print(meta, file = f)
+	for entry in desc[:-1]:
+		print(entry + ",", file = f)
+	print(desc[-1], file = f)
+	print("}", file = f)
+
+def printJSON(fileName, stdout, desc, maxid):
+	meta  = "\t\"meta\": {\n"
+	meta += "\t\t\"maxEventId\": " + str(maxid) + ",\n"
+	meta += "\t\t\"numberOfEvents\": " + str(len(desc)) + "\n"
+	meta += "\t},"
+
+	if stdout:
+		printToFile(sys.stdout, meta, desc)
+	else:
+		with open(fileName, "w") as f:
+			printToFile(f, meta, desc)
+
+def setupLogger(logLevel):
+	logging.basicConfig(level=logLevel)
+
+def printHelp():
+	print("ctfkerneldefs [--verbose] [--help] [--stdout]")
+	print(" --verbose | -v : verbose mode")
+	print(" --stdout | -o : Output description to stdout")
+	print(" --help | -h : Print this helpful help :-)")
+
+def parseArgs():
+	loglevel = logging.INFO
+	stdout = False
+	try:
+		opts, args = getopt.getopt(sys.argv[1:], "hvo", ["help", "verbose", "stdout"])
+	except getopt.GetoptError:
+		print("Error getting command line options")
+		printHelp()
+		sys.exit()
+
+	for opt, arg in opts:
+		if opt in ("-h", "--help"):
+			printHelp()
+			sys.exit()
+		elif opt in ("-v", "--verbose"):
+			loglevel = logging.DEBUG
+		elif opt in ("-o", "--stdout"):
+			stdout = True
+
+	return loglevel, stdout
+
+
+logLevel, stdout = parseArgs()
+setupLogger(logLevel)
+debugfs = searchDebugFs()
+desc, maxid = scanTracepoints(debugfs)
+printJSON("nanos6_kerneldefs.json", stdout, desc, maxid)

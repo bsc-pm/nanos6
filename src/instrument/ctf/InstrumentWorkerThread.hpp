@@ -8,17 +8,26 @@
 #define INSTRUMENT_CTF_WORKERTHREAD_HPP
 
 
-#include "instrument/api/InstrumentWorkerThread.hpp"
-
-#include "../support/InstrumentThreadLocalDataSupport.hpp"
-#include "ctfapi/CTFAPI.hpp"
 #include "CTFTracepoints.hpp"
+#include "ctfapi/CTFAPI.hpp"
+#include "instrument/ctf/InstrumentCPULocalData.hpp"
+#include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
+#include "instrument/api/InstrumentWorkerThread.hpp"
 
 namespace Instrument {
 
 	inline void workerThreadSpins()
 	{
-		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded();
+		CPULocalData *cpuLocalData = getCTFCPULocalData();
+		CTFAPI::CTFStreamKernel *kernelStream = cpuLocalData->kernelStream;
+		CTFAPI::CTFStream *userStream = cpuLocalData->userStream;
+
+		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(userStream, userStream);
+
+		if (kernelStream) {
+			CTFAPI::updateKernelEvents(kernelStream, userStream);
+			CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(kernelStream, userStream);
+		}
 	}
 
 	inline void workerThreadObtainedTask()

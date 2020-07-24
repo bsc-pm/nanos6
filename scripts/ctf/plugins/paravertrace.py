@@ -24,6 +24,9 @@ class ExtraeEventTypes():
 	NUMBER_OF_RUNNING_THREADS = 6400023
 	NUMBER_OF_BLOCKED_THREADS = 6400024
 
+	KERNEL_THREAD_ID          = 6400100
+	KERNEL_PROCESS_NAME       = 6400101
+
 class ExtraeEvent:
 	def __init__(self, identifier, description, mid = 0, used = True):
 		self.__id = identifier
@@ -95,6 +98,7 @@ class ParaverTrace:
 	__events = {}
 	__ncpus = 0
 	__nvcpus = 1 # leader thread virtual cpu
+	__binaryName = "undefined"
 	__startTime = 0
 	__endTime = 0
 	__eventCollections = []
@@ -316,5 +320,13 @@ class ParaverTrace:
 		cls.__ltcpu = ncpus # by convention
 
 	@classmethod
+	def addBinaryName(cls, binaryName):
+		cls.__binaryName = binaryName
+
+	@classmethod
 	def addAbsoluteStartTime(cls, absoluteStartTime):
 		cls.__absoluteStartTime = absoluteStartTime
+
+	@classmethod
+	def getBinaryName(cls):
+		return cls.__binaryName

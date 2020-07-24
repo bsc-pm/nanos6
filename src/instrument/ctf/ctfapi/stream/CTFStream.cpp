@@ -8,27 +8,27 @@
 
 CTFAPI::CTFStream::CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path,
 			     ctf_stream_id_t streamId)
+	: _cpuId(cpu),
+	_streamId(streamId),
+	_size(size)
 {
-	_cpuId = cpu;
-	_streamId = streamId;
-	std::string streamFilePath = path + "/channel_" + std::to_string(_cpuId);
-	_circularBuffer.initialize(size, streamFilePath.c_str());
+	_path = path + "/channel_" + std::to_string(_cpuId);
+}
+
+void CTFAPI::CTFStream::initialize()
+{
+	_circularBuffer.initialize(_size, _path.c_str());
 	addStreamHeader();
 }
 
-static void mk_packet_header(CircularBuffer *circularBuffer, ctf_stream_id_t streamId)
+void CTFAPI::CTFStream::makePacketHeader(CircularBuffer *circularBuffer, ctf_stream_id_t streamId)
 {
-	struct __attribute__((__packed__)) packet_header {
-		uint32_t magic;
-		ctf_stream_id_t stream_id;
-	};
-
-	const int pks = sizeof(struct packet_header);
-	struct packet_header *pk;
+	const int pks = sizeof(struct PacketHeader);
+	struct PacketHeader *pk;
 	void *buf = circularBuffer->getBuffer();
 
-	pk = (struct packet_header *) buf;
-	*pk = (struct packet_header) {
+	pk = (struct PacketHeader *) buf;
+	*pk = (struct PacketHeader) {
 		.magic = 0xc1fc1fc1,
 		.stream_id = streamId
 	};
@@ -36,19 +36,14 @@ static void mk_packet_header(CircularBuffer *circularBuffer, ctf_stream_id_t str
 	circularBuffer->submit(pks);
 }
 
-static void mk_packet_context(CircularBuffer *circularBuffer, ctf_cpu_id_t cpu_id)
+void CTFAPI::CTFStream::makePacketContext(CircularBuffer *circularBuffer, ctf_cpu_id_t cpu_id)
 {
-	// TODO possibly add index data here to speed up lookups
-	struct __attribute__((__packed__)) packet_context {
-		ctf_cpu_id_t cpu_id;
-	};
-
-	const int pks = sizeof(struct packet_context);
-	struct packet_context *pk;
+	const int pks = sizeof(struct PacketContext);
+	struct PacketContext *pk;
 	void *buf = circularBuffer->getBuffer();
 
-	pk = (struct packet_context *) buf;
-	*pk = (struct packet_context) {
+	pk = (struct PacketContext *) buf;
+	*pk = (struct PacketContext) {
 		.cpu_id = cpu_id,
 	};
 
@@ -57,6 +52,6 @@ static void mk_packet_context(CircularBuffer *circularBuffer, ctf_cpu_id_t cpu_i
 
 void CTFAPI::CTFStream::addStreamHeader()
 {
-	mk_packet_header (&_circularBuffer, _streamId);
-	mk_packet_context(&_circularBuffer, _cpuId);
+	makePacketHeader(&_circularBuffer, _streamId);
+	makePacketContext(&_circularBuffer, _cpuId);
 }

@@ -17,6 +17,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <algorithm>
+
 #include "CircularBuffer.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
@@ -176,6 +178,38 @@ bool CircularBuffer::alloc(uint64_t size)
 
 	// yes, we have space!
 	return true;
+}
+
+uint64_t CircularBuffer::allocAtLeast(uint64_t minSize)
+{
+	uint64_t nextWall;
+	uint64_t available;
+
+	assert(minSize <= bufferSize);
+
+	// Is there enough space in the buffer?
+	if (head + minSize - tail > bufferSize) {
+		return 0;
+	}
+
+	// Is there enough contiguous space to service the requested minimum size?
+	nextWall = (head & ~mask) + bufferSize;
+	if (nextWall - head < minSize) {
+		// If not, mark this segment as a hole and move forward
+		hole = head;
+		head = nextWall;
+		// We cannot cross the border again so what's left is what we have
+		available = bufferSize - (head - tail);
+		// Check again the available size, after moving the head there might
+		// no longer be enough space
+		available = (available >= minSize)? available : 0;
+	} else {
+		// If yes, get the minimum between the real space left and and
+		// the maximum contiguous space
+		available = std::min(bufferSize - (head - tail), nextWall - head);
+	}
+
+	return available;
 }
 
 void CircularBuffer::flushUpToTheWrap()

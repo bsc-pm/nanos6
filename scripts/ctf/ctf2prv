@@ -20,16 +20,22 @@ if [ $# -ne 1 ]; then
 	exit 1
 fi
 
-CTFTRACE=`readlink -f $1/ctf/ust/uid/*/64-bit`
+if [[ ! $(type -P "babeltrace2") ]]; then
+	>&2 echo "The babeltrace2 tool is not in the system path. ctf to prv conversion was not possible.";
+	exit 1;
+fi
 
-if [ ! -f $CTFTRACE/metadata ]; then
+CTF_USER_TRACE_PATH=`readlink -f $1/ctf/ust/uid/*/64-bit`
+CTF_KERNEL_TRACE_PATH=`readlink -f $1/ctf/kernel`
+
+if [ ! -f $CTF_USER_TRACE_PATH/metadata ]; then
 	>&2 echo "Error: The supplied input does not appear to be a CTF trace"
 	exit 1
 fi
 
-if [[ ! $(type -P "babeltrace2") ]]; then
-	>&2 echo "The babeltrace2 tool is not in the system path. ctf to prv conversion was not possible.";
-	exit 1;
+KERNEL_TRACE_FOUND=1
+if [ ! -f $CTF_KERNEL_TRACE_PATH/metadata ]; then
+	KERNEL_TRACE_FOUND=0
 fi
 
 PRVTRACE="$1/prv"
@@ -37,7 +43,16 @@ rm -rf $PRVTRACE
 mkdir $PRVTRACE
 cd $PRVTRACE
 
-babeltrace2 --plugin-path="$CTFPLUGINS"   \
-	-c source.ctf.fs                  \
-	--params="inputs=[\"$CTFTRACE\"]" \
-	-c sink.nanos6.ctf2prv
+if [ $KERNEL_TRACE_FOUND -eq 1 ]; then
+	babeltrace2 --plugin-path="$CTFPLUGINS"            \
+		-c source.ctf.fs                               \
+		--params="inputs=[\"$CTF_USER_TRACE_PATH\"]"   \
+		-c source.ctf.fs                               \
+		--params="inputs=[\"$CTF_KERNEL_TRACE_PATH\"]" \
+		-c sink.nanos6.ctf2prv
+else
+	babeltrace2 --plugin-path="$CTFPLUGINS"            \
+		-c source.ctf.fs                               \
+		--params="inputs=[\"$CTF_USER_TRACE_PATH\"]"   \
+		-c sink.nanos6.ctf2prv
+fi
