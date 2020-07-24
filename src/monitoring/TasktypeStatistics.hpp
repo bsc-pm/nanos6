@@ -436,7 +436,7 @@ public:
 		// parallelism metrics, and the accuracy obtained of a previous prediction
 		_timingAccumulatorLock.lock();
 		_timingAccumulator(normalizedTime);
-		_accumulatedTimeAccumulator(elapsed / 1000.0);
+		_accumulatedTimeAccumulator(elapsed);
 		if (predictionAvailable) {
 			_timingAccuracyAccumulator(accuracy);
 		}

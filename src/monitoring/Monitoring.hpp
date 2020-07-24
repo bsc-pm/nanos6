@@ -7,6 +7,8 @@
 #ifndef MONITORING_HPP
 #define MONITORING_HPP
 
+#include <sys/types.h>
+
 #include "CPUMonitor.hpp"
 #include "TaskMonitor.hpp"
 #include "TaskStatistics.hpp"
@@ -45,10 +47,7 @@ private:
 	//    CPU USAGE PREDICTION VARIABLES    //
 
 	//! The most recent past CPU usage prediction
-	static double _predictedCPUUsage;
-
-	//! Whether a prediciton has been done
-	static bool _predictedCPUUsageAvailable;
+	static size_t _predictedCPUUsage;
 
 private:
 
@@ -146,7 +145,7 @@ public:
 	//! \brief Get the predicted CPU usage for the next 'time' microseconds
 	//!
 	//! \param[in] time The amount of time in microseconds to predict usage for
-	static double getPredictedCPUUsage(size_t time);
+	static size_t getPredictedCPUUsage(size_t time);
 
 	//! \brief Poll the expected time until completion of the current execution
 	//!

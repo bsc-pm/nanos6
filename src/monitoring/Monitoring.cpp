@@ -23,8 +23,7 @@ ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "
 JsonFile *Monitoring::_wisdom(nullptr);
 CPUMonitor *Monitoring::_cpuMonitor(nullptr);
 TaskMonitor *Monitoring::_taskMonitor(nullptr);
-double Monitoring::_predictedCPUUsage(0.0);
-bool Monitoring::_predictedCPUUsageAvailable(false);
+size_t Monitoring::_predictedCPUUsage(0);
 
 
 //    MONITORING    //
@@ -179,13 +178,9 @@ void Monitoring::cpuBecomesActive(int cpuId)
 
 //    PREDICTORS    //
 
-double Monitoring::getPredictedCPUUsage(size_t time)
+size_t Monitoring::getPredictedCPUUsage(size_t time)
 {
 	if (_enabled) {
-		if (!_predictedCPUUsageAvailable) {
-			_predictedCPUUsageAvailable = true;
-		}
-
 		double currentWorkload = 0.0;
 		size_t currentActiveInstances = 0;
 		size_t currentPredictionlessInstances = 0;
@@ -206,20 +201,18 @@ double Monitoring::getPredictedCPUUsage(size_t time)
 		);
 
 		// At least one CPU, or if there are any predictionless instances, that number
-		double predictedUsage = (currentPredictionlessInstances) ? currentPredictionlessInstances : 1.0;
+		size_t predictedUsage = (currentPredictionlessInstances) ? currentPredictionlessInstances : 1;
 
 		// Add the minimum between the number of tasks with prediction, and
 		// the current workload in time divided by the required time
-		predictedUsage += std::min(
-			(double) currentActiveInstances,
-			(currentWorkload / (double) time)
-		);
+		predictedUsage += (size_t) ((double) currentWorkload / (double) time);
+		predictedUsage = std::min(predictedUsage, (size_t) CPUManager::getAvailableCPUs());
 		_predictedCPUUsage = predictedUsage;
 
 		return predictedUsage;
 	}
 
-	return 0.0;
+	return 0;
 }
 
 double Monitoring::getPredictedElapsedTime()
