@@ -8,7 +8,10 @@
 #define MANAGER_NUMA_HPP
 
 #include <map>
+#include <numa.h>
 #include <numaif.h>
+#include <cstring>
+#include <sys/mman.h>
 
 #include <nanos6.h>
 
@@ -18,23 +21,36 @@
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/RWSpinLock.hpp"
 
+struct DirectoryInfo {
+	size_t _size;
+	uint8_t _homenode;
+
+	DirectoryInfo(size_t size, uint8_t homenode)
+		: _size(size), _homenode(homenode)
+	{}
+};
+
 class ManagerNUMA {
 private:
 	typedef nanos6_bitmask_t bitmask_t;
 	// All what is stored here are pages. So the size is always pagesize.
 	// Therefore, we only need the initial address and the homenode.
-	typedef std::map<void *, uint8_t> directory_t;
+	typedef std::map<void *, DirectoryInfo> directory_t;
 
 	static directory_t _directory;
 	static RWSpinLock _lock;
+	static std::atomic<size_t> _totalBytes;
 
 public:
 	static void initialize()
-	{}
+	{
+		_totalBytes = 0;
+	}
 
 	static void shutdown()
 	{
 		assert(_directory.empty());
+		std::cout << "Total allocated bytes using nanos6_numa interface: " << _totalBytes << std::endl;
 	}
 
 	static void *alloc(size_t size, bitmask_t *bitmask, size_t block_size)
@@ -51,13 +67,49 @@ public:
 			FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
 		}
 
-		// PID = 0 means move pages of this process.
+		// Allocate space using mmap
+		void *addr = nullptr;
+		int prot = PROT_READ | PROT_WRITE;
+		int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE | MAP_NONBLOCK;
+		int fd = -1;
+		int offset = 0;
+		void *res = mmap(addr, size, prot, flags, fd, offset);
+		assert(res != MAP_FAILED);
+		struct bitmask *tmp_bitmask = numa_bitmask_alloc(HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device));
+
+		for (size_t i = 0; i < size; i += block_size) {
+			uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
+			disableBit(&bitmaskCopy, currentNodeIndex);
+			if (bitmaskCopy == 0) {
+				bitmaskCopy = *bitmask;
+			}
+
+			// Place pages where they must be
+			void *tmp = (void *) ((uintptr_t) res + i);
+			numa_bitmask_clearall(tmp_bitmask);
+			numa_bitmask_setbit(tmp_bitmask, currentNodeIndex);
+			assert(numa_bitmask_isbitset(tmp_bitmask, currentNodeIndex));
+			size_t tmp_size = std::min(block_size, size-i);
+			numa_interleave_memory(tmp, tmp_size, tmp_bitmask);
+
+			// Insert into directory
+			DirectoryInfo info(tmp_size, currentNodeIndex);
+			_lock.writeLock();
+			_directory.emplace(tmp, info);
+			_lock.writeUnlock();
+		}
+
+		numa_bitmask_free(tmp_bitmask);
+
+		_totalBytes += size;
+
+#ifndef NDEBUG
 		int pid = 0;
 		unsigned long numPages = ceil(size, pagesize);
 		void **pages = (void **) MemoryAllocator::alloc(numPages * sizeof(void *));
-		int *nodes = (int *) MemoryAllocator::alloc(numPages * sizeof(int));
+		int *nodes = nullptr;
 		int *status = (int *) MemoryAllocator::alloc(numPages * sizeof(int));
-		int flags = 0;
+		flags = 0;
 		size_t page = 0;
 		uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 		disableBit(&bitmaskCopy, currentNodeIndex);
@@ -65,11 +117,6 @@ public:
 			bitmaskCopy = *bitmask;
 		}
 
-		// Allocate memory
-		void *res = aligned_alloc(pagesize, size);
-		assert(res != nullptr);
-
-		// First touch, otherwise move_pages will fail
 		size_t blockBytes = 0;
 		for (size_t i = 0; i < size; i += pagesize) {
 			if (blockBytes >= block_size) {
@@ -84,11 +131,6 @@ public:
 			char *tmp = (char *) res+i;
 			tmp[0] = 0;
 			pages[page] = tmp;
-			nodes[page] = currentNodeIndex;
-
-			_lock.writeLock();
-			_directory.emplace(tmp, currentNodeIndex);
-			_lock.writeUnlock();
 
 			blockBytes += pagesize;
 			page++;
@@ -107,7 +149,6 @@ public:
 			bitmaskCopy = *bitmask;
 		}
 
-#ifndef NDEBUG
 		blockBytes = 0;
 		for (size_t i = 0; i < numPages; i++) {
 			if (blockBytes >= block_size) {
@@ -124,24 +165,48 @@ public:
 
 			blockBytes += pagesize;
 		}
-#endif
 
 		MemoryAllocator::free(pages, numPages * sizeof(void *));
-		MemoryAllocator::free(nodes, numPages * sizeof(int));
 		MemoryAllocator::free(status, numPages * sizeof(int));
+
+#endif
 
 		return res;
 	}
 
-	static void free(void *ptr, size_t size)
+	static void free(void *ptr, size_t size, bitmask_t *bitmask, size_t block_size)
 	{
+		assert(size > 0);
+		assert(*bitmask > 0);
+		assert(block_size > 0);
+
+		bitmask_t bitmaskCopy = *bitmask;
+
 		int pagesize = HardwareInfo::getPageSize();
-		assert((size_t) ptr % pagesize == 0);
+		if (block_size % pagesize != 0) {
+			block_size = closestMultiple(block_size, pagesize);
+			//FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
+		}
 
-		// Remove all pages from directory
-		for (size_t i = 0; i < size; i += pagesize) {
-			char *tmp = (char *) ptr+i;
+#ifndef NDEBUG
+		size_t remainingBytes = size;
+#endif
+		for (size_t i = 0; i < size; i += block_size) {
+			uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
+			disableBit(&bitmaskCopy, currentNodeIndex);
+			if (bitmaskCopy == 0) {
+				bitmaskCopy = *bitmask;
+			}
 
+			// Place pages where they must be
+			void *tmp = (void *) ((uintptr_t) ptr + i);
+#ifndef NDEBUG
+			_lock.readLock();
+			auto it = _directory.find(tmp);
+			assert(it->second._size == block_size || it->second._size == remainingBytes);
+			_lock.readUnlock();
+			remainingBytes -= it->second._size;
+#endif
 			_lock.writeLock();
 			__attribute__((unused)) size_t numErased = _directory.erase(tmp);
 			_lock.writeUnlock();
@@ -149,28 +214,65 @@ public:
 		}
 
 		// Release memory
-		std::free(ptr);
+		__attribute__((unused)) int res = munmap(ptr, size);
+		assert(res == 0);
 	}
 
-	static uint8_t getHomeNode(void *ptr)
+	static uint8_t getHomeNode(void *ptr, size_t size)
 	{
-		// Align to pagesize
-		void *alignedPtr = (void *) closestMultiple((size_t) ptr, HardwareInfo::getPageSize());
-
+		uint8_t homenode = (uint8_t ) -1;
 		// Search in the directory
 		_lock.readLock();
-		auto it = _directory.find(alignedPtr);
+		auto it = _directory.lower_bound(ptr);
 		_lock.readUnlock();
 
-		// Not present
-		if (it == _directory.end())
-			return (uint8_t) -1;
-
+		// lower_bound returns the first element not considered to go before ptr
+		// Thus, if ptr is exactly the start of the region, lower_bound will return
+		// the desired region. Otherwise, if ptr belongs to the region but its start
+		// address is greater than the region start, lower_bound returns the next region.
+		// In consequence, we should apply a decrement to the it.
 		// Get homenode
-		uint8_t homenode = it->second;
-		assert(homenode != (uint8_t) -1);
+		if (it == _directory.end() || ptr < it->first) {
+			if (it == _directory.begin()) {
+				//std::cout << "Not present" << std::endl;
+				return homenode;
+			}
+			it--;
+		}
 
-		return homenode;
+		// Not present
+		if (it == _directory.end()) {
+			//std::cout << "Not present" << std::endl;
+			return homenode;
+		}
+
+		// It could happen that the region we are checking resides in several directory regions.
+		// We will return as the homenode the one containing more bytes.
+		size_t foundBytes = 0;
+		size_t *bytesInNUMA = (size_t *) alloca(HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device)*sizeof(size_t));
+		std::memset(bytesInNUMA, 0, HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device)*sizeof(size_t));
+		int idMax = -1;
+		do {
+			size_t containedBytes = getContainedBytes((uintptr_t) it->first, it->second._size, (uintptr_t) ptr, size);
+			homenode = it->second._homenode;
+			bytesInNUMA[homenode] += containedBytes;
+
+			if (idMax == -1 || bytesInNUMA[homenode] > bytesInNUMA[idMax]) {
+				idMax = homenode;
+			}
+
+			// Cutoff
+			if (bytesInNUMA[homenode] >= (size/2)) {
+				assert(homenode != (uint8_t) -1);
+				return homenode;
+			}
+
+			foundBytes += containedBytes;
+			it++;
+		} while (foundBytes != size && it != _directory.end());
+		assert(idMax != -1);
+
+		return idMax;
 	}
 
 private:
@@ -194,6 +296,27 @@ private:
 	static inline void disableBit(uint64_t *x, uint64_t bitIndex)
 	{
 		*x &= ~((uint64_t) 1 << bitIndex);
+	}
+
+	static inline size_t getContainedBytes(uintptr_t ptr1, size_t size1, uintptr_t ptr2, size_t size2)
+	{
+		uintptr_t end1 = (uintptr_t) ptr1 + size1;
+		uintptr_t end2 = (uintptr_t) ptr2 + size2;
+
+		if (end1 <= ptr2)
+			return 0;
+
+		if (end2 <= ptr1)
+			return 0;
+
+		if (ptr1 > ptr2) {
+			return end2 - ptr1;
+		} else {
+			if (end2 > end1)
+				return end1 - ptr2;
+			else
+				return end2 - ptr2;
+		}
 	}
 };
 

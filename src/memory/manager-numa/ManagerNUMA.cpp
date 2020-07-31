@@ -8,3 +8,4 @@
 
 ManagerNUMA::directory_t ManagerNUMA::_directory;
 RWSpinLock ManagerNUMA::_lock;
+std::atomic<size_t> ManagerNUMA::_totalBytes;

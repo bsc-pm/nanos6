@@ -20,8 +20,10 @@ void *nanos6_numa_alloc_interleaved_subset(
 
 void nanos6_numa_free(
 	void *ptr,
-	size_t size
+	size_t size,
+	nanos6_bitmask_t *bitmask,
+	size_t block_size
 ) {
-	ManagerNUMA::free(ptr, size);
+	ManagerNUMA::free(ptr, size, bitmask, block_size);
 }
 

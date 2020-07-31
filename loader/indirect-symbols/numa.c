@@ -28,10 +28,12 @@ void *nanos6_numa_alloc_interleaved_subset(
 
 void nanos6_numa_free(
 	void *ptr,
-	size_t size
+	size_t size,
+	nanos6_bitmask_t *bitmask,
+	size_t block_size
 ) {
 	typedef void nanos6_numa_free(
-			void *ptr, size_t size
+			void *ptr, size_t size, nanos6_bitmask_t *bitmask, size_t block_size
 	);
 
 	static nanos6_numa_free *symbol = NULL;
@@ -39,7 +41,7 @@ void nanos6_numa_free(
 		symbol = (nanos6_numa_free *) _nanos6_resolve_symbol("nanos6_numa_free", "numa", NULL);
 	}
 
-	(*symbol)(ptr, size);
+	(*symbol)(ptr, size, bitmask, block_size);
 }
 
 #pragma GCC visibility pop
