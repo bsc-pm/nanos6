@@ -75,6 +75,11 @@ public:
 		int offset = 0;
 		void *res = mmap(addr, size, prot, flags, fd, offset);
 		assert(res != MAP_FAILED);
+
+		if (!DataTrackingSupport::isNUMATrackingEnabled()) {
+			return res;
+		}
+
 		struct bitmask *tmp_bitmask = numa_bitmask_alloc(HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device));
 
 		for (size_t i = 0; i < size; i += block_size) {
@@ -180,37 +185,39 @@ public:
 		assert(*bitmask > 0);
 		assert(block_size > 0);
 
-		bitmask_t bitmaskCopy = *bitmask;
+		if (DataTrackingSupport::isNUMATrackingEnabled()) {
+			bitmask_t bitmaskCopy = *bitmask;
 
-		int pagesize = HardwareInfo::getPageSize();
-		if (block_size % pagesize != 0) {
-			block_size = closestMultiple(block_size, pagesize);
-			//FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
-		}
-
-#ifndef NDEBUG
-		size_t remainingBytes = size;
-#endif
-		for (size_t i = 0; i < size; i += block_size) {
-			uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
-			disableBit(&bitmaskCopy, currentNodeIndex);
-			if (bitmaskCopy == 0) {
-				bitmaskCopy = *bitmask;
+			int pagesize = HardwareInfo::getPageSize();
+			if (block_size % pagesize != 0) {
+				block_size = closestMultiple(block_size, pagesize);
+				//FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
 			}
 
-			// Place pages where they must be
-			void *tmp = (void *) ((uintptr_t) ptr + i);
 #ifndef NDEBUG
-			_lock.readLock();
-			auto it = _directory.find(tmp);
-			assert(it->second._size == block_size || it->second._size == remainingBytes);
-			_lock.readUnlock();
-			remainingBytes -= it->second._size;
+			size_t remainingBytes = size;
 #endif
-			_lock.writeLock();
-			__attribute__((unused)) size_t numErased = _directory.erase(tmp);
-			_lock.writeUnlock();
-			assert(numErased == 1);
+			for (size_t i = 0; i < size; i += block_size) {
+				uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
+				disableBit(&bitmaskCopy, currentNodeIndex);
+				if (bitmaskCopy == 0) {
+					bitmaskCopy = *bitmask;
+				}
+
+				// Place pages where they must be
+				void *tmp = (void *) ((uintptr_t) ptr + i);
+#ifndef NDEBUG
+				_lock.readLock();
+				auto it = _directory.find(tmp);
+				assert(it->second._size == block_size || it->second._size == remainingBytes);
+				_lock.readUnlock();
+				remainingBytes -= it->second._size;
+#endif
+				_lock.writeLock();
+				__attribute__((unused)) size_t numErased = _directory.erase(tmp);
+				_lock.writeUnlock();
+				assert(numErased == 1);
+			}
 		}
 
 		// Release memory
@@ -220,6 +227,8 @@ public:
 
 	static uint8_t getHomeNode(void *ptr, size_t size)
 	{
+		assert(DataTrackingSupport::isNUMATrackingEnabled());
+
 		uint8_t homenode = (uint8_t ) -1;
 		// Search in the directory
 		_lock.readLock();
