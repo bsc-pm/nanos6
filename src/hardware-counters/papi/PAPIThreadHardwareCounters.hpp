@@ -9,9 +9,6 @@
 
 #include <papi.h>
 
-#include <MemoryAllocator.hpp>
-
-#include "lowlevel/FatalErrorHandler.hpp"
 #include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 
 
@@ -23,21 +20,21 @@ private:
 
 public:
 
-	PAPIThreadHardwareCounters()
+	inline PAPIThreadHardwareCounters()
 	{
 		_eventSet = PAPI_NULL;
 	}
 
-	~PAPIThreadHardwareCounters()
+	inline ~PAPIThreadHardwareCounters()
 	{
 	}
 
-	int getEventSet() const
+	inline int getEventSet() const
 	{
 		return _eventSet;
 	}
 
-	void setEventSet(int eventSet)
+	inline void setEventSet(int eventSet)
 	{
 		_eventSet = eventSet;
 	}
