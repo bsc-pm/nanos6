@@ -174,11 +174,11 @@ namespace DataAccessRegistration {
 		bool alreadyExisting;
 		DataAccess *access = accessStruct.allocateAccess(address, accessType, task, length, weak, alreadyExisting);
 
-		if (!weak) {
-			accessStruct.incrementTotalDataSize(length);
-		}
-
 		if (!alreadyExisting) {
+			if (!weak) {
+				accessStruct.incrementTotalDataSize(length);
+			}
+
 			if (accessType == REDUCTION_ACCESS_TYPE) {
 				access->setReductionOperator(reductionTypeAndOperatorIndex);
 				access->setReductionIndex(reductionIndex);
@@ -526,8 +526,6 @@ namespace DataAccessRegistration {
 		// Default deletableCount of 1.
 		accessStruct.increaseDeletableCount();
 
-		bool setHomeNode = true;
-
 		// Get all seqs
 		accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
 			DataAccessType accessType = access->getType();
@@ -535,6 +533,7 @@ namespace DataAccessRegistration {
 			DataAccess *predecessor = nullptr;
 			bottom_map_t::iterator itMap;
 			bool weak = access->isWeak();
+			bool setHomeNode = true;
 
 			// Instrumentation needs a region.
 			Instrument::data_access_id_t dataAccessInstrumentationId = Instrument::createdDataAccess(
@@ -669,27 +668,8 @@ namespace DataAccessRegistration {
 			// The homenode couldn't be propagated, check it in the directory
 			if (!weak && setHomeNode) {
 				size_t length = access->getAccessRegion().getSize();
-				size_t pagesize = HardwareInfo::getPageSize();
-				int numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
-				size_t *bytesInNUMA = (size_t *) alloca(numNUMANodes * sizeof(size_t));
-				std::memset(bytesInNUMA, 0, numNUMANodes * sizeof(size_t));
-				size_t max = 0;
-				uint8_t idMax = (uint8_t) -1;
-
-				for (size_t i = 0; i < length; i += pagesize) {
-					uint8_t homenode = ManagerNUMA::getHomeNode(address+i);
-					bytesInNUMA[homenode] += std::min(pagesize, length-i);
-					if (bytesInNUMA[homenode] > max) {
-						max = bytesInNUMA[homenode];
-						idMax = homenode;
-						if (max >= length/2) {
-							// No other NUMA can get more bytes than this one, so cutoff
-							break;
-						}
-					}
-				}
-				// We set the NUMA node with a highest number of bytes as the homenode.
-				access->setHomeNode(idMax);
+				uint8_t homenode = ManagerNUMA::getHomeNode(address, length);
+				access->setHomeNode(homenode);
 			}
 
 			if (fromCurrent.combine) {
