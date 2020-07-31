@@ -373,7 +373,7 @@ bool TaskDataAccesses::checkExpiration(unsigned int &chosenL2id, unsigned int &c
 
 void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
 {
-	if (_totalDataSize == 0)
+	if (_totalDataSize == 0 || !DataTrackingSupport::isNUMATrackingEnabled())
 		return;
 
 	int numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);

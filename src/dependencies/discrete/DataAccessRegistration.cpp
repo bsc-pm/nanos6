@@ -210,15 +210,19 @@ namespace DataAccessRegistration {
 
 			if (next.location) {
 				if (next.to != nullptr) {
-					DataTrackingSupport::DataTrackingInfo *trackingInfo = next.from->getTrackingInfo();
-					DataTrackingSupport::location_t location = (trackingInfo != nullptr) ? trackingInfo->_location : DataTrackingSupport::UNKNOWN_LOCATION;
-					if (location != DataTrackingSupport::UNKNOWN_LOCATION) {
-						DataTrackingSupport::timestamp_t timeL2 = trackingInfo->_timeL2;
-						DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
-						next.to->updateTrackingInfo(location, timeL2, timeL3);
+					if (DataTrackingSupport::isTrackingEnabled()) {
+						DataTrackingSupport::DataTrackingInfo *trackingInfo = next.from->getTrackingInfo();
+						DataTrackingSupport::location_t location = (trackingInfo != nullptr) ? trackingInfo->_location : DataTrackingSupport::UNKNOWN_LOCATION;
+						if (location != DataTrackingSupport::UNKNOWN_LOCATION) {
+							DataTrackingSupport::timestamp_t timeL2 = trackingInfo->_timeL2;
+							DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
+							next.to->updateTrackingInfo(location, timeL2, timeL3);
+						}
 					}
 
-					next.to->setHomeNode(next.from->getHomeNode());
+					if (DataTrackingSupport::isNUMATrackingEnabled()) {
+						next.to->setHomeNode(next.from->getHomeNode());
+					}
 				}
 			}
 
@@ -633,8 +637,10 @@ namespace DataAccessRegistration {
 						access->updateTrackingInfo(location, timeL2, timeL3);
 					}
 
-					access->setHomeNode(parentAccess->getHomeNode());
-					setHomeNode = false;
+					if (DataTrackingSupport::isNUMATrackingEnabled()) {
+						access->setHomeNode(parentAccess->getHomeNode());
+						setHomeNode = false;
+					}
 					if (dispose)
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
@@ -657,8 +663,10 @@ namespace DataAccessRegistration {
 					DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
 					access->updateTrackingInfo(location, timeL2, timeL3);
 				}
-				access->setHomeNode(predecessor->getHomeNode());
-				setHomeNode = false;
+				if (DataTrackingSupport::isNUMATrackingEnabled()) {
+					access->setHomeNode(predecessor->getHomeNode());
+					setHomeNode = false;
+				}
 
 				dispose = predecessor->applyPropagated(message);
 				if (dispose)
@@ -666,10 +674,12 @@ namespace DataAccessRegistration {
 			}
 
 			// The homenode couldn't be propagated, check it in the directory
-			if (!weak && setHomeNode) {
-				size_t length = access->getAccessRegion().getSize();
-				uint8_t homenode = ManagerNUMA::getHomeNode(address, length);
-				access->setHomeNode(homenode);
+			if (DataTrackingSupport::isNUMATrackingEnabled()) {
+				if (!weak && setHomeNode) {
+					size_t length = access->getAccessRegion().getSize();
+					uint8_t homenode = ManagerNUMA::getHomeNode(address, length);
+					access->setHomeNode(homenode);
+				}
 			}
 
 			if (fromCurrent.combine) {
