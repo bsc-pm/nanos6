@@ -7,10 +7,13 @@
 #ifndef TASK_DATA_ACCESSES_HPP
 #define TASK_DATA_ACCESSES_HPP
 
+#include <array>
 #include <atomic>
 #include <cassert>
 #include <functional>
 #include <mutex>
+#include <random>
+#include <unordered_map>
 
 #include "BottomMapEntry.hpp"
 #include "CommutativeSemaphore.hpp"
@@ -52,7 +55,7 @@ struct TaskDataAccesses {
 #ifndef NDEBUG
 	flags_t _flags;
 #endif
-
+	static std::default_random_engine _randomEngine;
 
 	TaskDataAccesses() :
 		_subaccessBottomMap(),

@@ -17,12 +17,13 @@ class ReadyQueueMap : public ReadyQueue {
 	typedef Container::map<Task::priority_t, ready_queue_t, std::greater<Task::priority_t>> ready_map_t;
 
 	ready_map_t *_readyMaps;
+	size_t *_numReadyTasksPerNUMANode;
 	uint8_t _numMaps;
 	// When tasks does not have a NUMA hint, we assign it in a round robin basis.
 	uint8_t _roundRobinQueues;
 
 	size_t _numReadyTasks;
-
+	size_t _enqueuedTasks;
 public:
 	ReadyQueueMap(SchedulingPolicy policy)
 		: ReadyQueue(policy),
@@ -32,10 +33,13 @@ public:
 		_numMaps = DataTrackingSupport::isNUMATrackingEnabled() ?
 			HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device) : 1;
 		_readyMaps = (ready_map_t *) MemoryAllocator::alloc(_numMaps * sizeof(ready_map_t));
+		_numReadyTasksPerNUMANode = (size_t *) MemoryAllocator::alloc(_numMaps * sizeof(size_t));
 
 		for (uint8_t i = 0; i < _numMaps; i++) {
 			new (&_readyMaps[i]) ready_map_t();
+			_numReadyTasksPerNUMANode[i] = 0;
 		}
+		_enqueuedTasks = 0;
 	}
 
 	~ReadyQueueMap()
@@ -46,8 +50,12 @@ public:
 			}
 			_readyMaps[i].clear();
 			_readyMaps[i].~ready_map_t();
+			std::cout << "Tasks in NUMA node " << (int) i << ": " << _numReadyTasksPerNUMANode[i] << std::endl;
 		}
 		MemoryAllocator::free(_readyMaps, _numMaps * sizeof(ready_map_t));
+		MemoryAllocator::free(_numReadyTasksPerNUMANode, _numMaps * sizeof(size_t));
+		std::cout << "Tasks with no NUMA hint: " << (int) _roundRobinQueues << std::endl;
+		std::cout << "Total number of enqueued tasks: " << _enqueuedTasks << std::endl;;
 	}
 
 	void addReadyTask(Task *task, bool unblocked)
@@ -76,6 +84,8 @@ public:
 		}
 
 		++_numReadyTasks;
+		++_numReadyTasksPerNUMANode[NUMAid];
+		++_enqueuedTasks;
 	}
 
 	Task *getReadyTask(ComputePlace *computePlace)

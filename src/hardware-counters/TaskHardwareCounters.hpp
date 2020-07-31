@@ -228,6 +228,9 @@ private:
 	static inline size_t getPAPITaskHardwareCountersSize()
 	{
 #if HAVE_PAPI
+		if (HardwareCounters::isPAPILightweightModeEnabled())
+			return 0;
+
 		return sizeof(PAPITaskHardwareCounters) + PAPITaskHardwareCounters::getTaskHardwareCountersSize();
 #endif
 		return 0;

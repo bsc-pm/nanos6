@@ -7,6 +7,8 @@
 #include "TaskDataAccesses.hpp"
 #include "scheduling/SchedulerInterface.hpp"
 
+std::default_random_engine TaskDataAccesses::_randomEngine;
+
 void TaskDataAccesses::trackDataLocation(CPU *cpu)
 {
 	if (!DataTrackingSupport::isTrackingEnabled() && _totalDataSize > 0) {
@@ -371,6 +373,9 @@ bool TaskDataAccesses::checkExpiration(unsigned int &chosenL2id, unsigned int &c
 
 void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
 {
+	if (_totalDataSize == 0)
+		return;
+
 	int numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
 	size_t *bytesInNUMA = (size_t *) alloca(numNUMANodes * sizeof(size_t));
 	std::memset(bytesInNUMA, 0, numNUMANodes * sizeof(size_t));
@@ -389,12 +394,27 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
 	});
 
 	size_t max = 0;
+	size_t sanityCheck = 0;
 	uint8_t chosen = (uint8_t) -1;
+	std::uniform_int_distribution<uint8_t> unif(0, numNUMANodes-1);
 	for (int i = 0; i < numNUMANodes; i++) {
+		sanityCheck += bytesInNUMA[i];
 		if (bytesInNUMA[i] > max) {
 			max = bytesInNUMA[i];
 			chosen = i;
+		} else if (bytesInNUMA[i] == max && chosen != (uint8_t) i) {
+			uint8_t rand = unif(_randomEngine);
+			if (rand != i) {
+				max = bytesInNUMA[rand];
+				chosen = rand;
+			}
 		}
 	}
 	chosenNUMAid = chosen;
+	//if (_currentIndex == 3) {
+	//	if (bytesInNUMA[0] != _totalDataSize && bytesInNUMA[1] != _totalDataSize) {
+	//		std::cout << "{" << bytesInNUMA[0] << ", " << bytesInNUMA[1] << " -> " << (int) chosenNUMAid << "}" << std::endl;
+	//	}
+	//}
+	assert(sanityCheck == _totalDataSize);
 }
