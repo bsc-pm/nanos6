@@ -7,6 +7,8 @@
 #ifndef PAPI_CPU_HARDWARE_COUNTERS_HPP
 #define PAPI_CPU_HARDWARE_COUNTERS_HPP
 
+#include <cstring>
+
 #include "PAPIHardwareCounters.hpp"
 #include "hardware-counters/CPUHardwareCountersInterface.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
@@ -26,7 +28,7 @@ public:
 		memset(_counters, 0, sizeof(_counters));
 	}
 
-	inline long long *getCountersBuffer() const
+	inline long long *getCountersBuffer()
 	{
 		return _counters;
 	}

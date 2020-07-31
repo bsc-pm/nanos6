@@ -7,7 +7,8 @@
 #ifndef PAPI_TASK_HARDWARE_COUNTERS_HPP
 #define PAPI_TASK_HARDWARE_COUNTERS_HPP
 
-#include <string>
+#include <cassert>
+#include <cstring>
 
 #include "PAPIHardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
