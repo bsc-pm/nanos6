@@ -143,6 +143,22 @@ class ParaverTrace:
 		cls.__prvFile.write(entry + "\n")
 
 	@classmethod
+	def emitCommunicationEvent(cls, cpuSendId, timeSend, cpuRecvId, timeRecv):
+		cpuSendId += 1
+		cpuRecvId += 1
+		size       = 1
+		tag        = 1
+
+		objectSend = "0:1:1:{}".format(cpuSendId)
+		objectRecv = "0:1:1:{}".format(cpuRecvId)
+		entry = "3:{}:{}:{}:{}:{}:{}:{}:{}\n".format(
+		        objectSend, timeSend, timeSend,
+		        objectRecv, timeRecv, timeRecv,
+		        size, tag)
+
+		cls.__prvFile.write(entry)
+
+	@classmethod
 	def finalizeTraceFiles(cls):
 		cls.__printParaverHeader(fake = False)
 		cls.__prvFile.close()

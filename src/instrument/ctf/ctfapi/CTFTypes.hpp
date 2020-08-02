@@ -18,5 +18,6 @@ typedef uint16_t ctf_thread_id_t;
 typedef uint8_t  ctf_debug_id_t;
 typedef uint16_t ctf_kernel_event_id_t;
 typedef uint16_t ctf_kernel_event_size_t;
+typedef uint64_t ctf_timestamp_t;
 
 #endif //CTFTYPES_HPP

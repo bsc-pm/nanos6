@@ -10,9 +10,9 @@
 
 #include "CTFTracepoints.hpp"
 #include "ctfapi/CTFAPI.hpp"
+#include "instrument/api/InstrumentWorkerThread.hpp"
 #include "instrument/ctf/InstrumentCPULocalData.hpp"
 #include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
-#include "instrument/api/InstrumentWorkerThread.hpp"
 
 namespace Instrument {
 

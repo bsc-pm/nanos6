@@ -10,7 +10,7 @@
 #include "SchedulerInterface.hpp"
 
 #include <InstrumentTaskStatus.hpp>
-#include <InstrumentSchedulerSubsystemEntryPoints.hpp>
+#include <InstrumentScheduler.hpp>
 #include <Monitoring.hpp>
 
 

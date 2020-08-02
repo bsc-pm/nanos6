@@ -145,6 +145,7 @@ class TaskIDsDB:
 class RuntimeModel:
 	_threads = {}
 	_taskTypes = TaskIDsDB()
+	_currentTimestamp = 0
 
 	@classmethod
 	def initialize(cls, ncpus):
@@ -240,6 +241,14 @@ class RuntimeModel:
 		else:
 			thread = cls._threads[tid]
 		return thread
+
+	@classmethod
+	def setCurrentTimestamp(cls, ts):
+		cls._currentTimestamp = ts
+
+	@classmethod
+	def getCurrentTimestamp(cls):
+		return cls._currentTimestamp
 
 	@classmethod
 	def preHooks(cls):

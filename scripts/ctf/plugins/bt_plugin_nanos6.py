@@ -93,6 +93,7 @@ class ctf2prv(bt2._UserSinkComponent):
 		self._it = self._create_message_iterator(self.__port)
 
 	def _process_event(self, ts, event):
+		RuntimeModel.setCurrentTimestamp(ts)
 		hookList = self.__hooks[event.name]
 		for hook in hookList:
 			hook(event, self.__payload)
@@ -143,7 +144,7 @@ class ctf2prv(bt2._UserSinkComponent):
 				pv.ParaverViewNumberOfCreatedThreads(),
 				pv.ParaverViewNumberOfRunningThreads(),
 				pv.ParaverViewNumberOfBlockedThreads(),
-	
+
 				pv.ParaverViewKernelThreadID(),
 				pv.ParaverViewKernelProcessName(),
 			]

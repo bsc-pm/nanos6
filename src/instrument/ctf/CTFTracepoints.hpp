@@ -52,6 +52,11 @@ namespace Instrument {
 	void tp_scheduler_get_task_enter();
 	void tp_scheduler_get_task_exit();
 
+	void tp_scheduler_lock_client(ctf_timestamp_t acquireTimestamp, ctf_task_id_t taskId);
+	void tp_scheduler_lock_server(ctf_timestamp_t acquireTimestamp);
+	void tp_scheduler_lock_assign(ctf_task_id_t taskId);
+	void tp_scheduler_lock_server_exit();
+
 	// Debug tracepoints
 
 	void tp_debug_register(const char *name, ctf_debug_id_t id);
