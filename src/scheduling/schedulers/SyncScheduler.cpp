@@ -11,18 +11,16 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	assert(computePlace != nullptr);
 
 	Task *task = nullptr;
-	uint64_t computePlaceIndex = computePlace->getIndex();
+	uint64_t computePlaceIdx = computePlace->getIndex();
 
-	// Subscribe to the lock
-	uint64_t ticket = _lock.subscribeOrLock(computePlaceIndex);
-	if (getAssignedTask(computePlaceIndex, ticket, task)) {
-		// Someone got the lock and assigned work to do
+	// Lock or delegate the work of getting a ready task
+	if (!_lock.lockOrDelegate(computePlaceIdx, task)) {
+		// Someone else acquired the lock and assigned us work
 		return task;
 	}
 
-	// We acquired the lock so we have to serve tasks
+	// We acquired the lock and we have to serve tasks
 	setServingTasks(true);
-	ticket++;
 
 	// The idea is to always keep a compute place inside the following scheduling loop
 	// serving tasks to the rest of active compute places, except when there is work for
@@ -37,43 +35,47 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 		// Move ready tasks from add queues to the unsynchronized scheduler
 		processReadyTasks();
 
-		// Serve the subscribers that are waiting
-		while (servedTasks < _maxServedTasks && _lock.popWaitingCPU(ticket, computePlaceIndex)) {
-			assert(computePlaceIndex < _totalComputePlaces);
+		// Serve the rest of computes places that are waiting
+		while (servedTasks < _maxServedTasks && !_lock.empty()) {
+			// Get the index of the waiting compute place
+			computePlaceIdx = _lock.front();
+			assert(computePlaceIdx < _totalComputePlaces);
 
-			ComputePlace *waitingComputePlace = getComputePlace(computePlaceIndex);
+			ComputePlace *waitingComputePlace = getComputePlace(computePlaceIdx);
 			assert(waitingComputePlace != nullptr);
 
 			// Try to get a ready task from the scheduler
 			task = _scheduler->getReadyTask(waitingComputePlace);
 
-			// Assign the task to the subscriber slot even if it nullptr. The
-			// responsible for serving tasks is the current compute place, and
-			// we want to avoid changing the responsible constantly (as happened
-			// in the original implementation)
-			assignTask(computePlaceIndex, ticket, task);
+			// Assign the task to the waiting compute place even if it nullptr. The
+			// responsible for serving tasks is the current compute place, and we
+			// want to avoid changing the responsible constantly, as happened in the
+			// original implementation
+			_lock.setItem(computePlaceIdx, task);
+
+			// Unblock the served compute place and advance to the next one
+			_lock.popFront();
+
 			servedTasks++;
-
-			// Advance the ticket of the subscriber just served
-			_lock.unsubscribe();
-			ticket++;
-
 			if (task == nullptr)
 				break;
 		}
 
-		// No more subscribers; try to get work for myself
+		// No more compute places waiting; try to get work for myself
 		task = _scheduler->getReadyTask(computePlace);
 
 		// Keep serving while there is no work for the current compute
 		// place or it is external/disabling
 	} while (task == nullptr && !mustStopServingTasks(computePlace));
 
+	// We are stopping to serve tasks
 	setServingTasks(false);
-	_lock.unsubscribe();
 
-	// Perform the required actions after stop serving tasks. In the case
-	// of the host scheduler it should resume idle compute places to guarantee
+	// Release the lock so another compute place can serve tasks
+	_lock.unlock();
+
+	// Perform the required actions after stop serving tasks. In the case of
+	// the host scheduler it should resume idle compute places to guarantee
 	// that there is always a compute place serving tasks
 	postServingTasks(computePlace, task);
 

@@ -15,7 +15,7 @@
 #include "UnsyncScheduler.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
-#include "lowlevel/SubscriptionLock.hpp"
+#include "lowlevel/DelegationLock.hpp"
 #include "lowlevel/TicketArraySpinLock.hpp"
 #include "scheduling/SchedulerSupport.hpp"
 
@@ -38,19 +38,15 @@ private:
 	//! Total number of add queues
 	size_t _totalAddQueues;
 
-	//! Subcription lock protecting the access
+	//! Delegation lock protecting the access
 	//! to the unsychronized scheduler
-	SubscriptionLock _lock;
+	DelegationLock<Task *> _lock;
 
 	//! Locks for adding tasks to the add queues
 	TicketArraySpinLock *_addQueuesLocks;
 
 	//! Add queues of ready tasks
 	add_queue_t *_addQueues;
-
-	//! Internal structure to manage the subscription mechanism
-	//! Indexed by the CPU index (virtual id)
-	PaddedCPUNode *_ready;
 
 	//! Indicates whether there is any compute place
 	//! serving tasks inside the scheduling loop
@@ -63,8 +59,8 @@ private:
 	size_t _maxServedTasks;
 
 public:
-	//! NOTE We initialize the SubscriptionLock with 2 * numCPUs since some
-	//! threads may oversubscribe and thus we may need more than "numCPUs"
+	//! NOTE We initialize the delegation lock with 2 * numCPUs since some
+	//! threads may oversubscribe and thus we may need more than numCPUs
 	//! slots in the lock's waiting queue
 	SyncScheduler(size_t totalComputePlaces, nanos6_device_t deviceType = nanos6_host_device) :
 		_deviceType(deviceType),
@@ -76,12 +72,6 @@ public:
 	{
 		uint64_t totalCPUsPow2 = SchedulerSupport::roundToNextPowOf2(_totalComputePlaces);
 		assert(SchedulerSupport::isPowOf2(totalCPUsPow2));
-
-		_ready = (PaddedCPUNode *) MemoryAllocator::alloc(_totalComputePlaces * sizeof(PaddedCPUNode));
-
-		for (size_t i = 0; i < _totalComputePlaces; i++) {
-			new (&_ready[i]) PaddedCPUNode();
-		}
 
 		size_t totalNUMANodes = HardwareInfo::getMemoryPlaceCount(nanos6_host_device);
 
@@ -108,7 +98,6 @@ public:
 		}
 		MemoryAllocator::free(_addQueues, _totalAddQueues * sizeof(add_queue_t));
 		MemoryAllocator::free(_addQueuesLocks, _totalAddQueues * sizeof(TicketArraySpinLock));
-		MemoryAllocator::free(_ready, _totalComputePlaces * sizeof(PaddedCPUNode));
 
 		delete _scheduler;
 	}
@@ -153,7 +142,7 @@ public:
 			if ((numTasks > count) && _lock.tryLock()) {
 				// Process queues before pushing new tasks
 				processReadyTasks();
-				_lock.unsubscribe();
+				_lock.unlock();
 			}
 		}
 	}
@@ -187,18 +176,6 @@ private:
 				);
 			}
 		}
-	}
-
-	inline void assignTask(uint64_t const cpuIndex, uint64_t const ticket, Task *const task)
-	{
-		_ready[cpuIndex].task = task;
-		_ready[cpuIndex].ticket = ticket;
-	}
-
-	inline bool getAssignedTask(uint64_t const cpuIndex, uint64_t const myTicket, Task *&task)
-	{
-		task = _ready[cpuIndex].task;
-		return (_ready[cpuIndex].ticket == myTicket);
 	}
 
 	//! \brief Set serving tasks condition

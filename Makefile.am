@@ -1199,7 +1199,7 @@ noinst_HEADERS = \
 	src/lowlevel/SpinLockNoDebug.hpp \
 	src/lowlevel/SpinLockOwnerDebug.hpp \
 	src/lowlevel/SpinWait.hpp \
-	src/lowlevel/SubscriptionLock.hpp \
+	src/lowlevel/DelegationLock.hpp \
 	src/lowlevel/TicketArraySpinLock.hpp \
 	src/lowlevel/TicketSpinLock.hpp \
 	src/lowlevel/TokenizedEnvironmentVariable.hpp \
