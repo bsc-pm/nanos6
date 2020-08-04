@@ -64,7 +64,7 @@ public:
 		int pagesize = HardwareInfo::getPageSize();
 		if (block_size % pagesize != 0) {
 			block_size = closestMultiple(block_size, pagesize);
-			FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
+			//FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
 		}
 
 		// Allocate space using mmap
