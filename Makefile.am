@@ -2130,8 +2130,6 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/tasks/task_and_deps.cfg \
 	paraver-cfg/nanos6/tasks/task_number.cfg \
 	paraver-cfg/nanos6/tasks/task_priority.cfg \
-	paraver-cfg/nanos6/ctf2prv/kernel/kernel_process_name.cfg \
-	paraver-cfg/nanos6/ctf2prv/kernel/kernel_thread_id.cfg \
 	paraver-cfg/nanos6/ctf2prv/ctf_buffers_flush_to_disk.cfg \
 	paraver-cfg/nanos6/ctf2prv/hardware_counters.cfg \
 	paraver-cfg/nanos6/ctf2prv/number_of_blocked_tasks.cfg \
@@ -2145,7 +2143,10 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/ctf2prv/task_ids.cfg \
 	paraver-cfg/nanos6/ctf2prv/tasks.cfg \
 	paraver-cfg/nanos6/ctf2prv/task_source.cfg \
-	paraver-cfg/nanos6/ctf2prv/thread_id.cfg
+	paraver-cfg/nanos6/ctf2prv/thread_id.cfg \
+	paraver-cfg/nanos6/ctf2prv/kernel/kernel_preemptions.cfg \
+	paraver-cfg/nanos6/ctf2prv/kernel/kernel_syscalls.cfg \
+	paraver-cfg/nanos6/ctf2prv/kernel/kernel_thread_id.cfg
 
 
 configfiledir = ${docdir}

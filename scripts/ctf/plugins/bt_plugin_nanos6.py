@@ -15,7 +15,9 @@ from collections import defaultdict
 import operator
 import signal
 
-from runtime import RuntimeModel
+from executionmodel import ExecutionModel
+from runtimemodel   import RuntimeModel
+from kernelmodel    import KernelModel
 from paravertrace import ParaverTrace, ExtraeEventTypes
 import paraverviews as pv
 
@@ -92,8 +94,8 @@ class ctf2prv(bt2._UserSinkComponent):
 	def _user_graph_is_configured(self):
 		self._it = self._create_message_iterator(self.__port)
 
-	def _process_event(self, ts, event):
-		RuntimeModel.setCurrentTimestamp(ts)
+	def _process_event(self, ts, cpuId, event):
+		ExecutionModel.setCurrentEventData(ts, cpuId)
 		hookList = self.__hooks[event.name]
 		for hook in hookList:
 			hook(event, self.__payload)
@@ -125,6 +127,11 @@ class ctf2prv(bt2._UserSinkComponent):
 			ParaverTrace.addBinaryName(binaryName)
 			ParaverTrace.initalizeTraceFiles()
 
+			# Initialize both Kernel and Runtime Models. The Kernel Model must
+			# be initalized before Paravare views are created
+			KernelModel.initialize(ncpus)
+			RuntimeModel.initialize(ncpus)
+
 			# Create Paraver Views
 			self.__paraverViews = [
 				pv.ParaverViewRuntimeCode(),
@@ -146,15 +153,17 @@ class ctf2prv(bt2._UserSinkComponent):
 				pv.ParaverViewNumberOfBlockedThreads(),
 
 				pv.ParaverViewKernelThreadID(),
-				pv.ParaverViewKernelProcessName(),
+				pv.ParaverViewKernelPreemptions(),
+				pv.ParaverViewKernelSyscalls(),
 			]
 
-			# install event processing hooks
-			RuntimeModel.initialize(ncpus)
+			# Install event processing hooks
+			self.installHooks(KernelModel.preHooks())
 			self.installHooks(RuntimeModel.preHooks())
 			for view in self.__paraverViews:
 				self.installHooks(view.hooks())
 			self.installHooks(RuntimeModel.postHooks())
+			self.installHooks(KernelModel.postHooks())
 
 			# redirect message processing
 			self.__process_message = self._process_other_message
@@ -190,13 +199,13 @@ class ctf2prv(bt2._UserSinkComponent):
 
 		if type(msg) is bt2._EventMessageConst:
 			ts = msg.default_clock_snapshot.value
+			cpuId = msg.event["cpu_id"]
 
 			if self.__verbose:
 				name = msg.event.name
-				cpu_id = msg.event["cpu_id"]
-				print("event {}, cpu_id {}, timestamp {}".format(name, cpu_id, ts))
+				print("event {}, cpu_id {}, timestamp {}".format(name, cpuId, ts))
 
-			self._process_event(ts, msg.event)
+			self._process_event(ts, cpuId, msg.event)
 			self.__last = msg
 		elif type(msg) is bt2._StreamBeginningMessageConst:
 			# TODO use this to obtain env parameters

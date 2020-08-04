@@ -25,6 +25,9 @@ namespace CTFAPI {
 		static const char *meta_stream;
 		static const char *meta_event;
 
+		static const char *defaultKernelDefsFileName;
+		static const char *defaultEnabledEventsFileName;
+
 		bool _enabled;
 		ctf_kernel_event_id_t _numberOfEvents;
 		ctf_kernel_event_id_t _maxEventId;
@@ -61,6 +64,7 @@ namespace CTFAPI {
 		}
 
 		void writeMetadataFile(std::string kernelPath);
+		void copyKernelDefinitionsFile(std::string basePath);
 	};
 }
 

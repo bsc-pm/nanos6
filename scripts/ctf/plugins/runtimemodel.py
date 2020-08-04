@@ -4,7 +4,8 @@
 #	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 #
 
-from paravertrace import ParaverTrace
+from executionmodel import ExecutionModel
+from paravertrace   import ParaverTrace
 from enum import Enum, auto
 
 class WorkerType(Enum):
@@ -145,7 +146,6 @@ class TaskIDsDB:
 class RuntimeModel:
 	_threads = {}
 	_taskTypes = TaskIDsDB()
-	_currentTimestamp = 0
 
 	@classmethod
 	def initialize(cls, ncpus):
@@ -193,7 +193,7 @@ class RuntimeModel:
 		# each of them belong. The Leader Thread has its own stream, and hence
 		# it's cpu_id is already a valid virtual cpu_id (=ncpus)
 
-		vcpuid = event["cpu_id"]
+		vcpuid = ExecutionModel.getCurrentCPUId()
 		wtype = cls.getWorkerType(vcpuid)
 		if wtype == WorkerType.WorkerThread:
 			cp = cls._cpus[vcpuid]
@@ -243,14 +243,6 @@ class RuntimeModel:
 		return thread
 
 	@classmethod
-	def setCurrentTimestamp(cls, ts):
-		cls._currentTimestamp = ts
-
-	@classmethod
-	def getCurrentTimestamp(cls):
-		return cls._currentTimestamp
-
-	@classmethod
 	def preHooks(cls):
 		return cls._preHooks
 
@@ -260,7 +252,7 @@ class RuntimeModel:
 
 	@classmethod
 	def hook_externalThreadCreate(cls, event, _):
-		vcpuid = event["cpu_id"]
+		vcpuid = ExecutionModel.getCurrentCPUId()
 		wtype = cls.getWorkerType(vcpuid)
 		if wtype == WorkerType.LeaderThread:
 			tid = event["tid"]

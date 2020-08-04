@@ -25,7 +25,8 @@ class ExtraeEventTypes():
 	NUMBER_OF_BLOCKED_THREADS = 6400024
 
 	KERNEL_THREAD_ID          = 6400100
-	KERNEL_PROCESS_NAME       = 6400101
+	KERNEL_PREEMPTIONS        = 6400101
+	KERNEL_SYSCALLS           = 6400102
 
 class ExtraeEvent:
 	def __init__(self, identifier, description, mid = 0, used = True):

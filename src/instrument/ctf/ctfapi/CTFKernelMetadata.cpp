@@ -21,6 +21,10 @@
 
 // TODO factor out common operations/data with CTFMetadata
 
+const char *CTFAPI::CTFKernelMetadata::defaultKernelDefsFileName    = "./nanos6_kerneldefs.json";
+
+const char *CTFAPI::CTFKernelMetadata::defaultEnabledEventsFileName = "./nanos6_kernel_events.txt";
+
 const char *CTFAPI::CTFKernelMetadata::meta_header = "/* CTF 1.8 */\n";
 
 const char *CTFAPI::CTFKernelMetadata::meta_typedefs =
@@ -219,8 +223,6 @@ bool CTFAPI::CTFKernelMetadata::loadEnabledEvents(const char *file)
 CTFAPI::CTFKernelMetadata::CTFKernelMetadata()
 	: _enabled(false), _maxEventId(-1)
 {
-	const char * defaultKernelDefsFileName = "./nanos6_kerneldefs.json";
-	const char * defaultEnabledEventsFileName = "./nanos6_kernel_events.txt";
 	bool loadDefs, loadEvents;
 
 	getSystemInformation();
@@ -279,4 +281,16 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
 	if (ret) {
 		FatalErrorHandler::warn("CTF: Kernel: closing metadata file: ", strerror(errno));
 	}
+}
+
+
+void CTFAPI::CTFKernelMetadata::copyKernelDefinitionsFile(std::string basePath)
+{
+	if (!_enabled)
+		return;
+
+	std::ifstream  src(defaultKernelDefsFileName, std::ios::binary);
+	std::ofstream  dst(basePath + "/" + defaultKernelDefsFileName, std::ios::binary);
+
+	dst << src.rdbuf();
 }

@@ -5,7 +5,9 @@
 #
 
 from abc import ABC
-from runtime import RuntimeModel
+from executionmodel import ExecutionModel
+from runtimemodel   import RuntimeModel
+from kernelmodel    import KernelModel
 from paravertrace import ParaverTrace, ExtraeEventTypes, ExtraeEventCollection
 from hwcdefs import hardwareCountersDefinitions
 
@@ -556,7 +558,7 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 	def hook_schedLockClient(self, event, payload):
 		taskId  = event["id"]
 		timeAcq = event["ts_acquire"]
-		cpuId   = event["cpu_id"]
+		cpuId   = ExecutionModel.getCurrentCPUId()
 		stack   = self.getEventStack(event)
 
 		# Emit event in the past. We know that no tracepoint can be emitted
@@ -570,7 +572,7 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		# requried by paraver. This line shows a relation between a worker
 		# serving task and another worker being assigned work by it.
 		if taskId != 0:
-			timeRel = RuntimeModel.getCurrentTimestamp()
+			timeRel = ExecutionModel.getCurrentTimestamp()
 			(timeSend, cpuSendId) = self._servedTasks[taskId]
 			ParaverTrace.emitCommunicationEvent(cpuSendId, timeSend, cpuId, timeRel)
 
@@ -579,7 +581,7 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 
 	def hook_schedLockServer(self, event, payload):
 		timeAcq = event["ts_acquire"]
-		cpuId   = event["cpu_id"]
+		cpuId   = ExecutionModel.getCurrentCPUId()
 		stack   = self.getEventStack(event)
 
 		# Emit event in the past. We know that no tracepoint can be emitted
@@ -597,8 +599,8 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 
 	def hook_schedLockAssign(self, event, _):
 		taskId = event["id"]
-		cpuSendId = event["cpu_id"]
-		self._servedTasks[taskId] = (RuntimeModel.getCurrentTimestamp(), cpuSendId)
+		cpuSendId = ExecutionModel.getCurrentCPUId()
+		self._servedTasks[taskId] = (ExecutionModel.getCurrentTimestamp(), cpuSendId)
 
 	@stackEvent
 	def hook_debug(self, event):
@@ -832,57 +834,163 @@ class ParaverViewKernelThreadID(ParaverView):
 		# threads.
 		payload.append((ExtraeEventTypes.KERNEL_THREAD_ID, tid))
 
-class ParaverViewKernelProcessName(ParaverView):
+class ParaverViewKernelPreemptions(ParaverView):
 
-	class ProcessNameDB():
+	class Status():
+		Idle        = 0
+		ThisProcess = 1
+		Irq         = 2
+		SoftIrq     = 3
 
-		def __init__(self, keys):
-			self._dic = {}
-			self._cnt = 1
-			for k in keys:
-				val = self._cnt
-				self._dic[k] = val
-				self._cnt += 1
-				ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PROCESS_NAME, {val : k})
+	def __init__(self):
+		super().__init__()
+		self._hooks = [
+			("sched_switch",      self.hook_schedSwitch),
+			("irq_handler_entry", self.hook_irq),
+			("irq_handler_exit",  self.hook_irqExit),
+			("softirq_entry",     self.hook_softIrq),
+			("softirq_exit",      self.hook_softIrqExit),
+		]
 
-		def __getitem__(self, key):
-			val = None
-			if key in self._dic:
-				val = self._dic[key]
-			elif key[:8] == 'swapper/':
-				# To detect Idle threads we could also check for tid == 0, but
-				# It's probably less expensive to check the string rather than
-				# access the event's dictionary
-				self._dic[key] = 0
-				val = 0
-			else:
-				val = self._cnt
-				self._dic[key] = val
-				self._cnt += 1
-				ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PROCESS_NAME, {val : key})
-			return val
+		# We only need to set up manually the idle thread and the traced
+		# application Paraver entries, the other processes entries will be
+		# installed in the callback_newProcessName
+		binaryName = ParaverTrace.getBinaryName()
+		values = {
+			self.Status.Idle         : "Idle",     # The KernelModel always sets up id 0 for Idle threads
+			self.Status.ThisProcess  : binaryName, # The KernelModel always sets up id 1 for the traced app
+			self.Status.Irq          : "IRQ",
+			self.Status.SoftIrq      : "Soft IRQ",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PREEMPTIONS, values, "Kernel Preemptions")
+		KernelModel.registerNewProcessNameCallback(self.callback_newProcessName)
+		KernelModel.registerNewThreadCallback(self.callback_newThread)
 
+	def callback_newProcessName(self, name, perProcessExtraeId):
+		""" This is called every time a thread with an unseen command name
+		"comm_next" is scheduled for the first time. The kernel model assings an id (perProcessExtraeId) to each of the new command names. The id 0 always corresponds to Idle, the Id 1 to the traced process, and the next process will start at 100. The ids in between are reserved for specific uses such as IRQ. """
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PREEMPTIONS, {perProcessExtraeId : name})
+
+	def callback_newThread(self, thread, tid, perProcessExtraeId):
+		""" This is called every time a thread is scheduled for the first time
+		in the trace """
+		thread.kernelPreemptionsEventStack = [perProcessExtraeId]
+
+	def hook_schedSwitch(self, event, payload):
+		thread = KernelModel.getCurrentThread()
+		state = thread.kernelPreemptionsEventStack[-1]
+		payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, state))
+
+	def hook_irq(self, _, payload):
+		state = self.Status.Irq
+		thread = KernelModel.getCurrentThread()
+		if thread == None:
+			return
+		thread.kernelPreemptionsEventStack.append(state)
+		payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, state))
+
+	def hook_irqExit(self, event, payload):
+		thread = KernelModel.getCurrentThread()
+		if thread == None:
+			return
+		stack = thread.kernelPreemptionsEventStack
+		if stack[-1] == self.Status.Irq:
+			stack.pop()
+			payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, stack[-1]))
+
+	def hook_softIrq(self, _, payload):
+		state = self.Status.SoftIrq
+		thread = KernelModel.getCurrentThread()
+		if thread == None:
+			return
+		thread.kernelPreemptionsEventStack.append(state)
+		payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, state))
+
+	def hook_softIrqExit(self, event, payload):
+		thread = KernelModel.getCurrentThread()
+		if thread == None:
+			return
+		stack = thread.kernelPreemptionsEventStack
+		if stack[-1] == self.Status.SoftIrq:
+			stack.pop()
+			payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, stack[-1]))
+
+class ParaverViewKernelSyscalls(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
 			("sched_switch", self.hook_schedSwitch),
 		]
+		self._syscallMap = {}
 
-		# Only the idle thread need to be registered manually, all the others
-		# processes will be registered in ProcessNameDB
-		values = {
-			0  : "Idle"
-		}
-		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PROCESS_NAME, values, "Kernel Process Name")
-
-		# Initialize process name to id mapping
-		# Add first the traced application's name to ensure that it always gets the same id
 		binaryName = ParaverTrace.getBinaryName()
-		shortBinaryName = binaryName[:15]
-		self._processNameMap = self.ProcessNameDB([shortBinaryName])
+
+		values = {
+			0 : "Idle",
+			1 : binaryName,
+			2 : "Other Process",
+		}
+
+		# Create hooks based on the available syscalls detected
+		syscallsEntry, syscallsExit = KernelModel.getSyscallDefinitions()
+
+		index = 3
+		prefix = len("sys_enter_")
+		for syscall in syscallsEntry:
+			self._hooks.append((syscall, self.hook_syscallEntry))
+			name = syscall[prefix:]
+			self._syscallMap[name] = index
+			values[index] = name
+			index += 1
+
+		prefix = len("sys_exit_")
+		for syscall in syscallsExit:
+			self._hooks.append((syscall, self.hook_syscallExit))
+			name = syscall[prefix:]
+			self._syscallMap[name] = index
+			values[index] = name
+			index += 1
+
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_SYSCALLS, values, "Kernel System Calls")
+		KernelModel.registerNewThreadCallback(self.callback_newThread)
+
+	def callback_newThread(self, thread, tid, perProcessExtraeId):
+		""" This is called every time a thread is scheduled for the first time
+		in the trace """
+		# We only show the Idle thread (0) and the traced process (1). All the
+		# other threads are displayed as "other" (2)
+		value = perProcessExtraeId if perProcessExtraeId <= 1 else 2
+		thread.kernelSyscallsEventStack = [value]
 
 	def hook_schedSwitch(self, event, payload):
-		name = event["next_comm"]
-		extraeId = self._processNameMap[name]
-		payload.append((ExtraeEventTypes.KERNEL_PROCESS_NAME, extraeId))
+		thread = KernelModel.getCurrentThread()
+		state = thread.kernelSyscallsEventStack[-1]
+		payload.append((ExtraeEventTypes.KERNEL_SYSCALLS, state))
 
+	def hook_syscallEntry(self, event, payload):
+		prefix = len("sys_enter_")
+		syscallId = self._syscallMap[event.name[prefix:]]
+		thread = KernelModel.getCurrentThread()
+		# On a kernel trace, we might encounter first an entry syscall event
+		# than a sched_switch, so the thread might not exist yet
+		if thread == None:
+			return
+
+		stack = thread.kernelSyscallsEventStack
+		stack.append(syscallId)
+		payload.append((ExtraeEventTypes.KERNEL_SYSCALLS, syscallId))
+
+	def hook_syscallExit(self, event, payload):
+		prefix = len("sys_exit_")
+		syscallId = self._syscallMap[event.name[prefix:]]
+		thread = KernelModel.getCurrentThread()
+		# See hook_syscalEntry note
+		if thread == None:
+			return
+		stack = thread.kernelSyscallsEventStack
+		# We might encounter a syscall exit before a syscall entry on the
+		# beginning of a trace. Hence, we need to check if we are doing a
+		# syscall before popping
+		if stack[-1] == syscallId:
+			stack.pop()
+			payload.append((ExtraeEventTypes.KERNEL_SYSCALLS, stack[-1]))

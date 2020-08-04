@@ -51,7 +51,7 @@ namespace CTFAPI {
 		void operator=(CTFTrace const&) = delete;
 
 		void setTracePath(const char* tracePath);
-		void createTraceDirectories(std::string &userPath, std::string &kernelPath);
+		void createTraceDirectories(std::string &basePath, std::string &userPath, std::string &kernelPath);
 		void initializeTraceTimer();
 		void convertToParaver();
 		void moveTemporalTraceToFinalDirectory();

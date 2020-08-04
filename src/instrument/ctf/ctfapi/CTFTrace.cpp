@@ -219,7 +219,7 @@ void CTFAPI::CTFTrace::setTracePath(const char* tracePath)
 	MemoryAllocator::free(templatePath, len);
 }
 
-void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string &kernelPath)
+void CTFAPI::CTFTrace::createTraceDirectories(std::string &basePath, std::string &userPath, std::string &kernelPath)
 {
 	int ret;
 	std::string tracePath = _tmpTracePath;
@@ -248,6 +248,7 @@ void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string
 	ret = mkdir(_userPath.c_str(), 0766);
 	FatalErrorHandler::failIf(ret, "ctf: failed to create trace directories");
 
+	basePath   = _tmpTracePath;
 	userPath   = _userPath;
 	kernelPath = _kernelPath;
 }
