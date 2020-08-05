@@ -73,7 +73,7 @@ static CTFAPI::CTFEvent *eventSchedulerLockServer;
 static CTFAPI::CTFEvent *eventSchedulerLockAssign;
 static CTFAPI::CTFEvent *eventSchedulerLockServerExit;
 
-void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
+void Instrument::preinitializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata)
 {
 	// create Events
 	__eventCTFFlush = userMetadata->addEvent(new CTFAPI::CTFEvent(

@@ -48,7 +48,7 @@ class KernelModel():
 	_newThreadCallbacks = []
 
 	@classmethod
-	def initialize(cls, ncpus):
+	def initialize(cls):
 		# Load kernel tracepoint definitions file
 		try:
 			cls.loadKernelDefs("../nanos6_kerneldefs.json")
@@ -73,7 +73,8 @@ class KernelModel():
 		cls._syscallExitPoints = list(filter(regex.match, cls._syscalls))
 
 		# Initialize CPUs
-		cls._cpus = [CPU(cpuId) for cpuId in range(ncpus)]
+		maxCPUId = ParaverTrace.getMaxRealCPUId()
+		cls._cpus = [CPU(cpuId) for cpuId in range(maxCPUId + 1)]
 
 		# Initialize thread list with a fake Idle thread shared by all Cores
 		# (all idle threads in the Linux Kernel have tid 0)

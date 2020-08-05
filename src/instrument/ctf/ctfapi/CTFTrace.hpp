@@ -13,7 +13,7 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "support/config/ConfigVariable.hpp"
 
-#include "CTFMetadata.hpp"
+#include "CTFUserMetadata.hpp"
 #include "CTFKernelMetadata.hpp"
 
 
@@ -39,7 +39,7 @@ namespace CTFAPI {
 		std::string _kernelPath;
 		std::string _binaryName;
 		uint64_t _pid;
-		CTFMetadata *_userMetadata;
+		CTFUserMetadata *_userMetadata;
 		CTFKernelMetadata *_kernelMetadata;
 
 		uint64_t _absoluteStartTime;
@@ -57,7 +57,7 @@ namespace CTFAPI {
 		void moveTemporalTraceToFinalDirectory();
 		void clean();
 
-		void setMetadata(CTFMetadata *metadata)
+		void setMetadata(CTFUserMetadata *metadata)
 		{
 			_userMetadata = metadata;
 		}

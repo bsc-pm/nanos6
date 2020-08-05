@@ -16,12 +16,9 @@
 #include "InstrumentInitAndShutdown.hpp"
 #include "ctfapi/CTFAPI.hpp"
 #include "ctfapi/CTFKernelMetadata.hpp"
-#include "ctfapi/CTFMetadata.hpp"
+#include "ctfapi/CTFUserMetadata.hpp"
 #include "ctfapi/CTFTrace.hpp"
 #include "ctfapi/CTFTypes.hpp"
-#include "ctfapi/context/CTFContextCPUHardwareCounters.hpp"
-#include "ctfapi/context/CTFContextTaskHardwareCounters.hpp"
-#include "ctfapi/context/CTFStreamContextUnbounded.hpp"
 #include "ctfapi/stream/CTFStream.hpp"
 #include "ctfapi/stream/CTFStreamUnboundedPrivate.hpp"
 #include "ctfapi/stream/CTFStreamUnboundedShared.hpp"
@@ -35,13 +32,13 @@
 #include "tasks/TasktypeData.hpp"
 
 
-static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFMetadata *metadata)
+static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFUserMetadata *metadata)
 {
 	// TODO perform refinement based on the upcoming Nanos6 JSON
 	// TODO add custom user-defined events based JSON
 }
 
-static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
+static void initializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata)
 {
 	CTFAPI::CTFEventContext *ctfContextTaskHWC = nullptr;
 	CTFAPI::CTFEventContext *ctfContextCPUHWC = nullptr;
@@ -70,7 +67,7 @@ static void initializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 }
 
 static void initializeUserStreams(
-	CTFAPI::CTFMetadata *userMetadata,
+	CTFAPI::CTFUserMetadata *userMetadata,
 	std::string userPath
 ) {
 	CPU *cpu;
@@ -91,13 +88,13 @@ static void initializeUserStreams(
 	// Initialize Worker thread streams
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
-		cpuId = cpu.getSystemCPUId();
+		cpuId = cpu->getSystemCPUId();
 		Instrument::CPULocalData &cpuLocalData = cpu->getInstrumentationData();
 		cpuLocalData.userStream = new CTFAPI::CTFStream(
 			defaultStreamBufferSize, cpuId, userPath.c_str()
 		);
 		cpuLocalData.userStream->initialize();
-		if (cpuId > maxCPUId)
+		if (cpuId > maxCpuId)
 			maxCpuId = cpuId;
 	}
 
@@ -157,7 +154,7 @@ static void initializeKernelStreams(
 	// Initialize per-cpu Kernel streams
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
-		cpuId = cpu.getSystemCPUId();
+		cpuId = cpu->getSystemCPUId();
 		Instrument::CPULocalData &cpuLocalData = cpu->getInstrumentationData();
 		cpuLocalData.kernelStream = new CTFAPI::CTFStreamKernel(
 			defaultStreamKernelSize, defaultKernelMappingSize,
@@ -196,7 +193,8 @@ void Instrument::initialize()
 	/////////////////////
 
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
-	CTFAPI::CTFMetadata *userMetadata = new CTFAPI::CTFMetadata();
+	CTFAPI::CTFMetadata::collectCommonInformation();
+	CTFAPI::CTFUserMetadata *userMetadata = new CTFAPI::CTFUserMetadata();
 	CTFAPI::CTFKernelMetadata *kernelMetadata = new CTFAPI::CTFKernelMetadata();
 
 	trace.setMetadata(userMetadata);

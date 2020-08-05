@@ -59,7 +59,7 @@ const char *CTFAPI::CTFKernelMetadata::meta_env =
 	"	tracer_minor = 10;\n"
 	"	tracer_patchlevel = 10;\n"
 	"	/* ctf2prv converter variables */\n"
-	"	ncpus = %" PRIu16 ";\n"
+	"	cpu_list = \"%s\";\n"
 	"	binary_name = \"%s\";\n"
 	"	pid = %" PRIu64 ";\n"
 	"};\n\n";
@@ -261,7 +261,7 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
 	fprintf(f, meta_env,
 		_kernelRelease.c_str(),
 		_kernelVersion.c_str(),
-		trace.getTotalCPUs(),
+		_cpuList.c_str(),
 		trace.getBinaryName(),
 		trace.getPid());
 	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());

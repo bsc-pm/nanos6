@@ -148,9 +148,10 @@ class RuntimeModel:
 	_taskTypes = TaskIDsDB()
 
 	@classmethod
-	def initialize(cls, ncpus):
-		cls._ncpus = ncpus
-		cls._cpus = [CPU() for i in range(ncpus)]
+	def initialize(cls):
+		cls._maxCPUId = ParaverTrace.getMaxRealCPUId()
+		cls._ltcpu = ParaverTrace.getLeaderThreadCPUId()
+		cls._cpus = [CPU() for i in range(cls._maxCPUId + 1)]
 		cls._cpus.append(VCPU()) # Leader Thread CPU
 		cls._preHooks = [
 			("nanos6:tc:task_create_enter",   cls.hook_taskAdd),
@@ -176,9 +177,9 @@ class RuntimeModel:
 	@classmethod
 	def getWorkerType(cls, vcpuid):
 		threadType = None
-		if vcpuid < cls._ncpus:
+		if vcpuid <= cls._maxCPUId:
 			threadType = WorkerType.WorkerThread
-		elif vcpuid == cls._ncpus:
+		elif vcpuid == cls._ltcpu:
 			threadType = WorkerType.LeaderThread
 		else:
 			threadType = WorkerType.ExternalThread
@@ -191,7 +192,7 @@ class RuntimeModel:
 		# of them share a stream). To distinguish them, we need to check their
 		# tid event value. With its tid, we keep track of which "virtual cpu"
 		# each of them belong. The Leader Thread has its own stream, and hence
-		# it's cpu_id is already a valid virtual cpu_id (=ncpus)
+		# it's cpu_id is already a valid virtual cpu_id (=maxCPUId+1)
 
 		vcpuid = ExecutionModel.getCurrentCPUId()
 		wtype = cls.getWorkerType(vcpuid)

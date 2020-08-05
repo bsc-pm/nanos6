@@ -591,6 +591,7 @@ instrument_ctf_sources = \
 	src/instrument/ctf/ctfapi/CTFEvent.cpp \
 	src/instrument/ctf/ctfapi/CTFKernelMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.cpp \
+	src/instrument/ctf/ctfapi/CTFUserMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFTrace.cpp \
 	src/instrument/ctf/InstrumentCPULocalData.cpp \
 	src/instrument/ctf/InstrumentInitAndShutdown.cpp \
@@ -951,6 +952,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/ctfapi/CTFEvent.hpp \
 	src/instrument/ctf/ctfapi/CTFKernelMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
+	src/instrument/ctf/ctfapi/CTFUserMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFTrace.hpp \
 	src/instrument/ctf/ctfapi/CTFTypes.hpp \
 	src/instrument/ctf/CTFTracepoints.hpp \
@@ -2156,10 +2158,12 @@ nobase_dist_configfile_DATA = \
 ctfdir = ${docdir}
 nobase_dist_ctf_DATA = \
 	scripts/ctf/plugins/bt_plugin_nanos6.py \
+	scripts/ctf/plugins/executionmodel.py \
 	scripts/ctf/plugins/hwcdefs.py \
-	scripts/ctf/plugins/runtime.py \
+	scripts/ctf/plugins/kernelmodel.py \
 	scripts/ctf/plugins/paravertrace.py \
 	scripts/ctf/plugins/paraverviews.py \
+	scripts/ctf/plugins/runtimemodel.py \
 	scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
 	scripts/ctf/wrappers/ctf2prv_nord3.sh \
 	scripts/ctf/wrappers/ctf2prv_cte-power.sh

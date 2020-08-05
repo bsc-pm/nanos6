@@ -13,9 +13,10 @@
 #include <vector>
 
 #include "CTFTypes.hpp"
+#include "CTFMetadata.hpp"
 
 namespace CTFAPI {
-	class CTFKernelMetadata {
+	class CTFKernelMetadata : public CTFMetadata {
 	private:
 		static const char *meta_header;
 		static const char *meta_typedefs;

@@ -11,13 +11,13 @@
 #include "ctfapi/CTFTypes.hpp"
 #include "ctfapi/CTFEvent.hpp"
 #include "ctfapi/context/CTFContext.hpp"
-#include "ctfapi/CTFMetadata.hpp"
+#include "ctfapi/CTFUserMetadata.hpp"
 
 namespace Instrument {
 
 	// Management functions
 
-	void preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata);
+	void preinitializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata);
 
 	// Internal Nanos6 Tracepoints
 

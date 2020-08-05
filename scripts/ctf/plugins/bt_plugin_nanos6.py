@@ -114,7 +114,7 @@ class ctf2prv(bt2._UserSinkComponent):
 			absoluteStartTime = clk.clock_class.offset.seconds
 			ts = clk.value - 1 # see comments below
 			assert(ts >= 0)
-			ncpus = msg.event.stream.trace.environment["ncpus"]
+			cpuList = str(msg.event.stream.trace.environment["cpu_list"])
 			binaryName = msg.event.stream.trace.environment["binary_name"]
 			pid = msg.event.stream.trace.environment["pid"]
 			traceName = "trace_" + str(binaryName) + "_" + str(pid)
@@ -123,14 +123,14 @@ class ctf2prv(bt2._UserSinkComponent):
 			ParaverTrace.addTraceName(traceName)
 			ParaverTrace.addAbsoluteStartTime(absoluteStartTime)
 			ParaverTrace.addStartTime(ts)
-			ParaverTrace.addNumberOfCPUs(ncpus)
+			ParaverTrace.addCPUList(cpuList)
 			ParaverTrace.addBinaryName(binaryName)
 			ParaverTrace.initalizeTraceFiles()
 
 			# Initialize both Kernel and Runtime Models. The Kernel Model must
 			# be initalized before Paravare views are created
-			KernelModel.initialize(ncpus)
-			RuntimeModel.initialize(ncpus)
+			KernelModel.initialize()
+			RuntimeModel.initialize()
 
 			# Create Paraver Views
 			self.__paraverViews = [
