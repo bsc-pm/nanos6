@@ -194,7 +194,7 @@ public:
 			}
 
 			assert(status[i] >= 0);
-			assert(status[i] == currentNodeIndex);
+			FatalErrorHandler::warnIf(status[i] != currentNodeIndex, "Page is not where it should.");
 
 			blockBytes += pagesize;
 		}
@@ -212,6 +212,7 @@ public:
 		assert(size > 0);
 		assert(*bitmask > 0);
 		assert(block_size > 0);
+		int originalBlockSize = block_size;
 		int pagesize = HardwareInfo::getPageSize();
 
 		if (DataTrackingSupport::isNUMATrackingEnabled()) {
@@ -225,26 +226,50 @@ public:
 #ifndef NDEBUG
 			size_t remainingBytes = size;
 #endif
-			for (size_t i = 0; i < size; i += block_size) {
-				uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
-				disableBit(&bitmaskCopy, currentNodeIndex);
-				if (bitmaskCopy == 0) {
-					bitmaskCopy = *bitmask;
-				}
+			if (originalBlockSize < (size_t) pagesize) {
+				for (size_t i = 0; i < size; i += originalBlockSize) {
+					uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
+					disableBit(&bitmaskCopy, currentNodeIndex);
+					if (bitmaskCopy == 0) {
+						bitmaskCopy = *bitmask;
+					}
 
-				// Place pages where they must be
-				void *tmp = (void *) ((uintptr_t) ptr + i);
+					// Place pages where they must be
+					void *tmp = (void *) ((uintptr_t) ptr + i);
 #ifndef NDEBUG
-				_lock.readLock();
-				auto it = _directory.find(tmp);
-				assert(it->second._size == block_size || it->second._size == remainingBytes);
-				_lock.readUnlock();
-				remainingBytes -= it->second._size;
+					_lock.readLock();
+					auto it = _directory.find(tmp);
+					assert(it->second._size == originalBlockSize || it->second._size == remainingBytes);
+					_lock.readUnlock();
+					remainingBytes -= it->second._size;
 #endif
-				_lock.writeLock();
-				__attribute__((unused)) size_t numErased = _directory.erase(tmp);
-				_lock.writeUnlock();
-				assert(numErased == 1);
+					_lock.writeLock();
+					__attribute__((unused)) size_t numErased = _directory.erase(tmp);
+					_lock.writeUnlock();
+					assert(numErased == 1);
+				}
+			} else {
+				for (size_t i = 0; i < size; i += block_size) {
+					uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
+					disableBit(&bitmaskCopy, currentNodeIndex);
+					if (bitmaskCopy == 0) {
+						bitmaskCopy = *bitmask;
+					}
+
+					// Place pages where they must be
+					void *tmp = (void *) ((uintptr_t) ptr + i);
+#ifndef NDEBUG
+					_lock.readLock();
+					auto it = _directory.find(tmp);
+					assert(it->second._size == block_size || it->second._size == remainingBytes);
+					_lock.readUnlock();
+					remainingBytes -= it->second._size;
+#endif
+					_lock.writeLock();
+					__attribute__((unused)) size_t numErased = _directory.erase(tmp);
+					_lock.writeUnlock();
+					assert(numErased == 1);
+				}
 			}
 		}
 
