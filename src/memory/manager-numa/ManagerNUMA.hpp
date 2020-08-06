@@ -63,6 +63,7 @@ public:
 		_totalBytes += size;
 
 		int pagesize = HardwareInfo::getPageSize();
+		size_t originalBlockSize = block_size;
 		if (block_size % pagesize != 0) {
 			block_size = closestMultiple(block_size, pagesize);
 			//FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
@@ -90,26 +91,47 @@ public:
 
 		struct bitmask *tmp_bitmask = numa_bitmask_alloc(HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device));
 
-		for (size_t i = 0; i < size; i += block_size) {
-			uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
-			disableBit(&bitmaskCopy, currentNodeIndex);
-			if (bitmaskCopy == 0) {
-				bitmaskCopy = *bitmask;
+		if (originalBlockSize < (size_t) pagesize) {
+			// In this case, the whole allocation is inside the same page. However, it
+			// is important for scheduling purposes to annotate in the directory as if
+			// we could really split the allocation as requested.
+			for (size_t i = 0; i < size; i += originalBlockSize) {
+				uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
+				disableBit(&bitmaskCopy, currentNodeIndex);
+				if (bitmaskCopy == 0) {
+					bitmaskCopy = *bitmask;
+				}
+
+				// Insert into directory
+				void *tmp = (void *) ((uintptr_t) res + i);
+				size_t tmp_size = std::min(originalBlockSize, size-i);
+				DirectoryInfo info(tmp_size, currentNodeIndex);
+				_lock.writeLock();
+				_directory.emplace(tmp, info);
+				_lock.writeUnlock();
 			}
+		} else {
+			for (size_t i = 0; i < size; i += block_size) {
+				uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
+				disableBit(&bitmaskCopy, currentNodeIndex);
+				if (bitmaskCopy == 0) {
+					bitmaskCopy = *bitmask;
+				}
 
-			// Place pages where they must be
-			void *tmp = (void *) ((uintptr_t) res + i);
-			numa_bitmask_clearall(tmp_bitmask);
-			numa_bitmask_setbit(tmp_bitmask, currentNodeIndex);
-			assert(numa_bitmask_isbitset(tmp_bitmask, currentNodeIndex));
-			size_t tmp_size = std::min(block_size, size-i);
-			numa_interleave_memory(tmp, tmp_size, tmp_bitmask);
+				// Place pages where they must be
+				void *tmp = (void *) ((uintptr_t) res + i);
+				numa_bitmask_clearall(tmp_bitmask);
+				numa_bitmask_setbit(tmp_bitmask, currentNodeIndex);
+				assert(numa_bitmask_isbitset(tmp_bitmask, currentNodeIndex));
+				size_t tmp_size = std::min(block_size, size-i);
+				numa_interleave_memory(tmp, tmp_size, tmp_bitmask);
 
-			// Insert into directory
-			DirectoryInfo info(tmp_size, currentNodeIndex);
-			_lock.writeLock();
-			_directory.emplace(tmp, info);
-			_lock.writeUnlock();
+				// Insert into directory
+				DirectoryInfo info(tmp_size, currentNodeIndex);
+				_lock.writeLock();
+				_directory.emplace(tmp, info);
+				_lock.writeUnlock();
+			}
 		}
 
 		numa_bitmask_free(tmp_bitmask);
