@@ -27,6 +27,12 @@ private:
 	struct Node {
 		std::atomic<uint64_t> _ticket;
 		std::atomic<uint64_t> _cpuId;
+
+		Node() :
+			_ticket(0),
+			_cpuId(0)
+		{
+		}
 	};
 
 #ifndef NDEBUG
