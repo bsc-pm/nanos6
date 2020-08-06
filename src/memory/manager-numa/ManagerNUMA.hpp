@@ -60,6 +60,7 @@ public:
 		assert(block_size > 0);
 
 		bitmask_t bitmaskCopy = *bitmask;
+		_totalBytes += size;
 
 		int pagesize = HardwareInfo::getPageSize();
 		if (block_size % pagesize != 0) {
@@ -67,14 +68,21 @@ public:
 			//FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
 		}
 
-		// Allocate space using mmap
-		void *addr = nullptr;
+		void *res = nullptr;
 		int prot = PROT_READ | PROT_WRITE;
 		int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE | MAP_NONBLOCK;
 		int fd = -1;
 		int offset = 0;
-		void *res = mmap(addr, size, prot, flags, fd, offset);
-		assert(res != MAP_FAILED);
+		if (size < (size_t) pagesize) {
+			// Use malloc for small allocations
+			res = malloc(size);
+			assert(res != nullptr);
+		} else {
+			// Allocate space using mmap
+			void *addr = nullptr;
+			res = mmap(addr, size, prot, flags, fd, offset);
+			assert(res != MAP_FAILED);
+		}
 
 		if (!DataTrackingSupport::isNUMATrackingEnabled()) {
 			return res;
@@ -105,8 +113,6 @@ public:
 		}
 
 		numa_bitmask_free(tmp_bitmask);
-
-		_totalBytes += size;
 
 #ifndef NDEBUG
 		int pid = 0;
@@ -184,11 +190,11 @@ public:
 		assert(size > 0);
 		assert(*bitmask > 0);
 		assert(block_size > 0);
+		int pagesize = HardwareInfo::getPageSize();
 
 		if (DataTrackingSupport::isNUMATrackingEnabled()) {
 			bitmask_t bitmaskCopy = *bitmask;
 
-			int pagesize = HardwareInfo::getPageSize();
 			if (block_size % pagesize != 0) {
 				block_size = closestMultiple(block_size, pagesize);
 				//FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
@@ -221,8 +227,12 @@ public:
 		}
 
 		// Release memory
-		__attribute__((unused)) int res = munmap(ptr, size);
-		assert(res == 0);
+		if (size < (size_t) pagesize) {
+			std::free(ptr);
+		} else {
+			__attribute__((unused)) int res = munmap(ptr, size);
+			assert(res == 0);
+		}
 	}
 
 	static uint8_t getHomeNode(void *ptr, size_t size)
