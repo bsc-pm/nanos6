@@ -7,16 +7,18 @@
 #ifndef PAPI_CPU_HARDWARE_COUNTERS_HPP
 #define PAPI_CPU_HARDWARE_COUNTERS_HPP
 
+#include <cstring>
+
+#include "PAPIHardwareCounters.hpp"
 #include "hardware-counters/CPUHardwareCountersInterface.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
-#include "PAPIHardwareCounters.hpp"
 
 
 class PAPICPUHardwareCounters : public CPUHardwareCountersInterface {
 
 private:
 
-	//! Arrays of regular HW counter deltas and accumulations
+	//! Array of regular HW counter deltas
 	long long _counters[HWCounters::HWC_PAPI_NUM_EVENTS];
 
 public:

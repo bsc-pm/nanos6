@@ -7,23 +7,32 @@
 #ifndef PAPI_HARDWARE_COUNTERS_HPP
 #define PAPI_HARDWARE_COUNTERS_HPP
 
+#include <cassert>
 #include <vector>
 
 #include "hardware-counters/HardwareCountersInterface.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
-#include "hardware-counters/TaskHardwareCountersInterface.hpp"
-#include "hardware-counters/ThreadHardwareCountersInterface.hpp"
-#include "hardware-counters/CPUHardwareCountersInterface.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 
+
+class CPUHardwareCountersInterface;
+class TaskHardwareCountersInterface;
+class ThreadHardwareCountersInterface;
 
 class PAPIHardwareCounters : public HardwareCountersInterface {
 
 private:
 
+	//! Whether the PAPI HW Counter backend is enabled
 	bool _enabled;
+
+	//! Whether the verbose mode is enabled
 	bool _verbose;
+
+	//! A vector containing all the enabled PAPI event codes
 	std::vector<int> _enabledPAPIEventCodes;
+
+	//! The number of enabled counters (enabled by the user and available)
+	static size_t _numEnabledCounters;
 
 	//! Maps HWCounters::counters_t identifiers with the "inner PAPI id" (0..N)
 	//!
@@ -32,14 +41,15 @@ private:
 	//!   - If the value of a position is -1, there is no mapping (i.e., the
 	//!     event is disabled).
 	//!   - On the other hand, the value of a position is a mapping of a general
-	//!     ID (PAPI_TOT_INS == 100) to the real position it should
+	//!     ID (HWC_PAPI_L1_DCM == 201) to the real position it should
 	//!     occupy in a vector with only enabled PAPI events (0 for instance if
 	//!     this is the only PAPI enabled event)
-	//! _idMap[PAPI_TOT_INS(101) - PAPI_MIN_EVENT(100)] = 0
-
+	//! _idMap[HWC_PAPI_L1_DCM(201) - HWC_PAPI_MIN_EVENT(200)] = 0
 	static int _idMap[HWCounters::HWC_PAPI_NUM_EVENTS];
-	static int _numEnabledCounters;
+
 	static const int DISABLED_PAPI_COUNTER = -1;
+
+private:
 
 	void testMaximumNumberOfEvents();
 
@@ -57,7 +67,7 @@ public:
 		std::vector<HWCounters::counters_t> &enabledEvents
 	);
 
-	~PAPIHardwareCounters()
+	inline ~PAPIHardwareCounters()
 	{
 	}
 
@@ -84,7 +94,7 @@ public:
 		return (_idMap[counterType - HWCounters::HWC_PAPI_MIN_EVENT] != DISABLED_PAPI_COUNTER);
 	}
 
-	//! \brief Get the number of enabled counters in the PQoS backend
+	//! \brief Get the number of enabled counters in the PAPI backend
 	static inline size_t getNumEnabledCounters()
 	{
 		return _numEnabledCounters;

@@ -4,127 +4,110 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
-
-#include <stdlib.h>
-#include <stdio.h>
 #include <pthread.h>
 #include <papi.h>
 
-#include "PAPIHardwareCounters.hpp"
-#include "PAPIThreadHardwareCounters.hpp"
-#include "PAPITaskHardwareCounters.hpp"
 #include "PAPICPUHardwareCounters.hpp"
+#include "PAPIHardwareCounters.hpp"
+#include "PAPITaskHardwareCounters.hpp"
+#include "PAPIThreadHardwareCounters.hpp"
+#include "hardware-counters/CPUHardwareCountersInterface.hpp"
+#include "hardware-counters/TaskHardwareCountersInterface.hpp"
+#include "hardware-counters/ThreadHardwareCountersInterface.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 
+size_t PAPIHardwareCounters::_numEnabledCounters(0);
 int PAPIHardwareCounters::_idMap[HWCounters::HWC_PAPI_NUM_EVENTS];
-int PAPIHardwareCounters::_numEnabledCounters = 0;
 
+//! \brief Private function only accessible from this file
 static void readAndResetPAPICounters(
 	PAPIThreadHardwareCounters *papiThreadCounters,
 	long long *countersBuffer
 ) {
-	int ret;
-	int eventSet = papiThreadCounters->getEventSet();
+	assert(countersBuffer != nullptr);
+	assert(papiThreadCounters != nullptr);
 
-	ret = PAPI_read(eventSet, countersBuffer);
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when reading a PAPI event set",
-		PAPI_strerror(ret)
-	);
+	int eventSet = papiThreadCounters->getEventSet();
+	int ret = PAPI_read(eventSet, countersBuffer);
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when reading a PAPI event set - ", PAPI_strerror(ret));
+	}
+
+	// Reset (clean) counters
 	ret = PAPI_reset(eventSet);
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when resetting a PAPI event set",
-		PAPI_strerror(ret)
-	);
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when resetting a PAPI event set - ", PAPI_strerror(ret));
+	}
 }
 
 void PAPIHardwareCounters::testMaximumNumberOfEvents()
 {
-	int ret;
-	int eventSet = PAPI_NULL;
-
-	if (!_enabled)
+	if (!_enabled) {
 		return;
+	}
 
-	if (_verbose)
-		std::cout << "Trying to enable simultaneously all the requested PAPI events" << std::endl;
+	if (_verbose) {
+		std::cout << "- Testing if all the requested PAPI events can co-exist..." << std::endl;
+	}
 
-	/* Register the thread into PAPI */
-	ret = PAPI_register_thread();
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when registering the main thread into PAPI: ",
-		PAPI_strerror(ret)
-	);
-
-	/* Create a test EventSet */
+	// Register the thread into PAPI and create an event set
+	int ret = PAPI_register_thread();
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when registering the main thread into PAPI - ", PAPI_strerror(ret));
+	}
+	int eventSet = PAPI_NULL;
 	ret = PAPI_create_eventset(&eventSet);
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when creating a PAPI event set for the main thread",
-		PAPI_strerror(ret)
-	);
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when creating a PAPI event set for the main thread - ", PAPI_strerror(ret));
+	}
 
-	for (auto it = _enabledPAPIEventCodes.begin(); it != _enabledPAPIEventCodes.end(); it++) {
-		int code = *it;
-
+	// After creating the event set and registering the main thread into PAPI
+	// for the purpose of testing, test if all enabled events can co-exist
+	for (size_t i = 0; i < _enabledPAPIEventCodes.size(); ++i) {
+		int eventCode = _enabledPAPIEventCodes[i];
 		if (_verbose) {
 			char codeName[PAPI_MAX_STR_LEN];
-			ret = PAPI_event_code_to_name(code, codeName);
-			FatalErrorHandler::failIf(
-				ret != PAPI_OK,
-				ret, " when translating from PAPI code to PAPI event name",
-				PAPI_strerror(ret)
-			);
-			std::cout << " - Enabling " << codeName << ": ";
+			ret = PAPI_event_code_to_name(eventCode, codeName);
+			if (ret != PAPI_OK) {
+				FatalErrorHandler::fail(ret, " when converting from PAPI code to PAPI event name - ", PAPI_strerror(ret));
+			}
+
+			std::cout << "  - Enabling " << codeName << ": ";
 		}
 
-		ret = PAPI_add_event(eventSet, code);
-		if (ret != PAPI_OK) {
-
-			if (_verbose)
+		// Try to add the event to the set
+		ret = PAPI_add_event(eventSet, eventCode);
+		if (_verbose) {
+			if (ret != PAPI_OK) {
 				std::cout << "FAIL" << std::endl;
+			} else {
+				std::cout << "OK" << std::endl;
+			}
+		}
 
-			FatalErrorHandler::fail(
-				"It was not possible to enable simultaneously all of the requested PAPI events. ",
-				"Each processor has a finite number of hardware counter registers, some of them are general purpose (can track any hardware counter) and other are fixed (can only track a specific hardware counter). ",
-				"Also, some counters are not compatible with some other. Therefore, it's not only a matter of which is the maximum number of hardware counters supported on a processor, it depens on the combination of requested counters. ",
-				"Please, try reducing the number of requested counters and/or try another combination (note that the supplied order of PAPI events is not relevant).",
-				"The PAPI \"papi_event_chooser\" tool might be of help in determining compatible sets of hardware counters"
-			);
-			break;
-
-		} else if (_verbose) {
-			std::cout << "OK" << std::endl;
+		// Regardless of the verbosity, if it failed, abort the execution
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail("Cannot simultaneously enable all the requested PAPI events due to incompatibilities");
 		}
 	}
 
-	/* Remove all events from the eventset */
+	// Remove all the events from the EventSet, destroy it, and unregister the thread
 	ret = PAPI_cleanup_eventset(eventSet);
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when clearing the main thread PAPI eventSet: ",
-		PAPI_strerror(ret)
-	);
-
-	/* destroy the test EventSet */
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when clearing the main thread's PAPI eventSet - ", PAPI_strerror(ret));
+	}
 	ret = PAPI_destroy_eventset(&eventSet);
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when destorying the main thread PAPI eventSet: ",
-		PAPI_strerror(ret)
-	);
-
-	/* Unregister this thread */
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when destorying the main thread's PAPI eventSet - ", PAPI_strerror(ret));
+	}
 	ret = PAPI_unregister_thread();
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when unregistering the main thread from the PAPI library: ",
-		PAPI_strerror(ret)
-	);
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when unregistering the main thread from the PAPI library - ", PAPI_strerror(ret));
+	}
 }
 
 PAPIHardwareCounters::PAPIHardwareCounters(
@@ -132,218 +115,199 @@ PAPIHardwareCounters::PAPIHardwareCounters(
 	const std::string &,
 	std::vector<HWCounters::counters_t> &enabledEvents
 ) {
-	int ret;
-
 	_verbose = verbose;
-
-	/* Initialize the library */
-	ret = PAPI_library_init(PAPI_VER_CURRENT);
-	FatalErrorHandler::failIf(
-		ret != PAPI_VER_CURRENT,
-		ret, " when initializing the PAPI library: ",
-		PAPI_strerror(ret)
-	);
-	// TODO enable multiplex if too many events enabled?
-	//ret = PAPI_multiplex_init();
-	//FatalErrorHandler::failIf(
-	//	ret != PAPI_OK,
-	//	ret, " when initializing PAPI library multiplex support: ",
-	//	PAPI_strerror(ret)
-	//);
-	ret = PAPI_thread_init((unsigned long (*)(void)) (pthread_self));
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when initializing the PAPI library for threads: ",
-		PAPI_strerror(ret)
-	);
-	ret = PAPI_set_domain(PAPI_DOM_USER);
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when setting the default PAPI domain to user only: ",
-		PAPI_strerror(ret)
-	);
-
-	for (unsigned short i = 0; i < HWCounters::HWC_PAPI_NUM_EVENTS; ++i)
+	for (size_t i = 0; i < HWCounters::HWC_PAPI_NUM_EVENTS; ++i) {
 		_idMap[i] = DISABLED_PAPI_COUNTER;
+	}
 
-	if (_verbose)
-		std::cout << "Testing this processors' availability of requested events" << std::endl;
+	// Initialize the library
+	int ret = PAPI_library_init(PAPI_VER_CURRENT);
+	if (ret != PAPI_VER_CURRENT) {
+		FatalErrorHandler::fail(ret, " when initializing the PAPI library - ", PAPI_strerror(ret));
+	}
 
-	int cnt = 0;
-	for (auto it = enabledEvents.begin(), end = enabledEvents.end(); it != end; ++it) {
-		int code;
-		short id = *it;
+	// TODO: Enable multiplex if too many events enabled?
+	/*
+	ret = PAPI_multiplex_init();
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when initializing PAPI library multiplex support - ", PAPI_strerror(ret));
+	}
+	*/
+
+	// Initialize the PAPI library for threads, and the domain
+	ret = PAPI_thread_init(pthread_self);
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when initializing the PAPI library for threads - ", PAPI_strerror(ret));
+	}
+	ret = PAPI_set_domain(PAPI_DOM_USER);
+	if (ret != PAPI_OK) {
+		FatalErrorHandler::fail(ret, " when setting the default PAPI domain to user only - ", PAPI_strerror(ret));
+	}
+
+	// Now test the availability of all the requested events
+	if (_verbose) {
+		std::cout << "-------------------------------------------------------" << std::endl;
+		std::cout << "- Testing the availability of the requested PAPI events" << std::endl;
+	}
+
+	size_t innerId = 0;
+	auto it = enabledEvents.begin();
+	while (it != enabledEvents.end()) {
+		HWCounters::counters_t id = *it;
 		if (id >= HWCounters::HWC_PAPI_MIN_EVENT && id <= HWCounters::HWC_PAPI_MAX_EVENT) {
+			if (_verbose) {
+				std::cout << "  - Checking " << HWCounters::counterDescriptions[id] << ": ";
+			}
 
-			if (_verbose)
-				std::cout << " - Checking " << HWCounters::counterDescriptions[id] << ":";
-
+			int code;
 			ret = PAPI_event_name_to_code((char *) HWCounters::counterDescriptions[id], &code);
-			FatalErrorHandler::failIf(
-				ret != PAPI_OK,
-				ret, std::string(" PAPI ") + HWCounters::counterDescriptions[id] + " event not known by this version of PAPI: ",
-				PAPI_strerror(ret)
-			);
-			ret = PAPI_query_event(code);
 			if (ret != PAPI_OK) {
-
-				if (_verbose) {
-					std::cout << "Fail" << std::endl;
+				FatalErrorHandler::fail(ret,
+					HWCounters::counterDescriptions[id],
+					" event not known by this version of PAPI - ",
+					PAPI_strerror(ret)
+				);
+			}
+			ret = PAPI_query_event(code);
+			if (_verbose) {
+				if (ret != PAPI_OK) {
+					std::cout << "FAIL" << std::endl;
+				} else {
+					std::cout << "OK" << std::endl;
 				}
-
-				FatalErrorHandler::warn(
-					ret, std::string(" PAPI ") + HWCounters::counterDescriptions[id] + " not available on this machine, skipping it: ",
+			}
+			if (ret != PAPI_OK) {
+				FatalErrorHandler::warn(ret, " ",
+					HWCounters::counterDescriptions[id],
+					" event unknown in this version of PAPI, skipping it - ",
 					PAPI_strerror(ret)
 				);
 
-				enabledEvents.erase(it);
-				end = enabledEvents.end();
-
-				continue;
+				// Erase the event from the vector of enabled events
+				it = enabledEvents.erase(it);
+			} else {
+				_enabledPAPIEventCodes.push_back(code);
+				_idMap[id - HWCounters::HWC_PQOS_MIN_EVENT] = innerId++;
+				++it;
 			}
-
-			_enabledPAPIEventCodes.push_back(code);
-			_idMap[id - HWCounters::HWC_PAPI_MIN_EVENT] = cnt++;
-
-			if (_verbose)
-				std::cout << " OK" << std::endl;
 		}
 	}
 
 	_numEnabledCounters = _enabledPAPIEventCodes.size();
 	if (!_numEnabledCounters) {
-		FatalErrorHandler::warn("No PAPI events enabled, disabling hardware counters");
+		FatalErrorHandler::warn("No PAPI events enabled, disabling this backend");
 		_enabled = false;
 	} else {
 		_enabled = true;
 	}
 
+	// Test incompatibilities between PAPI events
 	testMaximumNumberOfEvents();
-
-	if (_verbose)
-		std::cout << "PAPI events enabled: " << _numEnabledCounters << std::endl;
+	if (_verbose) {
+		std::cout << "- Finished testing the availability of all the requested PAPI events" << std::endl;
+		std::cout << "- Number of PAPI events enabled: " << _numEnabledCounters << std::endl;
+		std::cout << "-------------------------------------------------------" << std::endl;
+	}
 }
 
 void PAPIHardwareCounters::threadInitialized(ThreadHardwareCountersInterface *threadCounters)
 {
-	int ret;
-	int eventSet = PAPI_NULL;
-	PAPIThreadHardwareCounters *papiThreadCounters = (PAPIThreadHardwareCounters *) threadCounters;
+	if (_enabled) {
+		// Register the thread into PAPI and create an EventSet for it
+		int ret = PAPI_register_thread();
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when registering a new thread into PAPI - ", PAPI_strerror(ret));
+		}
+		int eventSet = PAPI_NULL;
+		ret = PAPI_create_eventset(&eventSet);
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when creating a PAPI event set - ", PAPI_strerror(ret));
+		}
 
-	assert(papiThreadCounters != nullptr);
+		// TODO: Remove? Keep?
+		/*
+		// Multiplex the EventSet
+		ret = PAPI_set_multiplex(eventSet);
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when enabling PAPI multiplex for a new thread - ", PAPI_strerror(ret));
+		}
+		*/
 
-	if (!_enabled)
-		return;
+		// Add all the enabled events to the EventSet
+		ret = PAPI_add_events(eventSet,
+			_enabledPAPIEventCodes.data(),
+			_enabledPAPIEventCodes.size()
+		);
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when initializing the PAPI event set of a new thread - ", PAPI_strerror(ret));
+		}
 
-	/* Register the thread into PAPI */
-	ret = PAPI_register_thread();
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when registering a new thread into PAPI: ",
-		PAPI_strerror(ret)
-	);
+		// Set the EventSet to the thread and start counting
+		PAPIThreadHardwareCounters *papiThreadCounters = (PAPIThreadHardwareCounters *) threadCounters;
+		assert(papiThreadCounters != nullptr);
 
-	/* Create an EventSet */
-	ret = PAPI_create_eventset(&eventSet);
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when creating a PAPI event set: ",
-		PAPI_strerror(ret)
-	);
-
-	///* Multiplex the EventSet */
-	//ret = PAPI_set_multiplex(eventSet);
-	//FatalErrorHandler::failIf(
-	//	ret != PAPI_OK,
-	//	ret, " when enabling PAPI multiplex for a new thread: ",
-	//	PAPI_strerror(ret)
-	//);
-	//
-
-	/* Add Total Instructions Executed to our EventSet */
-	ret = PAPI_add_events(eventSet,
-			      _enabledPAPIEventCodes.data(),
-			      _enabledPAPIEventCodes.size());
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when initializing the PAPI event set of a new thread: ",
-		PAPI_strerror(ret)
-	);
-
-	papiThreadCounters->setEventSet(eventSet);
-
-	/* Start counting */
-	ret = PAPI_start(eventSet);
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when starting a PAPI event set",
-		PAPI_strerror(ret)
-	);
+		papiThreadCounters->setEventSet(eventSet);
+		ret = PAPI_start(eventSet);
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when starting a PAPI event set - ", PAPI_strerror(ret));
+		}
+	}
 }
 
 void PAPIHardwareCounters::threadShutdown(ThreadHardwareCountersInterface *)
 {
-	int ret;
+	if (_enabled) {
+		// TODO: How can we stop the counters without passing a buffer?
+		/*
+		assert(papiThreadCounters != nullptr);
 
-	if (!_enabled)
-		return;
+		int ret = PAPI_stop(papiThreadCounters->getEventSet(), counter);
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when stopping a PAPI event set - ", PAPI_strerror(ret));
+		}
+		*/
 
-	// TODO How can we stop the counters without passing a buffer?
-	//ret = PAPI_stop(papiThreadCounters->getEventSet(), counter);
-	//FatalErrorHandler::failIf(
-	//	ret != PAPI_OK,
-	//	ret, " when stopping a PAPI event set",
-	//	PAPI_strerror(ret)
-	//);
-
-	ret = PAPI_unregister_thread();
-	FatalErrorHandler::failIf(
-		ret != PAPI_OK,
-		ret, " when unregistering a PAPI thread",
-		PAPI_strerror(ret)
-	);
+		int ret = PAPI_unregister_thread();
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when unregistering a PAPI thread - ", PAPI_strerror(ret));
+		}
+	}
 }
 
 void PAPIHardwareCounters::taskReinitialized(TaskHardwareCountersInterface *taskCounters)
 {
-	PAPITaskHardwareCounters *papiTaskCounters = (PAPITaskHardwareCounters *) taskCounters;
-	assert(papiTaskCounters != nullptr);
+	if (_enabled) {
+		PAPITaskHardwareCounters *papiTaskCounters = (PAPITaskHardwareCounters *) taskCounters;
+		assert(papiTaskCounters != nullptr);
 
-	papiTaskCounters->clear();
+		papiTaskCounters->clear();
+	}
 }
 
 void PAPIHardwareCounters::updateTaskCounters(
 	ThreadHardwareCountersInterface *threadCounters,
 	TaskHardwareCountersInterface *taskCounters
 ) {
-	long long *countersBuffer;
-	PAPITaskHardwareCounters   *papiTaskCounters   = (PAPITaskHardwareCounters *) taskCounters;
-	PAPIThreadHardwareCounters *papiThreadCounters = (PAPIThreadHardwareCounters *) threadCounters;
+	if (_enabled) {
+		PAPIThreadHardwareCounters *papiThreadCounters = (PAPIThreadHardwareCounters *) threadCounters;
+		PAPITaskHardwareCounters *papiTaskCounters = (PAPITaskHardwareCounters *) taskCounters;
+		assert(papiTaskCounters != nullptr);
 
-	assert(papiTaskCounters != nullptr);
-	assert(papiThreadCounters != nullptr);
-
-	if (!_enabled)
-		return;
-
-	countersBuffer = papiTaskCounters->getCountersBuffer();
-	readAndResetPAPICounters(papiThreadCounters, countersBuffer);
+		long long *countersBuffer = papiTaskCounters->getCountersBuffer();
+		readAndResetPAPICounters(papiThreadCounters, countersBuffer);
+	}
 }
 
 void PAPIHardwareCounters::updateRuntimeCounters(
 	CPUHardwareCountersInterface *cpuCounters,
 	ThreadHardwareCountersInterface *threadCounters
 ) {
-	long long *countersBuffer;
-	PAPICPUHardwareCounters    *papiCPUCounters    = (PAPICPUHardwareCounters *) cpuCounters;
-	PAPIThreadHardwareCounters *papiThreadCounters = (PAPIThreadHardwareCounters *) threadCounters;
+	if (_enabled) {
+		PAPICPUHardwareCounters *papiCPUCounters = (PAPICPUHardwareCounters *) cpuCounters;
+		PAPIThreadHardwareCounters *papiThreadCounters = (PAPIThreadHardwareCounters *) threadCounters;
+		assert(papiCPUCounters != nullptr);
 
-	assert(papiThreadCounters != nullptr);
-	assert(papiCPUCounters != nullptr);
-
-	if (!_enabled)
-		return;
-
-	countersBuffer = papiCPUCounters->getCountersBuffer();
-	readAndResetPAPICounters(papiThreadCounters, countersBuffer);
+		long long *countersBuffer = papiCPUCounters->getCountersBuffer();
+		readAndResetPAPICounters(papiThreadCounters, countersBuffer);
+	}
 }

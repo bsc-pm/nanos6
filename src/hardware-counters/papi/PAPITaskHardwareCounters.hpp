@@ -7,18 +7,19 @@
 #ifndef PAPI_TASK_HARDWARE_COUNTERS_HPP
 #define PAPI_TASK_HARDWARE_COUNTERS_HPP
 
-#include <string.h>
+#include <cassert>
+#include <cstring>
 
 #include "PAPIHardwareCounters.hpp"
-#include "hardware-counters/TaskHardwareCountersInterface.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCountersInterface.hpp"
 
 
 class PAPITaskHardwareCounters : public TaskHardwareCountersInterface {
 
 private:
 
-	//! Arrays of regular HW counter deltas and accumulations
+	//! Array of regular HW counter deltas
 	long long *_countersDelta;
 
 public:
@@ -28,7 +29,6 @@ public:
 		assert(allocationAddress != nullptr);
 
 		_countersDelta = (long long *) allocationAddress;
-
 		clear();
 	}
 
@@ -36,7 +36,6 @@ public:
 	inline void clear() override
 	{
 		const size_t numCounters = PAPIHardwareCounters::getNumEnabledCounters();
-
 		memset(_countersDelta, 0, numCounters * sizeof(long long));
 	}
 
@@ -68,7 +67,6 @@ public:
 	static inline size_t getTaskHardwareCountersSize()
 	{
 		const size_t numCounters = PAPIHardwareCounters::getNumEnabledCounters();
-
 		return numCounters * sizeof(long long);
 	}
 
