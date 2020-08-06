@@ -32,6 +32,8 @@ namespace DataTrackingSupport {
 	static const double L2_THRESHOLD = 0.25;
 	static const double L3_THRESHOLD = 0.70;
 
+	static const double RW_BONUS_FACTOR = 2.0;
+
 	enum HardwareCacheLevel {
 		L2_LEVEL = 2,
 		L3_LEVEL

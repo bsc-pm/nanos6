@@ -386,7 +386,14 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
 			uint8_t NUMAid = dataAccess->getHomeNode();
 			if (NUMAid != (uint8_t) -1) {
 				assert(NUMAid < numNUMANodes);
-				bytesInNUMA[NUMAid] += dataAccess->getAccessRegion().getSize();
+				// Apply a bonus factor to RW accesses
+				DataAccessType type = dataAccess->getType();
+				bool rwAccess = (type != READ_ACCESS_TYPE) && (type != WRITE_ACCESS_TYPE);
+				if (rwAccess) {
+					bytesInNUMA[NUMAid] += dataAccess->getAccessRegion().getSize() * DataTrackingSupport::RW_BONUS_FACTOR;
+				} else {
+					bytesInNUMA[NUMAid] += dataAccess->getAccessRegion().getSize();
+				}
 			}
 			return true;
 		}
@@ -396,25 +403,20 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
 	size_t max = 0;
 	size_t sanityCheck = 0;
 	uint8_t chosen = (uint8_t) -1;
-	std::uniform_int_distribution<uint8_t> unif(0, numNUMANodes-1);
+	std::uniform_int_distribution<uint8_t> _unif(0, 1);
 	for (int i = 0; i < numNUMANodes; i++) {
 		sanityCheck += bytesInNUMA[i];
 		if (bytesInNUMA[i] > max) {
 			max = bytesInNUMA[i];
 			chosen = i;
 		} else if (bytesInNUMA[i] == max && chosen != (uint8_t) i) {
-			uint8_t rand = unif(_randomEngine);
-			if (rand != i) {
-				max = bytesInNUMA[rand];
-				chosen = rand;
+			// Random returns either 0 or 1. If 0, we keep the old max, if 1, we update it.
+			uint8_t update = _unif(_randomEngine);
+			if (update) {
+				chosen = i;
 			}
 		}
 	}
 	chosenNUMAid = chosen;
-	//if (_currentIndex == 3) {
-	//	if (bytesInNUMA[0] != _totalDataSize && bytesInNUMA[1] != _totalDataSize) {
-	//		std::cout << "{" << bytesInNUMA[0] << ", " << bytesInNUMA[1] << " -> " << (int) chosenNUMAid << "}" << std::endl;
-	//	}
-	//}
-	assert(sanityCheck == _totalDataSize);
+	assert(sanityCheck >= _totalDataSize && sanityCheck <= 2*_totalDataSize);
 }
