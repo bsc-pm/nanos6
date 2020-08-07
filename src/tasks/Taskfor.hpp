@@ -55,8 +55,8 @@ public:
 			parent, instrumentationTaskId,
 			flags, taskAccessInfo,
 			taskCountersAddress),
-		_remainingChunks(),
-		_remainingIterations(),
+		_remainingChunks(0),
+		_remainingIterations(0),
 		_bounds(),
 		_completedIterations(0),
 		_myChunk(-1)
@@ -64,8 +64,6 @@ public:
 		assert(isFinal());
 		setRunnable(runnable);
 
-		std::atomic_init(&_remainingChunks, (int64_t) 0);
-		std::atomic_init(_remainingIterations.ptr_to_basetype(), (size_t) 0);
 		for (int i = 0; i < PENDING_CHUNKS_SIZE; i++) {
 			std::atomic_init(&_pendingChunks[i], (uint64_t) 0);
 		}
