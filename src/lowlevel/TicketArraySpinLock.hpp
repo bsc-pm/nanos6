@@ -1,9 +1,8 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
-
 
 #ifndef TICKET_ARRAY_SPIN_LOCK_HPP
 #define TICKET_ARRAY_SPIN_LOCK_HPP
@@ -14,6 +13,7 @@
 #include "SpinWait.hpp"
 #include "Padding.hpp"
 
+
 class TicketArraySpinLock {
 	// These are aligned on a cache line boundary in order to avoid false sharing:
 	alignas(CACHELINE_SIZE) Padded<std::atomic_size_t> *_buffer;
@@ -22,12 +22,14 @@ class TicketArraySpinLock {
 	alignas(CACHELINE_SIZE) size_t _size;
 
 public:
-	TicketArraySpinLock(size_t size)
-		: _head(0), _next(0), _size(size)
+	TicketArraySpinLock(size_t size) :
+		_head(0),
+		_next(0),
+		_size(size)
 	{
 		_buffer = (Padded<std::atomic_size_t> *) MemoryAllocator::alloc(_size * sizeof(Padded<std::atomic_size_t>));
 		for (size_t i = 0; i < _size; i++) {
-			new (&_buffer[i]) Padded<std::atomic_size_t>();
+			new (&_buffer[i]) Padded<std::atomic_size_t>(0);
 		}
 	}
 
