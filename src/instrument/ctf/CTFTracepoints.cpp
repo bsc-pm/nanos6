@@ -67,6 +67,7 @@ static CTFAPI::CTFEvent *eventMutexUnlockTaskContextEnter;
 static CTFAPI::CTFEvent *eventMutexUnlockTaskContextExit;
 static CTFAPI::CTFEvent *eventDebugRegister;
 static CTFAPI::CTFEvent *eventDebugEnter;
+static CTFAPI::CTFEvent *eventDebugTransition;
 static CTFAPI::CTFEvent *eventDebugExit;
 static CTFAPI::CTFEvent *eventSchedulerLockClient;
 static CTFAPI::CTFEvent *eventSchedulerLockServer;
@@ -317,6 +318,10 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata)
 	));
 	eventDebugEnter = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:debug_enter",
+		"\t\tuint8_t _id;\n"
+	));
+	eventDebugTransition = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:debug_transition",
 		"\t\tuint8_t _id;\n"
 	));
 	eventDebugExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
@@ -844,4 +849,12 @@ void Instrument::tp_debug_exit()
 
 	char dummy = 0;
 	CTFAPI::tracepoint(eventDebugExit, dummy);
+}
+
+void Instrument::tp_debug_transition(ctf_debug_id_t id)
+{
+	if (!eventDebugTransition->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventDebugTransition, id);
 }

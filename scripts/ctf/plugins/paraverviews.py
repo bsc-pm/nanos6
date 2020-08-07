@@ -433,6 +433,7 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 			("nanos6:scheduler_lock_server_exit",              self.hook_unstack),
 			("nanos6:debug_register",                          self.hook_debugRegister),
 			("nanos6:debug_enter",                             self.hook_debug),
+			("nanos6:debug_transition",                        self.hook_debugTransition),
 			("nanos6:debug_exit",                              self.hook_unstack),
 		]
 		status = {
@@ -604,6 +605,11 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 
 	@stackEvent
 	def hook_debug(self, event):
+		debugId = event["id"]
+		return self.Status.Debug + debugId
+
+	@unstackAndStackEvent
+	def hook_debugTransition(self, event):
 		debugId = event["id"]
 		return self.Status.Debug + debugId
 

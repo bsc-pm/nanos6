@@ -61,6 +61,7 @@ namespace Instrument {
 
 	void tp_debug_register(const char *name, ctf_debug_id_t id);
 	void tp_debug_enter(ctf_debug_id_t id);
+	void tp_debug_transition(ctf_debug_id_t id);
 	void tp_debug_exit();
 
 	// Nanos6 API entry and exit points tracepoints

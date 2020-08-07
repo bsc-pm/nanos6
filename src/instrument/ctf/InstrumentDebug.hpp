@@ -20,6 +20,11 @@ namespace Instrument {
 		tp_debug_enter(id);
 	}
 
+	inline void debugTransition(uint8_t id)
+	{
+		tp_debug_transition(id);
+	}
+
 	inline void debugExit()
 	{
 		tp_debug_exit();
