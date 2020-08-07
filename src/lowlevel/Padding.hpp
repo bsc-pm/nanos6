@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef PADDING_HPP
@@ -18,13 +18,17 @@
 
 template<class T, size_t Size = CACHELINE_SIZE>
 class Padded : public T {
-	constexpr static size_t roundup(size_t const x, size_t const y) {
-		return ((((x) + ((y) - 1)) / (y)) * (y));
+	using T::T;
+
+	constexpr static size_t roundup(size_t const x, size_t const y)
+	{
+		return (((x + (y - 1)) / y) * y);
 	}
+
 	uint8_t padding[roundup(sizeof(T), Size)-sizeof(T)];
 
 public:
-	T *ptr_to_basetype()
+	inline T *ptr_to_basetype()
 	{
 		return (T *) this;
 	}
