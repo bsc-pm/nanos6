@@ -26,6 +26,7 @@ namespace CTFAPI {
 
 	private:
 
+		int _node;
 		ctf_stream_id_t _streamId;
 		size_t _size;
 
@@ -49,12 +50,12 @@ namespace CTFAPI {
 		std::string    _path;
 		CircularBuffer _circularBuffer;
 
-		CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path,
+		CTFStream(size_t size, ctf_cpu_id_t cpu, int node, std::string path,
 			  ctf_stream_id_t streamId);
 
 	public:
-		CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path)
-			: CTFStream(size, cpu, path, CTFStreamBoundedId) {}
+		CTFStream(size_t size, ctf_cpu_id_t cpu, int node, std::string path)
+			: CTFStream(size, cpu, node, path, CTFStreamBoundedId) {}
 
 		virtual ~CTFStream() {}
 

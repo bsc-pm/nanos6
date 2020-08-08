@@ -71,6 +71,7 @@ static void initializeUserStreams(
 	std::string userPath
 ) {
 	CPU *cpu;
+	int nodeId;
 	ctf_cpu_id_t cpuId;
 	ctf_cpu_id_t maxCpuId = 0;
 	std::vector<CPU *> cpus = CPUManager::getCPUListReference();
@@ -89,9 +90,10 @@ static void initializeUserStreams(
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
 		cpuId = cpu->getSystemCPUId();
+		nodeId = cpu->getNumaNodeId();
 		Instrument::CPULocalData &cpuLocalData = cpu->getInstrumentationData();
 		cpuLocalData.userStream = new CTFAPI::CTFStream(
-			defaultStreamBufferSize, cpuId, userPath.c_str()
+			defaultStreamBufferSize, cpuId, nodeId, userPath.c_str()
 		);
 		cpuLocalData.userStream->initialize();
 		if (cpuId > maxCpuId)
@@ -103,7 +105,7 @@ static void initializeUserStreams(
 	cpu = CPUManager::getLeaderThreadCPU();
 	Instrument::CPULocalData &leaderThreadCPULocalData = cpu->getInstrumentationData();
 	CTFAPI::CTFStreamUnboundedPrivate *unboundedPrivateStream = new CTFAPI::CTFStreamUnboundedPrivate(
-		defaultStreamBufferSize, cpuId, userPath.c_str()
+		defaultStreamBufferSize, cpuId, -1, userPath.c_str()
 	);
 	unboundedPrivateStream->initialize();
 	unboundedPrivateStream->addContext(context);
@@ -113,7 +115,7 @@ static void initializeUserStreams(
 	cpuId = maxCpuId + 2;
 	Instrument::CPULocalData *virtualCPULocalData = new Instrument::CPULocalData();
 	CTFAPI::CTFStreamUnboundedShared *unboundedSharedStream = new CTFAPI::CTFStreamUnboundedShared(
-		defaultStreamBufferSize, cpuId, userPath.c_str()
+		defaultStreamBufferSize, cpuId, -1, userPath.c_str()
 	);
 	unboundedSharedStream->initialize();
 	unboundedSharedStream->addContext(context);
@@ -126,6 +128,7 @@ static void initializeKernelStreams(
 	std::string kernelPath
 ) {
 	CPU *cpu;
+	int nodeId;
 	ctf_cpu_id_t cpuId;
 
 	if (!kernelMetadata->enabled())
@@ -155,10 +158,11 @@ static void initializeKernelStreams(
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
 		cpuId = cpu->getSystemCPUId();
+		nodeId = cpu->getNumaNodeId();
 		Instrument::CPULocalData &cpuLocalData = cpu->getInstrumentationData();
 		cpuLocalData.kernelStream = new CTFAPI::CTFStreamKernel(
 			defaultStreamKernelSize, defaultKernelMappingSize,
-			cpuId, kernelPath.c_str()
+			cpuId, nodeId, kernelPath.c_str()
 		);
 		cpuLocalData.kernelStream->initialize();
 	}

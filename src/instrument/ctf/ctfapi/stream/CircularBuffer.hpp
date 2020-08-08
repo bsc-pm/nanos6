@@ -20,11 +20,12 @@ private:
 	uint64_t mask;
 	uint64_t subBufferMask;
 
-	int fd;
+	int      fd;
 	uint64_t fileOffset;
+	int      _node;
 
 	void initializeFile(const char *path);
-	void initializeBuffer(uint64_t size);
+	void initializeBuffer(uint64_t size, int node);
 	void flushToFile(char *buf, size_t size);
 	void flushUpToTheWrap();
 	void resetPointers();
@@ -37,7 +38,7 @@ private:
 public:
 	CircularBuffer() {};
 
-	void initialize(uint64_t size, const char *path);
+	void initialize(uint64_t size, int node, const char *path);
 	void flushAll();
 	void flushFilledSubBuffers();
 	void shutdown();

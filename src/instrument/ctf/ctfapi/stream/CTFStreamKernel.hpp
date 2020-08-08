@@ -62,8 +62,8 @@ namespace CTFAPI {
 		);
 
 	public:
-		CTFStreamKernel(size_t userSize, size_t kernelSize, ctf_cpu_id_t cpu, std::string path)
-			: CTFStream(userSize, cpu, path, CTFStreamKernelId),
+		CTFStreamKernel(size_t userSize, size_t kernelSize, ctf_cpu_id_t cpu, int node, std::string path)
+			: CTFStream(userSize, cpu, node, path, CTFStreamKernelId),
 			  _kernelEventsProvider(cpu, kernelSize)
 		{
 		}

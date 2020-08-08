@@ -16,6 +16,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <numa.h>
 
 #include <algorithm>
 
@@ -45,7 +46,14 @@ void CircularBuffer::initializeFile(const char *path)
 	fileOffset = 0;
 }
 
-void CircularBuffer::initializeBuffer(uint64_t size)
+static void prefaultMemory(char *addr, size_t size)
+{
+	for (size_t i = 0; i < size; i+= PAGE_SIZE) {
+		addr[i] = 1;
+	}
+}
+
+void CircularBuffer::initializeBuffer(uint64_t size, int node)
 {
 	void *tmp;
 	uint64_t sizeAligned;
@@ -63,16 +71,29 @@ void CircularBuffer::initializeBuffer(uint64_t size)
 	size_t nAlign = (size + (ALIGN_SIZE - 1)) >> ALIGN_SHIFT;
 	sizeAligned = nAlign * ALIGN_SIZE;
 
-	// TODO allocate memory on each CPU (madvise or specific
-	// instrument function?)
-
-	tmp = mmap(NULL, sizeAligned, PROT_READ | PROT_WRITE,
-		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	FatalErrorHandler::failIf(
-		buffer == MAP_FAILED,
-		" circular buffer: when allocating tracing buffer: ",
-		strerror(errno)
-	);
+	_node = node;
+	if (node != -1) {
+		// Allocate memory on a specific numa node
+		tmp = numa_alloc_onnode(sizeAligned, node);
+		if (tmp == NULL) {
+			FatalErrorHandler::fail(
+				" circular buffer: when allocating tracing buffer: ",
+				strerror(errno)
+			);
+		}
+		prefaultMemory((char *) tmp, sizeAligned);
+	} else {
+		// Allocate memory without binding, let it be allocated as it is
+		// accessed.
+		tmp = mmap(NULL, sizeAligned, PROT_READ | PROT_WRITE,
+			   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+		if (tmp == MAP_FAILED) {
+			FatalErrorHandler::fail(
+				" circular buffer: when allocating tracing buffer: ",
+				strerror(errno)
+			);
+		}
+	}
 
 	// set initial values
 	mask          = sizeAligned - 1;
@@ -84,9 +105,9 @@ void CircularBuffer::initializeBuffer(uint64_t size)
 	resetPointers();
 }
 
-void CircularBuffer::initialize(uint64_t size, const char *path)
+void CircularBuffer::initialize(uint64_t size, int node, const char *path)
 {
-	initializeBuffer(size);
+	initializeBuffer(size, node);
 	initializeFile(path);
 }
 
@@ -101,12 +122,17 @@ void CircularBuffer::shutdown()
 		ret, " circular buffer: when closing backing file: ",
 		strerror(errno)
 	);
-	ret = munmap(buffer, bufferSize);
-	FatalErrorHandler::warnIf(
-		ret == -1,
-		ret, " circular buffer: when unmapping circular buffer: ",
-		strerror(errno)
-	);
+	if (_node != -1) {
+		numa_free(buffer, bufferSize);
+	} else {
+		ret = munmap(buffer, bufferSize);
+		if (ret == -1) {
+			FatalErrorHandler::warn(
+				" circular buffer: when unmapping circular buffer: ",
+				strerror(errno)
+			);
+		}
+	}
 	bufferSize = 0;
 }
 

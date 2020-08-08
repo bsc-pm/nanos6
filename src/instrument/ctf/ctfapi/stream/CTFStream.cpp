@@ -6,9 +6,15 @@
 
 #include "CTFStream.hpp"
 
-CTFAPI::CTFStream::CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path,
-			     ctf_stream_id_t streamId)
-	: _cpuId(cpu),
+CTFAPI::CTFStream::CTFStream(
+	size_t size,
+	ctf_cpu_id_t cpu,
+	int node,
+	std::string path,
+	ctf_stream_id_t streamId
+) :
+	_cpuId(cpu),
+	_node(node),
 	_streamId(streamId),
 	_size(size)
 {
@@ -17,7 +23,7 @@ CTFAPI::CTFStream::CTFStream(size_t size, ctf_cpu_id_t cpu, std::string path,
 
 void CTFAPI::CTFStream::initialize()
 {
-	_circularBuffer.initialize(_size, _path.c_str());
+	_circularBuffer.initialize(_size, _node, _path.c_str());
 	addStreamHeader();
 }
 
