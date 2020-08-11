@@ -54,9 +54,9 @@ static void initializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata)
 	}
 
 	// Add Contexes to evens that support them
-	std::set<CTFAPI::CTFEvent *> &events = userMetadata->getEvents();
+	std::map<std::string, CTFAPI::CTFEvent *> &events = userMetadata->getEvents();
 	for (auto it = events.begin(); it != events.end(); ++it) {
-		CTFAPI::CTFEvent *event = (*it);
+		CTFAPI::CTFEvent *event = it->second;
 		uint8_t enabledContexes = event->getEnabledContexes();
 		if (enabledContexes & CTFAPI::CTFContextTaskHWC) {
 			event->addContext(ctfContextTaskHWC);
@@ -211,7 +211,7 @@ void Instrument::initialize()
 	initializeKernelStreams(kernelMetadata, kernelPath);
 
 	preinitializeCTFEvents(userMetadata);
-	refineCTFEvents(userMetadata);
+	userMetadata->refineEvents();
 	initializeCTFEvents(userMetadata);
 	userMetadata->writeMetadataFile(userPath);
 	kernelMetadata->writeMetadataFile(kernelPath);

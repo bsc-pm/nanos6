@@ -111,8 +111,10 @@ const char *CTFAPI::CTFUserMetadata::meta_eventMetadataFields =
 
 CTFAPI::CTFUserMetadata::~CTFUserMetadata()
 {
-	for (auto p : events)
-		delete p;
+	for (auto it = events.begin(); it != events.end(); ++it) {
+		CTFAPI::CTFEvent *event = it->second;
+		delete event;
+	}
 	for (auto p : contexes)
 		delete p;
 	events.clear();
@@ -174,7 +176,7 @@ void CTFAPI::CTFUserMetadata::writeMetadataFile(std::string userPath)
 
 	// print events bound to first stream
 	for (auto it = events.begin(); it != events.end(); ++it) {
-		CTFAPI::CTFEvent *event = (*it);
+		CTFAPI::CTFEvent *event = it->second;
 		writeEventMetadata(f, event, CTFStreamBoundedId);
 	}
 
@@ -184,7 +186,7 @@ void CTFAPI::CTFUserMetadata::writeMetadataFile(std::string userPath)
 	// belong to a single ctf stream, we must copy each event definition
 	// twice, one for each ctf stream
 	for (auto it = events.begin(); it != events.end(); ++it) {
-		CTFAPI::CTFEvent *event = (*it);
+		CTFAPI::CTFEvent *event = it->second;
 		writeEventMetadata(f, event, CTFStreamUnboundedId);
 	}
 
@@ -192,3 +194,75 @@ void CTFAPI::CTFUserMetadata::writeMetadataFile(std::string userPath)
 	FatalErrorHandler::failIf(ret, std::string("Instrumentation: ctf: closing metadata file: ") + strerror(errno));
 }
 
+
+static std::string trim(
+	const std::string& str,
+	const std::string& whitespace = " \t"
+) {
+	const auto strBegin = str.find_first_not_of(whitespace);
+	if (strBegin == std::string::npos)
+		return ""; // no content
+
+	const auto strEnd = str.find_last_not_of(whitespace);
+	const auto strRange = strEnd - strBegin + 1;
+
+	return str.substr(strBegin, strRange);
+}
+
+bool CTFAPI::CTFUserMetadata::loadEnabledEvents(const char *file)
+{
+	std::string line;
+	std::ifstream streamFile;
+
+	streamFile.open (file);
+
+	if (!streamFile.is_open()) {
+		return false;
+	}
+
+	while (std::getline(streamFile, line)) {
+		std::string trimmedLine = trim(line);
+
+		if (trimmedLine[0] == '#' || trimmedLine == "")
+			continue;
+
+		_enabledEvents.push_back(trimmedLine);
+	}
+
+	streamFile.close();
+
+	FatalErrorHandler::warnIf(
+		_enabledEvents.size() == 0,
+		"CTF: Kernel: Kernel tracepoints file found, but no event enabled."
+	);
+
+	return _enabledEvents.size() > 0;
+}
+
+
+void CTFAPI::CTFUserMetadata::refineEvents()
+{
+	const char *defaultRuntimeTracepointsFile = "./nanos6_runtime_tracepoints.txt";
+	if (!loadEnabledEvents(defaultRuntimeTracepointsFile))
+		return;
+
+	// Disable all events
+	for (auto it = events.begin(); it != events.end(); ++it) {
+		CTFAPI::CTFEvent *event = it->second;
+		event->disable();
+	}
+
+	// enable user-selected events
+	for (std::string eventName : _enabledEvents) {
+		CTFEvent *event = events[eventName];
+		event->enable();
+	}
+
+	// print enabled events
+	for (auto it = events.begin(); it != events.end(); ++it) {
+		CTFAPI::CTFEvent *event = it->second;
+		if (event->isEnabled()) {
+			std::cout << event->getName() << std::endl;
+		}
+	}
+}

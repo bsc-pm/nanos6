@@ -67,6 +67,16 @@ namespace CTFAPI {
 			return _enabled;
 		}
 
+		void disable()
+		{
+			_enabled = false;
+		}
+
+		void enable()
+		{
+			_enabled = true;
+		}
+
 		uint8_t getEnabledContexes() const
 		{
 			return _enabledContexes;

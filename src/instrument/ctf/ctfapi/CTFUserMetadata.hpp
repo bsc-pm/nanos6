@@ -7,6 +7,7 @@
 #ifndef CTF_USER_METADATA_HPP
 #define CTF_USER_METADATA_HPP
 
+#include <map>
 #include <set>
 #include <string>
 #include <cstdint>
@@ -31,11 +32,14 @@ namespace CTFAPI {
 		static const char *meta_eventMetadataStreamId;
 		static const char *meta_eventMetadataFields;
 
-		std::set<CTFEvent *> events;
+		std::map<std::string, CTFEvent *> events;
 		std::set<CTFContext *> contexes;
+		std::vector<std::string> _enabledEvents;
 
 		void writeEventContextMetadata(FILE *f, CTFAPI::CTFEvent *event, ctf_stream_id_t streamId);
 		void writeEventMetadata(FILE *f, CTFAPI::CTFEvent *event, ctf_stream_id_t streamId);
+
+		bool loadEnabledEvents(const char *file);
 
 	public:
 
@@ -44,7 +48,7 @@ namespace CTFAPI {
 
 		CTFEvent *addEvent(CTFEvent *event)
 		{
-			auto ret = events.emplace(event);
+			auto ret = events.emplace(std::string(event->getName()), event);
 			FatalErrorHandler::failIf(!ret.second, "Attempt to register a duplicate CTF Event with name ", event->getName());
 
 			return event;
@@ -59,11 +63,12 @@ namespace CTFAPI {
 			return context;
 		}
 
-		std::set<CTFEvent *> &getEvents()
+		std::map<std::string, CTFEvent *> &getEvents()
 		{
 			return events;
 		}
 
+		void refineEvents();
 		void writeMetadataFile(std::string userPath);
 	};
 }
