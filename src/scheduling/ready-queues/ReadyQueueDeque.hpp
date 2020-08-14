@@ -23,7 +23,7 @@ public:
 	ReadyQueueDeque(SchedulingPolicy policy)
 		: ReadyQueue(policy), _roundRobinQueues(0), _numReadyTasks(0)
 	{
-		_numQueues = DataTrackingSupport::isNUMATrackingEnabled() ?
+		_numQueues = DataTrackingSupport::isNUMASchedulingEnabled() ?
 			HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device) : 1;
 		_readyDeques = (ready_queue_t *) MemoryAllocator::alloc(_numQueues * sizeof(ready_queue_t));
 
@@ -44,7 +44,7 @@ public:
 	void addReadyTask(Task *task, bool unblocked)
 	{
 		uint8_t NUMAid = 0;
-		if (DataTrackingSupport::isNUMATrackingEnabled()) {
+		if (DataTrackingSupport::isNUMASchedulingEnabled()) {
 			NUMAid = task->getNUMAhint();
 			if (NUMAid == (uint8_t) -1) {
 				NUMAid = _roundRobinQueues;
@@ -69,7 +69,7 @@ public:
 			return nullptr;
 		}
 
-		uint8_t NUMAid = DataTrackingSupport::isNUMATrackingEnabled() ? ((CPU *)computePlace)->getNumaNodeId() : 0;
+		uint8_t NUMAid = DataTrackingSupport::isNUMASchedulingEnabled() ? ((CPU *)computePlace)->getNumaNodeId() : 0;
 		// 1. Try to get from my NUMA queue.
 		if (!_readyDeques[NUMAid].empty()) {
 			Task *result = _readyDeques[NUMAid].front();

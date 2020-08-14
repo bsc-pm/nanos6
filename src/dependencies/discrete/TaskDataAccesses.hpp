@@ -290,7 +290,7 @@ struct TaskDataAccesses {
 
 	void trackDataLocation(CPU *cpu);
 	void computeTaskAffinity(unsigned int &chosenL2id, unsigned int &chosenL3id);
-	void computeNUMAAffinity(uint8_t &chosenNUMAid);
+	void computeNUMAAffinity(uint8_t &chosenNUMAid, Task *task);
 	bool checkExpiration(unsigned int &chosenL2id, unsigned int &chosenL3id);
 };
 

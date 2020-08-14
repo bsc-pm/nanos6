@@ -62,6 +62,12 @@ public:
 		bitmask_t bitmaskCopy = *bitmask;
 		_totalBytes += size;
 
+		if (!DataTrackingSupport::isNUMATrackingEnabled()) {
+			void *res = malloc(size);
+			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
+			return res;
+		}
+
 		int pagesize = HardwareInfo::getPageSize();
 		size_t originalBlockSize = block_size;
 		if (block_size % pagesize != 0) {
@@ -77,16 +83,12 @@ public:
 		if (size < (size_t) pagesize) {
 			// Use malloc for small allocations
 			res = malloc(size);
-			assert(res != nullptr);
+			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
 		} else {
 			// Allocate space using mmap
 			void *addr = nullptr;
 			res = mmap(addr, size, prot, flags, fd, offset);
-			assert(res != MAP_FAILED);
-		}
-
-		if (!DataTrackingSupport::isNUMATrackingEnabled()) {
-			return res;
+			FatalErrorHandler::failIf(res == MAP_FAILED, "Couldn't allocate memory.");
 		}
 
 		struct bitmask *tmp_bitmask = numa_bitmask_alloc(HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device));

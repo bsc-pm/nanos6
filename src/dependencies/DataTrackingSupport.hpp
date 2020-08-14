@@ -15,6 +15,7 @@ class Task;
 namespace DataTrackingSupport {
 	static EnvironmentVariable<bool> _trackingEnabled("NANOS6_DATA_TRACKING", 1);
 	static EnvironmentVariable<bool> _NUMATrackingEnabled("NANOS6_NUMA_TRACKING", 1);
+	static EnvironmentVariable<bool> _NUMASchedulingEnabled("NANOS6_NUMA_SCHEDULING", 1);
 	static EnvironmentVariable<bool> _NUMAStealingEnabled("NANOS6_NUMA_STEALING", 1);
 	static EnvironmentVariable<bool> _trackingReportEnabled("NANOS6_TRACKING_REPORT", 0);
 	static EnvironmentVariable<bool> _checkExpiration("NANOS6_CHECK_EXPIRATION", 1);
@@ -73,6 +74,11 @@ namespace DataTrackingSupport {
 	static inline bool isNUMATrackingEnabled()
 	{
 		return _NUMATrackingEnabled;
+	}
+
+	static inline bool isNUMASchedulingEnabled()
+	{
+		return _NUMASchedulingEnabled;
 	}
 
 	static inline bool isNUMAStealingEnabled()

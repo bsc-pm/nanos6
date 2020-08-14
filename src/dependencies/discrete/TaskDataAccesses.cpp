@@ -371,9 +371,9 @@ bool TaskDataAccesses::checkExpiration(unsigned int &chosenL2id, unsigned int &c
 	return false;
 }
 
-void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
+void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid, Task *task)
 {
-	if (_totalDataSize == 0 || !DataTrackingSupport::isNUMATrackingEnabled())
+	if (_totalDataSize == 0 || !DataTrackingSupport::isNUMATrackingEnabled() || !DataTrackingSupport::isNUMASchedulingEnabled())
 		return;
 
 	int numNUMANodes = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
@@ -417,6 +417,10 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid)
 			}
 		}
 	}
+	//if (chosen == 0) {
+	//	if (task->getTaskInfo()->implementations[0].task_label != nullptr)
+	//		std::cout << task->getTaskInfo()->implementations[0].task_label << "{" << bytesInNUMA[0] << ", " << bytesInNUMA[1] << "}" << std::endl;
+	//}
 	chosenNUMAid = chosen;
 	assert(sanityCheck >= _totalDataSize && sanityCheck <= 2*_totalDataSize);
 }

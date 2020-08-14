@@ -24,13 +24,15 @@ class ReadyQueueMap : public ReadyQueue {
 
 	size_t _numReadyTasks;
 	size_t _enqueuedTasks;
+	size_t _runNuma0;
+	size_t _runNuma1;
 public:
 	ReadyQueueMap(SchedulingPolicy policy)
 		: ReadyQueue(policy),
 		_roundRobinQueues(0),
 		_numReadyTasks(0)
 	{
-		_numMaps = DataTrackingSupport::isNUMATrackingEnabled() ?
+		_numMaps = DataTrackingSupport::isNUMASchedulingEnabled() ?
 			HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device) : 1;
 		_readyMaps = (ready_map_t *) MemoryAllocator::alloc(_numMaps * sizeof(ready_map_t));
 		_numReadyTasksPerNUMANode = (size_t *) MemoryAllocator::alloc(_numMaps * sizeof(size_t));
@@ -40,6 +42,8 @@ public:
 			_numReadyTasksPerNUMANode[i] = 0;
 		}
 		_enqueuedTasks = 0;
+
+		_runNuma0 = 0; _runNuma1 = 0;
 	}
 
 	~ReadyQueueMap()
@@ -56,6 +60,9 @@ public:
 		MemoryAllocator::free(_numReadyTasksPerNUMANode, _numMaps * sizeof(size_t));
 		std::cout << "Tasks with no NUMA hint: " << (int) _roundRobinQueues << std::endl;
 		std::cout << "Total number of enqueued tasks: " << _enqueuedTasks << std::endl;;
+
+		std::cout << "Tasks run in NUMA 0: " << _runNuma0 << std::endl;
+		std::cout << "Tasks run in NUMA 1: " << _runNuma1 << std::endl;
 	}
 
 	void addReadyTask(Task *task, bool unblocked)
@@ -63,7 +70,7 @@ public:
 		Task::priority_t priority = task->getPriority();
 
 		uint8_t NUMAid = 0;
-		if (DataTrackingSupport::isNUMATrackingEnabled()) {
+		if (DataTrackingSupport::isNUMASchedulingEnabled()) {
 			NUMAid = task->getNUMAhint();
 			if (NUMAid == (uint8_t) -1) {
 				NUMAid = _roundRobinQueues;
@@ -94,7 +101,9 @@ public:
 			return nullptr;
 		}
 
-		uint8_t NUMAid = DataTrackingSupport::isNUMATrackingEnabled() ? ((CPU *)computePlace)->getNumaNodeId() : 0;
+		uint8_t NUMAid = DataTrackingSupport::isNUMASchedulingEnabled() ? ((CPU *)computePlace)->getNumaNodeId() : 0;
+		if (((CPU*)computePlace)->getNumaNodeId() == 0) _runNuma0++;
+		else _runNuma1++;
 		// 1. Try to get from my NUMA queue.
 		if (!_readyMaps[NUMAid].empty()) {
 			ready_map_t::iterator it = _readyMaps[NUMAid].begin();
