@@ -187,7 +187,7 @@ PAPIHardwareCounters::PAPIHardwareCounters(
 				it = enabledEvents.erase(it);
 			} else {
 				_enabledPAPIEventCodes.push_back(code);
-				_idMap[id - HWCounters::HWC_PQOS_MIN_EVENT] = innerId++;
+				_idMap[id - HWCounters::HWC_PAPI_MIN_EVENT] = innerId++;
 				++it;
 			}
 		}
