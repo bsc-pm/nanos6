@@ -245,7 +245,7 @@ void PQoSHardwareCounters::updateTaskCounters(
 		int ret = pqos_mon_poll(&threadData, 1);
 		FatalErrorHandler::failIf(
 			ret != PQOS_RETVAL_OK,
-			ret, " when polling PQoS events for a task (start)"
+			ret, " when polling PQoS events for a task"
 		);
 
 		// Copy read values for Task counters
@@ -269,7 +269,7 @@ void PQoSHardwareCounters::updateRuntimeCounters(
 		int ret = pqos_mon_poll(&threadData, 1);
 		FatalErrorHandler::failIf(
 			ret != PQOS_RETVAL_OK,
-			ret, " when polling PQoS events for a task (start)"
+			ret, " when polling PQoS events for the runtime"
 		);
 
 		// Copy read values for CPU counters

@@ -76,7 +76,7 @@ public:
 	//! \brief Get the delta value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType)
+	inline uint64_t getDelta(HWCounters::counters_t counterType) const
 	{
 		CPUHardwareCountersInterface *cpuCounters = nullptr;
 		if (counterType >= HWCounters::HWC_PQOS_MIN_EVENT && counterType <= HWCounters::HWC_PQOS_MAX_EVENT) {

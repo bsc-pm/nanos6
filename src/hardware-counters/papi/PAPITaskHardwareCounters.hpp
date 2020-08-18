@@ -69,7 +69,7 @@ public:
 	}
 
 	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType) override
+	inline uint64_t getDelta(HWCounters::counters_t counterType) const override
 	{
 		assert(PAPIHardwareCounters::isCounterEnabled(counterType));
 
@@ -82,7 +82,7 @@ public:
 	//! \brief Get the accumulated value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the accumulation from
-	inline uint64_t getAccumulated(HWCounters::counters_t counterType) override
+	inline uint64_t getAccumulated(HWCounters::counters_t counterType) const override
 	{
 		assert(PAPIHardwareCounters::isCounterEnabled(counterType));
 

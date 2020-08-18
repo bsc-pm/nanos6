@@ -144,7 +144,7 @@ public:
 	//! \brief Get the delta value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType)
+	inline uint64_t getDelta(HWCounters::counters_t counterType) const
 	{
 		if (_enabled) {
 			TaskHardwareCountersInterface *taskCounters = nullptr;
@@ -164,7 +164,7 @@ public:
 	//! \brief Get the accumulated value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the accumulation from
-	inline uint64_t getAccumulated(HWCounters::counters_t counterType)
+	inline uint64_t getAccumulated(HWCounters::counters_t counterType) const
 	{
 		if (_enabled) {
 			TaskHardwareCountersInterface *taskCounters = nullptr;

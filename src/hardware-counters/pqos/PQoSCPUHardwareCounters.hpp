@@ -83,7 +83,7 @@ public:
 	//! \brief Get the delta value of a hardware counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType) override
+	inline uint64_t getDelta(HWCounters::counters_t counterType) const override
 	{
 		assert(counterType >= HWCounters::HWC_PQOS_MIN_EVENT);
 		assert(counterType <= HWCounters::HWC_PQOS_MAX_EVENT);
