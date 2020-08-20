@@ -98,7 +98,7 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 
 	DataAccessRegistration::handleExitTaskwait(currentTask, cpu, cpu->getDependencyData());
 
-	if (!done && (currentThread != nullptr)) {
+	if (!done) {
 		// The instrumentation was notified that the task had been blocked
 		Instrument::taskIsExecuting(taskId, true);
 	}
