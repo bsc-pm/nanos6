@@ -8,7 +8,7 @@
 #define INSTRUMENT_NULL_TASK_STATUS_HPP
 
 
-#include "../api/InstrumentTaskStatus.hpp"
+#include "instrument/api/InstrumentTaskStatus.hpp"
 
 
 namespace Instrument {

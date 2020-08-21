@@ -8,7 +8,7 @@
 #define INSTRUMENT_NULL_TRACING_POINTS_HPP
 
 
-#include "../api/InstrumentTracingPoints.hpp"
+#include "instrument/api/InstrumentTracingPoints.hpp"
 
 
 namespace Instrument {

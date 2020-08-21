@@ -9,7 +9,7 @@
 
 
 #include "InstrumentComputePlaceId.hpp"
-#include "../api/InstrumentComputePlaceManagement.hpp"
+#include "instrument/api/InstrumentComputePlaceManagement.hpp"
 
 
 namespace Instrument {

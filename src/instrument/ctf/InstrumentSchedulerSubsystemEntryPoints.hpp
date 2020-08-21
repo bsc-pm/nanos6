@@ -8,7 +8,7 @@
 #define INSTRUMENT_CTF_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
 
 #include "CTFTracepoints.hpp"
-#include "../api/InstrumentSchedulerSubsystemEntryPoints.hpp"
+#include "instrument/api/InstrumentSchedulerSubsystemEntryPoints.hpp"
 
 namespace Instrument {
 

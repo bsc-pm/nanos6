@@ -8,7 +8,7 @@
 #define INSTRUMENT_VERBOSE_COMPUTE_PLACE_MANAGEMENT_HPP
 
 
-#include "../api/InstrumentComputePlaceManagement.hpp"
+#include "instrument/api/InstrumentComputePlaceManagement.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_COMPUTE_PLACE_MANAGEMENT_HPP

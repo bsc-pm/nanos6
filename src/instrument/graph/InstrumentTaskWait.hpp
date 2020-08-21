@@ -8,7 +8,7 @@
 #define INSTRUMENT_GRAPH_TASK_WAIT_HPP
 
 
-#include "../api/InstrumentTaskWait.hpp"
+#include "instrument/api/InstrumentTaskWait.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
 

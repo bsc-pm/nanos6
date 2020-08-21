@@ -11,7 +11,7 @@
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
 
-#include "../CTFAPI.hpp"
+#include "instrument/ctf/ctfapi/CTFAPI.hpp"
 #include "CTFContextTaskHardwareCounters.hpp"
 
 CTFAPI::CTFContextTaskHardwareCounters::CTFContextTaskHardwareCounters(ctf_stream_id_t streamMask) : CTFEventContext(streamMask)

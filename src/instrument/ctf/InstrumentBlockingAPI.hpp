@@ -8,7 +8,7 @@
 #define INSTRUMENT_CTF_BLOCKING_API_HPP
 
 
-#include "../api/InstrumentBlockingAPI.hpp"
+#include "instrument/api/InstrumentBlockingAPI.hpp"
 #include "CTFTracepoints.hpp"
 
 

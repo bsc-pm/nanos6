@@ -20,43 +20,43 @@ namespace Instrument {
 		if (!_verboseUserMutex) {
 			return;
 		}
-		
+
 		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
-		
+
 		logEntry->appendLocation(context);
 		logEntry->_contents << " --> UserMutex " << userMutex;
-		
+
 		addLogEntry(logEntry);
 	}
-	
-	
+
+
 	void blockedOnUserMutex(UserMutex *userMutex, InstrumentationContext const &context) {
 		if (!_verboseUserMutex) {
 			return;
 		}
-		
+
 		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
-		
+
 		logEntry->appendLocation(context);
 		logEntry->_contents << " --- BlockedOnUserMutex " << userMutex;
-		
+
 		addLogEntry(logEntry);
 	}
-	
-	
+
+
 	void releasedUserMutex(UserMutex *userMutex, InstrumentationContext const &context) {
 		if (!_verboseUserMutex) {
 			return;
 		}
-		
+
 		LogEntry *logEntry = getLogEntry(context);
 		assert(logEntry != nullptr);
-		
+
 		logEntry->appendLocation(context);
 		logEntry->_contents << " <-- UserMutex " << userMutex;
-		
+
 		addLogEntry(logEntry);
 	}
 

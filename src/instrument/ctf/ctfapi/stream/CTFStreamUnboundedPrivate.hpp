@@ -10,7 +10,7 @@
 #include <cassert>
 
 #include "CTFStream.hpp"
-#include "../context/CTFStreamContextUnbounded.hpp"
+#include "instrument/ctf/ctfapi/context/CTFStreamContextUnbounded.hpp"
 
 namespace CTFAPI {
 	class CTFStreamUnboundedPrivate : public CTFStream {

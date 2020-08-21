@@ -11,7 +11,7 @@
 #include <cassert>
 
 #include "InstrumentVerbose.hpp"
-#include "../api/InstrumentLogMessage.hpp"
+#include "instrument/api/InstrumentLogMessage.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
 

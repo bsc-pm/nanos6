@@ -9,7 +9,7 @@
 
 
 
-#include "../api/InstrumentDependenciesByGroup.hpp"
+#include "instrument/api/InstrumentDependenciesByGroup.hpp"
 
 
 namespace Instrument {

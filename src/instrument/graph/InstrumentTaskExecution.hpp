@@ -8,7 +8,7 @@
 #define INSTRUMENT_GRAPH_TASK_EXECUTION_HPP
 
 
-#include "../api/InstrumentTaskExecution.hpp"
+#include "instrument/api/InstrumentTaskExecution.hpp"
 
 
 namespace Instrument {

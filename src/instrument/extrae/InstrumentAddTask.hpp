@@ -10,7 +10,7 @@
 
 #include "InstrumentExtrae.hpp"
 #include "system/ompss/SpawnFunction.hpp"
-#include "../api/InstrumentAddTask.hpp"
+#include "instrument/api/InstrumentAddTask.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include <cassert>

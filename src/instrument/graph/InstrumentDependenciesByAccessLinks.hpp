@@ -10,7 +10,7 @@
 
 #include "InstrumentDataAccessId.hpp"
 
-#include "../api/InstrumentDependenciesByAccessLinks.hpp"
+#include "instrument/api/InstrumentDependenciesByAccessLinks.hpp"
 
 
 #endif // INSTRUMENT_GRAPH_DEPENDENCIES_BY_ACCESS_LINK_HPP

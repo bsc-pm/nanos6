@@ -17,41 +17,41 @@ namespace Instrument {
 	typedef enum {
 		//! \brief The task is being created
 		in_creation_task_status,
-		
+
 		//! \brief The task has predecessors and thus is still not ready
 		pending_task_status,
-		
+
 		//! \brief The task is ready for execution
 		ready_task_status,
-		
+
 		//! \brief The task is being executed
 		executing_task_status,
-		
+
 		//! \brief The task is blocked, the reason is detailed with a task_blocking_reason_t value
 		blocked_task_status,
-		
+
 		//! \brief The task is zoombie, i.e. it has finished but it has not been deleted yet
 		zombie_task_status
 	} task_status_t;
-	
-	
+
+
 	//! \brief The reason for a task getting blocked during its execution
 	typedef enum {
 		in_taskwait_blocking_reason,
 		in_mutex_blocking_reason,
 		user_requested_blocking_reason
 	} task_blocking_reason_t;
-	
+
 	//! NOTE: Instrument::createdTask gets called before any of the following functions and before calculating the dependencies
-	
+
 	//! \brief Indicates that the task is currently pending, i.e. it has predecessors
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void taskIsPending(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+
 	//! \brief Indicates that the task is currently ready to be executed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void taskIsReady(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+
 	//! \brief Indicates that the task is currently being executed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	//! \param[in] wasBlocked whether the task is running for the first time
@@ -69,7 +69,7 @@ namespace Instrument {
 	//! \brief Indicates that the task has finished and at some point will be destroyed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void taskIsZombie(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+
 	//! \brief Indicates that the task is about to be destroyed
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	void taskIsBeingDeleted(task_id_t taskId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
@@ -78,12 +78,12 @@ namespace Instrument {
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	//! \param[in] priority the new priority
 	void taskHasNewPriority(task_id_t taskId, long priority, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+
 	//! \brief Indicates that the task is currently being executed as a collaborator of a taskfor
 	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
 	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask
 	void taskforCollaboratorIsExecuting(task_id_t taskforId, task_id_t collaboratorId, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
-	
+
 	//! \brief Indicates that the taskfor collaborator has stopped
 	//! \param[in] taskforId the task identifier of the source taskfor returned in the call to enterAddTask
 	//! \param[in] collaboratorId the task identifier of the collaborator returned in the call to enterAddTask

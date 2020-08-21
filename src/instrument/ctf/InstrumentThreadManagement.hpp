@@ -10,7 +10,7 @@
 
 #include "InstrumentExternalThreadId.hpp"
 #include "InstrumentThreadId.hpp"
-#include "../api/InstrumentThreadManagement.hpp"
+#include "instrument/api/InstrumentThreadManagement.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include "ctfapi/CTFTypes.hpp"

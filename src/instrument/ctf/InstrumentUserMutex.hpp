@@ -8,7 +8,7 @@
 #define INSTRUMENT_CTF_USER_MUTEX_HPP
 
 
-#include "../api/InstrumentUserMutex.hpp"
+#include "instrument/api/InstrumentUserMutex.hpp"
 #include "CTFTracepoints.hpp"
 
 

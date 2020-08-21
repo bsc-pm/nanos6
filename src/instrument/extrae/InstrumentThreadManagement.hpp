@@ -10,7 +10,7 @@
 
 #include "InstrumentExtrae.hpp"
 
-#include "../api/InstrumentThreadManagement.hpp"
+#include "instrument/api/InstrumentThreadManagement.hpp"
 #include "../generic_ids/GenericIds.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 

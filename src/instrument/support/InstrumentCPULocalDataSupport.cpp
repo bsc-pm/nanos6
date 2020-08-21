@@ -6,12 +6,11 @@
 
 #include <cassert>
 
-#include <system/LeaderThread.hpp>
-#include <executors/threads/WorkerThread.hpp>
-#include <lowlevel/threads/ExternalThread.hpp>
-#include <lowlevel/threads/ExternalThreadGroup.hpp>
-
 #include "InstrumentCPULocalDataSupport.hpp"
+#include "executors/threads/WorkerThread.hpp"
+#include "lowlevel/threads/ExternalThread.hpp"
+#include "lowlevel/threads/ExternalThreadGroup.hpp"
+#include "system/LeaderThread.hpp"
 
 
 Instrument::CPULocalData *Instrument::getCPULocalData()

@@ -18,7 +18,7 @@ namespace Instrument {
 
 	//! This function is called when the runtime creates a new thread and
 	//! must return an instrumentation-specific thread identifier that will
-	//! be used to identify it throughout the rest of the instrumentation API.
+	//! be used to identify it throughout the rest of the instrumentation API
 	void enterThreadCreation(/* OUT */ thread_id_t &threadId, compute_place_id_t const &computePlaceId);
 	void exitThreadCreation(thread_id_t threadId);
 
@@ -26,24 +26,24 @@ namespace Instrument {
 
 	//! This function is called when the runtime creates a new non-worker thread and
 	//! must return an instrumentation-specific thread identifier that will
-	//! be used to identify it throughout the rest of the instrumentation API.
+	//! be used to identify it throughout the rest of the instrumentation API
 	void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId);
 
 	template<typename... TS>
 	void createdExternalThread(external_thread_id_t &threadId, TS... nameComponents);
 
-	// ! This functions are called when a new thread resumes and suspends
-	// ! before performing the initial thread ! synchronization.
+	//! This functions are called when a new thread resumes and suspends
+	//! before performing the initial thread synchronization
 	void threadWillSuspendBeforeSync(thread_id_t threadId, compute_place_id_t cpu);
 	void threadHasResumedBeforeSync(thread_id_t threadId, compute_place_id_t cpu);
 
 	//! This function is called just after the initial synchronization,
-	//! indicating that the thread has been granted ! permission to run after
-	//! being created.
+	//! indicating that the thread has been granted permission to run after
+	//! being created
 	void threadSynchronizationCompleted(thread_id_t threadId);
 
-	//! This functions are called when the thread suspends or resumes after
-	//! the inital synchronization.
+	//! These functions are called when the thread suspends or resumes after
+	//! the inital synchronization
 	void threadWillSuspend(thread_id_t threadId, compute_place_id_t cpu);
 	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu);
 

@@ -9,7 +9,7 @@
 
 
 #include "InstrumentTracingPointTypes.hpp"
-#include "../api/InstrumentTracingPoints.hpp"
+#include "instrument/api/InstrumentTracingPoints.hpp"
 
 #include "InstrumentVerbose.hpp"
 

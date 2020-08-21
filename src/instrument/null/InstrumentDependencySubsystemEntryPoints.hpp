@@ -7,7 +7,7 @@
 #ifndef INSTRUMENT_NULL_DEPENDENCY_SUBSYTEM_ENTRY_POINTS_HPP
 #define INSTRUMENT_NULL_DEPENDENCY_SUBSYTEM_ENTRY_POINTS_HPP
 
-#include "../api/InstrumentDependencySubsystemEntryPoints.hpp"
+#include "instrument/api/InstrumentDependencySubsystemEntryPoints.hpp"
 
 
 namespace Instrument {

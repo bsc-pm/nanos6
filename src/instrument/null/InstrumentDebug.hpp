@@ -9,7 +9,7 @@
 
 #include <cstdint>
 
-#include "../api/InstrumentDebug.hpp"
+#include "instrument/api/InstrumentDebug.hpp"
 
 namespace Instrument {
 

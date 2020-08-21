@@ -8,7 +8,7 @@
 #define INSTRUMENT_VERBOSE_LEADER_THREAD_HPP
 
 
-#include "../api/InstrumentLeaderThread.hpp"
+#include "instrument/api/InstrumentLeaderThread.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_LEADER_THREAD_HPP

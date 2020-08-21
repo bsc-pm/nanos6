@@ -8,7 +8,7 @@
 #define INSTRUMENT_NULL_REDUCTIONS_HPP
 
 
-#include "../api/InstrumentReductions.hpp"
+#include "instrument/api/InstrumentReductions.hpp"
 
 
 

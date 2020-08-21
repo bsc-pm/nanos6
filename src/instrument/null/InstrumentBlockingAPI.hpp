@@ -8,7 +8,7 @@
 #define INSTRUMENT_NULL_BLOCKING_API_HPP
 
 
-#include "../api/InstrumentBlockingAPI.hpp"
+#include "instrument/api/InstrumentBlockingAPI.hpp"
 
 
 namespace Instrument {

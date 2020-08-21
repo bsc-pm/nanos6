@@ -8,7 +8,7 @@
 #define INSTRUMENT_EXTRAE_REDUCTIONS_HPP
 
 
-#include "../api/InstrumentReductions.hpp"
+#include "instrument/api/InstrumentReductions.hpp"
 
 
 #endif // INSTRUMENT_EXTRAE_REDUCTIONS_HPP

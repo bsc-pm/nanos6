@@ -10,7 +10,7 @@
 
 #include <InstrumentInstrumentationContext.hpp>
 
-#include "../api/InstrumentTaskExecution.hpp"
+#include "instrument/api/InstrumentTaskExecution.hpp"
 
 
 namespace Instrument {

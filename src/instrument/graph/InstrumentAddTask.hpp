@@ -8,7 +8,7 @@
 #define INSTRUMENT_GRAPH_ADD_TASK_HPP
 
 
-#include "../api/InstrumentAddTask.hpp"
+#include "instrument/api/InstrumentAddTask.hpp"
 
 
 

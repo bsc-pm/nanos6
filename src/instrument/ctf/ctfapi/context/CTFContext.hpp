@@ -9,7 +9,7 @@
 
 #include <string>
 
-#include "../CTFTypes.hpp"
+#include "instrument/ctf/ctfapi/CTFTypes.hpp"
 
 namespace CTFAPI {
 

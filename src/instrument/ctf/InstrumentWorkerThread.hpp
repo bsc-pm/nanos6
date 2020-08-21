@@ -8,7 +8,7 @@
 #define INSTRUMENT_CTF_WORKERTHREAD_HPP
 
 
-#include "../api/InstrumentWorkerThread.hpp"
+#include "instrument/api/InstrumentWorkerThread.hpp"
 
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 #include "ctfapi/CTFAPI.hpp"

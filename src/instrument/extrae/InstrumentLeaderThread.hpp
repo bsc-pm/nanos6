@@ -8,7 +8,7 @@
 #define INSTRUMENT_EXTRAE_LEADER_THREAD_HPP
 
 
-#include "../api/InstrumentLeaderThread.hpp"
+#include "instrument/api/InstrumentLeaderThread.hpp"
 #include "InstrumentExtrae.hpp"
 
 

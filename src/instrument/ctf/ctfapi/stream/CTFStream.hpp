@@ -11,8 +11,8 @@
 #include <cstdint>
 
 #include "CircularBuffer.hpp"
-#include "../CTFTypes.hpp"
-#include "../context/CTFContext.hpp"
+#include "instrument/ctf/ctfapi/CTFTypes.hpp"
+#include "instrument/ctf/ctfapi/context/CTFContext.hpp"
 
 namespace CTFAPI {
 

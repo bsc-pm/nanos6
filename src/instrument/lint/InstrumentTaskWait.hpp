@@ -9,7 +9,7 @@
 
 #include <Callbacks.hpp>
 
-#include "../api/InstrumentTaskWait.hpp"
+#include "instrument/api/InstrumentTaskWait.hpp"
 
 
 

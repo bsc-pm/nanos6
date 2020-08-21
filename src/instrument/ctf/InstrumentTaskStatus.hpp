@@ -9,7 +9,7 @@
 
 #include "CTFTracepoints.hpp"
 
-#include "../api/InstrumentTaskStatus.hpp"
+#include "instrument/api/InstrumentTaskStatus.hpp"
 
 
 namespace Instrument {

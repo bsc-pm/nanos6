@@ -10,7 +10,7 @@
 
 #include "InstrumentComputePlaceId.hpp"
 #include "InstrumentExtrae.hpp"
-#include "../api/InstrumentComputePlaceManagement.hpp"
+#include "instrument/api/InstrumentComputePlaceManagement.hpp"
 
 #include <alloca.h>
 
