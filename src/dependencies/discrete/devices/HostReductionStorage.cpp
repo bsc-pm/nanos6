@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -13,12 +13,12 @@
 HostReductionStorage::HostReductionStorage(void * address, size_t length, size_t paddedLength,
 	std::function<void(void*, size_t)> initializationFunction,
 	std::function<void(void*, void*, size_t)> combinationFunction) :
-	DeviceReductionStorage(address, length, paddedLength, initializationFunction, combinationFunction)
+	DeviceReductionStorage(address, length, paddedLength, initializationFunction, combinationFunction),
+	_freeSlotIndices(CPUManager::getTotalCPUs())
 {
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
-	_slots.reserve(nCpus);
-	_freeSlotIndices.reserve(nCpus);
+	_slots.resize(nCpus); // Create all slots
 	_currentCpuSlotIndices.resize(nCpus, -1);
 };
 
@@ -45,20 +45,22 @@ void * HostReductionStorage::getFreeSlotStorage(__attribute__((unused)) Task * t
 
 void HostReductionStorage::combineInStorage(char * combineDestination)
 {
-    assert(combineDestination != nullptr);
+	std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
+	assert(combineDestination != nullptr);
 
-    for(size_t i = 0; i < _slots.size(); ++i) {
+	for(size_t i = 0; i < _slots.size(); ++i) {
         slot_t& slot = _slots[i];
 
-        assert(slot.initialized);
-        assert(slot.storage != nullptr);
-        assert(slot.storage != (void *) combineDestination);
+        if (slot.initialized) {
+			assert(slot.storage != nullptr);
+			assert(slot.storage != (void *) combineDestination);
 
-        _combinationFunction((void *) combineDestination, slot.storage, _length);
+			_combinationFunction((void *) combineDestination, slot.storage, _length);
 
-        MemoryAllocator::free(slot.storage, _paddedLength);
-        slot.storage = nullptr;
-        slot.initialized = false;
+			MemoryAllocator::free(slot.storage, _paddedLength);
+			slot.storage = nullptr;
+			slot.initialized = false;
+		}
     }
 }
 
@@ -81,19 +83,10 @@ size_t HostReductionStorage::getFreeSlotIndex(Task * task, ComputePlace * destin
 		return currentSlotIndex;
 	}
 
-	// Lock required to access _freeSlotIndices simultaneously
-	size_t freeSlotIndex;
-	if (_freeSlotIndices.size() > 0) {
-		// Reuse free slot in pool
-		freeSlotIndex = _freeSlotIndices.back();
-		_freeSlotIndices.pop_back();
-	}
-	else {
-		assert(_slots.size() < _currentCpuSlotIndices.size());
-
-		freeSlotIndex = _slots.size();
-		_slots.emplace_back();
-	}
+	int freeSlotIndex = _freeSlotIndices.setFirst();
+	// Can this happen??
+	while (freeSlotIndex == -1)
+		freeSlotIndex = _freeSlotIndices.setFirst();
 
 	_currentCpuSlotIndices[cpuId] = freeSlotIndex;
 
@@ -113,7 +106,7 @@ void HostReductionStorage::releaseSlotsInUse(Task * task, ComputePlace * compute
 	{
 		assert(_slots[currentSlotIndex].storage != nullptr);
 		assert(_slots[currentSlotIndex].initialized);
-		_freeSlotIndices.emplace_back(currentSlotIndex);
+		_freeSlotIndices.reset(currentSlotIndex);
 		_currentCpuSlotIndices[cpuId] = -1;
 	}
 }

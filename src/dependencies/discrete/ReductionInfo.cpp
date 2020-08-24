@@ -59,6 +59,8 @@ size_t ReductionInfo::getOriginalLength() const
 
 void ReductionInfo::combine()
 {
+	// This lock should be uncontended, because "combine" is only done once
+	// when all accesses have freed their slots.
 	std::lock_guard<spinlock_t> guard(_lock);
 	assert(_address != nullptr);
 
@@ -71,13 +73,10 @@ void ReductionInfo::combine()
 }
 
 void ReductionInfo::releaseSlotsInUse(Task* task, ComputePlace* computePlace) {
-	std::lock_guard<spinlock_t> guard(_lock);
 	nanos6_device_t deviceType = computePlace->getType();
 
 	DeviceReductionStorage * storage = _deviceStorages[deviceType];
-	if(storage == nullptr)
-		return;
-
+	assert(storage != nullptr);
 	storage->releaseSlotsInUse(task, computePlace);
 }
 
@@ -106,13 +105,18 @@ DeviceReductionStorage * ReductionInfo::allocateDeviceStorage(nanos6_device_t de
 }
 
 void * ReductionInfo::getFreeSlot(Task* task, ComputePlace* computePlace) {
-	std::lock_guard<spinlock_t> guard(_lock);
-
 	nanos6_device_t deviceType = computePlace->getType();
 
 	DeviceReductionStorage * storage = _deviceStorages[deviceType];
-	if(storage == nullptr)
-		storage = allocateDeviceStorage(deviceType);
+	if(storage == nullptr) {
+		std::lock_guard<spinlock_t> guard(_lock);
+
+		// Check again because of possible races.
+		if (_deviceStorages[deviceType] == nullptr)
+			storage = allocateDeviceStorage(deviceType);
+		else
+			storage = _deviceStorages[deviceType];
+	}
 
 	assert(storage != nullptr);
 

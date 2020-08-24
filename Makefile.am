@@ -1295,6 +1295,7 @@ noinst_HEADERS = \
 	src/support/Objectified.hpp \
 	src/support/StringLiteral.hpp \
 	src/support/StringSupport.hpp \
+	src/support/bitset/AtomicBitset.hpp \
 	src/support/config/ConfigParser.hpp \
 	src/support/config/ConfigVariable.hpp \
 	src/support/config/toml.hpp \

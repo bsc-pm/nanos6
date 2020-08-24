@@ -1,13 +1,14 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef HOST_REDUCTION_STORAGE_HPP
 #define HOST_REDUCTION_STORAGE_HPP
 
 #include "../DeviceReductionStorage.hpp"
+#include "support/bitset/AtomicBitset.hpp"
 
 class HostReductionStorage : public DeviceReductionStorage {
     public:
@@ -33,9 +34,10 @@ class HostReductionStorage : public DeviceReductionStorage {
         ~HostReductionStorage() {};
 
 	private:
+		ReductionInfo::spinlock_t _lock;
 		std::vector<slot_t> _slots;
 		std::vector<long int> _currentCpuSlotIndices;
-		std::vector<size_t> _freeSlotIndices;
+		AtomicBitset<> _freeSlotIndices;
 };
 
 #endif // HOST_REDUCTION_STORAGE_HPP

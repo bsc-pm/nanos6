@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -72,6 +72,8 @@ void * CUDAReductionStorage::getFreeSlotStorage(__attribute__((unused)) Task * t
 
 void CUDAReductionStorage::combineInStorage(char * combineDestination)
 {
+	std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
+
 	assert(combineDestination != nullptr);
 
 	if(_slots.size() == 0)
@@ -118,6 +120,8 @@ void CUDAReductionStorage::combineInStorage(char * combineDestination)
 
 size_t CUDAReductionStorage::getFreeSlotIndex(Task * task, ComputePlace * destinationComputePlace)
 {
+	std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
+
 	assert(destinationComputePlace->getType() == nanos6_cuda_device);
 	assignation_map_t::iterator itSlot = _currentAssignations.find(task);
 	long int currentSlotIndex = -1;
@@ -158,6 +162,8 @@ size_t CUDAReductionStorage::getFreeSlotIndex(Task * task, ComputePlace * destin
 
 void CUDAReductionStorage::releaseSlotsInUse(Task * task, ComputePlace * computePlace)
 {
+	std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
+
 	assert(computePlace->getType() == nanos6_cuda_device);
 	assignation_map_t::iterator itSlot = _currentAssignations.find(task);
 	long int currentSlotIndex = -1;
