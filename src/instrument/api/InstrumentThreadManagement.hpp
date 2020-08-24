@@ -32,11 +32,6 @@ namespace Instrument {
 	template<typename... TS>
 	void createdExternalThread(external_thread_id_t &threadId, TS... nameComponents);
 
-	//! This functions are called when a new thread resumes and suspends
-	//! before performing the initial thread synchronization
-	void threadWillSuspendBeforeSync(thread_id_t threadId, compute_place_id_t cpu);
-	void threadHasResumedBeforeSync(thread_id_t threadId, compute_place_id_t cpu);
-
 	//! This function is called just after the initial synchronization,
 	//! indicating that the thread has been granted permission to run after
 	//! being created
@@ -44,8 +39,8 @@ namespace Instrument {
 
 	//! These functions are called when the thread suspends or resumes after
 	//! the inital synchronization
-	void threadWillSuspend(thread_id_t threadId, compute_place_id_t cpu);
-	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu);
+	void threadWillSuspend(thread_id_t threadId, compute_place_id_t cpu, bool afterSynchronization = true);
+	void threadHasResumed(thread_id_t threadId, compute_place_id_t cpu, bool afterSynchronization = true);
 
 	void threadWillShutdown();
 	void threadWillShutdown(external_thread_id_t threadId);

@@ -22,53 +22,52 @@ namespace Instrument {
 	{
 		threadId = GenericIds::getNewThreadId();
 	}
-	
+
 	inline void exitThreadCreation(__attribute__((unused)) thread_id_t threadId)
 	{
 	}
-	
+
 	inline void createdThread(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
 	}
-	
+
 	inline void precreatedExternalThread(/* OUT */ external_thread_id_t &threadId)
 	{
 		threadId = GenericIds::getCommonPoolNewExternalThreadId();
 	}
-	
+
 	template<typename... TS>
 	void createdExternalThread(__attribute__((unused)) external_thread_id_t &threadId, __attribute__((unused)) TS... nameComponents)
 	{
 	}
 
-	inline void threadWillSuspendBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-	{
+	inline void threadSynchronizationCompleted(
+		__attribute((unused)) thread_id_t threadId
+	) {
 	}
 
-	inline void threadHasResumedBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-	{
+	inline void threadWillSuspend(
+		__attribute__((unused)) thread_id_t threadId,
+		__attribute__((unused)) compute_place_id_t cpu,
+		__attribute__((unused)) bool afterSynchronization
+	) {
 	}
 
-	inline void threadSynchronizationCompleted(__attribute((unused)) thread_id_t threadId)
-	{
+	inline void threadHasResumed(
+		__attribute__((unused)) thread_id_t threadId,
+		__attribute__((unused)) compute_place_id_t cpu,
+		__attribute__((unused)) bool afterSynchronization
+	) {
 	}
-	
-	inline void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-	{
-	}
-	
-	inline void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-	{
-	}
-	
+
 	inline void threadWillSuspend(__attribute__((unused)) external_thread_id_t threadId)
 	{
 	}
-	
+
 	inline void threadHasResumed(__attribute__((unused)) external_thread_id_t threadId)
 	{
 	}
-	
+
 	inline void threadWillShutdown()
 	{
 	}
@@ -76,11 +75,11 @@ namespace Instrument {
 	inline void threadWillShutdown(__attribute__((unused)) external_thread_id_t threadId)
 	{
 	}
-	
+
 	inline void threadEnterBusyWait(__attribute__((unused)) busy_wait_reason_t reason)
 	{
 	}
-	
+
 	inline void threadExitBusyWait()
 	{
 	}

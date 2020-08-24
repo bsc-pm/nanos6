@@ -46,7 +46,7 @@ void WorkerThread::initialize()
 	assert(getComputePlace() != nullptr);
 
 	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), getComputePlace()->getInstrumentationId(), _instrumentationId);
-	Instrument::threadHasResumedBeforeSync(_instrumentationId, getComputePlace()->getInstrumentationId());
+	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId(), false);
 
 	markAsCurrentWorkerThread();
 

@@ -47,18 +47,28 @@ void Instrument::threadSynchronizationCompleted(__attribute__((unused)) thread_i
 	Instrument::tp_thread_create(currentWorkerThread->getTid());
 }
 
-void Instrument::threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-{
-	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentWorkerThread != nullptr);
-	Instrument::tp_thread_suspend(currentWorkerThread->getTid());
+void Instrument::threadWillSuspend(
+	__attribute__((unused)) thread_id_t threadId,
+	__attribute__((unused)) compute_place_id_t cpu,
+	bool afterSynchronization
+) {
+	if (afterSynchronization) {
+		WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentWorkerThread != nullptr);
+		Instrument::tp_thread_suspend(currentWorkerThread->getTid());
+	}
 }
 
-void Instrument::threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-{
-	WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentWorkerThread != nullptr);
-	Instrument::tp_thread_resume(currentWorkerThread->getTid());
+void Instrument::threadHasResumed(
+	__attribute__((unused)) thread_id_t threadId,
+	__attribute__((unused)) compute_place_id_t cpu,
+	bool afterSynchronization
+) {
+	if (afterSynchronization) {
+		WorkerThread *currentWorkerThread = WorkerThread::getCurrentWorkerThread();
+		assert(currentWorkerThread != nullptr);
+		Instrument::tp_thread_resume(currentWorkerThread->getTid());
+	}
 }
 
 void Instrument::threadWillSuspend(external_thread_id_t threadId)
