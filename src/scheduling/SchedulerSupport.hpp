@@ -13,14 +13,9 @@ class Task;
 
 namespace SchedulerSupport {
 
-	struct CPUNode {
-		uint64_t ticket;
-		Task *task;
-	};
-
 	constexpr uint64_t roundup(const uint64_t x, const uint64_t y)
 	{
-		return ((((x) + ((y) - 1ULL)) / (y)) * (y));
+		return (((x + (y - 1ULL)) / y) * y);
 	}
 
 	inline uint64_t roundToNextPowOf2(const uint64_t x)
