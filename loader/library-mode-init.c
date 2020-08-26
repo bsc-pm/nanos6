@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2018-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <stddef.h>
@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "api-versions.h"
+#include "config-parser.h"
 #include "loader.h"
 #include <nanos6/bootstrap.h>
 #include <nanos6/library-mode.h>
@@ -34,7 +35,7 @@ __attribute__ ((used)) char const * nanos6_library_mode_init(void)
 		return _nanos6_error_text;
 	}
 
-	char *variant = getenv("NANOS6");
+	char *variant = _config.variant;
 	if (variant != NULL) {
 		if (!strcmp(variant, "graph") || !strcmp(variant, "graph-debug")) {
 			fprintf(stderr, "Warning: Graph variants may yield incorrect results when using nanos6 library mode\n");

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <assert.h>
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "api-versions.h"
+#include "config-parser.h"
 #include "loader.h"
 #include "main-wrapper.h"
 #include "api/nanos6/api-check.h"
@@ -51,7 +52,7 @@ static void main_task_wrapper(void *argsBlock)
 		realArgsBlock->envp
 	);
 
-	char *reportPrefix = getenv("NANOS6_REPORT_PREFIX");
+	char *reportPrefix = _config.report_prefix;
 	if (reportPrefix != NULL) {
 		for (void *it = nanos6_runtime_info_begin(); it != nanos6_runtime_info_end(); it = nanos6_runtime_info_advance(it)) {
 			if (reportPrefix[0] != '\0') {
