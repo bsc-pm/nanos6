@@ -22,8 +22,8 @@
 #endif
 
 
-EnvironmentVariable<bool> HardwareCounters::_verbose("NANOS6_HWCOUNTERS_VERBOSE", false);
-EnvironmentVariable<std::string> HardwareCounters::_verboseFile("NANOS6_HWCOUNTERS_VERBOSE_FILE", "nanos6-output-hwcounters.txt");
+ConfigVariable<bool> HardwareCounters::_verbose("hardware_counters.verbose", false);
+ConfigVariable<std::string> HardwareCounters::_verboseFile("hardware_counters.verbose_file", "nanos6-output-hwcounters.txt");
 HardwareCountersInterface *HardwareCounters::_papiBackend;
 HardwareCountersInterface *HardwareCounters::_pqosBackend;
 HardwareCountersInterface *HardwareCounters::_raplBackend;

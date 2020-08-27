@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2018 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <string>
@@ -14,10 +14,10 @@
 #include "cluster/messages/MessageId.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware/cluster/ClusterNode.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "memory/vmm/VirtualMemoryAllocation.hpp"
 #include "memory/vmm/VirtualMemoryArea.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
 #include <DataAccessRegion.hpp>
@@ -166,7 +166,7 @@ void VirtualMemoryManagement::initialize()
 	/* NANOS6_DISTRIBUTED_MEMORY determines the total address space to be
 	 * used for distributed allocations across the cluster.
 	 * Default value: 2GB */
-	EnvironmentVariable<StringifiedMemorySize> distribSizeEnv("NANOS6_DISTRIBUTED_MEMORY", (2UL << 30));
+	ConfigVariable<StringifiedMemorySize> distribSizeEnv("cluster.distributed_memory", (2UL << 30));
 	distribSize = distribSizeEnv.getValue();
 	assert(distribSize > 0);
 	distribSize = ROUND_UP(distribSize, HardwareInfo::getPageSize());
@@ -176,12 +176,12 @@ void VirtualMemoryManagement::initialize()
 	 * Default value: Trying to map the minimum between 2GB and the 5% of
 	 * 		  the total physical memory of the machine*/
 	size_t localSize = std::min(2UL << 30, totalPhysicalMemory / 20);
-	EnvironmentVariable<StringifiedMemorySize> localSizeEnv("NANOS6_LOCAL_MEMORY", localSize);
+	ConfigVariable<StringifiedMemorySize> localSizeEnv("cluster.local_memory", localSize);
 	localSize = localSizeEnv.getValue();
 	assert(localSize > 0);
 	localSize = ROUND_UP(localSize, HardwareInfo::getPageSize());
 
-	EnvironmentVariable<void *> startAddress("NANOS6_VA_START", nullptr);
+	ConfigVariable<void *> startAddress("cluster.va_start", nullptr);
 	void *address = startAddress.getValue();
 	size_t size = distribSize + localSize * ClusterManager::clusterSize();
 

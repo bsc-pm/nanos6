@@ -29,10 +29,10 @@
 #include "CTFAPI.hpp"
 
 
-EnvironmentVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("TMPDIR", "/tmp");
-EnvironmentVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("NANOS6_CTF2PRV_BIN");
+ConfigVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("instrument.ctf.tmpdir", "/tmp");
+ConfigVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("instrument.ctf.conversor.location");
+ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvEnabled("instrument.ctf.conversor.enabled", true);
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_systemPATH("PATH");
-EnvironmentVariable<bool>        CTFAPI::CTFTrace::_ctf2prvEnabled("NANOS6_CTF2PRV", true);
 
 static bool copyFile(std::string &src, std::string &dst)
 {

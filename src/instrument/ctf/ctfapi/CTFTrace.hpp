@@ -11,6 +11,7 @@
 #include <cstdint>
 
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 #include "CTFMetadata.hpp"
 
@@ -26,10 +27,10 @@ namespace CTFAPI {
 		}
 
 	private:
-		static EnvironmentVariable<std::string> _defaultTemporalPath;
-		static EnvironmentVariable<std::string> _ctf2prvWrapper;
+		static ConfigVariable<std::string> _defaultTemporalPath;
+		static ConfigVariable<std::string> _ctf2prvWrapper;
+		static ConfigVariable<bool> _ctf2prvEnabled;
 		static EnvironmentVariable<std::string> _systemPATH;
-		static EnvironmentVariable<bool>        _ctf2prvEnabled;
 
 		std::string _finalTraceBasePath;
 		std::string _tmpTracePath;

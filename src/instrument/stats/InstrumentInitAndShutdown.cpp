@@ -10,7 +10,7 @@
 #include "InstrumentStats.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
 
@@ -90,7 +90,7 @@ namespace Instrument {
 			accumulatedTaskInfo += taskInfoEntry.second;
 		}
 
-		EnvironmentVariable<std::string> _outputFilename("NANOS6_STATS_FILE", "/dev/stderr");
+		ConfigVariable<std::string> _outputFilename("instrument.stats.output_file", "/dev/stderr");
 		std::ofstream output(_outputFilename);
 
 		output << "STATS\t" << "Total CPUs\t" << CPUManager::getTotalCPUs() << std::endl;

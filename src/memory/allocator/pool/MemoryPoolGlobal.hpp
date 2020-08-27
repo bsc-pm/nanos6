@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef MEMORY_POOL_GLOBAL_HPP
@@ -19,13 +19,13 @@
 #include <numa.h>
 
 #include "lowlevel/SpinLock.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include <VirtualMemoryManagement.hpp>
 
 class MemoryPoolGlobal {
 private:
-	EnvironmentVariable<size_t> _globalAllocSize;
-	EnvironmentVariable<size_t> _memoryChunkSize;
+	ConfigVariable<size_t> _globalAllocSize;
+	ConfigVariable<size_t> _memoryChunkSize;
 
 	SpinLock _lock;
 	size_t _pageSize;
@@ -62,8 +62,8 @@ private:
 
 public:
 	MemoryPoolGlobal(size_t NUMANodeId)
-		: _globalAllocSize("NANOS6_GLOBAL_ALLOC_SIZE", 8 * 1024 * 1024),
-		_memoryChunkSize("NANOS6_ALLOCATOR_CHUNK_SIZE", 128 * 1024),
+		: _globalAllocSize("memory.pool.global_alloc_size", 8 * 1024 * 1024),
+		_memoryChunkSize("memory.pool.chunk_size", 128 * 1024),
 		_pageSize(sysconf(_SC_PAGESIZE)), _oldMemoryChunks(0),
 		_curMemoryChunk(nullptr), _curAvailable(0),
 		_NUMANodeId(NUMANodeId)

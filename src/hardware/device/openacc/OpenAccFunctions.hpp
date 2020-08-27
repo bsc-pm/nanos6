@@ -14,7 +14,7 @@
 // directory with -I will also include PGI's math.h etc that will break everything.
 #include NANOS6_OPENACC_PGI_HEADER
 
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 // A helper class, providing static helper functions, specific to the device,
 // to be used by DeviceInfo and other relevant classes as utilities.
@@ -43,13 +43,13 @@ public:
 
 	static inline size_t getInitialQueueNum()
 	{
-		static EnvironmentVariable<size_t> initQueues("NANOS6_OPENACC_DEFAULT_QUEUES", 64);
+		static ConfigVariable<size_t> initQueues("devices.openacc.default_queues", 64);
 		return initQueues;
 	}
 
 	static inline size_t getMaxQueues()
 	{
-		static EnvironmentVariable<size_t> maxQueues("NANOS6_OPENACC_MAX_QUEUES", 128);
+		static ConfigVariable<size_t> maxQueues("devices.openacc.max_queues", 128);
 		return maxQueues;
 	}
 

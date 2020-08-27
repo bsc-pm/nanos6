@@ -25,7 +25,7 @@ private:
 public:
 	CUDAStreamPool(int device)
 	{
-		static EnvironmentVariable<int> maxStreams("NANOS6_CUDA_STREAMS", 16);
+		static ConfigVariable<int> maxStreams("devices.cuda.streams", 16);
 		CUDAFunctions::setActiveDevice(device);
 		for (int i = 0; i < maxStreams; ++i)
 			_streams.emplace(CUDAFunctions::createStream());

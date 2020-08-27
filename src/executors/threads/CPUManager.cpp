@@ -8,4 +8,4 @@
 
 
 CPUManagerInterface *CPUManager::_cpuManager;
-EnvironmentVariable<bool> CPUManager::_dlbEnabled("NANOS6_ENABLE_DLB", false);
+ConfigVariable<bool> CPUManager::_dlbEnabled("dlb.enabled", false);

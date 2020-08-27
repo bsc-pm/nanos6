@@ -8,8 +8,8 @@
 
 #include "VirtualMemoryManagement.hpp"
 #include "hardware/HardwareInfo.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "memory/vmm/VirtualMemoryArea.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
 
@@ -26,7 +26,7 @@ void VirtualMemoryManagement::initialize()
 	// cluster node. Default value: Trying to map the minimum between 2GB and
 	// the 5% of the total physical memory of the machine
 	_size = std::min(2UL << 30, totalPhysicalMemory / 20);
-	EnvironmentVariable<StringifiedMemorySize> _sizeEnv("NANOS6_LOCAL_MEMORY", _size);
+	ConfigVariable<StringifiedMemorySize> _sizeEnv("cluster.local_memory", _size);
 	_size = _sizeEnv.getValue();
 	assert(_size > 0);
 

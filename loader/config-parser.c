@@ -18,6 +18,10 @@
 char _nanos6_config_path[MAX_CONFIG_PATH];
 _nanos6_loader_config_t _config;
 
+#ifndef INSTALLED_CONFIG_DIR
+	#error "INSTALLED_CONFIG_DIR should be defined at make time"
+#endif
+
 static void _nanos6_init_config()
 {
 	_config.dependencies = NULL;
@@ -57,7 +61,7 @@ static int _nanos6_find_config()
 		// Can we access the file for reading?
 		if (access(config_path, R_OK)) {
 			// We cannot. Lets print the error by stderr and then die.
-			snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to find the file specified in NANOS6_CONFIG: %s", sys_errlist[errno]);
+			snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to find the file specified in NANOS6_CONFIG: %s", strerror(errno));
 			return -1;
 		}
 
@@ -74,20 +78,24 @@ static int _nanos6_find_config()
 
 	// 2. Current directory
 	if (getcwd(_nanos6_config_path, MAX_CONFIG_PATH) == NULL) {
-		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to get current working directory: %s", sys_errlist[errno]);
+		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to get current working directory: %s", strerror(errno));
 		return -1;
 	}
 
 	const char *current_path = strdup(_nanos6_config_path);
 	snprintf(_nanos6_config_path, MAX_CONFIG_PATH, "%s/nanos6.toml", current_path);
-	free(current_path);
+	free((void *) current_path);
 
 	if (!access(_nanos6_config_path, R_OK)) {
 		// Found file in current path.
 		return 0;
 	}
 
-	// 3. Installation path. But what is the installation path?
+	// 3. Installation path
+	snprintf(_nanos6_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
+	if (!access(_nanos6_config_path, R_OK)) {
+		return 0;
+	}
 
 	snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to find the Nanos6 config file.");
 	return -1;
@@ -170,7 +178,7 @@ int _nanos6_loader_parse_config()
 	// Open found config file for reading
 	f = fopen(_nanos6_config_path, "r");
 	if (f == NULL) {
-		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to open config file for reading: %s", sys_errlist[errno]);
+		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to open config file for reading: %s", strerror(errno));
 		return -1;
 	}
 

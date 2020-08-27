@@ -27,8 +27,8 @@
 
 #include <InstrumentInstrumentationContext.hpp>
 
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 #include <ClusterManager.hpp>
 #include <support/ConcurrentUnorderedList.hpp>
@@ -54,8 +54,8 @@ namespace Instrument {
 		extern bool _verboseUserMutex;
 		extern bool _verboseLoggingMessages;
 
-		extern EnvironmentVariable<bool> _useTimestamps;
-		extern EnvironmentVariable<bool> _dumpOnlyOnExit;
+		extern ConfigVariable<bool> _useTimestamps;
+		extern ConfigVariable<bool> _dumpOnlyOnExit;
 
 		extern std::ofstream *_output;
 

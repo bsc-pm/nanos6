@@ -55,7 +55,7 @@ public:
 
 	static size_t getPageSize()
 	{
-		static EnvironmentVariable<size_t> pageSize("NANOS6_CUDA_PAGESIZE", 0x8000);
+		static ConfigVariable<size_t> pageSize("devices.cuda.page_size", 0x8000);
 		return pageSize;
 	}
 

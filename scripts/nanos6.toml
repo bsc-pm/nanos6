@@ -1,0 +1,91 @@
+# Nanos6 default configuration file
+stack_size = "8M"
+polling = true
+polling_frequency = 1000 # µs
+
+[loader]
+	verbose = false
+	variant = "optimized"
+	dependencies = "regions"
+	# library_path = "path/to/nanos6/lib"
+	# report_prefix = "#"
+
+[cluster]
+	communication = "disabled"
+	distributed_memory = "2G"
+	local_memory = "2G"
+	scheduling_policy = "locality"
+	# va_start = 0x00000000
+
+[cpumanager]
+	policy = "default"
+
+[taskfor]
+	groups = 1
+	report = false
+
+[throttle]
+	enabled = false
+	tasks = 5000000
+	pressure = 70
+	max_memory = "0" # Default memory size
+
+[dlb]
+	enabled = false
+
+[devices]
+	[devices.cuda]
+		page_size = 0x8000
+		streams = 16
+	[devices.openacc]
+		default_queues = 64
+		max_queues = 128
+
+[hardware_counters]
+	verbose = false
+	verbose_file = "nanos6-output-hwcounters.txt"
+
+[instrument]
+	[instrument.ctf]
+		tmpdir = "/tmp"
+		[instrument.ctf.conversor]
+			enabled = true
+			# location = "path/to/ctf2prv"
+	[instrument.extrae]
+		as_threads = false
+		detail_level = 1
+	[instrument.graph]
+		display = false
+		display_command = "xdg-open"
+		show_dependency_structures = false
+		show_regions = false
+		show_spurious_dependency_structures = false
+		show_dead_dependencies = false
+		show_all_steps = false
+		show_superaccess_links = false
+		show_log = false
+	[instrument.stats]
+		output_file = "/dev/stderr"
+	[instrument.verbose]
+		output_file = "/dev/stderr"
+		timestamps = true
+		dump_only_on_exit = false
+		areas = ["all", "!ComputePlaceManagement", "!DependenciesByAccess", "!DependenciesByAccessLinks",
+			"!DependenciesByGroup", "!LeaderThread", "!TaskStatus",	"!ThreadManagement"]
+
+[memory]
+	[memory.pool]
+		global_alloc_size = "8M"
+		chunk_size = "128K"
+
+[monitoring]
+	enabled = true
+	verbose = true
+	verbose_file = "output-monitoring.txt"
+	cpuusage_prediction_rate = 100 # µs
+	rolling_window = 20
+
+[scheduler]
+	policy = "fifo"
+	enable_immediate_successor = true
+	enable_priority = true

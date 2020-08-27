@@ -11,7 +11,7 @@
 
 #include "HardwareCountersInterface.hpp"
 #include "SupportedHardwareCounters.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
@@ -22,10 +22,10 @@ class HardwareCounters {
 private:
 
 	//! Whether the verbose mode is enabled
-	static EnvironmentVariable<bool> _verbose;
+	static ConfigVariable<bool> _verbose;
 
 	//! The file where output must be saved when verbose mode is enabled
-	static EnvironmentVariable<std::string> _verboseFile;
+	static ConfigVariable<std::string> _verboseFile;
 
 	//! The underlying PAPI backend
 	static HardwareCountersInterface *_papiBackend;

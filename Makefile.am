@@ -254,7 +254,7 @@ libnanos6_la_SOURCES = \
 	loader/include/toml/toml.c \
 	loader/include/toml/toml.h
 
-libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" $(jemalloc_CFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
+libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" -DINSTALLED_CONFIG_DIR=\"$(docdir)\" $(jemalloc_CFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
 libnanos6_la_LDFLAGS = $(jemalloc_LIBS) $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
 
 
@@ -1283,6 +1283,30 @@ noinst_HEADERS = \
 	src/support/Objectified.hpp \
 	src/support/StringComposer.hpp \
 	src/support/StringLiteral.hpp \
+	src/support/config/ConfigParser.hpp \
+	src/support/config/ConfigVariable.hpp \
+	src/support/config/toml.hpp \
+	src/support/config/toml/color.hpp \
+	src/support/config/toml/combinator.hpp \
+	src/support/config/toml/comments.hpp \
+	src/support/config/toml/datetime.hpp \
+	src/support/config/toml/exception.hpp \
+	src/support/config/toml/from.hpp \
+	src/support/config/toml/get.hpp \
+	src/support/config/toml/into.hpp \
+	src/support/config/toml/lexer.hpp \
+	src/support/config/toml/literal.hpp \
+	src/support/config/toml/parser.hpp \
+	src/support/config/toml/region.hpp \
+	src/support/config/toml/result.hpp \
+	src/support/config/toml/serializer.hpp \
+	src/support/config/toml/source_location.hpp \
+	src/support/config/toml/storage.hpp \
+	src/support/config/toml/string.hpp \
+	src/support/config/toml/traits.hpp \
+	src/support/config/toml/types.hpp \
+	src/support/config/toml/utility.hpp \
+	src/support/config/toml/value.hpp \
 	src/support/chronometers/arch/Chrono.hpp \
 	src/support/chronometers/std/Chrono.hpp \
 	src/system/APICheck.hpp \
@@ -2035,6 +2059,10 @@ nobase_dist_paraverconfig_DATA = \
 hwcountersdir = ${docdir}
 nobase_dist_hwcounters_DATA = \
 	scripts/nanos6_hwcounters.json
+
+configfiledir = ${docdir}
+nobase_dist_configfile_DATA = \
+	scripts/nanos6.toml
 
 ctfdir = ${docdir}
 nobase_dist_ctf_DATA = \

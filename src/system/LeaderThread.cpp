@@ -11,7 +11,7 @@
 
 #include "LeaderThread.hpp"
 #include "PollingAPI.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 #include <InstrumentLeaderThread.hpp>
 #include <InstrumentThreadManagement.hpp>
@@ -47,7 +47,7 @@ void LeaderThread::body()
 	initializeHelperThread();
 	Instrument::threadHasResumed(getInstrumentationId());
 	// Minimum polling interval in microseconds
-	EnvironmentVariable<int> pollingFrequency("NANOS6_POLLING_FREQUENCY", 1000);
+	ConfigVariable<int> pollingFrequency("polling_frequency", 1000);
 
 	while (!std::atomic_load_explicit(&_mustExit, std::memory_order_relaxed)) {
 		struct timespec delay = {0, pollingFrequency * 1000};

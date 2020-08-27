@@ -20,9 +20,9 @@ class SchedulerInterface {
 	HostScheduler *_hostScheduler;
 	DeviceScheduler *_deviceSchedulers[nanos6_device_type_num];
 
-	static EnvironmentVariable<std::string> _schedulingPolicy;
-	static EnvironmentVariable<bool> _enableImmediateSuccessor;
-	static EnvironmentVariable<bool> _enablePriority;
+	static ConfigVariable<std::string> _schedulingPolicy;
+	static ConfigVariable<bool> _enableImmediateSuccessor;
+	static ConfigVariable<bool> _enablePriority;
 
 #ifdef EXTRAE_ENABLED
 	std::atomic<Task *> _mainTask;

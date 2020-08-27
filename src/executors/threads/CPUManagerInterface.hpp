@@ -42,16 +42,16 @@ protected:
 	static std::atomic<bool> _finishedCPUInitialization;
 
 	//! The chosen number of taskfor groups
-	static EnvironmentVariable<size_t> _taskforGroups;
+	static ConfigVariable<size_t> _taskforGroups;
 
 	//! Whether we should emit a report with info about the taskfor groups.
-	static EnvironmentVariable<bool> _taskforGroupsReportEnabled;
+	static ConfigVariable<bool> _taskforGroupsReportEnabled;
 
 	//! The decision-taking policy of the CPU Manager
 	static CPUManagerPolicyInterface *_cpuManagerPolicy;
 
 	//! The chosen CPU Manager policy
-	static EnvironmentVariable<std::string> _policyChosen;
+	static ConfigVariable<std::string> _policyChosen;
 
 	//! The virtual id of the first owned CPU of this process
 	static size_t _firstCPUId;

@@ -22,7 +22,7 @@ class ClusterScheduler : public SchedulerInterface {
 public:
 	ClusterScheduler()
 	{
-		EnvironmentVariable<std::string> clusterSchedulerName("NANOS6_CLUSTER_SCHEDULING_POLICY", "locality");
+		ConfigVariable<std::string> clusterSchedulerName("cluster.scheduling_policy", "locality");
 
 		if (clusterSchedulerName.getValue() == "random") {
 			_clusterSchedulerImplementation = new ClusterRandomScheduler();

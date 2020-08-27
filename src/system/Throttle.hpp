@@ -7,7 +7,7 @@
 #ifndef THROTTLE_HPP
 #define THROTTLE_HPP
 
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 class Task;
 class WorkerThread;
@@ -15,10 +15,10 @@ class WorkerThread;
 class Throttle {
 private:
 	static int _pressure;
-	static EnvironmentVariable<bool> _enabled;
-	static EnvironmentVariable<int> _throttleTasks;
-	static EnvironmentVariable<int> _throttlePressure;
-	static EnvironmentVariable<StringifiedMemorySize> _throttleMem;
+	static ConfigVariable<bool> _enabled;
+	static ConfigVariable<int> _throttleTasks;
+	static ConfigVariable<int> _throttlePressure;
+	static ConfigVariable<StringifiedMemorySize> _throttleMem;
 
 	static int getAllowedTasks(int nestingLevel);
 
