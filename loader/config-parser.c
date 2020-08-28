@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 
 char _nanos6_config_path[MAX_CONFIG_PATH];
@@ -54,7 +55,7 @@ void _nanos6_loader_free_config()
 //	 4. If there still is no file, stop with an error.
 static int _nanos6_find_config()
 {
-	char *config_path = getenv("NANOS6_CONFIG");
+	const char *config_path = getenv("NANOS6_CONFIG");
 
 	// 1. NANOS6_CONFIG
 	if (config_path != NULL) {
@@ -136,7 +137,6 @@ static int _toml_try_extract_bool(toml_table_t *loader_section, int *output, con
 	}
 
 	return 0;
-
 }
 
 static int _nanos6_parse_config_table(toml_table_t *loader_section)
@@ -157,6 +157,64 @@ static int _nanos6_parse_config_table(toml_table_t *loader_section)
 		return -1;
 
 	return 0;
+}
+
+static void _nanos6_config_parse_individual_override(const char *name, const char *value)
+{
+	if (strlen(name) == 0 || strlen(value) == 0)
+		return;
+
+	if (strcasecmp(name, "loader.dependencies") == 0) {
+		if (_config.dependencies)
+			free(_config.dependencies);
+		_config.dependencies = strdup(value);
+	} else if (strcasecmp(name, "loader.library_path") == 0) {
+		if (_config.library_path)
+			free(_config.library_path);
+		_config.library_path = strdup(value);
+	} else if (strcasecmp(name, "loader.variant") == 0) {
+		if (_config.variant)
+			free(_config.variant);
+		_config.variant = strdup(value);
+	} else if (strcasecmp(name, "loader.report_prefix") == 0) {
+		if (_config.report_prefix)
+			free(_config.report_prefix);
+		_config.report_prefix = strdup(value);
+	} else if (strcasecmp(name, "loader.verbose") == 0) {
+		if (strcmp(value, "true"))
+			_config.verbose = 1;
+		else if (strcmp(value, "false"))
+			_config.verbose = 0;
+		else
+			fprintf(stderr, "Bad value for loader.verbose override");
+	}
+}
+
+static int _nanos6_config_parse_override()
+{
+	const char *config_override = getenv("NANOS6_CONFIG_OVERRIDE");
+
+	if (config_override == NULL || strlen(config_override) == 0)
+		return 0;
+
+	char *nstring = strdup(config_override);
+	char *current_option = strtok(nstring, ",");
+
+	while (current_option) {
+		// Let's extract the name and the value.
+		char *separator = strchr(current_option, ':');
+		if (separator) {
+			// We can "cheat" by creating two strings from the single place we have. As the separator is not important,
+			// we just replace it by a null character.
+			*separator = '\0';
+			_nanos6_config_parse_individual_override(current_option, separator + 1);
+			*separator = ':';
+		} // Otherwise just ignore this. It will fall-through and the runtime will warn the error
+
+		current_option = strtok(NULL, ",");
+	}
+
+	free(nstring);
 }
 
 // Find and parse the Nanos6 configuration file
@@ -201,6 +259,12 @@ int _nanos6_loader_parse_config()
 	}
 
 	toml_free(conf);
+
+	// Now parse the configuration overrides
+	if (_nanos6_config_parse_override()) {
+		_nanos6_loader_free_config();
+		return -1;
+	}
 
 	return 0;
 }

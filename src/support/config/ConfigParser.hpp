@@ -13,16 +13,21 @@
 #include <string>
 #include <vector>
 
+#include <boost/algorithm/string.hpp>
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #include "toml.hpp"
 #pragma GCC diagnostic pop
 
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "lowlevel/EnvironmentVariable.hpp"
 
 class ConfigParser {
 	toml::value data;
-	toml::value empty = toml::value();
+
+	typedef std::unordered_map<std::string, std::string> environmentConfigMap_t;
+	environmentConfigMap_t environmentConfig;
 
 	toml::value findKey(std::string key)
 	{
@@ -45,8 +50,70 @@ class ConfigParser {
 		return *it;
 	}
 
+	void parseEnvironmentConfig()
+	{
+		const EnvironmentVariable<std::string> configOverride("NANOS6_CONFIG_OVERRIDE", "");
+
+		if (!configOverride.getValue().empty()) {
+			std::istringstream ss(configOverride);
+			std::string currentDirective;
+
+			while (std::getline(ss, currentDirective, ',')) {
+				if (currentDirective.empty()) {
+					FatalErrorHandler::warn("Invalid config option: directive cannot be empty");
+					continue;
+				}
+
+				size_t separatorIndex = currentDirective.find(':');
+				if (separatorIndex == std::string::npos) {
+					FatalErrorHandler::warn("Invalid config option: directive must follow format 'option:value'");
+					continue;
+				}
+
+				std::string directiveName = currentDirective.substr(0, separatorIndex);
+				std::string directiveContent = currentDirective.substr(separatorIndex + 1);
+
+				if (directiveName.empty()) {
+					FatalErrorHandler::warn("Invalid config option: directive name cannot be empty");
+					continue;
+				}
+
+				if (directiveContent.empty()) {
+					FatalErrorHandler::warn("Invalid config option: directive content cannot be empty in option ", directiveName);
+					continue;
+				}
+
+				if (environmentConfig.find(directiveName) != environmentConfig.end()) {
+					FatalErrorHandler::warn("Ignoring repeated config option ", directiveName);
+					continue;
+				}
+
+				// All config options are in lowercase
+				boost::trim(directiveName);
+				boost::to_lower(directiveName);
+
+				environmentConfig.emplace(directiveName, directiveContent);
+			}
+		}
+	}
+
+	template <typename T>
+	bool parseString(std::string str, T &result)
+	{
+		std::istringstream iss(str);
+		T tmp = result;
+		iss >> tmp;
+
+		if (!iss.fail()) {
+			result = tmp;
+			return true;
+		}
+
+		return false;
+	}
+
 public:
-	ConfigParser()
+	ConfigParser() : environmentConfig()
 	{
 		const char *_nanos6_config_path = (const char *)dlsym(nullptr, "_nanos6_config_path");
 		assert(_nanos6_config_path != nullptr);
@@ -61,11 +128,31 @@ public:
 		} catch (toml::syntax_error &error) {
 			FatalErrorHandler::fail("Configuration syntax error: ", error.what());
 		}
+
+		parseEnvironmentConfig();
 	}
 
 	template <typename T>
 	void get(std::string key, T &value, bool &found)
 	{
+		// First we will try to find the corresponding override.
+		environmentConfigMap_t::iterator option = environmentConfig.find(key);
+		if (option != environmentConfig.end()) {
+			if (parseString<T>(option->second, value)) {
+				found = true;
+				return;
+			} else {
+				FatalErrorHandler::warn(
+				"Configuration override for ",
+				key,
+				" found but value '",
+				option->second,
+				"' could not be cast to ",
+				typeid(T).name(),
+				", falling back to config file");
+			}
+		}
+
 		toml::value element = findKey(key);
 
 		if (element.is_uninitialized()) {

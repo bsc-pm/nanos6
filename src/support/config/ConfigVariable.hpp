@@ -13,7 +13,6 @@
 #include <sstream>
 #include <string>
 
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "ConfigParser.hpp"
 
 class ConfigVariableAux {
