@@ -83,6 +83,7 @@ lib_LTLIBRARIES = \
 	libnanos6.la \
 	libnanos6-optimized-linear-regions-fragmented.la \
 	libnanos6-ctf-linear-regions-fragmented.la \
+	libnanos6-ctf-debug-linear-regions-fragmented.la \
 	libnanos6-debug-linear-regions-fragmented.la \
 	libnanos6-turbo-linear-regions-fragmented.la \
 	libnanos6-extrae-linear-regions-fragmented.la \
@@ -95,6 +96,7 @@ lib_LTLIBRARIES = \
 	libnanos6-verbose-debug-linear-regions-fragmented.la \
 	libnanos6-optimized-discrete.la \
 	libnanos6-ctf-discrete.la \
+	libnanos6-ctf-debug-discrete.la \
 	libnanos6-turbo-discrete.la \
 	libnanos6-debug-discrete.la \
 	libnanos6-extrae-discrete.la \
@@ -1355,7 +1357,7 @@ endif
 
 libnanos6_ctf_linear_regions_fragmented_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
 libnanos6_ctf_linear_regions_fragmented_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
-libnanos6_ctf_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) -lrt
+libnanos6_ctf_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES =
 
 if BUILD_CTF_INSTRUMENTATION_VARIANT
@@ -1367,9 +1369,28 @@ disabled_variants += ctf
 nodist_libnanos6_ctf_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
 endif
 
+libnanos6_ctf_debug_linear_regions_fragmented_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
+libnanos6_ctf_debug_linear_regions_fragmented_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(linear_regions_fragmented_dependency_flags)
+libnanos6_ctf_debug_linear_regions_fragmented_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+nodist_libnanos6_ctf_debug_linear_regions_fragmented_la_SOURCES =
+
+if BUILD_CTF_INSTRUMENTATION_VARIANT
+if BUILD_DEBUG_VARIANTS
+enabled_variants += ctf-debug
+nodist_libnanos6_ctf_debug_linear_regions_fragmented_la_SOURCES += $(common_sources) $(instrument_ctf_sources) $(memory_default_sources) $(linear_regions_fragmented_dependency_sources)
+nodist_libnanos6_ctf_debug_linear_regions_fragmented_la_SOURCES += $(nodist_common_sources)
+else
+disabled_variants += ctf-debug
+nodist_libnanos6_ctf_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+else
+disabled_variants += ctf-debug
+nodist_libnanos6_ctf_debug_linear_regions_fragmented_la_SOURCES += loader/disabled_variant.c
+endif
+
 libnanos6_ctf_discrete_la_CPPFLAGS = -DNDEBUG $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
 libnanos6_ctf_discrete_la_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
-libnanos6_ctf_discrete_la_LDFLAGS = $(common_libnanos6_ldflags) -lrt
+libnanos6_ctf_discrete_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
 nodist_libnanos6_ctf_discrete_la_SOURCES =
 
 if DISCRETE_DEPENDENCIES
@@ -1378,6 +1399,24 @@ nodist_libnanos6_ctf_discrete_la_SOURCES += $(common_sources) $(instrument_ctf_s
 nodist_libnanos6_ctf_discrete_la_SOURCES += $(nodist_common_sources)
 else
 nodist_libnanos6_ctf_discrete_la_SOURCES += loader/disabled_variant.c
+endif
+endif
+
+libnanos6_ctf_debug_discrete_la_CPPFLAGS = $(common_libnanos6_cppflags) $(memory_default_cppflags) -I$(srcdir)/src/instrument/ctf
+libnanos6_ctf_debug_discrete_la_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS) $(discrete_dependency_flags)
+libnanos6_ctf_debug_discrete_la_LDFLAGS = $(common_libnanos6_ldflags) $(CLOCK_LIBS) $(ANDROID_LOG_LIBS)
+nodist_libnanos6_ctf_debug_discrete_la_SOURCES =
+
+if DISCRETE_DEPENDENCIES
+if BUILD_CTF_INSTRUMENTATION_VARIANT
+if BUILD_DEBUG_VARIANTS
+nodist_libnanos6_ctf_debug_discrete_la_SOURCES += $(common_sources) $(instrument_ctf_sources) $(memory_default_sources) $(discrete_dependency_sources)
+nodist_libnanos6_ctf_debug_discrete_la_SOURCES += $(nodist_common_sources)
+else
+nodist_libnanos6_ctf_debug_discrete_la_SOURCES += loader/disabled_variant.c
+endif
+else
+nodist_libnanos6_ctf_debug_discrete_la_SOURCES += loader/disabled_variant.c
 endif
 endif
 
