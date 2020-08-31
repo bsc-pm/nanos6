@@ -13,7 +13,6 @@
 #include <string.h>
 
 #include "InstrumentCPULocalData.hpp"
-#include "instrument/support/InstrumentCPULocalDataSupport.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 #include "CTFTypes.hpp"
@@ -167,7 +166,7 @@ namespace CTFAPI {
 		// tracepoint_async user must guarantee that events are written
 		// sequentially
 
-		CTFStream *stream = Instrument::getCPULocalData()->userStream;
+		CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
 		__tp_lock(stream, event, timestamp, args...);
 	}
 
@@ -180,7 +179,7 @@ namespace CTFAPI {
 		// external thread that has not been initialized yet. In that
 		// case a nanos6:external_thread_create event will be emited
 		// before the current one
-		CTFStream *stream = Instrument::getCPULocalData()->userStream;
+		CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
 
 		// Locking only implemented for external threads
 		stream->lock();

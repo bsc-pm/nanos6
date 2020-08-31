@@ -42,11 +42,9 @@ Instrument::CPULocalData *Instrument::getCPULocalData()
 				// when shutting down Nanos6
 				ExternalThreadGroup::registerExternalThread(currentExternalThread);
 			}
-			assert(currentExternalThread != nullptr);
-			cpuLocalData = virtualCPULocalData;
+			cpuLocalData = nullptr;
 		}
 	}
 
-	assert(cpuLocalData != nullptr);
 	return cpuLocalData;
 }

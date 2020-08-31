@@ -88,7 +88,7 @@ void CTFAPI::flushSubBuffers(CTFStream *stream,
 void CTFAPI::flushCurrentVirtualCPUBufferIfNeeded()
 {
 	uint64_t tsBefore, tsAfter;
-	CTFStream *stream = Instrument::getCPULocalData()->userStream;
+	CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
 
 	stream->lock();
 	if (stream->checkIfNeedsFlush()) {

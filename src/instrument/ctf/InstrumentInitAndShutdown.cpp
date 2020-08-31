@@ -10,24 +10,23 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "CTFTracepoints.hpp"
+#include "InstrumentCPULocalData.hpp"
+#include "InstrumentInitAndShutdown.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
-
-#include "ctfapi/CTFTypes.hpp"
 #include "ctfapi/CTFAPI.hpp"
-#include "ctfapi/CTFTrace.hpp"
 #include "ctfapi/CTFMetadata.hpp"
+#include "ctfapi/CTFTrace.hpp"
+#include "ctfapi/CTFTypes.hpp"
+#include "ctfapi/context/CTFContextCPUHardwareCounters.hpp"
+#include "ctfapi/context/CTFContextTaskHardwareCounters.hpp"
+#include "ctfapi/context/CTFStreamContextUnbounded.hpp"
 #include "ctfapi/stream/CTFStream.hpp"
 #include "ctfapi/stream/CTFStreamUnboundedPrivate.hpp"
 #include "ctfapi/stream/CTFStreamUnboundedShared.hpp"
-#include "ctfapi/context/CTFContextTaskHardwareCounters.hpp"
-#include "ctfapi/context/CTFContextCPUHardwareCounters.hpp"
-#include "ctfapi/context/CTFStreamContextUnbounded.hpp"
-#include "CTFTracepoints.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "tasks/TaskInfo.hpp"
 #include "tasks/TasktypeData.hpp"
-#include "executors/threads/CPUManager.hpp"
-
-#include "InstrumentInitAndShutdown.hpp"
 
 
 static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFMetadata *metadata)
@@ -104,12 +103,13 @@ static void initializeCTFBuffers(CTFAPI::CTFMetadata *userMetadata, std::string 
 
 	// Initialize External Threads Stream
 	cpuId = totalCPUs + 1;
-	Instrument::virtualCPULocalData = new Instrument::CPULocalData();
+	Instrument::CPULocalData *virtualCPULocalData = new Instrument::CPULocalData();
 	CTFAPI::CTFStreamUnboundedShared *unboundedSharedStream = new CTFAPI::CTFStreamUnboundedShared(
 		defaultBufferSize, cpuId, userPath.c_str()
 	);
 	unboundedSharedStream->addContext(context);
-	Instrument::virtualCPULocalData->userStream = unboundedSharedStream;
+	virtualCPULocalData->userStream = unboundedSharedStream;
+	Instrument::setCTFVirtualCPULocalData(virtualCPULocalData);
 }
 
 void Instrument::initialize()
@@ -155,10 +155,10 @@ void Instrument::shutdown()
 	delete leaderThreadStream;
 
 	// Shutdown External thread stream
-	CTFAPI::CTFStream *externalThreadStream = Instrument::virtualCPULocalData->userStream;
+	CTFAPI::CTFStream *externalThreadStream = Instrument::getCTFVirtualCPULocalData()->userStream;
 	externalThreadStream->shutdown();
 	delete externalThreadStream;
-	delete Instrument::virtualCPULocalData;
+	delete Instrument::getCTFVirtualCPULocalData();
 
 	// move tracing files to final directory
 	trace.convertToParaver();

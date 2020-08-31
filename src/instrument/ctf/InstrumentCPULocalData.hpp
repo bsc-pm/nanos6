@@ -16,7 +16,9 @@ namespace Instrument {
 		CTFAPI::CTFStream *kernelStream;
 	};
 
-	extern CPULocalData *virtualCPULocalData;
+	CPULocalData *getCTFCPULocalData();
+	CPULocalData *getCTFVirtualCPULocalData();
+	void setCTFVirtualCPULocalData(CPULocalData *virtualCPULocalData);
 }
 
 #endif //INSTRUMENT_CTF_CPU_LOCAL_DATA_HPP
