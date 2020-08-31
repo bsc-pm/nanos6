@@ -28,7 +28,7 @@ When a buffer is full, it is needed to flush it to the storage device.
 Flushing is done synchronously (i.e. a worker thread that generates a tracepoint will have to flush the buffer if there is no free space left) and it might affect the execution workflow.
 Flushing operations are also recorded and can be inspected with the "CTF flush buffers to disk" view.
 
-Traces are written by default under the `TMPDIR` environment variable or under `/tmp` if not set.
+Traces are written by default under the `instrument.ctf.tmpdir` configuration variable or under `/tmp` if not set.
 Traces written to `/tmp` are kept in RAM memory (see tmpfs for more information) and flushing translates to a memory copy operation.
 When an application execution finishes, Nanos6 copies the trace to the current directory.
 
@@ -38,13 +38,13 @@ Usage
 To generate a CTF trace:
 
 ```sh
-$ NANOS6=ctf ./app
+$ NANOS6_CONFIG_OVERRIDE="loader.variant=ctf" ./app
 ```
 
 This will create a `trace-<app_name>-<app_pid>` folder in the current directory, hereinafter refered to as `$TRACE` for convenience.
 The subdirectory `$TRACE/ctf` contains the ctf trace as recorded by Nanos6.
 
-By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
+By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the configuration variable `instrument.ctf.conversor.enabled = false`.
 The converted Paraver trace will be stored under the `$TRACE/prv` subdirectory.
 The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the conversion after the specified elapsed time in minutes.
 Please note that the conversion tool requires python3 and the babeltrace2 package.

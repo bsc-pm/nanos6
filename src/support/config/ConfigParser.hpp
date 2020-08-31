@@ -64,9 +64,9 @@ class ConfigParser {
 					continue;
 				}
 
-				size_t separatorIndex = currentDirective.find(':');
+				size_t separatorIndex = currentDirective.find('=');
 				if (separatorIndex == std::string::npos) {
-					FatalErrorHandler::warn("Invalid config option: directive must follow format 'option:value'");
+					FatalErrorHandler::warn("Invalid config option: directive must follow format 'option=value'");
 					continue;
 				}
 

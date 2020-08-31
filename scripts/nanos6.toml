@@ -57,6 +57,7 @@ polling_frequency = 1000 # µs
 	[instrument.graph]
 		display = false
 		display_command = "xdg-open"
+		shorten_filenames = false
 		show_dependency_structures = false
 		show_regions = false
 		show_spurious_dependency_structures = false
@@ -80,6 +81,7 @@ polling_frequency = 1000 # µs
 
 [monitoring]
 	enabled = true
+	enable_wisdom = false
 	verbose = true
 	verbose_file = "output-monitoring.txt"
 	cpuusage_prediction_rate = 100 # µs

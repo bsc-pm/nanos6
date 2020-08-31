@@ -126,12 +126,13 @@ printf("%d\n", distributed_array[0]);
 nanos6_dfree(distributed_array, 1024 * sizeof(int));
 ```
 
-Nanos6 allows users to manage the size of the local and distributed memory regions, by means of setting environment variables.
-The two environment variables of interest are `NANOS6_LOCAL_MEMORY` and `NANOS6_DISTRIBUTED_MEMORY`, which can be set to size values like:
+Nanos6 allows users to manage the size of the local and distributed memory regions, by means of setting configuration variables.
+The two configuration variables of interest are `cluster.local_memory` and `cluster.distributed_memory`, which can be set to size values like:
 
-```sh
-export NANOS6_LOCAL_MEMORY=2GB
-export NANOS6_DISTRIBUTED_MEMORY=120GB
+```toml
+[cluster]
+	local_memory = "2GB"
+	distributed_memory = "120GB"
 ```
 
 Notice: Nanos6 will allocate the sum of these variables on all instances of the runtime in a clustered execution. This might require the
@@ -170,12 +171,13 @@ make install
 
 ### Preparing the environment
 
-Apart from enabling cluster support in Nanos6 during compilation, users of OmpSs-2@Cluster need to enable it at runtime by setting the `NANOS6_COMMUNICATION`
-environment variable. This variable determines which communication layer will be used by Nanos6 for Cluster communication. At the moment, we only support
+Apart from enabling cluster support in Nanos6 during compilation, users of OmpSs-2@Cluster need to enable it at runtime by setting the `cluster.communication`
+config variable. This variable determines which communication layer will be used by Nanos6 for Cluster communication. At the moment, we only support
 2-sided MPI implementations, so:
 
-```sh
-export NANOS6_COMMUNICATION=mpi-2sided
+```toml
+[cluster]
+	communication = "mpi-2sided"
 ```
 
 If this variable is not set, the application will run as if cluster is disabled.
@@ -184,8 +186,7 @@ If this variable is not set, the application will run as if cluster is disabled.
 
 You launch an OmpSs-2@Cluster application using the standard utility provided by the MPI library you used to build Nanos6 with Cluster support. For example,
 
-```sh
-export NANOS6_COMMUNICATION=mpi-2sided
+```toml
 mpirun -np 16 taskset -c 0-47 ./your_ompss_cluster_app args...
 ```
 
@@ -201,14 +202,13 @@ scheduler. For example, a SLURM job script could look like:
 #SBATCH --cpus-per-task=48
 
 
-export NANOS6_COMMUNICATION=mpi-2sided
 srun ./your_ompss_cluster_app args...
 ```
 
 ### System requirements
 
 At the moment, cluster execution requires the system to have disabled the address randomization feature. Moreover, depending on the total address space the
-application needs to manage, i.e. `NANOS6_LOCAL_MEMORY` and `NANOS6_DISTRIBUTED_MEMORY` you might need to change the memory overcommit feature of your kernel.
+application needs to manage, i.e. `cluster.local_memory` and `cluster.distributed_memory` you might need to change the memory overcommit feature of your kernel.
 
 These configurations can be done on a Linux system like this:
 

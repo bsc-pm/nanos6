@@ -140,7 +140,7 @@ calling a -PGI-transformed- `cudaMallocManaged()` from a thread (running a task)
 with a CUDA context will result in a CUDA Runtime error, or a segmentation fault later on.
 
 Although multi-threaded behaviour is not -yet- defined in OpenACC standard, we inherit this limitation from
-the underlying CUDA implementation. The good news is that we also inherit the work-around to it. 
+the underlying CUDA implementation. The good news is that we also inherit the work-around to it.
 For CUDA + multi-threading it is suggested that each thread does a -dummy- `cudaSetDevice()` operation, that
 serves to actually have the CUDA runtime bind the present thread to a CUDA context (see [here](https://devblogs.nvidia.com/cuda-pro-tip-always-set-current-device-avoid-multithreading-bugs/))
 
@@ -214,10 +214,10 @@ compilation procedure might be complex, so it is needed to keep things as separa
  - Hence, CUDA tasks (-->function calls) *can* be called from a file compiled with PGI-Mercurium.
  - CUDA tasks compilation however **must** be done with `mcxx` as shown in the documentation.
 
-## Nanos 6 environment variables for CUDA tasks
+## Nanos 6 configuration variables for OpenACC tasks
 
-The runtime provides the following environment variables related to OpenACC:
+The runtime provides the following configuration variables related to OpenACC:
 
-1. `NANOS6_OPENACC_DEFAULT_QUEUES`: The number of preallocated async queues *per device*. Default value is 64.
-1. `NANOS6_OPENACC_MAX_QUEUES`: The max number of async queues, and therefore tasks, that can be concurrently run *per device*. Default value is 128.
+1. `devices.openacc.default_queues`: The number of preallocated async queues *per device*. Default value is 64.
+1. `devices.openacc.max_queues`: The max number of async queues, and therefore tasks, that can be concurrently run *per device*. Default value is 128.
 

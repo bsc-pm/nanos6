@@ -129,8 +129,8 @@ $ mcxx --ompss-2 --cuda cuda-saxpy.cpp saxpy_kernel.cu -o saxpy_app
 (Note that, for CUDA parts, the C++ backend is needed, therefore always use `mcxx`. For large
 applications though, C parts can be compiled with `mcc -c` as described in README).
 
-## Nanos 6 environment variables for CUDA tasks
+## Nanos 6 configuration variables for CUDA tasks
 
-The runtime provides the following environment variables related to CUDA:
+The runtime provides the following configuration variables related to CUDA:
 
-1. `NANOS6_CUDA_STREAMS`: The max number of tasks that can be concurrently run *per device*. Default value is 16.
+1. `devices.cuda.streams`: The max number of tasks that can be concurrently run *per device*. Default value is 16.

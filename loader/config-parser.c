@@ -202,13 +202,13 @@ static int _nanos6_config_parse_override()
 
 	while (current_option) {
 		// Let's extract the name and the value.
-		char *separator = strchr(current_option, ':');
+		char *separator = strchr(current_option, '=');
 		if (separator) {
 			// We can "cheat" by creating two strings from the single place we have. As the separator is not important,
 			// we just replace it by a null character.
 			*separator = '\0';
 			_nanos6_config_parse_individual_override(current_option, separator + 1);
-			*separator = ':';
+			*separator = '=';
 		} // Otherwise just ignore this. It will fall-through and the runtime will warn the error
 
 		current_option = strtok(NULL, ",");
