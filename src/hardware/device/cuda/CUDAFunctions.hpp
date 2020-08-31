@@ -9,8 +9,8 @@
 
 #include <cuda_runtime_api.h>
 
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/cuda/CUDAErrorHandler.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 // A helper class, providing static helper functions, specific to the device,
 // to be used by DeviceInfo and other relevant classes as utilities.
