@@ -1,17 +1,32 @@
 # Nanos6 default configuration file
+# This file is part of Nanos6 and is licensed under the terms contained in the COPYING file
+# Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
+
 [misc]
+	# Stack size of threads created by the runtime. Default is 8M
 	stack_size = "8M"
+	# Enable polling services, needed for some runtime components. Default is true
 	polling = true
+	# Frequency for polling services expressed in microseconds. Default is 1ms
 	polling_frequency = 1000 # µs
 
 [loader]
+	# Enable verbose output of the loader, to debug dynamic linking problems. Default is false
 	verbose = false
+	# Choose runtime variant to be loaded, to enable specific instrumentations. Default is "optimized"
+	# Possible values: "optimized", "turbo", "debug", "verbose", "verbose-debug", "stats", "extrae", "ctf", "graph", "lint"
 	variant = "optimized"
-	dependencies = "regions" # "regions" or "discrete"
+	# Choose dependency system implementation. Default is "regions"
+	# Possible values: "regions", "discrete"
+	dependencies = "regions"
+	# Path to the nanos6 libraries. Default is none
 	# library_path = "path/to/nanos6/lib"
+	# Prefix for the report printing all the runtime variables. Default is none
 	# report_prefix = "#"
 
 [cpumanager]
+	# CPU Manager policy for lending or idling cpus. Default is "default"
+	# Possible values: "default", "idle", "busy", "lewi", "greedy"
 	policy = "default"
 
 [taskfor]
@@ -19,12 +34,17 @@
 	report = false
 
 [throttle]
+	# Enable throttle to stop creating tasks when certain conditions are met. Default is false
 	enabled = false
+	# Maximum number of child tasks that can be created before throttling. Default is 5000000
 	tasks = 5000000
-	pressure = 70
-	max_memory = "0" # Default memory size
+	# Maximum memory pressure (percent of max_memory) before throttling. Default is 70 (%)
+	pressure = 70 # %
+	# Maximum memory that can be used by the runtime. Default is "0", which equals half of system memory
+	max_memory = "0"
 
 [dlb]
+	# Enable DLB. Default is false
 	enabled = false
 
 [hardware_counters]
@@ -50,9 +70,13 @@
 	priority = true
 
 [devices]
+	# OmpSs-2 @ CUDA
 	[devices.cuda]
+		# CUDA device page size. Default is 0x8000
 		page_size = 0x8000
+		# Maximum CUDA streams per GPU. Default is 16
 		streams = 16
+	# OmpSs-2 @ OpenACC
 	[devices.openacc]
 		default_queues = 64
 		max_queues = 128
@@ -80,9 +104,13 @@
 	[instrument.stats]
 		output_file = "/dev/stderr"
 	[instrument.verbose]
+		# Output device or file for verbose log. Default is "/dev/stderr"
 		output_file = "/dev/stderr"
+		# Print timestamps on log. Default is true
 		timestamps = true
+		# Delay verbose output to prevent mixing with application output. Default is false
 		dump_only_on_exit = false
+		# Verbose log concepts to display. Possible values on README.md
 		areas = ["all", "!ComputePlaceManagement", "!DependenciesByAccess", "!DependenciesByAccessLinks",
 			"!DependenciesByGroup", "!LeaderThread", "!TaskStatus",	"!ThreadManagement"]
 
