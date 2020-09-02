@@ -1,21 +1,15 @@
 # Nanos6 default configuration file
-stack_size = "8M"
-polling = true
-polling_frequency = 1000 # µs
+[misc]
+	stack_size = "8M"
+	polling = true
+	polling_frequency = 1000 # µs
 
 [loader]
 	verbose = false
 	variant = "optimized"
-	dependencies = "regions"
+	dependencies = "regions" # "regions" or "discrete"
 	# library_path = "path/to/nanos6/lib"
 	# report_prefix = "#"
-
-[cluster]
-	communication = "disabled"
-	distributed_memory = "2G"
-	local_memory = "2G"
-	scheduling_policy = "locality"
-	# va_start = 0x00000000
 
 [cpumanager]
 	policy = "default"
@@ -33,6 +27,28 @@ polling_frequency = 1000 # µs
 [dlb]
 	enabled = false
 
+[hardware_counters]
+	verbose = false
+	verbose_file = "nanos6-output-hwcounters.txt"
+
+[memory]
+	[memory.pool]
+		global_alloc_size = "8M"
+		chunk_size = "128K"
+
+[monitoring]
+	enabled = true
+	wisdom = false
+	verbose = true
+	verbose_file = "output-monitoring.txt"
+	cpuusage_prediction_rate = 100 # µs
+	rolling_window = 20
+
+[scheduler]
+	policy = "fifo"
+	immediate_successor = true
+	priority = true
+
 [devices]
 	[devices.cuda]
 		page_size = 0x8000
@@ -40,10 +56,6 @@ polling_frequency = 1000 # µs
 	[devices.openacc]
 		default_queues = 64
 		max_queues = 128
-
-[hardware_counters]
-	verbose = false
-	verbose_file = "nanos6-output-hwcounters.txt"
 
 [instrument]
 	[instrument.ctf]
@@ -74,20 +86,9 @@ polling_frequency = 1000 # µs
 		areas = ["all", "!ComputePlaceManagement", "!DependenciesByAccess", "!DependenciesByAccessLinks",
 			"!DependenciesByGroup", "!LeaderThread", "!TaskStatus",	"!ThreadManagement"]
 
-[memory]
-	[memory.pool]
-		global_alloc_size = "8M"
-		chunk_size = "128K"
-
-[monitoring]
-	enabled = true
-	enable_wisdom = false
-	verbose = true
-	verbose_file = "output-monitoring.txt"
-	cpuusage_prediction_rate = 100 # µs
-	rolling_window = 20
-
-[scheduler]
-	policy = "fifo"
-	enable_immediate_successor = true
-	enable_priority = true
+[cluster]
+	communication = "disabled"
+	distributed_memory = "2G"
+	local_memory = "2G"
+	scheduling_policy = "locality"
+	# va_start = 0x00000000

@@ -127,8 +127,8 @@ For example, to change the dependency variant and enable turbo mode: `NANOS6_CON
 The scheduling infrastructure provides the following configuration variables to modify the behavior of the task scheduler.
 
 * `scheduler.policy`: Specifies whether ready tasks are added to the ready queue using a FIFO (`fifo`) or a LIFO (`lifo`) policy. The **fifo** is the default.
-* `scheduler.enable_immediate_successor`: Boolean indicating whether the immediate successor policy is enabled. If enabled, once a CPU finishes a task, the same CPU starts executing its successor task (computed through the data dependencies) such that it can reuse the data on the cache. **Enabled** by default.
-* `scheduler.enable_priority`: Boolean indicating whether the scheduler should consider task priorities. **Enabled** by default.
+* `scheduler.immediate_successor`: Boolean indicating whether the immediate successor policy is enabled. If enabled, once a CPU finishes a task, the same CPU starts executing its successor task (computed through the data dependencies) such that it can reuse the data on the cache. **Enabled** by default.
+* `scheduler.priority`: Boolean indicating whether the scheduler should consider task priorities. **Enabled** by default.
 
 ### Task worksharings options
 
@@ -377,7 +377,7 @@ The Monitoring infrastructure is enabled at configure time, however, both the in
 * `monitoring.enabled`: To enable/disable monitoring and predictions of task, CPU, and thread statistics. Enabled by default if the runtime is configured with Monitoring.
 * `monitoring.verbose`: To enable/disable the verbose mode for monitoring. Enabled by default if the runtime is configured with Monitoring.
 * `monitoring.rolling_window`: To specify the number of metrics used for accumulators (moving average's window). By default, the latest 20 metrics.
-* `monitoring.enable_wisdom`: To enable/disable the wisdom mechanism. Disabled by default.
+* `monitoring.wisdom`: To enable/disable the wisdom mechanism. Disabled by default.
 
 ### Known Limitations
 

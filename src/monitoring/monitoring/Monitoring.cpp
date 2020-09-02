@@ -13,7 +13,7 @@
 
 ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled", true);
 ConfigVariable<bool> Monitoring::_verbose("monitoring.verbose", true);
-ConfigVariable<bool> Monitoring::_wisdomEnabled("monitoring.enable_wisdom", false);
+ConfigVariable<bool> Monitoring::_wisdomEnabled("monitoring.wisdom", false);
 ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "output-monitoring.txt");
 Monitoring *Monitoring::_monitor;
 
