@@ -16,18 +16,21 @@
 
 namespace Instrument {
 	//! This function is called upon entering the blocking API task block function
+	//! If taskRuntimeTransistion is true, Task Hardware Counters have been updated before calling this function.
 	//! \param[in] taskID The blocking task identifier
 	//! \param[in] taskRuntimeTransition whether this API function was called from task or
 	//! runtime code
 	void enterBlockCurrentTask(task_id_t taskId, bool taskRuntimeTransition, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 
 	//! This function is called upon exiting blocking API task block function
+	//! If taskRuntimeTransistion is true, Runtime Hardware Counters have been updated before calling this function.
 	//! \param[in] taskID The blocking task identifier
 	//! \param[in] taskRuntimeTransition Whether this API function was called from task or
 	//! runtime code
 	void exitBlockCurrentTask(task_id_t taskId, bool taskRuntimeTransition, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 
 	//! This function is called upon entering the blocking API task unblock function
+	//! If taskRuntimeTransistion is true, Task Hardware Counters have been updated before calling this function.
 	//! \param[in] taskID The blocking task identifier
 	//! \param[in] taskRuntimeTransition Whether this API function was called from task or
 	//! runtime code

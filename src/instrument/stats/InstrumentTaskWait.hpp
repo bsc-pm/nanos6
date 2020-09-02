@@ -44,8 +44,6 @@ namespace Instrument {
 
 			Instrument::Stats::_phasesSpinLock.writeUnlock();
 		}
-
-		Instrument::returnToTask(taskId, context);
 	}
 
 }

@@ -21,6 +21,7 @@ namespace Instrument {
 	//! This function is called upon entering the task creation function and must
 	//! return an instrumentation-specific task identifier.
 	//! The other 2 functions will also be called by the same thread sequentially.
+	//! If taskRuntimeTransistion is true, Task Hardware Counters have been updated before calling this function.
 	//! \param[in] taskInfo The taskInfo describing the task
 	//! \param[in] taskInvokationInfo A pointer to the nanos6_task_invocation_info_t structure
 	//! \param[in] flags The flags of the task
@@ -57,6 +58,7 @@ namespace Instrument {
 	//! This function is called upon exiting the submit task function. The task
 	//! identifier is necessary because the actual task may have already been
 	//! destroyed by the time this function is called
+	//! If taskRuntimeTransistion is true, Runtime Hardware Counters have been updated before calling this function.
 	//! \param[in] taskId the task identifier returned in the call to enterAddTask
 	//! \param[in] taskRuntimeTransition whether this API was called from task or
 	//! runtime code
@@ -82,11 +84,13 @@ namespace Instrument {
 	void registeredNewSpawnedTaskType(nanos6_task_info_t *taskInfo);
 
 	//! This function is called upon entering SpawnFunction::spawnFunction
+	//! If taskRuntimeTransistion is true, Task Hardware Counters have been updated before calling this function.
 	//! \param[in] taskRuntimeTransition whether this API function was called from task or
 	//! runtime code
 	void enterSpawnFunction(bool taskRuntimeTransition);
 
 	//! This function is called upon exiting SpawnFunction::spawnFunction
+	//! If taskRuntimeTransistion is true, Runtime Hardware Counters have been updated before calling this function.
 	//! \param[in] taskRuntimeTransition whether this API function was called from task or
 	//! runtime code
 	void exitSpawnFunction(bool taskRuntimeTransition);

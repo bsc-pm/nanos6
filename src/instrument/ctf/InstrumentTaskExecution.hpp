@@ -23,12 +23,6 @@ namespace Instrument {
 		tp_task_start(taskId._taskId);
 	}
 
-	inline void returnToTask(
-		__attribute__((unused)) task_id_t taskId,
-		__attribute__((unused)) InstrumentationContext const &context
-	) {
-	}
-
 	inline void endTask(
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) InstrumentationContext const &context

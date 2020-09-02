@@ -17,6 +17,7 @@ class Task;
 
 namespace Instrument {
 	//! This function is called upon entering the task wait API
+	//! If taskRuntimeTransistion is true, Task Hardware Counters have been updated before calling this function.
 	//! \param[in] taskID The waiting task identifier
 	//! \param[in] invocationSource Source location starting that called this API
 	//! \param[in] if0TaskId If0 task Identifier (if called from If0Task only)
@@ -25,6 +26,7 @@ namespace Instrument {
 	void enterTaskWait(task_id_t taskId, char const *invocationSource, task_id_t if0TaskId, bool taskRuntimeTransition, InstrumentationContext const &context = ThreadInstrumentationContext::getCurrent());
 
 	//! This function is called upon entering the task wait API
+	//! If taskRuntimeTransistion is true, Runtime Hardware Counters have been updated before calling this function.
 	//! \param[in] taskID The waiting task identifier
 	//! \param[in] taskRuntimeTransition whether this API function was called from task or
 	//! runtime code

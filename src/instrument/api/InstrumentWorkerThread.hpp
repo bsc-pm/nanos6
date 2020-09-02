@@ -9,8 +9,13 @@
 
 namespace Instrument {
 
+	//! This function is called when the current worker thread loops on its main loop
 	void workerThreadSpins();
+
+	//! This function is called when the current worker thread obtains a task
 	void workerThreadObtainedTasks();
+
+	//! This function is called when the current worker thread starts busy waiting
 	void workerThreadBusyWaits();
 
 }
