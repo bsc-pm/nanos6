@@ -7,11 +7,13 @@
 import bt2
 import atexit
 import os
+import sys
 import readline
 import code
 from pprint import pprint
 from collections import defaultdict
 import operator
+import signal
 
 from runtime import RuntimeModel
 from paravertrace import ParaverTrace, ExtraeEventTypes
@@ -26,6 +28,38 @@ bt2.register_plugin(
 	version=(1, 0, 0),
 )
 
+
+class ExitHandler():
+	def __init__(self):
+		self._exit = False
+
+		# Register exit signals
+		signal.signal(signal.SIGTERM, self._sigtermHandler)
+		signal.signal(signal.SIGINT,  self._sigintHandler)
+
+		# Register timeout if requested
+		timeout = os.environ.get('CTF2PRV_TIMEOUT', "0")
+		if timeout != "0" and timeout != 0:
+			seconds = 0
+			try:
+				seconds = int(timeout) * 60
+			except:
+				raise RuntimeError("Cannot convert CTF2PRV_TIMEOUT value to seconds")
+			signal.signal(signal.SIGALRM, self._sigalrmHandler)
+			signal.alarm(seconds)
+
+	def exit(self):
+		return self._exit
+
+	def _sigalrmHandler(self, signum, frame):
+		self._exit = True
+
+	def _sigtermHandler(self, signum, frame):
+		self._exit = True
+
+	def _sigintHandler(self, signum, frame):
+		self._exit = True
+
 @bt2.plugin_component_class
 class ctf2prv(bt2._UserSinkComponent):
 	def __init__(self, config, params, obj):
@@ -35,6 +69,8 @@ class ctf2prv(bt2._UserSinkComponent):
 		atexit.register(self._finalize)
 		self.__payload = []
 		self.__verbose = False
+		self.__paraverViews = None
+		self.__exitHandler = ExitHandler()
 
 		self.__hooks = defaultdict(list)
 		self.__paraverViews = [
@@ -138,10 +174,18 @@ class ctf2prv(bt2._UserSinkComponent):
 		self._consume_message(msg)
 
 	def _consume_message(self, msg):
+		if self.__exitHandler.exit():
+			# TODO exit using babeltrace2 API
+			atexit.unregister(self._finalize)
+			self._finalize()
+			print("Conversion aborted successfully, trace might be incomplete but valid")
+			sys.stdout.flush()
+			os._exit(1)
+
 		if type(msg) is bt2._EventMessageConst:
 			ts = msg.default_clock_snapshot.value
 
-			if (self.__verbose):
+			if self.__verbose:
 				name = msg.event.name
 				cpu_id = msg.event["cpu_id"]
 				print("event {}, cpu_id {}, timestamp {}".format(name, cpu_id, ts))
@@ -166,6 +210,7 @@ class stats(bt2._UserSinkComponent):
 		self.__port = self._add_input_port("in")
 		self.__stats = defaultdict(int)
 		self.__total = 0
+		self.__exitHandler = ExitHandler()
 		atexit.register(self._finalize)
 
 	def _finalize(self):
@@ -195,6 +240,13 @@ class stats(bt2._UserSinkComponent):
 
 	def _user_consume(self):
 		msg = next(self._it)
+
+		if self.__exitHandler().exit():
+			# TODO exit using babeltrace2 API
+			atexit.unregister(self._finalize)
+			self._finalize()
+			sys.stdout.flush()
+			os._exit(1)
 
 		if type(msg) is bt2._EventMessageConst:
 			self._process_event(msg.event)

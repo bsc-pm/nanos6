@@ -46,6 +46,7 @@ The subdirectory `$TRACE/ctf` contains the ctf trace as recorded by Nanos6.
 
 By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
 The converted Paraver trace will be stored under the `$TRACE/prv` subdirectory.
+The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the conversion after the specified elapsed time in minutes.
 Please note that the conversion tool requires python3 and the babeltrace2 package.
 
 Additionally, Nanos6 provides a command to manually convert traces:
