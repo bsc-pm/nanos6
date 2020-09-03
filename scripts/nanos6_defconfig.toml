@@ -43,13 +43,37 @@
 	# Maximum memory that can be used by the runtime. Default is "0", which equals half of system memory
 	max_memory = "0"
 
+__require_DLB
 [dlb]
 	# Enable DLB. Default is false
 	enabled = false
+__!require_DLB
 
 [hardware_counters]
 	verbose = false
 	verbose_file = "nanos6-output-hwcounters.txt"
+__require_PAPI
+	[hardware_counters.papi]
+		enabled = false
+		counters = [
+			"PAPI_TOT_INS",
+			"PAPI_TOT_CYC"
+			]
+__!require_PAPI
+__require_PQOS
+	[hardware_counters.pqos]
+		enabled = false
+		counters = [
+			"PQOS_MON_EVENT_L3_OCCUP",
+			"PQOS_MON_EVENT_LMEM_BW",
+			"PQOS_MON_EVENT_RMEM_BW",
+			"PQOS_PERF_EVENT_LLC_MISS",
+			"PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS",
+			"PQOS_PERF_EVENT_UNHALTED_CYCLES"
+			]
+__!require_PQOS
+	[hardware_counters.rapl]
+		enabled = false
 
 [memory]
 	[memory.pool]
@@ -70,26 +94,35 @@
 	priority = true
 
 [devices]
+__require_CUDA
 	# OmpSs-2 @ CUDA
 	[devices.cuda]
 		# CUDA device page size. Default is 0x8000
 		page_size = 0x8000
 		# Maximum CUDA streams per GPU. Default is 16
 		streams = 16
+__!require_CUDA
+__require_OPENACC
 	# OmpSs-2 @ OpenACC
 	[devices.openacc]
 		default_queues = 64
 		max_queues = 128
+__!require_OPENACC
 
 [instrument]
+__require_CTF
 	[instrument.ctf]
 		tmpdir = "/tmp"
 		[instrument.ctf.conversor]
 			enabled = true
 			# location = "path/to/ctf2prv"
+__!require_CTF
+__require_EXTRAE
 	[instrument.extrae]
 		as_threads = false
 		detail_level = 1
+__!require_EXTRAE
+__require_GRAPH
 	[instrument.graph]
 		display = false
 		display_command = "xdg-open"
@@ -101,8 +134,10 @@
 		show_all_steps = false
 		show_superaccess_links = false
 		show_log = false
+__!require_GRAPH
 	[instrument.stats]
 		output_file = "/dev/stderr"
+__require_VERBOSE
 	[instrument.verbose]
 		# Output device or file for verbose log. Default is "/dev/stderr"
 		output_file = "/dev/stderr"
@@ -113,10 +148,13 @@
 		# Verbose log concepts to display. Possible values on README.md
 		areas = ["all", "!ComputePlaceManagement", "!DependenciesByAccess", "!DependenciesByAccessLinks",
 			"!DependenciesByGroup", "!LeaderThread", "!TaskStatus",	"!ThreadManagement"]
+__!require_VERBOSE
 
+__require_CLUSTER
 [cluster]
 	communication = "disabled"
 	distributed_memory = "2G"
 	local_memory = "2G"
 	scheduling_policy = "locality"
 	# va_start = 0x00000000
+__!require_CLUSTER

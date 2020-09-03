@@ -1939,6 +1939,75 @@ src/version/CompilerVersionInfo.cpp: Makefile
 	echo '#endif' >> src/version/CompilerVersionInfo.cpp ; \
 	echo >> src/version/CompilerVersionInfo.cpp
 
+# Generate config_vars to pass to the configuration generator based on the AM_CONDITIONALs
+# There is kind of no other way to do this
+
+config_vars=
+
+if USE_CUDA
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if USE_OPENACC
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if USE_CLUSTER
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if HAVE_DLB
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if BUILD_CTF_INSTRUMENTATION_VARIANT
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if BUILD_GRAPH_INSTRUMENTATION_VARIANT
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if BUILD_VERBOSE_INSTRUMENTATION_VARIANT
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if BUILD_EXTRAE_INSTRUMENTATION_VARIANT
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if HAVE_PAPI
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+if HAVE_PQOS
+config_vars += "1"
+else
+config_vars += "0"
+endif
+
+# Generate processed config file according to user chosen installation
+
+scripts/nanos6.toml: scripts/generate_config.sh scripts/nanos6_defconfig.toml
+	scripts/generate_config.sh $(config_vars) > scripts/nanos6.toml
 
 # All potential files in those lists will be distributed
 # regardless of the Makefile conditionals
@@ -1958,7 +2027,9 @@ EXTRA_DIST += \
 	docs/ctf/Developer.md \
 	docs/devices/CUDA.md \
 	docs/devices/Devices.md \
-	docs/devices/OpenACC.md
+	docs/devices/OpenACC.md \
+	scripts/generate_config.sh \
+	scripts/nanos6_defconfig.toml
 
 CLEANFILES += LICENSE.txt
 
