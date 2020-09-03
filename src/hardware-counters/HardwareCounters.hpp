@@ -49,7 +49,7 @@ private:
 
 	//! \brief Load backend and counter enabling configuration from the default
 	//! configuration file
-	static void loadConfigurationFile();
+	static void loadConfiguration();
 
 	//! \brief Check if multiple backends and/or other modules are enabled and incompatible
 	static inline void checkIncompatibilities()

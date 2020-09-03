@@ -12,6 +12,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <unordered_set>
 
 #include "ConfigParser.hpp"
 
@@ -187,7 +188,44 @@ public:
 	{
 		return _contents.end();
 	}
+};
 
+template <typename T>
+class ConfigVariableSet {
+public:
+	typedef std::unordered_set<T> contents_t;
+
+private:
+	contents_t _contents;
+	std::string _name;
+	bool _isPresent;
+
+public:
+	ConfigVariableSet(std::string const &name, std::initializer_list<T> defaultValues) :
+		_contents(defaultValues), _name(name)
+	{
+		ConfigParser &parser = ConfigVariableAux::getParser();
+		// Does not touch the value if the variable is invalid or is not specified
+		std::vector<T> listContents;
+		parser.getList(name, listContents, _isPresent);
+
+		if (_isPresent) {
+			_contents.clear();
+			for (T &item : listContents)
+				_contents.emplace(item);
+		}
+	}
+
+	//! \brief indicates if the enviornment variable has actually been defined
+	inline bool isPresent() const
+	{
+		return _isPresent;
+	}
+
+	inline bool contains(T &item) const
+	{
+		return (_contents.find(item) != _contents.end());
+	}
 };
 
 

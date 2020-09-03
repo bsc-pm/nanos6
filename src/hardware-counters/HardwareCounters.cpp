@@ -32,76 +32,34 @@ std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
 std::vector<HWCounters::counters_t> HardwareCounters::_enabledCounters;
 
 
-void HardwareCounters::loadConfigurationFile()
+void HardwareCounters::loadConfiguration()
 {
-	JsonFile configFile = JsonFile("./nanos6_hwcounters.json");
-	if (configFile.fileExists()) {
-		configFile.loadData();
+	ConfigVariable<bool> papiEnabled("hardware_counters.papi.enabled", false);
+	ConfigVariable<bool> pqosEnabled("hardware_counters.pqos.enabled", false);
+	ConfigVariable<bool> raplEnabled("hardware_counters.rapl.enabled", false);
 
-		// Navigate through the file and extract the enabled backens and counters
-		configFile.getRootNode()->traverseChildrenNodes(
-			[&](const std::string &backend, const JsonNode<> &backendNode) {
-				if (backend == "PAPI") {
-					if (backendNode.dataExists("ENABLED")) {
-						bool converted = false;
-						bool enabled = backendNode.getData("ENABLED", converted);
-						assert(converted);
+	_enabled[HWCounters::PAPI_BACKEND] = papiEnabled;
+	if (papiEnabled) {
+		_anyBackendEnabled = true;
+		ConfigVariableSet<std::string> counterSet("hardware_counters.papi.counters", {});
 
-						_enabled[HWCounters::PAPI_BACKEND] = enabled;
-						if (enabled) {
-							_anyBackendEnabled = true;
-							for (short i = HWCounters::HWC_PAPI_MIN_EVENT; i <= HWCounters::HWC_PAPI_MAX_EVENT; ++i) {
-								std::string eventDescription(HWCounters::counterDescriptions[i]);
-								if (backendNode.dataExists(eventDescription)) {
-									converted = false;
-									if (backendNode.getData(eventDescription, converted) == 1) {
-										_enabledCounters.push_back((HWCounters::counters_t) i);
-									}
-									assert(converted);
-								}
-							}
-						}
-					}
-				} else if (backend == "PQOS") {
-					if (backendNode.dataExists("ENABLED")) {
-						bool converted = false;
-						bool enabled = backendNode.getData("ENABLED", converted);
-						assert(converted);
+		for (short i = HWCounters::HWC_PAPI_MIN_EVENT; i <= HWCounters::HWC_PAPI_MAX_EVENT; ++i) {
+			std::string eventDescription(HWCounters::counterDescriptions[i]);
+			if (counterSet.contains(eventDescription))
+				_enabledCounters.push_back((HWCounters::counters_t) i);
+		}
+	}
 
-						_enabled[HWCounters::PQOS_BACKEND] = enabled;
-						if (enabled) {
-							_anyBackendEnabled = true;
-							for (short i = HWCounters::HWC_PQOS_MIN_EVENT; i <= HWCounters::HWC_PQOS_MAX_EVENT; ++i) {
-								std::string eventDescription(HWCounters::counterDescriptions[i]);
-								if (backendNode.dataExists(eventDescription)) {
-									converted = false;
-									if (backendNode.getData(eventDescription, converted) == 1) {
-										_enabledCounters.push_back((HWCounters::counters_t) i);
-									}
-									assert(converted);
-								}
-							}
-						}
-					}
-				} else if (backend == "RAPL") {
-					if (backendNode.dataExists("ENABLED")) {
-						bool converted = false;
-						bool enabled = backendNode.getData("ENABLED", converted);
-						assert(converted);
+	_enabled[HWCounters::PQOS_BACKEND] = pqosEnabled;
+	if (pqosEnabled) {
+		_anyBackendEnabled = true;
+		ConfigVariableSet<std::string> counterSet("hardware_counters.pqos.counters", {});
 
-						_enabled[HWCounters::RAPL_BACKEND] = enabled;
-						if (enabled) {
-							_anyBackendEnabled = true;
-						}
-					}
-				} else {
-					FatalErrorHandler::fail(
-						"Unexpected '", backend, "' backend name found while processing the ",
-						"hardware counters configuration file."
-					);
-				}
-			}
-		);
+		for (short i = HWCounters::HWC_PQOS_MIN_EVENT; i <= HWCounters::HWC_PQOS_MAX_EVENT; ++i) {
+			std::string eventDescription(HWCounters::counterDescriptions[i]);
+			if (counterSet.contains(eventDescription))
+				_enabledCounters.push_back((HWCounters::counters_t) i);
+		}
 	}
 }
 
@@ -116,7 +74,7 @@ void HardwareCounters::preinitialize()
 	}
 
 	// Load the configuration file to check which backends and events are enabled
-	loadConfigurationFile();
+	loadConfiguration();
 
 	// Check if there's an incompatibility between backends
 	checkIncompatibilities();
