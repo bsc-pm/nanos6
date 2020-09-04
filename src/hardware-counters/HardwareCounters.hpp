@@ -11,8 +11,8 @@
 
 #include "HardwareCountersInterface.hpp"
 #include "SupportedHardwareCounters.hpp"
-#include "support/config/ConfigVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 
 class Task;
@@ -47,8 +47,7 @@ private:
 
 private:
 
-	//! \brief Load backend and counter enabling configuration from the default
-	//! configuration file
+	//! \brief Load backends and counter configuration from the configuration file
 	static void loadConfiguration();
 
 	//! \brief Check if multiple backends and/or other modules are enabled and incompatible

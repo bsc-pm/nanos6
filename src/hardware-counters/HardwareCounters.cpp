@@ -10,7 +10,6 @@
 #include "ThreadHardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/rapl/RAPLHardwareCounters.hpp"
-#include "support/JsonFile.hpp"
 #include "tasks/Task.hpp"
 
 #if HAVE_PAPI
@@ -24,11 +23,11 @@
 
 ConfigVariable<bool> HardwareCounters::_verbose("hardware_counters.verbose", false);
 ConfigVariable<std::string> HardwareCounters::_verboseFile("hardware_counters.verbose_file", "nanos6-output-hwcounters.txt");
-HardwareCountersInterface *HardwareCounters::_papiBackend;
-HardwareCountersInterface *HardwareCounters::_pqosBackend;
-HardwareCountersInterface *HardwareCounters::_raplBackend;
+HardwareCountersInterface *HardwareCounters::_papiBackend(nullptr);
+HardwareCountersInterface *HardwareCounters::_pqosBackend(nullptr);
+HardwareCountersInterface *HardwareCounters::_raplBackend(nullptr);
 bool HardwareCounters::_anyBackendEnabled(false);
-std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS);
+std::vector<bool> HardwareCounters::_enabled(HWCounters::NUM_BACKENDS, false);
 std::vector<HWCounters::counters_t> HardwareCounters::_enabledCounters;
 
 
@@ -37,43 +36,45 @@ void HardwareCounters::loadConfiguration()
 	ConfigVariable<bool> papiEnabled("hardware_counters.papi.enabled", false);
 	ConfigVariable<bool> pqosEnabled("hardware_counters.pqos.enabled", false);
 	ConfigVariable<bool> raplEnabled("hardware_counters.rapl.enabled", false);
-
 	_enabled[HWCounters::PAPI_BACKEND] = papiEnabled;
-	if (papiEnabled) {
-		_anyBackendEnabled = true;
-		ConfigVariableSet<std::string> counterSet("hardware_counters.papi.counters", {});
+	_enabled[HWCounters::PQOS_BACKEND] = pqosEnabled;
+	_enabled[HWCounters::RAPL_BACKEND] = raplEnabled;
+	_anyBackendEnabled = papiEnabled || pqosEnabled || raplEnabled;
 
+	// Check which PAPI events are enabled in the config file
+	if (papiEnabled) {
+		ConfigVariableSet<std::string> counterSet("hardware_counters.papi.counters", {});
 		for (short i = HWCounters::HWC_PAPI_MIN_EVENT; i <= HWCounters::HWC_PAPI_MAX_EVENT; ++i) {
 			std::string eventDescription(HWCounters::counterDescriptions[i]);
-			if (counterSet.contains(eventDescription))
+			if (counterSet.contains(eventDescription)) {
 				_enabledCounters.push_back((HWCounters::counters_t) i);
+			}
+		}
+
+		if (_enabledCounters.empty()) {
+			FatalErrorHandler::warn("PAPI enabled but no counters are enabled in the config file");
 		}
 	}
 
-	_enabled[HWCounters::PQOS_BACKEND] = pqosEnabled;
+	// Check which PQOS events are enabled in the config file
 	if (pqosEnabled) {
-		_anyBackendEnabled = true;
 		ConfigVariableSet<std::string> counterSet("hardware_counters.pqos.counters", {});
-
 		for (short i = HWCounters::HWC_PQOS_MIN_EVENT; i <= HWCounters::HWC_PQOS_MAX_EVENT; ++i) {
 			std::string eventDescription(HWCounters::counterDescriptions[i]);
-			if (counterSet.contains(eventDescription))
+			if (counterSet.contains(eventDescription)) {
 				_enabledCounters.push_back((HWCounters::counters_t) i);
+			}
+		}
+
+		if (_enabledCounters.empty()) {
+			FatalErrorHandler::warn("PQoS enabled but no counters are enabled in the config file");
 		}
 	}
 }
 
 void HardwareCounters::preinitialize()
 {
-	// First set all backends to nullptr and all events disabled
-	_papiBackend = nullptr;
-	_pqosBackend = nullptr;
-	_raplBackend = nullptr;
-	for (short i = 0; i < HWCounters::NUM_BACKENDS; ++i) {
-		_enabled[i] = false;
-	}
-
-	// Load the configuration file to check which backends and events are enabled
+	// Load the configuration to check which backends and events are enabled
 	loadConfiguration();
 
 	// Check if there's an incompatibility between backends
