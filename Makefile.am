@@ -2127,10 +2127,6 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/ctf2prv/thread_id.cfg
 
 
-hwcountersdir = ${docdir}
-nobase_dist_hwcounters_DATA = \
-	scripts/nanos6_hwcounters.json
-
 configfiledir = ${docdir}
 nobase_dist_configfile_DATA = \
 	scripts/nanos6.toml

@@ -25,7 +25,8 @@
 	# report_prefix = "#"
 
 [cpumanager]
-	# CPU Manager policy for lending or idling cpus. Default is "default"
+	# The underlying policy of the CPU Manager for the handling of CPUs. By
+	# default "default", which corresponds to "idle".
 	# Possible values: "default", "idle", "busy", "lewi", "greedy"
 	policy = "default"
 
@@ -45,7 +46,7 @@
 
 __require_DLB
 [dlb]
-	# Enable DLB. Default is false
+	# Enable DLB support. Defaults to false
 	enabled = false
 __!require_DLB
 
@@ -58,7 +59,7 @@ __require_PAPI
 		counters = [
 			"PAPI_TOT_INS",
 			"PAPI_TOT_CYC"
-			]
+		]
 __!require_PAPI
 __require_PQOS
 	[hardware_counters.pqos]
@@ -70,7 +71,7 @@ __require_PQOS
 			"PQOS_PERF_EVENT_LLC_MISS",
 			"PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS",
 			"PQOS_PERF_EVENT_UNHALTED_CYCLES"
-			]
+		]
 __!require_PQOS
 	[hardware_counters.rapl]
 		enabled = false

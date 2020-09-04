@@ -23,6 +23,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 
 class CPUManagerInterface {
