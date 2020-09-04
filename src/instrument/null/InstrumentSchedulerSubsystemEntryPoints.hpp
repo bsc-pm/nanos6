@@ -7,7 +7,7 @@
 #ifndef INSTRUMENT_NULL_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
 #define INSTRUMENT_NULL_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
 
-#include "../api/InstrumentSchedulerSubsystemEntryPoints.hpp"
+#include "instrument/api/InstrumentSchedulerSubsystemEntryPoints.hpp"
 
 namespace Instrument {
 

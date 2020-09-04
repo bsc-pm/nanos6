@@ -46,7 +46,7 @@ void WorkerThread::initialize()
 	assert(getComputePlace() != nullptr);
 
 	Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), getComputePlace()->getInstrumentationId(), _instrumentationId);
-	Instrument::threadHasResumedBeforeSync(_instrumentationId, getComputePlace()->getInstrumentationId());
+	Instrument::threadHasResumed(_instrumentationId, getComputePlace()->getInstrumentationId(), false);
 
 	markAsCurrentWorkerThread();
 
@@ -89,6 +89,8 @@ void WorkerThread::body()
 				_task = nullptr;
 
 				ThreadManager::addIdler(this);
+				HardwareCounters::updateRuntimeCounters();
+				Instrument::threadWillSuspend(_instrumentationId, cpu->getInstrumentationId());
 				switchTo(assignedThread);
 			} else {
 				Instrument::workerThreadObtainedTask();

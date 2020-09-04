@@ -8,7 +8,7 @@
 #define INSTRUMENT_NULL_ADD_TASK_HPP
 
 
-#include "../api/InstrumentAddTask.hpp"
+#include "instrument/api/InstrumentAddTask.hpp"
 
 
 namespace Instrument {
@@ -16,13 +16,15 @@ namespace Instrument {
 		__attribute__((unused)) nanos6_task_info_t *taskInfo,
 		__attribute__((unused)) nanos6_task_invocation_info_t *taskInvokationInfo,
 		__attribute__((unused)) size_t flags,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		return task_id_t();
 	}
 
-	inline void exitCreateTask()
-	{
+	inline void exitCreateTask(
+		__attribute__((unused)) bool taskRuntimeTransition
+	) {
 	}
 
 	inline void createdArgsBlock(
@@ -33,7 +35,7 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context)
 	{
 	}
-	
+
 	inline void createdTask(
 		__attribute__((unused)) void *task,
 		__attribute__((unused)) task_id_t taskId,
@@ -41,12 +43,14 @@ namespace Instrument {
 	) {
 	}
 
-	inline void enterSubmitTask()
-	{
+	inline void enterSubmitTask(
+		__attribute__((unused)) bool taskRuntimeTransition
+	) {
 	}
 
 	inline void exitSubmitTask(
 		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 	}
@@ -60,7 +64,7 @@ namespace Instrument {
 	) {
 		return task_id_t();
 	}
-	
+
 	inline void exitInitTaskforCollaborator(
 		__attribute__((unused)) task_id_t taskforId,
 		__attribute__((unused)) task_id_t collaboratorId,
@@ -70,6 +74,16 @@ namespace Instrument {
 
 	inline void registeredNewSpawnedTaskType(
 		__attribute__((unused)) nanos6_task_info_t *taskInfo
+	) {
+	}
+
+	inline void enterSpawnFunction(
+		__attribute__((unused)) bool taskRuntimeTransition
+	) {
+	}
+
+	inline void exitSpawnFunction(
+		__attribute__((unused)) bool taskRuntimeTransition
 	) {
 	}
 }

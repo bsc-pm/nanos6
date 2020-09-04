@@ -51,12 +51,20 @@ private:
 	//! configuration file
 	static void loadConfigurationFile();
 
-	//! \brief Check if two or more backends are enabled and incompatible
-	static inline void checkIncompatibleBackends()
+	//! \brief Check if multiple backends and/or other modules are enabled and incompatible
+	static inline void checkIncompatibilities()
 	{
 		if (_enabled[HWCounters::PAPI_BACKEND] && _enabled[HWCounters::PQOS_BACKEND]) {
 			FatalErrorHandler::fail("PAPI and PQoS are incompatible hardware counter libraries");
 		}
+
+		// If extrae is enabled, disable PAPI to avoid hardware counters collisions
+#ifdef EXTRAE_ENABLED
+		if (_enabled[HWCounters::PAPI_BACKEND]) {
+			FatalErrorHandler::warn("The PAPI backend and Extrae are not compatible, disabling PAPI");
+			_enabled[HWCounters::PAPI_BACKEND] = false;
+		}
+#endif
 	}
 
 public:

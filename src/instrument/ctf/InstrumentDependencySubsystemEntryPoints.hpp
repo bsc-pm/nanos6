@@ -8,7 +8,7 @@
 #define INSTRUMENT_CTF_DEPENDENCY_SUBSYTEM_ENTRY_POINTS_HPP
 
 #include "CTFTracepoints.hpp"
-#include "../api/InstrumentDependencySubsystemEntryPoints.hpp"
+#include "instrument/api/InstrumentDependencySubsystemEntryPoints.hpp"
 
 
 namespace Instrument {

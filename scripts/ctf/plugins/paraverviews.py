@@ -53,36 +53,60 @@ class ParaverViewRuntimeBusyWaiting(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:thread_shutdown",        self.hook_threadShutdown),
+			("nanos6:thread_shutdown",        self.hook_threadStop),
+			("nanos6:thread_suspend",         self.hook_threadStop),
+			("nanos6:thread_resume",          self.hook_threadResume),
 			("nanos6:worker_enter_busy_wait", self.hook_enterBusyWait),
 			("nanos6:worker_exit_busy_wait",  self.hook_exitBusyWait)
 		]
 		values = {
 			RuntimeActivity.End         : "End",
-			RuntimeActivity.BusyWaiting : "BusyWait",
+			RuntimeActivity.BusyWaiting : "Busy Waiting",
 		}
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_BUSYWAITING, values, "Runtime: Busy Waiting")
 
-	def hook_threadShutdown(self, _, payload):
-		# In case we were busy waiting, we emit another "0" event to unstack
-		# it. We might emit the event event if the thread was not busy waiting,
-		# but its cheaper to always do it rather than keeping track of it's
-		# status. Paraver just ignores extra "unstack" events.
-		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.End))
+	def hook_threadResume(self, event, payload):
+		thread = RuntimeModel.getCurrentThread(event)
+		if thread.isBusyWaiting:
+			payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.BusyWaiting))
 
-	def hook_enterBusyWait(self, _, payload):
+	def hook_threadStop(self, event, payload):
+		thread = RuntimeModel.getCurrentThread(event)
+		if thread.isBusyWaiting:
+			payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.End))
+
+	def hook_enterBusyWait(self, event, payload):
+		thread = RuntimeModel.getCurrentThread(event)
+		thread.isBusyWaiting = 1
 		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.BusyWaiting))
 
-	def hook_exitBusyWait(self, _, payload):
+	def hook_exitBusyWait(self, event, payload):
+		thread = RuntimeModel.getCurrentThread(event)
+		thread.isBusyWaiting = 0
 		payload.append((ExtraeEventTypes.RUNTIME_BUSYWAITING, RuntimeActivity.End))
 
 class ParaverViewRuntimeTasks(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:task_execute", self.hook_taskExecute),
-			("nanos6:task_block",   self.hook_taskStop),
-			("nanos6:task_end",     self.hook_taskStop)
+			("nanos6:task_start",                    self.hook_taskExecute),
+			("nanos6:task_end",                      self.hook_taskStop),
+			("nanos6:tc:task_create_enter",          self.hook_taskStop),
+			("nanos6:tc:task_submit_exit",           self.hook_taskExecute),
+			("nanos6:tc:taskwait_enter",             self.hook_taskStop),
+			("nanos6:tc:taskwait_exit",              self.hook_taskExecute),
+			("nanos6:tc:waitfor_enter",              self.hook_taskStop),
+			("nanos6:tc:waitfor_exit",               self.hook_taskExecute),
+			("nanos6:tc:mutex_lock_enter",           self.hook_taskStop),
+			("nanos6:tc:mutex_lock_exit",            self.hook_taskExecute),
+			("nanos6:tc:mutex_unlock_enter",         self.hook_taskStop),
+			("nanos6:tc:mutex_unlock_exit",          self.hook_taskExecute),
+			("nanos6:tc:blocking_api_block_enter",   self.hook_taskStop),
+			("nanos6:tc:blocking_api_block_exit",    self.hook_taskExecute),
+			("nanos6:tc:blocking_api_unblock_enter", self.hook_taskStop),
+			("nanos6:tc:blocking_api_unblock_exit",  self.hook_taskExecute),
+			("nanos6:tc:spawn_function_enter",       self.hook_taskStop),
+			("nanos6:tc:spawn_function_exit",        self.hook_taskExecute),
 		]
 		values = {
 			RuntimeActivity.End  : "End",
@@ -97,13 +121,24 @@ class ParaverViewRuntimeTasks(ParaverView):
 		payload.append((ExtraeEventTypes.RUNTIME_TASKS, RuntimeActivity.End))
 
 class ParaverViewTaskLabel(ParaverView):
+	""" Shows the label of tasks running on each core. Periods of runtime code
+	running on behalf of tasks are shown as tasks unless the task blocks or
+	ends. A worker might suspend while running a task that has not blocked,
+	this happens when the task does not block, but the runtime considers that
+	another worker must run instead of the current one. In this case, the task
+	is added into the ready queue and we do not see a block event. We detect
+	this case by capturing the thread_suspend and thread_resume tracepoints"""
+
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:task_label",   self.hook_taskLabel),
-			("nanos6:task_execute", self.hook_taskExecute),
-			("nanos6:task_block",   self.hook_taskStop),
-			("nanos6:task_end",     self.hook_taskStop)
+			("nanos6:task_label",     self.hook_taskLabel),
+			("nanos6:task_start",     self.hook_taskExecute),
+			("nanos6:task_block",     self.hook_taskStop),
+			("nanos6:task_unblock",   self.hook_taskExecute),
+			("nanos6:task_end",       self.hook_taskStop),
+			("nanos6:thread_resume",  self.hook_threadResume),
+			("nanos6:thread_suspend", self.hook_threadSuspend),
 		]
 		values = {
 			RuntimeActivity.End : "End",
@@ -116,23 +151,36 @@ class ParaverViewTaskLabel(ParaverView):
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNNING_TASK_LABEL, {taskTypeID : label})
 
 	def hook_taskExecute(self, event, payload):
-		taskId = event["id"]
-		taskTypeId = RuntimeModel.getTaskTypeId(taskId)
-		payload.append((ExtraeEventTypes.RUNNING_TASK_LABEL, taskTypeId))
+		task = RuntimeModel.getCurrentTask(event)
+		payload.append((ExtraeEventTypes.RUNNING_TASK_LABEL, task.type))
 
 	def hook_taskStop(self, event, payload):
-		taskId = event["id"]
-		taskTypeId = RuntimeModel.getTaskTypeId(taskId)
 		payload.append((ExtraeEventTypes.RUNNING_TASK_LABEL, RuntimeActivity.End))
 
+	def hook_threadResume(self, event, payload):
+		task = RuntimeModel.getCurrentTask(event)
+		if task.isRunning():
+			payload.append((ExtraeEventTypes.RUNNING_TASK_LABEL, task.type))
+
+	def hook_threadSuspend(self, event, payload):
+		task = RuntimeModel.getCurrentTask(event)
+		if task.isRunning():
+			payload.append((ExtraeEventTypes.RUNNING_TASK_LABEL, RuntimeActivity.End))
+
 class ParaverViewTaskSource(ParaverView):
+	""" Shows the source code location of running tasks on each core. See
+	ParaverViewTaskLabel for more details. """
+
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:task_label",   self.hook_taskLabel),
-			("nanos6:task_execute", self.hook_taskExecute),
-			("nanos6:task_block",   self.hook_taskStop),
-			("nanos6:task_end",     self.hook_taskStop)
+			("nanos6:task_label",     self.hook_taskLabel),
+			("nanos6:task_start",     self.hook_taskExecute),
+			("nanos6:task_end",       self.hook_taskStop),
+			("nanos6:task_block",     self.hook_taskStop),
+			("nanos6:task_unblock",   self.hook_taskExecute),
+			("nanos6:thread_resume",  self.hook_threadResume),
+			("nanos6:thread_suspend", self.hook_threadSuspend),
 		]
 		values = {
 			RuntimeActivity.End : "End",
@@ -145,27 +193,82 @@ class ParaverViewTaskSource(ParaverView):
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNNING_TASK_SOURCE, {taskTypeID : source})
 
 	def hook_taskExecute(self, event, payload):
-		taskId = event["id"]
-		taskTypeId = RuntimeModel.getTaskTypeId(taskId)
-		payload.append((ExtraeEventTypes.RUNNING_TASK_SOURCE, taskTypeId))
+		task = RuntimeModel.getCurrentTask(event)
+		payload.append((ExtraeEventTypes.RUNNING_TASK_SOURCE, task.type))
 
 	def hook_taskStop(self, event, payload):
-		taskId = event["id"]
-		taskTypeId = RuntimeModel.getTaskTypeId(taskId)
 		payload.append((ExtraeEventTypes.RUNNING_TASK_SOURCE, RuntimeActivity.End))
 
+	def hook_threadResume(self, event, payload):
+		task = RuntimeModel.getCurrentTask(event)
+		if task.isRunning():
+			payload.append((ExtraeEventTypes.RUNNING_TASK_SOURCE, task.type))
+
+	def hook_threadSuspend(self, event, payload):
+		task = RuntimeModel.getCurrentTask(event)
+		if task.isRunning():
+			payload.append((ExtraeEventTypes.RUNNING_TASK_SOURCE, RuntimeActivity.End))
+
+class ParaverViewTaskId(ParaverView):
+	""" Shows the task Id of running tasks on each core. See
+	ParaverViewTaskLabel for more details. """
+
+	def __init__(self):
+		super().__init__()
+		self._hooks = [
+			("nanos6:task_start",     self.hook_taskExecute),
+			("nanos6:task_end",       self.hook_taskStop),
+			("nanos6:task_block",     self.hook_taskStop),
+			("nanos6:task_unblock",   self.hook_taskExecute),
+			("nanos6:thread_resume",  self.hook_threadResume),
+			("nanos6:thread_suspend", self.hook_threadSuspend),
+		]
+		values = {
+			RuntimeActivity.End : "End",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNNING_TASK_ID, values, "Task ID")
+
+	def hook_taskExecute(self, event, payload):
+		task = RuntimeModel.getCurrentTask(event)
+		payload.append((ExtraeEventTypes.RUNNING_TASK_ID, task.id))
+
+	def hook_taskStop(self, event, payload):
+		payload.append((ExtraeEventTypes.RUNNING_TASK_ID, RuntimeActivity.End))
+
+	def hook_threadResume(self, event, payload):
+		task = RuntimeModel.getCurrentTask(event)
+		if task.isRunning():
+			payload.append((ExtraeEventTypes.RUNNING_TASK_ID, task.id))
+
+	def hook_threadSuspend(self, event, payload):
+		task = RuntimeModel.getCurrentTask(event)
+		if task.isRunning():
+			payload.append((ExtraeEventTypes.RUNNING_TASK_ID, RuntimeActivity.End))
 
 class ParaverViewHardwareCounters(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:thread_suspend",    self.hook_getHardwareCounters),
-			("nanos6:thread_shutdown",   self.hook_getHardwareCounters),
-			("nanos6:task_execute",      self.hook_getHardwareCounters),
-			("nanos6:task_block",        self.hook_getHardwareCounters),
-			("nanos6:task_end",          self.hook_getHardwareCounters),
-			("nanos6:task_create_enter", self.hook_getHardwareCounters),
-			("nanos6:task_submit_exit",  self.hook_getHardwareCounters),
+			("nanos6:thread_suspend",                self.hook_getHardwareCounters),
+			("nanos6:thread_shutdown",               self.hook_getHardwareCounters),
+			("nanos6:task_start",                    self.hook_getHardwareCounters),
+			("nanos6:task_end",                      self.hook_getHardwareCounters),
+			("nanos6:tc:task_create_enter",          self.hook_getHardwareCounters),
+			("nanos6:tc:task_submit_exit",           self.hook_getHardwareCounters),
+			("nanos6:tc:taskwait_enter",             self.hook_getHardwareCounters),
+			("nanos6:tc:taskwait_exit",              self.hook_getHardwareCounters),
+			("nanos6:tc:waitfor_enter",              self.hook_getHardwareCounters),
+			("nanos6:tc:waitfor_exit",               self.hook_getHardwareCounters),
+			("nanos6:tc:mutex_lock_enter",           self.hook_getHardwareCounters),
+			("nanos6:tc:mutex_lock_exit",            self.hook_getHardwareCounters),
+			("nanos6:tc:mutex_unlock_enter",         self.hook_getHardwareCounters),
+			("nanos6:tc:mutex_unlock_exit",          self.hook_getHardwareCounters),
+			("nanos6:tc:blocking_api_block_enter",   self.hook_getHardwareCounters),
+			("nanos6:tc:blocking_api_block_exit",    self.hook_getHardwareCounters),
+			("nanos6:tc:blocking_api_unblock_enter", self.hook_getHardwareCounters),
+			("nanos6:tc:blocking_api_unblock_exit",  self.hook_getHardwareCounters),
+			("nanos6:tc:spawn_function_enter",       self.hook_getHardwareCounters),
+			("nanos6:tc:spawn_function_exit",        self.hook_getHardwareCounters),
 		]
 
 		self._eventsHardwareCounters = ExtraeEventCollection(3900000, 7)
@@ -229,26 +332,6 @@ class ParaverViewThreadId(ParaverView):
 	def hook_threadSuspend(self, event, payload):
 		payload.append((ExtraeEventTypes.RUNNING_THREAD_TID, RuntimeActivity.End))
 
-class ParaverViewTaskId(ParaverView):
-	def __init__(self):
-		super().__init__()
-		self._hooks = [
-			("nanos6:task_execute",   self.hook_taskExecute),
-			("nanos6:task_block",     self.hook_taskStop),
-			("nanos6:task_end",       self.hook_taskStop)
-		]
-		values = {
-			RuntimeActivity.End : "End",
-		}
-		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNNING_TASK_ID, values, "Task ID")
-
-	def hook_taskExecute(self, event, payload):
-		taskId = event["id"]
-		payload.append((ExtraeEventTypes.RUNNING_TASK_ID, taskId))
-
-	def hook_taskStop(self, event, payload):
-		payload.append((ExtraeEventTypes.RUNNING_TASK_ID, RuntimeActivity.End))
-
 class ParaverViewRuntimeSubsystems(ParaverView):
 	class Status:
 		Idle                 = 0
@@ -263,6 +346,13 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		TaskArgsInit         = 9
 		TaskSubmit           = 10
 		TaskforInit          = 11
+		TaskWait             = 12
+		WaitFor              = 13
+		Lock                 = 14
+		Unlock               = 15
+		BlockingAPIBlock     = 16
+		BlockingAPIUnblock   = 17
+		SpawnFunction        = 18
 		Debug                = 100
 
 	def stackEvent(func):
@@ -285,36 +375,57 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:thread_create",               self.hook_initStack),
-			("nanos6:external_thread_create",      self.hook_initStack),
-			("nanos6:thread_resume",               self.hook_eventContinue),
-			("nanos6:external_thread_resume",      self.hook_eventContinue),
-			("nanos6:thread_suspend",              self.hook_eventStop),
-			("nanos6:external_thread_suspend",     self.hook_eventStop),
-			("nanos6:thread_shutdown",             self.hook_eventStop),
-			("nanos6:external_thread_shutdown",    self.hook_eventStop),
-			("nanos6:task_execute",                self.hook_task),
-			("nanos6:task_block",                  self.hook_unstack),
-			("nanos6:task_end",                    self.hook_unstack),
-			("nanos6:worker_enter_busy_wait",      self.hook_busyWait),
-			("nanos6:worker_exit_busy_wait",       self.hook_unstack),
-			("nanos6:dependency_register_enter",   self.hook_dependencyRegister),
-			("nanos6:dependency_register_exit",    self.hook_unstack),
-			("nanos6:dependency_unregister_enter", self.hook_dependencyUnregister),
-			("nanos6:dependency_unregister_exit",  self.hook_unstack),
-			("nanos6:scheduler_add_task_enter",    self.hook_schedulerAddTask),
-			("nanos6:scheduler_add_task_exit",     self.hook_unstack),
-			("nanos6:scheduler_get_task_enter",    self.hook_schedulerGetTask),
-			("nanos6:scheduler_get_task_exit",     self.hook_unstack),
-			("nanos6:task_create_enter",           self.hook_taskCreate),
-			("nanos6:task_create_exit",            self.hook_taskBetweenCreateAndSubmit),
-			("nanos6:task_submit_enter",           self.hook_taskSubmit),
-			("nanos6:task_submit_exit",            self.hook_unstack),
-			("nanos6:taskfor_init_enter",          self.hook_taskforInit),
-			("nanos6:taskfor_init_exit",           self.hook_unstack),
-			("nanos6:debug_register",              self.hook_debugRegister),
-			("nanos6:debug_enter",                 self.hook_debug),
-			("nanos6:debug_exit",                  self.hook_unstack),
+			("nanos6:thread_create",                 self.hook_initStack),
+			("nanos6:external_thread_create",        self.hook_initExternalThreadStack),
+			("nanos6:thread_resume",                 self.hook_eventContinue),
+			("nanos6:external_thread_resume",        self.hook_runtime),
+			("nanos6:thread_suspend",                self.hook_eventStop),
+			("nanos6:external_thread_suspend",       self.hook_unstack),
+			("nanos6:thread_shutdown",               self.hook_eventStop),
+			("nanos6:external_thread_shutdown",      self.hook_eventStop),
+			("nanos6:task_start",                    self.hook_task),
+			("nanos6:task_end",                      self.hook_unstack),
+			("nanos6:tc:taskwait_enter",             self.hook_taskWait),
+			("nanos6:tc:taskwait_exit",              self.hook_unstack),
+			("nanos6:tc:waitfor_enter",              self.hook_waitFor),
+			("nanos6:tc:waitfor_exit",               self.hook_unstack),
+			("nanos6:tc:mutex_lock_enter",           self.hook_lock),
+			("nanos6:tc:mutex_lock_exit",            self.hook_unstack),
+			("nanos6:tc:mutex_unlock_enter",         self.hook_unlock),
+			("nanos6:tc:mutex_unlock_exit",          self.hook_unstack),
+			("nanos6:tc:blocking_api_block_enter",   self.hook_blockingAPIBlock),
+			("nanos6:tc:blocking_api_block_exit",    self.hook_unstack),
+			("nanos6:tc:blocking_api_unblock_enter", self.hook_blockingAPIUnblock),
+			("nanos6:tc:blocking_api_unblock_exit",  self.hook_unstack),
+			("nanos6:oc:blocking_api_unblock_enter", self.hook_blockingAPIUnblock),
+			("nanos6:oc:blocking_api_unblock_exit",  self.hook_unstack),
+			("nanos6:tc:spawn_function_enter",       self.hook_spawnFunction),
+			("nanos6:tc:spawn_function_exit",        self.hook_unstack),
+			("nanos6:oc:spawn_function_enter",       self.hook_spawnFunction),
+			("nanos6:oc:spawn_function_exit",        self.hook_unstack),
+			("nanos6:worker_enter_busy_wait",        self.hook_busyWait),
+			("nanos6:worker_exit_busy_wait",         self.hook_unstack),
+			("nanos6:dependency_register_enter",     self.hook_dependencyRegister),
+			("nanos6:dependency_register_exit",      self.hook_unstack),
+			("nanos6:dependency_unregister_enter",   self.hook_dependencyUnregister),
+			("nanos6:dependency_unregister_exit",    self.hook_unstack),
+			("nanos6:scheduler_add_task_enter",      self.hook_schedulerAddTask),
+			("nanos6:scheduler_add_task_exit",       self.hook_unstack),
+			("nanos6:scheduler_get_task_enter",      self.hook_schedulerGetTask),
+			("nanos6:scheduler_get_task_exit",       self.hook_unstack),
+			("nanos6:tc:task_create_enter",          self.hook_taskCreate),
+			("nanos6:tc:task_create_exit",           self.hook_taskBetweenCreateAndSubmit),
+			("nanos6:oc:task_create_enter",          self.hook_taskCreate),
+			("nanos6:oc:task_create_exit",           self.hook_taskBetweenCreateAndSubmit),
+			("nanos6:tc:task_submit_enter",          self.hook_taskSubmit),
+			("nanos6:tc:task_submit_exit",           self.hook_unstack),
+			("nanos6:oc:task_submit_enter",          self.hook_taskSubmit),
+			("nanos6:oc:task_submit_exit",           self.hook_unstack),
+			("nanos6:taskfor_init_enter",            self.hook_taskforInit),
+			("nanos6:taskfor_init_exit",             self.hook_unstack),
+			("nanos6:debug_register",                self.hook_debugRegister),
+			("nanos6:debug_enter",                   self.hook_debug),
+			("nanos6:debug_exit",                    self.hook_unstack),
 		]
 		status = {
 			self.Status.Idle:                 "Idle",
@@ -329,6 +440,13 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 			self.Status.TaskArgsInit:         "Task: Arguments Init",
 			self.Status.TaskSubmit:           "Task: Submit",
 			self.Status.TaskforInit:          "Task: Taskfor Collaborator Init",
+			self.Status.TaskWait:             "Task: TaskWait",
+			self.Status.WaitFor:              "Task: WaitFor",
+			self.Status.Lock:                 "Task: User Mutex: Lock",
+			self.Status.Unlock:               "Task: User Mutex: Unlock",
+			self.Status.BlockingAPIBlock:     "Task: Blocking API: Block",
+			self.Status.BlockingAPIUnblock:   "Task: Blocking API: Unblock",
+                        self.Status.SpawnFunction:        "SpawnFunction: Spawn",
 		}
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_SUBSYSTEMS, status, "Runtime Subsystems")
 
@@ -336,6 +454,11 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		tid = event["tid"]
 		thread = RuntimeModel.getThread(tid)
 		thread.eventStack = [self.Status.Runtime]
+
+	def hook_initExternalThreadStack(self, event, payload):
+		tid = event["tid"]
+		thread = RuntimeModel.getThread(tid)
+		thread.eventStack = [self.Status.Idle]
 
 	def hook_unstack(self, event, payload):
 		stack = self.getEventStack(event)
@@ -350,8 +473,40 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		self.emitVal(self.Status.Idle, payload)
 
 	@stackEvent
+	def hook_runtime(self, _):
+		return self.Status.Runtime
+
+	@stackEvent
 	def hook_task(self, _):
 		return self.Status.Task
+
+	@stackEvent
+	def hook_taskWait(self, _):
+		return self.Status.TaskWait
+
+	@stackEvent
+	def hook_waitFor(self, _):
+		return self.Status.WaitFor
+
+	@stackEvent
+	def hook_lock(self, _):
+		return self.Status.Lock
+
+	@stackEvent
+	def hook_unlock(self, _):
+		return self.Status.Unlock
+
+	@stackEvent
+	def hook_blockingAPIBlock(self, _):
+		return self.Status.BlockingAPIBlock
+
+	@stackEvent
+	def hook_blockingAPIUnblock(self, _):
+		return self.Status.BlockingAPIUnblock
+
+	@stackEvent
+	def hook_spawnFunction(self, _):
+		return self.Status.SpawnFunction
 
 	@stackEvent
 	def hook_busyWait(self, _):
@@ -476,7 +631,8 @@ class ParaverViewNumberOfCreatedTasks(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:task_create_enter", self.hook_taskCreate),
+			("nanos6:tc:task_create_enter", self.hook_taskCreate),
+			("nanos6:oc:task_create_enter", self.hook_taskCreate),
 		]
 		ParaverTrace.addEventType(ExtraeEventTypes.NUMBER_OF_CREATED_TASKS, "Number of Created Tasks")
 		self.createdTasksCount = 0
@@ -493,31 +649,19 @@ class ParaverViewNumberOfBlockedTasks(ParaverView):
 		super().__init__()
 		self._hooks = [
 			("nanos6:task_block",   self.hook_taskBlock),
-			("nanos6:task_execute", self.hook_taskExecute),
+			("nanos6:task_unblock", self.hook_taskUnblock),
 		]
 		ParaverTrace.addEventType(ExtraeEventTypes.NUMBER_OF_BLOCKED_TASKS, "Number of Blocked Tasks")
 		self.blockedTasksCount = 0
-		self.blockedTasksIds = set()
 
 	def start(self, payload):
 		payload.append((ExtraeEventTypes.NUMBER_OF_BLOCKED_TASKS, 0))
 
 	def hook_taskBlock(self, event, payload):
-		taskId = event["id"]
-		if taskId in self.blockedTasksIds:
-			raise Exception("attempt to block the same task twice")
-		self.blockedTasksIds.add(taskId)
 		self.blockedTasksCount += 1
 		payload.append((ExtraeEventTypes.NUMBER_OF_BLOCKED_TASKS, self.blockedTasksCount))
 
-	def hook_taskExecute(self, event, payload):
-		taskId = event["id"]
-
-		try:
-			self.blockedTasksIds.remove(taskId)
-		except:
-			return
-
+	def hook_taskUnblock(self, event, payload):
 		self.blockedTasksCount -= 1
 		payload.append((ExtraeEventTypes.NUMBER_OF_BLOCKED_TASKS, self.blockedTasksCount))
 
@@ -525,8 +669,9 @@ class ParaverViewNumberOfRunningTasks(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:task_execute", self.hook_taskExecute),
+			("nanos6:task_start",   self.hook_taskExecute),
 			("nanos6:task_block",   self.hook_taskStop),
+			("nanos6:task_unblock", self.hook_taskExecute),
 			("nanos6:task_end",     self.hook_taskStop),
 		]
 		ParaverTrace.addEventType(ExtraeEventTypes.NUMBER_OF_RUNNING_TASKS, "Number of Running Tasks")

@@ -8,7 +8,7 @@
 #define INSTRUMENT_NULL_WORKERTHREAD_HPP
 
 
-#include "../api/InstrumentWorkerThread.hpp"
+#include "instrument/api/InstrumentWorkerThread.hpp"
 
 namespace Instrument {
 

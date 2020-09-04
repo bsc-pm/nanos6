@@ -11,7 +11,7 @@
 #include "InstrumentDataAccessId.hpp"
 #include "InstrumentExtrae.hpp"
 #include "InstrumentTaskId.hpp"
-#include "../api/InstrumentDependenciesByAccessLinks.hpp"
+#include "instrument/api/InstrumentDependenciesByAccessLinks.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
 

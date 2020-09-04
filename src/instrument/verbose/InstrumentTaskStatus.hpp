@@ -8,7 +8,7 @@
 #define INSTRUMENT_VERBOSE_TASK_STATUS_HPP
 
 
-#include "../api/InstrumentTaskStatus.hpp"
+#include "instrument/api/InstrumentTaskStatus.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_TASK_STATUS_HPP

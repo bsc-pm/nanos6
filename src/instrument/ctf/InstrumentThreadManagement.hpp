@@ -10,18 +10,15 @@
 
 #include "InstrumentExternalThreadId.hpp"
 #include "InstrumentThreadId.hpp"
-#include "../api/InstrumentThreadManagement.hpp"
+#include "instrument/api/InstrumentThreadManagement.hpp"
 #include "../support/InstrumentThreadLocalDataSupport.hpp"
 
 #include "ctfapi/CTFTypes.hpp"
 
 
 namespace Instrument {
-	inline void enterThreadCreation(/* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
+	inline void enterThreadCreation(__attribute__((unused)) /* OUT */ thread_id_t &threadId, __attribute__((unused)) compute_place_id_t const &computePlaceId)
 	{
-		threadId = thread_id_t();
-		ThreadLocalData &tld = getThreadLocalData();
-		tld.isBusyWaiting = false;
 	}
 
 	inline void exitThreadCreation(__attribute__((unused)) thread_id_t threadId)
@@ -36,16 +33,9 @@ namespace Instrument {
 	{
 	}
 
-	inline void threadWillSuspendBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-	{
-	}
-
-	inline void threadHasResumedBeforeSync(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu)
-	{
-	}
-
-	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
-	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu);
+	void threadSynchronizationCompleted(thread_id_t threadId);
+	void threadWillSuspend(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu, bool afterSynchronization);
+	void threadHasResumed(__attribute__((unused)) thread_id_t threadId, __attribute__((unused)) compute_place_id_t cpu, bool afterSynchronization);
 	void threadWillSuspend(external_thread_id_t threadId);
 	void threadHasResumed(external_thread_id_t threadId);
 	void threadWillShutdown();

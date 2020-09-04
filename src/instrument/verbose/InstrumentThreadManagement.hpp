@@ -11,7 +11,7 @@
 #include "../generic_ids/GenericIds.hpp"
 #include "InstrumentComputePlaceId.hpp"
 
-#include "../api/InstrumentThreadManagement.hpp"
+#include "instrument/api/InstrumentThreadManagement.hpp"
 
 #include <support/StringComposer.hpp>
 

@@ -18,7 +18,7 @@ class CPU:
 		self._id = CPU.id_index
 		CPU.id_index += 1
 		self._currentThread = None
-	
+
 	@property
 	def currentThread(self):
 		return self._currentThread
@@ -51,11 +51,55 @@ class VCPU(CPU):
 	def isVirtual(self):
 		return True
 
+class Task:
+	class Status:
+		Uninitialized = 0
+		Running       = 1
+		Blocked       = 2
+
+	def __init__(self):
+		self.reset()
+
+	@property
+	def id(self):
+		return self._id
+
+	@property
+	def type(self):
+		return self._type
+
+	def reset(self):
+		self._id   = -1
+		self._type = -1
+		self._status = self.Status.Uninitialized
+
+	def start(self, taskId, taskTypeId):
+		assert(self._status == self.Status.Uninitialized)
+		self._id     = taskId
+		self._type   = taskTypeId
+		self._status = self.Status.Running
+
+	def block(self):
+		assert(self._status == self.Status.Running)
+		self._status = self.Status.Blocked
+
+	def unblock(self):
+		assert(self._status == self.Status.Blocked)
+		self._status = self.Status.Running
+
+	def end(self):
+		assert(self._status == self.Status.Running)
+		self.reset()
+
+	def isRunning(self):
+		return self._status == self.Status.Running
 
 class Thread:
 	def __init__(self, tid = 0):
-		self._id = tid
-		self._vcpu = None
+		self._id            = tid
+		self._vcpu          = None
+		self._isBusyWaiting = 0
+		self._currentTask   = Task()
 
 	@property
 	def tid(self):
@@ -68,6 +112,18 @@ class Thread:
 	@vcpu.setter
 	def vcpu(self, value):
 		self._vcpu = value
+
+	@property
+	def task(self):
+		return self._currentTask
+
+	@property
+	def isBusyWaiting(self):
+		return self._isBusyWaiting
+
+	@isBusyWaiting.setter
+	def isBusyWaiting(self, value):
+		self._isBusyWaiting = value
 
 class TaskIDsDB:
 	def __init__(self):
@@ -95,13 +151,21 @@ class RuntimeModel:
 		cls._ncpus = ncpus
 		cls._cpus = [CPU() for i in range(ncpus)]
 		cls._cpus.append(VCPU()) # Leader Thread CPU
-		cls._hooks = [
-			("nanos6:task_create_enter",       cls.hook_taskAdd),
-			("nanos6:taskfor_init_enter",      cls.hook_taskAdd),
-			("nanos6:external_thread_create",  cls.hook_externalThreadCreate),
-			("nanos6:thread_create",           cls.hook_threadCreate),
-			("nanos6:thread_resume",           cls.hook_threadResume),
-			("nanos6:thread_suspend",          cls.hook_threadSuspend)
+		cls._preHooks = [
+			("nanos6:tc:task_create_enter",   cls.hook_taskAdd),
+			("nanos6:oc:task_create_enter",   cls.hook_taskAdd),
+			("nanos6:taskfor_init_enter",     cls.hook_taskAdd),
+			("nanos6:external_thread_create", cls.hook_externalThreadCreate),
+			("nanos6:thread_create",          cls.hook_threadCreate),
+			("nanos6:thread_resume",          cls.hook_threadResume),
+			("nanos6:thread_resume",          cls.hook_threadResume),
+			("nanos6:task_start",             cls.hook_taskStart),
+			("nanos6:task_unblock",           cls.hook_taskUnblock),
+		]
+		cls._postHooks = [
+			("nanos6:thread_suspend",         cls.hook_threadSuspend),
+			("nanos6:task_block",             cls.hook_taskBlock),
+			("nanos6:task_end",               cls.hook_taskEnd),
 		]
 
 	@classmethod
@@ -158,6 +222,12 @@ class RuntimeModel:
 		return thread
 
 	@classmethod
+	def getCurrentTask(cls, event):
+		thread = cls.getCurrentThread(event)
+		task = thread.task
+		return task
+
+	@classmethod
 	def getVirtualCPUId(cls, event):
 		vcpu = cls.getVirtualCPU(event)
 		return vcpu.id
@@ -172,8 +242,12 @@ class RuntimeModel:
 		return thread
 
 	@classmethod
-	def hooks(cls):
-		return cls._hooks
+	def preHooks(cls):
+		return cls._preHooks
+
+	@classmethod
+	def postHooks(cls):
+		return cls._postHooks
 
 	@classmethod
 	def hook_externalThreadCreate(cls, event, _):
@@ -217,4 +291,26 @@ class RuntimeModel:
 		assert(thread != None)
 		assert(thread.tid == tid)
 		vcpu.currentThread = None
+
+	@classmethod
+	def hook_taskStart(cls, event, _):
+		taskId     = event["id"]
+		taskTypeId = cls.getTaskTypeId(taskId)
+		thread     = cls.getCurrentThread(event)
+		thread.task.start(taskId, taskTypeId)
+
+	@classmethod
+	def hook_taskBlock(cls, event, _):
+		thread = cls.getCurrentThread(event)
+		thread.task.block()
+
+	@classmethod
+	def hook_taskUnblock(cls, event, _):
+		thread = cls.getCurrentThread(event)
+		thread.task.unblock()
+
+	@classmethod
+	def hook_taskEnd(cls, event, _):
+		thread = cls.getCurrentThread(event)
+		thread.task.end()
 

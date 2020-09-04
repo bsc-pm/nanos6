@@ -8,7 +8,7 @@
 #define INSTRUMENT_NULL_DEPENDENCIES_BY_ACCESS_LINK_HPP
 
 
-#include "../api/InstrumentDependenciesByAccessLinks.hpp"
+#include "instrument/api/InstrumentDependenciesByAccessLinks.hpp"
 
 
 namespace Instrument {

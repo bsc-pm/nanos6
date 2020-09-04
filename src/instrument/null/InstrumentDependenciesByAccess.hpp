@@ -9,7 +9,7 @@
 
 
 
-#include "../api/InstrumentDependenciesByAccess.hpp"
+#include "instrument/api/InstrumentDependenciesByAccess.hpp"
 #include "dependencies/DataAccessType.hpp"
 
 

@@ -17,6 +17,7 @@ namespace Instrument {
 		nanos6_task_info_t *taskInfo,
 		nanos6_task_invocation_info_t *,
 		size_t,
+		bool,
 		InstrumentationContext const &context
 	) {
 		Stats::TaskTypeAndTimes *taskTypeAndTimes = new Stats::TaskTypeAndTimes(taskInfo, (context._taskId != task_id_t()));
@@ -24,24 +25,37 @@ namespace Instrument {
 		return taskTypeAndTimes;
 	}
 
-	inline void exitCreateTask()
-	{
+	inline void exitCreateTask(
+		bool
+	) {
 	}
 
-	inline void createdArgsBlock(task_id_t, void *, size_t, size_t, InstrumentationContext const &)
-	{
+	inline void createdArgsBlock(
+		task_id_t,
+		void *,
+		size_t,
+		size_t,
+		InstrumentationContext const &
+	) {
 	}
 
-	inline void createdTask(void *, task_id_t, InstrumentationContext const &)
-	{
+	inline void createdTask(
+		void *,
+		task_id_t,
+		InstrumentationContext const &
+	) {
 	}
 
-	inline void enterSubmitTask()
-	{
+	inline void enterSubmitTask(
+		bool
+	) {
 	}
 
-	inline void exitSubmitTask(task_id_t, InstrumentationContext const &)
-	{
+	inline void exitSubmitTask(
+		task_id_t,
+		bool,
+		InstrumentationContext const &
+	) {
 	}
 
 	inline task_id_t enterInitTaskforCollaborator(
@@ -56,12 +70,24 @@ namespace Instrument {
 		return taskTypeAndTimes;
 	}
 
-	inline void exitInitTaskforCollaborator(task_id_t, task_id_t, InstrumentationContext const &)
-	{
+	inline void exitInitTaskforCollaborator(
+		task_id_t, task_id_t,
+		InstrumentationContext const &
+	) {
 	}
 
 	inline void registeredNewSpawnedTaskType(
 		__attribute__((unused)) nanos6_task_info_t *taskInfo
+	) {
+	}
+
+	inline void enterSpawnFunction(
+		__attribute__((unused)) bool taskRuntimeTransition
+	) {
+	}
+
+	inline void exitSpawnFunction(
+		__attribute__ ((unused)) bool taskRuntimeTransition
 	) {
 	}
 }

@@ -10,7 +10,7 @@
 
 #include "InstrumentTaskId.hpp"
 
-#include "../api/InstrumentDataAccessTypes.hpp"
+#include "instrument/api/InstrumentDataAccessTypes.hpp"
 
 
 namespace Instrument {

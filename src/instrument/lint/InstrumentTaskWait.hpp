@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_LINT_TASK_WAIT_HPP
@@ -9,7 +9,7 @@
 
 #include <Callbacks.hpp>
 
-#include "../api/InstrumentTaskWait.hpp"
+#include "instrument/api/InstrumentTaskWait.hpp"
 
 
 
@@ -18,6 +18,7 @@ namespace Instrument {
 		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) char const *invocationSource,
 		__attribute__((unused)) task_id_t if0TaskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		nanos6_lint_on_taskwait_enter(taskId, invocationSource, if0TaskId);
@@ -25,6 +26,7 @@ namespace Instrument {
 
 	inline void exitTaskWait(
 		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) bool taskRuntimeTransition,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
 		nanos6_lint_on_taskwait_exit(taskId);

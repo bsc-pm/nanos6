@@ -180,6 +180,7 @@ To generate a CTF trace, run the application with the `NANOS6` envar set to `ctf
 A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
 To visualize this trace, it needs to be converted to Paraver format first.
 By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
+The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the conversion after the specified elapsed time in minutes.
 Please note that the conversion tool requires python3 and the babeltrace2 packages.
 
 The Paraver configuration files can be found under:

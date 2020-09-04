@@ -8,7 +8,7 @@
 #define INSTRUMENT_VERBOSE_DEPENDENCIES_BY_ACCESS_LINK_HPP
 
 
-#include "../api/InstrumentDependenciesByAccessLinks.hpp"
+#include "instrument/api/InstrumentDependenciesByAccessLinks.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_DEPENDENCIES_BY_ACCESS_LINK_HPP

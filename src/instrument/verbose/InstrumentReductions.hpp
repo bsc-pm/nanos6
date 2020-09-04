@@ -8,7 +8,7 @@
 #define INSTRUMENT_VERBOSE_REDUCTIONS_HPP
 
 
-#include "../api/InstrumentReductions.hpp"
+#include "instrument/api/InstrumentReductions.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_REDUCTIONS_HPP

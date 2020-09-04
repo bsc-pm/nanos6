@@ -12,34 +12,46 @@
 #include <InstrumentInstrumentationContext.hpp>
 
 #include "CTFTracepoints.hpp"
-#include "../api/InstrumentTaskExecution.hpp"
+#include "instrument/api/InstrumentTaskExecution.hpp"
 
 
 namespace Instrument {
-	inline void startTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
-	{
+	inline void startTask(
+		task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		tp_task_start(taskId._taskId);
 	}
 
-	inline void returnToTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
-	{
+	inline void endTask(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		tp_task_end();
 	}
 
-	inline void endTask(task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
-	{
-		tp_task_end(taskId._taskId);
+	inline void destroyTask(
+		__attribute__((unused)) task_id_t taskId,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
 	}
 
-	inline void destroyTask(__attribute__((unused)) task_id_t taskId, __attribute__((unused)) InstrumentationContext const &context)
-	{
+	inline void startTaskforCollaborator(
+		__attribute__((unused)) task_id_t taskforId,
+		task_id_t collaboratorId,
+		__attribute__((unused)) bool first,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		tp_task_start(collaboratorId._taskId);
 	}
 
-	inline void startTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, __attribute__((unused)) task_id_t collaboratorId, __attribute__((unused)) bool first, __attribute__((unused)) InstrumentationContext const &context)
-	{
-	}
-
-	inline void endTaskforCollaborator(__attribute__((unused)) task_id_t taskforId, task_id_t collaboratorId, __attribute((unused)) bool last, __attribute__((unused)) InstrumentationContext const &context)
-	{
-		tp_task_end(collaboratorId._taskId);
+	inline void endTaskforCollaborator(
+		__attribute__((unused)) task_id_t taskforId,
+		__attribute__((unused)) task_id_t collaboratorId,
+		__attribute__((unused)) bool last,
+		__attribute__((unused)) InstrumentationContext const &context
+	) {
+		tp_task_end();
 	}
 }
 

@@ -10,7 +10,7 @@
 #include "hardware-counters/CPUHardwareCounters.hpp"
 #include "executors/threads/WorkerThread.hpp"
 
-#include "../CTFAPI.hpp"
+#include "instrument/ctf/ctfapi/CTFAPI.hpp"
 #include "CTFContextCPUHardwareCounters.hpp"
 
 CTFAPI::CTFContextCPUHardwareCounters::CTFContextCPUHardwareCounters(ctf_stream_id_t streamMask) : CTFEventContext(streamMask)

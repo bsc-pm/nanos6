@@ -8,7 +8,7 @@
 #define INSTRUMENT_NULL_LOG_MESSAGE_HPP
 
 
-#include "../api/InstrumentLogMessage.hpp"
+#include "instrument/api/InstrumentLogMessage.hpp"
 
 
 namespace Instrument {

@@ -10,7 +10,7 @@
 #include <string>
 
 #include "CTFContext.hpp"
-#include "../CTFTypes.hpp"
+#include "instrument/ctf/ctfapi/CTFTypes.hpp"
 
 namespace CTFAPI {
 

@@ -8,7 +8,7 @@
 #define INSTRUMENT_VERBOSE_USER_MUTEX_HPP
 
 
-#include "../api/InstrumentUserMutex.hpp"
+#include "instrument/api/InstrumentUserMutex.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_USER_MUTEX_HPP

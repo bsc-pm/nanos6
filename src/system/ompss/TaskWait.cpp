@@ -10,6 +10,7 @@
 
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
+#include "TaskWait.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
@@ -24,6 +25,11 @@
 
 void nanos6_taskwait(char const *invocationSource)
 {
+	TaskWait::taskWait(invocationSource, true);
+}
+
+void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
+{
 	Task *currentTask = nullptr;
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 
@@ -33,14 +39,23 @@ void nanos6_taskwait(char const *invocationSource)
 	assert(currentTask != nullptr);
 	assert(currentTask->getThread() == currentThread);
 
-	Instrument::enterTaskWait(currentTask->getInstrumentationTaskId(), invocationSource, Instrument::task_id_t());
+	if (fromUserCode) {
+		HardwareCounters::updateTaskCounters(currentTask);
+		Monitoring::taskChangedStatus(currentTask, blocked_status);
+	}
+	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
+	Instrument::enterTaskWait(taskId, invocationSource, Instrument::task_id_t(), fromUserCode);
 
 	// Fast check
 	if (currentTask->doesNotNeedToBlockForChildren()) {
 		// This in combination with a release from the children makes their changes visible to this thread
 		std::atomic_thread_fence(std::memory_order_acquire);
 
-		Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
+		if (fromUserCode) {
+			HardwareCounters::updateRuntimeCounters();
+			Monitoring::taskChangedStatus(currentTask, executing_status);
+		}
+		Instrument::exitTaskWait(taskId, fromUserCode);
 
 		return;
 	}
@@ -65,9 +80,7 @@ void nanos6_taskwait(char const *invocationSource)
 	// 		on the "old" CPU)
 
 	if (!done) {
-		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
-		Instrument::taskIsBlocked(currentTask->getInstrumentationTaskId(), Instrument::in_taskwait_blocking_reason);
+		Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
 
 		TaskBlocking::taskBlocks(currentThread, currentTask);
 
@@ -80,18 +93,22 @@ void nanos6_taskwait(char const *invocationSource)
 	// This in combination with a release from the children makes their changes visible to this thread
 	std::atomic_thread_fence(std::memory_order_acquire);
 
-	Instrument::exitTaskWait(currentTask->getInstrumentationTaskId());
-
 	assert(currentTask->canBeWokenUp());
 	currentTask->markAsUnblocked();
 
 	DataAccessRegistration::handleExitTaskwait(currentTask, cpu, cpu->getDependencyData());
 
-	if (!done && (currentThread != nullptr)) {
+	if (!done) {
 		// The instrumentation was notified that the task had been blocked
+		Instrument::taskIsExecuting(taskId, true);
+	}
+
+	if (fromUserCode) {
 		HardwareCounters::updateRuntimeCounters();
-		Instrument::taskIsExecuting(currentTask->getInstrumentationTaskId());
+		Instrument::exitTaskWait(taskId, fromUserCode);
 		Monitoring::taskChangedStatus(currentTask, executing_status);
+	} else {
+		Instrument::exitTaskWait(taskId, fromUserCode);
 	}
 }
 

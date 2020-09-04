@@ -16,12 +16,14 @@
 
 #include "AddTask.hpp"
 #include "SpawnFunction.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskInfo.hpp"
 
 #include <InstrumentAddTask.hpp>
+#include <Monitoring.hpp>
 
 
 //! Static members
@@ -54,8 +56,39 @@ void SpawnFunction::spawnFunction(
 	function_t completionCallback,
 	void *completionArgs,
 	char const *label,
-	bool
+	bool fromUserCode
 ) {
+	// Instrumentation is interested in the transitions between Runtime and
+	// Tasks. However, this function might be called from within runtime
+	// context (not task context) with fromUserCode set to true (e.g.
+	// polling services are considered user code even if the code itself is
+	// into Nanos6). To detect a runtime-task transisiton, we check whether
+	// we are outside a task context by ensuring that the current worker
+	// does not have a task assigned (creator != nullptr). In summary:
+	//
+	// This function might be called from:
+	// 1) fromUserCode == true && currentTask != nullptr: From user code,
+	//    within task context (a task calls this function). This is a
+	//    transition between runtime and task context.
+	// 2) fromUserCode == true && currentTask == nullptr: From user code,
+	//    outside task context (polling service or external thread). This is not
+	//    a transition between runtime and task context.
+	// 3) fromUserCode == false: From runtime code (the runtime calls this
+	//    function). This is not a transition between runtime and task context.
+
+	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
+	Task *creator = nullptr;
+	if (workerThread != nullptr) {
+		creator = workerThread->getTask();
+	}
+
+	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
+	if (taskRuntimeTransition) {
+		HardwareCounters::updateTaskCounters(creator);
+		Monitoring::taskChangedStatus(creator, runtime_status);
+	}
+	Instrument::enterSpawnFunction(taskRuntimeTransition);
+
 	// Increase the number of spawned functions
 	_pendingSpawnedFunctions++;
 
@@ -122,6 +155,14 @@ void SpawnFunction::spawnFunction(
 
 	// Submit the task without parent
 	AddTask::submitTask(task, nullptr);
+
+	if (taskRuntimeTransition) {
+		HardwareCounters::updateRuntimeCounters();
+		Instrument::exitSpawnFunction(taskRuntimeTransition);
+		Monitoring::taskChangedStatus(creator, executing_status);
+	} else {
+		Instrument::exitSpawnFunction(taskRuntimeTransition);
+	}
 }
 
 void SpawnFunction::spawnedFunctionWrapper(void *args, void *, nanos6_address_translation_entry_t *)

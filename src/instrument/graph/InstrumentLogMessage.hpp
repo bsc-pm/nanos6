@@ -16,7 +16,7 @@
 #include "InstrumentExternalThreadLocalData.hpp"
 #include "InstrumentGraph.hpp"
 #include "InstrumentTaskId.hpp"
-#include "../api/InstrumentLogMessage.hpp"
+#include "instrument/api/InstrumentLogMessage.hpp"
 
 #include <InstrumentInstrumentationContext.hpp>
 

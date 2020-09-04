@@ -17,10 +17,6 @@ namespace Instrument {
 	{
 	}
 
-	inline void returnToTask(task_id_t, InstrumentationContext const &)
-	{
-	}
-
 	inline void endTask(task_id_t, InstrumentationContext const &)
 	{
 	}

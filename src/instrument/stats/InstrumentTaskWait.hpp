@@ -17,11 +17,19 @@
 
 
 namespace Instrument {
-	inline void enterTaskWait(task_id_t, char const *, task_id_t, InstrumentationContext const &)
-	{
+	inline void enterTaskWait(
+		task_id_t,
+		char const *,
+		task_id_t,
+		bool,
+		InstrumentationContext const &
+	) {
 	}
 
-	inline void exitTaskWait(task_id_t taskId, InstrumentationContext const &context)
+	inline void exitTaskWait(
+		task_id_t taskId,
+		bool,
+		InstrumentationContext const &)
 	{
 		// If a spawned function, count the taskwait as a frontier between phases
 		if (!taskId->_hasParent) {
@@ -36,8 +44,6 @@ namespace Instrument {
 
 			Instrument::Stats::_phasesSpinLock.writeUnlock();
 		}
-
-		Instrument::returnToTask(taskId, context);
 	}
 
 }

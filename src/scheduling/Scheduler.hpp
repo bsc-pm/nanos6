@@ -29,6 +29,7 @@ public:
 		ReadyTaskHint hint)
 	{
 		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
+		Instrument::enterAddReadyTask();
 
 		// Mark the task as ready prior to entering the lock
 		for (size_t i = 0; i < numTasks; ++i) {
@@ -38,6 +39,7 @@ public:
 		}
 
 		_instance->addReadyTasks(taskType, tasks, numTasks, computePlace, hint);
+		Instrument::exitAddReadyTask();
 	}
 
 	static inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)

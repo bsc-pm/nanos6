@@ -10,8 +10,8 @@
 #include "lowlevel/threads/ExternalThread.hpp"
 
 #include "CTFContext.hpp"
-#include "../CTFAPI.hpp"
-#include "../CTFTypes.hpp"
+#include "instrument/ctf/ctfapi/CTFAPI.hpp"
+#include "instrument/ctf/ctfapi/CTFTypes.hpp"
 
 
 namespace CTFAPI {

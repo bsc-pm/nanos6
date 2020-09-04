@@ -8,7 +8,7 @@
 #define INSTRUMENT_VERBOSE_DEPENDENCIES_BY_GROUP_HPP
 
 
-#include "../api/InstrumentDependenciesByGroup.hpp"
+#include "instrument/api/InstrumentDependenciesByGroup.hpp"
 
 
 #endif // INSTRUMENT_VERBOSE_DEPENDENCIES_BY_GROUP_HPP

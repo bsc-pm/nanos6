@@ -119,7 +119,7 @@ void HardwareCounters::preinitialize()
 	loadConfigurationFile();
 
 	// Check if there's an incompatibility between backends
-	checkIncompatibleBackends();
+	checkIncompatibilities();
 
 	// If verbose is enabled and no backends are available, warn the user
 	if (!_anyBackendEnabled && _verbose.getValue()) {

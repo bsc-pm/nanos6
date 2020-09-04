@@ -7,17 +7,16 @@
 #ifndef CTFAPI_HPP
 #define CTFAPI_HPP
 
+#include <cassert>
 #include <cstdint>
 #include <inttypes.h>
-#include <time.h>
 #include <string.h>
-
-#include "InstrumentCPULocalData.hpp"
-#include "instrument/support/InstrumentCPULocalDataSupport.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
+#include <time.h>
 
 #include "CTFTypes.hpp"
 #include "CTFEvent.hpp"
+#include "InstrumentCPULocalData.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "stream/CTFStream.hpp"
 
 namespace CTFAPI {
@@ -35,8 +34,7 @@ namespace CTFAPI {
 	void mk_event_header(char **buf, uint64_t timestamp, uint8_t id);
 	void flushAll(CTFStream *stream, uint64_t *before, uint64_t *after);
 	void flushSubBuffers(CTFStream *stream, uint64_t *before, uint64_t *after);
-	void writeFlushingTracepoint(CTFStream *stream,
-				      uint64_t tsBefore, uint64_t tsAfter);
+	void writeFlushingTracepoint(CTFStream *stream, uint64_t tsBefore, uint64_t tsAfter);
 
 	template <typename T>
 	static inline size_t sizeOfVariadic(T arg)
@@ -112,11 +110,7 @@ namespace CTFAPI {
 	}
 
 	template<typename... ARGS>
-	static void __tp_lock_write(CTFStream *stream,
-				    CTFEvent *event,
-				    uint64_t timestamp,
-				    size_t size,
-				    ARGS... args)
+	static void __tp_lock_write(CTFStream *stream, CTFEvent *event, uint64_t timestamp, size_t size, ARGS... args)
 	{
 		const uint8_t tracepointId = event->getEventId();
 		void *buf = stream->getBuffer();
@@ -129,10 +123,7 @@ namespace CTFAPI {
 	}
 
 	template<typename... ARGS>
-	static void __tp_lock(CTFStream *stream,
-			      CTFEvent *event,
-			      uint64_t timestamp,
-			      ARGS... args)
+	static void __tp_lock(CTFStream *stream, CTFEvent *event, uint64_t timestamp, ARGS... args)
 	{
 		size_t size;
 		bool needsFlush;
@@ -158,30 +149,47 @@ namespace CTFAPI {
 		// they originally ocurred. Writing the flushing tracepoints
 		// will call this function recursively. As long as the buffer
 		// can hold two flush tracepoints, this function will be called
-		// at most two extra times.
+		// at most two extra times
 		if (needsFlush)
 			writeFlushingTracepoint(stream, tsBefore, tsAfter);
 	}
 
 	// TODO add nanos6 developer instructions for adding tracepoints
 	template<typename... ARGS>
-	static void tracepoint_async(CTFEvent *event, uint64_t timestamp,
-				     ARGS... args)
+	static void tracepoint_async(CTFEvent *event, uint64_t timestamp, ARGS... args)
 	{
-		CTFStream *stream = Instrument::getCPULocalData()->userStream;
+		// When issuing async tracepoints, we cannot rely on locks
+		// because the timestamp should be aquired within a locked
+		// region. Otherwise we could be writing unordered events and
+		// corrupting the trace. However, here the user is providing us
+		// with a timestamp obtained in the past.  Hence, the
+		// tracepoint_async user must guarantee that events are written
+		// sequentially
 
-		// locking only implemented for external threads
-		stream->lock();
+		CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
+		assert(stream != nullptr);
 		__tp_lock(stream, event, timestamp, args...);
-		stream->unlock();
 	}
 
 	// TODO add nanos6 developer instructions for adding tracepoints
 	template<typename... ARGS>
 	static void tracepoint(CTFEvent *event, ARGS... args)
 	{
+		// Obtaining the per-cpu local object might trigger a
+		// tracepoint. This will happen if the current thread is an
+		// external thread that has not been initialized yet. In that
+		// case a nanos6:external_thread_create event will be emited
+		// before the current one
+		CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
+		assert(stream != nullptr);
+
+		// Locking only implemented for external threads
+		stream->lock();
+
 		uint64_t timestamp = getRelativeTimestamp();
-		tracepoint_async(event, timestamp, args...);
+		__tp_lock(stream, event, timestamp, args...);
+
+		stream->unlock();
 	}
 }
 

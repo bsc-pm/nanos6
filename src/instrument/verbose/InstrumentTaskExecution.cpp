@@ -32,21 +32,6 @@ namespace Instrument {
 	}
 	
 	
-	void returnToTask(task_id_t taskId, InstrumentationContext const &context) {
-		if (!_verboseTaskExecution) {
-			return;
-		}
-		
-		LogEntry *logEntry = getLogEntry(context);
-		assert(logEntry != nullptr);
-		
-		logEntry->appendLocation(context);
-		logEntry->_contents << " ->> Task " << taskId;
-		
-		addLogEntry(logEntry);
-	}
-	
-	
 	void endTask(task_id_t taskId, InstrumentationContext const &context) {
 		if (!_verboseTaskExecution) {
 			return;

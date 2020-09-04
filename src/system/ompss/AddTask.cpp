@@ -49,7 +49,7 @@ Task *AddTask::createTask(
 	size_t argsBlockSize,
 	size_t flags,
 	size_t numDependencies,
-	bool
+	bool fromUserCode
 ) {
 	Task *task = nullptr;
 	Task *creator = nullptr;
@@ -57,13 +57,14 @@ Task *AddTask::createTask(
 	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
 	if (workerThread != nullptr) {
 		creator = workerThread->getTask();
-		if (creator != nullptr) {
-			HardwareCounters::updateTaskCounters(creator);
-			Monitoring::taskChangedStatus(creator, runtime_status);
-		}
 	}
-
-	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags);
+	// See taskRuntimeTransition variable note in spawnFunction() for more details
+	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
+	if (taskRuntimeTransition) {
+		HardwareCounters::updateTaskCounters(creator);
+		Monitoring::taskChangedStatus(creator, runtime_status);
+	}
+	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags, taskRuntimeTransition);
 
 	//! Throttle. If active, act as a taskwait
 	if (Throttle::isActive() && creator != nullptr) {
@@ -144,17 +145,16 @@ Task *AddTask::createTask(
 			flags, taskAccesses, taskCountersAddress);
 	}
 
-	Instrument::exitCreateTask();
+	Instrument::exitCreateTask(taskRuntimeTransition);
 
 	return task;
 }
 
-void AddTask::submitTask(Task *task, Task *parent, bool)
+void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 {
 	assert(task != nullptr);
 
 	Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
-	Instrument::enterSubmitTask();
 
 	Task *creator = nullptr;
 	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
@@ -168,6 +168,10 @@ void AddTask::submitTask(Task *task, Task *parent, bool)
 		// There could be no creator
 		creator = workerThread->getTask();
 	}
+
+	// See taskRuntimeTransition variable note in spawnFunction() for more details
+	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
+	Instrument::enterSubmitTask(taskRuntimeTransition);
 
 	if (parent != nullptr) {
 		task->setParent(parent);
@@ -229,13 +233,6 @@ void AddTask::submitTask(Task *task, Task *parent, bool)
 		Scheduler::addReadyTask(task, computePlace, hint);
 	}
 
-	if (creator != nullptr) {
-		HardwareCounters::updateRuntimeCounters();
-		Monitoring::taskChangedStatus(creator, executing_status);
-	}
-
-	Instrument::exitSubmitTask(taskInstrumentationId);
-
 	// Special handling for if0 tasks
 	if (isIf0) {
 		if (ready && !executesInDevice) {
@@ -245,6 +242,14 @@ void AddTask::submitTask(Task *task, Task *parent, bool)
 			// Non-ready if0 tasks cause this thread to get blocked
 			If0Task::waitForIf0Task(workerThread, parent, task, computePlace);
 		}
+	}
+
+	if (taskRuntimeTransition) {
+		HardwareCounters::updateRuntimeCounters();
+		Instrument::exitSubmitTask(taskInstrumentationId, taskRuntimeTransition);
+		Monitoring::taskChangedStatus(creator, executing_status);
+	} else {
+		Instrument::exitSubmitTask(taskInstrumentationId, taskRuntimeTransition);
 	}
 }
 

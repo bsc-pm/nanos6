@@ -9,7 +9,7 @@
 
 #include "CTFTracepoints.hpp"
 
-#include "../api/InstrumentTaskStatus.hpp"
+#include "instrument/api/InstrumentTaskStatus.hpp"
 
 
 namespace Instrument {
@@ -26,18 +26,21 @@ namespace Instrument {
 	}
 
 	inline void taskIsExecuting(
-		task_id_t taskId,
+		__attribute__((unused)) task_id_t taskId,
+		bool wasBlocked,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		tp_task_execute(taskId._taskId);
+		if (wasBlocked) {
+			tp_task_unblock();
+		}
 	}
 
 	inline void taskIsBlocked(
-		task_id_t taskId,
+		__attribute__((unused)) task_id_t taskId,
 		__attribute__((unused)) task_blocking_reason_t reason,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		tp_task_block(taskId._taskId);
+		tp_task_block();
 	}
 
 	inline void taskIsZombie(
@@ -61,10 +64,9 @@ namespace Instrument {
 
 	inline void taskforCollaboratorIsExecuting(
 		__attribute__((unused)) task_id_t taskforId,
-		task_id_t collaboratorId,
+		__attribute__((unused)) task_id_t collaboratorId,
 		__attribute__((unused)) InstrumentationContext const &context
 	) {
-		tp_task_execute(collaboratorId._taskId);
 	}
 
 	inline void taskforCollaboratorStopped(

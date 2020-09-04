@@ -11,7 +11,7 @@
 #include <InstrumentInstrumentationContext.hpp>
 #include <Callbacks.hpp>
 
-#include "../api/InstrumentTaskExecution.hpp"
+#include "instrument/api/InstrumentTaskExecution.hpp"
 
 
 
@@ -21,12 +21,6 @@ namespace Instrument {
 		__attribute__((unused)) InstrumentationContext const &context)
 	{
 		nanos6_lint_on_task_start(taskId);
-	}
-
-	inline void returnToTask(
-		__attribute__((unused)) task_id_t taskId,
-		__attribute__((unused)) InstrumentationContext const &context)
-	{
 	}
 
 	inline void endTask(
