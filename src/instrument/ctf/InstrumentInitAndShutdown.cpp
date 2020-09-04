@@ -4,11 +4,12 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include <string.h>
+#include <cassert>
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/types.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include "CTFTracepoints.hpp"
 #include "InstrumentCPULocalData.hpp"
@@ -143,6 +144,7 @@ void Instrument::shutdown()
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
 		CTFAPI::CTFStream *userStream = cpu->getInstrumentationData().userStream;
+		assert(userStream != nullptr);
 		userStream->shutdown();
 		delete userStream;
 	}
@@ -151,11 +153,13 @@ void Instrument::shutdown()
 	cpu = CPUManager::getLeaderThreadCPU();
 	Instrument::CPULocalData &leaderThreadCPULocalData = cpu->getInstrumentationData();
 	CTFAPI::CTFStream *leaderThreadStream = leaderThreadCPULocalData.userStream;
+	assert(leaderThreadStream != nullptr);
 	leaderThreadStream->shutdown();
 	delete leaderThreadStream;
 
 	// Shutdown External thread stream
 	CTFAPI::CTFStream *externalThreadStream = Instrument::getCTFVirtualCPULocalData()->userStream;
+	assert(externalThreadStream != nullptr);
 	externalThreadStream->shutdown();
 	delete externalThreadStream;
 	delete Instrument::getCTFVirtualCPULocalData();

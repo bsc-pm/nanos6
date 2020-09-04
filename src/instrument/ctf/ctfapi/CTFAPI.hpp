@@ -7,16 +7,16 @@
 #ifndef CTFAPI_HPP
 #define CTFAPI_HPP
 
+#include <cassert>
 #include <cstdint>
 #include <inttypes.h>
-#include <time.h>
 #include <string.h>
-
-#include "InstrumentCPULocalData.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
+#include <time.h>
 
 #include "CTFTypes.hpp"
 #include "CTFEvent.hpp"
+#include "InstrumentCPULocalData.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "stream/CTFStream.hpp"
 
 namespace CTFAPI {
@@ -167,6 +167,7 @@ namespace CTFAPI {
 		// sequentially
 
 		CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
+		assert(stream != nullptr);
 		__tp_lock(stream, event, timestamp, args...);
 	}
 
@@ -180,6 +181,7 @@ namespace CTFAPI {
 		// case a nanos6:external_thread_create event will be emited
 		// before the current one
 		CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
+		assert(stream != nullptr);
 
 		// Locking only implemented for external threads
 		stream->lock();

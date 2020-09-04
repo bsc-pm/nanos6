@@ -4,17 +4,18 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include <string>
-#include <iostream>
+
 #include <cassert>
 #include <errno.h>
-
-#include <lowlevel/FatalErrorHandler.hpp>
+#include <iostream>
+#include <string>
 
 #include "CTFAPI.hpp"
 #include "CTFTrace.hpp"
 #include "CTFTypes.hpp"
 #include "CTFEvent.hpp"
+
+#include <lowlevel/FatalErrorHandler.hpp>
 
 extern CTFAPI::CTFEvent *__eventCTFFlush;
 
@@ -89,6 +90,7 @@ void CTFAPI::flushCurrentVirtualCPUBufferIfNeeded()
 {
 	uint64_t tsBefore, tsAfter;
 	CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
+	assert(stream != nullptr);
 
 	stream->lock();
 	if (stream->checkIfNeedsFlush()) {
