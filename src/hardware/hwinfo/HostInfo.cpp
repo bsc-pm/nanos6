@@ -77,6 +77,8 @@ HostInfo::HostInfo() :
 	//! Get (logical) cores of the machine
 	size_t coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 	_computePlaces.resize(coresCount);
+
+	size_t cpuCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
 	for (size_t i = 0; i < coresCount; i++) {
 		hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
 		assert(obj != nullptr);
@@ -120,13 +122,18 @@ HostInfo::HostInfo() :
 			_validMemoryPlaces++;
 		}
 
+		assert(obj->parent != NULL);
+		assert(obj->parent->type == HWLOC_OBJ_CORE);
+		size_t cpuLogicalIndex = (cpuCount * obj->sibling_rank) + obj->parent->logical_index;
+		assert(cpuLogicalIndex < coresCount);
+
 		CPU *cpu = new CPU(
 			/* systemCPUID */ obj->os_index,
-			/* virtualCPUID */ obj->logical_index,
+			/* virtualCPUID */ cpuLogicalIndex,
 			NUMANodeId
 		);
 
-		_computePlaces[obj->logical_index] = cpu;
+		_computePlaces[cpuLogicalIndex] = cpu;
 	}
 
 	assert(_validMemoryPlaces <= memNodesCount);
