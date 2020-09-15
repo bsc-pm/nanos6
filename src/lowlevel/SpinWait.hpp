@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef SPIN_WAIT_HPP
@@ -43,13 +43,20 @@ static inline void spinWait()
 #ifdef KNL_ARCH
 	_mm_pause();
 #elif defined(POWER9_ARCH)
-	do { HMT_low(); HMT_medium(); HMT_barrier(); } while (0);
+	HMT_low();
 #elif defined(MN4_ARCH)
 	asm volatile("pause" ::: "memory");
 #elif defined(ARM_ARCH)
 	__asm__ __volatile__ ("yield");
 #else
 	#pragma message ("No 'pause' instruction/intrisic found for this architecture ")
+#endif
+}
+
+static inline void spinWaitRelease()
+{
+#ifdef POWER9_ARCH
+	HMT_medium();
 #endif
 }
 

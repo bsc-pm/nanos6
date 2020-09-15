@@ -17,7 +17,6 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "lowlevel/SpinWait.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -76,10 +75,10 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	userMutex = userMutexReference.load();
 
 	if (currentTask->isTaskfor()) {
-		// Fast path
-		while (!userMutex->tryLock()) {
-			spinWait();
-		}
+		// Lock the mutex directly
+		userMutex->lock();
+		Instrument::acquiredUserMutex(userMutex);
+		return;
 	} else {
 		// Fast path
 		if (userMutex->tryLock()) {

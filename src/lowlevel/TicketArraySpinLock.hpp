@@ -48,6 +48,7 @@ public:
 		while (_buffer[idx].load(std::memory_order_acquire) != head) {
 			spinWait();
 		}
+		spinWaitRelease();
 	}
 
 	inline bool tryLock()

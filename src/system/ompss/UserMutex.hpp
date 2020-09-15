@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef USER_MUTEX_HPP
@@ -9,6 +9,7 @@
 
 
 #include "lowlevel/SpinLock.hpp"
+#include "lowlevel/SpinWait.hpp"
 
 #include <atomic>
 #include <cassert>
@@ -47,6 +48,21 @@ public:
 		bool successful = _userMutex.compare_exchange_strong(expected, true);
 		assert(expected != successful);
 		return successful;
+	}
+
+	//! \brief Lock
+	inline void lock()
+	{
+		bool expected = false;
+		while (!_userMutex.compare_exchange_weak(expected, true)) {
+			do {
+				spinWait();
+			} while (_userMutex.load(std::memory_order_relaxed));
+
+			spinWaitRelease();
+
+			expected = false;
+		}
 	}
 
 	//! \brief Try to lock of queue the task
