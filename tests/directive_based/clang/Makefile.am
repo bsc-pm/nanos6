@@ -73,7 +73,8 @@ linear_region_tests += \
 	lr-nonest.clang.test \
 	lr-nonest-upgrades.clang.test \
 	lr-early-release.clang.test  \
-	lr-er-and-weak.clang.test
+	lr-er-and-weak.clang.test \
+	lr-release.clang.test
 
 discrete_tests += \
 	discrete-deps-nonest.clang.test \
@@ -125,7 +126,8 @@ linear_region_tests += \
 	lr-nonest.clang.debug.test \
 	lr-nonest-upgrades.clang.debug.test \
 	lr-early-release.clang.debug.test  \
-	lr-er-and-weak.clang.debug.test
+	lr-er-and-weak.clang.debug.test \
+	lr-release.clang.debug.test
 
 discrete_tests += \
 	discrete-deps-nonest.clang.debug.test \
@@ -437,6 +439,15 @@ lr_er_and_weak_clang_test_SOURCES = ../linear-regions/lr-er-and-weak.cpp
 lr_er_and_weak_clang_test_CPPFLAGS = -DNDEBUG
 lr_er_and_weak_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
 lr_er_and_weak_clang_test_LDFLAGS = $(test_common_ldflags)
+
+lr_release_clang_debug_test_SOURCES = ../linear-regions/lr-release.cpp
+lr_release_clang_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+lr_release_clang_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+lr_release_clang_test_SOURCES = ../linear-regions/lr-release.cpp
+lr_release_clang_test_CPPFLAGS = -DNDEBUG
+lr_release_clang_test_CXXFLAGS = $(OPT_CLANG_CXXFLAGS) $(AM_CXXFLAGS)
+lr_release_clang_test_LDFLAGS = $(test_common_ldflags)
 
 discrete_deps_nonest_clang_debug_test_SOURCES = ../discrete/discrete-deps-nonest.cpp
 if HAVE_CONCURRENT_SUPPORT
