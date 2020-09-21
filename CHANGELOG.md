@@ -2,6 +2,21 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.4.1, Tue Sep 22, 2020
+The 2.4.1 release corresponds to the OmpSs-2 2020.06.1 release. It introduces bug fixes and performance improvements.
+
+### General
+- Improve the interface and performance of the scheduler's lock
+- Fix CTF instrumentation bugs and limitations
+- Fix PAPI hardware counters backend
+- Support newer versions of GCC, Clang and GLIBC
+- Fix task external events API
+- Remove preemption mechanism from critical sections
+- Fix initialization of locks
+- Add test suite built with the OmpSs-2 compiler based on LLVM
+- Add new tests
+
+
 ## Version 2.4, Mon Jun 22, 2020
 The 2.4 release corresponds to the OmpSs-2 2020.06 release. It introduces several features that improve the general
 performance of OmpSs-2 applications. It adds a new variant to extract execution traces with a lightweight internal
