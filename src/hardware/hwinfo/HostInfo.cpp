@@ -119,8 +119,8 @@ HostInfo::HostInfo() :
 		nodeNUMA = ancestor->memory_first_child;
 		assert(nodeNUMA != nullptr);
 		assert(hwloc_obj_type_is_memory(nodeNUMA->type));
-		hwloc_obj_t L3Cache = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L3CACHE, obj);
-		hwloc_obj_t L3Cache = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L2CACHE, obj);
+		hwloc_obj_t L3CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L3CACHE, obj);
+		hwloc_obj_t L2CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L2CACHE, obj);
 #else
 		hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
 		hwloc_obj_t tmpCache = obj->parent;
