@@ -230,6 +230,11 @@ public:
 	{
 		return nullptr;
 	}
+
+	inline bool isReleased() const
+	{
+		return (_accessFlags.load(std::memory_order_relaxed) & ACCESS_UNREGISTERED);
+	}
 };
 
 

@@ -373,7 +373,9 @@ namespace DataAccessRegistration {
 		if (accessStruct.hasDataAccesses()) {
 			// Release dependencies of all my accesses
 			accessStruct.forAll([&](void *address, DataAccess *access) -> bool {
-				finalizeDataAccess(task, access, address, hpDependencyData, computePlace, fromBusyThread);
+				// Skip if released
+				if (!access->isReleased())
+					finalizeDataAccess(task, access, address, hpDependencyData, computePlace, fromBusyThread);
 				return true;
 			});
 		}
@@ -689,7 +691,11 @@ namespace DataAccessRegistration {
 			return;
 
 		accessStruct.forAll([&](void *, DataAccess *access) -> bool {
-			if (access->getType() == REDUCTION_ACCESS_TYPE) {
+			// Skip if released
+			if (access->isReleased())
+				return true;
+
+			if (access->getType() == REDUCTION_ACCESS_TYPE && !access->isWeak()) {
 				ReductionInfo *reductionInfo = access->getReductionInfo();
 				reductionInfo->releaseSlotsInUse(((CPU *)computePlace)->getIndex());
 			}
@@ -699,14 +705,61 @@ namespace DataAccessRegistration {
 	}
 
 	void releaseAccessRegion(
-		__attribute__((unused)) Task *task,
-		__attribute__((unused)) void *address,
-		__attribute__((unused)) DataAccessType accessType,
-		__attribute__((unused)) bool weak,
-		__attribute__((unused)) ComputePlace *computePlace,
-		__attribute__((unused)) CPUDependencyData &hpDependencyData,
+		Task *task,
+		void *address,
+		DataAccessType accessType,
+		bool weak,
+		ComputePlace *computePlace,
+		CPUDependencyData &hpDependencyData,
 		__attribute__((unused)) MemoryPlace const *location)
 	{
+		assert(task != nullptr);
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
+		assert(!accessStruct.hasBeenDeleted());
+		assert(hpDependencyData._mailBox.empty());
+
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = false;
+			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, true));
+		}
+#endif
+
+		if (accessStruct.hasDataAccesses()) {
+			// Release dependencies of all my accesses
+			DataAccess *access = accessStruct.findAccess(address);
+
+			// Some unlikely sanity checks
+			FatalErrorHandler::failIf(access == nullptr,
+				"Attempt to release an access that was not originally registered in the task");
+
+			FatalErrorHandler::failIf(access->getType() != accessType,
+				"It is not possible to partially release a dependence.");
+
+			// Release reduction storage before finalizing, as we might delete the ReductionInfo later
+			if (access->getType() == REDUCTION_ACCESS_TYPE && !access->isWeak()) {
+				ReductionInfo *reductionInfo = access->getReductionInfo();
+				assert(reductionInfo != nullptr);
+				reductionInfo->releaseSlotsInUse(((CPU *)computePlace)->getIndex());
+			}
+
+			finalizeDataAccess(task, access, address, hpDependencyData, computePlace, true);
+		} else {
+			FatalErrorHandler::fail("Attempt to release an access that was not originally registered in the task");
+		}
+
+		// Unfortunately, due to the CommutativeSemaphore implementation, we cannot release the commutative mask.
+		// This is because it can be aliased between accesses, although if a counter was added for the number of
+		// commutative accesses, it would be possible to find out how safe is it to release the mask.
+		processSatisfiedOriginators(hpDependencyData, computePlace, true);
+		processDeletableOriginators(hpDependencyData);
+
+#ifndef NDEBUG
+		{
+			bool alreadyTaken = true;
+			assert(hpDependencyData._inUse.compare_exchange_strong(alreadyTaken, false));
+		}
+#endif
 	}
 
 	void releaseTaskwaitFragment(

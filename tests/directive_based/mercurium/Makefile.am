@@ -107,6 +107,7 @@ discrete_tests += \
 	discrete-deps-early-release.mercurium.test \
 	discrete-deps-er-and-weak.mercurium.test \
 	discrete-deps-wait.mercurium.test \
+	discrete-release.mercurium.test \
 	discrete-simple-commutative.mercurium.test \
 	discrete-red-stress.mercurium.test \
 	discrete-taskloop-multiaxpy.mercurium.test \
@@ -201,6 +202,7 @@ discrete_tests += \
 	discrete-deps-early-release.mercurium.debug.test \
 	discrete-deps-er-and-weak.mercurium.debug.test \
 	discrete-deps-wait.mercurium.debug.test \
+	discrete-release.mercurium.debug.test \
 	discrete-simple-commutative.mercurium.debug.test \
 	discrete-red-stress.mercurium.debug.test \
 	discrete-taskloop-multiaxpy.mercurium.debug.test \
@@ -778,6 +780,15 @@ discrete_deps_wait_mercurium_test_SOURCES = ../discrete/discrete-deps-wait.cpp
 discrete_deps_wait_mercurium_test_CPPFLAGS = -DNDEBUG
 discrete_deps_wait_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
 discrete_deps_wait_mercurium_test_LDFLAGS = $(test_common_ldflags)
+
+discrete_release_mercurium_debug_test_SOURCES = ../discrete/discrete-release.cpp
+discrete_release_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_release_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
+
+discrete_release_mercurium_test_SOURCES = ../discrete/discrete-release.cpp
+discrete_release_mercurium_test_CPPFLAGS = -DNDEBUG
+discrete_release_mercurium_test_CXXFLAGS = $(OPT_CXXFLAGS) $(AM_CXXFLAGS)
+discrete_release_mercurium_test_LDFLAGS = $(test_common_ldflags)
 
 discrete_simple_commutative_mercurium_debug_test_SOURCES = ../discrete/discrete-simple-commutative.cpp
 discrete_simple_commutative_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS) $(AM_CXXFLAGS)
