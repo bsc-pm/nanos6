@@ -30,20 +30,15 @@ extern "C" void *nanos6_get_current_event_counter(void)
 }
 
 
-extern "C" void nanos6_increase_current_task_event_counter(__attribute__((unused)) void *event_counter, unsigned int increment)
+extern "C" void nanos6_increase_current_task_event_counter(void *event_counter, unsigned int increment)
 {
 	assert(event_counter != 0);
 	if (increment == 0)
 		return;
 
-	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentThread != nullptr);
+	Task *task = static_cast<Task *>(event_counter);
 
-	Task *currentTask = currentThread->getTask();
-	assert(currentTask != nullptr);
-	assert(event_counter == currentTask);
-
-	currentTask->increaseReleaseCount(increment);
+	task->increaseReleaseCount(increment);
 }
 
 

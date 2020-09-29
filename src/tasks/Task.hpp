@@ -641,6 +641,8 @@ public:
 	//! \brief Increase the counter of events
 	inline void increaseReleaseCount(int amount = 1)
 	{
+		assert(_countdownToRelease > 0);
+
 		_countdownToRelease += amount;
 	}
 
