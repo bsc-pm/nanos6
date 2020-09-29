@@ -113,6 +113,11 @@ public:
 	//!
 	//! \returns A ready task or nullptr
 	Task *getReadyTask(ComputePlace *computePlace);
+
+	inline bool isLocalityEnabled() const override
+	{
+		return _enableLocality;
+	}
 };
 
 #endif // HOST_UNSYNC_SCHEDULER_HPP

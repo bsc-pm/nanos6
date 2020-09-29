@@ -133,8 +133,8 @@ public:
 			assert(tasks[t] != nullptr);
 			// Set temporary info that is used when processing ready tasks
 			tasks[t]->setComputePlace(computePlace);
-			// Disable IS if task data size is too big.
-			if (hint == SIBLING_TASK_HINT && tasks[t]->getDataAccesses().getTotalDataSize() > IS_MAX_THRESHOLD) {
+			// Disable IS if task data size is too big when locality scheduler is enabled.
+			if (_scheduler->isLocalityEnabled() && hint == SIBLING_TASK_HINT && tasks[t]->getDataAccesses().getTotalDataSize() > IS_MAX_THRESHOLD) {
 				hint = NO_HINT;
 			}
 			tasks[t]->setSchedulingHint(hint);

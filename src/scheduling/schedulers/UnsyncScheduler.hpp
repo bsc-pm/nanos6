@@ -90,6 +90,11 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
+
+	virtual inline bool isLocalityEnabled() const
+	{
+		return false;
+	}
 };
 
 
