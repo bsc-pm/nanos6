@@ -20,6 +20,7 @@ public:
 private:
 	bounds_t _bounds;
 	bool _source;
+	size_t _numTasks;
 
 public:
 	inline Taskloop(
@@ -59,6 +60,7 @@ public:
 		if (_bounds.grainsize == 0) {
 			_bounds.grainsize = std::max(totalIterations /CPUManager::getTotalCPUs(), (size_t) 1);
 		}
+		_numTasks = ceil(totalIterations, _bounds.grainsize);
 	}
 
 	inline bounds_t &getBounds()
@@ -76,14 +78,18 @@ public:
 		return (_bounds.upper_bound - _bounds.lower_bound);
 	}
 
+	inline size_t getNumTasks() const
+	{
+		return _numTasks;
+	}
+
 	void body(nanos6_address_translation_entry_t * = nullptr) override;
 
 	inline void registerDependencies(bool discrete = false) override
 	{
 		if (discrete && isTaskloopSource()) {
-			size_t tasks = std::ceil((double) (_bounds.upper_bound - _bounds.lower_bound) / (double) _bounds.grainsize);
 			bounds_t tmpBounds;
-			for (size_t t = 0; t < tasks; t++) {
+			for (size_t t = 0; t < _numTasks; t++) {
 				tmpBounds.lower_bound = _bounds.lower_bound + t * _bounds.grainsize;
 				tmpBounds.upper_bound = std::min(tmpBounds.lower_bound + _bounds.grainsize, _bounds.upper_bound);
 				getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &tmpBounds, this);
@@ -102,6 +108,11 @@ public:
 	inline bool isTaskloopFor() const override
 	{
 		return isTaskfor();
+	}
+
+	static inline size_t ceil(size_t x, size_t y)
+	{
+		return (x+(y-1))/y;
 	}
 };
 

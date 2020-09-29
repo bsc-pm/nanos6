@@ -103,11 +103,19 @@ public:
 			parentTaskInfo->duplicate_args_block(originalArgsBlock, &argsBlock);
 		}
 
-		// Create the task with undefined number of dependencies
+
+		// Source taskloops registrate as many deps as the total number of deps registered by its children.
+		// However, setting this number as numDeps per children may hurt performance, so we try to get the right number.
+		// If the compiler specified a number different than -1, it is the right number.
+		// Otherwise, if the compiler specified -1, we cannot know how many deps has each children, but we do know
+		// that it will be, at most, as many as the parent.
+		size_t parentMaxDeps = parent->getDataAccesses().getMaxDeps();
+		size_t parentRealDeps = parent->getDataAccesses().getRealAccessNumber();
+		size_t numDeps = (parentMaxDeps == (size_t) -1) ? parentRealDeps : parentMaxDeps;
 		Task *task = AddTask::createTask(
 			parentTaskInfo, parentTaskInvocationInfo,
 			argsBlock, originalArgsBlockSize,
-			flags, -1, fromTaskContext
+			flags, numDeps, fromTaskContext
 		);
 		assert(task != nullptr);
 
