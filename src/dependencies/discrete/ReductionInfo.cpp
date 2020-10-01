@@ -30,15 +30,17 @@ ReductionInfo::ReductionInfo(void *address, size_t length, reduction_type_and_op
 	_combinationFunction(combinationFunction),
 	_registeredAccesses(2)
 {
+	for (size_t i = 0; i < nanos6_device_type_num; ++i)
+		_deviceStorages[i] = nullptr;
 }
 
 ReductionInfo::~ReductionInfo()
 {
 	assert(_registeredAccesses == 0);
 
-	for(std::pair<nanos6_device_t, DeviceReductionStorage *> device : _deviceStorages) {
-		assert(device.second != nullptr);
-		delete device.second;
+	for (size_t i = 0; i < nanos6_device_type_num; ++i) {
+		if (_deviceStorages[i] != nullptr)
+			delete _deviceStorages[i];
 	}
 }
 
@@ -66,16 +68,17 @@ void ReductionInfo::combine()
 
 	char *originalAddress = (char*)_address;
 
-	for(std::pair<nanos6_device_t, DeviceReductionStorage *> device : _deviceStorages) {
-		assert(device.second != nullptr);
-		device.second->combineInStorage(originalAddress);
+	for(size_t i = 0; i < nanos6_device_type_num; ++i) {
+		if (_deviceStorages[i] != nullptr)
+			_deviceStorages[i]->combineInStorage(originalAddress);
 	}
 }
 
 void ReductionInfo::releaseSlotsInUse(Task* task, ComputePlace* computePlace) {
 	nanos6_device_t deviceType = computePlace->getType();
 
-	DeviceReductionStorage * storage = _deviceStorages[deviceType];
+	assert(deviceType < nanos6_device_type_num);
+	DeviceReductionStorage *storage = _deviceStorages[deviceType];
 	assert(storage != nullptr);
 	storage->releaseSlotsInUse(task, computePlace);
 }
@@ -100,6 +103,8 @@ DeviceReductionStorage * ReductionInfo::allocateDeviceStorage(nanos6_device_t de
 	}
 
 	assert(storage != nullptr);
+
+	// Maybe we need a memory barrier here?
 	_deviceStorages[deviceType] = storage;
 	return storage;
 }

@@ -75,7 +75,7 @@ class ReductionInfo
 
 		reduction_type_and_operator_index_t _typeAndOperatorIndex;
 
-		Container::map<nanos6_device_t, DeviceReductionStorage *> _deviceStorages;
+		DeviceReductionStorage *_deviceStorages[nanos6_device_type_num];
 
 		std::function<void(void*, size_t)> _initializationFunction;
 		std::function<void(void*, void*, size_t)> _combinationFunction;
