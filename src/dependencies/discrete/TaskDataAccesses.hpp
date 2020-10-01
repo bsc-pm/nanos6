@@ -8,10 +8,11 @@
 #define TASK_DATA_ACCESSES_HPP
 
 #include <atomic>
+#include <array>
 #include <cassert>
+#include <functional>
 #include <mutex>
 #include <unordered_map>
-#include <array>
 
 #include "BottomMapEntry.hpp"
 #include "CommutativeSemaphore.hpp"
@@ -24,8 +25,11 @@
 struct DataAccess;
 
 struct TaskDataAccesses {
-	typedef std::unordered_map<void *, BottomMapEntry> bottom_map_t;
-	typedef std::unordered_map<void *, DataAccess> access_map_t;
+	template <class Key, class Value>
+	using allocated_map_t = std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, TemplateAllocator<std::pair<const Key, Value>>>;
+
+	typedef allocated_map_t<void *, BottomMapEntry> bottom_map_t;
+	typedef allocated_map_t<void *, DataAccess> access_map_t;
 
 #ifndef NDEBUG
 	enum flag_bits_t {

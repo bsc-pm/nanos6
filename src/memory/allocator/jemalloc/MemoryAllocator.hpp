@@ -80,4 +80,39 @@ public:
 	}
 };
 
+template <class T>
+class TemplateAllocator {
+public:
+	using value_type = T;
+
+	TemplateAllocator() = default;
+	TemplateAllocator(const TemplateAllocator &) = default;
+
+	inline T *allocate(size_t n, const void* = nullptr)
+	{
+		return static_cast<T*>(MemoryAllocator::alloc(n * sizeof(T)));
+	}
+
+	inline void deallocate(void *t, size_t size)
+	{
+		assert(t != nullptr);
+		MemoryAllocator::free(t, size * sizeof(T));
+	}
+
+	template<class U>
+	TemplateAllocator(const TemplateAllocator<U>&) {}
+};
+
+template <class T, class U>
+inline bool operator==(TemplateAllocator<T> const&, TemplateAllocator<U> const&) noexcept
+{
+    return true;
+}
+
+template <class T, class U>
+inline bool operator!=(TemplateAllocator<T> const& x, TemplateAllocator<U> const& y) noexcept
+{
+    return !(x == y);
+}
+
 #endif // MEMORY_ALLOCATOR_HPP

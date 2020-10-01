@@ -7,8 +7,9 @@
 #ifndef MEMORY_ALLOCATOR_HPP
 #define MEMORY_ALLOCATOR_HPP
 
+#include <cstdlib>
 #include <malloc.h>
-#include <stdlib.h>
+#include <memory>
 
 #include "hardware/HardwareInfo.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -71,5 +72,8 @@ public:
 		MemoryAllocator::free(ptr, sizeof(T));
 	}
 };
+
+template<typename T>
+using TemplateAllocator = std::allocator<T>;
 
 #endif // MEMORY_ALLOCATOR_HPP
