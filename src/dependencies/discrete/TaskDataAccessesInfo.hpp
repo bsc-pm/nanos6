@@ -10,6 +10,7 @@
 #include <cstdlib>
 
 #include "DataAccess.hpp"
+#include "lowlevel/Padding.hpp"
 
 #define ACCESS_LINEAR_CUTOFF 256
 
@@ -28,6 +29,13 @@ public:
 		if (numDeps <= ACCESS_LINEAR_CUTOFF) {
 			_seqsSize = sizeof(DataAccess) * numDeps;
 			_addrSize = sizeof(void *) * numDeps;
+
+			// We must align the DataAccesses to a cacheline to prevent false sharing.
+			if (_addrSize % CACHELINE_SIZE) {
+				// Add padding
+				_addrSize += CACHELINE_SIZE - (_addrSize % CACHELINE_SIZE);
+				assert(_addrSize % CACHELINE_SIZE == 0);
+			}
 		}
 	}
 
