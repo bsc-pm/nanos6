@@ -9,6 +9,7 @@
 
 #include <set>
 
+#include "MemoryAllocator.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "support/chronometers/std/Chrono.hpp"
 #include "tasks/Task.hpp"
@@ -30,7 +31,7 @@ class DeadlineQueue : public ReadyQueue {
 	//! in ascending order. Tasks with the lowest deadline
 	//! are stored at the first positions. It also allows
 	//! different tasks to share the same deadline
-	typedef std::set<Task *, DeadlineCompare> deadline_set_t;
+	typedef std::set<Task *, DeadlineCompare, TemplateAllocator<Task *>> deadline_set_t;
 
 	//! The ordered set of deadline tasks
 	deadline_set_t _deadlineTasks;

@@ -10,17 +10,17 @@
 #include <cassert>
 #include <vector>
 
+#include "MemoryAllocator.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "scheduling/ready-queues/DeadlineQueue.hpp"
 #include "tasks/Task.hpp"
 
-
 class UnsyncScheduler {
 protected:
-	std::vector<Task *> _immediateSuccessorTasks;
-	std::vector<Task *> _immediateSuccessorTaskfors;
+	std::vector<Task *, TemplateAllocator<Task *>> _immediateSuccessorTasks;
+	std::vector<Task *, TemplateAllocator<Task *>> _immediateSuccessorTaskfors;
 	ReadyQueue *_readyTasks;
 	DeadlineQueue *_deadlineTasks;
 	bool _enableImmediateSuccessor;

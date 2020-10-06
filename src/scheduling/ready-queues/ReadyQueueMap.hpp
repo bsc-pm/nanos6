@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef READY_QUEUE_MAP_HPP
@@ -9,13 +9,14 @@
 
 #include <map>
 
+#include "MemoryAllocator.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "tasks/Task.hpp"
 
 // This kind of ready queue supports priorities.
 class ReadyQueueMap : public ReadyQueue {
-	typedef std::deque<Task *> ready_queue_t;
-	typedef std::map<Task::priority_t, ready_queue_t, std::greater<Task::priority_t>> ready_map_t;
+	typedef std::deque<Task *, TemplateAllocator<Task *>> ready_queue_t;
+	typedef std::map<Task::priority_t, ready_queue_t, std::greater<Task::priority_t>, TemplateAllocator<std::pair<Task::priority_t, ready_queue_t>>> ready_map_t;
 
 	ready_map_t _readyMap;
 

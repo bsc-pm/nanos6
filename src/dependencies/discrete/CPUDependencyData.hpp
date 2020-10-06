@@ -18,6 +18,7 @@
 #include <nanos6/task-instantiation.h>
 
 #include "DataAccessFlags.hpp"
+#include "MemoryAllocator.hpp"
 
 class Task;
 
@@ -65,8 +66,8 @@ public:
 
 struct CPUDependencyData {
 	typedef SatisfiedOriginatorList satisfied_originator_list_t;
-	typedef std::deque<Task *> commutative_satisfied_list_t;
-	typedef std::deque<Task *> deletable_originator_list_t;
+	typedef std::deque<Task *, TemplateAllocator<Task *>> commutative_satisfied_list_t;
+	typedef std::deque<Task *, TemplateAllocator<Task *>> deletable_originator_list_t;
 
 	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators[nanos6_device_t::nanos6_device_type_num];

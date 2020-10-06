@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CPU_DEPENDENCY_DATA_HPP
@@ -18,6 +18,7 @@
 #include "CommutativeScoreboard.hpp"
 #include "DataAccessLink.hpp"
 #include "DataAccessRegion.hpp"
+#include "MemoryAllocator.hpp"
 
 #include <ExecutionStep.hpp>
 
@@ -32,22 +33,22 @@ struct CPUDependencyData {
 	struct UpdateOperation {
 		DataAccessLink _target;
 		DataAccessRegion _region;
-		
+
 		bool _makeReadSatisfied;
 		bool _makeWriteSatisfied;
 		bool _makeConcurrentSatisfied;
 		bool _makeCommutativeSatisfied;
 		MemoryPlace const *_location;
 		ExecutionWorkflow::DataReleaseStep *_releaseStep;
-		
+
 		bool _makeTopmost;
 		bool _makeTopLevel;
-		
+
 		bool _setReductionInfo; // Note: Both this and next field are required, as a null ReductionInfo can be propagated
 		ReductionInfo *_reductionInfo;
-		
+
 		boost::dynamic_bitset<> _reductionSlotSet;
-		
+
 		UpdateOperation()
 			: _target(), _region(),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false),
@@ -57,7 +58,7 @@ struct CPUDependencyData {
 			_setReductionInfo(false), _reductionInfo(nullptr)
 		{
 		}
-		
+
 		UpdateOperation(DataAccessLink const &target, DataAccessRegion const &region)
 			: _target(target), _region(region),
 			_makeReadSatisfied(false), _makeWriteSatisfied(false),
@@ -67,7 +68,7 @@ struct CPUDependencyData {
 			_setReductionInfo(false), _reductionInfo(nullptr)
 		{
 		}
-		
+
 		bool empty() const
 		{
 			return !_makeReadSatisfied && !_makeWriteSatisfied
@@ -78,16 +79,16 @@ struct CPUDependencyData {
 				&& (_reductionSlotSet.size() == 0);
 		}
 	};
-	
+
 	struct TaskAndRegion {
 		Task *_task;
 		DataAccessRegion _region;
-		
+
 		TaskAndRegion(Task *task, DataAccessRegion const &region)
 			: _task(task), _region(region)
 		{
 		}
-		
+
 		bool operator<(TaskAndRegion const &other) const
 		{
 			if (_task < other._task) {
@@ -117,14 +118,14 @@ struct CPUDependencyData {
 			return (_task == other._task) && (_region == other._region);
 		}
 	};
-	
-	typedef std::deque<UpdateOperation> delayed_operations_t;
-	typedef std::deque<Task *> satisfied_originator_list_t;
-	typedef std::deque<Task *> removable_task_list_t;
-	typedef std::deque<CommutativeScoreboard::entry_t *> acquired_commutative_scoreboard_entries_t;
-	typedef std::deque<TaskAndRegion> released_commutative_regions_t;
-	typedef std::deque<DataAccess *> satisfied_taskwait_accesses_t;
-	
+
+	typedef std::deque<UpdateOperation, TemplateAllocator<UpdateOperation>> delayed_operations_t;
+	typedef std::deque<Task *, TemplateAllocator<Task *>> satisfied_originator_list_t;
+	typedef std::deque<Task *, TemplateAllocator<Task *>> removable_task_list_t;
+	typedef std::deque<CommutativeScoreboard::entry_t *, TemplateAllocator<CommutativeScoreboard::entry_t *>> acquired_commutative_scoreboard_entries_t;
+	typedef std::deque<TaskAndRegion, TemplateAllocator<TaskAndRegion>> released_commutative_regions_t;
+	typedef std::deque<DataAccess *, TemplateAllocator<DataAccess *>> satisfied_taskwait_accesses_t;
+
 	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators;
 	satisfied_originator_list_t _satisfiedCommutativeOriginators;
@@ -133,11 +134,11 @@ struct CPUDependencyData {
 	acquired_commutative_scoreboard_entries_t _acquiredCommutativeScoreboardEntries;
 	released_commutative_regions_t _releasedCommutativeRegions;
 	satisfied_taskwait_accesses_t _completedTaskwaits;
-	
+
 #ifndef NDEBUG
 	std::atomic<bool> _inUse;
 #endif
-	
+
 	CPUDependencyData()
 		: _satisfiedOriginators(), _satisfiedCommutativeOriginators(),
 		_delayedOperations(), _removableTasks(),
@@ -148,12 +149,12 @@ struct CPUDependencyData {
 #endif
 	{
 	}
-	
+
 	~CPUDependencyData()
 	{
 		assert(empty());
 	}
-	
+
 	inline bool empty() const
 	{
 		return _satisfiedOriginators.empty() && _satisfiedCommutativeOriginators.empty()

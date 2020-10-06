@@ -1,16 +1,17 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef READY_QUEUE_DEQUE_HPP
 #define READY_QUEUE_DEQUE_HPP
 
+#include "MemoryAllocator.hpp"
 #include "scheduling/ReadyQueue.hpp"
 
 class ReadyQueueDeque : public ReadyQueue {
-	typedef std::deque<Task *> ready_queue_t;
+	typedef std::deque<Task *, TemplateAllocator<Task *>> ready_queue_t;
 
 	ready_queue_t _readyDeque;
 public:
