@@ -49,6 +49,9 @@ public:
 
 	static void shutdown()
 	{
+#ifndef NDEBUG
+		printDirectoryContent();
+#endif
 		assert(_directory.empty());
 		std::cout << "Total allocated bytes using nanos6_numa interface: " << _totalBytes << std::endl;
 	}
@@ -228,7 +231,7 @@ public:
 #ifndef NDEBUG
 			size_t remainingBytes = size;
 #endif
-			if (originalBlockSize < (size_t) pagesize) {
+			if (originalBlockSize < pagesize) {
 				for (size_t i = 0; i < size; i += originalBlockSize) {
 					uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 					disableBit(&bitmaskCopy, currentNodeIndex);
@@ -241,7 +244,7 @@ public:
 #ifndef NDEBUG
 					_lock.readLock();
 					auto it = _directory.find(tmp);
-					assert(it->second._size == originalBlockSize || it->second._size == remainingBytes);
+					assert(it->second._size == (size_t) originalBlockSize || it->second._size == remainingBytes);
 					_lock.readUnlock();
 					remainingBytes -= it->second._size;
 #endif
@@ -302,7 +305,6 @@ public:
 		// Get homenode
 		if (it == _directory.end() || ptr < it->first) {
 			if (it == _directory.begin()) {
-				//std::cout << "Not present" << std::endl;
 				return homenode;
 			}
 			it--;
@@ -310,7 +312,6 @@ public:
 
 		// Not present
 		if (it == _directory.end()) {
-			//std::cout << "Not present" << std::endl;
 			return homenode;
 		}
 
@@ -384,6 +385,17 @@ private:
 				return end1 - ptr2;
 			else
 				return end2 - ptr2;
+		}
+	}
+
+	static void printDirectoryContent()
+	{
+		if (_directory.empty()) {
+			std::cout << "Directory is empty." << std::endl;
+			return;
+		}
+		for (auto it : _directory) {
+			std::cout << "Address: " << it.first << ", size: " << it.second._size << ", homenode: " << (int) it.second._homenode << std::endl;
 		}
 	}
 };

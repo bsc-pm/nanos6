@@ -107,6 +107,11 @@ public:
 	{
 		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getL3Cache(loc);
 	}
+
+	static inline const std::vector<uint64_t> &getNUMADistances()
+	{
+		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getNUMADistances();
+	}
 };
 
 #endif // HARDWARE_INFO_HPP

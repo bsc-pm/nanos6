@@ -43,6 +43,9 @@ private:
 	//! Total amount of physical packages in the system
 	size_t _numPhysicalPackages;
 
+	//! Matrix of NUMA distances
+	std::vector<uint64_t> _NUMADistances;
+
 public:
 
 	HostInfo();
@@ -121,6 +124,11 @@ public:
 	inline L3Cache *getL3Cache(DataTrackingSupport::location_t loc) const
 	{
 		return _L3Caches[loc];
+	}
+
+	inline const std::vector<uint64_t> &getNUMADistances() const
+	{
+		return _NUMADistances;
 	}
 };
 

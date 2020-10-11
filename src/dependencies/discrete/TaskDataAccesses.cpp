@@ -422,5 +422,10 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid, Task *task)
 	//		std::cout << task->getTaskInfo()->implementations[0].task_label << "{" << bytesInNUMA[0] << ", " << bytesInNUMA[1] << "}" << std::endl;
 	//}
 	chosenNUMAid = chosen;
+	//if (task->getTaskInfo()->implementations[0].task_label != nullptr) {
+	//	std::cout << "For task " << task->getTaskInfo()->implementations[0].task_label << ", chosen is " << (int) chosen << " with " << bytesInNUMA[chosen] << " bytes out of " << _totalDataSize << " bytes." << std::endl;
+	//} else {
+	//	std::cout << "Chosen is " << (int) chosen << " with " << bytesInNUMA[chosen] << " bytes out of " << _totalDataSize << " bytes." << std::endl;
+	//}
 	assert(sanityCheck >= _totalDataSize && sanityCheck <= 2*_totalDataSize);
 }
