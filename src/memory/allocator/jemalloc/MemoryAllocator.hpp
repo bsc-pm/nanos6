@@ -101,6 +101,11 @@ public:
 
 	template<class U>
 	TemplateAllocator(const TemplateAllocator<U>&) {}
+
+	// Legacy C++98/C++03 hack for rebinding operators that is needed for
+	// repurposing allocator instances in older Boost versions.
+	template <class U>
+	struct rebind {typedef TemplateAllocator<U> other;};
 };
 
 template <class T, class U>
