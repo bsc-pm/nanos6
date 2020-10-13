@@ -17,6 +17,7 @@ namespace DataTrackingSupport {
 	static EnvironmentVariable<bool> _NUMATrackingEnabled("NANOS6_NUMA_TRACKING", 1);
 	static EnvironmentVariable<bool> _NUMASchedulingEnabled("NANOS6_NUMA_SCHEDULING", 1);
 	static EnvironmentVariable<bool> _NUMAStealingEnabled("NANOS6_NUMA_STEALING", 1);
+	static EnvironmentVariable<bool> _NUMAOptimizedTrackingEnabled("NANOS6_NUMA_OPTIMIZED_TRACKING", 1);
 	static EnvironmentVariable<bool> _trackingReportEnabled("NANOS6_TRACKING_REPORT", 0);
 	static EnvironmentVariable<bool> _checkExpiration("NANOS6_CHECK_EXPIRATION", 1);
 
@@ -84,6 +85,11 @@ namespace DataTrackingSupport {
 	static inline bool isNUMAStealingEnabled()
 	{
 		return _NUMAStealingEnabled;
+	}
+
+	static inline bool isNUMAOptimizedTrackingEnabled()
+	{
+		return _NUMAOptimizedTrackingEnabled;
 	}
 
 	static inline bool isCheckExpirationEnabled()

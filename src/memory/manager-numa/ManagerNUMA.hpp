@@ -40,11 +40,13 @@ private:
 	static directory_t _directory;
 	static RWSpinLock _lock;
 	static std::atomic<size_t> _totalBytes;
+	static std::atomic<size_t> _totalQueries;
 
 public:
 	static void initialize()
 	{
 		_totalBytes = 0;
+		_totalQueries = 0;
 	}
 
 	static void shutdown()
@@ -54,6 +56,7 @@ public:
 #endif
 		assert(_directory.empty());
 		std::cout << "Total allocated bytes using nanos6_numa interface: " << _totalBytes << std::endl;
+		std::cout << "Total queries: " << _totalQueries << std::endl;
 	}
 
 	static void *alloc(size_t size, bitmask_t *bitmask, size_t block_size)
@@ -290,6 +293,7 @@ public:
 	static uint8_t getHomeNode(void *ptr, size_t size)
 	{
 		assert(DataTrackingSupport::isNUMATrackingEnabled());
+		_totalQueries++;
 
 		uint8_t homenode = (uint8_t ) -1;
 		// Search in the directory
