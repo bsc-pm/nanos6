@@ -264,6 +264,8 @@ HostInfo::HostInfo() :
 		}
 	}
 
+	_NUMADistances = std::vector<uint64_t>(memNodesCount*memNodesCount, 0);
+#if HWLOC_API_VERSION >= 0x00020000
 	//! Get matrix of NUMA distances
 	hwloc_distances_s *distances;
 	//! nr points to the number of distance matrices that may be stored in distances
@@ -274,7 +276,7 @@ HostInfo::HostInfo() :
 	unsigned long flags = 0;
 	hwloc_distances_get(topology, &nr, &distances, kind, flags);
 	unsigned nbobjs = distances->nbobjs;
-	_NUMADistances = std::vector<uint64_t>(nbobjs*nbobjs, 0);
+	assert(nbobjs == memNodesCount);
 	for (unsigned i = 0; i < nbobjs; i++) {
 		hwloc_obj_t obj = distances->objs[i];
 		assert(obj->type == HWLOC_NUMA_ALIAS);
@@ -287,6 +289,22 @@ HostInfo::HostInfo() :
 			_NUMADistances[j*nbobjs+i] = distance2to1;
 		}
 	}
+	hwloc_distances_release(topology, distances);
+#else
+	unsigned nbobjs = memNodesCount;
+	for (unsigned i = 0; i < nbobjs; i++) {
+		hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_NUMA_ALIAS, i);
+		assert(obj->type == HWLOC_NUMA_ALIAS);
+		for (unsigned j = i; j < nbobjs; j++) {
+			hwloc_obj_t obj2 = hwloc_get_obj_by_type(topology, HWLOC_NUMA_ALIAS, j);
+			assert(obj2->type == HWLOC_NUMA_ALIAS);
+			float distance1to2, distance2to1;
+			hwloc_get_latency(topology, obj, obj2, &distance1to2, &distance2to1);
+			_NUMADistances[i*nbobjs+j] = distance1to2 * 10;
+			_NUMADistances[j*nbobjs+i] = distance2to1 * 10;
+		}
+	}
+#endif
 	//std::cout << "---------- DISTANCE MATRIX ----------" << std::endl;
 	//for (unsigned i = 0; i < nbobjs; i++) {
 	//	for (unsigned j = 0; j < nbobjs; j++) {
@@ -295,7 +313,6 @@ HostInfo::HostInfo() :
 	//	std::cout << std::endl;
 	//}
 	//! Each distance matrix returned in the distances array should be released by the caller using hwloc_distances_release().
-	hwloc_distances_release(topology, distances);
 
 	// Other work
 	// Release resources
