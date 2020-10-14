@@ -105,10 +105,12 @@ public:
 		const uint64_t id = head % _size;
 
 		// Wait until it is our turn
-		while (_waitQueue[id]._ticket.load(std::memory_order_acquire) != head) {
+		while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) != head) {
 			spinWait();
 		}
 		spinWaitRelease();
+
+		std::atomic_thread_fence(std::memory_order_acquire);
 	}
 
 	//! \brief Acquire the lock or wait until someone serves an item
@@ -134,10 +136,17 @@ public:
 		_waitQueue[id]._cpuId.store(head + cpuIndex, std::memory_order_relaxed);
 
 		// Wait until it is our turn or someone else has served us an item
-		while (_waitQueue[id]._ticket.load(std::memory_order_acquire) < head) {
+		while (_waitQueue[id]._ticket.load(std::memory_order_relaxed) < head) {
 			spinWait();
 		}
 		spinWaitRelease();
+
+		// Prevent reordering of loads respect to other processes.
+		// On weak memory models, the write to _waitQueue[id]._ticket can be seen
+		// out-of-order respect other locations, for example _items[cpuIndex]._item.
+		// Add a fence to prevent this specific reorder, as the corresponding write
+		// to _waitQueue[id]._ticket is marked with memory_order_release.
+		std::atomic_thread_fence(std::memory_order_acquire);
 
 		if (_items[cpuIndex]._ticket != head) {
 			// We acquired the lock
