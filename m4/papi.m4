@@ -61,6 +61,31 @@ AC_DEFUN([AC_CHECK_PAPI],
 			LIBS="${ac_save_LIBS}"
 		fi
 
+		if test x"${ac_use_papi}" != x"" ; then
+			if test x"${ac_cv_use_papi_prefix}" != x"" ; then
+				papiBinary=${ac_cv_use_papi_prefix}/bin/papi_version
+			else
+				papiBinary=papi_version
+			fi
+			papiVersion=`$papiBinary | sed 's/[[^0-9.]]*\([[0-9.]]*\).*/\1/'`
+
+			AX_COMPARE_VERSION(
+				[[${papiVersion}]],
+				[[ge]],
+				[[5.6.0]],
+				[[ac_papi_version_correct=yes]],
+				[[ac_papi_version_correct=no]]
+			)
+
+			if test x"${ac_papi_version_correct}" != x"yes" ; then
+				AC_MSG_ERROR([PAPI version must be >= 5.6.0.])
+				ac_use_papi=no
+			else
+				AC_MSG_CHECKING([if the PAPI version >= 5.6.0.])
+				AC_MSG_RESULT([${ac_papi_version_correct}])
+			fi
+		fi
+
 		AM_CONDITIONAL(HAVE_PAPI, test x"${ac_use_papi}" = x"yes")
 
 		AC_SUBST([papi_LIBS])
