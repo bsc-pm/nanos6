@@ -27,6 +27,9 @@ remove_unused_requires () {
 	echo "${contents}" | perl -pe 's/^__(!*)require_(.*)(\n*)$//g' | perl -0777 -pe 's/(\n{2,})/\n\n/gs'
 }
 
+template_file=$1
+shift
+
 # This sections must be in order with the arguments of the script
 possible_sections=(CUDA OPENACC CLUSTER DLB CTF GRAPH VERBOSE EXTRAE PAPI PQOS)
 disabled_sections=()
@@ -41,7 +44,7 @@ for section in "${possible_sections[@]}"; do
 done
 
 # Read configure template
-file_contents=$(cat scripts/nanos6_defconfig.toml)
+file_contents=$(cat ${template_file})
 
 # For each disabled section, call remove_section
 for section in ${disabled_sections[@]}; do

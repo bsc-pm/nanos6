@@ -5,8 +5,6 @@
 [misc]
 	# Stack size of threads created by the runtime. Default is 8M
 	stack_size = "8M"
-	# Enable polling services, needed for some runtime components. Default is true
-	polling = true
 	# Frequency for polling services expressed in microseconds. Default is 1ms
 	polling_frequency = 1000 # µs
 

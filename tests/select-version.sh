@@ -24,9 +24,9 @@ fi
 
 # Enable DLB for dlb-specific tests
 if [[ "${*}" == *"dlb-"* ]]; then
-	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enable=true"
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enabled=true"
 else
-	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enable=false"
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enabled=false"
 fi
 
 # If DLB is enabled clean the shared memory first

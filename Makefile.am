@@ -2006,8 +2006,8 @@ endif
 
 # Generate processed config file according to user chosen installation
 
-scripts/nanos6.toml: scripts/generate_config.sh scripts/nanos6_defconfig.toml
-	scripts/generate_config.sh $(config_vars) > scripts/nanos6.toml
+scripts/nanos6.toml: $(top_srcdir)/scripts/generate_config.sh $(top_srcdir)/scripts/nanos6_defconfig.toml
+	$(top_srcdir)/scripts/generate_config.sh $(top_srcdir)/scripts/nanos6_defconfig.toml $(config_vars) > scripts/nanos6.toml
 
 # All potential files in those lists will be distributed
 # regardless of the Makefile conditionals

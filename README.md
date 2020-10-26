@@ -446,7 +446,7 @@ taskset -c 10-19 ./cholesky-fact.test &
 ## Polling Services
 
 Polling services are executed by a dedicated thread at regular intervals, and also, opportunistically by idle worker threads.
-The approximate minimum frequency in time in which the polling services are going to be executed can be controlled by the `polling_frequency` configuration variable.
+The approximate minimum frequency in time in which the polling services are going to be executed can be controlled by the `misc.polling_frequency` configuration variable.
 This variable can take an integer value that represents the polling frequency in microseconds.
 By default, the runtime system executes the polling services at least every 1000 microseconds.
 
