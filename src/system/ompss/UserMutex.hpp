@@ -50,8 +50,8 @@ public:
 		return successful;
 	}
 
-	//! \brief Lock
-	inline void lock()
+	//! \brief Directly grab the lock, but spin instead of blocking the calling thread
+	inline void spinLock()
 	{
 		bool expected = false;
 		while (!_userMutex.compare_exchange_weak(expected, true)) {

@@ -76,9 +76,7 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 
 	if (currentTask->isTaskfor()) {
 		// Lock the mutex directly
-		userMutex->lock();
-		Instrument::acquiredUserMutex(userMutex);
-		return;
+		userMutex->spinLock();
 	} else {
 		// Fast path
 		if (userMutex->tryLock()) {
