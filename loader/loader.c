@@ -25,6 +25,7 @@
 #include "api/nanos6/debug.h"
 
 #include "config-parser.h"
+#include "error.h"
 #include "main-wrapper.h"
 #include "loader.h"
 
@@ -110,7 +111,7 @@ static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *var
 	}
 }
 
-static int _nanos6_check_disabled_variant(char const *variant, char const *dependencies)
+static int _nanos6_check_disabled_variant(char const *variant, char const *dependencies, char const *common_error)
 {
 	assert(_nanos6_lib_handle != NULL);
 	assert(variant != NULL);
@@ -118,12 +119,10 @@ static int _nanos6_check_disabled_variant(char const *variant, char const *depen
 
 	void *disabled_symbol = dlsym(_nanos6_lib_handle, "nanos6_disabled_variant");
 	if (disabled_symbol != NULL) {
-		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE,
-			"This installation of Nanos6 does not include the %s variant with %s dependencies.",
-			variant, dependencies);
+		fprintf(stderr, "Error: %s\n", common_error);
+		fprintf(stderr, "This Nanos6 installation disabled the '%s' variant with '%s' dependencies.\n", variant, dependencies);
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -175,11 +174,13 @@ static int _nanos6_loader_impl(void)
 		}
 	}
 
+	char const *common_error = "Nanos6 loader failed to load the runtime library.";
+
 	// Try the global or the NANOS6_LIBRARY_PATH scope
 	_nanos6_loader_try_load(verbose, variant, dependencies, lib_path);
 	if (_nanos6_lib_handle != NULL) {
 		// Check if this is a disabled variant
-		return _nanos6_check_disabled_variant(variant, dependencies);
+		return _nanos6_check_disabled_variant(variant, dependencies, common_error);
 	}
 
 	// Attempt to load it from the same path as this library
@@ -198,10 +199,10 @@ static int _nanos6_loader_impl(void)
 	if (_nanos6_lib_handle != NULL) {
 		free(lib_path);
 		// Check if this is a disabled variant
-		return _nanos6_check_disabled_variant(variant, dependencies);
+		return _nanos6_check_disabled_variant(variant, dependencies, common_error);
 	}
 
-	snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Nanos6 loader failed to load the runtime library.");
+	fprintf(stderr, "Error: %s\n", common_error);
 
 	//
 	// Diagnose the problem
@@ -209,6 +210,7 @@ static int _nanos6_loader_impl(void)
 
 	// Check the variant
 	if (verbose) {
+		fprintf(stderr, "Diagnosing the loader issue...\n");
 		fprintf(stderr, "Checking if the variant was not correct\n");
 	}
 
@@ -217,8 +219,8 @@ static int _nanos6_loader_impl(void)
 		_nanos6_loader_try_load(verbose, "optimized", "linear-regions-fragmented", lib_path);
 	}
 	if (_nanos6_lib_handle != NULL) {
-		fprintf(stderr, "Error: the %s variant of the runtime with the dependencies implementation %s is not available in this installation.\n", variant, dependencies);
-		fprintf(stderr, "\tPlease check that the NANOS6 environment variable is valid.\n");
+		fprintf(stderr, "The '%s' runtime variant with the '%s' dependencies is not available in this installation.\n", variant, dependencies);
+		fprintf(stderr, "Please check that the NANOS6 and NANOS6_DEPENDENCIES environment variables are valid.\n");
 
 		dlclose(_nanos6_lib_handle);
 		_nanos6_lib_handle = NULL;
@@ -237,7 +239,7 @@ static int _nanos6_loader_impl(void)
 		_nanos6_loader_try_load_without_major(verbose, variant, dependencies, lib_path);
 	}
 	if (_nanos6_lib_handle != NULL) {
-		fprintf(stderr, "Error: there is a mismatch between the installed runtime so version and the linked so version\n");
+		fprintf(stderr, "There is a mismatch between the installed runtime so version and the linked so version\n");
 		fprintf(stderr, "\tExpected so version: %s or at least %s\n", SONAME_SUFFIX, SONAME_MAJOR);
 		fprintf(stderr, "\tFound instead this so: %s\n", nanos6_get_runtime_path());
 		fprintf(stderr, "\tPlease recompile your application.\n");
@@ -264,9 +266,7 @@ static int _nanos6_loader_impl(void)
 __attribute__ ((visibility ("hidden"), constructor)) void _nanos6_loader(void)
 {
 	if (_nanos6_loader_impl()) {
-		_nanos6_exit_with_error = 1;
-		fprintf(stderr, "Error: %s\n", _nanos6_error_text);
-		exit(1);
+		handle_error();
 	}
 }
 

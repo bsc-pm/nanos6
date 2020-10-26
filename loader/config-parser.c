@@ -62,13 +62,13 @@ static int _nanos6_find_config()
 		// Can we access the file for reading?
 		if (access(config_path, R_OK)) {
 			// We cannot. Lets print the error by stderr and then die.
-			snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to find the file specified in NANOS6_CONFIG: %s", strerror(errno));
+			fprintf(stderr, "Error: Failed to find the file specified in NANOS6_CONFIG: %s\n", strerror(errno));
 			return -1;
 		}
 
 		// Greater or equal strict to account for the null character
 		if (strlen(config_path) >= MAX_CONFIG_PATH) {
-			snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Path specified in NANOS6_CONFIG is too long");
+			fprintf(stderr, "Error: Path specified in NANOS6_CONFIG is too long.\n");
 			return -1;
 		}
 
@@ -79,7 +79,7 @@ static int _nanos6_find_config()
 
 	// 2. Current directory
 	if (getcwd(_nanos6_config_path, MAX_CONFIG_PATH) == NULL) {
-		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to get current working directory: %s", strerror(errno));
+		fprintf(stderr, "Error: Failed to get current working directory: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -98,7 +98,7 @@ static int _nanos6_find_config()
 		return 0;
 	}
 
-	snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to find the Nanos6 config file.");
+	fprintf(stderr, "Error: Failed to find the Nanos6 config file.\n");
 	return -1;
 }
 
@@ -236,7 +236,7 @@ int _nanos6_loader_parse_config()
 	// Open found config file for reading
 	f = fopen(_nanos6_config_path, "r");
 	if (f == NULL) {
-		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to open config file for reading: %s", strerror(errno));
+		fprintf(stderr, "Error: Failed to open config file for reading: %s", strerror(errno));
 		return -1;
 	}
 
@@ -244,7 +244,7 @@ int _nanos6_loader_parse_config()
 	conf = toml_parse_file(f, errbuf, sizeof(errbuf));
 	fclose(f);
 	if (conf == NULL) {
-		snprintf(_nanos6_error_text, ERROR_TEXT_SIZE, "Failed to parse config file: %s", errbuf);
+		fprintf(stderr, "Error: Failed to parse config file: %s", errbuf);
 		return -1;
 	}
 

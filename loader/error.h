@@ -18,7 +18,7 @@
 // Cannot go back from this.
 #define handle_error() \
 	do { \
-		abort(); \
+		exit(EXIT_FAILURE); \
 	} while (0)
 
 

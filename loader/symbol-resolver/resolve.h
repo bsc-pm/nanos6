@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef RESOLVE_H
@@ -29,24 +29,24 @@ void _nanos6_loader(void);
 void (*_##fname##_resolver(void)) (void) \
 { \
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
-		fprintf(stderr, "Nanos 6 loader warning: attempt to resolve the address of " #fname " before library initialization\n"); \
+		fprintf(stderr, "Nanos6 loader warning: attempt to resolve the address of " #fname " before library initialization\n"); \
 		_nanos6_loader(); \
-	} \
-	\
-	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
-		handle_error(); \
-		return NULL; \
+		\
+		if (_nanos6_lib_handle == NULL) { \
+			handle_error(); \
+			return NULL; \
+		} \
 	} \
 	\
 	void *symbol = (void (*)(void)) dlsym(_nanos6_lib_handle, #fname); \
 	if ((symbol == NULL) && (#fallback != NULL)) { \
 		symbol = (void (*)(void)) dlsym(_nanos6_lib_handle, #fallback); \
 		if (symbol != NULL) { \
-			fprintf(stderr, "Nanos 6 loader warning: " #area " runtime function " #fname " is undefined in '%s' falling back to function " #fallback " instead\n", nanos6_get_runtime_path()); \
+			fprintf(stderr, "Nanos6 loader warning: " #area " runtime function " #fname " is undefined in '%s' falling back to function " #fallback " instead\n", nanos6_get_runtime_path()); \
 		} \
 	} \
 	if (symbol == NULL) { \
-		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos6_get_runtime_path()); \
+		fprintf(stderr, "Nanos6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos6_get_runtime_path()); \
 		handle_error(); \
 		return NULL; \
 	} \
@@ -60,9 +60,13 @@ void *fname() __attribute__ (( ifunc("_" #fname "_resolver"), visibility("defaul
 void (*_##fname##_resolver(void)) (void) \
 { \
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
-		fprintf(stderr, "Nanos 6 loader error: call to " #fname " before library initialization\n"); \
-		handle_error(); \
-		return NULL; \
+		fprintf(stderr, "Nanos6 loader warning: attempt to resolve the address of " #fname " before library initialization\n"); \
+		_nanos6_loader(); \
+		\
+		if (_nanos6_lib_handle == NULL) { \
+			handle_error(); \
+			return NULL; \
+		} \
 	} \
 	\
 	void *symbol = (void (*)(void)) dlsym(_nanos6_lib_handle, #fname); \
@@ -70,7 +74,7 @@ void (*_##fname##_resolver(void)) (void) \
 		symbol = (void (*)(void)) fallback; \
 	} \
 	if (symbol == NULL) { \
-		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos6_get_runtime_path()); \
+		fprintf(stderr, "Nanos6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos6_get_runtime_path()); \
 		handle_error(); \
 		return NULL; \
 	} \
@@ -85,11 +89,12 @@ void *fname() __attribute__ (( ifunc("_" #fname "_resolver"), visibility("defaul
 void (*_##fname##_resolver(void)) (void) \
 { \
 	if (__builtin_expect(_nanos6_lib_handle == NULL, 0)) { \
+		fprintf(stderr, "Nanos6 loader warning: attempt to resolve the address of " #fname " before library initialization\n"); \
 		_nanos6_loader(); \
+		\
 		if (_nanos6_lib_handle == NULL) { \
-			fprintf(stderr, "Nanos 6 loader error: call to " #fname " before library initialization\n"); \
 			handle_error(); \
-		return NULL; \
+			return NULL; \
 		} \
 	} \
 	\
@@ -98,7 +103,7 @@ void (*_##fname##_resolver(void)) (void) \
 		symbol = (void (*)(void)) dlsym(RTLD_NEXT, #fname); \
 	} \
 	if (symbol == NULL) { \
-		fprintf(stderr, "Nanos 6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos6_get_runtime_path()); \
+		fprintf(stderr, "Nanos6 loader error: " #area " runtime function " #fname " is undefined in '%s'\n", nanos6_get_runtime_path()); \
 		handle_error(); \
 		return NULL; \
 	} \
