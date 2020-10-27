@@ -23,9 +23,6 @@ private:
 	//! The current number of idle CPUs, kept atomic through idleCPUsLock
 	static size_t _numIdleCPUs;
 
-	//! Map from system to virtual CPU id
-	static std::vector<size_t> _systemToVirtualCPUId;
-
 public:
 
 	/*    CPUMANAGER    */

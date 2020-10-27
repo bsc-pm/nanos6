@@ -53,7 +53,10 @@ public:
 
 	inline CPU *getCPU(size_t systemCPUId) const
 	{
-		return _cpus[systemCPUId];
+		assert(_systemToVirtualCPUId.size() > systemCPUId);
+
+		size_t virtualCPUId = _systemToVirtualCPUId[systemCPUId];
+		return _cpus[virtualCPUId];
 	}
 
 	inline CPU *getUnusedCPU()
