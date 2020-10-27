@@ -155,7 +155,7 @@ HostInfo::HostInfo() :
 
 	hwloc_obj_t cache = nullptr;
 #if HWLOC_API_VERSION >= 0x00020000
-	cache = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L1CACHE, 0);
+	cache = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
 #else
 	int cacheDepth = hwloc_get_cache_type_depth(topology, 1, HWLOC_OBJ_CACHE_DATA);
 
