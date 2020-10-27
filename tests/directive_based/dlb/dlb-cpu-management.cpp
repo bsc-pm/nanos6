@@ -38,10 +38,10 @@ int main(int argc, char **argv) {
 
 	nanos6_wait_for_full_initialization();
 
-	const long activeCPUs = nanos6_get_num_cpus();
-	tap.emitDiagnostic("Detected ", activeCPUs, " CPUs");
+	const long numActiveCPUs = nanos6_get_num_cpus();
+	tap.emitDiagnostic("Detected ", numActiveCPUs, " CPUs");
 
-	if (activeCPUs == 1) {
+	if (numActiveCPUs == 1) {
 		// This test only works correctly with more than 1 CPU
 		tap.registerNewTests(1);
 		tap.begin();
@@ -103,8 +103,9 @@ int main(int argc, char **argv) {
 	int numLentCPUs;
 	do {
 		numLentCPUs = 0;
-		for (int i = 0; i < activeCPUs; ++i) {
-			if (nanos6_get_cpu_status(i) == nanos6_lent_cpu) {
+		for (void *cpuIter = nanos6_cpus_begin(); cpuIter != nanos6_cpus_end(); cpuIter = nanos6_cpus_advance(cpuIter)) {
+			long cpuId = nanos6_cpus_get(cpuIter);
+			if (nanos6_get_cpu_status(cpuId) == nanos6_lent_cpu) {
 				++numLentCPUs;
 			}
 		}
@@ -113,10 +114,10 @@ int main(int argc, char **argv) {
 		if (timer.lap() > 5000000) {
 			break;
 		}
-	} while (numLentCPUs < (activeCPUs - 2));
+	} while (numLentCPUs < (numActiveCPUs - 2));
 
 	tap.evaluate(
-		numLentCPUs >= (activeCPUs - 2),
+		numLentCPUs >= (numActiveCPUs - 2),
 		"Check that all unused CPUs are lent after a reasonable amount of time"
 	); // 3
 	tap.bailOutAndExitIfAnyFailed();
@@ -135,7 +136,7 @@ int main(int argc, char **argv) {
 	Atomic<bool> exitCondition(false);
 
 	// Create work for all CPUs
-	for (int i = 0; i < activeCPUs; ++i) {
+	for (int i = 0; i < numActiveCPUs; ++i) {
 		// Block CPUs until the test finishes
 		#pragma oss task shared(exitCondition) label("wait")
 		while (!exitCondition.load());
@@ -146,29 +147,30 @@ int main(int argc, char **argv) {
 	// Loop untill all CPUs are currently running tasks. Note
 	// that the tasks are forced to busy wait until the test
 	// has finished
-	int runningCPUs;
+	int numRunningCPUs;
 	do {
-		runningCPUs = 0;
+		numRunningCPUs = 0;
 
 		// Count how many CPUs are running
-		for (int i = 0; i < activeCPUs; ++i) {
-			if (nanos6_get_cpu_status(i) != nanos6_lent_cpu) {
-				++runningCPUs;
+		for (void *cpuIter = nanos6_cpus_begin(); cpuIter != nanos6_cpus_end(); cpuIter = nanos6_cpus_advance(cpuIter)) {
+			long cpuId = nanos6_cpus_get(cpuIter);
+			if (nanos6_get_cpu_status(cpuId) != nanos6_lent_cpu) {
+				++numRunningCPUs;
 			}
 		}
-
+		
 		// Wait at most 5 seconds
-		if (timer.lap() > 5000000) {
-			break;
-		}
-	} while (runningCPUs < activeCPUs);
+                if (timer.lap() > 5000000) {
+                        break;
+                }
+	} while (numRunningCPUs < numActiveCPUs);
 
 	exitCondition.store(true);
 
 	#pragma oss taskwait
 
 	tap.evaluate(
-		runningCPUs == activeCPUs,
+		numRunningCPUs == numActiveCPUs,
 		"Check that when enough work is available, no CPUs are lent"
 	); // 4
 	tap.bailOutAndExitIfAnyFailed();
