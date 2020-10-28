@@ -56,7 +56,7 @@ private:
 	// The id that the next newly created (if pool is empty) queue will have
 	size_t _nextAsyncId;
 
-	// Defined in NANOS6_OPENACC_MAX_QUEUES, maximum number we can totally have
+	// Defined in devices.openacc.max_queues, maximum number we can totally have
 	size_t _maxAsyncQueues;
 
 public:
@@ -66,8 +66,8 @@ public:
 		// preallocate the default num of queues; on request expand up to _maxAsyncQueues
 		size_t numQueues = OpenAccFunctions::getInitialQueueNum();
 		FatalErrorHandler::failIf(numQueues > _maxAsyncQueues,
-			"NANOS6_OPENACC_DEFAULT_QUEUES can't be greater than NANOS6_OPENACC_MAX_QUEUES",
-			"\nPlease set environment variables accordingly");
+			"devices.openacc.default_queues can't be greater than devices.openacc.max_queues",
+			"\nPlease set the config variables accordingly");
 
 		for (size_t i = 1; i <= numQueues; i++) {	// count from 1; keep 0 for special cases (eg. in_final)
 			OpenAccQueue *queue = new OpenAccQueue((int)i);
@@ -89,7 +89,7 @@ public:
 	// We have available queues in 2 cases:
 	//   1. The existing queues pool is not empty
 	//   2. We haven't reached the defined MAX queue number, so we can allocate more
-	//      (see NANOS6_OPENACC_MAX_QUEUES)
+	//      (see devices.openacc.max_queues)
 	inline bool isQueueAvailable() const
 	{
 		if (_queuePool.empty()) {

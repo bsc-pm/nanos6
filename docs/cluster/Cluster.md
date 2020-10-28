@@ -186,7 +186,9 @@ If this variable is not set, the application will run as if cluster is disabled.
 
 You launch an OmpSs-2@Cluster application using the standard utility provided by the MPI library you used to build Nanos6 with Cluster support. For example,
 
-```toml
+```sh
+export NANOS6_CONFIG_OVERRIDE="cluster.communication=mpi-2sided" # Or set in nanos6.toml
+
 mpirun -np 16 taskset -c 0-47 ./your_ompss_cluster_app args...
 ```
 
@@ -195,6 +197,8 @@ scheduler. For example, a SLURM job script could look like:
 
 ```sh
 #!/bin/bash
+
+export NANOS6_CONFIG_OVERRIDE="cluster.communication=mpi-2sided" # Or set in nanos6.toml
 
 #SBATCH --job-name=my_ompss_cluster_app
 #SBATCH --time=30:00

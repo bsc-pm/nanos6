@@ -74,7 +74,7 @@ int Throttle::evaluate(void *)
 }
 
 // Each task has a maximum number of child tasks, which decreases at a 10x rate per nesting level
-// determined by NANOS6_THROTTLE_TASKS. Also, when the memory pressure reaches NANOS6_THROTTLE_MAX_MEMORY
+// determined by throttle.tasks. Also, when the memory pressure reaches throttle.max_memory
 // the number of tasks dicreases linearly between that point and 100% memory pressure. At a 100%
 // memory pressure, there is only 1 allowed tasks, which will trigger a taskwait to reduce
 // memory usage.

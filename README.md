@@ -269,7 +269,7 @@ Also `instrument.verbose.dump_only_on_exit` can be set to `true` to delay the ou
 To enable collecting timing statistics, run the application with the `loader.variant` config set to `stats`.
 
 By default, the statistics are emitted standard error when the program ends.
-The output can be sent to a file through the `instrument.stats.file` config.
+The output can be sent to a file through the `instrument.stats.output_file` config.
 
 The contents of the output contain the average for each task type and the total task average of the following metrics:
 

@@ -26,8 +26,8 @@
 class ConfigParser {
 	toml::value data;
 
-	typedef std::unordered_map<std::string, std::string> environmentConfigMap_t;
-	environmentConfigMap_t environmentConfig;
+	typedef std::unordered_map<std::string, std::string> environment_config_map_t;
+	environment_config_map_t _environmentConfig;
 
 	toml::value findKey(std::string key)
 	{
@@ -60,7 +60,7 @@ class ConfigParser {
 
 			while (std::getline(ss, currentDirective, ',')) {
 				if (currentDirective.empty()) {
-					FatalErrorHandler::warn("Invalid config option: directive cannot be empty");
+					// Silently skip empty directives
 					continue;
 				}
 
@@ -83,7 +83,7 @@ class ConfigParser {
 					continue;
 				}
 
-				if (environmentConfig.find(directiveName) != environmentConfig.end()) {
+				if (_environmentConfig.find(directiveName) != _environmentConfig.end()) {
 					FatalErrorHandler::warn("Ignoring repeated config option ", directiveName);
 					continue;
 				}
@@ -92,7 +92,7 @@ class ConfigParser {
 				boost::trim(directiveName);
 				boost::to_lower(directiveName);
 
-				environmentConfig.emplace(directiveName, directiveContent);
+				_environmentConfig.emplace(directiveName, directiveContent);
 			}
 		}
 	}
@@ -113,7 +113,8 @@ class ConfigParser {
 	}
 
 public:
-	ConfigParser() : environmentConfig()
+	ConfigParser() :
+		_environmentConfig()
 	{
 		const char *_nanos6_config_path = (const char *)dlsym(nullptr, "_nanos6_config_path");
 		assert(_nanos6_config_path != nullptr);
@@ -135,21 +136,21 @@ public:
 	template <typename T>
 	void get(std::string key, T &value, bool &found)
 	{
-		// First we will try to find the corresponding override.
-		environmentConfigMap_t::iterator option = environmentConfig.find(key);
-		if (option != environmentConfig.end()) {
+		// First we will try to find the corresponding override
+		environment_config_map_t::iterator option = _environmentConfig.find(key);
+		if (option != _environmentConfig.end()) {
 			if (parseString<T>(option->second, value)) {
 				found = true;
 				return;
 			} else {
 				FatalErrorHandler::warn(
-				"Configuration override for ",
-				key,
-				" found but value '",
-				option->second,
-				"' could not be cast to ",
-				typeid(T).name(),
-				", falling back to config file");
+					"Configuration override for ",
+					key,
+					" found but value '",
+					option->second,
+					"' could not be cast to ",
+					typeid(T).name(),
+					", falling back to config file");
 			}
 		}
 

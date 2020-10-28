@@ -22,7 +22,7 @@ void VirtualMemoryManagement::initialize()
 {
 	size_t totalPhysicalMemory = HardwareInfo::getPhysicalMemorySize();
 
-	// NANOS6_LOCAL_MEMORY determines the size of the local address space per
+	// cluster.local_memory determines the size of the local address space per
 	// cluster node. Default value: Trying to map the minimum between 2GB and
 	// the 5% of the total physical memory of the machine
 	_size = std::min(2UL << 30, totalPhysicalMemory / 20);

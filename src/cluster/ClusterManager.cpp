@@ -5,10 +5,10 @@
 */
 
 #include "ClusterManager.hpp"
-#include "support/config/ConfigVariable.hpp"
 #include "messages/MessageSysFinish.hpp"
 #include "messenger/Messenger.hpp"
 #include "polling-services/ClusterPollingServices.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
 #include <ClusterNode.hpp>
@@ -55,7 +55,7 @@ void ClusterManager::initialize()
 	RuntimeInfo::addEntry("cluster_communication", "Cluster Communication Implementation", commType);
 
 	/** If a communicator has not been specified through the
-	 * NANOS6_COMMUNCIATION environment variable we will not
+	 * cluster.communication config variable we will not
 	 * initialize the cluster support of Nanos6 */
 	if (commType.getValue() != "disabled") {
 		initializeCluster(commType.getValue());

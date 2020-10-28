@@ -908,9 +908,9 @@ dlb_cpu_sharing_passive_process_mercurium_debug_test_CXXFLAGS = $(DEBUG_CXXFLAGS
 dlb_cpu_sharing_passive_process_mercurium_debug_test_LDFLAGS = $(test_common_debug_ldflags)
 
 if AWK_IS_SANE
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(SHELL) $(top_srcdir)/tests/tap-driver.sh
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(top_builddir) $(SHELL) $(top_srcdir)/tests/tap-driver.sh
 else
-TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(PERL) $(top_srcdir)/tests/tap-driver.pl
+TEST_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' LD_LIBRARY_PATH='$(top_builddir)/.libs:${LD_LIBRARY_PATH}' $(SHELL) $(top_srcdir)/tests/select-version.sh $(top_builddir) $(PERL) $(top_srcdir)/tests/tap-driver.pl
 endif
 
 

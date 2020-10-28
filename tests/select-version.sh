@@ -4,48 +4,38 @@
 #
 #	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# The top build directory is passed on the first parameter
+DIR=$1
+shift
 
-export NANOS6_CONFIG="${DIR}/../scripts/nanos6.toml"
-export NANOS6_CONFIG_OVERRIDE="a=b"
+export NANOS6_CONFIG="${DIR}/scripts/nanos6.toml"
 
 # Any test with "discrete" in the name uses the simpler discrete implementation
-if test -z ${NANOS6_DEPENDENCIES} ; then
-	if [[ "${*}" == *"discrete"* ]]; then
-		export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.dependencies=discrete"
-	fi
+if [[ "${*}" == *"discrete"* ]]; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.dependencies=discrete"
 fi
 
-if test -z ${NANOS6_SCHEDULING_POLICY} ; then
-	if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"task-for-nqueens"* ]] || [[ "${*}" == *"taskloop-nqueens"* ]] || [[ "${*}" == *"taskloopfor-nqueens"* ]]; then
-		export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},scheduler.policy=lifo"
-	fi
+if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"task-for-nqueens"* ]] || [[ "${*}" == *"taskloop-nqueens"* ]] || [[ "${*}" == *"taskloopfor-nqueens"* ]]; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},scheduler.policy=lifo"
 fi
 
 # Enable DLB for dlb-specific tests
 if [[ "${*}" == *"dlb-"* ]]; then
 	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enabled=true"
+
+	# If DLB is enabled clean the shared memory first
+	if hash dlb_shm 2>/dev/null; then
+		dlb_shm -d
+	fi
 else
 	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enabled=false"
 fi
 
-# If DLB is enabled clean the shared memory first
-if [[ ${NANOS6_ENABLE_DLB} == "1" ]]; then
-	# Only if the command is found
-	if hash dlb_shm 2>/dev/null; then
-		dlb_shm -d
-	fi
-fi
-
-if test -z ${NANOS6} ; then
-	if test "${*}" = "${*/.debug/}" ; then
-		export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.variant=optimized"
-		exec "${@}"
-	else
-		export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.variant=debug"
-		# Regular execution
-		"${@}"
-	fi
-else
+if test "${*}" = "${*/.debug/}" ; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.variant=optimized"
 	exec "${@}"
+else
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.variant=debug"
+	# Regular execution
+	"${@}"
 fi

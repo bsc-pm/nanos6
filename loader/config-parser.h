@@ -15,21 +15,18 @@
 
 #define MAX_CONFIG_PATH PATH_MAX
 
-extern char _nanos6_config_path[MAX_CONFIG_PATH];
+int _nanos6_loader_parse_config(void);
+void _nanos6_loader_free_config(void);
 
-int _nanos6_loader_parse_config();
-void _nanos6_loader_free_config();
-
-struct _nanos6_loader_config {
+typedef struct {
 	char *dependencies;
 	char *variant;
 	char *library_path;
 	char *report_prefix;
 	int verbose;
-};
+} _nanos6_loader_config_t;
 
-typedef struct _nanos6_loader_config _nanos6_loader_config_t;
 extern _nanos6_loader_config_t _config;
-
+extern char _nanos6_config_path[MAX_CONFIG_PATH];
 
 #endif // NANOS6_LOADER_CONFIG_PARSER_H

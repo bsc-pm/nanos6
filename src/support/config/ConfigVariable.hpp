@@ -17,7 +17,7 @@
 #include "ConfigParser.hpp"
 
 class ConfigVariableAux {
-	public:
+public:
 	static inline ConfigParser &getParser()
 	{
 		static ConfigParser configParser;
@@ -33,7 +33,9 @@ protected:
 	std::string _name;
 
 public:
-	BaseConfigVariable() { }
+	BaseConfigVariable()
+	{
+	}
 
 	//! \brief indicates if the config variable has actually been defined
 	inline bool isPresent() const
@@ -60,7 +62,7 @@ public:
 	//!
 	//! \param[in] value the new value
 	//! \param[in] makePresent mark it as if it had been originally defined
-	inline void setValue(T value, bool makePresent=false)
+	inline void setValue(T value, bool makePresent = false)
 	{
 		_value = value;
 		_isPresent |= makePresent;
@@ -101,7 +103,6 @@ public:
 	}
 
 private:
-
 	/** It parses a string representing a size in the form
 	 * 'xxxx[k|K|m|M|g|G|t|T|p|P|e|E]' to a size_t value. */
 	inline size_t memparse(std::string str)
@@ -165,7 +166,7 @@ public:
 		parser.getList(name, _contents, _isPresent);
 	}
 
-	//! \brief indicates if the enviornment variable has actually been defined
+	//! \brief Indicates if the config variable has actually been defined
 	inline bool isPresent() const
 	{
 		return _isPresent;
@@ -216,7 +217,7 @@ public:
 		}
 	}
 
-	//! \brief indicates if the enviornment variable has actually been defined
+	//! \brief Indicates if the config variable has actually been defined
 	inline bool isPresent() const
 	{
 		return _isPresent;

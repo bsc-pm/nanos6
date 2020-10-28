@@ -2,12 +2,6 @@
 # This file is part of Nanos6 and is licensed under the terms contained in the COPYING file
 # Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 
-[misc]
-	# Stack size of threads created by the runtime. Default is 8M
-	stack_size = "8M"
-	# Frequency for polling services expressed in microseconds. Default is 1ms
-	polling_frequency = 1000 # µs
-
 [loader]
 	# Enable verbose output of the loader, to debug dynamic linking problems. Default is false
 	verbose = false
@@ -130,8 +124,9 @@ __require_GRAPH
 		show_regions = false
 		show_spurious_dependency_structures = false
 		show_dead_dependencies = false
+		show_dead_dependency_structures = false
 		show_all_steps = false
-		show_superaccess_links = false
+		show_superaccess_links = true
 		show_log = false
 __!require_GRAPH
 	[instrument.stats]
@@ -155,5 +150,12 @@ __require_CLUSTER
 	distributed_memory = "2G"
 	local_memory = "2G"
 	scheduling_policy = "locality"
-	# va_start = 0x00000000
+	# Virtual Address Space start. If set to 0x00000000, the runtime will find a suitable address.
+	va_start = 0x00000000
 __!require_CLUSTER
+
+[misc]
+	# Stack size of threads created by the runtime. Default is 8M
+	stack_size = "8M"
+	# Frequency for polling services expressed in microseconds. Default is 1ms
+	polling_frequency = 1000 # µs

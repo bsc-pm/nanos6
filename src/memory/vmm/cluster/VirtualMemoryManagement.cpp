@@ -163,7 +163,7 @@ void VirtualMemoryManagement::initialize()
 	size_t totalPhysicalMemory = HardwareInfo::getPhysicalMemorySize();
 	size_t distribSize = 0;
 
-	/* NANOS6_DISTRIBUTED_MEMORY determines the total address space to be
+	/* cluster.distributed_memory determines the total address space to be
 	 * used for distributed allocations across the cluster.
 	 * Default value: 2GB */
 	ConfigVariable<StringifiedMemorySize> distribSizeEnv("cluster.distributed_memory", (2UL << 30));
@@ -171,7 +171,7 @@ void VirtualMemoryManagement::initialize()
 	assert(distribSize > 0);
 	distribSize = ROUND_UP(distribSize, HardwareInfo::getPageSize());
 
-	/* NANOS6_LOCAL_MEMORY determines the size of the local address space
+	/* cluster.local_memory determines the size of the local address space
 	 * per cluster node.
 	 * Default value: Trying to map the minimum between 2GB and the 5% of
 	 * 		  the total physical memory of the machine*/

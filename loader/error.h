@@ -15,7 +15,7 @@
 
 #include "loader.h"
 
-// Cannot go back from this.
+// Cannot go back from this
 #define handle_error() \
 	do { \
 		exit(EXIT_FAILURE); \

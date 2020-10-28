@@ -251,8 +251,8 @@ libnanos6_la_SOURCES = \
 	loader/error.h \
 	loader/loader.c \
 	loader/loader.h \
-	loader/include/toml/toml.c \
-	loader/include/toml/toml.h
+	loader/support/toml/toml.c \
+	loader/support/toml/toml.h
 
 libnanos6_la_CPPFLAGS = -DSONAME_MAJOR=\"$(lib_major)\" -DSONAME_SUFFIX=\"$(lib_suffix)\" -DINSTALLED_CONFIG_DIR=\"$(docdir)\" $(jemalloc_CFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS)
 libnanos6_la_LDFLAGS = $(jemalloc_LIBS) $(AM_LDFLAGS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(DLOPEN_LIBS) $(LDFLAGS_NOUNDEFINED)
