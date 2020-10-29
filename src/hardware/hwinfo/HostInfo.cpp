@@ -156,8 +156,17 @@ HostInfo::HostInfo() :
 	hwloc_obj_t cache = nullptr;
 #if HWLOC_API_VERSION >= 0x00020000
 	cache = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L3CACHE, 0);
+
+	// If we find no L3 cache, fall back to L1 to get the cache line size
+	if (cache == nullptr)
+		cache = hwloc_get_obj_by_type(topology, HWLOC_OBJ_L1CACHE, 0);
 #else
-	int cacheDepth = hwloc_get_cache_type_depth(topology, 1, HWLOC_OBJ_CACHE_DATA);
+	// Get L3 Cache
+	int cacheDepth = hwloc_get_cache_type_depth(topology, 3, HWLOC_OBJ_CACHE_DATA);
+	if (cacheDepth == HWLOC_TYPE_DEPTH_MULTIPLE || cacheDepth == HWLOC_TYPE_DEPTH_UNKNOWN) {
+		// No matches for L3, try to get L1 instead
+		cacheDepth = hwloc_get_cache_type_depth(topology, 1, HWLOC_OBJ_CACHE_DATA);
+	}
 
 	if (cacheDepth != HWLOC_TYPE_DEPTH_MULTIPLE && cacheDepth != HWLOC_TYPE_DEPTH_UNKNOWN) {
 		cache = hwloc_get_obj_by_depth(topology, cacheDepth, 0);
