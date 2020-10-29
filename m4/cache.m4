@@ -14,8 +14,8 @@ AC_DEFUN([AC_CHECK_CACHE],
 		if test x"${CACHELINE_WIDTH}" != x"" ; then
 			cache_size="${CACHELINE_WIDTH}"
 		else
-			AC_CHECK_FILE([/sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size], [
-				cache_size=$(</sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size)
+			AC_CHECK_FILE([/sys/devices/system/cpu/cpu0/cache/index3/coherency_line_size], [
+				cache_size=$(</sys/devices/system/cpu/cpu0/cache/index3/coherency_line_size)
 
 				if [ test -z "$cache_size" ] || [ test "$cache_size" -lt 1 ] ; then
 					AC_MSG_WARN([No cacheline found. Please specify with CACHELINE_WIDTH.])

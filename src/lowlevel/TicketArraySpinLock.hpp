@@ -45,10 +45,12 @@ public:
 	{
 		const uint64_t head = _head.fetch_add(1, std::memory_order_relaxed);
 		const uint64_t idx = head % _size;
-		while (_buffer[idx].load(std::memory_order_acquire) != head) {
+		while (_buffer[idx].load(std::memory_order_relaxed) != head) {
 			spinWait();
 		}
 		spinWaitRelease();
+
+		std::atomic_thread_fence(std::memory_order_acquire);
 	}
 
 	inline bool tryLock()
