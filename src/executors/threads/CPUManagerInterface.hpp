@@ -32,6 +32,9 @@ protected:
 	//! A vector of available CPUs
 	static std::vector<CPU *> _cpus;
 
+	//! Map from system to virtual CPU id
+	static std::vector<size_t> _systemToVirtualCPUId;
+
 	//! The process' CPU mask
 	static cpu_set_t _cpuMask;
 

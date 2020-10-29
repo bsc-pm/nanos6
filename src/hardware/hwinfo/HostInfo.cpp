@@ -74,10 +74,13 @@ HostInfo::HostInfo() :
 		_validMemoryPlaces = 1;
 	}
 
-	//! Get (logical) cores of the machine
-	size_t coresCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-	_computePlaces.resize(coresCount);
-	for (size_t i = 0; i < coresCount; i++) {
+	//! Get (logical) CPUs of the machine
+	size_t cpuCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+	_computePlaces.resize(cpuCount);
+
+	//! Get physical core count
+	size_t coreCount = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+	for (size_t i = 0; i < cpuCount; i++) {
 		hwloc_obj_t obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
 		assert(obj != nullptr);
 
@@ -120,13 +123,22 @@ HostInfo::HostInfo() :
 			_validMemoryPlaces++;
 		}
 
+		// Intertwine CPU IDs so that threads from different physical cores are
+		// registered one after another (T0 from CPU0 to ID0, T1 from CPU0 to
+		// ID"coreCount", etc.
+
+		assert(obj->parent != NULL);
+		assert(obj->parent->type == HWLOC_OBJ_CORE);
+		size_t cpuLogicalIndex = (coreCount * obj->sibling_rank) + obj->parent->logical_index;
+		assert(cpuLogicalIndex < cpuCount);
+
 		CPU *cpu = new CPU(
 			/* systemCPUID */ obj->os_index,
-			/* virtualCPUID */ obj->logical_index,
+			/* virtualCPUID */ cpuLogicalIndex,
 			NUMANodeId
 		);
 
-		_computePlaces[obj->logical_index] = cpu;
+		_computePlaces[cpuLogicalIndex] = cpu;
 	}
 
 	assert(_validMemoryPlaces <= memNodesCount);

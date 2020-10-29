@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef CXX_SPIN_LOCK_IMPLEMENTATION_HPP
@@ -18,6 +18,7 @@
 #include "../SpinLock.hpp"
 #endif
 
+#include "../SpinWait.hpp"
 
 template <class DEBUG_KIND>
 inline CustomizableSpinLock<DEBUG_KIND>::CustomizableSpinLock()
@@ -36,18 +37,20 @@ inline void CustomizableSpinLock<DEBUG_KIND>::lock()
 {
 	DEBUG_KIND::assertNotCurrentOwner();
 	DEBUG_KIND::willLock();
-	
+
 	bool expected = false;
 	while (!_lock.compare_exchange_weak(expected, true, std::memory_order_acquire)) {
 		int spinsLeft = SPIN_LOCK_READS_BETWEEN_CMPXCHG;
 		do {
-			expected = _lock.load(std::memory_order_relaxed);
+			spinWait();
 			spinsLeft--;
-		} while (expected && (spinsLeft > 0));
+		} while (_lock.load(std::memory_order_relaxed) && (spinsLeft > 0));
+
+		spinWaitRelease();
 
 		expected = false;
 	}
-	
+
 	DEBUG_KIND::assertUnowned();
 	DEBUG_KIND::setOwner();
 }
@@ -56,15 +59,15 @@ template <class DEBUG_KIND>
 inline bool CustomizableSpinLock<DEBUG_KIND>::tryLock()
 {
 	DEBUG_KIND::assertNotCurrentOwner();
-	
+
 	bool expected = false;
 	bool success = _lock.compare_exchange_strong(expected, true, std::memory_order_acquire);
-	
+
 	if (success) {
 		DEBUG_KIND::assertUnowned();
 		DEBUG_KIND::setOwner();
 	}
-	
+
 	return success;
 }
 

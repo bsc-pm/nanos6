@@ -108,6 +108,7 @@ public:
 		while (_waitQueue[id]._ticket.load(std::memory_order_acquire) != head) {
 			spinWait();
 		}
+		spinWaitRelease();
 	}
 
 	//! \brief Acquire the lock or wait until someone serves an item
@@ -136,6 +137,7 @@ public:
 		while (_waitQueue[id]._ticket.load(std::memory_order_acquire) < head) {
 			spinWait();
 		}
+		spinWaitRelease();
 
 		if (_items[cpuIndex]._ticket != head) {
 			// We acquired the lock

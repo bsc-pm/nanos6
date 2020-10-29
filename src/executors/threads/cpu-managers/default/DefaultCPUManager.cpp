@@ -19,7 +19,6 @@
 boost::dynamic_bitset<> DefaultCPUManager::_idleCPUs;
 SpinLock DefaultCPUManager::_idleCPUsLock;
 size_t DefaultCPUManager::_numIdleCPUs;
-std::vector<size_t> DefaultCPUManager::_systemToVirtualCPUId;
 
 
 /*    CPUMANAGER    */

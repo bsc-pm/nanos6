@@ -65,9 +65,22 @@ void DLBCPUManager::preinitialize()
 
 	//    CPU MANAGER STRUCTURES    //
 
-	// Initialize the vector of CPUs and the vector of collaborator masks
+	// Find the maximum system CPU id
+	size_t maxSystemCPUId = 0;
+	for (size_t i = 0; i < numCPUs; ++i) {
+		const CPU *cpu = (const CPU *) cpus[i];
+		assert(cpu != nullptr);
+
+		if (cpu->getSystemCPUId() > maxSystemCPUId) {
+			maxSystemCPUId = cpu->getSystemCPUId();
+		}
+	}
+
+	// Initialize the vector of CPUs, the vector of collaborator masks and
+	// the vector that maps system to virtual CPU ids
 	_cpus.resize(numCPUs);
 	_collaboratorMasks.resize(numCPUs);
+	_systemToVirtualCPUId.resize(maxSystemCPUId + 1);
 
 	// Initialize each CPU's fields
 	bool firstCPUFound = false;
@@ -78,8 +91,10 @@ void DLBCPUManager::preinitialize()
 
 		_cpus[i] = cpu;
 
-		// Set the virtual id (identical to system id)
+		// Set the virtual and system ids
+		size_t systemId = cpu->getSystemCPUId();
 		cpu->setIndex(i);
+		_systemToVirtualCPUId[systemId] = i;
 
 		// FIXME-TODO: Since we cannot control when external CPUs are returned,
 		// we set all CPUs to the same group so regardless of the group, there
@@ -87,7 +102,7 @@ void DLBCPUManager::preinitialize()
 		cpu->setGroupId(0);
 
 		// If the CPU is not owned by this process, mark it as such
-		if (!CPU_ISSET(i, &_cpuMask)) {
+		if (!CPU_ISSET(systemId, &_cpuMask)) {
 			cpu->setOwned(false);
 		} else if (!firstCPUFound) {
 			_firstCPUId = i;
@@ -115,7 +130,7 @@ void DLBCPUManager::preinitialize()
 		}
 	}
 
-	CPUManagerInterface::reportInformation(numCPUs, numNUMANodes);
+	CPUManagerInterface::reportInformation(maxSystemCPUId + 1, numNUMANodes);
 	if (_taskforGroupsReportEnabled) {
 		CPUManagerInterface::reportTaskforGroupsInfo();
 	}
@@ -236,8 +251,12 @@ void DLBCPUManager::shutdownPhase2()
 
 void DLBCPUManager::forcefullyResumeFirstCPU()
 {
+	// Get the system id using the virtual id (_firstCPUId)
+	CPU *firstCPU = _cpus[_firstCPUId];
+	assert(firstCPU != nullptr);
+
 	// Try to reclaim the CPU (it only happens if it is lent)
-	DLBCPUActivation::reclaimCPU(_firstCPUId);
+	DLBCPUActivation::reclaimCPU(firstCPU->getSystemCPUId());
 }
 
 

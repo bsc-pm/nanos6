@@ -12,6 +12,7 @@
 
 
 std::vector<CPU *> CPUManagerInterface::_cpus;
+std::vector<size_t> CPUManagerInterface::_systemToVirtualCPUId;
 cpu_set_t CPUManagerInterface::_cpuMask;
 std::atomic<bool> CPUManagerInterface::_finishedCPUInitialization;
 EnvironmentVariable<size_t> CPUManagerInterface::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
