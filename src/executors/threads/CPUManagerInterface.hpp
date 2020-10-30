@@ -135,6 +135,12 @@ public:
 	//! \brief Initialize all structures for the CPUManager
 	virtual void initialize() = 0;
 
+	//! \brief Check whether DLB is enabled
+	inline virtual bool isDLBEnabled() const
+	{
+		return false;
+	}
+
 	//! \brief Check if CPU initialization has finished
 	inline bool hasFinishedInitialization() const
 	{

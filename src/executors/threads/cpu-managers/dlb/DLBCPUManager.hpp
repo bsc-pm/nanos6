@@ -37,6 +37,11 @@ public:
 
 	void initialize();
 
+	inline bool isDLBEnabled() const
+	{
+		return true;
+	}
+
 	void shutdownPhase1();
 
 	void shutdownPhase2();

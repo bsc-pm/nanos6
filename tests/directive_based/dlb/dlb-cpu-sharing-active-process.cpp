@@ -72,17 +72,13 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
-	if (dlbEnabled == 0) {
-		wrongExecution("DLB is disabled, skipping this test");
-		return 0;
-	} else if (strcmp(dlbEnabled, "1") != 0) {
+	nanos6_wait_for_full_initialization();
+	if (!nanos6_is_dlb_enabled()) {
 		wrongExecution("DLB is disabled, skipping this test");
 		return 0;
 	}
 
 	// Retreive the current amount of CPUs
-	nanos6_wait_for_full_initialization();
 	size_t numCPUs = nanos6_get_total_num_cpus();
 	tap.emitDiagnostic("Detected ", numCPUs, " CPUs");
 	if (numCPUs < 4) {

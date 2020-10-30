@@ -1,12 +1,13 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
 
 #include <nanos6/debug.h>
+
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
@@ -35,18 +36,19 @@ unsigned int nanos6_get_total_num_cpus(void)
 long nanos6_get_current_system_cpu(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
+	if (currentThread == nullptr) {
+		return 0;
+	}
 
-	assert(currentThread != 0);
 	CPU *currentCPU = currentThread->getComputePlace();
-
 	assert(currentCPU != 0);
+
 	return currentCPU->getSystemCPUId();
 }
 
 unsigned int nanos6_get_current_virtual_cpu(void)
 {
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-
 	if (currentThread == nullptr) {
 		return 0;
 	}
@@ -66,7 +68,6 @@ int nanos6_disable_cpu(long systemCPUId)
 {
 	return CPUManager::disable(systemCPUId);
 }
-
 
 nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 {
@@ -104,7 +105,6 @@ nanos6_cpu_status_t nanos6_get_cpu_status(long systemCPUId)
 	return nanos6_invalid_cpu_status;
 }
 
-
 #if 0
 void nanos6_wait_until_task_starts(void *taskHandle)
 {
@@ -132,9 +132,7 @@ long nanos6_get_system_cpu_of_task(void *taskHandle)
 }
 #endif
 
-
 typedef std::vector<CPU *>::const_iterator cpu_iterator_t;
-
 
 static void *nanos6_cpus_skip_uninitialized(void *cpuIterator) {
 	std::vector<CPU *> const &cpuList = CPUManager::getCPUListReference();
@@ -223,3 +221,7 @@ long nanos6_cpus_get_numa(void *cpuIterator)
 	return cpu->getNumaNodeId();
 }
 
+int nanos6_is_dlb_enabled(void)
+{
+	return CPUManager::isDLBEnabled();
+}

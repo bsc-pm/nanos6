@@ -50,6 +50,12 @@ public:
 		_cpuManager->preinitialize();
 	}
 
+	//! \brief Check whether DLB is enabled
+	static inline bool isDLBEnabled()
+	{
+		return _cpuManager->isDLBEnabled();
+	}
+
 	//! \brief Initialize all structures for the CPUManager
 	static inline void initialize()
 	{

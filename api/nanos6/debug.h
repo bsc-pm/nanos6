@@ -1,12 +1,11 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_DEBUG_H
 #define NANOS6_DEBUG_H
-
 
 #include "major.h"
 
@@ -16,7 +15,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 //! \brief returns the path of the runtime
 //! For instance "/apps/PM/ompss/git/lib/libnanos6-optimized.so"
@@ -120,6 +118,9 @@ long nanos6_cpus_get_virtual(void *cpuIterator);
 
 //! \brief retrieve the NUMA identifier where the CPU pointed to by the iterator is located
 long nanos6_cpus_get_numa(void *cpuIterator);
+
+//! \brief Check whether DLB is enabled
+int nanos6_is_dlb_enabled(void);
 
 #ifdef __cplusplus
 }
