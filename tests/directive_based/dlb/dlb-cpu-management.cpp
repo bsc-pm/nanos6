@@ -153,9 +153,9 @@ int main(int argc, char **argv) {
 		}
 
 		// Wait at most 5 seconds
-                if (timer.lap() > 5000000) {
-                        break;
-                }
+		if (timer.lap() > 5000000) {
+			break;
+		}
 	} while (numRunningCPUs < numActiveCPUs);
 
 	exitCondition.store(true);
