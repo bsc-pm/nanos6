@@ -11,9 +11,10 @@
 #include "MemoryAllocator.hpp"
 #include "TaskDataAccesses.hpp"
 #include "TaskFinalization.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
+#include "hardware-counters/TaskHardwareCounters.hpp"
 #include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/ompss/MetricPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
@@ -41,21 +42,8 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 		// If this is the first iteration of the loop, the task will test true to hasFinished and false to mustDelayRelease, doing
 		// nothing inside the conditionals.
 		if (task->hasFinished()) {
-			// If this is a taskfor collaborator, we must accumulate
-			// its counters into the taskfor source
-			if (task->isTaskforCollaborator()) {
-				Taskfor *source = (Taskfor *) parent;
-				assert(source != nullptr);
-				assert(source->isTaskfor());
-				assert(source->isTaskforSource());
-
-				// Combine the hardware counters of the taskfor collaborator (task)
-				// into the taskfor source (source)
-				HardwareCounters::taskCombineCounters(source, task);
-			}
-
-			// Propagate monitoring actions for this task since it has finished
-			Monitoring::taskFinished(task);
+			// Runtime Core Metric Point - A task has completely finished
+			MetricPoints::taskFinished(task);
 
 			// Complete the delayed release of dependencies of the task if it has a wait clause
 			if (task->mustDelayRelease()) {

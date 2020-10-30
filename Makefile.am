@@ -420,6 +420,7 @@ common_sources = \
 	src/system/debug/DebugAPI.cpp \
 	src/system/ompss/AddTask.cpp \
 	src/system/ompss/Loop.cpp \
+	src/system/ompss/MetricPoints.cpp \
 	src/system/ompss/Query.cpp \
 	src/system/ompss/SpawnFunction.cpp \
 	src/system/ompss/TaskWait.cpp \
@@ -1321,6 +1322,7 @@ noinst_HEADERS = \
 	src/system/RuntimeInfoEssentials.hpp \
 	src/system/Throttle.hpp \
 	src/system/ompss/AddTask.hpp \
+	src/system/ompss/MetricPoints.hpp \
 	src/system/ompss/SpawnFunction.hpp \
 	src/system/ompss/TaskBlocking.hpp \
 	src/system/ompss/TaskWait.hpp \

@@ -13,14 +13,12 @@
 #include "TaskWait.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/ompss/MetricPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <InstrumentTaskStatus.hpp>
-#include <InstrumentTaskWait.hpp>
 
 
 void nanos6_taskwait(char const *invocationSource)
@@ -30,38 +28,30 @@ void nanos6_taskwait(char const *invocationSource)
 
 void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 {
-	Task *currentTask = nullptr;
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-
 	assert(currentThread != nullptr);
 
-	currentTask = currentThread->getTask();
+	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 	assert(currentTask->getThread() == currentThread);
 
-	if (fromUserCode) {
-		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, paused_status);
-	}
+	// Runtime Core Metric Point - Entering a taskwait, the task will be blocked
 	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
-	Instrument::enterTaskWait(taskId, invocationSource, Instrument::task_id_t(), fromUserCode);
+	MetricPoints::enterTaskWait(currentTask, taskId, invocationSource, fromUserCode);
 
 	// Fast check
 	if (currentTask->doesNotNeedToBlockForChildren()) {
 		// This in combination with a release from the children makes their changes visible to this thread
 		std::atomic_thread_fence(std::memory_order_acquire);
 
-		if (fromUserCode) {
-			HardwareCounters::updateRuntimeCounters();
-			Monitoring::taskChangedStatus(currentTask, executing_status);
-		}
-		Instrument::exitTaskWait(taskId, fromUserCode);
-
+		// Runtime Core Metric Point - Exiting a taskwait, the task will be resumed
+		MetricPoints::exitTaskWait(currentTask, taskId, fromUserCode);
 		return;
 	}
 
 	ComputePlace *cpu = currentThread->getComputePlace();
 	assert(cpu != nullptr);
+
 	DataAccessRegistration::handleEnterTaskwait(currentTask, cpu, cpu->getDependencyData());
 	bool done = currentTask->markAsBlocked();
 
@@ -87,6 +77,7 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 		// Update the CPU since the thread may have migrated
 		cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
+
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 	}
 
@@ -103,13 +94,8 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 		Instrument::taskIsExecuting(taskId, true);
 	}
 
-	if (fromUserCode) {
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitTaskWait(taskId, fromUserCode);
-		Monitoring::taskChangedStatus(currentTask, executing_status);
-	} else {
-		Instrument::exitTaskWait(taskId, fromUserCode);
-	}
+	// Runtime Core Metric Point - Exiting a taskwait, the task will be resumed
+	MetricPoints::exitTaskWait(currentTask, taskId, fromUserCode);
 }
 
 void nanos6_stream_synchronize(size_t stream_id)

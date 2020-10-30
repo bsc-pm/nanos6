@@ -10,31 +10,26 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/ompss/MetricPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/Taskfor.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <InstrumentInstrumentationContext.hpp>
-#include <InstrumentTaskExecution.hpp>
-#include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadManagement.hpp>
 
 
 namespace ExecutionWorkflow {
-	void executeTask(
-		Task *task,
-		ComputePlace *targetComputePlace,
-		MemoryPlace *targetMemoryPlace
-	) {
-		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
 
+	void executeTask(Task *task, ComputePlace *targetComputePlace, MemoryPlace *targetMemoryPlace)
+	{
+		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
+		CPU *cpu = (CPU *) targetComputePlace;
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
-		CPU *cpu = (CPU *)targetComputePlace;
+		assert(task != nullptr);
 
 		task->setThread(currentThread);
 		task->setMemoryPlace(targetMemoryPlace);
@@ -46,27 +41,16 @@ namespace ExecutionWorkflow {
 			currentThread->getInstrumentationId()
 		);
 
-		if (task->hasCode()) {
+		bool taskHasCode = task->hasCode();
+		if (taskHasCode) {
 			size_t tableSize = 0;
 			nanos6_address_translation_entry_t *translationTable =
 				SymbolTranslation::generateTranslationTable(
 					task, targetComputePlace,
 					stackTranslationTable, tableSize);
 
-			HardwareCounters::updateRuntimeCounters();
-
-			bool isTaskforCollaborator = task->isTaskforCollaborator();
-			if (isTaskforCollaborator) {
-				bool first = ((Taskfor *) task)->hasFirstChunk();
-				Instrument::task_id_t parentTaskId = task->getParent()->getInstrumentationTaskId();
-				Instrument::startTaskforCollaborator(parentTaskId, taskId, first);
-				Instrument::taskforCollaboratorIsExecuting(parentTaskId, taskId);
-			} else {
-				Instrument::startTask(taskId);
-				Instrument::taskIsExecuting(taskId);
-			}
-
-			Monitoring::taskChangedStatus(task, executing_status);
+			// Runtime Core Metric Point - A task starts its execution
+			MetricPoints::taskIsExecuting(task);
 
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
@@ -80,33 +64,20 @@ namespace ExecutionWorkflow {
 			// Update the CPU since the thread may have migrated
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
-
-			HardwareCounters::updateTaskCounters(task);
-			Monitoring::taskChangedStatus(task, paused_status);
-			Monitoring::taskCompletedUserCode(task);
-
-			if (isTaskforCollaborator) {
-				bool last = ((Taskfor *) task)->hasLastChunk();
-				Instrument::task_id_t parentTaskId = task->getParent()->getInstrumentationTaskId();
-				Instrument::taskforCollaboratorStopped(parentTaskId, taskId);
-				Instrument::endTaskforCollaborator(parentTaskId, taskId, last);
-			} else {
-				Instrument::taskIsZombie(taskId);
-				Instrument::endTask(taskId);
-			}
-		} else {
-			Monitoring::taskChangedStatus(task, paused_status);
-			Monitoring::taskCompletedUserCode(task);
 		}
+
+		// Runtime Core Metric Point - A task has completed its execution (user code)
+		MetricPoints::taskCompletedUserCode(task, taskHasCode);
 
 		DataAccessRegistration::combineTaskReductions(task, cpu);
 
 		if (task->markAsFinished(cpu)) {
 			DataAccessRegistration::unregisterTaskDataAccesses(
-				task,
-				cpu,
-				cpu->getDependencyData()
+				task, cpu, cpu->getDependencyData()
 			);
+
+			// Runtime Core Metric Point - A task has completely finished its execution
+			MetricPoints::taskFinished(task);
 
 			TaskFinalization::taskFinished(task, cpu);
 			if (task->markAsReleased()) {
@@ -115,10 +86,8 @@ namespace ExecutionWorkflow {
 		}
 	}
 
-	void setupTaskwaitWorkflow(
-		Task *task,
-		DataAccess *taskwaitFragment
-	) {
+	void setupTaskwaitWorkflow(Task *task, DataAccess *taskwaitFragment)
+	{
 		ComputePlace *computePlace = nullptr;
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		if (currentThread != nullptr) {
@@ -126,12 +95,9 @@ namespace ExecutionWorkflow {
 		}
 
 		CPUDependencyData hpDependencyData;
-
 		DataAccessRegistration::releaseTaskwaitFragment(
-			task,
-			taskwaitFragment->getAccessRegion(),
-			computePlace,
-			hpDependencyData
+			task, taskwaitFragment->getAccessRegion(),
+			computePlace, hpDependencyData
 		);
 	}
 }

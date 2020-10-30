@@ -12,7 +12,7 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/ompss/MetricPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -78,6 +78,9 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 				/* from a busy thread */ true
 			);
 		}
+
+		// Runtime Core Metric Point - A task has completely finished its execution
+		MetricPoints::taskFinished(task);
 
 		TaskFinalization::taskFinished(task, cpu, true);
 

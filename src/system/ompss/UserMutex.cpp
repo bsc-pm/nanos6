@@ -15,10 +15,9 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/ThreadManagerPolicy.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "system/ompss/MetricPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -42,9 +41,8 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 
-	HardwareCounters::updateTaskCounters(currentTask);
-	Monitoring::taskChangedStatus(currentTask, paused_status);
-	Instrument::enterUserMutexLock();
+	// Runtime Core Metric Point - Entering a user lock
+	MetricPoints::enterUserLock(currentTask);
 
 	ComputePlace *computePlace = currentThread->getComputePlace();
 	assert(computePlace != nullptr);
@@ -107,9 +105,9 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 
 end:
 	Instrument::acquiredUserMutex(userMutex);
-	HardwareCounters::updateRuntimeCounters();
-	Instrument::exitUserMutexLock();
-	Monitoring::taskChangedStatus(currentTask, executing_status);
+
+	// Runtime Core Metric Point - Exiting a user lock
+	MetricPoints::exitUserLock(currentTask);
 }
 
 
@@ -127,12 +125,8 @@ void nanos6_user_unlock(void **handlerPointer)
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 
-	HardwareCounters::updateTaskCounters(currentTask);
-	Monitoring::taskChangedStatus(currentTask, paused_status);
-	Instrument::enterUserMutexUnlock();
-
-	CPU *cpu = currentThread->getComputePlace();
-	assert(cpu != nullptr);
+	// Runtime Core Metric Point - Entering user unlock
+	MetricPoints::enterUserUnlock(currentTask);
 
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
 	UserMutex &userMutex = *(userMutexReference.load());
@@ -140,6 +134,8 @@ void nanos6_user_unlock(void **handlerPointer)
 
 	Task *releasedTask = userMutex.dequeueOrUnlock();
 	if (releasedTask != nullptr) {
+		CPU *cpu = currentThread->getComputePlace();
+		assert(cpu != nullptr);
 
 		if (!currentTask->isTaskfor() && ThreadManagerPolicy::checkIfUnblockedMustPreemptUnblocker(currentTask, releasedTask, cpu)) {
 			WorkerThread *releasedThread = releasedTask->getThread();
@@ -153,9 +149,10 @@ void nanos6_user_unlock(void **handlerPointer)
 				// No idle CPUs available, first re-add the current task to the scheduler
 				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 
+				// Runtime Core Metric Point - A thread is about to be suspended
+				MetricPoints::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
+
 				// Now switch to the released thread
-				HardwareCounters::updateRuntimeCounters();
-				Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 				currentThread->switchTo(releasedThread);
 
 				// Update the CPU since the thread may have migrated
@@ -168,8 +165,7 @@ void nanos6_user_unlock(void **handlerPointer)
 		}
 	}
 
-	HardwareCounters::updateRuntimeCounters();
-	Instrument::exitUserMutexUnlock();
-	Monitoring::taskChangedStatus(currentTask, executing_status);
+	// Runtime Core Metric Point - Exiting user unlock
+	MetricPoints::exitUserUnlock(currentTask);
 }
 

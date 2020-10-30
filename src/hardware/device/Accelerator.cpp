@@ -5,12 +5,11 @@
 */
 
 #include "Accelerator.hpp"
-
 #include "dependencies/SymbolTranslation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/ompss/MetricPoints.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -67,6 +66,9 @@ void Accelerator::finishTask(Task *task)
 			task, cpu, hpDependencyData,
 			task->getMemoryPlace(),
 			/* from busy thread */ true);
+
+		// Runtime Core Metric Point - A task has completely finished its execution
+		MetricPoints::taskFinished(task);
 
 		TaskFinalization::taskFinished(task, cpu, /* busy thread */ true);
 

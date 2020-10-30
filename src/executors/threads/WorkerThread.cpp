@@ -24,6 +24,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/PollingAPI.hpp"
+#include "system/ompss/MetricPoints.hpp"
 #include "tasks/LoopGenerator.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -87,8 +88,10 @@ void WorkerThread::body()
 				_task = nullptr;
 
 				ThreadManager::addIdler(this);
-				HardwareCounters::updateRuntimeCounters();
-				Instrument::threadWillSuspend(_instrumentationId, cpu->getInstrumentationId());
+
+				// Runtime Core Metric Point - The current thread will suspend
+				MetricPoints::threadWillSuspend(_instrumentationId, cpu->getInstrumentationId());
+
 				switchTo(assignedThread);
 			} else {
 				Instrument::workerThreadObtainedTask();
@@ -126,9 +129,8 @@ void WorkerThread::body()
 	// The thread should not have any task assigned at this point
 	assert(_task == nullptr);
 
-	HardwareCounters::updateRuntimeCounters();
-	Instrument::threadWillShutdown();
-	HardwareCounters::threadShutdown();
+	// Runtime Core Metric Point - The current thread is gonna shutdown
+	MetricPoints::threadWillShutdown();
 
 	ThreadManager::addShutdownThread(this);
 }

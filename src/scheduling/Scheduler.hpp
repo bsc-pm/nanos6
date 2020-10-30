@@ -8,9 +8,8 @@
 #define SCHEDULER_HPP
 
 #include "SchedulerInterface.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/ompss/MetricPoints.hpp"
 
-#include <InstrumentTaskStatus.hpp>
 #include <InstrumentScheduler.hpp>
 
 
@@ -29,38 +28,37 @@ public:
 		ReadyTaskHint hint)
 	{
 		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
-		Instrument::enterAddReadyTask();
 
-		// Mark the task as ready prior to entering the lock
-		for (size_t i = 0; i < numTasks; ++i) {
-			Task *task = tasks[i];
-			Instrument::taskIsReady(task->getInstrumentationTaskId());
-			Monitoring::taskChangedStatus(task, ready_status);
-		}
+		// Runtime Core Metric Point - Tasks will be added to the scheduler and will be ready
+		MetricPoints::enterAddReadyTasks(tasks, numTasks);
 
 		_instance->addReadyTasks(taskType, tasks, numTasks, computePlace, hint);
-		Instrument::exitAddReadyTask();
+
+		// Runtime Core Metric Point - Exiting the addReadyTasks function
+		MetricPoints::exitAddReadyTasks();
 	}
 
 	static inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
 		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
-		Instrument::enterAddReadyTask();
 
-		// Mark the task as ready prior to entering the lock
-		Instrument::taskIsReady(task->getInstrumentationTaskId());
-		Monitoring::taskChangedStatus(task, ready_status);
+		// Runtime Core Metric Point - A task will be added to the scheduler and will be readys
+		MetricPoints::enterAddReadyTask(task);
 
 		_instance->addReadyTask(task, computePlace, hint);
-		Instrument::exitAddReadyTask();
+
+		// Runtime Core Metric Point - Exiting the addReadyTasks function
+		MetricPoints::exitAddReadyTask();
 	}
 
 	static inline Task *getReadyTask(ComputePlace *computePlace)
 	{
 		assert(computePlace != nullptr);
+
 		Instrument::enterGetReadyTask();
 		Task *task = _instance->getReadyTask(computePlace);
 		Instrument::exitGetReadyTask();
+
 		return task;
 	}
 

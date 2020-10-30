@@ -4,7 +4,6 @@
 	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
-
 #include <cassert>
 #include <map>
 #include <mutex>
@@ -16,9 +15,8 @@
 
 #include "AddTask.hpp"
 #include "SpawnFunction.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "monitoring/Monitoring.hpp"
+#include "system/ompss/MetricPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskInfo.hpp"
@@ -82,12 +80,9 @@ void SpawnFunction::spawnFunction(
 		creator = workerThread->getTask();
 	}
 
+	// Runtime Core Metric Point - Entering the creation of a task
 	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-	if (taskRuntimeTransition) {
-		HardwareCounters::updateTaskCounters(creator);
-		Monitoring::taskChangedStatus(creator, paused_status);
-	}
-	Instrument::enterSpawnFunction(taskRuntimeTransition);
+	MetricPoints::enterSpawnFunction(creator, taskRuntimeTransition);
 
 	// Increase the number of spawned functions
 	_pendingSpawnedFunctions++;
@@ -156,13 +151,8 @@ void SpawnFunction::spawnFunction(
 	// Submit the task without parent
 	AddTask::submitTask(task, nullptr);
 
-	if (taskRuntimeTransition) {
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitSpawnFunction(taskRuntimeTransition);
-		Monitoring::taskChangedStatus(creator, executing_status);
-	} else {
-		Instrument::exitSpawnFunction(taskRuntimeTransition);
-	}
+	// Runtime Core Metric Point - Exiting the creation of a task
+	MetricPoints::exitSpawnFunction(creator, taskRuntimeTransition);
 }
 
 void SpawnFunction::spawnedFunctionWrapper(void *args, void *, nanos6_address_translation_entry_t *)
