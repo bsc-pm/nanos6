@@ -20,9 +20,10 @@ void _nanos6_loader_free_config(void);
 
 typedef struct {
 	char *dependencies;
-	char *variant;
+	char *instrument;
 	char *library_path;
 	char *report_prefix;
+	int debug;
 	int verbose;
 } _nanos6_loader_config_t;
 

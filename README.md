@@ -120,7 +120,7 @@ The first configuration file found will be interpreted, according to the followi
 
 Alternatively, if configuration has to be changed programatically and creating new files is not practical, configuration variables can be overriden using the `NANOS6_CONFIG_OVERRIDE` environment variable.
 The contents of this variable have to be in the format `key1=value1,key2=value2,key3=value3,...`.
-For example, to change the dependency variant and enable turbo mode: `NANOS6_CONFIG_OVERRIDE="loader.dependencies=discrete,loader.variant=turbo" ./ompss-program`.
+For example, to change the dependency implementation and CTF instrumentation: `NANOS6_CONFIG_OVERRIDE="version.dependencies=discrete,version.instrument=ctf" ./ompss-program`.
 
 ### Scheduling options
 
@@ -158,27 +158,29 @@ Finally, taskfors that do not define any chunksize leverage a chunksize value co
 
 There are several Nanos6 variants, each one focusing on different aspects of parallel executions: performance, debugging, instrumentation, etc.
 Nanos6 applications, unlike Nanos++ applications do not require recompiling their code to generate Extrae traces or to generate additional information.
-This is instead controlled through configration variables, at run time.
-Users can select a Nanos6 variant when running an application through the `loader.variant` configuration variable.
+This is instead controlled through configration options, at run time.
+Users can select a Nanos6 variant when running an application through the `version.dependencies`, `version.instrument` and `version.debug` configuration variables.
 The next subsections explain the different variants of Nanos6 and how to enable them.
 
 ### Benchmarking
 
-If the `loader.variant` config is not set, the default variant is `optimized`.
-This is compiled with high optimization flags, it does not perform validity checks and it does not provide debug information.
+The default variant is the optimized one, which disables the `version.debug` (no debug) and the `version.instrument` to `none` (no instrumentation).
+This is compiled with high optimization flags, it does not perform validity checks and does not provide debug information.
 That is the variant that should be used when performing benchmarking of parallel applications.
 
-Additionally, Nanos6 offers an extra performant variant named `turbo`, which is the same as `optimized` but adding further optimizations.
-Firstly, it enables by default the `discrete` dependency implementation, although users can still change it through the `loader.dependencies` config.
-Secondly, it enables two Intel® floating-point (FP) unit optimizations in all tasks: flush-to-zero (FZ) and denormals are zero (DAZ).
+Additionally, Nanos6 offers an extra performant option named `turbo`, which is the same as `optimized` but adding further optimizations.
+It enables two Intel® floating-point (FP) unit optimizations in all tasks: flush-to-zero (FZ) and denormals are zero (DAZ).
 Please note these FP optimizations could alter the precision of floating-point computations.
+It is disabled by default, but can be enabled by setting the `turbo.enabled` configuration option to `true`.
 
 Moreover, these variants can be combined with the jemalloc memory allocator (``--with-jemalloc``) to obtain the best performance.
+Changing the dependency system implementation may also affect the performance of the applications.
+The different dependency implementations and how to enable them are explained in the Section [Choosing a dependency implementation](#choosing-a-dependency-implementation).
 
 
 ### Tracing a Nanos6 application with Extrae
 
-To generate an extrae trace, run the application with the `loader.variant` config set to `extrae`.
+To generate an extrae trace, run the application with the `version.instrument` config set to `extrae`.
 
 Currently there is an incompatibility when generating traces with PAPI.
 To solve it, define the following config: `instrument.extrae.as_threads = true`
@@ -189,7 +191,7 @@ In the future, this problem will be fixed.
 
 ### Tracing a Nanos6 application with CTF (Experimental)
 
-To generate a CTF trace, run the application with the `loader.variant` config set to `ctf`.
+To generate a CTF trace, run the application with the `version.instrument` config set to `ctf`.
 
 A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
 To visualize this trace, it needs to be converted to Paraver format first.
@@ -219,7 +221,7 @@ For more information on how the CTF instrumentation variant works see [CTF.md](d
 
 ### Generating a graphical representation of the dependency graph
 
-To generate the graph, run the application with the `loader.variant` config set to `graph`.
+To generate the graph, run the application with the `version.instrument` config set to `graph`.
 
 By default, the graph nodes include the full path of the source code.
 To remove the directories, set the `instrument.graph.shorten_filenames` config to `true`.
@@ -236,7 +238,7 @@ For best results, we suggest to display the PDF with "single page" view, showing
 
 ### Verbose logging
 
-To enable verbose logging, run the application with the `loader.variant` config set to `verbose`.
+To enable verbose logging, run the application with the `version.instrument` config set to `verbose`.
 
 By default it generates a lot of information.
 This is controlled by the `instrument.verbose.areas` config, which can contain a list of areas.
@@ -266,7 +268,7 @@ Also `instrument.verbose.dump_only_on_exit` can be set to `true` to delay the ou
 
 ### Obtaining statistics
 
-To enable collecting timing statistics, run the application with the `loader.variant` config set to `stats`.
+To enable collecting timing statistics, run the application with the `version.instrument` config set to `stats`.
 
 By default, the statistics are emitted standard error when the program ends.
 The output can be sent to a file through the `instrument.stats.output_file` config.
@@ -301,9 +303,10 @@ The runtime uses the taskwaits at the outermost level to identify phases and wil
 
 By default, the runtime is optimized for speed and will assume that the application code is correct.
 Hence, it will not perform most validity checks.
-To enable validity checks, run the application with the `loader.variant` config set to `debug`.
+To enable validity checks, run the application with the `version.debug` config set to `true`.
 This will enable many internal validity checks that may be violated with the application code is incorrect.
 In the future we may include a validation mode that will perform extensive application code validation.
+Notice that all instrumentation variants can be executed either with or without enabling the debug option.
 
 To debug an application with a regular debugger, please compile its code with the regular debugging flags and also the `-keep` flag.
 This flag will force Mercurium to dump the transformed code in the local file system, so that it will be available for the debugger.
@@ -415,14 +418,14 @@ For more information on how to write and run cluster applications see [Cluster.m
 
 ## Choosing a dependency implementation
 
-The Nanos6 runtime has support for different dependency implementations. The `regions` (or `linear-regions-fragmented`) dependencies are always compiled and are the default implementation. This choice is fully spec-compliant, and supports all of the features. It is also the only implementation that supports OmpSs-2@Cluster and execution workflows.
+The Nanos6 runtime has support for different dependency implementations. The `regions` dependencies are always compiled and are the default implementation. This choice is fully spec-compliant, and supports all of the features. It is also the only implementation that supports OmpSs-2@Cluster and execution workflows.
 
-Other implementations can be compiled in with the corresponding `./configure` flag, and selected dynamically through the `loader.dependencies` configuration variable.
+Other implementations can be compiled in with the corresponding `./configure` flag, and selected dynamically through the `version.dependencies` configuration variable.
 
 The available implementations are:
 
-* `loader.dependencies = "regions"`: Supporting all features. **Default** implementation in all Nanos6 variants except for `turbo`.
-* `loader.dependencies = "discrete"`: No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
+* `version.dependencies = "regions"`: Supporting all features. **Default** implementation.
+* `version.dependencies = "discrete"`: No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
 
 ## DLB Support
 

@@ -38,7 +38,7 @@ Usage
 To generate a CTF trace:
 
 ```sh
-$ NANOS6_CONFIG_OVERRIDE="loader.variant=ctf" ./app
+$ NANOS6_CONFIG_OVERRIDE="version.instrument=ctf" ./app
 ```
 
 This will create a `trace-<app_name>-<app_pid>` folder in the current directory, hereinafter refered to as `$TRACE` for convenience.

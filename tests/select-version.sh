@@ -12,7 +12,7 @@ export NANOS6_CONFIG="${DIR}/scripts/nanos6.toml"
 
 # Any test with "discrete" in the name uses the simpler discrete implementation
 if [[ "${*}" == *"discrete"* ]]; then
-	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.dependencies=discrete"
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.dependencies=discrete"
 fi
 
 if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"task-for-nqueens"* ]] || [[ "${*}" == *"taskloop-nqueens"* ]] || [[ "${*}" == *"taskloopfor-nqueens"* ]]; then
@@ -32,10 +32,10 @@ else
 fi
 
 if test "${*}" = "${*/.debug/}" ; then
-	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.variant=optimized"
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.debug=false"
 	exec "${@}"
 else
-	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},loader.variant=debug"
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.debug=true"
 	# Regular execution
 	"${@}"
 fi

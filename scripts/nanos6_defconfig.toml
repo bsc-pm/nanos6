@@ -1,24 +1,43 @@
-# Nanos6 default configuration file
 # This file is part of Nanos6 and is licensed under the terms contained in the COPYING file
+#
 # Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 
-[loader]
-	# Enable verbose output of the loader, to debug dynamic linking problems. Default is false
-	verbose = false
-	# Choose runtime variant to be loaded, to enable specific instrumentations. Default is "optimized"
-	# Possible values: "optimized", "turbo", "debug", "verbose", "verbose-debug", "stats", "extrae", "ctf", "graph", "lint"
-	variant = "optimized"
-	# Choose dependency system implementation. Default is "regions"
+# The Nanos6 default configuration file
+
+[version]
+	# Choose whether the runtime runs with debug symbols and internal asserts. Enabling this option
+	# may produce significant overheads, so production or performance executions should disable this
+	# option. Default is false
+	debug = false
+	# Choose the dependency system implementation. Default is "regions"
 	# Possible values: "regions", "discrete"
 	dependencies = "regions"
-	# Path to the nanos6 libraries. Default is none
-	# library_path = "path/to/nanos6/lib"
-	# Prefix for the report printing all the runtime variables. Default is none
-	# report_prefix = "#"
+	# Choose the instrumentation variant to run. Default is "none"
+	# Possible values: "none", "ctf", "extrae", "graph", "lint", "stats", "verbose"
+	instrument = "none"
+
+[turbo]
+	# Choose whether enabling floating-point unit optimizations in all Nanos6 threads. Enabling this
+	# option can speedup the floating-point computations in user tasks, but may produce imprecise
+	# results. It enables flush-to-zero (FZ) and denormals are zero (DAZ) optimizations in Intel®
+	# processors. Default is false
+	enabled = false
+
+[scheduler]
+	# Choose the task scheduling policy. Default is "fifo"
+	# Possible values: "fifo", "lifo"
+	policy = "fifo"
+	# Enable the immediate successor feature to improve cache data reutilization between successor
+	# tasks. If enabled, when a CPU finishes a task it starts executing the successor task (computed
+	# through their data dependencies). Default is true
+	immediate_successor = true
+	# Indicate whether the scheduler should consider task priorities defined by the user in the
+	# task priority clause. Default is true
+	priority = true
 
 [cpumanager]
-	# The underlying policy of the CPU Manager for the handling of CPUs. By
-	# default "default", which corresponds to "idle".
+	# The underlying policy of the CPU manager for the handling of CPUs. Default is "default", which
+	# corresponds to "idle"
 	# Possible values: "default", "idle", "busy", "lewi", "greedy"
 	policy = "default"
 
@@ -68,11 +87,6 @@ __!require_PQOS
 	[hardware_counters.rapl]
 		enabled = false
 
-[memory]
-	[memory.pool]
-		global_alloc_size = "8M"
-		chunk_size = "128K"
-
 [monitoring]
 	enabled = true
 	wisdom = false
@@ -80,11 +94,6 @@ __!require_PQOS
 	verbose_file = "output-monitoring.txt"
 	cpuusage_prediction_rate = 100 # µs
 	rolling_window = 20
-
-[scheduler]
-	policy = "fifo"
-	immediate_successor = true
-	priority = true
 
 [devices]
 __require_CUDA
@@ -154,8 +163,21 @@ __require_CLUSTER
 	va_start = 0x00000000
 __!require_CLUSTER
 
+[memory]
+	[memory.pool]
+		global_alloc_size = "8M"
+		chunk_size = "128K"
+
 [misc]
 	# Stack size of threads created by the runtime. Default is 8M
 	stack_size = "8M"
 	# Frequency for polling services expressed in microseconds. Default is 1ms
 	polling_frequency = 1000 # µs
+
+[loader]
+	# Enable verbose output of the loader, to debug dynamic linking problems. Default is false
+	verbose = false
+	# Path to the nanos6 libraries. Default is none
+	# library_path = "path/to/nanos6/lib"
+	# Prefix for the report printing all the runtime variables. Default is none
+	# report_prefix = "#"

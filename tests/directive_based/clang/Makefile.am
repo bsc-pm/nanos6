@@ -33,7 +33,6 @@ dlb_tests =
 
 
 if HAVE_NANOS6_CLANG
-if BUILD_OPTIMIZED_VARIANT
 base_tests += \
 	blocking.clang.test \
 	events.clang.test \
@@ -87,9 +86,7 @@ discrete_tests += \
 	discrete-taskloop-nqueens.clang.test \
 	discrete-taskloop-for-nonpod.clang.test \
 	discrete-taskloop-for-nqueens.clang.test
-endif
 
-if BUILD_DEBUG_VARIANTS
 base_tests +=  \
 	blocking.clang.debug.test \
 	events.clang.debug.test \
@@ -140,8 +137,6 @@ discrete_tests += \
 	discrete-taskloop-nqueens.clang.debug.test \
 	discrete-taskloop-for-nonpod.clang.debug.test \
 	discrete-taskloop-for-nqueens.clang.debug.test
-endif
-
 endif
 
 

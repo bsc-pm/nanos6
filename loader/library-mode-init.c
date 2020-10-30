@@ -35,9 +35,9 @@ __attribute__ ((used)) char const * nanos6_library_mode_init(void)
 		return _nanos6_error_text;
 	}
 
-	char *variant = _config.variant;
-	if (variant != NULL) {
-		if (!strcmp(variant, "graph") || !strcmp(variant, "graph-debug")) {
+	char *instrument = _config.instrument;
+	if (instrument != NULL) {
+		if (!strcmp(instrument, "graph")) {
 			fprintf(stderr, "Warning: Graph variants may yield incorrect results when using nanos6 library mode\n");
 		}
 	}

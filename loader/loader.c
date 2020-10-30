@@ -37,34 +37,40 @@ __attribute__ ((visibility ("hidden"))) void *_nanos6_lib_handle = NULL;
 int _nanos6_exit_with_error = 0;
 char _nanos6_error_text[ERROR_TEXT_SIZE];
 
-static char lib_name[MAX_LIB_PATH+1];
+static char _lib_name[MAX_LIB_PATH+1];
+static char _lib_name_aux[MAX_LIB_PATH+1];
 
-static void _nanos6_loader_set_up_lib_name(char const *variant, char const *dependencies, char const *path, char const *suffix)
+static void _nanos6_loader_set_up_lib_name(char const *optimization, char const *dependencies, char const *instrument, char const *path, char const *suffix)
 {
+	if (strcmp(instrument, "none")) {
+		snprintf(_lib_name_aux, MAX_LIB_PATH, "libnanos6-%s-%s-%s.so", optimization, dependencies, instrument);
+	} else {
+		snprintf(_lib_name_aux, MAX_LIB_PATH, "libnanos6-%s-%s.so", optimization, dependencies);
+	}
+
 	if (path != NULL) {
 		if (suffix == NULL) {
-			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so", path, variant, dependencies);
+			snprintf(_lib_name, MAX_LIB_PATH, "%s/%s", path, _lib_name_aux);
 		} else {
-			snprintf(lib_name, MAX_LIB_PATH, "%s/libnanos6-%s-%s.so.%s", path, variant, dependencies, suffix);
+			snprintf(_lib_name, MAX_LIB_PATH, "%s/%s.%s", path, _lib_name_aux, suffix);
 		}
 	} else {
 		if (suffix == NULL) {
-			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so", variant, dependencies);
+			snprintf(_lib_name, MAX_LIB_PATH, "%s", _lib_name_aux);
 		} else {
-			snprintf(lib_name, MAX_LIB_PATH, "libnanos6-%s-%s.so.%s", variant, dependencies, suffix);
+			snprintf(_lib_name, MAX_LIB_PATH, "%s.%s", _lib_name_aux, suffix);
 		}
 	}
 }
 
-static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char const *dependencies, char const *path)
+static void _nanos6_loader_try_load(_Bool verbose, char const *optimization, char const *dependencies, char const *instrument, char const *path)
 {
-	_nanos6_loader_set_up_lib_name(variant, dependencies, path, SONAME_SUFFIX);
-
+	_nanos6_loader_set_up_lib_name(optimization, dependencies, instrument, path, SONAME_SUFFIX);
 	if (verbose) {
-		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
+		fprintf(stderr, "Nanos6 loader trying to load: %s\n", _lib_name);
 	}
 
-	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_GLOBAL);
+	_nanos6_lib_handle = dlopen(_lib_name, RTLD_LAZY | RTLD_GLOBAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
 			fprintf(stderr, "Successfully loaded: %s\n", nanos6_get_runtime_path());
@@ -76,12 +82,12 @@ static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char con
 		fprintf(stderr, "Failed: %s\n", dlerror());
 	}
 
-	_nanos6_loader_set_up_lib_name(variant, dependencies, path, SONAME_MAJOR);
+	_nanos6_loader_set_up_lib_name(optimization, dependencies, instrument, path, SONAME_MAJOR);
 	if (verbose) {
-		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
+		fprintf(stderr, "Nanos6 loader trying to load: %s\n", _lib_name);
 	}
 
-	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_GLOBAL);
+	_nanos6_lib_handle = dlopen(_lib_name, RTLD_LAZY | RTLD_GLOBAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
 			fprintf(stderr, "Successfully loaded: %s\n", nanos6_get_runtime_path());
@@ -94,15 +100,14 @@ static void _nanos6_loader_try_load(_Bool verbose, char const *variant, char con
 	}
 }
 
-
-static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *variant, char const *dependencies, char const *path)
+static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *optimization, char const *dependencies, char const *instrument, char const *path)
 {
-	_nanos6_loader_set_up_lib_name(variant, dependencies, path, NULL);
+	_nanos6_loader_set_up_lib_name(optimization, dependencies, instrument, path, NULL);
 	if (verbose) {
-		fprintf(stderr, "Nanos6 loader trying to load: %s\n", lib_name);
+		fprintf(stderr, "Nanos6 loader trying to load: %s\n", _lib_name);
 	}
 
-	_nanos6_lib_handle = dlopen(lib_name, RTLD_LAZY | RTLD_GLOBAL);
+	_nanos6_lib_handle = dlopen(_lib_name, RTLD_LAZY | RTLD_GLOBAL);
 	if (_nanos6_lib_handle != NULL) {
 		if (verbose) {
 			fprintf(stderr, "Successfully loaded: %s\n", nanos6_get_runtime_path());
@@ -111,16 +116,17 @@ static void _nanos6_loader_try_load_without_major(_Bool verbose, char const *var
 	}
 }
 
-static int _nanos6_check_disabled_variant(char const *variant, char const *dependencies, char const *common_error)
+static int _nanos6_check_disabled_variant(char const *optimization, char const *dependencies, char const *instrument, char const *common_error)
 {
 	assert(_nanos6_lib_handle != NULL);
-	assert(variant != NULL);
+	assert(optimization != NULL);
 	assert(dependencies != NULL);
+	assert(instrument != NULL);
 
 	void *disabled_symbol = dlsym(_nanos6_lib_handle, "nanos6_disabled_variant");
 	if (disabled_symbol != NULL) {
 		fprintf(stderr, "Error: %s\n", common_error);
-		fprintf(stderr, "This Nanos6 installation disabled the '%s' variant with '%s' dependencies.\n", variant, dependencies);
+		fprintf(stderr, "This installation has disabled the '%s' variant with '%s' dependencies and '%s' instrumentation.\n", optimization, dependencies, instrument);
 		return -1;
 	}
 	return 0;
@@ -134,53 +140,43 @@ static int _nanos6_loader_impl(void)
 	if (_nanos6_loader_parse_config())
 		return -1;
 
+	_Bool debug = _config.debug;
 	_Bool verbose = _config.verbose;
 
-	// Check the name of the replacement library
-	char const *variant = _config.variant;
-	if (variant == NULL) {
-		variant = "optimized";
-	}
+	// Check the optimization variant to load
+	char const *optimization = (debug) ? "debug" : "optimized";
 
-	if (verbose) {
-		fprintf(stderr, "Nanos6 loader using variant: %s\n", variant);
+	// Check the instrumentation variant to load
+	char const *instrument = _config.instrument;
+	if (instrument == NULL) {
+		// No instrumentation by default
+		instrument = "none";
 	}
 
 	char const *dependencies = _config.dependencies;
 	if (dependencies == NULL) {
-		// Enable discrete dependencies by default when running turbo variant; otherwise,
-		// enable linear-regions-fragmented
-		if (strcmp(variant, "turbo") == 0) {
-			dependencies = "discrete";
-		} else {
-			dependencies = "linear-regions-fragmented";
-		}
-	} else if (strcmp(dependencies, "regions") == 0) {
-		// We accept "regions" as a valid alias of "linear-regions-fragmented"
-		dependencies = "linear-regions-fragmented";
-		if (verbose) {
-			fprintf(stderr, "Dependency implementation 'regions' is an alias of 'linear-regions-fragmented'\n");
-		}
+		// Enable region dependencies by default
+		dependencies = "regions";
 	}
 
 	if (verbose) {
-		fprintf(stderr, "Nanos6 loader using dependency implementation: %s\n", dependencies);
+		fprintf(stderr, "Nanos6 loader using '%s' variant with '%s' dependencies and '%s' instrumentation.\n", optimization, dependencies, instrument);
 	}
 
 	char *lib_path = _config.library_path;
 	if (lib_path != NULL) {
 		if (verbose) {
-			fprintf(stderr, "Nanos6 loader using path from NANOS6_LIBRARY_PATH: %s\n", lib_path);
+			fprintf(stderr, "Nanos6 loader using library path from loader.library_path: %s\n", lib_path);
 		}
 	}
 
 	char const *common_error = "Nanos6 loader failed to load the runtime library.";
 
-	// Try the global or the NANOS6_LIBRARY_PATH scope
-	_nanos6_loader_try_load(verbose, variant, dependencies, lib_path);
+	// Try the global or the loader.library_path scope
+	_nanos6_loader_try_load(verbose, optimization, dependencies, instrument, lib_path);
 	if (_nanos6_lib_handle != NULL) {
 		// Check if this is a disabled variant
-		return _nanos6_check_disabled_variant(variant, dependencies, common_error);
+		return _nanos6_check_disabled_variant(optimization, dependencies, instrument, common_error);
 	}
 
 	// Attempt to load it from the same path as this library
@@ -195,11 +191,11 @@ static int _nanos6_loader_impl(void)
 			break;
 		}
 	}
-	_nanos6_loader_try_load(verbose, variant, dependencies, lib_path);
+	_nanos6_loader_try_load(verbose, optimization, dependencies, instrument, lib_path);
 	if (_nanos6_lib_handle != NULL) {
 		free(lib_path);
 		// Check if this is a disabled variant
-		return _nanos6_check_disabled_variant(variant, dependencies, common_error);
+		return _nanos6_check_disabled_variant(optimization, dependencies, instrument, common_error);
 	}
 
 	fprintf(stderr, "Error: %s\n", common_error);
@@ -214,13 +210,13 @@ static int _nanos6_loader_impl(void)
 		fprintf(stderr, "Checking if the variant was not correct\n");
 	}
 
-	_nanos6_loader_try_load(verbose, "optimized", "linear-regions-fragmented", _config.library_path);
+	_nanos6_loader_try_load(verbose, "optimized", "regions", "none", _config.library_path);
 	if (_nanos6_lib_handle == NULL) {
-		_nanos6_loader_try_load(verbose, "optimized", "linear-regions-fragmented", lib_path);
+		_nanos6_loader_try_load(verbose, "optimized", "regions", "none", lib_path);
 	}
 	if (_nanos6_lib_handle != NULL) {
-		fprintf(stderr, "The '%s' runtime variant with the '%s' dependencies is not available in this installation.\n", variant, dependencies);
-		fprintf(stderr, "Please check that the NANOS6 and NANOS6_DEPENDENCIES environment variables are valid.\n");
+		fprintf(stderr, "The '%s' runtime variant with '%s' dependencies and '%s' instrumentation does not exist.\n", optimization, dependencies, instrument);
+		fprintf(stderr, "Please check that the version.dependencies and version.instrument configuration options are valid.\n");
 
 		dlclose(_nanos6_lib_handle);
 		_nanos6_lib_handle = NULL;
@@ -234,9 +230,9 @@ static int _nanos6_loader_impl(void)
 		fprintf(stderr, "Checking for a mismatch between the linked version and the installed version\n");
 	}
 
-	_nanos6_loader_try_load_without_major(verbose, variant, dependencies, _config.library_path);
+	_nanos6_loader_try_load_without_major(verbose, optimization, dependencies, instrument, _config.library_path);
 	if (_nanos6_lib_handle == NULL) {
-		_nanos6_loader_try_load_without_major(verbose, variant, dependencies, lib_path);
+		_nanos6_loader_try_load_without_major(verbose, optimization, dependencies, instrument, lib_path);
 	}
 	if (_nanos6_lib_handle != NULL) {
 		fprintf(stderr, "There is a mismatch between the installed runtime so version and the linked so version\n");
@@ -251,12 +247,12 @@ static int _nanos6_loader_impl(void)
 		return -1;
 	}
 
-	if (_config.variant != NULL) {
-		fprintf(stderr, "Please check that the value of the NANOS6 environment variable is correct and set the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
-	} else if (_config.dependencies != NULL) {
-		fprintf(stderr, "Please check that the value of the NANOS6_DEPENDENCIES environment variable is correct and set the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
+	if (_config.dependencies != NULL) {
+		fprintf(stderr, "Please check that the value of the version.dependencies configuration option is correct and set the loader.library_path option if the runtime is installed in a different location than the loader.\n");
+	} else if (_config.instrument != NULL) {
+		fprintf(stderr, "Please check that the value of the version.instrument configuration option is correct and set the loader.library_path option if the runtime is installed in a different location than the loader.\n");
 	} else {
-		fprintf(stderr, "Please set or check the NANOS6_LIBRARY_PATH environment variable if the runtime is installed in a different location than the loader.\n");
+		fprintf(stderr, "Please set or check the loader.library_path if the runtime is installed in a different location than the loader.\n");
 	}
 
 	free(lib_path);

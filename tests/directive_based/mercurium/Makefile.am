@@ -35,7 +35,6 @@ dlb_tests =
 
 
 if HAVE_NANOS6_MERCURIUM
-if BUILD_OPTIMIZED_VARIANT
 base_tests += \
 	blocking.mercurium.test \
 	events.mercurium.test \
@@ -131,9 +130,7 @@ discrete_tests += \
 #	red-combine-new-access.mercurium.test \
 #	red-combine-taskwait.mercurium.test \
 #	red-combine-taskwait-mark.mercurium.test
-endif
 
-if BUILD_DEBUG_VARIANTS
 base_tests +=  \
 	blocking.mercurium.debug.test \
 	events.mercurium.debug.test \
@@ -226,8 +223,6 @@ discrete_tests += \
 #	red-combine-new-access.mercurium.debug.test \
 #	red-combine-taskwait.mercurium.debug.test \
 #	red-combine-taskwait-mark.mercurium.debug.test
-endif
-
 endif
 
 
