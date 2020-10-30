@@ -11,18 +11,23 @@
 #include <xmmintrin.h>
 #endif
 
+#include "support/config/ConfigVariable.hpp"
+
+
 class TurboSettings {
 public:
 	static void initialize()
 	{
-#ifdef TURBO_ENABLED
 #ifdef __SSE2__
-		// Enable flush-to-zero (FZ) and denormals are zero (FAZ) floating-point optimizations
-		// All threads created by the runtime system will inherit these optimization flags
-		const unsigned int mask = 0x8080;
-		unsigned int mxcsr = _mm_getcsr() | mask;
-		_mm_setcsr(mxcsr);
-#endif
+		ConfigVariable<bool> turbo("turbo.enabled", false);
+
+		if (turbo.getValue()) {
+			// Enable flush-to-zero (FZ) and denormals are zero (FAZ) floating-point optimizations
+			// All threads created by the runtime system will inherit these optimization flags
+			const unsigned int mask = 0x8080;
+			unsigned int mxcsr = _mm_getcsr() | mask;
+			_mm_setcsr(mxcsr);
+		}
 #endif
 	}
 
