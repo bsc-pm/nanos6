@@ -102,7 +102,7 @@ class ConfigParser {
 	{
 		std::istringstream iss(str);
 		T tmp = result;
-		iss >> tmp;
+		iss >> std::boolalpha >> tmp;
 
 		if (!iss.fail()) {
 			result = tmp;
