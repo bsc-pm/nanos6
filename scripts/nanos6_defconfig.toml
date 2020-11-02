@@ -150,7 +150,7 @@ __require_CTF
 			# executing a program with CTF instrumentation
 			enabled = true
 			# Indicate the location of the ctf2prv conversor script. Default is none (not set),
-			# which means that the $CTF2PRV_BIN will be used if present, or ctf2prv in $PATH
+			# which means that the $CTF2PRV will be used if present, or ctf2prv in $PATH
 			# otherwise
 			# location = "path/to/ctf2prv"
 __!require_CTF

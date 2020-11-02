@@ -29,7 +29,7 @@
 #include "CTFAPI.hpp"
 
 
-ConfigVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("instrument.ctf.tmpdir", "/tmp");
+ConfigVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("instrument.ctf.tmpdir");
 ConfigVariable<std::string> CTFAPI::CTFTrace::_ctf2prvWrapper("instrument.ctf.conversor.location");
 ConfigVariable<bool> CTFAPI::CTFTrace::_ctf2prvEnabled("instrument.ctf.conversor.enabled", true);
 EnvironmentVariable<std::string> CTFAPI::CTFTrace::_systemPATH("PATH");
@@ -188,25 +188,35 @@ void CTFAPI::CTFTrace::setTracePath(const char* tracePath)
 {
 	void *ret;
 	char templateName[] = "/nanos6_trace_XXXXXX";
-	char *defaultTemporalPath;
-	const size_t len = _defaultTemporalPath.getValue().size() +
-			   sizeof(templateName) + 1;
+	const char *defaultTemporalPath;
 
-	// create a temporal directory under $TMPDIR or /tmp if not set
-	defaultTemporalPath = (char *) MemoryAllocator::alloc(len);
-	defaultTemporalPath[0] = 0;
-	strcat(defaultTemporalPath, _defaultTemporalPath.getValue().c_str());
-	strcat(defaultTemporalPath, templateName);
-	ret = mkdtemp(defaultTemporalPath);
+	if (_defaultTemporalPath.isPresent()) {
+		defaultTemporalPath = _defaultTemporalPath.getValue().c_str();
+	} else {
+		const char *tmpDir = getenv("TMPDIR");
+		if (tmpDir != NULL)
+			defaultTemporalPath = tmpDir;
+		else
+			defaultTemporalPath = "/tmp";
+	}
+
+	size_t len = strlen(defaultTemporalPath) + sizeof(templateName);
+	char * templatePath = (char *) MemoryAllocator::alloc(len);
+	templatePath[0] = 0;
+
+	strcat(templatePath, defaultTemporalPath);
+	strcat(templatePath, templateName);
+
+	ret = mkdtemp(templatePath);
 	FatalErrorHandler::failIf(
 		ret == NULL,
 		"ctf: failed to create temporal trace directory: ",
 		strerror(errno)
 	);
 
-	_tmpTracePath = std::string(defaultTemporalPath);
+	_tmpTracePath = std::string(templatePath);
 	_finalTraceBasePath = std::string(tracePath);
-	MemoryAllocator::free(defaultTemporalPath, len);
+	MemoryAllocator::free(templatePath, len);
 }
 
 void CTFAPI::CTFTrace::createTraceDirectories(std::string &userPath, std::string &kernelPath)
@@ -335,12 +345,19 @@ void CTFAPI::CTFTrace::convertToParaver()
 	if (_ctf2prvWrapper.isPresent()) {
 		converter = _ctf2prvWrapper.getValue();
 	} else {
-		// if not, is the default converter in the system path?
-		if (!findCommand(defaultConverter, _systemPATH.getValue())) {
-			FatalErrorHandler::warn("The ", defaultConverter, " tool is not in the system PATH. Automatic ctf to prv conversion is not possible.");
-			return;
+		const char *envConverter = getenv("CTF2PRV");
+
+		if (envConverter != NULL) {
+			converter = std::string(envConverter);
+		} else {
+			// if not, is the default converter in the system path?
+			if (!findCommand(defaultConverter, _systemPATH.getValue())) {
+				FatalErrorHandler::warn("The ", defaultConverter, " tool is not in the system PATH. Automatic ctf to prv conversion is not possible.");
+				return;
+			}
+
+			converter = std::string(defaultConverter);
 		}
-		converter = std::string(defaultConverter);
 	}
 
 	// perform the conversion!
