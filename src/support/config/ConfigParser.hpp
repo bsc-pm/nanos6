@@ -26,7 +26,7 @@
 
 
 class ConfigParser {
-	toml::value data;
+	toml::value _data;
 
 	typedef std::unordered_map<std::string, std::string> environment_config_map_t;
 	environment_config_map_t _environmentConfig;
@@ -35,7 +35,7 @@ class ConfigParser {
 	{
 		std::string tmp;
 		std::istringstream ss(key);
-		toml::value *it = &data;
+		toml::value *it = &_data;
 
 		while (std::getline(ss, tmp, '.')) {
 			toml::value &current = *it;
@@ -107,7 +107,7 @@ public:
 		assert(_nanos6_config_path != nullptr);
 
 		try {
-			data = toml::parse(_nanos6_config_path);
+			_data = toml::parse(_nanos6_config_path);
 		} catch (std::runtime_error &error) {
 			FatalErrorHandler::fail("Error while opening the configuration file found in ",
 				std::string(_nanos6_config_path),

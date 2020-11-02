@@ -198,13 +198,12 @@ scheduler. For example, a SLURM job script could look like:
 ```sh
 #!/bin/bash
 
-export NANOS6_CONFIG_OVERRIDE="cluster.communication=mpi-2sided" # Or set in nanos6.toml
-
 #SBATCH --job-name=my_ompss_cluster_app
 #SBATCH --time=30:00
 #SBATCH --ntasks=2
 #SBATCH --cpus-per-task=48
 
+export NANOS6_CONFIG_OVERRIDE="cluster.communication=mpi-2sided" # Or set in nanos6.toml
 
 srun ./your_ompss_cluster_app args...
 ```

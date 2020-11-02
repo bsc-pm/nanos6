@@ -52,6 +52,7 @@ void _nanos6_loader_free_config(void)
 //   4. If there still is no file, stop with an error
 static int _nanos6_find_config(void)
 {
+	int cnt;
 	const char *config_path = getenv("NANOS6_CONFIG");
 
 	// 1. NANOS6_CONFIG
@@ -81,18 +82,27 @@ static int _nanos6_find_config(void)
 	}
 
 	const char *current_path = strdup(_nanos6_config_path);
-	snprintf(_nanos6_config_path, MAX_CONFIG_PATH, "%s/nanos6.toml", current_path);
+	cnt = snprintf(_nanos6_config_path, MAX_CONFIG_PATH, "%s/nanos6.toml", current_path);
 	free((void *) current_path);
 
-	if (!access(_nanos6_config_path, R_OK)) {
-		// Found file in current path
-		return 0;
+	if (cnt >= MAX_CONFIG_PATH) {
+		fprintf(stderr, "Warning: The current working path is too long, if there is a config file in the current directory it will not be used.\n");
+	} else {
+		if (!access(_nanos6_config_path, R_OK)) {
+			// Found file in current path
+			return 0;
+		}
 	}
 
 	// 3. Installation path
-	snprintf(_nanos6_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
-	if (!access(_nanos6_config_path, R_OK)) {
-		return 0;
+	cnt = snprintf(_nanos6_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
+
+	if (cnt >= MAX_CONFIG_PATH) {
+		fprintf(stderr, "Warning: The installation path for the default Nanos6 config file is too long.\n");
+	} else {
+		if (!access(_nanos6_config_path, R_OK)) {
+			return 0;
+		}
 	}
 
 	fprintf(stderr, "Error: Failed to find the Nanos6 config file.\n");
@@ -186,14 +196,14 @@ static void _nanos6_config_parse_individual_override(const char *name, const cha
 		else if (strcmp(value, "false") == 0)
 			_config.debug = 0;
 		else
-			fprintf(stderr, "Bad value for version.debug override\n");
+			fprintf(stderr, "Warning: Bad value for version.debug override\n");
 	} else if (strcmp(name, "loader.verbose") == 0) {
 		if (strcmp(value, "true") == 0)
 			_config.verbose = 1;
 		else if (strcmp(value, "false") == 0)
 			_config.verbose = 0;
 		else
-			fprintf(stderr, "Bad value for loader.verbose override\n");
+			fprintf(stderr, "Warning: Bad value for loader.verbose override\n");
 	}
 }
 
@@ -272,6 +282,10 @@ int _nanos6_loader_parse_config(void)
 		_nanos6_loader_free_config();
 		return -1;
 	}
+
+	// Print the configuration file path if the loader is in verbose mode
+	if (_config.verbose)
+		fprintf(stderr, "Nanos6 loader parsed configuration from file: %s\n", _nanos6_config_path);
 
 	return 0;
 }
