@@ -33,6 +33,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#pragma GCC visibility push(hidden)
+
 #ifdef __cplusplus
 #define TOML_EXTERN extern "C"
 #else
@@ -149,5 +151,7 @@ TOML_EXTERN void toml_set_memutil(void *(*xxmalloc)(size_t),
 	void (*xxfree)(void *),
 	void *(*xxcalloc)(size_t, size_t),
 	void *(*xxrealloc)(void *, size_t));
+
+#pragma GCC visibility pop
 
 #endif /* TOML_H */

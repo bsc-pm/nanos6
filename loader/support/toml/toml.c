@@ -37,6 +37,7 @@
 #include <string.h>
 #include "toml.h"
 
+#pragma GCC visibility push(hidden)
 
 static void* (*ppmalloc)(size_t) = malloc;
 static void (*ppfree)(void*) = free;
@@ -2146,3 +2147,5 @@ int toml_rtos(toml_raw_t src, char** ret)
 
 	return *ret ? 0 : -1;
 }
+
+#pragma GCC visibility pop

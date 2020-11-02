@@ -15,8 +15,8 @@
 
 #define MAX_CONFIG_PATH PATH_MAX
 
-int _nanos6_loader_parse_config(void);
-void _nanos6_loader_free_config(void);
+__attribute__((visibility("hidden"))) int _nanos6_loader_parse_config(void);
+__attribute__((visibility("hidden"))) void _nanos6_loader_free_config(void);
 
 typedef struct {
 	char *dependencies;
