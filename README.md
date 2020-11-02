@@ -128,7 +128,7 @@ The scheduling infrastructure provides the following configuration variables to 
 
 * `scheduler.policy`: Specifies whether ready tasks are added to the ready queue using a FIFO (`fifo`) or a LIFO (`lifo`) policy. The **fifo** is the default.
 * `scheduler.immediate_successor`: Boolean indicating whether the immediate successor policy is enabled. If enabled, once a CPU finishes a task, the same CPU starts executing its successor task (computed through the data dependencies) such that it can reuse the data on the cache. **Enabled** by default.
-* `scheduler.priority`: Boolean indicating whether the scheduler should consider task priorities. **Enabled** by default.
+* `scheduler.priority`: Boolean indicating whether the scheduler should consider the task priorities defined by the user in the task's priority clause. **Enabled** by default.
 
 ### Task worksharings options
 

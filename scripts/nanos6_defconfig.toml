@@ -2,7 +2,9 @@
 #
 # Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 
-# The Nanos6 default configuration file
+# The Nanos6 default configuration file. More details about the configuration options and the possible
+# values are available on the OmpSs-2 User Guide (https://pm.bsc.es/ftp/ompss-2/doc/user-guide/) or on
+# the README.md in the Nanos6 repository (https://github.com/bsc-pm/nanos6)
 
 [version]
 	# Choose whether the runtime runs with debug symbols and internal asserts. Enabling this option
@@ -32,7 +34,7 @@
 	# through their data dependencies). Default is true
 	immediate_successor = true
 	# Indicate whether the scheduler should consider task priorities defined by the user in the
-	# task priority clause. Default is true
+	# task's priority clause. Default is true
 	priority = true
 
 [cpumanager]
@@ -42,7 +44,10 @@
 	policy = "default"
 
 [taskfor]
-	groups = 1
+	# Choose the total number of CPU groups that will execute the worksharing tasks (taskfors). Default
+	# is none (not set), which means that the runtime will create one taskfor group per NUMA node
+	# groups = 1
+	# Indicate whether should print the taskfor groups information
 	report = false
 
 [throttle]
@@ -57,21 +62,21 @@
 
 __require_DLB
 [dlb]
-	# Enable DLB support. Defaults to false
+	# Enable DLB support. Default is false
 	enabled = false
 __!require_DLB
 
 [hardware_counters]
 	# Enable the verbose mode of hardware counters, printing a small summary of metrics at the
-	# end of the execution
+	# end of the execution. Default is false
 	verbose = false
-	# The verbose file's name, by default "nanos6-output-hwcounters.txt"
+	# The verbose file's name. Default is "nanos6-output-hwcounters.txt"
 	verbose_file = "nanos6-output-hwcounters.txt"
 __require_PAPI
 	[hardware_counters.papi]
-		# Enable the PAPI backend of the hardware counters module
+		# Enable the PAPI backend of the hardware counters module. Default is false
 		enabled = false
-		# The list of PAPI counters to read
+		# The list of PAPI counters to read. Default is "PAPI_TOT_INS" and "PAPI_TOT_CYC"
 		counters = [
 			"PAPI_TOT_INS",
 			"PAPI_TOT_CYC"
@@ -79,9 +84,9 @@ __require_PAPI
 __!require_PAPI
 __require_PQOS
 	[hardware_counters.pqos]
-		# Enable the PQoS (CMT-MBM) backend of the hardware counters module
+		# Enable the PQoS (CMT-MBM) backend of the hardware counters module. Default is false
 		enabled = false
-		# The list of PQoS counters to read (by default, all of them)
+		# The list of PQoS counters to read. Default is all of them
 		counters = [
 			"PQOS_MON_EVENT_L3_OCCUP",
 			"PQOS_MON_EVENT_LMEM_BW",
@@ -92,24 +97,27 @@ __require_PQOS
 		]
 __!require_PQOS
 	[hardware_counters.rapl]
-		# Enable the RAPL backend of the hardware counters module for runtime-wise energy metrics
+		# Enable the RAPL backend of the hardware counters module for runtime-wise energy
+		# metrics. Default is false
 		enabled = false
 
 [monitoring]
-	# Enable Monitoring of tasks and CPUs, which allows the usage of prediction-based policies.
-	# Enabled by default if the runtime is configured with Monitoring
+	# Indicate whether enabling the Monitoring of tasks and CPUs, which allows the usage of
+	# prediction-based policies. Enabled by default if the runtime is configured with Monitoring
 	enabled = true
-	# Enable the "Wisdom" mechanism of Monitoring, saving normalized metrics for future executions
-	# and loading previously saved metrics when the runtime initializes
+	# Indicate whether enabling the "Wisdom" mechanism of Monitoring, saving normalized metrics for
+	# future executions and loading previously saved metrics when the runtime initializes. Default
+	# is false
 	wisdom = false
 	# Enable the verbose mode of Monitoring, which prints a detailed summary of task type metrics
-	# at the end of the execution
+	# at the end of the execution. Default is true
 	verbose = true
-	# The verbose file's name, by default "output-monitoring.txt"
+	# The verbose file's name. Default is "output-monitoring.txt"
 	verbose_file = "output-monitoring.txt"
-	# The prediction rate at which CPU usage predictions are infered (once every 100µs by default)
+	# The prediction rate at which CPU usage predictions are infered. Default is once every 100µs
 	cpuusage_prediction_rate = 100 # µs
 	# The number of samples (window) of the normalized exponential moving average for predictions
+	# Default is 20
 	rolling_window = 20
 
 [devices]
@@ -124,38 +132,71 @@ __!require_CUDA
 __require_OPENACC
 	# OmpSs-2 @ OpenACC
 	[devices.openacc]
+		# The number of preallocated async queues per device. Default is 64
 		default_queues = 64
+		# The maximum number of async queues per device. This option also indicates the maximum
+		# number of tasks that can be run concurrently per device. Default is 128
 		max_queues = 128
 __!require_OPENACC
 
 [instrument]
 __require_CTF
 	[instrument.ctf]
-		tmpdir = "/tmp"
+		# Choose the temporary directory where to store intermediate CTF files. Default is none
+		# (not set), which means that $TMPDIR will be used if present, or /tmp otherwise
+		# tmpdir = "/tmp"
 		[instrument.ctf.conversor]
+			# Indicate whether the trace conversor should automatically generate the trace after
+			# executing a program with CTF instrumentation
 			enabled = true
+			# Indicate the location of the ctf2prv conversor script. Default is none (not set),
+			# which means that the $CTF2PRV_BIN will be used if present, or ctf2prv in $PATH
+			# otherwise
 			# location = "path/to/ctf2prv"
 __!require_CTF
 __require_EXTRAE
 	[instrument.extrae]
+		# Indicate whether the trace should show the activity of the threads instead of the CPUs'
+		# activity. Default is false, which shows the activity of CPUs
 		as_threads = false
+		# Choose the detail level of the information generated in extrae traces. Default is 1
 		detail_level = 1
 __!require_EXTRAE
 __require_GRAPH
 	[instrument.graph]
+		# Indicate whether the resulting PDF should be opened automatically with the display
+		# command. Default is false
 		display = false
+		# Choose the command to be used to automatically display the resulting PDF
 		display_command = "xdg-open"
+		# Indicate whether the graph nodes should remove the directories from the source code
+		# file names. Default is false
 		shorten_filenames = false
+		# Indicate whether should show the internal data structures that determine when tasks
+		# are ready. Default is false
 		show_dependency_structures = false
+		# Include the information about the range of data or region that is covered when showing
+		# internal data structures. Default is false
 		show_regions = false
+		# Indicate whether should show the internal data structures that do not determine dependencies
+		# or that are redundant by transitivity. Default is false
 		show_spurious_dependency_structures = false
+		# Choose whether should force future and previous dependencies to be shown with different
+		# graphical attributes. Default is false
 		show_dead_dependencies = false
+		# Include the internal data structures after they are no longer relevant. Default is false
 		show_dead_dependency_structures = false
+		# Instead of trying to collapse in one step as many related changes as possible, show one
+		# at a time. Default is false
 		show_all_steps = false
+		# Show superaccess links. Default is true
 		show_superaccess_links = true
+		# Choose whether to emit a table next to the graph with a description of the changes in
+		# each frame. Default is false
 		show_log = false
 __!require_GRAPH
 	[instrument.stats]
+		# The outfile file for emitting the statistics. Default is the standard error
 		output_file = "/dev/stderr"
 __require_VERBOSE
 	[instrument.verbose]
@@ -172,17 +213,31 @@ __!require_VERBOSE
 
 __require_CLUSTER
 [cluster]
+	# Choose the communication layer to be used for Cluster communication between processes. The
+	# "disabled" value disables the Cluster mode. Default is "disabled"
+	# Possible values: "disabled", "mpi-2sided"
 	communication = "disabled"
+	# Choose the distributed memory for Cluster mode. Default is 2GB
 	distributed_memory = "2G"
-	local_memory = "2G"
+	# Choose the local memory for Cluster mode. Default is none (not set), which means that the
+	# runtime will allocate minimum between 2GB and the 5% of the total physical memory of the
+	# machine
+	# local_memory = "2G"
+	# Indicate the scheduling policy for Cluster mode. Default is "locality"
+	# Possible values: "locality", "random"
 	scheduling_policy = "locality"
-	# Virtual Address Space start. If set to 0x00000000, the runtime will find a suitable address.
+	# Indicate the virtual address space start. If set to 0x00000000, the runtime will find a
+	# suitable address. Default is 0x00000000
 	va_start = 0x00000000
 __!require_CLUSTER
 
 [memory]
 	[memory.pool]
+		# Indicate the global allocation size for the global memory pool. Considered only in
+		# Cluster installations. Default is 8MB
 		global_alloc_size = "8M"
+		# Indicate the chunk size for the global memory pool. Considered only in Cluster
+		# installations. Default is 128KB
 		chunk_size = "128K"
 
 [misc]
