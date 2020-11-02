@@ -25,6 +25,7 @@ typedef struct {
 	char *report_prefix;
 	int debug;
 	int verbose;
+	int warn_envars;
 } _nanos6_loader_config_t;
 
 extern _nanos6_loader_config_t _config;

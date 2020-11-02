@@ -16,12 +16,15 @@
 #include <strings.h>
 #include <unistd.h>
 
-char _nanos6_config_path[MAX_CONFIG_PATH];
-_nanos6_loader_config_t _config;
-
 #ifndef INSTALLED_CONFIG_DIR
 	#error "INSTALLED_CONFIG_DIR should be defined at make time"
 #endif
+
+char _nanos6_config_path[MAX_CONFIG_PATH];
+_nanos6_loader_config_t _config;
+
+extern char **environ;
+
 
 static void _nanos6_init_config(void)
 {
@@ -31,6 +34,7 @@ static void _nanos6_init_config(void)
 	_config.report_prefix = NULL;
 	_config.debug = 0;
 	_config.verbose = 0;
+	_config.warn_envars = 1;
 }
 
 void _nanos6_loader_free_config(void)
@@ -155,6 +159,8 @@ static int _nanos6_parse_config_tables(toml_table_t *loader_section, toml_table_
 			return -1;
 		if (_toml_try_extract_bool(loader_section, &_config.verbose, "verbose"))
 			return -1;
+		if (_toml_try_extract_bool(loader_section, &_config.warn_envars, "warn_envars"))
+			return -1;
 	}
 
 	if (version_section) {
@@ -204,6 +210,13 @@ static void _nanos6_config_parse_individual_override(const char *name, const cha
 			_config.verbose = 0;
 		else
 			fprintf(stderr, "Warning: Bad value for loader.verbose override\n");
+	} else if (strcmp(name, "loader.warn_envars") == 0) {
+		if (strcmp(value, "true") == 0)
+			_config.warn_envars = 1;
+		else if (strcmp(value, "false") == 0)
+			_config.warn_envars = 0;
+		else
+			fprintf(stderr, "Warning: Bad value for loader.verbose override\n");
 	}
 }
 
@@ -234,6 +247,68 @@ static int _nanos6_config_parse_override(void)
 	free(nstring);
 }
 
+static void _nanos6_loader_check_envars(void)
+{
+	if (!_config.warn_envars)
+		return;
+
+	const char *prefix = "NANOS6";
+	const int plen = strlen(prefix);
+
+	const int nsuffixes = 3;
+	const char *suffix[3] = { "_CONFIG=", "_CONFIG_OVERRIDE=", "_HOME=" };
+	int suffixlen[3];
+
+	for (int s = 0; s < nsuffixes; ++s) {
+		suffixlen[s] = strlen(suffix[s]);
+	}
+
+	int var = 0, error = 0;
+	while (!error && environ[var]) {
+		if (strncmp(environ[var], prefix, plen) == 0) {
+			int found = 0;
+			for (int s = 0; !found && s < nsuffixes; ++s) {
+				found = (strncmp(environ[var]+plen, suffix[s], suffixlen[s]) == 0);
+			}
+
+			if (!found)
+				error = 1;
+		}
+		++var;
+	}
+
+    if (error) {
+		char *default_config_path = (char *) malloc(MAX_CONFIG_PATH * sizeof(char));
+		assert(default_config_path);
+
+		snprintf(default_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
+
+        fprintf(stderr, "Warning: Irrelevant NANOS6 environment variables detected!\n\n"
+			"From now on, the behavior of the Nanos6 runtime can be tuned using a configuration file in TOML format.\n"
+			"The default configuration file is located at the documentation directory of the Nanos6 installation.\n"
+			"In this installation, the default configuration file is:\n"
+			"\t%s\n\n"
+			"We recommend to take a look at the configuration file to see the different options that Nanos6 provides.\n"
+			"Additionally, we recommend to copy that default file to your directory and change the options that you want to override.\n"
+			"The Nanos6 runtime will only interpret the first configuration file found according to the following order:\n"
+			"\t1. The file pointed by the NANOS6_CONFIG environment variable.\n"
+			"\t2. The nanos6.toml file found in the current working directory.\n"
+			"\t3. The nanos6.toml file found in the installation path (default file).\n\n"
+			"For your information, you are currently using the configuration file:\n"
+			"\t%s\n\n"
+			"Alternatively, you can override configuration options using the NANOS6_CONFIG_OVERRIDE environment variable.\n"
+			"The contents of this variable have to follow the format \"key1=value1,key2=value2,key3=value3,...\".\n"
+			"For example, to change the dependency system implementation and use the CTF instrumentation, you can execute the following command:\n"
+			"\tNANOS6_CONFIG_OVERRIDE=\"version.dependencies=discrete,version.instrument=ctf\" ./ompss-2-program\n\n"
+			"Therefore, the only relevant NANOS6 variables are NANOS6_CONFIG and NANOS6_CONFIG_OVERRIDE; the rest are ignored by the runtime.\n"
+			"Please note that you can disable this warning by setting the option 'loader.warn_envars' to false.\n",
+			default_config_path, _nanos6_config_path
+		);
+
+		free(default_config_path);
+    }
+}
+
 // Find and parse the Nanos6 configuration file
 // The file used (path) is shared with the runtime. However, the runtime will parse independently the file
 // This is because we don't know here which are the expected data types of each variable
@@ -251,7 +326,7 @@ int _nanos6_loader_parse_config(void)
 	// Open found config file for reading
 	FILE *f = fopen(_nanos6_config_path, "r");
 	if (f == NULL) {
-		fprintf(stderr, "Error: Failed to open config file for reading: %s", strerror(errno));
+		fprintf(stderr, "Error: Failed to open config file for reading: %s\n", strerror(errno));
 		return -1;
 	}
 
@@ -260,7 +335,7 @@ int _nanos6_loader_parse_config(void)
 	fclose(f);
 
 	if (conf == NULL) {
-		fprintf(stderr, "Error: Failed to parse config file: %s", errbuf);
+		fprintf(stderr, "Error: Failed to parse config file: %s\n", errbuf);
 		return -1;
 	}
 
@@ -286,6 +361,9 @@ int _nanos6_loader_parse_config(void)
 	// Print the configuration file path if the loader is in verbose mode
 	if (_config.verbose)
 		fprintf(stderr, "Nanos6 loader parsed configuration from file: %s\n", _nanos6_config_path);
+
+	// Check if there are irrelevant Nanos6 envars defined
+	_nanos6_loader_check_envars();
 
 	return 0;
 }

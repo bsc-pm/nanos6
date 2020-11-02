@@ -249,6 +249,9 @@ __!require_CLUSTER
 [loader]
 	# Enable verbose output of the loader, to debug dynamic linking problems. Default is false
 	verbose = false
+	# Choose whether to print a warning when there is any invalid NANOS6 environment variables
+	# defined when running a program. Default is true
+	warn_envars = true
 	# Path to the nanos6 libraries. Default is none
 	# library_path = "path/to/nanos6/lib"
 	# Prefix for the report printing all the runtime variables. Default is none
