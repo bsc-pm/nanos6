@@ -1,19 +1,17 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef INSTRUMENT_VERBOSE_THREAD_MANAGEMENT_HPP
 #define INSTRUMENT_VERBOSE_THREAD_MANAGEMENT_HPP
 
 
-#include "../generic_ids/GenericIds.hpp"
 #include "InstrumentComputePlaceId.hpp"
-
 #include "instrument/api/InstrumentThreadManagement.hpp"
-
-#include <support/StringComposer.hpp>
+#include "instrument/generic_ids/GenericIds.hpp"
+#include "support/StringSupport.hpp"
 
 
 namespace Instrument {
@@ -22,7 +20,7 @@ namespace Instrument {
 	template<typename... TS>
 	void createdExternalThread(/* OUT */ external_thread_id_t &threadId, TS... nameComponents)
 	{
-		createdExternalThread_private(threadId, StringComposer::compose(nameComponents...));
+		createdExternalThread_private(threadId, StringSupport::compose(nameComponents...));
 	}
 }
 

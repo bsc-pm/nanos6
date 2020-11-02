@@ -16,6 +16,7 @@
 
 #include "ConfigParser.hpp"
 
+
 class ConfigVariableAux {
 public:
 	static inline ConfigParser &getParser()
@@ -37,25 +38,25 @@ public:
 	{
 	}
 
-	//! \brief indicates if the config variable has actually been defined
+	//! \brief Indicate if the config variable has actually been defined
 	inline bool isPresent() const
 	{
 		return _isPresent;
 	}
 
-	//! \brief retrieve the current value
+	//! \brief Retrieve the current value
 	inline T getValue() const
 	{
 		return _value;
 	}
 
-	//! \brief retrieve the current value
+	//! \brief Retrieve the current value
 	operator T() const
 	{
 		return _value;
 	}
 
-	//! \brief overwrite the value
+	//! \brief Overwrite the value
 	//!
 	//! Note that this method does not alter the actual config variable. It
 	//! only modifies the value stored in the object.
@@ -73,11 +74,11 @@ public:
 template <typename T>
 class ConfigVariable : public BaseConfigVariable<T> {
 public:
-	//! \brief constructor
+	//! \brief Constructor
 	//!
 	//! \param[in] name the name of the config variable
 	//! \param[in] defaultValue an optional value to assign if the config variable has not been defined
-	ConfigVariable(std::string const &name, T defaultValue = T())
+	ConfigVariable(const std::string &name, T defaultValue = T())
 	{
 		this->_name = name;
 		this->_value = defaultValue;
@@ -90,7 +91,11 @@ public:
 template <>
 class ConfigVariable<StringifiedMemorySize> : public BaseConfigVariable<StringifiedMemorySize> {
 public:
-	ConfigVariable(std::string const &name, StringifiedMemorySize defaultValue = StringifiedMemorySize())
+	//! \brief Constructor
+	//!
+	//! \param[in] name the name of the config variable
+	//! \param[in] defaultValue an optional value to assign if the config variable has not been defined
+	ConfigVariable(const std::string &name, StringifiedMemorySize defaultValue = StringifiedMemorySize())
 	{
 		this->_name = name;
 		this->_value = defaultValue;
@@ -99,49 +104,7 @@ public:
 		parser.get(name, unparsedValue, this->_isPresent);
 
 		if (this->_isPresent)
-			this->_value = memparse(unparsedValue);
-	}
-
-private:
-	/** It parses a string representing a size in the form
-	 * 'xxxx[k|K|m|M|g|G|t|T|p|P|e|E]' to a size_t value. */
-	inline size_t memparse(std::string str)
-	{
-		char *endptr;
-
-		size_t ret = strtoull(str.c_str(), &endptr, 0);
-
-		switch (*endptr) {
-			case 'E':
-			case 'e':
-				ret <<= 10;
-				// fall through
-			case 'P':
-			case 'p':
-				ret <<= 10;
-				// fall through
-			case 'T':
-			case 't':
-				ret <<= 10;
-				// fall through
-			case 'G':
-			case 'g':
-				ret <<= 10;
-				// fall through
-			case 'M':
-			case 'm':
-				ret <<= 10;
-				// fall through
-			case 'K':
-			case 'k':
-				ret <<= 10;
-				endptr++;
-				// fall through
-			default:
-				break;
-		}
-
-		return ret;
+			this->_value = StringSupport::parseMemory(unparsedValue);
 	}
 };
 
@@ -158,8 +121,13 @@ private:
 	bool _isPresent;
 
 public:
-	ConfigVariableList(std::string const &name, std::initializer_list<T> defaultValues) :
-		_contents(defaultValues), _name(name)
+	//! \brief Constructor
+	//!
+	//! \param[in] name the name of the config variable
+	//! \param[in] defaultValues an optional list of values to assign if the config variable has not been defined
+	ConfigVariableList(const std::string &name, std::initializer_list<T> defaultValues) :
+		_contents(defaultValues),
+		_name(name)
 	{
 		ConfigParser &parser = ConfigVariableAux::getParser();
 		// Does not touch the value if the variable is invalid or is not specified
@@ -172,20 +140,22 @@ public:
 		return _isPresent;
 	}
 
-	iterator begin()
-	{
-		return _contents.begin();
-	}
-	const_iterator begin() const
+	inline iterator begin()
 	{
 		return _contents.begin();
 	}
 
-	iterator end()
+	inline const_iterator begin() const
+	{
+		return _contents.begin();
+	}
+
+	inline iterator end()
 	{
 		return _contents.end();
 	}
-	const_iterator end() const
+
+	inline const_iterator end() const
 	{
 		return _contents.end();
 	}
@@ -202,8 +172,13 @@ private:
 	bool _isPresent;
 
 public:
-	ConfigVariableSet(std::string const &name, std::initializer_list<T> defaultValues) :
-		_contents(defaultValues), _name(name)
+	//! \brief Constructor
+	//!
+	//! \param[in] name the name of the config variable
+	//! \param[in] defaultValues an optional list of values to assign if the config variable has not been defined
+	ConfigVariableSet(const std::string &name, std::initializer_list<T> defaultValues) :
+		_contents(defaultValues),
+		_name(name)
 	{
 		ConfigParser &parser = ConfigVariableAux::getParser();
 		// Does not touch the value if the variable is invalid or is not specified

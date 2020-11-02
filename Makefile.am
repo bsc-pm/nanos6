@@ -1283,8 +1283,8 @@ noinst_HEADERS = \
 	src/support/JsonFile.hpp \
 	src/support/JsonNode.hpp \
 	src/support/Objectified.hpp \
-	src/support/StringComposer.hpp \
 	src/support/StringLiteral.hpp \
+	src/support/StringSupport.hpp \
 	src/support/config/ConfigParser.hpp \
 	src/support/config/ConfigVariable.hpp \
 	src/support/config/toml.hpp \

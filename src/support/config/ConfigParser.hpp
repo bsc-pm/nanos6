@@ -20,8 +20,10 @@
 #include "toml.hpp"
 #pragma GCC diagnostic pop
 
-#include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
+#include "support/StringSupport.hpp"
+
 
 class ConfigParser {
 	toml::value data;
@@ -29,7 +31,7 @@ class ConfigParser {
 	typedef std::unordered_map<std::string, std::string> environment_config_map_t;
 	environment_config_map_t _environmentConfig;
 
-	toml::value findKey(std::string key)
+	toml::value findKey(const std::string &key)
 	{
 		std::string tmp;
 		std::istringstream ss(key);
@@ -97,21 +99,6 @@ class ConfigParser {
 		}
 	}
 
-	template <typename T>
-	bool parseString(std::string str, T &result)
-	{
-		std::istringstream iss(str);
-		T tmp = result;
-		iss >> std::boolalpha >> tmp;
-
-		if (!iss.fail()) {
-			result = tmp;
-			return true;
-		}
-
-		return false;
-	}
-
 public:
 	ConfigParser() :
 		_environmentConfig()
@@ -134,12 +121,12 @@ public:
 	}
 
 	template <typename T>
-	void get(std::string key, T &value, bool &found)
+	void get(const std::string &key, T &value, bool &found)
 	{
 		// First we will try to find the corresponding override
 		environment_config_map_t::iterator option = _environmentConfig.find(key);
 		if (option != _environmentConfig.end()) {
-			if (parseString<T>(option->second, value)) {
+			if (StringSupport::parse<T>(option->second, value, std::boolalpha)) {
 				found = true;
 				return;
 			} else {
@@ -178,7 +165,7 @@ public:
 	}
 
 	template <typename T>
-	void getList(std::string key, std::vector<T> &value, bool &found)
+	void getList(const std::string &key, std::vector<T> &value, bool &found)
 	{
 		toml::value element = findKey(key);
 
