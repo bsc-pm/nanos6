@@ -1697,6 +1697,12 @@ install-exec-local: $(lib_OBJECTS)
 			rm -f "$(DESTDIR)$(libdir)/$$l" ; \
 		fi ; \
 	done
+	@echo Removing deprecated documentation files
+	for f in scripts/nanos6_hwcounters.json ; do \
+		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
+			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
+		fi ; \
+	done
 
 
 uninstall-hook:
@@ -1721,6 +1727,12 @@ uninstall-hook:
 	for l in libnanos6-main-wrapper.a ; do \
 		if test -f "$(DESTDIR)$(libdir)/$$l" ; then \
 			rm -f "$(DESTDIR)$(libdir)/$$l" ; \
+		fi ; \
+	done
+	@echo Removing deprecated documentation files
+	for f in scripts/nanos6_hwcounters.json ; do \
+		if test -f "$(DESTDIR)$(docdir)/$$f" ; then \
+			rm -f "$(DESTDIR)$(docdir)/$$f" ; \
 		fi ; \
 	done
 
