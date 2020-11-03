@@ -263,47 +263,57 @@ static void _nanos6_loader_check_envars(void)
 		suffixlen[s] = strlen(suffix[s]);
 	}
 
-	int var = 0, error = 0;
-	while (!error && environ[var]) {
+	int var = 0, warn = 0;
+	while (environ[var]) {
 		if (strncmp(environ[var], prefix, plen) == 0) {
 			int found = 0;
 			for (int s = 0; !found && s < nsuffixes; ++s) {
 				found = (strncmp(environ[var]+plen, suffix[s], suffixlen[s]) == 0);
 			}
 
-			if (!found)
-				error = 1;
+			if (!found) {
+				if (!warn)
+					fprintf(stderr, "Warning: Irrelevant NANOS6 environment variables detected! The following variables are ignored:\n\t");
+				warn = 1;
+
+				char *last = strchr(environ[var], '=');
+				if (last == NULL) {
+					fprintf(stderr, "%s  ", environ[var]);
+				} else {
+					fprintf(stderr, "%.*s  ", last - environ[var], environ[var]);
+				}
+			}
 		}
 		++var;
 	}
 
-    if (error) {
+    if (warn) {
 		char *default_config_path = (char *) malloc(MAX_CONFIG_PATH * sizeof(char));
-		assert(default_config_path);
+		assert(default_config_path != NULL);
 
 		snprintf(default_config_path, MAX_CONFIG_PATH, "%s/scripts/nanos6.toml", INSTALLED_CONFIG_DIR);
 
-        fprintf(stderr, "Warning: Irrelevant NANOS6 environment variables detected!\n\n"
-			"From now on, the behavior of the Nanos6 runtime can be tuned using a configuration file in TOML format.\n"
-			"The default configuration file is located at the documentation directory of the Nanos6 installation.\n"
-			"In this installation, the default configuration file is:\n"
-			"\t%s\n\n"
-			"We recommend to take a look at the configuration file to see the different options that Nanos6 provides.\n"
-			"Additionally, we recommend to copy that default file to your directory and change the options that you want to override.\n"
-			"The Nanos6 runtime will only interpret the first configuration file found according to the following order:\n"
-			"\t1. The file pointed by the NANOS6_CONFIG environment variable.\n"
-			"\t2. The nanos6.toml file found in the current working directory.\n"
-			"\t3. The nanos6.toml file found in the installation path (default file).\n\n"
-			"For your information, you are currently using the configuration file:\n"
-			"\t%s\n\n"
-			"Alternatively, you can override configuration options using the NANOS6_CONFIG_OVERRIDE environment variable.\n"
-			"The contents of this variable have to follow the format \"key1=value1,key2=value2,key3=value3,...\".\n"
-			"For example, to change the dependency system implementation and use the CTF instrumentation, you can execute the following command:\n"
-			"\tNANOS6_CONFIG_OVERRIDE=\"version.dependencies=discrete,version.instrument=ctf\" ./ompss-2-program\n\n"
-			"Therefore, the only relevant NANOS6 variables are NANOS6_CONFIG and NANOS6_CONFIG_OVERRIDE; the rest are ignored by the runtime.\n"
-			"Please note that you can disable this warning by setting the option 'loader.warn_envars' to false.\n",
-			default_config_path, _nanos6_config_path
-		);
+		fprintf(stderr, "\n\n");
+		fprintf(stderr, "From now on, the behavior of the Nanos6 runtime can be tuned using a configuration file in TOML format.\n");
+		fprintf(stderr, "The default configuration file is located at the documentation directory of the Nanos6 installation.\n");
+		fprintf(stderr, "In this installation, the default configuration file is:\n\t%s\n\n", default_config_path);
+
+		fprintf(stderr, "We recommend to take a look at the configuration file to see the different options that Nanos6 provides.\n");
+		fprintf(stderr, "Additionally, we recommend to copy that default file to your directory and change the options that you want to override.\n");
+		fprintf(stderr, "The Nanos6 runtime will only interpret the first configuration file found according to the following order:\n");
+		fprintf(stderr, "\t1. The file pointed by the NANOS6_CONFIG environment variable.\n");
+		fprintf(stderr, "\t2. The nanos6.toml file found in the current working directory.\n");
+		fprintf(stderr, "\t3. The nanos6.toml file found in the installation path (default file).\n\n");
+
+		fprintf(stderr, "For your information, you are currently using the configuration file:\n\t%s\n\n", _nanos6_config_path);
+
+		fprintf(stderr, "Alternatively, you can override configuration options using the NANOS6_CONFIG_OVERRIDE environment variable.\n");
+		fprintf(stderr, "The contents of this variable have to follow the format \"key1=value1,key2=value2,key3=value3,...\".\n");
+		fprintf(stderr, "For instance, you can execute the command below to run the CTF instrumentation with discrete dependencies:\n");
+		fprintf(stderr, "\tNANOS6_CONFIG_OVERRIDE=\"version.dependencies=discrete,version.instrument=ctf\" ./ompss-2-program\n\n");
+
+		fprintf(stderr, "Therefore, the only relevant NANOS6 variables are NANOS6_CONFIG and NANOS6_CONFIG_OVERRIDE; the rest are ignored by the runtime.\n");
+		fprintf(stderr, "Please note that you can disable this warning by setting the option 'loader.warn_envars' to false.\n\n");
 
 		free(default_config_path);
     }
