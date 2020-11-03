@@ -11,6 +11,7 @@
 #include "Scheduler.hpp"
 #include "SchedulerGenerator.hpp"
 #include "executors/threads/CPUManager.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 #include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
@@ -21,12 +22,17 @@ ConfigVariable<bool> SchedulerInterface::_enablePriority("scheduler.priority", t
 
 SchedulerInterface::SchedulerInterface()
 {
-	RuntimeInfo::addEntry("schedulingPolicy", "SchedulingPolicy", _schedulingPolicy);
-
-	SchedulingPolicy policy = FIFO_POLICY;
-	if (_schedulingPolicy.getValue() == "LIFO" || _schedulingPolicy.getValue() == "lifo") {
+	SchedulingPolicy policy;
+	if (_schedulingPolicy.getValue() == "fifo") {
+		policy = FIFO_POLICY;
+	} else if (_schedulingPolicy.getValue() == "lifo") {
 		policy = LIFO_POLICY;
+	} else {
+		FatalErrorHandler::fail("Invalid scheduling policy ", _schedulingPolicy.getValue());
+		return;
 	}
+
+	RuntimeInfo::addEntry("schedulingPolicy", "SchedulingPolicy", _schedulingPolicy);
 
 	size_t computePlaceCount;
 	computePlaceCount = CPUManager::getTotalCPUs();
