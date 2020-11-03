@@ -9,7 +9,7 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -67,8 +67,8 @@ void Accelerator::finishTask(Task *task)
 			task->getMemoryPlace(),
 			/* from busy thread */ true);
 
-		// Runtime Core Metric Point - A task has completely finished its execution
-		MetricPoints::taskFinished(task);
+		// Runtime Tracking Point - A task has completely finished its execution
+		TrackingPoints::taskFinished(task);
 
 		TaskFinalization::taskFinished(task, cpu, /* busy thread */ true);
 

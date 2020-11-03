@@ -13,7 +13,7 @@
 #include "TaskWait.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -35,16 +35,16 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 	assert(currentTask != nullptr);
 	assert(currentTask->getThread() == currentThread);
 
-	// Runtime Core Metric Point - Entering a taskwait, the task will be blocked
-	MetricPoints::enterTaskWait(currentTask, invocationSource, fromUserCode);
+	// Runtime Tracking Point - Entering a taskwait, the task will be blocked
+	TrackingPoints::enterTaskWait(currentTask, invocationSource, fromUserCode);
 
 	// Fast check
 	if (currentTask->doesNotNeedToBlockForChildren()) {
 		// This in combination with a release from the children makes their changes visible to this thread
 		std::atomic_thread_fence(std::memory_order_acquire);
 
-		// Runtime Core Metric Point - Exiting a taskwait, the task will be resumed
-		MetricPoints::exitTaskWait(currentTask, fromUserCode);
+		// Runtime Tracking Point - Exiting a taskwait, the task will be resumed
+		TrackingPoints::exitTaskWait(currentTask, fromUserCode);
 		return;
 	}
 
@@ -93,8 +93,8 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 		Instrument::taskIsExecuting(taskId, true);
 	}
 
-	// Runtime Core Metric Point - Exiting a taskwait, the task will be resumed
-	MetricPoints::exitTaskWait(currentTask, fromUserCode);
+	// Runtime Tracking Point - Exiting a taskwait, the task will be resumed
+	TrackingPoints::exitTaskWait(currentTask, fromUserCode);
 }
 
 void nanos6_stream_synchronize(size_t stream_id)

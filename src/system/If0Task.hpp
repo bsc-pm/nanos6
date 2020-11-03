@@ -9,11 +9,11 @@
 
 #include <cassert>
 
+#include "TrackingPoints.hpp"
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "system/ompss/MetricPoints.hpp"
 #include "tasks/Task.hpp"
 
 #include <InstrumentThreadManagement.hpp>
@@ -39,8 +39,8 @@ namespace If0Task {
 		CPU *cpu = static_cast<CPU *>(computePlace);
 		assert(cpu != nullptr);
 
-		// Runtime Core Metric Point - Entering a taskwait through If0, the task will be blocked
-		MetricPoints::enterWaitForIf0Task(currentTask, if0Task, currentThread, cpu);
+		// Runtime Tracking Point - Entering a taskwait through If0, the task will be blocked
+		TrackingPoints::enterWaitForIf0Task(currentTask, if0Task, currentThread, cpu);
 
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		currentThread->switchTo(replacementThread);
@@ -51,8 +51,8 @@ namespace If0Task {
 
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
-		// Runtime Core Metric Point - Exiting a taskwait through If0, the task will resume
-		MetricPoints::exitWaitForIf0Task(currentTask);
+		// Runtime Tracking Point - Exiting a taskwait through If0, the task will resume
+		TrackingPoints::exitWaitForIf0Task(currentTask);
 	}
 
 
@@ -66,13 +66,13 @@ namespace If0Task {
 		assert(if0Task->getParent() == currentTask);
 		assert(computePlace != nullptr);
 
-		// Runtime Core Metric Point - Entering a taskwait through If0, the task will be blocked
-		MetricPoints::enterExecuteInline(currentTask, if0Task);
+		// Runtime Tracking Point - Entering a taskwait through If0, the task will be blocked
+		TrackingPoints::enterExecuteInline(currentTask, if0Task);
 
 		currentThread->handleTask((CPU *) computePlace, if0Task);
 
-		// Runtime Core Metric Point - Exiting a taskwait (from If0), the task will be resumed
-		MetricPoints::exitExecuteInline(currentTask, if0Task);
+		// Runtime Tracking Point - Exiting a taskwait (from If0), the task will be resumed
+		TrackingPoints::exitExecuteInline(currentTask, if0Task);
 	}
 
 

@@ -17,7 +17,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -41,8 +41,8 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 
-	// Runtime Core Metric Point - Entering a user lock
-	MetricPoints::enterUserLock(currentTask);
+	// Runtime Tracking Point - Entering a user lock
+	TrackingPoints::enterUserLock(currentTask);
 
 	ComputePlace *computePlace = currentThread->getComputePlace();
 	assert(computePlace != nullptr);
@@ -106,8 +106,8 @@ void nanos6_user_lock(void **handlerPointer, __attribute__((unused)) char const 
 end:
 	Instrument::acquiredUserMutex(userMutex);
 
-	// Runtime Core Metric Point - Exiting a user lock
-	MetricPoints::exitUserLock(currentTask);
+	// Runtime Tracking Point - Exiting a user lock
+	TrackingPoints::exitUserLock(currentTask);
 }
 
 
@@ -125,8 +125,8 @@ void nanos6_user_unlock(void **handlerPointer)
 	Task *currentTask = currentThread->getTask();
 	assert(currentTask != nullptr);
 
-	// Runtime Core Metric Point - Entering user unlock
-	MetricPoints::enterUserUnlock(currentTask);
+	// Runtime Tracking Point - Entering user unlock
+	TrackingPoints::enterUserUnlock(currentTask);
 
 	mutex_t &userMutexReference = (mutex_t &) *handlerPointer;
 	UserMutex &userMutex = *(userMutexReference.load());
@@ -149,8 +149,8 @@ void nanos6_user_unlock(void **handlerPointer)
 				// No idle CPUs available, first re-add the current task to the scheduler
 				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 
-				// Runtime Core Metric Point - A thread is about to be suspended
-				MetricPoints::threadWillSuspend(currentThread, cpu);
+				// Runtime Tracking Point - A thread is about to be suspended
+				TrackingPoints::threadWillSuspend(currentThread, cpu);
 
 				// Now switch to the released thread
 				currentThread->switchTo(releasedThread);
@@ -165,7 +165,7 @@ void nanos6_user_unlock(void **handlerPointer)
 		}
 	}
 
-	// Runtime Core Metric Point - Exiting user unlock
-	MetricPoints::exitUserUnlock(currentTask);
+	// Runtime Tracking Point - Exiting user unlock
+	TrackingPoints::exitUserUnlock(currentTask);
 }
 

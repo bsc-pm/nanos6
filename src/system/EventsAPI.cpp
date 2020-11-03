@@ -9,10 +9,10 @@
 #include "CPUDependencyData.hpp"
 #include "DataAccessRegistration.hpp"
 #include "LeaderThread.hpp"
+#include "TrackingPoints.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "system/ompss/MetricPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
@@ -79,8 +79,8 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 			);
 		}
 
-		// Runtime Core Metric Point - A task has completely finished its execution
-		MetricPoints::taskFinished(task);
+		// Runtime Tracking Point - A task has completely finished its execution
+		TrackingPoints::taskFinished(task);
 
 		TaskFinalization::taskFinished(task, cpu, true);
 

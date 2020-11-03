@@ -4,10 +4,10 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include "MetricPoints.hpp"
+#include "TrackingPoints.hpp"
 #include "tasks/Taskfor.hpp"
 
-void MetricPoints::taskIsExecuting(Task *task)
+void TrackingPoints::taskIsExecuting(Task *task)
 {
 	HardwareCounters::updateRuntimeCounters();
 
@@ -28,7 +28,7 @@ void MetricPoints::taskIsExecuting(Task *task)
 	Monitoring::taskChangedStatus(task, executing_status);
 }
 
-void MetricPoints::taskCompletedUserCode(Task *task)
+void TrackingPoints::taskCompletedUserCode(Task *task)
 {
 	assert(task != nullptr);
 

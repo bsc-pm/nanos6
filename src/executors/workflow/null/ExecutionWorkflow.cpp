@@ -10,7 +10,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/Taskfor.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -49,8 +49,8 @@ namespace ExecutionWorkflow {
 					task, targetComputePlace,
 					stackTranslationTable, tableSize);
 
-			// Runtime Core Metric Point - A task starts its execution
-			MetricPoints::taskIsExecuting(task);
+			// Runtime Tracking Point - A task starts its execution
+			TrackingPoints::taskIsExecuting(task);
 
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
@@ -66,8 +66,8 @@ namespace ExecutionWorkflow {
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 		}
 
-		// Runtime Core Metric Point - A task has completed its execution (user code)
-		MetricPoints::taskCompletedUserCode(task);
+		// Runtime Tracking Point - A task has completed its execution (user code)
+		TrackingPoints::taskCompletedUserCode(task);
 
 		DataAccessRegistration::combineTaskReductions(task, cpu);
 
@@ -76,8 +76,8 @@ namespace ExecutionWorkflow {
 				task, cpu, cpu->getDependencyData()
 			);
 
-			// Runtime Core Metric Point - A task has completely finished its execution
-			MetricPoints::taskFinished(task);
+			// Runtime Tracking Point - A task has completely finished its execution
+			TrackingPoints::taskFinished(task);
 
 			TaskFinalization::taskFinished(task, cpu);
 			if (task->markAsReleased()) {

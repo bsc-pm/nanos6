@@ -15,7 +15,7 @@
 
 #include "StreamExecutor.hpp"
 #include "Task.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
@@ -114,7 +114,7 @@ inline void Task::reinitialize(
 	}
 
 	// Re-use hardware counters and monitoring statistics
-	MetricPoints::taskReinitialized(this);
+	TrackingPoints::taskReinitialized(this);
 }
 
 inline bool Task::markAsFinished(ComputePlace *computePlace)

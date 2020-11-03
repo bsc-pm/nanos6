@@ -10,7 +10,7 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/Taskfor.hpp"
@@ -64,8 +64,8 @@ namespace ExecutionWorkflow {
 				SymbolTranslation::generateTranslationTable(
 					_task, cpu, stackTranslationTable, tableSize);
 
-			// Runtime Core Metric Point - A task starts its execution
-			MetricPoints::taskIsExecuting(_task);
+			// Runtime Tracking Point - A task starts its execution
+			TrackingPoints::taskIsExecuting(_task);
 
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
@@ -81,8 +81,8 @@ namespace ExecutionWorkflow {
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 		}
 
-		// Runtime Core Metric Point - A task completes its execution (user code)
-		MetricPoints::taskCompletedUserCode(_task);
+		// Runtime Tracking Point - A task completes its execution (user code)
+		TrackingPoints::taskCompletedUserCode(_task);
 
 		DataAccessRegistration::combineTaskReductions(_task, cpu);
 

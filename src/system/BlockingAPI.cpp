@@ -10,9 +10,9 @@
 #include <nanos6/blocking.h>
 
 #include "DataAccessRegistration.hpp"
+#include "TrackingPoints.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
-#include "ompss/MetricPoints.hpp"
 #include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "support/chronometers/std/Chrono.hpp"
@@ -25,8 +25,8 @@ void BlockingAPI::blockCurrentTask(bool fromUserCode)
 
 	Task *currentTask = currentThread->getTask();
 
-	// Runtime Core Metric Point - The current task is gonna be blocked
-	MetricPoints::enterBlockCurrentTask(currentTask, fromUserCode);
+	// Runtime Tracking Point - The current task is gonna be blocked
+	TrackingPoints::enterBlockCurrentTask(currentTask, fromUserCode);
 
 	TaskBlocking::taskBlocks(currentThread, currentTask);
 
@@ -36,8 +36,8 @@ void BlockingAPI::blockCurrentTask(bool fromUserCode)
 	// Update the CPU as this thread may have migrated
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 
-	// Runtime Core Metric Point - The current task resumes its execution
-	MetricPoints::exitBlockCurrentTask(currentTask, fromUserCode);
+	// Runtime Tracking Point - The current task resumes its execution
+	TrackingPoints::exitBlockCurrentTask(currentTask, fromUserCode);
 }
 
 void BlockingAPI::unblockTask(Task *task, bool fromUserCode)
@@ -52,13 +52,13 @@ void BlockingAPI::unblockTask(Task *task, bool fromUserCode)
 		computePlace = currentThread->getComputePlace();
 	}
 
-	// Runtime Core Metric Point - The current task is gonna execute runtime code
-	MetricPoints::enterUnblockTask(task, currentTask, fromUserCode);
+	// Runtime Tracking Point - The current task is gonna execute runtime code
+	TrackingPoints::enterUnblockTask(task, currentTask, fromUserCode);
 
 	Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
 
-	// Runtime Core Metric Point - The current task is resuming execution
-	MetricPoints::exitUnblockTask(task, currentTask, fromUserCode);
+	// Runtime Tracking Point - The current task is resuming execution
+	TrackingPoints::exitUnblockTask(task, currentTask, fromUserCode);
 }
 
 extern "C" void *nanos6_get_current_blocking_context(void)
@@ -96,8 +96,8 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	assert(cpu != nullptr);
 	assert(currentTask != nullptr);
 
-	// Runtime Core Metric Point - The current task is gonna be readded to the scheduler
-	MetricPoints::enterWaitFor(currentTask);
+	// Runtime Tracking Point - The current task is gonna be readded to the scheduler
+	TrackingPoints::enterWaitFor(currentTask);
 
 	Task::deadline_t timeout = (Task::deadline_t) time_us;
 
@@ -123,8 +123,8 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	assert(cpu != nullptr);
 	Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
-	// Runtime Core Metric Point - The current task is resuming execution
-	MetricPoints::exitWaitFor(currentTask);
+	// Runtime Tracking Point - The current task is resuming execution
+	TrackingPoints::exitWaitFor(currentTask);
 
 	return (uint64_t) (Chrono::now<Task::deadline_t>() - start);
 }

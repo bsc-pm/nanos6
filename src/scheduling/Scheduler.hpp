@@ -8,7 +8,7 @@
 #define SCHEDULER_HPP
 
 #include "SchedulerInterface.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 
 #include <InstrumentScheduler.hpp>
 
@@ -29,26 +29,26 @@ public:
 	{
 		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
 
-		// Runtime Core Metric Point - Tasks will be added to the scheduler and will be ready
-		MetricPoints::enterAddReadyTasks(tasks, numTasks);
+		// Runtime Tracking Point - Tasks will be added to the scheduler and will be ready
+		TrackingPoints::enterAddReadyTasks(tasks, numTasks);
 
 		_instance->addReadyTasks(taskType, tasks, numTasks, computePlace, hint);
 
-		// Runtime Core Metric Point - Exiting the addReadyTasks function
-		MetricPoints::exitAddReadyTasks();
+		// Runtime Tracking Point - Exiting the addReadyTasks function
+		TrackingPoints::exitAddReadyTasks();
 	}
 
 	static inline void addReadyTask(Task *task, ComputePlace *computePlace, ReadyTaskHint hint = NO_HINT)
 	{
 		assert(computePlace == nullptr || computePlace->getType() == nanos6_host_device);
 
-		// Runtime Core Metric Point - A task will be added to the scheduler and will be readys
-		MetricPoints::enterAddReadyTask(task);
+		// Runtime Tracking Point - A task will be added to the scheduler and will be readys
+		TrackingPoints::enterAddReadyTask(task);
 
 		_instance->addReadyTask(task, computePlace, hint);
 
-		// Runtime Core Metric Point - Exiting the addReadyTasks function
-		MetricPoints::exitAddReadyTask();
+		// Runtime Tracking Point - Exiting the addReadyTasks function
+		TrackingPoints::exitAddReadyTask();
 	}
 
 	static inline Task *getReadyTask(ComputePlace *computePlace)

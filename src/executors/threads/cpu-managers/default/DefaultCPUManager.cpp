@@ -10,7 +10,7 @@
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 
 boost::dynamic_bitset<> DefaultCPUManager::_idleCPUs;
 SpinLock DefaultCPUManager::_idleCPUsLock;
@@ -166,8 +166,8 @@ void DefaultCPUManager::forcefullyResumeFirstCPU()
 	_idleCPUsLock.lock();
 
 	if (_idleCPUs[_firstCPUId]) {
-		// Runtime Core Metric Point - A cpu becomes active
-		MetricPoints::cpuBecomesActive(_cpus[_firstCPUId]);
+		// Runtime Tracking Point - A cpu becomes active
+		TrackingPoints::cpuBecomesActive(_cpus[_firstCPUId]);
 
 		_idleCPUs[_firstCPUId] = false;
 		assert(_numIdleCPUs > 0);
@@ -228,9 +228,9 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 		return false;
 	}
 
-	// Runtime Core Metric Point - A cpu becomes idle
+	// Runtime Tracking Point - A cpu becomes idle
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	MetricPoints::cpuBecomesIdle(cpu, currentThread);
+	TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 	// Mark the CPU as idle
 	_idleCPUs[index] = true;
@@ -249,8 +249,8 @@ CPU *DefaultCPUManager::getIdleCPU()
 		CPU *cpu = _cpus[id];
 		assert(cpu != nullptr);
 
-		// Runtime Core Metric Point - A cpu becomes active
-		MetricPoints::cpuBecomesActive(cpu);
+		// Runtime Tracking Point - A cpu becomes active
+		TrackingPoints::cpuBecomesActive(cpu);
 
 		// Mark the CPU as active
 		_idleCPUs[id] = false;
@@ -277,8 +277,8 @@ size_t DefaultCPUManager::getIdleCPUs(
 		CPU *cpu = _cpus[id];
 		assert(cpu != nullptr);
 
-		// Runtime Core Metric Point - A cpu becomes active
-		MetricPoints::cpuBecomesActive(cpu);
+		// Runtime Tracking Point - A cpu becomes active
+		TrackingPoints::cpuBecomesActive(cpu);
 
 		// Mark the CPU as active
 		_idleCPUs[id] = false;
@@ -314,8 +314,8 @@ void DefaultCPUManager::getIdleCollaborators(
 		assert(collaborator != nullptr);
 
 		if (groupId == collaborator->getGroupId()) {
-			// Runtime Core Metric Point - A cpu becomes active
-			MetricPoints::cpuBecomesActive(collaborator);
+			// Runtime Tracking Point - A cpu becomes active
+			TrackingPoints::cpuBecomesActive(collaborator);
 
 			// Mark the CPU as active
 			_idleCPUs[id] = false;

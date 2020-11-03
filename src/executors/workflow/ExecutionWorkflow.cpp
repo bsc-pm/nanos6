@@ -11,7 +11,7 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "memory/directory/Directory.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <ClusterManager.hpp>
@@ -240,8 +240,8 @@ namespace ExecutionWorkflow {
 						targetMemoryPlace
 					);
 
-					// Runtime Core Metric Point - A task has completely finished its execution
-					MetricPoints::taskFinished(task);
+					// Runtime Tracking Point - A task has completely finished its execution
+					TrackingPoints::taskFinished(task);
 
 					TaskFinalization::taskFinished(task, cpu);
 

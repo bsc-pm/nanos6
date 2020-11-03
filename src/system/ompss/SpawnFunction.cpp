@@ -16,7 +16,7 @@
 #include "AddTask.hpp"
 #include "SpawnFunction.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskInfo.hpp"
@@ -62,8 +62,8 @@ void SpawnFunction::spawnFunction(
 		creator = workerThread->getTask();
 	}
 
-	// Runtime Core Metric Point - Entering the creation of a task
-	MetricPoints::enterSpawnFunction(creator, fromUserCode);
+	// Runtime Tracking Point - Entering the creation of a task
+	TrackingPoints::enterSpawnFunction(creator, fromUserCode);
 
 	// Increase the number of spawned functions
 	_pendingSpawnedFunctions++;
@@ -132,8 +132,8 @@ void SpawnFunction::spawnFunction(
 	// Submit the task without parent
 	AddTask::submitTask(task, nullptr);
 
-	// Runtime Core Metric Point - Exiting the creation of a task
-	MetricPoints::exitSpawnFunction(creator, fromUserCode);
+	// Runtime Tracking Point - Exiting the creation of a task
+	TrackingPoints::exitSpawnFunction(creator, fromUserCode);
 }
 
 void SpawnFunction::spawnedFunctionWrapper(void *args, void *, nanos6_address_translation_entry_t *)

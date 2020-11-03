@@ -14,7 +14,7 @@
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
@@ -42,8 +42,8 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 		// If this is the first iteration of the loop, the task will test true to hasFinished and false to mustDelayRelease, doing
 		// nothing inside the conditionals.
 		if (task->hasFinished()) {
-			// Runtime Core Metric Point - A task has completely finished
-			MetricPoints::taskFinished(task);
+			// Runtime Tracking Point - A task has completely finished
+			TrackingPoints::taskFinished(task);
 
 			// Complete the delayed release of dependencies of the task if it has a wait clause
 			if (task->mustDelayRelease()) {

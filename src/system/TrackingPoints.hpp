@@ -4,8 +4,8 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef METRIC_POINTS_HPP
-#define METRIC_POINTS_HPP
+#ifndef TRACKING_POINTS_HPP
+#define TRACKING_POINTS_HPP
 
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/WorkerThread.hpp"
@@ -26,7 +26,7 @@
 
 //! \brief This namespace aggregates common Instrumentation, Monitoring, and
 //! HardwareCounter actions in order to simplify the runtime core
-namespace MetricPoints {
+namespace TrackingPoints {
 
 	//    COMMON FLOW OF TASKS/THREADS/CPUS    //
 
@@ -239,7 +239,7 @@ namespace MetricPoints {
 		assert(if0TaskInvocation != nullptr);
 
 		// Common function actions for when the thread suspends
-		MetricPoints::threadWillSuspend(thread, cpu);
+		TrackingPoints::threadWillSuspend(thread, cpu);
 
 		Instrument::enterTaskWait(taskId, if0TaskInvocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
 		Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
@@ -296,7 +296,7 @@ namespace MetricPoints {
 		const nanos6_task_invocation_info_t *if0Invocation = if0Task->getTaskInvokationInfo();
 		assert(if0Invocation != nullptr);
 
-		Instrument::enterTaskWait(taskId, if0Invocation->invocation_source, if0Task->getInstrumentationId(), false);
+		Instrument::enterTaskWait(taskId, if0Invocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
 	}
 
 	//! \brief Exit point of the "executeInline" function (If0Task.hpp)
@@ -715,4 +715,4 @@ namespace MetricPoints {
 
 }
 
-#endif // METRIC_POINTS_HPP
+#endif // TRACKING_POINTS_HPP

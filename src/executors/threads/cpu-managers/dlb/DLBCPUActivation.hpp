@@ -17,7 +17,7 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 
 class DLBCPUActivation {
 
@@ -261,12 +261,12 @@ public:
 						WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 						assert(currentThread != nullptr);
 
-						// Runtime Core Metric Point - A cpu becomes idle
+						// Runtime Tracking Point - A cpu becomes idle
 						// The status change is only notified once we know that the CPU
 						// has been lent sucessfully. Additionally, the instrumentation
 						// must be called prior the status change to prevent overlapping
 						// instrumentation calls with threads resuming on the lending CPU
-						MetricPoints::cpuBecomesIdle(cpu, currentThread);
+						TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 						// Change the status since the lending was successful
 						expectedStatus = CPU::lending_status;
@@ -364,8 +364,8 @@ public:
 		CPU::activation_status_t expectedStatus = CPU::acquired_enabled_status;
 		bool successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::returned_status);
 		if (successful) {
-			// Runtime Core Metric Point - A cpu becomes idle
-			MetricPoints::cpuBecomesIdle(cpu, currentThread);
+			// Runtime Tracking Point - A cpu becomes idle
+			TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 			// Since we do not want to keep the CPU, we use lend instead of return
 			__attribute__((unused)) int ret = dlbLendCPU(cpu->getSystemCPUId());
@@ -447,8 +447,8 @@ public:
 					// reenable the CPU without changing the status
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					if (successful) {
-						// Runtime Core Metric Point - A cpu becomes active
-						MetricPoints::cpuBecomesActive(cpu);
+						// Runtime Tracking Point - A cpu becomes active
+						TrackingPoints::cpuBecomesActive(cpu);
 
 						ThreadManager::resumeIdle(cpu, true, true);
 					}
@@ -495,13 +495,13 @@ public:
 
 					// We always check at each iteration of threads (see WorkerThread.cpp) if the CPU
 					// they are running on must be returned. If they are to be returned, this callback
-					// is called, and before changing the status of the CPU we call MetricPoints to
+					// is called, and before changing the status of the CPU we call TrackingPoints to
 					// avoid race conditions
 					currentThread = WorkerThread::getCurrentWorkerThread();
 					assert(currentThread != nullptr);
 
-					// Runtime Core Metric Point - A cpu becomes idle
-					MetricPoints::cpuBecomesIdle(cpu, currentThread);
+					// Runtime Tracking Point - A cpu becomes idle
+					TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::returned_status);
 					assert(successful);
@@ -560,7 +560,7 @@ public:
 				case CPU::returned_status:
 				case CPU::shutting_down_status:
 					// If a thread is woken up in this CPU but it is not supposed to be running, re-add
-					// the thread as idle. We don't call MetricPoints here since this is an extreme
+					// the thread as idle. We don't call TrackingPoints here since this is an extreme
 					// case that should barely happen and the thread directly becomes idle again
 					ThreadManager::addIdler(currentThread);
 					currentThread->switchTo(nullptr);
@@ -581,8 +581,8 @@ public:
 							++_numActiveOwnedCPUs;
 							currentStatus = CPU::enabled_status;
 
-							// Runtime Core Metric Point - A cpu becomes active
-							MetricPoints::cpuBecomesActive(cpu);
+							// Runtime Tracking Point - A cpu becomes active
+							TrackingPoints::cpuBecomesActive(cpu);
 						}
 					}
 					break;
@@ -591,8 +591,8 @@ public:
 					if (successful) {
 						currentStatus = CPU::acquired_enabled_status;
 
-						// Runtime Core Metric Point - A cpu becomes active
-						MetricPoints::cpuBecomesActive(cpu);
+						// Runtime Tracking Point - A cpu becomes active
+						TrackingPoints::cpuBecomesActive(cpu);
 					}
 					break;
 			}

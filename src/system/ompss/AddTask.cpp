@@ -25,7 +25,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/Throttle.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 #include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
@@ -59,10 +59,10 @@ Task *AddTask::createTask(
 		creator = workerThread->getTask();
 	}
 
-	// Runtime Core Metric Point - Enter the creation of a task
-	MetricPoints::enterCreateTask(creator, fromUserCode);
+	// Runtime Tracking Point - Enter the creation of a task
+	TrackingPoints::enterCreateTask(creator, fromUserCode);
 
-	// NOTE: See the note in "MetricPoints::enterSpawnFunction" for more details
+	// NOTE: See the note in "TrackingPoints::enterSpawnFunction" for more details
 	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
 	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags, taskRuntimeTransition);
 
@@ -185,8 +185,8 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 		}
 	}
 
-	// Runtime Core Metric Point - Enter the submission of a task to the scheduler
-	MetricPoints::enterSubmitTask(creator, task, fromUserCode);
+	// Runtime Tracking Point - Enter the submission of a task to the scheduler
+	TrackingPoints::enterSubmitTask(creator, task, fromUserCode);
 
 	// Compute the task priority only when the scheduler is
 	// considering the task priorities
@@ -207,8 +207,8 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 		Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
 		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);
 
-		// Runtime Core Metric Point - The created task has unresolved dependencies and is pending
-		MetricPoints::taskIsPending(task);
+		// Runtime Tracking Point - The created task has unresolved dependencies and is pending
+		TrackingPoints::taskIsPending(task);
 
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}
@@ -238,8 +238,8 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 		}
 	}
 
-	// Runtime Core Metric Point - Exit the submission of a task (and thus, the creation)
-	MetricPoints::exitSubmitTask(creator, task, fromUserCode);
+	// Runtime Tracking Point - Exit the submission of a task (and thus, the creation)
+	TrackingPoints::exitSubmitTask(creator, task, fromUserCode);
 }
 
 

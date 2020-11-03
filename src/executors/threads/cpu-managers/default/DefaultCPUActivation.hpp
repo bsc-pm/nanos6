@@ -13,7 +13,7 @@
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "scheduling/Scheduler.hpp"
-#include "system/ompss/MetricPoints.hpp"
+#include "system/TrackingPoints.hpp"
 
 class DefaultCPUActivation {
 public:
@@ -178,12 +178,12 @@ public:
 					if (successful) {
 						currentStatus = CPU::enabled_status;
 
-						// Runtime Core Metric Point - A cpu becomes active
-						MetricPoints::cpuBecomesActive(cpu);
+						// Runtime Tracking Point - A cpu becomes active
+						TrackingPoints::cpuBecomesActive(cpu);
 					}
 					break;
 				case CPU::disabled_status:
-					// The CPU is disabled, the thread should be idle. No need for MetricPoints, this
+					// The CPU is disabled, the thread should be idle. No need for TrackingPoints, this
 					// this is a corner case that should barely happen and the thread becomes idle again
 					ThreadManager::addIdler(currentThread);
 					currentThread->switchTo(nullptr);
@@ -194,8 +194,8 @@ public:
 						// Loop again, since things may have changed
 						successful = false;
 
-						// Runtime Core Metric Point - A cpu becomes idle
-						MetricPoints::cpuBecomesIdle(cpu, currentThread);
+						// Runtime Tracking Point - A cpu becomes idle
+						TrackingPoints::cpuBecomesIdle(cpu, currentThread);
 
 						// The CPU is disabling, the thread becomes idle
 						ThreadManager::addIdler(currentThread);
@@ -243,8 +243,8 @@ public:
 					// notify that it has resumed for shutdown
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					if (successful) {
-						// Runtime Core Metric Point - A cpu becomes active
-						MetricPoints::cpuBecomesActive(cpu);
+						// Runtime Tracking Point - A cpu becomes active
+						TrackingPoints::cpuBecomesActive(cpu);
 					}
 					break;
 				case CPU::shutdown_status:
