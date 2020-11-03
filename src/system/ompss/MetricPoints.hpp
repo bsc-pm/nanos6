@@ -14,6 +14,7 @@
 
 #include <InstrumentAddTask.hpp>
 #include <InstrumentBlockingAPI.hpp>
+#include <InstrumentComputePlaceManagement.hpp>
 #include <InstrumentScheduler.hpp>
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
@@ -33,13 +34,11 @@ namespace MetricPoints {
 	//!
 	//! Actions:
 	//! - HWCounters: Notify that the current task has reinitialized
-	//! - Monitoring: Notify that the current task has reinitialized
 	//!
 	//! \param[in] task The reinitialized task
 	inline void taskReinitialized(Task *task)
 	{
 		HardwareCounters::taskReinitialized(task);
-		Monitoring::taskReinitialized(this);
 	}
 
 	//! \brief Actions to be taken when a task switches to pending status
@@ -127,6 +126,35 @@ namespace MetricPoints {
 		HardwareCounters::updateRuntimeCounters();
 		Instrument::threadWillShutdown();
 		HardwareCounters::threadShutdown();
+	}
+
+	//! \brief Actions to take after a CPU becomes active
+	//!
+	//! \param[in] cpu The CPU that becomes active
+	inline void cpuBecomesActive(const CPU *cpu)
+	{
+		assert(cpu != nullptr);
+
+		Instrument::resumedComputePlace(cpu->getInstrumentationId());
+		Monitoring::cpuBecomesActive(cpu->getIndex());
+	}
+
+	//! \brief Actions to take after a CPU becomes idle
+	//!
+	//! \param[in] cpu The CPU that becomes idle
+	//! \param[in] thread The thread currently running in the CPU
+	inline void cpuBecomesIdle(const CPU *cpu, const WorkerThread *thread)
+	{
+		assert(cpu != nullptr);
+		assert(thread != nullptr);
+
+		const size_t id = cpu->getIndex();
+		const Instrument::compute_place_id_t instrumId = cpu->getInstrumentationId();
+
+		HardwareCounters::updateRuntimeCounters();
+		Monitoring::cpuBecomesIdle(id);
+		Instrument::threadWillSuspend(thread->getInstrumentationId(), instrumId);
+		Instrument::suspendingComputePlace(instrumId);
 	}
 
 

@@ -12,12 +12,8 @@
 #include "executors/threads/CPU.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "executors/threads/ThreadManager.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
-
-#include <InstrumentComputePlaceManagement.hpp>
-
+#include "system/ompss/MetricPoints.hpp"
 
 class DefaultCPUActivation {
 public:
@@ -181,28 +177,25 @@ public:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::enabled_status);
 					if (successful) {
 						currentStatus = CPU::enabled_status;
-						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getIndex());
+
+						// Runtime Core Metric Point - A cpu becomes active
+						MetricPoints::cpuBecomesActive(cpu);
 					}
 					break;
 				case CPU::disabled_status:
-					// The CPU is disabled, the thread should be idle.
-					// It is not needed to call Instrument/Monitoring here,
-					// since this is an extreme case that should barely
-					// happen and the thread directly becomes idle again
+					// The CPU is disabled, the thread should be idle. No need for MetricPoints, this
+					// this is a corner case that should barely happen and the thread becomes idle again
 					ThreadManager::addIdler(currentThread);
 					currentThread->switchTo(nullptr);
 					break;
 				case CPU::disabling_status:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::disabled_status);
 					if (successful) {
-						 // Loop again, since things may have changed
+						// Loop again, since things may have changed
 						successful = false;
 
-						HardwareCounters::updateRuntimeCounters();
-						Monitoring::cpuBecomesIdle(cpu->getIndex());
-						Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
-						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+						// Runtime Core Metric Point - A cpu becomes idle
+						MetricPoints::cpuBecomesIdle(cpu, currentThread);
 
 						// The CPU is disabling, the thread becomes idle
 						ThreadManager::addIdler(currentThread);
@@ -250,8 +243,8 @@ public:
 					// notify that it has resumed for shutdown
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					if (successful) {
-						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getIndex());
+						// Runtime Core Metric Point - A cpu becomes active
+						MetricPoints::cpuBecomesActive(cpu);
 					}
 					break;
 				case CPU::shutdown_status:

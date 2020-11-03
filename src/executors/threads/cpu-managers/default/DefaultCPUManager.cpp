@@ -9,12 +9,8 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
-
-#include <InstrumentComputePlaceManagement.hpp>
-
+#include "system/ompss/MetricPoints.hpp"
 
 boost::dynamic_bitset<> DefaultCPUManager::_idleCPUs;
 SpinLock DefaultCPUManager::_idleCPUsLock;
@@ -170,13 +166,13 @@ void DefaultCPUManager::forcefullyResumeFirstCPU()
 	_idleCPUsLock.lock();
 
 	if (_idleCPUs[_firstCPUId]) {
+		// Runtime Core Metric Point - A cpu becomes active
+		MetricPoints::cpuBecomesActive(_cpus[_firstCPUId]);
+
 		_idleCPUs[_firstCPUId] = false;
 		assert(_numIdleCPUs > 0);
 
 		--_numIdleCPUs;
-
-		// Since monitoring works with system ids, translate the ID
-		Monitoring::cpuBecomesActive(_cpus[_firstCPUId]->getIndex());
 		resumed = true;
 	}
 
@@ -184,6 +180,7 @@ void DefaultCPUManager::forcefullyResumeFirstCPU()
 
 	if (resumed) {
 		assert(_cpus[_firstCPUId] != nullptr);
+
 		ThreadManager::resumeIdle(_cpus[_firstCPUId]);
 	}
 }
@@ -231,13 +228,9 @@ bool DefaultCPUManager::cpuBecomesIdle(CPU *cpu)
 		return false;
 	}
 
+	// Runtime Core Metric Point - A cpu becomes idle
 	WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-	assert(currentThread != nullptr);
-
-	HardwareCounters::updateRuntimeCounters();
-	Monitoring::cpuBecomesIdle(index);
-	Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
-	Instrument::suspendingComputePlace(cpu->getInstrumentationId());
+	MetricPoints::cpuBecomesIdle(cpu, currentThread);
 
 	// Mark the CPU as idle
 	_idleCPUs[index] = true;
@@ -256,8 +249,10 @@ CPU *DefaultCPUManager::getIdleCPU()
 		CPU *cpu = _cpus[id];
 		assert(cpu != nullptr);
 
-		Instrument::resumedComputePlace(cpu->getInstrumentationId());
-		Monitoring::cpuBecomesActive(id);
+		// Runtime Core Metric Point - A cpu becomes active
+		MetricPoints::cpuBecomesActive(cpu);
+
+		// Mark the CPU as active
 		_idleCPUs[id] = false;
 		assert(_numIdleCPUs > 0);
 
@@ -282,9 +277,10 @@ size_t DefaultCPUManager::getIdleCPUs(
 		CPU *cpu = _cpus[id];
 		assert(cpu != nullptr);
 
-		// Signal that the CPU becomes active
-		Instrument::resumedComputePlace(cpu->getInstrumentationId());
-		Monitoring::cpuBecomesActive(id);
+		// Runtime Core Metric Point - A cpu becomes active
+		MetricPoints::cpuBecomesActive(cpu);
+
+		// Mark the CPU as active
 		_idleCPUs[id] = false;
 
 		// Place the CPU in the vector
@@ -318,9 +314,10 @@ void DefaultCPUManager::getIdleCollaborators(
 		assert(collaborator != nullptr);
 
 		if (groupId == collaborator->getGroupId()) {
-			// Signal that the CPU becomes active
-			Instrument::resumedComputePlace(collaborator->getInstrumentationId());
-			Monitoring::cpuBecomesActive(id);
+			// Runtime Core Metric Point - A cpu becomes active
+			MetricPoints::cpuBecomesActive(collaborator);
+
+			// Mark the CPU as active
 			_idleCPUs[id] = false;
 
 			// Place the CPU in the vector
