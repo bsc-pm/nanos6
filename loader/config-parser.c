@@ -175,10 +175,10 @@ static int _nanos6_parse_config_tables(toml_table_t *loader_section, toml_table_
 	return 0;
 }
 
-static void _nanos6_config_parse_individual_override(const char *name, const char *value)
+static int _nanos6_config_parse_individual_override(const char *name, const char *value)
 {
 	if (strlen(name) == 0 || strlen(value) == 0)
-		return;
+		return 0;
 
 	if (strcmp(name, "version.dependencies") == 0) {
 		if (_config.dependencies)
@@ -197,27 +197,34 @@ static void _nanos6_config_parse_individual_override(const char *name, const cha
 			free(_config.report_prefix);
 		_config.report_prefix = strdup(value);
 	} else if (strcmp(name, "version.debug") == 0) {
-		if (strcmp(value, "true") == 0)
+		if (strcmp(value, "true") == 0) {
 			_config.debug = 1;
-		else if (strcmp(value, "false") == 0)
+		} else if (strcmp(value, "false") == 0) {
 			_config.debug = 0;
-		else
-			fprintf(stderr, "Warning: Bad value for version.debug override\n");
+		} else {
+			fprintf(stderr, "Error: Bad value for %s override\n", name);
+			return -1;
+		}
 	} else if (strcmp(name, "loader.verbose") == 0) {
-		if (strcmp(value, "true") == 0)
+		if (strcmp(value, "true") == 0) {
 			_config.verbose = 1;
-		else if (strcmp(value, "false") == 0)
+		} else if (strcmp(value, "false") == 0) {
 			_config.verbose = 0;
-		else
-			fprintf(stderr, "Warning: Bad value for loader.verbose override\n");
+		} else {
+			fprintf(stderr, "Error: Bad value for %s override\n", name);
+			return -1;
+		}
 	} else if (strcmp(name, "loader.warn_envars") == 0) {
-		if (strcmp(value, "true") == 0)
+		if (strcmp(value, "true") == 0) {
 			_config.warn_envars = 1;
-		else if (strcmp(value, "false") == 0)
+		} else if (strcmp(value, "false") == 0) {
 			_config.warn_envars = 0;
-		else
-			fprintf(stderr, "Warning: Bad value for loader.verbose override\n");
+		} else {
+			fprintf(stderr, "Error: Bad value for %s override\n", name);
+			return -1;
+		}
 	}
+	return 0;
 }
 
 static int _nanos6_config_parse_override(void)
@@ -237,7 +244,8 @@ static int _nanos6_config_parse_override(void)
 			// We can "cheat" by creating two strings from the single place we have. As the separator is not important,
 			// we just replace it by a null character
 			*separator = '\0';
-			_nanos6_config_parse_individual_override(current_option, separator + 1);
+			if (_nanos6_config_parse_individual_override(current_option, separator + 1))
+				return -1;
 			*separator = '=';
 		} // Otherwise maybe an invalid or empty variable, but more sanity checks are done on the runtime initialization
 
@@ -245,6 +253,8 @@ static int _nanos6_config_parse_override(void)
 	}
 
 	free(nstring);
+
+	return 0;
 }
 
 static void _nanos6_loader_check_envars(void)

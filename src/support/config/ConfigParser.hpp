@@ -68,21 +68,18 @@ class ConfigParser {
 
 				size_t separatorIndex = currentDirective.find('=');
 				if (separatorIndex == std::string::npos) {
-					FatalErrorHandler::warn("Invalid config option: directive must follow format 'option=value'");
-					continue;
+					FatalErrorHandler::fail("Invalid config option: directive must follow format 'option=value'");
 				}
 
 				std::string directiveName = currentDirective.substr(0, separatorIndex);
 				std::string directiveContent = currentDirective.substr(separatorIndex + 1);
 
 				if (directiveName.empty()) {
-					FatalErrorHandler::warn("Invalid config option: directive name cannot be empty");
-					continue;
+					FatalErrorHandler::fail("Invalid config option: directive name cannot be empty");
 				}
 
 				if (directiveContent.empty()) {
-					FatalErrorHandler::warn("Invalid config option: directive content cannot be empty in option ", directiveName);
-					continue;
+					FatalErrorHandler::fail("Invalid config option: directive content cannot be empty in option ", directiveName);
 				}
 
 				// All config options are in lowercase
@@ -105,9 +102,7 @@ public:
 			_data = toml::parse(_nanos6_config_path);
 		} catch (std::runtime_error &error) {
 			FatalErrorHandler::fail("Error while opening the configuration file found in ",
-				std::string(_nanos6_config_path),
-				". Inner error: ",
-				error.what());
+				std::string(_nanos6_config_path), ". Inner error: ", error.what());
 		} catch (toml::syntax_error &error) {
 			FatalErrorHandler::fail("Configuration syntax error: ", error.what());
 		}
@@ -125,14 +120,9 @@ public:
 				found = true;
 				return;
 			} else {
-				FatalErrorHandler::warn(
-					"Configuration override for ",
-					key,
-					" found but value '",
-					option->second,
-					"' could not be cast to ",
-					typeid(T).name(),
-					", falling back to config file");
+				FatalErrorHandler::fail("Configuration override for ",
+					key, " found but value '", option->second,
+					"' could not be cast to ", typeid(T).name());
 			}
 		}
 
@@ -146,14 +136,9 @@ public:
 		try {
 			value = toml::get<T>(element);
 		} catch (toml::type_error &error) {
-			found = false;
-
-			FatalErrorHandler::warn(
-				"Expecting type ", typeid(T).name(), " in configuration key ",
-				key,
-				", but found ",
-				toml::stringize(element.type()),
-				" instead.");
+			FatalErrorHandler::fail("Expecting type ", typeid(T).name(),
+				" in configuration key ", key, ", but found ",
+				toml::stringize(element.type()), " instead.");
 		}
 
 		found = true;
@@ -172,14 +157,9 @@ public:
 		try {
 			value = toml::get<std::vector<T>>(element);
 		} catch (toml::type_error &error) {
-			found = false;
-
-			FatalErrorHandler::warn(
-				"Expecting type list(", typeid(T).name(), ") in configuration key ",
-				key,
-				", but found ",
-				toml::stringize(element.type()),
-				" instead.");
+			FatalErrorHandler::fail("Expecting type list(", typeid(T).name(),
+				") in configuration key ", key, ", but found ",
+				toml::stringize(element.type()), " instead.");
 		}
 
 		found = true;
