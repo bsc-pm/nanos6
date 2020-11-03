@@ -17,15 +17,6 @@
 #include "ConfigParser.hpp"
 
 
-class ConfigVariableAux {
-public:
-	static inline ConfigParser &getParser()
-	{
-		static ConfigParser configParser;
-		return configParser;
-	}
-};
-
 template <typename T>
 class BaseConfigVariable {
 protected:
@@ -82,7 +73,7 @@ public:
 	{
 		this->_name = name;
 		this->_value = defaultValue;
-		ConfigParser &parser = ConfigVariableAux::getParser();
+		ConfigParser &parser = ConfigParser::getParser();
 		// Does not touch the value if the variable is invalid or is not specified
 		parser.get(name, this->_value, this->_isPresent);
 	}
@@ -99,7 +90,7 @@ public:
 	{
 		this->_name = name;
 		this->_value = defaultValue;
-		ConfigParser &parser = ConfigVariableAux::getParser();
+		ConfigParser &parser = ConfigParser::getParser();
 		std::string unparsedValue;
 		parser.get(name, unparsedValue, this->_isPresent);
 
@@ -129,7 +120,7 @@ public:
 		_contents(defaultValues),
 		_name(name)
 	{
-		ConfigParser &parser = ConfigVariableAux::getParser();
+		ConfigParser &parser = ConfigParser::getParser();
 		// Does not touch the value if the variable is invalid or is not specified
 		parser.getList(name, _contents, _isPresent);
 	}
@@ -180,7 +171,7 @@ public:
 		_contents(defaultValues),
 		_name(name)
 	{
-		ConfigParser &parser = ConfigVariableAux::getParser();
+		ConfigParser &parser = ConfigParser::getParser();
 		// Does not touch the value if the variable is invalid or is not specified
 		std::vector<T> listContents;
 		parser.getList(name, listContents, _isPresent);

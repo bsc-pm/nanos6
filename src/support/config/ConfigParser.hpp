@@ -31,7 +31,7 @@ class ConfigParser {
 	typedef std::unordered_map<std::string, std::string> environment_config_map_t;
 	environment_config_map_t _environmentConfig;
 
-	toml::value findKey(const std::string &key)
+	inline toml::value findKey(const std::string &key)
 	{
 		std::string tmp;
 		std::istringstream ss(key);
@@ -52,7 +52,7 @@ class ConfigParser {
 		return *it;
 	}
 
-	void parseEnvironmentConfig()
+	inline void parseEnvironmentConfig()
 	{
 		const EnvironmentVariable<std::string> configOverride("NANOS6_CONFIG_OVERRIDE", "");
 
@@ -85,16 +85,11 @@ class ConfigParser {
 					continue;
 				}
 
-				if (_environmentConfig.find(directiveName) != _environmentConfig.end()) {
-					FatalErrorHandler::warn("Ignoring repeated config option ", directiveName);
-					continue;
-				}
-
 				// All config options are in lowercase
 				boost::trim(directiveName);
 				boost::to_lower(directiveName);
 
-				_environmentConfig.emplace(directiveName, directiveContent);
+				_environmentConfig[directiveName] = directiveContent;
 			}
 		}
 	}
@@ -121,7 +116,7 @@ public:
 	}
 
 	template <typename T>
-	void get(const std::string &key, T &value, bool &found)
+	inline void get(const std::string &key, T &value, bool &found)
 	{
 		// First we will try to find the corresponding override
 		environment_config_map_t::iterator option = _environmentConfig.find(key);
@@ -165,7 +160,7 @@ public:
 	}
 
 	template <typename T>
-	void getList(const std::string &key, std::vector<T> &value, bool &found)
+	inline void getList(const std::string &key, std::vector<T> &value, bool &found)
 	{
 		toml::value element = findKey(key);
 
@@ -188,6 +183,12 @@ public:
 		}
 
 		found = true;
+	}
+
+	static inline ConfigParser &getParser()
+	{
+		static ConfigParser configParser;
+		return configParser;
 	}
 };
 
