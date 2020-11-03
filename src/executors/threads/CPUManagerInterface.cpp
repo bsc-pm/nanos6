@@ -15,10 +15,10 @@ std::vector<CPU *> CPUManagerInterface::_cpus;
 std::vector<size_t> CPUManagerInterface::_systemToVirtualCPUId;
 cpu_set_t CPUManagerInterface::_cpuMask;
 std::atomic<bool> CPUManagerInterface::_finishedCPUInitialization;
-EnvironmentVariable<size_t> CPUManagerInterface::_taskforGroups("NANOS6_TASKFOR_GROUPS", 1);
-EnvironmentVariable<bool> CPUManagerInterface::_taskforGroupsReportEnabled("NANOS6_TASKFOR_GROUPS_REPORT", 0);
+ConfigVariable<size_t> CPUManagerInterface::_taskforGroups("taskfor.groups", 1);
+ConfigVariable<bool> CPUManagerInterface::_taskforGroupsReportEnabled("taskfor.report", false);
 CPUManagerPolicyInterface *CPUManagerInterface::_cpuManagerPolicy;
-EnvironmentVariable<std::string> CPUManagerInterface::_policyChosen("NANOS6_CPUMANAGER_POLICY", "default");
+ConfigVariable<std::string> CPUManagerInterface::_policyChosen("cpumanager.policy", "default");
 size_t CPUManagerInterface::_firstCPUId;
 CPU *CPUManagerInterface::_leaderThreadCPU;
 

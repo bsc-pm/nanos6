@@ -35,7 +35,7 @@ namespace Instrument {
 		if (!taskId->_hasParent) {
 			Instrument::Stats::_phasesSpinLock.writeLock();
 
-			assert(Instrument::Stats::_currentPhase == (Instrument::Stats::_phaseTimes.size() - 1));
+			assert(Instrument::Stats::_currentPhase == (int)(Instrument::Stats::_phaseTimes.size() - 1));
 
 			Instrument::Stats::_phaseTimes.back().stop();
 			Instrument::Stats::_phaseTimes.emplace_back(true);

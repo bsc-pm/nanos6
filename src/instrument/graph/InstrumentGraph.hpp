@@ -11,8 +11,8 @@
 #include <nanos6.h>
 
 #include "dependencies/DataAccessType.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/ompss/UserMutex.hpp"
 
 #include <InstrumentDataAccessId.hpp>
@@ -465,9 +465,9 @@ namespace Instrument {
 
 		extern SpinLock _graphLock;
 
-		extern EnvironmentVariable<bool> _showDependencyStructures;
-		extern EnvironmentVariable<bool> _showRegions;
-		extern EnvironmentVariable<bool> _showLog;
+		extern ConfigVariable<bool> _showDependencyStructures;
+		extern ConfigVariable<bool> _showRegions;
+		extern ConfigVariable<bool> _showLog;
 
 
 

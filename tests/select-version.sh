@@ -2,46 +2,40 @@
 
 #	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 #
-#	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+#	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
+
+# The top build directory is passed on the first parameter
+DIR=$1
+shift
+
+export NANOS6_CONFIG="${DIR}/scripts/nanos6.toml"
 
 # Any test with "discrete" in the name uses the simpler discrete implementation
-if test -z ${NANOS6_DEPENDENCIES} ; then
-	if [[ "${*}" == *"discrete"* ]]; then
-		export NANOS6_DEPENDENCIES=discrete
-	fi
+if [[ "${*}" == *"discrete"* ]]; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.dependencies=discrete"
 fi
 
-if test -z ${NANOS6_SCHEDULING_POLICY} ; then
-	if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"task-for-nqueens"* ]] || [[ "${*}" == *"taskloop-nqueens"* ]] || [[ "${*}" == *"taskloopfor-nqueens"* ]]; then
-		export NANOS6_SCHEDULING_POLICY=lifo
-	fi
+if [[ "${*}" == *"fibonacci"* ]] || [[ "${*}" == *"task-for-nqueens"* ]] || [[ "${*}" == *"taskloop-nqueens"* ]] || [[ "${*}" == *"taskloopfor-nqueens"* ]]; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},scheduler.policy=lifo"
 fi
 
 # Enable DLB for dlb-specific tests
 if [[ "${*}" == *"dlb-"* ]]; then
-	export NANOS6_ENABLE_DLB=1
-else
-	export NANOS6_ENABLE_DLB=0
-fi
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enabled=true"
 
-# If DLB is enabled clean the shared memory first
-if [[ ${NANOS6_ENABLE_DLB} == "1" ]]; then
-	# Only if the command is found
+	# If DLB is enabled clean the shared memory first
 	if hash dlb_shm 2>/dev/null; then
 		dlb_shm -d
 	fi
+else
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},dlb.enabled=false"
 fi
 
-if test -z ${NANOS6} ; then
-	if test "${*}" = "${*/.debug/}" ; then
-		export NANOS6=optimized
-		exec "${@}"
-	else
-		export NANOS6=debug
-
-		# Regular execution
-		"${@}"
-	fi
-else
+if test "${*}" = "${*/.debug/}" ; then
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.debug=false"
 	exec "${@}"
+else
+	export NANOS6_CONFIG_OVERRIDE="${NANOS6_CONFIG_OVERRIDE},version.debug=true"
+	# Regular execution
+	"${@}"
 fi

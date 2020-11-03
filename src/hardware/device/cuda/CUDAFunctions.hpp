@@ -9,8 +9,8 @@
 
 #include <cuda_runtime_api.h>
 
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/cuda/CUDAErrorHandler.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 // A helper class, providing static helper functions, specific to the device,
 // to be used by DeviceInfo and other relevant classes as utilities.
@@ -55,7 +55,7 @@ public:
 
 	static size_t getPageSize()
 	{
-		static EnvironmentVariable<size_t> pageSize("NANOS6_CUDA_PAGESIZE", 0x8000);
+		static ConfigVariable<size_t> pageSize("devices.cuda.page_size", 0x8000);
 		return pageSize;
 	}
 

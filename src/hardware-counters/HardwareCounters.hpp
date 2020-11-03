@@ -11,8 +11,8 @@
 
 #include "HardwareCountersInterface.hpp"
 #include "SupportedHardwareCounters.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 
 class Task;
@@ -22,10 +22,10 @@ class HardwareCounters {
 private:
 
 	//! Whether the verbose mode is enabled
-	static EnvironmentVariable<bool> _verbose;
+	static ConfigVariable<bool> _verbose;
 
 	//! The file where output must be saved when verbose mode is enabled
-	static EnvironmentVariable<std::string> _verboseFile;
+	static ConfigVariable<std::string> _verboseFile;
 
 	//! The underlying PAPI backend
 	static HardwareCountersInterface *_papiBackend;
@@ -47,9 +47,8 @@ private:
 
 private:
 
-	//! \brief Load backend and counter enabling configuration from the default
-	//! configuration file
-	static void loadConfigurationFile();
+	//! \brief Load backends and counter configuration from the configuration file
+	static void loadConfiguration();
 
 	//! \brief Check if multiple backends and/or other modules are enabled and incompatible
 	static inline void checkIncompatibilities()

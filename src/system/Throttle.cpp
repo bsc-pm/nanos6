@@ -7,7 +7,6 @@
 #include "DataAccessRegistration.hpp"
 #include "Throttle.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
-#include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/TaskBlocking.hpp"
 #include "system/ompss/TaskWait.hpp"
@@ -20,14 +19,12 @@
 #include <MemoryAllocator.hpp>
 #include <Monitoring.hpp>
 
-#include <iostream>
-#include <random>
 
 int Throttle::_pressure;
-EnvironmentVariable<bool> Throttle::_enabled("NANOS6_THROTTLE", false);
-EnvironmentVariable<int> Throttle::_throttleTasks("NANOS6_THROTTLE_TASKS", 5000000);
-EnvironmentVariable<int> Throttle::_throttlePressure("NANOS6_THROTTLE_PRESSURE", 70);
-EnvironmentVariable<StringifiedMemorySize> Throttle::_throttleMem("NANOS6_THROTTLE_MAX_MEMORY", ((size_t) 0));
+ConfigVariable<bool> Throttle::_enabled("throttle.enabled", false);
+ConfigVariable<int> Throttle::_throttleTasks("throttle.tasks", 5000000);
+ConfigVariable<int> Throttle::_throttlePressure("throttle.pressure", 70);
+ConfigVariable<StringifiedMemorySize> Throttle::_throttleMem("throttle.max_memory", ((size_t) 0));
 
 void Throttle::initialize()
 {
@@ -77,7 +74,7 @@ int Throttle::evaluate(void *)
 }
 
 // Each task has a maximum number of child tasks, which decreases at a 10x rate per nesting level
-// determined by NANOS6_THROTTLE_TASKS. Also, when the memory pressure reaches NANOS6_THROTTLE_MAX_MEMORY
+// determined by throttle.tasks. Also, when the memory pressure reaches throttle.max_memory
 // the number of tasks dicreases linearly between that point and 100% memory pressure. At a 100%
 // memory pressure, there is only 1 allowed tasks, which will trigger a taskwait to reduce
 // memory usage.

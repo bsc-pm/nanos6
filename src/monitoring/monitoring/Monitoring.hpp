@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef MONITORING_HPP
@@ -10,9 +10,9 @@
 #include "CPUMonitor.hpp"
 #include "TaskMonitor.hpp"
 #include "WorkloadPredictor.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "support/JsonFile.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "tasks/Task.hpp"
 
 
@@ -21,16 +21,16 @@ class Monitoring {
 private:
 
 	//! Whether monitoring has to be performed or not
-	static EnvironmentVariable<bool> _enabled;
+	static ConfigVariable<bool> _enabled;
 
 	//! Whether verbose mode is enabled
-	static EnvironmentVariable<bool> _verbose;
+	static ConfigVariable<bool> _verbose;
 
 	//! Whether the wisdom mechanism is enabled
-	static EnvironmentVariable<bool> _wisdomEnabled;
+	static ConfigVariable<bool> _wisdomEnabled;
 
 	//! The file where output must be saved when verbose mode is enabled
-	static EnvironmentVariable<std::string> _outputFile;
+	static ConfigVariable<std::string> _outputFile;
 
 	//! The "monitor", singleton instance
 	static Monitoring *_monitor;

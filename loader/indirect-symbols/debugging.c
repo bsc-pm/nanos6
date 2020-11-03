@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include "resolve.h"
@@ -147,6 +147,18 @@ unsigned int nanos6_get_total_num_cpus(void)
 	static nanos6_get_total_num_cpus_t *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
 		symbol = (nanos6_get_total_num_cpus_t *) _nanos6_resolve_symbol("nanos6_get_total_num_cpus", "debugging", NULL);
+	}
+
+	return (*symbol)();
+}
+
+int nanos6_is_dlb_enabled(void)
+{
+	typedef int nanos6_is_dlb_enabled_t(void);
+
+	static nanos6_is_dlb_enabled_t *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_is_dlb_enabled_t *) _nanos6_resolve_symbol("nanos6_is_dlb_enabled", "debugging", NULL);
 	}
 
 	return (*symbol)();

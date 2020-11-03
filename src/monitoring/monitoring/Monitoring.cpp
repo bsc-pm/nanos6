@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <config.h>
@@ -11,10 +11,10 @@
 #include "Monitoring.hpp"
 
 
-EnvironmentVariable<bool> Monitoring::_enabled("NANOS6_MONITORING_ENABLE", true);
-EnvironmentVariable<bool> Monitoring::_verbose("NANOS6_MONITORING_VERBOSE", true);
-EnvironmentVariable<bool> Monitoring::_wisdomEnabled("NANOS6_WISDOM_ENABLE", false);
-EnvironmentVariable<std::string> Monitoring::_outputFile("NANOS6_MONITORING_VERBOSE_FILE", "output-monitoring.txt");
+ConfigVariable<bool> Monitoring::_enabled("monitoring.enabled", true);
+ConfigVariable<bool> Monitoring::_verbose("monitoring.verbose", true);
+ConfigVariable<bool> Monitoring::_wisdomEnabled("monitoring.wisdom", false);
+ConfigVariable<std::string> Monitoring::_outputFile("monitoring.verbose_file", "output-monitoring.txt");
 Monitoring *Monitoring::_monitor;
 
 

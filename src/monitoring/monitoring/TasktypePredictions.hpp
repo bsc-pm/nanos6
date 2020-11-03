@@ -13,9 +13,8 @@
 
 #include "TaskPredictions.hpp"
 #include "TaskStatistics.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
-
+#include "support/config/ConfigVariable.hpp"
 
 #define PREDICTION_UNAVAILABLE -1
 
@@ -29,7 +28,7 @@ private:
 	typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::sum, boost::accumulators::tag::mean> > accumulator_t;
 
 	//! Contains the rolling-window size for accumulators
-	static EnvironmentVariable<int> _rollingWindow;
+	static ConfigVariable<int> _rollingWindow;
 
 	//! Number of instances taken into account for predictions of this tasktype
 	size_t _instances;

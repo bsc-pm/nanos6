@@ -14,8 +14,8 @@
 #include "SortAccessGroups.hpp"
 
 #include "executors/threads/ThreadManager.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
 #include <fstream>
@@ -40,15 +40,15 @@ namespace Instrument {
 
 	static long _nextCluster = 1;
 
-	static EnvironmentVariable<bool> _shortenFilenames("NANOS6_GRAPH_SHORTEN_FILENAMES", false);
-	static EnvironmentVariable<bool> _showSpuriousDependencyStructures("NANOS6_GRAPH_SHOW_SPURIOUS_DEPENDENCY_STRUCTURES", false);
-	static EnvironmentVariable<bool> _showDeadDependencyStructures("NANOS6_GRAPH_SHOW_DEAD_DEPENDENCY_STRUCTURES", false);
-	static EnvironmentVariable<bool> _showDeadDependencies("NANOS6_GRAPH_SHOW_DEAD_DEPENDENCIES", false);
-	static EnvironmentVariable<bool> _showAllSteps("NANOS6_GRAPH_SHOW_ALL_STEPS", false);
-	static EnvironmentVariable<bool> _showSuperAccessLinks("NANOS6_GRAPH_SHOW_SUPERACCESS_LINKS", true);
-	static EnvironmentVariable<bool> _autoDisplay("NANOS6_GRAPH_DISPLAY", false);
+	static ConfigVariable<bool> _shortenFilenames("instrument.graph.shorten_filenames", false);
+	static ConfigVariable<bool> _showSpuriousDependencyStructures("instrument.graph.show_spurious_dependency_structures", false);
+	static ConfigVariable<bool> _showDeadDependencyStructures("instrument.graph.show_dead_dependency_structures", false);
+	static ConfigVariable<bool> _showDeadDependencies("instrument.graph.show_dead_dependencies", false);
+	static ConfigVariable<bool> _showAllSteps("instrument.graph.show_all_steps", false);
+	static ConfigVariable<bool> _showSuperAccessLinks("instrument.graph.show_superaccess_links", true);
+	static ConfigVariable<bool> _autoDisplay("instrument.graph.display", false);
 
-	static EnvironmentVariable<std::string> _displayCommand("NANOS6_GRAPH_DISPLAY_COMMAND", "xdg-open");
+	static ConfigVariable<std::string> _displayCommand("instrument.graph.display_command", "xdg-open");
 
 
 	static inline bool isComposite(task_id_t taskId)
@@ -769,7 +769,7 @@ namespace Instrument {
 #ifndef NDEBUG
 									<< "\t// " << __FILE__ << ":" << __LINE__
 #endif
-									<< std::endl; 
+									<< std::endl;
 							}
 							currentPhaseTopAccesses.clear();
 						}
@@ -1078,7 +1078,7 @@ namespace Instrument {
 									arrowType << "odiamond";
 								}
 
-								ofs << "\t" 
+								ofs << "\t"
 									<< "data_access_" << access->_superAccess
 									<< " -> "
 									<< "data_access_" << access->_id
@@ -1168,7 +1168,7 @@ namespace Instrument {
 								arrowType = "diamondodiamond";
 							}
 
-							ofs << "\t" 
+							ofs << "\t"
 								<< "data_access_" << superAccess->_id
 								<< " -> "
 								<< "data_access_" << fragment->_id
@@ -1501,7 +1501,7 @@ namespace Instrument {
 				intermediate = oss.str();
 			}
 
-			scriptOS << "\tpdfunite " << stepBase << " " << intermediate << std::endl;  
+			scriptOS << "\tpdfunite " << stepBase << " " << intermediate << std::endl;
 		}
 		scriptOS << "\tpdfunite " << dir << "/" << filenameBase << "-100steps-*.pdf " << filenameBase << ".pdf"
 			<< " && rm -f " << dir << "/" << filenameBase << "-100steps-*.pdf" << std::endl;
@@ -1528,7 +1528,7 @@ namespace Instrument {
 				intermediate = oss.str();
 			}
 
-			scriptOS << "\tpdfjoin -q --preamble '\\usepackage{hyperref} \\hypersetup{pdfpagelayout=SinglePage}' --rotateoversize false --outfile " << intermediate << " " << stepBase << std::endl;  
+			scriptOS << "\tpdfjoin -q --preamble '\\usepackage{hyperref} \\hypersetup{pdfpagelayout=SinglePage}' --rotateoversize false --outfile " << intermediate << " " << stepBase << std::endl;
 		}
 		scriptOS << "\tpdfjoin -q --preamble '\\usepackage{hyperref} \\hypersetup{pdfpagelayout=SinglePage}' --rotateoversize false --outfile " << filenameBase << ".pdf " << dir << "/" << filenameBase << "-100steps-*.pdf"
 		<< " && rm -f " << dir << "/" << filenameBase << "-100steps-*.pdf" << std::endl;

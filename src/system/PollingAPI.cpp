@@ -14,9 +14,9 @@
 #include <nanos6/polling.h>
 
 #include "PollingAPI.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/PaddedSpinLock.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
 
@@ -67,7 +67,7 @@ namespace PollingAPI {
 	services_t _services;
 
 	//! \brief Environment variable to enable/disable polling services
-	EnvironmentVariable<bool> _enabled("NANOS6_POLLING", true);
+	ConfigVariable<bool> _enabled("misc.polling", true);
 
 
 	inline bool operator<(ServiceKey const &a, ServiceKey const &b)

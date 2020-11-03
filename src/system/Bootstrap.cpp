@@ -22,7 +22,6 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/TurboSettings.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
 #include "lowlevel/threads/ExternalThreadGroup.hpp"
@@ -73,7 +72,6 @@ void nanos6_preinit(void) {
 
 	// Enable special flags for turbo mode
 	TurboSettings::initialize();
-
 
 	RuntimeInfoEssentials::initialize();
 

@@ -11,12 +11,12 @@
 #include "Scheduler.hpp"
 #include "SchedulerGenerator.hpp"
 #include "executors/threads/CPUManager.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
-EnvironmentVariable<std::string> SchedulerInterface::_schedulingPolicy("NANOS6_SCHEDULING_POLICY", "fifo");
-EnvironmentVariable<bool> SchedulerInterface::_enableImmediateSuccessor("NANOS6_IMMEDIATE_SUCCESSOR", "1");
-EnvironmentVariable<bool> SchedulerInterface::_enablePriority("NANOS6_PRIORITY", "1");
+ConfigVariable<std::string> SchedulerInterface::_schedulingPolicy("scheduler.policy", "fifo");
+ConfigVariable<bool> SchedulerInterface::_enableImmediateSuccessor("scheduler.immediate_successor", true);
+ConfigVariable<bool> SchedulerInterface::_enablePriority("scheduler.priority", true);
 
 
 SchedulerInterface::SchedulerInterface()

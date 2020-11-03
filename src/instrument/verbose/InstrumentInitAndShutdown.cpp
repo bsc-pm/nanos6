@@ -24,8 +24,7 @@
 #include <InstrumentLeaderThread.hpp>
 
 #include "InstrumentVerbose.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
-#include "lowlevel/TokenizedEnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 #include "system/RuntimeInfo.hpp"
 
 
@@ -40,7 +39,15 @@ namespace Instrument {
 	{
 		RuntimeInfo::addEntry("instrumentation", "Instrumentation", "verbose");
 
-		TokenizedEnvironmentVariable<std::string> verboseAreas("NANOS6_VERBOSE", ',', "all,!ComputePlaceManagement,!DependenciesByAccess,!DependenciesByAccessLinks,!DependenciesByGroup,!LeaderThread,!TaskStatus,!ThreadManagement");
+		ConfigVariableList<std::string> verboseAreas("instrument.verbose.areas", {
+			"all",
+			"!ComputePlaceManagement",
+			"!DependenciesByAccess",
+			"!DependenciesByAccessLinks",
+			"!DependenciesByGroup",
+			"!LeaderThread",
+			"!TaskStatus",
+			"!ThreadManagement"});
 		for (auto area : verboseAreas) {
 			std::transform(area.begin(), area.end(), area.begin(), ::tolower);
 			if (area == "all") {
@@ -126,13 +133,13 @@ namespace Instrument {
 			}
 		}
 
-		EnvironmentVariable<std::string> outputFilename("NANOS6_VERBOSE_FILE", "/dev/stderr");
+		ConfigVariable<std::string> outputFilename("instrument.verbose.output_file", "/dev/stderr");
 #ifdef __ANDROID__
 		if (!outputFilename.isPresent()) {
 			_output = nullptr;
 		} else {
 #endif
-		_output = new std::ofstream(outputFilename.getValue().c_str());
+			_output = new std::ofstream(outputFilename.getValue().c_str());
 #ifdef __ANDROID__
 		}
 #endif
@@ -149,7 +156,7 @@ namespace Instrument {
 #ifdef __ANDROID__
 		if (_output != nullptr) {
 #endif
-		_output->close();
+			_output->close();
 #ifdef __ANDROID__
 		}
 #endif
@@ -160,7 +167,7 @@ namespace Instrument {
 	void nanos6_preinit_finished()
 	{
 	}
-}
+} // namespace Instrument
 
 
 #endif // INSTRUMENT_INIT_AND_SHUTDOWN_HPP

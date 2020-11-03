@@ -21,22 +21,15 @@ TestAnyProtocolProducer tap;
 
 
 int main(int argc, char **argv) {
-	char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
-	if (dlbEnabled == 0) {
-		tap.registerNewTests(1);
-		tap.begin();
-		tap.success("DLB is disabled, skipping this test");
-		tap.end();
-		return 0;
-	} else if (strcmp(dlbEnabled, "1") != 0) {
+
+	nanos6_wait_for_full_initialization();
+	if (!nanos6_is_dlb_enabled()) {
 		tap.registerNewTests(1);
 		tap.begin();
 		tap.success("DLB is disabled, skipping this test");
 		tap.end();
 		return 0;
 	}
-
-	nanos6_wait_for_full_initialization();
 
 	const long numActiveCPUs = nanos6_get_num_cpus();
 	tap.emitDiagnostic("Detected ", numActiveCPUs, " CPUs");
@@ -158,11 +151,11 @@ int main(int argc, char **argv) {
 				++numRunningCPUs;
 			}
 		}
-		
+
 		// Wait at most 5 seconds
-                if (timer.lap() > 5000000) {
-                        break;
-                }
+		if (timer.lap() > 5000000) {
+			break;
+		}
 	} while (numRunningCPUs < numActiveCPUs);
 
 	exitCondition.store(true);

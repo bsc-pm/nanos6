@@ -31,12 +31,9 @@ void wrongExecution(const char *error)
 }
 
 int main(int argc, char **argv) {
+
 	// Make sure DLB is enabled
-	char *dlbEnabled = std::getenv("NANOS6_ENABLE_DLB");
-	if (dlbEnabled == 0) {
-		wrongExecution("DLB is disabled, skipping this test");
-		return 0;
-	} else if (strcmp(dlbEnabled, "1") != 0) {
+	if (!nanos6_is_dlb_enabled()) {
 		wrongExecution("DLB is disabled, skipping this test");
 		return 0;
 	}

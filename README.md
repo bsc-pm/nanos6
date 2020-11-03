@@ -105,13 +105,30 @@ $ taskset -c 0-2,4 ./app
 
 would run `app` on cores 0, 1, 2 and 4.
 
+### Runtime settings
+
+The behaviour of the Nanos6 runtime can be tuned after compilation by means of a configuration file.
+The default configuration can be found in the installed documentation directory, in the file `nanos6.toml`.
+Currently, the supported format is TOML v1.0.0-rc1 (https://toml.io/en/v1.0.0-rc.1).
+
+To override the default configuration, it is recommended to copy the default file and change the relevant options.
+The first configuration file found will be interpreted, according to the following order:
+
+1. The file pointed by the `NANOS6_CONFIG` environment variable.
+1. The file `nanos6.toml` found in the current working directory.
+1. The file `nanos6.toml` found in the installation path (default file).
+
+Alternatively, if configuration has to be changed programatically and creating new files is not practical, configuration variables can be overriden using the `NANOS6_CONFIG_OVERRIDE` environment variable.
+The contents of this variable have to be in the format `key1=value1,key2=value2,key3=value3,...`.
+For example, to change the dependency implementation and CTF instrumentation: `NANOS6_CONFIG_OVERRIDE="version.dependencies=discrete,version.instrument=ctf" ./ompss-program`.
+
 ### Scheduling options
 
-The scheduling infrastructure provides the following environment variables to modify the behavior of the task scheduler.
+The scheduling infrastructure provides the following configuration variables to modify the behavior of the task scheduler.
 
-* `NANOS6_SCHEDULING_POLICY`: Specifies whether ready tasks are added to the ready queue using a FIFO (`fifo`) or a LIFO (`lifo`) policy. The **fifo** is the default.
-* `NANOS6_IMMEDIATE_SUCCESSOR`: Boolean indicating whether the immediate successor policy is enabled. If enabled, once a CPU finishes a task, the same CPU starts executing its successor task (computed through the data dependencies) such that it can reuse the data on the cache. **Enabled** by default.
-* `NANOS6_PRIORITY`: Boolean indicating whether the scheduler should consider task priorities. **Enabled** by default.
+* `scheduler.policy`: Specifies whether ready tasks are added to the ready queue using a FIFO (`fifo`) or a LIFO (`lifo`) policy. The **fifo** is the default.
+* `scheduler.immediate_successor`: Boolean indicating whether the immediate successor policy is enabled. If enabled, once a CPU finishes a task, the same CPU starts executing its successor task (computed through the data dependencies) such that it can reuse the data on the cache. **Enabled** by default.
+* `scheduler.priority`: Boolean indicating whether the scheduler should consider the task priorities defined by the user in the task's priority clause. **Enabled** by default.
 
 ### Task worksharings options
 
@@ -132,7 +149,7 @@ In our implementation, worksharing tasks are executed by taskfor groups.
 Taskfor groups are composed by a set of available CPUs.
 Each available CPU on the system is assigned to a specific taskfor group.
 Then, a worksharing task is assigned to a particular taskfor group, so it can be run by at most as many CPUs (also known as collaborators) as that taskfor group has.
-Users can set the number of groups (and so, implicitly, the number of collaborators) by setting the ``NANOS6_TASKFOR_GROUPS`` environment variable.
+Users can set the number of groups (and so, implicitly, the number of collaborators) by setting the ``taskfor.groups`` configuration variable.
 By default, there are as many groups as NUMA nodes in the system.
 
 Finally, taskfors that do not define any chunksize leverage a chunksize value computed as their total number of iterations divided by the number of collaborators per taskfor group.
@@ -141,34 +158,32 @@ Finally, taskfors that do not define any chunksize leverage a chunksize value co
 
 There are several Nanos6 variants, each one focusing on different aspects of parallel executions: performance, debugging, instrumentation, etc.
 Nanos6 applications, unlike Nanos++ applications do not require recompiling their code to generate Extrae traces or to generate additional information.
-This is instead controlled through environment variables, _envar_ from now on, at run time.
-Users can select a Nanos6 variant when running an application through the `NANOS6` envar.
+This is instead controlled through configration options, at run time.
+Users can select a Nanos6 variant when running an application through the `version.dependencies`, `version.instrument` and `version.debug` configuration variables.
 The next subsections explain the different variants of Nanos6 and how to enable them.
 
 ### Benchmarking
 
-If `NANOS6` envar is not set, the default variant is `optimized`.
-This is compiled with high optimization flags, it does not perform validity checks and it does not provide debug information.
+The default variant is the optimized one, which disables the `version.debug` (no debug) and the `version.instrument` to `none` (no instrumentation).
+This is compiled with high optimization flags, it does not perform validity checks and does not provide debug information.
 That is the variant that should be used when performing benchmarking of parallel applications.
 
-Additionally, Nanos6 offers an extra performant variant named `turbo`, which is the same as `optimized` but adding further optimizations.
-Firstly, it enables by default the `discrete` dependency implementation, although users can still change it through the `NANOS6_DEPENDENCIES` envar.
-Secondly, it enables two Intel® floating-point (FP) unit optimizations in all tasks: flush-to-zero (FZ) and denormals are zero (DAZ).
+Additionally, Nanos6 offers an extra performant option named `turbo`, which is the same as `optimized` but adding further optimizations.
+It enables two Intel® floating-point (FP) unit optimizations in all tasks: flush-to-zero (FZ) and denormals are zero (DAZ).
 Please note these FP optimizations could alter the precision of floating-point computations.
+It is disabled by default, but can be enabled by setting the `turbo.enabled` configuration option to `true`.
 
 Moreover, these variants can be combined with the jemalloc memory allocator (``--with-jemalloc``) to obtain the best performance.
+Changing the dependency system implementation may also affect the performance of the applications.
+The different dependency implementations and how to enable them are explained in the Section [Choosing a dependency implementation](#choosing-a-dependency-implementation).
 
 
 ### Tracing a Nanos6 application with Extrae
 
-To generate an extrae trace, run the application with the `NANOS6` envar set to `extrae`.
+To generate an extrae trace, run the application with the `version.instrument` config set to `extrae`.
 
 Currently there is an incompatibility when generating traces with PAPI.
-To solve it, define the following envar:
-
-```sh
-$ export NANOS6_EXTRAE_AS_THREADS=1
-```
+To solve it, define the following config: `instrument.extrae.as_threads = true`
 
 The resulting trace will show the activity of the actual threads instead of the activity at each CPU.
 In the future, this problem will be fixed.
@@ -176,11 +191,11 @@ In the future, this problem will be fixed.
 
 ### Tracing a Nanos6 application with CTF (Experimental)
 
-To generate a CTF trace, run the application with the `NANOS6` envar set to `ctf`.
+To generate a CTF trace, run the application with the `version.instrument` config set to `ctf`.
 
 A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
 To visualize this trace, it needs to be converted to Paraver format first.
-By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the environment variable `NANOS6_CTF2PRV=0`.
+By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the configuration variable `instrument.ctf.conversor.enabled = false`.
 The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the conversion after the specified elapsed time in minutes.
 Please note that the conversion tool requires python3 and the babeltrace2 packages.
 
@@ -206,27 +221,27 @@ For more information on how the CTF instrumentation variant works see [CTF.md](d
 
 ### Generating a graphical representation of the dependency graph
 
-To generate the graph, run the application with the `NANOS6` envar set to `graph`.
+To generate the graph, run the application with the `version.instrument` config set to `graph`.
 
 By default, the graph nodes include the full path of the source code.
-To remove the directories, set the `NANOS6_GRAPH_SHORTEN_FILENAMES` envar to `1`.
+To remove the directories, set the `instrument.graph.shorten_filenames` config to `true`.
 
 The resulting file is a PDF that contains several pages.
 Each page represents the graph at a given point in time.
-Setting the `NANOS6_GRAPH_SHOW_DEAD_DEPENDENCIES` envar to `1` forces future and previous dependencies to be shown with different graphical attributes.
+Setting the `instrument.graph.show_dead_dependencies` config to `true` forces future and previous dependencies to be shown with different graphical attributes.
 
-The `NANOS6_GRAPH_DISPLAY` envar, if set to `1`, will make the resulting PDF to be opened automatically.
-The default viewer is `xdg-open`, but it can be overridden through the `NANOS6_GRAPH_DISPLAY_COMMAND` envar.
+The `instrument.graph.display` config, if set to `true`, will make the resulting PDF to be opened automatically.
+The default viewer is `xdg-open`, but it can be overridden through the `instrument.graph.display_command` config.
 
 For best results, we suggest to display the PDF with "single page" view, showing a full page and to advance page by page.
 
 
 ### Verbose logging
 
-To enable verbose logging, run the application with the `NANOS6` envar set to `verbose`.
+To enable verbose logging, run the application with the `version.instrument` config set to `verbose`.
 
 By default it generates a lot of information.
-This is controlled by the `NANOS6_VERBOSE` envar, which can contain a comma separated list of areas.
+This is controlled by the `instrument.verbose.areas` config, which can contain a list of areas.
 The areas are the following:
 
 <table><tbody><tr><td> <strong>Section</strong> </td><td> <strong>Description</strong>
@@ -245,18 +260,18 @@ The areas are the following:
 
 The case is ignored, and the `all` keyword enables all of them.
 Additionally, and area can have the `!` prepended to it to disable it.
-For instance, `NANOS6_VERBOSE=AddTask,TaskExecution,TaskWait` is a good starting point.
+For instance, `areas = [ "AddTask", "TaskExecution", "TaskWait" ]` is a good starting point.
 
-By default, the output is emitted to standard error, but it can be sent to a file by specifying it through the `NANOS6_VERBOSE_FILE` envar.
-Also the `NANOS6_VERBOSE_DUMP_ONLY_ON_EXIT` can be set to `1` to delay the output to the end of the program to avoid getting it mixed with the output of the program.
+By default, the output is emitted to standard error, but it can be sent to a file by specifying it through the `instrument.verbose.file` config.
+Also `instrument.verbose.dump_only_on_exit` can be set to `true` to delay the output to the end of the program to avoid getting it mixed with the output of the program.
 
 
 ### Obtaining statistics
 
-To enable collecting timing statistics, run the application with the `NANOS6` envar set to `stats`.
+To enable collecting timing statistics, run the application with the `version.instrument` config set to `stats`.
 
 By default, the statistics are emitted standard error when the program ends.
-The output can be sent to a file through the `NANOS6_STATS_FILE` envar.
+The output can be sent to a file through the `instrument.stats.output_file` config.
 
 The contents of the output contain the average for each task type and the total task average of the following metrics:
 
@@ -288,23 +303,23 @@ The runtime uses the taskwaits at the outermost level to identify phases and wil
 
 By default, the runtime is optimized for speed and will assume that the application code is correct.
 Hence, it will not perform most validity checks.
-To enable validity checks, run the application with the `NANOS6` envar set to `debug`.
+To enable validity checks, run the application with the `version.debug` config set to `true`.
 This will enable many internal validity checks that may be violated with the application code is incorrect.
 In the future we may include a validation mode that will perform extensive application code validation.
+Notice that all instrumentation variants can be executed either with or without enabling the debug option.
 
 To debug an application with a regular debugger, please compile its code with the regular debugging flags and also the `-keep` flag.
 This flag will force Mercurium to dump the transformed code in the local file system, so that it will be available for the debugger.
 
 To debug dependencies, it is advised to reduce the problem size so that very few tasks trigger the problem, and then use let the runtime make a graphical representation of the dependency graph as shown previously.
 
-Processing the `NANOS6` envar involves selecting at run time a runtime compiled for the corresponding instrumentation.
-This part of the bootstrap is performed by a component of the runtime called "loader.
-To debug problems due to the installation, run the application with the `NANOS6_LOADER_VERBOSE` environment variable set to any value.
-
+Processing the configuration file involves selecting at run time a runtime compiled for the corresponding instrumentation.
+This part of the bootstrap is performed by a component of the runtime called "loader".
+To debug problems due to the installation, run the application with the `loader.verbose` config variable set to `true`.
 
 ## Runtime information
 
-Information about the runtime may be obtained by running the application with the `NANOS6_REPORT_PREFIX` envar set, or by invoking the following command:
+Information about the runtime may be obtained by running the application with the `loader.report_prefix` config set, or by invoking the following command:
 
 ```sh
 $ nanos6-info --runtime-details
@@ -320,12 +335,12 @@ Dependency Implementation regions (linear-regions-fragmented)
 Threading Model pthreads
 ```
 
-The `NANOS6_REPORT_PREFIX` envar may contain a string that will be prepended to each line.
+The `loader.report_prefix` config may contain a string that will be prepended to each line.
 For instance, it can contain a sequence that starts a comment in the output of the program.
 Example:
 
 ```sh
-$ NANOS6_REPORT_PREFIX="#" ./app
+$ NANOS6_CONFIG_OVERRIDE="loader.report_prefix=#" ./app
 Some application output ...
 #	string	version	2017-11-07 09:26:03 +0100 5cb1900		Runtime Version
 #	string	branch	master		Runtime Branch
@@ -360,12 +375,12 @@ This external API can be used including `nanos6/monitoring.h` in applications.
 In addition, checkpointing of predictions is enabled through the Wisdom mechanism.
 This mechanism allows saving predictions for later usage, to enable earlier predictions in future executions.
 
-The Monitoring infrastructure is enabled at configure time, however, both the infrastructure and the Wisdom mechanism are controlled through additional environment variables:
+The Monitoring infrastructure is enabled at configure time, however, both the infrastructure and the Wisdom mechanism are controlled through additional configuration variables:
 
-* `NANOS6_MONITORING_ENABLE`: To enable/disable monitoring and predictions of task, CPU, and thread statistics. Enabled by default if the runtime is configured with Monitoring.
-* `NANOS6_MONITORING_VERBOSE`: To enable/disable the verbose mode for monitoring. Enabled by default if the runtime is configured with Monitoring.
-* `NANOS6_MONITORING_ROLLING_WINDOW`: To specify the number of metrics used for accumulators (moving average's window). By default, the latest 20 metrics.
-* `NANOS6_WISDOM_ENABLE`: To enable/disable the wisdom mechanism. Disabled by default.
+* `monitoring.enabled`: To enable/disable monitoring and predictions of task, CPU, and thread statistics. Enabled by default if the runtime is configured with Monitoring.
+* `monitoring.verbose`: To enable/disable the verbose mode for monitoring. Enabled by default if the runtime is configured with Monitoring.
+* `monitoring.rolling_window`: To specify the number of metrics used for accumulators (moving average's window). By default, the latest 20 metrics.
+* `monitoring.wisdom`: To enable/disable the wisdom mechanism. Disabled by default.
 
 ### Known Limitations
 
@@ -403,20 +418,20 @@ For more information on how to write and run cluster applications see [Cluster.m
 
 ## Choosing a dependency implementation
 
-The Nanos6 runtime has support for different dependency implementations. The `regions` (or `linear-regions-fragmented`) dependencies are always compiled and are the default implementation. This choice is fully spec-compliant, and supports all of the features. It is also the only implementation that supports OmpSs-2@Cluster and execution workflows.
+The Nanos6 runtime has support for different dependency implementations. The `regions` dependencies are always compiled and are the default implementation. This choice is fully spec-compliant, and supports all of the features. It is also the only implementation that supports OmpSs-2@Cluster and execution workflows.
 
-Other implementations can be compiled in with the corresponding `./configure` flag, and selected dynamically through the `NANOS6_DEPENDENCIES` environment variable.
+Other implementations can be compiled in with the corresponding `./configure` flag, and selected dynamically through the `version.dependencies` configuration variable.
 
 The available implementations are:
 
-* `NANOS6_DEPENDENCIES=regions`: Supporting all features. **Default** implementation in all Nanos6 variants except for `turbo`.
-* `NANOS6_DEPENDENCIES=discrete`: No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
+* `version.dependencies = "regions"`: Supporting all features. **Default** implementation.
+* `version.dependencies = "discrete"`: No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
 
 ## DLB Support
 
 DLB is a library devoted to speed up hybrid parallel applications and maximize the utilization of computational resources. More information about this library can be found [here](https://pm.bsc.es/dlb). To enable DLB support for Nanos6, a working DLB installation must be present in your environment. Configuring Nanos6 with DLB support is done through the `--with-dlb` flag, specifying the root directory of the DLB installation.
 
-After configuring DLB support for Nanos6, its enabling can be controlled at run-time through the `NANOS6_ENABLE_DLB` environment variable. To run with Nanos6 with DLB support then, this variable must be set to true (`export NANOS6_ENABLE_DLB=1`), since by default DLB is disabled.
+After configuring DLB support for Nanos6, its enabling can be controlled at run-time through the `dlb.enabled` configuration variable. To run with Nanos6 with DLB support then, this variable must be set to true, since by default DLB is disabled.
 
 Once DLB is enabled for Nanos6, OmpSs-2 applications will benefit from dynamic resource sharing automatically. The following example showcases the executions of two applications that share the available CPUs between them:
 
@@ -434,18 +449,18 @@ taskset -c 10-19 ./cholesky-fact.test &
 ## Polling Services
 
 Polling services are executed by a dedicated thread at regular intervals, and also, opportunistically by idle worker threads.
-The approximate minimum frequency in time in which the polling services are going to be executed can be controlled by the `NANOS6_POLLING_FREQUENCY` environment variable.
+The approximate minimum frequency in time in which the polling services are going to be executed can be controlled by the `misc.polling_frequency` configuration variable.
 This variable can take an integer value that represents the polling frequency in microseconds.
 By default, the runtime system executes the polling services at least every 1000 microseconds.
 
 ## CPU Managing Policies
 
-Currently, Nanos6 offers different policies when handling CPUs through the `NANOS6_CPUMANAGER_POLICY` environment variable:
-* `NANOS6_CPUMANAGER_POLICY=idle`: Activates the `idle` policy, in which idle threads halt on a blocking condition, while not consuming CPU cycles.
-* `NANOS6_CPUMANAGER_POLICY=busy`: Activates the `busy` policy, in which idle threads continue spinning and never halt, consuming CPU cycles.
-* `NANOS6_CPUMANAGER_POLICY=lewi`: If DLB is enabled, activates the LeWI policy. Similarly to the idle policy, in this one idle threads lend their CPU to other runtimes or processes.
-* `NANOS6_CPUMANAGER_POLICY=greedy`: If DLB is enabled, activates the `greedy` policy, in which CPUs from the process' mask are never lent, but allows acquiring and lending external CPUs.
-* `NANOS6_CPUMANAGER_POLICY=default`: Fallback to the default implementation. If DLB is disabled, this policy falls back to the `idle` policy, while if DLB is enabled it falls back to the `lewi` policy.
+Currently, Nanos6 offers different policies when handling CPUs through the `cpumanager.policy` configuration variable:
+* `cpumanager.policy = "idle"`: Activates the `idle` policy, in which idle threads halt on a blocking condition, while not consuming CPU cycles.
+* `cpumanager.policy = "busy"`: Activates the `busy` policy, in which idle threads continue spinning and never halt, consuming CPU cycles.
+* `cpumanager.policy = "lewi"`: If DLB is enabled, activates the LeWI policy. Similarly to the idle policy, in this one idle threads lend their CPU to other runtimes or processes.
+* `cpumanager.policy = "greedy"`: If DLB is enabled, activates the `greedy` policy, in which CPUs from the process' mask are never lent, but allows acquiring and lending external CPUs.
+* `cpumanager.policy = "default"`: Fallback to the default implementation. If DLB is disabled, this policy falls back to the `idle` policy, while if DLB is enabled it falls back to the `lewi` policy.
 
 ## Throttle
 
@@ -460,9 +475,9 @@ Furthermore, the execution time when enabling this feature should be similar to 
 
 The throttle mechanism requires a valid installation of Jemalloc, which is a scalable multi-threading memory allocator.
 Hence, the runtime system must be configured with the ``--with-jemalloc`` option.
-Although the throttle feature is disabled by default, it can be enabled and tunned at runtime through the following environment variables:
+Although the throttle feature is disabled by default, it can be enabled and tunned at runtime through the following configuration variables:
 
-* `NANOS6_THROTTLE`: Boolean variable that enables the throttle mechanism. **Disabled** by default.
-* `NANOS6_THROTTLE_TASKS`: Maximum absolute number of alive childs that any task can have. It is divided by 10 at each nesting level. By default is 5.000.000.
-* `NANOS6_THROTTLE_PRESSURE`: Percentage of memory budget used at which point the number of tasks allowed to exist will be decreased linearly until reaching 1 at 100% memory pressure. By default is 70.
-* `NANOS6_THROTTLE_MAX_MEMORY`: Maximum used memory or memory budget. Note that this variable can be set in terms of bytes or in memory units. For example: ``NANOS6_THROTTLE_MAX_MEMORY=50GB``. The default is the half of the available physical memory.
+* `throttle.enabled`: Boolean variable that enables the throttle mechanism. **Disabled** by default.
+* `throttle.tasks`: Maximum absolute number of alive childs that any task can have. It is divided by 10 at each nesting level. By default is 5.000.000.
+* `throttle.pressure`: Percentage of memory budget used at which point the number of tasks allowed to exist will be decreased linearly until reaching 1 at 100% memory pressure. By default is 70.
+* `throttle.max_memory`: Maximum used memory or memory budget. Note that this variable can be set in terms of bytes or in memory units. For example: ``throttle.max_memory = "50GB"``. The default is the half of the available physical memory.

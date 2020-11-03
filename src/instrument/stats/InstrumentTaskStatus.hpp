@@ -78,7 +78,6 @@ namespace Instrument {
 		task_id_t collaboratorId,
 		InstrumentationContext const &
 	) {
-		assert(taskforId != nullptr);
 		assert(collaboratorId->_currentTimer != nullptr);
 
 		collaboratorId->_currentTimer->continueAt(collaboratorId->_times._zombieTime);

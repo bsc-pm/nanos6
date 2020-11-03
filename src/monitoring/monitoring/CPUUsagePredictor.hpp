@@ -13,7 +13,7 @@
 #include "nanos6/polling.h"
 
 #include "CPUMonitor.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 
 class CPUUsagePredictor {
@@ -23,7 +23,7 @@ private:
 	typedef boost::accumulators::accumulator_set<double, boost::accumulators::stats<boost::accumulators::tag::sum, boost::accumulators::tag::mean> > accumulator_t;
 
 	//! How often (microseconds) CPU utilization predictions are made
-	static EnvironmentVariable<size_t> _predictionRate;
+	static ConfigVariable<size_t> _predictionRate;
 
 	//! The current prediction
 	static double _prediction;

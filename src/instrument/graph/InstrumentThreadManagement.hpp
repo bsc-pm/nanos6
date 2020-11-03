@@ -8,13 +8,11 @@
 #define INSTRUMENT_GRAPH_THREAD_MANAGEMENT_HPP
 
 
+#include "instrument/api/InstrumentThreadManagement.hpp"
+#include "instrument/generic_ids/GenericIds.hpp"
+
 #include <InstrumentComputePlaceId.hpp>
 #include <InstrumentThreadId.hpp>
-
-#include "instrument/api/InstrumentThreadManagement.hpp"
-#include "../generic_ids/GenericIds.hpp"
-
-#include <support/StringComposer.hpp>
 
 
 namespace Instrument {

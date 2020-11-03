@@ -8,7 +8,7 @@
 #include "WorkloadPredictor.hpp"
 
 
-EnvironmentVariable<size_t> CPUUsagePredictor::_predictionRate("NANOS6_MONITORING_CPUUSAGE_PREDICTION_RATE", 100 /* µs */);
+ConfigVariable<size_t> CPUUsagePredictor::_predictionRate("monitoring.cpuusage_prediction_rate", 100 /* µs */);
 double CPUUsagePredictor::_prediction;
 bool CPUUsagePredictor::_predictionAvailable;
 CPUUsagePredictor::accumulator_t CPUUsagePredictor::_accuracies;

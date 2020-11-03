@@ -14,7 +14,7 @@
 #if HAVE_DLB
 #include "executors/threads/cpu-managers/dlb/DLBCPUManager.hpp"
 #endif
-#include "lowlevel/EnvironmentVariable.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 
 class CPUManager {
@@ -25,7 +25,7 @@ private:
 	static CPUManagerInterface *_cpuManager;
 
 	//! Whether DLB is enabled
-	static EnvironmentVariable<bool> _dlbEnabled;
+	static ConfigVariable<bool> _dlbEnabled;
 
 public:
 
@@ -48,6 +48,12 @@ public:
 		assert(_cpuManager != nullptr);
 
 		_cpuManager->preinitialize();
+	}
+
+	//! \brief Check whether DLB is enabled
+	static inline bool isDLBEnabled()
+	{
+		return _cpuManager->isDLBEnabled();
 	}
 
 	//! \brief Initialize all structures for the CPUManager

@@ -216,7 +216,7 @@ namespace Instrument {
 			{
 				Instrument::Stats::_phasesSpinLock.readLock();
 
-				assert(_currentPhase == (_phaseTimes.size() - 1));
+				assert(_currentPhase == (int)(_phaseTimes.size() - 1));
 				int lastStartedPhase = _phaseInfo.size() - 1;
 
 				if (lastStartedPhase == -1) {

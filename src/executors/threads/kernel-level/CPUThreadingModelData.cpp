@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #include <cassert>
@@ -12,7 +12,7 @@
 #include "system/RuntimeInfo.hpp"
 
 
-EnvironmentVariable<StringifiedMemorySize> CPUThreadingModelData::_defaultThreadStackSize("NANOS6_STACK_SIZE", 8 * 1024 * 1024);
+ConfigVariable<StringifiedMemorySize> CPUThreadingModelData::_defaultThreadStackSize("misc.stack_size", 8 * 1024 * 1024);
 
 
 void CPUThreadingModelData::initialize(__attribute__((unused)) CPU *cpu)
