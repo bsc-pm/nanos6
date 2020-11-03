@@ -16,7 +16,6 @@
 #include "system/ompss/MetricPoints.hpp"
 #include "tasks/Task.hpp"
 
-#include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadManagement.hpp>
 
 
@@ -40,15 +39,8 @@ namespace If0Task {
 		CPU *cpu = static_cast<CPU *>(computePlace);
 		assert(cpu != nullptr);
 
-		nanos6_task_invocation_info_t *taskInvokationInfo = if0Task->getTaskInvokationInfo();
-		assert(taskInvokationInfo != nullptr);
-
 		// Runtime Core Metric Point - Entering a taskwait through If0, the task will be blocked
-		Instrument::task_id_t currentTaskId = currentTask->getInstrumentationTaskId();
-		MetricPoints::enterWaitForIf0Task(
-			currentTask, currentTaskId, taskInvokationInfo->invocation_source,
-			if0Task->getInstrumentationTaskId(), currentThread, cpu
-		);
+		MetricPoints::enterWaitForIf0Task(currentTask, if0Task, currentThread, cpu);
 
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		currentThread->switchTo(replacementThread);
@@ -56,10 +48,11 @@ namespace If0Task {
 		// Update the CPU since the thread may have migrated
 		cpu = currentThread->getComputePlace();
 		assert(cpu != nullptr);
+
 		Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
 		// Runtime Core Metric Point - Exiting a taskwait through If0, the task will resume
-		MetricPoints::exitWaitForIf0Task(currentTask, currentTaskId);
+		MetricPoints::exitWaitForIf0Task(currentTask);
 	}
 
 
@@ -73,23 +66,13 @@ namespace If0Task {
 		assert(if0Task->getParent() == currentTask);
 		assert(computePlace != nullptr);
 
-		bool hasCode = if0Task->hasCode();
-
-		nanos6_task_invocation_info_t *taskInvokationInfo = if0Task->getTaskInvokationInfo();
-		assert(taskInvokationInfo != nullptr);
-
 		// Runtime Core Metric Point - Entering a taskwait through If0, the task will be blocked
-		char const *invocationSource = taskInvokationInfo->invocation_source;
-		Instrument::task_id_t currentTaskId = currentTask->getInstrumentationTaskId();
-		MetricPoints::enterExecuteInline(
-			currentTask, currentTaskId, invocationSource,
-			if0Task->getInstrumentationTaskId(), hasCode
-		);
+		MetricPoints::enterExecuteInline(currentTask, if0Task);
 
 		currentThread->handleTask((CPU *) computePlace, if0Task);
 
 		// Runtime Core Metric Point - Exiting a taskwait (from If0), the task will be resumed
-		MetricPoints::exitExecuteInline(currentTask, currentTaskId, hasCode);
+		MetricPoints::exitExecuteInline(currentTask, if0Task);
 	}
 
 

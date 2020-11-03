@@ -11,10 +11,8 @@ namespace TaskWait {
 
 	//! \brief Block current task and wait for its childs to complete
 	//!
-	//! \param[in] invocationSource A representative string indicating the
-	//!            calling location
-	//! \param[in] fromUserCode Indicates whether this function is called
-	//!            from user code or runtime code
+	//! \param[in] invocationSource A representative string indicating the calling location
+	//! \param[in] fromUserCode Indicates whether this function is called from user or runtime code
 	void taskWait(char const *invocationSource, bool fromUserCode = false);
 
 }

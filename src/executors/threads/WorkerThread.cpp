@@ -90,7 +90,7 @@ void WorkerThread::body()
 				ThreadManager::addIdler(this);
 
 				// Runtime Core Metric Point - The current thread will suspend
-				MetricPoints::threadWillSuspend(_instrumentationId, cpu->getInstrumentationId());
+				MetricPoints::threadWillSuspend(this, cpu);
 
 				switchTo(assignedThread);
 			} else {

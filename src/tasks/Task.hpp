@@ -222,7 +222,7 @@ public:
 	}
 
 	//! Check if the task has an actual body
-	inline bool hasCode()
+	inline bool hasCode() const
 	{
 		assert(_taskInfo->implementation_count == 1); // TODO: temporary check for a single implementation
 		assert(_taskInfo != nullptr);

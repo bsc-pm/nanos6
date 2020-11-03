@@ -28,9 +28,11 @@ void MetricPoints::taskIsExecuting(Task *task)
 	Monitoring::taskChangedStatus(task, executing_status);
 }
 
-void MetricPoints::taskCompletedUserCode(Task *task, bool taskHasCode)
+void MetricPoints::taskCompletedUserCode(Task *task)
 {
-	if (taskHasCode) {
+	assert(task != nullptr);
+
+	if (task->hasCode()) {
 		HardwareCounters::updateTaskCounters(task);
 		Monitoring::taskChangedStatus(task, paused_status);
 		Monitoring::taskCompletedUserCode(task);

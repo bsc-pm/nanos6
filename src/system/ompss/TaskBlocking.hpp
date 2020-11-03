@@ -12,9 +12,6 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "system/ompss/MetricPoints.hpp"
 
-#include <InstrumentThreadManagement.hpp>
-
-
 class TaskBlocking {
 
 public:
@@ -35,7 +32,7 @@ public:
 		assert(replacementThread != nullptr);
 
 		// Runtime Core Metric Point - Thread is suspending
-		MetricPoints::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
+		MetricPoints::threadWillSuspend(currentThread, cpu);
 
 		// When a task blocks, switch to another idle thread to avoid:
 		// 1) Getting the current thread stuck in the CPU while doing nothing

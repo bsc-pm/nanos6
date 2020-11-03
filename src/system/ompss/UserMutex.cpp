@@ -150,7 +150,7 @@ void nanos6_user_unlock(void **handlerPointer)
 				Scheduler::addReadyTask(currentTask, cpu, UNBLOCKED_TASK_HINT);
 
 				// Runtime Core Metric Point - A thread is about to be suspended
-				MetricPoints::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
+				MetricPoints::threadWillSuspend(currentThread, cpu);
 
 				// Now switch to the released thread
 				currentThread->switchTo(releasedThread);

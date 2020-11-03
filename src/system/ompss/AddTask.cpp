@@ -28,8 +28,8 @@
 #include "system/ompss/MetricPoints.hpp"
 #include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/Taskfor.hpp"
 #include "tasks/TaskImplementation.hpp"
+#include "tasks/Taskfor.hpp"
 #include "tasks/Taskloop.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -59,11 +59,11 @@ Task *AddTask::createTask(
 		creator = workerThread->getTask();
 	}
 
-	// See taskRuntimeTransition variable note in spawnFunction() for more details
-	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-
 	// Runtime Core Metric Point - Enter the creation of a task
-	MetricPoints::enterCreateTask(creator, taskRuntimeTransition);
+	MetricPoints::enterCreateTask(creator, fromUserCode);
+
+	// NOTE: See the note in "MetricPoints::enterSpawnFunction" for more details
+	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
 	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags, taskRuntimeTransition);
 
 	//! Throttle. If active, act as a taskwait
@@ -163,13 +163,10 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 	Task *creator = nullptr;
 	ComputePlace *computePlace = nullptr;
 	WorkerThread *workerThread = WorkerThread::getCurrentWorkerThread();
-	Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
 	if (workerThread != nullptr) {
+		creator = workerThread->getTask();
 		computePlace = workerThread->getComputePlace();
 		assert(computePlace != nullptr);
-
-		// There could be no creator
-		creator = workerThread->getTask();
 	}
 
 	// Set the parent and check if it is a stream executor
@@ -188,11 +185,8 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 		}
 	}
 
-	// See taskRuntimeTransition variable note in spawnFunction() for more details
-	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-
 	// Runtime Core Metric Point - Enter the submission of a task to the scheduler
-	MetricPoints::enterSubmitTask(task, taskInstrumentationId, taskRuntimeTransition);
+	MetricPoints::enterSubmitTask(creator, task, fromUserCode);
 
 	// Compute the task priority only when the scheduler is
 	// considering the task priorities
@@ -210,9 +204,11 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 	if (taskInfo->register_depinfo != 0) {
 		assert(computePlace != nullptr);
 
-		// Runtime Core Metric Point - The created task has unresolved dependencies and is pending
+		Instrument::task_id_t taskInstrumentationId = task->getInstrumentationTaskId();
 		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);
-		MetricPoints::taskIsPending(taskInstrumentationId);
+
+		// Runtime Core Metric Point - The created task has unresolved dependencies and is pending
+		MetricPoints::taskIsPending(task);
 
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}
@@ -243,7 +239,7 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 	}
 
 	// Runtime Core Metric Point - Exit the submission of a task (and thus, the creation)
-	MetricPoints::exitSubmitTask(creator, taskInstrumentationId, taskRuntimeTransition);
+	MetricPoints::exitSubmitTask(creator, task, fromUserCode);
 }
 
 

@@ -22,6 +22,7 @@
 
 
 namespace ExecutionWorkflow {
+
 	void HostExecutionStep::start()
 	{
 		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
@@ -40,10 +41,10 @@ namespace ExecutionWorkflow {
 		// releases the ExecutionStep
 		//
 		// In that case we need to add the Task back for scheduling
-		if ((currentThread == nullptr) || (cpu == nullptr) || (currentThread->getTask() == nullptr)) {
+		if ((cpu == nullptr) || (currentThread->getTask() == nullptr)) {
 			_task->setExecutionStep(this);
-
 			Scheduler::addReadyTask(_task, nullptr, BUSY_COMPUTE_PLACE_TASK_HINT);
+
 			return;
 		}
 
@@ -81,7 +82,7 @@ namespace ExecutionWorkflow {
 		}
 
 		// Runtime Core Metric Point - A task completes its execution (user code)
-		MetricPoints::taskCompletedUserCode(_task, taskHasCode);
+		MetricPoints::taskCompletedUserCode(_task);
 
 		DataAccessRegistration::combineTaskReductions(_task, cpu);
 

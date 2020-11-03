@@ -36,8 +36,7 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 	assert(currentTask->getThread() == currentThread);
 
 	// Runtime Core Metric Point - Entering a taskwait, the task will be blocked
-	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
-	MetricPoints::enterTaskWait(currentTask, taskId, invocationSource, fromUserCode);
+	MetricPoints::enterTaskWait(currentTask, invocationSource, fromUserCode);
 
 	// Fast check
 	if (currentTask->doesNotNeedToBlockForChildren()) {
@@ -45,7 +44,7 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 		std::atomic_thread_fence(std::memory_order_acquire);
 
 		// Runtime Core Metric Point - Exiting a taskwait, the task will be resumed
-		MetricPoints::exitTaskWait(currentTask, taskId, fromUserCode);
+		MetricPoints::exitTaskWait(currentTask, fromUserCode);
 		return;
 	}
 
@@ -56,19 +55,19 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 	bool done = currentTask->markAsBlocked();
 
 	// done == true:
-	// 	1. The condition of the taskwait has been fulfilled
-	// 	2. The task will not be queued at all
-	// 	3. The execution must continue (without blocking)
+	//   1. The condition of the taskwait has been fulfilled
+	//   2. The task will not be queued at all
+	//   3. The execution must continue (without blocking)
 	// done == false:
-	// 	1. The task has been marked as blocked
-	// 	2. At any time the condition of the taskwait can become true
-	// 	3. The thread responsible for that change will queue the task
-	// 	4. Any thread can dequeue it and attempt to resume the thread
-	// 	5. This can trigger a migration, and will make the call to
-	// 		ThreadManager::switchThreads (that is inside TaskBlocking::taskBlocks)
-	// 		to resume immediately (and to wake the replacement thread, if any,
-	// 		on the "old" CPU)
-
+	//   1. The task has been marked as blocked
+	//   2. At any time the condition of the taskwait can become true
+	//   3. The thread responsible for that change will queue the task
+	//   4. Any thread can dequeue it and attempt to resume the thread
+	//   5. This can trigger a migration, and will make the call to
+	//     ThreadManager::switchThreads (that is inside TaskBlocking::taskBlocks)
+	//     to resume immediately (and to wake the replacement thread, if any,
+	//     on the "old" CPU)
+	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
 	if (!done) {
 		Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
 
@@ -95,7 +94,7 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 	}
 
 	// Runtime Core Metric Point - Exiting a taskwait, the task will be resumed
-	MetricPoints::exitTaskWait(currentTask, taskId, fromUserCode);
+	MetricPoints::exitTaskWait(currentTask, fromUserCode);
 }
 
 void nanos6_stream_synchronize(size_t stream_id)

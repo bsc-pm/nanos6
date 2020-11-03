@@ -12,10 +12,10 @@
 #include "DataAccessRegistration.hpp"
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
+#include "ompss/MetricPoints.hpp"
 #include "ompss/TaskBlocking.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "support/chronometers/std/Chrono.hpp"
-#include "system/ompss/MetricPoints.hpp"
 
 
 void BlockingAPI::blockCurrentTask(bool fromUserCode)
@@ -24,21 +24,20 @@ void BlockingAPI::blockCurrentTask(bool fromUserCode)
 	assert(currentThread != nullptr);
 
 	Task *currentTask = currentThread->getTask();
-	assert(currentTask != nullptr);
 
 	// Runtime Core Metric Point - The current task is gonna be blocked
-	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
-	MetricPoints::enterBlockCurrentTask(currentTask, taskId, fromUserCode);
+	MetricPoints::enterBlockCurrentTask(currentTask, fromUserCode);
 
 	TaskBlocking::taskBlocks(currentThread, currentTask);
 
-	// Update the CPU as this thread may have migrated
 	ComputePlace *computePlace = currentThread->getComputePlace();
 	assert(computePlace != nullptr);
+
+	// Update the CPU as this thread may have migrated
 	Instrument::ThreadInstrumentationContext::updateComputePlace(computePlace->getInstrumentationId());
 
 	// Runtime Core Metric Point - The current task resumes its execution
-	MetricPoints::exitBlockCurrentTask(currentTask, taskId, fromUserCode);
+	MetricPoints::exitBlockCurrentTask(currentTask, fromUserCode);
 }
 
 void BlockingAPI::unblockTask(Task *task, bool fromUserCode)
@@ -53,17 +52,13 @@ void BlockingAPI::unblockTask(Task *task, bool fromUserCode)
 		computePlace = currentThread->getComputePlace();
 	}
 
-	// See taskRuntimeTransition variable note in spawnFunction() for more details
-	bool taskRuntimeTransition = fromUserCode && (currentTask != nullptr);
-	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-
 	// Runtime Core Metric Point - The current task is gonna execute runtime code
-	MetricPoints::enterUnblockCurrentTask(currentTask, taskId, taskRuntimeTransition);
+	MetricPoints::enterUnblockTask(task, currentTask, fromUserCode);
 
 	Scheduler::addReadyTask(task, computePlace, UNBLOCKED_TASK_HINT);
 
 	// Runtime Core Metric Point - The current task is resuming execution
-	MetricPoints::exitUnblockCurrentTask(currentTask, taskId, taskRuntimeTransition);
+	MetricPoints::exitUnblockTask(task, currentTask, fromUserCode);
 }
 
 extern "C" void *nanos6_get_current_blocking_context(void)
@@ -102,8 +97,7 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	assert(currentTask != nullptr);
 
 	// Runtime Core Metric Point - The current task is gonna be readded to the scheduler
-	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
-	MetricPoints::enterWaitFor(currentTask, taskId);
+	MetricPoints::enterWaitFor(currentTask);
 
 	Task::deadline_t timeout = (Task::deadline_t) time_us;
 
@@ -130,7 +124,7 @@ extern "C" uint64_t nanos6_wait_for(uint64_t time_us)
 	Instrument::ThreadInstrumentationContext::updateComputePlace(cpu->getInstrumentationId());
 
 	// Runtime Core Metric Point - The current task is resuming execution
-	MetricPoints::exitWaitFor(currentTask, taskId);
+	MetricPoints::exitWaitFor(currentTask);
 
 	return (uint64_t) (Chrono::now<Task::deadline_t>() - start);
 }

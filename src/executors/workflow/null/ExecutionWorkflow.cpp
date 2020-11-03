@@ -67,7 +67,7 @@ namespace ExecutionWorkflow {
 		}
 
 		// Runtime Core Metric Point - A task has completed its execution (user code)
-		MetricPoints::taskCompletedUserCode(task, taskHasCode);
+		MetricPoints::taskCompletedUserCode(task);
 
 		DataAccessRegistration::combineTaskReductions(task, cpu);
 
