@@ -7,6 +7,7 @@
 #ifndef INSTRUMENT_CTF_WORKERTHREAD_HPP
 #define INSTRUMENT_CTF_WORKERTHREAD_HPP
 
+#include <cassert>
 
 #include "CTFTracepoints.hpp"
 #include "ctfapi/CTFAPI.hpp"
@@ -19,8 +20,10 @@ namespace Instrument {
 	inline void workerThreadSpins()
 	{
 		CPULocalData *cpuLocalData = getCTFCPULocalData();
-		CTFAPI::CTFKernelStream *kernelStream = cpuLocalData->kernelStream;
 		CTFAPI::CTFStream *userStream = cpuLocalData->userStream;
+		CTFAPI::CTFKernelStream *kernelStream = cpuLocalData->kernelStream;
+		assert(kernelStream != nullptr);
+		assert(userStream != nullptr);
 
 		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(userStream, userStream);
 

@@ -21,9 +21,9 @@ def searchDebugFs():
 	output = subprocess.check_output(['mount'])
 	for line in output.decode().split('\n'):
 		fields = line.split(" ")
-		if fields[0] == "debugfs":
+		if fields[0] == "debugfs" or fields[0] == "none":
 
-			# Is the mount point a debufs?
+			# Is the mount point a debugfs?
 			fsType = fields[4]
 			if fsType != "debugfs":
 				continue
@@ -43,9 +43,10 @@ def searchDebugFs():
 			if os.path.ismount(mount):
 				return mount
 
-	return None
+	logging.error("debugfs not mounted. Cannot read kernel event definitions")
+	sys.exit(1)
 
-def formatArgumentLine(raw, globalOffset):
+def formatArgumentLine(raw, globalOffset, position, isSyscall):
 
 	def macroRemoval(x):
 		if x[0] == '_':
@@ -86,6 +87,11 @@ def formatArgumentLine(raw, globalOffset):
 	signed    = config[3][8:]      # skip "signed:"
 	totalSize = fieldSize
 
+	# Some events (such as xen_mmu_flush_tlb_all) have no arguments, which is
+	# encoded as a single array with total size 0. Let's just skip it.
+	if fieldSize == 0:
+		return None, 0
+
 	# Remove anything between []
 	# The kernel might not specify the size in a integer form, it might be
 	# preset as a "sizeof" or an arithmetic operation. Hence, we clean the
@@ -121,8 +127,16 @@ def formatArgumentLine(raw, globalOffset):
 	isPointer = 1 if '*' in fieldType else 0
 
 	logging.debug(raw)
-	#(fieldType)
-	#(name)
+
+	# Older kernels name the syscall's first parameters "nr", whiles newer
+	# kernels name it "__syscall_nr". "nr" name might conflict with other
+	# parameters of the same event. Hence, we normalize the name to
+	# "__sycall_nr" always.
+	if position == 0 and isSyscall:
+		assert(not isPointer and not isArray and not isDataLoc)
+		assert(name == "nr" or name == "__syscall_nr")
+		if name == "nr":
+			name = "__syscall_nr"
 
 	argType = ""
 	if isDataLoc:
@@ -143,7 +157,7 @@ def formatArgumentLine(raw, globalOffset):
 		typeSize = getTypeSize(fieldType)
 		nelem = int(fieldSize/typeSize)
 
-		#print("size % typeSize: " + str(size) + " % " + str(typeSize) + " = " + str(size % typeSize) + "; nelem = " + str(nelem))
+		#print("fieldSize % typeSize: " + str(fieldSize) + " % " + str(typeSize) + " = " + str(fieldSize % typeSize) + "; nelem = " + str(nelem))
 		if fieldSize % typeSize != 0 or nelem == 0:
 			raise Exception("fieldSize % typeSize: " + str(fieldSize) + " % " + str(typeSize) + " = " + str(fieldSize % typeSize))
 
@@ -171,17 +185,18 @@ def formatArgumentLine(raw, globalOffset):
 
 	arg.append(argType + " " + "_" + name)
 
-
 	return arg, totalSize
 
 
-def readTracepointFormat(path):
+def readTracepointFormat(name, path):
 	formatFile = path + "/format"
 	formatSection = False
 	totalSize = 0
 	size = 0
 	formattedArg = []
 	offset = [8]
+	position = 0
+	isSyscall = (name.startswith("sys_enter_") or name.startswith("sys_exit_"))
 	with open(formatFile) as f:
 		for line in f:
 			if not formatSection:
@@ -194,9 +209,12 @@ def readTracepointFormat(path):
 				if line == "\n":
 					break
 				else:
-					arg, size = formatArgumentLine(line.strip(), offset)
+					arg, size = formatArgumentLine(line.strip(), offset, position, isSyscall)
+					if arg == None:
+						continue
 					totalSize += size
 					formattedArg.extend(arg)
+					position += 1
 	return formattedArg, totalSize
 
 def readTracepointId(path):
@@ -243,7 +261,7 @@ def processTracepointEntry(name, path, maxid):
 	tracepointId = readTracepointId(path)
 
 	logging.debug("id: " + str(tracepointId))
-	tracepointFormat, tracepointSize = readTracepointFormat(path)
+	tracepointFormat, tracepointSize = readTracepointFormat(name, path)
 
 	checkForDuplicateNames(name, tracepointFormat)
 	maxid[0] = tracepointId if tracepointId > maxid[0] else maxid[0]

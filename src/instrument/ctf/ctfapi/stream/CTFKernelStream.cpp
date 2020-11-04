@@ -4,25 +4,25 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#include <fcntl.h>
-
-#include <iostream>
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <cstdint>
-
-#include <MemoryAllocator.hpp>
+#include <unistd.h>
+#include <fcntl.h>
+#include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 
 #include "CTFKernelStream.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+#include <MemoryAllocator.hpp>
+
 std::vector<ctf_kernel_event_size_t> *CTFAPI::CTFKernelStream::_eventSizes = nullptr;
 
-struct CTFAPI::CTFKernelStream::KernelEventHeader *CTFAPI::CTFKernelStream::mapStream()
+CTFAPI::CTFKernelEventsProvider::EventHeader *CTFAPI::CTFKernelStream::mapStream()
 {
 	int fd, rc;
 	struct stat stat;
@@ -43,13 +43,12 @@ struct CTFAPI::CTFKernelStream::KernelEventHeader *CTFAPI::CTFKernelStream::mapS
 		FatalErrorHandler::fail("CTF: Kernel: When mapping a stream file: ", strerror(errno));
 	}
 
-	// TODO can I close the fd here?
-	//rc = close(fd);
-	//if (rc == -1) {
-	//	FatalErrorHandler::warn("CTF: Kernel: When obtaining stream file size: ", strerror(errno));
-	//}
+	rc = close(fd);
+	if (rc == -1) {
+		FatalErrorHandler::warn("CTF: Kernel: When obtaining stream file size: ", strerror(errno));
+	}
 
-	return (struct KernelEventHeader *) (_streamMap + sizeof(PacketHeader) + sizeof(PacketContext));
+	return (CTFKernelEventsProvider::EventHeader *) (_streamMap + sizeof(PacketHeader) + sizeof(PacketContext));
 }
 
 void CTFAPI::CTFKernelStream::unmapStream()
@@ -61,23 +60,23 @@ void CTFAPI::CTFKernelStream::unmapStream()
 }
 
 uint64_t CTFAPI::CTFKernelStream::getEventSize(
-	struct KernelEventHeader *current
+	CTFAPI::CTFKernelEventsProvider::EventHeader *current
 ) {
-	return sizeof(struct KernelEventHeader) + (*_eventSizes)[current->id];
+	return sizeof(CTFKernelEventsProvider::EventHeader) + (*_eventSizes)[current->id];
 }
 
-struct CTFAPI::CTFKernelStream::KernelEventHeader *CTFAPI::CTFKernelStream::getNextEvent(
-	struct KernelEventHeader *current
+CTFAPI::CTFKernelEventsProvider::EventHeader *CTFAPI::CTFKernelStream::getNextEvent(
+	CTFAPI::CTFKernelEventsProvider::EventHeader *current
 ) {
-	return (struct KernelEventHeader *) (((char *) current) + getEventSize(current));
+	return (CTFKernelEventsProvider::EventHeader *) (((char *) current) + getEventSize(current));
 }
 
-struct CTFAPI::CTFKernelStream::KernelEventHeader *CTFAPI::CTFKernelStream::getPreviousEvent(
-	struct KernelEventHeader *current,
+CTFAPI::CTFKernelEventsProvider::EventHeader *CTFAPI::CTFKernelStream::getPreviousEvent(
+	CTFAPI::CTFKernelEventsProvider::EventHeader *current,
 	struct Node *node
 ) {
 	return (node->offset == 0)? nullptr :
-		(struct KernelEventHeader *) (((char *)current) - (sizeof(struct KernelEventHeader) + node->offset));
+		(CTFKernelEventsProvider::EventHeader *) (((char *)current) - (sizeof(CTFKernelEventsProvider::EventHeader) + node->offset));
 }
 
 // hole points to the eventList location where the current element should be
@@ -90,15 +89,15 @@ void CTFAPI::CTFKernelStream::moveUnsortedEvent(
 	struct Node *eventList,
 	char *swapArea,
 	uint64_t hole,
-	struct KernelEventHeader **current,
-	struct KernelEventHeader *previous,
+	CTFAPI::CTFKernelEventsProvider::EventHeader **current,
+	CTFAPI::CTFKernelEventsProvider::EventHeader *previous,
 	uint64_t *currentSize,
 	uint64_t previousSize
 ) {
 	char *src, *dst;
 	uint64_t size = previousSize;
-	struct KernelEventHeader *shadow;
-	const struct KernelEventHeader *initialPrevious = previous;
+	CTFKernelEventsProvider::EventHeader *shadow;
+	const CTFKernelEventsProvider::EventHeader *initialPrevious = previous;
 
 	// TODO remove me after debugging
 	//uint64_t currentId = hole;
@@ -159,7 +158,7 @@ void CTFAPI::CTFKernelStream::moveUnsortedEvent(
 	// position might differ. We know that previous (and all other elements)
 	// have been moved forward by "currentSize", so let's advance the
 	// pointer.
-	*current = (struct KernelEventHeader *) (((char *) initialPrevious) + *currentSize);
+	*current = (CTFKernelEventsProvider::EventHeader *) (((char *) initialPrevious) + *currentSize);
 	*currentSize = previousSize;
 
 	// TODO remove me
@@ -167,7 +166,7 @@ void CTFAPI::CTFKernelStream::moveUnsortedEvent(
 	// is the one that we have not moved "previous" and the last one is the
 	// new "current"
 	//std::cout << " ====== moved =====" << std::endl;
-	//struct KernelEventHeader * iter = previous;
+	//CTFKernelEventsProvider::EventHeader * iter = previous;
 	//uint64_t j = hole - 1;
 	//while (iter <= *current) {
 	//	std::cout << "     - " << j << " with id " << iter->id << " timestamp: " << iter->timestamp << " iter: " << iter << " size: " << getEventSize(iter) << " payload: " << (*_eventSizes)[iter->id] << " offset: " << eventList[j].offset << std::endl;
@@ -179,7 +178,7 @@ void CTFAPI::CTFKernelStream::moveUnsortedEvent(
 
 void CTFAPI::CTFKernelStream::sortEvents()
 {
-	struct KernelEventHeader *current, *previous;
+	CTFAPI::CTFKernelEventsProvider::EventHeader *current, *previous;
 	uint64_t currentSize, previousSize;
 	void *end;
 
@@ -241,7 +240,7 @@ void CTFAPI::CTFKernelStream::sortEvents()
 			// current one which is used to move from this object to
 			// the previous one once we lose track of the previous
 			// event header location
-			eventList[hole].offset = (uint16_t) (previousSize - sizeof(struct KernelEventHeader));
+			eventList[hole].offset = (uint16_t) (previousSize - sizeof(CTFKernelEventsProvider::EventHeader));
 		} else {
 			// The current event is out-of-order. We need to move it
 			// backwards. This will also update the "current" size
@@ -257,7 +256,7 @@ void CTFAPI::CTFKernelStream::sortEvents()
 
 		// TODO remove me
 		//if (hole >= 2) {
-		//	struct KernelEventHeader *aux = current;
+		//	CTFKernelEventsProvider::EventHeader *aux = current;
 		//	//std::cout << "   - starting 2back & 2forw" << std::endl;
 		//	current = getPreviousEvent(current, &eventList[hole]);
 		//	//std::cout << "   - going back 1 id: " << current->id << " at: " << current << std::endl;

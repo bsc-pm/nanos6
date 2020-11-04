@@ -67,6 +67,11 @@ namespace CTFAPI {
 			_kernelMetadata = metadata;
 		}
 
+		CTFKernelMetadata *getKernelMetadata() const
+		{
+			return _kernelMetadata;
+		}
+
 		void setTotalCPUs(uint16_t totalCPUs)
 		{
 			_totalCPUs = totalCPUs;

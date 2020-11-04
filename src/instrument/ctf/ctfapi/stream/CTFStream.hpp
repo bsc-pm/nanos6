@@ -26,8 +26,8 @@ namespace CTFAPI {
 
 	private:
 
-		int _node;
 		ctf_stream_id_t _streamId;
+		int _node;
 		size_t _size;
 
 		void addStreamHeader();

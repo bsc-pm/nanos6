@@ -13,10 +13,10 @@ CTFAPI::CTFStream::CTFStream(
 	std::string path,
 	ctf_stream_id_t streamId
 ) :
-	_cpuId(cpu),
-	_node(node),
 	_streamId(streamId),
-	_size(size)
+	_node(node),
+	_size(size),
+	_cpuId(cpu)
 {
 	_path = path + "/channel_" + std::to_string(_cpuId);
 }

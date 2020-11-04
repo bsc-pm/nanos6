@@ -64,6 +64,12 @@ namespace CTFAPI {
 			return _enabled;
 		}
 
+		ctf_kernel_event_id_t getEventIdByName(std::string eventName) const
+		{
+			auto const& entry = _idMap.at(eventName);
+			return entry.first;
+		}
+
 		void writeMetadataFile(std::string kernelPath);
 		void copyKernelDefinitionsFile(std::string basePath);
 	};

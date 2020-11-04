@@ -170,6 +170,7 @@ namespace CTFAPI {
 
 		CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
 		assert(stream != nullptr);
+
 		__tp_lock(stream, event, timestamp, args...);
 	}
 

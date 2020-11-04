@@ -585,6 +585,7 @@ instrument_ctf_sources = \
 	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.cpp \
 	src/instrument/ctf/ctfapi/stream/CircularBuffer.cpp \
 	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProviderDebug.cpp \
 	src/instrument/ctf/ctfapi/stream/CTFKernelStream.cpp \
 	src/instrument/ctf/ctfapi/stream/CTFStream.cpp \
 	src/instrument/ctf/ctfapi/CTFAPI.cpp \

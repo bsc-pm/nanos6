@@ -18,18 +18,11 @@
 
 namespace CTFAPI {
 
-	class CTFKernelStream : public CTFStream
-	{
+	class CTFKernelStream : public CTFStream {
 	private:
 
 		struct Node {
 			uint16_t offset;
-		};
-
-		// TODO I should unify this with the definition of CTFKerenelEventProvider
-		struct __attribute__((__packed__)) KernelEventHeader {
-			ctf_kernel_event_id_t id;
-			uint64_t timestamp;
 		};
 
 		static std::vector<ctf_kernel_event_size_t> *_eventSizes;
@@ -38,16 +31,16 @@ namespace CTFAPI {
 		char * _streamMap;
 		CTFKernelEventsProvider _kernelEventsProvider;
 
-		struct KernelEventHeader *mapStream();
+		CTFKernelEventsProvider::EventHeader *mapStream();
 
 		void unmapStream();
 
-		uint64_t getEventSize(struct KernelEventHeader *current);
+		uint64_t getEventSize(CTFKernelEventsProvider::EventHeader *current);
 
-		struct KernelEventHeader *getNextEvent(struct KernelEventHeader *current);
+		CTFKernelEventsProvider::EventHeader *getNextEvent(CTFKernelEventsProvider::EventHeader *current);
 
-		struct KernelEventHeader *getPreviousEvent(
-			struct KernelEventHeader *current,
+		CTFKernelEventsProvider::EventHeader *getPreviousEvent(
+			CTFKernelEventsProvider::EventHeader *current,
 			struct Node *node
 		);
 
@@ -55,13 +48,16 @@ namespace CTFAPI {
 			struct Node *eventList,
 			char *swapArea,
 			uint64_t hole,
-			struct KernelEventHeader **current,
-			struct KernelEventHeader *previous,
+			CTFKernelEventsProvider::EventHeader **current,
+			CTFKernelEventsProvider::EventHeader *previous,
 			uint64_t *currentSize,
 			uint64_t previousSize
 		);
 
+		void sortEvents();
+
 	public:
+
 		CTFKernelStream(size_t userSize, size_t kernelSize, ctf_cpu_id_t cpu, int node, std::string path)
 			: CTFStream(userSize, cpu, node, path, CTFKernelStreamId),
 			  _kernelEventsProvider(cpu, kernelSize)
@@ -71,9 +67,6 @@ namespace CTFAPI {
 		~CTFKernelStream()
 		{
 		}
-
-		// TODO move back to private
-		void sortEvents();
 
 		static uint64_t minimumKernelVersion()
 		{
