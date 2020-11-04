@@ -30,6 +30,7 @@ namespace CTFAPI {
 		static const char *defaultEnabledEventsFileName;
 
 		bool _enabled;
+		std::string _kernelDefsBootId;
 		ctf_kernel_event_id_t _numberOfEvents;
 		ctf_kernel_event_id_t _maxEventId;
 		std::string _kernelVersion;
@@ -40,6 +41,7 @@ namespace CTFAPI {
 		std::vector<std::string> _enabledEventNames;
 		std::vector<ctf_kernel_event_size_t> _eventSizes;
 
+		void checkBootId();
 		bool getSystemInformation();
 		bool loadKernelDefsFile(const char *file);
 		bool loadEnabledEvents(const char *file);

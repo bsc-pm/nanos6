@@ -87,7 +87,8 @@ void increaseFileLimit()
 	if (rc == -1) {
 		FatalErrorHandler::fail(
 			"CTF: Kernel: When calling setrlimit to open kernel events: ",
-			strerror(errno)
+			strerror(errno),
+			(errno == EPERM) ? ". Please, increase the limit of opened files in your system" : ""
 		);
 	}
 }
@@ -146,7 +147,8 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 	if (_groupFd == -1) {
 		FatalErrorHandler::fail(
 			"CTF: Kernel: When calling perf_event_open: ",
-			strerror(errno)
+			strerror(errno),
+			(errno == EACCES) ? ". Have you set /proc/sys/kernel/perf_event_paranoid to -1?" : ""
 		);
 	}
 

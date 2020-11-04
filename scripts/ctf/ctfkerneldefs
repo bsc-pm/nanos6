@@ -16,34 +16,66 @@ import ctypes
 import logging
 import getopt
 
-def searchDebugFs():
-	""" Search for a debugfs mount point """
+
+def getBootId():
+	""" Obtain an id identifying the current machine's boot session """
+	bootIdFile = "/proc/sys/kernel/random/boot_id"
+	with open(bootIdFile) as f:
+		val = f.read().strip()
+	return val
+
+def searchTraceFs():
+	""" Search for a tracefs mount point """
 	output = subprocess.check_output(['mount'])
-	for line in output.decode().split('\n'):
+	mountPoints = output.decode().split('\n')
+	testEvent = "/events/sched/sched_switch/format"
+	candidatePath = None
+	candidateType = None
+	candidateError = None
+
+	for line in mountPoints:
 		fields = line.split(" ")
-		if fields[0] == "debugfs" or fields[0] == "none":
+		if fields[0] == "tracefs" or fields[0] == "debugfs" or fields[0] == "none":
 
-			# Is the mount point a debugfs?
+			# Is the mount point the required target?
 			fsType = fields[4]
-			if fsType != "debugfs":
+			if fsType != "tracefs":
 				continue
 
-			# Do the mount point has read premissions?
-			found = False
-			perms = fields[5][1:-1].split(',')
-			for p in perms:
-				if p == "r" or p == "rw":
-					found = True
-					break
-			if not found:
-				continue
-
-			# Paranoid check, is it really a mount point?
 			mount = fields[2]
-			if os.path.ismount(mount):
-				return mount
 
-	logging.error("debugfs not mounted. Cannot read kernel event definitions")
+			# Can we read it?
+			try:
+				fd = open(mount + testEvent)
+				val = fd.read()
+			except:
+				# Record a possible candidate.
+				if candidateType != "tracefs" and candidatePath != "/sys/kernel/tracing":
+					candidatePath = mount
+					candidateType = fsType
+					candidateError = mount + testEvent
+				continue
+
+			return mount
+
+	if candidatePath == None:
+		logging.error(
+			"tracefs not mounted. Please, mount it as root using:.\n" +
+			"   sudo mount -t tracefs -o rw,mode=755 tracefs /sys/kernel/tracing # or any other directory"
+		)
+	else:
+		extra = ""
+		if candidateError.startswith("/sys/kernel/debug"):
+			extra  = "\nYou might also need to run\n"
+			extra += "   sudo mount -o remount,mode=755 /sys/kernel/debug"
+
+		logging.error(
+			"tracefs mounted but it is not possible to read " + candidateError + "\n" +
+			"Please try running as root or remount the filesystem with:\n" +
+			"   sudo mount -o remount,mode=755 " + candidatePath +
+			extra
+		)
+
 	sys.exit(1)
 
 def formatArgumentLine(raw, globalOffset, position, isSyscall):
@@ -268,8 +300,8 @@ def processTracepointEntry(name, path, maxid):
 
 	return buildJSONEntry(name, tracepointId, tracepointSize, tracepointFormat)
 
-def scanTracepointsSafe(debugfs):
-	eventsHome = debugfs + "/tracing/events"
+def scanTracepointsSafe(tracefs):
+	eventsHome = tracefs + "/events"
 	subsysDirectoryList = os.listdir(eventsHome)
 	subsysDirectoryList = list(filter(lambda x: x != "ftrace", subsysDirectoryList))
 	entries = []
@@ -291,9 +323,9 @@ def scanTracepointsSafe(debugfs):
 				pass
 	return entries, maxid[0]
 
-def scanTracepoints(debugfs):
+def scanTracepoints(tracefs):
 	try:
-		return scanTracepointsSafe(debugfs)
+		return scanTracepointsSafe(tracefs)
 	except Exception as e:
 		print(traceback.format_exc())
 		print("Error: Cannot read tracepoint definition: " + str(e))
@@ -307,9 +339,10 @@ def printToFile(f, meta, desc):
 	print(desc[-1], file = f)
 	print("}", file = f)
 
-def printJSON(fileName, stdout, desc, maxid):
+def printJSON(fileName, stdout, bootId, desc, maxId):
 	meta  = "\t\"meta\": {\n"
-	meta += "\t\t\"maxEventId\": " + str(maxid) + ",\n"
+	meta += "\t\t\"bootId\": \"" + str(bootId) + "\",\n"
+	meta += "\t\t\"maxEventId\": " + str(maxId) + ",\n"
 	meta += "\t\t\"numberOfEvents\": " + str(len(desc)) + "\n"
 	meta += "\t},"
 
@@ -352,6 +385,7 @@ def parseArgs():
 
 logLevel, stdout = parseArgs()
 setupLogger(logLevel)
-debugfs = searchDebugFs()
-desc, maxid = scanTracepoints(debugfs)
-printJSON("nanos6_kerneldefs.json", stdout, desc, maxid)
+tracefs = searchTraceFs()
+bootId = getBootId()
+desc, maxId = scanTracepoints(tracefs)
+printJSON("nanos6_kerneldefs.json", stdout, bootId, desc, maxId)

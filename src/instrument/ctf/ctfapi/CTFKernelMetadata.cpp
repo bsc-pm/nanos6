@@ -11,7 +11,7 @@
 
 #include <cinttypes>
 #include <cstdint>
-#include <fstream>
+#include <cinttypes>
 
 #include "CTFTrace.hpp"
 #include "CTFKernelMetadata.hpp"
@@ -125,6 +125,14 @@ bool CTFAPI::CTFKernelMetadata::getSystemInformation()
 	return (LINUX_VERSION_CODE >= minimumKernelVersion);
 }
 
+static std::string getCurrentBootId()
+{
+	std::string value;
+	std::ifstream bootIdFile("/proc/sys/kernel/random/boot_id");
+	getline(bootIdFile, value);
+	return value;
+}
+
 bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 {
 	bool success = false;
@@ -138,6 +146,11 @@ bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 			[&](const std::string &name, const JsonNode<> &node) {
 				if (name == "meta") {
 					bool converted = false;
+
+					// get boot id
+					_kernelDefsBootId = node.getData<std::string>("bootId", converted);
+					assert(converted);
+
 					// get number of events
 					_numberOfEvents = node.getData<ctf_kernel_event_id_t>("numberOfEvents", converted);
 					assert(converted);
@@ -189,6 +202,18 @@ std::string trim(
 	return str.substr(strBegin, strRange);
 }
 
+void CTFAPI::CTFKernelMetadata::checkBootId()
+{
+	// Kernel event ids change after each boot. Therefore, we need to check
+	// whether the read kernel event defintions file is up to date.
+	std::string currentBootId = getCurrentBootId();
+	FatalErrorHandler::failIf(
+		currentBootId != _kernelDefsBootId,
+		"CTF: kernel: Boot id does not match, please regenerate the kernel definitions file"
+	);
+
+}
+
 bool CTFAPI::CTFKernelMetadata::loadEnabledEvents(const char *file)
 {
 	std::string line;
@@ -232,6 +257,8 @@ CTFAPI::CTFKernelMetadata::CTFKernelMetadata()
 	bool sysInfo    = getSystemInformation();
 	bool loadDefs   = loadKernelDefsFile(defaultKernelDefsFileName);
 	bool loadEvents = loadEnabledEvents(defaultEnabledEventsFileName);
+
+	checkBootId();
 
 	if (loadDefs && loadEvents && !sysInfo) {
 		FatalErrorHandler::warn(
