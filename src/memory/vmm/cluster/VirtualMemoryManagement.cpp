@@ -5,6 +5,7 @@
 */
 
 #include <string>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <sys/mman.h>
@@ -181,8 +182,8 @@ void VirtualMemoryManagement::initialize()
 	assert(localSize > 0);
 	localSize = ROUND_UP(localSize, HardwareInfo::getPageSize());
 
-	ConfigVariable<void *> startAddress("cluster.va_start", nullptr);
-	void *address = startAddress.getValue();
+	ConfigVariable<uint64_t> startAddress("cluster.va_start", 0);
+	void *address = (void *) startAddress.getValue();
 	size_t size = distribSize + localSize * ClusterManager::clusterSize();
 
 	if (address == nullptr) {
