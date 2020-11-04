@@ -11,10 +11,10 @@ else
 	exec 3>/dev/null
 fi
 
-CTF2PRV=$(type -P "ctf2prv")
-NOTFOUND=$?
+ctf2prvbin=$(type -P "ctf2prv")
+notfound=$?
 
-if [[ "$NOTFOUND" == "1" ]]; then
+if [[ "$notfound" == "1" ]]; then
 	>&2 echo "The ctf2prv converter is not in the system path. ctf to prv conversion was not possible.";
 	exit 1;
 fi
@@ -24,4 +24,4 @@ fi
 1>&3 2>&3 module load gcc/6.4.0 swig python/3.6.5 babeltrace2
 1>&3      echo "Loading modules done"
 
-$CTF2PRV $@
+$ctf2prvbin $@
