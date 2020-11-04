@@ -47,6 +47,8 @@ namespace CTFAPI {
 			};
 
 		private:
+			static std::vector<ctf_kernel_event_id_t>   *_enabledEvents;
+			static std::vector<ctf_kernel_event_size_t> *_eventSizes;
 			static uint64_t _referenceTimestamp;
 
 			const uint64_t _eventHeaderSize;
@@ -67,19 +69,18 @@ namespace CTFAPI {
 			uint64_t _numberOfEvents;
 			uint64_t _numberOfUnorderedEvents;
 
-			std::vector<int> _eventsFds;
 			void *_kernelBuffer;
 			void *_temporalBuffer;
 			char *_dataRing;
 			void *_metaPage;
 
+			int _groupFd;
+			std::vector<int> _openedEvents;
+
 			uint64_t _lastTimestamp;
 
 			ctf_kernel_event_id_t _sched_switch_id;
 			ctf_kernel_event_id_t _sched_wakeup_id;
-
-			static std::vector<ctf_kernel_event_id_t>   *_enabledEvents;
-			static std::vector<ctf_kernel_event_size_t> *_eventSizes;
 
 			void *getNextEvent(uint64_t current);
 

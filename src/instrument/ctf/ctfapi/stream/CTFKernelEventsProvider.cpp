@@ -22,6 +22,8 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <time.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 #include <dlfcn.h>
 
 #include "CTFKernelEventsProvider.hpp"
@@ -55,6 +57,39 @@ long perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
 	ret = syscall(__NR_perf_event_open, hw_event, pid, cpu,
 		      group_fd, flags);
 	return ret;
+}
+
+void increaseFileLimit()
+{
+	int rc;
+	struct rlimit rlim;
+
+	// Get the current setting for the number of opened files
+	rc = getrlimit(RLIMIT_NOFILE, &rlim);
+	if (rc == -1) {
+		FatalErrorHandler::fail(
+			"CTF: Kernel: When calling getrlimit: ",
+			strerror(errno)
+		);
+	}
+
+	// If we have reached the soft limit, try to increase the hard limit
+	if (rlim.rlim_cur == rlim.rlim_max) {
+		rlim.rlim_max += 1000;
+	}
+
+	// Increase the soft limit
+	rlim_t newLimit = (rlim.rlim_cur * 2 < rlim.rlim_max) ? rlim.rlim_cur * 2 : rlim.rlim_max;
+	rlim.rlim_cur = newLimit;
+
+	// Set the new setting
+	rc = setrlimit(RLIMIT_NOFILE, &rlim);
+	if (rc == -1) {
+		FatalErrorHandler::fail(
+			"CTF: Kernel: When calling setrlimit to open kernel events: ",
+			strerror(errno)
+		);
+	}
 }
 
 CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSize)
@@ -105,24 +140,21 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 	flags = 0;
 #endif
 
-	// Open each requested event file descriptor
-	_eventsFds.resize(_enabledEvents->size());
-	for (long unsigned int i = 0; i < _eventsFds.size(); i++) {
-		pe.config = (*_enabledEvents)[i];
-		_eventsFds[i] = perf_event_open(&pe, pid, cpu, -1, flags);
-		if (_eventsFds[i] == -1) {
-			FatalErrorHandler::fail(
-				"CTF: Kernel: When calling perf_event_open: ",
-				strerror(errno)
-			);
-		}
+	// Open group fd event
+	pe.config = (*_enabledEvents)[0];
+	_groupFd = perf_event_open(&pe, pid, cpu, -1, flags);
+	if (_groupFd == -1) {
+		FatalErrorHandler::fail(
+			"CTF: Kernel: When calling perf_event_open: ",
+			strerror(errno)
+		);
 	}
 
 	// Map kernel and user shared perf ring buffer
 	perfMap = mmap(
 		NULL, _totalSize,
 		PROT_READ | PROT_WRITE, MAP_SHARED,
-		_eventsFds[0], 0
+		_groupFd, 0
 	);
 	if (perfMap == MAP_FAILED) {
 		FatalErrorHandler::fail(
@@ -132,28 +164,53 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 	}
 
 	// Change file descriptor properties
-	if (fcntl(_eventsFds[0], F_SETFL, O_RDONLY | O_NONBLOCK)) {
+	if (fcntl(_groupFd, F_SETFL, O_RDONLY | O_NONBLOCK)) {
 		FatalErrorHandler::fail(
 			"CTF: Kernel: When changing file desciptor properties: ",
 			strerror(errno)
 		);
 	}
 
-	// Redirect secondary events output to primary event buffer
-	// This cannot be done before mmap!
-	for (long unsigned int i = 1; i < _eventsFds.size(); i++) {
-		if (ioctl(_eventsFds[i], PERF_EVENT_IOC_SET_OUTPUT, _eventsFds[0]) == -1) {
+	// Open each requested event file descriptor and redirect it to the _groupFd
+	_openedEvents.resize(_enabledEvents->size());
+	_openedEvents[0] = _groupFd;
+	for (long unsigned int i = 1; i < _enabledEvents->size(); i++) {
+		int fd;
+		pe.config = (*_enabledEvents)[i];
+
+		// Try to open the event
+		do {
+			fd = perf_event_open(&pe, pid, cpu, _groupFd, flags);
+			if (fd == -1) {
+				if (errno == EMFILE) {
+					increaseFileLimit();
+				} else {
+					FatalErrorHandler::fail(
+						"CTF: Kernel: When calling perf_event_open: ",
+						strerror(errno)
+					);
+				}
+			}
+		} while (fd == -1);
+
+		// Redirect event output to group leader
+		// This cannot be done before the mmap!
+		if (ioctl(fd, PERF_EVENT_IOC_SET_OUTPUT, _groupFd) == -1) {
 			FatalErrorHandler::fail(
 				"CTF: Kernel: redirecting event file descriptor: ",
 				strerror(errno)
 			);
 		}
-		if (fcntl(_eventsFds[i], F_SETFL, O_RDONLY | O_NONBLOCK)) {
+
+		// Set event as non-blocking and read-only
+		if (fcntl(fd, F_SETFL, O_RDONLY | O_NONBLOCK)) {
 			FatalErrorHandler::fail(
 				"CTF: Kernel: changing file desciptor properties: ",
 				strerror(errno)
 			);
 		}
+
+		_openedEvents[i] = fd;
 	}
 
 	// Allocate a temporal buffer used to copy events that have been split
@@ -162,7 +219,8 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 	if (!_temporalBuffer) {
 		FatalErrorHandler::fail(
 			"CTF: Kernel: Cannot allocate memory for temporal buffer: ",
-			strerror(errno)
+			strerror(errno),
+			"Please, try with less events or increase the open files hard limit (ulimit -Hn)"
 		);
 	}
 
@@ -349,25 +407,41 @@ CTFAPI::CTFKernelEventsProvider::~CTFKernelEventsProvider()
 		);
 	}
 
+	for (int i = _openedEvents.size() - 1; i >= 0; i--) {
+		int rc = close(_openedEvents[i]);
+		if (rc == -1) {
+			FatalErrorHandler::warn(
+				"CTF: Kernel: When closing event file descriptor: ",
+				strerror(errno)
+			);
+		}
+	}
+
 	free(_temporalBuffer);
 }
 
 void CTFAPI::CTFKernelEventsProvider::enable()
 {
-	// TODO check if all events can be enabled/disabled at once with
-	// PERF_IOC_FLAG_GROUP. see man perf_event_open and
-	// PERF_EVENT_IOC_ENABLE
-	for (long unsigned int i = 0; i < _eventsFds.size(); i++)
-		ioctl(_eventsFds[i], PERF_EVENT_IOC_ENABLE, 0);
+	char argument = PERF_IOC_FLAG_GROUP;
+	int rc = ioctl(_groupFd, PERF_EVENT_IOC_ENABLE, &argument);
+	if (rc == -1) {
+		FatalErrorHandler::warn(
+			"CTF: Kernel: When enabling event: ",
+			strerror(errno)
+		);
+	}
 }
 
 void CTFAPI::CTFKernelEventsProvider::disable()
 {
-	// TODO check if all events can be enabled/disabled at once with
-	// PERF_IOC_FLAG_GROUP. see man perf_event_open and
-	// PERF_EVENT_IOC_ENABLE
-	for (long unsigned int i = 0; i < _eventsFds.size(); i++)
-		ioctl(_eventsFds[i], PERF_EVENT_IOC_DISABLE, 0);
+	char argument = PERF_IOC_FLAG_GROUP;
+	int rc = ioctl(_groupFd, PERF_EVENT_IOC_DISABLE, &argument);
+	if (rc == -1) {
+		FatalErrorHandler::warn(
+			"CTF: Kernel: When disabling event: ",
+			strerror(errno)
+		);
+	}
 }
 
 bool CTFAPI::CTFKernelEventsProvider::hasEvents()
