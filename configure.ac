@@ -264,39 +264,20 @@ if test x"${ac_use_workflow}" = x"yes" ; then
 	AC_DEFINE([USE_EXEC_WORKFLOW], [1], [Define if Execution Workflow feature is enabled.])
 fi
 
-# Dependency engine to use
+# Dependency engines to build
 
-# Always include linear-fragmented
-AC_MSG_CHECKING([if linear regions fragmented dependencies should be included])
-ac_linear_fragmented_deps=yes
-AC_MSG_RESULT([$ac_linear_fragmented_deps])
+# Always include regions dependencies
+ac_regions_deps=yes
+AC_MSG_CHECKING([if regions dependencies should be included])
+AC_MSG_RESULT([$ac_regions_deps])
 
-AM_CONDITIONAL([LINEAR_REGION_FRAGMENTED_DEPENDENCIES], [test x"${ac_linear_fragmented_deps}" = x"yes"])
+AM_CONDITIONAL([REGIONS_DEPENDENCIES], [test x"${ac_regions_deps}" = x"yes"])
 
-AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test x"${ac_linear_fragmented_deps}" = x"yes"])
-AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [test x"${ac_linear_fragmented_deps}" = x"yes"])
-AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [test x"${ac_linear_fragmented_deps}" = x"yes"])
+AM_CONDITIONAL([HAVE_LINEAR_REGION_SUPPORT], [test x"${ac_regions_deps}" = x"yes"])
+AM_CONDITIONAL([HAVE_CONCURRENT_SUPPORT], [test x"${ac_regions_deps}" = x"yes"])
+AM_CONDITIONAL([HAVE_REDUCTIONS_SUPPORT], [test x"${ac_regions_deps}" = x"yes"])
 
-AC_ARG_ENABLE(
-	[discrete-deps],
-	[AS_HELP_STRING([--disable-discrete-deps], [Disable discrete dependency engine. This will be automatically disabled
-	if cluster support is enabled, as it is incompatible.])],
-	[
-		case "${enableval}" in
-		yes)
-			ac_discrete_deps=yes
-			;;
-		no)
-			ac_discrete_deps=no
-			;;
-		*)
-			AC_MSG_ERROR([bad value ${enableval} for --disable-discrete-deps])
-			;;
-		esac
-	],
-	[ac_discrete_deps=yes]
-)
-
+ac_discrete_deps=yes
 if test x"${ac_use_cluster}" = x"yes" ; then
 	ac_discrete_deps=no
 	AC_MSG_WARN([Cluster enabled, disabling discrete dependency engine])
@@ -414,7 +395,7 @@ _AS_ECHO([   Compiler version... ${CXX_VERSION}])
 _AS_ECHO([   Compiler optimization flags... ${OPT_CXXFLAGS}])
 _AS_ECHO([   Compiler debug flags... ${DEBUG_CXXFLAGS}])
 _AS_ECHO([])
-_AS_ECHO([   Include linear fragmented dependencies... ${ac_linear_fragmented_deps}])
+_AS_ECHO([   Include linear fragmented dependencies... ${ac_regions_deps}])
 _AS_ECHO([   Include discrete dependencies... ${ac_discrete_deps}])
 _AS_ECHO([   Symbol resolution method... ${ac_cv_use_symbol_resolution}])
 _AS_ECHO([])
