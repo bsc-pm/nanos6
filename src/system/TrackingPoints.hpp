@@ -19,6 +19,7 @@
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
+#include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <InstrumentUserMutex.hpp>
 #include <Monitoring.hpp>
@@ -39,6 +40,7 @@ namespace TrackingPoints {
 	inline void taskReinitialized(Task *task)
 	{
 		HardwareCounters::taskReinitialized(task);
+		Monitoring::taskReinitialized(task);
 	}
 
 	//! \brief Actions to be taken when a task switches to pending status
@@ -99,6 +101,24 @@ namespace TrackingPoints {
 
 		// Propagate monitoring actions for this task since it has finished
 		Monitoring::taskFinished(task);
+	}
+
+	//! \brief Actions to be taken after a worker thread initializes
+	//!
+	//! \param[in] thread The worker thread
+	//! \param[in] cpu The current CPU the thread is running on
+	inline void threadInitialized(const WorkerThread *thread, const CPU *cpu)
+	{
+		assert(thread != nullptr);
+		assert(cpu != nullptr);
+
+		Instrument::thread_id_t threadId = thread->getInstrumentationId();
+		Instrument::compute_place_id_t cpuId = cpu->getInstrumentationId();
+		Instrument::createdThread(threadId, cpuId);
+		Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpuId, threadId);
+		Instrument::threadHasResumed(threadId, cpuId, false);
+
+		HardwareCounters::threadInitialized();
 	}
 
 	//! \brief Common actions within the namespace for when a thread is suspending
@@ -181,12 +201,12 @@ namespace TrackingPoints {
 	{
 		assert(task != nullptr);
 
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 		if (fromUserCode) {
 			HardwareCounters::updateTaskCounters(task);
 			Monitoring::taskChangedStatus(task, paused_status);
 		}
 
+		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 		Instrument::enterTaskWait(taskId, invocationSource, Instrument::task_id_t(), fromUserCode);
 	}
 
@@ -339,7 +359,7 @@ namespace TrackingPoints {
 	inline void enterSpawnFunction(Task *creator, bool fromUserCode)
 	{
 		// NOTE: Our modules are interested in the transitions between Runtime and Tasks, however,
-		// these functions may be called from within the runtime with "fromUserCod" set to true (e.g.
+		// these functions may be called from within the runtime with "fromUserCode" set to true (e.g.
 		// polling services are considered user code even if the code is from the runtime). To detect
 		// these transitions, we check whether we are outside the context of a task by ensuring that
 		// the current thread has a task assigned to itself. Thus, the possible scenarios are:
@@ -515,8 +535,7 @@ namespace TrackingPoints {
 			Monitoring::taskChangedStatus(currentTask, paused_status);
 		}
 
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		Instrument::enterUnblockTask(taskId, taskRuntimeTransition);
+		Instrument::enterUnblockTask(task->getInstrumentationTaskId(), taskRuntimeTransition);
 	}
 
 	//! \brief Exit point of the "unblockTask" function (BlockingAPI.cpp)
@@ -559,10 +578,9 @@ namespace TrackingPoints {
 	{
 		assert(task != nullptr);
 
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 		HardwareCounters::updateTaskCounters(task);
 		// We do not notify Monitoring yet, as this will be done in the Scheduler's addReadyTask call
-		Instrument::enterWaitFor(taskId);
+		Instrument::enterWaitFor(task->getInstrumentationTaskId());
 	}
 
 	//! \brief Exit point of the "nanos6_wait_for" function (BlockingAPI.cpp)
@@ -578,9 +596,8 @@ namespace TrackingPoints {
 	{
 		assert(task != nullptr);
 
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitWaitFor(taskId);
+		Instrument::exitWaitFor(task->getInstrumentationTaskId());
 		Monitoring::taskChangedStatus(task, executing_status);
 	}
 
