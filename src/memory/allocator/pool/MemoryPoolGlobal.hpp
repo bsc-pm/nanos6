@@ -6,7 +6,6 @@
 
 #ifndef MEMORY_POOL_GLOBAL_HPP
 #define MEMORY_POOL_GLOBAL_HPP
-#include <vector>
 
 #if HAVE_CONFIG_H
 #include <config.h>
@@ -17,15 +16,20 @@
 #endif
 
 #include <numa.h>
+#include <vector>
 
 #include "lowlevel/SpinLock.hpp"
 #include "support/config/ConfigVariable.hpp"
+
 #include <VirtualMemoryManagement.hpp>
 
 class MemoryPoolGlobal {
 private:
-	ConfigVariable<size_t> _globalAllocSize;
-	ConfigVariable<size_t> _memoryChunkSize;
+	ConfigVariable<StringifiedMemorySize> _globalAllocSizeConfig;
+	ConfigVariable<StringifiedMemorySize> _memoryChunkSizeConfig;
+
+	size_t _globalAllocSize;
+	size_t _memoryChunkSize;
 
 	SpinLock _lock;
 	size_t _pageSize;
@@ -61,16 +65,21 @@ private:
 	}
 
 public:
-	MemoryPoolGlobal(size_t NUMANodeId)
-		: _globalAllocSize("memory.pool.global_alloc_size", 8 * 1024 * 1024),
-		_memoryChunkSize("memory.pool.chunk_size", 128 * 1024),
-		_pageSize(sysconf(_SC_PAGESIZE)), _oldMemoryChunks(0),
-		_curMemoryChunk(nullptr), _curAvailable(0),
+	MemoryPoolGlobal(size_t NUMANodeId) :
+		_globalAllocSizeConfig("memory.pool.global_alloc_size", 8 * 1024 * 1024),
+		_memoryChunkSizeConfig("memory.pool.chunk_size", 128 * 1024),
+		_globalAllocSize(0),
+		_memoryChunkSize(0),
+		_pageSize(sysconf(_SC_PAGESIZE)),
+		_oldMemoryChunks(0),
+		_curMemoryChunk(nullptr),
+		_curAvailable(0),
 		_NUMANodeId(NUMANodeId)
 	{
-		FatalErrorHandler::failIf(
-			_globalAllocSize == 0,
-			" Pool size can not be zero");
+		_globalAllocSize = _globalAllocSizeConfig.getValue();
+		_memoryChunkSize = _memoryChunkSizeConfig.getValue();
+
+		FatalErrorHandler::failIf(_globalAllocSize == 0, " Pool size can not be zero");
 
 		FatalErrorHandler::failIf(
 			(_globalAllocSize % _memoryChunkSize) != 0,
@@ -103,7 +112,7 @@ public:
 			if (_curAvailable != 0) {
 				// Chunk size was changed previously, update
 				// also alloc size to make all sizes fit again
-				_globalAllocSize.setValue(((_globalAllocSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize);
+				_globalAllocSize = ((_globalAllocSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize;
 			}
 
 			fillPool();
@@ -114,10 +123,10 @@ public:
 		if (chunkSize < minSize) {
 			// Get minimum acceptable chunkSize
 			chunkSize = ((minSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize;
-			_memoryChunkSize.setValue(chunkSize);
+			_memoryChunkSize = chunkSize;
 
 			if (_curAvailable < chunkSize) {
-				_globalAllocSize.setValue(((_globalAllocSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize);
+				_globalAllocSize = ((_globalAllocSize + _memoryChunkSize - 1) / _memoryChunkSize) * _memoryChunkSize;
 				fillPool();
 			}
 		}
