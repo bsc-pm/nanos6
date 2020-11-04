@@ -33,6 +33,19 @@ namespace CTFAPI {
 
 		CTFKernelEventsProvider::EventHeader *mapStream();
 
+		void integrityCheck()
+		{
+			uint64_t throttle, unthrottle;
+			throttle = _kernelEventsProvider.getThrottleEventsCount();
+			unthrottle = _kernelEventsProvider.getUnthrottleEventsCount();
+
+			if (throttle != 0)
+				FatalErrorHandler::warn("CTF Kernel Stream reported ", throttle, " throttle perf events on core ", _cpuId, ". You might need to enable less events.");
+
+			if (unthrottle != 0)
+				FatalErrorHandler::warn("CTF Kernel Stream reported ", unthrottle, " unthrottle perf events on core ", _cpuId, ".");
+		}
+
 		void unmapStream();
 
 		uint64_t getEventSize(CTFKernelEventsProvider::EventHeader *current);
@@ -109,19 +122,6 @@ namespace CTFAPI {
 		uint64_t getLostEventsCount()
 		{
 			return _kernelEventsProvider.getLostEventsCount();
-		}
-
-		void integrityCheck()
-		{
-			uint64_t throttle, unthrottle;
-			throttle = _kernelEventsProvider.getThrottleEventsCount();
-			unthrottle = _kernelEventsProvider.getUnthrottleEventsCount();
-
-			if (throttle != 0)
-				FatalErrorHandler::warn("CTF Kernel Stream reported ", throttle, " throttle perf events on core ", _cpuId, ". You might need to enable less events.");
-
-			if (unthrottle != 0)
-				FatalErrorHandler::warn("CTF Kernel Stream reported ", unthrottle, " unthrottle perf events on core ", _cpuId, ".");
 		}
 
 		bool readKernelEvents()

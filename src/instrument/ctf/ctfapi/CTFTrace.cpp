@@ -8,25 +8,25 @@
 #define _XOPEN_SOURCE 500
 #endif
 
-#include <fstream>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <libgen.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
+#include <fstream>
 #include <ftw.h>
+#include <iostream>
+#include <libgen.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include "CTFAPI.hpp"
+#include "CTFTrace.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 #include <MemoryAllocator.hpp>
-#include "lowlevel/FatalErrorHandler.hpp"
-#include "CTFTrace.hpp"
-#include "CTFAPI.hpp"
 
 
 ConfigVariable<std::string> CTFAPI::CTFTrace::_defaultTemporalPath("instrument.ctf.tmpdir");
@@ -257,6 +257,8 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 {
 	// TODO do not copy the trace if it's located in the same filesystem,
 	// just rename it
+	//
+	std::cout << "Moving trace to current directory, please wait " << std::flush;
 
 	// create final trace name
 	std::string finalTracePath = mkTraceDirectoryName(_finalTraceBasePath,
@@ -274,6 +276,8 @@ void CTFAPI::CTFTrace::moveTemporalTraceToFinalDirectory()
 			_tmpTracePath << "could not be removed. Please, remove it manually"
 			<< std::endl;
 	}
+
+	std::cout << "[DONE] " << std::endl;
 }
 
 static bool isExecutable(const char *file)
@@ -361,6 +365,8 @@ void CTFAPI::CTFTrace::convertToParaver()
 		}
 	}
 
+	std::cout << "Converting CTF trace to Paraver, please wait " << std::flush;
+
 	// perform the conversion!
 	command = converter + " " + _tmpTracePath;
 	ret = system(command.c_str());
@@ -369,6 +375,8 @@ void CTFAPI::CTFTrace::convertToParaver()
 		"ctf: automatic ctf to prv conversion failed: ",
 		strerror(errno)
 	);
+
+	std::cout << "[DONE]" << std::endl;
 }
 
 void CTFAPI::CTFTrace::initializeTraceTimer()

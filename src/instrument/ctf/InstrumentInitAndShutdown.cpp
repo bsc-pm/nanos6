@@ -178,24 +178,6 @@ void Instrument::initialize()
 {
 	std::string basePath, userPath, kernelPath;
 
-
-	// TODO remove me
-	///////////////////
-	//CTFAPI::CTFKernelMetadata *kernelMetadata2 = new CTFAPI::CTFKernelMetadata();
-	//CTFAPI::CTFKernelStream::setEvents(
-	//	kernelMetadata2->getEnabledEvents(),
-	//	kernelMetadata2->getEventSizes()
-	//);
-	//std::string path("./the_trace/ctf/kernel");
-	//for (int i = 0; i < 8; i++) {
-	//	std::cout << "========== scaning channel " << i << "===========" << std::endl;
-	//	CTFAPI::CTFKernelStream patata(4096, 4096, i, path);
-	//	patata.sortEvents();
-
-	//}
-	//FatalErrorHandler::fail("oh yeah");
-	/////////////////////
-
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 	CTFAPI::CTFMetadata::collectCommonInformation();
 	CTFAPI::CTFUserMetadata *userMetadata = new CTFAPI::CTFUserMetadata();
@@ -225,7 +207,6 @@ void Instrument::shutdown()
 	ctf_cpu_id_t totalCPUs = (ctf_cpu_id_t) cpus.size();
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 
-	// TODO global kernel tracing check?
 	// First disable kernel tracing
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
@@ -245,15 +226,14 @@ void Instrument::shutdown()
 
 		if (kernelStream) {
 			CTFAPI::updateKernelEvents(kernelStream, userStream);
-			kernelStream->shutdown();
 			uint64_t lost = kernelStream->getLostEventsCount();
+			kernelStream->shutdown();
 			if (lost > 0) {
 				FatalErrorHandler::warn(
 					lost, " lost Linux Kernel events on core ",
-					kernelStream->getCPUId()
+					cpu->getSystemCPUId()
 				);
 			}
-			delete kernelStream;
 		}
 
 		userStream->shutdown();
@@ -279,6 +259,20 @@ void Instrument::shutdown()
 	trace.convertToParaver();
 	trace.moveTemporalTraceToFinalDirectory();
 	trace.clean();
+
+	// Disabling kernel tracing takes a considerable amount of time. Warn
+	// the user of it.
+	std::cout << "Shutting down Linux Kernel tracing facility, please wait " << std::flush;
+	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
+		cpu = cpus[i];
+		CTFAPI::CTFKernelStream *kernelStream = cpu->getInstrumentationData().kernelStream;
+		assert(kernelStream != nullptr);
+
+		if (kernelStream) {
+			delete kernelStream;
+		}
+	}
+	std::cout << "[DONE]" << std::endl;
 }
 
 void Instrument::nanos6_preinit_finished()

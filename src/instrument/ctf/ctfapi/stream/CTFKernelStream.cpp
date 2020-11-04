@@ -45,7 +45,7 @@ CTFAPI::CTFKernelEventsProvider::EventHeader *CTFAPI::CTFKernelStream::mapStream
 
 	rc = close(fd);
 	if (rc == -1) {
-		FatalErrorHandler::warn("CTF: Kernel: When obtaining stream file size: ", strerror(errno));
+		FatalErrorHandler::warn("CTF: Kernel: When closing stream file: ", strerror(errno));
 	}
 
 	return (CTFKernelEventsProvider::EventHeader *) (_streamMap + sizeof(PacketHeader) + sizeof(PacketContext));
@@ -79,7 +79,7 @@ CTFAPI::CTFKernelEventsProvider::EventHeader *CTFAPI::CTFKernelStream::getPrevio
 		(CTFKernelEventsProvider::EventHeader *) (((char *)current) - (sizeof(CTFKernelEventsProvider::EventHeader) + node->offset));
 }
 
-// hole points to the eventList location where the current element should be
+// Hole points to the eventList location where the current element should be
 // stored. However, the current element is out-of-order and we need to move it
 // backward. Hence, the first thing to do is to move the previous element into
 // the hole. Then, we will continue moving the list and keeping track of how
@@ -98,9 +98,6 @@ void CTFAPI::CTFKernelStream::moveUnsortedEvent(
 	uint64_t size = previousSize;
 	CTFKernelEventsProvider::EventHeader *shadow;
 	const CTFKernelEventsProvider::EventHeader *initialPrevious = previous;
-
-	// TODO remove me after debugging
-	//uint64_t currentId = hole;
 
 	// We need to move the first element unconditionally, otherwise we would
 	// not be here right now
@@ -161,11 +158,10 @@ void CTFAPI::CTFKernelStream::moveUnsortedEvent(
 	*current = (CTFKernelEventsProvider::EventHeader *) (((char *) initialPrevious) + *currentSize);
 	*currentSize = previousSize;
 
-	// TODO remove me
 	// Let's now iterate and see what we have done the first element printed
 	// is the one that we have not moved "previous" and the last one is the
 	// new "current"
-	//std::cout << " ====== moved =====" << std::endl;
+	//std::cout << " ----- moved ------" << std::endl;
 	//CTFKernelEventsProvider::EventHeader * iter = previous;
 	//uint64_t j = hole - 1;
 	//while (iter <= *current) {
@@ -173,13 +169,22 @@ void CTFAPI::CTFKernelStream::moveUnsortedEvent(
 	//	j++;
 	//	iter = getNextEvent(iter);
 	//}
-	//std::cout << " ==================" << std::endl;
+	//std::cout << " ---------------- " << std::endl;
 }
 
+// This function iterates the events stored in a stream file and checks one by
+// one whether its timestamp is greater than the previous event's timestamp. If
+// it is not, it copies the unordered event into a "swap" memory area, and moves
+// backward in the stream file until it finds the right position of the event
+// (when its timestamp is bigger than the previous event).  Once the position of
+// the unsorted event is found, all events between this position and the
+// unsorted event position are physically moves forward and then it copies the
+// unorered event in the created hole.
 void CTFAPI::CTFKernelStream::sortEvents()
 {
 	CTFAPI::CTFKernelEventsProvider::EventHeader *current, *previous;
 	uint64_t currentSize, previousSize;
+	uint64_t fixedEvents = 0;
 	void *end;
 
 	// This stream will be sorted only if it was detected an out-of-order event
@@ -189,13 +194,12 @@ void CTFAPI::CTFKernelStream::sortEvents()
 
 	assert(_eventSizes != nullptr);
 
-	// Build a list to keep track of events. This is needed obtan the
-	// previous event from the current one.
-
 	uint64_t numberOfEvents = _kernelEventsProvider.getNumberOfProcessedEvents();
 	assert(numberOfEvents >= 2);
-	//uint64_t numberOfEvents = 100000;
 
+	// While iterating the stream file, we can walk the events forward but
+	// not backwards. Therefore, we need to create a list which allows to
+	// travers the events back. Here we are allocating such list.
 	uint64_t eventListSize = numberOfEvents * sizeof(struct Node);
 	struct Node *eventList = (struct Node *) MemoryAllocator::alloc(eventListSize);
 
@@ -205,6 +209,7 @@ void CTFAPI::CTFKernelStream::sortEvents()
 	// might expand up to the sizeo of an uint16_t as limited by the Linux
 	// kernel perf interface. We add an extra page to also fit the header in
 	// the worse case scenario (paranoid)
+	// TODO should the swap area be static and shared?
 	uint64_t eventSwapAreaSize = (1<<16) + (1<<12);
 	char *swapArea = (char *) MemoryAllocator::alloc(eventSwapAreaSize);
 
@@ -222,16 +227,10 @@ void CTFAPI::CTFKernelStream::sortEvents()
 	//std::cout << " - now processing event " << 0 << " with id " << previous->id << " current: " << previous << " size: " << previousSize << " (initial event)" << std::endl;
 
 	// Iterate elements one by one, we start at the second element (index 1)
-	// TODO stop iterating once all detected unordered events are fixed
 	uint64_t hole = 1;
-	while (current < end) {
+	while ((current < end) && (fixedEvents != numberOfUnorderedEvents)) {
 
 		assert(hole < numberOfEvents);
-
-		// TODO add while check. iterate with a for instead?
-		//if (hole >= numberOfEvents) {
-		//	FatalErrorHandler::fail("CTF: Kernel: Sort: Attempt to iterate out of bounds");
-		//}
 
 		//std::cout << " - now processing event " << hole << " with id " << current->id << "/" << numberOfEvents << " current: " << current << " size: " << currentSize << " payload: " << (*_eventSizes)[current->id] << std::endl;
 		if (current->timestamp >= previous->timestamp) {
@@ -251,28 +250,21 @@ void CTFAPI::CTFKernelStream::sortEvents()
 			moveUnsortedEvent(eventList, swapArea, hole,
 					  &current, previous,
 					  &currentSize, previousSize);
-			//std::cout << "   - New current id: " << current->id << " at: " << current << std::endl;
+			fixedEvents++;
 		}
 
-		// TODO remove me
-		//if (hole >= 2) {
-		//	CTFKernelEventsProvider::EventHeader *aux = current;
-		//	//std::cout << "   - starting 2back & 2forw" << std::endl;
-		//	current = getPreviousEvent(current, &eventList[hole]);
-		//	//std::cout << "   - going back 1 id: " << current->id << " at: " << current << std::endl;
-		//	current = getPreviousEvent(current, &eventList[hole-1]);
-		//	//std::cout << "   - going back 2 id: " << current->id << " at: " << current << std::endl;
-		//	current = getNextEvent(current);
-		//	//std::cout << "   - going forw 1 id: " << current->id << " at: " << current << std::endl;
-		//	current = getNextEvent(current);
-		//	//std::cout << "   - going forw 2 id: " << current->id << " at: " << current << std::endl;
-		//	if (current != aux) {
-		//		std::cout << "SOMETHING went wrong! look ma'!" << std::endl;
-		//		std::cout << "current: " << current << std::endl;
-		//		std::cout << "aux    : " << aux << std::endl;
-		//		FatalErrorHandler::fail("CTF: Kernel: Sort: Consistency fix failed");
-		//	}
-		//}
+#ifndef NDEBUG
+		if (hole >= 2) {
+			CTFKernelEventsProvider::EventHeader *aux = current;
+			current = getPreviousEvent(current, &eventList[hole]);
+			current = getPreviousEvent(current, &eventList[hole-1]);
+			current = getNextEvent(current);
+			current = getNextEvent(current);
+			if (current != aux) {
+				FatalErrorHandler::fail("CTF: Kernel: Sort: Consistency fix failed");
+			}
+		}
+#endif
 
 		previous = current;
 		current = getNextEvent(current);

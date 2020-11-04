@@ -79,7 +79,6 @@ class ctf2prv(bt2._UserSinkComponent):
 		verbose = os.environ.get('CTF2PRV_VERBOSE', "0")
 		if verbose == "0" or verbose == 0:
 			self.__verbose = False
-			print("Starting CTF to PRV conversion. Set environemnt variable CTF2PRV_VERBOSE=1 to show progress", flush=True)
 		elif verbose == "1" or verbose == 1:
 			self.__verbose = True
 			print("Starting CTF to PRV conversion", flush=True)
