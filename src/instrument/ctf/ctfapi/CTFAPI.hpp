@@ -18,7 +18,7 @@
 #include "InstrumentCPULocalData.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "stream/CTFStream.hpp"
-#include "stream/CTFStreamKernel.hpp"
+#include "stream/CTFKernelStream.hpp"
 
 namespace CTFAPI {
 
@@ -36,7 +36,7 @@ namespace CTFAPI {
 	void flushAll(CTFStream *stream, uint64_t *before, uint64_t *after);
 	void flushSubBuffers(CTFStream *stream, uint64_t *before, uint64_t *after);
 	void writeFlushingTracepoint(CTFStream *stream, uint64_t tsBefore, uint64_t tsAfter);
-	void updateKernelEvents(CTFStreamKernel *kernelStream, CTFStream *userStream);
+	void updateKernelEvents(CTFKernelStream *kernelStream, CTFStream *userStream);
 
 	template <typename T>
 	static inline size_t sizeOfVariadic(T arg)

@@ -8,7 +8,10 @@
 #ifndef CTF_KERNEL_EVENTS_PROVIDER
 #define CTF_KERNEL_EVENTS_PROVIDER
 
+#include "linux/version.h"
+
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "../CTFTypes.hpp"
@@ -53,6 +56,11 @@ namespace CTFAPI {
 		public:
 			CTFKernelEventsProvider(int cpu, size_t userSize);
 			~CTFKernelEventsProvider();
+
+			static uint64_t minimumKernelVersion()
+			{
+				return (uint64_t) KERNEL_VERSION(4, 1, 0 );
+			}
 
 			static void setReferenceTimestamp(uint64_t timestamp)
 			{

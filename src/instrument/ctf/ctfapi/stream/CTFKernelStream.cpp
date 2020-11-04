@@ -17,12 +17,12 @@
 
 #include <MemoryAllocator.hpp>
 
-#include "CTFStreamKernel.hpp"
+#include "CTFKernelStream.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
-std::vector<ctf_kernel_event_size_t> *CTFAPI::CTFStreamKernel::_eventSizes = nullptr;
+std::vector<ctf_kernel_event_size_t> *CTFAPI::CTFKernelStream::_eventSizes = nullptr;
 
-struct CTFAPI::CTFStreamKernel::KernelEventHeader *CTFAPI::CTFStreamKernel::mapStream()
+struct CTFAPI::CTFKernelStream::KernelEventHeader *CTFAPI::CTFKernelStream::mapStream()
 {
 	int fd, rc;
 	struct stat stat;
@@ -52,7 +52,7 @@ struct CTFAPI::CTFStreamKernel::KernelEventHeader *CTFAPI::CTFStreamKernel::mapS
 	return (struct KernelEventHeader *) (_streamMap + sizeof(PacketHeader) + sizeof(PacketContext));
 }
 
-void CTFAPI::CTFStreamKernel::unmapStream()
+void CTFAPI::CTFKernelStream::unmapStream()
 {
 	int rc = munmap(_streamMap, _streamSize);
 	if (rc == 1) {
@@ -60,19 +60,19 @@ void CTFAPI::CTFStreamKernel::unmapStream()
 	}
 }
 
-uint64_t CTFAPI::CTFStreamKernel::getEventSize(
+uint64_t CTFAPI::CTFKernelStream::getEventSize(
 	struct KernelEventHeader *current
 ) {
 	return sizeof(struct KernelEventHeader) + (*_eventSizes)[current->id];
 }
 
-struct CTFAPI::CTFStreamKernel::KernelEventHeader *CTFAPI::CTFStreamKernel::getNextEvent(
+struct CTFAPI::CTFKernelStream::KernelEventHeader *CTFAPI::CTFKernelStream::getNextEvent(
 	struct KernelEventHeader *current
 ) {
 	return (struct KernelEventHeader *) (((char *) current) + getEventSize(current));
 }
 
-struct CTFAPI::CTFStreamKernel::KernelEventHeader *CTFAPI::CTFStreamKernel::getPreviousEvent(
+struct CTFAPI::CTFKernelStream::KernelEventHeader *CTFAPI::CTFKernelStream::getPreviousEvent(
 	struct KernelEventHeader *current,
 	struct Node *node
 ) {
@@ -86,7 +86,7 @@ struct CTFAPI::CTFStreamKernel::KernelEventHeader *CTFAPI::CTFStreamKernel::getP
 // the hole. Then, we will continue moving the list and keeping track of how
 // many elements (and their size) we need to move in the mapping. Finally, we
 // will move all data with a memcopy.
-void CTFAPI::CTFStreamKernel::moveUnsortedEvent(
+void CTFAPI::CTFKernelStream::moveUnsortedEvent(
 	struct Node *eventList,
 	char *swapArea,
 	uint64_t hole,
@@ -177,7 +177,7 @@ void CTFAPI::CTFStreamKernel::moveUnsortedEvent(
 	//std::cout << " ==================" << std::endl;
 }
 
-void CTFAPI::CTFStreamKernel::sortEvents()
+void CTFAPI::CTFKernelStream::sortEvents()
 {
 	struct KernelEventHeader *current, *previous;
 	uint64_t currentSize, previousSize;

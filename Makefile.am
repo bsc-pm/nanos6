@@ -584,9 +584,9 @@ instrument_ctf_sources = \
 	src/instrument/ctf/ctfapi/context/CTFContextCPUHardwareCounters.cpp \
 	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.cpp \
 	src/instrument/ctf/ctfapi/stream/CircularBuffer.cpp \
-	src/instrument/ctf/ctfapi/stream/CTFStream.cpp \
-	src/instrument/ctf/ctfapi/stream/CTFStreamKernel.cpp \
 	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelStream.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFStream.cpp \
 	src/instrument/ctf/ctfapi/CTFAPI.cpp \
 	src/instrument/ctf/ctfapi/CTFEvent.cpp \
 	src/instrument/ctf/ctfapi/CTFKernelMetadata.cpp \
@@ -944,17 +944,17 @@ noinst_HEADERS = \
 	src/instrument/ctf/ctfapi/context/CTFEventContext.hpp \
 	src/instrument/ctf/ctfapi/stream/CircularBuffer.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelStream.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStream.hpp \
-	src/instrument/ctf/ctfapi/stream/CTFStreamKernel.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedShared.hpp \
 	src/instrument/ctf/ctfapi/CTFAPI.hpp \
 	src/instrument/ctf/ctfapi/CTFEvent.hpp \
 	src/instrument/ctf/ctfapi/CTFKernelMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
-	src/instrument/ctf/ctfapi/CTFUserMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFTrace.hpp \
 	src/instrument/ctf/ctfapi/CTFTypes.hpp \
+	src/instrument/ctf/ctfapi/CTFUserMetadata.hpp \
 	src/instrument/ctf/CTFTracepoints.hpp \
 	src/instrument/ctf/InstrumentAddTask.hpp \
 	src/instrument/ctf/InstrumentBlockingAPI.hpp \

@@ -40,7 +40,7 @@ namespace CTFAPI {
 		std::vector<std::string> _enabledEventNames;
 		std::vector<ctf_kernel_event_size_t> _eventSizes;
 
-		void getSystemInformation();
+		bool getSystemInformation();
 		bool loadKernelDefsFile(const char *file);
 		bool loadEnabledEvents(const char *file);
 	public:

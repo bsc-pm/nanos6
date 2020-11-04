@@ -19,7 +19,7 @@ namespace Instrument {
 	inline void workerThreadSpins()
 	{
 		CPULocalData *cpuLocalData = getCTFCPULocalData();
-		CTFAPI::CTFStreamKernel *kernelStream = cpuLocalData->kernelStream;
+		CTFAPI::CTFKernelStream *kernelStream = cpuLocalData->kernelStream;
 		CTFAPI::CTFStream *userStream = cpuLocalData->userStream;
 
 		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(userStream, userStream);

@@ -22,7 +22,7 @@
 #include "ctfapi/stream/CTFStream.hpp"
 #include "ctfapi/stream/CTFStreamUnboundedPrivate.hpp"
 #include "ctfapi/stream/CTFStreamUnboundedShared.hpp"
-#include "ctfapi/stream/CTFStreamKernel.hpp"
+#include "ctfapi/stream/CTFKernelStream.hpp"
 #include "ctfapi/context/CTFContextTaskHardwareCounters.hpp"
 #include "ctfapi/context/CTFContextCPUHardwareCounters.hpp"
 #include "ctfapi/context/CTFStreamContextUnbounded.hpp"
@@ -146,10 +146,10 @@ static void initializeKernelStreams(
 	// Set reference timestamp for all kernel streams
 	CTFAPI::CTFTrace &trace = CTFAPI::CTFTrace::getInstance();
 	uint64_t absoluteTimestamp = trace.getAbsoluteStartTimestamp();
-	CTFAPI::CTFStreamKernel::setReferenceTimestamp(absoluteTimestamp);
+	CTFAPI::CTFKernelStream::setReferenceTimestamp(absoluteTimestamp);
 
 	// Set tracepoint definitions for all kernel streams
-	CTFAPI::CTFStreamKernel::setEvents(
+	CTFAPI::CTFKernelStream::setEvents(
 		kernelMetadata->getEnabledEvents(),
 		kernelMetadata->getEventSizes()
 	);
@@ -160,7 +160,7 @@ static void initializeKernelStreams(
 		cpuId = cpu->getSystemCPUId();
 		nodeId = cpu->getNumaNodeId();
 		Instrument::CPULocalData &cpuLocalData = cpu->getInstrumentationData();
-		cpuLocalData.kernelStream = new CTFAPI::CTFStreamKernel(
+		cpuLocalData.kernelStream = new CTFAPI::CTFKernelStream(
 			defaultStreamKernelSize, defaultKernelMappingSize,
 			cpuId, nodeId, kernelPath.c_str()
 		);
@@ -182,14 +182,14 @@ void Instrument::initialize()
 	// TODO remove me
 	///////////////////
 	//CTFAPI::CTFKernelMetadata *kernelMetadata2 = new CTFAPI::CTFKernelMetadata();
-	//CTFAPI::CTFStreamKernel::setEvents(
+	//CTFAPI::CTFKernelStream::setEvents(
 	//	kernelMetadata2->getEnabledEvents(),
 	//	kernelMetadata2->getEventSizes()
 	//);
 	//std::string path("./the_trace/ctf/kernel");
 	//for (int i = 0; i < 8; i++) {
 	//	std::cout << "========== scaning channel " << i << "===========" << std::endl;
-	//	CTFAPI::CTFStreamKernel patata(4096, 4096, i, path);
+	//	CTFAPI::CTFKernelStream patata(4096, 4096, i, path);
 	//	patata.sortEvents();
 
 	//}
@@ -229,7 +229,7 @@ void Instrument::shutdown()
 	// First disable kernel tracing
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
-		CTFAPI::CTFStreamKernel *kernelStream = cpu->getInstrumentationData().kernelStream;
+		CTFAPI::CTFKernelStream *kernelStream = cpu->getInstrumentationData().kernelStream;
 		if (kernelStream) {
 			kernelStream->disableKernelEvents();
 		}
@@ -239,7 +239,7 @@ void Instrument::shutdown()
 	for (ctf_cpu_id_t i = 0; i < totalCPUs; i++) {
 		cpu = cpus[i];
 		CTFAPI::CTFStream       *userStream   = cpu->getInstrumentationData().userStream;
-		CTFAPI::CTFStreamKernel *kernelStream = cpu->getInstrumentationData().kernelStream;
+		CTFAPI::CTFKernelStream *kernelStream = cpu->getInstrumentationData().kernelStream;
 		assert(userStream != nullptr);
 		assert(kernelStream != nullptr);
 

@@ -5,8 +5,8 @@
 */
 
 
-#ifndef CTF_STREAM_KERNEL_HPP
-#define CTF_STREAM_KERNEL_HPP
+#ifndef CTF_KERNEL_STREAM_HPP
+#define CTF_KERNEL_STREAM_HPP
 
 #include <cstddef>
 #include <vector>
@@ -18,7 +18,7 @@
 
 namespace CTFAPI {
 
-	class CTFStreamKernel : public CTFStream
+	class CTFKernelStream : public CTFStream
 	{
 	private:
 
@@ -62,18 +62,23 @@ namespace CTFAPI {
 		);
 
 	public:
-		CTFStreamKernel(size_t userSize, size_t kernelSize, ctf_cpu_id_t cpu, int node, std::string path)
-			: CTFStream(userSize, cpu, node, path, CTFStreamKernelId),
+		CTFKernelStream(size_t userSize, size_t kernelSize, ctf_cpu_id_t cpu, int node, std::string path)
+			: CTFStream(userSize, cpu, node, path, CTFKernelStreamId),
 			  _kernelEventsProvider(cpu, kernelSize)
 		{
 		}
 
-		~CTFStreamKernel()
+		~CTFKernelStream()
 		{
 		}
 
 		// TODO move back to private
 		void sortEvents();
+
+		static uint64_t minimumKernelVersion()
+		{
+			return CTFKernelEventsProvider::minimumKernelVersion();
+		}
 
 		static void setReferenceTimestamp(uint64_t timestamp)
 		{
@@ -178,4 +183,4 @@ namespace CTFAPI {
 
 }
 
-#endif // CTF_STREAM_KERNEL_HPP
+#endif // CTF_KERNEL_STREAM_HPP

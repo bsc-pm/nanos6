@@ -101,7 +101,7 @@ void CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(CTFStream *stream, CTFStream *
 	}
 }
 
-void CTFAPI::updateKernelEvents(CTFStreamKernel *kernelStream, CTFStream *userStream)
+void CTFAPI::updateKernelEvents(CTFKernelStream *kernelStream, CTFStream *userStream)
 {
 	// only worker threads call this function, no need to take the stream lock
 	uint64_t tsBefore, tsAfter;

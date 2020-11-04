@@ -17,7 +17,7 @@
 namespace CTFAPI {
 
 	enum ctf_streams {
-		CTFStreamKernelId    = 0,
+		CTFKernelStreamId    = 0,
 		CTFStreamBoundedId   = 1,
 		CTFStreamUnboundedId = 2
 	};

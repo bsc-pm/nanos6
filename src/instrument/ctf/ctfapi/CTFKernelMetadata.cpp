@@ -6,6 +6,7 @@
 
 
 #include <errno.h>
+#include <linux/version.h>
 #include <sys/utsname.h>
 
 #include <cinttypes>
@@ -16,6 +17,7 @@
 #include "CTFKernelMetadata.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "stream/CTFStream.hpp"
+#include "stream/CTFKernelStream.hpp"
 #include "support/JsonFile.hpp"
 
 
@@ -102,7 +104,7 @@ const char *CTFAPI::CTFKernelMetadata::meta_event =
 	"	};\n"
 	"};\n";
 
-void CTFAPI::CTFKernelMetadata::getSystemInformation()
+bool CTFAPI::CTFKernelMetadata::getSystemInformation()
 {
 	int ret;
 	struct utsname info;
@@ -117,6 +119,10 @@ void CTFAPI::CTFKernelMetadata::getSystemInformation()
 
 	_kernelVersion = std::string(info.version);
 	_kernelRelease = std::string(info.release);
+
+	uint64_t minimumKernelVersion = CTFKernelStream::minimumKernelVersion();
+
+	return (LINUX_VERSION_CODE >= minimumKernelVersion);
 }
 
 bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
@@ -223,15 +229,17 @@ bool CTFAPI::CTFKernelMetadata::loadEnabledEvents(const char *file)
 CTFAPI::CTFKernelMetadata::CTFKernelMetadata()
 	: _enabled(false), _maxEventId(-1)
 {
-	bool loadDefs, loadEvents;
+	bool sysInfo    = getSystemInformation();
+	bool loadDefs   = loadKernelDefsFile(defaultKernelDefsFileName);
+	bool loadEvents = loadEnabledEvents(defaultEnabledEventsFileName);
 
-	getSystemInformation();
-	loadDefs = loadKernelDefsFile(defaultKernelDefsFileName);
-	loadEvents = loadEnabledEvents(defaultEnabledEventsFileName);
-
-	if (loadDefs && loadEvents) {
-		_enabled = true;
+	if (loadDefs && loadEvents && !sysInfo) {
+		FatalErrorHandler::warn(
+			"CTF Kernel tracing requires Linux Kernel >= 4.1.0, but Nanos6 was compiled against an older kernel: Disabling Kernel tracing."
+		);
 	}
+
+	_enabled = (sysInfo && loadDefs && loadEvents);
 }
 
 void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
@@ -265,14 +273,14 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
 		trace.getBinaryName(),
 		trace.getPid());
 	fprintf(f, meta_clock, trace.getAbsoluteStartTimestamp());
-	fprintf(f, meta_stream, CTFStreamKernelId);
+	fprintf(f, meta_stream, CTFKernelStreamId);
 
 	for (std::string event : _enabledEventNames) {
 		auto const& entry = _idMap.at(event);
 		fprintf(f, meta_event,
 			event.c_str(),       // event name
 			entry.first,         // event id
-			CTFStreamKernelId,   // stream id
+			CTFKernelStreamId,   // stream id
 			entry.second.c_str() // event format
 		);
 	}
