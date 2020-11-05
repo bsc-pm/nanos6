@@ -21,8 +21,6 @@
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentDependenciesByAccessLinks.hpp>
 
-#define MAX_SYMBOLS 64 // TODO: Temporary solution to use a fixed bitset size
-
 struct DataAccess;
 class Task;
 
@@ -31,6 +29,7 @@ class Task;
 //! There might me thousands of allocations of this struct, and size will have a noticeable effect on performance.
 struct DataAccess {
 public:
+	static const size_t MAX_SYMBOLS = 64; // TODO: Temporary solution to use a fixed bitset size
 	typedef std::bitset<MAX_SYMBOLS> symbols_t;
 
 private:
