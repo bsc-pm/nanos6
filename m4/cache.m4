@@ -24,7 +24,7 @@ AC_DEFUN([AC_CHECK_CACHE],
 				cache_size=0
 			])
 
-			if [ test -z "$cache_size" ] ; then
+			if [ test -z "$cache_size" ] || [ test "$cache_size" -lt 1 ] ; then
 				AC_CHECK_FILE([/sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size], [
 					cache_size=$(</sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size)
 
