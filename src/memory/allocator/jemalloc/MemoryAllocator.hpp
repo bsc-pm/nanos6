@@ -84,6 +84,12 @@ template <class T>
 class TemplateAllocator {
 public:
 	using value_type = T;
+	using reference = T &;
+	using const_reference = T const&;
+	using pointer = T *;
+	using const_pointer = T const*;
+	using size_type = std::size_t;
+	using difference_type = std::ptrdiff_t;
 
 	TemplateAllocator() = default;
 	TemplateAllocator(const TemplateAllocator &) = default;
@@ -106,6 +112,18 @@ public:
 	// repurposing allocator instances in older Boost versions.
 	template <class U>
 	struct rebind {typedef TemplateAllocator<U> other;};
+
+	template <class U, class ...Args>
+	void construct(U* p, Args&& ...args) 
+	{
+		::new(p) U(std::forward<Args>(args)...);
+	}
+
+	template <class U>
+	void destroy(U* p) noexcept
+	{
+		p->~U();
+	}
 };
 
 template <class T, class U>
