@@ -7,7 +7,7 @@
 #ifndef DATA_ACCESS_TYPE_HPP
 #define DATA_ACCESS_TYPE_HPP
 
-// Packed ensures this enum is as short as possible.
+// Packed ensures this enum is as short as possible
 typedef enum __attribute__((__packed__)) {
 	NO_ACCESS_TYPE = 0,
 	READ_ACCESS_TYPE,

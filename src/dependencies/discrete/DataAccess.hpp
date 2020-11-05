@@ -26,8 +26,8 @@ class Task;
 struct BottomMapEntry;
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
-//! WARNING: When modifying this structure, please mind to pack it as much as possible. There might me thousands of allocations of this
-//! struct, and size will have a noticeable effect on performance.
+//! WARNING: When modifying this structure, please mind to pack it as much as possible.
+//! There might me thousands of allocations of this struct, and size will have a noticeable effect on performance.
 struct DataAccess {
 private:
 	//! 16-byte fields
@@ -41,6 +41,7 @@ private:
 	//! C++ allows anonymous unions to save space when two fields of a struct are not used at once.
 	//! We can do this here, as assigning the reductionInfo will be done always when the length is not
 	//! needed anymore.
+	//! Warning: Take care to correctly initialize this union when copying or constructing this class.
 	union {
 		//! Reduction-specific information of current access
 		ReductionInfo *_reductionInfo;
@@ -52,7 +53,7 @@ private:
 	std::atomic<DataAccess *> _child;
 
 	//! 4-byte fields
-	//! Reduction stuff
+	//! Reduction information
 	reduction_type_and_operator_index_t _reductionOperator;
 	reduction_index_t _reductionIndex;
 

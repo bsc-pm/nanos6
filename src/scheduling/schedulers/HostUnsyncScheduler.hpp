@@ -14,7 +14,8 @@
 class Taskfor;
 
 class HostUnsyncScheduler : public UnsyncScheduler {
-	std::vector<Taskfor *, TemplateAllocator<Taskfor *>> _groupSlots;
+	typedef std::vector<Taskfor *, TemplateAllocator<Taskfor *>> taskfor_group_slots_t;
+	taskfor_group_slots_t _groupSlots;
 
 public:
 	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
@@ -22,10 +23,10 @@ public:
 	{
 		size_t groups = CPUManager::getNumTaskforGroups();
 
-		_groupSlots = std::vector<Taskfor *, TemplateAllocator<Taskfor *>>(groups, nullptr);
+		_groupSlots = taskfor_group_slots_t(groups, nullptr);
 
 		if (enableImmediateSuccessor) {
-			_immediateSuccessorTaskfors = std::vector<Task *, TemplateAllocator<Task *>>(groups*2, nullptr);
+			_immediateSuccessorTaskfors = immediate_successor_tasks_t(groups*2, nullptr);
 		}
 
 		_deadlineTasks = new DeadlineQueue(policy);

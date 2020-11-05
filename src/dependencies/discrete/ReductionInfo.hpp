@@ -12,7 +12,7 @@
 #include <functional>
 #include <atomic>
 
-
+#include <MemoryAllocator.hpp>
 #include <executors/threads/CPUManager.hpp>
 #include <lowlevel/PaddedSpinLock.hpp>
 
@@ -76,6 +76,10 @@ class ReductionInfo
 		}
 
 	private:
+		typedef std::vector<ReductionSlot, TemplateAllocator<ReductionSlot>> slots_t;
+		typedef std::vector<long int, TemplateAllocator<long int>> current_cpu_slot_indices_t;
+		typedef std::vector<size_t, TemplateAllocator<size_t>> free_slot_indices_t;
+
 		DataAccessRegion _region;
 
 		void * _address;
@@ -93,9 +97,9 @@ class ReductionInfo
 		bool _isOriginalStorageAvailable;
 		std::atomic_size_t _originalStorageAvailabilityCounter;
 
-		std::vector<ReductionSlot> _slots;
-		std::vector<long int> _currentCpuSlotIndices;
-		std::vector<size_t> _freeSlotIndices;
+		slots_t _slots;
+		current_cpu_slot_indices_t _currentCpuSlotIndices;
+		free_slot_indices_t _freeSlotIndices;
 		// Aggregating slots are private slots used to aggregate combinations
 		// when the original region is not available for combination. By now, they are not being used
 		// in discrete deps.

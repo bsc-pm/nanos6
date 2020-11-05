@@ -19,8 +19,9 @@
 
 class UnsyncScheduler {
 protected:
-	std::vector<Task *, TemplateAllocator<Task *>> _immediateSuccessorTasks;
-	std::vector<Task *, TemplateAllocator<Task *>> _immediateSuccessorTaskfors;
+	typedef std::vector<Task *, TemplateAllocator<Task *>> immediate_successor_tasks_t;
+	immediate_successor_tasks_t _immediateSuccessorTasks;
+	immediate_successor_tasks_t _immediateSuccessorTaskfors;
 	ReadyQueue *_readyTasks;
 	DeadlineQueue *_deadlineTasks;
 	bool _enableImmediateSuccessor;

@@ -8,7 +8,6 @@
 #define TASK_DATA_ACCESSES_HPP
 
 #include <atomic>
-#include <array>
 #include <cassert>
 #include <functional>
 #include <mutex>

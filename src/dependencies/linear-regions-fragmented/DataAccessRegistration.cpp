@@ -1967,7 +1967,7 @@ namespace DataAccessRegistration {
 
 		bool hasAllocatedReductionInfo = false;
 		ReductionInfo *previousReductionInfo = nullptr;
-		std::vector<DataAccess*> previousReductionAccesses;
+		std::vector<DataAccess *, TemplateAllocator<DataAccess *>> previousReductionAccesses;
 
 		bool local = false;
 		#ifndef NDEBUG
