@@ -33,6 +33,7 @@ private:
 
 	inline void generateDeviceEvironment(Task *task) override
 	{
+		// The Accelerator::runTask() function has already set the device so it's safe to proceed
 		nanos6_cuda_device_environment_t &env =	task->getDeviceEnvironment().cuda;
 		env.stream = _streamPool.getCUDAStream();
 		env.event = _streamPool.getCUDAEvent();

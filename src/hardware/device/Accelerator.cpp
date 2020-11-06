@@ -19,12 +19,11 @@ void Accelerator::runTask(Task *task)
 	assert(task != nullptr);
 	task->setComputePlace(_computePlace);
 	task->setMemoryPlace(_memoryPlace);
-	generateDeviceEvironment(task);
 
-	preRunTask(task);
 	setActiveDevice();
+	generateDeviceEvironment(task);
+	preRunTask(task);
 	task->body(nullptr);
-
 	postRunTask(task);
 }
 

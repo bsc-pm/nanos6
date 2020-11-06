@@ -44,15 +44,22 @@ void OpenAccAccelerator::acceleratorServiceLoop()
 
 void OpenAccAccelerator::processQueues()
 {
-	auto it = _activeQueues.begin();
-	while (it != _activeQueues.end()) {
-		OpenAccQueue *queue = *it;
-		assert(queue != nullptr);
-		if (queue->isFinished()) {
-			finishTask(queue->getTask());
-			it = _activeQueues.erase(it);
-		} else {
-			it++;
+	// Check if there is merit in setting the device;
+	// If we set it before any OpenACC work has run (e.g. during bootstrap) it causes
+	// erroneous behavior. If we don't set it here, the completion checks may not occur correctly
+
+	if (!_activeQueues.empty()) {
+		setActiveDevice();
+		auto it = _activeQueues.begin();
+		while (it != _activeQueues.end()) {
+			OpenAccQueue *queue = *it;
+			assert(queue != nullptr);
+			if (queue->isFinished()) {
+				finishTask(queue->getTask());
+				it = _activeQueues.erase(it);
+			} else {
+				it++;
+			}
 		}
 	}
 }
