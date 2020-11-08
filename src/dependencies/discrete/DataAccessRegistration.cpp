@@ -29,7 +29,6 @@
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentDependencySubsystemEntryPoints.hpp>
 #include <InstrumentTaskId.hpp>
-#include <MemoryAllocator.hpp>
 #include <ObjectAllocator.hpp>
 
 #pragma GCC visibility push(hidden)

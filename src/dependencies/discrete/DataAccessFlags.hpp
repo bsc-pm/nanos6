@@ -8,10 +8,8 @@
 #define DATA_ACCESS_FLAGS_HPP
 
 #include <cstdint>
-#include <deque>
-#include <stack>
 
-#include "MemoryAllocator.hpp"
+#include "support/Containers.hpp"
 
 struct DataAccess;
 
@@ -72,6 +70,6 @@ struct DataAccessMessage {
 	}
 };
 
-typedef std::stack<DataAccessMessage, std::deque<DataAccessMessage, TemplateAllocator<DataAccessMessage>>> mailbox_t;
+typedef Container::stack<DataAccessMessage> mailbox_t;
 
 #endif // DATA_ACCESS_FLAGS_HPP

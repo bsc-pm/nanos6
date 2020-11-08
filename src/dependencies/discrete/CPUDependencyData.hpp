@@ -10,15 +10,13 @@
 
 #include <atomic>
 #include <cassert>
-#include <deque>
-#include <queue>
 
 #include <limits.h>
 
 #include <nanos6/task-instantiation.h>
 
 #include "DataAccessFlags.hpp"
-#include "MemoryAllocator.hpp"
+#include "support/Containers.hpp"
 
 class Task;
 
@@ -28,7 +26,9 @@ public:
 
 private:
 	static const size_t _schedulerChunkSize = 256;
+
 	Task *_array[_schedulerChunkSize];
+
 	size_t _count;
 
 public:
@@ -66,8 +66,8 @@ public:
 
 struct CPUDependencyData {
 	typedef SatisfiedOriginatorList satisfied_originator_list_t;
-	typedef std::deque<Task *, TemplateAllocator<Task *>> commutative_satisfied_list_t;
-	typedef std::deque<Task *, TemplateAllocator<Task *>> deletable_originator_list_t;
+	typedef Container::deque<Task *> commutative_satisfied_list_t;
+	typedef Container::deque<Task *> deletable_originator_list_t;
 
 	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators[nanos6_device_t::nanos6_device_type_num];
@@ -88,7 +88,7 @@ struct CPUDependencyData {
 		_satisfiedCommutativeOriginators(),
 		_mailBox()
 #ifndef NDEBUG
-		,_inUse()
+		, _inUse()
 #endif
 	{
 	}

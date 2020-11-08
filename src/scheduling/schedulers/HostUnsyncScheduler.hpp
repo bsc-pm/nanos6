@@ -7,19 +7,20 @@
 #ifndef HOST_UNSYNC_SCHEDULER_HPP
 #define HOST_UNSYNC_SCHEDULER_HPP
 
-#include "MemoryAllocator.hpp"
 #include "UnsyncScheduler.hpp"
 #include "scheduling/ready-queues/DeadlineQueue.hpp"
+#include "support/Containers.hpp"
 
 class Taskfor;
 
 class HostUnsyncScheduler : public UnsyncScheduler {
-	typedef std::vector<Taskfor *, TemplateAllocator<Taskfor *>> taskfor_group_slots_t;
+	typedef Container::vector<Taskfor *> taskfor_group_slots_t;
+
 	taskfor_group_slots_t _groupSlots;
 
 public:
-	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
-		: UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
+	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor) :
+		UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
 	{
 		size_t groups = CPUManager::getNumTaskforGroups();
 

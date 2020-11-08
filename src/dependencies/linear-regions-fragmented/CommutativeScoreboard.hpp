@@ -10,10 +10,9 @@
 
 #include "DataAccessRegion.hpp"
 #include "LinearRegionMap.hpp"
-#include "MemoryAllocator.hpp"
 #include "lowlevel/PaddedTicketSpinLock.hpp"
+#include "support/Containers.hpp"
 
-#include <set>
 
 class Task;
 struct CPUDependencyData;
@@ -23,10 +22,11 @@ struct CommutativeScoreboard {
 	struct entry_t {
 		DataAccessRegion _region;
 		bool _available;
-		std::set<Task *, std::less<Task *>, TemplateAllocator<Task *>> _participants;
+		Container::set<Task *> _participants;
 
-		entry_t(DataAccessRegion const &region)
-			: _region(region), _available(true)
+		entry_t(DataAccessRegion const &region) :
+			_region(region),
+			_available(true)
 		{
 		}
 
@@ -34,6 +34,7 @@ struct CommutativeScoreboard {
 		{
 			return _region;
 		}
+
 		DataAccessRegion &getAccessRegion()
 		{
 			return _region;
@@ -50,7 +51,7 @@ struct CommutativeScoreboard {
 	static void processReleasedCommutativeRegions(CPUDependencyData &hpDependencyData);
 
 private:
-	typedef std::set<Task *, std::less<Task *>, TemplateAllocator<Task *>> candidate_set_t;
+	typedef Container::set<Task *> candidate_set_t;
 
 	static inline bool acquireEntry(entry_t &entry);
 	static inline void evaluateCompetingTask(Task *task, CPUDependencyData &hpDependencyData, candidate_set_t &candidates);

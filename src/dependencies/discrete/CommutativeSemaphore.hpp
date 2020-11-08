@@ -9,10 +9,9 @@
 
 #include <bitset>
 #include <cstdint>
-#include <deque>
 
-#include "MemoryAllocator.hpp"
 #include "lowlevel/PaddedTicketSpinLock.hpp"
+#include "support/Containers.hpp"
 
 class Task;
 class ComputePlace;
@@ -34,7 +33,7 @@ public:
 
 private:
 	typedef PaddedTicketSpinLock<> lock_t;
-	typedef std::deque<Task *, TemplateAllocator<Task *>> waiting_tasks_t;
+	typedef Container::deque<Task *> waiting_tasks_t;
 
 	static lock_t _lock;
 	static commutative_mask_t _mask;

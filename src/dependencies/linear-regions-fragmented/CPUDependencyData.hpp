@@ -11,14 +11,13 @@
 #include <atomic>
 #include <bitset>
 #include <boost/dynamic_bitset.hpp>
-#include <deque>
 #include <limits.h>
 
 
 #include "CommutativeScoreboard.hpp"
 #include "DataAccessLink.hpp"
 #include "DataAccessRegion.hpp"
-#include "MemoryAllocator.hpp"
+#include "support/Containers.hpp"
 
 #include <ExecutionStep.hpp>
 
@@ -119,12 +118,12 @@ struct CPUDependencyData {
 		}
 	};
 
-	typedef std::deque<UpdateOperation, TemplateAllocator<UpdateOperation>> delayed_operations_t;
-	typedef std::deque<Task *, TemplateAllocator<Task *>> satisfied_originator_list_t;
-	typedef std::deque<Task *, TemplateAllocator<Task *>> removable_task_list_t;
-	typedef std::deque<CommutativeScoreboard::entry_t *, TemplateAllocator<CommutativeScoreboard::entry_t *>> acquired_commutative_scoreboard_entries_t;
-	typedef std::deque<TaskAndRegion, TemplateAllocator<TaskAndRegion>> released_commutative_regions_t;
-	typedef std::deque<DataAccess *, TemplateAllocator<DataAccess *>> satisfied_taskwait_accesses_t;
+	typedef Container::deque<UpdateOperation> delayed_operations_t;
+	typedef Container::deque<Task *> satisfied_originator_list_t;
+	typedef Container::deque<Task *> removable_task_list_t;
+	typedef Container::deque<CommutativeScoreboard::entry_t *> acquired_commutative_scoreboard_entries_t;
+	typedef Container::deque<TaskAndRegion> released_commutative_regions_t;
+	typedef Container::deque<DataAccess *> satisfied_taskwait_accesses_t;
 
 	//! Tasks whose accesses have been satisfied after ending a task
 	satisfied_originator_list_t _satisfiedOriginators;

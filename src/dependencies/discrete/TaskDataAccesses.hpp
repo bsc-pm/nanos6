@@ -11,12 +11,12 @@
 #include <cassert>
 #include <functional>
 #include <mutex>
-#include <unordered_map>
 
 #include "BottomMapEntry.hpp"
 #include "CommutativeSemaphore.hpp"
 #include "TaskDataAccessesInfo.hpp"
 #include "lowlevel/TicketSpinLock.hpp"
+#include "support/Containers.hpp"
 
 #include <DependencySystem.hpp>
 #include <MemoryAllocator.hpp>
@@ -24,11 +24,8 @@
 struct DataAccess;
 
 struct TaskDataAccesses {
-	template <class Key, class Value>
-	using allocated_map_t = std::unordered_map<Key, Value, std::hash<Key>, std::equal_to<Key>, TemplateAllocator<std::pair<const Key, Value>>>;
-
-	typedef allocated_map_t<void *, BottomMapEntry> bottom_map_t;
-	typedef allocated_map_t<void *, DataAccess> access_map_t;
+	typedef Container::unordered_map<void *, BottomMapEntry> bottom_map_t;
+	typedef Container::unordered_map<void *, DataAccess> access_map_t;
 
 #ifndef NDEBUG
 	enum flag_bits_t {

@@ -8,18 +8,17 @@
 #ifndef REDUCTION_INFO_HPP
 #define REDUCTION_INFO_HPP
 
-#include <vector>
 #include <functional>
 #include <atomic>
 
-#include <MemoryAllocator.hpp>
-#include <executors/threads/CPUManager.hpp>
-#include <lowlevel/PaddedSpinLock.hpp>
-
 #include <boost/dynamic_bitset.hpp>
 
-#include "ReductionSpecific.hpp"
 #include "DataAccessRegion.hpp"
+#include "ReductionSpecific.hpp"
+#include "executors/threads/CPUManager.hpp"
+#include "lowlevel/PaddedSpinLock.hpp"
+#include "support/Containers.hpp"
+
 
 class ReductionInfo
 {
@@ -76,9 +75,9 @@ class ReductionInfo
 		}
 
 	private:
-		typedef std::vector<ReductionSlot, TemplateAllocator<ReductionSlot>> slots_t;
-		typedef std::vector<long int, TemplateAllocator<long int>> current_cpu_slot_indices_t;
-		typedef std::vector<size_t, TemplateAllocator<size_t>> free_slot_indices_t;
+		typedef Container::vector<ReductionSlot> slots_t;
+		typedef Container::vector<long int> current_cpu_slot_indices_t;
+		typedef Container::vector<size_t> free_slot_indices_t;
 
 		DataAccessRegion _region;
 
