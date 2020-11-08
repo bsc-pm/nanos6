@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef REDUCTION_INFO_HPP
@@ -9,13 +9,13 @@
 
 #include <atomic>
 #include <functional>
-#include <vector>
 
 #include <boost/dynamic_bitset.hpp>
 
 #include "ReductionSpecific.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "lowlevel/PaddedSpinLock.hpp"
+#include "support/Containers.hpp"
 
 #include <DataAccessRegion.hpp>
 
@@ -69,9 +69,10 @@ class ReductionInfo
 		bool _isOriginalStorageAvailable;
 		std::atomic_size_t _originalStorageAvailabilityCounter;
 		
-		std::vector<ReductionSlot> _slots;
-		std::vector<long int> _currentCpuSlotIndices;
-		std::vector<size_t> _freeSlotIndices;
+		Container::vector<ReductionSlot> _slots;
+		Container::vector<long int> _currentCpuSlotIndices;
+		Container::vector<size_t> _freeSlotIndices;
+
 		// Aggregating slots are private slots used to aggregate combinations
 		// when the original region is not available for combination
 		reduction_slot_set_t _isAggregatingSlotIndex;
