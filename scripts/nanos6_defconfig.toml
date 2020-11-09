@@ -153,6 +153,29 @@ __require_CTF
 			# which means that the $CTF2PRV will be used if present, or ctf2prv in $PATH
 			# otherwise
 			# location = "path/to/ctf2prv"
+		# Choose the events that will be traced
+		[instrument.ctf.events]
+			# Linux Kernel events options. Nanos6 can collect Linux kernel internal events using the
+			# perf_event_open system call. This requires to set /proc/sys/kernel/perf_event_paranoid
+			# to -1 and read permissions for either /sys/kernel/tracing or /sys/kernel/debug/tracing.
+			# Events can be selected individually and/or using Nanos6-defined presets
+			[instrument.ctf.events.kernel]
+				# Select one or more predefined sets of events. Available options are:
+				#  - preemption: Trace context switches and interrupts
+				#  - context_switch: Trace context switches
+				#  - syscall: Trace all kernel syscalls entry and exit
+				# presets = [
+				# 	"preemption"
+				# ]
+				# Provide a file with a list of individual events to enable, one event per line.
+				# Lines starting with "#" are omitted.
+				# file = "./nanos6_kernel_events"
+				# Exclude selected events. Disable events even if enabled in a preset or the
+				# user provided file.
+				# exclude = [
+				# 	"sys_enter_gettimeofday",
+				# 	"sys_exit_gettimeofday"
+				# ]
 __!require_CTF
 __require_EXTRAE
 	[instrument.extrae]

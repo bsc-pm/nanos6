@@ -22,10 +22,36 @@
 
 
 // TODO factor out common operations/data with CTFMetadata
+ConfigVariableList<std::string> CTFAPI::CTFKernelMetadata::_kernelEventPresets("instrument.ctf.events.kernel.presets", {});
+ConfigVariable<std::string> CTFAPI::CTFKernelMetadata::_kernelEventFile("instrument.ctf.events.kernel.file");
+ConfigVariableList<std::string> CTFAPI::CTFKernelMetadata::_kernelExcludedEvents("instrument.ctf.events.kernel.exclude", {});
+
+// TODO manage old alternative event names
+std::map<std::string, std::vector<std::string> > CTFAPI::CTFKernelMetadata::_kernelEventPresetMap {
+	{"context_switch",
+		{
+			"sched_switch"
+		}
+	},
+	{"preemption",
+		{
+			"irq_handler_entry",
+			"irq_handler_exit",
+			"softirq_entry",
+			"softirq_exit",
+			"sched_switch"
+		}
+	},
+	{"syscall",
+		{
+			"sched_switch",
+			"__syscalls"
+		}
+	}
+};
+
 
 const char *CTFAPI::CTFKernelMetadata::defaultKernelDefsFileName    = "./nanos6_kerneldefs.json";
-
-const char *CTFAPI::CTFKernelMetadata::defaultEnabledEventsFileName = "./nanos6_kernel_events.txt";
 
 const char *CTFAPI::CTFKernelMetadata::meta_header = "/* CTF 1.8 */\n";
 
@@ -174,13 +200,13 @@ bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 					std::string format = node.getData<std::string>("format", converted);
 					assert(converted);
 
-					_idMap.emplace(name, std::make_pair(id, format));
+					_kernelEventMap.emplace(name, std::make_pair(id, format));
 					_eventSizes[id] = size;
 				}
 			}
 		);
 
-		success = (_maxEventId != (ctf_kernel_event_id_t) -1) && (_idMap.size() > 0);
+		success = (_maxEventId != (ctf_kernel_event_id_t) -1) && (_kernelEventMap.size() > 0);
 
 		FatalErrorHandler::failIf(!success, "CTF: kernel: Kernel events definitions file present, but corrupted");
 	}
@@ -214,39 +240,113 @@ void CTFAPI::CTFKernelMetadata::checkBootId()
 
 }
 
-bool CTFAPI::CTFKernelMetadata::loadEnabledEvents(const char *file)
+void CTFAPI::CTFKernelMetadata::loadEventPresets()
+{
+	bool enableSyscalls = false;
+
+	if (!_kernelEventPresets.isPresent())
+		return;
+
+	for (std::string preset : _kernelEventPresets) {
+		try {
+			for (std::string event : _kernelEventPresetMap.at(preset)) {
+				if (event == "__syscalls") {
+					enableSyscalls = true;
+					continue;
+				}
+				_enabledEventNames.insert(event);
+			}
+		} catch(std::out_of_range &e) {
+			FatalErrorHandler::fail("CTF: Kernel: The preset \"", preset, "\" is not valid");
+		}
+	}
+
+	// Enable all events starting with "sys_" (all syscall events) but the
+	// generic "sys_enter" and "sys_exit". We prefer enabling syscall
+	// specific events e.g. sys_enter_open/sys_exit_open rather than the
+	// generic ones sys_enter/sys_exit because generic events always have
+	// six arguemnts, even if the specific syscall tracepoint has less.
+	if (enableSyscalls) {
+		kernel_event_map_t::iterator it;
+		for (it = _kernelEventMap.begin(); it != _kernelEventMap.end(); it++) {
+			if (it->first.rfind("sys_", 0) == 0) {
+				if (it->first == "sys_enter" || it->first == "sys_exit")
+					continue;
+				_enabledEventNames.insert(it->first);
+			}
+		}
+	}
+}
+
+void CTFAPI::CTFKernelMetadata::loadEnabledEventsFromFile()
 {
 	std::string line;
 	std::ifstream streamFile;
+	size_t enabledEventsAfter, enabledEventsBefore;
 
-	streamFile.open (file);
+	if (!_kernelEventFile.isPresent())
+		return;
 
+	std::string file = _kernelEventFile.getValue().c_str();
+
+	streamFile.open(file.c_str());
 	if (!streamFile.is_open()) {
-		return false;
+		FatalErrorHandler::fail(
+			"CTF: Kernel: Kernel tracepoints file provided but it could not be opened: ",
+			strerror(errno)
+		);
 	}
+
+	enabledEventsBefore = _enabledEventNames.size();
 
 	while (std::getline(streamFile, line)) {
 		std::string trimmedLine = trim(line);
-
 		if (trimmedLine[0] == '#' || trimmedLine == "")
 			continue;
 
-		try {
-			auto const& entry = _idMap.at(trimmedLine);
-			ctf_kernel_event_id_t id = entry.first;
-			_enabledEventIds.push_back(id);
-			_enabledEventNames.push_back(trimmedLine);
-		} catch(std::out_of_range &e) {
-			FatalErrorHandler::fail("CTF: Kernel: The event \"", line, "\" is not found into the kernel tracepoint definition file");
-		}
+		_enabledEventNames.insert(trimmedLine);
 	}
+
+	enabledEventsAfter = _enabledEventNames.size();
 
 	streamFile.close();
 
 	FatalErrorHandler::warnIf(
-		_enabledEventIds.size() == 0,
+		enabledEventsBefore == enabledEventsAfter,
 		"CTF: Kernel: Kernel tracepoints file found, but no event enabled."
 	);
+}
+
+void CTFAPI::CTFKernelMetadata::excludeEvents()
+{
+	if (!_kernelExcludedEvents.isPresent())
+		return;
+
+	for (std::string event : _kernelExcludedEvents) {
+		_enabledEventNames.erase(event);
+	}
+}
+
+void CTFAPI::CTFKernelMetadata::translateEvents()
+{
+	for (std::string eventName : _enabledEventNames) {
+		try {
+			auto const& entry = _kernelEventMap.at(eventName);
+			ctf_kernel_event_id_t id = entry.first;
+			_enabledEventIds.push_back(id);
+		} catch(std::out_of_range &e) {
+			FatalErrorHandler::fail("CTF: Kernel: The event \"", eventName, "\" is not found into the kernel tracepoint definition file");
+		}
+	}
+}
+
+bool CTFAPI::CTFKernelMetadata::loadEnabledEvents()
+{
+	loadEventPresets();
+	loadEnabledEventsFromFile();
+	excludeEvents();
+
+	translateEvents();
 
 	return _enabledEventIds.size() > 0;
 }
@@ -256,7 +356,7 @@ CTFAPI::CTFKernelMetadata::CTFKernelMetadata()
 {
 	bool sysInfo    = getSystemInformation();
 	bool loadDefs   = loadKernelDefsFile(defaultKernelDefsFileName);
-	bool loadEvents = loadEnabledEvents(defaultEnabledEventsFileName);
+	bool loadEvents = loadEnabledEvents();
 
 	checkBootId();
 
@@ -303,7 +403,7 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
 	fprintf(f, meta_stream, CTFKernelStreamId);
 
 	for (std::string event : _enabledEventNames) {
-		auto const& entry = _idMap.at(event);
+		auto const& entry = _kernelEventMap.at(event);
 		fprintf(f, meta_event,
 			event.c_str(),       // event name
 			entry.first,         // event id

@@ -32,11 +32,11 @@
 #include "tasks/TasktypeData.hpp"
 
 
-static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFUserMetadata *metadata)
-{
-	// TODO perform refinement based on the upcoming Nanos6 JSON
-	// TODO add custom user-defined events based JSON
-}
+//static void refineCTFEvents(__attribute__((unused)) CTFAPI::CTFUserMetadata *metadata)
+//{
+//	// TODO perform refinement based on the upcoming Nanos6 JSON
+//	// TODO add custom user-defined events based JSON
+//}
 
 static void initializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata)
 {

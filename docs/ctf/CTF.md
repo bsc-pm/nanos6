@@ -129,6 +129,7 @@ Thread Id
 Shows the thread Id (TID) of the thread that was running in each core.
 Be aware that this view only shows the thread placement according to Nanos6 perspective, not the OS perspective.
 This means that even if this view shows a thread running uninterruptedly in a core for a long time, the system might have preempted the Nanos6 thread by another system thread a number of times without this being displayed in the view.
+Please, use the "Linux Kernel Thread Ids" view to see system-wide TIDs.
 
 Runtime Status Simple
 ---------------------
@@ -193,3 +194,31 @@ This flushing can occur in a number of places within the Nanos6 core, either bec
 
 This view shows exactly when the flushing happened.
 If attempting to write the event A into the Nanos6 event buffer triggers a flush, the produced Nanos6 trace will first show the event that triggered the flush followed by the flushing events.
+
+Kernel Preemptions
+------------------
+
+Uses Linux Kernel events to show preemptions affecting the cores where the traced application runs.
+Preemptions include interruptions and both user and kernel threads.
+Interrupts will be shown as "IRQ" and "Soft IRQ".
+IRQs are run in interrupt context.
+Soft IRQs are deferred interrupt work that run out of interrupt context.
+
+This view requires the Linux Kernel "preemptions" preset (interrupts and threads) or the "context\_switch" preset (only threads).
+If using the "context\_switch" preset, Paraver might warn about not finding interrupt events, but it is safe to inspect the view.
+
+Kernel Thread Ids
+------------------
+
+Uses Linux Kernel events to show the Thread id (TID) of the running thread in each core used by Nanos6.
+
+This view requires the Linux Kernel "context\_switch" preset.
+
+Kernel System Calls
+------------------
+
+Uses Linux Kernel events to show the system calls performed by each thread on cores used by Nanos6.
+In this view, all threads but the traced application will be displayed as "Other threads" to enhance readability of system calls.
+
+This view requires the Linux Kernel "syscalls" preset to trace all system calls.
+If the user only wants to trace a set of syscalls, it can instead specify the "context\_switch" preset and provide a list of system call events manually using the `instrument.ctf.events.kernel.file` option in the Nanos6 configuration file.

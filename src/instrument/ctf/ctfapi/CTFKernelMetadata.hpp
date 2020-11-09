@@ -14,10 +14,13 @@
 
 #include "CTFTypes.hpp"
 #include "CTFMetadata.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 namespace CTFAPI {
 	class CTFKernelMetadata : public CTFMetadata {
 	private:
+		typedef std::map<std::string, std::pair<ctf_kernel_event_id_t, std::string> > kernel_event_map_t;
+
 		static const char *meta_header;
 		static const char *meta_typedefs;
 		static const char *meta_trace;
@@ -27,7 +30,10 @@ namespace CTFAPI {
 		static const char *meta_event;
 
 		static const char *defaultKernelDefsFileName;
-		static const char *defaultEnabledEventsFileName;
+		static ConfigVariableList<std::string> _kernelEventPresets;
+		static ConfigVariable<std::string> _kernelEventFile;
+		static ConfigVariableList<std::string> _kernelExcludedEvents;
+		static std::map<std::string, std::vector<std::string> > _kernelEventPresetMap;
 
 		bool _enabled;
 		std::string _kernelDefsBootId;
@@ -36,15 +42,19 @@ namespace CTFAPI {
 		std::string _kernelVersion;
 		std::string _kernelRelease;
 
-		std::map<std::string, std::pair<ctf_kernel_event_id_t, std::string> > _idMap;
+		kernel_event_map_t _kernelEventMap;
 		std::vector<ctf_kernel_event_id_t> _enabledEventIds;
-		std::vector<std::string> _enabledEventNames;
+		std::set<std::string> _enabledEventNames;
 		std::vector<ctf_kernel_event_size_t> _eventSizes;
 
 		void checkBootId();
 		bool getSystemInformation();
 		bool loadKernelDefsFile(const char *file);
-		bool loadEnabledEvents(const char *file);
+		bool loadEnabledEvents();
+		void loadEnabledEventsFromFile();
+		void loadEventPresets();
+		void excludeEvents();
+		void translateEvents();
 	public:
 		CTFKernelMetadata();
 		~CTFKernelMetadata()
@@ -68,7 +78,7 @@ namespace CTFAPI {
 
 		ctf_kernel_event_id_t getEventIdByName(std::string eventName) const
 		{
-			auto const& entry = _idMap.at(eventName);
+			auto const& entry = _kernelEventMap.at(eventName);
 			return entry.first;
 		}
 
