@@ -7,11 +7,12 @@
 #ifndef MEMORY_ALLOCATOR_HPP
 #define MEMORY_ALLOCATOR_HPP
 
+#include <cstdlib>
 #include <malloc.h>
-#include <stdlib.h>
+#include <memory>
 
-#include "hardware/HardwareInfo.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "lowlevel/Padding.hpp"
 
 class MemoryAllocator {
 public:
@@ -35,15 +36,13 @@ public:
 
 	static inline void *alloc(size_t size)
 	{
-		static size_t cacheLineSize = HardwareInfo::getCacheLineSize();
-
 		void *ptr;
 
-		if (size < cacheLineSize / 2) {
+		if (size < CACHELINE_SIZE / 2) {
 			ptr = malloc(size);
 			FatalErrorHandler::failIf(ptr == nullptr, " when trying to allocate memory");
 		} else {
-			int rc = posix_memalign(&ptr, cacheLineSize, size);
+			int rc = posix_memalign(&ptr, CACHELINE_SIZE, size);
 			FatalErrorHandler::handle(rc, " when trying to allocate memory");
 		}
 
@@ -71,5 +70,8 @@ public:
 		MemoryAllocator::free(ptr, sizeof(T));
 	}
 };
+
+template<typename T>
+using TemplateAllocator = std::allocator<T>;
 
 #endif // MEMORY_ALLOCATOR_HPP

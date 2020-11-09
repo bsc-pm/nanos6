@@ -9,22 +9,25 @@
 
 #include "UnsyncScheduler.hpp"
 #include "scheduling/ready-queues/DeadlineQueue.hpp"
+#include "support/Containers.hpp"
 
 class Taskfor;
 
 class HostUnsyncScheduler : public UnsyncScheduler {
-	std::vector<Taskfor *> _groupSlots;
+	typedef Container::vector<Taskfor *> taskfor_group_slots_t;
+
+	taskfor_group_slots_t _groupSlots;
 
 public:
-	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
-		: UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
+	HostUnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor) :
+		UnsyncScheduler(policy, enablePriority, enableImmediateSuccessor)
 	{
 		size_t groups = CPUManager::getNumTaskforGroups();
 
-		_groupSlots = std::vector<Taskfor *>(groups, nullptr);
+		_groupSlots = taskfor_group_slots_t(groups, nullptr);
 
 		if (enableImmediateSuccessor) {
-			_immediateSuccessorTaskfors = std::vector<Task *>(groups*2, nullptr);
+			_immediateSuccessorTaskfors = immediate_successor_tasks_t(groups*2, nullptr);
 		}
 
 		_deadlineTasks = new DeadlineQueue(policy);

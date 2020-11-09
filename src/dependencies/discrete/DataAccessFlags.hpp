@@ -8,7 +8,8 @@
 #define DATA_ACCESS_FLAGS_HPP
 
 #include <cstdint>
-#include <stack>
+
+#include "support/Containers.hpp"
 
 struct DataAccess;
 
@@ -69,6 +70,6 @@ struct DataAccessMessage {
 	}
 };
 
-typedef std::stack<DataAccessMessage> mailbox_t;
+typedef Container::stack<DataAccessMessage> mailbox_t;
 
 #endif // DATA_ACCESS_FLAGS_HPP

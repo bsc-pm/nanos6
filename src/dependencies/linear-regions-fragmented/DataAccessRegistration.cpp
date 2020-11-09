@@ -26,6 +26,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "memory/directory/Directory.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "support/Containers.hpp"
 #include "tasks/Task.hpp"
 
 #include <ClusterManager.hpp>
@@ -1967,7 +1968,7 @@ namespace DataAccessRegistration {
 
 		bool hasAllocatedReductionInfo = false;
 		ReductionInfo *previousReductionInfo = nullptr;
-		std::vector<DataAccess*> previousReductionAccesses;
+		Container::vector<DataAccess *> previousReductionAccesses;
 
 		bool local = false;
 		#ifndef NDEBUG

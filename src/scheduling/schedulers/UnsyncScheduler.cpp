@@ -25,7 +25,7 @@ UnsyncScheduler::UnsyncScheduler(
 	}
 
 	if (enableImmediateSuccessor) {
-		_immediateSuccessorTasks = std::vector<Task *>(CPUManager::getTotalCPUs(), nullptr);
+		_immediateSuccessorTasks = immediate_successor_tasks_t(CPUManager::getTotalCPUs(), nullptr);
 	}
 }
 

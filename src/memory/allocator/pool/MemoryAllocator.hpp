@@ -8,6 +8,7 @@
 #define MEMORY_ALLOCATOR_HPP
 
 #include <map>
+#include <memory>
 #include <vector>
 
 #include "lowlevel/SpinLock.hpp"
@@ -62,5 +63,8 @@ public:
 		MemoryAllocator::free(ptr, sizeof(T));
 	}
 };
+
+template<typename T>
+using TemplateAllocator = std::allocator<T>;
 
 #endif // MEMORY_ALLOCATOR_HPP

@@ -1277,6 +1277,7 @@ noinst_HEADERS = \
 	src/scheduling/schedulers/device/DeviceScheduler.hpp \
 	src/scheduling/schedulers/device/DeviceUnsyncScheduler.hpp \
 	src/support/ConcurrentUnorderedList.hpp \
+	src/support/Containers.hpp \
 	src/support/GenericFactory.hpp \
 	src/support/GlobalLock.hpp \
 	src/support/InstrumentedThread.hpp \

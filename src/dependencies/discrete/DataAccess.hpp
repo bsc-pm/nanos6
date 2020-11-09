@@ -26,37 +26,46 @@ class Task;
 struct BottomMapEntry;
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
+//! WARNING: When modifying this structure, please mind to pack it as much as possible.
+//! There might me thousands of allocations of this struct, and size will have a noticeable effect on performance.
 struct DataAccess {
 private:
-	//! The type of the access
-	DataAccessType _type;
-
+	//! 16-byte fields
 	//! The region covered by the access
 	DataAccessRegion _region;
 
+	//! 8-byte fields
 	//! The originator of the access
 	Task *_originator;
 
-	//! Reduction-specific information of current access
-	ReductionInfo *_reductionInfo;
-
-	//! Reduction stuff
-	size_t _reductionLength;
-	reduction_type_and_operator_index_t _reductionOperator;
-	reduction_index_t _reductionIndex;
+	//! C++ allows anonymous unions to save space when two fields of a struct are not used at once.
+	//! We can do this here, as assigning the reductionInfo will be done always when the length is not
+	//! needed anymore.
+	//! Warning: Take care to correctly initialize this union when copying or constructing this class.
+	union {
+		//! Reduction-specific information of current access
+		ReductionInfo *_reductionInfo;
+		size_t _reductionLength;
+	};
 
 	//! Next task with an access matching this one
 	std::atomic<DataAccess *> _successor;
 	std::atomic<DataAccess *> _child;
 
+	//! 4-byte fields
+	//! Reduction information
+	reduction_type_and_operator_index_t _reductionOperator;
+	reduction_index_t _reductionIndex;
+
 	//! Atomic flags for Read / Write / Deletable / Finished
 	std::atomic<access_flags_t> _accessFlags;
 
+	//! 1-byte fields
+	//! The type of the access
+	DataAccessType _type;
+
 	//! Instrumentation specific data
 	Instrument::data_access_id_t _instrumentDataAccessId;
-
-	//! Location of the access
-	MemoryPlace const *_location;
 
 	DataAccessMessage inAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	void outAutomata(access_flags_t flags, access_flags_t oldFlags, DataAccessMessage &message, bool weak);
@@ -68,14 +77,13 @@ private:
 
 public:
 	DataAccess(DataAccessType type, Task *originator, void *address, size_t length, bool weak) :
-		_type(type),
 		_region(address, length),
 		_originator(originator),
 		_reductionInfo(nullptr),
 		_successor(nullptr),
 		_child(nullptr),
 		_accessFlags(0),
-		_location(nullptr)
+		_type(type)
 	{
 		assert(originator != nullptr);
 
@@ -84,14 +92,13 @@ public:
 	}
 
 	DataAccess(const DataAccess &other) :
-		_type(other.getType()),
 		_region(other.getAccessRegion()),
 		_originator(other.getOriginator()),
 		_reductionInfo(other.getReductionInfo()),
 		_successor(other.getSuccessor()),
 		_child(other.getChild()),
 		_accessFlags(other.getFlags()),
-		_location(other.getLocation())
+		_type(other.getType())
 	{
 	}
 
@@ -132,7 +139,6 @@ public:
 
 	inline void setReductionInfo(ReductionInfo *reductionInfo)
 	{
-		assert(_reductionInfo == nullptr);
 		assert(_type == REDUCTION_ACCESS_TYPE);
 		_reductionInfo = reductionInfo;
 	}
@@ -215,15 +221,9 @@ public:
 		return _accessFlags;
 	}
 
-	void setLocation(MemoryPlace const *location)
-	{
-		_location = location;
-		Instrument::newDataAccessLocation(_instrumentDataAccessId, location);
-	}
-
 	MemoryPlace const *getLocation() const
 	{
-		return _location;
+		return nullptr;
 	}
 
 	MemoryPlace const *getOutputLocation() const
@@ -237,5 +237,8 @@ public:
 	}
 };
 
+// Assert that when using non-instrumented builds of nanos6 (where data_access_id_t is not an empty struct)
+// the DataAccess structure is packed to 64 bytes to prevent false sharing.
+static_assert(sizeof(Instrument::data_access_id_t) > 1 || sizeof(DataAccess) == 64, "DataAccess is not packed correctly");
 
 #endif // DATA_ACCESS_HPP

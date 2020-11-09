@@ -9,14 +9,14 @@
 
 #include <atomic>
 #include <cassert>
+#include <functional>
 #include <mutex>
-#include <unordered_map>
-#include <array>
 
 #include "BottomMapEntry.hpp"
 #include "CommutativeSemaphore.hpp"
 #include "TaskDataAccessesInfo.hpp"
 #include "lowlevel/TicketSpinLock.hpp"
+#include "support/Containers.hpp"
 
 #include <DependencySystem.hpp>
 #include <MemoryAllocator.hpp>
@@ -24,8 +24,8 @@
 struct DataAccess;
 
 struct TaskDataAccesses {
-	typedef std::unordered_map<void *, BottomMapEntry> bottom_map_t;
-	typedef std::unordered_map<void *, DataAccess> access_map_t;
+	typedef Container::unordered_map<void *, BottomMapEntry> bottom_map_t;
+	typedef Container::unordered_map<void *, DataAccess> access_map_t;
 
 #ifndef NDEBUG
 	enum flag_bits_t {

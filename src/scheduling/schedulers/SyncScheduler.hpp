@@ -29,7 +29,7 @@ protected:
 	UnsyncScheduler *_scheduler;
 
 private:
-	typedef boost::lockfree::spsc_queue<Task *> add_queue_t;
+	typedef boost::lockfree::spsc_queue<Task *, boost::lockfree::allocator<TemplateAllocator<Task *>>> add_queue_t;
 
 	//! Total number of computePlaces
 	uint64_t _totalComputePlaces;

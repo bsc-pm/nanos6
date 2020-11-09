@@ -8,21 +8,24 @@
 #define UNSYNC_SCHEDULER_HPP
 
 #include <cassert>
-#include <vector>
 
 #include "hardware/places/ComputePlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "scheduling/ready-queues/DeadlineQueue.hpp"
+#include "support/Containers.hpp"
 #include "tasks/Task.hpp"
-
 
 class UnsyncScheduler {
 protected:
-	std::vector<Task *> _immediateSuccessorTasks;
-	std::vector<Task *> _immediateSuccessorTaskfors;
+	typedef Container::vector<Task *> immediate_successor_tasks_t;
+
+	immediate_successor_tasks_t _immediateSuccessorTasks;
+	immediate_successor_tasks_t _immediateSuccessorTaskfors;
+
 	ReadyQueue *_readyTasks;
 	DeadlineQueue *_deadlineTasks;
+
 	bool _enableImmediateSuccessor;
 	bool _enablePriority;
 

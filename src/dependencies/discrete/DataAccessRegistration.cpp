@@ -29,7 +29,6 @@
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentDependencySubsystemEntryPoints.hpp>
 #include <InstrumentTaskId.hpp>
-#include <MemoryAllocator.hpp>
 #include <ObjectAllocator.hpp>
 
 #pragma GCC visibility push(hidden)
@@ -541,16 +540,16 @@ namespace DataAccessRegistration {
 				// Get the reduction info from the bottom map. If there is none, check
 				// if our parent has one (for weak reductions)
 				ReductionInfo *currentReductionInfo = itMap->second._reductionInfo;
+				reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
+				size_t length = access->getReductionLength();
+
 				if (currentReductionInfo == nullptr) {
 					currentReductionInfo = reductionInfo;
 					// Inherited reductions must be equal
-					assert(reductionInfo == nullptr || (reductionInfo->getTypeAndOperatorIndex() == access->getReductionOperator() && reductionInfo->getOriginalLength() == access->getReductionLength()));
+					assert(reductionInfo == nullptr || (reductionInfo->getTypeAndOperatorIndex() == typeAndOpIndex && reductionInfo->getOriginalLength() == length));
 				} else {
 					reductionInfo = currentReductionInfo;
 				}
-
-				reduction_type_and_operator_index_t typeAndOpIndex = access->getReductionOperator();
-				size_t length = access->getReductionLength();
 
 				if (currentReductionInfo == nullptr || currentReductionInfo->getTypeAndOperatorIndex() != typeAndOpIndex || currentReductionInfo->getOriginalLength() != length) {
 					currentReductionInfo = allocateReductionInfo(accessType, access->getReductionIndex(), typeAndOpIndex,
@@ -733,7 +732,7 @@ namespace DataAccessRegistration {
 			FatalErrorHandler::failIf(access == nullptr,
 				"Attempt to release an access that was not originally registered in the task");
 
-			FatalErrorHandler::failIf(access->getType() != accessType,
+			FatalErrorHandler::failIf(access->getType() != accessType || access->isWeak() != weak,
 				"It is not possible to partially release a dependence.");
 
 			// Release reduction storage before finalizing, as we might delete the ReductionInfo later

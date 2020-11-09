@@ -18,15 +18,27 @@ AC_DEFUN([AC_CHECK_CACHE],
 				cache_size=$(</sys/devices/system/cpu/cpu0/cache/index3/coherency_line_size)
 
 				if [ test -z "$cache_size" ] || [ test "$cache_size" -lt 1 ] ; then
+					cache_size=0
+				fi
+			],[
+				cache_size=0
+			])
+
+			if [ test -z "$cache_size" ] || [ test "$cache_size" -lt 1 ] ; then
+				AC_CHECK_FILE([/sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size], [
+					cache_size=$(</sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size)
+
+					if [ test -z "$cache_size" ] || [ test "$cache_size" -lt 1 ] ; then
+						AC_MSG_WARN([No cacheline found. Please specify with CACHELINE_WIDTH.])
+						AC_MSG_WARN([Falling back to safe default.])
+						cache_size=128
+					fi
+				],[
 					AC_MSG_WARN([No cacheline found. Please specify with CACHELINE_WIDTH.])
 					AC_MSG_WARN([Falling back to safe default.])
 					cache_size=128
-				fi
-			],[
-				AC_MSG_WARN([No cacheline found. Please specify with CACHELINE_WIDTH.])
-				AC_MSG_WARN([Falling back to safe default.])
-				cache_size=128
-			])
+				])
+			fi
 		fi
 
 		AC_MSG_CHECKING([the host cache line size])

@@ -80,4 +80,62 @@ public:
 	}
 };
 
+template <class T>
+class TemplateAllocator {
+public:
+	using value_type = T;
+	using reference = T &;
+	using const_reference = T const&;
+	using pointer = T *;
+	using const_pointer = T const*;
+	using size_type = std::size_t;
+	using difference_type = std::ptrdiff_t;
+
+	TemplateAllocator() = default;
+	TemplateAllocator(const TemplateAllocator &) = default;
+
+	inline T *allocate(size_t n, const void* = nullptr)
+	{
+		return static_cast<T*>(MemoryAllocator::alloc(n * sizeof(T)));
+	}
+
+	inline void deallocate(void *t, size_t size)
+	{
+		assert(t != nullptr);
+		MemoryAllocator::free(t, size * sizeof(T));
+	}
+
+	template<class U>
+	TemplateAllocator(const TemplateAllocator<U>&) {}
+
+	// Legacy C++98/C++03 hack for rebinding operators that is needed for
+	// repurposing allocator instances in older Boost versions.
+	template <class U>
+	struct rebind {typedef TemplateAllocator<U> other;};
+
+	template <class U, class ...Args>
+	void construct(U* p, Args&& ...args) 
+	{
+		::new(p) U(std::forward<Args>(args)...);
+	}
+
+	template <class U>
+	void destroy(U* p) noexcept
+	{
+		p->~U();
+	}
+};
+
+template <class T, class U>
+inline bool operator==(TemplateAllocator<T> const&, TemplateAllocator<U> const&) noexcept
+{
+    return true;
+}
+
+template <class T, class U>
+inline bool operator!=(TemplateAllocator<T> const& x, TemplateAllocator<U> const& y) noexcept
+{
+    return !(x == y);
+}
+
 #endif // MEMORY_ALLOCATOR_HPP
