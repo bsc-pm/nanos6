@@ -257,7 +257,7 @@ class stats(bt2._UserSinkComponent):
 	def _user_consume(self):
 		msg = next(self._it)
 
-		if self.__exitHandler().exit():
+		if self.__exitHandler.exit():
 			# TODO exit using babeltrace2 API
 			atexit.unregister(self._finalize)
 			self._finalize()
