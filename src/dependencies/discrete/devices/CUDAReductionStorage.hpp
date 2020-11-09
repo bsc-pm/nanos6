@@ -10,38 +10,38 @@
 #ifndef CUDA_REDUCTION_STORAGE_HPP
 #define CUDA_REDUCTION_STORAGE_HPP
 
-#include "../DeviceReductionStorage.hpp"
+#include "dependencies/discrete/DeviceReductionStorage.hpp"
 
 class CUDAReductionStorage : public DeviceReductionStorage {
-    public:
-		struct ReductionSlot {
-			void *storage = nullptr;
-			bool initialized = false;
-			int deviceId = 0;
-		};
+public:
+	struct ReductionSlot {
+		void *storage = nullptr;
+		bool initialized = false;
+		int deviceId = 0;
+	};
 
-		typedef std::unordered_map<Task *, size_t> assignation_map_t;
-		typedef ReductionSlot slot_t;
+	typedef std::unordered_map<Task *, size_t> assignation_map_t;
+	typedef ReductionSlot slot_t;
 
-		CUDAReductionStorage(void * address, size_t length, size_t paddedLength,
-			std::function<void(void*, size_t)> initializationFunction,
-			std::function<void(void*, void*, size_t)> combinationFunction);
+	CUDAReductionStorage(void *address, size_t length, size_t paddedLength,
+		std::function<void(void *, size_t)> initializationFunction,
+		std::function<void(void *, void *, size_t)> combinationFunction);
 
-		void * getFreeSlotStorage(Task * task, size_t slotIndex, ComputePlace * destinationComputePlace);
+	void *getFreeSlotStorage(Task *task, size_t slotIndex, ComputePlace *destinationComputePlace);
 
-		void combineInStorage(char * combineDestination);
+	void combineInStorage(void *combineDestination);
 
-		void releaseSlotsInUse(Task * task, ComputePlace * computePlace);
+	void releaseSlotsInUse(Task *task, ComputePlace *computePlace);
 
-		size_t getFreeSlotIndex(Task * task, ComputePlace * destinationComputePlace);
+	size_t getFreeSlotIndex(Task *task, ComputePlace *destinationComputePlace);
 
-		~CUDAReductionStorage() {};
+	~CUDAReductionStorage(){};
 
-	private:
-		ReductionInfo::spinlock_t _lock;
-		std::vector<slot_t> _slots;
-		assignation_map_t _currentAssignations;
-		std::vector<std::vector<size_t> > _freeSlotIndices;
+private:
+	ReductionInfo::spinlock_t _lock;
+	std::vector<slot_t> _slots;
+	assignation_map_t _currentAssignations;
+	std::vector<std::vector<size_t>> _freeSlotIndices;
 };
 
 #endif // CUDA_REDUCTION_STORAGE_HPP

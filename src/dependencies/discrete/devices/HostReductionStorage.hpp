@@ -7,37 +7,36 @@
 #ifndef HOST_REDUCTION_STORAGE_HPP
 #define HOST_REDUCTION_STORAGE_HPP
 
-#include "../DeviceReductionStorage.hpp"
+#include "dependencies/discrete/DeviceReductionStorage.hpp"
 #include "support/bitset/AtomicBitset.hpp"
 
 class HostReductionStorage : public DeviceReductionStorage {
-    public:
-		struct ReductionSlot {
-			void *storage = nullptr;
-			bool initialized = false;
-		};
+public:
+	struct ReductionSlot {
+		void *storage = nullptr;
+		bool initialized = false;
+	};
 
-		typedef ReductionSlot slot_t;
+	typedef ReductionSlot slot_t;
 
-        HostReductionStorage(void * address, size_t length, size_t paddedLength,
-			std::function<void(void*, size_t)> initializationFunction,
-			std::function<void(void*, void*, size_t)> combinationFunction);
+	HostReductionStorage(void *address, size_t length, size_t paddedLength,
+		std::function<void(void *, size_t)> initializationFunction,
+		std::function<void(void *, void *, size_t)> combinationFunction);
 
-		void * getFreeSlotStorage(Task * task, size_t slotIndex, ComputePlace * destinationComputePlace);
+	void *getFreeSlotStorage(Task *task, size_t slotIndex, ComputePlace *destinationComputePlace);
 
-		void combineInStorage(char * combineDestination);
+	void combineInStorage(void *combineDestination);
 
-		void releaseSlotsInUse(Task * task, ComputePlace * computePlace);
+	void releaseSlotsInUse(Task *task, ComputePlace *computePlace);
 
-		size_t getFreeSlotIndex(Task * task, ComputePlace * destinationComputePlace);
+	size_t getFreeSlotIndex(Task *task, ComputePlace *destinationComputePlace);
 
-        ~HostReductionStorage() {};
+	~HostReductionStorage(){};
 
-	private:
-		ReductionInfo::spinlock_t _lock;
-		std::vector<slot_t> _slots;
-		std::vector<long int> _currentCpuSlotIndices;
-		AtomicBitset<> _freeSlotIndices;
+private:
+	std::vector<slot_t> _slots;
+	std::vector<long int> _currentCpuSlotIndices;
+	AtomicBitset<> _freeSlotIndices;
 };
 
 #endif // HOST_REDUCTION_STORAGE_HPP

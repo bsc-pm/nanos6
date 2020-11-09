@@ -66,15 +66,14 @@ void ReductionInfo::combine()
 	std::lock_guard<spinlock_t> guard(_lock);
 	assert(_address != nullptr);
 
-	char *originalAddress = (char*)_address;
-
-	for(size_t i = 0; i < nanos6_device_type_num; ++i) {
+	for (size_t i = 0; i < nanos6_device_type_num; ++i) {
 		if (_deviceStorages[i] != nullptr)
-			_deviceStorages[i]->combineInStorage(originalAddress);
+			_deviceStorages[i]->combineInStorage(_address);
 	}
 }
 
-void ReductionInfo::releaseSlotsInUse(Task* task, ComputePlace* computePlace) {
+void ReductionInfo::releaseSlotsInUse(Task *task, ComputePlace *computePlace)
+{
 	nanos6_device_t deviceType = computePlace->getType();
 
 	assert(deviceType < nanos6_device_type_num);
@@ -83,17 +82,18 @@ void ReductionInfo::releaseSlotsInUse(Task* task, ComputePlace* computePlace) {
 	storage->releaseSlotsInUse(task, computePlace);
 }
 
-DeviceReductionStorage * ReductionInfo::allocateDeviceStorage(nanos6_device_t deviceType) {
+DeviceReductionStorage *ReductionInfo::allocateDeviceStorage(nanos6_device_t deviceType)
+{
 	assert(_deviceStorages[deviceType] == nullptr);
-	DeviceReductionStorage * storage = nullptr;
+	DeviceReductionStorage *storage = nullptr;
 
-	switch(deviceType) {
-		case nanos6_device_t::nanos6_host_device:
+	switch (deviceType) {
+		case nanos6_host_device:
 			storage = new HostReductionStorage(_address, _length, _paddedLength,
 				_initializationFunction, _combinationFunction);
 			break;
 #if USE_CUDA
-		case nanos6_device_t::nanos6_cuda_device:
+		case nanos6_cuda_device:
 			storage = new CUDAReductionStorage(_address, _length, _paddedLength,
 				_initializationFunction, _combinationFunction);
 			break;
@@ -109,11 +109,12 @@ DeviceReductionStorage * ReductionInfo::allocateDeviceStorage(nanos6_device_t de
 	return storage;
 }
 
-void * ReductionInfo::getFreeSlot(Task* task, ComputePlace* computePlace) {
+void *ReductionInfo::getFreeSlot(Task *task, ComputePlace *computePlace)
+{
 	nanos6_device_t deviceType = computePlace->getType();
 
-	DeviceReductionStorage * storage = _deviceStorages[deviceType];
-	if(storage == nullptr) {
+	DeviceReductionStorage *storage = _deviceStorages[deviceType];
+	if (storage == nullptr) {
 		std::lock_guard<spinlock_t> guard(_lock);
 
 		// Check again because of possible races.
@@ -127,7 +128,7 @@ void * ReductionInfo::getFreeSlot(Task* task, ComputePlace* computePlace) {
 
 	size_t index = storage->getFreeSlotIndex(task, computePlace);
 
-	void * privateStorage = storage->getFreeSlotStorage(task, index, computePlace);
+	void *privateStorage = storage->getFreeSlotStorage(task, index, computePlace);
 	assert(privateStorage != nullptr);
 
 	return privateStorage;

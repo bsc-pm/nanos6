@@ -10,8 +10,6 @@
 
 #include <functional>
 #include <atomic>
-
-#include "ReductionSpecific.hpp"
 #include "DataAccessRegion.hpp"
 #include "ReductionSpecific.hpp"
 #include "executors/threads/CPUManager.hpp"
@@ -21,69 +19,63 @@
 
 class DeviceReductionStorage;
 
-class ReductionInfo
-{
-	public:
+class ReductionInfo {
+public:
+	typedef PaddedSpinLock<> spinlock_t;
 
-		typedef PaddedSpinLock<> spinlock_t;
+	typedef boost::dynamic_bitset<> reduction_slot_set_t;
 
-		typedef boost::dynamic_bitset<> reduction_slot_set_t;
+	ReductionInfo(void *address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
+		std::function<void(void *, void *, size_t)> initializationFunction,
+		std::function<void(void *, void *, size_t)> combinationFunction);
 
-		ReductionInfo(void * address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
-			std::function<void(void*, void*, size_t)> initializationFunction,
-			std::function<void(void*, void*, size_t)> combinationFunction);
+	~ReductionInfo();
 
-		~ReductionInfo();
+	reduction_type_and_operator_index_t getTypeAndOperatorIndex() const;
 
-		reduction_type_and_operator_index_t getTypeAndOperatorIndex() const;
+	const void *getOriginalAddress() const;
 
-		const void * getOriginalAddress() const;
+	size_t getOriginalLength() const;
 
-		size_t getOriginalLength() const;
+	void combine();
 
-		void combine();
+	void releaseSlotsInUse(Task *task, ComputePlace *computePlace);
 
-		void releaseSlotsInUse(Task *task, ComputePlace* computePlace);
+	void *getFreeSlot(Task *task, ComputePlace *computePlace);
 
-		void * getFreeSlot(Task *task, ComputePlace* computePlace);
+	void incrementRegisteredAccesses();
 
-		void incrementRegisteredAccesses();
+	bool incrementUnregisteredAccesses();
 
-		bool incrementUnregisteredAccesses();
+	bool markAsClosed();
 
-		bool markAsClosed();
+	bool finished();
 
-		bool finished();
+	const DataAccessRegion &getOriginalRegion() const
+	{
+		return _region;
+	}
 
-		const DataAccessRegion& getOriginalRegion() const
-		{
-			return _region;
-		}
+private:
+	DataAccessRegion _region;
 
-	private:
-		typedef Container::vector<ReductionSlot> slots_t;
-		typedef Container::vector<long int> current_cpu_slot_indices_t;
-		typedef Container::vector<size_t> free_slot_indices_t;
+	void *_address;
 
-		DataAccessRegion _region;
+	const size_t _length;
 
-		void * _address;
+	const size_t _paddedLength;
 
-		const size_t _length;
+	reduction_type_and_operator_index_t _typeAndOperatorIndex;
 
-		const size_t _paddedLength;
+	DeviceReductionStorage *_deviceStorages[nanos6_device_type_num];
 
-		reduction_type_and_operator_index_t _typeAndOperatorIndex;
+	std::function<void(void *, size_t)> _initializationFunction;
+	std::function<void(void *, void *, size_t)> _combinationFunction;
 
-		DeviceReductionStorage *_deviceStorages[nanos6_device_type_num];
+	std::atomic<size_t> _registeredAccesses;
+	spinlock_t _lock;
 
-		std::function<void(void*, size_t)> _initializationFunction;
-		std::function<void(void*, void*, size_t)> _combinationFunction;
-
-		std::atomic<size_t> _registeredAccesses;
-		spinlock_t _lock;
-
-		DeviceReductionStorage * allocateDeviceStorage(nanos6_device_t deviceType);
+	DeviceReductionStorage *allocateDeviceStorage(nanos6_device_t deviceType);
 };
 
 inline void ReductionInfo::incrementRegisteredAccesses()

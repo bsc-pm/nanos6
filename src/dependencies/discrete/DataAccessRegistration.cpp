@@ -706,7 +706,7 @@ namespace DataAccessRegistration {
 	}
 
 	void translateReductionAddresses(Task *task, ComputePlace *computePlace,
-		nanos6_address_translation_entry_t * translationTable,
+		nanos6_address_translation_entry_t *translationTable,
 		int totalSymbols)
 	{
 		assert(task != nullptr);
@@ -714,23 +714,23 @@ namespace DataAccessRegistration {
 		assert(translationTable != nullptr);
 
 		// Initialize translationTable
-		for(int i = 0; i < totalSymbols; ++i)
+		for (int i = 0; i < totalSymbols; ++i)
 			translationTable[i] = {0, 0};
 
 		TaskDataAccesses &accessStruct = task->getDataAccesses();
 
 		assert(!accessStruct.hasBeenDeleted());
 
-		accessStruct.forAll([&](void * address, DataAccess *access) {
-			if(access->getType() == REDUCTION_ACCESS_TYPE && !access->isWeak()) {
-				ReductionInfo * reductionInfo = access->getReductionInfo();
+		accessStruct.forAll([&](void *address, DataAccess *access) {
+			if (access->getType() == REDUCTION_ACCESS_TYPE && !access->isWeak()) {
+				ReductionInfo *reductionInfo = access->getReductionInfo();
 				assert(reductionInfo != nullptr);
 
-				void * translation = reductionInfo->getFreeSlot(task, computePlace);
+				void *translation = reductionInfo->getFreeSlot(task, computePlace);
 
-				for(int j = 0; j < totalSymbols; ++j) {
-					if(access->isInSymbol(j)) {
-						translationTable[j] = { (size_t) address, (size_t) translation };
+				for (int j = 0; j < totalSymbols; ++j) {
+					if (access->isInSymbol(j)) {
+						translationTable[j] = {(size_t)address, (size_t)translation};
 					}
 				}
 			}

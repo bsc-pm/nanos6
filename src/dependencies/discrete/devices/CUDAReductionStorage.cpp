@@ -14,25 +14,28 @@
 #include "hardware/device/cuda/CUDAFunctions.hpp"
 #include "hardware/hwinfo/DeviceInfo.hpp"
 
-CUDAReductionStorage::CUDAReductionStorage(void * address, size_t length, size_t paddedLength,
-			std::function<void(void*, size_t)> initializationFunction,
-			std::function<void(void*, void*, size_t)> combinationFunction) :
+CUDAReductionStorage::CUDAReductionStorage(void *address, size_t length, size_t paddedLength,
+	std::function<void(void *, size_t)> initializationFunction,
+	std::function<void(void *, void *, size_t)> combinationFunction) :
 	DeviceReductionStorage(address, length, paddedLength, initializationFunction, combinationFunction)
 {
-	CUDADeviceInfo * deviceInfoGPU = (CUDADeviceInfo *) HardwareInfo::getDeviceInfo(nanos6_cuda_device);
+	CUDADeviceInfo *deviceInfoGPU = (CUDADeviceInfo *)HardwareInfo::getDeviceInfo(nanos6_cuda_device);
 	assert(deviceInfoGPU != nullptr);
 	int numGPUs = deviceInfoGPU->getComputePlaceCount();
 	assert(numGPUs != 0);
 	_freeSlotIndices.resize(numGPUs, std::vector<size_t>());
 }
 
-void * CUDAReductionStorage::getFreeSlotStorage(__attribute__((unused)) Task * task, size_t slotIndex, ComputePlace * destinationComputePlace)
+void *CUDAReductionStorage::getFreeSlotStorage(
+	__attribute__((unused)) Task *task,
+	size_t slotIndex,
+	ComputePlace *destinationComputePlace)
 {
 	assert(slotIndex < _slots.size());
 	int deviceId = destinationComputePlace->getIndex();
 	int oldDeviceId = 0;
 
-	slot_t& slot = _slots[slotIndex];
+	slot_t &slot = _slots[slotIndex];
 	assert(slot.initialized || slot.storage == nullptr);
 	assert(!slot.initialized || slot.deviceId == deviceId);
 
@@ -40,7 +43,7 @@ void * CUDAReductionStorage::getFreeSlotStorage(__attribute__((unused)) Task * t
 		oldDeviceId = CUDAFunctions::getActiveDevice();
 
 		// Set the GPU we're using if needed.
-		if(oldDeviceId != deviceId) {
+		if (oldDeviceId != deviceId) {
 			CUDAFunctions::setActiveDevice(deviceId);
 		}
 
@@ -49,7 +52,7 @@ void * CUDAReductionStorage::getFreeSlotStorage(__attribute__((unused)) Task * t
 
 		// Allocate temporal host storage. This is needed to transfer the initialized
 		// memory region with the neutral value towards the GPU.
-		void * tmpStorage = CUDAFunctions::mallocHost(_paddedLength);
+		void *tmpStorage = CUDAFunctions::mallocHost(_paddedLength);
 		assert(tmpStorage != nullptr);
 
 		_initializationFunction(tmpStorage, _length);
@@ -62,7 +65,7 @@ void * CUDAReductionStorage::getFreeSlotStorage(__attribute__((unused)) Task * t
 		slot.deviceId = deviceId;
 
 		// Restore old GPU value if needed.
-		if(oldDeviceId != deviceId) {
+		if (oldDeviceId != deviceId) {
 			CUDAFunctions::setActiveDevice(oldDeviceId);
 		}
 	}
@@ -70,30 +73,30 @@ void * CUDAReductionStorage::getFreeSlotStorage(__attribute__((unused)) Task * t
 	return slot.storage;
 }
 
-void CUDAReductionStorage::combineInStorage(char * combineDestination)
+void CUDAReductionStorage::combineInStorage(void *combineDestination)
 {
 	std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
 
 	assert(combineDestination != nullptr);
 
-	if(_slots.size() == 0)
+	if (_slots.size() == 0)
 		return;
 
 	// Temporal storage on which to transfer device memory.
-	void * tmpStorage = CUDAFunctions::mallocHost(_paddedLength);
+	void *tmpStorage = CUDAFunctions::mallocHost(_paddedLength);
 	assert(tmpStorage != nullptr);
 
 	int oldDeviceId = CUDAFunctions::getActiveDevice();
 	int lastDevice = oldDeviceId;
 
-	for(size_t i = 0; i < _slots.size(); ++i) {
-		slot_t& slot = _slots[i];
+	for (size_t i = 0; i < _slots.size(); ++i) {
+		slot_t &slot = _slots[i];
 
 		assert(slot.initialized);
 		assert(slot.storage != nullptr);
-		assert(slot.storage != (void *) combineDestination);
+		assert(slot.storage != combineDestination);
 
-		if(slot.deviceId != lastDevice) {
+		if (slot.deviceId != lastDevice) {
 			CUDAFunctions::setActiveDevice(slot.deviceId);
 			lastDevice = slot.deviceId;
 		}
@@ -102,7 +105,7 @@ void CUDAReductionStorage::combineInStorage(char * combineDestination)
 		CUDAFunctions::memcpy(tmpStorage, slot.storage, _paddedLength, cudaMemcpyDeviceToHost);
 
 		// Combine from temporal host storage
-		_combinationFunction((void *) combineDestination, tmpStorage, _length);
+		_combinationFunction(combineDestination, tmpStorage, _length);
 
 		// Free slot
 		CUDAFunctions::free(slot.storage);
@@ -111,14 +114,14 @@ void CUDAReductionStorage::combineInStorage(char * combineDestination)
 		slot.initialized = false;
 	}
 
-	if(oldDeviceId != lastDevice) {
+	if (oldDeviceId != lastDevice) {
 		CUDAFunctions::setActiveDevice(oldDeviceId);
 	}
 
 	CUDAFunctions::freeHost(tmpStorage);
 }
 
-size_t CUDAReductionStorage::getFreeSlotIndex(Task * task, ComputePlace * destinationComputePlace)
+size_t CUDAReductionStorage::getFreeSlotIndex(Task *task, ComputePlace *destinationComputePlace)
 {
 	std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
 
@@ -127,9 +130,9 @@ size_t CUDAReductionStorage::getFreeSlotIndex(Task * task, ComputePlace * destin
 	long int currentSlotIndex = -1;
 
 	int gpuId = destinationComputePlace->getIndex();
-	assert((size_t) gpuId < _freeSlotIndices.size());
+	assert((size_t)gpuId < _freeSlotIndices.size());
 
-	if(itSlot != _currentAssignations.end())
+	if (itSlot != _currentAssignations.end())
 		currentSlotIndex = itSlot->second;
 
 	if (currentSlotIndex != -1) {
@@ -160,7 +163,7 @@ size_t CUDAReductionStorage::getFreeSlotIndex(Task * task, ComputePlace * destin
 	return freeSlotIndex;
 }
 
-void CUDAReductionStorage::releaseSlotsInUse(Task * task, ComputePlace * computePlace)
+void CUDAReductionStorage::releaseSlotsInUse(Task *task, ComputePlace *computePlace)
 {
 	std::lock_guard<ReductionInfo::spinlock_t> guard(_lock);
 
@@ -168,16 +171,15 @@ void CUDAReductionStorage::releaseSlotsInUse(Task * task, ComputePlace * compute
 	assignation_map_t::iterator itSlot = _currentAssignations.find(task);
 	long int currentSlotIndex = -1;
 
-	if(itSlot != _currentAssignations.end())
+	if (itSlot != _currentAssignations.end())
 		currentSlotIndex = itSlot->second;
 
 	int gpuId = computePlace->getIndex();
-	assert((size_t) gpuId < _freeSlotIndices.size());
+	assert((size_t)gpuId < _freeSlotIndices.size());
 
 	// Note: If access is weak and final (promoted), but had no reduction subtasks, this
 	// member can be called when _currentCpuSlotIndices[task] is invalid (hasn't been used)
-	if (currentSlotIndex != -1)
-	{
+	if (currentSlotIndex != -1) {
 		assert(_slots[currentSlotIndex].storage != nullptr);
 		assert(_slots[currentSlotIndex].initialized);
 		assert(_slots[currentSlotIndex].deviceId == gpuId);
