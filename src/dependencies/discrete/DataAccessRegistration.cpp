@@ -732,7 +732,7 @@ namespace DataAccessRegistration {
 			FatalErrorHandler::failIf(access == nullptr,
 				"Attempt to release an access that was not originally registered in the task");
 
-			FatalErrorHandler::failIf(access->getType() != accessType,
+			FatalErrorHandler::failIf(access->getType() != accessType || access->isWeak() != weak,
 				"It is not possible to partially release a dependence.");
 
 			// Release reduction storage before finalizing, as we might delete the ReductionInfo later
