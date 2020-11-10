@@ -5,6 +5,7 @@
 */
 
 #include "ExecutionWorkflow.hpp"
+#include "dependencies/SymbolTranslation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
@@ -24,25 +25,12 @@
 
 
 namespace ExecutionWorkflow {
-	static inline nanos6_address_translation_entry_t *generateTranslationTable(Task *task, ComputePlace *computePlace, /*output*/ __attribute__((unused)) size_t &tableSize)
-	{
-		nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
-		int numSymbols = taskInfo->num_symbols;
-		if (numSymbols == 0)
-			return nullptr;
-
-		tableSize = numSymbols * sizeof(nanos6_address_translation_entry_t);
-		nanos6_address_translation_entry_t *table = (nanos6_address_translation_entry_t *)MemoryAllocator::alloc(tableSize);
-		DataAccessRegistration::translateReductionAddresses(task, computePlace, table, numSymbols);
-
-		return table;
-	}
-
 	void executeTask(
 		Task *task,
 		ComputePlace *targetComputePlace,
 		MemoryPlace *targetMemoryPlace
 	) {
+		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		CPU *cpu = (CPU *)targetComputePlace;
@@ -59,7 +47,9 @@ namespace ExecutionWorkflow {
 
 		if (task->hasCode()) {
 			size_t tableSize = 0;
-			nanos6_address_translation_entry_t *translationTable = generateTranslationTable(task, targetComputePlace, tableSize);
+			nanos6_address_translation_entry_t *translationTable =
+				SymbolTranslation::generateTranslationTable(
+					task, targetComputePlace, stackTranslationTable, tableSize);
 
 			HardwareCounters::updateRuntimeCounters();
 
@@ -82,7 +72,7 @@ namespace ExecutionWorkflow {
 			std::atomic_thread_fence(std::memory_order_release);
 
 			// Free up all symbol translation
-			if (translationTable != nullptr)
+			if (tableSize > 0)
 				MemoryAllocator::free(translationTable, tableSize);
 
 			// Update the CPU since the thread may have migrated

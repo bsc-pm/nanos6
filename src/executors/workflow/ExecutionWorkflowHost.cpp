@@ -5,6 +5,7 @@
 */
 
 #include "ExecutionWorkflowHost.hpp"
+#include "dependencies/SymbolTranslation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
@@ -25,26 +26,11 @@
 
 
 namespace ExecutionWorkflow {
-
-	static inline nanos6_address_translation_entry_t *generateTranslationTable(Task *task, ComputePlace *computePlace, /*output*/ __attribute__((unused)) size_t &tableSize)
-	{
-		nanos6_task_info_t const *const taskInfo = task->getTaskInfo();
-		int numSymbols = taskInfo->num_symbols;
-		if (numSymbols == 0)
-			return nullptr;
-
-		tableSize = numSymbols * sizeof(nanos6_address_translation_entry_t);
-		nanos6_address_translation_entry_t *table = (nanos6_address_translation_entry_t *)MemoryAllocator::alloc(tableSize);
-		DataAccessRegistration::translateReductionAddresses(task, computePlace, table, numSymbols);
-
-		return table;
-	}
-
 	void HostExecutionStep::start()
 	{
+		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		CPU *cpu = (currentThread == nullptr) ?
-			nullptr : currentThread->getComputePlace();
+		CPU *cpu = (currentThread == nullptr) ? nullptr : currentThread->getComputePlace();
 
 		//! We are trying to start the execution of the Task from within
 		//! something that is not a WorkerThread, or it does not have
@@ -54,16 +40,13 @@ namespace ExecutionWorkflow {
 		//! releases the ExecutionStep.
 		//!
 		//! In that case we need to add the Task back for scheduling.
-		if ((currentThread == nullptr) || (cpu == nullptr) ||
-		   	(currentThread->getTask() == nullptr)
-		) {
+		if ((currentThread == nullptr) || (cpu == nullptr) || (currentThread->getTask() == nullptr)) {
 			_task->setExecutionStep(this);
 
 			Scheduler::addReadyTask(
 				_task,
 				nullptr,
-				BUSY_COMPUTE_PLACE_TASK_HINT
-			);
+				BUSY_COMPUTE_PLACE_TASK_HINT);
 			return;
 		}
 
@@ -73,19 +56,20 @@ namespace ExecutionWorkflow {
 		Instrument::ThreadInstrumentationContext instrumentationContext(
 			taskId,
 			cpu->getInstrumentationId(),
-			currentThread->getInstrumentationId()
-		);
+			currentThread->getInstrumentationId());
 
 		if (_task->hasCode()) {
 			size_t tableSize = 0;
-			nanos6_address_translation_entry_t *translationTable = generateTranslationTable(task, static_cast<ComputePlace *>(cpu), tableSize);
+			nanos6_address_translation_entry_t *translationTable =
+				SymbolTranslation::generateTranslationTable(
+					task, cpu, stackTranslationTable, tableSize);
 
 			// Before executing a task, read runtime-related counters
 			HardwareCounters::updateRuntimeCounters();
 
 			bool isTaskforCollaborator = _task->isTaskforCollaborator();
 			if (isTaskforCollaborator) {
-				bool first = ((Taskfor *) _task)->hasFirstChunk();
+				bool first = ((Taskfor *)_task)->hasFirstChunk();
 				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
 				Instrument::startTaskforCollaborator(parentTaskId, taskId, first);
 				Instrument::taskforCollaboratorIsExecuting(parentTaskId, taskId);
@@ -102,7 +86,7 @@ namespace ExecutionWorkflow {
 			std::atomic_thread_fence(std::memory_order_release);
 
 			// Free up all symbol translation
-			if (translationTable != nullptr)
+			if (tableSize > 0)
 				MemoryAllocator::free(translationTable, tableSize);
 
 			// Update the CPU since the thread may have migrated
@@ -114,7 +98,7 @@ namespace ExecutionWorkflow {
 			Monitoring::taskCompletedUserCode(_task);
 
 			if (isTaskforCollaborator) {
-				bool last = ((Taskfor *) _task)->hasLastChunk();
+				bool last = ((Taskfor *)_task)->hasLastChunk();
 				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
 				Instrument::taskforCollaboratorStopped(parentTaskId, taskId);
 				Instrument::endTaskforCollaborator(parentTaskId, taskId, last);
@@ -133,4 +117,4 @@ namespace ExecutionWorkflow {
 		releaseSuccessors();
 		delete this;
 	}
-};
+}; // namespace ExecutionWorkflow

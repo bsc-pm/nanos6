@@ -806,6 +806,7 @@ noinst_HEADERS = \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
+	src/dependencies/SymbolTranslation.hpp \
 	src/dependencies/discrete/BottomMapEntry.hpp \
 	src/dependencies/discrete/CommutativeSemaphore.hpp \
 	src/dependencies/discrete/CPUDependencyData.hpp \

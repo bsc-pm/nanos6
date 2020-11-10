@@ -20,43 +20,10 @@
 class DeviceReductionStorage;
 
 class ReductionInfo {
-public:
+private:
 	typedef PaddedSpinLock<> spinlock_t;
-
 	typedef boost::dynamic_bitset<> reduction_slot_set_t;
 
-	ReductionInfo(void *address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
-		std::function<void(void *, void *, size_t)> initializationFunction,
-		std::function<void(void *, void *, size_t)> combinationFunction);
-
-	~ReductionInfo();
-
-	reduction_type_and_operator_index_t getTypeAndOperatorIndex() const;
-
-	const void *getOriginalAddress() const;
-
-	size_t getOriginalLength() const;
-
-	void combine();
-
-	void releaseSlotsInUse(Task *task, ComputePlace *computePlace);
-
-	void *getFreeSlot(Task *task, ComputePlace *computePlace);
-
-	void incrementRegisteredAccesses();
-
-	bool incrementUnregisteredAccesses();
-
-	bool markAsClosed();
-
-	bool finished();
-
-	const DataAccessRegion &getOriginalRegion() const
-	{
-		return _region;
-	}
-
-private:
 	DataAccessRegion _region;
 
 	void *_address;
@@ -76,27 +43,61 @@ private:
 	spinlock_t _lock;
 
 	DeviceReductionStorage *allocateDeviceStorage(nanos6_device_t deviceType);
+
+public:
+
+	ReductionInfo(void *address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
+		std::function<void(void *, void *, size_t)> initializationFunction,
+		std::function<void(void *, void *, size_t)> combinationFunction);
+
+	~ReductionInfo();
+
+	inline reduction_type_and_operator_index_t getTypeAndOperatorIndex() const
+	{
+		return _typeAndOperatorIndex;
+	}
+
+	inline const void *getOriginalAddress() const
+	{
+		return _address;
+	}
+
+	size_t getOriginalLength() const
+	{
+		return _length;
+	}
+
+	void combine();
+
+	void releaseSlotsInUse(Task *task, ComputePlace *computePlace);
+
+	void *getFreeSlot(Task *task, ComputePlace *computePlace);
+
+	inline void incrementRegisteredAccesses()
+	{
+		++_registeredAccesses;
+	}
+
+	inline bool incrementUnregisteredAccesses()
+	{
+		assert(_registeredAccesses > 0);
+		return (--_registeredAccesses == 0);
+	}
+
+	inline bool markAsClosed()
+	{
+		return incrementUnregisteredAccesses();
+	}
+
+	bool finished()
+	{
+		return (_registeredAccesses == 0);
+	}
+
+	const DataAccessRegion &getOriginalRegion() const
+	{
+		return _region;
+	}
 };
-
-inline void ReductionInfo::incrementRegisteredAccesses()
-{
-	++_registeredAccesses;
-}
-
-inline bool ReductionInfo::incrementUnregisteredAccesses()
-{
-	assert(_registeredAccesses > 0);
-	return (--_registeredAccesses == 0);
-}
-
-inline bool ReductionInfo::finished()
-{
-	return (_registeredAccesses == 0);
-}
-
-inline bool ReductionInfo::markAsClosed()
-{
-	return incrementUnregisteredAccesses();
-}
 
 #endif // REDUCTION_INFO_HPP

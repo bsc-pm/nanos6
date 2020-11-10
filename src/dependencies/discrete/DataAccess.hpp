@@ -41,6 +41,9 @@ private:
 	//! The originator of the access
 	Task *_originator;
 
+	//! A bitmap of the "symbols" this access is related to
+	symbols_t _symbols;
+
 	//! C++ allows anonymous unions to save space when two fields of a struct are not used at once.
 	//! We can do this here, as assigning the reductionInfo will be done always when the length is not
 	//! needed anymore.
@@ -77,9 +80,6 @@ private:
 	DataAccessMessage concurrentAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	DataAccessMessage commutativeAutomata(access_flags_t flags, access_flags_t oldFlags, bool toNextOnly, bool weak);
 	void readDestination(access_flags_t allFlags, DataAccessMessage &message, PropagationDestination &destination);
-
-	//! A bitmap of the "symbols" this access is related to
-	symbols_t _symbols;
 
 public:
 	DataAccess(DataAccessType type, Task *originator, void *address, size_t length, bool weak) :
@@ -265,6 +265,6 @@ public:
 
 // Assert that when using non-instrumented builds of nanos6 (where data_access_id_t is not an empty struct)
 // the DataAccess structure is packed to 64 bytes to prevent false sharing.
-static_assert(sizeof(Instrument::data_access_id_t) > 1 || sizeof(DataAccess) == 64, "DataAccess is not packed correctly");
+static_assert(sizeof(Instrument::data_access_id_t) > 1 || sizeof(DataAccess) == 72, "DataAccess is not packed correctly");
 
 #endif // DATA_ACCESS_HPP

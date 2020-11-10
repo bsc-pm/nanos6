@@ -775,7 +775,7 @@ namespace DataAccessRegistration {
 			if (access->getType() == REDUCTION_ACCESS_TYPE && !access->isWeak()) {
 				ReductionInfo *reductionInfo = access->getReductionInfo();
 				assert(reductionInfo != nullptr);
-				reductionInfo->releaseSlotsInUse(((CPU *)computePlace)->getIndex());
+				reductionInfo->releaseSlotsInUse(task, computePlace);
 			}
 
 			finalizeDataAccess(task, access, address, hpDependencyData, computePlace, true);

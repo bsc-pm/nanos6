@@ -6,6 +6,7 @@
 
 #include "Accelerator.hpp"
 
+#include "dependencies/SymbolTranslation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
@@ -16,6 +17,7 @@
 
 void Accelerator::runTask(Task *task)
 {
+	nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
 	assert(task != nullptr);
 	task->setComputePlace(_computePlace);
 	task->setMemoryPlace(_memoryPlace);
@@ -23,7 +25,17 @@ void Accelerator::runTask(Task *task)
 	setActiveDevice();
 	generateDeviceEvironment(task);
 	preRunTask(task);
-	task->body(nullptr);
+
+	size_t tableSize;
+	nanos6_address_translation_entry_t *translationTable =
+		SymbolTranslation::generateTranslationTable(
+			task, _computePlace, stackTranslationTable, tableSize);
+
+	task->body(translationTable);
+
+	if (tableSize > 0)
+		MemoryAllocator::free(translationTable, tableSize);
+
 	postRunTask(task);
 }
 

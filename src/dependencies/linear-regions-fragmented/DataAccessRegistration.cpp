@@ -3162,7 +3162,7 @@ namespace DataAccessRegistration {
 				assert(dataAccess != nullptr);
 
 				if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && !dataAccess->isWeak()) {
-					FatalErrorHandler::failIf(computePlace->getType() == nanos6_host_device,
+					FatalErrorHandler::failIf(computePlace->getType() != nanos6_host_device,
 						"Region dependencies do not support CUDA reductions");
 
 					ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
@@ -3176,10 +3176,13 @@ namespace DataAccessRegistration {
 					const DataAccessRegion &originalFullRegion = reductionInfo->getOriginalRegion();
 					translation = ((char *)reductionInfo->getFreeSlotStorage(slotIndex).getStartAddress()) + ((char *)address - (char *)originalFullRegion.getStartAddress());
 
+					// As we're iterating accesses that might have been split by sibling tasks, it is
+					// possible that we translate the same symbol twice. However, this is not an issue
+					// because symbol translation is relative and it is not mandatory for "address"
+					// to be equal to the first position of the translated symbol
 					for (int j = 0; j < totalSymbols; ++j) {
-						if (dataAccess->isInSymbol(j)) {
+						if (dataAccess->isInSymbol(j))
 							translationTable[j] = {(size_t)address, (size_t)translation};
-						}
 					}
 				}
 
