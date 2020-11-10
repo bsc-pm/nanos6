@@ -25,6 +25,8 @@ void OpenAccAccelerator::acceleratorServiceLoop()
 	bool worker = (WorkerThread::getCurrentWorkerThread() != nullptr);
 
 	Task *task = nullptr;
+	// Workaround to avoid the overhead of repetitive/redundant setActiveDevice() calls
+	bool activeDevice = false;
 
 	do {
 		if (isQueueAvailable()) {
@@ -33,8 +35,16 @@ void OpenAccAccelerator::acceleratorServiceLoop()
 				runTask(task);
 			}
 		}
+		// Check if there is merit in setting the device;
+		// Only do the setActiveDevice if there have been tasks launched
+		// If we set it before any OpenACC work has run (e.g. during bootstrap) it causes
+		// erroneous behavior. If we don't set it here, the completion checks may not occur correctly
+		if (!activeDevice && !_activeQueues.empty()) {
+			setActiveDevice();
+			activeDevice = true;
+		}
 		processQueues();
-	} while (_activeQueues.size() != 0 && worker);
+	} while (!_activeQueues.empty() && worker);
 
 	// If process was run by LeaderThread, request a WorkerThread to continue
 	if (!worker && (task != nullptr || !_activeQueues.empty())) {
@@ -44,22 +54,15 @@ void OpenAccAccelerator::acceleratorServiceLoop()
 
 void OpenAccAccelerator::processQueues()
 {
-	// Check if there is merit in setting the device;
-	// If we set it before any OpenACC work has run (e.g. during bootstrap) it causes
-	// erroneous behavior. If we don't set it here, the completion checks may not occur correctly
-
-	if (!_activeQueues.empty()) {
-		setActiveDevice();
-		auto it = _activeQueues.begin();
-		while (it != _activeQueues.end()) {
-			OpenAccQueue *queue = *it;
-			assert(queue != nullptr);
-			if (queue->isFinished()) {
-				finishTask(queue->getTask());
-				it = _activeQueues.erase(it);
-			} else {
-				it++;
-			}
+	auto it = _activeQueues.begin();
+	while (it != _activeQueues.end()) {
+		OpenAccQueue *queue = *it;
+		assert(queue != nullptr);
+		if (queue->isFinished()) {
+			finishTask(queue->getTask());
+			it = _activeQueues.erase(it);
+		} else {
+			it++;
 		}
 	}
 }
