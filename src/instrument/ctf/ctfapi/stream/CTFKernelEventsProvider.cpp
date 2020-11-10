@@ -21,12 +21,12 @@
 #include <sys/mman.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include <time.h>
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <dlfcn.h>
 
 #include "CTFKernelEventsProvider.hpp"
+#include "instrument/ctf/ctfapi/CTFClock.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
 
@@ -128,7 +128,7 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 	pe.disabled = 1;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0 )
 	pe.use_clockid = 1;
-	pe.clockid = CLOCK_MONOTONIC_RAW;
+	pe.clockid = CTF_CLOCK;
 #endif
 
 	// Tracing other than the current thread requires CAP_SYS_ADMIN

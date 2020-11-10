@@ -4,13 +4,13 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-
 #include <cassert>
 #include <errno.h>
 #include <iostream>
 #include <string>
 
 #include "CTFAPI.hpp"
+#include "CTFClock.hpp"
 #include "CTFTrace.hpp"
 #include "CTFTypes.hpp"
 #include "CTFEvent.hpp"
@@ -30,7 +30,7 @@ uint64_t CTFAPI::getTimestamp()
 	// confident on which syscall and clock this translates. Should we move
 	// to c++ here? If so, remove the -lrt
 
-	if (clock_gettime(CLOCK_MONOTONIC_RAW, &tp)) {
+	if (clock_gettime(CTF_CLOCK, &tp)) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: clock_gettime syscall: ") + strerror(errno));
 	}
 	timestamp = tp.tv_sec * ns + tp.tv_nsec;

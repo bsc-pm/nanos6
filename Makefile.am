@@ -950,6 +950,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedShared.hpp \
 	src/instrument/ctf/ctfapi/CTFAPI.hpp \
+	src/instrument/ctf/ctfapi/CTFClock.hpp \
 	src/instrument/ctf/ctfapi/CTFEvent.hpp \
 	src/instrument/ctf/ctfapi/CTFKernelMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
