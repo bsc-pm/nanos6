@@ -2146,6 +2146,7 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/ctf2prv/runtime_subsystems.cfg \
 	paraver-cfg/nanos6/ctf2prv/task_ids.cfg \
 	paraver-cfg/nanos6/ctf2prv/tasks.cfg \
+	paraver-cfg/nanos6/ctf2prv/tasks_and_runtime.cfg \
 	paraver-cfg/nanos6/ctf2prv/task_source.cfg \
 	paraver-cfg/nanos6/ctf2prv/thread_id.cfg \
 	paraver-cfg/nanos6/ctf2prv/kernel/kernel_preemptions.cfg \
