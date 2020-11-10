@@ -108,7 +108,7 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 	struct perf_event_attr pe;
 	pid_t pid;
 	unsigned long flags;
-	uint64_t alignedSize;
+	__u64 alignedSize;
 	void *perfMap;
 
 	alignedSize = (userSize + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
@@ -261,9 +261,9 @@ void *CTFAPI::CTFKernelEventsProvider::getNextEvent(uint64_t current)
 
 	// Adapted from perf tools/perf/util/mmap.c:perf_mmap__read()
 	if (((current & _dataMask) + header->size) != ((current + header->size) & _dataMask)) {
-		uint64_t offset = current;
-		uint64_t len = header->size;
-		uint64_t cpy;
+		__u64 offset = current;
+		__u64 len = header->size;
+		__u64 cpy;
 		char *dst = (char *) _temporalBuffer;
 
 		assert(len <= _tempSize);

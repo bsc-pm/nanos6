@@ -53,15 +53,16 @@ namespace CTFAPI {
 
 			const uint64_t _eventHeaderSize;
 
-			uint64_t _metaSize;
-			uint64_t _dataSize;
-			uint64_t _totalSize;
-			uint64_t _tempSize;
-			uint64_t _dataMask;
+			// The kernel exports related variables as __u64
+			__u64 _metaSize;
+			__u64 _dataSize;
+			__u64 _totalSize;
+			__u64 _tempSize;
 
-			long long unsigned int _localHead;
-			long long unsigned int _localTail;
-			long long unsigned int _current;
+			__u64 _dataMask;
+			__u64 _localHead;
+			__u64 _localTail;
+			__u64 _current;
 
 			uint64_t _lost;
 			uint64_t _throttle;
