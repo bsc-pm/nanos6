@@ -171,6 +171,7 @@ bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 		configFile.getRootNode()->traverseChildrenNodes(
 			[&](const std::string &name, const JsonNode<> &node) {
 				if (name == "meta") {
+					// The "meta" node is allways found first
 					bool converted = false;
 
 					// get boot id
@@ -201,6 +202,7 @@ bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 					assert(converted);
 
 					_kernelEventMap.emplace(name, std::make_pair(id, format));
+					assert(_eventSizes.size() > id);
 					_eventSizes[id] = size;
 				}
 			}

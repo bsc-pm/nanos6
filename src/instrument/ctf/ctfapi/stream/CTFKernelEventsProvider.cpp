@@ -26,6 +26,7 @@
 #include <dlfcn.h>
 
 #include "CTFKernelEventsProvider.hpp"
+#include "MemoryAllocator.hpp"
 #include "instrument/ctf/ctfapi/CTFClock.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
@@ -217,14 +218,7 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 
 	// Allocate a temporal buffer used to copy events that have been split
 	// betwen the end and beginning of the shared ring buffer
-	_temporalBuffer = malloc(_tempSize);
-	if (!_temporalBuffer) {
-		FatalErrorHandler::fail(
-			"CTF: Kernel: Cannot allocate memory for temporal buffer: ",
-			strerror(errno),
-			"Please, try with less events or increase the open files hard limit (ulimit -Hn)"
-		);
-	}
+	_temporalBuffer = MemoryAllocator::alloc(_tempSize);
 
 	// Setup initial pointers
 	_kernelBuffer = perfMap;
@@ -419,7 +413,7 @@ CTFAPI::CTFKernelEventsProvider::~CTFKernelEventsProvider()
 		}
 	}
 
-	free(_temporalBuffer);
+	MemoryAllocator::free(_temporalBuffer, _tempSize);
 }
 
 void CTFAPI::CTFKernelEventsProvider::enable()
