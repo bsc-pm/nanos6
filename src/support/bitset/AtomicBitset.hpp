@@ -122,7 +122,7 @@ public:
 
 			while (firstOne && (currentPos + firstOne) <= _size) {
 				//! Found a bit to zero. Lets set it.
-				backingstorage_t mask = (1 << (firstOne - 1));
+				backingstorage_t mask = (ONE << (firstOne - 1));
 				assert(!(value & mask));
 				if (elem.compare_exchange_strong(value, value | mask, std::memory_order_relaxed))
 					return (currentPos + firstOne - 1);
