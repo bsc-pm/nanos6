@@ -11,7 +11,7 @@
 
 
 HostReductionStorage::HostReductionStorage(void *address, size_t length, size_t paddedLength,
-	std::function<void(void *, size_t)> initializationFunction,
+	std::function<void(void *, void *, size_t)> initializationFunction,
 	std::function<void(void *, void *, size_t)> combinationFunction) :
 	DeviceReductionStorage(address, length, paddedLength, initializationFunction, combinationFunction),
 	_freeSlotIndices(CPUManager::getTotalCPUs())
@@ -36,8 +36,7 @@ void *HostReductionStorage::getFreeSlotStorage(__attribute__((unused)) Task *tas
 	if (!slot.initialized) {
 		// Allocate new storage
 		slot.storage = MemoryAllocator::alloc(_paddedLength);
-
-		_initializationFunction(slot.storage, _length);
+		_initializationFunction(slot.storage, _address, _length);
 		slot.initialized = true;
 	}
 
@@ -84,7 +83,6 @@ size_t HostReductionStorage::getFreeSlotIndex(__attribute__((unused)) Task *task
 	}
 
 	int freeSlotIndex = _freeSlotIndices.setFirst();
-	// Can this happen??
 	while (freeSlotIndex == -1)
 		freeSlotIndex = _freeSlotIndices.setFirst();
 

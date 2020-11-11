@@ -20,7 +20,7 @@ public:
 	typedef ReductionSlot slot_t;
 
 	HostReductionStorage(void *address, size_t length, size_t paddedLength,
-		std::function<void(void *, size_t)> initializationFunction,
+		std::function<void(void *, void *, size_t)> initializationFunction,
 		std::function<void(void *, void *, size_t)> combinationFunction);
 
 	void *getFreeSlotStorage(Task *task, size_t slotIndex, ComputePlace *destinationComputePlace);

@@ -24,13 +24,13 @@ protected:
 	const size_t _length;
 	const size_t _paddedLength;
 
-	std::function<void(void *, size_t)> _initializationFunction;
+	std::function<void(void *, void *, size_t)> _initializationFunction;
 	std::function<void(void *, void *, size_t)> _combinationFunction;
 
 public:
 	DeviceReductionStorage(
 		void *address, size_t length, size_t paddedLength,
-		std::function<void(void *, size_t)> initializationFunction,
+		std::function<void(void *, void *, size_t)> initializationFunction,
 		std::function<void(void *, void *, size_t)> combinationFunction) :
 		_address(address),
 		_length(length),

@@ -36,7 +36,7 @@ private:
 
 	DeviceReductionStorage *_deviceStorages[nanos6_device_type_num];
 
-	std::function<void(void *, size_t)> _initializationFunction;
+	std::function<void(void *, void *, size_t)> _initializationFunction;
 	std::function<void(void *, void *, size_t)> _combinationFunction;
 
 	std::atomic<size_t> _registeredAccesses;

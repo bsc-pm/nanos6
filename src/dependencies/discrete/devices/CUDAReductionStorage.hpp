@@ -4,9 +4,6 @@
 	Copyright (C) 2019-2020 Barcelona Supercomputing Center (BSC)
 */
 
-#include <config.h>
-
-#if USE_CUDA
 #ifndef CUDA_REDUCTION_STORAGE_HPP
 #define CUDA_REDUCTION_STORAGE_HPP
 
@@ -24,7 +21,7 @@ public:
 	typedef ReductionSlot slot_t;
 
 	CUDAReductionStorage(void *address, size_t length, size_t paddedLength,
-		std::function<void(void *, size_t)> initializationFunction,
+		std::function<void(void *, void *, size_t)> initializationFunction,
 		std::function<void(void *, void *, size_t)> combinationFunction);
 
 	void *getFreeSlotStorage(Task *task, size_t slotIndex, ComputePlace *destinationComputePlace);
@@ -45,4 +42,3 @@ private:
 };
 
 #endif // CUDA_REDUCTION_STORAGE_HPP
-#endif // USE_CUDA

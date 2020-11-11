@@ -15,7 +15,7 @@
 #include "hardware/hwinfo/DeviceInfo.hpp"
 
 CUDAReductionStorage::CUDAReductionStorage(void *address, size_t length, size_t paddedLength,
-	std::function<void(void *, size_t)> initializationFunction,
+	std::function<void(void *, void *, size_t)> initializationFunction,
 	std::function<void(void *, void *, size_t)> combinationFunction) :
 	DeviceReductionStorage(address, length, paddedLength, initializationFunction, combinationFunction)
 {
@@ -40,9 +40,10 @@ void *CUDAReductionStorage::getFreeSlotStorage(
 	assert(!slot.initialized || slot.deviceId == deviceId);
 
 	if (!slot.initialized) {
+		// We assume we're coming from a polling service with a valid CUDA context
 		oldDeviceId = CUDAFunctions::getActiveDevice();
 
-		// Set the GPU we're using if needed.
+		// Set the GPU we're using if needed
 		if (oldDeviceId != deviceId) {
 			CUDAFunctions::setActiveDevice(deviceId);
 		}
@@ -51,20 +52,20 @@ void *CUDAReductionStorage::getFreeSlotStorage(
 		slot.storage = CUDAFunctions::malloc(_paddedLength);
 
 		// Allocate temporal host storage. This is needed to transfer the initialized
-		// memory region with the neutral value towards the GPU.
+		// memory region with the neutral value towards the GPU
 		void *tmpStorage = CUDAFunctions::mallocHost(_paddedLength);
 		assert(tmpStorage != nullptr);
 
-		_initializationFunction(tmpStorage, _length);
+		_initializationFunction(tmpStorage, _address, _length);
 
-		// Transfer initialized value to GPU.
+		// Transfer initialized value to GPU
 		CUDAFunctions::memcpy(slot.storage, tmpStorage, _paddedLength, cudaMemcpyHostToDevice);
 		CUDAFunctions::freeHost(tmpStorage);
 
 		slot.initialized = true;
 		slot.deviceId = deviceId;
 
-		// Restore old GPU value if needed.
+		// Restore old GPU value if needed
 		if (oldDeviceId != deviceId) {
 			CUDAFunctions::setActiveDevice(oldDeviceId);
 		}
@@ -86,6 +87,7 @@ void CUDAReductionStorage::combineInStorage(void *combineDestination)
 	void *tmpStorage = CUDAFunctions::mallocHost(_paddedLength);
 	assert(tmpStorage != nullptr);
 
+	// Assume we are inside a valid CUDA context
 	int oldDeviceId = CUDAFunctions::getActiveDevice();
 	int lastDevice = oldDeviceId;
 
@@ -127,21 +129,12 @@ size_t CUDAReductionStorage::getFreeSlotIndex(Task *task, ComputePlace *destinat
 
 	assert(destinationComputePlace->getType() == nanos6_cuda_device);
 	assignation_map_t::iterator itSlot = _currentAssignations.find(task);
-	long int currentSlotIndex = -1;
 
 	int gpuId = destinationComputePlace->getIndex();
 	assert((size_t)gpuId < _freeSlotIndices.size());
 
-	if (itSlot != _currentAssignations.end())
-		currentSlotIndex = itSlot->second;
-
-	if (currentSlotIndex != -1) {
-		// Storage already assigned to this CPU, increase counter
-		// Note: Currently, this can only happen with a weakreduction task with
-		// 2 or more (in_final) reduction subtasks that will be requesting storage
-		// Note: Task scheduling points within reduction are currently not supported,
-		// as tied tasks are not yet implemented. If supported, task counters would be
-		// required to avoid the storage to be released at the end of a task while still in use
+	if (itSlot != _currentAssignations.end()) {
+		long int currentSlotIndex = itSlot->second;
 
 		assert(_slots[currentSlotIndex].initialized);
 		return currentSlotIndex;
@@ -169,17 +162,12 @@ void CUDAReductionStorage::releaseSlotsInUse(Task *task, ComputePlace *computePl
 
 	assert(computePlace->getType() == nanos6_cuda_device);
 	assignation_map_t::iterator itSlot = _currentAssignations.find(task);
-	long int currentSlotIndex = -1;
 
-	if (itSlot != _currentAssignations.end())
-		currentSlotIndex = itSlot->second;
+	if (itSlot != _currentAssignations.end()) {
+		long int currentSlotIndex = itSlot->second;
+		int gpuId = computePlace->getIndex();
+		assert((size_t)gpuId < _freeSlotIndices.size());
 
-	int gpuId = computePlace->getIndex();
-	assert((size_t)gpuId < _freeSlotIndices.size());
-
-	// Note: If access is weak and final (promoted), but had no reduction subtasks, this
-	// member can be called when _currentCpuSlotIndices[task] is invalid (hasn't been used)
-	if (currentSlotIndex != -1) {
 		assert(_slots[currentSlotIndex].storage != nullptr);
 		assert(_slots[currentSlotIndex].initialized);
 		assert(_slots[currentSlotIndex].deviceId == gpuId);

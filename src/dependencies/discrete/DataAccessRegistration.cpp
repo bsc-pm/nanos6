@@ -643,7 +643,6 @@ namespace DataAccessRegistration {
 	static inline void releaseReductionInfo(ReductionInfo *info)
 	{
 		assert(info != nullptr);
-		assert(info != info->getOriginalAddress());
 		assert(info->finished());
 
 		info->combine();

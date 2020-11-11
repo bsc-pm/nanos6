@@ -14,9 +14,12 @@
 #include "DeviceReductionStorage.hpp"
 #include "ReductionInfo.hpp"
 #include "devices/HostReductionStorage.hpp"
-#include "devices/CUDAReductionStorage.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
+
+#if USE_CUDA
+#include "devices/CUDAReductionStorage.hpp"
+#endif
 
 #include <MemoryAllocator.hpp>
 
@@ -26,7 +29,7 @@ ReductionInfo::ReductionInfo(void *address, size_t length, reduction_type_and_op
 	_length(length),
 	_paddedLength(((length + HardwareInfo::getCacheLineSize() - 1) / HardwareInfo::getCacheLineSize()) * HardwareInfo::getCacheLineSize()),
 	_typeAndOperatorIndex(typeAndOperatorIndex),
-	_initializationFunction(std::bind(initializationFunction, std::placeholders::_1, address, std::placeholders::_2)),
+	_initializationFunction(initializationFunction),
 	_combinationFunction(combinationFunction),
 	_registeredAccesses(2)
 {
@@ -47,7 +50,7 @@ ReductionInfo::~ReductionInfo()
 void ReductionInfo::combine()
 {
 	// This lock should be uncontended, because "combine" is only done once
-	// when all accesses have freed their slots.
+	// when all accesses have freed their slots
 	std::lock_guard<spinlock_t> guard(_lock);
 	assert(_address != nullptr);
 
@@ -89,7 +92,8 @@ DeviceReductionStorage *ReductionInfo::allocateDeviceStorage(nanos6_device_t dev
 
 	assert(storage != nullptr);
 
-	// Maybe we need a memory barrier here?
+	// Ensure all threads see the initialized reduction storage before setting the pointer
+	std::atomic_thread_fence(std::memory_order_release);
 	_deviceStorages[deviceType] = storage;
 	return storage;
 }
