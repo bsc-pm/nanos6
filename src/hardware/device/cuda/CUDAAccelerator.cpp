@@ -41,15 +41,21 @@ void CUDAAccelerator::acceleratorServiceLoop()
 	bool worker = (WorkerThread::getCurrentWorkerThread() != nullptr);
 
 	Task *task = nullptr;
+	// Workaround to avoid the overhead of repetitive/redundant setActiveDevice() calls
+	bool activeDevice = false;
 
-	// For CUDA we need the setDevice operation here, for the stream & event context-to-thread association
-	setActiveDevice();
 	do {
 		if (_streamPool.streamAvailable()) {
 			task = Scheduler::getReadyTask(_computePlace);
 			if (task != nullptr) {
 				runTask(task);
 			}
+		}
+		// Only do the setActiveDevice if there have been tasks launched
+		// Having setActiveDevice calls during e.g. bootstrap caused issues
+		if (!activeDevice && !_activeEvents.empty()) {
+			setActiveDevice();
+			activeDevice = true;
 		}
 		processCUDAEvents();
 	} while (!_activeEvents.empty() && worker);
@@ -99,14 +105,16 @@ void CUDAAccelerator::preRunTask(Task *task)
 // Query the events issued to detect task completion
 void CUDAAccelerator::processCUDAEvents()
 {
-	_preallocatedEvents.clear();
-	std::swap(_preallocatedEvents, _activeEvents);
+	if (!_activeEvents.empty()) {
+		_preallocatedEvents.clear();
+		std::swap(_preallocatedEvents, _activeEvents);
 
-	for (CUDAEvent &ev : _preallocatedEvents) {
-		if (CUDAFunctions::cudaEventFinished(ev.event)) {
-			finishTask(ev.task);
-		} else {
-			_activeEvents.push_back(ev);
+		for (CUDAEvent &ev : _preallocatedEvents) {
+			if (CUDAFunctions::cudaEventFinished(ev.event)) {
+				finishTask(ev.task);
+			} else {
+				_activeEvents.push_back(ev);
+			}
 		}
 	}
 }
