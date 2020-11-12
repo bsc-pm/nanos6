@@ -21,10 +21,10 @@
 class DeviceReductionStorage;
 
 class ReductionInfo {
-private:
+public:
 	typedef PaddedSpinLock<> spinlock_t;
-	typedef boost::dynamic_bitset<> reduction_slot_set_t;
 
+private:
 	DataAccessRegion _region;
 
 	void *_address;
@@ -46,7 +46,6 @@ private:
 	DeviceReductionStorage *allocateDeviceStorage(nanos6_device_t deviceType);
 
 public:
-
 	ReductionInfo(void *address, size_t length, reduction_type_and_operator_index_t typeAndOperatorIndex,
 		std::function<void(void *, void *, size_t)> initializationFunction,
 		std::function<void(void *, void *, size_t)> combinationFunction);
