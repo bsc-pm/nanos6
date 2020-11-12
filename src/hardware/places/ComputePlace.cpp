@@ -80,16 +80,18 @@ ComputePlace::~ComputePlace()
 	Taskfor *taskfor = (Taskfor *) _preallocatedTaskfor;
 	assert(taskfor != nullptr);
 
-	delete taskfor;
-
-	// Retreive the allocation addresses for monitoring statistics and hw counters
+	// Retreive the allocation addresses for monitoring statistics and hw counters before deleting
 	const TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
 	void *taskCountersAddress = taskCounters.getAllocationAddress();
+	TaskStatistics *taskStatisticsAddress = taskfor->getTaskStatistics();
+
+	delete taskfor;
+
+	// Delete monitoring and hw counters
 	if (taskCountersAddress != nullptr) {
 		free(taskCountersAddress);
 	}
 
-	TaskStatistics *taskStatisticsAddress = taskfor->getTaskStatistics();
 	if (taskStatisticsAddress != nullptr) {
 		free(taskStatisticsAddress);
 	}

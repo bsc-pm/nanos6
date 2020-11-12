@@ -766,14 +766,10 @@ public:
 	inline size_t getCost() const
 	{
 		size_t cost = 1;
-		if (_taskInfo != nullptr) {
-			if (_taskInfo->implementations != nullptr) {
-				if (_taskInfo->implementations->get_constraints != nullptr) {
-					nanos6_task_constraints_t constraints;
-					_taskInfo->implementations->get_constraints(_argsBlock, &constraints);
-					cost = constraints.cost;
-				}
-			}
+		if (hasCost()) {
+			nanos6_task_constraints_t constraints;
+			_taskInfo->implementations->get_constraints(_argsBlock, &constraints);
+			cost = constraints.cost;
 		}
 
 		return cost;

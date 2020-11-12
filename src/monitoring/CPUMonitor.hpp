@@ -52,6 +52,8 @@ public:
 	//! \param[in] virtualCPUId The identifier of the CPU
 	inline void cpuBecomesActive(int virtualCPUId)
 	{
+		assert(virtualCPUId <= _numCPUs);
+
 		_cpuStatistics[virtualCPUId].cpuBecomesActive();
 	}
 
@@ -60,6 +62,8 @@ public:
 	//! \param[in] virtualCPUId The identifier of the CPU
 	inline void cpuBecomesIdle(int virtualCPUId)
 	{
+		assert(virtualCPUId <= _numCPUs);
+
 		_cpuStatistics[virtualCPUId].cpuBecomesIdle();
 	}
 
@@ -68,6 +72,8 @@ public:
 	//! \param[in] virtualCPUId The identifier of the CPU
 	inline float getActiveness(int virtualCPUId)
 	{
+		assert(virtualCPUId < _numCPUs);
+
 		return _cpuStatistics[virtualCPUId].getActiveness();
 	}
 
