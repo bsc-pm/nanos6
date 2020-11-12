@@ -11,7 +11,7 @@
 
 #include <cinttypes>
 #include <cstdint>
-#include <cinttypes>
+#include <cstdlib>
 
 #include "CTFTrace.hpp"
 #include "CTFKernelMetadata.hpp"
@@ -50,8 +50,6 @@ std::map<std::string, std::vector<std::string> > CTFAPI::CTFKernelMetadata::_ker
 	}
 };
 
-
-const char *CTFAPI::CTFKernelMetadata::defaultKernelDefsFileName    = "./nanos6_kerneldefs.json";
 
 const char *CTFAPI::CTFKernelMetadata::meta_header = "/* CTF 1.8 */\n";
 
@@ -151,17 +149,8 @@ bool CTFAPI::CTFKernelMetadata::getSystemInformation()
 	return (LINUX_VERSION_CODE >= minimumKernelVersion);
 }
 
-static std::string getCurrentBootId()
+void CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 {
-	std::string value;
-	std::ifstream bootIdFile("/proc/sys/kernel/random/boot_id");
-	getline(bootIdFile, value);
-	return value;
-}
-
-bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
-{
-	bool success = false;
 	JsonFile configFile = JsonFile(file);
 
 	if (configFile.fileExists()) {
@@ -173,10 +162,6 @@ bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 				if (name == "meta") {
 					// The "meta" node is allways found first
 					bool converted = false;
-
-					// get boot id
-					_kernelDefsBootId = node.getData<std::string>("bootId", converted);
-					assert(converted);
 
 					// get number of events
 					_numberOfEvents = node.getData<ctf_kernel_event_id_t>("numberOfEvents", converted);
@@ -208,12 +193,11 @@ bool CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 			}
 		);
 
-		success = (_maxEventId != (ctf_kernel_event_id_t) -1) && (_kernelEventMap.size() > 0);
-
+		bool success = (_maxEventId != (ctf_kernel_event_id_t) -1) && (_kernelEventMap.size() > 0);
 		FatalErrorHandler::failIf(!success, "CTF: kernel: Kernel events definitions file present, but corrupted");
+	} else {
+		FatalErrorHandler::fail("CTF: kernel: Kernel events definitions file not found");
 	}
-
-	return success;
 }
 
 std::string trim(
@@ -230,30 +214,17 @@ std::string trim(
 	return str.substr(strBegin, strRange);
 }
 
-void CTFAPI::CTFKernelMetadata::checkBootId()
+bool CTFAPI::CTFKernelMetadata::addEventsInPresets()
 {
-	// Kernel event ids change after each boot. Therefore, we need to check
-	// whether the read kernel event defintions file is up to date.
-	std::string currentBootId = getCurrentBootId();
-	FatalErrorHandler::failIf(
-		currentBootId != _kernelDefsBootId,
-		"CTF: kernel: Boot id does not match, please regenerate the kernel definitions file"
-	);
-
-}
-
-void CTFAPI::CTFKernelMetadata::loadEventPresets()
-{
-	bool enableSyscalls = false;
-
 	if (!_kernelEventPresets.isPresent())
-		return;
+		return false;
 
+	size_t enabledEventsBefore = _enabledEventNames.size();
 	for (std::string preset : _kernelEventPresets) {
 		try {
 			for (std::string event : _kernelEventPresetMap.at(preset)) {
 				if (event == "__syscalls") {
-					enableSyscalls = true;
+					_enableSyscalls = true;
 					continue;
 				}
 				_enabledEventNames.insert(event);
@@ -262,32 +233,19 @@ void CTFAPI::CTFKernelMetadata::loadEventPresets()
 			FatalErrorHandler::fail("CTF: Kernel: The preset \"", preset, "\" is not valid");
 		}
 	}
+	size_t enabledEventsAfter = _enabledEventNames.size();
 
-	// Enable all events starting with "sys_" (all syscall events) but the
-	// generic "sys_enter" and "sys_exit". We prefer enabling syscall
-	// specific events e.g. sys_enter_open/sys_exit_open rather than the
-	// generic ones sys_enter/sys_exit because generic events always have
-	// six arguemnts, even if the specific syscall tracepoint has less.
-	if (enableSyscalls) {
-		kernel_event_map_t::iterator it;
-		for (it = _kernelEventMap.begin(); it != _kernelEventMap.end(); it++) {
-			if (it->first.rfind("sys_", 0) == 0) {
-				if (it->first == "sys_enter" || it->first == "sys_exit")
-					continue;
-				_enabledEventNames.insert(it->first);
-			}
-		}
-	}
+	return _enableSyscalls || (enabledEventsBefore != enabledEventsAfter);
 }
 
-void CTFAPI::CTFKernelMetadata::loadEnabledEventsFromFile()
+bool CTFAPI::CTFKernelMetadata::addEventsInFile()
 {
 	std::string line;
 	std::ifstream streamFile;
 	size_t enabledEventsAfter, enabledEventsBefore;
 
 	if (!_kernelEventFile.isPresent())
-		return;
+		return false;
 
 	std::string file = _kernelEventFile.getValue().c_str();
 
@@ -309,23 +267,42 @@ void CTFAPI::CTFKernelMetadata::loadEnabledEventsFromFile()
 		_enabledEventNames.insert(trimmedLine);
 	}
 
-	enabledEventsAfter = _enabledEventNames.size();
-
 	streamFile.close();
 
+	enabledEventsAfter = _enabledEventNames.size();
 	FatalErrorHandler::warnIf(
 		enabledEventsBefore == enabledEventsAfter,
 		"CTF: Kernel: Kernel tracepoints file found, but no event enabled."
 	);
+
+	return enabledEventsBefore != enabledEventsAfter;
+}
+
+void CTFAPI::CTFKernelMetadata::addPatternDependentEvents()
+{
+	// Enable all events starting with "sys_" (all syscall events) but the
+	// generic "sys_enter" and "sys_exit". We prefer enabling syscall
+	// specific events e.g. sys_enter_open/sys_exit_open rather than the
+	// generic ones sys_enter/sys_exit because generic events always have
+	// six arguemnts, even if the specific syscall tracepoint has less.
+	if (_enableSyscalls) {
+		kernel_event_map_t::iterator it;
+		for (it = _kernelEventMap.begin(); it != _kernelEventMap.end(); it++) {
+			if (it->first.rfind("sys_", 0) == 0) {
+				if (it->first == "sys_enter" || it->first == "sys_exit")
+					continue;
+				_enabledEventNames.insert(it->first);
+			}
+		}
+	}
 }
 
 void CTFAPI::CTFKernelMetadata::excludeEvents()
 {
-	if (!_kernelExcludedEvents.isPresent())
-		return;
-
-	for (std::string event : _kernelExcludedEvents) {
-		_enabledEventNames.erase(event);
+	if (_kernelExcludedEvents.isPresent()) {
+		for (std::string event : _kernelExcludedEvents) {
+			_enabledEventNames.erase(event);
+		}
 	}
 }
 
@@ -340,35 +317,6 @@ void CTFAPI::CTFKernelMetadata::translateEvents()
 			FatalErrorHandler::fail("CTF: Kernel: The event \"", eventName, "\" is not found into the kernel tracepoint definition file");
 		}
 	}
-}
-
-bool CTFAPI::CTFKernelMetadata::loadEnabledEvents()
-{
-	loadEventPresets();
-	loadEnabledEventsFromFile();
-	excludeEvents();
-
-	translateEvents();
-
-	return _enabledEventIds.size() > 0;
-}
-
-CTFAPI::CTFKernelMetadata::CTFKernelMetadata()
-	: _enabled(false), _maxEventId(-1)
-{
-	bool sysInfo    = getSystemInformation();
-	bool loadDefs   = loadKernelDefsFile(defaultKernelDefsFileName);
-	bool loadEvents = loadEnabledEvents();
-
-	checkBootId();
-
-	if (loadDefs && loadEvents && !sysInfo) {
-		FatalErrorHandler::warn(
-			"CTF Kernel tracing requires Linux Kernel >= 4.1.0, but Nanos6 was compiled against an older kernel: Disabling Kernel tracing."
-		);
-	}
-
-	_enabled = (sysInfo && loadDefs && loadEvents);
 }
 
 void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
@@ -420,14 +368,72 @@ void CTFAPI::CTFKernelMetadata::writeMetadataFile(std::string kernelPath)
 	}
 }
 
-
-void CTFAPI::CTFKernelMetadata::copyKernelDefinitionsFile(std::string basePath)
+void CTFAPI::CTFKernelMetadata::parseKernelEventDefinitions()
 {
-	if (!_enabled)
+	const char kernelDefsParser[] = "ctfkerneldefs";
+
+	// Call an external python command to parse the kernel event definitions file
+	// TODO reimplement the ctfkerneldefs tool in c++
+	CTFTrace &trace = CTFTrace::getInstance();
+	std::string parser = trace.searchPythonCommand(kernelDefsParser);
+	std::string tracePath = trace.getTemporalTracePath();
+	std::string kernelDefsFileName = tracePath + "/nanos6_kerneldefs.json";
+	std::string command = parser + " --file=\"" + kernelDefsFileName + "\"";
+
+	// Parse the kernel event definitions files and generate json
+	int ret = system(command.c_str());
+	FatalErrorHandler::failIf(
+		ret == -1,
+		"ctf: kernel: Could not parse kernel event definitions file: ",
+		strerror(errno)
+	);
+
+	// Load the generated json
+	loadKernelDefsFile(kernelDefsFileName.c_str());
+}
+
+void CTFAPI::CTFKernelMetadata::initialize()
+{
+	// Check for user requested events
+	bool presets      = addEventsInPresets();
+	bool eventsInFile = addEventsInFile();
+	if (!presets && !eventsInFile)
 		return;
 
-	std::ifstream  src(defaultKernelDefsFileName, std::ios::binary);
-	std::ofstream  dst(basePath + "/" + defaultKernelDefsFileName, std::ios::binary);
+	// Check system requirements
+	bool sysInfo = getSystemInformation();
+	if (!sysInfo) {
+		FatalErrorHandler::warn(
+			"CTF Kernel tracing requires Linux Kernel >= 4.1.0, but Nanos6 was compiled against an older kernel: Disabling Kernel tracing."
+		);
+		return;
+	}
 
-	dst << src.rdbuf();
+	// System requirements met and there are events to enable. Let's now
+	// load the kernel events definition files. Failure in doing so will
+	// halt the execution of Nanos6
+	parseKernelEventDefinitions();
+
+	// Next, load events that depend on kernel event definition files (we
+	// are not adding specific events to the list, but events that match a
+	// specific pattern.
+	addPatternDependentEvents();
+
+	// With the whole list of events requested by the user, now disable events in the exclude list
+	excludeEvents();
+
+	// After excluding, the event list might be empty. Disable if that's the case
+	if (_enabledEventNames.size() == 0) {
+		FatalErrorHandler::warn(
+			"All CTF kernel events have been excluded: Disabling kernel tracing"
+		);
+		_enabled = false;
+		return;
+	}
+
+	// Finally, translate event names to event Id's
+	translateEvents();
+
+	// Event list ready!
+	_enabled = true;
 }

@@ -29,13 +29,14 @@ namespace CTFAPI {
 		static const char *meta_stream;
 		static const char *meta_event;
 
-		static const char *defaultKernelDefsFileName;
 		static ConfigVariableList<std::string> _kernelEventPresets;
 		static ConfigVariable<std::string> _kernelEventFile;
 		static ConfigVariableList<std::string> _kernelExcludedEvents;
 		static std::map<std::string, std::vector<std::string> > _kernelEventPresetMap;
 
 		bool _enabled;
+		bool _enableSyscalls;
+
 		std::string _kernelDefsBootId;
 		ctf_kernel_event_id_t _numberOfEvents;
 		ctf_kernel_event_id_t _maxEventId;
@@ -47,16 +48,21 @@ namespace CTFAPI {
 		std::set<std::string> _enabledEventNames;
 		std::vector<ctf_kernel_event_size_t> _eventSizes;
 
-		void checkBootId();
 		bool getSystemInformation();
-		bool loadKernelDefsFile(const char *file);
+		void loadKernelDefsFile(const char *file);
 		bool loadEnabledEvents();
-		void loadEnabledEventsFromFile();
-		void loadEventPresets();
+		bool addEventsInFile();
+		bool addEventsInPresets();
+		void addPatternDependentEvents();
 		void excludeEvents();
 		void translateEvents();
 	public:
-		CTFKernelMetadata();
+
+		CTFKernelMetadata()
+			: _enabled(false), _enableSyscalls(false),  _maxEventId(-1)
+		{
+		}
+
 		~CTFKernelMetadata()
 		{
 		};
@@ -83,7 +89,8 @@ namespace CTFAPI {
 		}
 
 		void writeMetadataFile(std::string kernelPath);
-		void copyKernelDefinitionsFile(std::string basePath);
+		void parseKernelEventDefinitions();
+		void initialize();
 	};
 }
 

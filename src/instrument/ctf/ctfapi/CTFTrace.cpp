@@ -335,41 +335,53 @@ static bool findCommand(const char *targetCommand, std::string path)
 	return false;
 }
 
-void CTFAPI::CTFTrace::convertToParaver()
+std::string CTFAPI::CTFTrace::searchPythonCommand(const char *command)
 {
-	int ret;
-	const char defaultConverter[] = "ctf2prv";
-	std::string converter;
-	std::string command;
-
-	// is conversion enabled?
-	if (!_ctf2prvEnabled.getValue())
-		return;
+	std::string commandPath;
 
 	// should we use a machine-specific wrapper?
 	if (_ctf2prvWrapper.isPresent()) {
-		converter = _ctf2prvWrapper.getValue();
+		commandPath = _ctf2prvWrapper.getValue();
+		commandPath = commandPath + " " + command;
 	} else {
 		const char *envConverter = getenv("CTF2PRV");
 
-		if (envConverter != NULL) {
-			converter = std::string(envConverter);
+		if (envConverter != nullptr) {
+			commandPath = std::string(envConverter);
+			commandPath = commandPath + " " + command;
 		} else {
-			// if not, is the default converter in the system path?
-			if (!findCommand(defaultConverter, _systemPATH.getValue())) {
-				FatalErrorHandler::warn("The ", defaultConverter, " tool is not in the system PATH. Automatic ctf to prv conversion is not possible.");
-				return;
+			// if not, is the default command in the system path?
+			if (!findCommand(command, _systemPATH.getValue())) {
+				return "";
 			}
 
-			converter = std::string(defaultConverter);
+			commandPath = std::string(command);
 		}
+	}
+
+	return commandPath;
+}
+
+void CTFAPI::CTFTrace::convertToParaver()
+{
+	const char defaultConverter[] = "ctf2prv";
+
+	// Is conversion enabled?
+	if (!_ctf2prvEnabled.getValue())
+		return;
+
+	// Search for the converter or wrapper path
+	std::string converter = searchPythonCommand(defaultConverter);
+	if (converter == "") {
+		FatalErrorHandler::warn("The ctf2prv tool is not in the system PATH. Automatic ctf to prv conversion is not possible.");
+		return;
 	}
 
 	std::cout << "Converting CTF trace to Paraver, please wait " << std::flush;
 
-	// perform the conversion!
-	command = converter + " " + _tmpTracePath;
-	ret = system(command.c_str());
+	// Perform the conversion!
+	std::string command = converter + " " + _tmpTracePath;
+	int ret = system(command.c_str());
 	FatalErrorHandler::warnIf(
 		ret == -1,
 		"ctf: automatic ctf to prv conversion failed: ",

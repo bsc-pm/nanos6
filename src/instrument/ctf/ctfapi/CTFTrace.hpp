@@ -53,6 +53,7 @@ namespace CTFAPI {
 		void setTracePath(const char* tracePath);
 		void createTraceDirectories(std::string &basePath, std::string &userPath, std::string &kernelPath);
 		void initializeTraceTimer();
+		std::string searchPythonCommand(const char *command);
 		void convertToParaver();
 		void moveTemporalTraceToFinalDirectory();
 		void clean();
@@ -94,6 +95,10 @@ namespace CTFAPI {
 
 		inline uint64_t getAbsoluteStartTimestamp() const {
 			return _absoluteStartTime;
+		}
+
+		inline std::string getTemporalTracePath() const {
+			return _tmpTracePath;
 		}
 	};
 }

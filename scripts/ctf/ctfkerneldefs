@@ -339,18 +339,15 @@ def printToFile(f, meta, desc):
 	print(desc[-1], file = f)
 	print("}", file = f)
 
-def printJSON(fileName, stdout, bootId, desc, maxId):
+def printJSON(fileName, bootId, desc, maxId):
 	meta  = "\t\"meta\": {\n"
 	meta += "\t\t\"bootId\": \"" + str(bootId) + "\",\n"
 	meta += "\t\t\"maxEventId\": " + str(maxId) + ",\n"
 	meta += "\t\t\"numberOfEvents\": " + str(len(desc)) + "\n"
 	meta += "\t},"
 
-	if stdout:
-		printToFile(sys.stdout, meta, desc)
-	else:
-		with open(fileName, "w") as f:
-			printToFile(f, meta, desc)
+	with open(fileName, "w") as f:
+		printToFile(f, meta, desc)
 
 def setupLogger(logLevel):
 	logging.basicConfig(level=logLevel)
@@ -358,14 +355,15 @@ def setupLogger(logLevel):
 def printHelp():
 	print("ctfkerneldefs [--verbose] [--help] [--stdout]")
 	print(" --verbose | -v : verbose mode")
-	print(" --stdout | -o : Output description to stdout")
+	print(" --file | -f : Write description to the specified file")
 	print(" --help | -h : Print this helpful help :-)")
 
 def parseArgs():
 	loglevel = logging.INFO
-	stdout = False
+	fileName = "./nanos6_kerneldefs.json"
+
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hvo", ["help", "verbose", "stdout"])
+		opts, args = getopt.getopt(sys.argv[1:], "hvf:", ["help", "verbose", "file="])
 	except getopt.GetoptError:
 		print("Error getting command line options")
 		printHelp()
@@ -377,15 +375,15 @@ def parseArgs():
 			sys.exit()
 		elif opt in ("-v", "--verbose"):
 			loglevel = logging.DEBUG
-		elif opt in ("-o", "--stdout"):
-			stdout = True
+		elif opt in ("-f", "--file"):
+			fileName = arg
 
-	return loglevel, stdout
+	return loglevel, fileName
 
 
-logLevel, stdout = parseArgs()
+logLevel, fileName = parseArgs()
 setupLogger(logLevel)
 tracefs = searchTraceFs()
 bootId = getBootId()
 desc, maxId = scanTracepoints(tracefs)
-printJSON("nanos6_kerneldefs.json", stdout, bootId, desc, maxId)
+printJSON(fileName, bootId, desc, maxId)

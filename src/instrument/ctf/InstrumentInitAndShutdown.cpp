@@ -189,6 +189,7 @@ void Instrument::initialize()
 	trace.initializeTraceTimer();
 	trace.setTotalCPUs(CPUManager::getTotalCPUs());
 	trace.createTraceDirectories(basePath, userPath, kernelPath);
+	kernelMetadata->initialize();
 	initializeUserStreams(userMetadata, userPath);
 	initializeKernelStreams(kernelMetadata, kernelPath);
 
@@ -197,7 +198,6 @@ void Instrument::initialize()
 	initializeCTFEvents(userMetadata);
 	userMetadata->writeMetadataFile(userPath);
 	kernelMetadata->writeMetadataFile(kernelPath);
-	kernelMetadata->copyKernelDefinitionsFile(basePath);
 }
 
 void Instrument::shutdown()
