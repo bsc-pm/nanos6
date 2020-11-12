@@ -52,11 +52,11 @@ public:
 	static void shutdown()
 	{
 #ifndef NDEBUG
-		printDirectoryContent();
+		//printDirectoryContent();
 #endif
 		assert(_directory.empty());
-		std::cout << "Total allocated bytes using nanos6_numa interface: " << _totalBytes << std::endl;
-		std::cout << "Total queries: " << _totalQueries << std::endl;
+//		std::cout << "Total allocated bytes using nanos6_numa interface: " << _totalBytes << std::endl;
+//		std::cout << "Total queries: " << _totalQueries << std::endl;
 	}
 
 	static void *alloc(size_t size, bitmask_t *bitmask, size_t block_size)

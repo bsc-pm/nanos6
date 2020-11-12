@@ -85,5 +85,5 @@ SchedulerInterface::~SchedulerInterface()
 #if USE_FPGA
 	FatalErrorHandler::failIf(true, "FPGA is not supported yet.");
 #endif
-	std::cout << "Expired tasks: " << _expiredTasks << std::endl;
+	//std::cout << "Expired tasks: " << _expiredTasks << std::endl;
 }

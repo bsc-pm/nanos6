@@ -56,14 +56,14 @@ public:
 			}
 			_readyMaps[i].clear();
 			_readyMaps[i].~ready_map_t();
-			std::cout << "Tasks in NUMA node " << (int) i << ": " << _numReadyTasksPerNUMANode[i] << std::endl;
-			std::cout << "Tasks run in NUMA " << (int) i << ": " << _runTasksPerNUMA[i] << std::endl;
+		//	std::cout << "Tasks in NUMA node " << (int) i << ": " << _numReadyTasksPerNUMANode[i] << std::endl;
+		//	std::cout << "Tasks run in NUMA " << (int) i << ": " << _runTasksPerNUMA[i] << std::endl;
 		}
 		MemoryAllocator::free(_readyMaps, _numMaps * sizeof(ready_map_t));
 		MemoryAllocator::free(_numReadyTasksPerNUMANode, _numMaps * sizeof(size_t));
 		MemoryAllocator::free(_numCurrentReadyTasksPerNUMANode, _numMaps * sizeof(size_t));
-		std::cout << "Tasks with no NUMA hint: " << (int) _roundRobinQueues << std::endl;
-		std::cout << "Total number of enqueued tasks: " << _enqueuedTasks << std::endl;;
+		//std::cout << "Tasks with no NUMA hint: " << (int) _roundRobinQueues << std::endl;
+		//std::cout << "Total number of enqueued tasks: " << _enqueuedTasks << std::endl;;
 	}
 
 	void addReadyTask(Task *task, bool unblocked)
