@@ -186,7 +186,6 @@ symbol_resolution += \
 	loader/symbol-resolver/lint.c \
 	loader/symbol-resolver/monitoring.c \
 	loader/symbol-resolver/polling.c \
-	loader/symbol-resolver/reductions.c \
 	loader/symbol-resolver/runtime-info.c \
 	loader/symbol-resolver/task-info-registration.c \
 	loader/symbol-resolver/task-instantiation.c \
@@ -221,7 +220,6 @@ symbol_resolution += \
 	loader/indirect-symbols/lint.c \
 	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/polling.c \
-	loader/indirect-symbols/reductions.c \
 	loader/indirect-symbols/runtime-info.c \
 	loader/indirect-symbols/task-info-registration.c \
 	loader/indirect-symbols/task-instantiation.c \
@@ -512,7 +510,6 @@ regions_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.cpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.cpp \
 	src/dependencies/linear-regions-fragmented/ReductionInfo.cpp \
-	src/dependencies/linear-regions-fragmented/Reductions.cpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.cpp
@@ -526,7 +523,6 @@ discrete_dependency_sources = \
 	src/dependencies/discrete/DataAccessRegistration.cpp \
 	src/dependencies/discrete/devices/HostReductionStorage.cpp \
 	src/dependencies/discrete/ReductionInfo.cpp \
-	src/dependencies/discrete/Reductions.cpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
 	src/dependencies/discrete/ReleaseDirective.cpp
 
