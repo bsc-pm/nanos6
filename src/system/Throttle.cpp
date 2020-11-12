@@ -4,20 +4,16 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
+#include <nanos6.h>
+
+#include <MemoryAllocator.hpp>
+
 #include "DataAccessRegistration.hpp"
 #include "Throttle.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/ompss/TaskBlocking.hpp"
 #include "system/ompss/TaskWait.hpp"
 #include "tasks/Task.hpp"
-
-#include <nanos6.h>
-
-#include <InstrumentTaskStatus.hpp>
-#include <InstrumentTaskWait.hpp>
-#include <MemoryAllocator.hpp>
-
 
 int Throttle::_pressure;
 ConfigVariable<bool> Throttle::_enabled("throttle.enabled", false);
