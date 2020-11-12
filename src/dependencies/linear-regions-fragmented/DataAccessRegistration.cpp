@@ -3139,10 +3139,11 @@ namespace DataAccessRegistration {
 		assert(accessStructures._subaccessBottomMap.empty());
 	}
 
-	void translateReductionAddresses(Task *task, ComputePlace *computePlace,
+	void translateReductionAddresses(
+		Task *task, ComputePlace *computePlace,
 		nanos6_address_translation_entry_t *translationTable,
-		int totalSymbols)
-	{
+		int totalSymbols
+	) {
 		assert(task != nullptr);
 		assert(computePlace != nullptr);
 		assert(translationTable != nullptr);
@@ -3167,7 +3168,9 @@ namespace DataAccessRegistration {
 
 					ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
 					assert(reductionInfo != nullptr);
+
 					size_t slotIndex = reductionInfo->getFreeSlotIndex(computePlace->getIndex());
+
 					// Register assigned slot in the data access
 					dataAccess->setReductionAccessedSlot(slotIndex);
 

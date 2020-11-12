@@ -10,6 +10,7 @@
 
 #include <functional>
 #include <atomic>
+
 #include "DataAccessRegion.hpp"
 #include "ReductionSpecific.hpp"
 #include "executors/threads/CPUManager.hpp"

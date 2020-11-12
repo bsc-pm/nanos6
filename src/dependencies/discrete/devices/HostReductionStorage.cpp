@@ -18,6 +18,7 @@ HostReductionStorage::HostReductionStorage(void *address, size_t length, size_t 
 {
 	const long nCpus = CPUManager::getTotalCPUs();
 	assert(nCpus > 0);
+
 	// Create all slots
 	_slots.resize(nCpus);
 	_currentCpuSlotIndices.resize(nCpus, -1);

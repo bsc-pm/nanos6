@@ -31,6 +31,7 @@ namespace ExecutionWorkflow {
 		MemoryPlace *targetMemoryPlace
 	) {
 		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
+
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		assert(currentThread != nullptr);
 		CPU *cpu = (CPU *)targetComputePlace;
@@ -49,7 +50,8 @@ namespace ExecutionWorkflow {
 			size_t tableSize = 0;
 			nanos6_address_translation_entry_t *translationTable =
 				SymbolTranslation::generateTranslationTable(
-					task, targetComputePlace, stackTranslationTable, tableSize);
+					task, targetComputePlace,
+					stackTranslationTable, tableSize);
 
 			HardwareCounters::updateRuntimeCounters();
 

@@ -94,6 +94,7 @@ DeviceReductionStorage *ReductionInfo::allocateDeviceStorage(nanos6_device_t dev
 
 	// Ensure all threads see the initialized reduction storage before setting the pointer
 	std::atomic_thread_fence(std::memory_order_release);
+
 	_deviceStorages[deviceType] = storage;
 	return storage;
 }

@@ -29,6 +29,7 @@ namespace ExecutionWorkflow {
 	void HostExecutionStep::start()
 	{
 		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
+
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
 		CPU *cpu = (currentThread == nullptr) ? nullptr : currentThread->getComputePlace();
 

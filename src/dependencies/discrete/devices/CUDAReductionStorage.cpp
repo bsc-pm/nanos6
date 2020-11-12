@@ -83,7 +83,7 @@ void CUDAReductionStorage::combineInStorage(void *combineDestination)
 	if (_slots.size() == 0)
 		return;
 
-	// Temporal storage on which to transfer device memory.
+	// Temporal storage on which to transfer device memory
 	void *tmpStorage = CUDAFunctions::mallocHost(_paddedLength);
 	assert(tmpStorage != nullptr);
 

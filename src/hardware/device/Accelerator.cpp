@@ -18,6 +18,7 @@
 void Accelerator::runTask(Task *task)
 {
 	nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
+
 	assert(task != nullptr);
 	task->setComputePlace(_computePlace);
 	task->setMemoryPlace(_memoryPlace);
@@ -26,10 +27,11 @@ void Accelerator::runTask(Task *task)
 	generateDeviceEvironment(task);
 	preRunTask(task);
 
-	size_t tableSize;
+	size_t tableSize = 0;
 	nanos6_address_translation_entry_t *translationTable =
 		SymbolTranslation::generateTranslationTable(
-			task, _computePlace, stackTranslationTable, tableSize);
+			task, _computePlace, stackTranslationTable,
+			tableSize);
 
 	task->body(translationTable);
 
