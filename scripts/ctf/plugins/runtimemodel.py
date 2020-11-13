@@ -6,12 +6,12 @@
 
 from executionmodel import ExecutionModel
 from paravertrace   import ParaverTrace
-from enum import Enum, auto
+from enum import Enum
 
 class WorkerType(Enum):
-	WorkerThread   = auto()
-	LeaderThread   = auto()
-	ExternalThread = auto()
+	WorkerThread   = 1
+	LeaderThread   = 2
+	ExternalThread = 3
 
 class CPU:
 	id_index = 0
