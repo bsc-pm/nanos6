@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2015-2017 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2015-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_REDUCTIONS_H
@@ -16,6 +16,13 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+// NOTE: The full version depends also on nanos6_major_api
+//       That is:   nanos6_major_api . nanos6_reductions_api
+//! \brief This needs to be incremented every time there is an update to the task reductions
+enum nanos6_reductions_api_t { nanos6_reductions_api = 2 };
+
 
 enum ReductionOperation {
 	RED_OP_ADDITION = 0,
@@ -53,22 +60,6 @@ enum ReductionType {
 	RED_TYPE_BOOLEAN = 18000,
 	NUM_RED_TYPES = 19000
 };
-
-
-//! \brief Retrieve the adequate private storage corresponding to the reduction
-//! registered on the given original address
-//!
-//! \param[in] original the reduction address from which to obtain the private
-//! storage
-//! \param[in] dim1size the continuous dimension in bytes
-//! \param[in] dim1start the first byte/index
-//! \param[in] dim1end the next byte/index outside of the region
-//! \return the address of the private storage corresponding to the reduction
-//! registered on the original address
-void *nanos6_get_reduction_storage1(
-	void *original,
-	long dim1size, long dim1start, long dim1end
-);
 
 
 #ifdef __cplusplus

@@ -1,7 +1,7 @@
 /*
 	This file is part of Nanos6 and is licensed under the terms contained in the COPYING file.
 
-	Copyright (C) 2018-2019 Barcelona Supercomputing Center (BSC)
+	Copyright (C) 2018-2020 Barcelona Supercomputing Center (BSC)
 */
 
 #ifndef NANOS6_API_CHECK_H
@@ -21,6 +21,7 @@
 #include "major.h"
 #include "monitoring.h"
 #include "polling.h"
+#include "reductions.h"
 #include "task-info-registration.h"
 #include "task-instantiation.h"
 #include "taskwait.h"
@@ -66,6 +67,7 @@ typedef struct {
 	enum nanos6_locking_api_t locking_api_version;
 	enum nanos6_monitoring_api_t monitoring_api_version;
 	enum nanos6_polling_api_t polling_api_version;
+	enum nanos6_reductions_api_t reductions_api_version;
 	enum nanos6_task_constraints_api_t task_constraints_api_version;
 	enum nanos6_task_execution_api_t task_execution_api_version;
 	enum nanos6_task_info_registration_api_t task_info_registration_api_version;

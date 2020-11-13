@@ -186,7 +186,6 @@ symbol_resolution += \
 	loader/symbol-resolver/lint.c \
 	loader/symbol-resolver/monitoring.c \
 	loader/symbol-resolver/polling.c \
-	loader/symbol-resolver/reductions.c \
 	loader/symbol-resolver/runtime-info.c \
 	loader/symbol-resolver/task-info-registration.c \
 	loader/symbol-resolver/task-instantiation.c \
@@ -221,7 +220,6 @@ symbol_resolution += \
 	loader/indirect-symbols/lint.c \
 	loader/indirect-symbols/monitoring.c \
 	loader/indirect-symbols/polling.c \
-	loader/indirect-symbols/reductions.c \
 	loader/indirect-symbols/runtime-info.c \
 	loader/indirect-symbols/task-info-registration.c \
 	loader/indirect-symbols/task-instantiation.c \
@@ -512,7 +510,6 @@ regions_dependency_sources = \
 	src/dependencies/linear-regions-fragmented/DataAccessRegistration.cpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.cpp \
 	src/dependencies/linear-regions-fragmented/ReductionInfo.cpp \
-	src/dependencies/linear-regions-fragmented/Reductions.cpp \
 	src/dependencies/linear-regions-fragmented/RegisterDependencies.cpp \
 	src/dependencies/linear-regions-fragmented/ReleaseDirective.cpp \
 	src/dependencies/linear-regions-fragmented/TaskDataAccesses.cpp
@@ -524,10 +521,14 @@ discrete_dependency_sources = \
 	src/dependencies/discrete/CPUDependencyData.cpp \
 	src/dependencies/discrete/DataAccess.cpp \
 	src/dependencies/discrete/DataAccessRegistration.cpp \
+	src/dependencies/discrete/devices/HostReductionStorage.cpp \
 	src/dependencies/discrete/ReductionInfo.cpp \
-	src/dependencies/discrete/Reductions.cpp \
 	src/dependencies/discrete/RegisterDependencies.cpp \
 	src/dependencies/discrete/ReleaseDirective.cpp
+
+if USE_CUDA
+discrete_dependency_sources += src/dependencies/discrete/devices/CUDAReductionStorage.cpp
+endif
 
 multidimensional_adaptor_sources += MultidimensionalAPIToLinear.cpp
 
@@ -801,6 +802,7 @@ noinst_HEADERS = \
 	src/dependencies/DataAccessBase.hpp \
 	src/dependencies/DataAccessType.hpp \
 	src/dependencies/MultidimensionalAPITraversal.hpp \
+	src/dependencies/SymbolTranslation.hpp \
 	src/dependencies/discrete/BottomMapEntry.hpp \
 	src/dependencies/discrete/CommutativeSemaphore.hpp \
 	src/dependencies/discrete/CPUDependencyData.hpp \
@@ -811,11 +813,14 @@ noinst_HEADERS = \
 	src/dependencies/discrete/Dependencies.hpp \
 	src/dependencies/discrete/DependencyDomain.hpp \
 	src/dependencies/discrete/DependencySystem.hpp \
+	src/dependencies/discrete/DeviceReductionStorage.hpp \
 	src/dependencies/discrete/MultidimensionalAPI.hpp \
 	src/dependencies/discrete/ReductionInfo.hpp \
 	src/dependencies/discrete/ReductionSpecific.hpp \
 	src/dependencies/discrete/TaskDataAccesses.hpp \
 	src/dependencies/discrete/TaskDataAccessesInfo.hpp \
+	src/dependencies/discrete/devices/HostReductionStorage.hpp \
+	src/dependencies/discrete/devices/CUDAReductionStorage.hpp \
 	src/dependencies/linear-regions-fragmented/BottomMapEntry.hpp \
 	src/dependencies/linear-regions-fragmented/CommutativeScoreboard.hpp \
 	src/dependencies/linear-regions-fragmented/CPUDependencyData.hpp \
@@ -1286,6 +1291,7 @@ noinst_HEADERS = \
 	src/support/Objectified.hpp \
 	src/support/StringLiteral.hpp \
 	src/support/StringSupport.hpp \
+	src/support/bitset/AtomicBitset.hpp \
 	src/support/config/ConfigParser.hpp \
 	src/support/config/ConfigVariable.hpp \
 	src/support/config/toml.hpp \

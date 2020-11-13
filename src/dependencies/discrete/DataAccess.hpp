@@ -23,12 +23,15 @@
 
 struct DataAccess;
 class Task;
-struct BottomMapEntry;
 
 //! The accesses that one or more tasks perform sequentially to a memory location that can occur concurrently (unless commutative).
 //! WARNING: When modifying this structure, please mind to pack it as much as possible.
 //! There might me thousands of allocations of this struct, and size will have a noticeable effect on performance.
 struct DataAccess {
+public:
+	static const size_t MAX_SYMBOLS = 64; // TODO: Temporary solution to use a fixed bitset size
+	typedef std::bitset<MAX_SYMBOLS> symbols_t;
+
 private:
 	//! 16-byte fields
 	//! The region covered by the access
@@ -37,6 +40,9 @@ private:
 	//! 8-byte fields
 	//! The originator of the access
 	Task *_originator;
+
+	//! A bitmap of the "symbols" this access is related to
+	symbols_t _symbols;
 
 	//! C++ allows anonymous unions to save space when two fields of a struct are not used at once.
 	//! We can do this here, as assigning the reductionInfo will be done always when the length is not
@@ -235,10 +241,30 @@ public:
 	{
 		return (_accessFlags.load(std::memory_order_relaxed) & ACCESS_UNREGISTERED);
 	}
+
+	inline size_t getLength() const
+	{
+		return _region.getSize();
+	}
+
+	bool isInSymbol(int symbol) const
+	{
+		return _symbols[symbol];
+	}
+
+	void addToSymbol(int symbol)
+	{
+		_symbols.set(symbol);
+	}
+
+	symbols_t getSymbols() const
+	{
+		return _symbols;
+	}
 };
 
 // Assert that when using non-instrumented builds of nanos6 (where data_access_id_t is not an empty struct)
 // the DataAccess structure is packed to 64 bytes to prevent false sharing.
-static_assert(sizeof(Instrument::data_access_id_t) > 1 || sizeof(DataAccess) == 64, "DataAccess is not packed correctly");
+static_assert(sizeof(Instrument::data_access_id_t) > 1 || sizeof(DataAccess) == 72, "DataAccess is not packed correctly");
 
 #endif // DATA_ACCESS_HPP

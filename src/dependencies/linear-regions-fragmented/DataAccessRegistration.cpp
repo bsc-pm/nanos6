@@ -89,21 +89,28 @@ namespace DataAccessRegistration {
 		bool _triggersDataLinkWrite;
 
 	public:
-		DataAccessStatusEffects()
-			: _isRegistered(false),
-			_isSatisfied(false), _enforcesDependency(false),
+		DataAccessStatusEffects() :
+			_isRegistered(false),
+			_isSatisfied(false),
+			_enforcesDependency(false),
 
 			_hasNext(false),
-			_propagatesReadSatisfiabilityToNext(false), _propagatesWriteSatisfiabilityToNext(false), _propagatesConcurrentSatisfiabilityToNext(false),
+			_propagatesReadSatisfiabilityToNext(false),
+			_propagatesWriteSatisfiabilityToNext(false),
+			_propagatesConcurrentSatisfiabilityToNext(false),
 			_propagatesCommutativeSatisfiabilityToNext(false),
-			_propagatesReductionInfoToNext(false), _propagatesReductionSlotSetToNext(false),
+			_propagatesReductionInfoToNext(false),
+			_propagatesReductionSlotSetToNext(false),
 			_makesNextTopmost(false),
 			_propagatesTopLevel(false),
 			_releasesCommutativeRegion(false),
 
-			_propagatesReadSatisfiabilityToFragments(false), _propagatesWriteSatisfiabilityToFragments(false),
-			_propagatesConcurrentSatisfiabilityToFragments(false), _propagatesCommutativeSatisfiabilityToFragments(false),
-			_propagatesReductionInfoToFragments(false), _propagatesReductionSlotSetToFragments(false),
+			_propagatesReadSatisfiabilityToFragments(false),
+			_propagatesWriteSatisfiabilityToFragments(false),
+			_propagatesConcurrentSatisfiabilityToFragments(false),
+			_propagatesCommutativeSatisfiabilityToFragments(false),
+			_propagatesReductionInfoToFragments(false),
+			_propagatesReductionSlotSetToFragments(false),
 
 			_makesReductionOriginalStorageAvailable(false),
 			_combinesReductionToPrivateStorage(false),
@@ -129,12 +136,9 @@ namespace DataAccessRegistration {
 
 			_isSatisfied = access->satisfied();
 			_enforcesDependency =
-				!access->isWeak() &&
-				!access->satisfied() &&
+				!access->isWeak() && !access->satisfied() &&
 				// Reduction accesses can begin as soon as they have a ReductionInfo (even without SlotSet)
-				!((access->getType() == REDUCTION_ACCESS_TYPE) &&
-				  (access->receivedReductionInfo() || access->allocatedReductionInfo())) &&
-				(access->getObjectType() == access_type);
+				!((access->getType() == REDUCTION_ACCESS_TYPE) && (access->receivedReductionInfo() || access->allocatedReductionInfo())) && (access->getObjectType() == access_type);
 			_hasNext = access->hasNext();
 
 			// Propagation to fragments
@@ -185,12 +189,11 @@ namespace DataAccessRegistration {
 						// in order to be able to propagate a nested reduction ReductionInfo outside
 						&& ((access->getType() != WRITE_ACCESS_TYPE) && (access->getType() != READWRITE_ACCESS_TYPE));
 					_propagatesReductionSlotSetToNext = false; // ReductionSlotSet is propagated through the fragments
-					_propagatesDataReleaseStepToNext = false; // DataReleaseStep is propagated through the fragments
+					_propagatesDataReleaseStepToNext = false;  // DataReleaseStep is propagated through the fragments
 				} else if (
 					(access->getObjectType() == fragment_type)
 					|| (access->getObjectType() == taskwait_type)
-					|| (access->getObjectType() == top_level_sink_type)
-				) {
+					|| (access->getObjectType() == top_level_sink_type)) {
 					_propagatesReadSatisfiabilityToNext =
 						access->canPropagateReadSatisfiability()
 						&& access->readSatisfied();
@@ -210,7 +213,7 @@ namespace DataAccessRegistration {
 						&& access->receivedReductionInfo()
 						&& !access->closesReduction()
 						&& (access->allocatedReductionInfo()
-								|| access->receivedReductionSlotSet());
+							|| access->receivedReductionSlotSet());
 					_propagatesDataReleaseStepToNext = access->hasDataReleaseStep();
 				} else {
 					assert(access->getObjectType() == access_type);
@@ -252,7 +255,7 @@ namespace DataAccessRegistration {
 						&& access->complete()
 						&& !access->closesReduction()
 						&& (access->allocatedReductionInfo()
-								|| access->receivedReductionSlotSet());
+							|| access->receivedReductionSlotSet());
 					_propagatesDataReleaseStepToNext =
 						access->hasDataReleaseStep() && access->complete();
 				}
@@ -280,7 +283,7 @@ namespace DataAccessRegistration {
 				// (forming part of the same reduction) are completed, but access' predecessors are
 				// not necessarily so
 				&& (access->allocatedReductionInfo()
-						|| access->receivedReductionSlotSet())
+					|| access->receivedReductionSlotSet())
 				&& access->complete();
 
 			_combinesReductionToOriginal =
@@ -289,24 +292,22 @@ namespace DataAccessRegistration {
 				&& access->satisfied();
 
 			_isRemovable = access->isTopmost()
-				&& access->readSatisfied() && access->writeSatisfied()
-				&& access->receivedReductionInfo()
-				// Read as: If this (reduction) access is part of its predecessor reduction,
-				// it needs to have received the 'ReductionSlotSet' before being removed
-				&& ((access->getType() != REDUCTION_ACCESS_TYPE)
-					|| access->allocatedReductionInfo() || access->receivedReductionSlotSet())
-				&& access->complete()
-				&& (
-					!access->isInBottomMap() || access->hasNext()
-					|| (access->getType() == NO_ACCESS_TYPE)
-					|| (access->getObjectType() == taskwait_type)
-					|| (access->getObjectType() == top_level_sink_type)
-				);
+						   && access->readSatisfied() && access->writeSatisfied()
+						   && access->receivedReductionInfo()
+						   // Read as: If this (reduction) access is part of its predecessor reduction,
+						   // it needs to have received the 'ReductionSlotSet' before being removed
+						   && ((access->getType() != REDUCTION_ACCESS_TYPE)
+							   || access->allocatedReductionInfo() || access->receivedReductionSlotSet())
+						   && access->complete()
+						   && (!access->isInBottomMap() || access->hasNext()
+							   || (access->getType() == NO_ACCESS_TYPE)
+							   || (access->getObjectType() == taskwait_type)
+							   || (access->getObjectType() == top_level_sink_type));
 
 			_triggersTaskwaitWorkflow = (access->getObjectType() == taskwait_type)
-				&& access->readSatisfied()
-				&& access->writeSatisfied()
-				&& access->hasOutputLocation();
+										&& access->readSatisfied()
+										&& access->writeSatisfied()
+										&& access->hasOutputLocation();
 
 			if (access->hasDataReleaseStep()) {
 				ExecutionWorkflow::DataReleaseStep *releaseStep =
@@ -319,10 +320,10 @@ namespace DataAccessRegistration {
 			}
 
 			_triggersDataLinkRead = access->hasDataLinkStep()
-				&& access->readSatisfied();
+									&& access->readSatisfied();
 
 			_triggersDataLinkWrite = access->hasDataLinkStep()
-				&& access->writeSatisfied();
+									 && access->writeSatisfied();
 
 			Task *domainParent;
 			assert(access->getOriginator() != nullptr);
@@ -336,8 +337,7 @@ namespace DataAccessRegistration {
 				assert(
 					(access->getObjectType() == fragment_type)
 					|| (access->getObjectType() == taskwait_type)
-					|| (access->getObjectType() == top_level_sink_type)
-				);
+					|| (access->getObjectType() == top_level_sink_type));
 				domainParent = access->getOriginator();
 			}
 			assert(domainParent != nullptr);
@@ -350,8 +350,7 @@ namespace DataAccessRegistration {
 					assert(
 						(access->getNext()._objectType == fragment_type)
 						|| (access->getNext()._objectType == taskwait_type)
-						|| (access->getNext()._objectType == top_level_sink_type)
-					);
+						|| (access->getNext()._objectType == top_level_sink_type));
 					nextDomainParent = access->getNext()._task;
 				}
 				assert(nextDomainParent != nullptr);
@@ -376,8 +375,9 @@ namespace DataAccessRegistration {
 				access->hasNext() && access->complete() && access->hasSubaccesses();
 		}
 
-		void setEnforcesDependency() {
-			assert (_enforcesDependency == false);
+		void setEnforcesDependency()
+		{
+			assert(_enforcesDependency == false);
 			_enforcesDependency = true;
 		}
 	};
@@ -398,8 +398,8 @@ namespace DataAccessRegistration {
 
 		DataAccessLink _next;
 
-		BottomMapUpdateOperation()
-			: _region(),
+		BottomMapUpdateOperation() :
+			_region(),
 			_parentAccessType(NO_ACCESS_TYPE),
 			_linkBottomMapAccessesToNext(false),
 			_inhibitReadSatisfiabilityPropagation(false),
@@ -411,8 +411,8 @@ namespace DataAccessRegistration {
 		{
 		}
 
-		BottomMapUpdateOperation(DataAccessRegion const &region)
-			: _region(region),
+		BottomMapUpdateOperation(DataAccessRegion const &region) :
+			_region(region),
 			_parentAccessType(NO_ACCESS_TYPE),
 			_linkBottomMapAccessesToNext(false),
 			_inhibitReadSatisfiabilityPropagation(false),
@@ -435,33 +435,27 @@ namespace DataAccessRegistration {
 	static inline void processBottomMapUpdate(
 		BottomMapUpdateOperation &operation,
 		TaskDataAccesses &accessStructures, Task *task,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	);
+		/* OUT */ CPUDependencyData &hpDependencyData);
 	static inline void removeBottomMapTaskwaitOrTopLevelSink(
-		DataAccess *access, TaskDataAccesses &accessStructures, __attribute__((unused)) Task *task
-	);
+		DataAccess *access, TaskDataAccesses &accessStructures, __attribute__((unused)) Task *task);
 	static inline BottomMapEntry *fragmentBottomMapEntry(
 		BottomMapEntry *bottomMapEntry, DataAccessRegion region,
-		TaskDataAccesses &accessStructures, bool removeIntersection = false
-	);
+		TaskDataAccesses &accessStructures, bool removeIntersection = false);
 	static void handleRemovableTasks(
-		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks
-	);
+		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks);
 	static void handleCompletedTaskwaits(
 		CPUDependencyData::satisfied_taskwait_accesses_t &completedTaskwaits,
-		__attribute__((unused))ComputePlace *computePlace
-	);
+		__attribute__((unused)) ComputePlace *computePlace);
 	static inline DataAccess *fragmentAccess(
 		DataAccess *dataAccess, DataAccessRegion const &region,
-		TaskDataAccesses &accessStructures
-	);
+		TaskDataAccesses &accessStructures);
 
 	static inline void handleDataAccessStatusChanges(
 		DataAccessStatusEffects const &initialStatus,
 		DataAccessStatusEffects const &updatedStatus,
 		DataAccess *access, TaskDataAccesses &accessStructures, Task *task,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
+		/* OUT */ CPUDependencyData &hpDependencyData)
+	{
 		// Registration
 		if (initialStatus._isRegistered != updatedStatus._isRegistered) {
 			assert(!initialStatus._isRegistered);
@@ -500,8 +494,7 @@ namespace DataAccessRegistration {
 			Instrument::dataAccessBecomesSatisfied(
 				access->getInstrumentationId(),
 				true,
-				task->getInstrumentationTaskId()
-			);
+				task->getInstrumentationTaskId());
 		}
 
 		// Link to Next
@@ -510,10 +503,9 @@ namespace DataAccessRegistration {
 			Instrument::linkedDataAccesses(
 				access->getInstrumentationId(),
 				access->getNext()._task->getInstrumentationTaskId(),
-				(Instrument::access_object_type_t) access->getNext()._objectType,
+				(Instrument::access_object_type_t)access->getNext()._objectType,
 				access->getAccessRegion(),
-				/* direct */ true, /* unidirectional */ false
-			);
+				/* direct */ true, /* unidirectional */ false);
 		}
 
 		// Dependency updates
@@ -536,8 +528,7 @@ namespace DataAccessRegistration {
 		}
 
 		// Notify reduction original storage has become available
-		if (initialStatus._makesReductionOriginalStorageAvailable !=
-				updatedStatus._makesReductionOriginalStorageAvailable) {
+		if (initialStatus._makesReductionOriginalStorageAvailable != updatedStatus._makesReductionOriginalStorageAvailable) {
 			assert(!initialStatus._makesReductionOriginalStorageAvailable);
 			assert(access->getObjectType() == access_type);
 
@@ -549,16 +540,15 @@ namespace DataAccessRegistration {
 
 		// Reduction combination to a private reduction storage
 		if ((initialStatus._combinesReductionToPrivateStorage != updatedStatus._combinesReductionToPrivateStorage)
-				// If we can already combine to the original region directly, we just skip this step
-				&& (initialStatus._combinesReductionToOriginal == updatedStatus._combinesReductionToOriginal)) {
+			// If we can already combine to the original region directly, we just skip this step
+			&& (initialStatus._combinesReductionToOriginal == updatedStatus._combinesReductionToOriginal)) {
 			assert(!initialStatus._combinesReductionToPrivateStorage);
 			assert(!initialStatus._combinesReductionToOriginal);
 
 			assert(!access->hasBeenDiscounted());
 
 			assert(access->getType() == REDUCTION_ACCESS_TYPE);
-			assert(access->allocatedReductionInfo() ||
-					(access->receivedReductionInfo() && access->receivedReductionSlotSet()));
+			assert(access->allocatedReductionInfo() || (access->receivedReductionInfo() && access->receivedReductionSlotSet()));
 
 			ReductionInfo *reductionInfo = access->getReductionInfo();
 			assert(reductionInfo != nullptr);
@@ -583,15 +573,14 @@ namespace DataAccessRegistration {
 			bool wasLastCombination = reductionInfo->combineRegion(access->getAccessRegion(), access->getReductionSlotSet(), /* canCombineToOriginalStorage */ true);
 
 			if (wasLastCombination) {
-				const DataAccessRegion& originalRegion = reductionInfo->getOriginalRegion();
+				const DataAccessRegion &originalRegion = reductionInfo->getOriginalRegion();
 
 				ObjectAllocator<ReductionInfo>::deleteObject(reductionInfo);
 
 				Instrument::deallocatedReductionInfo(
 					access->getInstrumentationId(),
 					reductionInfo,
-					originalRegion
-				);
+					originalRegion);
 			}
 		}
 
@@ -721,8 +710,7 @@ namespace DataAccessRegistration {
 		if (access->hasSubaccesses()) {
 			if (
 				initialStatus._linksBottomMapAccessesToNextAndInhibitsPropagation
-				!= updatedStatus._linksBottomMapAccessesToNextAndInhibitsPropagation
-			) {
+				!= updatedStatus._linksBottomMapAccessesToNextAndInhibitsPropagation) {
 				BottomMapUpdateOperation bottomMapUpdateOperation(access->getAccessRegion());
 
 				bottomMapUpdateOperation._parentAccessType = access->getType();
@@ -818,8 +806,7 @@ namespace DataAccessRegistration {
 							dataAccess->getReductionSlotSet() |= access->getReductionSlotSet();
 
 							return true;
-						}
-					);
+						});
 				}
 
 				// The last taskwait fragment that finishes removes the blocking over the task
@@ -836,23 +823,20 @@ namespace DataAccessRegistration {
 				Instrument::unlinkedDataAccesses(
 					access->getInstrumentationId(),
 					access->getNext()._task->getInstrumentationTaskId(),
-					(Instrument::access_object_type_t) access->getNext()._objectType,
-					/* direct */ true
-				);
+					(Instrument::access_object_type_t)access->getNext()._objectType,
+					/* direct */ true);
 			} else {
-				if ((access->getObjectType() == taskwait_type) ||
-					(access->getObjectType() == top_level_sink_type))
-				{
+				if ((access->getObjectType() == taskwait_type) || (access->getObjectType() == top_level_sink_type)) {
 					removeBottomMapTaskwaitOrTopLevelSink(access, accessStructures, task);
 				} else {
 					assert(access->getObjectType() == access_type
-						&& access->getType() == NO_ACCESS_TYPE);
+						   && access->getType() == NO_ACCESS_TYPE);
 
 					Instrument::removedDataAccess(
-							access->getInstrumentationId());
+						access->getInstrumentationId());
 					accessStructures._accesses.erase(access);
 					ObjectAllocator<DataAccess>::deleteObject(
-							access);
+						access);
 				}
 			}
 
@@ -865,8 +849,8 @@ namespace DataAccessRegistration {
 
 
 	static inline void removeBottomMapTaskwaitOrTopLevelSink(
-		DataAccess *access, TaskDataAccesses &accessStructures, __attribute__((unused)) Task *task
-	) {
+		DataAccess *access, TaskDataAccesses &accessStructures, __attribute__((unused)) Task *task)
+	{
 		assert(access != nullptr);
 		assert(task != nullptr);
 		assert(access->getOriginator() == task);
@@ -889,13 +873,11 @@ namespace DataAccessRegistration {
 					fragmentBottomMapEntry(
 						bottomMapEntry, access->getAccessRegion(),
 						accessStructures,
-						/* remove intersection */ true
-					);
+						/* remove intersection */ true);
 				}
 
 				return true;
-			}
-		);
+			});
 
 		//! We are about to delete the taskwait fragment. Before doing so,
 		//! move the location info back to the original access
@@ -913,8 +895,7 @@ namespace DataAccessRegistration {
 				originalAccess->setLocation(access->getLocation());
 
 				return true;
-			}
-		);
+			});
 
 		accessStructures._taskwaitFragments.erase(access);
 		ObjectAllocator<DataAccess>::deleteObject(access);
@@ -931,8 +912,8 @@ namespace DataAccessRegistration {
 		MemoryPlace const *outputLocation = nullptr,
 		ExecutionWorkflow::DataReleaseStep *dataReleaseStep = nullptr,
 		ExecutionWorkflow::DataLinkStep *dataLinkStep = nullptr,
-		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink()
-	) {
+		DataAccess::status_t status = 0, DataAccessLink next = DataAccessLink())
+	{
 		// Regular object duplication
 		DataAccess *dataAccess = ObjectAllocator<DataAccess>::newObject(
 			objectType,
@@ -944,16 +925,15 @@ namespace DataAccessRegistration {
 			dataReleaseStep,
 			dataLinkStep,
 			Instrument::data_access_id_t(),
-			status, next
-		);
+			status, next);
 
 		return dataAccess;
 	}
 
 
 	static inline void upgradeAccess(
-		DataAccess *dataAccess, DataAccessType accessType, bool weak, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex
-	) {
+		DataAccess *dataAccess, DataAccessType accessType, bool weak, reduction_type_and_operator_index_t reductionTypeAndOperatorIndex)
+	{
 		assert(dataAccess != nullptr);
 		assert(!dataAccess->hasBeenDiscounted());
 
@@ -964,16 +944,11 @@ namespace DataAccessRegistration {
 			FatalErrorHandler::failIf(
 				(accessType == REDUCTION_ACCESS_TYPE) || (dataAccess->getType() == REDUCTION_ACCESS_TYPE),
 				"Task ",
-				(dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr ?
-					dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label :
-					dataAccess->getOriginator()->getTaskInfo()->implementations[0].declaration_source
-				),
-				" has non-reduction accesses that overlap a reduction"
-			);
+				(dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr ? dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label : dataAccess->getOriginator()->getTaskInfo()->implementations[0].declaration_source),
+				" has non-reduction accesses that overlap a reduction");
 			if (
 				((accessType == COMMUTATIVE_ACCESS_TYPE) && (dataAccess->getType() == CONCURRENT_ACCESS_TYPE))
-				||((accessType == CONCURRENT_ACCESS_TYPE) && (dataAccess->getType() == COMMUTATIVE_ACCESS_TYPE))
-			) {
+				|| ((accessType == CONCURRENT_ACCESS_TYPE) && (dataAccess->getType() == COMMUTATIVE_ACCESS_TYPE))) {
 				newDataAccessType = COMMUTATIVE_ACCESS_TYPE;
 			} else {
 				newDataAccessType = READWRITE_ACCESS_TYPE;
@@ -983,12 +958,8 @@ namespace DataAccessRegistration {
 				(accessType == REDUCTION_ACCESS_TYPE)
 					&& (dataAccess->getReductionTypeAndOperatorIndex() != reductionTypeAndOperatorIndex),
 				"Task ",
-				(dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr ?
-					dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label :
-					dataAccess->getOriginator()->getTaskInfo()->implementations[0].declaration_source
-				),
-				" has two overlapping reductions over different types or with different operators"
-			);
+				(dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr ? dataAccess->getOriginator()->getTaskInfo()->implementations[0].task_label : dataAccess->getOriginator()->getTaskInfo()->implementations[0].declaration_source),
+				" has two overlapping reductions over different types or with different operators");
 		}
 
 		dataAccess->upgrade(newWeak, newDataAccessType);
@@ -998,8 +969,8 @@ namespace DataAccessRegistration {
 	// NOTE: locking should be handled from the outside
 	static inline DataAccess *duplicateDataAccess(
 		DataAccess const &toBeDuplicated,
-		__attribute__((unused)) TaskDataAccesses &accessStructures
-	) {
+		__attribute__((unused)) TaskDataAccesses &accessStructures)
+	{
 		assert(toBeDuplicated.getOriginator() != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
 		assert(!toBeDuplicated.hasBeenDiscounted());
@@ -1023,16 +994,15 @@ namespace DataAccessRegistration {
 		return accessStructures._accesses.processAll(
 			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 				return !position->isReachable();
-			}
-		);
+			});
 	}
 #endif
 
 
 	static inline BottomMapEntry *fragmentBottomMapEntry(
 		BottomMapEntry *bottomMapEntry, DataAccessRegion region,
-		TaskDataAccesses &accessStructures, bool removeIntersection
-	) {
+		TaskDataAccesses &accessStructures, bool removeIntersection)
+	{
 		if (bottomMapEntry->getAccessRegion().fullyContainedIn(region)) {
 			// Nothing to fragment
 			return bottomMapEntry;
@@ -1048,11 +1018,10 @@ namespace DataAccessRegistration {
 			removeIntersection,
 			[&](BottomMapEntry const &toBeDuplicated) -> BottomMapEntry * {
 				return ObjectAllocator<BottomMapEntry>::newObject(DataAccessRegion(), toBeDuplicated._link,
-						toBeDuplicated._accessType, toBeDuplicated._reductionTypeAndOperatorIndex);
+					toBeDuplicated._accessType, toBeDuplicated._reductionTypeAndOperatorIndex);
 			},
 			[&](__attribute__((unused)) BottomMapEntry *fragment, __attribute__((unused)) BottomMapEntry *originalBottomMapEntry) {
-			}
-		);
+			});
 
 		if (!removeIntersection) {
 			bottomMapEntry = &(*position);
@@ -1068,8 +1037,8 @@ namespace DataAccessRegistration {
 
 	static inline void setUpNewFragment(
 		DataAccess *fragment, DataAccess *originalDataAccess,
-		TaskDataAccesses &accessStructures
-	) {
+		TaskDataAccesses &accessStructures)
+	{
 		if (fragment != originalDataAccess) {
 			CPUDependencyData hpDependencyData;
 
@@ -1081,8 +1050,7 @@ namespace DataAccessRegistration {
 			handleDataAccessStatusChanges(
 				initialStatus, updatedStatus,
 				fragment, accessStructures, fragment->getOriginator(),
-				hpDependencyData
-			);
+				hpDependencyData);
 
 			assert(hpDependencyData.empty());
 		}
@@ -1091,8 +1059,8 @@ namespace DataAccessRegistration {
 
 	static inline DataAccess *fragmentAccessObject(
 		DataAccess *dataAccess, DataAccessRegion const &region,
-		TaskDataAccesses &accessStructures
-	) {
+		TaskDataAccesses &accessStructures)
+	{
 		assert(!dataAccess->hasBeenDiscounted());
 		assert(dataAccess->getObjectType() == access_type);
 
@@ -1112,8 +1080,7 @@ namespace DataAccessRegistration {
 			},
 			[&](DataAccess *fragment, DataAccess *originalDataAccess) {
 				setUpNewFragment(fragment, originalDataAccess, accessStructures);
-			}
-		);
+			});
 
 		dataAccess = &(*position);
 		assert(dataAccess != nullptr);
@@ -1125,8 +1092,8 @@ namespace DataAccessRegistration {
 
 	static inline DataAccess *fragmentFragmentObject(
 		DataAccess *dataAccess, DataAccessRegion const &region,
-		TaskDataAccesses &accessStructures
-	) {
+		TaskDataAccesses &accessStructures)
+	{
 		assert(!dataAccess->hasBeenDiscounted());
 		assert(dataAccess->getObjectType() == fragment_type);
 
@@ -1146,8 +1113,7 @@ namespace DataAccessRegistration {
 			},
 			[&](DataAccess *fragment, DataAccess *originalDataAccess) {
 				setUpNewFragment(fragment, originalDataAccess, accessStructures);
-			}
-		);
+			});
 
 		dataAccess = &(*position);
 		assert(dataAccess != nullptr);
@@ -1159,8 +1125,8 @@ namespace DataAccessRegistration {
 
 	static inline DataAccess *fragmentTaskwaitFragmentObject(
 		DataAccess *dataAccess, DataAccessRegion const &region,
-		TaskDataAccesses &accessStructures
-	) {
+		TaskDataAccesses &accessStructures)
+	{
 		assert(!dataAccess->hasBeenDiscounted());
 		assert((dataAccess->getObjectType() == taskwait_type) || (dataAccess->getObjectType() == top_level_sink_type));
 
@@ -1180,8 +1146,7 @@ namespace DataAccessRegistration {
 			},
 			[&](DataAccess *fragment, DataAccess *originalDataAccess) {
 				setUpNewFragment(fragment, originalDataAccess, accessStructures);
-			}
-		);
+			});
 
 		dataAccess = &(*position);
 		assert(dataAccess != nullptr);
@@ -1193,8 +1158,8 @@ namespace DataAccessRegistration {
 
 	static inline DataAccess *fragmentAccess(
 		DataAccess *dataAccess, DataAccessRegion const &region,
-		TaskDataAccesses &accessStructures
-	) {
+		TaskDataAccesses &accessStructures)
+	{
 		assert(dataAccess != nullptr);
 		// assert(accessStructures._lock.isLockedByThisThread()); // Not necessary when fragmenting an access that is not reachable
 		assert(accessStructures._lock.isLockedByThisThread() || noAccessIsReachable(accessStructures));
@@ -1218,7 +1183,8 @@ namespace DataAccessRegistration {
 	}
 
 
-	static inline void processSatisfiedCommutativeOriginators(/* INOUT */ CPUDependencyData &hpDependencyData) {
+	static inline void processSatisfiedCommutativeOriginators(/* INOUT */ CPUDependencyData &hpDependencyData)
+	{
 		if (!hpDependencyData._satisfiedCommutativeOriginators.empty()) {
 			CommutativeScoreboard::_lock.lock();
 			for (Task *satisfiedCommutativeOriginator : hpDependencyData._satisfiedCommutativeOriginators) {
@@ -1241,8 +1207,8 @@ namespace DataAccessRegistration {
 	static inline void processSatisfiedOriginators(
 		/* INOUT */ CPUDependencyData &hpDependencyData,
 		ComputePlace *computePlace,
-		bool fromBusyThread
-	) {
+		bool fromBusyThread)
+	{
 		processSatisfiedCommutativeOriginators(hpDependencyData);
 
 		// NOTE: This is done without the lock held and may be slow since it can enter the scheduler
@@ -1271,8 +1237,8 @@ namespace DataAccessRegistration {
 	static void applyUpdateOperationOnAccess(
 		UpdateOperation const &updateOperation,
 		DataAccess *access, TaskDataAccesses &accessStructures,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
+		/* OUT */ CPUDependencyData &hpDependencyData)
+	{
 		// Fragment if necessary
 		access = fragmentAccess(access, updateOperation._region, accessStructures);
 		assert(access != nullptr);
@@ -1304,18 +1270,15 @@ namespace DataAccessRegistration {
 			if (access->getReductionInfo() != nullptr) {
 				assert(access->getType() == REDUCTION_ACCESS_TYPE);
 				assert(access->allocatedReductionInfo());
-			}
-			else if ((access->getType() == REDUCTION_ACCESS_TYPE)
-					&& (updateOperation._reductionInfo != nullptr)
-					&& (access->getReductionTypeAndOperatorIndex() ==
-						updateOperation._reductionInfo->getTypeAndOperatorIndex())) {
+			} else if ((access->getType() == REDUCTION_ACCESS_TYPE)
+					   && (updateOperation._reductionInfo != nullptr)
+					   && (access->getReductionTypeAndOperatorIndex() == updateOperation._reductionInfo->getTypeAndOperatorIndex())) {
 				// Received compatible ReductionInfo
 				access->setReductionInfo(updateOperation._reductionInfo);
 
 				Instrument::receivedCompatibleReductionInfo(
 					access->getInstrumentationId(),
-					*updateOperation._reductionInfo
-				);
+					*updateOperation._reductionInfo);
 			}
 
 			access->setReceivedReductionInfo();
@@ -1323,9 +1286,7 @@ namespace DataAccessRegistration {
 
 		// ReductionSlotSet
 		if (updateOperation._reductionSlotSet.size() > 0) {
-			assert((access->getObjectType() == access_type) ||
-				(access->getObjectType() == fragment_type) ||
-				(access->getObjectType() == taskwait_type));
+			assert((access->getObjectType() == access_type) || (access->getObjectType() == fragment_type) || (access->getObjectType() == taskwait_type));
 			assert(access->getType() == REDUCTION_ACCESS_TYPE);
 			assert(access->getReductionSlotSet().size() == updateOperation._reductionSlotSet.size());
 
@@ -1348,14 +1309,13 @@ namespace DataAccessRegistration {
 		handleDataAccessStatusChanges(
 			initialStatus, updatedStatus,
 			access, accessStructures, updateOperation._target._task,
-			hpDependencyData
-		);
+			hpDependencyData);
 	}
 
 	static void processUpdateOperation(
 		UpdateOperation const &updateOperation,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
+		/* OUT */ CPUDependencyData &hpDependencyData)
+	{
 		assert(!updateOperation.empty());
 		TaskDataAccesses &accessStructures = updateOperation._target._task->getDataAccesses();
 
@@ -1363,46 +1323,43 @@ namespace DataAccessRegistration {
 			// Update over Accesses
 			accessStructures._accesses.processIntersecting(
 				updateOperation._region,
-				[&] (TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
+				[&](TaskDataAccesses::accesses_t::iterator accessPosition) -> bool {
 					DataAccess *access = &(*accessPosition);
 
 					applyUpdateOperationOnAccess(updateOperation, access, accessStructures, hpDependencyData);
 
 					return true;
-				}
-			);
+				});
 		} else if (updateOperation._target._objectType == fragment_type) {
 			// Update over Fragments
 			accessStructures._accessFragments.processIntersecting(
 				updateOperation._region,
-				[&] (TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
+				[&](TaskDataAccesses::access_fragments_t::iterator fragmentPosition) -> bool {
 					DataAccess *fragment = &(*fragmentPosition);
 
 					applyUpdateOperationOnAccess(updateOperation, fragment, accessStructures, hpDependencyData);
 
 					return true;
-				}
-			);
+				});
 		} else {
 			// Update over Taskwait Fragments
 			assert((updateOperation._target._objectType == taskwait_type) || (updateOperation._target._objectType == top_level_sink_type));
 			accessStructures._taskwaitFragments.processIntersecting(
 				updateOperation._region,
-				[&] (TaskDataAccesses::access_fragments_t::iterator position) -> bool {
+				[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
 					DataAccess *taskwaitFragment = &(*position);
 
 					applyUpdateOperationOnAccess(updateOperation, taskwaitFragment, accessStructures, hpDependencyData);
 
 					return true;
-				}
-			);
+				});
 		}
 	}
 
 
 	static inline void processDelayedOperations(
-		/* INOUT */ CPUDependencyData &hpDependencyData
-	) {
+		/* INOUT */ CPUDependencyData &hpDependencyData)
+	{
 		Task *lastLocked = nullptr;
 
 		while (!hpDependencyData._delayedOperations.empty()) {
@@ -1429,8 +1386,8 @@ namespace DataAccessRegistration {
 
 
 	static inline void processReleasedCommutativeRegions(
-		/* INOUT */ CPUDependencyData &hpDependencyData
-	) {
+		/* INOUT */ CPUDependencyData &hpDependencyData)
+	{
 		if (!hpDependencyData._releasedCommutativeRegions.empty()) {
 			CommutativeScoreboard::_lock.lock();
 			CommutativeScoreboard::processReleasedCommutativeRegions(hpDependencyData);
@@ -1442,8 +1399,8 @@ namespace DataAccessRegistration {
 	static void processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
 		CPUDependencyData &hpDependencyData,
 		ComputePlace *computePlace,
-		bool fromBusyThread
-	) {
+		bool fromBusyThread)
+	{
 		processReleasedCommutativeRegions(hpDependencyData);
 
 #if NO_DEPENDENCY_DELAYED_OPERATIONS
@@ -1463,8 +1420,8 @@ namespace DataAccessRegistration {
 	static inline DataAccess *createInitialFragment(
 		TaskDataAccesses::accesses_t::iterator accessPosition,
 		TaskDataAccesses &accessStructures,
-		DataAccessRegion subregion
-	) {
+		DataAccessRegion subregion)
+	{
 		DataAccess *dataAccess = &(*accessPosition);
 		assert(dataAccess != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
@@ -1485,8 +1442,7 @@ namespace DataAccessRegistration {
 			dataAccess->getOutputLocation(),
 			dataAccess->getDataReleaseStep(),
 			dataAccess->getDataLinkStep(),
-			instrumentationId
-		);
+			instrumentationId);
 
 		fragment->inheritFragmentStatus(dataAccess); //TODO is it necessary?
 
@@ -1517,16 +1473,14 @@ namespace DataAccessRegistration {
 						excludedSubregion,
 						DataAccessLink(dataAccess->getOriginator(), fragment_type),
 						dataAccess->getType(),
-						dataAccess->getReductionTypeAndOperatorIndex()
-					);
+						dataAccess->getReductionTypeAndOperatorIndex());
 					accessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 				},
 				[&](__attribute__((unused)) DataAccessRegion intersection) {
 				},
 				[&](__attribute__((unused)) DataAccessRegion unmatchedRegion) {
 					// This part is not covered by the access
-				}
-			);
+				});
 		}
 
 		return fragment;
@@ -1537,8 +1491,8 @@ namespace DataAccessRegistration {
 	static inline bool followLink(
 		DataAccessLink const &link,
 		DataAccessRegion const &region,
-		ProcessorType processor
-	) {
+		ProcessorType processor)
+	{
 		Task *task = link._task;
 		assert(task != nullptr);
 
@@ -1548,40 +1502,37 @@ namespace DataAccessRegistration {
 		if (link._objectType == access_type) {
 			return accessStructures._accesses.processIntersecting(
 				region,
-				[&] (TaskDataAccesses::accesses_t::iterator position) -> bool {
+				[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
 					DataAccess *access = &(*position);
 					assert(!access->hasBeenDiscounted());
 
 					access = fragmentAccessObject(access, region, accessStructures);
 
 					return processor(access);
-				}
-			);
+				});
 		} else if (link._objectType == fragment_type) {
 			return accessStructures._accessFragments.processIntersecting(
 				region,
-				[&] (TaskDataAccesses::access_fragments_t::iterator position) -> bool {
+				[&](TaskDataAccesses::access_fragments_t::iterator position) -> bool {
 					DataAccess *access = &(*position);
 					assert(!access->hasBeenDiscounted());
 
 					access = fragmentFragmentObject(access, region, accessStructures);
 
 					return processor(access);
-				}
-			);
+				});
 		} else {
 			assert((link._objectType == taskwait_type) || (link._objectType == top_level_sink_type));
 			return accessStructures._taskwaitFragments.processIntersecting(
 				region,
-				[&] (TaskDataAccesses::taskwait_fragments_t::iterator position) -> bool {
+				[&](TaskDataAccesses::taskwait_fragments_t::iterator position) -> bool {
 					DataAccess *access = &(*position);
 					assert(!access->hasBeenDiscounted());
 
 					access = fragmentTaskwaitFragmentObject(access, region, accessStructures);
 
 					return processor(access);
-				}
-			);
+				});
 		}
 	}
 
@@ -1590,8 +1541,8 @@ namespace DataAccessRegistration {
 	static inline bool foreachBottomMapMatchPossiblyCreatingInitialFragmentsAndMissingRegion(
 		Task *parent, TaskDataAccesses &parentAccessStructures,
 		DataAccessRegion region,
-		MatchingProcessorType matchingProcessor, MissingProcessorType missingProcessor
-	) {
+		MatchingProcessorType matchingProcessor, MissingProcessorType missingProcessor)
+	{
 		assert(parent != nullptr);
 		assert((&parentAccessStructures) == (&parent->getDataAccesses()));
 		assert(!parentAccessStructures.hasBeenDeleted());
@@ -1622,8 +1573,7 @@ namespace DataAccessRegistration {
 							assert(previous->isInBottomMap());
 
 							return matchingProcessor(previous, bmeContents);
-						}
-					);
+						});
 
 					subtaskAccessStructures._lock.unlock();
 				} else {
@@ -1638,8 +1588,7 @@ namespace DataAccessRegistration {
 							assert(previous->isInBottomMap());
 
 							return matchingProcessor(previous, bmeContents);
-						}
-					);
+						});
 				}
 
 				bottomMapEntry = fragmentBottomMapEntry(bottomMapEntry, subregion, parentAccessStructures);
@@ -1656,8 +1605,7 @@ namespace DataAccessRegistration {
 
 						DataAccess *previous = createInitialFragment(
 							superaccessPosition, parentAccessStructures,
-							missingRegion
-						);
+							missingRegion);
 						assert(previous != nullptr);
 						assert(previous->getObjectType() == fragment_type);
 
@@ -1669,16 +1617,14 @@ namespace DataAccessRegistration {
 						BottomMapEntryContents bmeContents(
 							DataAccessLink(parent, fragment_type),
 							previous->getType(),
-							previous->getReductionTypeAndOperatorIndex()
-						);
+							previous->getReductionTypeAndOperatorIndex());
 
 						{
 							CPUDependencyData hpDependencyData;
 							handleDataAccessStatusChanges(
 								initialStatus, updatedStatus,
 								previous, parentAccessStructures, parent,
-								hpDependencyData
-							);
+								hpDependencyData);
 							assert(hpDependencyData.empty());
 						}
 
@@ -1688,12 +1634,10 @@ namespace DataAccessRegistration {
 					},
 					[&](DataAccessRegion regionUncoveredByParent) -> bool {
 						return missingProcessor(regionUncoveredByParent);
-					}
-				);
+					});
 
 				return true;
-			}
-		);
+			});
 	}
 
 
@@ -1702,8 +1646,8 @@ namespace DataAccessRegistration {
 		DataAccessRegion const &region,
 		TaskDataAccesses &accessStructures, Task *task,
 		ProcessorType processor,
-		BottomMapEntryProcessorType bottomMapEntryProcessor = [] (BottomMapEntry *) {}
-	) {
+		BottomMapEntryProcessorType bottomMapEntryProcessor = [](BottomMapEntry *) {})
+	{
 		assert(!accessStructures.hasBeenDeleted());
 		assert(accessStructures._lock.isLockedByThisThread());
 
@@ -1734,8 +1678,7 @@ namespace DataAccessRegistration {
 							processor(subaccess, subtaskAccessStructures, target._task);
 
 							return true;
-						}
-					);
+						});
 
 					subtaskAccessStructures._lock.unlock();
 				} else {
@@ -1743,8 +1686,7 @@ namespace DataAccessRegistration {
 					assert(
 						(target._objectType == fragment_type)
 						|| (target._objectType == taskwait_type)
-						|| (target._objectType == top_level_sink_type)
-					);
+						|| (target._objectType == top_level_sink_type));
 
 					followLink(
 						target, subregion,
@@ -1755,15 +1697,13 @@ namespace DataAccessRegistration {
 							processor(fragment, accessStructures, task);
 
 							return true;
-						}
-					);
+						});
 				}
 
 				bottomMapEntryProcessor(bottomMapEntry);
 
 				return true;
-			}
-		);
+			});
 	}
 
 
@@ -1771,8 +1711,8 @@ namespace DataAccessRegistration {
 	static inline void foreachBottomMapEntry(
 		TaskDataAccesses &accessStructures, Task *task,
 		ProcessorType processor,
-		BottomMapEntryProcessorType bottomMapEntryProcessor = [] (BottomMapEntry *) {}
-	) {
+		BottomMapEntryProcessorType bottomMapEntryProcessor = [](BottomMapEntry *) {})
+	{
 		assert(!accessStructures.hasBeenDeleted());
 		assert(accessStructures._lock.isLockedByThisThread());
 
@@ -1802,8 +1742,7 @@ namespace DataAccessRegistration {
 							processor(subaccess, subtaskAccessStructures, target._task);
 
 							return true;
-						}
-					);
+						});
 
 					subtaskAccessStructures._lock.unlock();
 				} else {
@@ -1819,23 +1758,21 @@ namespace DataAccessRegistration {
 							processor(fragment, accessStructures, task);
 
 							return true;
-						}
-					);
+						});
 				}
 
 				bottomMapEntryProcessor(bottomMapEntry);
 
 				return true;
-			}
-		);
+			});
 	}
 
 
 	static inline void processBottomMapUpdate(
 		BottomMapUpdateOperation &operation,
 		TaskDataAccesses &accessStructures, Task *task,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
+		/* OUT */ CPUDependencyData &hpDependencyData)
+	{
 		assert(task != nullptr);
 		assert(!operation.empty());
 		assert(!operation._region.empty());
@@ -1846,23 +1783,17 @@ namespace DataAccessRegistration {
 		foreachBottomMapMatch(
 			operation._region,
 			accessStructures, task,
-			[&] (DataAccess *access, TaskDataAccesses &currentAccessStructures, Task *currentTask) {
+			[&](DataAccess *access, TaskDataAccesses &currentAccessStructures, Task *currentTask) {
 				FatalErrorHandler::failIf(
 					((operation._parentAccessType == CONCURRENT_ACCESS_TYPE) || (operation._parentAccessType == COMMUTATIVE_ACCESS_TYPE))
 						&& access->getType() == REDUCTION_ACCESS_TYPE,
 					"Task '",
-					(access->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr) ?
-						access->getOriginator()->getTaskInfo()->implementations[0].task_label :
-						access->getOriginator()->getTaskInfo()->implementations[0].declaration_source
-					,
+					(access->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr) ? access->getOriginator()->getTaskInfo()->implementations[0].task_label : access->getOriginator()->getTaskInfo()->implementations[0].declaration_source,
 					"' declares a reduction within a region registered as ",
 					(operation._parentAccessType == CONCURRENT_ACCESS_TYPE) ? "concurrent" : "commutative",
 					" by task '",
-					(task->getTaskInfo()->implementations[0].task_label != nullptr) ?
-						task->getTaskInfo()->implementations[0].task_label :
-						task->getTaskInfo()->implementations[0].declaration_source,
-					"' without a taskwait"
-				);
+					(task->getTaskInfo()->implementations[0].task_label != nullptr) ? task->getTaskInfo()->implementations[0].task_label : task->getTaskInfo()->implementations[0].declaration_source,
+					"' without a taskwait");
 
 				DataAccessStatusEffects initialStatus(access);
 
@@ -1890,15 +1821,10 @@ namespace DataAccessRegistration {
 					FatalErrorHandler::failIf(
 						(operation._parentAccessType == REDUCTION_ACCESS_TYPE) && (access->getType() != REDUCTION_ACCESS_TYPE),
 						"Task '",
-						(access->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr) ?
-							access->getOriginator()->getTaskInfo()->implementations[0].task_label :
-							access->getOriginator()->getTaskInfo()->implementations[0].declaration_source,
+						(access->getOriginator()->getTaskInfo()->implementations[0].task_label != nullptr) ? access->getOriginator()->getTaskInfo()->implementations[0].task_label : access->getOriginator()->getTaskInfo()->implementations[0].declaration_source,
 						"' declares a non-reduction access within a region registered as reduction by task '",
-						(task->getTaskInfo()->implementations[0].task_label != nullptr) ?
-							task->getTaskInfo()->implementations[0].task_label :
-							task->getTaskInfo()->implementations[0].declaration_source,
-						"'"
-					);
+						(task->getTaskInfo()->implementations[0].task_label != nullptr) ? task->getTaskInfo()->implementations[0].task_label : task->getTaskInfo()->implementations[0].declaration_source,
+						"'");
 
 					if (access->getType() == REDUCTION_ACCESS_TYPE) {
 						access->setClosesReduction();
@@ -1913,21 +1839,19 @@ namespace DataAccessRegistration {
 				handleDataAccessStatusChanges(
 					initialStatus, updatedStatus,
 					access, currentAccessStructures, currentTask,
-					hpDependencyData
-				);
+					hpDependencyData);
 			},
-			[] (BottomMapEntry *) {}
-		);
+			[](BottomMapEntry *) {});
 	}
 
 
-	static inline void allocateReductionInfo(DataAccess &dataAccess, const Task &task) {
+	static inline void allocateReductionInfo(DataAccess &dataAccess, const Task &task)
+	{
 		assert(dataAccess.getType() == REDUCTION_ACCESS_TYPE);
 
 		Instrument::enterAllocateReductionInfo(
 			dataAccess.getInstrumentationId(),
-			dataAccess.getAccessRegion()
-		);
+			dataAccess.getAccessRegion());
 
 		nanos6_task_info_t *taskInfo = task.getTaskInfo();
 		assert(taskInfo != nullptr);
@@ -1935,10 +1859,10 @@ namespace DataAccessRegistration {
 		reduction_index_t reductionIndex = dataAccess.getReductionIndex();
 
 		ReductionInfo *newReductionInfo = ObjectAllocator<ReductionInfo>::newObject(
-				dataAccess.getAccessRegion(),
-				dataAccess.getReductionTypeAndOperatorIndex(),
-				taskInfo->reduction_initializers[reductionIndex],
-				taskInfo->reduction_combiners[reductionIndex]);
+			dataAccess.getAccessRegion(),
+			dataAccess.getReductionTypeAndOperatorIndex(),
+			taskInfo->reduction_initializers[reductionIndex],
+			taskInfo->reduction_combiners[reductionIndex]);
 
 		// Note: ReceivedReductionInfo flag is not set, as the access will still receive
 		// an (invalid) reduction info from the propagation system
@@ -1947,8 +1871,7 @@ namespace DataAccessRegistration {
 
 		Instrument::exitAllocateReductionInfo(
 			dataAccess.getInstrumentationId(),
-			*newReductionInfo
-		);
+			*newReductionInfo);
 	}
 
 
@@ -1956,8 +1879,8 @@ namespace DataAccessRegistration {
 		DataAccessLink const &next, TaskDataAccesses &accessStructures,
 		DataAccess *dataAccess,
 		Task *parent, TaskDataAccesses &parentAccessStructures,
-		/* inout */ CPUDependencyData &hpDependencyData
-	) {
+		/* inout */ CPUDependencyData &hpDependencyData)
+	{
 		assert(dataAccess != nullptr);
 		assert(parent != nullptr);
 		assert(next._task != nullptr);
@@ -1971,10 +1894,10 @@ namespace DataAccessRegistration {
 		Container::vector<DataAccess *> previousReductionAccesses;
 
 		bool local = false;
-		#ifndef NDEBUG
-			bool lastWasLocal = false;
-			bool first = true;
-		#endif
+#ifndef NDEBUG
+		bool lastWasLocal = false;
+		bool first = true;
+#endif
 
 		DataAccessType parentAccessType = NO_ACCESS_TYPE;
 		reduction_type_and_operator_index_t parentReductionTypeAndOperatorIndex = no_reduction_type_and_operator;
@@ -2003,13 +1926,10 @@ namespace DataAccessRegistration {
 						// When a reduction access is to be linked with any non-matching access, we want to
 						// allocate a new reductionInfo to it before it gets fragmented by propagation operations
 						allocatesReductionInfo = true;
-					}
-					else {
+					} else {
 						if (previousReductionInfo == nullptr) {
 							previousReductionInfo = previous->getReductionInfo();
-						}
-						else if (previous->getReductionInfo() != previousReductionInfo)
-						{
+						} else if (previous->getReductionInfo() != previousReductionInfo) {
 							// Has multiple previous reductions, need to allocate new reduction info
 							allocatesReductionInfo = true;
 						}
@@ -2025,18 +1945,17 @@ namespace DataAccessRegistration {
 						handleDataAccessStatusChanges(
 							initialStatus, updatedStatus,
 							dataAccess, accessStructures, next._task,
-							hpDependencyData
-						);
+							hpDependencyData);
 					}
 				}
 
-				#ifndef NDEBUG
-					if (!first) {
-						assert((local == lastWasLocal) && "This fails with wrongly nested regions");
-					}
-					first = false;
-					lastWasLocal = local;
-				#endif
+#ifndef NDEBUG
+				if (!first) {
+					assert((local == lastWasLocal) && "This fails with wrongly nested regions");
+				}
+				first = false;
+				lastWasLocal = local;
+#endif
 
 				TaskDataAccesses &previousAccessStructures = previousTask->getDataAccesses();
 				assert(!previousAccessStructures.hasBeenDeleted());
@@ -2046,14 +1965,12 @@ namespace DataAccessRegistration {
 
 				// Mark end of reduction
 				if (previous->getType() == REDUCTION_ACCESS_TYPE) {
-					if (dataAccess->getReductionTypeAndOperatorIndex() !=
-							previous->getReductionTypeAndOperatorIndex()) {
+					if (dataAccess->getReductionTypeAndOperatorIndex() != previous->getReductionTypeAndOperatorIndex()) {
 						// When any access is to be linked with a non-matching reduction access,
 						// we want to mark the preceding reduction access so that it is the
 						// last access of its reduction chain
 						previous->setClosesReduction();
-					}
-					else {
+					} else {
 						assert(dataAccess->getType() == REDUCTION_ACCESS_TYPE);
 						// When a reduction access is to be linked with a matching reduction
 						// access, we don't know whether a ReductionInfo will be allocated yet
@@ -2072,8 +1989,7 @@ namespace DataAccessRegistration {
 				handleDataAccessStatusChanges(
 					initialStatus, updatedStatus,
 					previous, previousAccessStructures, previousTask,
-					hpDependencyData
-				);
+					hpDependencyData);
 
 				return true;
 			},
@@ -2083,13 +1999,13 @@ namespace DataAccessRegistration {
 				// Not part of the parent
 				local = true;
 
-				#ifndef NDEBUG
-					if (!first) {
-						assert((local == lastWasLocal) && "This fails with wrongly nested regions");
-					}
-					first = false;
-					lastWasLocal = local;
-				#endif
+#ifndef NDEBUG
+				if (!first) {
+					assert((local == lastWasLocal) && "This fails with wrongly nested regions");
+				}
+				first = false;
+				lastWasLocal = local;
+#endif
 
 				// Holes in the parent bottom map that are not in the parent accesses become fully satisfied
 				accessStructures._accesses.processIntersecting(
@@ -2110,8 +2026,7 @@ namespace DataAccessRegistration {
 							handleDataAccessStatusChanges(
 								initialStatus, updatedStatus,
 								dataAccess, accessStructures, next._task,
-								hpDependencyData
-							);
+								hpDependencyData);
 						}
 
 						targetAccess = fragmentAccess(targetAccess, missingRegion, accessStructures);
@@ -2138,16 +2053,13 @@ namespace DataAccessRegistration {
 						handleDataAccessStatusChanges(
 							initialStatus, updatedStatus,
 							targetAccess, accessStructures, next._task,
-							hpDependencyData
-						);
+							hpDependencyData);
 
 						return true;
-					}
-				);
+					});
 
 				return true;
-			}
-		);
+			});
 
 		if (hasAllocatedReductionInfo && !previousReductionAccesses.empty()) {
 			assert(dataAccess->getType() == REDUCTION_ACCESS_TYPE);
@@ -2160,15 +2072,15 @@ namespace DataAccessRegistration {
 
 		// Add the entry to the bottom map
 		BottomMapEntry *bottomMapEntry = ObjectAllocator<BottomMapEntry>::newObject(
-				region, next, parentAccessType, parentReductionTypeAndOperatorIndex);
+			region, next, parentAccessType, parentReductionTypeAndOperatorIndex);
 		parentAccessStructures._subaccessBottomMap.insert(*bottomMapEntry);
 	}
 
 
 	static inline void linkTaskAccesses(
 		/* OUT */ CPUDependencyData &hpDependencyData,
-		Task *task
-	) {
+		Task *task)
+	{
 		assert(task != nullptr);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
@@ -2216,26 +2128,23 @@ namespace DataAccessRegistration {
 				handleDataAccessStatusChanges(
 					initialStatus, updatedStatus,
 					dataAccess, accessStructures, task,
-					hpDependencyData
-				);
+					hpDependencyData);
 
 				replaceMatchingInBottomMapLinkAndPropagate(
 					DataAccessLink(task, access_type), accessStructures,
 					dataAccess,
 					parent, parentAccessStructures,
-					hpDependencyData
-				);
+					hpDependencyData);
 
 				return true;
-			}
-		);
+			});
 	}
 
 
 	static inline void finalizeFragments(
 		Task *task, TaskDataAccesses &accessStructures,
-		/* OUT */ CPUDependencyData &hpDependencyData
-	) {
+		/* OUT */ CPUDependencyData &hpDependencyData)
+	{
 		assert(task != nullptr);
 		assert(!accessStructures.hasBeenDeleted());
 
@@ -2258,12 +2167,10 @@ namespace DataAccessRegistration {
 				handleDataAccessStatusChanges(
 					initialStatus, updatedStatus,
 					fragment, accessStructures, task,
-					hpDependencyData
-				);
+					hpDependencyData);
 
 				return true;
-			}
-		);
+			});
 	}
 
 
@@ -2271,8 +2178,8 @@ namespace DataAccessRegistration {
 	static inline void applyToAccessAndFragments(
 		DataAccess *dataAccess, DataAccessRegion const &region,
 		TaskDataAccesses &accessStructures,
-		ProcessorType processor
-	) {
+		ProcessorType processor)
+	{
 		// Fragment if necessary
 		dataAccess = fragmentAccess(dataAccess, region, accessStructures);
 		assert(dataAccess != nullptr);
@@ -2295,8 +2202,7 @@ namespace DataAccessRegistration {
 					processor(fragment);
 
 					return true;
-				}
-			);
+				});
 		}
 	}
 
@@ -2304,8 +2210,8 @@ namespace DataAccessRegistration {
 	static inline void releaseReductionStorage(
 		__attribute__((unused)) Task *finishedTask, DataAccess *dataAccess,
 		__attribute__((unused)) DataAccessRegion region,
-		ComputePlace *computePlace
-	) {
+		ComputePlace *computePlace)
+	{
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
 		assert(computePlace != nullptr);
@@ -2315,14 +2221,13 @@ namespace DataAccessRegistration {
 
 		// Release reduction slots (only when necessary)
 		// Note: Remember weak accesses in final tasks will be promoted to strong
-		if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !dataAccess->isWeak())
-		{
+		if ((dataAccess->getType() == REDUCTION_ACCESS_TYPE) && !dataAccess->isWeak()) {
 			assert(computePlace->getType() == nanos6_device_t::nanos6_host_device);
 
 #ifdef NDEBUG
-			CPU *cpu = static_cast<CPU*>(computePlace);
+			CPU *cpu = static_cast<CPU *>(computePlace);
 #else
-			CPU *cpu = dynamic_cast<CPU*>(computePlace);
+			CPU *cpu = dynamic_cast<CPU *>(computePlace);
 			assert(cpu != nullptr);
 #endif
 
@@ -2336,8 +2241,8 @@ namespace DataAccessRegistration {
 
 	static inline void finalizeAccess(
 		Task *finishedTask, DataAccess *dataAccess, DataAccessRegion region,
-		MemoryPlace const *location, /* OUT */ CPUDependencyData &hpDependencyData
-	) {
+		MemoryPlace const *location, /* OUT */ CPUDependencyData &hpDependencyData)
+	{
 		assert(finishedTask != nullptr);
 		assert(dataAccess != nullptr);
 		assert((location != nullptr) || dataAccess->isWeak());
@@ -2354,7 +2259,7 @@ namespace DataAccessRegistration {
 		applyToAccessAndFragments(
 			dataAccess, region,
 			finishedTask->getDataAccesses(),
-			[&] (DataAccess *accessOrFragment) -> bool {
+			[&](DataAccess *accessOrFragment) -> bool {
 				assert(!accessOrFragment->complete());
 				assert(accessOrFragment->getOriginator() == finishedTask);
 
@@ -2368,18 +2273,16 @@ namespace DataAccessRegistration {
 				handleDataAccessStatusChanges(
 					initialStatus, updatedStatus,
 					accessOrFragment, finishedTask->getDataAccesses(), finishedTask,
-					hpDependencyData
-				);
+					hpDependencyData);
 
 				return true; // Apply also to subaccesses if any
-			}
-		);
+			});
 	}
 
 
 	static void handleRemovableTasks(
-		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks
-	) {
+		/* inout */ CPUDependencyData::removable_task_list_t &removableTasks)
+	{
 		for (Task *removableTask : removableTasks) {
 			TaskFinalization::disposeTask(removableTask);
 		}
@@ -2388,14 +2291,13 @@ namespace DataAccessRegistration {
 
 	static void handleCompletedTaskwaits(
 		CPUDependencyData::satisfied_taskwait_accesses_t &completedTaskwaits,
-		__attribute__((unused))ComputePlace *computePlace
-	) {
+		__attribute__((unused)) ComputePlace *computePlace)
+	{
 		for (DataAccess *taskwait : completedTaskwaits) {
 			assert(taskwait->getObjectType() == taskwait_type);
 			ExecutionWorkflow::setupTaskwaitWorkflow(
 				taskwait->getOriginator(),
-				taskwait
-			);
+				taskwait);
 		}
 		completedTaskwaits.clear();
 	}
@@ -2432,8 +2334,7 @@ namespace DataAccessRegistration {
 						task,
 						taskwait_type,
 						accessType, /* not weak */ false, region,
-						reductionTypeAndOperatorIndex
-					);
+						reductionTypeAndOperatorIndex);
 
 					// No need for symbols in a taskwait
 
@@ -2447,10 +2348,10 @@ namespace DataAccessRegistration {
 						taskwaitFragment->setComplete();
 					}
 
-					// NOTE: For now we create it as completed, but we could actually link
-					// that part of the status to any other actions that needed to be carried
-					// out. For instance, data transfers.
-					// taskwaitFragment->setComplete();
+				// NOTE: For now we create it as completed, but we could actually link
+				// that part of the status to any other actions that needed to be carried
+				// out. For instance, data transfers.
+				// taskwaitFragment->setComplete();
 #ifndef NDEBUG
 					taskwaitFragment->setReachable();
 #endif
@@ -2465,8 +2366,7 @@ namespace DataAccessRegistration {
 					handleDataAccessStatusChanges(
 						initialStatus, updatedStatus,
 						taskwaitFragment, accessStructures, task,
-						hpDependencyData
-					);
+						hpDependencyData);
 				}
 
 				TaskDataAccesses &previousAccessStructures = previous._task->getDataAccesses();
@@ -2479,8 +2379,7 @@ namespace DataAccessRegistration {
 
 				followLink(
 					previous, region,
-					[&](DataAccess *previousAccess) -> bool
-					{
+					[&](DataAccess *previousAccess) -> bool {
 						DataAccessStatusEffects initialStatus(previousAccess);
 						// Mark end of reduction
 						if ((previousAccess->getType() == REDUCTION_ACCESS_TYPE)
@@ -2505,12 +2404,10 @@ namespace DataAccessRegistration {
 						handleDataAccessStatusChanges(
 							initialStatus, updatedStatus,
 							previousAccess, previousAccessStructures, previous._task,
-							hpDependencyData
-						);
+							hpDependencyData);
 
 						return true;
-					}
-				);
+					});
 
 				// Relock to advance the iterator
 				if (previous._task != task) {
@@ -2519,8 +2416,7 @@ namespace DataAccessRegistration {
 				}
 
 				return true;
-			}
-		);
+			});
 	}
 
 
@@ -2548,8 +2444,7 @@ namespace DataAccessRegistration {
 					DataAccess *topLevelSinkFragment = createAccess(
 						task,
 						top_level_sink_type,
-						accessType, /* not weak */ false, region
-					);
+						accessType, /* not weak */ false, region);
 
 					// TODO, top level sink fragment, what to do with the symbols?
 
@@ -2576,8 +2471,7 @@ namespace DataAccessRegistration {
 					handleDataAccessStatusChanges(
 						initialStatus, updatedStatus,
 						topLevelSinkFragment, accessStructures, task,
-						hpDependencyData
-					);
+						hpDependencyData);
 				}
 
 				TaskDataAccesses &previousAccessStructures = previous._task->getDataAccesses();
@@ -2590,8 +2484,7 @@ namespace DataAccessRegistration {
 
 				followLink(
 					previous, region,
-					[&](DataAccess *previousAccess) -> bool
-					{
+					[&](DataAccess *previousAccess) -> bool {
 						DataAccessStatusEffects initialStatus(previousAccess);
 						// Mark end of reduction
 						if (previousAccess->getType() == REDUCTION_ACCESS_TYPE) {
@@ -2611,12 +2504,10 @@ namespace DataAccessRegistration {
 						handleDataAccessStatusChanges(
 							initialStatus, updatedStatus,
 							previousAccess, previousAccessStructures, previous._task,
-							hpDependencyData
-						);
+							hpDependencyData);
 
 						return true;
-					}
-				);
+					});
 
 				// Relock to advance the iterator
 				if (previous._task != task) {
@@ -2625,20 +2516,20 @@ namespace DataAccessRegistration {
 				}
 
 				return true;
-			}
-		);
+			});
 	}
 
 
 	void registerTaskDataAccess(
 		Task *task, DataAccessType accessType, bool weak, DataAccessRegion region, int symbolIndex,
-		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex
-	) {
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex)
+	{
 		assert(task != nullptr);
 
 		DataAccess::symbols_t symbol_list; //TODO consider alternative to vector
 
-		if (symbolIndex >= 0) symbol_list.set(symbolIndex);
+		if (symbolIndex >= 0)
+			symbol_list.set(symbolIndex);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
 		assert(!accessStructures.hasBeenDeleted());
@@ -2650,8 +2541,7 @@ namespace DataAccessRegistration {
 			},
 			[&](__attribute__((unused)) DataAccess *newAccess, DataAccess *originalAccess) {
 				symbol_list |= originalAccess->getSymbols();
-			}
-		);
+			});
 
 		accessStructures._accesses.processIntersectingAndMissing(
 			region,
@@ -2666,22 +2556,21 @@ namespace DataAccessRegistration {
 			},
 			[&](DataAccessRegion missingRegion) -> bool {
 				DataAccess *newAccess = createAccess(task, access_type, accessType, weak, missingRegion,
-						reductionTypeAndOperatorIndex, reductionIndex);
+					reductionTypeAndOperatorIndex, reductionIndex);
 				newAccess->addToSymbols(symbol_list);
 
 				accessStructures._accesses.insert(*newAccess);
 
 				return true;
-			}
-		);
+			});
 	}
 
 
 	bool registerTaskDataAccesses(
 		Task *task,
 		ComputePlace *computePlace,
-		CPUDependencyData &hpDependencyData
-	) {
+		CPUDependencyData &hpDependencyData)
+	{
 		bool ready;
 
 		assert(task != 0);
@@ -2746,8 +2635,8 @@ namespace DataAccessRegistration {
 		__attribute__((unused)) DataAccessType accessType, __attribute__((unused)) bool weak,
 		ComputePlace *computePlace,
 		CPUDependencyData &hpDependencyData,
-		MemoryPlace const *location
-	) {
+		MemoryPlace const *location)
+	{
 		assert(task != nullptr);
 		//! Not true any more, since a region might be released from
 		//! inside a polling service
@@ -2775,8 +2664,8 @@ namespace DataAccessRegistration {
 					assert(dataAccess->isWeak() == weak);
 
 					FatalErrorHandler::failIf(dataAccess->getType() != accessType,
-							"The 'release' construct does not currently support the type downgrade of dependencies; ",
-							"the dependency type specified at that construct must be its complete type");
+						"The 'release' construct does not currently support the type downgrade of dependencies; ",
+						"the dependency type specified at that construct must be its complete type");
 
 					if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && task->isRunnable()) {
 						releaseReductionStorage(task, dataAccess, region, computePlace);
@@ -2787,7 +2676,7 @@ namespace DataAccessRegistration {
 					//! accesses. For weak accesses we do not want to update the
 					//! location of the access
 					MemoryPlace const *releaseLocation;
-					if ((location == nullptr) && !dataAccess->isWeak()){
+					if ((location == nullptr) && !dataAccess->isWeak()) {
 						assert(task->hasMemoryPlace());
 						releaseLocation = task->getMemoryPlace();
 					} else {
@@ -2798,8 +2687,7 @@ namespace DataAccessRegistration {
 					finalizeAccess(task, dataAccess, region, releaseLocation, /* OUT */ hpDependencyData);
 
 					return true;
-				}
-			);
+				});
 		}
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, true);
 
@@ -2815,8 +2703,8 @@ namespace DataAccessRegistration {
 		Task *task,
 		DataAccessRegion region,
 		ComputePlace *computePlace,
-		CPUDependencyData &hpDependencyData
-	) {
+		CPUDependencyData &hpDependencyData)
+	{
 		assert(task != nullptr);
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
@@ -2826,7 +2714,7 @@ namespace DataAccessRegistration {
 		{
 			bool alreadyTaken = false;
 			assert(hpDependencyData._inUse.compare_exchange_strong(
-					alreadyTaken, true));
+				alreadyTaken, true));
 		}
 #endif
 
@@ -2844,25 +2732,22 @@ namespace DataAccessRegistration {
 					handleDataAccessStatusChanges(
 						initialStatus, updatedStatus,
 						taskwait, accessStructures, task,
-						hpDependencyData
-					);
+						hpDependencyData);
 
 					return true;
-				}
-			);
+				});
 		}
 
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
 			hpDependencyData,
 			computePlace,
-			true
-		);
+			true);
 
 #ifndef NDEBUG
 		{
 			bool alreadyTaken = true;
 			assert(hpDependencyData._inUse.compare_exchange_strong(
-					alreadyTaken, false));
+				alreadyTaken, false));
 		}
 #endif
 	}
@@ -2879,9 +2764,7 @@ namespace DataAccessRegistration {
 
 		std::lock_guard<TaskDataAccesses::spinlock_t> guard(accessStructures._lock);
 
-		auto &accesses = (isTaskwait) ?
-			accessStructures._taskwaitFragments :
-			accessStructures._accesses;
+		auto &accesses = (isTaskwait) ? accessStructures._taskwaitFragments : accessStructures._accesses;
 
 		// At this point the region must be included in DataAccesses of the task
 		assert(accesses.contains(region));
@@ -2895,8 +2778,7 @@ namespace DataAccessRegistration {
 				access->setLocation(location);
 
 				return true;
-			}
-		);
+			});
 	}
 
 	void registerLocalAccess(Task *task, DataAccessRegion const &region)
@@ -2912,13 +2794,13 @@ namespace DataAccessRegistration {
 
 		DataAccess *newLocalAccess =
 			createAccess(task, access_type, NO_ACCESS_TYPE,
-					/* not weak */false, region);
+				/* not weak */ false, region);
 
 		DataAccessStatusEffects initialStatus(newLocalAccess);
 		newLocalAccess->setNewInstrumentationId(
-				task->getInstrumentationTaskId());
+			task->getInstrumentationTaskId());
 		newLocalAccess->setReadSatisfied(
-				Directory::getDirectoryMemoryPlace());
+			Directory::getDirectoryMemoryPlace());
 		newLocalAccess->setWriteSatisfied();
 		newLocalAccess->setConcurrentSatisfied();
 		newLocalAccess->setCommutativeSatisfied();
@@ -2940,8 +2822,8 @@ namespace DataAccessRegistration {
 
 		CPUDependencyData hpDependencyData;
 		handleDataAccessStatusChanges(initialStatus, updatedStatus,
-				newLocalAccess, accessStructures, task,
-				hpDependencyData);
+			newLocalAccess, accessStructures, task,
+			hpDependencyData);
 	}
 
 	void unregisterLocalAccess(Task *task, DataAccessRegion const &region)
@@ -2965,7 +2847,7 @@ namespace DataAccessRegistration {
 				assert(fragment->getType() == NO_ACCESS_TYPE);
 
 				fragment = fragmentAccess(fragment, region,
-						accessStructures);
+					accessStructures);
 
 				DataAccessStatusEffects initialStatus(fragment);
 				fragment->setComplete();
@@ -2977,8 +2859,7 @@ namespace DataAccessRegistration {
 					task, hpDependencyData);
 
 				return true;
-			}
-		);
+			});
 
 		//! By now all fragments of the local region should be removed
 		assert(!accessStructures._accessFragments.contains(region));
@@ -2992,7 +2873,7 @@ namespace DataAccessRegistration {
 				assert(access->getType() == NO_ACCESS_TYPE);
 
 				access = fragmentAccess(access, region,
-						accessStructures);
+					accessStructures);
 
 				DataAccessStatusEffects initialStatus(access);
 				access->setComplete();
@@ -3004,8 +2885,7 @@ namespace DataAccessRegistration {
 					task, hpDependencyData);
 
 				return true;
-			}
-		);
+			});
 
 		//! By now all access of the local region should be removed
 		assert(!accessStructures._accesses.contains(region));
@@ -3036,8 +2916,7 @@ namespace DataAccessRegistration {
 						releaseReductionStorage(task->getParent(), dataAccess, dataAccess->getAccessRegion(), computePlace);
 					}
 					return true;
-				}
-			);
+				});
 		}
 
 		TaskDataAccesses &accessStructures = task->getDataAccesses();
@@ -3056,8 +2935,7 @@ namespace DataAccessRegistration {
 					releaseReductionStorage(task, dataAccess, dataAccess->getAccessRegion(), computePlace);
 				}
 				return true;
-			}
-		);
+			});
 	}
 
 	void unregisterTaskDataAccesses(Task *task, ComputePlace *computePlace, CPUDependencyData &hpDependencyData, MemoryPlace *location, bool fromBusyThread)
@@ -3099,8 +2977,7 @@ namespace DataAccessRegistration {
 					finalizeAccess(task, dataAccess, dataAccess->getAccessRegion(), accessLocation, /* OUT */ hpDependencyData);
 
 					return true;
-				}
-			);
+				});
 		}
 
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(hpDependencyData, computePlace, fromBusyThread);
@@ -3148,8 +3025,7 @@ namespace DataAccessRegistration {
 		processDelayedOperationsSatisfiedOriginatorsAndRemovableTasks(
 			hpDependencyData,
 			computePlace,
-			true
-		);
+			true);
 
 #ifndef NDEBUG
 		{
@@ -3212,8 +3088,7 @@ namespace DataAccessRegistration {
 					}
 
 					return true;
-				}
-			);
+				});
 
 			// Delete all fragments
 			accessStructures._accessFragments.processAll(
@@ -3226,8 +3101,7 @@ namespace DataAccessRegistration {
 					ObjectAllocator<DataAccess>::deleteObject(dataAccess);
 
 					return true;
-				}
-			);
+				});
 			accessStructures._accessFragments.clear();
 
 			// Delete all taskwait fragments
@@ -3246,8 +3120,7 @@ namespace DataAccessRegistration {
 					ObjectAllocator<DataAccess>::deleteObject(dataAccess);
 
 					return true;
-				}
-			);
+				});
 			accessStructures._taskwaitFragments.clear();
 		}
 
@@ -3262,11 +3135,65 @@ namespace DataAccessRegistration {
 				ObjectAllocator<BottomMapEntry>::deleteObject(bottomMapEntry);
 
 				return true;
-			}
-		);
+			});
 		assert(accessStructures._subaccessBottomMap.empty());
 	}
 
-};
+	void translateReductionAddresses(
+		Task *task, ComputePlace *computePlace,
+		nanos6_address_translation_entry_t *translationTable,
+		int totalSymbols
+	) {
+		assert(task != nullptr);
+		assert(computePlace != nullptr);
+		assert(translationTable != nullptr);
+
+		// Initialize translationTable
+		for (int i = 0; i < totalSymbols; ++i)
+			translationTable[i] = {0, 0};
+
+		TaskDataAccesses &accessStruct = task->getDataAccesses();
+
+		assert(!accessStruct.hasBeenDeleted());
+		accessStruct._lock.lock();
+
+		accessStruct._accesses.processAll(
+			[&](TaskDataAccesses::accesses_t::iterator position) -> bool {
+				DataAccess *dataAccess = &(*position);
+				assert(dataAccess != nullptr);
+
+				if (dataAccess->getType() == REDUCTION_ACCESS_TYPE && !dataAccess->isWeak()) {
+					FatalErrorHandler::failIf(computePlace->getType() != nanos6_host_device,
+						"Region dependencies do not support CUDA reductions");
+
+					ReductionInfo *reductionInfo = dataAccess->getReductionInfo();
+					assert(reductionInfo != nullptr);
+
+					size_t slotIndex = reductionInfo->getFreeSlotIndex(computePlace->getIndex());
+
+					// Register assigned slot in the data access
+					dataAccess->setReductionAccessedSlot(slotIndex);
+
+					void *address = dataAccess->getAccessRegion().getStartAddress();
+					void *translation = nullptr;
+					const DataAccessRegion &originalFullRegion = reductionInfo->getOriginalRegion();
+					translation = ((char *)reductionInfo->getFreeSlotStorage(slotIndex).getStartAddress()) + ((char *)address - (char *)originalFullRegion.getStartAddress());
+
+					// As we're iterating accesses that might have been split by sibling tasks, it is
+					// possible that we translate the same symbol twice. However, this is not an issue
+					// because symbol translation is relative and it is not mandatory for "address"
+					// to be equal to the first position of the translated symbol
+					for (int j = 0; j < totalSymbols; ++j) {
+						if (dataAccess->isInSymbol(j))
+							translationTable[j] = {(size_t)address, (size_t)translation};
+					}
+				}
+
+				return true;
+			});
+
+		accessStruct._lock.unlock();
+	}
+}; // namespace DataAccessRegistration
 
 #pragma GCC visibility pop

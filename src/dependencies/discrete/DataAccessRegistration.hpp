@@ -14,6 +14,8 @@
 #include "ReductionSpecific.hpp"
 #include "dependencies/DataAccessType.hpp"
 
+#include <api/nanos6/task-instantiation.h>
+
 class ComputePlace;
 class Task;
 struct TaskDataAccesses;
@@ -31,7 +33,7 @@ namespace DataAccessRegistration {
 
 	void registerTaskDataAccess(
 		Task *task, DataAccessType accessType, bool weak, void *address, size_t length,
-		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex);
+		reduction_type_and_operator_index_t reductionTypeAndOperatorIndex, reduction_index_t reductionIndex, int symbolIndex);
 
 	//! \brief Performs the task dependency registration procedure
 	//!
@@ -59,6 +61,8 @@ namespace DataAccessRegistration {
 	void handleExitTaskwait(Task *task, ComputePlace *computePlace, CPUDependencyData &dependencyData);
 
 	void combineTaskReductions(Task *task, ComputePlace *computePlace);
+	void translateReductionAddresses(Task *task, ComputePlace *computePlace,
+		nanos6_address_translation_entry_t * translationTable, int totalSymbols);
 
 	template <typename ProcessorType>
 	inline bool processAllDataAccesses(Task *task, ProcessorType processor);

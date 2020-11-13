@@ -20,7 +20,7 @@
 #include <InstrumentDependenciesByAccess.hpp>
 
 template <DataAccessType ACCESS_TYPE, bool WEAK>
-void register_access(void *handler, void *start, size_t length, __attribute__((unused)) int symbolIndex,
+void register_access(void *handler, void *start, size_t length, int symbolIndex,
 	reduction_type_and_operator_index_t reductionTypeAndOperatorIndex = no_reduction_type_and_operator,
 	reduction_index_t reductionIndex = no_reduction_index)
 {
@@ -38,7 +38,7 @@ void register_access(void *handler, void *start, size_t length, __attribute__((u
 	bool weak = (WEAK && !task->isFinal() && !task->isTaskfor()) || task->isTaskloopSource();
 	Instrument::registerTaskAccess(task->getInstrumentationTaskId(), ACCESS_TYPE, weak, start, length);
 
-	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, start, length, reductionTypeAndOperatorIndex, reductionIndex);
+	DataAccessRegistration::registerTaskDataAccess(task, ACCESS_TYPE, weak, start, length, reductionTypeAndOperatorIndex, reductionIndex, symbolIndex);
 }
 
 void nanos6_register_read_depinfo(void *handler, void *start, size_t length, int symbolIndex)

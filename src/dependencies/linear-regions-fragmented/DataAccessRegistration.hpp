@@ -7,11 +7,12 @@
 #ifndef DATA_ACCESS_REGISTRATION_HPP
 #define DATA_ACCESS_REGISTRATION_HPP
 
+#include <api/nanos6/task-instantiation.h>
 #include <DataAccessRegion.hpp>
 
+#include "CPUDependencyData.hpp"
 #include "../DataAccessType.hpp"
 #include "ReductionSpecific.hpp"
-#include "CPUDependencyData.hpp"
 
 class ComputePlace;
 class Task;
@@ -140,6 +141,15 @@ namespace DataAccessRegistration {
 	//! \param[in] task is the Task that region is registerd to
 	//! \param[in] region is the DataAccessRegion being unregistered
 	void unregisterLocalAccess(Task *task, DataAccessRegion const &region);
+
+	//! \brief Generate the symbol translation table for reductions
+	//!
+	//! \param[in] task is the Task to be executed
+	//! \param[in] computePlace is where it will be executed
+	//! \param[in] translationTable is the symbol table to use
+	//! \param[in] totalSymbols is the number of rows in the translation table
+	void translateReductionAddresses(Task *task, ComputePlace *computePlace,
+		nanos6_address_translation_entry_t * translationTable, int totalSymbols);
 } // namespace DataAccessRegistration
 
 

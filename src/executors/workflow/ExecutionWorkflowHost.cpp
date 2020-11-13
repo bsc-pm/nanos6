@@ -5,6 +5,7 @@
 */
 
 #include "ExecutionWorkflowHost.hpp"
+#include "dependencies/SymbolTranslation.hpp"
 #include "executors/threads/TaskFinalization.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/places/ComputePlace.hpp"
@@ -25,12 +26,12 @@
 
 
 namespace ExecutionWorkflow {
-
 	void HostExecutionStep::start()
 	{
+		nanos6_address_translation_entry_t stackTranslationTable[SymbolTranslation::MAX_STACK_SYMBOLS];
+
 		WorkerThread *currentThread = WorkerThread::getCurrentWorkerThread();
-		CPU *cpu = (currentThread == nullptr) ?
-			nullptr : currentThread->getComputePlace();
+		CPU *cpu = (currentThread == nullptr) ? nullptr : currentThread->getComputePlace();
 
 		//! We are trying to start the execution of the Task from within
 		//! something that is not a WorkerThread, or it does not have
@@ -40,16 +41,13 @@ namespace ExecutionWorkflow {
 		//! releases the ExecutionStep.
 		//!
 		//! In that case we need to add the Task back for scheduling.
-		if ((currentThread == nullptr) || (cpu == nullptr) ||
-		   	(currentThread->getTask() == nullptr)
-		) {
+		if ((currentThread == nullptr) || (cpu == nullptr) || (currentThread->getTask() == nullptr)) {
 			_task->setExecutionStep(this);
 
 			Scheduler::addReadyTask(
 				_task,
 				nullptr,
-				BUSY_COMPUTE_PLACE_TASK_HINT
-			);
+				BUSY_COMPUTE_PLACE_TASK_HINT);
 			return;
 		}
 
@@ -59,31 +57,20 @@ namespace ExecutionWorkflow {
 		Instrument::ThreadInstrumentationContext instrumentationContext(
 			taskId,
 			cpu->getInstrumentationId(),
-			currentThread->getInstrumentationId()
-		);
+			currentThread->getInstrumentationId());
 
 		if (_task->hasCode()) {
-			nanos6_address_translation_entry_t *translationTable = nullptr;
-
-			nanos6_task_info_t const * const taskInfo = _task->getTaskInfo();
-			if (taskInfo->num_symbols >= 0) {
-				translationTable = (nanos6_address_translation_entry_t *)
-						alloca(
-							sizeof(nanos6_address_translation_entry_t)
-							* taskInfo->num_symbols
-						);
-
-				for (int index = 0; index < taskInfo->num_symbols; index++) {
-					translationTable[index] = {0, 0};
-				}
-			}
+			size_t tableSize = 0;
+			nanos6_address_translation_entry_t *translationTable =
+				SymbolTranslation::generateTranslationTable(
+					task, cpu, stackTranslationTable, tableSize);
 
 			// Before executing a task, read runtime-related counters
 			HardwareCounters::updateRuntimeCounters();
 
 			bool isTaskforCollaborator = _task->isTaskforCollaborator();
 			if (isTaskforCollaborator) {
-				bool first = ((Taskfor *) _task)->hasFirstChunk();
+				bool first = ((Taskfor *)_task)->hasFirstChunk();
 				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
 				Instrument::startTaskforCollaborator(parentTaskId, taskId, first);
 				Instrument::taskforCollaboratorIsExecuting(parentTaskId, taskId);
@@ -99,6 +86,10 @@ namespace ExecutionWorkflow {
 			_task->body(translationTable);
 			std::atomic_thread_fence(std::memory_order_release);
 
+			// Free up all symbol translation
+			if (tableSize > 0)
+				MemoryAllocator::free(translationTable, tableSize);
+
 			// Update the CPU since the thread may have migrated
 			cpu = currentThread->getComputePlace();
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
@@ -108,7 +99,7 @@ namespace ExecutionWorkflow {
 			Monitoring::taskCompletedUserCode(_task);
 
 			if (isTaskforCollaborator) {
-				bool last = ((Taskfor *) _task)->hasLastChunk();
+				bool last = ((Taskfor *)_task)->hasLastChunk();
 				Instrument::task_id_t parentTaskId = _task->getParent()->getInstrumentationTaskId();
 				Instrument::taskforCollaboratorStopped(parentTaskId, taskId);
 				Instrument::endTaskforCollaborator(parentTaskId, taskId, last);
@@ -127,4 +118,4 @@ namespace ExecutionWorkflow {
 		releaseSuccessors();
 		delete this;
 	}
-};
+}; // namespace ExecutionWorkflow
