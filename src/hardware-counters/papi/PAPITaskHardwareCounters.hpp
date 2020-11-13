@@ -30,9 +30,9 @@ public:
 	{
 		assert(allocationAddress != nullptr);
 
-		const size_t numEvents = PAPIHardwareCounters::getNumEnabledCounters();
+		const size_t numCounters = PAPIHardwareCounters::getNumEnabledCounters();
 		_countersDelta = (long long *) allocationAddress;
-		_countersAccumulated = (long long *) ((char *) allocationAddress + (numEvents * sizeof(long long)));
+		_countersAccumulated = (long long *) ((char *) allocationAddress + (numCounters * sizeof(long long)));
 
 		clear();
 	}
@@ -62,12 +62,14 @@ public:
 			FatalErrorHandler::fail(ret, " when resetting a PAPI event set - ", PAPI_strerror(ret));
 		}
 
-		const size_t numEvents = PAPIHardwareCounters::getNumEnabledCounters();
-		for (size_t i = 0; i < numEvents; ++i) {
+		const size_t numCounters = PAPIHardwareCounters::getNumEnabledCounters();
+		for (size_t i = 0; i < numCounters; ++i) {
 			_countersAccumulated[i] += _countersDelta[i];
 		}
 	}
 
+	//! \brief Get the delta value of a HW counter
+	//!
 	//! \param[in] counterType The type of counter to get the delta from
 	inline uint64_t getDelta(HWCounters::counters_t counterType) const override
 	{
@@ -96,7 +98,7 @@ public:
 	//!
 	//! \param[in] combineeCounters The counters of a task, which will be combined into
 	//! the current counters
-	inline void combineCounters(TaskHardwareCountersInterface *combineeCounters) override
+	inline void combineCounters(const TaskHardwareCountersInterface *combineeCounters) override
 	{
 		PAPITaskHardwareCounters *childCounters = (PAPITaskHardwareCounters *) combineeCounters;
 		assert(childCounters != nullptr);

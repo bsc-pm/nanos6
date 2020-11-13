@@ -151,11 +151,16 @@ public:
 
 				switch (counterType) {
 					case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
-						++_numSamples;
-						_counterDelta[innerId] =
-							((double) _counterDelta[innerId] * (_numSamples - 1) + childCounters->getDelta(counterType)) / _numSamples;
+						// Only take it into account if the child (most likely taskfor
+						// collaborator) truly participated in the execution
+						uint64_t childValue = childCounters->getDelta(counterType);
+						if (childValue != 0) {
+							++_numSamples;
+							_counterDelta[innerId] =
+								((double) _counterDelta[innerId] * (_numSamples - 1) + childValue) / _numSamples;
 
-						_counterAccumulated[innerId] = _counterDelta[innerId];
+							_counterAccumulated[innerId] = _counterDelta[innerId];
+						}
 						break;
 					default:
 						_counterDelta[innerId] = childCounters->getDelta(counterType);

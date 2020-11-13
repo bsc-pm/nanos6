@@ -38,40 +38,49 @@ void HardwareCounters::loadConfiguration()
 	ConfigVariable<bool> papiEnabled("hardware_counters.papi.enabled", false);
 	ConfigVariable<bool> pqosEnabled("hardware_counters.pqos.enabled", false);
 	ConfigVariable<bool> raplEnabled("hardware_counters.rapl.enabled", false);
-	_enabled[HWCounters::PAPI_BACKEND] = papiEnabled;
-	_enabled[HWCounters::PQOS_BACKEND] = pqosEnabled;
-	_enabled[HWCounters::RAPL_BACKEND] = raplEnabled;
-	_anyBackendEnabled = papiEnabled || pqosEnabled || raplEnabled;
 
 	// Check which PAPI events are enabled in the config file
 	if (papiEnabled) {
+		bool papiCounterAdded = false;
 		ConfigVariableSet<std::string> counterSet("hardware_counters.papi.counters", {});
 		for (short i = HWCounters::HWC_PAPI_MIN_EVENT; i <= HWCounters::HWC_PAPI_MAX_EVENT; ++i) {
 			std::string eventDescription(HWCounters::counterDescriptions[i]);
 			if (counterSet.contains(eventDescription)) {
 				_enabledCounters.push_back((HWCounters::counters_t) i);
+				papiCounterAdded = true;
 			}
 		}
 
-		if (_enabledCounters.empty()) {
-			FatalErrorHandler::warn("PAPI enabled but no counters are enabled in the config file");
+		_enabled[HWCounters::PAPI_BACKEND] = papiCounterAdded;
+		if (!papiCounterAdded) {
+			FatalErrorHandler::warn("PAPI enabled but no counters are enabled in the config file, disabling this backend");
 		}
 	}
 
 	// Check which PQOS events are enabled in the config file
 	if (pqosEnabled) {
+		bool pqosCounterAdded = false;
 		ConfigVariableSet<std::string> counterSet("hardware_counters.pqos.counters", {});
 		for (short i = HWCounters::HWC_PQOS_MIN_EVENT; i <= HWCounters::HWC_PQOS_MAX_EVENT; ++i) {
 			std::string eventDescription(HWCounters::counterDescriptions[i]);
 			if (counterSet.contains(eventDescription)) {
 				_enabledCounters.push_back((HWCounters::counters_t) i);
+				pqosCounterAdded = true;
 			}
 		}
 
-		if (_enabledCounters.empty()) {
-			FatalErrorHandler::warn("PQoS enabled but no counters are enabled in the config file");
+		_enabled[HWCounters::PQOS_BACKEND] = pqosCounterAdded;
+		if (!pqosCounterAdded) {
+			FatalErrorHandler::warn("PQoS enabled but no counters are enabled in the config file, disabling this backend");
 		}
 	}
+
+	_enabled[HWCounters::RAPL_BACKEND] = raplEnabled;
+
+	_anyBackendEnabled =
+		_enabled[HWCounters::PQOS_BACKEND] ||
+		_enabled[HWCounters::PAPI_BACKEND] ||
+		_enabled[HWCounters::RAPL_BACKEND];
 }
 
 void HardwareCounters::preinitialize()
@@ -123,10 +132,10 @@ void HardwareCounters::preinitialize()
 
 void HardwareCounters::initialize()
 {
-	if (_enabled[HWCounters::RAPL_BACKEND]) {
-		// Make sure the CPUManager is already preinitialized before this
-		assert(CPUManager::isPreinitialized());
+	// Make sure the CPUManager is already preinitialized before this
+	assert(CPUManager::isPreinitialized());
 
+	if (_enabled[HWCounters::RAPL_BACKEND]) {
 		_raplBackend = new RAPLHardwareCounters(
 			_verbose.getValue(),
 			_verboseFile.getValue()

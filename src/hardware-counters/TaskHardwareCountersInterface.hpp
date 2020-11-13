@@ -35,7 +35,7 @@ public:
 	//!
 	//! \param[in] combinee The counters of a task, which will be combined into
 	//! the current counters
-	virtual void combineCounters(TaskHardwareCountersInterface *combineeCounters) = 0;
+	virtual void combineCounters(const TaskHardwareCountersInterface *combineeCounters) = 0;
 
 };
 
