@@ -85,7 +85,6 @@ public:
 	//    TASKS    //
 
 	//! \brief Gather basic information about a task when it is created
-	//! set statistic structure for the task and predict some metrics
 	//!
 	//! \param[in,out] task The task
 	static void taskCreated(Task *task);
@@ -99,7 +98,7 @@ public:
 
 	//! \brief Change a task statistics after it changes its execution status
 	//!
-	//! \param[out] task The task changing its status
+	//! \param[in,out] task The task changing its status
 	//! \param[in] newStatus The new execution status of the task
 	static void taskChangedStatus(Task *task, monitoring_task_status_t newStatus);
 

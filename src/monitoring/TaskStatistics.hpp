@@ -19,11 +19,11 @@
 #define DEFAULT_COST 1
 
 enum monitoring_task_status_t {
-	/* The task is ready to be executed */
+	// The task is ready to be executed
 	ready_status = 0,
-	/* The task is being executed */
+	// The task is being executed
 	executing_status,
-	/* An aggregation of runtime + pending + blocked */
+	// An aggregation of runtime + pending + blocked
 	paused_status,
 	num_status,
 	null_status = -1
@@ -63,7 +63,7 @@ private:
 	monitoring_task_status_t _currentChronometer;
 
 	//! Elapsed execution ticks of children tasks (ticks, not time)
-	std::atomic<size_t> _childrenTimes[num_status];
+	std::atomic<size_t> _childrenTicks[num_status];
 
 	//! Whether the task has a predicted elapsed execution time
 	bool _hasPrediction;
@@ -86,7 +86,7 @@ private:
 
 	/*    HW COUNTER METRICS    */
 
-	//! Whether the taks has predictions for each hardware counter
+	//! Whether the task has predictions for each hardware counter
 	bool *_hasCounterPrediction;
 
 	//! Predictions for each hardware counter of the task
@@ -114,13 +114,11 @@ public:
 		_counterPredictions(nullptr)
 	{
 		for (size_t i = 0; i < num_status; ++i) {
-			_childrenTimes[i] = 0;
+			_childrenTicks[i] = 0;
 		}
 
 		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
-		if (numEvents != 0) {
-			assert(allocationAddress != nullptr);
-		}
+		assert(numEvents == 0 || allocationAddress != nullptr);
 
 		_hasCounterPrediction = (bool *) allocationAddress;
 		_counterPredictions = (double *) ((char *) allocationAddress + (numEvents * sizeof(bool)));
@@ -144,7 +142,7 @@ public:
 
 		for (size_t i = 0; i < num_status; ++i) {
 			_chronometers[i].restart();
-			_childrenTimes[i] = 0;
+			_childrenTicks[i] = 0;
 		}
 
 		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
@@ -192,6 +190,8 @@ public:
 		assert(_numChildrenAlive.load() > 0);
 
 		int aliveChildren = (--_numChildrenAlive);
+		assert(aliveChildren >= 0);
+
 		return (aliveChildren == 0);
 	}
 
@@ -224,11 +224,11 @@ public:
 		return _chronometers[id].getAccumulated();
 	}
 
-	inline size_t getChildrenTimes(monitoring_task_status_t id)
+	inline size_t getChildrenTicks(monitoring_task_status_t id)
 	{
 		assert(id < num_status);
 
-		return _childrenTimes[id].load();
+		return _childrenTicks[id].load();
 	}
 
 	inline void setHasPrediction(bool hasPrediction)
@@ -318,8 +318,6 @@ public:
 
 	//! \brief Stop/pause a chrono
 	//!
-	//! \param[in] id the timing status of the stopwatch to stop/pause
-	//!
 	//! \return The previous timing status of the task
 	inline monitoring_task_status_t stopTiming()
 	{
@@ -337,7 +335,7 @@ public:
 	inline double getElapsedExecutionTime() const
 	{
 		// First convert children ticks into Chronos to obtain elapsed time
-		Chrono executionTimer(_childrenTimes[executing_status].load());
+		Chrono executionTimer(_childrenTicks[executing_status].load());
 
 		// Return the aggregation of timing of the task plus its child tasks
 		return ((double) _chronometers[executing_status]) + (double) executionTimer;
@@ -345,18 +343,15 @@ public:
 
 	//! \brief Accumulate children statistics into the current task
 	//!
-	//! \param[in] childChronos An array of stopwatches that contain timing
-	//! data of the execution of a children task
-	//! \param[in] childTimes Accumulated elapsed ticks (one per timing status)
-	//! of children tasks created by a child task of the current one
+	//! \param[in] childStatistics The task statistics of a child task
 	inline void accumulateChildrenStatistics(TaskStatistics *childStatistics)
 	{
 		assert(childStatistics != nullptr);
 
-		for (short i = 0; i < num_status; ++i) {
-			_childrenTimes[i] +=
+		for (size_t i = 0; i < num_status; ++i) {
+			_childrenTicks[i] +=
 				childStatistics->getChronoTicks((monitoring_task_status_t) i) +
-				childStatistics->getChildrenTimes((monitoring_task_status_t) i);
+				childStatistics->getChildrenTicks((monitoring_task_status_t) i);
 		}
 	}
 

@@ -6,4 +6,4 @@
 
 #include "TasktypeStatistics.hpp"
 
-EnvironmentVariable<size_t> TasktypeStatistics::_rollingWindow("NANOS6_MONITORING_ROLLING_WINDOW", 20);
+ConfigVariable<int> TasktypeStatistics::_rollingWindow("monitoring.rolling_window", 20);

@@ -270,7 +270,7 @@ public:
 						// must be called prior the status change to prevent overlapping
 						// instrumentation calls with threads resuming on the lending CPU
 						HardwareCounters::updateRuntimeCounters();
-						Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+						Monitoring::cpuBecomesIdle(cpu->getIndex());
 						Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 						Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
@@ -371,7 +371,7 @@ public:
 		bool successful = cpu->getActivationStatus().compare_exchange_strong(expectedStatus, CPU::returned_status);
 		if (successful) {
 			HardwareCounters::updateRuntimeCounters();
-			Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+			Monitoring::cpuBecomesIdle(cpu->getIndex());
 			Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 			Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
@@ -456,7 +456,7 @@ public:
 					successful = cpu->getActivationStatus().compare_exchange_strong(currentStatus, CPU::shutdown_status);
 					if (successful) {
 						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
+						Monitoring::cpuBecomesActive(cpu->getIndex());
 						ThreadManager::resumeIdle(cpu, true, true);
 					}
 					break;
@@ -507,7 +507,7 @@ public:
 					currentThread = WorkerThread::getCurrentWorkerThread();
 					assert(currentThread != nullptr);
 					HardwareCounters::updateRuntimeCounters();
-					Monitoring::cpuBecomesIdle(cpu->getSystemCPUId());
+					Monitoring::cpuBecomesIdle(cpu->getIndex());
 					Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 					Instrument::suspendingComputePlace(cpu->getInstrumentationId());
 
@@ -593,7 +593,7 @@ public:
 
 							currentStatus = CPU::enabled_status;
 							Instrument::resumedComputePlace(cpu->getInstrumentationId());
-							Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
+							Monitoring::cpuBecomesActive(cpu->getIndex());
 						}
 					}
 					break;
@@ -602,7 +602,7 @@ public:
 					if (successful) {
 						currentStatus = CPU::acquired_enabled_status;
 						Instrument::resumedComputePlace(cpu->getInstrumentationId());
-						Monitoring::cpuBecomesActive(cpu->getSystemCPUId());
+						Monitoring::cpuBecomesActive(cpu->getIndex());
 					}
 					break;
 			}

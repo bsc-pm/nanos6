@@ -53,10 +53,10 @@ void Monitoring::preinitialize()
 
 void Monitoring::initialize()
 {
-	if (_enabled) {
-		// Make sure the CPUManager is already preinitialized before this
-		assert(CPUManager::isPreinitialized());
+	// Make sure the CPUManager is already preinitialized before this
+	assert(CPUManager::isPreinitialized());
 
+	if (_enabled) {
 		// Create all the monitors and predictors
 		_cpuMonitor = new CPUMonitor();
 		assert(_cpuMonitor != nullptr);

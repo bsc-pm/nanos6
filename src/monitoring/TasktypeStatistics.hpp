@@ -24,8 +24,8 @@
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
-#include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "support/config/ConfigVariable.hpp"
 
 
 #define PREDICTION_UNAVAILABLE -1.0
@@ -60,7 +60,7 @@ private:
 
 
 	//! The rolling-window size for accumulators (elements taken into account)
-	static EnvironmentVariable<size_t> _rollingWindow;
+	static ConfigVariable<int> _rollingWindow;
 
 	//    TIMING METRICS    //
 
@@ -231,10 +231,10 @@ public:
 	inline double getTimingStddev()
 	{
 		_timingAccumulatorLock.lock();
-		double stddev = sqrt(BoostAcc::variance(_timingAccumulator));
+		double variance = BoostAcc::variance(_timingAccumulator);
 		_timingAccumulatorLock.unlock();
 
-		return stddev;
+		return sqrt(variance);
 	}
 
 	//! \brief Get the number of task instances that accumulated metrics
@@ -333,10 +333,10 @@ public:
 	inline double getCounterStddev(size_t counterId)
 	{
 		_counterAccumulatorsLock.lock();
-		double stddev = sqrt(BoostAcc::variance(_counterAccumulators[counterId]));
+		double variance = BoostAcc::variance(_counterAccumulators[counterId]);
 		_counterAccumulatorsLock.unlock();
 
-		return stddev;
+		return sqrt(variance);
 	}
 
 	//! \brief Retreive, for a certain type of counter, the amount of values
