@@ -12,10 +12,10 @@
 
 class HostScheduler : public SyncScheduler {
 public:
-	HostScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor, bool enableLocality)
+	HostScheduler(size_t totalComputePlaces, SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor)
 		: SyncScheduler(totalComputePlaces)
 	{
-		_scheduler = new HostUnsyncScheduler(policy, enablePriority, enableImmediateSuccessor, enableLocality);
+		_scheduler = new HostUnsyncScheduler(policy, enablePriority, enableImmediateSuccessor);
 	}
 
 	inline Task *getReadyTask(ComputePlace *computePlace)

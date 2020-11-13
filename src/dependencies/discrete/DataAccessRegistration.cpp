@@ -122,11 +122,7 @@ namespace DataAccessRegistration {
 			if (accessStruct._commutativeMask.any() && !CommutativeSemaphore::registerTask(task))
 				return;
 
-			if (task->getL2hint() != (unsigned int) -1 && !task->isTaskfor() && computePlace->getSuccessor() == nullptr) {
-				computePlace->setSuccessor(task);
-			} else {
-				hpDependencyData.addSatisfiedOriginator(task, task->getDeviceType());
-			}
+			hpDependencyData.addSatisfiedOriginator(task, task->getDeviceType());
 
 			if (hpDependencyData.full())
 				processSatisfiedOriginators(hpDependencyData, computePlace, fromBusyThread);
@@ -194,11 +190,11 @@ namespace DataAccessRegistration {
 	}
 
 	void propagateMessages(
-			CPUDependencyData &hpDependencyData,
-			mailbox_t &mailBox,
-			ReductionInfo *originalReductionInfo,
-			ComputePlace *computePlace,
-			bool fromBusyThread)
+		CPUDependencyData &hpDependencyData,
+		mailbox_t &mailBox,
+		ReductionInfo *originalReductionInfo,
+		ComputePlace *computePlace,
+		bool fromBusyThread)
 	{
 		DataAccessMessage next;
 
@@ -210,16 +206,6 @@ namespace DataAccessRegistration {
 
 			if (next.location) {
 				if (next.to != nullptr) {
-					if (DataTrackingSupport::isTrackingEnabled()) {
-						DataTrackingSupport::DataTrackingInfo *trackingInfo = next.from->getTrackingInfo();
-						DataTrackingSupport::location_t location = (trackingInfo != nullptr) ? trackingInfo->_location : DataTrackingSupport::UNKNOWN_LOCATION;
-						if (location != DataTrackingSupport::UNKNOWN_LOCATION) {
-							DataTrackingSupport::timestamp_t timeL2 = trackingInfo->_timeL2;
-							DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
-							next.to->updateTrackingInfo(location, timeL2, timeL3);
-						}
-					}
-
 					if (DataTrackingSupport::isNUMATrackingEnabled() && DataTrackingSupport::getNUMATrackingType().compare("DEPS") == 0) {
 						next.to->setHomeNode(next.from->getHomeNode());
 					}
@@ -241,19 +227,6 @@ namespace DataAccessRegistration {
 				assert(!next.from->getOriginator()->getDataAccesses().hasBeenDeleted());
 				Task *task = next.from->getOriginator();
 				assert(!task->getDataAccesses().hasBeenDeleted());
-				// If this access represents a big share of the total data size, we can
-				// directly set the L2 hint. We do not do the same for L3 because there
-				// may be L2 locality with other L2, but if we set an L3 hint, it won't
-				// be computed.
-				if (DataTrackingSupport::isTrackingEnabled()) {
-					double score = (double) next.from->getAccessRegion().getSize() / task->getDataAccesses().getTotalDataSize();
-					if (score >= DataTrackingSupport::L2_THRESHOLD) {
-						unsigned int &L2hint = task->getL2hint();
-						unsigned int &L3hint = task->getL3hint();
-						L2hint = ((CPU *)computePlace)->getL2CacheId();
-						L3hint = ((CPU *)computePlace)->getL3CacheId();
-					}
-				}
 				satisfyTask(task, hpDependencyData, computePlace, fromBusyThread);
 			}
 
@@ -629,14 +602,6 @@ namespace DataAccessRegistration {
 					dispose = parentAccess->applyPropagated(message);
 					assert(!dispose);
 
-					DataTrackingSupport::DataTrackingInfo *trackingInfo = parentAccess->getTrackingInfo();
-					DataTrackingSupport::location_t location = (trackingInfo != nullptr) ? trackingInfo->_location : DataTrackingSupport::UNKNOWN_LOCATION;
-					if (location != DataTrackingSupport::UNKNOWN_LOCATION) {
-						DataTrackingSupport::timestamp_t timeL2 = trackingInfo->_timeL2;
-						DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
-						access->updateTrackingInfo(location, timeL2, timeL3);
-					}
-
 					if (DataTrackingSupport::isNUMATrackingEnabled() && DataTrackingSupport::getNUMATrackingType().compare("DEPS") == 0) {
 						access->setHomeNode(parentAccess->getHomeNode());
 						setHomeNode = false;
@@ -656,13 +621,6 @@ namespace DataAccessRegistration {
 				schedule = fromCurrent.schedule;
 				assert(!(fromCurrent.flagsForNext));
 
-				DataTrackingSupport::DataTrackingInfo *trackingInfo = predecessor->getTrackingInfo();
-				DataTrackingSupport::location_t location = (trackingInfo != nullptr) ? trackingInfo->_location : DataTrackingSupport::UNKNOWN_LOCATION;
-				if (location != DataTrackingSupport::UNKNOWN_LOCATION) {
-					DataTrackingSupport::timestamp_t timeL2 = trackingInfo->_timeL2;
-					DataTrackingSupport::timestamp_t timeL3 = trackingInfo->_timeL3;
-					access->updateTrackingInfo(location, timeL2, timeL3);
-				}
 				if (DataTrackingSupport::isNUMATrackingEnabled() && DataTrackingSupport::getNUMATrackingType().compare("DEPS") == 0) {
 					access->setHomeNode(predecessor->getHomeNode());
 					setHomeNode = false;

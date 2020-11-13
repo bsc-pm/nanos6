@@ -17,6 +17,7 @@
 #include "ReductionInfo.hpp"
 #include "ReductionSpecific.hpp"
 #include "dependencies/DataAccessType.hpp"
+#include "dependencies/DataTrackingSupport.hpp"
 
 #include <InstrumentDataAccessId.hpp>
 #include <InstrumentDependenciesByAccessLinks.hpp>
@@ -36,9 +37,6 @@ private:
 	//! 16-byte fields
 	//! The region covered by the access
 	DataAccessRegion _region;
-	//! Data tracking
-	SpinLock _trackingLock;
-	DataTrackingSupport::DataTrackingInfo *_trackingInfo;
 
 	//! 8-byte fields
 	//! The originator of the access
@@ -47,15 +45,8 @@ private:
 	//! A bitmap of the "symbols" this access is related to
 	symbols_t _symbols;
 
-	//! C++ allows anonymous unions to save space when two fields of a struct are not used at once.
-	//! We can do this here, as assigning the reductionInfo will be done always when the length is not
-	//! needed anymore.
-	//! Warning: Take care to correctly initialize this union when copying or constructing this class.
-	union {
-		//! Reduction-specific information of current access
-		ReductionInfo *_reductionInfo;
-		size_t _reductionLength;
-	};
+	//! Reduction-specific information of current access
+	ReductionInfo *_reductionInfo;
 
 	//! Next task with an access matching this one
 	std::atomic<DataAccess *> _successor;
@@ -89,14 +80,12 @@ private:
 public:
 	DataAccess(DataAccessType type, Task *originator, void *address, size_t length, bool weak) :
 		_region(address, length),
-		_trackingInfo(DataTrackingSupport::isTrackingEnabled() ? new DataTrackingSupport::DataTrackingInfo() : nullptr),
 		_originator(originator),
 		_reductionInfo(nullptr),
 		_successor(nullptr),
 		_child(nullptr),
 		_accessFlags(0),
 		_type(type),
-		_location(nullptr),
 		_homeNode((uint8_t) -1)
 	{
 		assert(originator != nullptr);
@@ -107,7 +96,6 @@ public:
 
 	DataAccess(const DataAccess &other) :
 		_region(other.getAccessRegion()),
-		_trackingInfo(other._trackingInfo),
 		_originator(other.getOriginator()),
 		_reductionInfo(other.getReductionInfo()),
 		_successor(other.getSuccessor()),
@@ -242,24 +230,9 @@ public:
 		return nullptr;
 	}
 
-	virtual inline DataTrackingSupport::DataTrackingInfo *getTrackingInfo()
-	{
-		return nullptr;
-	}
-
-	virtual void updateTrackingInfo(DataTrackingSupport::location_t, DataTrackingSupport::timestamp_t, DataTrackingSupport::timestamp_t)
-	{
-		FatalErrorHandler::failIf(1, "This method cannot be used in this class.");
-	}
-
 	inline bool isReleased() const
 	{
 		return (_accessFlags.load(std::memory_order_relaxed) & ACCESS_UNREGISTERED);
-	}
-
-	inline size_t getLength() const
-	{
-		return _region.getSize();
 	}
 
 	bool isInSymbol(int symbol) const

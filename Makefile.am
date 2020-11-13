@@ -384,8 +384,6 @@ common_sources = \
 	src/hardware/device/Accelerator.cpp \
 	src/hardware/hwinfo/HostInfo.cpp \
 	src/hardware/places/ComputePlace.cpp \
-	src/hardware/places/L2Cache.cpp \
-	src/hardware/places/L3Cache.cpp \
 	src/hardware/places/NUMAPlace.cpp \
 	src/hardware-counters/HardwareCounters.cpp \
 	src/hardware-counters/ThreadHardwareCounters.cpp \
@@ -819,7 +817,6 @@ noinst_HEADERS = \
 	src/dependencies/discrete/DataAccessFlags.hpp \
 	src/dependencies/discrete/DataAccessRegistration.hpp \
 	src/dependencies/discrete/DataAccessRegistrationImplementation.hpp \
-	src/dependencies/discrete/DataAccessTracking.hpp \
 	src/dependencies/discrete/Dependencies.hpp \
 	src/dependencies/discrete/DependencyDomain.hpp \
 	src/dependencies/discrete/DependencySystem.hpp \
@@ -902,9 +899,6 @@ noinst_HEADERS = \
 	src/hardware/hwinfo/HostInfo.hpp \
 	src/hardware/places/CPUPlace.hpp \
 	src/hardware/places/ComputePlace.hpp \
-	src/hardware/places/HardwareCache.hpp \
-	src/hardware/places/L2Cache.hpp \
-	src/hardware/places/L3Cache.hpp \
 	src/hardware/places/MemoryPlace.hpp \
 	src/hardware/places/NUMAPlace.hpp \
 	src/hardware-counters/CPUHardwareCounters.hpp \
@@ -1284,7 +1278,6 @@ noinst_HEADERS = \
 	src/scheduling/SchedulerSupport.hpp \
 	src/scheduling/ready-queues/DeadlineQueue.hpp \
 	src/scheduling/ready-queues/ReadyQueueDeque.hpp \
-	src/scheduling/ready-queues/ReadyQueueLocality.hpp \
 	src/scheduling/ready-queues/ReadyQueueMap.hpp \
 	src/scheduling/schedulers/HostScheduler.hpp \
 	src/scheduling/schedulers/HostUnsyncScheduler.hpp \

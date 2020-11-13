@@ -9,9 +9,6 @@
 #include <unistd.h>
 
 #include "HostInfo.hpp"
-#include "hardware/places/L2Cache.hpp"
-#include "hardware/places/L3Cache.hpp"
-#include "hardware/places/NUMAPlace.hpp"
 #include "executors/threads/CPU.hpp"
 #include "hardware/places/NUMAPlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
@@ -119,52 +116,9 @@ HostInfo::HostInfo() :
 		nodeNUMA = ancestor->memory_first_child;
 		assert(nodeNUMA != nullptr);
 		assert(hwloc_obj_type_is_memory(nodeNUMA->type));
-		hwloc_obj_t L3CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L3CACHE, obj);
-		hwloc_obj_t L2CacheObj = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_L2CACHE, obj);
 #else
 		hwloc_obj_t nodeNUMA = hwloc_get_ancestor_obj_by_type(topology, HWLOC_NUMA_ALIAS, obj);
-		hwloc_obj_t tmpCache = obj->parent;
-		assert(tmpCache != nullptr);
-		//! The first unified cache object found going up from the tmp should be its cache.
-		while(!(tmpCache->type == HWLOC_OBJ_CACHE && tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED && tmpCache->attr->cache.depth == 2)) {
-			tmpCache = tmpCache->parent;
-			assert(tmpCache != nullptr);
-		}
-		hwloc_obj_t L2CacheObj = tmpCache;
-		while(!(tmpCache->type == HWLOC_OBJ_CACHE && tmpCache->attr->cache.type == HWLOC_OBJ_CACHE_UNIFIED && tmpCache->attr->cache.depth == 3)) {
-			tmpCache = tmpCache->parent;
-			assert(tmpCache != nullptr);
-		}
-		hwloc_obj_t L3CacheObj = tmpCache;
 #endif
-
-		//! Check if L3 cache object is already created.
-		bool alreadyExists = false;
-		L3Cache * l3cache = nullptr;
-		for(L3Cache * cache : _L3Caches) {
-			if(cache->getId() == L3CacheObj->logical_index) {
-				l3cache = cache;
-				alreadyExists = true;
-			}
-		}
-		//! Create the L3 cache object if needed.
-		if(!alreadyExists) {
-			const char * inclusiveness = hwloc_obj_get_info_by_name(L3CacheObj, "Inclusive");
-			bool isInclusive = ((inclusiveness != nullptr) && strcmp(inclusiveness, "1") == 0);
-			l3cache = new L3Cache(L3CacheObj->logical_index, L3CacheObj->attr->cache.size, L3CacheObj->attr->cache.linesize, isInclusive);
-			_L3Caches.push_back(l3cache);
-		}
-		assert(l3cache != nullptr);
-
-		L2Cache * l2cache = nullptr;
-		if(_L2Caches.size() >= L2CacheObj->logical_index+1)
-			l2cache = _L2Caches[L2CacheObj->logical_index];
-		else {
-			l2cache = new L2Cache(L2CacheObj->logical_index, l3cache->getId(), L2CacheObj->attr->cache.size, L2CacheObj->attr->cache.linesize);
-			_L2Caches.push_back(l2cache);
-		}
-		assert(l2cache != nullptr);
-
 		size_t NUMANodeId = nodeNUMA == NULL ? 0 : nodeNUMA->logical_index;
 		assert(nodeNUMA == NULL || _memoryPlaces.size() >= nodeNUMA->logical_index);
 		if (_memoryPlaces[NUMANodeId] == nullptr) {
@@ -188,16 +142,8 @@ HostInfo::HostInfo() :
 		CPU *cpu = new CPU(
 			/* systemCPUID */ obj->os_index,
 			/* virtualCPUID */ cpuLogicalIndex,
-			NUMANodeId,
-			l2cache,
-			l3cache
+			NUMANodeId
 		);
-
-		// Set L3 penalty for data tracking only first time
-		if (i == coreCount - 1) {
-			double penalty = (double) (l3cache->getCacheSize() * getNumL3Cache()) / (double) (l2cache->getCacheSize() * getNumL2Cache());
-			L3Cache::setPenalty(penalty);
-		}
 
 		_computePlaces[cpuLogicalIndex] = cpu;
 	}
@@ -305,14 +251,6 @@ HostInfo::HostInfo() :
 		}
 	}
 #endif
-	//std::cout << "---------- DISTANCE MATRIX ----------" << std::endl;
-	//for (unsigned i = 0; i < nbobjs; i++) {
-	//	for (unsigned j = 0; j < nbobjs; j++) {
-	//		std::cout << _NUMADistances[i*nbobjs+j] << " ";
-	//	}
-	//	std::cout << std::endl;
-	//}
-	//! Each distance matrix returned in the distances array should be released by the caller using hwloc_distances_release().
 
 	// Other work
 	// Release resources

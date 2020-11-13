@@ -8,5 +8,7 @@
 
 ManagerNUMA::directory_t ManagerNUMA::_directory;
 RWSpinLock ManagerNUMA::_lock;
+#ifndef NDEBUG
 std::atomic<size_t> ManagerNUMA::_totalBytes;
 std::atomic<size_t> ManagerNUMA::_totalQueries;
+#endif

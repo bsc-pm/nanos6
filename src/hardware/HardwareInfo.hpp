@@ -13,7 +13,6 @@
 #include "hwinfo/HostInfo.hpp"
 #include "places/ComputePlace.hpp"
 #include "places/MemoryPlace.hpp"
-#include "places/HardwareCache.hpp"
 
 class HardwareInfo {
 private:
@@ -86,26 +85,6 @@ public:
 	static inline size_t getNumPhysicalPackages()
 	{
 		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getNumPhysicalPackages();
-    }
-
-	static inline size_t getNumL2Cache()
-	{
-		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getNumL2Cache();
-	}
-
-	static inline size_t getNumL3Cache()
-	{
-		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getNumL3Cache();
-	}
-
-	static inline L2Cache *getL2Cache(DataTrackingSupport::location_t loc)
-	{
-		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getL2Cache(loc);
-	}
-
-	static inline L3Cache *getL3Cache(DataTrackingSupport::location_t loc)
-	{
-		return ((HostInfo *) _infos[nanos6_device_t::nanos6_host_device])->getL3Cache(loc);
 	}
 
 	static inline const std::vector<uint64_t> &getNUMADistances()

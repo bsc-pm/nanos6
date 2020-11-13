@@ -29,9 +29,6 @@ protected:
 	bool _enablePriority;
 
 public:
-	UnsyncScheduler()
-	{}
-
 	UnsyncScheduler(SchedulingPolicy policy, bool enablePriority, bool enableImmediateSuccessor);
 
 	virtual ~UnsyncScheduler();
@@ -90,11 +87,6 @@ public:
 	//!
 	//! \returns a ready task or nullptr
 	virtual Task *getReadyTask(ComputePlace *computePlace) = 0;
-
-	virtual inline bool isLocalityEnabled() const
-	{
-		return false;
-	}
 };
 
 

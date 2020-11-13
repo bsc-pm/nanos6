@@ -20,8 +20,7 @@ public:
 		size_t totalComputePlaces,
 		SchedulingPolicy policy,
 		bool enablePriority,
-		bool enableImmediateSuccessor,
-        bool enableLocality);
+		bool enableImmediateSuccessor);
 
 	static DeviceScheduler *createDeviceScheduler(
 		size_t totalComputePlaces,

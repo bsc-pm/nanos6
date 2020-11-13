@@ -57,8 +57,6 @@ private:
 	//! too much time
 	size_t _maxServedTasks;
 
-	size_t IS_MAX_THRESHOLD;
-
 public:
 	//! NOTE We initialize the delegation lock with 2 * numCPUs since some
 	//! threads may oversubscribe and thus we may need more than numCPUs
@@ -89,9 +87,6 @@ public:
 			new (&_addQueues[i]) add_queue_t(totalCPUsPow2*4);
 			new (&_addQueuesLocks[i]) TicketArraySpinLock(_totalComputePlaces);
 		}
-
-		// Set IS_MAX_THRESHOLD to twice the capacity of L2 cache
-		IS_MAX_THRESHOLD = HardwareInfo::getL2Cache(0)->getCacheSize()*2;
 	}
 
 	virtual ~SyncScheduler()
@@ -133,12 +128,7 @@ public:
 			assert(tasks[t] != nullptr);
 			// Set temporary info that is used when processing ready tasks
 			tasks[t]->setComputePlace(computePlace);
-			// Disable IS if task data size is too big when locality scheduler is enabled.
-			if (_scheduler->isLocalityEnabled() && hint == SIBLING_TASK_HINT && tasks[t]->getDataAccesses().getTotalDataSize() > IS_MAX_THRESHOLD) {
-				hint = NO_HINT;
-			}
 			tasks[t]->setSchedulingHint(hint);
-			tasks[t]->computeTaskAffinity();
 			tasks[t]->computeNUMAAffinity();
 		}
 

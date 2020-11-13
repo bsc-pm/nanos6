@@ -7,19 +7,20 @@
 #ifndef MANAGER_NUMA_HPP
 #define MANAGER_NUMA_HPP
 
+#include <cstring>
 #include <map>
 #include <numa.h>
 #include <numaif.h>
-#include <cstring>
 #include <sys/mman.h>
 
 #include <nanos6.h>
 
-#include <MemoryAllocator.hpp>
-
+#include "dependencies/DataTrackingSupport.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/RWSpinLock.hpp"
+
+#include <MemoryAllocator.hpp>
 
 struct DirectoryInfo {
 	size_t _size;
@@ -39,14 +40,18 @@ private:
 
 	static directory_t _directory;
 	static RWSpinLock _lock;
+#ifndef NDEBUG
 	static std::atomic<size_t> _totalBytes;
 	static std::atomic<size_t> _totalQueries;
+#endif
 
 public:
 	static void initialize()
 	{
+#ifndef NDEBUG
 		_totalBytes = 0;
 		_totalQueries = 0;
+#endif
 	}
 
 	static void shutdown()
@@ -55,8 +60,6 @@ public:
 		//printDirectoryContent();
 #endif
 		assert(_directory.empty());
-//		std::cout << "Total allocated bytes using nanos6_numa interface: " << _totalBytes << std::endl;
-//		std::cout << "Total queries: " << _totalQueries << std::endl;
 	}
 
 	static void *alloc(size_t size, bitmask_t *bitmask, size_t block_size)
@@ -66,7 +69,9 @@ public:
 		assert(block_size > 0);
 
 		bitmask_t bitmaskCopy = *bitmask;
+#ifndef NDEBUG
 		_totalBytes += size;
+#endif
 
 		if (!DataTrackingSupport::isNUMATrackingEnabled()) {
 			void *res = malloc(size);
@@ -78,7 +83,6 @@ public:
 		size_t originalBlockSize = block_size;
 		if (block_size % pagesize != 0) {
 			block_size = closestMultiple(block_size, pagesize);
-			//FatalErrorHandler::warnIf(true, "Block size is not multiple of pagesize. Using ", block_size, " instead.");
 		}
 
 		void *res = nullptr;
@@ -309,7 +313,9 @@ public:
 	static uint8_t getHomeNode(void *ptr, size_t size)
 	{
 		assert(DataTrackingSupport::isNUMATrackingEnabled());
+#ifndef NDEBUG
 		_totalQueries++;
+#endif
 
 		uint8_t homenode = (uint8_t ) -1;
 		// Search in the directory

@@ -37,9 +37,6 @@ private:
 	//! The size of the preallocated argsBlock
 	size_t _preallocatedArgsBlockSize;
 
-	//! Successor task to be run immediately, even before requesting work to the scheduler
-	Task *_successor;
-
 	//! Whether this cpu is owned by the runtime
 	bool _owned;
 
@@ -135,18 +132,6 @@ public:
 	Instrument::CPULocalData &getInstrumentationData()
 	{
 		return _instrumentationData;
-	}
-
-	//! \brief returns the successor task of this ComputePlace.
-	inline Task *getSuccessor()
-	{
-		return _successor;
-	}
-
-	inline void setSuccessor(Task *successor)
-	{
-		assert(successor == nullptr || _successor == nullptr);
-		_successor = successor;
 	}
 };
 

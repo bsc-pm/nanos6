@@ -44,8 +44,6 @@ inline Task::Task(
 	_priority(0),
 	_deadline(0),
 	_schedulingHint(NO_HINT),
-	_L2hint((unsigned int)-1),
-	_L3hint((unsigned int)-1),
 	_NUMAhint((uint8_t)-1),
 	_thread(nullptr),
 	_dataAccesses(taskAccessInfo),

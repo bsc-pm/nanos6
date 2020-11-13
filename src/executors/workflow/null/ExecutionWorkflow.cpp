@@ -57,9 +57,6 @@ namespace ExecutionWorkflow {
 			// Runtime Tracking Point - A task starts its execution
 			TrackingPoints::taskIsExecuting(task);
 
-			// Annotate data location
-			task->trackDataLocation(cpu);
-
 			// Run the task
 			std::atomic_thread_fence(std::memory_order_acquire);
 			task->body(translationTable);

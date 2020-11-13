@@ -93,9 +93,7 @@ private:
 	//! Scheduling hint used by the scheduler
 	ReadyTaskHint _schedulingHint;
 
-	//! Locality scheduling hints
-	unsigned int _L2hint;
-	unsigned int _L3hint;
+	//! NUMA Locality scheduling hints
 	uint8_t _NUMAhint;
 
 protected:
@@ -253,19 +251,10 @@ public:
 	}
 
 	//! \brief Add a nested task
-	inline void addChild(Task *child, ComputePlace *computePlace = nullptr)
+	inline void addChild(__attribute__((unused)) Task *child)
 	{
 		_countdownToBeWokenUp.fetch_add(1, std::memory_order_relaxed);
 		_removalCount.fetch_add(1, std::memory_order_relaxed);
-
-		// As an optimization, if a strong task has children, we do know that
-		// they are going to use a subset of the parent's data. Consequently,
-		// we want to schedule them in the same L2 than the parent. If the
-		// _totalDataSize is > 0, then, a task is strong.
-		if (_dataAccesses.getTotalDataSize() > 0 && computePlace != nullptr) {
-			child->_L2hint = ((CPU *)computePlace)->getL2CacheId();
-			child->_L3hint = ((CPU *)computePlace)->getL3CacheId();
-		}
 	}
 
 	//! \brief Remove a nested task (because it has finished)
@@ -888,11 +877,6 @@ public:
 	virtual inline bool isTaskforSource() const
 	{
 		return false;
-	}
-
-	virtual inline void trackDataLocation(CPU *cpu)
-	{
-		_dataAccesses.trackDataLocation(cpu);
 	}
 
 	inline int getNestingLevel() const

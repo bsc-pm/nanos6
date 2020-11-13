@@ -38,7 +38,7 @@ SchedulerInterface::SchedulerInterface()
 	computePlaceCount = CPUManager::getTotalCPUs();
 	_hostScheduler = SchedulerGenerator::createHostScheduler(
 		computePlaceCount, policy, _enablePriority,
-		_enableImmediateSuccessor, _enableLocality);
+		_enableImmediateSuccessor);
 
 	size_t totalDevices = (nanos6_device_t::nanos6_device_type_num);
 
@@ -66,8 +66,6 @@ SchedulerInterface::SchedulerInterface()
 #if USE_FPGA
 	FatalErrorHandler::failIf(true, "FPGA is not supported yet.");
 #endif
-
-	_expiredTasks = 0;
 }
 
 SchedulerInterface::~SchedulerInterface()
@@ -85,5 +83,4 @@ SchedulerInterface::~SchedulerInterface()
 #if USE_FPGA
 	FatalErrorHandler::failIf(true, "FPGA is not supported yet.");
 #endif
-	//std::cout << "Expired tasks: " << _expiredTasks << std::endl;
 }

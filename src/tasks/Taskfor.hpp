@@ -30,8 +30,6 @@ private:
 	std::atomic<uint64_t> _pendingChunks[PENDING_CHUNKS_SIZE];
 	// Source
 	Padded<std::atomic<size_t>> _remainingIterations;
-	// Source (data tracking)
-	Padded<std::atomic<bool>> _accessesTracked;
 	// Source and collaborator
 	bounds_t _bounds;
 	// Collaborator
@@ -72,7 +70,6 @@ public:
 		for (int i = 0; i < PENDING_CHUNKS_SIZE; i++) {
 			std::atomic_init(&_pendingChunks[i], (uint64_t) 0);
 		}
-		std::atomic_init(_accessesTracked.ptr_to_basetype(), false);
 	}
 
 	inline void setRunnable(bool runnableValue)
@@ -336,33 +333,6 @@ public:
 	inline bool isTaskforSource() const override
 	{
 		return !isRunnable();
-	}
-
-	inline bool enableAccessesTracked()
-	{
-		bool expected = false;
-		__attribute__((unused)) bool exchanged = _accessesTracked.compare_exchange_strong(expected, true);
-		assert(exchanged || _accessesTracked);
-		return exchanged;
-	}
-
-	inline bool areAccessesTracked()
-	{
-		return _accessesTracked;
-	}
-
-	virtual inline void trackDataLocation(CPU *cpu)
-	{
-		assert(isRunnable());
-
-		Taskfor *parentTaskfor = (Taskfor *) getParent();
-		assert(parentTaskfor != nullptr);
-
-		if(!parentTaskfor->enableAccessesTracked())
-			return;
-
-		TaskDataAccesses &dataAccesses = parentTaskfor->getDataAccesses();
-		dataAccesses.trackDataLocation(cpu);
 	}
 
 private:

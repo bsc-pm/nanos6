@@ -7,6 +7,7 @@
 #ifndef READY_QUEUE_MAP_HPP
 #define READY_QUEUE_MAP_HPP
 
+#include "dependencies/DataTrackingSupport.hpp"
 #include "scheduling/ReadyQueue.hpp"
 #include "support/Containers.hpp"
 #include "tasks/Task.hpp"
@@ -17,35 +18,27 @@ class ReadyQueueMap : public ReadyQueue {
 	typedef Container::map<Task::priority_t, ready_queue_t, std::greater<Task::priority_t>> ready_map_t;
 
 	ready_map_t *_readyMaps;
-	size_t *_numReadyTasksPerNUMANode;
 	size_t *_numCurrentReadyTasksPerNUMANode;
+	size_t _numReadyTasks;
 	uint8_t _numMaps;
 	// When tasks does not have a NUMA hint, we assign it in a round robin basis.
 	uint8_t _roundRobinQueues;
 
-	size_t _numReadyTasks;
-	size_t _enqueuedTasks;
-	std::vector<size_t> _runTasksPerNUMA;
 public:
 	ReadyQueueMap(SchedulingPolicy policy)
 		: ReadyQueue(policy),
-		_roundRobinQueues(0),
-		_numReadyTasks(0)
+		_numReadyTasks(0),
+		_roundRobinQueues(0)
 	{
 		_numMaps = DataTrackingSupport::isNUMASchedulingEnabled() ?
 			HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device) : 1;
 		_readyMaps = (ready_map_t *) MemoryAllocator::alloc(_numMaps * sizeof(ready_map_t));
-		_numReadyTasksPerNUMANode = (size_t *) MemoryAllocator::alloc(_numMaps * sizeof(size_t));
 		_numCurrentReadyTasksPerNUMANode = (size_t *) MemoryAllocator::alloc(_numMaps * sizeof(size_t));
 
 		for (uint8_t i = 0; i < _numMaps; i++) {
 			new (&_readyMaps[i]) ready_map_t();
-			_numReadyTasksPerNUMANode[i] = 0;
 			_numCurrentReadyTasksPerNUMANode[i] = 0;
 		}
-		_enqueuedTasks = 0;
-
-		_runTasksPerNUMA = std::vector<size_t>(_numMaps, 0);
 	}
 
 	~ReadyQueueMap()
@@ -56,14 +49,9 @@ public:
 			}
 			_readyMaps[i].clear();
 			_readyMaps[i].~ready_map_t();
-		//	std::cout << "Tasks in NUMA node " << (int) i << ": " << _numReadyTasksPerNUMANode[i] << std::endl;
-		//	std::cout << "Tasks run in NUMA " << (int) i << ": " << _runTasksPerNUMA[i] << std::endl;
 		}
 		MemoryAllocator::free(_readyMaps, _numMaps * sizeof(ready_map_t));
-		MemoryAllocator::free(_numReadyTasksPerNUMANode, _numMaps * sizeof(size_t));
 		MemoryAllocator::free(_numCurrentReadyTasksPerNUMANode, _numMaps * sizeof(size_t));
-		//std::cout << "Tasks with no NUMA hint: " << (int) _roundRobinQueues << std::endl;
-		//std::cout << "Total number of enqueued tasks: " << _enqueuedTasks << std::endl;;
 	}
 
 	void addReadyTask(Task *task, bool unblocked)
@@ -92,9 +80,7 @@ public:
 		}
 
 		++_numReadyTasks;
-		++_numReadyTasksPerNUMANode[NUMAid];
 		++_numCurrentReadyTasksPerNUMANode[NUMAid];
-		++_enqueuedTasks;
 	}
 
 	Task *getReadyTask(ComputePlace *computePlace)
@@ -115,9 +101,10 @@ public:
 					assert(result != nullptr);
 
 					it->second.pop_front();
+
 					--_numReadyTasks;
 					--_numCurrentReadyTasksPerNUMANode[NUMAid];
-					_runTasksPerNUMA[NUMAid]++;
+
 					return result;
 				}
 			}
@@ -160,10 +147,10 @@ public:
 					assert(result != nullptr);
 
 					it->second.pop_front();
-					//std::cout << "Stealing with distance " << distances[chosen*_numMaps+NUMAid] << " and ready tasks " << _numCurrentReadyTasksPerNUMANode[chosen] << std::endl;
+
 					--_numReadyTasks;
 					--_numCurrentReadyTasksPerNUMANode[chosen];
-					_runTasksPerNUMA[NUMAid]++;
+
 					return result;
 				}
 			}

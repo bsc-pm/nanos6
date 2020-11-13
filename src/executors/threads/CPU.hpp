@@ -87,7 +87,7 @@ public:
 	//! \param[in] systemCPUId The system id of the CPU
 	//! \param[in] virtualCPUId The virtual id or index of the CPU
 	//! \param[in] NUMANodeId The NUMA node id of the CPU
-	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId, L2Cache *l2cache, L3Cache *l3cache);
+	CPU(size_t systemCPUId, size_t virtualCPUId, size_t NUMANodeId);
 
 	//! \brief Constructor for virtual CPUs
 	//!
