@@ -99,7 +99,7 @@ public:
 		backing_t &elem = getStorage(pos);
 		//! Resetting a bit is equal to the and with a mask that is all 1's except the position
 		//! that we want to reset. We shift a one just like on the "set" and then bitwise negation (~)
-		elem.fetch_and(~(ONE << getBitIndex(pos)), std::memory_order_relaxed);
+		elem.fetch_and(~(ONE << getBitIndex(pos)), std::memory_order_release);
 	}
 
 	//! \brief Set the first found zero-bit in the AtomicBitset
@@ -124,7 +124,7 @@ public:
 				//! Found a bit to zero. Lets set it.
 				backingstorage_t mask = (ONE << (firstOne - 1));
 				assert(!(value & mask));
-				if (elem.compare_exchange_strong(value, value | mask, std::memory_order_relaxed))
+				if (elem.compare_exchange_strong(value, value | mask, std::memory_order_acquire))
 					return (currentPos + firstOne - 1);
 				//! Raced with another thread. This retry makes this function lock-free (not wait-free).
 				firstOne = __builtin_ffsll(~value);

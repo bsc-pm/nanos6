@@ -48,6 +48,8 @@ void HostReductionStorage::combineInStorage(void *combineDestination)
 {
 	assert(combineDestination != nullptr);
 
+	// Ensure we see writes from other threads that affected the slots
+	std::atomic_thread_fence(std::memory_order_acquire);
 	for (size_t i = 0; i < _slots.size(); ++i) {
 		slot_t &slot = _slots[i];
 

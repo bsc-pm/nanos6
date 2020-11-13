@@ -113,8 +113,14 @@ void *ReductionInfo::getFreeSlot(Task *task, ComputePlace *computePlace)
 		else
 			storage = _deviceStorages[deviceType];
 	}
-
 	assert(storage != nullptr);
+
+	// Ensure if we see the value of storage as non null we can see
+	// all the writes done by the other threads to initialize it.
+	// This should not be needed because there is an address dependency
+	// and a release on the initialization (providing release-consumer ordering)
+	// However, better be safe than sorry.
+	std::atomic_thread_fence(std::memory_order_acquire);
 
 	size_t index = storage->getFreeSlotIndex(task, computePlace);
 
