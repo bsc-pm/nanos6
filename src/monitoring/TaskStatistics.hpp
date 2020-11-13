@@ -17,6 +17,7 @@
 
 
 #define DEFAULT_COST 1
+#define PREDICTION_UNAVAILABLE -1.0
 
 enum monitoring_task_status_t {
 	// The task is ready to be executed
@@ -49,11 +50,6 @@ private:
 	//! itself to avoid early accumulations)
 	std::atomic<size_t> _numChildrenAlive;
 
-	/*    GENERAL METRICS    */
-
-	//! The number of tasks created by this one
-	size_t _numChildren;
-
 	/*    TIMING METRICS    */
 
 	//! Array of stopwatches to monitor timing for the task in teach status
@@ -65,14 +61,11 @@ private:
 	//! Elapsed execution ticks of children tasks (ticks, not time)
 	std::atomic<size_t> _childrenTicks[num_status];
 
-	//! Whether the task has a predicted elapsed execution time
-	bool _hasPrediction;
-
-	//! Whether a task in the chain of ancestors of this task had a prediction
-	bool _ancestorHasPrediction;
-
 	//! The predicted elapsed execution time of the task
 	double _timePrediction;
+
+	//! Whether a task in the chain of ancestors of this task had a prediction
+	bool _ancestorHasTimePrediction;
 
 	//! An approximation the time that has been completed by this task already,
 	//! only accounting the elapsed time of children tasks when they complete
@@ -85,9 +78,6 @@ private:
 	std::atomic<size_t> _completedTime;
 
 	/*    HW COUNTER METRICS    */
-
-	//! Whether the task has predictions for each hardware counter
-	bool *_hasCounterPrediction;
 
 	//! Predictions for each hardware counter of the task
 	//! NOTE: Predictions of HWCounters must be doubles due to being computed
@@ -104,13 +94,10 @@ public:
 		_tasktypeStatistics(nullptr),
 		_cost(DEFAULT_COST),
 		_numChildrenAlive(1),
-		_numChildren(0),
 		_currentChronometer(null_status),
-		_hasPrediction(false),
-		_ancestorHasPrediction(false),
-		_timePrediction(0.0),
+		_timePrediction(PREDICTION_UNAVAILABLE),
+		_ancestorHasTimePrediction(false),
 		_completedTime(0),
-		_hasCounterPrediction(nullptr),
 		_counterPredictions(nullptr)
 	{
 		for (size_t i = 0; i < num_status; ++i) {
@@ -120,11 +107,9 @@ public:
 		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
 		assert(numEvents == 0 || allocationAddress != nullptr);
 
-		_hasCounterPrediction = (bool *) allocationAddress;
-		_counterPredictions = (double *) ((char *) allocationAddress + (numEvents * sizeof(bool)));
+		_counterPredictions = (double *) allocationAddress;
 		for (size_t i = 0; i < numEvents; ++i) {
-			_hasCounterPrediction[i] = false;
-			_counterPredictions[i] = 0.0;
+			_counterPredictions[i] = PREDICTION_UNAVAILABLE;
 		}
 	}
 
@@ -133,11 +118,9 @@ public:
 		_tasktypeStatistics = nullptr;
 		_cost = DEFAULT_COST;
 		_numChildrenAlive = 1;
-		_numChildren = 0;
 		_currentChronometer = null_status;
-		_hasPrediction = false;
-		_ancestorHasPrediction = false;
-		_timePrediction = 0.0;
+		_timePrediction = PREDICTION_UNAVAILABLE;
+		_ancestorHasTimePrediction = false;
 		_completedTime = 0;
 
 		for (size_t i = 0; i < num_status; ++i) {
@@ -147,8 +130,7 @@ public:
 
 		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
 		for (size_t i = 0; i < numEvents; ++i) {
-			_hasCounterPrediction[i] = false;
-			_counterPredictions[i] = 0.0;
+			_counterPredictions[i] = PREDICTION_UNAVAILABLE;
 		}
 	}
 
@@ -187,8 +169,6 @@ public:
 	//! \return Whether there are no more children alive
 	inline bool markAsFinished()
 	{
-		assert(_numChildrenAlive.load() > 0);
-
 		int aliveChildren = (--_numChildrenAlive);
 		assert(aliveChildren >= 0);
 
@@ -198,18 +178,6 @@ public:
 	inline size_t getNumChildrenAlive() const
 	{
 		return _numChildrenAlive.load();
-	}
-
-	//! \brief Increase the number of tasks created by this one
-	inline void increaseNumChildren()
-	{
-		++_numChildren;
-	}
-
-	//! \brief Get the number of children tasks created by this one
-	inline size_t getNumChildrenTasks() const
-	{
-		return _numChildren;
 	}
 
 	//! \brief Get a representation of the elapsed ticks of a timer
@@ -231,24 +199,19 @@ public:
 		return _childrenTicks[id].load();
 	}
 
-	inline void setHasPrediction(bool hasPrediction)
+	inline bool ancestorHasTimePrediction() const
 	{
-		_hasPrediction = hasPrediction;
+		return _ancestorHasTimePrediction;
 	}
 
-	inline bool hasPrediction() const
+	inline void setAncestorHasTimePrediction(bool ancestorHasTimePrediction)
 	{
-		return _hasPrediction;
+		_ancestorHasTimePrediction = ancestorHasTimePrediction;
 	}
 
-	inline void setAncestorHasPrediction(bool ancestorHasPrediction)
+	inline bool hasTimePrediction() const
 	{
-		_ancestorHasPrediction = ancestorHasPrediction;
-	}
-
-	inline bool ancestorHasPrediction() const
-	{
-		return _ancestorHasPrediction;
+		return (_timePrediction != PREDICTION_UNAVAILABLE);
 	}
 
 	inline void setTimePrediction(double prediction)
@@ -271,14 +234,9 @@ public:
 		return _completedTime.load();
 	}
 
-	inline void setHasCounterPrediction(size_t counterId, bool hasPrediction)
-	{
-		_hasCounterPrediction[counterId] = hasPrediction;
-	}
-
 	inline bool hasCounterPrediction(size_t counterId) const
 	{
-		return _hasCounterPrediction[counterId];
+		return (_counterPredictions[counterId] != PREDICTION_UNAVAILABLE);
 	}
 
 	inline void setCounterPrediction(size_t counterId, double value)
@@ -359,7 +317,7 @@ public:
 	static inline size_t getAllocationSize()
 	{
 		const size_t numEvents = HardwareCounters::getNumEnabledCounters();
-		return (numEvents * (sizeof(double) + sizeof(bool)));
+		return (numEvents * sizeof(double));
 	}
 
 };

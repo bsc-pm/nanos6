@@ -35,7 +35,9 @@ void Monitoring::preinitialize()
 		// Start measuring time to compute the tick conversion rate
 		TickConversionUpdater::initialize();
 #endif
-		// Create all the monitors and predictors
+		// Create the task monitor before the CPUManager is initialized.
+		// This is due to per-CPU preallocated taskfors needing task monitoring
+		// to be enabled before they are constructed
 		_taskMonitor = new TaskMonitor();
 		assert(_taskMonitor != nullptr);
 
@@ -57,7 +59,7 @@ void Monitoring::initialize()
 	assert(CPUManager::isPreinitialized());
 
 	if (_enabled) {
-		// Create all the monitors and predictors
+		// Create the CPU monitor
 		_cpuMonitor = new CPUMonitor();
 		assert(_cpuMonitor != nullptr);
 	}

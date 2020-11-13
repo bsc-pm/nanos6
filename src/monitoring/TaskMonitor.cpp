@@ -35,12 +35,11 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		TaskStatistics *parentStatistics = parent->getTaskStatistics();
 		assert(parentStatistics != nullptr);
 
-		parentStatistics->increaseNumChildren();
 		parentStatistics->increaseNumChildrenAlive();
 
-		taskStatistics->setAncestorHasPrediction(
-			parentStatistics->hasPrediction() ||
-			parentStatistics->ancestorHasPrediction()
+		taskStatistics->setAncestorHasTimePrediction(
+			parentStatistics->hasTimePrediction() ||
+			parentStatistics->ancestorHasTimePrediction()
 		);
 	}
 
@@ -57,7 +56,6 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		double timePrediction = tasktypeStatistics.getTimingPrediction(cost);
 		if (timePrediction != PREDICTION_UNAVAILABLE) {
 			taskStatistics->setTimePrediction(timePrediction);
-			taskStatistics->setHasPrediction(true);
 		}
 
 		// Predict hardware counter metrics
@@ -65,7 +63,6 @@ void TaskMonitor::taskCreated(Task *task, Task *parent) const
 		for (size_t i = 0; i < numEnabledCounters; ++i) {
 			double counterPrediction = tasktypeStatistics.getCounterPrediction(i, cost);
 			if (counterPrediction != PREDICTION_UNAVAILABLE) {
-				taskStatistics->setHasCounterPrediction(i, true);
 				taskStatistics->setCounterPrediction(i, counterPrediction);
 			}
 		}
@@ -122,12 +119,12 @@ void TaskMonitor::taskStarted(Task *task, monitoring_task_status_t execStatus) c
 	// If the task is not a taskfor collaborator, and this is the first time it
 	// becomes ready, increase the cost accumulations used to infer predictions.
 	// Only if this task doesn't have an ancestor that is already taken into account
-	if (!task->isTaskforCollaborator() && !taskStatistics->ancestorHasPrediction()) {
+	if (!task->isTaskforCollaborator() && !taskStatistics->ancestorHasTimePrediction()) {
 		if (oldStatus == null_status && execStatus == ready_status) {
 			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
 			assert(tasktypeStatistics != nullptr);
 
-			if (taskStatistics->hasPrediction()) {
+			if (taskStatistics->hasTimePrediction()) {
 				size_t cost = taskStatistics->getCost();
 				tasktypeStatistics->increaseAccumulatedCost(cost);
 				tasktypeStatistics->increaseNumAccumulatedInstances();
@@ -142,6 +139,10 @@ void TaskMonitor::taskCompletedUserCode(Task *task) const
 {
 	assert(task != nullptr);
 
+	if (task->isTaskforCollaborator()) {
+		return;
+	}
+
 	TaskStatistics *taskStatistics = task->getTaskStatistics();
 	assert(taskStatistics != nullptr);
 
@@ -155,38 +156,36 @@ void TaskMonitor::taskCompletedUserCode(Task *task) const
 	//    - So that when the ancestor finishes its execution, this time can be
 	//      decreased from the saved time in 1), since the accumulation of cost
 	//      will be decreased and we won't need it anymore
-	if (!task->isTaskforCollaborator()) {
-		if (taskStatistics->ancestorHasPrediction()) {
-			Task *ancestor = task->getParent();
-			while (ancestor != nullptr) {
-				TaskStatistics *ancestorStatistics = ancestor->getTaskStatistics();
-				if (!ancestorStatistics->ancestorHasPrediction()) {
-					// If this ancestor doesn't have an ancestor with predictions, it
-					// is the ancestor we're looking for, the one with the prediction
-					assert(ancestorStatistics->hasPrediction());
+	if (taskStatistics->ancestorHasTimePrediction()) {
+		Task *ancestor = task->getParent();
+		while (ancestor != nullptr) {
+			TaskStatistics *ancestorStatistics = ancestor->getTaskStatistics();
+			if (!ancestorStatistics->ancestorHasTimePrediction()) {
+				// If this ancestor doesn't have an ancestor with predictions, it
+				// is the ancestor we're looking for, the one with the prediction
+				assert(ancestorStatistics->hasTimePrediction());
 
-					TasktypeStatistics *ancestorTasktypeStatistics = ancestorStatistics->getTasktypeStatistics();
-					assert(ancestorTasktypeStatistics != nullptr);
+				TasktypeStatistics *ancestorTasktypeStatistics = ancestorStatistics->getTasktypeStatistics();
+				assert(ancestorTasktypeStatistics != nullptr);
 
-					// Add the elapsed execution time of the task in the ancestor
-					// and its tasktype statistics
-					size_t elapsed = taskStatistics->getChronoTicks(executing_status);
-					ancestorStatistics->increaseCompletedTime(elapsed);
-					ancestorTasktypeStatistics->increaseCompletedTime(elapsed);
+				// Add the elapsed execution time of the task in the ancestor
+				// and its tasktype statistics
+				size_t elapsed = taskStatistics->getChronoTicks(executing_status);
+				ancestorStatistics->increaseCompletedTime(elapsed);
+				ancestorTasktypeStatistics->increaseCompletedTime(elapsed);
 
-					break;
-				} else {
-					ancestor = ancestor->getParent();
-				}
+				break;
+			} else {
+				ancestor = ancestor->getParent();
 			}
-		} else if (!taskStatistics->hasPrediction()) {
-			// If this task has no ancestor with a prediction and it has no prediction,
-			// decrease the number of predictionless instances from its tasktype
-			TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
-			assert(tasktypeStatistics != nullptr);
-
-			tasktypeStatistics->decreaseNumPredictionlessInstances();
 		}
+	} else if (!taskStatistics->hasTimePrediction()) {
+		// If this task has no ancestor with a prediction and it has no prediction,
+		// decrease the number of predictionless instances from its tasktype
+		TasktypeStatistics *tasktypeStatistics = taskStatistics->getTasktypeStatistics();
+		assert(tasktypeStatistics != nullptr);
+
+		tasktypeStatistics->decreaseNumPredictionlessInstances();
 	}
 }
 
@@ -230,7 +229,7 @@ void TaskMonitor::taskFinished(Task *task) const
 			tasktypeStatistics->accumulateStatisticsAndCounters(taskStatistics, taskCounters);
 
 			// 2)
-			if (!taskStatistics->ancestorHasPrediction() && taskStatistics->hasPrediction()) {
+			if (!taskStatistics->ancestorHasTimePrediction() && taskStatistics->hasTimePrediction()) {
 				tasktypeStatistics->decreaseCompletedTime(taskStatistics->getCompletedTime());
 				tasktypeStatistics->decreaseAccumulatedCost(taskStatistics->getCost());
 				tasktypeStatistics->decreaseNumAccumulatedInstances();

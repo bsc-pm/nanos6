@@ -135,7 +135,7 @@ public:
 	//!
 	//! \param[in] combineeCounters The counters of a task, which will be combined into
 	//! the current counters
-	inline void combineCounters(TaskHardwareCountersInterface *combineeCounters) override
+	inline void combineCounters(const TaskHardwareCountersInterface *combineeCounters) override
 	{
 		PQoSTaskHardwareCounters *childCounters = (PQoSTaskHardwareCounters *) combineeCounters;
 		assert(childCounters != nullptr);

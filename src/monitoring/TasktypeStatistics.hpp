@@ -27,9 +27,6 @@
 #include "lowlevel/SpinLock.hpp"
 #include "support/config/ConfigVariable.hpp"
 
-
-#define PREDICTION_UNAVAILABLE -1.0
-
 namespace BoostAcc = boost::accumulators;
 namespace BoostAccTag = boost::accumulators::tag;
 
@@ -387,9 +384,10 @@ public:
 	//! \param[in] cost The task's computational cost
 	inline double getCounterPrediction(size_t counterId, size_t cost)
 	{
+		double normalizedValue = PREDICTION_UNAVAILABLE;
+
 		// Check if a prediction can be inferred
 		_counterAccumulatorsLock.lock();
-		double normalizedValue = PREDICTION_UNAVAILABLE;
 		if (BoostAcc::count(_normalizedCounterAccumulators[counterId])) {
 			normalizedValue = ((double) cost) * BoostAcc::rolling_mean(_normalizedCounterAccumulators[counterId]);
 		}
@@ -425,7 +423,7 @@ public:
 
 		// Compute the accuracy of the prediction if the task had one
 		double accuracy = 0.0;
-		bool predictionAvailable = (taskStatistics->hasPrediction() && (elapsed > 0.0));
+		bool predictionAvailable = (taskStatistics->hasTimePrediction() && (elapsed > 0.0));
 		if (predictionAvailable) {
 			double predicted = taskStatistics->getTimePrediction();
 			double error = 100.0 * (std::abs(predicted - elapsed) / std::max(elapsed, predicted));
@@ -448,6 +446,8 @@ public:
 		size_t numEnabledCounters = enabledCounters.size();
 
 		// Pre-compute all the needed values before entering the lock
+		// NOTE: We use VLAs even though they are not C++ compliant and could be dangerous,
+		// however, the number of enabled counters should not be too high
 		double counters[numEnabledCounters];
 		double normalizedCounters[numEnabledCounters];
 		bool counterPredictionsAvailable[numEnabledCounters];
