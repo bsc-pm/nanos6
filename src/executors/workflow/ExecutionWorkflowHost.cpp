@@ -44,10 +44,7 @@ namespace ExecutionWorkflow {
 		if ((currentThread == nullptr) || (cpu == nullptr) || (currentThread->getTask() == nullptr)) {
 			_task->setExecutionStep(this);
 
-			Scheduler::addReadyTask(
-				_task,
-				nullptr,
-				BUSY_COMPUTE_PLACE_TASK_HINT);
+			Scheduler::addReadyTask(_task, nullptr, BUSY_COMPUTE_PLACE_TASK_HINT);
 			return;
 		}
 
@@ -63,7 +60,7 @@ namespace ExecutionWorkflow {
 			size_t tableSize = 0;
 			nanos6_address_translation_entry_t *translationTable =
 				SymbolTranslation::generateTranslationTable(
-					task, cpu, stackTranslationTable, tableSize);
+					_task, cpu, stackTranslationTable, tableSize);
 
 			// Before executing a task, read runtime-related counters
 			HardwareCounters::updateRuntimeCounters();
