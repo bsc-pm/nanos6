@@ -51,9 +51,13 @@ static inline T smpLoadAcquire(const T *p)
 	return std::atomic_load_explicit(reinterpret_cast<const std::atomic<T> *>(p), std::memory_order_acquire);
 }
 
-long perf_event_open(struct perf_event_attr *hw_event, pid_t pid,
-                int cpu, int group_fd, unsigned long flags)
-{
+static inline long perfEventOpenWrapper(
+	struct perf_event_attr *hw_event,
+	pid_t pid,
+	int cpu,
+	int group_fd,
+	unsigned long flags
+) {
 	int ret;
 	ret = syscall(__NR_perf_event_open, hw_event, pid, cpu,
 		      group_fd, flags);
@@ -144,7 +148,7 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 
 	// Open group fd event
 	pe.config = (*_enabledEvents)[0];
-	_groupFd = perf_event_open(&pe, pid, cpu, -1, flags);
+	_groupFd = perfEventOpenWrapper(&pe, pid, cpu, -1, flags);
 	if (_groupFd == -1) {
 		FatalErrorHandler::fail(
 			"CTF: Kernel: When calling perf_event_open: ",
@@ -183,7 +187,7 @@ CTFAPI::CTFKernelEventsProvider::CTFKernelEventsProvider(int cpu, size_t userSiz
 
 		// Try to open the event
 		do {
-			fd = perf_event_open(&pe, pid, cpu, _groupFd, flags);
+			fd = perfEventOpenWrapper(&pe, pid, cpu, _groupFd, flags);
 			if (fd == -1) {
 				if (errno == EMFILE) {
 					increaseFileLimit();
