@@ -18,9 +18,7 @@
 #include "hardware/device/DeviceEnvironment.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
-#include "monitoring/TaskStatistics.hpp"
 #include "scheduling/ReadyQueue.hpp"
-#include "tasks/TasktypeData.hpp"
 
 #include <ClusterTaskContext.hpp>
 #include <ExecutionWorkflow.hpp>
@@ -33,6 +31,8 @@ struct DataAccessBase;
 struct StreamFunctionCallback;
 class ComputePlace;
 class MemoryPlace;
+class TaskStatistics;
+class TasktypeData;
 class WorkerThread;
 
 #pragma GCC diagnostic push

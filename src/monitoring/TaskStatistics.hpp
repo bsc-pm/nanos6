@@ -204,9 +204,9 @@ public:
 		return _ancestorHasTimePrediction;
 	}
 
-	inline void setAncestorHasTimePrediction(bool ancestorHasTimePrediction)
+	inline void setAncestorHasTimePrediction(bool hasPrediction)
 	{
-		_ancestorHasTimePrediction = ancestorHasTimePrediction;
+		_ancestorHasTimePrediction = hasPrediction;
 	}
 
 	inline bool hasTimePrediction() const
@@ -249,7 +249,7 @@ public:
 		return _counterPredictions[counterId];
 	}
 
-	/*    TIMING-RELATED METHODS    */
+	//    TIMING-RELATED METHODS    //
 
 	//! \brief Start/resume a chrono. If resumed, the active chrono must pause
 	//!

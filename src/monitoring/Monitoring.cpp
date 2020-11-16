@@ -7,12 +7,16 @@
 #include <config.h>
 #include <fstream>
 
+#include "CPUMonitor.hpp"
 #include "Monitoring.hpp"
+#include "TaskMonitor.hpp"
 #include "TasktypeStatistics.hpp"
 #include "executors/threads/CPUManager.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "support/JsonFile.hpp"
+#include "tasks/Task.hpp"
 #include "tasks/TaskInfo.hpp"
 
 

@@ -149,11 +149,12 @@ public:
 				int innerId = PQoSHardwareCounters::getInnerIdentifier(counterType);
 				assert(innerId >= 0);
 
+				uint64_t childValue;
 				switch (counterType) {
 					case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
 						// Only take it into account if the child (most likely taskfor
 						// collaborator) truly participated in the execution
-						uint64_t childValue = childCounters->getDelta(counterType);
+						childValue = childCounters->getDelta(counterType);
 						if (childValue != 0) {
 							++_numSamples;
 							_counterDelta[innerId] =
@@ -165,7 +166,6 @@ public:
 					default:
 						_counterDelta[innerId] = childCounters->getDelta(counterType);
 						_counterAccumulated[innerId] += childCounters->getAccumulated(counterType);
-						break;
 				}
 			}
 		}

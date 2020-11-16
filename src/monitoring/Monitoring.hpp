@@ -9,13 +9,14 @@
 
 #include <sys/types.h>
 
-#include "CPUMonitor.hpp"
-#include "TaskMonitor.hpp"
 #include "TaskStatistics.hpp"
-#include "support/JsonFile.hpp"
 #include "support/config/ConfigVariable.hpp"
-#include "tasks/Task.hpp"
 
+
+class CPUMonitor;
+class JsonFile;
+class Task;
+class TaskMonitor;
 
 class Monitoring {
 
