@@ -29,6 +29,15 @@ or
 $ /path/to/configure --<conf_flags> --enable-openacc --with-pgi=/opt/pgi/linux86-64-nollvm/19.10
 ```
 
+If you are using an NVIDIA HPC-SDK installation, replacing the PGI compilers, use the `compilers` folder in the provided path, for example:
+```sh
+$ export PATH=/opt/nvidia/hpc_sdk/Linux_x86_64/20.9/compilers/bin:$PATH
+```
+or
+```sh
+$ /path/to/configure --<conf_flags> --enable-openacc --with-pgi=/opt/nvidia/hpc_sdk/Linux_x86_64/20.9/compilers
+```
+
 ## Writing OpenACC tasks
 
 As mentioned in general Device-tasks guidelines, OpenACC tasks need to be written

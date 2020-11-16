@@ -25,7 +25,7 @@ In addition to the build requirements, the following libraries and tools enable 
 1. [graphviz](http://www.graphviz.org/) and pdfjam or pdfjoin from [TeX](http://www.tug.org/texlive/) to generate graphical representations of the dependency graph
 1. [parallel](https://www.gnu.org/software/parallel/) to generate the graph representation in parallel
 1. [CUDA](https://developer.nvidia.com/cuda-zone) to enable CUDA tasks
-1. [PGI](https://pgroup.com) to enable OpenACC tasks
+1. [PGI or NVIDIA HPC-SDK](https://pgroup.com) to enable OpenACC tasks
 1. [PQOS](https://github.com/intel/intel-cmt-cat) to generate real-time statistics of hardware counters
 1. [DLB](https://pm.bsc.es/dlb) to enable dynamic management and sharing of computing resources
 1. [jemalloc](https://github.com/jemalloc/jemalloc) to use jemalloc as the default memory allocator, providing better performance than the default glibc implementation. Jemalloc must be compiled with `--enable-stats` and `--with-jemalloc-prefix=nanos6_je_` to link with the runtime
@@ -66,7 +66,7 @@ The configure script accepts the following options:
 1. `--with-pqos=prefix` to specify the prefix of the PQoS installation
 1. `--with-cuda[=prefix]` to enable support for CUDA tasks; optionally specify the prefix of the CUDA installation, if needed
 1. `--enable-openacc` to enable support for OpenACC tasks; requires PGI compilers
-1. `--with-pgi=prefix` to specify the prefix of the PGI compilers installation, in case they are not in `$PATH`
+1. `--with-pgi=prefix` to specify the prefix of the PGI or NVIDIA HPC-SDK compilers installation, in case they are not in `$PATH`
 1. `--enable-chrono-arch` to enable an architecture-based timer for the monitoring infrastructure
 
 The location of elfutils and hwloc is always retrieved through pkg-config.
