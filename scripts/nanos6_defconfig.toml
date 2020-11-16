@@ -11,9 +11,9 @@
 	# may produce significant overheads, so production or performance executions should disable this
 	# option. Default is false
 	debug = false
-	# Choose the dependency system implementation. Default is "regions"
-	# Possible values: "regions", "discrete"
-	dependencies = "regions"
+	# Choose the dependency system implementation. Default is "discrete"
+	# Possible values: "discrete", "regions"
+	dependencies = "discrete"
 	# Choose the instrumentation variant to run. Default is "none"
 	# Possible values: "none", "ctf", "extrae", "graph", "lint", "stats", "verbose"
 	instrument = "none"
