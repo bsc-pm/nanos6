@@ -1249,6 +1249,7 @@ noinst_HEADERS = \
 	src/monitoring/CPUMonitor.hpp \
 	src/monitoring/CPUStatistics.hpp \
 	src/monitoring/Monitoring.hpp \
+	src/monitoring/MonitoringSupport.hpp \
 	src/monitoring/TaskMonitor.hpp \
 	src/monitoring/TaskStatistics.hpp \
 	src/monitoring/TasktypeStatistics.hpp \

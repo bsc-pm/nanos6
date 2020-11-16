@@ -9,6 +9,7 @@
 
 #include <sys/types.h>
 
+#include "MonitoringSupport.hpp"
 #include "TaskStatistics.hpp"
 #include "support/config/ConfigVariable.hpp"
 

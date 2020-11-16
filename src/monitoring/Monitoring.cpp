@@ -9,6 +9,7 @@
 
 #include "CPUMonitor.hpp"
 #include "Monitoring.hpp"
+#include "MonitoringSupport.hpp"
 #include "TaskMonitor.hpp"
 #include "TasktypeStatistics.hpp"
 #include "executors/threads/CPUManager.hpp"

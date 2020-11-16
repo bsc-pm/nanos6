@@ -9,6 +9,7 @@
 
 #include <sys/time.h>
 
+#include "MonitoringSupport.hpp"
 #include "tasks/Task.hpp"
 
 

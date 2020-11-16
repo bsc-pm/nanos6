@@ -9,6 +9,7 @@
 #include <sstream>
 #include <string>
 
+#include "MonitoringSupport.hpp"
 #include "TaskMonitor.hpp"
 #include "TasktypeStatistics.hpp"
 #include "TaskStatistics.hpp"
