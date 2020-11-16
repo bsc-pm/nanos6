@@ -22,12 +22,14 @@ remove_section () {
 			!skip{print}'
 }
 
-# Remove dangling requires
+# Remove dangling requires and newlines
 remove_unused_requires () {
 	contents=$1
 
 	# Remove any __require_* or __!require_* leftover lines
-	printf "%s\n" "${contents}" | sed '/^__!\?require_.*$/d'
+	# and contract multiple newlines into one with awk
+	printf "%s\n" "${contents}" | sed '/^__!\?require_.*$/d' | \
+		awk '!NF {f=1; next} f {print ""; f=0} 1'
 }
 
 template_file=$1
