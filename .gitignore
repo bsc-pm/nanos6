@@ -21,7 +21,7 @@ Makefile.in
 aclocal.m4
 autom4te.cache
 config-aux
-config.h
+/config.h
 config.h.in
 config.status
 configure
