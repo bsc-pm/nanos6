@@ -144,6 +144,7 @@ HostInfo::HostInfo() :
 			/* virtualCPUID */ cpuLogicalIndex,
 			NUMANodeId
 		);
+		((NUMAPlace *)_memoryPlaces[NUMANodeId])->incrementLocalCoreCount();
 
 		_computePlaces[cpuLogicalIndex] = cpu;
 	}

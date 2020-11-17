@@ -27,7 +27,7 @@ private:
 	//! Total amount of physical memory on the system
 	size_t _physicalMemorySize;
 
-	//! Total amount of valid memory places in the system
+	//! Total amount of valid (contains any CPU) memory places in the system
 	size_t _validMemoryPlaces;
 
 	//! Total amount of physical packages in the system

@@ -16,9 +16,12 @@
 #include <nanos6.h>
 
 #include "dependencies/DataTrackingSupport.hpp"
+#include "executors/threads/CPUManager.hpp"
 #include "hardware/HardwareInfo.hpp"
+#include "hardware/places/NUMAPlace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 #include "lowlevel/RWSpinLock.hpp"
+#include "support/Containers.hpp"
 
 #include <MemoryAllocator.hpp>
 
@@ -34,12 +37,40 @@ struct DirectoryInfo {
 class ManagerNUMA {
 private:
 	typedef nanos6_bitmask_t bitmask_t;
-	// All what is stored here are pages. So the size is always pagesize.
-	// Therefore, we only need the initial address and the homenode.
-	typedef std::map<void *, DirectoryInfo> directory_t;
+	typedef Container::map<void *, DirectoryInfo> directory_t;
+	typedef Container::map<void *, uint64_t> alloc_info_t;
 
+	// Directory to store the homenode of each memory region
 	static directory_t _directory;
+	// RWlock to access the directory
 	static RWSpinLock _lock;
+
+	// Map to store the size of each allocation, to be able to free memory
+	static alloc_info_t _allocations;
+	// Lock to access the allocations map
+	static SpinLock  _allocationsLock;
+
+	// The number of CPUs that a NUMA node physically contains
+	static size_t _maxCpusPerNuma;
+	// The number of CPUs assigned to this process that each NUMA node contains
+	static std::vector<size_t> _cpusPerNumaNode;
+
+	// The number of NUMA nodes for wildcard NUMA_ALL
+	static size_t _numNumaAll;
+	// The number of NUMA nodes for wildcard NUMA_ALL_ACTIVE
+	static size_t _numNumaAllActive;
+	// The number of NUMA nodes for wildcard NUMA_ANY_ACTIVE
+	static size_t _numNumaAnyActive;
+
+	// The bitmask for wildcard NUMA_ALL
+	static bitmask_t _bitmaskNumaAll;
+	// The bitmask for wildcard NUMA_ALL_ACTIVE
+	static bitmask_t _bitmaskNumaAllActive;
+	// The bitmask for wildcard NUMA_ANY_ACTIVE
+	static bitmask_t _bitmaskNumaAnyActive;
+
+	static bool _reportEnabled;
+
 #ifndef NDEBUG
 	static std::atomic<size_t> _totalBytes;
 	static std::atomic<size_t> _totalQueries;
@@ -48,6 +79,56 @@ private:
 public:
 	static void initialize()
 	{
+		// Initialize bitmasks to 0
+		clearAll(&_bitmaskNumaAll);
+		clearAll(&_bitmaskNumaAllActive);
+		clearAll(&_bitmaskNumaAnyActive);
+
+		// Intialize _cpusPerNumaNode vector to 0
+		_numNumaAll = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
+		_cpusPerNumaNode = std::vector<size_t>(_numNumaAll, 0);
+
+		// Get CPU list to check which CPUs we have in the process mask
+		const std::vector<CPU *> &cpus = CPUManager::getCPUListReference();
+		_maxCpusPerNuma = ((NUMAPlace *) HardwareInfo::getMemoryPlace(nanos6_host_device, 0))->getLocalCoreCount();
+
+		// Iterate over the CPU list to annotate CPUs per NUMA node
+		for (CPU *cpu : cpus) {
+			_cpusPerNumaNode[cpu->getNumaNodeId()]++;
+		}
+
+		// Enable corresponding bits in the bitmasks
+		for (size_t numaNode = 0; numaNode < _cpusPerNumaNode.size(); numaNode++) {
+			// NUMA_ALL -> enable a bit per NUMA node available in the system
+			enableBit(&_bitmaskNumaAll, numaNode);
+
+			// NUMA_ANY_ACTIVE -> enable a bit per NUMA node containing at least one CPU assigned to this process
+			if (_cpusPerNumaNode[numaNode] > 0) {
+				enableBit(&_bitmaskNumaAnyActive, numaNode);
+				_numNumaAnyActive++;
+
+				// NUMA_ALL_ACTIVE -> enable a bit per NUMA node containing all the CPUs assigned to this process
+				if (_cpusPerNumaNode[numaNode] == _maxCpusPerNuma) {
+					enableBit(&_bitmaskNumaAllActive, numaNode);
+					_numNumaAllActive++;
+				}
+			}
+		}
+
+		//_reportEnabled = true;
+		if (_reportEnabled) {
+			std::cout << "---------- MANAGER NUMA REPORT ----------" << std::endl;
+			std::cout << "NUMA_ALL:" << std::endl;
+			std::cout << "  Number of NUMA nodes: " << _numNumaAll << std::endl;
+			std::cout << "  bitmask: " << _bitmaskNumaAll << std::endl;
+			std::cout << "NUMA_ALL_ACTIVE:" << std::endl;
+			std::cout << "  Number of NUMA nodes: " << _numNumaAllActive << std::endl;
+			std::cout << "  bitmask: " << _bitmaskNumaAllActive << std::endl;
+			std::cout << "NUMA_ANY_ACTIVE:" << std::endl;
+			std::cout << "  Number of NUMA nodes: " << _numNumaAnyActive << std::endl;
+			std::cout << "  bitmask: " << _bitmaskNumaAnyActive << std::endl;
+		}
+
 #ifndef NDEBUG
 		_totalBytes = 0;
 		_totalQueries = 0;
@@ -65,19 +146,32 @@ public:
 	static void *alloc(size_t size, bitmask_t *bitmask, size_t block_size)
 	{
 		assert(size > 0);
-		assert(*bitmask > 0);
-		assert(block_size > 0);
-
-		bitmask_t bitmaskCopy = *bitmask;
-#ifndef NDEBUG
-		_totalBytes += size;
-#endif
 
 		if (!DataTrackingSupport::isNUMATrackingEnabled()) {
 			void *res = malloc(size);
 			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
 			return res;
 		}
+
+		assert(*bitmask != 0);
+		assert(block_size > 0);
+
+		// Check first if bitmask is any of the wildcards
+		bitmask_t realBitmask;
+		if (*bitmask == NUMA_ALL) {
+			setAll(&realBitmask);
+		} else if (*bitmask == NUMA_ALL_ACTIVE) {
+			setAllActive(&realBitmask);
+		} else if (*bitmask == NUMA_ANY_ACTIVE) {
+			setAnyActive(&realBitmask);
+		} else {
+			realBitmask = *bitmask;
+		}
+
+		bitmask_t bitmaskCopy = realBitmask;
+#ifndef NDEBUG
+		_totalBytes += size;
+#endif
 
 		int pagesize = HardwareInfo::getPageSize();
 		size_t originalBlockSize = block_size;
@@ -101,6 +195,10 @@ public:
 			FatalErrorHandler::failIf(res == MAP_FAILED, "Couldn't allocate memory.");
 		}
 
+		_allocationsLock.lock();
+		_allocations.emplace(res, size);
+		_allocationsLock.unlock();
+
 		struct bitmask *tmp_bitmask = numa_bitmask_alloc(HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device));
 
 		if (originalBlockSize < (size_t) pagesize) {
@@ -111,7 +209,7 @@ public:
 				uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 				disableBit(&bitmaskCopy, currentNodeIndex);
 				if (bitmaskCopy == 0) {
-					bitmaskCopy = *bitmask;
+					bitmaskCopy = realBitmask;
 				}
 
 				// Insert into directory
@@ -127,7 +225,7 @@ public:
 				uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 				disableBit(&bitmaskCopy, currentNodeIndex);
 				if (bitmaskCopy == 0) {
-					bitmaskCopy = *bitmask;
+					bitmaskCopy = realBitmask;
 				}
 
 				// Place pages where they must be
@@ -159,7 +257,7 @@ public:
 		uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 		disableBit(&bitmaskCopy, currentNodeIndex);
 		if (bitmaskCopy == 0) {
-			bitmaskCopy = *bitmask;
+			bitmaskCopy = realBitmask;
 		}
 
 		size_t blockBytes = 0;
@@ -168,7 +266,7 @@ public:
 				currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 				disableBit(&bitmaskCopy, currentNodeIndex);
 				if (bitmaskCopy == 0) {
-					bitmaskCopy = *bitmask;
+					bitmaskCopy = realBitmask;
 				}
 				blockBytes = 0;
 			}
@@ -187,11 +285,11 @@ public:
 		assert(ret == 0);
 
 		// Check pages are properly distributed
-		bitmaskCopy = *bitmask;
+		bitmaskCopy = realBitmask;
 		currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 		disableBit(&bitmaskCopy, currentNodeIndex);
 		if (bitmaskCopy == 0) {
-			bitmaskCopy = *bitmask;
+			bitmaskCopy = realBitmask;
 		}
 
 		blockBytes = 0;
@@ -200,7 +298,7 @@ public:
 				currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 				disableBit(&bitmaskCopy, currentNodeIndex);
 				if (bitmaskCopy == 0) {
-					bitmaskCopy = *bitmask;
+					bitmaskCopy = realBitmask;
 				}
 				blockBytes = 0;
 			}
@@ -219,12 +317,12 @@ public:
 		return res;
 	}
 
-	static void free(void *ptr, size_t size, bitmask_t *bitmask, size_t block_size)
+	static void freeDebug(void *ptr, size_t size, bitmask_t *bitmask, size_t block_size)
 	{
 		assert(size > 0);
 		assert(*bitmask > 0);
 		assert(block_size > 0);
-		int originalBlockSize = block_size;
+		size_t originalBlockSize = block_size;
 		int pagesize = HardwareInfo::getPageSize();
 
 		if (DataTrackingSupport::isNUMATrackingEnabled()) {
@@ -238,7 +336,7 @@ public:
 #ifndef NDEBUG
 			size_t remainingBytes = size;
 #endif
-			if (originalBlockSize < pagesize) {
+			if (originalBlockSize < (size_t) pagesize) {
 				for (size_t i = 0; i < size; i += originalBlockSize) {
 					uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 					disableBit(&bitmaskCopy, currentNodeIndex);
@@ -299,7 +397,43 @@ public:
 					assert(numErased == 1);
 				}
 			}
+
+			// Release memory
+			if (size < (size_t) pagesize) {
+				std::free(ptr);
+			} else {
+				__attribute__((unused)) int res = munmap(ptr, size);
+				assert(res == 0);
+			}
+		} else {
+			std::free(ptr);
 		}
+	}
+
+	static void free(void *ptr)
+	{
+		int pagesize = HardwareInfo::getPageSize();
+
+		_allocationsLock.lock();
+		size_t size = _allocations[ptr];
+		_allocationsLock.unlock();
+
+		void *aux = (void *)ptr;
+		do {
+			_lock.readLock();
+			auto it = _directory.find(aux);
+			_lock.readUnlock();
+
+			if (it == _directory.end()) {
+				break;
+			}
+
+			void *toErase = aux;
+			it++;
+			aux = it->first;
+
+			_directory.erase(toErase);
+		} while (aux < (char *)(ptr)+size);
 
 		// Release memory
 		if (size < (size_t) pagesize) {
@@ -378,6 +512,60 @@ public:
 		return idMax;
 	}
 
+	static inline void clearAll(bitmask_t *bitmask)
+	{
+		*bitmask = 0;
+	}
+
+	static inline void clearBit(bitmask_t *bitmask, uint64_t bitIndex)
+	{
+		disableBit(bitmask, bitIndex);
+	}
+
+	static inline void setAll(bitmask_t *bitmask)
+	{
+		*bitmask = _bitmaskNumaAll;
+	}
+
+	static inline void setAllActive(bitmask_t *bitmask)
+	{
+		*bitmask = _bitmaskNumaAllActive;
+	}
+
+	static inline void setAnyActive(bitmask_t *bitmask)
+	{
+		*bitmask = _bitmaskNumaAnyActive;
+	}
+
+	static inline void setBit(bitmask_t *bitmask, uint64_t bitIndex)
+	{
+		enableBit(bitmask, bitIndex);
+	}
+
+	static inline uint8_t isBitSet(bitmask_t *bitmask, uint64_t bitIndex)
+	{
+		return checkBit(bitmask, bitIndex);
+	}
+
+	static inline uint8_t getNumaNodes(bitmask_t *bitmask)
+	{
+		// In this method, we can only use the three wildcards described in numa.h:
+		//	 - NUMA_ALL: all the NUMA nodes available in the system
+		//	 - NUMA_ALL_ACTIVE: the NUMA nodes where we have all the CPUs assigned
+		//	 - NUMA_ANY_ACTIVE: the NUMA nodes where we have any of the CPUs assigned
+		// Any other value is not accepted.
+		if (*bitmask == NUMA_ALL) {
+			return _numNumaAll;
+		} else if (*bitmask == NUMA_ALL_ACTIVE) {
+			return _numNumaAllActive;
+		} else if (*bitmask == NUMA_ANY_ACTIVE) {
+			return _numNumaAnyActive;
+		} else {
+			FatalErrorHandler::warnIf(true, "Unknown bitmask value. Defaulting to NUMA_ALL.");
+			return _numNumaAll;
+		}
+	}
+
 private:
 	static inline size_t ceil(size_t x, size_t y)
 	{
@@ -399,6 +587,17 @@ private:
 	static inline void disableBit(uint64_t *x, uint64_t bitIndex)
 	{
 		*x &= ~((uint64_t) 1 << bitIndex);
+	}
+
+	static inline void enableBit(uint64_t *x, uint64_t bitIndex)
+	{
+		*x |= ((uint64_t) 1 << bitIndex);
+	}
+
+	static inline uint8_t checkBit(uint64_t *x, uint64_t bitIndex)
+	{
+		uint8_t bit = ((*x >> bitIndex) & (uint64_t) 1);
+		return bit;
 	}
 
 	static inline size_t getContainedBytes(uintptr_t ptr1, size_t size1, uintptr_t ptr2, size_t size2)

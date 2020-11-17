@@ -14,8 +14,17 @@
 
 
 // NOTE: The full version depends also on nanos6_major_api
-//       That is:   nanos6_major_api . nanos6_numa_api
+//	   That is:   nanos6_major_api . nanos6_numa_api
 enum nanos6_numa_api_t { nanos6_numa_api = 1 };
+
+//	 - NUMA_ALL: all the NUMA nodes available in the system
+//	 - NUMA_ALL_ACTIVE: the NUMA nodes where we have all the CPUs assigned
+//	 - NUMA_ANY_ACTIVE: the NUMA nodes where we have any of the CPUs assigned
+enum nanos6_bitmask_wildcard_t {
+	NUMA_ALL = 0xFFFFFFFFFFFFFFFF,
+	NUMA_ALL_ACTIVE = 0xFFFFFFFFFFFFFFFE,
+	NUMA_ANY_ACTIVE = 0xFFFFFFFFFFFFFFFD
+};
 
 
 #ifdef __cplusplus
@@ -35,16 +44,47 @@ typedef uint64_t nanos6_bitmask_t;
 //! \param[in] bitmask A bitmask specifying which NUMA nodes should contain a block of this chunk.
 //! \param[in] block_size The block size to perform the interleaving
 void *nanos6_numa_alloc_interleaved_subset(
-	size_t size,
+	uint64_t size,
 	nanos6_bitmask_t *bitmask,
-	size_t block_size
+	uint64_t block_size
+);
+
+void nanos6_numa_free_debug(
+	void *ptr,
+	uint64_t size,
+	nanos6_bitmask_t *bitmask,
+	uint64_t block_size
 );
 
 void nanos6_numa_free(
-	void *ptr,
-	size_t size,
+	void *ptr
+);
+
+void nanos6_bitmask_clearall(
+	nanos6_bitmask_t *bitmask
+);
+
+void nanos6_bitmask_clearbit(
 	nanos6_bitmask_t *bitmask,
-	size_t block_size
+	uint64_t n
+);
+
+void nanos6_bitmask_setall(
+	nanos6_bitmask_t *bitmask
+);
+
+void nanos6_bitmask_setbit(
+	nanos6_bitmask_t *bitmask,
+	uint64_t n
+);
+
+uint8_t nanos6_bitmask_isbitset(
+	nanos6_bitmask_t *bitmask,
+	uint64_t n
+);
+
+uint8_t nanos6_get_numa_nodes(
+	nanos6_bitmask_t *bitmask
 );
 
 #ifdef __cplusplus
