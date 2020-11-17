@@ -7,23 +7,12 @@
 #ifndef TRACKING_POINTS_HPP
 #define TRACKING_POINTS_HPP
 
-#include "executors/threads/CPU.hpp"
-#include "executors/threads/WorkerThread.hpp"
-#include "hardware-counters/HardwareCounters.hpp"
-#include "tasks/Task.hpp"
+#include <cstddef>
 
-#include <InstrumentAddTask.hpp>
-#include <InstrumentBlockingAPI.hpp>
-#include <InstrumentComputePlaceManagement.hpp>
-#include <InstrumentScheduler.hpp>
-#include <InstrumentTaskExecution.hpp>
-#include <InstrumentTaskStatus.hpp>
-#include <InstrumentTaskWait.hpp>
-#include <InstrumentThreadInstrumentationContext.hpp>
-#include <InstrumentThreadManagement.hpp>
-#include <InstrumentUserMutex.hpp>
-#include <Monitoring.hpp>
 
+class CPU;
+class Task;
+class WorkerThread;
 
 //! \brief This namespace aggregates common Instrumentation, Monitoring, and
 //! HardwareCounter actions in order to simplify the runtime core
@@ -37,11 +26,7 @@ namespace TrackingPoints {
 	//! - HWCounters: Notify that the current task has reinitialized
 	//!
 	//! \param[in] task The reinitialized task
-	inline void taskReinitialized(Task *task)
-	{
-		HardwareCounters::taskReinitialized(task);
-		Monitoring::taskReinitialized(task);
-	}
+	void taskReinitialized(Task *task);
 
 	//! \brief Actions to be taken when a task switches to pending status
 	//!
@@ -49,13 +34,7 @@ namespace TrackingPoints {
 	//! - Instrument: Notify that the task is pending
 	//!
 	//! \param[in] task The task with unresolved dependencies
-	inline void taskIsPending(Task *task)
-	{
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-
-		// No need to stop hardware counters, as the task just got created
-		Instrument::taskIsPending(taskId);
-	}
+	void taskIsPending(Task *task);
 
 	//! \brief Actions to be taken after a task begins executing user code
 	//!
@@ -86,40 +65,13 @@ namespace TrackingPoints {
 	//! - Monitoring: Notify that the current task has completely finished
 	//!
 	//! \param[in] task The finished task
-	inline void taskFinished(Task *task)
-	{
-		// If this is a taskfor collaborator, we must accumulate its counters into the taskfor source
-		if (task->isTaskforCollaborator()) {
-			Taskfor *source = (Taskfor *) task->getParent();
-			assert(source != nullptr);
-			assert(source->isTaskfor() && source->isTaskforSource());
-
-			// Combine the hardware counters of the taskfor collaborator (task)
-			// into the taskfor source (source)
-			HardwareCounters::taskCombineCounters(source, task);
-		}
-
-		// Propagate monitoring actions for this task since it has finished
-		Monitoring::taskFinished(task);
-	}
+	void taskFinished(Task *task);
 
 	//! \brief Actions to be taken after a worker thread initializes
 	//!
 	//! \param[in] thread The worker thread
 	//! \param[in] cpu The current CPU the thread is running on
-	inline void threadInitialized(const WorkerThread *thread, const CPU *cpu)
-	{
-		assert(thread != nullptr);
-		assert(cpu != nullptr);
-
-		Instrument::thread_id_t threadId = thread->getInstrumentationId();
-		Instrument::compute_place_id_t cpuId = cpu->getInstrumentationId();
-		Instrument::createdThread(threadId, cpuId);
-		Instrument::ThreadInstrumentationContext instrumentationContext(Instrument::task_id_t(), cpuId, threadId);
-		Instrument::threadHasResumed(threadId, cpuId, false);
-
-		HardwareCounters::threadInitialized();
-	}
+	void threadInitialized(const WorkerThread *thread, const CPU *cpu);
 
 	//! \brief Common actions within the namespace for when a thread is suspending
 	//!
@@ -130,16 +82,7 @@ namespace TrackingPoints {
 	//!
 	//! \param[in] thread The thread about to be suspended
 	//! \param[in] cpu The CPU the thread is running on
-	inline void threadWillSuspend(const WorkerThread *thread, const CPU *cpu)
-	{
-		assert(cpu != nullptr);
-		assert(thread != nullptr);
-
-		Instrument::thread_id_t threadId = thread->getInstrumentationId();
-		Instrument::compute_place_id_t cpuId = cpu->getInstrumentationId();
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::threadWillSuspend(threadId, cpuId);
-	}
+	void threadWillSuspend(const WorkerThread *thread, const CPU *cpu);
 
 	//! \brief Actions to take after a thread is shutting down
 	//!
@@ -147,41 +90,18 @@ namespace TrackingPoints {
 	//! - HWCounters: Update runtime counters for the thread and shutdown counter reading
 	//! - Instrument: Notify that the thread is shutting down
 	//!
-	inline void threadWillShutdown()
-	{
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::threadWillShutdown();
-		HardwareCounters::threadShutdown();
-	}
+	void threadWillShutdown();
 
 	//! \brief Actions to take after a CPU becomes active
 	//!
 	//! \param[in] cpu The CPU that becomes active
-	inline void cpuBecomesActive(const CPU *cpu)
-	{
-		assert(cpu != nullptr);
-
-		Instrument::resumedComputePlace(cpu->getInstrumentationId());
-		Monitoring::cpuBecomesActive(cpu->getIndex());
-	}
+	void cpuBecomesActive(const CPU *cpu);
 
 	//! \brief Actions to take after a CPU becomes idle
 	//!
 	//! \param[in] cpu The CPU that becomes idle
 	//! \param[in] thread The thread currently running in the CPU
-	inline void cpuBecomesIdle(const CPU *cpu, const WorkerThread *thread)
-	{
-		assert(cpu != nullptr);
-		assert(thread != nullptr);
-
-		size_t id = cpu->getIndex();
-		Instrument::compute_place_id_t instrumId = cpu->getInstrumentationId();
-
-		HardwareCounters::updateRuntimeCounters();
-		Monitoring::cpuBecomesIdle(id);
-		Instrument::threadWillSuspend(thread->getInstrumentationId(), instrumId);
-		Instrument::suspendingComputePlace(instrumId);
-	}
+	void cpuBecomesIdle(const CPU *cpu, const WorkerThread *thread);
 
 
 	//    ENTRY/EXIT POINTS OF THE RUNTIME CORE    //
@@ -197,18 +117,7 @@ namespace TrackingPoints {
 	//! \param[in] invocationSource The invocation source
 	//! \param[in] fromUserCode Whether the taskwait is executed from user code
 	//! or runtime code
-	inline void enterTaskWait(Task *task, char const *invocationSource, bool fromUserCode)
-	{
-		assert(task != nullptr);
-
-		if (fromUserCode) {
-			HardwareCounters::updateTaskCounters(task);
-			Monitoring::taskChangedStatus(task, paused_status);
-		}
-
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		Instrument::enterTaskWait(taskId, invocationSource, Instrument::task_id_t(), fromUserCode);
-	}
+	void enterTaskWait(Task *task, char const *invocationSource, bool fromUserCode);
 
 	//! \brief Exit point of the "taskWait" function (TaskWait.cpp)
 	//!
@@ -221,19 +130,7 @@ namespace TrackingPoints {
 	//! \param[in] task The (soon to be resumed) task exiting the taskwait
 	//! \param[in] fromUserCode Whether the taskwait was executed from user code
 	//! or runtime code
-	inline void exitTaskWait(Task *task, bool fromUserCode)
-	{
-		assert(task != nullptr);
-
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		if (fromUserCode) {
-			HardwareCounters::updateRuntimeCounters();
-			Instrument::exitTaskWait(taskId, fromUserCode);
-			Monitoring::taskChangedStatus(task, executing_status);
-		} else {
-			Instrument::exitTaskWait(taskId, fromUserCode);
-		}
-	}
+	void exitTaskWait(Task *task, bool fromUserCode);
 
 	//! \brief Entry point of the "waitForIf0Task" function (If0Task.hpp)
 	//!
@@ -249,22 +146,7 @@ namespace TrackingPoints {
 	//! \param[in] if0Task The if0 task preempting the current one
 	//! \param[in] thread The (soon to be suspended) current thread
 	//! \param[in] cpu The current CPU which the current thread is running on
-	inline void enterWaitForIf0Task(Task *task, const Task *if0Task, const WorkerThread *thread, const CPU *cpu)
-	{
-		assert(task != nullptr);
-		assert(if0Task != nullptr);
-
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		const nanos6_task_invocation_info_t *if0TaskInvocation = if0Task->getTaskInvokationInfo();
-		assert(if0TaskInvocation != nullptr);
-
-		// Common function actions for when the thread suspends
-		TrackingPoints::threadWillSuspend(thread, cpu);
-
-		Instrument::enterTaskWait(taskId, if0TaskInvocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
-		Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
-		Monitoring::taskChangedStatus(task, paused_status);
-	}
+	void enterWaitForIf0Task(Task *task, const Task *if0Task, const WorkerThread *thread, const CPU *cpu);
 
 	//! \brief Exit point of the "waitForIf0Task" function (If0Task.hpp)
 	//!
@@ -275,19 +157,7 @@ namespace TrackingPoints {
 	//! - Monitoring: Notify that the current task resumes its execution
 	//!
 	//! \param[in] task The (soon to be resumed) task exiting the taskwait
-	inline void exitWaitForIf0Task(Task *task)
-	{
-		assert(task != nullptr);
-
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-
-		// We don't reset hardware counters as this is done in AddTask after
-		// the waitForIf0Task function
-		Instrument::taskIsExecuting(taskId, true);
-		Instrument::exitTaskWait(taskId, false);
-
-		Monitoring::taskChangedStatus(task, executing_status);
-	}
+	void exitWaitForIf0Task(Task *task);
 
 	//! \brief Entry point of the "executeInline" function (If0Task.cpp)
 	//!
@@ -300,24 +170,7 @@ namespace TrackingPoints {
 	//!
 	//! \param[in] task The (soon to be blocked) task entering a taskwait
 	//! \param[in] if0Task The if0 task preempting the current one
-	inline void enterExecuteInline(Task *task, const Task *if0Task)
-	{
-		assert(task != nullptr);
-		assert(if0Task != nullptr);
-
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		if (if0Task->hasCode()) {
-			// Since hardware counters for the creator task (task) are updated
-			// when creating the if0Task, we need not update them here
-			Monitoring::taskChangedStatus(task, paused_status);
-			Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
-		}
-
-		const nanos6_task_invocation_info_t *if0Invocation = if0Task->getTaskInvokationInfo();
-		assert(if0Invocation != nullptr);
-
-		Instrument::enterTaskWait(taskId, if0Invocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
-	}
+	void enterExecuteInline(Task *task, const Task *if0Task);
 
 	//! \brief Exit point of the "executeInline" function (If0Task.hpp)
 	//!
@@ -330,21 +183,7 @@ namespace TrackingPoints {
 	//!
 	//! \param[in] task The (soon to be resumed) task exiting the taskwait
 	//! \param[in] if0Task The if0 task that was preempting the current one
-	inline void exitExecuteInline(Task *task, const Task *if0Task)
-	{
-		assert(task != nullptr);
-		assert(if0Task != nullptr);
-
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		if (if0Task->hasCode()) {
-			// Since hardware counters for the creator task (task) are updated
-			// when creating the if0Task, we need not update them here
-			Instrument::taskIsExecuting(taskId, true);
-			Monitoring::taskChangedStatus(task, executing_status);
-		}
-
-		Instrument::exitTaskWait(taskId, false);
-	}
+	void exitExecuteInline(Task *task, const Task *if0Task);
 
 	//! \brief Entry point of the "spawnFunction" function (SpawnFunction.cpp)
 	//!
@@ -356,29 +195,7 @@ namespace TrackingPoints {
 	//! \param[in] creator The creator task
 	//! \param[in] fromUserCode Whether the task is being created from runtime code
 	//! or user code. If the task is created from runtime, there is no creator task
-	inline void enterSpawnFunction(Task *creator, bool fromUserCode)
-	{
-		// NOTE: Our modules are interested in the transitions between Runtime and Tasks, however,
-		// these functions may be called from within the runtime with "fromUserCode" set to true (e.g.
-		// polling services are considered user code even if the code is from the runtime). To detect
-		// these transitions, we check whether we are outside the context of a task by ensuring that
-		// the current thread has a task assigned to itself. Thus, the possible scenarios are:
-		//
-		// 1) fromUserCode == true && currentTask != nullptr:
-		//    From user code, within task context (a task calls this function). Runtime-task transition
-		// 2) fromUserCode == true && currentTask == nullptr:
-		//    From user code, outside task context (polling service or external thread). Not a transition
-		// 3) fromUserCode == false:
-		//    From runtime code. This is not a transition between runtime and task context.
-
-		bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-		if (taskRuntimeTransition) {
-			HardwareCounters::updateTaskCounters(creator);
-			Monitoring::taskChangedStatus(creator, paused_status);
-		}
-
-		Instrument::enterSpawnFunction(taskRuntimeTransition);
-	}
+	void enterSpawnFunction(Task *creator, bool fromUserCode);
 
 	//! \brief Exit point of the "spawnFunction" function (SpawnFunction.cpp)
 	//!
@@ -391,18 +208,7 @@ namespace TrackingPoints {
 	//! \param[in] creator The (soon to be resumed) creator task
 	//! \param[in] fromUserCode Whether the task was created from runtime code or
 	//! user code. If the task is created from runtime, there is no creator task
-	inline void exitSpawnFunction(Task *creator, bool fromUserCode)
-	{
-		// NOTE: See the note in "enterSpawnFunction" for more details
-		bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-		if (taskRuntimeTransition) {
-			HardwareCounters::updateRuntimeCounters();
-			Instrument::exitSpawnFunction(taskRuntimeTransition);
-			Monitoring::taskChangedStatus(creator, executing_status);
-		} else {
-			Instrument::exitSpawnFunction(taskRuntimeTransition);
-		}
-	}
+	void exitSpawnFunction(Task *creator, bool fromUserCode);
 
 	//! \brief Entry point of the "nanos6_user_lock" function (UserMutex.cpp)
 	//!
@@ -412,12 +218,7 @@ namespace TrackingPoints {
 	//! - Monitoring: Notify that the current task is gonna be blocked
 	//!
 	//! \param[in] task The (soon to be blocked) task
-	inline void enterUserLock(Task *task)
-	{
-		HardwareCounters::updateTaskCounters(task);
-		Monitoring::taskChangedStatus(task, paused_status);
-		Instrument::enterUserMutexLock();
-	}
+	void enterUserLock(Task *task);
 
 	//! \brief Exit point of the "nanos6_user_lock" function (UserMutex.cpp)
 	//!
@@ -427,12 +228,7 @@ namespace TrackingPoints {
 	//! - Monitoring: Notify that the current task is resuming execution
 	//!
 	//! \param[in] task The (soon to be resumed) task
-	inline void exitUserLock(Task *task)
-	{
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitUserMutexLock();
-		Monitoring::taskChangedStatus(task, executing_status);
-	}
+	void exitUserLock(Task *task);
 
 	//! \brief Entry point of the "nanos6_user_unlock" function (UserMutex.cpp)
 	//!
@@ -442,12 +238,7 @@ namespace TrackingPoints {
 	//! - Monitoring: Notify that the current task is gonna be blocked
 	//!
 	//! \param[in] task The (soon to be blocked) task
-	inline void enterUserUnlock(Task *task)
-	{
-		HardwareCounters::updateTaskCounters(task);
-		Monitoring::taskChangedStatus(task, paused_status);
-		Instrument::enterUserMutexUnlock();
-	}
+	void enterUserUnlock(Task *task);
 
 	//! \brief Exit point of the "nanos6_user_unlock" function (UserMutex.cpp)
 	//!
@@ -457,12 +248,7 @@ namespace TrackingPoints {
 	//! - Monitoring: Notify that the current task is resuming execution
 	//!
 	//! \param[in] task The (soon to be resumed) task
-	inline void exitUserUnlock(Task *task)
-	{
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitUserMutexUnlock();
-		Monitoring::taskChangedStatus(task, executing_status);
-	}
+	void exitUserUnlock(Task *task);
 
 	//! \brief Entry point of the "blockCurrentTask" function (BlockingAPI.cpp)
 	//!
@@ -474,18 +260,7 @@ namespace TrackingPoints {
 	//! \param[in] task The (soon to be resumed) task
 	//! \param[in] fromUserCode Whether the blocking occured from user code or
 	//! was forced from within the runtime
-	inline void enterBlockCurrentTask(Task *task, bool fromUserCode)
-	{
-		assert(task != nullptr);
-
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		if (fromUserCode) {
-			HardwareCounters::updateTaskCounters(task);
-			Monitoring::taskChangedStatus(task, paused_status);
-		}
-		Instrument::enterBlockCurrentTask(taskId, fromUserCode);
-		Instrument::taskIsBlocked(taskId, Instrument::user_requested_blocking_reason);
-	}
+	void enterBlockCurrentTask(Task *task, bool fromUserCode);
 
 	//! \brief Exit point of the "blockCurrentTask" function (BlockingAPI.cpp)
 	//!
@@ -498,20 +273,7 @@ namespace TrackingPoints {
 	//! \param[in] task The (soon to be resumed) task
 	//! \param[in] fromUserCode Whether the blocking occured from user code or
 	//! was forced from within the runtime
-	inline void exitBlockCurrentTask(Task *task, bool fromUserCode)
-	{
-		assert(task != nullptr);
-
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		Instrument::taskIsExecuting(taskId, true);
-		if (fromUserCode) {
-			HardwareCounters::updateRuntimeCounters();
-			Instrument::exitBlockCurrentTask(taskId, fromUserCode);
-			Monitoring::taskChangedStatus(task, executing_status);
-		} else {
-			Instrument::exitBlockCurrentTask(taskId, fromUserCode);
-		}
-	}
+	void exitBlockCurrentTask(Task *task, bool fromUserCode);
 
 	//! \brief Entry point of the "unblockTask" function (BlockingAPI.cpp)
 	//!
@@ -524,19 +286,7 @@ namespace TrackingPoints {
 	//! \param[in] currenTask The task executing runtime code
 	//! \param[in] fromUserCode Whether this happened from user code or was
 	//! forced from within the runtime
-	inline void enterUnblockTask(const Task *task, Task *currentTask, bool fromUserCode)
-	{
-		// NOTE: See the note in "enterSpawnFunction" for more details
-		assert(task != nullptr);
-
-		bool taskRuntimeTransition = fromUserCode && (currentTask != nullptr);
-		if (taskRuntimeTransition) {
-			HardwareCounters::updateTaskCounters(currentTask);
-			Monitoring::taskChangedStatus(currentTask, paused_status);
-		}
-
-		Instrument::enterUnblockTask(task->getInstrumentationTaskId(), taskRuntimeTransition);
-	}
+	void enterUnblockTask(const Task *task, Task *currentTask, bool fromUserCode);
 
 	//! \brief Exit point of the "unblockTask" function (BlockingAPI.cpp)
 	//!
@@ -550,21 +300,7 @@ namespace TrackingPoints {
 	//! \param[in] currentTask The (soon to be resumed) task
 	//! \param[in] fromUserCode Whether this happened from user code or was
 	//! forced from within the runtime
-	inline void exitUnblockTask(const Task *task, Task *currentTask, bool fromUserCode)
-	{
-		// NOTE: See the note in "enterSpawnFunction" for more details
-		assert(task != nullptr);
-
-		bool taskRuntimeTransition = fromUserCode && (currentTask != nullptr);
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		if (taskRuntimeTransition) {
-			HardwareCounters::updateRuntimeCounters();
-			Instrument::exitUnblockTask(taskId, taskRuntimeTransition);
-			Monitoring::taskChangedStatus(currentTask, executing_status);
-		} else {
-			Instrument::exitUnblockTask(taskId, taskRuntimeTransition);
-		}
-	}
+	void exitUnblockTask(const Task *task, Task *currentTask, bool fromUserCode);
 
 	//! \brief Entry point of the "nanos6_wait_for" function (BlockingAPI.cpp)
 	//!
@@ -574,14 +310,7 @@ namespace TrackingPoints {
 	//! - Instrument: Notify that the current task is going to be re-added to the scheduler
 	//!
 	//! \param[in] task The task being re-added to the scheduler
-	inline void enterWaitFor(Task *task)
-	{
-		assert(task != nullptr);
-
-		HardwareCounters::updateTaskCounters(task);
-		// We do not notify Monitoring yet, as this will be done in the Scheduler's addReadyTask call
-		Instrument::enterWaitFor(task->getInstrumentationTaskId());
-	}
+	void enterWaitFor(Task *task);
 
 	//! \brief Exit point of the "nanos6_wait_for" function (BlockingAPI.cpp)
 	//!
@@ -592,14 +321,7 @@ namespace TrackingPoints {
 	//! - Monitoring: Notify that the current task resumes its execution
 	//!
 	//! \param[in] task The (soon to be resumed) task
-	inline void exitWaitFor(Task *task)
-	{
-		assert(task != nullptr);
-
-		HardwareCounters::updateRuntimeCounters();
-		Instrument::exitWaitFor(task->getInstrumentationTaskId());
-		Monitoring::taskChangedStatus(task, executing_status);
-	}
+	void exitWaitFor(Task *task);
 
 	//! \brief Entry point of the "addReadyTasks" function (Scheduler.hpp)
 	//!
@@ -610,26 +332,13 @@ namespace TrackingPoints {
 	//!
 	//! \param[in] tasks An array of tasks that will become ready
 	//! \param[in] numTasks The number of tasks in the previous array
-	inline void enterAddReadyTasks(Task *tasks[], const size_t numTasks)
-	{
-		Instrument::enterAddReadyTask();
-		for (size_t i = 0; i < numTasks; ++i) {
-			Task *task = tasks[i];
-			assert(task != nullptr);
-
-			Instrument::taskIsReady(task->getInstrumentationTaskId());
-			Monitoring::taskChangedStatus(task, ready_status);
-		}
-	}
+	void enterAddReadyTasks(Task *tasks[], const size_t numTasks);
 
 	//! \brief Exit point of the "addReadyTasks" function (Scheduler.hpp)
 	//!
 	//! Actions:
 	//! - Instrument: Notify that the thread is exiting the addReadyTasks function
-	inline void exitAddReadyTasks()
-	{
-		Instrument::exitAddReadyTask();
-	}
+	void exitAddReadyTasks();
 
 	//! \brief Entry point of the "addReadyTask" function (Scheduler.hpp)
 	//!
@@ -639,23 +348,13 @@ namespace TrackingPoints {
 	//! - Monitoring: Notify that the task will become ready
 	//!
 	//! \param[in] task The task being added to the scheduler
-	inline void enterAddReadyTask(Task *task)
-	{
-		assert(task != nullptr);
-
-		Instrument::enterAddReadyTask();
-		Instrument::taskIsReady(task->getInstrumentationTaskId());
-		Monitoring::taskChangedStatus(task, ready_status);
-	}
+	void enterAddReadyTask(Task *task);
 
 	//! \brief Exit point of the "addReadyTask" function (Scheduler.hpp)
 	//!
 	//! Actions:
 	//! - Instrument: Notify that the thread is exiting the addReadyTask function
-	inline void exitAddReadyTask()
-	{
-		Instrument::exitAddReadyTask();
-	}
+	void exitAddReadyTask();
 
 	//! \brief Entry point of the "createTask" function (AddTask.cpp)
 	//!
@@ -666,15 +365,7 @@ namespace TrackingPoints {
 	//! \param[in] creator The creator task creating another one
 	//! \param[in] fromUserCode Whether this happened from user code or was
 	//! forced from within the runtime
-	inline void enterCreateTask(Task *creator, bool fromUserCode)
-	{
-		// NOTE: See the note in "enterSpawnFunction" for more details
-		bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-		if (taskRuntimeTransition) {
-			HardwareCounters::updateTaskCounters(creator);
-			Monitoring::taskChangedStatus(creator, paused_status);
-		}
-	}
+	void enterCreateTask(Task *creator, bool fromUserCode);
 
 	//! \brief Entry point of the "submitTask" function (AddTask.cpp)
 	//!
@@ -689,19 +380,7 @@ namespace TrackingPoints {
 	//! \param[in] taskId The instrumentation id of the task
 	//! \param[in] fromUserCode Whether this happened from user code or was
 	//! forced from within the runtime
-	inline void enterSubmitTask(Task *creator, Task *task, bool fromUserCode)
-	{
-		assert(task != nullptr);
-
-		// NOTE: See the note in "enterSpawnFunction" for more details
-		bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		Instrument::enterSubmitTask(taskRuntimeTransition);
-
-		HardwareCounters::taskCreated(task);
-		Monitoring::taskCreated(task);
-		Instrument::createdTask(task, taskId);
-	}
+	void enterSubmitTask(Task *creator, Task *task, bool fromUserCode);
 
 	//! \brief Exit point of the "submitTask" function (AddTask.cpp)
 	//!
@@ -714,21 +393,7 @@ namespace TrackingPoints {
 	//! \param[in] task The created task
 	//! \param[in] fromUserCode Whether this happened from user code or was
 	//! forced from within the runtime
-	inline void exitSubmitTask(Task *creator, const Task *task, bool fromUserCode)
-	{
-		assert(task != nullptr);
-
-		// NOTE: See the note in "enterSpawnFunction" for more details
-		bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-		Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-		if (taskRuntimeTransition) {
-			HardwareCounters::updateRuntimeCounters();
-			Instrument::exitSubmitTask(taskId, taskRuntimeTransition);
-			Monitoring::taskChangedStatus(creator, executing_status);
-		} else {
-			Instrument::exitSubmitTask(taskId, taskRuntimeTransition);
-		}
-	}
+	void exitSubmitTask(Task *creator, const Task *task, bool fromUserCode);
 
 }
 
