@@ -14,17 +14,22 @@ remove_section () {
 	contents=$1
 	section=$2
 
-	# Remove anything between the __require_{section} and __!require_{section}
-	echo "${contents}" | perl -0777 -pe 's/^__require_'"${section}"'(.*)^__!require_'"${section}"'\n//gsm'
+	# Remove anything between the __require_{section} and
+	# __!require_{section}, inclusive
+	printf "%s\n" "${contents}" | \
+		awk '/^__require_'"${section}"'$/ { skip=1; next }; \
+			/^__!require_'"${section}"'$/{skip=0; next}; \
+			!skip{print}'
 }
 
 # Remove dangling requires and newlines
 remove_unused_requires () {
 	contents=$1
 
-	# Remove any __require_* or __!require_* and clean up the file removing extra newlines.
-	# (\n{2,}) -> match any group of two or more newlines
-	echo "${contents}" | perl -pe 's/^__(!*)require_(.*)(\n*)$//g' | perl -0777 -pe 's/(\n{2,})/\n\n/gs'
+	# Remove any __require_* or __!require_* leftover lines
+	# and contract multiple newlines into one with awk
+	printf "%s\n" "${contents}" | sed '/^__!\?require_.*$/d' | \
+		awk '!NF {f=1; next} f {print ""; f=0} 1'
 }
 
 template_file=$1
@@ -55,4 +60,4 @@ done
 file_contents=$(remove_unused_requires "${file_contents}")
 
 # Return the processed file
-echo "${file_contents}"
+printf "%s\n" "${file_contents}"
