@@ -9,6 +9,9 @@
 #include "CTFKernelEventsProvider.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
+
+#ifndef NDEBUG
+
 struct __attribute__((__packed__)) event_sched_switch {
 	CTFAPI::CTFKernelEventsProvider::EventCommon common;
 	char  prev_comm[16];
@@ -81,14 +84,11 @@ static std::string decodePerfHeaderType(struct perf_event_header *header)
 
 void CTFAPI::CTFKernelEventsProvider::warnUnknownPerfRecord(struct perf_event_header *header)
 {
-#ifndef NDEBUG
 	FatalErrorHandler::warn("Ignoring unknown perf record: ", decodePerfHeaderType(header));
-#endif
 }
 
 void CTFAPI::CTFKernelEventsProvider::checkPerfRecordSampleSize(PerfRecordSample *perfRecordSample)
 {
-#ifndef NDEBUG
 	size_t total, recordExtra;
 	size_t unknown;
 
@@ -100,22 +100,21 @@ void CTFAPI::CTFKernelEventsProvider::checkPerfRecordSampleSize(PerfRecordSample
 			- perfRecordSample->size;
 
 	if (unknown) {
+		struct perf_event_header *header = &perfRecordSample->header;
 		FatalErrorHandler::warn(
 			"Sample record unknown bytes: ", unknown,
 			" header.size  = ", perfRecordSample->header.size,
 			" size         = ", perfRecordSample->size,
 			" record extra = ", recordExtra,
-			" header type  = ", decodePerfHeaderType(&perfRecordSample->header)
+			" header type  = ", decodePerfHeaderType(header)
 		);
 	}
-#endif
 }
 
 void CTFAPI::CTFKernelEventsProvider::checkPerfEventSize(
 	PerfRecordSample *perfRecordSample,
 	ctf_kernel_event_size_t expectedFieldsSize
 ) {
-#ifndef NDEBUG
 	EventCommon *commonFields = (EventCommon *) perfRecordSample->data;
 	ctf_kernel_event_id_t eventId = commonFields->common_type;
 	size_t commonFieldsSize = sizeof(EventCommon);
@@ -144,14 +143,12 @@ void CTFAPI::CTFKernelEventsProvider::checkPerfEventSize(
 		" padding                 = " << (uint64_t) padding                          << std::endl <<
 		" record addr             = " <<            perfRecordSample                 << std::endl <<
 		" data addr               = " << (void *)   perfRecordSample->data           << std::endl;
-#endif
 }
 
 void CTFAPI::CTFKernelEventsProvider::printKernelEvent(
 	PerfRecordSample *perfRecordSample,
 	ctf_kernel_event_size_t payloadSize
 ) {
-#ifndef NDEBUG
 	EventCommon *commonFields = (EventCommon *) perfRecordSample->data;
 	ctf_kernel_event_id_t eventId = commonFields->common_type;
 
@@ -195,15 +192,40 @@ void CTFAPI::CTFKernelEventsProvider::printKernelEvent(
 	} else {
 		std::cout << "unknown definition" << std::endl;
 	}
-#endif
 }
 
 void CTFAPI::CTFKernelEventsProvider::initializeDebug()
 {
-#ifndef NDEBUG
 	CTFTrace &trace = CTFTrace::getInstance();
 	CTFKernelMetadata *metadata = trace.getKernelMetadata();
 	_sched_switch_id = metadata->getEventIdByName("sched_switch");
 	_sched_wakeup_id = metadata->getEventIdByName("sched_wakeup");
-#endif
 }
+
+#else // NDEBUG
+
+void CTFAPI::CTFKernelEventsProvider::warnUnknownPerfRecord(struct perf_event_header *)
+{
+}
+
+void CTFAPI::CTFKernelEventsProvider::checkPerfRecordSampleSize(PerfRecordSample *)
+{
+}
+
+void CTFAPI::CTFKernelEventsProvider::checkPerfEventSize(
+	PerfRecordSample *,
+	ctf_kernel_event_size_t
+) {
+}
+
+void CTFAPI::CTFKernelEventsProvider::printKernelEvent(
+	PerfRecordSample *,
+	ctf_kernel_event_size_t
+) {
+}
+
+void CTFAPI::CTFKernelEventsProvider::initializeDebug()
+{
+}
+
+#endif

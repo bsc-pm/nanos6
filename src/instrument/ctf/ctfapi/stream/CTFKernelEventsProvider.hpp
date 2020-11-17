@@ -33,7 +33,7 @@ namespace CTFAPI {
 				int            common_pid;
 			};
 
-			struct __attribute__((__packed__)) PerfRecordSample {
+			struct __attribute__((__aligned__(sizeof(struct perf_event_header)))) __attribute__((__packed__)) PerfRecordSample {
 				struct perf_event_header header;
 				uint64_t time;   // if PERF_SAMPLE_TIME
 				uint32_t size;   // if PERF_SAMPLE_RAW
@@ -145,7 +145,7 @@ namespace CTFAPI {
 				return _numberOfEvents;
 			}
 
-			bool read(void *buf, uint64_t size, uint64_t *read);
+			bool read(void *buf, uint64_t size, uint64_t *readBytes);
 			void updateHead();
 			bool hasEvents();
 			void updateTail();
