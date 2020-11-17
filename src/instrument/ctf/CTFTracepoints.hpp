@@ -11,13 +11,13 @@
 #include "ctfapi/CTFTypes.hpp"
 #include "ctfapi/CTFEvent.hpp"
 #include "ctfapi/context/CTFContext.hpp"
-#include "ctfapi/CTFMetadata.hpp"
+#include "ctfapi/CTFUserMetadata.hpp"
 
 namespace Instrument {
 
 	// Management functions
 
-	void preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata);
+	void preinitializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata);
 
 	// Internal Nanos6 Tracepoints
 
@@ -52,10 +52,16 @@ namespace Instrument {
 	void tp_scheduler_get_task_enter();
 	void tp_scheduler_get_task_exit();
 
+	void tp_scheduler_lock_client(ctf_timestamp_t acquireTimestamp, ctf_task_id_t taskId);
+	void tp_scheduler_lock_server(ctf_timestamp_t acquireTimestamp);
+	void tp_scheduler_lock_assign(ctf_task_id_t taskId);
+	void tp_scheduler_lock_server_exit();
+
 	// Debug tracepoints
 
 	void tp_debug_register(const char *name, ctf_debug_id_t id);
 	void tp_debug_enter(ctf_debug_id_t id);
+	void tp_debug_transition(ctf_debug_id_t id);
 	void tp_debug_exit();
 
 	// Nanos6 API entry and exit points tracepoints

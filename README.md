@@ -192,9 +192,11 @@ In the future, this problem will be fixed.
 ### Tracing a Nanos6 application with CTF (Experimental)
 
 To generate a CTF trace, run the application with the `version.instrument` config set to `ctf`.
+By default, only Nanos6 internal events are recorded.
+For details on how to additionally record system-wide Linux Kernel events, please check the section "Linux Kernel Tracing" under [CTF.md](docs/ctf/CTF.md).
 
 A directory named `trace_<binary_name>_<pid>` will be created at the current working directory at the end of the execution.
-To visualize this trace, it needs to be converted to Paraver format first.
+To visualize this trace it needs to be converted to Paraver format first.
 By default, Nanos6 will convert the trace automatically at the end of the execution unless the user explicitly sets the configuration variable `instrument.ctf.conversor.enabled = false`.
 The environment variable `CTF2PRV_TIMEOUT=<minutes>` can be set to stop the conversion after the specified elapsed time in minutes.
 Please note that the conversion tool requires python3 and the babeltrace2 packages.
@@ -205,9 +207,9 @@ The Paraver configuration files can be found under:
 $INSTALLATION_PREFIX/share/doc/nanos6/paraver-cfg/nanos6/ctf2prv/
 ```
 
-Please, note that these views are not compatible with Extrae traces and vice-versa.
+Please, note that ctf2prv views are not compatible with Extrae traces and vice-versa.
 
-Additionally, there is a command to manually convert a trace:
+Additionally, the following command can be used to convert a trace manually:
 
 ```sh
 $ ctf2prv $TRACE

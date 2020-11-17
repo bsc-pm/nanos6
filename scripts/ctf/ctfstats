@@ -19,22 +19,34 @@ if [ $# -ne 1 ]; then
 	exit 1
 fi
 
-TRACEOP1=`readlink -f $1/ctf/ust/uid/*/64-bit`
-TRACEOP2=`readlink -f $1/ust/uid/*/64-bit`
-TRACEOP3=`readlink -f $1`
+if [[ ! $(type -P "babeltrace2") ]]; then
+	>&2 echo "The babeltrace2 tool is not in the system path. ctf stats cannot be calculated.";
+	exit 1;
+fi
 
-if [ -f $TRACEOP1/metadata ]; then
-	TRACE=$TRACEOP1
-elif [ -f $TRACEOP2/metadata ]; then
-	TRACE=$TRACEOP2
-elif [ -f $TRACEOP3/metadata ]; then
-	TRACE=$TRACEOP3
-else
+CTF_USER_TRACE_PATH=`readlink -f $1/ctf/ust/uid/*/64-bit`
+CTF_KERNEL_TRACE_PATH=`readlink -f $1/ctf/kernel`
+
+if [ ! -f $CTF_USER_TRACE_PATH/metadata ]; then
 	>&2 echo "Error: The supplied input does not appear to be a CTF trace"
 	exit 1
 fi
 
-babeltrace2 --plugin-path="$CTFPLUGINS" \
-	-c source.ctf.fs                \
-	--params="inputs=[\"$TRACE\"]"  \
-	-c sink.nanos6.stats
+KERNEL_TRACE_FOUND=1
+if [ ! -f $CTF_KERNEL_TRACE_PATH/metadata ]; then
+	KERNEL_TRACE_FOUND=0
+fi
+
+if [ $KERNEL_TRACE_FOUND -eq 1 ]; then
+	babeltrace2 --plugin-path="$CTFPLUGINS"            \
+		-c source.ctf.fs                               \
+		--params="inputs=[\"$CTF_USER_TRACE_PATH\"]"   \
+		-c source.ctf.fs                               \
+		--params="inputs=[\"$CTF_KERNEL_TRACE_PATH\"]" \
+		-c sink.nanos6.stats
+else
+	babeltrace2 --plugin-path="$CTFPLUGINS"            \
+		-c source.ctf.fs                               \
+		--params="inputs=[\"$CTF_USER_TRACE_PATH\"]"   \
+		-c sink.nanos6.stats
+fi

@@ -7,18 +7,30 @@
 #ifndef INSTRUMENT_CTF_WORKERTHREAD_HPP
 #define INSTRUMENT_CTF_WORKERTHREAD_HPP
 
+#include <cassert>
 
-#include "instrument/api/InstrumentWorkerThread.hpp"
-
-#include "../support/InstrumentThreadLocalDataSupport.hpp"
-#include "ctfapi/CTFAPI.hpp"
 #include "CTFTracepoints.hpp"
+#include "ctfapi/CTFAPI.hpp"
+#include "instrument/api/InstrumentWorkerThread.hpp"
+#include "instrument/ctf/InstrumentCPULocalData.hpp"
+#include "instrument/support/InstrumentThreadLocalDataSupport.hpp"
 
 namespace Instrument {
 
 	inline void workerThreadSpins()
 	{
-		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded();
+		CPULocalData *cpuLocalData = getCTFCPULocalData();
+		CTFAPI::CTFStream *userStream = cpuLocalData->userStream;
+		CTFAPI::CTFKernelStream *kernelStream = cpuLocalData->kernelStream;
+		assert(kernelStream != nullptr);
+		assert(userStream != nullptr);
+
+		CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(userStream, userStream);
+
+		if (kernelStream) {
+			CTFAPI::updateKernelEvents(kernelStream, userStream);
+			CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(kernelStream, userStream);
+		}
 	}
 
 	inline void workerThreadObtainedTask()

@@ -5,7 +5,9 @@
 #
 
 from abc import ABC
-from runtime import RuntimeModel
+from executionmodel import ExecutionModel
+from runtimemodel   import RuntimeModel
+from kernelmodel    import KernelModel
 from paravertrace import ParaverTrace, ExtraeEventTypes, ExtraeEventCollection
 from hwcdefs import hardwareCountersDefinitions
 
@@ -353,6 +355,8 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 		BlockingAPIBlock     = 16
 		BlockingAPIUnblock   = 17
 		SpawnFunction        = 18
+		SchedulerLockEnter   = 19
+		SchedulerLockServing = 20
 		Debug                = 100
 
 	def stackEvent(func):
@@ -375,80 +379,88 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 	def __init__(self):
 		super().__init__()
 		self._hooks = [
-			("nanos6:thread_create",                 self.hook_initStack),
-			("nanos6:external_thread_create",        self.hook_initExternalThreadStack),
-			("nanos6:thread_resume",                 self.hook_eventContinue),
-			("nanos6:external_thread_resume",        self.hook_runtime),
-			("nanos6:thread_suspend",                self.hook_eventStop),
-			("nanos6:external_thread_suspend",       self.hook_unstack),
-			("nanos6:thread_shutdown",               self.hook_eventStop),
-			("nanos6:external_thread_shutdown",      self.hook_eventStop),
-			("nanos6:task_start",                    self.hook_task),
-			("nanos6:task_end",                      self.hook_unstack),
-			("nanos6:tc:taskwait_enter",             self.hook_taskWait),
-			("nanos6:tc:taskwait_exit",              self.hook_unstack),
-			("nanos6:tc:waitfor_enter",              self.hook_waitFor),
-			("nanos6:tc:waitfor_exit",               self.hook_unstack),
-			("nanos6:tc:mutex_lock_enter",           self.hook_lock),
-			("nanos6:tc:mutex_lock_exit",            self.hook_unstack),
-			("nanos6:tc:mutex_unlock_enter",         self.hook_unlock),
-			("nanos6:tc:mutex_unlock_exit",          self.hook_unstack),
-			("nanos6:tc:blocking_api_block_enter",   self.hook_blockingAPIBlock),
-			("nanos6:tc:blocking_api_block_exit",    self.hook_unstack),
-			("nanos6:tc:blocking_api_unblock_enter", self.hook_blockingAPIUnblock),
-			("nanos6:tc:blocking_api_unblock_exit",  self.hook_unstack),
-			("nanos6:oc:blocking_api_unblock_enter", self.hook_blockingAPIUnblock),
-			("nanos6:oc:blocking_api_unblock_exit",  self.hook_unstack),
-			("nanos6:tc:spawn_function_enter",       self.hook_spawnFunction),
-			("nanos6:tc:spawn_function_exit",        self.hook_unstack),
-			("nanos6:oc:spawn_function_enter",       self.hook_spawnFunction),
-			("nanos6:oc:spawn_function_exit",        self.hook_unstack),
-			("nanos6:worker_enter_busy_wait",        self.hook_busyWait),
-			("nanos6:worker_exit_busy_wait",         self.hook_unstack),
-			("nanos6:dependency_register_enter",     self.hook_dependencyRegister),
-			("nanos6:dependency_register_exit",      self.hook_unstack),
-			("nanos6:dependency_unregister_enter",   self.hook_dependencyUnregister),
-			("nanos6:dependency_unregister_exit",    self.hook_unstack),
-			("nanos6:scheduler_add_task_enter",      self.hook_schedulerAddTask),
-			("nanos6:scheduler_add_task_exit",       self.hook_unstack),
-			("nanos6:scheduler_get_task_enter",      self.hook_schedulerGetTask),
-			("nanos6:scheduler_get_task_exit",       self.hook_unstack),
-			("nanos6:tc:task_create_enter",          self.hook_taskCreate),
-			("nanos6:tc:task_create_exit",           self.hook_taskBetweenCreateAndSubmit),
-			("nanos6:oc:task_create_enter",          self.hook_taskCreate),
-			("nanos6:oc:task_create_exit",           self.hook_taskBetweenCreateAndSubmit),
-			("nanos6:tc:task_submit_enter",          self.hook_taskSubmit),
-			("nanos6:tc:task_submit_exit",           self.hook_unstack),
-			("nanos6:oc:task_submit_enter",          self.hook_taskSubmit),
-			("nanos6:oc:task_submit_exit",           self.hook_unstack),
-			("nanos6:taskfor_init_enter",            self.hook_taskforInit),
-			("nanos6:taskfor_init_exit",             self.hook_unstack),
-			("nanos6:debug_register",                self.hook_debugRegister),
-			("nanos6:debug_enter",                   self.hook_debug),
-			("nanos6:debug_exit",                    self.hook_unstack),
+			("nanos6:thread_create",                           self.hook_initStack),
+			("nanos6:external_thread_create",                  self.hook_initExternalThreadStack),
+			("nanos6:thread_resume",                           self.hook_eventContinue),
+			("nanos6:external_thread_resume",                  self.hook_runtime),
+			("nanos6:thread_suspend",                          self.hook_eventStop),
+			("nanos6:external_thread_suspend",                 self.hook_unstack),
+			("nanos6:thread_shutdown",                         self.hook_eventStop),
+			("nanos6:external_thread_shutdown",                self.hook_eventStop),
+			("nanos6:task_start",                              self.hook_task),
+			("nanos6:task_end",                                self.hook_unstack),
+			("nanos6:tc:taskwait_enter",                       self.hook_taskWait),
+			("nanos6:tc:taskwait_exit",                        self.hook_unstack),
+			("nanos6:tc:waitfor_enter",                        self.hook_waitFor),
+			("nanos6:tc:waitfor_exit",                         self.hook_unstack),
+			("nanos6:tc:mutex_lock_enter",                     self.hook_lock),
+			("nanos6:tc:mutex_lock_exit",                      self.hook_unstack),
+			("nanos6:tc:mutex_unlock_enter",                   self.hook_unlock),
+			("nanos6:tc:mutex_unlock_exit",                    self.hook_unstack),
+			("nanos6:tc:blocking_api_block_enter",             self.hook_blockingAPIBlock),
+			("nanos6:tc:blocking_api_block_exit",              self.hook_unstack),
+			("nanos6:tc:blocking_api_unblock_enter",           self.hook_blockingAPIUnblock),
+			("nanos6:tc:blocking_api_unblock_exit",            self.hook_unstack),
+			("nanos6:oc:blocking_api_unblock_enter",           self.hook_blockingAPIUnblock),
+			("nanos6:oc:blocking_api_unblock_exit",            self.hook_unstack),
+			("nanos6:tc:spawn_function_enter",                 self.hook_spawnFunction),
+			("nanos6:tc:spawn_function_exit",                  self.hook_unstack),
+			("nanos6:oc:spawn_function_enter",                 self.hook_spawnFunction),
+			("nanos6:oc:spawn_function_exit",                  self.hook_unstack),
+			("nanos6:worker_enter_busy_wait",                  self.hook_busyWait),
+			("nanos6:worker_exit_busy_wait",                   self.hook_unstack),
+			("nanos6:dependency_register_enter",               self.hook_dependencyRegister),
+			("nanos6:dependency_register_exit",                self.hook_unstack),
+			("nanos6:dependency_unregister_enter",             self.hook_dependencyUnregister),
+			("nanos6:dependency_unregister_exit",              self.hook_unstack),
+			("nanos6:scheduler_add_task_enter",                self.hook_schedulerAddTask),
+			("nanos6:scheduler_add_task_exit",                 self.hook_unstack),
+			("nanos6:scheduler_get_task_enter",                self.hook_schedulerGetTask),
+			("nanos6:scheduler_get_task_exit",                 self.hook_unstack),
+			("nanos6:tc:task_create_enter",                    self.hook_taskCreate),
+			("nanos6:tc:task_create_exit",                     self.hook_taskBetweenCreateAndSubmit),
+			("nanos6:oc:task_create_enter",                    self.hook_taskCreate),
+			("nanos6:oc:task_create_exit",                     self.hook_taskBetweenCreateAndSubmit),
+			("nanos6:tc:task_submit_enter",                    self.hook_taskSubmit),
+			("nanos6:tc:task_submit_exit",                     self.hook_unstack),
+			("nanos6:oc:task_submit_enter",                    self.hook_taskSubmit),
+			("nanos6:oc:task_submit_exit",                     self.hook_unstack),
+			("nanos6:taskfor_init_enter",                      self.hook_taskforInit),
+			("nanos6:taskfor_init_exit",                       self.hook_unstack),
+			("nanos6:scheduler_lock_client",                   self.hook_schedLockClient),
+			("nanos6:scheduler_lock_server",                   self.hook_schedLockServer),
+			("nanos6:scheduler_lock_assign",                   self.hook_schedLockAssign),
+			("nanos6:scheduler_lock_server_exit",              self.hook_unstack),
+			("nanos6:debug_register",                          self.hook_debugRegister),
+			("nanos6:debug_enter",                             self.hook_debug),
+			("nanos6:debug_transition",                        self.hook_debugTransition),
+			("nanos6:debug_exit",                              self.hook_unstack),
 		]
 		status = {
-			self.Status.Idle:                 "Idle",
-			self.Status.Runtime:              "Runtime",
-			self.Status.BusyWait:             "Busy Wait",
-			self.Status.Task:                 "Task",
-			self.Status.DependencyRegister:   "Dependency: Register",
-			self.Status.DependencyUnregister: "Dependency: Unregister",
-			self.Status.SchedulerAddTask:     "Scheduler: Add Ready Task",
-			self.Status.SchedulerGetTask:     "Scheduler: Get Ready Task",
-			self.Status.TaskCreate:           "Task: Create",
-			self.Status.TaskArgsInit:         "Task: Arguments Init",
-			self.Status.TaskSubmit:           "Task: Submit",
-			self.Status.TaskforInit:          "Task: Taskfor Collaborator Init",
-			self.Status.TaskWait:             "Task: TaskWait",
-			self.Status.WaitFor:              "Task: WaitFor",
-			self.Status.Lock:                 "Task: User Mutex: Lock",
-			self.Status.Unlock:               "Task: User Mutex: Unlock",
-			self.Status.BlockingAPIBlock:     "Task: Blocking API: Block",
-			self.Status.BlockingAPIUnblock:   "Task: Blocking API: Unblock",
-                        self.Status.SpawnFunction:        "SpawnFunction: Spawn",
+			self.Status.Idle:                             "Idle",
+			self.Status.Runtime:                          "Runtime",
+			self.Status.BusyWait:                         "Busy Wait",
+			self.Status.Task:                             "Task",
+			self.Status.DependencyRegister:               "Dependency: Register",
+			self.Status.DependencyUnregister:             "Dependency: Unregister",
+			self.Status.SchedulerAddTask:                 "Scheduler: Add Ready Task",
+			self.Status.SchedulerGetTask:                 "Scheduler: Get Ready Task",
+			self.Status.TaskCreate:                       "Task: Create",
+			self.Status.TaskArgsInit:                     "Task: Arguments Init",
+			self.Status.TaskSubmit:                       "Task: Submit",
+			self.Status.TaskforInit:                      "Task: Taskfor Collaborator Init",
+			self.Status.TaskWait:                         "Task: TaskWait",
+			self.Status.WaitFor:                          "Task: WaitFor",
+			self.Status.Lock:                             "Task: User Mutex: Lock",
+			self.Status.Unlock:                           "Task: User Mutex: Unlock",
+			self.Status.BlockingAPIBlock:                 "Task: Blocking API: Block",
+			self.Status.BlockingAPIUnblock:               "Task: Blocking API: Unblock",
+			self.Status.SpawnFunction:                    "SpawnFunction: Spawn",
+			self.Status.SchedulerLockEnter:               "Scheduler: Lock: Enter",
+			self.Status.SchedulerLockServing:             "Scheduler: Lock: Serving tasks",
 		}
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.RUNTIME_SUBSYSTEMS, status, "Runtime Subsystems")
+		self._servedTasks = {}
 
 	def hook_initStack(self, event, payload):
 		tid = event["tid"]
@@ -544,8 +556,60 @@ class ParaverViewRuntimeSubsystems(ParaverView):
 	def hook_taskforInit(self, _):
 		return self.Status.TaskforInit
 
+	def hook_schedLockClient(self, event, payload):
+		taskId  = event["id"]
+		timeAcq = event["ts_acquire"]
+		cpuId   = ExecutionModel.getCurrentCPUId()
+		stack   = self.getEventStack(event)
+
+		# Emit event in the past. We know that no tracepoint can be emitted
+		# between getting the lock and after the operation completes
+		# (at this point as a client). Hence, it is safe the override the
+		# standard path and enforce another tracepoint here.
+		pastPayload = [(ExtraeEventTypes.RUNTIME_SUBSYSTEMS, self.Status.SchedulerLockEnter)]
+		ParaverTrace.emitEvent(timeAcq, cpuId, pastPayload)
+
+		# Emit communication line (if present) before any current event as
+		# requried by paraver. This line shows a relation between a worker
+		# serving task and another worker being assigned work by it.
+		if taskId != 0:
+			timeRel = ExecutionModel.getCurrentTimestamp()
+			(timeSend, cpuSendId) = self._servedTasks[taskId]
+			ParaverTrace.emitCommunicationEvent(cpuSendId, timeSend, cpuId, timeRel)
+
+		# Emit event at this point in time using the standard path
+		payload.append((ExtraeEventTypes.RUNTIME_SUBSYSTEMS, stack[-1]))
+
+	def hook_schedLockServer(self, event, payload):
+		timeAcq = event["ts_acquire"]
+		cpuId   = ExecutionModel.getCurrentCPUId()
+		stack   = self.getEventStack(event)
+
+		# Emit event in the past. We know that no tracepoint can be emitted
+		# between before getting the lock and after the operation completes
+		# (at this point as a server). Hence, it is safe the override the
+		# standard path and enforce another tracepoint here.
+		pastPayload = [(ExtraeEventTypes.RUNTIME_SUBSYSTEMS, self.Status.SchedulerLockEnter)]
+		ParaverTrace.emitEvent(timeAcq, cpuId, pastPayload)
+
+		# Emit event at this point in time
+		payload.append((ExtraeEventTypes.RUNTIME_SUBSYSTEMS, self.Status.SchedulerLockServing))
+
+		# Add current new status to the event stack
+		stack.append(self.Status.SchedulerLockServing)
+
+	def hook_schedLockAssign(self, event, _):
+		taskId = event["id"]
+		cpuSendId = ExecutionModel.getCurrentCPUId()
+		self._servedTasks[taskId] = (ExecutionModel.getCurrentTimestamp(), cpuSendId)
+
 	@stackEvent
 	def hook_debug(self, event):
+		debugId = event["id"]
+		return self.Status.Debug + debugId
+
+	@unstackAndStackEvent
+	def hook_debugTransition(self, event):
 		debugId = event["id"]
 		return self.Status.Debug + debugId
 
@@ -760,3 +824,179 @@ class ParaverViewNumberOfBlockedThreads(ParaverView):
 			raise Exception("Error: attempt to suspend the same thread twice")
 		self.blockedThreads.add(tid)
 		payload.append((ExtraeEventTypes.NUMBER_OF_BLOCKED_THREADS, len(self.blockedThreads)))
+
+class ParaverViewKernelThreadID(ParaverView):
+	def __init__(self):
+		super().__init__()
+		self._hooks = [
+			("sched_switch", self.hook_schedSwitch),
+		]
+		ParaverTrace.addEventType(ExtraeEventTypes.KERNEL_THREAD_ID, "Kernel Thread ID (TID)")
+
+	def hook_schedSwitch(self, event, payload):
+		tid = event["next_pid"]
+		# Idle threads have Id 0, which correspond to the "End" state in
+		# Paraver. Therfore, no special treament need to be done for the idle
+		# threads.
+		payload.append((ExtraeEventTypes.KERNEL_THREAD_ID, tid))
+
+class ParaverViewKernelPreemptions(ParaverView):
+
+	class Status():
+		Idle        = 0
+		ThisProcess = 1
+		Irq         = 2
+		SoftIrq     = 3
+
+	def __init__(self):
+		super().__init__()
+		self._hooks = [
+			("sched_switch",      self.hook_schedSwitch),
+			("irq_handler_entry", self.hook_irq),
+			("irq_handler_exit",  self.hook_irqExit),
+			("softirq_entry",     self.hook_softIrq),
+			("softirq_exit",      self.hook_softIrqExit),
+		]
+
+		# We only need to set up manually the idle thread and the traced
+		# application Paraver entries, the other processes entries will be
+		# installed in the callback_newProcessName
+		binaryName = ParaverTrace.getBinaryName()
+		values = {
+			self.Status.Idle         : "Idle",     # The KernelModel always sets up id 0 for Idle threads
+			self.Status.ThisProcess  : binaryName, # The KernelModel always sets up id 1 for the traced app
+			self.Status.Irq          : "IRQ",
+			self.Status.SoftIrq      : "Soft IRQ",
+		}
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PREEMPTIONS, values, "Kernel Preemptions")
+		KernelModel.registerNewProcessNameCallback(self.callback_newProcessName)
+		KernelModel.registerNewThreadCallback(self.callback_newThread)
+
+	def callback_newProcessName(self, name, perProcessExtraeId):
+		""" This is called every time a thread with an unseen command name
+		"comm_next" is scheduled for the first time. The kernel model assings an id (perProcessExtraeId) to each of the new command names. The id 0 always corresponds to Idle, the Id 1 to the traced process, and the next process will start at 100. The ids in between are reserved for specific uses such as IRQ. """
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_PREEMPTIONS, {perProcessExtraeId : name})
+
+	def callback_newThread(self, thread, tid, perProcessExtraeId):
+		""" This is called every time a thread is scheduled for the first time
+		in the trace """
+		thread.kernelPreemptionsEventStack = [perProcessExtraeId]
+
+	def hook_schedSwitch(self, event, payload):
+		thread = KernelModel.getCurrentThread()
+		state = thread.kernelPreemptionsEventStack[-1]
+		payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, state))
+
+	def hook_irq(self, _, payload):
+		state = self.Status.Irq
+		thread = KernelModel.getCurrentThread()
+		if thread == None:
+			return
+		thread.kernelPreemptionsEventStack.append(state)
+		payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, state))
+
+	def hook_irqExit(self, event, payload):
+		thread = KernelModel.getCurrentThread()
+		if thread == None:
+			return
+		stack = thread.kernelPreemptionsEventStack
+		if stack[-1] == self.Status.Irq:
+			stack.pop()
+			payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, stack[-1]))
+
+	def hook_softIrq(self, _, payload):
+		state = self.Status.SoftIrq
+		thread = KernelModel.getCurrentThread()
+		if thread == None:
+			return
+		thread.kernelPreemptionsEventStack.append(state)
+		payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, state))
+
+	def hook_softIrqExit(self, event, payload):
+		thread = KernelModel.getCurrentThread()
+		if thread == None:
+			return
+		stack = thread.kernelPreemptionsEventStack
+		if stack[-1] == self.Status.SoftIrq:
+			stack.pop()
+			payload.append((ExtraeEventTypes.KERNEL_PREEMPTIONS, stack[-1]))
+
+class ParaverViewKernelSyscalls(ParaverView):
+	def __init__(self):
+		super().__init__()
+		self._hooks = [
+			("sched_switch", self.hook_schedSwitch),
+		]
+		self._syscallMap = {}
+
+		binaryName = ParaverTrace.getBinaryName()
+
+		values = {
+			0 : "Idle",
+			1 : binaryName,
+			2 : "Other Process",
+		}
+
+		# Create hooks based on the available syscalls detected
+		syscallsEntry, syscallsExit = KernelModel.getSyscallDefinitions()
+
+		index = 3
+		prefix = len("sys_enter_")
+		for syscall in syscallsEntry:
+			self._hooks.append((syscall, self.hook_syscallEntry))
+			name = syscall[prefix:]
+			self._syscallMap[name] = index
+			values[index] = name
+			index += 1
+
+		prefix = len("sys_exit_")
+		for syscall in syscallsExit:
+			self._hooks.append((syscall, self.hook_syscallExit))
+			name = syscall[prefix:]
+			self._syscallMap[name] = index
+			values[index] = name
+			index += 1
+
+		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_SYSCALLS, values, "Kernel System Calls")
+		KernelModel.registerNewThreadCallback(self.callback_newThread)
+
+	def callback_newThread(self, thread, tid, perProcessExtraeId):
+		""" This is called every time a thread is scheduled for the first time
+		in the trace """
+		# We only show the Idle thread (0) and the traced process (1). All the
+		# other threads are displayed as "other" (2)
+		value = perProcessExtraeId if perProcessExtraeId <= 1 else 2
+		thread.kernelSyscallsEventStack = [value]
+
+	def hook_schedSwitch(self, event, payload):
+		thread = KernelModel.getCurrentThread()
+		state = thread.kernelSyscallsEventStack[-1]
+		payload.append((ExtraeEventTypes.KERNEL_SYSCALLS, state))
+
+	def hook_syscallEntry(self, event, payload):
+		prefix = len("sys_enter_")
+		syscallId = self._syscallMap[event.name[prefix:]]
+		thread = KernelModel.getCurrentThread()
+		# On a kernel trace, we might encounter first an entry syscall event
+		# than a sched_switch, so the thread might not exist yet
+		if thread == None:
+			return
+
+		stack = thread.kernelSyscallsEventStack
+		stack.append(syscallId)
+		payload.append((ExtraeEventTypes.KERNEL_SYSCALLS, syscallId))
+
+	def hook_syscallExit(self, event, payload):
+		prefix = len("sys_exit_")
+		syscallId = self._syscallMap[event.name[prefix:]]
+		thread = KernelModel.getCurrentThread()
+		# See hook_syscalEntry note
+		if thread == None:
+			return
+		stack = thread.kernelSyscallsEventStack
+		# We might encounter a syscall exit before a syscall entry on the
+		# beginning of a trace. Hence, we need to check if we are doing a
+		# syscall before popping
+		if stack[-1] == syscallId:
+			stack.pop()
+			payload.append((ExtraeEventTypes.KERNEL_SYSCALLS, stack[-1]))

@@ -10,49 +10,51 @@
 class CircularBuffer {
 
 private:
-	char     *buffer;
-	uint64_t bufferSize;
-	uint64_t subBufferSize;
-	uint64_t head;
-	uint64_t tail;
-	uint64_t wall;
-	uint64_t hole;
-	uint64_t mask;
-	uint64_t subBufferMask;
+	char *_buffer;
+	uint64_t _bufferSize;
+	uint64_t _subBufferSize;
+	uint64_t _head;
+	uint64_t _tail;
+	uint64_t _wall;
+	uint64_t _hole;
+	uint64_t _mask;
+	uint64_t _subBufferMask;
 
-	int fd;
-	uint64_t fileOffset;
+	int _fd;
+	uint64_t _fileOffset;
+	int _node;
 
 	void initializeFile(const char *path);
-	void initializeBuffer(uint64_t size);
+	void initializeBuffer(uint64_t size, int node);
 	void flushToFile(char *buf, size_t size);
 	void flushUpToTheWrap();
 	void resetPointers();
 
-	bool wraps()
+	inline bool wraps()
 	{
-		return ((head & ~mask) != (tail & ~mask));
+		return ((_head & ~_mask) != (_tail & ~_mask));
 	}
 
 public:
 	CircularBuffer() {};
 
-	void initialize(uint64_t size, const char *path);
+	void initialize(uint64_t size, int node, const char *path);
 	void flushAll();
 	void flushFilledSubBuffers();
 	void shutdown();
 	bool checkIfNeedsFlush();
 	bool alloc(uint64_t size);
+	uint64_t allocAtLeast(uint64_t minSize);
 
 	inline void *getBuffer()
 	{
-		return (void *) (buffer + (head & mask));
+		return (void *) (_buffer + (_head & _mask));
 	}
 
 	inline void submit(uint64_t size)
 	{
-		head += size;
-		assert(head - tail <= bufferSize);
+		_head += size;
+		assert(_head - _tail <= _bufferSize);
 	}
 
 };

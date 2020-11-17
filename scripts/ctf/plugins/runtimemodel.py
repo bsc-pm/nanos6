@@ -4,13 +4,14 @@
 #	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 #
 
-from paravertrace import ParaverTrace
-from enum import Enum, auto
+from executionmodel import ExecutionModel
+from paravertrace   import ParaverTrace
+from enum import Enum
 
 class WorkerType(Enum):
-	WorkerThread   = auto()
-	LeaderThread   = auto()
-	ExternalThread = auto()
+	WorkerThread   = 1
+	LeaderThread   = 2
+	ExternalThread = 3
 
 class CPU:
 	id_index = 0
@@ -147,9 +148,10 @@ class RuntimeModel:
 	_taskTypes = TaskIDsDB()
 
 	@classmethod
-	def initialize(cls, ncpus):
-		cls._ncpus = ncpus
-		cls._cpus = [CPU() for i in range(ncpus)]
+	def initialize(cls):
+		cls._maxCPUId = ParaverTrace.getMaxRealCPUId()
+		cls._ltcpu = ParaverTrace.getLeaderThreadCPUId()
+		cls._cpus = [CPU() for i in range(cls._maxCPUId + 1)]
 		cls._cpus.append(VCPU()) # Leader Thread CPU
 		cls._preHooks = [
 			("nanos6:tc:task_create_enter",   cls.hook_taskAdd),
@@ -175,9 +177,9 @@ class RuntimeModel:
 	@classmethod
 	def getWorkerType(cls, vcpuid):
 		threadType = None
-		if vcpuid < cls._ncpus:
+		if vcpuid <= cls._maxCPUId:
 			threadType = WorkerType.WorkerThread
-		elif vcpuid == cls._ncpus:
+		elif vcpuid == cls._ltcpu:
 			threadType = WorkerType.LeaderThread
 		else:
 			threadType = WorkerType.ExternalThread
@@ -190,9 +192,9 @@ class RuntimeModel:
 		# of them share a stream). To distinguish them, we need to check their
 		# tid event value. With its tid, we keep track of which "virtual cpu"
 		# each of them belong. The Leader Thread has its own stream, and hence
-		# it's cpu_id is already a valid virtual cpu_id (=ncpus)
+		# it's cpu_id is already a valid virtual cpu_id (=maxCPUId+1)
 
-		vcpuid = event["cpu_id"]
+		vcpuid = ExecutionModel.getCurrentCPUId()
 		wtype = cls.getWorkerType(vcpuid)
 		if wtype == WorkerType.WorkerThread:
 			cp = cls._cpus[vcpuid]
@@ -251,7 +253,7 @@ class RuntimeModel:
 
 	@classmethod
 	def hook_externalThreadCreate(cls, event, _):
-		vcpuid = event["cpu_id"]
+		vcpuid = ExecutionModel.getCurrentCPUId()
 		wtype = cls.getWorkerType(vcpuid)
 		if wtype == WorkerType.LeaderThread:
 			tid = event["tid"]

@@ -6,6 +6,8 @@
 
 #include "SyncScheduler.hpp"
 
+#include <InstrumentScheduler.hpp>
+
 Task *SyncScheduler::getTask(ComputePlace *computePlace)
 {
 	assert(computePlace != nullptr);
@@ -13,13 +15,21 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 	Task *task = nullptr;
 	uint64_t computePlaceIdx = computePlace->getIndex();
 
+	Instrument::enterSchedulerLock();
+
 	// Lock or delegate the work of getting a ready task
 	if (!_lock.lockOrDelegate(computePlaceIdx, task)) {
 		// Someone else acquired the lock and assigned us work
+		if (task) {
+			Instrument::exitSchedulerLockAsClient(task->getInstrumentationTaskId());
+		} else {
+			Instrument::exitSchedulerLockAsClient();
+		}
 		return task;
 	}
 
 	// We acquired the lock and we have to serve tasks
+	Instrument::schedulerLockBecomesServer();
 	setServingTasks(true);
 
 	// The idea is to always keep a compute place inside the following scheduling loop
@@ -47,6 +57,9 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 			// Try to get a ready task from the scheduler
 			task = _scheduler->getReadyTask(waitingComputePlace);
 
+			if (task != nullptr)
+				Instrument::schedulerLockServesTask(task->getInstrumentationTaskId());
+
 			// Assign the task to the waiting compute place even if it nullptr. The
 			// responsible for serving tasks is the current compute place, and we
 			// want to avoid changing the responsible constantly, as happened in the
@@ -70,6 +83,7 @@ Task *SyncScheduler::getTask(ComputePlace *computePlace)
 
 	// We are stopping to serve tasks
 	setServingTasks(false);
+	Instrument::exitSchedulerLockAsServer();
 
 	// Release the lock so another compute place can serve tasks
 	_lock.unlock();

@@ -15,7 +15,9 @@ from collections import defaultdict
 import operator
 import signal
 
-from runtime import RuntimeModel
+from executionmodel import ExecutionModel
+from runtimemodel   import RuntimeModel
+from kernelmodel    import KernelModel
 from paravertrace import ParaverTrace, ExtraeEventTypes
 import paraverviews as pv
 
@@ -73,36 +75,15 @@ class ctf2prv(bt2._UserSinkComponent):
 		self.__exitHandler = ExitHandler()
 
 		self.__hooks = defaultdict(list)
-		self.__paraverViews = [
-			pv.ParaverViewRuntimeCode(),
-			pv.ParaverViewRuntimeBusyWaiting(),
-			pv.ParaverViewRuntimeTasks(),
-			pv.ParaverViewTaskLabel(),
-			pv.ParaverViewTaskSource(),
-			pv.ParaverViewTaskId(),
-			pv.ParaverViewHardwareCounters(),
-			pv.ParaverViewThreadId(),
-			pv.ParaverViewRuntimeSubsystems(),
-			pv.ParaverViewCTFFlush(),
-			#pv.ParaverViewNumberOfReadyTasks(),
-			pv.ParaverViewNumberOfCreatedTasks(),
-			pv.ParaverViewNumberOfBlockedTasks(),
-			pv.ParaverViewNumberOfRunningTasks(),
-			pv.ParaverViewNumberOfCreatedThreads(),
-			pv.ParaverViewNumberOfRunningThreads(),
-			pv.ParaverViewNumberOfBlockedThreads(),
-		]
 
 		verbose = os.environ.get('CTF2PRV_VERBOSE', "0")
 		if verbose == "0" or verbose == 0:
 			self.__verbose = False
-			print("Starting CTF to PRV conversion. Set environemnt variable CTF2PRV_VERBOSE=1 to show progress", flush=True)
 		elif verbose == "1" or verbose == 1:
 			self.__verbose = True
 			print("Starting CTF to PRV conversion", flush=True)
 		else:
 			raise RuntimeError("Error: Unknown CTF2PRV_VERBOSE value. Expected 0 or 1")
-
 
 	def _finalize(self):
 		ts = self.__last.default_clock_snapshot.value
@@ -112,7 +93,8 @@ class ctf2prv(bt2._UserSinkComponent):
 	def _user_graph_is_configured(self):
 		self._it = self._create_message_iterator(self.__port)
 
-	def _process_event(self, ts, event):
+	def _process_event(self, ts, cpuId, event):
+		ExecutionModel.setCurrentEventData(ts, cpuId)
 		hookList = self.__hooks[event.name]
 		for hook in hookList:
 			hook(event, self.__payload)
@@ -131,7 +113,7 @@ class ctf2prv(bt2._UserSinkComponent):
 			absoluteStartTime = clk.clock_class.offset.seconds
 			ts = clk.value - 1 # see comments below
 			assert(ts >= 0)
-			ncpus = msg.event.stream.trace.environment["ncpus"]
+			cpuList = str(msg.event.stream.trace.environment["cpu_list"])
 			binaryName = msg.event.stream.trace.environment["binary_name"]
 			pid = msg.event.stream.trace.environment["pid"]
 			traceName = "trace_" + str(binaryName) + "_" + str(pid)
@@ -140,15 +122,47 @@ class ctf2prv(bt2._UserSinkComponent):
 			ParaverTrace.addTraceName(traceName)
 			ParaverTrace.addAbsoluteStartTime(absoluteStartTime)
 			ParaverTrace.addStartTime(ts)
-			ParaverTrace.addNumberOfCPUs(ncpus)
+			ParaverTrace.addCPUList(cpuList)
+			ParaverTrace.addBinaryName(binaryName)
 			ParaverTrace.initalizeTraceFiles()
 
-			# install event processing hooks
-			RuntimeModel.initialize(ncpus)
+			# Initialize both Kernel and Runtime Models. The Kernel Model must
+			# be initalized before Paravare views are created
+			KernelModel.initialize()
+			RuntimeModel.initialize()
+
+			# Create Paraver Views
+			self.__paraverViews = [
+				pv.ParaverViewRuntimeCode(),
+				pv.ParaverViewRuntimeBusyWaiting(),
+				pv.ParaverViewRuntimeTasks(),
+				pv.ParaverViewTaskLabel(),
+				pv.ParaverViewTaskSource(),
+				pv.ParaverViewTaskId(),
+				pv.ParaverViewHardwareCounters(),
+				pv.ParaverViewThreadId(),
+				pv.ParaverViewRuntimeSubsystems(),
+				pv.ParaverViewCTFFlush(),
+				#pv.ParaverViewNumberOfReadyTasks(),
+				pv.ParaverViewNumberOfCreatedTasks(),
+				pv.ParaverViewNumberOfBlockedTasks(),
+				pv.ParaverViewNumberOfRunningTasks(),
+				pv.ParaverViewNumberOfCreatedThreads(),
+				pv.ParaverViewNumberOfRunningThreads(),
+				pv.ParaverViewNumberOfBlockedThreads(),
+
+				pv.ParaverViewKernelThreadID(),
+				pv.ParaverViewKernelPreemptions(),
+				pv.ParaverViewKernelSyscalls(),
+			]
+
+			# Install event processing hooks
+			self.installHooks(KernelModel.preHooks())
 			self.installHooks(RuntimeModel.preHooks())
 			for view in self.__paraverViews:
 				self.installHooks(view.hooks())
 			self.installHooks(RuntimeModel.postHooks())
+			self.installHooks(KernelModel.postHooks())
 
 			# redirect message processing
 			self.__process_message = self._process_other_message
@@ -184,16 +198,18 @@ class ctf2prv(bt2._UserSinkComponent):
 
 		if type(msg) is bt2._EventMessageConst:
 			ts = msg.default_clock_snapshot.value
+			cpuId = msg.event["cpu_id"]
 
 			if self.__verbose:
 				name = msg.event.name
-				cpu_id = msg.event["cpu_id"]
-				print("event {}, cpu_id {}, timestamp {}".format(name, cpu_id, ts))
+				print("event {}, cpu_id {}, timestamp {}".format(name, cpuId, ts))
 
-			self._process_event(ts, msg.event)
+			self._process_event(ts, cpuId, msg.event)
 			self.__last = msg
 		elif type(msg) is bt2._StreamBeginningMessageConst:
-			pass 
+			# TODO use this to obtain env parameters
+			#domain = msg.stream.trace.environment['domain']
+			pass
 		elif type(msg) is bt2._StreamEndMessageConst:
 			pass
 		elif type(msg) is bt2._PacketBeginningMessageConst:
@@ -241,7 +257,7 @@ class stats(bt2._UserSinkComponent):
 	def _user_consume(self):
 		msg = next(self._it)
 
-		if self.__exitHandler().exit():
+		if self.__exitHandler.exit():
 			# TODO exit using babeltrace2 API
 			atexit.unregister(self._finalize)
 			self._finalize()

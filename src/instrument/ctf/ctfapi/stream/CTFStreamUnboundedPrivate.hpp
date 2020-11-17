@@ -19,8 +19,9 @@ namespace CTFAPI {
 	public:
 		CTFStreamUnboundedPrivate(size_t size,
 					  ctf_cpu_id_t cpu,
+					  int node,
 					  std::string path)
-			: CTFStream(size, cpu, path, CTFStreamUnboundedId)
+			: CTFStream(size, cpu, node, path, CTFStreamUnboundedId)
 		{
 		}
 

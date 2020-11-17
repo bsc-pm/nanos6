@@ -67,9 +67,14 @@ static CTFAPI::CTFEvent *eventMutexUnlockTaskContextEnter;
 static CTFAPI::CTFEvent *eventMutexUnlockTaskContextExit;
 static CTFAPI::CTFEvent *eventDebugRegister;
 static CTFAPI::CTFEvent *eventDebugEnter;
+static CTFAPI::CTFEvent *eventDebugTransition;
 static CTFAPI::CTFEvent *eventDebugExit;
+static CTFAPI::CTFEvent *eventSchedulerLockClient;
+static CTFAPI::CTFEvent *eventSchedulerLockServer;
+static CTFAPI::CTFEvent *eventSchedulerLockAssign;
+static CTFAPI::CTFEvent *eventSchedulerLockServerExit;
 
-void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
+void Instrument::preinitializeCTFEvents(CTFAPI::CTFUserMetadata *userMetadata)
 {
 	// create Events
 	__eventCTFFlush = userMetadata->addEvent(new CTFAPI::CTFEvent(
@@ -315,8 +320,29 @@ void Instrument::preinitializeCTFEvents(CTFAPI::CTFMetadata *userMetadata)
 		"nanos6:debug_enter",
 		"\t\tuint8_t _id;\n"
 	));
+	eventDebugTransition = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:debug_transition",
+		"\t\tuint8_t _id;\n"
+	));
 	eventDebugExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
 		"nanos6:debug_exit",
+		"\t\tuint8_t _dummy;\n"
+	));
+	eventSchedulerLockServer = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:scheduler_lock_server",
+		"\t\tuint64_t _ts_acquire;\n"
+	));
+	eventSchedulerLockClient = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:scheduler_lock_client",
+		"\t\tuint64_t _ts_acquire;\n"
+		"\t\tuint32_t _id;\n"
+	));
+	eventSchedulerLockAssign = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:scheduler_lock_assign",
+		"\t\tuint32_t _id;\n"
+	));
+	eventSchedulerLockServerExit = userMetadata->addEvent(new CTFAPI::CTFEvent(
+		"nanos6:scheduler_lock_server_exit",
 		"\t\tuint8_t _dummy;\n"
 	));
 }
@@ -767,6 +793,39 @@ void Instrument::tp_mutex_unlock_tc_exit()
 	CTFAPI::tracepoint(eventMutexUnlockTaskContextExit, dummy);
 }
 
+void Instrument::tp_scheduler_lock_client(ctf_timestamp_t acquireTimestamp, ctf_task_id_t taskId)
+{
+	if (!eventSchedulerLockClient->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventSchedulerLockClient, acquireTimestamp, taskId);
+}
+
+void Instrument::tp_scheduler_lock_server(ctf_timestamp_t acquireTimestamp)
+{
+	if (!eventSchedulerLockServer->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventSchedulerLockServer, acquireTimestamp);
+}
+
+void Instrument::tp_scheduler_lock_assign(ctf_task_id_t taskId)
+{
+	if (!eventSchedulerLockAssign->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventSchedulerLockAssign, taskId);
+}
+
+void Instrument::tp_scheduler_lock_server_exit()
+{
+	if (!eventSchedulerLockServerExit->isEnabled())
+		return;
+
+	char dummy = 0;
+	CTFAPI::tracepoint(eventSchedulerLockServerExit, dummy);
+}
+
 void Instrument::tp_debug_register(const char *name, ctf_debug_id_t id)
 {
 	if (!eventDebugRegister->isEnabled())
@@ -790,4 +849,12 @@ void Instrument::tp_debug_exit()
 
 	char dummy = 0;
 	CTFAPI::tracepoint(eventDebugExit, dummy);
+}
+
+void Instrument::tp_debug_transition(ctf_debug_id_t id)
+{
+	if (!eventDebugTransition->isEnabled())
+		return;
+
+	CTFAPI::tracepoint(eventDebugTransition, id);
 }

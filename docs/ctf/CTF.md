@@ -10,6 +10,13 @@ CTF traces can be directly visualized with tools such as babeltrace1 or babeltra
 But it is recommended first to convert them to Paraver traces using the provided `ctf2prv` command.
 Although Nanos6 requires no special packages to write CTF traces, the `ctf2prv` converter needs python3 and the babeltrace2 python bindings.
 
+Nanos6 can simultaneously collect Linux Kernel events and store them in CTF format.
+Linux kernel events provide system-wide information such as context switches and interrupts, among others.
+Enabling Linux Kernel events tracing requires special permissions (see the section "Kernel tracing" for more details).
+The advantage of using the Nanos6 Linux Kernel tracing facility compared to other tracing solutions is its integration:
+Linux Kernel events are collected when the Nanos6 core deems appropriate, minimizing the disturbance on the application execution flow.
+Also, Nanos6 provides a simple interface based on presets to select the most relevant Linux Kernel events but also allows more experienced users to provide a list of manually defined events.
+
 The Nanos6 CTF backend will transparently collect hardware counters information if the Nanos6 Hardware counters infrastructure has been enabled.
 See the Nanos6 README for more information on how to enable Hardware Counters.
 
@@ -20,12 +27,21 @@ See [README.md](README.md) for Nanos6 and Extrae usage.
 Implementation details
 ----------------------
 
-Nanos6 keeps a per-core buffer to store CTF events before flushing them to the storage device.
+Nanos6 keeps a per-core circular buffer to store CTF events before flushing them to the storage device.
+Each Nanos6 worker threads is pinned to a core and uses the core's buffer to store the worker's emitted events.
 Therefore, emitting an event from a worker thread is a lock-free operation.
 However, events emitted by external threads (threads not controlled by Nanos6 and possibly not pinned to any core) are stored in a shared buffer and it is necessary to take a lock for writing an event.
 
-When a buffer is full, it is needed to flush it to the storage device.
-Flushing is done synchronously (i.e. a worker thread that generates a tracepoint will have to flush the buffer if there is no free space left) and it might affect the execution workflow.
+When Linux Kernel events are enabled, a second per-core buffer is allocated to store kernel-provided events.
+Internally, kernel events are collected using the `perf_event_open()` system call, which requires to open a file descriptor per-core and per-event.
+The `perf_event_open` syscall exports events through a shared per-core memory mapped circular buffer.
+Nanos6 periodically moves events from the kernel circular buffer to the per-core nanos6 buffer, formatting the event has necessary during the process.
+However, is worth noting that kernel events might be lost if too many events are generated before Nanos6 can move them.
+
+Nanos6 event circular buffers are divided into four subbuffers.
+Filled subbuffers are flushed to the storage device by worker threads in between tasks executions.
+Flushing is done synchronously (i.e. while a worker is performing a flush, it will not perform other tasks) and it might affect the execution workflow.
+External threads (but also worker threads) will flush their buffers when the next generated event does not fit into the buffer.
 Flushing operations are also recorded and can be inspected with the "CTF flush buffers to disk" view.
 
 Traces are written by default under the `instrument.ctf.tmpdir` configuration variable or under `/tmp` if not set.
@@ -35,11 +51,7 @@ When an application execution finishes, Nanos6 copies the trace to the current d
 Usage
 =====
 
-To generate a CTF trace:
-
-```sh
-$ NANOS6_CONFIG_OVERRIDE="version.instrument=ctf" ./app
-```
+To generate a CTF trace, run the application with the `version.instrument` config set to `ctf`.
 
 This will create a `trace-<app_name>-<app_pid>` folder in the current directory, hereinafter refered to as `$TRACE` for convenience.
 The subdirectory `$TRACE/ctf` contains the ctf trace as recorded by Nanos6.
@@ -56,6 +68,51 @@ $ ctf2prv $TRACE
 ```
 
 which will generate the directory `$TRACE/prv` with the Paraver trace.
+
+
+Linux Kernel Tracing
+==============
+
+Requirements:
+ - Linux Kernel >= 4.1.0
+ - Set /proc/sys/kernel/perf\_event\_paranoid to -1
+ - Grant the current user read permissions for /sys/kernel/debug/tracing or /sys/kernel/tracing (tracefs standard mountpoints)
+
+The Linux Kernel provides a set of events (also named tracepoints).
+To enable kernel events tracing in Nanos6, the user needs to specify which events wants to collect through the nanos6 configuration file.
+The option `instrument.ctf.events.kernel.presets` allows to speciy a list of presets that ease selecting events for supported Paraver views.
+For instance, try to set `instrument.ctf.events.kernel.presets=[preemption]` to enable preemption-related events.
+
+Please check the Paraver views description below for the list of presets that each view requries.
+
+If the user does not want to enable some of the events defined in a preset, it can blacklist them in the `instrument.ctf.events.kernel.exclude` list.
+
+Additionally, the user can provide a file path in `instrument.ctf.events.kernel.file` with a list of raw kernel events to enable.
+An example file named `kernel_events.conf` follows.
+
+```
+$ cat kernel_events.conf
+sched_switch
+sys_enter_open
+sys_exit_open
+# mm_page_alloc # comented lines are not enabled
+```
+
+A list of events that your system supports can be obtained with:
+
+```sh
+perf list tracepoint | grep Tracepoint | awk '{sub(/.*:/,"",$1); print $1}'
+```
+
+Or by inspecting the contents of tracefs, usually mounted by default at `/sys/kernel/tracing/events` or `/sys/kernel/debug/tracing/events`.
+Also, Nanos6 creates the file `$TRACE/nanos6_kerneldefs.json` which contains a human-readable format definition of all supported system events.
+Unfortunately, there is no official Linux description of each event at the moment; please check the Linux Kernel source code for a definition of the events you are interested into.
+
+If too many events are enabled, tracing might fail due to reaching the limit of open files in the system (one file descriptor is opened per event and core).
+In that case, please, increase the open file limit, reduce the number of events and/or the number of cores.
+
+The CTF kernel trace is stored under `$TRACE/ctf/kernel` whilst the Nanos6 internal events trace are stored in `$TRACE/ctf/ust`.
+Nanos6 will convert the generated CTF kernel trace (both user and kernel) into Paraver at the end of the execution, as usual.
 
 Paraver Views
 =============
@@ -88,6 +145,11 @@ Do not use the Extrae cfg's views as event identifiers are not compatible.
 
 Tasks
 -----
+
+Shows the name (label) of tasks executed in each core.
+
+Tasks and Runtime
+-----------------
 
 Shows the name (label) of tasks executed in each core.
 It also displays the time spent on Nanos6 Runtime (shown as "Runtime") and threads busy waiting (shown as "Busy waiting") while waiting for ready tasks to execute.
@@ -129,6 +191,7 @@ Thread Id
 Shows the thread Id (TID) of the thread that was running in each core.
 Be aware that this view only shows the thread placement according to Nanos6 perspective, not the OS perspective.
 This means that even if this view shows a thread running uninterruptedly in a core for a long time, the system might have preempted the Nanos6 thread by another system thread a number of times without this being displayed in the view.
+Please, use the "Linux Kernel Thread Ids" view to see system-wide TIDs.
 
 Runtime Status Simple
 ---------------------
@@ -193,3 +256,43 @@ This flushing can occur in a number of places within the Nanos6 core, either bec
 
 This view shows exactly when the flushing happened.
 If attempting to write the event A into the Nanos6 event buffer triggers a flush, the produced Nanos6 trace will first show the event that triggered the flush followed by the flushing events.
+
+Paraver Views for Kernel Events
+===============================
+
+All the views listed below require Linux Kernel events.
+Please, check the section "Linux Kernel Tracing" for more details.
+
+Paraver Views that depend on kernel events can be found under:
+
+```sh
+$INSTALLATION_PREFIX/share/doc/nanos6/paraver-cfg/nanos6/ctf2prv/kernel
+```
+
+Kernel Preemptions
+------------------
+
+Uses Linux Kernel events to show preemptions affecting the cores where the traced application runs.
+Preemptions include interruptions and both user and kernel threads.
+Interrupts will be shown as "IRQ" and "Soft IRQ".
+IRQs are run in interrupt context.
+Soft IRQs are deferred interrupt work that run out of interrupt context.
+
+This view requires the Linux Kernel "preemption" preset (interrupts and threads) or the "context\_switch" preset (only threads).
+If using the "context\_switch" preset, Paraver might warn about not finding interrupt events, but it is safe to inspect the view.
+
+Kernel Thread Ids
+------------------
+
+Uses Linux Kernel events to show the Thread id (TID) of the running thread in each core used by Nanos6.
+
+This view requires the Linux Kernel "context\_switch" preset.
+
+Kernel System Calls
+------------------
+
+Uses Linux Kernel events to show the system calls performed by each thread on cores used by Nanos6.
+In this view, all threads but the traced application will be displayed as "Other threads" to enhance the readability of system calls.
+
+This view requires the Linux Kernel "syscall" preset to trace all system calls.
+If the user only wants to trace a set of syscalls, it can instead specify the "context\_switch" preset and provide a list of system call events manually using the `instrument.ctf.events.kernel.file` option in the Nanos6 configuration file.

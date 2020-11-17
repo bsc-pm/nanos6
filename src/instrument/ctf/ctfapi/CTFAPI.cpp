@@ -4,13 +4,13 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-
 #include <cassert>
 #include <errno.h>
 #include <iostream>
 #include <string>
 
 #include "CTFAPI.hpp"
+#include "CTFClock.hpp"
 #include "CTFTrace.hpp"
 #include "CTFTypes.hpp"
 #include "CTFEvent.hpp"
@@ -30,7 +30,7 @@ uint64_t CTFAPI::getTimestamp()
 	// confident on which syscall and clock this translates. Should we move
 	// to c++ here? If so, remove the -lrt
 
-	if (clock_gettime(CLOCK_MONOTONIC, &tp)) {
+	if (clock_gettime(CTF_CLOCK, &tp)) {
 		FatalErrorHandler::failIf(true, std::string("Instrumentation: ctf: clock_gettime syscall: ") + strerror(errno));
 	}
 	timestamp = tp.tv_sec * ns + tp.tv_nsec;
@@ -86,16 +86,32 @@ void CTFAPI::flushSubBuffers(CTFStream *stream,
 	*tsAfter = getRelativeTimestamp();
 }
 
-void CTFAPI::flushCurrentVirtualCPUBufferIfNeeded()
+void CTFAPI::flushCurrentVirtualCPUBufferIfNeeded(CTFStream *stream, CTFStream *report)
 {
 	uint64_t tsBefore, tsAfter;
-	CTFStream *stream = Instrument::getCTFCPULocalData()->userStream;
-	assert(stream != nullptr);
 
-	stream->lock();
+	assert(stream != nullptr);
+	assert(report != nullptr);
+
+	// External threads (but the leader thread) never have a change to call
+	// this function. Hence, locking is not needed
 	if (stream->checkIfNeedsFlush()) {
 		flushSubBuffers(stream, &tsBefore, &tsAfter);
-		writeFlushingTracepoint(stream, tsBefore, tsAfter);
+		writeFlushingTracepoint(report, tsBefore, tsAfter);
 	}
-	stream->unlock();
+}
+
+void CTFAPI::updateKernelEvents(CTFKernelStream *kernelStream, CTFStream *userStream)
+{
+	// only worker threads call this function, no need to take the stream lock
+	uint64_t tsBefore, tsAfter;
+
+	kernelStream->updateAvailableKernelEvents();
+	while (!kernelStream->readKernelEvents()) {
+		// If the kernel stream buffer is full, flush it and write a
+		// flushing tracepoint to this CPU's user stream.
+		flushAll(kernelStream, &tsBefore, &tsAfter);
+		writeFlushingTracepoint(userStream, tsBefore, tsAfter);
+	}
+	kernelStream->consumeKernelEvents();
 }

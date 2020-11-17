@@ -9,12 +9,14 @@
 #endif
 
 
-#include <sys/mman.h>
-#include <string.h>
+#include <algorithm>
+#include <cstring>
 #include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <numa.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #include "CircularBuffer.hpp"
@@ -39,11 +41,18 @@ void CircularBuffer::initializeFile(const char *path)
 	);
 
 	// set initial values
-	fd = tmpfd;
-	fileOffset = 0;
+	_fd = tmpfd;
+	_fileOffset = 0;
 }
 
-void CircularBuffer::initializeBuffer(uint64_t size)
+static void prefaultMemory(char *addr, size_t size)
+{
+	for (size_t i = 0; i < size; i+= PAGE_SIZE) {
+		addr[i] = 1;
+	}
+}
+
+void CircularBuffer::initializeBuffer(uint64_t size, int node)
 {
 	void *tmp;
 	uint64_t sizeAligned;
@@ -61,30 +70,45 @@ void CircularBuffer::initializeBuffer(uint64_t size)
 	size_t nAlign = (size + (ALIGN_SIZE - 1)) >> ALIGN_SHIFT;
 	sizeAligned = nAlign * ALIGN_SIZE;
 
-	// TODO allocate memory on each CPU (madvise or specific
-	// instrument function?)
+	_node = node;
+	// Circular buffers of threads not bound to any core (such as external
+	// threads) are given a NUMA node id of -1 to specify that its memory
+	// should not be allocated in any specific NUMA node
+	if (node != -1) {
+		// Allocate memory on a specific numa node
+		tmp = numa_alloc_onnode(sizeAligned, node);
+		if (tmp == nullptr) {
+			FatalErrorHandler::fail(
+				" circular buffer: when allocating tracing buffer: ",
+				strerror(errno)
+			);
+		}
+		prefaultMemory((char *) tmp, sizeAligned);
+	} else {
+		// Allocate memory without binding, let it be allocated as it is accessed
+		tmp = mmap(NULL, sizeAligned, PROT_READ | PROT_WRITE,
+			   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+		if (tmp == MAP_FAILED) {
+			FatalErrorHandler::fail(
+				" circular buffer: when allocating tracing buffer: ",
+				strerror(errno)
+			);
+		}
+	}
 
-	tmp = mmap(NULL, sizeAligned, PROT_READ | PROT_WRITE,
-		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	FatalErrorHandler::failIf(
-		buffer == MAP_FAILED,
-		" circular buffer: when allocating tracing buffer: ",
-		strerror(errno)
-	);
-
-	// set initial values
-	mask          = sizeAligned - 1;
-	buffer        = (char *) tmp;
-	bufferSize    = sizeAligned;
-	subBufferSize = sizeAligned/NSUBBUF;
-	subBufferMask = subBufferSize - 1;
+	// Set initial values
+	_mask          = sizeAligned - 1;
+	_buffer        = (char *) tmp;
+	_bufferSize    = sizeAligned;
+	_subBufferSize = sizeAligned/NSUBBUF;
+	_subBufferMask = _subBufferSize - 1;
 
 	resetPointers();
 }
 
-void CircularBuffer::initialize(uint64_t size, const char *path)
+void CircularBuffer::initialize(uint64_t size, int node, const char *path)
 {
-	initializeBuffer(size);
+	initializeBuffer(size, node);
 	initializeFile(path);
 }
 
@@ -93,27 +117,32 @@ void CircularBuffer::shutdown()
 	int ret;
 
 	flushAll();
-	ret = close(fd);
+	ret = close(_fd);
 	FatalErrorHandler::warnIf(
 		ret == -1,
 		ret, " circular buffer: when closing backing file: ",
 		strerror(errno)
 	);
-	ret = munmap(buffer, bufferSize);
-	FatalErrorHandler::warnIf(
-		ret == -1,
-		ret, " circular buffer: when unmapping circular buffer: ",
-		strerror(errno)
-	);
-	bufferSize = 0;
+	if (_node != -1) {
+		numa_free(_buffer, _bufferSize);
+	} else {
+		ret = munmap(_buffer, _bufferSize);
+		if (ret == -1) {
+			FatalErrorHandler::warn(
+				" circular buffer: when unmapping circular buffer: ",
+				strerror(errno)
+			);
+		}
+	}
+	_bufferSize = 0;
 }
 
 void CircularBuffer::resetPointers()
 {
-	head = 0;
-	tail = 0;
-	hole = 0;
-	wall = bufferSize;
+	_head = 0;
+	_tail = 0;
+	_hole = 0;
+	_wall = _bufferSize;
 }
 
 void CircularBuffer::flushToFile(char *buf, size_t size)
@@ -122,20 +151,20 @@ void CircularBuffer::flushToFile(char *buf, size_t size)
 	size_t rem = size;
 	ssize_t ret;
 
-	assert(bufferSize != 0);
+	assert(_bufferSize != 0);
 
 	if (!size)
 		return;
 
 	do {
-		ret = pwrite(fd, (const char *)buf + offset, rem, fileOffset);
+		ret = pwrite(_fd, (const char *)buf + offset, rem, _fileOffset);
 		FatalErrorHandler::failIf(ret < 0,
 			"circular buffer: when writing to file: ", strerror(errno)
 		);
 
-		offset     += ret;
-		rem        -= ret;
-		fileOffset += ret;
+		offset      += ret;
+		rem         -= ret;
+		_fileOffset += ret;
 	} while (rem > 0);
 }
 
@@ -143,12 +172,12 @@ bool CircularBuffer::checkIfNeedsFlush()
 {
 	uint64_t size;
 
-	// if wraps it needs to flush
+	// If wraps it needs to flush
 	if (wraps())
 		return true;
 
-	// otherwise let's check if the wirtten size exceeds the subbuffer size
-	size = ((head - tail) & ~subBufferMask);
+	// Otherwise let's check if the wirtten size exceeds the subbuffer size
+	size = ((_head - _tail) & ~_subBufferMask);
 	return (size > 0);
 }
 
@@ -156,26 +185,58 @@ bool CircularBuffer::alloc(uint64_t size)
 {
 	uint64_t next_wall;
 
-	assert(size <= bufferSize);
+	assert(size <= _bufferSize);
 
-	// there is enough space in the buffer?
-	if (head + size - tail > bufferSize) {
+	// There is enough space in the buffer?
+	if (_head + size - _tail > _bufferSize) {
 		return false;
 	}
 
-	// is this space contiguous?
-	next_wall = (head & ~mask) + bufferSize;
-	if (next_wall - head < size) {
-		hole = head;
-		head = next_wall;
+	// Is this space contiguous?
+	next_wall = (_head & ~_mask) + _bufferSize;
+	if (next_wall - _head < size) {
+		_hole = _head;
+		_head = next_wall;
 		// if not, is the next space contiguous?
-		if (head + size - tail > bufferSize) {
+		if (_head + size - _tail > _bufferSize) {
 			return false;
 		}
 	}
 
-	// yes, we have space!
+	// Yes, we have space!
 	return true;
+}
+
+uint64_t CircularBuffer::allocAtLeast(uint64_t minSize)
+{
+	uint64_t nextWall;
+	uint64_t available;
+
+	assert(minSize <= _bufferSize);
+
+	// Is there enough space in the buffer?
+	if (_head + minSize - _tail > _bufferSize) {
+		return 0;
+	}
+
+	// Is there enough contiguous space to service the requested minimum size?
+	nextWall = (_head & ~_mask) + _bufferSize;
+	if (nextWall - _head < minSize) {
+		// If not, mark this segment as a hole and move forward
+		_hole = _head;
+		_head = nextWall;
+		// We cannot cross the border again so what's left is what we have
+		available = _bufferSize - (_head - _tail);
+		// Check again the available size, after moving the _head there might
+		// no longer be enough space
+		available = (available >= minSize)? available : 0;
+	} else {
+		// If yes, get the minimum between the real space left and and
+		// the maximum contiguous space
+		available = std::min(_bufferSize - (_head - _tail), nextWall - _head);
+	}
+
+	return available;
 }
 
 void CircularBuffer::flushUpToTheWrap()
@@ -185,21 +246,21 @@ void CircularBuffer::flushUpToTheWrap()
 	if (!wraps())
 		return;
 
-	seg = (tail < hole) ? hole : wall;
-	flushToFile(buffer + (tail & mask), seg - tail);
-	tail = wall;
-	wall += bufferSize;
+	seg = (_tail < _hole) ? _hole : _wall;
+	flushToFile(_buffer + (_tail & _mask), seg - _tail);
+	_tail = _wall;
+	_wall += _bufferSize;
 }
 
 void CircularBuffer::flushAll()
 {
-	// if the buffer wraps flush up to the wall or hole first
+	// If the buffer wraps flush up to the wall or hole first
 	flushUpToTheWrap();
 
-	// next flush up to head
-	flushToFile(buffer + (tail & mask), head - tail);
+	// Next flush up to _head
+	flushToFile(_buffer + (_tail & _mask), _head - _tail);
 
-	// move pointers to the beginning of the buffer; we want head to be as
+	// Move pointers to the beginning of the buffer; we want head to be as
 	// far as possible from the wall
 	resetPointers();
 }
@@ -208,22 +269,22 @@ void CircularBuffer::flushFilledSubBuffers()
 {
 	uint64_t size;
 
-	// if the buffer wraps flush up to the wall or hole first
+	// If the buffer wraps flush up to the wall or _hole first
 	flushUpToTheWrap();
 
-	// next, flush up to the next subbuffer. Here we priorize flushing
+	// Next, flush up to the next subbuffer. Here we priorize flushing
 	// size aligned blocks rather than flushing everything
-	size = ((head - tail) & ~subBufferMask);
-	flushToFile(buffer + (tail & mask), size);
-	tail += size;
+	size = ((_head - _tail) & ~_subBufferMask);
+	flushToFile(_buffer + (_tail & _mask), size);
+	_tail += size;
 
-	// if we have flushed everything, return pointers to the beginning of
-	// the buffer, we want head to be as far as possible from the wall.
-	if (tail == head) {
+	// If we have flushed everything, return pointers to the beginning of
+	// the buffer, we want head to be as far as possible from the wall
+	if (_tail == _head) {
 		resetPointers();
 	}
 
-	// note that size will always advance in multiples of subBufferSize,
+	// Note that size will always advance in multiples of subBufferSize,
 	// hence, all flushes will be aligned but for flushes with holes (whose
 	// start address will be aligned but not its size)
 }

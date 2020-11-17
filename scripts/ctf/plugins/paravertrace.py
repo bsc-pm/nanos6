@@ -24,6 +24,10 @@ class ExtraeEventTypes():
 	NUMBER_OF_RUNNING_THREADS = 6400023
 	NUMBER_OF_BLOCKED_THREADS = 6400024
 
+	KERNEL_THREAD_ID          = 6400100
+	KERNEL_PREEMPTIONS        = 6400101
+	KERNEL_SYSCALLS           = 6400102
+
 class ExtraeEvent:
 	def __init__(self, identifier, description, mid = 0, used = True):
 		self.__id = identifier
@@ -93,10 +97,17 @@ class ExtraeEventCollection:
 class ParaverTrace:
 	__name = "trace"
 	__events = {}
+
 	__ncpus = 0
 	__nvcpus = 1 # leader thread virtual cpu
+	__maxRealCPUId = 0
+	__cpuIdIndex = 0
+	__realCPUList = None
+
+	__binaryName = "undefined"
 	__startTime = 0
 	__endTime = 0
+
 	__eventCollections = []
 	__paraverHeaderDurationSlotSize = len(str(2**64))
 	__paraverApplicationModeSlotSize = len(str(2**64))
@@ -129,14 +140,32 @@ class ParaverTrace:
 	@classmethod
 	def increaseVirtualCPUCount(cls):
 		cls.__nvcpus += 1
+		cls.__cpuMap.append(cls.__cpuIdIndex)
+		cls.__cpuIdIndex += 1
 
 	@classmethod
-	def emitEvent(cls, ts, cpuID, data):
-		cpuID += 1 # Paraver does not like CpuID 0
-		entry = "2:0:1:1:{}:{}".format(cpuID, ts)
+	def emitEvent(cls, ts, cpuId, data):
+		cpuId = cls.__cpuMap[cpuId]
+		entry = "2:0:1:1:{}:{}".format(cpuId, ts)
 		for (eventType, eventValue) in data:
 			entry += ":" + str(eventType) + ":" + str(eventValue)
 		cls.__prvFile.write(entry + "\n")
+
+	@classmethod
+	def emitCommunicationEvent(cls, cpuSendId, timeSend, cpuRecvId, timeRecv):
+		cpuSendId  = cls.__cpuMap[cpuSendId]
+		cpuRecvId  = cls.__cpuMap[cpuRecvId]
+		size       = 1
+		tag        = 1
+
+		objectSend = "0:1:1:{}".format(cpuSendId)
+		objectRecv = "0:1:1:{}".format(cpuRecvId)
+		entry = "3:{}:{}:{}:{}:{}:{}:{}:{}\n".format(
+		        objectSend, timeSend, timeSend,
+		        objectRecv, timeRecv, timeRecv,
+		        size, tag)
+
+		cls.__prvFile.write(entry)
 
 	@classmethod
 	def finalizeTraceFiles(cls):
@@ -253,7 +282,7 @@ class ParaverTrace:
 		rowStr += "LEVEL THREAD SIZE " + str(tcpus) + "\n"
 
 		for cpu in range(cls.__ncpus):
-			rowStr += "CPU " + str(cpu) + "\n"
+			rowStr += "CPU " + str(cls.__realCPUList[cpu]) + "\n"
 
 		rowStr += "LT VCPU " + str(cls.__ltcpu) + "\n"
 
@@ -311,10 +340,51 @@ class ParaverTrace:
 		cls.__endTime = endTime
 
 	@classmethod
-	def addNumberOfCPUs(cls, ncpus):
-		cls.__ncpus = ncpus
-		cls.__ltcpu = ncpus # by convention
+	def addCPUList(cls, cpuListStr):
+		cpuList = [int(cpu) for cpu in cpuListStr.split(",")]
+		cpuList.sort()
+
+		# Detect max cpu Id
+		maxCPUId = 0
+		for cpu in cpuList:
+			if cpu > maxCPUId:
+				maxCPUId = cpu
+
+		# Create cpu map from real system Id to Paraver Id
+		cls.__cpuIdIndex = 1 # Paraver does not like cpu id 0
+		cls.__cpuMap = [-1] * (maxCPUId + 1 + 1)
+		for cpu in cpuList:
+			cls.__cpuMap[cpu] = cls.__cpuIdIndex
+			cls.__cpuIdIndex += 1
+		# Add Leader Thread entry too
+		cls.__cpuMap[maxCPUId + 1] = cls.__cpuIdIndex
+		cls.__cpuIdIndex += 1
+
+		cls.__ncpus = len(cpuList)
+		cls.__maxRealCPUId = maxCPUId
+		cls.__ltcpu = maxCPUId + 1 # by convention
+		cls.__realCPUList = cpuList
+
+	@classmethod
+	def addBinaryName(cls, binaryName):
+		cls.__binaryName = binaryName
 
 	@classmethod
 	def addAbsoluteStartTime(cls, absoluteStartTime):
 		cls.__absoluteStartTime = absoluteStartTime
+
+	@classmethod
+	def getBinaryName(cls):
+		return cls.__binaryName
+
+	@classmethod
+	def getNumberOfCPUs(cls):
+		return cls.__ncpus
+
+	@classmethod
+	def getMaxRealCPUId(cls):
+		return cls.__maxRealCPUId
+
+	@classmethod
+	def getLeaderThreadCPUId(cls):
+		return cls.__ltcpu

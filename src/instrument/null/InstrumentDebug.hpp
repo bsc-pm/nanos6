@@ -18,6 +18,11 @@ namespace Instrument {
 	) {
 	}
 
+	inline void debugTransition(
+		__attribute__((unused)) uint8_t id
+	) {
+	}
+
 	inline void debugExit() {}
 
 	inline void debugRegister(

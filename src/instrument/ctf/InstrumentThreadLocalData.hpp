@@ -8,6 +8,8 @@
 #define INSTRUMENT_CTF_THREAD_LOCAL_DATA_HPP
 
 
+#include "ctfapi/CTFTypes.hpp"
+
 #include <InstrumentInstrumentationContext.hpp>
 
 namespace Instrument {
@@ -17,6 +19,7 @@ namespace Instrument {
 	struct ThreadLocalData {
 		InstrumentationContext _context;
 		bool isBusyWaiting;
+		ctf_timestamp_t schedulerLockTimestamp;
 	};
 }
 

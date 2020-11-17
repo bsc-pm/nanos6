@@ -4,11 +4,12 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-#ifndef INSTRUMENT_CTF_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
-#define INSTRUMENT_CTF_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
+#ifndef INSTRUMENT_CTF_SCHEDULER_HPP
+#define INSTRUMENT_CTF_SCHEDULER_HPP
 
+#include "../api/InstrumentScheduler.hpp"
 #include "CTFTracepoints.hpp"
-#include "instrument/api/InstrumentSchedulerSubsystemEntryPoints.hpp"
+#include "InstrumentTaskId.hpp"
 
 namespace Instrument {
 
@@ -50,6 +51,44 @@ namespace Instrument {
 		tp_scheduler_get_task_exit();
 	}
 
+	inline void enterSchedulerLock()
+	{
+		ThreadLocalData &tld = getThreadLocalData();
+		tld.schedulerLockTimestamp = CTFAPI::getRelativeTimestamp();
+	}
+
+	inline void schedulerLockBecomesServer()
+	{
+		ThreadLocalData &tld = getThreadLocalData();
+		tp_scheduler_lock_server(tld.schedulerLockTimestamp);
+	}
+
+	inline void exitSchedulerLockAsClient(
+		task_id_t taskId
+	) {
+		ThreadLocalData &tld = getThreadLocalData();
+		tp_scheduler_lock_client(tld.schedulerLockTimestamp, taskId._taskId);
+	}
+
+	inline void exitSchedulerLockAsClient()
+	{
+		ThreadLocalData &tld = getThreadLocalData();
+		if (!tld.isBusyWaiting) {
+			tp_scheduler_lock_client(tld.schedulerLockTimestamp, 0);
+		}
+	}
+
+	inline void schedulerLockServesTask(
+		task_id_t taskId
+	) {
+		tp_scheduler_lock_assign(taskId._taskId);
+	}
+
+	inline void exitSchedulerLockAsServer()
+	{
+		tp_scheduler_lock_server_exit();
+	}
+
 }
 
-#endif // INSTRUMENT_CTF_SCHEDULER_SUBSYTEM_ENTRY_POINTS_HPP
+#endif // INSTRUMENT_CTF_SCHEDULER_HPP

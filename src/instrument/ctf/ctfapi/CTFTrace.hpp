@@ -13,7 +13,8 @@
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "support/config/ConfigVariable.hpp"
 
-#include "CTFMetadata.hpp"
+#include "CTFUserMetadata.hpp"
+#include "CTFKernelMetadata.hpp"
 
 
 namespace CTFAPI {
@@ -38,7 +39,8 @@ namespace CTFAPI {
 		std::string _kernelPath;
 		std::string _binaryName;
 		uint64_t _pid;
-		CTFMetadata *_metadata;
+		CTFUserMetadata *_userMetadata;
+		CTFKernelMetadata *_kernelMetadata;
 
 		uint64_t _absoluteStartTime;
 		uint16_t _totalCPUs;
@@ -49,15 +51,26 @@ namespace CTFAPI {
 		void operator=(CTFTrace const&) = delete;
 
 		void setTracePath(const char* tracePath);
-		void createTraceDirectories(std::string &userPath, std::string &kernelPath);
+		void createTraceDirectories(std::string &basePath, std::string &userPath, std::string &kernelPath);
 		void initializeTraceTimer();
+		std::string searchPythonCommand(const char *command);
 		void convertToParaver();
 		void moveTemporalTraceToFinalDirectory();
 		void clean();
 
-		void setMetadata(CTFMetadata *metadata)
+		void setMetadata(CTFUserMetadata *metadata)
 		{
-			_metadata = metadata;
+			_userMetadata = metadata;
+		}
+
+		void setKernelMetadata(CTFKernelMetadata *metadata)
+		{
+			_kernelMetadata = metadata;
+		}
+
+		CTFKernelMetadata *getKernelMetadata() const
+		{
+			return _kernelMetadata;
 		}
 
 		void setTotalCPUs(uint16_t totalCPUs)
@@ -82,6 +95,10 @@ namespace CTFAPI {
 
 		inline uint64_t getAbsoluteStartTimestamp() const {
 			return _absoluteStartTime;
+		}
+
+		inline std::string getTemporalTracePath() const {
+			return _tmpTracePath;
 		}
 	};
 }

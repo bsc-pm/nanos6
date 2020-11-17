@@ -584,10 +584,15 @@ instrument_ctf_sources = \
 	src/instrument/ctf/ctfapi/context/CTFContextCPUHardwareCounters.cpp \
 	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.cpp \
 	src/instrument/ctf/ctfapi/stream/CircularBuffer.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProviderDebug.cpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelStream.cpp \
 	src/instrument/ctf/ctfapi/stream/CTFStream.cpp \
 	src/instrument/ctf/ctfapi/CTFAPI.cpp \
 	src/instrument/ctf/ctfapi/CTFEvent.cpp \
+	src/instrument/ctf/ctfapi/CTFKernelMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.cpp \
+	src/instrument/ctf/ctfapi/CTFUserMetadata.cpp \
 	src/instrument/ctf/ctfapi/CTFTrace.cpp \
 	src/instrument/ctf/InstrumentCPULocalData.cpp \
 	src/instrument/ctf/InstrumentInitAndShutdown.cpp \
@@ -925,7 +930,7 @@ noinst_HEADERS = \
 	src/instrument/api/InstrumentLeaderThread.hpp \
 	src/instrument/api/InstrumentLogMessage.hpp \
 	src/instrument/api/InstrumentReductions.hpp \
-	src/instrument/api/InstrumentSchedulerSubsystemEntryPoints.hpp \
+	src/instrument/api/InstrumentScheduler.hpp \
 	src/instrument/api/InstrumentTaskExecution.hpp \
 	src/instrument/api/InstrumentTaskStatus.hpp \
 	src/instrument/api/InstrumentTaskWait.hpp \
@@ -939,14 +944,19 @@ noinst_HEADERS = \
 	src/instrument/ctf/ctfapi/context/CTFContextTaskHardwareCounters.hpp \
 	src/instrument/ctf/ctfapi/context/CTFEventContext.hpp \
 	src/instrument/ctf/ctfapi/stream/CircularBuffer.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelEventsProvider.hpp \
+	src/instrument/ctf/ctfapi/stream/CTFKernelStream.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStream.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedPrivate.hpp \
 	src/instrument/ctf/ctfapi/stream/CTFStreamUnboundedShared.hpp \
 	src/instrument/ctf/ctfapi/CTFAPI.hpp \
+	src/instrument/ctf/ctfapi/CTFClock.hpp \
 	src/instrument/ctf/ctfapi/CTFEvent.hpp \
+	src/instrument/ctf/ctfapi/CTFKernelMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFMetadata.hpp \
 	src/instrument/ctf/ctfapi/CTFTrace.hpp \
 	src/instrument/ctf/ctfapi/CTFTypes.hpp \
+	src/instrument/ctf/ctfapi/CTFUserMetadata.hpp \
 	src/instrument/ctf/CTFTracepoints.hpp \
 	src/instrument/ctf/InstrumentAddTask.hpp \
 	src/instrument/ctf/InstrumentBlockingAPI.hpp \
@@ -966,7 +976,7 @@ noinst_HEADERS = \
 	src/instrument/ctf/InstrumentLeaderThread.hpp \
 	src/instrument/ctf/InstrumentLogMessage.hpp \
 	src/instrument/ctf/InstrumentReductions.hpp \
-	src/instrument/ctf/InstrumentSchedulerSubsystemEntryPoints.hpp \
+	src/instrument/ctf/InstrumentScheduler.hpp \
 	src/instrument/ctf/InstrumentTaskExecution.hpp \
 	src/instrument/ctf/InstrumentTaskId.hpp \
 	src/instrument/ctf/InstrumentTaskStatus.hpp \
@@ -1001,7 +1011,7 @@ noinst_HEADERS = \
 	src/instrument/extrae/InstrumentLeaderThread.hpp \
 	src/instrument/extrae/InstrumentLogMessage.hpp \
 	src/instrument/extrae/InstrumentReductions.hpp \
-	src/instrument/extrae/InstrumentSchedulerSubsystemEntryPoints.hpp \
+	src/instrument/extrae/InstrumentScheduler.hpp \
 	src/instrument/extrae/InstrumentTaskExecution.hpp \
 	src/instrument/extrae/InstrumentTaskId.hpp \
 	src/instrument/extrae/InstrumentTaskStatus.hpp \
@@ -1039,7 +1049,7 @@ noinst_HEADERS = \
 	src/instrument/graph/InstrumentLeaderThread.hpp \
 	src/instrument/graph/InstrumentLogMessage.hpp \
 	src/instrument/graph/InstrumentReductions.hpp \
-	src/instrument/graph/InstrumentSchedulerSubsystemEntryPoints.hpp \
+	src/instrument/graph/InstrumentScheduler.hpp \
 	src/instrument/graph/InstrumentTaskExecution.hpp \
 	src/instrument/graph/InstrumentTaskId.hpp \
 	src/instrument/graph/InstrumentTaskStatus.hpp \
@@ -1073,7 +1083,7 @@ noinst_HEADERS = \
 	src/instrument/lint/InstrumentLeaderThread.hpp \
 	src/instrument/lint/InstrumentLogMessage.hpp \
 	src/instrument/lint/InstrumentReductions.hpp \
-	src/instrument/lint/InstrumentSchedulerSubsystemEntryPoints.hpp \
+	src/instrument/lint/InstrumentScheduler.hpp \
 	src/instrument/lint/InstrumentTaskExecution.hpp \
 	src/instrument/lint/InstrumentTaskId.hpp \
 	src/instrument/lint/InstrumentTaskStatus.hpp \
@@ -1105,7 +1115,7 @@ noinst_HEADERS = \
 	src/instrument/null/InstrumentLeaderThread.hpp \
 	src/instrument/null/InstrumentLogMessage.hpp \
 	src/instrument/null/InstrumentReductions.hpp \
-	src/instrument/null/InstrumentSchedulerSubsystemEntryPoints.hpp \
+	src/instrument/null/InstrumentScheduler.hpp \
 	src/instrument/null/InstrumentTaskExecution.hpp \
 	src/instrument/null/InstrumentTaskId.hpp \
 	src/instrument/null/InstrumentTaskStatus.hpp \
@@ -1136,7 +1146,7 @@ noinst_HEADERS = \
 	src/instrument/stats/InstrumentLeaderThread.hpp \
 	src/instrument/stats/InstrumentLogMessage.hpp \
 	src/instrument/stats/InstrumentReductions.hpp \
-	src/instrument/stats/InstrumentSchedulerSubsystemEntryPoints.hpp \
+	src/instrument/stats/InstrumentScheduler.hpp \
 	src/instrument/stats/InstrumentStats.hpp \
 	src/instrument/stats/InstrumentTaskExecution.hpp \
 	src/instrument/stats/InstrumentTaskId.hpp \
@@ -1184,7 +1194,7 @@ noinst_HEADERS = \
 	src/instrument/verbose/InstrumentLeaderThread.hpp \
 	src/instrument/verbose/InstrumentLogMessage.hpp \
 	src/instrument/verbose/InstrumentReductions.hpp \
-	src/instrument/verbose/InstrumentSchedulerSubsystemEntryPoints.hpp \
+	src/instrument/verbose/InstrumentScheduler.hpp \
 	src/instrument/verbose/InstrumentTaskExecution.hpp \
 	src/instrument/verbose/InstrumentTaskId.hpp \
 	src/instrument/verbose/InstrumentTaskStatus.hpp \
@@ -2136,8 +2146,12 @@ nobase_dist_paraverconfig_DATA = \
 	paraver-cfg/nanos6/ctf2prv/runtime_subsystems.cfg \
 	paraver-cfg/nanos6/ctf2prv/task_ids.cfg \
 	paraver-cfg/nanos6/ctf2prv/tasks.cfg \
+	paraver-cfg/nanos6/ctf2prv/tasks_and_runtime.cfg \
 	paraver-cfg/nanos6/ctf2prv/task_source.cfg \
-	paraver-cfg/nanos6/ctf2prv/thread_id.cfg
+	paraver-cfg/nanos6/ctf2prv/thread_id.cfg \
+	paraver-cfg/nanos6/ctf2prv/kernel/kernel_preemptions.cfg \
+	paraver-cfg/nanos6/ctf2prv/kernel/kernel_syscalls.cfg \
+	paraver-cfg/nanos6/ctf2prv/kernel/kernel_thread_id.cfg
 
 
 configfiledir = ${docdir}
@@ -2147,16 +2161,19 @@ nobase_dist_configfile_DATA = \
 ctfdir = ${docdir}
 nobase_dist_ctf_DATA = \
 	scripts/ctf/plugins/bt_plugin_nanos6.py \
+	scripts/ctf/plugins/executionmodel.py \
 	scripts/ctf/plugins/hwcdefs.py \
-	scripts/ctf/plugins/runtime.py \
+	scripts/ctf/plugins/kernelmodel.py \
 	scripts/ctf/plugins/paravertrace.py \
 	scripts/ctf/plugins/paraverviews.py \
+	scripts/ctf/plugins/runtimemodel.py \
 	scripts/ctf/wrappers/ctf2prv_marenostrum4.sh \
 	scripts/ctf/wrappers/ctf2prv_nord3.sh \
 	scripts/ctf/wrappers/ctf2prv_cte-power.sh
 
 dist_bin_SCRIPTS = \
 	scripts/ctf/ctf2prv \
+	scripts/ctf/ctfkerneldefs \
 	scripts/ctf/ctfstats
 
 ## --------------------------------- ##
