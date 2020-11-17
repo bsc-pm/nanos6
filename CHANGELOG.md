@@ -2,6 +2,34 @@
 All notable changes to this project will be documented in this file.
 
 
+## Version 2.5, Wed Nov 18, 2020
+The 2.5 release corresponds to the OmpSs-2 2020.11 release. It introduces several features and fixes that improve
+general performance. It replaces the configuration environment variables with a configuration file, improving the
+usability of the runtime system. It also makes the discrete dependency system the default implementation.
+
+### General
+- Replace all environment variables with a configuration file
+- Add `NANOS6_CONFIG` environment variable to specify the configuration file
+- Add `NANOS6_CONFIG_OVERRIDE` to override options from the configuration file
+- Enhance performance in architectures with hyperthreading
+- Improve locking performance
+- Allocate critical C++ containers with the custom memory allocator
+- Support the `assert` directive to check the loaded dependency system
+
+### Dependency System
+- Make `discrete` the default dependency system
+- Improve allocations in discrete dependencies
+- Add support for CUDA task reductions in discrete dependencies
+- Use address translation tables for specifying task reductions' storage
+
+### Instrumentation
+- Add support for kernel events in CTF instrumentation
+- Add new Paraver views for CTF traces
+
+### Devices
+- Add fixes for OpenACC and CUDA devices
+
+
 ## Version 2.4.1, Tue Sep 22, 2020
 The 2.4.1 release corresponds to the OmpSs-2 2020.06.1 release. It introduces bug fixes and performance improvements.
 
