@@ -54,7 +54,7 @@ public:
 			argsBlock, originalArgsBlockSize,
 			parentTaskInfo,
 			parentTaskInvocationInfo,
-			nullptr, taskId, flags
+			parent, taskId, flags
 		);
 
 		// Copy the args block if it was not duplicated
@@ -70,9 +70,6 @@ public:
 		// the taskloop flag, remove it. Otherwise, we may end up disposing
 		// a preallocated taskfor
 		taskfor->setTaskloop(false);
-
-		// Set the parent
-		taskfor->setParent(parent);
 
 		// Instrument the task creation
 		Instrument::task_id_t taskInstrumentationId = taskfor->getInstrumentationTaskId();

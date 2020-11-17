@@ -8,6 +8,8 @@
 #define TASKTYPE_DATA_HPP
 
 #include "InstrumentTasktypeData.hpp"
+#include "monitoring/TasktypeStatistics.hpp"
+
 
 //! \brief Use to hold data on a per-tasktype basis (i.e. Monitoring data,
 //! instrumentation parameters, etc.)
@@ -18,10 +20,14 @@ private:
 	//! Instrumentation identifier for this Tasktype
 	Instrument::TasktypeInstrument _instrumentId;
 
+	//! Monitoring-related statistics per tasktype
+	TasktypeStatistics _tasktypeStatistics;
+
 public:
 
 	inline TasktypeData() :
-		_instrumentId()
+		_instrumentId(),
+		_tasktypeStatistics()
 	{
 	}
 
@@ -29,6 +35,12 @@ public:
 	{
 		return _instrumentId;
 	}
+
+	inline TasktypeStatistics &getTasktypeStatistics()
+	{
+		return _tasktypeStatistics;
+	}
+
 };
 
 #endif // TASKTYPE_DATA_HPP

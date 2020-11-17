@@ -21,7 +21,7 @@ public:
 	//! \brief Get the delta value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	virtual uint64_t getDelta(HWCounters::counters_t counterType) = 0;
+	virtual uint64_t getDelta(HWCounters::counters_t counterType) const = 0;
 
 };
 

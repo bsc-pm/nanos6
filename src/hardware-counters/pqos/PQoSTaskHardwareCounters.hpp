@@ -72,14 +72,10 @@ public:
 
 				switch (id) {
 					case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
-						if (!_numSamples) {
-							++_numSamples;
-							_counterDelta[innerId] = data->values.llc;
-						} else {
-							++_numSamples;
-							_counterDelta[innerId] =
-								((double) _counterDelta[innerId] * (_numSamples - 1) + data->values.llc) / _numSamples;
-						}
+						++_numSamples;
+						_counterDelta[innerId] =
+							((double) _counterDelta[innerId] * (_numSamples - 1) + data->values.llc) / _numSamples;
+
 						_counterAccumulated[innerId] = _counterDelta[innerId];
 						break;
 					case HWCounters::HWC_PQOS_MON_EVENT_LMEM_BW:
@@ -94,11 +90,11 @@ public:
 						_counterDelta[innerId] = data->values.llc_misses_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
-					case HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
+					case HWCounters::HWC_PQOS_PERF_EVENT_INSTRUCTIONS:
 						_counterDelta[innerId] = data->values.ipc_retired_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
-					case HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES:
+					case HWCounters::HWC_PQOS_PERF_EVENT_CYCLES:
 						_counterDelta[innerId] = data->values.ipc_unhalted_delta;
 						_counterAccumulated[innerId] += _counterDelta[innerId];
 						break;
@@ -112,7 +108,7 @@ public:
 	//! \brief Get the delta value of a hardware counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType) override
+	inline uint64_t getDelta(HWCounters::counters_t counterType) const override
 	{
 		assert(PQoSHardwareCounters::isCounterEnabled(counterType));
 
@@ -125,7 +121,7 @@ public:
 	//! \brief Get the accumulated value of a hardware counter
 	//!
 	//! \param[in] counterType The type of counter to get the accumulation from
-	inline uint64_t getAccumulated(HWCounters::counters_t counterType) override
+	inline uint64_t getAccumulated(HWCounters::counters_t counterType) const override
 	{
 		assert(PQoSHardwareCounters::isCounterEnabled(counterType));
 
@@ -133,6 +129,46 @@ public:
 		assert(innerId >= 0 && (size_t) innerId < PQoSHardwareCounters::getNumEnabledCounters());
 
 		return _counterAccumulated[innerId];
+	}
+
+	//! \brief Combine the counters of two tasks
+	//!
+	//! \param[in] combineeCounters The counters of a task, which will be combined into
+	//! the current counters
+	inline void combineCounters(const TaskHardwareCountersInterface *combineeCounters) override
+	{
+		PQoSTaskHardwareCounters *childCounters = (PQoSTaskHardwareCounters *) combineeCounters;
+		assert(childCounters != nullptr);
+		assert(_counterDelta != nullptr);
+		assert(_counterAccumulated != nullptr);
+
+		// Get the raw data of each regular counter and combine it
+		for (size_t id = HWCounters::HWC_PQOS_MIN_EVENT; id <= HWCounters::HWC_PQOS_MAX_EVENT; ++id) {
+			HWCounters::counters_t counterType = (HWCounters::counters_t) id;
+			if (PQoSHardwareCounters::isCounterEnabled(counterType)) {
+				int innerId = PQoSHardwareCounters::getInnerIdentifier(counterType);
+				assert(innerId >= 0);
+
+				uint64_t childValue;
+				switch (counterType) {
+					case HWCounters::HWC_PQOS_MON_EVENT_L3_OCCUP:
+						// Only take it into account if the child (most likely taskfor
+						// collaborator) truly participated in the execution
+						childValue = childCounters->getDelta(counterType);
+						if (childValue != 0) {
+							++_numSamples;
+							_counterDelta[innerId] =
+								((double) _counterDelta[innerId] * (_numSamples - 1) + childValue) / _numSamples;
+
+							_counterAccumulated[innerId] = _counterDelta[innerId];
+						}
+						break;
+					default:
+						_counterDelta[innerId] = childCounters->getDelta(counterType);
+						_counterAccumulated[innerId] += childCounters->getAccumulated(counterType);
+				}
+			}
+		}
 	}
 
 	//! \brief Retreive the size needed for hardware counters

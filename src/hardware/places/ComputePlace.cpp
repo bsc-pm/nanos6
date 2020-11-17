@@ -8,6 +8,7 @@
 #include "MemoryAllocator.hpp"
 #include "MemoryPlace.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/Taskfor.hpp"
 
 #include <InstrumentTaskExecution.hpp>
@@ -51,20 +52,18 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 {
 	TaskDataAccessesInfo taskAccessInfo(0);
 
-	void *taskCountersAddress = nullptr;
+	// Allocate space for monitoring statistics and hardware counters in different
+	// calls to avoid the free by getPreallocatedArgsBlock
 	size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
+	size_t taskStatisticsSize = Monitoring::getAllocationSize();
 
-	// Allocate hardware counters in a different call to avoid
-	// the free by getPreallocatedArgsBlock()
-	if (taskCountersSize > 0) {
-		taskCountersAddress = malloc(taskCountersSize);
-		assert(taskCountersAddress != nullptr);
-	}
+	void *taskCountersAddress = (taskCountersSize > 0) ? malloc(taskCountersSize) : nullptr;
+	void *taskStatisticsAddress = (taskStatisticsSize > 0) ? malloc(taskStatisticsSize) : nullptr;
 
 	// Allocate preallocated taskfor
 	_preallocatedTaskfor = new Taskfor(nullptr, 0, nullptr, nullptr, nullptr,
 		Instrument::task_id_t(), nanos6_task_flag_t::nanos6_final_task,
-		taskAccessInfo, taskCountersAddress, true);
+		taskAccessInfo, taskCountersAddress, taskStatisticsAddress, true);
 	_preallocatedArgsBlockSize = 1024;
 
 	// MemoryAllocator is still not available, so use malloc
@@ -73,6 +72,7 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 		"Insufficient memory for preallocatedArgsBlock");
 
 	HardwareCounters::taskCreated(_preallocatedTaskfor);
+	Monitoring::taskCreated(_preallocatedTaskfor);
 }
 
 ComputePlace::~ComputePlace()
@@ -80,16 +80,20 @@ ComputePlace::~ComputePlace()
 	Taskfor *taskfor = (Taskfor *) _preallocatedTaskfor;
 	assert(taskfor != nullptr);
 
-	// Retreive the allocation address
+	// Retreive the allocation addresses for monitoring statistics and hw counters before deleting
 	const TaskHardwareCounters &taskCounters = taskfor->getHardwareCounters();
-	void *allocationAddress = taskCounters.getAllocationAddress();
+	void *taskCountersAddress = taskCounters.getAllocationAddress();
+	TaskStatistics *taskStatisticsAddress = taskfor->getTaskStatistics();
 
 	delete taskfor;
 
-	// After hardware counters are deleted (task destructor), free the
-	// task hardware counters structure if existent
-	if (allocationAddress != nullptr) {
-		free(allocationAddress);
+	// Delete monitoring and hw counters
+	if (taskCountersAddress != nullptr) {
+		free(taskCountersAddress);
+	}
+
+	if (taskStatisticsAddress != nullptr) {
+		free(taskStatisticsAddress);
 	}
 
 	// First allocation (1024) is done using malloc

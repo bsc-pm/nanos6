@@ -16,6 +16,7 @@ class PAPIThreadHardwareCounters : public ThreadHardwareCountersInterface {
 
 private:
 
+	//! The PAPI event set that must be read
 	int _eventSet;
 
 public:

@@ -10,10 +10,10 @@
 #include "executors/threads/TaskFinalization.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "scheduling/Scheduler.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <DataAccessRegistration.hpp>
-#include <Monitoring.hpp>
 
 void Accelerator::runTask(Task *task)
 {
@@ -68,7 +68,6 @@ void Accelerator::finishTask(Task *task)
 			task->getMemoryPlace(),
 			/* from busy thread */ true);
 
-		Monitoring::taskFinished(task);
 		TaskFinalization::taskFinished(task, cpu, /* busy thread */ true);
 
 		if (task->markAsReleased()) {

@@ -21,13 +21,14 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/If0Task.hpp"
 #include "system/Throttle.hpp"
 #include "tasks/StreamExecutor.hpp"
 #include "tasks/Task.hpp"
-#include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskfor.hpp"
+#include "tasks/TaskImplementation.hpp"
 #include "tasks/Taskloop.hpp"
 
 #include <DataAccessRegistration.hpp>
@@ -35,7 +36,6 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <MemoryAllocator.hpp>
-#include <Monitoring.hpp>
 #include <TaskDataAccesses.hpp>
 #include <TaskDataAccessesInfo.hpp>
 
@@ -62,7 +62,7 @@ Task *AddTask::createTask(
 	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
 	if (taskRuntimeTransition) {
 		HardwareCounters::updateTaskCounters(creator);
-		Monitoring::taskChangedStatus(creator, runtime_status);
+		Monitoring::taskChangedStatus(creator, paused_status);
 	}
 	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags, taskRuntimeTransition);
 
@@ -94,14 +94,17 @@ Task *AddTask::createTask(
 	}
 
 	TaskDataAccessesInfo taskAccesses(numDependencies);
+	size_t taskAccessesSize = taskAccesses.getAllocationSize();
 	size_t taskCountersSize = TaskHardwareCounters::getAllocationSize();
+	size_t taskStatisticsSize = Monitoring::getAllocationSize();
 
 	bool hasPreallocatedArgsBlock = (flags & nanos6_preallocated_args_block);
 	if (hasPreallocatedArgsBlock) {
 		assert(argsBlock != nullptr);
 		task = (Task *) MemoryAllocator::alloc(taskSize
-			+ taskAccesses.getAllocationSize()
-			+ taskCountersSize);
+			+ taskAccessesSize
+			+ taskCountersSize
+			+ taskStatisticsSize);
 	} else {
 		// Alignment fixup
 		size_t missalignment = argsBlockSize & (DATA_ALIGNMENT_SIZE - 1);
@@ -110,8 +113,9 @@ Task *AddTask::createTask(
 
 		// Allocation and layout
 		argsBlock = MemoryAllocator::alloc(argsBlockSize + taskSize
-			+ taskAccesses.getAllocationSize()
-			+ taskCountersSize);
+			+ taskAccessesSize
+			+ taskCountersSize
+			+ taskStatisticsSize);
 		task = (Task *) ((char *) argsBlock + argsBlockSize);
 	}
 
@@ -119,30 +123,31 @@ Task *AddTask::createTask(
 
 	taskAccesses.setAllocationAddress((char *) task + taskSize);
 
-	void *taskCountersAddress = nullptr;
-	if (taskCountersSize > 0) {
-		taskCountersAddress = (char *) task + taskSize + taskAccesses.getAllocationSize();
-	}
+	void *taskCountersAddress = (taskCountersSize > 0) ?
+		(char *) task + taskSize + taskAccessesSize : nullptr;
+
+	void *taskStatisticsAddress = (taskStatisticsSize > 0) ?
+		(char *) task + taskSize + taskAccessesSize + taskCountersSize : nullptr;
 
 	if (isTaskloop || isTaskloopFor) {
 		new (task) Taskloop(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCountersAddress);
+			flags, taskAccesses, taskCountersAddress, taskStatisticsAddress);
 	} else if (isTaskfor) {
 		// Taskfors are always final
 		flags |= nanos6_final_task;
 
 		new (task) Taskfor(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCountersAddress);
+			flags, taskAccesses, taskCountersAddress, taskStatisticsAddress);
 	} else if (isStreamExecutor) {
 		new (task) StreamExecutor(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId, flags,
-			taskAccesses, taskCountersAddress);
+			taskAccesses, taskCountersAddress, taskStatisticsAddress);
 	} else {
 		new (task) Task(argsBlock, originalArgsBlockSize,
 			taskInfo, taskInvocationInfo, nullptr, taskId,
-			flags, taskAccesses, taskCountersAddress);
+			flags, taskAccesses, taskCountersAddress, taskStatisticsAddress);
 	}
 
 	Instrument::exitCreateTask(taskRuntimeTransition);
@@ -212,9 +217,6 @@ void AddTask::submitTask(Task *task, Task *parent, bool fromUserCode)
 		// Begin as pending status, become ready later, through the scheduler
 		Instrument::ThreadInstrumentationContext instrumentationContext(taskInstrumentationId);
 		Instrument::taskIsPending(taskInstrumentationId);
-
-		Monitoring::taskChangedStatus(task, pending_status);
-		// No need to stop hardware counters, as the task was created just now
 
 		ready = DataAccessRegistration::registerTaskDataAccesses(task, computePlace, computePlace->getDependencyData());
 	}

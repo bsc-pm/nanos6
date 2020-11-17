@@ -45,6 +45,9 @@ private:
 	//! Enabled counters by the user
 	static std::vector<HWCounters::counters_t> _enabledCounters;
 
+	//! The number of enabled counters (the previous vector's size)
+	static size_t _numEnabledCounters;
+
 private:
 
 	//! \brief Load backends and counter configuration from the configuration file
@@ -97,6 +100,12 @@ public:
 		return _enabledCounters;
 	}
 
+	//! \brief Get the number of supported and enabled counters
+	static inline size_t getNumEnabledCounters()
+	{
+		return _numEnabledCounters;
+	}
+
 	//! \brief Initialize hardware counter structures for a new thread
 	static void threadInitialized();
 
@@ -113,6 +122,12 @@ public:
 	//!
 	//! \param[out] task The task to reinitialize structures for
 	static void taskReinitialized(Task *task);
+
+	//! \brief Combine the events of two tasks
+	//!
+	//! \param[in,out] parent The task to combine the events into
+	//! \param[in] child The task to gather events from
+	static void taskCombineCounters(Task *parent, Task *child);
 
 	//! \brief Read and update hardware counters for a task
 	//!

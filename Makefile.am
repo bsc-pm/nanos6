@@ -388,6 +388,9 @@ common_sources = \
 	src/lowlevel/threads/KernelLevelThread.cpp \
 	src/memory/directory/Directory.cpp \
 	src/memory/directory/HomeNodeMap.cpp \
+	src/monitoring/Monitoring.cpp \
+	src/monitoring/TaskMonitor.cpp \
+	src/monitoring/TasktypeStatistics.cpp \
 	src/scheduling/Scheduler.cpp \
 	src/scheduling/SchedulerGenerator.cpp \
 	src/scheduling/SchedulerInterface.cpp \
@@ -718,24 +721,8 @@ else
 chronometers_cppflags += -I$(srcdir)/src/support/chronometers/std
 endif
 
-# Monitoring
-monitoring_sources =
-monitoring_cppflags =
-if MONITORING_ENABLED
-monitoring_sources += \
-	src/monitoring/monitoring/CPUMonitor.cpp \
-	src/monitoring/monitoring/CPUUsagePredictor.cpp \
-	src/monitoring/monitoring/Monitoring.cpp \
-	src/monitoring/monitoring/TaskMonitor.cpp \
-	src/monitoring/monitoring/TasktypePredictions.cpp \
-	src/monitoring/monitoring/WorkloadPredictor.cpp
-monitoring_cppflags += -I$(srcdir)/src/monitoring/monitoring
-else
-monitoring_cppflags += -I$(srcdir)/src/monitoring/null
-endif
-
-# Add monitoring-related sources to common sources
-common_sources += $(monitoring_sources) $(chronometers_sources)
+# Add chronometer-related sources to common sources
+common_sources += $(chronometers_sources)
 
 
 # DLB + CPUManager
@@ -1259,20 +1246,13 @@ noinst_HEADERS = \
 	src/memory/vmm/VirtualMemoryArea.hpp \
 	src/memory/vmm/cluster/VirtualMemoryManagement.hpp \
 	src/memory/vmm/smp/VirtualMemoryManagement.hpp \
-	src/monitoring/monitoring/CPUMonitor.hpp \
-	src/monitoring/monitoring/CPUStatistics.hpp \
-	src/monitoring/monitoring/CPUUsagePredictor.hpp \
-	src/monitoring/monitoring/Monitoring.hpp \
-	src/monitoring/monitoring/TaskMonitor.hpp \
-	src/monitoring/monitoring/TaskPredictions.hpp \
-	src/monitoring/monitoring/TaskStatistics.hpp \
-	src/monitoring/monitoring/TasktypePredictions.hpp \
-	src/monitoring/monitoring/WorkloadPredictor.hpp \
-	src/monitoring/monitoring/WorkloadStatistics.hpp \
-	src/monitoring/null/Monitoring.hpp \
-	src/monitoring/null/TaskMonitor.hpp \
-	src/monitoring/null/TaskPredictions.hpp \
-	src/monitoring/null/TaskStatistics.hpp \
+	src/monitoring/CPUMonitor.hpp \
+	src/monitoring/CPUStatistics.hpp \
+	src/monitoring/Monitoring.hpp \
+	src/monitoring/MonitoringSupport.hpp \
+	src/monitoring/TaskMonitor.hpp \
+	src/monitoring/TaskStatistics.hpp \
+	src/monitoring/TasktypeStatistics.hpp \
 	src/scheduling/ClusterScheduler.hpp \
 	src/scheduling/LocalScheduler.hpp \
 	src/scheduling/ReadyQueue.hpp \
@@ -1363,7 +1343,7 @@ EXTRA_DIST += \
 	tests/tap-driver.pl \
 	tests/tap-driver.sh
 
-common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_cppflags) $(monitoring_cppflags) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
+common_libnanos6_cppflags = $(BOOST_CPPFLAGS) -DBOOST_ENABLE_ASSERT_DEBUG_HANDLER $(PTHREAD_CFLAGS) $(hwloc_CFLAGS) $(libnuma_CPPFLAGS) $(CUDA_CFLAGS) $(MPI_CXXFLAGS) $(memkind_CPPFLAGS) $(cluster_cppflags) $(workflow_cppflags) $(chronometers_cppflags) $(cpu_manager_cppflags) $(hardware_counters_cppflags) $(jemalloc_CPPFLAGS)
 common_libnanos6_ldflags = $(openacc_LIBS) $(AM_LDFLAGS) -version-info $(lib_current):$(lib_revision):$(lib_age) $(jemalloc_LIBS) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(LDFLAGS_NOUNDEFINED) $(hwloc_LIBS) $(libnuma_LIBS) $(DLOPEN_LIBS) $(CUDA_LIBS) $(MPI_CXXLDFLAGS) $(memkind_LIBS) $(cpu_manager_ldflags) $(hardware_counters_ldflags)
 
 # This is needed for debuggable spinlocks

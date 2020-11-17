@@ -14,6 +14,7 @@
 #include "StreamExecutor.hpp"
 #include "Task.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 
 #include <DataAccessRegistration.hpp>
 #include <InstrumentTaskId.hpp>
@@ -30,7 +31,8 @@ inline Task::Task(
 	Instrument::task_id_t instrumentationTaskId,
 	size_t flags,
 	const TaskDataAccessesInfo &taskAccessInfo,
-	void *taskCountersAddress
+	void *taskCountersAddress,
+	void *taskStatistics
 ) :
 	_argsBlock(argsBlock),
 	_argsBlockSize(argsBlockSize),
@@ -52,8 +54,7 @@ inline Task::Task(
 	_countdownToRelease(1),
 	_workflow(nullptr),
 	_executionStep(nullptr),
-	_taskStatistics(),
-	_taskPredictions(),
+	_taskStatistics((TaskStatistics *) taskStatistics),
 	_hwCounters(taskCountersAddress),
 	_clusterContext(nullptr),
 	_parentSpawnCallback(nullptr),
@@ -112,8 +113,9 @@ inline void Task::reinitialize(
 		_nestingLevel = parent->getNestingLevel() + 1;
 	}
 
-	// Re-use hardware counters
+	// Re-use hardware counters and monitoring statistics
 	HardwareCounters::taskReinitialized(this);
+	Monitoring::taskReinitialized(this);
 }
 
 inline bool Task::markAsFinished(ComputePlace *computePlace)

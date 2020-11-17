@@ -18,12 +18,12 @@
 #include "SpawnFunction.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskInfo.hpp"
 
 #include <InstrumentAddTask.hpp>
-#include <Monitoring.hpp>
 
 
 //! Static members
@@ -85,7 +85,7 @@ void SpawnFunction::spawnFunction(
 	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
 	if (taskRuntimeTransition) {
 		HardwareCounters::updateTaskCounters(creator);
-		Monitoring::taskChangedStatus(creator, runtime_status);
+		Monitoring::taskChangedStatus(creator, paused_status);
 	}
 	Instrument::enterSpawnFunction(taskRuntimeTransition);
 

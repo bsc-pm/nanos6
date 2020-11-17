@@ -11,7 +11,8 @@
 #include "MemoryAllocator.hpp"
 #include "TaskDataAccesses.hpp"
 #include "TaskFinalization.hpp"
-#include "hardware-counters/TaskHardwareCounters.hpp"
+#include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Taskfor.hpp"
@@ -21,7 +22,7 @@
 #include <InstrumentTaskExecution.hpp>
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadId.hpp>
-#include <Monitoring.hpp>
+
 
 void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool fromBusyThread)
 {
@@ -40,6 +41,22 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 		// If this is the first iteration of the loop, the task will test true to hasFinished and false to mustDelayRelease, doing
 		// nothing inside the conditionals.
 		if (task->hasFinished()) {
+			// If this is a taskfor collaborator, we must accumulate
+			// its counters into the taskfor source
+			if (task->isTaskforCollaborator()) {
+				Taskfor *source = (Taskfor *) parent;
+				assert(source != nullptr);
+				assert(source->isTaskfor());
+				assert(source->isTaskforSource());
+
+				// Combine the hardware counters of the taskfor collaborator (task)
+				// into the taskfor source (source)
+				HardwareCounters::taskCombineCounters(source, task);
+			}
+
+			// Propagate monitoring actions for this task since it has finished
+			Monitoring::taskFinished(task);
+
 			// Complete the delayed release of dependencies of the task if it has a wait clause
 			if (task->mustDelayRelease()) {
 				if (task->markAllChildrenAsFinished(computePlace)) {
@@ -54,7 +71,6 @@ void TaskFinalization::taskFinished(Task *task, ComputePlace *computePlace, bool
 						fromBusyThread
 					);
 
-					Monitoring::taskFinished(task);
 					// This is just to emulate a recursive call to TaskFinalization::taskFinished() again.
 					// It should not return false because at this point delayed release has happenned which means that
 					// the task has gone through a taskwait (no more children should be unfinished)
@@ -159,6 +175,7 @@ void TaskFinalization::disposeTask(Task *task)
 			const TaskDataAccesses &taskAccesses = task->getDataAccesses();
 			disposableBlockSize += taskAccesses.getAdditionalMemorySize();
 			disposableBlockSize += TaskHardwareCounters::getAllocationSize();
+			disposableBlockSize += Monitoring::getAllocationSize();
 
 			Instrument::taskIsBeingDeleted(task->getInstrumentationTaskId());
 

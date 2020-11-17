@@ -7,8 +7,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <pthread.h>
 #include <papi.h>
+#include <pthread.h>
 
 #include "PAPICPUHardwareCounters.hpp"
 #include "PAPIHardwareCounters.hpp"
@@ -19,30 +19,9 @@
 #include "hardware-counters/ThreadHardwareCountersInterface.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
 
-
 size_t PAPIHardwareCounters::_numEnabledCounters(0);
 int PAPIHardwareCounters::_idMap[HWCounters::HWC_PAPI_NUM_EVENTS];
 
-//! \brief Private function only accessible from this file
-static void readAndResetPAPICounters(
-	PAPIThreadHardwareCounters *papiThreadCounters,
-	long long *countersBuffer
-) {
-	assert(countersBuffer != nullptr);
-	assert(papiThreadCounters != nullptr);
-
-	int eventSet = papiThreadCounters->getEventSet();
-	int ret = PAPI_read(eventSet, countersBuffer);
-	if (ret != PAPI_OK) {
-		FatalErrorHandler::fail(ret, " when reading a PAPI event set - ", PAPI_strerror(ret));
-	}
-
-	// Reset (clean) counters
-	ret = PAPI_reset(eventSet);
-	if (ret != PAPI_OK) {
-		FatalErrorHandler::fail(ret, " when resetting a PAPI event set - ", PAPI_strerror(ret));
-	}
-}
 
 void PAPIHardwareCounters::testMaximumNumberOfEvents()
 {
@@ -291,10 +270,11 @@ void PAPIHardwareCounters::updateTaskCounters(
 	if (_enabled) {
 		PAPIThreadHardwareCounters *papiThreadCounters = (PAPIThreadHardwareCounters *) threadCounters;
 		PAPITaskHardwareCounters *papiTaskCounters = (PAPITaskHardwareCounters *) taskCounters;
+		assert(papiThreadCounters != nullptr);
 		assert(papiTaskCounters != nullptr);
 
-		long long *countersBuffer = papiTaskCounters->getCountersBuffer();
-		readAndResetPAPICounters(papiThreadCounters, countersBuffer);
+		int eventSet = papiThreadCounters->getEventSet();
+		papiTaskCounters->readCounters(eventSet);
 	}
 }
 
@@ -306,8 +286,9 @@ void PAPIHardwareCounters::updateRuntimeCounters(
 		PAPICPUHardwareCounters *papiCPUCounters = (PAPICPUHardwareCounters *) cpuCounters;
 		PAPIThreadHardwareCounters *papiThreadCounters = (PAPIThreadHardwareCounters *) threadCounters;
 		assert(papiCPUCounters != nullptr);
+		assert(papiThreadCounters != nullptr);
 
-		long long *countersBuffer = papiCPUCounters->getCountersBuffer();
-		readAndResetPAPICounters(papiThreadCounters, countersBuffer);
+		int eventSet = papiThreadCounters->getEventSet();
+		papiCPUCounters->readCounters(eventSet);
 	}
 }

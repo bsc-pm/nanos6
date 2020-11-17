@@ -55,7 +55,7 @@ private:
 
 public:
 
-	//! \brief Initializ the PAPI backend
+	//! \brief Initialize the PAPI backend
 	//!
 	//! \param[in] verbose Whether verbose mode is enabled
 	//! \param[in] verboseFile The file onto which to write verbose messages

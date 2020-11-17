@@ -25,6 +25,7 @@
 #include "lowlevel/TurboSettings.hpp"
 #include "lowlevel/threads/ExternalThread.hpp"
 #include "lowlevel/threads/ExternalThreadGroup.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "system/APICheck.hpp"
 #include "system/RuntimeInfoEssentials.hpp"
@@ -36,7 +37,6 @@
 #include <DependencySystem.hpp>
 #include <InstrumentInitAndShutdown.hpp>
 #include <InstrumentThreadManagement.hpp>
-#include <Monitoring.hpp>
 
 static ExternalThread *mainThread = nullptr;
 
@@ -75,14 +75,16 @@ void nanos6_preinit(void) {
 
 	RuntimeInfoEssentials::initialize();
 
-	// Pre-initialize Hardware Counters before hardware
+	// Pre-initialize Hardware Counters and Monitoring before hardware
 	HardwareCounters::preinitialize();
+	Monitoring::preinitialize();
 	HardwareInfo::initialize();
 	ClusterManager::initialize();
 	CPUManager::preinitialize();
 
-	// Finish Hardware counters initialization after CPUManager
+	// Finish Hardware counters and Monitoring initialization after CPUManager
 	HardwareCounters::initialize();
+	Monitoring::initialize();
 	MemoryAllocator::initialize();
 	Throttle::initialize();
 	Scheduler::initialize();
@@ -91,8 +93,6 @@ void nanos6_preinit(void) {
 	Instrument::initialize();
 	mainThread = new ExternalThread("main-thread");
 	mainThread->preinitializeExternalThread();
-
-	Monitoring::initialize();
 
 	mainThread->initializeExternalThread(/* already preinitialized */ false);
 

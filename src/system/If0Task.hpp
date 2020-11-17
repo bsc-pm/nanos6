@@ -13,13 +13,13 @@
 #include "executors/threads/ThreadManager.hpp"
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
 #include <InstrumentThreadManagement.hpp>
-#include <Monitoring.hpp>
 
 
 class ComputePlace;
@@ -46,7 +46,7 @@ namespace If0Task {
 
 		WorkerThread *replacementThread = ThreadManager::getIdleThread(cpu);
 		HardwareCounters::updateRuntimeCounters();
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
+		Monitoring::taskChangedStatus(currentTask, paused_status);
 		Instrument::threadWillSuspend(currentThread->getInstrumentationId(), cpu->getInstrumentationId());
 		currentThread->switchTo(replacementThread);
 
@@ -79,7 +79,7 @@ namespace If0Task {
 		if (hasCode) {
 			// Since hardware counters for the creator task (currentTask) are
 			// updated when creating the if0Task, we need not update them here
-			Monitoring::taskChangedStatus(currentTask, blocked_status);
+			Monitoring::taskChangedStatus(currentTask, paused_status);
 			Instrument::taskIsBlocked(currentTaskId, Instrument::in_taskwait_blocking_reason);
 		}
 

@@ -10,6 +10,7 @@
 #include "HardwareCounters.hpp"
 #include "SupportedHardwareCounters.hpp"
 #include "TaskHardwareCountersInterface.hpp"
+#include "lowlevel/SpinLock.hpp"
 
 #if HAVE_PAPI
 #include "hardware-counters/papi/PAPITaskHardwareCounters.hpp"
@@ -30,11 +31,15 @@ private:
 	//! Whether monitoring of counters for this task is enabled
 	bool _enabled;
 
+	//! A spinlock to ensure a thread-safe combination of events
+	SpinLock _spinlock;
+
 public:
 
 	inline TaskHardwareCounters(void *allocationAddress) :
 		_allocationAddress(allocationAddress),
-		_enabled(false)
+		_enabled(false),
+		_spinlock()
 	{
 	}
 
@@ -134,7 +139,7 @@ public:
 	//! \brief Get the delta value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType)
+	inline uint64_t getDelta(HWCounters::counters_t counterType) const
 	{
 		if (_enabled) {
 			TaskHardwareCountersInterface *taskCounters = nullptr;
@@ -154,7 +159,7 @@ public:
 	//! \brief Get the accumulated value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the accumulation from
-	inline uint64_t getAccumulated(HWCounters::counters_t counterType)
+	inline uint64_t getAccumulated(HWCounters::counters_t counterType) const
 	{
 		if (_enabled) {
 			TaskHardwareCountersInterface *taskCounters = nullptr;
@@ -169,6 +174,31 @@ public:
 		}
 
 		return 0;
+	}
+
+	//! \brief Combine the counters of two tasks
+	//!
+	//! \param[in] combinee The counters of a task, which will be combined into
+	//! the current counters
+	inline void combineCounters(const TaskHardwareCounters &combinee)
+	{
+		TaskHardwareCountersInterface *parentPqosCounters = getPQoSCounters();
+		TaskHardwareCountersInterface *parentPapiCounters = getPAPICounters();
+		TaskHardwareCountersInterface *childPqosCounters = combinee.getPQoSCounters();
+		TaskHardwareCountersInterface *childPapiCounters = combinee.getPAPICounters();
+
+		// Call each backend and let them combine their events
+		_spinlock.lock();
+
+		if (parentPqosCounters != nullptr) {
+			parentPqosCounters->combineCounters(childPqosCounters);
+		}
+
+		if (parentPapiCounters != nullptr) {
+			parentPapiCounters->combineCounters(childPapiCounters);
+		}
+
+		_spinlock.unlock();
 	}
 
 	//! \brief Retreive the allocation address for all the backend objects

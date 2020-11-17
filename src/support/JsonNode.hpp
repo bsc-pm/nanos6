@@ -7,6 +7,7 @@
 #ifndef JSON_NODE_HPP
 #define JSON_NODE_HPP
 
+#include <cassert>
 #include <string>
 
 #include <boost/property_tree/ptree.hpp>
@@ -82,6 +83,17 @@ public:
 	inline void addData(const std::string &label, const T &data)
 	{
 		_node.put(label, data);
+	}
+
+	//! \brief Replace data from an existing label of this node
+	//!
+	//! \param[in] label The existing label
+	//! \param[in] data The data itself
+	inline void replaceData(const std::string &label, const T &data)
+	{
+		assert(childNodeExists(label));
+
+		_node.get_child(label).put_value(data);
 	}
 
 	//! \brief Get data from this node

@@ -48,13 +48,15 @@ public:
 		size_t flags,
 		const TaskDataAccessesInfo &taskAccessInfo,
 		void *taskCountersAddress,
+		void *taskStatistics,
 		bool runnable = false
 	) :
 		Task(argsBlock, argsBlockSize,
 			taskInfo, taskInvokationInfo,
 			parent, instrumentationTaskId,
 			flags, taskAccessInfo,
-			taskCountersAddress),
+			taskCountersAddress,
+			taskStatistics),
 		_remainingChunks(0),
 		_remainingIterations(0),
 		_bounds(),

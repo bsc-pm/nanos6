@@ -11,6 +11,7 @@
 #include "hardware/places/ComputePlace.hpp"
 #include "hardware/places/MemoryPlace.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/Taskfor.hpp"
@@ -22,7 +23,6 @@
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadManagement.hpp>
-#include <Monitoring.hpp>
 
 
 namespace ExecutionWorkflow {
@@ -92,7 +92,7 @@ namespace ExecutionWorkflow {
 			instrumentationContext.updateComputePlace(cpu->getInstrumentationId());
 
 			HardwareCounters::updateTaskCounters(_task);
-			Monitoring::taskChangedStatus(_task, runtime_status);
+			Monitoring::taskChangedStatus(_task, paused_status);
 			Monitoring::taskCompletedUserCode(_task);
 
 			if (isTaskforCollaborator) {
@@ -105,7 +105,7 @@ namespace ExecutionWorkflow {
 				Instrument::endTask(taskId);
 			}
 		} else {
-			Monitoring::taskChangedStatus(_task, runtime_status);
+			Monitoring::taskChangedStatus(_task, paused_status);
 			Monitoring::taskCompletedUserCode(_task);
 		}
 

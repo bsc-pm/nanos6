@@ -37,7 +37,6 @@
 #include <InstrumentThreadInstrumentationContext.hpp>
 #include <InstrumentThreadManagement.hpp>
 #include <InstrumentWorkerThread.hpp>
-#include <Monitoring.hpp>
 
 void WorkerThread::initialize()
 {
@@ -51,7 +50,6 @@ void WorkerThread::initialize()
 	markAsCurrentWorkerThread();
 
 	HardwareCounters::threadInitialized();
-	Monitoring::initializeThread();
 
 	// This is needed for kernel-level threads to stop them after initialization
 	synchronizeInitialization();
@@ -131,7 +129,6 @@ void WorkerThread::body()
 	HardwareCounters::updateRuntimeCounters();
 	Instrument::threadWillShutdown();
 	HardwareCounters::threadShutdown();
-	Monitoring::shutdownThread();
 
 	ThreadManager::addShutdownThread(this);
 }

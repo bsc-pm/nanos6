@@ -19,14 +19,11 @@
 #include "hardware-counters/TaskHardwareCounters.hpp"
 #include "lowlevel/SpinLock.hpp"
 #include "scheduling/ReadyQueue.hpp"
-#include "tasks/TasktypeData.hpp"
 
 #include <ClusterTaskContext.hpp>
 #include <ExecutionWorkflow.hpp>
 #include <InstrumentTaskId.hpp>
 #include <TaskDataAccesses.hpp>
-#include <TaskPredictions.hpp>
-#include <TaskStatistics.hpp>
 #include <TaskDataAccessesInfo.hpp>
 
 struct DataAccess;
@@ -34,6 +31,8 @@ struct DataAccessBase;
 struct StreamFunctionCallback;
 class ComputePlace;
 class MemoryPlace;
+class TaskStatistics;
+class TasktypeData;
 class WorkerThread;
 
 #pragma GCC diagnostic push
@@ -138,10 +137,7 @@ private:
 	Step *_executionStep;
 
 	//! Monitoring-related statistics about the task
-	TaskStatistics _taskStatistics;
-
-	//! Monitoring-related predictions about the task
-	TaskPredictions _taskPredictions;
+	TaskStatistics *_taskStatistics;
 
 	//! Hardware counter structures of the task
 	TaskHardwareCounters _hwCounters;
@@ -166,7 +162,8 @@ public:
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
 		const TaskDataAccessesInfo &taskAccessInfo,
-		void *taskCountersAddress
+		void *taskCountersAddress,
+		void *taskStatistics
 	);
 
 	virtual inline void reinitialize(
@@ -192,11 +189,13 @@ public:
 	{
 		return _argsBlock;
 	}
+
 	//! Get the arguments block size
 	inline size_t getArgsBlockSize() const
 	{
 		return _argsBlockSize;
 	}
+
 	inline void setArgsBlockSize(size_t argsBlockSize)
 	{
 		_argsBlockSize = argsBlockSize;
@@ -247,7 +246,6 @@ public:
 	{
 		return _thread;
 	}
-
 
 	//! \brief Add a nested task
 	inline void addChild(__attribute__((unused)) Task *child)
@@ -755,43 +753,32 @@ public:
 	//! \brief Check whether cost is available for the task
 	inline bool hasCost() const
 	{
-		if (_taskInfo->implementations != nullptr) {
-			return (_taskInfo->implementations->get_constraints != nullptr);
+		if (_taskInfo != nullptr) {
+			if (_taskInfo->implementations != nullptr) {
+				return (_taskInfo->implementations->get_constraints != nullptr);
+			}
 		}
-		else {
-			return false;
-		}
+
+		return false;
 	}
 
 	//! \brief Get the task's cost
 	inline size_t getCost() const
 	{
-		assert(_taskInfo->implementations != nullptr);
+		size_t cost = 1;
+		if (hasCost()) {
+			nanos6_task_constraints_t constraints;
+			_taskInfo->implementations->get_constraints(_argsBlock, &constraints);
+			cost = constraints.cost;
+		}
 
-		nanos6_task_constraints_t constraints;
-		_taskInfo->implementations->get_constraints(_argsBlock, &constraints);
-
-		return constraints.cost;
+		return cost;
 	}
 
-	//! \brief Get the task's statistics
+	//! \brief Get the task's monitoring statistics
 	inline TaskStatistics *getTaskStatistics()
 	{
-		return &_taskStatistics;
-	}
-
-	//! \brief Get the task's predictions
-	inline TaskPredictions *getTaskPredictions()
-	{
-		return &_taskPredictions;
-	}
-
-	//! \brief Setter for the task's hardware counter structures
-	//!
-	//! \param[in] hwCounters The task's hardware counters
-	inline void setHardwareCounters(const TaskHardwareCounters &hwCounters)
-	{
-		_hwCounters = hwCounters;
+		return _taskStatistics;
 	}
 
 	//! \brief Get the task's hardware counter structures
@@ -850,11 +837,13 @@ public:
 		return _flags[main_task_flag];
 	}
 
-	inline TasktypeData *getTasktypeData()
+	inline TasktypeData *getTasktypeData() const
 	{
-		assert(_taskInfo != nullptr);
+		if (_taskInfo != nullptr) {
+			return (TasktypeData *) _taskInfo->task_type_data;
+		}
 
-		return (TasktypeData *) _taskInfo->task_type_data;
+		return nullptr;
 	}
 
 	virtual inline void registerDependencies(bool = false)

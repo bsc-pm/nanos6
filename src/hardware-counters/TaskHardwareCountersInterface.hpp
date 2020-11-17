@@ -24,12 +24,18 @@ public:
 	//! \brief Get the delta value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	virtual uint64_t getDelta(HWCounters::counters_t counterType) = 0;
+	virtual uint64_t getDelta(HWCounters::counters_t counterType) const = 0;
 
 	//! \brief Get the accumulated value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the accumulation from
-	virtual uint64_t getAccumulated(HWCounters::counters_t counterType) = 0;
+	virtual uint64_t getAccumulated(HWCounters::counters_t counterType) const = 0;
+
+	//! \brief Combine the counters of two tasks
+	//!
+	//! \param[in] combinee The counters of a task, which will be combined into
+	//! the current counters
+	virtual void combineCounters(const TaskHardwareCountersInterface *combineeCounters) = 0;
 
 };
 

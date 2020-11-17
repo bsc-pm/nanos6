@@ -31,13 +31,15 @@ public:
 		Instrument::task_id_t instrumentationTaskId,
 		size_t flags,
 		const TaskDataAccessesInfo &taskAccessInfo,
-		void *taskCountersAddress
+		void *taskCountersAddress,
+		void *taskStatistics
 	) :
 		Task(argsBlock, argsBlockSize,
 			taskInfo, taskInvokationInfo,
 			parent, instrumentationTaskId,
 			flags, taskAccessInfo,
-			taskCountersAddress),
+			taskCountersAddress,
+			taskStatistics),
 		_bounds(),
 		_source(false)
 	{

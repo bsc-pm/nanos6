@@ -8,17 +8,19 @@
 #define PAPI_CPU_HARDWARE_COUNTERS_HPP
 
 #include <cstring>
+#include <papi.h>
 
 #include "PAPIHardwareCounters.hpp"
 #include "hardware-counters/CPUHardwareCountersInterface.hpp"
 #include "hardware-counters/SupportedHardwareCounters.hpp"
+#include "lowlevel/FatalErrorHandler.hpp"
 
 
 class PAPICPUHardwareCounters : public CPUHardwareCountersInterface {
 
 private:
 
-	//! Array of regular HW counter deltas
+	//! Arrays of regular HW counter deltas
 	long long _counters[HWCounters::HWC_PAPI_NUM_EVENTS];
 
 public:
@@ -28,15 +30,28 @@ public:
 		memset(_counters, 0, sizeof(_counters));
 	}
 
-	inline long long *getCountersBuffer()
+	//! \brief Read counters from an event set
+	//!
+	//! \param[in] eventSet The event set specified
+	inline void readCounters(int eventSet)
 	{
-		return _counters;
+		assert(eventSet != PAPI_NULL);
+
+		int ret = PAPI_read(eventSet, _counters);
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when reading a PAPI event set - ", PAPI_strerror(ret));
+		}
+
+		ret = PAPI_reset(eventSet);
+		if (ret != PAPI_OK) {
+			FatalErrorHandler::fail(ret, " when resetting a PAPI event set - ", PAPI_strerror(ret));
+		}
 	}
 
 	//! \brief Get the delta value of a HW counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType) override
+	inline uint64_t getDelta(HWCounters::counters_t counterType) const override
 	{
 		assert(PAPIHardwareCounters::isCounterEnabled(counterType));
 

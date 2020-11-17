@@ -14,13 +14,13 @@
 #include "executors/threads/WorkerThread.hpp"
 #include "hardware/HardwareInfo.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "tasks/StreamManager.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
 
 #include <InstrumentTaskStatus.hpp>
 #include <InstrumentTaskWait.hpp>
-#include <Monitoring.hpp>
 
 
 void nanos6_taskwait(char const *invocationSource)
@@ -41,7 +41,7 @@ void TaskWait::taskWait(char const *invocationSource, bool fromUserCode)
 
 	if (fromUserCode) {
 		HardwareCounters::updateTaskCounters(currentTask);
-		Monitoring::taskChangedStatus(currentTask, blocked_status);
+		Monitoring::taskChangedStatus(currentTask, paused_status);
 	}
 	Instrument::task_id_t taskId = currentTask->getInstrumentationTaskId();
 	Instrument::enterTaskWait(taskId, invocationSource, Instrument::task_id_t(), fromUserCode);

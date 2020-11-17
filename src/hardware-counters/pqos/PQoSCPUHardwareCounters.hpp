@@ -67,10 +67,10 @@ public:
 					case HWCounters::HWC_PQOS_PERF_EVENT_LLC_MISS:
 						_counters[innerId] = data->values.llc_misses_delta;
 						break;
-					case HWCounters::HWC_PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS:
+					case HWCounters::HWC_PQOS_PERF_EVENT_INSTRUCTIONS:
 						_counters[innerId] = data->values.ipc_retired_delta;
 						break;
-					case HWCounters::HWC_PQOS_PERF_EVENT_UNHALTED_CYCLES:
+					case HWCounters::HWC_PQOS_PERF_EVENT_CYCLES:
 						_counters[innerId] = data->values.ipc_unhalted_delta;
 						break;
 					default:
@@ -83,7 +83,7 @@ public:
 	//! \brief Get the delta value of a hardware counter
 	//!
 	//! \param[in] counterType The type of counter to get the delta from
-	inline uint64_t getDelta(HWCounters::counters_t counterType) override
+	inline uint64_t getDelta(HWCounters::counters_t counterType) const override
 	{
 		assert(counterType >= HWCounters::HWC_PQOS_MIN_EVENT);
 		assert(counterType <= HWCounters::HWC_PQOS_MAX_EVENT);

@@ -10,10 +10,10 @@
 #include "executors/threads/cpu-managers/default/policies/BusyPolicy.hpp"
 #include "executors/threads/cpu-managers/default/policies/IdlePolicy.hpp"
 #include "hardware-counters/HardwareCounters.hpp"
+#include "monitoring/Monitoring.hpp"
 #include "scheduling/Scheduler.hpp"
 
 #include <InstrumentComputePlaceManagement.hpp>
-#include <Monitoring.hpp>
 
 
 boost::dynamic_bitset<> DefaultCPUManager::_idleCPUs;
@@ -176,7 +176,7 @@ void DefaultCPUManager::forcefullyResumeFirstCPU()
 		--_numIdleCPUs;
 
 		// Since monitoring works with system ids, translate the ID
-		Monitoring::cpuBecomesActive(_cpus[_firstCPUId]->getSystemCPUId());
+		Monitoring::cpuBecomesActive(_cpus[_firstCPUId]->getIndex());
 		resumed = true;
 	}
 
