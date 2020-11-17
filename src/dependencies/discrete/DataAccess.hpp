@@ -257,7 +257,6 @@ public:
 
 	void setHomeNode(uint8_t id)
 	{
-		assert(!DataTrackingSupport::isNUMATrackingEnabled() || id != (uint8_t) -1);
 		_homeNode = id;
 	}
 };

@@ -56,6 +56,4 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid, Task *)
 		}
 	}
 	chosenNUMAid = chosen;
-	// At least, it must be _totalDataSize, at most, 2*_totalDataSize because RW accesses count double.
-	assert(sanityCheck >= _totalDataSize && sanityCheck <= 2*_totalDataSize);
 }
