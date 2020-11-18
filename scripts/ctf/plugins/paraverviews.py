@@ -928,6 +928,8 @@ class ParaverViewKernelSyscalls(ParaverView):
 			("sched_switch", self.hook_schedSwitch),
 		]
 		self._syscallMap = {}
+		self._sys_enter_prefix = len("sys_enter_")
+		self._sys_exit_prefix  = len("sys_exit_")
 
 		binaryName = ParaverTrace.getBinaryName()
 
@@ -941,21 +943,16 @@ class ParaverViewKernelSyscalls(ParaverView):
 		syscallsEntry, syscallsExit = KernelModel.getSyscallDefinitions()
 
 		index = 3
-		prefix = len("sys_enter_")
 		for syscall in syscallsEntry:
 			self._hooks.append((syscall, self.hook_syscallEntry))
-			name = syscall[prefix:]
+			# Create and map id for this syscall in Paraver's pcf
+			name = syscall[self._sys_enter_prefix:]
 			self._syscallMap[name] = index
 			values[index] = name
 			index += 1
 
-		prefix = len("sys_exit_")
 		for syscall in syscallsExit:
 			self._hooks.append((syscall, self.hook_syscallExit))
-			name = syscall[prefix:]
-			self._syscallMap[name] = index
-			values[index] = name
-			index += 1
 
 		ParaverTrace.addEventTypeAndValue(ExtraeEventTypes.KERNEL_SYSCALLS, values, "Kernel System Calls")
 		KernelModel.registerNewThreadCallback(self.callback_newThread)
@@ -974,8 +971,7 @@ class ParaverViewKernelSyscalls(ParaverView):
 		payload.append((ExtraeEventTypes.KERNEL_SYSCALLS, state))
 
 	def hook_syscallEntry(self, event, payload):
-		prefix = len("sys_enter_")
-		syscallId = self._syscallMap[event.name[prefix:]]
+		syscallId = self._syscallMap[event.name[self._sys_enter_prefix:]]
 		thread = KernelModel.getCurrentThread()
 		# On a kernel trace, we might encounter first an entry syscall event
 		# than a sched_switch, so the thread might not exist yet
@@ -987,8 +983,7 @@ class ParaverViewKernelSyscalls(ParaverView):
 		payload.append((ExtraeEventTypes.KERNEL_SYSCALLS, syscallId))
 
 	def hook_syscallExit(self, event, payload):
-		prefix = len("sys_exit_")
-		syscallId = self._syscallMap[event.name[prefix:]]
+		syscallId = self._syscallMap[event.name[self._sys_exit_prefix:]]
 		thread = KernelModel.getCurrentThread()
 		# See hook_syscalEntry note
 		if thread == None:

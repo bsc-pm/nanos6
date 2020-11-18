@@ -171,7 +171,7 @@ void CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 					_maxEventId = node.getData<ctf_kernel_event_id_t>("maxEventId", converted);
 					assert(converted);
 
-					_eventSizes.reserve(_maxEventId + 1);
+					_eventSizes.resize(_maxEventId + 1);
 				} else {
 					// get the event ID
 					bool converted = false;

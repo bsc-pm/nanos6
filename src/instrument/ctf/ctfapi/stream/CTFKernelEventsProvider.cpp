@@ -280,7 +280,7 @@ void *CTFAPI::CTFKernelEventsProvider::getNextEvent(uint64_t current)
 	return header;
 }
 
-bool CTFAPI::CTFKernelEventsProvider::read(void *buf, uint64_t size, uint64_t *read)
+bool CTFAPI::CTFKernelEventsProvider::read(void *buf, uint64_t size, uint64_t *readBytes)
 {
 	struct perf_event_header *header;
 	PerfRecordSample *perfRecordSample;
@@ -387,13 +387,13 @@ early_end:
 
 	if (processedBytes) {
 		// Good ending. We have copied at least one event
-		*read = processedBytes;
+		*readBytes = processedBytes;
 		return true;
 	} else {
 		// Bad ending. We have __not__ copied a single event. Return the
 		// size of the event that we couldn't copy or 0 if there was
 		// really no event
-		*read = eventSize;
+		*readBytes = eventSize;
 		return false;
 	}
 }
