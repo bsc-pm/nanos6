@@ -401,14 +401,25 @@ For more information on how to write and run cluster applications see [Cluster.m
 
 ## Choosing a dependency implementation
 
-The Nanos6 runtime has support for different dependency implementations. The `regions` dependencies are always compiled and are the default implementation. This choice is fully spec-compliant, and supports all of the features. It is also the only implementation that supports OmpSs-2@Cluster and execution workflows.
+The Nanos6 runtime has support for different dependency implementations. The `discrete` dependencies are the default dependency implementation. This is the most optimized implementation but it does not fully support the OmpSs-2 dependency model since it does not support region dependencies. In the case the user program requires region dependencies (e.g., to detect dependencies among partial overlapping dependency regions), Nanos6 privides the `regions` implementation, which is completely spec-compliant. This latter is also the only implementation that supports OmpSs-2@Cluster.
 
-Other implementations can be compiled in with the corresponding `./configure` flag, and selected dynamically through the `version.dependencies` configuration variable.
+The dependency implementation can be selected at run-time through the `version.dependencies` configuration variable. The available implementations are:
 
-The available implementations are:
+* `version.dependencies = "discrete"`: Optimized implementation not supporting region dependencies. Region syntax is supported but will behave as a discrete dependency to the first address. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model. **Default** implementation.
+* `version.dependencies = "regions"`: Supporting all dependency features. Default implementation in OmpSs-2@Cluster installations.
 
-* `version.dependencies = "regions"`: Supporting all features. **Default** implementation.
-* `version.dependencies = "discrete"`: No support for regions nor weak dependencies. Region syntax is supported but will behave as a discrete dependency to the first address, and weaks will behave as normal strong dependencies. Scales better than the default implementation thanks to its simpler logic and is functionally similar to traditional OpenMP model.
+In case an OmpSs-2 program requires region dependency support, it is recommended to add the declarative directive below in any of the program source files. Then, before the program is started, the runtime will check whether the loaded dependency implementation is `regions` and will abort the execution if it is not true.
+
+```c
+#pragma oss assert("version.dependencies==regions")
+
+int main() {
+	// ...
+}
+```
+
+Notice that the assert directive could also check whether the runtime is using `discrete` dependencies. The directive supports conditions with the compare operators `==` and `!=`.
+
 
 ## DLB Support
 

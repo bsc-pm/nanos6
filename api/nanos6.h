@@ -16,6 +16,7 @@
 
 #include "nanos6/blocking.h"
 #include "nanos6/cluster.h"
+#include "nanos6/config.h"
 #include "nanos6/constants.h"
 #include "nanos6/devices.h"
 #include "nanos6/events.h"

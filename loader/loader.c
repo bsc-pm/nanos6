@@ -140,6 +140,15 @@ static int _nanos6_loader_impl(void)
 	if (_nanos6_loader_parse_config())
 		return -1;
 
+	// Enable discrete dependencies by default for SMP
+	// installations and enable regions dependencies
+	// for OmpSs-2@Cluster installations
+#if USE_CLUSTER
+	char const *default_dependencies = "regions";
+#else
+	char const *default_dependencies = "discrete";
+#endif
+
 	_Bool debug = _config.debug;
 	_Bool verbose = _config.verbose;
 
@@ -155,8 +164,7 @@ static int _nanos6_loader_impl(void)
 
 	char const *dependencies = _config.dependencies;
 	if (dependencies == NULL) {
-		// Enable region dependencies by default
-		dependencies = "regions";
+		dependencies = default_dependencies;
 	}
 
 	if (verbose) {
@@ -210,9 +218,9 @@ static int _nanos6_loader_impl(void)
 		fprintf(stderr, "Checking if the variant was not correct\n");
 	}
 
-	_nanos6_loader_try_load(verbose, "optimized", "regions", "none", _config.library_path);
+	_nanos6_loader_try_load(verbose, "optimized", default_dependencies, "none", _config.library_path);
 	if (_nanos6_lib_handle == NULL) {
-		_nanos6_loader_try_load(verbose, "optimized", "regions", "none", lib_path);
+		_nanos6_loader_try_load(verbose, "optimized", default_dependencies, "none", lib_path);
 	}
 	if (_nanos6_lib_handle != NULL) {
 		fprintf(stderr, "The '%s' runtime variant with '%s' dependencies and '%s' instrumentation does not exist.\n", optimization, dependencies, instrument);

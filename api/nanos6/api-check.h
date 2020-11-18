@@ -58,6 +58,7 @@ typedef struct {
 	enum nanos6_blocking_api_t blocking_api_version;
 	enum nanos6_bootstrap_api_t bootstrap_api_version;
 	enum nanos6_cluster_api_t cluster_api_version;
+	enum nanos6_config_api_t config_api_version;
 	enum nanos6_cuda_device_api_t cuda_device_api_version;
 	enum nanos6_openacc_device_api_t openacc_device_api_version;
 	enum nanos6_final_api_t final_api_version;
