@@ -107,11 +107,11 @@ would run `app` on cores 0, 1, 2 and 4.
 ### Runtime settings
 
 The behaviour of the Nanos6 runtime can be tuned after compilation by means of a configuration file.
-The default configuration can be found in the installed documentation directory, in the file `nanos6.toml`.
+The default configuration file `nanos6.toml` can be found in the documentation directory of the Nanos6 installation, usually in the `$INSTALLATION_PREFIX/share/doc/nanos6/scripts` folder.
 Currently, the supported format is TOML v1.0.0-rc1 (https://toml.io/en/v1.0.0-rc.1).
 
-To override the default configuration, it is recommended to copy the default file and change the relevant options.
-The first configuration file found will be interpreted, according to the following order:
+To override the default configuration, we recommended to copy the default file and change the relevant options.
+The Nanos6 runtime will only interpret the first configuration file found according to the following order:
 
 1. The file pointed by the `NANOS6_CONFIG` environment variable.
 1. The file `nanos6.toml` found in the current working directory.
