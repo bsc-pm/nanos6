@@ -300,8 +300,8 @@ void Monitoring::loadMonitoringWisdom()
 					if (taskLabel == label) {
 						// Labels coincide, first copy Monitoring data
 						if (metricsNode.dataExists("NORMALIZED_COST")) {
-							bool converted = false;
-							double metricValue = metricsNode.getData("NORMALIZED_COST", converted);
+							double metricValue = 0.0;
+							bool converted = metricsNode.getData("NORMALIZED_COST", metricValue);
 							if (converted) {
 								TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
 								tasktypeStatistics.insertNormalizedTime(metricValue);
@@ -315,8 +315,8 @@ void Monitoring::loadMonitoringWisdom()
 							HWCounters::counters_t counterType = enabledCounters[i];
 							std::string metricLabel(HWCounters::counterDescriptions[counterType]);
 							if (metricsNode.dataExists(metricLabel)) {
-								bool converted = false;
-								double metricValue = metricsNode.getData(metricLabel, converted);
+								double metricValue = 0.0;
+								bool converted = metricsNode.getData(metricLabel, metricValue);
 								if (converted) {
 									TasktypeStatistics &tasktypeStatistics = tasktypeData.getTasktypeStatistics();
 									tasktypeStatistics.insertNormalizedCounter(i, metricValue);
