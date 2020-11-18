@@ -323,7 +323,8 @@ static void _nanos6_loader_check_envars(void)
 		fprintf(stderr, "\tNANOS6_CONFIG_OVERRIDE=\"version.dependencies=discrete,version.instrument=ctf\" ./ompss-2-program\n\n");
 
 		fprintf(stderr, "Therefore, the only relevant NANOS6 variables are NANOS6_CONFIG and NANOS6_CONFIG_OVERRIDE; the rest are ignored by the runtime.\n");
-		fprintf(stderr, "Please note that you can disable this warning by setting the option 'loader.warn_envars' to false.\n\n");
+		fprintf(stderr, "For more information, please check the OmpSs-2 User Guide (https://pm.bsc.es/ftp/ompss-2/doc/user-guide).\n");
+		fprintf(stderr, "Note that you can disable this warning by setting the option 'loader.warn_envars' to false.\n\n");
 
 		free(default_config_path);
     }
