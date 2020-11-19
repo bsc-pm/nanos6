@@ -25,6 +25,7 @@
 #include "scheduling/Scheduler.hpp"
 #include "TaskDataAccesses.hpp"
 #include "tasks/Task.hpp"
+#include "tasks/Taskloop.hpp"
 
 #include <InstrumentDependenciesByAccessLinks.hpp>
 #include <InstrumentDependencySubsystemEntryPoints.hpp>
@@ -179,6 +180,9 @@ namespace DataAccessRegistration {
 		}
 
 		access->addToSymbol(symbolIndex);
+
+		// Tuning the number of deps of child taskloops
+		task->incrementMaxChildDeps();
 	}
 
 	void propagateMessages(

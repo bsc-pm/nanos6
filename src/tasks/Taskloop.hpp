@@ -21,6 +21,13 @@ private:
 	bounds_t _bounds;
 	bool _source;
 	size_t _numTasks;
+	// In some cases, the compiler cannot precisely indicate the number of deps.
+	// In these cases, it passes -1 to the runtime so the deps are dynamically
+	// registered. We have a loop where the parent registers all the deps of the
+	// child tasks. We can count on that loop how many deps has each child and
+	// get the max, so when we create children, we can use a more refined
+	// numDeps, saving memory space and probably improving slightly the performance.
+	size_t _maxChildDeps;
 
 public:
 	inline Taskloop(
@@ -42,7 +49,8 @@ public:
 			taskCountersAddress,
 			taskStatistics),
 		_bounds(),
-		_source(false)
+		_source(false),
+		_maxChildDeps((size_t) -1)
 	{
 	}
 
@@ -90,13 +98,37 @@ public:
 		if (discrete && isTaskloopSource()) {
 			bounds_t tmpBounds;
 			for (size_t t = 0; t < _numTasks; t++) {
+				// Store previous maxChildDeps
+				size_t maxChildDepsStart = _maxChildDeps;
+				// Reset
+				_maxChildDeps = 0;
+
+				// Register deps of children task
 				tmpBounds.lower_bound = _bounds.lower_bound + t * _bounds.grainsize;
 				tmpBounds.upper_bound = std::min(tmpBounds.lower_bound + _bounds.grainsize, _bounds.upper_bound);
 				getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &tmpBounds, this);
+
+				// Restore previous maxChildDeps if it is bigger than current one
+				if (maxChildDepsStart != (size_t) -1 && maxChildDepsStart > _maxChildDeps) {
+					_maxChildDeps = maxChildDepsStart;
+				}
 			}
 			assert(tmpBounds.upper_bound == _bounds.upper_bound);
 		} else {
 			getTaskInfo()->register_depinfo(getArgsBlock(), (void *) &_bounds, this);
+		}
+	}
+
+	inline size_t getMaxChildDeps() const
+	{
+		return _maxChildDeps;
+	}
+
+	inline void incrementMaxChildDeps()
+	{
+		if (_source) {
+			assert(_maxChildDeps != (size_t) -1);
+			_maxChildDeps++;
 		}
 	}
 

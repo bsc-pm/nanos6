@@ -880,6 +880,9 @@ public:
 	{
 		return _nestingLevel;
 	}
+
+	virtual inline void incrementMaxChildDeps()
+	{}
 };
 
 
