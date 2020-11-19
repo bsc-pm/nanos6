@@ -206,9 +206,7 @@ namespace DataAccessRegistration {
 
 			if (next.location) {
 				if (next.to != nullptr) {
-					if (DataTrackingSupport::isNUMATrackingEnabled() && DataTrackingSupport::getNUMATrackingType().compare("DEPS") == 0) {
-						next.to->setHomeNode(next.from->getHomeNode());
-					}
+					next.to->setHomeNode(next.from->getHomeNode());
 				}
 			}
 
@@ -602,10 +600,9 @@ namespace DataAccessRegistration {
 					dispose = parentAccess->applyPropagated(message);
 					assert(!dispose);
 
-					if (DataTrackingSupport::isNUMATrackingEnabled() && DataTrackingSupport::getNUMATrackingType().compare("DEPS") == 0) {
-						access->setHomeNode(parentAccess->getHomeNode());
-						setHomeNode = false;
-					}
+					access->setHomeNode(parentAccess->getHomeNode());
+					setHomeNode = false;
+
 					if (dispose)
 						decreaseDeletableCountOrDelete(parentTask, hpDependencyData._deletableOriginators);
 				} else {
@@ -621,10 +618,8 @@ namespace DataAccessRegistration {
 				schedule = fromCurrent.schedule;
 				assert(!(fromCurrent.flagsForNext));
 
-				if (DataTrackingSupport::isNUMATrackingEnabled() && DataTrackingSupport::getNUMATrackingType().compare("DEPS") == 0) {
-					access->setHomeNode(predecessor->getHomeNode());
-					setHomeNode = false;
-				}
+				access->setHomeNode(predecessor->getHomeNode());
+				setHomeNode = false;
 
 				dispose = predecessor->applyPropagated(message);
 				if (dispose)
@@ -632,12 +627,10 @@ namespace DataAccessRegistration {
 			}
 
 			// The homenode couldn't be propagated, check it in the directory
-			if (DataTrackingSupport::isNUMATrackingEnabled()) {
-				if (!weak && setHomeNode) {
-					size_t length = access->getAccessRegion().getSize();
-					uint8_t homenode = ManagerNUMA::getHomeNode(address, length);
-					access->setHomeNode(homenode);
-				}
+			if (!weak && setHomeNode) {
+				size_t length = access->getAccessRegion().getSize();
+				uint8_t homenode = ManagerNUMA::getHomeNode(address, length);
+				access->setHomeNode(homenode);
 			}
 
 			if (fromCurrent.combine) {

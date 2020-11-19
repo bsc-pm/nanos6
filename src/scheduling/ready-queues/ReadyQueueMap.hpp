@@ -30,8 +30,7 @@ public:
 		_numReadyTasks(0),
 		_roundRobinQueues(0)
 	{
-		_numMaps = DataTrackingSupport::isNUMASchedulingEnabled() ?
-			HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device) : 1;
+		_numMaps = DataTrackingSupport::getNUMATrackingNodes();
 		_readyMaps = (ready_map_t *) MemoryAllocator::alloc(_numMaps * sizeof(ready_map_t));
 		_numCurrentReadyTasksPerNUMANode = (size_t *) MemoryAllocator::alloc(_numMaps * sizeof(size_t));
 
@@ -58,13 +57,11 @@ public:
 	{
 		Task::priority_t priority = task->getPriority();
 
-		uint8_t NUMAid = 0;
-		if (DataTrackingSupport::isNUMASchedulingEnabled()) {
-			NUMAid = task->getNUMAhint();
-			if (NUMAid == (uint8_t) -1) {
-				NUMAid = _roundRobinQueues;
-				_roundRobinQueues = (_roundRobinQueues + 1) % _numMaps;
-			}
+		uint8_t NUMAid = task->getNUMAhint();
+		// In case there is no hint, use round robin to balance the load
+		if (NUMAid == (uint8_t) -1) {
+			NUMAid = _roundRobinQueues;
+			_roundRobinQueues = (_roundRobinQueues + 1) % _numMaps;
 		}
 
 		assert(NUMAid < _numMaps);
@@ -89,7 +86,11 @@ public:
 			return nullptr;
 		}
 
-		uint8_t NUMAid = DataTrackingSupport::isNUMASchedulingEnabled() ? ((CPU *)computePlace)->getNumaNodeId() : 0;
+		uint8_t NUMAid = 0;
+		if (_numMaps > 1) {
+			NUMAid =  ((CPU *)computePlace)->getNumaNodeId();
+		}
+
 		// 1. Try to get from my NUMA queue.
 		if (!_readyMaps[NUMAid].empty()) {
 			ready_map_t::iterator it = _readyMaps[NUMAid].begin();
@@ -111,8 +112,8 @@ public:
 		}
 
 		// 2. Try to steal from other NUMA queues.
-		// Stealing must consider distance and load balance
-		if (DataTrackingSupport::isNUMAStealingEnabled()) {
+		if (_numMaps > 1) {
+			// Stealing must consider distance and load balance
 			const std::vector<uint64_t> &distances = HardwareInfo::getNUMADistances();
 			// Ideally, we want to steal from closer sockets with many tasks
 			// We will use this score function: score = 100/distance + ready_tasks/5
@@ -156,7 +157,7 @@ public:
 			}
 		}
 
-		FatalErrorHandler::failIf(DataTrackingSupport::isNUMAStealingEnabled(), "There must be a ready task.");
+		FatalErrorHandler::failIf(true, "There must be a ready task.");
 		return nullptr;
 	}
 

@@ -25,8 +25,7 @@ public:
 	ReadyQueueDeque(SchedulingPolicy policy)
 		: ReadyQueue(policy), _numReadyTasks(0), _roundRobinQueues(0)
 	{
-		_numQueues = DataTrackingSupport::isNUMASchedulingEnabled() ?
-			HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device) : 1;
+		_numQueues = DataTrackingSupport::getNUMATrackingNodes();
 		_readyDeques = (ready_queue_t *) MemoryAllocator::alloc(_numQueues * sizeof(ready_queue_t));
 		_numCurrentReadyTasksPerNUMANode = (size_t *) MemoryAllocator::alloc(_numQueues * sizeof(size_t));
 
@@ -48,13 +47,11 @@ public:
 
 	void addReadyTask(Task *task, bool unblocked)
 	{
-		uint8_t NUMAid = 0;
-		if (DataTrackingSupport::isNUMASchedulingEnabled()) {
-			NUMAid = task->getNUMAhint();
-			if (NUMAid == (uint8_t) -1) {
-				NUMAid = _roundRobinQueues;
-				_roundRobinQueues = (_roundRobinQueues + 1) % _numQueues;
-			}
+		uint8_t NUMAid = task->getNUMAhint();
+		// In case there is no hint, use round robin to balance the load
+		if (NUMAid == (uint8_t) -1) {
+			NUMAid = _roundRobinQueues;
+			_roundRobinQueues = (_roundRobinQueues + 1) % _numQueues;
 		}
 
 		assert(NUMAid < _numQueues);
@@ -75,7 +72,11 @@ public:
 			return nullptr;
 		}
 
-		uint8_t NUMAid = DataTrackingSupport::isNUMASchedulingEnabled() ? ((CPU *)computePlace)->getNumaNodeId() : 0;
+		uint8_t NUMAid = 0;
+		if (_numQueues > 1) {
+			NUMAid =  ((CPU *)computePlace)->getNumaNodeId();
+		}
+
 		// 1. Try to get from my NUMA queue.
 		if (!_readyDeques[NUMAid].empty()) {
 			Task *result = _readyDeques[NUMAid].front();
@@ -90,32 +91,14 @@ public:
 		}
 
 		// 2. Try to steal from other NUMA queues.
-		if (DataTrackingSupport::isNUMAStealingEnabled()) {
-			for (uint8_t i = 0; i < _numQueues; i++) {
-				if (i != NUMAid) {
-					if (!_readyDeques[i].empty()) {
-						Task *result = _readyDeques[i].front();
-						assert(result != nullptr);
-
-						_readyDeques[i].pop_front();
-
-						--_numReadyTasks;
-
-						return result;
-					}
-				}
-			}
-		}
-
-		// 2. Try to steal from other NUMA queues.
-		// Stealing must consider distance and load balance
-		if (DataTrackingSupport::isNUMAStealingEnabled()) {
+		if (_numQueues > 1) {
+			// Stealing must consider distance and load balance
 			const std::vector<uint64_t> &distances = HardwareInfo::getNUMADistances();
 			// Ideally, we want to steal from closer sockets with many tasks
 			// We will use this score function: score = 100/distance + ready_tasks/5
 			// The highest score, the better
 			uint64_t score = 0;
-			int16_t chosen = -1;
+			uint8_t chosen = (uint8_t) -1;
 			for (uint8_t i = 0; i < _numQueues; i++) {
 				if (i != NUMAid) {
 					if (_numCurrentReadyTasksPerNUMANode[i] > 0) {
@@ -134,7 +117,7 @@ public:
 				}
 			}
 
-			assert(chosen != -1 && _numCurrentReadyTasksPerNUMANode[chosen] > 0);
+			assert(chosen != (uint8_t) -1 && _numCurrentReadyTasksPerNUMANode[chosen] > 0);
 			Task *result = _readyDeques[chosen].front();
 			assert(result != nullptr);
 
@@ -146,8 +129,7 @@ public:
 			return result;
 		}
 
-
-		FatalErrorHandler::failIf(DataTrackingSupport::isNUMAStealingEnabled(), "There must be a ready task.");
+		FatalErrorHandler::failIf(true, "There must be a ready task.");
 		return nullptr;
 	}
 

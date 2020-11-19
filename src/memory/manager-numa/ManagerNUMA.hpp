@@ -347,18 +347,10 @@ public:
 					// Place pages where they must be
 					void *tmp = (void *) ((uintptr_t) ptr + i);
 #ifndef NDEBUG
-					if (DataTrackingSupport::getNUMATrackingType().compare("LOCK") == 0) {
-						_lock.writeLock();
-					} else {
-						_lock.readLock();
-					}
+					_lock.readLock();
 					auto it = _directory.find(tmp);
 					assert(it->second._size == (size_t) originalBlockSize || it->second._size == remainingBytes);
-					if (DataTrackingSupport::getNUMATrackingType().compare("LOCK") == 0) {
-						_lock.writeUnlock();
-					} else {
-						_lock.readUnlock();
-					}
+					_lock.readUnlock();
 					remainingBytes -= it->second._size;
 #endif
 					_lock.writeLock();
@@ -377,18 +369,10 @@ public:
 					// Place pages where they must be
 					void *tmp = (void *) ((uintptr_t) ptr + i);
 #ifndef NDEBUG
-					if (DataTrackingSupport::getNUMATrackingType().compare("LOCK") == 0) {
-						_lock.writeLock();
-					} else {
-						_lock.readLock();
-					}
+					_lock.readLock();
 					auto it = _directory.find(tmp);
 					assert(it->second._size == block_size || it->second._size == remainingBytes);
-					if (DataTrackingSupport::getNUMATrackingType().compare("LOCK") == 0) {
-						_lock.writeUnlock();
-					} else {
-						_lock.readUnlock();
-					}
+					_lock.readUnlock();
 					remainingBytes -= it->second._size;
 #endif
 					_lock.writeLock();
@@ -446,24 +430,19 @@ public:
 
 	static uint8_t getHomeNode(void *ptr, size_t size)
 	{
-		assert(DataTrackingSupport::isNUMATrackingEnabled());
+		if (!DataTrackingSupport::isNUMATrackingEnabled()) {
+			return (uint8_t) -1;
+		}
+
 #ifndef NDEBUG
 		_totalQueries++;
 #endif
 
 		uint8_t homenode = (uint8_t ) -1;
 		// Search in the directory
-		if (DataTrackingSupport::getNUMATrackingType().compare("LOCK") == 0) {
-			_lock.writeLock();
-		} else {
-			_lock.readLock();
-		}
+		_lock.readLock();
 		auto it = _directory.lower_bound(ptr);
-		if (DataTrackingSupport::getNUMATrackingType().compare("LOCK") == 0) {
-			_lock.writeUnlock();
-		} else {
-			_lock.readUnlock();
-		}
+		_lock.readUnlock();
 
 		// lower_bound returns the first element not considered to go before ptr
 		// Thus, if ptr is exactly the start of the region, lower_bound will return

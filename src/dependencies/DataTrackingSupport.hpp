@@ -7,6 +7,7 @@
 #ifndef DATA_TRACKING_SUPPORT_HPP
 #define DATA_TRACKING_SUPPORT_HPP
 
+#include "hardware/HardwareInfo.hpp"
 #include "lowlevel/EnvironmentVariable.hpp"
 #include "lowlevel/SpinLock.hpp"
 
@@ -14,7 +15,6 @@ class Task;
 
 namespace DataTrackingSupport {
 	static EnvironmentVariable<bool> _NUMATrackingEnabled("NANOS6_NUMA_TRACKING", 1);
-	static EnvironmentVariable<std::string> _NUMATrackingType("NANOS6_NUMA_TRACKING_TYPE", "DEPS");
 	static EnvironmentVariable<bool> _NUMASchedulingEnabled("NANOS6_NUMA_SCHEDULING", 1);
 	static EnvironmentVariable<bool> _NUMAStealingEnabled("NANOS6_NUMA_STEALING", 1);
 
@@ -28,11 +28,6 @@ namespace DataTrackingSupport {
 		return _NUMATrackingEnabled;
 	}
 
-	static inline std::string getNUMATrackingType()
-	{
-		return _NUMATrackingType;
-	}
-
 	static inline bool isNUMASchedulingEnabled()
 	{
 		return _NUMASchedulingEnabled;
@@ -41,6 +36,15 @@ namespace DataTrackingSupport {
 	static inline bool isNUMAStealingEnabled()
 	{
 		return _NUMAStealingEnabled;
+	}
+
+	static inline size_t getNUMATrackingNodes()
+	{
+        if (_NUMATrackingEnabled) {
+            return HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
+        } else {
+            return 1;
+        }
 	}
 }
 
