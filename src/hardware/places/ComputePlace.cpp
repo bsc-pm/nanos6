@@ -73,6 +73,10 @@ ComputePlace::ComputePlace(int index, nanos6_device_t type, bool owned) :
 
 	HardwareCounters::taskCreated(_preallocatedTaskfor);
 	Monitoring::taskCreated(_preallocatedTaskfor);
+
+	// Obtain a seed from the system clock:
+	unsigned seed1 = std::chrono::system_clock::now().time_since_epoch().count();
+	_randomEngine = std::default_random_engine(seed1);
 }
 
 ComputePlace::~ComputePlace()

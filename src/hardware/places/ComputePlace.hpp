@@ -8,6 +8,7 @@
 #define COMPUTE_PLACE_HPP
 
 #include <map>
+#include <random>
 #include <vector>
 
 #include <nanos6/task-instantiation.h>
@@ -39,6 +40,9 @@ private:
 
 	//! Whether this cpu is owned by the runtime
 	bool _owned;
+
+	//! Random generator. Currently used in TaskDataAccesses::computeNUMAAffinity
+	std::default_random_engine _randomEngine;
 
 protected:
 	//! The index of the compute place
@@ -132,6 +136,11 @@ public:
 	Instrument::CPULocalData &getInstrumentationData()
 	{
 		return _instrumentationData;
+	}
+
+	inline std::default_random_engine &getRandomEngine()
+	{
+		return _randomEngine;
 	}
 };
 

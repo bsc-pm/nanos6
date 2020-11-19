@@ -7,9 +7,7 @@
 #include "TaskDataAccesses.hpp"
 #include "scheduling/SchedulerInterface.hpp"
 
-std::default_random_engine TaskDataAccesses::_randomEngine;
-
-void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid, Task *)
+void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid, std::default_random_engine &randomEngine, Task *)
 {
 	if (_totalDataSize == 0 || !DataTrackingSupport::isNUMATrackingEnabled() || !DataTrackingSupport::isNUMASchedulingEnabled())
 		return;
@@ -41,7 +39,6 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid, Task *)
 	size_t max = 0;
 	size_t sanityCheck = 0;
 	uint8_t chosen = (uint8_t) -1;
-	std::uniform_int_distribution<uint8_t> _unif(0, 1);
 	for (int i = 0; i < numNUMANodes; i++) {
 		sanityCheck += bytesInNUMA[i];
 		if (bytesInNUMA[i] > max) {
@@ -49,7 +46,7 @@ void TaskDataAccesses::computeNUMAAffinity(uint8_t &chosenNUMAid, Task *)
 			chosen = i;
 		} else if (bytesInNUMA[i] == max && chosen != (uint8_t) i) {
 			// Random returns either 0 or 1. If 0, we keep the old max, if 1, we update it.
-			uint8_t update = _unif(_randomEngine);
+			uint8_t update = _unif(randomEngine);
 			if (update) {
 				chosen = i;
 			}

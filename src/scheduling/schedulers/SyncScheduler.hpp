@@ -129,7 +129,7 @@ public:
 			// Set temporary info that is used when processing ready tasks
 			tasks[t]->setComputePlace(computePlace);
 			tasks[t]->setSchedulingHint(hint);
-			tasks[t]->computeNUMAAffinity();
+			tasks[t]->computeNUMAAffinity(computePlace->getRandomEngine());
 		}
 
 		size_t count = 0;

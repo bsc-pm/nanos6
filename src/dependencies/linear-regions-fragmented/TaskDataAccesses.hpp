@@ -11,6 +11,7 @@
 #include <bitset>
 #include <cassert>
 #include <mutex>
+#include <random>
 
 #include "BottomMapEntry.hpp"
 #include "IntrusiveLinearRegionMap.hpp"
