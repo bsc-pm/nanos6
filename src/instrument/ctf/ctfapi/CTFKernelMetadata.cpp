@@ -4,20 +4,18 @@
 	Copyright (C) 2020 Barcelona Supercomputing Center (BSC)
 */
 
-
+#include <cinttypes>
+#include <cstdint>
+#include <cstdlib>
 #include <errno.h>
 #include <linux/version.h>
 #include <sys/utsname.h>
 
-#include <cinttypes>
-#include <cstdint>
-#include <cstdlib>
-
-#include "CTFTrace.hpp"
 #include "CTFKernelMetadata.hpp"
+#include "CTFTrace.hpp"
 #include "lowlevel/FatalErrorHandler.hpp"
-#include "stream/CTFStream.hpp"
 #include "stream/CTFKernelStream.hpp"
+#include "stream/CTFStream.hpp"
 #include "support/JsonFile.hpp"
 
 
@@ -152,42 +150,42 @@ bool CTFAPI::CTFKernelMetadata::getSystemInformation()
 void CTFAPI::CTFKernelMetadata::loadKernelDefsFile(const char *file)
 {
 	JsonFile configFile = JsonFile(file);
-
 	if (configFile.fileExists()) {
 		configFile.loadData();
 
 		// Navigate through the file and extract tracepoint definitions
 		configFile.getRootNode()->traverseChildrenNodes(
 			[&](const std::string &name, const JsonNode<> &node) {
+				// The "meta" node is always found first
 				if (name == "meta") {
-					// The "meta" node is allways found first
-					bool converted = false;
+					// Get the number of events
+					bool converted = node.getData<ctf_kernel_event_id_t>("numberOfEvents", _numberOfEvents);
+					FatalErrorHandler::failIf(!converted, "CTF: Kernel: When extracting 'meta' numEvents");
 
-					// get number of events
-					_numberOfEvents = node.getData<ctf_kernel_event_id_t>("numberOfEvents", converted);
-					assert(converted);
-
-					// get max event id
-					_maxEventId = node.getData<ctf_kernel_event_id_t>("maxEventId", converted);
-					assert(converted);
+					// Get the maximum event ID
+					converted = node.getData<ctf_kernel_event_id_t>("maxEventId", _maxEventId);
+					FatalErrorHandler::failIf(!converted, "CTF: Kernel: When extracting 'meta' maxId");
 
 					_eventSizes.resize(_maxEventId + 1);
 				} else {
-					// get the event ID
-					bool converted = false;
-					ctf_kernel_event_id_t id = node.getData<ctf_kernel_event_id_t>("id", converted);
-					assert(converted);
+					// Get the event's ID
+					ctf_kernel_event_id_t id;
+					bool converted = node.getData<ctf_kernel_event_id_t>("id", id);
+					FatalErrorHandler::failIf(!converted, "CTF: Kernel: When extracting an event ID");
 
-					// get the event Size
-					ctf_kernel_event_size_t size = node.getData<ctf_kernel_event_size_t>("size", converted);
-					assert(converted);
+					// Get the event's size
+					ctf_kernel_event_size_t size;
+					converted = node.getData<ctf_kernel_event_size_t>("size", size);
+					FatalErrorHandler::failIf(!converted, "CTF: Kernel: When extracting an event size");
 
-					// get the event Format
-					std::string format = node.getData<std::string>("format", converted);
-					assert(converted);
+					// Get the event's format
+					std::string format;
+					converted = node.getData<std::string>("format", format);
+					FatalErrorHandler::failIf(!converted, "CTF: Kernel: When extracting an event format");
 
 					_kernelEventMap.emplace(name, std::make_pair(id, format));
 					assert(_eventSizes.size() > id);
+
 					_eventSizes[id] = size;
 				}
 			}

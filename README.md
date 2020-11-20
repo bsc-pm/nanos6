@@ -372,21 +372,19 @@ Additionally, checkpointing of predictions is enabled through the `Wisdom` mecha
 
 ## Hardware Counters
 
-Nanos6 offers a real-time API to obtain hardware counter statistics of tasks with various backends. The usage of this API is controlled through the `nanos6_hwcounters.json` configuration file, where backends and counters to be monitored are specified. Currently, Nanos6 supports two backends - `papi` and `pqos` - and a subset of their available counters. All the available backends and counters are listed in the default configuration file, found in the scripts folder. To enable any of these, simply modify the `0` in the field and replace it with a `1`.
+Nanos6 offers an infrastructure to obtain hardware counter statistics of tasks with various backends. The usage of this API is controlled through the Nanos6 configure file. Currently, Nanos6 supports the PAPI, RAPL and PQoS backends.
 
-Next we showcase a simplified version of the configuration file, where the PQoS backend is enabled with a counter that reports the local memory bandwidth and cycles executed of tasks:
-```json
-{
-	"PQOS": {
-		"ENABLED": 1,
-		"PQOS_MON_EVENT_L3_OCCUP": 0,
-		"PQOS_MON_EVENT_LMEM_BW": 1,
-		"PQOS_MON_EVENT_RMEM_BW": 0,
-		"PQOS_PERF_EVENT_LLC_MISS": 0,
-		"PQOS_PERF_EVENT_RETIRED_INSTRUCTIONS": 0,
-		"PQOS_PERF_EVENT_UNHALTED_CYCLES": 1
-	}
-}
+All the available hardware counter backends are listed in the default configuration file, found in the scripts folder. To enable any of these, modify the `false` fields and change them to `true`. Specific counters can be enabled or disabled by adding or removing their name from the list of counters inside each backend subsection.
+
+Next we showcase a simplified version of the hardware counter section of the configure file, where the PAPI backend is enabled with counters that monitor the total number of instructions and cycles, and the PAPI backend is enabled as well:
+
+```toml
+[hardware_counters]
+  [hardware_counters.papi]
+    enabled = true
+    counters = ["PAPI_TOT_INS", "PAPI_TOT_CYC"]
+  [hardware_counters.rapl]
+    enabled = true
 ```
 
 ## Device tasks

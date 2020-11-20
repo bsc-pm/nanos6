@@ -99,21 +99,20 @@ public:
 	//! \brief Get data from this node
 	//!
 	//! \param[in] label The label of the data
-	//! \param[out] converted Whether the data extraction was successful
+	//! \param[out] data The extracted data
+	//!
+	//! \return Whether the conversion was successful
 	template <typename X = T>
-	inline X getData(const std::string &label, bool &converted) const
+	inline bool getData(const std::string &label, X &data) const
 	{
-		X data;
-		converted = true;
-
 		try {
 			data = _node.get<X>(label);
 		} catch (const Json::ptree_error &conversionError) {
 			FatalErrorHandler::warn("Could not convert JSON data with label: ", label);
-			converted = false;
+			return false;
 		}
 
-		return data;
+		return true;
 	}
 
 
