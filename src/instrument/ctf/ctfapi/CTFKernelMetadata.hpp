@@ -8,12 +8,13 @@
 #define CTF_KERNEL_METADATA_HPP
 
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include "CTFTypes.hpp"
 #include "CTFMetadata.hpp"
+#include "CTFTypes.hpp"
 #include "support/config/ConfigVariable.hpp"
 
 namespace CTFAPI {
