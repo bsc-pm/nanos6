@@ -21,9 +21,9 @@ enum nanos6_numa_api_t { nanos6_numa_api = 1 };
 //	 - NUMA_ALL_ACTIVE: the NUMA nodes where we have all the CPUs assigned
 //	 - NUMA_ANY_ACTIVE: the NUMA nodes where we have any of the CPUs assigned
 enum nanos6_bitmask_wildcard_t {
-	NUMA_ALL = 0xFFFFFFFFFFFFFFFF,
-	NUMA_ALL_ACTIVE = 0xFFFFFFFFFFFFFFFE,
-	NUMA_ANY_ACTIVE = 0xFFFFFFFFFFFFFFFD
+	NUMA_ALL = 0,
+	NUMA_ALL_ACTIVE = 1,
+	NUMA_ANY_ACTIVE = 2
 };
 
 
@@ -94,12 +94,17 @@ void nanos6_bitmask_setbit(
 	uint64_t n
 );
 
+void nanos6_bitmask_set_wildcard(
+	nanos6_bitmask_t *bitmask,
+	nanos6_bitmask_t wildcard
+);
+
 uint8_t nanos6_bitmask_isbitset(
 	nanos6_bitmask_t *bitmask,
 	uint64_t n
 );
 
-uint8_t nanos6_get_numa_nodes(
+uint8_t nanos6_count_enabled_bits(
 	nanos6_bitmask_t *bitmask
 );
 

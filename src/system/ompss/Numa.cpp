@@ -65,6 +65,13 @@ void nanos6_bitmask_setbit(
 	ManagerNUMA::setBit(bitmask, n);
 }
 
+void nanos6_bitmask_set_wildcard(
+	nanos6_bitmask_t *bitmask,
+	nanos6_bitmask_t wildcard
+) {
+	ManagerNUMA::setWildcard(bitmask, wildcard);
+}
+
 uint8_t nanos6_bitmask_isbitset(
 	nanos6_bitmask_t *bitmask,
 	uint64_t n
@@ -72,8 +79,8 @@ uint8_t nanos6_bitmask_isbitset(
 	return ManagerNUMA::isBitSet(bitmask, n);
 }
 
-uint8_t nanos6_get_numa_nodes(
+uint8_t nanos6_count_enabled_bits(
 	nanos6_bitmask_t *bitmask
 ) {
-	return ManagerNUMA::getNumaNodes(bitmask);
+	return ManagerNUMA::countEnabledBits(bitmask);
 }

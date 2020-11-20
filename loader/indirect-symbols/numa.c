@@ -138,6 +138,22 @@ void nanos6_bitmask_setbit(
 	(*symbol)(bitmask, n);
 }
 
+void nanos6_bitmask_set_wildcard(
+	 nanos6_bitmask_t *bitmask,
+	 nanos6_bitmask_t wildcard
+) {
+	typedef void nanos6_bitmask_set_wildcard(
+			nanos6_bitmask_t *bitmask, nanos6_bitmask_t wildcard
+	);
+
+	static nanos6_bitmask_set_wildcard *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_bitmask_set_wildcard *) _nanos6_resolve_symbol("nanos6_bitmask_set_wildcard", "numa", NULL);
+	}
+
+	(*symbol)(bitmask, wildcard);
+}
+
 uint8_t nanos6_bitmask_isbitset(
 	 nanos6_bitmask_t *bitmask,
 	 uint64_t n
@@ -154,16 +170,16 @@ uint8_t nanos6_bitmask_isbitset(
 	return (*symbol)(bitmask, n);
 }
 
-uint8_t nanos6_get_numa_nodes(
+uint8_t nanos6_count_enabled_bits(
 	 nanos6_bitmask_t *bitmask
 ) {
-	typedef void nanos6_get_numa_nodes(
+	typedef void nanos6_count_enabled_bits(
 			nanos6_bitmask_t *bitmask
 	);
 
-	static nanos6_get_numa_nodes *symbol = NULL;
+	static nanos6_count_enabled_bits *symbol = NULL;
 	if (__builtin_expect(symbol == NULL, 0)) {
-		symbol = (nanos6_get_numa_nodes *) _nanos6_resolve_symbol("nanos6_get_numa_nodes", "numa", NULL);
+		symbol = (nanos6_count_enabled_bits *) _nanos6_resolve_symbol("nanos6_count_enabled_bits", "numa", NULL);
 	}
 
 	return (*symbol)(bitmask);

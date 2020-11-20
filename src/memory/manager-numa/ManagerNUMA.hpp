@@ -159,19 +159,7 @@ public:
 		assert(*bitmask != 0);
 		assert(block_size > 0);
 
-		// Check first if bitmask is any of the wildcards
-		bitmask_t realBitmask;
-		if (*bitmask == NUMA_ALL) {
-			setAll(&realBitmask);
-		} else if (*bitmask == NUMA_ALL_ACTIVE) {
-			setAllActive(&realBitmask);
-		} else if (*bitmask == NUMA_ANY_ACTIVE) {
-			setAnyActive(&realBitmask);
-		} else {
-			realBitmask = *bitmask;
-		}
-
-		bitmask_t bitmaskCopy = realBitmask;
+		bitmask_t bitmaskCopy = *bitmask;
 #ifndef NDEBUG
 		_totalBytes += size;
 #endif
@@ -212,7 +200,7 @@ public:
 				uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 				disableBit(&bitmaskCopy, currentNodeIndex);
 				if (bitmaskCopy == 0) {
-					bitmaskCopy = realBitmask;
+					bitmaskCopy = *bitmask;
 				}
 
 				// Insert into directory
@@ -228,7 +216,7 @@ public:
 				uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 				disableBit(&bitmaskCopy, currentNodeIndex);
 				if (bitmaskCopy == 0) {
-					bitmaskCopy = realBitmask;
+					bitmaskCopy = *bitmask;
 				}
 
 				// Place pages where they must be
@@ -260,7 +248,7 @@ public:
 		uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 		disableBit(&bitmaskCopy, currentNodeIndex);
 		if (bitmaskCopy == 0) {
-			bitmaskCopy = realBitmask;
+			bitmaskCopy = *bitmask;
 		}
 
 		size_t blockBytes = 0;
@@ -269,7 +257,7 @@ public:
 				currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 				disableBit(&bitmaskCopy, currentNodeIndex);
 				if (bitmaskCopy == 0) {
-					bitmaskCopy = realBitmask;
+					bitmaskCopy = *bitmask;
 				}
 				blockBytes = 0;
 			}
@@ -288,11 +276,11 @@ public:
 		assert(ret == 0);
 
 		// Check pages are properly distributed
-		bitmaskCopy = realBitmask;
+		bitmaskCopy = *bitmask;
 		currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 		disableBit(&bitmaskCopy, currentNodeIndex);
 		if (bitmaskCopy == 0) {
-			bitmaskCopy = realBitmask;
+			bitmaskCopy = *bitmask;
 		}
 
 		blockBytes = 0;
@@ -301,7 +289,7 @@ public:
 				currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 				disableBit(&bitmaskCopy, currentNodeIndex);
 				if (bitmaskCopy == 0) {
-					bitmaskCopy = realBitmask;
+					bitmaskCopy = *bitmask;
 				}
 				blockBytes = 0;
 			}
@@ -333,19 +321,7 @@ public:
 		assert(*bitmask != 0);
 		assert(block_size > 0);
 
-		// Check first if bitmask is any of the wildcards
-		bitmask_t realBitmask;
-		if (*bitmask == NUMA_ALL) {
-			setAll(&realBitmask);
-		} else if (*bitmask == NUMA_ALL_ACTIVE) {
-			setAllActive(&realBitmask);
-		} else if (*bitmask == NUMA_ANY_ACTIVE) {
-			setAnyActive(&realBitmask);
-		} else {
-			realBitmask = *bitmask;
-		}
-
-		bitmask_t bitmaskCopy = realBitmask;
+		bitmask_t bitmaskCopy = *bitmask;
 #ifndef NDEBUG
 		_totalBytes += size;
 #endif
@@ -379,7 +355,7 @@ public:
 			uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
 			disableBit(&bitmaskCopy, currentNodeIndex);
 			if (bitmaskCopy == 0) {
-				bitmaskCopy = realBitmask;
+				bitmaskCopy = *bitmask;
 			}
 
 			// Insert into directory
@@ -594,6 +570,19 @@ public:
 		*bitmask = _bitmaskNumaAnyActive;
 	}
 
+	static inline void setWildcard(bitmask_t *bitmask, nanos6_bitmask_t wildcard)
+	{
+		if (wildcard == NUMA_ALL) {
+			setAll(bitmask);
+		} else if (wildcard == NUMA_ALL_ACTIVE) {
+			setAllActive(bitmask);
+		} else if (wildcard == NUMA_ANY_ACTIVE) {
+			setAnyActive(bitmask);
+		} else {
+			FatalErrorHandler::warnIf(true, "No valid wildcard provided. Bitmask is left unchangend.");
+		}
+	}
+
 	static inline void setBit(bitmask_t *bitmask, uint64_t bitIndex)
 	{
 		enableBit(bitmask, bitIndex);
@@ -604,23 +593,9 @@ public:
 		return checkBit(bitmask, bitIndex);
 	}
 
-	static inline uint8_t getNumaNodes(bitmask_t *bitmask)
+	static inline uint8_t countEnabledBits(bitmask_t *bitmask)
 	{
-		// In this method, we can only use the three wildcards described in numa.h:
-		//	 - NUMA_ALL: all the NUMA nodes available in the system
-		//	 - NUMA_ALL_ACTIVE: the NUMA nodes where we have all the CPUs assigned
-		//	 - NUMA_ANY_ACTIVE: the NUMA nodes where we have any of the CPUs assigned
-		// Any other value is not accepted.
-		if (*bitmask == NUMA_ALL) {
-			return _numNumaAll;
-		} else if (*bitmask == NUMA_ALL_ACTIVE) {
-			return _numNumaAllActive;
-		} else if (*bitmask == NUMA_ANY_ACTIVE) {
-			return _numNumaAnyActive;
-		} else {
-			FatalErrorHandler::warnIf(true, "Unknown bitmask value. Defaulting to NUMA_ALL.");
-			return _numNumaAll;
-		}
+		return __builtin_popcountll((uint64_t) *bitmask);
 	}
 
 private:
