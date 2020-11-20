@@ -49,6 +49,22 @@ void *nanos6_numa_alloc_interleaved_subset(
 	uint64_t block_size
 );
 
+//! \brief Allocate a chunk of memory with first touch policy but annotate it in the directory as distributed
+//!
+//! This function allocates a chunk of memory using the default unix policy (first touch) because
+//! the size of it is too small to be distributed. However we want to annotate it in the directory
+//! as if it was distributed, because it is a chunk of sentinels that will be taken into account
+//! for scheduling purposes
+//!
+//! \param[in] size The total size of the memory chunk to be allocated
+//! \param[in] bitmask A bitmask specifying which NUMA nodes should contain a block of this chunk.
+//! \param[in] block_size The block size to perform the interleaving
+void *nanos6_numa_alloc_sentinels(
+	uint64_t size,
+	nanos6_bitmask_t *bitmask,
+	uint64_t block_size
+);
+
 void nanos6_numa_free_debug(
 	void *ptr,
 	uint64_t size,

@@ -16,6 +16,14 @@ void *nanos6_numa_alloc_interleaved_subset(
 	return ManagerNUMA::alloc(size, bitmask, block_size);
 }
 
+void *nanos6_numa_alloc_sentinels(
+	uint64_t size,
+	nanos6_bitmask_t *bitmask,
+	uint64_t block_size
+) {
+	return ManagerNUMA::allocSentinels(size, bitmask, block_size);
+}
+
 void nanos6_numa_free_debug(
 	void *ptr,
 	uint64_t size,

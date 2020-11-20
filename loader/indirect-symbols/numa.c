@@ -26,6 +26,23 @@ void *nanos6_numa_alloc_interleaved_subset(
 	return (*symbol)(size, bitmask, block_size);
 }
 
+void *nanos6_numa_alloc_sentinels(
+	uint64_t size,
+	nanos6_bitmask_t *bitmask,
+	uint64_t block_size
+) {
+	typedef void *nanos6_numa_alloc_sentinels(
+			uint64_t size, nanos6_bitmask_t *bitmask, uint64_t block_size
+	);
+
+	static nanos6_numa_alloc_sentinels *symbol = NULL;
+	if (__builtin_expect(symbol == NULL, 0)) {
+		symbol = (nanos6_numa_alloc_sentinels *) _nanos6_resolve_symbol("nanos6_numa_alloc_sentinels", "numa", NULL);
+	}
+
+	return (*symbol)(size, bitmask, block_size);
+}
+
 void nanos6_numa_free_debug(
 	void *ptr,
 	uint64_t size,

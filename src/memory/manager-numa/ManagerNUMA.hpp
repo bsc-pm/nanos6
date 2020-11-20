@@ -86,6 +86,9 @@ public:
 
 		// Intialize _cpusPerNumaNode vector to 0
 		_numNumaAll = HardwareInfo::getValidMemoryPlaceCount(nanos6_host_device);
+		// Currently, we are using uint64_t as type for the bitmasks. In case we have
+		// more than 64 nodes, the bitmask cannot represent all the NUMA nodes.
+		assert(_numNumaAll <= 64);
 		_cpusPerNumaNode = std::vector<size_t>(_numNumaAll, 0);
 
 		// Get CPU list to check which CPUs we have in the process mask
@@ -313,6 +316,81 @@ public:
 		MemoryAllocator::free(status, numPages * sizeof(int));
 
 #endif
+
+		return res;
+	}
+
+	static void *allocSentinels(size_t size, bitmask_t *bitmask, size_t block_size)
+	{
+		assert(size > 0);
+
+		if (!DataTrackingSupport::isNUMATrackingEnabled()) {
+			void *res = malloc(size);
+			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
+			return res;
+		}
+
+		assert(*bitmask != 0);
+		assert(block_size > 0);
+
+		// Check first if bitmask is any of the wildcards
+		bitmask_t realBitmask;
+		if (*bitmask == NUMA_ALL) {
+			setAll(&realBitmask);
+		} else if (*bitmask == NUMA_ALL_ACTIVE) {
+			setAllActive(&realBitmask);
+		} else if (*bitmask == NUMA_ANY_ACTIVE) {
+			setAnyActive(&realBitmask);
+		} else {
+			realBitmask = *bitmask;
+		}
+
+		bitmask_t bitmaskCopy = realBitmask;
+#ifndef NDEBUG
+		_totalBytes += size;
+#endif
+
+		void *res = nullptr;
+		int prot = PROT_READ | PROT_WRITE;
+		int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_NORESERVE | MAP_NONBLOCK;
+		int fd = -1;
+		int offset = 0;
+		int pagesize = HardwareInfo::getPageSize();
+
+		if (size < (size_t) pagesize) {
+			// Use malloc for small allocations
+			res = malloc(size);
+			FatalErrorHandler::failIf(res == nullptr, "Couldn't allocate memory.");
+		} else {
+			// Allocate space using mmap
+			void *addr = nullptr;
+			res = mmap(addr, size, prot, flags, fd, offset);
+			FatalErrorHandler::failIf(res == MAP_FAILED, "Couldn't allocate memory.");
+		}
+
+		_allocationsLock.lock();
+		_allocations.emplace(res, size);
+		_allocationsLock.unlock();
+
+		// In this case, the whole allocation is inside the same page. However, it
+		// is important for scheduling purposes to annotate in the directory as if
+		// we could really split the allocation as requested.
+		for (size_t i = 0; i < size; i += block_size) {
+			uint8_t currentNodeIndex = indexFirstEnabledBit(bitmaskCopy);
+			disableBit(&bitmaskCopy, currentNodeIndex);
+			if (bitmaskCopy == 0) {
+				bitmaskCopy = realBitmask;
+			}
+
+			// Insert into directory
+			void *tmp = (void *) ((uintptr_t) res + i);
+			size_t tmp_size = std::min(block_size, size-i);
+			DirectoryInfo info(tmp_size, currentNodeIndex);
+			_lock.writeLock();
+			_directory.emplace(tmp, info);
+			_lock.writeUnlock();
+		}
+
 
 		return res;
 	}
