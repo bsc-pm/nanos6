@@ -30,7 +30,7 @@ void TrackingPoints::taskReinitialized(Task *task)
 	Monitoring::taskReinitialized(task);
 }
 
-void TrackingPoints::taskIsPending(Task *task)
+void TrackingPoints::taskIsPending(const Task *task)
 {
 	assert(task != nullptr);
 
@@ -188,7 +188,7 @@ void TrackingPoints::exitTaskWait(Task *task, bool fromUserCode)
 	}
 }
 
-void TrackingPoints::enterWaitForIf0Task(Task *task, const Task *if0Task, const WorkerThread *thread, const CPU *cpu)
+void TrackingPoints::enterWaitForIf0Task(const Task *task, const Task *if0Task, const WorkerThread *thread, const CPU *cpu)
 {
 	assert(task != nullptr);
 	assert(if0Task != nullptr);
@@ -202,28 +202,20 @@ void TrackingPoints::enterWaitForIf0Task(Task *task, const Task *if0Task, const 
 	Instrument::enterTaskWait(taskId, if0TaskInvocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
 	Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
 
-	// Common function actions for when the thread suspends
-	TrackingPoints::threadWillSuspend(thread, cpu);
-
 	HardwareCounters::updateRuntimeCounters();
 	Instrument::threadWillSuspend(thread->getInstrumentationId(), cpu->getInstrumentationId());
 }
 
-void TrackingPoints::exitWaitForIf0Task(Task *task)
+void TrackingPoints::exitWaitForIf0Task(const Task *task)
 {
 	assert(task != nullptr);
 
 	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
-
-	// We don't reset hardware counters as this is done in AddTask after
-	// the waitForIf0Task function
 	Instrument::taskIsExecuting(taskId, true);
 	Instrument::exitTaskWait(taskId, false);
-
-	Monitoring::taskChangedStatus(task, executing_status);
 }
 
-void TrackingPoints::enterExecuteInline(Task *task, const Task *if0Task)
+void TrackingPoints::enterExecuteInline(const Task *task, const Task *if0Task)
 {
 	assert(task != nullptr);
 	assert(if0Task != nullptr);
@@ -233,16 +225,12 @@ void TrackingPoints::enterExecuteInline(Task *task, const Task *if0Task)
 
 	Instrument::task_id_t taskId = task->getInstrumentationTaskId();
 	Instrument::enterTaskWait(taskId, if0Invocation->invocation_source, if0Task->getInstrumentationTaskId(), false);
-
 	if (if0Task->hasCode()) {
-		// Since hardware counters for the creator task (task) are updated
-		// when creating the if0Task, we need not update them here
-		Monitoring::taskChangedStatus(task, paused_status);
 		Instrument::taskIsBlocked(taskId, Instrument::in_taskwait_blocking_reason);
 	}
 }
 
-void TrackingPoints::exitExecuteInline(Task *task, const Task *if0Task)
+void TrackingPoints::exitExecuteInline(const Task *task, const Task *if0Task)
 {
 	assert(task != nullptr);
 	assert(if0Task != nullptr);
@@ -252,7 +240,6 @@ void TrackingPoints::exitExecuteInline(Task *task, const Task *if0Task)
 		// Since hardware counters for the creator task (task) are updated
 		// when creating the if0Task, we need not update them here
 		Instrument::taskIsExecuting(taskId, true);
-		Monitoring::taskChangedStatus(task, executing_status);
 	}
 
 	Instrument::exitTaskWait(taskId, false);
@@ -431,17 +418,31 @@ void TrackingPoints::exitAddReadyTask()
 	Instrument::exitAddReadyTask();
 }
 
-void TrackingPoints::enterCreateTask(Task *creator, bool fromUserCode)
-{
+Instrument::task_id_t TrackingPoints::enterCreateTask(
+	Task *creator,
+	nanos6_task_info_t *taskInfo,
+	nanos6_task_invocation_info_t *taskInvocationInfo,
+	size_t flags,
+	bool fromUserCode
+) {
 	// NOTE: See the note in "enterSpawnFunction" for more details
 	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
 	if (taskRuntimeTransition) {
 		HardwareCounters::updateTaskCounters(creator);
 		Monitoring::taskChangedStatus(creator, paused_status);
 	}
+
+	return Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags, taskRuntimeTransition);
 }
 
-void TrackingPoints::enterSubmitTask(Task *creator, Task *task, bool fromUserCode)
+void TrackingPoints::exitCreateTask(const Task *creator, bool fromUserCode)
+{
+	// NOTE: See the note in "enterSpawnFunction" for more details
+	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
+	Instrument::exitCreateTask(taskRuntimeTransition);
+}
+
+void TrackingPoints::enterSubmitTask(const Task *creator, Task *task, bool fromUserCode)
 {
 	assert(task != nullptr);
 

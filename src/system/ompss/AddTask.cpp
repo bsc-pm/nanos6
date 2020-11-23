@@ -60,13 +60,11 @@ Task *AddTask::createTask(
 	}
 
 	// Runtime Tracking Point - Enter the creation of a task
-	TrackingPoints::enterCreateTask(creator, fromUserCode);
+	Instrument::task_id_t taskId = TrackingPoints::enterCreateTask(
+		creator, taskInfo, taskInvocationInfo, flags, fromUserCode
+	);
 
-	// NOTE: See the note in "TrackingPoints::enterSpawnFunction" for more details
-	bool taskRuntimeTransition = fromUserCode && (creator != nullptr);
-	Instrument::task_id_t taskId = Instrument::enterCreateTask(taskInfo, taskInvocationInfo, flags, taskRuntimeTransition);
-
-	//! Throttle. If active, act as a taskwait
+	// Throttle. If active, act as a taskwait
 	if (Throttle::isActive() && creator != nullptr) {
 		assert(workerThread != nullptr);
 		// We will try to execute something else instead of creating more memory pressure
@@ -150,7 +148,7 @@ Task *AddTask::createTask(
 			flags, taskAccesses, taskCountersAddress, taskStatisticsAddress);
 	}
 
-	Instrument::exitCreateTask(taskRuntimeTransition);
+	TrackingPoints::exitCreateTask(creator, fromUserCode);
 
 	return task;
 }

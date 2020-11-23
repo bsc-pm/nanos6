@@ -79,9 +79,6 @@ extern "C" void nanos6_decrease_task_event_counter(void *event_counter, unsigned
 			);
 		}
 
-		// Runtime Tracking Point - A task has completely finished its execution
-		TrackingPoints::taskFinished(task);
-
 		TaskFinalization::taskFinished(task, cpu, true);
 
 		// Try to dispose the task

@@ -8,6 +8,9 @@
 
 #include <nanos6.h>
 
+#include <InstrumentThreadInstrumentationContext.hpp>
+#include <InstrumentUserMutex.hpp>
+
 #include "DataAccessRegistration.hpp"
 #include "TaskBlocking.hpp"
 #include "UserMutex.hpp"
@@ -20,10 +23,6 @@
 #include "system/TrackingPoints.hpp"
 #include "tasks/Task.hpp"
 #include "tasks/TaskImplementation.hpp"
-
-#include <InstrumentThreadManagement.hpp>
-#include <InstrumentUserMutex.hpp>
-
 
 typedef std::atomic<UserMutex *> mutex_t;
 

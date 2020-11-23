@@ -43,7 +43,7 @@ void WorkerThread::initialize()
 
 	Instrument::ThreadInstrumentationContext instrumentationContext(
 		Instrument::task_id_t(),
-		cpu->getInstrumentationId,
+		cpu->getInstrumentationId(),
 		getInstrumentationId()
 	);
 

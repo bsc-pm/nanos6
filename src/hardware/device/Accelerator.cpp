@@ -67,9 +67,6 @@ void Accelerator::finishTask(Task *task)
 			task->getMemoryPlace(),
 			/* from busy thread */ true);
 
-		// Runtime Tracking Point - A task has completely finished its execution
-		TrackingPoints::taskFinished(task);
-
 		TaskFinalization::taskFinished(task, cpu, /* busy thread */ true);
 
 		if (task->markAsReleased()) {
